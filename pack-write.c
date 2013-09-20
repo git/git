@@ -1,6 +1,7 @@
 #include "cache.h"
 #include "pack.h"
 #include "csum-file.h"
+#include "varint.h"
 
 void reset_pack_idx_option(struct pack_idx_option *opts)
 {
@@ -87,6 +88,8 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 
 	/* if last object's offset is >= 2^31 we should use index V2 */
 	index_version = need_large_offset(last_obj_offset, opts) ? 2 : opts->version;
+	if (index_version < opts->version)
+		index_version = opts->version;
 
 	/* index versions 2 and above need a header */
 	if (index_version >= 2) {
@@ -127,7 +130,9 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 			uint32_t offset = htonl(obj->offset);
 			sha1write(f, &offset, 4);
 		}
-		sha1write(f, obj->sha1, 20);
+		/* Pack v4 (using index v3) carries the SHA1 table already */
+		if (index_version < 3)
+			sha1write(f, obj->sha1, 20);
 		git_SHA1_Update(&ctx, obj->sha1, 20);
 		if ((opts->flags & WRITE_IDX_STRICT) &&
 		    (i && !hashcmp(list[-2]->sha1, obj->sha1)))
@@ -182,12 +187,15 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 	return index_name;
 }
 
-off_t write_pack_header(struct sha1file *f, uint32_t nr_entries)
+off_t write_pack_header(struct sha1file *f,
+			int version, uint32_t nr_entries)
 {
 	struct pack_header hdr;
 
 	hdr.hdr_signature = htonl(PACK_SIGNATURE);
-	hdr.hdr_version = htonl(PACK_VERSION);
+	hdr.hdr_version = htonl(version);
+	if (!pack_version_ok(hdr.hdr_version))
+		die(_("pack version %d is not supported"), version);
 	hdr.hdr_entries = htonl(nr_entries);
 	if (sha1write(f, &hdr, sizeof(hdr)))
 		return 0;
@@ -318,8 +326,17 @@ int encode_in_pack_object_header(enum object_type type, uintmax_t size, unsigned
 	int n = 1;
 	unsigned char c;
 
-	if (type < OBJ_COMMIT || type > OBJ_REF_DELTA)
+	switch (type) {
+	case OBJ_COMMIT:
+	case OBJ_TREE:
+	case OBJ_BLOB:
+	case OBJ_TAG:
+	case OBJ_OFS_DELTA:
+	case OBJ_REF_DELTA:
+		break;
+	default:
 		die("bad type %d", type);
+	}
 
 	c = (type << 4) | (size & 15);
 	size >>= 4;
@@ -331,6 +348,38 @@ int encode_in_pack_object_header(enum object_type type, uintmax_t size, unsigned
 	}
 	*hdr = c;
 	return n;
+}
+
+int pv4_encode_object_header(enum object_type type,
+			     uintmax_t size, unsigned char *hdr)
+{
+	uintmax_t val;
+
+	switch (type) {
+	case OBJ_COMMIT:
+	case OBJ_TREE:
+	case OBJ_BLOB:
+	case OBJ_TAG:
+	case OBJ_REF_DELTA:
+	case OBJ_PV4_COMMIT:
+	case OBJ_PV4_TREE:
+		break;
+	default:
+		die("bad type %d", type);
+	}
+
+	/*
+	 * We allocate 4 bits in the LSB for the object type which
+	 * should be good for quite a while, given that we effectively
+	 * encodes only 5 object types: commit, tree, blob, delta,
+	 * tag.
+	 */
+	val = size;
+	if (MSB(val, 4))
+		die("fixme: the code doesn't currently cope with big sizes");
+	val <<= 4;
+	val |= type;
+	return encode_varint(val, hdr);
 }
 
 struct sha1file *create_tmp_packfile(char **pack_tmp_name)

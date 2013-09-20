@@ -437,7 +437,7 @@ static open_method_decl(pack_non_delta)
 	unuse_pack(&window);
 	switch (in_pack_type) {
 	default:
-		return -1; /* we do not do deltas for now */
+		return -1; /* we do not do deltas nor pv4 types for now */
 	case OBJ_COMMIT:
 	case OBJ_TREE:
 	case OBJ_BLOB:

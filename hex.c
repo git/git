@@ -56,6 +56,17 @@ int get_sha1_hex(const char *hex, unsigned char *sha1)
 	return 0;
 }
 
+int get_sha1_lowhex(const char *hex, unsigned char *sha1)
+{
+	int i;
+
+	/* uppercase letters (as well as '\0') have bit 5 clear */
+	for (i = 0; i < 20; i++)
+		if (!(hex[i] & 0x20))
+			return -1;
+	return get_sha1_hex(hex, sha1);
+}
+
 char *sha1_to_hex(const unsigned char *sha1)
 {
 	static int bufno;

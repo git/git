@@ -18,6 +18,9 @@
 #include "refs.h"
 #include "streaming.h"
 #include "thread-utils.h"
+#include "packv4-create.h"
+#include "packv4-parse.h"
+#include "varint.h"
 
 static const char *pack_usage[] = {
 	N_("git pack-objects --stdout [options...] [< ref-list | < object-list]"),
@@ -61,7 +64,9 @@ static struct object_entry *objects;
 static struct pack_idx_entry **written_list;
 static uint32_t nr_objects, nr_alloc, nr_result, nr_written;
 
-static int non_empty;
+static struct packv4_tables v4;
+
+static int non_empty, idx_version_set;
 static int reuse_delta = 1, reuse_object = 1;
 static int keep_unreachable, unpack_unreachable, include_tag;
 static unsigned long unpack_unreachable_expiration;
@@ -81,6 +86,7 @@ static int num_preferred_base;
 static struct progress *progress_state;
 static int pack_compression_level = Z_DEFAULT_COMPRESSION;
 static int pack_compression_seen;
+static int pack_version = 2;
 
 static unsigned long delta_cache_size = 0;
 static unsigned long max_delta_cache_size = 256 * 1024 * 1024;
@@ -250,8 +256,14 @@ static unsigned long write_no_reuse_object(struct sha1file *f, struct object_ent
 	enum object_type type;
 	void *buf;
 	struct git_istream *st = NULL;
+	char *result = "OK";
 
-	if (!usable_delta) {
+	if (!usable_delta ||
+	    /*
+	     * Force loading canonical tree. In future we may want to
+	     * read v4 trees directly instead.
+	     */
+	    (pack_version == 4 && entry->type == OBJ_TREE)) {
 		if (entry->type == OBJ_BLOB &&
 		    entry->size > big_file_threshold &&
 		    (st = open_istream(entry->idx.sha1, &type, &size, NULL)) != NULL)
@@ -283,7 +295,38 @@ static unsigned long write_no_reuse_object(struct sha1file *f, struct object_ent
 
 	if (st)	/* large blob case, just assume we don't compress well */
 		datalen = size;
-	else if (entry->z_delta_size)
+	else if (pack_version == 4 && entry->type == OBJ_COMMIT) {
+		datalen = size;
+		result = pv4_encode_commit(&v4, buf, &datalen,
+					   pack_compression_level);
+		if (result) {
+			free(buf);
+			buf = result;
+			type = OBJ_PV4_COMMIT;
+		}
+	} else if (pack_version == 4 && entry->type == OBJ_TREE) {
+		datalen = size;
+		if (usable_delta) {
+			unsigned long base_size;
+			char *base_buf;
+			base_buf = read_sha1_file(entry->delta->idx.sha1, &type,
+						  &base_size);
+			if (!base_buf || type != OBJ_TREE)
+				die("unable to read %s",
+				    sha1_to_hex(entry->delta->idx.sha1));
+			result = pv4_encode_tree(&v4, buf, &datalen,
+						 base_buf, base_size,
+						 entry->delta->idx.sha1);
+			free(base_buf);
+		} else
+			result = pv4_encode_tree(&v4, buf, &datalen,
+						 NULL, 0, NULL);
+		if (result) {
+			free(buf);
+			buf = result;
+			type = OBJ_PV4_TREE;
+		}
+	} else if (entry->z_delta_size)
 		datalen = entry->z_delta_size;
 	else
 		datalen = do_compress(&buf, size);
@@ -292,7 +335,10 @@ static unsigned long write_no_reuse_object(struct sha1file *f, struct object_ent
 	 * The object header is a byte of 'type' followed by zero or
 	 * more bytes of length.
 	 */
-	hdrlen = encode_in_pack_object_header(type, size, header);
+	if (pack_version < 4)
+		hdrlen = encode_in_pack_object_header(type, size, header);
+	else
+		hdrlen = pv4_encode_object_header(type, size, header);
 
 	if (type == OBJ_OFS_DELTA) {
 		/*
@@ -314,7 +360,7 @@ static unsigned long write_no_reuse_object(struct sha1file *f, struct object_ent
 		sha1write(f, header, hdrlen);
 		sha1write(f, dheader + pos, sizeof(dheader) - pos);
 		hdrlen += sizeof(dheader) - pos;
-	} else if (type == OBJ_REF_DELTA) {
+	} else if (type == OBJ_REF_DELTA && pack_version < 4) {
 		/*
 		 * Deltas with a base reference contain
 		 * an additional 20 bytes for the base sha1.
@@ -328,6 +374,10 @@ static unsigned long write_no_reuse_object(struct sha1file *f, struct object_ent
 		sha1write(f, header, hdrlen);
 		sha1write(f, entry->delta->idx.sha1, 20);
 		hdrlen += 20;
+	} else if (type == OBJ_REF_DELTA && pack_version == 4) {
+		hdrlen += encode_sha1ref(&v4, entry->delta->idx.sha1,
+					header + hdrlen);
+		sha1write(f, header, hdrlen);
 	} else {
 		if (limit && hdrlen + datalen + 20 >= limit) {
 			if (st)
@@ -337,14 +387,26 @@ static unsigned long write_no_reuse_object(struct sha1file *f, struct object_ent
 		}
 		sha1write(f, header, hdrlen);
 	}
+
 	if (st) {
 		datalen = write_large_blob_data(st, f, entry->idx.sha1);
 		close_istream(st);
-	} else {
-		sha1write(f, buf, datalen);
-		free(buf);
+		return hdrlen + datalen;
 	}
 
+	if (!result) {
+		warning(_("can't convert %s object %s"),
+			typename(entry->type),
+			sha1_to_hex(entry->idx.sha1));
+		free(buf);
+		buf = read_sha1_file(entry->idx.sha1, &type, &size);
+		if (!buf)
+			die(_("unable to read %s"),
+			    sha1_to_hex(entry->idx.sha1));
+		datalen = do_compress(&buf, size);
+	}
+	sha1write(f, buf, datalen);
+	free(buf);
 	return hdrlen + datalen;
 }
 
@@ -364,7 +426,10 @@ static unsigned long write_reuse_object(struct sha1file *f, struct object_entry 
 	if (entry->delta)
 		type = (allow_ofs_delta && entry->delta->idx.offset) ?
 			OBJ_OFS_DELTA : OBJ_REF_DELTA;
-	hdrlen = encode_in_pack_object_header(type, entry->size, header);
+	if (pack_version < 4)
+		hdrlen = encode_in_pack_object_header(type, entry->size, header);
+	else
+		hdrlen = pv4_encode_object_header(type, entry->size, header);
 
 	offset = entry->in_pack_offset;
 	revidx = find_pack_revindex(p, offset);
@@ -400,7 +465,7 @@ static unsigned long write_reuse_object(struct sha1file *f, struct object_entry 
 		sha1write(f, dheader + pos, sizeof(dheader) - pos);
 		hdrlen += sizeof(dheader) - pos;
 		reused_delta++;
-	} else if (type == OBJ_REF_DELTA) {
+	} else if (type == OBJ_REF_DELTA && pack_version < 4) {
 		if (limit && hdrlen + 20 + datalen + 20 >= limit) {
 			unuse_pack(&w_curs);
 			return 0;
@@ -408,6 +473,11 @@ static unsigned long write_reuse_object(struct sha1file *f, struct object_entry 
 		sha1write(f, header, hdrlen);
 		sha1write(f, entry->delta->idx.sha1, 20);
 		hdrlen += 20;
+		reused_delta++;
+	} else if (type == OBJ_REF_DELTA && pack_version == 4) {
+		hdrlen += encode_sha1ref(&v4, entry->delta->idx.sha1,
+					header + hdrlen);
+		sha1write(f, header, hdrlen);
 		reused_delta++;
 	} else {
 		if (limit && hdrlen + datalen + 20 >= limit) {
@@ -430,7 +500,7 @@ static unsigned long write_object(struct sha1file *f,
 	unsigned long limit, len;
 	int usable_delta, to_reuse;
 
-	if (!pack_to_stdout)
+	if (f && !pack_to_stdout)
 		crc32_begin(f);
 
 	/* apply size limit if limited packsize and not first object */
@@ -472,6 +542,16 @@ static unsigned long write_object(struct sha1file *f,
 		to_reuse = 1;	/* we have it in-pack undeltified,
 				 * and we do not need to deltify it.
 				 */
+
+	if (pack_version == 4 &&
+	     (entry->type == OBJ_TREE || entry->type == OBJ_COMMIT))
+		to_reuse = 0;
+
+	if (!f) {
+		if (usable_delta && entry->delta->idx.offset < 2)
+			entry->delta->idx.offset = 2;
+		return 2;
+	}
 
 	if (!to_reuse)
 		len = write_no_reuse_object(f, entry, limit, usable_delta);
@@ -539,10 +619,14 @@ static enum write_one_status write_one(struct sha1file *f,
 		e->idx.offset = recursing;
 		return WRITE_ONE_BREAK;
 	}
+	if (!f) {
+		*offset += size;
+		return WRITE_ONE_WRITTEN;
+	}
 	written_list[nr_written++] = &e->idx;
 
 	/* make sure off_t is sufficiently large not to wrap */
-	if (signed_add_overflows(*offset, size))
+	if (f && signed_add_overflows(*offset, size))
 		die("pack too large for current definition of off_t");
 	*offset += size;
 	return WRITE_ONE_WRITTEN;
@@ -712,6 +796,38 @@ static struct object_entry **compute_write_order(void)
 	return wo;
 }
 
+static int sha1_idx_sort(const void *a_, const void *b_)
+{
+	const struct pack_idx_entry *a = a_;
+	const struct pack_idx_entry *b = b_;
+	return hashcmp(a->sha1, b->sha1);
+}
+
+/*
+ * Do a fake writting round to detemine what's in the SHA-1 table.
+ */
+static void prepare_sha1_table(uint32_t start, struct object_entry **write_order)
+{
+	int i = start;
+	off_t fake_offset = 2;
+	for (; i < nr_objects; i++) {
+		struct object_entry *e = write_order[i];
+		if (write_one(NULL, e, &fake_offset) == WRITE_ONE_BREAK)
+			break;
+	}
+
+	v4.all_objs_nr = 0;
+	for (i = 0; i < nr_objects; i++) {
+		struct object_entry *e = write_order[i];
+		if (e->idx.offset > 0) {
+			v4.all_objs[v4.all_objs_nr++] = e->idx;
+			e->idx.offset = 0;
+		}
+	}
+	qsort(v4.all_objs, v4.all_objs_nr, sizeof(*v4.all_objs),
+	      sha1_idx_sort);
+}
+
 static void write_pack_file(void)
 {
 	uint32_t i = 0, j;
@@ -735,9 +851,16 @@ static void write_pack_file(void)
 		else
 			f = create_tmp_packfile(&pack_tmp_name);
 
-		offset = write_pack_header(f, nr_remaining);
+		if (pack_version == 4)
+			prepare_sha1_table(i, write_order);
+
+		offset = write_pack_header(f, pack_version,
+					   pack_version < 4 ? nr_remaining : v4.all_objs_nr);
+
 		if (!offset)
 			die_errno("unable to write pack header");
+		if (pack_version == 4)
+			offset += packv4_write_tables(f, &v4, pack_compression_level);
 		nr_written = 0;
 		for (; i < nr_objects; i++) {
 			struct object_entry *e = write_order[i];
@@ -746,15 +869,22 @@ static void write_pack_file(void)
 			display_progress(progress_state, written);
 		}
 
-		/*
-		 * Did we write the wrong # entries in the header?
-		 * If so, rewrite it like in fast-import
-		 */
 		if (pack_to_stdout) {
+			unsigned char type_zero = 0;
+			/*
+			 * Pack v4 thin pack is terminated by a "type
+			 * 0, size 0" in variable length encoding
+			 */
+			if (pack_version == 4 && nr_written < v4.all_objs_nr)
+				sha1write(f, &type_zero, 1);
 			sha1close(f, sha1, CSUM_CLOSE);
 		} else if (nr_written == nr_remaining) {
 			sha1close(f, sha1, CSUM_FSYNC);
 		} else {
+			/*
+			 * Did we write the wrong # entries in the header?
+			 * If so, rewrite it like in fast-import
+			 */
 			int fd = sha1close(f, sha1, 0);
 			fixup_pack_header_footer(fd, sha1, pack_tmp_name,
 						 nr_written, sha1, offset);
@@ -1269,9 +1399,14 @@ static void check_object(struct object_entry *entry)
 		 * We want in_pack_type even if we do not reuse delta
 		 * since non-delta representations could still be reused.
 		 */
-		used = unpack_object_header_buffer(buf, avail,
-						   &entry->in_pack_type,
-						   &entry->size);
+		if (p->version < 4)
+			used = unpack_object_header_buffer(buf, avail,
+							   &entry->in_pack_type,
+							   &entry->size);
+		else
+			used = pv4_unpack_object_header_buffer(buf, avail,
+							       &entry->in_pack_type,
+							       &entry->size);
 		if (used == 0)
 			goto give_up;
 
@@ -1289,7 +1424,22 @@ static void check_object(struct object_entry *entry)
 				goto give_up;
 			unuse_pack(&w_curs);
 			return;
+		case OBJ_PV4_COMMIT:
+		case OBJ_PV4_TREE:
+			entry->type = entry->in_pack_type - 8;
+			entry->in_pack_header_size = used;
+			unuse_pack(&w_curs);
+			return;
 		case OBJ_REF_DELTA:
+			if (p->version == 4) {
+				const unsigned char *sha1, *cp;
+				cp = buf + used;
+				sha1 = get_sha1ref(p, &cp);
+				entry->in_pack_header_size = cp - buf;;
+				if (reuse_delta && !entry->preferred_base)
+					base_ref = sha1;
+				break;
+			}
 			if (reuse_delta && !entry->preferred_base)
 				base_ref = use_pack(p, &w_curs,
 						entry->in_pack_offset + used, NULL);
@@ -1328,7 +1478,8 @@ static void check_object(struct object_entry *entry)
 			break;
 		}
 
-		if (base_ref && (base_entry = locate_object_entry(base_ref))) {
+		if (base_ref && (base_entry = locate_object_entry(base_ref)) &&
+		    (pack_version < 4 || entry->type != OBJ_COMMIT)) {
 			/*
 			 * If base_ref was set above that means we wish to
 			 * reuse delta data, and we even found that base
@@ -1339,7 +1490,8 @@ static void check_object(struct object_entry *entry)
 			 * deltify other objects against, in order to avoid
 			 * circular deltas.
 			 */
-			entry->type = entry->in_pack_type;
+			if (pack_version < 4 || entry->type != OBJ_TREE)
+				entry->type = entry->in_pack_type;
 			entry->delta = base_entry;
 			entry->delta_size = entry->size;
 			entry->delta_sibling = base_entry->delta_child;
@@ -1411,6 +1563,8 @@ static void get_object_details(void)
 		struct object_entry *entry = sorted_by_offset[i];
 		check_object(entry);
 		if (big_file_threshold < entry->size)
+			entry->no_try_delta = 1;
+		if (pack_version == 4 && entry->type == OBJ_COMMIT)
 			entry->no_try_delta = 1;
 	}
 
@@ -1755,8 +1909,12 @@ static void find_deltas(struct object_entry **list, unsigned *list_size,
 		 * and therefore it is best to go to the write phase ASAP
 		 * instead, as we can afford spending more time compressing
 		 * between writes at that moment.
+		 *
+		 * For v4 trees we'll need to delta differently anyway
+		 * so no cache. v4 commits simply do not delta.
 		 */
-		if (entry->delta_data && !pack_to_stdout) {
+		if (entry->delta_data && !pack_to_stdout &&
+		    (pack_version < 4 || entry->type == OBJ_BLOB)) {
 			entry->z_delta_size = do_compress(&entry->delta_data,
 							  entry->delta_size);
 			cache_lock();
@@ -2044,6 +2202,15 @@ static void prepare_pack(int window, int depth)
 	uint32_t i, nr_deltas;
 	unsigned n;
 
+	if (pack_version == 4) {
+		sort_dict_entries_by_hits(v4.commit_ident_table);
+		sort_dict_entries_by_hits(v4.tree_path_table);
+		v4.all_objs = xmalloc(nr_objects * sizeof(*v4.all_objs));
+		if (!idx_version_set)
+			pack_idx_opts.version = 3;
+		allow_ofs_delta = 0;
+	}
+
 	get_object_details();
 
 	/*
@@ -2154,9 +2321,10 @@ static int git_pack_config(const char *k, const char *v, void *cb)
 	}
 	if (!strcmp(k, "pack.indexversion")) {
 		pack_idx_opts.version = git_config_int(k, v);
-		if (pack_idx_opts.version > 2)
+		if (pack_idx_opts.version > 3)
 			die("bad pack.indexversion=%"PRIu32,
 			    pack_idx_opts.version);
+		idx_version_set = 1;
 		return 0;
 	}
 	return git_default_config(k, v, cb);
@@ -2190,6 +2358,34 @@ static void read_object_list_from_stdin(void)
 
 		add_preferred_base_object(line+41);
 		add_object_entry(sha1, 0, line+41, 0);
+
+		if (pack_version == 4) {
+			void *data;
+			enum object_type type;
+			unsigned long size;
+			int (*add_dict_entries)(struct dict_table *, void *, unsigned long);
+			struct dict_table *dict;
+
+			switch (sha1_object_info(sha1, &size)) {
+			case OBJ_COMMIT:
+				add_dict_entries = add_commit_dict_entries;
+				dict = v4.commit_ident_table;
+				break;
+			case OBJ_TREE:
+				add_dict_entries = add_tree_dict_entries;
+				dict = v4.tree_path_table;
+				break;
+			default:
+				continue;
+			}
+			data = read_sha1_file(sha1, &type, &size);
+			if (!data)
+				die("cannot unpack %s", sha1_to_hex(sha1));
+			if (add_dict_entries(dict, data, size) < 0)
+				die("can't process %s object %s",
+				    typename(type), sha1_to_hex(sha1));
+			free(data);
+		}
 	}
 }
 
@@ -2197,8 +2393,24 @@ static void read_object_list_from_stdin(void)
 
 static void show_commit(struct commit *commit, void *data)
 {
+	if (pack_version == 4) {
+		unsigned long size;
+		enum object_type type;
+		unsigned char *buf;
+
+		/* commit->buffer is NULL most of the time, don't bother */
+		buf = read_sha1_file(commit->object.sha1, &type, &size);
+		add_commit_dict_entries(v4.commit_ident_table, buf, size);
+		free(buf);
+	}
 	add_object_entry(commit->object.sha1, OBJ_COMMIT, NULL, 0);
 	commit->object.flags |= OBJECT_ADDED;
+}
+
+static void show_tree_entry(const struct name_entry *entry, void *data)
+{
+	dict_add_entry(v4.tree_path_table, entry->mode, entry->path,
+		       tree_entry_len(entry));
 }
 
 static void show_object(struct object *obj,
@@ -2379,7 +2591,9 @@ static void get_object_list(int ac, const char **av)
 	if (prepare_revision_walk(&revs))
 		die("revision walk setup failed");
 	mark_edges_uninteresting(&revs, show_edge);
-	traverse_commit_list(&revs, show_commit, show_object, NULL);
+	traverse_commit_list(&revs, show_commit,
+			     pack_version == 4 ? show_tree_entry : NULL,
+			     show_object, NULL);
 
 	if (keep_unreachable)
 		add_objects_in_unpacked_packs(&revs);
@@ -2393,12 +2607,13 @@ static int option_parse_index_version(const struct option *opt,
 	char *c;
 	const char *val = arg;
 	pack_idx_opts.version = strtoul(val, &c, 10);
-	if (pack_idx_opts.version > 2)
+	if (pack_idx_opts.version > 3)
 		die(_("unsupported index version %s"), val);
 	if (*c == ',' && c[1])
 		pack_idx_opts.off32_limit = strtoul(c+1, &c, 0);
 	if (*c || pack_idx_opts.off32_limit & 0x80000000)
 		die(_("bad index version '%s'"), val);
+	idx_version_set = 1;
 	return 0;
 }
 
@@ -2455,6 +2670,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		{ OPTION_CALLBACK, 0, "index-version", NULL, N_("version[,offset]"),
 		  N_("write the pack index file in the specified idx format version"),
 		  0, option_parse_index_version },
+		OPT_INTEGER(0, "version", &pack_version, N_("pack version")),
 		OPT_ULONG(0, "max-pack-size", &pack_size_limit,
 			  N_("maximum size of each output pack file")),
 		OPT_BOOL(0, "local", &local,
@@ -2525,6 +2741,11 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	}
 	if (pack_to_stdout != !base_name || argc)
 		usage_with_options(pack_usage, pack_objects_options);
+	if (pack_version != 2 && pack_version != 4)
+		die(_("pack version %d is not supported"), pack_version);
+	if (pack_version < 4 && pack_idx_opts.version >= 3)
+		die(_("pack idx version %d cannot be used with pack version %d"),
+		    pack_idx_opts.version, pack_version);
 
 	rp_av[rp_ac++] = "pack-objects";
 	if (thin) {
@@ -2575,6 +2796,10 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		progress = 2;
 
 	prepare_packed_git();
+	if (pack_version == 4) {
+		v4.commit_ident_table = create_dict_table();
+		v4.tree_path_table = create_dict_table();
+	}
 
 	if (progress)
 		progress_state = start_progress("Counting objects", 0);

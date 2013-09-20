@@ -334,6 +334,8 @@ enum object_type {
 	/* 5 for future expansion */
 	OBJ_OFS_DELTA = 6,
 	OBJ_REF_DELTA = 7,
+	OBJ_PV4_COMMIT = (8 + 1),
+	OBJ_PV4_TREE = (8 + 2),
 	OBJ_ANY,
 	OBJ_MAX
 };
@@ -841,8 +843,11 @@ extern int for_each_abbrev(const char *prefix, each_abbrev_fn, void *);
  * Return 0 on success.  Reading stops if a NUL is encountered in the
  * input, so it is safe to pass this function an arbitrary
  * null-terminated string.
+ *
+ * The "low" version accepts numbers and lowercase letters only.
  */
 extern int get_sha1_hex(const char *hex, unsigned char *sha1);
+extern int get_sha1_lowhex(const char *hex, unsigned char *sha1);
 
 extern char *sha1_to_hex(const unsigned char *sha1);	/* static buffer result! */
 extern int read_ref_full(const char *refname, unsigned char *sha1,
@@ -1012,16 +1017,23 @@ struct pack_window {
 	unsigned int inuse_cnt;
 };
 
+struct packv4_dict;
+
 extern struct packed_git {
 	struct packed_git *next;
 	struct pack_window *windows;
 	off_t pack_size;
 	const void *index_data;
 	size_t index_size;
+	const unsigned char *sha1_table;
 	uint32_t num_objects;
 	uint32_t num_bad_objects;
 	unsigned char *bad_object_sha1;
+	int version;
 	int index_version;
+	struct packv4_dict *ident_dict;
+	off_t ident_dict_end;
+	struct packv4_dict *path_dict;
 	time_t mtime;
 	int pack_fd;
 	unsigned pack_local:1,
@@ -1098,6 +1110,7 @@ struct object_info {
 	} u;
 };
 extern int sha1_object_info_extended(const unsigned char *, struct object_info *);
+extern int packed_object_info(struct packed_git *, off_t, struct object_info *);
 
 /* Dumb servers support */
 extern int update_server_info(int);

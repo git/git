@@ -8,8 +8,7 @@
  * Packed object header
  */
 #define PACK_SIGNATURE 0x5041434b	/* "PACK" */
-#define PACK_VERSION 2
-#define pack_version_ok(v) ((v) == htonl(2) || (v) == htonl(3))
+#define pack_version_ok(v) ((v) == htonl(2) || (v) == htonl(3) || (v) == htonl(4))
 struct pack_header {
 	uint32_t hdr_signature;
 	uint32_t hdr_version;
@@ -80,10 +79,11 @@ extern const char *write_idx_file(const char *index_name, struct pack_idx_entry 
 extern int check_pack_crc(struct packed_git *p, struct pack_window **w_curs, off_t offset, off_t len, unsigned int nr);
 extern int verify_pack_index(struct packed_git *);
 extern int verify_pack(struct packed_git *, verify_fn fn, struct progress *, uint32_t);
-extern off_t write_pack_header(struct sha1file *f, uint32_t);
+extern off_t write_pack_header(struct sha1file *f, int, uint32_t);
 extern void fixup_pack_header_footer(int, unsigned char *, const char *, uint32_t, unsigned char *, off_t);
 extern char *index_pack_lockfile(int fd);
 extern int encode_in_pack_object_header(enum object_type, uintmax_t, unsigned char *);
+extern int pv4_encode_object_header(enum object_type, uintmax_t, unsigned char *);
 
 #define PH_ERROR_EOF		(-1)
 #define PH_ERROR_PACK_SIGNATURE	(-2)

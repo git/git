@@ -93,11 +93,12 @@ test_expect_success 'packsize limit' '
 		) |
 		sort >expect &&
 
-		for pi in .git/objects/pack/pack-*.idx
+		for pi in .git/objects/pack/pack-*.pack
 		do
-			git show-index <"$pi"
+			git verify-pack -v "$pi"
 		done |
-		sed -e "s/^[0-9]* \([0-9a-f]*\) .*/\1/" |
+		grep "^[0-9a-f]\{40\}" |
+		sed -e "s/^\([0-9a-f]\{40\}\) .*/\1/" |
 		sort >actual &&
 
 		test_cmp expect actual

@@ -10,6 +10,7 @@
 #include "string-list.h"
 #include "delta.h"
 #include "pack.h"
+#include "varint.h"
 #include "blob.h"
 #include "commit.h"
 #include "run-command.h"
@@ -18,6 +19,7 @@
 #include "tree-walk.h"
 #include "refs.h"
 #include "pack-revindex.h"
+#include "packv4-parse.h"
 #include "sha1-lookup.h"
 #include "bulk-checkin.h"
 #include "streaming.h"
@@ -504,7 +506,7 @@ static int check_packed_git_idx(const char *path,  struct packed_git *p)
 	hdr = idx_map;
 	if (hdr->idx_signature == htonl(PACK_IDX_SIGNATURE)) {
 		version = ntohl(hdr->idx_version);
-		if (version < 2 || version > 2) {
+		if (version < 2 || version > 3) {
 			munmap(idx_map, idx_size);
 			return error("index file %s is version %"PRIu32
 				     " and is not supported by this binary"
@@ -539,12 +541,13 @@ static int check_packed_git_idx(const char *path,  struct packed_git *p)
 			munmap(idx_map, idx_size);
 			return error("wrong index v1 file size in %s", path);
 		}
-	} else if (version == 2) {
+	} else if (version == 2 || version == 3) {
+		unsigned long min_size, max_size;
 		/*
 		 * Minimum size:
 		 *  - 8 bytes of header
 		 *  - 256 index entries 4 bytes each
-		 *  - 20-byte sha1 entry * nr
+		 *  - 20-byte sha1 entry * nr (version 2 only)
 		 *  - 4-byte crc entry * nr
 		 *  - 4-byte offset entry * nr
 		 *  - 20-byte SHA1 of the packfile
@@ -553,8 +556,10 @@ static int check_packed_git_idx(const char *path,  struct packed_git *p)
 		 * variable sized table containing 8-byte entries
 		 * for offsets larger than 2^31.
 		 */
-		unsigned long min_size = 8 + 4*256 + nr*(20 + 4 + 4) + 20 + 20;
-		unsigned long max_size = min_size;
+		min_size = 8 + 4*256 + nr*(20 + 4 + 4) + 20 + 20;
+		if (version != 2)
+			min_size -= nr*20;
+		max_size = min_size;
 		if (nr)
 			max_size += (nr - 1)*8;
 		if (idx_size < min_size || idx_size > max_size) {
@@ -572,6 +577,36 @@ static int check_packed_git_idx(const char *path,  struct packed_git *p)
 			return error("pack too large for current definition of off_t in %s", path);
 		}
 	}
+
+	if (version >= 3) {
+		/* the SHA1 table is located in the main pack file */
+		void *pack_map;
+		struct pack_header *pack_hdr;
+
+		fd = git_open_noatime(p->pack_name);
+		if (fd < 0) {
+			munmap(idx_map, idx_size);
+			return error("unable to open %s", p->pack_name);
+		}
+		if (fstat(fd, &st) != 0 || xsize_t(st.st_size) < 12 + nr*20) {
+			close(fd);
+			munmap(idx_map, idx_size);
+			return error("size of %s is wrong", p->pack_name);
+		}
+		pack_map = xmmap(NULL, 12 + nr*20, PROT_READ, MAP_PRIVATE, fd, 0);
+		close(fd);
+		pack_hdr = pack_map;
+		if (pack_hdr->hdr_signature != htonl(PACK_SIGNATURE) ||
+		    pack_hdr->hdr_version != htonl(4) ||
+		    pack_hdr->hdr_entries != htonl(nr)) {
+			munmap(idx_map, idx_size);
+			munmap(pack_map, 12 + nr*20);
+			return error("packfile for %s doesn't match expectations", path);
+		}
+		p->sha1_table = pack_map;
+		p->sha1_table += 12;
+	} else
+		p->sha1_table = NULL;
 
 	p->index_version = version;
 	p->index_data = idx_map;
@@ -767,6 +802,10 @@ void close_pack_index(struct packed_git *p)
 		munmap((void *)p->index_data, p->index_size);
 		p->index_data = NULL;
 	}
+	if (p->sha1_table) {
+		munmap((void *)(p->sha1_table - 12), 12 + p->num_objects * 20);
+		p->sha1_table = NULL;
+	}
 }
 
 /*
@@ -794,6 +833,8 @@ void free_pack_by_name(const char *pack_name)
 			}
 			close_pack_index(p);
 			free(p->bad_object_sha1);
+			pv4_free_dict(p->ident_dict);
+			pv4_free_dict(p->path_dict);
 			*pp = p->next;
 			if (last_found_pack == p)
 				last_found_pack = NULL;
@@ -878,10 +919,11 @@ static int open_packed_git_1(struct packed_git *p)
 		return error("file %s is far too short to be a packfile", p->pack_name);
 	if (hdr.hdr_signature != htonl(PACK_SIGNATURE))
 		return error("file %s is not a GIT packfile", p->pack_name);
-	if (!pack_version_ok(hdr.hdr_version))
+	if (!pack_version_ok(hdr.hdr_version) && hdr.hdr_version != htonl(4))
 		return error("packfile %s is version %"PRIu32" and not"
 			" supported (try upgrading GIT to a newer version)",
 			p->pack_name, ntohl(hdr.hdr_version));
+	p->version = ntohl(hdr.hdr_version);
 
 	/* Verify the pack matches its index. */
 	if (p->num_objects != ntohl(hdr.hdr_entries))
@@ -1717,21 +1759,25 @@ static off_t get_delta_base(struct packed_git *p,
 	 * that is assured.  An OFS_DELTA longer than the hash size
 	 * is stupid, as then a REF_DELTA would be smaller to store.
 	 */
-	if (type == OBJ_OFS_DELTA) {
-		unsigned used = 0;
-		unsigned char c = base_info[used++];
-		base_offset = c & 127;
-		while (c & 128) {
-			base_offset += 1;
-			if (!base_offset || MSB(base_offset, 7))
-				return 0;  /* overflow */
-			c = base_info[used++];
-			base_offset = (base_offset << 7) + (c & 127);
+	if (p->version >= 4) {
+		if (base_info[0] != 0) {
+			const unsigned char *cp = base_info;
+			unsigned int base_index = decode_varint(&cp);
+			if (!base_index || base_index - 1 >= p->num_objects)
+				return 0;  /* out of bounds */
+			*curpos += cp - base_info;
+			base_offset = nth_packed_object_offset(p, base_index - 1);
+		} else {
+			base_offset = find_pack_entry_one(base_info+1, p);
+			*curpos += 21;
 		}
+	} else if (type == OBJ_OFS_DELTA) {
+		const unsigned char *cp = base_info;
+		base_offset = decode_varint(&cp);
 		base_offset = delta_obj_offset - base_offset;
 		if (base_offset <= 0 || base_offset >= delta_obj_offset)
 			return 0;  /* out of bound */
-		*curpos += used;
+		*curpos += cp - base_info;
 	} else if (type == OBJ_REF_DELTA) {
 		/* The base entry _must_ be in the same pack */
 		base_offset = find_pack_entry_one(base_info, p);
@@ -1758,7 +1804,10 @@ int unpack_object_header(struct packed_git *p,
 	 * insane, so we know won't exceed what we have been given.
 	 */
 	base = use_pack(p, w_curs, *curpos, &left);
-	used = unpack_object_header_buffer(base, left, &type, sizep);
+	if (p->version < 4) {
+		used = unpack_object_header_buffer(base, left, &type, sizep);
+	} else
+		used = pv4_unpack_object_header_buffer(base, left, &type, sizep);
 	if (!used) {
 		type = OBJ_BAD;
 	} else
@@ -1824,6 +1873,11 @@ static enum object_type packed_to_object_type(struct packed_git *p,
 	}
 
 	switch (type) {
+	case OBJ_PV4_COMMIT:
+	case OBJ_PV4_TREE:
+		/* hide pack v4 special object types */
+		type -= 8;
+		break;
 	case OBJ_BAD:
 	case OBJ_COMMIT:
 	case OBJ_TREE:
@@ -1852,8 +1906,8 @@ unwind:
 	goto out;
 }
 
-static int packed_object_info(struct packed_git *p, off_t obj_offset,
-			      struct object_info *oi)
+int packed_object_info(struct packed_git *p, off_t obj_offset,
+		       struct object_info *oi)
 {
 	struct pack_window *w_curs = NULL;
 	unsigned long size;
@@ -2189,6 +2243,14 @@ void *unpack_entry(struct packed_git *p, off_t obj_offset,
 		if (data)
 			die("BUG in unpack_entry: left loop at a valid delta");
 		break;
+	case OBJ_PV4_COMMIT:
+		data = pv4_get_commit(p, &w_curs, curpos, size);
+		type -= 8;
+		break;
+	case OBJ_PV4_TREE:
+		data = pv4_get_tree(p, &w_curs, obj_offset, size);
+		type -= 8;
+		break;
 	case OBJ_COMMIT:
 	case OBJ_TREE:
 	case OBJ_BLOB:
@@ -2296,8 +2358,11 @@ const unsigned char *nth_packed_object_sha1(struct packed_git *p,
 	index += 4 * 256;
 	if (p->index_version == 1) {
 		return index + 24 * n + 4;
-	} else {
+	} else if (p->index_version == 2) {
 		index += 8;
+		return index + 20 * n;
+	} else {
+		index = p->sha1_table;
 		return index + 20 * n;
 	}
 }
@@ -2311,6 +2376,8 @@ off_t nth_packed_object_offset(const struct packed_git *p, uint32_t n)
 	} else {
 		uint32_t off;
 		index += 8 + p->num_objects * (20 + 4);
+		if (p->index_version != 2)
+			index -= p->num_objects * 20;
 		off = ntohl(*((uint32_t *)(index + 4 * n)));
 		if (!(off & 0x80000000))
 			return off;
@@ -2351,6 +2418,8 @@ off_t find_pack_entry_one(const unsigned char *sha1,
 		stride = 24;
 		index += 4;
 	}
+	if (p->index_version > 2)
+		index = p->sha1_table;
 
 	if (debug_lookup)
 		printf("%02x%02x%02x... lo %u hi %u nr %"PRIu32"\n",

@@ -10,7 +10,9 @@
 #include "tree-walk.h"
 #include "progress.h"
 #include "decorate.h"
+#include "packv4-parse.h"
 #include "fsck.h"
+#include "varint.h"
 
 static int dry_run, quiet, recover, has_errors, strict;
 static const char unpack_usage[] = "git unpack-objects [-n] [-q] [-r] [--strict] < pack-file";
@@ -20,6 +22,11 @@ static unsigned char buffer[4096];
 static unsigned int offset, len;
 static off_t consumed_bytes;
 static git_SHA_CTX ctx;
+
+static int packv4;
+static unsigned nr_objects;
+static unsigned char *sha1_table;
+static struct packv4_dict *name_dict, *path_dict;
 
 /*
  * When running under --strict mode, objects whose reachability are
@@ -48,6 +55,9 @@ static void add_object_buffer(struct object *object, char *buffer, unsigned long
 		die("object %s tried to add buffer twice!", sha1_to_hex(object->sha1));
 }
 
+static struct strbuf back_buffer = STRBUF_INIT;
+static int save_to_back_buffer;
+
 /*
  * Make sure at least "min" bytes are available in the buffer, and
  * return the pointer to the buffer.
@@ -60,6 +70,8 @@ static void *fill(int min)
 		die("cannot fill %d bytes", min);
 	if (offset) {
 		git_SHA1_Update(&ctx, buffer, offset);
+		if (save_to_back_buffer)
+			strbuf_add(&back_buffer, buffer, offset);
 		memmove(buffer, buffer + offset, len);
 		offset = 0;
 	}
@@ -75,6 +87,18 @@ static void *fill(int min)
 	return buffer;
 }
 
+static void copy_back_buffer(int set)
+{
+	if (offset) {
+		git_SHA1_Update(&ctx, buffer, offset);
+		if (save_to_back_buffer)
+			strbuf_add(&back_buffer, buffer, offset);
+		memmove(buffer, buffer + offset, len);
+		offset = 0;
+	}
+	save_to_back_buffer = set;
+}
+
 static void use(int bytes)
 {
 	if (bytes > len)
@@ -86,6 +110,73 @@ static void use(int bytes)
 	if (signed_add_overflows(consumed_bytes, bytes))
 		die("pack too large for current definition of off_t");
 	consumed_bytes += bytes;
+}
+
+static inline void *fill_and_use(int bytes)
+{
+	void *p = fill(bytes);
+	use(bytes);
+	return p;
+}
+
+static uintmax_t read_varint(void)
+{
+	unsigned char c = *(char*)fill_and_use(1);
+	uintmax_t val = c & 127;
+	while (c & 128) {
+		val += 1;
+		if (!val || MSB(val, 7))
+			die("offset overflow in read_varint at %lu",
+			    (unsigned long)consumed_bytes);
+		c = *(char*)fill_and_use(1);
+		val = (val << 7) + (c & 127);
+	}
+	return val;
+}
+
+static const unsigned char *read_sha1ref(void)
+{
+	unsigned int index = read_varint();
+	if (!index) {
+		static unsigned char sha1[20];
+		hashcpy(sha1, fill_and_use(20));
+		return sha1;
+	}
+	index--;
+	if (index >= nr_objects)
+		die("bad index in read_sha1ref at %lu",
+		    (unsigned long)consumed_bytes);
+	return sha1_table + index * 20;
+}
+
+static void check_against_sha1table(const unsigned char *sha1)
+{
+	const unsigned char *found;
+	if (!packv4)
+		return;
+
+	found = bsearch(sha1, sha1_table, nr_objects, 20,
+			(int (*)(const void *, const void *))hashcmp);
+	if (!found)
+		die(_("object %s not found in SHA-1 table"),
+		    sha1_to_hex(sha1));
+}
+
+static const unsigned char *read_sha1table_ref(void)
+{
+	const unsigned char *sha1 = read_sha1ref();
+	if (sha1 < sha1_table || sha1 >= sha1_table + nr_objects * 20)
+		check_against_sha1table(sha1);
+	return sha1;
+}
+
+static const unsigned char *read_dictref(struct packv4_dict *dict)
+{
+	unsigned int index = read_varint();
+	if (index >= dict->nb_entries)
+		die("bad index in read_dictref at %lu",
+		    (unsigned long)consumed_bytes);
+	return  dict->data + dict->offsets[index];
 }
 
 static void *get_data(unsigned long size)
@@ -158,7 +249,6 @@ struct obj_info {
 #define FLAG_WRITTEN (1u<<21)
 
 static struct obj_info *obj_list;
-static unsigned nr_objects;
 
 /*
  * Called only from check_object() after it verified this object
@@ -193,7 +283,7 @@ static int check_object(struct object *obj, int type, void *data)
 		unsigned long size;
 		int type = sha1_object_info(obj->sha1, &size);
 		if (type != obj->type || type <= 0)
-			die("object of unexpected type");
+			die("object %s of unexpected type", sha1_to_hex(obj->sha1));
 		obj->flags |= FLAG_WRITTEN;
 		return 0;
 	}
@@ -259,6 +349,84 @@ static void write_object(unsigned nr, enum object_type type,
 	}
 }
 
+static void resolve_tree_v4(unsigned long nr_obj,
+			    const void *tree,
+			    unsigned long tree_len,
+			    const unsigned char *base_sha1,
+			    const void *base,
+			    unsigned long base_size)
+{
+	int nr;
+	struct strbuf sb = STRBUF_INIT;
+	const unsigned char *p = tree;
+	const unsigned char *end = p + tree_len;
+
+	nr = decode_varint(&p);
+	while (nr > 0 && p < end) {
+		unsigned int copy_start_or_path = decode_varint(&p);
+		if (copy_start_or_path & 1) { /* copy_start */
+			struct tree_desc desc;
+			struct name_entry entry;
+			unsigned int copy_count = decode_varint(&p);
+			unsigned int copy_start = copy_start_or_path >> 1;
+			if (!base_sha1)
+				die("we are not supposed to copy from another tree!");
+			if (copy_count & 1) { /* first delta */
+				unsigned int id = decode_varint(&p);
+				const unsigned char *last_base;
+				if (!id) {
+					last_base = p;
+					p += 20;
+				} else
+					last_base = sha1_table + (id - 1) * 20;
+				if (hashcmp(last_base, base_sha1))
+					die("bad base tree in resolve_tree_v4");
+			}
+
+			copy_count >>= 1;
+			nr -= copy_count;
+
+			init_tree_desc(&desc, base, base_size);
+			while (tree_entry(&desc, &entry)) {
+				if (copy_start)
+					copy_start--;
+				else if (copy_count) {
+					strbuf_addf(&sb, "%o %s%c",
+						    entry.mode, entry.path, '\0');
+					strbuf_add(&sb, entry.sha1, 20);
+					copy_count--;
+				} else
+					break;
+			}
+		} else {	/* path */
+			unsigned int path_idx = copy_start_or_path >> 1;
+			const unsigned char *path;
+			unsigned mode;
+			unsigned int id;
+			const unsigned char *entry_sha1;
+
+			id = decode_varint(&p);
+			if (!id) {
+				entry_sha1 = p;
+				p += 20;
+			} else
+				entry_sha1 = sha1_table + (id - 1) * 20;
+			nr--;
+
+			path = path_dict->data + path_dict->offsets[path_idx];
+			mode = (path[0] << 8) | path[1];
+			strbuf_addf(&sb, "%o %s%c", mode, path+2, '\0');
+			strbuf_add(&sb, entry_sha1, 20);
+		}
+	}
+	if (nr != 0 || p != end)
+		die(_("bad delta tree"));
+	if (!dry_run)
+		write_object(nr_obj, OBJ_TREE, sb.buf, sb.len);
+	else
+		strbuf_release(&sb);
+}
+
 static void resolve_delta(unsigned nr, enum object_type type,
 			  void *base, unsigned long base_size,
 			  void *delta, unsigned long delta_size)
@@ -290,8 +458,13 @@ static void added_object(unsigned nr, enum object_type type,
 		    info->base_offset == obj_list[nr].offset) {
 			*p = info->next;
 			p = &delta_list;
-			resolve_delta(info->nr, type, data, size,
-				      info->delta, info->size);
+			if (type == OBJ_TREE && packv4)
+				resolve_tree_v4(info->nr, info->delta,
+						info->size, info->base_sha1,
+						data, size);
+			else
+				resolve_delta(info->nr, type, data, size,
+					      info->delta, info->size);
 			free(info);
 			continue;
 		}
@@ -334,8 +507,12 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
 	unsigned char base_sha1[20];
 
 	if (type == OBJ_REF_DELTA) {
-		hashcpy(base_sha1, fill(20));
-		use(20);
+		if (packv4)
+			hashcpy(base_sha1, read_sha1ref());
+		else {
+			hashcpy(base_sha1, fill(20));
+			use(20);
+		}
 		delta_data = get_data(delta_size);
 		if (dry_run || !delta_data) {
 			free(delta_data);
@@ -421,28 +598,165 @@ static void unpack_delta_entry(enum object_type type, unsigned long delta_size,
 	free(base);
 }
 
-static void unpack_one(unsigned nr)
+static int resolve_tree_against_held(unsigned nr, const unsigned char *base,
+				     void *delta_data, unsigned long delta_size)
 {
+	struct object *obj;
+	struct obj_buffer *obj_buffer;
+	obj = lookup_object(base);
+	if (!obj || obj->type != OBJ_TREE)
+		return 0;
+	obj_buffer = lookup_object_buffer(obj);
+	if (!obj_buffer)
+		return 0;
+	resolve_tree_v4(nr, delta_data, delta_size,
+			base, obj_buffer->buffer, obj_buffer->size);
+	return 1;
+}
+
+static void unpack_tree_v4(unsigned long size, unsigned long nr_obj)
+{
+	unsigned int nr;
+	const unsigned char *last_base = NULL;
+
+	copy_back_buffer(1);
+	strbuf_reset(&back_buffer);
+	nr = read_varint();
+	while (nr) {
+		unsigned int copy_start_or_path = read_varint();
+		if (copy_start_or_path & 1) { /* copy_start */
+			unsigned int copy_count = read_varint();
+			if (copy_count & 1) { /* first delta */
+				const unsigned char *old_base = last_base;
+				last_base = read_sha1table_ref();
+				if (old_base && hashcmp(last_base, old_base))
+					die("multi-base trees are not supported");
+			} else if (!last_base)
+				die("missing delta base unpack_tree_v4 at %lu",
+				    (unsigned long)consumed_bytes);
+			copy_count >>= 1;
+			if (!copy_count || copy_count > nr)
+				die("bad copy count index in unpack_tree_v4 at %lu",
+				    (unsigned long)consumed_bytes);
+			nr -= copy_count;
+		} else {	/* path */
+			unsigned int path_idx = copy_start_or_path >> 1;
+			if (path_idx >= path_dict->nb_entries)
+				die("bad path index in unpack_tree_v4 at %lu",
+				    (unsigned long)consumed_bytes);
+			read_sha1ref();
+			nr--;
+		}
+	}
+	copy_back_buffer(0);
+
+	if (last_base) {
+		if (has_sha1_file(last_base)) {
+			enum object_type type;
+			unsigned long base_size;
+			void *base = read_sha1_file(last_base, &type, &base_size);
+			if (type != OBJ_TREE) {
+				die("base tree %s is not a tree", sha1_to_hex(last_base));
+				last_base = NULL;
+			}
+			resolve_tree_v4(nr_obj, back_buffer.buf, back_buffer.len,
+					last_base, base, base_size);
+			free(base);
+		} else if (resolve_tree_against_held(nr_obj, last_base,
+						     back_buffer.buf, back_buffer.len))
+			   ; /* resolved */
+		else {
+			unsigned long delta_size = back_buffer.len;
+			char *delta = strbuf_detach(&back_buffer, NULL);
+			/* cannot resolve yet --- queue it */
+			hashcpy(obj_list[nr].sha1, null_sha1);
+			add_delta_to_list(nr, last_base, 0, delta, delta_size);
+		}
+	} else
+		resolve_tree_v4(nr_obj, back_buffer.buf, back_buffer.len, NULL, NULL, 0);
+	strbuf_release(&back_buffer);
+}
+
+static void unpack_commit_v4(unsigned long size, unsigned long nr)
+{
+	unsigned int nb_parents;
+	const unsigned char *committer, *author, *ident;
+	unsigned long author_time, committer_time;
+	int16_t committer_tz, author_tz;
+	struct strbuf dst;
+	char *remaining;
+
+	strbuf_init(&dst, size);
+
+	strbuf_addf(&dst, "tree %s\n", sha1_to_hex(read_sha1ref()));
+	nb_parents = read_varint();
+	while (nb_parents--)
+		strbuf_addf(&dst, "parent %s\n", sha1_to_hex(read_sha1ref()));
+
+	committer_time = read_varint();
+	ident = read_dictref(name_dict);
+	committer_tz = (ident[0] << 8) | ident[1];
+	committer = ident + 2;
+
+	author_time = read_varint();
+	ident = read_dictref(name_dict);
+	author_tz = (ident[0] << 8) | ident[1];
+	author = ident + 2;
+
+	if (author_time & 1)
+		author_time = committer_time + (author_time >> 1);
+	else
+		author_time = committer_time - (author_time >> 1);
+
+	strbuf_addf(&dst,
+		    "author %s %lu %+05d\n"
+		    "committer %s %lu %+05d\n",
+		    author, author_time, author_tz,
+		    committer, committer_time, committer_tz);
+
+	if (dst.len > size)
+		die("bad commit");
+
+	remaining = get_data(size - dst.len);
+	strbuf_add(&dst, remaining, size - dst.len);
+	if (!dry_run)
+		write_object(nr, OBJ_COMMIT, dst.buf, dst.len);
+	else
+		strbuf_release(&dst);
+}
+
+static void read_typesize_v2(enum object_type *type, unsigned long *size)
+{
+	unsigned char c = *(char*)fill_and_use(1);
 	unsigned shift;
-	unsigned char *pack;
-	unsigned long size, c;
+
+	*type = (c >> 4) & 7;
+	*size = (c & 15);
+	shift = 4;
+	while (c & 128) {
+		c = *(char*)fill_and_use(1);
+		*size += (c & 0x7f) << shift;
+		shift += 7;
+	}
+}
+
+static int unpack_one(unsigned nr)
+{
+	unsigned long size;
 	enum object_type type;
 
 	obj_list[nr].offset = consumed_bytes;
 
-	pack = fill(1);
-	c = *pack;
-	use(1);
-	type = (c >> 4) & 7;
-	size = (c & 15);
-	shift = 4;
-	while (c & 0x80) {
-		pack = fill(1);
-		c = *pack;
+	if (packv4 && *(char*)fill(1) == 0) {
 		use(1);
-		size += (c & 0x7f) << shift;
-		shift += 7;
+		return -1;
 	}
+	if (packv4) {
+		uintmax_t val = read_varint();
+		type = val & 15;
+		size = val >> 4;
+	} else
+		read_typesize_v2(&type, &size);
 
 	switch (type) {
 	case OBJ_COMMIT:
@@ -450,18 +764,39 @@ static void unpack_one(unsigned nr)
 	case OBJ_BLOB:
 	case OBJ_TAG:
 		unpack_non_delta_entry(type, size, nr);
-		return;
+		break;
 	case OBJ_REF_DELTA:
 	case OBJ_OFS_DELTA:
 		unpack_delta_entry(type, size, nr);
-		return;
+		break;
+	case OBJ_PV4_COMMIT:
+		unpack_commit_v4(size, nr);
+		break;
+	case OBJ_PV4_TREE:
+		unpack_tree_v4(size, nr);
+		break;
 	default:
 		error("bad object type %d", type);
 		has_errors = 1;
 		if (recover)
-			return;
+			break;
 		exit(1);
 	}
+	return 0;
+}
+
+static struct packv4_dict *read_dict(void)
+{
+	unsigned long size;
+	unsigned char *data;
+	struct packv4_dict *dict;
+
+	size = read_varint();
+	data = get_data(size);
+	dict = pv4_create_dict(data, size);
+	if (!dict)
+		die("unable to parse dictionary");
+	return dict;
 }
 
 static void unpack_all(void)
@@ -477,13 +812,25 @@ static void unpack_all(void)
 	if (!pack_version_ok(hdr->hdr_version))
 		die("unknown pack file version %"PRIu32,
 			ntohl(hdr->hdr_version));
+	packv4 = ntohl(hdr->hdr_version) == 4;
 	use(sizeof(struct pack_header));
+
+	if (packv4) {
+		sha1_table = xmalloc(20 * nr_objects);
+		for (i = 0; i < nr_objects; i++) {
+			unsigned char *p = sha1_table + i * 20;
+			hashcpy(p, fill_and_use(20));
+		}
+		name_dict = read_dict();
+		path_dict = read_dict();
+	}
 
 	if (!quiet)
 		progress = start_progress("Unpacking objects", nr_objects);
 	obj_list = xcalloc(nr_objects, sizeof(*obj_list));
 	for (i = 0; i < nr_objects; i++) {
-		unpack_one(i);
+		if (unpack_one(i))
+			break;
 		display_progress(progress, i + 1);
 	}
 	stop_progress(&progress);
