@@ -104,6 +104,24 @@ EOF
 	test_cmp expected actual
 "
 
+test_expect_success 'no ignore=all setting has any effect' "
+	git config -f .gitmodules submodule.sm1.path sm1 &&
+	git config -f .gitmodules submodule.sm1.ignore all &&
+	git config submodule.sm1.ignore all &&
+	git config diff.ignoreSubmodules all &&
+	git submodule summary >actual &&
+	cat >expected <<-EOF &&
+* sm1 $head1...$head2 (1):
+  > Add foo3
+
+EOF
+	test_cmp expected actual &&
+	git config --unset diff.ignoreSubmodules &&
+	git config --remove-section submodule.sm1 &&
+	git config -f .gitmodules --remove-section submodule.sm1
+"
+
+
 commit_file sm1 &&
 head3=$(
 	cd sm1 &&
