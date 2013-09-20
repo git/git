@@ -406,6 +406,29 @@ static const char *show_ident_date(const struct ident_split *ident,
 	return show_date(date, tz, mode);
 }
 
+static int is_current_user(const struct pretty_print_context *pp,
+			   const char *email, size_t emaillen,
+			   const char *name, size_t namelen)
+{
+	const char *me = git_committer_info(0);
+	const char *myname, *mymail;
+	size_t mynamelen, mymaillen;
+	struct ident_split ident;
+
+	if (split_ident_line(&ident, me, strlen(me)))
+		return 0; /* play safe, as we do not know */
+	mymail = ident.mail_begin;
+	mymaillen = ident.mail_end - ident.mail_begin;
+	myname = ident.name_begin;
+	mynamelen = ident.name_end - ident.name_begin;
+	if (pp->mailmap)
+		map_user(pp->mailmap, &mymail, &mymaillen, &myname, &mynamelen);
+	return (mymaillen == emaillen &&
+		mynamelen == namelen &&
+		!memcmp(mymail, email, emaillen) &&
+		!memcmp(myname, name, namelen));
+}
+
 void pp_user_info(struct pretty_print_context *pp,
 		  const char *what, struct strbuf *sb,
 		  const char *line, const char *encoding)
@@ -430,6 +453,9 @@ void pp_user_info(struct pretty_print_context *pp,
 
 	if (pp->mailmap)
 		map_user(pp->mailmap, &mailbuf, &maillen, &namebuf, &namelen);
+
+	if (pp->inline_single && is_current_user(pp, mailbuf, maillen, namebuf, namelen))
+		return;
 
 	if (pp->fmt == CMIT_FMT_EMAIL) {
 		if (pp->from_ident && ident_cmp(pp->from_ident, &ident)) {

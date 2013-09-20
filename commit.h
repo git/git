@@ -93,6 +93,7 @@ struct pretty_print_context {
 	int preserve_subject;
 	enum date_mode date_mode;
 	unsigned date_mode_explicit:1;
+	unsigned inline_single:1;
 	int need_8bit_cte;
 	char *notes_message;
 	struct reflog_walk_info *reflog_info;

@@ -1085,7 +1085,7 @@ static int attach_callback(const struct option *opt, const char *arg, int unset)
 		rev->mime_boundary = arg;
 	else
 		rev->mime_boundary = git_version_string;
-	rev->no_inline = unset ? 0 : 1;
+	rev->disposition_attachment = unset ? 0 : 1;
 	return 0;
 }
 
@@ -1098,7 +1098,20 @@ static int inline_callback(const struct option *opt, const char *arg, int unset)
 		rev->mime_boundary = arg;
 	else
 		rev->mime_boundary = git_version_string;
-	rev->no_inline = 0;
+	rev->disposition_attachment = 0;
+	return 0;
+}
+
+static int inline_single_callback(const struct option *opt, const char *arg, int unset)
+{
+	struct rev_info *rev = (struct rev_info *)opt->value;
+	rev->mime_boundary = NULL;
+	rev->inline_single = 1;
+
+	/* defeat configured format.attach, format.thread, etc. */
+	free(default_attach);
+	default_attach = NULL;
+	thread = 0;
 	return 0;
 }
 
@@ -1230,6 +1243,10 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			    PARSE_OPT_OPTARG, thread_callback },
 		OPT_STRING(0, "signature", &signature, N_("signature"),
 			    N_("add a signature")),
+		{ OPTION_CALLBACK, 0, "inline-single", &rev, NULL,
+		  N_("single patch appendable to the end of an e-mail body"),
+		  PARSE_OPT_NOARG | PARSE_OPT_NONEG,
+		  inline_single_callback },
 		OPT__QUIET(&quiet, N_("don't print the patch filenames")),
 		OPT_END()
 	};
@@ -1252,7 +1269,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 
 	if (default_attach) {
 		rev.mime_boundary = default_attach;
-		rev.no_inline = 1;
+		rev.disposition_attachment = 1;
 	}
 
 	/*
@@ -1264,6 +1281,15 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			     builtin_format_patch_usage,
 			     PARSE_OPT_KEEP_ARGV0 | PARSE_OPT_KEEP_UNKNOWN |
 			     PARSE_OPT_KEEP_DASHDASH);
+
+	/* Set defaults and check incompatible options */
+	if (rev.inline_single) {
+		use_stdout = 1;
+		if (thread)
+			die(_("inline-single and thread are incompatible."));
+		if (output_directory)
+			die(_("inline-single and output-directory are incompatible."));
+	}
 
 	if (0 < reroll_count) {
 		struct strbuf sprefix = STRBUF_INIT;
@@ -1436,6 +1462,10 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		/* nothing to do */
 		return 0;
 	total = nr;
+
+	if (rev.inline_single && total != 1)
+		die(_("inline-single is only for a single commit"));
+
 	if (!keep_subject && auto_number && total > 1)
 		numbered = 1;
 	if (numbered)
@@ -1446,6 +1476,8 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		else
 			cover_letter = (config_cover_letter == COVER_ON);
 	}
+	if (cover_letter > 0 && rev.inline_single)
+		die(_("inline-single and cover-letter are incompatible."));
 
 	if (in_reply_to || thread || cover_letter)
 		rev.ref_message_ids = xcalloc(1, sizeof(struct string_list));

@@ -293,7 +293,11 @@ void log_write_email_headers(struct rev_info *opt, struct commit *commit,
 		subject = "Subject: ";
 	}
 
-	printf("From %s Mon Sep 17 00:00:00 2001\n", name);
+	if (opt->inline_single)
+		printf("-- >8 --\n");
+	else
+		printf("From %s Mon Sep 17 00:00:00 2001\n", name);
+
 	graph_show_oneline(opt->graph);
 	if (opt->message_id) {
 		printf("Message-Id: <%s>\n", opt->message_id);
@@ -343,7 +347,7 @@ void log_write_email_headers(struct rev_info *opt, struct commit *commit,
 			 " filename=\"%s\"\n\n",
 			 mime_boundary_leader, opt->mime_boundary,
 			 filename.buf,
-			 opt->no_inline ? "attachment" : "inline",
+			 opt->disposition_attachment ? "attachment" : "inline",
 			 filename.buf);
 		opt->diffopt.stat_sep = buffer;
 		strbuf_release(&filename);
@@ -620,6 +624,7 @@ void show_log(struct rev_info *opt)
 	ctx.output_encoding = get_log_output_encoding();
 	if (opt->from_ident.mail_begin && opt->from_ident.name_begin)
 		ctx.from_ident = &opt->from_ident;
+	ctx.inline_single = opt->inline_single;
 	pretty_print_commit(&ctx, commit, &msgbuf);
 
 	if (opt->add_signoff)
