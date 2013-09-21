@@ -12,7 +12,7 @@ static const char * const builtin_remote_usage[] = {
 	N_("git remote add [-t <branch>] [-m <master>] [-f] [--tags|--no-tags] [--mirror=<fetch|push>] <name> <url>"),
 	N_("git remote rename <old> <new>"),
 	N_("git remote remove <name>"),
-	N_("git remote set-head <name> (-a | -d | <branch>)"),
+	N_("git remote set-head <name> (-a | --auto | -d | --delete |<branch>)"),
 	N_("git remote [-v | --verbose] show [-n] <name>"),
 	N_("git remote prune [-n | --dry-run] <name>"),
 	N_("git remote [-v | --verbose] update [-p | --prune] [(<group> | <remote>)...]"),
@@ -39,7 +39,7 @@ static const char * const builtin_remote_rm_usage[] = {
 };
 
 static const char * const builtin_remote_sethead_usage[] = {
-	N_("git remote set-head <name> (-a | -d | <branch>)"),
+	N_("git remote set-head <name> (-a | --auto | -d | --delete | <branch>)"),
 	NULL
 };
 
