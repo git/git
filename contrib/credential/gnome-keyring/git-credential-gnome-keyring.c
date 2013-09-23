@@ -28,6 +28,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <glib.h>
 #include <gnome-keyring.h>
 
 /*
@@ -398,6 +399,8 @@ int main(int argc, char *argv[])
 		usage(argv[0]);
 		exit(EXIT_FAILURE);
 	}
+
+	g_set_application_name("Git Credential Helper");
 
 	/* lookup operation callback */
 	while (try_op->name && strcmp(argv[1], try_op->name))
