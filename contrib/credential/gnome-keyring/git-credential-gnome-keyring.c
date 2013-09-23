@@ -117,10 +117,10 @@ static char* keyring_object(struct credential *c)
 		return object;
 
 	object = (char*) malloc(strlen(c->host)+strlen(c->path)+8);
-	if(!object)
+	if (!object)
 		die_errno(errno);
 
-	if(c->port)
+	if (c->port)
 		sprintf(object,"%s:%hd/%s",c->host,c->port,c->path);
 	else
 		sprintf(object,"%s/%s",c->host,c->path);
@@ -314,14 +314,14 @@ int credential_read(struct credential *c)
 	{
 		line_len = strlen(buf);
 
-		if(buf[line_len-1]=='\n')
+		if (buf[line_len-1]=='\n')
 			buf[--line_len]='\0';
 
-		if(!line_len)
+		if (!line_len)
 			break;
 
 		value = strchr(buf,'=');
-		if(!value) {
+		if (!value) {
 			warning("invalid credential line: %s", key);
 			return -1;
 		}
@@ -379,9 +379,9 @@ static void usage(const char *name)
 
 	basename = (basename) ? basename + 1 : name;
 	fprintf(stderr, "usage: %s <", basename);
-	while(try_op->name) {
+	while (try_op->name) {
 		fprintf(stderr,"%s",(try_op++)->name);
-		if(try_op->name)
+		if (try_op->name)
 			fprintf(stderr,"%s","|");
 	}
 	fprintf(stderr,"%s",">\n");
@@ -400,15 +400,15 @@ int main(int argc, char *argv[])
 	}
 
 	/* lookup operation callback */
-	while(try_op->name && strcmp(argv[1], try_op->name))
+	while (try_op->name && strcmp(argv[1], try_op->name))
 		try_op++;
 
 	/* unsupported operation given -- ignore silently */
-	if(!try_op->name || !try_op->op)
+	if (!try_op->name || !try_op->op)
 		goto out;
 
 	ret = credential_read(&cred);
-	if(ret)
+	if (ret)
 		goto out;
 
 	/* perform credential operation */
