@@ -1,243 +1,68 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Sep 2013, #06; Fri, 20)
+Subject: What's cooking in git.git (Sep 2013, #07; Mon, 23)
 X-master-at: 128a96c98442524c7f2eeef4757b1e48445f24ce
 X-next-at: 0d6e0ce2a5090eb3c05a624d1ad584a1153fcc52
 
-What's cooking in git.git (Sep 2013, #06; Fri, 20)
+What's cooking in git.git (Sep 2013, #07; Mon, 23)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-The fifth batch of topics are in 'master'.  We are about to pass 350
-non-merge commits since the last release, which means we are about
-halfway there for the next one.  Among ~60 contributors who have
-commits in the 'master' branch since v1.8.4, ~10 are new faces.
+The fifth batch of topics are in 'master'.
 
-I'll be offline starting next week for a few weeks; in order to
-improve the "bus factor", I asked Jonathan Nieder to fill in for me
-as an interim maintainer, with Peff as a back-up.
+You can find the changes described here in the integration branches at
 
-You can find the changes described here in the integration branches
-of the repositories listed at
+    https://repo.or.cz/r/git/jrn.git
 
-    http://git-blame.blogspot.com/p/git-public-repositories.html
+I am still catching up on patches sent since last week.  If I have
+missed yours, do not despair, but feel free to send me a reminder to
+look at it.
 
---------------------------------------------------
-[Graduated to "master"]
-
-* bc/http-backend-allow-405 (2013-09-12) 1 commit
-  (merged to 'next' on 2013-09-12 at bc1719f)
- + http-backend: provide Allow header for 405
-
- When the webserver responds with "405 Method Not Allowed", it
- should tell the client what methods are allowed with the "Allow"
- header.
-
-
-* bk/refs-multi-update (2013-09-11) 8 commits
-  (merged to 'next' on 2013-09-13 at e6d21af)
- + update-ref: add test cases covering --stdin signature
- + update-ref: support multiple simultaneous updates
- + refs: add update_refs for multiple simultaneous updates
- + refs: add function to repack without multiple refs
- + refs: factor delete_ref loose ref step into a helper
- + refs: factor update_ref steps into helpers
- + refs: report ref type from lock_any_ref_for_update
- + reset: rename update_refs to reset_refs
-
- Give "update-refs" a "--stdin" option to read multiple update
- requests and perform them in an all-or-none fashion.
-
-
-* dw/check-ignore-sans-index (2013-09-12) 1 commit
-  (merged to 'next' on 2013-09-13 at 8daec3c)
- + check-ignore: Add option to ignore index contents
-
- "git check-ignore" follows the same rule as "git add" and "git
- status" in that the ignore/exclude mechanism does not take effect
- on paths that are already tracked.  With "--no-index" option, it
- can be used to diagnose which paths that should have been ignored
- have been mistakenly added to the index.
-
-
-* fc/at-head (2013-09-12) 2 commits
-  (merged to 'next' on 2013-09-13 at d3800c2)
- + Add new @ shortcut for HEAD
- + sha1-name: pass len argument to interpret_branch_name()
-
- Attempt to resurrect "Type @ for HEAD"; the bottom one seems to be
- a genuine code improvement, but identifying cases where "@" means
- HEAD were harder than it should have been.  I think the result of
- squashing the tip one in covers all the necessary cases.
-
-
-* hu/cherry-pick-previous-branch (2013-09-09) 1 commit
-  (merged to 'next' on 2013-09-12 at 36e4d9b)
- + cherry-pick: allow "-" as abbreviation of '@{-1}'
-
- Just like "git checkout -" knows to check out and "git merge -"
- knows to merge the branch you were previously on, teach "git
- cherry-pick" to understand "-" as the previous branch.
-
-
-* jh/checkout-auto-tracking (2013-09-17) 6 commits
-  (merged to 'next' on 2013-09-17 at 6748f49)
- + t3200: fix failure on case-insensitive filesystems
-  (merged to 'next' on 2013-09-13 at 2aa1553)
- + branch.c: Relax unnecessary requirement on upstream's remote ref name
- + t3200: Add test demonstrating minor regression in 41c21f2
- + Refer to branch.<name>.remote/merge when documenting --track
- + t3200: Minor fix when preparing for tracking failure
- + t2024: Fix &&-chaining and a couple of typos
-
- Fix a minor regression in v1.8.3.2 and later that made it
- impossible to base your local work on anything but a local branch
- of the upstream repository you are tracking from.
-
-
-* jk/upload-pack-keepalive (2013-09-09) 2 commits
-  (merged to 'next' on 2013-09-17 at d3141ac)
- + upload-pack: bump keepalive default to 5 seconds
- + upload-pack: send keepalive packets during pack computation
-
- When running "fetch -q", a long silence while the sender side
- computes the set of objects to send can be mistaken by proxies as
- dropped connection.
-
-
-* jx/branch-vv-always-compare-with-upstream (2013-08-26) 2 commits
-  (merged to 'next' on 2013-09-12 at b5c37f4)
- + status: always show tracking branch even no change
- + branch: report invalid tracking branch as gone
-
- "git branch -v -v" (and "git status") did not distinguish among a
- branch that does not build on any other branch, a branch that is in
- sync with the branch it builds on, and a branch that is configured
- to build on some other branch that no longer exists.
-
-
-* mm/commit-template-squelch-advice-messages (2013-09-12) 3 commits
-  (merged to 'next' on 2013-09-13 at 410d207)
- + commit: disable status hints when writing to COMMIT_EDITMSG
- + wt-status: turn advice_status_hints into a field of wt_status
- + commit: factor status configuration is a helper function
-
- From the commit log template, remove irrelevant "advice" messages
- that are shared with "git status" output.
-
-
-* mm/rebase-continue-freebsd-WB (2013-09-09) 1 commit
-  (merged to 'next' on 2013-09-13 at 82e8b91)
- + rebase: fix run_specific_rebase's use of "return" on FreeBSD
-
- Work around a bug in FreeBSD shell that caused a regression to "git
- rebase" in v1.8.4.  May need to be later applied to 'maint'.
-
-
-* mm/status-without-comment-char (2013-09-17) 7 commits
-  (merged to 'next' on 2013-09-17 at d93e7c1)
- + t7508: avoid non-portable sed expression
-  (merged to 'next' on 2013-09-12 at 89161b8)
- + status: add missing blank line after list of "other" files
- + tests: don't set status.displayCommentPrefix file-wide
- + status: disable display of '#' comment prefix by default
- + submodule summary: ignore --for-status option
- + wt-status: use argv_array API
- + builtin/stripspace.c: fix broken indentation
-
- Allow "git status" to omit the prefix to make its output a comment
- in a commit log editor, which is not necessary for human
- consumption.
-
- We may want to tighten the output to omit unnecessary trailing
- blank lines, but that does not have to be in the scope of this
- series.
-
-
-* nd/fetch-into-shallow (2013-08-28) 7 commits
-  (merged to 'next' on 2013-09-09 at 87a3b99)
- + Add testcase for needless objects during a shallow fetch
- + list-objects: mark more commits as edges in mark_edges_uninteresting
- + list-objects: reduce one argument in mark_edges_uninteresting
- + upload-pack: delegate rev walking in shallow fetch to pack-objects
- + shallow: add setup_temporary_shallow()
- + shallow: only add shallow graft points to new shallow file
- + move setup_alternate_shallow and write_shallow_commits to shallow.c
-
- When there is no sufficient overlap between old and new history
- during a fetch into a shallow repository, we unnecessarily sent
- objects the sending side knows the receiving end has.
-
-
-* np/lookup-object-hashing (2013-09-11) 1 commit
-  (merged to 'next' on 2013-09-12 at d835ef6)
- + lookup_object: remove hashtable_index() and optimize hash_obj()
-
- Micro optimize hash function used in the object hash table.
-
-
-* nr/git-cd-to-a-directory (2013-09-19) 2 commits
-  (merged to 'next' on 2013-09-19 at e9394e8)
- + t0056: "git -C" test updates
-  (merged to 'next' on 2013-09-13 at 2b07af9)
- + git: run in a directory given with -C option
-
- Just like "make -C <directory>", make "git -C <directory> ..." to
- go there before doing anything else.
-
-
-* rh/peeling-tag-to-tag (2013-09-03) 2 commits
-  (merged to 'next' on 2013-09-12 at 3a1d906)
- + peel_onion: do not assume length of x_type globals
- + peel_onion(): add support for <rev>^{tag}
-
- Make "foo^{tag}" to peel a tag to itself, i.e. no-op., and fail if
- "foo" is not a tag.
+For those following along at home, the process used to build this
+message is described in Documentation/howto/maintain-git.txt.  Maybe
+some day someone will tweak the tools so they can be used by other
+projects and more than a few people will know how to use them (hint,
+hint).  In the meantime the documentation has been serving well as a
+teacher.
 
 --------------------------------------------------
 [New Topics]
 
-* jc/revision-range-unpeel (2013-09-20) 2 commits
- - (possible fixup) jc/revision-range-unpeel - peel only when necessary
- - revision: do not peel tags used in range notation
+* bc/gnome-keyring (2013-09-23) 15 commits
+ - contrib/git-credential-gnome-keyring.c: support really ancient gnome-keyring
+ - contrib/git-credential-gnome-keyring.c: support ancient gnome-keyring
+ - contrib/git-credential-gnome-keyring.c: report failure to store password
+ - contrib/git-credential-gnome-keyring.c: use glib messaging functions
+ - contrib/git-credential-gnome-keyring.c: use glib memory allocation functions
+ - contrib/git-credential-gnome-keyring.c: use secure memory for reading passwords
+ - contrib/git-credential-gnome-keyring.c: use secure memory functions for passwds
+ - contrib/git-credential-gnome-keyring.c: use gnome helpers in keyring_object()
+ - contrib/git-credential-gnome-keyring.c: ensure buffer is non-empty before accessing
+ - contrib/git-credential-gnome-keyring.c: strlen() returns size_t, not ssize_t
+ - contrib/git-credential-gnome-keyring.c: set Gnome application name
+ - contrib/git-credential-gnome-keyring.c: exit non-zero when called incorrectly
+ - contrib/git-credential-gnome-keyring.c: add static where applicable
+ - contrib/git-credential-gnome-keyring.c: remove unused die() function
+ - contrib/git-credential-gnome-keyring.c: remove unnecessary pre-declarations
 
- "git rev-list --objects ^v1.0^ v1.0" gave v1.0 tag itself in the
- output, but "git rev-list --objects v1.0^..v1.0" did not.
-
- Need to decide either squashing the top fixup in, or dropping it
- and then merge to 'next'.
-
-
-* tg/perf-lib-test-perf-cleanup (2013-09-19) 2 commits
- - perf-lib: add test_perf_cleanup target
- - perf-lib: split starting the test from the execution
-
- Add test_perf_cleanup shell function to the perf suite, that allows
- the script writers to define a test with a clean-up action.
-
- Will hold, until we get any user.
-
-
-* jc/push-cas (2013-09-20) 1 commit
-  (merged to 'next' on 2013-09-20 at 5e1e7cc)
- + t5541: mark passing c-a-s test as success
-
- A trivial fix to a test.
-
- Will merge to 'master'.
+ Cleanups and tweaks for credential handling to work with ancient versions
+ of the gnome-keyring library that are still in use.
+ 
+ This is version 1 of the series, to give it more exposure.  Waiting for
+ the series to stabilize before including in 'next'.
 
 
-* jk/format-patch-from (2013-09-20) 1 commit
-  (merged to 'next' on 2013-09-20 at 0506530)
- + format-patch: print in-body "From" only when needed
+* bp/mediawiki-infinite-loop-fix (2013-09-23) 1 commit
+ - git-remote-mediawiki: bugfix for pages w/ >500 revisions
 
- "format-patch --from=<whom>" forgot to omit unnecessary in-body
- from line, i.e. when <whom> is the same as the real author.
+ The mediawiki:: remote helper would hang while handling results from
+ queries with more than 500 results against version 1.21 or newer of
+ the Mediawiki server.
 
- Will merge to 'master'.
+ Will merge to 'maint'.
 
 --------------------------------------------------
 [Stalled]
@@ -247,7 +72,7 @@ of the repositories listed at
  - merge-recursive: untangle double meaning of o->call_depth
  - merge-recursive: remove dead conditional in update_stages()
 
- Will hold, until we get any user.
+ Will hold until there is a caller to learn from.
 
 
 * jc/ref-excludes (2013-09-03) 2 commits
@@ -307,8 +132,9 @@ of the repositories listed at
  Make "git grep" and "git show" pay attention to --textconv when
  dealing with blob objects.
 
- I thought this was pretty well designed and executed, but it seems
- there are some doubts on the list; kicked back to 'pu'.
+ There was a question about how defaulting to 'git show --textconv'
+ would interact with the "git show HEAD:file.c >file.c" habit.
+ $gmane/221833
 
 
 * jc/format-patch (2013-04-22) 2 commits
@@ -320,11 +146,6 @@ of the repositories listed at
  this, but it was easy enough to cobble together.  Tests, docs and
  stripping out more MIMEy stuff are left as exercises to interested
  parties.
-
- Not ready for inclusion.
-
- Will discard unless we hear from anybody who is interested in
- tying its loose ends.
 
 
 * jk/gitweb-utf8 (2013-04-08) 4 commits
@@ -350,6 +171,46 @@ of the repositories listed at
 
 --------------------------------------------------
 [Cooking]
+
+* jc/revision-range-unpeel (2013-09-20) 2 commits
+ - (possible fixup) jc/revision-range-unpeel - peel only when necessary
+ - revision: do not peel tags used in range notation
+
+ "git rev-list --objects ^v1.0^ v1.0" gave v1.0 tag itself in the
+ output, but "git rev-list --objects v1.0^..v1.0" did not.
+
+ Need to decide either squashing the top fixup in, or dropping it
+ and then merge to 'next'.
+
+
+* tg/perf-lib-test-perf-cleanup (2013-09-19) 2 commits
+ - perf-lib: add test_perf_cleanup target
+ - perf-lib: split starting the test from the execution
+
+ Add test_perf_cleanup shell function to the perf suite, that allows
+ the script writers to define a test with a clean-up action.
+
+ Holding until needed.
+
+
+* jc/push-cas (2013-09-20) 1 commit
+  (merged to 'next' on 2013-09-20 at 5e1e7cc)
+ + t5541: mark passing c-a-s test as success
+
+ A trivial fix to a test.
+
+ Will merge to 'master'.
+
+
+* jk/format-patch-from (2013-09-20) 1 commit
+  (merged to 'next' on 2013-09-20 at 0506530)
+ + format-patch: print in-body "From" only when needed
+
+ "format-patch --from=<whom>" forgot to omit unnecessary in-body
+ from line, i.e. when <whom> is the same as the real author.
+
+ Will merge to 'master'.
+
 
 * es/name-hash-no-trailing-slash-in-dirs (2013-09-17) 4 commits
   (merged to 'next' on 2013-09-20 at 9633d9a)
