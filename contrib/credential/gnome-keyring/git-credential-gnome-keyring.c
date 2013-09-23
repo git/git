@@ -25,7 +25,6 @@
 
 #include <stdio.h>
 #include <string.h>
-#include <stdarg.h>
 #include <stdlib.h>
 #include <glib.h>
 #include <gnome-keyring.h>
@@ -57,30 +56,6 @@ struct credential_operation
 
 #define CREDENTIAL_OP_END \
   { NULL,NULL }
-
-/* ---------------- common helper functions ----------------- */
-
-static inline void warning(const char *fmt, ...)
-{
-	va_list ap;
-
-	va_start(ap, fmt);
-	fprintf(stderr, "warning: ");
-	vfprintf(stderr, fmt, ap);
-	fprintf(stderr, "\n" );
-	va_end(ap);
-}
-
-static inline void error(const char *fmt, ...)
-{
-	va_list ap;
-
-	va_start(ap, fmt);
-	fprintf(stderr, "error: ");
-	vfprintf(stderr, fmt, ap);
-	fprintf(stderr, "\n" );
-	va_end(ap);
-}
 
 /* ----------------- GNOME Keyring functions ----------------- */
 
@@ -127,7 +102,7 @@ static int keyring_get(struct credential *c)
 		return EXIT_SUCCESS;
 
 	if (result != GNOME_KEYRING_RESULT_OK) {
-		error("%s",gnome_keyring_result_to_message(result));
+		g_critical("%s", gnome_keyring_result_to_message(result));
 		return EXIT_FAILURE;
 	}
 
@@ -220,7 +195,7 @@ static int keyring_erase(struct credential *c)
 
 	if (result != GNOME_KEYRING_RESULT_OK)
 	{
-		error("%s",gnome_keyring_result_to_message(result));
+		g_critical("%s", gnome_keyring_result_to_message(result));
 		return EXIT_FAILURE;
 	}
 
@@ -234,7 +209,7 @@ static int keyring_erase(struct credential *c)
 
 	if (result != GNOME_KEYRING_RESULT_OK)
 	{
-		error("%s",gnome_keyring_result_to_message(result));
+		g_critical("%s", gnome_keyring_result_to_message(result));
 		return EXIT_FAILURE;
 	}
 
@@ -292,7 +267,7 @@ static int credential_read(struct credential *c)
 
 		value = strchr(buf,'=');
 		if (!value) {
-			warning("invalid credential line: %s", key);
+			g_warning("invalid credential line: %s", key);
 			gnome_keyring_memory_free(buf);
 			return -1;
 		}
