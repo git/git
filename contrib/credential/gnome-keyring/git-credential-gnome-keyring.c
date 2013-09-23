@@ -28,7 +28,65 @@
 #include <stdlib.h>
 #include <glib.h>
 #include <gnome-keyring.h>
+
+#ifdef GNOME_KEYRING_DEFAULT
+
+   /* Modern gnome-keyring */
+
 #include <gnome-keyring-memory.h>
+
+#else
+
+   /*
+    * Support ancient gnome-keyring, circ. RHEL 5.X.
+    * GNOME_KEYRING_DEFAULT seems to have been introduced with Gnome 2.22,
+    * and the other features roughly around Gnome 2.20, 6 months before.
+    * Ubuntu 8.04 used Gnome 2.22 (I think).  Not sure any distro used 2.20.
+    * So the existence/non-existence of GNOME_KEYRING_DEFAULT seems like
+    * a decent thing to use as an indicator.
+    */
+
+#define GNOME_KEYRING_DEFAULT NULL
+
+/*
+ * ancient gnome-keyring returns DENIED when an entry is not found.
+ * Setting NO_MATCH to DENIED will prevent us from reporting DENIED
+ * errors during get and erase operations, but we will still report
+ * DENIED errors during a store.
+ */
+#define GNOME_KEYRING_RESULT_NO_MATCH GNOME_KEYRING_RESULT_DENIED
+
+#define gnome_keyring_memory_alloc g_malloc
+#define gnome_keyring_memory_free gnome_keyring_free_password
+#define gnome_keyring_memory_strdup g_strdup
+
+static const char* gnome_keyring_result_to_message(GnomeKeyringResult result)
+{
+	switch (result) {
+	case GNOME_KEYRING_RESULT_OK:
+		return "OK";
+	case GNOME_KEYRING_RESULT_DENIED:
+		return "Denied";
+	case GNOME_KEYRING_RESULT_NO_KEYRING_DAEMON:
+		return "No Keyring Daemon";
+	case GNOME_KEYRING_RESULT_ALREADY_UNLOCKED:
+		return "Already UnLocked";
+	case GNOME_KEYRING_RESULT_NO_SUCH_KEYRING:
+		return "No Such Keyring";
+	case GNOME_KEYRING_RESULT_BAD_ARGUMENTS:
+		return "Bad Arguments";
+	case GNOME_KEYRING_RESULT_IO_ERROR:
+		return "IO Error";
+	case GNOME_KEYRING_RESULT_CANCELLED:
+		return "Cancelled";
+	case GNOME_KEYRING_RESULT_ALREADY_EXISTS:
+		return "Already Exists";
+	default:
+		return "Unknown Error";
+	}
+}
+
+#endif
 
 /*
  * This credential struct and API is simplified from git's credential.{h,c}
