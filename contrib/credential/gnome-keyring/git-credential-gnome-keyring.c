@@ -46,11 +46,6 @@ struct credential
 #define CREDENTIAL_INIT \
   { NULL,NULL,0,NULL,NULL,NULL }
 
-void credential_init(struct credential *c);
-void credential_clear(struct credential *c);
-int  credential_read(struct credential *c);
-void credential_write(const struct credential *c);
-
 typedef int (*credential_op_cb)(struct credential*);
 
 struct credential_operation
@@ -61,14 +56,6 @@ struct credential_operation
 
 #define CREDENTIAL_OP_END \
   { NULL,NULL }
-
-/*
- * Table with operation callbacks is defined in concrete
- * credential helper implementation and contains entries
- * like { "get", function_to_get_credential } terminated
- * by CREDENTIAL_OP_END.
- */
-struct credential_operation const credential_helper_ops[];
 
 /* ---------------- common helper functions ----------------- */
 
