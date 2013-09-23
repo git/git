@@ -27,7 +27,6 @@
 #include <string.h>
 #include <stdarg.h>
 #include <stdlib.h>
-#include <errno.h>
 #include <glib.h>
 #include <gnome-keyring.h>
 #include <gnome-keyring-memory.h>
@@ -83,21 +82,6 @@ static inline void error(const char *fmt, ...)
 	va_end(ap);
 }
 
-static inline void die_errno(int err)
-{
-	error("%s", strerror(err));
-	exit(EXIT_FAILURE);
-}
-
-static inline char *xstrdup(const char *str)
-{
-	char *ret = strdup(str);
-	if (!ret)
-		die_errno(errno);
-
-	return ret;
-}
-
 /* ----------------- GNOME Keyring functions ----------------- */
 
 /* create a special keyring option string, if path is given */
@@ -134,7 +118,7 @@ static int keyring_get(struct credential *c)
 				c->port,
 				&entries);
 
-	free(object);
+	g_free(object);
 
 	if (result == GNOME_KEYRING_RESULT_NO_MATCH)
 		return EXIT_SUCCESS;
@@ -154,7 +138,7 @@ static int keyring_get(struct credential *c)
 	c->password = gnome_keyring_memory_strdup(password_data->password);
 
 	if (!c->username)
-		c->username = xstrdup(password_data->user);
+		c->username = g_strdup(password_data->user);
 
 	gnome_keyring_network_password_list_free(entries);
 
@@ -192,7 +176,7 @@ static int keyring_store(struct credential *c)
 				c->password,
 				&item_id);
 
-	free(object);
+	g_free(object);
 	return EXIT_SUCCESS;
 }
 
@@ -226,7 +210,7 @@ static int keyring_erase(struct credential *c)
 				c->port,
 				&entries);
 
-	free(object);
+	g_free(object);
 
 	if (result == GNOME_KEYRING_RESULT_NO_MATCH)
 		return EXIT_SUCCESS;
@@ -278,10 +262,10 @@ static void credential_init(struct credential *c)
 
 static void credential_clear(struct credential *c)
 {
-	free(c->protocol);
-	free(c->host);
-	free(c->path);
-	free(c->username);
+	g_free(c->protocol);
+	g_free(c->host);
+	g_free(c->path);
+	g_free(c->username);
 	gnome_keyring_memory_free(c->password);
 
 	credential_init(c);
@@ -315,22 +299,22 @@ static int credential_read(struct credential *c)
 		*value++ = '\0';
 
 		if (!strcmp(key, "protocol")) {
-			free(c->protocol);
-			c->protocol = xstrdup(value);
+			g_free(c->protocol);
+			c->protocol = g_strdup(value);
 		} else if (!strcmp(key, "host")) {
-			free(c->host);
-			c->host = xstrdup(value);
+			g_free(c->host);
+			c->host = g_strdup(value);
 			value = strrchr(c->host,':');
 			if (value) {
 				*value++ = '\0';
 				c->port = atoi(value);
 			}
 		} else if (!strcmp(key, "path")) {
-			free(c->path);
-			c->path = xstrdup(value);
+			g_free(c->path);
+			c->path = g_strdup(value);
 		} else if (!strcmp(key, "username")) {
-			free(c->username);
-			c->username = xstrdup(value);
+			g_free(c->username);
+			c->username = g_strdup(value);
 		} else if (!strcmp(key, "password")) {
 			gnome_keyring_memory_free(c->password);
 			c->password = gnome_keyring_memory_strdup(value);
