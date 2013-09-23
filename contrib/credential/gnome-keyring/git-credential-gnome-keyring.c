@@ -289,12 +289,14 @@ static void credential_clear(struct credential *c)
 
 static int credential_read(struct credential *c)
 {
-	char    buf[1024];
+	char    *buf;
 	size_t line_len;
-	char   *key      = buf;
+	char   *key;
 	char   *value;
 
-	while (fgets(buf, sizeof(buf), stdin))
+	key = buf = gnome_keyring_memory_alloc(1024);
+
+	while (fgets(buf, 1024, stdin))
 	{
 		line_len = strlen(buf);
 
@@ -307,6 +309,7 @@ static int credential_read(struct credential *c)
 		value = strchr(buf,'=');
 		if (!value) {
 			warning("invalid credential line: %s", key);
+			gnome_keyring_memory_free(buf);
 			return -1;
 		}
 		*value++ = '\0';
@@ -339,6 +342,9 @@ static int credential_read(struct credential *c)
 		 * learn new lines, and the helpers are updated to match.
 		 */
 	}
+
+	gnome_keyring_memory_free(buf);
+
 	return 0;
 }
 
