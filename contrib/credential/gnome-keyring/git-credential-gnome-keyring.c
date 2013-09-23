@@ -306,7 +306,7 @@ static void credential_clear(struct credential *c)
 static int credential_read(struct credential *c)
 {
 	char    buf[1024];
-	ssize_t line_len = 0;
+	size_t line_len;
 	char   *key      = buf;
 	char   *value;
 
