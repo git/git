@@ -30,6 +30,7 @@
 #include <errno.h>
 #include <glib.h>
 #include <gnome-keyring.h>
+#include <gnome-keyring-memory.h>
 
 /*
  * This credential struct and API is simplified from git's credential.{h,c}
@@ -59,16 +60,6 @@ struct credential_operation
   { NULL,NULL }
 
 /* ---------------- common helper functions ----------------- */
-
-static inline void free_password(char *password)
-{
-	char *c = password;
-	if (!password)
-		return;
-
-	while (*c) *c++ = '\0';
-	free(password);
-}
 
 static inline void warning(const char *fmt, ...)
 {
@@ -159,8 +150,8 @@ static int keyring_get(struct credential *c)
 	/* pick the first one from the list */
 	password_data = (GnomeKeyringNetworkPasswordData *) entries->data;
 
-	free_password(c->password);
-	c->password = xstrdup(password_data->password);
+	gnome_keyring_memory_free(c->password);
+	c->password = gnome_keyring_memory_strdup(password_data->password);
 
 	if (!c->username)
 		c->username = xstrdup(password_data->user);
@@ -291,7 +282,7 @@ static void credential_clear(struct credential *c)
 	free(c->host);
 	free(c->path);
 	free(c->username);
-	free_password(c->password);
+	gnome_keyring_memory_free(c->password);
 
 	credential_init(c);
 }
@@ -338,8 +329,8 @@ static int credential_read(struct credential *c)
 			free(c->username);
 			c->username = xstrdup(value);
 		} else if (!strcmp(key, "password")) {
-			free_password(c->password);
-			c->password = xstrdup(value);
+			gnome_keyring_memory_free(c->password);
+			c->password = gnome_keyring_memory_strdup(value);
 			while (*value) *value++ = '\0';
 		}
 		/*
