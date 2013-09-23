@@ -125,6 +125,7 @@ static int keyring_store(struct credential *c)
 {
 	guint32 item_id;
 	char  *object = NULL;
+	GnomeKeyringResult result;
 
 	/*
 	 * Sanity check that what we are storing is actually sensible.
@@ -139,7 +140,7 @@ static int keyring_store(struct credential *c)
 
 	object = keyring_object(c);
 
-	gnome_keyring_set_network_password_sync(
+	result = gnome_keyring_set_network_password_sync(
 				GNOME_KEYRING_DEFAULT,
 				c->username,
 				NULL /* domain */,
@@ -152,6 +153,13 @@ static int keyring_store(struct credential *c)
 				&item_id);
 
 	g_free(object);
+
+	if (result != GNOME_KEYRING_RESULT_OK &&
+	    result != GNOME_KEYRING_RESULT_CANCELLED) {
+		g_critical("%s", gnome_keyring_result_to_message(result));
+		return EXIT_FAILURE;
+	}
+
 	return EXIT_SUCCESS;
 }
 
