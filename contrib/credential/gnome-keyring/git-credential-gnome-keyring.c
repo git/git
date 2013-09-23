@@ -128,7 +128,7 @@ static char* keyring_object(struct credential *c)
 	return object;
 }
 
-int keyring_get(struct credential *c)
+static int keyring_get(struct credential *c)
 {
 	char* object = NULL;
 	GList *entries;
@@ -178,7 +178,7 @@ int keyring_get(struct credential *c)
 }
 
 
-int keyring_store(struct credential *c)
+static int keyring_store(struct credential *c)
 {
 	guint32 item_id;
 	char  *object = NULL;
@@ -212,7 +212,7 @@ int keyring_store(struct credential *c)
 	return EXIT_SUCCESS;
 }
 
-int keyring_erase(struct credential *c)
+static int keyring_erase(struct credential *c)
 {
 	char  *object = NULL;
 	GList *entries;
@@ -277,7 +277,7 @@ int keyring_erase(struct credential *c)
  * Table with helper operation callbacks, used by generic
  * credential helper main function.
  */
-struct credential_operation const credential_helper_ops[] =
+static struct credential_operation const credential_helper_ops[] =
 {
 	{ "get",   keyring_get   },
 	{ "store", keyring_store },
@@ -287,12 +287,12 @@ struct credential_operation const credential_helper_ops[] =
 
 /* ------------------ credential functions ------------------ */
 
-void credential_init(struct credential *c)
+static void credential_init(struct credential *c)
 {
 	memset(c, 0, sizeof(*c));
 }
 
-void credential_clear(struct credential *c)
+static void credential_clear(struct credential *c)
 {
 	free(c->protocol);
 	free(c->host);
@@ -303,7 +303,7 @@ void credential_clear(struct credential *c)
 	credential_init(c);
 }
 
-int credential_read(struct credential *c)
+static int credential_read(struct credential *c)
 {
 	char    buf[1024];
 	ssize_t line_len = 0;
@@ -358,14 +358,14 @@ int credential_read(struct credential *c)
 	return 0;
 }
 
-void credential_write_item(FILE *fp, const char *key, const char *value)
+static void credential_write_item(FILE *fp, const char *key, const char *value)
 {
 	if (!value)
 		return;
 	fprintf(fp, "%s=%s\n", key, value);
 }
 
-void credential_write(const struct credential *c)
+static void credential_write(const struct credential *c)
 {
 	/* only write username/password, if set */
 	credential_write_item(stdout, "username", c->username);
