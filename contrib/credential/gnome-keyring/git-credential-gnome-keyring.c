@@ -86,6 +86,45 @@ static const char* gnome_keyring_result_to_message(GnomeKeyringResult result)
 	}
 }
 
+/*
+ * Support really ancient gnome-keyring, circ. RHEL 4.X.
+ * Just a guess for the Glib version.  Glib 2.8 was roughly Gnome 2.12 ?
+ * Which was released with gnome-keyring 0.4.3 ??
+ */
+#if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION < 8
+
+static void gnome_keyring_done_cb(GnomeKeyringResult result, gpointer user_data)
+{
+	gpointer *data = (gpointer*) user_data;
+	int *done = (int*) data[0];
+	GnomeKeyringResult *r = (GnomeKeyringResult*) data[1];
+
+	*r = result;
+	*done = 1;
+}
+
+static void wait_for_request_completion(int *done)
+{
+	GMainContext *mc = g_main_context_default();
+	while (!*done)
+		g_main_context_iteration(mc, TRUE);
+}
+
+static GnomeKeyringResult gnome_keyring_item_delete_sync(const char *keyring, guint32 id)
+{
+	int done = 0;
+	GnomeKeyringResult result;
+	gpointer data[] = { &done, &result };
+
+	gnome_keyring_item_delete(keyring, id, gnome_keyring_done_cb, data,
+		NULL);
+
+	wait_for_request_completion(&done);
+
+	return result;
+}
+
+#endif
 #endif
 
 /*
