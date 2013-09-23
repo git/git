@@ -314,7 +314,7 @@ static int credential_read(struct credential *c)
 	{
 		line_len = strlen(buf);
 
-		if (buf[line_len-1]=='\n')
+		if (line_len && buf[line_len-1] == '\n')
 			buf[--line_len]='\0';
 
 		if (!line_len)
