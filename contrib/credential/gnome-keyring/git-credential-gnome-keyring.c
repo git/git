@@ -396,7 +396,7 @@ int main(int argc, char *argv[])
 
 	if (!argv[1]) {
 		usage(argv[0]);
-		goto out;
+		exit(EXIT_FAILURE);
 	}
 
 	/* lookup operation callback */
