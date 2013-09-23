@@ -112,21 +112,13 @@ static inline char *xstrdup(const char *str)
 /* create a special keyring option string, if path is given */
 static char* keyring_object(struct credential *c)
 {
-	char* object = NULL;
-
 	if (!c->path)
-		return object;
-
-	object = (char*) malloc(strlen(c->host)+strlen(c->path)+8);
-	if (!object)
-		die_errno(errno);
+		return NULL;
 
 	if (c->port)
-		sprintf(object,"%s:%hd/%s",c->host,c->port,c->path);
-	else
-		sprintf(object,"%s/%s",c->host,c->path);
+		return g_strdup_printf("%s:%hd/%s", c->host, c->port, c->path);
 
-	return object;
+	return g_strdup_printf("%s/%s", c->host, c->path);
 }
 
 static int keyring_get(struct credential *c)
