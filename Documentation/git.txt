@@ -476,19 +476,19 @@ example the following invocations are equivalent:
 	This is equivalent to setting the `GIT_LITERAL_PATHSPECS` environment
 	variable to `1`.
 
---glob-pathspecs:
+--glob-pathspecs::
 	Add "glob" magic to all pathspec. This is equivalent to setting
 	the `GIT_GLOB_PATHSPECS` environment variable to `1`. Disabling
 	globbing on individual pathspecs can be done using pathspec
 	magic ":(literal)"
 
---noglob-pathspecs:
+--noglob-pathspecs::
 	Add "literal" magic to all pathspec. This is equivalent to setting
 	the `GIT_NOGLOB_PATHSPECS` environment variable to `1`. Enabling
 	globbing on individual pathspecs can be done using pathspec
 	magic ":(glob)"
 
---icase-pathspecs:
+--icase-pathspecs::
 	Add "icase" magic to all pathspec. This is equivalent to setting
 	the `GIT_ICASE_PATHSPECS` environment variable to `1`.
 
