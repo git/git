@@ -91,16 +91,6 @@ static inline void error(const char *fmt, ...)
 	va_end(ap);
 }
 
-static inline void die(const char *fmt, ...)
-{
-	va_list ap;
-
-	va_start(ap,fmt);
-	error(fmt, ap);
-	va_end(ap);
-	exit(EXIT_FAILURE);
-}
-
 static inline void die_errno(int err)
 {
 	error("%s", strerror(err));
