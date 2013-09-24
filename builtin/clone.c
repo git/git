@@ -556,7 +556,7 @@ static void update_remote_refs(const struct ref *refs,
 							      0, &rm, transport))
 			die(_("remote did not send all necessary objects"));
 		if (0 <= option_verbosity)
-			printf(_("done\n"));
+			printf(_("done.\n"));
 	}
 
 	if (refs) {
