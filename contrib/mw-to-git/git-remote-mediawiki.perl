@@ -622,6 +622,9 @@ sub fetch_mw_revisions_for_page {
 		rvstartid => $fetch_from,
 		rvlimit => 500,
 		pageids => $id,
+
+		# Let MediaWiki know that we support the latest API.
+		continue => '',
 	};
 
 	my $revnum = 0;
@@ -637,8 +640,15 @@ sub fetch_mw_revisions_for_page {
 			push(@page_revs, $page_rev_ids);
 			$revnum++;
 		}
-		last if (!$result->{'query-continue'});
-		$query->{rvstartid} = $result->{'query-continue'}->{revisions}->{rvstartid};
+
+		if ($result->{'query-continue'}) { # For legacy APIs
+			$query->{rvstartid} = $result->{'query-continue'}->{revisions}->{rvstartid};
+		} elsif ($result->{continue}) { # For newer APIs
+			$query->{rvstartid} = $result->{continue}->{rvcontinue};
+			$query->{continue} = $result->{continue}->{continue};
+		} else {
+			last;
+		}
 	}
 	if ($shallow_import && @page_revs) {
 		print {*STDERR} "  Found 1 revision (shallow import).\n";
