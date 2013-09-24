@@ -14,8 +14,7 @@ DESCRIPTION
 -----------
 The changeset (or "diff") of each commit between the fork-point and <head>
 is compared against each commit between the fork-point and <upstream>.
-The commits are compared with their 'patch id', obtained from
-the 'git patch-id' program.
+The diffs are compared after removing any whitespace and line numbers.
 
 Every commit that doesn't exist in the <upstream> branch
 has its id (sha1) reported, prefixed by a symbol.  The ones that have
