@@ -75,7 +75,8 @@ submodule.<name>.ignore::
 	the superproject, the setting there will override the one found in
 	.gitmodules.
 	Both settings can be overridden on the command line by using the
-	"--ignore-submodule" option.
+	"--ignore-submodule" option. The 'git submodule' commands are not
+	affected by this setting.
 
 
 EXAMPLES
