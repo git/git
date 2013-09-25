@@ -901,7 +901,7 @@ _git_add ()
 	esac
 
 	# XXX should we check for --update and --all options ?
-	__git_complete_index_file "--others --modified"
+	__git_complete_index_file "--others --modified --directory --no-empty-directory"
 }
 
 _git_archive ()
@@ -1063,7 +1063,7 @@ _git_clean ()
 	esac
 
 	# XXX should we check for -x option ?
-	__git_complete_index_file "--others"
+	__git_complete_index_file "--others --directory"
 }
 
 _git_clone ()
