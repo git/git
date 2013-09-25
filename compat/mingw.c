@@ -491,7 +491,6 @@ int mingw_stat(const char *file_name, struct stat *buf)
 	return do_stat_internal(1, file_name, buf);
 }
 
-#undef fstat
 int mingw_fstat(int fd, struct stat *buf)
 {
 	HANDLE fh = (HANDLE)_get_osfhandle(fd);
