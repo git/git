@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Sep 2013, #07; Mon, 23)
-X-master-at: 128a96c98442524c7f2eeef4757b1e48445f24ce
-X-next-at: 0d6e0ce2a5090eb3c05a624d1ad584a1153fcc52
+Subject: What's cooking in git.git (Sep 2013, #08; Wed, 25)
+X-master-at: 5636a20070c80dec23cc6d6180cb1dd958e23bca
+X-next-at: 4eb0c1432dc51cbf104157b7b61914bbe4a0191d
 
-What's cooking in git.git (Sep 2013, #07; Mon, 23)
+What's cooking in git.git (Sep 2013, #08; Wed, 25)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -15,18 +15,115 @@ The fifth batch of topics are in 'master'.
 
 You can find the changes described here in the integration branches at
 
-    https://repo.or.cz/r/git/jrn.git
+    git://repo.or.cz/git/jrn.git
+    http://repo.or.cz/r/git/jrn.git
 
-I am still catching up on patches sent since last week.  If I have
-missed yours, do not despair, but feel free to send me a reminder to
-look at it.
+Or view the web interface:
 
-For those following along at home, the process used to build this
-message is described in Documentation/howto/maintain-git.txt.  Maybe
-some day someone will tweak the tools so they can be used by other
-projects and more than a few people will know how to use them (hint,
-hint).  In the meantime the documentation has been serving well as a
-teacher.
+    http://repo.or.cz/w/git/jrn.git
+
+I'll probably be releasing 1.8.4.1 tomorrow.  If you have time to
+experiment with "maint" or "master" to find any remaining problems
+until then, that will be very welcome.
+
+--------------------------------------------------
+[Graduated to "master"]
+
+* bc/submodule-status-ignored (2013-09-11) 3 commits
+  (merged to 'next' on 2013-09-11 at 9f66712)
+ + Improve documentation concerning the status.submodulesummary setting
+  (merged to 'next' on 2013-09-10 at a417960)
+ + submodule: don't print status output with ignore=all
+ + submodule: fix confusing variable name
+
+
+* bp/mediawiki-infinite-loop-fix (2013-09-23) 1 commit
+ - git-remote-mediawiki: bugfix for pages w/ >500 revisions
+
+ The mediawiki:: remote helper would hang while handling results from
+ queries with more than 500 results against version 1.21 or newer of
+ the Mediawiki server.
+
+
+* cc/replace-with-the-same-type (2013-09-09) 8 commits
+  (merged to 'next' on 2013-09-17 at 34b5bb7)
+ + Doc: 'replace' merge and non-merge commits
+ + t6050-replace: use some long option names
+ + replace: allow long option names
+ + Documentation/replace: add Creating Replacement Objects section
+ + t6050-replace: add test to clean up all the replace refs
+ + t6050-replace: test that objects are of the same type
+ + Documentation/replace: state that objects must be of the same type
+ + replace: forbid replacing an object with one of a different type
+
+ Using the replace mechanism to swap an object with another object
+ of a different type can introduce inconsistency (e.g. a tree
+ expects an object name to refer to a blob, but the blob object can
+ be mistakenly or maliciously replaced with an object with a
+ different type). Attempt to forbid such.
+
+
+* es/contacts-in-subdir (2013-09-17) 1 commit
+  (merged to 'next' on 2013-09-20 at d67164f)
+ + contacts: fix to work in subdirectories
+
+ Allows the contacts (in contrib/) script to run from inside a
+ subdirectory.
+
+
+* jc/push-cas (2013-09-20) 1 commit
+  (merged to 'next' on 2013-09-20 at 5e1e7cc)
+ + t5541: mark passing c-a-s test as success
+
+ A touch-up to finish off a recently added feature.
+
+
+* jc/strcasecmp-pure-inline (2013-09-12) 1 commit
+  (merged to 'next' on 2013-09-20 at 7142d08)
+ + mailmap: work around implementations with pure inline strcasecmp
+
+ Work around MinGW <string.h> header that does not declare strcasecmp
+ whose address cannot be taken.
+
+
+* jk/shortlog-tolerate-broken-commit (2013-09-18) 1 commit
+  (merged to 'next' on 2013-09-20 at 9c85c02)
+ + shortlog: ignore commits with missing authors
+
+
+* kb/msvc-compile (2013-09-11) 5 commits
+  (merged to 'next' on 2013-09-17 at a9bcbb5)
+ + Windows: do not redefine _WIN32_WINNT
+ + MinGW: Fix stat definitions to work with MinGW runtime version 4.0
+ + MSVC: fix stat definition hell
+ + MSVC: fix compile errors due to macro redefinitions
+ + MSVC: fix compile errors due to missing libintl.h
+
+ Build updates for Windows port.
+
+
+* nd/fetch-pack-error-reporting-fix (2013-09-18) 1 commit
+  (merged to 'next' on 2013-09-20 at fefa04f)
+ + fetch-pack.c: show correct command name that fails
+
+ When "fetch-pack" detected an error from spawned "index-pack" or
+ "unpack-objects", it did not report the failed program name
+ correctly when a shallow repository is involved.
+
+
+* nd/unpack-entry-optim-in-pack-objects (2013-09-13) 1 commit
+  (merged to 'next' on 2013-09-17 at 00f7335)
+ + pack-objects: no crc check when the cached version is used
+
+ The codepath to use data from packfiles that is only exercised in
+ pack-objects unnecessarily checked crc checksum of the pack data,
+ even when it ends up using in-core copy that it got by reading from
+ the pack (at which point the checksum was validated).
+
+
+* sg/complete-untracked-filter (2013-09-19) 1 commit
+  (merged to 'next' on 2013-09-20 at 798d0b9)
+ + completion: improve untracked directory filtering for filename completion
 
 --------------------------------------------------
 [New Topics]
@@ -50,19 +147,25 @@ teacher.
 
  Cleanups and tweaks for credential handling to work with ancient versions
  of the gnome-keyring library that are still in use.
- 
+
  This is version 1 of the series, to give it more exposure.  Waiting for
  the series to stabilize before including in 'next'.
 
 
-* bp/mediawiki-infinite-loop-fix (2013-09-23) 1 commit
- - git-remote-mediawiki: bugfix for pages w/ >500 revisions
+* kb/fast-hashmap (2013-09-25) 6 commits
+ - fixup! diffcore-rename.c: simplify finding exact renames
+ - diffcore-rename.c: use new hash map implementation
+ - diffcore-rename.c: simplify finding exact renames
+ - diffcore-rename.c: move code around to prepare for the next patch
+ - buitin/describe.c: use new hash map implementation
+ - add a hashtable implementation that supports O(1) removal
 
- The mediawiki:: remote helper would hang while handling results from
- queries with more than 500 results against version 1.21 or newer of
- the Mediawiki server.
-
- Will merge to 'maint'.
+ Improvements to our hash table to get it to meet the needs of the
+ msysgit fscache project, with some nice performance improvements.
+ 
+ Looks promising.  Needs style review and a sanity-check on the
+ design before including in 'next'.  Expecting a reroll once review
+ settles down.
 
 --------------------------------------------------
 [Stalled]
@@ -193,15 +296,6 @@ teacher.
  Holding until needed.
 
 
-* jc/push-cas (2013-09-20) 1 commit
-  (merged to 'next' on 2013-09-20 at 5e1e7cc)
- + t5541: mark passing c-a-s test as success
-
- A trivial fix to a test.
-
- Will merge to 'master'.
-
-
 * jk/format-patch-from (2013-09-20) 1 commit
   (merged to 'next' on 2013-09-20 at 0506530)
  + format-patch: print in-body "From" only when needed
@@ -239,16 +333,6 @@ teacher.
  Will merge to 'master'.
 
 
-* es/contacts-in-subdir (2013-09-17) 1 commit
-  (merged to 'next' on 2013-09-20 at d67164f)
- + contacts: fix to work in subdirectories
-
- Allow the contacts (in contrib/) script to run from inside a
- subdirectory.
-
- Will merge to 'master'.
-
-
 * jc/upload-pack-send-symref (2013-09-17) 7 commits
  - clone: test the new HEAD detection logic
  - connect: annotate refs with their symref information in get_remote_head()
@@ -270,48 +354,14 @@ teacher.
 
 
 * jk/clone-progress-to-stderr (2013-09-18) 3 commits
- - clone: always set transport options
- - clone: treat "checking connectivity" like other progress
- - clone: send diagnostic messages to stderr
+  (merged to 'next' on 2013-09-25 at 137af9e)
+ + clone: always set transport options
+ + clone: treat "checking connectivity" like other progress
+ + clone: send diagnostic messages to stderr
 
  Some progress and diagnostic messages from "git clone" were
  incorrectly sent to the standard output stream, not to the standard
  error stream.
-
- Will merge to 'next'.
-
-
-* nd/fetch-pack-error-reporting-fix (2013-09-18) 1 commit
-  (merged to 'next' on 2013-09-20 at fefa04f)
- + fetch-pack.c: show correct command name that fails
-
- When "fetch-pack" detected an error from spawned "index-pack" or
- "unpack-objects", it did not report the failed program name
- correctly when a shallow repository is involved.
-
- Will merge to 'master'.
-
-
-* sg/complete-untracked-filter (2013-09-19) 1 commit
-  (merged to 'next' on 2013-09-20 at 798d0b9)
- + completion: improve untracked directory filtering for filename completion
-
- Will merge to 'master'.
-
-
-* jc/strcasecmp-pure-inline (2013-09-12) 1 commit
-  (merged to 'next' on 2013-09-20 at 7142d08)
- + mailmap: work around implementations with pure inline strcasecmp
-
- Work around MinGW <string.h> header that does not declare strcasecmp
- whose address cannot be taken.
-
- Will merge to 'master'.
-
-
-* jk/shortlog-tolerate-broken-commit (2013-09-18) 1 commit
-  (merged to 'next' on 2013-09-20 at 9c85c02)
- + shortlog: ignore commits with missing authors
 
  Will merge to 'master'.
 
@@ -322,18 +372,6 @@ teacher.
  - test: use unambigous leading path (/foo) for mingw
 
  Waiting for the review to settle.
-
-
-* nd/unpack-entry-optim-in-pack-objects (2013-09-13) 1 commit
-  (merged to 'next' on 2013-09-17 at 00f7335)
- + pack-objects: no crc check when the cached version is used
-
- The codepath to use data from packfiles that is only exercised in
- pack-objects unnecessarily checked crc checksum of the pack data,
- even when it ends up using in-core copy that it got by reading from
- the pack (at which point the checksum was validated).
-
- Will merge to 'master'.
 
 
 * jc/checkout-detach-doc (2013-09-11) 1 commit
@@ -352,19 +390,6 @@ teacher.
  + rm: re-use parse_pathspec's trailing-slash removal
 
  Code refactoring.
-
- Will merge to 'master'.
-
-
-* kb/msvc-compile (2013-09-11) 5 commits
-  (merged to 'next' on 2013-09-17 at a9bcbb5)
- + Windows: do not redefine _WIN32_WINNT
- + MinGW: Fix stat definitions to work with MinGW runtime version 4.0
- + MSVC: fix stat definition hell
- + MSVC: fix compile errors due to macro redefinitions
- + MSVC: fix compile errors due to missing libintl.h
-
- Build updates for Windows port.
 
  Will merge to 'master'.
 
@@ -391,55 +416,27 @@ teacher.
  primarily for wider distribution of the preview edition.
 
 
-* cc/replace-with-the-same-type (2013-09-09) 8 commits
-  (merged to 'next' on 2013-09-17 at 34b5bb7)
- + Doc: 'replace' merge and non-merge commits
- + t6050-replace: use some long option names
- + replace: allow long option names
- + Documentation/replace: add Creating Replacement Objects section
- + t6050-replace: add test to clean up all the replace refs
- + t6050-replace: test that objects are of the same type
- + Documentation/replace: state that objects must be of the same type
- + replace: forbid replacing an object with one of a different type
-
- Using the replace mechanism to swap an object with another object
- of a different type can introduce inconsistency (e.g. a tree
- expects an object name to refer to a blob, but the blob object can
- be mistakenly or maliciously replaced with an object with a
- different type). Attempt to forbid such.
-
- Will merge to 'master'.
-
-
-* bc/submodule-status-ignored (2013-09-11) 3 commits
-  (merged to 'next' on 2013-09-11 at 9f66712)
- + Improve documentation concerning the status.submodulesummary setting
-  (merged to 'next' on 2013-09-10 at a417960)
- + submodule: don't print status output with ignore=all
- + submodule: fix confusing variable name
-
- Will merge to 'master'.
-
-
 * sb/repack-in-c (2013-09-17) 3 commits
- - repack: improve warnings about failure of renaming and removing files
- - repack: retain the return value of pack-objects
- - repack: rewrite the shell script in C
+  (merged to 'next' on 2013-09-25 at 7c47036)
+ + repack: improve warnings about failure of renaming and removing files
+ + repack: retain the return value of pack-objects
+ + repack: rewrite the shell script in C
 
  Rerolled, and I think it is in a reasonably good shape.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jc/reflog-doc (2013-06-19) 1 commit
- - setup_reflog_action: document the rules for using GIT_REFLOG_ACTION
+  (merged to 'next' on 2013-09-25 at 4eb0c14)
+ + setup_reflog_action: document the rules for using GIT_REFLOG_ACTION
 
  Document rules to use GIT_REFLOG_ACTION variable in the scripted
- Porcelain.  git-rebase--interactive locally violates this, but it
- is a leaf user that does not call out to or dot-sources other
- scripts, so fixing it is not all that urgent.
+ Porcelain.  git-rebase--interactive locally violates them, but it
+ is a leaf user that does not call out to or dot-source other
+ scripts, so it does not urgently need to be fixed.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jn/add-2.0-u-A-sans-pathspec (2013-04-26) 1 commit
