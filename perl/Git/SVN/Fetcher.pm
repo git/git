@@ -315,11 +315,13 @@ sub change_file_prop {
 sub apply_textdelta {
 	my ($self, $fb, $exp) = @_;
 	return undef if $self->is_path_ignored($fb->{path});
-	my $fh = $::_repository->temp_acquire('svn_delta');
+	my $suffix = 0;
+	++$suffix while $::_repository->temp_is_locked("svn_delta_${$}_$suffix");
+	my $fh = $::_repository->temp_acquire("svn_delta_${$}_$suffix");
 	# $fh gets auto-closed() by SVN::TxDelta::apply(),
 	# (but $base does not,) so dup() it for reading in close_file
 	open my $dup, '<&', $fh or croak $!;
-	my $base = $::_repository->temp_acquire('git_blob');
+	my $base = $::_repository->temp_acquire("git_blob_${$}_$suffix");
 
 	if ($fb->{blob}) {
 		my ($base_is_link, $size);

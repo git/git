@@ -61,7 +61,7 @@ require Exporter;
                 remote_refs prompt
                 get_tz_offset
                 credential credential_read credential_write
-                temp_acquire temp_release temp_reset temp_path);
+                temp_acquire temp_is_locked temp_release temp_reset temp_path);
 
 
 =head1 DESCRIPTION
@@ -1204,6 +1204,35 @@ sub temp_acquire {
 
 	$TEMP_FILES{$temp_fd}{locked} = 1;
 	$temp_fd;
+}
+
+=item temp_is_locked ( NAME )
+
+Returns true if the internal lock created by a previous C<temp_acquire()>
+call with C<NAME> is still in effect.
+
+When temp_acquire is called on a C<NAME>, it internally locks the temporary
+file mapped to C<NAME>.  That lock will not be released until C<temp_release()>
+is called with either the original C<NAME> or the L<File::Handle> that was
+returned from the original call to temp_acquire.
+
+Subsequent attempts to call C<temp_acquire()> with the same C<NAME> will fail
+unless there has been an intervening C<temp_release()> call for that C<NAME>
+(or its corresponding L<File::Handle> that was returned by the original
+C<temp_acquire()> call).
+
+If true is returned by C<temp_is_locked()> for a C<NAME>, an attempt to
+C<temp_acquire()> the same C<NAME> will cause an error unless
+C<temp_release> is first called on that C<NAME> (or its corresponding
+L<File::Handle> that was returned by the original C<temp_acquire()> call).
+
+=cut
+
+sub temp_is_locked {
+	my ($self, $name) = _maybe_self(@_);
+	my $temp_fd = \$TEMP_FILEMAP{$name};
+
+	defined $$temp_fd && $$temp_fd->opened && $TEMP_FILES{$$temp_fd}{locked};
 }
 
 =item temp_release ( NAME )
