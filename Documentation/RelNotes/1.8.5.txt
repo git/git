@@ -96,6 +96,9 @@ UI, Workflows & Features
 
  * "git status" now omits the prefix to make its output a comment in a
    commit log editor, which is not necessary for human consumption.
+   Scripts that parse the output of "git status" are advised to use
+   "git status --porcelain" instead, as its format is stable and easier
+   to parse.
 
  * Make "foo^{tag}" to peel a tag to itself, i.e. no-op., and fail if
    "foo" is not a tag.  "git rev-parse --verify v1.0^{tag}" would be
