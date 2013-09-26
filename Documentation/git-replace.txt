@@ -20,7 +20,13 @@ The name of the 'replace' reference is the SHA-1 of the object that is
 replaced. The content of the 'replace' reference is the SHA-1 of the
 replacement object.
 
+The replaced object and the replacement object must be of the same type.
+This restriction can be bypassed using `-f`.
+
 Unless `-f` is given, the 'replace' reference must not yet exist.
+
+There is no other restriction on the replaced and replacement objects.
+Merge commits can be replaced by non-merge commits and vice versa.
 
 Replacement references will be used by default by all Git commands
 except those doing reachability traversal (prune, pack transfer and
@@ -49,17 +55,33 @@ achieve the same effect as the `--no-replace-objects` option.
 OPTIONS
 -------
 -f::
+--force::
 	If an existing replace ref for the same object exists, it will
 	be overwritten (instead of failing).
 
 -d::
+--delete::
 	Delete existing replace refs for the given objects.
 
 -l <pattern>::
+--list <pattern>::
 	List replace refs for objects that match the given pattern (or
 	all if no pattern is given).
 	Typing "git replace" without arguments, also lists all replace
 	refs.
+
+CREATING REPLACEMENT OBJECTS
+----------------------------
+
+linkgit:git-filter-branch[1], linkgit:git-hash-object[1] and
+linkgit:git-rebase[1], among other git commands, can be used to create
+replacement objects from existing objects.
+
+If you want to replace many blobs, trees or commits that are part of a
+string of commits, you may just want to create a replacement string of
+commits and then only replace the commit at the tip of the target
+string of commits with the commit at the tip of the replacement string
+of commits.
 
 BUGS
 ----
@@ -69,12 +91,13 @@ go back to a replaced commit will move the branch to the replacement
 commit instead of the replaced commit.
 
 There may be other problems when using 'git rev-list' related to
-pending objects. And of course things may break if an object of one
-type is replaced by an object of another type (for example a blob
-replaced by a commit).
+pending objects.
 
 SEE ALSO
 --------
+linkgit:git-hash-object[1]
+linkgit:git-filter-branch[1]
+linkgit:git-rebase[1]
 linkgit:git-tag[1]
 linkgit:git-branch[1]
 linkgit:git[1]

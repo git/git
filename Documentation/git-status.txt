@@ -210,7 +210,13 @@ directory.
 If `status.submodulesummary` is set to a non zero number or true (identical
 to -1 or an unlimited number), the submodule summary will be enabled for
 the long format and a summary of commits for modified submodules will be
-shown (see --summary-limit option of linkgit:git-submodule[1]).
+shown (see --summary-limit option of linkgit:git-submodule[1]). Please note
+that the summary output from the status command will be suppressed for all
+submodules when `diff.ignoreSubmodules` is set to 'all' or only for those
+submodules where `submodule.<name>.ignore=all`. To also view the summary for
+ignored submodules you can either use the --ignore-submodules=dirty command
+line option or the 'git submodule summary' command, which shows a similar
+output but does not honor these settings.
 
 SEE ALSO
 --------

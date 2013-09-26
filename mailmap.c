@@ -52,6 +52,20 @@ static void free_mailmap_entry(void *p, const char *s)
 	string_list_clear_func(&me->namemap, free_mailmap_info);
 }
 
+/*
+ * On some systems (e.g. MinGW 4.0), string.h has _only_ inline
+ * definition of strcasecmp and no non-inline implementation is
+ * supplied anywhere, which is, eh, "unusual"; we cannot take an
+ * address of such a function to store it in namemap.cmp.  This is
+ * here as a workaround---do not assign strcasecmp directly to
+ * namemap.cmp until we know no systems that matter have such an
+ * "unusual" string.h.
+ */
+static int namemap_cmp(const char *a, const char *b)
+{
+	return strcasecmp(a, b);
+}
+
 static void add_mapping(struct string_list *map,
 			char *new_name, char *new_email,
 			char *old_name, char *old_email)
@@ -75,7 +89,7 @@ static void add_mapping(struct string_list *map,
 		item = string_list_insert_at_index(map, index, old_email);
 		me = xcalloc(1, sizeof(struct mailmap_entry));
 		me->namemap.strdup_strings = 1;
-		me->namemap.cmp = strcasecmp;
+		me->namemap.cmp = namemap_cmp;
 		item->util = me;
 	}
 
@@ -237,7 +251,7 @@ int read_mailmap(struct string_list *map, char **repo_abbrev)
 	int err = 0;
 
 	map->strdup_strings = 1;
-	map->cmp = strcasecmp;
+	map->cmp = namemap_cmp;
 
 	if (!git_mailmap_blob && is_bare_repository())
 		git_mailmap_blob = "HEAD:.mailmap";

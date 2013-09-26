@@ -314,6 +314,8 @@ extern void free_name_hash(struct index_state *istate);
 #define refresh_cache(flags) refresh_index(&the_index, (flags), NULL, NULL, NULL)
 #define ce_match_stat(ce, st, options) ie_match_stat(&the_index, (ce), (st), (options))
 #define ce_modified(ce, st, options) ie_modified(&the_index, (ce), (st), (options))
+#define cache_dir_exists(name, namelen) index_dir_exists(&the_index, (name), (namelen))
+#define cache_file_exists(name, namelen, igncase) index_file_exists(&the_index, (name), (namelen), (igncase))
 #define cache_name_exists(name, namelen, igncase) index_name_exists(&the_index, (name), (namelen), (igncase))
 #define cache_name_is_other(name, namelen) index_name_is_other(&the_index, (name), (namelen))
 #define resolve_undo_clear() resolve_undo_clear_index(&the_index)
@@ -463,6 +465,8 @@ extern int write_index(struct index_state *, int newfd);
 extern int discard_index(struct index_state *);
 extern int unmerged_index(const struct index_state *);
 extern int verify_path(const char *path);
+extern struct cache_entry *index_dir_exists(struct index_state *istate, const char *name, int namelen);
+extern struct cache_entry *index_file_exists(struct index_state *istate, const char *name, int namelen, int igncase);
 extern struct cache_entry *index_name_exists(struct index_state *istate, const char *name, int namelen, int igncase);
 extern int index_name_pos(const struct index_state *, const char *name, int namelen);
 #define ADD_CACHE_OK_TO_ADD 1		/* Ok to add */
@@ -952,6 +956,15 @@ struct ident_split {
  * if the input lacks timestamp and zone
  */
 extern int split_ident_line(struct ident_split *, const char *, int);
+
+/*
+ * Compare split idents for equality or strict ordering. Note that we
+ * compare only the ident part of the line, ignoring any timestamp.
+ *
+ * Because there are two fields, we must choose one as the primary key; we
+ * currently arbitrarily pick the email.
+ */
+extern int ident_cmp(const struct ident_split *, const struct ident_split *);
 
 struct checkout {
 	const char *base_dir;

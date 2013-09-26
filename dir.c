@@ -860,7 +860,7 @@ static struct dir_entry *dir_entry_new(const char *pathname, int len)
 
 static struct dir_entry *dir_add_name(struct dir_struct *dir, const char *pathname, int len)
 {
-	if (cache_name_exists(pathname, len, ignore_case))
+	if (cache_file_exists(pathname, len, ignore_case))
 		return NULL;
 
 	ALLOC_GROW(dir->entries, dir->nr+1, dir->alloc);
@@ -885,11 +885,11 @@ enum exist_status {
 /*
  * Do not use the alphabetically sorted index to look up
  * the directory name; instead, use the case insensitive
- * name hash.
+ * directory hash.
  */
 static enum exist_status directory_exists_in_index_icase(const char *dirname, int len)
 {
-	const struct cache_entry *ce = cache_name_exists(dirname, len + 1, ignore_case);
+	const struct cache_entry *ce = cache_dir_exists(dirname, len);
 	unsigned char endchar;
 
 	if (!ce)
@@ -1071,7 +1071,7 @@ static int get_index_dtype(const char *path, int len)
 	int pos;
 	const struct cache_entry *ce;
 
-	ce = cache_name_exists(path, len, 0);
+	ce = cache_file_exists(path, len, 0);
 	if (ce) {
 		if (!ce_uptodate(ce))
 			return DT_UNKNOWN;
@@ -1131,7 +1131,7 @@ static enum path_treatment treat_one_path(struct dir_struct *dir,
 					  int dtype, struct dirent *de)
 {
 	int exclude;
-	int has_path_in_index = !!cache_name_exists(path->buf, path->len, ignore_case);
+	int has_path_in_index = !!cache_file_exists(path->buf, path->len, ignore_case);
 
 	if (dtype == DT_UNKNOWN)
 		dtype = get_dtype(de, path->buf, path->len);
@@ -1160,21 +1160,9 @@ static enum path_treatment treat_one_path(struct dir_struct *dir,
 	 */
 	if ((dir->flags & DIR_COLLECT_KILLED_ONLY) &&
 	    (dtype == DT_DIR) &&
-	    !has_path_in_index) {
-		/*
-		 * NEEDSWORK: directory_exists_in_index_icase()
-		 * assumes that one byte past the given path is
-		 * readable and has '/', which needs to be fixed, but
-		 * until then, work it around in the caller.
-		 */
-		strbuf_addch(path, '/');
-		if (directory_exists_in_index(path->buf, path->len - 1) ==
-		    index_nonexistent) {
-			strbuf_setlen(path, path->len - 1);
-			return path_none;
-		}
-		strbuf_setlen(path, path->len - 1);
-	}
+	    !has_path_in_index &&
+	    (directory_exists_in_index(path->buf, path->len) == index_nonexistent))
+		return path_none;
 
 	exclude = is_excluded(dir, path->buf, &dtype);
 
