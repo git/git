@@ -4,21 +4,24 @@ Git v1.8.4.1 Release Notes
 Fixes since v1.8.4
 ------------------
 
- * Some people still use rather old versions of bash, which cannot
-   grok some constructs like 'printf -v varname' the prompt and
-   completion code started to use recently.  The completion and
-   prompt scripts have been adjusted to work better with these old
-   versions of bash.
+ * Some old versions of bash do not grok some constructs like
+   'printf -v varname' which the prompt and completion code started
+   to use recently.  The completion and prompt scripts have been
+   adjusted to work better with these old versions of bash.
 
- * "git rebase -i" had a minor bug (the same could be in other
-   programs, as the root cause is pretty generic) where the code
-   feeds a random, data dependeant string to 'echo' and expects it
+ * In FreeBSD's and NetBSD's "sh", a return in a dot script in a
+   function returns from the function, not only in the dot script,
+   breaking "git rebase" on these platforms (regression introduced
+   in 1.8.4-rc1).
+
+ * "git rebase -i" and other scripted commands were feeding a
+   random, data dependant error message to 'echo' and expecting it
    to come out literally.
 
- * "submodule.<name>.path" variable mistakenly set to the empty
+ * Setting the "submodule.<name>.path" variable to the empty
    "true" caused the configuration parser to segfault.
 
- * Output from "git log --full-diff -- <pathspec>" looked strange,
+ * Output from "git log --full-diff -- <pathspec>" looked strange
    because comparison was done with the previous ancestor that
    touched the specified <pathspec>, causing the patches for paths
    outside the pathspec to show more than the single commit has
@@ -43,8 +46,26 @@ Fixes since v1.8.4
    shallow repository when a fetch operation tries to auto-follow
    tags.
 
- * On platforms with fgetc() and friends defined as macros,
-   the configuration parser did not compile.
+ * When send-email comes up with an error message to die with upon
+   failure to start an SSL session, it tried to read the error
+   string from a wrong place.
+
+ * A call to xread() was used without a loop to cope with short
+   read in the codepath to stream large blobs to a pack.
+
+ * On platforms with fgetc() and friends defined as macros, the
+   configuration parser did not compile.
+
+ * New versions of MediaWiki introduced a new API for returning
+   more than 500 results in response to a query, which would cause
+   the MediaWiki remote helper to go into an infinite loop.
+
+ * Subversion's serf access method (the only one available in
+   Subversion 1.8) for http and https URLs in skelta mode tells its
+   caller to open multiple files at a time, which made "git svn
+   fetch" complain that "Temp file with moniker 'svn_delta' already
+   in use" instead of fetching.
+
 
 Also contains a handful of trivial code clean-ups, documentation
 updates, updates to the test suite, etc.
