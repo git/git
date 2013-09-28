@@ -941,7 +941,7 @@ static int http_get_file(const char *url, const char *filename, int options)
 
 	strbuf_addf(&tmpfile, "%s.temp", filename);
 	result = fopen(tmpfile.buf, "a");
-	if (! result) {
+	if (!result) {
 		error("Unable to open local file %s", tmpfile.buf);
 		ret = HTTP_ERROR;
 		goto cleanup;
@@ -950,7 +950,7 @@ static int http_get_file(const char *url, const char *filename, int options)
 	ret = http_request_reauth(url, NULL, result, HTTP_REQUEST_FILE, options);
 	fclose(result);
 
-	if ((ret == HTTP_OK) && move_temp_to_file(tmpfile.buf, filename))
+	if (ret == HTTP_OK && move_temp_to_file(tmpfile.buf, filename))
 		ret = HTTP_ERROR;
 cleanup:
 	strbuf_release(&tmpfile);
