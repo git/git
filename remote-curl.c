@@ -187,6 +187,7 @@ static struct discovery* discover_refs(const char *service, int for_push)
 	struct discovery *last = last_discovery;
 	char *refs_url;
 	int http_ret, maybe_smart = 0;
+	struct http_get_options options;
 
 	if (last && !strcmp(service, last->service))
 		return last;
@@ -204,8 +205,12 @@ static struct discovery* discover_refs(const char *service, int for_push)
 	}
 	refs_url = strbuf_detach(&buffer, NULL);
 
-	http_ret = http_get_strbuf(refs_url, &type, &buffer,
-				   HTTP_NO_CACHE | HTTP_KEEP_ERROR);
+	memset(&options, 0, sizeof(options));
+	options.content_type = &type;
+	options.no_cache = 1;
+	options.keep_error = 1;
+
+	http_ret = http_get_strbuf(refs_url, &buffer, &options);
 	switch (http_ret) {
 	case HTTP_OK:
 		break;
