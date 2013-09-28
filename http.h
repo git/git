@@ -139,6 +139,14 @@ struct http_get_options {
 	 * redirects we followed.
 	 */
 	struct strbuf *effective_url;
+
+	/*
+	 * If both base_url and effective_url are non-NULL, the base URL will
+	 * be munged to reflect any redirections going from the requested url
+	 * to effective_url. See the definition of update_url_from_redirect
+	 * for details.
+	 */
+	struct strbuf *base_url;
 };
 
 /* Return values for http_get_*() */
