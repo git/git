@@ -185,8 +185,8 @@ static struct discovery* discover_refs(const char *service, int for_push)
 	struct strbuf exp = STRBUF_INIT;
 	struct strbuf type = STRBUF_INIT;
 	struct strbuf buffer = STRBUF_INIT;
+	struct strbuf refs_url = STRBUF_INIT;
 	struct discovery *last = last_discovery;
-	char *refs_url;
 	int http_ret, maybe_smart = 0;
 	struct http_get_options options;
 
@@ -194,24 +194,23 @@ static struct discovery* discover_refs(const char *service, int for_push)
 		return last;
 	free_discovery(last);
 
-	strbuf_addf(&buffer, "%sinfo/refs", url);
+	strbuf_addf(&refs_url, "%sinfo/refs", url);
 	if ((!prefixcmp(url, "http://") || !prefixcmp(url, "https://")) &&
 	     git_env_bool("GIT_SMART_HTTP", 1)) {
 		maybe_smart = 1;
 		if (!strchr(url, '?'))
-			strbuf_addch(&buffer, '?');
+			strbuf_addch(&refs_url, '?');
 		else
-			strbuf_addch(&buffer, '&');
-		strbuf_addf(&buffer, "service=%s", service);
+			strbuf_addch(&refs_url, '&');
+		strbuf_addf(&refs_url, "service=%s", service);
 	}
-	refs_url = strbuf_detach(&buffer, NULL);
 
 	memset(&options, 0, sizeof(options));
 	options.content_type = &type;
 	options.no_cache = 1;
 	options.keep_error = 1;
 
-	http_ret = http_get_strbuf(refs_url, &buffer, &options);
+	http_ret = http_get_strbuf(refs_url.buf, &buffer, &options);
 	switch (http_ret) {
 	case HTTP_OK:
 		break;
@@ -264,7 +263,7 @@ static struct discovery* discover_refs(const char *service, int for_push)
 	else
 		last->refs = parse_info_refs(last);
 
-	free(refs_url);
+	strbuf_release(&refs_url);
 	strbuf_release(&exp);
 	strbuf_release(&type);
 	strbuf_release(&buffer);
