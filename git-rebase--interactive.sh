@@ -713,7 +713,7 @@ expand_todo_ids() {
 }
 
 collapse_todo_ids() {
-	transform_todo_ids --short=7
+	transform_todo_ids --short
 }
 
 # Rearrange the todo list that has both "pick sha1 msg" and
