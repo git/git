@@ -102,6 +102,7 @@ extern void http_cleanup(void);
 extern int active_requests;
 extern int http_is_verbose;
 extern size_t http_post_buffer;
+extern struct credential http_auth;
 
 extern char curl_errorstr[CURL_ERROR_SIZE];
 

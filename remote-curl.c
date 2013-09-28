@@ -8,6 +8,7 @@
 #include "pkt-line.h"
 #include "sideband.h"
 #include "argv-array.h"
+#include "credential.h"
 
 static struct remote *remote;
 static const char *url; /* always ends with a trailing slash */
@@ -449,6 +450,8 @@ static int post_rpc(struct rpc_state *rpc)
 	if (large_request) {
 		do {
 			err = probe_rpc(rpc);
+			if (err == HTTP_REAUTH)
+				credential_fill(&http_auth);
 		} while (err == HTTP_REAUTH);
 		if (err != HTTP_OK)
 			return -1;
@@ -548,8 +551,10 @@ retry:
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, rpc);
 
 	err = run_slot(slot);
-	if (err == HTTP_REAUTH && !large_request)
+	if (err == HTTP_REAUTH && !large_request) {
+		credential_fill(&http_auth);
 		goto retry;
+	}
 	if (err != HTTP_OK)
 		err = -1;
 

@@ -45,7 +45,7 @@ static long curl_low_speed_time = -1;
 static int curl_ftp_no_epsv;
 static const char *curl_http_proxy;
 static const char *curl_cookie_file;
-static struct credential http_auth = CREDENTIAL_INIT;
+struct credential http_auth = CREDENTIAL_INIT;
 static int http_proactive_auth;
 static const char *user_agent;
 
@@ -806,7 +806,6 @@ int handle_curl_result(struct slot_results *results)
 			credential_reject(&http_auth);
 			return HTTP_NOAUTH;
 		} else {
-			credential_fill(&http_auth);
 			return HTTP_REAUTH;
 		}
 	} else {
@@ -924,6 +923,9 @@ static int http_request_reauth(const char *url,
 			die("BUG: HTTP_KEEP_ERROR is only supported with strbufs");
 		}
 	}
+
+	credential_fill(&http_auth);
+
 	return http_request(url, result, target, options);
 }
 
