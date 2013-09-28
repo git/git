@@ -187,7 +187,8 @@ set_askpass() {
 }
 
 expect_askpass() {
-	dest=$HTTPD_DEST
+	dest=$HTTPD_DEST${3+/$3}
+
 	{
 		case "$1" in
 		none)

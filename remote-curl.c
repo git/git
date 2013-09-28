@@ -188,6 +188,7 @@ static struct discovery* discover_refs(const char *service, int for_push)
 	struct strbuf type = STRBUF_INIT;
 	struct strbuf buffer = STRBUF_INIT;
 	struct strbuf refs_url = STRBUF_INIT;
+	struct strbuf effective_url = STRBUF_INIT;
 	struct discovery *last = last_discovery;
 	int http_ret, maybe_smart = 0;
 	struct http_get_options options;
@@ -209,6 +210,8 @@ static struct discovery* discover_refs(const char *service, int for_push)
 
 	memset(&options, 0, sizeof(options));
 	options.content_type = &type;
+	options.effective_url = &effective_url;
+	options.base_url = &url;
 	options.no_cache = 1;
 	options.keep_error = 1;
 
@@ -268,6 +271,7 @@ static struct discovery* discover_refs(const char *service, int for_push)
 	strbuf_release(&refs_url);
 	strbuf_release(&exp);
 	strbuf_release(&type);
+	strbuf_release(&effective_url);
 	strbuf_release(&buffer);
 	last_discovery = last;
 	return last;
