@@ -894,6 +894,10 @@ static int http_request(const char *url,
 		curlinfo_strbuf(slot->curl, CURLINFO_CONTENT_TYPE,
 				options->content_type);
 
+	if (options && options->effective_url)
+		curlinfo_strbuf(slot->curl, CURLINFO_EFFECTIVE_URL,
+				options->effective_url);
+
 	curl_slist_free_all(headers);
 	strbuf_release(&buf);
 

@@ -133,6 +133,12 @@ struct http_get_options {
 
 	/* If non-NULL, returns the content-type of the response. */
 	struct strbuf *content_type;
+
+	/*
+	 * If non-NULL, returns the URL we ended up at, including any
+	 * redirects we followed.
+	 */
+	struct strbuf *effective_url;
 };
 
 /* Return values for http_get_*() */
