@@ -820,6 +820,18 @@ int handle_curl_result(struct slot_results *results)
 	}
 }
 
+static CURLcode curlinfo_strbuf(CURL *curl, CURLINFO info, struct strbuf *buf)
+{
+	char *ptr;
+	CURLcode ret;
+
+	strbuf_reset(buf);
+	ret = curl_easy_getinfo(curl, info, &ptr);
+	if (!ret && ptr)
+		strbuf_addstr(buf, ptr);
+	return ret;
+}
+
 /* http_request() targets */
 #define HTTP_REQUEST_STRBUF	0
 #define HTTP_REQUEST_FILE	1
@@ -878,13 +890,8 @@ static int http_request(const char *url, struct strbuf *type,
 		ret = HTTP_START_FAILED;
 	}
 
-	if (type) {
-		char *t;
-		strbuf_reset(type);
-		curl_easy_getinfo(slot->curl, CURLINFO_CONTENT_TYPE, &t);
-		if (t)
-			strbuf_addstr(type, t);
-	}
+	if (type)
+		curlinfo_strbuf(slot->curl, CURLINFO_CONTENT_TYPE, type);
 
 	curl_slist_free_all(headers);
 	strbuf_release(&buf);
