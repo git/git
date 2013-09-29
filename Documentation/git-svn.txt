@@ -684,7 +684,7 @@ svn-remote.<name>.noMetadata::
 +
 This option can only be used for one-shot imports as 'git svn'
 will not be able to fetch again without metadata. Additionally,
-if you lose your .git/svn/**/.rev_map.* files, 'git svn' will not
+if you lose your .git/svn/\*\*/.rev_map.* files, 'git svn' will not
 be able to rebuild them.
 +
 The 'git svn log' command will not work on repositories using
