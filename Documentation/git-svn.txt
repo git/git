@@ -435,8 +435,8 @@ Any other arguments are passed directly to 'git log'
 	specific revision.
 
 'gc'::
-	Compress $GIT_DIR/svn/<refname>/unhandled.log files in .git/svn
-	and remove $GIT_DIR/svn/<refname>index files in .git/svn.
+	Compress $GIT_DIR/svn/<refname>/unhandled.log files and remove
+	$GIT_DIR/svn/<refname>/index files.
 
 'reset'::
 	Undoes the effects of 'fetch' back to the specified revision.
