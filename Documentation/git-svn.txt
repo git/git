@@ -104,8 +104,8 @@ COMMANDS
 'fetch'::
 	Fetch unfetched revisions from the Subversion remote we are
 	tracking.  The name of the [svn-remote "..."] section in the
-	.git/config file may be specified as an optional command-line
-	argument.
+	$GIT_DIR/config file may be specified as an optional
+	command-line argument.
 
 --localtime;;
 	Store Git commit times in the local timezone instead of UTC.  This
@@ -684,7 +684,7 @@ svn-remote.<name>.noMetadata::
 +
 This option can only be used for one-shot imports as 'git svn'
 will not be able to fetch again without metadata. Additionally,
-if you lose your .git/svn/\*\*/.rev_map.* files, 'git svn' will not
+if you lose your $GIT_DIR/svn/\*\*/.rev_map.* files, 'git svn' will not
 be able to rebuild them.
 +
 The 'git svn log' command will not work on repositories using
@@ -977,8 +977,8 @@ When using multiple --branches or --tags, 'git svn' does not automatically
 handle name collisions (for example, if two branches from different paths have
 the same name, or if a branch and a tag have the same name).  In these cases,
 use 'init' to set up your Git repository then, before your first 'fetch', edit
-the .git/config file so that the branches and tags are associated with
-different name spaces.  For example:
+the $GIT_DIR/config file so that the branches and tags are associated
+with different name spaces.  For example:
 
 	branches = stable/*:refs/remotes/svn/stable/*
 	branches = debug/*:refs/remotes/svn/debug/*
@@ -1006,7 +1006,7 @@ CONFIGURATION
 -------------
 
 'git svn' stores [svn-remote] configuration information in the
-repository .git/config file.  It is similar the core Git
+repository $GIT_DIR/config file.  It is similar the core Git
 [remote] sections except 'fetch' keys do not accept glob
 arguments; but they are instead handled by the 'branches'
 and 'tags' keys.  Since some SVN repositories are oddly
@@ -1060,8 +1060,8 @@ $ git svn branch -d branches/server release-2-3-0
 
 Note that git-svn keeps track of the highest revision in which a branch
 or tag has appeared. If the subset of branches or tags is changed after
-fetching, then .git/svn/.metadata must be manually edited to remove (or
-reset) branches-maxRev and/or tags-maxRev as appropriate.
+fetching, then $GIT_DIR/svn/.metadata must be manually edited to remove
+(or reset) branches-maxRev and/or tags-maxRev as appropriate.
 
 SEE ALSO
 --------
