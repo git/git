@@ -106,6 +106,9 @@ COMMANDS
 	tracking.  The name of the [svn-remote "..."] section in the
 	$GIT_DIR/config file may be specified as an optional
 	command-line argument.
++
+This automatically updates the rev_map if needed (see
+'$GIT_DIR/svn/\*\*/.rev_map.*' in the FILES section below for details).
 
 --localtime;;
 	Store Git commit times in the local timezone instead of UTC.  This
@@ -201,6 +204,9 @@ accept.  However, '--fetch-all' only fetches from the current
 +
 Like 'git rebase'; this requires that the working tree be clean
 and have no uncommitted changes.
++
+This automatically updates the rev_map if needed (see
+'$GIT_DIR/svn/\*\*/.rev_map.*' in the FILES section below for details).
 
 -l;;
 --local;;
@@ -449,9 +455,10 @@ Any other arguments are passed directly to 'git log'
 	file cannot be ignored forever (with --ignore-paths) the only
 	way to repair the repo is to use 'reset'.
 +
-Only the rev_map and refs/remotes/git-svn are changed.  Follow 'reset'
-with a 'fetch' and then 'git reset' or 'git rebase' to move local
-branches onto the new tree.
+Only the rev_map and refs/remotes/git-svn are changed (see
+'$GIT_DIR/svn/\*\*/.rev_map.*' in the FILES section below for details).
+Follow 'reset' with a 'fetch' and then 'git reset' or 'git rebase' to
+move local branches onto the new tree.
 
 -r <n>;;
 --revision=<n>;;
@@ -684,7 +691,7 @@ svn-remote.<name>.noMetadata::
 +
 This option can only be used for one-shot imports as 'git svn'
 will not be able to fetch again without metadata. Additionally,
-if you lose your $GIT_DIR/svn/\*\*/.rev_map.* files, 'git svn' will not
+if you lose your '$GIT_DIR/svn/\*\*/.rev_map.*' files, 'git svn' will not
 be able to rebuild them.
 +
 The 'git svn log' command will not work on repositories using
@@ -1062,6 +1069,19 @@ Note that git-svn keeps track of the highest revision in which a branch
 or tag has appeared. If the subset of branches or tags is changed after
 fetching, then $GIT_DIR/svn/.metadata must be manually edited to remove
 (or reset) branches-maxRev and/or tags-maxRev as appropriate.
+
+FILES
+-----
+$GIT_DIR/svn/\*\*/.rev_map.*::
+	Mapping between Subversion revision numbers and Git commit
+	names.  In a repository where the noMetadata option is not set,
+	this can be rebuilt from the git-svn-id: lines that are at the
+	end of every commit (see the 'svn.noMetadata' section above for
+	details).
++
+'git svn fetch' and 'git svn rebase' automatically update the rev_map
+if it is missing or not up to date.  'git svn reset' automatically
+rewinds it.
 
 SEE ALSO
 --------
