@@ -1759,7 +1759,7 @@ sub get_commit_entry {
 		my $msgbuf = "";
 		while (<$msg_fh>) {
 			if (!$in_msg) {
-				$in_msg = 1 if (/^\s*$/);
+				$in_msg = 1 if (/^$/);
 				$author = $1 if (/^author (.*>)/);
 			} elsif (/^git-svn-id: /) {
 				# skip this for now, we regenerate the
