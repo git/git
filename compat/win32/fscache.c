@@ -42,16 +42,6 @@ struct fsentry {
 	struct hashmap_entry ent;
 	mode_t st_mode;
 	ULONG reparse_tag;
-	/* Length of name. */
-	unsigned short len;
-	/*
-	 * Name of the entry. For directory listings: relative path of the
-	 * directory, without trailing '/' (empty for cwd()). For file entries:
-	 * name of the file. Typically points to the end of the structure if
-	 * the fsentry is allocated on the heap (see fsentry_alloc), or to a
-	 * local variable if on the stack (see fsentry_init).
-	 */
-	const char *name;
 	/* Pointer to the directory listing, or NULL for the listing itself. */
 	struct fsentry *list;
 	/* Pointer to the next file entry of the list. */
@@ -68,6 +58,22 @@ struct fsentry {
 			struct timespec st_ctim;
 		} s;
 	} u;
+
+	/* Length of name. */
+	unsigned short len;
+	/*
+	 * Name of the entry. For directory listings: relative path of the
+	 * directory, without trailing '/' (empty for cwd()). For file entries:
+	 * name of the file. Typically points to the end of the structure if
+	 * the fsentry is allocated on the heap (see fsentry_alloc), or to a
+	 * local variable if on the stack (see fsentry_init).
+	 */
+	struct dirent dirent;
+};
+
+struct heap_fsentry {
+	struct fsentry ent;
+	char dummy[MAX_LONG_PATH];
 };
 
 /*
@@ -90,7 +96,7 @@ static int fsentry_cmp(void *unused_cmp_data,
 	/* if list parts are equal, compare len and name */
 	if (fse1->len != fse2->len)
 		return fse1->len - fse2->len;
-	return strnicmp(fse1->name, fse2->name, fse1->len);
+	return strnicmp(fse1->dirent.d_name, fse2->dirent.d_name, fse1->len);
 }
 
 /*
@@ -99,17 +105,21 @@ static int fsentry_cmp(void *unused_cmp_data,
 static unsigned int fsentry_hash(const struct fsentry *fse)
 {
 	unsigned int hash = fse->list ? fse->list->ent.hash : 0;
-	return hash ^ memihash(fse->name, fse->len);
+	return hash ^ memihash(fse->dirent.d_name, fse->len);
 }
 
 /*
  * Initialize an fsentry structure for use by fsentry_hash and fsentry_cmp.
  */
 static void fsentry_init(struct fsentry *fse, struct fsentry *list,
-		const char *name, size_t len)
+			 const char *name, size_t len)
 {
 	fse->list = list;
-	fse->name = name;
+	if (len > MAX_LONG_PATH)
+		BUG("Trying to allocate fsentry for long path '%.*s'",
+		    (int)len, name);
+	memcpy(fse->dirent.d_name, name, len);
+	fse->dirent.d_name[len] = 0;
 	fse->len = len;
 	hashmap_entry_init(&fse->ent, fsentry_hash(fse));
 }
@@ -121,12 +131,10 @@ static struct fsentry *fsentry_alloc(struct fscache *cache, struct fsentry *list
 		size_t len)
 {
 	/* overallocate fsentry and copy the name to the end */
-	struct fsentry *fse = mem_pool_alloc(cache->mem_pool, sizeof(struct fsentry) + len + 1);
-	char *nm = ((char*) fse) + sizeof(struct fsentry);
-	memcpy(nm, name, len);
-	nm[len] = 0;
+	struct fsentry *fse =
+		mem_pool_alloc(cache->mem_pool, sizeof(struct fsentry) + len + 1);
 	/* init the rest of the structure */
-	fsentry_init(fse, list, nm, len);
+	fsentry_init(fse, list, name, len);
 	fse->next = NULL;
 	fse->u.refcnt = 1;
 	return fse;
@@ -170,8 +178,9 @@ static int xwcstoutfn(char *utf, int utflen, const wchar_t *wcs, int wcslen)
 /*
  * Allocate and initialize an fsentry from a FILE_FULL_DIR_INFORMATION structure.
  */
-static struct fsentry *fseentry_create_entry(struct fscache *cache, struct fsentry *list,
-		PFILE_FULL_DIR_INFORMATION fdata)
+static struct fsentry *fseentry_create_entry(struct fscache *cache,
+					     struct fsentry *list,
+					     PFILE_FULL_DIR_INFORMATION fdata)
 {
 	char buf[MAX_PATH * 3];
 	int len;
@@ -199,15 +208,19 @@ static struct fsentry *fseentry_create_entry(struct fscache *cache, struct fsent
 	    is_inside_windows_container()) {
 		size_t off = 0;
 		if (list) {
-			memcpy(buf, list->name, list->len);
+			memcpy(buf, list->dirent.d_name, list->len);
 			buf[list->len] = '/';
 			off = list->len + 1;
 		}
-		memcpy(buf + off, fse->name, fse->len);
+		memcpy(buf + off, fse->dirent.d_name, fse->len);
 		buf[off + fse->len] = '\0';
 	}
 
-	fse->st_mode = file_attr_to_st_mode(fdata->FileAttributes, fdata->EaSize, buf);
+	fse->st_mode =
+		file_attr_to_st_mode(fdata->FileAttributes, fdata->EaSize, buf);
+	fse->dirent.d_type = S_ISREG(fse->st_mode) ? DT_REG :
+			S_ISDIR(fse->st_mode) ? DT_DIR : DT_LNK;
+
 	fse->u.s.st_size = S_ISLNK(fse->st_mode) ? MAX_LONG_PATH :
 			fdata->EndOfFile.LowPart | (((off_t)fdata->EndOfFile.HighPart) << 32);
 	filetime_to_timespec((FILETIME *)&(fdata->LastAccessTime), &(fse->u.s.st_atim));
@@ -222,7 +235,8 @@ static struct fsentry *fseentry_create_entry(struct fscache *cache, struct fsent
  * Dir should not contain trailing '/'. Use an empty string for the current
  * directory (not "."!).
  */
-static struct fsentry *fsentry_create_list(struct fscache *cache, const struct fsentry *dir,
+static struct fsentry *fsentry_create_list(struct fscache *cache,
+					   const struct fsentry *dir,
 					   int *dir_not_found)
 {
 	wchar_t pattern[MAX_LONG_PATH];
@@ -257,14 +271,15 @@ static struct fsentry *fsentry_create_list(struct fscache *cache, const struct f
 		err = GetLastError();
 		*dir_not_found = 1; /* or empty directory */
 		errno = (err == ERROR_DIRECTORY) ? ENOTDIR : err_win_to_posix(err);
-		trace_printf_key(&trace_fscache, "fscache: error(%d) '%.*s'\n",
-						 errno, dir->len, dir->name);
+		trace_printf_key(&trace_fscache, "fscache: error(%d) '%s'\n",
+						 errno, dir->dirent.d_name);
 		return NULL;
 	}
 
 	/* allocate object to hold directory listing */
-	list = fsentry_alloc(cache, NULL, dir->name, dir->len);
+	list = fsentry_alloc(cache, NULL, dir->dirent.d_name, dir->len);
 	list->st_mode = S_IFDIR;
+	list->dirent.d_type = DT_DIR;
 
 	/* walk directory and build linked list of fsentry structures */
 	phead = &list->next;
@@ -312,8 +327,9 @@ static struct fsentry *fsentry_create_list(struct fscache *cache, const struct f
 	return list;
 
 Error:
-	trace_printf_key(&trace_fscache, "fscache: status(%ld) unable to query directory contents '%.*s'\n",
-		status, dir->len, dir->name);
+	trace_printf_key(&trace_fscache, "fscache: status(%ld) unable to query "
+			 "directory contents '%s'\n",
+			 status, dir->dirent.d_name);
 	CloseHandle(h);
 	fsentry_release(list);
 	return NULL;
@@ -553,7 +569,8 @@ void fscache_flush(void)
 int fscache_lstat(const char *filename, struct stat *st)
 {
 	int dirlen, base, len;
-	struct fsentry key[2], *fse;
+	struct heap_fsentry key[2];
+	struct fsentry *fse;
 	struct fscache *cache = fscache_getcache();
 
 	if (!cache || !do_fscache_enabled(cache, filename))
@@ -570,9 +587,9 @@ int fscache_lstat(const char *filename, struct stat *st)
 	dirlen = base ? base - 1 : 0;
 
 	/* lookup entry for path + name in cache */
-	fsentry_init(key, NULL, filename, dirlen);
-	fsentry_init(key + 1, key, filename + base, len - base);
-	fse = fscache_get(cache, key + 1);
+	fsentry_init(&key[0].ent, NULL, filename, dirlen);
+	fsentry_init(&key[1].ent, &key[0].ent, filename + base, len - base);
+	fse = fscache_get(cache, &key[1].ent);
 	if (!fse)
 		return -1;
 
@@ -629,7 +646,7 @@ int fscache_is_mount_point(struct strbuf *path)
 typedef struct fscache_DIR {
 	struct DIR base_dir; /* extend base struct DIR */
 	struct fsentry *pfsentry;
-	struct dirent dirent;
+	struct dirent *dirent;
 } fscache_DIR;
 
 /*
@@ -642,10 +659,8 @@ static struct dirent *fscache_readdir(DIR *base_dir)
 	if (!next)
 		return NULL;
 	dir->pfsentry = next;
-	dir->dirent.d_type = S_ISREG(next->st_mode) ? DT_REG :
-			S_ISDIR(next->st_mode) ? DT_DIR : DT_LNK;
-	dir->dirent.d_name = (char*) next->name;
-	return &(dir->dirent);
+	dir->dirent = &next->dirent;
+	return dir->dirent;
 }
 
 /*
@@ -665,7 +680,8 @@ static int fscache_closedir(DIR *base_dir)
  */
 DIR *fscache_opendir(const char *dirname)
 {
-	struct fsentry key, *list;
+	struct heap_fsentry key;
+	struct fsentry *list;
 	fscache_DIR *dir;
 	int len;
 	struct fscache *cache = fscache_getcache();
@@ -681,8 +697,8 @@ DIR *fscache_opendir(const char *dirname)
 		len--;
 
 	/* get directory listing from cache */
-	fsentry_init(&key, NULL, dirname, len);
-	list = fscache_get(cache, &key);
+	fsentry_init(&key.ent, NULL, dirname, len);
+	list = fscache_get(cache, &key.ent);
 	if (!list)
 		return NULL;
 
