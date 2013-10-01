@@ -132,8 +132,10 @@
 #if defined(__MINGW32__)
 /* pull in Windows compatibility stuff */
 #include "compat/mingw.h"
+#include "compat/win32/fscache.h"
 #elif defined(_MSC_VER)
 #include "compat/msvc.h"
+#include "compat/win32/fscache.h"
 #else
 #include <sys/wait.h>
 #include <sys/resource.h>
