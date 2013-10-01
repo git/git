@@ -284,9 +284,11 @@ static inline int is_xplatform_dir_sep(int c)
 /* pull in Windows compatibility stuff */
 #include "compat/win32/path-utils.h"
 #include "compat/mingw.h"
+#include "compat/win32/fscache.h"
 #elif defined(_MSC_VER)
 #include "compat/win32/path-utils.h"
 #include "compat/msvc.h"
+#include "compat/win32/fscache.h"
 #else
 #include <sys/utsname.h>
 #include <sys/wait.h>
