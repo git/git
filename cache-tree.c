@@ -47,6 +47,7 @@ static int subtree_pos(struct cache_tree *it, const char *path, int pathlen)
 	int lo, hi;
 	lo = 0;
 	hi = it->subtree_nr;
+	//add my comments 1
 	while (lo < hi) {
 		int mi = (lo + hi) / 2;
 		struct cache_tree_sub *mdl = down[mi];
