@@ -243,3 +243,4 @@
 *.pdb
 /Debug/
 /Release/
+/*.c~
