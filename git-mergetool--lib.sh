@@ -264,7 +264,7 @@ list_merge_tool_candidates () {
 }
 
 show_tool_help () {
-	tool_opt="'git ${TOOL_MODE}tool --tool-<tool>'"
+	tool_opt="'git ${TOOL_MODE}tool --tool=<tool>'"
 
 	tab='	'
 	LF='
