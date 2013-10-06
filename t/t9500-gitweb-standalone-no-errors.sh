@@ -654,9 +654,11 @@ cat >>gitweb_config.perl <<\EOF
 $feature{'highlight'}{'override'} = 1;
 EOF
 
-highlight --version >/dev/null 2>&1
+highlight_version=$(highlight --version </dev/null 2>/dev/null)
 if [ $? -eq 127 ]; then
-	say "Skipping syntax highlighting test, because 'highlight' was not found"
+	say "Skipping syntax highlighting tests: 'highlight' not found"
+elif test -z "$highlight_version"; then
+	say "Skipping syntax highlighting tests: incorrect 'highlight' found"
 else
 	test_set_prereq HIGHLIGHT
 fi
