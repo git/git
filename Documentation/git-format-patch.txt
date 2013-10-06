@@ -438,7 +438,8 @@ Edit..Preferences..Composition, wrap plain text messages at 0
 In Thunderbird 3:
 Edit..Preferences..Advanced..Config Editor.  Search for
 "mail.wrap_long_lines".
-Toggle it to make sure it is set to `false`.
+Toggle it to make sure it is set to `false`. Also, search for
+"mailnews.wraplength" and set the value to 0.
 
 3. Disable the use of format=flowed:
 Edit..Preferences..Advanced..Config Editor.  Search for
