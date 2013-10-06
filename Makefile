@@ -2018,6 +2018,9 @@ gettext.sp gettext.s gettext.o: GIT-PREFIX
 gettext.sp gettext.s gettext.o: EXTRA_CPPFLAGS = \
 	-DGIT_LOCALE_PATH='"$(localedir_SQ)"'
 
+http-push.sp http.sp http-walker.sp remote-curl.sp: SPARSE_FLAGS += \
+	-DCURL_DISABLE_TYPECHECK
+
 ifdef NO_EXPAT
 http-walker.sp http-walker.s http-walker.o: EXTRA_CPPFLAGS = -DNO_EXPAT
 endif
