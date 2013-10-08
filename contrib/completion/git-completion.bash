@@ -2282,6 +2282,10 @@ _git_show ()
 _git_show_branch ()
 {
 	case "$cur" in
+	--color=*)
+		__gitcomp "always never auto" "" "${cur##--color=}"
+		return
+		;;
 	--*)
 		__gitcomp "
 			--all --remotes --topo-order --date-order --current --more=
