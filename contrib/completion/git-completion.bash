@@ -864,7 +864,8 @@ _git_am ()
 			--3way --committer-date-is-author-date --ignore-date
 			--ignore-whitespace --ignore-space-change
 			--interactive --keep --no-utf8 --signoff --utf8
-			--whitespace= --scissors
+			--whitespace= --scissors --keep-cr --no-keep-cr
+			--directory= --exclude= --reject --quiet  --no-scissors
 			"
 		return
 	esac
@@ -881,7 +882,7 @@ _git_apply ()
 		__gitcomp "
 			--stat --numstat --summary --check --index
 			--cached --index-info --reverse --reject --unidiff-zero
-			--apply --no-add --exclude=
+			--apply --no-add --exclude= --directory=
 			--ignore-whitespace --ignore-space-change
 			--whitespace= --inaccurate-eof --verbose
 			"
@@ -2281,9 +2282,13 @@ _git_show ()
 _git_show_branch ()
 {
 	case "$cur" in
+	--color=*)
+		__gitcomp "always never auto" "" "${cur##--color=}"
+		return
+		;;
 	--*)
 		__gitcomp "
-			--all --remotes --topo-order --current --more=
+			--all --remotes --topo-order --date-order --current --more=
 			--list --independent --merge-base --no-name
 			--color --no-color
 			--sha1-name --sparse --topics --reflog
@@ -2296,7 +2301,7 @@ _git_show_branch ()
 
 _git_stash ()
 {
-	local save_opts='--keep-index --no-keep-index --quiet --patch'
+	local save_opts='--all --keep-index --no-keep-index --patch --quiet --include-untracked'
 	local subcommands='save list show apply clear drop pop create branch'
 	local subcommand="$(__git_find_on_cmdline "$subcommands")"
 	if [ -z "$subcommand" ]; then
