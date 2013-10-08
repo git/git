@@ -2283,7 +2283,7 @@ _git_show_branch ()
 	case "$cur" in
 	--*)
 		__gitcomp "
-			--all --remotes --topo-order --current --more=
+			--all --remotes --topo-order --date-order --current --more=
 			--list --independent --merge-base --no-name
 			--color --no-color
 			--sha1-name --sparse --topics --reflog
@@ -2296,7 +2296,7 @@ _git_show_branch ()
 
 _git_stash ()
 {
-	local save_opts='--keep-index --no-keep-index --quiet --patch'
+	local save_opts='--all --keep-index --no-keep-index --patch --quiet --include-untracked'
 	local subcommands='save list show apply clear drop pop create branch'
 	local subcommand="$(__git_find_on_cmdline "$subcommands")"
 	if [ -z "$subcommand" ]; then
