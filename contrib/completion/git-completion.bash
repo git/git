@@ -864,7 +864,8 @@ _git_am ()
 			--3way --committer-date-is-author-date --ignore-date
 			--ignore-whitespace --ignore-space-change
 			--interactive --keep --no-utf8 --signoff --utf8
-			--whitespace= --scissors
+			--whitespace= --scissors --keep-cr --no-keep-cr
+			--directory= --exclude= --reject --quiet  --no-scissors
 			"
 		return
 	esac
@@ -881,7 +882,7 @@ _git_apply ()
 		__gitcomp "
 			--stat --numstat --summary --check --index
 			--cached --index-info --reverse --reject --unidiff-zero
-			--apply --no-add --exclude=
+			--apply --no-add --exclude= --directory=
 			--ignore-whitespace --ignore-space-change
 			--whitespace= --inaccurate-eof --verbose
 			"
