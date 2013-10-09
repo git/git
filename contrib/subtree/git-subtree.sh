@@ -592,7 +592,9 @@ cmd_split()
 	eval "$grl" |
 	while read rev parents; do
 		revcount=$(($revcount + 1))
-		say -n "$revcount/$revmax ($createcount)"
+		if [ -z "$quiet" ]; then
+			printf "%s" "$revcount/$revmax ($createcount)" >&2
+		fi
 		debug "Processing commit: $rev"
 		exists=$(cache_get $rev)
 		if [ -n "$exists" ]; then
