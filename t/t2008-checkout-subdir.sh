@@ -58,13 +58,13 @@ test_expect_success 'checkout with simple prefix' '
 
 '
 
-# This is not expected to work as ls-files was not designed
-# to deal with such.  Enable it when ls-files is updated.
-: test_expect_success 'checkout with complex relative path' '
-
-	rm file1 &&
-	git checkout HEAD -- ../dir1/../dir1/file1 && test -f ./file1
-
+test_expect_success 'checkout with complex relative path' '
+	(
+		cd dir1 &&
+		rm file1 &&
+		git checkout HEAD -- ../dir1/../dir1/file1 &&
+		test "hello" = "$(cat file1)"
+	)
 '
 
 test_expect_success 'relative path outside tree should fail' \
