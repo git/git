@@ -626,9 +626,10 @@ test_expect_success 'prepare for cherry-pick conflicts' '
 test_expect_success 'status when cherry-picking before resolving conflicts' '
 	test_when_finished "git cherry-pick --abort" &&
 	test_must_fail git cherry-pick cherry_branch_second &&
-	cat >expected <<\EOF &&
+	TO_CHERRY_PICK=$(git rev-parse --short CHERRY_PICK_HEAD) &&
+	cat >expected <<EOF &&
 On branch cherry_branch
-You are currently cherry-picking.
+You are currently cherry-picking commit $TO_CHERRY_PICK.
   (fix conflicts and run "git cherry-pick --continue")
   (use "git cherry-pick --abort" to cancel the cherry-pick operation)
 
@@ -648,11 +649,12 @@ test_expect_success 'status when cherry-picking after resolving conflicts' '
 	git reset --hard cherry_branch &&
 	test_when_finished "git cherry-pick --abort" &&
 	test_must_fail git cherry-pick cherry_branch_second &&
+	TO_CHERRY_PICK=$(git rev-parse --short CHERRY_PICK_HEAD) &&
 	echo end >main.txt &&
 	git add main.txt &&
-	cat >expected <<\EOF &&
+	cat >expected <<EOF &&
 On branch cherry_branch
-You are currently cherry-picking.
+You are currently cherry-picking commit $TO_CHERRY_PICK.
   (all conflicts fixed: run "git cherry-pick --continue")
   (use "git cherry-pick --abort" to cancel the cherry-pick operation)
 
