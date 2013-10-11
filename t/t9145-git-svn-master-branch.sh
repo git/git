@@ -17,7 +17,7 @@ test_expect_success 'git svn clone --stdlayout sets up trunk as master' '
 	git svn clone -s "$svnrepo" g &&
 	(
 		cd g &&
-		test x`git rev-parse --verify refs/remotes/trunk^0` = \
+		test x`git rev-parse --verify refs/remotes/origin/trunk^0` = \
 		     x`git rev-parse --verify refs/heads/master^0`
 	)
 '

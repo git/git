@@ -70,9 +70,9 @@ test_expect_success 'rebase looses SVN merge (m)' '
 #
 test_expect_success 'reset and fetch gets the SVN merge (m) correctly' '
 	git svn reset -r 3 &&
-	git reset --hard trunk &&
+	git reset --hard origin/trunk &&
 	git svn fetch &&
-	test 2 = $(git cat-file -p trunk|grep parent|wc -l)
+	test 2 = $(git cat-file -p origin/trunk|grep parent|wc -l)
 '
 
 test_done

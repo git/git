@@ -46,7 +46,7 @@ test_expect_success 'clone svn repo' '
 '
 
 test_expect_success 'verify merge commit' 'x=$(git rev-parse HEAD^2) &&
-	y=$(git rev-parse branch2) &&
+	y=$(git rev-parse origin/branch2) &&
 	test "x$x" = "x$y"
 '
 

@@ -29,30 +29,30 @@ test_expect_success 'initialize svnrepo' '
 test_expect_success 'import into git' '
 	git svn init --stdlayout "$svnrepo" &&
 	git svn fetch &&
-	git checkout remotes/trunk
+	git checkout remotes/origin/trunk
 '
 
 test_expect_success 'git svn branch tests' '
 	git svn branch a &&
 	base=$(git rev-parse HEAD:) &&
-	test $base = $(git rev-parse remotes/a:) &&
+	test $base = $(git rev-parse remotes/origin/a:) &&
 	git svn branch -m "created branch b blah" b &&
-	test $base = $(git rev-parse remotes/b:) &&
+	test $base = $(git rev-parse remotes/origin/b:) &&
 	test_must_fail git branch -m "no branchname" &&
 	git svn branch -n c &&
-	test_must_fail git rev-parse remotes/c &&
+	test_must_fail git rev-parse remotes/origin/c &&
 	test_must_fail git svn branch a &&
 	git svn branch -t tag1 &&
-	test $base = $(git rev-parse remotes/tags/tag1:) &&
+	test $base = $(git rev-parse remotes/origin/tags/tag1:) &&
 	git svn branch --tag tag2 &&
-	test $base = $(git rev-parse remotes/tags/tag2:) &&
+	test $base = $(git rev-parse remotes/origin/tags/tag2:) &&
 	git svn tag tag3 &&
-	test $base = $(git rev-parse remotes/tags/tag3:) &&
+	test $base = $(git rev-parse remotes/origin/tags/tag3:) &&
 	git svn tag -m "created tag4 foo" tag4 &&
-	test $base = $(git rev-parse remotes/tags/tag4:) &&
+	test $base = $(git rev-parse remotes/origin/tags/tag4:) &&
 	test_must_fail git svn tag -m "no tagname" &&
 	git svn tag -n tag5 &&
-	test_must_fail git rev-parse remotes/tags/tag5 &&
+	test_must_fail git rev-parse remotes/origin/tags/tag5 &&
 	test_must_fail git svn tag tag1
 '
 

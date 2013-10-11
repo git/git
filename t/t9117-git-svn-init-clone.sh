@@ -83,25 +83,25 @@ EOF
 	rm -f expect actual
 }
 
-test_expect_success 'init with -s/-T/-b/-t without --prefix warns' '
+test_expect_success 'init with -s/-T/-b/-t assumes --prefix=origin/' '
 	test ! -d project &&
 	git svn init -s "$svnrepo"/project project 2>warning &&
-	grep -q prefix warning &&
-	test_svn_configured_prefix "" &&
+	test_must_fail grep -q prefix warning &&
+	test_svn_configured_prefix "origin/" &&
 	rm -rf project &&
 	rm -f warning
 	'
 
-test_expect_success 'clone with -s/-T/-b/-t without --prefix warns' '
+test_expect_success 'clone with -s/-T/-b/-t assumes --prefix=origin/' '
 	test ! -d project &&
 	git svn clone -s "$svnrepo"/project 2>warning &&
-	grep -q prefix warning &&
-	test_svn_configured_prefix "" &&
+	test_must_fail grep -q prefix warning &&
+	test_svn_configured_prefix "origin/" &&
 	rm -rf project &&
 	rm -f warning
 	'
 
-test_expect_success 'init with -s/-T/-b/-t and --prefix does not warn' '
+test_expect_success 'init with -s/-T/-b/-t and --prefix="" still works' '
 	test ! -d project &&
 	git svn init -s "$svnrepo"/project project --prefix="" 2>warning &&
 	test_must_fail grep -q prefix warning &&
@@ -110,7 +110,7 @@ test_expect_success 'init with -s/-T/-b/-t and --prefix does not warn' '
 	rm -f warning
 	'
 
-test_expect_success 'clone with -s/-T/-b/-t and --prefix does not warn' '
+test_expect_success 'clone with -s/-T/-b/-t and --prefix="" still works' '
 	test ! -d project &&
 	git svn clone -s "$svnrepo"/project --prefix="" 2>warning &&
 	test_must_fail grep -q prefix warning &&

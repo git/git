@@ -31,7 +31,7 @@ test_expect_success 'import into git' '
 	git svn init --trunk=trunk/project --branches=branches/*/project \
 		--tags=tags/*/project "$svnrepo" &&
 	git svn fetch &&
-	git checkout remotes/trunk
+	git checkout remotes/origin/trunk
 '
 
 test_expect_success 'git svn branch tests' '
