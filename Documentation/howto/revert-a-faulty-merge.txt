@@ -37,7 +37,7 @@ where A and B are on the side development that was not so good, M is the
 merge that brings these premature changes into the mainline, x are changes
 unrelated to what the side branch did and already made on the mainline,
 and W is the "revert of the merge M" (doesn't W look M upside down?).
-IOW, "diff W^..W" is similar to "diff -R M^..M".
+IOW, `"diff W^..W"` is similar to `"diff -R M^..M"`.
 
 Such a "revert" of a merge can be made with:
 
@@ -121,9 +121,9 @@ If you reverted the revert in such a case as in the previous example:
        ---A---B                   A'--B'--C'
 
 where Y is the revert of W, A' and B' are rerolled A and B, and there may
-also be a further fix-up C' on the side branch.  "diff Y^..Y" is similar
-to "diff -R W^..W" (which in turn means it is similar to "diff M^..M"),
-and "diff A'^..C'" by definition would be similar but different from that,
+also be a further fix-up C' on the side branch.  `"diff Y^..Y"` is similar
+to `"diff -R W^..W"` (which in turn means it is similar to `"diff M^..M"`),
+and `"diff A'^..C'"` by definition would be similar but different from that,
 because it is a rerolled series of the earlier change.  There will be a
 lot of overlapping changes that result in conflicts.  So do not do "revert
 of revert" blindly without thinking..
