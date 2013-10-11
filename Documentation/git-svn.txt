@@ -79,8 +79,13 @@ COMMANDS
 	trailing slash, so be sure you include one in the
 	argument if that is what you want.  If --branches/-b is
 	specified, the prefix must include a trailing slash.
-	Setting a prefix is useful if you wish to track multiple
-	projects that share a common repository.
+	Setting a prefix (with a trailing slash) is strongly
+	encouraged in any case, as your SVN-tracking refs will
+	then be located at "refs/remotes/$prefix/*", which is
+	compatible with Git's own remote-tracking ref layout
+	(refs/remotes/$remote/*). Setting a prefix is also useful
+	if you wish to track multiple projects that share a common
+	repository.
 --ignore-paths=<regex>;;
 	When passed to 'init' or 'clone' this regular expression will
 	be preserved as a config key.  See 'fetch' for a description
@@ -811,16 +816,16 @@ Tracking and contributing to an entire Subversion-managed project
 
 ------------------------------------------------------------------------
 # Clone a repo with standard SVN directory layout (like git clone):
-	git svn clone http://svn.example.com/project --stdlayout
+	git svn clone http://svn.example.com/project --stdlayout --prefix svn/
 # Or, if the repo uses a non-standard directory layout:
-	git svn clone http://svn.example.com/project -T tr -b branch -t tag
+	git svn clone http://svn.example.com/project -T tr -b branch -t tag --prefix svn/
 # View all branches and tags you have cloned:
 	git branch -r
 # Create a new branch in SVN
     git svn branch waldo
 # Reset your master to trunk (or any other branch, replacing 'trunk'
 # with the appropriate name):
-	git reset --hard remotes/trunk
+	git reset --hard svn/trunk
 # You may only dcommit to one branch/tag/trunk at a time.  The usage
 # of dcommit/rebase/show-ignore should be the same as above.
 ------------------------------------------------------------------------
@@ -834,7 +839,7 @@ have each person clone that repository with 'git clone':
 
 ------------------------------------------------------------------------
 # Do the initial import on a server
-	ssh server "cd /pub && git svn clone http://svn.example.com/project
+	ssh server "cd /pub && git svn clone http://svn.example.com/project [options...]"
 # Clone locally - make sure the refs/remotes/ space matches the server
 	mkdir project
 	cd project
@@ -847,8 +852,9 @@ have each person clone that repository with 'git clone':
 	git config --remove-section remote.origin
 # Create a local branch from one of the branches just fetched
 	git checkout -b master FETCH_HEAD
-# Initialize 'git svn' locally (be sure to use the same URL and -T/-b/-t options as were used on server)
-	git svn init http://svn.example.com/project
+# Initialize 'git svn' locally (be sure to use the same URL and
+# --stdlayout/-T/-b/-t/--prefix options as were used on server)
+	git svn init http://svn.example.com/project [options...]
 # Pull the latest changes from Subversion
 	git svn rebase
 ------------------------------------------------------------------------
@@ -980,6 +986,15 @@ without giving any repository layout options.  If the full history with
 branches and tags is required, the options '--trunk' / '--branches' /
 '--tags' must be used.
 
+When using the options for describing the repository layout (--trunk,
+--tags, --branches, --stdlayout), please also specify the --prefix
+option (e.g. '--prefix=origin/') to cause your SVN-tracking refs to be
+placed at refs/remotes/origin/* rather than the default refs/remotes/*.
+The former is more compatible with the layout of Git's "regular"
+remote-tracking refs (refs/remotes/$remote/*), and may potentially
+prevent similarly named SVN branches and Git remotes from clobbering
+each other.
+
 When using multiple --branches or --tags, 'git svn' does not automatically
 handle name collisions (for example, if two branches from different paths have
 the same name, or if a branch and a tag have the same name).  In these cases,
@@ -1042,8 +1057,8 @@ comma-separated list of names within braces. For example:
 [svn-remote "huge-project"]
 	url = http://server.org/svn
 	fetch = trunk/src:refs/remotes/trunk
-	branches = branches/{red,green}/src:refs/remotes/branches/*
-	tags = tags/{1.0,2.0}/src:refs/remotes/tags/*
+	branches = branches/{red,green}/src:refs/remotes/project-a/branches/*
+	tags = tags/{1.0,2.0}/src:refs/remotes/project-a/tags/*
 ------------------------------------------------------------------------
 
 Multiple fetch, branches, and tags keys are supported:
