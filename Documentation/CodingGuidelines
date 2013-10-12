@@ -145,6 +145,14 @@ For C programs:
    they were describing changes.  Often splitting a function
    into two makes the intention of the code much clearer.
 
+ - Multi-line comments include their delimiters on separate lines from
+   the text.  E.g.
+
+	/*
+	 * A very long
+	 * multi-line comment.
+	 */
+
  - Double negation is often harder to understand than no negation
    at all.
 
