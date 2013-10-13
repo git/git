@@ -55,6 +55,7 @@ static const char *add_slash(const char *path)
 }
 
 static struct lock_file lock_file;
+#define SUBMODULE_WITH_GITDIR ((const char *)1)
 
 int cmd_mv(int argc, const char **argv, const char *prefix)
 {
@@ -132,6 +133,8 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 				submodule_gitfile[i] = read_gitfile(submodule_dotgit.buf);
 				if (submodule_gitfile[i])
 					submodule_gitfile[i] = xstrdup(submodule_gitfile[i]);
+				else
+					submodule_gitfile[i] = SUBMODULE_WITH_GITDIR;
 				strbuf_release(&submodule_dotgit);
 			} else {
 				const char *src_w_slash = add_slash(src);
@@ -230,10 +233,12 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 		if (!show_only && mode != INDEX) {
 			if (rename(src, dst) < 0 && !ignore_errors)
 				die_errno (_("renaming '%s' failed"), src);
-			if (submodule_gitfile[i])
-				connect_work_tree_and_git_dir(dst, submodule_gitfile[i]);
-			if (!update_path_in_gitmodules(src, dst))
-				gitmodules_modified = 1;
+			if (submodule_gitfile[i]) {
+				if (submodule_gitfile[i] != SUBMODULE_WITH_GITDIR)
+					connect_work_tree_and_git_dir(dst, submodule_gitfile[i]);
+				if (!update_path_in_gitmodules(src, dst))
+					gitmodules_modified = 1;
+			}
 		}
 
 		if (mode == WORKING_DIRECTORY)
