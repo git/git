@@ -81,8 +81,8 @@ Initialize a bare repository
     $ git --bare init
 
 
-Change the ownership to your web-server's credentials. Use "grep ^User
-httpd.conf" and "grep ^Group httpd.conf" to find out:
+Change the ownership to your web-server's credentials. Use `"grep ^User
+httpd.conf"` and `"grep ^Group httpd.conf"` to find out:
 
     $ chown -R www.www .
 
