@@ -1901,11 +1901,11 @@ user.name::
 	environment variables.  See linkgit:git-commit-tree[1].
 
 user.signingkey::
-	If linkgit:git-tag[1] is not selecting the key you want it to
-	automatically when creating a signed tag, you can override the
-	default selection with this variable.  This option is passed
-	unchanged to gpg's --local-user parameter, so you may specify a key
-	using any method that gpg supports.
+	If linkgit:git-tag[1] or linkgit:git-commit[1] is not selecting the
+	key you want it to automatically when creating a signed tag or
+	commit, you can override the default selection with this variable.
+	This option is passed unchanged to gpg's --local-user parameter,
+	so you may specify a key using any method that gpg supports.
 
 web.browser::
 	Specify a web browser that may be used by some commands.
