@@ -116,7 +116,7 @@ int main(int argc, char **argv)
 		return 0;
 	}
 
-	if (argc == 3 && !strcmp(argv[1], "mingw_path")) {
+	if (argc == 3 && !strcmp(argv[1], "print_path")) {
 		puts(argv[2]);
 		return 0;
 	}

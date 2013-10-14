@@ -8,13 +8,13 @@ test_description='Test various path utilities'
 . ./test-lib.sh
 
 norm_path() {
-	expected=$(test-path-utils mingw_path "$2")
+	expected=$(test-path-utils print_path "$2")
 	test_expect_success $3 "normalize path: $1 => $2" \
 	"test \"\$(test-path-utils normalize_path_copy '$1')\" = '$expected'"
 }
 
 relative_path() {
-	expected=$(test-path-utils mingw_path "$3")
+	expected=$(test-path-utils print_path "$3")
 	test_expect_success $4 "relative path: $1 $2 => $3" \
 	"test \"\$(test-path-utils relative_path '$1' '$2')\" = '$expected'"
 }
