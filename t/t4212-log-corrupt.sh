@@ -13,11 +13,16 @@ test_expect_success 'setup' '
 	git update-ref refs/heads/broken_email $(cat broken_email.hash)
 '
 
+test_expect_success 'fsck notices broken commit' '
+	git fsck 2>actual &&
+	test_i18ngrep invalid.author actual
+'
+
 test_expect_success 'git log with broken author email' '
 	{
 		echo commit $(cat broken_email.hash)
 		echo "Author: A U Thor <author@example.com>"
-		echo "Date:   Thu Jan 1 00:00:00 1970 +0000"
+		echo "Date:   Thu Apr 7 15:13:13 2005 -0700"
 		echo
 		echo "    foo"
 	} >expect.out &&
@@ -30,7 +35,7 @@ test_expect_success 'git log with broken author email' '
 '
 
 test_expect_success 'git log --format with broken author email' '
-	echo "A U Thor+author@example.com+" >expect.out &&
+	echo "A U Thor+author@example.com+Thu Apr 7 15:13:13 2005 -0700" >expect.out &&
 	: >expect.err &&
 
 	git log --format="%an+%ae+%ad" broken_email >actual.out 2>actual.err &&
