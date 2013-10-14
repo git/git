@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git merge' [-n] [--stat] [--no-commit] [--squash] [--[no-]edit]
-	[-s <strategy>] [-X <strategy-option>]
+	[-s <strategy>] [-X <strategy-option>] [-S[<keyid>]]
 	[--[no-]rerere-autoupdate] [-m <msg>] [<commit>...]
 'git merge' <msg> HEAD <commit>...
 'git merge' --abort
@@ -64,6 +64,10 @@ back out of in the case of a conflict.
 OPTIONS
 -------
 include::merge-options.txt[]
+
+-S[<keyid>]::
+--gpg-sign[=<keyid>]::
+	GPG-sign the resulting merge commit.
 
 -m <msg>::
 	Set the commit message to be used for the merge commit (in
