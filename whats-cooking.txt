@@ -1,171 +1,101 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Sep 2013, #08; Wed, 25)
-X-master-at: 5636a20070c80dec23cc6d6180cb1dd958e23bca
-X-next-at: 4eb0c1432dc51cbf104157b7b61914bbe4a0191d
+Subject: What's cooking in git.git (Oct 2013, #01; Mon, 14)
+X-master-at: 774282d16ab5aa2ec4b8bb7fa4ad83b0622ee778
+X-next-at: 8a12490ddc9ceec4537b17f1339ff3a0171a7ce4
 
-What's cooking in git.git (Sep 2013, #08; Wed, 25)
+What's cooking in git.git (Oct 2013, #01; Mon, 14)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-The fifth batch of topics are in 'master'.
+Junio is back (yay!).  Here is the state of topics in flight.  As
+usual, help moving topics forward and pointing out patches that fell
+through the cracks is appreciated.
 
 You can find the changes described here in the integration branches at
 
+    https://googlers.googlesource.com/jrn/git
     git://repo.or.cz/git/jrn.git
-    http://repo.or.cz/r/git/jrn.git
-
-Or view the web interface:
-
-    http://repo.or.cz/w/git/jrn.git
-
-I'll probably be releasing 1.8.4.1 tomorrow.  If you have time to
-experiment with "maint" or "master" to find any remaining problems
-until then, that will be very welcome.
-
---------------------------------------------------
-[Graduated to "master"]
-
-* bc/submodule-status-ignored (2013-09-11) 3 commits
-  (merged to 'next' on 2013-09-11 at 9f66712)
- + Improve documentation concerning the status.submodulesummary setting
-  (merged to 'next' on 2013-09-10 at a417960)
- + submodule: don't print status output with ignore=all
- + submodule: fix confusing variable name
-
-
-* bp/mediawiki-infinite-loop-fix (2013-09-23) 1 commit
- - git-remote-mediawiki: bugfix for pages w/ >500 revisions
-
- The mediawiki:: remote helper would hang while handling results from
- queries with more than 500 results against version 1.21 or newer of
- the Mediawiki server.
-
-
-* cc/replace-with-the-same-type (2013-09-09) 8 commits
-  (merged to 'next' on 2013-09-17 at 34b5bb7)
- + Doc: 'replace' merge and non-merge commits
- + t6050-replace: use some long option names
- + replace: allow long option names
- + Documentation/replace: add Creating Replacement Objects section
- + t6050-replace: add test to clean up all the replace refs
- + t6050-replace: test that objects are of the same type
- + Documentation/replace: state that objects must be of the same type
- + replace: forbid replacing an object with one of a different type
-
- Using the replace mechanism to swap an object with another object
- of a different type can introduce inconsistency (e.g. a tree
- expects an object name to refer to a blob, but the blob object can
- be mistakenly or maliciously replaced with an object with a
- different type). Attempt to forbid such.
-
-
-* es/contacts-in-subdir (2013-09-17) 1 commit
-  (merged to 'next' on 2013-09-20 at d67164f)
- + contacts: fix to work in subdirectories
-
- Allows the contacts (in contrib/) script to run from inside a
- subdirectory.
-
-
-* jc/push-cas (2013-09-20) 1 commit
-  (merged to 'next' on 2013-09-20 at 5e1e7cc)
- + t5541: mark passing c-a-s test as success
-
- A touch-up to finish off a recently added feature.
-
-
-* jc/strcasecmp-pure-inline (2013-09-12) 1 commit
-  (merged to 'next' on 2013-09-20 at 7142d08)
- + mailmap: work around implementations with pure inline strcasecmp
-
- Work around MinGW <string.h> header that does not declare strcasecmp
- whose address cannot be taken.
-
-
-* jk/shortlog-tolerate-broken-commit (2013-09-18) 1 commit
-  (merged to 'next' on 2013-09-20 at 9c85c02)
- + shortlog: ignore commits with missing authors
-
-
-* kb/msvc-compile (2013-09-11) 5 commits
-  (merged to 'next' on 2013-09-17 at a9bcbb5)
- + Windows: do not redefine _WIN32_WINNT
- + MinGW: Fix stat definitions to work with MinGW runtime version 4.0
- + MSVC: fix stat definition hell
- + MSVC: fix compile errors due to macro redefinitions
- + MSVC: fix compile errors due to missing libintl.h
-
- Build updates for Windows port.
-
-
-* nd/fetch-pack-error-reporting-fix (2013-09-18) 1 commit
-  (merged to 'next' on 2013-09-20 at fefa04f)
- + fetch-pack.c: show correct command name that fails
-
- When "fetch-pack" detected an error from spawned "index-pack" or
- "unpack-objects", it did not report the failed program name
- correctly when a shallow repository is involved.
-
-
-* nd/unpack-entry-optim-in-pack-objects (2013-09-13) 1 commit
-  (merged to 'next' on 2013-09-17 at 00f7335)
- + pack-objects: no crc check when the cached version is used
-
- The codepath to use data from packfiles that is only exercised in
- pack-objects unnecessarily checked crc checksum of the pack data,
- even when it ends up using in-core copy that it got by reading from
- the pack (at which point the checksum was validated).
-
-
-* sg/complete-untracked-filter (2013-09-19) 1 commit
-  (merged to 'next' on 2013-09-20 at 798d0b9)
- + completion: improve untracked directory filtering for filename completion
+    git://gitorious.org/git/jrn.git
+    https://github.com/jrn/git
 
 --------------------------------------------------
 [New Topics]
 
-* bc/gnome-keyring (2013-09-23) 15 commits
- - contrib/git-credential-gnome-keyring.c: support really ancient gnome-keyring
- - contrib/git-credential-gnome-keyring.c: support ancient gnome-keyring
- - contrib/git-credential-gnome-keyring.c: report failure to store password
- - contrib/git-credential-gnome-keyring.c: use glib messaging functions
- - contrib/git-credential-gnome-keyring.c: use glib memory allocation functions
- - contrib/git-credential-gnome-keyring.c: use secure memory for reading passwords
- - contrib/git-credential-gnome-keyring.c: use secure memory functions for passwds
- - contrib/git-credential-gnome-keyring.c: use gnome helpers in keyring_object()
- - contrib/git-credential-gnome-keyring.c: ensure buffer is non-empty before accessing
- - contrib/git-credential-gnome-keyring.c: strlen() returns size_t, not ssize_t
- - contrib/git-credential-gnome-keyring.c: set Gnome application name
- - contrib/git-credential-gnome-keyring.c: exit non-zero when called incorrectly
- - contrib/git-credential-gnome-keyring.c: add static where applicable
- - contrib/git-credential-gnome-keyring.c: remove unused die() function
- - contrib/git-credential-gnome-keyring.c: remove unnecessary pre-declarations
+* ak/submodule-foreach-quoting (2013-09-27) 1 commit
+  (merged to 'next' on 2013-10-14 at d77c5f1)
+ + submodule foreach: skip eval for more than one argument
 
- Cleanups and tweaks for credential handling to work with ancient versions
- of the gnome-keyring library that are still in use.
+ A behavior change, but a worthwhile one: "git submodule foreach"
+ was treating its arguments as part of a single command to be
+ concatenated and passed to a shell, making writing buggy
+ scripts too easy.
 
- This is version 1 of the series, to give it more exposure.  Waiting for
- the series to stabilize before including in 'next'.
+ This patch preserves the old "just pass it to the shell" behavior
+ when a single argument is passed to 'git submodule foreach' and
+ moves to a new "skip the shell and use the arguments passed
+ unmolested" behavior when more than one argument is passed.
+
+ The old behavior (always concatenating and passing to the shell)
+ was similar to the 'ssh' command, while the new behavior (switching
+ on the number of arguments) is what 'xterm -e' does.
+
+ May need more thought to make sure this change is advertised well
+ so that scripts that used multiple arguments but added their own
+ extra layer of quoting are not broken.
+
+* ew/keepalive (2013-10-14) 1 commit
+  (merged to 'next' on 2013-10-14 at 24d786f)
+ + http: enable keepalive on TCP sockets
 
 
-* kb/fast-hashmap (2013-09-25) 6 commits
- - fixup! diffcore-rename.c: simplify finding exact renames
- - diffcore-rename.c: use new hash map implementation
- - diffcore-rename.c: simplify finding exact renames
- - diffcore-rename.c: move code around to prepare for the next patch
- - buitin/describe.c: use new hash map implementation
- - add a hashtable implementation that supports O(1) removal
+* hu/cherry-pick-previous-branch (2013-10-10) 1 commit
+  (merged to 'next' on 2013-10-14 at 090934f)
+ + cherry-pick: handle "-" after parsing options
 
- Improvements to our hash table to get it to meet the needs of the
- msysgit fscache project, with some nice performance improvements.
- 
- Looks promising.  Needs style review and a sanity-check on the
- design before including in 'next'.  Expecting a reroll once review
- settles down.
+ "git cherry-pick" without further options would segfault.
+
+ Could use a follow-up to handle '-' after argv[1] better.
+
+
+* jc/pack-objects (2013-02-04) 1 commit
+  (merged to 'next' on 2013-10-14 at 8e8feb6)
+ + pack-objects: shrink struct object_entry
+
+
+* jc/prompt-upstream (2013-10-14) 1 commit
+  (merged to 'next' on 2013-10-14 at 270ef7b)
+ + git-prompt.sh: optionally show upstream branch name
+
+ An enhancement to the GIT_PS1_SHOWUPSTREAM facility.
+
+
+* jk/http-auth-redirects (2013-09-30) 3 commits
+  (merged to 'next' on 2013-10-14 at a0642be)
+ + http: refactor options to http_get_*
+ + http_request: factor out curlinfo_strbuf
+ + http_get_file: style fixes
+
+ Cleanups from the beginning of a larger series.
+
+
+* jl/submodule-mv (2013-10-13) 1 commit
+ - mv: Fix spurious warning when moving a file in presence of submodules
+
+ Moving a regular file in a repository with a .gitmodules file was
+ producing a warning 'Could not find section in .gitmodules where
+ path=<filename>'.
+
+ The test can use a little cleanup.  Otherwise looks good.
+
+
+* yt/shortened-rename (2013-10-13) 1 commit
+ - diff.c: keep arrow(=>) on show_stats()'s shortened filename part to make rename visible.
+
+ Expecting a reroll.
 
 --------------------------------------------------
 [Stalled]
@@ -224,13 +154,14 @@ until then, that will be very welcome.
 
 
 * mg/more-textconv (2013-05-10) 7 commits
- - grep: honor --textconv for the case rev:path
- - grep: allow to use textconv filters
- - t7008: demonstrate behavior of grep with textconv
- - cat-file: do not die on --textconv without textconv filters
- - show: honor --textconv for blobs
- - diff_opt: track whether flags have been set explicitly
- - t4030: demonstrate behavior of show with textconv
+  (merged to 'next' on 2013-10-14 at 8a12490)
+ + grep: honor --textconv for the case rev:path
+ + grep: allow to use textconv filters
+ + t7008: demonstrate behavior of grep with textconv
+ + cat-file: do not die on --textconv without textconv filters
+ + show: honor --textconv for blobs
+ + diff_opt: track whether flags have been set explicitly
+ + t4030: demonstrate behavior of show with textconv
 
  Make "git grep" and "git show" pay attention to --textconv when
  dealing with blob objects.
@@ -274,6 +205,46 @@ until then, that will be very welcome.
 
 --------------------------------------------------
 [Cooking]
+
+* bc/gnome-keyring (2013-09-23) 15 commits
+ - contrib/git-credential-gnome-keyring.c: support really ancient gnome-keyring
+ - contrib/git-credential-gnome-keyring.c: support ancient gnome-keyring
+ - contrib/git-credential-gnome-keyring.c: report failure to store password
+ - contrib/git-credential-gnome-keyring.c: use glib messaging functions
+ - contrib/git-credential-gnome-keyring.c: use glib memory allocation functions
+ - contrib/git-credential-gnome-keyring.c: use secure memory for reading passwords
+ - contrib/git-credential-gnome-keyring.c: use secure memory functions for passwds
+ - contrib/git-credential-gnome-keyring.c: use gnome helpers in keyring_object()
+ - contrib/git-credential-gnome-keyring.c: ensure buffer is non-empty before accessing
+ - contrib/git-credential-gnome-keyring.c: strlen() returns size_t, not ssize_t
+ - contrib/git-credential-gnome-keyring.c: set Gnome application name
+ - contrib/git-credential-gnome-keyring.c: exit non-zero when called incorrectly
+ - contrib/git-credential-gnome-keyring.c: add static where applicable
+ - contrib/git-credential-gnome-keyring.c: remove unused die() function
+ - contrib/git-credential-gnome-keyring.c: remove unnecessary pre-declarations
+
+ Cleanups and tweaks for credential handling to work with ancient versions
+ of the gnome-keyring library that are still in use.
+
+ This is version 1 of the series, to give it more exposure.  Waiting for
+ the series to stabilize before including in 'next'.
+
+
+* kb/fast-hashmap (2013-09-25) 6 commits
+ - fixup! diffcore-rename.c: simplify finding exact renames
+ - diffcore-rename.c: use new hash map implementation
+ - diffcore-rename.c: simplify finding exact renames
+ - diffcore-rename.c: move code around to prepare for the next patch
+ - buitin/describe.c: use new hash map implementation
+ - add a hashtable implementation that supports O(1) removal
+
+ Improvements to our hash table to get it to meet the needs of the
+ msysgit fscache project, with some nice performance improvements.
+
+ Looks promising.  Needs style review and a sanity-check on the
+ design before including in 'next'.  Expecting a reroll once review
+ settles down.
+
 
 * jc/revision-range-unpeel (2013-09-20) 2 commits
  - (possible fixup) jc/revision-range-unpeel - peel only when necessary
@@ -366,10 +337,11 @@ until then, that will be very welcome.
  Will merge to 'master'.
 
 
-* jx/relative-path-regression-fix (2013-09-20) 3 commits
+* jx/relative-path-regression-fix (2013-10-14) 3 commits
  - Use simpler relative_path when set_git_dir
- - relative_path should honor dos-driver-prefix
- - test: use unambigous leading path (/foo) for mingw
+  (merged to 'next' on 2013-10-14 at 704b9ee)
+ + relative_path should honor dos-drive-prefix
+ + test: use unambigous leading path (/foo) for MSYS
 
  Waiting for the review to settle.
 
