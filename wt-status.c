@@ -996,7 +996,8 @@ static void show_cherry_pick_in_progress(struct wt_status *s,
 					struct wt_status_state *state,
 					const char *color)
 {
-	status_printf_ln(s, color, _("You are currently cherry-picking."));
+	status_printf_ln(s, color, _("You are currently cherry-picking commit %s."),
+			find_unique_abbrev(state->cherry_pick_head_sha1, DEFAULT_ABBREV));
 	if (s->hints) {
 		if (has_unmerged(s))
 			status_printf_ln(s, color,
@@ -1169,8 +1170,10 @@ void wt_status_get_state(struct wt_status_state *state,
 			state->rebase_in_progress = 1;
 		state->branch = read_and_strip_branch("rebase-merge/head-name");
 		state->onto = read_and_strip_branch("rebase-merge/onto");
-	} else if (!stat(git_path("CHERRY_PICK_HEAD"), &st)) {
+	} else if (!stat(git_path("CHERRY_PICK_HEAD"), &st) &&
+			!get_sha1("CHERRY_PICK_HEAD", sha1)) {
 		state->cherry_pick_in_progress = 1;
+		hashcpy(state->cherry_pick_head_sha1, sha1);
 	}
 	if (!stat(git_path("BISECT_LOG"), &st)) {
 		state->bisect_in_progress = 1;

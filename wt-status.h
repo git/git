@@ -88,6 +88,7 @@ struct wt_status_state {
 	char *detached_from;
 	unsigned char detached_sha1[20];
 	unsigned char revert_head_sha1[20];
+	unsigned char cherry_pick_head_sha1[20];
 };
 
 void wt_status_prepare(struct wt_status *s);

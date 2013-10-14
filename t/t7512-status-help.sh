@@ -626,9 +626,10 @@ test_expect_success 'prepare for cherry-pick conflicts' '
 test_expect_success 'status when cherry-picking before resolving conflicts' '
 	test_when_finished "git cherry-pick --abort" &&
 	test_must_fail git cherry-pick cherry_branch_second &&
-	cat >expected <<\EOF &&
+	TO_CHERRY_PICK=$(git rev-parse --short CHERRY_PICK_HEAD) &&
+	cat >expected <<EOF &&
 On branch cherry_branch
-You are currently cherry-picking.
+You are currently cherry-picking commit $TO_CHERRY_PICK.
   (fix conflicts and run "git cherry-pick --continue")
   (use "git cherry-pick --abort" to cancel the cherry-pick operation)
 
@@ -648,11 +649,12 @@ test_expect_success 'status when cherry-picking after resolving conflicts' '
 	git reset --hard cherry_branch &&
 	test_when_finished "git cherry-pick --abort" &&
 	test_must_fail git cherry-pick cherry_branch_second &&
+	TO_CHERRY_PICK=$(git rev-parse --short CHERRY_PICK_HEAD) &&
 	echo end >main.txt &&
 	git add main.txt &&
-	cat >expected <<\EOF &&
+	cat >expected <<EOF &&
 On branch cherry_branch
-You are currently cherry-picking.
+You are currently cherry-picking commit $TO_CHERRY_PICK.
   (all conflicts fixed: run "git cherry-pick --continue")
   (use "git cherry-pick --abort" to cancel the cherry-pick operation)
 
@@ -669,7 +671,7 @@ EOF
 test_expect_success 'status showing detached at and from a tag' '
 	test_commit atag tagging &&
 	git checkout atag &&
-	cat >expected <<\EOF
+	cat >expected <<\EOF &&
 HEAD detached at atag
 nothing to commit (use -u to show untracked files)
 EOF
@@ -677,7 +679,7 @@ EOF
 	test_i18ncmp expected actual &&
 
 	git reset --hard HEAD^ &&
-	cat >expected <<\EOF
+	cat >expected <<\EOF &&
 HEAD detached from atag
 nothing to commit (use -u to show untracked files)
 EOF
@@ -695,7 +697,7 @@ test_expect_success 'status while reverting commit (conflicts)' '
 	test_commit new to-revert.txt &&
 	TO_REVERT=$(git rev-parse --short HEAD^) &&
 	test_must_fail git revert $TO_REVERT &&
-	cat >expected <<EOF
+	cat >expected <<EOF &&
 On branch master
 You are currently reverting commit $TO_REVERT.
   (fix conflicts and run "git revert --continue")
@@ -716,7 +718,7 @@ EOF
 test_expect_success 'status while reverting commit (conflicts resolved)' '
 	echo reverted >to-revert.txt &&
 	git add to-revert.txt &&
-	cat >expected <<EOF
+	cat >expected <<EOF &&
 On branch master
 You are currently reverting commit $TO_REVERT.
   (all conflicts fixed: run "git revert --continue")
@@ -735,7 +737,7 @@ EOF
 
 test_expect_success 'status after reverting commit' '
 	git revert --continue &&
-	cat >expected <<\EOF
+	cat >expected <<\EOF &&
 On branch master
 nothing to commit (use -u to show untracked files)
 EOF
