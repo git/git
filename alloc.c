@@ -58,7 +58,7 @@ static void report(const char *name, unsigned int count, size_t size)
 }
 
 #define REPORT(name)	\
-    report(#name, name##_allocs, name##_allocs*sizeof(struct name) >> 10)
+    report(#name, name##_allocs, name##_allocs * sizeof(struct name) >> 10)
 
 void alloc_report(void)
 {
