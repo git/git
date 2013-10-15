@@ -1,101 +1,24 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Oct 2013, #01; Mon, 14)
-X-master-at: 774282d16ab5aa2ec4b8bb7fa4ad83b0622ee778
-X-next-at: 8a12490ddc9ceec4537b17f1339ff3a0171a7ce4
+Subject: What's cooking in git.git (Oct 2013, #02; Mon, 14)
+X-master-at: 2b7ca916fcffafe9cfd967cce87436a9372ae969
+X-next-at: de5dd42fdd555936f677232024b1b20893279fac
 
-What's cooking in git.git (Oct 2013, #01; Mon, 14)
+What's cooking in git.git (Oct 2013, #02; Mon, 14)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-Junio is back (yay!).  Here is the state of topics in flight.  As
-usual, help moving topics forward and pointing out patches that fell
-through the cracks is appreciated.
+Tying up loose ends before the hand-off.
 
-You can find the changes described here in the integration branches at
+The changes described here are in the integration branches at
 
     https://googlers.googlesource.com/jrn/git
     git://repo.or.cz/git/jrn.git
     git://gitorious.org/git/jrn.git
     https://github.com/jrn/git
-
---------------------------------------------------
-[New Topics]
-
-* ak/submodule-foreach-quoting (2013-09-27) 1 commit
-  (merged to 'next' on 2013-10-14 at d77c5f1)
- + submodule foreach: skip eval for more than one argument
-
- A behavior change, but a worthwhile one: "git submodule foreach"
- was treating its arguments as part of a single command to be
- concatenated and passed to a shell, making writing buggy
- scripts too easy.
-
- This patch preserves the old "just pass it to the shell" behavior
- when a single argument is passed to 'git submodule foreach' and
- moves to a new "skip the shell and use the arguments passed
- unmolested" behavior when more than one argument is passed.
-
- The old behavior (always concatenating and passing to the shell)
- was similar to the 'ssh' command, while the new behavior (switching
- on the number of arguments) is what 'xterm -e' does.
-
- May need more thought to make sure this change is advertised well
- so that scripts that used multiple arguments but added their own
- extra layer of quoting are not broken.
-
-* ew/keepalive (2013-10-14) 1 commit
-  (merged to 'next' on 2013-10-14 at 24d786f)
- + http: enable keepalive on TCP sockets
-
-
-* hu/cherry-pick-previous-branch (2013-10-10) 1 commit
-  (merged to 'next' on 2013-10-14 at 090934f)
- + cherry-pick: handle "-" after parsing options
-
- "git cherry-pick" without further options would segfault.
-
- Could use a follow-up to handle '-' after argv[1] better.
-
-
-* jc/pack-objects (2013-02-04) 1 commit
-  (merged to 'next' on 2013-10-14 at 8e8feb6)
- + pack-objects: shrink struct object_entry
-
-
-* jc/prompt-upstream (2013-10-14) 1 commit
-  (merged to 'next' on 2013-10-14 at 270ef7b)
- + git-prompt.sh: optionally show upstream branch name
-
- An enhancement to the GIT_PS1_SHOWUPSTREAM facility.
-
-
-* jk/http-auth-redirects (2013-09-30) 3 commits
-  (merged to 'next' on 2013-10-14 at a0642be)
- + http: refactor options to http_get_*
- + http_request: factor out curlinfo_strbuf
- + http_get_file: style fixes
-
- Cleanups from the beginning of a larger series.
-
-
-* jl/submodule-mv (2013-10-13) 1 commit
- - mv: Fix spurious warning when moving a file in presence of submodules
-
- Moving a regular file in a repository with a .gitmodules file was
- producing a warning 'Could not find section in .gitmodules where
- path=<filename>'.
-
- The test can use a little cleanup.  Otherwise looks good.
-
-
-* yt/shortened-rename (2013-10-13) 1 commit
- - diff.c: keep arrow(=>) on show_stats()'s shortened filename part to make rename visible.
-
- Expecting a reroll.
 
 --------------------------------------------------
 [Stalled]
@@ -105,7 +28,7 @@ You can find the changes described here in the integration branches at
  - merge-recursive: untangle double meaning of o->call_depth
  - merge-recursive: remove dead conditional in update_stages()
 
- Will hold until there is a caller to learn from.
+ Holding until there is a caller to learn from.
 
 
 * jc/ref-excludes (2013-09-03) 2 commits
@@ -205,6 +128,86 @@ You can find the changes described here in the integration branches at
 
 --------------------------------------------------
 [Cooking]
+
+* ak/submodule-foreach-quoting (2013-09-27) 1 commit
+  (merged to 'next' on 2013-10-14 at d77c5f1)
+ + submodule foreach: skip eval for more than one argument
+
+ A behavior change, but a worthwhile one: "git submodule foreach"
+ was treating its arguments as part of a single command to be
+ concatenated and passed to a shell, making writing buggy
+ scripts too easy.
+
+ This patch preserves the old "just pass it to the shell" behavior
+ when a single argument is passed to 'git submodule foreach' and
+ moves to a new "skip the shell and use the arguments passed
+ unmolested" behavior when more than one argument is passed.
+
+ The old behavior (always concatenating and passing to the shell)
+ was similar to the 'ssh' command, while the new behavior (switching
+ on the number of arguments) is what 'xterm -e' does.
+
+ May need more thought to make sure this change is advertised well
+ so that scripts that used multiple arguments but added their own
+ extra layer of quoting are not broken.
+
+
+* ew/keepalive (2013-10-14) 1 commit
+  (merged to 'next' on 2013-10-14 at 24d786f)
+ + http: enable keepalive on TCP sockets
+
+ $gmane/236154 has a follow-up to do more magic with recent curl.
+
+
+* hu/cherry-pick-previous-branch (2013-10-10) 1 commit
+  (merged to 'next' on 2013-10-14 at 090934f)
+ + cherry-pick: handle "-" after parsing options
+
+ "git cherry-pick" without further options would segfault.
+
+ Could use a follow-up to handle '-' after argv[1] better.
+
+
+* jc/pack-objects (2013-02-04) 1 commit
+  (merged to 'next' on 2013-10-14 at 8e8feb6)
+ + pack-objects: shrink struct object_entry
+
+
+* jc/prompt-upstream (2013-10-14) 1 commit
+  (merged to 'next' on 2013-10-14 at 270ef7b)
+ + git-prompt.sh: optionally show upstream branch name
+
+ An enhancement to the GIT_PS1_SHOWUPSTREAM facility.
+
+
+* jk/http-auth-redirects (2013-10-14) 9 commits
+ - remote-curl: rewrite base url from info/refs redirects
+ - remote-curl: store url as a strbuf
+ - remote-curl: make refs_url a strbuf
+ - http: update base URLs when we see redirects
+ - http: provide effective url to callers
+ - http: hoist credential request out of handle_curl_result
+  (merged to 'next' on 2013-10-14 at a0642be)
+ + http: refactor options to http_get_*
+ + http_request: factor out curlinfo_strbuf
+ + http_get_file: style fixes
+
+
+* jl/submodule-mv (2013-10-13) 1 commit
+ - mv: Fix spurious warning when moving a file in presence of submodules
+
+ Moving a regular file in a repository with a .gitmodules file was
+ producing a warning 'Could not find section in .gitmodules where
+ path=<filename>'.
+
+ The test can use a little cleanup.  Otherwise looks good.
+
+
+* yt/shortened-rename (2013-10-13) 1 commit
+ - diff.c: keep arrow(=>) on show_stats()'s shortened filename part to make rename visible.
+
+ Expecting a reroll.
+
 
 * bc/gnome-keyring (2013-09-23) 15 commits
  - contrib/git-credential-gnome-keyring.c: support really ancient gnome-keyring
