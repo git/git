@@ -41,7 +41,7 @@ int decode_85(char *dst, const char *buffer, int len)
 {
 	prep_base85();
 
-	say2("decode 85 <%.*s>", len/4*5, buffer);
+	say2("decode 85 <%.*s>", len / 4 * 5, buffer);
 	while (len) {
 		unsigned acc = 0;
 		int de, cnt = 4;
