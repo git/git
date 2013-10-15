@@ -274,10 +274,10 @@ void blk_SHA1_Final(unsigned char hashout[20], blk_SHA_CTX *ctx)
 	padlen[1] = htonl((uint32_t)(ctx->size << 3));
 
 	i = ctx->size & 63;
-	blk_SHA1_Update(ctx, pad, 1+ (63 & (55 - i)));
+	blk_SHA1_Update(ctx, pad, 1 + (63 & (55 - i)));
 	blk_SHA1_Update(ctx, padlen, 8);
 
 	/* Output hash */
 	for (i = 0; i < 5; i++)
-		put_be32(hashout + i*4, ctx->H[i]);
+		put_be32(hashout + i * 4, ctx->H[i]);
 }
