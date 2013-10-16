@@ -240,18 +240,15 @@ test_expect_success 'refresh index before checking if it is up-to-date' '
 
 test_expect_success 'choking "git rm" should not let it die with cruft' '
 	git reset -q --hard &&
+	test_when_finished "rm -f .git/index.lock && git reset -q --hard" &&
 	i=0 &&
 	while test $i -lt 12000
 	do
-	    echo "100644 $_z40 0	some-file-$i"
+	    echo "100644 1234567890123456789012345678901234567890 0	some-file-$i"
 	    i=$(( $i + 1 ))
 	done | git update-index --index-info &&
-	git rm -n "some-file-*" | :;
-	test -f .git/index.lock
-	status=$?
-	rm -f .git/index.lock
-	git reset -q --hard
-	test "$status" != 0
+	git rm -n "some-file-*" | : &&
+	test_path_is_missing .git/index.lock
 '
 
 test_expect_success 'rm removes subdirectories recursively' '
