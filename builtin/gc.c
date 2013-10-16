@@ -14,6 +14,7 @@
 #include "cache.h"
 #include "parse-options.h"
 #include "run-command.h"
+#include "sigchain.h"
 #include "argv-array.h"
 
 #define FAILED_RUN "failed to run %s"
@@ -34,6 +35,21 @@ static struct argv_array reflog = ARGV_ARRAY_INIT;
 static struct argv_array repack = ARGV_ARRAY_INIT;
 static struct argv_array prune = ARGV_ARRAY_INIT;
 static struct argv_array rerere = ARGV_ARRAY_INIT;
+
+static char *pidfile;
+
+static void remove_pidfile(void)
+{
+	if (pidfile)
+		unlink(pidfile);
+}
+
+static void remove_pidfile_on_signal(int signo)
+{
+	remove_pidfile();
+	sigchain_pop(signo);
+	raise(signo);
+}
 
 static int gc_config(const char *var, const char *value, void *cb)
 {
@@ -179,6 +195,10 @@ static const char *lock_repo_for_gc(int force, pid_t* ret_pid)
 	FILE *fp;
 	int fd, should_exit;
 
+	if (pidfile)
+		/* already locked */
+		return NULL;
+
 	if (gethostname(my_host, sizeof(my_host)))
 		strcpy(my_host, "unknown");
 
@@ -218,6 +238,10 @@ static const char *lock_repo_for_gc(int force, pid_t* ret_pid)
 	write_in_full(fd, sb.buf, sb.len);
 	strbuf_release(&sb);
 	commit_lock_file(&lock);
+
+	pidfile = git_pathdup("gc.pid");
+	sigchain_push_common(remove_pidfile_on_signal);
+	atexit(remove_pidfile);
 
 	return NULL;
 }
