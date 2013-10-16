@@ -42,6 +42,11 @@ release, will keep ignoring removals, but the users who rely on this
 behaviour are encouraged to start using "git add --ignore-removal <path>"
 now before 2.0 is released.
 
+The default prefix for "git svn" will change in Git 2.0.  For a long
+time, "git svn" created its remote-tracking branches directly under
+refs/remotes, but it will place them under refs/remotes/origin/ unless
+it is told otherwise with its --prefix option.
+
 
 Updates since v1.8.4
 --------------------
@@ -70,6 +75,20 @@ Foreign interfaces, subsystems and ports.
 
 
 UI, Workflows & Features
+
+ * "git replace" helper no longer allows an object to be replaced with
+   another object of a different type to avoid confusion (you can
+   still manually craft such replacement using "git update-ref", as an
+   escape hatch).
+
+ * "git status" no longer prints dirty status information for
+   submodules for which submodule.$name.ignore is set to "all".
+
+ * "git rebase -i" honours core.abbrev when preparing the insn sheet
+   for editing.
+
+ * "git status" during a cherry-pick shows what original commit is
+   being picked.
 
  * Instead of typing four capital letters "HEAD", you can say "@" now,
    e.g. "git log @".
@@ -182,6 +201,8 @@ UI, Workflows & Features
 
 Performance, Internal Implementation, etc.
 
+ * Build procedure for MSVC has been updated.
+
  * If a build-time fallback is set to "cat" instead of "less", we
    should apply the same "no subprocess or pipe" optimization as we
    apply to user-supplied GIT_PAGER=cat.
@@ -214,6 +235,15 @@ Fixes since v1.8.4
 Unless otherwise noted, all the fixes since v1.8.4 in the maintenance
 track are contained in this release (see release notes to them for
 details).
+
+ * "git shortlog" used to choke and die when there is a malformed
+   commit (e.g. missing authors); it now simply ignore such a commit
+   and keeps going.
+   (merge cd4f09e jk/shortlog-tolerate-broken-commit later to maint).
+
+ * "git merge-recursive" did not parse its "--diff-algorithm=" command
+   line option correctly.
+   (merge 6562928 jk/diff-algo later to maint).
 
  * When running "fetch -q", a long silence while the sender side
    computes the set of objects to send can be mistaken by proxies as
