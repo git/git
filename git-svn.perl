@@ -1389,7 +1389,17 @@ sub cmd_multi_init {
 		usage(1);
 	}
 
-	$_prefix = '' unless defined $_prefix;
+	unless (defined $_prefix) {
+		$_prefix = '';
+		warn <<EOF
+WARNING: --prefix is not given, defaulting to empty prefix.
+         This is probably not what you want! In order to stay compatible
+         with regular remote-tracking refs, provide a prefix like
+         --prefix=origin/ (remember the trailing slash), which will cause
+         the SVN-tracking refs to be placed at refs/remotes/origin/*.
+NOTE: In Git v2.0, the default prefix will change from empty to 'origin/'.
+EOF
+	}
 	if (defined $url) {
 		$url = canonicalize_url($url);
 		init_subdir(@_);
@@ -1759,7 +1769,7 @@ sub get_commit_entry {
 		my $msgbuf = "";
 		while (<$msg_fh>) {
 			if (!$in_msg) {
-				$in_msg = 1 if (/^\s*$/);
+				$in_msg = 1 if (/^$/);
 				$author = $1 if (/^author (.*>)/);
 			} elsif (/^git-svn-id: /) {
 				# skip this for now, we regenerate the
