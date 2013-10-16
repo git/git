@@ -1,24 +1,79 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Oct 2013, #02; Mon, 14)
-X-master-at: 2b7ca916fcffafe9cfd967cce87436a9372ae969
-X-next-at: de5dd42fdd555936f677232024b1b20893279fac
+Subject: What's cooking in git.git (Oct 2013, #03; Wed, 16)
+X-master-at: 1d25dd416f08f39042d23340db380f28abb81962
+X-next-at: 748b636b89b812d224df614a3624ce2c0b67b367
 
-What's cooking in git.git (Oct 2013, #02; Mon, 14)
+What's cooking in git.git (Oct 2013, #03; Wed, 16)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-Tying up loose ends before the hand-off.
+I think I correctly inherited all the topics Jonathan kept track of
+during my absence (big thanks to Jonathan); if a topic that has been
+in his tree is missing please holler. I am chewing through the list
+backlog but still have a long way to go.
 
-The changes described here are in the integration branches at
+You can find the changes described here in the integration branches
+of the repositories listed at
 
-    https://googlers.googlesource.com/jrn/git
-    git://repo.or.cz/git/jrn.git
-    git://gitorious.org/git/jrn.git
-    https://github.com/jrn/git
+    http://git-blame.blogspot.com/p/git-public-repositories.html
+
+--------------------------------------------------
+[New Topics]
+
+* fc/styles (2013-10-16) 7 commits
+ - block-sha1/sha1.c: have SP around arithmetic operators
+ - base85.c: have SP around arithmetic operators
+ - archive.c: have SP around arithmetic operators
+ - alloc.c: have SP around arithmetic operators
+ - abspath.c: have SP around arithmetic operators
+ - alias: have SP around arithmetic operators
+ - C: have space around && and || operators
+
+ C coding style fixes.  The ones near the tip have not been sent to
+ the list yet (they cover the same kind of style violation as the
+ second one) and I may either send them or drop some of them if they
+ turn out to conflict with other work in flight---I still haven't
+ caught up with the backlog and do not know.
+
+
+* jk/remote-literal-string-leakfix (2013-10-15) 1 commit
+ - remote: do not copy "origin" string literal
+
+ Will merge to 'next'.
+
+
+* jk/split-broken-ident (2013-10-15) 2 commits
+ - SQUASH??? remove reverse scan to simplify the logic
+ - split_ident: parse timestamp from end of line
+
+ Make the fall-back parsing of commit objects with broken author or
+ committer lines more robust to pick up the timestamps.
+
+ Will merge to 'next', perhaps after dropping the top one.
+
+
+* sg/prompt-svn-remote-fix (2013-10-15) 1 commit
+ - bash prompt: don't use '+=' operator in show upstream code path
+
+ Bash portability fix.
+
+ Will merge to 'next'.
+
+
+* sc/doc-howto-dumb-http (2013-10-16) 1 commit
+ - doc/howto: warn about (dumb)http server document being too old
+
+ Will merge to 'next'.
+
+
+* sg/t3600-nul-sha1-fix (2013-10-16) 1 commit
+ - t3600: fix broken "choking git rm" test
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -76,24 +131,6 @@ The changes described here are in the integration branches at
  $gmane/225137
 
 
-* mg/more-textconv (2013-05-10) 7 commits
-  (merged to 'next' on 2013-10-14 at 8a12490)
- + grep: honor --textconv for the case rev:path
- + grep: allow to use textconv filters
- + t7008: demonstrate behavior of grep with textconv
- + cat-file: do not die on --textconv without textconv filters
- + show: honor --textconv for blobs
- + diff_opt: track whether flags have been set explicitly
- + t4030: demonstrate behavior of show with textconv
-
- Make "git grep" and "git show" pay attention to --textconv when
- dealing with blob objects.
-
- There was a question about how defaulting to 'git show --textconv'
- would interact with the "git show HEAD:file.c >file.c" habit.
- $gmane/221833
-
-
 * jc/format-patch (2013-04-22) 2 commits
  - format-patch: --inline-single
  - format-patch: rename "no_inline" field
@@ -129,6 +166,20 @@ The changes described here are in the integration branches at
 --------------------------------------------------
 [Cooking]
 
+* mg/more-textconv (2013-05-10) 7 commits
+  (merged to 'next' on 2013-10-14 at 8a12490)
+ + grep: honor --textconv for the case rev:path
+ + grep: allow to use textconv filters
+ + t7008: demonstrate behavior of grep with textconv
+ + cat-file: do not die on --textconv without textconv filters
+ + show: honor --textconv for blobs
+ + diff_opt: track whether flags have been set explicitly
+ + t4030: demonstrate behavior of show with textconv
+
+ Make "git grep" and "git show" pay attention to --textconv when
+ dealing with blob objects.
+
+
 * ak/submodule-foreach-quoting (2013-09-27) 1 commit
   (merged to 'next' on 2013-10-14 at d77c5f1)
  + submodule foreach: skip eval for more than one argument
@@ -152,11 +203,11 @@ The changes described here are in the integration branches at
  extra layer of quoting are not broken.
 
 
-* ew/keepalive (2013-10-14) 1 commit
+* ew/keepalive (2013-10-16) 2 commits
+  (merged to 'next' on 2013-10-16 at 56fd9f3)
+ + http: use curl's tcp keepalive if available
   (merged to 'next' on 2013-10-14 at 24d786f)
  + http: enable keepalive on TCP sockets
-
- $gmane/236154 has a follow-up to do more magic with recent curl.
 
 
 * hu/cherry-pick-previous-branch (2013-10-10) 1 commit
@@ -192,6 +243,11 @@ The changes described here are in the integration branches at
  + http_request: factor out curlinfo_strbuf
  + http_get_file: style fixes
 
+ Handle the case where http transport gets redirected during the
+ authorization request better.
+
+ Will merge to 'next'.
+
 
 * jl/submodule-mv (2013-10-13) 1 commit
  - mv: Fix spurious warning when moving a file in presence of submodules
@@ -200,16 +256,16 @@ The changes described here are in the integration branches at
  producing a warning 'Could not find section in .gitmodules where
  path=<filename>'.
 
- The test can use a little cleanup.  Otherwise looks good.
+ jrneider: "The test can use a little cleanup.  Otherwise looks good".
 
 
 * yt/shortened-rename (2013-10-13) 1 commit
  - diff.c: keep arrow(=>) on show_stats()'s shortened filename part to make rename visible.
 
- Expecting a reroll.
+ Reroll v6 hasn't been picked up yet.
 
 
-* bc/gnome-keyring (2013-09-23) 15 commits
+* bc/gnome-keyring (2013-10-16) 16 commits
  - contrib/git-credential-gnome-keyring.c: support really ancient gnome-keyring
  - contrib/git-credential-gnome-keyring.c: support ancient gnome-keyring
  - contrib/git-credential-gnome-keyring.c: report failure to store password
@@ -218,19 +274,19 @@ The changes described here are in the integration branches at
  - contrib/git-credential-gnome-keyring.c: use secure memory for reading passwords
  - contrib/git-credential-gnome-keyring.c: use secure memory functions for passwds
  - contrib/git-credential-gnome-keyring.c: use gnome helpers in keyring_object()
+ - contrib/git-credential-gnome-keyring.c: set Gnome application name
  - contrib/git-credential-gnome-keyring.c: ensure buffer is non-empty before accessing
  - contrib/git-credential-gnome-keyring.c: strlen() returns size_t, not ssize_t
- - contrib/git-credential-gnome-keyring.c: set Gnome application name
  - contrib/git-credential-gnome-keyring.c: exit non-zero when called incorrectly
  - contrib/git-credential-gnome-keyring.c: add static where applicable
+ - contrib/git-credential-gnome-keyring.c: *style* use "if ()" not "if()" etc.
  - contrib/git-credential-gnome-keyring.c: remove unused die() function
  - contrib/git-credential-gnome-keyring.c: remove unnecessary pre-declarations
 
  Cleanups and tweaks for credential handling to work with ancient versions
  of the gnome-keyring library that are still in use.
 
- This is version 1 of the series, to give it more exposure.  Waiting for
- the series to stabilize before including in 'next'.
+ Will merge to 'next'.
 
 
 * kb/fast-hashmap (2013-09-25) 6 commits
@@ -249,15 +305,12 @@ The changes described here are in the integration branches at
  settles down.
 
 
-* jc/revision-range-unpeel (2013-09-20) 2 commits
- - (possible fixup) jc/revision-range-unpeel - peel only when necessary
- - revision: do not peel tags used in range notation
+* jc/revision-range-unpeel (2013-10-15) 1 commit
+  (merged to 'next' on 2013-10-16 at d04ddfe)
+ + revision: do not peel tags used in range notation
 
  "git rev-list --objects ^v1.0^ v1.0" gave v1.0 tag itself in the
  output, but "git rev-list --objects v1.0^..v1.0" did not.
-
- Need to decide either squashing the top fixup in, or dropping it
- and then merge to 'next'.
 
 
 * tg/perf-lib-test-perf-cleanup (2013-09-19) 2 commits
@@ -296,7 +349,9 @@ The changes described here are in the integration branches at
  Will merge to 'master'.
 
 
-* po/dot-url (2013-09-13) 2 commits
+* po/dot-url (2013-10-15) 3 commits
+  (merged to 'next' on 2013-10-15 at 312d0af)
+ + doc/cli: make "dot repository" an independent bullet point
   (merged to 'next' on 2013-09-20 at 6a12786)
  + config doc: update dot-repository notes
  + doc: command line interface (cli) dot-repository dwimmery
@@ -308,13 +363,14 @@ The changes described here are in the integration branches at
 
 
 * jc/upload-pack-send-symref (2013-09-17) 7 commits
- - clone: test the new HEAD detection logic
- - connect: annotate refs with their symref information in get_remote_head()
- - connect.c: make parse_feature_value() static
- - upload-pack: send non-HEAD symbolic refs
- - upload-pack: send symbolic ref information as capability
- - upload-pack.c: do not pass confusing cb_data to mark_our_ref()
- - t5505: fix "set-head --auto with ambiguous HEAD" test
+  (merged to 'next' on 2013-10-16 at eb1ae25)
+ + clone: test the new HEAD detection logic
+ + connect: annotate refs with their symref information in get_remote_head()
+ + connect.c: make parse_feature_value() static
+ + upload-pack: send non-HEAD symbolic refs
+ + upload-pack: send symbolic ref information as capability
+ + upload-pack.c: do not pass confusing cb_data to mark_our_ref()
+ + t5505: fix "set-head --auto with ambiguous HEAD" test
 
  One long-standing flaw in the pack transfer protocol used by "git
  clone" was that there was no way to tell the other end which branch
@@ -324,7 +380,7 @@ The changes described here are in the integration branches at
  branches pointing at the same commit where the HEAD is at now
  reliably sets the initial branch in the resulting repository.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jk/clone-progress-to-stderr (2013-09-18) 3 commits
