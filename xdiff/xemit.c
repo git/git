@@ -108,7 +108,7 @@ static long def_ff(const char *rec, long len, char *buf, long sz, void *priv)
 {
 	if (len > 0 &&
 			(isalpha((unsigned char)*rec) || /* identifier? */
-			 *rec == '_' ||	/* also identifier? */
+			 *rec == '_' || /* also identifier? */
 			 *rec == '$')) { /* identifiers from VMS and other esoterico */
 		if (len > sz)
 			len = sz;

@@ -178,7 +178,7 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 
 	if (1 < opts.index_only + opts.update)
 		die("-u and -i at the same time makes no sense");
-	if ((opts.update||opts.index_only) && !opts.merge)
+	if ((opts.update || opts.index_only) && !opts.merge)
 		die("%s is meaningless without -m, --reset, or --prefix",
 		    opts.update ? "-u" : "-i");
 	if ((opts.dir && !opts.update))

@@ -322,7 +322,7 @@ int cmd_rev_list(int argc, const char **argv, const char *prefix)
 		revs.commit_format = CMIT_FMT_RAW;
 
 	if ((!revs.commits &&
-	     (!(revs.tag_objects||revs.tree_objects||revs.blob_objects) &&
+	     (!(revs.tag_objects || revs.tree_objects || revs.blob_objects) &&
 	      !revs.pending.nr)) ||
 	    revs.diff)
 		usage(rev_list_usage);
