@@ -236,6 +236,10 @@ Unless otherwise noted, all the fixes since v1.8.4 in the maintenance
 track are contained in this release (see release notes to them for
 details).
 
+ * "format-patch --from=<whom>" forgot to omit unnecessary in-body
+   from line, i.e. when <whom> is the same as the real author.
+   (merge 662cc30 jk/format-patch-from later to maint).
+
  * "git shortlog" used to choke and die when there is a malformed
    commit (e.g. missing authors); it now simply ignore such a commit
    and keeps going.
