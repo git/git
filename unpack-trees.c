@@ -1357,7 +1357,7 @@ static int icase_exists(struct unpack_trees_options *o, const char *name, int le
 {
 	const struct cache_entry *src;
 
-	src = index_name_exists(o->src_index, name, len, 1);
+	src = index_file_exists(o->src_index, name, len, 1);
 	return src && !ie_match_stat(o->src_index, src, st, CE_MATCH_IGNORE_VALID|CE_MATCH_IGNORE_SKIP_WORKTREE);
 }
 
@@ -1403,7 +1403,7 @@ static int check_ok_to_remove(const char *name, int len, int dtype,
 	 * delete this path, which is in a subdirectory that
 	 * is being replaced with a blob.
 	 */
-	result = index_name_exists(&o->result, name, len, 0);
+	result = index_file_exists(&o->result, name, len, 0);
 	if (result) {
 		if (result->ce_flags & CE_REMOVE)
 			return 0;
