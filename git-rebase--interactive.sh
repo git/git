@@ -671,7 +671,7 @@ skip_unnecessary_picks () {
 				;;
 			esac
 			;;
-		3,#*|3,)
+		3,"$comment_char"*|3,)
 			# copy comments
 			;;
 		*)
