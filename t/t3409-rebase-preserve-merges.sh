@@ -28,6 +28,8 @@ export GIT_AUTHOR_EMAIL
 #     \--A3    <-- topic2
 #      \
 #       B2     <-- origin/topic
+#
+# Clone 4 (same as Clone 3)
 
 test_expect_success 'setup for merge-preserving rebase' \
 	'echo First > A &&
@@ -64,6 +66,16 @@ test_expect_success 'setup for merge-preserving rebase' \
 		git merge --no-ff topic2
 	) &&
 
+	git clone ./. clone4 &&
+	(
+		cd clone4 &&
+		git checkout -b topic2 origin/topic &&
+		echo Sixth > A &&
+		git commit -a -m "Modify A3" &&
+		git checkout -b topic origin/topic &&
+		git merge --no-ff topic2
+	) &&
+
 	git checkout topic &&
 	echo Fourth >> B &&
 	git commit -a -m "Modify B2"
@@ -93,6 +105,17 @@ test_expect_success 'rebase -p preserves no-ff merges' '
 	git rebase -p origin/topic &&
 	test 3 = $(git rev-list --all --pretty=oneline | grep "Modify A" | wc -l) &&
 	test 1 = $(git rev-list --all --pretty=oneline | grep "Merge branch" | wc -l)
+	)
+'
+
+test_expect_success 'rebase -p ignores merge.log config' '
+	(
+	cd clone4 &&
+	git fetch &&
+	git -c merge.log=1 rebase -p origin/topic &&
+	echo >expected &&
+	git log --format="%b" -1 >current &&
+	test_cmp expected current
 	)
 '
 

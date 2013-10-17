@@ -352,8 +352,9 @@ pick_one_preserving_merges () {
 			msg_content="$(commit_message $sha1)"
 			# No point in merging the first parent, that's HEAD
 			new_parents=${new_parents# $first_parent}
+			merge_args="--no-log --no-ff"
 			if ! do_with_author output eval \
-			'git merge --no-ff $strategy_args -m "$msg_content" $new_parents'
+			'git merge $merge_args $strategy_args -m "$msg_content" $new_parents'
 			then
 				printf "%s\n" "$msg_content" > "$GIT_DIR"/MERGE_MSG
 				die_with_patch $sha1 "Error redoing merge $sha1"
