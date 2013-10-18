@@ -47,4 +47,10 @@ test_expect_success 'disambiguate checking out from a tree-ish' '
 	git diff --exit-code --quiet
 '
 
+test_expect_success 'accurate error message with more than one ref' '
+	test_must_fail git checkout HEAD master -- 2>actual &&
+	grep 2 actual &&
+	test_i18ngrep "one reference expected, 2 given" actual
+'
+
 test_done

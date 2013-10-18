@@ -872,7 +872,9 @@ static int parse_branchname_arg(int argc, const char **argv,
 	int argcount = 0;
 	unsigned char branch_rev[20];
 	const char *arg;
-	int has_dash_dash;
+	int dash_dash_pos;
+	int has_dash_dash = 0;
+	int i;
 
 	/*
 	 * case 1: git checkout <ref> -- [<paths>]
@@ -916,11 +918,20 @@ static int parse_branchname_arg(int argc, const char **argv,
 	if (!argc)
 		return 0;
 
-	if (!strcmp(argv[0], "--"))	/* case (2) */
-		return 1;
-
 	arg = argv[0];
-	has_dash_dash = (argc > 1) && !strcmp(argv[1], "--");
+	dash_dash_pos = -1;
+	for (i = 0; i < argc; i++) {
+		if (!strcmp(argv[i], "--")) {
+			dash_dash_pos = i;
+			break;
+		}
+	}
+	if (dash_dash_pos == 0)
+		return 1; /* case (2) */
+	else if (dash_dash_pos == 1)
+		has_dash_dash = 1; /* case (3) or (1) */
+	else if (dash_dash_pos >= 2)
+		die(_("only one reference expected, %d given."), dash_dash_pos);
 
 	if (!strcmp(arg, "-"))
 		arg = "@{-1}";
