@@ -884,20 +884,30 @@ static int parse_branchname_arg(int argc, const char **argv,
 	 *
 	 *   everything after the '--' must be paths.
 	 *
-	 * case 3: git checkout <something> [<paths>]
+	 * case 3: git checkout <something> [--]
 	 *
-	 *   With no paths, if <something> is a commit, that is to
-	 *   switch to the branch or detach HEAD at it.  As a special case,
-	 *   if <something> is A...B (missing A or B means HEAD but you can
-	 *   omit at most one side), and if there is a unique merge base
-	 *   between A and B, A...B names that merge base.
+	 *   (a) If <something> is a commit, that is to
+	 *       switch to the branch or detach HEAD at it.  As a special case,
+	 *       if <something> is A...B (missing A or B means HEAD but you can
+	 *       omit at most one side), and if there is a unique merge base
+	 *       between A and B, A...B names that merge base.
 	 *
-	 *   With no paths, if <something> is _not_ a commit, no -t nor -b
-	 *   was given, and there is a tracking branch whose name is
-	 *   <something> in one and only one remote, then this is a short-hand
-	 *   to fork local <something> from that remote-tracking branch.
+	 *   (b) If <something> is _not_ a commit, either "--" is present
+	 *       or <something> is not a path, no -t nor -b was given, and
+	 *       and there is a tracking branch whose name is <something>
+	 *       in one and only one remote, then this is a short-hand to
+	 *       fork local <something> from that remote-tracking branch.
 	 *
-	 *   Otherwise <something> shall not be ambiguous.
+	 *   (c) Otherwise, if "--" is present, treat it like case (1).
+	 *
+	 *   (d) Otherwise :
+	 *       - if it's a reference, treat it like case (1)
+	 *       - else if it's a path, treat it like case (2)
+	 *       - else: fail.
+	 *
+	 * case 4: git checkout <something> <paths>
+	 *
+	 *   The first argument must not be ambiguous.
 	 *   - If it's *only* a reference, treat it like case (1).
 	 *   - If it's only a path, treat it like case (2).
 	 *   - else: fail.
@@ -916,18 +926,40 @@ static int parse_branchname_arg(int argc, const char **argv,
 		arg = "@{-1}";
 
 	if (get_sha1_mb(arg, rev)) {
-		if (has_dash_dash)          /* case (1) */
-			die(_("invalid reference: %s"), arg);
-		if (dwim_new_local_branch_ok &&
-		    !check_filename(NULL, arg) &&
-		    argc == 1) {
+		/*
+		 * Either case (3) or (4), with <something> not being
+		 * a commit, or an attempt to use case (1) with an
+		 * invalid ref.
+		 *
+		 * It's likely an error, but we need to find out if
+		 * we should auto-create the branch, case (3).(b).
+		 */
+		int recover_with_dwim = dwim_new_local_branch_ok;
+
+		if (check_filename(NULL, arg) && !has_dash_dash)
+			recover_with_dwim = 0;
+		/*
+		 * Accept "git checkout foo" and "git checkout foo --"
+		 * as candidates for dwim.
+		 */
+		if (!(argc == 1 && !has_dash_dash) &&
+		    !(argc == 2 && has_dash_dash))
+			recover_with_dwim = 0;
+
+		if (recover_with_dwim) {
 			const char *remote = unique_tracking_name(arg, rev);
-			if (!remote)
-				return argcount;
-			*new_branch = arg;
-			arg = remote;
-			/* DWIMmed to create local branch */
-		} else {
+			if (remote) {
+				*new_branch = arg;
+				arg = remote;
+				/* DWIMmed to create local branch, case (3).(b) */
+			} else {
+				recover_with_dwim = 0;
+			}
+		}
+
+		if (!recover_with_dwim) {
+			if (has_dash_dash)
+				die(_("invalid reference: %s"), arg);
 			return argcount;
 		}
 	}
@@ -957,7 +989,7 @@ static int parse_branchname_arg(int argc, const char **argv,
 
 	if (!*source_tree)                   /* case (1): want a tree */
 		die(_("reference is not a tree: %s"), arg);
-	if (!has_dash_dash) {/* case (3 -> 1) */
+	if (!has_dash_dash) {/* case (3).(d) -> (1) */
 		/*
 		 * Do not complain the most common case
 		 *	git checkout branch
