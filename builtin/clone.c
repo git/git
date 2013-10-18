@@ -379,7 +379,7 @@ static void clone_local(const char *src_repo, const char *dest_repo)
 	}
 
 	if (0 <= option_verbosity)
-		printf(_("done.\n"));
+		fprintf(stderr, _("done.\n"));
 }
 
 static const char *junk_work_tree;
@@ -550,13 +550,13 @@ static void update_remote_refs(const struct ref *refs,
 	const struct ref *rm = mapped_refs;
 
 	if (check_connectivity) {
-		if (0 <= option_verbosity)
-			printf(_("Checking connectivity... "));
+		if (transport->progress)
+			fprintf(stderr, _("Checking connectivity... "));
 		if (check_everything_connected_with_transport(iterate_ref_map,
 							      0, &rm, transport))
 			die(_("remote did not send all necessary objects"));
-		if (0 <= option_verbosity)
-			printf(_("done.\n"));
+		if (transport->progress)
+			fprintf(stderr, _("done.\n"));
 	}
 
 	if (refs) {
@@ -849,9 +849,9 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 
 	if (0 <= option_verbosity) {
 		if (option_bare)
-			printf(_("Cloning into bare repository '%s'...\n"), dir);
+			fprintf(stderr, _("Cloning into bare repository '%s'...\n"), dir);
 		else
-			printf(_("Cloning into '%s'...\n"), dir);
+			fprintf(stderr, _("Cloning into '%s'...\n"), dir);
 	}
 	init_db(option_template, INIT_DB_QUIET);
 	write_config(&option_config);
@@ -884,27 +884,25 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	remote = remote_get(option_origin);
 	transport = transport_get(remote, remote->url[0]);
 
-	if (!is_local) {
-		if (!transport->get_refs_list || !transport->fetch)
-			die(_("Don't know how to clone %s"), transport->url);
+	if (!transport->get_refs_list || (!is_local && !transport->fetch))
+		die(_("Don't know how to clone %s"), transport->url);
 
-		transport_set_option(transport, TRANS_OPT_KEEP, "yes");
+	transport_set_option(transport, TRANS_OPT_KEEP, "yes");
 
-		if (option_depth)
-			transport_set_option(transport, TRANS_OPT_DEPTH,
-					     option_depth);
-		if (option_single_branch)
-			transport_set_option(transport, TRANS_OPT_FOLLOWTAGS, "1");
+	if (option_depth)
+		transport_set_option(transport, TRANS_OPT_DEPTH,
+				     option_depth);
+	if (option_single_branch)
+		transport_set_option(transport, TRANS_OPT_FOLLOWTAGS, "1");
 
-		transport_set_verbosity(transport, option_verbosity, option_progress);
+	transport_set_verbosity(transport, option_verbosity, option_progress);
 
-		if (option_upload_pack)
-			transport_set_option(transport, TRANS_OPT_UPLOADPACK,
-					     option_upload_pack);
+	if (option_upload_pack)
+		transport_set_option(transport, TRANS_OPT_UPLOADPACK,
+				     option_upload_pack);
 
-		if (transport->smart_options && !option_depth)
-			transport->smart_options->check_self_contained_and_connected = 1;
-	}
+	if (transport->smart_options && !option_depth)
+		transport->smart_options->check_self_contained_and_connected = 1;
 
 	refs = transport_get_remote_refs(transport);
 

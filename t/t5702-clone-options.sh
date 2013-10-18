@@ -19,17 +19,19 @@ test_expect_success 'clone -o' '
 
 '
 
-test_expect_success 'redirected clone' '
+test_expect_success 'redirected clone does not show progress' '
 
 	git clone "file://$(pwd)/parent" clone-redirected >out 2>err &&
-	test_must_be_empty err
+	! grep % err &&
+	test_i18ngrep ! "Checking connectivity" err
 
 '
-test_expect_success 'redirected clone -v' '
+
+test_expect_success 'redirected clone -v does show progress' '
 
 	git clone --progress "file://$(pwd)/parent" clone-redirected-progress \
 		>out 2>err &&
-	test -s err
+	grep % err
 
 '
 
