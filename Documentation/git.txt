@@ -909,6 +909,16 @@ GIT_ICASE_PATHSPECS::
 	Setting this variable to `1` will cause Git to treat all
 	pathspecs as case-insensitive.
 
+'GIT_REFLOG_ACTION'::
+	When a ref is updated, reflog entries are created to keep
+	track of the reason why the ref was updated (which is
+	typically the name of the high-level command that updated
+	the ref), in addition to the old and new values of the ref.
+	A scripted Porcelain command can use set_reflog_action
+	helper function in `git-sh-setup` to set its name to this
+	variable when it is invoked as the top level command by the
+	end user, to be recorded in the body of the reflog.
+
 
 Discussion[[Discussion]]
 ------------------------
