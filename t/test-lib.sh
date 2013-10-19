@@ -205,15 +205,6 @@ do
 	--valgrind-only=*)
 		valgrind_only=$(expr "z$1" : 'z[^=]*=\(.*\)')
 		shift ;;
-	--valgrind-parallel=*)
-		valgrind_parallel=$(expr "z$1" : 'z[^=]*=\(.*\)')
-		shift ;;
-	--valgrind-only-stride=*)
-		valgrind_only_stride=$(expr "z$1" : 'z[^=]*=\(.*\)')
-		shift ;;
-	--valgrind-only-offset=*)
-		valgrind_only_offset=$(expr "z$1" : 'z[^=]*=\(.*\)')
-		shift ;;
 	--tee)
 		shift ;; # was handled already
 	--root=*)
@@ -227,7 +218,7 @@ do
 	esac
 done
 
-if test -n "$valgrind_only" || test -n "$valgrind_only_stride"
+if test -n "$valgrind_only"
 then
 	test -z "$valgrind" && valgrind=memcheck
 	test -z "$verbose" && verbose_only="$valgrind_only"
@@ -377,9 +368,7 @@ maybe_teardown_verbose () {
 last_verbose=t
 maybe_setup_verbose () {
 	test -z "$verbose_only" && return
-	if match_pattern_list $test_count $verbose_only ||
-		{ test -n "$valgrind_only_stride" &&
-		expr $test_count "%" $valgrind_only_stride - $valgrind_only_offset = 0 >/dev/null; }
+	if match_pattern_list $test_count $verbose_only
 	then
 		exec 4>&2 3>&1
 		# Emit a delimiting blank line when going from
@@ -403,17 +392,13 @@ maybe_teardown_valgrind () {
 
 maybe_setup_valgrind () {
 	test -z "$GIT_VALGRIND" && return
-	if test -z "$valgrind_only" && test -z "$valgrind_only_stride"
+	if test -z "$valgrind_only"
 	then
 		GIT_VALGRIND_ENABLED=t
 		return
 	fi
 	GIT_VALGRIND_ENABLED=
 	if match_pattern_list $test_count $valgrind_only
-	then
-		GIT_VALGRIND_ENABLED=t
-	elif test -n "$valgrind_only_stride" &&
-		expr $test_count "%" $valgrind_only_stride - $valgrind_only_offset = 0 >/dev/null
 	then
 		GIT_VALGRIND_ENABLED=t
 	fi
@@ -568,9 +553,6 @@ test_done () {
 	esac
 }
 
-
-# Set up a directory that we can put in PATH which redirects all git
-# calls to 'valgrind git ...'.
 if test -n "$valgrind"
 then
 	make_symlink () {
@@ -618,42 +600,33 @@ then
 		make_symlink "$symlink_target" "$GIT_VALGRIND/bin/$base" || exit
 	}
 
-	# In the case of --valgrind-parallel, we only need to do the
-	# wrapping once, in the main script.  The worker children all
-	# have $valgrind_only_stride set, so we can skip based on that.
-	if test -z "$valgrind_only_stride"
-	then
-		# override all git executables in TEST_DIRECTORY/..
-		GIT_VALGRIND=$TEST_DIRECTORY/valgrind
-		mkdir -p "$GIT_VALGRIND"/bin
-		for file in $GIT_BUILD_DIR/git* $GIT_BUILD_DIR/test-*
+	# override all git executables in TEST_DIRECTORY/..
+	GIT_VALGRIND=$TEST_DIRECTORY/valgrind
+	mkdir -p "$GIT_VALGRIND"/bin
+	for file in $GIT_BUILD_DIR/git* $GIT_BUILD_DIR/test-*
+	do
+		make_valgrind_symlink $file
+	done
+	# special-case the mergetools loadables
+	make_symlink "$GIT_BUILD_DIR"/mergetools "$GIT_VALGRIND/bin/mergetools"
+	OLDIFS=$IFS
+	IFS=:
+	for path in $PATH
+	do
+		ls "$path"/git-* 2> /dev/null |
+		while read file
 		do
-			make_valgrind_symlink $file
+			make_valgrind_symlink "$file"
 		done
-		# special-case the mergetools loadables
-		make_symlink "$GIT_BUILD_DIR"/mergetools "$GIT_VALGRIND/bin/mergetools"
-		OLDIFS=$IFS
-		IFS=:
-		for path in $PATH
-		do
-			ls "$path"/git-* 2> /dev/null |
-			while read file
-			do
-				make_valgrind_symlink "$file"
-			done
-		done
-		IFS=$OLDIFS
-	fi
+	done
+	IFS=$OLDIFS
 	PATH=$GIT_VALGRIND/bin:$PATH
 	GIT_EXEC_PATH=$GIT_VALGRIND/bin
 	export GIT_VALGRIND
 	GIT_VALGRIND_MODE="$valgrind"
 	export GIT_VALGRIND_MODE
 	GIT_VALGRIND_ENABLED=t
-	if test -n "$valgrind_only" || test -n "$valgrind_only_stride"
-	then
-		GIT_VALGRIND_ENABLED=
-	fi
+	test -n "$valgrind_only" && GIT_VALGRIND_ENABLED=
 	export GIT_VALGRIND_ENABLED
 elif test -n "$GIT_TEST_INSTALLED"
 then
@@ -739,41 +712,6 @@ then
 else
 	mkdir -p "$TRASH_DIRECTORY"
 fi
-
-# Gross hack to spawn N sub-instances of the tests in parallel, and
-# summarize the results.  Note that if this is enabled, the script
-# terminates at the end of this 'if' block.
-if test -n "$valgrind_parallel"
-then
-	for i in $(test_seq 1 $valgrind_parallel)
-	do
-		root="$TRASH_DIRECTORY/vgparallel-$i"
-		mkdir "$root"
-		TEST_OUTPUT_DIRECTORY="$root" \
-			${SHELL_PATH} "$0" \
-			--root="$root" --statusprefix="[$i] " \
-			--valgrind="$valgrind" \
-			--valgrind-only-stride="$valgrind_parallel" \
-			--valgrind-only-offset="$i" &
-		pids="$pids $!"
-	done
-	trap "kill $pids" INT TERM HUP
-	wait $pids
-	trap - INT TERM HUP
-	for i in $(test_seq 1 $valgrind_parallel)
-	do
-		root="$TRASH_DIRECTORY/vgparallel-$i"
-		eval "$(cat "$root/test-results/$(basename "$0" .sh)"-*.counts |
-			sed 's/^\([a-z][a-z]*\) \([0-9][0-9]*\)/inner_\1=\2/')"
-		test_count=$(expr $test_count + $inner_total)
-		test_success=$(expr $test_success + $inner_success)
-		test_fixed=$(expr $test_fixed + $inner_fixed)
-		test_broken=$(expr $test_broken + $inner_broken)
-		test_failure=$(expr $test_failure + $inner_failed)
-	done
-	test_done
-fi
-
 # Use -P to resolve symlinks in our working directory so that the cwd
 # in subprocesses like git equals our $PWD (for pathname comparisons).
 cd -P "$TRASH_DIRECTORY" || exit 1
