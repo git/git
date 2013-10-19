@@ -210,9 +210,6 @@ do
 	--root=*)
 		root=$(expr "z$1" : 'z[^=]*=\(.*\)')
 		shift ;;
-	--statusprefix=*)
-		statusprefix=$(expr "z$1" : 'z[^=]*=\(.*\)')
-		shift ;;
 	*)
 		echo "error: unknown test option '$1'" >&2; exit 1 ;;
 	esac
@@ -320,12 +317,12 @@ trap 'die' EXIT
 
 test_ok_ () {
 	test_success=$(($test_success + 1))
-	say_color "" "${statusprefix}ok $test_count - $@"
+	say_color "" "ok $test_count - $@"
 }
 
 test_failure_ () {
 	test_failure=$(($test_failure + 1))
-	say_color error "${statusprefix}not ok $test_count - $1"
+	say_color error "not ok $test_count - $1"
 	shift
 	echo "$@" | sed -e 's/^/#	/'
 	test "$immediate" = "" || { GIT_EXIT_OK=t; exit 1; }
@@ -333,12 +330,12 @@ test_failure_ () {
 
 test_known_broken_ok_ () {
 	test_fixed=$(($test_fixed+1))
-	say_color error "${statusprefix}ok $test_count - $@ # TODO known breakage vanished"
+	say_color error "ok $test_count - $@ # TODO known breakage vanished"
 }
 
 test_known_broken_failure_ () {
 	test_broken=$(($test_broken+1))
-	say_color warn "${statusprefix}not ok $test_count - $@ # TODO known breakage"
+	say_color warn "not ok $test_count - $@ # TODO known breakage"
 }
 
 test_debug () {
@@ -462,8 +459,8 @@ test_skip () {
 			of_prereq=" of $test_prereq"
 		fi
 
-		say_color skip >&3 "${statusprefix}skipping test: $@"
-		say_color skip "${statusprefix}ok $test_count # skip $1 (missing $missing_prereq${of_prereq})"
+		say_color skip >&3 "skipping test: $@"
+		say_color skip "ok $test_count # skip $1 (missing $missing_prereq${of_prereq})"
 		: true
 		;;
 	*)
@@ -501,11 +498,11 @@ test_done () {
 
 	if test "$test_fixed" != 0
 	then
-		say_color error "${statusprefix}# $test_fixed known breakage(s) vanished; please update test(s)"
+		say_color error "# $test_fixed known breakage(s) vanished; please update test(s)"
 	fi
 	if test "$test_broken" != 0
 	then
-		say_color warn "${statusprefix}# still have $test_broken known breakage(s)"
+		say_color warn "# still have $test_broken known breakage(s)"
 	fi
 	if test "$test_broken" != 0 || test "$test_fixed" != 0
 	then
@@ -528,9 +525,9 @@ test_done () {
 		then
 			if test $test_remaining -gt 0
 			then
-				say_color pass "${statusprefix}# passed all $msg"
+				say_color pass "# passed all $msg"
 			fi
-			say "${statusprefix}1..$test_count$skip_all"
+			say "1..$test_count$skip_all"
 		fi
 
 		test -d "$remove_trash" &&
@@ -544,8 +541,8 @@ test_done () {
 	*)
 		if test $test_external_has_tap -eq 0
 		then
-			say_color error "${statusprefix}# failed $test_failure among $msg"
-			say "${statusprefix}1..$test_count"
+			say_color error "# failed $test_failure among $msg"
+			say "1..$test_count"
 		fi
 
 		exit 1 ;;
