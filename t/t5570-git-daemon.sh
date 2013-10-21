@@ -37,7 +37,7 @@ test_expect_success 'fetch changes via git protocol' '
 	test_cmp file clone/file
 '
 
-test_expect_failure 'remote detects correct HEAD' '
+test_expect_success 'remote detects correct HEAD' '
 	git push public master:other &&
 	(cd clone &&
 	 git remote set-head -d origin &&
