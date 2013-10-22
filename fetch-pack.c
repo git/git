@@ -776,6 +776,10 @@ static int get_pack(struct fetch_pack_args *args,
 		close(cmd.out);
 	}
 
+	if (!use_sideband)
+		/* Closed by start_command() */
+		xd[0] = -1;
+
 	ret = finish_command(&cmd);
 	if (!ret || (args->check_self_contained_and_connected && ret == 1))
 		args->self_contained_and_connected =

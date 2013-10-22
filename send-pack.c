@@ -300,8 +300,12 @@ int send_pack(struct send_pack_args *args,
 				shutdown(fd[0], SHUT_WR);
 			if (use_sideband)
 				finish_async(&demux);
+			fd[1] = -1;
 			return -1;
 		}
+		if (!args->stateless_rpc)
+			/* Closed by pack_objects() via start_command() */
+			fd[1] = -1;
 	}
 	if (args->stateless_rpc && cmds_sent)
 		packet_flush(out);
