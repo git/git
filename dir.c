@@ -472,15 +472,14 @@ static void *read_skip_worktree_file_from_index(const char *path, size_t *size)
 	unsigned long sz;
 	enum object_type type;
 	void *data;
-	struct index_state *istate = &the_index;
 
 	len = strlen(path);
-	pos = index_name_pos(istate, path, len);
+	pos = cache_name_pos(path, len);
 	if (pos < 0)
 		return NULL;
-	if (!ce_skip_worktree(istate->cache[pos]))
+	if (!ce_skip_worktree(active_cache[pos]))
 		return NULL;
-	data = read_sha1_file(istate->cache[pos]->sha1, &type, &sz);
+	data = read_sha1_file(active_cache[pos]->sha1, &type, &sz);
 	if (!data || type != OBJ_BLOB) {
 		free(data);
 		return NULL;
@@ -927,13 +926,13 @@ enum exist_status {
 };
 
 /*
- * Do not use the alphabetically stored index to look up
+ * Do not use the alphabetically sorted index to look up
  * the directory name; instead, use the case insensitive
  * name hash.
  */
 static enum exist_status directory_exists_in_index_icase(const char *dirname, int len)
 {
-	const struct cache_entry *ce = index_name_exists(&the_index, dirname, len + 1, ignore_case);
+	const struct cache_entry *ce = cache_name_exists(dirname, len + 1, ignore_case);
 	unsigned char endchar;
 
 	if (!ce)
@@ -1175,13 +1174,50 @@ static enum path_treatment treat_one_path(struct dir_struct *dir,
 					  int dtype, struct dirent *de)
 {
 	int exclude;
+	int has_path_in_index = !!cache_name_exists(path->buf, path->len, ignore_case);
+
 	if (dtype == DT_UNKNOWN)
 		dtype = get_dtype(de, path->buf, path->len);
 
 	/* Always exclude indexed files */
-	if (dtype != DT_DIR &&
-	    cache_name_exists(path->buf, path->len, ignore_case))
+	if (dtype != DT_DIR && has_path_in_index)
 		return path_none;
+
+	/*
+	 * When we are looking at a directory P in the working tree,
+	 * there are three cases:
+	 *
+	 * (1) P exists in the index.  Everything inside the directory P in
+	 * the working tree needs to go when P is checked out from the
+	 * index.
+	 *
+	 * (2) P does not exist in the index, but there is P/Q in the index.
+	 * We know P will stay a directory when we check out the contents
+	 * of the index, but we do not know yet if there is a directory
+	 * P/Q in the working tree to be killed, so we need to recurse.
+	 *
+	 * (3) P does not exist in the index, and there is no P/Q in the index
+	 * to require P to be a directory, either.  Only in this case, we
+	 * know that everything inside P will not be killed without
+	 * recursing.
+	 */
+	if ((dir->flags & DIR_COLLECT_KILLED_ONLY) &&
+	    (dtype == DT_DIR) &&
+	    !has_path_in_index) {
+		/*
+		 * NEEDSWORK: directory_exists_in_index_icase()
+		 * assumes that one byte past the given path is
+		 * readable and has '/', which needs to be fixed, but
+		 * until then, work it around in the caller.
+		 */
+		strbuf_addch(path, '/');
+		if (directory_exists_in_index(path->buf, path->len - 1) ==
+		    index_nonexistent) {
+			strbuf_setlen(path, path->len - 1);
+			return path_none;
+		}
+		strbuf_setlen(path, path->len - 1);
+	}
 
 	exclude = is_excluded(dir, path->buf, &dtype);
 

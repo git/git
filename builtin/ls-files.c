@@ -219,6 +219,8 @@ static void show_files(struct dir_struct *dir)
 
 	/* For cached/deleted files we don't need to even do the readdir */
 	if (show_others || show_killed) {
+		if (!show_others)
+			dir->flags |= DIR_COLLECT_KILLED_ONLY;
 		fill_directory(dir, pathspec);
 		if (show_others)
 			show_other_files(dir);
