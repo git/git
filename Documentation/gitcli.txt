@@ -59,6 +59,10 @@ working tree.  After running `git add hello.c; rm hello.c`, you will _not_
 see `hello.c` in your working tree with the former, but with the latter
 you will.
 
+ * Just as the filesystem '.' (period) refers to the current directory,
+   using a '.' as a repository name in Git (a dot-repository) is a relative
+   path and means your current repository.
+
 Here are the rules regarding the "flags" that you should follow when you are
 scripting Git:
 
