@@ -13,6 +13,7 @@ SYNOPSIS
 'git merge-base' [-a|--all] --octopus <commit>...
 'git merge-base' --is-ancestor <commit> <commit>
 'git merge-base' --independent <commit>...
+'git merge-base' --fork-point <ref> [<commit>]
 
 DESCRIPTION
 -----------
@@ -24,8 +25,8 @@ that does not have any better common ancestor is a 'best common
 ancestor', i.e. a 'merge base'.  Note that there can be more than one
 merge base for a pair of commits.
 
-OPERATION MODE
---------------
+OPERATION MODES
+---------------
 
 As the most common special case, specifying only two commits on the
 command line means computing the merge base between the given two commits.
@@ -56,6 +57,14 @@ from linkgit:git-show-branch[1] when used with the `--merge-base` option.
 	and exit with status 0 if true, or with status 1 if not.
 	Errors are signaled by a non-zero status that is not 1.
 
+--fork-point::
+	Find the point at which a branch (or any history that leads
+	to <commit>) forked from another branch (or any reference)
+	<ref>. This does not just look for the common ancestor of
+	the two commits, but also takes into account the reflog of
+	<ref> to see if the history leading to <commit> forked from
+	an earlier incarnation of the branch <ref> (see discussion
+	on this mode below).
 
 OPTIONS
 -------
@@ -136,6 +145,31 @@ In modern git, you can say this in a more direct way:
 	fi
 
 instead.
+
+Discussion on fork-point mode
+-----------------------------
+
+After working on the `topic` branch created with `git checkout -b
+topic origin/master`, the history of remote-tracking branch
+`origin/master` may have been rewound and rebuilt, leading to a
+history of this shape:
+
+			 o---B1
+			/
+	---o---o---B2--o---o---o---B (origin/master)
+		\
+		 B3
+		  \
+		   Derived (topic)
+
+where `origin/master` used to point at commits B3, B2, B1 and now it
+points at B, and your `topic` branch was started on top of it back
+when `origin/master` was at B3. This mode uses the reflog of
+`origin/master` to find B3 as the fork point, so that the `topic`
+can be rebased on top of the updated `origin/master` by:
+
+    $ fork_point=$(git merge-base --fork-point origin/master topic)
+    $ git rebase --onto origin/master $fork_point topic
 
 
 See also
