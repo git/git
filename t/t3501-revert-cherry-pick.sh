@@ -129,4 +129,16 @@ test_expect_success 'cherry-pick "-" is meaningless without checkout' '
 	)
 '
 
+test_expect_success 'cherry-pick "-" works with arguments' '
+	git checkout -b side-branch &&
+	test_commit change actual change &&
+	git checkout master &&
+	git cherry-pick -s - &&
+	echo "Signed-off-by: C O Mitter <committer@example.com>" >expect &&
+	git cat-file commit HEAD | grep ^Signed-off-by: >signoff &&
+	test_cmp expect signoff &&
+	echo change >expect &&
+	test_cmp expect actual
+'
+
 test_done
