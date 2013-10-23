@@ -88,7 +88,7 @@ test_expect_success 'fetch --prune on its own works as expected' '
 	cd "$D" &&
 	git clone . prune &&
 	cd prune &&
-	git fetch origin refs/heads/master:refs/remotes/origin/extrabranch &&
+	git update-ref refs/remotes/origin/extrabranch master &&
 
 	git fetch --prune origin &&
 	test_must_fail git rev-parse origin/extrabranch
@@ -98,7 +98,7 @@ test_expect_success 'fetch --prune with a branch name keeps branches' '
 	cd "$D" &&
 	git clone . prune-branch &&
 	cd prune-branch &&
-	git fetch origin refs/heads/master:refs/remotes/origin/extrabranch &&
+	git update-ref refs/remotes/origin/extrabranch master &&
 
 	git fetch --prune origin master &&
 	git rev-parse origin/extrabranch
@@ -117,7 +117,7 @@ test_expect_success 'fetch --prune --tags does not delete the remote-tracking br
 	cd "$D" &&
 	git clone . prune-tags &&
 	cd prune-tags &&
-	git fetch origin refs/heads/master:refs/tags/sometag &&
+	git tag sometag master &&
 
 	git fetch --prune --tags origin &&
 	git rev-parse origin/master &&
@@ -128,7 +128,7 @@ test_expect_success 'fetch --prune --tags with branch does not delete other remo
 	cd "$D" &&
 	git clone . prune-tags-branch &&
 	cd prune-tags-branch &&
-	git fetch origin refs/heads/master:refs/remotes/origin/extrabranch &&
+	git update-ref refs/remotes/origin/extrabranch master &&
 
 	git fetch --prune --tags origin master &&
 	git rev-parse origin/extrabranch
