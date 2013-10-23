@@ -165,8 +165,8 @@ static void find_non_local_tags(struct transport *transport,
 			struct ref ***tail);
 
 static struct ref *get_ref_map(struct transport *transport,
-			       struct refspec *refs, int ref_count, int tags,
-			       int *autotags)
+			       struct refspec *refspecs, int refspec_count,
+			       int tags, int *autotags)
 {
 	int i;
 	struct ref *rm;
@@ -175,12 +175,12 @@ static struct ref *get_ref_map(struct transport *transport,
 
 	const struct ref *remote_refs = transport_get_remote_refs(transport);
 
-	if (ref_count || tags == TAGS_SET) {
+	if (refspec_count || tags == TAGS_SET) {
 		struct ref **old_tail;
 
-		for (i = 0; i < ref_count; i++) {
-			get_fetch_map(remote_refs, &refs[i], &tail, 0);
-			if (refs[i].dst && refs[i].dst[0])
+		for (i = 0; i < refspec_count; i++) {
+			get_fetch_map(remote_refs, &refspecs[i], &tail, 0);
+			if (refspecs[i].dst && refspecs[i].dst[0])
 				*autotags = 1;
 		}
 		/* Merge everything on the command line, but not --tags */
