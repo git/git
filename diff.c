@@ -3219,6 +3219,9 @@ void diff_setup_done(struct diff_options *options)
 {
 	int count = 0;
 
+	if (options->set_default)
+		options->set_default(options);
+
 	if (options->output_format & DIFF_FORMAT_NAME)
 		count++;
 	if (options->output_format & DIFF_FORMAT_NAME_STATUS)
