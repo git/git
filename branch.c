@@ -203,8 +203,7 @@ static int check_tracking_branch(struct remote *remote, void *cb_data)
 	struct refspec query;
 	memset(&query, 0, sizeof(struct refspec));
 	query.dst = tracking_branch;
-	return !(remote_find_tracking(remote, &query) ||
-		 prefixcmp(query.src, "refs/heads/"));
+	return !remote_find_tracking(remote, &query);
 }
 
 static int validate_remote_tracking_branch(char *ref)

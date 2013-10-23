@@ -319,8 +319,9 @@ test_expect_success 'test tracking setup (non-wildcard, matching)' '
 
 test_expect_success 'tracking setup fails on non-matching refspec' '
 	git config remote.local.url . &&
-	git config remote.local.fetch refs/heads/s:refs/remotes/local/s &&
+	git config remote.local.fetch refs/heads/*:refs/remotes/local/* &&
 	(git show-ref -q refs/remotes/local/master || git fetch local) &&
+	git config remote.local.fetch refs/heads/s:refs/remotes/local/s &&
 	test_must_fail git branch --track my5 local/master &&
 	test_must_fail git config branch.my5.remote &&
 	test_must_fail git config branch.my5.merge
@@ -868,6 +869,41 @@ test_expect_success 'refuse --edit-description on unborn branch for now' '
 
 test_expect_success '--merged catches invalid object names' '
 	test_must_fail git branch --merged 0000000000000000000000000000000000000000
+'
+
+test_expect_success 'tracking with unexpected .fetch refspec' '
+	rm -rf a b c d &&
+	git init a &&
+	(
+		cd a &&
+		test_commit a
+	) &&
+	git init b &&
+	(
+		cd b &&
+		test_commit b
+	) &&
+	git init c &&
+	(
+		cd c &&
+		test_commit c &&
+		git remote add a ../a &&
+		git remote add b ../b &&
+		git fetch --all
+	) &&
+	git init d &&
+	(
+		cd d &&
+		git remote add c ../c &&
+		git config remote.c.fetch "+refs/remotes/*:refs/remotes/*" &&
+		git fetch c &&
+		git branch --track local/a/master remotes/a/master &&
+		test "$(git config branch.local/a/master.remote)" = "c" &&
+		test "$(git config branch.local/a/master.merge)" = "refs/remotes/a/master" &&
+		git rev-parse --verify a >expect &&
+		git rev-parse --verify local/a/master >actual &&
+		test_cmp expect actual
+	)
 '
 
 test_done
