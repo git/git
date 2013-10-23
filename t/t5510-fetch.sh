@@ -118,9 +118,13 @@ test_expect_success 'fetch --prune --tags does not delete the remote-tracking br
 	git clone . prune-tags &&
 	cd prune-tags &&
 	git tag sometag master &&
+	# Create what looks like a remote-tracking branch from an earlier
+	# fetch that has since been deleted from the remote:
+	git update-ref refs/remotes/origin/fake-remote master &&
 
 	git fetch --prune --tags origin &&
 	git rev-parse origin/master &&
+	git rev-parse origin/fake-remote &&
 	test_must_fail git rev-parse sometag
 '
 
