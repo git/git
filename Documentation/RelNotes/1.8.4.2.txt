@@ -4,6 +4,19 @@ Git v1.8.4.2 Release Notes
 Fixes since v1.8.4.1
 --------------------
 
+ * "git branch --track" had a minor regression in v1.8.3.2 and later
+   that made it impossible to base your local work on anything but a
+   local branch of the upstream repository you are tracking from.
+
+ * "git ls-files -k" needs to crawl only the part of the working tree
+   that may overlap the paths in the index to find killed files, but
+   shared code with the logic to find all the untracked files, which
+   made it unnecessarily inefficient.
+
+ * When there is no sufficient overlap between old and new history
+   during a "git fetch" into a shallow repository, objects that the
+   sending side knows the receiving end has were unnecessarily sent.
+
  * When running "fetch -q", a long silence while the sender side
    computes the set of objects to send can be mistaken by proxies as
    dropped connection.  The server side has been taught to send a
