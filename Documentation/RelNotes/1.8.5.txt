@@ -76,6 +76,10 @@ Foreign interfaces, subsystems and ports.
 
 UI, Workflows & Features
 
+ * "git grep" and "git show" pays attention to "--textconv" option
+   when these commands are told to operate on blob objects (e.g. "git
+   grep -e pattern HEAD:Makefile").
+
  * "git replace" helper no longer allows an object to be replaced with
    another object of a different type to avoid confusion (you can
    still manually craft such replacement using "git update-ref", as an
