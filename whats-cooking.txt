@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Oct 2013, #04; Fri, 18)
-X-master-at: db9bdfbeb044f73a01f6325f4ad61413666a2ce0
-X-next-at: a09e2a8521091b0cc2a18d124507050f20dee1d0
+Subject: What's cooking in git.git (Oct 2013, #05; Wed, 23)
+X-master-at: 3d092bfc6f2d9a998967979f926c661e9762601c
+X-next-at: 1c32b8d241eeeb98707f52c99ac71d905c99b673
 
-What's cooking in git.git (Oct 2013, #04; Fri, 18)
+What's cooking in git.git (Oct 2013, #05; Wed, 23)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -19,107 +19,135 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* es/name-hash-no-trailing-slash-in-dirs (2013-09-17) 4 commits
-  (merged to 'next' on 2013-09-20 at 9633d9a)
- + dir: revert work-around for retired dangerous behavior
- + name-hash: stop storing trailing '/' on paths in index_state.dir_hash
- + employ new explicit "exists in index?" API
- + name-hash: refactor polymorphic index_name_exists()
+* bc/gnome-keyring (2013-10-16) 16 commits
+  (merged to 'next' on 2013-10-18 at 25024aa)
+ + contrib/git-credential-gnome-keyring.c: support really ancient gnome-keyring
+ + contrib/git-credential-gnome-keyring.c: support ancient gnome-keyring
+ + contrib/git-credential-gnome-keyring.c: report failure to store password
+ + contrib/git-credential-gnome-keyring.c: use glib messaging functions
+ + contrib/git-credential-gnome-keyring.c: use glib memory allocation functions
+ + contrib/git-credential-gnome-keyring.c: use secure memory for reading passwords
+ + contrib/git-credential-gnome-keyring.c: use secure memory functions for passwds
+ + contrib/git-credential-gnome-keyring.c: use gnome helpers in keyring_object()
+ + contrib/git-credential-gnome-keyring.c: set Gnome application name
+ + contrib/git-credential-gnome-keyring.c: ensure buffer is non-empty before accessing
+ + contrib/git-credential-gnome-keyring.c: strlen() returns size_t, not ssize_t
+ + contrib/git-credential-gnome-keyring.c: exit non-zero when called incorrectly
+ + contrib/git-credential-gnome-keyring.c: add static where applicable
+ + contrib/git-credential-gnome-keyring.c: *style* use "if ()" not "if()" etc.
+ + contrib/git-credential-gnome-keyring.c: remove unused die() function
+ + contrib/git-credential-gnome-keyring.c: remove unnecessary pre-declarations
 
- Clean up the internal of the name-hash mechanism used to work
- around case insensitivity on some filesystems to cleanly fix a
- long-standing API glitch where the caller of cache_name_exists()
- that ask about a directory with a counted string was required to
- have '/' at one location past the end of the string.
-
-
-* jc/checkout-detach-doc (2013-09-11) 1 commit
-  (merged to 'next' on 2013-09-17 at 438cf13)
- + checkout: update synopsys and documentation on detaching HEAD
-
- "git checkout [--detach] <commit>" was listed poorly in the
- synopsis section of its documentation.
-
-
-* jc/reflog-doc (2013-06-19) 1 commit
-  (merged to 'next' on 2013-09-25 at 4eb0c14)
- + setup_reflog_action: document the rules for using GIT_REFLOG_ACTION
-
- Document rules to use GIT_REFLOG_ACTION variable in the scripted
- Porcelain.  git-rebase--interactive locally violates them, but it
- is a leaf user that does not call out to or dot-source other
- scripts, so it does not urgently need to be fixed.
+ Cleanups and tweaks for credential handling to work with ancient versions
+ of the gnome-keyring library that are still in use.
 
 
-* jk/clone-progress-to-stderr (2013-09-18) 3 commits
-  (merged to 'next' on 2013-09-25 at 137af9e)
- + clone: always set transport options
- + clone: treat "checking connectivity" like other progress
- + clone: send diagnostic messages to stderr
+* hu/cherry-pick-previous-branch (2013-10-10) 1 commit
+  (merged to 'next' on 2013-10-14 at 090934f)
+ + cherry-pick: handle "-" after parsing options
 
- Some progress and diagnostic messages from "git clone" were
- incorrectly sent to the standard output stream, not to the standard
- error stream.
+ "git cherry-pick" without further options would segfault.
+
+ Could use a follow-up to handle '-' after argv[1] better.
 
 
-* jk/format-patch-from (2013-09-20) 1 commit
-  (merged to 'next' on 2013-09-20 at 0506530)
- + format-patch: print in-body "From" only when needed
-
- "format-patch --from=<whom>" forgot to omit unnecessary in-body
- from line, i.e. when <whom> is the same as the real author.
+* jc/pack-objects (2013-02-04) 1 commit
+  (merged to 'next' on 2013-10-14 at 8e8feb6)
+ + pack-objects: shrink struct object_entry
 
 
-* jk/trailing-slash-in-pathspec (2013-09-13) 2 commits
-  (merged to 'next' on 2013-09-17 at 18fe277)
- + reset: handle submodule with trailing slash
- + rm: re-use parse_pathspec's trailing-slash removal
+* jc/prompt-upstream (2013-10-14) 1 commit
+  (merged to 'next' on 2013-10-14 at 270ef7b)
+ + git-prompt.sh: optionally show upstream branch name
 
- Code refactoring.
-
-
-* lc/filter-branch-too-many-refs (2013-09-12) 1 commit
-  (merged to 'next' on 2013-09-17 at 31cd01a)
- + Allow git-filter-branch to process large repositories with lots of branches.
-
- "git filter-branch" in a repository with many refs blew limit of
- command line length.
+ An enhancement to the GIT_PS1_SHOWUPSTREAM facility.
 
 
-* sb/repack-in-c (2013-09-17) 3 commits
-  (merged to 'next' on 2013-09-25 at 7c47036)
- + repack: improve warnings about failure of renaming and removing files
- + repack: retain the return value of pack-objects
- + repack: rewrite the shell script in C
+* mg/more-textconv (2013-05-10) 7 commits
+  (merged to 'next' on 2013-10-14 at 8a12490)
+ + grep: honor --textconv for the case rev:path
+ + grep: allow to use textconv filters
+ + t7008: demonstrate behavior of grep with textconv
+ + cat-file: do not die on --textconv without textconv filters
+ + show: honor --textconv for blobs
+ + diff_opt: track whether flags have been set explicitly
+ + t4030: demonstrate behavior of show with textconv
 
- Rerolled, and I think it is in a reasonably good shape.
+ Make "git grep" and "git show" pay attention to --textconv when
+ dealing with blob objects.
+
+
+* po/dot-url (2013-10-15) 3 commits
+  (merged to 'next' on 2013-10-15 at 312d0af)
+ + doc/cli: make "dot repository" an independent bullet point
+  (merged to 'next' on 2013-09-20 at 6a12786)
+ + config doc: update dot-repository notes
+ + doc: command line interface (cli) dot-repository dwimmery
+
+ Explain how '.' can be used to refer to the "current repository"
+ in the documentation.
 
 --------------------------------------------------
 [New Topics]
 
-* mm/checkout-auto-track-fix (2013-10-18) 2 commits
- - checkout: proper error message on 'git checkout foo bar --'
- - checkout: allow dwim for branch creation for "git checkout $branch --"
+* ap/remote-hg-unquote-cquote (2013-10-23) 1 commit
+ - remote-hg: unquote C-style paths when exporting
 
- "git checkout topic", when there is not yet a local "topic" branch
- but there is a unique remote-tracking branch for a remote "topic"
- branch, pretended as if "git checkout -t -b topic remote/$r/topic"
- (for that unique remote $r) was run. This hack however was not
- implemented for "git checkout topic --".
+ A fast-import stream expresses a pathname with funny characters by
+ quoting them in C style; remote-hg remote helper forgot to unquote
+ such a path.
 
  Will merge to 'next'.
 
 
-* hn/log-graph-color-octopus (2013-10-18) 1 commit
- - graph: fix coloring around octopus merges
+* jl/pack-transfer-avoid-double-close (2013-10-23) 1 commit
+ - Clear fd after closing to avoid double-close error
+
+ The codepath that send_pack() calls pack_objects() mistakenly
+ closed the same file descriptor twice, leading to potentially
+ closing a wrong file descriptor that was opened in the meantime.
+
+ Will merge to 'next'.
+ Needs to be merged later to 'maint'.
+
+
+* nd/magic-pathspec (2013-10-22) 1 commit
+ - Fix calling parse_pathspec with no paths nor PATHSPEC_PREFER_* flags
+
+ All callers to parse_pathspec() must choose between getting no
+ pathspec or one path that is limited to the current directory
+ when there is no paths given on the command line, but there were
+ two callers that violated this rule, triggering a BUG().
 
  Will merge to 'next'.
 
 
-* nd/gc-lock-against-each-other (2013-10-18) 1 commit
- - gc: remove gc.pid file at end of execution
+* sb/git-svn-docs-indent-with-ht (2013-10-22) 1 commit
+ - git-svn docs: Use tabs consistently within the ascii doc
 
  Will merge to 'next'.
+
+
+* tr/gitk-doc-update (2013-10-22) 1 commit
+ - Documentation: revamp gitk(1)
+
+ Will merge to 'next'.
+
+
+* tr/valgrind-test-fix (2013-10-22) 2 commits
+ - Revert "test-lib: allow prefixing a custom string before "ok N" etc."
+ - Revert "test-lib: support running tests under valgrind in parallel"
+
+ Will merge to 'next'.
+
+
+* sb/repack-in-c (2013-10-22) 1 commit
+  (merged to 'next' on 2013-10-23 at 5d7ac72)
+ + Reword repack documentation to no longer state it's a script
+
+ Finishing touches to update documentation.
+
+ Will merge to 'master'.
 
 --------------------------------------------------
 [Stalled]
@@ -141,6 +169,27 @@ of the repositories listed at
 
  The new text needs to go somewhere in the body of the document,
  not before the title line.
+
+
+* tg/perf-lib-test-perf-cleanup (2013-09-19) 2 commits
+ - perf-lib: add test_perf_cleanup target
+ - perf-lib: split starting the test from the execution
+
+ Add test_perf_cleanup shell function to the perf suite, that allows
+ the script writers to define a test with a clean-up action.
+
+ Holding until needed.
+
+
+* yt/shortened-rename (2013-10-18) 2 commits
+ - SQUASH??? style fixes and s/omit/shorten/ where appropriate
+ - diff.c: keep arrow(=>) on show_stats()'s shortened filename part to make rename visible
+
+ Attempts to give more weight on the fact that a filepair represents
+ a rename than showing substring of the actual path when diffstat
+ lines are not wide enough.
+
+ I am not sure if that is solving a right problem, though.
 
 
 * tr/merge-recursive-index-only (2013-07-07) 3 commits
@@ -231,6 +280,31 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* mm/checkout-auto-track-fix (2013-10-18) 2 commits
+ - checkout: proper error message on 'git checkout foo bar --'
+ - checkout: allow dwim for branch creation for "git checkout $branch --"
+
+ "git checkout topic", when there is not yet a local "topic" branch
+ but there is a unique remote-tracking branch for a remote "topic"
+ branch, pretended as if "git checkout -t -b topic remote/$r/topic"
+ (for that unique remote $r) was run. This hack however was not
+ implemented for "git checkout topic --".
+
+ Will merge to 'next'.
+
+
+* hn/log-graph-color-octopus (2013-10-18) 1 commit
+ - graph: fix coloring around octopus merges
+
+ Will merge to 'next'.
+
+
+* nd/gc-lock-against-each-other (2013-10-18) 1 commit
+ - gc: remove gc.pid file at end of execution
+
+ Will merge to 'next'.
+
+
 * fc/styles (2013-10-16) 7 commits
  - block-sha1/sha1.c: have SP around arithmetic operators
  - base85.c: have SP around arithmetic operators
@@ -242,9 +316,9 @@ of the repositories listed at
 
  C coding style fixes.  The ones near the tip have not been sent to
  the list yet (they cover the same kind of style violation as the
- second one) and I may either send them or drop some of them if they
- turn out to conflict with other work in flight---I still haven't
- caught up with the backlog and do not know.
+ second one) and I should send them to the list.
+
+ Will merge to 'next'.
 
 
 * jk/remote-literal-string-leakfix (2013-10-15) 1 commit
@@ -279,22 +353,6 @@ of the repositories listed at
  Will merge to 'next'.
 
 
-* mg/more-textconv (2013-05-10) 7 commits
-  (merged to 'next' on 2013-10-14 at 8a12490)
- + grep: honor --textconv for the case rev:path
- + grep: allow to use textconv filters
- + t7008: demonstrate behavior of grep with textconv
- + cat-file: do not die on --textconv without textconv filters
- + show: honor --textconv for blobs
- + diff_opt: track whether flags have been set explicitly
- + t4030: demonstrate behavior of show with textconv
-
- Make "git grep" and "git show" pay attention to --textconv when
- dealing with blob objects.
-
- Will merge to 'master'.
-
-
 * ak/submodule-foreach-quoting (2013-09-27) 1 commit
   (merged to 'next' on 2013-10-14 at d77c5f1)
  + submodule foreach: skip eval for more than one argument
@@ -317,39 +375,14 @@ of the repositories listed at
  so that scripts that used multiple arguments but added their own
  extra layer of quoting are not broken.
 
+ Will cook in 'next' for the rest of this cycle.
+
 
 * ew/keepalive (2013-10-16) 2 commits
   (merged to 'next' on 2013-10-16 at 56fd9f3)
  + http: use curl's tcp keepalive if available
   (merged to 'next' on 2013-10-14 at 24d786f)
  + http: enable keepalive on TCP sockets
-
- Will merge to 'master'.
-
-
-* hu/cherry-pick-previous-branch (2013-10-10) 1 commit
-  (merged to 'next' on 2013-10-14 at 090934f)
- + cherry-pick: handle "-" after parsing options
-
- "git cherry-pick" without further options would segfault.
-
- Could use a follow-up to handle '-' after argv[1] better.
-
- Will merge to 'master'.
-
-
-* jc/pack-objects (2013-02-04) 1 commit
-  (merged to 'next' on 2013-10-14 at 8e8feb6)
- + pack-objects: shrink struct object_entry
-
- Will merge to 'master'.
-
-
-* jc/prompt-upstream (2013-10-14) 1 commit
-  (merged to 'next' on 2013-10-14 at 270ef7b)
- + git-prompt.sh: optionally show upstream branch name
-
- An enhancement to the GIT_PS1_SHOWUPSTREAM facility.
 
  Will merge to 'master'.
 
@@ -382,44 +415,7 @@ of the repositories listed at
  Will merge to 'next'.
 
 
-* yt/shortened-rename (2013-10-18) 2 commits
- - SQUASH??? style fixes and s/omit/shorten/ where appropriate
- - diff.c: keep arrow(=>) on show_stats()'s shortened filename part to make rename visible
-
- Attempts to give more weight on the fact that a filepair represents
- a rename than showing substring of the actual path when diffstat
- lines are not wide enough.
-
- I am not sure if that is solving a right problem, though.
-
-
-* bc/gnome-keyring (2013-10-16) 16 commits
-  (merged to 'next' on 2013-10-18 at 25024aa)
- + contrib/git-credential-gnome-keyring.c: support really ancient gnome-keyring
- + contrib/git-credential-gnome-keyring.c: support ancient gnome-keyring
- + contrib/git-credential-gnome-keyring.c: report failure to store password
- + contrib/git-credential-gnome-keyring.c: use glib messaging functions
- + contrib/git-credential-gnome-keyring.c: use glib memory allocation functions
- + contrib/git-credential-gnome-keyring.c: use secure memory for reading passwords
- + contrib/git-credential-gnome-keyring.c: use secure memory functions for passwds
- + contrib/git-credential-gnome-keyring.c: use gnome helpers in keyring_object()
- + contrib/git-credential-gnome-keyring.c: set Gnome application name
- + contrib/git-credential-gnome-keyring.c: ensure buffer is non-empty before accessing
- + contrib/git-credential-gnome-keyring.c: strlen() returns size_t, not ssize_t
- + contrib/git-credential-gnome-keyring.c: exit non-zero when called incorrectly
- + contrib/git-credential-gnome-keyring.c: add static where applicable
- + contrib/git-credential-gnome-keyring.c: *style* use "if ()" not "if()" etc.
- + contrib/git-credential-gnome-keyring.c: remove unused die() function
- + contrib/git-credential-gnome-keyring.c: remove unnecessary pre-declarations
-
- Cleanups and tweaks for credential handling to work with ancient versions
- of the gnome-keyring library that are still in use.
-
- Will merge to 'master'.
-
-
-* kb/fast-hashmap (2013-10-18) 12 commits
- - SQUASH??? submodule.c: do not use ce after it gets freed by remove-cache-entry
+* kb/fast-hashmap (2013-10-22) 12 commits
  - remove old hash.[ch] implementation
  - read-cache.c: fix memory leaks caused by removed cache entries
  - name-hash.c: remove cache entries instead of marking them CE_UNHASHED
@@ -431,12 +427,16 @@ of the repositories listed at
  - diffcore-rename.c: move code around to prepare for the next patch
  - buitin/describe.c: use new hash map implementation
  - add a hashtable implementation that supports O(1) removal
+ - submodule: don't access the .gitmodules cache entry after removing it
 
  Improvements to our hash table to get it to meet the needs of the
  msysgit fscache project, with some nice performance improvements.
 
- Replaced with a newer reroll; the tip one needs to be replaced with
- the version from Jens and should come before any of them.
+ The preparatory clean-up to submodule from Jens is at the bottom. I
+ also squashed in a fix-up by Karsten found at $gmane/236468 (please
+ double-check the result).
+
+ Will merge to 'next'.
 
 
 * jc/revision-range-unpeel (2013-10-15) 1 commit
@@ -449,30 +449,11 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* tg/perf-lib-test-perf-cleanup (2013-09-19) 2 commits
- - perf-lib: add test_perf_cleanup target
- - perf-lib: split starting the test from the execution
-
- Add test_perf_cleanup shell function to the perf suite, that allows
- the script writers to define a test with a clean-up action.
-
- Holding until needed.
-
-
-* po/dot-url (2013-10-15) 3 commits
-  (merged to 'next' on 2013-10-15 at 312d0af)
- + doc/cli: make "dot repository" an independent bullet point
-  (merged to 'next' on 2013-09-20 at 6a12786)
- + config doc: update dot-repository notes
- + doc: command line interface (cli) dot-repository dwimmery
-
- Explain how '.' can be used to refer to the "current repository"
- in the documentation.
-
- Will merge to 'master'.
-
-
-* jc/upload-pack-send-symref (2013-09-17) 7 commits
+* jc/upload-pack-send-symref (2013-10-22) 10 commits
+  (merged to 'next' on 2013-10-23 at 8ef5660)
+ + t5570: Update for clone-progress-to-stderr branch
+ + Merge branch 'jk/clone-progress-to-stderr' into jc/upload-pack-send-symref
+ + t5570: Update for symref capability
   (merged to 'next' on 2013-10-16 at eb1ae25)
  + clone: test the new HEAD detection logic
  + connect: annotate refs with their symref information in get_remote_head()
@@ -506,19 +487,19 @@ of the repositories listed at
 * jn/add-2.0-u-A-sans-pathspec (2013-04-26) 1 commit
  - git add: -u/-A now affects the entire working tree
 
- Will cook in 'next' until Git 2.0.
+ Will merge to and cook in 'next' until Git 2.0.
 
 
 * jc/core-checkstat-2.0 (2013-05-06) 1 commit
  - core.statinfo: remove as promised in Git 2.0
 
- Will cook in 'next' until Git 2.0.
+ Will merge to and cook in 'next' until Git 2.0.
 
 
 * jc/push-2.0-default-to-simple (2013-06-18) 1 commit
  - push: switch default from "matching" to "simple"
 
- Will cook in 'next' until Git 2.0.
+ Will merge to and cook in 'next' until Git 2.0.
 
 
 * jc/add-2.0-ignore-removal (2013-04-22) 1 commit
@@ -527,26 +508,10 @@ of the repositories listed at
  Updated endgame for "git add <pathspec>" that defaults to "--all"
  aka "--no-ignore-removal".
 
- Will cook in 'next' until Git 2.0.
+ Will merge to and cook in 'next' until Git 2.0.
 
 
 * jc/hold-diff-remove-q-synonym-for-no-deletion (2013-07-19) 1 commit
  - diff: remove "diff-files -q" in a version of Git in a distant future
 
- Will cook in 'next' until a distant future.
-
---------------------------------------------------
-[Discarded]
-
-* jc/pull-training-wheel (2013-07-19) 1 commit
-  (merged to 'next' on 2013-08-28 at c39bd15)
- + pull: require choice between rebase/merge on non-fast-forward pull
-
- Make "git pull" (without arguments that say what branch to
- integrate from where) refuse with "it does not fast forward; choose
- between 'pull --merge' and 'pull --rebase'".
-
- This topic has been reverted from 'next'.  Will wait for the
- conclusion of the discussion to seek a more user-friendly
- alternative; it is likely that it will be based on the simpler
- approach Felipe posted earlier.
+ Will merge to and cook in 'next' until a distant future.
