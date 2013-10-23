@@ -121,7 +121,7 @@ test_expect_success 'fetch --prune --tags does not delete the remote-tracking br
 
 	git fetch --prune --tags origin &&
 	git rev-parse origin/master &&
-	test_must_fail git rev-parse somebranch
+	test_must_fail git rev-parse sometag
 '
 
 test_expect_success 'fetch --prune --tags with branch does not delete other remote-tracking branches' '
