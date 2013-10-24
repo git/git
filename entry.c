@@ -237,16 +237,19 @@ static int check_path(const char *path, int len, struct stat *st, int skiplen)
 int checkout_entry(struct cache_entry *ce,
 		   const struct checkout *state, char *topath)
 {
-	static char path[PATH_MAX + 1];
+	static struct strbuf path_buf = STRBUF_INIT;
+	char *path;
 	struct stat st;
-	int len = state->base_dir_len;
+	int len;
 
 	if (topath)
 		return write_entry(ce, topath, state, 1);
 
-	memcpy(path, state->base_dir, len);
-	strcpy(path + len, ce->name);
-	len += ce_namelen(ce);
+	strbuf_reset(&path_buf);
+	strbuf_add(&path_buf, state->base_dir, state->base_dir_len);
+	strbuf_add(&path_buf, ce->name, ce_namelen(ce));
+	path = path_buf.buf;
+	len = path_buf.len;
 
 	if (!check_path(path, len, &st, state->base_dir_len)) {
 		unsigned changed = ce_match_stat(ce, &st, CE_MATCH_IGNORE_VALID|CE_MATCH_IGNORE_SKIP_WORKTREE);
