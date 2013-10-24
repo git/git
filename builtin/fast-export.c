@@ -286,7 +286,7 @@ static void handle_commit(struct commit *commit, struct rev_info *rev)
 
 	rev->diffopt.output_format = DIFF_FORMAT_CALLBACK;
 
-	parse_commit(commit);
+	parse_commit_or_die(commit);
 	author = strstr(commit->buffer, "\nauthor ");
 	if (!author)
 		die ("Could not find author in commit %s",
@@ -307,7 +307,7 @@ static void handle_commit(struct commit *commit, struct rev_info *rev)
 	if (commit->parents &&
 	    get_object_mark(&commit->parents->item->object) != 0 &&
 	    !full_tree) {
-		parse_commit(commit->parents->item);
+		parse_commit_or_die(commit->parents->item);
 		diff_tree_sha1(commit->parents->item->tree->object.sha1,
 			       commit->tree->object.sha1, "", &rev->diffopt);
 	}

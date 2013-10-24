@@ -796,7 +796,7 @@ static int switch_branches(const struct checkout_opts *opts,
 		new->commit = old.commit;
 		if (!new->commit)
 			die(_("You are on a branch yet to be born"));
-		parse_commit(new->commit);
+		parse_commit_or_die(new->commit);
 	}
 
 	ret = merge_working_tree(opts, &old, new, &writeout_error);
@@ -959,7 +959,7 @@ static int parse_branchname_arg(int argc, const char **argv,
 		/* not a commit */
 		*source_tree = parse_tree_indirect(rev);
 	} else {
-		parse_commit(new->commit);
+		parse_commit_or_die(new->commit);
 		*source_tree = new->commit->tree;
 	}
 
