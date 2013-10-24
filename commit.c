@@ -79,7 +79,7 @@ struct commit *lookup_commit_reference_by_name(const char *name)
 	if (get_sha1_committish(name, sha1))
 		return NULL;
 	commit = lookup_commit_reference(sha1);
-	if (!commit || parse_commit(commit))
+	if (parse_commit(commit))
 		return NULL;
 	return commit;
 }

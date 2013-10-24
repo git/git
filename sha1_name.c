@@ -582,8 +582,6 @@ static int get_parent(const char *name, int len,
 	if (ret)
 		return ret;
 	commit = lookup_commit_reference(sha1);
-	if (!commit)
-		return -1;
 	if (parse_commit(commit))
 		return -1;
 	if (!idx) {
