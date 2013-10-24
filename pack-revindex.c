@@ -16,11 +16,6 @@
  * get the object sha1 from the main index.
  */
 
-struct pack_revindex {
-	struct packed_git *p;
-	struct revindex_entry *revindex;
-};
-
 static struct pack_revindex *pack_revindex;
 static int pack_revindex_hashsz;
 
@@ -201,15 +196,14 @@ static void create_pack_revindex(struct pack_revindex *rix)
 	sort_revindex(rix->revindex, num_ent, p->pack_size);
 }
 
-struct revindex_entry *find_pack_revindex(struct packed_git *p, off_t ofs)
+struct pack_revindex *revindex_for_pack(struct packed_git *p)
 {
 	int num;
-	unsigned lo, hi;
 	struct pack_revindex *rix;
-	struct revindex_entry *revindex;
 
 	if (!pack_revindex_hashsz)
 		init_pack_revindex();
+
 	num = pack_revindex_ix(p);
 	if (num < 0)
 		die("internal error: pack revindex fubar");
@@ -217,21 +211,39 @@ struct revindex_entry *find_pack_revindex(struct packed_git *p, off_t ofs)
 	rix = &pack_revindex[num];
 	if (!rix->revindex)
 		create_pack_revindex(rix);
-	revindex = rix->revindex;
 
-	lo = 0;
-	hi = p->num_objects + 1;
+	return rix;
+}
+
+int find_revindex_position(struct pack_revindex *pridx, off_t ofs)
+{
+	int lo = 0;
+	int hi = pridx->p->num_objects + 1;
+	struct revindex_entry *revindex = pridx->revindex;
+
 	do {
 		unsigned mi = lo + (hi - lo) / 2;
 		if (revindex[mi].offset == ofs) {
-			return revindex + mi;
+			return mi;
 		} else if (ofs < revindex[mi].offset)
 			hi = mi;
 		else
 			lo = mi + 1;
 	} while (lo < hi);
+
 	error("bad offset for revindex");
-	return NULL;
+	return -1;
+}
+
+struct revindex_entry *find_pack_revindex(struct packed_git *p, off_t ofs)
+{
+	struct pack_revindex *pridx = revindex_for_pack(p);
+	int pos = find_revindex_position(pridx, ofs);
+
+	if (pos < 0)
+		return NULL;
+
+	return pridx->revindex + pos;
 }
 
 void discard_revindex(void)
