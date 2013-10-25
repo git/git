@@ -263,6 +263,17 @@ sub get_empty_tree {
 	return '4b825dc642cb6eb9a060e54bf8d69288fbee4904';
 }
 
+sub get_diff_reference {
+	my $ref = shift;
+	if (defined $ref and $ref ne 'HEAD') {
+		return $ref;
+	} elsif (is_initial_commit()) {
+		return get_empty_tree();
+	} else {
+		return 'HEAD';
+	}
+}
+
 # Returns list of hashes, contents of each of which are:
 # VALUE:	pathname
 # BINARY:	is a binary path
@@ -286,14 +297,7 @@ sub list_modified {
 		return if (!@tracked);
 	}
 
-	my $reference;
-	if (defined $patch_mode_revision and $patch_mode_revision ne 'HEAD') {
-		$reference = $patch_mode_revision;
-	} elsif (is_initial_commit()) {
-		$reference = get_empty_tree();
-	} else {
-		$reference = 'HEAD';
-	}
+	my $reference = get_diff_reference($patch_mode_revision);
 	for (run_cmd_pipe(qw(git diff-index --cached
 			     --numstat --summary), $reference,
 			     '--', @tracked)) {
@@ -737,7 +741,7 @@ sub parse_diff {
 		splice @diff_cmd, 1, 0, "--diff-algorithm=${diff_algorithm}";
 	}
 	if (defined $patch_mode_revision) {
-		push @diff_cmd, $patch_mode_revision;
+		push @diff_cmd, get_diff_reference($patch_mode_revision);
 	}
 	my @diff = run_cmd_pipe("git", @diff_cmd, "--", $path);
 	my @colored = ();
