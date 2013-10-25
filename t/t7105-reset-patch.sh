@@ -25,15 +25,17 @@ test_expect_success PERL 'saying "n" does nothing' '
 '
 
 test_expect_success PERL 'git reset -p' '
-	(echo n; echo y) | git reset -p &&
+	(echo n; echo y) | git reset -p >output &&
 	verify_state dir/foo work head &&
-	verify_saved_state bar
+	verify_saved_state bar &&
+	test_i18ngrep "Unstage" output
 '
 
 test_expect_success PERL 'git reset -p HEAD^' '
-	(echo n; echo y) | git reset -p HEAD^ &&
+	(echo n; echo y) | git reset -p HEAD^ >output &&
 	verify_state dir/foo work parent &&
-	verify_saved_state bar
+	verify_saved_state bar &&
+	test_i18ngrep "Apply" output
 '
 
 # The idea in the rest is that bar sorts first, so we always say 'y'

@@ -37,11 +37,12 @@ test_expect_success PERL 'reset -p' '
 	rm .git/index &&
 	git add a &&
 	echo y >yes &&
-	git reset -p <yes &&
+	git reset -p <yes >output &&
 
 	>expect &&
 	git ls-files >actual &&
-	test_cmp expect actual
+	test_cmp expect actual &&
+	test_i18ngrep "Unstage" output
 '
 
 test_expect_success 'reset --soft is a no-op' '

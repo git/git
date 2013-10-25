@@ -304,7 +304,7 @@ int cmd_reset(int argc, const char **argv, const char *prefix)
 	if (patch_mode) {
 		if (reset_type != NONE)
 			die(_("--patch is incompatible with --{hard,mixed,soft}"));
-		return run_add_interactive(sha1_to_hex(sha1), "--patch=reset", &pathspec);
+		return run_add_interactive(rev, "--patch=reset", &pathspec);
 	}
 
 	/* git reset tree [--] paths... can be used to
