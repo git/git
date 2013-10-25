@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Oct 2013, #05; Wed, 23)
+Subject: What's cooking in git.git (Oct 2013, #06; Fri, 25)
 X-master-at: 3d092bfc6f2d9a998967979f926c661e9762601c
-X-next-at: 1c32b8d241eeeb98707f52c99ac71d905c99b673
+X-next-at: 4bebb6611df42b82d24d2e1efd8b270ca0779f33
 
-What's cooking in git.git (Oct 2013, #05; Wed, 23)
+What's cooking in git.git (Oct 2013, #06; Fri, 25)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -17,151 +17,153 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* bc/gnome-keyring (2013-10-16) 16 commits
-  (merged to 'next' on 2013-10-18 at 25024aa)
- + contrib/git-credential-gnome-keyring.c: support really ancient gnome-keyring
- + contrib/git-credential-gnome-keyring.c: support ancient gnome-keyring
- + contrib/git-credential-gnome-keyring.c: report failure to store password
- + contrib/git-credential-gnome-keyring.c: use glib messaging functions
- + contrib/git-credential-gnome-keyring.c: use glib memory allocation functions
- + contrib/git-credential-gnome-keyring.c: use secure memory for reading passwords
- + contrib/git-credential-gnome-keyring.c: use secure memory functions for passwds
- + contrib/git-credential-gnome-keyring.c: use gnome helpers in keyring_object()
- + contrib/git-credential-gnome-keyring.c: set Gnome application name
- + contrib/git-credential-gnome-keyring.c: ensure buffer is non-empty before accessing
- + contrib/git-credential-gnome-keyring.c: strlen() returns size_t, not ssize_t
- + contrib/git-credential-gnome-keyring.c: exit non-zero when called incorrectly
- + contrib/git-credential-gnome-keyring.c: add static where applicable
- + contrib/git-credential-gnome-keyring.c: *style* use "if ()" not "if()" etc.
- + contrib/git-credential-gnome-keyring.c: remove unused die() function
- + contrib/git-credential-gnome-keyring.c: remove unnecessary pre-declarations
-
- Cleanups and tweaks for credential handling to work with ancient versions
- of the gnome-keyring library that are still in use.
-
-
-* hu/cherry-pick-previous-branch (2013-10-10) 1 commit
-  (merged to 'next' on 2013-10-14 at 090934f)
- + cherry-pick: handle "-" after parsing options
-
- "git cherry-pick" without further options would segfault.
-
- Could use a follow-up to handle '-' after argv[1] better.
-
-
-* jc/pack-objects (2013-02-04) 1 commit
-  (merged to 'next' on 2013-10-14 at 8e8feb6)
- + pack-objects: shrink struct object_entry
-
-
-* jc/prompt-upstream (2013-10-14) 1 commit
-  (merged to 'next' on 2013-10-14 at 270ef7b)
- + git-prompt.sh: optionally show upstream branch name
-
- An enhancement to the GIT_PS1_SHOWUPSTREAM facility.
-
-
-* mg/more-textconv (2013-05-10) 7 commits
-  (merged to 'next' on 2013-10-14 at 8a12490)
- + grep: honor --textconv for the case rev:path
- + grep: allow to use textconv filters
- + t7008: demonstrate behavior of grep with textconv
- + cat-file: do not die on --textconv without textconv filters
- + show: honor --textconv for blobs
- + diff_opt: track whether flags have been set explicitly
- + t4030: demonstrate behavior of show with textconv
-
- Make "git grep" and "git show" pay attention to --textconv when
- dealing with blob objects.
-
-
-* po/dot-url (2013-10-15) 3 commits
-  (merged to 'next' on 2013-10-15 at 312d0af)
- + doc/cli: make "dot repository" an independent bullet point
-  (merged to 'next' on 2013-09-20 at 6a12786)
- + config doc: update dot-repository notes
- + doc: command line interface (cli) dot-repository dwimmery
-
- Explain how '.' can be used to refer to the "current repository"
- in the documentation.
-
---------------------------------------------------
 [New Topics]
 
-* ap/remote-hg-unquote-cquote (2013-10-23) 1 commit
- - remote-hg: unquote C-style paths when exporting
+* bc/http-100-continue (2013-10-23) 1 commit
+ - http: add option to enable 100 Continue responses
 
- A fast-import stream expresses a pathname with funny characters by
- quoting them in C style; remote-hg remote helper forgot to unquote
- such a path.
+ Conditionally allow "100 Continue" responses to help use of
+ GSS-Negotiate authentication scheme over HTTP transport.
 
- Will merge to 'next'.
-
-
-* jl/pack-transfer-avoid-double-close (2013-10-23) 1 commit
- - Clear fd after closing to avoid double-close error
-
- The codepath that send_pack() calls pack_objects() mistakenly
- closed the same file descriptor twice, leading to potentially
- closing a wrong file descriptor that was opened in the meantime.
-
- Will merge to 'next'.
- Needs to be merged later to 'maint'.
+ Seems to be still under discussion.
 
 
-* nd/magic-pathspec (2013-10-22) 1 commit
- - Fix calling parse_pathspec with no paths nor PATHSPEC_PREFER_* flags
+* jc/merge-base-reflog (2013-10-25) 2 commits
+ - merge-base: teach "--fork-point" mode
+ - merge-base: use OPT_CMDMODE and clarify the command line parsing
 
- All callers to parse_pathspec() must choose between getting no
- pathspec or one path that is limited to the current directory
- when there is no paths given on the command line, but there were
- two callers that violated this rule, triggering a BUG().
+ Code the logic in "pull --rebase" that figures out a fork point
+ from reflog entries in C.
+
+
+* jk/date-c-double-semicolon (2013-10-24) 1 commit
+ - drop redundant semicolon in empty while
 
  Will merge to 'next'.
 
 
-* sb/git-svn-docs-indent-with-ht (2013-10-22) 1 commit
- - git-svn docs: Use tabs consistently within the ascii doc
+* jk/for-each-ref-skip-parsing (2013-10-24) 1 commit
+ - for-each-ref: avoid loading objects to print %(objectname)
 
  Will merge to 'next'.
 
 
-* tr/gitk-doc-update (2013-10-22) 1 commit
- - Documentation: revamp gitk(1)
+* jk/pack-bitmap (2013-10-25) 19 commits
+ - pack-bitmap: implement optional name_hash cache
+ - t: add basic bitmap functionality tests
+ - repack: consider bitmaps when performing repacks
+ - repack: handle optional files created by pack-objects
+ - repack: turn exts array into array-of-struct
+ - repack: stop using magic number for ARRAY_SIZE(exts)
+ - pack-objects: implement bitmap writing
+ - rev-list: add bitmap mode to speed up object lists
+ - pack-objects: use bitmaps when packing objects
+ - pack-bitmap: add support for bitmap indexes
+ - documentation: add documentation for the bitmap format
+ - ewah: compressed bitmap implementation
+ - compat: add endianness helpers
+ - sha1_file: export `git_open_noatime`
+ - revision: allow setting custom limiter function
+ - pack-objects: factor out name_hash
+ - pack-objects: refactor the packing list
+ - revindex: export new APIs
+ - sha1write: make buffer const-correct
+
+ Borrows the bitmap index into packfiles from JGit to speed up
+ enumeration of objects involved in a commit range without having to
+ fully traverse the history.
+
+
+* jk/refs-c-squelch-gcc (2013-10-24) 1 commit
+ - silence gcc array-bounds warning
 
  Will merge to 'next'.
 
 
-* tr/valgrind-test-fix (2013-10-22) 2 commits
- - Revert "test-lib: allow prefixing a custom string before "ok N" etc."
- - Revert "test-lib: support running tests under valgrind in parallel"
+* jk/robustify-parse-commit (2013-10-24) 6 commits
+ - checkout: do not die when leaving broken detached HEAD
+ - use parse_commit_or_die instead of custom message
+ - use parse_commit_or_die instead of segfaulting
+ - assume parse_commit checks for NULL commit
+ - assume parse_commit checks commit->object.parsed
+ - log_tree_diff: die when we fail to parse a commit
+
+ Will merge to 'next' after taking another look.
+
+
+* mh/fetch-tags-in-addition-to-normal-refs (2013-10-24) 16 commits
+ - fetch, remote: properly convey --no-prune options to subprocesses
+ - builtin/remote.c:update(): use struct argv_array
+ - builtin/remote.c: reorder function definitions
+ - query_refspecs(): move some constants out of the loop
+ - fetch --prune: prune only based on explicit refspecs
+ - SQUASH??? --tags is no longer a short-hand
+ - fetch --tags: fetch tags *in addition to* other stuff
+ - builtin/fetch.c: reorder function definitions
+ - ref_remove_duplicates(): improve documentation comment
+ - ref_remove_duplicates(): simplify function
+ - ref_remove_duplicates(): avoid redundant bisection
+ - get_ref_map(): rename local variables
+ - api-remote.txt: correct section "struct refspec"
+ - t5510: check that "git fetch --prune --tags" does not prune branches
+ - t5510: prepare test refs more straightforwardly
+ - t5510: use the correct tag name in test
+
+ Some questionable paragraphs in the doc updates, but other than
+ that looks reasonably solid.
+
+
+* nd/lift-path-max (2013-10-24) 2 commits
+ - checkout_entry(): clarify the use of topath[] parameter
+ - entry.c: convert checkout_entry to use strbuf
 
  Will merge to 'next'.
 
 
-* sb/repack-in-c (2013-10-22) 1 commit
-  (merged to 'next' on 2013-10-23 at 5d7ac72)
- + Reword repack documentation to no longer state it's a script
+* jk/pack-corruption-post-mortem (2013-10-25) 1 commit
+ - howto: add article on recovering a corrupted object
 
- Finishing touches to update documentation.
+ Will merge to 'next'.
 
- Will merge to 'master'.
+
+* jk/reset-p-current-head-fix (2013-10-25) 2 commits
+ - reset: pass real rev name to add--interactive
+ - add-interactive: handle unborn branch in patch mode
+
+ "git reset -p HEAD" has codepath to special case it from resetting
+ to contents of other commits, but recent change broke it.
+
+ Will merge to 'next'.
+
+
+* mf/graph-show-root (2013-10-25) 1 commit
+ - graph.c: mark root commit differently
+
+ Needs adjustments to some tests.
+
+
+* nv/parseopt-opt-arg (2013-10-25) 1 commit
+ - rev-parse --parseopt: add the --sticked-long mode
+
+ Enhance "rev-parse --parseopt" mode to help parsing options with
+ an optional parameter.
 
 --------------------------------------------------
 [Stalled]
 
 * np/pack-v4 (2013-09-18) 90 commits
- - packv4-parse.c: add tree offset caching
- - t1050: replace one instance of show-index with verify-pack
- - index-pack, pack-objects: allow creating .idx v2 with .pack v4
- - unpack-objects: decode v4 trees
- - unpack-objects: allow to save processed bytes to a buffer
+ . packv4-parse.c: add tree offset caching
+ . t1050: replace one instance of show-index with verify-pack
+ . index-pack, pack-objects: allow creating .idx v2 with .pack v4
+ . unpack-objects: decode v4 trees
+ . unpack-objects: allow to save processed bytes to a buffer
  - ...
 
  Nico and Duy advancing the eternal vaporware pack-v4.  This is here
  primarily for wider distribution of the preview edition.
+
+ Temporarily ejected from 'pu', to try out jk/pack-bitmap, which
+ this topic conflicts with.
 
 
 * sc/doc-howto-dumb-http (2013-10-16) 1 commit
@@ -229,22 +231,6 @@ of the repositories listed at
  $gmane/228294
 
 
-* jh/shorten-refname (2013-05-07) 4 commits
- - t1514: refname shortening is done after dereferencing symbolic refs
- - shorten_unambiguous_ref(): Fix shortening refs/remotes/origin/HEAD to origin
- - t1514: Demonstrate failure to correctly shorten "refs/remotes/origin/HEAD"
- - t1514: Add tests of shortening refnames in strict/loose mode
-
- When remotes/origin/HEAD is not a symbolic ref, "rev-parse
- --abbrev-ref remotes/origin/HEAD" ought to show "origin", not
- "origin/HEAD", which is fixed with this series (if it is a symbolic
- ref that points at remotes/origin/something, then it should show
- "origin/something" and it already does).
-
- Expecting a reroll, as an early part of a larger series.
- $gmane/225137
-
-
 * jc/format-patch (2013-04-22) 2 commits
  - format-patch: --inline-single
  - format-patch: rename "no_inline" field
@@ -279,6 +265,66 @@ of the repositories listed at
 
 --------------------------------------------------
 [Cooking]
+
+* ap/remote-hg-unquote-cquote (2013-10-23) 1 commit
+ - remote-hg: unquote C-style paths when exporting
+
+ A fast-import stream expresses a pathname with funny characters by
+ quoting them in C style; remote-hg remote helper forgot to unquote
+ such a path.
+
+ Will merge to 'next'.
+
+
+* jl/pack-transfer-avoid-double-close (2013-10-23) 1 commit
+ - Clear fd after closing to avoid double-close error
+
+ The codepath that send_pack() calls pack_objects() mistakenly
+ closed the same file descriptor twice, leading to potentially
+ closing a wrong file descriptor that was opened in the meantime.
+
+ Will merge to 'next'.
+ Needs to be merged later to 'maint'.
+
+
+* nd/magic-pathspec (2013-10-22) 1 commit
+ - Fix calling parse_pathspec with no paths nor PATHSPEC_PREFER_* flags
+
+ All callers to parse_pathspec() must choose between getting no
+ pathspec or one path that is limited to the current directory
+ when there is no paths given on the command line, but there were
+ two callers that violated this rule, triggering a BUG().
+
+ Will merge to 'next'.
+
+
+* sb/git-svn-docs-indent-with-ht (2013-10-22) 1 commit
+ - git-svn docs: Use tabs consistently within the ascii doc
+
+ Will merge to 'next'.
+
+
+* tr/gitk-doc-update (2013-10-22) 1 commit
+ - Documentation: revamp gitk(1)
+
+ Will merge to 'next'.
+
+
+* tr/valgrind-test-fix (2013-10-22) 2 commits
+ - Revert "test-lib: allow prefixing a custom string before "ok N" etc."
+ - Revert "test-lib: support running tests under valgrind in parallel"
+
+ Will merge to 'next'.
+
+
+* sb/repack-in-c (2013-10-22) 1 commit
+  (merged to 'next' on 2013-10-23 at 5d7ac72)
+ + Reword repack documentation to no longer state it's a script
+
+ Finishing touches to update documentation.
+
+ Will merge to 'master'.
+
 
 * mm/checkout-auto-track-fix (2013-10-18) 2 commits
  - checkout: proper error message on 'git checkout foo bar --'
@@ -387,13 +433,15 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* jk/http-auth-redirects (2013-10-14) 9 commits
- - remote-curl: rewrite base url from info/refs redirects
- - remote-curl: store url as a strbuf
- - remote-curl: make refs_url a strbuf
- - http: update base URLs when we see redirects
- - http: provide effective url to callers
- - http: hoist credential request out of handle_curl_result
+* jk/http-auth-redirects (2013-10-24) 10 commits
+  (merged to 'next' on 2013-10-24 at 4bebb66)
+ + http.c: Spell the null pointer as NULL
+ + remote-curl: rewrite base url from info/refs redirects
+ + remote-curl: store url as a strbuf
+ + remote-curl: make refs_url a strbuf
+ + http: update base URLs when we see redirects
+ + http: provide effective url to callers
+ + http: hoist credential request out of handle_curl_result
   (merged to 'next' on 2013-10-14 at a0642be)
  + http: refactor options to http_get_*
  + http_request: factor out curlinfo_strbuf
@@ -402,7 +450,7 @@ of the repositories listed at
  Handle the case where http transport gets redirected during the
  authorization request better.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jl/submodule-mv (2013-10-13) 1 commit
@@ -515,3 +563,23 @@ of the repositories listed at
  - diff: remove "diff-files -q" in a version of Git in a distant future
 
  Will merge to and cook in 'next' until a distant future.
+
+--------------------------------------------------
+[Discarded]
+
+* jh/shorten-refname (2013-05-07) 4 commits
+ . t1514: refname shortening is done after dereferencing symbolic refs
+ . shorten_unambiguous_ref(): Fix shortening refs/remotes/origin/HEAD to origin
+ . t1514: Demonstrate failure to correctly shorten "refs/remotes/origin/HEAD"
+ . t1514: Add tests of shortening refnames in strict/loose mode
+
+ When remotes/origin/HEAD is not a symbolic ref, "rev-parse
+ --abbrev-ref remotes/origin/HEAD" ought to show "origin", not
+ "origin/HEAD", which is fixed with this series (if it is a symbolic
+ ref that points at remotes/origin/something, then it should show
+ "origin/something" and it already does).
+
+ Has been expecting a reroll, as an early part of a larger series.
+ $gmane/225137
+
+ Discarded due to inactivity, without prejudice.
