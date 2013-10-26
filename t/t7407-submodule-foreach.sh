@@ -254,10 +254,6 @@ test_expect_success 'ensure "status --cached --recursive" preserves the --cached
 		) &&
 		git submodule status --cached --recursive -- nested1 > ../actual
 	) &&
-	if test_have_prereq MINGW
-	then
-		dos2unix actual
-	fi &&
 	test_cmp expect actual
 '
 

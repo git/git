@@ -18,10 +18,6 @@ check() {
 		cat stderr &&
 		false
 	fi &&
-	if test_have_prereq MINGW
-	then
-		dos2unix -q stderr
-	fi &&
 	test_cmp expect-stdout stdout &&
 	test_cmp expect-stderr stderr
 }
