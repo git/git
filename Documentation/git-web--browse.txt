@@ -35,6 +35,7 @@ The following browsers (or commands) are currently supported:
 * open (this is the default under Mac OS X GUI)
 * start (this is the default under MinGW)
 * cygstart (this is the default under Cygwin)
+* xdg-open
 
 Custom commands may also be specified.
 
