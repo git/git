@@ -58,6 +58,13 @@ struct pathspec {
 #define PATHSPEC_STRIP_SUBMODULE_SLASH_EXPENSIVE (1<<5)
 #define PATHSPEC_PREFIX_ORIGIN (1<<6)
 #define PATHSPEC_KEEP_ORDER (1<<7)
+/*
+ * For the callers that just need pure paths from somewhere else, not
+ * from command line. Global --*-pathspecs options are ignored. No
+ * magic is parsed in each pathspec either. If PATHSPEC_LITERAL is
+ * allowed, then it will automatically set for every pathspec.
+ */
+#define PATHSPEC_LITERAL_PATH (1<<8)
 
 extern void parse_pathspec(struct pathspec *pathspec,
 			   unsigned magic_mask,

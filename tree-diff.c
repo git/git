@@ -254,7 +254,9 @@ static void try_to_follow_renames(struct tree_desc *t1, struct tree_desc *t2, co
 			path[0] = p->one->path;
 			path[1] = NULL;
 			free_pathspec(&opt->pathspec);
-			parse_pathspec(&opt->pathspec, PATHSPEC_ALL_MAGIC, 0, "", path);
+			parse_pathspec(&opt->pathspec,
+				       PATHSPEC_ALL_MAGIC & ~PATHSPEC_LITERAL,
+				       PATHSPEC_LITERAL_PATH, "", path);
 
 			/*
 			 * The caller expects us to return a set of vanilla
