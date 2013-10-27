@@ -325,7 +325,7 @@ trap 'die' EXIT
 . "$TEST_DIRECTORY/test-lib-functions.sh"
 
 # You are not expected to call test_ok_ and test_failure_ directly, use
-# the text_expect_* functions instead.
+# the test_expect_* functions instead.
 
 test_ok_ () {
 	test_success=$(($test_success + 1))
