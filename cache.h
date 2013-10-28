@@ -966,6 +966,15 @@ struct ident_split {
  */
 extern int split_ident_line(struct ident_split *, const char *, int);
 
+/*
+ * Compare split idents for equality or strict ordering. Note that we
+ * compare only the ident part of the line, ignoring any timestamp.
+ *
+ * Because there are two fields, we must choose one as the primary key; we
+ * currently arbitrarily pick the email.
+ */
+extern int ident_cmp(const struct ident_split *, const struct ident_split *);
+
 struct checkout {
 	const char *base_dir;
 	int base_dir_len;
