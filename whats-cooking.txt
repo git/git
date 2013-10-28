@@ -1,15 +1,30 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Oct 2013, #06; Fri, 25)
-X-master-at: 3d092bfc6f2d9a998967979f926c661e9762601c
-X-next-at: 4bebb6611df42b82d24d2e1efd8b270ca0779f33
+Subject: What's cooking in git.git (Oct 2013, #07; Mon, 28)
+X-master-at: 0d6cf2471f426dd2b742e2285aad78381738be96
+X-next-at: f1bec963d618585da2c32644d95f42c8f174f1ce
 
-What's cooking in git.git (Oct 2013, #06; Fri, 25)
+What's cooking in git.git (Oct 2013, #07; Mon, 28)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
+
+It is already 10th week of this cycle, but somehow I completely
+forgot where in the cycle we were.  Sorry about that.
+
+I'll tag 1.8.5-rc0 in a few days by the end of this month, and then
+hopefully we will have two to three -rc weeks after that, aiming for
+the final 1.8.5 release sometime late November (tentative schedule
+at http://tinyurl.com/gitCal).
+
+As promised/requested, the final steps for 2.0 are in 'next'; they,
+together with a handful topics that have been merged to 'next'
+fairly recently, will _not_ be part of the upcoming 1.8.5 release,
+but will be carried over in 'next' to the next cycle.
+
+Also there is 1.8.4.2 maintenance release out.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -17,136 +32,125 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
+[Graduated to "master"]
+
+* ew/keepalive (2013-10-16) 2 commits
+  (merged to 'next' on 2013-10-16 at 56fd9f3)
+ + http: use curl's tcp keepalive if available
+  (merged to 'next' on 2013-10-14 at 24d786f)
+ + http: enable keepalive on TCP sockets
+
+ The HTTP transport will try to use TCP keepalive when able.
+
+
+* jc/revision-range-unpeel (2013-10-15) 1 commit
+  (merged to 'next' on 2013-10-16 at d04ddfe)
+ + revision: do not peel tags used in range notation
+
+ "git rev-list --objects ^v1.0^ v1.0" gave v1.0 tag itself in the
+ output, but "git rev-list --objects v1.0^..v1.0" did not.
+
+
+* jk/remote-literal-string-leakfix (2013-10-15) 1 commit
+  (merged to 'next' on 2013-10-18 at 6abddac)
+ + remote: do not copy "origin" string literal
+
+
+* jk/split-broken-ident (2013-10-15) 1 commit
+  (merged to 'next' on 2013-10-18 at 8f4b8b7)
+ + split_ident: parse timestamp from end of line
+
+ Make the fall-back parsing of commit objects with broken author or
+ committer lines more robust to pick up the timestamps.
+
+
+* jx/relative-path-regression-fix (2013-10-14) 3 commits
+  (merged to 'next' on 2013-10-18 at b4af45f)
+ + Use simpler relative_path when set_git_dir
+  (merged to 'next' on 2013-10-14 at 704b9ee)
+ + relative_path should honor dos-drive-prefix
+ + test: use unambigous leading path (/foo) for MSYS
+
+ Will merge to 'master' and later to 'maint'.
+
+
+* sb/repack-in-c (2013-10-22) 1 commit
+  (merged to 'next' on 2013-10-23 at 5d7ac72)
+ + Reword repack documentation to no longer state it's a script
+
+ Finishing touches to update documentation.
+
+
+* sg/prompt-svn-remote-fix (2013-10-15) 1 commit
+  (merged to 'next' on 2013-10-18 at 20b47eb)
+ + bash prompt: don't use '+=' operator in show upstream code path
+
+ Bash portability fix.
+
+--------------------------------------------------
 [New Topics]
 
-* bc/http-100-continue (2013-10-23) 1 commit
- - http: add option to enable 100 Continue responses
+* bw/solaris-sed-tr-test-portability (2013-10-28) 2 commits
+ - Avoid difference in tr semantics between System V and BSD
+ - Change sed i\ usage to something Solaris' sed can handle
 
- Conditionally allow "100 Continue" responses to help use of
- GSS-Negotiate authentication scheme over HTTP transport.
-
- Seems to be still under discussion.
+ Needs a bit of reroll.
 
 
-* jc/merge-base-reflog (2013-10-25) 2 commits
- - merge-base: teach "--fork-point" mode
- - merge-base: use OPT_CMDMODE and clarify the command line parsing
-
- Code the logic in "pull --rebase" that figures out a fork point
- from reflog entries in C.
-
-
-* jk/date-c-double-semicolon (2013-10-24) 1 commit
- - drop redundant semicolon in empty while
-
- Will merge to 'next'.
-
-
-* jk/for-each-ref-skip-parsing (2013-10-24) 1 commit
- - for-each-ref: avoid loading objects to print %(objectname)
-
- Will merge to 'next'.
+* fc/transport-helper-fixes (2013-10-28) 13 commits
+ - test: remote-helper: add test for force pushes
+ - git-remote-testgit: support the new 'force' option
+ - fixup! transport-helper: add 'force' to 'export' helpers
+ - transport-helper: don't update refs in dry-run
+ - transport-helper: add support to delete branches
+ - fast-export: add support to delete refs
+ - fast-import: add support to delete refs
+ - transport-helper: add support for old:new refspec
+ - fast-export: add new --refspec option
+ - fast-export: improve argument parsing
+ - transport-helper: check for 'forced update' message
+ - transport-helper: fix extra lines
+ - transport-helper: add 'force' to 'export' helpers
 
 
-* jk/pack-bitmap (2013-10-25) 19 commits
- - pack-bitmap: implement optional name_hash cache
- - t: add basic bitmap functionality tests
- - repack: consider bitmaps when performing repacks
- - repack: handle optional files created by pack-objects
- - repack: turn exts array into array-of-struct
- - repack: stop using magic number for ARRAY_SIZE(exts)
- - pack-objects: implement bitmap writing
- - rev-list: add bitmap mode to speed up object lists
- - pack-objects: use bitmaps when packing objects
- - pack-bitmap: add support for bitmap indexes
- - documentation: add documentation for the bitmap format
- - ewah: compressed bitmap implementation
- - compat: add endianness helpers
- - sha1_file: export `git_open_noatime`
- - revision: allow setting custom limiter function
- - pack-objects: factor out name_hash
- - pack-objects: refactor the packing list
- - revindex: export new APIs
- - sha1write: make buffer const-correct
 
- Borrows the bitmap index into packfiles from JGit to speed up
- enumeration of objects involved in a commit range without having to
- fully traverse the history.
+* jh/loose-object-dirs-creation-race (2013-10-28) 1 commit
+ - sha1_file.c:create_tmpfile(): Fix race when creating loose object dirs
 
 
-* jk/refs-c-squelch-gcc (2013-10-24) 1 commit
- - silence gcc array-bounds warning
+* js/test-help-format-windows-port-fix (2013-10-28) 1 commit
+ - PATCH] t3200: do not open a HTML manual page when DEFAULT_MAN_FORMAT is html
+
+ Will merge to 'next' after amending the title.
+
+
+* js/tests-windows-port-fix (2013-10-28) 3 commits
+ - tests: undo special treatment of CRLF for Windows
+ - Windows: a test_cmp that is agnostic to random LF <> CRLF conversions
+ - t5300-pack-object: do not compare binary data using test_cmp
 
  Will merge to 'next'.
 
 
-* jk/robustify-parse-commit (2013-10-24) 6 commits
- - checkout: do not die when leaving broken detached HEAD
- - use parse_commit_or_die instead of custom message
- - use parse_commit_or_die instead of segfaulting
- - assume parse_commit checks for NULL commit
- - assume parse_commit checks commit->object.parsed
- - log_tree_diff: die when we fail to parse a commit
-
- Will merge to 'next' after taking another look.
+* nd/liteal-pathspecs (2013-10-28) 1 commit
+ - pathspec: stop --*-pathspecs impact on internal parse_pathspec() uses
 
 
-* mh/fetch-tags-in-addition-to-normal-refs (2013-10-24) 16 commits
- - fetch, remote: properly convey --no-prune options to subprocesses
- - builtin/remote.c:update(): use struct argv_array
- - builtin/remote.c: reorder function definitions
- - query_refspecs(): move some constants out of the loop
- - fetch --prune: prune only based on explicit refspecs
- - SQUASH??? --tags is no longer a short-hand
- - fetch --tags: fetch tags *in addition to* other stuff
- - builtin/fetch.c: reorder function definitions
- - ref_remove_duplicates(): improve documentation comment
- - ref_remove_duplicates(): simplify function
- - ref_remove_duplicates(): avoid redundant bisection
- - get_ref_map(): rename local variables
- - api-remote.txt: correct section "struct refspec"
- - t5510: check that "git fetch --prune --tags" does not prune branches
- - t5510: prepare test refs more straightforwardly
- - t5510: use the correct tag name in test
-
- Some questionable paragraphs in the doc updates, but other than
- that looks reasonably solid.
-
-
-* nd/lift-path-max (2013-10-24) 2 commits
- - checkout_entry(): clarify the use of topath[] parameter
- - entry.c: convert checkout_entry to use strbuf
+* rs/web-browse-xdg-open (2013-10-28) 1 commit
+ - web--browse: Add support for xdg-open.
 
  Will merge to 'next'.
 
 
-* jk/pack-corruption-post-mortem (2013-10-25) 1 commit
- - howto: add article on recovering a corrupted object
+* sb/refs-code-cleanup (2013-10-28) 2 commits
+ - cache: remove unused function 'have_git_dir'
+ - refs: remove unused function invalidate_ref_cache
 
  Will merge to 'next'.
 
 
-* jk/reset-p-current-head-fix (2013-10-25) 2 commits
- - reset: pass real rev name to add--interactive
- - add-interactive: handle unborn branch in patch mode
-
- "git reset -p HEAD" has codepath to special case it from resetting
- to contents of other commits, but recent change broke it.
-
- Will merge to 'next'.
-
-
-* mf/graph-show-root (2013-10-25) 1 commit
- - graph.c: mark root commit differently
-
- Needs adjustments to some tests.
-
-
-* nv/parseopt-opt-arg (2013-10-25) 1 commit
- - rev-parse --parseopt: add the --sticked-long mode
-
- Enhance "rev-parse --parseopt" mode to help parsing options with
- an optional parameter.
+* th/reflog-annotated-tag (2013-10-28) 1 commit
+ - reflog: handle lightweight and annotated tags equally
 
 --------------------------------------------------
 [Stalled]
@@ -192,14 +196,6 @@ of the repositories listed at
  lines are not wide enough.
 
  I am not sure if that is solving a right problem, though.
-
-
-* tr/merge-recursive-index-only (2013-07-07) 3 commits
- - merge-recursive: -Xindex-only to leave worktree unchanged
- - merge-recursive: untangle double meaning of o->call_depth
- - merge-recursive: remove dead conditional in update_stages()
-
- Holding until there is a caller to learn from.
 
 
 * jc/ref-excludes (2013-09-03) 2 commits
@@ -266,8 +262,166 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* tr/merge-recursive-index-only (2013-10-28) 3 commits
+ - merge-recursive: -Xindex-only to leave worktree unchanged
+ - merge-recursive: internal flag to avoid touching the worktree
+ - merge-recursive: remove dead conditional in update_stages()
+
+ Holding until there is a caller to learn from.
+
+
+* bc/http-100-continue (2013-10-28) 1 commit
+ - remote-curl: fix large pushes with GSSAPI
+
+ Conditionally allow "100 Continue" responses to help use of
+ GSS-Negotiate authentication scheme over HTTP transport.
+
+ Rerolled. Is everybody happy with this version without
+ configuration?
+
+
+* jc/merge-base-reflog (2013-10-28) 2 commits
+ - merge-base: teach "--fork-point" mode
+ - merge-base: use OPT_CMDMODE and clarify the command line parsing
+
+ Code the logic in "pull --rebase" that figures out a fork point
+ from reflog entries in C.
+
+ Rerolled.
+
+
+* jk/date-c-double-semicolon (2013-10-24) 1 commit
+  (merged to 'next' on 2013-10-28 at 00ce440)
+ + drop redundant semicolon in empty while
+
+ Will merge to 'master'.
+
+
+* jk/for-each-ref-skip-parsing (2013-10-24) 1 commit
+ - for-each-ref: avoid loading objects to print %(objectname)
+
+ Will merge to 'next' and then to 'master'.
+
+
+* jk/pack-bitmap (2013-10-28) 20 commits
+ - count-objects: consider .bitmap without .pack/.idx pair garbage
+ - pack-bitmap: implement optional name_hash cache
+ - t: add basic bitmap functionality tests
+ - repack: consider bitmaps when performing repacks
+ - repack: handle optional files created by pack-objects
+ - repack: turn exts array into array-of-struct
+ - repack: stop using magic number for ARRAY_SIZE(exts)
+ - pack-objects: implement bitmap writing
+ - rev-list: add bitmap mode to speed up object lists
+ - pack-objects: use bitmaps when packing objects
+ - pack-bitmap: add support for bitmap indexes
+ - documentation: add documentation for the bitmap format
+ - ewah: compressed bitmap implementation
+ - compat: add endianness helpers
+ - sha1_file: export `git_open_noatime`
+ - revision: allow setting custom limiter function
+ - pack-objects: factor out name_hash
+ - pack-objects: refactor the packing list
+ - revindex: export new APIs
+ - sha1write: make buffer const-correct
+
+ Borrows the bitmap index into packfiles from JGit to speed up
+ enumeration of objects involved in a commit range without having to
+ fully traverse the history.
+
+
+* jk/refs-c-squelch-gcc (2013-10-24) 1 commit
+  (merged to 'next' on 2013-10-28 at d15f7c2)
+ + silence gcc array-bounds warning
+
+ Will merge to 'master'.
+
+
+* jk/robustify-parse-commit (2013-10-24) 6 commits
+ - checkout: do not die when leaving broken detached HEAD
+ - use parse_commit_or_die instead of custom message
+ - use parse_commit_or_die instead of segfaulting
+ - assume parse_commit checks for NULL commit
+ - assume parse_commit checks commit->object.parsed
+ - log_tree_diff: die when we fail to parse a commit
+
+ Will merge to 'next' after taking another look.
+
+
+* mh/fetch-tags-in-addition-to-normal-refs (2013-10-24) 16 commits
+ - fetch, remote: properly convey --no-prune options to subprocesses
+ - builtin/remote.c:update(): use struct argv_array
+ - builtin/remote.c: reorder function definitions
+ - query_refspecs(): move some constants out of the loop
+ - fetch --prune: prune only based on explicit refspecs
+ - SQUASH??? --tags is no longer a short-hand
+ - fetch --tags: fetch tags *in addition to* other stuff
+ - builtin/fetch.c: reorder function definitions
+ - ref_remove_duplicates(): improve documentation comment
+ - ref_remove_duplicates(): simplify function
+ - ref_remove_duplicates(): avoid redundant bisection
+ - get_ref_map(): rename local variables
+ - api-remote.txt: correct section "struct refspec"
+ - t5510: check that "git fetch --prune --tags" does not prune branches
+ - t5510: prepare test refs more straightforwardly
+ - t5510: use the correct tag name in test
+
+ Some questionable paragraphs in the doc updates, but other than
+ that looks reasonably solid.
+
+ Expecting a reroll.
+
+
+* nd/lift-path-max (2013-10-24) 2 commits
+  (merged to 'next' on 2013-10-28 at 07698af)
+ + checkout_entry(): clarify the use of topath[] parameter
+ + entry.c: convert checkout_entry to use strbuf
+
+ Will merge to 'master'.
+
+
+* jk/pack-corruption-post-mortem (2013-10-25) 1 commit
+ - howto: add article on recovering a corrupted object
+
+ Will merge to 'next' and then to 'master'.
+
+
+* jk/reset-p-current-head-fix (2013-10-25) 2 commits
+ - reset: pass real rev name to add--interactive
+ - add-interactive: handle unborn branch in patch mode
+
+ "git reset -p HEAD" has codepath to special case it from resetting
+ to contents of other commits, but recent change broke it.
+
+ Will merge to 'next' and then to 'master'.
+
+
+* mf/graph-show-root (2013-10-25) 1 commit
+ - graph.c: mark root commit differently
+
+ In a repository with multiple-roots, "log --graph", especially with
+ "--oneline", does not give the reader enough visual cue to see
+ where one line of history ended and a separate history began.
+
+ This is the version that marks the roots 'x' when they would have
+ been marked as '*'; Keshav Kini suggested an alternative of giving
+ an extra blank line after every root, which I tend to think is a
+ better approach to the problem.
+
+
+* nv/parseopt-opt-arg (2013-10-25) 1 commit
+ - rev-parse --parseopt: add the --sticked-long mode
+
+ Enhance "rev-parse --parseopt" mode to help parsing options with
+ an optional parameter.
+
+ Option name bikeshedding aside ("Is it sticked or stuck?"), the
+ change seems to be competently done.
+
+
 * ap/remote-hg-unquote-cquote (2013-10-23) 1 commit
- - remote-hg: unquote C-style paths when exporting
+  (merged to 'next' on 2013-10-28 at 6b99fd5)
+ + remote-hg: unquote C-style paths when exporting
 
  A fast-import stream expresses a pathname with funny characters by
  quoting them in C style; remote-hg remote helper forgot to unquote
@@ -277,58 +431,54 @@ of the repositories listed at
 
 
 * jl/pack-transfer-avoid-double-close (2013-10-23) 1 commit
- - Clear fd after closing to avoid double-close error
+  (merged to 'next' on 2013-10-28 at 4a55bba)
+ + Clear fd after closing to avoid double-close error
 
  The codepath that send_pack() calls pack_objects() mistakenly
  closed the same file descriptor twice, leading to potentially
  closing a wrong file descriptor that was opened in the meantime.
 
- Will merge to 'next'.
- Needs to be merged later to 'maint'.
+ Will merge to 'master' and later to 'maint'.
 
 
 * nd/magic-pathspec (2013-10-22) 1 commit
- - Fix calling parse_pathspec with no paths nor PATHSPEC_PREFER_* flags
+  (merged to 'next' on 2013-10-28 at 50eda68)
+ + Fix calling parse_pathspec with no paths nor PATHSPEC_PREFER_* flags
 
  All callers to parse_pathspec() must choose between getting no
  pathspec or one path that is limited to the current directory
  when there is no paths given on the command line, but there were
  two callers that violated this rule, triggering a BUG().
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * sb/git-svn-docs-indent-with-ht (2013-10-22) 1 commit
- - git-svn docs: Use tabs consistently within the ascii doc
+  (merged to 'next' on 2013-10-28 at 8a952d1)
+ + git-svn docs: Use tabs consistently within the ascii doc
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * tr/gitk-doc-update (2013-10-22) 1 commit
- - Documentation: revamp gitk(1)
+  (merged to 'next' on 2013-10-28 at f4158b8)
+ + Documentation: revamp gitk(1)
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * tr/valgrind-test-fix (2013-10-22) 2 commits
- - Revert "test-lib: allow prefixing a custom string before "ok N" etc."
- - Revert "test-lib: support running tests under valgrind in parallel"
-
- Will merge to 'next'.
-
-
-* sb/repack-in-c (2013-10-22) 1 commit
-  (merged to 'next' on 2013-10-23 at 5d7ac72)
- + Reword repack documentation to no longer state it's a script
-
- Finishing touches to update documentation.
+  (merged to 'next' on 2013-10-28 at 4d3f31a)
+ + Revert "test-lib: allow prefixing a custom string before "ok N" etc."
+ + Revert "test-lib: support running tests under valgrind in parallel"
 
  Will merge to 'master'.
 
 
 * mm/checkout-auto-track-fix (2013-10-18) 2 commits
- - checkout: proper error message on 'git checkout foo bar --'
- - checkout: allow dwim for branch creation for "git checkout $branch --"
+  (merged to 'next' on 2013-10-28 at f4594ba)
+ + checkout: proper error message on 'git checkout foo bar --'
+ + checkout: allow dwim for branch creation for "git checkout $branch --"
 
  "git checkout topic", when there is not yet a local "topic" branch
  but there is a unique remote-tracking branch for a remote "topic"
@@ -336,67 +486,43 @@ of the repositories listed at
  (for that unique remote $r) was run. This hack however was not
  implemented for "git checkout topic --".
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * hn/log-graph-color-octopus (2013-10-18) 1 commit
- - graph: fix coloring around octopus merges
+  (merged to 'next' on 2013-10-28 at e103175)
+ + graph: fix coloring around octopus merges
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * nd/gc-lock-against-each-other (2013-10-18) 1 commit
- - gc: remove gc.pid file at end of execution
+  (merged to 'next' on 2013-10-28 at 14bd458)
+ + gc: remove gc.pid file at end of execution
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * fc/styles (2013-10-16) 7 commits
- - block-sha1/sha1.c: have SP around arithmetic operators
- - base85.c: have SP around arithmetic operators
- - archive.c: have SP around arithmetic operators
- - alloc.c: have SP around arithmetic operators
- - abspath.c: have SP around arithmetic operators
- - alias: have SP around arithmetic operators
- - C: have space around && and || operators
+  (merged to 'next' on 2013-10-28 at cf592ed)
+ + block-sha1/sha1.c: have SP around arithmetic operators
+ + base85.c: have SP around arithmetic operators
+ + archive.c: have SP around arithmetic operators
+ + alloc.c: have SP around arithmetic operators
+ + abspath.c: have SP around arithmetic operators
+ + alias: have SP around arithmetic operators
+ + C: have space around && and || operators
 
- C coding style fixes.  The ones near the tip have not been sent to
- the list yet (they cover the same kind of style violation as the
- second one) and I should send them to the list.
-
- Will merge to 'next'.
-
-
-* jk/remote-literal-string-leakfix (2013-10-15) 1 commit
-  (merged to 'next' on 2013-10-18 at 6abddac)
- + remote: do not copy "origin" string literal
-
- Will merge to 'master'.
-
-
-* jk/split-broken-ident (2013-10-15) 1 commit
-  (merged to 'next' on 2013-10-18 at 8f4b8b7)
- + split_ident: parse timestamp from end of line
-
- Make the fall-back parsing of commit objects with broken author or
- committer lines more robust to pick up the timestamps.
-
- Will merge to 'master'.
-
-
-* sg/prompt-svn-remote-fix (2013-10-15) 1 commit
-  (merged to 'next' on 2013-10-18 at 20b47eb)
- + bash prompt: don't use '+=' operator in show upstream code path
-
- Bash portability fix.
+ C coding style fixes.
 
  Will merge to 'master'.
 
 
 * sg/t3600-nul-sha1-fix (2013-10-16) 1 commit
- - t3600: fix broken "choking git rm" test
+  (merged to 'next' on 2013-10-28 at ac4b703)
+ + t3600: fix broken "choking git rm" test
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * ak/submodule-foreach-quoting (2013-09-27) 1 commit
@@ -424,15 +550,6 @@ of the repositories listed at
  Will cook in 'next' for the rest of this cycle.
 
 
-* ew/keepalive (2013-10-16) 2 commits
-  (merged to 'next' on 2013-10-16 at 56fd9f3)
- + http: use curl's tcp keepalive if available
-  (merged to 'next' on 2013-10-14 at 24d786f)
- + http: enable keepalive on TCP sockets
-
- Will merge to 'master'.
-
-
 * jk/http-auth-redirects (2013-10-24) 10 commits
   (merged to 'next' on 2013-10-24 at 4bebb66)
  + http.c: Spell the null pointer as NULL
@@ -454,13 +571,14 @@ of the repositories listed at
 
 
 * jl/submodule-mv (2013-10-13) 1 commit
- - mv: Fix spurious warning when moving a file in presence of submodules
+  (merged to 'next' on 2013-10-28 at 8dc9b31)
+ + mv: Fix spurious warning when moving a file in presence of submodules
 
  Moving a regular file in a repository with a .gitmodules file was
  producing a warning 'Could not find section in .gitmodules where
  path=<filename>'.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * kb/fast-hashmap (2013-10-22) 12 commits
@@ -485,16 +603,6 @@ of the repositories listed at
  double-check the result).
 
  Will merge to 'next'.
-
-
-* jc/revision-range-unpeel (2013-10-15) 1 commit
-  (merged to 'next' on 2013-10-16 at d04ddfe)
- + revision: do not peel tags used in range notation
-
- "git rev-list --objects ^v1.0^ v1.0" gave v1.0 tag itself in the
- output, but "git rev-list --objects v1.0^..v1.0" did not.
-
- Will merge to 'master'.
 
 
 * jc/upload-pack-send-symref (2013-10-22) 10 commits
@@ -522,41 +630,35 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* jx/relative-path-regression-fix (2013-10-14) 3 commits
-  (merged to 'next' on 2013-10-18 at b4af45f)
- + Use simpler relative_path when set_git_dir
-  (merged to 'next' on 2013-10-14 at 704b9ee)
- + relative_path should honor dos-drive-prefix
- + test: use unambigous leading path (/foo) for MSYS
-
- Will merge to 'master' and later to 'maint'.
-
-
 * jn/add-2.0-u-A-sans-pathspec (2013-04-26) 1 commit
- - git add: -u/-A now affects the entire working tree
+  (merged to 'next' on 2013-10-28 at d8cdf30)
+ + git add: -u/-A now affects the entire working tree
 
- Will merge to and cook in 'next' until Git 2.0.
+ Will cook in 'next' until Git 2.0.
 
 
 * jc/core-checkstat-2.0 (2013-05-06) 1 commit
- - core.statinfo: remove as promised in Git 2.0
+  (merged to 'next' on 2013-10-28 at f1bec96)
+ + core.statinfo: remove as promised in Git 2.0
 
- Will merge to and cook in 'next' until Git 2.0.
+ Will cook in 'next' until Git 2.0.
 
 
 * jc/push-2.0-default-to-simple (2013-06-18) 1 commit
- - push: switch default from "matching" to "simple"
+  (merged to 'next' on 2013-10-28 at 3153a9e)
+ + push: switch default from "matching" to "simple"
 
- Will merge to and cook in 'next' until Git 2.0.
+ Will cook in 'next' until Git 2.0.
 
 
 * jc/add-2.0-ignore-removal (2013-04-22) 1 commit
- - git add <pathspec>... defaults to "-A"
+  (merged to 'next' on 2013-10-28 at 5fd76ec)
+ + git add <pathspec>... defaults to "-A"
 
  Updated endgame for "git add <pathspec>" that defaults to "--all"
  aka "--no-ignore-removal".
 
- Will merge to and cook in 'next' until Git 2.0.
+ Will cook in 'next' until Git 2.0.
 
 
 * jc/hold-diff-remove-q-synonym-for-no-deletion (2013-07-19) 1 commit
