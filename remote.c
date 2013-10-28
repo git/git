@@ -483,7 +483,7 @@ static void read_config(void)
 	int flag;
 	if (default_remote_name) /* did this already */
 		return;
-	default_remote_name = xstrdup("origin");
+	default_remote_name = "origin";
 	current_branch = NULL;
 	head_ref = resolve_ref_unsafe("HEAD", sha1, 0, &flag);
 	if (head_ref && (flag & REF_ISSYMREF) &&
