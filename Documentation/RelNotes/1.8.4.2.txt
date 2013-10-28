@@ -4,6 +4,20 @@ Git v1.8.4.2 Release Notes
 Fixes since v1.8.4.1
 --------------------
 
+ * "git clone" gave some progress messages to the standard output, not
+   to the standard error, and did not allow suppressing them with the
+   "--no-progress" option.
+
+ * "format-patch --from=<whom>" forgot to omit unnecessary in-body
+   from line, i.e. when <whom> is the same as the real author.
+
+ * "git shortlog" used to choke and die when there is a malformed
+   commit (e.g. missing authors); it now simply ignore such a commit
+   and keeps going.
+
+ * "git merge-recursive" did not parse its "--diff-algorithm=" command
+   line option correctly.
+
  * "git branch --track" had a minor regression in v1.8.3.2 and later
    that made it impossible to base your local work on anything but a
    local branch of the upstream repository you are tracking from.
