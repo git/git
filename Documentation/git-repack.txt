@@ -14,7 +14,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-This script is used to combine all objects that do not currently
+This command is used to combine all objects that do not currently
 reside in a "pack", into a pack.  It can also be used to re-organize
 existing packs into a single, more efficient pack.
 
