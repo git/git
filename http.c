@@ -260,6 +260,42 @@ static int has_cert_password(void)
 	return 1;
 }
 
+#if LIBCURL_VERSION_NUM >= 0x071900
+static void set_curl_keepalive(CURL *c)
+{
+	curl_easy_setopt(c, CURLOPT_TCP_KEEPALIVE, 1);
+}
+
+#elif LIBCURL_VERSION_NUM >= 0x071000
+static int sockopt_callback(void *client, curl_socket_t fd, curlsocktype type)
+{
+	int ka = 1;
+	int rc;
+	socklen_t len = (socklen_t)sizeof(ka);
+
+	if (type != CURLSOCKTYPE_IPCXN)
+		return 0;
+
+	rc = setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, (void *)&ka, len);
+	if (rc < 0)
+		warning("unable to set SO_KEEPALIVE on socket %s",
+			strerror(errno));
+
+	return 0; /* CURL_SOCKOPT_OK only exists since curl 7.21.5 */
+}
+
+static void set_curl_keepalive(CURL *c)
+{
+	curl_easy_setopt(c, CURLOPT_SOCKOPTFUNCTION, sockopt_callback);
+}
+
+#else
+static void set_curl_keepalive(CURL *c)
+{
+	/* not supported on older curl versions */
+}
+#endif
+
 static CURL *get_curl_handle(void)
 {
 	CURL *result = curl_easy_init();
@@ -331,6 +367,8 @@ static CURL *get_curl_handle(void)
 		curl_easy_setopt(result, CURLOPT_PROXY, curl_http_proxy);
 		curl_easy_setopt(result, CURLOPT_PROXYAUTH, CURLAUTH_ANY);
 	}
+
+	set_curl_keepalive(result);
 
 	return result;
 }
