@@ -629,11 +629,18 @@ See the prereq argument to the test_* functions in the "Test harness
 library" section above and the "test_have_prereq" function for how to
 use these, and "test_set_prereq" for how to define your own.
 
- - PERL & PYTHON
+ - PYTHON
 
-   Git wasn't compiled with NO_PERL=YesPlease or
-   NO_PYTHON=YesPlease. Wrap any tests that need Perl or Python in
-   these.
+   Git wasn't compiled with NO_PYTHON=YesPlease. Wrap any tests that
+   need Python with this.
+
+ - PERL
+
+   Git wasn't compiled with NO_PERL=YesPlease.
+
+   Even without the PERL prerequisite, tests can assume there is a
+   usable perl interpreter at $PERL_PATH, though it need not be
+   particularly modern.
 
  - POSIXPERM
 
