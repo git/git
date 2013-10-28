@@ -111,7 +111,7 @@ __git_ps1_show_upstream ()
 			;;
 		svn-remote.*.url)
 			svn_remote[$((${#svn_remote[@]} + 1))]="$value"
-			svn_url_pattern+="\\|$value"
+			svn_url_pattern="$svn_url_pattern\\|$value"
 			upstream=svn+git # default upstream is SVN if available, else git
 			;;
 		esac
