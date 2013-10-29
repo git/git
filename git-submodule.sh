@@ -115,7 +115,7 @@ module_list()
 		git ls-files --error-unmatch --stage -- "$@" ||
 		echo "unmatched pathspec exists"
 	) |
-	perl -e '
+	@@PERL@@ -e '
 	my %unmerged = ();
 	my ($null_sha1) = ("0" x 40);
 	my @out = ();
