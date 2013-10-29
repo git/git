@@ -710,3 +710,7 @@ test_ln_s_add () {
 		git update-index --add --cacheinfo 120000 $ln_s_obj "$2"
 	fi
 }
+
+perl () {
+	command "$PERL_PATH" "$@"
+}
