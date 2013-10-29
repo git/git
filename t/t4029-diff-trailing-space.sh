@@ -27,7 +27,7 @@ test_expect_success \
      git config --bool diff.suppressBlankEmpty true &&
      git diff f > actual &&
      test_cmp exp actual &&
-     "$PERL_PATH" -i.bak -p -e "s/^\$/ /" exp &&
+     perl -i.bak -p -e "s/^\$/ /" exp &&
      git config --bool diff.suppressBlankEmpty false &&
      git diff f > actual &&
      test_cmp exp actual &&

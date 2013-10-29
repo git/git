@@ -11,7 +11,7 @@ if ! test_have_prereq PERL; then
 	test_done
 fi
 
-"$PERL_PATH" -MTest::More -e 0 2>/dev/null || {
+perl -MTest::More -e 0 2>/dev/null || {
 	skip_all="Perl Test::More unavailable, skipping test"
 	test_done
 }
@@ -55,6 +55,6 @@ test_external_has_tap=1
 
 test_external_without_stderr \
     'Perl API' \
-    "$PERL_PATH" "$TEST_DIRECTORY"/t9700/test.pl
+    perl "$TEST_DIRECTORY"/t9700/test.pl
 
 test_done

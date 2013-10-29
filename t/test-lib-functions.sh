@@ -76,11 +76,11 @@ test_decode_color () {
 }
 
 nul_to_q () {
-	"$PERL_PATH" -pe 'y/\000/Q/'
+	perl -pe 'y/\000/Q/'
 }
 
 q_to_nul () {
-	"$PERL_PATH" -pe 'y/Q/\000/'
+	perl -pe 'y/Q/\000/'
 }
 
 q_to_cr () {
@@ -648,7 +648,7 @@ test_seq () {
 	2)	;;
 	*)	error "bug in the test script: not 1 or 2 parameters to test_seq" ;;
 	esac
-	"$PERL_PATH" -le 'print for $ARGV[0]..$ARGV[1]' -- "$@"
+	perl -le 'print for $ARGV[0]..$ARGV[1]' -- "$@"
 }
 
 # This function can be used to schedule some commands to be run
