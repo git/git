@@ -745,6 +745,15 @@ int for_each_remote(each_remote_fn fn, void *priv)
 	return result;
 }
 
+static void handle_duplicate(struct ref *ref1, struct ref *ref2)
+{
+	if (strcmp(ref1->name, ref2->name))
+		die("%s tracks both %s and %s",
+		    ref2->peer_ref->name, ref1->name, ref2->name);
+	free(ref2->peer_ref);
+	free(ref2);
+}
+
 struct ref *ref_remove_duplicates(struct ref *ref_map)
 {
 	struct string_list refs = STRING_LIST_INIT_NODUP;
@@ -766,14 +775,7 @@ struct ref *ref_remove_duplicates(struct ref *ref_map)
 
 			if (item->util) {
 				/* Entry already existed */
-				if (strcmp(((struct ref *)item->util)->name,
-					   ref->name))
-					die("%s tracks both %s and %s",
-					    ref->peer_ref->name,
-					    ((struct ref *)item->util)->name,
-					    ref->name);
-				free(ref->peer_ref);
-				free(ref);
+				handle_duplicate((struct ref *)item->util, ref);
 			} else {
 				*p = ref;
 				p = &ref->next;
