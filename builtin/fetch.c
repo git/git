@@ -272,32 +272,50 @@ static struct ref *get_ref_map(struct transport *transport,
 	const struct ref *remote_refs = transport_get_remote_refs(transport);
 
 	if (refspec_count || tags == TAGS_SET) {
-		struct ref **old_tail;
+		/* opportunistically-updated references: */
+		struct ref *orefs = NULL, **oref_tail = &orefs;
 
 		for (i = 0; i < refspec_count; i++) {
 			get_fetch_map(remote_refs, &refspecs[i], &tail, 0);
 			if (refspecs[i].dst && refspecs[i].dst[0])
 				*autotags = 1;
 		}
-		/* Merge everything on the command line, but not --tags */
+		/* Merge everything on the command line (but not --tags) */
 		for (rm = ref_map; rm; rm = rm->next)
 			rm->fetch_head_status = FETCH_HEAD_MERGE;
+
+		/*
+		 * For any refs that we happen to be fetching via
+		 * command-line arguments, the destination ref might
+		 * have been missing or have been different than the
+		 * remote-tracking ref that would be derived from the
+		 * configured refspec.  In these cases, we want to
+		 * take the opportunity to update their configured
+		 * remote-tracking reference.  However, we do not want
+		 * to mention these entries in FETCH_HEAD at all, as
+		 * they would simply be duplicates of existing
+		 * entries, so we set them FETCH_HEAD_IGNORE below.
+		 *
+		 * We compute these entries now, based only on the
+		 * refspecs specified on the command line.  But we add
+		 * them to the list following the refspecs resulting
+		 * from the tags option so that one of the latter,
+		 * which has FETCH_HEAD_NOT_FOR_MERGE, is not removed
+		 * by ref_remove_duplicates() in favor of one of these
+		 * opportunistic entries with FETCH_HEAD_IGNORE.
+		 */
+		for (i = 0; i < transport->remote->fetch_refspec_nr; i++)
+			get_fetch_map(ref_map, &transport->remote->fetch[i],
+				      &oref_tail, 1);
+
 		if (tags == TAGS_SET)
 			get_fetch_map(remote_refs, tag_refspec, &tail, 0);
 
-		/*
-		 * For any refs that we happen to be fetching via command-line
-		 * arguments, take the opportunity to update their configured
-		 * counterparts. However, we do not want to mention these
-		 * entries in FETCH_HEAD at all, as they would simply be
-		 * duplicates of existing entries.
-		 */
-		old_tail = tail;
-		for (i = 0; i < transport->remote->fetch_refspec_nr; i++)
-			get_fetch_map(ref_map, &transport->remote->fetch[i],
-				      &tail, 1);
-		for (rm = *old_tail; rm; rm = rm->next)
+		*tail = orefs;
+		for (rm = orefs; rm; rm = rm->next) {
 			rm->fetch_head_status = FETCH_HEAD_IGNORE;
+			tail = &rm->next;
+		}
 	} else {
 		/* Use the defaults */
 		struct remote *remote = transport->remote;
@@ -334,8 +352,10 @@ static struct ref *get_ref_map(struct transport *transport,
 			tail = &ref_map->next;
 		}
 	}
+
 	if (tags == TAGS_DEFAULT && *autotags)
 		find_non_local_tags(transport, &ref_map, &tail);
+
 	ref_remove_duplicates(ref_map);
 
 	return ref_map;
