@@ -244,6 +244,29 @@ Unless otherwise noted, all the fixes since v1.8.4 in the maintenance
 track are contained in this release (see release notes to them for
 details).
 
+ * Coloring around octopus merges in "log --graph" output was screwy.
+   (merge 339c17b hn/log-graph-color-octopus later to maint).
+
+ * "git checkout topic", when there is not yet a local "topic" branch
+   but there is a unique remote-tracking branch for a remote "topic"
+   branch, pretended as if "git checkout -t -b topic remote/$r/topic"
+   (for that unique remote $r) was run. This hack however was not
+   implemented for "git checkout topic --".
+   (merge bca3969 mm/checkout-auto-track-fix later to maint).
+
+ * One long-standing flaw in the pack transfer protocol used by "git
+   clone" was that there was no way to tell the other end which branch
+   "HEAD" points at, and the receiving end needed to guess.  A new
+   capability has been defined in the pack protocol to convey this
+   information so that cloning from a repository with more than one
+   branches pointing at the same commit where the HEAD is at now
+   reliably sets the initial branch in the resulting repository.
+   (merge 360a326 jc/upload-pack-send-symref later to maint).
+
+ * We did not handle cases where http transport gets redirected during
+   the authorization request (e.g. from http:// to https://).
+   (merge 70900ed jk/http-auth-redirects later to maint).
+
  * Bash prompting code to deal with an SVN remote as an upstream
    were coded in a way not supported by older Bash versions (3.x).
    (merge 52ec889 sg/prompt-svn-remote-fix later to maint).
