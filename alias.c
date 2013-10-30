@@ -5,7 +5,7 @@ static char *alias_val;
 
 static int alias_lookup_cb(const char *k, const char *v, void *cb)
 {
-	if (!prefixcmp(k, "alias.") && !strcmp(k+6, alias_key)) {
+	if (!prefixcmp(k, "alias.") && !strcmp(k + 6, alias_key)) {
 		if (!v)
 			return config_error_nonbool(k);
 		alias_val = xstrdup(v);
@@ -34,7 +34,7 @@ int split_cmdline(char *cmdline, const char ***argv)
 	int src, dst, count = 0, size = 16;
 	char quoted = 0;
 
-	*argv = xmalloc(sizeof(char *) * size);
+	*argv = xmalloc(sizeof(**argv) * size);
 
 	/* split alias_string */
 	(*argv)[count++] = cmdline;
@@ -45,7 +45,7 @@ int split_cmdline(char *cmdline, const char ***argv)
 			while (cmdline[++src]
 					&& isspace(cmdline[src]))
 				; /* skip */
-			ALLOC_GROW(*argv, count+1, size);
+			ALLOC_GROW(*argv, count + 1, size);
 			(*argv)[count++] = cmdline + dst;
 		} else if (!quoted && (c == '\'' || c == '"')) {
 			quoted = c;
@@ -76,12 +76,13 @@ int split_cmdline(char *cmdline, const char ***argv)
 		return -SPLIT_CMDLINE_UNCLOSED_QUOTE;
 	}
 
-	ALLOC_GROW(*argv, count+1, size);
+	ALLOC_GROW(*argv, count + 1, size);
 	(*argv)[count] = NULL;
 
 	return count;
 }
 
-const char *split_cmdline_strerror(int split_cmdline_errno) {
-	return split_cmdline_errors[-split_cmdline_errno-1];
+const char *split_cmdline_strerror(int split_cmdline_errno)
+{
+	return split_cmdline_errors[-split_cmdline_errno - 1];
 }

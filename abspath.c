@@ -110,7 +110,7 @@ static const char *real_path_internal(const char *path, int die_on_error)
 				else
 					goto error_out;
 			}
-			if (len && !is_dir_sep(buf[len-1]))
+			if (len && !is_dir_sep(buf[len - 1]))
 				buf[len++] = '/';
 			strcpy(buf + len, last_elem);
 			free(last_elem);
@@ -201,7 +201,7 @@ const char *absolute_path(const char *path)
 		if (!cwd)
 			die_errno("Cannot determine the current working directory");
 		len = strlen(cwd);
-		fmt = (len > 0 && is_dir_sep(cwd[len-1])) ? "%s%s" : "%s/%s";
+		fmt = (len > 0 && is_dir_sep(cwd[len - 1])) ? "%s%s" : "%s/%s";
 		if (snprintf(buf, PATH_MAX, fmt, cwd, path) >= PATH_MAX)
 			die("Too long path: %.*s", 60, path);
 	}
