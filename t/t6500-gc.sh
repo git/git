@@ -9,6 +9,11 @@ test_expect_success 'gc empty repository' '
 	git gc
 '
 
+test_expect_success 'gc does not leave behind pid file' '
+	git gc &&
+	test_path_is_missing .git/gc.pid
+'
+
 test_expect_success 'gc --gobbledegook' '
 	test_expect_code 129 git gc --nonsense 2>err &&
 	test_i18ngrep "[Uu]sage: git gc" err
