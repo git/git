@@ -22,7 +22,7 @@ verify_stderr () {
 	cat >expected &&
 	# We're not interested in the error
 	# "fatal: The remote end hung up unexpectedly":
-	grep -v "hung up" <error >actual &&
+	grep -E '^(fatal|warning):' <error | grep -v 'hung up' >actual | sort &&
 	test_cmp expected actual
 }
 
@@ -49,7 +49,7 @@ test_expect_success 'fetch conflict: config vs. config' '
 		cd ccc &&
 		test_must_fail git fetch origin 2>error &&
 		verify_stderr <<-\EOF
-		fatal: refs/remotes/origin/branch1 tracks both refs/heads/branch1 and refs/heads/branch2
+		fatal: Cannot fetch both refs/heads/branch1 and refs/heads/branch2 to refs/remotes/origin/branch1
 		EOF
 	)
 '
@@ -78,18 +78,22 @@ test_expect_success 'fetch conflict: arg vs. arg' '
 			refs/heads/*:refs/remotes/origin/* \
 			refs/heads/branch2:refs/remotes/origin/branch1 2>error &&
 		verify_stderr <<-\EOF
-		fatal: refs/remotes/origin/branch1 tracks both refs/heads/branch1 and refs/heads/branch2
+		fatal: Cannot fetch both refs/heads/branch1 and refs/heads/branch2 to refs/remotes/origin/branch1
 		EOF
 	)
 '
 
-test_expect_failure 'fetch conflict: criss-cross args' '
+test_expect_success 'fetch conflict: criss-cross args' '
 	setup_repository xaa \
 		"+refs/heads/*:refs/remotes/origin/*" && (
 		cd xaa &&
 		git fetch origin \
 			refs/heads/branch1:refs/remotes/origin/branch2 \
-			refs/heads/branch2:refs/remotes/origin/branch1
+			refs/heads/branch2:refs/remotes/origin/branch1 2>error &&
+		verify_stderr <<-\EOF
+		warning: refs/remotes/origin/branch1 usually tracks refs/heads/branch1, not refs/heads/branch2
+		warning: refs/remotes/origin/branch2 usually tracks refs/heads/branch2, not refs/heads/branch1
+		EOF
 	)
 '
 
