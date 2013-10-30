@@ -329,4 +329,15 @@ test_expect_success 'bracketed hostnames are still ssh' '
 	expect_ssh myhost:123 src
 '
 
+test_expect_success 'clone from a repository with two identical branches' '
+
+	(
+		cd src &&
+		git checkout -b another master
+	) &&
+	git clone src target-11 &&
+	test "z$( cd target-11 && git symbolic-ref HEAD )" = zrefs/heads/another
+
+'
+
 test_done
