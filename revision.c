@@ -1372,7 +1372,8 @@ static void prepare_show_merge(struct rev_info *revs)
 			i++;
 	}
 	free_pathspec(&revs->prune_data);
-	parse_pathspec(&revs->prune_data, PATHSPEC_ALL_MAGIC, 0, "", prune);
+	parse_pathspec(&revs->prune_data, PATHSPEC_ALL_MAGIC,
+		       PATHSPEC_PREFER_FULL, "", prune);
 	revs->limited = 1;
 }
 

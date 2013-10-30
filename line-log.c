@@ -760,7 +760,8 @@ void line_log_init(struct rev_info *rev, const char *prefix, struct string_list 
 			r = r->next;
 		}
 		paths[count] = NULL;
-		parse_pathspec(&rev->diffopt.pathspec, 0, 0, "", paths);
+		parse_pathspec(&rev->diffopt.pathspec, 0,
+			       PATHSPEC_PREFER_FULL, "", paths);
 		free(paths);
 	}
 }
