@@ -6,6 +6,7 @@
 #include "strbuf.h"
 #include "run-command.h"
 #include "refs.h"
+#include "argv-array.h"
 
 static const char * const builtin_remote_usage[] = {
 	N_("git remote [-v | --verbose]"),
@@ -1376,36 +1377,36 @@ static int update(int argc, const char **argv)
 			 N_("prune remotes after fetching")),
 		OPT_END()
 	};
-	const char **fetch_argv;
-	int fetch_argc = 0;
+	struct argv_array fetch_argv = ARGV_ARRAY_INIT;
 	int default_defined = 0;
-
-	fetch_argv = xmalloc(sizeof(char *) * (argc+5));
+	int retval;
 
 	argc = parse_options(argc, argv, NULL, options, builtin_remote_update_usage,
 			     PARSE_OPT_KEEP_ARGV0);
 
-	fetch_argv[fetch_argc++] = "fetch";
+	argv_array_push(&fetch_argv, "fetch");
 
 	if (prune)
-		fetch_argv[fetch_argc++] = "--prune";
+		argv_array_push(&fetch_argv, "--prune");
 	if (verbose)
-		fetch_argv[fetch_argc++] = "-v";
-	fetch_argv[fetch_argc++] = "--multiple";
+		argv_array_push(&fetch_argv, "-v");
+	argv_array_push(&fetch_argv, "--multiple");
 	if (argc < 2)
-		fetch_argv[fetch_argc++] = "default";
+		argv_array_push(&fetch_argv, "default");
 	for (i = 1; i < argc; i++)
-		fetch_argv[fetch_argc++] = argv[i];
+		argv_array_push(&fetch_argv, argv[i]);
 
-	if (strcmp(fetch_argv[fetch_argc-1], "default") == 0) {
+	if (strcmp(fetch_argv.argv[fetch_argv.argc-1], "default") == 0) {
 		git_config(get_remote_default, &default_defined);
-		if (!default_defined)
-			fetch_argv[fetch_argc-1] = "--all";
+		if (!default_defined) {
+			argv_array_pop(&fetch_argv);
+			argv_array_push(&fetch_argv, "--all");
+		}
 	}
 
-	fetch_argv[fetch_argc] = NULL;
-
-	return run_command_v_opt(fetch_argv, RUN_GIT_CMD);
+	retval = run_command_v_opt(fetch_argv.argv, RUN_GIT_CMD);
+	argv_array_clear(&fetch_argv);
+	return retval;
 }
 
 static int remove_all_fetch_refspecs(const char *remote, const char *key)
