@@ -1542,7 +1542,7 @@ static int remote_exists(const char *path)
 
 	sprintf(url, "%s%s", repo->url, path);
 
-	switch (http_get_strbuf(url, NULL, NULL, 0)) {
+	switch (http_get_strbuf(url, NULL, NULL)) {
 	case HTTP_OK:
 		ret = 1;
 		break;
@@ -1566,7 +1566,7 @@ static void fetch_symref(const char *path, char **symref, unsigned char *sha1)
 	url = xmalloc(strlen(repo->url) + strlen(path) + 1);
 	sprintf(url, "%s%s", repo->url, path);
 
-	if (http_get_strbuf(url, NULL, &buffer, 0) != HTTP_OK)
+	if (http_get_strbuf(url, &buffer, NULL) != HTTP_OK)
 		die("Couldn't get %s for remote symref\n%s", url,
 		    curl_errorstr);
 	free(url);
