@@ -164,4 +164,25 @@ test_expect_success 'checkout of branch from a single remote succeeds #4' '
 	test_branch_upstream eggs repo_d eggs
 '
 
+test_expect_success 'checkout of branch with a file having the same name fails' '
+	git checkout -B master &&
+	test_might_fail git branch -D spam &&
+
+	>spam &&
+	test_must_fail git checkout spam &&
+	test_must_fail git rev-parse --verify refs/heads/spam &&
+	test_branch master
+'
+
+test_expect_success 'checkout <branch> -- succeeds, even if a file with the same name exists' '
+	git checkout -B master &&
+	test_might_fail git branch -D spam &&
+
+	>spam &&
+	git checkout spam -- &&
+	test_branch spam &&
+	test_cmp_rev refs/remotes/extra_dir/repo_c/extra_dir/spam HEAD &&
+	test_branch_upstream spam repo_c spam
+'
+
 test_done
