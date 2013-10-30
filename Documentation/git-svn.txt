@@ -175,11 +175,11 @@ Skip "branches" and "tags" of first level directories;;
 	precedence over '--include-paths'.
 
 --log-window-size=<n>;;
-    Fetch <n> log entries per request when scanning Subversion history.
-    The default is 100. For very large Subversion repositories, larger
-    values may be needed for 'clone'/'fetch' to complete in reasonable
-    time. But overly large values may lead to higher memory usage and
-    request timeouts.
+	Fetch <n> log entries per request when scanning Subversion history.
+	The default is 100. For very large Subversion repositories, larger
+	values may be needed for 'clone'/'fetch' to complete in reasonable
+	time. But overly large values may lead to higher memory usage and
+	request timeouts.
 
 'clone'::
 	Runs 'init' and 'fetch'.  It will automatically create a
@@ -275,7 +275,7 @@ first have already been pushed into SVN.
 	For each patch, one may answer "yes" (accept this patch), "no" (discard this
 	patch), "all" (accept all patches), or "quit".
 	+
-       'git svn dcommit' returns immediately if answer is "no" or "quit", without
+	'git svn dcommit' returns immediately if answer is "no" or "quit", without
 	committing anything to SVN.
 
 'branch'::
@@ -366,12 +366,12 @@ environment). This command has the same behaviour.
 Any other arguments are passed directly to 'git log'
 
 'blame'::
-       Show what revision and author last modified each line of a file. The
-       output of this mode is format-compatible with the output of
-       `svn blame' by default. Like the SVN blame command,
-       local uncommitted changes in the working tree are ignored;
-       the version of the file in the HEAD revision is annotated. Unknown
-       arguments are passed directly to 'git blame'.
+	Show what revision and author last modified each line of a file. The
+	output of this mode is format-compatible with the output of
+	`svn blame' by default. Like the SVN blame command,
+	local uncommitted changes in the working tree are ignored;
+	the version of the file in the HEAD revision is annotated. Unknown
+	arguments are passed directly to 'git blame'.
 +
 --git-format;;
 	Produce output in the same format as 'git blame', but with
@@ -830,7 +830,7 @@ Tracking and contributing to an entire Subversion-managed project
 # View all branches and tags you have cloned:
 	git branch -r
 # Create a new branch in SVN
-    git svn branch waldo
+	git svn branch waldo
 # Reset your master to trunk (or any other branch, replacing 'trunk'
 # with the appropriate name):
 	git reset --hard svn/trunk
