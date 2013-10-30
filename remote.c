@@ -748,7 +748,7 @@ int for_each_remote(each_remote_fn fn, void *priv)
 static void handle_duplicate(struct ref *ref1, struct ref *ref2)
 {
 	if (strcmp(ref1->name, ref2->name))
-		die("%s tracks both %s and %s",
+		die(_("%s tracks both %s and %s"),
 		    ref2->peer_ref->name, ref1->name, ref2->name);
 	free(ref2->peer_ref);
 	free(ref2);
