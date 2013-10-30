@@ -51,13 +51,10 @@ ifndef::git-pull[]
 	subject to pruning.
 endif::git-pull[]
 
-ifdef::git-pull[]
---no-tags::
-endif::git-pull[]
 ifndef::git-pull[]
 -n::
---no-tags::
 endif::git-pull[]
+--no-tags::
 	By default, tags that point at objects that are downloaded
 	from the remote repository are fetched and stored locally.
 	This option disables this automatic tag following. The default
