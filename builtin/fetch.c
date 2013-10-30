@@ -936,8 +936,8 @@ static void add_options_to_argv(struct argv_array *argv)
 {
 	if (dry_run)
 		argv_array_push(argv, "--dry-run");
-	if (prune > 0)
-		argv_array_push(argv, "--prune");
+	if (prune != -1)
+		argv_array_push(argv, prune ? "--prune" : "--no-prune");
 	if (update_head_ok)
 		argv_array_push(argv, "--update-head-ok");
 	if (force)
