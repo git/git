@@ -865,7 +865,7 @@ test_expect_success 'rebase -i --exec without <CMD>' '
 	test_must_fail git rebase -i --exec 2>tmp &&
 	sed -e "1d" tmp >actual &&
 	test_must_fail git rebase -h >expected &&
-	test_cmp expected actual &&
+	test_cmp_text expected actual &&
 	git checkout master
 '
 
