@@ -1553,6 +1553,13 @@ static int ignore_symref_update(const char *refname)
 	return (flag & REF_ISSYMREF);
 }
 
+/*
+ * Create and return a list of (struct ref) consisting of copies of
+ * each remote_ref that matches refspec.  refspec must be a pattern.
+ * Fill in the copies' peer_ref to describe the local tracking refs to
+ * which they map.  Omit any references that would map to an existing
+ * local symbolic ref.
+ */
 static struct ref *get_expanded_map(const struct ref *remote_refs,
 				    const struct refspec *refspec)
 {
