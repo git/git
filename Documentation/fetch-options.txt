@@ -61,11 +61,9 @@ endif::git-pull[]
 ifndef::git-pull[]
 -t::
 --tags::
-	This is a short-hand for giving `refs/tags/*:refs/tags/*`
-	refspec from the command line, to ask all tags to be fetched
-	and stored locally.  Because this acts as an explicit
-	refspec, the default refspecs (configured with the
-	remote.$name.fetch variable) are overridden and not used.
+	Request that all tags be fetched from the remote in addition
+	to whatever else is being fetched.  Its effect is similar to
+	that of the refspec `refs/tags/*:refs/tags/*`.
 
 --recurse-submodules[=yes|on-demand|no]::
 	This option controls if and under what conditions new commits of

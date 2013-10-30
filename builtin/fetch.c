@@ -269,12 +269,12 @@ static struct ref *get_ref_map(struct transport *transport,
 	struct ref *ref_map = NULL;
 	struct ref **tail = &ref_map;
 
+	/* opportunistically-updated references: */
+	struct ref *orefs = NULL, **oref_tail = &orefs;
+
 	const struct ref *remote_refs = transport_get_remote_refs(transport);
 
-	if (refspec_count || tags == TAGS_SET) {
-		/* opportunistically-updated references: */
-		struct ref *orefs = NULL, **oref_tail = &orefs;
-
+	if (refspec_count) {
 		for (i = 0; i < refspec_count; i++) {
 			get_fetch_map(remote_refs, &refspecs[i], &tail, 0);
 			if (refspecs[i].dst && refspecs[i].dst[0])
@@ -310,12 +310,6 @@ static struct ref *get_ref_map(struct transport *transport,
 
 		if (tags == TAGS_SET)
 			get_fetch_map(remote_refs, tag_refspec, &tail, 0);
-
-		*tail = orefs;
-		for (rm = orefs; rm; rm = rm->next) {
-			rm->fetch_head_status = FETCH_HEAD_IGNORE;
-			tail = &rm->next;
-		}
 	} else {
 		/* Use the defaults */
 		struct remote *remote = transport->remote;
@@ -353,8 +347,18 @@ static struct ref *get_ref_map(struct transport *transport,
 		}
 	}
 
-	if (tags == TAGS_DEFAULT && *autotags)
+	if (tags == TAGS_SET)
+		/* also fetch all tags */
+		get_fetch_map(remote_refs, tag_refspec, &tail, 0);
+	else if (tags == TAGS_DEFAULT && *autotags)
 		find_non_local_tags(transport, &ref_map, &tail);
+
+	/* Now append any refs to be updated opportunistically: */
+	*tail = orefs;
+	for (rm = orefs; rm; rm = rm->next) {
+		rm->fetch_head_status = FETCH_HEAD_IGNORE;
+		tail = &rm->next;
+	}
 
 	ref_remove_duplicates(ref_map);
 
@@ -846,31 +850,38 @@ static int do_fetch(struct transport *transport,
 		goto cleanup;
 	}
 	if (prune) {
-		/*
-		 * If --tags was specified, pretend that the user gave us
-		 * the canonical tags refspec
-		 */
+		struct refspec *prune_refspecs;
+		int prune_refspec_count;
+
+		if (ref_count) {
+			prune_refspecs = refs;
+			prune_refspec_count = ref_count;
+		} else {
+			prune_refspecs = transport->remote->fetch;
+			prune_refspec_count = transport->remote->fetch_refspec_nr;
+		}
+
 		if (tags == TAGS_SET) {
+			/*
+			 * --tags was specified.  Pretend that the user also
+			 * gave us the canonical tags refspec
+			 */
 			const char *tags_str = "refs/tags/*:refs/tags/*";
 			struct refspec *tags_refspec, *refspec;
 
 			/* Copy the refspec and add the tags to it */
-			refspec = xcalloc(ref_count + 1, sizeof(struct refspec));
+			refspec = xcalloc(prune_refspec_count + 1, sizeof(*refspec));
 			tags_refspec = parse_fetch_refspec(1, &tags_str);
-			memcpy(refspec, refs, ref_count * sizeof(struct refspec));
-			memcpy(&refspec[ref_count], tags_refspec, sizeof(struct refspec));
-			ref_count++;
+			memcpy(refspec, prune_refspecs, prune_refspec_count * sizeof(*refspec));
+			memcpy(&refspec[prune_refspec_count], tags_refspec, sizeof(*refspec));
 
-			prune_refs(refspec, ref_count, ref_map);
+			prune_refs(refspec, prune_refspec_count + 1, ref_map);
 
-			ref_count--;
 			/* The rest of the strings belong to fetch_one */
 			free_refspec(1, tags_refspec);
 			free(refspec);
-		} else if (ref_count) {
-			prune_refs(refs, ref_count, ref_map);
 		} else {
-			prune_refs(transport->remote->fetch, transport->remote->fetch_refspec_nr, ref_map);
+			prune_refs(prune_refspecs, prune_refspec_count, ref_map);
 		}
 	}
 	free_refs(ref_map);
