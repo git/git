@@ -41,8 +41,14 @@ ifndef::git-pull[]
 
 -p::
 --prune::
-	After fetching, remove any remote-tracking branches which
-	no longer exist	on the remote.
+	After fetching, remove any remote-tracking references that no
+	longer exist on the remote.  Tags are not subject to pruning
+	if they are fetched only because of the default tag
+	auto-following or due to a --tags option.  However, if tags
+	are fetched due to an explicit refspec (either on the command
+	line or in the remote configuration, for example if the remote
+	was cloned with the --mirror option), then they are also
+	subject to pruning.
 endif::git-pull[]
 
 ifdef::git-pull[]
@@ -61,9 +67,12 @@ endif::git-pull[]
 ifndef::git-pull[]
 -t::
 --tags::
-	Request that all tags be fetched from the remote in addition
-	to whatever else is being fetched.  Its effect is similar to
-	that of the refspec `refs/tags/*:refs/tags/*`.
+	Fetch all tags from the remote (i.e., fetch remote tags
+	`refs/tags/*` into local tags with the same name), in addition
+	to whatever else would otherwise be fetched.  Using this
+	option alone does not subject tags to pruning, even if --prune
+	is used (though tags may be pruned anyway if they are also the
+	destination of an explicit refspec; see '--prune').
 
 --recurse-submodules[=yes|on-demand|no]::
 	This option controls if and under what conditions new commits of

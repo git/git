@@ -2087,8 +2087,8 @@ remote.<name>.vcs::
 
 remote.<name>.prune::
 	When set to true, fetching from this remote by default will also
-	remove any remote-tracking branches which no longer exist on the
-	remote (as if the `--prune` option was give on the command line).
+	remove any remote-tracking references that no longer exist on the
+	remote (as if the `--prune` option was given on the command line).
 	Overrides `fetch.prune` settings, if any.
 
 remotes.<group>::

@@ -850,38 +850,17 @@ static int do_fetch(struct transport *transport,
 		goto cleanup;
 	}
 	if (prune) {
-		struct refspec *prune_refspecs;
-		int prune_refspec_count;
-
+		/*
+		 * We only prune based on refspecs specified
+		 * explicitly (via command line or configuration); we
+		 * don't care whether --tags was specified.
+		 */
 		if (ref_count) {
-			prune_refspecs = refs;
-			prune_refspec_count = ref_count;
+			prune_refs(refs, ref_count, ref_map);
 		} else {
-			prune_refspecs = transport->remote->fetch;
-			prune_refspec_count = transport->remote->fetch_refspec_nr;
-		}
-
-		if (tags == TAGS_SET) {
-			/*
-			 * --tags was specified.  Pretend that the user also
-			 * gave us the canonical tags refspec
-			 */
-			const char *tags_str = "refs/tags/*:refs/tags/*";
-			struct refspec *tags_refspec, *refspec;
-
-			/* Copy the refspec and add the tags to it */
-			refspec = xcalloc(prune_refspec_count + 1, sizeof(*refspec));
-			tags_refspec = parse_fetch_refspec(1, &tags_str);
-			memcpy(refspec, prune_refspecs, prune_refspec_count * sizeof(*refspec));
-			memcpy(&refspec[prune_refspec_count], tags_refspec, sizeof(*refspec));
-
-			prune_refs(refspec, prune_refspec_count + 1, ref_map);
-
-			/* The rest of the strings belong to fetch_one */
-			free_refspec(1, tags_refspec);
-			free(refspec);
-		} else {
-			prune_refs(prune_refspecs, prune_refspec_count, ref_map);
+			prune_refs(transport->remote->fetch,
+				   transport->remote->fetch_refspec_nr,
+				   ref_map);
 		}
 	}
 	free_refs(ref_map);

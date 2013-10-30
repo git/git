@@ -113,7 +113,7 @@ test_expect_success 'fetch --prune with a namespace keeps other namespaces' '
 	git rev-parse origin/master
 '
 
-test_expect_success 'fetch --prune --tags prunes tags and branches' '
+test_expect_success 'fetch --prune --tags prunes branches but not tags' '
 	cd "$D" &&
 	git clone . prune-tags &&
 	cd prune-tags &&
@@ -125,10 +125,10 @@ test_expect_success 'fetch --prune --tags prunes tags and branches' '
 	git fetch --prune --tags origin &&
 	git rev-parse origin/master &&
 	test_must_fail git rev-parse origin/fake-remote &&
-	test_must_fail git rev-parse sometag
+	git rev-parse sometag
 '
 
-test_expect_success 'fetch --prune --tags with branch does not delete other remote-tracking branches' '
+test_expect_success 'fetch --prune --tags with branch does not prune other things' '
 	cd "$D" &&
 	git clone . prune-tags-branch &&
 	cd prune-tags-branch &&
@@ -137,7 +137,7 @@ test_expect_success 'fetch --prune --tags with branch does not delete other remo
 
 	git fetch --prune --tags origin master &&
 	git rev-parse origin/extrabranch &&
-	test_must_fail git rev-parse sometag
+	git rev-parse sometag
 '
 
 test_expect_success 'fetch --prune --tags with refspec prunes based on refspec' '
@@ -151,7 +151,7 @@ test_expect_success 'fetch --prune --tags with refspec prunes based on refspec' 
 	git fetch --prune --tags origin refs/heads/foo/*:refs/remotes/origin/foo/* &&
 	test_must_fail git rev-parse refs/remotes/origin/foo/otherbranch &&
 	git rev-parse origin/extrabranch &&
-	test_must_fail git rev-parse sometag
+	git rev-parse sometag
 '
 
 test_expect_success 'fetch tags when there is no tags' '
