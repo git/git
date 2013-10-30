@@ -976,6 +976,7 @@ struct checkout {
 		 refresh_cache:1;
 };
 
+#define TEMPORARY_FILENAME_LENGTH 25
 extern int checkout_entry(struct cache_entry *ce, const struct checkout *state, char *topath);
 
 struct cache_def {
