@@ -745,35 +745,45 @@ int for_each_remote(each_remote_fn fn, void *priv)
 	return result;
 }
 
-void ref_remove_duplicates(struct ref *ref_map)
+struct ref *ref_remove_duplicates(struct ref *ref_map)
 {
 	struct string_list refs = STRING_LIST_INIT_NODUP;
-	struct string_list_item *item = NULL;
-	struct ref *prev = NULL, *next = NULL;
+	struct ref *retval = NULL;
+	struct ref **p = &retval;
 
-	for (; ref_map; prev = ref_map, ref_map = next) {
-		next = ref_map->next;
-		if (!ref_map->peer_ref)
-			continue;
+	while (ref_map) {
+		struct ref *ref = ref_map;
 
-		item = string_list_insert(&refs, ref_map->peer_ref->name);
-		if (item->util) {
-			/* Entry already existed */
-			if (strcmp(((struct ref *)item->util)->name,
-				   ref_map->name))
-				die("%s tracks both %s and %s",
-				    ref_map->peer_ref->name,
-				    ((struct ref *)item->util)->name,
-				    ref_map->name);
-			prev->next = ref_map->next;
-			free(ref_map->peer_ref);
-			free(ref_map);
-			ref_map = prev; /* skip this; we freed it */
+		ref_map = ref_map->next;
+		ref->next = NULL;
+
+		if (!ref->peer_ref) {
+			*p = ref;
+			p = &ref->next;
 		} else {
-			item->util = ref_map;
+			struct string_list_item *item =
+				string_list_insert(&refs, ref->peer_ref->name);
+
+			if (item->util) {
+				/* Entry already existed */
+				if (strcmp(((struct ref *)item->util)->name,
+					   ref->name))
+					die("%s tracks both %s and %s",
+					    ref->peer_ref->name,
+					    ((struct ref *)item->util)->name,
+					    ref->name);
+				free(ref->peer_ref);
+				free(ref);
+			} else {
+				*p = ref;
+				p = &ref->next;
+				item->util = ref;
+			}
 		}
 	}
+
 	string_list_clear(&refs, 0);
+	return retval;
 }
 
 int remote_has_url(struct remote *remote, const char *url)

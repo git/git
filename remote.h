@@ -149,9 +149,13 @@ int resolve_remote_symref(struct ref *ref, struct ref *list);
 int ref_newer(const unsigned char *new_sha1, const unsigned char *old_sha1);
 
 /*
- * Removes and frees any duplicate refs in the map.
+ * Remove and free all but the first of any entries in the input list
+ * that map the same remote reference to the same local reference.  If
+ * there are two entries that map different remote references to the
+ * same local reference, emit an error message and die.  Return a
+ * pointer to the head of the resulting list.
  */
-void ref_remove_duplicates(struct ref *ref_map);
+struct ref *ref_remove_duplicates(struct ref *ref_map);
 
 int valid_fetch_refspec(const char *refspec);
 struct refspec *parse_fetch_refspec(int nr_refspec, const char **refspec);

@@ -360,9 +360,7 @@ static struct ref *get_ref_map(struct transport *transport,
 		tail = &rm->next;
 	}
 
-	ref_remove_duplicates(ref_map);
-
-	return ref_map;
+	return ref_remove_duplicates(ref_map);
 }
 
 #define STORE_REF_ERROR_OTHER 1
