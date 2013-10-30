@@ -3376,7 +3376,7 @@ char *shorten_unambiguous_ref(const char *refname, int strict)
 		size_t total_len = 0;
 
 		/* the rule list is NULL terminated, count them first */
-		for (; ref_rev_parse_rules[nr_rules]; nr_rules++)
+		for (nr_rules = 0; ref_rev_parse_rules[nr_rules]; nr_rules++)
 			/* no +1 because strlen("%s") < strlen("%.*s") */
 			total_len += strlen(ref_rev_parse_rules[nr_rules]);
 
