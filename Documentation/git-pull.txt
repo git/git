@@ -42,6 +42,8 @@ Assume the following history exists and the current branch is
 	  A---B---C master on origin
 	 /
     D---E---F---G master
+	^
+	origin/master in your repository
 ------------
 
 Then "`git pull`" will fetch and replay the changes from the remote
@@ -51,7 +53,7 @@ result in a new commit along with the names of the two parent commits
 and a log message from the user describing the changes.
 
 ------------
-	  A---B---C remotes/origin/master
+	  A---B---C origin/master
 	 /         \
     D---E---F---G---H master
 ------------
