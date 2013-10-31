@@ -9,7 +9,7 @@
 #include "hash.h"
 #include "argv-array.h"
 
-#define SEEN		(1u<<0)
+#define SEEN		(1u << 0)
 #define MAX_TAGS	(FLAG_BITS - 1)
 
 static const char * const describe_usage[] = {
@@ -36,7 +36,6 @@ static const char *diff_index_args[] = {
 	"diff-index", "--quiet", "HEAD", "--", NULL
 };
 
-
 struct commit_name {
 	struct commit_name *next;
 	unsigned char peeled[20];
@@ -46,6 +45,7 @@ struct commit_name {
 	unsigned char sha1[20];
 	char *path;
 };
+
 static const char *prio_names[] = {
 	"head", "lightweight", "annotated",
 };
@@ -488,9 +488,8 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 	} else if (dirty) {
 		die(_("--dirty is incompatible with commit-ishes"));
 	} else {
-		while (argc-- > 0) {
+		while (argc-- > 0)
 			describe(*argv++, argc == 0);
-		}
 	}
 	return 0;
 }
