@@ -3394,7 +3394,7 @@ int parse_long_opt(const char *opt, const char **argv,
 	if (prefixcmp(arg, opt))
 		return 0;
 	arg += strlen(opt);
-	if (*arg == '=') { /* sticked form: --option=value */
+	if (*arg == '=') { /* stuck form: --option=value */
 		*optarg = arg + 1;
 		return 1;
 	}
