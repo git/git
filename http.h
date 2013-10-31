@@ -54,6 +54,7 @@
 struct slot_results {
 	CURLcode curl_result;
 	long http_code;
+	long auth_avail;
 };
 
 struct active_request_slot {
