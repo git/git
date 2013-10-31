@@ -563,7 +563,7 @@ static const char *setup_git_directory_gently_1(int *nongit_ok)
 {
 	const char *env_ceiling_dirs = getenv(CEILING_DIRECTORIES_ENVIRONMENT);
 	struct string_list ceiling_dirs = STRING_LIST_INIT_DUP;
-	static char cwd[PATH_MAX+1];
+	static char cwd[PATH_MAX + 1];
 	const char *gitdirenv, *ret;
 	char *gitfile;
 	int len, offset, offset_parent, ceil_offset = -1;
@@ -578,7 +578,7 @@ static const char *setup_git_directory_gently_1(int *nongit_ok)
 	if (nongit_ok)
 		*nongit_ok = 0;
 
-	if (!getcwd(cwd, sizeof(cwd)-1))
+	if (!getcwd(cwd, sizeof(cwd) - 1))
 		die_errno("Unable to read current working directory");
 	offset = len = strlen(cwd);
 
