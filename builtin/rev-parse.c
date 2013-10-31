@@ -30,6 +30,8 @@ static int abbrev_ref;
 static int abbrev_ref_strict;
 static int output_sq;
 
+static int stuck_long;
+
 /*
  * Some arguments are relevant "revision" arguments,
  * others are about output format or other details.
@@ -320,12 +322,15 @@ static int parseopt_dump(const struct option *o, const char *arg, int unset)
 	struct strbuf *parsed = o->value;
 	if (unset)
 		strbuf_addf(parsed, " --no-%s", o->long_name);
-	else if (o->short_name)
+	else if (o->short_name && (o->long_name == NULL || !stuck_long))
 		strbuf_addf(parsed, " -%c", o->short_name);
 	else
 		strbuf_addf(parsed, " --%s", o->long_name);
 	if (arg) {
-		strbuf_addch(parsed, ' ');
+		if (!stuck_long)
+			strbuf_addch(parsed, ' ');
+		else if (o->long_name)
+			strbuf_addch(parsed, '=');
 		sq_quote_buf(parsed, arg);
 	}
 	return 0;
@@ -351,6 +356,8 @@ static int cmd_parseopt(int argc, const char **argv, const char *prefix)
 		OPT_BOOL(0, "stop-at-non-option", &stop_at_non_option,
 					N_("stop parsing after the "
 					   "first non-option argument")),
+		OPT_BOOL(0, "stuck-long", &stuck_long,
+					N_("output in stuck long form")),
 		OPT_END(),
 	};
 

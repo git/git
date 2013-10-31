@@ -50,6 +50,10 @@ Options for --parseopt
 	the first non-option argument.  This can be used to parse sub-commands
 	that take options themselves.
 
+--stuck-long::
+	Only meaningful in `--parseopt` mode. Output the options in their
+	long form if available, and with their arguments stuck.
+
 Options for Filtering
 ~~~~~~~~~~~~~~~~~~~~~
 
@@ -285,7 +289,9 @@ Each line of options has this format:
 	`<flags>` are of `*`, `=`, `?` or `!`.
 	* Use `=` if the option takes an argument.
 
-	* Use `?` to mean that the option is optional (though its use is discouraged).
+	* Use `?` to mean that the option takes an optional argument. You
+	  probably want to use the `--stuck-long` mode to be able to
+	  unambiguously parse the optional argument.
 
 	* Use `*` to mean that this option should not be listed in the usage
 	  generated for the `-h` argument. It's shown for `--help-all` as
