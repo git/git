@@ -423,6 +423,7 @@ static int post_rpc(struct rpc_state *rpc)
 	char *gzip_body = NULL;
 	size_t gzip_size = 0;
 	int err, large_request = 0;
+	int needs_100_continue = 0;
 
 	/* Try to load the entire request, if we can fit it into the
 	 * allocated buffer space we can use HTTP/1.0 and avoid the
@@ -446,16 +447,22 @@ static int post_rpc(struct rpc_state *rpc)
 	}
 
 	if (large_request) {
+		struct slot_results results;
+
 		do {
-			err = probe_rpc(rpc, NULL);
+			err = probe_rpc(rpc, &results);
 		} while (err == HTTP_REAUTH);
 		if (err != HTTP_OK)
 			return -1;
+
+		if (results.auth_avail & CURLAUTH_GSSNEGOTIATE)
+			needs_100_continue = 1;
 	}
 
 	headers = curl_slist_append(headers, rpc->hdr_content_type);
 	headers = curl_slist_append(headers, rpc->hdr_accept);
-	headers = curl_slist_append(headers, "Expect:");
+	headers = curl_slist_append(headers, needs_100_continue ?
+		"Expect: 100-continue" : "Expect:");
 
 retry:
 	slot = get_active_slot();
