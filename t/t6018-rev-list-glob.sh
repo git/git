@@ -231,6 +231,48 @@ test_expect_success 'rev-list --remotes=foo' '
 
 '
 
+test_expect_success 'rev-list --exclude with --branches' '
+	compare rev-list "--exclude=*/* --branches" "master someref subspace-x"
+'
+
+test_expect_success 'rev-list --exclude with --all' '
+	compare rev-list "--exclude=refs/remotes/* --all" "--branches --tags"
+'
+
+test_expect_success 'rev-list accumulates multiple --exclude' '
+	compare rev-list "--exclude=refs/remotes/* --exclude=refs/tags/* --all" --branches
+'
+
+
+# "git rev-list<ENTER>" is likely to be a bug in the calling script and may
+# deserve an error message, but do cases where set of refs programatically
+# given using globbing and/or --stdin need to fail with the same error, or
+# are we better off reporting a success with no output?  The following few
+# tests document the current behaviour to remind us that we might want to
+# think about this issue.
+
+test_expect_failure 'rev-list may want to succeed with empty output on no input (1)' '
+	>expect &&
+	git rev-list --stdin <expect >actual &&
+	test_cmp expect actual
+'
+
+test_expect_failure 'rev-list may want to succeed with empty output on no input (2)' '
+	>expect &&
+	git rev-list --exclude=* --all >actual &&
+	test_cmp expect actual
+'
+
+test_expect_failure 'rev-list may want to succeed with empty output on no input (3)' '
+	(
+		test_create_repo empty &&
+		cd empty &&
+		>expect &&
+		git rev-list --all >actual &&
+		test_cmp expect actual
+	)
+'
+
 test_expect_success 'shortlog accepts --glob/--tags/--remotes' '
 
 	compare shortlog "subspace/one subspace/two" --branches=subspace &&
