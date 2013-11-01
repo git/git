@@ -192,6 +192,11 @@ struct rev_info {
 	struct decoration line_log_data;
 };
 
+extern int ref_excluded(struct string_list *, const char *path);
+void clear_ref_exclusion(struct string_list **);
+void add_ref_exclusion(struct string_list **, const char *exclude);
+
+
 #define REV_TREE_SAME		0
 #define REV_TREE_NEW		1	/* Only new files */
 #define REV_TREE_OLD		2	/* Only files removed */

@@ -1180,13 +1180,13 @@ struct all_refs_cb {
 	const char *name_for_errormsg;
 };
 
-static int ref_excluded(struct rev_info *revs, const char *path)
+int ref_excluded(struct string_list *ref_excludes, const char *path)
 {
 	struct string_list_item *item;
 
-	if (!revs->ref_excludes)
+	if (!ref_excludes)
 		return 0;
-	for_each_string_list_item(item, revs->ref_excludes) {
+	for_each_string_list_item(item, ref_excludes) {
 		if (!fnmatch(item->string, path, 0))
 			return 1;
 	}
@@ -1198,7 +1198,7 @@ static int handle_one_ref(const char *path, const unsigned char *sha1, int flag,
 	struct all_refs_cb *cb = cb_data;
 	struct object *object;
 
-	if (ref_excluded(cb->all_revs, path))
+	if (ref_excluded(cb->all_revs->ref_excludes, path))
 	    return 0;
 
 	object = get_reference(cb->all_revs, path, sha1, cb->all_flags);
@@ -1214,22 +1214,22 @@ static void init_all_refs_cb(struct all_refs_cb *cb, struct rev_info *revs,
 	cb->all_flags = flags;
 }
 
-static void clear_ref_exclusion(struct rev_info *revs)
+void clear_ref_exclusion(struct string_list **ref_excludes_p)
 {
-	if (revs->ref_excludes) {
-		string_list_clear(revs->ref_excludes, 0);
-		free(revs->ref_excludes);
+	if (*ref_excludes_p) {
+		string_list_clear(*ref_excludes_p, 0);
+		free(*ref_excludes_p);
 	}
-	revs->ref_excludes = NULL;
+	*ref_excludes_p = NULL;
 }
 
-static void add_ref_exclusion(struct rev_info *revs, const char *exclude)
+void add_ref_exclusion(struct string_list **ref_excludes_p, const char *exclude)
 {
-	if (!revs->ref_excludes) {
-		revs->ref_excludes = xcalloc(1, sizeof(*revs->ref_excludes));
-		revs->ref_excludes->strdup_strings = 1;
+	if (!*ref_excludes_p) {
+		*ref_excludes_p = xcalloc(1, sizeof(**ref_excludes_p));
+		(*ref_excludes_p)->strdup_strings = 1;
 	}
-	string_list_append(revs->ref_excludes, exclude);
+	string_list_append(*ref_excludes_p, exclude);
 }
 
 static void handle_refs(const char *submodule, struct rev_info *revs, unsigned flags,
@@ -1988,44 +1988,44 @@ static int handle_revision_pseudo_opt(const char *submodule,
 	if (!strcmp(arg, "--all")) {
 		handle_refs(submodule, revs, *flags, for_each_ref_submodule);
 		handle_refs(submodule, revs, *flags, head_ref_submodule);
-		clear_ref_exclusion(revs);
+		clear_ref_exclusion(&revs->ref_excludes);
 	} else if (!strcmp(arg, "--branches")) {
 		handle_refs(submodule, revs, *flags, for_each_branch_ref_submodule);
-		clear_ref_exclusion(revs);
+		clear_ref_exclusion(&revs->ref_excludes);
 	} else if (!strcmp(arg, "--bisect")) {
 		handle_refs(submodule, revs, *flags, for_each_bad_bisect_ref);
 		handle_refs(submodule, revs, *flags ^ (UNINTERESTING | BOTTOM), for_each_good_bisect_ref);
 		revs->bisect = 1;
 	} else if (!strcmp(arg, "--tags")) {
 		handle_refs(submodule, revs, *flags, for_each_tag_ref_submodule);
-		clear_ref_exclusion(revs);
+		clear_ref_exclusion(&revs->ref_excludes);
 	} else if (!strcmp(arg, "--remotes")) {
 		handle_refs(submodule, revs, *flags, for_each_remote_ref_submodule);
-		clear_ref_exclusion(revs);
+		clear_ref_exclusion(&revs->ref_excludes);
 	} else if ((argcount = parse_long_opt("glob", argv, &optarg))) {
 		struct all_refs_cb cb;
 		init_all_refs_cb(&cb, revs, *flags);
 		for_each_glob_ref(handle_one_ref, optarg, &cb);
-		clear_ref_exclusion(revs);
+		clear_ref_exclusion(&revs->ref_excludes);
 		return argcount;
 	} else if ((argcount = parse_long_opt("exclude", argv, &optarg))) {
-		add_ref_exclusion(revs, optarg);
+		add_ref_exclusion(&revs->ref_excludes, optarg);
 		return argcount;
 	} else if (!prefixcmp(arg, "--branches=")) {
 		struct all_refs_cb cb;
 		init_all_refs_cb(&cb, revs, *flags);
 		for_each_glob_ref_in(handle_one_ref, arg + 11, "refs/heads/", &cb);
-		clear_ref_exclusion(revs);
+		clear_ref_exclusion(&revs->ref_excludes);
 	} else if (!prefixcmp(arg, "--tags=")) {
 		struct all_refs_cb cb;
 		init_all_refs_cb(&cb, revs, *flags);
 		for_each_glob_ref_in(handle_one_ref, arg + 7, "refs/tags/", &cb);
-		clear_ref_exclusion(revs);
+		clear_ref_exclusion(&revs->ref_excludes);
 	} else if (!prefixcmp(arg, "--remotes=")) {
 		struct all_refs_cb cb;
 		init_all_refs_cb(&cb, revs, *flags);
 		for_each_glob_ref_in(handle_one_ref, arg + 10, "refs/remotes/", &cb);
-		clear_ref_exclusion(revs);
+		clear_ref_exclusion(&revs->ref_excludes);
 	} else if (!strcmp(arg, "--reflog")) {
 		handle_reflog(revs, *flags);
 	} else if (!strcmp(arg, "--not")) {
