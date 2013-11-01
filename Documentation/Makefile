@@ -53,6 +53,7 @@ SP_ARTICLES += howto/setup-git-server-over-http
 SP_ARTICLES += howto/separating-topic-branches
 SP_ARTICLES += howto/revert-a-faulty-merge
 SP_ARTICLES += howto/recover-corrupted-blob-object
+SP_ARTICLES += howto/recover-corrupted-object-harder
 SP_ARTICLES += howto/rebuild-from-update-hook
 SP_ARTICLES += howto/rebase-from-internal-branch
 SP_ARTICLES += howto/maintain-git
