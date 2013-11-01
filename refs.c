@@ -947,13 +947,6 @@ static struct ref_cache *get_ref_cache(const char *submodule)
 	return refs;
 }
 
-void invalidate_ref_cache(const char *submodule)
-{
-	struct ref_cache *refs = get_ref_cache(submodule);
-	clear_packed_ref_cache(refs);
-	clear_loose_ref_cache(refs);
-}
-
 /* The length of a peeled reference line in packed-refs, including EOL: */
 #define PEELED_LINE_LENGTH 42
 

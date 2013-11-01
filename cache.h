@@ -398,7 +398,6 @@ extern int is_bare_repository(void);
 extern int is_inside_git_dir(void);
 extern char *git_work_tree_cfg;
 extern int is_inside_work_tree(void);
-extern int have_git_dir(void);
 extern const char *get_git_dir(void);
 extern int is_git_directory(const char *path);
 extern char *get_object_directory(void);
