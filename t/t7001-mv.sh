@@ -293,6 +293,32 @@ test_expect_success 'git mv moves a submodule with a .git directory and no .gitm
 	git diff-files --quiet
 '
 
+test_expect_success 'git mv moves a submodule with a .git directory and .gitmodules' '
+	rm -rf mod &&
+	git reset --hard &&
+	git submodule update &&
+	entry="$(git ls-files --stage sub | cut -f 1)" &&
+	(
+		cd sub &&
+		rm -f .git &&
+		cp -a ../.git/modules/sub .git &&
+		GIT_WORK_TREE=. git config --unset core.worktree
+	) &&
+	mkdir mod &&
+	git mv sub mod/sub &&
+	! test -e sub &&
+	[ "$entry" = "$(git ls-files --stage mod/sub | cut -f 1)" ] &&
+	(
+		cd mod/sub &&
+		git status
+	) &&
+	echo mod/sub >expected &&
+	git config -f .gitmodules submodule.sub.path >actual &&
+	test_cmp expected actual &&
+	git update-index --refresh &&
+	git diff-files --quiet
+'
+
 test_expect_success 'git mv moves a submodule with gitfile' '
 	rm -rf mod/sub &&
 	git reset --hard &&
