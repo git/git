@@ -76,6 +76,9 @@ Foreign interfaces, subsystems and ports.
 
 UI, Workflows & Features
 
+ * xdg-open can be used as a browser backend for "git web-browse"
+   (hence to show "git help -w" output), when available.
+
  * "git grep" and "git show" pays attention to "--textconv" option
    when these commands are told to operate on blob objects (e.g. "git
    grep -e pattern HEAD:Makefile").
@@ -132,10 +135,6 @@ UI, Workflows & Features
    sync with the branch it builds on, and a branch that is configured
    to build on some other branch that no longer exists.
 
- * A packfile that stores the same object more than once is broken and
-   will be rejected by "git index-pack" that is run when receiving
-   data over the wire.
-
  * Earlier we started rejecting an attempt to add 0{40} object name to
    the index and to tree objects, but it sometimes is necessary to
    allow so to be able to use tools like filter-branch to correct such
@@ -153,8 +152,9 @@ UI, Workflows & Features
  * "git push --no-thin" actually disables the "thin pack transfer"
    optimization.
 
- * Magic pathspecs like ":(icase)makefile" that matches both
-   Makefile and makefile can be used in more places.
+ * Magic pathspecs like ":(icase)makefile" that matches both Makefile
+   and makefile and ":(glob)foo/**/bar" that matches "bar" in "foo"
+   and any subdirectory of "foo" can be used in more places.
 
  * The "http.*" variables can now be specified per URL that the
    configuration applies.  For example,
@@ -205,6 +205,10 @@ UI, Workflows & Features
 
 Performance, Internal Implementation, etc.
 
+ * "git for-each-ref" when asking for merely the object name does not
+   have to parse the object pointed at by the refs; the codepath has
+   been optimized.
+
  * The HTTP transport will try to use TCP keepalive when able.
 
  * "git repack" is now written in C.
@@ -243,6 +247,15 @@ Fixes since v1.8.4
 Unless otherwise noted, all the fixes since v1.8.4 in the maintenance
 track are contained in this release (see release notes to them for
 details).
+
+ * A fast-import stream expresses a pathname with funny characters by
+   quoting them in C style; remote-hg remote helper forgot to unquote
+   such a path.
+   (merge 1136265 ap/remote-hg-unquote-cquote later to maint).
+
+ * "git reset -p HEAD" has a codepath to special case it to behave
+   differently from resetting to contents of other commits, but a
+   recent change broke it.
 
  * Coloring around octopus merges in "log --graph" output was screwy.
    (merge 339c17b hn/log-graph-color-octopus later to maint).
