@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Oct 2013, #08; Wed, 30)
-X-master-at: 42817b96b1b80b56fd5a4d5e0d6239524b1832a3
-X-next-at: a9bf06aa4c8db76465f9b7c11b2704229b2adb5a
+Subject: What's cooking in git.git (Nov 2013, #01; Fri, 1)
+X-master-at: aa2706463fdeb51d6f9d0e267113b251888cf7f5
+X-next-at: 895133908010cd8192e1783286fa28ed6538f61f
 
-What's cooking in git.git (Oct 2013, #08; Wed, 30)
+What's cooking in git.git (Nov 2013, #01; Fri, 1)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -29,178 +29,119 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* fc/styles (2013-10-16) 7 commits
-  (merged to 'next' on 2013-10-28 at cf592ed)
- + block-sha1/sha1.c: have SP around arithmetic operators
- + base85.c: have SP around arithmetic operators
- + archive.c: have SP around arithmetic operators
- + alloc.c: have SP around arithmetic operators
- + abspath.c: have SP around arithmetic operators
- + alias: have SP around arithmetic operators
- + C: have space around && and || operators
+* ap/remote-hg-unquote-cquote (2013-10-23) 1 commit
+  (merged to 'next' on 2013-10-28 at 6b99fd5)
+ + remote-hg: unquote C-style paths when exporting
 
- C coding style fixes.
+ A fast-import stream expresses a pathname with funny characters by
+ quoting them in C style; remote-hg remote helper forgot to unquote
+ such a path.
 
 
-* hn/log-graph-color-octopus (2013-10-18) 1 commit
-  (merged to 'next' on 2013-10-28 at e103175)
- + graph: fix coloring around octopus merges
+* jk/for-each-ref-skip-parsing (2013-10-30) 1 commit
+  (merged to 'next' on 2013-10-30 at 56ea310)
+ + for-each-ref: avoid loading objects to print %(objectname)
 
 
-* jc/upload-pack-send-symref (2013-10-22) 10 commits
-  (merged to 'next' on 2013-10-23 at 8ef5660)
- + t5570: Update for clone-progress-to-stderr branch
- + Merge branch 'jk/clone-progress-to-stderr' into jc/upload-pack-send-symref
- + t5570: Update for symref capability
-  (merged to 'next' on 2013-10-16 at eb1ae25)
- + clone: test the new HEAD detection logic
- + connect: annotate refs with their symref information in get_remote_head()
- + connect.c: make parse_feature_value() static
- + upload-pack: send non-HEAD symbolic refs
- + upload-pack: send symbolic ref information as capability
- + upload-pack.c: do not pass confusing cb_data to mark_our_ref()
- + t5505: fix "set-head --auto with ambiguous HEAD" test
-
- One long-standing flaw in the pack transfer protocol used by "git
- clone" was that there was no way to tell the other end which branch
- "HEAD" points at, and the receiving end needed to guess.  A new
- capability has been defined in the pack protocol to convey this
- information so that cloning from a repository with more than one
- branches pointing at the same commit where the HEAD is at now
- reliably sets the initial branch in the resulting repository.
+* jk/pack-corruption-post-mortem (2013-10-25) 1 commit
+  (merged to 'next' on 2013-10-30 at 2248df6)
+ + howto: add article on recovering a corrupted object
 
 
-* jk/date-c-double-semicolon (2013-10-24) 1 commit
-  (merged to 'next' on 2013-10-28 at 00ce440)
- + drop redundant semicolon in empty while
+* jk/reset-p-current-head-fix (2013-10-25) 2 commits
+  (merged to 'next' on 2013-10-30 at 37ae6e0)
+ + reset: pass real rev name to add--interactive
+ + add-interactive: handle unborn branch in patch mode
+
+ "git reset -p HEAD" has codepath to special case it from resetting
+ to contents of other commits, but recent change broke it.
 
 
-* jk/http-auth-redirects (2013-10-24) 10 commits
-  (merged to 'next' on 2013-10-24 at 4bebb66)
- + http.c: Spell the null pointer as NULL
- + remote-curl: rewrite base url from info/refs redirects
- + remote-curl: store url as a strbuf
- + remote-curl: make refs_url a strbuf
- + http: update base URLs when we see redirects
- + http: provide effective url to callers
- + http: hoist credential request out of handle_curl_result
-  (merged to 'next' on 2013-10-14 at a0642be)
- + http: refactor options to http_get_*
- + http_request: factor out curlinfo_strbuf
- + http_get_file: style fixes
+* jl/submodule-mv (2013-10-13) 1 commit
+  (merged to 'next' on 2013-10-28 at 8dc9b31)
+ + mv: Fix spurious warning when moving a file in presence of submodules
 
- Handle the case where http transport gets redirected during the
- authorization request better.
+ Moving a regular file in a repository with a .gitmodules file was
+ producing a warning 'Could not find section in .gitmodules where
+ path=<filename>'.
 
 
-* jk/refs-c-squelch-gcc (2013-10-24) 1 commit
-  (merged to 'next' on 2013-10-28 at d15f7c2)
- + silence gcc array-bounds warning
+* js/test-help-format-windows-port-fix (2013-10-30) 1 commit
+  (merged to 'next' on 2013-10-30 at b98e991)
+ + t3200: do not open a HTML manual page when DEFAULT_MAN_FORMAT is html
 
 
-* jl/pack-transfer-avoid-double-close (2013-10-23) 1 commit
-  (merged to 'next' on 2013-10-28 at 4a55bba)
- + Clear fd after closing to avoid double-close error
-
- The codepath that send_pack() calls pack_objects() mistakenly
- closed the same file descriptor twice, leading to potentially
- closing a wrong file descriptor that was opened in the meantime.
+* js/tests-windows-port-fix (2013-10-28) 3 commits
+  (merged to 'next' on 2013-10-30 at 61f8e24)
+ + tests: undo special treatment of CRLF for Windows
+ + Windows: a test_cmp that is agnostic to random LF <> CRLF conversions
+ + t5300-pack-object: do not compare binary data using test_cmp
 
 
-* mm/checkout-auto-track-fix (2013-10-18) 2 commits
-  (merged to 'next' on 2013-10-28 at f4594ba)
- + checkout: proper error message on 'git checkout foo bar --'
- + checkout: allow dwim for branch creation for "git checkout $branch --"
-
- "git checkout topic", when there is not yet a local "topic" branch
- but there is a unique remote-tracking branch for a remote "topic"
- branch, pretended as if "git checkout -t -b topic remote/$r/topic"
- (for that unique remote $r) was run. This hack however was not
- implemented for "git checkout topic --".
+* rs/web-browse-xdg-open (2013-10-30) 1 commit
+  (merged to 'next' on 2013-10-30 at 37d6eb4)
+ + web--browse: Add support for xdg-open
 
 
-* nd/gc-lock-against-each-other (2013-10-18) 1 commit
-  (merged to 'next' on 2013-10-28 at 14bd458)
- + gc: remove gc.pid file at end of execution
-
-
-* nd/lift-path-max (2013-10-24) 2 commits
-  (merged to 'next' on 2013-10-28 at 07698af)
- + checkout_entry(): clarify the use of topath[] parameter
- + entry.c: convert checkout_entry to use strbuf
-
-
-* nd/magic-pathspec (2013-10-22) 1 commit
-  (merged to 'next' on 2013-10-28 at 50eda68)
- + Fix calling parse_pathspec with no paths nor PATHSPEC_PREFER_* flags
-
- All callers to parse_pathspec() must choose between getting no
- pathspec or one path that is limited to the current directory
- when there is no paths given on the command line, but there were
- two callers that violated this rule, triggering a BUG().
-
-
-* sb/git-svn-docs-indent-with-ht (2013-10-22) 1 commit
-  (merged to 'next' on 2013-10-28 at 8a952d1)
- + git-svn docs: Use tabs consistently within the ascii doc
-
-
-* sg/t3600-nul-sha1-fix (2013-10-16) 1 commit
-  (merged to 'next' on 2013-10-28 at ac4b703)
- + t3600: fix broken "choking git rm" test
-
-
-* tr/gitk-doc-update (2013-10-22) 1 commit
-  (merged to 'next' on 2013-10-28 at f4158b8)
- + Documentation: revamp gitk(1)
-
-
-* tr/valgrind-test-fix (2013-10-22) 2 commits
-  (merged to 'next' on 2013-10-28 at 4d3f31a)
- + Revert "test-lib: allow prefixing a custom string before "ok N" etc."
- + Revert "test-lib: support running tests under valgrind in parallel"
+* sb/refs-code-cleanup (2013-10-28) 2 commits
+  (merged to 'next' on 2013-10-30 at a9bf06a)
+ + cache: remove unused function 'have_git_dir'
+ + refs: remove unused function invalidate_ref_cache
 
 --------------------------------------------------
 [New Topics]
 
-* jn/test-prereq-perl-doc (2013-10-28) 1 commit
- - t/README: tests can use perl even with NO_PERL
+* fc/trivial (2013-10-31) 13 commits
+ - setup: trivial style fixes
+ - run-command: trivial style fixes
+ - diff: trivial style fix
+ - revision: trivial style fixes
+ - pretty: trivial style fix
+ - describe: trivial style fixes
+ - transport-helper: trivial style fix
+ - sha1-name: trivial style cleanup
+ - branch: trivial style fix
+ - revision: add missing include
+ - doc/pull: clarify the illustrations
+ - t: replace pulls with merges
+ - merge: simplify ff-only option
+
+ A random collection of style fixes and minor doc updates.
 
  Will merge to 'next'.
 
 
-* ak/cvsserver-stabilize-use-of-hash-keys (2013-10-30) 1 commit
- - cvsserver: Determinize output to combat Perl 5.18 hash randomization
+* jk/duplicate-objects-in-packs (2013-10-31) 1 commit
+  (merged to 'next' on 2013-11-01 at 8951339)
+ + Fix '\%o' for printf from coreutils
 
- Will merge to 'next'.
+ Test fixup to a topic recently graduated.
 
-
-* jk/replace-perl-in-built-scripts (2013-10-29) 1 commit
- - use @@PERL@@ in built scripts
-
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* jk/subtree-install-fix (2013-10-30) 1 commit
- - subtree: add makefile target for html docs
-
- Will merge to 'next'.
-
-
-* jk/wrap-perl-used-in-tests (2013-10-29) 2 commits
- - t: use perl instead of "$PERL_PATH" where applicable
- - t: provide a perl() function which uses $PERL_PATH
-
- Will merge to 'next'.
+* rr/for-each-ref-decoration (2013-10-31) 4 commits
+ - fixup! for-each-ref: introduce %(upstream:track[short])
+ - for-each-ref: introduce %(upstream:track[short])
+ - for-each-ref: introduce %(HEAD) asterisk marker
+ - for-each-ref: introduce %C(...) for color
 
 
-* jt/commit-fixes-footer (2013-10-30) 1 commit
- - commit: Add -f, --fixes <commit> option to add Fixes: line
+* vd/doc-unpack-objects (2013-11-01) 2 commits
+  (merged to 'next' on 2013-11-01 at 443d0f4)
+ + Documentation: "pack-file" is not literal in unpack-objects
+ + Documentation: restore a space in unpack-objects usage
 
- There is an ongoing discussion around this topic; in general I am
- fairly negative on a new feature that is too narrow and prefer a
- more generic solution that can be tailored for specific needs, as
- many people stated in the thread.
+ Will merge to 'master'.
+
+
+* jk/two-way-merge-corner-case-fix (2013-11-01) 3 commits
+ - t1005: add test for "read-tree --reset -u A B"
+ - t1005: reindent
+ - unpack-trees: fix "read-tree -u --reset A B" with conflicted index
+
+ Fix a rather longstanding corner-case bug in twoway "reset to
+ there" merge, which is most often seen in "git am --abort".
 
 --------------------------------------------------
 [Stalled]
@@ -252,18 +193,6 @@ of the repositories listed at
  lines are not wide enough.
 
  I am not sure if that is solving a right problem, though.
-
-
-* jc/ref-excludes (2013-09-03) 2 commits
- - document --exclude option
- - revision: introduce --exclude=<glob> to tame wildcards
-
- People often wished a way to tell "git log --branches" (and "git
- log --remotes --not --branches") to exclude some local branches
- from the expansion of "--branches" (similarly for "--tags", "--all"
- and "--glob=<pattern>").  Now they have one.
-
- Needs a matching change to rev-parse.
 
 
 * rv/send-email-cache-generated-mid (2013-08-21) 2 commits
@@ -318,25 +247,81 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* sc/doc-howto-dumb-http (2013-10-28) 1 commit
- - doc/howto: warn about (dumb)http server document being too old
+* jc/ref-excludes (2013-11-01) 5 commits
+ - rev-parse: introduce --exclude=<glob> to tame wildcards
+ - rev-list --exclude: export add/clear-ref-exclusion and ref-excluded API
+ - rev-list --exclude: tests
+ - document --exclude option
+ - revision: introduce --exclude=<glob> to tame wildcards
 
- Will merge to 'next'.
+ People often wished a way to tell "git log --branches" (and "git
+ log --remotes --not --branches") to exclude some local branches
+ from the expansion of "--branches" (similarly for "--tags", "--all"
+ and "--glob=<pattern>").  Now they have one.
+
+
+* jn/test-prereq-perl-doc (2013-10-28) 1 commit
+  (merged to 'next' on 2013-11-01 at 4d4a8b4)
+ + t/README: tests can use perl even with NO_PERL
+
+ Will merge to 'master'.
+
+
+* ak/cvsserver-stabilize-use-of-hash-keys (2013-10-30) 1 commit
+  (merged to 'next' on 2013-11-01 at cc3b890)
+ + cvsserver: Determinize output to combat Perl 5.18 hash randomization
+
+ Will merge to 'master'.
+
+
+* jk/replace-perl-in-built-scripts (2013-10-29) 1 commit
+  (merged to 'next' on 2013-11-01 at 2384e29)
+ + use @@PERL@@ in built scripts
+
+ Will cook in 'next'.
+
+
+* jk/subtree-install-fix (2013-10-30) 1 commit
+  (merged to 'next' on 2013-11-01 at 531bd79)
+ + subtree: add makefile target for html docs
+
+ Will merge to 'master'.
+
+
+* jk/wrap-perl-used-in-tests (2013-10-29) 2 commits
+  (merged to 'next' on 2013-11-01 at 73444c5)
+ + t: use perl instead of "$PERL_PATH" where applicable
+ + t: provide a perl() function which uses $PERL_PATH
+
+ Will merge to 'master'.
+
+
+* jt/commit-fixes-footer (2013-10-30) 1 commit
+ - commit: Add -f, --fixes <commit> option to add Fixes: line
+
+ There is an ongoing discussion around this topic; in general I am
+ fairly negative on a new feature that is too narrow and prefer a
+ more generic solution that can be tailored for specific needs, as
+ many people stated in the thread.
+
+
+* sc/doc-howto-dumb-http (2013-10-28) 1 commit
+  (merged to 'next' on 2013-11-01 at a734b6e)
+ + doc/howto: warn about (dumb)http server document being too old
+
+ Will merge to 'master'.
 
 
 * bw/solaris-sed-tr-test-portability (2013-10-30) 2 commits
- - Avoid difference in tr semantics between System V and BSD
- - Change sed i\ usage to something Solaris' sed can handle
+  (merged to 'next' on 2013-11-01 at f04be9a)
+ + Avoid difference in tr semantics between System V and BSD
+ + Change sed i\ usage to something Solaris' sed can handle
 
- The bottom one may want to lose the "\<nl>" that seems to be a
- no-op.
+ Will merge to 'master'.
 
 
-* fc/transport-helper-fixes (2013-10-28) 13 commits
- - test: remote-helper: add test for force pushes
- - git-remote-testgit: support the new 'force' option
- - fixup! transport-helper: add 'force' to 'export' helpers
- - transport-helper: don't update refs in dry-run
+* fc/transport-helper-fixes (2013-11-01) 11 commits
+ - transport-helper: demote lack of "force" option to a warning
  - transport-helper: add support to delete branches
  - fast-export: add support to delete refs
  - fast-import: add support to delete refs
@@ -344,60 +329,40 @@ of the repositories listed at
  - fast-export: add new --refspec option
  - fast-export: improve argument parsing
  - transport-helper: check for 'forced update' message
- - transport-helper: fix extra lines
  - transport-helper: add 'force' to 'export' helpers
+ - transport-helper: don't update refs in dry-run
+ - transport-helper: mismerge fix
 
- This may need to be rerolled, taking review comments and
- discussions into account.
+ Updates transport-helper, fast-import and fast-export to allow the
+ ref mapping and ref deletion in a way similar to the natively
+ supported transports.
+
+ Will merge to 'next'.
 
 
 * jh/loose-object-dirs-creation-race (2013-10-28) 1 commit
- - sha1_file.c:create_tmpfile(): Fix race when creating loose object dirs
+  (merged to 'next' on 2013-11-01 at 3169b0f)
+ + sha1_file.c:create_tmpfile(): Fix race when creating loose object dirs
 
- Will merge to 'next'.
-
-
-* js/test-help-format-windows-port-fix (2013-10-30) 1 commit
-  (merged to 'next' on 2013-10-30 at b98e991)
- + t3200: do not open a HTML manual page when DEFAULT_MAN_FORMAT is html
-
- Will merge to 'master'.
-
-
-* js/tests-windows-port-fix (2013-10-28) 3 commits
-  (merged to 'next' on 2013-10-30 at 61f8e24)
- + tests: undo special treatment of CRLF for Windows
- + Windows: a test_cmp that is agnostic to random LF <> CRLF conversions
- + t5300-pack-object: do not compare binary data using test_cmp
-
- Will merge to 'master'.
+ Will cook in 'next'.
 
 
 * nd/liteal-pathspecs (2013-10-28) 1 commit
- - pathspec: stop --*-pathspecs impact on internal parse_pathspec() uses
+  (merged to 'next' on 2013-11-01 at 1a91775)
+ + pathspec: stop --*-pathspecs impact on internal parse_pathspec() uses
 
- Will merge to 'next'.
-
-
-* rs/web-browse-xdg-open (2013-10-30) 1 commit
-  (merged to 'next' on 2013-10-30 at 37d6eb4)
- + web--browse: Add support for xdg-open
-
- Will merge to 'master'.
-
-
-* sb/refs-code-cleanup (2013-10-28) 2 commits
-  (merged to 'next' on 2013-10-30 at a9bf06a)
- + cache: remove unused function 'have_git_dir'
- + refs: remove unused function invalidate_ref_cache
-
- Will merge to 'master'.
+ Will cook in 'next'.
 
 
 * th/reflog-annotated-tag (2013-10-28) 1 commit
- - reflog: handle lightweight and annotated tags equally
+  (merged to 'next' on 2013-11-01 at 8b154cc)
+ + reflog: handle lightweight and annotated tags equally
 
- Will merge to 'next'.
+ "git log -g $annotated_tag", when there is no reflog history, should
+ have produced a single output entry (i.e. the ref creation event),
+ but instead showed the history leading to the tag.
+
+ Will merge to 'master'.
 
 
 * tr/merge-recursive-index-only (2013-10-28) 3 commits
@@ -406,30 +371,27 @@ of the repositories listed at
  - merge-recursive: remove dead conditional in update_stages()
 
 
-* bc/http-100-continue (2013-10-29) 1 commit
- - remote-curl: fix large pushes with GSSAPI
+* bc/http-100-continue (2013-10-31) 3 commits
+  (merged to 'next' on 2013-11-01 at e12ae23)
+ + remote-curl: fix large pushes with GSSAPI
+ + remote-curl: pass curl slot_results back through run_slot
+ + http: return curl's AUTHAVAIL via slot_results
 
- Conditionally allow "100 Continue" responses to help use of
- GSS-Negotiate authentication scheme over HTTP transport.
+ Issue "100 Continue" responses to help use of GSS-Negotiate
+ authentication scheme over HTTP transport when needed.
 
- Still being updated, but it seems like we are getting there.
+ Will cook in 'next'.
 
 
 * jc/merge-base-reflog (2013-10-29) 2 commits
- - merge-base: teach "--fork-point" mode
- - merge-base: use OPT_CMDMODE and clarify the command line parsing
+  (merged to 'next' on 2013-11-01 at 6114764)
+ + merge-base: teach "--fork-point" mode
+ + merge-base: use OPT_CMDMODE and clarify the command line parsing
 
  Code the logic in "pull --rebase" that figures out a fork point
  from reflog entries in C.
 
- Will merge to 'next'.
-
-
-* jk/for-each-ref-skip-parsing (2013-10-30) 1 commit
-  (merged to 'next' on 2013-10-30 at 56ea310)
- + for-each-ref: avoid loading objects to print %(objectname)
-
- Will merge to 'master'.
+ Will cook in 'next'.
 
 
 * jk/pack-bitmap (2013-10-30) 20 commits
@@ -462,14 +424,15 @@ of the repositories listed at
 
 
 * jk/robustify-parse-commit (2013-10-24) 6 commits
- - checkout: do not die when leaving broken detached HEAD
- - use parse_commit_or_die instead of custom message
- - use parse_commit_or_die instead of segfaulting
- - assume parse_commit checks for NULL commit
- - assume parse_commit checks commit->object.parsed
- - log_tree_diff: die when we fail to parse a commit
+  (merged to 'next' on 2013-11-01 at 2bfbaab)
+ + checkout: do not die when leaving broken detached HEAD
+ + use parse_commit_or_die instead of custom message
+ + use parse_commit_or_die instead of segfaulting
+ + assume parse_commit checks for NULL commit
+ + assume parse_commit checks commit->object.parsed
+ + log_tree_diff: die when we fail to parse a commit
 
- Will merge to 'next' after taking another look.
+ Will cook in 'next'.
 
 
 * mh/fetch-tags-in-addition-to-normal-refs (2013-10-30) 23 commits
@@ -500,43 +463,15 @@ of the repositories listed at
  Will merge to 'next' after taking another look.
 
 
-* jk/pack-corruption-post-mortem (2013-10-25) 1 commit
-  (merged to 'next' on 2013-10-30 at 2248df6)
- + howto: add article on recovering a corrupted object
-
- Will merge to 'master'.
-
-
-* jk/reset-p-current-head-fix (2013-10-25) 2 commits
-  (merged to 'next' on 2013-10-30 at 37ae6e0)
- + reset: pass real rev name to add--interactive
- + add-interactive: handle unborn branch in patch mode
-
- "git reset -p HEAD" has codepath to special case it from resetting
- to contents of other commits, but recent change broke it.
-
- Will merge to 'master'.
-
-
-* nv/parseopt-opt-arg (2013-10-25) 1 commit
- - rev-parse --parseopt: add the --sticked-long mode
+* nv/parseopt-opt-arg (2013-10-31) 2 commits
+  (merged to 'next' on 2013-11-01 at cd2afd9)
+ + rev-parse --parseopt: add the --stuck-long mode
+ + Use the word 'stuck' instead of 'sticked'
 
  Enhance "rev-parse --parseopt" mode to help parsing options with
  an optional parameter.
 
- Option name bikeshedding aside ("Is it sticked or stuck?"), the
- change seems to be competently done.
-
-
-* ap/remote-hg-unquote-cquote (2013-10-23) 1 commit
-  (merged to 'next' on 2013-10-28 at 6b99fd5)
- + remote-hg: unquote C-style paths when exporting
-
- A fast-import stream expresses a pathname with funny characters by
- quoting them in C style; remote-hg remote helper forgot to unquote
- such a path.
-
- Will merge to 'master'.
+ Will cook in 'next'.
 
 
 * ak/submodule-foreach-quoting (2013-09-27) 1 commit
@@ -562,17 +497,6 @@ of the repositories listed at
  extra layer of quoting are not broken.
 
  Will cook in 'next' for the rest of this cycle.
-
-
-* jl/submodule-mv (2013-10-13) 1 commit
-  (merged to 'next' on 2013-10-28 at 8dc9b31)
- + mv: Fix spurious warning when moving a file in presence of submodules
-
- Moving a regular file in a repository with a .gitmodules file was
- producing a warning 'Could not find section in .gitmodules where
- path=<filename>'.
-
- Will merge to 'master'.
 
 
 * kb/fast-hashmap (2013-10-22) 12 commits
@@ -631,6 +555,7 @@ of the repositories listed at
 
 
 * jc/hold-diff-remove-q-synonym-for-no-deletion (2013-07-19) 1 commit
- - diff: remove "diff-files -q" in a version of Git in a distant future
+  (merged to 'next' on 2013-11-01 at 5fc26e4)
+ + diff: remove "diff-files -q" in a version of Git in a distant future
 
- Will merge to and cook in 'next' until a distant future.
+ Will cook in 'next' until a distant future.
