@@ -23,7 +23,6 @@ test_expect_success $PREREQ \
       echo do
       echo "  echo \"!\$a!\""
       echo "done >commandline\$output"
-      test_have_prereq MINGW && echo "dos2unix commandline\$output"
       echo "cat > msgtxt\$output"
       ) >fake.sendmail &&
      chmod +x ./fake.sendmail &&
