@@ -7,7 +7,7 @@ do
 	test -f "$s" &&
 	v=$(expr "$s" : '^git.*-\([^-]*\)\.tar\.sig$') &&
 	case "$v" in
-	*.rc[1-9]*)
+	*.rc[0-9]*)
 		dest=/pub/software/scm/git/testing/ ;;
 	*)
 		dest=/pub/software/scm/git/ ;;
