@@ -18,7 +18,7 @@ test_expect_success 'prepare a trivial repository' '
 '
 
 test_expect_success 'git branch --help should not have created a bogus branch' '
-	test_might_fail git branch --help </dev/null >/dev/null 2>/dev/null &&
+	test_might_fail git branch --man --help </dev/null >/dev/null 2>&1 &&
 	test_path_is_missing .git/refs/heads/--help
 '
 
