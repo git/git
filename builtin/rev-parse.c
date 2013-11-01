@@ -9,6 +9,8 @@
 #include "quote.h"
 #include "builtin.h"
 #include "parse-options.h"
+#include "diff.h"
+#include "revision.h"
 
 #define DO_REVS		1
 #define DO_NOREV	2
@@ -29,6 +31,8 @@ static int abbrev;
 static int abbrev_ref;
 static int abbrev_ref_strict;
 static int output_sq;
+
+static struct string_list *ref_excludes;
 
 /*
  * Some arguments are relevant "revision" arguments,
@@ -185,6 +189,8 @@ static int show_default(void)
 
 static int show_reference(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
 {
+	if (ref_excluded(ref_excludes, refname))
+		return 0;
 	show_rev(NORMAL, sha1, refname);
 	return 0;
 }
@@ -633,32 +639,43 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 			if (!prefixcmp(arg, "--branches=")) {
 				for_each_glob_ref_in(show_reference, arg + 11,
 					"refs/heads/", NULL);
+				clear_ref_exclusion(&ref_excludes);
 				continue;
 			}
 			if (!strcmp(arg, "--branches")) {
 				for_each_branch_ref(show_reference, NULL);
+				clear_ref_exclusion(&ref_excludes);
 				continue;
 			}
 			if (!prefixcmp(arg, "--tags=")) {
 				for_each_glob_ref_in(show_reference, arg + 7,
 					"refs/tags/", NULL);
+				clear_ref_exclusion(&ref_excludes);
 				continue;
 			}
 			if (!strcmp(arg, "--tags")) {
 				for_each_tag_ref(show_reference, NULL);
+				clear_ref_exclusion(&ref_excludes);
 				continue;
 			}
 			if (!prefixcmp(arg, "--glob=")) {
 				for_each_glob_ref(show_reference, arg + 7, NULL);
+				clear_ref_exclusion(&ref_excludes);
 				continue;
 			}
 			if (!prefixcmp(arg, "--remotes=")) {
 				for_each_glob_ref_in(show_reference, arg + 10,
 					"refs/remotes/", NULL);
+				clear_ref_exclusion(&ref_excludes);
 				continue;
 			}
 			if (!strcmp(arg, "--remotes")) {
 				for_each_remote_ref(show_reference, NULL);
+				clear_ref_exclusion(&ref_excludes);
+				continue;
+			}
+			if (!prefixcmp(arg, "--exclude=")) {
+				add_ref_exclusion(&ref_excludes, arg + 10);
 				continue;
 			}
 			if (!strcmp(arg, "--show-toplevel")) {

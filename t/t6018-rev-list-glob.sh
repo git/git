@@ -129,6 +129,18 @@ test_expect_success 'rev-parse --remotes=foo' '
 
 '
 
+test_expect_success 'rev-parse --exclude with --branches' '
+	compare rev-parse "--exclude=*/* --branches" "master someref subspace-x"
+'
+
+test_expect_success 'rev-parse --exclude with --all' '
+	compare rev-parse "--exclude=refs/remotes/* --all" "--branches --tags"
+'
+
+test_expect_success 'rev-parse accumulates multiple --exclude' '
+	compare rev-parse "--exclude=refs/remotes/* --exclude=refs/tags/* --all" --branches
+'
+
 test_expect_success 'rev-list --glob=refs/heads/subspace/*' '
 
 	compare rev-list "subspace/one subspace/two" "--glob=refs/heads/subspace/*"
