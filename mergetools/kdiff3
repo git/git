@@ -11,13 +11,13 @@ merge_cmd () {
 			--L1 "$MERGED (Base)" \
 			--L2 "$MERGED (Local)" \
 			--L3 "$MERGED (Remote)" \
-			-o "$MERGED" "$BASE" "$LOCAL" "$REMOTE" \
+			-o `pwd`/"$MERGED" "$BASE" "$LOCAL" "$REMOTE" \
 		>/dev/null 2>&1
 	else
 		"$merge_tool_path" --auto \
 			--L1 "$MERGED (Local)" \
 			--L2 "$MERGED (Remote)" \
-			-o "$MERGED" "$LOCAL" "$REMOTE" \
+			-o `pwd`/"$MERGED" "$LOCAL" "$REMOTE" \
 		>/dev/null 2>&1
 	fi
 	status=$?
