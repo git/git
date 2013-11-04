@@ -145,7 +145,7 @@ test_expect_success 'another test, with --ignore-space-at-eol' 'test_cmp expect 
 test_expect_success 'ignore-blank-lines: only new lines' '
 	test_seq 5 >x &&
 	git update-index x &&
-	test_seq 5 | sed "/3/i \\
+	test_seq 5 | sed "/3/i\\
 " >x &&
 	git diff --ignore-blank-lines >out &&
 	>expect &&
@@ -155,7 +155,8 @@ test_expect_success 'ignore-blank-lines: only new lines' '
 test_expect_success 'ignore-blank-lines: only new lines with space' '
 	test_seq 5 >x &&
 	git update-index x &&
-	test_seq 5 | sed "/3/i \ " >x &&
+	test_seq 5 | sed "/3/i\\
+ " >x &&
 	git diff -w --ignore-blank-lines >out &&
 	>expect &&
 	test_cmp out expect

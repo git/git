@@ -37,6 +37,14 @@ test_stderr () {
 	test_cmp "$HOME/expected-stderr" "$HOME/stderr"
 }
 
+broken_c_unquote () {
+	"$PERL_PATH" -pe 's/^"//; s/\\//; s/"$//; tr/\n/\0/' "$@"
+}
+
+broken_c_unquote_verbose () {
+	"$PERL_PATH" -pe 's/	"/	/; s/\\//; s/"$//; tr/:\t\n/\0/' "$@"
+}
+
 stderr_contains () {
 	regexp="$1"
 	if grep "$regexp" "$HOME/stderr"
@@ -606,12 +614,11 @@ cat <<-EOF >expected-verbose
 	$global_excludes:2:!globaltwo	b/globaltwo
 EOF
 
-sed -e 's/^"//' -e 's/\\//' -e 's/"$//' stdin | \
-	tr "\n" "\0" >stdin0
-sed -e 's/^"//' -e 's/\\//' -e 's/"$//' expected-default | \
-	tr "\n" "\0" >expected-default0
-sed -e 's/	"/	/' -e 's/\\//' -e 's/"$//' expected-verbose | \
-	tr ":\t\n" "\0" >expected-verbose0
+broken_c_unquote stdin >stdin0
+
+broken_c_unquote expected-default >expected-default0
+
+broken_c_unquote_verbose expected-verbose >expected-verbose0
 
 test_expect_success '--stdin' '
 	expect_from_stdin <expected-default &&
@@ -692,12 +699,11 @@ EOF
 grep -v '^::	' expected-all >expected-verbose
 sed -e 's/.*	//' expected-verbose >expected-default
 
-sed -e 's/^"//' -e 's/\\//' -e 's/"$//' stdin | \
-	tr "\n" "\0" >stdin0
-sed -e 's/^"//' -e 's/\\//' -e 's/"$//' expected-default | \
-	tr "\n" "\0" >expected-default0
-sed -e 's/	"/	/' -e 's/\\//' -e 's/"$//' expected-verbose | \
-	tr ":\t\n" "\0" >expected-verbose0
+broken_c_unquote stdin >stdin0
+
+broken_c_unquote expected-default >expected-default0
+
+broken_c_unquote_verbose expected-verbose >expected-verbose0
 
 test_expect_success '--stdin from subdirectory' '
 	expect_from_stdin <expected-default &&
