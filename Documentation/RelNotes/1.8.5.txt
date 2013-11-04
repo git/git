@@ -248,6 +248,23 @@ Unless otherwise noted, all the fixes since v1.8.4 in the maintenance
 track are contained in this release (see release notes to them for
 details).
 
+ * An ancient How-To on serving Git repositories on an HTTP server
+   lacked a warning that it has been mostly superseded with more
+   modern way.
+   (merge 6d52bc3 sc/doc-howto-dumb-http later to maint).
+
+ * The interaction between use of Perl in our test suite and NO_PERL
+   has been clarified a bit.
+   (merge f8fc0ee jn/test-prereq-perl-doc later to maint).
+
+ * The synopsis section of "git unpack-objects" documentation has been
+   clarified a bit.
+   (merge 61e2e22 vd/doc-unpack-objects later to maint).
+
+ * We did not generate HTML version of documentation to "git subtree"
+   in contrib/.
+   (merge 95c62fb jk/subtree-install-fix later to maint).
+
  * A fast-import stream expresses a pathname with funny characters by
    quoting them in C style; remote-hg remote helper forgot to unquote
    such a path.
