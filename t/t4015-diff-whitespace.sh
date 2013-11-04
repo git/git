@@ -146,7 +146,6 @@ test_expect_success 'ignore-blank-lines: only new lines' '
 	test_seq 5 >x &&
 	git update-index x &&
 	test_seq 5 | sed "/3/i\\
-\
 " >x &&
 	git diff --ignore-blank-lines >out &&
 	>expect &&
