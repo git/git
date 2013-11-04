@@ -340,7 +340,11 @@ Don't:
  - use perl without spelling it as "$PERL_PATH". This is to help our
    friends on Windows where the platform Perl often adds CR before
    the end of line, and they bundle Git with a version of Perl that
-   does not do so, whose path is specified with $PERL_PATH.
+   does not do so, whose path is specified with $PERL_PATH. Note that we
+   provide a "perl" function which uses $PERL_PATH under the hood, so
+   you do not need to worry when simply running perl in the test scripts
+   (but you do, for example, on a shebang line or in a sub script
+   created via "write_script").
 
  - use sh without spelling it as "$SHELL_PATH", when the script can
    be misinterpreted by broken platform shell (e.g. Solaris).
@@ -387,7 +391,7 @@ of the test_* functions (see the "Test harness library" section
 below), e.g.:
 
     test_expect_success PERL 'I need Perl' '
-        "$PERL_PATH" -e "hlagh() if unf_unf()"
+        perl -e "hlagh() if unf_unf()"
     '
 
 The advantage of skipping tests like this is that platforms that don't
@@ -520,7 +524,7 @@ library for your script to use.
 
 	test_external \
 	    'GitwebCache::*FileCache*' \
-	    "$PERL_PATH" "$TEST_DIRECTORY"/t9503/test_cache_interface.pl
+	    perl "$TEST_DIRECTORY"/t9503/test_cache_interface.pl
 
    If the test is outputting its own TAP you should set the
    test_external_has_tap variable somewhere before calling the first
@@ -536,7 +540,7 @@ library for your script to use.
 
 	test_external_without_stderr \
 	    'Perl API' \
-	    "$PERL_PATH" "$TEST_DIRECTORY"/t9700/test.pl
+	    perl "$TEST_DIRECTORY"/t9700/test.pl
 
  - test_expect_code <exit-code> <command>
 

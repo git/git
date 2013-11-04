@@ -12,7 +12,7 @@ test_description='test git fast-import utility'
 # This could be written as "head -c $1", but IRIX "head" does not
 # support the -c option.
 head_c () {
-	"$PERL_PATH" -e '
+	perl -e '
 		my $len = $ARGV[1];
 		while ($len > 0) {
 			my $s;

@@ -20,7 +20,7 @@ then
     skip_all='skipping git-cvsserver tests, cvs not found'
     test_done
 fi
-"$PERL_PATH" -e 'use DBI; use DBD::SQLite' >/dev/null 2>&1 || {
+perl -e 'use DBI; use DBD::SQLite' >/dev/null 2>&1 || {
     skip_all='skipping git-cvsserver tests, Perl SQLite interface unavailable'
     test_done
 }

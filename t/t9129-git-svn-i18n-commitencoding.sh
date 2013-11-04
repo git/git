@@ -29,7 +29,7 @@ fi
 compare_svn_head_with () {
 	# extract just the log message and strip out committer info.
 	# don't use --limit here since svn 1.1.x doesn't have it,
-	LC_ALL="$a_utf8_locale" svn log `git svn info --url` | "$PERL_PATH" -w -e '
+	LC_ALL="$a_utf8_locale" svn log `git svn info --url` | perl -w -e '
 		use bytes;
 		$/ = ("-"x72) . "\n";
 		my @x = <STDIN>;

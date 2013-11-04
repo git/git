@@ -37,7 +37,7 @@ test_expect_success 'verify number of revisions' \
 
 test_expect_success 'corrupt second commit object' \
    '
-   "$PERL_PATH" -i.bak -pe "s/second commit/socond commit/" .git/objects/pack/*.pack &&
+   perl -i.bak -pe "s/second commit/socond commit/" .git/objects/pack/*.pack &&
    test_must_fail git fsck --full
    '
 

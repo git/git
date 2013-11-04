@@ -29,7 +29,7 @@ export svnrepo
 svnconf=$PWD/svnconf
 export svnconf
 
-"$PERL_PATH" -w -e "
+perl -w -e "
 use SVN::Core;
 use SVN::Repos;
 \$SVN::Core::VERSION gt '1.1.0' or exit(42);
@@ -146,7 +146,7 @@ stop_httpd () {
 }
 
 convert_to_rev_db () {
-	"$PERL_PATH" -w -- - "$@" <<\EOF
+	perl -w -- - "$@" <<\EOF
 use strict;
 @ARGV == 2 or die "usage: convert_to_rev_db <input> <output>";
 open my $wr, '+>', $ARGV[1] or die "$!: couldn't open: $ARGV[1]";

@@ -293,7 +293,7 @@ check_threading () {
 	(git format-patch --stdout "$@"; echo $? > status.out) |
 	# Prints everything between the Message-ID and In-Reply-To,
 	# and replaces all Message-ID-lookalikes by a sequence number
-	"$PERL_PATH" -ne '
+	perl -ne '
 		if (/^(message-id|references|in-reply-to)/i) {
 			$printing = 1;
 		} elsif (/^\S/) {

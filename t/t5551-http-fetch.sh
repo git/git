@@ -235,7 +235,7 @@ test_expect_success EXPENSIVE 'create 50,000 tags in the repo' '
 	done | git fast-import --export-marks=marks &&
 
 	# now assign tags to all the dangling commits we created above
-	tag=$("$PERL_PATH" -e "print \"bla\" x 30") &&
+	tag=$(perl -e "print \"bla\" x 30") &&
 	sed -e "s|^:\([^ ]*\) \(.*\)$|\2 refs/tags/$tag-\1|" <marks >>packed-refs
 	)
 '
