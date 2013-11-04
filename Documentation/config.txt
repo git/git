@@ -988,6 +988,14 @@ commit.cleanup::
 	have to remove the help lines that begin with `#` in the commit log
 	template yourself, if you do this).
 
+commit.gpgsign::
+
+	A boolean to specify whether all commits should be GPG signed.
+	Use of this option when doing operations such as rebase can
+	result in a large number of commits being signed. It may be
+	convenient to use an agent to avoid typing your GPG passphrase
+	several times.
+
 commit.status::
 	A boolean to enable/disable inclusion of status information in the
 	commit message template when using an editor to prepare the commit
