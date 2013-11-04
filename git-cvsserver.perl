@@ -430,10 +430,10 @@ sub req_validrequests
 
     $log->debug("req_validrequests");
 
-    $log->debug("SEND : Valid-requests " . join(" ",keys %$methods));
+    $log->debug("SEND : Valid-requests " . join(" ",sort keys %$methods));
     $log->debug("SEND : ok");
 
-    print "Valid-requests " . join(" ",keys %$methods) . "\n";
+    print "Valid-requests " . join(" ",sort keys %$methods) . "\n";
     print "ok\n";
 }
 
@@ -2124,7 +2124,7 @@ sub req_diff
             print "M retrieving revision $meta2->{revision}\n"
         }
         print "M diff ";
-        foreach my $opt ( keys %{$state->{opt}} )
+        foreach my $opt ( sort keys %{$state->{opt}} )
         {
             if ( ref $state->{opt}{$opt} eq "ARRAY" )
             {
@@ -4050,7 +4050,7 @@ sub update
             close FILELIST;
 
             # Detect deleted files
-            foreach my $file ( keys %$head )
+            foreach my $file ( sort keys %$head )
             {
                 unless ( exists $seen_files->{$file} or $head->{$file}{filehash} eq "deleted" )
                 {
@@ -4078,7 +4078,7 @@ sub update
     }
 
     $self->delete_head();
-    foreach my $file ( keys %$head )
+    foreach my $file ( sort keys %$head )
     {
         $self->insert_head(
             $file,
