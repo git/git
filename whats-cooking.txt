@@ -1,25 +1,28 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Nov 2013, #01; Fri, 1)
-X-master-at: aa2706463fdeb51d6f9d0e267113b251888cf7f5
-X-next-at: 895133908010cd8192e1783286fa28ed6538f61f
+Subject: What's cooking in git.git (Nov 2013, #02; Wed, 6)
+X-master-at: 6ba01babcd37e92e88221fcf35ee4471aa66bf4c
+X-next-at: 1ea5b1861e50543207d31c936d4f7bbd4571e433
 
-What's cooking in git.git (Nov 2013, #01; Fri, 1)
+What's cooking in git.git (Nov 2013, #02; Wed, 6)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-An early preview 1.8.5-rc0 has been tagged. There still are handful
-of fixes and enhancements left in 'next' that I'd like to see in the
-final, which will hopefully be in when the first release candidate
-is tagged.
+The first release candidate 1.8.5-rc1 has been tagged.
 
 As promised/requested, the final steps for 2.0 are in 'next'; they,
 together with a handful topics that have been merged to 'next'
 fairly recently, will _not_ be part of the upcoming 1.8.5 release,
 but will be carried over in 'next' to the next cycle.
+
+There is a proposed rewording of advice message from "git push"
+patch, which is tentatively queued near the tip of 'pu' for now; it
+would be nice to get a few more sets of eyeballs.  I am not sure if
+we should merge it before the 1.8.5 final, yet (we have i18n to
+worry about, among other things).
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -29,86 +32,40 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* ap/remote-hg-unquote-cquote (2013-10-23) 1 commit
-  (merged to 'next' on 2013-10-28 at 6b99fd5)
- + remote-hg: unquote C-style paths when exporting
+* ak/cvsserver-stabilize-use-of-hash-keys (2013-10-30) 1 commit
+  (merged to 'next' on 2013-11-01 at cc3b890)
+ + cvsserver: Determinize output to combat Perl 5.18 hash randomization
 
- A fast-import stream expresses a pathname with funny characters by
- quoting them in C style; remote-hg remote helper forgot to unquote
- such a path.
+ Perl portability fix.
 
 
-* jk/for-each-ref-skip-parsing (2013-10-30) 1 commit
-  (merged to 'next' on 2013-10-30 at 56ea310)
- + for-each-ref: avoid loading objects to print %(objectname)
+* bw/solaris-sed-tr-test-portability (2013-11-04) 3 commits
+  (merged to 'next' on 2013-11-04 at c2c09e28)
+ + t4015: simplify sed command that is not even seen by sed
+  (merged to 'next' on 2013-11-01 at f04be9a)
+ + Avoid difference in tr semantics between System V and BSD
+ + Change sed i\ usage to something Solaris' sed can handle
 
+ Shell script portability fix.
 
-* jk/pack-corruption-post-mortem (2013-10-25) 1 commit
-  (merged to 'next' on 2013-10-30 at 2248df6)
- + howto: add article on recovering a corrupted object
-
-
-* jk/reset-p-current-head-fix (2013-10-25) 2 commits
-  (merged to 'next' on 2013-10-30 at 37ae6e0)
- + reset: pass real rev name to add--interactive
- + add-interactive: handle unborn branch in patch mode
-
- "git reset -p HEAD" has codepath to special case it from resetting
- to contents of other commits, but recent change broke it.
-
-
-* jl/submodule-mv (2013-10-13) 1 commit
-  (merged to 'next' on 2013-10-28 at 8dc9b31)
- + mv: Fix spurious warning when moving a file in presence of submodules
-
- Moving a regular file in a repository with a .gitmodules file was
- producing a warning 'Could not find section in .gitmodules where
- path=<filename>'.
-
-
-* js/test-help-format-windows-port-fix (2013-10-30) 1 commit
-  (merged to 'next' on 2013-10-30 at b98e991)
- + t3200: do not open a HTML manual page when DEFAULT_MAN_FORMAT is html
-
-
-* js/tests-windows-port-fix (2013-10-28) 3 commits
-  (merged to 'next' on 2013-10-30 at 61f8e24)
- + tests: undo special treatment of CRLF for Windows
- + Windows: a test_cmp that is agnostic to random LF <> CRLF conversions
- + t5300-pack-object: do not compare binary data using test_cmp
-
-
-* rs/web-browse-xdg-open (2013-10-30) 1 commit
-  (merged to 'next' on 2013-10-30 at 37d6eb4)
- + web--browse: Add support for xdg-open
-
-
-* sb/refs-code-cleanup (2013-10-28) 2 commits
-  (merged to 'next' on 2013-10-30 at a9bf06a)
- + cache: remove unused function 'have_git_dir'
- + refs: remove unused function invalidate_ref_cache
-
---------------------------------------------------
-[New Topics]
 
 * fc/trivial (2013-10-31) 13 commits
- - setup: trivial style fixes
- - run-command: trivial style fixes
- - diff: trivial style fix
- - revision: trivial style fixes
- - pretty: trivial style fix
- - describe: trivial style fixes
- - transport-helper: trivial style fix
- - sha1-name: trivial style cleanup
- - branch: trivial style fix
- - revision: add missing include
- - doc/pull: clarify the illustrations
- - t: replace pulls with merges
- - merge: simplify ff-only option
+  (merged to 'next' on 2013-11-04 at c608324)
+ + setup: trivial style fixes
+ + run-command: trivial style fixes
+ + diff: trivial style fix
+ + revision: trivial style fixes
+ + pretty: trivial style fix
+ + describe: trivial style fixes
+ + transport-helper: trivial style fix
+ + sha1-name: trivial style cleanup
+ + branch: trivial style fix
+ + revision: add missing include
+ + doc/pull: clarify the illustrations
+ + t: replace pulls with merges
+ + merge: simplify ff-only option
 
  A random collection of style fixes and minor doc updates.
-
- Will merge to 'next'.
 
 
 * jk/duplicate-objects-in-packs (2013-10-31) 1 commit
@@ -117,14 +74,38 @@ of the repositories listed at
 
  Test fixup to a topic recently graduated.
 
- Will merge to 'master'.
+
+* jk/subtree-install-fix (2013-10-30) 1 commit
+  (merged to 'next' on 2013-11-01 at 531bd79)
+ + subtree: add makefile target for html docs
+
+ We did not generate HTML version of documentation to "git subtree"
+ in contrib/.
 
 
-* rr/for-each-ref-decoration (2013-10-31) 4 commits
- - fixup! for-each-ref: introduce %(upstream:track[short])
- - for-each-ref: introduce %(upstream:track[short])
- - for-each-ref: introduce %(HEAD) asterisk marker
- - for-each-ref: introduce %C(...) for color
+* jk/wrap-perl-used-in-tests (2013-10-29) 2 commits
+  (merged to 'next' on 2013-11-01 at 73444c5)
+ + t: use perl instead of "$PERL_PATH" where applicable
+ + t: provide a perl() function which uses $PERL_PATH
+
+ Perl portability fix.
+
+
+* jn/test-prereq-perl-doc (2013-10-28) 1 commit
+  (merged to 'next' on 2013-11-01 at 4d4a8b4)
+ + t/README: tests can use perl even with NO_PERL
+
+ The interaction between use of Perl in our test suite and NO_PERL
+ has been clarified a bit.
+
+
+* sc/doc-howto-dumb-http (2013-10-28) 1 commit
+  (merged to 'next' on 2013-11-01 at a734b6e)
+ + doc/howto: warn about (dumb)http server document being too old
+
+ An ancient How-To on serving Git repositories on an HTTP server
+ lacked a warning that it has been mostly superseded with more
+ modern way.
 
 
 * vd/doc-unpack-objects (2013-11-01) 2 commits
@@ -132,16 +113,72 @@ of the repositories listed at
  + Documentation: "pack-file" is not literal in unpack-objects
  + Documentation: restore a space in unpack-objects usage
 
- Will merge to 'master'.
+ The synopsis section of "git unpack-objects" documentation has been
+ clarified a bit.
+
+--------------------------------------------------
+[New Topics]
+
+* cc/remote-remove-redundant-postfixcmp (2013-11-06) 2 commits
+  (merged to 'next' on 2013-11-06 at 7b45219)
+ + Rename suffixcmp() to has_suffix() and invert its result
+  (merged to 'next' on 2013-11-04 at 6408502)
+ + builtin/remote: remove postfixcmp() and use suffixcmp() instead
+
+ Minor code clean-up.
+
+ Can wait in 'next'.
 
 
-* jk/two-way-merge-corner-case-fix (2013-11-01) 3 commits
- - t1005: add test for "read-tree --reset -u A B"
- - t1005: reindent
- - unpack-trees: fix "read-tree -u --reset A B" with conflicted index
+* tb/clone-ssh-with-colon-for-port (2013-11-04) 1 commit
+ . git clone: is an URL local or ssh
 
- Fix a rather longstanding corner-case bug in twoway "reset to
- there" merge, which is most often seen in "git am --abort".
+ Still being reworked.
+
+
+* cn/thin-push-capability (2013-11-06) 2 commits
+ - send-pack: only send a thin pack if the server supports it
+ - receive-pack: advertise thin-pack
+
+ Peff had a good suggestion to control this by expressing what the
+ receiving end wants in a more direct way, namely to advertise a
+ 'no-thin' trait in the capability list.
+
+
+* nd/wt-status-align-i18n (2013-11-06) 1 commit
+ - wt-status: take the alignment burden off translators
+
+ An attempt to automatically align the names in the "git status"
+ output, taking the display width of (translated) section labels
+ into account.
+
+
+* nv/commit-gpgsign-config (2013-11-06) 1 commit
+ - Add the commit.gpgsign option to sign all commits
+
+ Introduce commit.gpgsign configuration variable to force every
+ commit to be GPG signed.
+
+ Needs tests, perhaps?
+
+
+* sb/sha1-loose-object-info-check-existence (2013-11-06) 1 commit
+  (merged to 'next' on 2013-11-06 at 1ea5b18)
+ + sha1_loose_object_info(): do not return success on missing object
+
+ "git cat-file --batch-check=ok" did not check the existence of the
+ named object.
+
+ Will merge to 'next', but I think this can wait in 'next' during
+ the feature freeze.
+
+* gj/push-more-verbose-advice (2013-11-06) 2 commits
+ - push: switch default from "matching" to "simple"
+ - push: Enhance unspecified push default warning
+
+ Explain 'simple' and 'matching' in "git push" advice message; the
+ topmost patch is a rebase of jc/push-2.0-default-to-simple on top
+ of it.
 
 --------------------------------------------------
 [Stalled]
@@ -247,53 +284,46 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* rr/for-each-ref-decoration (2013-10-31) 4 commits
+ - fixup! for-each-ref: introduce %(upstream:track[short])
+ - for-each-ref: introduce %(upstream:track[short])
+ - for-each-ref: introduce %(HEAD) asterisk marker
+ - for-each-ref: introduce %C(...) for color
+
+
+* jk/two-way-merge-corner-case-fix (2013-11-04) 3 commits
+  (merged to 'next' on 2013-11-04 at 79f4fb0)
+ + t1005: add test for "read-tree --reset -u A B"
+ + t1005: reindent
+ + unpack-trees: fix "read-tree -u --reset A B" with conflicted index
+
+ Fix a rather longstanding corner-case bug in twoway "reset to
+ there" merge, which is most often seen in "git am --abort".
+
+ Will cook in 'next'.
+
+
 * jc/ref-excludes (2013-11-01) 5 commits
- - rev-parse: introduce --exclude=<glob> to tame wildcards
- - rev-list --exclude: export add/clear-ref-exclusion and ref-excluded API
- - rev-list --exclude: tests
- - document --exclude option
- - revision: introduce --exclude=<glob> to tame wildcards
+  (merged to 'next' on 2013-11-04 at fac1ed0)
+ + rev-parse: introduce --exclude=<glob> to tame wildcards
+ + rev-list --exclude: export add/clear-ref-exclusion and ref-excluded API
+ + rev-list --exclude: tests
+ + document --exclude option
+ + revision: introduce --exclude=<glob> to tame wildcards
 
  People often wished a way to tell "git log --branches" (and "git
  log --remotes --not --branches") to exclude some local branches
  from the expansion of "--branches" (similarly for "--tags", "--all"
  and "--glob=<pattern>").  Now they have one.
 
-
-* jn/test-prereq-perl-doc (2013-10-28) 1 commit
-  (merged to 'next' on 2013-11-01 at 4d4a8b4)
- + t/README: tests can use perl even with NO_PERL
-
- Will merge to 'master'.
-
-
-* ak/cvsserver-stabilize-use-of-hash-keys (2013-10-30) 1 commit
-  (merged to 'next' on 2013-11-01 at cc3b890)
- + cvsserver: Determinize output to combat Perl 5.18 hash randomization
-
- Will merge to 'master'.
+ Can wait in 'next'.
 
 
 * jk/replace-perl-in-built-scripts (2013-10-29) 1 commit
   (merged to 'next' on 2013-11-01 at 2384e29)
  + use @@PERL@@ in built scripts
 
- Will cook in 'next'.
-
-
-* jk/subtree-install-fix (2013-10-30) 1 commit
-  (merged to 'next' on 2013-11-01 at 531bd79)
- + subtree: add makefile target for html docs
-
- Will merge to 'master'.
-
-
-* jk/wrap-perl-used-in-tests (2013-10-29) 2 commits
-  (merged to 'next' on 2013-11-01 at 73444c5)
- + t: use perl instead of "$PERL_PATH" where applicable
- + t: provide a perl() function which uses $PERL_PATH
-
- Will merge to 'master'.
+ Can wait in 'next'.
 
 
 * jt/commit-fixes-footer (2013-10-30) 1 commit
@@ -305,27 +335,13 @@ of the repositories listed at
  many people stated in the thread.
 
 
-* sc/doc-howto-dumb-http (2013-10-28) 1 commit
-  (merged to 'next' on 2013-11-01 at a734b6e)
- + doc/howto: warn about (dumb)http server document being too old
-
- Will merge to 'master'.
-
-
-* bw/solaris-sed-tr-test-portability (2013-10-30) 2 commits
-  (merged to 'next' on 2013-11-01 at f04be9a)
- + Avoid difference in tr semantics between System V and BSD
- + Change sed i\ usage to something Solaris' sed can handle
-
- Will merge to 'master'.
-
-
-* fc/transport-helper-fixes (2013-11-01) 11 commits
+* fc/transport-helper-fixes (2013-11-06) 12 commits
  - transport-helper: demote lack of "force" option to a warning
  - transport-helper: add support to delete branches
  - fast-export: add support to delete refs
  - fast-import: add support to delete refs
  - transport-helper: add support for old:new refspec
+ - fixup! fast-export: add new --refspec option
  - fast-export: add new --refspec option
  - fast-export: improve argument parsing
  - transport-helper: check for 'forced update' message
@@ -337,7 +353,7 @@ of the repositories listed at
  ref mapping and ref deletion in a way similar to the natively
  supported transports.
 
- Will merge to 'next'.
+ Expecting a reroll to fix use of vla.
 
 
 * jh/loose-object-dirs-creation-race (2013-10-28) 1 commit
@@ -362,13 +378,18 @@ of the repositories listed at
  have produced a single output entry (i.e. the ref creation event),
  but instead showed the history leading to the tag.
 
- Will merge to 'master'.
+ Broken at the design level.  Any reflog entry that points at a non
+ commit needs to be handled with new code that does not exist yet,
+ and lifting the "this code handles only commits" without adding
+ such code does not solve anything.
 
 
 * tr/merge-recursive-index-only (2013-10-28) 3 commits
  - merge-recursive: -Xindex-only to leave worktree unchanged
  - merge-recursive: internal flag to avoid touching the worktree
  - merge-recursive: remove dead conditional in update_stages()
+
+ Will hold until using script appears.
 
 
 * bc/http-100-continue (2013-10-31) 3 commits
@@ -436,31 +457,46 @@ of the repositories listed at
 
 
 * mh/fetch-tags-in-addition-to-normal-refs (2013-10-30) 23 commits
- - fetch: improve the error messages emitted for conflicting refspecs
- - handle_duplicate(): mark error message for translation
- - ref_remote_duplicates(): extract a function handle_duplicate()
- - ref_remove_duplicates(): simplify loop logic
- - t5536: new test of refspec conflicts when fetching
- - ref_remove_duplicates(): avoid redundant bisection
- - git-fetch.txt: improve description of tag auto-following
- - fetch-options.txt: simplify ifdef/ifndef/endif usage
- - fetch, remote: properly convey --no-prune options to subprocesses
- - builtin/remote.c:update(): use struct argv_array
- - builtin/remote.c: reorder function definitions
- - query_refspecs(): move some constants out of the loop
- - fetch --prune: prune only based on explicit refspecs
- - fetch --tags: fetch tags *in addition to* other stuff
- - fetch: only opportunistically update references based on command line
- - get_expanded_map(): avoid memory leak
- - get_expanded_map(): add docstring
- - builtin/fetch.c: reorder function definitions
- - get_ref_map(): rename local variables
- - api-remote.txt: correct section "struct refspec"
- - t5510: check that "git fetch --prune --tags" does not prune branches
- - t5510: prepare test refs more straightforwardly
- - t5510: use the correct tag name in test
+  (merged to 'next' on 2013-11-06 at 6932893)
+ + fetch: improve the error messages emitted for conflicting refspecs
+ + handle_duplicate(): mark error message for translation
+ + ref_remote_duplicates(): extract a function handle_duplicate()
+ + ref_remove_duplicates(): simplify loop logic
+ + t5536: new test of refspec conflicts when fetching
+ + ref_remove_duplicates(): avoid redundant bisection
+ + git-fetch.txt: improve description of tag auto-following
+ + fetch-options.txt: simplify ifdef/ifndef/endif usage
+ + fetch, remote: properly convey --no-prune options to subprocesses
+ + builtin/remote.c:update(): use struct argv_array
+ + builtin/remote.c: reorder function definitions
+ + query_refspecs(): move some constants out of the loop
+ + fetch --prune: prune only based on explicit refspecs
+ + fetch --tags: fetch tags *in addition to* other stuff
+ + fetch: only opportunistically update references based on command line
+ + get_expanded_map(): avoid memory leak
+ + get_expanded_map(): add docstring
+ + builtin/fetch.c: reorder function definitions
+ + get_ref_map(): rename local variables
+ + api-remote.txt: correct section "struct refspec"
+ + t5510: check that "git fetch --prune --tags" does not prune branches
+ + t5510: prepare test refs more straightforwardly
+ + t5510: use the correct tag name in test
 
- Will merge to 'next' after taking another look.
+ The "-tags" option to "git fetch" used to be literally a synonym to
+ a "refs/tags/*:refs/tags/*" refspec, which meant that (1) as an
+ explicit refspec given from the command line, it silenced the lazy
+ "git fetch" default that is configured, and (2) also as an explicit
+ refspec given from the command line, it interacted with "--prune"
+ to remove any tag that the remote we are fetching from does not
+ have.
+
+ This demotes it to an option; with it, we fetch all tags in
+ addition to what would be fetched without the option, and it does
+ not interact with the decision "--prune" makes to see what
+ remote-tracking refs the local has are missing the remote
+ counterpart.
+
+ Will cook in 'next'.
 
 
 * nv/parseopt-opt-arg (2013-10-31) 2 commits
@@ -496,7 +532,7 @@ of the repositories listed at
  so that scripts that used multiple arguments but added their own
  extra layer of quoting are not broken.
 
- Will cook in 'next' for the rest of this cycle.
+ Will cook in 'next'.
 
 
 * kb/fast-hashmap (2013-10-22) 12 commits
