@@ -1519,7 +1519,7 @@ struct cmdline_pathspec {
 static void append_prune_data(struct cmdline_pathspec *prune, const char **av)
 {
 	while (*av) {
-		ALLOC_GROW(prune->path, prune->nr+1, prune->alloc);
+		ALLOC_GROW(prune->path, prune->nr + 1, prune->alloc);
 		prune->path[prune->nr++] = *(av++);
 	}
 }
@@ -1531,7 +1531,7 @@ static void read_pathspec_from_stdin(struct rev_info *revs, struct strbuf *sb,
 		int len = sb->len;
 		if (len && sb->buf[len - 1] == '\n')
 			sb->buf[--len] = '\0';
-		ALLOC_GROW(prune->path, prune->nr+1, prune->alloc);
+		ALLOC_GROW(prune->path, prune->nr + 1, prune->alloc);
 		prune->path[prune->nr++] = xstrdup(sb->buf);
 	}
 }
@@ -2134,7 +2134,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 		 *	call init_pathspec() to set revs->prune_data here.
 		 * }
 		 */
-		ALLOC_GROW(prune_data.path, prune_data.nr+1, prune_data.alloc);
+		ALLOC_GROW(prune_data.path, prune_data.nr + 1, prune_data.alloc);
 		prune_data.path[prune_data.nr++] = NULL;
 		parse_pathspec(&revs->prune_data, 0, 0,
 			       revs->prefix, prune_data.path);
@@ -2987,7 +2987,7 @@ static struct commit *get_revision_internal(struct rev_info *revs)
 	if (revs->max_count) {
 		c = get_revision_1(revs);
 		if (c) {
-			while (0 < revs->skip_count) {
+			while (revs->skip_count > 0) {
 				revs->skip_count--;
 				c = get_revision_1(revs);
 				if (!c)
@@ -3002,9 +3002,8 @@ static struct commit *get_revision_internal(struct rev_info *revs)
 	if (c)
 		c->object.flags |= SHOWN;
 
-	if (!revs->boundary) {
+	if (!revs->boundary)
 		return c;
-	}
 
 	if (!c) {
 		/*
@@ -3050,9 +3049,8 @@ struct commit *get_revision(struct rev_info *revs)
 
 	if (revs->reverse) {
 		reversed = NULL;
-		while ((c = get_revision_internal(revs))) {
+		while ((c = get_revision_internal(revs)))
 			commit_list_insert(c, &reversed);
-		}
 		revs->commits = reversed;
 		revs->reverse = 0;
 		revs->reverse_output_stage = 1;

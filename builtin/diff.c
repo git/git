@@ -169,7 +169,7 @@ static int builtin_diff_tree(struct rev_info *revs,
 	if (ent1->item->flags & UNINTERESTING)
 		swap = 1;
 	sha1[swap] = ent0->item->sha1;
-	sha1[1-swap] = ent1->item->sha1;
+	sha1[1 - swap] = ent1->item->sha1;
 	diff_tree_sha1(sha1[0], sha1[1], "", &revs->diffopt);
 	log_tree_diff_flush(revs);
 	return 0;
