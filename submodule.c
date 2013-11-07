@@ -116,30 +116,7 @@ int remove_path_from_gitmodules(const char *path)
 
 void stage_updated_gitmodules(void)
 {
-	struct strbuf buf = STRBUF_INIT;
-	struct stat st;
-	int pos;
-	struct cache_entry *ce;
-	int namelen = strlen(".gitmodules");
-
-	pos = cache_name_pos(".gitmodules", namelen);
-	if (pos < 0) {
-		warning(_("could not find .gitmodules in index"));
-		return;
-	}
-	ce = active_cache[pos];
-	ce->ce_flags = namelen;
-	if (strbuf_read_file(&buf, ".gitmodules", 0) < 0)
-		die(_("reading updated .gitmodules failed"));
-	if (lstat(".gitmodules", &st) < 0)
-		die_errno(_("unable to stat updated .gitmodules"));
-	fill_stat_cache_info(ce, &st);
-	ce->ce_mode = ce_mode_from_stat(ce, st.st_mode);
-	if (remove_cache_entry_at(pos) < 0)
-		die(_("unable to remove .gitmodules from index"));
-	if (write_sha1_file(buf.buf, buf.len, blob_type, ce->sha1))
-		die(_("adding updated .gitmodules failed"));
-	if (add_cache_entry(ce, ADD_CACHE_OK_TO_ADD|ADD_CACHE_OK_TO_REPLACE))
+	if (add_file_to_cache(".gitmodules", 0))
 		die(_("staging updated .gitmodules failed"));
 }
 
