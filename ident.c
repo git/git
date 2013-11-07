@@ -233,7 +233,21 @@ int split_ident_line(struct ident_split *split, const char *line, int len)
 	if (!split->mail_end)
 		return status;
 
-	for (cp = split->mail_end + 1; cp < line + len && isspace(*cp); cp++)
+	/*
+	 * Look from the end-of-line to find the trailing ">" of the mail
+	 * address, even though we should already know it as split->mail_end.
+	 * This can help in cases of broken idents with an extra ">" somewhere
+	 * in the email address.  Note that we are assuming the timestamp will
+	 * never have a ">" in it.
+	 *
+	 * Note that we will always find some ">" before going off the front of
+	 * the string, because will always hit the split->mail_end closing
+	 * bracket.
+	 */
+	for (cp = line + len - 1; *cp != '>'; cp--)
+		;
+
+	for (cp = cp + 1; cp < line + len && isspace(*cp); cp++)
 		;
 	if (line + len <= cp)
 		goto person_only;
