@@ -6,6 +6,10 @@ Content-type: text/asciidoc
 How to setup Git server over http
 =================================
 
+NOTE: This document is from 2006.  A lot has happened since then, and this
+document is now relevant mainly if your web host is not CGI capable.
+Almost everyone else should instead look at linkgit:git-http-backend[1].
+
 Since Apache is one of those packages people like to compile
 themselves while others prefer the bureaucrat's dream Debian, it is
 impossible to give guidelines which will work for everyone. Just send
