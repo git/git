@@ -9,7 +9,7 @@ git-unpack-objects - Unpack objects from a packed archive
 SYNOPSIS
 --------
 [verse]
-'git unpack-objects' [-n] [-q] [-r] [--strict] <pack-file
+'git unpack-objects' [-n] [-q] [-r] [--strict] < <pack-file>
 
 
 DESCRIPTION
