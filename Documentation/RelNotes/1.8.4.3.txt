@@ -4,6 +4,24 @@ Git v1.8.4.3 Release Notes
 Fixes since v1.8.4.2
 --------------------
 
+ * The interaction between use of Perl in our test suite and NO_PERL
+   has been clarified a bit.
+
+ * A fast-import stream expresses a pathname with funny characters by
+   quoting them in C style; remote-hg remote helper (in contrib/)
+   forgot to unquote such a path.
+
+ * One long-standing flaw in the pack transfer protocol used by "git
+   clone" was that there was no way to tell the other end which branch
+   "HEAD" points at, and the receiving end needed to guess.  A new
+   capability has been defined in the pack protocol to convey this
+   information so that cloning from a repository with more than one
+   branches pointing at the same commit where the HEAD is at now
+   reliably sets the initial branch in the resulting repository.
+
+ * We did not handle cases where http transport gets redirected during
+   the authorization request (e.g. from http:// to https://).
+
  * "git rev-list --objects ^v1.0^ v1.0" gave v1.0 tag itself in the
    output, but "git rev-list --objects v1.0^..v1.0" did not.
 
