@@ -7923,7 +7923,7 @@ msgid ""
 "to update which remote branch."
 msgstr ""
 "Sie versenden nach '%s', welches kein Upstream-Repository Ihres aktuellen\n"
-"Branches '%s' ist, ohne mir mitzuteilen, was ich versenden soll, um welchen\n"
+"Branches '%s' ist, ohne anzugeben, was versendet werden soll, um welchen\n"
 "Remote-Branch zu aktualisieren."
 
 #: builtin/push.c:167
