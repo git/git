@@ -285,4 +285,15 @@ test_expect_success NOT_MINGW,NOT_CYGWIN 'clone local path foo:bar' '
 	git clone "./foo:bar" foobar
 '
 
+test_expect_success 'clone from a repository with two identical branches' '
+
+	(
+		cd src &&
+		git checkout -b another master
+	) &&
+	git clone src target-11 &&
+	test "z$( cd target-11 && git symbolic-ref HEAD )" = zrefs/heads/another
+
+'
+
 test_done

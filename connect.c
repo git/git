@@ -6,8 +6,10 @@
 #include "run-command.h"
 #include "remote.h"
 #include "url.h"
+#include "string-list.h"
 
 static char *server_capabilities;
+static const char *parse_feature_value(const char *, const char *, int *);
 
 static int check_ref(const char *name, int len, unsigned int flags)
 {
@@ -59,6 +61,61 @@ static void die_initial_contact(int got_at_least_one_head)
 		    "and the repository exists.");
 }
 
+static void parse_one_symref_info(struct string_list *symref, const char *val, int len)
+{
+	char *sym, *target;
+	struct string_list_item *item;
+
+	if (!len)
+		return; /* just "symref" */
+	/* e.g. "symref=HEAD:refs/heads/master" */
+	sym = xmalloc(len + 1);
+	memcpy(sym, val, len);
+	sym[len] = '\0';
+	target = strchr(sym, ':');
+	if (!target)
+		/* just "symref=something" */
+		goto reject;
+	*(target++) = '\0';
+	if (check_refname_format(sym, REFNAME_ALLOW_ONELEVEL) ||
+	    check_refname_format(target, REFNAME_ALLOW_ONELEVEL))
+		/* "symref=bogus:pair */
+		goto reject;
+	item = string_list_append(symref, sym);
+	item->util = target;
+	return;
+reject:
+	free(sym);
+	return;
+}
+
+static void annotate_refs_with_symref_info(struct ref *ref)
+{
+	struct string_list symref = STRING_LIST_INIT_DUP;
+	const char *feature_list = server_capabilities;
+
+	while (feature_list) {
+		int len;
+		const char *val;
+
+		val = parse_feature_value(feature_list, "symref", &len);
+		if (!val)
+			break;
+		parse_one_symref_info(&symref, val, len);
+		feature_list = val + 1;
+	}
+	sort_string_list(&symref);
+
+	for (; ref; ref = ref->next) {
+		struct string_list_item *item;
+		item = string_list_lookup(&symref, ref->name);
+		if (!item)
+			continue;
+		ref->symref = xstrdup((char *)item->util);
+	}
+	string_list_clear(&symref, 0);
+}
+
 /*
  * Read all the refs from the other end
  */
@@ -66,6 +123,7 @@ struct ref **get_remote_heads(int in, char *src_buf, size_t src_len,
 			      struct ref **list, unsigned int flags,
 			      struct extra_have_objects *extra_have)
 {
+	struct ref **orig_list = list;
 	int got_at_least_one_head = 0;
 
 	*list = NULL;
@@ -113,10 +171,13 @@ struct ref **get_remote_heads(int in, char *src_buf, size_t src_len,
 		list = &ref->next;
 		got_at_least_one_head = 1;
 	}
+
+	annotate_refs_with_symref_info(*orig_list);
+
 	return list;
 }
 
-const char *parse_feature_value(const char *feature_list, const char *feature, int *lenp)
+static const char *parse_feature_value(const char *feature_list, const char *feature, int *lenp)
 {
 	int len;
 

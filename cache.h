@@ -1107,7 +1107,6 @@ extern struct ref **get_remote_heads(int in, char *src_buf, size_t src_len,
 extern int server_supports(const char *feature);
 extern int parse_feature_request(const char *features, const char *feature);
 extern const char *server_feature_value(const char *feature, int *len_ret);
-extern const char *parse_feature_value(const char *feature_list, const char *feature, int *len_ret);
 
 extern struct packed_git *parse_pack_index(unsigned char *sha1, const char *idx_path);
 
