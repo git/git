@@ -8,9 +8,11 @@
 #include "pkt-line.h"
 #include "sideband.h"
 #include "argv-array.h"
+#include "credential.h"
 
 static struct remote *remote;
-static const char *url; /* always ends with a trailing slash */
+/* always ends with a trailing slash */
+static struct strbuf url = STRBUF_INIT;
 
 struct options {
 	int verbosity;
@@ -111,7 +113,8 @@ static struct ref *parse_info_refs(struct discovery *heads)
 			mid = &data[i];
 		if (data[i] == '\n') {
 			if (mid - start != 40)
-				die("%sinfo/refs not valid: is this a git repository?", url);
+				die("%sinfo/refs not valid: is this a git repository?",
+				    url.buf);
 			data[i] = 0;
 			ref_name = mid + 1;
 			ref = xmalloc(sizeof(struct ref) +
@@ -130,7 +133,7 @@ static struct ref *parse_info_refs(struct discovery *heads)
 	}
 
 	ref = alloc_ref("HEAD");
-	if (!http_fetch_ref(url, ref) &&
+	if (!http_fetch_ref(url.buf, ref) &&
 	    !resolve_remote_symref(ref, refs)) {
 		ref->next = refs;
 		refs = ref;
@@ -184,40 +187,47 @@ static struct discovery* discover_refs(const char *service, int for_push)
 	struct strbuf exp = STRBUF_INIT;
 	struct strbuf type = STRBUF_INIT;
 	struct strbuf buffer = STRBUF_INIT;
+	struct strbuf refs_url = STRBUF_INIT;
+	struct strbuf effective_url = STRBUF_INIT;
 	struct discovery *last = last_discovery;
-	char *refs_url;
 	int http_ret, maybe_smart = 0;
+	struct http_get_options options;
 
 	if (last && !strcmp(service, last->service))
 		return last;
 	free_discovery(last);
 
-	strbuf_addf(&buffer, "%sinfo/refs", url);
-	if ((!prefixcmp(url, "http://") || !prefixcmp(url, "https://")) &&
+	strbuf_addf(&refs_url, "%sinfo/refs", url.buf);
+	if ((!prefixcmp(url.buf, "http://") || !prefixcmp(url.buf, "https://")) &&
 	     git_env_bool("GIT_SMART_HTTP", 1)) {
 		maybe_smart = 1;
-		if (!strchr(url, '?'))
-			strbuf_addch(&buffer, '?');
+		if (!strchr(url.buf, '?'))
+			strbuf_addch(&refs_url, '?');
 		else
-			strbuf_addch(&buffer, '&');
-		strbuf_addf(&buffer, "service=%s", service);
+			strbuf_addch(&refs_url, '&');
+		strbuf_addf(&refs_url, "service=%s", service);
 	}
-	refs_url = strbuf_detach(&buffer, NULL);
 
-	http_ret = http_get_strbuf(refs_url, &type, &buffer,
-				   HTTP_NO_CACHE | HTTP_KEEP_ERROR);
+	memset(&options, 0, sizeof(options));
+	options.content_type = &type;
+	options.effective_url = &effective_url;
+	options.base_url = &url;
+	options.no_cache = 1;
+	options.keep_error = 1;
+
+	http_ret = http_get_strbuf(refs_url.buf, &buffer, &options);
 	switch (http_ret) {
 	case HTTP_OK:
 		break;
 	case HTTP_MISSING_TARGET:
 		show_http_message(&type, &buffer);
-		die("repository '%s' not found", url);
+		die("repository '%s' not found", url.buf);
 	case HTTP_NOAUTH:
 		show_http_message(&type, &buffer);
-		die("Authentication failed for '%s'", url);
+		die("Authentication failed for '%s'", url.buf);
 	default:
 		show_http_message(&type, &buffer);
-		die("unable to access '%s': %s", url, curl_errorstr);
+		die("unable to access '%s': %s", url.buf, curl_errorstr);
 	}
 
 	last= xcalloc(1, sizeof(*last_discovery));
@@ -258,9 +268,10 @@ static struct discovery* discover_refs(const char *service, int for_push)
 	else
 		last->refs = parse_info_refs(last);
 
-	free(refs_url);
+	strbuf_release(&refs_url);
 	strbuf_release(&exp);
 	strbuf_release(&type);
+	strbuf_release(&effective_url);
 	strbuf_release(&buffer);
 	last_discovery = last;
 	return last;
@@ -444,6 +455,8 @@ static int post_rpc(struct rpc_state *rpc)
 	if (large_request) {
 		do {
 			err = probe_rpc(rpc);
+			if (err == HTTP_REAUTH)
+				credential_fill(&http_auth);
 		} while (err == HTTP_REAUTH);
 		if (err != HTTP_OK)
 			return -1;
@@ -543,8 +556,10 @@ retry:
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, rpc);
 
 	err = run_slot(slot);
-	if (err == HTTP_REAUTH && !large_request)
+	if (err == HTTP_REAUTH && !large_request) {
+		credential_fill(&http_auth);
 		goto retry;
+	}
 	if (err != HTTP_OK)
 		err = -1;
 
@@ -579,7 +594,7 @@ static int rpc_service(struct rpc_state *rpc, struct discovery *heads)
 	rpc->out = client.out;
 	strbuf_init(&rpc->result, 0);
 
-	strbuf_addf(&buf, "%s%s", url, svc);
+	strbuf_addf(&buf, "%s%s", url.buf, svc);
 	rpc->service_url = strbuf_detach(&buf, NULL);
 
 	strbuf_addf(&buf, "Content-Type: application/x-%s-request", svc);
@@ -631,7 +646,7 @@ static int fetch_dumb(int nr_heads, struct ref **to_fetch)
 	for (i = 0; i < nr_heads; i++)
 		targets[i] = xstrdup(sha1_to_hex(to_fetch[i]->old_sha1));
 
-	walker = get_http_walker(url);
+	walker = get_http_walker(url.buf);
 	walker->get_all = 1;
 	walker->get_tree = 1;
 	walker->get_history = 1;
@@ -676,7 +691,7 @@ static int fetch_git(struct discovery *heads,
 		depth_arg = strbuf_detach(&buf, NULL);
 		argv[argc++] = depth_arg;
 	}
-	argv[argc++] = url;
+	argv[argc++] = url.buf;
 	argv[argc++] = NULL;
 
 	for (i = 0; i < nr_heads; i++) {
@@ -774,7 +789,7 @@ static int push_dav(int nr_spec, char **specs)
 		argv[argc++] = "--dry-run";
 	if (options.verbosity > 1)
 		argv[argc++] = "--verbose";
-	argv[argc++] = url;
+	argv[argc++] = url.buf;
 	for (i = 0; i < nr_spec; i++)
 		argv[argc++] = specs[i];
 	argv[argc++] = NULL;
@@ -804,7 +819,7 @@ static int push_git(struct discovery *heads, int nr_spec, char **specs)
 	else if (options.verbosity > 1)
 		argv_array_push(&args, "--verbose");
 	argv_array_push(&args, options.progress ? "--progress" : "--no-progress");
-	argv_array_push(&args, url);
+	argv_array_push(&args, url.buf);
 	for (i = 0; i < nr_spec; i++)
 		argv_array_push(&args, specs[i]);
 
@@ -885,14 +900,12 @@ int main(int argc, const char **argv)
 	remote = remote_get(argv[1]);
 
 	if (argc > 2) {
-		end_url_with_slash(&buf, argv[2]);
+		end_url_with_slash(&url, argv[2]);
 	} else {
-		end_url_with_slash(&buf, remote->url[0]);
+		end_url_with_slash(&url, remote->url[0]);
 	}
 
-	url = strbuf_detach(&buf, NULL);
-
-	http_init(remote, url, 0);
+	http_init(remote, url.buf, 0);
 
 	do {
 		if (strbuf_getline(&buf, stdin, '\n') == EOF) {

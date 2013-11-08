@@ -102,6 +102,7 @@ extern void http_cleanup(void);
 extern int active_requests;
 extern int http_is_verbose;
 extern size_t http_post_buffer;
+extern struct credential http_auth;
 
 extern char curl_errorstr[CURL_ERROR_SIZE];
 
@@ -125,11 +126,30 @@ extern void append_remote_object_url(struct strbuf *buf, const char *url,
 extern char *get_remote_object_url(const char *url, const char *hex,
 				   int only_two_digit_prefix);
 
-/* Options for http_request_*() */
-#define HTTP_NO_CACHE		1
-#define HTTP_KEEP_ERROR		2
+/* Options for http_get_*() */
+struct http_get_options {
+	unsigned no_cache:1,
+		 keep_error:1;
 
-/* Return values for http_request_*() */
+	/* If non-NULL, returns the content-type of the response. */
+	struct strbuf *content_type;
+
+	/*
+	 * If non-NULL, returns the URL we ended up at, including any
+	 * redirects we followed.
+	 */
+	struct strbuf *effective_url;
+
+	/*
+	 * If both base_url and effective_url are non-NULL, the base URL will
+	 * be munged to reflect any redirections going from the requested url
+	 * to effective_url. See the definition of update_url_from_redirect
+	 * for details.
+	 */
+	struct strbuf *base_url;
+};
+
+/* Return values for http_get_*() */
 #define HTTP_OK			0
 #define HTTP_MISSING_TARGET	1
 #define HTTP_ERROR		2
@@ -142,7 +162,7 @@ extern char *get_remote_object_url(const char *url, const char *hex,
  *
  * If the result pointer is NULL, a HTTP HEAD request is made instead of GET.
  */
-int http_get_strbuf(const char *url, struct strbuf *content_type, struct strbuf *result, int options);
+int http_get_strbuf(const char *url, struct strbuf *result, struct http_get_options *options);
 
 extern int http_fetch_ref(const char *base, struct ref *ref);
 
