@@ -31,7 +31,6 @@ install: install_pm
 clean:
 	$(MAKE) -C $(GIT_ROOT_DIR) SCRIPT_PERL=$(SCRIPT_PERL_FULL) \
                 clean-perl-script
-	rm $(INSTLIBDIR)/$(GIT_MEDIAWIKI_PM)
 
 perlcritic:
 	perlcritic -2 *.perl
