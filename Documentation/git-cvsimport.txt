@@ -144,7 +144,7 @@ This option can be used several times to provide several detection regexes.
 	CVS by default uses the Unix username when writing its
 	commit logs. Using this option and an author-conv-file
 	maps the name recorded in CVS to author name, e-mail and
-	optional timezone:
+	optional time zone:
 +
 ---------
 	exon=Andreas Ericsson <ae@op5.se>
@@ -154,7 +154,7 @@ This option can be used several times to provide several detection regexes.
 +
 'git cvsimport' will make it appear as those authors had
 their GIT_AUTHOR_NAME and GIT_AUTHOR_EMAIL set properly
-all along.  If a timezone is specified, GIT_AUTHOR_DATE will
+all along.  If a time zone is specified, GIT_AUTHOR_DATE will
 have the corresponding offset applied.
 +
 For convenience, this data is saved to `$GIT_DIR/cvs-authors`

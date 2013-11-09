@@ -8,9 +8,9 @@ endif::git-commit[]
 support the following date formats:
 
 Git internal format::
-	It is `<unix timestamp> <timezone offset>`, where `<unix
+	It is `<unix timestamp> <time zone offset>`, where `<unix
 	timestamp>` is the number of seconds since the UNIX epoch.
-	`<timezone offset>` is a positive or negative offset from UTC.
+	`<time zone offset>` is a positive or negative offset from UTC.
 	For example CET (which is 2 hours ahead UTC) is `+0200`.
 
 RFC 2822::

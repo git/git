@@ -103,7 +103,7 @@ This header line is followed by the following information
 at least once for each commit:
 
 - the author name ("author"), email ("author-mail"), time
-  ("author-time"), and timezone ("author-tz"); similarly
+  ("author-time"), and time zone ("author-tz"); similarly
   for committer.
 - the filename in the commit that the line is attributed to.
 - the first line of the commit log message ("summary").

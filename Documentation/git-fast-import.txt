@@ -251,7 +251,7 @@ advisement to help formatting routines display the timestamp.
 If the local offset is not available in the source material, use
 ``+0000'', or the most common local offset.  For example many
 organizations have a CVS repository which has only ever been accessed
-by users who are located in the same location and timezone.  In this
+by users who are located in the same location and time zone.  In this
 case a reasonable offset from UTC could be assumed.
 +
 Unlike the `rfc2822` format, this format is very strict.  Any
@@ -271,7 +271,7 @@ the malformed string.  There are also some types of malformed
 strings which Git will parse wrong, and yet consider valid.
 Seriously malformed strings will be rejected.
 +
-Unlike the `raw` format above, the timezone/UTC offset information
+Unlike the `raw` format above, the time zone/UTC offset information
 contained in an RFC 2822 date string is used to adjust the date
 value to UTC prior to storage.  Therefore it is important that
 this information be as accurate as possible.
@@ -287,13 +287,13 @@ format, or its format is easily convertible to it, as there is no
 ambiguity in parsing.
 
 `now`::
-	Always use the current time and timezone.  The literal
+	Always use the current time and time zone.  The literal
 	`now` must always be supplied for `<when>`.
 +
-This is a toy format.  The current time and timezone of this system
+This is a toy format.  The current time and time zone of this system
 is always copied into the identity string at the time it is being
 created by fast-import.  There is no way to specify a different time or
-timezone.
+time zone.
 +
 This particular format is supplied as it's short to implement and
 may be useful to a process that wants to create a new commit

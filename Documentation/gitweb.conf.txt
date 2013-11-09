@@ -822,18 +822,18 @@ timed::
 Project specific override is not supported.
 
 javascript-timezone::
-	Enable and configure the ability to change a common timezone for dates
+	Enable and configure the ability to change a common time zone for dates
 	in gitweb output via JavaScript.  Dates in gitweb output include
 	authordate and committerdate in "commit", "commitdiff" and "log"
 	views, and taggerdate in "tag" view.  Enabled by default.
 +
-The value is a list of three values: a default timezone (for if the client
-hasn't selected some other timezone and saved it in a cookie), a name of cookie
-where to store selected timezone, and a CSS class used to mark up
+The value is a list of three values: a default time zone (for if the client
+hasn't selected some other time zone and saved it in a cookie), a name of cookie
+where to store selected time zone, and a CSS class used to mark up
 dates for manipulation.  If you want to turn this feature off, set "default"
 to empty list: `[]`.
 +
-Typical gitweb config files will only change starting (default) timezone,
+Typical gitweb config files will only change starting (default) time zone,
 and leave other elements at their default values:
 +
 ---------------------------------------------------------------------------
@@ -843,9 +843,9 @@ $feature{'javascript-timezone'}{'default'}[0] = "utc";
 The example configuration presented here is guaranteed to be backwards
 and forward compatible.
 +
-Timezone values can be "local" (for local timezone that browser uses), "utc"
+Time zone values can be "local" (for local time zone that browser uses), "utc"
 (what gitweb uses when JavaScript or this feature is disabled), or numerical
-timezones in the form of "+/-HHMM", such as "+0200".
+time zones in the form of "+/-HHMM", such as "+0200".
 +
 Project specific override is not supported.
 

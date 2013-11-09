@@ -124,15 +124,15 @@ This automatically updates the rev_map if needed (see
 '$GIT_DIR/svn/\*\*/.rev_map.*' in the FILES section below for details).
 
 --localtime;;
-	Store Git commit times in the local timezone instead of UTC.  This
+	Store Git commit times in the local time zone instead of UTC.  This
 	makes 'git log' (even without --date=local) show the same times
-	that `svn log` would in the local timezone.
+	that `svn log` would in the local time zone.
 +
 This doesn't interfere with interoperating with the Subversion
 repository you cloned from, but if you wish for your local Git
 repository to be able to interoperate with someone else's local Git
 repository, either don't use this option or you should both use it in
-the same local timezone.
+the same local time zone.
 
 --parent;;
 	Fetch only from the SVN parent of the current HEAD.
