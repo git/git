@@ -104,7 +104,6 @@
 /git-pack-refs
 /git-parse-remote
 /git-patch-id
-/git-peek-remote
 /git-prune
 /git-prune-packed
 /git-pull

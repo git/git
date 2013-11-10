@@ -408,7 +408,6 @@ static void handle_internal_command(int argc, const char **argv)
 		{ "pack-redundant", cmd_pack_redundant, RUN_SETUP },
 		{ "pack-refs", cmd_pack_refs, RUN_SETUP },
 		{ "patch-id", cmd_patch_id },
-		{ "peek-remote", cmd_ls_remote, RUN_SETUP_GENTLY },
 		{ "pickaxe", cmd_blame, RUN_SETUP },
 		{ "prune", cmd_prune, RUN_SETUP },
 		{ "prune-packed", cmd_prune_packed, RUN_SETUP },
