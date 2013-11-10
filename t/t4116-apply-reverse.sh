@@ -48,12 +48,12 @@ test_expect_success 'apply in reverse' '
 
 test_expect_success 'setup separate repository lacking postimage' '
 
-	git tar-tree initial initial | $TAR xf - &&
+	git archive --format=tar --prefix=initial/ initial | $TAR xf - &&
 	(
 		cd initial && git init && git add .
 	) &&
 
-	git tar-tree second second | $TAR xf - &&
+	git archive --format=tar --prefix=second/ second | $TAR xf - &&
 	(
 		cd second && git init && git add .
 	)

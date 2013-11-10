@@ -3,7 +3,7 @@
 # Copyright (C) 2005 Rene Scharfe
 #
 
-test_description='git tar-tree and git get-tar-commit-id test
+test_description='git archive and git get-tar-commit-id test
 
 This test covers the topics of file contents, commit date handling and
 commit id embedding:
@@ -13,11 +13,11 @@ commit id embedding:
   binary file (/bin/sh).  Only paths shorter than 99 characters are
   used.
 
-  git tar-tree applies the commit date to every file in the archive it
+  git archive applies the commit date to every file in the archive it
   creates.  The test sets the commit date to a specific value and checks
   if the tar archive contains that value.
 
-  When giving git tar-tree a commit id (in contrast to a tree id) it
+  When giving git archive a commit id (in contrast to a tree id) it
   embeds this commit id into the tar archive as a comment.  The test
   checks the ability of git get-tar-commit-id to figure it out from the
   tar file.
@@ -195,16 +195,6 @@ test_expect_success \
     'git get-tar-commit-id' \
     'git get-tar-commit-id <b.tar >b.commitid &&
      test_cmp .git/$(git symbolic-ref HEAD) b.commitid'
-
-test_expect_success 'git tar-tree' '
-	git tar-tree HEAD >tar-tree.tar &&
-	test_cmp b.tar tar-tree.tar
-'
-
-test_expect_success 'git tar-tree with prefix' '
-	git tar-tree HEAD prefix >tar-tree_with_prefix.tar &&
-	test_cmp with_prefix.tar tar-tree_with_prefix.tar
-'
 
 test_expect_success 'git archive with --output, override inferred format' '
 	git archive --format=tar --output=d4.zip HEAD &&

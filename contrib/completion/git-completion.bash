@@ -706,7 +706,6 @@ __git_list_porcelain_commands ()
 		ssh-*)            : transport;;
 		stripspace)       : plumbing;;
 		symbolic-ref)     : plumbing;;
-		tar-tree)         : deprecated;;
 		unpack-file)      : plumbing;;
 		unpack-objects)   : plumbing;;
 		update-index)     : plumbing;;

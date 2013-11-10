@@ -158,7 +158,6 @@
 /git-svn
 /git-symbolic-ref
 /git-tag
-/git-tar-tree
 /git-unpack-file
 /git-unpack-objects
 /git-update-index
