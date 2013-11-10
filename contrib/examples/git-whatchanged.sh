@@ -9,12 +9,12 @@ case "$0" in
 *whatchanged)
 	count=
 	test -z "$diff_tree_flags" &&
-		diff_tree_flags=$(git-repo-config --get whatchanged.difftree)
+		diff_tree_flags=$(git config --get whatchanged.difftree)
 	diff_tree_default_flags='-c -M --abbrev' ;;
 *show)
 	count=-n1
 	test -z "$diff_tree_flags" &&
-		diff_tree_flags=$(git-repo-config --get show.difftree)
+		diff_tree_flags=$(git config --get show.difftree)
 	diff_tree_default_flags='--cc --always' ;;
 esac
 test -z "$diff_tree_flags" &&

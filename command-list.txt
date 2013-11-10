@@ -102,7 +102,6 @@ git-relink                              ancillarymanipulators
 git-remote                              ancillarymanipulators
 git-repack                              ancillarymanipulators
 git-replace                             ancillarymanipulators
-git-repo-config                         ancillarymanipulators	deprecated
 git-request-pull                        foreignscminterface
 git-rerere                              ancillaryinterrogators
 git-reset                               mainporcelain common
