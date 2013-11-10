@@ -64,7 +64,6 @@ git-init                                mainporcelain common
 git-instaweb                            ancillaryinterrogators
 gitk                                    mainporcelain
 git-log                                 mainporcelain common
-git-lost-found                          ancillarymanipulators	deprecated
 git-ls-files                            plumbinginterrogators
 git-ls-remote                           plumbinginterrogators
 git-ls-tree                             plumbinginterrogators
