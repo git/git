@@ -18,7 +18,9 @@ INSTLIBDIR=$(shell $(MAKE) -C $(GIT_ROOT_DIR)/perl \
 all: build
 
 install_pm:
-	install $(GIT_MEDIAWIKI_PM) $(INSTLIBDIR)/$(GIT_MEDIAWIKI_PM)
+	install -d -m 755 $(DESTDIR)$(INSTLIBDIR)/Git
+	install -m 644 $(GIT_MEDIAWIKI_PM) \
+		$(DESTDIR)$(INSTLIBDIR)/$(GIT_MEDIAWIKI_PM)
 
 build:
 	$(MAKE) -C $(GIT_ROOT_DIR) SCRIPT_PERL=$(SCRIPT_PERL_FULL) \
