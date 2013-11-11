@@ -11,6 +11,8 @@ SCRIPT_PERL=git-remote-mediawiki.perl
 GIT_ROOT_DIR=../..
 HERE=contrib/mw-to-git/
 
+INSTALL = install
+
 SCRIPT_PERL_FULL=$(patsubst %,$(HERE)/%,$(SCRIPT_PERL))
 INSTLIBDIR=$(shell $(MAKE) -C $(GIT_ROOT_DIR)/perl \
                 -s --no-print-directory instlibdir)
@@ -18,8 +20,8 @@ INSTLIBDIR=$(shell $(MAKE) -C $(GIT_ROOT_DIR)/perl \
 all: build
 
 install_pm:
-	install -d -m 755 $(DESTDIR)$(INSTLIBDIR)/Git
-	install -m 644 $(GIT_MEDIAWIKI_PM) \
+	$(INSTALL) -d -m 755 $(DESTDIR)$(INSTLIBDIR)/Git
+	$(INSTALL) -m 644 $(GIT_MEDIAWIKI_PM) \
 		$(DESTDIR)$(INSTLIBDIR)/$(GIT_MEDIAWIKI_PM)
 
 build:
