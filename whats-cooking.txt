@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Nov 2013, #02; Wed, 6)
-X-master-at: 6ba01babcd37e92e88221fcf35ee4471aa66bf4c
-X-next-at: 1ea5b1861e50543207d31c936d4f7bbd4571e433
+Subject: What's cooking in git.git (Nov 2013, #03; Mon, 11)
+X-master-at: 0ecd94d7d728606e0047a44e60a277ff4e7b3990
+X-next-at: 1febc128a577ae89808d686735192c098d1093d9
 
-What's cooking in git.git (Nov 2013, #02; Wed, 6)
+What's cooking in git.git (Nov 2013, #03; Mon, 11)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -30,111 +30,49 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* ak/cvsserver-stabilize-use-of-hash-keys (2013-10-30) 1 commit
-  (merged to 'next' on 2013-11-01 at cc3b890)
- + cvsserver: Determinize output to combat Perl 5.18 hash randomization
-
- Perl portability fix.
-
-
-* bw/solaris-sed-tr-test-portability (2013-11-04) 3 commits
-  (merged to 'next' on 2013-11-04 at c2c09e28)
- + t4015: simplify sed command that is not even seen by sed
-  (merged to 'next' on 2013-11-01 at f04be9a)
- + Avoid difference in tr semantics between System V and BSD
- + Change sed i\ usage to something Solaris' sed can handle
-
- Shell script portability fix.
-
-
-* fc/trivial (2013-10-31) 13 commits
-  (merged to 'next' on 2013-11-04 at c608324)
- + setup: trivial style fixes
- + run-command: trivial style fixes
- + diff: trivial style fix
- + revision: trivial style fixes
- + pretty: trivial style fix
- + describe: trivial style fixes
- + transport-helper: trivial style fix
- + sha1-name: trivial style cleanup
- + branch: trivial style fix
- + revision: add missing include
- + doc/pull: clarify the illustrations
- + t: replace pulls with merges
- + merge: simplify ff-only option
-
- A random collection of style fixes and minor doc updates.
-
-
-* jk/duplicate-objects-in-packs (2013-10-31) 1 commit
-  (merged to 'next' on 2013-11-01 at 8951339)
- + Fix '\%o' for printf from coreutils
-
- Test fixup to a topic recently graduated.
-
-
-* jk/subtree-install-fix (2013-10-30) 1 commit
-  (merged to 'next' on 2013-11-01 at 531bd79)
- + subtree: add makefile target for html docs
-
- We did not generate HTML version of documentation to "git subtree"
- in contrib/.
-
-
-* jk/wrap-perl-used-in-tests (2013-10-29) 2 commits
-  (merged to 'next' on 2013-11-01 at 73444c5)
- + t: use perl instead of "$PERL_PATH" where applicable
- + t: provide a perl() function which uses $PERL_PATH
-
- Perl portability fix.
-
-
-* jn/test-prereq-perl-doc (2013-10-28) 1 commit
-  (merged to 'next' on 2013-11-01 at 4d4a8b4)
- + t/README: tests can use perl even with NO_PERL
-
- The interaction between use of Perl in our test suite and NO_PERL
- has been clarified a bit.
-
-
-* sc/doc-howto-dumb-http (2013-10-28) 1 commit
-  (merged to 'next' on 2013-11-01 at a734b6e)
- + doc/howto: warn about (dumb)http server document being too old
-
- An ancient How-To on serving Git repositories on an HTTP server
- lacked a warning that it has been mostly superseded with more
- modern way.
-
-
-* vd/doc-unpack-objects (2013-11-01) 2 commits
-  (merged to 'next' on 2013-11-01 at 443d0f4)
- + Documentation: "pack-file" is not literal in unpack-objects
- + Documentation: restore a space in unpack-objects usage
-
- The synopsis section of "git unpack-objects" documentation has been
- clarified a bit.
-
---------------------------------------------------
 [New Topics]
 
-* cc/remote-remove-redundant-postfixcmp (2013-11-06) 2 commits
-  (merged to 'next' on 2013-11-06 at 7b45219)
- + Rename suffixcmp() to has_suffix() and invert its result
-  (merged to 'next' on 2013-11-04 at 6408502)
- + builtin/remote: remove postfixcmp() and use suffixcmp() instead
+* kb/doc-exclude-directory-semantics (2013-11-07) 1 commit
+ - gitignore.txt: clarify recursive nature of excluded directories
 
- Minor code clean-up.
-
- Can wait in 'next'.
+ Will merge to 'next'.
 
 
-* tb/clone-ssh-with-colon-for-port (2013-11-04) 1 commit
- . git clone: is an URL local or ssh
+* jc/create-directories-microopt (2013-11-11) 1 commit
+ - checkout: most of the time we have good leading directories
 
- Still being reworked.
+ Of unknown value until tested on non-Linux platforms (especially
+ Windows).
 
+ Will hold.
+
+
+* jl/submodule-update-retire-orig-flags (2013-11-11) 1 commit
+ - submodule update: remove unnecessary orig_flags variable
+
+ Code clean-up.
+
+ Will merge to 'next'.
+
+
+* jn/mediawiki-makefile-updates (2013-11-11) 4 commits
+ - git-remote-mediawiki build: handle DESTDIR/INSTLIBDIR with whitespace
+ - git-remote-mediawiki build: make 'install' command configurable
+ - git-remote-mediawiki: honor DESTDIR in "make install"
+ - git-remote-mediawiki: do not remove installed files in "clean" target
+
+ Build and Installation procedure clean-up.
+
+ Will merge to 'next'.
+
+
+* tb/doc-fetch-pack-url (2013-11-11) 1 commit
+ - git-fetch-pack uses URLs like git-fetch
+
+ Will merge to 'next'.
+
+--------------------------------------------------
+[Stalled]
 
 * cn/thin-push-capability (2013-11-06) 2 commits
  - send-pack: only send a thin pack if the server supports it
@@ -142,46 +80,20 @@ of the repositories listed at
 
  Peff had a good suggestion to control this by expressing what the
  receiving end wants in a more direct way, namely to advertise a
- 'no-thin' trait in the capability list.
+ 'no-thin' trait in the capability list, which seems to be favored
+ by Shawn, too.
 
 
-* nd/wt-status-align-i18n (2013-11-06) 1 commit
- - wt-status: take the alignment burden off translators
+* jt/commit-fixes-footer (2013-10-30) 1 commit
+ - commit: Add -f, --fixes <commit> option to add Fixes: line
 
- An attempt to automatically align the names in the "git status"
- output, taking the display width of (translated) section labels
- into account.
+ There is an ongoing discussion around this topic; in general I am
+ fairly negative on a new feature that is too narrow and prefer a
+ more generic solution that can be tailored for specific needs, as
+ many people stated in the thread.
 
+ It appears that the discussion stalled.
 
-* nv/commit-gpgsign-config (2013-11-06) 1 commit
- - Add the commit.gpgsign option to sign all commits
-
- Introduce commit.gpgsign configuration variable to force every
- commit to be GPG signed.
-
- Needs tests, perhaps?
-
-
-* sb/sha1-loose-object-info-check-existence (2013-11-06) 1 commit
-  (merged to 'next' on 2013-11-06 at 1ea5b18)
- + sha1_loose_object_info(): do not return success on missing object
-
- "git cat-file --batch-check=ok" did not check the existence of the
- named object.
-
- Will merge to 'next', but I think this can wait in 'next' during
- the feature freeze.
-
-* gj/push-more-verbose-advice (2013-11-06) 2 commits
- - push: switch default from "matching" to "simple"
- - push: Enhance unspecified push default warning
-
- Explain 'simple' and 'matching' in "git push" advice message; the
- topmost patch is a rebase of jc/push-2.0-default-to-simple on top
- of it.
-
---------------------------------------------------
-[Stalled]
 
 * np/pack-v4 (2013-09-18) 90 commits
  . packv4-parse.c: add tree offset caching
@@ -196,6 +108,35 @@ of the repositories listed at
 
  Temporarily ejected from 'pu', to try out jk/pack-bitmap, which
  this topic conflicts with.
+
+
+* jk/pack-bitmap (2013-10-30) 20 commits
+ - count-objects: recognize .bitmap in garbage-checking
+ - pack-bitmap: implement optional name_hash cache
+ - t: add basic bitmap functionality tests
+ - repack: consider bitmaps when performing repacks
+ - repack: handle optional files created by pack-objects
+ - repack: turn exts array into array-of-struct
+ - repack: stop using magic number for ARRAY_SIZE(exts)
+ - pack-objects: implement bitmap writing
+ - rev-list: add bitmap mode to speed up object lists
+ - pack-objects: use bitmaps when packing objects
+ - pack-bitmap: add support for bitmap indexes
+ - documentation: add documentation for the bitmap format
+ - ewah: compressed bitmap implementation
+ - compat: add endianness helpers
+ - sha1_file: export `git_open_noatime`
+ - revision: allow setting custom limiter function
+ - pack-objects: factor out name_hash
+ - pack-objects: refactor the packing list
+ - revindex: export new APIs
+ - sha1write: make buffer const-correct
+
+ Borrows the bitmap index into packfiles from JGit to speed up
+ enumeration of objects involved in a commit range without having to
+ fully traverse the history.
+
+ Waiting for a reroll.
 
 
 * mf/graph-show-root (2013-10-25) 1 commit
@@ -284,6 +225,66 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* cc/remote-remove-redundant-postfixcmp (2013-11-06) 2 commits
+  (merged to 'next' on 2013-11-06 at 7b45219)
+ + Rename suffixcmp() to has_suffix() and invert its result
+  (merged to 'next' on 2013-11-04 at 6408502)
+ + builtin/remote: remove postfixcmp() and use suffixcmp() instead
+
+ Minor code clean-up.
+
+ Can wait in 'next'.
+
+
+* tb/clone-ssh-with-colon-for-port (2013-11-04) 1 commit
+ . git clone: is an URL local or ssh
+
+ Still being reworked.
+
+
+* nd/wt-status-align-i18n (2013-11-06) 1 commit
+ - wt-status: take the alignment burden off translators
+
+ An attempt to automatically align the names in the "git status"
+ output, taking the display width of (translated) section labels
+ into account.
+
+ Will merge to 'next'.
+
+
+* nv/commit-gpgsign-config (2013-11-06) 1 commit
+ - Add the commit.gpgsign option to sign all commits
+
+ Introduce commit.gpgsign configuration variable to force every
+ commit to be GPG signed.
+
+ Needs tests, perhaps?
+
+
+* sb/sha1-loose-object-info-check-existence (2013-11-06) 1 commit
+  (merged to 'next' on 2013-11-06 at 1ea5b18)
+ + sha1_loose_object_info(): do not return success on missing object
+
+ "git cat-file --batch-check=ok" did not check the existence of the
+ named object.
+
+ Will cook in 'next'.
+
+
+* gj/push-more-verbose-advice (2013-11-11) 2 commits
+ - push: switch default from "matching" to "simple"
+ - push: Enhance unspecified push default warning
+
+ Explain 'simple' and 'matching' in "git push" advice message; the
+ topmost patch is a rebase of jc/push-2.0-default-to-simple on top
+ of it.
+
+ Will cook in 'next'.
+
+ The first one should be merged to 'master' soon after the next
+ cycle opens; the other to replace jc/push-2.0-default-to-simple.
+
+
 * rr/for-each-ref-decoration (2013-10-31) 4 commits
  - fixup! for-each-ref: introduce %(upstream:track[short])
  - for-each-ref: introduce %(upstream:track[short])
@@ -326,15 +327,6 @@ of the repositories listed at
  Can wait in 'next'.
 
 
-* jt/commit-fixes-footer (2013-10-30) 1 commit
- - commit: Add -f, --fixes <commit> option to add Fixes: line
-
- There is an ongoing discussion around this topic; in general I am
- fairly negative on a new feature that is too narrow and prefer a
- more generic solution that can be tailored for specific needs, as
- many people stated in the thread.
-
-
 * fc/transport-helper-fixes (2013-11-06) 12 commits
  - transport-helper: demote lack of "force" option to a warning
  - transport-helper: add support to delete branches
@@ -353,7 +345,8 @@ of the repositories listed at
  ref mapping and ref deletion in a way similar to the natively
  supported transports.
 
- Expecting a reroll to fix use of vla.
+ Expecting a reroll to fix use of vla and a few typos pointed out
+ during the last round of review.
 
 
 * jh/loose-object-dirs-creation-race (2013-10-28) 1 commit
@@ -413,35 +406,6 @@ of the repositories listed at
  from reflog entries in C.
 
  Will cook in 'next'.
-
-
-* jk/pack-bitmap (2013-10-30) 20 commits
- - count-objects: recognize .bitmap in garbage-checking
- - pack-bitmap: implement optional name_hash cache
- - t: add basic bitmap functionality tests
- - repack: consider bitmaps when performing repacks
- - repack: handle optional files created by pack-objects
- - repack: turn exts array into array-of-struct
- - repack: stop using magic number for ARRAY_SIZE(exts)
- - pack-objects: implement bitmap writing
- - rev-list: add bitmap mode to speed up object lists
- - pack-objects: use bitmaps when packing objects
- - pack-bitmap: add support for bitmap indexes
- - documentation: add documentation for the bitmap format
- - ewah: compressed bitmap implementation
- - compat: add endianness helpers
- - sha1_file: export `git_open_noatime`
- - revision: allow setting custom limiter function
- - pack-objects: factor out name_hash
- - pack-objects: refactor the packing list
- - revindex: export new APIs
- - sha1write: make buffer const-correct
-
- Borrows the bitmap index into packfiles from JGit to speed up
- enumeration of objects involved in a commit range without having to
- fully traverse the history.
-
- Still under discussion.
 
 
 * jk/robustify-parse-commit (2013-10-24) 6 commits
@@ -535,9 +499,13 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* kb/fast-hashmap (2013-10-22) 12 commits
- - remove old hash.[ch] implementation
+* kb/fast-hashmap (2013-11-07) 16 commits
+ - fixup! builtin/update-index.c: cleanup update_one
+ - fixup! read-cache.c: fix memory leaks caused by removed cache entries
  - read-cache.c: fix memory leaks caused by removed cache entries
+ - builtin/update-index.c: cleanup update_one
+ - fix 'git update-index --verbose --again' output
+ - remove old hash.[ch] implementation
  - name-hash.c: remove cache entries instead of marking them CE_UNHASHED
  - name-hash.c: use new hash map implementation for cache entries
  - name-hash.c: remove unreferenced directory entries
@@ -556,7 +524,9 @@ of the repositories listed at
  also squashed in a fix-up by Karsten found at $gmane/236468 (please
  double-check the result).
 
- More valgrind breakage reported ($gmane/236869).
+ This is a reroll one after the valgrind breakage report ($gmane/236869).
+
+ Waiting for a reroll.
 
 
 * jn/add-2.0-u-A-sans-pathspec (2013-04-26) 1 commit
