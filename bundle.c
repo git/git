@@ -7,6 +7,7 @@
 #include "list-objects.h"
 #include "run-command.h"
 #include "refs.h"
+#include "argv-array.h"
 
 static const char bundle_signature[] = "# v2 git bundle\n";
 
@@ -234,13 +235,13 @@ static int is_tag_in_date_range(struct object *tag, struct rev_info *revs)
 }
 
 int create_bundle(struct bundle_header *header, const char *path,
-		int argc, const char **argv)
+		  int argc, const char **argv)
 {
 	static struct lock_file lock;
 	int bundle_fd = -1;
 	int bundle_to_stdout;
-	const char **argv_boundary = xmalloc((argc + 4) * sizeof(const char *));
-	const char **argv_pack = xmalloc(6 * sizeof(const char *));
+	struct argv_array argv_boundary = ARGV_ARRAY_INIT;
+	struct argv_array argv_pack = ARGV_ARRAY_INIT;
 	int i, ref_count = 0;
 	struct strbuf buf = STRBUF_INIT;
 	struct rev_info revs;
@@ -262,13 +263,14 @@ int create_bundle(struct bundle_header *header, const char *path,
 	init_revisions(&revs, NULL);
 
 	/* write prerequisites */
-	memcpy(argv_boundary + 3, argv + 1, argc * sizeof(const char *));
-	argv_boundary[0] = "rev-list";
-	argv_boundary[1] = "--boundary";
-	argv_boundary[2] = "--pretty=oneline";
-	argv_boundary[argc + 2] = NULL;
+	argv_array_pushl(&argv_boundary,
+			 "rev-list", "--boundary", "--pretty=oneline",
+			 NULL);
+	for (i = 1; i < argc; i++)
+		argv_array_push(&argv_boundary, argv[i]);
+
 	memset(&rls, 0, sizeof(rls));
-	rls.argv = argv_boundary;
+	rls.argv = argv_boundary.argv;
 	rls.out = -1;
 	rls.git_cmd = 1;
 	if (start_command(&rls))
@@ -383,14 +385,12 @@ int create_bundle(struct bundle_header *header, const char *path,
 	write_or_die(bundle_fd, "\n", 1);
 
 	/* write pack */
-	argv_pack[0] = "pack-objects";
-	argv_pack[1] = "--all-progress-implied";
-	argv_pack[2] = "--stdout";
-	argv_pack[3] = "--thin";
-	argv_pack[4] = "--delta-base-offset";
-	argv_pack[5] = NULL;
+	argv_array_pushl(&argv_pack,
+			 "pack-objects", "--all-progress-implied",
+			 "--stdout", "--thin", "--delta-base-offset",
+			 NULL);
 	memset(&rls, 0, sizeof(rls));
-	rls.argv = argv_pack;
+	rls.argv = argv_pack.argv;
 	rls.in = -1;
 	rls.out = bundle_fd;
 	rls.git_cmd = 1;
