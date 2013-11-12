@@ -1205,7 +1205,7 @@ class GitView(object):
 
 		#The first parent always continue on the same line
 		try:
-			# check we alreay have the value
+			# check we already have the value
 			tmp_node_pos = self.nodepos[commit.parent_sha1[0]]
 		except KeyError:
 			self.colours[commit.parent_sha1[0]] = colour

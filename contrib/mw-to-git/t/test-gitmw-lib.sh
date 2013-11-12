@@ -91,7 +91,7 @@ test_diff_directories () {
 # Check that <dir> contains exactly <N> files
 test_contains_N_files () {
 	if test `ls -- "$1" | wc -l` -ne "$2"; then
-		echo "directory $1 sould contain $2 files"
+		echo "directory $1 should contain $2 files"
 		echo "it contains these files:"
 		ls "$1"
 		false
