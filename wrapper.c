@@ -133,7 +133,7 @@ void *xcalloc(size_t nmemb, size_t size)
 /*
  * Limit size of IO chunks, because huge chunks only cause pain.  OS X
  * 64-bit is buggy, returning EINVAL if len >= INT_MAX; and even in
- * the absense of bugs, large chunks can result in bad latencies when
+ * the absence of bugs, large chunks can result in bad latencies when
  * you decide to kill the process.
  */
 #define MAX_IO_SIZE (8*1024*1024)
