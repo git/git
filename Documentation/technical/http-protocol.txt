@@ -307,7 +307,7 @@ Clients MUST first perform ref discovery with
    S: ....ACK %s, continue
    S: ....NAK
 
-Clients MUST NOT reuse or revalidate a cached reponse.
+Clients MUST NOT reuse or revalidate a cached response.
 Servers MUST include sufficient Cache-Control headers
 to prevent caching of the response.
 
@@ -468,7 +468,7 @@ Clients MUST first perform ref discovery with
    S:
    S: ....
 
-Clients MUST NOT reuse or revalidate a cached reponse.
+Clients MUST NOT reuse or revalidate a cached response.
 Servers MUST include sufficient Cache-Control headers
 to prevent caching of the response.
 
