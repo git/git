@@ -1,28 +1,18 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Nov 2013, #03; Mon, 11)
-X-master-at: 0ecd94d7d728606e0047a44e60a277ff4e7b3990
-X-next-at: 1febc128a577ae89808d686735192c098d1093d9
+Subject: What's cooking in git.git (Nov 2013, #04; Wed, 13)
+X-master-at: 03973056a08d1694cf1c819eb2e8b9557650f70e
+X-next-at: 87216524bc6ef3cbd79ae913726957a0a7b5c236
 
-What's cooking in git.git (Nov 2013, #03; Mon, 11)
+What's cooking in git.git (Nov 2013, #04; Wed, 13)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-The first release candidate 1.8.5-rc1 has been tagged.
-
-As promised/requested, the final steps for 2.0 are in 'next'; they,
-together with a handful topics that have been merged to 'next'
-fairly recently, will _not_ be part of the upcoming 1.8.5 release,
-but will be carried over in 'next' to the next cycle.
-
-There is a proposed rewording of advice message from "git push"
-patch, which is tentatively queued near the tip of 'pu' for now; it
-would be nice to get a few more sets of eyeballs.  I am not sure if
-we should merge it before the 1.8.5 final, yet (we have i18n to
-worry about, among other things).
+The second release candidate has been tagged.  Hopefully we can have
+an uneventful 1.8.5 final next week.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -32,47 +22,74 @@ of the repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* kb/doc-exclude-directory-semantics (2013-11-07) 1 commit
- - gitignore.txt: clarify recursive nature of excluded directories
-
- Will merge to 'next'.
-
-
-* jc/create-directories-microopt (2013-11-11) 1 commit
- - checkout: most of the time we have good leading directories
-
- Of unknown value until tested on non-Linux platforms (especially
- Windows).
-
- Will hold.
-
-
-* jl/submodule-update-retire-orig-flags (2013-11-11) 1 commit
- - submodule update: remove unnecessary orig_flags variable
+* jc/bundle (2013-11-12) 1 commit
+ - bundle: use argv-array
 
  Code clean-up.
 
+
+* jj/log-doc (2013-11-13) 2 commits
+ - Documentation/git-log.txt: mark-up fix and minor rephasing
+ - Documentation/git-log: update "--log-size" description
+
+ Mark-up fixes.
+ Needs extra sets of eyeballs.
+
+
+* jj/rev-list-options-doc (2013-11-13) 1 commit
+ - Documentation/rev-list-options: fix mark-ups and typos
+
+ Mark-up fixes.
+ Needs extra sets of eyeballs.
+
+
+* jk/remove-deprecated (2013-11-12) 4 commits
+  (merged to 'next' on 2013-11-13 at c324792)
+ + peek-remote: remove deprecated alias of ls-remote
+ + lost-found: remove deprecated command
+ + tar-tree: remove deprecated command
+ + repo-config: remove deprecated alias for "git config"
+
+ Will cook in 'next' until a distant future.
+
+
+* mi/typofixes (2013-11-12) 3 commits
+  (merged to 'next' on 2013-11-13 at bb7c2eb)
+ + contrib: typofixes
+ + Documentation/technical/http-protocol.txt: typofixes
+ + typofixes: fix misspelt comments
+
+ Can wait in 'next'.
+
+
+* rh/remote-hg-bzr-updates (2013-11-12) 9 commits
+ - remote-bzr, remote-hg: fix email address regular expression
+ - test-hg.sh: help user correlate verbose output with email test
+ - test-hg.sh: fix duplicate content strings in author tests
+ - test-hg.sh: avoid obsolete 'test' syntax
+ - test-hg.sh: eliminate 'local' bashism
+ - test-bzr.sh, test-hg.sh: prepare for change to push.default=simple
+ - test-bzr.sh, test-hg.sh: allow running from any dir
+ - test-lib.sh: convert $TEST_DIRECTORY to an absolute path
+ - remote-hg: don't decode UTF-8 paths into Unicode objects
+
  Will merge to 'next'.
 
 
-* jn/mediawiki-makefile-updates (2013-11-11) 4 commits
- - git-remote-mediawiki build: handle DESTDIR/INSTLIBDIR with whitespace
- - git-remote-mediawiki build: make 'install' command configurable
- - git-remote-mediawiki: honor DESTDIR in "make install"
- - git-remote-mediawiki: do not remove installed files in "clean" target
-
- Build and Installation procedure clean-up.
+* tr/config-multivalue-lift-max (2013-11-13) 1 commit
+ - config: arbitrary number of matches for --unset and --replace-all
 
  Will merge to 'next'.
 
-
-* tb/doc-fetch-pack-url (2013-11-11) 1 commit
- - git-fetch-pack uses URLs like git-fetch
-
- Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
+
+* tb/clone-ssh-with-colon-for-port (2013-11-04) 1 commit
+ . git clone: is an URL local or ssh
+
+ Still being reworked.
+
 
 * cn/thin-push-capability (2013-11-06) 2 commits
  - send-pack: only send a thin pack if the server supports it
@@ -225,6 +242,50 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* kb/doc-exclude-directory-semantics (2013-11-07) 1 commit
+  (merged to 'next' on 2013-11-13 at 06e5645)
+ + gitignore.txt: clarify recursive nature of excluded directories
+
+ Can wait in 'next'.
+
+
+* jc/create-directories-microopt (2013-11-11) 1 commit
+ - checkout: most of the time we have good leading directories
+
+ Of unknown value until tested on non-Linux platforms (especially
+ Windows).
+
+ Will hold.
+
+
+* jl/submodule-update-retire-orig-flags (2013-11-11) 1 commit
+  (merged to 'next' on 2013-11-13 at 4b70d15)
+ + submodule update: remove unnecessary orig_flags variable
+
+ Code clean-up.
+
+ Can wait in 'next'.
+
+
+* jn/mediawiki-makefile-updates (2013-11-11) 4 commits
+  (merged to 'next' on 2013-11-13 at 71c8d20)
+ + git-remote-mediawiki build: handle DESTDIR/INSTLIBDIR with whitespace
+ + git-remote-mediawiki build: make 'install' command configurable
+ + git-remote-mediawiki: honor DESTDIR in "make install"
+ + git-remote-mediawiki: do not remove installed files in "clean" target
+
+ Build and Installation procedure clean-up.
+
+ Can wait in 'next'.
+
+
+* tb/doc-fetch-pack-url (2013-11-11) 1 commit
+  (merged to 'next' on 2013-11-13 at 90d6832)
+ + git-fetch-pack uses URLs like git-fetch
+
+ Can wait in 'next'.
+
+
 * cc/remote-remove-redundant-postfixcmp (2013-11-06) 2 commits
   (merged to 'next' on 2013-11-06 at 7b45219)
  + Rename suffixcmp() to has_suffix() and invert its result
@@ -236,20 +297,15 @@ of the repositories listed at
  Can wait in 'next'.
 
 
-* tb/clone-ssh-with-colon-for-port (2013-11-04) 1 commit
- . git clone: is an URL local or ssh
-
- Still being reworked.
-
-
 * nd/wt-status-align-i18n (2013-11-06) 1 commit
- - wt-status: take the alignment burden off translators
+  (merged to 'next' on 2013-11-13 at b033aa0)
+ + wt-status: take the alignment burden off translators
 
  An attempt to automatically align the names in the "git status"
  output, taking the display width of (translated) section labels
  into account.
 
- Will merge to 'next'.
+ Can wait in 'next'.
 
 
 * nv/commit-gpgsign-config (2013-11-06) 1 commit
@@ -271,9 +327,9 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* gj/push-more-verbose-advice (2013-11-11) 2 commits
+* gj/push-more-verbose-advice (2013-11-13) 2 commits
  - push: switch default from "matching" to "simple"
- - push: Enhance unspecified push default warning
+ - push: enhance unspecified push default warning
 
  Explain 'simple' and 'matching' in "git push" advice message; the
  topmost patch is a rebase of jc/push-2.0-default-to-simple on top
@@ -285,11 +341,15 @@ of the repositories listed at
  cycle opens; the other to replace jc/push-2.0-default-to-simple.
 
 
-* rr/for-each-ref-decoration (2013-10-31) 4 commits
+* rr/for-each-ref-decoration (2013-11-13) 5 commits
+ - fixup! for-each-ref: introduce %(color:...) for color
+ - for-each-ref: introduce %(color:...) for color
  - fixup! for-each-ref: introduce %(upstream:track[short])
  - for-each-ref: introduce %(upstream:track[short])
  - for-each-ref: introduce %(HEAD) asterisk marker
- - for-each-ref: introduce %C(...) for color
+
+ Needs fix-ups, aut-reset, --color=auto support, and tests.
+ but it is a good start.
 
 
 * jk/two-way-merge-corner-case-fix (2013-11-04) 3 commits
@@ -327,15 +387,15 @@ of the repositories listed at
  Can wait in 'next'.
 
 
-* fc/transport-helper-fixes (2013-11-06) 12 commits
- - transport-helper: demote lack of "force" option to a warning
+* fc/transport-helper-fixes (2013-11-13) 12 commits
+ - remote-bzr: support the new 'force' option
  - transport-helper: add support to delete branches
  - fast-export: add support to delete refs
  - fast-import: add support to delete refs
  - transport-helper: add support for old:new refspec
- - fixup! fast-export: add new --refspec option
  - fast-export: add new --refspec option
  - fast-export: improve argument parsing
+ - test-hg.sh: tests are now expected to pass
  - transport-helper: check for 'forced update' message
  - transport-helper: add 'force' to 'export' helpers
  - transport-helper: don't update refs in dry-run
@@ -344,9 +404,6 @@ of the repositories listed at
  Updates transport-helper, fast-import and fast-export to allow the
  ref mapping and ref deletion in a way similar to the natively
  supported transports.
-
- Expecting a reroll to fix use of vla and a few typos pointed out
- during the last round of review.
 
 
 * jh/loose-object-dirs-creation-race (2013-10-28) 1 commit
