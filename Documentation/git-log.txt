@@ -56,11 +56,11 @@ Note that this affects all diff-based output types, e.g. those
 produced by --stat etc.
 
 --log-size::
-	Before the log message print out its size in bytes. Intended
-	mainly for porcelain tools consumption. If Git is unable to
-	produce a valid value size is set to zero.
-	Note that only message is considered, if also a diff is shown
-	its size is not included.
+
+	Include a line ``log size <number>'' in the output for each commit,
+	where <number> is the length of that commit's message in bytes.
+	Intended to speed up tools that read log messages from `git log`
+	output by allowing them to allocate space in advance.
 
 -L <start>,<end>:<file>, -L :<regex>:<file>::
 
