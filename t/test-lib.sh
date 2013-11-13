@@ -958,6 +958,12 @@ test_lazy_prereq SYMLINKS '
 	touch x
 	ln -s x y && test -h y
 '
+test_lazy_prereq SYMLINKS_SH '
+	# test whether the filesystem supports symbolic links
+	touch x
+	# Then check it is supported by the shell (not using overridden test)
+	ln -s x y && builtin test -h y
+'
 
 test_lazy_prereq FILEMODE '
 	test "$(git config --bool core.filemode)" = true
