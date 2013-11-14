@@ -106,8 +106,19 @@ static void hash_index_entry(struct index_state *istate, struct cache_entry *ce)
 	hashmap_entry_init(ce, memihash(ce->name, ce_namelen(ce)));
 	hashmap_add(&istate->name_hash, ce);
 
-	if (ignore_case && !(ce->ce_flags & CE_UNHASHED))
+	if (ignore_case)
 		add_dir_entry(istate, ce);
+}
+
+static int cache_entry_cmp(const struct cache_entry *ce1,
+		const struct cache_entry *ce2, const void *remove)
+{
+	/*
+	 * For remove_name_hash, find the exact entry (pointer equality); for
+	 * index_name_exists, find all entries with matching hash code and
+	 * decide whether the entry matches in same_name.
+	 */
+	return remove ? !(ce1 == ce2) : 0;
 }
 
 static void lazy_init_name_hash(struct index_state *istate)
@@ -116,7 +127,8 @@ static void lazy_init_name_hash(struct index_state *istate)
 
 	if (istate->name_hash_initialized)
 		return;
-	hashmap_init(&istate->name_hash, NULL, istate->cache_nr);
+	hashmap_init(&istate->name_hash, (hashmap_cmp_fn) cache_entry_cmp,
+			istate->cache_nr);
 	hashmap_init(&istate->dir_hash, (hashmap_cmp_fn) dir_entry_cmp, 0);
 	for (nr = 0; nr < istate->cache_nr; nr++)
 		hash_index_entry(istate, istate->cache[nr]);
@@ -125,31 +137,19 @@ static void lazy_init_name_hash(struct index_state *istate)
 
 void add_name_hash(struct index_state *istate, struct cache_entry *ce)
 {
-	/* if already hashed, add reference to directory entries */
-	if (ignore_case && (ce->ce_flags & CE_STATE_MASK) == CE_STATE_MASK)
-		add_dir_entry(istate, ce);
-
-	ce->ce_flags &= ~CE_UNHASHED;
 	if (istate->name_hash_initialized)
 		hash_index_entry(istate, ce);
 }
 
-/*
- * We don't actually *remove* it, we can just mark it invalid so that
- * we won't find it in lookups.
- *
- * Not only would we have to search the lists (simple enough), but
- * we'd also have to rehash other hash buckets in case this makes the
- * hash bucket empty (common). So it's much better to just mark
- * it.
- */
 void remove_name_hash(struct index_state *istate, struct cache_entry *ce)
 {
-	/* if already hashed, release reference to directory entries */
-	if (ignore_case && (ce->ce_flags & CE_STATE_MASK) == CE_HASHED)
-		remove_dir_entry(istate, ce);
+	if (!istate->name_hash_initialized || !(ce->ce_flags & CE_HASHED))
+		return;
+	ce->ce_flags &= ~CE_HASHED;
+	hashmap_remove(&istate->name_hash, ce, ce);
 
-	ce->ce_flags |= CE_UNHASHED;
+	if (ignore_case)
+		remove_dir_entry(istate, ce);
 }
 
 static int slow_same_name(const char *name1, int len1, const char *name2, int len2)
@@ -220,10 +220,8 @@ struct cache_entry *index_file_exists(struct index_state *istate, const char *na
 	hashmap_entry_init(&key, memihash(name, namelen));
 	ce = hashmap_get(&istate->name_hash, &key, NULL);
 	while (ce) {
-		if (!(ce->ce_flags & CE_UNHASHED)) {
-			if (same_name(ce, name, namelen, icase))
-				return ce;
-		}
+		if (same_name(ce, name, namelen, icase))
+			return ce;
 		ce = hashmap_get_next(&istate->name_hash, ce);
 	}
 	return NULL;
