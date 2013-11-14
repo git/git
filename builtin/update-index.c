@@ -579,7 +579,7 @@ static int do_reupdate(int ac, const char **av,
 		 * or worse yet 'allow_replace', active_nr may decrease.
 		 */
 		save_nr = active_nr;
-		update_one(ce->name + prefix_length, prefix, prefix_length);
+		update_one(ce->name, NULL, 0);
 		if (save_nr != active_nr)
 			goto redo;
 	}
