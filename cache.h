@@ -131,12 +131,12 @@ struct stat_data {
 };
 
 struct cache_entry {
+	struct hashmap_entry ent;
 	struct stat_data ce_stat_data;
 	unsigned int ce_mode;
 	unsigned int ce_flags;
 	unsigned int ce_namelen;
 	unsigned char sha1[20];
-	struct cache_entry *next;
 	char name[FLEX_ARRAY]; /* more */
 };
 
@@ -203,7 +203,9 @@ static inline void copy_cache_entry(struct cache_entry *dst,
 	unsigned int state = dst->ce_flags & CE_STATE_MASK;
 
 	/* Don't copy hash chain and name */
-	memcpy(dst, src, offsetof(struct cache_entry, next));
+	memcpy(&dst->ce_stat_data, &src->ce_stat_data,
+			offsetof(struct cache_entry, name) -
+			offsetof(struct cache_entry, ce_stat_data));
 
 	/* Restore the hash state */
 	dst->ce_flags = (dst->ce_flags & ~CE_STATE_MASK) | state;
@@ -278,7 +280,7 @@ struct index_state {
 	struct cache_time timestamp;
 	unsigned name_hash_initialized : 1,
 		 initialized : 1;
-	struct hash_table name_hash;
+	struct hashmap name_hash;
 	struct hashmap dir_hash;
 };
 
