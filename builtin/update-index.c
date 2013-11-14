@@ -559,6 +559,7 @@ static int do_reupdate(int ac, const char **av,
 		const struct cache_entry *ce = active_cache[pos];
 		struct cache_entry *old = NULL;
 		int save_nr;
+		char *path;
 
 		if (ce_stage(ce) || !ce_path_match(ce, &pathspec))
 			continue;
@@ -575,7 +576,9 @@ static int do_reupdate(int ac, const char **av,
 		 * or worse yet 'allow_replace', active_nr may decrease.
 		 */
 		save_nr = active_nr;
-		update_one(ce->name);
+		path = xstrdup(ce->name);
+		update_one(path);
+		free(path);
 		if (save_nr != active_nr)
 			goto redo;
 	}

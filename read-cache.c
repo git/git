@@ -47,6 +47,7 @@ static void replace_index_entry(struct index_state *istate, int nr, struct cache
 	struct cache_entry *old = istate->cache[nr];
 
 	remove_name_hash(istate, old);
+	free(old);
 	set_index_entry(istate, nr, ce);
 	istate->cache_changed = 1;
 }
@@ -478,6 +479,7 @@ int remove_index_entry_at(struct index_state *istate, int pos)
 
 	record_resolve_undo(istate, ce);
 	remove_name_hash(istate, ce);
+	free(ce);
 	istate->cache_changed = 1;
 	istate->cache_nr--;
 	if (pos >= istate->cache_nr)
@@ -499,8 +501,10 @@ void remove_marked_cache_entries(struct index_state *istate)
 	unsigned int i, j;
 
 	for (i = j = 0; i < istate->cache_nr; i++) {
-		if (ce_array[i]->ce_flags & CE_REMOVE)
+		if (ce_array[i]->ce_flags & CE_REMOVE) {
 			remove_name_hash(istate, ce_array[i]);
+			free(ce_array[i]);
+		}
 		else
 			ce_array[j++] = ce_array[i];
 	}
@@ -1894,7 +1898,7 @@ int read_index_unmerged(struct index_state *istate)
 		new_ce->ce_mode = ce->ce_mode;
 		if (add_index_entry(istate, new_ce, 0))
 			return error("%s: cannot drop to stage #0",
-				     ce->name);
+				     new_ce->name);
 		i = index_name_pos(istate, new_ce->name, len);
 	}
 	return unmerged;
