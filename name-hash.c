@@ -86,15 +86,16 @@ static void add_dir_entry(struct index_state *istate, struct cache_entry *ce)
 static void remove_dir_entry(struct index_state *istate, struct cache_entry *ce)
 {
 	/*
-	 * Release reference to the directory entry (and parents if 0).
-	 *
-	 * Note: we do not remove / free the entry because there's no
-	 * hash.[ch]::remove_hash and dir->next may point to other entries
-	 * that are still valid, so we must not free the memory.
+	 * Release reference to the directory entry. If 0, remove and continue
+	 * with parent directory.
 	 */
 	struct dir_entry *dir = hash_dir_entry(istate, ce, ce_namelen(ce));
-	while (dir && dir->nr && !(--dir->nr))
-		dir = dir->parent;
+	while (dir && !(--dir->nr)) {
+		struct dir_entry *parent = dir->parent;
+		hashmap_remove(&istate->dir_hash, dir, NULL);
+		free(dir);
+		dir = parent;
+	}
 }
 
 static void hash_index_entry(struct index_state *istate, struct cache_entry *ce)
