@@ -126,85 +126,6 @@ static void perf_hashmap(unsigned int method, unsigned int rounds)
 	}
 }
 
-struct hash_entry
-{
-	struct hash_entry *next;
-	char key[FLEX_ARRAY];
-};
-
-/*
- * Test performance of hash.[ch]
- * Usage: time echo "perfhash method rounds" | test-hashmap
- */
-static void perf_hash(unsigned int method, unsigned int rounds)
-{
-	struct hash_table map;
-	char buf[16];
-	struct hash_entry **entries, **res, *entry;
-	unsigned int *hashes;
-	unsigned int i, j;
-
-	entries = malloc(TEST_SIZE * sizeof(struct hash_entry *));
-	hashes = malloc(TEST_SIZE * sizeof(int));
-	for (i = 0; i < TEST_SIZE; i++) {
-		snprintf(buf, sizeof(buf), "%i", i);
-		entries[i] = malloc(sizeof(struct hash_entry) + strlen(buf) + 1);
-		strcpy(entries[i]->key, buf);
-		hashes[i] = hash(method, i, entries[i]->key);
-	}
-
-	if (method & TEST_ADD) {
-		/* test adding to the map */
-		for (j = 0; j < rounds; j++) {
-			init_hash(&map);
-
-			/* add entries */
-			for (i = 0; i < TEST_SIZE; i++) {
-				res = (struct hash_entry **) insert_hash(
-						hashes[i], entries[i], &map);
-				if (res) {
-					entries[i]->next = *res;
-					*res = entries[i];
-				} else {
-					entries[i]->next = NULL;
-				}
-			}
-
-			free_hash(&map);
-		}
-	} else {
-		/* test map lookups */
-		init_hash(&map);
-
-		/* fill the map (sparsely if specified) */
-		j = (method & TEST_SPARSE) ? TEST_SIZE / 10 : TEST_SIZE;
-		for (i = 0; i < j; i++) {
-			res = (struct hash_entry **) insert_hash(hashes[i],
-					entries[i], &map);
-			if (res) {
-				entries[i]->next = *res;
-				*res = entries[i];
-			} else {
-				entries[i]->next = NULL;
-			}
-		}
-
-		for (j = 0; j < rounds; j++) {
-			for (i = 0; i < TEST_SIZE; i++) {
-				entry = lookup_hash(hashes[i], &map);
-				while (entry) {
-					if (!strcmp(entries[i]->key, entry->key))
-						break;
-					entry = entry->next;
-				}
-			}
-		}
-
-		free_hash(&map);
-
-	}
-}
-
 #define DELIM " \t\r\n"
 
 /*
@@ -218,7 +139,6 @@ static void perf_hash(unsigned int method, unsigned int rounds)
  * size -> tablesize numentries
  *
  * perfhashmap method rounds -> test hashmap.[ch] performance
- * perfhash method rounds -> test hash.[ch] performance
  */
 int main(int argc, char *argv[])
 {
@@ -323,10 +243,6 @@ int main(int argc, char *argv[])
 		} else if (!strcmp("perfhashmap", cmd) && l1 && l2) {
 
 			perf_hashmap(atoi(p1), atoi(p2));
-
-		} else if (!strcmp("perfhash", cmd) && l1 && l2) {
-
-			perf_hash(atoi(p1), atoi(p2));
 
 		} else {
 
