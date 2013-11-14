@@ -8,49 +8,28 @@
 #define NO_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
 
-/*
- * This removes bit 5 if bit 6 is set.
- *
- * That will make US-ASCII characters hash to their upper-case
- * equivalent. We could easily do this one whole word at a time,
- * but that's for future worries.
- */
-static inline unsigned char icase_hash(unsigned char c)
-{
-	return c & ~((c & 0x40) >> 1);
-}
-
-static unsigned int hash_name(const char *name, int namelen)
-{
-	unsigned int hash = 0x123;
-
-	while (namelen--) {
-		unsigned char c = *name++;
-		c = icase_hash(c);
-		hash = hash*101 + c;
-	}
-	return hash;
-}
-
 struct dir_entry {
-	struct dir_entry *next;
+	struct hashmap_entry ent;
 	struct dir_entry *parent;
 	struct cache_entry *ce;
 	int nr;
 	unsigned int namelen;
 };
 
+static int dir_entry_cmp(const struct dir_entry *e1,
+		const struct dir_entry *e2, const char *name)
+{
+	return e1->namelen != e2->namelen || strncasecmp(e1->ce->name,
+			name ? name : e2->ce->name, e1->namelen);
+}
+
 static struct dir_entry *find_dir_entry(struct index_state *istate,
 		const char *name, unsigned int namelen)
 {
-	unsigned int hash = hash_name(name, namelen);
-	struct dir_entry *dir;
-
-	for (dir = lookup_hash(hash, &istate->dir_hash); dir; dir = dir->next)
-		if (dir->namelen == namelen &&
-		    !strncasecmp(dir->ce->name, name, namelen))
-			return dir;
-	return NULL;
+	struct dir_entry key;
+	hashmap_entry_init(&key, memihash(name, namelen));
+	key.namelen = namelen;
+	return hashmap_get(&istate->dir_hash, &key, name);
 }
 
 static struct dir_entry *hash_dir_entry(struct index_state *istate,
@@ -84,18 +63,11 @@ static struct dir_entry *hash_dir_entry(struct index_state *istate,
 	dir = find_dir_entry(istate, ce->name, namelen);
 	if (!dir) {
 		/* not found, create it and add to hash table */
-		void **pdir;
-		unsigned int hash = hash_name(ce->name, namelen);
-
 		dir = xcalloc(1, sizeof(struct dir_entry));
+		hashmap_entry_init(dir, memihash(ce->name, namelen));
 		dir->namelen = namelen;
 		dir->ce = ce;
-
-		pdir = insert_hash(hash, dir, &istate->dir_hash);
-		if (pdir) {
-			dir->next = *pdir;
-			*pdir = dir;
-		}
+		hashmap_add(&istate->dir_hash, dir);
 
 		/* recursively add missing parent directories */
 		dir->parent = hash_dir_entry(istate, ce, namelen);
@@ -134,7 +106,7 @@ static void hash_index_entry(struct index_state *istate, struct cache_entry *ce)
 		return;
 	ce->ce_flags |= CE_HASHED;
 	ce->next = NULL;
-	hash = hash_name(ce->name, ce_namelen(ce));
+	hash = memihash(ce->name, ce_namelen(ce));
 	pos = insert_hash(hash, ce, &istate->name_hash);
 	if (pos) {
 		ce->next = *pos;
@@ -153,6 +125,7 @@ static void lazy_init_name_hash(struct index_state *istate)
 		return;
 	if (istate->cache_nr)
 		preallocate_hash(&istate->name_hash, istate->cache_nr);
+	hashmap_init(&istate->dir_hash, (hashmap_cmp_fn) dir_entry_cmp, 0);
 	for (nr = 0; nr < istate->cache_nr; nr++)
 		hash_index_entry(istate, istate->cache[nr]);
 	istate->name_hash_initialized = 1;
@@ -247,7 +220,7 @@ struct cache_entry *index_dir_exists(struct index_state *istate, const char *nam
 
 struct cache_entry *index_file_exists(struct index_state *istate, const char *name, int namelen, int icase)
 {
-	unsigned int hash = hash_name(name, namelen);
+	unsigned int hash = memihash(name, namelen);
 	struct cache_entry *ce;
 
 	lazy_init_name_hash(istate);
@@ -270,26 +243,12 @@ struct cache_entry *index_name_exists(struct index_state *istate, const char *na
 	return index_file_exists(istate, name, namelen, icase);
 }
 
-static int free_dir_entry(void *entry, void *unused)
-{
-	struct dir_entry *dir = entry;
-	while (dir) {
-		struct dir_entry *next = dir->next;
-		free(dir);
-		dir = next;
-	}
-	return 0;
-}
-
 void free_name_hash(struct index_state *istate)
 {
 	if (!istate->name_hash_initialized)
 		return;
 	istate->name_hash_initialized = 0;
-	if (ignore_case)
-		/* free directory entries */
-		for_each_hash(&istate->dir_hash, free_dir_entry, NULL);
 
 	free_hash(&istate->name_hash);
-	free_hash(&istate->dir_hash);
+	hashmap_free(&istate->dir_hash, 1);
 }
