@@ -68,7 +68,8 @@ if it is part of the log message.
 
 -i::
 --regexp-ignore-case::
-	Match the regexp limiting patterns without regard to letters case.
+	Match the regular expression limiting patterns without regard to letter
+	case.
 
 --basic-regexp::
 	Consider the limiting patterns to be basic regular expressions;
@@ -85,7 +86,7 @@ if it is part of the log message.
 	pattern as a regular expression).
 
 --perl-regexp::
-	Consider the limiting patterns to be Perl-compatible regexp.
+	Consider the limiting patterns to be Perl-compatible regular expressions.
 	Requires libpcre to be compiled in.
 
 --remove-empty::
@@ -191,9 +192,9 @@ endif::git-rev-list[]
 For example, if you have two branches, `A` and `B`, a usual way
 to list all commits on only one side of them is with
 `--left-right` (see the example below in the description of
-the `--left-right` option).  It however shows the commits that were cherry-picked
-from the other branch (for example, ``3rd on b'' may be cherry-picked
-from branch A).  With this option, such pairs of commits are
+the `--left-right` option). However, it shows the commits that were
+cherry-picked from the other branch (for example, ``3rd on b'' may be
+cherry-picked from branch A). With this option, such pairs of commits are
 excluded from the output.
 
 --left-only::
@@ -447,7 +448,7 @@ The effect of this is best shown by way of comparing to
 	  `---------'
 -----------------------------------------------------------------------
 +
-Note the major differences in `N`, `P` and `Q` over `--full-history`:
+Note the major differences in `N`, `P`, and `Q` over `--full-history`:
 +
 --
 * `N`'s parent list had `I` removed, because it is an ancestor of the
@@ -467,7 +468,7 @@ Finally, there is a fifth simplification mode available:
 	Limit the displayed commits to those directly on the ancestry
 	chain between the ``from'' and ``to'' commits in the given commit
 	range. I.e. only display commits that are ancestor of the ``to''
-	commit, and descendants of the ``from'' commit.
+	commit and descendants of the ``from'' commit.
 +
 As an example use case, consider the following commit history:
 +
@@ -631,9 +632,9 @@ These options are mostly targeted for packing of Git repositories.
 --no-walk[=(sorted|unsorted)]::
 	Only show the given commits, but do not traverse their ancestors.
 	This has no effect if a range is specified. If the argument
-	`unsorted` is given, the commits are show in the order they were
+	`unsorted` is given, the commits are shown in the order they were
 	given on the command line. Otherwise (if `sorted` or no argument
-	was given), the commits are show in reverse chronological order
+	was given), the commits are shown in reverse chronological order
 	by commit time.
 
 --do-walk::
@@ -656,7 +657,7 @@ include::pretty-options.txt[]
 --date=(relative|local|default|iso|rfc|short|raw)::
 	Only takes effect for dates shown in human-readable format, such
 	as when using `--pretty`. `log.date` config variable sets a default
-	value for log command's `--date` option.
+	value for the log command's `--date` option.
 +
 `--date=relative` shows dates relative to the current time,
 e.g. ``2 hours ago''.
@@ -666,9 +667,9 @@ e.g. ``2 hours ago''.
 `--date=iso` (or `--date=iso8601`) shows timestamps in ISO 8601 format.
 +
 `--date=rfc` (or `--date=rfc2822`) shows timestamps in RFC 2822
-format, often found in E-mail messages.
+format, often found in email messages.
 +
-`--date=short` shows only date but not time, in `YYYY-MM-DD` format.
+`--date=short` shows only the date, but not the time, in `YYYY-MM-DD` format.
 +
 `--date=raw` shows the date in the internal raw Git format `%s %z` format.
 +
@@ -749,7 +750,7 @@ ifndef::git-rev-list[]
 Diff Formatting
 ~~~~~~~~~~~~~~~
 
-Below are listed options that control the formatting of diff output.
+Listed below are options that control the formatting of diff output.
 Some of them are specific to linkgit:git-rev-list[1], however other diff
 options may be given. See linkgit:git-diff-files[1] for more options.
 
