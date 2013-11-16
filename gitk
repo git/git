@@ -235,6 +235,14 @@ proc parseviewargs {n arglist} {
 		set filtered 1
 		lappend glflags $arg
 	    }
+	    "-L*" {
+		# Line-log with 'stuck' argument (unstuck form is
+		# not supported)
+		set filtered 1
+		set vinlinediff($n) 1
+		set allknown 0
+		lappend glflags $arg
+	    }
 	    "-n" {
 		# This appears to be the only one that has a value as a
 		# separate word following it
