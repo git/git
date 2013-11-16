@@ -1704,8 +1704,17 @@ proc parsecommit {id contents listed} {
 	set comment $newcomment
     }
     set hasnote [string first "\nNotes:\n" $contents]
+    set diff ""
+    # If there is diff output shown in the git-log stream, split it
+    # out.  But get rid of the empty line that always precedes the
+    # diff.
+    set i [string first "\n\ndiff" $comment]
+    if {$i >= 0} {
+	set diff [string range $comment $i+1 end]
+	set comment [string range $comment 0 $i-1]
+    }
     set commitinfo($id) [list $headline $auname $audate \
-			     $comname $comdate $comment $hasnote]
+			     $comname $comdate $comment $hasnote $diff]
 }
 
 proc getcommit {id} {
