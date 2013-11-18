@@ -91,7 +91,11 @@ objectname::
 upstream::
 	The name of a local ref which can be considered ``upstream''
 	from the displayed ref. Respects `:short` in the same way as
-	`refname` above.
+	`refname` above.  Additionally respects `:track` to show
+	"[ahead N, behind M]" and `:trackshort` to show the terse
+	version: ">" (ahead), "<" (behind), "<>" (ahead and behind),
+	or "=" (in sync).  Has no effect if the ref does not have
+	tracking information associated with it.
 
 HEAD::
 	'*' if HEAD matches current ref (the checked out branch), ' '

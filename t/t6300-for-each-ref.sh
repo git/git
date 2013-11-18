@@ -303,6 +303,33 @@ test_expect_success 'Check short upstream format' '
 	test_cmp expected actual
 '
 
+test_expect_success 'setup for upstream:track[short]' '
+	test_commit two
+'
+
+cat >expected <<EOF
+[ahead 1]
+EOF
+
+test_expect_success 'Check upstream:track format' '
+	git for-each-ref --format="%(upstream:track)" refs/heads >actual &&
+	test_cmp expected actual
+'
+
+cat >expected <<EOF
+>
+EOF
+
+test_expect_success 'Check upstream:trackshort format' '
+	git for-each-ref --format="%(upstream:trackshort)" refs/heads >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'Check that :track[short] cannot be used with other atoms' '
+	test_must_fail git for-each-ref --format="%(refname:track)" 2>/dev/null &&
+	test_must_fail git for-each-ref --format="%(refname:trackshort)" 2>/dev/null
+'
+
 cat >expected <<EOF
 $(git rev-parse --short HEAD)
 EOF
