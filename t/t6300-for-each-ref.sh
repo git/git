@@ -356,7 +356,7 @@ $(git rev-parse --short refs/tags/two) $(get_color green)two$(get_color reset)
 EOF
 
 test_expect_success 'Check %(color:...) ' '
-	git for-each-ref --format="%(objectname:short) %(color:green)%(refname:short)%(color:reset)" >actual &&
+	git for-each-ref --format="%(objectname:short) %(color:green)%(refname:short)" >actual &&
 	test_cmp expected actual
 '
 

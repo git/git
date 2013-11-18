@@ -93,6 +93,7 @@ static struct {
 static const char **used_atom;
 static cmp_type *used_atom_type;
 static int used_atom_cnt, sort_atom_limit, need_tagged, need_symref;
+static int need_color_reset_at_eol;
 
 /*
  * Used to parse format string and sort specifiers
@@ -179,13 +180,21 @@ static const char *find_next(const char *cp)
 static int verify_format(const char *format)
 {
 	const char *cp, *sp;
+	static const char color_reset[] = "color:reset";
+
+	need_color_reset_at_eol = 0;
 	for (cp = format; *cp && (sp = find_next(cp)); ) {
 		const char *ep = strchr(sp, ')');
+		int at;
+
 		if (!ep)
 			return error("malformed format string %s", sp);
 		/* sp points at "%(" and ep points at the closing ")" */
-		parse_atom(sp + 2, ep);
+		at = parse_atom(sp + 2, ep);
 		cp = ep + 1;
+
+		if (!memcmp(used_atom[at], "color:", 6))
+			need_color_reset_at_eol = !!strcmp(used_atom[at], color_reset);
 	}
 	return 0;
 }
@@ -914,11 +923,9 @@ static void sort_refs(struct ref_sort *sort, struct refinfo **refs, int num_refs
 	qsort(refs, num_refs, sizeof(struct refinfo *), compare_refs);
 }
 
-static void print_value(struct refinfo *ref, int atom, int quote_style)
+static void print_value(struct atom_value *v, int quote_style)
 {
-	struct atom_value *v;
 	struct strbuf sb = STRBUF_INIT;
-	get_value(ref, atom, &v);
 	switch (quote_style) {
 	case QUOTE_NONE:
 		fputs(v->s, stdout);
@@ -985,14 +992,25 @@ static void show_ref(struct refinfo *info, const char *format, int quote_style)
 	const char *cp, *sp, *ep;
 
 	for (cp = format; *cp && (sp = find_next(cp)); cp = ep + 1) {
+		struct atom_value *atomv;
+
 		ep = strchr(sp, ')');
 		if (cp < sp)
 			emit(cp, sp);
-		print_value(info, parse_atom(sp + 2, ep), quote_style);
+		get_value(info, parse_atom(sp + 2, ep), &atomv);
+		print_value(atomv, quote_style);
 	}
 	if (*cp) {
 		sp = cp + strlen(cp);
 		emit(cp, sp);
+	}
+	if (need_color_reset_at_eol) {
+		struct atom_value resetv;
+		char color[COLOR_MAXLEN] = "";
+
+		color_parse("reset", "--format", color);
+		resetv.s = color;
+		print_value(&resetv, quote_style);
 	}
 	putchar('\n');
 }
