@@ -215,7 +215,8 @@ test_expect_success 'authors' '
 	author_test theta "theta < test@example.com >" "theta <test@example.com>" &&
 	author_test iota "iota >test@example.com>" "iota <test@example.com>" &&
 	author_test kappa "kappa < test <at> example <dot> com>" "kappa <unknown>" &&
-	author_test lambda "lambda@example.com" "Unknown <lambda@example.com>"
+	author_test lambda "lambda@example.com" "Unknown <lambda@example.com>" &&
+	author_test mu "mu.mu@example.com" "Unknown <mu.mu@example.com>"
 	) &&
 
 	git clone "hg::hgrepo" gitrepo &&
