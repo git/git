@@ -54,14 +54,14 @@ check_bookmark () {
 }
 
 check_push () {
-	local expected_ret=$1 ret=0 ref_ret=0 IFS=':'
+	expected_ret=$1 ret=0 ref_ret=0
 
 	shift
 	git push origin "$@" 2>error
 	ret=$?
 	cat error
 
-	while read branch kind
+	while IFS=':' read branch kind
 	do
 		case "$kind" in
 		'new')
