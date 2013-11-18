@@ -49,8 +49,8 @@ test_atom head refname refs/heads/master
 test_atom head upstream refs/remotes/origin/master
 test_atom head objecttype commit
 test_atom head objectsize 171
-test_atom head objectname 67a36f10722846e891fbada1ba48ed035de75581
-test_atom head tree 0e51c00fcb93dffc755546f27593d511e1bdb46f
+test_atom head objectname $(git rev-parse refs/heads/master)
+test_atom head tree $(git rev-parse refs/heads/master^{tree})
 test_atom head parent ''
 test_atom head numparent 0
 test_atom head object ''
@@ -82,11 +82,11 @@ test_atom tag refname refs/tags/testtag
 test_atom tag upstream ''
 test_atom tag objecttype tag
 test_atom tag objectsize 154
-test_atom tag objectname 98b46b1d36e5b07909de1b3886224e3e81e87322
+test_atom tag objectname $(git rev-parse refs/tags/testtag)
 test_atom tag tree ''
 test_atom tag parent ''
 test_atom tag numparent ''
-test_atom tag object '67a36f10722846e891fbada1ba48ed035de75581'
+test_atom tag object $(git rev-parse refs/tags/testtag^0)
 test_atom tag type 'commit'
 test_atom tag author ''
 test_atom tag authorname ''
@@ -302,7 +302,7 @@ test_expect_success 'Check short upstream format' '
 '
 
 cat >expected <<EOF
-67a36f1
+$(git rev-parse --short HEAD)
 EOF
 
 test_expect_success 'Check short objectname format' '
@@ -453,9 +453,9 @@ test_atom refs/tags/signed-long contents "subject line
 body contents
 $sig"
 
-cat >expected <<\EOF
-408fe76d02a785a006c2e9c669b7be5589ede96d <committer@example.com> refs/tags/master
-90b5ebede4899eda64893bc2a4c8f1d6fb6dfc40 <committer@example.com> refs/tags/bogo
+cat >expected <<EOF
+$(git rev-parse refs/tags/master) <committer@example.com> refs/tags/master
+$(git rev-parse refs/tags/bogo) <committer@example.com> refs/tags/bogo
 EOF
 
 test_expect_success 'Verify sort with multiple keys' '
