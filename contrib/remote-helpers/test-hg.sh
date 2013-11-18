@@ -83,7 +83,7 @@ check_push () {
 		test $ref_ret -ne 0 && echo "match for '$branch' failed" && break
 	done
 
-	if test $expected_ret -ne $ret -o $ref_ret -ne 0
+	if test $expected_ret -ne $ret || test $ref_ret -ne 0
 	then
 		return 1
 	fi
