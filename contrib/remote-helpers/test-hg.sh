@@ -207,15 +207,15 @@ test_expect_success 'authors' '
 	>../expected &&
 	author_test alpha "" "H G Wells <wells@example.com>" &&
 	author_test beta "test" "test <unknown>" &&
-	author_test beta "test <test@example.com> (comment)" "test <test@example.com>" &&
-	author_test gamma "<test@example.com>" "Unknown <test@example.com>" &&
-	author_test delta "name<test@example.com>" "name <test@example.com>" &&
-	author_test epsilon "name <test@example.com" "name <test@example.com>" &&
-	author_test zeta " test " "test <unknown>" &&
-	author_test eta "test < test@example.com >" "test <test@example.com>" &&
-	author_test theta "test >test@example.com>" "test <test@example.com>" &&
-	author_test iota "test < test <at> example <dot> com>" "test <unknown>" &&
-	author_test kappa "test@example.com" "Unknown <test@example.com>"
+	author_test gamma "test <test@example.com> (comment)" "test <test@example.com>" &&
+	author_test delta "<test@example.com>" "Unknown <test@example.com>" &&
+	author_test epsilon "name<test@example.com>" "name <test@example.com>" &&
+	author_test zeta "name <test@example.com" "name <test@example.com>" &&
+	author_test eta " test " "test <unknown>" &&
+	author_test theta "test < test@example.com >" "test <test@example.com>" &&
+	author_test iota "test >test@example.com>" "test <test@example.com>" &&
+	author_test kappa "test < test <at> example <dot> com>" "test <unknown>" &&
+	author_test lambda "test@example.com" "Unknown <test@example.com>"
 	) &&
 
 	git clone "hg::hgrepo" gitrepo &&
