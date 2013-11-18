@@ -101,6 +101,10 @@ HEAD::
 	'*' if HEAD matches current ref (the checked out branch), ' '
 	otherwise.
 
+color::
+	Change output color.  Followed by `:<colorname>`, where names
+	are described in `color.branch.*`.
+
 In addition to the above, for commit and tag objects, the header
 field names (`tree`, `parent`, `object`, `type`, and `tag`) can
 be used to specify the value in the header field.
