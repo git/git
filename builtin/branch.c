@@ -424,6 +424,7 @@ static void fill_tracking_info(struct strbuf *stat, const char *branch_name,
 	struct branch *branch = branch_get(branch_name);
 	struct strbuf fancy = STRBUF_INIT;
 	int upstream_is_gone = 0;
+	int added_decoration = 1;
 
 	switch (stat_tracking_info(branch, &ours, &theirs)) {
 	case 0:
@@ -451,9 +452,13 @@ static void fill_tracking_info(struct strbuf *stat, const char *branch_name,
 	if (upstream_is_gone) {
 		if (show_upstream_ref)
 			strbuf_addf(stat, _("[%s: gone]"), fancy.buf);
+		else
+			added_decoration = 0;
 	} else if (!ours && !theirs) {
 		if (show_upstream_ref)
 			strbuf_addf(stat, _("[%s]"), fancy.buf);
+		else
+			added_decoration = 0;
 	} else if (!ours) {
 		if (show_upstream_ref)
 			strbuf_addf(stat, _("[%s: behind %d]"), fancy.buf, theirs);
@@ -474,7 +479,8 @@ static void fill_tracking_info(struct strbuf *stat, const char *branch_name,
 				    ours, theirs);
 	}
 	strbuf_release(&fancy);
-	strbuf_addch(stat, ' ');
+	if (added_decoration)
+		strbuf_addch(stat, ' ');
 	free(ref);
 }
 
