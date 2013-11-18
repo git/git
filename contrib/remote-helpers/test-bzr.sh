@@ -379,7 +379,7 @@ test_expect_success 'export utf-8 authors' '
 	git add content &&
 	git commit -m one &&
 	git remote add bzr "bzr::../bzrrepo" &&
-	git push bzr
+	git push bzr master
 	) &&
 
 	(
