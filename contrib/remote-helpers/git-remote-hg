@@ -747,7 +747,7 @@ def parse_commit(parser):
             f = { 'deleted' : True }
         else:
             die('Unknown file command: %s' % line)
-        path = c_style_unescape(path).decode('utf-8')
+        path = c_style_unescape(path)
         files[path] = f
 
     # only export the commits if we are on an internal proxy repo
