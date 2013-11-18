@@ -18,16 +18,13 @@ setdate_and_increment () {
     export GIT_COMMITTER_DATE GIT_AUTHOR_DATE
 }
 
-test_expect_success 'Create sample commit with known timestamp' '
+test_expect_success setup '
 	setdate_and_increment &&
 	echo "Using $datestamp" > one &&
 	git add one &&
 	git commit -m "Initial" &&
 	setdate_and_increment &&
-	git tag -a -m "Tagging at $datestamp" testtag
-'
-
-test_expect_success 'Create upstream config' '
+	git tag -a -m "Tagging at $datestamp" testtag &&
 	git update-ref refs/remotes/origin/master master &&
 	git remote add origin nowhere &&
 	git config branch.master.remote origin &&
