@@ -752,7 +752,6 @@ static void upload_pack(void)
 	struct string_list symref = STRING_LIST_INIT_DUP;
 
 	head_ref_namespaced(find_symref, &symref);
-	for_each_namespaced_ref(find_symref, &symref);
 
 	if (advertise_refs || !stateless_rpc) {
 		reset_timeout();
