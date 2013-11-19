@@ -405,14 +405,14 @@ Any other arguments are passed directly to 'git log'
 	independently of 'git svn' functions.
 
 'create-ignore'::
-	Recursively finds the svn:ignore property on directories and
-	creates matching .gitignore files. The resulting files are staged to
-	be committed, but are not committed. Use -r/--revision to refer to a
-	specific revision.
+	Recursively finds svn:ignore and svn:global-ignores properties on
+	directories and creates matching .gitignore files. The resulting
+	files are staged to be committed, but are not committed.
+	Use -r/--revision to refer to a specific revision.
 
 'show-ignore'::
-	Recursively finds and lists the svn:ignore property on
-	directories.  The output is suitable for appending to
+	Recursively finds and lists svn:ignore and svn:global-ignores
+	properties on directories. The output is suitable for appending to
 	the $GIT_DIR/info/exclude file.
 
 'mkdirs'::

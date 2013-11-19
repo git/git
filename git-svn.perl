@@ -1261,6 +1261,15 @@ sub cmd_rebase {
 	}
 }
 
+sub get_svn_ignore {
+	my ($props, $prop) = @_;
+	my $s = $props->{$prop} or return;
+	$s =~ s/[\r\n]+/\n/g;
+	$s =~ s/^\n+//;
+	chomp $s;
+	return $s;
+}
+
 sub cmd_show_ignore {
 	my ($url, $rev, $uuid, $gs) = working_head_info('HEAD');
 	$gs ||= Git::SVN->new;
@@ -1268,12 +1277,17 @@ sub cmd_show_ignore {
 	$gs->prop_walk($gs->path, $r, sub {
 		my ($gs, $path, $props) = @_;
 		print STDOUT "\n# $path\n";
-		my $s = $props->{'svn:ignore'} or return;
-		$s =~ s/[\r\n]+/\n/g;
-		$s =~ s/^\n+//;
-		chomp $s;
-		$s =~ s#^#$path#gm;
-		print STDOUT "$s\n";
+		my $s = &get_svn_ignore($props, 'svn:ignore');
+		my $s_global = &get_svn_ignore($props, 'svn:global-ignores');
+		$s or $s_global or return;
+		if ($s) {
+			$s =~ s#^#$path#gm;
+			print STDOUT "$s\n";
+		}
+		if ($s_global) {
+			$s_global =~ s#^#$path**/#gm;
+			print STDOUT "$s_global\n";
+		}
 	});
 }
 
@@ -1304,16 +1318,20 @@ sub cmd_create_ignore {
 		# which git won't track
 		mkpath([$path]) unless -d $path;
 		my $ignore = $path . '.gitignore';
-		my $s = $props->{'svn:ignore'} or return;
+		my $s = &get_svn_ignore($props, 'svn:ignore');
+		my $s_global = &get_svn_ignore($props, 'svn:global-ignores');
+		$s or $s_global or return;
 		open(GITIGNORE, '>', $ignore)
 		  or fatal("Failed to open `$ignore' for writing: $!");
-		$s =~ s/[\r\n]+/\n/g;
-		$s =~ s/^\n+//;
-		chomp $s;
-		# Prefix all patterns so that the ignore doesn't apply
-		# to sub-directories.
-		$s =~ s#^#/#gm;
-		print GITIGNORE "$s\n";
+		if ($s) {
+			# Prefix all patterns so that the ignore doesn't apply
+			# to sub-directories.
+			$s =~ s#^#/#gm;
+			print GITIGNORE "$s\n";
+		}
+		if ($s_global) {
+			print GITIGNORE "$s_global\n";
+		}
 		close(GITIGNORE)
 		  or fatal("Failed to close `$ignore': $!");
 		command_noisy('add', '-f', $ignore);
