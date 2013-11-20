@@ -1,0 +1,10 @@
+Git v1.8.4.4 Release Notes
+========================
+
+Fixes since v1.8.4.3
+--------------------
+
+ * The fix in v1.8.4.3 to the pack transfer protocol to propagate
+   the target of symbolic refs broke "git clone/git fetch" from a
+   repository with too many symbolic refs. As a hotfix/workaround,
+   we transfer only the information on HEAD.
