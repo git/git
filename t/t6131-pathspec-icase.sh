@@ -100,4 +100,10 @@ test_expect_success 'match_pathspec_depth matches :(icase)bar with empty prefix'
 	test_cmp expect actual
 '
 
+test_expect_success '"git diff" can take magic :(icase) pathspec' '
+	echo FOO/BAR >expect &&
+	git diff --name-only HEAD^ HEAD -- ":(icase)foo/bar" >actual &&
+	test_cmp expect actual
+'
+
 test_done
