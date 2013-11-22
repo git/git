@@ -29,6 +29,7 @@ annotate_merge () {
 			s/^\s*//;
 			if (/^Will (?:\S+ ){0,2}(fast-track|keep|merge|drop|discard|cook|kick|defer|be re-?rolled)[,. ]/ ||
 			    /^Not urgent/ || /^Not ready/ || /^Waiting for / ||
+			    /^Can wait in / ||
 			    /^Needs? / || /^Expecting / || /^May want to /) {
 				return 1;
 			}
