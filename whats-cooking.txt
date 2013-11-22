@@ -1,18 +1,18 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Nov 2013, #04; Wed, 13)
-X-master-at: 03973056a08d1694cf1c819eb2e8b9557650f70e
-X-next-at: 87216524bc6ef3cbd79ae913726957a0a7b5c236
+Subject: What's cooking in git.git (Nov 2013, #05; Thu, 21)
+X-master-at: 5fd09df3937f54c5cfda4f1087f5d99433cce527
+X-next-at: df10213b17da8480bb44fc5e4ff77001f2265457
 
-What's cooking in git.git (Nov 2013, #04; Wed, 13)
+What's cooking in git.git (Nov 2013, #05; Thu, 21)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-The second release candidate has been tagged.  Hopefully we can have
-an uneventful 1.8.5 final next week.
+Hopefully 1.8.5-rc3 that was tagged on Wednesday will be the final
+release candidate for this cycle.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -20,70 +20,98 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
+[Graduated to "master"]
+
+* nd/liteal-pathspecs (2013-10-28) 1 commit
+  (merged to 'next' on 2013-11-01 at 1a91775)
+ + pathspec: stop --*-pathspecs impact on internal parse_pathspec() uses
+
+ Fixes a regression on 'master' since v1.8.4.
+
+--------------------------------------------------
 [New Topics]
 
-* jc/bundle (2013-11-12) 1 commit
- - bundle: use argv-array
-
- Code clean-up.
-
-
-* jj/log-doc (2013-11-13) 2 commits
- - Documentation/git-log.txt: mark-up fix and minor rephasing
- - Documentation/git-log: update "--log-size" description
-
- Mark-up fixes.
- Needs extra sets of eyeballs.
-
-
-* jj/rev-list-options-doc (2013-11-13) 1 commit
- - Documentation/rev-list-options: fix mark-ups and typos
-
- Mark-up fixes.
- Needs extra sets of eyeballs.
-
-
-* jk/remove-deprecated (2013-11-12) 4 commits
-  (merged to 'next' on 2013-11-13 at c324792)
- + peek-remote: remove deprecated alias of ls-remote
- + lost-found: remove deprecated command
- + tar-tree: remove deprecated command
- + repo-config: remove deprecated alias for "git config"
-
- Will cook in 'next' until a distant future.
-
-
-* mi/typofixes (2013-11-12) 3 commits
-  (merged to 'next' on 2013-11-13 at bb7c2eb)
- + contrib: typofixes
- + Documentation/technical/http-protocol.txt: typofixes
- + typofixes: fix misspelt comments
+* jj/doc-markup-hints-in-coding-guidelines (2013-11-18) 1 commit
+  (merged to 'next' on 2013-11-21 at 9c638a6)
+ + State correct usage of literal examples in man pages in the coding standards
 
  Can wait in 'next'.
 
 
-* rh/remote-hg-bzr-updates (2013-11-12) 9 commits
- - remote-bzr, remote-hg: fix email address regular expression
- - test-hg.sh: help user correlate verbose output with email test
- - test-hg.sh: fix duplicate content strings in author tests
- - test-hg.sh: avoid obsolete 'test' syntax
- - test-hg.sh: eliminate 'local' bashism
- - test-bzr.sh, test-hg.sh: prepare for change to push.default=simple
- - test-bzr.sh, test-hg.sh: allow running from any dir
- - test-lib.sh: convert $TEST_DIRECTORY to an absolute path
- - remote-hg: don't decode UTF-8 paths into Unicode objects
-
- Will merge to 'next'.
+* jn/perl-lib-extra (2013-11-18) 2 commits
+  (merged to 'next' on 2013-11-20 at 8c90afae)
+ + Makefile: add PERLLIB_EXTRA variable that adds to default perl path
+ + Makefile: rebuild perl scripts when perl paths change
 
 
-* tr/config-multivalue-lift-max (2013-11-13) 1 commit
- - config: arbitrary number of matches for --unset and --replace-all
+* jj/doc-markup-gitcli (2013-11-20) 1 commit
+  (merged to 'next' on 2013-11-21 at 5e49fa8)
+ + Documentation/gitcli.txt: fix double quotes
 
- Will merge to 'next'.
+ Can wait in 'next'.
 
+
+* jk/remove-experimental-loose-object-support (2013-11-21) 1 commit
+  (merged to 'next' on 2013-11-21 at d37bab7)
+ + drop support for "experimental" loose objects
+
+ Can wait in 'next'.
+
+
+* jl/commit-v-strip-marker (2013-11-19) 1 commit
+ - commit -v: strip diffs and submodule shortlogs from the commit message
+
+ Perhaps another reroll for core.commentChar coming?
+
+
+* nd/glossary-content-pathspec-markup (2013-11-21) 1 commit
+  (merged to 'next' on 2013-11-21 at 6072636)
+ + glossary-content.txt: fix documentation of "**" patterns
+
+ Can wait in 'next'.
+
+
+* nd/magic-pathspec (2013-11-20) 1 commit
+  (merged to 'next' on 2013-11-21 at f914a30)
+ + diff: restrict pathspec limitations to diff b/f case only
+
+ Can wait in 'next'.
 
 --------------------------------------------------
 [Stalled]
+
+* fc/transport-helper-fixes (2013-11-13) 12 commits
+ - remote-bzr: support the new 'force' option
+ - transport-helper: add support to delete branches
+ - fast-export: add support to delete refs
+ - fast-import: add support to delete refs
+ - transport-helper: add support for old:new refspec
+ - fast-export: add new --refspec option
+ - fast-export: improve argument parsing
+ - test-hg.sh: tests are now expected to pass
+ - transport-helper: check for 'forced update' message
+ - transport-helper: add 'force' to 'export' helpers
+ - transport-helper: don't update refs in dry-run
+ - transport-helper: mismerge fix
+
+ Updates transport-helper, fast-import and fast-export to allow the
+ ref mapping and ref deletion in a way similar to the natively
+ supported transports.
+
+ The option name "--refspec" needs to be rethought. It does not mean
+ what refspec usually means, even though it shares the same syntax
+ with refspec; calling it --refspec only because it shares the same
+ syntax is like calling it --asciistring and does not make sense.
+
+
+* nv/commit-gpgsign-config (2013-11-06) 1 commit
+ - Add the commit.gpgsign option to sign all commits
+
+ Introduce commit.gpgsign configuration variable to force every
+ commit to be GPG signed.
+
+ Needs tests, perhaps?
+
 
 * tb/clone-ssh-with-colon-for-port (2013-11-04) 1 commit
  . git clone: is an URL local or ssh
@@ -127,10 +155,12 @@ of the repositories listed at
  this topic conflicts with.
 
 
-* jk/pack-bitmap (2013-10-30) 20 commits
- - count-objects: recognize .bitmap in garbage-checking
+* jk/pack-bitmap (2013-11-18) 22 commits
+ - compat/mingw.h: Fix the MinGW and msvc builds
  - pack-bitmap: implement optional name_hash cache
+ - t/perf: add tests for pack bitmaps
  - t: add basic bitmap functionality tests
+ - count-objects: recognize .bitmap in garbage-checking
  - repack: consider bitmaps when performing repacks
  - repack: handle optional files created by pack-objects
  - repack: turn exts array into array-of-struct
@@ -152,8 +182,6 @@ of the repositories listed at
  Borrows the bitmap index into packfiles from JGit to speed up
  enumeration of objects involved in a commit range without having to
  fully traverse the history.
-
- Waiting for a reroll.
 
 
 * mf/graph-show-root (2013-10-25) 1 commit
@@ -242,6 +270,76 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* jj/log-doc (2013-11-13) 2 commits
+  (merged to 'next' on 2013-11-21 at cb0ddd2)
+ + Documentation/git-log.txt: mark-up fix and minor rephasing
+ + Documentation/git-log: update "--log-size" description
+
+ Mark-up fixes.
+
+ Can wait in 'next'.
+
+
+* jc/bundle (2013-11-12) 1 commit
+  (merged to 'next' on 2013-11-21 at 535b046)
+ + bundle: use argv-array
+
+ Code clean-up.
+
+ Can wait in 'next'.
+
+
+* jj/rev-list-options-doc (2013-11-18) 2 commits
+  (merged to 'next' on 2013-11-20 at db975de)
+ + Documentation/rev-list-options.txt: fix some grammatical issues and typos
+ + Documentation/rev-list-options.txt: fix mark-up
+
+ Mark-up and grammo fixes.
+
+ Can wait in 'next'.
+
+
+* jk/remove-deprecated (2013-11-12) 4 commits
+  (merged to 'next' on 2013-11-13 at c324792)
+ + peek-remote: remove deprecated alias of ls-remote
+ + lost-found: remove deprecated command
+ + tar-tree: remove deprecated command
+ + repo-config: remove deprecated alias for "git config"
+
+ Will cook in 'next' until a distant future.
+
+
+* mi/typofixes (2013-11-12) 3 commits
+  (merged to 'next' on 2013-11-13 at bb7c2eb)
+ + contrib: typofixes
+ + Documentation/technical/http-protocol.txt: typofixes
+ + typofixes: fix misspelt comments
+
+ Can wait in 'next'.
+
+
+* rh/remote-hg-bzr-updates (2013-11-18) 9 commits
+  (merged to 'next' on 2013-11-20 at a36f3c4)
+ + remote-bzr, remote-hg: fix email address regular expression
+ + test-hg.sh: help user correlate verbose output with email test
+ + test-hg.sh: fix duplicate content strings in author tests
+ + test-hg.sh: avoid obsolete 'test' syntax
+ + test-hg.sh: eliminate 'local' bashism
+ + test-bzr.sh, test-hg.sh: prepare for change to push.default=simple
+ + test-bzr.sh, test-hg.sh: allow running from any dir
+ + test-lib.sh: convert $TEST_DIRECTORY to an absolute path
+ + remote-hg: don't decode UTF-8 paths into Unicode objects
+
+ Can wait in 'next'.
+
+
+* tr/config-multivalue-lift-max (2013-11-13) 1 commit
+  (merged to 'next' on 2013-11-20 at d18aac9)
+ + config: arbitrary number of matches for --unset and --replace-all
+
+ Can wait in 'next'.
+
+
 * kb/doc-exclude-directory-semantics (2013-11-07) 1 commit
   (merged to 'next' on 2013-11-13 at 06e5645)
  + gitignore.txt: clarify recursive nature of excluded directories
@@ -308,15 +406,6 @@ of the repositories listed at
  Can wait in 'next'.
 
 
-* nv/commit-gpgsign-config (2013-11-06) 1 commit
- - Add the commit.gpgsign option to sign all commits
-
- Introduce commit.gpgsign configuration variable to force every
- commit to be GPG signed.
-
- Needs tests, perhaps?
-
-
 * sb/sha1-loose-object-info-check-existence (2013-11-06) 1 commit
   (merged to 'next' on 2013-11-06 at 1ea5b18)
  + sha1_loose_object_info(): do not return success on missing object
@@ -328,8 +417,10 @@ of the repositories listed at
 
 
 * gj/push-more-verbose-advice (2013-11-13) 2 commits
- - push: switch default from "matching" to "simple"
- - push: enhance unspecified push default warning
+  (merged to 'next' on 2013-11-21 at df10213)
+ + push: switch default from "matching" to "simple"
+  (merged to 'next' on 2013-11-21 at 4ee3d4a)
+ + push: enhance unspecified push default warning
 
  Explain 'simple' and 'matching' in "git push" advice message; the
  topmost patch is a rebase of jc/push-2.0-default-to-simple on top
@@ -341,15 +432,16 @@ of the repositories listed at
  cycle opens; the other to replace jc/push-2.0-default-to-simple.
 
 
-* rr/for-each-ref-decoration (2013-11-13) 5 commits
- - fixup! for-each-ref: introduce %(color:...) for color
- - for-each-ref: introduce %(color:...) for color
- - fixup! for-each-ref: introduce %(upstream:track[short])
- - for-each-ref: introduce %(upstream:track[short])
- - for-each-ref: introduce %(HEAD) asterisk marker
+* rr/for-each-ref-decoration (2013-11-19) 6 commits
+  (merged to 'next' on 2013-11-21 at ee7b0ed)
+ + for-each-ref: avoid color leakage
+ + for-each-ref: introduce %(color:...) for color
+ + for-each-ref: introduce %(upstream:track[short])
+ + for-each-ref: introduce %(HEAD) asterisk marker
+ + t6300 (for-each-ref): don't hardcode SHA-1 hexes
+ + t6300 (for-each-ref): clearly demarcate setup
 
- Needs fix-ups, aut-reset, --color=auto support, and tests.
- but it is a good start.
+ Can wait in 'next'.
 
 
 * jk/two-way-merge-corner-case-fix (2013-11-04) 3 commits
@@ -387,35 +479,9 @@ of the repositories listed at
  Can wait in 'next'.
 
 
-* fc/transport-helper-fixes (2013-11-13) 12 commits
- - remote-bzr: support the new 'force' option
- - transport-helper: add support to delete branches
- - fast-export: add support to delete refs
- - fast-import: add support to delete refs
- - transport-helper: add support for old:new refspec
- - fast-export: add new --refspec option
- - fast-export: improve argument parsing
- - test-hg.sh: tests are now expected to pass
- - transport-helper: check for 'forced update' message
- - transport-helper: add 'force' to 'export' helpers
- - transport-helper: don't update refs in dry-run
- - transport-helper: mismerge fix
-
- Updates transport-helper, fast-import and fast-export to allow the
- ref mapping and ref deletion in a way similar to the natively
- supported transports.
-
-
 * jh/loose-object-dirs-creation-race (2013-10-28) 1 commit
   (merged to 'next' on 2013-11-01 at 3169b0f)
  + sha1_file.c:create_tmpfile(): Fix race when creating loose object dirs
-
- Will cook in 'next'.
-
-
-* nd/liteal-pathspecs (2013-10-28) 1 commit
-  (merged to 'next' on 2013-11-01 at 1a91775)
- + pathspec: stop --*-pathspecs impact on internal parse_pathspec() uses
 
  Will cook in 'next'.
 
@@ -432,6 +498,8 @@ of the repositories listed at
  commit needs to be handled with new code that does not exist yet,
  and lifting the "this code handles only commits" without adding
  such code does not solve anything.
+
+ Will discard.
 
 
 * tr/merge-recursive-index-only (2013-10-28) 3 commits
@@ -556,9 +624,7 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* kb/fast-hashmap (2013-11-07) 16 commits
- - fixup! builtin/update-index.c: cleanup update_one
- - fixup! read-cache.c: fix memory leaks caused by removed cache entries
+* kb/fast-hashmap (2013-11-18) 14 commits
  - read-cache.c: fix memory leaks caused by removed cache entries
  - builtin/update-index.c: cleanup update_one
  - fix 'git update-index --verbose --again' output
@@ -580,10 +646,6 @@ of the repositories listed at
  The preparatory clean-up to submodule from Jens is at the bottom. I
  also squashed in a fix-up by Karsten found at $gmane/236468 (please
  double-check the result).
-
- This is a reroll one after the valgrind breakage report ($gmane/236869).
-
- Waiting for a reroll.
 
 
 * jn/add-2.0-u-A-sans-pathspec (2013-04-26) 1 commit
