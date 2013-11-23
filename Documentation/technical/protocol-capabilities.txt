@@ -72,14 +72,29 @@ interleaved with S-R-Q.
 thin-pack
 ---------
 
-This capability means that the server can send a 'thin' pack, a pack
-which does not contain base objects; if those base objects are available
-on client side. Client requests 'thin-pack' capability when it
-understands how to "thicken" it by adding required delta bases making
-it self-contained.
+A thin pack is one with deltas which reference base objects not
+contained within the pack (but are known to exist at the receiving
+end). This can reduce the network traffic significantly, but it
+requires the receiving end to know how to "thicken" these packs by
+adding the missing bases to the pack.
 
-Client MUST NOT request 'thin-pack' capability if it cannot turn a thin
-pack into a self-contained pack.
+The upload-pack server advertises 'thin-pack' when it can generate
+and send a thin pack. A client requests the 'thin-pack' capability
+when it understands how to "thicken" it, notifying the server that
+it can receive such a pack. A client MUST NOT request the
+'thin-pack' capability if it cannot turn a thin pack into a
+self-contained pack.
+
+Receive-pack, on the other hand, is assumed by default to be able to
+handle thin packs, but can ask the client not to use the feature by
+advertising the 'no-thin' capability. A client MUST NOT send a thin
+pack if the server advertises the 'no-thin' capability.
+
+The reasons for this asymmetry are historical. The receive-pack
+program did not exist until after the invention of thin packs, so
+historically the reference implementation of receive-pack always
+understood thin packs. Adding 'no-thin' later allowed receive-pack
+to disable the feature in a backwards-compatible manner.
 
 
 side-band, side-band-64k
