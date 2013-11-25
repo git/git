@@ -1,9 +1,6 @@
-#!/bin/sh
-#
-# This is included in commands that either have to be run from the toplevel
-# of the repository, or with GIT_DIR environment variable properly.
-# If the GIT_DIR does not look like the right correct git-repository,
-# it dies.
+# This shell scriplet is meant to be included by other shell scripts
+# to set up some variables pointing at the normal git directories and
+# a few helper shell functions.
 
 # Having this variable in your environment would break scripts because
 # you would cause "cd" to be taken to unexpected places.  If you

@@ -1,5 +1,3 @@
-#!tcsh
-#
 # tcsh completion support for core Git.
 #
 # Copyright (C) 2012 Marc Khouzam <marc.khouzam@gmail.com>
