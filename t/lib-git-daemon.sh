@@ -1,4 +1,20 @@
-#!/bin/sh
+# Shell library to run git-daemon in tests.  Ends the test early if
+# GIT_TEST_GIT_DAEMON is not set.
+#
+# Usage:
+#
+#	. ./test-lib.sh
+#	. "$TEST_DIRECTORY"/lib-git-daemon.sh
+#	start_git_daemon
+#
+#	test_expect_success '...' '
+#		...
+#	'
+#
+#	test_expect_success ...
+#
+#	stop_git_daemon
+#	test_done
 
 if test -z "$GIT_TEST_GIT_DAEMON"
 then

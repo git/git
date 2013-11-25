@@ -1,4 +1,4 @@
-#!/bin/sh
+# Shell library sourced instead of ./test-lib.sh by cvsimport tests.
 
 . ./test-lib.sh
 

@@ -1,4 +1,5 @@
-#!/bin/sh
+# Initialization and helpers for Gitweb tests, which source this
+# shell library instead of test-lib.sh.
 #
 # Copyright (c) 2007 Jakub Narebski
 #

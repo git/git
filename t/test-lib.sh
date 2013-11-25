@@ -1,4 +1,4 @@
-#!/bin/sh
+# Test framework for git.  See t/README for usage.
 #
 # Copyright (c) 2005 Junio C Hamano
 #

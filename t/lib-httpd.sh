@@ -1,4 +1,31 @@
-#!/bin/sh
+# Shell library to run an HTTP server for use in tests.
+# Ends the test early if httpd tests should not be run,
+# for example because the user has not enabled them.
+#
+# Usage:
+#
+#	. ./test-lib.sh
+#	. "$TEST_DIRECTORY"/lib-httpd.sh
+#	start_httpd
+#
+#	test_expect_success '...' '
+#		...
+#	'
+#
+#	test_expect_success ...
+#
+#	stop_httpd
+#	test_done
+#
+# Can be configured using the following variables.
+#
+#    GIT_TEST_HTTPD              enable HTTPD tests
+#    LIB_HTTPD_PATH              web server path
+#    LIB_HTTPD_MODULE_PATH       web server modules path
+#    LIB_HTTPD_PORT              listening port
+#    LIB_HTTPD_DAV               enable DAV
+#    LIB_HTTPD_SVN               enable SVN
+#    LIB_HTTPD_SSL               enable SSL
 #
 # Copyright (c) 2008 Clemens Buchacher <drizzd@aon.at>
 #
