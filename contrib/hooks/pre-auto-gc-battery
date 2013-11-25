@@ -13,7 +13,6 @@
 # For example, if the hook is stored in
 # /usr/share/git-core/contrib/hooks/pre-auto-gc-battery:
 #
-# chmod a+x pre-auto-gc-battery
 # cd /path/to/your/repository.git
 # ln -sf /usr/share/git-core/contrib/hooks/pre-auto-gc-battery \
 #	hooks/pre-auto-gc
