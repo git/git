@@ -22,8 +22,17 @@
  *
  *   Initializes the indegree slab that associates an array of integers
  *   to each commit. 'stride' specifies how big each array is.  The slab
- *   that id initialied by the variant without "_with_stride" associates
+ *   that is initialized by the variant without "_with_stride" associates
  *   each commit with an array of one integer.
+ *
+ * - void clear_indegree(struct indegree *);
+ *
+ *   Empties the slab.  The slab can be reused with the same stride
+ *   without calling init_indegree() again or can be reconfigured to a
+ *   different stride by calling init_indegree_with_stride().
+ *
+ *   Call this function before the slab falls out of scope to avoid
+ *   leaking memory.
  */
 
 /* allocate ~512kB at once, allowing for malloc overhead */
