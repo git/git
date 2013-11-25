@@ -2,7 +2,6 @@
 
 test_description='merge-recursive: handle file mode'
 . ./test-lib.sh
-. "$TEST_DIRECTORY"/lib-prereq-FILEMODE.sh
 
 test_expect_success 'mode change in one branch: keep changed version' '
 	: >file1 &&

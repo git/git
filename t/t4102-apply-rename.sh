@@ -7,7 +7,6 @@ test_description='git apply handling copy/rename patch.
 
 '
 . ./test-lib.sh
-. "$TEST_DIRECTORY"/lib-prereq-FILEMODE.sh
 
 # setup
 

@@ -5,7 +5,6 @@
 test_description='Test export of commits to CVS'
 
 . ./test-lib.sh
-. "$TEST_DIRECTORY"/lib-prereq-FILEMODE.sh
 
 if ! test_have_prereq PERL; then
 	skip_all='skipping git cvsexportcommit tests, perl not available'

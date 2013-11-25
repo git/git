@@ -6,7 +6,6 @@
 test_description='git apply -p handling.'
 
 . ./test-lib.sh
-. "$TEST_DIRECTORY"/lib-prereq-FILEMODE.sh
 
 test_expect_success setup '
 	mkdir sub &&

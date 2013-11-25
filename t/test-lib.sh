@@ -830,6 +830,10 @@ test_lazy_prereq SYMLINKS '
 	ln -s x y && test -h y
 '
 
+test_lazy_prereq FILEMODE '
+	test "$(git config --bool core.filemode)" = true
+'
+
 test_lazy_prereq CASE_INSENSITIVE_FS '
 	echo good >CamelCase &&
 	echo bad >camelcase &&
