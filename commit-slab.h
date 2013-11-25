@@ -40,6 +40,8 @@
 #define COMMIT_SLAB_SIZE (512*1024-32)
 #endif
 
+#define MAYBE_UNUSED __attribute__((__unused__))
+
 #define define_commit_slab(slabname, elemtype) 				\
 									\
 struct slabname {							\
@@ -50,8 +52,8 @@ struct slabname {							\
 };									\
 static int stat_ ##slabname## realloc;					\
 									\
-static void init_ ##slabname## _with_stride(struct slabname *s,		\
-					    unsigned stride)		\
+static MAYBE_UNUSED void init_ ##slabname## _with_stride(struct slabname *s, \
+						   unsigned stride)	\
 {									\
 	unsigned int elem_size;						\
 	if (!stride)							\
@@ -63,12 +65,12 @@ static void init_ ##slabname## _with_stride(struct slabname *s,		\
 	s->slab = NULL;							\
 }									\
 									\
-static void init_ ##slabname(struct slabname *s)			\
+static MAYBE_UNUSED void init_ ##slabname(struct slabname *s)		\
 {									\
 	init_ ##slabname## _with_stride(s, 1);				\
 }									\
 									\
-static void clear_ ##slabname(struct slabname *s)			\
+static MAYBE_UNUSED void clear_ ##slabname(struct slabname *s)		\
 {									\
 	int i;								\
 	for (i = 0; i < s->slab_count; i++)				\
@@ -78,8 +80,8 @@ static void clear_ ##slabname(struct slabname *s)			\
 	s->slab = NULL;							\
 }									\
 									\
-static elemtype *slabname## _at(struct slabname *s,			\
-				const struct commit *c)			\
+static MAYBE_UNUSED elemtype *slabname## _at(struct slabname *s,	\
+				       const struct commit *c)		\
 {									\
 	int nth_slab, nth_slot;						\
 									\
@@ -102,5 +104,17 @@ static elemtype *slabname## _at(struct slabname *s,			\
 }									\
 									\
 static int stat_ ##slabname## realloc
+
+/*
+ * Note that this seemingly redundant second declaration is required
+ * to allow a terminating semicolon, which makes instantiations look
+ * like function declarations.  I.e., the expansion of
+ *
+ *    define_commit_slab(indegree, int);
+ *
+ * ends in 'static int stat_indegreerealloc;'.  This would otherwise
+ * be a syntax error according (at least) to ISO C.  It's hard to
+ * catch because GCC silently parses it by default.
+ */
 
 #endif /* COMMIT_SLAB_H */
