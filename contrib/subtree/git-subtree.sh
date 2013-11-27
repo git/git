@@ -9,10 +9,10 @@ if [ $# -eq 0 ]; then
 fi
 OPTS_SPEC="\
 git subtree add   --prefix=<prefix> <commit>
-git subtree add   --prefix=<prefix> <repository> <commit>
+git subtree add   --prefix=<prefix> <repository> <ref>
 git subtree merge --prefix=<prefix> <commit>
-git subtree pull  --prefix=<prefix> <repository> <refspec...>
-git subtree push  --prefix=<prefix> <repository> <refspec...>
+git subtree pull  --prefix=<prefix> <repository> <ref>
+git subtree push  --prefix=<prefix> <repository> <ref>
 git subtree split --prefix=<prefix> <commit...>
 --
 h,help        show the help
@@ -489,6 +489,12 @@ ensure_clean()
 	fi
 }
 
+ensure_valid_ref_format()
+{
+	git check-ref-format "refs/heads/$1" ||
+	    die "'$1' does not look like a ref"
+}
+
 cmd_add()
 {
 	if [ -e "$dir" ]; then
@@ -508,8 +514,7 @@ cmd_add()
 	    # specified directory.  Allowing a refspec might be
 	    # misleading because we won't do anything with any other
 	    # branches fetched via the refspec.
-	    git rev-parse -q --verify "$2^{commit}" >/dev/null ||
-	    die "'$2' does not refer to a commit"
+	    ensure_valid_ref_format "$2"
 
 	    "cmd_add_repository" "$@"
 	else
@@ -699,7 +704,11 @@ cmd_merge()
 
 cmd_pull()
 {
+	if [ $# -ne 2 ]; then
+	    die "You must provide <repository> <ref>"
+	fi
 	ensure_clean
+	ensure_valid_ref_format "$2"
 	git fetch "$@" || exit $?
 	revs=FETCH_HEAD
 	set -- $revs
@@ -709,8 +718,9 @@ cmd_pull()
 cmd_push()
 {
 	if [ $# -ne 2 ]; then
-	    die "You must provide <repository> <refspec>"
+	    die "You must provide <repository> <ref>"
 	fi
+	ensure_valid_ref_format "$2"
 	if [ -e "$dir" ]; then
 	    repository=$1
 	    refspec=$2
