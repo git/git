@@ -362,6 +362,14 @@ do
 		test_clone_url [::1]:$repo ::1 $repo
 	'
 done
+#home directory
+test_expect_success "clone host:/~repo" '
+	test_clone_url host:/~repo host "~repo"
+'
+
+test_expect_success "clone [::1]:/~repo" '
+	test_clone_url [::1]:/~repo ::1 "~repo"
+'
 
 # Corner cases
 for url in foo/bar:baz [foo]bar/baz:qux [foo/bar]:baz

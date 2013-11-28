@@ -232,14 +232,24 @@ int server_supports(const char *feature)
 
 enum protocol {
 	PROTO_LOCAL = 1,
+	PROTO_FILE,
 	PROTO_SSH,
 	PROTO_GIT
 };
+
+int url_is_local_not_ssh(const char *url)
+{
+	const char *colon = strchr(url, ':');
+	const char *slash = strchr(url, '/');
+	return !colon || (slash && slash < colon) ||
+		has_dos_drive_prefix(url);
+}
 
 static const char *prot_name(enum protocol protocol)
 {
 	switch (protocol) {
 		case PROTO_LOCAL:
+		case PROTO_FILE:
 			return "file";
 		case PROTO_SSH:
 			return "ssh";
@@ -261,7 +271,7 @@ static enum protocol get_protocol(const char *name)
 	if (!strcmp(name, "ssh+git"))
 		return PROTO_SSH;
 	if (!strcmp(name, "file"))
-		return PROTO_LOCAL;
+		return PROTO_FILE;
 	die("I don't handle protocol '%s'", name);
 }
 
@@ -564,9 +574,8 @@ static enum protocol parse_connect_url(const char *url_orig, char **ret_host,
 	char *url;
 	char *host, *path;
 	char *end;
-	int separator;
+	int separator = '/';
 	enum protocol protocol = PROTO_LOCAL;
-	int free_path = 0;
 
 	if (is_url(url_orig))
 		url = url_decode(url_orig);
@@ -578,10 +587,12 @@ static enum protocol parse_connect_url(const char *url_orig, char **ret_host,
 		*host = '\0';
 		protocol = get_protocol(url);
 		host += 3;
-		separator = '/';
 	} else {
 		host = url;
-		separator = ':';
+		if (!url_is_local_not_ssh(url)) {
+			protocol = PROTO_SSH;
+			separator = ':';
+		}
 	}
 
 	/*
@@ -597,17 +608,12 @@ static enum protocol parse_connect_url(const char *url_orig, char **ret_host,
 	} else
 		end = host;
 
-	path = strchr(end, separator);
-	if (path && !has_dos_drive_prefix(end)) {
-		if (separator == ':') {
-			if (host != url || path < strchrnul(host, '/')) {
-				protocol = PROTO_SSH;
-				*path++ = '\0';
-			} else /* '/' in the host part, assume local path */
-				path = end;
-		}
-	} else
+	if (protocol == PROTO_LOCAL)
 		path = end;
+	else if (protocol == PROTO_FILE && has_dos_drive_prefix(end))
+		path = end; /* "file://$(pwd)" may be "file://C:/projects/repo" */
+	else
+		path = strchr(end, separator);
 
 	if (!path || !*path)
 		die("No path specified. See 'man git-pull' for valid url syntax");
@@ -616,23 +622,20 @@ static enum protocol parse_connect_url(const char *url_orig, char **ret_host,
 	 * null-terminate hostname and point path to ~ for URL's like this:
 	 *    ssh://host.xz/~user/repo
 	 */
-	if (protocol != PROTO_LOCAL) {
-		char *ptr = path;
+
+	end = path; /* Need to \0 terminate host here */
+	if (separator == ':')
+		path++; /* path starts after ':' */
+	if (protocol == PROTO_GIT || protocol == PROTO_SSH) {
 		if (path[1] == '~')
 			path++;
-		else {
-			path = xstrdup(ptr);
-			free_path = 1;
-		}
-
-		*ptr = '\0';
 	}
 
+	path = xstrdup(path);
+	*end = '\0';
+
 	*ret_host = xstrdup(host);
-	if (free_path)
-		*ret_path = path;
-	else
-		*ret_path = xstrdup(path);
+	*ret_path = path;
 	free(url);
 	return protocol;
 }

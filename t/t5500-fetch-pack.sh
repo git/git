@@ -612,4 +612,11 @@ do
 	done
 done
 
+test_expect_success MINGW 'fetch-pack --diag-url file://c:/repo' '
+	check_prot_path file://c:/repo file c:/repo
+'
+test_expect_success MINGW 'fetch-pack --diag-url c:repo' '
+	check_prot_path c:repo file c:repo
+'
+
 test_done

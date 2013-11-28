@@ -9,5 +9,6 @@ extern int git_connection_is_socket(struct child_process *conn);
 extern int server_supports(const char *feature);
 extern int parse_feature_request(const char *features, const char *feature);
 extern const char *server_feature_value(const char *feature, int *len_ret);
+extern int url_is_local_not_ssh(const char *url);
 
 #endif
