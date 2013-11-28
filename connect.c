@@ -236,6 +236,20 @@ enum protocol {
 	PROTO_GIT
 };
 
+static const char *prot_name(enum protocol protocol)
+{
+	switch (protocol) {
+		case PROTO_LOCAL:
+			return "file";
+		case PROTO_SSH:
+			return "ssh";
+		case PROTO_GIT:
+			return "git";
+		default:
+			return "unkown protocol";
+	}
+}
+
 static enum protocol get_protocol(const char *name)
 {
 	if (!strcmp(name, "ssh"))
@@ -670,6 +684,20 @@ struct child_process *git_connect(int fd[2], const char *url,
 	signal(SIGCHLD, SIG_DFL);
 
 	protocol = parse_connect_url(url, &host, &port, &path);
+	if (flags & CONNECT_DIAG_URL) {
+		printf("Diag: url=%s\n", url ? url : "NULL");
+		printf("Diag: protocol=%s\n", prot_name(protocol));
+		printf("Diag: hostandport=%s", host ? host : "NULL");
+		if (port)
+			printf(":%s\n", port);
+		else
+			printf("\n");
+		printf("Diag: path=%s\n", path ? path : "NULL");
+		free(host);
+		free(port);
+		free(path);
+		return NULL;
+	}
 
 	if (protocol == PROTO_GIT) {
 		/* These underlying connection commands die() if they
