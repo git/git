@@ -531,5 +531,64 @@ test_expect_success 'shallow fetch with tags does not break the repository' '
 		git fsck
 	)
 '
+check_prot_path () {
+	cat >expected <<-EOF &&
+	Diag: url=$1
+	Diag: protocol=$2
+	Diag: path=$3
+	EOF
+	git fetch-pack --diag-url "$1" | grep -v hostandport= >actual &&
+	test_cmp expected actual
+}
+
+check_prot_host_path () {
+	cat >expected <<-EOF &&
+	Diag: url=$1
+	Diag: protocol=$2
+	Diag: hostandport=$3
+	Diag: path=$4
+	EOF
+	git fetch-pack --diag-url "$1" >actual &&
+	test_cmp expected actual
+}
+
+for r in repo re:po re/po
+do
+	# git or ssh with scheme
+	for p in "ssh+git" "git+ssh" git ssh
+	do
+		for h in host host:12 [::1] [::1]:23
+		do
+			case "$p" in
+			*ssh*)
+				hh=$(echo $h | tr -d "[]")
+				pp=ssh
+				;;
+			*)
+				hh=$h
+				pp=$p
+			;;
+			esac
+			test_expect_success "fetch-pack --diag-url $p://$h/$r" '
+				check_prot_host_path $p://$h/$r $pp "$hh" "/$r"
+			'
+			# "/~" -> "~" conversion
+			test_expect_success "fetch-pack --diag-url $p://$h/~$r" '
+				check_prot_host_path $p://$h/~$r $pp "$hh" "~$r"
+			'
+		done
+	done
+	# file with scheme
+	for p in file
+	do
+		test_expect_success "fetch-pack --diag-url $p://$h/$r" '
+			check_prot_path $p://$h/$r $p "/$r"
+		'
+		# No "/~" -> "~" conversion for file
+		test_expect_success "fetch-pack --diag-url $p://$h/~$r" '
+			check_prot_path $p://$h/~$r $p "/~$r"
+		'
+	done
+done
 
 test_done
