@@ -527,8 +527,6 @@ static struct child_process *git_proxy_connect(int fd[2], char *host)
 	return proxy;
 }
 
-#define MAX_CMD_LEN 1024
-
 static char *get_port(char *host)
 {
 	char *end;
@@ -570,7 +568,7 @@ struct child_process *git_connect(int fd[2], const char *url_orig,
 	int free_path = 0;
 	char *port = NULL;
 	const char **arg;
-	struct strbuf cmd;
+	struct strbuf cmd = STRBUF_INIT;
 
 	/* Without this we cannot rely on waitpid() to tell
 	 * what happened to our children.
@@ -676,12 +674,9 @@ struct child_process *git_connect(int fd[2], const char *url_orig,
 
 	conn = xcalloc(1, sizeof(*conn));
 
-	strbuf_init(&cmd, MAX_CMD_LEN);
 	strbuf_addstr(&cmd, prog);
 	strbuf_addch(&cmd, ' ');
 	sq_quote_buf(&cmd, path);
-	if (cmd.len >= MAX_CMD_LEN)
-		die("command line too long");
 
 	conn->in = conn->out = -1;
 	conn->argv = arg = xcalloc(7, sizeof(*arg));
