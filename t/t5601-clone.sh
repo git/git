@@ -364,15 +364,7 @@ do
 done
 
 # Corner cases
-# failing
-for url in [foo]bar/baz:qux [foo/bar]:baz
-do
-	test_expect_failure "clone $url is not ssh" '
-		test_clone_url $url none
-	'
-done
-
-for url in foo/bar:baz
+for url in foo/bar:baz [foo]bar/baz:qux [foo/bar]:baz
 do
 	test_expect_success "clone $url is not ssh" '
 		test_clone_url $url none

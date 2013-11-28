@@ -561,20 +561,18 @@ do
 		do
 			case "$p" in
 			*ssh*)
-				hh=$(echo $h | tr -d "[]")
 				pp=ssh
 				;;
 			*)
-				hh=$h
 				pp=$p
 			;;
 			esac
 			test_expect_success "fetch-pack --diag-url $p://$h/$r" '
-				check_prot_host_path $p://$h/$r $pp "$hh" "/$r"
+				check_prot_host_path $p://$h/$r $pp "$h" "/$r"
 			'
 			# "/~" -> "~" conversion
 			test_expect_success "fetch-pack --diag-url $p://$h/~$r" '
-				check_prot_host_path $p://$h/~$r $pp "$hh" "~$r"
+				check_prot_host_path $p://$h/~$r $pp "$h" "~$r"
 			'
 		done
 	done
@@ -604,13 +602,12 @@ do
 	p=ssh
 	for h in host [::1]
 	do
-		hh=$(echo $h | tr -d "[]")
 		test_expect_success "fetch-pack --diag-url $h:$r" '
 			check_prot_path $h:$r $p "$r"
 		'
 		# Do "/~" -> "~" conversion
 		test_expect_success "fetch-pack --diag-url $h:/~$r" '
-			check_prot_host_path $h:/~$r $p "$hh" "~$r"
+			check_prot_host_path $h:/~$r $p "$h" "~$r"
 		'
 	done
 done

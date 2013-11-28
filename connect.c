@@ -541,16 +541,13 @@ static struct child_process *git_proxy_connect(int fd[2], char *host)
 	return proxy;
 }
 
-static char *get_port(char *host)
+static const char *get_port_numeric(const char *p)
 {
 	char *end;
-	char *p = strchr(host, ':');
-
 	if (p) {
 		long port = strtol(p + 1, &end, 10);
 		if (end != p + 1 && *end == '\0' && 0 <= port && port < 65536) {
-			*p = '\0';
-			return p+1;
+			return p;
 		}
 	}
 
@@ -562,7 +559,7 @@ static char *get_port(char *host)
  * The caller must free() the returned strings.
  */
 static enum protocol parse_connect_url(const char *url_orig, char **ret_host,
-				       char **ret_port, char **ret_path)
+				       char **ret_path)
 {
 	char *url;
 	char *host, *path;
@@ -570,7 +567,6 @@ static enum protocol parse_connect_url(const char *url_orig, char **ret_host,
 	int separator;
 	enum protocol protocol = PROTO_LOCAL;
 	int free_path = 0;
-	char *port = NULL;
 
 	if (is_url(url_orig))
 		url = url_decode(url_orig);
@@ -589,16 +585,12 @@ static enum protocol parse_connect_url(const char *url_orig, char **ret_host,
 	}
 
 	/*
-	 * Don't do destructive transforms with git:// as that
-	 * protocol code does '[]' unwrapping of its own.
+	 * Don't do destructive transforms as protocol code does
+	 * '[]' unwrapping in get_host_and_port()
 	 */
 	if (host[0] == '[') {
 		end = strchr(host + 1, ']');
 		if (end) {
-			if (protocol != PROTO_GIT) {
-				*end = 0;
-				host++;
-			}
 			end++;
 		} else
 			end = host;
@@ -636,17 +628,7 @@ static enum protocol parse_connect_url(const char *url_orig, char **ret_host,
 		*ptr = '\0';
 	}
 
-	/*
-	 * Add support for ssh port: ssh://host.xy:<port>/...
-	 */
-	if (protocol == PROTO_SSH && separator == '/')
-		port = get_port(end);
-
 	*ret_host = xstrdup(host);
-	if (port)
-		*ret_port = xstrdup(port);
-	else
-		*ret_port = NULL;
 	if (free_path)
 		*ret_path = path;
 	else
@@ -674,7 +656,6 @@ struct child_process *git_connect(int fd[2], const char *url,
 	char *host, *path;
 	struct child_process *conn = &no_fork;
 	enum protocol protocol;
-	char *port;
 	const char **arg;
 	struct strbuf cmd = STRBUF_INIT;
 
@@ -683,18 +664,13 @@ struct child_process *git_connect(int fd[2], const char *url,
 	 */
 	signal(SIGCHLD, SIG_DFL);
 
-	protocol = parse_connect_url(url, &host, &port, &path);
+	protocol = parse_connect_url(url, &host, &path);
 	if (flags & CONNECT_DIAG_URL) {
 		printf("Diag: url=%s\n", url ? url : "NULL");
 		printf("Diag: protocol=%s\n", prot_name(protocol));
-		printf("Diag: hostandport=%s", host ? host : "NULL");
-		if (port)
-			printf(":%s\n", port);
-		else
-			printf("\n");
+		printf("Diag: hostandport=%s\n", host ? host : "NULL");
 		printf("Diag: path=%s\n", path ? path : "NULL");
 		free(host);
-		free(port);
 		free(path);
 		return NULL;
 	}
@@ -721,7 +697,6 @@ struct child_process *git_connect(int fd[2], const char *url,
 			     target_host, 0);
 		free(target_host);
 		free(host);
-		free(port);
 		free(path);
 		return conn;
 	}
@@ -737,6 +712,11 @@ struct child_process *git_connect(int fd[2], const char *url,
 	if (protocol == PROTO_SSH) {
 		const char *ssh = getenv("GIT_SSH");
 		int putty = ssh && strcasestr(ssh, "plink");
+		char *ssh_host = host; /* keep host for the free() below */
+		const char *port = NULL;
+		get_host_and_port(&ssh_host, &port);
+		port = get_port_numeric(port);
+
 		if (!ssh) ssh = "ssh";
 
 		*arg++ = ssh;
@@ -747,7 +727,7 @@ struct child_process *git_connect(int fd[2], const char *url,
 			*arg++ = putty ? "-P" : "-p";
 			*arg++ = port;
 		}
-		*arg++ = host;
+		*arg++ = ssh_host;
 	}
 	else {
 		/* remove repo-local variables from the environment */
@@ -764,7 +744,6 @@ struct child_process *git_connect(int fd[2], const char *url,
 	fd[1] = conn->in;  /* write to child's stdin */
 	strbuf_release(&cmd);
 	free(host);
-	free(port);
 	free(path);
 	return conn;
 }
