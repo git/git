@@ -567,7 +567,7 @@ static enum protocol parse_connect_url(const char *url_orig, char **ret_host,
 	char *url;
 	char *host, *path;
 	char *end;
-	int c;
+	int separator;
 	enum protocol protocol = PROTO_LOCAL;
 	int free_path = 0;
 	char *port = NULL;
@@ -582,10 +582,10 @@ static enum protocol parse_connect_url(const char *url_orig, char **ret_host,
 		*host = '\0';
 		protocol = get_protocol(url);
 		host += 3;
-		c = '/';
+		separator = '/';
 	} else {
 		host = url;
-		c = ':';
+		separator = ':';
 	}
 
 	/*
@@ -605,9 +605,9 @@ static enum protocol parse_connect_url(const char *url_orig, char **ret_host,
 	} else
 		end = host;
 
-	path = strchr(end, c);
+	path = strchr(end, separator);
 	if (path && !has_dos_drive_prefix(end)) {
-		if (c == ':') {
+		if (separator == ':') {
 			if (host != url || path < strchrnul(host, '/')) {
 				protocol = PROTO_SSH;
 				*path++ = '\0';
@@ -624,7 +624,7 @@ static enum protocol parse_connect_url(const char *url_orig, char **ret_host,
 	 * null-terminate hostname and point path to ~ for URL's like this:
 	 *    ssh://host.xz/~user/repo
 	 */
-	if (protocol != PROTO_LOCAL && host != url) {
+	if (protocol != PROTO_LOCAL) {
 		char *ptr = path;
 		if (path[1] == '~')
 			path++;
@@ -639,7 +639,7 @@ static enum protocol parse_connect_url(const char *url_orig, char **ret_host,
 	/*
 	 * Add support for ssh port: ssh://host.xy:<port>/...
 	 */
-	if (protocol == PROTO_SSH && host != url)
+	if (protocol == PROTO_SSH && separator == '/')
 		port = get_port(end);
 
 	*ret_host = xstrdup(host);

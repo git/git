@@ -348,7 +348,7 @@ test_expect_success MINGW 'clone c:temp is dos drive' '
 '
 
 #ip v4
-for repo in rep rep/home/project /~proj 123
+for repo in rep rep/home/project 123
 do
 	test_expect_success "clone host:$repo" '
 		test_clone_url host:$repo host $repo
@@ -356,14 +356,6 @@ do
 done
 
 #ipv6
-# failing
-for repo in /~proj
-do
-	test_expect_failure "clone [::1]:$repo" '
-		test_clone_url [::1]:$repo ::1 $repo
-	'
-done
-
 for repo in rep rep/home/project 123
 do
 	test_expect_success "clone [::1]:$repo" '
@@ -373,7 +365,7 @@ done
 
 # Corner cases
 # failing
-for repo in [foo]bar/baz:qux [foo/bar]:baz
+for url in [foo]bar/baz:qux [foo/bar]:baz
 do
 	test_expect_failure "clone $url is not ssh" '
 		test_clone_url $url none

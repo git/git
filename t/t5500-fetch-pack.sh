@@ -589,6 +589,30 @@ do
 			check_prot_path $p://$h/~$r $p "/~$r"
 		'
 	done
+	# file without scheme
+	for h in nohost nohost:12 [::1] [::1]:23 [ [:aa
+	do
+		test_expect_success "fetch-pack --diag-url ./$h:$r" '
+			check_prot_path ./$h:$r $p "./$h:$r"
+		'
+		# No "/~" -> "~" conversion for file
+		test_expect_success "fetch-pack --diag-url ./$p:$h/~$r" '
+		check_prot_path ./$p:$h/~$r $p "./$p:$h/~$r"
+		'
+	done
+	#ssh without scheme
+	p=ssh
+	for h in host [::1]
+	do
+		hh=$(echo $h | tr -d "[]")
+		test_expect_success "fetch-pack --diag-url $h:$r" '
+			check_prot_path $h:$r $p "$r"
+		'
+		# Do "/~" -> "~" conversion
+		test_expect_success "fetch-pack --diag-url $h:/~$r" '
+			check_prot_host_path $h:/~$r $p "$hh" "~$r"
+		'
+	done
 done
 
 test_done
