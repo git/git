@@ -313,7 +313,7 @@ expect_ssh () {
 
 setup_ssh_wrapper
 
-test_expect_success 'cloning myhost:src uses ssh' '
+test_expect_success 'clone myhost:src uses ssh' '
 	git clone myhost:src ssh-clone &&
 	expect_ssh myhost src
 '
@@ -327,6 +327,104 @@ test_expect_success NOT_MINGW,NOT_CYGWIN 'clone local path foo:bar' '
 test_expect_success 'bracketed hostnames are still ssh' '
 	git clone "[myhost:123]:src" ssh-bracket-clone &&
 	expect_ssh myhost:123 src
+'
+
+counter=0
+# $1 url
+# $2 none|host
+# $3 path
+test_clone_url () {
+	counter=$(($counter + 1))
+	test_might_fail git clone "$1" tmp$counter &&
+	expect_ssh "$2" "$3"
+}
+
+test_expect_success NOT_MINGW 'clone c:temp is ssl' '
+	test_clone_url c:temp c temp
+'
+
+test_expect_success MINGW 'clone c:temp is dos drive' '
+	test_clone_url c:temp none
+'
+
+#ip v4
+for repo in rep rep/home/project /~proj 123
+do
+	test_expect_success "clone host:$repo" '
+		test_clone_url host:$repo host $repo
+	'
+done
+
+#ipv6
+# failing
+for repo in /~proj
+do
+	test_expect_failure "clone [::1]:$repo" '
+		test_clone_url [::1]:$repo ::1 $repo
+	'
+done
+
+for repo in rep rep/home/project 123
+do
+	test_expect_success "clone [::1]:$repo" '
+		test_clone_url [::1]:$repo ::1 $repo
+	'
+done
+
+# Corner cases
+# failing
+for repo in [foo]bar/baz:qux [foo/bar]:baz
+do
+	test_expect_failure "clone $url is not ssh" '
+		test_clone_url $url none
+	'
+done
+
+for url in foo/bar:baz
+do
+	test_expect_success "clone $url is not ssh" '
+		test_clone_url $url none
+	'
+done
+
+#with ssh:// scheme
+test_expect_success 'clone ssh://host.xz/home/user/repo' '
+	test_clone_url "ssh://host.xz/home/user/repo" host.xz "/home/user/repo"
+'
+
+# from home directory
+test_expect_success 'clone ssh://host.xz/~repo' '
+	test_clone_url "ssh://host.xz/~repo" host.xz "~repo"
+'
+
+# with port number
+test_expect_success 'clone ssh://host.xz:22/home/user/repo' '
+	test_clone_url "ssh://host.xz:22/home/user/repo" "-p 22 host.xz" "/home/user/repo"
+'
+
+# from home directory with port number
+test_expect_success 'clone ssh://host.xz:22/~repo' '
+	test_clone_url "ssh://host.xz:22/~repo" "-p 22 host.xz" "~repo"
+'
+
+#IPv6
+test_expect_success 'clone ssh://[::1]/home/user/repo' '
+	test_clone_url "ssh://[::1]/home/user/repo" "::1" "/home/user/repo"
+'
+
+#IPv6 from home directory
+test_expect_success 'clone ssh://[::1]/~repo' '
+	test_clone_url "ssh://[::1]/~repo" "::1" "~repo"
+'
+
+#IPv6 with port number
+test_expect_success 'clone ssh://[::1]:22/home/user/repo' '
+	test_clone_url "ssh://[::1]:22/home/user/repo" "-p 22 ::1" "/home/user/repo"
+'
+
+#IPv6 from home directory with port number
+test_expect_success 'clone ssh://[::1]:22/~repo' '
+	test_clone_url "ssh://[::1]:22/~repo" "-p 22 ::1" "~repo"
 '
 
 test_expect_success 'clone from a repository with two identical branches' '
