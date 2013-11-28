@@ -656,7 +656,7 @@ static struct child_process no_fork;
 struct child_process *git_connect(int fd[2], const char *url,
 				  const char *prog, int flags)
 {
-	char *host, *path;
+	char *hostandport, *path;
 	struct child_process *conn = &no_fork;
 	enum protocol protocol;
 	const char **arg;
@@ -667,26 +667,22 @@ struct child_process *git_connect(int fd[2], const char *url,
 	 */
 	signal(SIGCHLD, SIG_DFL);
 
-	protocol = parse_connect_url(url, &host, &path);
+	protocol = parse_connect_url(url, &hostandport, &path);
 	if (flags & CONNECT_DIAG_URL) {
 		printf("Diag: url=%s\n", url ? url : "NULL");
 		printf("Diag: protocol=%s\n", prot_name(protocol));
-		printf("Diag: hostandport=%s\n", host ? host : "NULL");
+		printf("Diag: hostandport=%s\n", hostandport ? hostandport : "NULL");
 		printf("Diag: path=%s\n", path ? path : "NULL");
-		free(host);
-		free(path);
-		return NULL;
-	}
-
-	if (protocol == PROTO_GIT) {
+		conn = NULL;
+	} else if (protocol == PROTO_GIT) {
 		/* These underlying connection commands die() if they
 		 * cannot connect.
 		 */
-		char *target_host = xstrdup(host);
-		if (git_use_proxy(host))
-			conn = git_proxy_connect(fd, host);
+		char *target_host = xstrdup(hostandport);
+		if (git_use_proxy(hostandport))
+			conn = git_proxy_connect(fd, hostandport);
 		else
-			git_tcp_connect(fd, host, flags);
+			git_tcp_connect(fd, hostandport, flags);
 		/*
 		 * Separate original protocol components prog and path
 		 * from extended host header with a NUL byte.
@@ -699,54 +695,50 @@ struct child_process *git_connect(int fd[2], const char *url,
 			     prog, path, 0,
 			     target_host, 0);
 		free(target_host);
-		free(host);
-		free(path);
-		return conn;
-	}
+	} else {
+		conn = xcalloc(1, sizeof(*conn));
 
-	conn = xcalloc(1, sizeof(*conn));
+		strbuf_addstr(&cmd, prog);
+		strbuf_addch(&cmd, ' ');
+		sq_quote_buf(&cmd, path);
 
-	strbuf_addstr(&cmd, prog);
-	strbuf_addch(&cmd, ' ');
-	sq_quote_buf(&cmd, path);
+		conn->in = conn->out = -1;
+		conn->argv = arg = xcalloc(7, sizeof(*arg));
+		if (protocol == PROTO_SSH) {
+			const char *ssh = getenv("GIT_SSH");
+			int putty = ssh && strcasestr(ssh, "plink");
+			char *ssh_host = hostandport;
+			const char *port = NULL;
+			get_host_and_port(&ssh_host, &port);
+			port = get_port_numeric(port);
 
-	conn->in = conn->out = -1;
-	conn->argv = arg = xcalloc(7, sizeof(*arg));
-	if (protocol == PROTO_SSH) {
-		const char *ssh = getenv("GIT_SSH");
-		int putty = ssh && strcasestr(ssh, "plink");
-		char *ssh_host = host; /* keep host for the free() below */
-		const char *port = NULL;
-		get_host_and_port(&ssh_host, &port);
-		port = get_port_numeric(port);
+			if (!ssh) ssh = "ssh";
 
-		if (!ssh) ssh = "ssh";
-
-		*arg++ = ssh;
-		if (putty && !strcasestr(ssh, "tortoiseplink"))
-			*arg++ = "-batch";
-		if (port) {
-			/* P is for PuTTY, p is for OpenSSH */
-			*arg++ = putty ? "-P" : "-p";
-			*arg++ = port;
+			*arg++ = ssh;
+			if (putty && !strcasestr(ssh, "tortoiseplink"))
+				*arg++ = "-batch";
+			if (port) {
+				/* P is for PuTTY, p is for OpenSSH */
+				*arg++ = putty ? "-P" : "-p";
+				*arg++ = port;
+			}
+			*arg++ = ssh_host;
+		}	else {
+			/* remove repo-local variables from the environment */
+			conn->env = local_repo_env;
+			conn->use_shell = 1;
 		}
-		*arg++ = ssh_host;
-	}
-	else {
-		/* remove repo-local variables from the environment */
-		conn->env = local_repo_env;
-		conn->use_shell = 1;
-	}
-	*arg++ = cmd.buf;
-	*arg = NULL;
+		*arg++ = cmd.buf;
+		*arg = NULL;
 
-	if (start_command(conn))
-		die("unable to fork");
+		if (start_command(conn))
+			die("unable to fork");
 
-	fd[0] = conn->out; /* read from child's stdout */
-	fd[1] = conn->in;  /* write to child's stdin */
-	strbuf_release(&cmd);
-	free(host);
+		fd[0] = conn->out; /* read from child's stdout */
+		fd[1] = conn->in;  /* write to child's stdin */
+		strbuf_release(&cmd);
+	}
+	free(hostandport);
 	free(path);
 	return conn;
 }
