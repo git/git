@@ -1243,9 +1243,9 @@ static void format_note(struct notes_tree *t, const unsigned char *object_sha1,
 		if (!ref || !strcmp(ref, GIT_NOTES_DEFAULT_REF)) {
 			strbuf_addstr(sb, "\nNotes:\n");
 		} else {
-			if (!prefixcmp(ref, "refs/"))
+			if (starts_with(ref, "refs/"))
 				ref += 5;
-			if (!prefixcmp(ref, "notes/"))
+			if (starts_with(ref, "notes/"))
 				ref += 6;
 			strbuf_addf(sb, "\nNotes (%s):\n", ref);
 		}
@@ -1293,9 +1293,9 @@ int copy_note(struct notes_tree *t,
 
 void expand_notes_ref(struct strbuf *sb)
 {
-	if (!prefixcmp(sb->buf, "refs/notes/"))
+	if (starts_with(sb->buf, "refs/notes/"))
 		return; /* we're happy */
-	else if (!prefixcmp(sb->buf, "notes/"))
+	else if (starts_with(sb->buf, "notes/"))
 		strbuf_insert(sb, 0, "refs/", 5);
 	else
 		strbuf_insert(sb, 0, "refs/notes/", 11);

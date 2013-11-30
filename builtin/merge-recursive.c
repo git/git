@@ -29,7 +29,7 @@ int cmd_merge_recursive(int argc, const char **argv, const char *prefix)
 	struct commit *result;
 
 	init_merge_options(&o);
-	if (argv[0] && !suffixcmp(argv[0], "-subtree"))
+	if (argv[0] && ends_with(argv[0], "-subtree"))
 		o.subtree_shift = "";
 
 	if (argc < 4)
@@ -38,7 +38,7 @@ int cmd_merge_recursive(int argc, const char **argv, const char *prefix)
 	for (i = 1; i < argc; ++i) {
 		const char *arg = argv[i];
 
-		if (!prefixcmp(arg, "--")) {
+		if (starts_with(arg, "--")) {
 			if (!arg[2])
 				break;
 			if (parse_merge_opt(&o, arg + 2))

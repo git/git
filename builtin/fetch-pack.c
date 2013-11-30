@@ -48,11 +48,11 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 	for (i = 1; i < argc && *argv[i] == '-'; i++) {
 		const char *arg = argv[i];
 
-		if (!prefixcmp(arg, "--upload-pack=")) {
+		if (starts_with(arg, "--upload-pack=")) {
 			args.uploadpack = arg + 14;
 			continue;
 		}
-		if (!prefixcmp(arg, "--exec=")) {
+		if (starts_with(arg, "--exec=")) {
 			args.uploadpack = arg + 7;
 			continue;
 		}
@@ -85,7 +85,7 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 			args.verbose = 1;
 			continue;
 		}
-		if (!prefixcmp(arg, "--depth=")) {
+		if (starts_with(arg, "--depth=")) {
 			args.depth = strtol(arg + 8, NULL, 0);
 			continue;
 		}

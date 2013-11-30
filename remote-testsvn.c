@@ -82,7 +82,7 @@ static int parse_rev_note(const char *msg, struct rev_note *res)
 		len = end ? end - msg : strlen(msg);
 
 		key = "Revision-number: ";
-		if (!prefixcmp(msg, key)) {
+		if (starts_with(msg, key)) {
 			long i;
 			char *end;
 			value = msg + strlen(key);
@@ -154,7 +154,7 @@ static void check_or_regenerate_marks(int latestrev)
 	} else {
 		strbuf_addf(&sb, ":%d ", latestrev);
 		while (strbuf_getline(&line, marksfile, '\n') != EOF) {
-			if (!prefixcmp(line.buf, sb.buf)) {
+			if (starts_with(line.buf, sb.buf)) {
 				found++;
 				break;
 			}
@@ -264,7 +264,7 @@ static int do_command(struct strbuf *line)
 		return 1;	/* end of command stream, quit */
 	}
 	if (batch_cmd) {
-		if (prefixcmp(batch_cmd->name, line->buf))
+		if (!starts_with(batch_cmd->name, line->buf))
 			die("Active %s batch interrupted by %s", batch_cmd->name, line->buf);
 		/* buffer batch lines */
 		string_list_append(&batchlines, line->buf);
@@ -272,7 +272,7 @@ static int do_command(struct strbuf *line)
 	}
 
 	for (p = input_command_list; p->name; p++) {
-		if (!prefixcmp(line->buf, p->name) && (strlen(p->name) == line->len ||
+		if (starts_with(line->buf, p->name) && (strlen(p->name) == line->len ||
 				line->buf[strlen(p->name)] == ' ')) {
 			if (p->batchable) {
 				batch_cmd = p;
@@ -304,7 +304,7 @@ int main(int argc, char **argv)
 	remote = remote_get(argv[1]);
 	url_in = (argc == 3) ? argv[2] : remote->url[0];
 
-	if (!prefixcmp(url_in, "file://")) {
+	if (starts_with(url_in, "file://")) {
 		dump_from_file = 1;
 		url = url_decode(url_in + sizeof("file://")-1);
 	} else {

@@ -100,7 +100,7 @@ static int check_emacsclient_version(void)
 	 */
 	finish_command(&ec_process);
 
-	if (prefixcmp(buffer.buf, "emacsclient")) {
+	if (!starts_with(buffer.buf, "emacsclient")) {
 		strbuf_release(&buffer);
 		return error(_("Failed to parse emacsclient version."));
 	}
@@ -258,7 +258,7 @@ static int add_man_viewer_info(const char *var, const char *value)
 
 static int git_help_config(const char *var, const char *value, void *cb)
 {
-	if (!prefixcmp(var, "column."))
+	if (starts_with(var, "column."))
 		return git_column_config(var, value, "help", &colopts);
 	if (!strcmp(var, "help.format")) {
 		if (!value)
@@ -278,7 +278,7 @@ static int git_help_config(const char *var, const char *value, void *cb)
 		add_man_viewer(value);
 		return 0;
 	}
-	if (!prefixcmp(var, "man."))
+	if (starts_with(var, "man."))
 		return add_man_viewer_info(var, value);
 
 	return git_default_config(var, value, cb);
@@ -306,7 +306,7 @@ static const char *cmd_to_page(const char *git_cmd)
 {
 	if (!git_cmd)
 		return "git";
-	else if (!prefixcmp(git_cmd, "git"))
+	else if (starts_with(git_cmd, "git"))
 		return git_cmd;
 	else if (is_git_command(git_cmd))
 		return prepend("git-", git_cmd);

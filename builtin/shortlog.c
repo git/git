@@ -65,7 +65,7 @@ static void insert_one_record(struct shortlog *log,
 	eol = strchr(oneline, '\n');
 	if (!eol)
 		eol = oneline + strlen(oneline);
-	if (!prefixcmp(oneline, "[PATCH")) {
+	if (starts_with(oneline, "[PATCH")) {
 		char *eob = strchr(oneline, ']');
 		if (eob && (!eol || eob < eol))
 			oneline = eob + 1;
@@ -95,7 +95,7 @@ static void read_from_stdin(struct shortlog *log)
 
 	while (fgets(author, sizeof(author), stdin) != NULL) {
 		if (!(author[0] == 'A' || author[0] == 'a') ||
-		    prefixcmp(author + 1, "uthor: "))
+		    !starts_with(author + 1, "uthor: "))
 			continue;
 		while (fgets(oneline, sizeof(oneline), stdin) &&
 		       oneline[0] != '\n')
@@ -123,7 +123,7 @@ void shortlog_add_commit(struct shortlog *log, struct commit *commit)
 		else
 			eol++;
 
-		if (!prefixcmp(buffer, "author "))
+		if (starts_with(buffer, "author "))
 			author = buffer + 7;
 		buffer = eol;
 	}

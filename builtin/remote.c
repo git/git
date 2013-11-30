@@ -261,7 +261,7 @@ static const char *abbrev_ref(const char *name, const char *prefix)
 
 static int config_read_branches(const char *key, const char *value, void *cb)
 {
-	if (!prefixcmp(key, "branch.")) {
+	if (starts_with(key, "branch.")) {
 		const char *orig_key = key;
 		char *name;
 		struct string_list_item *item;
@@ -269,13 +269,13 @@ static int config_read_branches(const char *key, const char *value, void *cb)
 		enum { REMOTE, MERGE, REBASE } type;
 
 		key += 7;
-		if (!suffixcmp(key, ".remote")) {
+		if (ends_with(key, ".remote")) {
 			name = xstrndup(key, strlen(key) - 7);
 			type = REMOTE;
-		} else if (!suffixcmp(key, ".merge")) {
+		} else if (ends_with(key, ".merge")) {
 			name = xstrndup(key, strlen(key) - 6);
 			type = MERGE;
-		} else if (!suffixcmp(key, ".rebase")) {
+		} else if (ends_with(key, ".rebase")) {
 			name = xstrndup(key, strlen(key) - 7);
 			type = REBASE;
 		} else
@@ -526,9 +526,9 @@ static int add_branch_for_removal(const char *refname,
 	}
 
 	/* don't delete non-remote-tracking refs */
-	if (prefixcmp(refname, "refs/remotes/")) {
+	if (!starts_with(refname, "refs/remotes/")) {
 		/* advise user how to delete local branches */
-		if (!prefixcmp(refname, "refs/heads/"))
+		if (starts_with(refname, "refs/heads/"))
 			string_list_append(branches->skipped,
 					   abbrev_branch(refname));
 		/* silently skip over other non-remote refs */
@@ -563,7 +563,7 @@ static int read_remote_branches(const char *refname,
 	const char *symref;
 
 	strbuf_addf(&buf, "refs/remotes/%s/", rename->old);
-	if (!prefixcmp(refname, buf.buf)) {
+	if (starts_with(refname, buf.buf)) {
 		item = string_list_append(rename->remote_branches, xstrdup(refname));
 		symref = resolve_ref_unsafe(refname, orig_sha1, 1, &flag);
 		if (flag & REF_ISSYMREF)

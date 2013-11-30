@@ -190,7 +190,7 @@ static struct child_process *get_helper(struct transport *transport)
 			data->export = 1;
 		else if (!strcmp(capname, "check-connectivity"))
 			data->check_connectivity = 1;
-		else if (!data->refspecs && !prefixcmp(capname, "refspec ")) {
+		else if (!data->refspecs && starts_with(capname, "refspec ")) {
 			ALLOC_GROW(refspecs,
 				   refspec_nr + 1,
 				   refspec_alloc);
@@ -199,17 +199,17 @@ static struct child_process *get_helper(struct transport *transport)
 			data->connect = 1;
 		} else if (!strcmp(capname, "signed-tags")) {
 			data->signed_tags = 1;
-		} else if (!prefixcmp(capname, "export-marks ")) {
+		} else if (starts_with(capname, "export-marks ")) {
 			struct strbuf arg = STRBUF_INIT;
 			strbuf_addstr(&arg, "--export-marks=");
 			strbuf_addstr(&arg, capname + strlen("export-marks "));
 			data->export_marks = strbuf_detach(&arg, NULL);
-		} else if (!prefixcmp(capname, "import-marks")) {
+		} else if (starts_with(capname, "import-marks")) {
 			struct strbuf arg = STRBUF_INIT;
 			strbuf_addstr(&arg, "--import-marks=");
 			strbuf_addstr(&arg, capname + strlen("import-marks "));
 			data->import_marks = strbuf_detach(&arg, NULL);
-		} else if (!prefixcmp(capname, "no-private-update")) {
+		} else if (starts_with(capname, "no-private-update")) {
 			data->no_private_update = 1;
 		} else if (mandatory) {
 			die("Unknown mandatory capability %s. This remote "
@@ -311,7 +311,7 @@ static int set_helper_option(struct transport *transport,
 
 	if (!strcmp(buf.buf, "ok"))
 		ret = 0;
-	else if (!prefixcmp(buf.buf, "error")) {
+	else if (starts_with(buf.buf, "error")) {
 		ret = -1;
 	} else if (!strcmp(buf.buf, "unsupported"))
 		ret = 1;
@@ -375,7 +375,7 @@ static int fetch_with_fetch(struct transport *transport,
 	while (1) {
 		recvline(data, &buf);
 
-		if (!prefixcmp(buf.buf, "lock ")) {
+		if (starts_with(buf.buf, "lock ")) {
 			const char *name = buf.buf + 5;
 			if (transport->pack_lockfile)
 				warning("%s also locked %s", data->name, name);
@@ -646,10 +646,10 @@ static int push_update_ref_status(struct strbuf *buf,
 	char *refname, *msg;
 	int status;
 
-	if (!prefixcmp(buf->buf, "ok ")) {
+	if (starts_with(buf->buf, "ok ")) {
 		status = REF_STATUS_OK;
 		refname = buf->buf + 3;
-	} else if (!prefixcmp(buf->buf, "error ")) {
+	} else if (starts_with(buf->buf, "error ")) {
 		status = REF_STATUS_REMOTE_REJECT;
 		refname = buf->buf + 6;
 	} else

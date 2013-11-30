@@ -81,13 +81,13 @@ static int parse_branch_color_slot(const char *var, int ofs)
 
 static int git_branch_config(const char *var, const char *value, void *cb)
 {
-	if (!prefixcmp(var, "column."))
+	if (starts_with(var, "column."))
 		return git_column_config(var, value, "branch", &colopts);
 	if (!strcmp(var, "color.branch")) {
 		branch_use_color = git_config_colorbool(var, value);
 		return 0;
 	}
-	if (!prefixcmp(var, "color.branch.")) {
+	if (starts_with(var, "color.branch.")) {
 		int slot = parse_branch_color_slot(var, 13);
 		if (slot < 0)
 			return 0;
@@ -868,7 +868,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	if (!strcmp(head, "HEAD")) {
 		detached = 1;
 	} else {
-		if (prefixcmp(head, "refs/heads/"))
+		if (!starts_with(head, "refs/heads/"))
 			die(_("HEAD not found below refs/heads!"));
 		head += 11;
 	}

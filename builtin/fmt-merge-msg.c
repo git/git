@@ -109,7 +109,7 @@ static int handle_line(char *line, struct merge_parents *merge_parents)
 	if (len < 43 || line[40] != '\t')
 		return 1;
 
-	if (!prefixcmp(line + 41, "not-for-merge"))
+	if (starts_with(line + 41, "not-for-merge"))
 		return 0;
 
 	if (line[41] != '\t')
@@ -155,16 +155,16 @@ static int handle_line(char *line, struct merge_parents *merge_parents)
 	if (pulling_head) {
 		origin = src;
 		src_data->head_status |= 1;
-	} else if (!prefixcmp(line, "branch ")) {
+	} else if (starts_with(line, "branch ")) {
 		origin_data->is_local_branch = 1;
 		origin = line + 7;
 		string_list_append(&src_data->branch, origin);
 		src_data->head_status |= 2;
-	} else if (!prefixcmp(line, "tag ")) {
+	} else if (starts_with(line, "tag ")) {
 		origin = line;
 		string_list_append(&src_data->tag, origin + 4);
 		src_data->head_status |= 2;
-	} else if (!prefixcmp(line, "remote-tracking branch ")) {
+	} else if (starts_with(line, "remote-tracking branch ")) {
 		origin = line + strlen("remote-tracking branch ");
 		string_list_append(&src_data->r_branch, origin);
 		src_data->head_status |= 2;
@@ -605,7 +605,7 @@ int fmt_merge_msg(struct strbuf *in, struct strbuf *out,
 		resolve_refdup("HEAD", head_sha1, 1, NULL);
 	if (!current_branch)
 		die("No current branch");
-	if (!prefixcmp(current_branch, "refs/heads/"))
+	if (starts_with(current_branch, "refs/heads/"))
 		current_branch += 11;
 
 	find_merge_parents(&merge_parents, in, head_sha1);

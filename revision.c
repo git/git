@@ -1592,9 +1592,9 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 	    !strcmp(arg, "--tags") || !strcmp(arg, "--remotes") ||
 	    !strcmp(arg, "--reflog") || !strcmp(arg, "--not") ||
 	    !strcmp(arg, "--no-walk") || !strcmp(arg, "--do-walk") ||
-	    !strcmp(arg, "--bisect") || !prefixcmp(arg, "--glob=") ||
-	    !prefixcmp(arg, "--branches=") || !prefixcmp(arg, "--tags=") ||
-	    !prefixcmp(arg, "--remotes=") || !prefixcmp(arg, "--no-walk="))
+	    !strcmp(arg, "--bisect") || starts_with(arg, "--glob=") ||
+	    starts_with(arg, "--branches=") || starts_with(arg, "--tags=") ||
+	    starts_with(arg, "--remotes=") || starts_with(arg, "--no-walk="))
 	{
 		unkv[(*unkc)++] = arg;
 		return 1;
@@ -1617,7 +1617,7 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->max_count = atoi(argv[1]);
 		revs->no_walk = 0;
 		return 2;
-	} else if (!prefixcmp(arg, "-n")) {
+	} else if (starts_with(arg, "-n")) {
 		revs->max_count = atoi(arg + 2);
 		revs->no_walk = 0;
 	} else if ((argcount = parse_long_opt("max-age", argv, &optarg))) {
@@ -1677,7 +1677,7 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 	} else if (!strcmp(arg, "--author-date-order")) {
 		revs->sort_order = REV_SORT_BY_AUTHOR_DATE;
 		revs->topo_order = 1;
-	} else if (!prefixcmp(arg, "--early-output")) {
+	} else if (starts_with(arg, "--early-output")) {
 		int count = 100;
 		switch (arg[14]) {
 		case '=':
@@ -1702,13 +1702,13 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->min_parents = 2;
 	} else if (!strcmp(arg, "--no-merges")) {
 		revs->max_parents = 1;
-	} else if (!prefixcmp(arg, "--min-parents=")) {
+	} else if (starts_with(arg, "--min-parents=")) {
 		revs->min_parents = atoi(arg+14);
-	} else if (!prefixcmp(arg, "--no-min-parents")) {
+	} else if (starts_with(arg, "--no-min-parents")) {
 		revs->min_parents = 0;
-	} else if (!prefixcmp(arg, "--max-parents=")) {
+	} else if (starts_with(arg, "--max-parents=")) {
 		revs->max_parents = atoi(arg+14);
-	} else if (!prefixcmp(arg, "--no-max-parents")) {
+	} else if (starts_with(arg, "--no-max-parents")) {
 		revs->max_parents = -1;
 	} else if (!strcmp(arg, "--boundary")) {
 		revs->boundary = 1;
@@ -1758,7 +1758,7 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->verify_objects = 1;
 	} else if (!strcmp(arg, "--unpacked")) {
 		revs->unpacked = 1;
-	} else if (!prefixcmp(arg, "--unpacked=")) {
+	} else if (starts_with(arg, "--unpacked=")) {
 		die("--unpacked=<packfile> no longer supported.");
 	} else if (!strcmp(arg, "-r")) {
 		revs->diff = 1;
@@ -1783,7 +1783,7 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->verbose_header = 1;
 		revs->pretty_given = 1;
 		get_commit_format(arg+8, revs);
-	} else if (!prefixcmp(arg, "--pretty=") || !prefixcmp(arg, "--format=")) {
+	} else if (starts_with(arg, "--pretty=") || starts_with(arg, "--format=")) {
 		/*
 		 * Detached form ("--pretty X" as opposed to "--pretty=X")
 		 * not allowed, since the argument is optional.
@@ -1797,12 +1797,12 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->notes_opt.use_default_notes = 1;
 	} else if (!strcmp(arg, "--show-signature")) {
 		revs->show_signature = 1;
-	} else if (!prefixcmp(arg, "--show-notes=") ||
-		   !prefixcmp(arg, "--notes=")) {
+	} else if (starts_with(arg, "--show-notes=") ||
+		   starts_with(arg, "--notes=")) {
 		struct strbuf buf = STRBUF_INIT;
 		revs->show_notes = 1;
 		revs->show_notes_given = 1;
-		if (!prefixcmp(arg, "--show-notes")) {
+		if (starts_with(arg, "--show-notes")) {
 			if (revs->notes_opt.use_default_notes < 0)
 				revs->notes_opt.use_default_notes = 1;
 			strbuf_addstr(&buf, arg+13);
@@ -1845,7 +1845,7 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->abbrev = 0;
 	} else if (!strcmp(arg, "--abbrev")) {
 		revs->abbrev = DEFAULT_ABBREV;
-	} else if (!prefixcmp(arg, "--abbrev=")) {
+	} else if (starts_with(arg, "--abbrev=")) {
 		revs->abbrev = strtoul(arg + 9, NULL, 10);
 		if (revs->abbrev < MINIMUM_ABBREV)
 			revs->abbrev = MINIMUM_ABBREV;
@@ -1984,15 +1984,15 @@ static int handle_revision_pseudo_opt(const char *submodule,
 		init_all_refs_cb(&cb, revs, *flags);
 		for_each_glob_ref(handle_one_ref, optarg, &cb);
 		return argcount;
-	} else if (!prefixcmp(arg, "--branches=")) {
+	} else if (starts_with(arg, "--branches=")) {
 		struct all_refs_cb cb;
 		init_all_refs_cb(&cb, revs, *flags);
 		for_each_glob_ref_in(handle_one_ref, arg + 11, "refs/heads/", &cb);
-	} else if (!prefixcmp(arg, "--tags=")) {
+	} else if (starts_with(arg, "--tags=")) {
 		struct all_refs_cb cb;
 		init_all_refs_cb(&cb, revs, *flags);
 		for_each_glob_ref_in(handle_one_ref, arg + 7, "refs/tags/", &cb);
-	} else if (!prefixcmp(arg, "--remotes=")) {
+	} else if (starts_with(arg, "--remotes=")) {
 		struct all_refs_cb cb;
 		init_all_refs_cb(&cb, revs, *flags);
 		for_each_glob_ref_in(handle_one_ref, arg + 10, "refs/remotes/", &cb);
@@ -2002,7 +2002,7 @@ static int handle_revision_pseudo_opt(const char *submodule,
 		*flags ^= UNINTERESTING | BOTTOM;
 	} else if (!strcmp(arg, "--no-walk")) {
 		revs->no_walk = REVISION_WALK_NO_WALK_SORTED;
-	} else if (!prefixcmp(arg, "--no-walk=")) {
+	} else if (starts_with(arg, "--no-walk=")) {
 		/*
 		 * Detached form ("--no-walk X" as opposed to "--no-walk=X")
 		 * not allowed, since the argument is optional.

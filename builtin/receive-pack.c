@@ -428,7 +428,7 @@ static const char *update(struct command *cmd)
 	struct ref_lock *lock;
 
 	/* only refs/... are allowed */
-	if (prefixcmp(name, "refs/") || check_refname_format(name + 5, 0)) {
+	if (!starts_with(name, "refs/") || check_refname_format(name + 5, 0)) {
 		rp_error("refusing to create funny ref '%s' remotely", name);
 		return "funny refname";
 	}
@@ -459,7 +459,7 @@ static const char *update(struct command *cmd)
 	}
 
 	if (!is_null_sha1(old_sha1) && is_null_sha1(new_sha1)) {
-		if (deny_deletes && !prefixcmp(name, "refs/heads/")) {
+		if (deny_deletes && starts_with(name, "refs/heads/")) {
 			rp_error("denying ref deletion for %s", name);
 			return "deletion prohibited";
 		}
@@ -483,7 +483,7 @@ static const char *update(struct command *cmd)
 
 	if (deny_non_fast_forwards && !is_null_sha1(new_sha1) &&
 	    !is_null_sha1(old_sha1) &&
-	    !prefixcmp(name, "refs/heads/")) {
+	    starts_with(name, "refs/heads/")) {
 		struct object *old_object, *new_object;
 		struct commit *old_commit, *new_commit;
 

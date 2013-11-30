@@ -78,7 +78,7 @@ static void get_non_kept_pack_filenames(struct string_list *fname_list)
 		return;
 
 	while ((e = readdir(dir)) != NULL) {
-		if (suffixcmp(e->d_name, ".pack"))
+		if (!ends_with(e->d_name, ".pack"))
 			continue;
 
 		len = strlen(e->d_name) - strlen(".pack");

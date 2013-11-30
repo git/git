@@ -771,7 +771,7 @@ static void handle_new_lock_ctx(struct xml_ctx *ctx, int tag_closed)
 			lock->owner = xmalloc(strlen(ctx->cdata) + 1);
 			strcpy(lock->owner, ctx->cdata);
 		} else if (!strcmp(ctx->name, DAV_ACTIVELOCK_TIMEOUT)) {
-			if (!prefixcmp(ctx->cdata, "Second-"))
+			if (starts_with(ctx->cdata, "Second-"))
 				lock->timeout =
 					strtol(ctx->cdata + 7, NULL, 10);
 		} else if (!strcmp(ctx->name, DAV_ACTIVELOCK_TOKEN)) {
@@ -1579,7 +1579,7 @@ static void fetch_symref(const char *path, char **symref, unsigned char *sha1)
 		return;
 
 	/* If it's a symref, set the refname; otherwise try for a sha1 */
-	if (!prefixcmp((char *)buffer.buf, "ref: ")) {
+	if (starts_with((char *)buffer.buf, "ref: ")) {
 		*symref = xmemdupz((char *)buffer.buf + 5, buffer.len - 6);
 	} else {
 		get_sha1_hex(buffer.buf, sha1);

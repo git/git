@@ -441,7 +441,7 @@ static void grab_person(const char *who, struct atom_value *val, int deref, stru
 		if (name[wholen] != 0 &&
 		    strcmp(name + wholen, "name") &&
 		    strcmp(name + wholen, "email") &&
-		    prefixcmp(name + wholen, "date"))
+		    !starts_with(name + wholen, "date"))
 			continue;
 		if (!wholine)
 			wholine = find_wholine(who, wholen, buf, sz);
@@ -453,7 +453,7 @@ static void grab_person(const char *who, struct atom_value *val, int deref, stru
 			v->s = copy_name(wholine);
 		else if (!strcmp(name + wholen, "email"))
 			v->s = copy_email(wholine);
-		else if (!prefixcmp(name + wholen, "date"))
+		else if (starts_with(name + wholen, "date"))
 			grab_date(wholine, v, name);
 	}
 
@@ -475,7 +475,7 @@ static void grab_person(const char *who, struct atom_value *val, int deref, stru
 		if (deref)
 			name++;
 
-		if (!prefixcmp(name, "creatordate"))
+		if (starts_with(name, "creatordate"))
 			grab_date(wholine, v, name);
 		else if (!strcmp(name, "creator"))
 			v->s = copy_line(wholine);
@@ -655,14 +655,14 @@ static void populate_value(struct refinfo *ref)
 			name++;
 		}
 
-		if (!prefixcmp(name, "refname"))
+		if (starts_with(name, "refname"))
 			refname = ref->refname;
-		else if (!prefixcmp(name, "symref"))
+		else if (starts_with(name, "symref"))
 			refname = ref->symref ? ref->symref : "";
-		else if (!prefixcmp(name, "upstream")) {
+		else if (starts_with(name, "upstream")) {
 			struct branch *branch;
 			/* only local branches may have an upstream */
-			if (prefixcmp(ref->refname, "refs/heads/"))
+			if (!starts_with(ref->refname, "refs/heads/"))
 				continue;
 			branch = branch_get(ref->refname + 11);
 

@@ -546,7 +546,7 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 		if (read_ref_at(real_ref, at_time, nth, sha1, NULL,
 				&co_time, &co_tz, &co_cnt)) {
 			if (!len) {
-				if (!prefixcmp(real_ref, "refs/heads/")) {
+				if (starts_with(real_ref, "refs/heads/")) {
 					str = real_ref + 11;
 					len = strlen(real_ref + 11);
 				} else {
@@ -676,15 +676,15 @@ static int peel_onion(const char *name, int len, unsigned char *sha1)
 		return -1;
 
 	sp++; /* beginning of type name, or closing brace for empty */
-	if (!prefixcmp(sp, "commit}"))
+	if (starts_with(sp, "commit}"))
 		expected_type = OBJ_COMMIT;
-	else if (!prefixcmp(sp, "tag}"))
+	else if (starts_with(sp, "tag}"))
 		expected_type = OBJ_TAG;
-	else if (!prefixcmp(sp, "tree}"))
+	else if (starts_with(sp, "tree}"))
 		expected_type = OBJ_TREE;
-	else if (!prefixcmp(sp, "blob}"))
+	else if (starts_with(sp, "blob}"))
 		expected_type = OBJ_BLOB;
-	else if (!prefixcmp(sp, "object}"))
+	else if (starts_with(sp, "object}"))
 		expected_type = OBJ_ANY;
 	else if (sp[0] == '}')
 		expected_type = OBJ_NONE;
@@ -911,7 +911,7 @@ static int grab_nth_branch_switch(unsigned char *osha1, unsigned char *nsha1,
 	const char *match = NULL, *target = NULL;
 	size_t len;
 
-	if (!prefixcmp(message, "checkout: moving from ")) {
+	if (starts_with(message, "checkout: moving from ")) {
 		match = message + strlen("checkout: moving from ");
 		target = strstr(match, " to ");
 	}
@@ -1304,7 +1304,7 @@ static void diagnose_invalid_index_path(int stage,
 
 static char *resolve_relative_path(const char *rel)
 {
-	if (prefixcmp(rel, "./") && prefixcmp(rel, "../"))
+	if (!starts_with(rel, "./") && !starts_with(rel, "../"))
 		return NULL;
 
 	if (!startup_info)

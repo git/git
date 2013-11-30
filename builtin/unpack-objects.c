@@ -523,7 +523,7 @@ int cmd_unpack_objects(int argc, const char **argv, const char *prefix)
 				strict = 1;
 				continue;
 			}
-			if (!prefixcmp(arg, "--pack_header=")) {
+			if (starts_with(arg, "--pack_header=")) {
 				struct pack_header *hdr;
 				char *c;
 

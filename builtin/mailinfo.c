@@ -328,11 +328,11 @@ static int check_header(const struct strbuf *line,
 	}
 
 	/* for inbody stuff */
-	if (!prefixcmp(line->buf, ">From") && isspace(line->buf[5])) {
+	if (starts_with(line->buf, ">From") && isspace(line->buf[5])) {
 		ret = 1; /* Should this return 0? */
 		goto check_header_out;
 	}
-	if (!prefixcmp(line->buf, "[PATCH]") && isspace(line->buf[7])) {
+	if (starts_with(line->buf, "[PATCH]") && isspace(line->buf[7])) {
 		for (i = 0; header[i]; i++) {
 			if (!memcmp("Subject", header[i], 7)) {
 				handle_header(&hdr_data[i], line);
@@ -361,7 +361,7 @@ static int is_rfc2822_header(const struct strbuf *line)
 	char *cp = line->buf;
 
 	/* Count mbox From headers as headers */
-	if (!prefixcmp(cp, "From ") || !prefixcmp(cp, ">From "))
+	if (starts_with(cp, "From ") || starts_with(cp, ">From "))
 		return 1;
 
 	while ((ch = *cp++)) {
@@ -671,11 +671,11 @@ static inline int patchbreak(const struct strbuf *line)
 	size_t i;
 
 	/* Beginning of a "diff -" header? */
-	if (!prefixcmp(line->buf, "diff -"))
+	if (starts_with(line->buf, "diff -"))
 		return 1;
 
 	/* CVS "Index: " line? */
-	if (!prefixcmp(line->buf, "Index: "))
+	if (starts_with(line->buf, "Index: "))
 		return 1;
 
 	/*
@@ -685,7 +685,7 @@ static inline int patchbreak(const struct strbuf *line)
 	if (line->len < 4)
 		return 0;
 
-	if (!prefixcmp(line->buf, "---")) {
+	if (starts_with(line->buf, "---")) {
 		/* space followed by a filename? */
 		if (line->buf[3] == ' ' && !isspace(line->buf[4]))
 			return 1;
@@ -986,7 +986,7 @@ static int mailinfo(FILE *in, FILE *out, const char *msg, const char *patch)
 
 static int git_mailinfo_config(const char *var, const char *value, void *unused)
 {
-	if (prefixcmp(var, "mailinfo."))
+	if (!starts_with(var, "mailinfo."))
 		return git_default_config(var, value, unused);
 	if (!strcmp(var, "mailinfo.scissors")) {
 		use_scissors = git_config_bool(var, value);
@@ -1020,7 +1020,7 @@ int cmd_mailinfo(int argc, const char **argv, const char *prefix)
 			metainfo_charset = def_charset;
 		else if (!strcmp(argv[1], "-n"))
 			metainfo_charset = NULL;
-		else if (!prefixcmp(argv[1], "--encoding="))
+		else if (starts_with(argv[1], "--encoding="))
 			metainfo_charset = argv[1] + 11;
 		else if (!strcmp(argv[1], "--scissors"))
 			use_scissors = 1;

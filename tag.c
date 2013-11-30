@@ -86,7 +86,7 @@ int parse_tag_buffer(struct tag *item, const void *data, unsigned long size)
 		return -1;
 	bufptr += 48; /* "object " + sha1 + "\n" */
 
-	if (prefixcmp(bufptr, "type "))
+	if (!starts_with(bufptr, "type "))
 		return -1;
 	bufptr += 5;
 	nl = memchr(bufptr, '\n', tail - bufptr);
@@ -109,7 +109,7 @@ int parse_tag_buffer(struct tag *item, const void *data, unsigned long size)
 		item->tagged = NULL;
 	}
 
-	if (bufptr + 4 < tail && !prefixcmp(bufptr, "tag "))
+	if (bufptr + 4 < tail && starts_with(bufptr, "tag "))
 		; 		/* good */
 	else
 		return -1;
@@ -120,7 +120,7 @@ int parse_tag_buffer(struct tag *item, const void *data, unsigned long size)
 	item->tag = xmemdupz(bufptr, nl - bufptr);
 	bufptr = nl + 1;
 
-	if (bufptr + 7 < tail && !prefixcmp(bufptr, "tagger "))
+	if (bufptr + 7 < tail && starts_with(bufptr, "tagger "))
 		item->date = parse_tag_date(bufptr, tail);
 	else
 		item->date = 0;
@@ -160,8 +160,8 @@ size_t parse_signature(const char *buf, unsigned long size)
 {
 	char *eol;
 	size_t len = 0;
-	while (len < size && prefixcmp(buf + len, PGP_SIGNATURE) &&
-			prefixcmp(buf + len, PGP_MESSAGE)) {
+	while (len < size && !starts_with(buf + len, PGP_SIGNATURE) &&
+			!starts_with(buf + len, PGP_MESSAGE)) {
 		eol = memchr(buf + len, '\n', size - len);
 		len += eol ? eol - (buf + len) + 1 : size - len;
 	}

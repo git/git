@@ -211,7 +211,7 @@ static struct match_attr *parse_attr_line(const char *line, const char *src,
 	name = cp;
 	namelen = strcspn(name, blank);
 	if (strlen(ATTRIBUTE_MACRO_PREFIX) < namelen &&
-	    !prefixcmp(name, ATTRIBUTE_MACRO_PREFIX)) {
+	    starts_with(name, ATTRIBUTE_MACRO_PREFIX)) {
 		if (!macro_ok) {
 			fprintf(stderr, "%s not allowed: %s:%d\n",
 				name, src, lineno);

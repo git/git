@@ -101,9 +101,9 @@ static const char *name_ref_abbrev(const char *refname, int shorten_unambiguous)
 {
 	if (shorten_unambiguous)
 		refname = shorten_unambiguous_ref(refname, 0);
-	else if (!prefixcmp(refname, "refs/heads/"))
+	else if (starts_with(refname, "refs/heads/"))
 		refname = refname + 11;
-	else if (!prefixcmp(refname, "refs/"))
+	else if (starts_with(refname, "refs/"))
 		refname = refname + 5;
 	return refname;
 }
@@ -149,7 +149,7 @@ static int name_ref(const char *path, const unsigned char *sha1, int flags, void
 	int can_abbreviate_output = data->tags_only && data->name_only;
 	int deref = 0;
 
-	if (data->tags_only && prefixcmp(path, "refs/tags/"))
+	if (data->tags_only && !starts_with(path, "refs/tags/"))
 		return 0;
 
 	if (data->ref_filter) {

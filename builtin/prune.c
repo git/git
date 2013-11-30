@@ -80,7 +80,7 @@ static int prune_dir(int i, char *path)
 			prune_object(path, de->d_name, sha1);
 			continue;
 		}
-		if (!prefixcmp(de->d_name, "tmp_obj_")) {
+		if (starts_with(de->d_name, "tmp_obj_")) {
 			prune_tmp_object(path, de->d_name);
 			continue;
 		}
@@ -119,7 +119,7 @@ static void remove_temporary_files(const char *path)
 		return;
 	}
 	while ((de = readdir(dir)) != NULL)
-		if (!prefixcmp(de->d_name, "tmp_"))
+		if (starts_with(de->d_name, "tmp_"))
 			prune_tmp_object(path, de->d_name);
 	closedir(dir);
 }

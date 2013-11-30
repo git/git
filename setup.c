@@ -82,7 +82,7 @@ int check_filename(const char *prefix, const char *arg)
 	const char *name;
 	struct stat st;
 
-	if (!prefixcmp(arg, ":/")) {
+	if (starts_with(arg, ":/")) {
 		if (arg[2] == '\0') /* ":/" is root dir, always exists */
 			return 1;
 		name = arg + 2;
@@ -304,7 +304,7 @@ const char *read_gitfile(const char *path)
 	if (len != st.st_size)
 		die("Error reading %s", path);
 	buf[len] = '\0';
-	if (prefixcmp(buf, "gitdir: "))
+	if (!starts_with(buf, "gitdir: "))
 		die("Invalid gitfile format: %s", path);
 	while (buf[len - 1] == '\n' || buf[len - 1] == '\r')
 		len--;

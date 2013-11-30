@@ -37,8 +37,8 @@ static int show_ref(const char *refname, const unsigned char *sha1, int flag, vo
 	if (tags_only || heads_only) {
 		int match;
 
-		match = heads_only && !prefixcmp(refname, "refs/heads/");
-		match |= tags_only && !prefixcmp(refname, "refs/tags/");
+		match = heads_only && starts_with(refname, "refs/heads/");
+		match |= tags_only && starts_with(refname, "refs/tags/");
 		if (!match)
 			return 0;
 	}
@@ -210,7 +210,7 @@ int cmd_show_ref(int argc, const char **argv, const char *prefix)
 		while (*pattern) {
 			unsigned char sha1[20];
 
-			if (!prefixcmp(*pattern, "refs/") &&
+			if (starts_with(*pattern, "refs/") &&
 			    !read_ref(*pattern, sha1)) {
 				if (!quiet)
 					show_one(*pattern, sha1);

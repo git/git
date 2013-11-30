@@ -141,7 +141,7 @@ static void add_to_known_names(const char *path,
 
 static int get_name(const char *path, const unsigned char *sha1, int flag, void *cb_data)
 {
-	int is_tag = !prefixcmp(path, "refs/tags/");
+	int is_tag = starts_with(path, "refs/tags/");
 	unsigned char peeled[20];
 	int is_annotated, prio;
 

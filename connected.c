@@ -38,7 +38,7 @@ int check_everything_connected_with_transport(sha1_iterate_fn fn,
 	if (transport && transport->smart_options &&
 	    transport->smart_options->self_contained_and_connected &&
 	    transport->pack_lockfile &&
-	    !suffixcmp(transport->pack_lockfile, ".keep")) {
+	    ends_with(transport->pack_lockfile, ".keep")) {
 		struct strbuf idx_file = STRBUF_INIT;
 		strbuf_addstr(&idx_file, transport->pack_lockfile);
 		strbuf_setlen(&idx_file, idx_file.len - 5); /* ".keep" */
