@@ -80,14 +80,6 @@ static int verbose;
 static int show_all(void);
 static int prune_remote(const char *remote, int dry_run);
 
-static inline int postfixcmp(const char *string, const char *postfix)
-{
-	int len1 = strlen(string), len2 = strlen(postfix);
-	if (len1 < len2)
-		return 1;
-	return strcmp(string + len1 - len2, postfix);
-}
-
 static int fetch_remote(const char *name)
 {
 	const char *argv[] = { "fetch", name, NULL, NULL };
@@ -277,13 +269,13 @@ static int config_read_branches(const char *key, const char *value, void *cb)
 		enum { REMOTE, MERGE, REBASE } type;
 
 		key += 7;
-		if (!postfixcmp(key, ".remote")) {
+		if (!suffixcmp(key, ".remote")) {
 			name = xstrndup(key, strlen(key) - 7);
 			type = REMOTE;
-		} else if (!postfixcmp(key, ".merge")) {
+		} else if (!suffixcmp(key, ".merge")) {
 			name = xstrndup(key, strlen(key) - 6);
 			type = MERGE;
-		} else if (!postfixcmp(key, ".rebase")) {
+		} else if (!suffixcmp(key, ".rebase")) {
 			name = xstrndup(key, strlen(key) - 7);
 			type = REBASE;
 		} else
