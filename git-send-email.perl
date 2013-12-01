@@ -1217,6 +1217,7 @@ X-Mailer: git-send-email $gitversion
 			$smtp ||= Net::SMTP::SSL->new($smtp_server,
 						      Hello => $smtp_domain,
 						      Port => $smtp_server_port,
+						      Debug => $debug_net_smtp,
 						      ssl_verify_params());
 		}
 		else {
