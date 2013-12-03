@@ -35,9 +35,38 @@ static void add_refspec(const char *ref)
 	refspec[refspec_nr-1] = ref;
 }
 
-static void set_refspecs(const char **refs, int nr)
+static const char *map_refspec(const char *ref,
+			       struct remote *remote, struct ref *local_refs)
 {
+	struct ref *matched = NULL;
+
+	/* Does "ref" uniquely name our ref? */
+	if (count_refspec_match(ref, local_refs, &matched) != 1)
+		return ref;
+
+	if (remote->push) {
+		struct refspec query;
+		memset(&query, 0, sizeof(struct refspec));
+		query.src = matched->name;
+		if (!query_refspecs(remote->push, remote->push_refspec_nr, &query) &&
+		    query.dst) {
+			struct strbuf buf = STRBUF_INIT;
+			strbuf_addf(&buf, "%s%s:%s",
+				    query.force ? "+" : "",
+				    query.src, query.dst);
+			return strbuf_detach(&buf, NULL);
+		}
+	}
+
+	return ref;
+}
+
+static void set_refspecs(const char **refs, int nr, const char *repo)
+{
+	struct remote *remote = NULL;
+	struct ref *local_refs = NULL;
 	int i;
+
 	for (i = 0; i < nr; i++) {
 		const char *ref = refs[i];
 		if (!strcmp("tag", ref)) {
@@ -56,6 +85,13 @@ static void set_refspecs(const char **refs, int nr)
 				die(_("--delete only accepts plain target ref names"));
 			strbuf_addf(&delref, ":%s", ref);
 			ref = strbuf_detach(&delref, NULL);
+		} else if (!strchr(ref, ':')) {
+			if (!remote) {
+				/* lazily grab remote and local_refs */
+				remote = remote_get(repo);
+				local_refs = get_local_heads();
+			}
+			ref = map_refspec(ref, remote, local_refs);
 		}
 		add_refspec(ref);
 	}
@@ -487,7 +523,7 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 
 	if (argc > 0) {
 		repo = argv[0];
-		set_refspecs(argv + 1, argc - 1);
+		set_refspecs(argv + 1, argc - 1, repo);
 	}
 
 	rc = do_push(repo, flags);
