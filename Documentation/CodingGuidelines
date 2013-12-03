@@ -260,9 +260,11 @@ Writing Documentation:
 
  Every user-visible change should be reflected in the documentation.
  The same general rule as for code applies -- imitate the existing
- conventions.  A few commented examples follow to provide reference
- when writing or modifying command usage strings and synopsis sections
- in the manual pages:
+ conventions.
+
+ A few commented examples follow to provide reference when writing or
+ modifying command usage strings and synopsis sections in the manual
+ pages:
 
  Placeholders are spelled in lowercase and enclosed in angle brackets:
    <file>
@@ -312,3 +314,29 @@ Writing Documentation:
    Use 'git' (all lowercase) when talking about commands i.e. something
    the user would type into a shell and use 'Git' (uppercase first letter)
    when talking about the version control system and its properties.
+
+ A few commented examples follow to provide reference when writing or
+ modifying paragraphs or option/command explanations that contain options
+ or commands:
+
+ Literal examples (e.g. use of command-line options, command names, and
+ configuration variables) are typeset in monospace, and if you can use
+ `backticks around word phrases`, do so.
+   `--pretty=oneline`
+   `git rev-list`
+   `remote.pushdefault`
+
+ Word phrases enclosed in `backtick characters` are rendered literally
+ and will not be further expanded. The use of `backticks` to achieve the
+ previous rule means that literal examples should not use AsciiDoc
+ escapes.
+   Correct:
+      `--pretty=oneline`
+   Incorrect:
+      `\--pretty=oneline`
+
+ If some place in the documentation needs to typeset a command usage
+ example with inline substitutions, it is fine to use +monospaced and
+ inline substituted text+ instead of `monospaced literal text`, and with
+ the former, the part that should not get substituted must be
+ quoted/escaped.
