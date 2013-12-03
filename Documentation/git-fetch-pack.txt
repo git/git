@@ -12,7 +12,7 @@ SYNOPSIS
 'git fetch-pack' [--all] [--quiet|-q] [--keep|-k] [--thin] [--include-tag]
 	[--upload-pack=<git-upload-pack>]
 	[--depth=<n>] [--no-progress]
-	[-v] [<host>:]<directory> [<refs>...]
+	[-v] <repository> [<refs>...]
 
 DESCRIPTION
 -----------
@@ -97,18 +97,17 @@ be in a separate packet, and the list must end with a flush packet.
 -v::
 	Run verbosely.
 
-<host>::
-	A remote host that houses the repository.  When this
-	part is specified, 'git-upload-pack' is invoked via
-	ssh.
-
-<directory>::
-	The repository to sync from.
+<repository>::
+	The URL to the remote repository.
 
 <refs>...::
 	The remote heads to update from. This is relative to
 	$GIT_DIR (e.g. "HEAD", "refs/heads/master").  When
 	unspecified, update from all heads the remote side has.
+
+SEE ALSO
+--------
+linkgit:git-fetch[1]
 
 GIT
 ---
