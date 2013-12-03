@@ -197,11 +197,11 @@ static unsigned prefix_pathspec(struct pathspec_item *item,
 	magic |= short_magic;
 	*p_short_magic = short_magic;
 
-	/* --noglob-pathspec adds :(literal) _unless_ :(glob) is specifed */
+	/* --noglob-pathspec adds :(literal) _unless_ :(glob) is specified */
 	if (noglob_global && !(magic & PATHSPEC_GLOB))
 		global_magic |= PATHSPEC_LITERAL;
 
-	/* --glob-pathspec is overriden by :(literal) */
+	/* --glob-pathspec is overridden by :(literal) */
 	if ((global_magic & PATHSPEC_GLOB) && (magic & PATHSPEC_LITERAL))
 		global_magic &= ~PATHSPEC_GLOB;
 

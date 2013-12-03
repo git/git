@@ -137,7 +137,7 @@ bisect_start() {
 			# cogito usage, and cogito users should understand
 			# it relates to cg-seek.
 			[ -s "$GIT_DIR/head-name" ] &&
-				die "$(gettext "won't bisect on seeked tree")"
+				die "$(gettext "won't bisect on cg-seek'ed tree")"
 			start_head="${head#refs/heads/}"
 			;;
 		*)
