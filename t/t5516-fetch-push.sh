@@ -1160,6 +1160,7 @@ test_expect_success 'with no remote.$name.push, it is not used as refmap' '
 		git pull ../testrepo master &&
 		git branch next &&
 		git config remote.dst.url ../dst &&
+		git config push.default matching &&
 		git push dst master &&
 		git show-ref refs/heads/master >../dst/expect
 	) &&
@@ -1167,6 +1168,35 @@ test_expect_success 'with no remote.$name.push, it is not used as refmap' '
 		cd dst &&
 		test_must_fail git show-ref refs/heads/next &&
 		git show-ref refs/heads/master >actual
+	) &&
+	test_cmp dst/expect dst/actual
+'
+
+test_expect_success 'with no remote.$name.push, upstream mapping is used' '
+	mk_test testrepo heads/master &&
+	rm -fr src dst &&
+	git init src &&
+	git init --bare dst &&
+	(
+		cd src &&
+		git pull ../testrepo master &&
+		git branch next &&
+		git config remote.dst.url ../dst &&
+		git config remote.dst.fetch "+refs/heads/*:refs/remotes/dst/*" &&
+		git config push.default upstream &&
+
+		git config branch.master.merge refs/heads/trunk &&
+		git config branch.master.remote dst &&
+
+		git push dst master &&
+		git show-ref refs/heads/master |
+		sed -e "s|refs/heads/master|refs/heads/trunk|" >../dst/expect
+	) &&
+	(
+		cd dst &&
+		test_must_fail git show-ref refs/heads/master &&
+		test_must_fail git show-ref refs/heads/next &&
+		git show-ref refs/heads/trunk >actual
 	) &&
 	test_cmp dst/expect dst/actual
 '

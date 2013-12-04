@@ -58,6 +58,17 @@ static const char *map_refspec(const char *ref,
 		}
 	}
 
+	if (push_default == PUSH_DEFAULT_UPSTREAM &&
+	    !prefixcmp(matched->name, "refs/heads/")) {
+		struct branch *branch = branch_get(matched->name + 11);
+		if (branch->merge_nr == 1 && branch->merge[0]->src) {
+			struct strbuf buf = STRBUF_INIT;
+			strbuf_addf(&buf, "%s:%s",
+				    ref, branch->merge[0]->src);
+			return strbuf_detach(&buf, NULL);
+		}
+	}
+
 	return ref;
 }
 
