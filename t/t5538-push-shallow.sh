@@ -67,4 +67,19 @@ test_expect_success 'push from shallow clone, with grafted roots' '
 	git fsck
 '
 
+test_expect_success 'add new shallow root with receive.updateshallow on' '
+	test_config receive.shallowupdate true &&
+	(
+	cd shallow2 &&
+	git push ../.git +master:refs/remotes/shallow2/master
+	) &&
+	git log --format=%s shallow2/master >actual &&
+	git fsck &&
+	cat <<EOF >expect &&
+c
+b
+EOF
+	test_cmp expect actual
+'
+
 test_done

@@ -44,6 +44,7 @@ static int fix_thin = 1;
 static const char *head_name;
 static void *head_name_to_free;
 static int sent_capabilities;
+static int shallow_update;
 static const char *alt_shallow_file;
 
 static enum deny_action parse_deny_action(const char *var, const char *value)
@@ -120,6 +121,11 @@ static int receive_pack_config(const char *var, const char *value, void *cb)
 
 	if (strcmp(var, "receive.autogc") == 0) {
 		auto_gc = git_config_bool(var, value);
+		return 0;
+	}
+
+	if (strcmp(var, "receive.shallowupdate") == 0) {
+		shallow_update = git_config_bool(var, value);
 		return 0;
 	}
 
@@ -423,7 +429,46 @@ static void refuse_unconfigured_deny_delete_current(void)
 		rp_error("%s", refuse_unconfigured_deny_delete_current_msg[i]);
 }
 
-static const char *update(struct command *cmd)
+static int command_singleton_iterator(void *cb_data, unsigned char sha1[20]);
+static int update_shallow_ref(struct command *cmd, struct shallow_info *si)
+{
+	static struct lock_file shallow_lock;
+	struct sha1_array extra = SHA1_ARRAY_INIT;
+	const char *alt_file;
+	uint32_t mask = 1 << (cmd->index % 32);
+	int i;
+
+	trace_printf_key("GIT_TRACE_SHALLOW",
+			 "shallow: update_shallow_ref %s\n", cmd->ref_name);
+	for (i = 0; i < si->shallow->nr; i++)
+		if (si->used_shallow[i] &&
+		    (si->used_shallow[i][cmd->index / 32] & mask) &&
+		    !delayed_reachability_test(si, i))
+			sha1_array_append(&extra, si->shallow->sha1[i]);
+
+	setup_alternate_shallow(&shallow_lock, &alt_file, &extra);
+	if (check_shallow_connected(command_singleton_iterator,
+				    0, cmd, alt_file)) {
+		rollback_lock_file(&shallow_lock);
+		sha1_array_clear(&extra);
+		return -1;
+	}
+
+	commit_lock_file(&shallow_lock);
+
+	/*
+	 * Make sure setup_alternate_shallow() for the next ref does
+	 * not lose these new roots..
+	 */
+	for (i = 0; i < extra.nr; i++)
+		register_shallow(extra.sha1[i]);
+
+	si->shallow_ref[cmd->index] = 0;
+	sha1_array_clear(&extra);
+	return 0;
+}
+
+static const char *update(struct command *cmd, struct shallow_info *si)
 {
 	const char *name = cmd->ref_name;
 	struct strbuf namespaced_name_buf = STRBUF_INIT;
@@ -531,6 +576,10 @@ static const char *update(struct command *cmd)
 		return NULL; /* good */
 	}
 	else {
+		if (shallow_update && si->shallow_ref[cmd->index] &&
+		    update_shallow_ref(cmd, si))
+			return "shallow error";
+
 		lock = lock_any_ref_for_update(namespaced_name, old_sha1,
 					       0, NULL);
 		if (!lock) {
@@ -671,12 +720,16 @@ static int command_singleton_iterator(void *cb_data, unsigned char sha1[20])
 	return 0;
 }
 
-static void set_connectivity_errors(struct command *commands)
+static void set_connectivity_errors(struct command *commands,
+				    struct shallow_info *si)
 {
 	struct command *cmd;
 
 	for (cmd = commands; cmd; cmd = cmd->next) {
 		struct command *singleton = cmd;
+		if (shallow_update && si->shallow_ref[cmd->index])
+			/* to be checked in update_shallow_ref() */
+			continue;
 		if (!check_everything_connected(command_singleton_iterator,
 						0, &singleton))
 			continue;
@@ -684,18 +737,26 @@ static void set_connectivity_errors(struct command *commands)
 	}
 }
 
+struct iterate_data {
+	struct command *cmds;
+	struct shallow_info *si;
+};
+
 static int iterate_receive_command_list(void *cb_data, unsigned char sha1[20])
 {
-	struct command **cmd_list = cb_data;
+	struct iterate_data *data = cb_data;
+	struct command **cmd_list = &data->cmds;
 	struct command *cmd = *cmd_list;
 
-	while (cmd) {
+	for (; cmd; cmd = cmd->next) {
+		if (shallow_update && data->si->shallow_ref[cmd->index])
+			/* to be checked in update_shallow_ref() */
+			continue;
 		if (!is_null_sha1(cmd->new_sha1) && !cmd->skip_update) {
 			hashcpy(sha1, cmd->new_sha1);
 			*cmd_list = cmd->next;
 			return 0;
 		}
-		cmd = cmd->next;
 	}
 	*cmd_list = NULL;
 	return -1; /* end of list */
@@ -715,10 +776,14 @@ static void reject_updates_to_hidden(struct command *commands)
 	}
 }
 
-static void execute_commands(struct command *commands, const char *unpacker_error)
+static void execute_commands(struct command *commands,
+			     const char *unpacker_error,
+			     struct shallow_info *si)
 {
+	int checked_connectivity;
 	struct command *cmd;
 	unsigned char sha1[20];
+	struct iterate_data data;
 
 	if (unpacker_error) {
 		for (cmd = commands; cmd; cmd = cmd->next)
@@ -726,10 +791,10 @@ static void execute_commands(struct command *commands, const char *unpacker_erro
 		return;
 	}
 
-	cmd = commands;
-	if (check_everything_connected(iterate_receive_command_list,
-				       0, &cmd))
-		set_connectivity_errors(commands);
+	data.cmds = commands;
+	data.si = si;
+	if (check_everything_connected(iterate_receive_command_list, 0, &data))
+		set_connectivity_errors(commands, si);
 
 	reject_updates_to_hidden(commands);
 
@@ -746,6 +811,7 @@ static void execute_commands(struct command *commands, const char *unpacker_erro
 	free(head_name_to_free);
 	head_name = head_name_to_free = resolve_refdup("HEAD", sha1, 0, NULL);
 
+	checked_connectivity = 1;
 	for (cmd = commands; cmd; cmd = cmd->next) {
 		if (cmd->error_string)
 			continue;
@@ -753,7 +819,22 @@ static void execute_commands(struct command *commands, const char *unpacker_erro
 		if (cmd->skip_update)
 			continue;
 
-		cmd->error_string = update(cmd);
+		cmd->error_string = update(cmd, si);
+		if (shallow_update && !cmd->error_string &&
+		    si->shallow_ref[cmd->index]) {
+			error("BUG: connectivity check has not been run on ref %s",
+			      cmd->ref_name);
+			checked_connectivity = 0;
+		}
+	}
+
+	if (shallow_update) {
+		if (!checked_connectivity)
+			error("BUG: run 'git fsck' for safety.\n"
+			      "If there are errors, try to remove "
+			      "the reported refs above");
+		if (alt_shallow_file && *alt_shallow_file)
+			unlink(alt_shallow_file);
 	}
 }
 
@@ -924,6 +1005,53 @@ static const char *unpack_with_sideband(struct shallow_info *si)
 	return ret;
 }
 
+static void prepare_shallow_update(struct command *commands,
+				   struct shallow_info *si)
+{
+	int i, j, k, bitmap_size = (si->ref->nr + 31) / 32;
+
+	si->used_shallow = xmalloc(sizeof(*si->used_shallow) *
+				   si->shallow->nr);
+	assign_shallow_commits_to_refs(si, si->used_shallow, NULL);
+
+	si->need_reachability_test =
+		xcalloc(si->shallow->nr, sizeof(*si->need_reachability_test));
+	si->reachable =
+		xcalloc(si->shallow->nr, sizeof(*si->reachable));
+	si->shallow_ref = xcalloc(si->ref->nr, sizeof(*si->shallow_ref));
+
+	for (i = 0; i < si->nr_ours; i++)
+		si->need_reachability_test[si->ours[i]] = 1;
+
+	for (i = 0; i < si->shallow->nr; i++) {
+		if (!si->used_shallow[i])
+			continue;
+		for (j = 0; j < bitmap_size; j++) {
+			if (!si->used_shallow[i][j])
+				continue;
+			si->need_reachability_test[i]++;
+			for (k = 0; k < 32; k++)
+				if (si->used_shallow[i][j] & (1 << k))
+					si->shallow_ref[j * 32 + k]++;
+		}
+
+		/*
+		 * true for those associated with some refs and belong
+		 * in "ours" list aka "step 7 not done yet"
+		 */
+		si->need_reachability_test[i] =
+			si->need_reachability_test[i] > 1;
+	}
+
+	/*
+	 * keep hooks happy by forcing a temporary shallow file via
+	 * env variable because we can't add --shallow-file to every
+	 * command. check_everything_connected() will be done with
+	 * true .git/shallow though.
+	 */
+	setenv(GIT_SHALLOW_FILE_ENVIRONMENT, alt_shallow_file, 1);
+}
+
 static void update_shallow_info(struct command *commands,
 				struct shallow_info *si,
 				struct sha1_array *ref)
@@ -932,8 +1060,10 @@ static void update_shallow_info(struct command *commands,
 	int *ref_status;
 	remove_nonexistent_theirs_shallow(si);
 	/* XXX remove_nonexistent_ours_in_pack() */
-	if (!si->nr_ours && !si->nr_theirs)
+	if (!si->nr_ours && !si->nr_theirs) {
+		shallow_update = 0;
 		return;
+	}
 
 	for (cmd = commands; cmd; cmd = cmd->next) {
 		if (is_null_sha1(cmd->new_sha1))
@@ -942,6 +1072,11 @@ static void update_shallow_info(struct command *commands,
 		cmd->index = ref->nr - 1;
 	}
 	si->ref = ref;
+
+	if (shallow_update) {
+		prepare_shallow_update(commands, si);
+		return;
+	}
 
 	ref_status = xmalloc(sizeof(*ref_status) * ref->nr);
 	assign_shallow_commits_to_refs(si, NULL, ref_status);
@@ -1064,11 +1199,13 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 		const char *unpack_status = NULL;
 
 		prepare_shallow_info(&si, &shallow);
+		if (!si.nr_ours && !si.nr_theirs)
+			shallow_update = 0;
 		if (!delete_only(commands)) {
 			unpack_status = unpack_with_sideband(&si);
 			update_shallow_info(commands, &si, &ref);
 		}
-		execute_commands(commands, unpack_status);
+		execute_commands(commands, unpack_status, &si);
 		if (pack_lockfile)
 			unlink_or_warn(pack_lockfile);
 		if (report_status)
