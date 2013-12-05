@@ -174,11 +174,11 @@ test_expect_success \
 test_expect_success \
     '[index v1] 5) pack-objects happily reuses corrupted data' \
     'pack4=$(git pack-objects test-4 <obj-list) &&
-     test -f "test-4-${pack1}.pack"'
+     test -f "test-4-${pack4}.pack"'
 
 test_expect_success \
     '[index v1] 6) newly created pack is BAD !' \
-    'test_must_fail git verify-pack -v "test-4-${pack1}.pack"'
+    'test_must_fail git verify-pack -v "test-4-${pack4}.pack"'
 
 test_expect_success \
     '[index v2] 1) stream pack to repository' \

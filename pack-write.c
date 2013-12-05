@@ -44,14 +44,13 @@ static int need_large_offset(off_t offset, const struct pack_idx_option *opts)
  */
 const char *write_idx_file(const char *index_name, struct pack_idx_entry **objects,
 			   int nr_objects, const struct pack_idx_option *opts,
-			   unsigned char *sha1)
+			   const unsigned char *sha1)
 {
 	struct sha1file *f;
 	struct pack_idx_entry **sorted_by_sha, **list, **last;
 	off_t last_obj_offset = 0;
 	uint32_t array[256];
 	int i, fd;
-	git_SHA_CTX ctx;
 	uint32_t index_version;
 
 	if (nr_objects) {
@@ -114,9 +113,6 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 	}
 	sha1write(f, array, 256 * 4);
 
-	/* compute the SHA1 hash of sorted object names. */
-	git_SHA1_Init(&ctx);
-
 	/*
 	 * Write the actual SHA1 entries..
 	 */
@@ -128,7 +124,6 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 			sha1write(f, &offset, 4);
 		}
 		sha1write(f, obj->sha1, 20);
-		git_SHA1_Update(&ctx, obj->sha1, 20);
 		if ((opts->flags & WRITE_IDX_STRICT) &&
 		    (i && !hashcmp(list[-2]->sha1, obj->sha1)))
 			die("The same object %s appears twice in the pack",
@@ -178,7 +173,6 @@ const char *write_idx_file(const char *index_name, struct pack_idx_entry **objec
 	sha1write(f, sha1, 20);
 	sha1close(f, NULL, ((opts->flags & WRITE_IDX_VERIFY)
 			    ? CSUM_CLOSE : CSUM_FSYNC));
-	git_SHA1_Final(sha1, &ctx);
 	return index_name;
 }
 
