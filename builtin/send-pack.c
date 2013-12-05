@@ -101,6 +101,7 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 	int fd[2];
 	struct child_process *conn;
 	struct sha1_array extra_have = SHA1_ARRAY_INIT;
+	struct sha1_array shallow = SHA1_ARRAY_INIT;
 	struct ref *remote_refs, *local_refs;
 	int ret;
 	int helper_status = 0;
@@ -232,7 +233,8 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 			args.verbose ? CONNECT_VERBOSE : 0);
 	}
 
-	get_remote_heads(fd[0], NULL, 0, &remote_refs, REF_NORMAL, &extra_have, NULL);
+	get_remote_heads(fd[0], NULL, 0, &remote_refs, REF_NORMAL,
+			 &extra_have, &shallow);
 
 	transport_verify_remote_names(nr_refspecs, refspecs);
 

@@ -82,4 +82,42 @@ EOF
 	test_cmp expect actual
 '
 
+test_expect_success 'push from shallow to shallow' '
+	(
+	cd shallow &&
+	git --git-dir=../shallow2/.git config receive.shallowupdate true &&
+	git push ../shallow2/.git +master:refs/remotes/shallow/master &&
+	git --git-dir=../shallow2/.git config receive.shallowupdate false
+	) &&
+	(
+	cd shallow2 &&
+	git log --format=%s shallow/master >actual &&
+	git fsck &&
+	cat <<EOF >expect &&
+5
+4
+3
+EOF
+	test_cmp expect actual
+	)
+'
+
+test_expect_success 'push from full to shallow' '
+	! git --git-dir=shallow2/.git cat-file blob `echo 1|git hash-object --stdin` &&
+	commit 1 &&
+	git push shallow2/.git +master:refs/remotes/top/master &&
+	(
+	cd shallow2 &&
+	git log --format=%s top/master >actual &&
+	git fsck &&
+	cat <<EOF >expect &&
+1
+4
+3
+EOF
+	test_cmp expect actual &&
+	git cat-file blob `echo 1|git hash-object --stdin` >/dev/null
+	)
+'
+
 test_done
