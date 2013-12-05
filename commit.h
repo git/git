@@ -202,7 +202,7 @@ extern int is_repository_shallow(void);
 extern struct commit_list *get_shallow_commits(struct object_array *heads,
 		int depth, int shallow_flag, int not_shallow_flag);
 extern void check_shallow_file_for_update(void);
-extern void set_alternate_shallow_file(const char *path);
+extern void set_alternate_shallow_file(const char *path, int override);
 extern int write_shallow_commits(struct strbuf *out, int use_pack_protocol,
 				 const struct sha1_array *extra);
 extern void setup_alternate_shallow(struct lock_file *shallow_lock,
