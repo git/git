@@ -360,6 +360,12 @@ static int fetch_with_fetch(struct transport *transport,
 	    data->transport_options.check_self_contained_and_connected)
 		set_helper_option(transport, "check-connectivity", "true");
 
+	if (transport->cloning)
+		set_helper_option(transport, "cloning", "true");
+
+	if (data->transport_options.update_shallow)
+		set_helper_option(transport, "update-shallow", "true");
+
 	for (i = 0; i < nr_heads; i++) {
 		const struct ref *posn = to_fetch[i];
 		if (posn->status & REF_STATUS_UPTODATE)

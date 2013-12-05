@@ -437,6 +437,13 @@ set by Git if the remote helper has the 'option' capability.
 'option check-connectivity' \{'true'|'false'\}::
 	Request the helper to check connectivity of a clone.
 
+'option cloning \{'true'|'false'\}::
+	Notify the helper this is a clone request (i.e. the current
+	repository is guaranteed empty).
+
+'option update-shallow \{'true'|'false'\}::
+	Allow to extend .git/shallow if the new refs require it.
+
 SEE ALSO
 --------
 linkgit:git-remote[1]
