@@ -13,6 +13,7 @@
 #include "string-list.h"
 #include "sha1-array.h"
 #include "connected.h"
+#include "argv-array.h"
 #include "version.h"
 
 static const char receive_pack_usage[] = "git receive-pack <git-dir>";
@@ -822,8 +823,11 @@ static const char *pack_lockfile;
 static const char *unpack(int err_fd)
 {
 	struct pack_header hdr;
+	struct argv_array av = ARGV_ARRAY_INIT;
 	const char *hdr_err;
+	int status;
 	char hdr_arg[38];
+	struct child_process child;
 	int fsck_objects = (receive_fsck_objects >= 0
 			    ? receive_fsck_objects
 			    : transfer_fsck_objects >= 0
@@ -840,63 +844,49 @@ static const char *unpack(int err_fd)
 			"--pack_header=%"PRIu32",%"PRIu32,
 			ntohl(hdr.hdr_version), ntohl(hdr.hdr_entries));
 
+	memset(&child, 0, sizeof(child));
 	if (ntohl(hdr.hdr_entries) < unpack_limit) {
-		int code, i = 0;
-		struct child_process child;
-		const char *unpacker[5];
-		unpacker[i++] = "unpack-objects";
+		argv_array_pushl(&av, "unpack-objects", hdr_arg, NULL);
 		if (quiet)
-			unpacker[i++] = "-q";
+			argv_array_push(&av, "-q");
 		if (fsck_objects)
-			unpacker[i++] = "--strict";
-		unpacker[i++] = hdr_arg;
-		unpacker[i++] = NULL;
-		memset(&child, 0, sizeof(child));
-		child.argv = unpacker;
+			argv_array_push(&av, "--strict");
+		child.argv = av.argv;
 		child.no_stdout = 1;
 		child.err = err_fd;
 		child.git_cmd = 1;
-		code = run_command(&child);
-		if (!code)
-			return NULL;
-		return "unpack-objects abnormal exit";
+		status = run_command(&child);
+		if (status)
+			return "unpack-objects abnormal exit";
 	} else {
-		const char *keeper[7];
-		int s, status, i = 0;
+		int s;
 		char keep_arg[256];
-		struct child_process ip;
 
 		s = sprintf(keep_arg, "--keep=receive-pack %"PRIuMAX" on ", (uintmax_t) getpid());
 		if (gethostname(keep_arg + s, sizeof(keep_arg) - s))
 			strcpy(keep_arg + s, "localhost");
 
-		keeper[i++] = "index-pack";
-		keeper[i++] = "--stdin";
+		argv_array_pushl(&av, "index-pack",
+				 "--stdin", hdr_arg, keep_arg, NULL);
 		if (fsck_objects)
-			keeper[i++] = "--strict";
+			argv_array_push(&av, "--strict");
 		if (fix_thin)
-			keeper[i++] = "--fix-thin";
-		keeper[i++] = hdr_arg;
-		keeper[i++] = keep_arg;
-		keeper[i++] = NULL;
-		memset(&ip, 0, sizeof(ip));
-		ip.argv = keeper;
-		ip.out = -1;
-		ip.err = err_fd;
-		ip.git_cmd = 1;
-		status = start_command(&ip);
-		if (status) {
+			argv_array_push(&av, "--fix-thin");
+		child.argv = av.argv;
+		child.out = -1;
+		child.err = err_fd;
+		child.git_cmd = 1;
+		status = start_command(&child);
+		if (status)
 			return "index-pack fork failed";
-		}
-		pack_lockfile = index_pack_lockfile(ip.out);
-		close(ip.out);
-		status = finish_command(&ip);
-		if (!status) {
-			reprepare_packed_git();
-			return NULL;
-		}
-		return "index-pack abnormal exit";
+		pack_lockfile = index_pack_lockfile(child.out);
+		close(child.out);
+		status = finish_command(&child);
+		if (status)
+			return "index-pack abnormal exit";
+		reprepare_packed_git();
 	}
+	return NULL;
 }
 
 static const char *unpack_with_sideband(void)
