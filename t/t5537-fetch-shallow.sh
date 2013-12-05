@@ -141,4 +141,36 @@ EOF
 	)
 '
 
+test_expect_success 'fetch --update-shallow' '
+	(
+	cd shallow &&
+	git checkout master &&
+	commit 7 &&
+	git tag -m foo heavy-tag HEAD^ &&
+	git tag light-tag HEAD^:tracked
+	) &&
+	(
+	cd notshallow &&
+	git fetch --update-shallow ../shallow/.git refs/heads/*:refs/remotes/shallow/* &&
+	git fsck &&
+	git for-each-ref --sort=refname --format="%(refname)" >actual.refs &&
+	cat <<EOF >expect.refs &&
+refs/remotes/shallow/master
+refs/remotes/shallow/no-shallow
+refs/tags/heavy-tag
+refs/tags/light-tag
+EOF
+	test_cmp expect.refs actual.refs &&
+	git log --format=%s shallow/master >actual &&
+	cat <<EOF >expect &&
+7
+6
+5
+4
+3
+EOF
+	test_cmp expect actual
+	)
+'
+
 test_done

@@ -21,6 +21,12 @@
 If the source repository is shallow, fetch as much as possible so that
 the current repository has the same history as the source repository.
 
+--update-shallow::
+	By default when fetching from a shallow repository,
+	`git fetch` refuses refs that require updating
+	.git/shallow. This option updates .git/shallow and accept such
+	refs.
+
 ifndef::git-pull[]
 --dry-run::
 	Show what would be done, without making any changes.

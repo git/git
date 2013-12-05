@@ -993,6 +993,33 @@ static void update_shallow(struct fetch_pack_args *args,
 		sha1_array_append(&ref, sought[i]->old_sha1);
 	si->ref = &ref;
 
+	if (args->update_shallow) {
+		/*
+		 * remote is also shallow, .git/shallow may be updated
+		 * so all refs can be accepted. Make sure we only add
+		 * shallow roots that are actually reachable from new
+		 * refs.
+		 */
+		struct sha1_array extra = SHA1_ARRAY_INIT;
+		unsigned char (*sha1)[20] = si->shallow->sha1;
+		assign_shallow_commits_to_refs(si, NULL, NULL);
+		if (!si->nr_ours && !si->nr_theirs) {
+			sha1_array_clear(&ref);
+			return;
+		}
+		for (i = 0; i < si->nr_ours; i++)
+			sha1_array_append(&extra, sha1[si->ours[i]]);
+		for (i = 0; i < si->nr_theirs; i++)
+			sha1_array_append(&extra, sha1[si->theirs[i]]);
+		setup_alternate_shallow(&shallow_lock,
+					&alternate_shallow_file,
+					&extra);
+		commit_lock_file(&shallow_lock);
+		sha1_array_clear(&extra);
+		sha1_array_clear(&ref);
+		return;
+	}
+
 	/*
 	 * remote is also shallow, check what ref is safe to update
 	 * without updating .git/shallow

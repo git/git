@@ -36,7 +36,7 @@ static int prune = -1; /* unspecified */
 
 static int all, append, dry_run, force, keep, multiple, update_head_ok, verbosity;
 static int progress = -1, recurse_submodules = RECURSE_SUBMODULES_DEFAULT;
-static int tags = TAGS_DEFAULT, unshallow;
+static int tags = TAGS_DEFAULT, unshallow, update_shallow;
 static const char *depth;
 static const char *upload_pack;
 static struct strbuf default_rla = STRBUF_INIT;
@@ -104,6 +104,8 @@ static struct option builtin_fetch_options[] = {
 	{ OPTION_STRING, 0, "recurse-submodules-default",
 		   &recurse_submodules_default, NULL,
 		   N_("default mode for recursion"), PARSE_OPT_HIDDEN },
+	OPT_BOOL(0, "update-shallow", &update_shallow,
+		 N_("accept refs that update .git/shallow")),
 	OPT_END()
 };
 
@@ -768,6 +770,8 @@ static struct transport *prepare_transport(struct remote *remote)
 		set_option(transport, TRANS_OPT_KEEP, "yes");
 	if (depth)
 		set_option(transport, TRANS_OPT_DEPTH, depth);
+	if (update_shallow)
+		set_option(transport, TRANS_OPT_UPDATE_SHALLOW, "yes");
 	return transport;
 }
 

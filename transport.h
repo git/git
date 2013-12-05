@@ -11,6 +11,7 @@ struct git_transport_options {
 	unsigned followtags : 1;
 	unsigned check_self_contained_and_connected : 1;
 	unsigned self_contained_and_connected : 1;
+	unsigned update_shallow : 1;
 	int depth;
 	const char *uploadpack;
 	const char *receivepack;
@@ -151,6 +152,9 @@ struct transport *transport_get(struct remote *, const char *);
 
 /* Aggressively fetch annotated tags if possible */
 #define TRANS_OPT_FOLLOWTAGS "followtags"
+
+/* Accept refs that may update .git/shallow without --depth */
+#define TRANS_OPT_UPDATE_SHALLOW "updateshallow"
 
 /**
  * Returns 0 if the option was used, non-zero otherwise. Prints a
