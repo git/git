@@ -1505,7 +1505,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	struct strbuf sb = STRBUF_INIT;
 	struct strbuf author_ident = STRBUF_INIT;
 	const char *index_file, *reflog_msg;
-	char *nl, *p;
+	char *nl;
 	unsigned char sha1[20];
 	struct ref_lock *ref_lock;
 	struct commit_list *parents = NULL, **pptr = &parents;
@@ -1601,11 +1601,8 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	}
 
 	/* Truncate the message just before the diff, if any. */
-	if (verbose) {
-		p = strstr(sb.buf, "\ndiff --git ");
-		if (p != NULL)
-			strbuf_setlen(&sb, p - sb.buf + 1);
-	}
+	if (verbose)
+		wt_status_truncate_message_at_cut_line(&sb);
 
 	if (cleanup_mode != CLEANUP_NONE)
 		stripspace(&sb, cleanup_mode == CLEANUP_ALL);

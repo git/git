@@ -91,6 +91,7 @@ struct wt_status_state {
 	unsigned char cherry_pick_head_sha1[20];
 };
 
+void wt_status_truncate_message_at_cut_line(struct strbuf *);
 void wt_status_prepare(struct wt_status *s);
 void wt_status_print(struct wt_status *s);
 void wt_status_collect(struct wt_status *s);
