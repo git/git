@@ -223,6 +223,9 @@ extern void clear_shallow_info(struct shallow_info *);
 extern void remove_nonexistent_theirs_shallow(struct shallow_info *);
 extern void remove_nonexistent_ours_in_pack(struct shallow_info *,
 					    struct packed_git *);
+extern void assign_shallow_commits_to_refs(struct shallow_info *info,
+					   uint32_t **used,
+					   int *ref_status);
 
 int is_descendant_of(struct commit *, struct commit_list *);
 int in_merge_bases(struct commit *, struct commit *);
