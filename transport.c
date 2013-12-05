@@ -512,7 +512,7 @@ static struct ref *get_refs_via_connect(struct transport *transport, int for_pus
 
 	connect_setup(transport, for_push, 0);
 	get_remote_heads(data->fd[0], NULL, 0, &refs,
-			 for_push ? REF_NORMAL : 0, &data->extra_have);
+			 for_push ? REF_NORMAL : 0, &data->extra_have, NULL);
 	data->got_remote_heads = 1;
 
 	return refs;
@@ -542,7 +542,8 @@ static int fetch_refs_via_pack(struct transport *transport,
 
 	if (!data->got_remote_heads) {
 		connect_setup(transport, 0, 0);
-		get_remote_heads(data->fd[0], NULL, 0, &refs_tmp, 0, NULL);
+		get_remote_heads(data->fd[0], NULL, 0, &refs_tmp, 0,
+				 NULL, NULL);
 		data->got_remote_heads = 1;
 	}
 
@@ -806,7 +807,7 @@ static int git_transport_push(struct transport *transport, struct ref *remote_re
 		struct ref *tmp_refs;
 		connect_setup(transport, 1, 0);
 
-		get_remote_heads(data->fd[0], NULL, 0, &tmp_refs, REF_NORMAL, NULL);
+		get_remote_heads(data->fd[0], NULL, 0, &tmp_refs, REF_NORMAL, NULL, NULL);
 		data->got_remote_heads = 1;
 	}
 

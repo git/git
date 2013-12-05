@@ -232,7 +232,7 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 			args.verbose ? CONNECT_VERBOSE : 0);
 	}
 
-	get_remote_heads(fd[0], NULL, 0, &remote_refs, REF_NORMAL, &extra_have);
+	get_remote_heads(fd[0], NULL, 0, &remote_refs, REF_NORMAL, &extra_have, NULL);
 
 	transport_verify_remote_names(nr_refspecs, refspecs);
 

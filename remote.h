@@ -140,7 +140,8 @@ void free_refs(struct ref *ref);
 struct sha1_array;
 extern struct ref **get_remote_heads(int in, char *src_buf, size_t src_len,
 				     struct ref **list, unsigned int flags,
-				     struct sha1_array *extra_have);
+				     struct sha1_array *extra_have,
+				     struct sha1_array *shallow);
 
 int resolve_remote_symref(struct ref *ref, struct ref *list);
 int ref_newer(const unsigned char *new_sha1, const unsigned char *old_sha1);
