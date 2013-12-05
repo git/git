@@ -177,6 +177,20 @@ shown.  If the pattern does not contain a globbing character (`?`,
 	character (`?`, `*`, or `[`), it is turned into a prefix
 	match by appending `/*`.
 
+--exclude=<glob-pattern>::
+	Do not include refs matching '<glob-pattern>' that the next `--all`,
+	`--branches`, `--tags`, `--remotes`, or `--glob` would otherwise
+	consider. Repetitions of this option accumulate exclusion patterns
+	up to the next `--all`, `--branches`, `--tags`, `--remotes`, or
+	`--glob` option (other options or arguments do not clear
+	accumlated patterns).
++
+The patterns given should not begin with `refs/heads`, `refs/tags`, or
+`refs/remotes` when applied to `--branches`, `--tags`, or `--remotes`,
+respectively, and they must begin with `refs/` when applied to `--glob`
+or `--all`. If a trailing '/{asterisk}' is intended, it must be given
+explicitly.
+
 --disambiguate=<prefix>::
 	Show every object whose name begins with the given prefix.
 	The <prefix> must be at least 4 hexadecimal digits long to
