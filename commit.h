@@ -205,6 +205,7 @@ extern int write_shallow_commits(struct strbuf *out, int use_pack_protocol);
 extern void setup_alternate_shallow(struct lock_file *shallow_lock,
 				    const char **alternate_shallow_file);
 extern char *setup_temporary_shallow(void);
+extern void advertise_shallow_grafts(int);
 
 int is_descendant_of(struct commit *, struct commit_list *);
 int in_merge_bases(struct commit *, struct commit *);
