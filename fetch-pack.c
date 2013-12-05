@@ -925,6 +925,18 @@ static int remove_duplicates_in_refs(struct ref **ref, int nr)
 	return dst;
 }
 
+static void update_shallow(struct fetch_pack_args *args)
+{
+	if (args->depth > 0 && alternate_shallow_file) {
+		if (*alternate_shallow_file == '\0') { /* --unshallow */
+			unlink_or_warn(git_path("shallow"));
+			rollback_lock_file(&shallow_lock);
+		} else
+			commit_lock_file(&shallow_lock);
+		return;
+	}
+}
+
 struct ref *fetch_pack(struct fetch_pack_args *args,
 		       int fd[], struct child_process *conn,
 		       const struct ref *ref,
@@ -943,15 +955,7 @@ struct ref *fetch_pack(struct fetch_pack_args *args,
 		die("no matching remote head");
 	}
 	ref_cpy = do_fetch_pack(args, fd, ref, sought, nr_sought, pack_lockfile);
-
-	if (args->depth > 0 && alternate_shallow_file) {
-		if (*alternate_shallow_file == '\0') { /* --unshallow */
-			unlink_or_warn(git_path("shallow"));
-			rollback_lock_file(&shallow_lock);
-		} else
-			commit_lock_file(&shallow_lock);
-	}
-
+	update_shallow(args);
 	reprepare_packed_git();
 	return ref_cpy;
 }
