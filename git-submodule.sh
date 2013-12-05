@@ -545,7 +545,12 @@ cmd_foreach()
 				sm_path=$(relative_path "$sm_path") &&
 				# we make $path available to scripts ...
 				path=$sm_path &&
-				eval "$@" &&
+				if test $# -eq 1
+				then
+					eval "$1"
+				else
+					"$@"
+				fi &&
 				if test -n "$recursive"
 				then
 					cmd_foreach "--recursive" "$@"

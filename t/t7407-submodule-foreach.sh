@@ -325,4 +325,13 @@ test_expect_success 'command passed to foreach --recursive retains notion of std
 	test_cmp expected actual
 '
 
+test_expect_success 'multi-argument command passed to foreach is not shell-evaluated twice' '
+	(
+		cd super &&
+		git submodule foreach "echo \\\"quoted\\\"" > ../expected &&
+		git submodule foreach echo \"quoted\" > ../actual
+	) &&
+	test_cmp expected actual
+'
+
 test_done
