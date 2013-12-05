@@ -49,6 +49,7 @@ struct commit *lookup_commit_or_die(const unsigned char *sha1, const char *ref_n
 
 int parse_commit_buffer(struct commit *item, const void *buffer, unsigned long size);
 int parse_commit(struct commit *item);
+void parse_commit_or_die(struct commit *item);
 
 /* Find beginning and length of commit subject. */
 int find_commit_subject(const char *commit_buffer, const char **subject);

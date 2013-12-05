@@ -734,7 +734,7 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 	if (!opt->diff && !DIFF_OPT_TST(&opt->diffopt, EXIT_WITH_STATUS))
 		return 0;
 
-	parse_commit(commit);
+	parse_commit_or_die(commit);
 	sha1 = commit->tree->object.sha1;
 
 	/* Root commit? */
@@ -759,7 +759,7 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 			 * parent, showing summary diff of the others
 			 * we merged _in_.
 			 */
-			parse_commit(parents->item);
+			parse_commit_or_die(parents->item);
 			diff_tree_sha1(parents->item->tree->object.sha1,
 				       sha1, "", &opt->diffopt);
 			log_tree_diff_flush(opt);
@@ -774,7 +774,7 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 	for (;;) {
 		struct commit *parent = parents->item;
 
-		parse_commit(parent);
+		parse_commit_or_die(parent);
 		diff_tree_sha1(parent->tree->object.sha1,
 			       sha1, "", &opt->diffopt);
 		log_tree_diff_flush(opt);

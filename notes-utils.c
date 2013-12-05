@@ -18,7 +18,7 @@ void create_notes_commit(struct notes_tree *t, struct commit_list *parents,
 		unsigned char parent_sha1[20];
 		if (!read_ref(t->ref, parent_sha1)) {
 			struct commit *parent = lookup_commit(parent_sha1);
-			if (!parent || parse_commit(parent))
+			if (parse_commit(parent))
 				die("Failed to find/parse commit %s", t->ref);
 			commit_list_insert(parent, &parents);
 		}

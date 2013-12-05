@@ -47,9 +47,8 @@ static void rev_list_push(struct commit *commit, int mark)
 	if (!(commit->object.flags & mark)) {
 		commit->object.flags |= mark;
 
-		if (!(commit->object.parsed))
-			if (parse_commit(commit))
-				return;
+		if (parse_commit(commit))
+			return;
 
 		prio_queue_put(&rev_list, commit);
 
@@ -128,8 +127,7 @@ static const unsigned char *get_rev(void)
 			return NULL;
 
 		commit = prio_queue_get(&rev_list);
-		if (!commit->object.parsed)
-			parse_commit(commit);
+		parse_commit(commit);
 		parents = commit->parents;
 
 		commit->object.flags |= POPPED;

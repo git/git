@@ -1338,7 +1338,7 @@ static void print_summary(const char *prefix, const unsigned char *sha1,
 	commit = lookup_commit(sha1);
 	if (!commit)
 		die(_("couldn't look up newly created commit"));
-	if (!commit || parse_commit(commit))
+	if (parse_commit(commit))
 		die(_("could not parse newly created commit"));
 
 	strbuf_addstr(&format, "format:%h] %s");
@@ -1525,7 +1525,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		current_head = NULL;
 	else {
 		current_head = lookup_commit_or_die(sha1, "HEAD");
-		if (!current_head || parse_commit(current_head))
+		if (parse_commit(current_head))
 			die(_("could not parse HEAD commit"));
 	}
 	argc = parse_and_validate_options(argc, argv, builtin_commit_options,

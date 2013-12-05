@@ -649,8 +649,7 @@ static void receive_needs(void)
 				/* make sure the real parents are parsed */
 				unregister_shallow(object->sha1);
 				object->parsed = 0;
-				if (parse_commit((struct commit *)object))
-					die("invalid commit");
+				parse_commit_or_die((struct commit *)object);
 				parents = ((struct commit *)object)->parents;
 				while (parents) {
 					add_object_array(&parents->item->object,

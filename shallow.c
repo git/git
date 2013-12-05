@@ -90,8 +90,7 @@ struct commit_list *get_shallow_commits(struct object_array *heads, int depth,
 				cur_depth = *(int *)commit->util;
 			}
 		}
-		if (parse_commit(commit))
-			die("invalid commit");
+		parse_commit_or_die(commit);
 		cur_depth++;
 		if (cur_depth >= depth) {
 			commit_list_insert(commit, &result);

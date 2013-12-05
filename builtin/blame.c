@@ -1551,8 +1551,7 @@ static void assign_blame(struct scoreboard *sb, int opt)
 		 */
 		origin_incref(suspect);
 		commit = suspect->commit;
-		if (!commit->object.parsed)
-			parse_commit(commit);
+		parse_commit(commit);
 		if (reverse ||
 		    (!(commit->object.flags & UNINTERESTING) &&
 		     !(revs->max_age != -1 && commit->date < revs->max_age)))

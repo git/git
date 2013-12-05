@@ -27,8 +27,7 @@ static void name_rev(struct commit *commit,
 	struct commit_list *parents;
 	int parent_number = 1;
 
-	if (!commit->object.parsed)
-		parse_commit(commit);
+	parse_commit(commit);
 
 	if (commit->date < cutoff)
 		return;

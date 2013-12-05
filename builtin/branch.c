@@ -502,7 +502,7 @@ static void add_verbose_info(struct strbuf *out, struct ref_item *item,
 	const char *sub = _(" **** invalid ref ****");
 	struct commit *commit = item->commit;
 
-	if (commit && !parse_commit(commit)) {
+	if (!parse_commit(commit)) {
 		pp_commit_easy(CMIT_FMT_ONELINE, commit, &subject);
 		sub = subject.buf;
 	}
