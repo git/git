@@ -14,8 +14,12 @@
 	branch history. Tags for the deepened commits are not fetched.
 
 --unshallow::
-	Convert a shallow repository to a complete one, removing all
-	the limitations imposed by shallow repositories.
+	If the source repository is complete, convert a shallow
+	repository to a complete one, removing all the limitations
+	imposed by shallow repositories.
++
+If the source repository is shallow, fetch as much as possible so that
+the current repository has the same history as the source repository.
 
 ifndef::git-pull[]
 --dry-run::

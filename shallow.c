@@ -75,6 +75,7 @@ struct commit_list *get_shallow_commits(struct object_array *heads, int depth,
 	struct commit_list *result = NULL;
 	struct object_array stack = OBJECT_ARRAY_INIT;
 	struct commit *commit = NULL;
+	struct commit_graft *graft;
 
 	while (commit || i < heads->nr || stack.nr) {
 		struct commit_list *p;
@@ -99,7 +100,10 @@ struct commit_list *get_shallow_commits(struct object_array *heads, int depth,
 		if (parse_commit(commit))
 			die("invalid commit");
 		cur_depth++;
-		if (cur_depth >= depth) {
+		if ((depth != INFINITE_DEPTH && cur_depth >= depth) ||
+		    (is_repository_shallow() && !commit->parents &&
+		     (graft = lookup_commit_graft(commit->object.sha1)) != NULL &&
+		     graft->nr_parent < 0)) {
 			commit_list_insert(commit, &result);
 			commit->object.flags |= shallow_flag;
 			commit = NULL;

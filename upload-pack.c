@@ -619,7 +619,7 @@ static void receive_needs(void)
 	if (depth > 0) {
 		struct commit_list *result = NULL, *backup = NULL;
 		int i;
-		if (depth == INFINITE_DEPTH)
+		if (depth == INFINITE_DEPTH && !is_repository_shallow())
 			for (i = 0; i < shallows.nr; i++) {
 				struct object *object = shallows.objects[i].item;
 				object->flags |= NOT_SHALLOW;

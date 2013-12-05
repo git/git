@@ -79,6 +79,22 @@ EOF
 	)
 '
 
+test_expect_success 'fetch --unshallow from shallow clone' '
+	(
+	cd shallow2 &&
+	git fetch --unshallow &&
+	git fsck &&
+	git log --format=%s origin/master >actual &&
+	cat <<EOF >expect &&
+6
+5
+4
+3
+EOF
+	test_cmp expect actual
+	)
+'
+
 test_expect_success 'fetch something upstream has but hidden by clients shallow boundaries' '
 	# the blob "1" is available in .git but hidden by the
 	# shallow2/.git/shallow and it should be resent
