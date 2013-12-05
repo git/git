@@ -18,6 +18,8 @@ typedef int (*sha1_iterate_fn)(void *, unsigned char [20]);
  * Return 0 if Ok, non zero otherwise (i.e. some missing objects)
  */
 extern int check_everything_connected(sha1_iterate_fn, int quiet, void *cb_data);
+extern int check_shallow_connected(sha1_iterate_fn, int quiet, void *cb_data,
+				   const char *shallow_file);
 extern int check_everything_connected_with_transport(sha1_iterate_fn, int quiet,
 						     void *cb_data,
 						     struct transport *transport);
