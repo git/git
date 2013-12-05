@@ -854,7 +854,7 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 	if (args->depth > 0)
 		setup_alternate_shallow(&shallow_lock, &alternate_shallow_file,
 					NULL);
-	else if (args->cloning && si->shallow && si->shallow->nr)
+	else if (si->nr_ours || si->nr_theirs)
 		alternate_shallow_file = setup_temporary_shallow(si->shallow);
 	else
 		alternate_shallow_file = NULL;
@@ -930,8 +930,11 @@ static int remove_duplicates_in_refs(struct ref **ref, int nr)
 }
 
 static void update_shallow(struct fetch_pack_args *args,
+			   struct ref **sought, int nr_sought,
 			   struct shallow_info *si)
 {
+	struct sha1_array ref = SHA1_ARRAY_INIT;
+	int *status;
 	int i;
 
 	if (args->depth > 0 && alternate_shallow_file) {
@@ -978,6 +981,31 @@ static void update_shallow(struct fetch_pack_args *args,
 		sha1_array_clear(&extra);
 		return;
 	}
+
+	if (!si->nr_ours && !si->nr_theirs)
+		return;
+
+	remove_nonexistent_theirs_shallow(si);
+	/* XXX remove_nonexistent_ours_in_pack() */
+	if (!si->nr_ours && !si->nr_theirs)
+		return;
+	for (i = 0; i < nr_sought; i++)
+		sha1_array_append(&ref, sought[i]->old_sha1);
+	si->ref = &ref;
+
+	/*
+	 * remote is also shallow, check what ref is safe to update
+	 * without updating .git/shallow
+	 */
+	status = xcalloc(nr_sought, sizeof(*status));
+	assign_shallow_commits_to_refs(si, NULL, status);
+	if (si->nr_ours || si->nr_theirs) {
+		for (i = 0; i < nr_sought; i++)
+			if (status[i])
+				sought[i]->status = REF_STATUS_REJECT_SHALLOW;
+	}
+	free(status);
+	sha1_array_clear(&ref);
 }
 
 struct ref *fetch_pack(struct fetch_pack_args *args,
@@ -1003,7 +1031,7 @@ struct ref *fetch_pack(struct fetch_pack_args *args,
 	ref_cpy = do_fetch_pack(args, fd, ref, sought, nr_sought,
 				&si, pack_lockfile);
 	reprepare_packed_git();
-	update_shallow(args, &si);
+	update_shallow(args, sought, nr_sought, &si);
 	clear_shallow_info(&si);
 	return ref_cpy;
 }

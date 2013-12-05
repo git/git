@@ -515,7 +515,7 @@ static struct ref *get_refs_via_connect(struct transport *transport, int for_pus
 	get_remote_heads(data->fd[0], NULL, 0, &refs,
 			 for_push ? REF_NORMAL : 0,
 			 &data->extra_have,
-			 transport->cloning ? &data->shallow : NULL);
+			 &data->shallow);
 	data->got_remote_heads = 1;
 
 	return refs;
@@ -547,8 +547,7 @@ static int fetch_refs_via_pack(struct transport *transport,
 	if (!data->got_remote_heads) {
 		connect_setup(transport, 0, 0);
 		get_remote_heads(data->fd[0], NULL, 0, &refs_tmp, 0,
-				 NULL,
-				 transport->cloning ? &data->shallow : NULL);
+				 NULL, &data->shallow);
 		data->got_remote_heads = 1;
 	}
 
@@ -720,6 +719,10 @@ static int print_one_push_status(struct ref *ref, const char *dest, int count, i
 		print_ref_status('!', "[rejected]", ref, ref->peer_ref,
 						 "stale info", porcelain);
 		break;
+	case REF_STATUS_REJECT_SHALLOW:
+		print_ref_status('!', "[rejected]", ref, ref->peer_ref,
+						 "new shallow roots not allowed", porcelain);
+		break;
 	case REF_STATUS_REMOTE_REJECT:
 		print_ref_status('!', "[remote rejected]", ref,
 						 ref->deletion ? NULL : ref->peer_ref,
@@ -815,6 +818,8 @@ static int git_transport_push(struct transport *transport, struct ref *remote_re
 		get_remote_heads(data->fd[0], NULL, 0, &tmp_refs, REF_NORMAL, NULL, NULL);
 		data->got_remote_heads = 1;
 	}
+	if (data->shallow.nr)
+		die("pushing to a shallow repository is not supported");
 
 	memset(&args, 0, sizeof(args));
 	args.send_mirror = !!(flags & TRANSPORT_PUSH_MIRROR);
