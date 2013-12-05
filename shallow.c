@@ -155,10 +155,14 @@ void check_shallow_file_for_update(void)
 		die("shallow file was changed during fetch");
 }
 
+#define SEEN_ONLY 1
+#define VERBOSE   2
+
 struct write_shallow_data {
 	struct strbuf *out;
 	int use_pack_protocol;
 	int count;
+	unsigned flags;
 };
 
 static int write_one_shallow(const struct commit_graft *graft, void *cb_data)
@@ -167,6 +171,15 @@ static int write_one_shallow(const struct commit_graft *graft, void *cb_data)
 	const char *hex = sha1_to_hex(graft->sha1);
 	if (graft->nr_parent != -1)
 		return 0;
+	if (data->flags & SEEN_ONLY) {
+		struct commit *c = lookup_commit(graft->sha1);
+		if (!c || !(c->object.flags & SEEN)) {
+			if (data->flags & VERBOSE)
+				printf("Removing %s from .git/shallow\n",
+				       sha1_to_hex(c->object.sha1));
+			return 0;
+		}
+	}
 	data->count++;
 	if (data->use_pack_protocol)
 		packet_buf_write(data->out, "shallow %s", hex);
@@ -177,14 +190,16 @@ static int write_one_shallow(const struct commit_graft *graft, void *cb_data)
 	return 0;
 }
 
-int write_shallow_commits(struct strbuf *out, int use_pack_protocol,
-			  const struct sha1_array *extra)
+static int write_shallow_commits_1(struct strbuf *out, int use_pack_protocol,
+				   const struct sha1_array *extra,
+				   unsigned flags)
 {
 	struct write_shallow_data data;
 	int i;
 	data.out = out;
 	data.use_pack_protocol = use_pack_protocol;
 	data.count = 0;
+	data.flags = flags;
 	for_each_commit_graft(write_one_shallow, &data);
 	if (!extra)
 		return data.count;
@@ -194,6 +209,12 @@ int write_shallow_commits(struct strbuf *out, int use_pack_protocol,
 		data.count++;
 	}
 	return data.count;
+}
+
+int write_shallow_commits(struct strbuf *out, int use_pack_protocol,
+			  const struct sha1_array *extra)
+{
+	return write_shallow_commits_1(out, use_pack_protocol, extra, 0);
 }
 
 char *setup_temporary_shallow(const struct sha1_array *extra)
@@ -256,6 +277,36 @@ void advertise_shallow_grafts(int fd)
 	if (!is_repository_shallow())
 		return;
 	for_each_commit_graft(advertise_shallow_grafts_cb, &fd);
+}
+
+/*
+ * mark_reachable_objects() should have been run prior to this and all
+ * reachable commits marked as "SEEN".
+ */
+void prune_shallow(int show_only)
+{
+	static struct lock_file shallow_lock;
+	struct strbuf sb = STRBUF_INIT;
+	int fd;
+
+	if (show_only) {
+		write_shallow_commits_1(&sb, 0, NULL, SEEN_ONLY | VERBOSE);
+		strbuf_release(&sb);
+		return;
+	}
+	check_shallow_file_for_update();
+	fd = hold_lock_file_for_update(&shallow_lock, git_path("shallow"),
+				       LOCK_DIE_ON_ERROR);
+	if (write_shallow_commits_1(&sb, 0, NULL, SEEN_ONLY)) {
+		if (write_in_full(fd, sb.buf, sb.len) != sb.len)
+			die_errno("failed to write to %s",
+				  shallow_lock.filename);
+		commit_lock_file(&shallow_lock);
+	} else {
+		unlink(git_path("shallow"));
+		rollback_lock_file(&shallow_lock);
+	}
+	strbuf_release(&sb);
 }
 
 #define TRACE_KEY "GIT_TRACE_SHALLOW"

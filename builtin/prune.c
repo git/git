@@ -170,5 +170,9 @@ int cmd_prune(int argc, const char **argv, const char *prefix)
 	s = mkpathdup("%s/pack", get_object_directory());
 	remove_temporary_files(s);
 	free(s);
+
+	if (is_repository_shallow())
+		prune_shallow(show_only);
+
 	return 0;
 }

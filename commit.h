@@ -235,6 +235,7 @@ extern void assign_shallow_commits_to_refs(struct shallow_info *info,
 					   uint32_t **used,
 					   int *ref_status);
 extern int delayed_reachability_test(struct shallow_info *si, int c);
+extern void prune_shallow(int show_only);
 
 int is_descendant_of(struct commit *, struct commit_list *);
 int in_merge_bases(struct commit *, struct commit *);
