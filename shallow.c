@@ -2,6 +2,12 @@
 #include "commit.h"
 #include "tag.h"
 #include "pkt-line.h"
+#include "remote.h"
+#include "refs.h"
+#include "sha1-array.h"
+#include "diff.h"
+#include "revision.h"
+#include "commit-slab.h"
 
 static int is_shallow = -1;
 static struct stat shallow_stat;
@@ -244,4 +250,70 @@ void advertise_shallow_grafts(int fd)
 	if (!is_repository_shallow())
 		return;
 	for_each_commit_graft(advertise_shallow_grafts_cb, &fd);
+}
+
+#define TRACE_KEY "GIT_TRACE_SHALLOW"
+
+/*
+ * Step 1, split sender shallow commits into "ours" and "theirs"
+ * Step 2, clean "ours" based on .git/shallow
+ */
+void prepare_shallow_info(struct shallow_info *info, struct sha1_array *sa)
+{
+	int i;
+	trace_printf_key(TRACE_KEY, "shallow: prepare_shallow_info\n");
+	memset(info, 0, sizeof(*info));
+	info->shallow = sa;
+	if (!sa)
+		return;
+	info->ours = xmalloc(sizeof(*info->ours) * sa->nr);
+	info->theirs = xmalloc(sizeof(*info->theirs) * sa->nr);
+	for (i = 0; i < sa->nr; i++) {
+		if (has_sha1_file(sa->sha1[i])) {
+			struct commit_graft *graft;
+			graft = lookup_commit_graft(sa->sha1[i]);
+			if (graft && graft->nr_parent < 0)
+				continue;
+			info->ours[info->nr_ours++] = i;
+		} else
+			info->theirs[info->nr_theirs++] = i;
+	}
+}
+
+void clear_shallow_info(struct shallow_info *info)
+{
+	free(info->ours);
+	free(info->theirs);
+}
+
+/* Step 4, remove non-existent ones in "theirs" after getting the pack */
+
+void remove_nonexistent_theirs_shallow(struct shallow_info *info)
+{
+	unsigned char (*sha1)[20] = info->shallow->sha1;
+	int i, dst;
+	trace_printf_key(TRACE_KEY, "shallow: remove_nonexistent_theirs_shallow\n");
+	for (i = dst = 0; i < info->nr_theirs; i++) {
+		if (i != dst)
+			info->theirs[dst] = info->theirs[i];
+		if (has_sha1_file(sha1[info->theirs[i]]))
+			dst++;
+	}
+	info->nr_theirs = dst;
+}
+
+/* Step 5, remove non-existent ones in "ours" in the pack */
+void remove_nonexistent_ours_in_pack(struct shallow_info *info,
+				     struct packed_git *p)
+{
+	unsigned char (*sha1)[20] = info->shallow->sha1;
+	int i, dst;
+	trace_printf_key(TRACE_KEY, "shallow: remove_nonexistent_ours_in_pack\n");
+	for (i = dst = 0; i < info->nr_ours; i++) {
+		if (i != dst)
+			info->ours[dst] = info->ours[i];
+		if (find_pack_entry_one(sha1[info->ours[i]], p))
+			dst++;
+	}
+	info->nr_ours = dst;
 }

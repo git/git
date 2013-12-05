@@ -193,6 +193,8 @@ extern struct commit_list *get_octopus_merge_bases(struct commit_list *in);
 /* largest positive number a signed 32-bit integer can contain */
 #define INFINITE_DEPTH 0x7fffffff
 
+struct sha1_array;
+struct ref;
 extern int register_shallow(const unsigned char *sha1);
 extern int unregister_shallow(const unsigned char *sha1);
 extern int for_each_commit_graft(each_commit_graft_fn, void *);
@@ -208,6 +210,19 @@ extern void setup_alternate_shallow(struct lock_file *shallow_lock,
 				    const struct sha1_array *extra);
 extern char *setup_temporary_shallow(const struct sha1_array *extra);
 extern void advertise_shallow_grafts(int);
+
+struct shallow_info {
+	struct sha1_array *shallow;
+	int *ours, nr_ours;
+	int *theirs, nr_theirs;
+	struct sha1_array *ref;
+};
+
+extern void prepare_shallow_info(struct shallow_info *, struct sha1_array *);
+extern void clear_shallow_info(struct shallow_info *);
+extern void remove_nonexistent_theirs_shallow(struct shallow_info *);
+extern void remove_nonexistent_ours_in_pack(struct shallow_info *,
+					    struct packed_git *);
 
 int is_descendant_of(struct commit *, struct commit_list *);
 int in_merge_bases(struct commit *, struct commit *);
