@@ -15,6 +15,7 @@
 #include "submodule.h"
 #include "column.h"
 #include "strbuf.h"
+#include "utf8.h"
 
 static char default_wt_status_colors[][COLOR_MAXLEN] = {
 	GIT_COLOR_NORMAL, /* WT_STATUS_HEADER */
@@ -264,6 +265,30 @@ static void wt_status_print_unmerged_data(struct wt_status *s,
 	strbuf_release(&onebuf);
 }
 
+static const char *wt_status_diff_status_string(int status)
+{
+	switch (status) {
+	case DIFF_STATUS_ADDED:
+		return _("new file");
+	case DIFF_STATUS_COPIED:
+		return _("copied");
+	case DIFF_STATUS_DELETED:
+		return _("deleted");
+	case DIFF_STATUS_MODIFIED:
+		return _("modified");
+	case DIFF_STATUS_RENAMED:
+		return _("renamed");
+	case DIFF_STATUS_TYPE_CHANGED:
+		return _("typechange");
+	case DIFF_STATUS_UNKNOWN:
+		return _("unknown");
+	case DIFF_STATUS_UNMERGED:
+		return _("unmerged");
+	default:
+		return NULL;
+	}
+}
+
 static void wt_status_print_change_data(struct wt_status *s,
 					int change_type,
 					struct string_list_item *it)
@@ -276,6 +301,23 @@ static void wt_status_print_change_data(struct wt_status *s,
 	const char *one, *two;
 	struct strbuf onebuf = STRBUF_INIT, twobuf = STRBUF_INIT;
 	struct strbuf extra = STRBUF_INIT;
+	static char *padding;
+	const char *what;
+	int len;
+
+	if (!padding) {
+		int width = 0;
+		/* If DIFF_STATUS_* uses outside this range, we're in trouble */
+		for (status = 'A'; status <= 'Z'; status++) {
+			what = wt_status_diff_status_string(status);
+			len = what ? strlen(what) : 0;
+			if (len > width)
+				width = len;
+		}
+		width += 2;	/* colon and a space */
+		padding = xmallocz(width);
+		memset(padding, ' ', width);
+	}
 
 	one_name = two_name = it->string;
 	switch (change_type) {
@@ -307,34 +349,18 @@ static void wt_status_print_change_data(struct wt_status *s,
 	two = quote_path(two_name, s->prefix, &twobuf);
 
 	status_printf(s, color(WT_STATUS_HEADER, s), "\t");
-	switch (status) {
-	case DIFF_STATUS_ADDED:
-		status_printf_more(s, c, _("new file:   %s"), one);
-		break;
-	case DIFF_STATUS_COPIED:
-		status_printf_more(s, c, _("copied:     %s -> %s"), one, two);
-		break;
-	case DIFF_STATUS_DELETED:
-		status_printf_more(s, c, _("deleted:    %s"), one);
-		break;
-	case DIFF_STATUS_MODIFIED:
-		status_printf_more(s, c, _("modified:   %s"), one);
-		break;
-	case DIFF_STATUS_RENAMED:
-		status_printf_more(s, c, _("renamed:    %s -> %s"), one, two);
-		break;
-	case DIFF_STATUS_TYPE_CHANGED:
-		status_printf_more(s, c, _("typechange: %s"), one);
-		break;
-	case DIFF_STATUS_UNKNOWN:
-		status_printf_more(s, c, _("unknown:    %s"), one);
-		break;
-	case DIFF_STATUS_UNMERGED:
-		status_printf_more(s, c, _("unmerged:   %s"), one);
-		break;
-	default:
+	what = wt_status_diff_status_string(status);
+	if (!what)
 		die(_("bug: unhandled diff status %c"), status);
-	}
+	/* 1 for colon, which is not part of "what" */
+	len = strlen(padding) - (utf8_strwidth(what) + 1);
+	assert(len >= 0);
+	if (status == DIFF_STATUS_COPIED || status == DIFF_STATUS_RENAMED)
+		status_printf_more(s, c, "%s:%.*s%s -> %s",
+				   what, len, padding, one, two);
+	else
+		status_printf_more(s, c, "%s:%.*s%s",
+				   what, len, padding, one);
 	if (extra.len) {
 		status_printf_more(s, color(WT_STATUS_HEADER, s), "%s", extra.buf);
 		strbuf_release(&extra);
