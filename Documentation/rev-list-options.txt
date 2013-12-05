@@ -720,7 +720,7 @@ include::pretty-options.txt[]
 `--date=relative` shows dates relative to the current time,
 e.g. "2 hours ago".
 +
-`--date=local` shows timestamps in user's local timezone.
+`--date=local` shows timestamps in user's local time zone.
 +
 `--date=iso` (or `--date=iso8601`) shows timestamps in ISO 8601 format.
 +
@@ -731,7 +731,7 @@ format, often found in E-mail messages.
 +
 `--date=raw` shows the date in the internal raw Git format `%s %z` format.
 +
-`--date=default` shows timestamps in the original timezone
+`--date=default` shows timestamps in the original time zone
 (either committer's or author's).
 
 ifdef::git-rev-list[]
