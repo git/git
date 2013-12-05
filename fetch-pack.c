@@ -13,6 +13,7 @@
 #include "transport.h"
 #include "version.h"
 #include "prio-queue.h"
+#include "sha1-array.h"
 
 static int transfer_unpack_limit = -1;
 static int fetch_unpack_limit = -1;
@@ -774,6 +775,7 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 				 int fd[2],
 				 const struct ref *orig_ref,
 				 struct ref **sought, int nr_sought,
+				 struct shallow_info *si,
 				 char **pack_lockfile)
 {
 	struct ref *ref = copy_ref_list(orig_ref);
@@ -852,6 +854,8 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 	if (args->depth > 0)
 		setup_alternate_shallow(&shallow_lock, &alternate_shallow_file,
 					NULL);
+	else if (args->cloning && si->shallow && si->shallow->nr)
+		alternate_shallow_file = setup_temporary_shallow(si->shallow);
 	else
 		alternate_shallow_file = NULL;
 	if (get_pack(args, fd, pack_lockfile))
@@ -925,14 +929,53 @@ static int remove_duplicates_in_refs(struct ref **ref, int nr)
 	return dst;
 }
 
-static void update_shallow(struct fetch_pack_args *args)
+static void update_shallow(struct fetch_pack_args *args,
+			   struct shallow_info *si)
 {
+	int i;
+
 	if (args->depth > 0 && alternate_shallow_file) {
 		if (*alternate_shallow_file == '\0') { /* --unshallow */
 			unlink_or_warn(git_path("shallow"));
 			rollback_lock_file(&shallow_lock);
 		} else
 			commit_lock_file(&shallow_lock);
+		return;
+	}
+
+	if (!si->shallow || !si->shallow->nr)
+		return;
+
+	if (alternate_shallow_file) {
+		/*
+		 * The temporary shallow file is only useful for
+		 * index-pack and unpack-objects because it may
+		 * contain more roots than we want. Delete it.
+		 */
+		if (*alternate_shallow_file)
+			unlink(alternate_shallow_file);
+		free((char *)alternate_shallow_file);
+	}
+
+	if (args->cloning) {
+		/*
+		 * remote is shallow, but this is a clone, there are
+		 * no objects in repo to worry about. Accept any
+		 * shallow points that exist in the pack (iow in repo
+		 * after get_pack() and reprepare_packed_git())
+		 */
+		struct sha1_array extra = SHA1_ARRAY_INIT;
+		unsigned char (*sha1)[20] = si->shallow->sha1;
+		for (i = 0; i < si->shallow->nr; i++)
+			if (has_sha1_file(sha1[i]))
+				sha1_array_append(&extra, sha1[i]);
+		if (extra.nr) {
+			setup_alternate_shallow(&shallow_lock,
+						&alternate_shallow_file,
+						&extra);
+			commit_lock_file(&shallow_lock);
+		}
+		sha1_array_clear(&extra);
 		return;
 	}
 }
@@ -942,9 +985,11 @@ struct ref *fetch_pack(struct fetch_pack_args *args,
 		       const struct ref *ref,
 		       const char *dest,
 		       struct ref **sought, int nr_sought,
+		       struct sha1_array *shallow,
 		       char **pack_lockfile)
 {
 	struct ref *ref_cpy;
+	struct shallow_info si;
 
 	fetch_pack_setup();
 	if (nr_sought)
@@ -954,8 +999,11 @@ struct ref *fetch_pack(struct fetch_pack_args *args,
 		packet_flush(fd[1]);
 		die("no matching remote head");
 	}
-	ref_cpy = do_fetch_pack(args, fd, ref, sought, nr_sought, pack_lockfile);
-	update_shallow(args);
+	prepare_shallow_info(&si, shallow);
+	ref_cpy = do_fetch_pack(args, fd, ref, sought, nr_sought,
+				&si, pack_lockfile);
 	reprepare_packed_git();
+	update_shallow(args, &si);
+	clear_shallow_info(&si);
 	return ref_cpy;
 }

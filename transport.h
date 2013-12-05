@@ -35,6 +35,12 @@ struct transport {
 	 */
 	unsigned cannot_reuse : 1;
 
+	/*
+	 * A hint from caller that it will be performing a clone, not
+	 * normal fetch. IOW the repository is guaranteed empty.
+	 */
+	unsigned cloning : 1;
+
 	/**
 	 * Returns 0 if successful, positive if the option is not
 	 * recognized or is inapplicable, and negative if the option

@@ -889,6 +889,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 
 	remote = remote_get(option_origin);
 	transport = transport_get(remote, remote->url[0]);
+	transport->cloning = 1;
 
 	if (!transport->get_refs_list || (!is_local && !transport->fetch))
 		die(_("Don't know how to clone %s"), transport->url);

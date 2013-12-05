@@ -4,6 +4,8 @@
 #include "string-list.h"
 #include "run-command.h"
 
+struct sha1_array;
+
 struct fetch_pack_args {
 	const char *uploadpack;
 	int unpacklimit;
@@ -20,6 +22,7 @@ struct fetch_pack_args {
 	unsigned stateless_rpc:1;
 	unsigned check_self_contained_and_connected:1;
 	unsigned self_contained_and_connected:1;
+	unsigned cloning:1;
 };
 
 /*
@@ -33,6 +36,7 @@ struct ref *fetch_pack(struct fetch_pack_args *args,
 		       const char *dest,
 		       struct ref **sought,
 		       int nr_sought,
+		       struct sha1_array *shallow,
 		       char **pack_lockfile);
 
 #endif
