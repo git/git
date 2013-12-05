@@ -311,7 +311,7 @@ static int find_common(struct fetch_pack_args *args,
 	}
 
 	if (is_repository_shallow())
-		write_shallow_commits(&req_buf, 1);
+		write_shallow_commits(&req_buf, 1, NULL);
 	if (args->depth > 0)
 		packet_buf_write(&req_buf, "deepen %d", args->depth);
 	packet_buf_flush(&req_buf);
@@ -850,7 +850,8 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 	if (args->stateless_rpc)
 		packet_flush(fd[1]);
 	if (args->depth > 0)
-		setup_alternate_shallow(&shallow_lock, &alternate_shallow_file);
+		setup_alternate_shallow(&shallow_lock, &alternate_shallow_file,
+					NULL);
 	else
 		alternate_shallow_file = NULL;
 	if (get_pack(args, fd, pack_lockfile))

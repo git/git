@@ -84,7 +84,7 @@ static void create_pack_file(void)
 	char *shallow_file = NULL;
 
 	if (shallow_nr) {
-		shallow_file = setup_temporary_shallow();
+		shallow_file = setup_temporary_shallow(NULL);
 		argv[arg++] = "--shallow-file";
 		argv[arg++] = shallow_file;
 	}

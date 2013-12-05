@@ -165,22 +165,31 @@ static int write_one_shallow(const struct commit_graft *graft, void *cb_data)
 	return 0;
 }
 
-int write_shallow_commits(struct strbuf *out, int use_pack_protocol)
+int write_shallow_commits(struct strbuf *out, int use_pack_protocol,
+			  const struct sha1_array *extra)
 {
 	struct write_shallow_data data;
+	int i;
 	data.out = out;
 	data.use_pack_protocol = use_pack_protocol;
 	data.count = 0;
 	for_each_commit_graft(write_one_shallow, &data);
+	if (!extra)
+		return data.count;
+	for (i = 0; i < extra->nr; i++) {
+		strbuf_addstr(out, sha1_to_hex(extra->sha1[i]));
+		strbuf_addch(out, '\n');
+		data.count++;
+	}
 	return data.count;
 }
 
-char *setup_temporary_shallow(void)
+char *setup_temporary_shallow(const struct sha1_array *extra)
 {
 	struct strbuf sb = STRBUF_INIT;
 	int fd;
 
-	if (write_shallow_commits(&sb, 0)) {
+	if (write_shallow_commits(&sb, 0, extra)) {
 		struct strbuf path = STRBUF_INIT;
 		strbuf_addstr(&path, git_path("shallow_XXXXXX"));
 		fd = xmkstemp(path.buf);
@@ -199,7 +208,8 @@ char *setup_temporary_shallow(void)
 }
 
 void setup_alternate_shallow(struct lock_file *shallow_lock,
-			     const char **alternate_shallow_file)
+			     const char **alternate_shallow_file,
+			     const struct sha1_array *extra)
 {
 	struct strbuf sb = STRBUF_INIT;
 	int fd;
@@ -207,7 +217,7 @@ void setup_alternate_shallow(struct lock_file *shallow_lock,
 	check_shallow_file_for_update();
 	fd = hold_lock_file_for_update(shallow_lock, git_path("shallow"),
 				       LOCK_DIE_ON_ERROR);
-	if (write_shallow_commits(&sb, 0)) {
+	if (write_shallow_commits(&sb, 0, extra)) {
 		if (write_in_full(fd, sb.buf, sb.len) != sb.len)
 			die_errno("failed to write to %s",
 				  shallow_lock->filename);
