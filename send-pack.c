@@ -10,6 +10,7 @@
 #include "quote.h"
 #include "transport.h"
 #include "version.h"
+#include "sha1-array.h"
 
 static int feed_object(const unsigned char *sha1, int fd, int negative)
 {
@@ -28,7 +29,7 @@ static int feed_object(const unsigned char *sha1, int fd, int negative)
 /*
  * Make a pack stream and spit it out into file descriptor fd
  */
-static int pack_objects(int fd, struct ref *refs, struct extra_have_objects *extra, struct send_pack_args *args)
+static int pack_objects(int fd, struct ref *refs, struct sha1_array *extra, struct send_pack_args *args)
 {
 	/*
 	 * The child becomes pack-objects --revs; we feed
@@ -71,7 +72,7 @@ static int pack_objects(int fd, struct ref *refs, struct extra_have_objects *ext
 	 * parameters by writing to the pipe.
 	 */
 	for (i = 0; i < extra->nr; i++)
-		if (!feed_object(extra->array[i], po.in, 1))
+		if (!feed_object(extra->sha1[i], po.in, 1))
 			break;
 
 	while (refs) {
@@ -177,7 +178,7 @@ static int sideband_demux(int in, int out, void *data)
 int send_pack(struct send_pack_args *args,
 	      int fd[], struct child_process *conn,
 	      struct ref *remote_refs,
-	      struct extra_have_objects *extra_have)
+	      struct sha1_array *extra_have)
 {
 	int in = fd[0];
 	int out = fd[1];

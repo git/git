@@ -8,6 +8,7 @@
 #include "connect.h"
 #include "url.h"
 #include "string-list.h"
+#include "sha1-array.h"
 
 static char *server_capabilities;
 static const char *parse_feature_value(const char *, const char *, int *);
@@ -43,13 +44,6 @@ static int check_ref(const char *name, int len, unsigned int flags)
 int check_ref_type(const struct ref *ref, int flags)
 {
 	return check_ref(ref->name, strlen(ref->name), flags);
-}
-
-static void add_extra_have(struct extra_have_objects *extra, unsigned char *sha1)
-{
-	ALLOC_GROW(extra->array, extra->nr + 1, extra->alloc);
-	hashcpy(&(extra->array[extra->nr][0]), sha1);
-	extra->nr++;
 }
 
 static void die_initial_contact(int got_at_least_one_head)
@@ -122,7 +116,7 @@ static void annotate_refs_with_symref_info(struct ref *ref)
  */
 struct ref **get_remote_heads(int in, char *src_buf, size_t src_len,
 			      struct ref **list, unsigned int flags,
-			      struct extra_have_objects *extra_have)
+			      struct sha1_array *extra_have)
 {
 	struct ref **orig_list = list;
 	int got_at_least_one_head = 0;
@@ -160,7 +154,7 @@ struct ref **get_remote_heads(int in, char *src_buf, size_t src_len,
 
 		if (extra_have &&
 		    name_len == 5 && !memcmp(".have", name, 5)) {
-			add_extra_have(extra_have, old_sha1);
+			sha1_array_append(extra_have, old_sha1);
 			continue;
 		}
 

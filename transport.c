@@ -14,6 +14,7 @@
 #include "url.h"
 #include "submodule.h"
 #include "string-list.h"
+#include "sha1-array.h"
 
 /* rsync support */
 
@@ -454,7 +455,7 @@ struct git_transport_data {
 	struct child_process *conn;
 	int fd[2];
 	unsigned got_remote_heads : 1;
-	struct extra_have_objects extra_have;
+	struct sha1_array extra_have;
 };
 
 static int set_git_option(struct git_transport_options *opts,
