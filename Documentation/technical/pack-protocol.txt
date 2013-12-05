@@ -464,7 +464,9 @@ contain all the objects that the server will need to complete the new
 references.
 
 ----
-  update-request    =  command-list [pack-file]
+  update-request    =  *shallow command-list [pack-file]
+
+  shallow           =  PKT-LINE("shallow" SP obj-id)
 
   command-list      =  PKT-LINE(command NUL capability-list LF)
 		       *PKT-LINE(command LF)

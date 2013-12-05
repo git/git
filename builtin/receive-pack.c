@@ -44,6 +44,7 @@ static int fix_thin = 1;
 static const char *head_name;
 static void *head_name_to_free;
 static int sent_capabilities;
+static const char *alt_shallow_file;
 
 static enum deny_action parse_deny_action(const char *var, const char *value)
 {
@@ -190,6 +191,7 @@ struct command {
 	const char *error_string;
 	unsigned int skip_update:1,
 		     did_not_exist:1;
+	int index;
 	unsigned char old_sha1[20];
 	unsigned char new_sha1[20];
 	char ref_name[FLEX_ARRAY]; /* more */
@@ -688,7 +690,7 @@ static int iterate_receive_command_list(void *cb_data, unsigned char sha1[20])
 	struct command *cmd = *cmd_list;
 
 	while (cmd) {
-		if (!is_null_sha1(cmd->new_sha1)) {
+		if (!is_null_sha1(cmd->new_sha1) && !cmd->skip_update) {
 			hashcpy(sha1, cmd->new_sha1);
 			*cmd_list = cmd->next;
 			return 0;
@@ -755,7 +757,7 @@ static void execute_commands(struct command *commands, const char *unpacker_erro
 	}
 }
 
-static struct command *read_head_info(void)
+static struct command *read_head_info(struct sha1_array *shallow)
 {
 	struct command *commands = NULL;
 	struct command **p = &commands;
@@ -769,6 +771,14 @@ static struct command *read_head_info(void)
 		line = packet_read_line(0, &len);
 		if (!line)
 			break;
+
+		if (len == 48 && !prefixcmp(line, "shallow ")) {
+			if (get_sha1_hex(line + 8, old_sha1))
+				die("protocol error: expected shallow sha, got '%s'", line + 8);
+			sha1_array_append(shallow, old_sha1);
+			continue;
+		}
+
 		if (len < 83 ||
 		    line[40] != ' ' ||
 		    line[81] != ' ' ||
@@ -820,7 +830,7 @@ static const char *parse_pack_header(struct pack_header *hdr)
 
 static const char *pack_lockfile;
 
-static const char *unpack(int err_fd)
+static const char *unpack(int err_fd, struct shallow_info *si)
 {
 	struct pack_header hdr;
 	struct argv_array av = ARGV_ARRAY_INIT;
@@ -843,6 +853,11 @@ static const char *unpack(int err_fd)
 	snprintf(hdr_arg, sizeof(hdr_arg),
 			"--pack_header=%"PRIu32",%"PRIu32,
 			ntohl(hdr.hdr_version), ntohl(hdr.hdr_entries));
+
+	if (si->nr_ours || si->nr_theirs) {
+		alt_shallow_file = setup_temporary_shallow(si->shallow);
+		argv_array_pushl(&av, "--shallow-file", alt_shallow_file, NULL);
+	}
 
 	memset(&child, 0, sizeof(child));
 	if (ntohl(hdr.hdr_entries) < unpack_limit) {
@@ -889,13 +904,13 @@ static const char *unpack(int err_fd)
 	return NULL;
 }
 
-static const char *unpack_with_sideband(void)
+static const char *unpack_with_sideband(struct shallow_info *si)
 {
 	struct async muxer;
 	const char *ret;
 
 	if (!use_sideband)
-		return unpack(0);
+		return unpack(0, si);
 
 	memset(&muxer, 0, sizeof(muxer));
 	muxer.proc = copy_to_sideband;
@@ -903,10 +918,46 @@ static const char *unpack_with_sideband(void)
 	if (start_async(&muxer))
 		return NULL;
 
-	ret = unpack(muxer.in);
+	ret = unpack(muxer.in, si);
 
 	finish_async(&muxer);
 	return ret;
+}
+
+static void update_shallow_info(struct command *commands,
+				struct shallow_info *si,
+				struct sha1_array *ref)
+{
+	struct command *cmd;
+	int *ref_status;
+	remove_nonexistent_theirs_shallow(si);
+	/* XXX remove_nonexistent_ours_in_pack() */
+	if (!si->nr_ours && !si->nr_theirs)
+		return;
+
+	for (cmd = commands; cmd; cmd = cmd->next) {
+		if (is_null_sha1(cmd->new_sha1))
+			continue;
+		sha1_array_append(ref, cmd->new_sha1);
+		cmd->index = ref->nr - 1;
+	}
+	si->ref = ref;
+
+	ref_status = xmalloc(sizeof(*ref_status) * ref->nr);
+	assign_shallow_commits_to_refs(si, NULL, ref_status);
+	for (cmd = commands; cmd; cmd = cmd->next) {
+		if (is_null_sha1(cmd->new_sha1))
+			continue;
+		if (ref_status[cmd->index]) {
+			cmd->error_string = "shallow update not allowed";
+			cmd->skip_update = 1;
+		}
+	}
+	if (alt_shallow_file && *alt_shallow_file) {
+		unlink(alt_shallow_file);
+		alt_shallow_file = NULL;
+	}
+	free(ref_status);
 }
 
 static void report(struct command *commands, const char *unpack_status)
@@ -950,6 +1001,9 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 	int i;
 	char *dir = NULL;
 	struct command *commands;
+	struct sha1_array shallow = SHA1_ARRAY_INIT;
+	struct sha1_array ref = SHA1_ARRAY_INIT;
+	struct shallow_info si;
 
 	packet_trace_identity("receive-pack");
 
@@ -1006,11 +1060,14 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 	if (advertise_refs)
 		return 0;
 
-	if ((commands = read_head_info()) != NULL) {
+	if ((commands = read_head_info(&shallow)) != NULL) {
 		const char *unpack_status = NULL;
 
-		if (!delete_only(commands))
-			unpack_status = unpack_with_sideband();
+		prepare_shallow_info(&si, &shallow);
+		if (!delete_only(commands)) {
+			unpack_status = unpack_with_sideband(&si);
+			update_shallow_info(commands, &si, &ref);
+		}
 		execute_commands(commands, unpack_status);
 		if (pack_lockfile)
 			unlink_or_warn(pack_lockfile);
@@ -1027,8 +1084,11 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 		}
 		if (auto_update_server_info)
 			update_server_info(0);
+		clear_shallow_info(&si);
 	}
 	if (use_sideband)
 		packet_flush(1);
+	sha1_array_clear(&shallow);
+	sha1_array_clear(&ref);
 	return 0;
 }
