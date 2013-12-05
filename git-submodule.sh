@@ -721,7 +721,6 @@ cmd_deinit()
 cmd_update()
 {
 	# parse $args after "submodule ... update".
-	orig_flags=
 	while test $# -ne 0
 	do
 		case "$1" in
@@ -746,7 +745,6 @@ cmd_update()
 		--reference)
 			case "$2" in '') usage ;; esac
 			reference="--reference=$2"
-			orig_flags="$orig_flags $(git rev-parse --sq-quote "$1")"
 			shift
 			;;
 		--reference=*)
@@ -780,7 +778,6 @@ cmd_update()
 			break
 			;;
 		esac
-		orig_flags="$orig_flags $(git rev-parse --sq-quote "$1")"
 		shift
 	done
 
@@ -924,7 +921,7 @@ Maybe you want to use 'update --init'?")"
 				prefix="$prefix$sm_path/"
 				clear_local_git_env
 				cd "$sm_path" &&
-				eval cmd_update "$orig_flags"
+				eval cmd_update
 			)
 			res=$?
 			if test $res -gt 0
