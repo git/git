@@ -394,25 +394,29 @@ static size_t rpc_in(char *ptr, size_t eltsize,
 	return size;
 }
 
-static int run_slot(struct active_request_slot *slot)
+static int run_slot(struct active_request_slot *slot,
+		    struct slot_results *results)
 {
 	int err;
-	struct slot_results results;
+	struct slot_results results_buf;
 
-	slot->results = &results;
+	if (!results)
+		results = &results_buf;
+
+	slot->results = results;
 	slot->curl_result = curl_easy_perform(slot->curl);
 	finish_active_slot(slot);
 
-	err = handle_curl_result(&results);
+	err = handle_curl_result(results);
 	if (err != HTTP_OK && err != HTTP_REAUTH) {
 		error("RPC failed; result=%d, HTTP code = %ld",
-		      results.curl_result, results.http_code);
+		      results->curl_result, results->http_code);
 	}
 
 	return err;
 }
 
-static int probe_rpc(struct rpc_state *rpc)
+static int probe_rpc(struct rpc_state *rpc, struct slot_results *results)
 {
 	struct active_request_slot *slot;
 	struct curl_slist *headers = NULL;
@@ -434,7 +438,7 @@ static int probe_rpc(struct rpc_state *rpc)
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, fwrite_buffer);
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, &buf);
 
-	err = run_slot(slot);
+	err = run_slot(slot, results);
 
 	curl_slist_free_all(headers);
 	strbuf_release(&buf);
@@ -449,6 +453,7 @@ static int post_rpc(struct rpc_state *rpc)
 	char *gzip_body = NULL;
 	size_t gzip_size = 0;
 	int err, large_request = 0;
+	int needs_100_continue = 0;
 
 	/* Try to load the entire request, if we can fit it into the
 	 * allocated buffer space we can use HTTP/1.0 and avoid the
@@ -472,18 +477,24 @@ static int post_rpc(struct rpc_state *rpc)
 	}
 
 	if (large_request) {
+		struct slot_results results;
+
 		do {
-			err = probe_rpc(rpc);
+			err = probe_rpc(rpc, &results);
 			if (err == HTTP_REAUTH)
 				credential_fill(&http_auth);
 		} while (err == HTTP_REAUTH);
 		if (err != HTTP_OK)
 			return -1;
+
+		if (results.auth_avail & CURLAUTH_GSSNEGOTIATE)
+			needs_100_continue = 1;
 	}
 
 	headers = curl_slist_append(headers, rpc->hdr_content_type);
 	headers = curl_slist_append(headers, rpc->hdr_accept);
-	headers = curl_slist_append(headers, "Expect:");
+	headers = curl_slist_append(headers, needs_100_continue ?
+		"Expect: 100-continue" : "Expect:");
 
 retry:
 	slot = get_active_slot();
@@ -574,7 +585,7 @@ retry:
 	curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION, rpc_in);
 	curl_easy_setopt(slot->curl, CURLOPT_FILE, rpc);
 
-	err = run_slot(slot);
+	err = run_slot(slot, NULL);
 	if (err == HTTP_REAUTH && !large_request) {
 		credential_fill(&http_auth);
 		goto retry;
