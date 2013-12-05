@@ -244,7 +244,7 @@ extern struct diff_filepair *diff_unmerge(struct diff_options *, const char *pat
 #define DIFF_SETUP_USE_SIZE_CACHE	4
 
 /*
- * Poor man's alternative to parse-option, to allow both sticked form
+ * Poor man's alternative to parse-option, to allow both stuck form
  * (--option=value) and separate form (--option value).
  */
 extern int parse_long_opt(const char *opt, const char **argv,

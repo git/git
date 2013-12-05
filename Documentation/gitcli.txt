@@ -72,11 +72,11 @@ scripting Git:
  * splitting short options to separate words (prefer `git foo -a -b`
    to `git foo -ab`, the latter may not even work).
 
- * when a command line option takes an argument, use the 'sticked' form.  In
+ * when a command line option takes an argument, use the 'stuck' form.  In
    other words, write `git foo -oArg` instead of `git foo -o Arg` for short
    options, and `git foo --long-opt=Arg` instead of `git foo --long-opt Arg`
    for long options.  An option that takes optional option-argument must be
-   written in the 'sticked' form.
+   written in the 'stuck' form.
 
  * when you give a revision parameter to a command, make sure the parameter is
    not ambiguous with a name of a file in the work tree.  E.g. do not write
@@ -165,7 +165,7 @@ $ git foo -o Arg
 ----------------------------
 
 However, this is *NOT* allowed for switches with an optional value, where the
-'sticked' form must be used:
+'stuck' form must be used:
 ----------------------------
 $ git describe --abbrev HEAD     # correct
 $ git describe --abbrev=10 HEAD  # correct

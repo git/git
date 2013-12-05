@@ -29,9 +29,9 @@ that allow to change the behavior of a command.
 
 The parse-options API allows:
 
-* 'sticked' and 'separate form' of options with arguments.
-  `-oArg` is sticked, `-o Arg` is separate form.
-  `--option=Arg` is sticked, `--option Arg` is separate form.
+* 'stuck' and 'separate form' of options with arguments.
+  `-oArg` is stuck, `-o Arg` is separate form.
+  `--option=Arg` is stuck, `--option Arg` is separate form.
 
 * Long options may be 'abbreviated', as long as the abbreviation
   is unambiguous.
