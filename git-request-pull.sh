@@ -106,7 +106,7 @@ find_matching_ref='
 	}
 '
 
-ref=$(git ls-remote "$url" | perl -e "$find_matching_ref" "$head" "$headrev" "$tag_name")
+ref=$(git ls-remote "$url" | @@PERL@@ -e "$find_matching_ref" "$head" "$headrev" "$tag_name")
 
 url=$(git ls-remote --get-url "$url")
 
