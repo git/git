@@ -194,6 +194,12 @@ test_expect_success "--batch-check for an emtpy line" '
     test " missing" = "$(echo | git cat-file --batch-check)"
 '
 
+test_expect_success 'empty --batch-check notices missing object' '
+	echo "$_z40 missing" >expect &&
+	echo "$_z40" | git cat-file --batch-check="" >actual &&
+	test_cmp expect actual
+'
+
 batch_input="$hello_sha1
 $commit_sha1
 $tag_sha1
