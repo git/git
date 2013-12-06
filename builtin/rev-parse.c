@@ -279,6 +279,7 @@ static int try_difference(const char *arg)
 				exclude = n;
 			}
 		}
+		*dotdot = '.';
 		return 1;
 	}
 	*dotdot = '.';
@@ -302,8 +303,10 @@ static int try_parent_shorthands(const char *arg)
 		return 0;
 
 	*dotdot = 0;
-	if (get_sha1_committish(arg, sha1))
+	if (get_sha1_committish(arg, sha1)) {
+		*dotdot = '^';
 		return 0;
+	}
 
 	if (!parents_only)
 		show_rev(NORMAL, sha1, arg);
@@ -312,6 +315,7 @@ static int try_parent_shorthands(const char *arg)
 		show_rev(parents_only ? NORMAL : REVERSED,
 				parents->item->object.sha1, arg);
 
+	*dotdot = '^';
 	return 1;
 }
 
