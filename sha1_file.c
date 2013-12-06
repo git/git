@@ -1442,51 +1442,6 @@ void *map_sha1_file(const unsigned char *sha1, unsigned long *size)
 	return map;
 }
 
-/*
- * There used to be a second loose object header format which
- * was meant to mimic the in-pack format, allowing for direct
- * copy of the object data.  This format turned up not to be
- * really worth it and we no longer write loose objects in that
- * format.
- */
-static int experimental_loose_object(unsigned char *map)
-{
-	unsigned int word;
-
-	/*
-	 * We must determine if the buffer contains the standard
-	 * zlib-deflated stream or the experimental format based
-	 * on the in-pack object format. Compare the header byte
-	 * for each format:
-	 *
-	 * RFC1950 zlib w/ deflate : 0www1000 : 0 <= www <= 7
-	 * Experimental pack-based : Stttssss : ttt = 1,2,3,4
-	 *
-	 * If bit 7 is clear and bits 0-3 equal 8, the buffer MUST be
-	 * in standard loose-object format, UNLESS it is a Git-pack
-	 * format object *exactly* 8 bytes in size when inflated.
-	 *
-	 * However, RFC1950 also specifies that the 1st 16-bit word
-	 * must be divisible by 31 - this checksum tells us our buffer
-	 * is in the standard format, giving a false positive only if
-	 * the 1st word of the Git-pack format object happens to be
-	 * divisible by 31, ie:
-	 *      ((byte0 * 256) + byte1) % 31 = 0
-	 *   =>        0ttt10000www1000 % 31 = 0
-	 *
-	 * As it happens, this case can only arise for www=3 & ttt=1
-	 * - ie, a Commit object, which would have to be 8 bytes in
-	 * size. As no Commit can be that small, we find that the
-	 * combination of these two criteria (bitmask & checksum)
-	 * can always correctly determine the buffer format.
-	 */
-	word = (map[0] << 8) + map[1];
-	if ((map[0] & 0x8F) == 0x08 && !(word % 31))
-		return 0;
-	else
-		return 1;
-}
-
 unsigned long unpack_object_header_buffer(const unsigned char *buf,
 		unsigned long len, enum object_type *type, unsigned long *sizep)
 {
@@ -1514,14 +1469,6 @@ unsigned long unpack_object_header_buffer(const unsigned char *buf,
 
 int unpack_sha1_header(git_zstream *stream, unsigned char *map, unsigned long mapsize, void *buffer, unsigned long bufsiz)
 {
-	unsigned long size, used;
-	static const char valid_loose_object_type[8] = {
-		0, /* OBJ_EXT */
-		1, 1, 1, 1, /* "commit", "tree", "blob", "tag" */
-		0, /* "delta" and others are invalid in a loose object */
-	};
-	enum object_type type;
-
 	/* Get the data stream */
 	memset(stream, 0, sizeof(*stream));
 	stream->next_in = map;
@@ -1529,27 +1476,6 @@ int unpack_sha1_header(git_zstream *stream, unsigned char *map, unsigned long ma
 	stream->next_out = buffer;
 	stream->avail_out = bufsiz;
 
-	if (experimental_loose_object(map)) {
-		/*
-		 * The old experimental format we no longer produce;
-		 * we can still read it.
-		 */
-		used = unpack_object_header_buffer(map, mapsize, &type, &size);
-		if (!used || !valid_loose_object_type[type])
-			return -1;
-		map += used;
-		mapsize -= used;
-
-		/* Set up the stream for the rest.. */
-		stream->next_in = map;
-		stream->avail_in = mapsize;
-		git_inflate_init(stream);
-
-		/* And generate the fake traditional header */
-		stream->total_out = 1 + snprintf(buffer, bufsiz, "%s %lu",
-						 typename(type), size);
-		return 0;
-	}
 	git_inflate_init(stream);
 	return git_inflate(stream, 0);
 }
