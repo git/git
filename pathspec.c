@@ -71,6 +71,7 @@ static struct pathspec_magic {
 	{ PATHSPEC_LITERAL,   0, "literal" },
 	{ PATHSPEC_GLOB,   '\0', "glob" },
 	{ PATHSPEC_ICASE,  '\0', "icase" },
+	{ PATHSPEC_EXCLUDE, '!', "exclude" },
 };
 
 /*
@@ -355,7 +356,7 @@ void parse_pathspec(struct pathspec *pathspec,
 {
 	struct pathspec_item *item;
 	const char *entry = argv ? *argv : NULL;
-	int i, n, prefixlen;
+	int i, n, prefixlen, nr_exclude = 0;
 
 	memset(pathspec, 0, sizeof(*pathspec));
 
@@ -412,6 +413,8 @@ void parse_pathspec(struct pathspec *pathspec,
 		if ((flags & PATHSPEC_LITERAL_PATH) &&
 		    !(magic_mask & PATHSPEC_LITERAL))
 			item[i].magic |= PATHSPEC_LITERAL;
+		if (item[i].magic & PATHSPEC_EXCLUDE)
+			nr_exclude++;
 		if (item[i].magic & magic_mask)
 			unsupported_magic(entry,
 					  item[i].magic & magic_mask,
@@ -426,6 +429,10 @@ void parse_pathspec(struct pathspec *pathspec,
 			pathspec->has_wildcard = 1;
 		pathspec->magic |= item[i].magic;
 	}
+
+	if (nr_exclude == n)
+		die(_("There is nothing to exclude from by :(exclude) patterns.\n"
+		      "Perhaps you forgot to add either ':/' or '.' ?"));
 
 
 	if (pathspec->magic & PATHSPEC_MAXDEPTH) {
