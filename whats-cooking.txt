@@ -1,19 +1,18 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Dec 2013, #01; Wed, 4)
-X-master-at: daad3aa255ec5c08f95867feaaf8f4db03346e70
-X-next-at: dd8f0929c2ec5ca88db21a610c529223e471ab6c
+Subject: What's cooking in git.git (Dec 2013, #02; Fri, 6)
+X-master-at: 077f43447c4931dd2e7890f16e8728f7f7376b87
+X-next-at: 083d67c40460583eb33253efa92cc809789c8f9b
 
-What's cooking in git.git (Dec 2013, #01; Wed, 4)
+What's cooking in git.git (Dec 2013, #02; Fri, 6)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-There are quite a many topics that have been left over from the
-previous round.  I haven't rewound the tip of 'next' yet, but I am
-planning to do so real soon now, kicking some topics out of it.
+The tip of 'next' has been rewound, ejecting a few topics that
+used to be there.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -21,182 +20,239 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* jj/doc-markup-gitcli (2013-11-20) 1 commit
-  (merged to 'next' on 2013-11-21 at 5e49fa8)
- + Documentation/gitcli.txt: fix double quotes
-
-
-* jj/doc-markup-hints-in-coding-guidelines (2013-11-18) 1 commit
-  (merged to 'next' on 2013-11-21 at 9c638a6)
- + State correct usage of literal examples in man pages in the coding standards
-
-
-* jj/log-doc (2013-11-13) 2 commits
-  (merged to 'next' on 2013-11-21 at cb0ddd2)
- + Documentation/git-log.txt: mark-up fix and minor rephasing
- + Documentation/git-log: update "--log-size" description
-
-
-* jj/rev-list-options-doc (2013-11-18) 2 commits
-  (merged to 'next' on 2013-11-20 at db975de)
- + Documentation/rev-list-options.txt: fix some grammatical issues and typos
- + Documentation/rev-list-options.txt: fix mark-up
-
-
-* mi/typofixes (2013-11-12) 3 commits
-  (merged to 'next' on 2013-11-13 at bb7c2eb)
- + contrib: typofixes
- + Documentation/technical/http-protocol.txt: typofixes
- + typofixes: fix misspelt comments
-
-
-* nd/glossary-content-pathspec-markup (2013-11-21) 1 commit
-  (merged to 'next' on 2013-11-21 at 6072636)
- + glossary-content.txt: fix documentation of "**" patterns
-
-
-* tb/doc-fetch-pack-url (2013-11-11) 1 commit
-  (merged to 'next' on 2013-11-13 at 90d6832)
- + git-fetch-pack uses URLs like git-fetch
-
---------------------------------------------------
 [New Topics]
 
-* cl/p4-use-diff-tree (2013-11-22) 1 commit
-  (merged to 'next' on 2013-11-27 at 11926ce)
- + git p4: Use git diff-tree instead of format-patch
+* jn/git-gui-chmod+x (2013-11-25) 1 commit
+ - git-gui: chmod +x po2msg, windows/git-gui.sh
 
- Will merge to 'master'.
-
-
-* jn/scripts-updates (2013-11-26) 11 commits
-  (merged to 'next' on 2013-11-27 at 5056d4d)
- + Merge commit '0f2068c4cfb8bc84d338265f03c773e5559e761d' into jn/scripts-updates
- + gitk: chmod +x po2msg
- + Merge commit '688eb87c9444686180d8f379ab854bcbc34db4db' into jn/scripts-updates
- + git-gui: chmod +x po2msg, windows/git-gui.sh
- + remove #!interpreter line from shell libraries
- + test: replace shebangs with descriptions in shell libraries
- + test: make FILEMODE a lazy prereq
- + contrib: remove git-p4import
- + mark contributed hooks executable
- + mark perl test scripts executable
- + mark Windows build scripts executable
-
- Will drop the two merges at the tip to gitk and git-gui parts of
- the tree, as I've forwarded the relevant patches to the upstream
- and expect them to come back later from their respective trees.
+ Parked here until I get the same change back from the upstream
+ git-gui tree.
 
 
-* tr/commit-slab-cleanup (2013-12-02) 3 commits
-  (merged to 'next' on 2013-12-02 at f545f4d)
- + commit-slab: sizeof() the right type in xrealloc
-  (merged to 'next' on 2013-11-27 at 84d5a73)
- + commit-slab: declare functions "static inline"
- + commit-slab: document clear_$slabname()
+* jn/gitk-chmod+x (2013-11-25) 1 commit
+ - gitk: chmod +x po2msg
+
+ Parked here until I get the same change back from the upstream gitk
+ tree.
 
 
-* tr/doc-git-cherry (2013-11-27) 1 commit
-  (merged to 'next' on 2013-11-27 at d37f520)
- + Documentation: revamp git-cherry(1)
-
- Will merge to 'master'.
-
-
-* aa/transport-non-positive-depth-only (2013-11-26) 1 commit
-  (merged to 'next' on 2013-11-27 at b01f05b)
- + transport: catch non positive --depth option value
-
- Will merge to 'master'.
+* jk/name-pack-after-byte-representation (2013-12-05) 2 commits
+ - pack-objects: name pack files after trailer hash
+ - sha1write: make buffer const-correct
+ (this branch is tangled with jk/pack-bitmap.)
 
 
-* rs/doc-submitting-patches (2013-11-27) 1 commit
-  (merged to 'next' on 2013-11-27 at f8886f4)
- + SubmittingPatches: document how to handle multiple patches
-
- Will merge to 'master'.
-
-
-* cc/starts-n-ends-with (2013-12-04) 4 commits
- - replace {pre,suf}fixcmp() with {starts,ends}_with()
- - strbuf: introduce starts_with() and ends_with()
- - builtin/remote: remove postfixcmp() and use suffixcmp() instead
- - environment: normalize use of prefixcmp() by removing " != 0"
- (this branch is used by cc/starts-n-ends-with-endgame.)
-
- Remove a few duplicate implementations of prefix/suffix comparison
- functions, and rename them to starts_with and ends_with.
-
- This conflicts with a part of cc/remote-remove-redundant-postfixcmp
- topic (I think it actually subsumes it).
+* nd/negative-pathspec (2013-12-06) 3 commits
+ - pathspec.c: support adding prefix magic to a pathspec with mnemonic magic
+ - Support pathspec magic :(exclude) and its short form :!
+ - glossary-content.txt: rephrase magic signature part
 
 
-* cc/starts-n-ends-with-endgame (2013-12-04) 1 commit
- - strbuf: remove prefixcmp() and suffixcmp()
- (this branch uses cc/starts-n-ends-with.)
-
- Endgame for the above topic, that needs to be evil-merged with
- other topics that introduce new uses of prefix/suffix-cmp
- functions.
+* nd/transport-positive-depth-only (2013-12-06) 1 commit
+ - clone,fetch: catch non positive --depth option value
 
 
-* jc/push-refmap (2013-12-04) 3 commits
- - push: also use "upstream" mapping when pushing a single ref
- - push: use remote.$name.push as a refmap
- - builtin/push.c: use strbuf instead of manual allocation
+* zk/difftool-counts (2013-12-06) 1 commit
+ - difftool: display the number of files in the diff queue in the prompt
 
- Make "git push origin master" update the same ref that would be
- updated by our 'master' when "git push origin" (no refspecs) is run
- while the 'master' branch is checked out, which makes "git push"
- more symmetric to "git fetch" and more usable for the triangular
- workflow.
+--------------------------------------------------
+[Graduated to "master"]
 
+* ak/submodule-foreach-quoting (2013-09-27) 1 commit
+  (merged to 'next' on 2013-10-14 at d77c5f1)
+ + submodule foreach: skip eval for more than one argument
 
-* jk/t5000-gzip-simplify (2013-12-04) 1 commit
- - t5000: simplify gzip prerequisite checks
+ A behavior change, but maybe a worthwhile one: "git submodule
+ foreach" was treating its arguments as part of a single command to
+ be concatenated and passed to a shell, making writing buggy scripts
+ too easy.
 
- Test fix.
+ This patch preserves the old "just pass it to the shell" behavior
+ when a single argument is passed to 'git submodule foreach' and
+ moves to a new "skip the shell and use the arguments passed
+ unmolested" behavior when more than one argument is passed.
 
+ The old behavior (always concatenating and passing to the shell)
+ was similar to the 'ssh' command, while the new behavior (switching
+ on the number of arguments) is what 'xterm -e' does.
 
-* js/gnome-keyring (2013-12-04) 1 commit
- - contrib/git-credential-gnome-keyring.c: small stylistic cleanups
-
- Style fix.
-
-
-* kn/gitweb-extra-branch-refs (2013-12-04) 4 commits
- - gitweb: Denote non-heads, non-remotes branches
- - gitweb: Add a feature for adding more branch refs
- - gitweb: Return plain booleans in validation methods
- - gitweb: Move check-ref-format code into separate function
-
- Allow gitweb to be configured to show refs out of refs/heads/ as if
- they were branches.
+ May need more thought to make sure this change is advertised well;
+ scripts that used multiple arguments but added their own extra
+ layer of quoting are broken, and the users need to adjust them.
 
 
-* mm/mv-file-to-no-such-dir-with-slash (2013-12-04) 1 commit
- - mv: let 'git mv file no-such-dir/' error out
+* bc/http-100-continue (2013-10-31) 3 commits
+  (merged to 'next' on 2013-11-01 at e12ae23)
+ + remote-curl: fix large pushes with GSSAPI
+ + remote-curl: pass curl slot_results back through run_slot
+ + http: return curl's AUTHAVAIL via slot_results
+
+ Issue "100 Continue" responses to help use of GSS-Negotiate
+ authentication scheme over HTTP transport when needed.
 
 
-* nd/gettext-vsnprintf (2013-12-04) 1 commit
- - gettext.c: detect the vsnprintf bug at runtime
+* jc/bundle (2013-11-12) 1 commit
+  (merged to 'next' on 2013-11-21 at 535b046)
+ + bundle: use argv-array
+
+ Code clean-up.
 
 
-* tr/send-email-ssl (2013-12-04) 3 commits
- - send-email: set SSL options through IO::Socket::SSL::set_client_defaults
- - send-email: --smtp-ssl-cert-path takes an argument
- - send-email: pass Debug to Net::SMTP::SSL::new
+* jc/merge-base-reflog (2013-10-29) 2 commits
+  (merged to 'next' on 2013-11-01 at 6114764)
+ + merge-base: teach "--fork-point" mode
+ + merge-base: use OPT_CMDMODE and clarify the command line parsing
+
+ Code the logic in "pull --rebase" that figures out a fork point
+ from reflog entries in C.
+
+
+* jc/ref-excludes (2013-11-01) 5 commits
+  (merged to 'next' on 2013-11-04 at fac1ed0)
+ + rev-parse: introduce --exclude=<glob> to tame wildcards
+ + rev-list --exclude: export add/clear-ref-exclusion and ref-excluded API
+ + rev-list --exclude: tests
+ + document --exclude option
+ + revision: introduce --exclude=<glob> to tame wildcards
+
+ People often wished a way to tell "git log --branches" (and "git
+ log --remotes --not --branches") to exclude some local branches
+ from the expansion of "--branches" (similarly for "--tags", "--all"
+ and "--glob=<pattern>").  Now they have one.
+
+
+* jh/loose-object-dirs-creation-race (2013-10-28) 1 commit
+  (merged to 'next' on 2013-11-01 at 3169b0f)
+ + sha1_file.c:create_tmpfile(): Fix race when creating loose object dirs
+
+ Two processes creating loose objects at the same time could have
+ failed unnecessarily when they happened to have created objects
+ whose names share the same first byte.
+
+
+* jk/remove-experimental-loose-object-support (2013-11-21) 1 commit
+  (merged to 'next' on 2013-11-21 at d37bab7)
+ + drop support for "experimental" loose objects
+
+ Read-only support for experimental loose-object format, in which
+ users could optionally choose to write in their loose objects for a
+ short while between v1.4.3 to v1.5.3 era, has been dropped.
+
+
+* jk/replace-perl-in-built-scripts (2013-10-29) 1 commit
+  (merged to 'next' on 2013-11-01 at 2384e29)
+ + use @@PERL@@ in built scripts
+
+
+* jk/robustify-parse-commit (2013-10-24) 6 commits
+  (merged to 'next' on 2013-11-01 at 2bfbaab)
+ + checkout: do not die when leaving broken detached HEAD
+ + use parse_commit_or_die instead of custom message
+ + use parse_commit_or_die instead of segfaulting
+ + assume parse_commit checks for NULL commit
+ + assume parse_commit checks commit->object.parsed
+ + log_tree_diff: die when we fail to parse a commit
+
+
+* jk/two-way-merge-corner-case-fix (2013-11-04) 3 commits
+  (merged to 'next' on 2013-11-04 at 79f4fb0)
+ + t1005: add test for "read-tree --reset -u A B"
+ + t1005: reindent
+ + unpack-trees: fix "read-tree -u --reset A B" with conflicted index
+
+ Fix a rather longstanding corner-case bug in twoway "reset to
+ there" merge, which is most often seen in "git am --abort".
+
+
+* jl/submodule-update-retire-orig-flags (2013-11-11) 1 commit
+  (merged to 'next' on 2013-11-13 at 4b70d15)
+ + submodule update: remove unnecessary orig_flags variable
+
+ Code clean-up.
+
+
+* jn/mediawiki-makefile-updates (2013-11-11) 4 commits
+  (merged to 'next' on 2013-11-13 at 71c8d20)
+ + git-remote-mediawiki build: handle DESTDIR/INSTLIBDIR with whitespace
+ + git-remote-mediawiki build: make 'install' command configurable
+ + git-remote-mediawiki: honor DESTDIR in "make install"
+ + git-remote-mediawiki: do not remove installed files in "clean" target
+
+ Build and installation procedure clean-up.
+
+
+* jn/perl-lib-extra (2013-11-18) 2 commits
+  (merged to 'next' on 2013-11-20 at 8c90afae)
+ + Makefile: add PERLLIB_EXTRA variable that adds to default perl path
+ + Makefile: rebuild perl scripts when perl paths change
+
+ The new PERLLIB_EXTRA makefile variable can be used to specify
+ additional directories Perl modules (e.g. the ones necessary to run
+ git-svn) are installed on the platform when building.
+
+
+* nd/magic-pathspec (2013-11-20) 1 commit
+  (merged to 'next' on 2013-11-21 at f914a30)
+ + diff: restrict pathspec limitations to diff b/f case only
+
+ "git diff -- ':(icase)makefile'" was unnecessarily rejected at the
+ command line parser.
+
+ Needs to be merged to 'maint' later.
+
+
+* nd/wt-status-align-i18n (2013-11-06) 1 commit
+  (merged to 'next' on 2013-11-13 at b033aa0)
+ + wt-status: take the alignment burden off translators
+
+ An attempt to automatically align the names in the "git status"
+ output, taking the display width of (translated) section labels
+ into account.
+
+
+* nv/parseopt-opt-arg (2013-10-31) 2 commits
+  (merged to 'next' on 2013-11-01 at cd2afd9)
+ + rev-parse --parseopt: add the --stuck-long mode
+ + Use the word 'stuck' instead of 'sticked'
+
+ Enhance "rev-parse --parseopt" mode to help parsing options with
+ an optional parameter.
+
+
+* rh/remote-hg-bzr-updates (2013-11-18) 8 commits
+  (merged to 'next' on 2013-11-20 at a36f3c4)
+ + remote-bzr, remote-hg: fix email address regular expression
+ + test-hg.sh: help user correlate verbose output with email test
+ + test-hg.sh: fix duplicate content strings in author tests
+ + test-hg.sh: avoid obsolete 'test' syntax
+ + test-hg.sh: eliminate 'local' bashism
+ + test-bzr.sh, test-hg.sh: prepare for change to push.default=simple
+ + test-bzr.sh, test-hg.sh: allow running from any dir
+ + test-lib.sh: convert $TEST_DIRECTORY to an absolute path
+
+
+* rr/for-each-ref-decoration (2013-11-19) 6 commits
+  (merged to 'next' on 2013-11-21 at ee7b0ed)
+ + for-each-ref: avoid color leakage
+ + for-each-ref: introduce %(color:...) for color
+ + for-each-ref: introduce %(upstream:track[short])
+ + for-each-ref: introduce %(HEAD) asterisk marker
+ + t6300 (for-each-ref): don't hardcode SHA-1 hexes
+ + t6300 (for-each-ref): clearly demarcate setup
+
+ "git for-each-ref --format=..." learned a few formatting directives;
+ e.g. "%(color:red)%(HEAD)%(color:reset) %(refname:short) %(subject)".
+
+
+* sb/sha1-loose-object-info-check-existence (2013-11-06) 1 commit
+  (merged to 'next' on 2013-11-06 at 1ea5b18)
+ + sha1_loose_object_info(): do not return success on missing object
+
+ "git cat-file --batch-check=ok" did not check the existence of the
+ named object.
 
 --------------------------------------------------
 [Stalled]
-
-* jl/commit-v-strip-marker (2013-11-19) 1 commit
- - commit -v: strip diffs and submodule shortlogs from the commit message
-
- Perhaps another reroll for core.commentChar coming?
-
 
 * fc/transport-helper-fixes (2013-11-13) 12 commits
  - remote-bzr: support the new 'force' option
@@ -280,6 +336,7 @@ of the repositories listed at
  - pack-objects: refactor the packing list
  - revindex: export new APIs
  - sha1write: make buffer const-correct
+ (this branch is tangled with jk/name-pack-after-byte-representation.)
 
  Borrows the bitmap index into packfiles from JGit to speed up
  enumeration of objects involved in a commit range without having to
@@ -372,6 +429,132 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* jl/commit-v-strip-marker (2013-12-05) 1 commit
+ - commit -v: strip diffs and submodule shortlogs from the commit message
+
+
+* cl/p4-use-diff-tree (2013-11-22) 1 commit
+  (merged to 'next' on 2013-12-06 at fc3c89e)
+ + git p4: Use git diff-tree instead of format-patch
+
+ Originally merged to 'next' on 2013-11-27
+
+ Will merge to 'master'.
+
+
+* jn/scripts-updates (2013-11-26) 7 commits
+  (merged to 'next' on 2013-12-06 at 60a7026)
+ + remove #!interpreter line from shell libraries
+ + test: replace shebangs with descriptions in shell libraries
+ + test: make FILEMODE a lazy prereq
+ + contrib: remove git-p4import
+ + mark contributed hooks executable
+ + mark perl test scripts executable
+ + mark Windows build scripts executable
+
+ Will merge to 'master'.
+
+
+* tr/commit-slab-cleanup (2013-12-02) 3 commits
+  (merged to 'next' on 2013-12-06 at faee247)
+ + commit-slab: sizeof() the right type in xrealloc
+ + commit-slab: declare functions "static inline"
+ + commit-slab: document clear_$slabname()
+
+ Originally merged to 'next' on 2013-12-02
+
+ Will merge to 'master'.
+
+
+* tr/doc-git-cherry (2013-11-27) 1 commit
+  (merged to 'next' on 2013-12-06 at 9a1ba7a)
+ + Documentation: revamp git-cherry(1)
+
+ Originally merged to 'next' on 2013-11-27
+
+ Will merge to 'master'.
+
+
+* rs/doc-submitting-patches (2013-11-27) 1 commit
+  (merged to 'next' on 2013-12-06 at 0628818)
+ + SubmittingPatches: document how to handle multiple patches
+
+ Originally merged to 'next' on 2013-11-27
+
+ Will merge to 'master'.
+
+
+* cc/starts-n-ends-with (2013-12-05) 4 commits
+ - replace {pre,suf}fixcmp() with {starts,ends}_with()
+ - strbuf: introduce starts_with() and ends_with()
+ - builtin/remote: remove postfixcmp() and use suffixcmp() instead
+ - environment: normalize use of prefixcmp() by removing " != 0"
+ (this branch is used by cc/starts-n-ends-with-endgame; uses jk/remove-deprecated.)
+
+ Remove a few duplicate implementations of prefix/suffix comparison
+ functions, and rename them to starts_with and ends_with.
+
+ To avoid unnecessary merge conflicts, this is queued on top of
+ jk/remove-deprecated topic.
+
+
+* cc/starts-n-ends-with-endgame (2013-12-05) 1 commit
+ - strbuf: remove prefixcmp() and suffixcmp()
+ (this branch uses cc/starts-n-ends-with and jk/remove-deprecated.)
+
+ Endgame for the above topic, that needs to be evil-merged with
+ other topics that introduce new uses of prefix/suffix-cmp
+ functions.
+
+
+* jc/push-refmap (2013-12-04) 3 commits
+ - push: also use "upstream" mapping when pushing a single ref
+ - push: use remote.$name.push as a refmap
+ - builtin/push.c: use strbuf instead of manual allocation
+
+ Make "git push origin master" update the same ref that would be
+ updated by our 'master' when "git push origin" (no refspecs) is run
+ while the 'master' branch is checked out, which makes "git push"
+ more symmetric to "git fetch" and more usable for the triangular
+ workflow.
+
+
+* jk/t5000-gzip-simplify (2013-12-04) 1 commit
+ - t5000: simplify gzip prerequisite checks
+
+ Test fix.
+
+
+* js/gnome-keyring (2013-12-04) 1 commit
+ - contrib/git-credential-gnome-keyring.c: small stylistic cleanups
+
+ Style fix.
+
+
+* kn/gitweb-extra-branch-refs (2013-12-04) 4 commits
+ - gitweb: Denote non-heads, non-remotes branches
+ - gitweb: Add a feature for adding more branch refs
+ - gitweb: Return plain booleans in validation methods
+ - gitweb: Move check-ref-format code into separate function
+
+ Allow gitweb to be configured to show refs out of refs/heads/ as if
+ they were branches.
+
+
+* mm/mv-file-to-no-such-dir-with-slash (2013-12-04) 1 commit
+ - mv: let 'git mv file no-such-dir/' error out
+
+
+* nd/gettext-vsnprintf (2013-12-04) 1 commit
+ - gettext.c: detect the vsnprintf bug at runtime
+
+
+* tr/send-email-ssl (2013-12-04) 3 commits
+ - send-email: set SSL options through IO::Socket::SSL::set_client_defaults
+ - send-email: --smtp-ssl-cert-path takes an argument
+ - send-email: pass Debug to Net::SMTP::SSL::new
+
+
 * tb/clone-ssh-with-colon-for-port (2013-12-04) 10 commits
  - git_connect(): use common return point
  - connect.c: refactor url parsing
@@ -385,90 +568,48 @@ of the repositories listed at
  - t5601: remove clear_ssh, refactor setup_ssh_wrapper
 
 
-
 * cn/thin-push-capability (2013-11-25) 1 commit
- - send-pack: don't send a thin pack to a server which doesn't support it
+  (merged to 'next' on 2013-12-06 at a7ae524)
+ + send-pack: don't send a thin pack to a server which doesn't support it
 
  Allow receive-pack to insist on receiving a fat pack from "git
  push" clients.
 
- Will merge to 'next'.
-
-
-* jn/perl-lib-extra (2013-11-18) 2 commits
-  (merged to 'next' on 2013-11-20 at 8c90afae)
- + Makefile: add PERLLIB_EXTRA variable that adds to default perl path
- + Makefile: rebuild perl scripts when perl paths change
-
  Will merge to 'master'.
 
 
-* jk/remove-experimental-loose-object-support (2013-11-21) 1 commit
-  (merged to 'next' on 2013-11-21 at d37bab7)
- + drop support for "experimental" loose objects
-
- Will merge to 'master'.
-
-
-* nd/magic-pathspec (2013-11-20) 1 commit
-  (merged to 'next' on 2013-11-21 at f914a30)
- + diff: restrict pathspec limitations to diff b/f case only
-
- Will merge to 'master'.
-
-
-* jc/bundle (2013-11-12) 1 commit
-  (merged to 'next' on 2013-11-21 at 535b046)
- + bundle: use argv-array
-
- Code clean-up.
-
- Will merge to 'master'.
-
-
-* jk/remove-deprecated (2013-12-03) 5 commits
-  (merged to 'next' on 2013-12-03 at bc1da41)
+* jk/remove-deprecated (2013-12-05) 6 commits
+  (merged to 'next' on 2013-12-06 at c0c91a2)
+ + Sync with 1.8.5
  + stop installing git-tar-tree link
-  (merged to 'next' on 2013-11-13 at c324792)
  + peek-remote: remove deprecated alias of ls-remote
  + lost-found: remove deprecated command
  + tar-tree: remove deprecated command
  + repo-config: remove deprecated alias for "git config"
+ (this branch is used by cc/starts-n-ends-with and cc/starts-n-ends-with-endgame.)
 
- Will cook in 'next' until a distant future.
-
-
-* rh/remote-hg-bzr-updates (2013-11-18) 8 commits
-  (merged to 'next' on 2013-11-20 at a36f3c4)
- + remote-bzr, remote-hg: fix email address regular expression
- + test-hg.sh: help user correlate verbose output with email test
- + test-hg.sh: fix duplicate content strings in author tests
- + test-hg.sh: avoid obsolete 'test' syntax
- + test-hg.sh: eliminate 'local' bashism
- + test-bzr.sh, test-hg.sh: prepare for change to push.default=simple
- + test-bzr.sh, test-hg.sh: allow running from any dir
- + test-lib.sh: convert $TEST_DIRECTORY to an absolute path
-
- The patch that used to be at the bottom of the series has been
- merged to v1.8.5, as it fixes a minor regression and has also been
- cherry-picked to 'maint'.
+ Originally merged to 'next' on 2013-12-03
 
  Will merge to 'master'.
 
 
-* tr/config-multivalue-lift-max (2013-11-13) 1 commit
-  (merged to 'next' on 2013-11-20 at d18aac9)
+* tr/config-multivalue-lift-max (2013-12-06) 1 commit
+  (merged to 'next' on 2013-12-06 at 92afee2)
  + config: arbitrary number of matches for --unset and --replace-all
+
+ Originally merged to 'next' on 2013-11-20
 
  Will merge to 'master'.
 
 
 * kb/doc-exclude-directory-semantics (2013-11-07) 1 commit
-  (merged to 'next' on 2013-11-13 at 06e5645)
- + gitignore.txt: clarify recursive nature of excluded directories
+ - gitignore.txt: clarify recursive nature of excluded directories
 
- Will kick back to 'pu' to replace with a newer reroll ($gmane/237814
- looked OK but there seems to have some loose ends in the discussion).
+ Originally merged to 'next' on 2013-11-13
+
+ Kicked back to 'pu' to replace with a newer reroll ($gmane/237814
+ looked OK but there seems to have some loose ends in the
+ discussion).
 
 
 * jc/create-directories-microopt (2013-11-11) 1 commit
@@ -480,142 +621,17 @@ of the repositories listed at
  Will hold.
 
 
-* jl/submodule-update-retire-orig-flags (2013-11-11) 1 commit
-  (merged to 'next' on 2013-11-13 at 4b70d15)
- + submodule update: remove unnecessary orig_flags variable
-
- Code clean-up.
-
- Will merge to 'master'.
-
-
-* jn/mediawiki-makefile-updates (2013-11-11) 4 commits
-  (merged to 'next' on 2013-11-13 at 71c8d20)
- + git-remote-mediawiki build: handle DESTDIR/INSTLIBDIR with whitespace
- + git-remote-mediawiki build: make 'install' command configurable
- + git-remote-mediawiki: honor DESTDIR in "make install"
- + git-remote-mediawiki: do not remove installed files in "clean" target
-
- Build and Installation procedure clean-up.
-
- Will merge to 'master'.
-
-
-* cc/remote-remove-redundant-postfixcmp (2013-12-04) 3 commits
-  (merged to 'next' on 2013-12-04 at dd8f092)
- + Revert 76e08227e5bc8b6e3d208da965d2421911d25ae3
-  (merged to 'next' on 2013-11-06 at 7b45219)
- + Rename suffixcmp() to has_suffix() and invert its result
-  (merged to 'next' on 2013-11-04 at 6408502)
- + builtin/remote: remove postfixcmp() and use suffixcmp() instead
-
- Minor code clean-up.
-
- Will drop, as cc/starts-n-ends-with contains the same.
-
-
-* nd/wt-status-align-i18n (2013-11-06) 1 commit
-  (merged to 'next' on 2013-11-13 at b033aa0)
- + wt-status: take the alignment burden off translators
-
- An attempt to automatically align the names in the "git status"
- output, taking the display width of (translated) section labels
- into account.
-
- Will merge to 'master'.
-
-
-* sb/sha1-loose-object-info-check-existence (2013-11-06) 1 commit
-  (merged to 'next' on 2013-11-06 at 1ea5b18)
- + sha1_loose_object_info(): do not return success on missing object
-
- "git cat-file --batch-check=ok" did not check the existence of the
- named object.
-
- Will merge to 'master'.
-
-
-* gj/push-more-verbose-advice (2013-11-13) 2 commits
-  (merged to 'next' on 2013-11-21 at df10213)
+* gj/push-more-verbose-advice (2013-11-13) 1 commit
+  (merged to 'next' on 2013-12-06 at 574b18a)
  + push: switch default from "matching" to "simple"
-  (merged to 'next' on 2013-11-21 at 4ee3d4a)
- + push: enhance unspecified push default warning
+
+ Originally merged to 'next' on 2013-11-21
 
  Explain 'simple' and 'matching' in "git push" advice message; the
  topmost patch is a rebase of jc/push-2.0-default-to-simple on top
  of it.
 
- Will merge the bottom to 'master' and cook the other in 'next'.
-
-
-* rr/for-each-ref-decoration (2013-11-19) 6 commits
-  (merged to 'next' on 2013-11-21 at ee7b0ed)
- + for-each-ref: avoid color leakage
- + for-each-ref: introduce %(color:...) for color
- + for-each-ref: introduce %(upstream:track[short])
- + for-each-ref: introduce %(HEAD) asterisk marker
- + t6300 (for-each-ref): don't hardcode SHA-1 hexes
- + t6300 (for-each-ref): clearly demarcate setup
-
- Will merge to 'master'.
-
-
-* jk/two-way-merge-corner-case-fix (2013-11-04) 3 commits
-  (merged to 'next' on 2013-11-04 at 79f4fb0)
- + t1005: add test for "read-tree --reset -u A B"
- + t1005: reindent
- + unpack-trees: fix "read-tree -u --reset A B" with conflicted index
-
- Fix a rather longstanding corner-case bug in twoway "reset to
- there" merge, which is most often seen in "git am --abort".
-
- Will merge to 'master'.
-
-
-* jc/ref-excludes (2013-11-01) 5 commits
-  (merged to 'next' on 2013-11-04 at fac1ed0)
- + rev-parse: introduce --exclude=<glob> to tame wildcards
- + rev-list --exclude: export add/clear-ref-exclusion and ref-excluded API
- + rev-list --exclude: tests
- + document --exclude option
- + revision: introduce --exclude=<glob> to tame wildcards
-
- People often wished a way to tell "git log --branches" (and "git
- log --remotes --not --branches") to exclude some local branches
- from the expansion of "--branches" (similarly for "--tags", "--all"
- and "--glob=<pattern>").  Now they have one.
-
- Will merge to 'master'.
-
-
-* jk/replace-perl-in-built-scripts (2013-10-29) 1 commit
-  (merged to 'next' on 2013-11-01 at 2384e29)
- + use @@PERL@@ in built scripts
-
- Will merge to 'master'.
-
-
-* jh/loose-object-dirs-creation-race (2013-10-28) 1 commit
-  (merged to 'next' on 2013-11-01 at 3169b0f)
- + sha1_file.c:create_tmpfile(): Fix race when creating loose object dirs
-
- Will merge to 'master'.
-
-
-* th/reflog-annotated-tag (2013-10-28) 1 commit
-  (merged to 'next' on 2013-11-01 at 8b154cc)
- + reflog: handle lightweight and annotated tags equally
-
- "git log -g $annotated_tag", when there is no reflog history, should
- have produced a single output entry (i.e. the ref creation event),
- but instead showed the history leading to the tag.
-
- Broken at the design level.  Any reflog entry that points at a non
- commit needs to be handled with new code that does not exist yet,
- and lifting the "this code handles only commits" without adding
- such code does not solve anything.
-
- Will discard.
+ Will cook in 'next'.
 
 
 * tr/merge-recursive-index-only (2013-10-28) 3 commits
@@ -626,43 +642,8 @@ of the repositories listed at
  Will hold until using script appears.
 
 
-* bc/http-100-continue (2013-10-31) 3 commits
-  (merged to 'next' on 2013-11-01 at e12ae23)
- + remote-curl: fix large pushes with GSSAPI
- + remote-curl: pass curl slot_results back through run_slot
- + http: return curl's AUTHAVAIL via slot_results
-
- Issue "100 Continue" responses to help use of GSS-Negotiate
- authentication scheme over HTTP transport when needed.
-
- Will merge to 'master'.
-
-
-* jc/merge-base-reflog (2013-10-29) 2 commits
-  (merged to 'next' on 2013-11-01 at 6114764)
- + merge-base: teach "--fork-point" mode
- + merge-base: use OPT_CMDMODE and clarify the command line parsing
-
- Code the logic in "pull --rebase" that figures out a fork point
- from reflog entries in C.
-
- Will merge to 'master'.
-
-
-* jk/robustify-parse-commit (2013-10-24) 6 commits
-  (merged to 'next' on 2013-11-01 at 2bfbaab)
- + checkout: do not die when leaving broken detached HEAD
- + use parse_commit_or_die instead of custom message
- + use parse_commit_or_die instead of segfaulting
- + assume parse_commit checks for NULL commit
- + assume parse_commit checks commit->object.parsed
- + log_tree_diff: die when we fail to parse a commit
-
- Will merge to 'master'.
-
-
 * mh/fetch-tags-in-addition-to-normal-refs (2013-10-30) 23 commits
-  (merged to 'next' on 2013-11-06 at 6932893)
+  (merged to 'next' on 2013-12-06 at 3b9c44a)
  + fetch: improve the error messages emitted for conflicting refspecs
  + handle_duplicate(): mark error message for translation
  + ref_remote_duplicates(): extract a function handle_duplicate()
@@ -687,6 +668,8 @@ of the repositories listed at
  + t5510: prepare test refs more straightforwardly
  + t5510: use the correct tag name in test
 
+ Originally merged to 'next' on 2013-11-06
+
  The "--tags" option to "git fetch" used to be literally a synonym to
  a "refs/tags/*:refs/tags/*" refspec, which meant that (1) as an
  explicit refspec given from the command line, it silenced the lazy
@@ -701,94 +684,55 @@ of the repositories listed at
  remote-tracking refs the local has are missing the remote
  counterpart.
 
- Will cook in 'next'.
-
-
-* nv/parseopt-opt-arg (2013-10-31) 2 commits
-  (merged to 'next' on 2013-11-01 at cd2afd9)
- + rev-parse --parseopt: add the --stuck-long mode
- + Use the word 'stuck' instead of 'sticked'
-
- Enhance "rev-parse --parseopt" mode to help parsing options with
- an optional parameter.
-
- Will merge to 'master'.
-
-
-* ak/submodule-foreach-quoting (2013-09-27) 1 commit
-  (merged to 'next' on 2013-10-14 at d77c5f1)
- + submodule foreach: skip eval for more than one argument
-
- A behavior change, but a worthwhile one: "git submodule foreach"
- was treating its arguments as part of a single command to be
- concatenated and passed to a shell, making writing buggy
- scripts too easy.
-
- This patch preserves the old "just pass it to the shell" behavior
- when a single argument is passed to 'git submodule foreach' and
- moves to a new "skip the shell and use the arguments passed
- unmolested" behavior when more than one argument is passed.
-
- The old behavior (always concatenating and passing to the shell)
- was similar to the 'ssh' command, while the new behavior (switching
- on the number of arguments) is what 'xterm -e' does.
-
- May need more thought to make sure this change is advertised well
- so that scripts that used multiple arguments but added their own
- extra layer of quoting are not broken.
-
  Will merge to 'master'.
 
 
 * kb/fast-hashmap (2013-11-18) 14 commits
- - read-cache.c: fix memory leaks caused by removed cache entries
- - builtin/update-index.c: cleanup update_one
- - fix 'git update-index --verbose --again' output
- - remove old hash.[ch] implementation
- - name-hash.c: remove cache entries instead of marking them CE_UNHASHED
- - name-hash.c: use new hash map implementation for cache entries
- - name-hash.c: remove unreferenced directory entries
- - name-hash.c: use new hash map implementation for directories
- - diffcore-rename.c: use new hash map implementation
- - diffcore-rename.c: simplify finding exact renames
- - diffcore-rename.c: move code around to prepare for the next patch
- - buitin/describe.c: use new hash map implementation
- - add a hashtable implementation that supports O(1) removal
- - submodule: don't access the .gitmodules cache entry after removing it
+  (merged to 'next' on 2013-12-06 at f90be3d)
+ + read-cache.c: fix memory leaks caused by removed cache entries
+ + builtin/update-index.c: cleanup update_one
+ + fix 'git update-index --verbose --again' output
+ + remove old hash.[ch] implementation
+ + name-hash.c: remove cache entries instead of marking them CE_UNHASHED
+ + name-hash.c: use new hash map implementation for cache entries
+ + name-hash.c: remove unreferenced directory entries
+ + name-hash.c: use new hash map implementation for directories
+ + diffcore-rename.c: use new hash map implementation
+ + diffcore-rename.c: simplify finding exact renames
+ + diffcore-rename.c: move code around to prepare for the next patch
+ + buitin/describe.c: use new hash map implementation
+ + add a hashtable implementation that supports O(1) removal
+ + submodule: don't access the .gitmodules cache entry after removing it
 
  Improvements to our hash table to get it to meet the needs of the
  msysgit fscache project, with some nice performance improvements.
 
- The preparatory clean-up to submodule from Jens is at the bottom. I
- also squashed in a fix-up by Karsten found at $gmane/236468 (please
- double-check the result).
-
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
 * jn/add-2.0-u-A-sans-pathspec (2013-04-26) 1 commit
-  (merged to 'next' on 2013-10-28 at d8cdf30)
+  (merged to 'next' on 2013-12-06 at ead2ec8)
  + git add: -u/-A now affects the entire working tree
 
  Will cook in 'next' until Git 2.0.
 
 
 * jc/core-checkstat-2.0 (2013-05-06) 1 commit
-  (merged to 'next' on 2013-10-28 at f1bec96)
+  (merged to 'next' on 2013-12-06 at ae18007)
  + core.statinfo: remove as promised in Git 2.0
 
  Will cook in 'next' until Git 2.0.
 
 
 * jc/push-2.0-default-to-simple (2013-06-18) 1 commit
-  (merged to 'next' on 2013-10-28 at 3153a9e)
+  (merged to 'next' on 2013-12-06 at 6fad61c)
  + push: switch default from "matching" to "simple"
 
  Will cook in 'next' until Git 2.0.
 
 
 * jc/add-2.0-ignore-removal (2013-04-22) 1 commit
-  (merged to 'next' on 2013-10-28 at 5fd76ec)
+  (merged to 'next' on 2013-12-06 at fbaa75a)
  + git add <pathspec>... defaults to "-A"
 
  Updated endgame for "git add <pathspec>" that defaults to "--all"
@@ -798,7 +742,31 @@ of the repositories listed at
 
 
 * jc/hold-diff-remove-q-synonym-for-no-deletion (2013-07-19) 1 commit
-  (merged to 'next' on 2013-11-01 at 5fc26e4)
+  (merged to 'next' on 2013-12-06 at 083d67c)
  + diff: remove "diff-files -q" in a version of Git in a distant future
 
  Will cook in 'next' until a distant future.
+
+--------------------------------------------------
+[Discarded]
+
+* aa/transport-non-positive-depth-only (2013-11-26) 1 commit
+ . transport: catch non positive --depth option value
+
+
+* cc/remote-remove-redundant-postfixcmp (2013-11-06) 2 commits
+ . Rename suffixcmp() to has_suffix() and invert its result
+ . builtin/remote: remove postfixcmp() and use suffixcmp() instead
+
+
+* th/reflog-annotated-tag (2013-10-28) 1 commit
+ . reflog: handle lightweight and annotated tags equally
+
+ "git log -g $annotated_tag", when there is no reflog history, should
+ have produced a single output entry (i.e. the ref creation event),
+ but instead showed the history leading to the tag.
+
+ Broken at the design level.  Any reflog entry that points at a non
+ commit needs to be handled with new code that does not exist yet,
+ and lifting the "this code handles only commits" without adding
+ such code does not solve anything.
