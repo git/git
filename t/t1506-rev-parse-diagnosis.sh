@@ -196,4 +196,28 @@ test_expect_success 'dotdot is not an empty set' '
 	test_cmp expect actual
 '
 
+test_expect_success 'arg before dashdash must be a revision (missing)' '
+	test_must_fail git rev-parse foobar -- 2>stderr &&
+	test_i18ngrep "bad revision" stderr
+'
+
+test_expect_success 'arg before dashdash must be a revision (file)' '
+	>foobar &&
+	test_must_fail git rev-parse foobar -- 2>stderr &&
+	test_i18ngrep "bad revision" stderr
+'
+
+test_expect_success 'arg before dashdash must be a revision (ambiguous)' '
+	>foobar &&
+	git update-ref refs/heads/foobar HEAD &&
+	{
+		# we do not want to use rev-parse here, because
+		# we are testing it
+		cat .git/refs/heads/foobar &&
+		printf "%s\n" --
+	} >expect &&
+	git rev-parse foobar -- >actual &&
+	test_cmp expect actual
+'
+
 test_done
