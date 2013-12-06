@@ -18,16 +18,13 @@ setdate_and_increment () {
     export GIT_COMMITTER_DATE GIT_AUTHOR_DATE
 }
 
-test_expect_success 'Create sample commit with known timestamp' '
+test_expect_success setup '
 	setdate_and_increment &&
 	echo "Using $datestamp" > one &&
 	git add one &&
 	git commit -m "Initial" &&
 	setdate_and_increment &&
-	git tag -a -m "Tagging at $datestamp" testtag
-'
-
-test_expect_success 'Create upstream config' '
+	git tag -a -m "Tagging at $datestamp" testtag &&
 	git update-ref refs/remotes/origin/master master &&
 	git remote add origin nowhere &&
 	git config branch.master.remote origin &&
@@ -52,8 +49,8 @@ test_atom head refname refs/heads/master
 test_atom head upstream refs/remotes/origin/master
 test_atom head objecttype commit
 test_atom head objectsize 171
-test_atom head objectname 67a36f10722846e891fbada1ba48ed035de75581
-test_atom head tree 0e51c00fcb93dffc755546f27593d511e1bdb46f
+test_atom head objectname $(git rev-parse refs/heads/master)
+test_atom head tree $(git rev-parse refs/heads/master^{tree})
 test_atom head parent ''
 test_atom head numparent 0
 test_atom head object ''
@@ -82,16 +79,17 @@ test_atom head contents:body ''
 test_atom head contents:signature ''
 test_atom head contents 'Initial
 '
+test_atom head HEAD '*'
 
 test_atom tag refname refs/tags/testtag
 test_atom tag upstream ''
 test_atom tag objecttype tag
 test_atom tag objectsize 154
-test_atom tag objectname 98b46b1d36e5b07909de1b3886224e3e81e87322
+test_atom tag objectname $(git rev-parse refs/tags/testtag)
 test_atom tag tree ''
 test_atom tag parent ''
 test_atom tag numparent ''
-test_atom tag object '67a36f10722846e891fbada1ba48ed035de75581'
+test_atom tag object $(git rev-parse refs/tags/testtag^0)
 test_atom tag type 'commit'
 test_atom tag '*objectname' '67a36f10722846e891fbada1ba48ed035de75581'
 test_atom tag '*objecttype' 'commit'
@@ -117,6 +115,7 @@ test_atom tag contents:body ''
 test_atom tag contents:signature ''
 test_atom tag contents 'Tagging at 1151939927
 '
+test_atom tag HEAD ' '
 
 test_expect_success 'Check invalid atoms names are errors' '
 	test_must_fail git for-each-ref --format="%(INVALID)" refs/heads
@@ -308,8 +307,35 @@ test_expect_success 'Check short upstream format' '
 	test_cmp expected actual
 '
 
+test_expect_success 'setup for upstream:track[short]' '
+	test_commit two
+'
+
 cat >expected <<EOF
-67a36f1
+[ahead 1]
+EOF
+
+test_expect_success 'Check upstream:track format' '
+	git for-each-ref --format="%(upstream:track)" refs/heads >actual &&
+	test_cmp expected actual
+'
+
+cat >expected <<EOF
+>
+EOF
+
+test_expect_success 'Check upstream:trackshort format' '
+	git for-each-ref --format="%(upstream:trackshort)" refs/heads >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'Check that :track[short] cannot be used with other atoms' '
+	test_must_fail git for-each-ref --format="%(refname:track)" 2>/dev/null &&
+	test_must_fail git for-each-ref --format="%(refname:trackshort)" 2>/dev/null
+'
+
+cat >expected <<EOF
+$(git rev-parse --short HEAD)
 EOF
 
 test_expect_success 'Check short objectname format' '
@@ -319,6 +345,23 @@ test_expect_success 'Check short objectname format' '
 
 test_expect_success 'Check for invalid refname format' '
 	test_must_fail git for-each-ref --format="%(refname:INVALID)"
+'
+
+get_color ()
+{
+	git config --get-color no.such.slot "$1"
+}
+
+cat >expected <<EOF
+$(git rev-parse --short refs/heads/master) $(get_color green)master$(get_color reset)
+$(git rev-parse --short refs/remotes/origin/master) $(get_color green)origin/master$(get_color reset)
+$(git rev-parse --short refs/tags/testtag) $(get_color green)testtag$(get_color reset)
+$(git rev-parse --short refs/tags/two) $(get_color green)two$(get_color reset)
+EOF
+
+test_expect_success 'Check %(color:...) ' '
+	git for-each-ref --format="%(objectname:short) %(color:green)%(refname:short)" >actual &&
+	test_cmp expected actual
 '
 
 cat >expected <<\EOF
@@ -460,9 +503,9 @@ test_atom refs/tags/signed-long contents "subject line
 body contents
 $sig"
 
-cat >expected <<\EOF
-408fe76d02a785a006c2e9c669b7be5589ede96d <committer@example.com> refs/tags/master
-90b5ebede4899eda64893bc2a4c8f1d6fb6dfc40 <committer@example.com> refs/tags/bogo
+cat >expected <<EOF
+$(git rev-parse refs/tags/master) <committer@example.com> refs/tags/master
+$(git rev-parse refs/tags/bogo) <committer@example.com> refs/tags/bogo
 EOF
 
 test_expect_success 'Verify sort with multiple keys' '
