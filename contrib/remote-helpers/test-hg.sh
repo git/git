@@ -8,7 +8,8 @@
 
 test_description='Test remote-hg'
 
-. ./test-lib.sh
+test -n "$TEST_DIRECTORY" || TEST_DIRECTORY=${0%/*}/../../t
+. "$TEST_DIRECTORY"/test-lib.sh
 
 if ! test_have_prereq PYTHON
 then
@@ -53,14 +54,14 @@ check_bookmark () {
 }
 
 check_push () {
-	local expected_ret=$1 ret=0 ref_ret=0 IFS=':'
+	expected_ret=$1 ret=0 ref_ret=0
 
 	shift
 	git push origin "$@" 2>error
 	ret=$?
 	cat error
 
-	while read branch kind
+	while IFS=':' read branch kind
 	do
 		case "$kind" in
 		'new')
@@ -82,7 +83,7 @@ check_push () {
 		test $ref_ret -ne 0 && echo "match for '$branch' failed" && break
 	done
 
-	if test $expected_ret -ne $ret -o $ref_ret -ne 0
+	if test $expected_ret -ne $ret || test $ref_ret -ne 0
 	then
 		return 1
 	fi
@@ -205,16 +206,17 @@ test_expect_success 'authors' '
 
 	>../expected &&
 	author_test alpha "" "H G Wells <wells@example.com>" &&
-	author_test beta "test" "test <unknown>" &&
-	author_test beta "test <test@example.com> (comment)" "test <test@example.com>" &&
-	author_test gamma "<test@example.com>" "Unknown <test@example.com>" &&
-	author_test delta "name<test@example.com>" "name <test@example.com>" &&
-	author_test epsilon "name <test@example.com" "name <test@example.com>" &&
-	author_test zeta " test " "test <unknown>" &&
-	author_test eta "test < test@example.com >" "test <test@example.com>" &&
-	author_test theta "test >test@example.com>" "test <test@example.com>" &&
-	author_test iota "test < test <at> example <dot> com>" "test <unknown>" &&
-	author_test kappa "test@example.com" "Unknown <test@example.com>"
+	author_test beta "beta" "beta <unknown>" &&
+	author_test gamma "gamma <test@example.com> (comment)" "gamma <test@example.com>" &&
+	author_test delta "<delta@example.com>" "Unknown <delta@example.com>" &&
+	author_test epsilon "epsilon<test@example.com>" "epsilon <test@example.com>" &&
+	author_test zeta "zeta <test@example.com" "zeta <test@example.com>" &&
+	author_test eta " eta " "eta <unknown>" &&
+	author_test theta "theta < test@example.com >" "theta <test@example.com>" &&
+	author_test iota "iota >test@example.com>" "iota <test@example.com>" &&
+	author_test kappa "kappa < test <at> example <dot> com>" "kappa <unknown>" &&
+	author_test lambda "lambda@example.com" "Unknown <lambda@example.com>" &&
+	author_test mu "mu.mu@example.com" "Unknown <mu.mu@example.com>"
 	) &&
 
 	git clone "hg::hgrepo" gitrepo &&
