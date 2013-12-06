@@ -64,14 +64,17 @@ static void stuff_change(struct diff_options *opt,
 
 static int builtin_diff_b_f(struct rev_info *revs,
 			    int argc, const char **argv,
-			    struct blobinfo *blob,
-			    const char *path)
+			    struct blobinfo *blob)
 {
 	/* Blob vs file in the working tree*/
 	struct stat st;
+	const char *path;
 
 	if (argc > 1)
 		usage(builtin_diff_usage);
+
+	GUARD_PATHSPEC(&revs->prune_data, PATHSPEC_FROMTOP | PATHSPEC_LITERAL);
+	path = revs->prune_data.items[0].match;
 
 	if (lstat(path, &st))
 		die_errno(_("failed to stat '%s'"), path);
@@ -255,7 +258,6 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 	struct rev_info rev;
 	struct object_array ent = OBJECT_ARRAY_INIT;
 	int blobs = 0, paths = 0;
-	const char *path = NULL;
 	struct blobinfo blob[2];
 	int nongit;
 	int result = 0;
@@ -366,13 +368,8 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 			die(_("unhandled object '%s' given."), name);
 		}
 	}
-	if (rev.prune_data.nr) {
-		/* builtin_diff_b_f() */
-		GUARD_PATHSPEC(&rev.prune_data, PATHSPEC_FROMTOP | PATHSPEC_LITERAL);
-		if (!path)
-			path = rev.prune_data.items[0].match;
+	if (rev.prune_data.nr)
 		paths += rev.prune_data.nr;
-	}
 
 	/*
 	 * Now, do the arguments look reasonable?
@@ -385,7 +382,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 		case 1:
 			if (paths != 1)
 				usage(builtin_diff_usage);
-			result = builtin_diff_b_f(&rev, argc, argv, blob, path);
+			result = builtin_diff_b_f(&rev, argc, argv, blob);
 			break;
 		case 2:
 			if (paths)
