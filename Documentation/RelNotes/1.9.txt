@@ -1,0 +1,133 @@
+Git v1.9 Release Notes
+======================
+
+Backward compatibility notes
+----------------------------
+
+"git submodule foreach $cmd $args" used to treat "$cmd $args" the same
+way "ssh" did, concatenating them into a single string and letting the
+shell unquote. Careless users who forget to sufficiently quote $args
+gets their argument split at $IFS whitespaces by the shell, and got
+unexpected results due to this. Starting from this release, the
+command line is passed directly to the shell, if it has an argument.
+
+Read-only support for experimental loose-object format, in which users
+could optionally choose to write in their loose objects for a short
+while between v1.4.3 to v1.5.3 era, has been dropped.
+
+
+Backward compatibility notes (for Git 2.0)
+------------------------------------------
+
+When "git push [$there]" does not say what to push, we have used the
+traditional "matching" semantics so far (all your branches were sent
+to the remote as long as there already are branches of the same name
+over there).  In Git 2.0, the default will change to the "simple"
+semantics, which pushes:
+
+ - only the current branch to the branch with the same name, and only
+   when the current branch is set to integrate with that remote
+   branch, if you are pushing to the same remote as you fetch from; or
+
+ - only the current branch to the branch with the same name, if you
+   are pushing to a remote that is not where you usually fetch from.
+
+Use the user preference configuration variable "push.default" to
+change this.  If you are an old-timer who is used to the "matching"
+semantics, you can set the variable to "matching" to keep the
+traditional behaviour.  If you want to live in the future early, you
+can set it to "simple" today without waiting for Git 2.0.
+
+When "git add -u" (and "git add -A") is run inside a subdirectory and
+does not specify which paths to add on the command line, it
+will operate on the entire tree in Git 2.0 for consistency
+with "git commit -a" and other commands.  There will be no
+mechanism to make plain "git add -u" behave like "git add -u .".
+Current users of "git add -u" (without a pathspec) should start
+training their fingers to explicitly say "git add -u ."
+before Git 2.0 comes.  A warning is issued when these commands are
+run without a pathspec and when you have local changes outside the
+current directory, because the behaviour in Git 2.0 will be different
+from today's version in such a situation.
+
+In Git 2.0, "git add <path>" will behave as "git add -A <path>", so
+that "git add dir/" will notice paths you removed from the directory
+and record the removal.  Versions before Git 2.0, including this
+release, will keep ignoring removals, but the users who rely on this
+behaviour are encouraged to start using "git add --ignore-removal <path>"
+now before 2.0 is released.
+
+The default prefix for "git svn" will change in Git 2.0.  For a long
+time, "git svn" created its remote-tracking branches directly under
+refs/remotes, but it will place them under refs/remotes/origin/ unless
+it is told otherwise with its --prefix option.
+
+
+Updates since v1.8.5
+--------------------
+
+Foreign interfaces, subsystems and ports.
+
+ * The HTTP transport, when talking GSS-Negotinate, uses "100
+   Continue" response to avoid having to rewind and resend a large
+   payload, which may not be always doable.
+
+ * Various bugfixes to remote-bzr and remote-hg (in contrib/).
+
+
+UI, Workflows & Features
+
+ * "git for-each-ref --format=..." learned a few formatting directives;
+   e.g. "%(color:red)%(HEAD)%(color:reset) %(refname:short) %(subject)".
+
+ * The command string given to "git submodule foreach" is passed
+   directly to the shell, without being eval'ed.  This is a backward
+   incompatible change that may break existing users.
+
+ * "git log" and friends learned the "--exclude=<glob>" option, to
+   allow people to say "list history of all branches except those that
+   match this pattern" with "git log --exclude='*/*' --branches".
+
+ * "git rev-parse --parseopt" learned a new "--stuck-long" option to
+   help scripts parse options with an optional parameter.
+
+
+Performance, Internal Implementation, etc.
+
+ * The new PERLLIB_EXTRA makefile variable can be used to specify
+   additional directories Perl modules (e.g. the ones necessary to run
+   git-svn) are installed on the platform when building.
+
+ * "git merge-base" learned the "--fork-point" mode, that implements
+   the same logic used in "git pull --rebase" to find a suitable fork
+   point out of the reflog entries for the remote-tracking branch the
+   work has been based on.
+
+
+
+Also contains various documentation updates and code clean-ups.
+
+
+Fixes since v1.8.5
+------------------
+
+Unless otherwise noted, all the fixes since v1.8.5 in the maintenance
+track are contained in this release (see the maintenance releases' notes
+for details).
+
+ * "git diff -- ':(icase)makefile'" was unnecessarily rejected at the
+   command line parser.
+   (merge 887c6c1 nd/magic-pathspec later to maint).
+
+ * "git cat-file --batch-check=ok" did not check the existence of
+   the named object.
+   (merge 4ef8d1d sb/sha1-loose-object-info-check-existence later to maint).
+
+ * "git am --abort" sometimes complained about not being able to write
+   a tree with an 0{40} object in it.
+   (merge 77b43ca jk/two-way-merge-corner-case-fix later to maint).
+
+ * Two processes creating loose objects at the same time could have
+   failed unnecessarily when the name of their new objects started
+   with the same byte value, due to a race condition.
+   (merge b2476a6 jh/loose-object-dirs-creation-race later to maint).
