@@ -415,6 +415,9 @@ def get_repo(url, alias):
         local_path = os.path.join(dirname, 'clone')
         if not os.path.exists(local_path):
             hg.share(myui, shared_path, local_path, update=False)
+        else:
+            # make sure the shared path is always up-to-date
+            util.writefile(os.path.join(local_path, '.hg', 'sharedpath'), hg_path)
 
         repo = hg.repository(myui, local_path)
         try:
