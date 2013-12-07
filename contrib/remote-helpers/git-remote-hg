@@ -537,7 +537,7 @@ def export_ref(repo, name, kind, head):
 
         print "commit %s" % ref
         print "mark :%d" % (note_mark)
-        print "committer remote-hg <> %s" % (ptime.strftime('%s %z'))
+        print "committer remote-hg <> %d %s" % (ptime.time(), gittz(ptime.timezone))
         desc = "Notes for %s\n" % (name)
         print "data %d" % (len(desc))
         print desc
