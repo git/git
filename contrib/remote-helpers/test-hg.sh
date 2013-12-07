@@ -444,6 +444,74 @@ test_expect_success 'remote new bookmark multiple branch head' '
 # cleanup previous stuff
 rm -rf hgrepo
 
+test_expect_success 'fetch special filenames' '
+	test_when_finished "rm -rf hgrepo gitrepo && LC_ALL=C" &&
+
+	LC_ALL=en_US.UTF-8
+	export LC_ALL
+
+	(
+	hg init hgrepo &&
+	cd hgrepo &&
+
+	echo test >> "æ rø" &&
+	hg add "æ rø" &&
+	echo test >> "ø~?" &&
+	hg add "ø~?" &&
+	hg commit -m add-utf-8 &&
+	echo test >> "æ rø" &&
+	hg commit -m test-utf-8 &&
+	hg rm "ø~?" &&
+	hg mv "æ rø" "ø~?" &&
+	hg commit -m hg-mv-utf-8
+	) &&
+
+	(
+	git clone "hg::hgrepo" gitrepo &&
+	cd gitrepo &&
+	git -c core.quotepath=false ls-files > ../actual
+	) &&
+	echo "ø~?" > expected &&
+	test_cmp expected actual
+'
+
+test_expect_success 'push special filenames' '
+	test_when_finished "rm -rf hgrepo gitrepo && LC_ALL=C" &&
+
+	mkdir -p tmp && cd tmp &&
+
+	LC_ALL=en_US.UTF-8
+	export LC_ALL
+
+	(
+	hg init hgrepo &&
+	cd hgrepo &&
+
+	echo one >> content &&
+	hg add content &&
+	hg commit -m one
+	) &&
+
+	(
+	git clone "hg::hgrepo" gitrepo &&
+	cd gitrepo &&
+
+	echo test >> "æ rø" &&
+	git add "æ rø" &&
+	git commit -m utf-8 &&
+
+	git push
+	) &&
+
+	(cd hgrepo &&
+	hg update &&
+	hg manifest > ../actual
+	) &&
+
+	printf "content\næ rø\n" > expected &&
+	test_cmp expected actual
+'
+
 setup_big_push () {
 	(
 	hg init hgrepo &&
