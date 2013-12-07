@@ -1164,6 +1164,16 @@ def main(args):
     global dry_run
     global notes, alias
 
+    marks = None
+    is_tmp = False
+    gitdir = os.environ.get('GIT_DIR', None)
+
+    if len(args) < 3:
+        die('Not enough arguments.')
+
+    if not gitdir:
+        die('GIT_DIR not set')
+
     alias = args[1]
     url = args[2]
     peer = None
@@ -1184,16 +1194,12 @@ def main(args):
     if alias[4:] == url:
         is_tmp = True
         alias = hashlib.sha1(alias).hexdigest()
-    else:
-        is_tmp = False
 
-    gitdir = os.environ['GIT_DIR']
     dirname = os.path.join(gitdir, 'hg', alias)
     branches = {}
     bmarks = {}
     blob_marks = {}
     parsed_refs = {}
-    marks = None
     parsed_tags = {}
     filenodes = {}
     fake_bmark = None
