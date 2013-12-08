@@ -143,7 +143,7 @@ static const char *real_path_internal(const char *path, int die_on_error)
 error_out:
 	free(last_elem);
 	if (*cwd && chdir(cwd))
-		die_errno ("Could not change back to '%s'", cwd);
+		die_errno("Could not change back to '%s'", cwd);
 
 	return retval;
 }
