@@ -7,7 +7,7 @@ Verify that plumbing commands work when .git is a file
 . ./test-lib.sh
 
 objpath() {
-    echo "$1" | sed -e 's|\(..\)|\1/|'
+	echo "$1" | sed -e 's|\(..\)|\1/|'
 }
 
 objck() {
@@ -18,7 +18,6 @@ objck() {
 		false
 	fi
 }
-
 
 test_expect_success 'initial setup' '
 	REAL="$(pwd)/.real" &&

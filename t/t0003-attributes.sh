@@ -13,7 +13,6 @@ attr_check () {
 	test_line_count = 0 err
 }
 
-
 test_expect_success 'setup' '
 	mkdir -p a/b/d a/c b &&
 	(
