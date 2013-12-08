@@ -37,6 +37,9 @@ or from several repositories at once if <group> is given and
 there is a remotes.<group> entry in the configuration file.
 (See linkgit:git-config[1]).
 
+When no remote is specified, by default the `origin` remote will be used,
+unless there's an upstream branch configured for the current branch.
+
 OPTIONS
 -------
 include::fetch-options.txt[]
