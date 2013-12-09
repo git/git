@@ -14,6 +14,7 @@ git-rebase --continue | --abort | --skip | --edit-todo
 v,verbose!         display a diffstat of what changed upstream
 q,quiet!           be quiet. implies --no-stat
 autostash!         automatically stash/stash pop before and after
+fork-point         use 'merge-base --fork-point' to refine upstream
 onto=!             rebase onto given branch instead of upstream
 p,preserve-merges! try to recreate merges instead of ignoring them
 s,strategy=!       use the given merge strategy
@@ -66,6 +67,7 @@ verbose=
 diffstat=
 test "$(git config --bool rebase.stat)" = true && diffstat=t
 autostash="$(git config --bool rebase.autostash || echo false)"
+fork_point=auto
 git_am_opt=
 rebase_root=
 force_rebase=
@@ -260,6 +262,12 @@ do
 	--no-autosquash)
 		autosquash=
 		;;
+	--fork-point)
+		fork_point=t
+		;;
+	--no-fork-point)
+		fork_point=
+		;;
 	-M|-m)
 		do_merge=t
 		;;
@@ -437,6 +445,8 @@ then
 			error_on_missing_default_upstream "rebase" "rebase" \
 				"against" "git rebase <branch>"
 		fi
+
+		test "$fork_point" = auto && fork_point=t
 		;;
 	*)	upstream_name="$1"
 		shift
@@ -521,6 +531,15 @@ case "$#" in
 	die "BUG: unexpected number of arguments left to parse"
 	;;
 esac
+
+if test "$fork_point" = t
+then
+	new_upstream=$(git merge-base --fork-point "$upstream_name" "$switch_to")
+	if test -n "$new_upstream"
+	then
+		upstream=$new_upstream
+	fi
+fi
 
 if test "$autostash" = true && ! (require_clean_work_tree) 2>/dev/null
 then

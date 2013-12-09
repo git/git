@@ -324,6 +324,16 @@ fresh commits so it can be remerged successfully without needing to "revert
 the reversion" (see the
 link:howto/revert-a-faulty-merge.html[revert-a-faulty-merge How-To] for details).
 
+--fork-point::
+--no-fork-point::
+	Use 'git merge-base --fork-point' to find a better common ancestor
+	between `upstream` and `branch` when calculating which commits have
+	have been introduced by `branch` (see linkgit:git-merge-base[1]).
++
+If no non-option arguments are given on the command line, then the default is
+`--fork-point @{u}` otherwise the `upstream` argument is interpreted literally
+unless the `--fork-point` option is specified.
+
 --ignore-whitespace::
 --whitespace=<option>::
 	These flag are passed to the 'git apply' program
