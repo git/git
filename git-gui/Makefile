@@ -4,7 +4,7 @@ all::
 #
 # Define NO_MSGFMT if you do not have msgfmt from the GNU gettext
 # package and want to use our rough pure Tcl po->msg translator.
-# TCL_PATH must be vaild for this to work.
+# TCL_PATH must be valid for this to work.
 #
 
 GIT-VERSION-FILE: FORCE

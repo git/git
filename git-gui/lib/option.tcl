@@ -150,6 +150,7 @@ proc do_options {} {
 		{b gui.matchtrackingbranch {mc "Match Tracking Branches"}}
 		{b gui.textconv {mc "Use Textconv For Diffs and Blames"}}
 		{b gui.fastcopyblame {mc "Blame Copy Only On Changed Files"}}
+		{i-0..100 gui.maxrecentrepo {mc "Maximum Length of Recent Repositories List"}}
 		{i-20..200 gui.copyblamethreshold {mc "Minimum Letters To Blame Copy On"}}
 		{i-0..300 gui.blamehistoryctx {mc "Blame History Context Radius (days)"}}
 		{i-1..99 gui.diffcontext {mc "Number of Diff Context Lines"}}
@@ -159,6 +160,7 @@ proc do_options {} {
 		{c gui.encoding {mc "Default File Contents Encoding"}}
 		{b gui.warndetachedcommit {mc "Warn before committing to a detached head"}}
 		{s gui.stageuntracked {mc "Staging of untracked files"} {list "yes" "no" "ask"}}
+		{b gui.displayuntracked {mc "Show untracked files"}}
 		} {
 		set type [lindex $option 0]
 		set name [lindex $option 1]
