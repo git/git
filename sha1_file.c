@@ -2662,8 +2662,7 @@ void *read_sha1_file_extended(const unsigned char *sha1,
 	void *data;
 	char *path;
 	const struct packed_git *p;
-	const unsigned char *repl = (flag & LOOKUP_REPLACE_OBJECT)
-		? lookup_replace_object(sha1) : sha1;
+	const unsigned char *repl = lookup_replace_object_extended(sha1, flag);
 
 	errno = 0;
 	data = read_object(repl, type, size);

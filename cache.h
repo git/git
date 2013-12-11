@@ -773,6 +773,12 @@ static inline const unsigned char *lookup_replace_object(const unsigned char *sh
 		return sha1;
 	return do_lookup_replace_object(sha1);
 }
+static inline const unsigned char *lookup_replace_object_extended(const unsigned char *sha1, unsigned flag)
+{
+	if (!(flag & LOOKUP_REPLACE_OBJECT))
+		return sha1;
+	return lookup_replace_object(sha1);
+}
 
 /* Read and unpack a sha1 file into memory, write memory to a sha1 file */
 extern int sha1_object_info(const unsigned char *, unsigned long *);
