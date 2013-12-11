@@ -276,7 +276,7 @@ test_expect_success '-f option bypasses the type check' '
 	git replace -f HEAD^ $BLOB
 '
 
-test_expect_failure 'git cat-file --batch works on replace objects' '
+test_expect_success 'git cat-file --batch works on replace objects' '
 	git replace | grep $PARA3 &&
 	echo $PARA3 | git cat-file --batch
 '
