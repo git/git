@@ -2514,7 +2514,7 @@ static int sha1_loose_object_info(const unsigned char *sha1,
 	return 0;
 }
 
-int sha1_object_info_extended(const unsigned char *sha1, struct object_info *oi)
+int sha1_object_info_extended(const unsigned char *sha1, struct object_info *oi, unsigned flags)
 {
 	struct cached_object *co;
 	struct pack_entry e;
@@ -2548,7 +2548,7 @@ int sha1_object_info_extended(const unsigned char *sha1, struct object_info *oi)
 	rtype = packed_object_info(e.p, e.offset, oi);
 	if (rtype < 0) {
 		mark_bad_packed_object(e.p, sha1);
-		return sha1_object_info_extended(sha1, oi);
+		return sha1_object_info_extended(sha1, oi, 0);
 	} else if (in_delta_base_cache(e.p, e.offset)) {
 		oi->whence = OI_DBCACHED;
 	} else {
@@ -2570,7 +2570,7 @@ int sha1_object_info(const unsigned char *sha1, unsigned long *sizep)
 
 	oi.typep = &type;
 	oi.sizep = sizep;
-	if (sha1_object_info_extended(sha1, &oi) < 0)
+	if (sha1_object_info_extended(sha1, &oi, LOOKUP_REPLACE_OBJECT) < 0)
 		return -1;
 	return type;
 }
