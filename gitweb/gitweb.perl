@@ -994,7 +994,7 @@ our ($action, $project, $file_name, $file_parent, $hash, $hash_parent, $hash_bas
 sub evaluate_and_validate_params {
 	our $action = $input_params{'action'};
 	if (defined $action) {
-		if (!validate_action($action)) {
+		if (!is_valid_action($action)) {
 			die_error(400, "Invalid action parameter");
 		}
 	}
@@ -1002,7 +1002,7 @@ sub evaluate_and_validate_params {
 	# parameters which are pathnames
 	our $project = $input_params{'project'};
 	if (defined $project) {
-		if (!validate_project($project)) {
+		if (!is_valid_project($project)) {
 			undef $project;
 			die_error(404, "No such project");
 		}
@@ -1010,21 +1010,21 @@ sub evaluate_and_validate_params {
 
 	our $project_filter = $input_params{'project_filter'};
 	if (defined $project_filter) {
-		if (!validate_pathname($project_filter)) {
+		if (!is_valid_pathname($project_filter)) {
 			die_error(404, "Invalid project_filter parameter");
 		}
 	}
 
 	our $file_name = $input_params{'file_name'};
 	if (defined $file_name) {
-		if (!validate_pathname($file_name)) {
+		if (!is_valid_pathname($file_name)) {
 			die_error(400, "Invalid file parameter");
 		}
 	}
 
 	our $file_parent = $input_params{'file_parent'};
 	if (defined $file_parent) {
-		if (!validate_pathname($file_parent)) {
+		if (!is_valid_pathname($file_parent)) {
 			die_error(400, "Invalid file parent parameter");
 		}
 	}
@@ -1032,21 +1032,21 @@ sub evaluate_and_validate_params {
 	# parameters which are refnames
 	our $hash = $input_params{'hash'};
 	if (defined $hash) {
-		if (!validate_refname($hash)) {
+		if (!is_valid_refname($hash)) {
 			die_error(400, "Invalid hash parameter");
 		}
 	}
 
 	our $hash_parent = $input_params{'hash_parent'};
 	if (defined $hash_parent) {
-		if (!validate_refname($hash_parent)) {
+		if (!is_valid_refname($hash_parent)) {
 			die_error(400, "Invalid hash parent parameter");
 		}
 	}
 
 	our $hash_base = $input_params{'hash_base'};
 	if (defined $hash_base) {
-		if (!validate_refname($hash_base)) {
+		if (!is_valid_refname($hash_base)) {
 			die_error(400, "Invalid hash base parameter");
 		}
 	}
@@ -1066,7 +1066,7 @@ sub evaluate_and_validate_params {
 
 	our $hash_parent_base = $input_params{'hash_parent_base'};
 	if (defined $hash_parent_base) {
-		if (!validate_refname($hash_parent_base)) {
+		if (!is_valid_refname($hash_parent_base)) {
 			die_error(400, "Invalid hash parent base parameter");
 		}
 	}
@@ -1418,27 +1418,30 @@ sub href {
 ## ======================================================================
 ## validation, quoting/unquoting and escaping
 
-sub validate_action {
-	my $input = shift || return undef;
+sub is_valid_action {
+	my $input = shift;
 	return undef unless exists $actions{$input};
-	return $input;
+	return 1;
 }
 
-sub validate_project {
-	my $input = shift || return undef;
-	if (!validate_pathname($input) ||
+sub is_valid_project {
+	my $input = shift;
+
+	return unless defined $input;
+	if (!is_valid_pathname($input) ||
 		!(-d "$projectroot/$input") ||
 		!check_export_ok("$projectroot/$input") ||
 		($strict_export && !project_in_list($input))) {
 		return undef;
 	} else {
-		return $input;
+		return 1;
 	}
 }
 
-sub validate_pathname {
-	my $input = shift || return undef;
+sub is_valid_pathname {
+	my $input = shift;
 
+	return undef unless defined $input;
 	# no '.' or '..' as elements of path, i.e. no '.' nor '..'
 	# at the beginning, at the end, and between slashes.
 	# also this catches doubled slashes
@@ -1449,33 +1452,33 @@ sub validate_pathname {
 	if ($input =~ m!\0!) {
 		return undef;
 	}
-	return $input;
+	return 1;
 }
 
 sub is_valid_ref_format {
-	my $input = shift || return undef;
+	my $input = shift;
 
+	return undef unless defined $input;
 	# restrictions on ref name according to git-check-ref-format
 	if ($input =~ m!(/\.|\.\.|[\000-\040\177 ~^:?*\[]|/$)!) {
 		return undef;
 	}
-	return $input;
+	return 1;
 }
 
-sub validate_refname {
-	my $input = shift || return undef;
+sub is_valid_refname {
+	my $input = shift;
 
+	return undef unless defined $input;
 	# textual hashes are O.K.
 	if ($input =~ m/^[0-9a-fA-F]{40}$/) {
-		return $input;
+		return 1;
 	}
 	# it must be correct pathname
-	$input = validate_pathname($input)
-		or return undef;
+	is_valid_pathname($input) or return undef;
 	# check git-check-ref-format restrictions
-	is_valid_ref_format($input)
-		or return undef;
-	return $input;
+	is_valid_ref_format($input) or return undef;
+	return 1;
 }
 
 # decode sequences of octets in utf8 into Perl's internal form,
