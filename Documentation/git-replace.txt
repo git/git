@@ -10,7 +10,7 @@ SYNOPSIS
 [verse]
 'git replace' [-f] <object> <replacement>
 'git replace' -d <object>...
-'git replace' -l [<pattern>]
+'git replace' [--format=<format>] [-l [<pattern>]]
 
 DESCRIPTION
 -----------
@@ -69,6 +69,23 @@ OPTIONS
 	all if no pattern is given).
 	Typing "git replace" without arguments, also lists all replace
 	refs.
+
+--format=<format>::
+	When listing, use the specified <format>, which can be one of
+	'short', 'medium' and 'full'. When omitted, the format
+	defaults to 'short'.
+
+FORMATS
+-------
+
+The following format are available:
+
+* 'short':
+	<replaced sha1>
+* 'medium':
+	<replaced sha1> -> <replacement sha1>
+* 'full'
+	<replaced sha1> (<replaced type>) -> <replacement sha1> (<replacement type>)
 
 CREATING REPLACEMENT OBJECTS
 ----------------------------
