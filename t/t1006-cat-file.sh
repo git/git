@@ -85,6 +85,28 @@ $content"
 		git cat-file --batch-check="%(objecttype) %(rest)" >actual &&
 	test_cmp expect actual
     '
+
+    test -z "$content" ||
+    test_expect_success "--batch without type ($type)" '
+	{
+		echo "$size" &&
+		maybe_remove_timestamp "$content" $no_ts
+	} >expect &&
+	echo $sha1 | git cat-file --batch="%(objectsize)" >actual.full &&
+	maybe_remove_timestamp "$(cat actual.full)" $no_ts >actual &&
+	test_cmp expect actual
+    '
+
+    test -z "$content" ||
+    test_expect_success "--batch without size ($type)" '
+	{
+		echo "$type" &&
+		maybe_remove_timestamp "$content" $no_ts
+	} >expect &&
+	echo $sha1 | git cat-file --batch="%(objecttype)" >actual.full &&
+	maybe_remove_timestamp "$(cat actual.full)" $no_ts >actual &&
+	test_cmp expect actual
+    '
 }
 
 hello_content="Hello World"

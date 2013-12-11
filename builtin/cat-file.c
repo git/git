@@ -197,6 +197,8 @@ static void print_object_or_die(int fd, struct expand_data *data)
 {
 	const unsigned char *sha1 = data->sha1;
 
+	assert(data->info.typep);
+
 	if (data->type == OBJ_BLOB) {
 		if (stream_blob_to_fd(fd, sha1, NULL, 0) < 0)
 			die("unable to stream %s to stdout", sha1_to_hex(sha1));
@@ -211,7 +213,7 @@ static void print_object_or_die(int fd, struct expand_data *data)
 			die("object %s disappeared", sha1_to_hex(sha1));
 		if (type != data->type)
 			die("object %s changed type!?", sha1_to_hex(sha1));
-		if (size != data->size)
+		if (data->info.sizep && size != data->size)
 			die("object %s changed size!?", sha1_to_hex(sha1));
 
 		write_or_die(fd, contents, size);
@@ -274,6 +276,13 @@ static int batch_objects(struct batch_options *opt)
 	data.mark_query = 1;
 	strbuf_expand(&buf, opt->format, expand_format, &data);
 	data.mark_query = 0;
+
+	/*
+	 * If we are printing out the object, then always fill in the type,
+	 * since we will want to decide whether or not to stream.
+	 */
+	if (opt->print_contents)
+		data.info.typep = &data.type;
 
 	/*
 	 * We are going to call get_sha1 on a potentially very large number of
