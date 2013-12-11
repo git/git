@@ -548,6 +548,20 @@ our %feature = (
 		'sub' => sub { feature_bool('remote_heads', @_) },
 		'override' => 0,
 		'default' => [0]},
+
+	# Enable showing branches under other refs in addition to heads
+
+	# To set system wide extra branch refs have in $GITWEB_CONFIG
+	# $feature{'extra-branch-refs'}{'default'} = ['dirs', 'of', 'choice'];
+	# To have project specific config enable override in $GITWEB_CONFIG
+	# $feature{'extra-branch-refs'}{'override'} = 1;
+	# and in project config gitweb.extrabranchrefs = dirs of choice
+	# Every directory is separated with whitespace.
+
+	'extra-branch-refs' => {
+		'sub' => \&feature_extra_branch_refs,
+		'override' => 0,
+		'default' => []},
 );
 
 sub gitweb_get_feature {
@@ -626,6 +640,21 @@ sub feature_avatar {
 	return @val ? @val : @_;
 }
 
+sub feature_extra_branch_refs {
+	my (@branch_refs) = @_;
+	my $values = git_get_project_config('extrabranchrefs');
+
+	if ($values) {
+		$values = config_to_multi ($values);
+		@branch_refs = ();
+		foreach my $value (@{$values}) {
+			push @branch_refs, split /\s+/, $value;
+		}
+	}
+
+	return @branch_refs;
+}
+
 # checking HEAD file with -e is fragile if the repository was
 # initialized long time ago (i.e. symlink HEAD) and was pack-ref'ed
 # and then pruned.
@@ -654,6 +683,18 @@ sub filter_snapshot_fmts {
 	@fmts = grep {
 		exists $known_snapshot_formats{$_} &&
 		!$known_snapshot_formats{$_}{'disabled'}} @fmts;
+}
+
+sub filter_and_validate_refs {
+	my @refs = @_;
+	my %unique_refs = ();
+
+	foreach my $ref (@refs) {
+		die_error(500, "Invalid ref '$ref' in 'extra-branch-refs' feature") unless (is_valid_ref_format($ref));
+		# 'heads' are added implicitly in get_branch_refs().
+		$unique_refs{$ref} = 1 if ($ref ne 'heads');
+	}
+	return sort keys %unique_refs;
 }
 
 # If it is set to code reference, it is code that it is to be run once per
@@ -1113,7 +1154,7 @@ sub evaluate_git_dir {
 	our $git_dir = "$projectroot/$project" if $project;
 }
 
-our (@snapshot_fmts, $git_avatar);
+our (@snapshot_fmts, $git_avatar, @extra_branch_refs);
 sub configure_gitweb_features {
 	# list of supported snapshot formats
 	our @snapshot_fmts = gitweb_get_feature('snapshot');
@@ -1131,6 +1172,13 @@ sub configure_gitweb_features {
 	} else {
 		$git_avatar = '';
 	}
+
+	our @extra_branch_refs = gitweb_get_feature('extra-branch-refs');
+	@extra_branch_refs = filter_and_validate_refs (@extra_branch_refs);
+}
+
+sub get_branch_refs {
+	return ('heads', @extra_branch_refs);
 }
 
 # custom error handler: 'die <message>' is Internal Server Error
@@ -2527,6 +2575,7 @@ sub format_snapshot_links {
 sub get_feed_info {
 	my $format = shift || 'Atom';
 	my %res = (action => lc($format));
+	my $matched_ref = 0;
 
 	# feed links are possible only for project views
 	return unless (defined $project);
@@ -2534,12 +2583,17 @@ sub get_feed_info {
 	# or don't have specific feed yet (so they should use generic)
 	return if (!$action || $action =~ /^(?:tags|heads|forks|tag|search)$/x);
 
-	my $branch;
-	# branches refs uses 'refs/heads/' prefix (fullname) to differentiate
-	# from tag links; this also makes possible to detect branch links
-	if ((defined $hash_base && $hash_base =~ m!^refs/heads/(.*)$!) ||
-	    (defined $hash      && $hash      =~ m!^refs/heads/(.*)$!)) {
-		$branch = $1;
+	my $branch = undef;
+	# branches refs uses 'refs/' + $get_branch_refs()[x] + '/' prefix
+	# (fullname) to differentiate from tag links; this also makes
+	# possible to detect branch links
+	for my $ref (get_branch_refs()) {
+		if ((defined $hash_base && $hash_base =~ m!^refs/\Q$ref\E/(.*)$!) ||
+		    (defined $hash      && $hash      =~ m!^refs/\Q$ref\E/(.*)$!)) {
+			$branch = $1;
+			$matched_ref = $ref;
+			last;
+		}
 	}
 	# find log type for feed description (title)
 	my $type = 'log';
@@ -2552,7 +2606,7 @@ sub get_feed_info {
 	}
 
 	$res{-title} = $type;
-	$res{'hash'} = (defined $branch ? "refs/heads/$branch" : undef);
+	$res{'hash'} = (defined $branch ? "refs/$matched_ref/$branch" : undef);
 	$res{'file_name'} = $file_name;
 
 	return %res;
@@ -3205,7 +3259,7 @@ sub git_get_last_activity {
 	     '--format=%(committer)',
 	     '--sort=-committerdate',
 	     '--count=1',
-	     'refs/heads') or return;
+	     map { "refs/$_" } get_branch_refs ()) or return;
 	my $most_recent = <$fd>;
 	close $fd or return;
 	if (defined $most_recent &&
@@ -3656,7 +3710,7 @@ sub parse_from_to_diffinfo {
 
 sub git_get_heads_list {
 	my ($limit, @classes) = @_;
-	@classes = ('heads') unless @classes;
+	@classes = get_branch_refs() unless @classes;
 	my @patterns = map { "refs/$_" } @classes;
 	my @headslist;
 
@@ -3674,7 +3728,8 @@ sub git_get_heads_list {
 		my ($committer, $epoch, $tz) =
 			($committerinfo =~ /^(.*) ([0-9]+) (.*)$/);
 		$ref_item{'fullname'}  = $name;
-		$name =~ s!^refs/(?:head|remote)s/!!;
+		my $strip_refs = join '|', map { quotemeta } get_branch_refs();
+		$name =~ s!^refs/($strip_refs|remotes)/!!;
 
 		$ref_item{'name'}  = $name;
 		$ref_item{'id'}    = $hash;
@@ -7191,7 +7246,8 @@ sub snapshot_name {
 		$ver = $1;
 	} else {
 		# branches and other need shortened SHA-1 hash
-		if ($hash =~ m!^refs/(?:heads|remotes)/(.*)$!) {
+		my $strip_refs = join '|', map { quotemeta } get_branch_refs();
+		if ($hash =~ m!^refs/($strip_refs|remotes)/(.*)$!) {
 			$ver = $1;
 		}
 		$ver .= '-' . git_get_short_hash($project, $hash);
