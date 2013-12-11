@@ -760,11 +760,11 @@ int daemon_avoid_alias(const char *path);
 int offset_1st_component(const char *path);
 
 /* object replacement */
-#define READ_SHA1_FILE_REPLACE 1
+#define LOOKUP_REPLACE_OBJECT 1
 extern void *read_sha1_file_extended(const unsigned char *sha1, enum object_type *type, unsigned long *size, unsigned flag);
 static inline void *read_sha1_file(const unsigned char *sha1, enum object_type *type, unsigned long *size)
 {
-	return read_sha1_file_extended(sha1, type, size, READ_SHA1_FILE_REPLACE);
+	return read_sha1_file_extended(sha1, type, size, LOOKUP_REPLACE_OBJECT);
 }
 extern const unsigned char *do_lookup_replace_object(const unsigned char *sha1);
 static inline const unsigned char *lookup_replace_object(const unsigned char *sha1)
