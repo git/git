@@ -29,4 +29,19 @@ test_expect_success 'git diff --no-index relative path outside repo' '
 	)
 '
 
+test_expect_success 'git diff --no-index with broken index' '
+	(
+		cd repo &&
+		echo broken >.git/index &&
+		git diff --no-index a ../non/git/a
+	)
+'
+
+test_expect_success 'git diff outside repo with broken index' '
+	(
+		cd repo &&
+		git diff ../non/git/a ../non/git/b
+	)
+'
+
 test_done

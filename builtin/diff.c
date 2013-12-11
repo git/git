@@ -298,7 +298,9 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 			break;
 	}
 
-	prefix = setup_git_directory_gently(&nongit);
+	if (!no_index)
+		prefix = setup_git_directory_gently(&nongit);
+
 	/*
 	 * Treat git diff with at least one path outside of the
 	 * repo the same as if the command would have been executed
@@ -311,7 +313,8 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 			!path_inside_repo(prefix, argv[i + 1]))))
 		no_index = DIFF_NO_INDEX_IMPLICIT;
 
-	gitmodules_config();
+	if (!no_index)
+		gitmodules_config();
 	git_config(git_diff_ui_config, NULL);
 
 	init_revisions(&rev, prefix);
