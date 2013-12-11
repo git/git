@@ -1452,6 +1452,16 @@ sub validate_pathname {
 	return $input;
 }
 
+sub is_valid_ref_format {
+	my $input = shift || return undef;
+
+	# restrictions on ref name according to git-check-ref-format
+	if ($input =~ m!(/\.|\.\.|[\000-\040\177 ~^:?*\[]|/$)!) {
+		return undef;
+	}
+	return $input;
+}
+
 sub validate_refname {
 	my $input = shift || return undef;
 
@@ -1462,10 +1472,9 @@ sub validate_refname {
 	# it must be correct pathname
 	$input = validate_pathname($input)
 		or return undef;
-	# restrictions on ref name according to git-check-ref-format
-	if ($input =~ m!(/\.|\.\.|[\000-\040\177 ~^:?*\[]|/$)!) {
-		return undef;
-	}
+	# check git-check-ref-format restrictions
+	is_valid_ref_format($input)
+		or return undef;
 	return $input;
 }
 
