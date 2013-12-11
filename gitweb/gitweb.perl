@@ -3730,8 +3730,14 @@ sub git_get_heads_list {
 		$ref_item{'fullname'}  = $name;
 		my $strip_refs = join '|', map { quotemeta } get_branch_refs();
 		$name =~ s!^refs/($strip_refs|remotes)/!!;
+		$ref_item{'name'} = $name;
+		# for refs neither in 'heads' nor 'remotes' we want to
+		# show their ref dir
+		my $ref_dir = (defined $1) ? $1 : '';
+		if ($ref_dir ne '' and $ref_dir ne 'heads' and $ref_dir ne 'remotes') {
+		    $ref_item{'name'} .= ' (' . $ref_dir . ')';
+		}
 
-		$ref_item{'name'}  = $name;
 		$ref_item{'id'}    = $hash;
 		$ref_item{'title'} = $title || '(no commit message)';
 		$ref_item{'epoch'} = $epoch;
@@ -7223,6 +7229,15 @@ sub git_tree {
 	git_footer_html();
 }
 
+sub sanitize_for_filename {
+    my $name = shift;
+
+    $name =~ s!/!-!g;
+    $name =~ s/[^[:alnum:]_.-]//g;
+
+    return $name;
+}
+
 sub snapshot_name {
 	my ($project, $hash) = @_;
 
@@ -7230,9 +7245,7 @@ sub snapshot_name {
 	# path/to/project/.git -> project
 	my $name = to_utf8($project);
 	$name =~ s,([^/])/*\.git$,$1,;
-	$name = basename($name);
-	# sanitize name
-	$name =~ s/[[:cntrl:]]/?/g;
+	$name = sanitize_for_filename(basename($name));
 
 	my $ver = $hash;
 	if ($hash =~ /^[0-9a-fA-F]+$/) {
@@ -7248,12 +7261,23 @@ sub snapshot_name {
 		# branches and other need shortened SHA-1 hash
 		my $strip_refs = join '|', map { quotemeta } get_branch_refs();
 		if ($hash =~ m!^refs/($strip_refs|remotes)/(.*)$!) {
-			$ver = $1;
+			my $ref_dir = (defined $1) ? $1 : '';
+			$ver = $2;
+
+			$ref_dir = sanitize_for_filename($ref_dir);
+			# for refs neither in heads nor remotes we want to
+			# add a ref dir to archive name
+			if ($ref_dir ne '' and $ref_dir ne 'heads' and $ref_dir ne 'remotes') {
+				$ver = $ref_dir . '-' . $ver;
+			}
 		}
 		$ver .= '-' . git_get_short_hash($project, $hash);
 	}
+	# special case of sanitization for filename - we change
+	# slashes to dots instead of dashes
 	# in case of hierarchical branch names
 	$ver =~ s!/!.!g;
+	$ver =~ s/[^[:alnum:]_.-]//g;
 
 	# name = project-version_string
 	$name = "$name-$ver";
