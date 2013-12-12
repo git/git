@@ -64,7 +64,6 @@ git-init                                mainporcelain common
 git-instaweb                            ancillaryinterrogators
 gitk                                    mainporcelain
 git-log                                 mainporcelain common
-git-lost-found                          ancillarymanipulators	deprecated
 git-ls-files                            plumbinginterrogators
 git-ls-remote                           plumbinginterrogators
 git-ls-tree                             plumbinginterrogators
@@ -88,7 +87,6 @@ git-pack-redundant                      plumbinginterrogators
 git-pack-refs                           ancillarymanipulators
 git-parse-remote                        synchelpers
 git-patch-id                            purehelpers
-git-peek-remote                         purehelpers	deprecated
 git-prune                               ancillarymanipulators
 git-prune-packed                        plumbingmanipulators
 git-pull                                mainporcelain common
@@ -102,7 +100,6 @@ git-relink                              ancillarymanipulators
 git-remote                              ancillarymanipulators
 git-repack                              ancillarymanipulators
 git-replace                             ancillarymanipulators
-git-repo-config                         ancillarymanipulators	deprecated
 git-request-pull                        foreignscminterface
 git-rerere                              ancillaryinterrogators
 git-reset                               mainporcelain common
@@ -127,7 +124,6 @@ git-submodule                           mainporcelain
 git-svn                                 foreignscminterface
 git-symbolic-ref                        plumbingmanipulators
 git-tag                                 mainporcelain common
-git-tar-tree                            plumbinginterrogators	deprecated
 git-unpack-file                         plumbinginterrogators
 git-unpack-objects                      plumbingmanipulators
 git-update-index                        plumbingmanipulators

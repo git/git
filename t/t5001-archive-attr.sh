@@ -87,14 +87,4 @@ test_expect_success 'export-subst' '
 	test_cmp substfile2 archive/substfile2
 '
 
-test_expect_success 'git tar-tree vs. git archive with worktree attributes' '
-	git tar-tree HEAD >tar-tree.tar &&
-	test_cmp worktree.tar tar-tree.tar
-'
-
-test_expect_success 'git tar-tree vs. git archive with worktree attrs, bare' '
-	(cd bare && git tar-tree HEAD) >bare-tar-tree.tar &&
-	test_cmp bare-worktree.tar bare-tar-tree.tar
-'
-
 test_done

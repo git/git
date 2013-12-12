@@ -76,7 +76,6 @@
 /git-init-db
 /git-instaweb
 /git-log
-/git-lost-found
 /git-ls-files
 /git-ls-remote
 /git-ls-tree
@@ -106,7 +105,6 @@
 /git-pack-refs
 /git-parse-remote
 /git-patch-id
-/git-peek-remote
 /git-prune
 /git-prune-packed
 /git-pull
@@ -132,7 +130,6 @@
 /git-remote-testsvn
 /git-repack
 /git-replace
-/git-repo-config
 /git-request-pull
 /git-rerere
 /git-reset
@@ -160,7 +157,6 @@
 /git-svn
 /git-symbolic-ref
 /git-tag
-/git-tar-tree
 /git-unpack-file
 /git-unpack-objects
 /git-update-index
