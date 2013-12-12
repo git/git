@@ -1311,7 +1311,7 @@ class P4Submit(Command, P4UserMap):
             else:
                 die("unknown modifier %s for %s" % (modifier, path))
 
-        diffcmd = "git format-patch -k --stdout \"%s^\"..\"%s\"" % (id, id)
+        diffcmd = "git diff-tree -p \"%s\"" % (id)
         patchcmd = diffcmd + " | git apply "
         tryPatchCmd = patchcmd + "--check -"
         applyPatchCmd = patchcmd + "--check --apply -"
