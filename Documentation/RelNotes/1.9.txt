@@ -15,6 +15,13 @@ Read-only support for experimental loose-object format, in which users
 could optionally choose to write in their loose objects for a short
 while between v1.4.3 to v1.5.3 era, has been dropped.
 
+The meanings of "--tags" option to "git fetch" has changed; the
+command fetches tags _in addition to_ what are fetched by the same
+command line without the option.
+
+A handful of ancient commands that have long been deprecated are
+finally gone (repo-config, tar-tree, lost-found, and peek-remote).
+
 
 Backward compatibility notes (for Git 2.0)
 ------------------------------------------
@@ -68,7 +75,7 @@ Updates since v1.8.5
 
 Foreign interfaces, subsystems and ports.
 
- * The HTTP transport, when talking GSS-Negotinate, uses "100
+ * The HTTP transport, when talking GSS-Negotiate, uses "100
    Continue" response to avoid having to rewind and resend a large
    payload, which may not be always doable.
 
@@ -91,6 +98,10 @@ UI, Workflows & Features
  * "git rev-parse --parseopt" learned a new "--stuck-long" option to
    help scripts parse options with an optional parameter.
 
+ * The "--tags" option to "git fetch" no longer tells the command to
+   fetch _only_ the tags. It instead fetches tags _in addition to_
+   what are fetched by the same command line without the option.
+
 
 Performance, Internal Implementation, etc.
 
@@ -103,6 +114,11 @@ Performance, Internal Implementation, etc.
    point out of the reflog entries for the remote-tracking branch the
    work has been based on.
 
+ * A third-party "receive-pack" (the responder to "git push") can
+   advertise the "no-thin" capability to tell "git push" not to use
+   the thin-pack optimization. Our receive-pack has always been
+   capable of accepting and fattening a thin-pack, and will continue
+   not to ask "git push" to use a non-thin pack.
 
 
 Also contains various documentation updates and code clean-ups.
