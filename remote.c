@@ -745,35 +745,66 @@ int for_each_remote(each_remote_fn fn, void *priv)
 	return result;
 }
 
-void ref_remove_duplicates(struct ref *ref_map)
+static void handle_duplicate(struct ref *ref1, struct ref *ref2)
+{
+	if (strcmp(ref1->name, ref2->name)) {
+		if (ref1->fetch_head_status != FETCH_HEAD_IGNORE &&
+		    ref2->fetch_head_status != FETCH_HEAD_IGNORE) {
+			die(_("Cannot fetch both %s and %s to %s"),
+			    ref1->name, ref2->name, ref2->peer_ref->name);
+		} else if (ref1->fetch_head_status != FETCH_HEAD_IGNORE &&
+			   ref2->fetch_head_status == FETCH_HEAD_IGNORE) {
+			warning(_("%s usually tracks %s, not %s"),
+				ref2->peer_ref->name, ref2->name, ref1->name);
+		} else if (ref1->fetch_head_status == FETCH_HEAD_IGNORE &&
+			   ref2->fetch_head_status == FETCH_HEAD_IGNORE) {
+			die(_("%s tracks both %s and %s"),
+			    ref2->peer_ref->name, ref1->name, ref2->name);
+		} else {
+			/*
+			 * This last possibility doesn't occur because
+			 * FETCH_HEAD_IGNORE entries always appear at
+			 * the end of the list.
+			 */
+			die(_("Internal error"));
+		}
+	}
+	free(ref2->peer_ref);
+	free(ref2);
+}
+
+struct ref *ref_remove_duplicates(struct ref *ref_map)
 {
 	struct string_list refs = STRING_LIST_INIT_NODUP;
-	struct string_list_item *item = NULL;
-	struct ref *prev = NULL, *next = NULL;
-	for (; ref_map; prev = ref_map, ref_map = next) {
-		next = ref_map->next;
-		if (!ref_map->peer_ref)
-			continue;
+	struct ref *retval = NULL;
+	struct ref **p = &retval;
 
-		item = string_list_lookup(&refs, ref_map->peer_ref->name);
-		if (item) {
-			if (strcmp(((struct ref *)item->util)->name,
-				   ref_map->name))
-				die("%s tracks both %s and %s",
-				    ref_map->peer_ref->name,
-				    ((struct ref *)item->util)->name,
-				    ref_map->name);
-			prev->next = ref_map->next;
-			free(ref_map->peer_ref);
-			free(ref_map);
-			ref_map = prev; /* skip this; we freed it */
-			continue;
+	while (ref_map) {
+		struct ref *ref = ref_map;
+
+		ref_map = ref_map->next;
+		ref->next = NULL;
+
+		if (!ref->peer_ref) {
+			*p = ref;
+			p = &ref->next;
+		} else {
+			struct string_list_item *item =
+				string_list_insert(&refs, ref->peer_ref->name);
+
+			if (item->util) {
+				/* Entry already existed */
+				handle_duplicate((struct ref *)item->util, ref);
+			} else {
+				*p = ref;
+				p = &ref->next;
+				item->util = ref;
+			}
 		}
-
-		item = string_list_insert(&refs, ref_map->peer_ref->name);
-		item->util = ref_map;
 	}
+
 	string_list_clear(&refs, 0);
+	return retval;
 }
 
 int remote_has_url(struct remote *remote, const char *url)
@@ -825,6 +856,8 @@ static int query_refspecs(struct refspec *refs, int ref_count, struct refspec *q
 {
 	int i;
 	int find_src = !query->src;
+	const char *needle = find_src ? query->dst : query->src;
+	char **result = find_src ? &query->src : &query->dst;
 
 	if (find_src && !query->dst)
 		return error("query_refspecs: need either src or dst");
@@ -833,8 +866,6 @@ static int query_refspecs(struct refspec *refs, int ref_count, struct refspec *q
 		struct refspec *refspec = &refs[i];
 		const char *key = find_src ? refspec->dst : refspec->src;
 		const char *value = find_src ? refspec->src : refspec->dst;
-		const char *needle = find_src ? query->dst : query->src;
-		char **result = find_src ? &query->src : &query->dst;
 
 		if (!refspec->dst)
 			continue;
@@ -1553,6 +1584,13 @@ static int ignore_symref_update(const char *refname)
 	return (flag & REF_ISSYMREF);
 }
 
+/*
+ * Create and return a list of (struct ref) consisting of copies of
+ * each remote_ref that matches refspec.  refspec must be a pattern.
+ * Fill in the copies' peer_ref to describe the local tracking refs to
+ * which they map.  Omit any references that would map to an existing
+ * local symbolic ref.
+ */
 static struct ref *get_expanded_map(const struct ref *remote_refs,
 				    const struct refspec *refspec)
 {
@@ -1560,9 +1598,9 @@ static struct ref *get_expanded_map(const struct ref *remote_refs,
 	struct ref *ret = NULL;
 	struct ref **tail = &ret;
 
-	char *expn_name;
-
 	for (ref = remote_refs; ref; ref = ref->next) {
+		char *expn_name = NULL;
+
 		if (strchr(ref->name, '^'))
 			continue; /* a dereference item */
 		if (match_name_with_pattern(refspec->src, ref->name,
@@ -1571,12 +1609,12 @@ static struct ref *get_expanded_map(const struct ref *remote_refs,
 			struct ref *cpy = copy_ref(ref);
 
 			cpy->peer_ref = alloc_ref(expn_name);
-			free(expn_name);
 			if (refspec->force)
 				cpy->peer_ref->force = 1;
 			*tail = cpy;
 			tail = &cpy->next;
 		}
+		free(expn_name);
 	}
 
 	return ret;

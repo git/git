@@ -172,7 +172,7 @@ error_on_no_merge_candidates () {
 	do
 		case "$opt" in
 		-t|--t|--ta|--tag|--tags)
-			echo "Fetching tags only, you probably meant:"
+			echo "It doesn't make sense to pull all tags; you probably meant:"
 			echo "  git fetch --tags"
 			exit 1
 		esac

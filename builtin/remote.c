@@ -6,6 +6,7 @@
 #include "strbuf.h"
 #include "run-command.h"
 #include "refs.h"
+#include "argv-array.h"
 
 static const char * const builtin_remote_usage[] = {
 	N_("git remote [-v | --verbose]"),
@@ -76,9 +77,6 @@ static const char * const builtin_remote_seturl_usage[] = {
 #define GET_PUSH_REF_STATES (1<<2)
 
 static int verbose;
-
-static int show_all(void);
-static int prune_remote(const char *remote, int dry_run);
 
 static inline int postfixcmp(const char *string, const char *postfix)
 {
@@ -1084,6 +1082,64 @@ static int show_push_info_item(struct string_list_item *item, void *cb_data)
 	return 0;
 }
 
+static int get_one_entry(struct remote *remote, void *priv)
+{
+	struct string_list *list = priv;
+	struct strbuf url_buf = STRBUF_INIT;
+	const char **url;
+	int i, url_nr;
+
+	if (remote->url_nr > 0) {
+		strbuf_addf(&url_buf, "%s (fetch)", remote->url[0]);
+		string_list_append(list, remote->name)->util =
+				strbuf_detach(&url_buf, NULL);
+	} else
+		string_list_append(list, remote->name)->util = NULL;
+	if (remote->pushurl_nr) {
+		url = remote->pushurl;
+		url_nr = remote->pushurl_nr;
+	} else {
+		url = remote->url;
+		url_nr = remote->url_nr;
+	}
+	for (i = 0; i < url_nr; i++)
+	{
+		strbuf_addf(&url_buf, "%s (push)", url[i]);
+		string_list_append(list, remote->name)->util =
+				strbuf_detach(&url_buf, NULL);
+	}
+
+	return 0;
+}
+
+static int show_all(void)
+{
+	struct string_list list = STRING_LIST_INIT_NODUP;
+	int result;
+
+	list.strdup_strings = 1;
+	result = for_each_remote(get_one_entry, &list);
+
+	if (!result) {
+		int i;
+
+		sort_string_list(&list);
+		for (i = 0; i < list.nr; i++) {
+			struct string_list_item *item = list.items + i;
+			if (verbose)
+				printf("%s\t%s\n", item->string,
+					item->util ? (const char *)item->util : "");
+			else {
+				if (i && !strcmp((item - 1)->string, item->string))
+					continue;
+				printf("%s\n", item->string);
+			}
+		}
+	}
+	string_list_clear(&list, 1);
+	return result;
+}
+
 static int show(int argc, const char **argv)
 {
 	int no_query = 0, result = 0, query_flag = 0;
@@ -1246,26 +1302,6 @@ static int set_head(int argc, const char **argv)
 	return result;
 }
 
-static int prune(int argc, const char **argv)
-{
-	int dry_run = 0, result = 0;
-	struct option options[] = {
-		OPT__DRY_RUN(&dry_run, N_("dry run")),
-		OPT_END()
-	};
-
-	argc = parse_options(argc, argv, NULL, options, builtin_remote_prune_usage,
-			     0);
-
-	if (argc < 1)
-		usage_with_options(builtin_remote_prune_usage, options);
-
-	for (; argc; argc--, argv++)
-		result |= prune_remote(*argv, dry_run);
-
-	return result;
-}
-
 static int prune_remote(const char *remote, int dry_run)
 {
 	int result = 0, i;
@@ -1304,6 +1340,26 @@ static int prune_remote(const char *remote, int dry_run)
 	return result;
 }
 
+static int prune(int argc, const char **argv)
+{
+	int dry_run = 0, result = 0;
+	struct option options[] = {
+		OPT__DRY_RUN(&dry_run, N_("dry run")),
+		OPT_END()
+	};
+
+	argc = parse_options(argc, argv, NULL, options, builtin_remote_prune_usage,
+			     0);
+
+	if (argc < 1)
+		usage_with_options(builtin_remote_prune_usage, options);
+
+	for (; argc; argc--, argv++)
+		result |= prune_remote(*argv, dry_run);
+
+	return result;
+}
+
 static int get_remote_default(const char *key, const char *value, void *priv)
 {
 	if (strcmp(key, "remotes.default") == 0) {
@@ -1315,42 +1371,42 @@ static int get_remote_default(const char *key, const char *value, void *priv)
 
 static int update(int argc, const char **argv)
 {
-	int i, prune = 0;
+	int i, prune = -1;
 	struct option options[] = {
 		OPT_BOOL('p', "prune", &prune,
 			 N_("prune remotes after fetching")),
 		OPT_END()
 	};
-	const char **fetch_argv;
-	int fetch_argc = 0;
+	struct argv_array fetch_argv = ARGV_ARRAY_INIT;
 	int default_defined = 0;
-
-	fetch_argv = xmalloc(sizeof(char *) * (argc+5));
+	int retval;
 
 	argc = parse_options(argc, argv, NULL, options, builtin_remote_update_usage,
 			     PARSE_OPT_KEEP_ARGV0);
 
-	fetch_argv[fetch_argc++] = "fetch";
+	argv_array_push(&fetch_argv, "fetch");
 
-	if (prune)
-		fetch_argv[fetch_argc++] = "--prune";
+	if (prune != -1)
+		argv_array_push(&fetch_argv, prune ? "--prune" : "--no-prune");
 	if (verbose)
-		fetch_argv[fetch_argc++] = "-v";
-	fetch_argv[fetch_argc++] = "--multiple";
+		argv_array_push(&fetch_argv, "-v");
+	argv_array_push(&fetch_argv, "--multiple");
 	if (argc < 2)
-		fetch_argv[fetch_argc++] = "default";
+		argv_array_push(&fetch_argv, "default");
 	for (i = 1; i < argc; i++)
-		fetch_argv[fetch_argc++] = argv[i];
+		argv_array_push(&fetch_argv, argv[i]);
 
-	if (strcmp(fetch_argv[fetch_argc-1], "default") == 0) {
+	if (strcmp(fetch_argv.argv[fetch_argv.argc-1], "default") == 0) {
 		git_config(get_remote_default, &default_defined);
-		if (!default_defined)
-			fetch_argv[fetch_argc-1] = "--all";
+		if (!default_defined) {
+			argv_array_pop(&fetch_argv);
+			argv_array_push(&fetch_argv, "--all");
+		}
 	}
 
-	fetch_argv[fetch_argc] = NULL;
-
-	return run_command_v_opt(fetch_argv, RUN_GIT_CMD);
+	retval = run_command_v_opt(fetch_argv.argv, RUN_GIT_CMD);
+	argv_array_clear(&fetch_argv);
+	return retval;
 }
 
 static int remove_all_fetch_refspecs(const char *remote, const char *key)
@@ -1503,64 +1559,6 @@ static int set_url(int argc, const char **argv)
 	else
 		git_config_set_multivar(name_buf.buf, NULL, oldurl, 1);
 	return 0;
-}
-
-static int get_one_entry(struct remote *remote, void *priv)
-{
-	struct string_list *list = priv;
-	struct strbuf url_buf = STRBUF_INIT;
-	const char **url;
-	int i, url_nr;
-
-	if (remote->url_nr > 0) {
-		strbuf_addf(&url_buf, "%s (fetch)", remote->url[0]);
-		string_list_append(list, remote->name)->util =
-				strbuf_detach(&url_buf, NULL);
-	} else
-		string_list_append(list, remote->name)->util = NULL;
-	if (remote->pushurl_nr) {
-		url = remote->pushurl;
-		url_nr = remote->pushurl_nr;
-	} else {
-		url = remote->url;
-		url_nr = remote->url_nr;
-	}
-	for (i = 0; i < url_nr; i++)
-	{
-		strbuf_addf(&url_buf, "%s (push)", url[i]);
-		string_list_append(list, remote->name)->util =
-				strbuf_detach(&url_buf, NULL);
-	}
-
-	return 0;
-}
-
-static int show_all(void)
-{
-	struct string_list list = STRING_LIST_INIT_NODUP;
-	int result;
-
-	list.strdup_strings = 1;
-	result = for_each_remote(get_one_entry, &list);
-
-	if (!result) {
-		int i;
-
-		sort_string_list(&list);
-		for (i = 0; i < list.nr; i++) {
-			struct string_list_item *item = list.items + i;
-			if (verbose)
-				printf("%s\t%s\n", item->string,
-					item->util ? (const char *)item->util : "");
-			else {
-				if (i && !strcmp((item - 1)->string, item->string))
-					continue;
-				printf("%s\n", item->string);
-			}
-		}
-	}
-	string_list_clear(&list, 1);
-	return result;
 }
 
 int cmd_remote(int argc, const char **argv, const char *prefix)

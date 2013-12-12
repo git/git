@@ -24,13 +24,13 @@ The ref names and their object names of fetched refs are stored
 in `.git/FETCH_HEAD`.  This information is left for a later merge
 operation done by 'git merge'.
 
-When <refspec> stores the fetched result in remote-tracking branches,
-the tags that point at these branches are automatically
-followed.  This is done by first fetching from the remote using
-the given <refspec>s, and if the repository has objects that are
-pointed by remote tags that it does not yet have, then fetch
-those missing tags.  If the other end has tags that point at
-branches you are not interested in, you will not get them.
+By default, tags are auto-followed.  This means that when fetching
+from a remote, any tags on the remote that point to objects that exist
+in the local repository are fetched.  The effect is to fetch tags that
+point at branches that you are interested in.  This default behavior
+can be changed by using the --tags or --no-tags options, by
+configuring remote.<name>.tagopt, or by using a refspec that fetches
+tags explicitly.
 
 'git fetch' can fetch from either a single named repository,
 or from several repositories at once if <group> is given and
