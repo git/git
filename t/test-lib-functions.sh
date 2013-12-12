@@ -1,4 +1,5 @@
-#!/bin/sh
+# Library of functions shared by all tests scripts, included by
+# test-lib.sh.
 #
 # Copyright (c) 2005 Junio C Hamano
 #

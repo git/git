@@ -3,7 +3,6 @@
 test_description='applying patch with mode bits'
 
 . ./test-lib.sh
-. "$TEST_DIRECTORY"/lib-prereq-FILEMODE.sh
 
 test_expect_success setup '
 	echo original >file &&

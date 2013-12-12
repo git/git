@@ -1,5 +1,4 @@
-#!/bin/sh
-# git-mergetool--lib is a library for common merge tool functions
+# git-mergetool--lib is a shell library for common merge tool functions
 
 : ${MERGE_TOOLS_DIR=$(git --exec-path)/mergetools}
 

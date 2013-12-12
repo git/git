@@ -1,11 +1,8 @@
-#!/bin/sh
+# This shell script fragment is sourced by git-rebase to implement
+# its interactive mode.  "git rebase --interactive" makes it easy
+# to fix up commits in the middle of a series and rearrange commits.
 #
 # Copyright (c) 2006 Johannes E. Schindelin
-
-# SHORT DESCRIPTION
-#
-# This script makes it easy to fix up commits in the middle of a series,
-# and rearrange commits.
 #
 # The original idea comes from Eric W. Biederman, in
 # http://article.gmane.org/gmane.comp.version-control.git/22407

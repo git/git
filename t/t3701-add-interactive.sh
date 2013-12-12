@@ -2,7 +2,6 @@
 
 test_description='add -i basic tests'
 . ./test-lib.sh
-. "$TEST_DIRECTORY"/lib-prereq-FILEMODE.sh
 
 if ! test_have_prereq PERL
 then

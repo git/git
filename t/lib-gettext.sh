@@ -1,4 +1,5 @@
-#!/bin/sh
+# Initialization and Icelandic locale for basic git i18n tests,
+# which source this scriptlet instead of ./test-lib.sh.
 #
 # Copyright (c) 2010 Ævar Arnfjörð Bjarmason
 #

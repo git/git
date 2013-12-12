@@ -1,4 +1,4 @@
-#!/bin/sh
+# Helpers for terminal output tests.
 
 test_expect_success PERL 'set up terminal for tests' '
 	# Reading from the pty master seems to get stuck _sometimes_

@@ -1,4 +1,6 @@
-#!/bin/sh
+# Performance testing framework.  Each perf script starts much like
+# a normal test script, except it sources this library instead of
+# test-lib.sh.  See t/perf/README for documentation.
 #
 # Copyright (c) 2011 Thomas Rast
 #

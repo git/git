@@ -1,4 +1,4 @@
-#!/bin/sh
+# Helper functions used by interactive rebase tests.
 
 # After setting the fake editor with this function, you can
 #

@@ -1,5 +1,3 @@
-#!/bin/sh
-#
 # Support routines for hand-crafting weird or malicious packs.
 #
 # You can make a complete pack like:

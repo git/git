@@ -22,7 +22,6 @@
 # For example, on debian the hook is stored in
 # /usr/share/git-core/contrib/hooks/post-receive-email:
 #
-#  chmod a+x post-receive-email
 #  cd /path/to/your/repository.git
 #  ln -sf /usr/share/git-core/contrib/hooks/post-receive-email hooks/post-receive
 #

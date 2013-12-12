@@ -1,4 +1,6 @@
-#!/bin/sh
+# This shell script fragment is sourced by git-rebase to implement
+# its merge-based non-interactive mode that copes well with renamed
+# files.
 #
 # Copyright (c) 2010 Junio C Hamano.
 #

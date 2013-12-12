@@ -1,4 +1,4 @@
-#!/bin/sh
+# Helpers for tests of git's choice of pager.
 
 test_expect_success 'determine default pager' '
 	test_might_fail git config --unset core.pager &&
