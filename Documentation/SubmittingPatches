@@ -139,8 +139,15 @@ People on the Git mailing list need to be able to read and
 comment on the changes you are submitting.  It is important for
 a developer to be able to "quote" your changes, using standard
 e-mail tools, so that they may comment on specific portions of
-your code.  For this reason, all patches should be submitted
-"inline".  If your log message (including your name on the
+your code.  For this reason, each patch should be submitted
+"inline" in a separate message.
+
+Multiple related patches should be grouped into their own e-mail
+thread to help readers find all parts of the series.  To that end,
+send them as replies to either an additional "cover letter" message
+(see below), the first patch, or the respective preceding patch.
+
+If your log message (including your name on the
 Signed-off-by line) is not writable in ASCII, make sure that
 you send off a message in the correct encoding.
 
