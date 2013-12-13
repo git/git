@@ -71,6 +71,11 @@ int cmd_commit_tree(int argc, const char **argv, const char *prefix)
 			continue;
 		}
 
+		if (!strcmp(arg, "--no-gpg-sign")) {
+			sign_commit = NULL;
+			continue;
+		}
+
 		if (!strcmp(arg, "-m")) {
 			if (argc <= ++i)
 				usage(commit_tree_usage);
