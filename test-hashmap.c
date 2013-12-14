@@ -1,6 +1,5 @@
-#include "cache.h"
+#include "git-compat-util.h"
 #include "hashmap.h"
-#include <stdio.h>
 
 struct test_entry
 {
