@@ -73,15 +73,16 @@ struct pair_order {
 static int match_order(const char *path)
 {
 	int i;
-	char p[PATH_MAX];
+	static struct strbuf p = STRBUF_INIT;
 
 	for (i = 0; i < order_cnt; i++) {
-		strcpy(p, path);
-		while (p[0]) {
+		strbuf_reset(&p);
+		strbuf_addstr(&p, path);
+		while (p.buf[0]) {
 			char *cp;
-			if (!fnmatch(order[i], p, 0))
+			if (!fnmatch(order[i], p.buf, 0))
 				return i;
-			cp = strrchr(p, '/');
+			cp = strrchr(p.buf, '/');
 			if (!cp)
 				break;
 			*cp = 0;
