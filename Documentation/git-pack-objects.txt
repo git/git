@@ -51,8 +51,7 @@ base-name::
 	<base-name> to determine the name of the created file.
 	When this option is used, the two files are written in
 	<base-name>-<SHA-1>.{pack,idx} files.  <SHA-1> is a hash
-	of the sorted object names to make the resulting filename
-	based on the pack content, and written to the standard
+	based on the pack content and is written to the standard
 	output of the command.
 
 --stdout::
