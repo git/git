@@ -44,4 +44,15 @@ test_expect_success 'git diff outside repo with broken index' '
 	)
 '
 
+test_expect_success 'git diff --no-index executed outside repo gives correct error message' '
+	(
+		GIT_CEILING_DIRECTORIES=$TRASH_DIRECTORY/non &&
+		export GIT_CEILING_DIRECTORIES &&
+		cd non/git &&
+		test_must_fail git diff --no-index a 2>actual.err &&
+		echo "usage: git diff --no-index <path> <path>" >expect.err &&
+		test_cmp expect.err actual.err
+	)
+'
+
 test_done
