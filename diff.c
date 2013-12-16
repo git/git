@@ -2936,7 +2936,7 @@ static void run_external_diff(const char *pgm,
 
 	env[0] = env_counter;
 	snprintf(env_counter, sizeof(env_counter), "GIT_DIFF_PATH_COUNTER=%d",
-			++o->diff_path_counter);
+		 ++o->diff_path_counter);
 	env[1] = env_total;
 	snprintf(env_total, sizeof(env_total), "GIT_DIFF_PATH_TOTAL=%d", q->nr);
 
@@ -3330,7 +3330,7 @@ void diff_setup_done(struct diff_options *options)
 		DIFF_OPT_SET(options, EXIT_WITH_STATUS);
 	}
 
-    options->diff_path_counter = 0;
+	options->diff_path_counter = 0;
 }
 
 static int opt_arg(const char *arg, int arg_short, const char *arg_long, int *val)
