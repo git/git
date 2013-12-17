@@ -83,12 +83,12 @@ scripting Git:
    `git log -1 HEAD` but write `git log -1 HEAD --`; the former will not work
    if you happen to have a file called `HEAD` in the work tree.
 
- * many commands allow a long option "--option" to be abbreviated
+ * many commands allow a long option `--option` to be abbreviated
    only to their unique prefix (e.g. if there is no other option
-   whose name begins with "opt", you may be able to spell "--opt" to
-   invoke the "--option" flag), but you should fully spell them out
+   whose name begins with `opt`, you may be able to spell `--opt` to
+   invoke the `--option` flag), but you should fully spell them out
    when writing your scripts; later versions of Git may introduce a
-   new option whose name shares the same prefix, e.g. "--optimize",
+   new option whose name shares the same prefix, e.g. `--optimize`,
    to make a short prefix that used to be unique no longer unique.
 
 
@@ -149,7 +149,7 @@ prefix of a long option as if it is fully spelled out, but use this
 with a caution.  For example, `git commit --amen` behaves as if you
 typed `git commit --amend`, but that is true only until a later version
 of Git introduces another option that shares the same prefix,
-e.g `git commit --amenity" option.
+e.g. `git commit --amenity` option.
 
 
 Separating argument from the option
