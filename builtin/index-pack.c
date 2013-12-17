@@ -1534,9 +1534,9 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 				stat_only = 1;
 			} else if (!strcmp(arg, "--keep")) {
 				keep_msg = "";
-			} else if (!prefixcmp(arg, "--keep=")) {
+			} else if (starts_with(arg, "--keep=")) {
 				keep_msg = arg + 7;
-			} else if (!prefixcmp(arg, "--threads=")) {
+			} else if (starts_with(arg, "--threads=")) {
 				char *end;
 				nr_threads = strtoul(arg+10, &end, 0);
 				if (!arg[10] || *end || nr_threads < 0)
@@ -1547,7 +1547,7 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 						  "ignoring %s"), arg);
 				nr_threads = 1;
 #endif
-			} else if (!prefixcmp(arg, "--pack_header=")) {
+			} else if (starts_with(arg, "--pack_header=")) {
 				struct pack_header *hdr;
 				char *c;
 
@@ -1566,7 +1566,7 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 				if (index_name || (i+1) >= argc)
 					usage(index_pack_usage);
 				index_name = argv[++i];
-			} else if (!prefixcmp(arg, "--index-version=")) {
+			} else if (starts_with(arg, "--index-version=")) {
 				char *c;
 				opts.version = strtoul(arg + 16, &c, 10);
 				if (opts.version > 2)

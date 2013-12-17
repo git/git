@@ -460,7 +460,7 @@ void http_init(struct remote *remote, const char *url, int proactive_auth)
 		credential_from_url(&http_auth, url);
 		if (!ssl_cert_password_required &&
 		    getenv("GIT_SSL_CERT_PASSWORD_PROTECTED") &&
-		    !prefixcmp(url, "https://"))
+		    starts_with(url, "https://"))
 			ssl_cert_password_required = 1;
 	}
 
@@ -1000,7 +1000,7 @@ static int update_url_from_redirect(struct strbuf *base,
 	if (!strcmp(asked, got->buf))
 		return 0;
 
-	if (prefixcmp(asked, base->buf))
+	if (!starts_with(asked, base->buf))
 		die("BUG: update_url_from_redirect: %s is not a superset of %s",
 		    asked, base->buf);
 
@@ -1106,7 +1106,7 @@ int http_fetch_ref(const char *base, struct ref *ref)
 		strbuf_rtrim(&buffer);
 		if (buffer.len == 40)
 			ret = get_sha1_hex(buffer.buf, ref->old_sha1);
-		else if (!prefixcmp(buffer.buf, "ref: ")) {
+		else if (starts_with(buffer.buf, "ref: ")) {
 			ref->symref = xstrdup(buffer.buf + 5);
 			ret = 0;
 		}
@@ -1207,8 +1207,8 @@ int http_get_info_packs(const char *base_url, struct packed_git **packs_head)
 		case 'P':
 			i++;
 			if (i + 52 <= buf.len &&
-			    !prefixcmp(data + i, " pack-") &&
-			    !prefixcmp(data + i + 46, ".pack\n")) {
+			    starts_with(data + i, " pack-") &&
+			    starts_with(data + i + 46, ".pack\n")) {
 				get_sha1_hex(data + i + 6, sha1);
 				fetch_and_setup_pack_index(packs_head, sha1,
 						      base_url);

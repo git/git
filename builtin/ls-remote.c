@@ -50,11 +50,11 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 		const char *arg = argv[i];
 
 		if (*arg == '-') {
-			if (!prefixcmp(arg, "--upload-pack=")) {
+			if (starts_with(arg, "--upload-pack=")) {
 				uploadpack = arg + 14;
 				continue;
 			}
-			if (!prefixcmp(arg, "--exec=")) {
+			if (starts_with(arg, "--exec=")) {
 				uploadpack = arg + 7;
 				continue;
 			}

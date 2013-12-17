@@ -148,7 +148,7 @@ static void list_commands_in_dir(struct cmdnames *cmds,
 	while ((de = readdir(dir)) != NULL) {
 		int entlen;
 
-		if (prefixcmp(de->d_name, prefix))
+		if (!starts_with(de->d_name, prefix))
 			continue;
 
 		strbuf_setlen(&buf, len);
@@ -255,7 +255,7 @@ static int git_unknown_cmd_config(const char *var, const char *value, void *cb)
 	if (!strcmp(var, "help.autocorrect"))
 		autocorrect = git_config_int(var,value);
 	/* Also use aliases for command lookup */
-	if (!prefixcmp(var, "alias."))
+	if (starts_with(var, "alias."))
 		add_cmdname(&aliases, var + 6, strlen(var + 6));
 
 	return git_default_config(var, value, cb);
@@ -329,7 +329,7 @@ const char *help_unknown_cmd(const char *cmd)
 		if ((n < ARRAY_SIZE(common_cmds)) && !cmp) {
 			/* Yes, this is one of the common commands */
 			n++; /* use the entry from common_cmds[] */
-			if (!prefixcmp(candidate, cmd)) {
+			if (starts_with(candidate, cmd)) {
 				/* Give prefix match a very good score */
 				main_cmds.names[i]->len = 0;
 				continue;
@@ -414,7 +414,7 @@ static int append_similar_ref(const char *refname, const unsigned char *sha1,
 	struct similar_ref_cb *cb = (struct similar_ref_cb *)(cb_data);
 	char *branch = strrchr(refname, '/') + 1;
 	/* A remote branch of the same name is deemed similar */
-	if (!prefixcmp(refname, "refs/remotes/") &&
+	if (starts_with(refname, "refs/remotes/") &&
 	    !strcmp(branch, cb->base_ref))
 		string_list_append(cb->similar_refs,
 				   refname + strlen("refs/remotes/"));

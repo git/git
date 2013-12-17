@@ -145,7 +145,7 @@ struct ref **get_remote_heads(int in, char *src_buf, size_t src_len,
 		if (!len)
 			break;
 
-		if (len > 4 && !prefixcmp(buffer, "ERR "))
+		if (len > 4 && starts_with(buffer, "ERR "))
 			die("remote error: %s", buffer + 4);
 
 		if (len < 42 || get_sha1_hex(buffer, old_sha1) || buffer[40] != ' ')

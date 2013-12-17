@@ -1409,10 +1409,10 @@ static void recount_diff(const char *line, int size, struct fragment *fragment)
 		case '\\':
 			continue;
 		case '@':
-			ret = size < 3 || prefixcmp(line, "@@ ");
+			ret = size < 3 || !starts_with(line, "@@ ");
 			break;
 		case 'd':
-			ret = size < 5 || prefixcmp(line, "diff ");
+			ret = size < 5 || !starts_with(line, "diff ");
 			break;
 		default:
 			ret = -1;
@@ -1798,11 +1798,11 @@ static struct fragment *parse_binary_hunk(char **buf_p,
 
 	*status_p = 0;
 
-	if (!prefixcmp(buffer, "delta ")) {
+	if (starts_with(buffer, "delta ")) {
 		patch_method = BINARY_DELTA_DEFLATED;
 		origlen = strtoul(buffer + 6, NULL, 10);
 	}
-	else if (!prefixcmp(buffer, "literal ")) {
+	else if (starts_with(buffer, "literal ")) {
 		patch_method = BINARY_LITERAL_DEFLATED;
 		origlen = strtoul(buffer + 8, NULL, 10);
 	}
@@ -3627,12 +3627,12 @@ static int preimage_sha1_in_gitlink_patch(struct patch *p, unsigned char sha1[20
 	    hunk->oldpos == 1 && hunk->oldlines == 1 &&
 	    /* does preimage begin with the heading? */
 	    (preimage = memchr(hunk->patch, '\n', hunk->size)) != NULL &&
-	    !prefixcmp(++preimage, heading) &&
+	    starts_with(++preimage, heading) &&
 	    /* does it record full SHA-1? */
 	    !get_sha1_hex(preimage + sizeof(heading) - 1, sha1) &&
 	    preimage[sizeof(heading) + 40 - 1] == '\n' &&
 	    /* does the abbreviated name on the index line agree with it? */
-	    !prefixcmp(preimage + sizeof(heading) - 1, p->old_sha1_prefix))
+	    starts_with(preimage + sizeof(heading) - 1, p->old_sha1_prefix))
 		return 0; /* it all looks fine */
 
 	/* we may have full object name on the index line */

@@ -37,7 +37,7 @@ int cmd_upload_archive_writer(int argc, const char **argv, const char *prefix)
 		if (sent_argv.argc > MAX_ARGS)
 			die("Too many options (>%d)", MAX_ARGS - 1);
 
-		if (prefixcmp(buf, arg_cmd))
+		if (!starts_with(buf, arg_cmd))
 			die("'argument' token or flush expected");
 		argv_array_push(&sent_argv, buf + strlen(arg_cmd));
 	}

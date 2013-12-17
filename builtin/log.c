@@ -391,7 +391,7 @@ static int git_log_config(const char *var, const char *value, void *cb)
 		default_show_root = git_config_bool(var, value);
 		return 0;
 	}
-	if (!prefixcmp(var, "color.decorate."))
+	if (starts_with(var, "color.decorate."))
 		return parse_decorate_color_config(var, 15, value);
 	if (!strcmp(var, "log.mailmap")) {
 		use_mailmap_config = git_config_bool(var, value);
@@ -477,7 +477,7 @@ static int show_tag_object(const unsigned char *sha1, struct rev_info *rev)
 		int new_offset = offset + 1;
 		while (new_offset < size && buf[new_offset++] != '\n')
 			; /* do nothing */
-		if (!prefixcmp(buf + offset, "tagger "))
+		if (starts_with(buf + offset, "tagger "))
 			show_tagger(buf + offset + 7,
 				    new_offset - offset - 7, rev);
 		offset = new_offset;
@@ -882,7 +882,7 @@ static char *find_branch_name(struct rev_info *rev)
 	ref = rev->cmdline.rev[positive].name;
 	tip_sha1 = rev->cmdline.rev[positive].item->sha1;
 	if (dwim_ref(ref, strlen(ref), branch_sha1, &full_ref) &&
-	    !prefixcmp(full_ref, "refs/heads/") &&
+	    starts_with(full_ref, "refs/heads/") &&
 	    !hashcmp(tip_sha1, branch_sha1))
 		branch = xstrdup(full_ref + strlen("refs/heads/"));
 	free(full_ref);
@@ -1388,7 +1388,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			unsigned char sha1[20];
 			const char *ref;
 			ref = resolve_ref_unsafe("HEAD", sha1, 1, NULL);
-			if (ref && !prefixcmp(ref, "refs/heads/"))
+			if (ref && starts_with(ref, "refs/heads/"))
 				branch_name = xstrdup(ref + strlen("refs/heads/"));
 			else
 				branch_name = xstrdup(""); /* no branch */

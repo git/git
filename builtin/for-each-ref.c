@@ -453,7 +453,7 @@ static void grab_person(const char *who, struct atom_value *val, int deref, stru
 		if (name[wholen] != 0 &&
 		    strcmp(name + wholen, "name") &&
 		    strcmp(name + wholen, "email") &&
-		    prefixcmp(name + wholen, "date"))
+		    !starts_with(name + wholen, "date"))
 			continue;
 		if (!wholine)
 			wholine = find_wholine(who, wholen, buf, sz);
@@ -465,7 +465,7 @@ static void grab_person(const char *who, struct atom_value *val, int deref, stru
 			v->s = copy_name(wholine);
 		else if (!strcmp(name + wholen, "email"))
 			v->s = copy_email(wholine);
-		else if (!prefixcmp(name + wholen, "date"))
+		else if (starts_with(name + wholen, "date"))
 			grab_date(wholine, v, name);
 	}
 
@@ -487,7 +487,7 @@ static void grab_person(const char *who, struct atom_value *val, int deref, stru
 		if (deref)
 			name++;
 
-		if (!prefixcmp(name, "creatordate"))
+		if (starts_with(name, "creatordate"))
 			grab_date(wholine, v, name);
 		else if (!strcmp(name, "creator"))
 			v->s = copy_line(wholine);
@@ -668,13 +668,13 @@ static void populate_value(struct refinfo *ref)
 			name++;
 		}
 
-		if (!prefixcmp(name, "refname"))
+		if (starts_with(name, "refname"))
 			refname = ref->refname;
-		else if (!prefixcmp(name, "symref"))
+		else if (starts_with(name, "symref"))
 			refname = ref->symref ? ref->symref : "";
-		else if (!prefixcmp(name, "upstream")) {
+		else if (starts_with(name, "upstream")) {
 			/* only local branches may have an upstream */
-			if (prefixcmp(ref->refname, "refs/heads/"))
+			if (!starts_with(ref->refname, "refs/heads/"))
 				continue;
 			branch = branch_get(ref->refname + 11);
 
@@ -682,7 +682,7 @@ static void populate_value(struct refinfo *ref)
 			    !branch->merge[0]->dst)
 				continue;
 			refname = branch->merge[0]->dst;
-		} else if (!prefixcmp(name, "color:")) {
+		} else if (starts_with(name, "color:")) {
 			char color[COLOR_MAXLEN] = "";
 
 			color_parse(name + 6, "--format", color);
@@ -725,7 +725,7 @@ static void populate_value(struct refinfo *ref)
 				refname = shorten_unambiguous_ref(refname,
 						      warn_ambiguous_refs);
 			else if (!strcmp(formatp, "track") &&
-				!prefixcmp(name, "upstream")) {
+				 starts_with(name, "upstream")) {
 				char buf[40];
 
 				stat_tracking_info(branch, &num_ours, &num_theirs);
@@ -744,7 +744,7 @@ static void populate_value(struct refinfo *ref)
 				}
 				continue;
 			} else if (!strcmp(formatp, "trackshort") &&
-				!prefixcmp(name, "upstream")) {
+				   starts_with(name, "upstream")) {
 				assert(branch);
 				stat_tracking_info(branch, &num_ours, &num_theirs);
 				if (!num_ours && !num_theirs)

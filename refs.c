@@ -637,7 +637,7 @@ static int do_one_ref(struct ref_entry *entry, void *cb_data)
 	struct ref_entry *old_current_ref;
 	int retval;
 
-	if (prefixcmp(entry->name, data->base))
+	if (!starts_with(entry->name, data->base))
 		return 0;
 
 	if (!(data->flags & DO_FOR_EACH_INCLUDE_BROKEN) &&
@@ -1042,7 +1042,7 @@ static void read_packed_refs(FILE *f, struct ref_dir *dir)
 		if (refname) {
 			last = create_ref_entry(refname, sha1, REF_ISPACKED, 1);
 			if (peeled == PEELED_FULLY ||
-			    (peeled == PEELED_TAGS && !prefixcmp(refname, "refs/tags/")))
+			    (peeled == PEELED_TAGS && starts_with(refname, "refs/tags/")))
 				last->flag |= REF_KNOWS_PEELED;
 			add_ref(dir, last);
 			continue;
@@ -1376,7 +1376,7 @@ const char *resolve_ref_unsafe(const char *refname, unsigned char *sha1, int rea
 					return NULL;
 			}
 			buffer[len] = 0;
-			if (!prefixcmp(buffer, "refs/") &&
+			if (starts_with(buffer, "refs/") &&
 					!check_refname_format(buffer, 0)) {
 				strcpy(refname_buffer, buffer);
 				refname = refname_buffer;
@@ -1415,7 +1415,7 @@ const char *resolve_ref_unsafe(const char *refname, unsigned char *sha1, int rea
 		/*
 		 * Is it a symbolic ref?
 		 */
-		if (prefixcmp(buffer, "ref:")) {
+		if (!starts_with(buffer, "ref:")) {
 			/*
 			 * Please note that FETCH_HEAD has a second
 			 * line containing other data.
@@ -1837,7 +1837,7 @@ int for_each_glob_ref_in(each_ref_fn fn, const char *pattern,
 	struct ref_filter filter;
 	int ret;
 
-	if (!prefix && prefixcmp(pattern, "refs/"))
+	if (!prefix && !starts_with(pattern, "refs/"))
 		strbuf_addstr(&real_pattern, "refs/");
 	else if (prefix)
 		strbuf_addstr(&real_pattern, prefix);
@@ -1874,9 +1874,9 @@ int for_each_rawref(each_ref_fn fn, void *cb_data)
 const char *prettify_refname(const char *name)
 {
 	return name + (
-		!prefixcmp(name, "refs/heads/") ? 11 :
-		!prefixcmp(name, "refs/tags/") ? 10 :
-		!prefixcmp(name, "refs/remotes/") ? 13 :
+		starts_with(name, "refs/heads/") ? 11 :
+		starts_with(name, "refs/tags/") ? 10 :
+		starts_with(name, "refs/remotes/") ? 13 :
 		0);
 }
 
@@ -2244,7 +2244,7 @@ static int pack_if_possible_fn(struct ref_entry *entry, void *cb_data)
 	struct pack_refs_cb_data *cb = cb_data;
 	enum peel_status peel_status;
 	struct ref_entry *packed_entry;
-	int is_tag_ref = !prefixcmp(entry->name, "refs/tags/");
+	int is_tag_ref = starts_with(entry->name, "refs/tags/");
 
 	/* ALWAYS pack tags */
 	if (!(cb->flags & PACK_REFS_ALL) && !is_tag_ref)
@@ -2679,9 +2679,9 @@ int log_ref_setup(const char *refname, char *logfile, int bufsize)
 
 	git_snpath(logfile, bufsize, "logs/%s", refname);
 	if (log_all_ref_updates &&
-	    (!prefixcmp(refname, "refs/heads/") ||
-	     !prefixcmp(refname, "refs/remotes/") ||
-	     !prefixcmp(refname, "refs/notes/") ||
+	    (starts_with(refname, "refs/heads/") ||
+	     starts_with(refname, "refs/remotes/") ||
+	     starts_with(refname, "refs/notes/") ||
 	     !strcmp(refname, "HEAD"))) {
 		if (safe_create_leading_directories(logfile) < 0)
 			return error("unable to create directory for %s",
@@ -2751,7 +2751,7 @@ static int log_ref_write(const char *refname, const unsigned char *old_sha1,
 
 static int is_branch(const char *refname)
 {
-	return !strcmp(refname, "HEAD") || !prefixcmp(refname, "refs/heads/");
+	return !strcmp(refname, "HEAD") || starts_with(refname, "refs/heads/");
 }
 
 int write_ref_sha1(struct ref_lock *lock,
@@ -3450,7 +3450,7 @@ int parse_hide_refs_config(const char *var, const char *value, const char *secti
 {
 	if (!strcmp("transfer.hiderefs", var) ||
 	    /* NEEDSWORK: use parse_config_key() once both are merged */
-	    (!prefixcmp(var, section) && var[strlen(section)] == '.' &&
+	    (starts_with(var, section) && var[strlen(section)] == '.' &&
 	     !strcmp(var + strlen(section), ".hiderefs"))) {
 		char *ref;
 		int len;
@@ -3478,7 +3478,7 @@ int ref_is_hidden(const char *refname)
 		return 0;
 	for_each_string_list_item(item, hide_refs) {
 		int len;
-		if (prefixcmp(refname, item->string))
+		if (!starts_with(refname, item->string))
 			continue;
 		len = strlen(item->string);
 		if (!refname[len] || refname[len] == '/')

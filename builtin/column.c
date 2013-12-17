@@ -34,7 +34,7 @@ int cmd_column(int argc, const char **argv, const char *prefix)
 	};
 
 	/* This one is special and must be the first one */
-	if (argc > 1 && !prefixcmp(argv[1], "--command=")) {
+	if (argc > 1 && starts_with(argv[1], "--command=")) {
 		command = argv[1] + 10;
 		git_config(column_config, (void *)command);
 	} else

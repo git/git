@@ -50,7 +50,7 @@ static int should_setup_rebase(const char *origin)
 void install_branch_config(int flag, const char *local, const char *origin, const char *remote)
 {
 	const char *shortname = remote + 11;
-	int remote_is_branch = !prefixcmp(remote, "refs/heads/");
+	int remote_is_branch = starts_with(remote, "refs/heads/");
 	struct strbuf key = STRBUF_INIT;
 	int rebasing = should_setup_rebase(origin);
 
@@ -272,7 +272,7 @@ void create_branch(const char *head,
 		break;
 	case 1:
 		/* Unique completion -- good, only if it is a real branch */
-		if (prefixcmp(real_ref, "refs/heads/") &&
+		if (!starts_with(real_ref, "refs/heads/") &&
 		    validate_remote_tracking_branch(real_ref)) {
 			if (explicit_tracking)
 				die(_(upstream_not_branch), start_name);

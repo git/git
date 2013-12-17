@@ -476,7 +476,7 @@ static void handle_tag(const char *name, struct tag *tag)
 		}
 	}
 
-	if (!prefixcmp(name, "refs/tags/"))
+	if (starts_with(name, "refs/tags/"))
 		name += 10;
 	printf("tag %s\nfrom :%d\n%.*s%sdata %d\n%.*s\n",
 	       name, tagged_mark,

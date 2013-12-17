@@ -98,7 +98,7 @@ static int add_ref_decoration(const char *refname, const unsigned char *sha1, in
 	struct object *obj;
 	enum decoration_type type = DECORATION_NONE;
 
-	if (!prefixcmp(refname, "refs/replace/")) {
+	if (starts_with(refname, "refs/replace/")) {
 		unsigned char original_sha1[20];
 		if (!read_replace_refs)
 			return 0;
@@ -116,11 +116,11 @@ static int add_ref_decoration(const char *refname, const unsigned char *sha1, in
 	if (!obj)
 		return 0;
 
-	if (!prefixcmp(refname, "refs/heads/"))
+	if (starts_with(refname, "refs/heads/"))
 		type = DECORATION_REF_LOCAL;
-	else if (!prefixcmp(refname, "refs/remotes/"))
+	else if (starts_with(refname, "refs/remotes/"))
 		type = DECORATION_REF_REMOTE;
-	else if (!prefixcmp(refname, "refs/tags/"))
+	else if (starts_with(refname, "refs/tags/"))
 		type = DECORATION_REF_TAG;
 	else if (!strcmp(refname, "refs/stash"))
 		type = DECORATION_REF_STASH;

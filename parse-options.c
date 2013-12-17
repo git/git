@@ -273,13 +273,13 @@ is_abbreviated:
 			if (options->flags & PARSE_OPT_NONEG)
 				continue;
 			/* negated and abbreviated very much? */
-			if (!prefixcmp("no-", arg)) {
+			if (starts_with("no-", arg)) {
 				flags |= OPT_UNSET;
 				goto is_abbreviated;
 			}
 			/* negated? */
-			if (prefixcmp(arg, "no-")) {
-				if (!prefixcmp(long_name, "no-")) {
+			if (!starts_with(arg, "no-")) {
+				if (starts_with(long_name, "no-")) {
 					long_name += 3;
 					opt_flags |= OPT_UNSET;
 					goto again;
@@ -289,7 +289,7 @@ is_abbreviated:
 			flags |= OPT_UNSET;
 			rest = skip_prefix(arg + 3, long_name);
 			/* abbreviated and negated? */
-			if (!rest && !prefixcmp(long_name, arg + 3))
+			if (!rest && starts_with(long_name, arg + 3))
 				goto is_abbreviated;
 			if (!rest)
 				continue;
@@ -334,7 +334,7 @@ static void check_typos(const char *arg, const struct option *options)
 	if (strlen(arg) < 3)
 		return;
 
-	if (!prefixcmp(arg, "no-")) {
+	if (starts_with(arg, "no-")) {
 		error ("did you mean `--%s` (with two dashes ?)", arg);
 		exit(129);
 	}
@@ -342,7 +342,7 @@ static void check_typos(const char *arg, const struct option *options)
 	for (; options->type != OPTION_END; options++) {
 		if (!options->long_name)
 			continue;
-		if (!prefixcmp(options->long_name, arg)) {
+		if (starts_with(options->long_name, arg)) {
 			error ("did you mean `--%s` (with two dashes ?)", arg);
 			exit(129);
 		}

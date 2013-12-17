@@ -192,7 +192,7 @@ static void find_non_local_tags(struct transport *transport,
 
 	for_each_ref(add_existing, &existing_refs);
 	for (ref = transport_get_remote_refs(transport); ref; ref = ref->next) {
-		if (prefixcmp(ref->name, "refs/tags/"))
+		if (!starts_with(ref->name, "refs/tags/"))
 			continue;
 
 		/*
@@ -201,7 +201,7 @@ static void find_non_local_tags(struct transport *transport,
 		 * to fetch then we can mark the ref entry in the list
 		 * as one to ignore by setting util to NULL.
 		 */
-		if (!suffixcmp(ref->name, "^{}")) {
+		if (ends_with(ref->name, "^{}")) {
 			if (item && !has_sha1_file(ref->old_sha1) &&
 			    !will_fetch(head, ref->old_sha1) &&
 			    !has_sha1_file(item->util) &&
@@ -431,7 +431,7 @@ static int update_local_ref(struct ref *ref,
 	}
 
 	if (!is_null_sha1(ref->old_sha1) &&
-	    !prefixcmp(ref->name, "refs/tags/")) {
+	    starts_with(ref->name, "refs/tags/")) {
 		int r;
 		r = s_update_ref("updating tag", ref, 0);
 		strbuf_addf(display, "%c %-*s %-*s -> %s%s",
@@ -454,10 +454,10 @@ static int update_local_ref(struct ref *ref,
 		 * more likely to follow a standard layout.
 		 */
 		const char *name = remote_ref ? remote_ref->name : "";
-		if (!prefixcmp(name, "refs/tags/")) {
+		if (starts_with(name, "refs/tags/")) {
 			msg = "storing tag";
 			what = _("[new tag]");
-		} else if (!prefixcmp(name, "refs/heads/")) {
+		} else if (starts_with(name, "refs/heads/")) {
 			msg = "storing head";
 			what = _("[new branch]");
 		} else {
@@ -589,15 +589,15 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 				kind = "";
 				what = "";
 			}
-			else if (!prefixcmp(rm->name, "refs/heads/")) {
+			else if (starts_with(rm->name, "refs/heads/")) {
 				kind = "branch";
 				what = rm->name + 11;
 			}
-			else if (!prefixcmp(rm->name, "refs/tags/")) {
+			else if (starts_with(rm->name, "refs/tags/")) {
 				kind = "tag";
 				what = rm->name + 10;
 			}
-			else if (!prefixcmp(rm->name, "refs/remotes/")) {
+			else if (starts_with(rm->name, "refs/remotes/")) {
 				kind = "remote-tracking branch";
 				what = rm->name + 13;
 			}
@@ -896,7 +896,7 @@ static int get_remote_group(const char *key, const char *value, void *priv)
 {
 	struct remote_group_data *g = priv;
 
-	if (!prefixcmp(key, "remotes.") &&
+	if (starts_with(key, "remotes.") &&
 			!strcmp(key + 8, g->name)) {
 		/* split list by white space */
 		int space = strcspn(value, " \t\n");

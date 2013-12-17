@@ -217,7 +217,7 @@ static struct discovery* discover_refs(const char *service, int for_push)
 	free_discovery(last);
 
 	strbuf_addf(&refs_url, "%sinfo/refs", url.buf);
-	if ((!prefixcmp(url.buf, "http://") || !prefixcmp(url.buf, "https://")) &&
+	if ((starts_with(url.buf, "http://") || starts_with(url.buf, "https://")) &&
 	     git_env_bool("GIT_SMART_HTTP", 1)) {
 		maybe_smart = 1;
 		if (!strchr(url.buf, '?'))
@@ -766,7 +766,7 @@ static void parse_fetch(struct strbuf *buf)
 	int alloc_heads = 0, nr_heads = 0;
 
 	do {
-		if (!prefixcmp(buf->buf, "fetch ")) {
+		if (starts_with(buf->buf, "fetch ")) {
 			char *p = buf->buf + strlen("fetch ");
 			char *name;
 			struct ref *ref;
@@ -889,7 +889,7 @@ static void parse_push(struct strbuf *buf)
 	int alloc_spec = 0, nr_spec = 0, i, ret;
 
 	do {
-		if (!prefixcmp(buf->buf, "push ")) {
+		if (starts_with(buf->buf, "push ")) {
 			ALLOC_GROW(specs, nr_spec + 1, alloc_spec);
 			specs[nr_spec++] = xstrdup(buf->buf + 5);
 		}
@@ -952,19 +952,19 @@ int main(int argc, const char **argv)
 		}
 		if (buf.len == 0)
 			break;
-		if (!prefixcmp(buf.buf, "fetch ")) {
+		if (starts_with(buf.buf, "fetch ")) {
 			if (nongit)
 				die("Fetch attempted without a local repo");
 			parse_fetch(&buf);
 
-		} else if (!strcmp(buf.buf, "list") || !prefixcmp(buf.buf, "list ")) {
+		} else if (!strcmp(buf.buf, "list") || starts_with(buf.buf, "list ")) {
 			int for_push = !!strstr(buf.buf + 4, "for-push");
 			output_refs(get_refs(for_push));
 
-		} else if (!prefixcmp(buf.buf, "push ")) {
+		} else if (starts_with(buf.buf, "push ")) {
 			parse_push(&buf);
 
-		} else if (!prefixcmp(buf.buf, "option ")) {
+		} else if (starts_with(buf.buf, "option ")) {
 			char *name = buf.buf + strlen("option ");
 			char *value = strchr(name, ' ');
 			int result;

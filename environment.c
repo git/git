@@ -171,7 +171,7 @@ const char *get_git_namespace(void)
 
 const char *strip_namespace(const char *namespaced_ref)
 {
-	if (prefixcmp(namespaced_ref, get_git_namespace()) != 0)
+	if (!starts_with(namespaced_ref, get_git_namespace()))
 		return NULL;
 	return namespaced_ref + namespace_len;
 }

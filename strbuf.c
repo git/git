@@ -1,6 +1,15 @@
 #include "cache.h"
 #include "refs.h"
 
+int starts_with(const char *str, const char *prefix)
+{
+	for (; ; str++, prefix++)
+		if (!*prefix)
+			return 1;
+		else if (*str != *prefix)
+			return 0;
+}
+
 int prefixcmp(const char *str, const char *prefix)
 {
 	for (; ; str++, prefix++)
@@ -8,6 +17,15 @@ int prefixcmp(const char *str, const char *prefix)
 			return 0;
 		else if (*str != *prefix)
 			return (unsigned char)*prefix - (unsigned char)*str;
+}
+
+int ends_with(const char *str, const char *suffix)
+{
+	int len = strlen(str), suflen = strlen(suffix);
+	if (len < suflen)
+		return 0;
+	else
+		return !strcmp(str + len - suflen, suffix);
 }
 
 int suffixcmp(const char *str, const char *suffix)

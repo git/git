@@ -115,15 +115,15 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 		const char *arg = *argv;
 
 		if (*arg == '-') {
-			if (!prefixcmp(arg, "--receive-pack=")) {
+			if (starts_with(arg, "--receive-pack=")) {
 				receivepack = arg + 15;
 				continue;
 			}
-			if (!prefixcmp(arg, "--exec=")) {
+			if (starts_with(arg, "--exec=")) {
 				receivepack = arg + 7;
 				continue;
 			}
-			if (!prefixcmp(arg, "--remote=")) {
+			if (starts_with(arg, "--remote=")) {
 				remote_name = arg + 9;
 				continue;
 			}
@@ -181,7 +181,7 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 					exit(1);
 				continue;
 			}
-			if (!prefixcmp(arg, "--" CAS_OPT_NAME "=")) {
+			if (starts_with(arg, "--" CAS_OPT_NAME "=")) {
 				if (parse_push_cas_option(&cas,
 							  strchr(arg, '=') + 1, 0) < 0)
 					exit(1);

@@ -226,7 +226,7 @@ static int http_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
-	if (!prefixcmp(var, "http.")) {
+	if (starts_with(var, "http.")) {
 		int i;
 
 		for (i = 0; i < ARRAY_SIZE(rpc_service); i++) {
@@ -247,7 +247,7 @@ static struct rpc_service *select_service(const char *name)
 	struct rpc_service *svc = NULL;
 	int i;
 
-	if (prefixcmp(name, "git-"))
+	if (!starts_with(name, "git-"))
 		forbidden("Unsupported service: '%s'", name);
 
 	for (i = 0; i < ARRAY_SIZE(rpc_service); i++) {

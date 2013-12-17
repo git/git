@@ -347,7 +347,7 @@ static struct notes_tree *init_notes_check(const char *subcommand)
 	init_notes(NULL, NULL, NULL, 0);
 	t = &default_notes_tree;
 
-	if (prefixcmp(t->ref, "refs/notes/"))
+	if (!starts_with(t->ref, "refs/notes/"))
 		die("Refusing to %s notes in %s (outside of refs/notes/)",
 		    subcommand, t->ref);
 	return t;

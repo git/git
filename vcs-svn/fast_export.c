@@ -162,22 +162,13 @@ static void die_short_read(struct line_buffer *input)
 	die("invalid dump: unexpected end of file");
 }
 
-static int ends_with(const char *s, size_t len, const char *suffix)
-{
-	const size_t suffixlen = strlen(suffix);
-	if (len < suffixlen)
-		return 0;
-	return !memcmp(s + len - suffixlen, suffix, suffixlen);
-}
-
 static int parse_cat_response_line(const char *header, off_t *len)
 {
-	size_t headerlen = strlen(header);
 	uintmax_t n;
 	const char *type;
 	const char *end;
 
-	if (ends_with(header, headerlen, " missing"))
+	if (ends_with(header, " missing"))
 		return error("cat-blob reports missing blob: %s", header);
 	type = strstr(header, " blob ");
 	if (!type)

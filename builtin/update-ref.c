@@ -229,15 +229,15 @@ static void update_refs_stdin(void)
 			die("empty command in input");
 		else if (isspace(*cmd.buf))
 			die("whitespace before command: %s", cmd.buf);
-		else if (!prefixcmp(cmd.buf, "update "))
+		else if (starts_with(cmd.buf, "update "))
 			parse_cmd_update(cmd.buf + 7);
-		else if (!prefixcmp(cmd.buf, "create "))
+		else if (starts_with(cmd.buf, "create "))
 			parse_cmd_create(cmd.buf + 7);
-		else if (!prefixcmp(cmd.buf, "delete "))
+		else if (starts_with(cmd.buf, "delete "))
 			parse_cmd_delete(cmd.buf + 7);
-		else if (!prefixcmp(cmd.buf, "verify "))
+		else if (starts_with(cmd.buf, "verify "))
 			parse_cmd_verify(cmd.buf + 7);
-		else if (!prefixcmp(cmd.buf, "option "))
+		else if (starts_with(cmd.buf, "option "))
 			parse_cmd_option(cmd.buf + 7);
 		else
 			die("unknown command: %s", cmd.buf);

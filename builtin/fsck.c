@@ -442,7 +442,7 @@ static void fsck_dir(int i, char *path)
 			add_sha1_list(sha1, DIRENT_SORT_HINT(de));
 			continue;
 		}
-		if (!prefixcmp(de->d_name, "tmp_obj_"))
+		if (starts_with(de->d_name, "tmp_obj_"))
 			continue;
 		fprintf(stderr, "bad sha1 file: %s/%s\n", path, de->d_name);
 	}
@@ -484,7 +484,7 @@ static int fsck_handle_reflog(const char *logname, const unsigned char *sha1, in
 
 static int is_branch(const char *refname)
 {
-	return !strcmp(refname, "HEAD") || !prefixcmp(refname, "refs/heads/");
+	return !strcmp(refname, "HEAD") || starts_with(refname, "refs/heads/");
 }
 
 static int fsck_handle_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
@@ -566,7 +566,7 @@ static int fsck_head_link(void)
 	if (!strcmp(head_points_at, "HEAD"))
 		/* detached HEAD */
 		null_is_error = 1;
-	else if (prefixcmp(head_points_at, "refs/heads/"))
+	else if (!starts_with(head_points_at, "refs/heads/"))
 		return error("HEAD points to something strange (%s)",
 			     head_points_at);
 	if (is_null_sha1(head_sha1)) {

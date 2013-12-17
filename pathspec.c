@@ -154,7 +154,7 @@ static unsigned prefix_pathspec(struct pathspec_item *item,
 					magic |= pathspec_magic[i].bit;
 					break;
 				}
-				if (!prefixcmp(copyfrom, "prefix:")) {
+				if (starts_with(copyfrom, "prefix:")) {
 					char *endptr;
 					pathspec_prefix = strtol(copyfrom + 7,
 								 &endptr, 10);

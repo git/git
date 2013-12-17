@@ -969,25 +969,25 @@ static int git_default_mailmap_config(const char *var, const char *value)
 
 int git_default_config(const char *var, const char *value, void *dummy)
 {
-	if (!prefixcmp(var, "core."))
+	if (starts_with(var, "core."))
 		return git_default_core_config(var, value);
 
-	if (!prefixcmp(var, "user."))
+	if (starts_with(var, "user."))
 		return git_ident_config(var, value, dummy);
 
-	if (!prefixcmp(var, "i18n."))
+	if (starts_with(var, "i18n."))
 		return git_default_i18n_config(var, value);
 
-	if (!prefixcmp(var, "branch."))
+	if (starts_with(var, "branch."))
 		return git_default_branch_config(var, value);
 
-	if (!prefixcmp(var, "push."))
+	if (starts_with(var, "push."))
 		return git_default_push_config(var, value);
 
-	if (!prefixcmp(var, "mailmap."))
+	if (starts_with(var, "mailmap."))
 		return git_default_mailmap_config(var, value);
 
-	if (!prefixcmp(var, "advice."))
+	if (starts_with(var, "advice."))
 		return git_default_advice_config(var, value);
 
 	if (!strcmp(var, "pager.color") || !strcmp(var, "color.pager")) {
@@ -1879,7 +1879,7 @@ int parse_config_key(const char *var,
 	const char *dot;
 
 	/* Does it start with "section." ? */
-	if (prefixcmp(var, section) || var[section_len] != '.')
+	if (!starts_with(var, section) || var[section_len] != '.')
 		return -1;
 
 	/*

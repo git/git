@@ -266,7 +266,7 @@ static int create_default_files(const char *template_path)
 		/* allow template config file to override the default */
 		if (log_all_ref_updates == -1)
 		    git_config_set("core.logallrefupdates", "true");
-		if (prefixcmp(git_dir, work_tree) ||
+		if (!starts_with(git_dir, work_tree) ||
 		    strcmp(git_dir + strlen(work_tree), "/.git")) {
 			git_config_set("core.worktree", work_tree);
 		}

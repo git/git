@@ -284,7 +284,7 @@ static void show_one_commit(struct commit *commit, int no_name)
 		pp_commit_easy(CMIT_FMT_ONELINE, commit, &pretty);
 		pretty_str = pretty.buf;
 	}
-	if (!prefixcmp(pretty_str, "[PATCH] "))
+	if (starts_with(pretty_str, "[PATCH] "))
 		pretty_str += 8;
 
 	if (!no_name) {
@@ -395,7 +395,7 @@ static int append_head_ref(const char *refname, const unsigned char *sha1, int f
 {
 	unsigned char tmp[20];
 	int ofs = 11;
-	if (prefixcmp(refname, "refs/heads/"))
+	if (!starts_with(refname, "refs/heads/"))
 		return 0;
 	/* If both heads/foo and tags/foo exists, get_sha1 would
 	 * get confused.
@@ -409,7 +409,7 @@ static int append_remote_ref(const char *refname, const unsigned char *sha1, int
 {
 	unsigned char tmp[20];
 	int ofs = 13;
-	if (prefixcmp(refname, "refs/remotes/"))
+	if (!starts_with(refname, "refs/remotes/"))
 		return 0;
 	/* If both heads/foo and tags/foo exists, get_sha1 would
 	 * get confused.
@@ -421,7 +421,7 @@ static int append_remote_ref(const char *refname, const unsigned char *sha1, int
 
 static int append_tag_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
 {
-	if (prefixcmp(refname, "refs/tags/"))
+	if (!starts_with(refname, "refs/tags/"))
 		return 0;
 	return append_ref(refname + 5, sha1, 0);
 }
@@ -452,9 +452,9 @@ static int append_matching_ref(const char *refname, const unsigned char *sha1, i
 		return 0;
 	if (fnmatch(match_ref_pattern, tail, 0))
 		return 0;
-	if (!prefixcmp(refname, "refs/heads/"))
+	if (starts_with(refname, "refs/heads/"))
 		return append_head_ref(refname, sha1, flag, cb_data);
-	if (!prefixcmp(refname, "refs/tags/"))
+	if (starts_with(refname, "refs/tags/"))
 		return append_tag_ref(refname, sha1, flag, cb_data);
 	return append_ref(refname, sha1, 0);
 }
@@ -479,11 +479,11 @@ static int rev_is_head(char *head, int headlen, char *name,
 	if ((!head[0]) ||
 	    (head_sha1 && sha1 && hashcmp(head_sha1, sha1)))
 		return 0;
-	if (!prefixcmp(head, "refs/heads/"))
+	if (starts_with(head, "refs/heads/"))
 		head += 11;
-	if (!prefixcmp(name, "refs/heads/"))
+	if (starts_with(name, "refs/heads/"))
 		name += 11;
-	else if (!prefixcmp(name, "heads/"))
+	else if (starts_with(name, "heads/"))
 		name += 6;
 	return !strcmp(head, name);
 }
@@ -812,7 +812,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 				has_head++;
 		}
 		if (!has_head) {
-			int offset = !prefixcmp(head, "refs/heads/") ? 11 : 0;
+			int offset = starts_with(head, "refs/heads/") ? 11 : 0;
 			append_one_rev(head + offset);
 		}
 	}

@@ -781,7 +781,7 @@ static int switch_branches(const struct checkout_opts *opts,
 	if (!(flag & REF_ISSYMREF))
 		old.path = NULL;
 
-	if (old.path && !prefixcmp(old.path, "refs/heads/"))
+	if (old.path && starts_with(old.path, "refs/heads/"))
 		old.name = old.path + strlen("refs/heads/");
 
 	if (!new->name) {
@@ -816,7 +816,7 @@ static int git_checkout_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
-	if (!prefixcmp(var, "submodule."))
+	if (starts_with(var, "submodule."))
 		return parse_submodule_config_option(var, value);
 
 	return git_xmerge_config(var, value, NULL);
@@ -1151,9 +1151,9 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 		const char *argv0 = argv[0];
 		if (!argc || !strcmp(argv0, "--"))
 			die (_("--track needs a branch name"));
-		if (!prefixcmp(argv0, "refs/"))
+		if (starts_with(argv0, "refs/"))
 			argv0 += 5;
-		if (!prefixcmp(argv0, "remotes/"))
+		if (starts_with(argv0, "remotes/"))
 			argv0 += 8;
 		argv0 = strchr(argv0, '/');
 		if (!argv0 || !argv0[1])

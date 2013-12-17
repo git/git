@@ -40,7 +40,7 @@ static int git_pretty_formats_config(const char *var, const char *value, void *c
 	const char *fmt;
 	int i;
 
-	if (prefixcmp(var, "pretty."))
+	if (!starts_with(var, "pretty."))
 		return 0;
 
 	name = var + strlen("pretty.");
@@ -67,7 +67,7 @@ static int git_pretty_formats_config(const char *var, const char *value, void *c
 	commit_format->name = xstrdup(name);
 	commit_format->format = CMIT_FMT_USERFORMAT;
 	git_config_string(&fmt, var, value);
-	if (!prefixcmp(fmt, "format:") || !prefixcmp(fmt, "tformat:")) {
+	if (starts_with(fmt, "format:") || starts_with(fmt, "tformat:")) {
 		commit_format->is_tformat = fmt[0] == 't';
 		fmt = strchr(fmt, ':') + 1;
 	} else if (strchr(fmt, '%'))
@@ -115,7 +115,7 @@ static struct cmt_fmt_map *find_commit_format_recursive(const char *sought,
 	for (i = 0; i < commit_formats_len; i++) {
 		size_t match_len;
 
-		if (prefixcmp(commit_formats[i].name, sought))
+		if (!starts_with(commit_formats[i].name, sought))
 			continue;
 
 		match_len = strlen(commit_formats[i].name);
@@ -151,7 +151,7 @@ void get_commit_format(const char *arg, struct rev_info *rev)
 		rev->commit_format = CMIT_FMT_DEFAULT;
 		return;
 	}
-	if (!prefixcmp(arg, "format:") || !prefixcmp(arg, "tformat:")) {
+	if (starts_with(arg, "format:") || starts_with(arg, "tformat:")) {
 		save_user_format(rev, strchr(arg, ':') + 1, arg[0] == 't');
 		return;
 	}
@@ -840,10 +840,10 @@ static void parse_commit_header(struct format_commit_context *context)
 
 		if (i == eol) {
 			break;
-		} else if (!prefixcmp(msg + i, "author ")) {
+		} else if (starts_with(msg + i, "author ")) {
 			context->author.off = i + 7;
 			context->author.len = eol - i - 7;
-		} else if (!prefixcmp(msg + i, "committer ")) {
+		} else if (starts_with(msg + i, "committer ")) {
 			context->committer.off = i + 10;
 			context->committer.len = eol - i - 10;
 		}
@@ -983,7 +983,7 @@ static size_t parse_color(struct strbuf *sb, /* in UTF-8 */
 
 		if (!end)
 			return 0;
-		if (!prefixcmp(begin, "auto,")) {
+		if (starts_with(begin, "auto,")) {
 			if (!want_color(c->pretty_ctx->color))
 				return end - placeholder + 1;
 			begin += 5;
@@ -994,16 +994,16 @@ static size_t parse_color(struct strbuf *sb, /* in UTF-8 */
 		strbuf_addstr(sb, color);
 		return end - placeholder + 1;
 	}
-	if (!prefixcmp(placeholder + 1, "red")) {
+	if (starts_with(placeholder + 1, "red")) {
 		strbuf_addstr(sb, GIT_COLOR_RED);
 		return 4;
-	} else if (!prefixcmp(placeholder + 1, "green")) {
+	} else if (starts_with(placeholder + 1, "green")) {
 		strbuf_addstr(sb, GIT_COLOR_GREEN);
 		return 6;
-	} else if (!prefixcmp(placeholder + 1, "blue")) {
+	} else if (starts_with(placeholder + 1, "blue")) {
 		strbuf_addstr(sb, GIT_COLOR_BLUE);
 		return 5;
-	} else if (!prefixcmp(placeholder + 1, "reset")) {
+	} else if (starts_with(placeholder + 1, "reset")) {
 		strbuf_addstr(sb, GIT_COLOR_RESET);
 		return 6;
 	} else
@@ -1060,11 +1060,11 @@ static size_t parse_padding_placeholder(struct strbuf *sb,
 			end = strchr(start, ')');
 			if (!end || end == start)
 				return 0;
-			if (!prefixcmp(start, "trunc)"))
+			if (starts_with(start, "trunc)"))
 				c->truncate = trunc_right;
-			else if (!prefixcmp(start, "ltrunc)"))
+			else if (starts_with(start, "ltrunc)"))
 				c->truncate = trunc_left;
-			else if (!prefixcmp(start, "mtrunc)"))
+			else if (starts_with(start, "mtrunc)"))
 				c->truncate = trunc_middle;
 			else
 				return 0;
@@ -1089,7 +1089,7 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 	/* these are independent of the commit */
 	switch (placeholder[0]) {
 	case 'C':
-		if (!prefixcmp(placeholder + 1, "(auto)")) {
+		if (starts_with(placeholder + 1, "(auto)")) {
 			c->auto_color = 1;
 			return 7; /* consumed 7 bytes, "C(auto)" */
 		} else {
@@ -1556,7 +1556,7 @@ static void pp_header(struct pretty_print_context *pp,
 			continue;
 		}
 
-		if (!prefixcmp(line, "parent ")) {
+		if (starts_with(line, "parent ")) {
 			if (linelen != 48)
 				die("bad parent line in commit");
 			continue;
@@ -1580,11 +1580,11 @@ static void pp_header(struct pretty_print_context *pp,
 		 * FULL shows both authors but not dates.
 		 * FULLER shows both authors and dates.
 		 */
-		if (!prefixcmp(line, "author ")) {
+		if (starts_with(line, "author ")) {
 			strbuf_grow(sb, linelen + 80);
 			pp_user_info(pp, "Author", sb, line + 7, encoding);
 		}
-		if (!prefixcmp(line, "committer ") &&
+		if (starts_with(line, "committer ") &&
 		    (pp->fmt == CMIT_FMT_FULL || pp->fmt == CMIT_FMT_FULLER)) {
 			strbuf_grow(sb, linelen + 80);
 			pp_user_info(pp, "Commit", sb, line + 10, encoding);
