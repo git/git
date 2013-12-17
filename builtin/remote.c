@@ -307,8 +307,13 @@ static int config_read_branches(const char *key, const char *value, void *cb)
 				space = strchr(value, ' ');
 			}
 			string_list_append(&info->merge, xstrdup(value));
-		} else
-			info->rebase = git_config_bool(orig_key, value);
+		} else {
+			int v = git_config_maybe_bool(orig_key, value);
+			if (v >= 0)
+				info->rebase = v;
+			else if (!strcmp(value, "preserve"))
+				info->rebase = 1;
+		}
 	}
 	return 0;
 }
