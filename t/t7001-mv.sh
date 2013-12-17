@@ -70,6 +70,35 @@ test_expect_success \
 rm -f idontexist untracked1 untracked2 \
      path0/idontexist path0/untracked1 path0/untracked2 \
      .git/index.lock
+rmdir path1
+
+test_expect_success \
+    'moving to absent target with trailing slash' \
+    'test_must_fail git mv path0/COPYING no-such-dir/ &&
+     test_must_fail git mv path0/COPYING no-such-dir// &&
+     git mv path0/ no-such-dir/ &&
+     test_path_is_dir no-such-dir'
+
+test_expect_success \
+    'clean up' \
+    'git reset --hard'
+
+test_expect_success \
+    'moving to existing untracked target with trailing slash' \
+    'mkdir path1 &&
+     git mv path0/ path1/ &&
+     test_path_is_dir path1/path0/'
+
+test_expect_success \
+    'moving to existing tracked target with trailing slash' \
+    'mkdir path2 &&
+     >path2/file && git add path2/file &&
+     git mv path1/path0/ path2/ &&
+     test_path_is_dir path2/path0/'
+
+test_expect_success \
+    'clean up' \
+    'git reset --hard'
 
 test_expect_success \
     'adding another file' \
