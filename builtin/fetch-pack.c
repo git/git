@@ -7,7 +7,7 @@
 static const char fetch_pack_usage[] =
 "git fetch-pack [--all] [--stdin] [--quiet|-q] [--keep|-k] [--thin] "
 "[--include-tag] [--upload-pack=<git-upload-pack>] [--depth=<n>] "
-"[--no-progress] [-v] [<host>:]<directory> [<refs>...]";
+"[--no-progress] [--diag-url] [-v] [<host>:]<directory> [<refs>...]";
 
 static void add_sought_entry_mem(struct ref ***sought, int *nr, int *alloc,
 				 const char *name, int namelen)
@@ -81,6 +81,10 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 			args.stdin_refs = 1;
 			continue;
 		}
+		if (!strcmp("--diag-url", arg)) {
+			args.diag_url = 1;
+			continue;
+		}
 		if (!strcmp("-v", arg)) {
 			args.verbose = 1;
 			continue;
@@ -146,10 +150,14 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 		fd[0] = 0;
 		fd[1] = 1;
 	} else {
+		int flags = args.verbose ? CONNECT_VERBOSE : 0;
+		if (args.diag_url)
+			flags |= CONNECT_DIAG_URL;
 		conn = git_connect(fd, dest, args.uploadpack,
-				   args.verbose ? CONNECT_VERBOSE : 0);
+				   flags);
+		if (!conn)
+			return args.diag_url ? 0 : 1;
 	}
-
 	get_remote_heads(fd[0], NULL, 0, &ref, 0, NULL);
 
 	ref = fetch_pack(&args, fd, conn, ref, dest,
