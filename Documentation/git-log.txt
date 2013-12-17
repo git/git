@@ -15,9 +15,9 @@ DESCRIPTION
 -----------
 Shows the commit logs.
 
-The command takes options applicable to the 'git rev-list'
+The command takes options applicable to the `git rev-list`
 command to control what is shown and how, and options applicable to
-the 'git diff-*' commands to control how the changes
+the `git diff-*` commands to control how the changes
 each commit introduces are shown.
 
 
@@ -42,29 +42,27 @@ OPTIONS
 
 --use-mailmap::
 	Use mailmap file to map author and committer names and email
-	to canonical real names and email addresses. See
+	addresses to canonical real names and email addresses. See
 	linkgit:git-shortlog[1].
 
 --full-diff::
-	Without this flag, "git log -p <path>..." shows commits that
+	Without this flag, `git log -p <path>...` shows commits that
 	touch the specified paths, and diffs about the same specified
 	paths.  With this, the full diff is shown for commits that touch
 	the specified paths; this means that "<path>..." limits only
 	commits, and doesn't limit diff for those commits.
 +
 Note that this affects all diff-based output types, e.g. those
-produced by --stat etc.
+produced by `--stat`, etc.
 
 --log-size::
-	Before the log message print out its size in bytes. Intended
-	mainly for porcelain tools consumption. If Git is unable to
-	produce a valid value size is set to zero.
-	Note that only message is considered, if also a diff is shown
-	its size is not included.
+	Include a line ``log size <number>'' in the output for each commit,
+	where <number> is the length of that commit's message in bytes.
+	Intended to speed up tools that read log messages from `git log`
+	output by allowing them to allocate space in advance.
 
 -L <start>,<end>:<file>::
 -L :<regex>:<file>::
-
 	Trace the evolution of the line range given by "<start>,<end>"
 	(or the funcname regex <regex>) within the <file>.  You may
 	not give any pathspec limiters.  This is currently limited to
@@ -80,16 +78,16 @@ include::line-range-format.txt[]
 	whole history leading to the current commit).  `origin..HEAD`
 	specifies all the commits reachable from the current commit
 	(i.e. `HEAD`), but not from `origin`. For a complete list of
-	ways to spell <revision range>, see the "Specifying Ranges"
+	ways to spell <revision range>, see the 'Specifying Ranges'
 	section of linkgit:gitrevisions[7].
 
 [\--] <path>...::
 	Show only commits that are enough to explain how the files
-	that match the specified paths came to be.  See "History
-	Simplification" below for details and other simplification
+	that match the specified paths came to be.  See 'History
+	Simplification' below for details and other simplification
 	modes.
 +
-Paths may need to be prefixed with "\-- " to separate them from
+Paths may need to be prefixed with ``\-- '' to separate them from
 options or the revision range, when confusion arises.
 
 include::rev-list-options.txt[]
@@ -113,12 +111,12 @@ EXAMPLES
 `git log v2.6.12.. include/scsi drivers/scsi`::
 
 	Show all commits since version 'v2.6.12' that changed any file
-	in the include/scsi or drivers/scsi subdirectories
+	in the `include/scsi` or `drivers/scsi` subdirectories
 
 `git log --since="2 weeks ago" -- gitk`::
 
 	Show the changes during the last two weeks to the file 'gitk'.
-	The "--" is necessary to avoid confusion with the *branch* named
+	The ``--'' is necessary to avoid confusion with the *branch* named
 	'gitk'
 
 `git log --name-status release..test`::
@@ -129,7 +127,7 @@ EXAMPLES
 
 `git log --follow builtin/rev-list.c`::
 
-	Shows the commits that changed builtin/rev-list.c, including
+	Shows the commits that changed `builtin/rev-list.c`, including
 	those commits that occurred before the file was given its
 	present name.
 
@@ -147,17 +145,18 @@ EXAMPLES
 `git log -p -m --first-parent`::
 
 	Shows the history including change diffs, but only from the
-	"main branch" perspective, skipping commits that come from merged
+	``main branch'' perspective, skipping commits that come from merged
 	branches, and showing full diffs of changes introduced by the merges.
 	This makes sense only when following a strict policy of merging all
 	topic branches when staying on a single integration branch.
 
 `git log -L '/int main/',/^}/:main.c`::
 
-	Shows how the function `main()` in the file 'main.c' evolved
+	Shows how the function `main()` in the file `main.c` evolved
 	over time.
 
 `git log -3`::
+
 	Limits the number of commits to show to 3.
 
 DISCUSSION
@@ -172,12 +171,12 @@ See linkgit:git-config[1] for core variables and linkgit:git-diff[1]
 for settings related to diff generation.
 
 format.pretty::
-	Default for the `--format` option.  (See "PRETTY FORMATS" above.)
-	Defaults to "medium".
+	Default for the `--format` option.  (See 'Pretty Formats' above.)
+	Defaults to `medium`.
 
 i18n.logOutputEncoding::
-	Encoding to use when displaying logs.  (See "Discussion", above.)
-	Defaults to the value of `i18n.commitEncoding` if set, UTF-8
+	Encoding to use when displaying logs.  (See 'Discussion' above.)
+	Defaults to the value of `i18n.commitEncoding` if set, and UTF-8
 	otherwise.
 
 log.date::
@@ -186,7 +185,7 @@ log.date::
 	dates like `Sat May 8 19:35:34 2010 -0500`.
 
 log.showroot::
-	If `false`, 'git log' and related commands will not treat the
+	If `false`, `git log` and related commands will not treat the
 	initial commit as a big creation event.  Any root commits in
 	`git log -p` output would be shown without a diff attached.
 	The default is `true`.
@@ -197,7 +196,7 @@ mailmap.*::
 notes.displayRef::
 	Which refs, in addition to the default set by `core.notesRef`
 	or 'GIT_NOTES_REF', to read notes from when showing commit
-	messages with the 'log' family of commands.  See
+	messages with the `log` family of commands.  See
 	linkgit:git-notes[1].
 +
 May be an unabbreviated ref name or a glob and may be specified
