@@ -17,9 +17,8 @@ static int verbose;
 static unsigned long expire;
 static int show_progress = -1;
 
-static int prune_tmp_object(const char *path, const char *filename)
+static int prune_tmp_file(const char *fullpath)
 {
-	const char *fullpath = mkpath("%s/%s", path, filename);
 	struct stat st;
 	if (lstat(fullpath, &st))
 		return error("Could not stat '%s'", fullpath);
@@ -32,9 +31,8 @@ static int prune_tmp_object(const char *path, const char *filename)
 	return 0;
 }
 
-static int prune_object(char *path, const char *filename, const unsigned char *sha1)
+static int prune_object(const char *fullpath, const unsigned char *sha1)
 {
-	const char *fullpath = mkpath("%s/%s", path, filename);
 	struct stat st;
 	if (lstat(fullpath, &st))
 		return error("Could not stat '%s'", fullpath);
@@ -50,9 +48,10 @@ static int prune_object(char *path, const char *filename, const unsigned char *s
 	return 0;
 }
 
-static int prune_dir(int i, char *path)
+static int prune_dir(int i, struct strbuf *path)
 {
-	DIR *dir = opendir(path);
+	size_t baselen = path->len;
+	DIR *dir = opendir(path->buf);
 	struct dirent *de;
 
 	if (!dir)
@@ -77,28 +76,39 @@ static int prune_dir(int i, char *path)
 			if (lookup_object(sha1))
 				continue;
 
-			prune_object(path, de->d_name, sha1);
+			strbuf_addf(path, "/%s", de->d_name);
+			prune_object(path->buf, sha1);
+			strbuf_setlen(path, baselen);
 			continue;
 		}
 		if (!prefixcmp(de->d_name, "tmp_obj_")) {
-			prune_tmp_object(path, de->d_name);
+			strbuf_addf(path, "/%s", de->d_name);
+			prune_tmp_file(path->buf);
+			strbuf_setlen(path, baselen);
 			continue;
 		}
-		fprintf(stderr, "bad sha1 file: %s/%s\n", path, de->d_name);
+		fprintf(stderr, "bad sha1 file: %s/%s\n", path->buf, de->d_name);
 	}
 	closedir(dir);
 	if (!show_only)
-		rmdir(path);
+		rmdir(path->buf);
 	return 0;
 }
 
 static void prune_object_dir(const char *path)
 {
+	struct strbuf buf = STRBUF_INIT;
+	size_t baselen;
 	int i;
+
+	strbuf_addstr(&buf, path);
+	strbuf_addch(&buf, '/');
+	baselen = buf.len;
+
 	for (i = 0; i < 256; i++) {
-		static char dir[4096];
-		sprintf(dir, "%s/%02x", path, i);
-		prune_dir(i, dir);
+		strbuf_addf(&buf, "%02x", i);
+		prune_dir(i, &buf);
+		strbuf_setlen(&buf, baselen);
 	}
 }
 
@@ -120,7 +130,7 @@ static void remove_temporary_files(const char *path)
 	}
 	while ((de = readdir(dir)) != NULL)
 		if (!prefixcmp(de->d_name, "tmp_"))
-			prune_tmp_object(path, de->d_name);
+			prune_tmp_file(mkpath("%s/%s", path, de->d_name));
 	closedir(dir);
 }
 
