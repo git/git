@@ -134,6 +134,8 @@ static int add_ref_decoration(const char *refname, const unsigned char *sha1, in
 		obj = ((struct tag *)obj)->tagged;
 		if (!obj)
 			break;
+		if (!obj->parsed)
+			parse_object(obj->sha1);
 		add_name_decoration(DECORATION_REF_TAG, refname, obj);
 	}
 	return 0;
