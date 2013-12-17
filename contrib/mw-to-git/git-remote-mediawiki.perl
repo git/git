@@ -1315,7 +1315,7 @@ sub get_mw_namespace_id {
 	# Store "notANameSpace" as special value for inexisting namespaces
 	my $store_id = ($id || 'notANameSpace');
 
-	# Store explicitely requested namespaces on disk
+	# Store explicitly requested namespaces on disk
 	if (!exists $cached_mw_namespace_id{$name}) {
 		run_git(qq(config --add remote.${remotename}.namespaceCache "${name}:${store_id}"));
 		$cached_mw_namespace_id{$name} = 1;
