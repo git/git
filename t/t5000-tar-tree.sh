@@ -25,8 +25,6 @@ commit id embedding:
 '
 
 . ./test-lib.sh
-GZIP=${GZIP:-gzip}
-GUNZIP=${GUNZIP:-gzip -d}
 
 SUBSTFORMAT=%H%n
 
@@ -38,6 +36,8 @@ test_lazy_prereq TAR_NEEDS_PAX_FALLBACK '
 		test -f PaxHeaders.1791/file
 	)
 '
+
+test_lazy_prereq GZIP 'gzip --version'
 
 get_pax_header() {
 	file=$1
@@ -265,12 +265,6 @@ test_expect_success 'only enabled filters are available remotely' '
 	test_cmp remote.bar config.bar
 '
 
-if $GZIP --version >/dev/null 2>&1; then
-	test_set_prereq GZIP
-else
-	say "Skipping some tar.gz tests because gzip not found"
-fi
-
 test_expect_success GZIP 'git archive --format=tgz' '
 	git archive --format=tgz HEAD >j.tgz
 '
@@ -290,14 +284,8 @@ test_expect_success GZIP 'infer tgz from .tar.gz filename' '
 	test_cmp j.tgz j3.tar.gz
 '
 
-if $GUNZIP --version >/dev/null 2>&1; then
-	test_set_prereq GUNZIP
-else
-	say "Skipping some tar.gz tests because gunzip was not found"
-fi
-
-test_expect_success GZIP,GUNZIP 'extract tgz file' '
-	$GUNZIP -c <j.tgz >j.tar &&
+test_expect_success GZIP 'extract tgz file' '
+	gzip -d -c <j.tgz >j.tar &&
 	test_cmp b.tar j.tar
 '
 
