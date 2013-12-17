@@ -161,9 +161,6 @@ struct option {
 	  N_("no-op (backward compatibility)"),		\
 	  PARSE_OPT_HIDDEN | PARSE_OPT_NOARG, parse_opt_noop_cb }
 
-/* Deprecated synonym */
-#define OPT_BOOLEAN OPT_COUNTUP
-
 /* parse_options() will filter out the processed options and leave the
  * non-option arguments in argv[]. usagestr strings should be marked
  * for translation with N_().
@@ -232,15 +229,15 @@ extern int parse_opt_tertiary(const struct option *, const char *, int);
 extern int parse_opt_string_list(const struct option *, const char *, int);
 extern int parse_opt_noop_cb(const struct option *, const char *, int);
 
-#define OPT__VERBOSE(var, h)  OPT_BOOLEAN('v', "verbose", (var), (h))
-#define OPT__QUIET(var, h)    OPT_BOOLEAN('q', "quiet",   (var), (h))
+#define OPT__VERBOSE(var, h)  OPT_COUNTUP('v', "verbose", (var), (h))
+#define OPT__QUIET(var, h)    OPT_COUNTUP('q', "quiet",   (var), (h))
 #define OPT__VERBOSITY(var) \
 	{ OPTION_CALLBACK, 'v', "verbose", (var), NULL, N_("be more verbose"), \
 	  PARSE_OPT_NOARG, &parse_opt_verbosity_cb, 0 }, \
 	{ OPTION_CALLBACK, 'q', "quiet", (var), NULL, N_("be more quiet"), \
 	  PARSE_OPT_NOARG, &parse_opt_verbosity_cb, 0 }
-#define OPT__DRY_RUN(var, h)  OPT_BOOLEAN('n', "dry-run", (var), (h))
-#define OPT__FORCE(var, h)    OPT_BOOLEAN('f', "force",   (var), (h))
+#define OPT__DRY_RUN(var, h)  OPT_BOOL('n', "dry-run", (var), (h))
+#define OPT__FORCE(var, h)    OPT_COUNTUP('f', "force",   (var), (h))
 #define OPT__ABBREV(var)  \
 	{ OPTION_CALLBACK, 0, "abbrev", (var), N_("n"),	\
 	  N_("use <n> digits to display SHA-1s"),	\
