@@ -79,8 +79,10 @@ PATTERN FORMAT
 
  - An optional prefix "`!`" which negates the pattern; any
    matching file excluded by a previous pattern will become
-   included again.  If a negated pattern matches, this will
-   override lower precedence patterns sources.
+   included again. It is not possible to re-include a file if a parent
+   directory of that file is excluded. Git doesn't list excluded
+   directories for performance reasons, so any patterns on contained
+   files have no effect, no matter where they are defined.
    Put a backslash ("`\`") in front of the first "`!`" for patterns
    that begin with a literal "`!`", for example, "`\!important!.txt`".
 
@@ -181,6 +183,19 @@ Another example:
 
 The second .gitignore prevents Git from ignoring
 `arch/foo/kernel/vmlinux.lds.S`.
+
+Example to exclude everything except a specific directory `foo/bar`
+(note the `/*` - without the slash, the wildcard would also exclude
+everything within `foo/bar`):
+
+--------------------------------------------------------------
+    $ cat .gitignore
+    # exclude everything except directory foo/bar
+    /*
+    !/foo
+    /foo/*
+    !/foo/bar
+--------------------------------------------------------------
 
 SEE ALSO
 --------
