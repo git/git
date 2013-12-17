@@ -548,6 +548,20 @@ our %feature = (
 		'sub' => sub { feature_bool('remote_heads', @_) },
 		'override' => 0,
 		'default' => [0]},
+
+	# Enable showing branches under other refs in addition to heads
+
+	# To set system wide extra branch refs have in $GITWEB_CONFIG
+	# $feature{'extra-branch-refs'}{'default'} = ['dirs', 'of', 'choice'];
+	# To have project specific config enable override in $GITWEB_CONFIG
+	# $feature{'extra-branch-refs'}{'override'} = 1;
+	# and in project config gitweb.extrabranchrefs = dirs of choice
+	# Every directory is separated with whitespace.
+
+	'extra-branch-refs' => {
+		'sub' => \&feature_extra_branch_refs,
+		'override' => 0,
+		'default' => []},
 );
 
 sub gitweb_get_feature {
@@ -626,6 +640,21 @@ sub feature_avatar {
 	return @val ? @val : @_;
 }
 
+sub feature_extra_branch_refs {
+	my (@branch_refs) = @_;
+	my $values = git_get_project_config('extrabranchrefs');
+
+	if ($values) {
+		$values = config_to_multi ($values);
+		@branch_refs = ();
+		foreach my $value (@{$values}) {
+			push @branch_refs, split /\s+/, $value;
+		}
+	}
+
+	return @branch_refs;
+}
+
 # checking HEAD file with -e is fragile if the repository was
 # initialized long time ago (i.e. symlink HEAD) and was pack-ref'ed
 # and then pruned.
@@ -654,6 +683,18 @@ sub filter_snapshot_fmts {
 	@fmts = grep {
 		exists $known_snapshot_formats{$_} &&
 		!$known_snapshot_formats{$_}{'disabled'}} @fmts;
+}
+
+sub filter_and_validate_refs {
+	my @refs = @_;
+	my %unique_refs = ();
+
+	foreach my $ref (@refs) {
+		die_error(500, "Invalid ref '$ref' in 'extra-branch-refs' feature") unless (is_valid_ref_format($ref));
+		# 'heads' are added implicitly in get_branch_refs().
+		$unique_refs{$ref} = 1 if ($ref ne 'heads');
+	}
+	return sort keys %unique_refs;
 }
 
 # If it is set to code reference, it is code that it is to be run once per
@@ -994,7 +1035,7 @@ our ($action, $project, $file_name, $file_parent, $hash, $hash_parent, $hash_bas
 sub evaluate_and_validate_params {
 	our $action = $input_params{'action'};
 	if (defined $action) {
-		if (!validate_action($action)) {
+		if (!is_valid_action($action)) {
 			die_error(400, "Invalid action parameter");
 		}
 	}
@@ -1002,7 +1043,7 @@ sub evaluate_and_validate_params {
 	# parameters which are pathnames
 	our $project = $input_params{'project'};
 	if (defined $project) {
-		if (!validate_project($project)) {
+		if (!is_valid_project($project)) {
 			undef $project;
 			die_error(404, "No such project");
 		}
@@ -1010,21 +1051,21 @@ sub evaluate_and_validate_params {
 
 	our $project_filter = $input_params{'project_filter'};
 	if (defined $project_filter) {
-		if (!validate_pathname($project_filter)) {
+		if (!is_valid_pathname($project_filter)) {
 			die_error(404, "Invalid project_filter parameter");
 		}
 	}
 
 	our $file_name = $input_params{'file_name'};
 	if (defined $file_name) {
-		if (!validate_pathname($file_name)) {
+		if (!is_valid_pathname($file_name)) {
 			die_error(400, "Invalid file parameter");
 		}
 	}
 
 	our $file_parent = $input_params{'file_parent'};
 	if (defined $file_parent) {
-		if (!validate_pathname($file_parent)) {
+		if (!is_valid_pathname($file_parent)) {
 			die_error(400, "Invalid file parent parameter");
 		}
 	}
@@ -1032,21 +1073,21 @@ sub evaluate_and_validate_params {
 	# parameters which are refnames
 	our $hash = $input_params{'hash'};
 	if (defined $hash) {
-		if (!validate_refname($hash)) {
+		if (!is_valid_refname($hash)) {
 			die_error(400, "Invalid hash parameter");
 		}
 	}
 
 	our $hash_parent = $input_params{'hash_parent'};
 	if (defined $hash_parent) {
-		if (!validate_refname($hash_parent)) {
+		if (!is_valid_refname($hash_parent)) {
 			die_error(400, "Invalid hash parent parameter");
 		}
 	}
 
 	our $hash_base = $input_params{'hash_base'};
 	if (defined $hash_base) {
-		if (!validate_refname($hash_base)) {
+		if (!is_valid_refname($hash_base)) {
 			die_error(400, "Invalid hash base parameter");
 		}
 	}
@@ -1066,7 +1107,7 @@ sub evaluate_and_validate_params {
 
 	our $hash_parent_base = $input_params{'hash_parent_base'};
 	if (defined $hash_parent_base) {
-		if (!validate_refname($hash_parent_base)) {
+		if (!is_valid_refname($hash_parent_base)) {
 			die_error(400, "Invalid hash parent base parameter");
 		}
 	}
@@ -1113,7 +1154,7 @@ sub evaluate_git_dir {
 	our $git_dir = "$projectroot/$project" if $project;
 }
 
-our (@snapshot_fmts, $git_avatar);
+our (@snapshot_fmts, $git_avatar, @extra_branch_refs);
 sub configure_gitweb_features {
 	# list of supported snapshot formats
 	our @snapshot_fmts = gitweb_get_feature('snapshot');
@@ -1131,6 +1172,13 @@ sub configure_gitweb_features {
 	} else {
 		$git_avatar = '';
 	}
+
+	our @extra_branch_refs = gitweb_get_feature('extra-branch-refs');
+	@extra_branch_refs = filter_and_validate_refs (@extra_branch_refs);
+}
+
+sub get_branch_refs {
+	return ('heads', @extra_branch_refs);
 }
 
 # custom error handler: 'die <message>' is Internal Server Error
@@ -1418,27 +1466,30 @@ sub href {
 ## ======================================================================
 ## validation, quoting/unquoting and escaping
 
-sub validate_action {
-	my $input = shift || return undef;
+sub is_valid_action {
+	my $input = shift;
 	return undef unless exists $actions{$input};
-	return $input;
+	return 1;
 }
 
-sub validate_project {
-	my $input = shift || return undef;
-	if (!validate_pathname($input) ||
+sub is_valid_project {
+	my $input = shift;
+
+	return unless defined $input;
+	if (!is_valid_pathname($input) ||
 		!(-d "$projectroot/$input") ||
 		!check_export_ok("$projectroot/$input") ||
 		($strict_export && !project_in_list($input))) {
 		return undef;
 	} else {
-		return $input;
+		return 1;
 	}
 }
 
-sub validate_pathname {
-	my $input = shift || return undef;
+sub is_valid_pathname {
+	my $input = shift;
 
+	return undef unless defined $input;
 	# no '.' or '..' as elements of path, i.e. no '.' nor '..'
 	# at the beginning, at the end, and between slashes.
 	# also this catches doubled slashes
@@ -1449,24 +1500,33 @@ sub validate_pathname {
 	if ($input =~ m!\0!) {
 		return undef;
 	}
-	return $input;
+	return 1;
 }
 
-sub validate_refname {
-	my $input = shift || return undef;
+sub is_valid_ref_format {
+	my $input = shift;
 
-	# textual hashes are O.K.
-	if ($input =~ m/^[0-9a-fA-F]{40}$/) {
-		return $input;
-	}
-	# it must be correct pathname
-	$input = validate_pathname($input)
-		or return undef;
+	return undef unless defined $input;
 	# restrictions on ref name according to git-check-ref-format
 	if ($input =~ m!(/\.|\.\.|[\000-\040\177 ~^:?*\[]|/$)!) {
 		return undef;
 	}
-	return $input;
+	return 1;
+}
+
+sub is_valid_refname {
+	my $input = shift;
+
+	return undef unless defined $input;
+	# textual hashes are O.K.
+	if ($input =~ m/^[0-9a-fA-F]{40}$/) {
+		return 1;
+	}
+	# it must be correct pathname
+	is_valid_pathname($input) or return undef;
+	# check git-check-ref-format restrictions
+	is_valid_ref_format($input) or return undef;
+	return 1;
 }
 
 # decode sequences of octets in utf8 into Perl's internal form,
@@ -2515,6 +2575,7 @@ sub format_snapshot_links {
 sub get_feed_info {
 	my $format = shift || 'Atom';
 	my %res = (action => lc($format));
+	my $matched_ref = 0;
 
 	# feed links are possible only for project views
 	return unless (defined $project);
@@ -2522,12 +2583,17 @@ sub get_feed_info {
 	# or don't have specific feed yet (so they should use generic)
 	return if (!$action || $action =~ /^(?:tags|heads|forks|tag|search)$/x);
 
-	my $branch;
-	# branches refs uses 'refs/heads/' prefix (fullname) to differentiate
-	# from tag links; this also makes possible to detect branch links
-	if ((defined $hash_base && $hash_base =~ m!^refs/heads/(.*)$!) ||
-	    (defined $hash      && $hash      =~ m!^refs/heads/(.*)$!)) {
-		$branch = $1;
+	my $branch = undef;
+	# branches refs uses 'refs/' + $get_branch_refs()[x] + '/' prefix
+	# (fullname) to differentiate from tag links; this also makes
+	# possible to detect branch links
+	for my $ref (get_branch_refs()) {
+		if ((defined $hash_base && $hash_base =~ m!^refs/\Q$ref\E/(.*)$!) ||
+		    (defined $hash      && $hash      =~ m!^refs/\Q$ref\E/(.*)$!)) {
+			$branch = $1;
+			$matched_ref = $ref;
+			last;
+		}
 	}
 	# find log type for feed description (title)
 	my $type = 'log';
@@ -2540,7 +2606,7 @@ sub get_feed_info {
 	}
 
 	$res{-title} = $type;
-	$res{'hash'} = (defined $branch ? "refs/heads/$branch" : undef);
+	$res{'hash'} = (defined $branch ? "refs/$matched_ref/$branch" : undef);
 	$res{'file_name'} = $file_name;
 
 	return %res;
@@ -3193,7 +3259,7 @@ sub git_get_last_activity {
 	     '--format=%(committer)',
 	     '--sort=-committerdate',
 	     '--count=1',
-	     'refs/heads') or return;
+	     map { "refs/$_" } get_branch_refs ()) or return;
 	my $most_recent = <$fd>;
 	close $fd or return;
 	if (defined $most_recent &&
@@ -3644,7 +3710,7 @@ sub parse_from_to_diffinfo {
 
 sub git_get_heads_list {
 	my ($limit, @classes) = @_;
-	@classes = ('heads') unless @classes;
+	@classes = get_branch_refs() unless @classes;
 	my @patterns = map { "refs/$_" } @classes;
 	my @headslist;
 
@@ -3662,9 +3728,16 @@ sub git_get_heads_list {
 		my ($committer, $epoch, $tz) =
 			($committerinfo =~ /^(.*) ([0-9]+) (.*)$/);
 		$ref_item{'fullname'}  = $name;
-		$name =~ s!^refs/(?:head|remote)s/!!;
+		my $strip_refs = join '|', map { quotemeta } get_branch_refs();
+		$name =~ s!^refs/($strip_refs|remotes)/!!;
+		$ref_item{'name'} = $name;
+		# for refs neither in 'heads' nor 'remotes' we want to
+		# show their ref dir
+		my $ref_dir = (defined $1) ? $1 : '';
+		if ($ref_dir ne '' and $ref_dir ne 'heads' and $ref_dir ne 'remotes') {
+		    $ref_item{'name'} .= ' (' . $ref_dir . ')';
+		}
 
-		$ref_item{'name'}  = $name;
 		$ref_item{'id'}    = $hash;
 		$ref_item{'title'} = $title || '(no commit message)';
 		$ref_item{'epoch'} = $epoch;
@@ -7156,6 +7229,15 @@ sub git_tree {
 	git_footer_html();
 }
 
+sub sanitize_for_filename {
+    my $name = shift;
+
+    $name =~ s!/!-!g;
+    $name =~ s/[^[:alnum:]_.-]//g;
+
+    return $name;
+}
+
 sub snapshot_name {
 	my ($project, $hash) = @_;
 
@@ -7163,9 +7245,7 @@ sub snapshot_name {
 	# path/to/project/.git -> project
 	my $name = to_utf8($project);
 	$name =~ s,([^/])/*\.git$,$1,;
-	$name = basename($name);
-	# sanitize name
-	$name =~ s/[[:cntrl:]]/?/g;
+	$name = sanitize_for_filename(basename($name));
 
 	my $ver = $hash;
 	if ($hash =~ /^[0-9a-fA-F]+$/) {
@@ -7179,13 +7259,25 @@ sub snapshot_name {
 		$ver = $1;
 	} else {
 		# branches and other need shortened SHA-1 hash
-		if ($hash =~ m!^refs/(?:heads|remotes)/(.*)$!) {
-			$ver = $1;
+		my $strip_refs = join '|', map { quotemeta } get_branch_refs();
+		if ($hash =~ m!^refs/($strip_refs|remotes)/(.*)$!) {
+			my $ref_dir = (defined $1) ? $1 : '';
+			$ver = $2;
+
+			$ref_dir = sanitize_for_filename($ref_dir);
+			# for refs neither in heads nor remotes we want to
+			# add a ref dir to archive name
+			if ($ref_dir ne '' and $ref_dir ne 'heads' and $ref_dir ne 'remotes') {
+				$ver = $ref_dir . '-' . $ver;
+			}
 		}
 		$ver .= '-' . git_get_short_hash($project, $hash);
 	}
+	# special case of sanitization for filename - we change
+	# slashes to dots instead of dashes
 	# in case of hierarchical branch names
 	$ver =~ s!/!.!g;
+	$ver =~ s/[^[:alnum:]_.-]//g;
 
 	# name = project-version_string
 	$name = "$name-$ver";

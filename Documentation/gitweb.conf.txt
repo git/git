@@ -849,6 +849,43 @@ time zones in the form of "+/-HHMM", such as "+0200".
 +
 Project specific override is not supported.
 
+extra-branch-refs::
+	List of additional directories under "refs" which are going to
+	be used as branch refs. For example if you have a gerrit setup
+	where all branches under refs/heads/ are official,
+	push-after-review ones and branches under refs/sandbox/,
+	refs/wip and refs/other are user ones where permissions are
+	much wider, then you might want to set this variable as
+	follows:
++
+--------------------------------------------------------------------------------
+$feature{'extra-branch-refs'}{'default'} =
+	['sandbox', 'wip', 'other'];
+--------------------------------------------------------------------------------
++
+This feature can be configured on per-repository basis after setting
+$feature{'extra-branch-refs'}{'override'} to true, via repository's
+`gitweb.extraBranchRefs` configuration variable, which contains a
+space separated list of refs. An example:
++
+--------------------------------------------------------------------------------
+[gitweb]
+	extraBranchRefs = sandbox wip other
+--------------------------------------------------------------------------------
++
+The gitweb.extraBranchRefs is actually a multi-valued configuration
+variable, so following example is also correct and the result is the
+same as of the snippet above:
++
+--------------------------------------------------------------------------------
+[gitweb]
+	extraBranchRefs = sandbox
+	extraBranchRefs = wip other
+--------------------------------------------------------------------------------
++
+It is an error to specify a ref that does not pass "git check-ref-format"
+scrutiny. Duplicated values are filtered.
+
 
 EXAMPLES
 --------
