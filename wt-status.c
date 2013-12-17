@@ -17,6 +17,9 @@
 #include "strbuf.h"
 #include "utf8.h"
 
+static char cut_line[] =
+"------------------------ >8 ------------------------\n";
+
 static char default_wt_status_colors[][COLOR_MAXLEN] = {
 	GIT_COLOR_NORMAL, /* WT_STATUS_HEADER */
 	GIT_COLOR_GREEN,  /* WT_STATUS_UPDATED */
@@ -793,6 +796,18 @@ conclude:
 	status_printf_ln(s, GIT_COLOR_NORMAL, "");
 }
 
+void wt_status_truncate_message_at_cut_line(struct strbuf *buf)
+{
+	const char *p;
+	struct strbuf pattern = STRBUF_INIT;
+
+	strbuf_addf(&pattern, "%c %s", comment_line_char, cut_line);
+	p = strstr(buf->buf, pattern.buf);
+	if (p && (p == buf->buf || p[-1] == '\n'))
+		strbuf_setlen(buf, p - buf->buf);
+	strbuf_release(&pattern);
+}
+
 static void wt_status_print_verbose(struct wt_status *s)
 {
 	struct rev_info rev;
@@ -813,10 +828,20 @@ static void wt_status_print_verbose(struct wt_status *s)
 	 * If we're not going to stdout, then we definitely don't
 	 * want color, since we are going to the commit message
 	 * file (and even the "auto" setting won't work, since it
-	 * will have checked isatty on stdout).
+	 * will have checked isatty on stdout). But we then do want
+	 * to insert the scissor line here to reliably remove the
+	 * diff before committing.
 	 */
-	if (s->fp != stdout)
+	if (s->fp != stdout) {
+		const char *explanation = _("Do not touch the line above.\nEverything below will be removed.");
+		struct strbuf buf = STRBUF_INIT;
+
 		rev.diffopt.use_color = 0;
+		fprintf(s->fp, "%c %s", comment_line_char, cut_line);
+		strbuf_add_commented_lines(&buf, explanation, strlen(explanation));
+		fputs(buf.buf, s->fp);
+		strbuf_release(&buf);
+	}
 	run_diff_index(&rev, 1);
 }
 

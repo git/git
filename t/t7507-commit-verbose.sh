@@ -65,9 +65,35 @@ test_expect_success 'diff in message is retained without -v' '
 	check_message diff
 '
 
-test_expect_failure 'diff in message is retained with -v' '
+test_expect_success 'diff in message is retained with -v' '
 	git commit --amend -F diff -v &&
 	check_message diff
+'
+
+test_expect_success 'submodule log is stripped out too with -v' '
+	git config diff.submodule log &&
+	git submodule add ./. sub &&
+	git commit -m "sub added" &&
+	(
+		cd sub &&
+		echo "more" >>file &&
+		git commit -a -m "submodule commit"
+	) &&
+	(
+		GIT_EDITOR=cat &&
+		export GIT_EDITOR &&
+		test_must_fail git commit -a -v 2>err
+	) &&
+	test_i18ngrep "Aborting commit due to empty commit message." err
+'
+
+test_expect_success 'verbose diff is stripped out with set core.commentChar' '
+	(
+		GIT_EDITOR=cat &&
+		export GIT_EDITOR &&
+		test_must_fail git -c core.commentchar=";" commit -a -v 2>err
+	) &&
+	test_i18ngrep "Aborting commit due to empty commit message." err
 '
 
 test_done
