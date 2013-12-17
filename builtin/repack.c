@@ -123,7 +123,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	struct string_list rollback = STRING_LIST_INIT_NODUP;
 	struct string_list existing_packs = STRING_LIST_INIT_DUP;
 	struct strbuf line = STRBUF_INIT;
-	int nr_packs, ext, ret, failed;
+	int ext, ret, failed;
 	FILE *out;
 
 	/* variables to be filled by option parsing */
@@ -233,13 +233,11 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	if (ret)
 		return ret;
 
-	nr_packs = 0;
 	out = xfdopen(cmd.out, "r");
 	while (strbuf_getline(&line, out, '\n') != EOF) {
 		if (line.len != 40)
 			die("repack: Expecting 40 character sha1 lines only from pack-objects.");
 		string_list_append(&names, line.buf);
-		nr_packs++;
 	}
 	fclose(out);
 	ret = finish_command(&cmd);
@@ -247,7 +245,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		return ret;
 	argv_array_clear(&cmd_args);
 
-	if (!nr_packs && !quiet)
+	if (!names.nr && !quiet)
 		printf("Nothing new to pack.\n");
 
 	/*
