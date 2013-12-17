@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Dec 2013, #03; Thu, 12)
-X-master-at: d7aced95cd681b761468635f8d2a8b82d7ed26fd
-X-next-at: aaad5e77ff44962de7a1fccb0c9def6b6dd228aa
+Subject: What's cooking in git.git (Dec 2013, #04; Tue, 17)
+X-master-at: 7794a680e63a2a11b73cb1194653662f2769a792
+X-next-at: 3e57c29e689448252d8f77d1a49492e7b4cdbfa4
 
-What's cooking in git.git (Dec 2013, #03; Thu, 12)
+What's cooking in git.git (Dec 2013, #04; Tue, 17)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -17,83 +17,134 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[New Topics]
+[Graduated to "master"]
 
 * bc/doc-merge-no-op-revert (2013-12-09) 1 commit
- - Documentation: document pitfalls with 3-way merge
-
- Will merge to 'next'.
-
-
-* cc/replace-object-info (2013-12-12) 10 commits
- - Documentation/git-replace: describe --format option
- - builtin/replace: unset read_replace_refs
- - t6050: add tests for listing with --format
- - builtin/replace: teach listing using short, medium or full formats
- - sha1_file: perform object replacement in sha1_object_info_extended()
- - t6050: show that git cat-file --batch fails with replace objects
- - sha1_object_info_extended(): add an "unsigned flags" parameter
- - sha1_file.c: add lookup_replace_object_extended() to pass flags
- - replace_object: don't check read_replace_refs twice
- - rename READ_SHA1_FILE_REPLACE flag to LOOKUP_REPLACE_OBJECT
-
- read_sha1_file() that is the workhorse to read the contents given
- an object name honoured object replacements, but there is no
- corresponding mechanism to sha1_object_info() that is used to
- obtain the metainfo (e.g. type & size) about the object, leading
- callers to weird inconsistencies.
-
- Will merge to 'next'.
+  (merged to 'next' on 2013-12-13 at 6e0ce64)
+ + Documentation: document pitfalls with 3-way merge
 
 
-* fc/completion (2013-12-09) 1 commit
- - completion: fix completion of certain aliases
+* cc/starts-n-ends-with (2013-12-05) 4 commits
+  (merged to 'next' on 2013-12-12 at 76ee567)
+ + replace {pre,suf}fixcmp() with {starts,ends}_with()
+ + strbuf: introduce starts_with() and ends_with()
+ + builtin/remote: remove postfixcmp() and use suffixcmp() instead
+ + environment: normalize use of prefixcmp() by removing " != 0"
+ (this branch is used by cc/starts-n-ends-with-endgame.)
 
- Will merge to 'next'.
-
-
-* fc/remote-helper-fixes (2013-12-09) 4 commits
- - remote-hg: add tests for special filenames
- - remote-hg: fix 'shared path' path
- - remote-helpers: add extra safety checks
- - remote-hg: avoid buggy strftime()
-
- Will merge to 'next'.
+ Remove a few duplicate implementations of prefix/suffix comparison
+ functions, and rename them to starts_with and ends_with.
 
 
 * fc/trivial (2013-12-09) 4 commits
- - remote: fix status with branch...rebase=preserve
- - fetch: add missing documentation
- - t: trivial whitespace cleanups
- - abspath: trivial style fix
+  (merged to 'next' on 2013-12-13 at eeead16)
+ + remote: fix status with branch...rebase=preserve
+ + fetch: add missing documentation
+ + t: trivial whitespace cleanups
+ + abspath: trivial style fix
+
+
+* jk/t5000-gzip-simplify (2013-12-04) 1 commit
+  (merged to 'next' on 2013-12-09 at e9010f1)
+ + t5000: simplify gzip prerequisite checks
+
+ Test fix.
+
+
+* jl/commit-v-strip-marker (2013-12-05) 1 commit
+  (merged to 'next' on 2013-12-09 at 2b85e9e)
+ + commit -v: strip diffs and submodule shortlogs from the commit message
+
+ "git commit -v" appends the patch to the log message before
+ editing, and then removed the patch when the editor returned
+ control. However, the patch was not stripped correctly when the
+ first modified path was a submodule.
+
+
+* kb/doc-exclude-directory-semantics (2013-12-09) 1 commit
+  (merged to 'next' on 2013-12-09 at e54b2ec)
+ + gitignore.txt: clarify recursive nature of excluded directories
+
+
+* kn/gitweb-extra-branch-refs (2013-12-12) 4 commits
+  (merged to 'next' on 2013-12-12 at ae75b02)
+ + gitweb: Denote non-heads, non-remotes branches
+ + gitweb: Add a feature for adding more branch refs
+ + gitweb: Return 1 on validation success instead of passed input
+ + gitweb: Move check-ref-format code into separate function
+
+ Allow gitweb to be configured to show refs out of refs/heads/ as if
+ they were branches.
+
+
+* mm/mv-file-to-no-such-dir-with-slash (2013-12-04) 1 commit
+  (merged to 'next' on 2013-12-09 at f33bc0b)
+ + mv: let 'git mv file no-such-dir/' error out
+
+
+* nd/gettext-vsnprintf (2013-12-04) 1 commit
+  (merged to 'next' on 2013-12-09 at e99106e)
+ + gettext.c: detect the vsnprintf bug at runtime
+
+
+* nd/remove-opt-boolean (2013-12-09) 1 commit
+  (merged to 'next' on 2013-12-13 at 26f46cc)
+ + parse-options: remove OPT_BOOLEAN
+
+
+* nd/transport-positive-depth-only (2013-12-06) 1 commit
+  (merged to 'next' on 2013-12-12 at f953cb8)
+ + clone,fetch: catch non positive --depth option value
+
+ "git fetch --depth=0" was a no-op, and was silently
+ ignored. Diagnose it as an error.
+
+
+* tb/clone-ssh-with-colon-for-port (2013-12-09) 10 commits
+  (merged to 'next' on 2013-12-12 at ae4ae39)
+ + git_connect(): use common return point
+ + connect.c: refactor url parsing
+ + git_connect(): refactor the port handling for ssh
+ + git fetch: support host:/~repo
+ + t5500: add test cases for diag-url
+ + git fetch-pack: add --diag-url
+ + git_connect: factor out discovery of the protocol and its parts
+ + git_connect: remove artificial limit of a remote command
+ + t5601: add tests for ssh
+ + t5601: remove clear_ssh, refactor setup_ssh_wrapper
+
+ Be more careful when parsing remote repository URL given in the
+ scp-style host:path notation.
+
+
+* tr/send-email-ssl (2013-12-04) 3 commits
+  (merged to 'next' on 2013-12-09 at facb859)
+ + send-email: set SSL options through IO::Socket::SSL::set_client_defaults
+ + send-email: --smtp-ssl-cert-path takes an argument
+ + send-email: pass Debug to Net::SMTP::SSL::new
+
+ SSL-related options were not passed correctly to underlying socket
+ layer in "git send-email".
+
+--------------------------------------------------
+[New Topics]
+
+* ap/path-max (2013-12-16) 1 commit
+ - Prevent buffer overflows when path is too long
 
  Will merge to 'next'.
 
 
-* jk/cat-file-regression-fix (2013-12-12) 2 commits
- - cat-file: handle --batch format with missing type/size
- - cat-file: pass expand_data to print_object_or_die
+* mh/path-max (2013-12-17) 1 commit
+ - prune-packed: use strbuf to avoid having to worry about PATH_MAX
 
- Will merge to 'next'.
+ This is my rewrite of Michael's patch to prune-packed (which still
+ had a hardcoded PATH_MAX limitation) using strbuf. Tweaking of the
+ other patch in the same series ($gmane/239386) for prune is left as
+ an exercise to the readers ;-)
 
-
-* jk/pull-rebase-using-fork-point (2013-12-10) 2 commits
- - rebase: use reflog to find common base with upstream
- - pull: use merge-base --fork-point when appropriate
-
- Will merge to 'next'.
-
-
-* jk/rev-parse-double-dashes (2013-12-09) 2 commits
- - rev-parse: be more careful with munging arguments
- - rev-parse: correctly diagnose revision errors before "--"
-
- "git rev-parse <revs> -- <paths>" did not implement the usual
- disambiguation rules the commands in the "git log" family used in
- the same way.
-
- Will merge to 'next'.
-
+--------------------------------------------------
+[Stalled]
 
 * mo/subtree-split-updates (2013-12-10) 3 commits
  - subtree: add --edit option
@@ -101,62 +152,6 @@ of the repositories listed at
  - subtree: support split --rejoin --squash
 
  Comments?
-
-
-* nd/remove-opt-boolean (2013-12-09) 1 commit
- - parse-options: remove OPT_BOOLEAN
-
- Will merge to 'next'.
-
-
-* nd/shallow-clone (2013-12-10) 28 commits
- - git-clone.txt: remove shallow clone limitations
- - prune: clean .git/shallow after pruning objects
- - clone: use git protocol for cloning shallow repo locally
- - send-pack: support pushing from a shallow clone via http
- - receive-pack: support pushing to a shallow clone via http
- - smart-http: support shallow fetch/clone
- - remote-curl: pass ref SHA-1 to fetch-pack as well
- - send-pack: support pushing to a shallow clone
- - receive-pack: allow pushes that update .git/shallow
- - connected.c: add new variant that runs with --shallow-file
- - add GIT_SHALLOW_FILE to propagate --shallow-file to subprocesses
- - receive/send-pack: support pushing from a shallow clone
- - receive-pack: reorder some code in unpack()
- - fetch: add --update-shallow to accept refs that update .git/shallow
- - upload-pack: make sure deepening preserves shallow roots
- - fetch: support fetching from a shallow repository
- - clone: support remote shallow repository
- - fetch-pack.h: one statement per bitfield declaration
- - fetch-pack.c: move shallow update code out of fetch_pack()
- - shallow.c: steps 6 and 7 to select new commits for .git/shallow
- - shallow.c: the 8 steps to select new commits for .git/shallow
- - shallow.c: extend setup_*_shallow() to accept extra shallow commits
- - connect.c: teach get_remote_heads to parse "shallow" lines
- - make the sender advertise shallow commits to the receiver
- - clone: prevent --reference to a shallow repository
- - send-pack: forbid pushing from a shallow repository
- - remote.h: replace struct extra_have_objects with struct sha1_array
- - transport.h: remove send_pack prototype, already defined in send-pack.h
-
- Fetching from a shallow-cloned repository used to be forbidden,
- primarily because the codepaths involved were not carefully vetted
- and we did not bother supporting such usage. This attempts to allow
- object transfer out of a shallow-cloned repository in a controlled
- way (i.e. the receiver become a shallow repository with truncated
- history).
-
-
-* tg/diff-no-index-refactor (2013-12-12) 2 commits
- - diff: don't read index when --no-index is given
- - diff: move no-index detection to builtin/diff.c
-
- "git diff ../else/where/A ../else/where/B" when ../else/where is
- clearly outside the repository, and "git diff --no-index A B", do
- not have to look at the index at all, but we used to read the index
- unconditionally.
-
- Will merge to 'next'.
 
 
 * hv/submodule-ignore-fix (2013-12-06) 4 commits
@@ -177,114 +172,33 @@ of the repositories listed at
  few nights ago I tried and failed and that was why it hasn't been
  merged to 'pu' so far).
 
---------------------------------------------------
-[Graduated to "master"]
 
-* cl/p4-use-diff-tree (2013-11-22) 1 commit
-  (merged to 'next' on 2013-12-06 at fc3c89e)
- + git p4: Use git diff-tree instead of format-patch
+* kb/fast-hashmap (2013-12-16) 17 commits
+ - hashmap.h: make sure map entries are tightly packed
+  (merged to 'next' on 2013-12-16 at bff99b1)
+ + Drop unnecessary #includes from test-hashmap
+ + Add test-hashmap to .gitignore
+  (merged to 'next' on 2013-12-06 at f90be3d)
+ + read-cache.c: fix memory leaks caused by removed cache entries
+ + builtin/update-index.c: cleanup update_one
+ + fix 'git update-index --verbose --again' output
+ + remove old hash.[ch] implementation
+ + name-hash.c: remove cache entries instead of marking them CE_UNHASHED
+ + name-hash.c: use new hash map implementation for cache entries
+ + name-hash.c: remove unreferenced directory entries
+ + name-hash.c: use new hash map implementation for directories
+ + diffcore-rename.c: use new hash map implementation
+ + diffcore-rename.c: simplify finding exact renames
+ + diffcore-rename.c: move code around to prepare for the next patch
+ + buitin/describe.c: use new hash map implementation
+ + add a hashtable implementation that supports O(1) removal
+ + submodule: don't access the .gitmodules cache entry after removing it
 
- Originally merged to 'next' on 2013-11-27
+ Improvements to our hash table to get it to meet the needs of the
+ msysgit fscache project, with some nice performance improvements.
 
+ The tip one does not seem to have reached concensus (yet).
 
-* cn/thin-push-capability (2013-11-25) 1 commit
-  (merged to 'next' on 2013-12-06 at a7ae524)
- + send-pack: don't send a thin pack to a server which doesn't support it
-
- Allow receive-pack to insist on receiving a fat pack from "git
- push" clients.
-
-
-* jk/remove-deprecated (2013-12-05) 6 commits
-  (merged to 'next' on 2013-12-06 at c0c91a2)
- + Sync with 1.8.5
- + stop installing git-tar-tree link
- + peek-remote: remove deprecated alias of ls-remote
- + lost-found: remove deprecated command
- + tar-tree: remove deprecated command
- + repo-config: remove deprecated alias for "git config"
- (this branch is used by cc/starts-n-ends-with and cc/starts-n-ends-with-endgame.)
-
- Remove commands that have long been deprecated.
-
-
-* jn/scripts-updates (2013-11-26) 7 commits
-  (merged to 'next' on 2013-12-06 at 60a7026)
- + remove #!interpreter line from shell libraries
- + test: replace shebangs with descriptions in shell libraries
- + test: make FILEMODE a lazy prereq
- + contrib: remove git-p4import
- + mark contributed hooks executable
- + mark perl test scripts executable
- + mark Windows build scripts executable
-
-
-* mh/fetch-tags-in-addition-to-normal-refs (2013-10-30) 23 commits
-  (merged to 'next' on 2013-12-06 at 3b9c44a)
- + fetch: improve the error messages emitted for conflicting refspecs
- + handle_duplicate(): mark error message for translation
- + ref_remote_duplicates(): extract a function handle_duplicate()
- + ref_remove_duplicates(): simplify loop logic
- + t5536: new test of refspec conflicts when fetching
- + ref_remove_duplicates(): avoid redundant bisection
- + git-fetch.txt: improve description of tag auto-following
- + fetch-options.txt: simplify ifdef/ifndef/endif usage
- + fetch, remote: properly convey --no-prune options to subprocesses
- + builtin/remote.c:update(): use struct argv_array
- + builtin/remote.c: reorder function definitions
- + query_refspecs(): move some constants out of the loop
- + fetch --prune: prune only based on explicit refspecs
- + fetch --tags: fetch tags *in addition to* other stuff
- + fetch: only opportunistically update references based on command line
- + get_expanded_map(): avoid memory leak
- + get_expanded_map(): add docstring
- + builtin/fetch.c: reorder function definitions
- + get_ref_map(): rename local variables
- + api-remote.txt: correct section "struct refspec"
- + t5510: check that "git fetch --prune --tags" does not prune branches
- + t5510: prepare test refs more straightforwardly
- + t5510: use the correct tag name in test
-
- Originally merged to 'next' on 2013-11-06
-
- The "--tags" option to "git fetch" used to be literally a synonym to
- a "refs/tags/*:refs/tags/*" refspec, which meant that (1) as an
- explicit refspec given from the command line, it silenced the lazy
- "git fetch" default that is configured, and (2) also as an explicit
- refspec given from the command line, it interacted with "--prune"
- to remove any tag that the remote we are fetching from does not
- have.
-
- This demotes it to an option; with it, we fetch all tags in
- addition to what would be fetched without the option, and it does
- not interact with the decision "--prune" makes to see what
- remote-tracking refs the local has are missing the remote
- counterpart.
-
-
-* rs/doc-submitting-patches (2013-11-27) 1 commit
-  (merged to 'next' on 2013-12-06 at 0628818)
- + SubmittingPatches: document how to handle multiple patches
-
-
-* tr/commit-slab-cleanup (2013-12-02) 3 commits
-  (merged to 'next' on 2013-12-06 at faee247)
- + commit-slab: sizeof() the right type in xrealloc
- + commit-slab: declare functions "static inline"
- + commit-slab: document clear_$slabname()
-
-
-* tr/config-multivalue-lift-max (2013-12-06) 1 commit
-  (merged to 'next' on 2013-12-06 at 92afee2)
- + config: arbitrary number of matches for --unset and --replace-all
-
-
-* tr/doc-git-cherry (2013-11-27) 1 commit
-  (merged to 'next' on 2013-12-06 at 9a1ba7a)
- + Documentation: revamp git-cherry(1)
-
---------------------------------------------------
-[Stalled]
 
 * jc/create-directories-microopt (2013-11-11) 1 commit
  - checkout: most of the time we have good leading directories
@@ -293,15 +207,6 @@ of the repositories listed at
  Windows).
 
  Will hold.
-
-
-* nv/commit-gpgsign-config (2013-11-06) 1 commit
- - Add the commit.gpgsign option to sign all commits
-
- Introduce commit.gpgsign configuration variable to force every
- commit to be GPG signed.
-
- Needs tests, perhaps?
 
 
 * jt/commit-fixes-footer (2013-10-30) 1 commit
@@ -448,6 +353,150 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* nv/commit-gpgsign-config (2013-12-17) 3 commits
+ - test the commit.gpgsign config option
+ - commit-tree: add and document --no-gpg-sign
+ - Add the commit.gpgsign option to sign all commits
+
+ Introduce commit.gpgsign configuration variable to force every
+ commit to be GPG signed.  The variable cannot be overriden from the
+ command line of some of the commands that create commits except for
+ "git commit" and "git commit-tree", but I am not convinced that it
+ is a good idea to sprinkle support for --no-gpg-sign everywhere.
+
+ Will merge to 'next'.
+
+
+* cc/replace-object-info (2013-12-12) 10 commits
+  (merged to 'next' on 2013-12-17 at aeb9e18)
+ + Documentation/git-replace: describe --format option
+ + builtin/replace: unset read_replace_refs
+ + t6050: add tests for listing with --format
+ + builtin/replace: teach listing using short, medium or full formats
+ + sha1_file: perform object replacement in sha1_object_info_extended()
+ + t6050: show that git cat-file --batch fails with replace objects
+ + sha1_object_info_extended(): add an "unsigned flags" parameter
+ + sha1_file.c: add lookup_replace_object_extended() to pass flags
+ + replace_object: don't check read_replace_refs twice
+ + rename READ_SHA1_FILE_REPLACE flag to LOOKUP_REPLACE_OBJECT
+
+ read_sha1_file() that is the workhorse to read the contents given
+ an object name honoured object replacements, but there is no
+ corresponding mechanism to sha1_object_info() that is used to
+ obtain the metainfo (e.g. type & size) about the object, leading
+ callers to weird inconsistencies.
+
+ Has this been reviewed sufficiently?
+
+ Will merge to 'next'.
+
+
+* fc/completion (2013-12-09) 1 commit
+ - completion: fix completion of certain aliases
+
+ SZEDER Gábor noticed that this breaks "git -c var=val alias" and
+ also suggested a better description of the change.
+
+ Will hold.
+
+
+* fc/remote-helper-fixes (2013-12-09) 4 commits
+  (merged to 'next' on 2013-12-17 at aa4dc07)
+ + remote-hg: add tests for special filenames
+ + remote-hg: fix 'shared path' path
+ + remote-helpers: add extra safety checks
+ + remote-hg: avoid buggy strftime()
+
+ Expecting follow-up test additions.
+
+
+* jk/cat-file-regression-fix (2013-12-12) 2 commits
+  (merged to 'next' on 2013-12-13 at 3713e01)
+ + cat-file: handle --batch format with missing type/size
+ + cat-file: pass expand_data to print_object_or_die
+
+ "git cat-file --batch=", an admittedly useless command, did not
+ behave very well.
+
+ Will merge to 'master'.
+
+
+* jk/pull-rebase-using-fork-point (2013-12-10) 2 commits
+  (merged to 'next' on 2013-12-13 at 1862c12)
+ + rebase: use reflog to find common base with upstream
+ + pull: use merge-base --fork-point when appropriate
+
+ Will merge to 'master'.
+
+
+* jk/rev-parse-double-dashes (2013-12-09) 2 commits
+  (merged to 'next' on 2013-12-13 at d26bac7)
+ + rev-parse: be more careful with munging arguments
+ + rev-parse: correctly diagnose revision errors before "--"
+
+ "git rev-parse <revs> -- <paths>" did not implement the usual
+ disambiguation rules the commands in the "git log" family used in
+ the same way.
+
+ Will merge to 'master'.
+
+
+* nd/shallow-clone (2013-12-10) 28 commits
+ - git-clone.txt: remove shallow clone limitations
+ - prune: clean .git/shallow after pruning objects
+ - clone: use git protocol for cloning shallow repo locally
+ - send-pack: support pushing from a shallow clone via http
+ - receive-pack: support pushing to a shallow clone via http
+ - smart-http: support shallow fetch/clone
+ - remote-curl: pass ref SHA-1 to fetch-pack as well
+ - send-pack: support pushing to a shallow clone
+ - receive-pack: allow pushes that update .git/shallow
+ - connected.c: add new variant that runs with --shallow-file
+ - add GIT_SHALLOW_FILE to propagate --shallow-file to subprocesses
+ - receive/send-pack: support pushing from a shallow clone
+ - receive-pack: reorder some code in unpack()
+ - fetch: add --update-shallow to accept refs that update .git/shallow
+ - upload-pack: make sure deepening preserves shallow roots
+ - fetch: support fetching from a shallow repository
+ - clone: support remote shallow repository
+ - fetch-pack.h: one statement per bitfield declaration
+ - fetch-pack.c: move shallow update code out of fetch_pack()
+ - shallow.c: steps 6 and 7 to select new commits for .git/shallow
+ - shallow.c: the 8 steps to select new commits for .git/shallow
+ - shallow.c: extend setup_*_shallow() to accept extra shallow commits
+ - connect.c: teach get_remote_heads to parse "shallow" lines
+ - make the sender advertise shallow commits to the receiver
+ - clone: prevent --reference to a shallow repository
+ - send-pack: forbid pushing from a shallow repository
+ - remote.h: replace struct extra_have_objects with struct sha1_array
+ - transport.h: remove send_pack prototype, already defined in send-pack.h
+
+ Fetching from a shallow-cloned repository used to be forbidden,
+ primarily because the codepaths involved were not carefully vetted
+ and we did not bother supporting such usage. This attempts to allow
+ object transfer out of a shallow-cloned repository in a controlled
+ way (i.e. the receiver become a shallow repository with truncated
+ history).
+
+ Will merge to 'next'.
+
+
+* tg/diff-no-index-refactor (2013-12-16) 4 commits
+  (merged to 'next' on 2013-12-17 at 009d8d8)
+ + diff: avoid some nesting
+ + diff: add test for --no-index executed outside repo
+  (merged to 'next' on 2013-12-13 at 523f7c4)
+ + diff: don't read index when --no-index is given
+ + diff: move no-index detection to builtin/diff.c
+
+ "git diff ../else/where/A ../else/where/B" when ../else/where is
+ clearly outside the repository, and "git diff --no-index A B", do
+ not have to look at the index at all, but we used to read the index
+ unconditionally.
+
+ Will merge to 'master'.
+
+
 * fc/transport-helper-fixes (2013-12-09) 6 commits
  - remote-bzr: support the new 'force' option
  - test-hg.sh: tests are now expected to pass
@@ -460,7 +509,7 @@ of the repositories listed at
  ref mapping and ref deletion in a way similar to the natively
  supported transports.
 
- Will merge to 'next'.
+ Will hold. Reported to break t5541.
 
 
 * jn/git-gui-chmod+x (2013-11-25) 1 commit
@@ -477,7 +526,9 @@ of the repositories listed at
  tree.
 
 
-* jk/name-pack-after-byte-representation (2013-12-05) 2 commits
+* jk/name-pack-after-byte-representation (2013-12-16) 3 commits
+  (merged to 'next' on 2013-12-17 at 0bc385c)
+ + pack-objects doc: treat output filename as opaque
   (merged to 'next' on 2013-12-09 at 247b2d0)
  + pack-objects: name pack files after trailer hash
  + sha1write: make buffer const-correct
@@ -499,19 +550,15 @@ of the repositories listed at
  + Support pathspec magic :(exclude) and its short form :!
  + glossary-content.txt: rephrase magic signature part
 
- Introduce "negative pathspec" magic, to allow "git log . ':!dir'" to
+ Introduce "negative pathspec" magic, to allow "git log -- . ':!dir'" to
  tell us "I am interested in everything but 'dir' directory".
 
-
-* nd/transport-positive-depth-only (2013-12-06) 1 commit
-  (merged to 'next' on 2013-12-12 at f953cb8)
- + clone,fetch: catch non positive --depth option value
-
- "git fetch --depth=0" was a no-op, and was silently
- ignored. Diagnose it as an error.
+ Will cook in 'next'.
 
 
-* zk/difftool-counts (2013-12-06) 1 commit
+* zk/difftool-counts (2013-12-16) 2 commits
+  (merged to 'next' on 2013-12-16 at 0e0d235)
+ + diff.c: fix some recent whitespace style violations
   (merged to 'next' on 2013-12-12 at ba35694)
  + difftool: display the number of files in the diff queue in the prompt
 
@@ -519,36 +566,15 @@ of the repositories listed at
  when "git difftool" prompts to launch an external diff tool, which
  would give users some sense of progress.
 
-
-* jl/commit-v-strip-marker (2013-12-05) 1 commit
-  (merged to 'next' on 2013-12-09 at 2b85e9e)
- + commit -v: strip diffs and submodule shortlogs from the commit message
-
- "git commit -v" appends the patch to the log message before
- editing, and then removed the patch when the editor returned
- control. However, the patch was not stripped correctly when the
- first modified path was a submodule.
-
-
-* cc/starts-n-ends-with (2013-12-05) 4 commits
-  (merged to 'next' on 2013-12-12 at 76ee567)
- + replace {pre,suf}fixcmp() with {starts,ends}_with()
- + strbuf: introduce starts_with() and ends_with()
- + builtin/remote: remove postfixcmp() and use suffixcmp() instead
- + environment: normalize use of prefixcmp() by removing " != 0"
- (this branch is used by cc/starts-n-ends-with-endgame.)
-
- Remove a few duplicate implementations of prefix/suffix comparison
- functions, and rename them to starts_with and ends_with.
+ Will merge to 'master'.
 
 
 * cc/starts-n-ends-with-endgame (2013-12-05) 1 commit
  - strbuf: remove prefixcmp() and suffixcmp()
- (this branch uses cc/starts-n-ends-with.)
 
- Endgame for the above topic, that needs to be evil-merged with
- other topics that introduce new uses of prefix/suffix-cmp
- functions.
+ Endgame for the cc/starts-n-ends-with topic; this needs to be
+ evil-merged with other topics that introduce new uses of
+ prefix/suffix-cmp functions.
 
 
 * jc/push-refmap (2013-12-04) 3 commits
@@ -563,71 +589,14 @@ of the repositories listed at
  more symmetric to "git fetch" and more usable for the triangular
  workflow.
 
-
-* jk/t5000-gzip-simplify (2013-12-04) 1 commit
-  (merged to 'next' on 2013-12-09 at e9010f1)
- + t5000: simplify gzip prerequisite checks
-
- Test fix.
+ Will merge to 'master'.
 
 
-* js/gnome-keyring (2013-12-04) 1 commit
- - contrib/git-credential-gnome-keyring.c: small stylistic cleanups
+* js/gnome-keyring (2013-12-16) 1 commit
+  (merged to 'next' on 2013-12-17 at 422fd61)
+ + contrib/git-credential-gnome-keyring.c: small stylistic cleanups
 
  Style fix.
-
-
-* kn/gitweb-extra-branch-refs (2013-12-12) 4 commits
-  (merged to 'next' on 2013-12-12 at ae75b02)
- + gitweb: Denote non-heads, non-remotes branches
- + gitweb: Add a feature for adding more branch refs
- + gitweb: Return 1 on validation success instead of passed input
- + gitweb: Move check-ref-format code into separate function
-
- Allow gitweb to be configured to show refs out of refs/heads/ as if
- they were branches.
-
-
-* mm/mv-file-to-no-such-dir-with-slash (2013-12-04) 1 commit
-  (merged to 'next' on 2013-12-09 at f33bc0b)
- + mv: let 'git mv file no-such-dir/' error out
-
-
-* nd/gettext-vsnprintf (2013-12-04) 1 commit
-  (merged to 'next' on 2013-12-09 at e99106e)
- + gettext.c: detect the vsnprintf bug at runtime
-
-
-* tr/send-email-ssl (2013-12-04) 3 commits
-  (merged to 'next' on 2013-12-09 at facb859)
- + send-email: set SSL options through IO::Socket::SSL::set_client_defaults
- + send-email: --smtp-ssl-cert-path takes an argument
- + send-email: pass Debug to Net::SMTP::SSL::new
-
- SSL-related options were not passed correctly to underlying socket
- layer in "git send-email".
-
-
-* tb/clone-ssh-with-colon-for-port (2013-12-09) 10 commits
-  (merged to 'next' on 2013-12-12 at ae4ae39)
- + git_connect(): use common return point
- + connect.c: refactor url parsing
- + git_connect(): refactor the port handling for ssh
- + git fetch: support host:/~repo
- + t5500: add test cases for diag-url
- + git fetch-pack: add --diag-url
- + git_connect: factor out discovery of the protocol and its parts
- + git_connect: remove artificial limit of a remote command
- + t5601: add tests for ssh
- + t5601: remove clear_ssh, refactor setup_ssh_wrapper
-
- Be more careful when parsing remote repository URL given in the
- scp-style host:path notation.
-
-
-* kb/doc-exclude-directory-semantics (2013-12-09) 1 commit
-  (merged to 'next' on 2013-12-09 at e54b2ec)
- + gitignore.txt: clarify recursive nature of excluded directories
 
  Will merge to 'master'.
 
@@ -642,7 +611,7 @@ of the repositories listed at
  topmost patch is a rebase of jc/push-2.0-default-to-simple on top
  of it.
 
- Will cook in 'next'.
+ Will cook in 'next' until Git 2.0.
 
 
 * tr/merge-recursive-index-only (2013-10-28) 3 commits
@@ -651,30 +620,6 @@ of the repositories listed at
  - merge-recursive: remove dead conditional in update_stages()
 
  Will hold until using script appears.
-
-
-* kb/fast-hashmap (2013-12-09) 15 commits
- - hashmap.h: make sure map entries are tightly packed
-  (merged to 'next' on 2013-12-06 at f90be3d)
- + read-cache.c: fix memory leaks caused by removed cache entries
- + builtin/update-index.c: cleanup update_one
- + fix 'git update-index --verbose --again' output
- + remove old hash.[ch] implementation
- + name-hash.c: remove cache entries instead of marking them CE_UNHASHED
- + name-hash.c: use new hash map implementation for cache entries
- + name-hash.c: remove unreferenced directory entries
- + name-hash.c: use new hash map implementation for directories
- + diffcore-rename.c: use new hash map implementation
- + diffcore-rename.c: simplify finding exact renames
- + diffcore-rename.c: move code around to prepare for the next patch
- + buitin/describe.c: use new hash map implementation
- + add a hashtable implementation that supports O(1) removal
- + submodule: don't access the .gitmodules cache entry after removing it
-
- Improvements to our hash table to get it to meet the needs of the
- msysgit fscache project, with some nice performance improvements.
-
- The tip one does not seem to have reached concensus (yet).
 
 
 * jn/add-2.0-u-A-sans-pathspec (2013-04-26) 1 commit
