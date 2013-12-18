@@ -43,7 +43,7 @@ extern void hashmap_free(struct hashmap *map, int free_entries);
 
 /* hashmap_entry functions */
 
-static inline void hashmap_entry_init(void *entry, int hash)
+static inline void hashmap_entry_init(void *entry, unsigned int hash)
 {
 	struct hashmap_entry *e = entry;
 	e->hash = hash;

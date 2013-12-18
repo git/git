@@ -80,7 +80,7 @@ prevent expensive resizing. If 0, the table is dynamically resized.
 If `free_entries` is true, each hashmap_entry in the map is freed as well
 (using stdlib's free()).
 
-`void hashmap_entry_init(void *entry, int hash)`::
+`void hashmap_entry_init(void *entry, unsigned int hash)`::
 
 	Initializes a hashmap_entry structure.
 +
