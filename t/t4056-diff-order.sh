@@ -89,6 +89,16 @@ do
 		wait &&
 		test_cmp expect_$i actual
 	'
+
+	test_expect_success "orderfile using config ($i)" '
+		git -c diff.orderfile=order_file_$i diff --name-only HEAD^..HEAD >actual &&
+		test_cmp expect_$i actual
+	'
+
+	test_expect_success "cancelling configured orderfile ($i)" '
+		git -c diff.orderfile=order_file_$i diff -O/dev/null --name-only HEAD^..HEAD >actual &&
+		test_cmp expect_none actual
+	'
 done
 
 test_done

@@ -98,6 +98,11 @@ diff.mnemonicprefix::
 diff.noprefix::
 	If set, 'git diff' does not show any source or destination prefix.
 
+diff.orderfile::
+	File indicating how to order files within a diff, using
+	one shell glob pattern per line.
+	Can be overridden by the '-O' option to linkgit:git-diff[1].
+
 diff.renameLimit::
 	The number of files to consider when performing the copy/rename
 	detection; equivalent to the 'git diff' option '-l'.
