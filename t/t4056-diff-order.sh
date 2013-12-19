@@ -57,10 +57,36 @@ test_expect_success "no order (=tree object order)" '
 	test_cmp expect_none actual
 '
 
+test_expect_success 'missing orderfile' '
+	rm -f bogus_file &&
+	test_must_fail git diff -Obogus_file --name-only HEAD^..HEAD
+'
+
+test_expect_success POSIXPERM,SANITY 'unreadable orderfile' '
+	>unreadable_file &&
+	chmod -r unreadable_file &&
+	test_must_fail git diff -Ounreadable_file --name-only HEAD^..HEAD
+'
+
+test_expect_success 'orderfile is a directory' '
+	test_must_fail git diff -O/ --name-only HEAD^..HEAD
+'
+
 for i in 1 2
 do
 	test_expect_success "orderfile using option ($i)" '
 		git diff -Oorder_file_$i --name-only HEAD^..HEAD >actual &&
+		test_cmp expect_$i actual
+	'
+
+	test_expect_success PIPE "orderfile is fifo ($i)" '
+		rm -f order_fifo &&
+		mkfifo order_fifo &&
+		{
+			cat order_file_$i >order_fifo &
+		} &&
+		git diff -O order_fifo --name-only HEAD^..HEAD >actual &&
+		wait &&
 		test_cmp expect_$i actual
 	'
 done
