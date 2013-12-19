@@ -292,6 +292,19 @@ static const char *wt_status_diff_status_string(int status)
 	}
 }
 
+static int maxwidth(const char *(*label)(int), int minval, int maxval)
+{
+	int result = 0, i;
+
+	for (i = minval; i <= maxval; i++) {
+		const char *s = label(i);
+		int len = s ? utf8_strwidth(s) : 0;
+		if (len > result)
+			result = len;
+	}
+	return result;
+}
+
 static void wt_status_print_change_data(struct wt_status *s,
 					int change_type,
 					struct string_list_item *it)
@@ -310,13 +323,8 @@ static void wt_status_print_change_data(struct wt_status *s,
 	int len;
 
 	if (!padding) {
-		/* If DIFF_STATUS_* uses outside this range, we're in trouble */
-		for (status = 'A'; status <= 'Z'; status++) {
-			what = wt_status_diff_status_string(status);
-			len = what ? strlen(what) : 0;
-			if (len > label_width)
-				label_width = len;
-		}
+		/* If DIFF_STATUS_* uses outside the range [A..Z], we're in trouble */
+		label_width = maxwidth(wt_status_diff_status_string, 'A', 'Z');
 		label_width += strlen(" ");
 		padding = xmallocz(label_width);
 		memset(padding, ' ', label_width);
