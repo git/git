@@ -1,10 +1,25 @@
 #!/bin/sh
 
-# for remote in ko repo gph github2 sfjp sf.net
-for remote in ko repo gph github2 sfjp sf.net
+sites='ko repo github2 sfjp sf.net gph '
+
+while :
 do
-	printf "%s: " "$remote"
-	git push --follow-tags "$remote" "$@" || exit $?
+	failed=
+	for remote in $sites
+	do
+		printf "%s: " "$remote"
+		git push --follow-tags "$remote" "$@" || failed="$failed$remote "
+	done
+
+	if test -z "$failed"
+	then
+		break
+	elif test "x$sites" = "x$failed"
+	then
+		echo >&2 "Failed to push to: $sites"
+		exit 1
+	fi
+	sites="$failed"
 done
 
 case "$#,$*" in
