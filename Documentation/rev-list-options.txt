@@ -274,6 +274,14 @@ See also linkgit:git-reflog[1].
 	Output excluded boundary commits. Boundary commits are
 	prefixed with `-`.
 
+ifdef::git-rev-list[]
+--use-bitmap-index::
+
+	Try to speed up the traversal using the pack bitmap index (if
+	one is available). Note that when traversing with `--objects`,
+	trees and blobs will not have their associated path printed.
+endif::git-rev-list[]
+
 --
 
 History Simplification
