@@ -118,6 +118,7 @@ struct expand_data {
 	unsigned long size;
 	unsigned long disk_size;
 	const char *rest;
+	unsigned char delta_base_sha1[20];
 
 	/*
 	 * If mark_query is true, we do not expand anything, but rather
@@ -174,6 +175,11 @@ static void expand_atom(struct strbuf *sb, const char *atom, int len,
 			data->split_on_whitespace = 1;
 		else if (data->rest)
 			strbuf_addstr(sb, data->rest);
+	} else if (is_atom("deltabase", atom, len)) {
+		if (data->mark_query)
+			data->info.delta_base_sha1 = data->delta_base_sha1;
+		else
+			strbuf_addstr(sb, sha1_to_hex(data->delta_base_sha1));
 	} else
 		die("unknown format element: %.*s", len, atom);
 }

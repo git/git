@@ -109,6 +109,11 @@ newline. The available atoms are:
 	The size, in bytes, that the object takes up on disk. See the
 	note about on-disk sizes in the `CAVEATS` section below.
 
+`deltabase`::
+	If the object is stored as a delta on-disk, this expands to the
+	40-hex sha1 of the delta base object. Otherwise, expands to the
+	null sha1 (40 zeroes). See `CAVEATS` below.
+
 `rest`::
 	If this atom is used in the output string, input lines are split
 	at the first whitespace boundary. All characters before that
@@ -152,10 +157,11 @@ should be taken in drawing conclusions about which refs or objects are
 responsible for disk usage. The size of a packed non-delta object may be
 much larger than the size of objects which delta against it, but the
 choice of which object is the base and which is the delta is arbitrary
-and is subject to change during a repack. Note also that multiple copies
-of an object may be present in the object database; in this case, it is
-undefined which copy's size will be reported.
+and is subject to change during a repack.
 
+Note also that multiple copies of an object may be present in the object
+database; in this case, it is undefined which copy's size or delta base
+will be reported.
 
 GIT
 ---
