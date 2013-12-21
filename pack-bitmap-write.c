@@ -490,6 +490,19 @@ static void write_selected_commits_v1(struct sha1file *f,
 	}
 }
 
+static void write_hash_cache(struct sha1file *f,
+			     struct pack_idx_entry **index,
+			     uint32_t index_nr)
+{
+	uint32_t i;
+
+	for (i = 0; i < index_nr; ++i) {
+		struct object_entry *entry = (struct object_entry *)index[i];
+		uint32_t hash_value = htonl(entry->hash);
+		sha1write(f, &hash_value, sizeof(hash_value));
+	}
+}
+
 void bitmap_writer_set_checksum(unsigned char *sha1)
 {
 	hashcpy(writer.pack_checksum, sha1);
@@ -497,7 +510,8 @@ void bitmap_writer_set_checksum(unsigned char *sha1)
 
 void bitmap_writer_finish(struct pack_idx_entry **index,
 			  uint32_t index_nr,
-			  const char *filename)
+			  const char *filename,
+			  uint16_t options)
 {
 	static char tmp_file[PATH_MAX];
 	static uint16_t default_version = 1;
@@ -514,7 +528,7 @@ void bitmap_writer_finish(struct pack_idx_entry **index,
 
 	memcpy(header.magic, BITMAP_IDX_SIGNATURE, sizeof(BITMAP_IDX_SIGNATURE));
 	header.version = htons(default_version);
-	header.options = htons(flags);
+	header.options = htons(flags | options);
 	header.entry_count = htonl(writer.selected_nr);
 	memcpy(header.checksum, writer.pack_checksum, 20);
 
@@ -524,6 +538,9 @@ void bitmap_writer_finish(struct pack_idx_entry **index,
 	dump_bitmap(f, writer.blobs);
 	dump_bitmap(f, writer.tags);
 	write_selected_commits_v1(f, index, index_nr);
+
+	if (options & BITMAP_OPT_HASH_CACHE)
+		write_hash_cache(f, index, index_nr);
 
 	sha1close(f, NULL, CSUM_FSYNC);
 

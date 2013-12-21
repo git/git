@@ -9,7 +9,8 @@ test_perf_large_repo
 # since we want to be able to compare bitmap-aware
 # git versus non-bitmap git
 test_expect_success 'setup bitmap config' '
-	git config pack.writebitmaps true
+	git config pack.writebitmaps true &&
+	git config pack.writebitmaphashcache true
 '
 
 test_perf 'repack to disk' '

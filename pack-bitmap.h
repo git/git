@@ -24,7 +24,8 @@ static const char BITMAP_IDX_SIGNATURE[] = {'B', 'I', 'T', 'M'};
 #define NEEDS_BITMAP (1u<<22)
 
 enum pack_bitmap_opts {
-	BITMAP_OPT_FULL_DAG = 1
+	BITMAP_OPT_FULL_DAG = 1,
+	BITMAP_OPT_HASH_CACHE = 4,
 };
 
 enum pack_bitmap_flags {
@@ -57,6 +58,7 @@ void bitmap_writer_select_commits(struct commit **indexed_commits,
 void bitmap_writer_build(struct packing_data *to_pack);
 void bitmap_writer_finish(struct pack_idx_entry **index,
 			  uint32_t index_nr,
-			  const char *filename);
+			  const char *filename,
+			  uint16_t options);
 
 #endif

@@ -64,6 +64,7 @@ static off_t reuse_packfile_offset;
 
 static int use_bitmap_index = 1;
 static int write_bitmap_index;
+static uint16_t write_bitmap_options;
 
 static unsigned long delta_cache_size = 0;
 static unsigned long max_delta_cache_size = 256 * 1024 * 1024;
@@ -851,7 +852,8 @@ static void write_pack_file(void)
 				bitmap_writer_reuse_bitmaps(&to_pack);
 				bitmap_writer_select_commits(indexed_commits, indexed_commits_nr, -1);
 				bitmap_writer_build(&to_pack);
-				bitmap_writer_finish(written_list, nr_written, tmpname);
+				bitmap_writer_finish(written_list, nr_written,
+						     tmpname, write_bitmap_options);
 				write_bitmap_index = 0;
 			}
 
@@ -2200,6 +2202,12 @@ static int git_pack_config(const char *k, const char *v, void *cb)
 	if (!strcmp(k, "pack.writebitmaps")) {
 		write_bitmap_index = git_config_bool(k, v);
 		return 0;
+	}
+	if (!strcmp(k, "pack.writebitmaphashcache")) {
+		if (git_config_bool(k, v))
+			write_bitmap_options |= BITMAP_OPT_HASH_CACHE;
+		else
+			write_bitmap_options &= ~BITMAP_OPT_HASH_CACHE;
 	}
 	if (!strcmp(k, "pack.usebitmaps")) {
 		use_bitmap_index = git_config_bool(k, v);
