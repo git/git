@@ -800,41 +800,69 @@ static int no_try_delta(const char *path)
 	return 0;
 }
 
-static int add_object_entry(const unsigned char *sha1, enum object_type type,
-			    const char *name, int exclude)
+/*
+ * When adding an object, check whether we have already added it
+ * to our packing list. If so, we can skip. However, if we are
+ * being asked to excludei t, but the previous mention was to include
+ * it, make sure to adjust its flags and tweak our numbers accordingly.
+ *
+ * As an optimization, we pass out the index position where we would have
+ * found the item, since that saves us from having to look it up again a
+ * few lines later when we want to add the new entry.
+ */
+static int have_duplicate_entry(const unsigned char *sha1,
+				int exclude,
+				uint32_t *index_pos)
 {
 	struct object_entry *entry;
-	struct packed_git *p, *found_pack = NULL;
-	off_t found_offset = 0;
-	uint32_t hash = pack_name_hash(name);
-	uint32_t index_pos;
 
-	entry = packlist_find(&to_pack, sha1, &index_pos);
-	if (entry) {
-		if (exclude) {
-			if (!entry->preferred_base)
-				nr_result--;
-			entry->preferred_base = 1;
-		}
+	entry = packlist_find(&to_pack, sha1, index_pos);
+	if (!entry)
 		return 0;
+
+	if (exclude) {
+		if (!entry->preferred_base)
+			nr_result--;
+		entry->preferred_base = 1;
 	}
+
+	return 1;
+}
+
+/*
+ * Check whether we want the object in the pack (e.g., we do not want
+ * objects found in non-local stores if the "--local" option was used).
+ *
+ * As a side effect of this check, we will find the packed version of this
+ * object, if any. We therefore pass out the pack information to avoid having
+ * to look it up again later.
+ */
+static int want_object_in_pack(const unsigned char *sha1,
+			       int exclude,
+			       struct packed_git **found_pack,
+			       off_t *found_offset)
+{
+	struct packed_git *p;
 
 	if (!exclude && local && has_loose_object_nonlocal(sha1))
 		return 0;
 
+	*found_pack = NULL;
+	*found_offset = 0;
+
 	for (p = packed_git; p; p = p->next) {
 		off_t offset = find_pack_entry_one(sha1, p);
 		if (offset) {
-			if (!found_pack) {
+			if (!*found_pack) {
 				if (!is_pack_valid(p)) {
 					warning("packfile %s cannot be accessed", p->pack_name);
 					continue;
 				}
-				found_offset = offset;
-				found_pack = p;
+				*found_offset = offset;
+				*found_pack = p;
 			}
 			if (exclude)
-				break;
+				return 1;
 			if (incremental)
 				return 0;
 			if (local && !p->pack_local)
@@ -843,6 +871,20 @@ static int add_object_entry(const unsigned char *sha1, enum object_type type,
 				return 0;
 		}
 	}
+
+	return 1;
+}
+
+static void create_object_entry(const unsigned char *sha1,
+				enum object_type type,
+				uint32_t hash,
+				int exclude,
+				int no_try_delta,
+				uint32_t index_pos,
+				struct packed_git *found_pack,
+				off_t found_offset)
+{
+	struct object_entry *entry;
 
 	entry = packlist_alloc(&to_pack, sha1, index_pos);
 	entry->hash = hash;
@@ -857,11 +899,27 @@ static int add_object_entry(const unsigned char *sha1, enum object_type type,
 		entry->in_pack_offset = found_offset;
 	}
 
+	entry->no_try_delta = no_try_delta;
+}
+
+static int add_object_entry(const unsigned char *sha1, enum object_type type,
+			    const char *name, int exclude)
+{
+	struct packed_git *found_pack;
+	off_t found_offset;
+	uint32_t index_pos;
+
+	if (have_duplicate_entry(sha1, exclude, &index_pos))
+		return 0;
+
+	if (!want_object_in_pack(sha1, exclude, &found_pack, &found_offset))
+		return 0;
+
+	create_object_entry(sha1, type, pack_name_hash(name),
+			    exclude, name && no_try_delta(name),
+			    index_pos, found_pack, found_offset);
+
 	display_progress(progress_state, to_pack.nr_objects);
-
-	if (name && no_try_delta(name))
-		entry->no_try_delta = 1;
-
 	return 1;
 }
 
