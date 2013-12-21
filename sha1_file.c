@@ -1194,6 +1194,7 @@ static void prepare_packed_git_one(char *objdir, int local)
 
 		if (has_extension(de->d_name, ".idx") ||
 		    has_extension(de->d_name, ".pack") ||
+		    has_extension(de->d_name, ".bitmap") ||
 		    has_extension(de->d_name, ".keep"))
 			string_list_append(&garbage, path);
 		else
