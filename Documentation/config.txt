@@ -1858,6 +1858,12 @@ pack.packSizeLimit::
 	Common unit suffixes of 'k', 'm', or 'g' are
 	supported.
 
+pack.useBitmaps::
+	When true, git will use pack bitmaps (if available) when packing
+	to stdout (e.g., during the server side of a fetch). Defaults to
+	true. You should not generally need to turn this off unless
+	you are debugging pack bitmaps.
+
 pager.<cmd>::
 	If the value is boolean, turns on or off pagination of the
 	output of a particular Git subcommand when writing to a tty.

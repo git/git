@@ -19,6 +19,7 @@
 #include "refs.h"
 #include "streaming.h"
 #include "thread-utils.h"
+#include "pack-bitmap.h"
 
 static const char *pack_usage[] = {
 	N_("git pack-objects --stdout [options...] [< ref-list | < object-list]"),
@@ -56,6 +57,12 @@ static int num_preferred_base;
 static struct progress *progress_state;
 static int pack_compression_level = Z_DEFAULT_COMPRESSION;
 static int pack_compression_seen;
+
+static struct packed_git *reuse_packfile;
+static uint32_t reuse_packfile_objects;
+static off_t reuse_packfile_offset;
+
+static int use_bitmap_index = 1;
 
 static unsigned long delta_cache_size = 0;
 static unsigned long max_delta_cache_size = 256 * 1024 * 1024;
@@ -678,6 +685,46 @@ static struct object_entry **compute_write_order(void)
 	return wo;
 }
 
+static off_t write_reused_pack(struct sha1file *f)
+{
+	unsigned char buffer[8192];
+	off_t to_write;
+	int fd;
+
+	if (!is_pack_valid(reuse_packfile))
+		die("packfile is invalid: %s", reuse_packfile->pack_name);
+
+	fd = git_open_noatime(reuse_packfile->pack_name);
+	if (fd < 0)
+		die_errno("unable to open packfile for reuse: %s",
+			  reuse_packfile->pack_name);
+
+	if (lseek(fd, sizeof(struct pack_header), SEEK_SET) == -1)
+		die_errno("unable to seek in reused packfile");
+
+	if (reuse_packfile_offset < 0)
+		reuse_packfile_offset = reuse_packfile->pack_size - 20;
+
+	to_write = reuse_packfile_offset - sizeof(struct pack_header);
+
+	while (to_write) {
+		int read_pack = xread(fd, buffer, sizeof(buffer));
+
+		if (read_pack <= 0)
+			die_errno("unable to read from reused packfile");
+
+		if (read_pack > to_write)
+			read_pack = to_write;
+
+		sha1write(f, buffer, read_pack);
+		to_write -= read_pack;
+	}
+
+	close(fd);
+	written += reuse_packfile_objects;
+	return reuse_packfile_offset - sizeof(struct pack_header);
+}
+
 static void write_pack_file(void)
 {
 	uint32_t i = 0, j;
@@ -704,6 +751,15 @@ static void write_pack_file(void)
 		offset = write_pack_header(f, nr_remaining);
 		if (!offset)
 			die_errno("unable to write pack header");
+
+		if (reuse_packfile) {
+			off_t packfile_size;
+			assert(pack_to_stdout);
+
+			packfile_size = write_reused_pack(f);
+			offset += packfile_size;
+		}
+
 		nr_written = 0;
 		for (; i < to_pack.nr_objects; i++) {
 			struct object_entry *e = write_order[i];
@@ -918,6 +974,22 @@ static int add_object_entry(const unsigned char *sha1, enum object_type type,
 	create_object_entry(sha1, type, pack_name_hash(name),
 			    exclude, name && no_try_delta(name),
 			    index_pos, found_pack, found_offset);
+
+	display_progress(progress_state, to_pack.nr_objects);
+	return 1;
+}
+
+static int add_object_entry_from_bitmap(const unsigned char *sha1,
+					enum object_type type,
+					int flags, uint32_t name_hash,
+					struct packed_git *pack, off_t offset)
+{
+	uint32_t index_pos;
+
+	if (have_duplicate_entry(sha1, 0, &index_pos))
+		return 0;
+
+	create_object_entry(sha1, type, name_hash, 0, 0, index_pos, pack, offset);
 
 	display_progress(progress_state, to_pack.nr_objects);
 	return 1;
@@ -2085,6 +2157,10 @@ static int git_pack_config(const char *k, const char *v, void *cb)
 		cache_max_small_delta_size = git_config_int(k, v);
 		return 0;
 	}
+	if (!strcmp(k, "pack.usebitmaps")) {
+		use_bitmap_index = git_config_bool(k, v);
+		return 0;
+	}
 	if (!strcmp(k, "pack.threads")) {
 		delta_search_threads = git_config_int(k, v);
 		if (delta_search_threads < 0)
@@ -2293,6 +2369,29 @@ static void loosen_unused_packed_objects(struct rev_info *revs)
 	}
 }
 
+static int get_object_list_from_bitmap(struct rev_info *revs)
+{
+	if (prepare_bitmap_walk(revs) < 0)
+		return -1;
+
+	if (!reuse_partial_packfile_from_bitmap(
+			&reuse_packfile,
+			&reuse_packfile_objects,
+			&reuse_packfile_offset)) {
+		assert(reuse_packfile_objects);
+		nr_result += reuse_packfile_objects;
+
+		if (progress) {
+			fprintf(stderr, "Reusing existing pack: %d, done.\n",
+				reuse_packfile_objects);
+			fflush(stderr);
+		}
+	}
+
+	traverse_bitmap_commit_list(&add_object_entry_from_bitmap);
+	return 0;
+}
+
 static void get_object_list(int ac, const char **av)
 {
 	struct rev_info revs;
@@ -2319,6 +2418,9 @@ static void get_object_list(int ac, const char **av)
 		if (handle_revision_arg(line, &revs, flags, REVARG_CANNOT_BE_FILENAME))
 			die("bad revision '%s'", line);
 	}
+
+	if (use_bitmap_index && !get_object_list_from_bitmap(&revs))
+		return;
 
 	if (prepare_revision_walk(&revs))
 		die("revision walk setup failed");
@@ -2449,6 +2551,8 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 			    N_("pack compression level")),
 		OPT_SET_INT(0, "keep-true-parents", &grafts_replace_parents,
 			    N_("do not hide commits by grafts"), 0),
+		OPT_BOOL(0, "use-bitmap-index", &use_bitmap_index,
+			 N_("use a bitmap index if available to speed up counting objects")),
 		OPT_END(),
 	};
 
@@ -2514,6 +2618,9 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 
 	if (keep_unreachable && unpack_unreachable)
 		die("--keep-unreachable and --unpack-unreachable are incompatible.");
+
+	if (!use_internal_rev_list || !pack_to_stdout || is_repository_shallow())
+		use_bitmap_index = 0;
 
 	if (progress && all_progress_implied)
 		progress = 2;
