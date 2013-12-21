@@ -17,6 +17,7 @@ struct object_entry {
 	enum object_type type;
 	enum object_type in_pack_type;	/* could be delta */
 	uint32_t hash;			/* name hint hash */
+	unsigned int in_pack_pos;
 	unsigned char in_pack_header_size;
 	unsigned preferred_base:1; /*
 				    * we do not pack this, but is available

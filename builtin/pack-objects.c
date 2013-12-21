@@ -63,6 +63,7 @@ static uint32_t reuse_packfile_objects;
 static off_t reuse_packfile_offset;
 
 static int use_bitmap_index = 1;
+static int write_bitmap_index;
 
 static unsigned long delta_cache_size = 0;
 static unsigned long max_delta_cache_size = 256 * 1024 * 1024;
@@ -75,6 +76,24 @@ static unsigned long window_memory_limit = 0;
  */
 static uint32_t written, written_delta;
 static uint32_t reused, reused_delta;
+
+/*
+ * Indexed commits
+ */
+static struct commit **indexed_commits;
+static unsigned int indexed_commits_nr;
+static unsigned int indexed_commits_alloc;
+
+static void index_commit_for_bitmap(struct commit *commit)
+{
+	if (indexed_commits_nr >= indexed_commits_alloc) {
+		indexed_commits_alloc = (indexed_commits_alloc + 32) * 2;
+		indexed_commits = xrealloc(indexed_commits,
+			indexed_commits_alloc * sizeof(struct commit *));
+	}
+
+	indexed_commits[indexed_commits_nr++] = commit;
+}
 
 static void *get_delta(struct object_entry *entry)
 {
@@ -812,9 +831,30 @@ static void write_pack_file(void)
 			if (sizeof(tmpname) <= strlen(base_name) + 50)
 				die("pack base name '%s' too long", base_name);
 			snprintf(tmpname, sizeof(tmpname), "%s-", base_name);
+
+			if (write_bitmap_index) {
+				bitmap_writer_set_checksum(sha1);
+				bitmap_writer_build_type_index(written_list, nr_written);
+			}
+
 			finish_tmp_packfile(tmpname, pack_tmp_name,
 					    written_list, nr_written,
 					    &pack_idx_opts, sha1);
+
+			if (write_bitmap_index) {
+				char *end_of_name_prefix = strrchr(tmpname, 0);
+				sprintf(end_of_name_prefix, "%s.bitmap", sha1_to_hex(sha1));
+
+				stop_progress(&progress_state);
+
+				bitmap_writer_show_progress(progress);
+				bitmap_writer_reuse_bitmaps(&to_pack);
+				bitmap_writer_select_commits(indexed_commits, indexed_commits_nr, -1);
+				bitmap_writer_build(&to_pack);
+				bitmap_writer_finish(written_list, nr_written, tmpname);
+				write_bitmap_index = 0;
+			}
+
 			free(pack_tmp_name);
 			puts(sha1_to_hex(sha1));
 		}
@@ -2157,6 +2197,10 @@ static int git_pack_config(const char *k, const char *v, void *cb)
 		cache_max_small_delta_size = git_config_int(k, v);
 		return 0;
 	}
+	if (!strcmp(k, "pack.writebitmaps")) {
+		write_bitmap_index = git_config_bool(k, v);
+		return 0;
+	}
 	if (!strcmp(k, "pack.usebitmaps")) {
 		use_bitmap_index = git_config_bool(k, v);
 		return 0;
@@ -2219,6 +2263,9 @@ static void show_commit(struct commit *commit, void *data)
 {
 	add_object_entry(commit->object.sha1, OBJ_COMMIT, NULL, 0);
 	commit->object.flags |= OBJECT_ADDED;
+
+	if (write_bitmap_index)
+		index_commit_for_bitmap(commit);
 }
 
 static void show_object(struct object *obj,
@@ -2411,6 +2458,7 @@ static void get_object_list(int ac, const char **av)
 		if (*line == '-') {
 			if (!strcmp(line, "--not")) {
 				flags ^= UNINTERESTING;
+				write_bitmap_index = 0;
 				continue;
 			}
 			die("not a rev '%s'", line);
@@ -2553,6 +2601,8 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 			    N_("do not hide commits by grafts"), 0),
 		OPT_BOOL(0, "use-bitmap-index", &use_bitmap_index,
 			 N_("use a bitmap index if available to speed up counting objects")),
+		OPT_BOOL(0, "write-bitmap-index", &write_bitmap_index,
+			 N_("write a bitmap index together with the pack index")),
 		OPT_END(),
 	};
 
@@ -2621,6 +2671,9 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 
 	if (!use_internal_rev_list || !pack_to_stdout || is_repository_shallow())
 		use_bitmap_index = 0;
+
+	if (pack_to_stdout || !rev_list_all)
+		write_bitmap_index = 0;
 
 	if (progress && all_progress_implied)
 		progress = 2;
