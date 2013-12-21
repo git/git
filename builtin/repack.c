@@ -94,7 +94,7 @@ static void get_non_kept_pack_filenames(struct string_list *fname_list)
 
 static void remove_redundant_pack(const char *dir_name, const char *base_name)
 {
-	const char *exts[] = {".pack", ".idx", ".keep"};
+	const char *exts[] = {".pack", ".idx", ".keep", ".bitmap"};
 	int i;
 	struct strbuf buf = STRBUF_INIT;
 	size_t plen;
@@ -121,6 +121,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	} exts[] = {
 		{".pack"},
 		{".idx"},
+		{".bitmap", 1},
 	};
 	struct child_process cmd;
 	struct string_list_item *item;
@@ -143,6 +144,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	int no_update_server_info = 0;
 	int quiet = 0;
 	int local = 0;
+	int write_bitmap = -1;
 
 	struct option builtin_repack_options[] = {
 		OPT_BIT('a', NULL, &pack_everything,
@@ -161,6 +163,8 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		OPT__QUIET(&quiet, N_("be quiet")),
 		OPT_BOOL('l', "local", &local,
 				N_("pass --local to git-pack-objects")),
+		OPT_BOOL('b', "write-bitmap-index", &write_bitmap,
+				N_("write bitmap index")),
 		OPT_STRING(0, "unpack-unreachable", &unpack_unreachable, N_("approxidate"),
 				N_("with -A, do not loosen objects older than this")),
 		OPT_INTEGER(0, "window", &window,
@@ -202,6 +206,9 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		argv_array_pushf(&cmd_args, "--no-reuse-delta");
 	if (no_reuse_object)
 		argv_array_pushf(&cmd_args, "--no-reuse-object");
+	if (write_bitmap >= 0)
+		argv_array_pushf(&cmd_args, "--%swrite-bitmap-index",
+				 write_bitmap ? "" : "no-");
 
 	if (pack_everything & ALL_INTO_ONE) {
 		get_non_kept_pack_filenames(&existing_packs);
