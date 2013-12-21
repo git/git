@@ -86,7 +86,7 @@ int sha1close(struct sha1file *f, unsigned char *result, unsigned int flags)
 	return fd;
 }
 
-int sha1write(struct sha1file *f, void *buf, unsigned int count)
+void sha1write(struct sha1file *f, void *buf, unsigned int count)
 {
 	while (count) {
 		unsigned offset = f->offset;
@@ -116,7 +116,6 @@ int sha1write(struct sha1file *f, void *buf, unsigned int count)
 		}
 		f->offset = offset;
 	}
-	return 0;
 }
 
 struct sha1file *sha1fd(int fd, const char *name)

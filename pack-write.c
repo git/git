@@ -189,8 +189,7 @@ off_t write_pack_header(struct sha1file *f, uint32_t nr_entries)
 	hdr.hdr_signature = htonl(PACK_SIGNATURE);
 	hdr.hdr_version = htonl(PACK_VERSION);
 	hdr.hdr_entries = htonl(nr_entries);
-	if (sha1write(f, &hdr, sizeof(hdr)))
-		return 0;
+	sha1write(f, &hdr, sizeof(hdr));
 	return sizeof(hdr);
 }
 
