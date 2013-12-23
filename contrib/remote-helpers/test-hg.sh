@@ -337,6 +337,17 @@ test_expect_success 'remote cloning' '
 	check gitrepo HEAD zero
 '
 
+test_expect_success 'moving remote clone' '
+	test_when_finished "rm -rf gitrepo*" &&
+
+	(
+	git clone "hg::hgrepo" gitrepo &&
+	mv gitrepo gitrepo2 &&
+	cd gitrepo2 &&
+	git fetch
+	)
+'
+
 test_expect_success 'remote update bookmark' '
 	test_when_finished "rm -rf gitrepo*" &&
 
