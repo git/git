@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Dec 2013, #04; Tue, 17)
+Subject: What's cooking in git.git (Dec 2013, #05; Thu, 26)
 X-master-at: 7794a680e63a2a11b73cb1194653662f2769a792
-X-next-at: 3e57c29e689448252d8f77d1a49492e7b4cdbfa4
+X-next-at: ce5f8720e5a64bacb433bf475a00b1be1182c612
 
-What's cooking in git.git (Dec 2013, #04; Tue, 17)
+What's cooking in git.git (Dec 2013, #05; Thu, 26)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -17,131 +17,127 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* bc/doc-merge-no-op-revert (2013-12-09) 1 commit
-  (merged to 'next' on 2013-12-13 at 6e0ce64)
- + Documentation: document pitfalls with 3-way merge
-
-
-* cc/starts-n-ends-with (2013-12-05) 4 commits
-  (merged to 'next' on 2013-12-12 at 76ee567)
- + replace {pre,suf}fixcmp() with {starts,ends}_with()
- + strbuf: introduce starts_with() and ends_with()
- + builtin/remote: remove postfixcmp() and use suffixcmp() instead
- + environment: normalize use of prefixcmp() by removing " != 0"
- (this branch is used by cc/starts-n-ends-with-endgame.)
-
- Remove a few duplicate implementations of prefix/suffix comparison
- functions, and rename them to starts_with and ends_with.
-
-
-* fc/trivial (2013-12-09) 4 commits
-  (merged to 'next' on 2013-12-13 at eeead16)
- + remote: fix status with branch...rebase=preserve
- + fetch: add missing documentation
- + t: trivial whitespace cleanups
- + abspath: trivial style fix
-
-
-* jk/t5000-gzip-simplify (2013-12-04) 1 commit
-  (merged to 'next' on 2013-12-09 at e9010f1)
- + t5000: simplify gzip prerequisite checks
-
- Test fix.
-
-
-* jl/commit-v-strip-marker (2013-12-05) 1 commit
-  (merged to 'next' on 2013-12-09 at 2b85e9e)
- + commit -v: strip diffs and submodule shortlogs from the commit message
-
- "git commit -v" appends the patch to the log message before
- editing, and then removed the patch when the editor returned
- control. However, the patch was not stripped correctly when the
- first modified path was a submodule.
-
-
-* kb/doc-exclude-directory-semantics (2013-12-09) 1 commit
-  (merged to 'next' on 2013-12-09 at e54b2ec)
- + gitignore.txt: clarify recursive nature of excluded directories
-
-
-* kn/gitweb-extra-branch-refs (2013-12-12) 4 commits
-  (merged to 'next' on 2013-12-12 at ae75b02)
- + gitweb: Denote non-heads, non-remotes branches
- + gitweb: Add a feature for adding more branch refs
- + gitweb: Return 1 on validation success instead of passed input
- + gitweb: Move check-ref-format code into separate function
-
- Allow gitweb to be configured to show refs out of refs/heads/ as if
- they were branches.
-
-
-* mm/mv-file-to-no-such-dir-with-slash (2013-12-04) 1 commit
-  (merged to 'next' on 2013-12-09 at f33bc0b)
- + mv: let 'git mv file no-such-dir/' error out
-
-
-* nd/gettext-vsnprintf (2013-12-04) 1 commit
-  (merged to 'next' on 2013-12-09 at e99106e)
- + gettext.c: detect the vsnprintf bug at runtime
-
-
-* nd/remove-opt-boolean (2013-12-09) 1 commit
-  (merged to 'next' on 2013-12-13 at 26f46cc)
- + parse-options: remove OPT_BOOLEAN
-
-
-* nd/transport-positive-depth-only (2013-12-06) 1 commit
-  (merged to 'next' on 2013-12-12 at f953cb8)
- + clone,fetch: catch non positive --depth option value
-
- "git fetch --depth=0" was a no-op, and was silently
- ignored. Diagnose it as an error.
-
-
-* tb/clone-ssh-with-colon-for-port (2013-12-09) 10 commits
-  (merged to 'next' on 2013-12-12 at ae4ae39)
- + git_connect(): use common return point
- + connect.c: refactor url parsing
- + git_connect(): refactor the port handling for ssh
- + git fetch: support host:/~repo
- + t5500: add test cases for diag-url
- + git fetch-pack: add --diag-url
- + git_connect: factor out discovery of the protocol and its parts
- + git_connect: remove artificial limit of a remote command
- + t5601: add tests for ssh
- + t5601: remove clear_ssh, refactor setup_ssh_wrapper
-
- Be more careful when parsing remote repository URL given in the
- scp-style host:path notation.
-
-
-* tr/send-email-ssl (2013-12-04) 3 commits
-  (merged to 'next' on 2013-12-09 at facb859)
- + send-email: set SSL options through IO::Socket::SSL::set_client_defaults
- + send-email: --smtp-ssl-cert-path takes an argument
- + send-email: pass Debug to Net::SMTP::SSL::new
-
- SSL-related options were not passed correctly to underlying socket
- layer in "git send-email".
-
---------------------------------------------------
 [New Topics]
 
-* ap/path-max (2013-12-16) 1 commit
- - Prevent buffer overflows when path is too long
+* bc/log-decoration (2013-12-20) 1 commit
+ - log: properly handle decorations with chained tags
+
+ "git log --decorate" did not handle a tag pointed by another tag
+ nicely.
 
  Will merge to 'next'.
 
 
-* mh/path-max (2013-12-17) 1 commit
- - prune-packed: use strbuf to avoid having to worry about PATH_MAX
+* jh/rlimit-nofile-fallback (2013-12-18) 1 commit
+ - get_max_fd_limit(): fall back to OPEN_MAX upon getrlimit/sysconf failure
 
- This is my rewrite of Michael's patch to prune-packed (which still
- had a hardcoded PATH_MAX limitation) using strbuf. Tweaking of the
- other patch in the same series ($gmane/239386) for prune is left as
- an exercise to the readers ;-)
+ When we figure out how many file descriptors to allocate for
+ keeping packfiles open, a system with non-working getrlimit() could
+ cause us to die(), but because we make this call only to get a
+ rough estimate of how many is available and we do not even attempt
+ to use up all file descriptors available ourselves, it is nicer to
+ fall back to a reasonable low value rather than dying.
+
+ Will merge to 'next'.
+
+
+* rt/bfg-ad-in-filter-branch-doc (2013-12-18) 1 commit
+ - docs: add filter-branch notes on The BFG
+
+ Will merge to 'next'.
+
+
+* sb/diff-orderfile-config (2013-12-18) 3 commits
+ - diff: add diff.orderfile configuration variable
+ - diff: let "git diff -O" read orderfile from any file and fail properly
+ - t4056: add new tests for "git diff -O"
+
+ Allow "git diff -O<file>" to be configured with a new configuration
+ variable.
+
+ Will merge to 'next'.
+
+
+* jc/graph-post-root-gap (2013-12-20) 1 commit
+ - graph: give an extra gap after showing root commit
+
+ This was primarily a RFH ($gmane/239580).
+
+
+* nd/daemon-informative-errors-typofix (2013-12-20) 1 commit
+ - daemon: be strict at parsing parameters --[no-]informative-errors
+
+ Will merge to 'next'.
+
+
+* tm/fetch-prune (2013-12-20) 2 commits
+ - fetch --prune: run prune before fetching
+ - fetch --prune: always print header url
+
+ Fetching 'frotz' branch with "git fetch", while having
+ 'frotz/nitfol' remote-tracking branch from an earlier fetch, would
+ error out, primarily because the command has not been told to
+ remove anything on our side. In such a case, "git fetch --prune"
+ can be used to remove 'frotz/nitfol' to make room to fetch and
+ store 'frotz' remote-tracking branch.
+
+ Will merge to 'next'.
+
+
+* jk/oi-delta-base (2013-12-26) 2 commits
+ - cat-file: provide %(deltabase) batch format
+ - sha1_object_info_extended: provide delta base sha1s
+
+ Teach "cat-file --batch" to show delta-base object name for a
+ packed object that is represented as a delta.
+
+ Will merge to 'next'.
+
+
+* jk/sha1write-void (2013-12-26) 1 commit
+ - do not pretend sha1write returns errors
+
+ Code clean-up.
+
+ Will merge to 'next'.
+
+
+* jl/submodule-recursive-checkout (2013-12-26) 5 commits
+ - Teach checkout to recursively checkout submodules
+ - submodule: teach unpack_trees() to update submodules
+ - submodule: teach unpack_trees() to repopulate submodules
+ - submodule: teach unpack_trees() to remove submodule contents
+ - submodule: prepare for recursive checkout of submodules
+
+
+* mh/safe-create-leading-directories (2013-12-26) 5 commits
+ - rename_ref(): fix a mkdir()/rmdir() race
+ - safe_create_leading_directories(): fix a mkdir/rmdir race
+ - safe_create_leading_directories(): add "slash" pointer
+ - safe_create_leading_directories(): reduce scope of local variable
+ - safe_create_leading_directories(): modernize format of "if" chaining
+
+ Code clean-up and protection against concurrent write access to the
+ ref namespace.
+
+ Will merge to 'next'.
+
+
+* nd/add-empty-fix (2013-12-26) 1 commit
+ - add: don't complain when adding empty project root
+
+ "git add -A" (no other arguments) in a totally empty working tree
+ used to emit an error.
+
+ Will merge to 'next'.
+
+
+* nd/commit-tree-constness (2013-12-26) 1 commit
+ - commit.c: make "tree" a const pointer in commit_tree*()
+
+ Code clean-up.
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -173,8 +169,9 @@ of the repositories listed at
  merged to 'pu' so far).
 
 
-* kb/fast-hashmap (2013-12-16) 17 commits
+* kb/fast-hashmap (2013-12-18) 18 commits
  - hashmap.h: make sure map entries are tightly packed
+ - hashmap.h: Use 'unsigned int' for hash-codes everywhere
   (merged to 'next' on 2013-12-16 at bff99b1)
  + Drop unnecessary #includes from test-hashmap
  + Add test-hashmap to .gitignore
@@ -233,38 +230,6 @@ of the repositories listed at
 
  Temporarily ejected from 'pu', to try out jk/pack-bitmap, which
  this topic conflicts with.
-
-
-* jk/pack-bitmap (2013-11-18) 22 commits
- - compat/mingw.h: Fix the MinGW and msvc builds
- - pack-bitmap: implement optional name_hash cache
- - t/perf: add tests for pack bitmaps
- - t: add basic bitmap functionality tests
- - count-objects: recognize .bitmap in garbage-checking
- - repack: consider bitmaps when performing repacks
- - repack: handle optional files created by pack-objects
- - repack: turn exts array into array-of-struct
- - repack: stop using magic number for ARRAY_SIZE(exts)
- - pack-objects: implement bitmap writing
- - rev-list: add bitmap mode to speed up object lists
- - pack-objects: use bitmaps when packing objects
- - pack-bitmap: add support for bitmap indexes
- - documentation: add documentation for the bitmap format
- - ewah: compressed bitmap implementation
- - compat: add endianness helpers
- - sha1_file: export `git_open_noatime`
- - revision: allow setting custom limiter function
- - pack-objects: factor out name_hash
- - pack-objects: refactor the packing list
- - revindex: export new APIs
- + sha1write: make buffer const-correct
- (this branch is tangled with jk/name-pack-after-byte-representation.)
-
- Borrows the bitmap index into packfiles from JGit to speed up
- enumeration of objects involved in a commit range without having to
- fully traverse the history.
-
- A reroll forthcoming?
 
 
 * mf/graph-show-root (2013-10-25) 1 commit
@@ -353,6 +318,53 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* jk/pack-bitmap (2013-12-26) 23 commits
+ - pack-bitmap: implement optional name_hash cache
+ - t/perf: add tests for pack bitmaps
+ - t: add basic bitmap functionality tests
+ - count-objects: recognize .bitmap in garbage-checking
+ - repack: consider bitmaps when performing repacks
+ - repack: handle optional files created by pack-objects
+ - repack: turn exts array into array-of-struct
+ - repack: stop using magic number for ARRAY_SIZE(exts)
+ - pack-objects: implement bitmap writing
+ - rev-list: add bitmap mode to speed up object lists
+ - pack-objects: use bitmaps when packing objects
+ - pack-objects: split add_object_entry
+ - pack-bitmap: add support for bitmap indexes
+ - documentation: add documentation for the bitmap format
+ - ewah: compressed bitmap implementation
+ - compat/mingw.h: teach PRIx64 format to the MinGW and msvc builds
+ - compat: add endianness helpers
+ - sha1_file: export `git_open_noatime`
+ - revision: allow setting custom limiter function
+ - pack-objects: factor out name_hash
+ - pack-objects: refactor the packing list
+ - revindex: export new APIs
+ + sha1write: make buffer const-correct
+ (this branch is tangled with jk/name-pack-after-byte-representation.)
+
+ Borrows the bitmap index into packfiles from JGit to speed up
+ enumeration of objects involved in a commit range without having to
+ fully traverse the history.
+
+
+* ap/path-max (2013-12-16) 1 commit
+ - Prevent buffer overflows when path is too long
+
+ Will merge to 'next'.
+
+
+* mh/path-max (2013-12-18) 2 commits
+ - builtin/prune.c: use strbuf to avoid having to worry about PATH_MAX
+ - prune-packed: use strbuf to avoid having to worry about PATH_MAX
+
+ A few places where we relied on a fixed length buffer to hold
+ pathnames in these two programs have been converted to use strbuf.
+
+ Will merge to 'next'.
+
+
 * nv/commit-gpgsign-config (2013-12-17) 3 commits
  - test the commit.gpgsign config option
  - commit-tree: add and document --no-gpg-sign
@@ -400,14 +412,16 @@ of the repositories listed at
  Will hold.
 
 
-* fc/remote-helper-fixes (2013-12-09) 4 commits
+* fc/remote-helper-fixes (2013-12-26) 5 commits
+  (merged to 'next' on 2013-12-26 at ce5f872)
+ + remote-hg: test 'shared_path' in a moved clone
   (merged to 'next' on 2013-12-17 at aa4dc07)
  + remote-hg: add tests for special filenames
  + remote-hg: fix 'shared path' path
  + remote-helpers: add extra safety checks
  + remote-hg: avoid buggy strftime()
 
- Expecting follow-up test additions.
+ Will merge to 'master'.
 
 
 * jk/cat-file-regression-fix (2013-12-12) 2 commits
