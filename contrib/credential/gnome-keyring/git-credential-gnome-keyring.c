@@ -60,7 +60,7 @@
 #define gnome_keyring_memory_free gnome_keyring_free_password
 #define gnome_keyring_memory_strdup g_strdup
 
-static const char* gnome_keyring_result_to_message(GnomeKeyringResult result)
+static const char *gnome_keyring_result_to_message(GnomeKeyringResult result)
 {
 	switch (result) {
 	case GNOME_KEYRING_RESULT_OK:
@@ -95,9 +95,9 @@ static const char* gnome_keyring_result_to_message(GnomeKeyringResult result)
 
 static void gnome_keyring_done_cb(GnomeKeyringResult result, gpointer user_data)
 {
-	gpointer *data = (gpointer*) user_data;
-	int *done = (int*) data[0];
-	GnomeKeyringResult *r = (GnomeKeyringResult*) data[1];
+	gpointer *data = (gpointer *)user_data;
+	int *done = (int *)data[0];
+	GnomeKeyringResult *r = (GnomeKeyringResult *)data[1];
 
 	*r = result;
 	*done = 1;
@@ -130,34 +130,30 @@ static GnomeKeyringResult gnome_keyring_item_delete_sync(const char *keyring, gu
 /*
  * This credential struct and API is simplified from git's credential.{h,c}
  */
-struct credential
-{
-	char          *protocol;
-	char          *host;
+struct credential {
+	char *protocol;
+	char *host;
 	unsigned short port;
-	char          *path;
-	char          *username;
-	char          *password;
+	char *path;
+	char *username;
+	char *password;
 };
 
-#define CREDENTIAL_INIT \
-  { NULL,NULL,0,NULL,NULL,NULL }
+#define CREDENTIAL_INIT { NULL, NULL, 0, NULL, NULL, NULL }
 
-typedef int (*credential_op_cb)(struct credential*);
+typedef int (*credential_op_cb)(struct credential *);
 
-struct credential_operation
-{
-	char             *name;
+struct credential_operation {
+	char *name;
 	credential_op_cb op;
 };
 
-#define CREDENTIAL_OP_END \
-  { NULL,NULL }
+#define CREDENTIAL_OP_END { NULL, NULL }
 
 /* ----------------- GNOME Keyring functions ----------------- */
 
 /* create a special keyring option string, if path is given */
-static char* keyring_object(struct credential *c)
+static char *keyring_object(struct credential *c)
 {
 	if (!c->path)
 		return NULL;
@@ -170,7 +166,7 @@ static char* keyring_object(struct credential *c)
 
 static int keyring_get(struct credential *c)
 {
-	char* object = NULL;
+	char *object = NULL;
 	GList *entries;
 	GnomeKeyringNetworkPasswordData *password_data;
 	GnomeKeyringResult result;
@@ -204,7 +200,7 @@ static int keyring_get(struct credential *c)
 	}
 
 	/* pick the first one from the list */
-	password_data = (GnomeKeyringNetworkPasswordData *) entries->data;
+	password_data = (GnomeKeyringNetworkPasswordData *)entries->data;
 
 	gnome_keyring_memory_free(c->password);
 	c->password = gnome_keyring_memory_strdup(password_data->password);
@@ -221,7 +217,7 @@ static int keyring_get(struct credential *c)
 static int keyring_store(struct credential *c)
 {
 	guint32 item_id;
-	char  *object = NULL;
+	char *object = NULL;
 	GnomeKeyringResult result;
 
 	/*
@@ -262,7 +258,7 @@ static int keyring_store(struct credential *c)
 
 static int keyring_erase(struct credential *c)
 {
-	char  *object = NULL;
+	char *object = NULL;
 	GList *entries;
 	GnomeKeyringNetworkPasswordData *password_data;
 	GnomeKeyringResult result;
@@ -298,22 +294,20 @@ static int keyring_erase(struct credential *c)
 	if (result == GNOME_KEYRING_RESULT_CANCELLED)
 		return EXIT_SUCCESS;
 
-	if (result != GNOME_KEYRING_RESULT_OK)
-	{
+	if (result != GNOME_KEYRING_RESULT_OK) {
 		g_critical("%s", gnome_keyring_result_to_message(result));
 		return EXIT_FAILURE;
 	}
 
 	/* pick the first one from the list (delete all matches?) */
-	password_data = (GnomeKeyringNetworkPasswordData *) entries->data;
+	password_data = (GnomeKeyringNetworkPasswordData *)entries->data;
 
 	result = gnome_keyring_item_delete_sync(
 		password_data->keyring, password_data->item_id);
 
 	gnome_keyring_network_password_list_free(entries);
 
-	if (result != GNOME_KEYRING_RESULT_OK)
-	{
+	if (result != GNOME_KEYRING_RESULT_OK) {
 		g_critical("%s", gnome_keyring_result_to_message(result));
 		return EXIT_FAILURE;
 	}
@@ -325,9 +319,8 @@ static int keyring_erase(struct credential *c)
  * Table with helper operation callbacks, used by generic
  * credential helper main function.
  */
-static struct credential_operation const credential_helper_ops[] =
-{
-	{ "get",   keyring_get   },
+static struct credential_operation const credential_helper_ops[] = {
+	{ "get",   keyring_get },
 	{ "store", keyring_store },
 	{ "erase", keyring_erase },
 	CREDENTIAL_OP_END
@@ -353,24 +346,23 @@ static void credential_clear(struct credential *c)
 
 static int credential_read(struct credential *c)
 {
-	char    *buf;
+	char *buf;
 	size_t line_len;
-	char   *key;
-	char   *value;
+	char *key;
+	char *value;
 
 	key = buf = gnome_keyring_memory_alloc(1024);
 
-	while (fgets(buf, 1024, stdin))
-	{
+	while (fgets(buf, 1024, stdin)) {
 		line_len = strlen(buf);
 
 		if (line_len && buf[line_len-1] == '\n')
-			buf[--line_len]='\0';
+			buf[--line_len] = '\0';
 
 		if (!line_len)
 			break;
 
-		value = strchr(buf,'=');
+		value = strchr(buf, '=');
 		if (!value) {
 			g_warning("invalid credential line: %s", key);
 			gnome_keyring_memory_free(buf);
@@ -384,7 +376,7 @@ static int credential_read(struct credential *c)
 		} else if (!strcmp(key, "host")) {
 			g_free(c->host);
 			c->host = g_strdup(value);
-			value = strrchr(c->host,':');
+			value = strrchr(c->host, ':');
 			if (value) {
 				*value++ = '\0';
 				c->port = atoi(value);
@@ -398,7 +390,8 @@ static int credential_read(struct credential *c)
 		} else if (!strcmp(key, "password")) {
 			gnome_keyring_memory_free(c->password);
 			c->password = gnome_keyring_memory_strdup(value);
-			while (*value) *value++ = '\0';
+			while (*value)
+				*value++ = '\0';
 		}
 		/*
 		 * Ignore other lines; we don't know what they mean, but
@@ -429,16 +422,16 @@ static void credential_write(const struct credential *c)
 static void usage(const char *name)
 {
 	struct credential_operation const *try_op = credential_helper_ops;
-	const char *basename = strrchr(name,'/');
+	const char *basename = strrchr(name, '/');
 
 	basename = (basename) ? basename + 1 : name;
 	fprintf(stderr, "usage: %s <", basename);
 	while (try_op->name) {
-		fprintf(stderr,"%s",(try_op++)->name);
+		fprintf(stderr, "%s", (try_op++)->name);
 		if (try_op->name)
-			fprintf(stderr,"%s","|");
+			fprintf(stderr, "%s", "|");
 	}
-	fprintf(stderr,"%s",">\n");
+	fprintf(stderr, "%s", ">\n");
 }
 
 int main(int argc, char *argv[])
@@ -446,7 +439,7 @@ int main(int argc, char *argv[])
 	int ret = EXIT_SUCCESS;
 
 	struct credential_operation const *try_op = credential_helper_ops;
-	struct credential                  cred   = CREDENTIAL_INIT;
+	struct credential cred = CREDENTIAL_INIT;
 
 	if (!argv[1]) {
 		usage(argv[0]);
