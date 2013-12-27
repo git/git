@@ -415,6 +415,9 @@ def get_repo(url, alias):
         local_path = os.path.join(dirname, 'clone')
         if not os.path.exists(local_path):
             hg.share(myui, shared_path, local_path, update=False)
+        else:
+            # make sure the shared path is always up-to-date
+            util.writefile(os.path.join(local_path, '.hg', 'sharedpath'), hg_path)
 
         repo = hg.repository(myui, local_path)
         try:
@@ -537,7 +540,7 @@ def export_ref(repo, name, kind, head):
 
         print "commit %s" % ref
         print "mark :%d" % (note_mark)
-        print "committer remote-hg <> %s" % (ptime.strftime('%s %z'))
+        print "committer remote-hg <> %d %s" % (ptime.time(), gittz(ptime.timezone))
         desc = "Notes for %s\n" % (name)
         print "data %d" % (len(desc))
         print desc
@@ -1164,6 +1167,16 @@ def main(args):
     global dry_run
     global notes, alias
 
+    marks = None
+    is_tmp = False
+    gitdir = os.environ.get('GIT_DIR', None)
+
+    if len(args) < 3:
+        die('Not enough arguments.')
+
+    if not gitdir:
+        die('GIT_DIR not set')
+
     alias = args[1]
     url = args[2]
     peer = None
@@ -1184,16 +1197,12 @@ def main(args):
     if alias[4:] == url:
         is_tmp = True
         alias = hashlib.sha1(alias).hexdigest()
-    else:
-        is_tmp = False
 
-    gitdir = os.environ['GIT_DIR']
     dirname = os.path.join(gitdir, 'hg', alias)
     branches = {}
     bmarks = {}
     blob_marks = {}
     parsed_refs = {}
-    marks = None
     parsed_tags = {}
     filenodes = {}
     fake_bmark = None
