@@ -2899,11 +2899,16 @@ static void run_external_diff(const char *pgm,
 			      struct diff_filespec *one,
 			      struct diff_filespec *two,
 			      const char *xfrm_msg,
-			      int complete_rewrite)
+			      int complete_rewrite,
+			      struct diff_options *o)
 {
 	const char *spawn_arg[10];
 	int retval;
 	const char **arg = &spawn_arg[0];
+	struct diff_queue_struct *q = &diff_queued_diff;
+	const char *env[3] = { NULL };
+	char env_counter[50];
+	char env_total[50];
 
 	if (one && two) {
 		struct diff_tempfile *temp_one, *temp_two;
@@ -2928,7 +2933,14 @@ static void run_external_diff(const char *pgm,
 	}
 	*arg = NULL;
 	fflush(NULL);
-	retval = run_command_v_opt(spawn_arg, RUN_USING_SHELL);
+
+	env[0] = env_counter;
+	snprintf(env_counter, sizeof(env_counter), "GIT_DIFF_PATH_COUNTER=%d",
+		 ++o->diff_path_counter);
+	env[1] = env_total;
+	snprintf(env_total, sizeof(env_total), "GIT_DIFF_PATH_TOTAL=%d", q->nr);
+
+	retval = run_command_v_opt_cd_env(spawn_arg, RUN_USING_SHELL, NULL, env);
 	remove_tempfile();
 	if (retval) {
 		fprintf(stderr, "external diff died, stopping at %s.\n", name);
@@ -3042,7 +3054,7 @@ static void run_diff_cmd(const char *pgm,
 
 	if (pgm) {
 		run_external_diff(pgm, name, other, one, two, xfrm_msg,
-				  complete_rewrite);
+				  complete_rewrite, o);
 		return;
 	}
 	if (one && two)
@@ -3317,6 +3329,8 @@ void diff_setup_done(struct diff_options *options)
 		options->output_format = DIFF_FORMAT_NO_OUTPUT;
 		DIFF_OPT_SET(options, EXIT_WITH_STATUS);
 	}
+
+	options->diff_path_counter = 0;
 }
 
 static int opt_arg(const char *arg, int arg_short, const char *arg_long, int *val)

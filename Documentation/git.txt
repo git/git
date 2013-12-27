@@ -807,6 +807,15 @@ temporary file --- it is removed when 'GIT_EXTERNAL_DIFF' exits.
 +
 For a path that is unmerged, 'GIT_EXTERNAL_DIFF' is called with 1
 parameter, <path>.
++
+For each path 'GIT_EXTERNAL_DIFF' is called, two environment variables,
+'GIT_DIFF_PATH_COUNTER' and 'GIT_DIFF_PATH_TOTAL' are set.
+
+'GIT_DIFF_PATH_COUNTER'::
+	A 1-based counter incremented by one for every path.
+
+'GIT_DIFF_PATH_TOTAL'::
+	The total number of paths.
 
 other
 ~~~~~

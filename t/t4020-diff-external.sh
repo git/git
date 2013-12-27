@@ -193,6 +193,19 @@ test_expect_success 'GIT_EXTERNAL_DIFF with more than one changed files' '
 	GIT_EXTERNAL_DIFF=echo git diff
 '
 
+test_expect_success 'GIT_EXTERNAL_DIFF path counter/total' '
+	write_script external-diff.sh <<-\EOF &&
+	echo $GIT_DIFF_PATH_COUNTER of $GIT_DIFF_PATH_TOTAL >>counter.txt
+	EOF
+	>counter.txt &&
+	cat >expect <<-\EOF &&
+	1 of 2
+	2 of 2
+	EOF
+	GIT_EXTERNAL_DIFF=./external-diff.sh git diff &&
+	test_cmp expect counter.txt
+'
+
 test_expect_success 'GIT_EXTERNAL_DIFF generates pretty paths' '
 	touch file.ext &&
 	git add file.ext &&
