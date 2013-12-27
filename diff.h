@@ -332,7 +332,7 @@ extern int diff_flush_patch_id(struct diff_options *, unsigned char *);
 
 extern int diff_result_code(struct diff_options *, int);
 
-extern void diff_no_index(struct rev_info *, int, const char **, int, const char *);
+extern void diff_no_index(struct rev_info *, int, const char **, const char *);
 
 extern int index_differs_from(const char *def, int diff_flags);
 
