@@ -304,8 +304,12 @@ sub C {
 	my ($self, $m, $deletions) = @_;
 	my ($dir, $file) = split_path($m->{file_b});
 	my $pbat = $self->ensure_path($dir, $deletions);
+	# workaround for a bug in svn serf backend (v1.8.5 and below):
+	# store third argument to ->add_file() in a local variable, to make it
+	# have the same lifetime as $fbat
+	my $upa = $self->url_path($m->{file_a});
 	my $fbat = $self->add_file($self->repo_path($m->{file_b}), $pbat,
-				$self->url_path($m->{file_a}), $self->{r});
+				$upa, $self->{r});
 	print "\tC\t$m->{file_a} => $m->{file_b}\n" unless $::_q;
 	$self->chg_file($fbat, $m);
 	$self->close_file($fbat,undef,$self->{pool});
@@ -323,8 +327,10 @@ sub R {
 	my ($self, $m, $deletions) = @_;
 	my ($dir, $file) = split_path($m->{file_b});
 	my $pbat = $self->ensure_path($dir, $deletions);
+	# workaround for a bug in svn serf backend, see comment in C() above
+	my $upa = $self->url_path($m->{file_a});
 	my $fbat = $self->add_file($self->repo_path($m->{file_b}), $pbat,
-				$self->url_path($m->{file_a}), $self->{r});
+				$upa, $self->{r});
 	print "\tR\t$m->{file_a} => $m->{file_b}\n" unless $::_q;
 	$self->apply_autoprops($file, $fbat);
 	$self->chg_file($fbat, $m);
