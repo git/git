@@ -286,6 +286,7 @@ static int try_difference(const char *arg)
 				exclude = n;
 			}
 		}
+		*dotdot = '.';
 		return 1;
 	}
 	*dotdot = '.';
@@ -309,8 +310,10 @@ static int try_parent_shorthands(const char *arg)
 		return 0;
 
 	*dotdot = 0;
-	if (get_sha1_committish(arg, sha1))
+	if (get_sha1_committish(arg, sha1)) {
+		*dotdot = '^';
 		return 0;
+	}
 
 	if (!parents_only)
 		show_rev(NORMAL, sha1, arg);
@@ -319,6 +322,7 @@ static int try_parent_shorthands(const char *arg)
 		show_rev(parents_only ? NORMAL : REVERSED,
 				parents->item->object.sha1, arg);
 
+	*dotdot = '^';
 	return 1;
 }
 
@@ -488,6 +492,7 @@ N_("git rev-parse --parseopt [options] -- [<args>...]\n"
 int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 {
 	int i, as_is = 0, verify = 0, quiet = 0, revs_count = 0, type = 0;
+	int has_dashdash = 0;
 	int output_prefix = 0;
 	unsigned char sha1[20];
 	const char *name = NULL;
@@ -500,6 +505,13 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 
 	if (argc > 1 && !strcmp("-h", argv[1]))
 		usage(builtin_rev_parse_usage);
+
+	for (i = 1; i < argc; i++) {
+		if (!strcmp(argv[i], "--")) {
+			has_dashdash = 1;
+			break;
+		}
+	}
 
 	prefix = setup_git_directory();
 	git_config(git_default_config, NULL);
@@ -788,6 +800,8 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 		}
 		if (verify)
 			die_no_single_rev(quiet);
+		if (has_dashdash)
+			die("bad revision '%s'", arg);
 		as_is = 1;
 		if (!show_file(arg, output_prefix))
 			continue;
