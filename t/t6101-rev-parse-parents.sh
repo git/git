@@ -20,7 +20,17 @@ test_expect_success 'setup' '
 	test_commit start2 &&
 	git checkout master &&
 	git merge -m next start2 &&
-	test_commit final
+	test_commit final &&
+
+	test_seq 40 |
+	while read i
+	do
+		git checkout --orphan "b$i" &&
+		test_tick &&
+		git commit --allow-empty -m "$i" &&
+		commit=$(git rev-parse --verify HEAD) &&
+		printf "$commit " >>.git/info/grafts
+	done
 '
 
 test_expect_success 'start is valid' '
@@ -77,6 +87,10 @@ test_expect_success 'final^1^! = final^1 ^final^1^1 ^final^1^2' '
 	git rev-parse final^1 ^final^1^1 ^final^1^2 >expect &&
 	git rev-parse final^1^! >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'large graft octopus' '
+	test_cmp_rev_output b31 "git rev-parse --verify b1^30"
 '
 
 test_expect_success 'repack for next test' '
