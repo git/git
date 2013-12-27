@@ -128,6 +128,7 @@ struct ref *alloc_ref(const char *name);
 struct ref *copy_ref(const struct ref *ref);
 struct ref *copy_ref_list(const struct ref *ref);
 void sort_ref_list(struct ref **, int (*cmp)(const void *, const void *));
+extern int count_refspec_match(const char *, struct ref *refs, struct ref **matched_ref);
 int ref_compare_name(const void *, const void *);
 
 int check_ref_type(const struct ref *ref, int flags);
@@ -162,6 +163,7 @@ struct refspec *parse_fetch_refspec(int nr_refspec, const char **refspec);
 
 void free_refspec(int nr_refspec, struct refspec *refspec);
 
+extern int query_refspecs(struct refspec *specs, int nr, struct refspec *query);
 char *apply_refspecs(struct refspec *refspecs, int nr_refspec,
 		     const char *name);
 

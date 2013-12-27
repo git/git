@@ -852,7 +852,7 @@ static int match_name_with_pattern(const char *key, const char *name,
 	return ret;
 }
 
-static int query_refspecs(struct refspec *refs, int ref_count, struct refspec *query)
+int query_refspecs(struct refspec *refs, int ref_count, struct refspec *query)
 {
 	int i;
 	int find_src = !query->src;
@@ -986,9 +986,9 @@ void sort_ref_list(struct ref **l, int (*cmp)(const void *, const void *))
 	*l = llist_mergesort(*l, ref_list_get_next, ref_list_set_next, cmp);
 }
 
-static int count_refspec_match(const char *pattern,
-			       struct ref *refs,
-			       struct ref **matched_ref)
+int count_refspec_match(const char *pattern,
+			struct ref *refs,
+			struct ref **matched_ref)
 {
 	int patlen = strlen(pattern);
 	struct ref *matched_weak = NULL;
