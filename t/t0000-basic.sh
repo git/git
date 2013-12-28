@@ -41,9 +41,6 @@ test_expect_success '.git/objects should have 3 subdirectories' '
 test_expect_success 'success is reported like this' '
 	:
 '
-test_expect_failure 'pretend we have a known breakage' '
-	false
-'
 
 run_sub_test_lib_test () {
 	name="$1" descr="$2" # stdin is the body of the test code
