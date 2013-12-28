@@ -71,6 +71,8 @@ run_sub_test_lib_test () {
 		cat >>"$name.sh" &&
 		chmod +x "$name.sh" &&
 		export TEST_DIRECTORY &&
+		TEST_OUTPUT_DIRECTORY=$(pwd) &&
+		export TEST_OUTPUT_DIRECTORY &&
 		./"$name.sh" "$@" >out 2>err
 	)
 }
