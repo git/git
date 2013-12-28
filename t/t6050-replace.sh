@@ -306,7 +306,7 @@ test_expect_success 'test --format medium' '
 	test_cmp expected actual
 '
 
-test_expect_success 'test --format full' '
+test_expect_success 'test --format long' '
 	{
 		echo "$H1 (commit) -> $BLOB (blob)" &&
 		echo "$BLOB (blob) -> $REPLACED (blob)" &&
@@ -314,7 +314,7 @@ test_expect_success 'test --format full' '
 		echo "$PARA3 (commit) -> $S (commit)" &&
 		echo "$MYTAG (tag) -> $HASH1 (commit)"
 	} | sort >expected &&
-	git replace --format=full | sort > actual &&
+	git replace --format=long | sort > actual &&
 	test_cmp expected actual
 '
 

@@ -72,7 +72,7 @@ OPTIONS
 
 --format=<format>::
 	When listing, use the specified <format>, which can be one of
-	'short', 'medium' and 'full'. When omitted, the format
+	'short', 'medium' and 'long'. When omitted, the format
 	defaults to 'short'.
 
 FORMATS
@@ -84,7 +84,7 @@ The following format are available:
 	<replaced sha1>
 * 'medium':
 	<replaced sha1> -> <replacement sha1>
-* 'full'
+* 'long':
 	<replaced sha1> (<replaced type>) -> <replacement sha1> (<replacement type>)
 
 CREATING REPLACEMENT OBJECTS

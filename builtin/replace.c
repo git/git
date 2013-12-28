@@ -20,11 +20,15 @@ static const char * const git_replace_usage[] = {
 	NULL
 };
 
-enum repl_fmt { SHORT, MEDIUM, FULL };
+enum replace_format {
+      REPLACE_FORMAT_SHORT,
+      REPLACE_FORMAT_MEDIUM,
+      REPLACE_FORMAT_LONG
+};
 
 struct show_data {
 	const char *pattern;
-	enum repl_fmt fmt;
+	enum replace_format format;
 };
 
 static int show_reference(const char *refname, const unsigned char *sha1,
@@ -33,11 +37,11 @@ static int show_reference(const char *refname, const unsigned char *sha1,
 	struct show_data *data = cb_data;
 
 	if (!fnmatch(data->pattern, refname, 0)) {
-		if (data->fmt == SHORT)
+		if (data->format == REPLACE_FORMAT_SHORT)
 			printf("%s\n", refname);
-		else if (data->fmt == MEDIUM)
+		else if (data->format == REPLACE_FORMAT_MEDIUM)
 			printf("%s -> %s\n", refname, sha1_to_hex(sha1));
-		else { /* data->fmt == FULL */
+		else { /* data->format == REPLACE_FORMAT_LONG */
 			unsigned char object[20];
 			enum object_type obj_type, repl_type;
 
@@ -64,14 +68,14 @@ static int list_replace_refs(const char *pattern, const char *format)
 	data.pattern = pattern;
 
 	if (format == NULL || *format == '\0' || !strcmp(format, "short"))
-		data.fmt = SHORT;
+		data.format = REPLACE_FORMAT_SHORT;
 	else if (!strcmp(format, "medium"))
-		data.fmt = MEDIUM;
-	else if (!strcmp(format, "full"))
-		data.fmt = FULL;
+		data.format = REPLACE_FORMAT_MEDIUM;
+	else if (!strcmp(format, "long"))
+		data.format = REPLACE_FORMAT_LONG;
 	else
 		die("invalid replace format '%s'\n"
-		    "valid formats are 'short', 'medium' and 'full'\n",
+		    "valid formats are 'short', 'medium' and 'long'\n",
 		    format);
 
 	for_each_replace_ref(show_reference, (void *) &data);
