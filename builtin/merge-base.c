@@ -73,7 +73,7 @@ static int handle_octopus(int count, const char **args, int show_all)
 	for (i = count - 1; i >= 0; i--)
 		commit_list_insert(get_commit_reference(args[i]), &revs);
 
-	result = get_octopus_merge_bases(revs);
+	result = reduce_heads(get_octopus_merge_bases(revs));
 
 	if (!result)
 		return 1;
