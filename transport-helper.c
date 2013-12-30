@@ -14,6 +14,8 @@
 #include "refs.h"
 
 static int debug;
+/* TODO: put somewhere sensible, e.g. git_transport_options? */
+static int auto_gc = 1;
 
 struct helper_data {
 	const char *name;
@@ -429,7 +431,7 @@ static int get_exporter(struct transport *transport,
 	/* we need to duplicate helper->in because we want to use it after
 	 * fastexport is done with it. */
 	fastexport->out = dup(helper->in);
-	fastexport->argv = xcalloc(6 + revlist_args->nr, sizeof(*fastexport->argv));
+	fastexport->argv = xcalloc(7 + revlist_args->nr, sizeof(*fastexport->argv));
 	fastexport->argv[argc++] = "fast-export";
 	fastexport->argv[argc++] = "--use-done-feature";
 	fastexport->argv[argc++] = data->signed_tags ?
@@ -442,8 +444,23 @@ static int get_exporter(struct transport *transport,
 	for (i = 0; i < revlist_args->nr; i++)
 		fastexport->argv[argc++] = revlist_args->items[i].string;
 
+	fastexport->argv[argc++] = "--";
+
 	fastexport->git_cmd = 1;
 	return start_command(fastexport);
+}
+
+static void check_helper_status(struct helper_data *data)
+{
+	int pid, status;
+
+	pid = waitpid(data->helper->pid, &status, WNOHANG);
+	if (pid < 0)
+		die("Could not retrieve status of remote helper '%s'",
+		    data->name);
+	if (pid > 0 && WIFEXITED(status))
+		die("Remote helper '%s' died with %d",
+		    data->name, WEXITSTATUS(status));
 }
 
 static int fetch_with_import(struct transport *transport,
@@ -482,6 +499,7 @@ static int fetch_with_import(struct transport *transport,
 	if (finish_command(&fastimport))
 		die("Error while running fast-import");
 	argv_array_free_detached(fastimport.argv);
+	check_helper_status(data);
 
 	/*
 	 * The fast-import stream of a remote helper that advertises
@@ -513,6 +531,12 @@ static int fetch_with_import(struct transport *transport,
 		}
 	}
 	strbuf_release(&buf);
+	if (auto_gc) {
+		const char *argv_gc_auto[] = {
+			"gc", "--auto", "--quiet", NULL,
+		};
+		run_command_v_opt(argv_gc_auto, RUN_GIT_CMD);
+	}
 	return 0;
 }
 
@@ -890,6 +914,7 @@ static int push_refs_with_export(struct transport *transport,
 
 	if (finish_command(&exporter))
 		die("Error while running fast-export");
+	check_helper_status(data);
 	push_update_refs_status(data, remote_refs);
 	return 0;
 }
