@@ -70,7 +70,7 @@ DIR *dirent_opendir(const char *name)
 	dirent_DIR *dir;
 
 	/* convert name to UTF-16 and check length < MAX_PATH */
-	if ((len = xutftowcs_path(pattern, name)) < 0)
+	if ((len = xutftowcs_canonical_path(pattern, name)) < 0)
 		return NULL;
 
 	/* append optional '/' and wildcard '*' */
