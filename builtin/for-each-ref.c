@@ -92,7 +92,7 @@ static struct {
  */
 static const char **used_atom;
 static cmp_type *used_atom_type;
-static int used_atom_cnt, sort_atom_limit, need_tagged, need_symref;
+static int used_atom_cnt, need_tagged, need_symref;
 static int need_color_reset_at_eol;
 
 /*
@@ -1105,7 +1105,6 @@ int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 
 	if (!sort)
 		sort = default_sort();
-	sort_atom_limit = used_atom_cnt;
 
 	/* for warn_ambiguous_refs */
 	git_config(git_default_config, NULL);
