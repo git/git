@@ -467,9 +467,10 @@ static void graph_update_columns(struct git_graph *graph)
 	 *
 	 * First, make sure we have enough room.  At most, there will
 	 * be graph->num_columns + graph->num_parents columns for the next
-	 * commit.
+	 * commit, and we add one to make sure we can add the current commit
+	 * on the graph->columns[] if we haven't shown any of its descendants.
 	 */
-	max_new_columns = graph->num_columns + graph->num_parents;
+	max_new_columns = graph->num_columns + graph->num_parents + 1;
 	graph_ensure_capacity(graph, max_new_columns);
 
 	/*
@@ -478,6 +479,21 @@ static void graph_update_columns(struct git_graph *graph)
 	graph->mapping_size = 2 * max_new_columns;
 	for (i = 0; i < graph->mapping_size; i++)
 		graph->mapping[i] = -1;
+
+	/*
+	 * This commit will not be in graph->columns[] if we have
+	 * emitted no descendant of it so far.
+	 */
+	for (i = 0; i < graph->num_columns; i++)
+		if (graph->commit == graph->columns[i].commit)
+			break;
+	if (i == graph->num_columns) {
+		/* Append it at the end */
+		graph->columns[graph->num_columns].commit = graph->commit;
+		graph->columns[graph->num_columns].color =
+			graph_find_commit_color(graph, graph->commit);
+		graph->num_columns++;
+	}
 
 	/*
 	 * Populate graph->new_columns and graph->mapping
