@@ -198,6 +198,13 @@ ifeq ($(uname_S),OpenBSD)
 	BASIC_LDFLAGS += -L/usr/local/lib
 	HAVE_PATHS_H = YesPlease
 endif
+ifeq ($(uname_S),MirBSD)
+	NO_STRCASESTR = YesPlease
+	NO_MEMMEM = YesPlease
+	USE_ST_TIMESPEC = YesPlease
+	NEEDS_LIBICONV = YesPlease
+	HAVE_PATHS_H = YesPlease
+endif
 ifeq ($(uname_S),NetBSD)
 	ifeq ($(shell expr "$(uname_R)" : '[01]\.'),2)
 		NEEDS_LIBICONV = YesPlease
