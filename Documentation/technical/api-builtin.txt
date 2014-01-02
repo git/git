@@ -14,7 +14,7 @@ Git:
 
 . Add the external declaration for the function to `builtin.h`.
 
-. Add the command to `commands[]` table in `handle_internal_command()`,
+. Add the command to `commands[]` table in `handle_builtin()`,
   defined in `git.c`.  The entry should look like:
 
 	{ "foo", cmd_foo, <options> },
