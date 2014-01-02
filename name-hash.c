@@ -115,7 +115,7 @@ static int cache_entry_cmp(const struct cache_entry *ce1,
 {
 	/*
 	 * For remove_name_hash, find the exact entry (pointer equality); for
-	 * index_name_exists, find all entries with matching hash code and
+	 * index_file_exists, find all entries with matching hash code and
 	 * decide whether the entry matches in same_name.
 	 */
 	return remove ? !(ce1 == ce2) : 0;
@@ -225,13 +225,6 @@ struct cache_entry *index_file_exists(struct index_state *istate, const char *na
 		ce = hashmap_get_next(&istate->name_hash, ce);
 	}
 	return NULL;
-}
-
-struct cache_entry *index_name_exists(struct index_state *istate, const char *name, int namelen, int icase)
-{
-	if (namelen > 0 && name[namelen - 1] == '/')
-		return index_dir_exists(istate, name, namelen - 1);
-	return index_file_exists(istate, name, namelen, icase);
 }
 
 void free_name_hash(struct index_state *istate)
