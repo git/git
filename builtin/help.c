@@ -288,6 +288,7 @@ static struct cmdnames main_cmds, other_cmds;
 
 static int is_git_command(const char *s)
 {
+	load_command_list("git-", &main_cmds, &other_cmds);
 	return is_in_cmdlist(&main_cmds, s) ||
 		is_in_cmdlist(&other_cmds, s);
 }
@@ -449,7 +450,6 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 	int nongit;
 	const char *alias;
 	enum help_format parsed_help_format;
-	load_command_list("git-", &main_cmds, &other_cmds);
 
 	argc = parse_options(argc, argv, prefix, builtin_help_options,
 			builtin_help_usage, 0);
@@ -458,6 +458,7 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 	if (show_all) {
 		git_config(git_help_config, NULL);
 		printf(_("usage: %s%s"), _(git_usage_string), "\n\n");
+		load_command_list("git-", &main_cmds, &other_cmds);
 		list_commands(colopts, &main_cmds, &other_cmds);
 	}
 
