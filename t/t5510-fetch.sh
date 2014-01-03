@@ -614,4 +614,16 @@ test_expect_success 'all boundary commits are excluded' '
 	test_bundle_object_count .git/objects/pack/pack-${pack##pack	}.pack 3
 '
 
+test_expect_success 'fetch --prune prints the remotes url' '
+	git branch goodbye &&
+	git clone . only-prunes &&
+	git branch -D goodbye &&
+	(
+		cd only-prunes &&
+		git fetch --prune origin 2>&1 | head -n1 >../actual
+	) &&
+	echo "From ${D}/." >expect &&
+	test_cmp expect actual
+'
+
 test_done
