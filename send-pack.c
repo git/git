@@ -183,7 +183,7 @@ static int advertise_shallow_grafts_cb(const struct commit_graft *graft, void *c
 	return 0;
 }
 
-void advertise_shallow_grafts_buf(struct strbuf *sb)
+static void advertise_shallow_grafts_buf(struct strbuf *sb)
 {
 	if (!is_repository_shallow())
 		return;
