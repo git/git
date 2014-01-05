@@ -1841,6 +1841,7 @@ _git_config ()
 	branch.*)
 		local pfx="${cur%.*}." cur_="${cur#*.}"
 		__gitcomp_nl "$(__git_heads)" "$pfx" "$cur_" "."
+		__gitcomp_nl_append $'autosetupmerge\nautosetuprebase\n' "$pfx" "$cur_"
 		return
 		;;
 	guitool.*.*)
