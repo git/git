@@ -108,8 +108,9 @@ int mkdir_in_gitdir(const char *path)
 int safe_create_leading_directories(char *path)
 {
 	char *next_component = path + offset_1st_component(path);
+	int ret = 0;
 
-	while (next_component) {
+	while (!ret && next_component) {
 		struct stat st;
 		char *slash = strchr(next_component, '/');
 
@@ -125,25 +126,20 @@ int safe_create_leading_directories(char *path)
 		*slash = '\0';
 		if (!stat(path, &st)) {
 			/* path exists */
-			if (!S_ISDIR(st.st_mode)) {
-				*slash = '/';
-				return -3;
-			}
+			if (!S_ISDIR(st.st_mode))
+				ret = -3;
 		} else if (mkdir(path, 0777)) {
 			if (errno == EEXIST &&
-			    !stat(path, &st) && S_ISDIR(st.st_mode)) {
+			    !stat(path, &st) && S_ISDIR(st.st_mode))
 				; /* somebody created it since we checked */
-			} else {
-				*slash = '/';
-				return -1;
-			}
+			else
+				ret = -1;
 		} else if (adjust_shared_perm(path)) {
-			*slash = '/';
-			return -2;
+			ret = -2;
 		}
 		*slash = '/';
 	}
-	return 0;
+	return ret;
 }
 
 int safe_create_leading_directories_const(const char *path)
