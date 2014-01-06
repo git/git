@@ -125,8 +125,7 @@ int safe_create_leading_directories(char *path)
 				*pos = '/';
 				return -3;
 			}
-		}
-		else if (mkdir(path, 0777)) {
+		} else if (mkdir(path, 0777)) {
 			if (errno == EEXIST &&
 			    !stat(path, &st) && S_ISDIR(st.st_mode)) {
 				; /* somebody created it since we checked */
@@ -134,8 +133,7 @@ int safe_create_leading_directories(char *path)
 				*pos = '/';
 				return -1;
 			}
-		}
-		else if (adjust_shared_perm(path)) {
+		} else if (adjust_shared_perm(path)) {
 			*pos = '/';
 			return -2;
 		}
