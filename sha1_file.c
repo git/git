@@ -111,19 +111,21 @@ int safe_create_leading_directories(char *path)
 
 	while (pos) {
 		struct stat st;
+		char *slash = strchr(pos, '/');
 
-		pos = strchr(pos, '/');
-		if (!pos)
+		if (!slash)
 			break;
-		while (*++pos == '/')
-			;
+		while (*(slash + 1) == '/')
+			slash++;
+		pos = slash + 1;
 		if (!*pos)
 			break;
-		*--pos = '\0';
+
+		*slash = '\0';
 		if (!stat(path, &st)) {
 			/* path exists */
 			if (!S_ISDIR(st.st_mode)) {
-				*pos = '/';
+				*slash = '/';
 				return -3;
 			}
 		} else if (mkdir(path, 0777)) {
@@ -131,14 +133,14 @@ int safe_create_leading_directories(char *path)
 			    !stat(path, &st) && S_ISDIR(st.st_mode)) {
 				; /* somebody created it since we checked */
 			} else {
-				*pos = '/';
+				*slash = '/';
 				return -1;
 			}
 		} else if (adjust_shared_perm(path)) {
-			*pos = '/';
+			*slash = '/';
 			return -2;
 		}
-		*pos++ = '/';
+		*slash = '/';
 	}
 	return 0;
 }
