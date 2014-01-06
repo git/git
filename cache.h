@@ -736,8 +736,21 @@ enum sharedrepo {
 };
 int git_config_perm(const char *var, const char *value);
 int adjust_shared_perm(const char *path);
-int safe_create_leading_directories(char *path);
-int safe_create_leading_directories_const(const char *path);
+
+/*
+ * Create the directory containing the named path, using care to be
+ * somewhat safe against races.  Return one of the scld_error values
+ * to indicate success/failure.
+ */
+enum scld_error {
+	SCLD_OK = 0,
+	SCLD_FAILED = -1,
+	SCLD_PERMS = -2,
+	SCLD_EXISTS = -3
+};
+enum scld_error safe_create_leading_directories(char *path);
+enum scld_error safe_create_leading_directories_const(const char *path);
+
 int mkdir_in_gitdir(const char *path);
 extern void home_config_paths(char **global, char **xdg, char *file);
 extern char *expand_user_path(const char *path);

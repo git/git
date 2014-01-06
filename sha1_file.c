@@ -105,12 +105,12 @@ int mkdir_in_gitdir(const char *path)
 	return adjust_shared_perm(path);
 }
 
-int safe_create_leading_directories(char *path)
+enum scld_error safe_create_leading_directories(char *path)
 {
 	char *next_component = path + offset_1st_component(path);
-	int ret = 0;
+	enum scld_error ret = SCLD_OK;
 
-	while (!ret && next_component) {
+	while (ret == SCLD_OK && next_component) {
 		struct stat st;
 		char *slash = strchr(next_component, '/');
 
@@ -127,26 +127,26 @@ int safe_create_leading_directories(char *path)
 		if (!stat(path, &st)) {
 			/* path exists */
 			if (!S_ISDIR(st.st_mode))
-				ret = -3;
+				ret = SCLD_EXISTS;
 		} else if (mkdir(path, 0777)) {
 			if (errno == EEXIST &&
 			    !stat(path, &st) && S_ISDIR(st.st_mode))
 				; /* somebody created it since we checked */
 			else
-				ret = -1;
+				ret = SCLD_FAILED;
 		} else if (adjust_shared_perm(path)) {
-			ret = -2;
+			ret = SCLD_PERMS;
 		}
 		*slash = '/';
 	}
 	return ret;
 }
 
-int safe_create_leading_directories_const(const char *path)
+enum scld_error safe_create_leading_directories_const(const char *path)
 {
 	/* path points to cache entries, so xstrdup before messing with it */
 	char *buf = xstrdup(path);
-	int result = safe_create_leading_directories(buf);
+	enum scld_error result = safe_create_leading_directories(buf);
 	free(buf);
 	return result;
 }
