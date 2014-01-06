@@ -72,7 +72,7 @@ msgstr "Archivformat"
 
 #: archive.c:328 builtin/log.c:1193
 msgid "prefix"
-msgstr "Prefix"
+msgstr "Präfix"
 
 #: archive.c:329
 msgid "prepend prefix to each pathname in the archive"
@@ -3716,7 +3716,7 @@ msgid ""
 msgstr ""
 "Eingabehilfe:\n"
 "1          - nummeriertes Element auswählen\n"
-"foo        - Element anhand eines eindeutigen Prefix auswählen\n"
+"foo        - Element anhand eines eindeutigen Präfix auswählen\n"
 "           - (leer) nichts auswählen"
 
 #: builtin/clean.c:298
@@ -3734,7 +3734,7 @@ msgstr ""
 "1          - einzelnes Element auswählen\n"
 "3-5        - Bereich von Elementen auswählen\n"
 "2-3,6-9    - mehrere Bereiche auswählen\n"
-"foo        - Element anhand eines eindeutigen Prefix auswählen\n"
+"foo        - Element anhand eines eindeutigen Präfix auswählen\n"
 "-...       - angegebenes Element abwählen\n"
 "*          - alle Elemente auswählen\n"
 "           - (leer) Auswahl beenden"
@@ -6452,7 +6452,7 @@ msgstr "kennzeichnet die Serie als n-te Fassung"
 
 #: builtin/log.c:1194
 msgid "Use [<prefix>] instead of [PATCH]"
-msgstr "verwendet [<Prefix>] anstatt [PATCH]"
+msgstr "verwendet [<Präfix>] anstatt [PATCH]"
 
 #: builtin/log.c:1197
 msgid "store resulting files in <dir>"
@@ -8182,7 +8182,7 @@ msgid ""
 "[-u [--exclude-per-directory=<gitignore>] | -i]] [--no-sparse-checkout] [--"
 "index-output=<file>] (--empty | <tree-ish1> [<tree-ish2> [<tree-ish3>]])"
 msgstr ""
-"git read-tree [[-m [--trivial] [--aggressive] | --reset | --prefix=<Prefix>] "
+"git read-tree [[-m [--trivial] [--aggressive] | --reset | --prefix=<Präfix>] "
 "[-u [--exclude-per-directory=<gitignore>] | -i]] [--no-sparse-checkout] [--"
 "index-output=<Datei>] (--empty | <Commit-Referenz1> [<Commit-Referenz2> "
 "[<Commit-Referenz3>]])"
@@ -9782,15 +9782,15 @@ msgstr "gibt Tag-Inhalte aus"
 
 #: builtin/write-tree.c:13
 msgid "git write-tree [--missing-ok] [--prefix=<prefix>/]"
-msgstr "git write-tree [--missing-ok] [--prefix=<Prefix>/]"
+msgstr "git write-tree [--missing-ok] [--prefix=<Präfix>/]"
 
 #: builtin/write-tree.c:26
 msgid "<prefix>/"
-msgstr "<Prefix>/"
+msgstr "<Präfix>/"
 
 #: builtin/write-tree.c:27
 msgid "write tree object for a subdirectory <prefix>"
-msgstr "schreibt das \"Tree\"-Objekt für ein Unterverzeichnis <Prefix>"
+msgstr "schreibt das \"Tree\"-Objekt für ein Unterverzeichnis <Präfix>"
 
 #: builtin/write-tree.c:30
 msgid "only useful for debugging"
