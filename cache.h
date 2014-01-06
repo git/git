@@ -741,12 +741,20 @@ int adjust_shared_perm(const char *path);
  * Create the directory containing the named path, using care to be
  * somewhat safe against races.  Return one of the scld_error values
  * to indicate success/failure.
+ *
+ * SCLD_VANISHED indicates that one of the ancestor directories of the
+ * path existed at one point during the function call and then
+ * suddenly vanished, probably because another process pruned the
+ * directory while we were working.  To be robust against this kind of
+ * race, callers might want to try invoking the function again when it
+ * returns SCLD_VANISHED.
  */
 enum scld_error {
 	SCLD_OK = 0,
 	SCLD_FAILED = -1,
 	SCLD_PERMS = -2,
-	SCLD_EXISTS = -3
+	SCLD_EXISTS = -3,
+	SCLD_VANISHED = -4
 };
 enum scld_error safe_create_leading_directories(char *path);
 enum scld_error safe_create_leading_directories_const(const char *path);
