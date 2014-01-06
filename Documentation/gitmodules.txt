@@ -35,6 +35,8 @@ submodule.<name>.url::
 	linkgit:git-clone[1] or (if it begins with ./ or ../) a location
 	relative to the superproject's origin repository.
 
+In addition, there are a number of optional keys:
+
 submodule.<name>.update::
 	Defines what to do when the submodule is updated by the superproject.
 	If 'checkout' (the default), the new commit specified in the
