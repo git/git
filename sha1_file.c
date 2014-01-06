@@ -115,9 +115,10 @@ int safe_create_leading_directories(char *path)
 
 		if (!slash)
 			break;
-		while (*(slash + 1) == '/')
-			slash++;
+
 		next_component = slash + 1;
+		while (*next_component == '/')
+			next_component++;
 		if (!*next_component)
 			break;
 
