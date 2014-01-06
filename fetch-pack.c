@@ -986,7 +986,6 @@ static void update_shallow(struct fetch_pack_args *args,
 		return;
 
 	remove_nonexistent_theirs_shallow(si);
-	/* XXX remove_nonexistent_ours_in_pack() */
 	if (!si->nr_ours && !si->nr_theirs)
 		return;
 	for (i = 0; i < nr_sought; i++)

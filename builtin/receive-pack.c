@@ -1059,7 +1059,6 @@ static void update_shallow_info(struct command *commands,
 	struct command *cmd;
 	int *ref_status;
 	remove_nonexistent_theirs_shallow(si);
-	/* XXX remove_nonexistent_ours_in_pack() */
 	if (!si->nr_ours && !si->nr_theirs) {
 		shallow_update = 0;
 		return;

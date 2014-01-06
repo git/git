@@ -359,22 +359,6 @@ void remove_nonexistent_theirs_shallow(struct shallow_info *info)
 	info->nr_theirs = dst;
 }
 
-/* Step 5, remove non-existent ones in "ours" in the pack */
-void remove_nonexistent_ours_in_pack(struct shallow_info *info,
-				     struct packed_git *p)
-{
-	unsigned char (*sha1)[20] = info->shallow->sha1;
-	int i, dst;
-	trace_printf_key(TRACE_KEY, "shallow: remove_nonexistent_ours_in_pack\n");
-	for (i = dst = 0; i < info->nr_ours; i++) {
-		if (i != dst)
-			info->ours[dst] = info->ours[i];
-		if (find_pack_entry_one(sha1[info->ours[i]], p))
-			dst++;
-	}
-	info->nr_ours = dst;
-}
-
 define_commit_slab(ref_bitmap, uint32_t *);
 
 struct paint_info {
