@@ -107,18 +107,18 @@ int mkdir_in_gitdir(const char *path)
 
 int safe_create_leading_directories(char *path)
 {
-	char *pos = path + offset_1st_component(path);
+	char *next_component = path + offset_1st_component(path);
 
-	while (pos) {
+	while (next_component) {
 		struct stat st;
-		char *slash = strchr(pos, '/');
+		char *slash = strchr(next_component, '/');
 
 		if (!slash)
 			break;
 		while (*(slash + 1) == '/')
 			slash++;
-		pos = slash + 1;
-		if (!*pos)
+		next_component = slash + 1;
+		if (!*next_component)
 			break;
 
 		*slash = '\0';
