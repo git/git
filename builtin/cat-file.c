@@ -260,6 +260,7 @@ static int batch_objects(struct batch_options *opt)
 {
 	struct strbuf buf = STRBUF_INIT;
 	struct expand_data data;
+	int retval = 0;
 
 	if (!opt->format)
 		opt->format = "%(objectname) %(objecttype) %(objectsize)";
@@ -284,8 +285,6 @@ static int batch_objects(struct batch_options *opt)
 	warn_on_object_refname_ambiguity = 0;
 
 	while (strbuf_getline(&buf, stdin, '\n') != EOF) {
-		int error;
-
 		if (data.split_on_whitespace) {
 			/*
 			 * Split at first whitespace, tying off the beginning
@@ -300,12 +299,12 @@ static int batch_objects(struct batch_options *opt)
 			data.rest = p;
 		}
 
-		error = batch_one_object(buf.buf, opt, &data);
-		if (error)
-			return error;
+		retval = batch_one_object(buf.buf, opt, &data);
+		if (retval)
+			break;
 	}
 
-	return 0;
+	return retval;
 }
 
 static const char * const cat_file_usage[] = {
