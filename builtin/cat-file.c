@@ -304,6 +304,7 @@ static int batch_objects(struct batch_options *opt)
 			break;
 	}
 
+	strbuf_release(&buf);
 	return retval;
 }
 
