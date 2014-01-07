@@ -52,6 +52,18 @@ core.worktree setting to make the submodule work in the new location.
 It also will attempt to update the submodule.<name>.path setting in
 the linkgit:gitmodules[5] file and stage that file (unless -n is used).
 
+BUGS
+----
+Each time a superproject update moves a populated submodule (e.g. when
+switching between commits before and after the move) a stale submodule
+checkout will remain in the old location and an empty directory will
+appear in the new location. To populate the submodule again in the new
+location the user will have to run "git submodule update"
+afterwards. Removing the old directory is only safe when it uses a
+gitfile, as otherwise the history of the submodule will be deleted
+too. Both steps will be obsolete when recursive submodule update has
+been implemented.
+
 GIT
 ---
 Part of the linkgit:git[1] suite
