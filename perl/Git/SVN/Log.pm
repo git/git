@@ -117,6 +117,7 @@ sub run_pager {
 	}
 	open STDIN, '<&', $rfd or fatal "Can't redirect stdin: $!";
 	$ENV{LESS} ||= 'FRSX';
+	$ENV{LV} ||= '-c';
 	exec $pager or fatal "Can't run pager: $! ($pager)";
 }
 

@@ -162,7 +162,8 @@ git_pager() {
 		GIT_PAGER=cat
 	fi
 	: ${LESS=-FRSX}
-	export LESS
+	: ${LV=-c}
+	export LESS LV
 
 	eval "$GIT_PAGER" '"$@"'
 }

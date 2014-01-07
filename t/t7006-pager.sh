@@ -37,6 +37,18 @@ test_expect_failure TTY 'pager runs from subdir' '
 	test_cmp expected actual
 '
 
+test_expect_success TTY 'LESS and LV envvars are set for pagination' '
+	(
+		sane_unset LESS LV &&
+		PAGER="env >pager-env.out" &&
+		export PAGER &&
+
+		test_terminal git log
+	) &&
+	grep ^LESS= pager-env.out &&
+	grep ^LV= pager-env.out
+'
+
 test_expect_success TTY 'some commands do not use a pager' '
 	rm -f paginated.out &&
 	test_terminal git rev-list HEAD &&
