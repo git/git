@@ -3353,8 +3353,8 @@ char *shorten_unambiguous_ref(const char *refname, int strict)
 
 		/* the rule list is NULL terminated, count them first */
 		for (nr_rules = 0; ref_rev_parse_rules[nr_rules]; nr_rules++)
-			/* no +1 because strlen("%s") < strlen("%.*s") */
-			total_len += strlen(ref_rev_parse_rules[nr_rules]);
+			/* -2 for strlen("%.*s") - strlen("%s"); +1 for NUL */
+			total_len += strlen(ref_rev_parse_rules[nr_rules]) - 2 + 1;
 
 		scanf_fmts = xmalloc(nr_rules * sizeof(char *) + total_len);
 
