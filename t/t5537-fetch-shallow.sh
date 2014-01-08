@@ -178,7 +178,7 @@ if test -n "$NO_CURL" -o -z "$GIT_TEST_HTTPD"; then
 	test_done
 fi
 
-LIB_HTTPD_PORT=${LIB_HTTPD_PORT-'5536'}
+LIB_HTTPD_PORT=${LIB_HTTPD_PORT-'5537'}
 . "$TEST_DIRECTORY"/lib-httpd.sh
 start_httpd
 
@@ -190,6 +190,7 @@ test_expect_success 'clone http repository' '
 	git fsck &&
 	git log --format=%s origin/master >actual &&
 	cat <<EOF >expect &&
+7
 6
 5
 4
