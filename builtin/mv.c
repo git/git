@@ -214,6 +214,8 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 			}
 		} else if (string_list_has_string(&src_for_dst, dst))
 			bad = _("multiple sources for the same target");
+		else if (is_dir_sep(dst[strlen(dst) - 1]))
+			bad = _("destination directory does not exist");
 		else
 			string_list_insert(&src_for_dst, dst);
 
