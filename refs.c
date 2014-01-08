@@ -3367,6 +3367,7 @@ char *shorten_unambiguous_ref(const char *refname, int strict)
 	/* pre generate scanf formats from ref_rev_parse_rules[] */
 	if (!nr_rules) {
 		size_t total_len = 0;
+		size_t offset = 0;
 
 		/* the rule list is NULL terminated, count them first */
 		for (nr_rules = 0; ref_rev_parse_rules[nr_rules]; nr_rules++)
@@ -3375,12 +3376,11 @@ char *shorten_unambiguous_ref(const char *refname, int strict)
 
 		scanf_fmts = xmalloc(nr_rules * sizeof(char *) + total_len);
 
-		total_len = 0;
+		offset = 0;
 		for (i = 0; i < nr_rules; i++) {
-			scanf_fmts[i] = (char *)&scanf_fmts[nr_rules]
-					+ total_len;
+			scanf_fmts[i] = (char *)&scanf_fmts[nr_rules] + offset;
 			gen_scanf_fmt(scanf_fmts[i], ref_rev_parse_rules[i]);
-			total_len += strlen(ref_rev_parse_rules[i]);
+			offset += strlen(ref_rev_parse_rules[i]);
 		}
 	}
 
