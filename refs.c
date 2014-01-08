@@ -3334,29 +3334,6 @@ cleanup:
 	return ret;
 }
 
-/*
- * generate a format suitable for scanf from a ref_rev_parse_rules
- * rule, that is replace the "%.*s" spec with a "%s" spec
- */
-static void gen_scanf_fmt(char *scanf_fmt, const char *rule)
-{
-	char *spec;
-
-	spec = strstr(rule, "%.*s");
-	if (!spec || strstr(spec + 4, "%.*s"))
-		die("invalid rule in ref_rev_parse_rules: %s", rule);
-
-	/* copy all until spec */
-	strncpy(scanf_fmt, rule, spec - rule);
-	scanf_fmt[spec - rule] = '\0';
-	/* copy new spec */
-	strcat(scanf_fmt, "%s");
-	/* copy remaining rule */
-	strcat(scanf_fmt, spec + 4);
-
-	return;
-}
-
 char *shorten_unambiguous_ref(const char *refname, int strict)
 {
 	int i;
@@ -3364,8 +3341,13 @@ char *shorten_unambiguous_ref(const char *refname, int strict)
 	static int nr_rules;
 	char *short_name;
 
-	/* pre generate scanf formats from ref_rev_parse_rules[] */
 	if (!nr_rules) {
+		/*
+		 * Pre-generate scanf formats from ref_rev_parse_rules[].
+		 * Generate a format suitable for scanf from a
+		 * ref_rev_parse_rules rule by interpolating "%s" at the
+		 * location of the "%.*s".
+		 */
 		size_t total_len = 0;
 		size_t offset = 0;
 
@@ -3378,9 +3360,10 @@ char *shorten_unambiguous_ref(const char *refname, int strict)
 
 		offset = 0;
 		for (i = 0; i < nr_rules; i++) {
+			assert(offset < total_len);
 			scanf_fmts[i] = (char *)&scanf_fmts[nr_rules] + offset;
-			gen_scanf_fmt(scanf_fmts[i], ref_rev_parse_rules[i]);
-			offset += strlen(ref_rev_parse_rules[i]);
+			offset += snprintf(scanf_fmts[i], total_len - offset,
+					   ref_rev_parse_rules[i], 2, "%s") + 1;
 		}
 	}
 
