@@ -12,6 +12,7 @@ test_expect_success setup '
 	(
 		cd work &&
 		git init &&
+		git config push.default matching &&
 		mkdir -p gar/bage &&
 		(
 			cd gar/bage &&
