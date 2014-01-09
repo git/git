@@ -795,8 +795,7 @@ static void read_merge_msg(struct strbuf *msg)
 		die_errno(_("Could not read from '%s'"), filename);
 }
 
-static void write_merge_state(struct commit_list *);
-static void abort_commit(struct commit_list *remoteheads, const char *err_msg)
+static void abort_commit(const char *err_msg)
 {
 	if (err_msg)
 		error("%s", err_msg);
@@ -812,6 +811,7 @@ N_("Please enter a commit message to explain why this merge is necessary,\n"
    "Lines starting with '%c' will be ignored, and an empty message aborts\n"
    "the commit.\n");
 
+static void write_merge_state(struct commit_list *);
 static void prepare_to_commit(struct commit_list *remoteheads)
 {
 	struct strbuf msg = STRBUF_INIT;
@@ -824,15 +824,15 @@ static void prepare_to_commit(struct commit_list *remoteheads)
 	write_merge_msg(&msg);
 	if (run_hook(get_index_file(), "prepare-commit-msg",
 		     git_path("MERGE_MSG"), "merge", NULL, NULL))
-		abort_commit(remoteheads, NULL);
+		abort_commit(NULL);
 	if (0 < option_edit) {
 		if (launch_editor(git_path("MERGE_MSG"), NULL, NULL))
-			abort_commit(remoteheads, NULL);
+			abort_commit(NULL);
 	}
 	read_merge_msg(&msg);
 	stripspace(&msg, 0 < option_edit);
 	if (!msg.len)
-		abort_commit(remoteheads, _("Empty commit message."));
+		abort_commit(_("Empty commit message."));
 	strbuf_release(&merge_msg);
 	strbuf_addbuf(&merge_msg, &msg);
 	strbuf_release(&msg);
