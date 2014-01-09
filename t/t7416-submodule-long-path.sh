@@ -81,7 +81,7 @@ test_expect_success 'recursive submodule with a long path' '
 		git clone ../super test &&
 		cd test &&
 		git submodule add ../parent foo &&
-		git submodule update --init --recursive
+		git submodule update --init --recursive &&
 		test_commit "sogood" &&
 		(
 			cd foo/$longpath &&
