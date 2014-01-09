@@ -802,7 +802,6 @@ static void abort_commit(struct commit_list *remoteheads, const char *err_msg)
 		error("%s", err_msg);
 	fprintf(stderr,
 		_("Not committing merge; use 'git commit' to complete the merge.\n"));
-	write_merge_state(remoteheads);
 	exit(1);
 }
 
@@ -816,6 +815,8 @@ N_("Please enter a commit message to explain why this merge is necessary,\n"
 static void prepare_to_commit(struct commit_list *remoteheads)
 {
 	struct strbuf msg = STRBUF_INIT;
+
+	write_merge_state(remoteheads);
 	strbuf_addbuf(&msg, &merge_msg);
 	strbuf_addch(&msg, '\n');
 	if (0 < option_edit)
