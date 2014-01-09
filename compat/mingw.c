@@ -5,7 +5,6 @@
 #include "../strbuf.h"
 #include "../run-command.h"
 #include "../cache.h"
-#include "../string-list.h"
 
 static const int delay[] = { 0, 1, 10, 20, 40 };
 unsigned int _CRT_fmode = _O_BINARY;
@@ -406,60 +405,12 @@ int mingw_fgetc(FILE *stream)
 	return ch;
 }
 
-static struct string_list_item dos_device_names_items[] = {
-	{ "AUX", NULL},
-	{ "CLOCK$", NULL},
-	{ "COM1", NULL},
-	{ "COM2", NULL},
-	{ "COM3", NULL},
-	{ "COM4", NULL},
-	{ "CON", NULL},
-	{ "CONERR$", NULL},
-	{ "CONIN$", NULL},
-	{ "CONOUT$", NULL},
-	{ "LPT1", NULL},
-	{ "LPT2", NULL},
-	{ "LPT3", NULL},
-	{ "NUL", NULL},
-	{ "PRN", NULL},
-	{ "aux", NULL},
-	{ "clock$", NULL},
-	{ "com1", NULL},
-	{ "com2", NULL},
-	{ "com3", NULL},
-	{ "com4", NULL},
-	{ "con", NULL},
-	{ "conerr$", NULL},
-	{ "conin$", NULL},
-	{ "conout$", NULL},
-	{ "lpt1", NULL},
-	{ "lpt2", NULL},
-	{ "lpt3", NULL},
-	{ "nul", NULL},
-	{ "prn", NULL}
-};
-
-static struct string_list dos_device_names = {
-	&dos_device_names_items[0], ARRAY_SIZE(dos_device_names_items),
-	0, 0, NULL
-};
-
-static int is_dos_device_name(const char *filename)
-{
-	return filename && !strchr(filename, '/') &&
-		string_list_has_string(&dos_device_names, filename);
-}
-
 #undef fopen
 FILE *mingw_fopen (const char *filename, const char *otype)
 {
 	int hide = 0;
 	FILE *file;
 	wchar_t wfilename[MAX_PATH], wotype[4];
-
-	if (is_dos_device_name(filename))
-		return fopen(filename, otype);
-
 	if (hide_dotfiles == HIDE_DOTFILES_TRUE &&
 	    basename((char*)filename)[0] == '.')
 		hide = access(filename, F_OK);
@@ -474,16 +425,11 @@ FILE *mingw_fopen (const char *filename, const char *otype)
 	return file;
 }
 
-#undef freopen
 FILE *mingw_freopen (const char *filename, const char *otype, FILE *stream)
 {
 	int hide = 0;
 	FILE *file;
 	wchar_t wfilename[MAX_PATH], wotype[4];
-
-	if (is_dos_device_name(filename))
-		return freopen(filename, otype, stream);
-
 	if (hide_dotfiles == HIDE_DOTFILES_TRUE &&
 	    basename((char*)filename)[0] == '.')
 		hide = access(filename, F_OK);
