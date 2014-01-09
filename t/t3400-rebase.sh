@@ -135,11 +135,19 @@ test_expect_success 'fail when upstream arg is missing and not configured' '
 '
 
 test_expect_success 'default to common base in @{upstream}s reflog if no upstream arg' '
+	git checkout -b default-base master &&
 	git checkout -b default topic &&
 	git config branch.default.remote . &&
-	git config branch.default.merge refs/heads/master &&
+	git config branch.default.merge refs/heads/default-base &&
 	git rebase &&
-	git rev-parse --verify master >expect &&
+	git rev-parse --verify default-base >expect &&
+	git rev-parse default~1 >actual &&
+	test_cmp expect actual &&
+	git checkout default-base &&
+	git reset --hard HEAD^ &&
+	git checkout default &&
+	git rebase &&
+	git rev-parse --verify default-base >expect &&
 	git rev-parse default~1 >actual &&
 	test_cmp expect actual
 '
