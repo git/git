@@ -16,27 +16,69 @@
 static const char * const git_replace_usage[] = {
 	N_("git replace [-f] <object> <replacement>"),
 	N_("git replace -d <object>..."),
-	N_("git replace -l [<pattern>]"),
+	N_("git replace [--format=<format>] [-l [<pattern>]]"),
 	NULL
+};
+
+enum replace_format {
+      REPLACE_FORMAT_SHORT,
+      REPLACE_FORMAT_MEDIUM,
+      REPLACE_FORMAT_LONG
+};
+
+struct show_data {
+	const char *pattern;
+	enum replace_format format;
 };
 
 static int show_reference(const char *refname, const unsigned char *sha1,
 			  int flag, void *cb_data)
 {
-	const char *pattern = cb_data;
+	struct show_data *data = cb_data;
 
-	if (!fnmatch(pattern, refname, 0))
-		printf("%s\n", refname);
+	if (!fnmatch(data->pattern, refname, 0)) {
+		if (data->format == REPLACE_FORMAT_SHORT)
+			printf("%s\n", refname);
+		else if (data->format == REPLACE_FORMAT_MEDIUM)
+			printf("%s -> %s\n", refname, sha1_to_hex(sha1));
+		else { /* data->format == REPLACE_FORMAT_LONG */
+			unsigned char object[20];
+			enum object_type obj_type, repl_type;
+
+			if (get_sha1(refname, object))
+				return error("Failed to resolve '%s' as a valid ref.", refname);
+
+			obj_type = sha1_object_info(object, NULL);
+			repl_type = sha1_object_info(sha1, NULL);
+
+			printf("%s (%s) -> %s (%s)\n", refname, typename(obj_type),
+			       sha1_to_hex(sha1), typename(repl_type));
+		}
+	}
 
 	return 0;
 }
 
-static int list_replace_refs(const char *pattern)
+static int list_replace_refs(const char *pattern, const char *format)
 {
+	struct show_data data;
+
 	if (pattern == NULL)
 		pattern = "*";
+	data.pattern = pattern;
 
-	for_each_replace_ref(show_reference, (void *) pattern);
+	if (format == NULL || *format == '\0' || !strcmp(format, "short"))
+		data.format = REPLACE_FORMAT_SHORT;
+	else if (!strcmp(format, "medium"))
+		data.format = REPLACE_FORMAT_MEDIUM;
+	else if (!strcmp(format, "long"))
+		data.format = REPLACE_FORMAT_LONG;
+	else
+		die("invalid replace format '%s'\n"
+		    "valid formats are 'short', 'medium' and 'long'\n",
+		    format);
+
+	for_each_replace_ref(show_reference, (void *) &data);
 
 	return 0;
 }
@@ -127,17 +169,25 @@ static int replace_object(const char *object_ref, const char *replace_ref,
 int cmd_replace(int argc, const char **argv, const char *prefix)
 {
 	int list = 0, delete = 0, force = 0;
+	const char *format = NULL;
 	struct option options[] = {
 		OPT_BOOL('l', "list", &list, N_("list replace refs")),
 		OPT_BOOL('d', "delete", &delete, N_("delete replace refs")),
 		OPT_BOOL('f', "force", &force, N_("replace the ref if it exists")),
+		OPT_STRING(0, "format", &format, N_("format"), N_("use this format")),
 		OPT_END()
 	};
+
+	read_replace_refs = 0;
 
 	argc = parse_options(argc, argv, prefix, options, git_replace_usage, 0);
 
 	if (list && delete)
 		usage_msg_opt("-l and -d cannot be used together",
+			      git_replace_usage, options);
+
+	if (format && delete)
+		usage_msg_opt("--format and -d cannot be used together",
 			      git_replace_usage, options);
 
 	if (force && (list || delete))
@@ -157,6 +207,9 @@ int cmd_replace(int argc, const char **argv, const char *prefix)
 		if (argc != 2)
 			usage_msg_opt("bad number of arguments",
 				      git_replace_usage, options);
+		if (format)
+			usage_msg_opt("--format cannot be used when not listing",
+				      git_replace_usage, options);
 		return replace_object(argv[0], argv[1], force);
 	}
 
@@ -168,5 +221,5 @@ int cmd_replace(int argc, const char **argv, const char *prefix)
 		usage_msg_opt("-f needs some arguments",
 			      git_replace_usage, options);
 
-	return list_replace_refs(argv[0]);
+	return list_replace_refs(argv[0], format);
 }

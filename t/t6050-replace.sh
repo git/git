@@ -276,6 +276,48 @@ test_expect_success '-f option bypasses the type check' '
 	git replace -f HEAD^ $BLOB
 '
 
+test_expect_success 'git cat-file --batch works on replace objects' '
+	git replace | grep $PARA3 &&
+	echo $PARA3 | git cat-file --batch
+'
+
+test_expect_success 'test --format bogus' '
+	test_must_fail git replace --format bogus >/dev/null 2>&1
+'
+
+test_expect_success 'test --format short' '
+	git replace --format=short >actual &&
+	git replace >expected &&
+	test_cmp expected actual
+'
+
+test_expect_success 'test --format medium' '
+	H1=$(git --no-replace-objects rev-parse HEAD~1) &&
+	HT=$(git --no-replace-objects rev-parse HEAD^{tree}) &&
+	MYTAG=$(git --no-replace-objects rev-parse mytag) &&
+	{
+		echo "$H1 -> $BLOB" &&
+		echo "$BLOB -> $REPLACED" &&
+		echo "$HT -> $H1" &&
+		echo "$PARA3 -> $S" &&
+		echo "$MYTAG -> $HASH1"
+	} | sort >expected &&
+	git replace -l --format medium | sort > actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'test --format long' '
+	{
+		echo "$H1 (commit) -> $BLOB (blob)" &&
+		echo "$BLOB (blob) -> $REPLACED (blob)" &&
+		echo "$HT (tree) -> $H1 (commit)" &&
+		echo "$PARA3 (commit) -> $S (commit)" &&
+		echo "$MYTAG (tag) -> $HASH1 (commit)"
+	} | sort >expected &&
+	git replace --format=long | sort > actual &&
+	test_cmp expected actual
+'
+
 test_expect_success 'replace ref cleanup' '
 	test -n "$(git replace)" &&
 	git replace -d $(git replace) &&
