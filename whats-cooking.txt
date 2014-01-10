@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jan 2014, #01; Mon, 6)
-X-master-at: 932f7e47699993de0f6ad2af92be613994e40afe
-X-next-at: 5ca323a946964afa14ca9712a4b3012b36f33b02
+Subject: What's cooking in git.git (Jan 2014, #02; Fri, 10)
+X-master-at: a25014bc4cef56712f7d005d7b76070d0270f454
+X-next-at: 7559984f930784464fd0cfdd0a69e17c779ae117
 
-What's cooking in git.git (Jan 2014, #01; Mon, 6)
+What's cooking in git.git (Jan 2014, #02; Fri, 10)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -19,112 +19,17 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* fc/remote-helper-fixes (2013-12-26) 5 commits
-  (merged to 'next' on 2013-12-26 at ce5f872)
- + remote-hg: test 'shared_path' in a moved clone
-  (merged to 'next' on 2013-12-17 at aa4dc07)
- + remote-hg: add tests for special filenames
- + remote-hg: fix 'shared path' path
- + remote-helpers: add extra safety checks
- + remote-hg: avoid buggy strftime()
+* ap/path-max (2013-12-16) 1 commit
+  (merged to 'next' on 2014-01-03 at affc620)
+ + Prevent buffer overflows when path is too long
 
 
-* jc/push-refmap (2013-12-04) 3 commits
-  (merged to 'next' on 2013-12-12 at 71e358f)
- + push: also use "upstream" mapping when pushing a single ref
- + push: use remote.$name.push as a refmap
- + builtin/push.c: use strbuf instead of manual allocation
+* bc/log-decoration (2013-12-20) 1 commit
+  (merged to 'next' on 2014-01-03 at ff8873f)
+ + log: properly handle decorations with chained tags
 
- Make "git push origin master" update the same ref that would be
- updated by our 'master' when "git push origin" (no refspecs) is run
- while the 'master' branch is checked out, which makes "git push"
- more symmetric to "git fetch" and more usable for the triangular
- workflow.
-
-
-* jk/cat-file-regression-fix (2013-12-12) 2 commits
-  (merged to 'next' on 2013-12-13 at 3713e01)
- + cat-file: handle --batch format with missing type/size
- + cat-file: pass expand_data to print_object_or_die
-
- "git cat-file --batch=", an admittedly useless command, did not
- behave very well.
-
-
-* jk/name-pack-after-byte-representation (2013-12-16) 3 commits
-  (merged to 'next' on 2013-12-17 at 0bc385c)
- + pack-objects doc: treat output filename as opaque
-  (merged to 'next' on 2013-12-09 at 247b2d0)
- + pack-objects: name pack files after trailer hash
- + sha1write: make buffer const-correct
- (this branch is tangled with jk/pack-bitmap.)
-
- Two packfiles that contain the same set of objects have
- traditionally been named identically, but that made repacking a
- repository that is already fully packed without any cruft with a
- different packing parameter cumbersome. Update the convention to
- name the packfile after the bytestream representation of the data,
- not after the set of objects in it.
-
-
-* jk/pull-rebase-using-fork-point (2013-12-10) 2 commits
-  (merged to 'next' on 2013-12-13 at 1862c12)
- + rebase: use reflog to find common base with upstream
- + pull: use merge-base --fork-point when appropriate
-
-
-* jk/rev-parse-double-dashes (2013-12-09) 2 commits
-  (merged to 'next' on 2013-12-13 at d26bac7)
- + rev-parse: be more careful with munging arguments
- + rev-parse: correctly diagnose revision errors before "--"
-
- "git rev-parse <revs> -- <paths>" did not implement the usual
- disambiguation rules the commands in the "git log" family used in
- the same way.
-
-
-* js/gnome-keyring (2013-12-16) 1 commit
-  (merged to 'next' on 2013-12-17 at 422fd61)
- + contrib/git-credential-gnome-keyring.c: small stylistic cleanups
-
- Style fix.
-
-
-* tg/diff-no-index-refactor (2013-12-16) 4 commits
-  (merged to 'next' on 2013-12-17 at 009d8d8)
- + diff: avoid some nesting
- + diff: add test for --no-index executed outside repo
-  (merged to 'next' on 2013-12-13 at 523f7c4)
- + diff: don't read index when --no-index is given
- + diff: move no-index detection to builtin/diff.c
-
- "git diff ../else/where/A ../else/where/B" when ../else/where is
- clearly outside the repository, and "git diff --no-index A B", do
- not have to look at the index at all, but we used to read the index
- unconditionally.
-
-
-* zk/difftool-counts (2013-12-16) 2 commits
-  (merged to 'next' on 2013-12-16 at 0e0d235)
- + diff.c: fix some recent whitespace style violations
-  (merged to 'next' on 2013-12-12 at ba35694)
- + difftool: display the number of files in the diff queue in the prompt
-
- Show the total number of paths and the number of paths shown so far
- when "git difftool" prompts to launch an external diff tool, which
- would give users some sense of progress.
-
---------------------------------------------------
-[New Topics]
-
-* ta/format-user-manual-as-an-article (2014-01-06) 1 commit
-  (merged to 'next' on 2014-01-06 at 37858f6)
- + user-manual: improve html and pdf formatting
-
- Update the way the user-manual is formatted via AsciiDoc to save
- trees.
-
- Will merge to 'master'.
+ "git log --decorate" did not handle a tag pointed by another tag
+ nicely.
 
 
 * bm/merge-base-octopus-dedup (2013-12-30) 2 commits
@@ -135,7 +40,76 @@ of the repositories listed at
  "git merge-base --octopus" used to leave cleaning up suboptimal
  result to the caller, but now it does the clean-up itself.
 
- Will merge to 'master'.
+
+* bs/mirbsd (2014-01-02) 1 commit
+  (merged to 'next' on 2014-01-06 at d5cecbb)
+ + Add MirBSD support to the build system.
+
+
+* cc/replace-object-info (2013-12-30) 11 commits
+  (merged to 'next' on 2014-01-03 at 4473803)
+ + replace info: rename 'full' to 'long' and clarify in-code symbols
+  (merged to 'next' on 2013-12-17 at aeb9e18)
+ + Documentation/git-replace: describe --format option
+ + builtin/replace: unset read_replace_refs
+ + t6050: add tests for listing with --format
+ + builtin/replace: teach listing using short, medium or full formats
+ + sha1_file: perform object replacement in sha1_object_info_extended()
+ + t6050: show that git cat-file --batch fails with replace objects
+ + sha1_object_info_extended(): add an "unsigned flags" parameter
+ + sha1_file.c: add lookup_replace_object_extended() to pass flags
+ + replace_object: don't check read_replace_refs twice
+ + rename READ_SHA1_FILE_REPLACE flag to LOOKUP_REPLACE_OBJECT
+
+ read_sha1_file() that is the workhorse to read the contents given
+ an object name honoured object replacements, but there is no
+ corresponding mechanism to sha1_object_info() that is used to
+ obtain the metainfo (e.g. type & size) about the object, leading
+ callers to weird inconsistencies.
+
+
+* jh/rlimit-nofile-fallback (2013-12-18) 1 commit
+  (merged to 'next' on 2014-01-03 at b56ae0c)
+ + get_max_fd_limit(): fall back to OPEN_MAX upon getrlimit/sysconf failure
+
+ When we figure out how many file descriptors to allocate for
+ keeping packfiles open, a system with non-working getrlimit() could
+ cause us to die(), but because we make this call only to get a
+ rough estimate of how many is available and we do not even attempt
+ to use up all file descriptors available ourselves, it is nicer to
+ fall back to a reasonable low value rather than dying.
+
+
+* jk/credential-plug-leak (2014-01-02) 1 commit
+  (merged to 'next' on 2014-01-06 at 88e29a3)
+ + Revert "prompt: clean up strbuf usage"
+
+ An earlier "clean-up" introduced an unnecessary memory leak.
+
+
+* jk/http-auth-tests-robustify (2014-01-02) 1 commit
+  (merged to 'next' on 2014-01-06 at 7e87bba)
+ + use distinct username/password for http auth tests
+
+ Using the same username and password during the tests would not
+ catch a potential breakage of sending one when we should be sending
+ the other.
+
+
+* jk/oi-delta-base (2013-12-26) 2 commits
+  (merged to 'next' on 2014-01-06 at 8cf3ed2)
+ + cat-file: provide %(deltabase) batch format
+ + sha1_object_info_extended: provide delta base sha1s
+
+ Teach "cat-file --batch" to show delta-base object name for a
+ packed object that is represented as a delta.
+
+
+* jk/sha1write-void (2013-12-26) 1 commit
+  (merged to 'next' on 2014-01-06 at d8cd8ff)
+ + do not pretend sha1write returns errors
+
+ Code clean-up.
 
 
 * jk/test-framework-updates (2014-01-02) 3 commits
@@ -147,8 +121,6 @@ of the repositories listed at
  The basic test used to leave unnecessary trash directories in the
  t/ directory.
 
- Will merge to 'master'.
-
 
 * js/lift-parent-count-limit (2013-12-27) 1 commit
   (merged to 'next' on 2014-01-06 at b74133c)
@@ -156,42 +128,6 @@ of the repositories listed at
 
  There is no reason to have a hardcoded upper limit of the number of
  parents for an octopus merge, created via the graft mechanism.
-
- Will merge to 'master'.
-
-
-* ap/remote-hg-skip-null-bookmarks (2014-01-02) 1 commit
- - remote-hg: do not fail on invalid bookmarks
-
- Reported to break tests ($gmane/240005)
- Expecting a reroll.
-
-
-* bs/mirbsd (2014-01-02) 1 commit
-  (merged to 'next' on 2014-01-06 at d5cecbb)
- + Add MirBSD support to the build system.
-
- Will merge to 'master'.
-
-
-* jk/credential-plug-leak (2014-01-02) 1 commit
-  (merged to 'next' on 2014-01-06 at 88e29a3)
- + Revert "prompt: clean up strbuf usage"
-
- An earlier "clean-up" introduced an unnecessary memory leak.
-
- Will merge to 'master'.
-
-
-* jk/http-auth-tests-robustify (2014-01-02) 1 commit
-  (merged to 'next' on 2014-01-06 at 7e87bba)
- + use distinct username/password for http auth tests
-
- Using the same username and password during the tests would not
- catch a potential breakage of sending one when we should be sending
- the other.
-
- Will merge to 'master'.
 
 
 * km/gc-eperm (2014-01-02) 1 commit
@@ -201,7 +137,44 @@ of the repositories listed at
  A "gc" process running as a different user should be able to stop a
  new "gc" process from starting.
 
- Will merge to 'master'.
+
+* mh/path-max (2013-12-18) 2 commits
+  (merged to 'next' on 2014-01-03 at 5227c9b)
+ + builtin/prune.c: use strbuf to avoid having to worry about PATH_MAX
+ + prune-packed: use strbuf to avoid having to worry about PATH_MAX
+
+ A few places where we relied on a fixed length buffer to hold
+ pathnames in these two programs have been converted to use strbuf.
+
+
+* nd/add-empty-fix (2013-12-26) 1 commit
+  (merged to 'next' on 2014-01-06 at 88a78c9)
+ + add: don't complain when adding empty project root
+
+ "git add -A" (no other arguments) in a totally empty working tree
+ used to emit an error.
+
+
+* nd/commit-tree-constness (2013-12-26) 1 commit
+  (merged to 'next' on 2014-01-06 at a177c9f)
+ + commit.c: make "tree" a const pointer in commit_tree*()
+
+ Code clean-up.
+
+
+* nd/daemon-informative-errors-typofix (2013-12-20) 1 commit
+  (merged to 'next' on 2014-01-03 at 1b87648)
+ + daemon: be strict at parsing parameters --[no-]informative-errors
+
+
+* nd/negative-pathspec (2013-12-06) 3 commits
+  (merged to 'next' on 2013-12-12 at 9f340c8)
+ + pathspec.c: support adding prefix magic to a pathspec with mnemonic magic
+ + Support pathspec magic :(exclude) and its short form :!
+ + glossary-content.txt: rephrase magic signature part
+
+ Introduce "negative pathspec" magic, to allow "git log -- . ':!dir'" to
+ tell us "I am interested in everything but 'dir' directory".
 
 
 * rr/completion-branch-config (2014-01-06) 4 commits
@@ -215,7 +188,20 @@ of the repositories listed at
  hierarchies whose variables are predominantly three-level where not
  completed by hitting a <TAB> in bash and zsh completions.
 
- Will merge to 'master'.
+
+* rt/bfg-ad-in-filter-branch-doc (2013-12-18) 1 commit
+  (merged to 'next' on 2014-01-03 at 2a45e3b)
+ + docs: add filter-branch notes on The BFG
+
+
+* sb/diff-orderfile-config (2013-12-18) 3 commits
+  (merged to 'next' on 2014-01-03 at 744eba7)
+ + diff: add diff.orderfile configuration variable
+ + diff: let "git diff -O" read orderfile from any file and fail properly
+ + t4056: add new tests for "git diff -O"
+
+ Allow "git diff -O<file>" to be configured with a new configuration
+ variable.
 
 
 * ss/builtin-cleanup (2014-01-06) 3 commits
@@ -231,25 +217,147 @@ of the repositories listed at
  is_in_cmdlist(), were suggested in the discussion, but they can
  come as follow-ups on top of this series.
 
- Will merge to 'master'.
+
+* ta/format-user-manual-as-an-article (2014-01-06) 1 commit
+  (merged to 'next' on 2014-01-06 at 37858f6)
+ + user-manual: improve html and pdf formatting
+
+ Update the way the user-manual is formatted via AsciiDoc to save
+ trees.
 
 
-* ss/safe-create-leading-dir-with-slash (2014-01-06) 1 commit
- - safe_create_leading_directories(): on Windows, \ can separate path components
+* tm/fetch-prune (2014-01-03) 2 commits
+  (merged to 'next' on 2014-01-03 at a58c6b4)
+ + fetch --prune: Run prune before fetching
+ + fetch --prune: always print header url
+
+ Fetching 'frotz' branch with "git fetch", while having
+ 'frotz/nitfol' remote-tracking branch from an earlier fetch, would
+ error out, primarily because the command has not been told to
+ remove anything on our side. In such a case, "git fetch --prune"
+ can be used to remove 'frotz/nitfol' to make room to fetch and
+ store 'frotz' remote-tracking branch.
 
 
 * vm/octopus-merge-bases-simplify (2014-01-03) 1 commit
   (merged to 'next' on 2014-01-06 at 35df672)
  + get_octopus_merge_bases(): cleanup redundant variable
 
+--------------------------------------------------
+[New Topics]
+
+* br/sha1-name-40-hex-no-disambiguation (2014-01-07) 1 commit
+  (merged to 'next' on 2014-01-10 at 2a0973b)
+ + sha1_name: don't resolve refs when core.warnambiguousrefs is false
+ (this branch is used by jk/warn-on-object-refname-ambiguity.)
+
+ When parsing a 40-hex string into the object name, the string is
+ checked to see if it can be interpreted as a ref so that a warning
+ can be given for ambiguity. The code kicked in even when the
+ core.warnambiguousrefs is set to false to squelch this warning, in
+ which case the cycles spent to look at the ref namespace were an
+ expensive no-op, as the result was discarded without being used.
+
  Will merge to 'master'.
 
 
-* fp/submodule-checkout-mode (2014-01-06) 2 commits
- - DONOTMERGE: needs sign-off
- - git-submodule.sh: support 'checkout' as a valid update mode
+* jl/submodule-mv-checkout-caveat (2014-01-07) 2 commits
+  (merged to 'next' on 2014-01-10 at 8d3953c)
+ + rm: better document side effects when removing a submodule
+ + mv: better document side effects when moving a submodule
 
- Need to pick up a rerolled one.
+ With a submodule that was initialized in an old fashioned way
+ without gitlinks, switching branches in the superproject between
+ the one with and without the submodule may leave the submodule
+ working tree with its embedded repository behind, as there may be
+ unexpendable state there. Document and warn users about this.
+
+ Will merge to 'master'.
+
+
+* jn/pager-lv-default-env (2014-01-07) 1 commit
+  (merged to 'next' on 2014-01-10 at 22d4755)
+ + pager: set LV=-c alongside LESS=FRSX
+
+ Just like we give a reasonable default for "less" via the LESS
+ environment variable, specify a reasonable default for "lv" via the
+ "LV" environment variable when spawning the pager.
+
+ Will merge to 'master'.
+
+
+* ow/stash-with-ifs (2014-01-07) 1 commit
+  (merged to 'next' on 2014-01-10 at 4fc9bdb)
+ + stash: handle specifying stashes with $IFS
+
+ The implementation of 'git stash $cmd "stash@{...}"' did not quote
+ the stash argument properly and left it split at IFS whitespace.
+
+ Will merge to 'master'.
+
+
+* rr/completion-format-coverletter (2014-01-07) 1 commit
+  (merged to 'next' on 2014-01-10 at d2dbc9d)
+ + completion: complete format.coverLetter
+
+ The bash/zsh completion code did not know about format.coverLetter
+ among many format.* configuration variables.
+
+ Will merge to 'master'.
+
+
+* wk/submodule-on-branch (2014-01-07) 2 commits
+ - DONTMERGE: RFC will be rerolled with tests ($gmane/239967)
+ - submodule: respect requested branch on all clones
+
+ Waiting for the discussion to settle.
+
+
+* jk/branch-at-publish (2014-01-09) 5 commits
+ - implement @{publish} shorthand
+ - branch_get: provide per-branch pushremote pointers
+ - branch_get: return early on error
+ - interpret_branch_name: factor out upstream handling
+ - sha1_name: refactor upstream_mark
+
+ Give an easier access to the tracking branches from "other" side in
+ a triangular workflow by introducing B@{publish} that works in a
+ similar way to how B@{upstream} does.
+
+ Expecting a reroll.
+
+
+* jk/pull-rebase-using-fork-point (2014-01-09) 1 commit
+  (merged to 'next' on 2014-01-10 at e86e59d)
+ + rebase: fix fork-point with zero arguments
+
+ Will merge to 'master'.
+
+
+* jk/warn-on-object-refname-ambiguity (2014-01-09) 6 commits
+ - get_sha1: drop object/refname ambiguity flag
+ - get_sha1: speed up ambiguous 40-hex test
+ - FIXUP: teach DO_FOR_EACH_NO_RECURSE to prime_ref_dir()
+ - refs: teach for_each_ref a flag to avoid recursion
+ - cat-file: fix a minor memory leak in batch_objects
+ - cat-file: refactor error handling of batch_objects
+ (this branch uses br/sha1-name-40-hex-no-disambiguation.)
+
+ Expecting a reroll.
+
+
+* mh/shorten-unambigous-ref (2014-01-09) 3 commits
+ - shorten_unambiguous_ref(): tighten up pointer arithmetic
+ - gen_scanf_fmt(): delete function and use snprintf() instead
+ - shorten_unambiguous_ref(): introduce a new local variable
+
+ Will merge to 'next'.
+
+
+* mm/mv-file-to-no-such-dir-with-slash (2014-01-10) 1 commit
+ - mv: let 'git mv file no-such-dir/' error out on Windows, too
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -463,87 +571,26 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* bc/log-decoration (2013-12-20) 1 commit
-  (merged to 'next' on 2014-01-03 at ff8873f)
- + log: properly handle decorations with chained tags
+* ap/remote-hg-skip-null-bookmarks (2014-01-02) 1 commit
+ - remote-hg: do not fail on invalid bookmarks
 
- "git log --decorate" did not handle a tag pointed by another tag
- nicely.
-
- Will merge to 'master'.
+ Reported to break tests ($gmane/240005)
+ Expecting a reroll.
 
 
-* jh/rlimit-nofile-fallback (2013-12-18) 1 commit
-  (merged to 'next' on 2014-01-03 at b56ae0c)
- + get_max_fd_limit(): fall back to OPEN_MAX upon getrlimit/sysconf failure
+* ss/safe-create-leading-dir-with-slash (2014-01-06) 1 commit
+ - safe_create_leading_directories(): on Windows, \ can separate path components
 
- When we figure out how many file descriptors to allocate for
- keeping packfiles open, a system with non-working getrlimit() could
- cause us to die(), but because we make this call only to get a
- rough estimate of how many is available and we do not even attempt
- to use up all file descriptors available ourselves, it is nicer to
- fall back to a reasonable low value rather than dying.
-
- Will merge to 'master'.
+ Expecting to be rolled into mh/safe-create-leading-directories
 
 
-* rt/bfg-ad-in-filter-branch-doc (2013-12-18) 1 commit
-  (merged to 'next' on 2014-01-03 at 2a45e3b)
- + docs: add filter-branch notes on The BFG
+* fp/submodule-checkout-mode (2014-01-07) 1 commit
+  (merged to 'next' on 2014-01-10 at 647ba9b)
+ + git-submodule.sh: 'checkout' is a valid update mode
 
- Will merge to 'master'.
-
-
-* sb/diff-orderfile-config (2013-12-18) 3 commits
-  (merged to 'next' on 2014-01-03 at 744eba7)
- + diff: add diff.orderfile configuration variable
- + diff: let "git diff -O" read orderfile from any file and fail properly
- + t4056: add new tests for "git diff -O"
-
- Allow "git diff -O<file>" to be configured with a new configuration
- variable.
-
- Will merge to 'master'.
-
-
-* nd/daemon-informative-errors-typofix (2013-12-20) 1 commit
-  (merged to 'next' on 2014-01-03 at 1b87648)
- + daemon: be strict at parsing parameters --[no-]informative-errors
-
- Will merge to 'master'.
-
-
-* tm/fetch-prune (2014-01-03) 2 commits
-  (merged to 'next' on 2014-01-03 at a58c6b4)
- + fetch --prune: Run prune before fetching
- + fetch --prune: always print header url
-
- Fetching 'frotz' branch with "git fetch", while having
- 'frotz/nitfol' remote-tracking branch from an earlier fetch, would
- error out, primarily because the command has not been told to
- remove anything on our side. In such a case, "git fetch --prune"
- can be used to remove 'frotz/nitfol' to make room to fetch and
- store 'frotz' remote-tracking branch.
-
- Will merge to 'master'.
-
-
-* jk/oi-delta-base (2013-12-26) 2 commits
-  (merged to 'next' on 2014-01-06 at 8cf3ed2)
- + cat-file: provide %(deltabase) batch format
- + sha1_object_info_extended: provide delta base sha1s
-
- Teach "cat-file --batch" to show delta-base object name for a
- packed object that is represented as a delta.
-
- Will merge to 'master'.
-
-
-* jk/sha1write-void (2013-12-26) 1 commit
-  (merged to 'next' on 2014-01-06 at d8cd8ff)
- + do not pretend sha1write returns errors
-
- Code clean-up.
+ "submodule.*.update=checkout", when propagated from .gitmodules to
+ .git/config, turned into a "submodule.*.update=none", which did not
+ make much sense.
 
  Will merge to 'master'.
 
@@ -555,7 +602,7 @@ of the repositories listed at
  - submodule: teach unpack_trees() to remove submodule contents
  - submodule: prepare for recursive checkout of submodules
 
- What is the doneness of this one???
+ Expecting a reroll.
 
 
 * mh/safe-create-leading-directories (2014-01-06) 17 commits
@@ -580,74 +627,41 @@ of the repositories listed at
  Code clean-up and protection against concurrent write access to the
  ref namespace.
 
- Is ready for 'next', with or without minor nitfix.
+ Asked Michael and Sebastian to work together to roll the latter's
+ "allow passing p\a\t\h to safe_create_leading_dir()" into this.
 
-
-* nd/add-empty-fix (2013-12-26) 1 commit
-  (merged to 'next' on 2014-01-06 at 88a78c9)
- + add: don't complain when adding empty project root
-
- "git add -A" (no other arguments) in a totally empty working tree
- used to emit an error.
-
- Will merge to 'master'.
-
-
-* nd/commit-tree-constness (2013-12-26) 1 commit
-  (merged to 'next' on 2014-01-06 at a177c9f)
- + commit.c: make "tree" a const pointer in commit_tree*()
-
- Code clean-up.
-
- Will merge to 'master'.
+ Expecting a reroll.
 
 
 * jk/pack-bitmap (2013-12-30) 21 commits
- - pack-bitmap: implement optional name_hash cache
- - t/perf: add tests for pack bitmaps
- - t: add basic bitmap functionality tests
- - count-objects: recognize .bitmap in garbage-checking
- - repack: consider bitmaps when performing repacks
- - repack: handle optional files created by pack-objects
- - repack: turn exts array into array-of-struct
- - repack: stop using magic number for ARRAY_SIZE(exts)
- - pack-objects: implement bitmap writing
- - rev-list: add bitmap mode to speed up object lists
- - pack-objects: use bitmaps when packing objects
- - pack-objects: split add_object_entry
- - pack-bitmap: add support for bitmap indexes
- - documentation: add documentation for the bitmap format
- - ewah: compressed bitmap implementation
- - compat: add endianness helpers
- - sha1_file: export `git_open_noatime`
- - revision: allow setting custom limiter function
- - pack-objects: factor out name_hash
- - pack-objects: refactor the packing list
- - revindex: export new APIs
+  (merged to 'next' on 2014-01-10 at bdbe0a4)
+ + pack-bitmap: implement optional name_hash cache
+ + t/perf: add tests for pack bitmaps
+ + t: add basic bitmap functionality tests
+ + count-objects: recognize .bitmap in garbage-checking
+ + repack: consider bitmaps when performing repacks
+ + repack: handle optional files created by pack-objects
+ + repack: turn exts array into array-of-struct
+ + repack: stop using magic number for ARRAY_SIZE(exts)
+ + pack-objects: implement bitmap writing
+ + rev-list: add bitmap mode to speed up object lists
+ + pack-objects: use bitmaps when packing objects
+ + pack-objects: split add_object_entry
+ + pack-bitmap: add support for bitmap indexes
+ + documentation: add documentation for the bitmap format
+ + ewah: compressed bitmap implementation
+ + compat: add endianness helpers
+ + sha1_file: export `git_open_noatime`
+ + revision: allow setting custom limiter function
+ + pack-objects: factor out name_hash
+ + pack-objects: refactor the packing list
+ + revindex: export new APIs
 
  Borrows the bitmap index into packfiles from JGit to speed up
  enumeration of objects involved in a commit range without having to
  fully traverse the history.
 
- Will merge to 'next'.
-
-
-* ap/path-max (2013-12-16) 1 commit
-  (merged to 'next' on 2014-01-03 at affc620)
- + Prevent buffer overflows when path is too long
-
- Will merge to 'master'.
-
-
-* mh/path-max (2013-12-18) 2 commits
-  (merged to 'next' on 2014-01-03 at 5227c9b)
- + builtin/prune.c: use strbuf to avoid having to worry about PATH_MAX
- + prune-packed: use strbuf to avoid having to worry about PATH_MAX
-
- A few places where we relied on a fixed length buffer to hold
- pathnames in these two programs have been converted to use strbuf.
-
- Will merge to 'master'.
+ Will cook in 'next'.
 
 
 * nv/commit-gpgsign-config (2013-12-17) 3 commits
@@ -662,32 +676,12 @@ of the repositories listed at
  "git commit" and "git commit-tree", but I am not convinced that it
  is a good idea to sprinkle support for --no-gpg-sign everywhere.
 
-
-* cc/replace-object-info (2013-12-30) 11 commits
-  (merged to 'next' on 2014-01-03 at 4473803)
- + replace info: rename 'full' to 'long' and clarify in-code symbols
-  (merged to 'next' on 2013-12-17 at aeb9e18)
- + Documentation/git-replace: describe --format option
- + builtin/replace: unset read_replace_refs
- + t6050: add tests for listing with --format
- + builtin/replace: teach listing using short, medium or full formats
- + sha1_file: perform object replacement in sha1_object_info_extended()
- + t6050: show that git cat-file --batch fails with replace objects
- + sha1_object_info_extended(): add an "unsigned flags" parameter
- + sha1_file.c: add lookup_replace_object_extended() to pass flags
- + replace_object: don't check read_replace_refs twice
- + rename READ_SHA1_FILE_REPLACE flag to LOOKUP_REPLACE_OBJECT
-
- read_sha1_file() that is the workhorse to read the contents given
- an object name honoured object replacements, but there is no
- corresponding mechanism to sha1_object_info() that is used to
- obtain the metainfo (e.g. type & size) about the object, leading
- callers to weird inconsistencies.
-
- Will merge to 'master'.
+ Will cook in 'next'.
 
 
-* nd/shallow-clone (2014-01-06) 30 commits
+* nd/shallow-clone (2014-01-09) 31 commits
+  (merged to 'next' on 2014-01-09 at 6608634)
+ + t5537: fix incorrect expectation in test case 10
   (merged to 'next' on 2014-01-06 at 3dc7fab)
  + shallow: remove unused code
  + send-pack.c: mark a file-local function static
@@ -745,26 +739,15 @@ of the repositories listed at
  tree.
 
 
-* nd/negative-pathspec (2013-12-06) 3 commits
-  (merged to 'next' on 2013-12-12 at 9f340c8)
- + pathspec.c: support adding prefix magic to a pathspec with mnemonic magic
- + Support pathspec magic :(exclude) and its short form :!
- + glossary-content.txt: rephrase magic signature part
-
- Introduce "negative pathspec" magic, to allow "git log -- . ':!dir'" to
- tell us "I am interested in everything but 'dir' directory".
-
- Will merge to 'master'.
-
-
 * cc/starts-n-ends-with-endgame (2013-12-05) 1 commit
- - strbuf: remove prefixcmp() and suffixcmp()
+  (merged to 'next' on 2014-01-07 at 4cdf8d0)
+ + strbuf: remove prefixcmp() and suffixcmp()
 
  Endgame for the cc/starts-n-ends-with topic; this needs to be
  evil-merged with other topics that introduce new uses of
  prefix/suffix-cmp functions.
 
- Will merge to 'next' and cook until Git 2.0.
+ Will cook in 'next' until Git 2.0.
 
 
 * gj/push-more-verbose-advice (2013-11-13) 1 commit
