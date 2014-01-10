@@ -48,19 +48,36 @@ static struct commit *get_commit_reference(const char *arg)
 	return r;
 }
 
-static int handle_octopus(int count, const char **args, int reduce, int show_all)
+static int handle_independent(int count, const char **args)
 {
 	struct commit_list *revs = NULL;
 	struct commit_list *result;
 	int i;
 
-	if (reduce)
-		show_all = 1;
+	for (i = count - 1; i >= 0; i--)
+		commit_list_insert(get_commit_reference(args[i]), &revs);
+
+	result = reduce_heads(revs);
+	if (!result)
+		return 1;
+
+	while (result) {
+		printf("%s\n", sha1_to_hex(result->item->object.sha1));
+		result = result->next;
+	}
+	return 0;
+}
+
+static int handle_octopus(int count, const char **args, int show_all)
+{
+	struct commit_list *revs = NULL;
+	struct commit_list *result;
+	int i;
 
 	for (i = count - 1; i >= 0; i--)
 		commit_list_insert(get_commit_reference(args[i]), &revs);
 
-	result = reduce ? reduce_heads(revs) : get_octopus_merge_bases(revs);
+	result = reduce_heads(get_octopus_merge_bases(revs));
 
 	if (!result)
 		return 1;
@@ -220,8 +237,11 @@ int cmd_merge_base(int argc, const char **argv, const char *prefix)
 	if (cmdmode == 'r' && show_all)
 		die("--independent cannot be used with --all");
 
-	if (cmdmode == 'r' || cmdmode == 'o')
-		return handle_octopus(argc, argv, cmdmode == 'r', show_all);
+	if (cmdmode == 'o')
+		return handle_octopus(argc, argv, show_all);
+
+	if (cmdmode == 'r')
+		return handle_independent(argc, argv);
 
 	if (cmdmode == 'f') {
 		if (argc < 1 || 2 < argc)
