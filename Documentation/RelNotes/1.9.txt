@@ -19,6 +19,10 @@ The meanings of "--tags" option to "git fetch" has changed; the
 command fetches tags _in addition to_ what are fetched by the same
 command line without the option.
 
+The way "git push $there $what" interprets $what part given on the
+command line, when it does not have a colon that explicitly tells us
+what ref at the $there repository is to be updated, has been enhanced.
+
 A handful of ancient commands that have long been deprecated are
 finally gone (repo-config, tar-tree, lost-found, and peek-remote).
 
@@ -81,8 +85,49 @@ Foreign interfaces, subsystems and ports.
 
  * Various bugfixes to remote-bzr and remote-hg (in contrib/).
 
+ * The build procedure is aware of MirBSD now.
+
 
 UI, Workflows & Features
+
+ * Two-level configuration variable names in "branch.*" and "remote.*"
+   hierarchies, whose variables are predominantly three-level, were
+   not completed by hitting a <TAB> in bash and zsh completions.
+
+ * Fetching 'frotz' branch with "git fetch", while 'frotz/nitfol'
+   remote-tracking branch from an earlier fetch was still there, would
+   error out, primarily because the command was not told that it is
+   allowed to lose any information on our side.  "git fetch --prune"
+   now can be used to remove 'frotz/nitfol' to make room to fetch and
+   store 'frotz' remote-tracking branch.
+
+ * "diff.orderfile=<file>" configuration variable can be used to
+   pretend as if the "-O<file>" option were given from the command
+   line of "git diff", etc.
+
+ * The negative pathspec syntax allows "git log -- . ':!dir'" to tell
+   us "I am interested in everything but 'dir' directory".
+
+ * "git difftool" shows how many different paths there are in total,
+   and how many of them have been shown so far, to indicate progress.
+
+ * "git push origin master" used to push our 'master' branch to update
+   the 'master' branch at the 'origin' repository.  This has been
+   enhanced to use the same ref mapping "git push origin" would use to
+   determine what ref at the 'origin' to be updated with our 'master'.
+   For example, with this configuration
+
+   [remote "origin"]
+      push = refs/heads/*:refs/review/*
+
+   that would cause "git push origin" to push out our local branches
+   to corresponding refs under refs/review/ hierarchy at 'origin',
+   "git push origin master" would update 'refs/review/master' over
+   there.  Alternatively, if push.default is set to 'upstream' and our
+   'master' is set to integrate with 'topic' from the 'origin' branch,
+   running "git push origin" while on our 'master' would update their
+   'topic' branch, and running "git push origin master" while on any
+   of our branches does the same.
 
  * "gitweb" learned to treat ref hierarchies other than refs/heads as
    if they are additional branch namespaces (e.g. refs/changes/ in
@@ -109,6 +154,16 @@ UI, Workflows & Features
 
 Performance, Internal Implementation, etc.
 
+ * The naming convention of the packfiles has been updated; it used to
+   be based on the enumeration of names of the objects that are
+   contained in the pack, but now it also depends on how the packed
+   result is represented---packing the same set of objects using
+   different settings (or delta order) would produce a pack with
+   different name.
+
+ * "git diff --no-index" mode used to unnecessarily attempt to read
+   the index when there is one.
+
  * The deprecated parse-options macro OPT_BOOLEAN has been removed;
    use OPT_BOOL or OPT_COUNTUP in new code.
 
@@ -122,7 +177,8 @@ Performance, Internal Implementation, etc.
  * "git merge-base" learned the "--fork-point" mode, that implements
    the same logic used in "git pull --rebase" to find a suitable fork
    point out of the reflog entries for the remote-tracking branch the
-   work has been based on.
+   work has been based on.  "git rebase" has the same logic that can be
+   triggered with the "--fork-point" option.
 
  * A third-party "receive-pack" (the responder to "git push") can
    advertise the "no-thin" capability to tell "git push" not to use
@@ -140,6 +196,63 @@ Fixes since v1.8.5
 Unless otherwise noted, all the fixes since v1.8.5 in the maintenance
 track are contained in this release (see the maintenance releases' notes
 for details).
+
+ * The "--[no-]informative-errors" options to "git daemon" were parsed
+   a bit too loosely, allowing any other string after these option
+   names.
+   (merge 82246b7 nd/daemon-informative-errors-typofix later to maint).
+
+ * There is no reason to have a hardcoded upper limit of the number of
+   parents for an octopus merge, created via the graft mechanism, but
+   there was.
+   (merge e228c17 js/lift-parent-count-limit later to maint).
+
+ * The basic test used to leave unnecessary trash directories in the
+   t/ directory.
+   (merge 738a8be jk/test-framework-updates later to maint).
+
+ * "git merge-base --octopus" used to leave cleaning up suboptimal
+   result to the caller, but now it does the clean-up itself.
+   (merge 8f29299 bm/merge-base-octopus-dedup later to maint).
+
+ * A "gc" process running as a different user should be able to stop a
+   new "gc" process from starting, but it didn't.
+   (merge ed7eda8 km/gc-eperm later to maint).
+
+ * An earlier "clean-up" introduced an unnecessary memory leak.
+   (merge e1c1a32 jk/credential-plug-leak later to maint).
+
+ * "git add -A" (no other arguments) in a totally empty working tree
+   used to emit an error.
+   (merge 64ed07c nd/add-empty-fix later to maint).
+
+ * "git log --decorate" did not handle a tag pointed by another tag
+   nicely.
+   (merge 5e1361c bc/log-decoration later to maint).
+
+ * When we figure out how many file descriptors to allocate for
+   keeping packfiles open, a system with non-working getrlimit() could
+   cause us to die(), but because we make this call only to get a
+   rough estimate of how many is available and we do not even attempt
+   to use up all file descriptors available ourselves, it is nicer to
+   fall back to a reasonable low value rather than dying.
+   (merge 491a8de jh/rlimit-nofile-fallback later to maint).
+
+ * read_sha1_file(), that is the workhorse to read the contents given
+   an object name, honoured object replacements, but there was no
+   corresponding mechanism to sha1_object_info() that was used to
+   obtain the metainfo (e.g. type & size) about the object.  This led
+   callers to weird inconsistencies.
+   (merge 663a856 cc/replace-object-info later to maint).
+
+ * "git cat-file --batch=", an admittedly useless command, did not
+   behave very well.
+   (merge 6554dfa jk/cat-file-regression-fix later to maint).
+
+ * "git rev-parse <revs> -- <paths>" did not implement the usual
+   disambiguation rules the commands in the "git log" family used in
+   the same way.
+   (merge 62f162f jk/rev-parse-double-dashes later to maint).
 
  * "git mv A B/", when B does not exist as a directory, should error
    out, but it didn't.
