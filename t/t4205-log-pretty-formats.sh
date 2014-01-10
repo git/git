@@ -310,4 +310,19 @@ EOF
 	test_cmp expected actual
 '
 
+test_expect_success 'log decoration properly follows tag chain' '
+	git tag -a tag1 -m tag1 &&
+	git tag -a tag2 -m tag2 tag1 &&
+	git tag -d tag1 &&
+	git commit --amend -m shorter &&
+	git log --no-walk --tags --pretty="%H %d" --decorate=full >actual &&
+	cat <<EOF >expected &&
+6a908c10688b2503073c39c9ba26322c73902bb5  (tag: refs/tags/tag2)
+9f716384d92283fb915a4eee5073f030638e05f9  (tag: refs/tags/message-one)
+b87e4cccdb77336ea79d89224737be7ea8e95367  (tag: refs/tags/message-two)
+EOF
+	sort actual >actual1 &&
+	test_cmp expected actual1
+'
+
 test_done
