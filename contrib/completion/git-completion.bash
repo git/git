@@ -178,14 +178,20 @@ _get_comp_words_by_ref ()
 }
 fi
 
-__gitcompadd ()
+__gitcompappend ()
 {
-	local i=0
+	local i=${#COMPREPLY[@]}
 	for x in $1; do
 		if [[ "$x" == "$3"* ]]; then
 			COMPREPLY[i++]="$2$x$4"
 		fi
 	done
+}
+
+__gitcompadd ()
+{
+	COMPREPLY=()
+	__gitcompappend "$@"
 }
 
 # Generates completion reply, appending a space to possible completion words,
@@ -218,6 +224,14 @@ __gitcomp ()
 	esac
 }
 
+# Variation of __gitcomp_nl () that appends to the existing list of
+# completion candidates, COMPREPLY.
+__gitcomp_nl_append ()
+{
+	local IFS=$'\n'
+	__gitcompappend "$1" "${2-}" "${3-$cur}" "${4- }"
+}
+
 # Generates completion reply from newline-separated possible completion words
 # by appending a space to all of them.
 # It accepts 1 to 4 arguments:
@@ -229,8 +243,8 @@ __gitcomp ()
 #    appended.
 __gitcomp_nl ()
 {
-	local IFS=$'\n'
-	__gitcompadd "$1" "${2-}" "${3-$cur}" "${4- }"
+	COMPREPLY=()
+	__gitcomp_nl_append "$@"
 }
 
 # Generates completion reply with compgen from newline-separated possible
@@ -1827,6 +1841,7 @@ _git_config ()
 	branch.*)
 		local pfx="${cur%.*}." cur_="${cur#*.}"
 		__gitcomp_nl "$(__git_heads)" "$pfx" "$cur_" "."
+		__gitcomp_nl_append $'autosetupmerge\nautosetuprebase\n' "$pfx" "$cur_"
 		return
 		;;
 	guitool.*.*)
@@ -1869,6 +1884,7 @@ _git_config ()
 	remote.*)
 		local pfx="${cur%.*}." cur_="${cur#*.}"
 		__gitcomp_nl "$(__git_remotes)" "$pfx" "$cur_" "."
+		__gitcomp_nl_append "pushdefault" "$pfx" "$cur_"
 		return
 		;;
 	url.*.*)
