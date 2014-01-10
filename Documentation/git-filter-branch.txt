@@ -393,7 +393,7 @@ git filter-branch --index-filter \
 Checklist for Shrinking a Repository
 ------------------------------------
 
-git-filter-branch is often used to get rid of a subset of files,
+git-filter-branch can be used to get rid of a subset of files,
 usually with some combination of `--index-filter` and
 `--subdirectory-filter`.  People expect the resulting repository to
 be smaller than the original, but you need a few more steps to
@@ -428,6 +428,37 @@ warned.
 * Garbage collect all unreferenced objects with `git gc --prune=now`
   (or if your git-gc is not new enough to support arguments to
   `--prune`, use `git repack -ad; git prune` instead).
+
+Notes
+-----
+
+git-filter-branch allows you to make complex shell-scripted rewrites
+of your Git history, but you probably don't need this flexibility if
+you're simply _removing unwanted data_ like large files or passwords.
+For those operations you may want to consider
+link:http://rtyley.github.io/bfg-repo-cleaner/[The BFG Repo-Cleaner],
+a JVM-based alternative to git-filter-branch, typically at least
+10-50x faster for those use-cases, and with quite different
+characteristics:
+
+* Any particular version of a file is cleaned exactly _once_. The BFG,
+  unlike git-filter-branch, does not give you the opportunity to
+  handle a file differently based on where or when it was committed
+  within your history. This constraint gives the core performance
+  benefit of The BFG, and is well-suited to the task of cleansing bad
+  data - you don't care _where_ the bad data is, you just want it
+  _gone_.
+
+* By default The BFG takes full advantage of multi-core machines,
+  cleansing commit file-trees in parallel. git-filter-branch cleans
+  commits sequentially (ie in a single-threaded manner), though it
+  _is_ possible to write filters that include their own parallellism,
+  in the scripts executed against each commit.
+
+* The link:http://rtyley.github.io/bfg-repo-cleaner/#examples[command options]
+  are much more restrictive than git-filter branch, and dedicated just
+  to the tasks of removing unwanted data- e.g:
+  `--strip-blobs-bigger-than 1M`.
 
 GIT
 ---
