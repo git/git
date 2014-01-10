@@ -116,6 +116,27 @@ test_expect_success 'blame evil merge' '
 	check_count A 2 B 1 B1 2 B2 1 "A U Thor" 1
 '
 
+test_expect_success 'blame huge graft' '
+	test_when_finished "git checkout branch2" &&
+	test_when_finished "rm -f .git/info/grafts" &&
+	graft= &&
+	for i in 0 1 2
+	do
+		for j in 0 1 2 3 4 5 6 7 8 9
+		do
+			git checkout --orphan "$i$j" &&
+			printf "%s\n" "$i" "$j" >file &&
+			test_tick &&
+			GIT_AUTHOR_NAME=$i$j GIT_AUTHOR_EMAIL=$i$j@test.git \
+			git commit -a -m "$i$j" &&
+			commit=$(git rev-parse --verify HEAD) &&
+			graft="$graft$commit "
+		done
+	done &&
+	printf "%s " $graft >.git/info/grafts &&
+	check_count -h 00 01 1 10 1
+'
+
 test_expect_success 'setup incomplete line' '
 	echo "incomplete" | tr -d "\\012" >>file &&
 	GIT_AUTHOR_NAME="C" GIT_AUTHOR_EMAIL="C@test.git" \
