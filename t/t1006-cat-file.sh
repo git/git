@@ -262,4 +262,38 @@ test_expect_success "--batch-check with multiple sha1s gives correct format" '
     "$(echo_without_newline "$batch_check_input" | git cat-file --batch-check)"
 '
 
+test_expect_success 'setup blobs which are likely to delta' '
+	test-genrandom foo 10240 >foo &&
+	{ cat foo; echo plus; } >foo-plus &&
+	git add foo foo-plus &&
+	git commit -m foo &&
+	cat >blobs <<-\EOF
+	HEAD:foo
+	HEAD:foo-plus
+	EOF
+'
+
+test_expect_success 'confirm that neither loose blob is a delta' '
+	cat >expect <<-EOF
+	$_z40
+	$_z40
+	EOF
+	git cat-file --batch-check="%(deltabase)" <blobs >actual &&
+	test_cmp expect actual
+'
+
+# To avoid relying too much on the current delta heuristics,
+# we will check only that one of the two objects is a delta
+# against the other, but not the order. We can do so by just
+# asking for the base of both, and checking whether either
+# sha1 appears in the output.
+test_expect_success '%(deltabase) reports packed delta bases' '
+	git repack -ad &&
+	git cat-file --batch-check="%(deltabase)" <blobs >actual &&
+	{
+		grep "$(git rev-parse HEAD:foo)" actual ||
+		grep "$(git rev-parse HEAD:foo-plus)" actual
+	}
+'
+
 test_done
