@@ -126,10 +126,13 @@ static size_t common_prefix_len(const struct pathspec *pathspec)
 		       PATHSPEC_MAXDEPTH |
 		       PATHSPEC_LITERAL |
 		       PATHSPEC_GLOB |
-		       PATHSPEC_ICASE);
+		       PATHSPEC_ICASE |
+		       PATHSPEC_EXCLUDE);
 
 	for (n = 0; n < pathspec->nr; n++) {
 		size_t i = 0, len = 0, item_len;
+		if (pathspec->items[n].magic & PATHSPEC_EXCLUDE)
+			continue;
 		if (pathspec->items[n].magic & PATHSPEC_ICASE)
 			item_len = pathspec->items[n].prefix;
 		else
@@ -279,9 +282,10 @@ static int match_pathspec_item(const struct pathspec_item *item, int prefix,
  * pathspec did not match any names, which could indicate that the
  * user mistyped the nth pathspec.
  */
-int match_pathspec_depth(const struct pathspec *ps,
-			 const char *name, int namelen,
-			 int prefix, char *seen)
+static int match_pathspec_depth_1(const struct pathspec *ps,
+				  const char *name, int namelen,
+				  int prefix, char *seen,
+				  int exclude)
 {
 	int i, retval = 0;
 
@@ -290,7 +294,8 @@ int match_pathspec_depth(const struct pathspec *ps,
 		       PATHSPEC_MAXDEPTH |
 		       PATHSPEC_LITERAL |
 		       PATHSPEC_GLOB |
-		       PATHSPEC_ICASE);
+		       PATHSPEC_ICASE |
+		       PATHSPEC_EXCLUDE);
 
 	if (!ps->nr) {
 		if (!ps->recursive ||
@@ -309,8 +314,19 @@ int match_pathspec_depth(const struct pathspec *ps,
 
 	for (i = ps->nr - 1; i >= 0; i--) {
 		int how;
+
+		if ((!exclude &&   ps->items[i].magic & PATHSPEC_EXCLUDE) ||
+		    ( exclude && !(ps->items[i].magic & PATHSPEC_EXCLUDE)))
+			continue;
+
 		if (seen && seen[i] == MATCHED_EXACTLY)
 			continue;
+		/*
+		 * Make exclude patterns optional and never report
+		 * "pathspec ':(exclude)foo' matches no files"
+		 */
+		if (seen && ps->items[i].magic & PATHSPEC_EXCLUDE)
+			seen[i] = MATCHED_FNMATCH;
 		how = match_pathspec_item(ps->items+i, prefix, name, namelen);
 		if (ps->recursive &&
 		    (ps->magic & PATHSPEC_MAXDEPTH) &&
@@ -332,6 +348,18 @@ int match_pathspec_depth(const struct pathspec *ps,
 		}
 	}
 	return retval;
+}
+
+int match_pathspec_depth(const struct pathspec *ps,
+			 const char *name, int namelen,
+			 int prefix, char *seen)
+{
+	int positive, negative;
+	positive = match_pathspec_depth_1(ps, name, namelen, prefix, seen, 0);
+	if (!(ps->magic & PATHSPEC_EXCLUDE) || !positive)
+		return positive;
+	negative = match_pathspec_depth_1(ps, name, namelen, prefix, seen, 1);
+	return negative ? 0 : positive;
 }
 
 /*
@@ -1375,11 +1403,18 @@ int read_directory(struct dir_struct *dir, const char *path, int len, const stru
 			       PATHSPEC_MAXDEPTH |
 			       PATHSPEC_LITERAL |
 			       PATHSPEC_GLOB |
-			       PATHSPEC_ICASE);
+			       PATHSPEC_ICASE |
+			       PATHSPEC_EXCLUDE);
 
 	if (has_symlink_leading_path(path, len))
 		return dir->nr;
 
+	/*
+	 * exclude patterns are treated like positive ones in
+	 * create_simplify. Usually exclude patterns should be a
+	 * subset of positive ones, which has no impacts on
+	 * create_simplify().
+	 */
 	simplify = create_simplify(pathspec ? pathspec->_raw : NULL);
 	if (!len || treat_leading_path(dir, path, len, simplify))
 		read_directory_recursive(dir, path, len, 0, simplify);
