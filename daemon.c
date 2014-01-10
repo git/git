@@ -1278,11 +1278,11 @@ int main(int argc, char **argv)
 			make_service_overridable(arg + 18, 0);
 			continue;
 		}
-		if (starts_with(arg, "--informative-errors")) {
+		if (!strcmp(arg, "--informative-errors")) {
 			informative_errors = 1;
 			continue;
 		}
-		if (starts_with(arg, "--no-informative-errors")) {
+		if (!strcmp(arg, "--no-informative-errors")) {
 			informative_errors = 0;
 			continue;
 		}
