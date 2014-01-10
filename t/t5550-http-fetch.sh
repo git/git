@@ -62,13 +62,13 @@ test_expect_success 'http auth can use user/pass in URL' '
 '
 
 test_expect_success 'http auth can use just user in URL' '
-	set_askpass user@host &&
+	set_askpass wrong pass@host &&
 	git clone "$HTTPD_URL_USER/auth/dumb/repo.git" clone-auth-pass &&
 	expect_askpass pass user@host
 '
 
 test_expect_success 'http auth can request both user and pass' '
-	set_askpass user@host &&
+	set_askpass user@host pass@host &&
 	git clone "$HTTPD_URL/auth/dumb/repo.git" clone-auth-both &&
 	expect_askpass both user@host
 '
@@ -77,7 +77,7 @@ test_expect_success 'http auth respects credential helper config' '
 	test_config_global credential.helper "!f() {
 		cat >/dev/null
 		echo username=user@host
-		echo password=user@host
+		echo password=pass@host
 	}; f" &&
 	set_askpass wrong &&
 	git clone "$HTTPD_URL/auth/dumb/repo.git" clone-auth-helper &&
@@ -86,14 +86,14 @@ test_expect_success 'http auth respects credential helper config' '
 
 test_expect_success 'http auth can get username from config' '
 	test_config_global "credential.$HTTPD_URL.username" user@host &&
-	set_askpass user@host &&
+	set_askpass wrong pass@host &&
 	git clone "$HTTPD_URL/auth/dumb/repo.git" clone-auth-user &&
 	expect_askpass pass user@host
 '
 
 test_expect_success 'configured username does not override URL' '
 	test_config_global "credential.$HTTPD_URL.username" wrong &&
-	set_askpass user@host &&
+	set_askpass wrong pass@host &&
 	git clone "$HTTPD_URL_USER/auth/dumb/repo.git" clone-auth-user2 &&
 	expect_askpass pass user@host
 '

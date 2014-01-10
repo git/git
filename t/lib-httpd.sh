@@ -129,7 +129,7 @@ prepare_httpd() {
 	HTTPD_DEST=127.0.0.1:$LIB_HTTPD_PORT
 	HTTPD_URL=$HTTPD_PROTO://$HTTPD_DEST
 	HTTPD_URL_USER=$HTTPD_PROTO://user%40host@$HTTPD_DEST
-	HTTPD_URL_USER_PASS=$HTTPD_PROTO://user%40host:user%40host@$HTTPD_DEST
+	HTTPD_URL_USER_PASS=$HTTPD_PROTO://user%40host:pass%40host@$HTTPD_DEST
 
 	if test -n "$LIB_HTTPD_DAV" -o -n "$LIB_HTTPD_SVN"
 	then
@@ -217,7 +217,15 @@ setup_askpass_helper() {
 	test_expect_success 'setup askpass helper' '
 		write_script "$TRASH_DIRECTORY/askpass" <<-\EOF &&
 		echo >>"$TRASH_DIRECTORY/askpass-query" "askpass: $*" &&
-		cat "$TRASH_DIRECTORY/askpass-response"
+		case "$*" in
+		*Username*)
+			what=user
+			;;
+		*Password*)
+			what=pass
+			;;
+		esac &&
+		cat "$TRASH_DIRECTORY/askpass-$what"
 		EOF
 		GIT_ASKPASS="$TRASH_DIRECTORY/askpass" &&
 		export GIT_ASKPASS &&
@@ -227,7 +235,8 @@ setup_askpass_helper() {
 
 set_askpass() {
 	>"$TRASH_DIRECTORY/askpass-query" &&
-	echo "$*" >"$TRASH_DIRECTORY/askpass-response"
+	echo "$1" >"$TRASH_DIRECTORY/askpass-user" &&
+	echo "$2" >"$TRASH_DIRECTORY/askpass-pass"
 }
 
 expect_askpass() {
