@@ -1,3 +1,19 @@
+Git for Windows
+===============
+
+[![Join the chat at https://gitter.im/git-for-windows/git](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/git-for-windows/git?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
+This is [Git for Windows](http://git-for-windows.github.io/), the Windows port
+of [Git](http://git-scm.com/).
+
+The Git for Windows project is run using a [governance
+model](http://git-for-windows.github.io/governance-model.html). If you
+encounter problems, you can report them as [GitHub
+issues](https://github.com/git-for-windows/git/issues), discuss them on Git
+for Windows' [Google Group](http://groups.google.com/group/git-for-windows),
+and [contribute bug
+fixes](https://github.com/git-for-windows/git/wiki/How-to-participate).
+
 Git - fast, scalable, distributed revision control system
 =========================================================
 
@@ -27,7 +43,7 @@ CVS users may also want to read [Documentation/gitcvs-migration.txt][]
 (`man gitcvs-migration` or `git help cvs-migration` if git is
 installed).
 
-The user discussion and development of Git take place on the Git
+The user discussion and development of core Git take place on the Git
 mailing list -- everyone is welcome to post bug reports, feature
 requests, comments and patches to git@vger.kernel.org (read
 [Documentation/SubmittingPatches][] for instructions on patch submission).
@@ -35,6 +51,7 @@ To subscribe to the list, send an email with just "subscribe git" in
 the body to majordomo@vger.kernel.org. The mailing list archives are
 available at <https://public-inbox.org/git/>,
 <http://marc.info/?l=git> and other archival sites.
+The core git mailing list is plain text (no HTML!).
 
 The maintainer frequently sends the "What's cooking" reports that
 list the current status of various development topics to the mailing
