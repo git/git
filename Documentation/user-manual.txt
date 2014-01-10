@@ -1,5 +1,5 @@
 Git User Manual
-_______________
+===============
 
 Git is a fast distributed revision control system.
 
