@@ -41,20 +41,17 @@ test_expect_success '.git/objects should have 3 subdirectories' '
 test_expect_success 'success is reported like this' '
 	:
 '
-test_expect_failure 'pretend we have a known breakage' '
-	false
-'
 
 run_sub_test_lib_test () {
 	name="$1" descr="$2" # stdin is the body of the test code
 	shift 2
 	mkdir "$name" &&
 	(
-		# Pretend we're a test harness.  This prevents
-		# test-lib from writing the counts to a file that will
-		# later be summarized, showing spurious "failed" tests
-		HARNESS_ACTIVE=t &&
-		export HARNESS_ACTIVE &&
+		# Pretend we're not running under a test harness, whether we
+		# are or not. The test-lib output depends on the setting of
+		# this variable, so we need a stable setting under which to run
+		# the sub-test.
+		sane_unset HARNESS_ACTIVE &&
 		cd "$name" &&
 		cat >"$name.sh" <<-EOF &&
 		#!$SHELL_PATH
@@ -71,6 +68,8 @@ run_sub_test_lib_test () {
 		cat >>"$name.sh" &&
 		chmod +x "$name.sh" &&
 		export TEST_DIRECTORY &&
+		TEST_OUTPUT_DIRECTORY=$(pwd) &&
+		export TEST_OUTPUT_DIRECTORY &&
 		./"$name.sh" "$@" >out 2>err
 	)
 }
@@ -233,16 +232,13 @@ test_expect_success 'test --verbose' '
 	grep -v "^Initialized empty" test-verbose/out+ >test-verbose/out &&
 	check_sub_test_lib_test test-verbose <<-\EOF
 	> expecting success: true
-	> Z
 	> ok 1 - passing test
 	> Z
 	> expecting success: echo foo
 	> foo
-	> Z
 	> ok 2 - test with output
 	> Z
 	> expecting success: false
-	> Z
 	> not ok 3 - failing test
 	> #	false
 	> Z
@@ -265,7 +261,6 @@ test_expect_success 'test --verbose-only' '
 	> Z
 	> expecting success: echo foo
 	> foo
-	> Z
 	> ok 2 - test with output
 	> Z
 	> not ok 3 - failing test

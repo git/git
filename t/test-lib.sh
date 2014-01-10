@@ -481,8 +481,6 @@ test_at_end_hook_ () {
 test_done () {
 	GIT_EXIT_OK=t
 
-	# Note: t0000 relies on $HARNESS_ACTIVE disabling the .counts
-	# output file
 	if test -z "$HARNESS_ACTIVE"
 	then
 		test_results_dir="$TEST_OUTPUT_DIRECTORY/test-results"
