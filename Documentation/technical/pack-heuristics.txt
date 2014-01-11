@@ -1,5 +1,5 @@
-        Concerning Git's Packing Heuristics
-        ===================================
+Concerning Git's Packing Heuristics
+===================================
 
         Oh, here's a really stupid question:
 
