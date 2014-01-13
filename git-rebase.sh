@@ -534,7 +534,8 @@ esac
 
 if test "$fork_point" = t
 then
-	new_upstream=$(git merge-base --fork-point "$upstream_name" "$switch_to")
+	new_upstream=$(git merge-base --fork-point "$upstream_name" \
+			"${switch_to:-HEAD}")
 	if test -n "$new_upstream"
 	then
 		upstream=$new_upstream
