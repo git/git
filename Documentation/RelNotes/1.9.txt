@@ -90,6 +90,10 @@ Foreign interfaces, subsystems and ports.
 
 UI, Workflows & Features
 
+ * Just like we give a reasonable default for "less" via the LESS
+   environment variable, we now specify a reasonable default for "lv"
+   via the "LV" environment variable when spawning the pager.
+
  * Two-level configuration variable names in "branch.*" and "remote.*"
    hierarchies, whose variables are predominantly three-level, were
    not completed by hitting a <TAB> in bash and zsh completions.
@@ -154,6 +158,13 @@ UI, Workflows & Features
 
 Performance, Internal Implementation, etc.
 
+ * When parsing a 40-hex string into the object name, the string is
+   checked to see if it can be interpreted as a ref so that a warning
+   can be given for ambiguity. The code kicked in even when the
+   core.warnambiguousrefs is set to false to squelch this warning, in
+   which case the cycles spent to look at the ref namespace were an
+   expensive no-op, as the result was discarded without being used.
+
  * The naming convention of the packfiles has been updated; it used to
    be based on the enumeration of names of the objects that are
    contained in the pack, but now it also depends on how the packed
@@ -196,6 +207,10 @@ Fixes since v1.8.5
 Unless otherwise noted, all the fixes since v1.8.5 in the maintenance
 track are contained in this release (see the maintenance releases' notes
 for details).
+
+ * The implementation of 'git stash $cmd "stash@{...}"' did not quote
+   the stash argument properly and left it split at IFS whitespace.
+   (merge 2a07e43 ow/stash-with-ifs later to maint).
 
  * The "--[no-]informative-errors" options to "git daemon" were parsed
    a bit too loosely, allowing any other string after these option
