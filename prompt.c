@@ -22,6 +22,7 @@ static char *do_askpass(const char *cmd, const char *prompt)
 	if (start_command(&pass))
 		return NULL;
 
+	strbuf_reset(&buffer);
 	if (strbuf_read(&buffer, pass.out, 20) < 0)
 		err = 1;
 
@@ -38,7 +39,7 @@ static char *do_askpass(const char *cmd, const char *prompt)
 
 	strbuf_setlen(&buffer, strcspn(buffer.buf, "\r\n"));
 
-	return strbuf_detach(&buffer, NULL);
+	return buffer.buf;
 }
 
 char *git_prompt(const char *prompt, int flags)
