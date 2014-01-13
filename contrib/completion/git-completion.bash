@@ -2007,6 +2007,7 @@ _git_config ()
 		fetch.unpackLimit
 		format.attach
 		format.cc
+		format.coverLetter
 		format.headers
 		format.numbered
 		format.pretty
