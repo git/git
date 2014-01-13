@@ -567,6 +567,10 @@ be passed to the shell by Git, which will translate the final
 command to `LESS=FRSX less -+S`. The environment tells the command
 to set the `S` option to chop long lines but the command line
 resets it to the default to fold long lines.
++
+Likewise, when the `LV` environment variable is unset, Git sets it
+to `-c`.  You can override this setting by exporting `LV` with
+another value or setting `core.pager` to `lv +c`.
 
 core.whitespace::
 	A comma separated list of common whitespace problems to
