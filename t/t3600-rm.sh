@@ -705,6 +705,22 @@ test_expect_success 'rm of a populated nested submodule with a nested .git direc
 	rm -rf submod
 '
 
+test_expect_success 'checking out a commit after submodule removal needs manual updates' '
+	git commit -m "submodule removal" submod &&
+	git checkout HEAD^ &&
+	git submodule update &&
+	git checkout -q HEAD^ 2>actual &&
+	git checkout -q master 2>actual &&
+	echo "warning: unable to rmdir submod: Directory not empty" >expected &&
+	test_i18ncmp expected actual &&
+	git status -s submod >actual &&
+	echo "?? submod/" >expected &&
+	test_cmp expected actual &&
+	rm -rf submod &&
+	git status -s -uno --ignore-submodules=none > actual &&
+	! test -s actual
+'
+
 test_expect_success 'rm of d/f when d has become a non-directory' '
 	rm -rf d &&
 	mkdir d &&

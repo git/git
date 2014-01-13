@@ -170,6 +170,15 @@ of files and subdirectories under the `Documentation/` directory.
 	(i.e. you are listing the files explicitly), it
 	does not remove `subdir/git-foo.sh`.
 
+BUGS
+----
+Each time a superproject update removes a populated submodule
+(e.g. when switching between commits before and after the removal) a
+stale submodule checkout will remain in the old location. Removing the
+old directory is only safe when it uses a gitfile, as otherwise the
+history of the submodule will be deleted too. This step will be
+obsolete when recursive submodule update has been implemented.
+
 SEE ALSO
 --------
 linkgit:git-add[1]
