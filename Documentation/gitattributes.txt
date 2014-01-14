@@ -930,9 +930,12 @@ state.
 DEFINING MACRO ATTRIBUTES
 -------------------------
 
-Custom macro attributes can be defined only in the `.gitattributes`
-file at the toplevel (i.e. not in any subdirectory).  The built-in
-macro attribute "binary" is equivalent to:
+Custom macro attributes can be defined only in top-level gitattributes
+files (`$GIT_DIR/info/attributes`, the `.gitattributes` file at the
+top level of the working tree, or the global or system-wide
+gitattributes files), not in `.gitattributes` files in working tree
+subdirectories.  The built-in macro attribute "binary" is equivalent
+to:
 
 ------------
 [attr]binary -diff -merge -text
