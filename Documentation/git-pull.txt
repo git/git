@@ -42,9 +42,9 @@ OPTIONS
 Options related to merging
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-include::merge-options.txt[]
-
 :git-pull: 1
+
+include::merge-options.txt[]
 
 --rebase::
 	Instead of a merge, perform a rebase after fetching.  If
