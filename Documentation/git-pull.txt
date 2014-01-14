@@ -97,9 +97,9 @@ must be given before the options meant for 'git fetch'.
 Options related to merging
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-include::merge-options.txt[]
-
 :git-pull: 1
+
+include::merge-options.txt[]
 
 -r::
 --rebase::
