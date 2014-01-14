@@ -1880,7 +1880,7 @@ const char *prettify_refname(const char *name)
 		0);
 }
 
-const char *ref_rev_parse_rules[] = {
+static const char *ref_rev_parse_rules[] = {
 	"%.*s",
 	"refs/%.*s",
 	"refs/tags/%.*s",
@@ -1890,12 +1890,12 @@ const char *ref_rev_parse_rules[] = {
 	NULL
 };
 
-int refname_match(const char *abbrev_name, const char *full_name, const char **rules)
+int refname_match(const char *abbrev_name, const char *full_name)
 {
 	const char **p;
 	const int abbrev_name_len = strlen(abbrev_name);
 
-	for (p = rules; *p; p++) {
+	for (p = ref_rev_parse_rules; *p; p++) {
 		if (!strcmp(full_name, mkpath(*p, abbrev_name_len, abbrev_name))) {
 			return 1;
 		}
