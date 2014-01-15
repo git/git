@@ -512,4 +512,15 @@ test_expect_success 'all boundary commits are excluded' '
 	test_bundle_object_count .git/objects/pack/pack-${pack##pack	}.pack 3
 '
 
+test_expect_success 'fetching a one-level ref works' '
+	test_commit extra &&
+	git reset --hard HEAD^ &&
+	git update-ref refs/foo extra &&
+	git init one-level &&
+	(
+		cd one-level &&
+		git fetch .. HEAD refs/foo
+	)
+'
+
 test_done
