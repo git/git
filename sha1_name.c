@@ -1095,6 +1095,9 @@ static int interpret_upstream_mark(const char *name, int namelen,
 	if (!len)
 		return -1;
 
+	if (memchr(name, ':', at))
+		return -1;
+
 	set_shortened_ref(buf, get_upstream_branch(name, at));
 	return len + at;
 }
