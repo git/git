@@ -17,6 +17,9 @@ test_expect_success 'setup' '
 	 test_commit 4 &&
 	 git branch --track my-side origin/side &&
 	 git branch --track local-master master &&
+	 git branch --track fun@ny origin/side &&
+	 git branch --track @funny origin/side &&
+	 git branch --track funny@ origin/side &&
 	 git remote add -t master master-only .. &&
 	 git fetch master-only &&
 	 git branch bad-upstream &&
@@ -52,6 +55,24 @@ test_expect_success '@{u} resolves to correct full name' '
 
 test_expect_success 'my-side@{upstream} resolves to correct full name' '
 	test refs/remotes/origin/side = "$(full_name my-side@{u})"
+'
+
+test_expect_success 'upstream of branch with @ in middle' '
+	full_name fun@ny@{u} >actual &&
+	echo refs/remotes/origin/side >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'upstream of branch with @ at start' '
+	full_name @funny@{u} >actual &&
+	echo refs/remotes/origin/side >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'upstream of branch with @ at end' '
+	full_name funny@@{u} >actual &&
+	echo refs/remotes/origin/side >expect &&
+	test_cmp expect actual
 '
 
 test_expect_success 'refs/heads/my-side@{upstream} does not resolve to my-side{upstream}' '
