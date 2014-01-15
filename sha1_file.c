@@ -1279,7 +1279,6 @@ void prepare_packed_git(void)
 
 void reprepare_packed_git(void)
 {
-	discard_revindex();
 	prepare_packed_git_run_once = 0;
 	prepare_packed_git();
 }
