@@ -1119,7 +1119,7 @@ static int interpret_upstream_mark(const char *name, int namelen,
  */
 int interpret_branch_name(const char *name, int namelen, struct strbuf *buf)
 {
-	char *cp;
+	char *at;
 	int len = interpret_nth_prior_checkout(name, buf);
 
 	if (!namelen)
@@ -1134,15 +1134,15 @@ int interpret_branch_name(const char *name, int namelen, struct strbuf *buf)
 			return reinterpret(name, namelen, len, buf);
 	}
 
-	cp = strchr(name, '@');
-	if (!cp)
+	at = strchr(name, '@');
+	if (!at)
 		return -1;
 
-	len = interpret_empty_at(name, namelen, cp - name, buf);
+	len = interpret_empty_at(name, namelen, at - name, buf);
 	if (len > 0)
 		return reinterpret(name, namelen, len, buf);
 
-	len = interpret_upstream_mark(name, namelen, cp - name, buf);
+	len = interpret_upstream_mark(name, namelen, at - name, buf);
 	if (len > 0)
 		return len;
 
