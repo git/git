@@ -9,8 +9,11 @@ check() {
 		if test '$2' = 'commit'
 		then
 			git log -1 --format=%s '$1' >actual
-		else
+		elif test '$2' = 'ref'
+		then
 			git rev-parse --symbolic-full-name '$1' >actual
+		else
+			git cat-file -p '$1' >actual
 		fi &&
 		test_cmp expect actual
 	"
@@ -81,5 +84,15 @@ test_expect_success 'switch to old-branch' '
 check HEAD ref refs/heads/old-branch
 check "HEAD@{1}" commit new-two
 check "@{1}" commit old-one
+
+test_expect_success 'create path with @' '
+	echo content >normal &&
+	echo content >fun@ny &&
+	git add normal fun@ny &&
+	git commit -m "funny path"
+'
+
+check "@:normal" blob content
+check "@:fun@ny" blob content
 
 test_done

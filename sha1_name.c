@@ -430,7 +430,7 @@ static inline int upstream_mark(const char *string, int len)
 }
 
 static int get_sha1_1(const char *name, int len, unsigned char *sha1, unsigned lookup_flags);
-static int interpret_nth_prior_checkout(const char *name, struct strbuf *buf);
+static int interpret_nth_prior_checkout(const char *name, int namelen, struct strbuf *buf);
 
 static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 {
@@ -492,7 +492,7 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1)
 		struct strbuf buf = STRBUF_INIT;
 		int detached;
 
-		if (interpret_nth_prior_checkout(str, &buf) > 0) {
+		if (interpret_nth_prior_checkout(str, len, &buf) > 0) {
 			detached = (buf.len == 40 && !get_sha1_hex(buf.buf, sha1));
 			strbuf_release(&buf);
 			if (detached)
@@ -931,7 +931,8 @@ static int grab_nth_branch_switch(unsigned char *osha1, unsigned char *nsha1,
  * Parse @{-N} syntax, return the number of characters parsed
  * if successful; otherwise signal an error with negative value.
  */
-static int interpret_nth_prior_checkout(const char *name, struct strbuf *buf)
+static int interpret_nth_prior_checkout(const char *name, int namelen,
+					struct strbuf *buf)
 {
 	long nth;
 	int retval;
@@ -939,9 +940,11 @@ static int interpret_nth_prior_checkout(const char *name, struct strbuf *buf)
 	const char *brace;
 	char *num_end;
 
+	if (namelen < 4)
+		return -1;
 	if (name[0] != '@' || name[1] != '{' || name[2] != '-')
 		return -1;
-	brace = strchr(name, '}');
+	brace = memchr(name, '}', namelen);
 	if (!brace)
 		return -1;
 	nth = strtol(name + 3, &num_end, 10);
@@ -1014,7 +1017,7 @@ static int interpret_empty_at(const char *name, int namelen, int len, struct str
 		return -1;
 
 	/* make sure it's a single @, or @@{.*}, not @foo */
-	next = strchr(name + len + 1, '@');
+	next = memchr(name + len + 1, '@', namelen - len - 1);
 	if (next && next[1] != '{')
 		return -1;
 	if (!next)
@@ -1120,7 +1123,7 @@ static int interpret_upstream_mark(const char *name, int namelen,
 int interpret_branch_name(const char *name, int namelen, struct strbuf *buf)
 {
 	char *at;
-	int len = interpret_nth_prior_checkout(name, buf);
+	int len = interpret_nth_prior_checkout(name, namelen, buf);
 
 	if (!namelen)
 		namelen = strlen(name);
@@ -1134,7 +1137,7 @@ int interpret_branch_name(const char *name, int namelen, struct strbuf *buf)
 			return reinterpret(name, namelen, len, buf);
 	}
 
-	at = strchr(name, '@');
+	at = memchr(name, '@', namelen);
 	if (!at)
 		return -1;
 
