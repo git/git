@@ -273,6 +273,7 @@ static struct commit *handle_commit(struct rev_info *revs, struct object *object
 				return NULL;
 			die("bad object %s", sha1_to_hex(tag->tagged->sha1));
 		}
+		object->flags |= flags;
 	}
 
 	/*
@@ -284,7 +285,6 @@ static struct commit *handle_commit(struct rev_info *revs, struct object *object
 		if (parse_commit(commit) < 0)
 			die("unable to parse commit %s", name);
 		if (flags & UNINTERESTING) {
-			commit->object.flags |= UNINTERESTING;
 			mark_parents_uninteresting(commit);
 			revs->limited = 1;
 		}
@@ -302,7 +302,6 @@ static struct commit *handle_commit(struct rev_info *revs, struct object *object
 		if (!revs->tree_objects)
 			return NULL;
 		if (flags & UNINTERESTING) {
-			tree->object.flags |= UNINTERESTING;
 			mark_tree_contents_uninteresting(tree);
 			return NULL;
 		}
@@ -314,13 +313,10 @@ static struct commit *handle_commit(struct rev_info *revs, struct object *object
 	 * Blob object? You know the drill by now..
 	 */
 	if (object->type == OBJ_BLOB) {
-		struct blob *blob = (struct blob *)object;
 		if (!revs->blob_objects)
 			return NULL;
-		if (flags & UNINTERESTING) {
-			blob->object.flags |= UNINTERESTING;
+		if (flags & UNINTERESTING)
 			return NULL;
-		}
 		add_pending_object(revs, object, "");
 		return NULL;
 	}
