@@ -98,17 +98,12 @@ static void mark_blob_uninteresting(struct blob *blob)
 	blob->object.flags |= UNINTERESTING;
 }
 
-void mark_tree_uninteresting(struct tree *tree)
+static void mark_tree_contents_uninteresting(struct tree *tree)
 {
 	struct tree_desc desc;
 	struct name_entry entry;
 	struct object *obj = &tree->object;
 
-	if (!tree)
-		return;
-	if (obj->flags & UNINTERESTING)
-		return;
-	obj->flags |= UNINTERESTING;
 	if (!has_sha1_file(obj->sha1))
 		return;
 	if (parse_tree(tree) < 0)
@@ -135,6 +130,19 @@ void mark_tree_uninteresting(struct tree *tree)
 	 */
 	free(tree->buffer);
 	tree->buffer = NULL;
+	tree->object.parsed = 0;
+}
+
+void mark_tree_uninteresting(struct tree *tree)
+{
+	struct object *obj = &tree->object;
+
+	if (!tree)
+		return;
+	if (obj->flags & UNINTERESTING)
+		return;
+	obj->flags |= UNINTERESTING;
+	mark_tree_contents_uninteresting(tree);
 }
 
 void mark_parents_uninteresting(struct commit *commit)
@@ -294,7 +302,8 @@ static struct commit *handle_commit(struct rev_info *revs, struct object *object
 		if (!revs->tree_objects)
 			return NULL;
 		if (flags & UNINTERESTING) {
-			mark_tree_uninteresting(tree);
+			tree->object.flags |= UNINTERESTING;
+			mark_tree_contents_uninteresting(tree);
 			return NULL;
 		}
 		add_pending_object(revs, object, "");
@@ -309,7 +318,7 @@ static struct commit *handle_commit(struct rev_info *revs, struct object *object
 		if (!revs->blob_objects)
 			return NULL;
 		if (flags & UNINTERESTING) {
-			mark_blob_uninteresting(blob);
+			blob->object.flags |= UNINTERESTING;
 			return NULL;
 		}
 		add_pending_object(revs, object, "");

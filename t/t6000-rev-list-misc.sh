@@ -56,4 +56,10 @@ test_expect_success 'rev-list A..B and rev-list ^A B are the same' '
 	test_cmp expect actual
 '
 
+test_expect_success 'propagate uninteresting flag down correctly' '
+	git rev-list --objects ^HEAD^{tree} HEAD^{tree} >actual &&
+	>expect &&
+	test_cmp expect actual
+'
+
 test_done
