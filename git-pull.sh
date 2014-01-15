@@ -52,6 +52,21 @@ if test -z "$rebase"
 then
 	rebase=$(bool_or_string_config pull.rebase)
 fi
+
+# Setup default fast-forward options via `pull.ff`
+pull_ff=$(git config pull.ff)
+case "$pull_ff" in
+false)
+	no_ff=--no-ff
+	break
+	;;
+only)
+	ff_only=--ff-only
+	break
+	;;
+esac
+
+
 dry_run=
 while :
 do
