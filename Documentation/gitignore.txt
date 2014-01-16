@@ -7,7 +7,7 @@ gitignore - Specifies intentionally untracked files to ignore
 
 SYNOPSIS
 --------
-$GIT_DIR/info/exclude, .gitignore
+$HOME/.config/git/ignore, $GIT_DIR/info/exclude, .gitignore
 
 DESCRIPTION
 -----------
