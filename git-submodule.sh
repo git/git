@@ -803,17 +803,10 @@ cmd_update()
 			update_module=$update
 		else
 			update_module=$(git config submodule."$name".update)
-			case "$update_module" in
-			'')
-				;; # Unset update mode
-			checkout | rebase | merge | none)
-				;; # Known update modes
-			!*)
-				;; # Custom update command
-			*)
-				die "$(eval_gettext "Invalid update mode '$update_module' for submodule '$name'")"
-				;;
-			esac
+			if test -z "$update_module"
+			then
+				update_module="checkout"
+			fi
 		fi
 
 		displaypath=$(relative_path "$prefix$sm_path")
@@ -882,11 +875,16 @@ Maybe you want to use 'update --init'?")"
 			case ";$cloned_modules;" in
 			*";$name;"*)
 				# then there is no local change to integrate
-				update_module= ;;
+				update_module=checkout ;;
 			esac
 
 			must_die_on_failure=
 			case "$update_module" in
+			checkout)
+				command="git checkout $subforce -q"
+				die_msg="$(eval_gettext "Unable to checkout '\$sha1' in submodule path '\$displaypath'")"
+				say_msg="$(eval_gettext "Submodule path '\$displaypath': checked out '\$sha1'")"
+				;;
 			rebase)
 				command="git rebase"
 				die_msg="$(eval_gettext "Unable to rebase '\$sha1' in submodule path '\$displaypath'")"
@@ -906,10 +904,7 @@ Maybe you want to use 'update --init'?")"
 				must_die_on_failure=yes
 				;;
 			*)
-				command="git checkout $subforce -q"
-				die_msg="$(eval_gettext "Unable to checkout '\$sha1' in submodule path '\$displaypath'")"
-				say_msg="$(eval_gettext "Submodule path '\$displaypath': checked out '\$sha1'")"
-				;;
+				die "$(eval_gettext "Invalid update mode '$update_module' for submodule '$name'")"
 			esac
 
 			if (clear_local_git_env; cd "$sm_path" && $command "$sha1")
