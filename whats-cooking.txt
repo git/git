@@ -1,15 +1,20 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jan 2014, #02; Fri, 10)
-X-master-at: a25014bc4cef56712f7d005d7b76070d0270f454
-X-next-at: 7559984f930784464fd0cfdd0a69e17c779ae117
+Subject: What's cooking in git.git (Jan 2014, #03; Thu, 16)
+X-master-at: 14598b907008dc9952428662a30ecfd74dc90a79
+X-next-at: b139ac2589b15d55cd9fa5c6957da44b150d0737
 
-What's cooking in git.git (Jan 2014, #02; Fri, 10)
+What's cooking in git.git (Jan 2014, #03; Thu, 16)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
+
+I am planning to tag 1.9-rc0 preview release from the tip of
+'master'.  Hopefully a few fix-up topics still in flight and also
+updates to git-gui and gitk from subarea maintainers can be merged
+by 1.9-rc1 is tagged.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -18,233 +23,6 @@ of the repositories listed at
 
 --------------------------------------------------
 [Graduated to "master"]
-
-* ap/path-max (2013-12-16) 1 commit
-  (merged to 'next' on 2014-01-03 at affc620)
- + Prevent buffer overflows when path is too long
-
-
-* bc/log-decoration (2013-12-20) 1 commit
-  (merged to 'next' on 2014-01-03 at ff8873f)
- + log: properly handle decorations with chained tags
-
- "git log --decorate" did not handle a tag pointed by another tag
- nicely.
-
-
-* bm/merge-base-octopus-dedup (2013-12-30) 2 commits
-  (merged to 'next' on 2014-01-06 at 355d62b)
- + merge-base --octopus: reduce the result from get_octopus_merge_bases()
- + merge-base: separate "--independent" codepath into its own helper
-
- "git merge-base --octopus" used to leave cleaning up suboptimal
- result to the caller, but now it does the clean-up itself.
-
-
-* bs/mirbsd (2014-01-02) 1 commit
-  (merged to 'next' on 2014-01-06 at d5cecbb)
- + Add MirBSD support to the build system.
-
-
-* cc/replace-object-info (2013-12-30) 11 commits
-  (merged to 'next' on 2014-01-03 at 4473803)
- + replace info: rename 'full' to 'long' and clarify in-code symbols
-  (merged to 'next' on 2013-12-17 at aeb9e18)
- + Documentation/git-replace: describe --format option
- + builtin/replace: unset read_replace_refs
- + t6050: add tests for listing with --format
- + builtin/replace: teach listing using short, medium or full formats
- + sha1_file: perform object replacement in sha1_object_info_extended()
- + t6050: show that git cat-file --batch fails with replace objects
- + sha1_object_info_extended(): add an "unsigned flags" parameter
- + sha1_file.c: add lookup_replace_object_extended() to pass flags
- + replace_object: don't check read_replace_refs twice
- + rename READ_SHA1_FILE_REPLACE flag to LOOKUP_REPLACE_OBJECT
-
- read_sha1_file() that is the workhorse to read the contents given
- an object name honoured object replacements, but there is no
- corresponding mechanism to sha1_object_info() that is used to
- obtain the metainfo (e.g. type & size) about the object, leading
- callers to weird inconsistencies.
-
-
-* jh/rlimit-nofile-fallback (2013-12-18) 1 commit
-  (merged to 'next' on 2014-01-03 at b56ae0c)
- + get_max_fd_limit(): fall back to OPEN_MAX upon getrlimit/sysconf failure
-
- When we figure out how many file descriptors to allocate for
- keeping packfiles open, a system with non-working getrlimit() could
- cause us to die(), but because we make this call only to get a
- rough estimate of how many is available and we do not even attempt
- to use up all file descriptors available ourselves, it is nicer to
- fall back to a reasonable low value rather than dying.
-
-
-* jk/credential-plug-leak (2014-01-02) 1 commit
-  (merged to 'next' on 2014-01-06 at 88e29a3)
- + Revert "prompt: clean up strbuf usage"
-
- An earlier "clean-up" introduced an unnecessary memory leak.
-
-
-* jk/http-auth-tests-robustify (2014-01-02) 1 commit
-  (merged to 'next' on 2014-01-06 at 7e87bba)
- + use distinct username/password for http auth tests
-
- Using the same username and password during the tests would not
- catch a potential breakage of sending one when we should be sending
- the other.
-
-
-* jk/oi-delta-base (2013-12-26) 2 commits
-  (merged to 'next' on 2014-01-06 at 8cf3ed2)
- + cat-file: provide %(deltabase) batch format
- + sha1_object_info_extended: provide delta base sha1s
-
- Teach "cat-file --batch" to show delta-base object name for a
- packed object that is represented as a delta.
-
-
-* jk/sha1write-void (2013-12-26) 1 commit
-  (merged to 'next' on 2014-01-06 at d8cd8ff)
- + do not pretend sha1write returns errors
-
- Code clean-up.
-
-
-* jk/test-framework-updates (2014-01-02) 3 commits
-  (merged to 'next' on 2014-01-06 at f81f373)
- + t0000: drop "known breakage" test
- + t0000: simplify HARNESS_ACTIVE hack
- + t0000: set TEST_OUTPUT_DIRECTORY for sub-tests
-
- The basic test used to leave unnecessary trash directories in the
- t/ directory.
-
-
-* js/lift-parent-count-limit (2013-12-27) 1 commit
-  (merged to 'next' on 2014-01-06 at b74133c)
- + Remove the line length limit for graft files
-
- There is no reason to have a hardcoded upper limit of the number of
- parents for an octopus merge, created via the graft mechanism.
-
-
-* km/gc-eperm (2014-01-02) 1 commit
-  (merged to 'next' on 2014-01-06 at fe107de)
- + gc: notice gc processes run by other users
-
- A "gc" process running as a different user should be able to stop a
- new "gc" process from starting.
-
-
-* mh/path-max (2013-12-18) 2 commits
-  (merged to 'next' on 2014-01-03 at 5227c9b)
- + builtin/prune.c: use strbuf to avoid having to worry about PATH_MAX
- + prune-packed: use strbuf to avoid having to worry about PATH_MAX
-
- A few places where we relied on a fixed length buffer to hold
- pathnames in these two programs have been converted to use strbuf.
-
-
-* nd/add-empty-fix (2013-12-26) 1 commit
-  (merged to 'next' on 2014-01-06 at 88a78c9)
- + add: don't complain when adding empty project root
-
- "git add -A" (no other arguments) in a totally empty working tree
- used to emit an error.
-
-
-* nd/commit-tree-constness (2013-12-26) 1 commit
-  (merged to 'next' on 2014-01-06 at a177c9f)
- + commit.c: make "tree" a const pointer in commit_tree*()
-
- Code clean-up.
-
-
-* nd/daemon-informative-errors-typofix (2013-12-20) 1 commit
-  (merged to 'next' on 2014-01-03 at 1b87648)
- + daemon: be strict at parsing parameters --[no-]informative-errors
-
-
-* nd/negative-pathspec (2013-12-06) 3 commits
-  (merged to 'next' on 2013-12-12 at 9f340c8)
- + pathspec.c: support adding prefix magic to a pathspec with mnemonic magic
- + Support pathspec magic :(exclude) and its short form :!
- + glossary-content.txt: rephrase magic signature part
-
- Introduce "negative pathspec" magic, to allow "git log -- . ':!dir'" to
- tell us "I am interested in everything but 'dir' directory".
-
-
-* rr/completion-branch-config (2014-01-06) 4 commits
-  (merged to 'next' on 2014-01-06 at ed9eecc)
- + completion: fix remote.pushdefault
- + completion: fix branch.autosetup(merge|rebase)
- + completion: introduce __gitcomp_nl_append ()
- + zsh completion: find matching custom bash completion
-
- Two-level configuration variable names in "branch.*" and "remote.*"
- hierarchies whose variables are predominantly three-level where not
- completed by hitting a <TAB> in bash and zsh completions.
-
-
-* rt/bfg-ad-in-filter-branch-doc (2013-12-18) 1 commit
-  (merged to 'next' on 2014-01-03 at 2a45e3b)
- + docs: add filter-branch notes on The BFG
-
-
-* sb/diff-orderfile-config (2013-12-18) 3 commits
-  (merged to 'next' on 2014-01-03 at 744eba7)
- + diff: add diff.orderfile configuration variable
- + diff: let "git diff -O" read orderfile from any file and fail properly
- + t4056: add new tests for "git diff -O"
-
- Allow "git diff -O<file>" to be configured with a new configuration
- variable.
-
-
-* ss/builtin-cleanup (2014-01-06) 3 commits
-  (merged to 'next' on 2014-01-06 at ffcac50)
- + builtin/help.c: speed up is_git_command() by checking for builtin commands first
- + builtin/help.c: call load_command_list() only when it is needed
- + git.c: consistently use the term "builtin" instead of "internal command"
-
- "git help $cmd" unnecessarily enumerated potential command names
- from the filesystem, even when $cmd is known to be a built-in.
-
- Ideas for further optimization, primarily by killing the use of
- is_in_cmdlist(), were suggested in the discussion, but they can
- come as follow-ups on top of this series.
-
-
-* ta/format-user-manual-as-an-article (2014-01-06) 1 commit
-  (merged to 'next' on 2014-01-06 at 37858f6)
- + user-manual: improve html and pdf formatting
-
- Update the way the user-manual is formatted via AsciiDoc to save
- trees.
-
-
-* tm/fetch-prune (2014-01-03) 2 commits
-  (merged to 'next' on 2014-01-03 at a58c6b4)
- + fetch --prune: Run prune before fetching
- + fetch --prune: always print header url
-
- Fetching 'frotz' branch with "git fetch", while having
- 'frotz/nitfol' remote-tracking branch from an earlier fetch, would
- error out, primarily because the command has not been told to
- remove anything on our side. In such a case, "git fetch --prune"
- can be used to remove 'frotz/nitfol' to make room to fetch and
- store 'frotz' remote-tracking branch.
-
-
-* vm/octopus-merge-bases-simplify (2014-01-03) 1 commit
-  (merged to 'next' on 2014-01-06 at 35df672)
- + get_octopus_merge_bases(): cleanup redundant variable
-
---------------------------------------------------
-[New Topics]
 
 * br/sha1-name-40-hex-no-disambiguation (2014-01-07) 1 commit
   (merged to 'next' on 2014-01-10 at 2a0973b)
@@ -258,7 +36,10 @@ of the repositories listed at
  which case the cycles spent to look at the ref namespace were an
  expensive no-op, as the result was discarded without being used.
 
- Will merge to 'master'.
+
+* jk/pull-rebase-using-fork-point (2014-01-09) 1 commit
+  (merged to 'next' on 2014-01-10 at e86e59d)
+ + rebase: fix fork-point with zero arguments
 
 
 * jl/submodule-mv-checkout-caveat (2014-01-07) 2 commits
@@ -272,8 +53,6 @@ of the repositories listed at
  working tree with its embedded repository behind, as there may be
  unexpendable state there. Document and warn users about this.
 
- Will merge to 'master'.
-
 
 * jn/pager-lv-default-env (2014-01-07) 1 commit
   (merged to 'next' on 2014-01-10 at 22d4755)
@@ -283,7 +62,17 @@ of the repositories listed at
  environment variable, specify a reasonable default for "lv" via the
  "LV" environment variable when spawning the pager.
 
- Will merge to 'master'.
+
+* mh/shorten-unambigous-ref (2014-01-09) 3 commits
+ + shorten_unambiguous_ref(): tighten up pointer arithmetic
+ + gen_scanf_fmt(): delete function and use snprintf() instead
+ + shorten_unambiguous_ref(): introduce a new local variable
+
+
+* mm/mv-file-to-no-such-dir-with-slash (2014-01-10) 1 commit
+ + mv: let 'git mv file no-such-dir/' error out on Windows, too
+
+ Finishing touches to a topic that has already been merged to 'master'.
 
 
 * ow/stash-with-ifs (2014-01-07) 1 commit
@@ -293,8 +82,6 @@ of the repositories listed at
  The implementation of 'git stash $cmd "stash@{...}"' did not quote
  the stash argument properly and left it split at IFS whitespace.
 
- Will merge to 'master'.
-
 
 * rr/completion-format-coverletter (2014-01-07) 1 commit
   (merged to 'next' on 2014-01-10 at d2dbc9d)
@@ -303,59 +90,112 @@ of the repositories listed at
  The bash/zsh completion code did not know about format.coverLetter
  among many format.* configuration variables.
 
- Will merge to 'master'.
+--------------------------------------------------
+[New Topics]
 
-
-* wk/submodule-on-branch (2014-01-07) 2 commits
- - DONTMERGE: RFC will be rerolled with tests ($gmane/239967)
- - submodule: respect requested branch on all clones
-
- Waiting for the discussion to settle.
-
-
-* jk/branch-at-publish (2014-01-09) 5 commits
- - implement @{publish} shorthand
- - branch_get: provide per-branch pushremote pointers
- - branch_get: return early on error
- - interpret_branch_name: factor out upstream handling
- - sha1_name: refactor upstream_mark
-
- Give an easier access to the tracking branches from "other" side in
- a triangular workflow by introducing B@{publish} that works in a
- similar way to how B@{upstream} does.
-
- Expecting a reroll.
-
-
-* jk/pull-rebase-using-fork-point (2014-01-09) 1 commit
-  (merged to 'next' on 2014-01-10 at e86e59d)
- + rebase: fix fork-point with zero arguments
-
- Will merge to 'master'.
-
-
-* jk/warn-on-object-refname-ambiguity (2014-01-09) 6 commits
- - get_sha1: drop object/refname ambiguity flag
- - get_sha1: speed up ambiguous 40-hex test
- - FIXUP: teach DO_FOR_EACH_NO_RECURSE to prime_ref_dir()
- - refs: teach for_each_ref a flag to avoid recursion
- - cat-file: fix a minor memory leak in batch_objects
- - cat-file: refactor error handling of batch_objects
- (this branch uses br/sha1-name-40-hex-no-disambiguation.)
-
- Expecting a reroll.
-
-
-* mh/shorten-unambigous-ref (2014-01-09) 3 commits
- - shorten_unambiguous_ref(): tighten up pointer arithmetic
- - gen_scanf_fmt(): delete function and use snprintf() instead
- - shorten_unambiguous_ref(): introduce a new local variable
+* ab/subtree-doc (2014-01-13) 1 commit
+ - subtree: fix argument validation in add/pull/push
 
  Will merge to 'next'.
 
 
-* mm/mv-file-to-no-such-dir-with-slash (2014-01-10) 1 commit
- - mv: let 'git mv file no-such-dir/' error out on Windows, too
+* jk/complete-merge-base (2014-01-13) 2 commits
+ - completion: handle --[no-]fork-point options to git-rebase
+ - completion: complete merge-base options
+
+ Will merge to 'next'.
+
+
+* po/everyday-doc (2014-01-13) 1 commit
+ - Make 'git help everyday' work
+
+
+* rb/merge-prepare-commit-msg-hook (2014-01-10) 4 commits
+ - merge: drop unused arg from abort_commit method signature
+ - merge: make prepare_to_commit responsible for write_merge_state
+ - t7505: ensure cleanup after hook blocks merge
+ - t7505: add missing &&
+
+ Expose more merge states (e.g. $GIT_DIR/MERGE_MODE) to hooks that
+ run during "git merge".  The log stressed too much on one hook,
+ prepare-commit-msg, but it would equally apply to other hooks like
+ post-merge, I think.
+
+ Waiting to give a chance to reroll.
+
+
+* bl/blame-full-history (2014-01-14) 1 commit
+ - blame: new option --prefer-first to better handle merged cherry-picks
+
+
+* da/pull-ff-configuration (2014-01-15) 2 commits
+ - pull: add --ff-only to the help text
+ - pull: add pull.ff configuration
+
+ Will merge to 'next'.
+
+
+* jc/maint-pull-docfix (2014-01-14) 2 commits
+ - Documentation: "git pull" does not have the "-m" option
+ - Merge branch 'jc/maint-pull-docfix-for-409b8d82' into jc/maint-pull-docfix
+ (this branch uses jc/maint-pull-docfix-for-409b8d82.)
+
+ Will merge to 'next'.
+
+
+* jc/maint-pull-docfix-for-409b8d82 (2014-01-14) 1 commit
+ - Documentation: exclude irrelevant options from "git pull"
+ (this branch is used by jc/maint-pull-docfix.)
+
+ Will merge to 'next'.
+
+
+* jc/revision-range-unpeel (2014-01-15) 2 commits
+ - revision: propagate flag bits from tags to pointees
+ - revision: mark contents of an uninteresting tree uninteresting
+
+ "git log --left-right A...B" lost the "leftness" of commits
+ reachable from A when A is a tag as a side effect of a recent
+ bugfix.  This is a regression in 1.8.4.x series.
+
+ Will merge to 'next'.
+
+
+* jk/allow-fetch-onelevel-refname (2014-01-15) 1 commit
+ - fetch-pack: do not filter out one-level refs
+
+ "git clone" would fail to clone from a repository that has a ref
+ directly under "refs/", e.g. "refs/stash", because different
+ validation paths do different things on such a refname.  Loosen the
+ client side's validation to allow such a ref.
+
+ Will merge to 'next'.
+
+
+* jk/interpret-branch-name-fix (2014-01-15) 5 commits
+ - interpret_branch_name: find all possible @-marks
+ - interpret_branch_name: avoid @{upstream} past colon
+ - interpret_branch_name: always respect "namelen" parameter
+ - interpret_branch_name: rename "cp" variable to "at"
+ - interpret_branch_name: factor out upstream handling
+
+ Fix a handful of bugs around interpreting $branch@{upstream}
+ notation and its lookalike, when $branch part has interesting
+ characters, e.g. "@", and ":".
+
+ Will merge to 'next'.
+
+
+* mh/attr-macro-doc (2014-01-14) 1 commit
+ - gitattributes: document more clearly where macros are allowed
+
+ Will merge to 'next'.
+
+
+* mh/retire-ref-fetch-rules (2014-01-14) 1 commit
+ - refname_match(): always use the rules in ref_rev_parse_rules
+
+ Code simplification.
 
  Will merge to 'next'.
 
@@ -571,6 +411,52 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* wk/submodule-on-branch (2014-01-16) 6 commits
+ - Documentation: Describe 'submodule update' modes in detail
+ - t7406: Add explicit tests for head attachement after cloning updates
+ - [DONOTMERGE] t7406: Just-cloned checkouts update to the gitlinked hash with 'reset'
+ - submodule: Explicit local branch creation in module_clone
+ - submodule: Document module_clone arguments in comments
+ - submodule: Make 'checkout' update_module explicit
+ (this branch uses fp/submodule-checkout-mode.)
+
+ Makes sure 'submodule update' modes that do not detach HEADs can
+ be used more pleasantly by checking out a concrete branch when
+ cloning them to prime the well.
+
+ This round seems to be almost ready; further discussions are of
+ course very much welcomed.
+
+ Will wait for another reroll to fix minor nits, at least.
+
+
+* jk/branch-at-publish (2014-01-13) 6 commits
+ - t1507 (rev-parse-upstream): fix typo in test title
+ - implement @{publish} shorthand
+ - branch_get: provide per-branch pushremote pointers
+ - branch_get: return early on error
+ - interpret_branch_name: factor out upstream handling
+ - sha1_name: refactor upstream_mark
+
+ Give an easier access to the tracking branches from "other" side in
+ a triangular workflow by introducing B@{publish} that works in a
+ similar way to how B@{upstream} does.
+
+ Will rebase to share the same change with the
+ jk/interpret-branch-name-fix topic.
+
+
+* jk/warn-on-object-refname-ambiguity (2014-01-09) 6 commits
+ - get_sha1: drop object/refname ambiguity flag
+ - get_sha1: speed up ambiguous 40-hex test
+ - FIXUP: teach DO_FOR_EACH_NO_RECURSE to prime_ref_dir()
+ - refs: teach for_each_ref a flag to avoid recursion
+ - cat-file: fix a minor memory leak in batch_objects
+ - cat-file: refactor error handling of batch_objects
+
+ Expecting a reroll.
+
+
 * ap/remote-hg-skip-null-bookmarks (2014-01-02) 1 commit
  - remote-hg: do not fail on invalid bookmarks
 
@@ -587,6 +473,7 @@ of the repositories listed at
 * fp/submodule-checkout-mode (2014-01-07) 1 commit
   (merged to 'next' on 2014-01-10 at 647ba9b)
  + git-submodule.sh: 'checkout' is a valid update mode
+ (this branch is used by wk/submodule-on-branch.)
 
  "submodule.*.update=checkout", when propagated from .gitmodules to
  .git/config, turned into a "submodule.*.update=none", which did not
@@ -807,27 +694,3 @@ of the repositories listed at
  + diff: remove "diff-files -q" in a version of Git in a distant future
 
  Will cook in 'next' until a distant future.
-
---------------------------------------------------
-[Discarded]
-
-* aa/transport-non-positive-depth-only (2013-11-26) 1 commit
- . transport: catch non positive --depth option value
-
-
-* cc/remote-remove-redundant-postfixcmp (2013-11-06) 2 commits
- . Rename suffixcmp() to has_suffix() and invert its result
- . builtin/remote: remove postfixcmp() and use suffixcmp() instead
-
-
-* th/reflog-annotated-tag (2013-10-28) 1 commit
- . reflog: handle lightweight and annotated tags equally
-
- "git log -g $annotated_tag", when there is no reflog history, should
- have produced a single output entry (i.e. the ref creation event),
- but instead showed the history leading to the tag.
-
- Broken at the design level.  Any reflog entry that points at a non
- commit needs to be handled with new code that does not exist yet,
- and lifting the "this code handles only commits" without adding
- such code does not solve anything.
