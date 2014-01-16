@@ -241,6 +241,12 @@ module_name()
 #
 # Clone a submodule
 #
+# $1 = submodule path
+# $2 = submodule name
+# $3 = URL to clone
+# $4 = reference repository to reuse (empty for independent)
+# $5 = depth argument for shallow clones (empty for deep)
+#
 # Prior to calling, cmd_update checks that a possibly existing
 # path is not a git repository.
 # Likewise, cmd_add checks that path does not exist at all,
