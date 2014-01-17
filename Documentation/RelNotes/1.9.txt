@@ -90,6 +90,13 @@ Foreign interfaces, subsystems and ports.
 
 UI, Workflows & Features
 
+ * Fetching from a shallowly-cloned repository used to be forbidden,
+   primarily because the codepaths involved were not carefully vetted
+   and we did not bother supporting such usage. This release attempts
+   to allow object transfer out of a shallowly-cloned repository in a
+   more controlled way (i.e. the receiver become a shallow repository
+   with a truncated history).
+
  * Just like we give a reasonable default for "less" via the LESS
    environment variable, we now specify a reasonable default for "lv"
    via the "LV" environment variable when spawning the pager.
@@ -207,6 +214,11 @@ Fixes since v1.8.5
 Unless otherwise noted, all the fixes since v1.8.5 in the maintenance
 track are contained in this release (see the maintenance releases' notes
 for details).
+
+ * "submodule.*.update=checkout", when propagated from .gitmodules to
+   .git/config, turned into a "submodule.*.update=none", which did not
+   make much sense.
+   (merge efa8fd7 fp/submodule-checkout-mode later to maint).
 
  * The implementation of 'git stash $cmd "stash@{...}"' did not quote
    the stash argument properly and left it split at IFS whitespace.
