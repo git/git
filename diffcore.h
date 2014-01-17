@@ -45,9 +45,9 @@ struct diff_filespec {
 #define DIRTY_SUBMODULE_MODIFIED  2
 	unsigned is_stdin : 1;
 	unsigned has_more_entries : 1; /* only appear in combined diff */
-	struct userdiff_driver *driver;
 	/* data should be considered "binary"; -1 means "don't know yet" */
 	int is_binary;
+	struct userdiff_driver *driver;
 };
 
 extern struct diff_filespec *alloc_filespec(const char *);
