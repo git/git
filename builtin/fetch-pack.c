@@ -3,6 +3,7 @@
 #include "fetch-pack.h"
 #include "remote.h"
 #include "connect.h"
+#include "sha1-array.h"
 
 static const char fetch_pack_usage[] =
 "git fetch-pack [--all] [--stdin] [--quiet|-q] [--keep|-k] [--thin] "
@@ -13,6 +14,13 @@ static void add_sought_entry_mem(struct ref ***sought, int *nr, int *alloc,
 				 const char *name, int namelen)
 {
 	struct ref *ref = xcalloc(1, sizeof(*ref) + namelen + 1);
+	unsigned char sha1[20];
+
+	if (namelen > 41 && name[40] == ' ' && !get_sha1_hex(name, sha1)) {
+		hashcpy(ref->old_sha1, sha1);
+		name += 41;
+		namelen -= 41;
+	}
 
 	memcpy(ref->name, name, namelen);
 	ref->name[namelen] = '\0';
@@ -39,6 +47,7 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 	char **pack_lockfile_ptr = NULL;
 	struct child_process *conn;
 	struct fetch_pack_args args;
+	struct sha1_array shallow = SHA1_ARRAY_INIT;
 
 	packet_trace_identity("fetch-pack");
 
@@ -110,6 +119,14 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 			args.check_self_contained_and_connected = 1;
 			continue;
 		}
+		if (!strcmp("--cloning", arg)) {
+			args.cloning = 1;
+			continue;
+		}
+		if (!strcmp("--update-shallow", arg)) {
+			args.update_shallow = 1;
+			continue;
+		}
 		usage(fetch_pack_usage);
 	}
 
@@ -158,10 +175,10 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 		if (!conn)
 			return args.diag_url ? 0 : 1;
 	}
-	get_remote_heads(fd[0], NULL, 0, &ref, 0, NULL);
+	get_remote_heads(fd[0], NULL, 0, &ref, 0, NULL, &shallow);
 
-	ref = fetch_pack(&args, fd, conn, ref, dest,
-			 sought, nr_sought, pack_lockfile_ptr);
+	ref = fetch_pack(&args, fd, conn, ref, dest, sought, nr_sought,
+			 &shallow, pack_lockfile_ptr);
 	if (pack_lockfile) {
 		printf("lock %s\n", pack_lockfile);
 		fflush(stdout);

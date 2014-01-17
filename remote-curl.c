@@ -10,6 +10,7 @@
 #include "sideband.h"
 #include "argv-array.h"
 #include "credential.h"
+#include "sha1-array.h"
 
 static struct remote *remote;
 /* always ends with a trailing slash */
@@ -20,6 +21,8 @@ struct options {
 	unsigned long depth;
 	unsigned progress : 1,
 		check_self_contained_and_connected : 1,
+		cloning : 1,
+		update_shallow : 1,
 		followtags : 1,
 		dry_run : 1,
 		thin : 1;
@@ -87,8 +90,23 @@ static int set_option(const char *name, const char *value)
 		string_list_append(&cas_options, val.buf);
 		strbuf_release(&val);
 		return 0;
-	}
-	else {
+	} else if (!strcmp(name, "cloning")) {
+		if (!strcmp(value, "true"))
+			options.cloning = 1;
+		else if (!strcmp(value, "false"))
+			options.cloning = 0;
+		else
+			return -1;
+		return 0;
+	} else if (!strcmp(name, "update-shallow")) {
+		if (!strcmp(value, "true"))
+			options.update_shallow = 1;
+		else if (!strcmp(value, "false"))
+			options.update_shallow = 0;
+		else
+			return -1;
+		return 0;
+	} else {
 		return 1 /* unsupported */;
 	}
 }
@@ -99,6 +117,7 @@ struct discovery {
 	char *buf;
 	size_t len;
 	struct ref *refs;
+	struct sha1_array shallow;
 	unsigned proto_git : 1;
 };
 static struct discovery *last_discovery;
@@ -107,7 +126,7 @@ static struct ref *parse_git_refs(struct discovery *heads, int for_push)
 {
 	struct ref *list = NULL;
 	get_remote_heads(-1, heads->buf, heads->len, &list,
-			 for_push ? REF_NORMAL : 0, NULL);
+			 for_push ? REF_NORMAL : 0, NULL, &heads->shallow);
 	return list;
 }
 
@@ -168,6 +187,7 @@ static void free_discovery(struct discovery *d)
 	if (d) {
 		if (d == last_discovery)
 			last_discovery = NULL;
+		free(d->shallow.sha1);
 		free(d->buf_alloc);
 		free_refs(d->refs);
 		free(d);
@@ -699,7 +719,7 @@ static int fetch_git(struct discovery *heads,
 	struct strbuf preamble = STRBUF_INIT;
 	char *depth_arg = NULL;
 	int argc = 0, i, err;
-	const char *argv[16];
+	const char *argv[17];
 
 	argv[argc++] = "fetch-pack";
 	argv[argc++] = "--stateless-rpc";
@@ -715,6 +735,10 @@ static int fetch_git(struct discovery *heads,
 	}
 	if (options.check_self_contained_and_connected)
 		argv[argc++] = "--check-self-contained-and-connected";
+	if (options.cloning)
+		argv[argc++] = "--cloning";
+	if (options.update_shallow)
+		argv[argc++] = "--update-shallow";
 	if (!options.progress)
 		argv[argc++] = "--no-progress";
 	if (options.depth) {
@@ -730,7 +754,8 @@ static int fetch_git(struct discovery *heads,
 		struct ref *ref = to_fetch[i];
 		if (!ref->name || !*ref->name)
 			die("cannot fetch by sha1 over smart http");
-		packet_buf_write(&preamble, "%s\n", ref->name);
+		packet_buf_write(&preamble, "%s %s\n",
+				 sha1_to_hex(ref->old_sha1), ref->name);
 	}
 	packet_buf_flush(&preamble);
 

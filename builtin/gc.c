@@ -16,6 +16,7 @@
 #include "run-command.h"
 #include "sigchain.h"
 #include "argv-array.h"
+#include "commit.h"
 
 #define FAILED_RUN "failed to run %s"
 

@@ -430,4 +430,11 @@ test_expect_success 'clone from a repository with two identical branches' '
 
 '
 
+test_expect_success 'shallow clone locally' '
+	git clone --depth=1 --no-local src ssrrcc &&
+	git clone ssrrcc ddsstt &&
+	test_cmp ssrrcc/.git/shallow ddsstt/.git/shallow &&
+	( cd ddsstt && git fsck )
+'
+
 test_done

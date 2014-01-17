@@ -161,6 +161,7 @@ MUST peel the ref if it's an annotated tag.
 
 ----
   advertised-refs  =  (no-refs / list-of-refs)
+		      *shallow
 		      flush-pkt
 
   no-refs          =  PKT-LINE(zero-id SP "capabilities^{}"
@@ -173,6 +174,8 @@ MUST peel the ref if it's an annotated tag.
   other-ref        =  PKT-LINE(other-tip / other-peeled)
   other-tip        =  obj-id SP refname LF
   other-peeled     =  obj-id SP refname "^{}" LF
+
+  shallow          =  PKT-LINE("shallow" SP obj-id)
 
   capability-list  =  capability *(SP capability)
   capability       =  1*(LC_ALPHA / DIGIT / "-" / "_")
@@ -461,7 +464,9 @@ contain all the objects that the server will need to complete the new
 references.
 
 ----
-  update-request    =  command-list [pack-file]
+  update-request    =  *shallow command-list [pack-file]
+
+  shallow           =  PKT-LINE("shallow" SP obj-id)
 
   command-list      =  PKT-LINE(command NUL capability-list LF)
 		       *PKT-LINE(command LF)

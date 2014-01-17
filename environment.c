@@ -10,6 +10,7 @@
 #include "cache.h"
 #include "refs.h"
 #include "fmt-merge-msg.h"
+#include "commit.h"
 
 int trust_executable_bit = 1;
 int trust_ctime = 1;
@@ -97,6 +98,7 @@ const char * const local_repo_env[] = {
 	INDEX_ENVIRONMENT,
 	NO_REPLACE_OBJECTS_ENVIRONMENT,
 	GIT_PREFIX_ENVIRONMENT,
+	GIT_SHALLOW_FILE_ENVIRONMENT,
 	NULL
 };
 
@@ -124,6 +126,7 @@ static char *expand_namespace(const char *raw_namespace)
 static void setup_git_env(void)
 {
 	const char *gitfile;
+	const char *shallow_file;
 
 	git_dir = getenv(GIT_DIR_ENVIRONMENT);
 	if (!git_dir)
@@ -147,6 +150,9 @@ static void setup_git_env(void)
 		read_replace_refs = 0;
 	namespace = expand_namespace(getenv(GIT_NAMESPACE_ENVIRONMENT));
 	namespace_len = strlen(namespace);
+	shallow_file = getenv(GIT_SHALLOW_FILE_ENVIRONMENT);
+	if (shallow_file)
+		set_alternate_shallow_file(shallow_file, 0);
 }
 
 int is_bare_repository(void)

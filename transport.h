@@ -11,6 +11,7 @@ struct git_transport_options {
 	unsigned followtags : 1;
 	unsigned check_self_contained_and_connected : 1;
 	unsigned self_contained_and_connected : 1;
+	unsigned update_shallow : 1;
 	int depth;
 	const char *uploadpack;
 	const char *receivepack;
@@ -34,6 +35,12 @@ struct transport {
 	 * the transport type while doing so, and cannot be reused.
 	 */
 	unsigned cannot_reuse : 1;
+
+	/*
+	 * A hint from caller that it will be performing a clone, not
+	 * normal fetch. IOW the repository is guaranteed empty.
+	 */
+	unsigned cloning : 1;
 
 	/**
 	 * Returns 0 if successful, positive if the option is not
@@ -146,6 +153,9 @@ struct transport *transport_get(struct remote *, const char *);
 /* Aggressively fetch annotated tags if possible */
 #define TRANS_OPT_FOLLOWTAGS "followtags"
 
+/* Accept refs that may update .git/shallow without --depth */
+#define TRANS_OPT_UPDATE_SHALLOW "updateshallow"
+
 /**
  * Returns 0 if the option was used, non-zero otherwise. Prints a
  * message to stderr if the option is not used.
@@ -193,10 +203,4 @@ void transport_print_push_status(const char *dest, struct ref *refs,
 
 typedef void alternate_ref_fn(const struct ref *, void *);
 extern void for_each_alternate_ref(alternate_ref_fn, void *);
-
-struct send_pack_args;
-extern int send_pack(struct send_pack_args *args,
-		     int fd[], struct child_process *conn,
-		     struct ref *remote_refs,
-		     struct extra_have_objects *extra_have);
 #endif

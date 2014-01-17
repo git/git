@@ -24,6 +24,8 @@ objects unreachable from any of these head objects from the object database.
 In addition, it
 prunes the unpacked objects that are also found in packs by
 running 'git prune-packed'.
+It also removes entries from .git/shallow that are not reachable by
+any ref.
 
 Note that unreachable, packed objects will remain.  If this is
 not desired, see linkgit:git-repack[1].

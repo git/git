@@ -84,7 +84,7 @@ static void create_pack_file(void)
 	char *shallow_file = NULL;
 
 	if (shallow_nr) {
-		shallow_file = setup_temporary_shallow();
+		shallow_file = setup_temporary_shallow(NULL);
 		argv[arg++] = "--shallow-file";
 		argv[arg++] = shallow_file;
 	}
@@ -619,7 +619,7 @@ static void receive_needs(void)
 	if (depth > 0) {
 		struct commit_list *result = NULL, *backup = NULL;
 		int i;
-		if (depth == INFINITE_DEPTH)
+		if (depth == INFINITE_DEPTH && !is_repository_shallow())
 			for (i = 0; i < shallows.nr; i++) {
 				struct object *object = shallows.objects[i].item;
 				object->flags |= NOT_SHALLOW;
@@ -757,6 +757,7 @@ static void upload_pack(void)
 		reset_timeout();
 		head_ref_namespaced(send_ref, &symref);
 		for_each_namespaced_ref(send_ref, &symref);
+		advertise_shallow_grafts(1);
 		packet_flush(1);
 	} else {
 		head_ref_namespaced(mark_our_ref, NULL);
@@ -834,8 +835,7 @@ int main(int argc, char **argv)
 
 	if (!enter_repo(dir, strict))
 		die("'%s' does not appear to be a git repository", dir);
-	if (is_repository_shallow())
-		die("attempt to fetch/clone from a shallow repository");
+
 	git_config(upload_pack_config, NULL);
 	upload_pack();
 	return 0;

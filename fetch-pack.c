@@ -13,6 +13,7 @@
 #include "transport.h"
 #include "version.h"
 #include "prio-queue.h"
+#include "sha1-array.h"
 
 static int transfer_unpack_limit = -1;
 static int fetch_unpack_limit = -1;
@@ -309,7 +310,7 @@ static int find_common(struct fetch_pack_args *args,
 	}
 
 	if (is_repository_shallow())
-		write_shallow_commits(&req_buf, 1);
+		write_shallow_commits(&req_buf, 1, NULL);
 	if (args->depth > 0)
 		packet_buf_write(&req_buf, "deepen %d", args->depth);
 	packet_buf_flush(&req_buf);
@@ -772,6 +773,7 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 				 int fd[2],
 				 const struct ref *orig_ref,
 				 struct ref **sought, int nr_sought,
+				 struct shallow_info *si,
 				 char **pack_lockfile)
 {
 	struct ref *ref = copy_ref_list(orig_ref);
@@ -848,7 +850,10 @@ static struct ref *do_fetch_pack(struct fetch_pack_args *args,
 	if (args->stateless_rpc)
 		packet_flush(fd[1]);
 	if (args->depth > 0)
-		setup_alternate_shallow(&shallow_lock, &alternate_shallow_file);
+		setup_alternate_shallow(&shallow_lock, &alternate_shallow_file,
+					NULL);
+	else if (si->nr_ours || si->nr_theirs)
+		alternate_shallow_file = setup_temporary_shallow(si->shallow);
 	else
 		alternate_shallow_file = NULL;
 	if (get_pack(args, fd, pack_lockfile))
@@ -922,14 +927,121 @@ static int remove_duplicates_in_refs(struct ref **ref, int nr)
 	return dst;
 }
 
+static void update_shallow(struct fetch_pack_args *args,
+			   struct ref **sought, int nr_sought,
+			   struct shallow_info *si)
+{
+	struct sha1_array ref = SHA1_ARRAY_INIT;
+	int *status;
+	int i;
+
+	if (args->depth > 0 && alternate_shallow_file) {
+		if (*alternate_shallow_file == '\0') { /* --unshallow */
+			unlink_or_warn(git_path("shallow"));
+			rollback_lock_file(&shallow_lock);
+		} else
+			commit_lock_file(&shallow_lock);
+		return;
+	}
+
+	if (!si->shallow || !si->shallow->nr)
+		return;
+
+	if (alternate_shallow_file) {
+		/*
+		 * The temporary shallow file is only useful for
+		 * index-pack and unpack-objects because it may
+		 * contain more roots than we want. Delete it.
+		 */
+		if (*alternate_shallow_file)
+			unlink(alternate_shallow_file);
+		free((char *)alternate_shallow_file);
+	}
+
+	if (args->cloning) {
+		/*
+		 * remote is shallow, but this is a clone, there are
+		 * no objects in repo to worry about. Accept any
+		 * shallow points that exist in the pack (iow in repo
+		 * after get_pack() and reprepare_packed_git())
+		 */
+		struct sha1_array extra = SHA1_ARRAY_INIT;
+		unsigned char (*sha1)[20] = si->shallow->sha1;
+		for (i = 0; i < si->shallow->nr; i++)
+			if (has_sha1_file(sha1[i]))
+				sha1_array_append(&extra, sha1[i]);
+		if (extra.nr) {
+			setup_alternate_shallow(&shallow_lock,
+						&alternate_shallow_file,
+						&extra);
+			commit_lock_file(&shallow_lock);
+		}
+		sha1_array_clear(&extra);
+		return;
+	}
+
+	if (!si->nr_ours && !si->nr_theirs)
+		return;
+
+	remove_nonexistent_theirs_shallow(si);
+	if (!si->nr_ours && !si->nr_theirs)
+		return;
+	for (i = 0; i < nr_sought; i++)
+		sha1_array_append(&ref, sought[i]->old_sha1);
+	si->ref = &ref;
+
+	if (args->update_shallow) {
+		/*
+		 * remote is also shallow, .git/shallow may be updated
+		 * so all refs can be accepted. Make sure we only add
+		 * shallow roots that are actually reachable from new
+		 * refs.
+		 */
+		struct sha1_array extra = SHA1_ARRAY_INIT;
+		unsigned char (*sha1)[20] = si->shallow->sha1;
+		assign_shallow_commits_to_refs(si, NULL, NULL);
+		if (!si->nr_ours && !si->nr_theirs) {
+			sha1_array_clear(&ref);
+			return;
+		}
+		for (i = 0; i < si->nr_ours; i++)
+			sha1_array_append(&extra, sha1[si->ours[i]]);
+		for (i = 0; i < si->nr_theirs; i++)
+			sha1_array_append(&extra, sha1[si->theirs[i]]);
+		setup_alternate_shallow(&shallow_lock,
+					&alternate_shallow_file,
+					&extra);
+		commit_lock_file(&shallow_lock);
+		sha1_array_clear(&extra);
+		sha1_array_clear(&ref);
+		return;
+	}
+
+	/*
+	 * remote is also shallow, check what ref is safe to update
+	 * without updating .git/shallow
+	 */
+	status = xcalloc(nr_sought, sizeof(*status));
+	assign_shallow_commits_to_refs(si, NULL, status);
+	if (si->nr_ours || si->nr_theirs) {
+		for (i = 0; i < nr_sought; i++)
+			if (status[i])
+				sought[i]->status = REF_STATUS_REJECT_SHALLOW;
+	}
+	free(status);
+	sha1_array_clear(&ref);
+}
+
 struct ref *fetch_pack(struct fetch_pack_args *args,
 		       int fd[], struct child_process *conn,
 		       const struct ref *ref,
 		       const char *dest,
 		       struct ref **sought, int nr_sought,
+		       struct sha1_array *shallow,
 		       char **pack_lockfile)
 {
 	struct ref *ref_cpy;
+	struct shallow_info si;
 
 	fetch_pack_setup();
 	if (nr_sought)
@@ -939,16 +1051,11 @@ struct ref *fetch_pack(struct fetch_pack_args *args,
 		packet_flush(fd[1]);
 		die("no matching remote head");
 	}
-	ref_cpy = do_fetch_pack(args, fd, ref, sought, nr_sought, pack_lockfile);
-
-	if (args->depth > 0 && alternate_shallow_file) {
-		if (*alternate_shallow_file == '\0') { /* --unshallow */
-			unlink_or_warn(git_path("shallow"));
-			rollback_lock_file(&shallow_lock);
-		} else
-			commit_lock_file(&shallow_lock);
-	}
-
+	prepare_shallow_info(&si, shallow);
+	ref_cpy = do_fetch_pack(args, fd, ref, sought, nr_sought,
+				&si, pack_lockfile);
 	reprepare_packed_git();
+	update_shallow(args, sought, nr_sought, &si);
+	clear_shallow_info(&si);
 	return ref_cpy;
 }

@@ -252,6 +252,12 @@ static int add_one_reference(struct string_list_item *item, void *cb_data)
 		die(_("reference repository '%s' is not a local repository."),
 		    item->string);
 
+	if (!access(mkpath("%s/shallow", ref_git), F_OK))
+		die(_("reference repository '%s' is shallow"), item->string);
+
+	if (!access(mkpath("%s/info/grafts", ref_git), F_OK))
+		die(_("reference repository '%s' is grafted"), item->string);
+
 	strbuf_addf(&alternate, "%s/objects", ref_git);
 	add_to_alternates_file(alternate.buf);
 	strbuf_release(&alternate);
@@ -791,8 +797,15 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	else
 		repo = repo_name;
 	is_local = option_local != 0 && path && !is_bundle;
-	if (is_local && option_depth)
-		warning(_("--depth is ignored in local clones; use file:// instead."));
+	if (is_local) {
+		if (option_depth)
+			warning(_("--depth is ignored in local clones; use file:// instead."));
+		if (!access(mkpath("%s/shallow", path), F_OK)) {
+			if (option_local > 0)
+				warning(_("source repository is shallow, ignoring --local"));
+			is_local = 0;
+		}
+	}
 	if (option_local > 0 && !is_local)
 		warning(_("--local is ignored"));
 
@@ -887,6 +900,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 
 	remote = remote_get(option_origin);
 	transport = transport_get(remote, remote->url[0]);
+	transport->cloning = 1;
 
 	if (!transport->get_refs_list || (!is_local && !transport->fetch))
 		die(_("Don't know how to clone %s"), transport->url);

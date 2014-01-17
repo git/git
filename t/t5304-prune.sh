@@ -221,4 +221,14 @@ EOF
 	test_cmp expected actual
 '
 
+test_expect_success 'prune .git/shallow' '
+	SHA1=`echo hi|git commit-tree HEAD^{tree}` &&
+	echo $SHA1 >.git/shallow &&
+	git prune --dry-run >out &&
+	grep $SHA1 .git/shallow &&
+	grep $SHA1 out &&
+	git prune &&
+	! test -f .git/shallow
+'
+
 test_done

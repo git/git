@@ -14,6 +14,7 @@
 #include "url.h"
 #include "submodule.h"
 #include "string-list.h"
+#include "sha1-array.h"
 
 /* rsync support */
 
@@ -454,7 +455,8 @@ struct git_transport_data {
 	struct child_process *conn;
 	int fd[2];
 	unsigned got_remote_heads : 1;
-	struct extra_have_objects extra_have;
+	struct sha1_array extra_have;
+	struct sha1_array shallow;
 };
 
 static int set_git_option(struct git_transport_options *opts,
@@ -474,6 +476,9 @@ static int set_git_option(struct git_transport_options *opts,
 		return 0;
 	} else if (!strcmp(name, TRANS_OPT_KEEP)) {
 		opts->keep = !!value;
+		return 0;
+	} else if (!strcmp(name, TRANS_OPT_UPDATE_SHALLOW)) {
+		opts->update_shallow = !!value;
 		return 0;
 	} else if (!strcmp(name, TRANS_OPT_DEPTH)) {
 		if (!value)
@@ -511,7 +516,9 @@ static struct ref *get_refs_via_connect(struct transport *transport, int for_pus
 
 	connect_setup(transport, for_push, 0);
 	get_remote_heads(data->fd[0], NULL, 0, &refs,
-			 for_push ? REF_NORMAL : 0, &data->extra_have);
+			 for_push ? REF_NORMAL : 0,
+			 &data->extra_have,
+			 &data->shallow);
 	data->got_remote_heads = 1;
 
 	return refs;
@@ -538,16 +545,19 @@ static int fetch_refs_via_pack(struct transport *transport,
 	args.depth = data->options.depth;
 	args.check_self_contained_and_connected =
 		data->options.check_self_contained_and_connected;
+	args.cloning = transport->cloning;
+	args.update_shallow = data->options.update_shallow;
 
 	if (!data->got_remote_heads) {
 		connect_setup(transport, 0, 0);
-		get_remote_heads(data->fd[0], NULL, 0, &refs_tmp, 0, NULL);
+		get_remote_heads(data->fd[0], NULL, 0, &refs_tmp, 0,
+				 NULL, &data->shallow);
 		data->got_remote_heads = 1;
 	}
 
 	refs = fetch_pack(&args, data->fd, data->conn,
 			  refs_tmp ? refs_tmp : transport->remote_refs,
-			  dest, to_fetch, nr_heads,
+			  dest, to_fetch, nr_heads, &data->shallow,
 			  &transport->pack_lockfile);
 	close(data->fd[0]);
 	close(data->fd[1]);
@@ -713,6 +723,10 @@ static int print_one_push_status(struct ref *ref, const char *dest, int count, i
 		print_ref_status('!', "[rejected]", ref, ref->peer_ref,
 						 "stale info", porcelain);
 		break;
+	case REF_STATUS_REJECT_SHALLOW:
+		print_ref_status('!', "[rejected]", ref, ref->peer_ref,
+						 "new shallow roots not allowed", porcelain);
+		break;
 	case REF_STATUS_REMOTE_REJECT:
 		print_ref_status('!', "[remote rejected]", ref,
 						 ref->deletion ? NULL : ref->peer_ref,
@@ -805,7 +819,8 @@ static int git_transport_push(struct transport *transport, struct ref *remote_re
 		struct ref *tmp_refs;
 		connect_setup(transport, 1, 0);
 
-		get_remote_heads(data->fd[0], NULL, 0, &tmp_refs, REF_NORMAL, NULL);
+		get_remote_heads(data->fd[0], NULL, 0, &tmp_refs, REF_NORMAL,
+				 NULL, &data->shallow);
 		data->got_remote_heads = 1;
 	}
 
