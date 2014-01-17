@@ -31,7 +31,6 @@ struct diff_filespec {
 	void *cnt_data;
 	unsigned long size;
 	int count;               /* Reference count */
-	int xfrm_flags;		 /* for use by the xfrm */
 	int rename_used;         /* Count of rename users */
 	unsigned short mode;	 /* file mode */
 	unsigned sha1_valid : 1; /* if true, use sha1 and trust mode;
