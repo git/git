@@ -622,7 +622,7 @@ cmd_init()
 		   test -z "$(git config submodule."$name".update)"
 		then
 			case "$upd" in
-			rebase | merge | none)
+			checkout | rebase | merge | none)
 				;; # known modes of updating
 			*)
 				echo >&2 "warning: unknown update mode '$upd' suggested for submodule '$name'"
@@ -805,6 +805,17 @@ cmd_update()
 			update_module=$update
 		else
 			update_module=$(git config submodule."$name".update)
+			case "$update_module" in
+			'')
+				;; # Unset update mode
+			checkout | rebase | merge | none)
+				;; # Known update modes
+			!*)
+				;; # Custom update command
+			*)
+				die "$(eval_gettext "Invalid update mode '$update_module' for submodule '$name'")"
+				;;
+			esac
 		fi
 
 		displaypath=$(relative_path "$prefix$sm_path")
