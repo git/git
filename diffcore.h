@@ -29,7 +29,6 @@ struct diff_filespec {
 	char *path;
 	void *data;
 	void *cnt_data;
-	const char *funcname_pattern_ident;
 	unsigned long size;
 	int count;               /* Reference count */
 	int xfrm_flags;		 /* for use by the xfrm */
