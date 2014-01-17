@@ -538,7 +538,7 @@ int stream_blob_to_fd(int fd, unsigned const char *sha1, struct stream_filter *f
 			goto close_and_exit;
 	}
 	if (kept && (lseek(fd, kept - 1, SEEK_CUR) == (off_t) -1 ||
-		     write(fd, "", 1) != 1))
+		     xwrite(fd, "", 1) != 1))
 		goto close_and_exit;
 	result = 0;
 

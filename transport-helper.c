@@ -1129,9 +1129,8 @@ static int udt_do_write(struct unidirectional_transfer *t)
 		return 0;	/* Nothing to write. */
 
 	transfer_debug("%s is writable", t->dest_name);
-	bytes = write(t->dest, t->buf, t->bufuse);
-	if (bytes < 0 && errno != EWOULDBLOCK && errno != EAGAIN &&
-		errno != EINTR) {
+	bytes = xwrite(t->dest, t->buf, t->bufuse);
+	if (bytes < 0 && errno != EWOULDBLOCK) {
 		error("write(%s) failed: %s", t->dest_name, strerror(errno));
 		return -1;
 	} else if (bytes > 0) {
