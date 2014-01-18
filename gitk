@@ -7922,7 +7922,7 @@ proc blobdiffmaybeseehere {ateof} {
     if {$diffseehere >= 0} {
 	mark_ctext_line [lindex [split $diffseehere .] 0]
     }
-    maybe_scroll_ctext ateof
+    maybe_scroll_ctext $ateof
 }
 
 proc getblobdiffline {bdf ids} {
