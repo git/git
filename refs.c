@@ -2081,7 +2081,7 @@ static struct ref_lock *lock_ref_sha1_basic(const char *refname,
 
 	lock->lk = xcalloc(1, sizeof(struct lock_file));
 
-	lflags = LOCK_DIE_ON_ERROR;
+	lflags = 0;
 	if (flags & REF_NODEREF) {
 		refname = orig_refname;
 		lflags |= LOCK_NODEREF;
@@ -2109,6 +2109,17 @@ static struct ref_lock *lock_ref_sha1_basic(const char *refname,
 	}
 
 	lock->lock_fd = hold_lock_file_for_update(lock->lk, ref_file, lflags);
+	if (lock->lock_fd < 0) {
+		if (errno == ENOENT && --attempts_remaining > 0)
+			/*
+			 * Maybe somebody just deleted one of the
+			 * directories leading to ref_file.  Try
+			 * again:
+			 */
+			goto retry;
+		else
+			unable_to_lock_index_die(ref_file, errno);
+	}
 	return old_sha1 ? verify_lock(lock, old_sha1, mustexist) : lock;
 
  error_return:
