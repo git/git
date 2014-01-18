@@ -1476,7 +1476,9 @@ static int remove_dir_recurse(struct strbuf *path, int flag, int *kept_up)
 	flag &= ~REMOVE_DIR_KEEP_TOPLEVEL;
 	dir = opendir(path->buf);
 	if (!dir) {
-		if (errno == EACCES && !keep_toplevel)
+		if (errno == ENOENT)
+			return keep_toplevel ? -1 : 0;
+		else if (errno == EACCES && !keep_toplevel)
 			/*
 			 * An empty dir could be removable even if it
 			 * is unreadable:
@@ -1496,13 +1498,21 @@ static int remove_dir_recurse(struct strbuf *path, int flag, int *kept_up)
 
 		strbuf_setlen(path, len);
 		strbuf_addstr(path, e->d_name);
-		if (lstat(path->buf, &st))
-			; /* fall thru */
-		else if (S_ISDIR(st.st_mode)) {
+		if (lstat(path->buf, &st)) {
+			if (errno == ENOENT)
+				/*
+				 * file disappeared, which is what we
+				 * wanted anyway
+				 */
+				continue;
+			/* fall thru */
+		} else if (S_ISDIR(st.st_mode)) {
 			if (!remove_dir_recurse(path, flag, &kept_down))
 				continue; /* happy */
-		} else if (!only_empty && !unlink(path->buf))
+		} else if (!only_empty &&
+			   (!unlink(path->buf) || errno == ENOENT)) {
 			continue; /* happy, too */
+		}
 
 		/* path too long, stat fails, or non-directory still exists */
 		ret = -1;
@@ -1512,7 +1522,7 @@ static int remove_dir_recurse(struct strbuf *path, int flag, int *kept_up)
 
 	strbuf_setlen(path, original_len);
 	if (!ret && !keep_toplevel && !kept_down)
-		ret = rmdir(path->buf);
+		ret = (!rmdir(path->buf) || errno == ENOENT) ? 0 : -1;
 	else if (kept_up)
 		/*
 		 * report the uplevel that it is not an error that we
