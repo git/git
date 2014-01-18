@@ -1,0 +1,7 @@
+#inlude<iostram>
+using namespace std;
+int main()
+{
+  cout<<"hellow git hub";
+  return 0;
+}
