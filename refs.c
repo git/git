@@ -2530,7 +2530,7 @@ int delete_ref(const char *refname, const unsigned char *sha1, int delopt)
 
 static int rename_tmp_log(const char *newrefname)
 {
-	int attempts_remaining = 3;
+	int attempts_remaining = 4;
 
  retry:
 	if (safe_create_leading_directories(git_path("logs/%s", newrefname))) {
@@ -2539,7 +2539,7 @@ static int rename_tmp_log(const char *newrefname)
 	}
 
 	if (rename(git_path(TMP_RENAMED_LOG), git_path("logs/%s", newrefname))) {
-		if (errno==EISDIR || errno==ENOTDIR) {
+		if ((errno==EISDIR || errno==ENOTDIR) && --attempts_remaining > 0) {
 			/*
 			 * rename(a, b) when b is an existing
 			 * directory ought to result in ISDIR, but
