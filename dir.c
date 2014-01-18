@@ -1476,8 +1476,11 @@ static int remove_dir_recurse(struct strbuf *path, int flag, int *kept_up)
 	flag &= ~REMOVE_DIR_KEEP_TOPLEVEL;
 	dir = opendir(path->buf);
 	if (!dir) {
-		/* an empty dir could be removed even if it is unreadble */
-		if (!keep_toplevel)
+		if (errno == EACCES && !keep_toplevel)
+			/*
+			 * An empty dir could be removable even if it
+			 * is unreadable:
+			 */
 			return rmdir(path->buf);
 		else
 			return -1;
