@@ -2530,12 +2530,14 @@ int delete_ref(const char *refname, const unsigned char *sha1, int delopt)
 
 static int rename_tmp_log(const char *newrefname)
 {
+	int attempts_remaining = 3;
+
+ retry:
 	if (safe_create_leading_directories(git_path("logs/%s", newrefname))) {
 		error("unable to create directory for %s", newrefname);
 		return -1;
 	}
 
- retry:
 	if (rename(git_path(TMP_RENAMED_LOG), git_path("logs/%s", newrefname))) {
 		if (errno==EISDIR || errno==ENOTDIR) {
 			/*
@@ -2547,6 +2549,13 @@ static int rename_tmp_log(const char *newrefname)
 				error("Directory not empty: logs/%s", newrefname);
 				return -1;
 			}
+			goto retry;
+		} else if (errno == ENOENT && --attempts_remaining > 0) {
+			/*
+			 * Maybe another process just deleted one of
+			 * the directories in the path to newrefname.
+			 * Try again from the beginning.
+			 */
 			goto retry;
 		} else {
 			error("unable to move logfile "TMP_RENAMED_LOG" to logs/%s: %s",
