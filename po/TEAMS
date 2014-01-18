@@ -1,10 +1,6 @@
 Core Git translation language teams
 (please keep the list sorted alphabetically on language field)
 
-Language:	da (Danish)
-Repository:	https://github.com/git-da/git-po/
-Leader:		Byrial Jensen <byrial@vip.cybercity.dk>
-
 Language:	de (German)
 Repository:	https://github.com/ralfth/git-po-de
 Leader:		Ralf Thielow <ralf.thielow@googlemail.com>
@@ -24,10 +20,6 @@ Language:	it (Italian)
 Repository:	https://github.com/quizzlo/git-po-it/
 Leader:		Marco Paolone <marcopaolone AT gmail.com>
 Members:	Stefano Lattarini <stefano.lattarini AT gmail.com>
-
-Language:	nl (Dutch)
-Repository:	https://github.com/vfr-nl/git-po/
-Leader:		Vincent van Ravesteijn <vfr@lyx.org>
 
 Language:	pt_PT (Portuguese - Portugal)
 Repository:	https://github.com/marcomsousa/git-l10n-pt_PT/
