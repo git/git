@@ -124,7 +124,6 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 			dpath->path = (char *) &(dpath->parent[5]);
 
 			dpath->next = NULL;
-			dpath->len = path_len;
 			memcpy(dpath->path, ce->name, path_len);
 			dpath->path[path_len] = '\0';
 			hashclr(dpath->sha1);
@@ -326,7 +325,6 @@ static int show_modified(struct rev_info *revs,
 		p = xmalloc(combine_diff_path_size(2, pathlen));
 		p->path = (char *) &p->parent[2];
 		p->next = NULL;
-		p->len = pathlen;
 		memcpy(p->path, new->name, pathlen);
 		p->path[pathlen] = 0;
 		p->mode = mode;

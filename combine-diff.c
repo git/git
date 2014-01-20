@@ -31,7 +31,6 @@ static struct combine_diff_path *intersect_paths(struct combine_diff_path *curr,
 			p->path = (char *) &(p->parent[num_parent]);
 			memcpy(p->path, path, len);
 			p->path[len] = 0;
-			p->len = len;
 			p->next = NULL;
 			memset(p->parent, 0,
 			       sizeof(p->parent[0]) * num_parent);
@@ -1234,8 +1233,6 @@ void show_combined_diff(struct combine_diff_path *p,
 {
 	struct diff_options *opt = &rev->diffopt;
 
-	if (!p->len)
-		return;
 	if (opt->output_format & (DIFF_FORMAT_RAW |
 				  DIFF_FORMAT_NAME |
 				  DIFF_FORMAT_NAME_STATUS))
@@ -1299,11 +1296,8 @@ static void handle_combined_callback(struct diff_options *opt,
 	q.queue = xcalloc(num_paths, sizeof(struct diff_filepair *));
 	q.alloc = num_paths;
 	q.nr = num_paths;
-	for (i = 0, p = paths; p; p = p->next) {
-		if (!p->len)
-			continue;
+	for (i = 0, p = paths; p; p = p->next)
 		q.queue[i++] = combined_pair(p, num_parent);
-	}
 	opt->format_callback(&q, opt, opt->format_callback_data);
 	for (i = 0; i < num_paths; i++)
 		free_combined_pair(q.queue[i]);
@@ -1369,11 +1363,9 @@ void diff_tree_combined(const unsigned char *sha1,
 		diff_flush(&diffopts);
 	}
 
-	/* find out surviving paths */
-	for (num_paths = 0, p = paths; p; p = p->next) {
-		if (p->len)
-			num_paths++;
-	}
+	/* find out number of surviving paths */
+	for (num_paths = 0, p = paths; p; p = p->next)
+		num_paths++;
 
 	/* order paths according to diffcore_order */
 	if (opt->orderfile && num_paths) {
@@ -1399,10 +1391,8 @@ void diff_tree_combined(const unsigned char *sha1,
 		if (opt->output_format & (DIFF_FORMAT_RAW |
 					  DIFF_FORMAT_NAME |
 					  DIFF_FORMAT_NAME_STATUS)) {
-			for (p = paths; p; p = p->next) {
-				if (p->len)
-					show_raw_diff(p, num_parent, rev);
-			}
+			for (p = paths; p; p = p->next)
+				show_raw_diff(p, num_parent, rev);
 			needsep = 1;
 		}
 		else if (opt->output_format &
@@ -1415,11 +1405,9 @@ void diff_tree_combined(const unsigned char *sha1,
 			if (needsep)
 				printf("%s%c", diff_line_prefix(opt),
 				       opt->line_termination);
-			for (p = paths; p; p = p->next) {
-				if (p->len)
-					show_patch_diff(p, num_parent, dense,
-							0, rev);
-			}
+			for (p = paths; p; p = p->next)
+				show_patch_diff(p, num_parent, dense,
+						0, rev);
 		}
 	}
 
