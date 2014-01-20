@@ -15,8 +15,8 @@
 static struct combine_diff_path *intersect_paths(struct combine_diff_path *curr, int n, int num_parent)
 {
 	struct diff_queue_struct *q = &diff_queued_diff;
-	struct combine_diff_path *p;
-	int i;
+	struct combine_diff_path *p, *pprev, *ptmp;
+	int i, cmp;
 
 	if (!n) {
 		struct combine_diff_path *list = NULL, **tail = &list;
@@ -47,28 +47,43 @@ static struct combine_diff_path *intersect_paths(struct combine_diff_path *curr,
 		return list;
 	}
 
-	for (p = curr; p; p = p->next) {
-		int found = 0;
-		if (!p->len)
-			continue;
-		for (i = 0; i < q->nr; i++) {
-			const char *path;
-			int len;
+	/*
+	 * NOTE paths are coming sorted here (= in tree order)
+	 */
 
-			if (diff_unmodified_pair(q->queue[i]))
-				continue;
-			path = q->queue[i]->two->path;
-			len = strlen(path);
-			if (len == p->len && !memcmp(path, p->path, len)) {
-				found = 1;
-				hashcpy(p->parent[n].sha1, q->queue[i]->one->sha1);
-				p->parent[n].mode = q->queue[i]->one->mode;
-				p->parent[n].status = q->queue[i]->status;
-				break;
-			}
+	pprev = NULL;
+	p = curr;
+	i = 0;
+
+	while (1) {
+		if (!p)
+			break;
+
+		cmp = (i >= q->nr) ? -1
+				   : strcmp(p->path, q->queue[i]->two->path);
+		if (cmp < 0) {
+			if (pprev)
+				pprev->next = p->next;
+			ptmp = p;
+			p = p->next;
+			free(ptmp);
+			if (curr == ptmp)
+				curr = p;
+			continue;
 		}
-		if (!found)
-			p->len = 0;
+
+		if (cmp > 0) {
+			i++;
+			continue;
+		}
+
+		hashcpy(p->parent[n].sha1, q->queue[i]->one->sha1);
+		p->parent[n].mode = q->queue[i]->one->mode;
+		p->parent[n].status = q->queue[i]->status;
+
+		pprev = p;
+		p = p->next;
+		i++;
 	}
 	return curr;
 }
@@ -1295,6 +1310,13 @@ static void handle_combined_callback(struct diff_options *opt,
 	free(q.queue);
 }
 
+static const char *path_path(void *obj)
+{
+	struct combine_diff_path *path = (struct combine_diff_path *)obj;
+
+	return path->path;
+}
+
 void diff_tree_combined(const unsigned char *sha1,
 			const struct sha1_array *parents,
 			int dense,
@@ -1310,6 +1332,8 @@ void diff_tree_combined(const unsigned char *sha1,
 	diffopts.output_format = DIFF_FORMAT_NO_OUTPUT;
 	DIFF_OPT_SET(&diffopts, RECURSIVE);
 	DIFF_OPT_CLR(&diffopts, ALLOW_EXTERNAL);
+	/* tell diff_tree to emit paths in sorted (=tree) order */
+	diffopts.orderfile = NULL;
 
 	show_log_first = !!rev->loginfo && !rev->no_commit_id;
 	needsep = 0;
@@ -1335,6 +1359,13 @@ void diff_tree_combined(const unsigned char *sha1,
 				printf("%s%c", diff_line_prefix(opt),
 				       opt->line_termination);
 		}
+
+		/* if showing diff, show it in requested order */
+		if (diffopts.output_format != DIFF_FORMAT_NO_OUTPUT &&
+		    opt->orderfile) {
+			diffcore_order(opt->orderfile);
+		}
+
 		diff_flush(&diffopts);
 	}
 
@@ -1343,6 +1374,27 @@ void diff_tree_combined(const unsigned char *sha1,
 		if (p->len)
 			num_paths++;
 	}
+
+	/* order paths according to diffcore_order */
+	if (opt->orderfile && num_paths) {
+		struct obj_order *o;
+
+		o = xmalloc(sizeof(*o) * num_paths);
+		for (i = 0, p = paths; p; p = p->next, i++)
+			o[i].obj = p;
+		order_objects(opt->orderfile, path_path, o, num_paths);
+		for (i = 0; i < num_paths - 1; i++) {
+			p = o[i].obj;
+			p->next = o[i+1].obj;
+		}
+
+		p = o[num_paths-1].obj;
+		p->next = NULL;
+		paths = o[0].obj;
+		free(o);
+	}
+
+
 	if (num_paths) {
 		if (opt->output_format & (DIFF_FORMAT_RAW |
 					  DIFF_FORMAT_NAME |
