@@ -14,4 +14,16 @@ test_perf 'rev-list --all --objects' '
 	git rev-list --all --objects >/dev/null
 '
 
+test_expect_success 'create new unreferenced commit' '
+	commit=$(git commit-tree HEAD^{tree} -p HEAD)
+'
+
+test_perf 'rev-list $commit --not --all' '
+	git rev-list $commit --not --all >/dev/null
+'
+
+test_perf 'rev-list --objects $commit --not --all' '
+	git rev-list --objects $commit --not --all >/dev/null
+'
+
 test_done
