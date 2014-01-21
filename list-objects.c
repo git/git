@@ -163,15 +163,17 @@ void mark_edges_uninteresting(struct rev_info *revs, show_edge_fn show_edge)
 		}
 		mark_edge_parents_uninteresting(commit, revs, show_edge);
 	}
-	for (i = 0; i < revs->cmdline.nr; i++) {
-		struct object *obj = revs->cmdline.rev[i].item;
-		struct commit *commit = (struct commit *)obj;
-		if (obj->type != OBJ_COMMIT || !(obj->flags & UNINTERESTING))
-			continue;
-		mark_tree_uninteresting(commit->tree);
-		if (revs->edge_hint && !(obj->flags & SHOWN)) {
-			obj->flags |= SHOWN;
-			show_edge(commit);
+	if (revs->edge_hint) {
+		for (i = 0; i < revs->cmdline.nr; i++) {
+			struct object *obj = revs->cmdline.rev[i].item;
+			struct commit *commit = (struct commit *)obj;
+			if (obj->type != OBJ_COMMIT || !(obj->flags & UNINTERESTING))
+				continue;
+			mark_tree_uninteresting(commit->tree);
+			if (!(obj->flags & SHOWN)) {
+				obj->flags |= SHOWN;
+				show_edge(commit);
+			}
 		}
 	}
 }
