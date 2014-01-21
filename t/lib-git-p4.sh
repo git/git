@@ -47,9 +47,10 @@ P4DPORT=$((10669 + ($testid - $git_p4_test_start)))
 
 P4PORT=localhost:$P4DPORT
 P4CLIENT=client
+P4USER=author
 P4EDITOR=:
 unset P4CHARSET
-export P4PORT P4CLIENT P4EDITOR P4CHARSET
+export P4PORT P4CLIENT P4USER P4EDITOR P4CHARSET
 
 db="$TRASH_DIRECTORY/db"
 cli="$TRASH_DIRECTORY/cli"
@@ -96,10 +97,22 @@ start_p4d() {
 		return 1
 	fi
 
+	# build a p4 user so author@example.com has an entry
+	p4_add_user author
+
 	# build a client
 	client_view "//depot/... //client/..." &&
 
 	return 0
+}
+
+p4_add_user() {
+	name=$1 &&
+	p4 user -f -i <<-EOF
+	User: $name
+	Email: $name@example.com
+	FullName: Dr. $name
+	EOF
 }
 
 kill_p4d() {
