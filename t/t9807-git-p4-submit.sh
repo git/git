@@ -17,7 +17,7 @@ test_expect_success 'init depot' '
 	)
 '
 
-test_expect_failure 'is_cli_file_writeable function' '
+test_expect_success 'is_cli_file_writeable function' '
 	(
 		cd "$cli" &&
 		echo a >a &&
