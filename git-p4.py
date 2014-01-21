@@ -2075,7 +2075,14 @@ class P4Sync(Command, P4UserMap):
             # p4 print on a symlink sometimes contains "target\n";
             # if it does, remove the newline
             data = ''.join(contents)
-            if data[-1] == '\n':
+            if not data:
+                # Some version of p4 allowed creating a symlink that pointed
+                # to nothing.  This causes p4 errors when checking out such
+                # a change, and errors here too.  Work around it by ignoring
+                # the bad symlink; hopefully a future change fixes it.
+                print "\nIgnoring empty symlink in %s" % file['depotFile']
+                return
+            elif data[-1] == '\n':
                 contents = [data[:-1]]
             else:
                 contents = [data]
