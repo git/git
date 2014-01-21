@@ -76,28 +76,28 @@ test_expect_success 'init depot' '
 '
 
 # double % for printf
-test_expect_success 'unsupported view wildcard %%n' '
+test_expect_success 'view wildcard %%n' '
 	client_view "//depot/%%%%1/sub/... //client/sub/%%%%1/..." &&
 	test_when_finished cleanup_git &&
-	test_must_fail git p4 clone --use-client-spec --dest="$git" //depot
+	git p4 clone --use-client-spec --dest="$git" //depot
 '
 
-test_expect_success 'unsupported view wildcard *' '
+test_expect_success 'view wildcard *' '
 	client_view "//depot/*/bar/... //client/*/bar/..." &&
 	test_when_finished cleanup_git &&
-	test_must_fail git p4 clone --use-client-spec --dest="$git" //depot
+	git p4 clone --use-client-spec --dest="$git" //depot
 '
 
-test_expect_success 'wildcard ... only supported at end of spec 1' '
+test_expect_success 'wildcard ... in the middle' '
 	client_view "//depot/.../file11 //client/.../file11" &&
 	test_when_finished cleanup_git &&
-	test_must_fail git p4 clone --use-client-spec --dest="$git" //depot
+	git p4 clone --use-client-spec --dest="$git" //depot
 '
 
-test_expect_success 'wildcard ... only supported at end of spec 2' '
+test_expect_success 'wildcard ... in the middle and at the end' '
 	client_view "//depot/.../a/... //client/.../a/..." &&
 	test_when_finished cleanup_git &&
-	test_must_fail git p4 clone --use-client-spec --dest="$git" //depot
+	git p4 clone --use-client-spec --dest="$git" //depot
 '
 
 test_expect_success 'basic map' '
