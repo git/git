@@ -250,6 +250,23 @@ test_expect_success 'ignore apple' '
 	)
 '
 
+test_expect_success SYMLINKS 'create p4 symlink' '
+	cd "$cli" &&
+	ln -s symlink-target symlink &&
+	p4 add symlink &&
+	p4 submit -d "add symlink"
+'
+
+test_expect_success SYMLINKS 'ensure p4 symlink parsed correctly' '
+	test_when_finished cleanup_git &&
+	git p4 clone --dest="$git" //depot@all &&
+	(
+		cd "$git" &&
+		test -L symlink &&
+		test $(readlink symlink) = symlink-target
+	)
+'
+
 test_expect_success 'kill p4d' '
 	kill_p4d
 '
