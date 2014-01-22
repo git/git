@@ -47,19 +47,23 @@ fi
 
 #
 # $3 must be a symbolic ref, a unique ref, or
-# a SHA object expression
+# a SHA object expression. It can also be of
+# the format 'local-name:remote-name'.
 #
-head=$(git symbolic-ref -q "${3-HEAD}")
-head=${head:-$(git show-ref "${3-HEAD}" | cut -d' ' -f2)}
-head=${head:-$(git rev-parse --quiet --verify "$3")}
+local=${3%:*}
+local=${local:-HEAD}
+remote=${3#*:}
+head=$(git symbolic-ref -q "$local")
+head=${head:-$(git show-ref --heads --tags "$local" | cut -d' ' -f2)}
+head=${head:-$(git rev-parse --quiet --verify "$local")}
 
 # None of the above? Bad.
-test -z "$head" && die "fatal: Not a valid revision: $3"
+test -z "$head" && die "fatal: Not a valid revision: $local"
 
 # This also verifies that the resulting head is unique:
 # "git show-ref" could have shown multiple matching refs..
 headrev=$(git rev-parse --verify --quiet "$head"^0)
-test -z "$headrev" && die "fatal: Ambiguous revision: $3"
+test -z "$headrev" && die "fatal: Ambiguous revision: $local"
 
 # Was it a branch with a description?
 branch_name=${head#refs/heads/}
@@ -68,9 +72,6 @@ if test "z$branch_name" = "z$headref" ||
 then
 	branch_name=
 fi
-
-prettyhead=${head#refs/}
-prettyhead=${prettyhead#heads/}
 
 merge_base=$(git merge-base $baserev $headrev) ||
 die "fatal: No commits in common between $base and $head"
@@ -81,30 +82,37 @@ die "fatal: No commits in common between $base and $head"
 #
 # Otherwise find a random ref that matches $headrev.
 find_matching_ref='
-	my ($exact,$found);
+	my ($head,$headrev) = (@ARGV);
+	my ($found);
+
 	while (<STDIN>) {
+		chomp;
 		my ($sha1, $ref, $deref) = /^(\S+)\s+([^^]+)(\S*)$/;
-		next unless ($sha1 eq $ARGV[1]);
-		if ($ref eq $ARGV[0]) {
-			$exact = $ref;
+		my ($pattern);
+		next unless ($sha1 eq $headrev);
+
+		$pattern="/$head\$";
+		if ($ref eq $head) {
+			$found = $ref;
 		}
-		if ($sha1 eq $ARGV[0]) {
+		if ($ref =~ /$pattern/) {
+			$found = $ref;
+		}
+		if ($sha1 eq $head) {
 			$found = $sha1;
 		}
 	}
-	if ($exact) {
-		print "$exact\n";
-	} elsif ($found) {
+	if ($found) {
 		print "$found\n";
 	}
 '
 
-ref=$(git ls-remote "$url" | @@PERL@@ -e "$find_matching_ref" "$head" "$headrev")
+ref=$(git ls-remote "$url" | @@PERL@@ -e "$find_matching_ref" "${remote:-HEAD}" "$headrev")
 
 if test -z "$ref"
 then
-	echo "warn: No match for $prettyhead found at $url" >&2
-	echo "warn: Are you sure you pushed '$prettyhead' there?" >&2
+	echo "warn: No match for commit $headrev found at $url" >&2
+	echo "warn: Are you sure you pushed '${remote:-HEAD}' there?" >&2
 	status=1
 fi
 
@@ -116,7 +124,7 @@ git show -s --format='The following changes since commit %H:
 
 are available in the git repository at:
 ' $merge_base &&
-echo "  $url $prettyhead" &&
+echo "  $url $remote" &&
 git show -s --format='
 for you to fetch changes up to %H:
 
