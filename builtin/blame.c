@@ -255,15 +255,6 @@ struct scoreboard {
 	int *lineno;
 };
 
-static inline int same_suspect(struct origin *a, struct origin *b)
-{
-	if (a == b)
-		return 1;
-	if (a->commit != b->commit)
-		return 0;
-	return !strcmp(a->path, b->path);
-}
-
 static void sanity_check_refcnt(struct scoreboard *);
 
 /*
@@ -276,7 +267,7 @@ static void coalesce(struct scoreboard *sb)
 	struct blame_entry *ent, *next;
 
 	for (ent = sb->ent; ent && (next = ent->next); ent = next) {
-		if (same_suspect(ent->suspect, next->suspect) &&
+		if (ent->suspect == next->suspect &&
 		    ent->guilty == next->guilty &&
 		    ent->s_lno + ent->num_lines == next->s_lno) {
 			ent->num_lines += next->num_lines;
@@ -735,7 +726,7 @@ static int find_last_in_target(struct scoreboard *sb, struct origin *target)
 	int last_in_target = -1;
 
 	for (e = sb->ent; e; e = e->next) {
-		if (e->guilty || !same_suspect(e->suspect, target))
+		if (e->guilty || e->suspect != target)
 			continue;
 		if (last_in_target < e->s_lno + e->num_lines)
 			last_in_target = e->s_lno + e->num_lines;
@@ -755,7 +746,7 @@ static void blame_chunk(struct scoreboard *sb,
 	struct blame_entry *e;
 
 	for (e = sb->ent; e; e = e->next) {
-		if (e->guilty || !same_suspect(e->suspect, target))
+		if (e->guilty || e->suspect != target)
 			continue;
 		if (same <= e->s_lno)
 			continue;
@@ -985,7 +976,7 @@ static int find_move_in_parent(struct scoreboard *sb,
 	while (made_progress) {
 		made_progress = 0;
 		for (e = sb->ent; e; e = e->next) {
-			if (e->guilty || !same_suspect(e->suspect, target) ||
+			if (e->guilty || e->suspect != target ||
 			    ent_score(sb, e) < blame_move_score)
 				continue;
 			find_copy_in_blob(sb, e, parent, split, &file_p);
@@ -1020,14 +1011,14 @@ static struct blame_list *setup_blame_list(struct scoreboard *sb,
 
 	for (e = sb->ent, num_ents = 0; e; e = e->next)
 		if (!e->scanned && !e->guilty &&
-		    same_suspect(e->suspect, target) &&
+		    e->suspect == target &&
 		    min_score < ent_score(sb, e))
 			num_ents++;
 	if (num_ents) {
 		blame_list = xcalloc(num_ents, sizeof(struct blame_list));
 		for (e = sb->ent, i = 0; e; e = e->next)
 			if (!e->scanned && !e->guilty &&
-			    same_suspect(e->suspect, target) &&
+			    e->suspect == target &&
 			    min_score < ent_score(sb, e))
 				blame_list[i++].ent = e;
 	}
@@ -1171,7 +1162,7 @@ static void pass_whole_blame(struct scoreboard *sb,
 		origin->file.ptr = NULL;
 	}
 	for (e = sb->ent; e; e = e->next) {
-		if (!same_suspect(e->suspect, origin))
+		if (e->suspect != origin)
 			continue;
 		origin_incref(porigin);
 		origin_decref(e->suspect);
@@ -1560,7 +1551,7 @@ static void assign_blame(struct scoreboard *sb, int opt)
 
 		/* Take responsibility for the remaining entries */
 		for (ent = sb->ent; ent; ent = ent->next)
-			if (same_suspect(ent->suspect, suspect))
+			if (ent->suspect == suspect)
 				found_guilty_entry(ent);
 		origin_decref(suspect);
 
