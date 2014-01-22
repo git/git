@@ -197,7 +197,6 @@ static void drop_origin_blob(struct origin *o)
  * scoreboard structure, sorted by the target line number.
  */
 struct blame_entry {
-	struct blame_entry *prev;
 	struct blame_entry *next;
 
 	/* the first line of this group in the final image;
@@ -282,8 +281,6 @@ static void coalesce(struct scoreboard *sb)
 		    ent->s_lno + ent->num_lines == next->s_lno) {
 			ent->num_lines += next->num_lines;
 			ent->next = next->next;
-			if (ent->next)
-				ent->next->prev = ent;
 			origin_decref(next->suspect);
 			free(next);
 			ent->score = 0;
@@ -534,7 +531,7 @@ static void add_blame_entry(struct scoreboard *sb, struct blame_entry *e)
 		prev = ent;
 
 	/* prev, if not NULL, is the last one that is below e */
-	e->prev = prev;
+
 	if (prev) {
 		e->next = prev->next;
 		prev->next = e;
@@ -543,8 +540,6 @@ static void add_blame_entry(struct scoreboard *sb, struct blame_entry *e)
 		e->next = sb->ent;
 		sb->ent = e;
 	}
-	if (e->next)
-		e->next->prev = e;
 }
 
 /*
@@ -555,14 +550,12 @@ static void add_blame_entry(struct scoreboard *sb, struct blame_entry *e)
  */
 static void dup_entry(struct blame_entry *dst, struct blame_entry *src)
 {
-	struct blame_entry *p, *n;
+	struct blame_entry *n;
 
-	p = dst->prev;
 	n = dst->next;
 	origin_incref(src->suspect);
 	origin_decref(dst->suspect);
 	memcpy(dst, src, sizeof(*src));
-	dst->prev = p;
 	dst->next = n;
 	dst->score = 0;
 }
@@ -2502,8 +2495,6 @@ parse_done:
 		ent->suspect = o;
 		ent->s_lno = bottom;
 		ent->next = next;
-		if (next)
-			next->prev = ent;
 		origin_incref(o);
 	}
 	origin_decref(o);
