@@ -112,23 +112,38 @@ int ewah_serialize(struct ewah_bitmap *self, int fd)
 
 int ewah_read_mmap(struct ewah_bitmap *self, void *map, size_t len)
 {
-	uint32_t *read32 = map;
-	eword_t *read64;
-	size_t i;
+	uint8_t *ptr = map;
 
-	self->bit_size = ntohl(*read32++);
-	self->buffer_size = self->alloc_size = ntohl(*read32++);
+	self->bit_size = get_be32(ptr);
+	ptr += sizeof(uint32_t);
+
+	self->buffer_size = self->alloc_size = get_be32(ptr);
+	ptr += sizeof(uint32_t);
+
 	self->buffer = ewah_realloc(self->buffer,
 		self->alloc_size * sizeof(eword_t));
 
 	if (!self->buffer)
 		return -1;
 
-	for (i = 0, read64 = (void *)read32; i < self->buffer_size; ++i)
-		self->buffer[i] = ntohll(*read64++);
+	/*
+	 * Copy the raw data for the bitmap as a whole chunk;
+	 * if we're in a little-endian platform, we'll perform
+	 * the endianness conversion in a separate pass to ensure
+	 * we're loading 8-byte aligned words.
+	 */
+	memcpy(self->buffer, ptr, self->buffer_size * sizeof(uint64_t));
+	ptr += self->buffer_size * sizeof(uint64_t);
 
-	read32 = (void *)read64;
-	self->rlw = self->buffer + ntohl(*read32++);
+#if __BYTE_ORDER != __BIG_ENDIAN
+	{
+		size_t i;
+		for (i = 0; i < self->buffer_size; ++i)
+			self->buffer[i] = ntohll(self->buffer[i]);
+	}
+#endif
+
+	self->rlw = self->buffer + get_be32(ptr);
 
 	return (3 * 4) + (self->buffer_size * 8);
 }
