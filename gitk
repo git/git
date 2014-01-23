@@ -2429,7 +2429,7 @@ proc makewindow {} {
     $ctext tag conf msep -font textfontbold
     $ctext tag conf found -back $foundbgcolor
     $ctext tag conf currentsearchhit -back $currentsearchhitbgcolor
-    $ctext tag conf wwrap -wrap word
+    $ctext tag conf wwrap -wrap word -lmargin2 1c
     $ctext tag conf bold -font textfontbold
 
     .pwbottom add .bleft
