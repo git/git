@@ -191,7 +191,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	if (depth)
 		argv_array_pushf(&cmd_args, "--depth=%u", depth);
 	if (max_pack_size)
-		argv_array_pushf(&cmd_args, "--max_pack_size=%u", max_pack_size);
+		argv_array_pushf(&cmd_args, "--max-pack-size=%u", max_pack_size);
 	if (no_reuse_delta)
 		argv_array_pushf(&cmd_args, "--no-reuse-delta");
 	if (no_reuse_object)
