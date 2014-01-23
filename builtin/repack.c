@@ -129,7 +129,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	/* variables to be filled by option parsing */
 	int pack_everything = 0;
 	int delete_redundant = 0;
-	char *unpack_unreachable = NULL;
+	const char *unpack_unreachable = NULL;
 	int window = 0, window_memory = 0;
 	int depth = 0;
 	int max_pack_size = 0;
