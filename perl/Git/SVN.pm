@@ -1599,6 +1599,7 @@ sub tie_for_persistent_memoization {
 		my %lookup_svn_merge_cache;
 		my %check_cherry_pick_cache;
 		my %has_no_changes_cache;
+		my %_rev_list_cache;
 
 		tie_for_persistent_memoization(\%lookup_svn_merge_cache,
 		    "$cache_path/lookup_svn_merge");
@@ -1620,6 +1621,14 @@ sub tie_for_persistent_memoization {
 			SCALAR_CACHE => ['HASH' => \%has_no_changes_cache],
 			LIST_CACHE => 'FAULT',
 		;
+
+		tie_for_persistent_memoization(\%_rev_list_cache,
+		    "$cache_path/_rev_list");
+		memoize '_rev_list',
+			SCALAR_CACHE => 'FAULT',
+			LIST_CACHE => ['HASH' => \%_rev_list_cache],
+		;
+
 	}
 
 	sub unmemoize_svn_mergeinfo_functions {
@@ -1629,6 +1638,7 @@ sub tie_for_persistent_memoization {
 		Memoize::unmemoize 'lookup_svn_merge';
 		Memoize::unmemoize 'check_cherry_pick';
 		Memoize::unmemoize 'has_no_changes';
+		Memoize::unmemoize '_rev_list';
 	}
 
 	sub clear_memoized_mergeinfo_caches {
@@ -1959,11 +1969,25 @@ sub rebuild_from_rev_db {
 	unlink $path or croak "unlink: $!";
 }
 
+#define a global associate map to record rebuild status
+my %rebuild_status;
+#define a global associate map to record rebuild verify status
+my %rebuild_verify_status;
+
 sub rebuild {
 	my ($self) = @_;
 	my $map_path = $self->map_path;
 	my $partial = (-e $map_path && ! -z $map_path);
-	return unless ::verify_ref($self->refname.'^0');
+	my $verify_key = $self->refname.'^0';
+	if (!$rebuild_verify_status{$verify_key}) {
+		my $verify_result = ::verify_ref($verify_key);
+		if ($verify_result) {
+			$rebuild_verify_status{$verify_key} = 1;
+		}
+	}
+	if (!$rebuild_verify_status{$verify_key}) {
+		return;
+	}
 	if (!$partial && ($self->use_svm_props || $self->no_metadata)) {
 		my $rev_db = $self->rev_db_path;
 		$self->rebuild_from_rev_db($rev_db);
@@ -1977,10 +2001,21 @@ sub rebuild {
 	print "Rebuilding $map_path ...\n" if (!$partial);
 	my ($base_rev, $head) = ($partial ? $self->rev_map_max_norebuild(1) :
 		(undef, undef));
+	my $key_value = ($head ? "$head.." : "") . $self->refname;
+	if (exists $rebuild_status{$key_value}) {
+		print "Done rebuilding $map_path\n" if (!$partial || !$head);
+		my $rev_db_path = $self->rev_db_path;
+		if (-f $self->rev_db_path) {
+			unlink $self->rev_db_path or croak "unlink: $!";
+		}
+		$self->unlink_rev_db_symlink;
+		return;
+	}
 	my ($log, $ctx) =
-	    command_output_pipe(qw/rev-list --pretty=raw --reverse/,
-				($head ? "$head.." : "") . $self->refname,
+		command_output_pipe(qw/rev-list --pretty=raw --reverse/,
+				$key_value,
 				'--');
+	$rebuild_status{$key_value} = 1;
 	my $metadata_url = $self->metadata_url;
 	remove_username($metadata_url);
 	my $svn_uuid = $self->rewrite_uuid || $self->ra_uuid;
