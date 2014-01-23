@@ -2,7 +2,7 @@
 # Tcl ignores the next line -*- tcl -*- \
 exec wish "$0" -- "$@"
 
-# Copyright © 2005-2011 Paul Mackerras.  All rights reserved.
+# Copyright © 2005-2014 Paul Mackerras.  All rights reserved.
 # This program is free software; it may be used, copied, modified
 # and distributed under the terms of the GNU General Public Licence,
 # either version 2, or (at your option) any later version.
@@ -2263,9 +2263,35 @@ proc makewindow {} {
 
     # build up the bottom bar of upper window
     ${NS}::label .tf.lbar.flabel -text "[mc "Find"] "
-    ${NS}::button .tf.lbar.fnext -text [mc "next"] -command {dofind 1 1}
-    ${NS}::button .tf.lbar.fprev -text [mc "prev"] -command {dofind -1 1}
+
+    set bm_down_data {
+	#define down_width 16
+	#define down_height 16
+	static unsigned char down_bits[] = {
+	0x80, 0x01, 0x80, 0x01, 0x80, 0x01, 0x80, 0x01,
+	0x80, 0x01, 0x80, 0x01, 0x80, 0x01, 0x80, 0x01,
+	0x87, 0xe1, 0x8e, 0x71, 0x9c, 0x39, 0xb8, 0x1d,
+	0xf0, 0x0f, 0xe0, 0x07, 0xc0, 0x03, 0x80, 0x01};
+    }
+    image create bitmap bm-down -data $bm_down_data -foreground $uifgcolor
+    ${NS}::button .tf.lbar.fnext -width 26 -command {dofind 1 1}
+    .tf.lbar.fnext configure -image bm-down
+
+    set bm_up_data {
+	#define up_width 16
+	#define up_height 16
+	static unsigned char up_bits[] = {
+	0x80, 0x01, 0xc0, 0x03, 0xe0, 0x07, 0xf0, 0x0f,
+	0xb8, 0x1d, 0x9c, 0x39, 0x8e, 0x71, 0x87, 0xe1,
+	0x80, 0x01, 0x80, 0x01, 0x80, 0x01, 0x80, 0x01,
+	0x80, 0x01, 0x80, 0x01, 0x80, 0x01, 0x80, 0x01};
+    }
+    image create bitmap bm-up -data $bm_up_data -foreground $uifgcolor
+    ${NS}::button .tf.lbar.fprev -width 26 -command {dofind -1 1}
+    .tf.lbar.fprev configure -image bm-up
+
     ${NS}::label .tf.lbar.flab2 -text " [mc "commit"] "
+
     pack .tf.lbar.flabel .tf.lbar.fnext .tf.lbar.fprev .tf.lbar.flab2 \
 	-side left -fill y
     set gdttype [mc "containing:"]
@@ -2403,7 +2429,7 @@ proc makewindow {} {
     $ctext tag conf msep -font textfontbold
     $ctext tag conf found -back $foundbgcolor
     $ctext tag conf currentsearchhit -back $currentsearchhitbgcolor
-    $ctext tag conf wwrap -wrap word
+    $ctext tag conf wwrap -wrap word -lmargin2 1c
     $ctext tag conf bold -font textfontbold
 
     .pwbottom add .bleft
@@ -2761,14 +2787,17 @@ proc savestuff {w} {
     global linkfgcolor circleoutlinecolor
     global autoselect autosellen extdifftool perfile_attrs markbgcolor use_ttk
     global hideremotes want_ttk maxrefs
+    global config_file config_file_tmp
 
     if {$stuffsaved} return
     if {![winfo viewable .]} return
     catch {
-	if {[file exists ~/.gitk-new]} {file delete -force ~/.gitk-new}
-	set f [open "~/.gitk-new" w]
+	if {[file exists $config_file_tmp]} {
+	    file delete -force $config_file_tmp
+	}
+	set f [open $config_file_tmp w]
 	if {$::tcl_platform(platform) eq {windows}} {
-	    file attributes "~/.gitk-new" -hidden true
+	    file attributes $config_file_tmp -hidden true
 	}
 	puts $f [list set mainfont $mainfont]
 	puts $f [list set textfont $textfont]
@@ -2845,7 +2874,7 @@ proc savestuff {w} {
 	}
 	puts $f "}"
 	close $f
-	file rename -force "~/.gitk-new" "~/.gitk"
+	file rename -force $config_file_tmp $config_file
     }
     set stuffsaved 1
 }
@@ -2947,7 +2976,7 @@ proc about {} {
     message $w.m -text [mc "
 Gitk - a commit viewer for git
 
-Copyright \u00a9 2005-2011 Paul Mackerras
+Copyright \u00a9 2005-2014 Paul Mackerras
 
 Use and redistribute under the terms of the GNU General Public License"] \
 	    -justify center -aspect 400 -border 2 -bg white -relief groove
@@ -7922,7 +7951,7 @@ proc blobdiffmaybeseehere {ateof} {
     if {$diffseehere >= 0} {
 	mark_ctext_line [lindex [split $diffseehere .] 0]
     }
-    maybe_scroll_ctext ateof
+    maybe_scroll_ctext $ateof
 }
 
 proc getblobdiffline {bdf ids} {
@@ -12058,7 +12087,29 @@ namespace import ::msgcat::mc
 ## And eventually load the actual message catalog
 ::msgcat::mcload $gitk_msgsdir
 
-catch {source ~/.gitk}
+catch {
+    # follow the XDG base directory specification by default. See
+    # http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html
+    if {[info exists env(XDG_CONFIG_HOME)] && $env(XDG_CONFIG_HOME) ne ""} {
+	# XDG_CONFIG_HOME environment variable is set
+	set config_file [file join $env(XDG_CONFIG_HOME) git gitk]
+	set config_file_tmp [file join $env(XDG_CONFIG_HOME) git gitk-tmp]
+    } else {
+	# default XDG_CONFIG_HOME
+	set config_file "~/.config/git/gitk"
+	set config_file_tmp "~/.config/git/gitk-tmp"
+    }
+    if {![file exists $config_file]} {
+	# for backward compatibility use the old config file if it exists
+	if {[file exists "~/.gitk"]} {
+	    set config_file "~/.gitk"
+	    set config_file_tmp "~/.gitk-tmp"
+	} elseif {![file exists [file dirname $config_file]]} {
+	    file mkdir [file dirname $config_file]
+	}
+    }
+    source $config_file
+}
 
 parsefont mainfont $mainfont
 eval font create mainfont [fontflags mainfont]
