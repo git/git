@@ -86,7 +86,7 @@ test_expect_success 'setup: two scripts for reading pull requests' '
 	s/[-0-9]\{10\} [:0-9]\{8\} [-+][0-9]\{4\}/DATE/g
 	s/        [^ ].*/        SUBJECT/g
 	s/  [^ ].* (DATE)/  SUBJECT (DATE)/g
-	s/for-upstream/BRANCH/g
+	s|tags/full|BRANCH|g
 	s/mnemonic.txt/FILENAME/g
 	s/^version [0-9]/VERSION/
 	/^ FILENAME | *[0-9]* [-+]*\$/ b diffstat
@@ -127,7 +127,7 @@ test_expect_success 'pull request when forgot to push' '
 		test_must_fail git request-pull initial "$downstream_url" \
 			2>../err
 	) &&
-	grep "No branch of.*is at:\$" err &&
+	grep "No match for commit .*" err &&
 	grep "Are you sure you pushed" err
 
 '
@@ -141,7 +141,7 @@ test_expect_success 'pull request after push' '
 		git checkout initial &&
 		git merge --ff-only master &&
 		git push origin master:for-upstream &&
-		git request-pull initial origin >../request
+		git request-pull initial origin master:for-upstream >../request
 	) &&
 	sed -nf read-request.sed <request >digest &&
 	cat digest &&
@@ -160,7 +160,7 @@ test_expect_success 'pull request after push' '
 
 '
 
-test_expect_success 'request names an appropriate branch' '
+test_expect_success 'request asks HEAD to be pulled' '
 
 	rm -fr downstream.git &&
 	git init --bare downstream.git &&
@@ -179,7 +179,7 @@ test_expect_success 'request names an appropriate branch' '
 		read repository &&
 		read branch
 	} <digest &&
-	test "$branch" = tags/full
+	test -z "$branch"
 
 '
 
@@ -212,8 +212,8 @@ test_expect_success 'pull request format' '
 		cd local &&
 		git checkout initial &&
 		git merge --ff-only master &&
-		git push origin master:for-upstream &&
-		git request-pull initial "$downstream_url" >../request
+		git push origin tags/full &&
+		git request-pull initial "$downstream_url" tags/full >../request
 	) &&
 	<request sed -nf fuzz.sed >request.fuzzy &&
 	test_i18ncmp expect request.fuzzy
@@ -229,7 +229,7 @@ test_expect_success 'request-pull ignores OPTIONS_KEEPDASHDASH poison' '
 		git checkout initial &&
 		git merge --ff-only master &&
 		git push origin master:for-upstream &&
-		git request-pull -- initial "$downstream_url" >../request
+		git request-pull -- initial "$downstream_url" master:for-upstream >../request
 	)
 
 '
