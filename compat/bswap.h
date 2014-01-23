@@ -136,11 +136,15 @@ static inline uint64_t git_bswap64(uint64_t x)
     defined(__powerpc__) || defined(__powerpc64__) || \
     defined(__s390__) || defined(__s390x__)
 
+#define get_be16(p)	ntohs(*(unsigned short *)(p))
 #define get_be32(p)	ntohl(*(unsigned int *)(p))
 #define put_be32(p, v)	do { *(unsigned int *)(p) = htonl(v); } while (0)
 
 #else
 
+#define get_be16(p)	( \
+	(*((unsigned char *)(p) + 0) << 8) | \
+	(*((unsigned char *)(p) + 1) << 0) )
 #define get_be32(p)	( \
 	(*((unsigned char *)(p) + 0) << 24) | \
 	(*((unsigned char *)(p) + 1) << 16) | \
