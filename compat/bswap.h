@@ -122,3 +122,35 @@ static inline uint64_t git_bswap64(uint64_t x)
 #endif
 
 #endif
+
+/*
+ * Performance might be improved if the CPU architecture is OK with
+ * unaligned 32-bit loads and a fast ntohl() is available.
+ * Otherwise fall back to byte loads and shifts which is portable,
+ * and is faster on architectures with memory alignment issues.
+ */
+
+#if defined(__i386__) || defined(__x86_64__) || \
+    defined(_M_IX86) || defined(_M_X64) || \
+    defined(__ppc__) || defined(__ppc64__) || \
+    defined(__powerpc__) || defined(__powerpc64__) || \
+    defined(__s390__) || defined(__s390x__)
+
+#define get_be32(p)	ntohl(*(unsigned int *)(p))
+#define put_be32(p, v)	do { *(unsigned int *)(p) = htonl(v); } while (0)
+
+#else
+
+#define get_be32(p)	( \
+	(*((unsigned char *)(p) + 0) << 24) | \
+	(*((unsigned char *)(p) + 1) << 16) | \
+	(*((unsigned char *)(p) + 2) <<  8) | \
+	(*((unsigned char *)(p) + 3) <<  0) )
+#define put_be32(p, v)	do { \
+	unsigned int __v = (v); \
+	*((unsigned char *)(p) + 0) = __v >> 24; \
+	*((unsigned char *)(p) + 1) = __v >> 16; \
+	*((unsigned char *)(p) + 2) = __v >>  8; \
+	*((unsigned char *)(p) + 3) = __v >>  0; } while (0)
+
+#endif
