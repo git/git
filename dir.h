@@ -212,4 +212,11 @@ static inline int ce_path_match(const struct cache_entry *ce,
 	return match_pathspec_depth(pathspec, ce->name, ce_namelen(ce), 0, seen);
 }
 
+static inline int dir_path_match(const struct dir_entry *ent,
+				 const struct pathspec *pathspec,
+				 int prefix, char *seen)
+{
+	return match_pathspec_depth(pathspec, ent->name, ent->len, prefix, seen);
+}
+
 #endif

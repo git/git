@@ -64,7 +64,7 @@ static void show_dir_entry(const char *tag, struct dir_entry *ent)
 	if (len >= ent->len)
 		die("git ls-files: internal error - directory entry not superset of prefix");
 
-	if (!match_pathspec_depth(&pathspec, ent->name, ent->len, len, ps_matched))
+	if (!dir_path_match(ent, &pathspec, len, ps_matched))
 		return;
 
 	fputs(tag, stdout);

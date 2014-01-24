@@ -208,8 +208,7 @@ static char *prune_directory(struct dir_struct *dir, struct pathspec *pathspec,
 	i = dir->nr;
 	while (--i >= 0) {
 		struct dir_entry *entry = *src++;
-		if (match_pathspec_depth(pathspec, entry->name, entry->len,
-					 prefix, seen))
+		if (dir_path_match(entry, pathspec, prefix, seen))
 			*dst++ = entry;
 		else if (flag & WARN_IMPLICIT_DOT)
 			/*
