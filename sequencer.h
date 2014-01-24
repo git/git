@@ -37,6 +37,8 @@ struct replay_opts {
 
 	int mainline;
 
+	const char *gpg_sign;
+
 	/* Merge strategy */
 	const char *strategy;
 	const char **xopts;

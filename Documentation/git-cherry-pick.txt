@@ -8,7 +8,8 @@ git-cherry-pick - Apply the changes introduced by some existing commits
 SYNOPSIS
 --------
 [verse]
-'git cherry-pick' [--edit] [-n] [-m parent-number] [-s] [-x] [--ff] <commit>...
+'git cherry-pick' [--edit] [-n] [-m parent-number] [-s] [-x] [--ff]
+		  [-S[<keyid>]] <commit>...
 'git cherry-pick' --continue
 'git cherry-pick' --quit
 'git cherry-pick' --abort
@@ -99,6 +100,10 @@ effect to your index in a row.
 -s::
 --signoff::
 	Add Signed-off-by line at the end of the commit message.
+
+-S[<keyid>]::
+--gpg-sign[=<keyid>]::
+	GPG-sign commits.
 
 --ff::
 	If the current HEAD is the same as the parent of the
