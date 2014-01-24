@@ -195,6 +195,8 @@ int within_depth(const char *name, int namelen,
 	return 1;
 }
 
+#define DO_MATCH_EXCLUDE   1
+
 /*
  * Does 'match' match the given name?
  * A match is found if
@@ -208,7 +210,7 @@ int within_depth(const char *name, int namelen,
  * It returns 0 when there is no match.
  */
 static int match_pathspec_item(const struct pathspec_item *item, int prefix,
-			       const char *name, int namelen)
+			       const char *name, int namelen, unsigned flags)
 {
 	/* name/namelen has prefix cut off by caller */
 	const char *match = item->match + prefix;
@@ -285,9 +287,9 @@ static int match_pathspec_item(const struct pathspec_item *item, int prefix,
 static int do_match_pathspec(const struct pathspec *ps,
 			     const char *name, int namelen,
 			     int prefix, char *seen,
-			     int exclude)
+			     unsigned flags)
 {
-	int i, retval = 0;
+	int i, retval = 0, exclude = flags & DO_MATCH_EXCLUDE;
 
 	GUARD_PATHSPEC(ps,
 		       PATHSPEC_FROMTOP |
@@ -327,7 +329,8 @@ static int do_match_pathspec(const struct pathspec *ps,
 		 */
 		if (seen && ps->items[i].magic & PATHSPEC_EXCLUDE)
 			seen[i] = MATCHED_FNMATCH;
-		how = match_pathspec_item(ps->items+i, prefix, name, namelen);
+		how = match_pathspec_item(ps->items+i, prefix, name,
+					  namelen, flags);
 		if (ps->recursive &&
 		    (ps->magic & PATHSPEC_MAXDEPTH) &&
 		    ps->max_depth != -1 &&
@@ -355,10 +358,14 @@ int match_pathspec(const struct pathspec *ps,
 		   int prefix, char *seen)
 {
 	int positive, negative;
-	positive = do_match_pathspec(ps, name, namelen, prefix, seen, 0);
+	unsigned flags = 0;
+	positive = do_match_pathspec(ps, name, namelen,
+				     prefix, seen, flags);
 	if (!(ps->magic & PATHSPEC_EXCLUDE) || !positive)
 		return positive;
-	negative = do_match_pathspec(ps, name, namelen, prefix, seen, 1);
+	negative = do_match_pathspec(ps, name, namelen,
+				     prefix, seen,
+				     flags | DO_MATCH_EXCLUDE);
 	return negative ? 0 : positive;
 }
 
