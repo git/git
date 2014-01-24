@@ -961,8 +961,8 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 			die_errno("Cannot lstat '%s'", ent->name);
 
 		if (pathspec.nr)
-			matches = match_pathspec_depth(&pathspec, ent->name,
-						       len, 0, NULL);
+			matches = match_pathspec(&pathspec, ent->name,
+						 len, 0, NULL);
 
 		if (S_ISDIR(st.st_mode)) {
 			if (remove_directories || (matches == MATCHED_EXACTLY)) {

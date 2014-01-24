@@ -132,9 +132,9 @@ struct dir_struct {
 extern int simple_length(const char *match);
 extern int no_wildcard(const char *string);
 extern char *common_prefix(const struct pathspec *pathspec);
-extern int match_pathspec_depth(const struct pathspec *pathspec,
-				const char *name, int namelen,
-				int prefix, char *seen);
+extern int match_pathspec(const struct pathspec *pathspec,
+			  const char *name, int namelen,
+			  int prefix, char *seen);
 extern int within_depth(const char *name, int namelen, int depth, int max_depth);
 
 extern int fill_directory(struct dir_struct *dir, const struct pathspec *pathspec);
@@ -209,14 +209,14 @@ static inline int ce_path_match(const struct cache_entry *ce,
 				const struct pathspec *pathspec,
 				char *seen)
 {
-	return match_pathspec_depth(pathspec, ce->name, ce_namelen(ce), 0, seen);
+	return match_pathspec(pathspec, ce->name, ce_namelen(ce), 0, seen);
 }
 
 static inline int dir_path_match(const struct dir_entry *ent,
 				 const struct pathspec *pathspec,
 				 int prefix, char *seen)
 {
-	return match_pathspec_depth(pathspec, ent->name, ent->len, prefix, seen);
+	return match_pathspec(pathspec, ent->name, ent->len, prefix, seen);
 }
 
 #endif
