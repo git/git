@@ -510,7 +510,7 @@ static void wt_status_collect_changes_initial(struct wt_status *s)
 		struct wt_status_change_data *d;
 		const struct cache_entry *ce = active_cache[i];
 
-		if (!ce_path_match(ce, &s->pathspec))
+		if (!ce_path_match(ce, &s->pathspec, NULL))
 			continue;
 		it = string_list_insert(&s->change, ce->name);
 		d = it->util;
