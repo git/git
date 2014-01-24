@@ -140,7 +140,8 @@ static void show_ce_entry(const char *tag, const struct cache_entry *ce)
 		die("git ls-files: internal error - cache entry not superset of prefix");
 
 	if (!match_pathspec(&pathspec, ce->name, ce_namelen(ce),
-			    len, ps_matched))
+			    len, ps_matched,
+			    S_ISDIR(ce->ce_mode) || S_ISGITLINK(ce->ce_mode)))
 		return;
 
 	if (tag && *tag && show_valid_bit &&
@@ -197,7 +198,7 @@ static void show_ru_info(void)
 		if (len < max_prefix_len)
 			continue; /* outside of the prefix */
 		if (!match_pathspec(&pathspec, path, len,
-				    max_prefix_len, ps_matched))
+				    max_prefix_len, ps_matched, 0))
 			continue; /* uninterested */
 		for (i = 0; i < 3; i++) {
 			if (!ui->mode[i])

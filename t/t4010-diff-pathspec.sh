@@ -127,4 +127,10 @@ test_expect_success 'diff-tree ignores trailing slash on submodule path' '
 	test_cmp expect actual
 '
 
+test_expect_success 'diff-cache ignores trailing slash on submodule path' '
+	git diff --name-only HEAD^ submod >expect &&
+	git diff --name-only HEAD^ submod/ >actual &&
+	test_cmp expect actual
+'
+
 test_done

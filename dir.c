@@ -360,10 +360,10 @@ static int do_match_pathspec(const struct pathspec *ps,
 
 int match_pathspec(const struct pathspec *ps,
 		   const char *name, int namelen,
-		   int prefix, char *seen)
+		   int prefix, char *seen, int is_dir)
 {
 	int positive, negative;
-	unsigned flags = 0;
+	unsigned flags = is_dir ? DO_MATCH_DIRECTORY : 0;
 	positive = do_match_pathspec(ps, name, namelen,
 				     prefix, seen, flags);
 	if (!(ps->magic & PATHSPEC_EXCLUDE) || !positive)

@@ -962,7 +962,7 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 
 		if (pathspec.nr)
 			matches = match_pathspec(&pathspec, ent->name,
-						 len, 0, NULL);
+						 len, 0, NULL, 0);
 
 		if (S_ISDIR(st.st_mode)) {
 			if (remove_directories || (matches == MATCHED_EXACTLY)) {
