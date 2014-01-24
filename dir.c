@@ -196,6 +196,7 @@ int within_depth(const char *name, int namelen,
 }
 
 #define DO_MATCH_EXCLUDE   1
+#define DO_MATCH_DIRECTORY 2
 
 /*
  * Does 'match' match the given name?
@@ -259,7 +260,11 @@ static int match_pathspec_item(const struct pathspec_item *item, int prefix,
 
 		if (match[matchlen-1] == '/' || name[matchlen] == '/')
 			return MATCHED_RECURSIVELY;
-	}
+	} else if ((flags & DO_MATCH_DIRECTORY) &&
+		   match[matchlen - 1] == '/' &&
+		   namelen == matchlen - 1 &&
+		   !ps_strncmp(item, match, name, namelen))
+		return MATCHED_EXACTLY;
 
 	if (item->nowildcard_len < item->len &&
 	    !git_fnmatch(item, match, name,
