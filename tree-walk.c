@@ -696,7 +696,7 @@ match_wildcards:
 
 		if (item->nowildcard_len &&
 		    !match_wildcard_base(item, base_str, baselen, &matched))
-			return entry_not_interesting;
+			continue;
 
 		/*
 		 * Concatenate base and entry->path into one and do
