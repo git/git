@@ -246,6 +246,9 @@ module_name()
 # $3 = URL to clone
 # $4 = reference repository to reuse (empty for independent)
 # $5 = depth argument for shallow clones (empty for deep)
+# $6 = (remote-tracking) starting point for the local branch (empty for HEAD)
+# $7 = local branch to create (empty for a detached HEAD, unless $6 is
+#      also empty, in which case the local branch is left unchanged)
 #
 # Prior to calling, cmd_update checks that a possibly existing
 # path is not a git repository.
@@ -259,6 +262,8 @@ module_clone()
 	url=$3
 	reference="$4"
 	depth="$5"
+	start_point="$6"
+	local_branch="$7"
 	quiet=
 	if test -n "$GIT_QUIET"
 	then
@@ -312,7 +317,16 @@ module_clone()
 	echo "gitdir: $rel/$a" >"$sm_path/.git"
 
 	rel=$(echo $a | sed -e 's|[^/][^/]*|..|g')
-	(clear_local_git_env; cd "$sm_path" && GIT_WORK_TREE=. git config core.worktree "$rel/$b")
+	(
+		clear_local_git_env
+		cd "$sm_path" &&
+		GIT_WORK_TREE=. git config core.worktree "$rel/$b" &&
+		# ash fails to wordsplit ${local_branch:+-B "$local_branch"...}
+		case "$local_branch" in
+		'') git checkout -f -q ${start_point:+"$start_point"} ;;
+		?*) git checkout -f -q -B "$local_branch" ${start_point:+"$start_point"} ;;
+		esac
+	) || die "$(eval_gettext "Unable to setup cloned submodule '\$sm_path'")"
 }
 
 isnumber()
@@ -475,16 +489,15 @@ Use -f if you really want to add it." >&2
 				echo "$(eval_gettext "Reactivating local git directory for submodule '\$sm_name'.")"
 			fi
 		fi
-		module_clone "$sm_path" "$sm_name" "$realrepo" "$reference" "$depth" || exit
-		(
-			clear_local_git_env
-			cd "$sm_path" &&
-			# ash fails to wordsplit ${branch:+-b "$branch"...}
-			case "$branch" in
-			'') git checkout -f -q ;;
-			?*) git checkout -f -q -B "$branch" "origin/$branch" ;;
-			esac
-		) || die "$(eval_gettext "Unable to checkout submodule '\$sm_path'")"
+		if test -n "$branch"
+		then
+			start_point="origin/$branch"
+			local_branch="$branch"
+		else
+			start_point=""
+			local_branch=""
+		fi
+		module_clone "$sm_path" "$sm_name" "$realrepo" "$reference" "$depth" "$start_point" "$local_branch" || exit
 	fi
 	git config submodule."$sm_name".url "$realrepo"
 
@@ -803,7 +816,9 @@ cmd_update()
 		fi
 		name=$(module_name "$sm_path") || exit
 		url=$(git config submodule."$name".url)
-		branch=$(get_submodule_config "$name" branch master)
+		config_branch=$(get_submodule_config "$name" branch)
+		branch="${config_branch:-master}"
+		local_branch="$branch"
 		if ! test -z "$update"
 		then
 			update_module=$update
@@ -817,11 +832,19 @@ cmd_update()
 
 		displaypath=$(relative_path "$prefix$sm_path")
 
-		if test "$update_module" = "none"
-		then
+		case "$update_module" in
+		none)
 			echo "Skipping submodule '$displaypath'"
 			continue
-		fi
+			;;
+		checkout)
+			local_branch=""
+			;;
+		rebase | merge | !*)
+			;;
+		*)
+			die "$(eval_gettext "Invalid update mode '$update_module' for submodule '$name'")"
+		esac
 
 		if test -z "$url"
 		then
@@ -835,7 +858,8 @@ Maybe you want to use 'update --init'?")"
 
 		if ! test -d "$sm_path"/.git -o -f "$sm_path"/.git
 		then
-			module_clone "$sm_path" "$name" "$url" "$reference" "$depth" || exit
+			start_point="origin/${branch}"
+			module_clone "$sm_path" "$name" "$url" "$reference" "$depth" "$start_point" "$local_branch" || exit
 			cloned_modules="$cloned_modules;$name"
 			subsha1=
 		else
@@ -881,7 +905,7 @@ Maybe you want to use 'update --init'?")"
 			case ";$cloned_modules;" in
 			*";$name;"*)
 				# then there is no local change to integrate
-				update_module=checkout ;;
+				update_module='!git reset --hard -q'
 			esac
 
 			must_die_on_failure=

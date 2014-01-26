@@ -53,6 +53,10 @@ submodule.<name>.branch::
 	A remote branch name for tracking updates in the upstream submodule.
 	If the option is not specified, it defaults to 'master'.  See the
 	`--remote` documentation in linkgit:git-submodule[1] for details.
++
+This branch name is also used for the local branch created by
+non-checkout cloning updates.  See the `update` documentation in
+linkgit:git-submodule[1] for details.
 
 submodule.<name>.fetchRecurseSubmodules::
 	This option can be used to control recursive fetching of this
