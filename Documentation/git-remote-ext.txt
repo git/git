@@ -116,11 +116,6 @@ begins with `ext::`.  Examples:
 	determined by the helper using environment variables (see
 	above).
 
-Documentation
---------------
-Documentation by Ilari Liusvaara, Jonathan Nieder and the Git list
-<git@vger.kernel.org>
-
 GIT
 ---
 Part of the linkgit:git[1] suite
