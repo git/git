@@ -299,6 +299,16 @@ In order to ensure a current tracking branch state, `update --remote`
 fetches the submodule's remote repository before calculating the
 SHA-1.  If you don't want to fetch, you should use `submodule update
 --remote --no-fetch`.
++
+Use this option to integrate changes from the upstream subproject with
+your submodule's current HEAD.  Alternatively, you can run `git pull`
+from the submodule, which is equivalent except for the remote branch
+name: `update --remote` uses the default upstream repository and
+`submodule.<name>.branch`, while `git pull` uses the submodule's
+`branch.<name>.merge`.  Prefer `submodule.<name>.branch` if you want
+to distribute the default upstream branch with the superproject and
+`branch.<name>.merge` if you want a more native feel while working in
+the submodule itself.
 
 -N::
 --no-fetch::
