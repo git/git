@@ -335,7 +335,6 @@ server advertises capability `allow-tip-sha1-in-want`.
   have_list         =  *PKT-LINE("have" SP id LF)
 
 TODO: Document this further.
-TODO: Don't use uppercase for variable names below.
 
 The Negotiation Algorithm
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -346,15 +345,15 @@ The computation to select the minimal pack proceeds as follows
 
 C: Use ref discovery to obtain the advertised refs.
 
-C: Place any object seen into set ADVERTISED.
+C: Place any object seen into set `advertised`.
 
-C: Build an empty set, COMMON, to hold the objects that are later
+C: Build an empty set, `common`, to hold the objects that are later
    determined to be on both ends.
 
-C: Build a set, WANT, of the objects from ADVERTISED the client
+C: Build a set, `want`, of the objects from `advertised` the client
    wants to fetch, based on what it saw during ref discovery.
 
-C: Start a queue, C_PENDING, ordered by commit time (popping newest
+C: Start a queue, `c_pending`, ordered by commit time (popping newest
    first).  Add all client refs.  When a commit is popped from
    the queue its parents SHOULD be automatically inserted back.
    Commits MUST only enter the queue once.
@@ -363,14 +362,14 @@ C: Start a queue, C_PENDING, ordered by commit time (popping newest
 
 C: Send one `$GIT_URL/git-upload-pack` request:
 
-   C: 0032want <WANT #1>...............................
-   C: 0032want <WANT #2>...............................
+   C: 0032want <want #1>...............................
+   C: 0032want <want #2>...............................
    ....
-   C: 0032have <COMMON #1>.............................
-   C: 0032have <COMMON #2>.............................
+   C: 0032have <common #1>.............................
+   C: 0032have <common #2>.............................
    ....
-   C: 0032have <HAVE #1>...............................
-   C: 0032have <HAVE #2>...............................
+   C: 0032have <have #1>...............................
+   C: 0032have <have #2>...............................
    ....
    C: 0000
 
@@ -393,38 +392,38 @@ A single "want" or "have" command MUST have one hex formatted
 SHA-1 as its value.  Multiple SHA-1s MUST be sent by sending
 multiple commands.
 
-The HAVE list is created by popping the first 32 commits
-from C_PENDING.  Less can be supplied if C_PENDING empties.
+The `have` list is created by popping the first 32 commits
+from `c_pending`.  Less can be supplied if `c_pending` empties.
 
-If the client has sent 256 HAVE commits and has not yet
-received one of those back from S_COMMON, or the client has
-emptied C_PENDING it SHOULD include a "done" command to let
+If the client has sent 256 "have" commits and has not yet
+received one of those back from `s_common`, or the client has
+emptied `c_pending` it SHOULD include a "done" command to let
 the server know it won't proceed:
 
    C: 0009done
 
 S: Parse the git-upload-pack request:
 
-Verify all objects in WANT are directly reachable from refs.
+Verify all objects in `want` are directly reachable from refs.
 
 The server MAY walk backwards through history or through
 the reflog to permit slightly stale requests.
 
-If no WANT objects are received, send an error:
+If no "want" objects are received, send an error:
 TODO: Define error if no "want" lines are requested.
 
-If any WANT object is not reachable, send an error:
+If any "want" object is not reachable, send an error:
 TODO: Define error if an invalid "want" is requested.
 
-Create an empty list, S_COMMON.
+Create an empty list, `s_common`.
 
 If "have" was sent:
 
 Loop through the objects in the order supplied by the client.
 
 For each object, if the server has the object reachable from
-a ref, add it to S_COMMON.  If a commit is added to S_COMMON,
-do not add any ancestors, even if they also appear in HAVE.
+a ref, add it to `s_common`.  If a commit is added to `s_common`,
+do not add any ancestors, even if they also appear in `have`.
 
 S: Send the git-upload-pack response:
 
@@ -440,7 +439,7 @@ stream 1.  Progress messages from the server side MAY appear
 in stream 2.
 
 Here a "closed set of objects" is defined to have at least
-one path from every WANT to at least one COMMON object.
+one path from every "want" to at least one "common" object.
 
 If the server needs more information, it replies with a
 status continue response:
