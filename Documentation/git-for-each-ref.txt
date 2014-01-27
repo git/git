@@ -219,14 +219,6 @@ eval=`git for-each-ref --shell --format="$fmt" \
 eval "$eval"
 ------------
 
-Author
-------
-Written by Junio C Hamano <gitster@pobox.com>.
-
-Documentation
--------------
-Documentation by Junio C Hamano and the git-list <git@vger.kernel.org>.
-
 SEE ALSO
 --------
 linkgit:git-show-ref[1]

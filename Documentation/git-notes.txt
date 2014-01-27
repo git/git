@@ -375,16 +375,6 @@ does not match any refs is silently ignored.
 If not set in the environment, the list of notes to copy depends
 on the `notes.rewrite.<command>` and `notes.rewriteRef` settings.
 
-
-Author
-------
-Written by Johannes Schindelin <johannes.schindelin@gmx.de> and
-Johan Herland <johan@herland.net>
-
-Documentation
--------------
-Documentation by Johannes Schindelin and Johan Herland
-
 GIT
 ---
 Part of the linkgit:git[7] suite

@@ -43,11 +43,6 @@ OPTIONS
 --padding=<N>::
 	The number of spaces between columns. One space by default.
 
-
-Author
-------
-Written by Nguyen Thai Ngoc Duy <pclouds@gmail.com>
-
 GIT
 ---
 Part of the linkgit:git[1] suite
