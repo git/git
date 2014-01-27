@@ -19,16 +19,6 @@ test_expect_success 'create files' '
 	)
 '
 
-p4_add_user() {
-	name=$1 fullname=$2 &&
-	p4 user -f -i <<-EOF &&
-	User: $name
-	Email: $name@localhost
-	FullName: $fullname
-	EOF
-	p4 passwd -P secret $name
-}
-
 p4_grant_admin() {
 	name=$1 &&
 	{
@@ -51,8 +41,8 @@ make_change_by_user() {
 
 # Test username support, submitting as user 'alice'
 test_expect_success 'preserve users' '
-	p4_add_user alice Alice &&
-	p4_add_user bob Bob &&
+	p4_add_user alice &&
+	p4_add_user bob &&
 	p4_grant_admin alice &&
 	git p4 clone --dest="$git" //depot &&
 	test_when_finished cleanup_git &&
@@ -60,8 +50,8 @@ test_expect_success 'preserve users' '
 		cd "$git" &&
 		echo "username: a change by alice" >>file1 &&
 		echo "username: a change by bob" >>file2 &&
-		git commit --author "Alice <alice@localhost>" -m "a change by alice" file1 &&
-		git commit --author "Bob <bob@localhost>" -m "a change by bob" file2 &&
+		git commit --author "Alice <alice@example.com>" -m "a change by alice" file1 &&
+		git commit --author "Bob <bob@example.com>" -m "a change by bob" file2 &&
 		git config git-p4.skipSubmitEditCheck true &&
 		P4EDITOR=touch P4USER=alice P4PASSWD=secret git p4 commit --preserve-user &&
 		p4_check_commit_author file1 alice &&
@@ -78,7 +68,7 @@ test_expect_success 'refuse to preserve users without perms' '
 		cd "$git" &&
 		git config git-p4.skipSubmitEditCheck true &&
 		echo "username-noperms: a change by alice" >>file1 &&
-		git commit --author "Alice <alice@localhost>" -m "perms: a change by alice" file1 &&
+		git commit --author "Alice <alice@example.com>" -m "perms: a change by alice" file1 &&
 		P4EDITOR=touch P4USER=bob P4PASSWD=secret &&
 		export P4EDITOR P4USER P4PASSWD &&
 		test_must_fail git p4 commit --preserve-user &&
@@ -94,9 +84,9 @@ test_expect_success 'preserve user where author is unknown to p4' '
 		cd "$git" &&
 		git config git-p4.skipSubmitEditCheck true &&
 		echo "username-bob: a change by bob" >>file1 &&
-		git commit --author "Bob <bob@localhost>" -m "preserve: a change by bob" file1 &&
+		git commit --author "Bob <bob@example.com>" -m "preserve: a change by bob" file1 &&
 		echo "username-unknown: a change by charlie" >>file1 &&
-		git commit --author "Charlie <charlie@localhost>" -m "preserve: a change by charlie" file1 &&
+		git commit --author "Charlie <charlie@example.com>" -m "preserve: a change by charlie" file1 &&
 		P4EDITOR=touch P4USER=alice P4PASSWD=secret &&
 		export P4EDITOR P4USER P4PASSWD &&
 		test_must_fail git p4 commit --preserve-user &&
@@ -121,24 +111,24 @@ test_expect_success 'not preserving user with mixed authorship' '
 	(
 		cd "$git" &&
 		git config git-p4.skipSubmitEditCheck true &&
-		p4_add_user derek Derek &&
+		p4_add_user derek &&
 
-		make_change_by_user usernamefile3 Derek derek@localhost &&
+		make_change_by_user usernamefile3 Derek derek@example.com &&
 		P4EDITOR=cat P4USER=alice P4PASSWD=secret &&
 		export P4EDITOR P4USER P4PASSWD &&
 		git p4 commit |\
-		grep "git author derek@localhost does not match" &&
+		grep "git author derek@example.com does not match" &&
 
-		make_change_by_user usernamefile3 Charlie charlie@localhost &&
+		make_change_by_user usernamefile3 Charlie charlie@example.com &&
 		git p4 commit |\
-		grep "git author charlie@localhost does not match" &&
+		grep "git author charlie@example.com does not match" &&
 
-		make_change_by_user usernamefile3 alice alice@localhost &&
+		make_change_by_user usernamefile3 alice alice@example.com &&
 		git p4 commit |\
 		test_must_fail grep "git author.*does not match" &&
 
 		git config git-p4.skipUserNameCheck true &&
-		make_change_by_user usernamefile3 Charlie charlie@localhost &&
+		make_change_by_user usernamefile3 Charlie charlie@example.com &&
 		git p4 commit |\
 		test_must_fail grep "git author.*does not match" &&
 

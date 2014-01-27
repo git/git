@@ -310,8 +310,8 @@ def split_p4_type(p4type):
 #
 # return the raw p4 type of a file (text, text+ko, etc)
 #
-def p4_type(file):
-    results = p4CmdList(["fstat", "-T", "headType", file])
+def p4_type(f):
+    results = p4CmdList(["fstat", "-T", "headType", wildcard_encode(f)])
     return results[0]['headType']
 
 #
@@ -1220,7 +1220,7 @@ class P4Submit(Command, P4UserMap):
             editor = os.environ.get("P4EDITOR")
         else:
             editor = read_pipe("git var GIT_EDITOR").strip()
-        system(editor + " " + template_file)
+        system([editor, template_file])
 
         # If the file was not saved, prompt to see if this patch should
         # be skipped.  But skip this verification step if configured so.
@@ -1871,7 +1871,7 @@ class View(object):
                 # assume error is "... file(s) not in client view"
                 continue
             if "clientFile" not in res:
-                die("No clientFile from 'p4 where %s'" % depot_path)
+                die("No clientFile in 'p4 where' output")
             if "unmap" in res:
                 # it will list all of them, but only one not unmap-ped
                 continue
@@ -2075,7 +2075,14 @@ class P4Sync(Command, P4UserMap):
             # p4 print on a symlink sometimes contains "target\n";
             # if it does, remove the newline
             data = ''.join(contents)
-            if data[-1] == '\n':
+            if not data:
+                # Some version of p4 allowed creating a symlink that pointed
+                # to nothing.  This causes p4 errors when checking out such
+                # a change, and errors here too.  Work around it by ignoring
+                # the bad symlink; hopefully a future change fixes it.
+                print "\nIgnoring empty symlink in %s" % file['depotFile']
+                return
+            elif data[-1] == '\n':
                 contents = [data[:-1]]
             else:
                 contents = [data]

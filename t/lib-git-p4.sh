@@ -47,14 +47,21 @@ P4DPORT=$((10669 + ($testid - $git_p4_test_start)))
 
 P4PORT=localhost:$P4DPORT
 P4CLIENT=client
-P4EDITOR=:
+P4USER=author
+P4EDITOR=true
 unset P4CHARSET
-export P4PORT P4CLIENT P4EDITOR P4CHARSET
+export P4PORT P4CLIENT P4USER P4EDITOR P4CHARSET
 
 db="$TRASH_DIRECTORY/db"
 cli="$TRASH_DIRECTORY/cli"
 git="$TRASH_DIRECTORY/git"
 pidfile="$TRASH_DIRECTORY/p4d.pid"
+
+# git p4 submit generates a temp file, which will
+# not get cleaned up if the submission fails.  Don't
+# clutter up /tmp on the test machine.
+TMPDIR="$TRASH_DIRECTORY"
+export TMPDIR
 
 start_p4d() {
 	mkdir -p "$db" "$cli" "$git" &&
@@ -96,10 +103,22 @@ start_p4d() {
 		return 1
 	fi
 
+	# build a p4 user so author@example.com has an entry
+	p4_add_user author
+
 	# build a client
 	client_view "//depot/... //client/..." &&
 
 	return 0
+}
+
+p4_add_user() {
+	name=$1 &&
+	p4 user -f -i <<-EOF
+	User: $name
+	Email: $name@example.com
+	FullName: Dr. $name
+	EOF
 }
 
 kill_p4d() {

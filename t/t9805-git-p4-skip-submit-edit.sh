@@ -17,7 +17,7 @@ test_expect_success 'init depot' '
 	)
 '
 
-# this works because EDITOR is set to :
+# this works because P4EDITOR is set to true
 test_expect_success 'no config, unedited, say yes' '
 	git p4 clone --dest="$git" //depot &&
 	test_when_finished cleanup_git &&
@@ -90,7 +90,9 @@ test_expect_success 'no config, edited' '
 		cd "$git" &&
 		echo line >>file1 &&
 		git commit -a -m "change 5" &&
-		P4EDITOR="" EDITOR="\"$TRASH_DIRECTORY/ed.sh\"" git p4 submit &&
+		P4EDITOR="$TRASH_DIRECTORY/ed.sh" &&
+		export P4EDITOR &&
+		git p4 submit &&
 		p4 changes //depot/... >wc &&
 		test_line_count = 5 wc
 	)

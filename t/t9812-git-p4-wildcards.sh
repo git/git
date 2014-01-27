@@ -161,6 +161,56 @@ test_expect_success 'wildcard files submit back to p4, delete' '
 	)
 '
 
+test_expect_success 'p4 deleted a wildcard file' '
+	(
+		cd "$cli" &&
+		echo "wild delete test" >wild@delete &&
+		p4 add -f wild@delete &&
+		p4 submit -d "add wild@delete"
+	) &&
+	test_when_finished cleanup_git &&
+	git p4 clone --dest="$git" //depot &&
+	(
+		cd "$git" &&
+		test_path_is_file wild@delete
+	) &&
+	(
+		cd "$cli" &&
+		# must use its encoded name
+		p4 delete wild%40delete &&
+		p4 submit -d "delete wild@delete"
+	) &&
+	(
+		cd "$git" &&
+		git p4 sync &&
+		git merge --ff-only p4/master &&
+		test_path_is_missing wild@delete
+	)
+'
+
+test_expect_success 'wildcard files requiring keyword scrub' '
+	(
+		cd "$cli" &&
+		cat <<-\EOF >scrub@wild &&
+		$Id$
+		line2
+		EOF
+		p4 add -t text+k -f scrub@wild &&
+		p4 submit -d "scrub at wild"
+	) &&
+	test_when_finished cleanup_git &&
+	git p4 clone --dest="$git" //depot &&
+	(
+		cd "$git" &&
+		git config git-p4.skipSubmitEdit true &&
+		git config git-p4.attemptRCSCleanup true &&
+		sed "s/^line2/line2 edit/" <scrub@wild >scrub@wild.tmp &&
+		mv -f scrub@wild.tmp scrub@wild &&
+		git commit -m "scrub at wild line2 edit" scrub@wild &&
+		git p4 submit
+	)
+'
+
 test_expect_success 'kill p4d' '
 	kill_p4d
 '
