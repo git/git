@@ -543,7 +543,7 @@ static int match_entry(const struct pathspec_item *item,
 	if (matchlen > pathlen) {
 		if (match[pathlen] != '/')
 			return 0;
-		if (!S_ISDIR(entry->mode))
+		if (!S_ISDIR(entry->mode) && !S_ISGITLINK(entry->mode))
 			return 0;
 	}
 
