@@ -87,6 +87,8 @@ Foreign interfaces, subsystems and ports.
 
  * The build procedure is aware of MirBSD now.
 
+ * Various "git p4", "git svn" and "gitk" updates.
+
 
 UI, Workflows & Features
 
@@ -214,6 +216,50 @@ Fixes since v1.8.5
 Unless otherwise noted, all the fixes since v1.8.5 in the maintenance
 track are contained in this release (see the maintenance releases' notes
 for details).
+
+ * The pathspec matching code, while comparing two trees (e.g. "git
+   diff A B -- path1 path2") was too agrresive and failed to match
+   some paths when multiple pathspecs were involved.
+   (merge e4ddb05 as/tree-walk-fix-aggressive-short-cut later to maint).
+
+ * "git repack --max-pack-size=8g" stopped being parsed correctly when
+   the command was reimplemented in C.
+   (merge b861e23 sb/repack-in-c later to maint).
+
+ * An earlier update in v1.8.4.x to "git rev-list --objects" with
+   negative ref had performance regression.
+   (merge 200abe7 jk/mark-edges-uninteresting later to maint).
+
+ * A recent update to "git send-email" broke platforms where
+   /etc/ssl/certs/ directory exists, but it cannot used as SSL_ca_path
+   (e.g. Fedora rawhide).
+   (merge 01645b7 rk/send-email-ssl-cert later to maint).
+
+ * A handful of bugs around interpreting $branch@{upstream} notation
+   and its lookalike, when $branch part has interesting characters,
+   e.g. "@", and ":", have been fixed.
+   (merge 9892d5d jk/interpret-branch-name-fix later to maint).
+
+ * "git clone" would fail to clone from a repository that has a ref
+   directly under "refs/", e.g. "refs/stash", because different
+   validation paths do different things on such a refname.  Loosen the
+   client side's validation to allow such a ref.
+   (merge 4c22408 jk/allow-fetch-onelevel-refname later to maint).
+
+ * "git log --left-right A...B" lost the "leftness" of commits
+   reachable from A when A is a tag as a side effect of a recent
+   bugfix.  This is a regression in 1.8.4.x series.
+   (merge a743528 jc/revision-range-unpeel later to maint).
+
+ * documentations to "git pull" hinted there is an "-m" option because
+   it incorrectly shared the documentation with "git merge".
+   (merge 08f19cf jc/maint-pull-docfix later to maint).
+
+ * "git diff A B submod" and "git diff A B submod/" ought to have done
+   the same for a submodule "submod", but didn't.
+
+ * "git clone $origin foo\bar\baz" on Windows failed to create the
+   leading directories (i.e. a moral-equivalent of "mkdir -p").
 
  * "submodule.*.update=checkout", when propagated from .gitmodules to
    .git/config, turned into a "submodule.*.update=none", which did not
