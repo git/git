@@ -367,7 +367,7 @@ static void squash_message(struct commit *commit, struct commit_list *remotehead
 			sha1_to_hex(commit->object.sha1));
 		pretty_print_commit(&ctx, commit, &out);
 	}
-	if (write(fd, out.buf, out.len) < 0)
+	if (write_in_full(fd, out.buf, out.len) != out.len)
 		die_errno(_("Writing SQUASH_MSG"));
 	if (close(fd))
 		die_errno(_("Finishing SQUASH_MSG"));

@@ -304,23 +304,6 @@ int mingw_open (const char *filename, int oflags, ...)
 	return fd;
 }
 
-#undef write
-ssize_t mingw_write(int fd, const void *buf, size_t count)
-{
-	/*
-	 * While write() calls to a file on a local disk are translated
-	 * into WriteFile() calls with a maximum size of 64KB on Windows
-	 * XP and 256KB on Vista, no such cap is placed on writes to
-	 * files over the network on Windows XP.  Unfortunately, there
-	 * seems to be a limit of 32MB-28KB on X64 and 64MB-32KB on x86;
-	 * bigger writes fail on Windows XP.
-	 * So we cap to a nice 31MB here to avoid write failures over
-	 * the net without changing the number of WriteFile() calls in
-	 * the local case.
-	 */
-	return write(fd, buf, min(count, 31 * 1024 * 1024));
-}
-
 static BOOL WINAPI ctrl_ignore(DWORD type)
 {
 	return TRUE;
