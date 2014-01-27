@@ -1499,6 +1499,12 @@ _git_mergetool ()
 
 _git_merge_base ()
 {
+	case "$cur" in
+	--*)
+		__gitcomp "--octopus --independent --is-ancestor --fork-point"
+		return
+		;;
+	esac
 	__gitcomp_nl "$(__git_refs)"
 }
 
@@ -1631,7 +1637,7 @@ _git_rebase ()
 			--preserve-merges --stat --no-stat
 			--committer-date-is-author-date --ignore-date
 			--ignore-whitespace --whitespace=
-			--autosquash
+			--autosquash --fork-point --no-fork-point
 			"
 
 		return
