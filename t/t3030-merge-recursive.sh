@@ -257,6 +257,7 @@ test_expect_success 'setup 8' '
 	git add e &&
 	test_tick &&
 	git commit -m "rename a->e" &&
+	c7=$(git rev-parse --verify HEAD) &&
 	git checkout rename-ln &&
 	git mv a e &&
 	test_ln_s_add e a &&
@@ -515,6 +516,52 @@ test_expect_success 'reset and bind merge' '
 	) >expected &&
 	test_cmp expected actual
 
+'
+
+test_expect_failure 'merge-recursive w/ empty work tree - ours has rename' '
+	(
+		GIT_WORK_TREE="$PWD/ours-has-rename-work" &&
+		export GIT_WORK_TREE &&
+		GIT_INDEX_FILE="$PWD/ours-has-rename-index" &&
+		export GIT_INDEX_FILE &&
+		mkdir "$GIT_WORK_TREE" &&
+		git read-tree -i -m $c7 &&
+		git update-index --ignore-missing --refresh &&
+		git merge-recursive $c0 -- $c7 $c3 &&
+		git ls-files -s >actual-files
+	) 2>actual-err &&
+	>expected-err &&
+	cat >expected-files <<-EOF &&
+	100644 $o3 0	b/c
+	100644 $o0 0	c
+	100644 $o0 0	d/e
+	100644 $o0 0	e
+	EOF
+	test_cmp expected-files actual-files &&
+	test_cmp expected-err actual-err
+'
+
+test_expect_success 'merge-recursive w/ empty work tree - theirs has rename' '
+	(
+		GIT_WORK_TREE="$PWD/theirs-has-rename-work" &&
+		export GIT_WORK_TREE &&
+		GIT_INDEX_FILE="$PWD/theirs-has-rename-index" &&
+		export GIT_INDEX_FILE &&
+		mkdir "$GIT_WORK_TREE" &&
+		git read-tree -i -m $c3 &&
+		git update-index --ignore-missing --refresh &&
+		git merge-recursive $c0 -- $c3 $c7 &&
+		git ls-files -s >actual-files
+	) 2>actual-err &&
+	>expected-err &&
+	cat >expected-files <<-EOF &&
+	100644 $o3 0	b/c
+	100644 $o0 0	c
+	100644 $o0 0	d/e
+	100644 $o0 0	e
+	EOF
+	test_cmp expected-files actual-files &&
+	test_cmp expected-err actual-err
 '
 
 test_expect_success 'merge removes empty directories' '
