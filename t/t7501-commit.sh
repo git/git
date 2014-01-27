@@ -57,6 +57,7 @@ test_expect_success 'using invalid commit with -C' '
 '
 
 test_expect_success 'nothing to commit' '
+	git reset --hard &&
 	test_must_fail git commit -m initial
 '
 

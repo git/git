@@ -17,7 +17,7 @@ test_expect_success 'objects in packs marked .keep are not repacked' '
 	# The second pack will contain the excluded object
 	packsha1=$(git rev-list --objects --all | grep file2 |
 		git pack-objects pack) &&
-	touch -r pack-$packsha1.pack pack-$packsha1.keep &&
+	>pack-$packsha1.keep &&
 	objsha1=$(git verify-pack -v pack-$packsha1.idx | head -n 1 |
 		sed -e "s/^\([0-9a-f]\{40\}\).*/\1/") &&
 	mv pack-* .git/objects/pack/ &&
