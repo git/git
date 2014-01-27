@@ -105,50 +105,59 @@ int mkdir_in_gitdir(const char *path)
 	return adjust_shared_perm(path);
 }
 
-int safe_create_leading_directories(char *path)
+enum scld_error safe_create_leading_directories(char *path)
 {
-	char *pos = path + offset_1st_component(path);
-	struct stat st;
+	char *next_component = path + offset_1st_component(path);
+	enum scld_error ret = SCLD_OK;
 
-	while (pos) {
-		pos = strchr(pos, '/');
-		if (!pos)
+	while (ret == SCLD_OK && next_component) {
+		struct stat st;
+		char *slash = strchr(next_component, '/');
+
+		if (!slash)
 			break;
-		while (*++pos == '/')
-			;
-		if (!*pos)
+
+		next_component = slash + 1;
+		while (*next_component == '/')
+			next_component++;
+		if (!*next_component)
 			break;
-		*--pos = '\0';
+
+		*slash = '\0';
 		if (!stat(path, &st)) {
 			/* path exists */
-			if (!S_ISDIR(st.st_mode)) {
-				*pos = '/';
-				return -3;
-			}
-		}
-		else if (mkdir(path, 0777)) {
+			if (!S_ISDIR(st.st_mode))
+				ret = SCLD_EXISTS;
+		} else if (mkdir(path, 0777)) {
 			if (errno == EEXIST &&
-			    !stat(path, &st) && S_ISDIR(st.st_mode)) {
+			    !stat(path, &st) && S_ISDIR(st.st_mode))
 				; /* somebody created it since we checked */
-			} else {
-				*pos = '/';
-				return -1;
-			}
+			else if (errno == ENOENT)
+				/*
+				 * Either mkdir() failed because
+				 * somebody just pruned the containing
+				 * directory, or stat() failed because
+				 * the file that was in our way was
+				 * just removed.  Either way, inform
+				 * the caller that it might be worth
+				 * trying again:
+				 */
+				ret = SCLD_VANISHED;
+			else
+				ret = SCLD_FAILED;
+		} else if (adjust_shared_perm(path)) {
+			ret = SCLD_PERMS;
 		}
-		else if (adjust_shared_perm(path)) {
-			*pos = '/';
-			return -2;
-		}
-		*pos++ = '/';
+		*slash = '/';
 	}
-	return 0;
+	return ret;
 }
 
-int safe_create_leading_directories_const(const char *path)
+enum scld_error safe_create_leading_directories_const(const char *path)
 {
 	/* path points to cache entries, so xstrdup before messing with it */
 	char *buf = xstrdup(path);
-	int result = safe_create_leading_directories(buf);
+	enum scld_error result = safe_create_leading_directories(buf);
 	free(buf);
 	return result;
 }

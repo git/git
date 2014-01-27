@@ -693,7 +693,7 @@ static int make_room_for_path(struct merge_options *o, const char *path)
 	/* Make sure leading directories are created */
 	status = safe_create_leading_directories_const(path);
 	if (status) {
-		if (status == -3) {
+		if (status == SCLD_EXISTS) {
 			/* something else exists */
 			error(msg, path, _(": perhaps a D/F conflict?"));
 			return -1;

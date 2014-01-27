@@ -515,13 +515,14 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 				saved = shared_repository;
 				shared_repository = 0;
 				switch (safe_create_leading_directories_const(argv[0])) {
-				case -3:
+				case SCLD_OK:
+				case SCLD_PERMS:
+					break;
+				case SCLD_EXISTS:
 					errno = EEXIST;
 					/* fallthru */
-				case -1:
-					die_errno(_("cannot mkdir %s"), argv[0]);
-					break;
 				default:
+					die_errno(_("cannot mkdir %s"), argv[0]);
 					break;
 				}
 				shared_repository = saved;
