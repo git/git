@@ -88,7 +88,7 @@ some output processing may assume ref names in UTF-8.
   branch 'blabla' then '@\{1\}' means the same as 'blabla@\{1\}'.
 
 '@\{-<n>\}', e.g. '@\{-1\}'::
-  The construct '@\{-<n>\}' means the <n>th branch checked out
+  The construct '@\{-<n>\}' means the <n>th branch/commit checked out
   before the current one.
 
 '<branchname>@\{upstream\}', e.g. 'master@\{upstream\}', '@\{u\}'::
