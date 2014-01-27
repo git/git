@@ -14,14 +14,15 @@ TEST_NO_CREATE_REPO=1
 # cloning a submodule calls is_git_directory("$path/../.git/modules/$path"),
 # which effectively limits the maximum length to PATH_MAX / 2 minus some
 # overhead; start with 3 * 36 = 108 chars (test 2 fails if >= 110)
-longpath=0123456789abcdefghijklmnopqrstuvwxyz
-longpath=$longpath$longpath$longpath
+longpath36=0123456789abcdefghijklmnopqrstuvwxyz
+longpath180=$longpath36$longpath36$longpath36$longpath36$longpath36
 
 # the git database must fit within PATH_MAX, which limits the submodule name
 # to PATH_MAX - len(pwd) - ~90 (= len("/objects//") + 40-byte sha1 + some
 # overhead from the test case)
 pwd=$(pwd)
-longpath=${longpath:0:170-${#pwd}}
+pwdlen=$(echo "$pwd" | wc -c)
+longpath=$(echo $longpath180 | cut -c 1-$((170-$pwdlen)))
 
 test_expect_success 'submodule with a long path' '
 	git init --bare remote &&
