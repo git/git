@@ -15,7 +15,8 @@
 #include "strbuf.h"
 #include "varint.h"
 
-static struct cache_entry *refresh_cache_entry(struct cache_entry *ce, int really);
+static struct cache_entry *refresh_cache_entry(struct cache_entry *ce,
+					       unsigned int options);
 
 /* Mask for the name length in ce_flags in the on-disk index */
 
@@ -696,7 +697,7 @@ int add_file_to_index(struct index_state *istate, const char *path, int flags)
 
 struct cache_entry *make_cache_entry(unsigned int mode,
 		const unsigned char *sha1, const char *path, int stage,
-		int refresh)
+		unsigned int refresh_options)
 {
 	int size, len;
 	struct cache_entry *ce;
@@ -716,10 +717,7 @@ struct cache_entry *make_cache_entry(unsigned int mode,
 	ce->ce_namelen = len;
 	ce->ce_mode = create_ce_mode(mode);
 
-	if (refresh)
-		return refresh_cache_entry(ce, 0);
-
-	return ce;
+	return refresh_cache_entry(ce, refresh_options);
 }
 
 int ce_same_name(const struct cache_entry *a, const struct cache_entry *b)
@@ -1029,11 +1027,12 @@ static struct cache_entry *refresh_cache_ent(struct index_state *istate,
 	struct stat st;
 	struct cache_entry *updated;
 	int changed, size;
+	int refresh = options & CE_MATCH_REFRESH;
 	int ignore_valid = options & CE_MATCH_IGNORE_VALID;
 	int ignore_skip_worktree = options & CE_MATCH_IGNORE_SKIP_WORKTREE;
 	int ignore_missing = options & CE_MATCH_IGNORE_MISSING;
 
-	if (ce_uptodate(ce))
+	if (!refresh || ce_uptodate(ce))
 		return ce;
 
 	/*
@@ -1129,7 +1128,8 @@ int refresh_index(struct index_state *istate, unsigned int flags, const char **p
 	int ignore_submodules = (flags & REFRESH_IGNORE_SUBMODULES) != 0;
 	int first = 1;
 	int in_porcelain = (flags & REFRESH_IN_PORCELAIN);
-	unsigned int options = ((really ? CE_MATCH_IGNORE_VALID : 0) |
+	unsigned int options = (CE_MATCH_REFRESH |
+				(really ? CE_MATCH_IGNORE_VALID : 0) |
 				(not_new ? CE_MATCH_IGNORE_MISSING : 0));
 	const char *modified_fmt;
 	const char *deleted_fmt;
@@ -1208,9 +1208,10 @@ int refresh_index(struct index_state *istate, unsigned int flags, const char **p
 	return has_errors;
 }
 
-static struct cache_entry *refresh_cache_entry(struct cache_entry *ce, int really)
+static struct cache_entry *refresh_cache_entry(struct cache_entry *ce,
+					       unsigned int options)
 {
-	return refresh_cache_ent(&the_index, ce, really, NULL, NULL);
+	return refresh_cache_ent(&the_index, ce, options, NULL, NULL);
 }
 
 
