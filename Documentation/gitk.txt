@@ -98,6 +98,22 @@ linkgit:git-rev-list[1] for a complete list.
 	(See "History simplification" in linkgit:git-log[1] for a more
 	detailed explanation.)
 
+-L<start>,<end>:<file>::
+-L:<regex>:<file>::
+
+	Trace the evolution of the line range given by "<start>,<end>"
+	(or the funcname regex <regex>) within the <file>.  You may
+	not give any pathspec limiters.  This is currently limited to
+	a walk starting from a single revision, i.e., you may only
+	give zero or one positive revision arguments.
+	You can specify this option more than once.
++
+*Note:* gitk (unlike linkgit:git-log[1]) currently only understands
+this option if you specify it "glued together" with its argument.  Do
+*not* put a space after `-L`.
++
+include::line-range-format.txt[]
+
 <revision range>::
 
 	Limit the revisions to show. This can be either a single revision
