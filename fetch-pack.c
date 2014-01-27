@@ -506,7 +506,7 @@ static void filter_refs(struct fetch_pack_args *args,
 		next = ref->next;
 
 		if (!memcmp(ref->name, "refs/", 5) &&
-		    check_refname_format(ref->name + 5, 0))
+		    check_refname_format(ref->name, 0))
 			; /* trash */
 		else {
 			while (i < nr_sought) {
