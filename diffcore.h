@@ -29,10 +29,8 @@ struct diff_filespec {
 	char *path;
 	void *data;
 	void *cnt_data;
-	const char *funcname_pattern_ident;
 	unsigned long size;
 	int count;               /* Reference count */
-	int xfrm_flags;		 /* for use by the xfrm */
 	int rename_used;         /* Count of rename users */
 	unsigned short mode;	 /* file mode */
 	unsigned sha1_valid : 1; /* if true, use sha1 and trust mode;
@@ -43,13 +41,13 @@ struct diff_filespec {
 	unsigned should_free : 1; /* data should be free()'ed */
 	unsigned should_munmap : 1; /* data should be munmap()'ed */
 	unsigned dirty_submodule : 2;  /* For submodules: its work tree is dirty */
-	unsigned is_stdin : 1;
 #define DIRTY_SUBMODULE_UNTRACKED 1
 #define DIRTY_SUBMODULE_MODIFIED  2
+	unsigned is_stdin : 1;
 	unsigned has_more_entries : 1; /* only appear in combined diff */
-	struct userdiff_driver *driver;
 	/* data should be considered "binary"; -1 means "don't know yet" */
-	int is_binary;
+	int is_binary : 2;
+	struct userdiff_driver *driver;
 };
 
 extern struct diff_filespec *alloc_filespec(const char *);
