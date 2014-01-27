@@ -1,20 +1,21 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jan 2014, #04; Wed, 22)
-X-master-at: f21e1c5d36cfbbff753cec652c21a88a129f1a27
-X-next-at: 8e6341d90183123bf2e9368ab83d6382c9846761
+Subject: What's cooking in git.git (Jan 2014, #05; Mon, 27)
+X-master-at: bd3e186d811a13d8687584856f345a767e3e4d67
+X-next-at: 0b1dcb534ef2691254edb3a0d66a3bdbbb849f98
 
-What's cooking in git.git (Jan 2014, #04; Wed, 22)
+What's cooking in git.git (Jan 2014, #05; Mon, 27)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-I am planning to tag 1.9-rc0 preview release from the tip of
-'master'.  Hopefully a few fix-up topics still in flight and also
-updates to git-gui and gitk from subarea maintainers can be merged
-by 1.9-rc1 is tagged.
+The tip of 'master' is at 1.9-rc1; as far as new features are
+concerned, this is pretty much it until the final.
+
+On the maintenance track, we may have another 1.8.5.x maintenance
+release before 1.9 final is tagged in 2-3 weeks.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -24,85 +25,9 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* fp/submodule-checkout-mode (2014-01-07) 1 commit
-  (merged to 'next' on 2014-01-10 at 647ba9b)
- + git-submodule.sh: 'checkout' is a valid update mode
- (this branch is used by wk/submodule-on-branch.)
-
- "submodule.*.update=checkout", when propagated from .gitmodules to
- .git/config, turned into a "submodule.*.update=none", which did not
- make much sense.
-
-
-* nd/shallow-clone (2014-01-09) 31 commits
-  (merged to 'next' on 2014-01-09 at 6608634)
- + t5537: fix incorrect expectation in test case 10
-  (merged to 'next' on 2014-01-06 at 3dc7fab)
- + shallow: remove unused code
- + send-pack.c: mark a file-local function static
-  (merged to 'next' on 2014-01-03 at a776065)
- + git-clone.txt: remove shallow clone limitations
- + prune: clean .git/shallow after pruning objects
- + clone: use git protocol for cloning shallow repo locally
- + send-pack: support pushing from a shallow clone via http
- + receive-pack: support pushing to a shallow clone via http
- + smart-http: support shallow fetch/clone
- + remote-curl: pass ref SHA-1 to fetch-pack as well
- + send-pack: support pushing to a shallow clone
- + receive-pack: allow pushes that update .git/shallow
- + connected.c: add new variant that runs with --shallow-file
- + add GIT_SHALLOW_FILE to propagate --shallow-file to subprocesses
- + receive/send-pack: support pushing from a shallow clone
- + receive-pack: reorder some code in unpack()
- + fetch: add --update-shallow to accept refs that update .git/shallow
- + upload-pack: make sure deepening preserves shallow roots
- + fetch: support fetching from a shallow repository
- + clone: support remote shallow repository
- + fetch-pack.h: one statement per bitfield declaration
- + fetch-pack.c: move shallow update code out of fetch_pack()
- + shallow.c: steps 6 and 7 to select new commits for .git/shallow
- + shallow.c: the 8 steps to select new commits for .git/shallow
- + shallow.c: extend setup_*_shallow() to accept extra shallow commits
- + connect.c: teach get_remote_heads to parse "shallow" lines
- + make the sender advertise shallow commits to the receiver
- + clone: prevent --reference to a shallow repository
- + send-pack: forbid pushing from a shallow repository
- + remote.h: replace struct extra_have_objects with struct sha1_array
- + transport.h: remove send_pack prototype, already defined in send-pack.h
-
- Fetching from a shallow-cloned repository used to be forbidden,
- primarily because the codepaths involved were not carefully vetted
- and we did not bother supporting such usage. This attempts to allow
- object transfer out of a shallow-cloned repository in a controlled
- way (i.e. the receiver become a shallow repository with truncated
- history).
-
---------------------------------------------------
-[New Topics]
-
-* jn/ignore-doc (2014-01-16) 1 commit
-  (merged to 'next' on 2014-01-22 at a07ac63)
- + gitignore doc: add global gitignore to synopsis
-
- Explicitly list $HOME/.config/git/ignore as one of the places you
- can use to keep ignore patterns that depend on your personal choice
- of tools, e.g. *~ for Emacs users.
-
- Will merge to 'master'.
-
-
-* rk/send-email-ssl-cert (2014-01-16) 1 commit
-  (merged to 'next' on 2014-01-22 at 2fb13f2)
- + send-email: /etc/ssl/certs/ directory may not be usable as ca_path
-
- The "if /etc/ssl/certs/ directory exists, explicitly tell the
- library to use it as SSL_ca_path" blind-defaulting in "git
- send-email" broke platforms where /etc/ssl/certs/ directory exists,
- but it cannot used as SSL_ca_path (e.g. Fedora rawhide).  Fix it by
- not specifying any SSL_ca_path/SSL_ca_file but still asking for
- peer verification in such a case.
-
- Will merge to 'master'.
+* ab/subtree-doc (2014-01-13) 1 commit
+  (merged to 'next' on 2014-01-22 at e352c75)
+ + subtree: fix argument validation in add/pull/push
 
 
 * ef/mingw-write (2014-01-17) 2 commits
@@ -110,27 +35,38 @@ of the repositories listed at
  + mingw: remove mingw_write
  + prefer xwrite instead of write
 
- Will merge to 'master'.
+
+* jc/maint-pull-docfix (2014-01-14) 2 commits
+  (merged to 'next' on 2014-01-22 at 2e62ef4)
+ + Documentation: "git pull" does not have the "-m" option
+ + Merge branch 'jc/maint-pull-docfix-for-409b8d82' into jc/maint-pull-docfix
+ (this branch uses jc/maint-pull-docfix-for-409b8d82.)
 
 
-* jk/branch-at-publish-rebased (2014-01-17) 5 commits
- - t1507 (rev-parse-upstream): fix typo in test title
- - implement @{publish} shorthand
- - branch_get: provide per-branch pushremote pointers
- - branch_get: return early on error
- - sha1_name: refactor upstream_mark
- (this branch uses jk/interpret-branch-name-fix.)
+* jc/revision-range-unpeel (2014-01-15) 2 commits
+  (merged to 'next' on 2014-01-22 at ab2a159)
+ + revision: propagate flag bits from tags to pointees
+ + revision: mark contents of an uninteresting tree uninteresting
 
- Give an easier access to the tracking branches from "other" side in
- a triangular workflow by introducing B@{publish} that works in a
- similar way to how B@{upstream} does.
+ "git log --left-right A...B" lost the "leftness" of commits
+ reachable from A when A is a tag as a side effect of a recent
+ bugfix.  This is a regression in 1.8.4.x series.
 
 
-* jk/color-for-more-pagers (2014-01-17) 4 commits
- - pager: disable colors for some known-bad configurations
- - DONOTMERGE: needs matching change to git-sh-setup
- - setup_pager: set MORE=R
- - setup_pager: refactor LESS/LV environment setting
+* jk/allow-fetch-onelevel-refname (2014-01-15) 1 commit
+  (merged to 'next' on 2014-01-22 at 15089b1)
+ + fetch-pack: do not filter out one-level refs
+
+ "git clone" would fail to clone from a repository that has a ref
+ directly under "refs/", e.g. "refs/stash", because different
+ validation paths do different things on such a refname.  Loosen the
+ client side's validation to allow such a ref.
+
+
+* jk/complete-merge-base (2014-01-13) 2 commits
+  (merged to 'next' on 2014-01-22 at 91c428d)
+ + completion: handle --[no-]fork-point options to git-rebase
+ + completion: complete merge-base options
 
 
 * jk/diff-filespec-cleanup (2014-01-17) 5 commits
@@ -141,40 +77,19 @@ of the repositories listed at
  + diff_filespec: drop funcname_pattern_ident field
  + diff_filespec: reorder dirty_submodule macro definitions
 
- Will merge to 'master'.
 
+* jk/interpret-branch-name-fix (2014-01-15) 5 commits
+  (merged to 'next' on 2014-01-22 at f113c68)
+ + interpret_branch_name: find all possible @-marks
+ + interpret_branch_name: avoid @{upstream} past colon
+ + interpret_branch_name: always respect "namelen" parameter
+ + interpret_branch_name: rename "cp" variable to "at"
+ + interpret_branch_name: factor out upstream handling
+ (this branch is used by jk/branch-at-publish-rebased.)
 
-* cc/interpret-trailers (2014-01-21) 17 commits
- - DONOTMERGE: style issues, unused funcs, etc.
- - trailer: add tests for commands using env variables
- - trailer: set author and committer env variables
- - trailer: add tests for trailer command
- - trailer: execute command from 'trailer.<name>.command'
- - strbuf: add strbuf_replace()
- - trailer: add new_trailer_item() function
- - trailer: if no input file is passed, read from stdin
- - trailer: add tests for "git interpret-trailers"
- - trailer: add interpret-trailers command
- - trailer: put all the processing together and print
- - trailer: parse trailers from input file
- - strbuf: add strbuf_isspace()
- - trailer: process command line trailer arguments
- - trailer: read and process config information
- - trailer: process trailers from file and arguments
- - Add data structures and basic functions for commit trailers
-
-
-* dk/blame-janitorial (2014-01-22) 2 commits
- - Eliminate same_suspect function in builtin/blame.c
- - builtin/blame.c: struct blame_entry does not need a prev link
-
-
-* jc/parse-options-humint (2014-01-22) 2 commits
- - repack: accept larger window-memory and max-pack-size
- - parse-options: refactor human-friendly-integer parser out of pack-objects
-
- "git repack --max-pack-size=8g" stopped being parsed correctly when
- the command was reimplemented in C.
+ Fix a handful of bugs around interpreting $branch@{upstream}
+ notation and its lookalike, when $branch part has interesting
+ characters, e.g. "@", and ":".
 
 
 * jk/mark-edges-uninteresting (2014-01-21) 2 commits
@@ -184,31 +99,62 @@ of the repositories listed at
 
  Fix to regression in v1.8.4.x and later.
 
- Will merge to 'master'.
+
+* jk/test-fixes (2014-01-23) 2 commits
+  (merged to 'next' on 2014-01-23 at 6515089)
+ + t7700: do not use "touch" unnecessarily
+ + t7501: fix "empty commit" test with NO_PERL
 
 
-* ks/diff-c-with-diff-order (2014-01-21) 4 commits
- - combine-diff: combine_diff_path.len is not needed anymore
- - combine-diff: Optimize combine_diff_path sets intersection
- - diff test: Add tests for combine-diff with orderfile
- - diffcore-order: Export generic ordering interface
+* jn/ignore-doc (2014-01-16) 1 commit
+  (merged to 'next' on 2014-01-22 at a07ac63)
+ + gitignore doc: add global gitignore to synopsis
 
- Teach combine-diff to honour the path-output-order imposed by
- diffcore-order.
-
-
-* tr/gitk-doc-range-trace (2014-01-21) 1 commit
-  (merged to 'next' on 2014-01-22 at 1d93d1d)
- + Documentation/gitk: document -L option
-
- Will merge to 'master'.
+ Explicitly list $HOME/.config/git/ignore as one of the places you
+ can use to keep ignore patterns that depend on your personal choice
+ of tools, e.g. *~ for Emacs users.
 
 
-* tr/nth-previous-is-a-commit (2014-01-21) 1 commit
-  (merged to 'next' on 2014-01-22 at 0425887)
- + Documentation: @{-N} can refer to a commit
+* mh/attr-macro-doc (2014-01-14) 1 commit
+  (merged to 'next' on 2014-01-22 at e3ed767)
+ + gitattributes: document more clearly where macros are allowed
 
- Will merge to 'master'.
+
+* mh/retire-ref-fetch-rules (2014-01-14) 1 commit
+  (merged to 'next' on 2014-01-22 at 753b1f6)
+ + refname_match(): always use the rules in ref_rev_parse_rules
+
+ Code simplification.
+
+
+* mh/safe-create-leading-directories (2014-01-21) 17 commits
+  (merged to 'next' on 2014-01-22 at ad38e73)
+ + rename_tmp_log(): on SCLD_VANISHED, retry
+ + rename_tmp_log(): limit the number of remote_empty_directories() attempts
+ + rename_tmp_log(): handle a possible mkdir/rmdir race
+ + rename_ref(): extract function rename_tmp_log()
+ + remove_dir_recurse(): handle disappearing files and directories
+ + remove_dir_recurse(): tighten condition for removing unreadable dir
+ + lock_ref_sha1_basic(): if locking fails with ENOENT, retry
+ + lock_ref_sha1_basic(): on SCLD_VANISHED, retry
+ + safe_create_leading_directories(): add new error value SCLD_VANISHED
+ + cmd_init_db(): when creating directories, handle errors conservatively
+ + safe_create_leading_directories(): introduce enum for return values
+ + safe_create_leading_directories(): always restore slash at end of loop
+ + safe_create_leading_directories(): split on first of multiple slashes
+ + safe_create_leading_directories(): rename local variable
+ + safe_create_leading_directories(): add explicit "slash" pointer
+ + safe_create_leading_directories(): reduce scope of local variable
+ + safe_create_leading_directories(): fix format of "if" chaining
+ (this branch is used by ss/safe-create-leading-dir-with-slash.)
+
+ Code clean-up and protection against concurrent write access to the
+ ref namespace.
+
+
+* nd/negative-pathspec (2014-01-23) 1 commit
+  (merged to 'next' on 2014-01-23 at fd64119)
+ + tree-walk.c: ignore trailing slash on submodule in tree_entry_interesting()
 
 
 * pw/git-p4 (2014-01-22) 11 commits
@@ -227,10 +173,117 @@ of the repositories listed at
 
  Various "git p4" updates.
 
- Will merge to 'master'.
+
+* rk/send-email-ssl-cert (2014-01-16) 1 commit
+  (merged to 'next' on 2014-01-22 at 2fb13f2)
+ + send-email: /etc/ssl/certs/ directory may not be usable as ca_path
+
+ The "if /etc/ssl/certs/ directory exists, explicitly tell the
+ library to use it as SSL_ca_path" blind-defaulting in "git
+ send-email" broke platforms where /etc/ssl/certs/ directory exists,
+ but it cannot used as SSL_ca_path (e.g. Fedora rawhide).  Fix it by
+ not specifying any SSL_ca_path/SSL_ca_file but still asking for
+ peer verification in such a case.
+
+
+* sb/repack-in-c (2014-01-23) 3 commits
+  (merged to 'next' on 2014-01-23 at 3ff349f)
+ + repack: propagate pack-objects options as strings
+ + repack: make parsed string options const-correct
+ + repack: fix typo in max-pack-size option
+
+ "git repack --max-pack-size=8g" stopped being parsed correctly when
+ the command was reimplemented in C.
+
+
+* ss/safe-create-leading-dir-with-slash (2014-01-22) 1 commit
+  (merged to 'next' on 2014-01-22 at ca62c45)
+ + safe_create_leading_directories(): on Windows, \ can separate path components
+ (this branch uses mh/safe-create-leading-directories.)
+
+ "git clone $origin foo\bar\baz" on Windows failed to create the
+ leading directories (i.e. a moral-equivalent of "mkdir -p").
+
+
+* tr/gitk-doc-range-trace (2014-01-21) 1 commit
+  (merged to 'next' on 2014-01-22 at 1d93d1d)
+ + Documentation/gitk: document -L option
+
+
+* tr/nth-previous-is-a-commit (2014-01-21) 1 commit
+  (merged to 'next' on 2014-01-22 at 0425887)
+ + Documentation: @{-N} can refer to a commit
+
+--------------------------------------------------
+[New Topics]
+
+* lt/request-pull (2014-01-23) 3 commits
+ - pull-request: test updates
+ - Make request-pull able to take a refspec of form local:remote
+ - Make 'git request-pull' more strict about matching
+
+ Waiting for the updates to settle.
+
+
+* bk/refresh-missing-ok-in-merge-recursive (2014-01-27) 4 commits
+ - merge-recursive.c: Tolerate missing files while refreshing index
+ - read-cache.c: Extend make_cache_entry refresh flag with options
+ - read-cache.c: Refactor --ignore-missing implementation
+ - t3030-merge-recursive: Test known breakage with empty work tree
+
+ Will merge to 'next'.
+
+
+* nd/diff-quiet-stat-dirty (2014-01-27) 3 commits
+ - diff: turn off skip_stat_unmatch on "diff --cached"
+ - diff: do not quit early on stat-dirty files
+ - Move diffcore_skip_stat_unmatch core logic out for reuse later
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
+
+* jk/color-for-more-pagers (2014-01-17) 4 commits
+ - pager: disable colors for some known-bad configurations
+ - DONOTMERGE: needs matching change to git-sh-setup
+ - setup_pager: set MORE=R
+ - setup_pager: refactor LESS/LV environment setting
+
+ 'more' implementation of BSD wants to be told with MORE=R
+ environment before it shows colored output, while 'more' on some
+ other platforms will die when seeing MORE=R environment.
+
+ It appears that we are coming to the consensus that trying to be
+ too intimately knowledgeable about quirks of various pager
+ implementations on different platforms is a losing proposition, so
+ perhaps I should replace this with the alternative and simpler
+ approach I posted, unless there are strong objections.
+
+
+* po/everyday-doc (2014-01-27) 1 commit
+ - Make 'git help everyday' work
+
+ This may make the said command to emit something, but the source is
+ not meant to be formatted into a manual pages to begin with, and
+ also its contents are a bit stale.  It may be a good first step in
+ the right direction, but needs more work to at least get the
+ mark-up right before public consumption.
+
+
+* jk/branch-at-publish-rebased (2014-01-17) 5 commits
+ - t1507 (rev-parse-upstream): fix typo in test title
+ - implement @{publish} shorthand
+ - branch_get: provide per-branch pushremote pointers
+ - branch_get: return early on error
+ - sha1_name: refactor upstream_mark
+
+ Give an easier access to the tracking branches from "other" side in
+ a triangular workflow by introducing B@{publish} that works in a
+ similar way to how B@{upstream} does.
+
+ Will hold.
+
 
 * rb/merge-prepare-commit-msg-hook (2014-01-10) 4 commits
  - merge: drop unused arg from abort_commit method signature
@@ -465,23 +518,43 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* ab/subtree-doc (2014-01-13) 1 commit
-  (merged to 'next' on 2014-01-22 at e352c75)
- + subtree: fix argument validation in add/pull/push
+* cc/interpret-trailers (2014-01-27) 17 commits
+ - Documentation: add documentation for 'git interpret-trailers'
+ - trailer: add tests for commands using env variables
+ - trailer: set author and committer env variables
+ - trailer: add tests for trailer command
+ - trailer: execute command from 'trailer.<name>.command'
+ - strbuf: add strbuf_replace()
+ - trailer: add new_trailer_item() function
+ - trailer: if no input file is passed, read from stdin
+ - trailer: add tests for "git interpret-trailers"
+ - trailer: add interpret-trailers command
+ - trailer: put all the processing together and print
+ - trailer: parse trailers from input file
+ - strbuf: add strbuf_isspace()
+ - trailer: process command line trailer arguments
+ - trailer: read and process config information
+ - trailer: process trailers from file and arguments
+ - Add data structures and basic functions for commit trailers
 
- Will merge to 'master'.
+
+* dk/blame-janitorial (2014-01-22) 2 commits
+ - Eliminate same_suspect function in builtin/blame.c
+ - builtin/blame.c: struct blame_entry does not need a prev link
+
+ Will merge to 'next'.
 
 
-* jk/complete-merge-base (2014-01-13) 2 commits
-  (merged to 'next' on 2014-01-22 at 91c428d)
- + completion: handle --[no-]fork-point options to git-rebase
- + completion: complete merge-base options
+* ks/diff-c-with-diff-order (2014-01-21) 4 commits
+ - combine-diff: combine_diff_path.len is not needed anymore
+ - combine-diff: Optimize combine_diff_path sets intersection
+ - diff test: Add tests for combine-diff with orderfile
+ - diffcore-order: Export generic ordering interface
 
- Will merge to 'master'.
+ Teach combine-diff to honour the path-output-order imposed by
+ diffcore-order.
 
-
-* po/everyday-doc (2014-01-13) 1 commit
- - Make 'git help everyday' work
+ Will merge to 'next'.
 
 
 * bl/blame-full-history (2014-01-14) 1 commit
@@ -511,80 +584,8 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* jc/maint-pull-docfix-for-409b8d82 (2014-01-14) 1 commit
- + Documentation: exclude irrelevant options from "git pull"
- (this branch is used by jc/maint-pull-docfix.)
-
-
-* jc/maint-pull-docfix (2014-01-14) 2 commits
-  (merged to 'next' on 2014-01-22 at 2e62ef4)
- + Documentation: "git pull" does not have the "-m" option
- + Merge branch 'jc/maint-pull-docfix-for-409b8d82' into jc/maint-pull-docfix
- (this branch uses jc/maint-pull-docfix-for-409b8d82.)
-
- Will merge to 'master'.
-
-
-* jc/revision-range-unpeel (2014-01-15) 2 commits
-  (merged to 'next' on 2014-01-22 at ab2a159)
- + revision: propagate flag bits from tags to pointees
- + revision: mark contents of an uninteresting tree uninteresting
-
- "git log --left-right A...B" lost the "leftness" of commits
- reachable from A when A is a tag as a side effect of a recent
- bugfix.  This is a regression in 1.8.4.x series.
-
- Will merge to 'master'.
-
-
-* jk/allow-fetch-onelevel-refname (2014-01-15) 1 commit
-  (merged to 'next' on 2014-01-22 at 15089b1)
- + fetch-pack: do not filter out one-level refs
-
- "git clone" would fail to clone from a repository that has a ref
- directly under "refs/", e.g. "refs/stash", because different
- validation paths do different things on such a refname.  Loosen the
- client side's validation to allow such a ref.
-
- Will merge to 'master'.
-
-
-* jk/interpret-branch-name-fix (2014-01-15) 5 commits
-  (merged to 'next' on 2014-01-22 at f113c68)
- + interpret_branch_name: find all possible @-marks
- + interpret_branch_name: avoid @{upstream} past colon
- + interpret_branch_name: always respect "namelen" parameter
- + interpret_branch_name: rename "cp" variable to "at"
- + interpret_branch_name: factor out upstream handling
- (this branch is used by jk/branch-at-publish-rebased.)
-
- Fix a handful of bugs around interpreting $branch@{upstream}
- notation and its lookalike, when $branch part has interesting
- characters, e.g. "@", and ":".
-
- Will merge to 'master'.
-
-
-* mh/attr-macro-doc (2014-01-14) 1 commit
-  (merged to 'next' on 2014-01-22 at e3ed767)
- + gitattributes: document more clearly where macros are allowed
-
- Will merge to 'master'.
-
-
-* mh/retire-ref-fetch-rules (2014-01-14) 1 commit
-  (merged to 'next' on 2014-01-22 at 753b1f6)
- + refname_match(): always use the rules in ref_rev_parse_rules
-
- Code simplification.
-
- Will merge to 'master'.
-
-
-* wk/submodule-on-branch (2014-01-16) 6 commits
- - Documentation: Describe 'submodule update' modes in detail
- - t7406: Add explicit tests for head attachement after cloning updates
- - [DONOTMERGE] t7406: Just-cloned checkouts update to the gitlinked hash with 'reset'
+* wk/submodule-on-branch (2014-01-27) 4 commits
+ - Documentation: Describe 'submodule update --remote' use case
  - submodule: Explicit local branch creation in module_clone
  - submodule: Document module_clone arguments in comments
  - submodule: Make 'checkout' update_module explicit
@@ -595,8 +596,6 @@ of the repositories listed at
 
  This round seems to be almost ready; further discussions are of
  course very much welcomed.
-
- Waiting for another reroll to fix minor nits, at least.
 
 
 * jk/warn-on-object-refname-ambiguity (2014-01-09) 6 commits
@@ -617,45 +616,11 @@ of the repositories listed at
  Expecting a reroll.
 
 
-* ss/safe-create-leading-dir-with-slash (2014-01-22) 1 commit
-  (merged to 'next' on 2014-01-22 at ca62c45)
- + safe_create_leading_directories(): on Windows, \ can separate path components
- (this branch uses mh/safe-create-leading-directories.)
-
- "git clone $origin foo\bar\baz" on Windows failed to create the
- leading directories (i.e. a moral-equivalent of "mkdir -p").
-
- Will merge to 'master'.
-
-
-* mh/safe-create-leading-directories (2014-01-21) 17 commits
-  (merged to 'next' on 2014-01-22 at ad38e73)
- + rename_tmp_log(): on SCLD_VANISHED, retry
- + rename_tmp_log(): limit the number of remote_empty_directories() attempts
- + rename_tmp_log(): handle a possible mkdir/rmdir race
- + rename_ref(): extract function rename_tmp_log()
- + remove_dir_recurse(): handle disappearing files and directories
- + remove_dir_recurse(): tighten condition for removing unreadable dir
- + lock_ref_sha1_basic(): if locking fails with ENOENT, retry
- + lock_ref_sha1_basic(): on SCLD_VANISHED, retry
- + safe_create_leading_directories(): add new error value SCLD_VANISHED
- + cmd_init_db(): when creating directories, handle errors conservatively
- + safe_create_leading_directories(): introduce enum for return values
- + safe_create_leading_directories(): always restore slash at end of loop
- + safe_create_leading_directories(): split on first of multiple slashes
- + safe_create_leading_directories(): rename local variable
- + safe_create_leading_directories(): add explicit "slash" pointer
- + safe_create_leading_directories(): reduce scope of local variable
- + safe_create_leading_directories(): fix format of "if" chaining
- (this branch is used by ss/safe-create-leading-dir-with-slash.)
-
- Code clean-up and protection against concurrent write access to the
- ref namespace.
-
- Will merge to 'master'.
-
-
-* jk/pack-bitmap (2014-01-16) 22 commits
+* jk/pack-bitmap (2014-01-23) 25 commits
+  (merged to 'next' on 2014-01-27 at 0b1dcb5)
+ + ewah: support platforms that require aligned reads
+ + read-cache: use get_be32 instead of hand-rolled ntoh_l
+ + block-sha1: factor out get_be and put_be wrappers
   (merged to 'next' on 2014-01-16 at ddac2d2)
  + do not discard revindex when re-preparing packfiles
   (merged to 'next' on 2014-01-10 at bdbe0a4)
@@ -701,13 +666,6 @@ of the repositories listed at
  is a good idea to sprinkle support for --no-gpg-sign everywhere.
 
  Will cook in 'next'.
-
-
-* jn/gitk-chmod+x (2013-11-25) 1 commit
- - gitk: chmod +x po2msg
-
- Parked here until I get the same change back from the upstream gitk
- tree.
 
 
 * cc/starts-n-ends-with-endgame (2013-12-05) 1 commit
@@ -798,3 +756,17 @@ of the repositories listed at
  . git-gui: chmod +x po2msg, windows/git-gui.sh
 
  Now in 'master' from the upstream git-gui repository.
+
+
+* jn/gitk-chmod+x (2013-11-25) 1 commit
+ . gitk: chmod +x po2msg
+
+ Now in 'master' from the upstream gitk repository.
+
+
+* jc/parse-options-humint (2014-01-22) 2 commits
+ . repack: accept larger window-memory and max-pack-size
+ . parse-options: refactor human-friendly-integer parser out of pack-objects
+
+ "git repack --max-pack-size=8g" stopped being parsed correctly when
+ the command was reimplemented in C.
