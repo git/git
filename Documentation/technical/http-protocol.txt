@@ -20,13 +20,13 @@ URL syntax documented by RFC 1738, so they are of the form:
 
   http://<host>:<port>/<path>?<searchpart>
 
-Within this documentation the placeholder $GIT_URL will stand for
+Within this documentation the placeholder `$GIT_URL` will stand for
 the http:// repository URL entered by the end-user.
 
-Servers SHOULD handle all requests to locations matching $GIT_URL, as
+Servers SHOULD handle all requests to locations matching `$GIT_URL`, as
 both the "smart" and "dumb" HTTP protocols used by Git operate
 by appending additional path components onto the end of the user
-supplied $GIT_URL string.
+supplied `$GIT_URL` string.
 
 An example of a dumb client requesting for a loose object:
 
@@ -43,10 +43,10 @@ An example of a request to a submodule:
   $GIT_URL:     http://example.com/git/repo.git/path/submodule.git
   URL request:  http://example.com/git/repo.git/path/submodule.git/info/refs
 
-Clients MUST strip a trailing '/', if present, from the user supplied
-$GIT_URL string to prevent empty path tokens ('//') from appearing
+Clients MUST strip a trailing `/`, if present, from the user supplied
+`$GIT_URL` string to prevent empty path tokens (`//`) from appearing
 in any URL sent to a server.  Compatible clients MUST expand
-'$GIT_URL/info/refs' as 'foo/info/refs' and not 'foo//info/refs'.
+`$GIT_URL/info/refs` as `foo/info/refs` and not `foo//info/refs`.
 
 
 Authentication
@@ -103,14 +103,14 @@ Except where noted, all standard HTTP behavior SHOULD be assumed
 by both client and server.  This includes (but is not necessarily
 limited to):
 
-If there is no repository at $GIT_URL, or the resource pointed to by a
-location matching $GIT_URL does not exist, the server MUST NOT respond
-with '200 OK' response.  A server SHOULD respond with
-'404 Not Found', '410 Gone', or any other suitable HTTP status code
+If there is no repository at `$GIT_URL`, or the resource pointed to by a
+location matching `$GIT_URL` does not exist, the server MUST NOT respond
+with `200 OK` response.  A server SHOULD respond with
+`404 Not Found`, `410 Gone`, or any other suitable HTTP status code
 which does not imply the resource exists as requested.
 
-If there is a repository at $GIT_URL, but access is not currently
-permitted, the server MUST respond with the '403 Forbidden' HTTP
+If there is a repository at `$GIT_URL`, but access is not currently
+permitted, the server MUST respond with the `403 Forbidden` HTTP
 status code.
 
 Servers SHOULD support both HTTP 1.0 and HTTP 1.1.
@@ -126,9 +126,9 @@ Servers MAY return ETag and/or Last-Modified headers.
 Clients MAY revalidate cached entities by including If-Modified-Since
 and/or If-None-Match request headers.
 
-Servers MAY return '304 Not Modified' if the relevant headers appear
+Servers MAY return `304 Not Modified` if the relevant headers appear
 in the request and the entity has not changed.  Clients MUST treat
-'304 Not Modified' identical to '200 OK' by reusing the cached entity.
+`304 Not Modified` identical to `200 OK` by reusing the cached entity.
 
 Clients MAY reuse a cached entity without revalidation if the
 Cache-Control and/or Expires header permits caching.  Clients and
@@ -148,7 +148,7 @@ HTTP clients that only support the "dumb" protocol MUST discover
 references by making a request for the special info/refs file of
 the repository.
 
-Dumb HTTP clients MUST make a GET request to $GIT_URL/info/refs,
+Dumb HTTP clients MUST make a `GET` request to `$GIT_URL/info/refs`,
 without any search/query parameters.
 
    C: GET $GIT_URL/info/refs HTTP/1.0
@@ -161,21 +161,21 @@ without any search/query parameters.
    S: a3c2e2402b99163d1d59756e5f207ae21cccba4c	refs/tags/v1.0^{}
 
 The Content-Type of the returned info/refs entity SHOULD be
-"text/plain; charset=utf-8", but MAY be any content type.
+`text/plain; charset=utf-8`, but MAY be any content type.
 Clients MUST NOT attempt to validate the returned Content-Type.
 Dumb servers MUST NOT return a return type starting with
-"application/x-git-".
+`application/x-git-`.
 
 Cache-Control headers MAY be returned to disable caching of the
 returned entity.
 
 When examining the response clients SHOULD only examine the HTTP
-status code.  Valid responses are '200 OK', or '304 Not Modified'.
+status code.  Valid responses are `200 OK`, or `304 Not Modified`.
 
 The returned content is a UNIX formatted text file describing
 each ref and its known value.  The file SHOULD be sorted by name
 according to the C locale ordering.  The file SHOULD NOT include
-the default ref named 'HEAD'.
+the default ref named `HEAD`.
 
   info_refs   =  *( ref_record )
   ref_record  =  any_ref / peeled_ref
@@ -192,13 +192,14 @@ HTTP clients that support the "smart" protocol (or both the
 a parameterized request for the info/refs file of the repository.
 
 The request MUST contain exactly one query parameter,
-'service=$servicename', where $servicename MUST be the service
+`service=$servicename`, where `$servicename` MUST be the service
 name the client wishes to contact to complete the operation.
 The request MUST NOT contain additional query parameters.
 
    C: GET $GIT_URL/info/refs?service=git-upload-pack HTTP/1.0
 
-   dumb server reply:
+dumb server reply:
+
    S: 200 OK
    S:
    S: 95dcfa3633004da0049d3d0fa03f80589cbcaf31	refs/heads/maint
@@ -206,7 +207,8 @@ The request MUST NOT contain additional query parameters.
    S: 2cb58b79488a98d2721cea644875a8dd0026b115	refs/tags/v1.0
    S: a3c2e2402b99163d1d59756e5f207ae21cccba4c	refs/tags/v1.0^{}
 
-   smart server reply:
+smart server reply:
+
    S: 200 OK
    S: Content-Type: application/x-git-upload-pack-advertisement
    S: Cache-Control: no-cache
@@ -228,7 +230,7 @@ Smart Server Response
 ^^^^^^^^^^^^^^^^^^^^^
 If the server does not recognize the requested service name, or the
 requested service name has been disabled by the server administrator,
-the server MUST respond with the '403 Forbidden' HTTP status code.
+the server MUST respond with the `403 Forbidden` HTTP status code.
 
 Otherwise, smart servers MUST respond with the smart server reply
 format for the requested service name.
@@ -236,35 +238,35 @@ format for the requested service name.
 Cache-Control headers SHOULD be used to disable caching of the
 returned entity.
 
-The Content-Type MUST be 'application/x-$servicename-advertisement'.
+The Content-Type MUST be `application/x-$servicename-advertisement`.
 Clients SHOULD fall back to the dumb protocol if another content
 type is returned.  When falling back to the dumb protocol clients
-SHOULD NOT make an additional request to $GIT_URL/info/refs, but
+SHOULD NOT make an additional request to `$GIT_URL/info/refs`, but
 instead SHOULD use the response already in hand.  Clients MUST NOT
 continue if they do not support the dumb protocol.
 
-Clients MUST validate the status code is either '200 OK' or
-'304 Not Modified'.
+Clients MUST validate the status code is either `200 OK` or
+`304 Not Modified`.
 
 Clients MUST validate the first five bytes of the response entity
-matches the regex "^[0-9a-f]{4}#".  If this test fails, clients
+matches the regex `^[0-9a-f]{4}#`.  If this test fails, clients
 MUST NOT continue.
 
 Clients MUST parse the entire response as a sequence of pkt-line
 records.
 
-Clients MUST verify the first pkt-line is "# service=$servicename".
+Clients MUST verify the first pkt-line is `# service=$servicename`.
 Servers MUST set $servicename to be the request parameter value.
 Servers SHOULD include an LF at the end of this line.
 Clients MUST ignore an LF at the end of the line.
 
-Servers MUST terminate the response with the magic "0000" end
+Servers MUST terminate the response with the magic `0000` end
 pkt-line marker.
 
 The returned response is a pkt-line stream describing each ref and
 its known value.  The stream SHOULD be sorted by name according to
 the C locale ordering.  The stream SHOULD include the default ref
-named 'HEAD' as the first ref.  The stream MUST include capability
+named `HEAD` as the first ref.  The stream MUST include capability
 declarations behind a NUL on the first ref.
 
   smart_reply     =  PKT-LINE("# service=$servicename" LF)
@@ -286,12 +288,13 @@ declarations behind a NUL on the first ref.
   peeled_ref      =  PKT-LINE(obj-id SP name LF)
 		     PKT-LINE(obj-id SP name "^{}" LF
 
+
 Smart Service git-upload-pack
 ------------------------------
-This service reads from the repository pointed to by $GIT_URL.
+This service reads from the repository pointed to by `$GIT_URL`.
 
 Clients MUST first perform ref discovery with
-'$GIT_URL/info/refs?service=git-upload-pack'.
+`$GIT_URL/info/refs?service=git-upload-pack`.
 
    C: POST $GIT_URL/git-upload-pack HTTP/1.0
    C: Content-Type: application/x-git-upload-pack-request
@@ -313,10 +316,10 @@ to prevent caching of the response.
 
 Servers SHOULD support all capabilities defined here.
 
-Clients MUST send at least one 'want' command in the request body.
-Clients MUST NOT reference an id in a 'want' command which did not
+Clients MUST send at least one "want" command in the request body.
+Clients MUST NOT reference an id in a "want" command which did not
 appear in the response obtained through ref discovery unless the
-server advertises capability "allow-tip-sha1-in-want".
+server advertises capability `allow-tip-sha1-in-want`.
 
   compute_request   =  want_list
 		       have_list
@@ -332,128 +335,128 @@ server advertises capability "allow-tip-sha1-in-want".
   have_list         =  *PKT-LINE("have" SP id LF)
 
 TODO: Document this further.
-TODO: Don't use uppercase for variable names below.
 
 The Negotiation Algorithm
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 The computation to select the minimal pack proceeds as follows
-(c = client, s = server):
+(C = client, S = server):
 
- init step:
- (c) Use ref discovery to obtain the advertised refs.
- (c) Place any object seen into set ADVERTISED.
+'init step:'
 
- (c) Build an empty set, COMMON, to hold the objects that are later
-     determined to be on both ends.
- (c) Build a set, WANT, of the objects from ADVERTISED the client
-     wants to fetch, based on what it saw during ref discovery.
+C: Use ref discovery to obtain the advertised refs.
 
- (c) Start a queue, C_PENDING, ordered by commit time (popping newest
-     first).  Add all client refs.  When a commit is popped from
-     the queue its parents SHOULD be automatically inserted back.
-     Commits MUST only enter the queue once.
+C: Place any object seen into set `advertised`.
 
- one compute step:
- (c) Send one $GIT_URL/git-upload-pack request:
+C: Build an empty set, `common`, to hold the objects that are later
+   determined to be on both ends.
 
-   C: 0032want <WANT #1>...............................
-   C: 0032want <WANT #2>...............................
+C: Build a set, `want`, of the objects from `advertised` the client
+   wants to fetch, based on what it saw during ref discovery.
+
+C: Start a queue, `c_pending`, ordered by commit time (popping newest
+   first).  Add all client refs.  When a commit is popped from
+   the queue its parents SHOULD be automatically inserted back.
+   Commits MUST only enter the queue once.
+
+'one compute step:'
+
+C: Send one `$GIT_URL/git-upload-pack` request:
+
+   C: 0032want <want #1>...............................
+   C: 0032want <want #2>...............................
    ....
-   C: 0032have <COMMON #1>.............................
-   C: 0032have <COMMON #2>.............................
+   C: 0032have <common #1>.............................
+   C: 0032have <common #2>.............................
    ....
-   C: 0032have <HAVE #1>...............................
-   C: 0032have <HAVE #2>...............................
+   C: 0032have <have #1>...............................
+   C: 0032have <have #2>...............................
    ....
    C: 0000
 
-     The stream is organized into "commands", with each command
-     appearing by itself in a pkt-line.  Within a command line
-     the text leading up to the first space is the command name,
-     and the remainder of the line to the first LF is the value.
-     Command lines are terminated with an LF as the last byte of
-     the pkt-line value.
+The stream is organized into "commands", with each command
+appearing by itself in a pkt-line.  Within a command line
+the text leading up to the first space is the command name,
+and the remainder of the line to the first LF is the value.
+Command lines are terminated with an LF as the last byte of
+the pkt-line value.
 
-     Commands MUST appear in the following order, if they appear
-     at all in the request stream:
+Commands MUST appear in the following order, if they appear
+at all in the request stream:
 
-       * want
-       * have
+* "want"
+* "have"
 
-     The stream is terminated by a pkt-line flush ("0000").
+The stream is terminated by a pkt-line flush (`0000`).
 
-     A single "want" or "have" command MUST have one hex formatted
-     SHA-1 as its value.  Multiple SHA-1s MUST be sent by sending
-     multiple commands.
+A single "want" or "have" command MUST have one hex formatted
+SHA-1 as its value.  Multiple SHA-1s MUST be sent by sending
+multiple commands.
 
-     The HAVE list is created by popping the first 32 commits
-     from C_PENDING.  Less can be supplied if C_PENDING empties.
+The `have` list is created by popping the first 32 commits
+from `c_pending`.  Less can be supplied if `c_pending` empties.
 
-     If the client has sent 256 HAVE commits and has not yet
-     received one of those back from S_COMMON, or the client has
-     emptied C_PENDING it SHOULD include a "done" command to let
-     the server know it won't proceed:
+If the client has sent 256 "have" commits and has not yet
+received one of those back from `s_common`, or the client has
+emptied `c_pending` it SHOULD include a "done" command to let
+the server know it won't proceed:
 
    C: 0009done
 
-  (s) Parse the git-upload-pack request:
+S: Parse the git-upload-pack request:
 
-      Verify all objects in WANT are directly reachable from refs.
+Verify all objects in `want` are directly reachable from refs.
 
-      The server MAY walk backwards through history or through
-      the reflog to permit slightly stale requests.
+The server MAY walk backwards through history or through
+the reflog to permit slightly stale requests.
 
-      If no WANT objects are received, send an error:
+If no "want" objects are received, send an error:
+TODO: Define error if no "want" lines are requested.
 
-TODO: Define error if no want lines are requested.
+If any "want" object is not reachable, send an error:
+TODO: Define error if an invalid "want" is requested.
 
-      If any WANT object is not reachable, send an error:
+Create an empty list, `s_common`.
 
-TODO: Define error if an invalid want is requested.
+If "have" was sent:
 
-     Create an empty list, S_COMMON.
+Loop through the objects in the order supplied by the client.
 
-     If 'have' was sent:
+For each object, if the server has the object reachable from
+a ref, add it to `s_common`.  If a commit is added to `s_common`,
+do not add any ancestors, even if they also appear in `have`.
 
-     Loop through the objects in the order supplied by the client.
-     For each object, if the server has the object reachable from
-     a ref, add it to S_COMMON.  If a commit is added to S_COMMON,
-     do not add any ancestors, even if they also appear in HAVE.
+S: Send the git-upload-pack response:
 
-  (s) Send the git-upload-pack response:
-
-     If the server has found a closed set of objects to pack or the
-     request ends with "done", it replies with the pack.
-
+If the server has found a closed set of objects to pack or the
+request ends with "done", it replies with the pack.
 TODO: Document the pack based response
+
    S: PACK...
 
-     The returned stream is the side-band-64k protocol supported
-     by the git-upload-pack service, and the pack is embedded into
-     stream 1.  Progress messages from the server side MAY appear
-     in stream 2.
+The returned stream is the side-band-64k protocol supported
+by the git-upload-pack service, and the pack is embedded into
+stream 1.  Progress messages from the server side MAY appear
+in stream 2.
 
-     Here a "closed set of objects" is defined to have at least
-     one path from every WANT to at least one COMMON object.
+Here a "closed set of objects" is defined to have at least
+one path from every "want" to at least one "common" object.
 
-     If the server needs more information, it replies with a
-     status continue response:
-
+If the server needs more information, it replies with a
+status continue response:
 TODO: Document the non-pack response
 
-  (c) Parse the upload-pack response:
+C: Parse the upload-pack response:
+   TODO: Document parsing response
 
-TODO: Document parsing response
-
-      Do another compute step.
+'Do another compute step.'
 
 
 Smart Service git-receive-pack
 ------------------------------
-This service reads from the repository pointed to by $GIT_URL.
+This service reads from the repository pointed to by `$GIT_URL`.
 
 Clients MUST first perform ref discovery with
-'$GIT_URL/info/refs?service=git-receive-pack'.
+`$GIT_URL/info/refs?service=git-receive-pack`.
 
    C: POST $GIT_URL/git-receive-pack HTTP/1.0
    C: Content-Type: application/x-git-receive-pack-request
