@@ -518,7 +518,7 @@ test_expect_success 'reset and bind merge' '
 
 '
 
-test_expect_failure 'merge-recursive w/ empty work tree - ours has rename' '
+test_expect_success 'merge-recursive w/ empty work tree - ours has rename' '
 	(
 		GIT_WORK_TREE="$PWD/ours-has-rename-work" &&
 		export GIT_WORK_TREE &&
