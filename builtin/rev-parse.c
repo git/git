@@ -523,15 +523,17 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				continue;
 			}
 			if (!strcmp(arg, "--default")) {
-				def = argv[i+1];
-				i++;
+				def = argv[++i];
+				if (!def)
+					die("--default requires an argument");
 				continue;
 			}
 			if (!strcmp(arg, "--prefix")) {
-				prefix = argv[i+1];
+				prefix = argv[++i];
+				if (!prefix)
+					die("--prefix requires an argument");
 				startup_info->prefix = prefix;
 				output_prefix = 1;
-				i++;
 				continue;
 			}
 			if (!strcmp(arg, "--revs-only")) {
@@ -703,9 +705,12 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				continue;
 			}
 			if (!strcmp(arg, "--resolve-git-dir")) {
-				const char *gitdir = resolve_gitdir(argv[i+1]);
+				const char *gitdir = argv[++i];
 				if (!gitdir)
-					die("not a gitdir '%s'", argv[i+1]);
+					die("--resolve-git-dir requires an argument");
+				gitdir = resolve_gitdir(gitdir);
+				if (!gitdir)
+					die("not a gitdir '%s'", argv[i]);
 				puts(gitdir);
 				continue;
 			}
