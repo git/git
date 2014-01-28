@@ -15,11 +15,10 @@
 static struct combine_diff_path *intersect_paths(struct combine_diff_path *curr, int n, int num_parent)
 {
 	struct diff_queue_struct *q = &diff_queued_diff;
-	struct combine_diff_path *p, *pprev, *ptmp;
+	struct combine_diff_path *p, **tail = &curr;
 	int i, cmp;
 
 	if (!n) {
-		struct combine_diff_path *list = NULL, **tail = &list;
 		for (i = 0; i < q->nr; i++) {
 			int len;
 			const char *path;
@@ -43,35 +42,27 @@ static struct combine_diff_path *intersect_paths(struct combine_diff_path *curr,
 			*tail = p;
 			tail = &p->next;
 		}
-		return list;
+		return curr;
 	}
 
 	/*
-	 * NOTE paths are coming sorted here (= in tree order)
+	 * paths in curr (linked list) and q->queue[] (array) are
+	 * both sorted in the tree order.
 	 */
-
-	pprev = NULL;
-	p = curr;
 	i = 0;
+	while ((p = *tail) != NULL) {
+		cmp = ((i >= q->nr)
+		       ? -1 : strcmp(p->path, q->queue[i]->two->path));
 
-	while (1) {
-		if (!p)
-			break;
-
-		cmp = (i >= q->nr) ? -1
-				   : strcmp(p->path, q->queue[i]->two->path);
 		if (cmp < 0) {
-			if (pprev)
-				pprev->next = p->next;
-			ptmp = p;
-			p = p->next;
-			free(ptmp);
-			if (curr == ptmp)
-				curr = p;
+			/* p->path not in q->queue[]; drop it */
+			*tail = p->next;
+			free(p);
 			continue;
 		}
 
 		if (cmp > 0) {
+			/* q->queue[i] not in p->path; skip it */
 			i++;
 			continue;
 		}
@@ -80,8 +71,7 @@ static struct combine_diff_path *intersect_paths(struct combine_diff_path *curr,
 		p->parent[n].mode = q->queue[i]->one->mode;
 		p->parent[n].status = q->queue[i]->status;
 
-		pprev = p;
-		p = p->next;
+		tail = &p->next;
 		i++;
 	}
 	return curr;
