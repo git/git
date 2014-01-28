@@ -37,8 +37,12 @@ static int handle_path_include(const char *path, struct config_include_data *inc
 {
 	int ret = 0;
 	struct strbuf buf = STRBUF_INIT;
-	char *expanded = expand_user_path(path);
+	char *expanded;
 
+	if (!path)
+		return config_error_nonbool("include.path");
+
+	expanded = expand_user_path(path);
 	if (!expanded)
 		return error("Could not expand include path '%s'", path);
 	path = expanded;
