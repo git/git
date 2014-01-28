@@ -1,6 +1,10 @@
 Core Git translation language teams
 (please keep the list sorted alphabetically on language field)
 
+Language:	bg (Bulgarian)
+Repository:	https://github.com/git-l10n/git-po
+Leader:		Alexander Shopov <ash@kambanaria.org>
+
 Language:	de (German)
 Repository:	https://github.com/ralfth/git-po-de
 Leader:		Ralf Thielow <ralf.thielow@googlemail.com>
