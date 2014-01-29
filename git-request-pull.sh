@@ -132,6 +132,14 @@ for you to fetch changes up to %H:
 
 ----------------------------------------------------------------' $headrev &&
 
+if test $(git cat-file -t "$head") = tag
+then
+	git cat-file tag "$head" |
+	sed -n -e '1,/^$/d' -e '/^-----BEGIN PGP /q' -e p
+	echo
+	echo "----------------------------------------------------------------"
+fi &&
+
 if test -n "$branch_name"
 then
 	echo "(from the branch description for $branch_name local branch)"
