@@ -987,7 +987,6 @@ static int fetch_multiple(struct string_list *list)
 
 static int fetch_one(struct remote *remote, int argc, const char **argv)
 {
-	int i;
 	static const char **refs = NULL;
 	struct refspec *refspec;
 	int ref_nr = 0;
@@ -1011,6 +1010,7 @@ static int fetch_one(struct remote *remote, int argc, const char **argv)
 
 	if (argc > 0) {
 		int j = 0;
+		int i;
 		refs = xcalloc(argc + 1, sizeof(const char *));
 		for (i = 0; i < argc; i++) {
 			if (!strcmp(argv[i], "tag")) {
