@@ -685,7 +685,6 @@ static void mark_expected_rev(char *bisect_rev_hex)
 
 static int bisect_checkout(char *bisect_rev_hex, int no_checkout)
 {
-	int res;
 
 	mark_expected_rev(bisect_rev_hex);
 
@@ -696,6 +695,7 @@ static int bisect_checkout(char *bisect_rev_hex, int no_checkout)
 			die("update-ref --no-deref HEAD failed on %s",
 			    bisect_rev_hex);
 	} else {
+		int res;
 		res = run_command_v_opt(argv_checkout, RUN_GIT_CMD);
 		if (res)
 			exit(res);
