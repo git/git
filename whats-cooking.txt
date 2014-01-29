@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jan 2014, #05; Mon, 27)
+Subject: What's cooking in git.git (Jan 2014, #06; Wed, 29)
 X-master-at: bd3e186d811a13d8687584856f345a767e3e4d67
-X-next-at: 0b1dcb534ef2691254edb3a0d66a3bdbbb849f98
+X-next-at: 614c158afed5077691c76d341b6888596b24b9fd
 
-What's cooking in git.git (Jan 2014, #05; Mon, 27)
+What's cooking in git.git (Jan 2014, #06; Wed, 29)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -23,221 +23,70 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* ab/subtree-doc (2014-01-13) 1 commit
-  (merged to 'next' on 2014-01-22 at e352c75)
- + subtree: fix argument validation in add/pull/push
-
-
-* ef/mingw-write (2014-01-17) 2 commits
-  (merged to 'next' on 2014-01-22 at b9ddab2)
- + mingw: remove mingw_write
- + prefer xwrite instead of write
-
-
-* jc/maint-pull-docfix (2014-01-14) 2 commits
-  (merged to 'next' on 2014-01-22 at 2e62ef4)
- + Documentation: "git pull" does not have the "-m" option
- + Merge branch 'jc/maint-pull-docfix-for-409b8d82' into jc/maint-pull-docfix
- (this branch uses jc/maint-pull-docfix-for-409b8d82.)
-
-
-* jc/revision-range-unpeel (2014-01-15) 2 commits
-  (merged to 'next' on 2014-01-22 at ab2a159)
- + revision: propagate flag bits from tags to pointees
- + revision: mark contents of an uninteresting tree uninteresting
-
- "git log --left-right A...B" lost the "leftness" of commits
- reachable from A when A is a tag as a side effect of a recent
- bugfix.  This is a regression in 1.8.4.x series.
-
-
-* jk/allow-fetch-onelevel-refname (2014-01-15) 1 commit
-  (merged to 'next' on 2014-01-22 at 15089b1)
- + fetch-pack: do not filter out one-level refs
-
- "git clone" would fail to clone from a repository that has a ref
- directly under "refs/", e.g. "refs/stash", because different
- validation paths do different things on such a refname.  Loosen the
- client side's validation to allow such a ref.
-
-
-* jk/complete-merge-base (2014-01-13) 2 commits
-  (merged to 'next' on 2014-01-22 at 91c428d)
- + completion: handle --[no-]fork-point options to git-rebase
- + completion: complete merge-base options
-
-
-* jk/diff-filespec-cleanup (2014-01-17) 5 commits
-  (merged to 'next' on 2014-01-22 at fb26e43)
- + diff_filespec: use only 2 bits for is_binary flag
- + diff_filespec: reorder is_binary field
- + diff_filespec: drop xfrm_flags field
- + diff_filespec: drop funcname_pattern_ident field
- + diff_filespec: reorder dirty_submodule macro definitions
-
-
-* jk/interpret-branch-name-fix (2014-01-15) 5 commits
-  (merged to 'next' on 2014-01-22 at f113c68)
- + interpret_branch_name: find all possible @-marks
- + interpret_branch_name: avoid @{upstream} past colon
- + interpret_branch_name: always respect "namelen" parameter
- + interpret_branch_name: rename "cp" variable to "at"
- + interpret_branch_name: factor out upstream handling
- (this branch is used by jk/branch-at-publish-rebased.)
-
- Fix a handful of bugs around interpreting $branch@{upstream}
- notation and its lookalike, when $branch part has interesting
- characters, e.g. "@", and ":".
-
-
-* jk/mark-edges-uninteresting (2014-01-21) 2 commits
-  (merged to 'next' on 2014-01-22 at d8807c4)
- + list-objects: only look at cmdline trees with edge_hint
- + t/perf: time rev-list with UNINTERESTING commits
-
- Fix to regression in v1.8.4.x and later.
-
-
-* jk/test-fixes (2014-01-23) 2 commits
-  (merged to 'next' on 2014-01-23 at 6515089)
- + t7700: do not use "touch" unnecessarily
- + t7501: fix "empty commit" test with NO_PERL
-
-
-* jn/ignore-doc (2014-01-16) 1 commit
-  (merged to 'next' on 2014-01-22 at a07ac63)
- + gitignore doc: add global gitignore to synopsis
-
- Explicitly list $HOME/.config/git/ignore as one of the places you
- can use to keep ignore patterns that depend on your personal choice
- of tools, e.g. *~ for Emacs users.
-
-
-* mh/attr-macro-doc (2014-01-14) 1 commit
-  (merged to 'next' on 2014-01-22 at e3ed767)
- + gitattributes: document more clearly where macros are allowed
-
-
-* mh/retire-ref-fetch-rules (2014-01-14) 1 commit
-  (merged to 'next' on 2014-01-22 at 753b1f6)
- + refname_match(): always use the rules in ref_rev_parse_rules
-
- Code simplification.
-
-
-* mh/safe-create-leading-directories (2014-01-21) 17 commits
-  (merged to 'next' on 2014-01-22 at ad38e73)
- + rename_tmp_log(): on SCLD_VANISHED, retry
- + rename_tmp_log(): limit the number of remote_empty_directories() attempts
- + rename_tmp_log(): handle a possible mkdir/rmdir race
- + rename_ref(): extract function rename_tmp_log()
- + remove_dir_recurse(): handle disappearing files and directories
- + remove_dir_recurse(): tighten condition for removing unreadable dir
- + lock_ref_sha1_basic(): if locking fails with ENOENT, retry
- + lock_ref_sha1_basic(): on SCLD_VANISHED, retry
- + safe_create_leading_directories(): add new error value SCLD_VANISHED
- + cmd_init_db(): when creating directories, handle errors conservatively
- + safe_create_leading_directories(): introduce enum for return values
- + safe_create_leading_directories(): always restore slash at end of loop
- + safe_create_leading_directories(): split on first of multiple slashes
- + safe_create_leading_directories(): rename local variable
- + safe_create_leading_directories(): add explicit "slash" pointer
- + safe_create_leading_directories(): reduce scope of local variable
- + safe_create_leading_directories(): fix format of "if" chaining
- (this branch is used by ss/safe-create-leading-dir-with-slash.)
-
- Code clean-up and protection against concurrent write access to the
- ref namespace.
-
-
-* nd/negative-pathspec (2014-01-23) 1 commit
-  (merged to 'next' on 2014-01-23 at fd64119)
- + tree-walk.c: ignore trailing slash on submodule in tree_entry_interesting()
-
-
-* pw/git-p4 (2014-01-22) 11 commits
-  (merged to 'next' on 2014-01-22 at 60489cd)
- + git p4 doc: use two-line style for options with multiple spellings
- + git p4 test: examine behavior with locked (+l) files
- + git p4: fix an error message when "p4 where" fails
- + git p4: handle files with wildcards when doing RCS scrubbing
- + git p4 test: do not pollute /tmp
- + git p4 test: run as user "author"
- + git p4 test: is_cli_file_writeable succeeds
- + git p4 test: explicitly check p4 wildcard delete
- + git p4: work around p4 bug that causes empty symlinks
- + git p4 test: ensure p4 symlink parsing works
- + git p4 test: wildcards are supported
-
- Various "git p4" updates.
-
-
-* rk/send-email-ssl-cert (2014-01-16) 1 commit
-  (merged to 'next' on 2014-01-22 at 2fb13f2)
- + send-email: /etc/ssl/certs/ directory may not be usable as ca_path
-
- The "if /etc/ssl/certs/ directory exists, explicitly tell the
- library to use it as SSL_ca_path" blind-defaulting in "git
- send-email" broke platforms where /etc/ssl/certs/ directory exists,
- but it cannot used as SSL_ca_path (e.g. Fedora rawhide).  Fix it by
- not specifying any SSL_ca_path/SSL_ca_file but still asking for
- peer verification in such a case.
-
-
-* sb/repack-in-c (2014-01-23) 3 commits
-  (merged to 'next' on 2014-01-23 at 3ff349f)
- + repack: propagate pack-objects options as strings
- + repack: make parsed string options const-correct
- + repack: fix typo in max-pack-size option
-
- "git repack --max-pack-size=8g" stopped being parsed correctly when
- the command was reimplemented in C.
-
-
-* ss/safe-create-leading-dir-with-slash (2014-01-22) 1 commit
-  (merged to 'next' on 2014-01-22 at ca62c45)
- + safe_create_leading_directories(): on Windows, \ can separate path components
- (this branch uses mh/safe-create-leading-directories.)
-
- "git clone $origin foo\bar\baz" on Windows failed to create the
- leading directories (i.e. a moral-equivalent of "mkdir -p").
-
-
-* tr/gitk-doc-range-trace (2014-01-21) 1 commit
-  (merged to 'next' on 2014-01-22 at 1d93d1d)
- + Documentation/gitk: document -L option
-
-
-* tr/nth-previous-is-a-commit (2014-01-21) 1 commit
-  (merged to 'next' on 2014-01-22 at 0425887)
- + Documentation: @{-N} can refer to a commit
-
---------------------------------------------------
 [New Topics]
 
-* lt/request-pull (2014-01-23) 3 commits
- - pull-request: test updates
- - Make request-pull able to take a refspec of form local:remote
- - Make 'git request-pull' more strict about matching
+* bc/gpg-sign-everywhere (2014-01-27) 9 commits
+ - pull: add the --gpg-sign option.
+ - rebase: add the --gpg-sign option
+ - rebase: parse options in stuck-long mode
+ - rebase: don't try to match -M option
+ - rebase: remove useless arguments check
+ - am: add the --gpg-sign option
+ - am: parse options in stuck-long mode
+ - git-sh-setup.sh: add variable to use the stuck-long mode
+ - cherry-pick, revert: add the --gpg-sign option
 
- Waiting for the updates to settle.
+ Teach "--gpg-sign" option to many commands that create commits.
+
+ Changes to some scripted Porcelains use unsafe variable
+ substitutions and need to be tightened.
+
+ Waiting for a reroll.
 
 
-* bk/refresh-missing-ok-in-merge-recursive (2014-01-27) 4 commits
- - merge-recursive.c: Tolerate missing files while refreshing index
- - read-cache.c: Extend make_cache_entry refresh flag with options
- - read-cache.c: Refactor --ignore-missing implementation
- - t3030-merge-recursive: Test known breakage with empty work tree
+* ds/rev-parse-required-args (2014-01-28) 1 commit
+ - rev-parse: check i before using argv[i] against argc
+
+ "git rev-parse --default" without the required option argument did
+ not diagnose it as an error.
 
  Will merge to 'next'.
 
 
-* nd/diff-quiet-stat-dirty (2014-01-27) 3 commits
- - diff: turn off skip_stat_unmatch on "diff --cached"
- - diff: do not quit early on stat-dirty files
- - Move diffcore_skip_stat_unmatch core logic out for reuse later
+* jk/config-path-include-fix (2014-01-28) 2 commits
+ - handle_path_include: don't look at NULL value
+ - expand_user_path: do not look at NULL path
+
+ include.path variable (or any variable that expects a path that can
+ use ~username expansion) in the configuration file is not a
+ boolean, but the code failed to check it.
+
+ Will merge to 'next'.
+
+
+* jk/repack-honor-pack-keep (2014-01-28) 1 commit
+ - repack: add `repack.honorpackkeep` config var
+ (this branch uses jk/pack-bitmap.)
+
+ Optionally allow "git repack" to include objects that exist in kept
+ packs in newly created packfiles.
+
+ Waiting for response to review comments.
+
+
+* nd/submodule-pathspec-ending-with-slash (2014-01-27) 8 commits
+ - clean: use cache_name_is_other()
+ - clean: replace match_pathspec() with dir_path_match()
+ - Pass directory indicator to match_pathspec_item()
+ - match_pathspec: match pathspec "foo/" against directory "foo"
+ - dir.c: prepare match_pathspec_item for taking more flags
+ - Rename match_pathspec_depth() to match_pathspec()
+ - Convert some match_pathspec_depth() to dir_path_match()
+ - Convert some match_pathspec_depth() to ce_path_match()
+
+ Allow "git cmd path/", when the 'path' is where a submodule is
+ bound to the top-level working tree, to match 'path', despite the
+ extra and unnecessary trailing slash.
 
  Will merge to 'next'.
 
@@ -256,9 +105,9 @@ of the repositories listed at
 
  It appears that we are coming to the consensus that trying to be
  too intimately knowledgeable about quirks of various pager
- implementations on different platforms is a losing proposition, so
- perhaps I should replace this with the alternative and simpler
- approach I posted, unless there are strong objections.
+ implementations on different platforms is a losing proposition.
+
+ Waiting for a reroll.
 
 
 * po/everyday-doc (2014-01-27) 1 commit
@@ -269,6 +118,8 @@ of the repositories listed at
  also its contents are a bit stale.  It may be a good first step in
  the right direction, but needs more work to at least get the
  mark-up right before public consumption.
+
+ Will hold.
 
 
 * jk/branch-at-publish-rebased (2014-01-17) 5 commits
@@ -296,7 +147,7 @@ of the repositories listed at
  hook, prepare-commit-msg, but it would equally apply to other hooks
  like post-merge, I think.
 
- Waiting to give a chance to reroll.
+ Waiting for a reroll.
 
 
 * jl/submodule-recursive-checkout (2013-12-26) 5 commits
@@ -366,6 +217,8 @@ of the repositories listed at
  with two changes to "git add" that have been scheduled for Git 2.0
  quite badly, and I think I got the resolution right this time.
 
+ Waiting for a reroll.
+
 
 * kb/fast-hashmap (2014-01-03) 19 commits
  - hashmap.h: make sure map entries are tightly packed
@@ -396,6 +249,8 @@ of the repositories listed at
 
  The tip one does not seem to have reached concensus (yet).
 
+ Will hold.
+
 
 * jc/create-directories-microopt (2013-11-11) 1 commit
  - checkout: most of the time we have good leading directories
@@ -414,7 +269,10 @@ of the repositories listed at
  more generic solution that can be tailored for specific needs, as
  many people stated in the thread.
 
- It appears that the discussion stalled.
+ cc/interpret-trailers could be such a generic solution (although
+ there don't seem to be much concensus yet).
+
+ Will discard.
 
 
 * np/pack-v4 (2013-09-18) 90 commits
@@ -444,6 +302,8 @@ of the repositories listed at
  an extra blank line after every root, which I tend to think is a
  better approach to the problem.
 
+ Will discard.
+
 
 * tg/perf-lib-test-perf-cleanup (2013-09-19) 2 commits
  - perf-lib: add test_perf_cleanup target
@@ -452,7 +312,7 @@ of the repositories listed at
  Add test_perf_cleanup shell function to the perf suite, that allows
  the script writers to define a test with a clean-up action.
 
- Holding until needed.
+ Will hold.
 
 
 * yt/shortened-rename (2013-10-18) 2 commits
@@ -469,6 +329,8 @@ of the repositories listed at
 * rv/send-email-cache-generated-mid (2013-08-21) 2 commits
  - git-send-email: Cache generated message-ids, use them when prompting
  - git-send-email: add optional 'choices' parameter to the ask sub
+
+ Will discard.
 
 
 * rj/read-default-config-in-show-ref-pack-refs (2013-06-17) 3 commits
@@ -518,6 +380,36 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* lt/request-pull (2014-01-23) 3 commits
+ - pull-request: test updates
+ - Make request-pull able to take a refspec of form local:remote
+ - Make 'git request-pull' more strict about matching
+
+ Waiting for the updates to settle.
+
+
+* bk/refresh-missing-ok-in-merge-recursive (2014-01-27) 4 commits
+  (merged to 'next' on 2014-01-29 at 614c158)
+ + merge-recursive.c: Tolerate missing files while refreshing index
+ + read-cache.c: Extend make_cache_entry refresh flag with options
+ + read-cache.c: Refactor --ignore-missing implementation
+ + t3030-merge-recursive: Test known breakage with empty work tree
+
+ Allows "merge-recursive" to work in an empty (temporary) working
+ tree again when there are renames involved, correcting an old
+ regression in 1.7.7 era.
+
+ Will cook in 'next'.
+
+
+* nd/diff-quiet-stat-dirty (2014-01-29) 3 commits
+ - diff: turn skip_stat_unmatch on selectively
+ - diff: do not quit early on stat-dirty files
+ - Move diffcore_skip_stat_unmatch core logic out for reuse later
+
+ Will merge to 'next'.
+
+
 * cc/interpret-trailers (2014-01-27) 17 commits
  - Documentation: add documentation for 'git interpret-trailers'
  - trailer: add tests for commands using env variables
@@ -537,19 +429,25 @@ of the repositories listed at
  - trailer: process trailers from file and arguments
  - Add data structures and basic functions for commit trailers
 
+ Waiting for a reroll.
+
 
 * dk/blame-janitorial (2014-01-22) 2 commits
- - Eliminate same_suspect function in builtin/blame.c
- - builtin/blame.c: struct blame_entry does not need a prev link
+  (merged to 'next' on 2014-01-29 at 0b7ea97)
+ + Eliminate same_suspect function in builtin/blame.c
+ + builtin/blame.c: struct blame_entry does not need a prev link
 
- Will merge to 'next'.
+ Code clean-up.
+
+ Will hold.
 
 
-* ks/diff-c-with-diff-order (2014-01-21) 4 commits
+* ks/diff-c-with-diff-order (2014-01-29) 5 commits
+ - combine_diff: simplify intersect_paths() further
  - combine-diff: combine_diff_path.len is not needed anymore
- - combine-diff: Optimize combine_diff_path sets intersection
- - diff test: Add tests for combine-diff with orderfile
- - diffcore-order: Export generic ordering interface
+ - combine-diff: optimize combine_diff_path sets intersection
+ - diff test: add tests for combine-diff with orderfile
+ - diffcore-order: export generic ordering interface
 
  Teach combine-diff to honour the path-output-order imposed by
  diffcore-order.
@@ -645,6 +543,7 @@ of the repositories listed at
  + pack-objects: factor out name_hash
  + pack-objects: refactor the packing list
  + revindex: export new APIs
+ (this branch is used by jk/repack-honor-pack-keep.)
 
  Borrows the bitmap index into packfiles from JGit to speed up
  enumeration of objects involved in a commit range without having to
@@ -697,7 +596,7 @@ of the repositories listed at
  - merge-recursive: internal flag to avoid touching the worktree
  - merge-recursive: remove dead conditional in update_stages()
 
- Will hold until using script appears.
+ Will hold.
 
 
 * jn/add-2.0-u-A-sans-pathspec (2013-04-26) 1 commit
@@ -740,7 +639,7 @@ of the repositories listed at
 --------------------------------------------------
 [Discarded]
 
-* jk/branch-at-publish (2014-01-13) 6 commits
+* jk/branch-at-publish (2014-01-23) 6 commits
  . t1507 (rev-parse-upstream): fix typo in test title
  . implement @{publish} shorthand
  . branch_get: provide per-branch pushremote pointers
@@ -764,9 +663,8 @@ of the repositories listed at
  Now in 'master' from the upstream gitk repository.
 
 
-* jc/parse-options-humint (2014-01-22) 2 commits
- . repack: accept larger window-memory and max-pack-size
+* jc/parse-options-humint (2014-01-22) 1 commit
  . parse-options: refactor human-friendly-integer parser out of pack-objects
 
- "git repack --max-pack-size=8g" stopped being parsed correctly when
- the command was reimplemented in C.
+ Teach parse-options machinery to optionally parse numbers with a
+ unit suffix, e.g. 8g, 4m, 128k.
