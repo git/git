@@ -187,13 +187,12 @@ static int need_to_gc(void)
 static const char *lock_repo_for_gc(int force, pid_t* ret_pid)
 {
 	static struct lock_file lock;
-	static char locking_host[128];
 	char my_host[128];
 	struct strbuf sb = STRBUF_INIT;
 	struct stat st;
 	uintmax_t pid;
 	FILE *fp;
-	int fd, should_exit;
+	int fd;
 
 	if (pidfile)
 		/* already locked */
@@ -205,6 +204,8 @@ static const char *lock_repo_for_gc(int force, pid_t* ret_pid)
 	fd = hold_lock_file_for_update(&lock, git_path("gc.pid"),
 				       LOCK_DIE_ON_ERROR);
 	if (!force) {
+		static char locking_host[128];
+		int should_exit;
 		fp = fopen(git_path("gc.pid"), "r");
 		memset(locking_host, 0, sizeof(locking_host));
 		should_exit =
