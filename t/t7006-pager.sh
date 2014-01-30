@@ -40,7 +40,7 @@ test_expect_failure TTY 'pager runs from subdir' '
 test_expect_success TTY 'LESS and LV envvars are set for pagination' '
 	(
 		sane_unset LESS LV &&
-		PAGER="env >pager-env.out" &&
+		PAGER="env >pager-env.out; wc" &&
 		export PAGER &&
 
 		test_terminal git log
