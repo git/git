@@ -39,26 +39,26 @@ The policy on Integration is informally mentioned in "A Note
 from the maintainer" message, which is periodically posted to
 this mailing list after each feature release is made.
 
- - Feature releases are numbered as vX.Y.Z and are meant to
+ - Feature releases are numbered as vX.Y.0 and are meant to
    contain bugfixes and enhancements in any area, including
    functionality, performance and usability, without regression.
 
  - One release cycle for a feature release is expected to last for
    eight to ten weeks.
 
- - Maintenance releases are numbered as vX.Y.Z.W and are meant
-   to contain only bugfixes for the corresponding vX.Y.Z feature
-   release and earlier maintenance releases vX.Y.Z.V (V < W).
+ - Maintenance releases are numbered as vX.Y.Z and are meant
+   to contain only bugfixes for the corresponding vX.Y.0 feature
+   release and earlier maintenance releases vX.Y.W (W < Z).
 
  - 'master' branch is used to prepare for the next feature
    release. In other words, at some point, the tip of 'master'
-   branch is tagged with vX.Y.Z.
+   branch is tagged with vX.Y.0.
 
  - 'maint' branch is used to prepare for the next maintenance
-   release.  After the feature release vX.Y.Z is made, the tip
+   release.  After the feature release vX.Y.0 is made, the tip
    of 'maint' branch is set to that release, and bugfixes will
    accumulate on the branch, and at some point, the tip of the
-   branch is tagged with vX.Y.Z.1, vX.Y.Z.2, and so on.
+   branch is tagged with vX.Y.1, vX.Y.2, and so on.
 
  - 'next' branch is used to publish changes (both enhancements
    and fixes) that (1) have worthwhile goal, (2) are in a fairly
@@ -85,6 +85,10 @@ this mailing list after each feature release is made.
  - The 'next' branch is where new action takes place, and the
    users are encouraged to test it so that regressions and bugs
    are found before new topics are merged to 'master'.
+
+Note that before v1.9.0 release, the version numbers used to be
+structured slightly differently.  vX.Y.Z were feature releases while
+vX.Y.Z.W were maintenance releases for vX.Y.Z.
 
 
 A Typical Git Day
