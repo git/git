@@ -1,27 +1,106 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# Bulgarian translation of git po-file.
+# Copyright (C) 2014 Alexander Shopov <ash@kambanaria.org>.
+# This file is distributed under the same license as the git package.
+# Alexander Shopov <ash@kambanaria.org>, 2014.
 #
-#, fuzzy
+# ========================
+# DICTIONARY TO MERGE IN GIT GUI
+# ------------------------
+# range интервал
+# unreachable object недостижим обект
+# dangling objects обект извън клон
+# fast-forward тривиално сливане
+# stale remote старо хранилище
+# rebase пребазирам
+# force (push) принудително изтласквам
+# stash/index индекс
+# ========================
+# RECHECK
+# ------------------------
+# HEAD as a reference vs head of a branch
+#
+# ========================
+# GENERATE STATS
+# ------------------------
+# grep ^#: bg.po | cut -c4- |tr ' ' '\n'| sed -e 's/:[0-9][0-9]*//'  -e 's%.*/%%' -e 's/[.][^.]*$//' > OUT
+# sort -u OUT > UNIQUE
+# for i in `cat UNIQUE`; do echo   `grep "^$i$" OUT | wc -l` $i ; done | sort -nr > STATS
+# ========================
+# DONE strings
+# ------------------------
+# 222
+# ========================
+# REMAINING strings
+# ------------------------
+# 1988
+# ========================
+# DONE alphabetical ordering
+# ------------------------
+#
+# advice, fsck, gc, help, parse-options, reflog, remote, rm, run-command
+#
+# ========================
+# REMAINING alphabetical ordering
+# ------------------------
+#
+# add, apply, archive, attr, bisect--helper, blame, branch, bundle, cat-file, check-attr, check-ignore, check-mailmap,
+# checkout, checkout-index, clean, clone, column, commit, common-cmds, config, connected, count-objects, date, describe,
+# diff, diffcore-order, fast-export, fetch, fmt-merge-msg, for-each-ref, git, git-am, git-bisect, git-pull, git-rebase,
+# git-stash, git-submodule, gpg-interface, grep, hash-object, index-pack, init-db, log, ls-files, ls-tree, merge,
+# merge-base, merge-file, merge-recursive, mktree, mv, name-rev, notes, notes-utils, object, obstack, pack-objects,
+# pack-refs, pathspec, precompose_utf8, prune, prune-packed, push, read-tree, repack, replace, rerere, reset, revert,
+# rev-parse, sequencer, sha1_name, shortlog, show-branch, show-ref, submodule, symbolic-ref, tag, update-index,
+# update-ref, update-server-info, urlmatch, verify-pack, verify-tag, wrapper, write-tree, wt-status
+#
+#
+# ========================
+# MOST IMPORTANT strings ordering
+# ------------------------
+# 144 [remote]    68 fetch       28 blame         16 [parse-options]
+# 137 commit      64 grep        27 git-rebase    12 [gc]
+# 115 branch      46 push        24 revert        12 [fsck]
+# 102 wt-status   38 add         21 common-cmds   3 reflog
+#  78 checkout    34 config      21 [rm]
+#  77 log         33 reset       21 mv
+#  69 clone       29 git-stash   13 diff
+#
+# ========================
+# WHOLE STATISTICS strings ordering
+# ------------------------
+# 144 remote           54 git-submodule  27 ls-files        12 pathspec         8 replace         3 prune-packed
+# 137 commit           48 push           27 git-rebase      12 name-rev         8 git-pull        3 pack-refs
+# 115 branch           41 help           24 revert          12 gc               8 fmt-merge-msg   3 count-objects
+# 111 apply            40 pack-objects   24 mv              12 fsck             7 symbolic-ref    3 connected
+# 102 wt-status        39 init-db        21 rm              12 checkout-index   6 gpg-interface   3 bisect--helper
+# 100 notes            38 add            21 common-cmds     11 date             6 check-attr      2 verify-tag
+#  97 merge            35 archive        19 show-branch     11 column           5 write-tree      2 update-server-info
+#  78 checkout         34 config         19 read-tree       10 urlmatch         5 sha1_name       2 run-command
+#  77 log              33 reset          19 bundle          10 shortlog         5 rev-parse       2 rerere
+#  69 clone            32 clean          17 repack          10 merge-file       5 prune           2 obstack
+#  68 index-pack       30 git-am         16 parse-options   10 merge-base       4 wrapper         2 advice
+#  68 fetch            30 describe       14 submodule       10 ls-tree          4 notes-utils     1 precompose_utf8
+#  64 grep             29 git-stash      14 show-ref        10 hash-object      4 mktree          1 object
+#  58 tag              29 git-bisect     14 fast-export     10 for-each-ref     4 check-mailmap   1 git
+#  56 sequencer        28 update-index   13 diff            10 cat-file         3 verify-pack     1 diffcore-order
+#  55 merge-recursive  28 blame          13 check-ignore     9 update-ref       3 reflog          1 attr
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: git master\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
 "POT-Creation-Date: 2014-01-18 07:42+0800\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
-"Language: \n"
+"PO-Revision-Date: 2014-01-28 19:05+0200\n"
+"Last-Translator: Alexander Shopov <ash@kambanaria.org>\n"
+"Language-Team: Bulgarian <dict@fsa-bg.org>\n"
+"Language: bg\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: advice.c:57
 #, c-format
 msgid "hint: %.*s\n"
-msgstr ""
+msgstr "Подсказка: %.*s\n"
 
 #.
 #. * Message used both when 'git commit' fails and when
@@ -34,6 +113,10 @@ msgid ""
 "appropriate to mark resolution and make a commit,\n"
 "or use 'git commit -a'."
 msgstr ""
+"Редактирайте ги в работното дърво,\n"
+"и тогава ползвайте „git add/rm <file>“,\n"
+"за да отбележите коригирането им и ги\n"
+"подадете или просто ползвайте „git commit -a“."
 
 #: archive.c:10
 msgid "git archive [options] <tree-ish> [<path>...]"
@@ -55,7 +138,7 @@ msgstr ""
 #: archive.c:242 builtin/add.c:240 builtin/add.c:559 builtin/rm.c:328
 #, c-format
 msgid "pathspec '%s' did not match any files"
-msgstr ""
+msgstr "пътят „%s“ не съвпада с никой файл"
 
 #: archive.c:327
 msgid "fmt"
@@ -79,7 +162,7 @@ msgstr ""
 #: builtin/ls-files.c:486 builtin/ls-files.c:489 builtin/notes.c:408
 #: builtin/notes.c:565 builtin/read-tree.c:108 parse-options.h:154
 msgid "file"
-msgstr ""
+msgstr "файл"
 
 #: archive.c:331 builtin/archive.c:89
 msgid "write the archive to this file"
@@ -497,15 +580,15 @@ msgstr ""
 #: help.c:210
 #, c-format
 msgid "available git commands in '%s'"
-msgstr ""
+msgstr "налични команди на git от „%s“"
 
 #: help.c:217
 msgid "git commands available from elsewhere on your $PATH"
-msgstr ""
+msgstr "команди на git от други директории от пътя „$PATH“"
 
 #: help.c:233
 msgid "The most commonly used git commands are:"
-msgstr ""
+msgstr "Най-често употребяваните команди на git са:"
 
 #: help.c:290
 #, c-format
@@ -513,10 +596,12 @@ msgid ""
 "'%s' appears to be a git command, but we were not\n"
 "able to execute it. Maybe git-%s is broken?"
 msgstr ""
+"Изглежда, че „%s“ е команда на git, но тя не може да\n"
+"бъде изпълнена. Вероятно пакетът „git-%s“ е повреден."
 
 #: help.c:347
 msgid "Uh oh. Your system reports no Git commands at all."
-msgstr ""
+msgstr "Странно, изглежда, че на системата ви няма нито една команда на git."
 
 #: help.c:369
 #, c-format
@@ -524,16 +609,20 @@ msgid ""
 "WARNING: You called a Git command named '%s', which does not exist.\n"
 "Continuing under the assumption that you meant '%s'"
 msgstr ""
+"ПРЕДУПРЕЖДЕНИЕ: Пробвахте да изпълните команда на Git на име „%s“, а такава "
+"не\n"
+"съществува. Изпълнението автоматично продължава, като се счита, че имате "
+"предвид „%s“"
 
 #: help.c:374
 #, c-format
 msgid "in %0.1f seconds automatically..."
-msgstr ""
+msgstr "след %0.1f секунди…"
 
 #: help.c:381
 #, c-format
 msgid "git: '%s' is not a git command. See 'git --help'."
-msgstr ""
+msgstr "git: „%s“ не е команда на git. Вижте изхода от „git --help“."
 
 #: help.c:385 help.c:444
 msgid ""
@@ -543,12 +632,16 @@ msgid_plural ""
 "\n"
 "Did you mean one of these?"
 msgstr[0] ""
+"\n"
+"Команда с подобно име е:"
 msgstr[1] ""
+"\n"
+"Команди с подобно име са:"
 
 #: help.c:440
 #, c-format
 msgid "%s: %s - %s"
-msgstr ""
+msgstr "%s: %s — %s"
 
 #: merge.c:56
 msgid "failed to read the cache"
@@ -833,28 +926,28 @@ msgstr ""
 
 #: parse-options.c:537
 msgid "..."
-msgstr ""
+msgstr "…"
 
 #: parse-options.c:555
 #, c-format
 msgid "usage: %s"
-msgstr ""
+msgstr "употреба: %s"
 
 #. TRANSLATORS: the colon here should align with the
 #. one in "usage: %s" translation
 #: parse-options.c:559
 #, c-format
 msgid "   or: %s"
-msgstr ""
+msgstr "     или: %s"
 
 #: parse-options.c:562
 #, c-format
 msgid "    %s"
-msgstr ""
+msgstr "    %s"
 
 #: parse-options.c:596
 msgid "-NUM"
-msgstr ""
+msgstr "-ЧИСЛО"
 
 #: pathspec.c:133
 msgid "global 'glob' and 'noglob' pathspec settings are incompatible"
@@ -924,17 +1017,17 @@ msgstr ""
 #: remote.c:753
 #, c-format
 msgid "Cannot fetch both %s and %s to %s"
-msgstr ""
+msgstr "Невъзможно е да се доставят едновременно и „%s“, и „%s“ към „%s“"
 
 #: remote.c:757
 #, c-format
 msgid "%s usually tracks %s, not %s"
-msgstr ""
+msgstr "„%s“ обикновено следи „%s“, а не „%s“"
 
 #: remote.c:761
 #, c-format
 msgid "%s tracks both %s and %s"
-msgstr ""
+msgstr "„%s“ следи както „%s“, така и „%s“"
 
 #.
 #. * This last possibility doesn't occur because
@@ -943,32 +1036,32 @@ msgstr ""
 #.
 #: remote.c:769
 msgid "Internal error"
-msgstr ""
+msgstr "Вътрешна грешка"
 
 #: remote.c:1871
 #, c-format
 msgid "Your branch is based on '%s', but the upstream is gone.\n"
-msgstr ""
+msgstr "Този клон следи „%s“, но следеният клон е изтрит.\n"
 
 #: remote.c:1875
 msgid "  (use \"git branch --unset-upstream\" to fixup)\n"
-msgstr ""
+msgstr "  (за да коригирате това използвайте „git branch --unset-upstream“)\n"
 
 #: remote.c:1878
 #, c-format
 msgid "Your branch is up-to-date with '%s'.\n"
-msgstr ""
+msgstr "Клонът е актуализиран както „%s“.\n"
 
 #: remote.c:1882
 #, c-format
 msgid "Your branch is ahead of '%s' by %d commit.\n"
 msgid_plural "Your branch is ahead of '%s' by %d commits.\n"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "Клонът ви е с %2$d подаване пред „%1$s“.\n"
+msgstr[1] "Клонът ви е с %2$d подавания пред „%1$s“.\n"
 
 #: remote.c:1888
 msgid "  (use \"git push\" to publish your local commits)\n"
-msgstr ""
+msgstr "  (публикувайте локалните си промени чрез „git push“)\n"
 
 #: remote.c:1891
 #, c-format
@@ -976,11 +1069,13 @@ msgid "Your branch is behind '%s' by %d commit, and can be fast-forwarded.\n"
 msgid_plural ""
 "Your branch is behind '%s' by %d commits, and can be fast-forwarded.\n"
 msgstr[0] ""
+"Клонът ви е с %2$d подаване след „%1$s“ и може да бъде тривиално слят.\n"
 msgstr[1] ""
+"Клонът ви е с %2$d подавания след „%1$s“ и може да бъде тривиално слят.\n"
 
 #: remote.c:1899
 msgid "  (use \"git pull\" to update your local branch)\n"
-msgstr ""
+msgstr "  (обновете локалния си клон чрез „git pull“)\n"
 
 #: remote.c:1902
 #, c-format
@@ -991,20 +1086,24 @@ msgid_plural ""
 "Your branch and '%s' have diverged,\n"
 "and have %d and %d different commits each, respectively.\n"
 msgstr[0] ""
+"Текущият клон се е отделил от „%s“,\n"
+"двата имат съответно по %d и %d несъвпадащи подавания.\n"
 msgstr[1] ""
+"Текущият клон се е отделил от „%s“,\n"
+"двата имат съответно по %d и %d несъвпадащи подавания.\n"
 
 #: remote.c:1912
 msgid "  (use \"git pull\" to merge the remote branch into yours)\n"
-msgstr ""
+msgstr "  (слейте отдалечения клон в локалния чрез „git pull“)\n"
 
 #: run-command.c:80
 msgid "open /dev/null failed"
-msgstr ""
+msgstr "неуспешно отваряне на „/dev/null“"
 
 #: run-command.c:82
 #, c-format
 msgid "dup2(%d,%d) failed"
-msgstr ""
+msgstr "неуспешно изпълнение на dup2(%d,%d)"
 
 #: sequencer.c:206 builtin/merge.c:783 builtin/merge.c:896
 #: builtin/merge.c:1006 builtin/merge.c:1016
@@ -1892,13 +1991,13 @@ msgstr ""
 #: builtin/prune-packed.c:77 builtin/push.c:506 builtin/remote.c:1344
 #: builtin/rm.c:269
 msgid "dry run"
-msgstr ""
+msgstr "пробно изпълнeние"
 
 #: builtin/add.c:355 builtin/apply.c:4410 builtin/check-ignore.c:19
 #: builtin/commit.c:1249 builtin/count-objects.c:95 builtin/fsck.c:612
 #: builtin/log.c:1592 builtin/mv.c:69 builtin/read-tree.c:113
 msgid "be verbose"
-msgstr ""
+msgstr "повече подробности"
 
 #: builtin/add.c:357
 msgid "interactive picking"
@@ -1979,11 +2078,11 @@ msgstr ""
 #: builtin/add.c:492 builtin/check-ignore.c:172 builtin/clean.c:919
 #: builtin/commit.c:320 builtin/mv.c:90 builtin/reset.c:224 builtin/rm.c:299
 msgid "index file corrupt"
-msgstr ""
+msgstr "файлът с индекса е повреден"
 
 #: builtin/add.c:592 builtin/apply.c:4506 builtin/mv.c:270 builtin/rm.c:432
 msgid "Unable to write new index file"
-msgstr ""
+msgstr "Новият файл с индекса не може да бъде записан"
 
 #: builtin/apply.c:57
 msgid "git apply [options] [<patch>...]"
@@ -2373,8 +2472,9 @@ msgid "paths are separated with NUL character"
 msgstr ""
 
 #: builtin/apply.c:4392
+#, fuzzy
 msgid "ensure at least <n> lines of context match"
-msgstr ""
+msgstr "<брой>"
 
 #: builtin/apply.c:4393
 msgid "action"
@@ -2510,6 +2610,7 @@ msgstr ""
 msgid "Show blame entries as we find them, incrementally"
 msgstr ""
 
+# FIXME
 #: builtin/blame.c:2250
 msgid "Show blank SHA-1 for boundary commits (Default: off)"
 msgstr ""
@@ -3074,7 +3175,7 @@ msgstr ""
 
 #: builtin/check-ignore.c:18 builtin/checkout.c:1090 builtin/gc.c:260
 msgid "suppress progress reporting"
-msgstr ""
+msgstr "без показване на напредъка"
 
 #: builtin/check-ignore.c:26
 msgid "show non-matching input paths"
@@ -3352,7 +3453,7 @@ msgstr ""
 #: builtin/checkout.c:1091 builtin/checkout.c:1093 builtin/clone.c:88
 #: builtin/remote.c:159 builtin/remote.c:161
 msgid "branch"
-msgstr ""
+msgstr "клон"
 
 #: builtin/checkout.c:1092
 msgid "create and checkout a new branch"
@@ -3404,7 +3505,7 @@ msgstr ""
 
 #: builtin/checkout.c:1107 builtin/log.c:1228 parse-options.h:248
 msgid "style"
-msgstr ""
+msgstr "стил"
 
 #: builtin/checkout.c:1108
 msgid "conflict style (merge or diff3)"
@@ -4033,6 +4134,7 @@ msgstr ""
 msgid "could not write commit template"
 msgstr ""
 
+# FIXME
 #: builtin/commit.c:760
 #, c-format
 msgid ""
@@ -4043,6 +4145,7 @@ msgid ""
 "and try again.\n"
 msgstr ""
 
+# FIXME
 #: builtin/commit.c:765
 #, c-format
 msgid ""
@@ -4197,7 +4300,7 @@ msgstr ""
 
 #: builtin/commit.c:1268 parse-options.h:156
 msgid "when"
-msgstr ""
+msgstr "кога"
 
 #: builtin/commit.c:1269
 msgid ""
@@ -4251,7 +4354,7 @@ msgstr ""
 
 #: builtin/commit.c:1458 builtin/gc.c:261
 msgid "date"
-msgstr ""
+msgstr "дата"
 
 #: builtin/commit.c:1458
 msgid "override date for commit"
@@ -4658,8 +4761,9 @@ msgid "only output exact matches"
 msgstr ""
 
 #: builtin/describe.c:419
+#, fuzzy
 msgid "consider <n> most recent tags (default: 10)"
-msgstr ""
+msgstr "<брой>"
 
 #: builtin/describe.c:421
 msgid "only consider tags matching <pattern>"
@@ -4723,8 +4827,9 @@ msgid "git fast-export [rev-list-opts]"
 msgstr ""
 
 #: builtin/fast-export.c:673
+#, fuzzy
 msgid "show progress after <n> objects"
-msgstr ""
+msgstr "<брой>"
 
 #: builtin/fast-export.c:675
 msgid "select handling of signed tags"
@@ -4943,7 +5048,7 @@ msgstr ""
 
 #: builtin/fetch.c:756 builtin/remote.c:1050
 msgid "(none)"
-msgstr ""
+msgstr "(нищо)"
 
 #: builtin/fetch.c:775
 #, c-format
@@ -4973,7 +5078,7 @@ msgstr ""
 #: builtin/fetch.c:1017 builtin/remote.c:90
 #, c-format
 msgid "Could not fetch %s"
-msgstr ""
+msgstr "„%s“ не може да се достави"
 
 #: builtin/fetch.c:1036
 msgid ""
@@ -5011,18 +5116,20 @@ msgid "Fetching a group and specifying refspecs does not make sense"
 msgstr ""
 
 #: builtin/fmt-merge-msg.c:13
+#, fuzzy
 msgid "git fmt-merge-msg [-m <message>] [--log[=<n>]|--no-log] [--file <file>]"
-msgstr ""
+msgstr "<брой>"
 
 #: builtin/fmt-merge-msg.c:663 builtin/fmt-merge-msg.c:666 builtin/grep.c:702
 #: builtin/merge.c:196 builtin/show-branch.c:654 builtin/show-ref.c:178
 #: builtin/tag.c:446 parse-options.h:135 parse-options.h:242
 msgid "n"
-msgstr ""
+msgstr "брой"
 
 #: builtin/fmt-merge-msg.c:664
+#, fuzzy
 msgid "populate log with at most <n> entries from shortlog"
-msgstr ""
+msgstr "<брой>"
 
 #: builtin/fmt-merge-msg.c:667
 msgid "alias for --log (deprecated)"
@@ -5061,8 +5168,9 @@ msgid "quote placeholders suitably for tcl"
 msgstr ""
 
 #: builtin/for-each-ref.c:1087
+#, fuzzy
 msgid "show only <n> matched refs"
-msgstr ""
+msgstr "<брой>"
 
 #: builtin/for-each-ref.c:1088 builtin/replace.c:177
 msgid "format"
@@ -5082,77 +5190,81 @@ msgstr ""
 
 #: builtin/fsck.c:607
 msgid "git fsck [options] [<object>...]"
-msgstr ""
+msgstr "git fsck [ОПЦИИ] [<ОБЕКТ>…]"
 
 #: builtin/fsck.c:613
 msgid "show unreachable objects"
-msgstr ""
+msgstr "показване на недостижимите обекти"
 
 #: builtin/fsck.c:614
 msgid "show dangling objects"
-msgstr ""
+msgstr "показване на обектите извън клоните"
 
 #: builtin/fsck.c:615
 msgid "report tags"
-msgstr ""
+msgstr "показване на етикетите"
 
 #: builtin/fsck.c:616
 msgid "report root nodes"
-msgstr ""
+msgstr "показване на кореновите възли"
 
 #: builtin/fsck.c:617
 msgid "make index objects head nodes"
-msgstr ""
+msgstr "задаване на обекти от индекса да са коренови"
 
 #: builtin/fsck.c:618
+#, fuzzy
 msgid "make reflogs head nodes (default)"
-msgstr ""
+msgstr "проследяване на указателите от журнала като глави (стандартно)"
 
 #: builtin/fsck.c:619
+#, fuzzy
 msgid "also consider packs and alternate objects"
-msgstr ""
+msgstr "допълнително да се проверяват пакетите и алтернативните обекти"
 
 #: builtin/fsck.c:620
 msgid "enable more strict checking"
-msgstr ""
+msgstr "по-строги проверки"
 
 #: builtin/fsck.c:622
 msgid "write dangling objects in .git/lost-found"
-msgstr ""
+msgstr "запазване на обектите извън клоните в директорията „.git/lost-found“"
 
 #: builtin/fsck.c:623 builtin/prune.c:144
 msgid "show progress"
-msgstr ""
+msgstr "показване на напредъка"
 
 #: builtin/gc.c:24
 msgid "git gc [options]"
-msgstr ""
+msgstr "git gc [ОПЦИИ]"
 
 #: builtin/gc.c:80
 #, c-format
 msgid "Invalid %s: '%s'"
-msgstr ""
+msgstr "Неправилна стойност за „%s“: „%s“"
 
 #: builtin/gc.c:107
 #, c-format
 msgid "insanely long object directory %.*s"
-msgstr ""
+msgstr "прекалено дълга директория с обекти „%.*s“"
 
 #: builtin/gc.c:262
 msgid "prune unreferenced objects"
-msgstr ""
+msgstr "окастряне на обектите, към които нищо не сочи"
 
 #: builtin/gc.c:264
 msgid "be more thorough (increased runtime)"
-msgstr ""
+msgstr "изчерпателно търсене на боклука (за сметка на повече време работа)"
 
 #: builtin/gc.c:265
 msgid "enable auto-gc mode"
-msgstr ""
+msgstr "включване на автоматичното събиране на боклука (auto-gc)"
 
 #: builtin/gc.c:266
 msgid "force running gc even if there may be another gc running"
 msgstr ""
+"изрично стартиране на събирането на боклука, дори и ако вече работи друго "
+"събиране"
 
 #: builtin/gc.c:306
 #, c-format
@@ -5160,6 +5272,10 @@ msgid ""
 "Auto packing the repository for optimum performance. You may also\n"
 "run \"git gc\" manually. See \"git help gc\" for more information.\n"
 msgstr ""
+"Автоматично пакетиране на хранилището за най-добра производителност. Можете "
+"и\n"
+"ръчно да стартирате „git gc“. За подробности погледнете помощта: „git help "
+"gc“.\n"
 
 #. be quiet on --auto
 #: builtin/gc.c:316
@@ -5167,11 +5283,17 @@ msgstr ""
 msgid ""
 "gc is already running on machine '%s' pid %<PRIuMAX> (use --force if not)"
 msgstr ""
+"събирането на боклука вече е стартирано на машината „%s“ с идентификатор на\n"
+"процеса: %<PRIuMAX> (ако сте сигурни, че това не е вярно, това използвайте\n"
+"опцията „--force“)"
 
 #: builtin/gc.c:341
 msgid ""
 "There are too many unreachable loose objects; run 'git prune' to remove them."
 msgstr ""
+"Има прекалено много недостижими, непакетирани обекти. Използвайте „git "
+"prune“, за да\n"
+"ги окастрите."
 
 #: builtin/grep.c:23
 msgid "git grep [options] [-e] <pattern> [<rev>...] [[--] <path>...]"
@@ -5316,16 +5438,19 @@ msgid "show filename only once above matches from same file"
 msgstr ""
 
 #: builtin/grep.c:703
+#, fuzzy
 msgid "show <n> context lines before and after matches"
-msgstr ""
+msgstr "<брой>"
 
 #: builtin/grep.c:706
+#, fuzzy
 msgid "show <n> context lines before matches"
-msgstr ""
+msgstr "<брой>"
 
 #: builtin/grep.c:708
+#, fuzzy
 msgid "show <n> context lines after matches"
-msgstr ""
+msgstr "<брой>"
 
 #: builtin/grep.c:709
 msgid "shortcut for -C NUM"
@@ -5439,50 +5564,50 @@ msgstr ""
 
 #: builtin/help.c:41
 msgid "print all available commands"
-msgstr ""
+msgstr "показване на всички налични команди"
 
 #: builtin/help.c:42
 msgid "print list of useful guides"
-msgstr ""
+msgstr "показване на списък с пътеводители"
 
 #: builtin/help.c:43
 msgid "show man page"
-msgstr ""
+msgstr "показване на страница от ръководството"
 
 #: builtin/help.c:44
 msgid "show manual in web browser"
-msgstr ""
+msgstr "показване на страница от ръководството в уеб браузър"
 
 #: builtin/help.c:46
 msgid "show info page"
-msgstr ""
+msgstr "показване на информационна страница"
 
 #: builtin/help.c:52
 msgid "git help [--all] [--guides] [--man|--web|--info] [command]"
-msgstr ""
+msgstr "git help [--all] [--guides] [--man|--web|--info] [КОМАНДА]"
 
 #: builtin/help.c:64
 #, c-format
 msgid "unrecognized help format '%s'"
-msgstr ""
+msgstr "непознат формат на помощта „%s“"
 
 #: builtin/help.c:92
 msgid "Failed to start emacsclient."
-msgstr ""
+msgstr "Неуспешно стартиране на „emacsclient“."
 
 #: builtin/help.c:105
 msgid "Failed to parse emacsclient version."
-msgstr ""
+msgstr "Версията на „emacsclient“ не може да се анализира."
 
 #: builtin/help.c:113
 #, c-format
 msgid "emacsclient version '%d' too old (< 22)."
-msgstr ""
+msgstr "Прекалено стара версия на „emacsclient“ — %d (< 22)."
 
 #: builtin/help.c:131 builtin/help.c:159 builtin/help.c:168 builtin/help.c:176
 #, c-format
 msgid "failed to exec '%s': %s"
-msgstr ""
+msgstr "неуспешно изпълнение на „%s“: %s"
 
 #: builtin/help.c:216
 #, c-format
@@ -5490,6 +5615,8 @@ msgid ""
 "'%s': path for unsupported man viewer.\n"
 "Please consider using 'man.<tool>.cmd' instead."
 msgstr ""
+"„%s“: път към неподдържана програма за разглеждане на\n"
+" ръководството. Вместо нея пробвайте „man.<tool>.cmd“."
 
 #: builtin/help.c:228
 #, c-format
@@ -5497,61 +5624,63 @@ msgid ""
 "'%s': cmd for supported man viewer.\n"
 "Please consider using 'man.<tool>.path' instead."
 msgstr ""
+"„%s“: команда за поддържана програма за разглеждане на\n"
+" ръководството. Вместо нея пробвайте „man.<tool>.path“."
 
 #: builtin/help.c:353
 #, c-format
 msgid "'%s': unknown man viewer."
-msgstr ""
+msgstr "„%s“: непозната програма за преглед на ръководството."
 
 #: builtin/help.c:370
 msgid "no man viewer handled the request"
-msgstr ""
+msgstr "никоя програма за ръководство не успя да обработи заявката"
 
 #: builtin/help.c:378
 msgid "no info viewer handled the request"
-msgstr ""
+msgstr "никоя програма за информационни страници не успя да обработи заявката"
 
 #: builtin/help.c:424
 msgid "Defining attributes per path"
-msgstr ""
+msgstr "Указване на атрибути към път"
 
 #: builtin/help.c:425
 msgid "A Git glossary"
-msgstr ""
+msgstr "Речник с термините на Git"
 
 #: builtin/help.c:426
 msgid "Specifies intentionally untracked files to ignore"
-msgstr ""
+msgstr "Указване на неследени файлове, които да бъдат нарочно пренебрегвани"
 
 #: builtin/help.c:427
 msgid "Defining submodule properties"
-msgstr ""
+msgstr "Дефиниране на свойствата на подмодулите"
 
 #: builtin/help.c:428
 msgid "Specifying revisions and ranges for Git"
-msgstr ""
+msgstr "Указване на версии и интервали в Git"
 
 #: builtin/help.c:429
 msgid "A tutorial introduction to Git (for version 1.5.1 or newer)"
-msgstr ""
+msgstr "Въвеждащ урок за Git (версии поне 1.5.1)"
 
 #: builtin/help.c:430
 msgid "An overview of recommended workflows with Git"
-msgstr ""
+msgstr "Общ преглед на препоръчваните начини за работа с Git"
 
 #: builtin/help.c:442
 msgid "The common Git guides are:\n"
-msgstr ""
+msgstr "Популярните пътеводители в Git са:\n"
 
 #: builtin/help.c:463 builtin/help.c:480
 #, c-format
 msgid "usage: %s%s"
-msgstr ""
+msgstr "употреба: %s%s"
 
 #: builtin/help.c:496
 #, c-format
 msgid "`git %s' is aliased to `%s'"
-msgstr ""
+msgstr "„git %s“ е синоним на „%s“"
 
 #: builtin/index-pack.c:184
 #, c-format
@@ -6091,8 +6220,9 @@ msgid "use <sfx> instead of '.patch'"
 msgstr ""
 
 #: builtin/log.c:1190
+#, fuzzy
 msgid "start numbering patches at <n> instead of 1"
-msgstr ""
+msgstr "<брой>"
 
 #: builtin/log.c:1192
 msgid "mark the series as Nth re-roll"
@@ -6415,8 +6545,9 @@ msgid "(synonym to --stat)"
 msgstr ""
 
 #: builtin/merge.c:197
+#, fuzzy
 msgid "add (at most <n>) entries from shortlog to merge commit message"
-msgstr ""
+msgstr "<брой>"
 
 #: builtin/merge.c:200
 msgid "create a single commit instead of doing a merge"
@@ -6839,6 +6970,9 @@ msgstr ""
 #: builtin/mv.c:140 builtin/rm.c:318
 msgid "Please, stage your changes to .gitmodules or stash them to proceed"
 msgstr ""
+"За да продължите или вкарайте промените по файла „.gitmodules“ в индекса, "
+"или\n"
+"ги скътайте"
 
 #: builtin/mv.c:156
 #, c-format
@@ -6887,7 +7021,7 @@ msgstr ""
 #: builtin/mv.c:246 builtin/remote.c:726 builtin/repack.c:328
 #, c-format
 msgid "renaming '%s' failed"
-msgstr ""
+msgstr "неуспешно преименуване на „%s“"
 
 #: builtin/name-rev.c:258
 msgid "git name-rev [options] <commit>..."
@@ -6901,6 +7035,7 @@ msgstr ""
 msgid "git name-rev [options] --stdin"
 msgstr ""
 
+# FIXME
 #: builtin/name-rev.c:312
 msgid "print only names (no SHA-1)"
 msgstr ""
@@ -7237,7 +7372,7 @@ msgstr ""
 #: builtin/notes.c:974 builtin/remote.c:1593
 #, c-format
 msgid "Unknown subcommand: %s"
-msgstr ""
+msgstr "Непозната подкоманда: %s"
 
 #: builtin/pack-objects.c:23
 msgid "git pack-objects --stdout [options...] [< ref-list | < object-list]"
@@ -7370,7 +7505,7 @@ msgstr ""
 
 #: builtin/pack-objects.c:2496 parse-options.h:143
 msgid "time"
-msgstr ""
+msgstr "време"
 
 #: builtin/pack-objects.c:2497
 msgid "unpack unreachable objects newer than <time>"
@@ -7754,200 +7889,212 @@ msgstr ""
 msgid "debug unpack-trees"
 msgstr ""
 
+# FIXME
 #: builtin/reflog.c:499
 #, c-format
 msgid "%s' for '%s' is not a valid timestamp"
-msgstr ""
+msgstr "„%s“ не е правилна стойност за време за „%s“"
 
 #: builtin/reflog.c:615 builtin/reflog.c:620
 #, c-format
 msgid "'%s' is not a valid timestamp"
-msgstr ""
+msgstr "„%s“ не е правилна стойност за време"
 
 #: builtin/remote.c:12
 msgid "git remote [-v | --verbose]"
-msgstr ""
+msgstr "git remote [-v | --verbose]"
 
 #: builtin/remote.c:13
 msgid ""
 "git remote add [-t <branch>] [-m <master>] [-f] [--tags|--no-tags] [--"
 "mirror=<fetch|push>] <name> <url>"
 msgstr ""
+"git remote add [-t <КЛОН>] [-m <ОСНОВЕН_КЛОН>] [-f] [--tags|--no-tags] [--"
+"mirror=<fetch|push>] <ИМЕ> <АДРЕС>"
 
 #: builtin/remote.c:14 builtin/remote.c:33
 msgid "git remote rename <old> <new>"
-msgstr ""
+msgstr "git remote rename <СТАРО_ИМЕ> <НОВО_ИМЕ>"
 
 #: builtin/remote.c:15 builtin/remote.c:38
 msgid "git remote remove <name>"
-msgstr ""
+msgstr "git remote remove <ИМЕ>"
 
 #: builtin/remote.c:16
 msgid "git remote set-head <name> (-a | --auto | -d | --delete |<branch>)"
-msgstr ""
+msgstr "git remote set-head <ИМЕ> (-a | --auto | -d | --delete |<КЛОН>)"
 
 #: builtin/remote.c:17
 msgid "git remote [-v | --verbose] show [-n] <name>"
-msgstr ""
+msgstr "git remote [-v | --verbose] show [-n] <ИМЕ>"
 
 #: builtin/remote.c:18
 msgid "git remote prune [-n | --dry-run] <name>"
-msgstr ""
+msgstr "git remote prune [-n | --dry-run] <ИМЕ>"
 
 #: builtin/remote.c:19
 msgid ""
 "git remote [-v | --verbose] update [-p | --prune] [(<group> | <remote>)...]"
 msgstr ""
+"git remote [-v | --verbose] update [-p | --prune] [(<ГРУПА> | "
+"<ОТДАЛЕЧЕНО_ХРАНИЛИЩЕ>)…]"
 
 #: builtin/remote.c:20
 msgid "git remote set-branches [--add] <name> <branch>..."
-msgstr ""
+msgstr "git remote set-branches [--add] <ИМЕ> <КЛОН>…"
 
 #: builtin/remote.c:21 builtin/remote.c:69
 msgid "git remote set-url [--push] <name> <newurl> [<oldurl>]"
-msgstr ""
+msgstr "git remote set-url [--push] <ИМЕ> <НОВ_АДРЕС> [<СТАР_АДРЕС>]"
 
 #: builtin/remote.c:22 builtin/remote.c:70
 msgid "git remote set-url --add <name> <newurl>"
-msgstr ""
+msgstr "git remote set-url --add <ИМЕ> <НОВ_АДРЕС>"
 
 #: builtin/remote.c:23 builtin/remote.c:71
 msgid "git remote set-url --delete <name> <url>"
-msgstr ""
+msgstr "git remote set-url --delete <ИМЕ> <АДРЕС>"
 
 #: builtin/remote.c:28
 msgid "git remote add [<options>] <name> <url>"
-msgstr ""
+msgstr "git remote add [<ОПЦИИ>] <ИМЕ> <АДРЕС>"
 
 #: builtin/remote.c:43
 msgid "git remote set-head <name> (-a | --auto | -d | --delete | <branch>)"
-msgstr ""
+msgstr "git remote set-head <ИМЕ> (-a | --auto | -d | --delete | <КЛОН>)"
 
 #: builtin/remote.c:48
 msgid "git remote set-branches <name> <branch>..."
-msgstr ""
+msgstr "git remote set-branches <ИМЕ> <КЛОН>…"
 
 #: builtin/remote.c:49
 msgid "git remote set-branches --add <name> <branch>..."
-msgstr ""
+msgstr "git remote set-branches --add <ИМЕ> <КЛОН>…"
 
 #: builtin/remote.c:54
 msgid "git remote show [<options>] <name>"
-msgstr ""
+msgstr "git remote show [<ОПЦИИ>] <ИМЕ>"
 
 #: builtin/remote.c:59
 msgid "git remote prune [<options>] <name>"
-msgstr ""
+msgstr "git remote prune [<ОПЦИИ>] <ИМЕ>"
 
 #: builtin/remote.c:64
 msgid "git remote update [<options>] [<group> | <remote>]..."
-msgstr ""
+msgstr "git remote update [<ОПЦИИ>] [<ГРУПА> | <ОТДАЛЕЧЕНО_ХРАНИЛИЩЕ>]…"
 
 #: builtin/remote.c:88
 #, c-format
 msgid "Updating %s"
-msgstr ""
+msgstr "Обновяване на „%s“"
 
 #: builtin/remote.c:120
 msgid ""
 "--mirror is dangerous and deprecated; please\n"
 "\t use --mirror=fetch or --mirror=push instead"
 msgstr ""
+"Използването само на „--mirror“ е опасно. Вместо това\n"
+"\tползвайте „--mirror=fetch“ или „--mirror=push“"
 
 #: builtin/remote.c:137
 #, c-format
 msgid "unknown mirror argument: %s"
-msgstr ""
+msgstr "неправилна стойност за „--mirror“: %s"
 
 #: builtin/remote.c:153
 msgid "fetch the remote branches"
-msgstr ""
+msgstr "отдалечените клони не могат да бъдат доставени"
 
 #: builtin/remote.c:155
 msgid "import all tags and associated objects when fetching"
-msgstr ""
+msgstr "внасяне на всички етикети и принадлежащите им обекти при доставяне"
 
 #: builtin/remote.c:158
 msgid "or do not fetch any tag at all (--no-tags)"
-msgstr ""
+msgstr "може и да не се доставят никакви етикети (чрез опцията „--no-tags“)"
 
 #: builtin/remote.c:160
 msgid "branch(es) to track"
-msgstr ""
+msgstr "клон/и за следене"
 
 #: builtin/remote.c:161
 msgid "master branch"
-msgstr ""
+msgstr "основен клон"
 
 #: builtin/remote.c:162
 msgid "push|fetch"
-msgstr ""
+msgstr "издърпване|доставяне"
 
 #: builtin/remote.c:163
 msgid "set up remote as a mirror to push to or fetch from"
 msgstr ""
+"настройване на отдалечено хранилище, от което да се издърпва или доставя"
 
 #: builtin/remote.c:175
 msgid "specifying a master branch makes no sense with --mirror"
 msgstr ""
+"няма смисъл да се указва основен клон при използване на опцията „--mirror“"
 
 #: builtin/remote.c:177
 msgid "specifying branches to track makes sense only with fetch mirrors"
 msgstr ""
+"указването на следени клони е смислено само за отдалечени хранилища, от "
+"които се доставя"
 
 #: builtin/remote.c:185 builtin/remote.c:641
 #, c-format
 msgid "remote %s already exists."
-msgstr ""
+msgstr "вече съществува отдалечено хранилище с име „%s“."
 
 #: builtin/remote.c:189 builtin/remote.c:645
 #, c-format
 msgid "'%s' is not a valid remote name"
-msgstr ""
+msgstr "„%s“ е неправилно име за отдалечено хранилище"
 
 #: builtin/remote.c:233
 #, c-format
 msgid "Could not setup master '%s'"
-msgstr ""
+msgstr "Основният клон „%s“ не може да бъде настроен"
 
 #: builtin/remote.c:289
 #, c-format
 msgid "more than one %s"
-msgstr ""
+msgstr "повече от едно отдалечено хранилище на име „%s“"
 
 #: builtin/remote.c:334
 #, c-format
 msgid "Could not get fetch map for refspec %s"
-msgstr ""
+msgstr "Обектите за доставяне за указателя „%s“ не могат да бъдат получени"
 
 #: builtin/remote.c:435 builtin/remote.c:443
 msgid "(matching)"
-msgstr ""
+msgstr "(съвпадащи)"
 
 #: builtin/remote.c:447
 msgid "(delete)"
-msgstr ""
+msgstr "(за изтриване)"
 
 #: builtin/remote.c:590 builtin/remote.c:596 builtin/remote.c:602
 #, c-format
 msgid "Could not append '%s' to '%s'"
-msgstr ""
+msgstr "„%s“ не може да се добави към „%s“"
 
 #: builtin/remote.c:634 builtin/remote.c:787 builtin/remote.c:885
 #, c-format
 msgid "No such remote: %s"
-msgstr ""
+msgstr "Такова отдалечено хранилище няма: %s"
 
 #: builtin/remote.c:651
 #, c-format
 msgid "Could not rename config section '%s' to '%s'"
-msgstr ""
+msgstr "Секцията в настройките „%s“ не може да бъде преименувана на „%s“"
 
 #: builtin/remote.c:657 builtin/remote.c:794
 #, c-format
 msgid "Could not remove config section '%s'"
-msgstr ""
+msgstr "Секцията в настройките „%s“ не може да бъде изтрита"
 
+# FIXME
 #: builtin/remote.c:672
 #, c-format
 msgid ""
@@ -7955,31 +8102,34 @@ msgid ""
 "\t%s\n"
 "\tPlease update the configuration manually if necessary."
 msgstr ""
+"Нестандартните указатели за доставяне няма да бъдат обновени\n"
+"    %s\n"
+"  Променете настройките ръчно, ако е необходимо."
 
 #: builtin/remote.c:678
 #, c-format
 msgid "Could not append '%s'"
-msgstr ""
+msgstr "Секцията „%s“ не може да бъде добавена в настройките"
 
 #: builtin/remote.c:689
 #, c-format
 msgid "Could not set '%s'"
-msgstr ""
+msgstr "Секцията „%s“ не може да бъде зададена в настройките"
 
 #: builtin/remote.c:711
 #, c-format
 msgid "deleting '%s' failed"
-msgstr ""
+msgstr "неуспешно изтриване на „%s“"
 
 #: builtin/remote.c:745
 #, c-format
 msgid "creating '%s' failed"
-msgstr ""
+msgstr "неуспешно създаване на „%s“"
 
 #: builtin/remote.c:759
 #, c-format
 msgid "Could not remove branch %s"
-msgstr ""
+msgstr "Клонът „%s“ не може да бъде изтрит"
 
 #: builtin/remote.c:829
 msgid ""
@@ -7989,266 +8139,277 @@ msgid_plural ""
 "Note: Some branches outside the refs/remotes/ hierarchy were not removed;\n"
 "to delete them, use:"
 msgstr[0] ""
+"Бележка: Клон извън йерархията „refs/remotes/“ не бе изтрит.\n"
+"Изтрийте го чрез командата:"
 msgstr[1] ""
+"Бележка: Няколко клона извън йерархията „refs/remotes/“ не бяха изтрити.\n"
+"Изтрийте ги чрез командата:"
 
 #: builtin/remote.c:938
 #, c-format
 msgid " new (next fetch will store in remotes/%s)"
-msgstr ""
+msgstr " нов (следващото доставяне ще го разположи в „remotes/%s“)"
 
 #: builtin/remote.c:941
 msgid " tracked"
-msgstr ""
+msgstr " следен"
 
 #: builtin/remote.c:943
 msgid " stale (use 'git remote prune' to remove)"
-msgstr ""
+msgstr " стар (изтрийте чрез „git remote prune“)"
 
 #: builtin/remote.c:945
 msgid " ???"
-msgstr ""
+msgstr " неясно"
 
+# CHECK
 #: builtin/remote.c:986
 #, c-format
 msgid "invalid branch.%s.merge; cannot rebase onto > 1 branch"
 msgstr ""
+"неправилен клон за сливане „%s“. Невъзможно е да пребазирате върху повече от "
+"1 клон"
 
 #: builtin/remote.c:993
 #, c-format
 msgid "rebases onto remote %s"
-msgstr ""
+msgstr "пребазиране върху отдалечения клон „%s“"
 
 #: builtin/remote.c:996
 #, c-format
 msgid " merges with remote %s"
-msgstr ""
+msgstr " сливане с отдалечения клон „%s“"
 
 #: builtin/remote.c:997
 msgid "    and with remote"
-msgstr ""
+msgstr "    и с отдалечения клон"
 
 #: builtin/remote.c:999
 #, c-format
 msgid "merges with remote %s"
-msgstr ""
+msgstr "сливане с отдалечения клон „%s“"
 
 #: builtin/remote.c:1000
 msgid "   and with remote"
-msgstr ""
+msgstr "   и с отдалечения клон"
 
 #: builtin/remote.c:1046
 msgid "create"
-msgstr ""
+msgstr "създаден"
 
 #: builtin/remote.c:1049
 msgid "delete"
-msgstr ""
+msgstr "изтрит"
 
 #: builtin/remote.c:1053
 msgid "up to date"
-msgstr ""
+msgstr "актуален"
 
 #: builtin/remote.c:1056
 msgid "fast-forwardable"
-msgstr ""
+msgstr "може да се слее тривиално"
 
 #: builtin/remote.c:1059
 msgid "local out of date"
-msgstr ""
+msgstr "локалният е остарял"
 
 #: builtin/remote.c:1066
 #, c-format
 msgid "    %-*s forces to %-*s (%s)"
-msgstr ""
+msgstr "    %-*s принудително изтласква към %-*s (%s)"
 
 #: builtin/remote.c:1069
 #, c-format
 msgid "    %-*s pushes to %-*s (%s)"
-msgstr ""
+msgstr "    %-*s изтласква към %-*s (%s)"
 
 #: builtin/remote.c:1073
 #, c-format
 msgid "    %-*s forces to %s"
-msgstr ""
+msgstr "    %-*s принудително изтласква към %s"
 
 #: builtin/remote.c:1076
 #, c-format
 msgid "    %-*s pushes to %s"
-msgstr ""
+msgstr "    %-*s изтласква към %s"
 
 #: builtin/remote.c:1144
 msgid "do not query remotes"
-msgstr ""
+msgstr "без заявки към отдалечените хранилища"
 
 #: builtin/remote.c:1171
 #, c-format
 msgid "* remote %s"
-msgstr ""
+msgstr "* отдалечено хранилище „%s“"
 
 #: builtin/remote.c:1172
 #, c-format
 msgid "  Fetch URL: %s"
-msgstr ""
+msgstr "  Адрес за доставяне: %s"
 
 #: builtin/remote.c:1173 builtin/remote.c:1318
 msgid "(no URL)"
-msgstr ""
+msgstr "(без адрес)"
 
 #: builtin/remote.c:1182 builtin/remote.c:1184
 #, c-format
 msgid "  Push  URL: %s"
-msgstr ""
+msgstr "  Адрес за изтласкване: %s"
 
 #: builtin/remote.c:1186 builtin/remote.c:1188 builtin/remote.c:1190
 #, c-format
 msgid "  HEAD branch: %s"
-msgstr ""
+msgstr "  клон в HEAD: %s"
 
 #: builtin/remote.c:1192
 #, c-format
 msgid ""
 "  HEAD branch (remote HEAD is ambiguous, may be one of the following):\n"
 msgstr ""
+"  клон в HEAD (клонът указан във файла HEAD от отдалеченото хранилище е\n"
+"  нееднозначен и е някой от следните):\n"
 
 #: builtin/remote.c:1204
 #, c-format
 msgid "  Remote branch:%s"
 msgid_plural "  Remote branches:%s"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "  Отдалечен клон: %s"
+msgstr[1] "  Отдалечени клони: %s"
 
 #: builtin/remote.c:1207 builtin/remote.c:1234
 msgid " (status not queried)"
-msgstr ""
+msgstr " (състоянието не бе проверено)"
 
 #: builtin/remote.c:1216
 msgid "  Local branch configured for 'git pull':"
 msgid_plural "  Local branches configured for 'git pull':"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "  Локален клон настроен за издърпване чрез „git pull“:"
+msgstr[1] "  Локални клони настроени за издърпване чрез „git pull“:"
 
 #: builtin/remote.c:1224
 msgid "  Local refs will be mirrored by 'git push'"
-msgstr ""
+msgstr "  Локалните указатели ще бъдат пренесени чрез „ push“"
 
 #: builtin/remote.c:1231
 #, c-format
 msgid "  Local ref configured for 'git push'%s:"
 msgid_plural "  Local refs configured for 'git push'%s:"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "  Локалният указател, настроен за „git push“%s:"
+msgstr[1] "  Локалните указатели, настроени за „git push“%s:"
 
 #: builtin/remote.c:1252
 msgid "set refs/remotes/<name>/HEAD according to remote"
-msgstr ""
+msgstr "задаване на refs/remotes/<ИМЕ>/HEAD според отдалеченото хранилище"
 
 #: builtin/remote.c:1254
 msgid "delete refs/remotes/<name>/HEAD"
-msgstr ""
+msgstr "изтриване на refs/remotes/<ИМЕ>/HEAD"
 
 #: builtin/remote.c:1269
 msgid "Cannot determine remote HEAD"
-msgstr ""
+msgstr "Не може да се установи отдалеченият връх"
 
 #: builtin/remote.c:1271
 msgid "Multiple remote HEAD branches. Please choose one explicitly with:"
 msgstr ""
+"Множество клони с върхове. Изберете изрично някой от тях чрез командата:"
 
 #: builtin/remote.c:1281
 #, c-format
 msgid "Could not delete %s"
-msgstr ""
+msgstr "„%s“ не може да бъде изтрит"
 
 #: builtin/remote.c:1289
 #, c-format
 msgid "Not a valid ref: %s"
-msgstr ""
+msgstr "Неправилен указател: %s"
 
 #: builtin/remote.c:1291
 #, c-format
 msgid "Could not setup %s"
-msgstr ""
+msgstr "„%s“ не може да се настрои"
 
 #: builtin/remote.c:1307
 #, c-format
 msgid " %s will become dangling!"
-msgstr ""
+msgstr "„%s“ ще се превърне в обект извън клоните!"
 
 #: builtin/remote.c:1308
 #, c-format
 msgid " %s has become dangling!"
-msgstr ""
+msgstr "„%s“ се превърна в обект извън клоните!"
 
 #: builtin/remote.c:1314
 #, c-format
 msgid "Pruning %s"
-msgstr ""
+msgstr "Окастряне на „%s“"
 
 #: builtin/remote.c:1315
 #, c-format
 msgid "URL: %s"
-msgstr ""
+msgstr "адрес: %s"
 
 #: builtin/remote.c:1328
 #, c-format
 msgid " * [would prune] %s"
-msgstr ""
+msgstr " * [ще бъде окастрено] %s"
 
 #: builtin/remote.c:1331
 #, c-format
 msgid " * [pruned] %s"
-msgstr ""
+msgstr " * [окастрено] %s"
 
 #: builtin/remote.c:1374
 msgid "prune remotes after fetching"
-msgstr ""
+msgstr "окастряне на огледалата на отдалечените хранилища след доставяне"
 
 #: builtin/remote.c:1440 builtin/remote.c:1514
 #, c-format
 msgid "No such remote '%s'"
-msgstr ""
+msgstr "Няма отдалечено хранилище на име „%s“"
 
 #: builtin/remote.c:1460
 msgid "add branch"
-msgstr ""
+msgstr "добавяне на клон"
 
 #: builtin/remote.c:1467
 msgid "no remote specified"
-msgstr ""
+msgstr "не е указано отдалечено хранилище"
 
 #: builtin/remote.c:1489
 msgid "manipulate push URLs"
-msgstr ""
+msgstr "промяна на адресите за изтласкване"
 
 #: builtin/remote.c:1491
 msgid "add URL"
-msgstr ""
+msgstr "добавяне на адреси"
 
 #: builtin/remote.c:1493
 msgid "delete URLs"
-msgstr ""
+msgstr "изтриване на адреси"
 
 #: builtin/remote.c:1500
 msgid "--add --delete doesn't make sense"
-msgstr ""
+msgstr "опциите „--add“ и „--delete“ не могат да се използват заедно"
 
 #: builtin/remote.c:1540
 #, c-format
 msgid "Invalid old URL pattern: %s"
-msgstr ""
+msgstr "Неправилен (стар) формат за адрес: %s"
 
 #: builtin/remote.c:1548
 #, c-format
 msgid "No such URL found: %s"
-msgstr ""
+msgstr "Такъв адрес не е открит: %s"
 
+# MEANING
 #: builtin/remote.c:1550
 msgid "Will not delete all non-push URLs"
-msgstr ""
+msgstr "Никой от адресите, които не са за изтласкване, няма да се изтрие"
 
 #: builtin/remote.c:1564
 msgid "be verbose; must be placed before a subcommand"
-msgstr ""
+msgstr "повече подробности. Поставя се пред подкоманда"
 
 #: builtin/repack.c:15
 msgid "git repack [options]"
@@ -8585,7 +8746,7 @@ msgstr ""
 
 #: builtin/rm.c:17
 msgid "git rm [options] [--] <file>..."
-msgstr ""
+msgstr "git rm [ОПЦИИ] [--] <ФАЙЛ>…"
 
 #: builtin/rm.c:65
 msgid ""
@@ -8595,13 +8756,19 @@ msgid_plural ""
 "the following submodules (or one of its nested submodules)\n"
 "use a .git directory:"
 msgstr[0] ""
+"следният подмодул или някой от неговите подмодули\n"
+"използват директория на име „.git“:"
 msgstr[1] ""
+"следните подмодули или някои от техните подмодули\n"
+"използват директория на име „.git“:"
 
 #: builtin/rm.c:71
 msgid ""
 "\n"
 "(use 'rm -rf' if you really want to remove it including all of its history)"
 msgstr ""
+"\n"
+"(ако искате да ги изтриете заедно с цялата им история, използвайте „rm -rf“)"
 
 #: builtin/rm.c:231
 msgid ""
@@ -8611,61 +8778,74 @@ msgid_plural ""
 "the following files have staged content different from both the\n"
 "file and the HEAD:"
 msgstr[0] ""
+"следният файл е със съдържание в индекса различно от текущото му съдържание "
+"и\n"
+"различно от съответстващото на HEAD:"
 msgstr[1] ""
+"следните файлове са със съдържание в индекса различно от текущото им "
+"съдържание и\n"
+"различно от съответстващото на HEAD:"
 
 #: builtin/rm.c:236
 msgid ""
 "\n"
 "(use -f to force removal)"
 msgstr ""
+"\n"
+"(за принудително изтриване използвайте опцията „-f“)"
 
 #: builtin/rm.c:240
 msgid "the following file has changes staged in the index:"
 msgid_plural "the following files have changes staged in the index:"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "следният файл е с променено съдържание в индекса:"
+msgstr[1] "следните файлове са с променено съдържание в индекса:"
 
 #: builtin/rm.c:244 builtin/rm.c:255
 msgid ""
 "\n"
 "(use --cached to keep the file, or -f to force removal)"
 msgstr ""
+"\n"
+"(за запазване на файла използвайте опцията „--cached“, а за принудително\n"
+"изтриване — „-f“)"
 
 #: builtin/rm.c:252
 msgid "the following file has local modifications:"
 msgid_plural "the following files have local modifications:"
-msgstr[0] ""
-msgstr[1] ""
+msgstr[0] "следният файл е с променено съдържание"
+msgstr[1] "следните файлове са с променено съдържание"
 
 #: builtin/rm.c:270
 msgid "do not list removed files"
-msgstr ""
+msgstr "да не се извеждат изтритите файлове"
 
 #: builtin/rm.c:271
 msgid "only remove from the index"
-msgstr ""
+msgstr "изтриване само от индекса"
 
 #: builtin/rm.c:272
 msgid "override the up-to-date check"
-msgstr ""
+msgstr "въпреки проверката за актуалността на съдържанието"
 
 #: builtin/rm.c:273
 msgid "allow recursive removal"
-msgstr ""
+msgstr "рекурсивно изтриване"
 
 #: builtin/rm.c:275
 msgid "exit with a zero status even if nothing matched"
 msgstr ""
+"изходният код да е 0, дори ако никой файл нe e напаснал с шаблона за "
+"изтриване"
 
 #: builtin/rm.c:336
 #, c-format
 msgid "not removing '%s' recursively without -r"
-msgstr ""
+msgstr "без използването на опцията „-r“ „%s“ няма да се изтрие рекурсивно"
 
 #: builtin/rm.c:375
 #, c-format
 msgid "git rm: unable to remove %s"
-msgstr ""
+msgstr "git rm: „%s“ не може да се изтрие"
 
 #: builtin/shortlog.c:13
 msgid "git shortlog [<options>] [<revision range>] [[--] [<path>...]]"
@@ -8697,16 +8877,18 @@ msgid "Linewrap output"
 msgstr ""
 
 #: builtin/show-branch.c:9
+#, fuzzy
 msgid ""
 "git show-branch [-a|--all] [-r|--remotes] [--topo-order | --date-order] [--"
 "current] [--color[=<when>] | --no-color] [--sparse] [--more=<n> | --list | --"
 "independent | --merge-base] [--no-name | --sha1-name] [--topics] [(<rev> | "
 "<glob>)...]"
-msgstr ""
+msgstr "<брой>"
 
 #: builtin/show-branch.c:10
+#, fuzzy
 msgid "git show-branch (-g|--reflog)[=<n>[,<base>]] [--list] [<ref>]"
-msgstr ""
+msgstr "<брой>"
 
 #: builtin/show-branch.c:649
 msgid "show remote-tracking and local branches"
@@ -8721,8 +8903,9 @@ msgid "color '*!+-' corresponding to the branch"
 msgstr ""
 
 #: builtin/show-branch.c:655
+#, fuzzy
 msgid "show <n> more commits after the common ancestor"
-msgstr ""
+msgstr "<брой>"
 
 #: builtin/show-branch.c:657
 msgid "synonym to more=-1"
@@ -8765,18 +8948,21 @@ msgid "topologically sort, maintaining date order where possible"
 msgstr ""
 
 #: builtin/show-branch.c:678
+#, fuzzy
 msgid "<n>[,<base>]"
-msgstr ""
+msgstr "<брой>"
 
 #: builtin/show-branch.c:679
+#, fuzzy
 msgid "show <n> most recent ref-log entries starting at base"
-msgstr ""
+msgstr "<брой>"
 
 #: builtin/show-ref.c:10
+#, fuzzy
 msgid ""
 "git show-ref [-q|--quiet] [--verify] [--head] [-d|--dereference] [-s|--"
 "hash[=<n>]] [--abbrev[=<n>]] [--tags] [--heads] [--] [pattern*] "
-msgstr ""
+msgstr "<брой>"
 
 #: builtin/show-ref.c:11
 msgid "git show-ref --exclude-existing[=pattern] < ref-list"
@@ -8803,8 +8989,9 @@ msgid "dereference tags into object IDs"
 msgstr ""
 
 #: builtin/show-ref.c:179
+#, fuzzy
 msgid "only show SHA1 hash using <n> digits"
-msgstr ""
+msgstr "<брой>"
 
 #: builtin/show-ref.c:183
 msgid "do not print results to stdout (useful with --verify)"
@@ -8851,6 +9038,7 @@ msgstr ""
 msgid "git tag -d <tagname>..."
 msgstr ""
 
+# FIXME
 #: builtin/tag.c:24
 msgid ""
 "git tag -l [-n[<num>]] [--contains <commit>] [--points-at <object>] \n"
@@ -8942,8 +9130,9 @@ msgid "list tag names"
 msgstr ""
 
 #: builtin/tag.c:447
+#, fuzzy
 msgid "print <n> lines of each tag message"
-msgstr ""
+msgstr "<брой>"
 
 #: builtin/tag.c:449
 msgid "delete tags"
@@ -9235,23 +9424,24 @@ msgstr ""
 
 #: parse-options.h:146
 msgid "expiry date"
-msgstr ""
+msgstr "период на валидност"
 
 #: parse-options.h:161
 msgid "no-op (backward compatibility)"
-msgstr ""
+msgstr "нулева операция (за съвместимост с предишни версии)"
 
 #: parse-options.h:235
 msgid "be more verbose"
-msgstr ""
+msgstr "повече подробности"
 
 #: parse-options.h:237
 msgid "be more quiet"
-msgstr ""
+msgstr "по-малко подробности"
 
+# FIXME
 #: parse-options.h:243
 msgid "use <n> digits to display SHA-1s"
-msgstr ""
+msgstr "да се показват такъв <брой> цифри от сумите по SHA1"
 
 #: common-cmds.h:8
 msgid "Add file contents to the index"
@@ -9728,6 +9918,7 @@ msgstr ""
 msgid "Could not move back to $head_name"
 msgstr ""
 
+# FIXME
 #: git-rebase.sh:409
 #, sh-format
 msgid ""
