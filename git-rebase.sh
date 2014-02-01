@@ -267,7 +267,7 @@ do
 	--no-fork-point)
 		fork_point=
 		;;
-	-M|-m)
+	-m)
 		do_merge=t
 		;;
 	-X)
