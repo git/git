@@ -6,18 +6,18 @@ to this software.
 In general, always base your work on the oldest branch that your
 change is relevant to.
 
- - A bugfix should be based on 'maint' in general. If the bug is not
-   present in 'maint', base it on 'master'. For a bug that's not yet
+ - A bugfix should be based on 'master' in general. If the bug is not
+   present in 'master', base it on 'master'. For a bug that's not yet
    in 'master', find the topic that introduces the regression, and
-   base your work on the tip of the topic.
+   base your work on the top of the topic.
 
  - A new feature should be based on 'master' in general. If the new
    feature depends on a topic that is in 'pu', but not in 'master',
-   base your work on the tip of that topic.
+   base your work on the top of that topic.
 
  - Corrections and enhancements to a topic not yet in 'master' should
-   be based on the tip of that topic. If the topic has not been merged
-   to 'next', it's alright to add a note to squash minor corrections
+   be based on the top of that topic. If the topic has not been merged
+   to 'next', it's all right to add a note to squash minor corrections
    into the series.
 
  - In the exceptional case that a new feature depends on several topics
@@ -30,7 +30,7 @@ change is relevant to.
    repositories (see the section "Subsystems" below).  Changes to
    these parts should be based on their trees.
 
-To find the tip of a topic branch, run "git log --first-parent
+To find the top of a topic branch, run "git log --first-parent
 master..pu" and look for the merge commit. The second parent of this
 commit is the tip of the topic branch.
 
@@ -51,7 +51,7 @@ If your description starts to get too long, that's a sign that you
 probably need to split up your commit to finer grained pieces.
 That being said, patches which plainly describe the things that
 help reviewers check the patch, and future maintainers understand
-the code, are the most beautiful patches.  Descriptions that summarise
+the code, are the most beautiful patches.  Descriptions that summarize
 the point in the subject well, and describe the motivation for the
 change, the approach taken by the change, and if relevant how this
 differs substantially from the prior version, are all good things
@@ -60,10 +60,10 @@ to have.
 Make sure that you have tests for the bug you are fixing.
 
 When adding a new feature, make sure that you have new tests to show
-the feature triggers the new behaviour when it should, and to show the
+the feature triggers the new behavior when it should, and to show the
 feature does not trigger when it shouldn't.  Also make sure that the
 test suite passes after your commit.  Do not forget to update the
-documentation to describe the updated behaviour.
+documentation to describe the updated behavior.
 
 Speaking of the documentation, it is currently a liberal mixture of US
 and UK English norms for spelling and grammar, which is somewhat
@@ -111,7 +111,7 @@ The body should provide a meaningful commit message, which:
 Describe your changes in imperative mood, e.g. "make xyzzy do frotz"
 instead of "[This patch] makes xyzzy do frotz" or "[I] changed xyzzy
 to do frotz", as if you are giving orders to the codebase to change
-its behaviour.  Try to make sure your explanation can be understood
+its behavior.  Try to make sure your explanation can be understood
 without external resources. Instead of giving a URL to a mailing list
 archive, summarize the relevant points of the discussion.
 
