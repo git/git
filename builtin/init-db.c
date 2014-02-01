@@ -177,6 +177,58 @@ static int git_init_db_config(const char *k, const char *v, void *cb)
 	return 0;
 }
 
+static void probe_case_sensitivity(char *path, size_t len)
+{
+	int completely_insensitive_fs = 1;
+	char const * const case_check_filename = ".CaseCheck";
+	struct dirent *dirent;
+	FILE *case_file;
+	DIR *dir;
+
+	/*
+	 * If we can't access "config" by the name "CoNfIg", this fs is
+	 * case sensitive...so do nothing and return.
+	 */
+	path[len] = 0;
+	strcpy(path + len, "CoNfIg");
+	if (access(path, F_OK))
+		return;
+
+	/*
+	 * This filesystem is at least partially case-insensitive.  Let's
+	 * find out if this filesystem is completely case-insensitive.
+	 *
+	 * Create a CamelCase file here, make sure readdir reads a
+	 * CamelCase file below.
+	 */
+	path[len] = 0;
+	strcpy(path + len, case_check_filename);
+	case_file = fopen(path, "w");
+	if (!case_file)
+		die_errno(_("cannot open '%s'"), path);
+	fclose(case_file);
+
+	path[len] = 0;
+	dir = opendir(path);
+	if (!dir)
+		die_errno(_("cannot opendir '%s'"), path);
+
+	while ( (dirent = readdir(dir)) ) {
+		if (0 == strcmp(case_check_filename, dirent->d_name)) {
+			completely_insensitive_fs = 0;
+			break;
+		}
+	}
+
+	closedir(dir);
+	path[len] = 0;
+	strcpy(path + len, case_check_filename);
+	unlink(path);
+
+	if (completely_insensitive_fs)
+		git_config_set("core.ignorecase", "true");
+}
+
 static int create_default_files(const char *template_path)
 {
 	const char *git_dir = get_git_dir();
@@ -285,11 +337,7 @@ static int create_default_files(const char *template_path)
 		else
 			git_config_set("core.symlinks", "false");
 
-		/* Check if the filesystem is case-insensitive */
-		path[len] = 0;
-		strcpy(path + len, "CoNfIg");
-		if (!access(path, F_OK))
-			git_config_set("core.ignorecase", "true");
+		probe_case_sensitivity(path, len);
 		probe_utf8_pathname_composition(path, len);
 	}
 
