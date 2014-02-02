@@ -12,8 +12,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2014-01-18 07:42+0800\n"
-"PO-Revision-Date: 2014-01-18 10:54+0800\n"
+"POT-Creation-Date: 2014-02-01 08:06+0800\n"
+"PO-Revision-Date: 2014-02-03 10:52+0800\n"
 "Last-Translator: Jiang Xin <worldhello.net@gmail.com>\n"
 "Language-Team: GitHub <https://github.com/gotgit/git/>\n"
 "Language: zh_CN\n"
@@ -8640,6 +8640,10 @@ msgstr "使用 -A，不要将早于给定时间的对象过期"
 #: builtin/repack.c:161
 msgid "size of the window used for delta compression"
 msgstr "用于增量压缩的窗口值"
+
+#: builtin/repack.c:162 builtin/repack.c:166
+msgid "bytes"
+msgstr "字节"
 
 #: builtin/repack.c:163
 msgid "same as the above, but limit memory size instead of entries count"
