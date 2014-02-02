@@ -260,7 +260,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	for_each_string_list_item(item, &names) {
 		for (ext = 0; ext < 2; ext++) {
 			char *fname, *fname_old;
-			fname = mkpathdup("%s/%s%s", packdir,
+			fname = mkpathdup("%s/pack-%s%s", packdir,
 						item->string, exts[ext]);
 			if (!file_exists(fname)) {
 				free(fname);
@@ -337,7 +337,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	for_each_string_list_item(item, &names) {
 		for (ext = 0; ext < 2; ext++) {
 			char *fname;
-			fname = mkpath("%s/old-pack-%s%s",
+			fname = mkpath("%s/old-%s%s",
 					packdir,
 					item->string,
 					exts[ext]);
