@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git 1.8.4\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2014-01-18 07:42+0800\n"
-"PO-Revision-Date: 2014-01-21 09:24+0100\n"
+"POT-Creation-Date: 2014-02-01 08:06+0800\n"
+"PO-Revision-Date: 2014-02-02 17:21+0100\n"
 "Last-Translator: Peter Krefting <peter@softwolves.pp.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
 "Language: sv\n"
@@ -1323,21 +1323,21 @@ msgstr ""
 "Undersök referenserna och ta kanske bort dem. Stäng av meddelandet\n"
 "genom att köra \"git config advice.objectNameWarning false\""
 
-#: sha1_name.c:1109
+#: sha1_name.c:1070
 msgid "HEAD does not point to a branch"
 msgstr "HEAD pekar inte på en gren"
 
-#: sha1_name.c:1112
+#: sha1_name.c:1073
 #, c-format
 msgid "No such branch: '%s'"
 msgstr "Okänd gren: \"%s\""
 
-#: sha1_name.c:1114
+#: sha1_name.c:1075
 #, c-format
 msgid "No upstream configured for branch '%s'"
 msgstr "Ingen standarduppström angiven för grenen \"%s\""
 
-#: sha1_name.c:1118
+#: sha1_name.c:1079
 #, c-format
 msgid "Upstream branch '%s' not stored as a remote-tracking branch"
 msgstr "Uppströmsgrenen \"%s\" är inte lagrad som en fjärrspårande gren"
@@ -5260,8 +5260,9 @@ msgstr ""
 "git fmt-merge-msg [-m <meddelande>] [--log[=<n>]|--no-log] [--file <fil>]"
 
 #: builtin/fmt-merge-msg.c:663 builtin/fmt-merge-msg.c:666 builtin/grep.c:702
-#: builtin/merge.c:196 builtin/show-branch.c:654 builtin/show-ref.c:178
-#: builtin/tag.c:446 parse-options.h:135 parse-options.h:242
+#: builtin/merge.c:196 builtin/repack.c:160 builtin/repack.c:164
+#: builtin/show-branch.c:654 builtin/show-ref.c:178 builtin/tag.c:446
+#: parse-options.h:135 parse-options.h:242
 msgid "n"
 msgstr "n"
 
@@ -6218,17 +6219,17 @@ msgstr "ange att git-arkivet skall delas bland flera användare"
 msgid "be quiet"
 msgstr "var tyst"
 
-#: builtin/init-db.c:522 builtin/init-db.c:529
+#: builtin/init-db.c:525 builtin/init-db.c:530
 #, c-format
 msgid "cannot mkdir %s"
 msgstr "kan inte skapa katalogen (mkdir) %s"
 
-#: builtin/init-db.c:533
+#: builtin/init-db.c:534
 #, c-format
 msgid "cannot chdir to %s"
 msgstr "kan inte byta katalog (chdir) till %s"
 
-#: builtin/init-db.c:555
+#: builtin/init-db.c:556
 #, c-format
 msgid ""
 "%s (or --work-tree=<directory>) not allowed without specifying %s (or --git-"
@@ -6237,11 +6238,11 @@ msgstr ""
 "%s (eller --work-tree=<katalog>) inte tillåtet utan att ange %s (eller --git-"
 "dir=<katalog>)"
 
-#: builtin/init-db.c:579
+#: builtin/init-db.c:580
 msgid "Cannot access current working directory"
 msgstr "Kan inte komma åt aktuell arbetskatalog"
 
-#: builtin/init-db.c:586
+#: builtin/init-db.c:587
 #, c-format
 msgid "Cannot access work tree '%s'"
 msgstr "Kan inte komma åt arbetskatalogen \"%s\""
@@ -8687,6 +8688,10 @@ msgstr "med -A, lös inte upp objekt äldre än detta"
 #: builtin/repack.c:161
 msgid "size of the window used for delta compression"
 msgstr "storlek på fönster använt för deltakomprimering"
+
+#: builtin/repack.c:162 builtin/repack.c:166
+msgid "bytes"
+msgstr "byte"
 
 #: builtin/repack.c:163
 msgid "same as the above, but limit memory size instead of entries count"
