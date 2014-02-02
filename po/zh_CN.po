@@ -13,7 +13,7 @@ msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
 "POT-Creation-Date: 2014-02-01 08:06+0800\n"
-"PO-Revision-Date: 2014-02-03 10:52+0800\n"
+"PO-Revision-Date: 2014-02-03 10:53+0800\n"
 "Last-Translator: Jiang Xin <worldhello.net@gmail.com>\n"
 "Language-Team: GitHub <https://github.com/gotgit/git/>\n"
 "Language: zh_CN\n"
@@ -1320,21 +1320,21 @@ msgstr ""
 "可能需要删除它们。用 \"git config advice.objectNameWarning false\"\n"
 "命令关闭本消息通知。"
 
-#: sha1_name.c:1109
+#: sha1_name.c:1070
 msgid "HEAD does not point to a branch"
 msgstr "HEAD 没有指向一个分支"
 
-#: sha1_name.c:1112
+#: sha1_name.c:1073
 #, c-format
 msgid "No such branch: '%s'"
 msgstr "没有此分支：'%s'"
 
-#: sha1_name.c:1114
+#: sha1_name.c:1075
 #, c-format
 msgid "No upstream configured for branch '%s'"
 msgstr "尚未给分支 '%s' 设置上游"
 
-#: sha1_name.c:1118
+#: sha1_name.c:1079
 #, c-format
 msgid "Upstream branch '%s' not stored as a remote-tracking branch"
 msgstr "上游分支 '%s' 没有存储为一个远程跟踪分支"
@@ -1622,7 +1622,7 @@ msgstr "  （使用 \"git commit\" 结束合并）"
 
 #: wt-status.c:918
 msgid "You are in the middle of an am session."
-msgstr "您正处于一个 am 过程中。"
+msgstr "您正处于 am 操作过程中。"
 
 #: wt-status.c:921
 msgid "The current patch is empty."
@@ -1646,11 +1646,11 @@ msgstr "  （使用 \"git am --abort\" 恢复原有分支）"
 #: wt-status.c:989 wt-status.c:1006
 #, c-format
 msgid "You are currently rebasing branch '%s' on '%s'."
-msgstr "您正在将分支 '%s' 变基到 '%s'。"
+msgstr "您在执行将分支 '%s' 变基到 '%s' 的操作。"
 
 #: wt-status.c:994 wt-status.c:1011
 msgid "You are currently rebasing."
-msgstr "您正在变基。"
+msgstr "您在执行变基操作。"
 
 #  译者：注意保持前导空格
 #: wt-status.c:997
@@ -1676,11 +1676,11 @@ msgstr "  （所有冲突已解决：运行 \"git rebase --continue\"）"
 #, c-format
 msgid ""
 "You are currently splitting a commit while rebasing branch '%s' on '%s'."
-msgstr "您正在将分支 '%s' 变基到 '%s' 过程中拆分一个提交。"
+msgstr "您在执行将分支 '%s' 变基到 '%s' 的操作时拆分提交。"
 
 #: wt-status.c:1023
 msgid "You are currently splitting a commit during a rebase."
-msgstr "您正在变基过程中拆分一个提交。"
+msgstr "您在执行变基操作时拆分提交。"
 
 #  译者：注意保持前导空格
 #: wt-status.c:1026
@@ -1690,11 +1690,11 @@ msgstr "  （一旦您工作目录提交干净后，运行 \"git rebase --contin
 #: wt-status.c:1030
 #, c-format
 msgid "You are currently editing a commit while rebasing branch '%s' on '%s'."
-msgstr "您正在将分支 '%s' 变基到 '%s' 过程中编辑一个提交。"
+msgstr "您在执行将分支 '%s' 变基到 '%s' 的操作时编辑提交。"
 
 #: wt-status.c:1035
 msgid "You are currently editing a commit during a rebase."
-msgstr "您正在变基过程中编辑一个提交。"
+msgstr "您在执行变基操作时编辑提交。"
 
 #  译者：注意保持前导空格
 #: wt-status.c:1038
@@ -1710,7 +1710,7 @@ msgstr "  （当您对您的修改满意后执行 \"git rebase --continue\"）"
 #: wt-status.c:1050
 #, c-format
 msgid "You are currently cherry-picking commit %s."
-msgstr "您正在做拣选提交 %s。"
+msgstr "您在执行拣选提交 %s 的操作。"
 
 #  译者：注意保持前导空格
 #: wt-status.c:1055
@@ -1730,7 +1730,7 @@ msgstr "  （使用 \"git cherry-pick --abort\" 以取消拣选操作）"
 #: wt-status.c:1069
 #, c-format
 msgid "You are currently reverting commit %s."
-msgstr "您正在反转提交 %s 。"
+msgstr "您在执行反转提交 %s 的操作。"
 
 #  译者：注意保持前导空格
 #: wt-status.c:1074
@@ -1750,11 +1750,11 @@ msgstr "  （使用 \"git revert --abort\" 以取消反转提交操作）"
 #: wt-status.c:1090
 #, c-format
 msgid "You are currently bisecting, started from branch '%s'."
-msgstr "您正在从分支 '%s' 开始做二分查找。"
+msgstr "您在执行从分支 '%s' 开始的二分查找操作。"
 
 #: wt-status.c:1094
 msgid "You are currently bisecting."
-msgstr "您正在做二分查找。"
+msgstr "您在执行二分查找操作。"
 
 #  译者：注意保持前导空格
 #: wt-status.c:1097
@@ -1767,7 +1767,7 @@ msgstr "位于分支 "
 
 #: wt-status.c:1279
 msgid "rebase in progress; onto "
-msgstr "变基正在进行中；至 "
+msgstr "变基操作正在进行中；至 "
 
 #: wt-status.c:1286
 msgid "HEAD detached at "
@@ -5254,8 +5254,9 @@ msgstr ""
 "git fmt-merge-msg [-m <message>] [--log[=<n>]|--no-log] [--file <file>]"
 
 #: builtin/fmt-merge-msg.c:663 builtin/fmt-merge-msg.c:666 builtin/grep.c:702
-#: builtin/merge.c:196 builtin/show-branch.c:654 builtin/show-ref.c:178
-#: builtin/tag.c:446 parse-options.h:135 parse-options.h:242
+#: builtin/merge.c:196 builtin/repack.c:160 builtin/repack.c:164
+#: builtin/show-branch.c:654 builtin/show-ref.c:178 builtin/tag.c:446
+#: parse-options.h:135 parse-options.h:242
 msgid "n"
 msgstr "n"
 
@@ -6211,17 +6212,17 @@ msgstr "指定 git 版本库是多个用户之间共享的"
 msgid "be quiet"
 msgstr "保持安静"
 
-#: builtin/init-db.c:522 builtin/init-db.c:529
+#: builtin/init-db.c:525 builtin/init-db.c:530
 #, c-format
 msgid "cannot mkdir %s"
 msgstr "不能创建目录 %s"
 
-#: builtin/init-db.c:533
+#: builtin/init-db.c:534
 #, c-format
 msgid "cannot chdir to %s"
 msgstr "不能切换目录到 %s"
 
-#: builtin/init-db.c:555
+#: builtin/init-db.c:556
 #, c-format
 msgid ""
 "%s (or --work-tree=<directory>) not allowed without specifying %s (or --git-"
@@ -6230,11 +6231,11 @@ msgstr ""
 "不允许 %s（或 --work-tree=<directory>）而没有指定 %s（或 --git-"
 "dir=<directory>）"
 
-#: builtin/init-db.c:579
+#: builtin/init-db.c:580
 msgid "Cannot access current working directory"
 msgstr "不能访问当前工作目录"
 
-#: builtin/init-db.c:586
+#: builtin/init-db.c:587
 #, c-format
 msgid "Cannot access work tree '%s'"
 msgstr "不能访问工作区 '%s'"
@@ -10118,7 +10119,7 @@ msgstr ""
 
 #: git-rebase.sh:201
 msgid "The pre-rebase hook refused to rebase."
-msgstr "钩子 pre-rebase 拒绝变基。"
+msgstr "钩子 pre-rebase 拒绝变基操作。"
 
 #: git-rebase.sh:206
 msgid "It looks like git-am is in progress. Cannot rebase."
@@ -10165,12 +10166,12 @@ msgid ""
 "and run me again.  I am stopping in case you still have something\n"
 "valuable there."
 msgstr ""
-"好像已有一个 $state_dir_base 目录，我怀疑您正处于另外一个变基过程中。\n"
-"如果是这样，请尝试执行\n"
+"好像已有 $state_dir_base 目录，我怀疑您正处于另外一个变基操作\n"
+"过程中。 如果是这样，请执行\n"
 "\t$cmd_live_rebase\n"
 "如果不是这样，请执行\n"
 "\t$cmd_clear_stale_rebase\n"
-"然后再重新执行变基。为避免您丢失重要数据，我已经停止当前操作。"
+"然后再重新执行变基操作。 为避免丢失重要数据，我已经停止当前操作。"
 
 #: git-rebase.sh:456
 #, sh-format
