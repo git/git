@@ -109,13 +109,14 @@ static void show_entry(struct diff_options *opt, const char *prefix,
 }
 
 static void skip_uninteresting(struct tree_desc *t, struct strbuf *base,
-			       struct diff_options *opt,
-			       enum interesting *match)
+			       struct diff_options *opt)
 {
+	enum interesting match;
+
 	while (t->size) {
-		*match = tree_entry_interesting(&t->entry, base, 0, &opt->pathspec);
-		if (*match) {
-			if (*match == all_entries_not_interesting)
+		match = tree_entry_interesting(&t->entry, base, 0, &opt->pathspec);
+		if (match) {
+			if (match == all_entries_not_interesting)
 				t->size = 0;
 			break;
 		}
@@ -128,8 +129,6 @@ int diff_tree(struct tree_desc *t1, struct tree_desc *t2,
 {
 	struct strbuf base;
 	int baselen = strlen(base_str);
-	enum interesting t1_match = entry_not_interesting;
-	enum interesting t2_match = entry_not_interesting;
 
 	/* Enable recursion indefinitely */
 	opt->pathspec.recursive = DIFF_OPT_TST(opt, RECURSIVE);
@@ -141,8 +140,8 @@ int diff_tree(struct tree_desc *t1, struct tree_desc *t2,
 		if (diff_can_quit_early(opt))
 			break;
 		if (opt->pathspec.nr) {
-			skip_uninteresting(t1, &base, opt, &t1_match);
-			skip_uninteresting(t2, &base, opt, &t2_match);
+			skip_uninteresting(t1, &base, opt);
+			skip_uninteresting(t2, &base, opt);
 		}
 		if (!t1->size) {
 			if (!t2->size)
