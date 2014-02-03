@@ -1311,6 +1311,20 @@ void diff_tree_combined(const unsigned char *sha1,
 	struct combine_diff_path *p, *paths = NULL;
 	int i, num_paths, needsep, show_log_first, num_parent = parents->nr;
 
+	/* nothing to do, if no parents */
+	if (!num_parent)
+		return;
+
+	show_log_first = !!rev->loginfo && !rev->no_commit_id;
+	needsep = 0;
+	if (show_log_first) {
+		show_log(rev);
+
+		if (rev->verbose_header && opt->output_format)
+			printf("%s%c", diff_line_prefix(opt),
+			       opt->line_termination);
+	}
+
 	diffopts = *opt;
 	copy_pathspec(&diffopts.pathspec, &opt->pathspec);
 	diffopts.output_format = DIFF_FORMAT_NO_OUTPUT;
@@ -1319,8 +1333,6 @@ void diff_tree_combined(const unsigned char *sha1,
 	/* tell diff_tree to emit paths in sorted (=tree) order */
 	diffopts.orderfile = NULL;
 
-	show_log_first = !!rev->loginfo && !rev->no_commit_id;
-	needsep = 0;
 	/* find set of paths that everybody touches */
 	for (i = 0; i < num_parent; i++) {
 		/* show stat against the first parent even
@@ -1335,14 +1347,6 @@ void diff_tree_combined(const unsigned char *sha1,
 		diff_tree_sha1(parents->sha1[i], sha1, "", &diffopts);
 		diffcore_std(&diffopts);
 		paths = intersect_paths(paths, i, num_parent);
-
-		if (show_log_first && i == 0) {
-			show_log(rev);
-
-			if (rev->verbose_header && opt->output_format)
-				printf("%s%c", diff_line_prefix(opt),
-				       opt->line_termination);
-		}
 
 		/* if showing diff, show it in requested order */
 		if (diffopts.output_format != DIFF_FORMAT_NO_OUTPUT &&
