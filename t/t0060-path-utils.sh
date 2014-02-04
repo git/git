@@ -201,6 +201,16 @@ test_expect_success 'prefix_path works with only absolute path to work tree' '
 	test_cmp expected actual
 '
 
+test_expect_success 'prefix_path rejects absolute path to dir with same beginning as work tree' '
+	test_must_fail test-path-utils prefix_path prefix "$(pwd)a"
+'
+
+test_expect_success SYMLINKS 'prefix_path works with absolute path to a symlink to work tree having  same beginning as work tree' '
+	git init repo &&
+	ln -s repo repolink &&
+	test "a" = "$(cd repo && test-path-utils prefix_path prefix "$(pwd)/../repolink/a")"
+'
+
 relative_path /foo/a/b/c/	/foo/a/b/	c/
 relative_path /foo/a/b/c/	/foo/a/b	c/
 relative_path /foo/a//b//c/	///foo/a/b//	c/		POSIX
