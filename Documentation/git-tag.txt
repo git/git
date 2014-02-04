@@ -103,8 +103,9 @@ OPTIONS
 +
 This option is only applicable when listing tags without annotation lines.
 
---contains <commit>::
-	Only list tags which contain the specified commit.
+--contains [<commit>]::
+	Only list tags which contain the specified commit (HEAD if not
+	specified).
 
 --points-at <object>::
 	Only list tags of the given object.
