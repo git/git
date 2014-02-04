@@ -36,7 +36,7 @@ test_expect_success 'ls-files -h in corrupt repository' '
 	test_i18ngrep "[Uu]sage: git ls-files " broken/usage
 '
 
-test_expect_failure SYMLINKS 'ls-files with absolute paths to symlinks' '
+test_expect_success SYMLINKS 'ls-files with absolute paths to symlinks' '
 	mkdir subs &&
 	ln -s nosuch link &&
 	ln -s ../nosuch subs/link &&
