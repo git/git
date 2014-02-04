@@ -579,7 +579,7 @@ static struct cache_entry *create_alias_ce(struct cache_entry *ce, struct cache_
 	return new;
 }
 
-static void record_intent_to_add(struct cache_entry *ce)
+void set_object_name_for_intent_to_add_entry(struct cache_entry *ce)
 {
 	unsigned char sha1[20];
 	if (write_sha1_file("", 0, blob_type, sha1))
@@ -665,7 +665,7 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 		if (index_path(ce->sha1, path, st, HASH_WRITE_OBJECT))
 			return error("unable to index file %s", path);
 	} else
-		record_intent_to_add(ce);
+		set_object_name_for_intent_to_add_entry(ce);
 
 	if (ignore_case && alias && different_name(ce, alias))
 		ce = create_alias_ce(ce, alias);
