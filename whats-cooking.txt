@@ -1,21 +1,17 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jan 2014, #06; Wed, 29)
-X-master-at: bd3e186d811a13d8687584856f345a767e3e4d67
-X-next-at: 614c158afed5077691c76d341b6888596b24b9fd
+Subject: What's cooking in git.git (Feb 2014, #01; Mon, 3)
+X-master-at: be961c292f1d36097afa1690df68cf90f655c855
+X-next-at: d198f5de1081dd0a829bcc347e50bf5423f2e778
 
-What's cooking in git.git (Jan 2014, #06; Wed, 29)
+What's cooking in git.git (Feb 2014, #01; Mon, 3)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-The tip of 'master' is at 1.9-rc1; as far as new features are
-concerned, this is pretty much it until the final.
-
-On the maintenance track, we may have another 1.8.5.x maintenance
-release before 1.9 final is tagged in 2-3 weeks.
+The tip of 'master' is at 1.9-rc2.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -25,70 +21,66 @@ of the repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* bc/gpg-sign-everywhere (2014-01-27) 9 commits
- - pull: add the --gpg-sign option.
- - rebase: add the --gpg-sign option
- - rebase: parse options in stuck-long mode
- - rebase: don't try to match -M option
- - rebase: remove useless arguments check
- - am: add the --gpg-sign option
- - am: parse options in stuck-long mode
- - git-sh-setup.sh: add variable to use the stuck-long mode
- - cherry-pick, revert: add the --gpg-sign option
+* bs/stdio-undef-before-redef (2014-01-31) 1 commit
+  (merged to 'next' on 2014-01-31 at 9874918)
+ + git-compat-util.h: #undef (v)snprintf before #define them
 
- Teach "--gpg-sign" option to many commands that create commits.
+ When we replace broken macros from stdio.h in git-compat-util.h,
+ #undef them to avoid re-definition warnings from the C
+ preprocessor.
 
- Changes to some scripted Porcelains use unsafe variable
- substitutions and need to be tightened.
-
- Waiting for a reroll.
+ Will cook in 'next'.
 
 
-* ds/rev-parse-required-args (2014-01-28) 1 commit
- - rev-parse: check i before using argv[i] against argc
+* ep/varscope (2014-01-31) 7 commits
+  (merged to 'next' on 2014-01-31 at d198f5d)
+ + builtin/gc.c: reduce scope of variables
+ + builtin/fetch.c: reduce scope of variable
+ + builtin/commit.c: reduce scope of variables
+ + builtin/clean.c: reduce scope of variable
+ + builtin/blame.c: reduce scope of variables
+ + builtin/apply.c: reduce scope of variables
+ + bisect.c: reduce scope of variable
 
- "git rev-parse --default" without the required option argument did
- not diagnose it as an error.
+ Shrink lifetime of variables by moving their definitions to an
+ inner scope where appropriate.
 
- Will merge to 'next'.
-
-
-* jk/config-path-include-fix (2014-01-28) 2 commits
- - handle_path_include: don't look at NULL value
- - expand_user_path: do not look at NULL path
-
- include.path variable (or any variable that expects a path that can
- use ~username expansion) in the configuration file is not a
- boolean, but the code failed to check it.
-
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
-* jk/repack-honor-pack-keep (2014-01-28) 1 commit
- - repack: add `repack.honorpackkeep` config var
- (this branch uses jk/pack-bitmap.)
+* mw/symlinks (2014-02-03) 5 commits
+ - setup: don't dereference in-tree symlinks for absolute paths
+ - setup: add 'abspath_part_inside_repo' function
+ - t0060: add tests for prefix_path when path begins with work tree
+ - t0060: add test for prefix_path when path == work tree
+ - t0060: add test for manipulating symlinks via absolute paths
 
- Optionally allow "git repack" to include objects that exist in kept
- packs in newly created packfiles.
+ All subcommands that take pathspecs mishandled an in-tree symbolic
+ link when given it as a full path from the root (which arguably is
+ a sick way to use pathspecs).  "git ls-files -s $(pwd)/RelNotes" in
+ our tree is an easy reproduction recipe.
 
- Waiting for response to review comments.
-
-
-* nd/submodule-pathspec-ending-with-slash (2014-01-27) 8 commits
- - clean: use cache_name_is_other()
- - clean: replace match_pathspec() with dir_path_match()
- - Pass directory indicator to match_pathspec_item()
- - match_pathspec: match pathspec "foo/" against directory "foo"
- - dir.c: prepare match_pathspec_item for taking more flags
- - Rename match_pathspec_depth() to match_pathspec()
- - Convert some match_pathspec_depth() to dir_path_match()
- - Convert some match_pathspec_depth() to ce_path_match()
-
- Allow "git cmd path/", when the 'path' is where a submodule is
- bound to the top-level working tree, to match 'path', despite the
- extra and unnecessary trailing slash.
+ We may want to add tests to illustrate symptoms that are visible to
+ the end user, but the updated code looked reasonable.
 
  Will merge to 'next'.
+
+
+* ks/diff-c-with-diff-order-more (2014-02-03) 5 commits
+ - combine-diff: move changed-paths scanning logic into its own function
+ - combine-diff: move show_log_first logic/action out of paths scanning
+ - tree-diff: no need to pass match to skip_uninteresting()
+ - tree-diff: no need to manually verify that there is no mode change for a path
+ - tests: add checking that combine-diff emits only correct paths
+ (this branch uses ks/diff-c-with-diff-order.)
+
+ By avoiding running full two-way diff between the resulting
+ revision and each of its N parents, combine-diff can be sped up
+ significantly.
+
+ Not quite sure if we want another custom tree walker for it, or it
+ should be written by using existing two-way diff with the result of
+ earlier intersect_path() as pathspec.
 
 --------------------------------------------------
 [Stalled]
@@ -380,8 +372,78 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* lt/request-pull (2014-01-23) 3 commits
+* bc/gpg-sign-everywhere (2014-02-03) 9 commits
+ - pull: add the --gpg-sign option.
+ - rebase: add the --gpg-sign option
+ - rebase: parse options in stuck-long mode
+ - rebase: don't try to match -M option
+ - rebase: remove useless arguments check
+ - am: add the --gpg-sign option
+ - am: parse options in stuck-long mode
+ - git-sh-setup.sh: add variable to use the stuck-long mode
+ - cherry-pick, revert: add the --gpg-sign option
+
+ Teach "--gpg-sign" option to many commands that create commits.
+
+ Changes to some scripted Porcelains use unsafe variable
+ substitutions and still need to be tightened.
+
+ Waiting for a reroll.
+
+
+* ds/rev-parse-required-args (2014-01-28) 1 commit
+  (merged to 'next' on 2014-01-31 at 73b7514)
+ + rev-parse: check i before using argv[i] against argc
+
+ "git rev-parse --default" without the required option argument did
+ not diagnose it as an error.
+
+ Will cook in 'next'.
+
+
+* jk/config-path-include-fix (2014-01-28) 2 commits
+  (merged to 'next' on 2014-01-31 at 8550a9e)
+ + handle_path_include: don't look at NULL value
+ + expand_user_path: do not look at NULL path
+
+ include.path variable (or any variable that expects a path that can
+ use ~username expansion) in the configuration file is not a
+ boolean, but the code failed to check it.
+
+ Will cook in 'next'.
+
+
+* jk/repack-honor-pack-keep (2014-01-28) 1 commit
+ - repack: add `repack.honorpackkeep` config var
+ (this branch uses jk/pack-bitmap.)
+
+ Optionally allow "git repack" to include objects that exist in kept
+ packs in newly created packfiles.
+
+ Waiting for response to review comments.
+
+
+* nd/submodule-pathspec-ending-with-slash (2014-01-27) 8 commits
+  (merged to 'next' on 2014-01-31 at cfddaa5)
+ + clean: use cache_name_is_other()
+ + clean: replace match_pathspec() with dir_path_match()
+ + Pass directory indicator to match_pathspec_item()
+ + match_pathspec: match pathspec "foo/" against directory "foo"
+ + dir.c: prepare match_pathspec_item for taking more flags
+ + Rename match_pathspec_depth() to match_pathspec()
+ + Convert some match_pathspec_depth() to dir_path_match()
+ + Convert some match_pathspec_depth() to ce_path_match()
+
+ Allow "git cmd path/", when the 'path' is where a submodule is
+ bound to the top-level working tree, to match 'path', despite the
+ extra and unnecessary trailing slash.
+
+ Will cook in 'next'.
+
+
+* lt/request-pull (2014-01-31) 4 commits
  - pull-request: test updates
+ - request-pull: pick up tag message as before
  - Make request-pull able to take a refspec of form local:remote
  - Make 'git request-pull' more strict about matching
 
@@ -402,12 +464,15 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* nd/diff-quiet-stat-dirty (2014-01-29) 3 commits
- - diff: turn skip_stat_unmatch on selectively
- - diff: do not quit early on stat-dirty files
- - Move diffcore_skip_stat_unmatch core logic out for reuse later
+* nd/diff-quiet-stat-dirty (2014-01-27) 2 commits
+  (merged to 'next' on 2014-01-31 at 8b6e35d)
+ + diff: do not quit early on stat-dirty files
+ + Move diffcore_skip_stat_unmatch core logic out for reuse later
 
- Will merge to 'next'.
+ "git diff --quiet -- pathspec1 pathspec2" sometimes did not return
+ correct status value.
+
+ Will cook in 'next'.
 
 
 * cc/interpret-trailers (2014-01-27) 17 commits
@@ -442,12 +507,13 @@ of the repositories listed at
  Will hold.
 
 
-* ks/diff-c-with-diff-order (2014-01-29) 5 commits
- - combine_diff: simplify intersect_paths() further
+* ks/diff-c-with-diff-order (2014-02-03) 5 commits
+ - combine-diff: simplify intersect_paths() further
  - combine-diff: combine_diff_path.len is not needed anymore
  - combine-diff: optimize combine_diff_path sets intersection
  - diff test: add tests for combine-diff with orderfile
  - diffcore-order: export generic ordering interface
+ (this branch is used by ks/diff-c-with-diff-order-more.)
 
  Teach combine-diff to honour the path-output-order imposed by
  diffcore-order.
