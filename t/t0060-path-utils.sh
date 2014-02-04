@@ -195,6 +195,12 @@ test_expect_failure SYMLINKS 'prefix_path works with absolute paths to work tree
 	test "$(test-path-utils prefix_path prefix "$(pwd)/symlink")" = "symlink"
 '
 
+test_expect_success 'prefix_path works with only absolute path to work tree' '
+	echo "" >expected &&
+	test-path-utils prefix_path prefix "$(pwd)" >actual &&
+	test_cmp expected actual
+'
+
 relative_path /foo/a/b/c/	/foo/a/b/	c/
 relative_path /foo/a/b/c/	/foo/a/b	c/
 relative_path /foo/a//b//c/	///foo/a/b//	c/		POSIX
