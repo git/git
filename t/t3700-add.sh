@@ -272,6 +272,25 @@ test_expect_success '"add non-existent" should fail' '
 	! (git ls-files | grep "non-existent")
 '
 
+test_expect_success 'git add -A on empty repo does not error out' '
+	rm -fr empty &&
+	git init empty &&
+	(
+		cd empty &&
+		git add -A . &&
+		git add -A
+	)
+'
+
+test_expect_success '"git add ." in empty repo' '
+	rm -fr empty &&
+	git init empty &&
+	(
+		cd empty &&
+		git add .
+	)
+'
+
 test_expect_success 'git add --dry-run of existing changed file' "
 	echo new >>track-this &&
 	git add --dry-run track-this >actual 2>&1 &&
