@@ -213,7 +213,7 @@ objects from the source repository into a pack in the cloned repository.
 --separate-git-dir=<git dir>::
 	Instead of placing the cloned repository where it is supposed
 	to be, place the cloned repository at the specified directory,
-	then make a filesytem-agnostic Git symbolic link to there.
+	then make a filesystem-agnostic Git symbolic link to there.
 	The result is Git repository can be separated from working
 	tree.
 

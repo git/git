@@ -630,13 +630,13 @@ need to set this element to empty list i.e. `[]`.
 
 override::
 	If this field has a true value then the given feature is
-	overriddable, which means that it can be configured
+	overridable, which means that it can be configured
 	(or enabled/disabled) on a per-repository basis.
 +
 Usually given "<feature>" is configurable via the `gitweb.<feature>`
 config variable in the per-repository Git configuration file.
 +
-*Note* that no feature is overriddable by default.
+*Note* that no feature is overridable by default.
 
 sub::
 	Internal detail of implementation.  What is important is that

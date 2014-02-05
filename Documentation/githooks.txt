@@ -251,7 +251,7 @@ three parameters:
 
  - the name of the ref being updated,
  - the old object name stored in the ref,
- - and the new objectname to be stored in the ref.
+ - and the new object name to be stored in the ref.
 
 A zero exit from the update hook allows the ref to be updated.
 Exiting with a non-zero status prevents 'git-receive-pack'
