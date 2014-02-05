@@ -148,6 +148,10 @@ do
 			then
 				skip_test=1
 				skip_doc=1
+			elif git diff --quiet "$vtree" "$rtree" -- . \
+			    ':!GIT-VERSION-GEN' ':!Documentation/'
+			then
+				skip_test=1
 			fi
 			dvtree=$(git rev-parse --verify "$version:Documentation/")
 			drtree=$(git rev-parse --verify "$revision:Documentation/")
@@ -155,14 +159,6 @@ do
 			then
 				skip_doc=1
 			fi
-			case "$branch, $branches " in
-			jch,*' next '*)
-				if git diff --quiet --exit-code jch next
-				then
-					skip_test=1
-				fi
-				;;
-			esac
 			;;
 		esac
 
