@@ -885,14 +885,6 @@ void transport_take_over(struct transport *transport,
 	transport->cannot_reuse = 1;
 }
 
-static int is_local(const char *url)
-{
-	const char *colon = strchr(url, ':');
-	const char *slash = strchr(url, '/');
-	return !colon || (slash && slash < colon) ||
-		has_dos_drive_prefix(url);
-}
-
 static int is_file(const char *url)
 {
 	struct stat buf;
@@ -941,7 +933,7 @@ struct transport *transport_get(struct remote *remote, const char *url)
 		ret->fetch = fetch_objs_via_rsync;
 		ret->push = rsync_transport_push;
 		ret->smart_options = NULL;
-	} else if (is_local(url) && is_file(url) && is_bundle(url, 1)) {
+	} else if (url_is_local_not_ssh(url) && is_file(url) && is_bundle(url, 1)) {
 		struct bundle_transport_data *data = xcalloc(1, sizeof(*data));
 		ret->data = data;
 		ret->get_refs_list = get_refs_from_bundle;
@@ -1297,7 +1289,7 @@ char *transport_anonymize_url(const char *url)
 	size_t anon_len, prefix_len = 0;
 
 	anon_part = strchr(url, '@');
-	if (is_local(url) || !anon_part)
+	if (url_is_local_not_ssh(url) || !anon_part)
 		goto literal_copy;
 
 	anon_len = strlen(++anon_part);
