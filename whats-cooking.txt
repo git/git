@@ -1,17 +1,17 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Feb 2014, #01; Mon, 3)
-X-master-at: be961c292f1d36097afa1690df68cf90f655c855
-X-next-at: d198f5de1081dd0a829bcc347e50bf5423f2e778
+Subject: What's cooking in git.git (Feb 2014, #02; Wed, 5)
+X-master-at: 89ba81dc7643f5b126b15b15a8dcd3893d05ee47
+X-next-at: ed4ee9f6d9847e9cfc1ea6faeea20ae612ccbcfb
 
-What's cooking in git.git (Feb 2014, #01; Mon, 3)
+What's cooking in git.git (Feb 2014, #02; Wed, 5)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-The tip of 'master' is at 1.9-rc2.
+v1.9.0-rc3 is expected to happen this weekend or early next week.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -21,86 +21,93 @@ of the repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* bs/stdio-undef-before-redef (2014-01-31) 1 commit
-  (merged to 'next' on 2014-01-31 at 9874918)
- + git-compat-util.h: #undef (v)snprintf before #define them
+* aj/ada-diff-word-pattern (2014-02-05) 1 commit
+ - userdiff: update Ada patterns
 
- When we replace broken macros from stdio.h in git-compat-util.h,
- #undef them to avoid re-definition warnings from the C
- preprocessor.
-
- Will cook in 'next'.
+ Will merge to 'next' and then to 'master'.
 
 
-* ep/varscope (2014-01-31) 7 commits
-  (merged to 'next' on 2014-01-31 at d198f5d)
- + builtin/gc.c: reduce scope of variables
- + builtin/fetch.c: reduce scope of variable
- + builtin/commit.c: reduce scope of variables
- + builtin/clean.c: reduce scope of variable
- + builtin/blame.c: reduce scope of variables
- + builtin/apply.c: reduce scope of variables
- + bisect.c: reduce scope of variable
+* jk/makefile (2014-02-05) 16 commits
+ - FIXUP
+ - move LESS/LV pager environment to Makefile
+ - Makefile: teach scripts to include make variables
+ - FIXUP
+ - Makefile: auto-build C strings from make variables
+ - Makefile: drop *_SQ variables
+ - FIXUP
+ - Makefile: add c-quote helper function
+ - Makefile: introduce sq function for shell-quoting
+ - Makefile: always create files via make-var
+ - Makefile: store GIT-* sentinel files in MAKE/
+ - Makefile: prefer printf to echo for GIT-*
+ - Makefile: use tempfile/mv strategy for GIT-*
+ - Makefile: introduce make-var helper function
+ - Makefile: fix git-instaweb dependency on gitweb
+ - Makefile: drop USE_GETTEXT_SCHEME from GIT-CFLAGS
 
- Shrink lifetime of variables by moving their definitions to an
- inner scope where appropriate.
 
- Will cook in 'next'.
-
-
-* mw/symlinks (2014-02-03) 5 commits
- - setup: don't dereference in-tree symlinks for absolute paths
- - setup: add 'abspath_part_inside_repo' function
- - t0060: add tests for prefix_path when path begins with work tree
- - t0060: add test for prefix_path when path == work tree
- - t0060: add test for manipulating symlinks via absolute paths
-
- All subcommands that take pathspecs mishandled an in-tree symbolic
- link when given it as a full path from the root (which arguably is
- a sick way to use pathspecs).  "git ls-files -s $(pwd)/RelNotes" in
- our tree is an easy reproduction recipe.
-
- We may want to add tests to illustrate symptoms that are visible to
- the end user, but the updated code looked reasonable.
+* ks/tree-diff-walk (2014-02-05) 4 commits
+ - revision: convert to using diff_tree_sha1()
+ - line-log: convert to using diff_tree_sha1()
+ - tree-diff: convert diff_root_tree_sha1() to just call diff_tree_sha1 with old=NULL
+ - tree-diff: allow diff_tree_sha1 to accept NULL sha1
 
  Will merge to 'next'.
 
 
-* ks/diff-c-with-diff-order-more (2014-02-03) 5 commits
- - combine-diff: move changed-paths scanning logic into its own function
- - combine-diff: move show_log_first logic/action out of paths scanning
- - tree-diff: no need to pass match to skip_uninteresting()
- - tree-diff: no need to manually verify that there is no mode change for a path
- - tests: add checking that combine-diff emits only correct paths
- (this branch uses ks/diff-c-with-diff-order.)
+* nd/reset-intent-to-add (2014-02-05) 1 commit
+ - reset: support "--mixed --intent-to-add" mode
 
- By avoiding running full two-way diff between the resulting
- revision and each of its N parents, combine-diff can be sped up
- significantly.
+ Will merge to 'next'.
 
- Not quite sure if we want another custom tree walker for it, or it
- should be written by using existing two-way diff with the result of
- earlier intersect_path() as pathspec.
+
+* nd/tag-doc (2014-02-04) 1 commit
+ - git-tag.txt: <commit> for --contains is optional
+
+ Will merge to 'next' and then to 'master'.
+
+
+* nd/test-rename-reset (2014-02-04) 1 commit
+ - t7101, t7014: rename test files to indicate what that file is for
+
+ Will merge to 'next'.
+
+
+* tb/repack-fix-renames (2014-02-05) 1 commit
+ - repack.c: rename a few variables
+
+ Perhaps unneeded, as the longer-term plan is to drop the codeblock
+ this change touches.
+
+ Will discard.
+
+
+* tr/remerge-diff (2014-02-05) 6 commits
+ - log --remerge-diff: show what the conflict resolution changed
+ - merge-recursive: allow storing conflict hunks in index
+ - Fold all merge diff variants into an enum
+ - combine-diff: do not pass revs->dense_combined_merges redundantly
+ - log: add a merge base inspection option
+ - pretty: refactor add_merge_info() into parts
+ (this branch uses tr/merge-recursive-index-only.)
+
+ "log -p" output learns a new way to let users inspect a merge
+ commit by showing the differences between the automerged result
+ with conflicts the person who recorded the merge would have seen
+ and the final conflict resolution that was recorded in the merge.
+
+ RFC.
+
+
+* ow/manpages-typofix (2014-02-05) 1 commit
+ - Documentation: fix typos in man pages
+
+ Various typofixes, all looked correct.
+
+ Will merge to 'next' and then to 'master'.
 
 --------------------------------------------------
 [Stalled]
-
-* jk/color-for-more-pagers (2014-01-17) 4 commits
- - pager: disable colors for some known-bad configurations
- - DONOTMERGE: needs matching change to git-sh-setup
- - setup_pager: set MORE=R
- - setup_pager: refactor LESS/LV environment setting
-
- 'more' implementation of BSD wants to be told with MORE=R
- environment before it shows colored output, while 'more' on some
- other platforms will die when seeing MORE=R environment.
-
- It appears that we are coming to the consensus that trying to be
- too intimately knowledgeable about quirks of various pager
- implementations on different platforms is a losing proposition.
-
- Waiting for a reroll.
-
 
 * po/everyday-doc (2014-01-27) 1 commit
  - Make 'git help everyday' work
@@ -372,6 +379,69 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* bs/stdio-undef-before-redef (2014-01-31) 1 commit
+  (merged to 'next' on 2014-01-31 at 9874918)
+ + git-compat-util.h: #undef (v)snprintf before #define them
+
+ When we replace broken macros from stdio.h in git-compat-util.h,
+ #undef them to avoid re-definition warnings from the C
+ preprocessor.
+
+ Will cook in 'next'.
+
+
+* ep/varscope (2014-01-31) 7 commits
+  (merged to 'next' on 2014-01-31 at d198f5d)
+ + builtin/gc.c: reduce scope of variables
+ + builtin/fetch.c: reduce scope of variable
+ + builtin/commit.c: reduce scope of variables
+ + builtin/clean.c: reduce scope of variable
+ + builtin/blame.c: reduce scope of variables
+ + builtin/apply.c: reduce scope of variables
+ + bisect.c: reduce scope of variable
+
+ Shrink lifetime of variables by moving their definitions to an
+ inner scope where appropriate.
+
+ Will cook in 'next'.
+
+
+* mw/symlinks (2014-02-04) 6 commits
+ - setup: don't dereference in-tree symlinks for absolute paths
+ - setup: add abspath_part_inside_repo() function
+ - t0060: add tests for prefix_path when path begins with work tree
+ - t0060: add test for prefix_path when path == work tree
+ - t0060: add test for prefix_path on symlinks via absolute paths
+ - t3004: add test for ls-files on symlinks via absolute paths
+
+ All subcommands that take pathspecs mishandled an in-tree symbolic
+ link when given it as a full path from the root (which arguably is
+ a sick way to use pathspecs).  "git ls-files -s $(pwd)/RelNotes" in
+ our tree is an easy reproduction recipe.
+
+ We may want to add tests to illustrate symptoms that are visible to
+ the end user, but the updated code looked reasonable.
+
+ Will merge to 'next'.
+
+
+* ks/diff-c-with-diff-order-more (2014-02-05) 5 commits
+ - combine-diff: move changed-paths scanning logic into its own function
+ - combine-diff: move show_log_first logic/action out of paths scanning
+ - tree-diff: no need to pass match to skip_uninteresting()
+ - tree-diff: no need to manually verify that there is no mode change for a path
+ - tests: add checking that combine-diff emits only correct paths
+ (this branch uses ks/diff-c-with-diff-order.)
+
+ By avoiding running full two-way diff between the resulting
+ revision and each of its N parents, combine-diff can be sped up
+ significantly.
+
+ Not quite sure if we want another custom tree walker for it, or it
+ should be written by using existing two-way diff with the result of
+ earlier intersect_path() as pathspec.
+
+
 * bc/gpg-sign-everywhere (2014-02-03) 9 commits
  - pull: add the --gpg-sign option.
  - rebase: add the --gpg-sign option
@@ -504,21 +574,22 @@ of the repositories listed at
 
  Code clean-up.
 
- Will hold.
+ Will cook in 'next'.
 
 
 * ks/diff-c-with-diff-order (2014-02-03) 5 commits
- - combine-diff: simplify intersect_paths() further
- - combine-diff: combine_diff_path.len is not needed anymore
- - combine-diff: optimize combine_diff_path sets intersection
- - diff test: add tests for combine-diff with orderfile
- - diffcore-order: export generic ordering interface
+  (merged to 'next' on 2014-02-04 at 24a8b2e)
+ + combine-diff: simplify intersect_paths() further
+ + combine-diff: combine_diff_path.len is not needed anymore
+ + combine-diff: optimize combine_diff_path sets intersection
+ + diff test: add tests for combine-diff with orderfile
+ + diffcore-order: export generic ordering interface
  (this branch is used by ks/diff-c-with-diff-order-more.)
 
  Teach combine-diff to honour the path-output-order imposed by
  diffcore-order.
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
 * bl/blame-full-history (2014-01-14) 1 commit
@@ -558,8 +629,7 @@ of the repositories listed at
  be used more pleasantly by checking out a concrete branch when
  cloning them to prime the well.
 
- This round seems to be almost ready; further discussions are of
- course very much welcomed.
+ Will merge to 'next'.
 
 
 * jk/warn-on-object-refname-ambiguity (2014-01-09) 6 commits
@@ -657,10 +727,11 @@ of the repositories listed at
  Will cook in 'next' until Git 2.0.
 
 
-* tr/merge-recursive-index-only (2013-10-28) 3 commits
+* tr/merge-recursive-index-only (2014-02-05) 3 commits
  - merge-recursive: -Xindex-only to leave worktree unchanged
  - merge-recursive: internal flag to avoid touching the worktree
  - merge-recursive: remove dead conditional in update_stages()
+ (this branch is used by tr/remerge-diff.)
 
  Will hold.
 
@@ -734,3 +805,19 @@ of the repositories listed at
 
  Teach parse-options machinery to optionally parse numbers with a
  unit suffix, e.g. 8g, 4m, 128k.
+
+
+* jk/color-for-more-pagers (2014-01-17) 4 commits
+ . pager: disable colors for some known-bad configurations
+ . DONOTMERGE: needs matching change to git-sh-setup
+ . setup_pager: set MORE=R
+ . setup_pager: refactor LESS/LV environment setting
+
+ 'more' implementation of BSD wants to be told with MORE=R
+ environment before it shows colored output, while 'more' on some
+ other platforms will die when seeing MORE=R environment.  But the
+ consensus is that trying to be too intimately knowledgeable about
+ quirks of various pager implementations on different platforms is a
+ losing proposition.
+
+ Will be superseded by jk/makefile series when it matures.
