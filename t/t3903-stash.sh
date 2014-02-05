@@ -673,4 +673,16 @@ test_expect_success 'store updates stash ref and reflog' '
 	grep quux bazzy
 '
 
+test_expect_success 'handle stash specification with spaces' '
+	git stash clear &&
+	echo pig >file &&
+	git stash &&
+	stamp=$(git log -g --format="%cd" -1 refs/stash) &&
+	test_tick &&
+	echo cow >file &&
+	git stash &&
+	git stash apply "stash@{$stamp}" &&
+	grep pig file
+'
+
 test_done
