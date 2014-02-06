@@ -139,20 +139,17 @@ do
 		?*)
 			;;
 		'')
-			case "$installed_source_trees" in
-			*" $rtree "*)
-				skip_test=1
-				;;
-			esac
-			if test "z$vtree" = "z$rtree"
-			then
-				skip_test=1
-				skip_doc=1
-			elif git diff --quiet "$vtree" "$rtree" -- . \
-			    ':!GIT-VERSION-GEN' ':!Documentation/'
-			then
-				skip_test=1
-			fi
+			for xtree in $installed_source_trees $vtree
+			do
+				if test "z$xtree" = "z$rtree" ||
+					git diff --quiet "$xtree" "$rtree" -- . \
+					':!GIT-VERSION-GEN' ':!Documentation/'
+				then
+					skip_test=1
+					break
+				fi
+			done
+
 			dvtree=$(git rev-parse --verify "$version:Documentation/")
 			drtree=$(git rev-parse --verify "$revision:Documentation/")
 			if test "z$dvtree" = "z$drtree"
