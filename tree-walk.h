@@ -16,7 +16,7 @@ struct tree_desc {
 static inline const unsigned char *tree_entry_extract(struct tree_desc *desc, const char **pathp, unsigned int *modep)
 {
 	*pathp = desc->entry.path;
-	*modep = canon_mode(desc->entry.mode);
+	*modep = desc->entry.mode;
 	return desc->entry.sha1;
 }
 
