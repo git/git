@@ -439,7 +439,8 @@ done:
 	}
 	strbuf_release(&req_buf);
 
-	consume_shallow_list(args, fd[0]);
+	if (!got_ready || !no_done)
+		consume_shallow_list(args, fd[0]);
 	while (flushes || multi_ack) {
 		int ack = get_ack(fd[0], result_sha1);
 		if (ack) {

@@ -199,5 +199,35 @@ EOF
 	)
 '
 
+# This test is tricky. We need large enough "have"s that fetch-pack
+# will put pkt-flush in between. Then we need a "have" the server
+# does not have, it'll send "ACK %s ready"
+test_expect_success 'no shallow lines after receiving ACK ready' '
+	(
+		cd shallow &&
+		for i in $(test_seq 10)
+		do
+			git checkout --orphan unrelated$i &&
+			test_commit unrelated$i &&
+			git push -q "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" \
+				refs/heads/unrelated$i:refs/heads/unrelated$i &&
+			git push -q ../clone/.git \
+				refs/heads/unrelated$i:refs/heads/unrelated$i ||
+			exit 1
+		done &&
+		git checkout master &&
+		test_commit new &&
+		git push  "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" master
+	) &&
+	(
+		cd clone &&
+		git checkout --orphan newnew &&
+		test_commit new-too &&
+		GIT_TRACE_PACKET="$TRASH_DIRECTORY/trace" git fetch --depth=2 &&
+		grep "fetch-pack< ACK .* ready" ../trace &&
+		! grep "fetch-pack> done" ../trace
+	)
+'
+
 stop_httpd
 test_done
