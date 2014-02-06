@@ -69,6 +69,12 @@ ends.
 Without multi_ack the client would have sent that c-b-a chain anyway,
 interleaved with S-R-Q.
 
+multi_ack_detailed
+------------------
+This is an extension of multi_ack that permits client to better
+understand the server's in-memory state. See pack-protocol.txt,
+section "Packfile Negotiation" for more information.
+
 thin-pack
 ---------
 
