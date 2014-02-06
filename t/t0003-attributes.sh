@@ -196,6 +196,16 @@ test_expect_success 'root subdir attribute test' '
 	attr_check subdir/a/i unspecified
 '
 
+test_expect_success 'using --git-dir and --work-tree' '
+	mkdir unreal real &&
+	git init real &&
+	echo "file test=in-real" >real/.gitattributes &&
+	(
+		cd unreal &&
+		attr_check file in-real "--git-dir ../real/.git --work-tree ../real"
+	)
+'
+
 test_expect_success 'setup bare' '
 	git clone --bare . bare.git
 '
