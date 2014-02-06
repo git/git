@@ -75,6 +75,18 @@ This is an extension of multi_ack that permits client to better
 understand the server's in-memory state. See pack-protocol.txt,
 section "Packfile Negotiation" for more information.
 
+no-done
+-------
+This capability should only be used with the smart HTTP protocol. If
+multi_ack_detailed and no-done are both present, then the sender is
+free to immediately send a pack following its first "ACK obj-id ready"
+message.
+
+Without no-done in the smart HTTP protocol, the server session would
+end and the client has to make another trip to send "done" before
+the server can send the pack. no-done removes the last round and
+thus slightly reduces latency.
+
 thin-pack
 ---------
 
