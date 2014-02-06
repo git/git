@@ -338,7 +338,8 @@ during a prior round.  This helps to ensure that at least one common
 ancestor is found before we give up entirely.
 
 Once the 'done' line is read from the client, the server will either
-send a final 'ACK obj-id' or it will send a 'NAK'. The server only sends
+send a final 'ACK obj-id' or it will send a 'NAK'. 'obj-id' is the object
+name of the last commit determined to be common. The server only sends
 ACK after 'done' if there is at least one common base and multi_ack or
 multi_ack_detailed is enabled. The server always sends NAK after 'done'
 if there is no common base found.
