@@ -1,17 +1,22 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Feb 2014, #02; Wed, 5)
-X-master-at: 89ba81dc7643f5b126b15b15a8dcd3893d05ee47
-X-next-at: ed4ee9f6d9847e9cfc1ea6faeea20ae612ccbcfb
+Subject: What's cooking in git.git (Feb 2014, #03; Fri, 7)
+X-master-at: 6a7071958620dadcce84e4faaa470407ae3d4108
+X-next-at: 34970086681ea5b5ca7b0bdca6356de6004e0245
 
-What's cooking in git.git (Feb 2014, #02; Wed, 5)
+What's cooking in git.git (Feb 2014, #03; Fri, 7)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-v1.9.0-rc3 is expected to happen this weekend or early next week.
+The tip of 'master' has been tagged as v1.9.0-rc3.  As a workaround
+to make life easier for third-party tools, the upcoming major
+release will be called "Git 1.9.0" (not "Git 1.9").  The first
+maintenance release for it will be "Git 1.9.1", and the major
+release after "Git 1.9.0" will either be "Git 2.0.0" or "Git
+1.10.0".
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -19,92 +24,56 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[New Topics]
+[Graduated to "master"]
 
 * aj/ada-diff-word-pattern (2014-02-05) 1 commit
- - userdiff: update Ada patterns
-
- Will merge to 'next' and then to 'master'.
-
-
-* jk/makefile (2014-02-05) 16 commits
- - FIXUP
- - move LESS/LV pager environment to Makefile
- - Makefile: teach scripts to include make variables
- - FIXUP
- - Makefile: auto-build C strings from make variables
- - Makefile: drop *_SQ variables
- - FIXUP
- - Makefile: add c-quote helper function
- - Makefile: introduce sq function for shell-quoting
- - Makefile: always create files via make-var
- - Makefile: store GIT-* sentinel files in MAKE/
- - Makefile: prefer printf to echo for GIT-*
- - Makefile: use tempfile/mv strategy for GIT-*
- - Makefile: introduce make-var helper function
- - Makefile: fix git-instaweb dependency on gitweb
- - Makefile: drop USE_GETTEXT_SCHEME from GIT-CFLAGS
-
-
-* ks/tree-diff-walk (2014-02-05) 4 commits
- - revision: convert to using diff_tree_sha1()
- - line-log: convert to using diff_tree_sha1()
- - tree-diff: convert diff_root_tree_sha1() to just call diff_tree_sha1 with old=NULL
- - tree-diff: allow diff_tree_sha1 to accept NULL sha1
-
- Will merge to 'next'.
-
-
-* nd/reset-intent-to-add (2014-02-05) 1 commit
- - reset: support "--mixed --intent-to-add" mode
-
- Will merge to 'next'.
+  (merged to 'next' on 2014-02-06 at 8062b22)
+ + userdiff: update Ada patterns
 
 
 * nd/tag-doc (2014-02-04) 1 commit
- - git-tag.txt: <commit> for --contains is optional
-
- Will merge to 'next' and then to 'master'.
-
-
-* nd/test-rename-reset (2014-02-04) 1 commit
- - t7101, t7014: rename test files to indicate what that file is for
-
- Will merge to 'next'.
-
-
-* tb/repack-fix-renames (2014-02-05) 1 commit
- - repack.c: rename a few variables
-
- Perhaps unneeded, as the longer-term plan is to drop the codeblock
- this change touches.
-
- Will discard.
-
-
-* tr/remerge-diff (2014-02-05) 6 commits
- - log --remerge-diff: show what the conflict resolution changed
- - merge-recursive: allow storing conflict hunks in index
- - Fold all merge diff variants into an enum
- - combine-diff: do not pass revs->dense_combined_merges redundantly
- - log: add a merge base inspection option
- - pretty: refactor add_merge_info() into parts
- (this branch uses tr/merge-recursive-index-only.)
-
- "log -p" output learns a new way to let users inspect a merge
- commit by showing the differences between the automerged result
- with conflicts the person who recorded the merge would have seen
- and the final conflict resolution that was recorded in the merge.
-
- RFC.
+  (merged to 'next' on 2014-02-06 at 9f02991)
+ + git-tag.txt: <commit> for --contains is optional
 
 
 * ow/manpages-typofix (2014-02-05) 1 commit
- - Documentation: fix typos in man pages
+  (merged to 'next' on 2014-02-06 at b482b8f)
+ + Documentation: fix typos in man pages
 
- Various typofixes, all looked correct.
+--------------------------------------------------
+[New Topics]
 
- Will merge to 'next' and then to 'master'.
+* jc/check-attr-honor-working-tree (2014-02-06) 2 commits
+ - check-attr: move to the top of working tree when in non-bare repository
+ - t0003: do not chdir the whole test process
+
+ "git check-attr" when (trying to) work on a repository with a
+ working tree did not work well when the working tree was specified
+ via --work-tree (and obviously with --git-dir).
+
+ The command also works in a bare repository but it reads from the
+ (possibly stale, irrelevant and/or nonexistent) index, which may
+ need to be fixed to read from HEAD, but that is a completely
+ separate issue.  As a related tangentto this separate issue, we may
+ want to also fix "check-ignore", which refuses to work in a bare
+ repository, to also operate in a bare one.
+
+
+* nd/http-fetch-shallow-fix (2014-02-07) 6 commits
+ - fetch-pack: fix deepen shallow over smart http with no-done cap
+ - protocol-capabilities.txt: document no-done
+ - protocol-capabilities.txt: refer multi_ack_detailed back to pack-protocol.txt
+ - pack-protocol.txt: clarify 'obj-id' in the last ACK after 'done'
+ - t5538: fix default http port
+ - test: rename http fetch and push test files
+
+ Attempting to deepen a shallow repository by fetching over smart
+ HTTP transport failed in the protocol exchange, when no-done
+ extension was used.  The fetching side waited for the list of
+ shallow boundary commits after the sending end stopped talking to
+ it.
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -131,6 +100,8 @@ of the repositories listed at
  Give an easier access to the tracking branches from "other" side in
  a triangular workflow by introducing B@{publish} that works in a
  similar way to how B@{upstream} does.
+
+ Meant to be used as a basis for whatever Ram wants to build on.
 
  Will hold.
 
@@ -179,8 +150,10 @@ of the repositories listed at
  ref mapping and ref deletion in a way similar to the natively
  supported transports.
 
- Reported to break t5541.
- Will hold.
+ Reported to break t5541, and has been stalled for a while without
+ fixes.
+
+ Will discard.
 
 
 * fc/completion (2013-12-09) 1 commit
@@ -189,7 +162,10 @@ of the repositories listed at
  SZEDER Gábor noticed that this breaks "git -c var=val alias" and
  also suggested a better description of the change.
 
- Will hold.
+ Has been stalled for a while without much comments from anybody
+ interested.
+
+ Will discard.
 
 
 * mo/subtree-split-updates (2013-12-10) 3 commits
@@ -197,7 +173,10 @@ of the repositories listed at
  - subtree: allow --squash and --message with push
  - subtree: support split --rejoin --squash
 
- Comments?
+ Has been stalled for a while without much comments from anybody
+ interested.
+
+ Will discard.
 
 
 * hv/submodule-ignore-fix (2013-12-06) 4 commits
@@ -257,7 +236,7 @@ of the repositories listed at
  Of unknown value until tested on non-Linux platforms (especially
  Windows).
 
- Will hold.
+ Will discard.
 
 
 * jt/commit-fixes-footer (2013-10-30) 1 commit
@@ -324,6 +303,8 @@ of the repositories listed at
 
  I am not sure if that is solving a right problem, though.
 
+ Will discard.
+
 
 * rv/send-email-cache-generated-mid (2013-08-21) 2 commits
  - git-send-email: Cache generated message-ids, use them when prompting
@@ -363,8 +344,10 @@ of the repositories listed at
 
  Various fixes to gitweb.
 
- Drew Northup volunteered to take a look into this.
- $gmane/226216
+ Drew Northup volunteered to take a look into this ($gmane/226216)
+ but nothing seems to have happened since then.
+
+ Will discard.
 
 
 * jc/show-branch (2013-06-07) 5 commits
@@ -378,6 +361,82 @@ of the repositories listed at
 
 --------------------------------------------------
 [Cooking]
+
+* jk/makefile (2014-02-05) 16 commits
+ - FIXUP
+ - move LESS/LV pager environment to Makefile
+ - Makefile: teach scripts to include make variables
+ - FIXUP
+ - Makefile: auto-build C strings from make variables
+ - Makefile: drop *_SQ variables
+ - FIXUP
+ - Makefile: add c-quote helper function
+ - Makefile: introduce sq function for shell-quoting
+ - Makefile: always create files via make-var
+ - Makefile: store GIT-* sentinel files in MAKE/
+ - Makefile: prefer printf to echo for GIT-*
+ - Makefile: use tempfile/mv strategy for GIT-*
+ - Makefile: introduce make-var helper function
+ - Makefile: fix git-instaweb dependency on gitweb
+ - Makefile: drop USE_GETTEXT_SCHEME from GIT-CFLAGS
+
+ Simplify the Makefile rules and macros that exist primarily for
+ quoting purposes, and make it easier to robustly express the
+ dependency rules.
+
+ Expecting a reroll.
+
+
+* ks/tree-diff-walk (2014-02-06) 5 commits
+  (merged to 'next' on 2014-02-06 at d56a3be)
+ + Finally switch over tree descriptors to contain a pre-parsed entry
+ + revision: convert to using diff_tree_sha1()
+ + line-log: convert to using diff_tree_sha1()
+ + tree-diff: convert diff_root_tree_sha1() to just call diff_tree_sha1 with old=NULL
+ + tree-diff: allow diff_tree_sha1 to accept NULL sha1
+
+ Will cook in 'next'.
+
+
+* nd/reset-intent-to-add (2014-02-05) 1 commit
+  (merged to 'next' on 2014-02-07 at 3497008)
+ + reset: support "--mixed --intent-to-add" mode
+
+ Will cook in 'next'.
+
+
+* nd/test-rename-reset (2014-02-04) 1 commit
+  (merged to 'next' on 2014-02-06 at ca188bd)
+ + t7101, t7014: rename test files to indicate what that file is for
+
+ Will cook in 'next'.
+
+
+* tb/repack-fix-renames (2014-02-05) 1 commit
+ - repack.c: rename a few variables
+
+ Perhaps unneeded, as the longer-term plan is to drop the codeblock
+ this change touches.
+
+ Will discard.
+
+
+* tr/remerge-diff (2014-02-05) 6 commits
+ - log --remerge-diff: show what the conflict resolution changed
+ - merge-recursive: allow storing conflict hunks in index
+ - Fold all merge diff variants into an enum
+ - combine-diff: do not pass revs->dense_combined_merges redundantly
+ - log: add a merge base inspection option
+ - pretty: refactor add_merge_info() into parts
+ (this branch uses tr/merge-recursive-index-only.)
+
+ "log -p" output learns a new way to let users inspect a merge
+ commit by showing the differences between the automerged result
+ with conflicts the person who recorded the merge would have seen
+ and the final conflict resolution that was recorded in the merge.
+
+ RFC.
+
 
 * bs/stdio-undef-before-redef (2014-01-31) 1 commit
   (merged to 'next' on 2014-01-31 at 9874918)
@@ -407,25 +466,23 @@ of the repositories listed at
 
 
 * mw/symlinks (2014-02-04) 6 commits
- - setup: don't dereference in-tree symlinks for absolute paths
- - setup: add abspath_part_inside_repo() function
- - t0060: add tests for prefix_path when path begins with work tree
- - t0060: add test for prefix_path when path == work tree
- - t0060: add test for prefix_path on symlinks via absolute paths
- - t3004: add test for ls-files on symlinks via absolute paths
+  (merged to 'next' on 2014-02-06 at 3d6df37)
+ + setup: don't dereference in-tree symlinks for absolute paths
+ + setup: add abspath_part_inside_repo() function
+ + t0060: add tests for prefix_path when path begins with work tree
+ + t0060: add test for prefix_path when path == work tree
+ + t0060: add test for prefix_path on symlinks via absolute paths
+ + t3004: add test for ls-files on symlinks via absolute paths
 
  All subcommands that take pathspecs mishandled an in-tree symbolic
  link when given it as a full path from the root (which arguably is
  a sick way to use pathspecs).  "git ls-files -s $(pwd)/RelNotes" in
  our tree is an easy reproduction recipe.
 
- We may want to add tests to illustrate symptoms that are visible to
- the end user, but the updated code looked reasonable.
-
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
-* ks/diff-c-with-diff-order-more (2014-02-05) 5 commits
+* ks/combine-diff (2014-02-05) 5 commits
  - combine-diff: move changed-paths scanning logic into its own function
  - combine-diff: move show_log_first logic/action out of paths scanning
  - tree-diff: no need to pass match to skip_uninteresting()
@@ -437,9 +494,8 @@ of the repositories listed at
  revision and each of its N parents, combine-diff can be sped up
  significantly.
 
- Not quite sure if we want another custom tree walker for it, or it
- should be written by using existing two-way diff with the result of
- earlier intersect_path() as pathspec.
+ Will merge to 'next' after reading it over one more time.
+ Help in reviewing the series is very much appreciated.
 
 
 * bc/gpg-sign-everywhere (2014-02-03) 9 commits
@@ -545,26 +601,21 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* cc/interpret-trailers (2014-01-27) 17 commits
+* cc/interpret-trailers (2014-02-06) 14 commits
  - Documentation: add documentation for 'git interpret-trailers'
  - trailer: add tests for commands using env variables
  - trailer: set author and committer env variables
  - trailer: add tests for trailer command
  - trailer: execute command from 'trailer.<name>.command'
- - strbuf: add strbuf_replace()
- - trailer: add new_trailer_item() function
  - trailer: if no input file is passed, read from stdin
  - trailer: add tests for "git interpret-trailers"
  - trailer: add interpret-trailers command
  - trailer: put all the processing together and print
  - trailer: parse trailers from input file
- - strbuf: add strbuf_isspace()
  - trailer: process command line trailer arguments
  - trailer: read and process config information
  - trailer: process trailers from file and arguments
  - Add data structures and basic functions for commit trailers
-
- Waiting for a reroll.
 
 
 * dk/blame-janitorial (2014-01-22) 2 commits
@@ -584,7 +635,7 @@ of the repositories listed at
  + combine-diff: optimize combine_diff_path sets intersection
  + diff test: add tests for combine-diff with orderfile
  + diffcore-order: export generic ordering interface
- (this branch is used by ks/diff-c-with-diff-order-more.)
+ (this branch is used by ks/combine-diff.)
 
  Teach combine-diff to honour the path-output-order imposed by
  diffcore-order.
@@ -620,16 +671,17 @@ of the repositories listed at
 
 
 * wk/submodule-on-branch (2014-01-27) 4 commits
- - Documentation: Describe 'submodule update --remote' use case
- - submodule: Explicit local branch creation in module_clone
- - submodule: Document module_clone arguments in comments
- - submodule: Make 'checkout' update_module explicit
+  (merged to 'next' on 2014-02-06 at 03dc3fd)
+ + Documentation: Describe 'submodule update --remote' use case
+ + submodule: Explicit local branch creation in module_clone
+ + submodule: Document module_clone arguments in comments
+ + submodule: Make 'checkout' update_module explicit
 
  Makes sure 'submodule update' modes that do not detach HEADs can
  be used more pleasantly by checking out a concrete branch when
  cloning them to prime the well.
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
 * jk/warn-on-object-refname-ambiguity (2014-01-09) 6 commits
@@ -772,52 +824,3 @@ of the repositories listed at
  + diff: remove "diff-files -q" in a version of Git in a distant future
 
  Will cook in 'next' until a distant future.
-
---------------------------------------------------
-[Discarded]
-
-* jk/branch-at-publish (2014-01-23) 6 commits
- . t1507 (rev-parse-upstream): fix typo in test title
- . implement @{publish} shorthand
- . branch_get: provide per-branch pushremote pointers
- . branch_get: return early on error
- . interpret_branch_name: factor out upstream handling
- . sha1_name: refactor upstream_mark
-
- Rebased to be jk/branch-at-publish-rebased to share the same change
- with the jk/interpret-branch-name-fix topic.
-
-
-* jn/git-gui-chmod+x (2013-11-25) 1 commit
- . git-gui: chmod +x po2msg, windows/git-gui.sh
-
- Now in 'master' from the upstream git-gui repository.
-
-
-* jn/gitk-chmod+x (2013-11-25) 1 commit
- . gitk: chmod +x po2msg
-
- Now in 'master' from the upstream gitk repository.
-
-
-* jc/parse-options-humint (2014-01-22) 1 commit
- . parse-options: refactor human-friendly-integer parser out of pack-objects
-
- Teach parse-options machinery to optionally parse numbers with a
- unit suffix, e.g. 8g, 4m, 128k.
-
-
-* jk/color-for-more-pagers (2014-01-17) 4 commits
- . pager: disable colors for some known-bad configurations
- . DONOTMERGE: needs matching change to git-sh-setup
- . setup_pager: set MORE=R
- . setup_pager: refactor LESS/LV environment setting
-
- 'more' implementation of BSD wants to be told with MORE=R
- environment before it shows colored output, while 'more' on some
- other platforms will die when seeing MORE=R environment.  But the
- consensus is that trying to be too intimately knowledgeable about
- quirks of various pager implementations on different platforms is a
- losing proposition.
-
- Will be superseded by jk/makefile series when it matures.
