@@ -15,13 +15,13 @@ static int drivers_alloc;
 	  word_regex "|[^[:space:]]|[\xc0-\xff][\x80-\xbf]+" }
 static struct userdiff_driver builtin_drivers[] = {
 IPATTERN("ada",
-	 "!^(.*[ \t])?(is new|renames|is separate)([ \t].*)?$\n"
+	 "!^(.*[ \t])?(is[ \t]+new|renames|is[ \t]+separate)([ \t].*)?$\n"
 	 "!^[ \t]*with[ \t].*$\n"
 	 "^[ \t]*((procedure|function)[ \t]+.*)$\n"
 	 "^[ \t]*((package|protected|task)[ \t]+.*)$",
 	 /* -- */
 	 "[a-zA-Z][a-zA-Z0-9_]*"
-	 "|[0-9][-+0-9#_.eE]"
+	 "|[-+]?[0-9][0-9#_.aAbBcCdDeEfF]*([eE][+-]?[0-9_]+)?"
 	 "|=>|\\.\\.|\\*\\*|:=|/=|>=|<=|<<|>>|<>"),
 IPATTERN("fortran",
 	 "!^([C*]|[ \t]*!)\n"
