@@ -20,7 +20,7 @@ recursive::
 	merged tree of the common ancestors and uses that as
 	the reference tree for the 3-way merge.  This has been
 	reported to result in fewer merge conflicts without
-	causing mis-merges by tests done on actual merge commits
+	causing mismerges by tests done on actual merge commits
 	taken from Linux 2.6 kernel development history.
 	Additionally this can detect and handle merges involving
 	renames.  This is the default merge strategy when
