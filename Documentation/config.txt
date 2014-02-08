@@ -1167,6 +1167,10 @@ gc.autopacklimit::
 	--auto` consolidates them into one larger pack.  The
 	default	value is 50.  Setting this to 0 disables it.
 
+gc.autodetach::
+	Make `git gc --auto` return immediately andrun in background
+	if the system supports it. Default is true.
+
 gc.packrefs::
 	Running `git pack-refs` in a repository renders it
 	unclonable by Git versions prior to 1.5.1.2 over dumb

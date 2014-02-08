@@ -29,6 +29,7 @@ static int pack_refs = 1;
 static int aggressive_window = 250;
 static int gc_auto_threshold = 6700;
 static int gc_auto_pack_limit = 50;
+static int detach_auto = 1;
 static const char *prune_expire = "2.weeks.ago";
 
 static struct argv_array pack_refs_cmd = ARGV_ARRAY_INIT;
@@ -71,6 +72,10 @@ static int gc_config(const char *var, const char *value, void *cb)
 	}
 	if (!strcmp(var, "gc.autopacklimit")) {
 		gc_auto_pack_limit = git_config_int(var, value);
+		return 0;
+	}
+	if (!strcmp(var, "gc.autodetach")) {
+		detach_auto = git_config_bool(var, value);
 		return 0;
 	}
 	if (!strcmp(var, "gc.pruneexpire")) {
@@ -301,11 +306,19 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 		 */
 		if (!need_to_gc())
 			return 0;
-		if (!quiet)
-			fprintf(stderr,
-					_("Auto packing the repository for optimum performance. You may also\n"
-					"run \"git gc\" manually. See "
-					"\"git help gc\" for more information.\n"));
+		if (!quiet) {
+			if (detach_auto)
+				fprintf(stderr, _("Auto packing the repository in background for optimum performance.\n"));
+			else
+				fprintf(stderr, _("Auto packing the repository for optimum performance.\n"));
+			fprintf(stderr, _("See \"git help gc\" for manual housekeeping.\n"));
+		}
+		if (detach_auto)
+			/*
+			 * failure to daemonize is ok, we'll continue
+			 * in foreground
+			 */
+			daemonize();
 	} else
 		add_repack_all_option();
 
