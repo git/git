@@ -7878,7 +7878,7 @@ msgstr "Komprimierungsgrad für Paketierung"
 
 #: builtin/pack-objects.c:2506
 msgid "do not hide commits by grafts"
-msgstr "verbirgt keine Commits mit künstlichen Vorgängern (\"grafts\")"
+msgstr "verbirgt keine künstlichen Vorgänger-Commits (\"grafts\")"
 
 #: builtin/pack-refs.c:6
 msgid "git pack-refs [options]"
