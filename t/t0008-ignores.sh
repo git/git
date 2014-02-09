@@ -779,18 +779,18 @@ test_expect_success PIPE 'streaming support for --stdin' '
 #
 # test whitespace handling
 
-test_expect_success 'trailing whitespace is warned' '
+test_expect_success 'trailing whitespace is ignored' '
 	mkdir whitespace &&
 	>whitespace/trailing &&
 	>whitespace/untracked &&
 	echo "whitespace/trailing   " >ignore &&
 	cat >expect <<EOF &&
-whitespace/trailing
 whitespace/untracked
 EOF
+	: >err.expect &&
 	git ls-files -o -X ignore whitespace >actual 2>err &&
-	grep "ignore:.*'\''whitespace/trailing   '\''" err &&
-	test_cmp expect actual
+	test_cmp expect actual &&
+	test_cmp err.expect err
 '
 
 test_expect_success 'quoting allows trailing whitespace' '
