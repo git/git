@@ -775,4 +775,35 @@ test_expect_success PIPE 'streaming support for --stdin' '
 	echo "$response" | grep "^::	two"
 '
 
+############################################################################
+#
+# test whitespace handling
+
+test_expect_success 'trailing whitespace is warned' '
+	mkdir whitespace &&
+	>whitespace/trailing &&
+	>whitespace/untracked &&
+	echo "whitespace/trailing   " >ignore &&
+	cat >expect <<EOF &&
+whitespace/trailing
+whitespace/untracked
+EOF
+	git ls-files -o -X ignore whitespace >actual 2>err &&
+	grep "ignore:.*'\''whitespace/trailing   '\''" err &&
+	test_cmp expect actual
+'
+
+test_expect_success 'quoting allows trailing whitespace' '
+	rm -rf whitespace &&
+	mkdir whitespace &&
+	>"whitespace/trailing  " &&
+	>whitespace/untracked &&
+	echo "whitespace/trailing\\ \\ " >ignore &&
+	echo whitespace/untracked >expect &&
+	: >err.expect &&
+	git ls-files -o -X ignore whitespace >actual 2>err &&
+	test_cmp expect actual &&
+	test_cmp err.expect err
+'
+
 test_done
