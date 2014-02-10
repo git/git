@@ -27,7 +27,7 @@ continue_merge () {
 	cmt=`cat "$state_dir/current"`
 	if ! git diff-index --quiet --ignore-submodules HEAD --
 	then
-		if ! git commit --no-verify -C "$cmt"
+		if ! git commit ${gpg_sign_opt:+"$gpg_sign_opt"} --no-verify -C "$cmt"
 		then
 			echo "Commit failed, please do not call \"git commit\""
 			echo "directly, but instead do one of the following: "
