@@ -8,7 +8,6 @@ if test -n "$NO_CURL"; then
 	test_done
 fi
 
-LIB_HTTPD_PORT=${LIB_HTTPD_PORT-'5561'}
 . "$TEST_DIRECTORY"/lib-httpd.sh
 start_httpd
 

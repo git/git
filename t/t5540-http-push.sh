@@ -16,7 +16,6 @@ then
 fi
 
 LIB_HTTPD_DAV=t
-LIB_HTTPD_PORT=${LIB_HTTPD_PORT-'5540'}
 . "$TEST_DIRECTORY"/lib-httpd.sh
 ROOT_PATH="$PWD"
 start_httpd
