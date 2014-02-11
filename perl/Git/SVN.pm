@@ -1321,7 +1321,7 @@ sub get_untracked {
 sub parse_svn_date {
 	my $date = shift || return '+0000 1970-01-01 00:00:00';
 	my ($Y,$m,$d,$H,$M,$S) = ($date =~ /^(\d{4})\-(\d\d)\-(\d\d)T
-	                                    (\d\d)\:(\d\d)\:(\d\d)\.\d*Z$/x) or
+	                                    (\d\d?)\:(\d\d)\:(\d\d)\.\d*Z$/x) or
 	                                 croak "Unable to parse date: $date\n";
 	my $parsed_date;    # Set next.
 
