@@ -73,10 +73,10 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2013-11-02 08:06+0800\n"
-"PO-Revision-Date: 2013-11-07 21:41+0100\n"
-"Last-Translator: S�bastien Helleu <flashcode@flashtux.org>\n"
-"Language-Team: Jean-No�l Avila <jn.avila@free.fr>\n"
+"POT-Creation-Date: 2014-02-01 08:06+0800\n"
+"PO-Revision-Date: 2014-02-02 14:35+0100\n"
+"Last-Translator: Jean-Noël Avila <jn.avila@free.fr>\n"
+"Language-Team: Jean-Noël Avila <jn.avila@free.fr>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -1412,21 +1412,21 @@ msgstr ""
 "message\n"
 "en lançant \"git config advice.objectNameWarning false\""
 
-#: sha1_name.c:1109
+#: sha1_name.c:1070
 msgid "HEAD does not point to a branch"
 msgstr "HEAD ne pointe pas sur une branche"
 
-#: sha1_name.c:1112
+#: sha1_name.c:1073
 #, c-format
 msgid "No such branch: '%s'"
 msgstr "Branche inconnue : '%s'"
 
-#: sha1_name.c:1114
+#: sha1_name.c:1075
 #, c-format
 msgid "No upstream configured for branch '%s'"
 msgstr "Aucune branche amont configurée pour la branche '%s'"
 
-#: sha1_name.c:1118
+#: sha1_name.c:1079
 #, c-format
 msgid "Upstream branch '%s' not stored as a remote-tracking branch"
 msgstr "La branche amont '%s' n'est pas stockée comme branche de suivi"
@@ -5311,7 +5311,8 @@ msgstr "%s n'a pas envoyé tous les objets nécessaires\n"
 #: builtin/fetch.c:579
 #, c-format
 msgid "reject %s because shallow roots are not allowed to be updated"
-msgstr "%s rejeté parce que les racines superficielles ne sont pas mises à jour"
+msgstr ""
+"%s rejeté parce que les racines superficielles ne sont pas mises à jour"
 
 #: builtin/fetch.c:667 builtin/fetch.c:750
 #, c-format
@@ -5420,8 +5421,9 @@ msgstr ""
 "git fmt-merge-msg [-m <message>] [--log[=<n>]|--no-log] [--file <fichier>]"
 
 #: builtin/fmt-merge-msg.c:663 builtin/fmt-merge-msg.c:666 builtin/grep.c:702
-#: builtin/merge.c:196 builtin/show-branch.c:654 builtin/show-ref.c:178
-#: builtin/tag.c:446 parse-options.h:135 parse-options.h:242
+#: builtin/merge.c:196 builtin/repack.c:160 builtin/repack.c:164
+#: builtin/show-branch.c:654 builtin/show-ref.c:178 builtin/tag.c:446
+#: parse-options.h:135 parse-options.h:242
 msgid "n"
 msgstr "n"
 
@@ -6395,17 +6397,17 @@ msgstr "spécifier que le dépôt git sera partagé entre plusieurs utilisateurs
 msgid "be quiet"
 msgstr "être silencieux"
 
-#: builtin/init-db.c:522 builtin/init-db.c:529
+#: builtin/init-db.c:525 builtin/init-db.c:530
 #, c-format
 msgid "cannot mkdir %s"
 msgstr "impossible de créer le répertoire (mkdir) %s"
 
-#: builtin/init-db.c:533
+#: builtin/init-db.c:534
 #, c-format
 msgid "cannot chdir to %s"
 msgstr "impossible de se déplacer vers le répertoire (chdir) %s"
 
-#: builtin/init-db.c:555
+#: builtin/init-db.c:556
 #, c-format
 msgid ""
 "%s (or --work-tree=<directory>) not allowed without specifying %s (or --git-"
@@ -6414,11 +6416,11 @@ msgstr ""
 "%s (ou --work-tree=<répertoire>) n'est pas autorisé sans spécifier %s (ou --"
 "git-dir=<répertoire>)"
 
-#: builtin/init-db.c:579
+#: builtin/init-db.c:580
 msgid "Cannot access current working directory"
 msgstr "Impossible d'accéder au répertoire de travail courant"
 
-#: builtin/init-db.c:586
+#: builtin/init-db.c:587
 #, c-format
 msgid "Cannot access work tree '%s'"
 msgstr "Impossible d'accéder à l'arbre de travail '%s'"
@@ -8042,24 +8044,30 @@ msgid ""
 msgstr ""
 "push.default n'est pas défini ; sa valeur implicite change dans Git 2.0\n"
 "de 'matching' vers 'simple'. Pour supprimer ce message et maintenir\n"
-"le comportement actuel après la modification de la valeur de défaut, utilisez :\n"
+"le comportement actuel après la modification de la valeur de défaut, "
+"utilisez :\n"
 "\n"
 "  git config --global push.default matching\n"
 "\n"
-"Pour supprimer ce message et adopter le nouveau comportement maintenant, utilisez :\n"
+"Pour supprimer ce message et adopter le nouveau comportement maintenant, "
+"utilisez :\n"
 "\n"
 "  git config --global push.default simple\n"
 "\n"
 "Quand push.default vaudra 'matching', git poussera les branches locales\n"
 "sur les branches distantes qui existent déjà avec le même nom.\n"
 "\n"
-"Dans Git 2.0 Git utilisera par défaut le comportement plus conservatif 'simple'\n"
-"qui ne pousse la branche courante vers la branche distante que 'git pull' utilise\n"
+"Dans Git 2.0 Git utilisera par défaut le comportement plus conservatif "
+"'simple'\n"
+"qui ne pousse la branche courante vers la branche distante que 'git pull' "
+"utilise\n"
 "pour mettre à jour la branche courante.\n"
 " \n"
 "Voir 'git help config' et chercher 'push.default' pour plus d'information.\n"
-"(le mode 'simple' a été introduit dans Git 1.7.11. Utilisez le mode similaire\n"
-"'current' au lieu de 'simple' si vous utilisez de temps en temps d'anciennes versions de Git)"
+"(le mode 'simple' a été introduit dans Git 1.7.11. Utilisez le mode "
+"similaire\n"
+"'current' au lieu de 'simple' si vous utilisez de temps en temps d'anciennes "
+"versions de Git)"
 
 #: builtin/push.c:274
 msgid ""
@@ -8918,6 +8926,10 @@ msgstr "avec -A, ne pas suspendre les objets plus vieux que celui-ci"
 #: builtin/repack.c:161
 msgid "size of the window used for delta compression"
 msgstr "taille de la fenêtre utilisée pour la compression des deltas"
+
+#: builtin/repack.c:162 builtin/repack.c:166
+msgid "bytes"
+msgstr "octets"
 
 #: builtin/repack.c:163
 msgid "same as the above, but limit memory size instead of entries count"
@@ -11021,7 +11033,7 @@ msgid "Synchronizing submodule url for '$displaypath'"
 msgstr "Synchronisation de l'URL sous-module pour '$displaypath'"
 
 #~ msgid "copied:     %s -> %s"
-#~ msgstr "copié :     %s -> %s"
+#~ msgstr ""
 
 #~ msgid "deleted:    %s"
 #~ msgstr "supprimé :  %s"
