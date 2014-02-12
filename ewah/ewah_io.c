@@ -113,6 +113,7 @@ int ewah_serialize(struct ewah_bitmap *self, int fd)
 int ewah_read_mmap(struct ewah_bitmap *self, void *map, size_t len)
 {
 	uint8_t *ptr = map;
+	size_t i;
 
 	self->bit_size = get_be32(ptr);
 	ptr += sizeof(uint32_t);
@@ -135,13 +136,8 @@ int ewah_read_mmap(struct ewah_bitmap *self, void *map, size_t len)
 	memcpy(self->buffer, ptr, self->buffer_size * sizeof(uint64_t));
 	ptr += self->buffer_size * sizeof(uint64_t);
 
-#if __BYTE_ORDER != __BIG_ENDIAN
-	{
-		size_t i;
-		for (i = 0; i < self->buffer_size; ++i)
-			self->buffer[i] = ntohll(self->buffer[i]);
-	}
-#endif
+	for (i = 0; i < self->buffer_size; ++i)
+		self->buffer[i] = ntohll(self->buffer[i]);
 
 	self->rlw = self->buffer + get_be32(ptr);
 
