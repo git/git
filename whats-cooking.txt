@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Feb 2014, #03; Fri, 7)
-X-master-at: 6a7071958620dadcce84e4faaa470407ae3d4108
-X-next-at: 34970086681ea5b5ca7b0bdca6356de6004e0245
+Subject: What's cooking in git.git (Feb 2014, #04; Wed, 12)
+X-master-at: bc97e2d8ae24dc2c8d06e616e20a0b4a47c58f67
+X-next-at: 4cf525ce1d2c8852398b34afa865f9fb26828d57
 
-What's cooking in git.git (Feb 2014, #03; Fri, 7)
+What's cooking in git.git (Feb 2014, #04; Wed, 12)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -24,56 +24,85 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* aj/ada-diff-word-pattern (2014-02-05) 1 commit
-  (merged to 'next' on 2014-02-06 at 8062b22)
- + userdiff: update Ada patterns
-
-
-* nd/tag-doc (2014-02-04) 1 commit
-  (merged to 'next' on 2014-02-06 at 9f02991)
- + git-tag.txt: <commit> for --contains is optional
-
-
-* ow/manpages-typofix (2014-02-05) 1 commit
-  (merged to 'next' on 2014-02-06 at b482b8f)
- + Documentation: fix typos in man pages
-
---------------------------------------------------
 [New Topics]
 
-* jc/check-attr-honor-working-tree (2014-02-06) 2 commits
- - check-attr: move to the top of working tree when in non-bare repository
- - t0003: do not chdir the whole test process
+* al/docs (2014-02-11) 4 commits
+ - docs/git-blame: explain more clearly the example pickaxe use
+ - docs/git-clone: clarify use of --no-hardlinks option
+ - docs/git-remote: capitalize first word of initial blurb
+ - docs/merge-strategies: remove hyphen from mis-merges
 
- "git check-attr" when (trying to) work on a repository with a
- working tree did not work well when the working tree was specified
- via --work-tree (and obviously with --git-dir).
-
- The command also works in a bare repository but it reads from the
- (possibly stale, irrelevant and/or nonexistent) index, which may
- need to be fixed to read from HEAD, but that is a completely
- separate issue.  As a related tangentto this separate issue, we may
- want to also fix "check-ignore", which refuses to work in a bare
- repository, to also operate in a bare one.
-
-
-* nd/http-fetch-shallow-fix (2014-02-07) 6 commits
- - fetch-pack: fix deepen shallow over smart http with no-done cap
- - protocol-capabilities.txt: document no-done
- - protocol-capabilities.txt: refer multi_ack_detailed back to pack-protocol.txt
- - pack-protocol.txt: clarify 'obj-id' in the last ACK after 'done'
- - t5538: fix default http port
- - test: rename http fetch and push test files
-
- Attempting to deepen a shallow repository by fetching over smart
- HTTP transport failed in the protocol exchange, when no-done
- extension was used.  The fetching side waited for the list of
- shallow boundary commits after the sending end stopped talking to
- it.
+ A handful of documentation updates, all trivially harmless.
 
  Will merge to 'next'.
+
+
+* jk/test-ports (2014-02-10) 2 commits
+ - tests: auto-set git-daemon port
+ - tests: auto-set LIB_HTTPD_PORT from test name
+ (this branch is tangled with nd/http-fetch-shallow-fix.)
+
+ Avoid having to assign port number to be used in tests manually.
+
+ Will merge to 'next'.
+
+
+* nd/daemonize-gc (2014-02-10) 2 commits
+ - gc: config option for running --auto in background
+ - daemon: move daemonize() to libgit.a
+
+ Allow running "gc --auto" in the background.
+
+ Will merge to 'next'.
+
+
+* nd/gitignore-trailing-whitespace (2014-02-10) 2 commits
+ - dir: ignore trailing spaces in exclude patterns
+ - dir: warn about trailing spaces in exclude patterns
+
+ Warn and then ignore trailing whitespaces in .gitignore files,
+ unless they are quoted for fnmatch(3), e.g. "path\ ".
+
+
+* nd/log-show-linear-break (2014-02-10) 1 commit
+ - log: add --show-linear-break to help see non-linear history
+
+
+* ss/completion-rec-sub-fetch-push (2014-02-11) 1 commit
+ - completion: teach --recurse-submodules to fetch, pull and push
+
+
+* ks/tree-diff-more (2014-02-12) 16 commits
+ - tree-diff: reuse base str(buf) memory on sub-tree recursion
+ - tree-diff: no need to call "full" diff_tree_sha1 from show_path()
+ - tree-diff: rework diff_tree interface to be sha1 based
+ - tree-diff: remove special-case diff-emitting code for empty-tree cases
+ - tree-diff: simplify tree_entry_pathcmp
+ - tree-diff: show_path prototype is not needed anymore
+ - tree-diff: rename compare_tree_entry -> tree_entry_pathcmp
+ - tree-diff: move all action-taking code out of compare_tree_entry()
+ - tree-diff: don't assume compare_tree_entry() returns -1,0,1
+ - FIXUP!
+ - tree-diff: consolidate code for emitting diffs and recursion in one place
+ - tree-diff: show_tree() is not needed
+ - tree-diff: no need to pass match to skip_uninteresting()
+ - tree-diff: no need to manually verify that there is no mode change for a path
+ - combine-diff: move changed-paths scanning logic into its own function
+ - combine-diff: move show_log_first logic/action out of paths scanning
+ (this branch uses ks/combine-diff and ks/tree-diff-walk.)
+
+
+* jh/note-trees-record-blobs (2014-02-12) 1 commit
+ - notes: Disallow reusing non-blob as a note object
+
+
+* jk/run-network-tests-by-default (2014-02-12) 1 commit
+ - tests: turn on network daemon tests by default
+
+ Teach "make test" to run networking tests when possible by default.
+
+ Needs a bit more work.
+ e.g. $gmane/242013
 
 --------------------------------------------------
 [Stalled]
@@ -362,6 +391,40 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* jc/check-attr-honor-working-tree (2014-02-06) 2 commits
+ - check-attr: move to the top of working tree when in non-bare repository
+ - t0003: do not chdir the whole test process
+
+ "git check-attr" when (trying to) work on a repository with a
+ working tree did not work well when the working tree was specified
+ via --work-tree (and obviously with --git-dir).
+
+ The command also works in a bare repository but it reads from the
+ (possibly stale, irrelevant and/or nonexistent) index, which may
+ need to be fixed to read from HEAD, but that is a completely
+ separate issue.  As a related tangentto this separate issue, we may
+ want to also fix "check-ignore", which refuses to work in a bare
+ repository, to also operate in a bare one.
+
+
+* nd/http-fetch-shallow-fix (2014-02-10) 6 commits
+ - fetch-pack: fix deepen shallow over smart http with no-done cap
+ - protocol-capabilities.txt: document no-done
+ - protocol-capabilities.txt: refer multi_ack_detailed back to pack-protocol.txt
+ - pack-protocol.txt: clarify 'obj-id' in the last ACK after 'done'
+ - test: rename http fetch and push test files
+ - tests: auto-set LIB_HTTPD_PORT from test name
+ (this branch is tangled with jk/test-ports.)
+
+ Attempting to deepen a shallow repository by fetching over smart
+ HTTP transport failed in the protocol exchange, when no-done
+ extension was used.  The fetching side waited for the list of
+ shallow boundary commits after the sending end stopped talking to
+ it.
+
+ Will merge to 'next'.
+
+
 * jk/makefile (2014-02-05) 16 commits
  - FIXUP
  - move LESS/LV pager environment to Makefile
@@ -394,6 +457,7 @@ of the repositories listed at
  + line-log: convert to using diff_tree_sha1()
  + tree-diff: convert diff_root_tree_sha1() to just call diff_tree_sha1 with old=NULL
  + tree-diff: allow diff_tree_sha1 to accept NULL sha1
+ (this branch is used by ks/combine-diff and ks/tree-diff-more.)
 
  Will cook in 'next'.
 
@@ -482,13 +546,14 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* ks/combine-diff (2014-02-05) 5 commits
- - combine-diff: move changed-paths scanning logic into its own function
- - combine-diff: move show_log_first logic/action out of paths scanning
- - tree-diff: no need to pass match to skip_uninteresting()
- - tree-diff: no need to manually verify that there is no mode change for a path
+* ks/combine-diff (2014-02-12) 6 commits
  - tests: add checking that combine-diff emits only correct paths
- (this branch uses ks/diff-c-with-diff-order.)
+ - combine-diff: simplify intersect_paths() further
+ - combine-diff: combine_diff_path.len is not needed anymore
+ - combine-diff: optimize combine_diff_path sets intersection
+ - diff test: add tests for combine-diff with orderfile
+ - diffcore-order: export generic ordering interface
+ (this branch is used by ks/tree-diff-more; uses ks/tree-diff-walk.)
 
  By avoiding running full two-way diff between the resulting
  revision and each of its N parents, combine-diff can be sped up
@@ -498,7 +563,7 @@ of the repositories listed at
  Help in reviewing the series is very much appreciated.
 
 
-* bc/gpg-sign-everywhere (2014-02-03) 9 commits
+* bc/gpg-sign-everywhere (2014-02-11) 9 commits
  - pull: add the --gpg-sign option.
  - rebase: add the --gpg-sign option
  - rebase: parse options in stuck-long mode
@@ -514,7 +579,7 @@ of the repositories listed at
  Changes to some scripted Porcelains use unsafe variable
  substitutions and still need to be tightened.
 
- Waiting for a reroll.
+ Will merge to 'next'.
 
 
 * ds/rev-parse-required-args (2014-01-28) 1 commit
@@ -541,7 +606,7 @@ of the repositories listed at
 
 * jk/repack-honor-pack-keep (2014-01-28) 1 commit
  - repack: add `repack.honorpackkeep` config var
- (this branch uses jk/pack-bitmap.)
+ (this branch is tangled with jk/pack-bitmap.)
 
  Optionally allow "git repack" to include objects that exist in kept
  packs in newly created packfiles.
@@ -618,14 +683,17 @@ of the repositories listed at
  - Add data structures and basic functions for commit trailers
 
 
-* dk/blame-janitorial (2014-01-22) 2 commits
+* dk/blame-janitorial (2014-02-12) 4 commits
+ - blame.c: prepare_lines should not call xrealloc for every line
+  (merged to 'next' on 2014-02-11 at 4af3ebd)
+ + builtin/blame.c::prepare_lines: fix allocation size of sb->lineno
   (merged to 'next' on 2014-01-29 at 0b7ea97)
  + Eliminate same_suspect function in builtin/blame.c
  + builtin/blame.c: struct blame_entry does not need a prev link
 
  Code clean-up.
 
- Will cook in 'next'.
+ Will merge to and cook in 'next'.
 
 
 * ks/diff-c-with-diff-order (2014-02-03) 5 commits
@@ -635,7 +703,6 @@ of the repositories listed at
  + combine-diff: optimize combine_diff_path sets intersection
  + diff test: add tests for combine-diff with orderfile
  + diffcore-order: export generic ordering interface
- (this branch is used by ks/combine-diff.)
 
  Teach combine-diff to honour the path-output-order imposed by
  diffcore-order.
@@ -702,7 +769,8 @@ of the repositories listed at
  Expecting a reroll.
 
 
-* jk/pack-bitmap (2014-01-23) 25 commits
+* jk/pack-bitmap (2014-02-12) 26 commits
+ - ewah: unconditionally ntohll ewah data
   (merged to 'next' on 2014-01-27 at 0b1dcb5)
  + ewah: support platforms that require aligned reads
  + read-cache: use get_be32 instead of hand-rolled ntoh_l
@@ -731,13 +799,13 @@ of the repositories listed at
  + pack-objects: factor out name_hash
  + pack-objects: refactor the packing list
  + revindex: export new APIs
- (this branch is used by jk/repack-honor-pack-keep.)
+ (this branch is tangled with jk/repack-honor-pack-keep.)
 
  Borrows the bitmap index into packfiles from JGit to speed up
  enumeration of objects involved in a commit range without having to
  fully traverse the history.
 
- Will cook in 'next'.
+ Will merge to and cook in 'next'.
 
 
 * nv/commit-gpgsign-config (2013-12-17) 3 commits
