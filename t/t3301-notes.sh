@@ -812,6 +812,33 @@ test_expect_success 'create note from non-existing note with "git notes add -C" 
 	test_must_fail git notes list HEAD
 '
 
+test_expect_success 'create note from non-blob with "git notes add -C" fails' '
+	commit=$(git rev-parse --verify HEAD) &&
+	tree=$(git rev-parse --verify HEAD:) &&
+	test_must_fail git notes add -C $commit &&
+	test_must_fail git notes add -C $tree &&
+	test_must_fail git notes list HEAD
+'
+
+cat > expect << EOF
+commit 80d796defacd5db327b7a4e50099663902fbdc5c
+Author: A U Thor <author@example.com>
+Date:   Thu Apr 7 15:20:13 2005 -0700
+
+    8th
+
+Notes (other):
+    This is a blob object
+EOF
+
+test_expect_success 'create note from blob with "git notes add -C" reuses blob id' '
+	blob=$(echo "This is a blob object" | git hash-object -w --stdin) &&
+	git notes add -C $blob &&
+	git log -1 > actual &&
+	test_cmp expect actual &&
+	test "$(git notes list HEAD)" = "$blob"
+'
+
 cat > expect << EOF
 commit 016e982bad97eacdbda0fcbd7ce5b0ba87c81f1b
 Author: A U Thor <author@example.com>
