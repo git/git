@@ -110,4 +110,17 @@ test_expect_success 'diff-tree -r with wildcard' '
 	test_cmp expected result
 '
 
+test_expect_success 'diff multiple wildcard pathspecs' '
+	mkdir path2 &&
+	echo rezrov >path2/file1 &&
+	git update-index --add path2/file1 &&
+	tree3=`git write-tree` &&
+	git diff --name-only $tree $tree3 -- "path2*1" "path1*1" >actual &&
+	cat <<-\EOF >expect &&
+	path1/file1
+	path2/file1
+	EOF
+	test_cmp expect actual
+'
+
 test_done
