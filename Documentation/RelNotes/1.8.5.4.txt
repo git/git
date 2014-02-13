@@ -1,7 +1,7 @@
 Git v1.8.5.4 Release Notes
 ==========================
 
-Fixes since v1.8.5.4
+Fixes since v1.8.5.3
 --------------------
 
  * "git fetch --depth=0" was a no-op, and was silently ignored.
