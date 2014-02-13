@@ -1095,7 +1095,8 @@ sub ssl_verify_params {
 	}
 
 	if (!defined $smtp_ssl_cert_path) {
-		$smtp_ssl_cert_path = "/etc/ssl/certs";
+		# use the OpenSSL defaults
+		return (SSL_verify_mode => SSL_VERIFY_PEER());
 	}
 
 	if ($smtp_ssl_cert_path eq "") {
