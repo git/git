@@ -104,17 +104,12 @@ static void mark_blob_uninteresting(struct blob *blob)
 	blob->object.flags |= UNINTERESTING;
 }
 
-void mark_tree_uninteresting(struct tree *tree)
+static void mark_tree_contents_uninteresting(struct tree *tree)
 {
 	struct tree_desc desc;
 	struct name_entry entry;
 	struct object *obj = &tree->object;
 
-	if (!tree)
-		return;
-	if (obj->flags & UNINTERESTING)
-		return;
-	obj->flags |= UNINTERESTING;
 	if (!has_sha1_file(obj->sha1))
 		return;
 	if (parse_tree(tree) < 0)
@@ -140,6 +135,18 @@ void mark_tree_uninteresting(struct tree *tree)
 	 * after it has been marked uninteresting.
 	 */
 	free_tree_buffer(tree);
+}
+
+void mark_tree_uninteresting(struct tree *tree)
+{
+	struct object *obj = &tree->object;
+
+	if (!tree)
+		return;
+	if (obj->flags & UNINTERESTING)
+		return;
+	obj->flags |= UNINTERESTING;
+	mark_tree_contents_uninteresting(tree);
 }
 
 void mark_parents_uninteresting(struct commit *commit)
@@ -276,6 +283,7 @@ static struct commit *handle_commit(struct rev_info *revs,
 				return NULL;
 			die("bad object %s", sha1_to_hex(tag->tagged->sha1));
 		}
+		object->flags |= flags;
 	}
 
 	/*
@@ -287,7 +295,6 @@ static struct commit *handle_commit(struct rev_info *revs,
 		if (parse_commit(commit) < 0)
 			die("unable to parse commit %s", name);
 		if (flags & UNINTERESTING) {
-			commit->object.flags |= UNINTERESTING;
 			mark_parents_uninteresting(commit);
 			revs->limited = 1;
 		}
@@ -305,7 +312,7 @@ static struct commit *handle_commit(struct rev_info *revs,
 		if (!revs->tree_objects)
 			return NULL;
 		if (flags & UNINTERESTING) {
-			mark_tree_uninteresting(tree);
+			mark_tree_contents_uninteresting(tree);
 			return NULL;
 		}
 		add_pending_object(revs, object, "");
@@ -316,13 +323,10 @@ static struct commit *handle_commit(struct rev_info *revs,
 	 * Blob object? You know the drill by now..
 	 */
 	if (object->type == OBJ_BLOB) {
-		struct blob *blob = (struct blob *)object;
 		if (!revs->blob_objects)
 			return NULL;
-		if (flags & UNINTERESTING) {
-			mark_blob_uninteresting(blob);
+		if (flags & UNINTERESTING)
 			return NULL;
-		}
 		add_pending_object(revs, object, "");
 		return NULL;
 	}
