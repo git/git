@@ -1,5 +1,5 @@
-Git v1.9 Release Notes
-======================
+Git v1.9.0 Release Notes
+========================
 
 Backward compatibility notes
 ----------------------------
@@ -27,8 +27,8 @@ A handful of ancient commands that have long been deprecated are
 finally gone (repo-config, tar-tree, lost-found, and peek-remote).
 
 
-Backward compatibility notes (for Git 2.0)
-------------------------------------------
+Backward compatibility notes (for Git 2.0.0)
+--------------------------------------------
 
 When "git push [$there]" does not say what to push, we have used the
 traditional "matching" semantics so far (all your branches were sent
@@ -220,11 +220,9 @@ for details).
  * The pathspec matching code, while comparing two trees (e.g. "git
    diff A B -- path1 path2") was too aggressive and failed to match
    some paths when multiple pathspecs were involved.
-   (merge e4ddb05 as/tree-walk-fix-aggressive-short-cut later to maint).
 
  * "git repack --max-pack-size=8g" stopped being parsed correctly when
    the command was reimplemented in C.
-   (merge b861e23 sb/repack-in-c later to maint).
 
  * An earlier update in v1.8.4.x to "git rev-list --objects" with
    negative ref had a performance regression.
@@ -233,27 +231,22 @@ for details).
  * A recent update to "git send-email" broke platforms where
    /etc/ssl/certs/ directory exists but cannot be used as SSL_ca_path
    (e.g. Fedora rawhide).
-   (merge 01645b7 rk/send-email-ssl-cert later to maint).
 
  * A handful of bugs around interpreting $branch@{upstream} notation
    and its lookalike, when $branch part has interesting characters,
    e.g. "@", and ":", have been fixed.
-   (merge 9892d5d jk/interpret-branch-name-fix later to maint).
 
  * "git clone" would fail to clone from a repository that has a ref
    directly under "refs/", e.g. "refs/stash", because different
    validation paths do different things on such a refname.  Loosen the
    client side's validation to allow such a ref.
-   (merge 4c22408 jk/allow-fetch-onelevel-refname later to maint).
 
  * "git log --left-right A...B" lost the "leftness" of commits
    reachable from A when A is a tag as a side effect of a recent
    bugfix.  This is a regression in 1.8.4.x series.
-   (merge a743528 jc/revision-range-unpeel later to maint).
 
  * documentations to "git pull" hinted there is an "-m" option because
    it incorrectly shared the documentation with "git merge".
-   (merge 08f19cf jc/maint-pull-docfix later to maint).
 
  * "git diff A B submod" and "git diff A B submod/" ought to have done
    the same for a submodule "submod", but didn't.
@@ -268,17 +261,14 @@ for details).
 
  * The implementation of 'git stash $cmd "stash@{...}"' did not quote
    the stash argument properly and left it split at IFS whitespace.
-   (merge 2a07e43 ow/stash-with-ifs later to maint).
 
  * The "--[no-]informative-errors" options to "git daemon" were parsed
    a bit too loosely, allowing any other string after these option
    names.
-   (merge 82246b7 nd/daemon-informative-errors-typofix later to maint).
 
  * There is no reason to have a hardcoded upper limit for the number of
    parents of an octopus merge, created via the graft mechanism, but
    there was.
-   (merge e228c17 js/lift-parent-count-limit later to maint).
 
  * The basic test used to leave unnecessary trash directories in the
    t/ directory.
@@ -286,22 +276,17 @@ for details).
 
  * "git merge-base --octopus" used to leave cleaning up suboptimal
    result to the caller, but now it does the clean-up itself.
-   (merge 8f29299 bm/merge-base-octopus-dedup later to maint).
 
  * A "gc" process running as a different user should be able to stop a
    new "gc" process from starting, but it didn't.
-   (merge ed7eda8 km/gc-eperm later to maint).
 
  * An earlier "clean-up" introduced an unnecessary memory leak.
-   (merge e1c1a32 jk/credential-plug-leak later to maint).
 
  * "git add -A" (no other arguments) in a totally empty working tree
    used to emit an error.
-   (merge 64ed07c nd/add-empty-fix later to maint).
 
  * "git log --decorate" did not handle a tag pointed by another tag
    nicely.
-   (merge 5e1361c bc/log-decoration later to maint).
 
  * When we figure out how many file descriptors to allocate for
    keeping packfiles open, a system with non-working getrlimit() could
@@ -309,7 +294,6 @@ for details).
    rough estimate of how many are available and we do not even attempt
    to use up all available file descriptors ourselves, it is nicer to
    fall back to a reasonable low value rather than dying.
-   (merge 491a8de jh/rlimit-nofile-fallback later to maint).
 
  * read_sha1_file(), that is the workhorse to read the contents given
    an object name, honoured object replacements, but there was no
@@ -320,16 +304,13 @@ for details).
 
  * "git cat-file --batch=", an admittedly useless command, did not
    behave very well.
-   (merge 6554dfa jk/cat-file-regression-fix later to maint).
 
  * "git rev-parse <revs> -- <paths>" did not implement the usual
    disambiguation rules the commands in the "git log" family used in
    the same way.
-   (merge 62f162f jk/rev-parse-double-dashes later to maint).
 
  * "git mv A B/", when B does not exist as a directory, should error
    out, but it didn't.
-   (merge c57f628 mm/mv-file-to-no-such-dir-with-slash later to maint).
 
  * A workaround to an old bug in glibc prior to glibc 2.17 has been
    retired; this would remove a side effect of the workaround that
@@ -337,36 +318,28 @@ for details).
 
  * SSL-related options were not passed correctly to underlying socket
    layer in "git send-email".
-   (merge 5508f3e tr/send-email-ssl later to maint).
 
  * "git commit -v" appends the patch to the log message before
    editing, and then removes the patch when the editor returned
    control. However, the patch was not stripped correctly when the
    first modified path was a submodule.
-   (merge 1a72cfd jl/commit-v-strip-marker later to maint).
 
  * "git fetch --depth=0" was a no-op, and was silently ignored.
    Diagnose it as an error.
-   (merge 5594bca nd/transport-positive-depth-only later to maint).
 
  * Remote repository URLs expressed in scp-style host:path notation are
    parsed more carefully (e.g. "foo/bar:baz" is local, "[::1]:/~user" asks
    to connect to user's home directory on host at address ::1.
-   (merge a2036d7 tb/clone-ssh-with-colon-for-port later to maint).
 
  * "git diff -- ':(icase)makefile'" was unnecessarily rejected at the
    command line parser.
-   (merge 887c6c1 nd/magic-pathspec later to maint).
 
  * "git cat-file --batch-check=ok" did not check the existence of
    the named object.
-   (merge 4ef8d1d sb/sha1-loose-object-info-check-existence later to maint).
 
  * "git am --abort" sometimes complained about not being able to write
    a tree with an 0{40} object in it.
-   (merge 77b43ca jk/two-way-merge-corner-case-fix later to maint).
 
  * Two processes creating loose objects at the same time could have
    failed unnecessarily when the name of their new objects started
    with the same byte value, due to a race condition.
-   (merge b2476a6 jh/loose-object-dirs-creation-race later to maint).
