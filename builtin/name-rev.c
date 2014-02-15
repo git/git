@@ -87,7 +87,7 @@ static int subpath_matches(const char *path, const char *filter)
 	const char *subpath = path;
 
 	while (subpath) {
-		if (!fnmatch(filter, subpath, 0))
+		if (!wildmatch(filter, subpath, 0, NULL))
 			return subpath - path;
 		subpath = strchr(subpath, '/');
 		if (subpath)

@@ -73,7 +73,7 @@ static int match_order(const char *path)
 		strbuf_addstr(&p, path);
 		while (p.buf[0]) {
 			char *cp;
-			if (!fnmatch(order[i], p.buf, 0))
+			if (!wildmatch(order[i], p.buf, 0, NULL))
 				return i;
 			cp = strrchr(p.buf, '/');
 			if (!cp)
