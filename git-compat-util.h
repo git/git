@@ -116,9 +116,6 @@
 #include <sys/time.h>
 #include <time.h>
 #include <signal.h>
-#ifndef USE_WILDMATCH
-#include <fnmatch.h>
-#endif
 #include <assert.h>
 #include <regex.h>
 #include <utime.h>
@@ -304,16 +301,7 @@ extern char *gitbasename(char *);
 
 #include "compat/bswap.h"
 
-#ifdef USE_WILDMATCH
 #include "wildmatch.h"
-#define FNM_PATHNAME WM_PATHNAME
-#define FNM_CASEFOLD WM_CASEFOLD
-#define FNM_NOMATCH  WM_NOMATCH
-static inline int fnmatch(const char *pattern, const char *string, int flags)
-{
-	return wildmatch(pattern, string, flags, NULL);
-}
-#endif
 
 /* General helper functions */
 extern void vreportf(const char *prefix, const char *err, va_list params);

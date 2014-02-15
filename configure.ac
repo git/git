@@ -901,34 +901,6 @@ GIT_CHECK_FUNC(strcasestr,
 [NO_STRCASESTR=YesPlease])
 GIT_CONF_SUBST([NO_STRCASESTR])
 #
-# Define NO_FNMATCH if you don't have fnmatch
-GIT_CHECK_FUNC(fnmatch,
-[NO_FNMATCH=],
-[NO_FNMATCH=YesPlease])
-GIT_CONF_SUBST([NO_FNMATCH])
-#
-# Define NO_FNMATCH_CASEFOLD if your fnmatch function doesn't have the
-# FNM_CASEFOLD GNU extension.
-AC_CACHE_CHECK([whether the fnmatch function supports the FNMATCH_CASEFOLD GNU extension],
- [ac_cv_c_excellent_fnmatch], [
-AC_EGREP_CPP(yippeeyeswehaveit,
-	AC_LANG_PROGRAM([
-#include <fnmatch.h>
-],
-[#ifdef FNM_CASEFOLD
-yippeeyeswehaveit
-#endif
-]),
-	[ac_cv_c_excellent_fnmatch=yes],
-	[ac_cv_c_excellent_fnmatch=no])
-])
-if test $ac_cv_c_excellent_fnmatch = yes; then
-	NO_FNMATCH_CASEFOLD=
-else
-	NO_FNMATCH_CASEFOLD=YesPlease
-fi
-GIT_CONF_SUBST([NO_FNMATCH_CASEFOLD])
-#
 # Define NO_MEMMEM if you don't have memmem.
 GIT_CHECK_FUNC(memmem,
 [NO_MEMMEM=],
