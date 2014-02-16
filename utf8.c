@@ -5,8 +5,8 @@
 /* This code is originally from http://www.cl.cam.ac.uk/~mgk25/ucs/ */
 
 struct interval {
-  int first;
-  int last;
+	ucs_char_t first;
+	ucs_char_t last;
 };
 
 size_t display_mode_esc_sequence_len(const char *s)
