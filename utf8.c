@@ -529,7 +529,7 @@ char *reencode_string_iconv(const char *in, size_t insz, iconv_t conv, int *outs
 	while (1) {
 		size_t cnt = iconv(conv, &cp, &insz, &outpos, &outsz);
 
-		if (cnt == -1) {
+		if (cnt == (size_t) -1) {
 			size_t sofar;
 			if (errno != E2BIG) {
 				free(out);
