@@ -17,7 +17,7 @@
 #include "strbuf.h"
 #include "utf8.h"
 
-static char cut_line[] =
+static const char cut_line[] =
 "------------------------ >8 ------------------------\n";
 
 static char default_wt_status_colors[][COLOR_MAXLEN] = {
