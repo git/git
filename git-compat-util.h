@@ -270,6 +270,10 @@ extern char *gitbasename(char *);
 #define has_dos_drive_prefix(path) 0
 #endif
 
+#ifndef offset_1st_component
+#define offset_1st_component(path) (is_dir_sep((path)[0]))
+#endif
+
 #ifndef is_dir_sep
 #define is_dir_sep(c) ((c) == '/')
 #endif
@@ -720,5 +724,13 @@ void warn_on_inaccessible(const char *path);
 
 /* Get the passwd entry for the UID of the current process. */
 struct passwd *xgetpwuid_self(void);
+
+#ifndef mark_as_git_dir
+#define mark_as_git_dir(x) /* noop */
+#endif
+
+#ifndef get_home_directory
+#define get_home_directory() getenv("HOME")
+#endif
 
 #endif
