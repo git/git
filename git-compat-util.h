@@ -132,8 +132,10 @@
 #if defined(__MINGW32__)
 /* pull in Windows compatibility stuff */
 #include "compat/mingw.h"
+#include "compat/win32/fscache.h"
 #elif defined(_MSC_VER)
 #include "compat/msvc.h"
+#include "compat/win32/fscache.h"
 #else
 #include <sys/wait.h>
 #include <sys/resource.h>
@@ -731,6 +733,21 @@ struct passwd *xgetpwuid_self(void);
 
 #ifndef get_home_directory
 #define get_home_directory() getenv("HOME")
+#endif
+
+/*
+ * Enable/disable a read-only cache for file system data on platforms that
+ * support it.
+ *
+ * Implementing a live-cache is complicated and requires special platform
+ * support (inotify, ReadDirectoryChangesW...). enable_fscache shall be used
+ * to mark sections of git code that extensively read from the file system
+ * without modifying anything. Implementations can use this to cache e.g. stat
+ * data or even file content without the need to synchronize with the file
+ * system.
+ */
+#ifndef enable_fscache
+#define enable_fscache(x) /* noop */
 #endif
 
 #endif
