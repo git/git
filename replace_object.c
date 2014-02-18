@@ -86,7 +86,7 @@ static void prepare_replace_object(void)
 	for_each_replace_ref(register_replace_ref, NULL);
 	replace_object_prepared = 1;
 	if (!replace_object_nr)
-		read_replace_refs = 0;
+		check_replace_refs = 0;
 }
 
 /* We allow "recursive" replacement. Only within reason, though */

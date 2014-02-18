@@ -580,7 +580,17 @@ extern size_t packed_git_limit;
 extern size_t delta_base_cache_limit;
 extern unsigned long big_file_threshold;
 extern unsigned long pack_size_limit_cfg;
-extern int read_replace_refs;
+
+/*
+ * Do replace refs need to be checked this run?  This variable is
+ * initialized to true unless --no-replace-object is used or
+ * $GIT_NO_REPLACE_OBJECTS is set, but is set to false by some
+ * commands that do not want replace references to be active.  As an
+ * optimization it is also set to false if replace references have
+ * been sought but there were none.
+ */
+extern int check_replace_refs;
+
 extern int fsync_object_files;
 extern int core_preload_index;
 extern int core_apply_sparse_checkout;
@@ -791,7 +801,7 @@ static inline void *read_sha1_file(const unsigned char *sha1, enum object_type *
 extern const unsigned char *do_lookup_replace_object(const unsigned char *sha1);
 static inline const unsigned char *lookup_replace_object(const unsigned char *sha1)
 {
-	if (!read_replace_refs)
+	if (!check_replace_refs)
 		return sha1;
 	return do_lookup_replace_object(sha1);
 }

@@ -630,7 +630,7 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 	struct alternate_object_database *alt;
 
 	errors_found = 0;
-	read_replace_refs = 0;
+	check_replace_refs = 0;
 
 	argc = parse_options(argc, argv, prefix, fsck_opts, fsck_usage, 0);
 

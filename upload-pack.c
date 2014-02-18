@@ -796,7 +796,7 @@ int main(int argc, char **argv)
 
 	packet_trace_identity("upload-pack");
 	git_extract_argv0_path(argv[0]);
-	read_replace_refs = 0;
+	check_replace_refs = 0;
 
 	for (i = 1; i < argc; i++) {
 		char *arg = argv[i];
