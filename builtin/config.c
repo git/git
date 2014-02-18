@@ -360,6 +360,9 @@ static int get_colorbool(int print)
 
 static void check_write(void)
 {
+	if (given_config_source.use_stdin)
+		die("writing to stdin is not supported");
+
 	if (given_config_source.blob)
 		die("writing config blobs is not supported");
 }
@@ -472,6 +475,12 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		usage_with_options(builtin_config_usage, builtin_config_options);
 	}
 
+	if (given_config_source.file &&
+			!strcmp(given_config_source.file, "-")) {
+		given_config_source.file = NULL;
+		given_config_source.use_stdin = 1;
+	}
+
 	if (use_global_config) {
 		char *user_config = NULL;
 		char *xdg_config = NULL;
@@ -558,6 +567,8 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		check_argc(argc, 0, 0);
 		if (!given_config_source.file && nongit)
 			die("not in a git directory");
+		if (given_config_source.use_stdin)
+			die("editing stdin is not supported");
 		if (given_config_source.blob)
 			die("editing blobs is not supported");
 		git_config(git_default_config, NULL);

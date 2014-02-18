@@ -1147,6 +1147,7 @@ extern int update_server_info(int);
 #define CONFIG_GENERIC_ERROR 7
 
 struct git_config_source {
+	unsigned int use_stdin:1;
 	const char *file;
 	const char *blob;
 };
