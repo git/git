@@ -122,6 +122,22 @@ test_expect_success 'relative includes from command line fail' '
 	test_must_fail git -c include.path=one config test.one
 '
 
+test_expect_success 'absolute includes from blobs work' '
+	echo "[test]one = 1" >one &&
+	echo "[include]path=$(pwd)/one" >blob &&
+	blob=$(git hash-object -w blob) &&
+	echo 1 >expect &&
+	git config --blob=$blob test.one >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'relative includes from blobs fail' '
+	echo "[test]one = 1" >one &&
+	echo "[include]path=one" >blob &&
+	blob=$(git hash-object -w blob) &&
+	test_must_fail git config --blob=$blob test.one
+'
+
 test_expect_success 'include cycles are detected' '
 	cat >.gitconfig <<-\EOF &&
 	[test]value = gitconfig

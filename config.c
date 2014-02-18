@@ -21,6 +21,7 @@ struct config_source {
 		} buf;
 	} u;
 	const char *name;
+	const char *path;
 	int die_on_error;
 	int linenr;
 	int eof;
@@ -97,12 +98,12 @@ static int handle_path_include(const char *path, struct config_include_data *inc
 	if (!is_absolute_path(path)) {
 		char *slash;
 
-		if (!cf || !cf->name)
+		if (!cf || !cf->path)
 			return error("relative config includes must come from files");
 
-		slash = find_last_dir_sep(cf->name);
+		slash = find_last_dir_sep(cf->path);
 		if (slash)
-			strbuf_add(&buf, cf->name, slash - cf->name + 1);
+			strbuf_add(&buf, cf->path, slash - cf->path + 1);
 		strbuf_addstr(&buf, path);
 		path = buf.buf;
 	}
@@ -1040,7 +1041,7 @@ int git_config_from_file(config_fn_t fn, const char *filename, void *data)
 		struct config_source top;
 
 		top.u.file = f;
-		top.name = filename;
+		top.name = top.path = filename;
 		top.die_on_error = 1;
 		top.do_fgetc = config_file_fgetc;
 		top.do_ungetc = config_file_ungetc;
@@ -1062,6 +1063,7 @@ int git_config_from_buf(config_fn_t fn, const char *name, const char *buf,
 	top.u.buf.len = len;
 	top.u.buf.pos = 0;
 	top.name = name;
+	top.path = NULL;
 	top.die_on_error = 0;
 	top.do_fgetc = config_buf_fgetc;
 	top.do_ungetc = config_buf_ungetc;
