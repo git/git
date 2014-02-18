@@ -880,6 +880,20 @@ int handle_curl_result(struct slot_results *results)
 	}
 }
 
+int run_one_slot(struct active_request_slot *slot,
+		 struct slot_results *results)
+{
+	slot->results = results;
+	if (!start_active_slot(slot)) {
+		snprintf(curl_errorstr, sizeof(curl_errorstr),
+			 "failed to start HTTP request");
+		return HTTP_START_FAILED;
+	}
+
+	run_active_slot(slot);
+	return handle_curl_result(results);
+}
+
 static CURLcode curlinfo_strbuf(CURL *curl, CURLINFO info, struct strbuf *buf)
 {
 	char *ptr;
@@ -907,7 +921,6 @@ static int http_request(const char *url,
 	int ret;
 
 	slot = get_active_slot();
-	slot->results = &results;
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPGET, 1);
 
 	if (result == NULL) {
@@ -942,14 +955,7 @@ static int http_request(const char *url,
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPHEADER, headers);
 	curl_easy_setopt(slot->curl, CURLOPT_ENCODING, "gzip");
 
-	if (start_active_slot(slot)) {
-		run_active_slot(slot);
-		ret = handle_curl_result(&results);
-	} else {
-		snprintf(curl_errorstr, sizeof(curl_errorstr),
-			 "failed to start HTTP request");
-		ret = HTTP_START_FAILED;
-	}
+	ret = run_one_slot(slot, &results);
 
 	if (options && options->content_type)
 		curlinfo_strbuf(slot->curl, CURLINFO_CONTENT_TYPE,
