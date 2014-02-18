@@ -1172,8 +1172,7 @@ int git_config_early(config_fn_t fn, void *data, const char *repo_config)
 }
 
 int git_config_with_options(config_fn_t fn, void *data,
-			    const char *filename,
-			    const char *blob_ref,
+			    struct git_config_source *config_source,
 			    int respect_includes)
 {
 	char *repo_config = NULL;
@@ -1191,10 +1190,10 @@ int git_config_with_options(config_fn_t fn, void *data,
 	 * If we have a specific filename, use it. Otherwise, follow the
 	 * regular lookup sequence.
 	 */
-	if (filename)
-		return git_config_from_file(fn, filename, data);
-	else if (blob_ref)
-		return git_config_from_blob_ref(fn, blob_ref, data);
+	if (config_source && config_source->file)
+		return git_config_from_file(fn, config_source->file, data);
+	else if (config_source && config_source->blob)
+		return git_config_from_blob_ref(fn, config_source->blob, data);
 
 	repo_config = git_pathdup("config");
 	ret = git_config_early(fn, data, repo_config);
@@ -1205,7 +1204,7 @@ int git_config_with_options(config_fn_t fn, void *data,
 
 int git_config(config_fn_t fn, void *data)
 {
-	return git_config_with_options(fn, data, NULL, NULL, 1);
+	return git_config_with_options(fn, data, NULL, 1);
 }
 
 /*
