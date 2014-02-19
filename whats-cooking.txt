@@ -1,19 +1,28 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Feb 2014, #05; Fri, 14)
+Subject: What's cooking in git.git (Feb 2014, #06; Wed, 19)
 X-master-at: 5f95c9f850b19b368c43ae399cc831b17a26a5ac
 X-next-at: dc9e3eb950a3fce88e01983170c37200a6d34d8f
 
-What's cooking in git.git (Feb 2014, #05; Fri, 14)
+What's cooking in git.git (Feb 2014, #06; Wed, 19)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-The tip of 'master' is v1.9.0.  The first maintenance release for it
-will be "Git 1.9.1", and the major release after "Git 1.9.0" will
-either be "Git 2.0.0" or "Git 1.10.0".
+The tip of 'next' hasn't been rewound, and none of the topics that
+have been cooking there has graduated, yet.  Hopefully that can
+start happening to open the new development cycle later this week,
+at which time I'll be also updating tinyurl.com/gitCal and also
+annotate the topics listed in this file with the course of action
+(i.e. if you run "Meta/cook -w", many are listed as Undecided right
+now, which I need to fix).
+
+There are many stalled topics; I think some of them do deserve to be
+discarded as marked, but others do solve (or at least attempt to)
+real issues and it would be nice to see people help unblock them
+(one reason for blockage would be that they introduce regressions).
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -23,20 +32,102 @@ of the repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* ks/tree-diff-nway (2014-02-14) 2 commits
- - combine-diff: speed it up, by using multiparent diff
- - tree-diff: rework diff_tree() to generate diffs for multiparent cases as well
- (this branch uses ks/combine-diff, ks/tree-diff-more and ks/tree-diff-walk.)
+* bc/blame-crlf-test (2014-02-18) 1 commit
+ - blame: add a failing test for a CRLF issue.
 
- Instead of running N pair-wise diff-trees when inspecting a
- N-parent merge, find the set of paths that were touched by walking
- N+1 trees in parallel.  These set of paths can then be turned into
- N pair-wise diff-tree results to be processed through rename
- detections and such.  And N=2 case nicely degenerates to the usual
- 2-way diff-tree, which is very nice.
 
- Promising, but unfortunately the implementation seems a bit too
- unportable for such a core part of the system.
+* jk/http-no-curl-easy (2014-02-18) 1 commit
+ - http: never use curl_easy_perform
+
+
+* jk/janitorial-fixes (2014-02-18) 5 commits
+ - open_istream(): do not dereference NULL in the error case
+ - builtin/mv: don't use memory after free
+ - utf8: use correct type for values in interval table
+ - utf8: fix iconv error detection
+ - notes-utils: handle boolean notes.rewritemode correctly
+
+
+* ks/config-file-stdin (2014-02-18) 4 commits
+ - config: teach "git config --file -" to read from the standard input
+ - config: change git_config_with_options() interface
+ - builtin/config.c: rename check_blob_write() -> check_write()
+ - config: disallow relative include paths from blobs
+
+
+* lb/contrib-contacts-looser-diff-parsing (2014-02-18) 1 commit
+ - git-contacts: do not fail parsing of good diffs
+
+
+* mh/replace-refs-variable-rename (2014-02-18) 1 commit
+ - Rename read_replace_refs to check_replace_refs
+
+
+* nd/commit-editor-cleanup (2014-02-18) 3 commits
+ - commit: add --cleanup=scissors
+ - wt-status.c: move cut-line print code out to wt_status_add_cut_line
+ - wt-status.c: make cut_line[] const to shrink .data section a bit
+
+
+* nd/no-more-fnmatch (2014-02-18) 4 commits
+ - Actually remove compat fnmatch source code
+ - Stop using fnmatch (either native or compat)
+ - Revert "test-wildmatch: add "perf" command to compare wildmatch and fnmatch"
+ - Use wildmatch() directly without fnmatch() wrapper
+
+
+* nd/reset-setup-worktree (2014-02-18) 1 commit
+ - reset: optionally setup worktree and refresh index on --mixed
+
+
+* po/git-help-user-manual (2014-02-18) 1 commit
+ - Provide a 'git help user-manual' route to the docbook
+
+
+* rt/links-for-asciidoctor (2014-02-18) 1 commit
+ - Fix documentation AsciiDoc links for external urls
+
+
+* tg/index-v4-format (2014-02-18) 5 commits
+ - read-cache: add index.version config variable
+ - FIXUP
+ - test-lib: allow setting the index format version
+ - FIXUP
+ - introduce GIT_INDEX_VERSION environment variable
+
+
+* tr/diff-submodule-no-reuse-worktree (2014-02-18) 2 commits
+ - diff: refactor reuse_worktree_file()
+ - diff: do not reuse_worktree_file for submodules
+
+
+* nd/multiple-work-trees (2014-02-19) 26 commits
+ - FIXUP???
+ - gc: support prune --repos
+ - prune: strategies for linked checkouts
+ - checkout: detach if the branch is already checked out elsewhere
+ - checkout: clean up half-prepared directories in --to mode
+ - checkout: support checking out into a new working directory
+ - use new wrapper write_file() for simple file writing
+ - wrapper.c: wrapper to open a file, fprintf then close
+ - setup.c: support multi-checkout repo setup
+ - setup.c: detect $GIT_COMMON_DIR check_repository_format_gently()
+ - setup.c: convert check_repository_format_gently to use strbuf
+ - setup.c: detect $GIT_COMMON_DIR in is_git_directory()
+ - setup.c: convert is_git_directory() to use strbuf
+ - git-stash: avoid hardcoding $GIT_DIR/logs/....
+ - *.sh: avoid hardcoding $GIT_DIR/hooks/...
+ - git-sh-setup.sh: use rev-parse --git-path to get $GIT_DIR/objects
+ - Add new environment variable $GIT_COMMON_DIR
+ - commit: use SEQ_DIR instead of hardcoding "sequencer"
+ - fast-import: use git_path() for accessing .git dir instead of get_git_dir()
+ - reflog: avoid constructing .lock path with git_path
+ - *.sh: respect $GIT_INDEX_FILE
+ - Make git_path() aware of file relocation in $GIT_DIR
+ - path.c: group git_path(), git_pathdup() and strbuf_git_path() together
+ - path.c: rename vsnpath() to do_git_path()
+ - Convert git_snpath() to strbuf_git_path()
+ - path.c: make get_pathname() return strbuf instead of static buffer
 
 --------------------------------------------------
 [Stalled]
@@ -324,6 +415,22 @@ of the repositories listed at
 
 --------------------------------------------------
 [Cooking]
+
+* ks/tree-diff-nway (2014-02-14) 2 commits
+ - combine-diff: speed it up, by using multiparent diff
+ - tree-diff: rework diff_tree() to generate diffs for multiparent cases as well
+ (this branch uses ks/combine-diff, ks/tree-diff-more and ks/tree-diff-walk.)
+
+ Instead of running N pair-wise diff-trees when inspecting a
+ N-parent merge, find the set of paths that were touched by walking
+ N+1 trees in parallel.  These set of paths can then be turned into
+ N pair-wise diff-tree results to be processed through rename
+ detections and such.  And N=2 case nicely degenerates to the usual
+ 2-way diff-tree, which is very nice.
+
+ Promising, but unfortunately the implementation seems a bit too
+ unportable for such a core part of the system.
+
 
 * al/docs (2014-02-11) 4 commits
   (merged to 'next' on 2014-02-13 at 4157cf3)
