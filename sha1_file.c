@@ -2058,6 +2058,10 @@ void *unpack_entry(struct packed_git *p, off_t obj_offset,
 	*final_size = size;
 
 	unuse_pack(&w_curs);
+
+	if (delta_stack != small_delta_stack)
+		free(delta_stack);
+
 	return data;
 }
 
