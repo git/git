@@ -727,7 +727,7 @@ static int push_update_ref_status(struct strbuf *buf,
 	}
 
 	(*ref)->status = status;
-	(*ref)->forced_update = forced;
+	(*ref)->forced_update |= forced;
 	(*ref)->remote_status = msg;
 	return !(status == REF_STATUS_OK);
 }
