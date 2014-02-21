@@ -3,8 +3,13 @@
 #include "refs.h"
 #include "commit.h"
 
+/*
+ * An array of replacements.  The array is kept sorted by the original
+ * sha1.
+ */
 static struct replace_object {
-	unsigned char sha1[2][20];
+	unsigned char original[20];
+	unsigned char replacement[20];
 } **replace_object;
 
 static int replace_object_alloc, replace_object_nr;
@@ -12,7 +17,7 @@ static int replace_object_alloc, replace_object_nr;
 static const unsigned char *replace_sha1_access(size_t index, void *table)
 {
 	struct replace_object **replace = table;
-	return replace[index]->sha1[0];
+	return replace[index]->original;
 }
 
 static int replace_object_pos(const unsigned char *sha1)
@@ -24,7 +29,7 @@ static int replace_object_pos(const unsigned char *sha1)
 static int register_replace_object(struct replace_object *replace,
 				   int ignore_dups)
 {
-	int pos = replace_object_pos(replace->sha1[0]);
+	int pos = replace_object_pos(replace->original);
 
 	if (0 <= pos) {
 		if (ignore_dups)
@@ -60,14 +65,14 @@ static int register_replace_ref(const char *refname,
 	const char *hash = slash ? slash + 1 : refname;
 	struct replace_object *repl_obj = xmalloc(sizeof(*repl_obj));
 
-	if (strlen(hash) != 40 || get_sha1_hex(hash, repl_obj->sha1[0])) {
+	if (strlen(hash) != 40 || get_sha1_hex(hash, repl_obj->original)) {
 		free(repl_obj);
 		warning("bad replace ref name: %s", refname);
 		return 0;
 	}
 
 	/* Copy sha1 from the read ref */
-	hashcpy(repl_obj->sha1[1], sha1);
+	hashcpy(repl_obj->replacement, sha1);
 
 	/* Register new object */
 	if (register_replace_object(repl_obj, 1))
@@ -107,7 +112,7 @@ const unsigned char *do_lookup_replace_object(const unsigned char *sha1)
 
 		pos = replace_object_pos(cur);
 		if (0 <= pos)
-			cur = replace_object[pos]->sha1[1];
+			cur = replace_object[pos]->replacement;
 	} while (0 <= pos);
 
 	return cur;
