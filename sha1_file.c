@@ -60,6 +60,12 @@ static struct cached_object empty_tree = {
 	0
 };
 
+/*
+ * A pointer to the last packed_git in which an object was found.
+ * When an object is sought, we look in this packfile first, because
+ * objects that are looked up at similar times are often in the same
+ * packfile as one another.
+ */
 static struct packed_git *last_found_pack;
 
 static struct cached_object *find_cached_object(const unsigned char *sha1)
@@ -2460,11 +2466,13 @@ static int find_pack_entry(const unsigned char *sha1, struct pack_entry *e)
 		return 1;
 
 	for (p = packed_git; p; p = p->next) {
-		if (p == last_found_pack || !fill_pack_entry(sha1, e, p))
-			continue;
+		if (p == last_found_pack)
+			continue; /* we already checked this one */
 
-		last_found_pack = p;
-		return 1;
+		if (fill_pack_entry(sha1, e, p)) {
+			last_found_pack = p;
+			return 1;
+		}
 	}
 	return 0;
 }
