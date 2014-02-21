@@ -184,16 +184,6 @@ static void fill_sha1_path(char *pathbuf, const unsigned char *sha1)
 	}
 }
 
-/*
- * NOTE! This returns a statically allocated buffer, so you have to be
- * careful about using it. Do an "xstrdup()" if you need to save the
- * filename.
- *
- * Also note that this returns the location for creating.  Reading
- * SHA1 file can happen from any alternate directory listed in the
- * DB_ENVIRONMENT environment variable if it is not found in
- * the primary object database.
- */
 const char *sha1_file_name(const unsigned char *sha1)
 {
 	static char buf[PATH_MAX];
@@ -214,6 +204,11 @@ const char *sha1_file_name(const unsigned char *sha1)
 	return buf;
 }
 
+/*
+ * Return the name of the pack or index file with the specified sha1
+ * in its filename.  *base and *name are scratch space that must be
+ * provided by the caller.  which should be "pack" or "idx".
+ */
 static char *sha1_get_pack_name(const unsigned char *sha1,
 				char **name, char **base, const char *which)
 {
@@ -496,7 +491,12 @@ void pack_report(void)
 		sz_fmt(pack_mapped), sz_fmt(peak_pack_mapped));
 }
 
-static int check_packed_git_idx(const char *path,  struct packed_git *p)
+/*
+ * Open and mmap the index file at path, perform a couple of
+ * consistency checks, then record its information to p.  Return 0 on
+ * success.
+ */
+static int check_packed_git_idx(const char *path, struct packed_git *p)
 {
 	void *idx_map;
 	struct pack_idx_header *hdr;
@@ -2449,6 +2449,10 @@ static int fill_pack_entry(const unsigned char *sha1,
 	return 1;
 }
 
+/*
+ * Iff a pack file contains the object named by sha1, return true and
+ * store its location to e.
+ */
 static int find_pack_entry(const unsigned char *sha1, struct pack_entry *e)
 {
 	struct packed_git *p;
