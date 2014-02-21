@@ -194,7 +194,7 @@ static void fill_sha1_path(char *pathbuf, const unsigned char *sha1)
  * DB_ENVIRONMENT environment variable if it is not found in
  * the primary object database.
  */
-char *sha1_file_name(const unsigned char *sha1)
+const char *sha1_file_name(const unsigned char *sha1)
 {
 	static char buf[PATH_MAX];
 	const char *objdir;
@@ -444,8 +444,7 @@ void prepare_alt_odb(void)
 
 static int has_loose_object_local(const unsigned char *sha1)
 {
-	char *name = sha1_file_name(sha1);
-	return !access(name, F_OK);
+	return !access(sha1_file_name(sha1), F_OK);
 }
 
 int has_loose_object_nonlocal(const unsigned char *sha1)
@@ -1420,17 +1419,15 @@ static int git_open_noatime(const char *name)
 
 static int stat_sha1_file(const unsigned char *sha1, struct stat *st)
 {
-	char *name = sha1_file_name(sha1);
 	struct alternate_object_database *alt;
 
-	if (!lstat(name, st))
+	if (!lstat(sha1_file_name(sha1), st))
 		return 0;
 
 	prepare_alt_odb();
 	errno = ENOENT;
 	for (alt = alt_odb_list; alt; alt = alt->next) {
-		name = alt->name;
-		fill_sha1_path(name, sha1);
+		fill_sha1_path(alt->name, sha1);
 		if (!lstat(alt->base, st))
 			return 0;
 	}
@@ -1441,18 +1438,16 @@ static int stat_sha1_file(const unsigned char *sha1, struct stat *st)
 static int open_sha1_file(const unsigned char *sha1)
 {
 	int fd;
-	char *name = sha1_file_name(sha1);
 	struct alternate_object_database *alt;
 
-	fd = git_open_noatime(name);
+	fd = git_open_noatime(sha1_file_name(sha1));
 	if (fd >= 0)
 		return fd;
 
 	prepare_alt_odb();
 	errno = ENOENT;
 	for (alt = alt_odb_list; alt; alt = alt->next) {
-		name = alt->name;
-		fill_sha1_path(name, sha1);
+		fill_sha1_path(alt->name, sha1);
 		fd = git_open_noatime(alt->base);
 		if (fd >= 0)
 			return fd;
@@ -2687,7 +2682,6 @@ void *read_sha1_file_extended(const unsigned char *sha1,
 			      unsigned flag)
 {
 	void *data;
-	char *path;
 	const struct packed_git *p;
 	const unsigned char *repl = lookup_replace_object_extended(sha1, flag);
 
@@ -2705,7 +2699,8 @@ void *read_sha1_file_extended(const unsigned char *sha1,
 		    sha1_to_hex(repl), sha1_to_hex(sha1));
 
 	if (has_loose_object(repl)) {
-		path = sha1_file_name(sha1);
+		const char *path = sha1_file_name(sha1);
+
 		die("loose object %s (stored in %s) is corrupt",
 		    sha1_to_hex(repl), path);
 	}
@@ -2903,10 +2898,9 @@ static int write_loose_object(const unsigned char *sha1, char *hdr, int hdrlen,
 	git_zstream stream;
 	git_SHA_CTX c;
 	unsigned char parano_sha1[20];
-	char *filename;
 	static char tmp_file[PATH_MAX];
+	const char *filename = sha1_file_name(sha1);
 
-	filename = sha1_file_name(sha1);
 	fd = create_tmpfile(tmp_file, sizeof(tmp_file), filename);
 	if (fd < 0) {
 		if (errno == EACCES)
