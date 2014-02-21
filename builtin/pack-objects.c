@@ -723,7 +723,7 @@ static void write_pack_file(void)
 	struct object_entry **write_order;
 
 	if (progress > pack_to_stdout)
-		progress_state = start_progress("Writing objects", nr_result);
+		progress_state = start_progress(_("Writing objects"), nr_result);
 	written_list = xmalloc(nr_objects * sizeof(*written_list));
 	write_order = compute_write_order();
 
@@ -2097,7 +2097,7 @@ static void prepare_pack(int window, int depth)
 	if (nr_deltas && n > 1) {
 		unsigned nr_done = 0;
 		if (progress)
-			progress_state = start_progress("Compressing objects",
+			progress_state = start_progress(_("Compressing objects"),
 							nr_deltas);
 		qsort(delta_list, n, sizeof(*delta_list), type_size_sort);
 		ll_find_deltas(delta_list, n, window+1, depth, &nr_done);
@@ -2576,7 +2576,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	prepare_packed_git();
 
 	if (progress)
-		progress_state = start_progress("Counting objects", 0);
+		progress_state = start_progress(_("Counting objects"), 0);
 	if (!use_internal_rev_list)
 		read_object_list_from_stdin();
 	else {

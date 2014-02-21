@@ -579,7 +579,7 @@ void diffcore_rename(struct diff_options *options)
 
 	if (options->show_rename_progress) {
 		progress = start_progress_delay(
-				"Performing inexact rename detection",
+				_("Performing inexact rename detection"),
 				rename_dst_nr * rename_src_nr, 50, 1);
 	}
 

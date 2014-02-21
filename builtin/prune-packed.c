@@ -46,7 +46,7 @@ void prune_packed_objects(int opts)
 
 	strbuf_addstr(&pathname, dir);
 	if (opts & PRUNE_PACKED_VERBOSE)
-		progress = start_progress_delay("Removing duplicate objects",
+		progress = start_progress_delay(_("Removing duplicate objects"),
 			256, 95, 2);
 
 	if (pathname.len && pathname.buf[pathname.len - 1] != '/')
