@@ -923,7 +923,6 @@ static void find_copy_in_blob(struct scoreboard *sb,
 			      mmfile_t *file_p)
 {
 	const char *cp;
-	int cnt;
 	mmfile_t file_o;
 	struct handle_split_cb_data d;
 
@@ -934,13 +933,7 @@ static void find_copy_in_blob(struct scoreboard *sb,
 	 */
 	cp = nth_line(sb, ent->lno);
 	file_o.ptr = (char *) cp;
-	cnt = ent->num_lines;
-
-	while (cnt && cp < sb->final_buf + sb->final_buf_size) {
-		if (*cp++ == '\n')
-			cnt--;
-	}
-	file_o.size = cp - file_o.ptr;
+	file_o.size = nth_line(sb, ent->lno + ent->num_lines) - cp;
 
 	/*
 	 * file_o is a part of final image we are annotating.
