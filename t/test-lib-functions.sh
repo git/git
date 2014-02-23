@@ -32,6 +32,11 @@ test_set_editor () {
 	export EDITOR
 }
 
+test_set_index_version () {
+    GIT_INDEX_VERSION="$1"
+    export GIT_INDEX_VERSION
+}
+
 test_decode_color () {
 	awk '
 		function name(n) {
