@@ -9,7 +9,14 @@
 static void show_path(struct strbuf *base, struct diff_options *opt,
 		      struct tree_desc *t1, struct tree_desc *t2);
 
-static int compare_tree_entry(struct tree_desc *t1, struct tree_desc *t2)
+/*
+ * Compare two tree entries, taking into account only path/S_ISDIR(mode),
+ * but not their sha1's.
+ *
+ * NOTE files and directories *always* compare differently, even when having
+ *      the same name - thanks to base_name_compare().
+ */
+static int tree_entry_pathcmp(struct tree_desc *t1, struct tree_desc *t2)
 {
 	unsigned mode1, mode2;
 	const char *path1, *path2;
@@ -22,10 +29,6 @@ static int compare_tree_entry(struct tree_desc *t1, struct tree_desc *t2)
 	pathlen1 = tree_entry_len(&t1->entry);
 	pathlen2 = tree_entry_len(&t2->entry);
 
-	/*
-	 * NOTE files and directories *always* compare differently,
-	 * even when having the same name.
-	 */
 	cmp = base_name_compare(path1, pathlen1, mode1, path2, pathlen2, mode2);
 	return cmp;
 }
@@ -168,7 +171,7 @@ int diff_tree(struct tree_desc *t1, struct tree_desc *t2,
 			continue;
 		}
 
-		cmp = compare_tree_entry(t1, t2);
+		cmp = tree_entry_pathcmp(t1, t2);
 
 		/* t1 = t2 */
 		if (cmp == 0) {
