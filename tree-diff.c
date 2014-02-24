@@ -12,11 +12,23 @@
  *
  * NOTE files and directories *always* compare differently, even when having
  *      the same name - thanks to base_name_compare().
+ *
+ * NOTE empty (=invalid) descriptor(s) take part in comparison as +infty,
+ *      so that they sort *after* valid tree entries.
+ *
+ *      Due to this convention, if trees are scanned in sorted order, all
+ *      non-empty descriptors will be processed first.
  */
 static int tree_entry_pathcmp(struct tree_desc *t1, struct tree_desc *t2)
 {
 	struct name_entry *e1, *e2;
 	int cmp;
+
+	/* empty descriptors sort after valid tree entries */
+	if (!t1->size)
+		return t2->size ? 1 : 0;
+	else if (!t2->size)
+		return -1;
 
 	e1 = &t1->entry;
 	e2 = &t2->entry;
@@ -150,18 +162,8 @@ int diff_tree(struct tree_desc *t1, struct tree_desc *t2,
 			skip_uninteresting(t1, &base, opt);
 			skip_uninteresting(t2, &base, opt);
 		}
-		if (!t1->size) {
-			if (!t2->size)
-				break;
-			show_path(&base, opt, /*t1=*/NULL, t2);
-			update_tree_entry(t2);
-			continue;
-		}
-		if (!t2->size) {
-			show_path(&base, opt, t1, /*t2=*/NULL);
-			update_tree_entry(t1);
-			continue;
-		}
+		if (!t1->size && !t2->size)
+			break;
 
 		cmp = tree_entry_pathcmp(t1, t2);
 
