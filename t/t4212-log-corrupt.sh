@@ -60,4 +60,20 @@ test_expect_success 'unparsable dates produce sentinel value (%ad)' '
 	test_cmp expect actual
 '
 
+# date is 2^64 + 1
+test_expect_success 'date parser recognizes integer overflow' '
+	commit=$(munge_author_date HEAD 18446744073709551617) &&
+	echo "Thu Jan 1 00:00:00 1970 +0000" >expect &&
+	git log -1 --format=%ad $commit >actual &&
+	test_cmp expect actual
+'
+
+# date is 2^64 - 2
+test_expect_success 'date parser recognizes time_t overflow' '
+	commit=$(munge_author_date HEAD 18446744073709551614) &&
+	echo "Thu Jan 1 00:00:00 1970 +0000" >expect &&
+	git log -1 --format=%ad $commit >actual &&
+	test_cmp expect actual
+'
+
 test_done

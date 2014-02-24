@@ -401,8 +401,14 @@ static const char *show_ident_date(const struct ident_split *ident,
 
 	if (ident->date_begin && ident->date_end)
 		date = strtoul(ident->date_begin, NULL, 10);
-	if (ident->tz_begin && ident->tz_end)
-		tz = strtol(ident->tz_begin, NULL, 10);
+	if (date_overflows(date))
+		date = 0;
+	else {
+		if (ident->tz_begin && ident->tz_end)
+			tz = strtol(ident->tz_begin, NULL, 10);
+		if (tz == LONG_MAX || tz == LONG_MIN)
+			tz = 0;
+	}
 	return show_date(date, tz, mode);
 }
 
