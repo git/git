@@ -178,18 +178,24 @@ int diff_tree(struct tree_desc *t1, struct tree_desc *t2,
 			update_tree_entry(t1);
 			continue;
 		}
-		switch (compare_tree_entry(t1, t2, &base, opt)) {
-		case -1:
+
+		cmp = compare_tree_entry(t1, t2, &base, opt);
+
+		/* t1 = t2 */
+		if (cmp == 0) {
 			update_tree_entry(t1);
-			continue;
-		case 0:
-			update_tree_entry(t1);
-			/* Fallthrough */
-		case 1:
 			update_tree_entry(t2);
-			continue;
 		}
-		die("git diff-tree: internal error");
+
+		/* t1 < t2 */
+		else if (cmp < 0) {
+			update_tree_entry(t1);
+		}
+
+		/* t1 > t2 */
+		else {
+			update_tree_entry(t2);
+		}
 	}
 
 	strbuf_release(&base);
