@@ -189,6 +189,11 @@ commits, like running 'git am' on the wrong branch or an error in the
 commits that is more easily fixed by changing the mailbox (e.g.
 errors in the "From:" lines).
 
+HOOKS
+-----
+This command can run `applypatch-msg`, `pre-applypatch`,
+and `post-applypatch` hooks.  See linkgit:githooks[5] for more
+information.
 
 SEE ALSO
 --------
