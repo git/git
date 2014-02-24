@@ -55,25 +55,7 @@ static int compare_tree_entry(struct tree_desc *t1, struct tree_desc *t2,
 	return 0;
 }
 
-/* A whole sub-tree went away or appeared */
-static void show_tree(struct diff_options *opt, const char *prefix,
-		      struct tree_desc *desc, struct strbuf *base)
-{
-	enum interesting match = entry_not_interesting;
-	for (; desc->size; update_tree_entry(desc)) {
-		if (match != all_entries_interesting) {
-			match = tree_entry_interesting(&desc->entry, base, 0,
-						       &opt->pathspec);
-			if (match == all_entries_not_interesting)
-				break;
-			if (match == entry_not_interesting)
-				continue;
-		}
-		show_entry(opt, prefix, desc, base);
-	}
-}
-
-/* A file entry went away or appeared */
+/* An entry went away or appeared */
 static void show_entry(struct diff_options *opt, const char *prefix,
 		       struct tree_desc *desc, struct strbuf *base)
 {
@@ -85,23 +67,12 @@ static void show_entry(struct diff_options *opt, const char *prefix,
 
 	strbuf_add(base, path, pathlen);
 	if (DIFF_OPT_TST(opt, RECURSIVE) && S_ISDIR(mode)) {
-		enum object_type type;
-		struct tree_desc inner;
-		void *tree;
-		unsigned long size;
-
-		tree = read_sha1_file(sha1, &type, &size);
-		if (!tree || type != OBJ_TREE)
-			die("corrupt tree sha %s", sha1_to_hex(sha1));
-
 		if (DIFF_OPT_TST(opt, TREE_IN_RECURSIVE))
 			opt->add_remove(opt, *prefix, mode, sha1, 1, base->buf, 0);
 
 		strbuf_addch(base, '/');
-
-		init_tree_desc(&inner, tree, size);
-		show_tree(opt, prefix, &inner, base);
-		free(tree);
+		diff_tree_sha1(*prefix == '-' ? sha1 : NULL,
+			       *prefix == '+' ? sha1 : NULL, base->buf, opt);
 	} else
 		opt->add_remove(opt, prefix[0], mode, sha1, 1, base->buf, 0);
 
