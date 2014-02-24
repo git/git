@@ -39,4 +39,25 @@ test_expect_success 'git log --format with broken author email' '
 	test_cmp expect.err actual.err
 '
 
+munge_author_date () {
+	git cat-file commit "$1" >commit.orig &&
+	sed "s/^\(author .*>\) [0-9]*/\1 $2/" <commit.orig >commit.munge &&
+	git hash-object -w -t commit commit.munge
+}
+
+test_expect_success 'unparsable dates produce sentinel value' '
+	commit=$(munge_author_date HEAD totally_bogus) &&
+	echo "Date:   Thu Jan 1 00:00:00 1970 +0000" >expect &&
+	git log -1 $commit >actual.full &&
+	grep Date <actual.full >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'unparsable dates produce sentinel value (%ad)' '
+	commit=$(munge_author_date HEAD totally_bogus) &&
+	echo >expect &&
+	git log -1 --format=%ad $commit >actual
+	test_cmp expect actual
+'
+
 test_done
