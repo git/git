@@ -141,8 +141,8 @@ static void skip_uninteresting(struct tree_desc *t, struct strbuf *base,
 	}
 }
 
-int diff_tree(struct tree_desc *t1, struct tree_desc *t2,
-	      const char *base_str, struct diff_options *opt)
+static int diff_tree(struct tree_desc *t1, struct tree_desc *t2,
+		     const char *base_str, struct diff_options *opt)
 {
 	struct strbuf base;
 	int baselen = strlen(base_str);
