@@ -6,9 +6,6 @@
 #include "diffcore.h"
 #include "tree.h"
 
-static void show_path(struct strbuf *base, struct diff_options *opt,
-		      struct tree_desc *t1, struct tree_desc *t2);
-
 /*
  * Compare two tree entries, taking into account only path/S_ISDIR(mode),
  * but not their sha1's.
