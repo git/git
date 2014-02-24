@@ -49,6 +49,7 @@ static int branches_nr;
 
 static struct branch *current_branch;
 static const char *default_remote_name;
+static const char *branch_pushremote_name;
 static const char *pushremote_name;
 static int explicit_default_remote_name;
 
@@ -352,7 +353,7 @@ static int handle_config(const char *key, const char *value, void *cb)
 			}
 		} else if (!strcmp(subkey, ".pushremote")) {
 			if (branch == current_branch)
-				if (git_config_string(&pushremote_name, key, value))
+				if (git_config_string(&branch_pushremote_name, key, value))
 					return -1;
 		} else if (!strcmp(subkey, ".merge")) {
 			if (!value)
@@ -492,6 +493,10 @@ static void read_config(void)
 			make_branch(head_ref + strlen("refs/heads/"), 0);
 	}
 	git_config(handle_config, NULL);
+	if (branch_pushremote_name) {
+		free((char *)pushremote_name);
+		pushremote_name = branch_pushremote_name;
+	}
 	alias_all_urls();
 }
 
