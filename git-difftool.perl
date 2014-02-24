@@ -39,24 +39,10 @@ USAGE
 
 sub find_worktree
 {
-	my ($repo) = @_;
-
 	# Git->repository->wc_path() does not honor changes to the working
 	# tree location made by $ENV{GIT_WORK_TREE} or the 'core.worktree'
 	# config variable.
-	my $worktree;
-	my $env_worktree = $ENV{GIT_WORK_TREE};
-	my $core_worktree = Git::config('core.worktree');
-
-	if (defined($env_worktree) and (length($env_worktree) > 0)) {
-		$worktree = $env_worktree;
-	} elsif (defined($core_worktree) and (length($core_worktree) > 0)) {
-		$worktree = $core_worktree;
-	} else {
-		$worktree = $repo->wc_path();
-	}
-
-	return $worktree;
+	return Git::command_oneline('rev-parse', '--show-toplevel');
 }
 
 sub print_tool_help
@@ -418,7 +404,7 @@ sub dir_diff
 	my $rc;
 	my $error = 0;
 	my $repo = Git->repository();
-	my $workdir = find_worktree($repo);
+	my $workdir = find_worktree();
 	my ($a, $b, $tmpdir, @worktree) =
 		setup_dir_diff($repo, $workdir, $symlinks);
 
