@@ -1303,7 +1303,7 @@ static const char *path_path(void *obj)
 
 
 /* find set of paths that every parent touches */
-static struct combine_diff_path *find_paths(const unsigned char *sha1,
+static struct combine_diff_path *find_paths_generic(const unsigned char *sha1,
 	const struct sha1_array *parents, struct diff_options *opt)
 {
 	struct combine_diff_path *paths = NULL;
@@ -1316,6 +1316,7 @@ static struct combine_diff_path *find_paths(const unsigned char *sha1,
 	/* tell diff_tree to emit paths in sorted (=tree) order */
 	opt->orderfile = NULL;
 
+	/* D(A,P1...Pn) = D(A,P1) ^ ... ^ D(A,Pn)  (wrt paths) */
 	for (i = 0; i < num_parent; i++) {
 		/*
 		 * show stat against the first parent even when doing
@@ -1346,6 +1347,35 @@ static struct combine_diff_path *find_paths(const unsigned char *sha1,
 }
 
 
+/*
+ * find set of paths that everybody touches, assuming diff is run without
+ * rename/copy detection, etc, comparing all trees simultaneously (= faster).
+ */
+static struct combine_diff_path *find_paths_multitree(
+	const unsigned char *sha1, const struct sha1_array *parents,
+	struct diff_options *opt)
+{
+	int i, nparent = parents->nr;
+	const unsigned char **parents_sha1;
+	struct combine_diff_path paths_head;
+	struct strbuf base;
+
+	parents_sha1 = xmalloc(nparent * sizeof(parents_sha1[0]));
+	for (i = 0; i < nparent; i++)
+		parents_sha1[i] = parents->sha1[i];
+
+	/* fake list head, so worker can assume it is non-NULL */
+	paths_head.next = NULL;
+
+	strbuf_init(&base, PATH_MAX);
+	diff_tree_paths(&paths_head, sha1, parents_sha1, nparent, &base, opt);
+
+	strbuf_release(&base);
+	free(parents_sha1);
+	return paths_head.next;
+}
+
+
 void diff_tree_combined(const unsigned char *sha1,
 			const struct sha1_array *parents,
 			int dense,
@@ -1355,6 +1385,7 @@ void diff_tree_combined(const unsigned char *sha1,
 	struct diff_options diffopts;
 	struct combine_diff_path *p, *paths;
 	int i, num_paths, needsep, show_log_first, num_parent = parents->nr;
+	int need_generic_pathscan;
 
 	/* nothing to do, if no parents */
 	if (!num_parent)
@@ -1377,11 +1408,58 @@ void diff_tree_combined(const unsigned char *sha1,
 
 	/* find set of paths that everybody touches
 	 *
-	 * NOTE find_paths() also handles --stat, as it computes
-	 * diff(sha1,parent_i) for all i to do the job, specifically
-	 * for parent0.
+	 * NOTE
+	 *
+	 * Diffcore transformations are bound to diff_filespec and logic
+	 * comparing two entries - i.e. they do not apply directly to combine
+	 * diff.
+	 *
+	 * If some of such transformations is requested - we launch generic
+	 * path scanning, which works significantly slower compared to
+	 * simultaneous all-trees-in-one-go scan in find_paths_multitree().
+	 *
+	 * TODO some of the filters could be ported to work on
+	 * combine_diff_paths - i.e. all functionality that skips paths, so in
+	 * theory, we could end up having only multitree path scanning.
+	 *
+	 * NOTE please keep this semantically in sync with diffcore_std()
 	 */
-	paths = find_paths(sha1, parents, &diffopts);
+	need_generic_pathscan = opt->skip_stat_unmatch	||
+			DIFF_OPT_TST(opt, FOLLOW_RENAMES)	||
+			opt->break_opt != -1	||
+			opt->detect_rename	||
+			opt->pickaxe		||
+			opt->filter;
+
+
+	if (need_generic_pathscan) {
+		/*
+		 * NOTE generic case also handles --stat, as it computes
+		 * diff(sha1,parent_i) for all i to do the job, specifically
+		 * for parent0.
+		 */
+		paths = find_paths_generic(sha1, parents, &diffopts);
+	}
+	else {
+		int stat_opt;
+		paths = find_paths_multitree(sha1, parents, &diffopts);
+
+		/*
+		 * show stat against the first parent even
+		 * when doing combined diff.
+		 */
+		stat_opt = (opt->output_format &
+				(DIFF_FORMAT_NUMSTAT|DIFF_FORMAT_DIFFSTAT));
+		if (stat_opt) {
+			diffopts.output_format = stat_opt;
+
+			diff_tree_sha1(parents->sha1[0], sha1, "", &diffopts);
+			diffcore_std(&diffopts);
+			if (opt->orderfile)
+				diffcore_order(opt->orderfile);
+			diff_flush(&diffopts);
+		}
+	}
 
 	/* find out number of surviving paths */
 	for (num_paths = 0, p = paths; p; p = p->next)
