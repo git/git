@@ -142,6 +142,20 @@ test_expect_success '> in name is reported' '
 	grep "error in commit $new" out
 '
 
+# date is 2^64 + 1
+test_expect_success 'integer overflow in timestamps is reported' '
+	git cat-file commit HEAD >basis &&
+	sed "s/^\\(author .*>\\) [0-9]*/\\1 18446744073709551617/" \
+		<basis >bad-timestamp &&
+	new=$(git hash-object -t commit -w --stdin <bad-timestamp) &&
+	test_when_finished "remove_object $new" &&
+	git update-ref refs/heads/bogus "$new" &&
+	test_when_finished "git update-ref -d refs/heads/bogus" &&
+	git fsck 2>out &&
+	cat out &&
+	grep "error in commit $new.*integer overflow" out
+'
+
 test_expect_success 'tag pointing to nonexistent' '
 	cat >invalid-tag <<-\EOF &&
 	object ffffffffffffffffffffffffffffffffffffffff

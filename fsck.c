@@ -245,6 +245,8 @@ static int fsck_tree(struct tree *item, int strict, fsck_error error_func)
 
 static int fsck_ident(char **ident, struct object *obj, fsck_error error_func)
 {
+	char *end;
+
 	if (**ident == '<')
 		return error_func(obj, FSCK_ERROR, "invalid author/committer line - missing space before email");
 	*ident += strcspn(*ident, "<>\n");
@@ -264,10 +266,11 @@ static int fsck_ident(char **ident, struct object *obj, fsck_error error_func)
 	(*ident)++;
 	if (**ident == '0' && (*ident)[1] != ' ')
 		return error_func(obj, FSCK_ERROR, "invalid author/committer line - zero-padded date");
-	*ident += strspn(*ident, "0123456789");
-	if (**ident != ' ')
+	if (strtoul(*ident, &end, 10) == ULONG_MAX)
+		return error_func(obj, FSCK_ERROR, "invalid author/committer line - date causes integer overflow");
+	if (end == *ident || *end != ' ')
 		return error_func(obj, FSCK_ERROR, "invalid author/committer line - bad date");
-	(*ident)++;
+	*ident = end + 1;
 	if ((**ident != '+' && **ident != '-') ||
 	    !isdigit((*ident)[1]) ||
 	    !isdigit((*ident)[2]) ||
@@ -286,9 +289,6 @@ static int fsck_commit(struct commit *commit, fsck_error error_func)
 	struct commit_graft *graft;
 	int parents = 0;
 	int err;
-
-	if (commit->date == ULONG_MAX)
-		return error_func(&commit->object, FSCK_ERROR, "invalid author/committer line");
 
 	if (memcmp(buffer, "tree ", 5))
 		return error_func(&commit->object, FSCK_ERROR, "invalid format - expected 'tree' line");
