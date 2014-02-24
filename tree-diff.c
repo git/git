@@ -9,8 +9,7 @@
 static void show_path(struct strbuf *base, struct diff_options *opt,
 		      struct tree_desc *t1, struct tree_desc *t2);
 
-static int compare_tree_entry(struct tree_desc *t1, struct tree_desc *t2,
-			      struct strbuf *base, struct diff_options *opt)
+static int compare_tree_entry(struct tree_desc *t1, struct tree_desc *t2)
 {
 	unsigned mode1, mode2;
 	const char *path1, *path2;
@@ -28,19 +27,7 @@ static int compare_tree_entry(struct tree_desc *t1, struct tree_desc *t2,
 	 * even when having the same name.
 	 */
 	cmp = base_name_compare(path1, pathlen1, mode1, path2, pathlen2, mode2);
-	if (cmp < 0) {
-		show_path(base, opt, t1, /*t2=*/NULL);
-		return -1;
-	}
-	if (cmp > 0) {
-		show_path(base, opt, /*t1=*/NULL, t2);
-		return 1;
-	}
-	if (!DIFF_OPT_TST(opt, FIND_COPIES_HARDER) && !hashcmp(sha1, sha2) && mode1 == mode2)
-		return 0;
-
-	show_path(base, opt, t1, t2);
-	return 0;
+	return cmp;
 }
 
 
@@ -160,6 +147,8 @@ int diff_tree(struct tree_desc *t1, struct tree_desc *t2,
 	strbuf_add(&base, base_str, baselen);
 
 	for (;;) {
+		int cmp;
+
 		if (diff_can_quit_early(opt))
 			break;
 		if (opt->pathspec.nr) {
@@ -179,21 +168,28 @@ int diff_tree(struct tree_desc *t1, struct tree_desc *t2,
 			continue;
 		}
 
-		cmp = compare_tree_entry(t1, t2, &base, opt);
+		cmp = compare_tree_entry(t1, t2);
 
 		/* t1 = t2 */
 		if (cmp == 0) {
+			if (DIFF_OPT_TST(opt, FIND_COPIES_HARDER) ||
+			    hashcmp(t1->entry.sha1, t2->entry.sha1) ||
+			    (t1->entry.mode != t2->entry.mode))
+				show_path(&base, opt, t1, t2);
+
 			update_tree_entry(t1);
 			update_tree_entry(t2);
 		}
 
 		/* t1 < t2 */
 		else if (cmp < 0) {
+			show_path(&base, opt, t1, /*t2=*/NULL);
 			update_tree_entry(t1);
 		}
 
 		/* t1 > t2 */
 		else {
+			show_path(&base, opt, /*t1=*/NULL, t2);
 			update_tree_entry(t2);
 		}
 	}
