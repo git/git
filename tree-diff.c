@@ -15,18 +15,13 @@
  */
 static int tree_entry_pathcmp(struct tree_desc *t1, struct tree_desc *t2)
 {
-	unsigned mode1, mode2;
-	const char *path1, *path2;
-	const unsigned char *sha1, *sha2;
-	int cmp, pathlen1, pathlen2;
+	struct name_entry *e1, *e2;
+	int cmp;
 
-	sha1 = tree_entry_extract(t1, &path1, &mode1);
-	sha2 = tree_entry_extract(t2, &path2, &mode2);
-
-	pathlen1 = tree_entry_len(&t1->entry);
-	pathlen2 = tree_entry_len(&t2->entry);
-
-	cmp = base_name_compare(path1, pathlen1, mode1, path2, pathlen2, mode2);
+	e1 = &t1->entry;
+	e2 = &t2->entry;
+	cmp = base_name_compare(e1->path, tree_entry_len(e1), e1->mode,
+				e2->path, tree_entry_len(e2), e2->mode);
 	return cmp;
 }
 
