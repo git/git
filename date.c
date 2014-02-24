@@ -184,8 +184,10 @@ const char *show_date(unsigned long time, int tz, enum date_mode mode)
 		tz = local_tzoffset(time);
 
 	tm = time_to_tm(time, tz);
-	if (!tm)
-		return NULL;
+	if (!tm) {
+		tm = time_to_tm(0, 0);
+		tz = 0;
+	}
 
 	strbuf_reset(&timebuf);
 	if (mode == DATE_SHORT)
