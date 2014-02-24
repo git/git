@@ -266,7 +266,7 @@ static int fsck_ident(char **ident, struct object *obj, fsck_error error_func)
 	(*ident)++;
 	if (**ident == '0' && (*ident)[1] != ' ')
 		return error_func(obj, FSCK_ERROR, "invalid author/committer line - zero-padded date");
-	if (strtoul(*ident, &end, 10) == ULONG_MAX)
+	if (date_overflows(strtoul(*ident, &end, 10)))
 		return error_func(obj, FSCK_ERROR, "invalid author/committer line - date causes integer overflow");
 	if (end == *ident || *end != ' ')
 		return error_func(obj, FSCK_ERROR, "invalid author/committer line - bad date");
