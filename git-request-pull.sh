@@ -53,6 +53,8 @@ fi
 local=${3%:*}
 local=${local:-HEAD}
 remote=${3#*:}
+pretty_remote=${remote#refs/}
+pretty_remote=${pretty_remote#heads/}
 head=$(git symbolic-ref -q "$local")
 head=${head:-$(git show-ref --heads --tags "$local" | cut -d' ' -f2)}
 head=${head:-$(git rev-parse --quiet --verify "$local")}
@@ -124,7 +126,7 @@ git show -s --format='The following changes since commit %H:
 
 are available in the git repository at:
 ' $merge_base &&
-echo "  $url $remote" &&
+echo "  $url $pretty_remote" &&
 git show -s --format='
 for you to fetch changes up to %H:
 

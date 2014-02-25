@@ -216,8 +216,14 @@ test_expect_success 'pull request format' '
 		git request-pull initial "$downstream_url" tags/full >../request
 	) &&
 	<request sed -nf fuzz.sed >request.fuzzy &&
-	test_i18ncmp expect request.fuzzy
+	test_i18ncmp expect request.fuzzy &&
 
+	(
+		cd local &&
+		git request-pull initial "$downstream_url" tags/full:refs/tags/full
+	) >request &&
+	sed -nf fuzz.sed <request >request.fuzzy &&
+	test_i18ncmp expect request.fuzzy
 '
 
 test_expect_success 'request-pull ignores OPTIONS_KEEPDASHDASH poison' '
