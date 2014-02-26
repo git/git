@@ -512,8 +512,14 @@ apply_stash () {
 pop_stash() {
 	assert_stash_ref "$@"
 
-	apply_stash "$@" &&
-	drop_stash "$@"
+	if apply_stash "$@"
+	then
+		drop_stash "$@"
+	else
+		status=$?
+		say "The stash is kept in case you need it again."
+		exit $status
+	fi
 }
 
 drop_stash () {
