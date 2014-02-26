@@ -10,6 +10,7 @@
 #include "mergesort.h"
 #include "commit-slab.h"
 #include "prio-queue.h"
+#include "sha1-lookup.h"
 
 static struct commit_extra_header *read_commit_extra_header_lines(const char *buf, size_t len, const char **);
 
@@ -114,23 +115,16 @@ static unsigned long parse_commit_date(const char *buf, const char *tail)
 static struct commit_graft **commit_graft;
 static int commit_graft_alloc, commit_graft_nr;
 
+static const unsigned char *commit_graft_sha1_access(size_t index, void *table)
+{
+	struct commit_graft **commit_graft_table = table;
+	return commit_graft_table[index]->sha1;
+}
+
 static int commit_graft_pos(const unsigned char *sha1)
 {
-	int lo, hi;
-	lo = 0;
-	hi = commit_graft_nr;
-	while (lo < hi) {
-		int mi = (lo + hi) / 2;
-		struct commit_graft *graft = commit_graft[mi];
-		int cmp = hashcmp(sha1, graft->sha1);
-		if (!cmp)
-			return mi;
-		if (cmp < 0)
-			hi = mi;
-		else
-			lo = mi + 1;
-	}
-	return -lo - 1;
+	return sha1_pos(sha1, commit_graft, commit_graft_nr,
+			commit_graft_sha1_access);
 }
 
 int register_commit_graft(struct commit_graft *graft, int ignore_dups)
