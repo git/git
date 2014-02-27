@@ -95,6 +95,12 @@ OPTIONS
 	using fnmatch(3)).  Multiple patterns may be given; if any of
 	them matches, the tag is shown.
 
+--sort=<type>::
+	Sort in a specific order. Supported type is "refname"
+	(lexicographic order), "version:refname" or "v:refname" (tag
+	names are treated as versions). Prepend "-" to reverse sort
+	order.
+
 --column[=<options>]::
 --no-column::
 	Display tag listing in columns. See configuration variable
