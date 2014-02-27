@@ -10,7 +10,7 @@
 #include "commit-slab.h"
 
 static int is_shallow = -1;
-static struct stat shallow_stat;
+static struct stat_validity shallow_stat;
 static char *alternate_shallow_file;
 
 void set_alternate_shallow_file(const char *path, int override)
@@ -52,12 +52,12 @@ int is_repository_shallow(void)
 	 * shallow file should be used. We could just open it and it
 	 * will likely fail. But let's do an explicit check instead.
 	 */
-	if (!*path ||
-	    stat(path, &shallow_stat) ||
-	    (fp = fopen(path, "r")) == NULL) {
+	if (!*path || (fp = fopen(path, "r")) == NULL) {
+		stat_validity_clear(&shallow_stat);
 		is_shallow = 0;
 		return is_shallow;
 	}
+	stat_validity_update(&shallow_stat, fileno(fp));
 	is_shallow = 1;
 
 	while (fgets(buf, sizeof(buf), fp)) {
@@ -137,21 +137,11 @@ struct commit_list *get_shallow_commits(struct object_array *heads, int depth,
 
 void check_shallow_file_for_update(void)
 {
-	struct stat st;
-
-	if (!is_shallow)
-		return;
-	else if (is_shallow == -1)
+	if (is_shallow == -1)
 		die("BUG: shallow must be initialized by now");
 
-	if (stat(git_path("shallow"), &st))
-		die("shallow file was removed during fetch");
-	else if (st.st_mtime != shallow_stat.st_mtime
-#ifdef USE_NSEC
-		 || ST_MTIME_NSEC(st) != ST_MTIME_NSEC(shallow_stat)
-#endif
-		   )
-		die("shallow file was changed during fetch");
+	if (!stat_validity_check(&shallow_stat, git_path("shallow")))
+		die("shallow file has changed since we read it");
 }
 
 #define SEEN_ONLY 1
