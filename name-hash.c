@@ -8,49 +8,28 @@
 #define NO_THE_INDEX_COMPATIBILITY_MACROS
 #include "cache.h"
 
-/*
- * This removes bit 5 if bit 6 is set.
- *
- * That will make US-ASCII characters hash to their upper-case
- * equivalent. We could easily do this one whole word at a time,
- * but that's for future worries.
- */
-static inline unsigned char icase_hash(unsigned char c)
-{
-	return c & ~((c & 0x40) >> 1);
-}
-
-static unsigned int hash_name(const char *name, int namelen)
-{
-	unsigned int hash = 0x123;
-
-	while (namelen--) {
-		unsigned char c = *name++;
-		c = icase_hash(c);
-		hash = hash*101 + c;
-	}
-	return hash;
-}
-
 struct dir_entry {
-	struct dir_entry *next;
+	struct hashmap_entry ent;
 	struct dir_entry *parent;
 	struct cache_entry *ce;
 	int nr;
 	unsigned int namelen;
 };
 
+static int dir_entry_cmp(const struct dir_entry *e1,
+		const struct dir_entry *e2, const char *name)
+{
+	return e1->namelen != e2->namelen || strncasecmp(e1->ce->name,
+			name ? name : e2->ce->name, e1->namelen);
+}
+
 static struct dir_entry *find_dir_entry(struct index_state *istate,
 		const char *name, unsigned int namelen)
 {
-	unsigned int hash = hash_name(name, namelen);
-	struct dir_entry *dir;
-
-	for (dir = lookup_hash(hash, &istate->dir_hash); dir; dir = dir->next)
-		if (dir->namelen == namelen &&
-		    !strncasecmp(dir->ce->name, name, namelen))
-			return dir;
-	return NULL;
+	struct dir_entry key;
+	hashmap_entry_init(&key, memihash(name, namelen));
+	key.namelen = namelen;
+	return hashmap_get(&istate->dir_hash, &key, name);
 }
 
 static struct dir_entry *hash_dir_entry(struct index_state *istate,
@@ -84,18 +63,11 @@ static struct dir_entry *hash_dir_entry(struct index_state *istate,
 	dir = find_dir_entry(istate, ce->name, namelen);
 	if (!dir) {
 		/* not found, create it and add to hash table */
-		void **pdir;
-		unsigned int hash = hash_name(ce->name, namelen);
-
 		dir = xcalloc(1, sizeof(struct dir_entry));
+		hashmap_entry_init(dir, memihash(ce->name, namelen));
 		dir->namelen = namelen;
 		dir->ce = ce;
-
-		pdir = insert_hash(hash, dir, &istate->dir_hash);
-		if (pdir) {
-			dir->next = *pdir;
-			*pdir = dir;
-		}
+		hashmap_add(&istate->dir_hash, dir);
 
 		/* recursively add missing parent directories */
 		dir->parent = hash_dir_entry(istate, ce, namelen);
@@ -114,35 +86,39 @@ static void add_dir_entry(struct index_state *istate, struct cache_entry *ce)
 static void remove_dir_entry(struct index_state *istate, struct cache_entry *ce)
 {
 	/*
-	 * Release reference to the directory entry (and parents if 0).
-	 *
-	 * Note: we do not remove / free the entry because there's no
-	 * hash.[ch]::remove_hash and dir->next may point to other entries
-	 * that are still valid, so we must not free the memory.
+	 * Release reference to the directory entry. If 0, remove and continue
+	 * with parent directory.
 	 */
 	struct dir_entry *dir = hash_dir_entry(istate, ce, ce_namelen(ce));
-	while (dir && dir->nr && !(--dir->nr))
-		dir = dir->parent;
+	while (dir && !(--dir->nr)) {
+		struct dir_entry *parent = dir->parent;
+		hashmap_remove(&istate->dir_hash, dir, NULL);
+		free(dir);
+		dir = parent;
+	}
 }
 
 static void hash_index_entry(struct index_state *istate, struct cache_entry *ce)
 {
-	void **pos;
-	unsigned int hash;
-
 	if (ce->ce_flags & CE_HASHED)
 		return;
 	ce->ce_flags |= CE_HASHED;
-	ce->next = NULL;
-	hash = hash_name(ce->name, ce_namelen(ce));
-	pos = insert_hash(hash, ce, &istate->name_hash);
-	if (pos) {
-		ce->next = *pos;
-		*pos = ce;
-	}
+	hashmap_entry_init(ce, memihash(ce->name, ce_namelen(ce)));
+	hashmap_add(&istate->name_hash, ce);
 
-	if (ignore_case && !(ce->ce_flags & CE_UNHASHED))
+	if (ignore_case)
 		add_dir_entry(istate, ce);
+}
+
+static int cache_entry_cmp(const struct cache_entry *ce1,
+		const struct cache_entry *ce2, const void *remove)
+{
+	/*
+	 * For remove_name_hash, find the exact entry (pointer equality); for
+	 * index_file_exists, find all entries with matching hash code and
+	 * decide whether the entry matches in same_name.
+	 */
+	return remove ? !(ce1 == ce2) : 0;
 }
 
 static void lazy_init_name_hash(struct index_state *istate)
@@ -151,8 +127,9 @@ static void lazy_init_name_hash(struct index_state *istate)
 
 	if (istate->name_hash_initialized)
 		return;
-	if (istate->cache_nr)
-		preallocate_hash(&istate->name_hash, istate->cache_nr);
+	hashmap_init(&istate->name_hash, (hashmap_cmp_fn) cache_entry_cmp,
+			istate->cache_nr);
+	hashmap_init(&istate->dir_hash, (hashmap_cmp_fn) dir_entry_cmp, 0);
 	for (nr = 0; nr < istate->cache_nr; nr++)
 		hash_index_entry(istate, istate->cache[nr]);
 	istate->name_hash_initialized = 1;
@@ -160,31 +137,19 @@ static void lazy_init_name_hash(struct index_state *istate)
 
 void add_name_hash(struct index_state *istate, struct cache_entry *ce)
 {
-	/* if already hashed, add reference to directory entries */
-	if (ignore_case && (ce->ce_flags & CE_STATE_MASK) == CE_STATE_MASK)
-		add_dir_entry(istate, ce);
-
-	ce->ce_flags &= ~CE_UNHASHED;
 	if (istate->name_hash_initialized)
 		hash_index_entry(istate, ce);
 }
 
-/*
- * We don't actually *remove* it, we can just mark it invalid so that
- * we won't find it in lookups.
- *
- * Not only would we have to search the lists (simple enough), but
- * we'd also have to rehash other hash buckets in case this makes the
- * hash bucket empty (common). So it's much better to just mark
- * it.
- */
 void remove_name_hash(struct index_state *istate, struct cache_entry *ce)
 {
-	/* if already hashed, release reference to directory entries */
-	if (ignore_case && (ce->ce_flags & CE_STATE_MASK) == CE_HASHED)
-		remove_dir_entry(istate, ce);
+	if (!istate->name_hash_initialized || !(ce->ce_flags & CE_HASHED))
+		return;
+	ce->ce_flags &= ~CE_HASHED;
+	hashmap_remove(&istate->name_hash, ce, ce);
 
-	ce->ce_flags |= CE_UNHASHED;
+	if (ignore_case)
+		remove_dir_entry(istate, ce);
 }
 
 static int slow_same_name(const char *name1, int len1, const char *name2, int len2)
@@ -247,38 +212,19 @@ struct cache_entry *index_dir_exists(struct index_state *istate, const char *nam
 
 struct cache_entry *index_file_exists(struct index_state *istate, const char *name, int namelen, int icase)
 {
-	unsigned int hash = hash_name(name, namelen);
 	struct cache_entry *ce;
+	struct hashmap_entry key;
 
 	lazy_init_name_hash(istate);
-	ce = lookup_hash(hash, &istate->name_hash);
 
+	hashmap_entry_init(&key, memihash(name, namelen));
+	ce = hashmap_get(&istate->name_hash, &key, NULL);
 	while (ce) {
-		if (!(ce->ce_flags & CE_UNHASHED)) {
-			if (same_name(ce, name, namelen, icase))
-				return ce;
-		}
-		ce = ce->next;
+		if (same_name(ce, name, namelen, icase))
+			return ce;
+		ce = hashmap_get_next(&istate->name_hash, ce);
 	}
 	return NULL;
-}
-
-struct cache_entry *index_name_exists(struct index_state *istate, const char *name, int namelen, int icase)
-{
-	if (namelen > 0 && name[namelen - 1] == '/')
-		return index_dir_exists(istate, name, namelen - 1);
-	return index_file_exists(istate, name, namelen, icase);
-}
-
-static int free_dir_entry(void *entry, void *unused)
-{
-	struct dir_entry *dir = entry;
-	while (dir) {
-		struct dir_entry *next = dir->next;
-		free(dir);
-		dir = next;
-	}
-	return 0;
 }
 
 void free_name_hash(struct index_state *istate)
@@ -286,10 +232,7 @@ void free_name_hash(struct index_state *istate)
 	if (!istate->name_hash_initialized)
 		return;
 	istate->name_hash_initialized = 0;
-	if (ignore_case)
-		/* free directory entries */
-		for_each_hash(&istate->dir_hash, free_dir_entry, NULL);
 
-	free_hash(&istate->name_hash);
-	free_hash(&istate->dir_hash);
+	hashmap_free(&istate->name_hash, 0);
+	hashmap_free(&istate->dir_hash, 1);
 }

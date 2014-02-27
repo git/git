@@ -105,12 +105,11 @@ void setup_unpack_trees_porcelain(struct unpack_trees_options *opts,
 static void do_add_entry(struct unpack_trees_options *o, struct cache_entry *ce,
 			 unsigned int set, unsigned int clear)
 {
-	clear |= CE_HASHED | CE_UNHASHED;
+	clear |= CE_HASHED;
 
 	if (set & CE_REMOVE)
 		set |= CE_WT_REMOVE;
 
-	ce->next = NULL;
 	ce->ce_flags = (ce->ce_flags & ~clear) | set;
 	add_index_entry(&o->result, ce,
 			ADD_CACHE_OK_TO_ADD | ADD_CACHE_OK_TO_REPLACE);
