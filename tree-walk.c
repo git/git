@@ -37,7 +37,7 @@ static void decode_tree_entry(struct tree_desc *desc, const char *buf, unsigned 
 
 	/* Initialize the descriptor entry */
 	desc->entry.path = path;
-	desc->entry.mode = mode;
+	desc->entry.mode = canon_mode(mode);
 	desc->entry.sha1 = (const unsigned char *)(path + len);
 }
 
