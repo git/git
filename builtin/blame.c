@@ -197,7 +197,6 @@ static void drop_origin_blob(struct origin *o)
  * scoreboard structure, sorted by the target line number.
  */
 struct blame_entry {
-	struct blame_entry *prev;
 	struct blame_entry *next;
 
 	/* the first line of this group in the final image;
@@ -256,15 +255,6 @@ struct scoreboard {
 	int *lineno;
 };
 
-static inline int same_suspect(struct origin *a, struct origin *b)
-{
-	if (a == b)
-		return 1;
-	if (a->commit != b->commit)
-		return 0;
-	return !strcmp(a->path, b->path);
-}
-
 static void sanity_check_refcnt(struct scoreboard *);
 
 /*
@@ -277,13 +267,11 @@ static void coalesce(struct scoreboard *sb)
 	struct blame_entry *ent, *next;
 
 	for (ent = sb->ent; ent && (next = ent->next); ent = next) {
-		if (same_suspect(ent->suspect, next->suspect) &&
+		if (ent->suspect == next->suspect &&
 		    ent->guilty == next->guilty &&
 		    ent->s_lno + ent->num_lines == next->s_lno) {
 			ent->num_lines += next->num_lines;
 			ent->next = next->next;
-			if (ent->next)
-				ent->next->prev = ent;
 			origin_decref(next->suspect);
 			free(next);
 			ent->score = 0;
@@ -534,7 +522,7 @@ static void add_blame_entry(struct scoreboard *sb, struct blame_entry *e)
 		prev = ent;
 
 	/* prev, if not NULL, is the last one that is below e */
-	e->prev = prev;
+
 	if (prev) {
 		e->next = prev->next;
 		prev->next = e;
@@ -543,8 +531,6 @@ static void add_blame_entry(struct scoreboard *sb, struct blame_entry *e)
 		e->next = sb->ent;
 		sb->ent = e;
 	}
-	if (e->next)
-		e->next->prev = e;
 }
 
 /*
@@ -555,14 +541,12 @@ static void add_blame_entry(struct scoreboard *sb, struct blame_entry *e)
  */
 static void dup_entry(struct blame_entry *dst, struct blame_entry *src)
 {
-	struct blame_entry *p, *n;
+	struct blame_entry *n;
 
-	p = dst->prev;
 	n = dst->next;
 	origin_incref(src->suspect);
 	origin_decref(dst->suspect);
 	memcpy(dst, src, sizeof(*src));
-	dst->prev = p;
 	dst->next = n;
 	dst->score = 0;
 }
@@ -742,7 +726,7 @@ static int find_last_in_target(struct scoreboard *sb, struct origin *target)
 	int last_in_target = -1;
 
 	for (e = sb->ent; e; e = e->next) {
-		if (e->guilty || !same_suspect(e->suspect, target))
+		if (e->guilty || e->suspect != target)
 			continue;
 		if (last_in_target < e->s_lno + e->num_lines)
 			last_in_target = e->s_lno + e->num_lines;
@@ -762,7 +746,7 @@ static void blame_chunk(struct scoreboard *sb,
 	struct blame_entry *e;
 
 	for (e = sb->ent; e; e = e->next) {
-		if (e->guilty || !same_suspect(e->suspect, target))
+		if (e->guilty || e->suspect != target)
 			continue;
 		if (same <= e->s_lno)
 			continue;
@@ -939,7 +923,6 @@ static void find_copy_in_blob(struct scoreboard *sb,
 			      mmfile_t *file_p)
 {
 	const char *cp;
-	int cnt;
 	mmfile_t file_o;
 	struct handle_split_cb_data d;
 
@@ -950,13 +933,7 @@ static void find_copy_in_blob(struct scoreboard *sb,
 	 */
 	cp = nth_line(sb, ent->lno);
 	file_o.ptr = (char *) cp;
-	cnt = ent->num_lines;
-
-	while (cnt && cp < sb->final_buf + sb->final_buf_size) {
-		if (*cp++ == '\n')
-			cnt--;
-	}
-	file_o.size = cp - file_o.ptr;
+	file_o.size = nth_line(sb, ent->lno + ent->num_lines) - cp;
 
 	/*
 	 * file_o is a part of final image we are annotating.
@@ -992,7 +969,7 @@ static int find_move_in_parent(struct scoreboard *sb,
 	while (made_progress) {
 		made_progress = 0;
 		for (e = sb->ent; e; e = e->next) {
-			if (e->guilty || !same_suspect(e->suspect, target) ||
+			if (e->guilty || e->suspect != target ||
 			    ent_score(sb, e) < blame_move_score)
 				continue;
 			find_copy_in_blob(sb, e, parent, split, &file_p);
@@ -1027,14 +1004,14 @@ static struct blame_list *setup_blame_list(struct scoreboard *sb,
 
 	for (e = sb->ent, num_ents = 0; e; e = e->next)
 		if (!e->scanned && !e->guilty &&
-		    same_suspect(e->suspect, target) &&
+		    e->suspect == target &&
 		    min_score < ent_score(sb, e))
 			num_ents++;
 	if (num_ents) {
 		blame_list = xcalloc(num_ents, sizeof(struct blame_list));
 		for (e = sb->ent, i = 0; e; e = e->next)
 			if (!e->scanned && !e->guilty &&
-			    same_suspect(e->suspect, target) &&
+			    e->suspect == target &&
 			    min_score < ent_score(sb, e))
 				blame_list[i++].ent = e;
 	}
@@ -1178,7 +1155,7 @@ static void pass_whole_blame(struct scoreboard *sb,
 		origin->file.ptr = NULL;
 	}
 	for (e = sb->ent; e; e = e->next) {
-		if (!same_suspect(e->suspect, origin))
+		if (e->suspect != origin)
 			continue;
 		origin_incref(porigin);
 		origin_decref(e->suspect);
@@ -1567,7 +1544,7 @@ static void assign_blame(struct scoreboard *sb, int opt)
 
 		/* Take responsibility for the remaining entries */
 		for (ent = sb->ent; ent; ent = ent->next)
-			if (same_suspect(ent->suspect, suspect))
+			if (ent->suspect == suspect)
 				found_guilty_entry(ent);
 		origin_decref(suspect);
 
@@ -1772,25 +1749,41 @@ static int prepare_lines(struct scoreboard *sb)
 {
 	const char *buf = sb->final_buf;
 	unsigned long len = sb->final_buf_size;
-	int num = 0, incomplete = 0, bol = 1;
+	const char *end = buf + len;
+	const char *p;
+	int *lineno;
+	int num = 0, incomplete = 0;
 
-	if (len && buf[len-1] != '\n')
-		incomplete++; /* incomplete line at the end */
-	while (len--) {
-		if (bol) {
-			sb->lineno = xrealloc(sb->lineno,
-					      sizeof(int *) * (num + 1));
-			sb->lineno[num] = buf - sb->final_buf;
-			bol = 0;
-		}
-		if (*buf++ == '\n') {
+	for (p = buf;;) {
+		p = memchr(p, '\n', end - p);
+		if (p) {
+			p++;
 			num++;
-			bol = 1;
+			continue;
 		}
+		break;
 	}
-	sb->lineno = xrealloc(sb->lineno,
-			      sizeof(int *) * (num + incomplete + 1));
-	sb->lineno[num + incomplete] = buf - sb->final_buf;
+
+	if (len && end[-1] != '\n')
+		incomplete++; /* incomplete line at the end */
+
+	sb->lineno = xmalloc(sizeof(*sb->lineno) * (num + incomplete + 1));
+	lineno = sb->lineno;
+
+	*lineno++ = 0;
+	for (p = buf;;) {
+		p = memchr(p, '\n', end - p);
+		if (p) {
+			p++;
+			*lineno++ = p - buf;
+			continue;
+		}
+		break;
+	}
+
+	if (incomplete)
+		*lineno++ = len;
+
 	sb->num_lines = num + incomplete;
 	return sb->num_lines;
 }
@@ -2502,8 +2495,6 @@ parse_done:
 		ent->suspect = o;
 		ent->s_lno = bottom;
 		ent->next = next;
-		if (next)
-			next->prev = ent;
 		origin_incref(o);
 	}
 	origin_decref(o);
