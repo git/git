@@ -55,6 +55,7 @@ SYNOPSIS
 	     [ \--reverse ]
 	     [ \--walk-reflogs ]
 	     [ \--no-walk ] [ \--do-walk ]
+	     [ \--use-bitmap-index ]
 	     <commit>... [ \-- <paths>... ]
 
 DESCRIPTION

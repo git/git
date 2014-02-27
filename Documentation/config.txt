@@ -1870,6 +1870,31 @@ pack.packSizeLimit::
 	Common unit suffixes of 'k', 'm', or 'g' are
 	supported.
 
+pack.useBitmaps::
+	When true, git will use pack bitmaps (if available) when packing
+	to stdout (e.g., during the server side of a fetch). Defaults to
+	true. You should not generally need to turn this off unless
+	you are debugging pack bitmaps.
+
+pack.writebitmaps::
+	When true, git will write a bitmap index when packing all
+	objects to disk (e.g., when `git repack -a` is run).  This
+	index can speed up the "counting objects" phase of subsequent
+	packs created for clones and fetches, at the cost of some disk
+	space and extra time spent on the initial repack.  Defaults to
+	false.
+
+pack.writeBitmapHashCache::
+	When true, git will include a "hash cache" section in the bitmap
+	index (if one is written). This cache can be used to feed git's
+	delta heuristics, potentially leading to better deltas between
+	bitmapped and non-bitmapped objects (e.g., when serving a fetch
+	between an older, bitmapped pack and objects that have been
+	pushed since the last gc). The downside is that it consumes 4
+	bytes per object of disk space, and that JGit's bitmap
+	implementation does not understand it, causing it to complain if
+	Git and JGit are used on the same repository. Defaults to false.
+
 pager.<cmd>::
 	If the value is boolean, turns on or off pagination of the
 	output of a particular Git subcommand when writing to a tty.

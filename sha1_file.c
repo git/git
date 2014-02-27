@@ -252,8 +252,6 @@ char *sha1_pack_index_name(const unsigned char *sha1)
 struct alternate_object_database *alt_odb_list;
 static struct alternate_object_database **alt_odb_tail;
 
-static int git_open_noatime(const char *name);
-
 /*
  * Prepare alternate object database registry.
  *
@@ -1232,6 +1230,7 @@ static void prepare_packed_git_one(char *objdir, int local)
 
 		if (has_extension(de->d_name, ".idx") ||
 		    has_extension(de->d_name, ".pack") ||
+		    has_extension(de->d_name, ".bitmap") ||
 		    has_extension(de->d_name, ".keep"))
 			string_list_append(&garbage, path);
 		else
@@ -1316,7 +1315,6 @@ void prepare_packed_git(void)
 
 void reprepare_packed_git(void)
 {
-	discard_revindex();
 	prepare_packed_git_run_once = 0;
 	prepare_packed_git();
 }
@@ -1393,7 +1391,7 @@ int check_sha1_signature(const unsigned char *sha1, void *map,
 	return hashcmp(sha1, real_sha1) ? -1 : 0;
 }
 
-static int git_open_noatime(const char *name)
+int git_open_noatime(const char *name)
 {
 	static int sha1_file_open_flag = O_NOATIME;
 

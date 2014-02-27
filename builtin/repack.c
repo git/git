@@ -94,7 +94,7 @@ static void get_non_kept_pack_filenames(struct string_list *fname_list)
 
 static void remove_redundant_pack(const char *dir_name, const char *base_name)
 {
-	const char *exts[] = {".pack", ".idx", ".keep"};
+	const char *exts[] = {".pack", ".idx", ".keep", ".bitmap"};
 	int i;
 	struct strbuf buf = STRBUF_INIT;
 	size_t plen;
@@ -115,7 +115,14 @@ static void remove_redundant_pack(const char *dir_name, const char *base_name)
 
 int cmd_repack(int argc, const char **argv, const char *prefix)
 {
-	const char *exts[2] = {".pack", ".idx"};
+	struct {
+		const char *name;
+		unsigned optional:1;
+	} exts[] = {
+		{".pack"},
+		{".idx"},
+		{".bitmap", 1},
+	};
 	struct child_process cmd;
 	struct string_list_item *item;
 	struct argv_array cmd_args = ARGV_ARRAY_INIT;
@@ -137,6 +144,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	int no_update_server_info = 0;
 	int quiet = 0;
 	int local = 0;
+	int write_bitmap = -1;
 
 	struct option builtin_repack_options[] = {
 		OPT_BIT('a', NULL, &pack_everything,
@@ -155,6 +163,8 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		OPT__QUIET(&quiet, N_("be quiet")),
 		OPT_BOOL('l', "local", &local,
 				N_("pass --local to git-pack-objects")),
+		OPT_BOOL('b', "write-bitmap-index", &write_bitmap,
+				N_("write bitmap index")),
 		OPT_STRING(0, "unpack-unreachable", &unpack_unreachable, N_("approxidate"),
 				N_("with -A, do not loosen objects older than this")),
 		OPT_STRING(0, "window", &window, N_("n"),
@@ -196,6 +206,9 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		argv_array_pushf(&cmd_args, "--no-reuse-delta");
 	if (no_reuse_object)
 		argv_array_pushf(&cmd_args, "--no-reuse-object");
+	if (write_bitmap >= 0)
+		argv_array_pushf(&cmd_args, "--%swrite-bitmap-index",
+				 write_bitmap ? "" : "no-");
 
 	if (pack_everything & ALL_INTO_ONE) {
 		get_non_kept_pack_filenames(&existing_packs);
@@ -256,17 +269,17 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	 */
 	failed = 0;
 	for_each_string_list_item(item, &names) {
-		for (ext = 0; ext < 2; ext++) {
+		for (ext = 0; ext < ARRAY_SIZE(exts); ext++) {
 			char *fname, *fname_old;
 			fname = mkpathdup("%s/pack-%s%s", packdir,
-						item->string, exts[ext]);
+						item->string, exts[ext].name);
 			if (!file_exists(fname)) {
 				free(fname);
 				continue;
 			}
 
 			fname_old = mkpath("%s/old-%s%s", packdir,
-						item->string, exts[ext]);
+						item->string, exts[ext].name);
 			if (file_exists(fname_old))
 				if (unlink(fname_old))
 					failed = 1;
@@ -313,19 +326,23 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 
 	/* Now the ones with the same name are out of the way... */
 	for_each_string_list_item(item, &names) {
-		for (ext = 0; ext < 2; ext++) {
+		for (ext = 0; ext < ARRAY_SIZE(exts); ext++) {
 			char *fname, *fname_old;
 			struct stat statbuffer;
+			int exists = 0;
 			fname = mkpathdup("%s/pack-%s%s",
-					packdir, item->string, exts[ext]);
+					packdir, item->string, exts[ext].name);
 			fname_old = mkpathdup("%s-%s%s",
-					packtmp, item->string, exts[ext]);
+					packtmp, item->string, exts[ext].name);
 			if (!stat(fname_old, &statbuffer)) {
 				statbuffer.st_mode &= ~(S_IWUSR | S_IWGRP | S_IWOTH);
 				chmod(fname_old, statbuffer.st_mode);
+				exists = 1;
 			}
-			if (rename(fname_old, fname))
-				die_errno(_("renaming '%s' failed"), fname_old);
+			if (exists || !exts[ext].optional) {
+				if (rename(fname_old, fname))
+					die_errno(_("renaming '%s' failed"), fname_old);
+			}
 			free(fname);
 			free(fname_old);
 		}
@@ -333,12 +350,12 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 
 	/* Remove the "old-" files */
 	for_each_string_list_item(item, &names) {
-		for (ext = 0; ext < 2; ext++) {
+		for (ext = 0; ext < ARRAY_SIZE(exts); ext++) {
 			char *fname;
 			fname = mkpath("%s/old-%s%s",
 					packdir,
 					item->string,
-					exts[ext]);
+					exts[ext].name);
 			if (remove_path(fname))
 				warning(_("removing '%s' failed"), fname);
 		}
