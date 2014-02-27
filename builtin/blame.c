@@ -1580,14 +1580,14 @@ static const char *format_time(unsigned long time, const char *tz_str,
 			       int show_raw_time)
 {
 	static char time_buf[128];
-	const char *time_str;
-	int time_len;
-	int tz;
 
 	if (show_raw_time) {
 		snprintf(time_buf, sizeof(time_buf), "%lu %s", time, tz_str);
 	}
 	else {
+		const char *time_str;
+		int time_len;
+		int tz;
 		tz = atoi(tz_str);
 		time_str = show_date(time, tz, blame_date_mode);
 		time_len = strlen(time_str);
