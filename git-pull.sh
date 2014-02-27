@@ -153,6 +153,15 @@ do
 	--no-verify-signatures)
 		verify_signatures=--no-verify-signatures
 		;;
+	--gpg-sign|-S)
+		gpg_sign_args=-S
+		;;
+	--gpg-sign=*)
+		gpg_sign_args=$(git rev-parse --sq-quote "-S${1#--gpg-sign=}")
+		;;
+	-S*)
+		gpg_sign_args=$(git rev-parse --sq-quote "$1")
+		;;
 	--d|--dr|--dry|--dry-|--dry-r|--dry-ru|--dry-run)
 		dry_run=--dry-run
 		;;
@@ -320,11 +329,13 @@ merge_name=$(git fmt-merge-msg $log_arg <"$GIT_DIR/FETCH_HEAD") || exit
 case "$rebase" in
 true)
 	eval="git-rebase $diffstat $strategy_args $merge_args $rebase_args $verbosity"
+	eval="$eval $gpg_sign_args"
 	eval="$eval --onto $merge_head ${oldremoteref:-$merge_head}"
 	;;
 *)
 	eval="git-merge $diffstat $no_commit $verify_signatures $edit $squash $no_ff $ff_only"
-	eval="$eval  $log_arg $strategy_args $merge_args $verbosity $progress"
+	eval="$eval $log_arg $strategy_args $merge_args $verbosity $progress"
+	eval="$eval $gpg_sign_args"
 	eval="$eval \"\$merge_name\" HEAD $merge_head"
 	;;
 esac

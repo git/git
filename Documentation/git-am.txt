@@ -14,7 +14,7 @@ SYNOPSIS
 	 [--ignore-date] [--ignore-space-change | --ignore-whitespace]
 	 [--whitespace=<option>] [-C<n>] [-p<n>] [--directory=<dir>]
 	 [--exclude=<path>] [--include=<path>] [--reject] [-q | --quiet]
-	 [--[no-]scissors]
+	 [--[no-]scissors] [-S[<keyid>]]
 	 [(<mbox> | <Maildir>)...]
 'git am' (--continue | --skip | --abort)
 
@@ -118,6 +118,10 @@ default.   You can use `--no-utf8` to override this.
 --skip::
 	Skip the current patch.  This is only meaningful when
 	restarting an aborted patch.
+
+-S[<keyid>]::
+--gpg-sign[=<keyid>]::
+	GPG-sign commits.
 
 --continue::
 -r::

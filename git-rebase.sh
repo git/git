@@ -5,6 +5,7 @@
 
 SUBDIRECTORY_OK=Yes
 OPTIONS_KEEPDASHDASH=
+OPTIONS_STUCKLONG=t
 OPTIONS_SPEC="\
 git rebase [-i] [options] [--exec <cmd>] [--onto <newbase>] [<upstream>] [<branch>]
 git rebase [-i] [options] [--exec <cmd>] [--onto <newbase>] --root [<branch>]
@@ -36,6 +37,7 @@ ignore-date!       passed to 'git am'
 whitespace=!       passed to 'git apply'
 ignore-whitespace! passed to 'git apply'
 C=!                passed to 'git apply'
+S,gpg-sign?        GPG-sign commits
  Actions:
 continue!          continue
 abort!             abort and check out the original branch
@@ -84,6 +86,7 @@ preserve_merges=
 autosquash=
 keep_empty=
 test "$(git config --bool rebase.autosquash)" = "true" && autosquash=t
+gpg_sign_opt=
 
 read_basic_state () {
 	test -f "$state_dir/head-name" &&
@@ -106,6 +109,8 @@ read_basic_state () {
 		strategy_opts="$(cat "$state_dir"/strategy_opts)"
 	test -f "$state_dir"/allow_rerere_autoupdate &&
 		allow_rerere_autoupdate="$(cat "$state_dir"/allow_rerere_autoupdate)"
+	test -f "$state_dir"/gpg_sign_opt &&
+		gpg_sign_opt="$(cat "$state_dir"/gpg_sign_opt)"
 }
 
 write_basic_state () {
@@ -119,6 +124,7 @@ write_basic_state () {
 		"$state_dir"/strategy_opts
 	test -n "$allow_rerere_autoupdate" && echo "$allow_rerere_autoupdate" > \
 		"$state_dir"/allow_rerere_autoupdate
+	test -n "$gpg_sign_opt" && echo "$gpg_sign_opt" > "$state_dir"/gpg_sign_opt
 }
 
 output () {
@@ -236,23 +242,19 @@ do
 		test $total_argc -eq 2 || usage
 		action=${1##--}
 		;;
-	--onto)
-		test 2 -le "$#" || usage
-		onto="$2"
-		shift
+	--onto=*)
+		onto="${1#--onto=}"
 		;;
-	-x)
-		test 2 -le "$#" || usage
-		cmd="${cmd}exec $2${LF}"
-		shift
+	--exec=*)
+		cmd="${cmd}exec ${1#--exec=}${LF}"
 		;;
-	-i)
+	--interactive)
 		interactive_rebase=explicit
 		;;
-	-k)
+	--keep-empty)
 		keep_empty=yes
 		;;
-	-p)
+	--preserve-merges)
 		preserve_merges=t
 		test -z "$interactive_rebase" && interactive_rebase=implied
 		;;
@@ -268,21 +270,19 @@ do
 	--no-fork-point)
 		fork_point=
 		;;
-	-M|-m)
+	--merge)
 		do_merge=t
 		;;
-	-X)
-		shift
-		strategy_opts="$strategy_opts $(git rev-parse --sq-quote "--$1")"
+	--strategy-option=*)
+		strategy_opts="$strategy_opts $(git rev-parse --sq-quote "--${1#--strategy-option=}")"
 		do_merge=t
 		test -z "$strategy" && strategy=recursive
 		;;
-	-s)
-		shift
-		strategy="$1"
+	--strategy=*)
+		strategy="${1#--strategy=}"
 		do_merge=t
 		;;
-	-n)
+	--no-stat)
 		diffstat=
 		;;
 	--stat)
@@ -291,21 +291,20 @@ do
 	--autostash)
 		autostash=true
 		;;
-	-v)
+	--verbose)
 		verbose=t
 		diffstat=t
 		GIT_QUIET=
 		;;
-	-q)
+	--quiet)
 		GIT_QUIET=t
 		git_am_opt="$git_am_opt -q"
 		verbose=
 		diffstat=
 		;;
-	--whitespace)
-		shift
-		git_am_opt="$git_am_opt --whitespace=$1"
-		case "$1" in
+	--whitespace=*)
+		git_am_opt="$git_am_opt --whitespace=${1#--whitespace=}"
+		case "${1#--whitespace=}" in
 		fix|strip)
 			force_rebase=t
 			;;
@@ -318,18 +317,23 @@ do
 		git_am_opt="$git_am_opt $1"
 		force_rebase=t
 		;;
-	-C)
-		shift
-		git_am_opt="$git_am_opt -C$1"
+	-C*)
+		git_am_opt="$git_am_opt $1"
 		;;
 	--root)
 		rebase_root=t
 		;;
-	-f|--no-ff)
+	--force-rebase|--no-ff)
 		force_rebase=t
 		;;
 	--rerere-autoupdate|--no-rerere-autoupdate)
 		allow_rerere_autoupdate="$1"
+		;;
+	--gpg-sign)
+		gpg_sign_opt=-S
+		;;
+	--gpg-sign=*)
+		gpg_sign_opt="-S${1#--gpg-sign=}"
 		;;
 	--)
 		shift

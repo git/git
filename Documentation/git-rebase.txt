@@ -281,6 +281,10 @@ which makes little sense.
 	specified, `-s recursive`.  Note the reversal of 'ours' and
 	'theirs' as noted above for the `-m` option.
 
+-S[<keyid>]::
+--gpg-sign[=<keyid>]::
+	GPG-sign commits.
+
 -q::
 --quiet::
 	Be quiet. Implies --no-stat.
