@@ -15,8 +15,8 @@ SYNOPSIS
 'git submodule' [--quiet] init [--] [<path>...]
 'git submodule' [--quiet] deinit [-f|--force] [--] <path>...
 'git submodule' [--quiet] update [--init] [--remote] [-N|--no-fetch]
-	      [-f|--force] [--rebase] [--reference <repository>] [--depth <depth>]
-	      [--merge] [--recursive] [--] [<path>...]
+	      [-f|--force] [--rebase|--merge|--checkout] [--reference <repository>]
+	      [--depth <depth>] [--recursive] [--] [<path>...]
 'git submodule' [--quiet] summary [--cached|--files] [(-n|--summary-limit) <n>]
 	      [commit] [--] [<path>...]
 'git submodule' [--quiet] foreach [--recursive] <command>
@@ -155,13 +155,31 @@ it contains local modifications.
 
 update::
 	Update the registered submodules, i.e. clone missing submodules and
-	checkout the commit specified in the index of the containing repository.
-	This will make the submodules HEAD be detached unless `--rebase` or
-	`--merge` is specified or the key `submodule.$name.update` is set to
-	`rebase`, `merge` or `none`. `none` can be overridden by specifying
-	`--checkout`. Setting the key `submodule.$name.update` to `!command`
-	will cause `command` to be run. `command` can be any arbitrary shell
-	command that takes a single argument, namely the sha1 to update to.
+	checkout the commit specified in the index of the containing
+	repository.  The update mode defaults to `checkout`, but can be
+	configured with the `submodule.<name>.update` setting or the
+	`--rebase`, `--merge`, or `--checkout` options.
++
+For updates that clone missing submodules, checkout-mode updates will
+create submodules with detached HEADs; all other modes will create
+submodules with a local branch named after `submodule.<path>.branch`.
++
+For updates that do not clone missing submodules, the submodule's HEAD
+is only touched when the remote reference does not match the
+submodule's HEAD (for none-mode updates, the submodule is never
+touched).  The remote reference is usually the gitlinked commit from
+the superproject's tree, but with `--remote` it is the upstream
+subproject's `submodule.<name>.branch`.  This remote reference is
+integrated with the submodule's HEAD using the specified update mode.
+For checkout-mode updates, that will result in a detached HEAD.  For
+rebase- and merge-mode updates, the commit referenced by the
+submodule's HEAD may change, but the symbolic reference will remain
+unchanged (i.e. checked-out branches will still be checked-out
+branches, and detached HEADs will still be detached HEADs).  If none
+of the builtin modes fit your needs, set `submodule.<name>.update` to
+`!command` to configure a custom integration command.  `command` can
+be any arbitrary shell command that takes a single argument, namely
+the sha1 to update to.
 +
 If the submodule is not yet initialized, and you just want to use the
 setting as stored in .gitmodules, you can automatically initialize the
@@ -281,6 +299,16 @@ In order to ensure a current tracking branch state, `update --remote`
 fetches the submodule's remote repository before calculating the
 SHA-1.  If you don't want to fetch, you should use `submodule update
 --remote --no-fetch`.
++
+Use this option to integrate changes from the upstream subproject with
+your submodule's current HEAD.  Alternatively, you can run `git pull`
+from the submodule, which is equivalent except for the remote branch
+name: `update --remote` uses the default upstream repository and
+`submodule.<name>.branch`, while `git pull` uses the submodule's
+`branch.<name>.merge`.  Prefer `submodule.<name>.branch` if you want
+to distribute the default upstream branch with the superproject and
+`branch.<name>.merge` if you want a more native feel while working in
+the submodule itself.
 
 -N::
 --no-fetch::
