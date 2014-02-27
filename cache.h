@@ -487,6 +487,7 @@ extern int add_to_index(struct index_state *, const char *path, struct stat *, i
 extern int add_file_to_index(struct index_state *, const char *path, int flags);
 extern struct cache_entry *make_cache_entry(unsigned int mode, const unsigned char *sha1, const char *path, int stage, unsigned int refresh_options);
 extern int ce_same_name(const struct cache_entry *a, const struct cache_entry *b);
+extern void set_object_name_for_intent_to_add_entry(struct cache_entry *ce);
 extern int index_name_is_other(const struct index_state *, const char *, int);
 extern void *read_blob_data_from_index(struct index_state *, const char *, unsigned long *);
 
