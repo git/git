@@ -33,7 +33,7 @@ void add_pathspec_matches_against_index(const struct pathspec *pathspec,
 		return;
 	for (i = 0; i < active_nr; i++) {
 		const struct cache_entry *ce = active_cache[i];
-		match_pathspec_depth(pathspec, ce->name, ce_namelen(ce), 0, seen);
+		ce_path_match(ce, pathspec, seen);
 	}
 }
 

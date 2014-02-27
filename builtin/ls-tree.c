@@ -171,7 +171,7 @@ int cmd_ls_tree(int argc, const char **argv, const char *prefix)
 	 * show_recursive() rolls its own matching code and is
 	 * generally ignorant of 'struct pathspec'. The magic mask
 	 * cannot be lifted until it is converted to use
-	 * match_pathspec_depth() or tree_entry_interesting()
+	 * match_pathspec() or tree_entry_interesting()
 	 */
 	parse_pathspec(&pathspec, PATHSPEC_GLOB | PATHSPEC_ICASE,
 		       PATHSPEC_PREFER_CWD,
