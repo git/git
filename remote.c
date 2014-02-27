@@ -821,6 +821,32 @@ static int match_name_with_pattern(const char *key, const char *name,
 	return ret;
 }
 
+static void query_refspecs_multiple(struct refspec *refs, int ref_count, struct refspec *query, struct string_list *results)
+{
+	int i;
+	int find_src = !query->src;
+
+	if (find_src && !query->dst)
+		error("query_refspecs_multiple: need either src or dst");
+
+	for (i = 0; i < ref_count; i++) {
+		struct refspec *refspec = &refs[i];
+		const char *key = find_src ? refspec->dst : refspec->src;
+		const char *value = find_src ? refspec->src : refspec->dst;
+		const char *needle = find_src ? query->dst : query->src;
+		char **result = find_src ? &query->src : &query->dst;
+
+		if (!refspec->dst)
+			continue;
+		if (refspec->pattern) {
+			if (match_name_with_pattern(key, needle, value, result))
+				string_list_append_nodup(results, *result);
+		} else if (!strcmp(needle, key)) {
+			string_list_append(results, value);
+		}
+	}
+}
+
 static int query_refspecs(struct refspec *refs, int ref_count, struct refspec *query)
 {
 	int i;
@@ -1954,25 +1980,37 @@ static int get_stale_heads_cb(const char *refname,
 	const unsigned char *sha1, int flags, void *cb_data)
 {
 	struct stale_heads_info *info = cb_data;
+	struct string_list matches = STRING_LIST_INIT_DUP;
 	struct refspec query;
+	int i, stale = 1;
 	memset(&query, 0, sizeof(struct refspec));
 	query.dst = (char *)refname;
 
-	if (query_refspecs(info->refs, info->ref_count, &query))
-		return 0; /* No matches */
+	query_refspecs_multiple(info->refs, info->ref_count, &query, &matches);
+	if (matches.nr == 0)
+		goto clean_exit; /* No matches */
 
 	/*
 	 * If we did find a suitable refspec and it's not a symref and
 	 * it's not in the list of refs that currently exist in that
-	 * remote we consider it to be stale.
+	 * remote, we consider it to be stale. In order to deal with
+	 * overlapping refspecs, we need to go over all of the
+	 * matching refs.
 	 */
-	if (!((flags & REF_ISSYMREF) ||
-	      string_list_has_string(info->ref_names, query.src))) {
+	if (flags & REF_ISSYMREF)
+		goto clean_exit;
+
+	for (i = 0; stale && i < matches.nr; i++)
+		if (string_list_has_string(info->ref_names, matches.items[i].string))
+			stale = 0;
+
+	if (stale) {
 		struct ref *ref = make_linked_ref(refname, &info->stale_refs_tail);
 		hashcpy(ref->new_sha1, sha1);
 	}
 
-	free(query.src);
+clean_exit:
+	string_list_clear(&matches, 0);
 	return 0;
 }
 

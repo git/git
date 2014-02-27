@@ -113,7 +113,7 @@ test_expect_success 'fetch --prune with a namespace keeps other namespaces' '
 	git rev-parse origin/master
 '
 
-test_expect_failure 'fetch --prune handles overlapping refspecs' '
+test_expect_success 'fetch --prune handles overlapping refspecs' '
 	cd "$D" &&
 	git update-ref refs/pull/42/head master &&
 	git clone . prune-overlapping &&
