@@ -12,7 +12,6 @@ if test -n "$NO_CURL"; then
 fi
 
 ROOT_PATH="$PWD"
-LIB_HTTPD_PORT=${LIB_HTTPD_PORT-'5541'}
 . "$TEST_DIRECTORY"/lib-httpd.sh
 . "$TEST_DIRECTORY"/lib-terminal.sh
 start_httpd
