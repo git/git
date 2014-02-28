@@ -126,6 +126,17 @@ For C programs:
    "char * string".  This makes it easier to understand code
    like "char *string, c;".
 
+ - Use whitespace around operators and keywords, but not inside
+   parentheses and not around functions. So:
+
+        while (condition)
+		func(bar + 1);
+
+   and not:
+
+        while( condition )
+		func (bar+1);
+
  - We avoid using braces unnecessarily.  I.e.
 
 	if (bla) {
