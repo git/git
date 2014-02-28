@@ -15,7 +15,7 @@ SYNOPSIS
 'git submodule' [--quiet] init [--] [<path>...]
 'git submodule' [--quiet] deinit [-f|--force] [--] <path>...
 'git submodule' [--quiet] update [--init] [--remote] [-N|--no-fetch]
-	      [-f|--force] [--rebase|--merge|--checkout] [--reference <repository>]
+	      [-f|--force] [--checkout|--rebase|--merge] [--reference <repository>]
 	      [--depth <depth>] [--recursive] [--] [<path>...]
 'git submodule' [--quiet] summary [--cached|--files] [(-n|--summary-limit) <n>]
 	      [commit] [--] [<path>...]
@@ -304,6 +304,15 @@ SHA-1.  If you don't want to fetch, you should use `submodule update
 --no-fetch::
 	This option is only valid for the update command.
 	Don't fetch new objects from the remote site.
+
+--checkout::
+	This option is only valid for the update command.
+	Checkout the commit recorded in the superproject on a detached HEAD
+	in the submodule. This is the default behavior, the main use of
+	this option is to override `submodule.$name.update` when set to
+	`merge`, `rebase` or `none`.
+	If the key `submodule.$name.update` is either not explicitly set or
+	set to `checkout`, this option is implicit.
 
 --merge::
 	This option is only valid for the update command.
