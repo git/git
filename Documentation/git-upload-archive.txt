@@ -46,6 +46,12 @@ implications. These rules are subject to change in future versions of
 git, and the server accessed by `git archive --remote` may or may not
 follow these exact rules.
 
+If the config option `uploadArchive.allowUnreachable` is true, these
+rules are ignored, and clients may use arbitrary sha1 expressions.
+This is useful if you do not care about the privacy of unreachable
+objects, or if your object database is already publicly available for
+access via non-smart-http.
+
 OPTIONS
 -------
 <directory>::

@@ -2291,6 +2291,13 @@ transfer.unpackLimit::
 	not set, the value of this variable is used instead.
 	The default value is 100.
 
+uploadarchive.allowUnreachable::
+	If true, allow clients to use `git archive --remote` to request
+	any tree, whether reachable from the ref tips or not. See the
+	discussion in the `SECURITY` section of
+	linkgit:git-upload-archive[1] for more details. Defaults to
+	`false`.
+
 uploadpack.hiderefs::
 	String(s) `upload-pack` uses to decide which refs to omit
 	from its initial advertisement.  Use more than one
