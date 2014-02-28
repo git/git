@@ -42,7 +42,14 @@ struct object {
 extern const char *typename(unsigned int type);
 extern int type_from_string(const char *str);
 
+/*
+ * Return the current number of buckets in the object hashmap.
+ */
 extern unsigned int get_max_object_index(void);
+
+/*
+ * Return the object from the specified bucket in the object hashmap.
+ */
 extern struct object *get_indexed_object(unsigned int);
 
 /*
