@@ -23,7 +23,7 @@ m,merges             scan for merges into other branches (slow)
 t,merge-targets      scan for merges of other branches into <name>
 n,dry-run            don't recreate the branch"
 
-. git-sh-setup
+. "$(git --exec-path)/git-sh-setup"
 
 search_reflog () {
         sed -ne 's~^\([^ ]*\) .*\tcheckout: moving from '"$1"' .*~\1~p' \
