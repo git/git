@@ -749,8 +749,9 @@ def p4ChangesForPaths(depotPaths, changeRange):
 
     changes = {}
     for line in output:
-        changeNum = int(line.split(" ")[1])
-        changes[changeNum] = True
+        if " " in line:
+            changeNum = int(line.split(" ")[1])
+            changes[changeNum] = True
 
     changelist = changes.keys()
     changelist.sort()
