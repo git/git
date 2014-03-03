@@ -14,11 +14,7 @@ static const char bundle_signature[] = "# v2 git bundle\n";
 static void add_to_ref_list(const unsigned char *sha1, const char *name,
 		struct ref_list *list)
 {
-	if (list->nr + 1 >= list->alloc) {
-		list->alloc = alloc_nr(list->nr + 1);
-		list->list = xrealloc(list->list,
-				list->alloc * sizeof(list->list[0]));
-	}
+	ALLOC_GROW(list->list, list->nr + 1, list->alloc);
 	memcpy(list->list[list->nr].sha1, sha1, 20);
 	list->list[list->nr].name = xstrdup(name);
 	list->nr++;
