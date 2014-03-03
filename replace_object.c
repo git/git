@@ -36,12 +36,8 @@ static int register_replace_object(struct replace_object *replace,
 		return 1;
 	}
 	pos = -pos - 1;
-	if (replace_object_alloc <= ++replace_object_nr) {
-		replace_object_alloc = alloc_nr(replace_object_alloc);
-		replace_object = xrealloc(replace_object,
-					  sizeof(*replace_object) *
-					  replace_object_alloc);
-	}
+	ALLOC_GROW(replace_object, replace_object_nr + 1, replace_object_alloc);
+	replace_object_nr++;
 	if (pos < replace_object_nr)
 		memmove(replace_object + pos + 1,
 			replace_object + pos,
