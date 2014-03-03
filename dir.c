@@ -1329,10 +1329,7 @@ static struct path_simplify *create_simplify(const char **pathspec)
 
 	for (nr = 0 ; ; nr++) {
 		const char *match;
-		if (nr >= alloc) {
-			alloc = alloc_nr(alloc);
-			simplify = xrealloc(simplify, alloc * sizeof(*simplify));
-		}
+		ALLOC_GROW(simplify, nr + 1, alloc);
 		match = *pathspec++;
 		if (!match)
 			break;
