@@ -357,8 +357,11 @@ extern int suffixcmp(const char *str, const char *suffix);
 
 static inline const char *skip_prefix(const char *str, const char *prefix)
 {
-	size_t len = strlen(prefix);
-	return strncmp(str, prefix, len) ? NULL : str + len;
+	do {
+		if (!*prefix)
+			return str;
+	} while (*str++ == *prefix++);
+	return NULL;
 }
 
 #if defined(NO_MMAP) || defined(USE_WIN32_MMAP)
