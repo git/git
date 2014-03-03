@@ -530,7 +530,7 @@ void bitmap_writer_finish(struct pack_idx_entry **index,
 	header.version = htons(default_version);
 	header.options = htons(flags | options);
 	header.entry_count = htonl(writer.selected_nr);
-	memcpy(header.checksum, writer.pack_checksum, 20);
+	hashcpy(header.checksum, writer.pack_checksum);
 
 	sha1write(f, &header, sizeof(header));
 	dump_bitmap(f, writer.commits);
