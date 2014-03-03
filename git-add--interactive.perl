@@ -58,6 +58,9 @@ if ($repo->config_bool("interactive.singlekey")) {
 		Term::ReadKey->import;
 		$use_readkey = 1;
 	};
+	if (!$use_readkey) {
+		print STDERR "missing Term::ReadKey, disabling interactive.singlekey\n";
+	}
 	eval {
 		require Term::Cap;
 		my $termcap = Term::Cap->Tgetent;
