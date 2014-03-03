@@ -147,12 +147,8 @@ int register_commit_graft(struct commit_graft *graft, int ignore_dups)
 		return 1;
 	}
 	pos = -pos - 1;
-	if (commit_graft_alloc <= ++commit_graft_nr) {
-		commit_graft_alloc = alloc_nr(commit_graft_alloc);
-		commit_graft = xrealloc(commit_graft,
-					sizeof(*commit_graft) *
-					commit_graft_alloc);
-	}
+	ALLOC_GROW(commit_graft, commit_graft_nr + 1, commit_graft_alloc);
+	commit_graft_nr++;
 	if (pos < commit_graft_nr)
 		memmove(commit_graft + pos + 1,
 			commit_graft + pos,
