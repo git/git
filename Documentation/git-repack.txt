@@ -117,6 +117,14 @@ other objects in that pack they already have locally.
 	must be able to refer to all reachable objects. This option
 	overrides the setting of `pack.writebitmaps`.
 
+--pack-kept-objects::
+	Include objects in `.keep` files when repacking.  Note that we
+	still do not delete `.keep` packs after `pack-objects` finishes.
+	This means that we may duplicate objects, but this makes the
+	option safe to use when there are concurrent pushes or fetches.
+	This option is generally only useful if you are writing bitmaps
+	with `-b` or `pack.writebitmaps`, as it ensures that the
+	bitmapped packfile has the necessary objects.
 
 Configuration
 -------------
