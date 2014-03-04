@@ -365,7 +365,7 @@ bisect_reset() {
 	}
 	case "$#" in
 	0) branch=$(cat "$GIT_DIR/BISECT_START") ;;
-	1) git rev-parse --quiet --verify "$1^{commit}" > /dev/null || {
+	1) git rev-parse --quiet --verify "$1^{commit}" >/dev/null || {
 			invalid="$1"
 			die "$(eval_gettext "'\$invalid' is not a valid commit")"
 		}
@@ -458,13 +458,13 @@ exit code \$res from '\$command' is < 0 or >= 128" >&2
 		fi
 
 		# We have to use a subshell because "bisect_state" can exit.
-		( bisect_state $state > "$GIT_DIR/BISECT_RUN" )
+		( bisect_state $state >"$GIT_DIR/BISECT_RUN" )
 		res=$?
 
 		cat "$GIT_DIR/BISECT_RUN"
 
 		if sane_grep "first bad commit could be any of" "$GIT_DIR/BISECT_RUN" \
-			> /dev/null
+			>/dev/null
 		then
 			gettextln "bisect run cannot continue any more" >&2
 			exit $res
@@ -477,7 +477,7 @@ exit code \$res from '\$command' is < 0 or >= 128" >&2
 			exit $res
 		fi
 
-		if sane_grep "is the first bad commit" "$GIT_DIR/BISECT_RUN" > /dev/null
+		if sane_grep "is the first bad commit" "$GIT_DIR/BISECT_RUN" >/dev/null
 		then
 			gettextln "bisect run success"
 			exit 0;
