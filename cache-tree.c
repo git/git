@@ -564,10 +564,9 @@ static struct cache_tree *cache_tree_find(struct cache_tree *it, const char *pat
 		if (!sub)
 			return NULL;
 		it = sub->cache_tree;
-		if (slash)
-			while (*slash && *slash == '/')
-				slash++;
-		if (!slash || !*slash)
+		while (*slash && *slash == '/')
+			slash++;
+		if (!*slash)
 			return it; /* prefix ended with slashes */
 		path = slash;
 	}
