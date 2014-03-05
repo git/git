@@ -111,6 +111,20 @@ extern void diffcore_merge_broken(void);
 extern void diffcore_pickaxe(struct diff_options *);
 extern void diffcore_order(const char *orderfile);
 
+/* low-level interface to diffcore_order */
+struct obj_order {
+	void *obj;	/* setup by caller */
+
+	/* setup/used by order_objects() */
+	int orig_order;
+	int order;
+};
+
+typedef const char *(*obj_path_fn_t)(void *obj);
+
+void order_objects(const char *orderfile, obj_path_fn_t obj_path,
+		   struct obj_order *objs, int nr);
+
 #define DIFF_DEBUG 0
 #if DIFF_DEBUG
 void diff_debug_filespec(struct diff_filespec *, int, const char *);

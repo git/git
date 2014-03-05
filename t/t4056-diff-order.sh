@@ -97,4 +97,25 @@ do
 	'
 done
 
+test_expect_success 'setup for testing combine-diff order' '
+	git checkout -b tmp HEAD~ &&
+	create_files 3 &&
+	git checkout master &&
+	git merge --no-commit -s ours tmp &&
+	create_files 5
+'
+
+test_expect_success "combine-diff: no order (=tree object order)" '
+	git diff --name-only HEAD HEAD^ HEAD^2 >actual &&
+	test_cmp expect_none actual
+'
+
+for i in 1 2
+do
+	test_expect_success "combine-diff: orderfile using option ($i)" '
+		git diff -Oorder_file_$i --name-only HEAD HEAD^ HEAD^2 >actual &&
+		test_cmp expect_$i actual
+	'
+done
+
 test_done

@@ -57,12 +57,6 @@ static void prepare_order(const char *orderfile)
 	}
 }
 
-struct pair_order {
-	struct diff_filepair *pair;
-	int orig_order;
-	int order;
-};
-
 static int match_order(const char *path)
 {
 	int i;
@@ -84,35 +78,54 @@ static int match_order(const char *path)
 	return order_cnt;
 }
 
-static int compare_pair_order(const void *a_, const void *b_)
+static int compare_objs_order(const void *a_, const void *b_)
 {
-	struct pair_order const *a, *b;
-	a = (struct pair_order const *)a_;
-	b = (struct pair_order const *)b_;
+	struct obj_order const *a, *b;
+	a = (struct obj_order const *)a_;
+	b = (struct obj_order const *)b_;
 	if (a->order != b->order)
 		return a->order - b->order;
 	return a->orig_order - b->orig_order;
 }
 
+void order_objects(const char *orderfile, obj_path_fn_t obj_path,
+		   struct obj_order *objs, int nr)
+{
+	int i;
+
+	if (!nr)
+		return;
+
+	prepare_order(orderfile);
+	for (i = 0; i < nr; i++) {
+		objs[i].orig_order = i;
+		objs[i].order = match_order(obj_path(objs[i].obj));
+	}
+	qsort(objs, nr, sizeof(*objs), compare_objs_order);
+}
+
+static const char *pair_pathtwo(void *obj)
+{
+	struct diff_filepair *pair = (struct diff_filepair *)obj;
+
+	return pair->two->path;
+}
+
 void diffcore_order(const char *orderfile)
 {
 	struct diff_queue_struct *q = &diff_queued_diff;
-	struct pair_order *o;
+	struct obj_order *o;
 	int i;
 
 	if (!q->nr)
 		return;
 
 	o = xmalloc(sizeof(*o) * q->nr);
-	prepare_order(orderfile);
-	for (i = 0; i < q->nr; i++) {
-		o[i].pair = q->queue[i];
-		o[i].orig_order = i;
-		o[i].order = match_order(o[i].pair->two->path);
-	}
-	qsort(o, q->nr, sizeof(*o), compare_pair_order);
 	for (i = 0; i < q->nr; i++)
-		q->queue[i] = o[i].pair;
+		o[i].obj = q->queue[i];
+	order_objects(orderfile, pair_pathtwo, o, q->nr);
+	for (i = 0; i < q->nr; i++)
+		q->queue[i] = o[i].obj;
 	free(o);
 	return;
 }
