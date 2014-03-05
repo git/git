@@ -1132,8 +1132,7 @@ int transport_push(struct transport *transport,
 
 		return transport->push(transport, refspec_nr, refspec, flags);
 	} else if (transport->push_refs) {
-		struct ref *remote_refs =
-			transport->get_refs_list(transport, 1);
+		struct ref *remote_refs;
 		struct ref *local_refs = get_local_heads();
 		int match_flags = MATCH_REFS_NONE;
 		int verbose = (transport->verbose > 0);
@@ -1141,6 +1140,11 @@ int transport_push(struct transport *transport,
 		int porcelain = flags & TRANSPORT_PUSH_PORCELAIN;
 		int pretend = flags & TRANSPORT_PUSH_DRY_RUN;
 		int push_ret, ret, err;
+
+		if (check_push_refs(local_refs, refspec_nr, refspec) < 0)
+			return -1;
+
+		remote_refs = transport->get_refs_list(transport, 1);
 
 		if (flags & TRANSPORT_PUSH_ALL)
 			match_flags |= MATCH_REFS_ALL;

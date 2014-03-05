@@ -1374,6 +1374,31 @@ static void prepare_ref_index(struct string_list *ref_index, struct ref *ref)
 }
 
 /*
+ * Given only the set of local refs, sanity-check the set of push
+ * refspecs. We can't catch all errors that match_push_refs would,
+ * but we can catch some errors early before even talking to the
+ * remote side.
+ */
+int check_push_refs(struct ref *src, int nr_refspec, const char **refspec_names)
+{
+	struct refspec *refspec = parse_push_refspec(nr_refspec, refspec_names);
+	int ret = 0;
+	int i;
+
+	for (i = 0; i < nr_refspec; i++) {
+		struct refspec *rs = refspec + i;
+
+		if (rs->pattern || rs->matching)
+			continue;
+
+		ret |= match_explicit_lhs(src, rs, NULL, NULL);
+	}
+
+	free_refspec(nr_refspec, refspec);
+	return ret;
+}
+
+/*
  * Given the set of refs the local repository has, the set of refs the
  * remote repository has, and the refspec used for push, determine
  * what remote refs we will update and with what value by setting
