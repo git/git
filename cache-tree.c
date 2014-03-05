@@ -555,8 +555,9 @@ static struct cache_tree *cache_tree_find(struct cache_tree *it, const char *pat
 		struct cache_tree_sub *sub;
 
 		slash = strchrnul(path, '/');
-		/* between path and slash is the name of the
-		 * subtree to look for.
+		/*
+		 * Between path and slash is the name of the subtree
+		 * to look for.
 		 */
 		sub = find_subtree(it, path, slash - path, 0);
 		if (!sub)
