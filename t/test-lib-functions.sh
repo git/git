@@ -716,6 +716,64 @@ perl () {
 	command "$PERL_PATH" "$@"
 }
 
+# Is the value one of the various ways to spell a boolean true/false?
+test_normalize_bool () {
+	git -c magic.variable="$1" config --bool magic.variable 2>/dev/null
+}
+
+# Given a variable $1, normalize the value of it to one of "true",
+# "false", or "auto" and store the result to it.
+#
+#     test_tristate GIT_TEST_HTTPD
+#
+# A variable set to an empty string is set to 'false'.
+# A variable set to 'false' or 'auto' keeps its value.
+# Anything else is set to 'true'.
+# An unset variable defaults to 'auto'.
+#
+# The last rule is to allow people to set the variable to an empty
+# string and export it to decline testing the particular feature
+# for versions both before and after this change.  We used to treat
+# both unset and empty variable as a signal for "do not test" and
+# took any non-empty string as "please test".
+
+test_tristate () {
+	if eval "test x\"\${$1+isset}\" = xisset"
+	then
+		# explicitly set
+		eval "
+			case \"\$$1\" in
+			'')	$1=false ;;
+			auto)	;;
+			*)	$1=\$(test_normalize_bool \$$1 || echo true) ;;
+			esac
+		"
+	else
+		eval "$1=auto"
+	fi
+}
+
+# Exit the test suite, either by skipping all remaining tests or by
+# exiting with an error. If "$1" is "auto", we then we assume we were
+# opportunistically trying to set up some tests and we skip. If it is
+# "true", then we report a failure.
+#
+# The error/skip message should be given by $2.
+#
+test_skip_or_die () {
+	case "$1" in
+	auto)
+		skip_all=$2
+		test_done
+		;;
+	true)
+		error "$2"
+		;;
+	*)
+		error "BUG: test tristate is '$1' (real error: $2)"
+	esac
+}
+
 # The following mingw_* functions obey POSIX shell syntax, but are actually
 # bash scripts, and are meant to be used only with bash on Windows.
 
