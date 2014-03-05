@@ -1031,11 +1031,13 @@ int count_refspec_match(const char *pattern,
 		}
 	}
 	if (!matched) {
-		*matched_ref = matched_weak;
+		if (matched_ref)
+			*matched_ref = matched_weak;
 		return weak_match;
 	}
 	else {
-		*matched_ref = matched;
+		if (matched_ref)
+			*matched_ref = matched;
 		return match;
 	}
 }
@@ -1055,18 +1057,25 @@ static struct ref *alloc_delete_ref(void)
 	return ref;
 }
 
-static struct ref *try_explicit_object_name(const char *name)
+static int try_explicit_object_name(const char *name,
+				    struct ref **match)
 {
 	unsigned char sha1[20];
-	struct ref *ref;
 
-	if (!*name)
-		return alloc_delete_ref();
+	if (!*name) {
+		if (match)
+			*match = alloc_delete_ref();
+		return 0;
+	}
+
 	if (get_sha1(name, sha1))
-		return NULL;
-	ref = alloc_ref(name);
-	hashcpy(ref->new_sha1, sha1);
-	return ref;
+		return -1;
+
+	if (match) {
+		*match = alloc_ref(name);
+		hashcpy((*match)->new_sha1, sha1);
+	}
+	return 0;
 }
 
 static struct ref *make_linked_ref(const char *name, struct ref ***tail)
@@ -1103,17 +1112,18 @@ static int match_explicit_lhs(struct ref *src,
 {
 	switch (count_refspec_match(rs->src, src, match)) {
 	case 1:
-		*allocated_match = 0;
+		if (allocated_match)
+			*allocated_match = 0;
 		return 0;
 	case 0:
 		/* The source could be in the get_sha1() format
 		 * not a reference name.  :refs/other is a
 		 * way to delete 'other' ref at the remote end.
 		 */
-		*match = try_explicit_object_name(rs->src);
-		if (!*match)
+		if (try_explicit_object_name(rs->src, match) < 0)
 			return error("src refspec %s does not match any.", rs->src);
-		*allocated_match = 1;
+		if (allocated_match)
+			*allocated_match = 1;
 		return 0;
 	default:
 		return error("src refspec %s matches more than one.", rs->src);
