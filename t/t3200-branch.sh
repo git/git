@@ -507,6 +507,16 @@ EOF
 	test_cmp expected actual
 '
 
+test_expect_success '--set-upstream-to notices an error to set branch as own upstream' '
+	git branch --set-upstream-to refs/heads/my13 my13 2>actual &&
+	cat >expected <<-\EOF &&
+	warning: Not setting branch my13 as its own upstream.
+	EOF
+	test_expect_code 1 git config branch.my13.remote &&
+	test_expect_code 1 git config branch.my13.merge &&
+	test_i18ncmp expected actual
+'
+
 # Keep this test last, as it changes the current branch
 cat >expect <<EOF
 $_z40 $HEAD $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> 1117150200 +0000	branch: Created from master
