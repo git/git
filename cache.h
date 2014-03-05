@@ -433,6 +433,7 @@ extern int set_git_dir_init(const char *git_dir, const char *real_git_dir, int);
 extern int init_db(const char *template_dir, unsigned int flags);
 
 extern void sanitize_stdfds(void);
+extern int daemonize(void);
 
 #define alloc_nr(x) (((x)+16)*3/2)
 
