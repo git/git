@@ -104,10 +104,10 @@ apply to the index. See EDITING PATCHES below.
 	<pathspec>.  This removes as well as modifies index entries to
 	match the working tree, but adds no new files.
 +
-If no <pathspec> is given, the current version of Git defaults to
-"."; in other words, update all tracked files in the current directory
-and its subdirectories. This default will change in a future version
-of Git, hence the form without <pathspec> should not be used.
+If no <pathspec> is given when `-u` option is used, all
+tracked files in the entire working tree are updated (old versions
+of Git used to limit the update to the current directory and its
+subdirectories).
 
 -A::
 --all::
@@ -117,10 +117,10 @@ of Git, hence the form without <pathspec> should not be used.
 	entry.	This adds, modifies, and removes index entries to
 	match the working tree.
 +
-If no <pathspec> is given, the current version of Git defaults to
-"."; in other words, update all files in the current directory
-and its subdirectories. This default will change in a future version
-of Git, hence the form without <pathspec> should not be used.
+If no <pathspec> is given when `-A` option is used, all
+files in the entire working tree are updated (old versions
+of Git used to limit the update to the current directory and its
+subdirectories).
 
 --no-all::
 --ignore-removal::
