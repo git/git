@@ -471,6 +471,12 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 			parse_opt_with_commit, (intptr_t)"HEAD",
 		},
 		{
+			OPTION_CALLBACK, 0, "with", &with_commit, N_("commit"),
+			N_("print only tags that contain the commit"),
+			PARSE_OPT_HIDDEN | PARSE_OPT_LASTARG_DEFAULT,
+			parse_opt_with_commit, (intptr_t)"HEAD",
+		},
+		{
 			OPTION_CALLBACK, 0, "points-at", NULL, N_("object"),
 			N_("print only tags of the object"), 0, parse_opt_points_at
 		},
