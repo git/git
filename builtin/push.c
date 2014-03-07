@@ -58,7 +58,7 @@ static const char *map_refspec(const char *ref,
 	}
 
 	if (push_default == PUSH_DEFAULT_UPSTREAM &&
-	    !prefixcmp(matched->name, "refs/heads/")) {
+	    starts_with(matched->name, "refs/heads/")) {
 		struct branch *branch = branch_get(matched->name + 11);
 		if (branch->merge_nr == 1 && branch->merge[0]->src) {
 			struct strbuf buf = STRBUF_INIT;
