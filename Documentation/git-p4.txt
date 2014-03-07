@@ -482,6 +482,11 @@ git config       git-p4.branchList main:branchA
 git config --add git-p4.branchList main:branchB
 -------------
 
+git-p4.skipBranchScan::
+	Will disable scanning of remote perforce branches. This is useful if
+        you have defined your own branch mappings and do not wish to scan all
+        branches in Perforce unnecessarily.
+
 git-p4.ignoredP4Labels::
 	List of p4 labels to ignore. This is built automatically as
 	unimportable labels are discovered.

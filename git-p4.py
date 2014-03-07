@@ -2452,34 +2452,35 @@ class P4Sync(Command, P4UserMap):
         else:
             command = "branches"
 
-        for info in p4CmdList(command):
-            details = p4Cmd(["branch", "-o", info["branch"]])
-            viewIdx = 0
-            while details.has_key("View%s" % viewIdx):
-                paths = details["View%s" % viewIdx].split(" ")
-                viewIdx = viewIdx + 1
-                # require standard //depot/foo/... //depot/bar/... mapping
-                if len(paths) != 2 or not paths[0].endswith("/...") or not paths[1].endswith("/..."):
-                    continue
-                source = paths[0]
-                destination = paths[1]
-                ## HACK
-                if p4PathStartsWith(source, self.depotPaths[0]) and p4PathStartsWith(destination, self.depotPaths[0]):
-                    source = source[len(self.depotPaths[0]):-4]
-                    destination = destination[len(self.depotPaths[0]):-4]
-
-                    if destination in self.knownBranches:
-                        if not self.silent:
-                            print "p4 branch %s defines a mapping from %s to %s" % (info["branch"], source, destination)
-                            print "but there exists another mapping from %s to %s already!" % (self.knownBranches[destination], destination)
+        if not gitConfigBool("git-p4.skipBranchScan"):
+            for info in p4CmdList(command):
+                details = p4Cmd(["branch", "-o", info["branch"]])
+                viewIdx = 0
+                while details.has_key("View%s" % viewIdx):
+                    paths = details["View%s" % viewIdx].split(" ")
+                    viewIdx = viewIdx + 1
+                    # require standard //depot/foo/... //depot/bar/... mapping
+                    if len(paths) != 2 or not paths[0].endswith("/...") or not paths[1].endswith("/..."):
                         continue
+                    source = paths[0]
+                    destination = paths[1]
+                    ## HACK
+                    if p4PathStartsWith(source, self.depotPaths[0]) and p4PathStartsWith(destination, self.depotPaths[0]):
+                        source = source[len(self.depotPaths[0]):-4]
+                        destination = destination[len(self.depotPaths[0]):-4]
 
-                    self.knownBranches[destination] = source
+                        if destination in self.knownBranches:
+                            if not self.silent:
+                                print "p4 branch %s defines a mapping from %s to %s" % (info["branch"], source, destination)
+                                print "but there exists another mapping from %s to %s already!" % (self.knownBranches[destination], destination)
+                            continue
 
-                    lostAndFoundBranches.discard(destination)
+                        self.knownBranches[destination] = source
 
-                    if source not in self.knownBranches:
-                        lostAndFoundBranches.add(source)
+                        lostAndFoundBranches.discard(destination)
+
+                        if source not in self.knownBranches:
+                            lostAndFoundBranches.add(source)
 
         # Perforce does not strictly require branches to be defined, so we also
         # check git config for a branch list.
