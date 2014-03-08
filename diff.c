@@ -3365,14 +3365,11 @@ static int opt_arg(const char *arg, int arg_short, const char *arg_long, int *va
 	if (c != '-')
 		return 0;
 	arg++;
-	eq = strchr(arg, '=');
-	if (eq)
-		len = eq - arg;
-	else
-		len = strlen(arg);
+	eq = strchrnul(arg, '=');
+	len = eq - arg;
 	if (!len || strncmp(arg, arg_long, len))
 		return 0;
-	if (eq) {
+	if (*eq) {
 		int n;
 		char *end;
 		if (!isdigit(*++eq))
