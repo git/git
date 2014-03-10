@@ -967,15 +967,12 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 		if (pathspec.nr && !matches)
 			continue;
 
-		if (S_ISDIR(st.st_mode)) {
-			if (remove_directories || (matches == MATCHED_EXACTLY)) {
-				rel = relative_path(ent->name, prefix, &buf);
-				string_list_append(&del_list, rel);
-			}
-		} else {
-			rel = relative_path(ent->name, prefix, &buf);
-			string_list_append(&del_list, rel);
-		}
+		if (S_ISDIR(st.st_mode) && !remove_directories &&
+		    matches != MATCHED_EXACTLY)
+			continue;
+
+		rel = relative_path(ent->name, prefix, &buf);
+		string_list_append(&del_list, rel);
 	}
 
 	if (interactive && del_list.nr > 0)
