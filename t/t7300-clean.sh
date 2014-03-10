@@ -511,4 +511,20 @@ test_expect_success SANITY 'git clean -d with an unreadable empty directory' '
 	! test -d foo
 '
 
+test_expect_success 'git clean -d respects pathspecs (dir is prefix of pathspec)' '
+	mkdir -p foo &&
+	mkdir -p foobar &&
+	git clean -df foobar &&
+	test_path_is_dir foo &&
+	test_path_is_missing foobar
+'
+
+test_expect_success 'git clean -d respects pathspecs (pathspec is prefix of dir)' '
+	mkdir -p foo &&
+	mkdir -p foobar &&
+	git clean -df foo &&
+	test_path_is_missing foo &&
+	test_path_is_dir foobar
+'
+
 test_done

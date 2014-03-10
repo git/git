@@ -964,14 +964,15 @@ int cmd_clean(int argc, const char **argv, const char *prefix)
 			matches = match_pathspec_depth(&pathspec, ent->name,
 						       len, 0, NULL);
 
+		if (pathspec.nr && !matches)
+			continue;
+
 		if (S_ISDIR(st.st_mode)) {
 			if (remove_directories || (matches == MATCHED_EXACTLY)) {
 				rel = relative_path(ent->name, prefix, &buf);
 				string_list_append(&del_list, rel);
 			}
 		} else {
-			if (pathspec.nr && !matches)
-				continue;
 			rel = relative_path(ent->name, prefix, &buf);
 			string_list_append(&del_list, rel);
 		}
