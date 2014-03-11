@@ -12,9 +12,9 @@ SYNOPSIS
 'git am' [--signoff] [--keep] [--[no-]keep-cr] [--[no-]utf8]
 	 [--3way] [--interactive] [--committer-date-is-author-date]
 	 [--ignore-date] [--ignore-space-change | --ignore-whitespace]
-	 [--whitespace=<option>] [-C<n>] [-p<n>] [--directory=<dir>]
-	 [--exclude=<path>] [--include=<path>] [--reject] [-q | --quiet]
-	 [--[no-]scissors]
+	 [--whitespace=<option>] [-C<n>] [-p<n>] [--patch-format=<format>]
+	 [--directory=<dir>] [--exclude=<path>] [--include=<path>]
+	 [--reject] [-q | --quiet] [--[no-]scissors]
 	 [(<mbox> | <Maildir>)...]
 'git am' (--continue | --skip | --abort)
 
@@ -96,6 +96,12 @@ default.   You can use `--no-utf8` to override this.
 	These flags are passed to the 'git apply' (see linkgit:git-apply[1])
 	program that applies
 	the patch.
+
+--patch-format::
+	By default the command will try to detect the patch format
+	automatically. This option allows the user to bypass the automatic
+	detection and specify the patch format that the patch(es) should be
+	intepreted as. Valid formats are mbox, stgit, stgit-series and hg.
 
 -i::
 --interactive::
