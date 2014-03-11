@@ -328,6 +328,18 @@ do
 			grep "a+b*c" $H ab >actual &&
 		test_cmp expected actual
 	'
+
+	test_expect_success "grep --count $L" '
+		echo ${HC}ab:3 >expected &&
+		git grep --count -e b $H -- ab >actual &&
+		test_cmp expected actual
+	'
+
+	test_expect_success "grep --count -h $L" '
+		echo 3 >expected &&
+		git grep --count -h -e b $H -- ab >actual &&
+		test_cmp expected actual
+	'
 done
 
 cat >expected <<EOF
