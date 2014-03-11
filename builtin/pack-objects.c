@@ -2358,6 +2358,9 @@ static void get_object_list(int ac, const char **av)
 	save_commit_buffer = 0;
 	setup_revisions(ac, av, &revs, NULL);
 
+	/* make sure shallows are read */
+	is_repository_shallow();
+
 	while (fgets(line, sizeof(line), stdin) != NULL) {
 		int len = strlen(line);
 		if (len && line[len - 1] == '\n')
@@ -2367,6 +2370,13 @@ static void get_object_list(int ac, const char **av)
 		if (*line == '-') {
 			if (!strcmp(line, "--not")) {
 				flags ^= UNINTERESTING;
+				continue;
+			}
+			if (starts_with(line, "--shallow ")) {
+				unsigned char sha1[20];
+				if (get_sha1_hex(line + 10, sha1))
+					die("not an SHA-1 '%s'", line + 10);
+				register_shallow(sha1);
 				continue;
 			}
 			die("not a rev '%s'", line);
