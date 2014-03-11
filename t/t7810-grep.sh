@@ -105,7 +105,7 @@ do
 
 	test_expect_success "grep -w $L (w)" '
 		: >expected &&
-		test_must_fail git grep -n -w -e "^w" >actual &&
+		test_must_fail git grep -n -w -e "^w" $H >actual &&
 		test_cmp expected actual
 	'
 
@@ -240,92 +240,92 @@ do
 		test_cmp expected actual
 	'
 	test_expect_success "grep $L with grep.extendedRegexp=false" '
-		echo "ab:a+bc" >expected &&
-		git -c grep.extendedRegexp=false grep "a+b*c" ab >actual &&
+		echo "${HC}ab:a+bc" >expected &&
+		git -c grep.extendedRegexp=false grep "a+b*c" $H ab >actual &&
 		test_cmp expected actual
 	'
 
 	test_expect_success "grep $L with grep.extendedRegexp=true" '
-		echo "ab:abc" >expected &&
-		git -c grep.extendedRegexp=true grep "a+b*c" ab >actual &&
+		echo "${HC}ab:abc" >expected &&
+		git -c grep.extendedRegexp=true grep "a+b*c" $H ab >actual &&
 		test_cmp expected actual
 	'
 
 	test_expect_success "grep $L with grep.patterntype=basic" '
-		echo "ab:a+bc" >expected &&
-		git -c grep.patterntype=basic grep "a+b*c" ab >actual &&
+		echo "${HC}ab:a+bc" >expected &&
+		git -c grep.patterntype=basic grep "a+b*c" $H ab >actual &&
 		test_cmp expected actual
 	'
 
 	test_expect_success "grep $L with grep.patterntype=extended" '
-		echo "ab:abc" >expected &&
-		git -c grep.patterntype=extended grep "a+b*c" ab >actual &&
+		echo "${HC}ab:abc" >expected &&
+		git -c grep.patterntype=extended grep "a+b*c" $H ab >actual &&
 		test_cmp expected actual
 	'
 
 	test_expect_success "grep $L with grep.patterntype=fixed" '
-		echo "ab:a+b*c" >expected &&
-		git -c grep.patterntype=fixed grep "a+b*c" ab >actual &&
+		echo "${HC}ab:a+b*c" >expected &&
+		git -c grep.patterntype=fixed grep "a+b*c" $H ab >actual &&
 		test_cmp expected actual
 	'
 
 	test_expect_success LIBPCRE "grep $L with grep.patterntype=perl" '
-		echo "ab:a+b*c" >expected &&
-		git -c grep.patterntype=perl grep "a\x{2b}b\x{2a}c" ab >actual &&
+		echo "${HC}ab:a+b*c" >expected &&
+		git -c grep.patterntype=perl grep "a\x{2b}b\x{2a}c" $H ab >actual &&
 		test_cmp expected actual
 	'
 
 	test_expect_success "grep $L with grep.patternType=default and grep.extendedRegexp=true" '
-		echo "ab:abc" >expected &&
+		echo "${HC}ab:abc" >expected &&
 		git \
 			-c grep.patternType=default \
 			-c grep.extendedRegexp=true \
-			grep "a+b*c" ab >actual &&
+			grep "a+b*c" $H ab >actual &&
 		test_cmp expected actual
 	'
 
 	test_expect_success "grep $L with grep.extendedRegexp=true and grep.patternType=default" '
-		echo "ab:abc" >expected &&
+		echo "${HC}ab:abc" >expected &&
 		git \
 			-c grep.extendedRegexp=true \
 			-c grep.patternType=default \
-			grep "a+b*c" ab >actual &&
+			grep "a+b*c" $H ab >actual &&
 		test_cmp expected actual
 	'
 
-	test_expect_success 'grep $L with grep.patternType=extended and grep.extendedRegexp=false' '
-		echo "ab:abc" >expected &&
+	test_expect_success "grep $L with grep.patternType=extended and grep.extendedRegexp=false" '
+		echo "${HC}ab:abc" >expected &&
 		git \
 			-c grep.patternType=extended \
 			-c grep.extendedRegexp=false \
-			grep "a+b*c" ab >actual &&
+			grep "a+b*c" $H ab >actual &&
 		test_cmp expected actual
 	'
 
-	test_expect_success 'grep $L with grep.patternType=basic and grep.extendedRegexp=true' '
-		echo "ab:a+bc" >expected &&
+	test_expect_success "grep $L with grep.patternType=basic and grep.extendedRegexp=true" '
+		echo "${HC}ab:a+bc" >expected &&
 		git \
 			-c grep.patternType=basic \
 			-c grep.extendedRegexp=true \
-			grep "a+b*c" ab >actual &&
+			grep "a+b*c" $H ab >actual &&
 		test_cmp expected actual
 	'
 
-	test_expect_success 'grep $L with grep.extendedRegexp=false and grep.patternType=extended' '
-		echo "ab:abc" >expected &&
+	test_expect_success "grep $L with grep.extendedRegexp=false and grep.patternType=extended" '
+		echo "${HC}ab:abc" >expected &&
 		git \
 			-c grep.extendedRegexp=false \
 			-c grep.patternType=extended \
-			grep "a+b*c" ab >actual &&
+			grep "a+b*c" $H ab >actual &&
 		test_cmp expected actual
 	'
 
-	test_expect_success 'grep $L with grep.extendedRegexp=true and grep.patternType=basic' '
-		echo "ab:a+bc" >expected &&
+	test_expect_success "grep $L with grep.extendedRegexp=true and grep.patternType=basic" '
+		echo "${HC}ab:a+bc" >expected &&
 		git \
 			-c grep.extendedRegexp=true \
 			-c grep.patternType=basic \
-			grep "a+b*c" ab >actual &&
+			grep "a+b*c" $H ab >actual &&
 		test_cmp expected actual
 	'
 done
