@@ -890,7 +890,7 @@ GIT_CONF_SUBST([HAVE_STRINGS_H])
 # and libcharset does
 CHARSET_LIB=
 AC_CHECK_LIB([iconv], [locale_charset],
-       [],
+       [CHARSET_LIB=-liconv],
        [AC_CHECK_LIB([charset], [locale_charset],
                      [CHARSET_LIB=-lcharset])])
 GIT_CONF_SUBST([CHARSET_LIB])
