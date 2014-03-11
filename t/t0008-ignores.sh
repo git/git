@@ -793,7 +793,7 @@ EOF
 	test_cmp err.expect err
 '
 
-test_expect_success 'quoting allows trailing whitespace' '
+test_expect_success !MINGW 'quoting allows trailing whitespace' '
 	rm -rf whitespace &&
 	mkdir whitespace &&
 	>"whitespace/trailing  " &&
