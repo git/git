@@ -318,8 +318,6 @@ static void wt_status_print_unmerged_data(struct wt_status *s,
 	if (!padding) {
 		label_width = maxwidth(wt_status_unmerged_status_string, 1, 7);
 		label_width += strlen(" ");
-		if (label_width < 20)
-			label_width = 20;
 		padding = xmallocz(label_width);
 		memset(padding, ' ', label_width);
 	}
