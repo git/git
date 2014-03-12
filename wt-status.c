@@ -272,21 +272,21 @@ static const char *wt_status_diff_status_string(int status)
 {
 	switch (status) {
 	case DIFF_STATUS_ADDED:
-		return _("new file");
+		return _("new file:");
 	case DIFF_STATUS_COPIED:
-		return _("copied");
+		return _("copied:");
 	case DIFF_STATUS_DELETED:
-		return _("deleted");
+		return _("deleted:");
 	case DIFF_STATUS_MODIFIED:
-		return _("modified");
+		return _("modified:");
 	case DIFF_STATUS_RENAMED:
-		return _("renamed");
+		return _("renamed:");
 	case DIFF_STATUS_TYPE_CHANGED:
-		return _("typechange");
+		return _("typechange:");
 	case DIFF_STATUS_UNKNOWN:
-		return _("unknown");
+		return _("unknown:");
 	case DIFF_STATUS_UNMERGED:
-		return _("unmerged");
+		return _("unmerged:");
 	default:
 		return NULL;
 	}
@@ -305,21 +305,21 @@ static void wt_status_print_change_data(struct wt_status *s,
 	struct strbuf onebuf = STRBUF_INIT, twobuf = STRBUF_INIT;
 	struct strbuf extra = STRBUF_INIT;
 	static char *padding;
+	static int label_width;
 	const char *what;
 	int len;
 
 	if (!padding) {
-		int width = 0;
 		/* If DIFF_STATUS_* uses outside this range, we're in trouble */
 		for (status = 'A'; status <= 'Z'; status++) {
 			what = wt_status_diff_status_string(status);
 			len = what ? strlen(what) : 0;
-			if (len > width)
-				width = len;
+			if (len > label_width)
+				label_width = len;
 		}
-		width += 2;	/* colon and a space */
-		padding = xmallocz(width);
-		memset(padding, ' ', width);
+		label_width += strlen(" ");
+		padding = xmallocz(label_width);
+		memset(padding, ' ', label_width);
 	}
 
 	one_name = two_name = it->string;
@@ -355,14 +355,13 @@ static void wt_status_print_change_data(struct wt_status *s,
 	what = wt_status_diff_status_string(status);
 	if (!what)
 		die(_("bug: unhandled diff status %c"), status);
-	/* 1 for colon, which is not part of "what" */
-	len = strlen(padding) - (utf8_strwidth(what) + 1);
+	len = label_width - utf8_strwidth(what);
 	assert(len >= 0);
 	if (status == DIFF_STATUS_COPIED || status == DIFF_STATUS_RENAMED)
-		status_printf_more(s, c, "%s:%.*s%s -> %s",
+		status_printf_more(s, c, "%s%.*s%s -> %s",
 				   what, len, padding, one, two);
 	else
-		status_printf_more(s, c, "%s:%.*s%s",
+		status_printf_more(s, c, "%s%.*s%s",
 				   what, len, padding, one);
 	if (extra.len) {
 		status_printf_more(s, color(WT_STATUS_HEADER, s), "%s", extra.buf);
