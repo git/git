@@ -260,6 +260,7 @@ static int batch_objects(struct batch_options *opt)
 {
 	struct strbuf buf = STRBUF_INIT;
 	struct expand_data data;
+	int save_warning;
 	int retval = 0;
 
 	if (!opt->format)
@@ -282,6 +283,7 @@ static int batch_objects(struct batch_options *opt)
 	 * warn) ends up dwarfing the actual cost of the object lookups
 	 * themselves. We can work around it by just turning off the warning.
 	 */
+	save_warning = warn_on_object_refname_ambiguity;
 	warn_on_object_refname_ambiguity = 0;
 
 	while (strbuf_getline(&buf, stdin, '\n') != EOF) {
@@ -305,6 +307,7 @@ static int batch_objects(struct batch_options *opt)
 	}
 
 	strbuf_release(&buf);
+	warn_on_object_refname_ambiguity = save_warning;
 	return retval;
 }
 
