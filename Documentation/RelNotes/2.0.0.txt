@@ -63,7 +63,27 @@ UI, Workflows & Features
    "quiet", has been removed (it told Git to ignore deletion, which
    you can do with "git diff-files --diff-filter=d").
 
- * Many commands that creates commits, e.g. "pull", "rebase",
+ * Server operators can loosen the "tips of refs only" restriction for
+   the remote archive service with the uploadarchive.allowUnreachable
+   configuration option.
+
+ * The progress indicators from various time-consuming commands have
+   been marked for i18n/l10n.
+
+ * "git notes -C <blob>" diagnoses an attempt to use an object that
+   is not a blob as an error.
+
+ * "git config" learned to read from the standard input when "-" is
+   given as the value to its "--file" parameter (attempting an
+   operation to update the configuration in the standard input of
+   course is rejected).
+
+ * Trailing whitespaces in .gitignore files, unless they are quoted
+   for fnmatch(3), e.g. "path\ ", are warned and ignored.  Strictly
+   speaking, this is a backward incompatible change, but very unlikely
+   to bite any sane user and adjusting should be obvious and easy.
+
+ * Many commands that create commits, e.g. "pull", "rebase",
    learned to take the --gpg-sign option on the command line.
 
  * "git commit" can be told to always GPG sign the resulting commit
@@ -85,6 +105,14 @@ UI, Workflows & Features
 
 Performance, Internal Implementation, etc.
 
+ * We started using wildmatch() in place of fnmatch(3) a few releases
+   ago; complete the process and stop using fnmatch(3).
+
+ * Uses of curl's "multi" interface and "easy" interface do not mix
+   well when we attempt to reuse outgoing connections.  Teach the RPC
+   over http code, used in the smart HTTP transport, not to use the
+   "easy" interface.
+
  * The bitmap-index feature from JGit has been ported, which should
    significantly improve performance when serving objects form a
    repository that uses it.
@@ -97,7 +125,9 @@ Performance, Internal Implementation, etc.
    suits your needs better when using the former.
 
 
-Also contains various documentation updates and code clean-ups.
+Also contains various documentation updates and code clean-ups.  Many
+of them came from flurry of activities as GSoC candidate microproject
+exercises.
 
 
 Fixes since v1.9 series
@@ -106,6 +136,37 @@ Fixes since v1.9 series
 Unless otherwise noted, all the fixes since v1.9 in the maintenance
 track are contained in this release (see the maintenance releases'
 notes for details).
+
+ * "git difftool" misbehaved when the repository is bound to the
+   working tree with the ".git file" mechanism, where a textual file
+   ".git" tells us where it is.
+   (merge fcfec8b da/difftool-git-files later to maint).
+
+ * "git push" did not pay attention to branch.*.pushremote if it is
+   defined earlier than remote.pushdefault; the order of these two
+   variables in the configuration file should not matter, but it did
+   by mistake.
+   (merge 98b406f jk/remote-pushremote-config-reading later to maint).
+
+ * Codepaths that parse timestamps in commit objects have been
+   tightened.
+   (merge 3f419d4 jk/commit-dates-parsing-fix later to maint).
+
+ * "git diff --external-diff" incorrectly fed the submodule directory
+   in the working tree to the external diff driver when it knew it is
+   the same as one of the versions being compared.
+   (merge aba4727 tr/diff-submodule-no-reuse-worktree later to maint).
+
+ * "git reset" needs to refresh the index when working in a working
+   tree (it can also be used to match the index to the HEAD in an
+   otherwise bare repository), but it failed to set up the working
+   tree properly, causing GIT_WORK_TREE to be ignored.
+   (merge b7756d4 nd/reset-setup-worktree later to maint).
+
+ * "git check-attr" when working on a repository with a working tree
+   did not work well when the working tree was specified via the
+   --work-tree (and obviously with --git-dir) option.
+   (merge cdbf623 jc/check-attr-honor-working-tree later to maint).
 
  * "merge-recursive" was broken in 1.7.7 era and stopped working in
    an empty (temporary) working tree, when there are renames
