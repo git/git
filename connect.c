@@ -723,7 +723,7 @@ struct child_process *git_connect(int fd[2], const char *url,
 				*arg++ = port;
 			}
 			*arg++ = ssh_host;
-		}	else {
+		} else {
 			/* remove repo-local variables from the environment */
 			conn->env = local_repo_env;
 			conn->use_shell = 1;
