@@ -86,7 +86,7 @@ UI, Workflows & Features
 Performance, Internal Implementation, etc.
 
  * The bitmap-index feature from JGit has been ported, which should
-   significantly improve performance when serving objects form a
+   significantly improve performance when serving objects from a
    repository that uses it.
 
  * The way "git log --cc" shows a combined diff against multiple
