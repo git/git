@@ -28,20 +28,12 @@ test_expect_success 'a basic commit in an empty tree should succeed' '
 test_expect_success 'nonexistent template file should return error' '
 	echo changes >> foo &&
 	git add foo &&
-	(
-		GIT_EDITOR="echo hello >\"\$1\"" &&
-		export GIT_EDITOR &&
-		test_must_fail git commit --template "$PWD"/notexist
-	)
+	test_must_fail env GIT_EDITOR="echo hello >\"\$1\"" git commit --template "$PWD"/notexist
 '
 
 test_expect_success 'nonexistent template file in config should return error' '
 	test_config commit.template "$PWD"/notexist &&
-	(
-		GIT_EDITOR="echo hello >\"\$1\"" &&
-		export GIT_EDITOR &&
-		test_must_fail git commit
-	)
+	test_must_fail env GIT_EDITOR="echo hello >\"\$1\"" git commit
 '
 
 # From now on we'll use a template file that exists.

@@ -217,11 +217,7 @@ test_expect_success PERL "commit --interactive doesn't change index if editor ab
 	echo zoo >file &&
 	test_must_fail git diff --exit-code >diff1 &&
 	(echo u ; echo "*" ; echo q) |
-	(
-		EDITOR=: &&
-		export EDITOR &&
-		test_must_fail git commit --interactive
-	) &&
+	test_must_fail env EDITOR=: git commit --interactive &&
 	git diff >diff2 &&
 	compare_diff_patch diff1 diff2
 '

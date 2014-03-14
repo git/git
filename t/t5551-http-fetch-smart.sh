@@ -162,10 +162,8 @@ test_expect_success 'disable dumb http on server' '
 '
 
 test_expect_success 'GIT_SMART_HTTP can disable smart http' '
-	(GIT_SMART_HTTP=0 &&
-	 export GIT_SMART_HTTP &&
-	 cd clone &&
-	 test_must_fail git fetch)
+	(cd clone &&
+	 test_must_fail env GIT_SMART_HTTP=0 git fetch)
 '
 
 test_expect_success 'invalid Content-Type rejected' '

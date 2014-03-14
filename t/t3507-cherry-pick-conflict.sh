@@ -103,11 +103,7 @@ test_expect_success \
 
 test_expect_success 'GIT_CHERRY_PICK_HELP suppresses CHERRY_PICK_HEAD' '
 	pristine_detach initial &&
-	(
-		GIT_CHERRY_PICK_HELP="and then do something else" &&
-		export GIT_CHERRY_PICK_HELP &&
-		test_must_fail git cherry-pick picked
-	) &&
+	test_must_fail env GIT_CHERRY_PICK_HELP="and then do something else" git cherry-pick picked &&
 	test_must_fail git rev-parse --verify CHERRY_PICK_HEAD
 '
 
@@ -137,11 +133,7 @@ test_expect_success 'cancelled commit does not clear CHERRY_PICK_HEAD' '
 	git add foo &&
 	git update-index --refresh -q &&
 	test_must_fail git diff-index --exit-code HEAD &&
-	(
-		GIT_EDITOR=false &&
-		export GIT_EDITOR &&
-		test_must_fail git commit
-	) &&
+	test_must_fail env GIT_EDITOR=false git commit &&
 
 	test_cmp_rev picked CHERRY_PICK_HEAD
 '
