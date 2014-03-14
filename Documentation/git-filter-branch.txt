@@ -436,7 +436,7 @@ git-filter-branch allows you to make complex shell-scripted rewrites
 of your Git history, but you probably don't need this flexibility if
 you're simply _removing unwanted data_ like large files or passwords.
 For those operations you may want to consider
-link:http://rtyley.github.io/bfg-repo-cleaner/[The BFG Repo-Cleaner],
+http://rtyley.github.io/bfg-repo-cleaner/[The BFG Repo-Cleaner],
 a JVM-based alternative to git-filter-branch, typically at least
 10-50x faster for those use-cases, and with quite different
 characteristics:
@@ -455,7 +455,7 @@ characteristics:
   _is_ possible to write filters that include their own parallellism,
   in the scripts executed against each commit.
 
-* The link:http://rtyley.github.io/bfg-repo-cleaner/#examples[command options]
+* The http://rtyley.github.io/bfg-repo-cleaner/#examples[command options]
   are much more restrictive than git-filter branch, and dedicated just
   to the tasks of removing unwanted data- e.g:
   `--strip-blobs-bigger-than 1M`.
