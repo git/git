@@ -21,8 +21,7 @@ static char key_delim = ' ';
 static char term = '\n';
 
 static int use_global_config, use_system_config, use_local_config;
-static const char *given_config_file;
-static const char *given_config_blob;
+static struct git_config_source given_config_source;
 static int actions, types;
 static const char *get_color_slot, *get_colorbool_slot;
 static int end_null;
@@ -55,8 +54,8 @@ static struct option builtin_config_options[] = {
 	OPT_BOOL(0, "global", &use_global_config, N_("use global config file")),
 	OPT_BOOL(0, "system", &use_system_config, N_("use system config file")),
 	OPT_BOOL(0, "local", &use_local_config, N_("use repository config file")),
-	OPT_STRING('f', "file", &given_config_file, N_("file"), N_("use given config file")),
-	OPT_STRING(0, "blob", &given_config_blob, N_("blob-id"), N_("read config from given blob object")),
+	OPT_STRING('f', "file", &given_config_source.file, N_("file"), N_("use given config file")),
+	OPT_STRING(0, "blob", &given_config_source.blob, N_("blob-id"), N_("read config from given blob object")),
 	OPT_GROUP(N_("Action")),
 	OPT_BIT(0, "get", &actions, N_("get value: name [value-regex]"), ACTION_GET),
 	OPT_BIT(0, "get-all", &actions, N_("get all values: key [value-regex]"), ACTION_GET_ALL),
@@ -224,8 +223,7 @@ static int get_value(const char *key_, const char *regex_)
 	}
 
 	git_config_with_options(collect_config, &values,
-				given_config_file, given_config_blob,
-				respect_includes);
+				&given_config_source, respect_includes);
 
 	ret = !values.nr;
 
@@ -309,8 +307,7 @@ static void get_color(const char *def_color)
 	get_color_found = 0;
 	parsed_color[0] = '\0';
 	git_config_with_options(git_get_color_config, NULL,
-				given_config_file, given_config_blob,
-				respect_includes);
+				&given_config_source, respect_includes);
 
 	if (!get_color_found && def_color)
 		color_parse(def_color, "command line", parsed_color);
@@ -339,8 +336,7 @@ static int get_colorbool(int print)
 	get_diff_color_found = -1;
 	get_color_ui_found = -1;
 	git_config_with_options(git_get_colorbool_config, NULL,
-				given_config_file, given_config_blob,
-				respect_includes);
+				&given_config_source, respect_includes);
 
 	if (get_colorbool_found < 0) {
 		if (!strcmp(get_colorbool_slot, "color.diff"))
@@ -362,9 +358,12 @@ static int get_colorbool(int print)
 		return get_colorbool_found ? 0 : 1;
 }
 
-static void check_blob_write(void)
+static void check_write(void)
 {
-	if (given_config_blob)
+	if (given_config_source.use_stdin)
+		die("writing to stdin is not supported");
+
+	if (given_config_source.blob)
 		die("writing config blobs is not supported");
 }
 
@@ -435,7 +434,7 @@ static int get_urlmatch(const char *var, const char *url)
 	}
 
 	git_config_with_options(urlmatch_config_entry, &config,
-				given_config_file, NULL, respect_includes);
+				&given_config_source, respect_includes);
 
 	for_each_string_list_item(item, &values) {
 		struct urlmatch_current_candidate_value *matched = item->util;
@@ -464,16 +463,22 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 	int nongit = !startup_info->have_repository;
 	char *value;
 
-	given_config_file = getenv(CONFIG_ENVIRONMENT);
+	given_config_source.file = getenv(CONFIG_ENVIRONMENT);
 
 	argc = parse_options(argc, argv, prefix, builtin_config_options,
 			     builtin_config_usage,
 			     PARSE_OPT_STOP_AT_NON_OPTION);
 
 	if (use_global_config + use_system_config + use_local_config +
-	    !!given_config_file + !!given_config_blob > 1) {
+	    !!given_config_source.file + !!given_config_source.blob > 1) {
 		error("only one config file at a time.");
 		usage_with_options(builtin_config_usage, builtin_config_options);
+	}
+
+	if (given_config_source.file &&
+			!strcmp(given_config_source.file, "-")) {
+		given_config_source.file = NULL;
+		given_config_source.use_stdin = 1;
 	}
 
 	if (use_global_config) {
@@ -493,24 +498,24 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 
 		if (access_or_warn(user_config, R_OK, 0) &&
 		    xdg_config && !access_or_warn(xdg_config, R_OK, 0))
-			given_config_file = xdg_config;
+			given_config_source.file = xdg_config;
 		else
-			given_config_file = user_config;
+			given_config_source.file = user_config;
 	}
 	else if (use_system_config)
-		given_config_file = git_etc_gitconfig();
+		given_config_source.file = git_etc_gitconfig();
 	else if (use_local_config)
-		given_config_file = git_pathdup("config");
-	else if (given_config_file) {
-		if (!is_absolute_path(given_config_file) && prefix)
-			given_config_file =
+		given_config_source.file = git_pathdup("config");
+	else if (given_config_source.file) {
+		if (!is_absolute_path(given_config_source.file) && prefix)
+			given_config_source.file =
 				xstrdup(prefix_filename(prefix,
 							strlen(prefix),
-							given_config_file));
+							given_config_source.file));
 	}
 
 	if (respect_includes == -1)
-		respect_includes = !given_config_file;
+		respect_includes = !given_config_source.file;
 
 	if (end_null) {
 		term = '\0';
@@ -549,57 +554,58 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 	if (actions == ACTION_LIST) {
 		check_argc(argc, 0, 0);
 		if (git_config_with_options(show_all_config, NULL,
-					    given_config_file,
-					    given_config_blob,
+					    &given_config_source,
 					    respect_includes) < 0) {
-			if (given_config_file)
+			if (given_config_source.file)
 				die_errno("unable to read config file '%s'",
-					  given_config_file);
+					  given_config_source.file);
 			else
 				die("error processing config file(s)");
 		}
 	}
 	else if (actions == ACTION_EDIT) {
 		check_argc(argc, 0, 0);
-		if (!given_config_file && nongit)
+		if (!given_config_source.file && nongit)
 			die("not in a git directory");
-		if (given_config_blob)
+		if (given_config_source.use_stdin)
+			die("editing stdin is not supported");
+		if (given_config_source.blob)
 			die("editing blobs is not supported");
 		git_config(git_default_config, NULL);
-		launch_editor(given_config_file ?
-			      given_config_file : git_path("config"),
+		launch_editor(given_config_source.file ?
+			      given_config_source.file : git_path("config"),
 			      NULL, NULL);
 	}
 	else if (actions == ACTION_SET) {
 		int ret;
-		check_blob_write();
+		check_write();
 		check_argc(argc, 2, 2);
 		value = normalize_value(argv[0], argv[1]);
-		ret = git_config_set_in_file(given_config_file, argv[0], value);
+		ret = git_config_set_in_file(given_config_source.file, argv[0], value);
 		if (ret == CONFIG_NOTHING_SET)
 			error("cannot overwrite multiple values with a single value\n"
 			"       Use a regexp, --add or --replace-all to change %s.", argv[0]);
 		return ret;
 	}
 	else if (actions == ACTION_SET_ALL) {
-		check_blob_write();
+		check_write();
 		check_argc(argc, 2, 3);
 		value = normalize_value(argv[0], argv[1]);
-		return git_config_set_multivar_in_file(given_config_file,
+		return git_config_set_multivar_in_file(given_config_source.file,
 						       argv[0], value, argv[2], 0);
 	}
 	else if (actions == ACTION_ADD) {
-		check_blob_write();
+		check_write();
 		check_argc(argc, 2, 2);
 		value = normalize_value(argv[0], argv[1]);
-		return git_config_set_multivar_in_file(given_config_file,
+		return git_config_set_multivar_in_file(given_config_source.file,
 						       argv[0], value, "^$", 0);
 	}
 	else if (actions == ACTION_REPLACE_ALL) {
-		check_blob_write();
+		check_write();
 		check_argc(argc, 2, 3);
 		value = normalize_value(argv[0], argv[1]);
-		return git_config_set_multivar_in_file(given_config_file,
+		return git_config_set_multivar_in_file(given_config_source.file,
 						       argv[0], value, argv[2], 1);
 	}
 	else if (actions == ACTION_GET) {
@@ -623,26 +629,26 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		return get_urlmatch(argv[0], argv[1]);
 	}
 	else if (actions == ACTION_UNSET) {
-		check_blob_write();
+		check_write();
 		check_argc(argc, 1, 2);
 		if (argc == 2)
-			return git_config_set_multivar_in_file(given_config_file,
+			return git_config_set_multivar_in_file(given_config_source.file,
 							       argv[0], NULL, argv[1], 0);
 		else
-			return git_config_set_in_file(given_config_file,
+			return git_config_set_in_file(given_config_source.file,
 						      argv[0], NULL);
 	}
 	else if (actions == ACTION_UNSET_ALL) {
-		check_blob_write();
+		check_write();
 		check_argc(argc, 1, 2);
-		return git_config_set_multivar_in_file(given_config_file,
+		return git_config_set_multivar_in_file(given_config_source.file,
 						       argv[0], NULL, argv[1], 1);
 	}
 	else if (actions == ACTION_RENAME_SECTION) {
 		int ret;
-		check_blob_write();
+		check_write();
 		check_argc(argc, 2, 2);
-		ret = git_config_rename_section_in_file(given_config_file,
+		ret = git_config_rename_section_in_file(given_config_source.file,
 							argv[0], argv[1]);
 		if (ret < 0)
 			return ret;
@@ -651,9 +657,9 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 	}
 	else if (actions == ACTION_REMOVE_SECTION) {
 		int ret;
-		check_blob_write();
+		check_write();
 		check_argc(argc, 1, 1);
-		ret = git_config_rename_section_in_file(given_config_file,
+		ret = git_config_rename_section_in_file(given_config_source.file,
 							argv[0], NULL);
 		if (ret < 0)
 			return ret;

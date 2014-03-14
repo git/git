@@ -21,6 +21,7 @@ struct config_source {
 		} buf;
 	} u;
 	const char *name;
+	const char *path;
 	int die_on_error;
 	int linenr;
 	int eof;
@@ -101,12 +102,12 @@ static int handle_path_include(const char *path, struct config_include_data *inc
 	if (!is_absolute_path(path)) {
 		char *slash;
 
-		if (!cf || !cf->name)
+		if (!cf || !cf->path)
 			return error("relative config includes must come from files");
 
-		slash = find_last_dir_sep(cf->name);
+		slash = find_last_dir_sep(cf->path);
 		if (slash)
-			strbuf_add(&buf, cf->name, slash - cf->name + 1);
+			strbuf_add(&buf, cf->path, slash - cf->path + 1);
 		strbuf_addstr(&buf, path);
 		path = buf.buf;
 	}
@@ -1021,24 +1022,35 @@ static int do_config_from(struct config_source *top, config_fn_t fn, void *data)
 	return ret;
 }
 
+static int do_config_from_file(config_fn_t fn,
+		const char *name, const char *path, FILE *f, void *data)
+{
+	struct config_source top;
+
+	top.u.file = f;
+	top.name = name;
+	top.path = path;
+	top.die_on_error = 1;
+	top.do_fgetc = config_file_fgetc;
+	top.do_ungetc = config_file_ungetc;
+	top.do_ftell = config_file_ftell;
+
+	return do_config_from(&top, fn, data);
+}
+
+static int git_config_from_stdin(config_fn_t fn, void *data)
+{
+	return do_config_from_file(fn, "<stdin>", NULL, stdin, data);
+}
+
 int git_config_from_file(config_fn_t fn, const char *filename, void *data)
 {
-	int ret;
-	FILE *f = fopen(filename, "r");
+	int ret = -1;
+	FILE *f;
 
-	ret = -1;
+	f = fopen(filename, "r");
 	if (f) {
-		struct config_source top;
-
-		top.u.file = f;
-		top.name = filename;
-		top.die_on_error = 1;
-		top.do_fgetc = config_file_fgetc;
-		top.do_ungetc = config_file_ungetc;
-		top.do_ftell = config_file_ftell;
-
-		ret = do_config_from(&top, fn, data);
-
+		ret = do_config_from_file(fn, filename, filename, f, data);
 		fclose(f);
 	}
 	return ret;
@@ -1053,6 +1065,7 @@ int git_config_from_buf(config_fn_t fn, const char *name, const char *buf,
 	top.u.buf.len = len;
 	top.u.buf.pos = 0;
 	top.name = name;
+	top.path = NULL;
 	top.die_on_error = 0;
 	top.do_fgetc = config_buf_fgetc;
 	top.do_ungetc = config_buf_ungetc;
@@ -1161,8 +1174,7 @@ int git_config_early(config_fn_t fn, void *data, const char *repo_config)
 }
 
 int git_config_with_options(config_fn_t fn, void *data,
-			    const char *filename,
-			    const char *blob_ref,
+			    struct git_config_source *config_source,
 			    int respect_includes)
 {
 	char *repo_config = NULL;
@@ -1180,10 +1192,12 @@ int git_config_with_options(config_fn_t fn, void *data,
 	 * If we have a specific filename, use it. Otherwise, follow the
 	 * regular lookup sequence.
 	 */
-	if (filename)
-		return git_config_from_file(fn, filename, data);
-	else if (blob_ref)
-		return git_config_from_blob_ref(fn, blob_ref, data);
+	if (config_source && config_source->use_stdin)
+		return git_config_from_stdin(fn, data);
+	else if (config_source && config_source->file)
+		return git_config_from_file(fn, config_source->file, data);
+	else if (config_source && config_source->blob)
+		return git_config_from_blob_ref(fn, config_source->blob, data);
 
 	repo_config = git_pathdup("config");
 	ret = git_config_early(fn, data, repo_config);
@@ -1194,7 +1208,7 @@ int git_config_with_options(config_fn_t fn, void *data,
 
 int git_config(config_fn_t fn, void *data)
 {
-	return git_config_with_options(fn, data, NULL, NULL, 1);
+	return git_config_with_options(fn, data, NULL, 1);
 }
 
 /*
