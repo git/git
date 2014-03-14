@@ -17,20 +17,23 @@ extern void strbuf_init(struct strbuf *, size_t);
 extern void strbuf_release(struct strbuf *);
 extern char *strbuf_detach(struct strbuf *, size_t *);
 extern void strbuf_attach(struct strbuf *, void *, size_t, size_t);
-static inline void strbuf_swap(struct strbuf *a, struct strbuf *b) {
+static inline void strbuf_swap(struct strbuf *a, struct strbuf *b)
+{
 	struct strbuf tmp = *a;
 	*a = *b;
 	*b = tmp;
 }
 
 /*----- strbuf size related -----*/
-static inline size_t strbuf_avail(const struct strbuf *sb) {
+static inline size_t strbuf_avail(const struct strbuf *sb)
+{
 	return sb->alloc ? sb->alloc - sb->len - 1 : 0;
 }
 
 extern void strbuf_grow(struct strbuf *, size_t);
 
-static inline void strbuf_setlen(struct strbuf *sb, size_t len) {
+static inline void strbuf_setlen(struct strbuf *sb, size_t len)
+{
 	if (len > (sb->alloc ? sb->alloc - 1 : 0))
 		die("BUG: strbuf_setlen() beyond buffer");
 	sb->len = len;
@@ -97,7 +100,8 @@ static inline struct strbuf **strbuf_split(const struct strbuf *sb,
 extern void strbuf_list_free(struct strbuf **);
 
 /*----- add data in your buffer -----*/
-static inline void strbuf_addch(struct strbuf *sb, int c) {
+static inline void strbuf_addch(struct strbuf *sb, int c)
+{
 	strbuf_grow(sb, 1);
 	sb->buf[sb->len++] = c;
 	sb->buf[sb->len] = '\0';
@@ -113,10 +117,12 @@ extern void strbuf_splice(struct strbuf *, size_t pos, size_t len,
 extern void strbuf_add_commented_lines(struct strbuf *out, const char *buf, size_t size);
 
 extern void strbuf_add(struct strbuf *, const void *, size_t);
-static inline void strbuf_addstr(struct strbuf *sb, const char *s) {
+static inline void strbuf_addstr(struct strbuf *sb, const char *s)
+{
 	strbuf_add(sb, s, strlen(s));
 }
-static inline void strbuf_addbuf(struct strbuf *sb, const struct strbuf *sb2) {
+static inline void strbuf_addbuf(struct strbuf *sb, const struct strbuf *sb2)
+{
 	strbuf_grow(sb, sb2->len);
 	strbuf_add(sb, sb2->buf, sb2->len);
 }
