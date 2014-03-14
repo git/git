@@ -423,11 +423,8 @@ static int run_slot(struct active_request_slot *slot,
 	if (!results)
 		results = &results_buf;
 
-	slot->results = results;
-	slot->curl_result = curl_easy_perform(slot->curl);
-	finish_active_slot(slot);
+	err = run_one_slot(slot, results);
 
-	err = handle_curl_result(results);
 	if (err != HTTP_OK && err != HTTP_REAUTH) {
 		error("RPC failed; result=%d, HTTP code = %ld",
 		      results->curl_result, results->http_code);

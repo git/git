@@ -90,6 +90,15 @@ extern void finish_active_slot(struct active_request_slot *slot);
 extern void finish_all_active_slots(void);
 extern int handle_curl_result(struct slot_results *results);
 
+/*
+ * This will run one slot to completion in a blocking manner, similar to how
+ * curl_easy_perform would work (but we don't want to use that, because
+ * we do not want to intermingle calls to curl_multi and curl_easy).
+ *
+ */
+int run_one_slot(struct active_request_slot *slot,
+		 struct slot_results *results);
+
 #ifdef USE_CURL_MULTI
 extern void fill_active_slots(void);
 extern void add_fill_function(void *data, int (*fill)(void *));
