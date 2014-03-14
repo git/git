@@ -354,9 +354,7 @@ test_expect_success !AUTOIDENT 'do not fire editor when committer is bogus' '
 	(
 		sane_unset GIT_COMMITTER_EMAIL &&
 		sane_unset GIT_COMMITTER_NAME &&
-		GIT_EDITOR="\"$(pwd)/.git/FAKE_EDITOR\"" &&
-		export GIT_EDITOR &&
-		test_must_fail git commit -e -m sample -a
+		test_must_fail env GIT_EDITOR="\"$(pwd)/.git/FAKE_EDITOR\"" git commit -e -m sample -a
 	) &&
 	test_cmp expect .git/result
 '
@@ -396,11 +394,7 @@ test_expect_success 'do not fire editor in the presence of conflicts' '
 	# Must fail due to conflict
 	test_must_fail git cherry-pick -n master &&
 	echo "editor not started" >.git/result &&
-	(
-		GIT_EDITOR="\"$(pwd)/.git/FAKE_EDITOR\"" &&
-		export GIT_EDITOR &&
-		test_must_fail git commit
-	) &&
+	test_must_fail env GIT_EDITOR="\"$(pwd)/.git/FAKE_EDITOR\"" git commit &&
 	test "$(cat .git/result)" = "editor not started"
 '
 

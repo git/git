@@ -39,11 +39,7 @@ test_expect_success 'untracked files overwritten by merge (fast and non-fast for
 	test_must_fail git merge branch 2>out &&
 	test_cmp out expect &&
 	git commit --allow-empty -m empty &&
-	(
-		GIT_MERGE_VERBOSITY=0 &&
-		export GIT_MERGE_VERBOSITY &&
-		test_must_fail git merge branch 2>out2
-	) &&
+	test_must_fail env GIT_MERGE_VERBOSITY=0 git merge branch 2>out2 &&
 	test_cmp out2 expect &&
 	git reset --hard HEAD^
 '

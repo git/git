@@ -142,12 +142,7 @@ EOF
 '
 
 commit_template_commented () {
-	(
-		EDITOR=.git/editor &&
-		export EDITOR &&
-		# Fails due to empty message
-		test_must_fail git commit
-	) &&
+	test_must_fail env EDITOR=.git/editor git commit &&
 	! grep '^[^#]' output
 }
 

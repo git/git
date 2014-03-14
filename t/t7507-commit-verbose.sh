@@ -79,20 +79,12 @@ test_expect_success 'submodule log is stripped out too with -v' '
 		echo "more" >>file &&
 		git commit -a -m "submodule commit"
 	) &&
-	(
-		GIT_EDITOR=cat &&
-		export GIT_EDITOR &&
-		test_must_fail git commit -a -v 2>err
-	) &&
+	test_must_fail env GIT_EDITOR=cat git commit -a -v 2>err &&
 	test_i18ngrep "Aborting commit due to empty commit message." err
 '
 
 test_expect_success 'verbose diff is stripped out with set core.commentChar' '
-	(
-		GIT_EDITOR=cat &&
-		export GIT_EDITOR &&
-		test_must_fail git -c core.commentchar=";" commit -a -v 2>err
-	) &&
+	test_must_fail env GIT_EDITOR=cat git -c core.commentchar=";" commit -a -v 2>err &&
 	test_i18ngrep "Aborting commit due to empty commit message." err
 '
 
