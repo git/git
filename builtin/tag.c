@@ -42,7 +42,7 @@ static int match_pattern(const char **patterns, const char *ref)
 	if (!*patterns)
 		return 1;
 	for (; *patterns; patterns++)
-		if (!fnmatch(*patterns, ref, 0))
+		if (!wildmatch(*patterns, ref, 0, NULL))
 			return 1;
 	return 0;
 }

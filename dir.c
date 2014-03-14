@@ -49,7 +49,9 @@ int strncmp_icase(const char *a, const char *b, size_t count)
 
 int fnmatch_icase(const char *pattern, const char *string, int flags)
 {
-	return fnmatch(pattern, string, flags | (ignore_case ? FNM_CASEFOLD : 0));
+	return wildmatch(pattern, string,
+			 flags | (ignore_case ? WM_CASEFOLD : 0),
+			 NULL);
 }
 
 inline int git_fnmatch(const struct pathspec_item *item,
@@ -58,7 +60,7 @@ inline int git_fnmatch(const struct pathspec_item *item,
 {
 	if (prefix > 0) {
 		if (ps_strncmp(item, pattern, string, prefix))
-			return FNM_NOMATCH;
+			return WM_NOMATCH;
 		pattern += prefix;
 		string += prefix;
 	}
@@ -76,8 +78,9 @@ inline int git_fnmatch(const struct pathspec_item *item,
 				 NULL);
 	else
 		/* wildmatch has not learned no FNM_PATHNAME mode yet */
-		return fnmatch(pattern, string,
-			       item->magic & PATHSPEC_ICASE ? FNM_CASEFOLD : 0);
+		return wildmatch(pattern, string,
+				 item->magic & PATHSPEC_ICASE ? WM_CASEFOLD : 0,
+				 NULL);
 }
 
 static int fnmatch_icase_mem(const char *pattern, int patternlen,

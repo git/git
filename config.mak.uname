@@ -108,7 +108,6 @@ ifeq ($(uname_S),SunOS)
 	NO_MKDTEMP = YesPlease
 	NO_MKSTEMPS = YesPlease
 	NO_REGEX = YesPlease
-	NO_FNMATCH_CASEFOLD = YesPlease
 	NO_MSGFMT_EXTENDED_OPTIONS = YesPlease
 	HAVE_DEV_TTY = YesPlease
 	ifeq ($(uname_R),5.6)
@@ -259,7 +258,6 @@ ifeq ($(uname_S),IRIX)
 	# issue, comment out the NO_MMAP statement.
 	NO_MMAP = YesPlease
 	NO_REGEX = YesPlease
-	NO_FNMATCH_CASEFOLD = YesPlease
 	SNPRINTF_RETURNS_BOGUS = YesPlease
 	SHELL_PATH = /usr/gnu/bin/bash
 	NEEDS_LIBGEN = YesPlease
@@ -279,7 +277,6 @@ ifeq ($(uname_S),IRIX64)
 	# issue, comment out the NO_MMAP statement.
 	NO_MMAP = YesPlease
 	NO_REGEX = YesPlease
-	NO_FNMATCH_CASEFOLD = YesPlease
 	SNPRINTF_RETURNS_BOGUS = YesPlease
 	SHELL_PATH = /usr/gnu/bin/bash
 	NEEDS_LIBGEN = YesPlease
@@ -296,7 +293,6 @@ ifeq ($(uname_S),HP-UX)
 	NO_UNSETENV = YesPlease
 	NO_HSTRERROR = YesPlease
 	NO_SYS_SELECT_H = YesPlease
-	NO_FNMATCH_CASEFOLD = YesPlease
 	SNPRINTF_RETURNS_BOGUS = YesPlease
 	NO_NSEC = YesPlease
 	ifeq ($(uname_R),B.11.00)
@@ -327,7 +323,6 @@ ifeq ($(uname_S),Windows)
 	NO_UNSETENV = YesPlease
 	NO_STRCASESTR = YesPlease
 	NO_STRLCPY = YesPlease
-	NO_FNMATCH = YesPlease
 	NO_MEMMEM = YesPlease
 	# NEEDS_LIBICONV = YesPlease
 	NO_ICONV = YesPlease
@@ -389,13 +384,11 @@ ifeq ($(uname_S),Interix)
 		NO_INET_NTOP = YesPlease
 		NO_INET_PTON = YesPlease
 		NO_SOCKADDR_STORAGE = YesPlease
-		NO_FNMATCH_CASEFOLD = YesPlease
 	endif
 	ifeq ($(uname_R),5.2)
 		NO_INET_NTOP = YesPlease
 		NO_INET_PTON = YesPlease
 		NO_SOCKADDR_STORAGE = YesPlease
-		NO_FNMATCH_CASEFOLD = YesPlease
 	endif
 endif
 ifeq ($(uname_S),Minix)
@@ -440,7 +433,6 @@ ifeq ($(uname_S),NONSTOP_KERNEL)
 	NO_D_TYPE_IN_DIRENT = YesPlease
 	NO_HSTRERROR = YesPlease
 	NO_STRCASESTR = YesPlease
-	NO_FNMATCH_CASEFOLD = YesPlease
 	NO_MEMMEM = YesPlease
 	NO_STRLCPY = YesPlease
 	NO_SETENV = YesPlease
@@ -484,7 +476,6 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	NO_UNSETENV = YesPlease
 	NO_STRCASESTR = YesPlease
 	NO_STRLCPY = YesPlease
-	NO_FNMATCH = YesPlease
 	NO_MEMMEM = YesPlease
 	NEEDS_LIBICONV = YesPlease
 	NO_STRTOUMAX = YesPlease
@@ -538,7 +529,6 @@ ifeq ($(uname_S),QNX)
 	EXPAT_NEEDS_XMLPARSE_H = YesPlease
 	HAVE_STRINGS_H = YesPlease
 	NEEDS_SOCKET = YesPlease
-	NO_FNMATCH_CASEFOLD = YesPlease
 	NO_GETPAGESIZE = YesPlease
 	NO_ICONV = YesPlease
 	NO_MEMMEM = YesPlease

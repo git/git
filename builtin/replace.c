@@ -36,7 +36,7 @@ static int show_reference(const char *refname, const unsigned char *sha1,
 {
 	struct show_data *data = cb_data;
 
-	if (!fnmatch(data->pattern, refname, 0)) {
+	if (!wildmatch(data->pattern, refname, 0, NULL)) {
 		if (data->format == REPLACE_FORMAT_SHORT)
 			printf("%s\n", refname);
 		else if (data->format == REPLACE_FORMAT_MEDIUM)

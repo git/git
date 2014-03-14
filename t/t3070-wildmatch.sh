@@ -14,19 +14,6 @@ match() {
 	    ! test-wildmatch wildmatch '$3' '$4'
 	"
     fi
-    if [ $2 = 1 ]; then
-	test_expect_success "fnmatch:       match '$3' '$4'" "
-	    test-wildmatch fnmatch '$3' '$4'
-	"
-    elif [ $2 = 0 ]; then
-	test_expect_success "fnmatch:    no match '$3' '$4'" "
-	    ! test-wildmatch fnmatch '$3' '$4'
-	"
-#    else
-#	test_expect_success BROKEN_FNMATCH "fnmatch:       '$3' '$4'" "
-#	    ! test-wildmatch fnmatch '$3' '$4'
-#	"
-    fi
 }
 
 imatch() {

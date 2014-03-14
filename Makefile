@@ -101,14 +101,6 @@ all::
 #
 # Define NO_MKSTEMPS if you don't have mkstemps in the C library.
 #
-# Define NO_FNMATCH if you don't have fnmatch in the C library.
-#
-# Define NO_FNMATCH_CASEFOLD if your fnmatch function doesn't have the
-# FNM_CASEFOLD GNU extension.
-#
-# Define NO_WILDMATCH if you do not want to use Git's wildmatch
-# implementation as fnmatch
-#
 # Define NO_GECOS_IN_PWENT if you don't have pw_gecos in struct passwd
 # in the C library.
 #
@@ -1282,20 +1274,6 @@ ifdef NO_STRTOUMAX
 endif
 ifdef NO_STRTOULL
 	COMPAT_CFLAGS += -DNO_STRTOULL
-endif
-ifdef NO_FNMATCH
-	COMPAT_CFLAGS += -Icompat/fnmatch
-	COMPAT_CFLAGS += -DNO_FNMATCH
-	COMPAT_OBJS += compat/fnmatch/fnmatch.o
-else
-ifdef NO_FNMATCH_CASEFOLD
-	COMPAT_CFLAGS += -Icompat/fnmatch
-	COMPAT_CFLAGS += -DNO_FNMATCH_CASEFOLD
-	COMPAT_OBJS += compat/fnmatch/fnmatch.o
-endif
-endif
-ifndef NO_WILDMATCH
-	COMPAT_CFLAGS += -DUSE_WILDMATCH
 endif
 ifdef NO_SETENV
 	COMPAT_CFLAGS += -DNO_SETENV

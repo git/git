@@ -138,7 +138,7 @@ static int get_name(const char *path, const unsigned char *sha1, int flag, void 
 		return 0;
 
 	/* Accept only tags that match the pattern, if given */
-	if (pattern && (!is_tag || fnmatch(pattern, path + 10, 0)))
+	if (pattern && (!is_tag || wildmatch(pattern, path + 10, 0, NULL)))
 		return 0;
 
 	/* Is it annotated? */
