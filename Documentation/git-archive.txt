@@ -65,7 +65,10 @@ OPTIONS
 
 --remote=<repo>::
 	Instead of making a tar archive from the local repository,
-	retrieve a tar archive from a remote repository.
+	retrieve a tar archive from a remote repository. Note that the
+	remote repository may place restrictions on which sha1
+	expressions may be allowed in `<tree-ish>`. See
+	linkgit:git-upload-archive[1] for details.
 
 --exec=<git-upload-archive>::
 	Used with --remote to specify the path to the

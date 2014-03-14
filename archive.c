@@ -17,6 +17,7 @@ static char const * const archive_usage[] = {
 static const struct archiver **archivers;
 static int nr_archivers;
 static int alloc_archivers;
+static int remote_allow_unreachable;
 
 void register_archiver(struct archiver *ar)
 {
@@ -257,7 +258,7 @@ static void parse_treeish_arg(const char **argv,
 	unsigned char sha1[20];
 
 	/* Remotes are only allowed to fetch actual refs */
-	if (remote) {
+	if (remote && !remote_allow_unreachable) {
 		char *ref = NULL;
 		const char *colon = strchr(name, ':');
 		int refnamelen = colon ? colon - name : strlen(name);
@@ -401,6 +402,14 @@ static int parse_archive_args(int argc, const char **argv,
 	return argc;
 }
 
+static int git_default_archive_config(const char *var, const char *value,
+				      void *cb)
+{
+	if (!strcmp(var, "uploadarchive.allowunreachable"))
+		remote_allow_unreachable = git_config_bool(var, value);
+	return git_default_config(var, value, cb);
+}
+
 int write_archive(int argc, const char **argv, const char *prefix,
 		  int setup_prefix, const char *name_hint, int remote)
 {
@@ -411,7 +420,7 @@ int write_archive(int argc, const char **argv, const char *prefix,
 	if (setup_prefix && prefix == NULL)
 		prefix = setup_git_directory_gently(&nongit);
 
-	git_config(git_default_config, NULL);
+	git_config(git_default_archive_config, NULL);
 	init_tar_archiver();
 	init_zip_archiver();
 
