@@ -43,14 +43,32 @@ int type_from_string(const char *str)
 	die("invalid object type \"%s\"", str);
 }
 
+/*
+ * Return a numerical hash value between 0 and n-1 for the object with
+ * the specified sha1.  n must be a power of 2.  Please note that the
+ * return value is *not* consistent across computer architectures.
+ */
 static unsigned int hash_obj(const unsigned char *sha1, unsigned int n)
 {
 	unsigned int hash;
+
+	/*
+	 * Since the sha1 is essentially random, we just take the
+	 * required number of bits directly from the first
+	 * sizeof(unsigned int) bytes of sha1.  First we have to copy
+	 * the bytes into a properly aligned integer.  If we cared
+	 * about getting consistent results across architectures, we
+	 * would have to call ntohl() here, too.
+	 */
 	memcpy(&hash, sha1, sizeof(unsigned int));
-	/* Assumes power-of-2 hash sizes in grow_object_hash */
 	return hash & (n - 1);
 }
 
+/*
+ * Insert obj into the hash table hash, which has length size (which
+ * must be a power of 2).  On collisions, simply overflow to the next
+ * empty bucket.
+ */
 static void insert_obj_hash(struct object *obj, struct object **hash, unsigned int size)
 {
 	unsigned int j = hash_obj(obj->sha1, size);
@@ -63,6 +81,10 @@ static void insert_obj_hash(struct object *obj, struct object **hash, unsigned i
 	hash[j] = obj;
 }
 
+/*
+ * Look up the record for the given sha1 in the hash map stored in
+ * obj_hash.  Return NULL if it was not found.
+ */
 struct object *lookup_object(const unsigned char *sha1)
 {
 	unsigned int i, first;
@@ -92,6 +114,11 @@ struct object *lookup_object(const unsigned char *sha1)
 	return obj;
 }
 
+/*
+ * Increase the size of the hash map stored in obj_hash to the next
+ * power of 2 (but at least 32).  Copy the existing values to the new
+ * hash map.
+ */
 static void grow_object_hash(void)
 {
 	int i;

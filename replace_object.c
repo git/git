@@ -91,12 +91,19 @@ static void prepare_replace_object(void)
 	for_each_replace_ref(register_replace_ref, NULL);
 	replace_object_prepared = 1;
 	if (!replace_object_nr)
-		read_replace_refs = 0;
+		check_replace_refs = 0;
 }
 
 /* We allow "recursive" replacement. Only within reason, though */
 #define MAXREPLACEDEPTH 5
 
+/*
+ * If a replacement for object sha1 has been set up, return the
+ * replacement object's name (replaced recursively, if necessary).
+ * The return value is either sha1 or a pointer to a
+ * permanently-allocated value.  This function always respects replace
+ * references, regardless of the value of check_replace_refs.
+ */
 const unsigned char *do_lookup_replace_object(const unsigned char *sha1)
 {
 	int pos, depth = MAXREPLACEDEPTH;
