@@ -32,6 +32,11 @@ img.avatar {
 	vertical-align: middle;
 }
 
+img.blob {
+	max-height: 100%;
+	max-width: 100%;
+}
+
 a.list img.avatar {
 	border-style: none;
 }
