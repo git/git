@@ -152,8 +152,10 @@ struct git_istream *open_istream(const unsigned char *sha1,
 	if (filter) {
 		/* Add "&& !is_null_stream_filter(filter)" for performance */
 		struct git_istream *nst = attach_stream_filter(st, filter);
-		if (!nst)
+		if (!nst) {
 			close_istream(st);
+			return NULL;
+		}
 		st = nst;
 	}
 

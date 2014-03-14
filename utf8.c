@@ -5,8 +5,8 @@
 /* This code is originally from http://www.cl.cam.ac.uk/~mgk25/ucs/ */
 
 struct interval {
-  int first;
-  int last;
+	ucs_char_t first;
+	ucs_char_t last;
 };
 
 size_t display_mode_esc_sequence_len(const char *s)
@@ -529,7 +529,7 @@ char *reencode_string_iconv(const char *in, size_t insz, iconv_t conv, int *outs
 	while (1) {
 		size_t cnt = iconv(conv, &cp, &insz, &outpos, &outsz);
 
-		if (cnt == -1) {
+		if (cnt == (size_t) -1) {
 			size_t sofar;
 			if (errno != E2BIG) {
 				free(out);

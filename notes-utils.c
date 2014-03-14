@@ -75,7 +75,7 @@ static int notes_rewrite_config(const char *k, const char *v, void *cb)
 		return 0;
 	} else if (!c->mode_from_env && !strcmp(k, "notes.rewritemode")) {
 		if (!v)
-			config_error_nonbool(k);
+			return config_error_nonbool(k);
 		c->combine = parse_combine_notes_fn(v);
 		if (!c->combine) {
 			error(_("Bad notes.rewriteMode value: '%s'"), v);
