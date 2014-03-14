@@ -77,6 +77,9 @@ PATTERN FORMAT
    Put a backslash ("`\`") in front of the first hash for patterns
    that begin with a hash.
 
+ - Trailing spaces are ignored unless they are quoted with backlash
+   ("`\`").
+
  - An optional prefix "`!`" which negates the pattern; any
    matching file excluded by a previous pattern will become
    included again. It is not possible to re-include a file if a parent
