@@ -243,40 +243,58 @@ EOF
 	test_line_count = 0 err
 '
 
+test_expect_success 'using --git-dir and --work-tree' '
+	mkdir unreal real &&
+	git init real &&
+	echo "file test=in-real" >real/.gitattributes &&
+	(
+		cd unreal &&
+		attr_check file in-real "--git-dir ../real/.git --work-tree ../real"
+	)
+'
+
 test_expect_success 'setup bare' '
-	git clone --bare . bare.git &&
-	cd bare.git
+	git clone --bare . bare.git
 '
 
 test_expect_success 'bare repository: check that .gitattribute is ignored' '
 	(
-		echo "f	test=f"
-		echo "a/i test=a/i"
-	) >.gitattributes &&
-	attr_check f unspecified &&
-	attr_check a/f unspecified &&
-	attr_check a/c/f unspecified &&
-	attr_check a/i unspecified &&
-	attr_check subdir/a/i unspecified
+		cd bare.git &&
+		(
+			echo "f	test=f"
+			echo "a/i test=a/i"
+		) >.gitattributes &&
+		attr_check f unspecified &&
+		attr_check a/f unspecified &&
+		attr_check a/c/f unspecified &&
+		attr_check a/i unspecified &&
+		attr_check subdir/a/i unspecified
+	)
 '
 
 test_expect_success 'bare repository: check that --cached honors index' '
-	GIT_INDEX_FILE=../.git/index \
-	git check-attr --cached --stdin --all <../stdin-all |
-	sort >actual &&
-	test_cmp ../specified-all actual
+	(
+		cd bare.git &&
+		GIT_INDEX_FILE=../.git/index \
+		git check-attr --cached --stdin --all <../stdin-all |
+		sort >actual &&
+		test_cmp ../specified-all actual
+	)
 '
 
 test_expect_success 'bare repository: test info/attributes' '
 	(
-		echo "f	test=f"
-		echo "a/i test=a/i"
-	) >info/attributes &&
-	attr_check f f &&
-	attr_check a/f f &&
-	attr_check a/c/f f &&
-	attr_check a/i a/i &&
-	attr_check subdir/a/i unspecified
+		cd bare.git &&
+		(
+			echo "f	test=f"
+			echo "a/i test=a/i"
+		) >info/attributes &&
+		attr_check f f &&
+		attr_check a/f f &&
+		attr_check a/c/f f &&
+		attr_check a/i a/i &&
+		attr_check subdir/a/i unspecified
+	)
 '
 
 test_done
