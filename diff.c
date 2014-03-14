@@ -2845,8 +2845,9 @@ static struct diff_tempfile *prepare_temp_file(const char *name,
 		remove_tempfile_installed = 1;
 	}
 
-	if (!one->sha1_valid ||
-	    reuse_worktree_file(name, one->sha1, 1)) {
+	if (!S_ISGITLINK(one->mode) &&
+	    (!one->sha1_valid ||
+	     reuse_worktree_file(name, one->sha1, 1))) {
 		struct stat st;
 		if (lstat(name, &st) < 0) {
 			if (errno == ENOENT)
