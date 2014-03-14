@@ -144,7 +144,7 @@ static int traverse_reachable(void)
 	unsigned int nr = 0;
 	int result = 0;
 	if (show_progress)
-		progress = start_progress_delay("Checking connectivity", 0, 0, 2);
+		progress = start_progress_delay(_("Checking connectivity"), 0, 0, 2);
 	while (pending.nr) {
 		struct object_array_entry *entry;
 		struct object *obj;
@@ -541,7 +541,7 @@ static void fsck_object_dir(const char *path)
 		fprintf(stderr, "Checking object directory\n");
 
 	if (show_progress)
-		progress = start_progress("Checking object directories", 256);
+		progress = start_progress(_("Checking object directories"), 256);
 	for (i = 0; i < 256; i++) {
 		static char dir[4096];
 		sprintf(dir, "%s/%02x", path, i);
@@ -670,7 +670,7 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 				total += p->num_objects;
 			}
 
-			progress = start_progress("Checking objects", total);
+			progress = start_progress(_("Checking objects"), total);
 		}
 		for (p = packed_git; p; p = p->next) {
 			/* verify gives error messages itself */

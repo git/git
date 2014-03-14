@@ -9,6 +9,7 @@
  */
 
 #include "git-compat-util.h"
+#include "gettext.h"
 #include "progress.h"
 #include "strbuf.h"
 
@@ -220,7 +221,7 @@ struct progress *start_progress(const char *title, unsigned total)
 
 void stop_progress(struct progress **p_progress)
 {
-	stop_progress_msg(p_progress, "done");
+	stop_progress_msg(p_progress, _("done"));
 }
 
 void stop_progress_msg(struct progress **p_progress, const char *msg)

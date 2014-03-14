@@ -203,7 +203,7 @@ static int check_updates(struct unpack_trees_options *o)
 				total++;
 		}
 
-		progress = start_progress_delay("Checking out files",
+		progress = start_progress_delay(_("Checking out files"),
 						total, 50, 1);
 		cnt = 0;
 	}
