@@ -78,8 +78,7 @@ void exclude_cmds(struct cmdnames *cmds, struct cmdnames *excludes)
 	cmds->cnt = cj;
 }
 
-static void pretty_print_string_list(struct cmdnames *cmds,
-				     unsigned int colopts)
+static void pretty_print_cmdnames(struct cmdnames *cmds, unsigned int colopts)
 {
 	struct string_list list = STRING_LIST_INIT_NODUP;
 	struct column_options copts;
@@ -209,14 +208,14 @@ void list_commands(unsigned int colopts,
 		const char *exec_path = git_exec_path();
 		printf_ln(_("available git commands in '%s'"), exec_path);
 		putchar('\n');
-		pretty_print_string_list(main_cmds, colopts);
+		pretty_print_cmdnames(main_cmds, colopts);
 		putchar('\n');
 	}
 
 	if (other_cmds->cnt) {
 		printf_ln(_("git commands available from elsewhere on your $PATH"));
 		putchar('\n');
-		pretty_print_string_list(other_cmds, colopts);
+		pretty_print_cmdnames(other_cmds, colopts);
 		putchar('\n');
 	}
 }
