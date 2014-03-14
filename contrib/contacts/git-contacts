@@ -96,8 +96,6 @@ sub scan_patches {
 		next unless $id;
 		if (m{^--- (?:a/(.+)|/dev/null)$}) {
 			$source = $1;
-		} elsif (/^--- /) {
-			die "Cannot parse hunk source: $_\n";
 		} elsif (/^@@ -(\d+)(?:,(\d+))?/ && $source) {
 			my $len = defined($2) ? $2 : 1;
 			push @{$sources->{$source}{$id}}, [$1, $len] if $len;
