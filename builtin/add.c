@@ -15,6 +15,7 @@
 #include "diffcore.h"
 #include "revision.h"
 #include "bulk-checkin.h"
+#include "argv-array.h"
 
 static const char * const builtin_add_usage[] = {
 	N_("git add [options] [--] <pathspec>..."),
@@ -246,23 +247,21 @@ static void refresh(int verbose, const struct pathspec *pathspec)
 int run_add_interactive(const char *revision, const char *patch_mode,
 			const struct pathspec *pathspec)
 {
-	int status, ac, i;
-	const char **args;
+	int status, i;
+	struct argv_array argv = ARGV_ARRAY_INIT;
 
-	args = xcalloc(sizeof(const char *), (pathspec->nr + 6));
-	ac = 0;
-	args[ac++] = "add--interactive";
+	argv_array_push(&argv, "add--interactive");
 	if (patch_mode)
-		args[ac++] = patch_mode;
+		argv_array_push(&argv, patch_mode);
 	if (revision)
-		args[ac++] = revision;
-	args[ac++] = "--";
+		argv_array_push(&argv, revision);
+	argv_array_push(&argv, "--");
 	for (i = 0; i < pathspec->nr; i++)
 		/* pass original pathspec, to be re-parsed */
-		args[ac++] = pathspec->items[i].original;
+		argv_array_push(&argv, pathspec->items[i].original);
 
-	status = run_command_v_opt(args, RUN_GIT_CMD);
-	free(args);
+	status = run_command_v_opt(argv.argv, RUN_GIT_CMD);
+	argv_array_clear(&argv);
 	return status;
 }
 
