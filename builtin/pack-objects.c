@@ -1028,7 +1028,7 @@ static int add_object_entry(const unsigned char *sha1, enum object_type type,
 			    exclude, name && no_try_delta(name),
 			    index_pos, found_pack, found_offset);
 
-	display_progress(progress_state, to_pack.nr_objects);
+	display_progress(progress_state, nr_result);
 	return 1;
 }
 
@@ -1044,7 +1044,7 @@ static int add_object_entry_from_bitmap(const unsigned char *sha1,
 
 	create_object_entry(sha1, type, name_hash, 0, 0, index_pos, pack, offset);
 
-	display_progress(progress_state, to_pack.nr_objects);
+	display_progress(progress_state, nr_result);
 	return 1;
 }
 
@@ -2446,12 +2446,7 @@ static int get_object_list_from_bitmap(struct rev_info *revs)
 			&reuse_packfile_offset)) {
 		assert(reuse_packfile_objects);
 		nr_result += reuse_packfile_objects;
-
-		if (progress) {
-			fprintf(stderr, "Reusing existing pack: %d, done.\n",
-				reuse_packfile_objects);
-			fflush(stderr);
-		}
+		display_progress(progress_state, nr_result);
 	}
 
 	traverse_bitmap_commit_list(&add_object_entry_from_bitmap);
