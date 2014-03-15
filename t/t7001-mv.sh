@@ -294,7 +294,8 @@ test_expect_success 'setup submodule' '
 	git submodule add ./. sub &&
 	echo content >file &&
 	git add file &&
-	git commit -m "added sub and file"
+	git commit -m "added sub and file" &&
+	git branch submodule
 '
 
 test_expect_success 'git mv cannot move a submodule in a file' '
@@ -440,6 +441,16 @@ test_expect_success 'mv --dry-run does not touch the submodule or .gitmodules' '
 	git diff-index --exit-code HEAD &&
 	git update-index --refresh &&
 	git diff-files --quiet -- sub .gitmodules
+'
+
+test_expect_success 'mv -k does not accidentally destroy submodules' '
+	git checkout submodule &&
+	mkdir dummy dest &&
+	git mv -k dummy sub dest &&
+	git status --porcelain >actual &&
+	grep "^R  sub -> dest/sub" actual &&
+	git reset --hard &&
+	git checkout .
 '
 
 test_done
