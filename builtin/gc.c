@@ -26,6 +26,7 @@ static const char * const builtin_gc_usage[] = {
 };
 
 static int pack_refs = 1;
+static int aggressive_depth = 250;
 static int aggressive_window = 250;
 static int gc_auto_threshold = 6700;
 static int gc_auto_pack_limit = 50;
@@ -64,6 +65,10 @@ static int gc_config(const char *var, const char *value, void *cb)
 	}
 	if (!strcmp(var, "gc.aggressivewindow")) {
 		aggressive_window = git_config_int(var, value);
+		return 0;
+	}
+	if (!strcmp(var, "gc.aggressivedepth")) {
+		aggressive_depth = git_config_int(var, value);
 		return 0;
 	}
 	if (!strcmp(var, "gc.auto")) {
@@ -294,7 +299,8 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 
 	if (aggressive) {
 		argv_array_push(&repack, "-f");
-		argv_array_push(&repack, "--depth=250");
+		if (aggressive_depth > 0)
+			argv_array_pushf(&repack, "--depth=%d", aggressive_depth);
 		if (aggressive_window > 0)
 			argv_array_pushf(&repack, "--window=%d", aggressive_window);
 	}
