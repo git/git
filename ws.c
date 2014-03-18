@@ -33,11 +33,8 @@ unsigned parse_whitespace_rule(const char *string)
 		int negated = 0;
 
 		string = string + strspn(string, ", \t\n\r");
-		ep = strchr(string, ',');
-		if (!ep)
-			len = strlen(string);
-		else
-			len = ep - string;
+		ep = strchrnul(string, ',');
+		len = ep - string;
 
 		if (*string == '-') {
 			negated = 1;

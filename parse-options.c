@@ -223,12 +223,9 @@ static int parse_long_opt(struct parse_opt_ctx_t *p, const char *arg,
                           const struct option *options)
 {
 	const struct option *all_opts = options;
-	const char *arg_end = strchr(arg, '=');
+	const char *arg_end = strchrnul(arg, '=');
 	const struct option *abbrev_option = NULL, *ambiguous_option = NULL;
 	int abbrev_flags = 0, ambiguous_flags = 0;
-
-	if (!arg_end)
-		arg_end = arg + strlen(arg);
 
 	for (; options->type != OPTION_END; options++) {
 		const char *rest, *long_name = options->long_name;

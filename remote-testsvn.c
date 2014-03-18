@@ -78,8 +78,8 @@ static int parse_rev_note(const char *msg, struct rev_note *res)
 	size_t len;
 
 	while (*msg) {
-		end = strchr(msg, '\n');
-		len = end ? end - msg : strlen(msg);
+		end = strchrnul(msg, '\n');
+		len = end - msg;
 
 		key = "Revision-number: ";
 		if (starts_with(msg, key)) {

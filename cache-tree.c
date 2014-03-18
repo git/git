@@ -117,11 +117,11 @@ void cache_tree_invalidate_path(struct cache_tree *it, const char *path)
 
 	if (!it)
 		return;
-	slash = strchr(path, '/');
+	slash = strchrnul(path, '/');
+	namelen = slash - path;
 	it->entry_count = -1;
-	if (!slash) {
+	if (!*slash) {
 		int pos;
-		namelen = strlen(path);
 		pos = subtree_pos(it, path, namelen);
 		if (0 <= pos) {
 			cache_tree_free(&it->down[pos]->cache_tree);
@@ -139,7 +139,6 @@ void cache_tree_invalidate_path(struct cache_tree *it, const char *path)
 		}
 		return;
 	}
-	namelen = slash - path;
 	down = find_subtree(it, path, namelen, 0);
 	if (down)
 		cache_tree_invalidate_path(down->cache_tree, slash + 1);
