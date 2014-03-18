@@ -501,8 +501,6 @@ extern void *read_blob_data_from_index(struct index_state *, const char *, unsig
 extern int ie_match_stat(const struct index_state *, const struct cache_entry *, struct stat *, unsigned int);
 extern int ie_modified(const struct index_state *, const struct cache_entry *, struct stat *, unsigned int);
 
-extern int ce_path_match(const struct cache_entry *ce, const struct pathspec *pathspec);
-
 #define HASH_WRITE_OBJECT 1
 #define HASH_FORMAT_CHECK 2
 extern int index_fd(unsigned char *sha1, int fd, struct stat *st, enum object_type type, const char *path, unsigned flags);

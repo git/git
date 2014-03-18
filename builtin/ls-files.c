@@ -64,7 +64,7 @@ static void show_dir_entry(const char *tag, struct dir_entry *ent)
 	if (len >= ent->len)
 		die("git ls-files: internal error - directory entry not superset of prefix");
 
-	if (!match_pathspec_depth(&pathspec, ent->name, ent->len, len, ps_matched))
+	if (!dir_path_match(ent, &pathspec, len, ps_matched))
 		return;
 
 	fputs(tag, stdout);
@@ -139,7 +139,9 @@ static void show_ce_entry(const char *tag, const struct cache_entry *ce)
 	if (len >= ce_namelen(ce))
 		die("git ls-files: internal error - cache entry not superset of prefix");
 
-	if (!match_pathspec_depth(&pathspec, ce->name, ce_namelen(ce), len, ps_matched))
+	if (!match_pathspec(&pathspec, ce->name, ce_namelen(ce),
+			    len, ps_matched,
+			    S_ISDIR(ce->ce_mode) || S_ISGITLINK(ce->ce_mode)))
 		return;
 
 	if (tag && *tag && show_valid_bit &&
@@ -195,7 +197,8 @@ static void show_ru_info(void)
 		len = strlen(path);
 		if (len < max_prefix_len)
 			continue; /* outside of the prefix */
-		if (!match_pathspec_depth(&pathspec, path, len, max_prefix_len, ps_matched))
+		if (!match_pathspec(&pathspec, path, len,
+				    max_prefix_len, ps_matched, 0))
 			continue; /* uninterested */
 		for (i = 0; i < 3; i++) {
 			if (!ui->mode[i])

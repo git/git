@@ -297,8 +297,7 @@ static int checkout_paths(const struct checkout_opts *opts,
 		 * match_pathspec() for _all_ entries when
 		 * opts->source_tree != NULL.
 		 */
-		if (match_pathspec_depth(&opts->pathspec, ce->name, ce_namelen(ce),
-				   0, ps_matched))
+		if (ce_path_match(ce, &opts->pathspec, ps_matched))
 			ce->ce_flags |= CE_MATCHED;
 	}
 

@@ -195,6 +195,9 @@ int within_depth(const char *name, int namelen,
 	return 1;
 }
 
+#define DO_MATCH_EXCLUDE   1
+#define DO_MATCH_DIRECTORY 2
+
 /*
  * Does 'match' match the given name?
  * A match is found if
@@ -208,7 +211,7 @@ int within_depth(const char *name, int namelen,
  * It returns 0 when there is no match.
  */
 static int match_pathspec_item(const struct pathspec_item *item, int prefix,
-			       const char *name, int namelen)
+			       const char *name, int namelen, unsigned flags)
 {
 	/* name/namelen has prefix cut off by caller */
 	const char *match = item->match + prefix;
@@ -218,7 +221,7 @@ static int match_pathspec_item(const struct pathspec_item *item, int prefix,
 	 * The normal call pattern is:
 	 * 1. prefix = common_prefix_len(ps);
 	 * 2. prune something, or fill_directory
-	 * 3. match_pathspec_depth()
+	 * 3. match_pathspec()
 	 *
 	 * 'prefix' at #1 may be shorter than the command's prefix and
 	 * it's ok for #2 to match extra files. Those extras will be
@@ -257,7 +260,11 @@ static int match_pathspec_item(const struct pathspec_item *item, int prefix,
 
 		if (match[matchlen-1] == '/' || name[matchlen] == '/')
 			return MATCHED_RECURSIVELY;
-	}
+	} else if ((flags & DO_MATCH_DIRECTORY) &&
+		   match[matchlen - 1] == '/' &&
+		   namelen == matchlen - 1 &&
+		   !ps_strncmp(item, match, name, namelen))
+		return MATCHED_EXACTLY;
 
 	if (item->nowildcard_len < item->len &&
 	    !git_fnmatch(item, match, name,
@@ -282,12 +289,12 @@ static int match_pathspec_item(const struct pathspec_item *item, int prefix,
  * pathspec did not match any names, which could indicate that the
  * user mistyped the nth pathspec.
  */
-static int match_pathspec_depth_1(const struct pathspec *ps,
-				  const char *name, int namelen,
-				  int prefix, char *seen,
-				  int exclude)
+static int do_match_pathspec(const struct pathspec *ps,
+			     const char *name, int namelen,
+			     int prefix, char *seen,
+			     unsigned flags)
 {
-	int i, retval = 0;
+	int i, retval = 0, exclude = flags & DO_MATCH_EXCLUDE;
 
 	GUARD_PATHSPEC(ps,
 		       PATHSPEC_FROMTOP |
@@ -327,7 +334,8 @@ static int match_pathspec_depth_1(const struct pathspec *ps,
 		 */
 		if (seen && ps->items[i].magic & PATHSPEC_EXCLUDE)
 			seen[i] = MATCHED_FNMATCH;
-		how = match_pathspec_item(ps->items+i, prefix, name, namelen);
+		how = match_pathspec_item(ps->items+i, prefix, name,
+					  namelen, flags);
 		if (ps->recursive &&
 		    (ps->magic & PATHSPEC_MAXDEPTH) &&
 		    ps->max_depth != -1 &&
@@ -350,15 +358,19 @@ static int match_pathspec_depth_1(const struct pathspec *ps,
 	return retval;
 }
 
-int match_pathspec_depth(const struct pathspec *ps,
-			 const char *name, int namelen,
-			 int prefix, char *seen)
+int match_pathspec(const struct pathspec *ps,
+		   const char *name, int namelen,
+		   int prefix, char *seen, int is_dir)
 {
 	int positive, negative;
-	positive = match_pathspec_depth_1(ps, name, namelen, prefix, seen, 0);
+	unsigned flags = is_dir ? DO_MATCH_DIRECTORY : 0;
+	positive = do_match_pathspec(ps, name, namelen,
+				     prefix, seen, flags);
 	if (!(ps->magic & PATHSPEC_EXCLUDE) || !positive)
 		return positive;
-	negative = match_pathspec_depth_1(ps, name, namelen, prefix, seen, 1);
+	negative = do_match_pathspec(ps, name, namelen,
+				     prefix, seen,
+				     flags | DO_MATCH_EXCLUDE);
 	return negative ? 0 : positive;
 }
 
