@@ -1562,8 +1562,11 @@ static int grep_source_1(struct grep_opt *opt, struct grep_source *gs, int colle
 	 */
 	if (opt->count && count) {
 		char buf[32];
-		output_color(opt, gs->name, strlen(gs->name), opt->color_filename);
-		output_sep(opt, ':');
+		if (opt->pathname) {
+			output_color(opt, gs->name, strlen(gs->name),
+				     opt->color_filename);
+			output_sep(opt, ':');
+		}
 		snprintf(buf, sizeof(buf), "%u\n", count);
 		opt->output(opt, buf, strlen(buf));
 		return 1;
