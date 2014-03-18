@@ -134,14 +134,26 @@ test_expect_success 'with hook (-c)' '
 
 test_expect_success 'with hook (merge)' '
 
-	head=`git rev-parse HEAD` &&
-	git checkout -b other HEAD@{1} &&
-	echo "more" >> file &&
+	test_when_finished "git checkout -f master" &&
+	git checkout -B other HEAD@{1} &&
+	echo "more" >>file &&
 	git add file &&
 	git commit -m other &&
 	git checkout - &&
-	git merge other &&
-	test "`git log -1 --pretty=format:%s`" = merge
+	git merge --no-ff other &&
+	test "`git log -1 --pretty=format:%s`" = "merge (no editor)"
+'
+
+test_expect_success 'with hook and editor (merge)' '
+
+	test_when_finished "git checkout -f master" &&
+	git checkout -B other HEAD@{1} &&
+	echo "more" >>file &&
+	git add file &&
+	git commit -m other &&
+	git checkout - &&
+	env GIT_EDITOR="\"\$FAKE_EDITOR\"" git merge --no-ff -e other &&
+	test "`git log -1 --pretty=format:%s`" = "merge"
 '
 
 cat > "$HOOK" <<'EOF'
@@ -151,6 +163,7 @@ EOF
 
 test_expect_success 'with failing hook' '
 
+	test_when_finished "git checkout -f master" &&
 	head=`git rev-parse HEAD` &&
 	echo "more" >> file &&
 	git add file &&
@@ -160,6 +173,7 @@ test_expect_success 'with failing hook' '
 
 test_expect_success 'with failing hook (--no-verify)' '
 
+	test_when_finished "git checkout -f master" &&
 	head=`git rev-parse HEAD` &&
 	echo "more" >> file &&
 	git add file &&
@@ -169,6 +183,7 @@ test_expect_success 'with failing hook (--no-verify)' '
 
 test_expect_success 'with failing hook (merge)' '
 
+	test_when_finished "git checkout -f master" &&
 	git checkout -B other HEAD@{1} &&
 	echo "more" >> file &&
 	git add file &&
@@ -178,7 +193,7 @@ test_expect_success 'with failing hook (merge)' '
 	exit 1
 	EOF
 	git checkout - &&
-	test_must_fail git merge other
+	test_must_fail git merge --no-ff other
 
 '
 
