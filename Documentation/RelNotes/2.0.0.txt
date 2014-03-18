@@ -48,6 +48,13 @@ Foreign interfaces, subsystems and ports.
 
 UI, Workflows & Features
 
+ * "git grep" learned to behave in a way similar to native grep when
+   "-h" (no header) and "-c" (count) options are given.
+
+ * transport-helper, fast-import and fast-export have been updated to
+   allow the ref mapping and ref deletion in a way similar to the
+   natively supported transports.
+
  * The "simple" mode is the default for "git push".
 
  * "git add -u" and "git add -A", when run without any pathspec, is a
@@ -136,6 +143,10 @@ Fixes since v1.9 series
 Unless otherwise noted, all the fixes since v1.9 in the maintenance
 track are contained in this release (see the maintenance releases'
 notes for details).
+
+ * "git clean -d pathspec" did not use the given pathspec correctly
+   and ended up cleaning too much.
+   (merge 1f2e108 jk/clean-d-pathspec later to maint).
 
  * "git difftool" misbehaved when the repository is bound to the
    working tree with the ".git file" mechanism, where a textual file
