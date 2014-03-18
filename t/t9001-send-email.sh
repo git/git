@@ -409,7 +409,7 @@ test_expect_success $PREREQ 'Valid In-Reply-To when prompting' '
 	(echo "From Example <from@example.com>"
 	 echo "To Example <to@example.com>"
 	 echo ""
-	) | env GIT_SEND_EMAIL_NOTTY=1 git send-email \
+	) | GIT_SEND_EMAIL_NOTTY=1 git send-email \
 		--smtp-server="$(pwd)/fake.sendmail" \
 		$patches 2>errors &&
 	! grep "^In-Reply-To: < *>" msgtxt1
