@@ -26,11 +26,7 @@ static int read_one_reflog(unsigned char *osha1, unsigned char *nsha1,
 	struct complete_reflogs *array = cb_data;
 	struct reflog_info *item;
 
-	if (array->nr >= array->alloc) {
-		array->alloc = alloc_nr(array->nr + 1);
-		array->items = xrealloc(array->items, array->alloc *
-			sizeof(struct reflog_info));
-	}
+	ALLOC_GROW(array->items, array->nr + 1, array->alloc);
 	item = array->items + array->nr;
 	memcpy(item->osha1, osha1, 20);
 	memcpy(item->nsha1, nsha1, 20);
@@ -114,11 +110,7 @@ static void add_commit_info(struct commit *commit, void *util,
 		struct commit_info_lifo *lifo)
 {
 	struct commit_info *info;
-	if (lifo->nr >= lifo->alloc) {
-		lifo->alloc = alloc_nr(lifo->nr + 1);
-		lifo->items = xrealloc(lifo->items,
-			lifo->alloc * sizeof(struct commit_info));
-	}
+	ALLOC_GROW(lifo->items, lifo->nr + 1, lifo->alloc);
 	info = lifo->items + lifo->nr;
 	info->commit = commit;
 	info->util = util;

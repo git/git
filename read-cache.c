@@ -990,11 +990,7 @@ int add_index_entry(struct index_state *istate, struct cache_entry *ce, int opti
 	}
 
 	/* Make sure the array is big enough .. */
-	if (istate->cache_nr == istate->cache_alloc) {
-		istate->cache_alloc = alloc_nr(istate->cache_alloc);
-		istate->cache = xrealloc(istate->cache,
-					istate->cache_alloc * sizeof(*istate->cache));
-	}
+	ALLOC_GROW(istate->cache, istate->cache_nr + 1, istate->cache_alloc);
 
 	/* Add it in.. */
 	istate->cache_nr++;

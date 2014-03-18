@@ -2635,12 +2635,7 @@ int pretend_sha1_file(void *buf, unsigned long len, enum object_type type,
 	hash_sha1_file(buf, len, typename(type), sha1);
 	if (has_sha1_file(sha1) || find_cached_object(sha1))
 		return 0;
-	if (cached_object_alloc <= cached_object_nr) {
-		cached_object_alloc = alloc_nr(cached_object_alloc);
-		cached_objects = xrealloc(cached_objects,
-					  sizeof(*cached_objects) *
-					  cached_object_alloc);
-	}
+	ALLOC_GROW(cached_objects, cached_object_nr + 1, cached_object_alloc);
 	co = &cached_objects[cached_object_nr++];
 	co->size = len;
 	co->type = type;

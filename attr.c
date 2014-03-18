@@ -338,12 +338,7 @@ static void handle_attr_line(struct attr_stack *res,
 	a = parse_attr_line(line, src, lineno, macro_ok);
 	if (!a)
 		return;
-	if (res->alloc <= res->num_matches) {
-		res->alloc = alloc_nr(res->num_matches);
-		res->attrs = xrealloc(res->attrs,
-				      sizeof(struct match_attr *) *
-				      res->alloc);
-	}
+	ALLOC_GROW(res->attrs, res->num_matches + 1, res->alloc);
 	res->attrs[res->num_matches++] = a;
 }
 
