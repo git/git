@@ -2156,6 +2156,13 @@ repack.usedeltabaseoffset::
 	"false" and repack. Access from old Git versions over the
 	native protocol are unaffected by this option.
 
+repack.packKeptObjects::
+	If set to true, makes `git repack` act as if
+	`--pack-kept-objects` was passed. See linkgit:git-repack[1] for
+	details. Defaults to `false` normally, but `true` if a bitmap
+	index is being written (either via `--write-bitmap-index` or
+	`pack.writeBitmaps`).
+
 rerere.autoupdate::
 	When set to true, `git-rerere` updates the index with the
 	resulting contents after it cleanly resolves conflicts using
