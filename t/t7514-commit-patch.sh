@@ -15,7 +15,7 @@ test_expect_success 'setup (initial)' '
 	git commit -m commit1
 '
 
-test_expect_failure 'edit hunk "commit -p -m message"' '
+test_expect_success 'edit hunk "commit -p -m message"' '
 	test_when_finished "rm -f editor_was_started" &&
 	rm -f editor_was_started &&
 	echo more >>file &&
@@ -23,7 +23,7 @@ test_expect_failure 'edit hunk "commit -p -m message"' '
 	test -r editor_was_started
 '
 
-test_expect_failure 'edit hunk "commit --dry-run -p -m message"' '
+test_expect_success 'edit hunk "commit --dry-run -p -m message"' '
 	test_when_finished "rm -f editor_was_started" &&
 	rm -f editor_was_started &&
 	echo more >>file &&
