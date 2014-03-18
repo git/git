@@ -265,12 +265,12 @@ static struct passwd *getpw_str(const char *username, size_t len)
 char *expand_user_path(const char *path)
 {
 	struct strbuf user_path = STRBUF_INIT;
-	const char *first_slash = strchrnul(path, '/');
 	const char *to_copy = path;
 
 	if (path == NULL)
 		goto return_null;
 	if (path[0] == '~') {
+		const char *first_slash = strchrnul(path, '/');
 		const char *username = path + 1;
 		size_t username_len = first_slash - username;
 		if (username_len == 0) {
