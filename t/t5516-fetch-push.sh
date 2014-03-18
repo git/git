@@ -536,6 +536,19 @@ test_expect_success 'push with config branch.*.pushremote' '
 	check_push_result down_repo $the_commit heads/master
 '
 
+test_expect_success 'branch.*.pushremote config order is irrelevant' '
+	mk_test one_repo heads/master &&
+	mk_test two_repo heads/master &&
+	test_config remote.one.url one_repo &&
+	test_config remote.two.url two_repo &&
+	test_config branch.master.pushremote two_repo &&
+	test_config remote.pushdefault one_repo &&
+	test_config push.default matching &&
+	git push &&
+	check_push_result one_repo $the_first_commit heads/master &&
+	check_push_result two_repo $the_commit heads/master
+'
+
 test_expect_success 'push with dry-run' '
 
 	mk_test testrepo heads/master &&
