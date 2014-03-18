@@ -102,12 +102,8 @@ test_expect_success 'rebase -i with the exec command runs from tree root' '
 
 test_expect_success 'rebase -i with the exec command checks tree cleanness' '
 	git checkout master &&
-	(
 	set_fake_editor &&
-	FAKE_LINES="exec_echo_foo_>file1 1" &&
-	export FAKE_LINES &&
-	test_must_fail git rebase -i HEAD^
-	) &&
+	test_must_fail env FAKE_LINES="exec_echo_foo_>file1 1" git rebase -i HEAD^ &&
 	test_cmp_rev master^ HEAD &&
 	git reset --hard &&
 	git rebase --continue
@@ -116,12 +112,9 @@ test_expect_success 'rebase -i with the exec command checks tree cleanness' '
 test_expect_success 'rebase -i with exec of inexistent command' '
 	git checkout master &&
 	test_when_finished "git rebase --abort" &&
-	(
 	set_fake_editor &&
-	FAKE_LINES="exec_this-command-does-not-exist 1" &&
-	export FAKE_LINES &&
-	test_must_fail git rebase -i HEAD^ >actual 2>&1
-	) &&
+	test_must_fail env FAKE_LINES="exec_this-command-does-not-exist 1" \
+	git rebase -i HEAD^ >actual 2>&1 &&
 	! grep "Maybe git-rebase is broken" actual
 '
 
@@ -375,11 +368,7 @@ test_expect_success 'commit message used after conflict' '
 	git checkout -b conflict-fixup conflict-branch &&
 	base=$(git rev-parse HEAD~4) &&
 	set_fake_editor &&
-	(
-		FAKE_LINES="1 fixup 3 fixup 4" &&
-		export FAKE_LINES &&
-		test_must_fail git rebase -i $base
-	) &&
+	test_must_fail env FAKE_LINES="1 fixup 3 fixup 4" git rebase -i $base &&
 	echo three > conflict &&
 	git add conflict &&
 	FAKE_COMMIT_AMEND="ONCE" EXPECT_HEADER_COUNT=2 \
@@ -394,11 +383,7 @@ test_expect_success 'commit message retained after conflict' '
 	git checkout -b conflict-squash conflict-branch &&
 	base=$(git rev-parse HEAD~4) &&
 	set_fake_editor &&
-	(
-		FAKE_LINES="1 fixup 3 squash 4" &&
-		export FAKE_LINES &&
-		test_must_fail git rebase -i $base
-	) &&
+	test_must_fail env FAKE_LINES="1 fixup 3 squash 4" git rebase -i $base &&
 	echo three > conflict &&
 	git add conflict &&
 	FAKE_COMMIT_AMEND="TWICE" EXPECT_HEADER_COUNT=2 \
@@ -469,11 +454,7 @@ test_expect_success 'interrupted squash works as expected' '
 	git checkout -b interrupted-squash conflict-branch &&
 	one=$(git rev-parse HEAD~3) &&
 	set_fake_editor &&
-	(
-		FAKE_LINES="1 squash 3 2" &&
-		export FAKE_LINES &&
-		test_must_fail git rebase -i HEAD~3
-	) &&
+	test_must_fail env FAKE_LINES="1 squash 3 2" git rebase -i HEAD~3 &&
 	(echo one; echo two; echo four) > conflict &&
 	git add conflict &&
 	test_must_fail git rebase --continue &&
@@ -487,11 +468,7 @@ test_expect_success 'interrupted squash works as expected (case 2)' '
 	git checkout -b interrupted-squash2 conflict-branch &&
 	one=$(git rev-parse HEAD~3) &&
 	set_fake_editor &&
-	(
-		FAKE_LINES="3 squash 1 2" &&
-		export FAKE_LINES &&
-		test_must_fail git rebase -i HEAD~3
-	) &&
+	test_must_fail env FAKE_LINES="3 squash 1 2" git rebase -i HEAD~3 &&
 	(echo one; echo four) > conflict &&
 	git add conflict &&
 	test_must_fail git rebase --continue &&
@@ -528,11 +505,7 @@ test_expect_success 'aborted --continue does not squash commits after "edit"' '
 	FAKE_LINES="edit 1" git rebase -i HEAD^ &&
 	echo "edited again" > file7 &&
 	git add file7 &&
-	(
-		FAKE_COMMIT_MESSAGE=" " &&
-		export FAKE_COMMIT_MESSAGE &&
-		test_must_fail git rebase --continue
-	) &&
+	test_must_fail env FAKE_COMMIT_MESSAGE=" " git rebase --continue &&
 	test $old = $(git rev-parse HEAD) &&
 	git rebase --abort
 '
@@ -547,11 +520,7 @@ test_expect_success 'auto-amend only edited commits after "edit"' '
 	echo "and again" > file7 &&
 	git add file7 &&
 	test_tick &&
-	(
-		FAKE_COMMIT_MESSAGE="and again" &&
-		export FAKE_COMMIT_MESSAGE &&
-		test_must_fail git rebase --continue
-	) &&
+	test_must_fail env FAKE_COMMIT_MESSAGE="and again" git rebase --continue &&
 	git rebase --abort
 '
 
@@ -559,11 +528,7 @@ test_expect_success 'clean error after failed "exec"' '
 	test_tick &&
 	test_when_finished "git rebase --abort || :" &&
 	set_fake_editor &&
-	(
-		FAKE_LINES="1 exec_false" &&
-		export FAKE_LINES &&
-		test_must_fail git rebase -i HEAD^
-	) &&
+	test_must_fail env FAKE_LINES="1 exec_false" git rebase -i HEAD^ &&
 	echo "edited again" > file7 &&
 	git add file7 &&
 	test_must_fail git rebase --continue 2>error &&
@@ -947,12 +912,8 @@ test_expect_success 'rebase -i --root retain root commit author and message' '
 
 test_expect_success 'rebase -i --root temporary sentinel commit' '
 	git checkout B &&
-	(
-		set_fake_editor &&
-		FAKE_LINES="2" &&
-		export FAKE_LINES &&
-		test_must_fail git rebase -i --root
-	) &&
+	set_fake_editor &&
+	test_must_fail env FAKE_LINES="2" git rebase -i --root &&
 	git cat-file commit HEAD | grep "^tree 4b825dc642cb" &&
 	git rebase --abort
 '
@@ -1042,11 +1003,7 @@ test_expect_success 'rebase -i error on commits with \ in message' '
 	test_when_finished "git rebase --abort; git reset --hard $current_head; rm -f error" &&
 	test_commit TO-REMOVE will-conflict old-content &&
 	test_commit "\temp" will-conflict new-content dummy &&
-	(
-	EDITOR=true &&
-	export EDITOR &&
-	test_must_fail git rebase -i HEAD^ --onto HEAD^^ 2>error
-	) &&
+	test_must_fail env EDITOR=true git rebase -i HEAD^ --onto HEAD^^ 2>error &&
 	test_expect_code 1 grep  "	emp" error
 '
 

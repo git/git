@@ -218,10 +218,8 @@ test_expect_success 'proper failure checks for fetching' '
 '
 
 test_expect_success 'proper failure checks for pushing' '
-	(GIT_REMOTE_TESTGIT_FAILURE=1 &&
-	export GIT_REMOTE_TESTGIT_FAILURE &&
-	cd local &&
-	test_must_fail git push --all
+	(cd local &&
+	test_must_fail env GIT_REMOTE_TESTGIT_FAILURE=1 git push --all
 	)
 '
 
