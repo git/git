@@ -176,6 +176,10 @@ current branch integrates with) obviously do not work, as there is no
 	you can make Git pretend the set of <<def_parent,parents>> a <<def_commit,commit>> has
 	is different from what was recorded when the commit was
 	created. Configured via the `.git/info/grafts` file.
++
+Note that the grafts mechanism is outdated and can lead to problems
+transferring objects between repositories; see linkgit:git-replace[1]
+for a more flexible and robust system to do the same thing.
 
 [[def_hash]]hash::
 	In Git's context, synonym for <<def_object_name,object name>>.

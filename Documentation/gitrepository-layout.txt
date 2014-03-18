@@ -176,6 +176,10 @@ info/grafts::
 	per line describes a commit and its fake parents by
 	listing their 40-byte hexadecimal object names separated
 	by a space and terminated by a newline.
++
+Note that the grafts mechanism is outdated and can lead to problems
+transferring objects between repositories; see linkgit:git-replace[1]
+for a more flexible and robust system to do the same thing.
 
 info/exclude::
 	This file, by convention among Porcelains, stores the
