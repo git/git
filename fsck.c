@@ -165,18 +165,12 @@ static int fsck_tree(struct tree *item, int strict, fsck_error error_func)
 
 		sha1 = tree_entry_extract(&desc, &name, &mode);
 
-		if (is_null_sha1(sha1))
-			has_null_sha1 = 1;
-		if (strchr(name, '/'))
-			has_full_path = 1;
-		if (!*name)
-			has_empty_name = 1;
-		if (!strcmp(name, "."))
-			has_dot = 1;
-		if (!strcmp(name, ".."))
-			has_dotdot = 1;
-		if (!strcmp(name, ".git"))
-			has_dotgit = 1;
+		has_null_sha1 |= is_null_sha1(sha1);
+		has_full_path |= !!strchr(name, '/');
+		has_empty_name |= !*name;
+		has_dot |= !strcmp(name, ".");
+		has_dotdot |= !strcmp(name, "..");
+		has_dotgit |= !strcmp(name, ".git");
 		has_zero_pad |= *(char *)desc.buffer == '0';
 		update_tree_entry(&desc);
 
