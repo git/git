@@ -449,6 +449,10 @@ then
 		test "$fork_point" = auto && fork_point=t
 		;;
 	*)	upstream_name="$1"
+		if test "$upstream_name" = "-"
+		then
+			upstream_name="@{-1}"
+		fi
 		shift
 		;;
 	esac
