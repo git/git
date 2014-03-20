@@ -12,8 +12,8 @@ check_config () {
 		echo "expected a directory $1, a file $1/config and $1/refs"
 		return 1
 	fi
-	bare=$(GIT_CONFIG="$1/config" git config --bool core.bare)
-	worktree=$(GIT_CONFIG="$1/config" git config core.worktree) ||
+	bare=$(cd "$1" && git config --bool core.bare)
+	worktree=$(cd "$1" && git config core.worktree) ||
 	worktree=unset
 
 	test "$bare" = "$2" && test "$worktree" = "$3" || {
