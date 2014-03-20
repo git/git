@@ -199,13 +199,13 @@ test_expect_success 'init with --template (blank)' '
 		cd template-plain &&
 		git init
 	) &&
-	test -f template-plain/.git/info/exclude &&
+	test_path_is_file template-plain/.git/info/exclude &&
 	(
 		mkdir template-blank &&
 		cd template-blank &&
 		git init --template=
 	) &&
-	! test -f template-blank/.git/info/exclude
+	test_path_is_missing template-blank/.git/info/exclude
 '
 
 test_expect_success 'init with init.templatedir set' '
@@ -263,7 +263,7 @@ test_expect_success 'init creates a new directory' '
 	rm -fr newdir &&
 	(
 		git init newdir &&
-		test -d newdir/.git/refs
+		test_path_is_dir newdir/.git/refs
 	)
 '
 
@@ -271,7 +271,7 @@ test_expect_success 'init creates a new bare directory' '
 	rm -fr newdir &&
 	(
 		git init --bare newdir &&
-		test -d newdir/refs
+		test_path_is_dir newdir/refs
 	)
 '
 
@@ -280,7 +280,7 @@ test_expect_success 'init recreates a directory' '
 	(
 		mkdir newdir &&
 		git init newdir &&
-		test -d newdir/.git/refs
+		test_path_is_dir newdir/.git/refs
 	)
 '
 
@@ -289,14 +289,14 @@ test_expect_success 'init recreates a new bare directory' '
 	(
 		mkdir newdir &&
 		git init --bare newdir &&
-		test -d newdir/refs
+		test_path_is_dir newdir/refs
 	)
 '
 
 test_expect_success 'init creates a new deep directory' '
 	rm -fr newdir &&
 	git init newdir/a/b/c &&
-	test -d newdir/a/b/c/.git/refs
+	test_path_is_dir newdir/a/b/c/.git/refs
 '
 
 test_expect_success POSIXPERM 'init creates a new deep directory (umask vs. shared)' '
@@ -306,7 +306,7 @@ test_expect_success POSIXPERM 'init creates a new deep directory (umask vs. shar
 		# the repository itself should follow "shared"
 		umask 002 &&
 		git init --bare --shared=0660 newdir/a/b/c &&
-		test -d newdir/a/b/c/refs &&
+		test_path_is_dir newdir/a/b/c/refs &&
 		ls -ld newdir/a newdir/a/b > lsab.out &&
 		! grep -v "^drwxrw[sx]r-x" lsab.out &&
 		ls -ld newdir/a/b/c > lsc.out &&
@@ -319,7 +319,7 @@ test_expect_success 'init notices EEXIST (1)' '
 	(
 		>newdir &&
 		test_must_fail git init newdir &&
-		test -f newdir
+		test_path_is_file newdir
 	)
 '
 
@@ -329,7 +329,7 @@ test_expect_success 'init notices EEXIST (2)' '
 		mkdir newdir &&
 		>newdir/a
 		test_must_fail git init newdir/a/b &&
-		test -f newdir/a
+		test_path_is_file newdir/a
 	)
 '
 
@@ -345,15 +345,15 @@ test_expect_success POSIXPERM,SANITY 'init notices EPERM' '
 test_expect_success 'init creates a new bare directory with global --bare' '
 	rm -rf newdir &&
 	git --bare init newdir &&
-	test -d newdir/refs
+	test_path_is_dir newdir/refs
 '
 
 test_expect_success 'init prefers command line to GIT_DIR' '
 	rm -rf newdir &&
 	mkdir otherdir &&
 	GIT_DIR=otherdir git --bare init newdir &&
-	test -d newdir/refs &&
-	! test -d otherdir/refs
+	test_path_is_dir newdir/refs &&
+	test_path_is_missing otherdir/refs
 '
 
 test_expect_success 'init with separate gitdir' '
@@ -361,7 +361,7 @@ test_expect_success 'init with separate gitdir' '
 	git init --separate-git-dir realgitdir newdir &&
 	echo "gitdir: `pwd`/realgitdir" >expected &&
 	test_cmp expected newdir/.git &&
-	test -d realgitdir/refs
+	test_path_is_dir realgitdir/refs
 '
 
 test_expect_success 're-init on .git file' '
@@ -375,8 +375,8 @@ test_expect_success 're-init to update git link' '
 	) &&
 	echo "gitdir: `pwd`/surrealgitdir" >expected &&
 	test_cmp expected newdir/.git &&
-	test -d surrealgitdir/refs &&
-	! test -d realgitdir/refs
+	test_path_is_dir surrealgitdir/refs &&
+	test_path_is_missing realgitdir/refs
 '
 
 test_expect_success 're-init to move gitdir' '
@@ -388,7 +388,7 @@ test_expect_success 're-init to move gitdir' '
 	) &&
 	echo "gitdir: `pwd`/realgitdir" >expected &&
 	test_cmp expected newdir/.git &&
-	test -d realgitdir/refs
+	test_path_is_dir realgitdir/refs
 '
 
 test_expect_success SYMLINKS 're-init to move gitdir symlink' '
@@ -403,7 +403,7 @@ test_expect_success SYMLINKS 're-init to move gitdir symlink' '
 	echo "gitdir: `pwd`/realgitdir" >expected &&
 	test_cmp expected newdir/.git &&
 	test_cmp expected newdir/here &&
-	test -d realgitdir/refs
+	test_path_is_dir realgitdir/refs
 '
 
 test_done
