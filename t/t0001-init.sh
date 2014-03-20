@@ -211,9 +211,8 @@ test_expect_success 'init with --template (blank)' '
 test_expect_success 'init with init.templatedir set' '
 	mkdir templatedir-source &&
 	echo Content >templatedir-source/file &&
+	test_config_global init.templatedir "${HOME}/templatedir-source" &&
 	(
-		test_config="${HOME}/.gitconfig" &&
-		git config -f "$test_config"  init.templatedir "${HOME}/templatedir-source" &&
 		mkdir templatedir-set &&
 		cd templatedir-set &&
 		sane_unset GIT_TEMPLATE_DIR &&
@@ -225,10 +224,9 @@ test_expect_success 'init with init.templatedir set' '
 '
 
 test_expect_success 'init --bare/--shared overrides system/global config' '
+	test_config_global core.bare false &&
+	test_config_global core.sharedRepository 0640 &&
 	(
-		test_config="$HOME"/.gitconfig &&
-		git config -f "$test_config" core.bare false &&
-		git config -f "$test_config" core.sharedRepository 0640 &&
 		mkdir init-bare-shared-override &&
 		cd init-bare-shared-override &&
 		git init --bare --shared=0666
@@ -239,9 +237,8 @@ test_expect_success 'init --bare/--shared overrides system/global config' '
 '
 
 test_expect_success 'init honors global core.sharedRepository' '
+	test_config_global core.sharedRepository 0666 &&
 	(
-		test_config="$HOME"/.gitconfig &&
-		git config -f "$test_config" core.sharedRepository 0666 &&
 		mkdir shared-honor-global &&
 		cd shared-honor-global &&
 		git init
