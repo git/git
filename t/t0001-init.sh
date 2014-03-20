@@ -106,11 +106,8 @@ test_expect_success 'plain bare with GIT_WORK_TREE' '
 '
 
 test_expect_success 'GIT_DIR bare' '
-
-	(
-		mkdir git-dir-bare.git &&
-		GIT_DIR=git-dir-bare.git git init
-	) &&
+	mkdir git-dir-bare.git &&
+	GIT_DIR=git-dir-bare.git git init &&
 	check_config git-dir-bare.git true unset
 '
 
@@ -242,36 +239,28 @@ test_expect_success 'init rejects insanely long --template' '
 
 test_expect_success 'init creates a new directory' '
 	rm -fr newdir &&
-	(
-		git init newdir &&
-		test_path_is_dir newdir/.git/refs
-	)
+	git init newdir &&
+	test_path_is_dir newdir/.git/refs
 '
 
 test_expect_success 'init creates a new bare directory' '
 	rm -fr newdir &&
-	(
-		git init --bare newdir &&
-		test_path_is_dir newdir/refs
-	)
+	git init --bare newdir &&
+	test_path_is_dir newdir/refs
 '
 
 test_expect_success 'init recreates a directory' '
 	rm -fr newdir &&
-	(
-		mkdir newdir &&
-		git init newdir &&
-		test_path_is_dir newdir/.git/refs
-	)
+	mkdir newdir &&
+	git init newdir &&
+	test_path_is_dir newdir/.git/refs
 '
 
 test_expect_success 'init recreates a new bare directory' '
 	rm -fr newdir &&
-	(
-		mkdir newdir &&
-		git init --bare newdir &&
-		test_path_is_dir newdir/refs
-	)
+	mkdir newdir &&
+	git init --bare newdir &&
+	test_path_is_dir newdir/refs
 '
 
 test_expect_success 'init creates a new deep directory' '
@@ -297,30 +286,24 @@ test_expect_success POSIXPERM 'init creates a new deep directory (umask vs. shar
 
 test_expect_success 'init notices EEXIST (1)' '
 	rm -fr newdir &&
-	(
-		>newdir &&
-		test_must_fail git init newdir &&
-		test_path_is_file newdir
-	)
+	>newdir &&
+	test_must_fail git init newdir &&
+	test_path_is_file newdir
 '
 
 test_expect_success 'init notices EEXIST (2)' '
 	rm -fr newdir &&
-	(
-		mkdir newdir &&
-		>newdir/a
-		test_must_fail git init newdir/a/b &&
-		test_path_is_file newdir/a
-	)
+	mkdir newdir &&
+	>newdir/a &&
+	test_must_fail git init newdir/a/b &&
+	test_path_is_file newdir/a
 '
 
 test_expect_success POSIXPERM,SANITY 'init notices EPERM' '
 	rm -fr newdir &&
-	(
-		mkdir newdir &&
-		chmod -w newdir &&
-		test_must_fail git init newdir/a/b
-	)
+	mkdir newdir &&
+	chmod -w newdir &&
+	test_must_fail git init newdir/a/b
 '
 
 test_expect_success 'init creates a new bare directory with global --bare' '
