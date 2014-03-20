@@ -402,8 +402,8 @@ test_expect_success SYMLINKS 're-init to move gitdir symlink' '
 	) &&
 	echo "gitdir: `pwd`/realgitdir" >expected &&
 	test_cmp expected newdir/.git &&
-	test -d realgitdir/refs &&
-	! test -d newdir/here
+	test_cmp expected newdir/here &&
+	test -d realgitdir/refs
 '
 
 test_done
