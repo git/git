@@ -67,7 +67,7 @@ test_expect_success 'fetch fails on ee' '
 	'
 
 tmp_config_get () {
-	GIT_CONFIG=.git/svn/.metadata git config --get "$1"
+	git config --file=.git/svn/.metadata --get "$1"
 }
 
 test_expect_success 'failure happened without negative side effects' '

@@ -461,7 +461,7 @@ test_expect_success 'new variable inserts into proper section' '
 	test_cmp expect .git/config
 '
 
-test_expect_success 'alternative GIT_CONFIG (non-existing file should fail)' '
+test_expect_success 'alternative --file (non-existing file should fail)' '
 	test_must_fail git config --file non-existing-config -l
 '
 
@@ -495,10 +495,10 @@ test_expect_success 'refer config from subdirectory' '
 
 '
 
-test_expect_success 'refer config from subdirectory via GIT_CONFIG' '
+test_expect_success 'refer config from subdirectory via --file' '
 	(
 		cd x &&
-		GIT_CONFIG=../other-config git config --get ein.bahn >actual &&
+		git config --file=../other-config --get ein.bahn >actual &&
 		test_cmp expect actual
 	)
 '
@@ -510,8 +510,8 @@ cat > expect << EOF
 	park = ausweis
 EOF
 
-test_expect_success '--set in alternative GIT_CONFIG' '
-	GIT_CONFIG=other-config git config anwohner.park ausweis &&
+test_expect_success '--set in alternative file' '
+	git config --file=other-config anwohner.park ausweis &&
 	test_cmp expect other-config
 '
 
@@ -942,11 +942,11 @@ test_expect_success 'inner whitespace kept verbatim' '
 
 test_expect_success SYMLINKS 'symlinked configuration' '
 	ln -s notyet myconfig &&
-	GIT_CONFIG=myconfig git config test.frotz nitfol &&
+	git config --file=myconfig test.frotz nitfol &&
 	test -h myconfig &&
 	test -f notyet &&
-	test "z$(GIT_CONFIG=notyet git config test.frotz)" = znitfol &&
-	GIT_CONFIG=myconfig git config test.xyzzy rezrov &&
+	test "z$(git config --file=notyet test.frotz)" = znitfol &&
+	git config --file=myconfig test.xyzzy rezrov &&
 	test -h myconfig &&
 	test -f notyet &&
 	cat >expect <<-\EOF &&
@@ -954,8 +954,8 @@ test_expect_success SYMLINKS 'symlinked configuration' '
 	rezrov
 	EOF
 	{
-		GIT_CONFIG=notyet git config test.frotz &&
-		GIT_CONFIG=notyet git config test.xyzzy
+		git config --file=notyet test.frotz &&
+		git config --file=notyet test.xyzzy
 	} >actual &&
 	test_cmp expect actual
 '
