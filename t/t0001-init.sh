@@ -85,15 +85,8 @@ test_expect_failure 'plain nested in bare through aliased command' '
 '
 
 test_expect_success 'plain with GIT_WORK_TREE' '
-	if (
-		mkdir plain-wt &&
-		cd plain-wt &&
-		GIT_WORK_TREE=$(pwd) git init
-	)
-	then
-		echo Should have failed -- GIT_WORK_TREE should not be used
-		false
-	fi
+	mkdir plain-wt &&
+	test_must_fail env GIT_WORK_TREE="$(pwd)/plain-wt" git init plain-wt
 '
 
 test_expect_success 'plain bare' '
@@ -106,15 +99,10 @@ test_expect_success 'plain bare' '
 '
 
 test_expect_success 'plain bare with GIT_WORK_TREE' '
-	if (
-		mkdir plain-bare-2 &&
-		cd plain-bare-2 &&
-		GIT_WORK_TREE=$(pwd) git --bare init
-	)
-	then
-		echo Should have failed -- GIT_WORK_TREE should not be used
-		false
-	fi
+	mkdir plain-bare-2 &&
+	test_must_fail \
+		env GIT_WORK_TREE="$(pwd)/plain-bare-2" \
+		git --bare init plain-bare-2
 '
 
 test_expect_success 'GIT_DIR bare' '
@@ -156,15 +144,11 @@ test_expect_success 'GIT_DIR & GIT_WORK_TREE (1)' '
 '
 
 test_expect_success 'GIT_DIR & GIT_WORK_TREE (2)' '
-
-	if (
-		mkdir git-dir-wt-2.git &&
-		GIT_WORK_TREE=$(pwd) GIT_DIR=git-dir-wt-2.git git --bare init
-	)
-	then
-		echo Should have failed -- --bare should not be used
-		false
-	fi
+	mkdir git-dir-wt-2.git &&
+	test_must_fail env \
+		GIT_WORK_TREE="$(pwd)" \
+		GIT_DIR=git-dir-wt-2.git \
+		git --bare init
 '
 
 test_expect_success 'reinit' '
