@@ -30,12 +30,19 @@ public class Beer
 EOF
 sed 's/beer\\/beer,\\/' <Beer.java >Beer-correct.java
 
-test_expect_funcname () {
-	lang=${2-java}
-	test_expect_code 1 git diff --no-index -U1 \
-		"Beer.$lang" "Beer-correct.$lang" >diff &&
-	grep "^@@.*@@ $1" diff
-}
+test_expect_success 'setup' '
+	# a non-trivial custom pattern
+	git config diff.custom1.funcname "!static
+!String
+[^ 	].*s.*" &&
+
+	# a custom pattern which matches to end of line
+	git config diff.custom2.funcname "......Beer\$" &&
+
+	# alternation in pattern
+	git config diff.custom3.funcname "Beer$" &&
+	git config diff.custom3.xfuncname "^[ 	]*((public|static).*)$"
+'
 
 diffpatterns="
 	ada
@@ -53,6 +60,9 @@ diffpatterns="
 	python
 	ruby
 	tex
+	custom1
+	custom2
+	custom3
 "
 
 for p in $diffpatterns
@@ -79,28 +89,10 @@ test_expect_success 'set up .gitattributes declaring drivers to test' '
 	EOF
 '
 
-test_expect_success 'custom pattern' '
-	test_config diff.java.funcname "!static
-!String
-[^ 	].*s.*" &&
-	test_expect_funcname "int special;\$"
-'
-
 test_expect_success 'last regexp must not be negated' '
 	test_config diff.java.funcname "!static" &&
 	test_expect_code 128 git diff --no-index Beer.java Beer-correct.java 2>msg &&
 	grep ": Last expression must not be negated:" msg
-'
-
-test_expect_success 'pattern which matches to end of line' '
-	test_config diff.java.funcname "Beer\$" &&
-	test_expect_funcname "Beer\$"
-'
-
-test_expect_success 'alternation in pattern' '
-	test_config diff.java.funcname "Beer$" &&
-	test_config diff.java.xfuncname "^[ 	]*((public|static).*)$" &&
-	test_expect_funcname "public static void main("
 '
 
 test_expect_success 'setup hunk header tests' '
