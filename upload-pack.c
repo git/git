@@ -70,6 +70,14 @@ static ssize_t send_client_data(int fd, const char *data, ssize_t sz)
 	return sz;
 }
 
+static int write_one_shallow(const struct commit_graft *graft, void *cb_data)
+{
+	FILE *fp = cb_data;
+	if (graft->nr_parent == -1)
+		fprintf(fp, "--shallow %s\n", sha1_to_hex(graft->sha1));
+	return 0;
+}
+
 static void create_pack_file(void)
 {
 	struct child_process pack_objects;
@@ -81,12 +89,10 @@ static void create_pack_file(void)
 	const char *argv[12];
 	int i, arg = 0;
 	FILE *pipe_fd;
-	const char *shallow_file = NULL;
 
 	if (shallow_nr) {
-		shallow_file = setup_temporary_shallow(NULL);
 		argv[arg++] = "--shallow-file";
-		argv[arg++] = shallow_file;
+		argv[arg++] = "";
 	}
 	argv[arg++] = "pack-objects";
 	argv[arg++] = "--revs";
@@ -113,6 +119,9 @@ static void create_pack_file(void)
 		die("git upload-pack: unable to fork git-pack-objects");
 
 	pipe_fd = xfdopen(pack_objects.in, "w");
+
+	if (shallow_nr)
+		for_each_commit_graft(write_one_shallow, pipe_fd);
 
 	for (i = 0; i < want_obj.nr; i++)
 		fprintf(pipe_fd, "%s\n",
