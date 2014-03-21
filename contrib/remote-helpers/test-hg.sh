@@ -691,4 +691,77 @@ test_expect_success 'remote double failed push' '
 	)
 '
 
+test_expect_success 'clone remote with master null bookmark, then push to the bookmark' '
+	test_when_finished "rm -rf gitrepo* hgrepo*" &&
+
+	hg init hgrepo &&
+	(
+		cd hgrepo &&
+		echo a >a &&
+		hg add a &&
+		hg commit -m a &&
+		hg bookmark -r null master
+	) &&
+
+	git clone "hg::hgrepo" gitrepo &&
+	check gitrepo HEAD a &&
+	(
+		cd gitrepo &&
+		git checkout --quiet -b master &&
+		echo b >b &&
+		git add b &&
+		git commit -m b &&
+		git push origin master
+	)
+'
+
+test_expect_success 'clone remote with default null bookmark, then push to the bookmark' '
+	test_when_finished "rm -rf gitrepo* hgrepo*" &&
+
+	hg init hgrepo &&
+	(
+		cd hgrepo &&
+		echo a >a &&
+		hg add a &&
+		hg commit -m a &&
+		hg bookmark -r null -f default
+	) &&
+
+	git clone "hg::hgrepo" gitrepo &&
+	check gitrepo HEAD a &&
+	(
+		cd gitrepo &&
+		git checkout --quiet -b default &&
+		echo b >b &&
+		git add b &&
+		git commit -m b &&
+		git push origin default
+	)
+'
+
+test_expect_success 'clone remote with generic null bookmark, then push to the bookmark' '
+	test_when_finished "rm -rf gitrepo* hgrepo*" &&
+
+	hg init hgrepo &&
+	(
+		cd hgrepo &&
+		echo a >a &&
+		hg add a &&
+		hg commit -m a &&
+		hg bookmark -r null bmark
+	) &&
+
+	git clone "hg::hgrepo" gitrepo &&
+	check gitrepo HEAD a &&
+	(
+		cd gitrepo &&
+		git checkout --quiet -b bmark &&
+		git remote -v &&
+		echo b >b &&
+		git add b &&
+		git commit -m b &&
+		git push origin bmark
+	)
+'
+
 test_done
