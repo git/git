@@ -97,7 +97,7 @@ configuration variable documented in linkgit:git-config[1].
 OUTPUT
 ------
 The output from this command is designed to be used as a commit
-template comment, and all the output lines are prefixed with '#'.
+template comment.
 The default, long format, is designed to be human readable,
 verbose and descriptive.  Its contents and format are subject to change
 at any time.
