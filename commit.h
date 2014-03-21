@@ -209,7 +209,7 @@ extern int write_shallow_commits(struct strbuf *out, int use_pack_protocol,
 extern void setup_alternate_shallow(struct lock_file *shallow_lock,
 				    const char **alternate_shallow_file,
 				    const struct sha1_array *extra);
-extern char *setup_temporary_shallow(const struct sha1_array *extra);
+extern const char *setup_temporary_shallow(const struct sha1_array *extra);
 extern void advertise_shallow_grafts(int);
 
 struct shallow_info {
