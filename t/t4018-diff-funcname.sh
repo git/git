@@ -79,10 +79,6 @@ test_expect_success 'set up .gitattributes declaring drivers to test' '
 	EOF
 '
 
-test_expect_success 'preset java pattern' '
-	test_expect_funcname "public static void main("
-'
-
 test_expect_success 'custom pattern' '
 	test_config diff.java.funcname "!static
 !String
