@@ -29,69 +29,6 @@ public class Beer
 }
 EOF
 sed 's/beer\\/beer,\\/' <Beer.java >Beer-correct.java
-cat >Beer.perl <<\EOT
-package Beer;
-
-use strict;
-use warnings;
-use parent qw(Exporter);
-our @EXPORT_OK = qw(round finalround);
-
-sub other; # forward declaration
-
-# hello
-
-sub round {
-	my ($n) = @_;
-	print "$n bottles of beer on the wall ";
-	print "$n bottles of beer\n";
-	print "Take one down, pass it around, ";
-	$n = $n - 1;
-	print "$n bottles of beer on the wall.\n";
-}
-
-sub finalround
-{
-	print "Go to the store, buy some more\n";
-	print "99 bottles of beer on the wall.\n");
-}
-
-sub withheredocument {
-	print <<"EOF"
-decoy here-doc
-EOF
-	# some lines of context
-	# to pad it out
-	print "hello\n";
-}
-
-__END__
-
-=head1 NAME
-
-Beer - subroutine to output fragment of a drinking song
-
-=head1 SYNOPSIS
-
-	use Beer qw(round finalround);
-
-	sub song {
-		for (my $i = 99; $i > 0; $i--) {
-			round $i;
-		}
-		finalround;
-	}
-
-	song;
-
-=cut
-EOT
-sed -e '
-	s/hello/goodbye/
-	s/beer\\/beer,\\/
-	s/more\\/more,\\/
-	s/song;/song();/
-' <Beer.perl >Beer-correct.perl
 
 test_expect_funcname () {
 	lang=${2-java}
@@ -139,36 +76,11 @@ done
 test_expect_success 'set up .gitattributes declaring drivers to test' '
 	cat >.gitattributes <<-\EOF
 	*.java diff=java
-	*.perl diff=perl
 	EOF
 '
 
 test_expect_success 'preset java pattern' '
 	test_expect_funcname "public static void main("
-'
-
-test_expect_success 'preset perl pattern' '
-	test_expect_funcname "sub round {\$" perl
-'
-
-test_expect_success 'perl pattern accepts K&R style brace placement, too' '
-	test_expect_funcname "sub finalround\$" perl
-'
-
-test_expect_success 'but is not distracted by end of <<here document' '
-	test_expect_funcname "sub withheredocument {\$" perl
-'
-
-test_expect_success 'perl pattern is not distracted by sub within POD' '
-	test_expect_funcname "=head" perl
-'
-
-test_expect_success 'perl pattern gets full line of POD header' '
-	test_expect_funcname "=head1 SYNOPSIS\$" perl
-'
-
-test_expect_success 'perl pattern is not distracted by forward declaration' '
-	test_expect_funcname "package Beer;\$" perl
 '
 
 test_expect_success 'custom pattern' '
