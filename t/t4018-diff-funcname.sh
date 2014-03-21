@@ -100,7 +100,25 @@ test_expect_funcname () {
 	grep "^@@.*@@ $1" diff
 }
 
-for p in ada bibtex cpp csharp fortran html java matlab objc pascal perl php python ruby tex
+diffpatterns="
+	ada
+	bibtex
+	cpp
+	csharp
+	fortran
+	html
+	java
+	matlab
+	objc
+	pascal
+	perl
+	php
+	python
+	ruby
+	tex
+"
+
+for p in $diffpatterns
 do
 	test_expect_success "builtin $p pattern compiles" '
 		echo "*.java diff=$p" >.gitattributes &&
@@ -117,11 +135,6 @@ do
 		! grep error msg
 	'
 done
-
-test_expect_success 'default behaviour' '
-	rm -f .gitattributes &&
-	test_expect_funcname "public class Beer\$"
-'
 
 test_expect_success 'set up .gitattributes declaring drivers to test' '
 	cat >.gitattributes <<-\EOF
@@ -181,5 +194,40 @@ test_expect_success 'alternation in pattern' '
 	test_config diff.java.xfuncname "^[ 	]*((public|static).*)$" &&
 	test_expect_funcname "public static void main("
 '
+
+test_expect_success 'setup hunk header tests' '
+	for i in $diffpatterns
+	do
+		echo "$i-* diff=$i"
+	done > .gitattributes &&
+
+	# add all test files to the index
+	(
+		cd "$TEST_DIRECTORY"/t4018 &&
+		git --git-dir="$TRASH_DIRECTORY/.git" add .
+	) &&
+
+	# place modified files in the worktree
+	for i in $(git ls-files)
+	do
+		sed -e "s/ChangeMe/IWasChanged/" <"$TEST_DIRECTORY/t4018/$i" >"$i" || return 1
+	done
+'
+
+# check each individual file
+for i in $(git ls-files)
+do
+	if grep broken "$i" >/dev/null 2>&1
+	then
+		result=failure
+	else
+		result=success
+	fi
+	test_expect_$result "hunk header: $i" "
+		test_when_finished 'cat actual' &&	# for debugging only
+		git diff -U1 $i >actual &&
+		grep '@@ .* @@.*RIGHT' actual
+	"
+done
 
 test_done
