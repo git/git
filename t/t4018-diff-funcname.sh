@@ -7,29 +7,6 @@ test_description='Test custom diff function name patterns'
 
 . ./test-lib.sh
 
-LF='
-'
-cat >Beer.java <<\EOF
-public class Beer
-{
-	int special;
-	public static void main(String args[])
-	{
-		String s=" ";
-		for(int x = 99; x > 0; x--)
-		{
-			System.out.print(x + " bottles of beer on the wall "
-				+ x + " bottles of beer\n"
-				+ "Take one down, pass it around, " + (x - 1)
-				+ " bottles of beer on the wall.\n");
-		}
-		System.out.print("Go to the store, buy some more,\n"
-			+ "99 bottles of beer on the wall.\n");
-	}
-}
-EOF
-sed 's/beer\\/beer,\\/' <Beer.java >Beer-correct.java
-
 test_expect_success 'setup' '
 	# a non-trivial custom pattern
 	git config diff.custom1.funcname "!static
@@ -41,7 +18,11 @@ test_expect_success 'setup' '
 
 	# alternation in pattern
 	git config diff.custom3.funcname "Beer$" &&
-	git config diff.custom3.xfuncname "^[ 	]*((public|static).*)$"
+	git config diff.custom3.xfuncname "^[ 	]*((public|static).*)$" &&
+
+	# for regexp compilation tests
+	echo A >A.java &&
+	echo B >B.java
 '
 
 diffpatterns="
@@ -70,29 +51,24 @@ do
 	test_expect_success "builtin $p pattern compiles" '
 		echo "*.java diff=$p" >.gitattributes &&
 		test_expect_code 1 git diff --no-index \
-			Beer.java Beer-correct.java 2>msg &&
-		! grep fatal msg &&
-		! grep error msg
+			A.java B.java 2>msg &&
+		! test_i18ngrep fatal msg &&
+		! test_i18ngrep error msg
 	'
 	test_expect_success "builtin $p wordRegex pattern compiles" '
 		echo "*.java diff=$p" >.gitattributes &&
 		test_expect_code 1 git diff --no-index --word-diff \
-			Beer.java Beer-correct.java 2>msg &&
-		! grep fatal msg &&
-		! grep error msg
+			A.java B.java 2>msg &&
+		! test_i18ngrep fatal msg &&
+		! test_i18ngrep error msg
 	'
 done
 
-test_expect_success 'set up .gitattributes declaring drivers to test' '
-	cat >.gitattributes <<-\EOF
-	*.java diff=java
-	EOF
-'
-
 test_expect_success 'last regexp must not be negated' '
+	echo "*.java diff=java" >.gitattributes &&
 	test_config diff.java.funcname "!static" &&
-	test_expect_code 128 git diff --no-index Beer.java Beer-correct.java 2>msg &&
-	grep ": Last expression must not be negated:" msg
+	test_expect_code 128 git diff --no-index A.java B.java 2>msg &&
+	test_i18ngrep ": Last expression must not be negated:" msg
 '
 
 test_expect_success 'setup hunk header tests' '
