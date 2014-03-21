@@ -1,0 +1,5 @@
+RIGHT::~RIGHT()
+{
+	ChangeMe;
+	broken;
+}

@@ -1,0 +1,5 @@
+Value operator+(Value LEFT, Value RIGHT)
+{
+	ChangeMe;
+	broken;
+}

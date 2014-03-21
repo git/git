@@ -1,0 +1,6 @@
+const char *
+RIGHT(int arg)
+{
+	ChangeMe;
+	broken;
+}

@@ -1,0 +1,6 @@
+Item::Item(int RIGHT) :
+	member(0)
+{
+	ChangeMe;
+	broken;
+}

@@ -1,0 +1,5 @@
+union RIGHT {
+	double v;
+	int ChangeMe;
+	broken;
+};
