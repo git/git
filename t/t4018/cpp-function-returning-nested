@@ -1,6 +1,5 @@
 get::Item get::it::RIGHT()
 {
 	ChangeMe;
-	broken;
 }
 
