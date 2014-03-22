@@ -60,15 +60,10 @@ test_log	expect_nomatch	--grep InItial
 test_log_icase	expect_initial	--grep InItial
 test_log_icase	expect_nomatch	--grep initail
 
-test_expect_success 'log --author --regexp-ignore-case' '
-	git log --regexp-ignore-case --author=person --format=%H >actual &&
-	test_cmp expect_second actual
-'
-
-test_expect_success 'log --author -i' '
-	git log -i --author=person --format=%H >actual &&
-	test_cmp expect_second actual
-'
+test_log	expect_second	--author Person
+test_log	expect_nomatch	--author person
+test_log_icase	expect_second	--author person
+test_log_icase	expect_nomatch	--author spreon
 
 test_log	expect_nomatch	-G picked
 test_log	expect_second	-G Picked
