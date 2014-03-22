@@ -205,7 +205,6 @@ void diffcore_pickaxe(struct diff_options *o)
 {
 	const char *needle = o->pickaxe;
 	int opts = o->pickaxe_opts;
-	unsigned long len = strlen(needle);
 	regex_t regex, *regexp = NULL;
 	kwset_t kws = NULL;
 
@@ -226,7 +225,7 @@ void diffcore_pickaxe(struct diff_options *o)
 	} else {
 		kws = kwsalloc(DIFF_OPT_TST(o, PICKAXE_IGNORE_CASE)
 			       ? tolower_trans_tbl : NULL);
-		kwsincr(kws, needle, len);
+		kwsincr(kws, needle, strlen(needle));
 		kwsprep(kws);
 	}
 
