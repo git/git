@@ -94,13 +94,10 @@ static unsigned int contains(mmfile_t *mf, regex_t *regexp, kwset_t kws)
 		while (sz) {
 			struct kwsmatch kwsm;
 			size_t offset = kwsexec(kws, data, sz, &kwsm);
-			const char *found;
 			if (offset == -1)
 				break;
-			else
-				found = data + offset;
-			sz -= found - data + kwsm.size[0];
-			data = found + kwsm.size[0];
+			sz -= offset + kwsm.size[0];
+			data += offset + kwsm.size[0];
 			cnt++;
 		}
 	}
