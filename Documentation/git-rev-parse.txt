@@ -284,13 +284,13 @@ Input Format
 
 'git rev-parse --parseopt' input format is fully text based. It has two parts,
 separated by a line that contains only `--`. The lines before the separator
-(should be more than one) are used for the usage.
+(should be one or more) are used for the usage.
 The lines after the separator describe the options.
 
 Each line of options has this format:
 
 ------------
-<opt_spec><flags>* SP+ help LF
+<opt_spec><flags>*<arg_hint>? SP+ help LF
 ------------
 
 `<opt_spec>`::
@@ -313,6 +313,12 @@ Each line of options has this format:
 
 	* Use `!` to not make the corresponding negated long option available.
 
+`<arg_hint>`::
+	`<arg_hint>`, if specified, is used as a name of the argument in the
+	help output, for options that take arguments. `<arg_hint>` is
+	terminated by the first whitespace. When you need to use space in the
+	argument hint use dash instead.
+
 The remainder of the line, after stripping the spaces, is used
 as the help associated to the option.
 
@@ -333,11 +339,35 @@ h,help    show the help
 
 foo       some nifty option --foo
 bar=      some cool option --bar with an argument
+baz=arg   another cool option --baz with a named argument
+qux?path  qux may take a path argument but has meaning by itself
 
   An option group Header
 C?        option C with an optional argument"
 
 eval "$(echo "$OPTS_SPEC" | git rev-parse --parseopt -- "$@" || echo exit $?)"
+------------
+
+
+Usage text
+~~~~~~~~~~
+
+When `"$@"` is `-h` or `--help` in the above example, the following
+usage text would be shown:
+
+------------
+usage: some-command [options] <args>...
+
+    some-command does foo and bar!
+
+    -h, --help            show the help
+    --foo                 some nifty option --foo
+    --bar ...             some cool option --bar with an argument
+    --bar <arg>           another cool option --baz with a named argument
+    --qux[=<path>]        qux may take a path argument but has meaning by itself
+
+An option group Header
+    -C[...]               option C with an optional argument
 ------------
 
 SQ-QUOTE
