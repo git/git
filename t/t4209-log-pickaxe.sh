@@ -88,6 +88,11 @@ test_log	expect_second	-S Picked
 test_log_icase	expect_second	-S picked
 test_log_icase	expect_nomatch	-S pickle
 
+test_log	expect_nomatch	-S p.cked --pickaxe-regex
+test_log	expect_second	-S P.cked --pickaxe-regex
+test_log_icase	expect_second	-S p.cked --pickaxe-regex
+test_log_icase	expect_nomatch	-S p.ckle --pickaxe-regex
+
 test_expect_success 'log -S --textconv (missing textconv tool)' '
 	echo "* diff=test" >.gitattributes &&
 	test_must_fail git -c diff.test.textconv=missing log -Sfoo &&

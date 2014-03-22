@@ -237,7 +237,10 @@ static void diffcore_pickaxe_count(struct diff_options *o)
 
 	if (opts & DIFF_PICKAXE_REGEX) {
 		int err;
-		err = regcomp(&regex, needle, REG_EXTENDED | REG_NEWLINE);
+		int cflags = REG_EXTENDED | REG_NEWLINE;
+		if (DIFF_OPT_TST(o, PICKAXE_IGNORE_CASE))
+			cflags |= REG_ICASE;
+		err = regcomp(&regex, needle, cflags);
 		if (err) {
 			/* The POSIX.2 people are surely sick */
 			char errbuf[1024];
