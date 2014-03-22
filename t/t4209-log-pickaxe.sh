@@ -55,20 +55,10 @@ test_expect_success setup '
 	git rev-parse --verify HEAD >expect_second
 '
 
-test_expect_success 'log --grep' '
-	git log --grep=initial --format=%H >actual &&
-	test_cmp expect_initial actual
-'
-
-test_expect_success 'log --grep --regexp-ignore-case' '
-	git log --regexp-ignore-case --grep=InItial --format=%H >actual &&
-	test_cmp expect_initial actual
-'
-
-test_expect_success 'log --grep -i' '
-	git log -i --grep=InItial --format=%H >actual &&
-	test_cmp expect_initial actual
-'
+test_log	expect_initial	--grep initial
+test_log	expect_nomatch	--grep InItial
+test_log_icase	expect_initial	--grep InItial
+test_log_icase	expect_nomatch	--grep initail
 
 test_expect_success 'log --author --regexp-ignore-case' '
 	git log --regexp-ignore-case --author=person --format=%H >actual &&
