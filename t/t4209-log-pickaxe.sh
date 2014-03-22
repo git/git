@@ -3,6 +3,36 @@
 test_description='log --grep/--author/--regexp-ignore-case/-S/-G'
 . ./test-lib.sh
 
+test_log () {
+	expect=$1
+	kind=$2
+	needle=$3
+	shift 3
+	rest=$@
+
+	case $kind in
+	--*)
+		opt=$kind=$needle
+		;;
+	*)
+		opt=$kind$needle
+		;;
+	esac
+	case $expect in
+	expect_nomatch)
+		match=nomatch
+		;;
+	*)
+		match=match
+		;;
+	esac
+
+	test_expect_success "log $kind${rest:+ $rest} ($match)" "
+		git log $rest $opt --format=%H >actual &&
+		test_cmp $expect actual
+	"
+}
+
 test_expect_success setup '
 	>expect_nomatch &&
 
@@ -44,35 +74,12 @@ test_expect_success 'log --author -i' '
 	test_cmp expect_second actual
 '
 
-test_expect_success 'log -G (nomatch)' '
-	git log -Gpicked --format=%H >actual &&
-	test_cmp expect_nomatch actual
-'
-
-test_expect_success 'log -G (match)' '
-	git log -GPicked --format=%H >actual &&
-	test_cmp expect_second actual
-'
-
-test_expect_success 'log -G --regexp-ignore-case (nomatch)' '
-	git log --regexp-ignore-case -Gpickle --format=%H >actual &&
-	test_cmp expect_nomatch actual
-'
-
-test_expect_success 'log -G -i (nomatch)' '
-	git log -i -Gpickle --format=%H >actual &&
-	test_cmp expect_nomatch actual
-'
-
-test_expect_success 'log -G --regexp-ignore-case (match)' '
-	git log --regexp-ignore-case -Gpicked --format=%H >actual &&
-	test_cmp expect_second actual
-'
-
-test_expect_success 'log -G -i (match)' '
-	git log -i -Gpicked --format=%H >actual &&
-	test_cmp expect_second actual
-'
+test_log expect_nomatch -G picked
+test_log expect_second  -G Picked
+test_log expect_nomatch -G pickle --regexp-ignore-case
+test_log expect_nomatch -G pickle -i
+test_log expect_second  -G picked --regexp-ignore-case
+test_log expect_second  -G picked -i
 
 test_expect_success 'log -G --textconv (missing textconv tool)' '
 	echo "* diff=test" >.gitattributes &&
@@ -87,35 +94,12 @@ test_expect_success 'log -G --no-textconv (missing textconv tool)' '
 	rm .gitattributes
 '
 
-test_expect_success 'log -S (nomatch)' '
-	git log -Spicked --format=%H >actual &&
-	test_cmp expect_nomatch actual
-'
-
-test_expect_success 'log -S (match)' '
-	git log -SPicked --format=%H >actual &&
-	test_cmp expect_second actual
-'
-
-test_expect_success 'log -S --regexp-ignore-case (match)' '
-	git log --regexp-ignore-case -Spicked --format=%H >actual &&
-	test_cmp expect_second actual
-'
-
-test_expect_success 'log -S -i (match)' '
-	git log -i -Spicked --format=%H >actual &&
-	test_cmp expect_second actual
-'
-
-test_expect_success 'log -S --regexp-ignore-case (nomatch)' '
-	git log --regexp-ignore-case -Spickle --format=%H >actual &&
-	test_cmp expect_nomatch actual
-'
-
-test_expect_success 'log -S -i (nomatch)' '
-	git log -i -Spickle --format=%H >actual &&
-	test_cmp expect_nomatch actual
-'
+test_log expect_nomatch -S picked
+test_log expect_second  -S Picked
+test_log expect_second  -S picked --regexp-ignore-case
+test_log expect_second  -S picked -i
+test_log expect_nomatch -S pickle --regexp-ignore-case
+test_log expect_nomatch -S pickle -i
 
 test_expect_success 'log -S --textconv (missing textconv tool)' '
 	echo "* diff=test" >.gitattributes &&
