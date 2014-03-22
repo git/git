@@ -33,6 +33,12 @@ test_log () {
 	"
 }
 
+# test -i and --regexp-ignore-case and expect both to behave the same way
+test_log_icase () {
+	test_log $@ --regexp-ignore-case
+	test_log $@ -i
+}
+
 test_expect_success setup '
 	>expect_nomatch &&
 
@@ -74,12 +80,10 @@ test_expect_success 'log --author -i' '
 	test_cmp expect_second actual
 '
 
-test_log expect_nomatch -G picked
-test_log expect_second  -G Picked
-test_log expect_nomatch -G pickle --regexp-ignore-case
-test_log expect_nomatch -G pickle -i
-test_log expect_second  -G picked --regexp-ignore-case
-test_log expect_second  -G picked -i
+test_log	expect_nomatch	-G picked
+test_log	expect_second	-G Picked
+test_log_icase	expect_nomatch	-G pickle
+test_log_icase	expect_second	-G picked
 
 test_expect_success 'log -G --textconv (missing textconv tool)' '
 	echo "* diff=test" >.gitattributes &&
@@ -94,12 +98,10 @@ test_expect_success 'log -G --no-textconv (missing textconv tool)' '
 	rm .gitattributes
 '
 
-test_log expect_nomatch -S picked
-test_log expect_second  -S Picked
-test_log expect_second  -S picked --regexp-ignore-case
-test_log expect_second  -S picked -i
-test_log expect_nomatch -S pickle --regexp-ignore-case
-test_log expect_nomatch -S pickle -i
+test_log	expect_nomatch	-S picked
+test_log	expect_second	-S Picked
+test_log_icase	expect_second	-S picked
+test_log_icase	expect_nomatch	-S pickle
 
 test_expect_success 'log -S --textconv (missing textconv tool)' '
 	echo "* diff=test" >.gitattributes &&
