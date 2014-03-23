@@ -939,7 +939,7 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 	int result;
 	const char *override_notes_ref = NULL;
 	struct option options[] = {
-		OPT_STRING(0, "ref", &override_notes_ref, N_("notes_ref"),
+		OPT_STRING(0, "ref", &override_notes_ref, N_("notes-ref"),
 			   N_("use notes from <notes_ref>")),
 		OPT_END()
 	};
