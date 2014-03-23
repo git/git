@@ -3,64 +3,64 @@
 test_description='test git rev-parse --parseopt'
 . ./test-lib.sh
 
-cat > expect <<\END_EXPECT
-cat <<\EOF
-usage: some-command [options] <args>...
-
-    some-command does foo and bar!
-
-    -h, --help            show the help
-    --foo                 some nifty option --foo
-    --bar ...             some cool option --bar with an argument
-    -b, --baz             a short and long option
-
-An option group Header
-    -C[...]               option C with an optional argument
-    -d, --data[=...]      short and long option with an optional argument
-
-Argument hints
-    -b <arg>              short option required argument
-    --bar2 <arg>          long option required argument
-    -e, --fuz <with-space>
-			  short and long option required argument
-    -s[<some>]            short option optional argument
-    --long[=<data>]       long option optional argument
-    -g, --fluf[=<path>]   short and long option optional argument
-    --longest <very-long-argument-hint>
-			  a very long argument hint
-
-Extras
-    --extra1              line above used to cause a segfault but no longer does
-
-EOF
+sed -e 's/^|//' >expect <<\END_EXPECT
+|cat <<\EOF
+|usage: some-command [options] <args>...
+|
+|    some-command does foo and bar!
+|
+|    -h, --help            show the help
+|    --foo                 some nifty option --foo
+|    --bar ...             some cool option --bar with an argument
+|    -b, --baz             a short and long option
+|
+|An option group Header
+|    -C[...]               option C with an optional argument
+|    -d, --data[=...]      short and long option with an optional argument
+|
+|Argument hints
+|    -b <arg>              short option required argument
+|    --bar2 <arg>          long option required argument
+|    -e, --fuz <with-space>
+|                          short and long option required argument
+|    -s[<some>]            short option optional argument
+|    --long[=<data>]       long option optional argument
+|    -g, --fluf[=<path>]   short and long option optional argument
+|    --longest <very-long-argument-hint>
+|                          a very long argument hint
+|
+|Extras
+|    --extra1              line above used to cause a segfault but no longer does
+|
+|EOF
 END_EXPECT
 
-cat > optionspec << EOF
-some-command [options] <args>...
-
-some-command does foo and bar!
---
-h,help    show the help
-
-foo       some nifty option --foo
-bar=      some cool option --bar with an argument
-b,baz     a short and long option
-
- An option group Header
-C?        option C with an optional argument
-d,data?   short and long option with an optional argument
-
- Argument hints
-b=arg     short option required argument
-bar2=arg  long option required argument
-e,fuz=with-space  short and long option required argument
-s?some    short option optional argument
-long?data long option optional argument
-g,fluf?path     short and long option optional argument
-longest=very-long-argument-hint  a very long argument hint
-
-Extras
-extra1    line above used to cause a segfault but no longer does
+sed -e 's/^|//' >optionspec <<\EOF
+|some-command [options] <args>...
+|
+|some-command does foo and bar!
+|--
+|h,help    show the help
+|
+|foo       some nifty option --foo
+|bar=      some cool option --bar with an argument
+|b,baz     a short and long option
+|
+| An option group Header
+|C?        option C with an optional argument
+|d,data?   short and long option with an optional argument
+|
+| Argument hints
+|b=arg     short option required argument
+|bar2=arg  long option required argument
+|e,fuz=with-space  short and long option required argument
+|s?some    short option optional argument
+|long?data long option optional argument
+|g,fluf?path     short and long option optional argument
+|longest=very-long-argument-hint  a very long argument hint
+|
+|Extras
+|extra1    line above used to cause a segfault but no longer does
 EOF
 
 test_expect_success 'test --parseopt help output' '
