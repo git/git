@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Mar 2014, #04; Thu, 20)
-X-master-at: 5172cb3bcb2c7e1a609e34cfae64e3b181e0226a
-X-next-at: 4443bfdcdf4b1e25b48040987632afd841c9b636
+Subject: What's cooking in git.git (Mar 2014, #05; Mon, 24)
+X-master-at: 3f09db07b3dc0758756fad73c96abd0e47cbcd1b
+X-next-at: f5e1d547771ba4cba473a0195e52a3c9bceeb5f9
 
-What's cooking in git.git (Mar 2014, #04; Thu, 20)
+What's cooking in git.git (Mar 2014, #05; Mon, 24)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -16,6 +16,11 @@ before the v1.9.0 final release, many of them fallouts from GSoC
 microprojects.  Many topics that have been marked to be discarded
 are finally discarded.
 
+There seems to be a crasher somewhere in the new pack bitmap
+codepath that was introduced recently. I am hoping that the root
+cause is found and fixed soonish.  Other than that, things look more
+or less calm on the 'next' and up.
+
 You can find the changes described here in the integration branches
 of the repositories listed at
 
@@ -24,283 +29,179 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* bg/install-branch-config-skip-prefix (2014-03-06) 2 commits
-  (merged to 'next' on 2014-03-12 at 9d04564)
- + branch: use skip_prefix() in install_branch_config()
- + t3200-branch: test setting branch as own upstream
+* dk/skip-prefix-scan-only-once (2014-03-03) 1 commit
+  (merged to 'next' on 2014-03-14 at ff375fc)
+ + skip_prefix(): scan prefix only once
+
+ Update implementation of skip_prefix() to scan only once; given
+ that most "prefix" arguments to the inline function are constant
+ strings whose strlen() can be determined at the compile time, this
+ might actually make things worse with a compiler with sufficient
+ intelligence.
 
 
-* dd/find-graft-with-sha1-pos (2014-02-27) 1 commit
-  (merged to 'next' on 2014-03-12 at 0383d59)
- + commit.c: use the generic "sha1_pos" function for lookup
-
- Replace a hand-rolled binary search with a call to our generic
- binary search helper function.
+* es/sh-i18n-envsubst (2014-03-12) 1 commit
+  (merged to 'next' on 2014-03-14 at e4d5603)
+ + sh-i18n--envsubst: retire unused string_list_member()
 
 
-* dd/use-alloc-grow (2014-03-03) 14 commits
-  (merged to 'next' on 2014-03-12 at ed82259)
- + sha1_file.c: use ALLOC_GROW() in pretend_sha1_file()
- + read-cache.c: use ALLOC_GROW() in add_index_entry()
- + builtin/mktree.c: use ALLOC_GROW() in append_to_tree()
- + attr.c: use ALLOC_GROW() in handle_attr_line()
- + dir.c: use ALLOC_GROW() in create_simplify()
- + reflog-walk.c: use ALLOC_GROW()
- + replace_object.c: use ALLOC_GROW() in register_replace_object()
- + patch-ids.c: use ALLOC_GROW() in add_commit()
- + diffcore-rename.c: use ALLOC_GROW()
- + diff.c: use ALLOC_GROW()
- + commit.c: use ALLOC_GROW() in register_commit_graft()
- + cache-tree.c: use ALLOC_GROW() in find_subtree()
- + bundle.c: use ALLOC_GROW() in add_to_ref_list()
- + builtin/pack-objects.c: use ALLOC_GROW() in check_pbase_path()
+* jc/stash-pop-not-popped (2014-02-26) 1 commit
+  (merged to 'next' on 2014-03-14 at 9ba1de8)
+ + stash pop: mention we did not drop the stash upon failing to apply
 
- Replace open-coded reallocation with ALLOC_GROW() macro.
+ "stash pop", upon failing to apply the stash, refrains from
+ discarding the stash to avoid information loss.  Be more explicit
+ in the error message.
+
+ The wording may want to get a bit more bikeshedding.
 
 
-* fc/transport-helper-fixes (2014-02-24) 7 commits
-  (merged to 'next' on 2014-03-12 at 5d7c69a)
- + remote-bzr: support the new 'force' option
- + test-hg.sh: tests are now expected to pass
- + transport-helper.c: do not overwrite forced bit
- + transport-helper: check for 'forced update' message
- + transport-helper: add 'force' to 'export' helpers
- + transport-helper: don't update refs in dry-run
- + transport-helper: mismerge fix
+* jk/shallow-update-fix (2014-03-17) 3 commits
+  (merged to 'next' on 2014-03-17 at 011942e)
+ + shallow: verify shallow file after taking lock
+  (merged to 'next' on 2014-03-12 at ce5abbf)
+ + shallow: automatically clean up shallow tempfiles
+ + shallow: use stat_validity to check for up-to-date file
 
- Updates transport-helper, fast-import and fast-export to allow the
- ref mapping and ref deletion in a way similar to the natively
- supported transports.
+ Serving objects from a shallow repository needs to write a new file
+ to hold the temporary shallow boundaries but it was not cleaned
+ when we exit due to die() or a signal.
 
 
-* jc/no-need-for-env-in-sh-scripts (2014-03-06) 1 commit
-  (merged to 'next' on 2014-03-12 at dfd3234)
- + *.sh: drop useless use of "env"
+* jn/wt-status (2014-03-12) 4 commits
+  (merged to 'next' on 2014-03-14 at 8ac862c)
+ + wt-status: lift the artificual "at least 20 columns" floor
+ + wt-status: i18n of section labels
+ + wt-status: extract the code to compute width for labels
+ + wt-status: make full label string to be subject to l10n
+
+ Unify the codepaths that format new/modified/changed sections and
+ conflicted paths in the "git status" output and make it possible to
+ properly internationalize their output.
 
 
-* jc/tag-contains-with (2014-03-07) 1 commit
-  (merged to 'next' on 2014-03-12 at e120644)
- + tag: grok "--with" as synonym to "--contains"
+* lt/request-pull (2014-03-13) 6 commits
+  (merged to 'next' on 2014-03-17 at 21a598d)
+ + request-pull: documentation updates
+ + request-pull: resurrect "pretty refname" feature
+ + request-pull: test updates
+ + request-pull: pick up tag message as before
+ + request-pull: allow "local:remote" to specify names on both ends
+ + request-pull: more strictly match local/remote branches
+
+ Discard the accumulated "heuristics" to guess from which branch the
+ result wants to be pulled from and make sure what the end user
+ specified is not second-guessed by "git request-pull", to avoid
+ mistakes.
 
 
-* jk/clean-d-pathspec (2014-03-11) 2 commits
-  (merged to 'next' on 2014-03-12 at aaae6ee)
- + clean: simplify dir/not-dir logic
- + clean: respect pathspecs with "-d"
+* nd/tag-version-sort (2014-02-27) 1 commit
+  (merged to 'next' on 2014-03-14 at 4e7f714)
+ + tag: support --sort=<spec>
 
- "git clean -d pathspec" did not use the given pathspec correctly
- and ended up cleaning too much.
+ Allow v1.9.0 sorted before v1.10.0 in "git tag --list" output.
 
 
-* jk/detect-push-typo-early (2014-03-05) 3 commits
-  (merged to 'next' on 2014-03-12 at da522e7)
- + push: detect local refspec errors early
- + match_explicit_lhs: allow a "verify only" mode
- + match_explicit: hoist refspec lhs checks into their own function
+* nd/upload-pack-shallow (2014-03-11) 1 commit
+  (merged to 'next' on 2014-03-14 at d40b8c3)
+ + upload-pack: send shallow info over stdin to pack-objects
 
- Catch "git push $there no-such-branch" early.
-
-
-* jk/diff-filespec-cleanup (2014-02-24) 1 commit
-  (merged to 'next' on 2014-03-12 at 184c2aa)
- + diffcore.h: be explicit about the signedness of is_binary
-
- Portability fix to a topic already in v1.9
+ Serving objects from a shallow repository needs to write a
+ temporary file to be used, but the serving upload-pack may not have
+ write access to the repository which is meant to be read-only.
+ Instead feed these temporary shallow bounds from the standard input
+ of pack-objects so that we do not have to use a temporary file.
 
 
-* jk/doc-deprecate-grafts (2014-03-05) 1 commit
-  (merged to 'next' on 2014-03-12 at 8d34916)
- + docs: mark info/grafts as outdated
-
-
-* jk/repack-pack-keep-objects (2014-03-03) 1 commit
-  (merged to 'next' on 2014-03-12 at 3fd2335)
- + repack: add `repack.packKeptObjects` config var
-
-
-* jn/branch-lift-unnecessary-name-length-limit (2014-03-05) 1 commit
-  (merged to 'next' on 2014-03-12 at bd0fb0e)
- + branch.c: delete size check of newly tracked branch names
-
-
-* mh/simplify-cache-tree-find (2014-03-05) 6 commits
-  (merged to 'next' on 2014-03-12 at c29aa24)
- + cache_tree_find(): use path variable when passing over slashes
- + cache_tree_find(): remove early return
- + cache_tree_find(): remove redundant check
- + cache_tree_find(): fix comment formatting
- + cache_tree_find(): find the end of path component using strchrnul()
- + cache_tree_find(): remove redundant checks
-
-
-* nd/sha1-file-delta-stack-leakage-fix (2014-02-24) 1 commit
-  (merged to 'next' on 2014-03-12 at 9d1a621)
- + sha1_file: fix delta_stack memory leak in unpack_entry
-
- Fix a small leak in the delta stack used when resolving a long
- delta chain at runtime.
-
-
-* rm/strchrnul-not-strlen (2014-03-10) 1 commit
-  (merged to 'next' on 2014-03-12 at fad8f12)
- + use strchrnul() in place of strchr() and strlen()
-
-
-* rs/grep-h-c (2014-03-11) 2 commits
-  (merged to 'next' on 2014-03-12 at 0341bd8)
- + grep: support -h (no header) with --count
- + t7810: add missing variables to tests in loop
-
- "git grep" learns to handle combination of "-h (no header)" and "-c
- (counts)".
-
-
-* sh/finish-tmp-packfile (2014-03-03) 2 commits
-  (merged to 'next' on 2014-03-12 at 410d45d)
- + finish_tmp_packfile():use strbuf for pathname construction
- + Merge branch 'sh/write-pack-file-warning-message-fix' into sh/finish-tmp-packfile
-
-
-* sh/use-hashcpy (2014-03-06) 1 commit
-  (merged to 'next' on 2014-03-12 at cf2735a)
- + Use hashcpy() when copying object names
-
+* tc/commit-dry-run-exit-status-tests (2014-02-24) 1 commit
+  (merged to 'next' on 2014-03-12 at b839886)
+ + demonstrate git-commit --dry-run exit code behaviour
 
 --------------------------------------------------
 [New Topics]
 
-* jk/lib-terminal-lazy (2014-03-14) 1 commit
-  (merged to 'next' on 2014-03-20 at 5de832f)
- + t/lib-terminal: make TTY a lazy prerequisite
-
- The test helper lib-terminal always run an actual test_expect_* when
- included, which screwed up with the use of skil-all that may have to
- be done later.
-
- Will merge to 'master'.
-
-
-* ah/doc-gitk-config (2014-03-20) 1 commit
-  (merged to 'next' on 2014-03-20 at d671b60)
- + Documentation/gitk: document the location of the configulation file
-
- Will merge to 'master'.
-
-
-* as/grep-fullname-config (2014-03-20) 1 commit
- - grep: add grep.fullName config variable
-
-
-* fr/add-interactive-argv-array (2014-03-18) 1 commit
-  (merged to 'next' on 2014-03-20 at 9d65f3d)
- + add: use struct argv_array in run_add_interactive()
-
- Will merge to 'master'.
-
-
-* jk/pack-bitmap (2014-03-17) 1 commit
-  (merged to 'next' on 2014-03-20 at bba6246)
- + pack-objects: turn off bitmaps when skipping objects
-
- Instead of dying when asked to (re)pack with the reachability
- bitmap when a bitmap cannot be built, just (re)pack without
- producing a bitmap in such a case, with a warning.
-
- Will merge to 'master', and probably to 'maint' later.
-
-
-* jk/pack-bitmap-progress (2014-03-17) 2 commits
-  (merged to 'next' on 2014-03-20 at c7a83f9)
- + pack-objects: show reused packfile objects in "Counting objects"
- + pack-objects: show progress for reused packfiles
-
- The progress output while repacking and transferring objects showed
- an apparent large silence while writing the objects out of existing
- packfiles, when the reachability bitmap was in use.
-
- Will merge to 'master', and probably to 'maint' later.
-
-
-* jk/subtree-prefix (2014-03-17) 1 commit
-  (merged to 'next' on 2014-03-20 at 81367fa)
- + subtree: initialize "prefix" variable
-
- A stray environment variable $prefix could have leaked into and
- affected the behaviour of the "subtree" script.
-
- Will merge to 'master'.
-
-
-* nd/gc-aggressive (2014-03-17) 4 commits
- - gc --aggressive: three phase repacking
- - gc --aggressive: make --depth configurable
- - pack-objects: support --keep
- - environment.c: fix constness for odb_pack_keep()
-
-
-* nd/index-pack-error-message (2014-03-17) 1 commit
-  (merged to 'next' on 2014-03-20 at 4d722ac)
- + index-pack: report error using the correct variable
-
- Will merge to 'master'.
-
-
-* rr/doc-merge-strategies (2014-03-17) 1 commit
-  (merged to 'next' on 2014-03-20 at d31f415)
- + Documentation/merge-strategies: avoid hyphenated commands
-
- Will merge to 'master'.
-
-
-* us/printf-not-echo (2014-03-18) 2 commits
-  (merged to 'next' on 2014-03-20 at 41205c8)
- + test-lib.sh: do not "echo" caller-supplied strings
- + rebase -i: do not "echo" random user-supplied strings
-
- Will merge to 'master'.
-
-
-* bb/diff-no-index-dotdot (2014-03-19) 2 commits
-  (merged to 'next' on 2014-03-20 at 352f48c)
- + diff-no-index: replace manual "."/".." check with is_dot_or_dotdot()
- + diff-no-index: rename read_directory()
-
- Will merge to 'master'.
-
-
-* bg/rebase-off-of-previous-branch (2014-03-19) 1 commit
- - rebase: allow "-" short-hand for the previous branch
+* ca/doc-config-third-party (2014-03-21) 1 commit
+ - config.txt: third-party tools may and do use their own variables
 
  Will merge to 'next'.
 
 
-* dt/tests-with-env-not-subshell (2014-03-19) 1 commit
- - tests: use "env" to run commands with temporary env-var settings
+* dw/doc-status-no-longer-shows-pound-prefix (2014-03-21) 1 commit
+ - doc: status, remove leftover statement about '#' prefix
+
+ Will merge to 'next'.
 
 
-* hs/simplify-bit-setting-in-fsck-tree (2014-03-20) 1 commit
- - fsck: use bitwise-or assignment operator to set flag
+* js/userdiff-cc (2014-03-21) 10 commits
+ - userdiff: have 'cpp' hunk header pattern catch more C++ anchor points
+ - t4018: test cases showing that the cpp pattern misses many anchor points
+ - t4018: test cases for the built-in cpp pattern
+ - t4018: reduce test files for pattern compilation tests
+ - t4018: convert custom pattern test to the new infrastructure
+ - t4018: convert java pattern test to the new infrastructure
+ - t4018: convert perl pattern tests to the new infrastructure
+ - t4018: an infrastructure to test hunk headers
+ - userdiff: support unsigned and long long suffixes of integer constants
+ - userdiff: support C++ ->* and .* operators in the word regexp
+
+ Improves the pattern to match the hunk-header for C/C++.
+
+ Will merge to 'next'.
 
 
-* mm/status-porcelain-format-i18n-fix (2014-03-20) 2 commits
- - SQUASH??? fix decl-after-stmt and simplify
- - status: disable translation when --porcelain is used
+* dp/makefile-charset-lib-doc (2014-03-23) 1 commit
+ - Makefile: describe CHARSET_LIB better
+
+ Will merge to 'next'.
 
 
-* ss/test-on-mingw-rsync-path-no-absolute (2014-03-19) 1 commit
-  (merged to 'next' on 2014-03-20 at 2b7b95d)
- + t5510: Do not use $(pwd) when fetching / pushing / pulling via rsync
+* ib/rev-parse-parseopt-argh (2014-03-24) 5 commits
+ - parse-options: make sure argh string does not have SP or _
+ - update-index: teach --cacheinfo a new syntax "mode,sha1,path"
+ - parse-options: multi-word argh should use dash to separate words
+ - t1502: protect runs of SPs used in the indentation
+ - rev-parse --parseopt: option argument name hints
 
- Will merge to 'master'.
+ Teaches the "rev-parse --parseopt" mechanism used by scripted
+ Porcelains to parse command line options and give help text how to
+ supply argv-help (the placeholder string for an option parameter,
+ e.g. "key-id" in "--gpg-sign=<key-id>").
 
+ Will merge to 'next'.
+
+
+* rs/pickaxe-i (2014-03-24) 10 commits
+ - pickaxe: simplify kwset loop in contains()
+ - pickaxe: call strlen only when necessary in diffcore_pickaxe_count()
+ - pickaxe: move pickaxe() after pickaxe_match()
+ - pickaxe: merge diffcore_pickaxe_grep() and diffcore_pickaxe_count() into diffcore_pickaxe()
+ - pickaxe: honor -i when used with -S and --pickaxe-regex
+ - t4209: use helper functions to test --author
+ - t4209: use helper functions to test --grep
+ - t4209: factor out helper function test_log_icase()
+ - t4209: factor out helper function test_log()
+ - t4209: set up expectations up front
+
+ Allow the options -i/--regexp-ignore-case, --pickaxe-regex, and -S
+ to be used together and work as expected to perform a pickaxe
+ search using case-insensitive regular expression matching.
+
+ Will merge to 'next'.
+
+
+* an/branch-config-message (2014-03-24) 1 commit
+ - branch.c: install_branch_config: simplify if chain
+
+ Will merge to 'next'.
+
+--------------------------------------------------
+[Stalled]
 
 * sz/mingw-index-pack-threaded (2014-03-19) 1 commit
  - Enable index-pack threading in msysgit.
 
  Still under discussion among Windows folks
 
---------------------------------------------------
-[Stalled]
 
 * bc/blame-crlf-test (2014-02-18) 1 commit
  - blame: add a failing test for a CRLF issue.
@@ -471,31 +372,147 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* ap/remote-hg-skip-null-bookmarks (2014-03-19) 1 commit
- - remote-hg: do not fail on invalid bookmarks
+* jk/lib-terminal-lazy (2014-03-14) 1 commit
+  (merged to 'next' on 2014-03-20 at 5de832f)
+ + t/lib-terminal: make TTY a lazy prerequisite
+
+ The test helper lib-terminal always run an actual test_expect_* when
+ included, which screwed up with the use of skil-all that may have to
+ be done later.
+
+ Will merge to 'master'.
+
+
+* ah/doc-gitk-config (2014-03-20) 1 commit
+  (merged to 'next' on 2014-03-20 at d671b60)
+ + Documentation/gitk: document the location of the configulation file
+
+ Will merge to 'master'.
+
+
+* as/grep-fullname-config (2014-03-20) 1 commit
+ - grep: add grep.fullName config variable
 
  Will merge to 'next'.
 
 
-* jn/wt-status (2014-03-12) 4 commits
-  (merged to 'next' on 2014-03-14 at 8ac862c)
- + wt-status: lift the artificual "at least 20 columns" floor
- + wt-status: i18n of section labels
- + wt-status: extract the code to compute width for labels
- + wt-status: make full label string to be subject to l10n
-
- Unify the codepaths that format new/modified/changed sections and
- conflicted paths in the "git status" output and make it possible to
- properly internationalize their output.
+* fr/add-interactive-argv-array (2014-03-18) 1 commit
+  (merged to 'next' on 2014-03-20 at 9d65f3d)
+ + add: use struct argv_array in run_add_interactive()
 
  Will merge to 'master'.
 
 
-* es/sh-i18n-envsubst (2014-03-12) 1 commit
-  (merged to 'next' on 2014-03-14 at e4d5603)
- + sh-i18n--envsubst: retire unused string_list_member()
+* jk/pack-bitmap (2014-03-17) 1 commit
+  (merged to 'next' on 2014-03-20 at bba6246)
+ + pack-objects: turn off bitmaps when skipping objects
+
+ Instead of dying when asked to (re)pack with the reachability
+ bitmap when a bitmap cannot be built, just (re)pack without
+ producing a bitmap in such a case, with a warning.
+
+ Will merge to 'master', and probably to 'maint' later.
+
+
+* jk/pack-bitmap-progress (2014-03-17) 2 commits
+  (merged to 'next' on 2014-03-20 at c7a83f9)
+ + pack-objects: show reused packfile objects in "Counting objects"
+ + pack-objects: show progress for reused packfiles
+
+ The progress output while repacking and transferring objects showed
+ an apparent large silence while writing the objects out of existing
+ packfiles, when the reachability bitmap was in use.
+
+ Will merge to 'master', and probably to 'maint' later.
+
+
+* jk/subtree-prefix (2014-03-17) 1 commit
+  (merged to 'next' on 2014-03-20 at 81367fa)
+ + subtree: initialize "prefix" variable
+
+ A stray environment variable $prefix could have leaked into and
+ affected the behaviour of the "subtree" script.
 
  Will merge to 'master'.
+
+
+* nd/gc-aggressive (2014-03-17) 4 commits
+ - gc --aggressive: three phase repacking
+ - gc --aggressive: make --depth configurable
+ - pack-objects: support --keep
+ - environment.c: fix constness for odb_pack_keep()
+
+
+* nd/index-pack-error-message (2014-03-17) 1 commit
+  (merged to 'next' on 2014-03-20 at 4d722ac)
+ + index-pack: report error using the correct variable
+
+ Will merge to 'master'.
+
+
+* rr/doc-merge-strategies (2014-03-17) 1 commit
+  (merged to 'next' on 2014-03-20 at d31f415)
+ + Documentation/merge-strategies: avoid hyphenated commands
+
+ Will merge to 'master'.
+
+
+* us/printf-not-echo (2014-03-18) 2 commits
+  (merged to 'next' on 2014-03-20 at 41205c8)
+ + test-lib.sh: do not "echo" caller-supplied strings
+ + rebase -i: do not "echo" random user-supplied strings
+
+ Will merge to 'master'.
+
+
+* bb/diff-no-index-dotdot (2014-03-19) 2 commits
+  (merged to 'next' on 2014-03-20 at 352f48c)
+ + diff-no-index: replace manual "."/".." check with is_dot_or_dotdot()
+ + diff-no-index: rename read_directory()
+
+ Will merge to 'master'.
+
+
+* bg/rebase-off-of-previous-branch (2014-03-19) 1 commit
+  (merged to 'next' on 2014-03-21 at 916b759)
+ + rebase: allow "-" short-hand for the previous branch
+
+ Will merge to 'master'.
+
+
+* dt/tests-with-env-not-subshell (2014-03-19) 1 commit
+ - tests: use "env" to run commands with temporary env-var settings
+ (this branch is used by jk/tests-cleanup.)
+
+ Will merge to 'next'.
+
+
+* hs/simplify-bit-setting-in-fsck-tree (2014-03-20) 1 commit
+ - fsck: use bitwise-or assignment operator to set flag
+
+ Will merge to 'next'.
+
+
+* mm/status-porcelain-format-i18n-fix (2014-03-20) 2 commits
+ - SQUASH??? fix decl-after-stmt and simplify
+ - status: disable translation when --porcelain is used
+
+ Will merge to 'next' after squashing in the fixup.
+
+
+* ss/test-on-mingw-rsync-path-no-absolute (2014-03-19) 1 commit
+  (merged to 'next' on 2014-03-20 at 2b7b95d)
+ + t5510: Do not use $(pwd) when fetching / pushing / pulling via rsync
+
+ Will merge to 'master'.
+
+
+* ap/remote-hg-skip-null-bookmarks (2014-03-21) 2 commits
+ - SQUASH???
+ - remote-hg: do not fail on invalid bookmarks
+
+ Will merge to 'next' after squashing in the fix.
+ Thanks Torsten for testing.
 
 
 * mh/remove-subtree-long-pathname-fix (2014-03-13) 2 commits
@@ -513,19 +530,12 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* pw/branch-config-message (2014-03-13) 1 commit
- - install_branch_config(): simplify verbose messages logic
-
- Among the many attempts to microproject #8, this seemed to be the
- most "done" among the table based ones; I however tend to think
- that the original with minimum refactoring would be easier to read.
-
-
 * ys/fsck-commit-parsing (2014-03-19) 2 commits
- - fsck.c:fsck_commit(): use skip_prefix() to verify and skip constant
- - fsck.c:fsck_ident(): ident points at a const string
+  (merged to 'next' on 2014-03-21 at 2728983)
+ + fsck.c:fsck_commit(): use skip_prefix() to verify and skip constant
+ + fsck.c:fsck_ident(): ident points at a const string
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jk/warn-on-object-refname-ambiguity (2014-03-13) 4 commits
@@ -538,23 +548,23 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* jk/diff-funcname-cpp-regex (2014-03-05) 1 commit
- - diff: simplify cpp funcname regex
-
- It appears that Peff and Hannes agreed to base the final version
- not on this one, but Hannes's version.
-
-
 * bp/commit-p-editor (2014-03-18) 7 commits
- - run-command: mark run_hook_with_custom_index as deprecated
- - merge hook tests: fix and update tests
- - merge: fix GIT_EDITOR override for commit hook
- - commit: fix patch hunk editing with "commit -p -m"
- - test patch hunk editing with "commit -p -m"
- - merge hook tests: use 'test_must_fail' instead of '!'
- - merge hook tests: fix missing '&&' in test
+  (merged to 'next' on 2014-03-21 at 23b6b06)
+ + run-command: mark run_hook_with_custom_index as deprecated
+ + merge hook tests: fix and update tests
+ + merge: fix GIT_EDITOR override for commit hook
+ + commit: fix patch hunk editing with "commit -p -m"
+ + test patch hunk editing with "commit -p -m"
+ + merge hook tests: use 'test_must_fail' instead of '!'
+ + merge hook tests: fix missing '&&' in test
 
- Will merge to 'next'.
+ When it is not necessary to edit a commit log message (e.g. "git
+ commit -m" is given a message without specifying "-e"), we used to
+ disable the spawning of the editor by overriding GIT_EDITOR, but
+ this means all the uses of the editor, other than to edit the
+ commit log message, are also affected.
+
+ Will merge to 'master'.
 
 
 * cp/am-patch-format-doc (2014-03-17) 2 commits
@@ -581,75 +591,18 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* nd/upload-pack-shallow (2014-03-11) 1 commit
-  (merged to 'next' on 2014-03-14 at d40b8c3)
- + upload-pack: send shallow info over stdin to pack-objects
-
- Will merge to 'master'.
-
-
-* jc/stash-pop-not-popped (2014-02-26) 1 commit
-  (merged to 'next' on 2014-03-14 at 9ba1de8)
- + stash pop: mention we did not drop the stash upon failing to apply
-
- "stash pop", upon failing to apply the stash, refrains from
- discarding the stash to avoid information loss.  Be more explicit
- in the error message.
-
- The wording may want to get a bit more bikeshedding.
-
- Will merge to 'master'.
-
-
-* cn/fetch-prune-overlapping-destination (2014-02-28) 2 commits
+* cn/fetch-prune-overlapping-destination (2014-03-24) 3 commits
+ - SQUASH??? style and leak fix
  - fetch: handle overlaping refspecs on --prune
  - fetch: add a failing test for prunning with overlapping refspecs
 
  Protect refs in a hierarchy that can come from more than one remote
  hierarcies from incorrect removal by "git fetch --prune".
 
- Comments?
+ Since I didn't get any responses to my earlier "Comments?", I ended
+ up reading it myself again and found a small leak.
 
-
-* dk/skip-prefix-scan-only-once (2014-03-03) 1 commit
-  (merged to 'next' on 2014-03-14 at ff375fc)
- + skip_prefix(): scan prefix only once
-
- Update implementation of skip_prefix() to scan only once; given
- that most "prefix" arguments to the inline function are constant
- strings whose strlen() can be determined at the compile time, this
- might actually make things worse with a compiler with sufficient
- intelligence.
-
- Will merge to 'master'.
-
-
-* jk/shallow-update-fix (2014-03-17) 3 commits
-  (merged to 'next' on 2014-03-17 at 011942e)
- + shallow: verify shallow file after taking lock
-  (merged to 'next' on 2014-03-12 at ce5abbf)
- + shallow: automatically clean up shallow tempfiles
- + shallow: use stat_validity to check for up-to-date file
-
- Serving objects from a shallow repository needs to write a
- temporary file to be used, but the serving upload-pack may not have
- write access to the repository which is meant to be read-only.
-
- Will merge to 'master'.
-
-
-* nd/tag-version-sort (2014-02-27) 1 commit
-  (merged to 'next' on 2014-03-14 at 4e7f714)
- + tag: support --sort=<spec>
-
- Allow v1.9.0 sorted before v1.10.0 in "git tag --list" output.
-
- Will merge to 'master'.
-
-
-* tc/commit-dry-run-exit-status-tests (2014-02-24) 1 commit
-  (merged to 'next' on 2014-03-12 at b839886)
- + demonstrate git-commit --dry-run exit code behaviour
+ Hoping to be able to merge a fix for this issue soonish.
 
 
 * nd/commit-editor-cleanup (2014-02-25) 3 commits
@@ -659,6 +612,8 @@ of the repositories listed at
  + wt-status.c: make cut_line[] const to shrink .data section a bit
 
  "git commit --cleanup=<mode>" learned a new mode, scissors.
+
+ Will merge to 'master'.
 
 
 * nd/multiple-work-trees (2014-03-17) 28 commits
@@ -691,10 +646,15 @@ of the repositories listed at
  - path.c: make get_pathname() call sites return const char *
  - path.c: make get_pathname() return strbuf instead of static buffer
 
- Replaced with v5 (with minor fixes already squashed in).
+ A replacement for contrib/workdir/git-new-workdir that does not
+ rely on symbolic links and make sharing of objects and refs safer
+ by making the borrowee and borrowers aware of each other.
+
+ Reported to break on a worktree whose leading path component has a
+ symbolic link in it ($gmane/244822).
 
 
-* ks/tree-diff-nway (2014-03-04) 19 commits
+* ks/tree-diff-nway (2014-03-20) 19 commits
  - combine-diff: speed it up, by using multiparent diff tree-walker directly
  - tree-diff: rework diff_tree() to generate diffs for multiparent cases as well
  - Portable alloca for Git
@@ -708,12 +668,13 @@ of the repositories listed at
  - tree-diff: rename compare_tree_entry -> tree_entry_pathcmp
  - tree-diff: move all action-taking code out of compare_tree_entry()
  - tree-diff: don't assume compare_tree_entry() returns -1,0,1
- - tree-diff: consolidate code for emitting diffs and recursion in one place
- - tree-diff: show_tree() is not needed
- - tree-diff: no need to pass match to skip_uninteresting()
- - tree-diff: no need to manually verify that there is no mode change for a path
- - combine-diff: move changed-paths scanning logic into its own function
- - combine-diff: move show_log_first logic/action out of paths scanning
+  (merged to 'next' on 2014-03-21 at d872679)
+ + tree-diff: consolidate code for emitting diffs and recursion in one place
+ + tree-diff: show_tree() is not needed
+ + tree-diff: no need to pass match to skip_uninteresting()
+ + tree-diff: no need to manually verify that there is no mode change for a path
+ + combine-diff: move changed-paths scanning logic into its own function
+ + combine-diff: move show_log_first logic/action out of paths scanning
 
  Instead of running N pair-wise diff-trees when inspecting a
  N-parent merge, find the set of paths that were touched by walking
@@ -751,23 +712,6 @@ of the repositories listed at
  'master'.
 
 
-* lt/request-pull (2014-03-13) 6 commits
-  (merged to 'next' on 2014-03-17 at 21a598d)
- + request-pull: documentation updates
- + request-pull: resurrect "pretty refname" feature
- + request-pull: test updates
- + request-pull: pick up tag message as before
- + request-pull: allow "local:remote" to specify names on both ends
- + request-pull: more strictly match local/remote branches
-
- Discard the accumulated "heuristics" to guess from which branch the
- result wants to be pulled from and make sure what the end user
- specified is not second-guessed by "git request-pull", to avoid
- mistakes.
-
- Will merge to 'master'.
-
-
 * cc/interpret-trailers (2014-03-07) 11 commits
  - Documentation: add documentation for 'git interpret-trailers'
  - trailer: add tests for commands in config file
@@ -792,3 +736,21 @@ of the repositories listed at
  (this branch is used by tr/remerge-diff.)
 
  Will hold.
+
+--------------------------------------------------
+[Discarded]
+
+* jk/diff-funcname-cpp-regex (2014-03-05) 1 commit
+ . diff: simplify cpp funcname regex
+
+ Superceded.
+
+
+* pw/branch-config-message (2014-03-13) 1 commit
+ . install_branch_config(): simplify verbose messages logic
+
+ Among the many attempts to microproject #8, this seemed to be the
+ most "done" among the table based ones; I however tend to think
+ that the original with minimum refactoring would be easier to read.
+
+ an/branch-config-message supersedes this topic.
