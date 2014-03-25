@@ -301,7 +301,7 @@ test_expect_success 'fetch via rsync' '
 	mkdir rsynced &&
 	(cd rsynced &&
 	 git init --bare &&
-	 git fetch "rsync:$(pwd)/../.git" master:refs/heads/master &&
+	 git fetch "rsync:../.git" master:refs/heads/master &&
 	 git gc --prune &&
 	 test $(git rev-parse master) = $(cd .. && git rev-parse master) &&
 	 git fsck --full)
@@ -312,7 +312,7 @@ test_expect_success 'push via rsync' '
 	(cd rsynced2 &&
 	 git init) &&
 	(cd rsynced &&
-	 git push "rsync:$(pwd)/../rsynced2/.git" master) &&
+	 git push "rsync:../rsynced2/.git" master) &&
 	(cd rsynced2 &&
 	 git gc --prune &&
 	 test $(git rev-parse master) = $(cd .. && git rev-parse master) &&
@@ -323,7 +323,7 @@ test_expect_success 'push via rsync' '
 	mkdir rsynced3 &&
 	(cd rsynced3 &&
 	 git init) &&
-	git push --all "rsync:$(pwd)/rsynced3/.git" &&
+	git push --all "rsync:rsynced3/.git" &&
 	(cd rsynced3 &&
 	 test $(git rev-parse master) = $(cd .. && git rev-parse master) &&
 	 git fsck --full)
