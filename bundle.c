@@ -124,6 +124,7 @@ static int list_refs(struct ref_list *r, int argc, const char **argv)
 	return 0;
 }
 
+/* Remember to update object flag allocation in object.h */
 #define PREREQ_MARK (1u<<16)
 
 int verify_bundle(struct bundle_header *header, int verbose)

@@ -74,7 +74,7 @@ static unsigned blame_copy_score;
 #define BLAME_DEFAULT_MOVE_SCORE	20
 #define BLAME_DEFAULT_COPY_SCORE	40
 
-/* bits #0..7 in revision.h, #8..11 used for merge_bases() in commit.c */
+/* Remember to update object flag allocation in object.h */
 #define METAINFO_SHOWN		(1u<<12)
 #define MORE_THAN_ONE_PATH	(1u<<13)
 

@@ -7,6 +7,7 @@
 #include "commit.h"
 #include "diff.h"
 
+/* Remember to update object flag allocation in object.h */
 #define SEEN		(1u<<0)
 #define UNINTERESTING   (1u<<1)
 #define TREESAME	(1u<<2)

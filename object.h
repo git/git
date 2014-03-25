@@ -26,6 +26,19 @@ struct object_array {
 #define OBJECT_ARRAY_INIT { 0, 0, NULL }
 
 #define TYPE_BITS   3
+/*
+ * object flag allocation:
+ * revision.h:      0---------10
+ * fetch-pack.c:    0---4
+ * walker.c:        0-2
+ * upload-pack.c:               11----------------19
+ * builtin/blame.c:               12-13
+ * bisect.c:                               16
+ * bundle.c:                               16
+ * http-push.c:                            16-----19
+ * commit.c:                               16-----19
+ * sha1_name.c:                                     20
+ */
 #define FLAG_BITS  27
 
 /*

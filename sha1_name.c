@@ -819,6 +819,8 @@ static int get_sha1_1(const char *name, int len, unsigned char *sha1, unsigned l
  * For future extension, ':/!' is reserved. If you want to match a message
  * beginning with a '!', you have to repeat the exclamation mark.
  */
+
+/* Remember to update object flag allocation in object.h */
 #define ONELINE_SEEN (1u<<20)
 
 static int handle_one_ref(const char *path,
