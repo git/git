@@ -28,7 +28,7 @@ struct object_array {
 #define TYPE_BITS   3
 /*
  * object flag allocation:
- * revision.h:      0---------10
+ * revision.h:      0---------10                                26
  * fetch-pack.c:    0---4
  * walker.c:        0-2
  * upload-pack.c:               11----------------19

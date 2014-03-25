@@ -19,7 +19,8 @@
 #define SYMMETRIC_LEFT	(1u<<8)
 #define PATCHSAME	(1u<<9)
 #define BOTTOM		(1u<<10)
-#define ALL_REV_FLAGS	((1u<<11)-1)
+#define TRACK_LINEAR	(1u<<26)
+#define ALL_REV_FLAGS	(((1u<<11)-1) | TRACK_LINEAR)
 
 #define DECORATE_SHORT_REFS	1
 #define DECORATE_FULL_REFS	2
@@ -138,6 +139,10 @@ struct rev_info {
 			preserve_subject:1;
 	unsigned int	disable_stdin:1;
 	unsigned int	leak_pending:1;
+	/* --show-linear-break */
+	unsigned int	track_linear:1,
+			track_first_time:1,
+			linear:1;
 
 	enum date_mode date_mode;
 
@@ -196,6 +201,9 @@ struct rev_info {
 
 	/* copies of the parent lists, for --full-diff display */
 	struct saved_parents *saved_parents_slab;
+
+	struct commit_list *previous_parents;
+	const char *break_bar;
 };
 
 extern int ref_excluded(struct string_list *, const char *path);
