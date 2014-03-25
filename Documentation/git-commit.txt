@@ -176,7 +176,7 @@ OPTIONS
 --cleanup=<mode>::
 	This option determines how the supplied commit message should be
 	cleaned up before committing.  The '<mode>' can be `strip`,
-	`whitespace`, `verbatim`, or `default`.
+	`whitespace`, `verbatim`, `scissors` or `default`.
 +
 --
 strip::
@@ -186,6 +186,12 @@ whitespace::
 	Same as `strip` except #commentary is not removed.
 verbatim::
 	Do not change the message at all.
+scissors::
+	Same as `whitespace`, except that everything from (and
+	including) the line
+	"`# ------------------------ >8 ------------------------`"
+	is truncated if the message is to be edited. "`#`" can be
+	customized with core.commentChar.
 default::
 	Same as `strip` if the message is to be edited.
 	Otherwise `whitespace`.
