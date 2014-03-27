@@ -6,6 +6,10 @@
 #include "diffcore.h"
 #include "tree.h"
 
+
+static int ll_diff_tree_sha1(const unsigned char *old, const unsigned char *new,
+			     const char *base_str, struct diff_options *opt);
+
 /*
  * Compare two tree entries, taking into account only path/S_ISDIR(mode),
  * but not their sha1's.
@@ -118,8 +122,8 @@ static void show_path(struct strbuf *base, struct diff_options *opt,
 
 	if (recurse) {
 		strbuf_addch(base, '/');
-		diff_tree_sha1(t1 ? t1->entry.sha1 : NULL,
-			       t2 ? t2->entry.sha1 : NULL, base->buf, opt);
+		ll_diff_tree_sha1(t1 ? t1->entry.sha1 : NULL,
+				  t2 ? t2->entry.sha1 : NULL, base->buf, opt);
 	}
 
 	strbuf_setlen(base, old_baselen);
