@@ -47,6 +47,9 @@ Updates since v1.9 series
 
 UI, Workflows & Features
 
+ * "git rebase" learned to interpret a lone "-" as "@{-1}", the
+   branch that we were previously on.
+
  * "git commit --cleanup=<mode>" learned a new mode, scissors.
 
  * "git tag --list" output can be sorted using "version sort" with
@@ -154,6 +157,30 @@ Fixes since v1.9 series
 Unless otherwise noted, all the fixes since v1.9 in the maintenance
 track are contained in this release (see the maintenance releases'
 notes for details).
+
+ * "git repack" died when asked to (re)pack with the reachability
+   bitmap when a bitmap cannot be built; instead, just (re)pack
+   without producing a bitmap in such a case, with a warning.
+   (merge 373c67d jk/pack-bitmap later to maint).
+
+
+ * The progress output while repacking and transferring objects showed
+   an apparent large silence while writing the objects out of existing
+   packfiles, when the reachability bitmap was in use.
+   (merge 78d2214 jk/pack-bitmap-progress later to maint).
+
+
+ * A stray environment variable $prefix could have leaked into and
+   affected the behaviour of the "subtree" script (in contrib/).
+
+
+ * When it is not necessary to edit a commit log message (e.g. "git
+   commit -m" is given a message without specifying "-e"), we used to
+   disable the spawning of the editor by overriding GIT_EDITOR, but
+   this means all the uses of the editor, other than to edit the
+   commit log message, are also affected.
+   (merge b549be0 bp/commit-p-editor later to maint).
+
 
  * "git mv" that moves a submodule forgot to adjust the array that
    uses to keep track of which submodules were to be moved to update
