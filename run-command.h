@@ -47,7 +47,12 @@ int run_command(struct child_process *);
 
 extern char *find_hook(const char *name);
 LAST_ARG_MUST_BE_NULL
-extern int run_hook(const char *index_file, const char *name, ...);
+extern int run_hook_le(const char *const *env, const char *name, ...);
+extern int run_hook_ve(const char *const *env, const char *name, va_list args);
+
+LAST_ARG_MUST_BE_NULL
+__attribute__((deprecated))
+extern int run_hook_with_custom_index(const char *index_file, const char *name, ...);
 
 #define RUN_COMMAND_NO_STDIN 1
 #define RUN_GIT_CMD	     2	/*If this is to be git sub-command */
