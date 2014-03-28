@@ -708,7 +708,7 @@ static struct object_entry **compute_write_order(void)
 static off_t write_reused_pack(struct sha1file *f)
 {
 	unsigned char buffer[8192];
-	off_t to_write;
+	off_t to_write, total;
 	int fd;
 
 	if (!is_pack_valid(reuse_packfile))
@@ -725,7 +725,7 @@ static off_t write_reused_pack(struct sha1file *f)
 	if (reuse_packfile_offset < 0)
 		reuse_packfile_offset = reuse_packfile->pack_size - 20;
 
-	to_write = reuse_packfile_offset - sizeof(struct pack_header);
+	total = to_write = reuse_packfile_offset - sizeof(struct pack_header);
 
 	while (to_write) {
 		int read_pack = xread(fd, buffer, sizeof(buffer));
@@ -738,10 +738,23 @@ static off_t write_reused_pack(struct sha1file *f)
 
 		sha1write(f, buffer, read_pack);
 		to_write -= read_pack;
+
+		/*
+		 * We don't know the actual number of objects written,
+		 * only how many bytes written, how many bytes total, and
+		 * how many objects total. So we can fake it by pretending all
+		 * objects we are writing are the same size. This gives us a
+		 * smooth progress meter, and at the end it matches the true
+		 * answer.
+		 */
+		written = reuse_packfile_objects *
+				(((double)(total - to_write)) / total);
+		display_progress(progress_state, written);
 	}
 
 	close(fd);
-	written += reuse_packfile_objects;
+	written = reuse_packfile_objects;
+	display_progress(progress_state, written);
 	return reuse_packfile_offset - sizeof(struct pack_header);
 }
 
@@ -1022,7 +1035,7 @@ static int add_object_entry(const unsigned char *sha1, enum object_type type,
 			    exclude, name && no_try_delta(name),
 			    index_pos, found_pack, found_offset);
 
-	display_progress(progress_state, to_pack.nr_objects);
+	display_progress(progress_state, nr_result);
 	return 1;
 }
 
@@ -1038,7 +1051,7 @@ static int add_object_entry_from_bitmap(const unsigned char *sha1,
 
 	create_object_entry(sha1, type, name_hash, 0, 0, index_pos, pack, offset);
 
-	display_progress(progress_state, to_pack.nr_objects);
+	display_progress(progress_state, nr_result);
 	return 1;
 }
 
@@ -2437,12 +2450,7 @@ static int get_object_list_from_bitmap(struct rev_info *revs)
 			&reuse_packfile_offset)) {
 		assert(reuse_packfile_objects);
 		nr_result += reuse_packfile_objects;
-
-		if (progress) {
-			fprintf(stderr, "Reusing existing pack: %d, done.\n",
-				reuse_packfile_objects);
-			fflush(stderr);
-		}
+		display_progress(progress_state, nr_result);
 	}
 
 	traverse_bitmap_commit_list(&add_object_entry_from_bitmap);
