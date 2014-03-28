@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Mar 2014, #06; Tue, 25)
-X-master-at: d393d140b5656e608b332c00ea3b14f9a060d604
-X-next-at: 2ddfaae461cfeaf6df645d1978edc11df0e4914b
+Subject: What's cooking in git.git (Mar 2014, #07; Fri, 28)
+X-master-at: 96e67c86f817b4fbd492b12f57dae4bd821571ba
+X-next-at: f39dc61b64e8fe9f0fb9ad70df8bb78bf1f5f911
 
-What's cooking in git.git (Mar 2014, #06; Tue, 25)
+What's cooking in git.git (Mar 2014, #07; Fri, 28)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -22,123 +22,141 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* bb/diff-no-index-dotdot (2014-03-19) 2 commits
-  (merged to 'next' on 2014-03-20 at 352f48c)
- + diff-no-index: replace manual "."/".." check with is_dot_or_dotdot()
- + diff-no-index: rename read_directory()
+* ah/doc-gitk-config (2014-03-20) 1 commit
+  (merged to 'next' on 2014-03-20 at d671b60)
+ + Documentation/gitk: document the location of the configulation file
 
 
-* cp/am-patch-format-doc (2014-03-17) 2 commits
-  (merged to 'next' on 2014-03-17 at 7437c77)
- + Documentation/git-am: typofix
-  (merged to 'next' on 2014-03-12 at 17c3ada)
- + Documentation/git-am: Document supported --patch-format options
+* bg/rebase-off-of-previous-branch (2014-03-19) 1 commit
+  (merged to 'next' on 2014-03-21 at 916b759)
+ + rebase: allow "-" short-hand for the previous branch
+
+ "git rebase" learned to interpret a lone "-" as "@{-1}", the
+ branch that we were previously on.
 
 
-* dm/configure-iconv-locale-charset (2014-03-11) 1 commit
-  (merged to 'next' on 2014-03-20 at 4443bfd)
- + configure.ac: link with -liconv for locale_charset()
+* bp/commit-p-editor (2014-03-18) 7 commits
+  (merged to 'next' on 2014-03-21 at 23b6b06)
+ + run-command: mark run_hook_with_custom_index as deprecated
+ + merge hook tests: fix and update tests
+ + merge: fix GIT_EDITOR override for commit hook
+ + commit: fix patch hunk editing with "commit -p -m"
+ + test patch hunk editing with "commit -p -m"
+ + merge hook tests: use 'test_must_fail' instead of '!'
+ + merge hook tests: fix missing '&&' in test
+
+ When it is not necessary to edit a commit log message (e.g. "git
+ commit -m" is given a message without specifying "-e"), we used to
+ disable the spawning of the editor by overriding GIT_EDITOR, but
+ this means all the uses of the editor, other than to edit the
+ commit log message, are also affected.
 
 
-* jk/lib-terminal-lazy (2014-03-14) 1 commit
-  (merged to 'next' on 2014-03-20 at 5de832f)
- + t/lib-terminal: make TTY a lazy prerequisite
-
- The test helper lib-terminal always run an actual test_expect_* when
- included, which screwed up with the use of skil-all that may have to
- be done later.
+* fr/add-interactive-argv-array (2014-03-18) 1 commit
+  (merged to 'next' on 2014-03-20 at 9d65f3d)
+ + add: use struct argv_array in run_add_interactive()
 
 
-* jk/mv-submodules-fix (2014-03-17) 2 commits
-  (merged to 'next' on 2014-03-17 at 7cae3b1)
- + mv: prevent mismatched data when ignoring errors.
- + builtin/mv: fix out of bounds write
+* jk/pack-bitmap (2014-03-17) 1 commit
+  (merged to 'next' on 2014-03-20 at bba6246)
+ + pack-objects: turn off bitmaps when skipping objects
 
- "git mv" that moves a submodule forgot to adjust the array that
- uses to keep track of which submodules were to be moved to update
- its configuration.
-
-
-* jk/warn-on-object-refname-ambiguity (2014-03-13) 4 commits
-  (merged to 'next' on 2014-03-17 at 3f8e98e)
- + rev-list: disable object/refname ambiguity check with --stdin
- + cat-file: restore warn_on_object_refname_ambiguity flag
- + cat-file: fix a minor memory leak in batch_objects
- + cat-file: refactor error handling of batch_objects
+ Instead of dying when asked to (re)pack with the reachability
+ bitmap when a bitmap cannot be built, just (re)pack without
+ producing a bitmap in such a case, with a warning.
 
 
-* mh/remove-subtree-long-pathname-fix (2014-03-13) 2 commits
-  (merged to 'next' on 2014-03-17 at 68cc994)
- + entry.c: fix possible buffer overflow in remove_subtree()
- + checkout_entry(): use the strbuf throughout the function
+* jk/pack-bitmap-progress (2014-03-17) 2 commits
+  (merged to 'next' on 2014-03-20 at c7a83f9)
+ + pack-objects: show reused packfile objects in "Counting objects"
+ + pack-objects: show progress for reused packfiles
 
- Length limit for the pathname used when removing a path in a deep
- subdirectory has been removed to avoid buffer overflows.
-
-
-* nd/commit-editor-cleanup (2014-02-25) 3 commits
-  (merged to 'next' on 2014-03-17 at 986605d)
- + commit: add --cleanup=scissors
- + wt-status.c: move cut-line print code out to wt_status_add_cut_line
- + wt-status.c: make cut_line[] const to shrink .data section a bit
-
- "git commit --cleanup=<mode>" learned a new mode, scissors.
+ The progress output while repacking and transferring objects showed
+ an apparent large silence while writing the objects out of existing
+ packfiles, when the reachability bitmap was in use.
 
 
-* nd/indent-fix-connect-c (2014-03-13) 1 commit
-  (merged to 'next' on 2014-03-17 at a109efc)
- + connect.c: SP after "}", not TAB
+* jk/subtree-prefix (2014-03-17) 1 commit
+  (merged to 'next' on 2014-03-20 at 81367fa)
+ + subtree: initialize "prefix" variable
+
+ A stray environment variable $prefix could have leaked into and
+ affected the behaviour of the "subtree" script.
 
 
-* nd/index-pack-error-message (2014-03-17) 1 commit
-  (merged to 'next' on 2014-03-20 at 4d722ac)
- + index-pack: report error using the correct variable
-
- "git index-pack" used a wrong variable to name the keep-file in an
- error message when the file cannot be written or closed.
-
-
-* rr/doc-merge-strategies (2014-03-17) 1 commit
-  (merged to 'next' on 2014-03-20 at d31f415)
- + Documentation/merge-strategies: avoid hyphenated commands
-
- There were a few instances of 'git-foo' remaining in the
- documentation that should have been spelled 'git foo'.
-
-
-* ss/test-on-mingw-rsync-path-no-absolute (2014-03-19) 1 commit
-  (merged to 'next' on 2014-03-20 at 2b7b95d)
- + t5510: Do not use $(pwd) when fetching / pushing / pulling via rsync
-
-
-* us/printf-not-echo (2014-03-18) 2 commits
-  (merged to 'next' on 2014-03-20 at 41205c8)
- + test-lib.sh: do not "echo" caller-supplied strings
- + rebase -i: do not "echo" random user-supplied strings
-
- "rebase -i" produced a broken insn sheet when the title of a commit
- happened to contain '\n' (or ended with '\c') due to a careless use
- of 'echo'.
+* ys/fsck-commit-parsing (2014-03-19) 2 commits
+  (merged to 'next' on 2014-03-21 at 2728983)
+ + fsck.c:fsck_commit(): use skip_prefix() to verify and skip constant
+ + fsck.c:fsck_ident(): ident points at a const string
 
 --------------------------------------------------
 [New Topics]
 
-* jk/tests-cleanup (2014-03-21) 12 commits
- - t0001: drop subshells just for "cd"
- - t0001: drop useless subshells
- - t0001: use test_must_fail
- - t0001: use test_config_global
- - t0001: use test_path_is_*
- - t0001: make symlink reinit test more careful
- - t: prefer "git config --file" to GIT_CONFIG
- - t: prefer "git config --file" to GIT_CONFIG with test_must_fail
- - t: stop using GIT_CONFIG to cross repo boundaries
- - t: drop useless sane_unset GIT_* calls
- - t/test-lib: drop redundant unset of GIT_CONFIG
- - t/Makefile: stop setting GIT_CONFIG
- (this branch uses dt/tests-with-env-not-subshell.)
+* jc/apply-ignore-whitespace (2014-03-26) 1 commit
+ - apply --ignore-space-change: lines with and without leading whitespaces do not match
+
+ An RFC.  "--ignore-space-change" option of "git apply" ignored the
+ spaces at the beginning of line too aggressively, which is
+ inconsistent with the option of the same name "diff" and "git diff"
+ have.
+
+ Will hold.
+
+
+* jc/rev-parse-argh-dashed-multi-words (2014-03-24) 3 commits
+ - parse-options: make sure argh string does not have SP or _
+ - update-index: teach --cacheinfo a new syntax "mode,sha1,path"
+ - parse-options: multi-word argh should use dash to separate words
+ (this branch uses ib/rev-parse-parseopt-argh.)
+
+ Make sure that the help text given to describe the "<param>" part
+ of the "git cmd --option=<param>" does not contain SP or _,
+ e.g. "--gpg-sign=<key-id>" option for "git commit" is not spelled
+ as "--gpg-sign=<key id>".
 
  Will merge to 'next'.
+
+
+* jk/commit-dates-parsing-fix (2014-03-26) 1 commit
+ - t4212: loosen far-in-future test for AIX
+
+ I think we agreed that a simpler test would be a better way
+ forward.
+
+
+* mr/msvc-link-with-invalidcontinue (2014-03-28) 1 commit
+ - MSVC: link in invalidcontinue.obj for better POSIX compatibility
+
+ Will merge to 'next'.
+
+
+* mr/msvc-link-with-lcurl (2014-03-27) 1 commit
+  (merged to 'next' on 2014-03-28 at 3281dab)
+ + MSVC: allow linking with the cURL library
+
+ Will merge to 'master'.
+
+
+* wt/doc-submodule-name-path-confusion-1 (2014-03-27) 1 commit
+  (merged to 'next' on 2014-03-28 at 225f241)
+ + doc: submodule.* config are keyed by submodule names
+
+ Will merge to 'master'.
+
+
+* wt/doc-submodule-name-path-confusion-2 (2014-03-27) 1 commit
+  (merged to 'next' on 2014-03-28 at ec5bcf3)
+ + doc: submodule.*.branch config is keyed by name
+
+ Will merge to 'master'.
+
+
+* ep/shell-command-substitution (2014-03-25) 2 commits
+  (merged to 'next' on 2014-03-28 at 99a512a)
+ + git-am.sh: use the $(...) construct for command substitution
+ + check-builtins.sh: use the $(...) construct for command substitution
+
+ Will merge to 'master'.
 
 --------------------------------------------------
 [Stalled]
@@ -172,7 +190,8 @@ of the repositories listed at
 * sz/mingw-index-pack-threaded (2014-03-19) 1 commit
  - Enable index-pack threading in msysgit.
 
- Still under discussion among Windows folks
+ Still under discussion among Windows folks.  A failure report
+ exists ($gmane/245170).
 
 
 * bc/blame-crlf-test (2014-02-18) 1 commit
@@ -344,6 +363,25 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* jk/tests-cleanup (2014-03-21) 12 commits
+  (merged to 'next' on 2014-03-26 at 4a72b49)
+ + t0001: drop subshells just for "cd"
+ + t0001: drop useless subshells
+ + t0001: use test_must_fail
+ + t0001: use test_config_global
+ + t0001: use test_path_is_*
+ + t0001: make symlink reinit test more careful
+ + t: prefer "git config --file" to GIT_CONFIG
+ + t: prefer "git config --file" to GIT_CONFIG with test_must_fail
+ + t: stop using GIT_CONFIG to cross repo boundaries
+ + t: drop useless sane_unset GIT_* calls
+ + t/test-lib: drop redundant unset of GIT_CONFIG
+ + t/Makefile: stop setting GIT_CONFIG
+ (this branch uses dt/tests-with-env-not-subshell.)
+
+ Will merge to 'master'.
+
+
 * ca/doc-config-third-party (2014-03-21) 1 commit
   (merged to 'next' on 2014-03-25 at 731e011)
  + config.txt: third-party tools may and do use their own variables
@@ -383,20 +421,18 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* ib/rev-parse-parseopt-argh (2014-03-24) 5 commits
- - parse-options: make sure argh string does not have SP or _
- - update-index: teach --cacheinfo a new syntax "mode,sha1,path"
- - parse-options: multi-word argh should use dash to separate words
+* ib/rev-parse-parseopt-argh (2014-03-23) 2 commits
   (merged to 'next' on 2014-03-25 at d9083ed)
  + t1502: protect runs of SPs used in the indentation
  + rev-parse --parseopt: option argument name hints
+ (this branch is used by jc/rev-parse-argh-dashed-multi-words.)
 
  Teaches the "rev-parse --parseopt" mechanism used by scripted
  Porcelains to parse command line options and give help text how to
  supply argv-help (the placeholder string for an option parameter,
  e.g. "key-id" in "--gpg-sign=<key-id>").
 
- Will merge the bottom part to 'master'.
+ Will merge to 'master'.
 
 
 * rs/pickaxe-i (2014-03-24) 10 commits
@@ -420,62 +456,23 @@ of the repositories listed at
 
 
 * an/branch-config-message (2014-03-24) 1 commit
- - branch.c: install_branch_config: simplify if chain
-
- Will merge to 'next'.
-
-
-* ah/doc-gitk-config (2014-03-20) 1 commit
-  (merged to 'next' on 2014-03-20 at d671b60)
- + Documentation/gitk: document the location of the configulation file
+  (merged to 'next' on 2014-03-26 at 26f9741)
+ + branch.c: install_branch_config: simplify if chain
 
  Will merge to 'master'.
 
 
 * as/grep-fullname-config (2014-03-20) 1 commit
- - grep: add grep.fullName config variable
+  (merged to 'next' on 2014-03-28 at 810a076)
+ + grep: add grep.fullName config variable
 
- Will merge to 'next'.
+ Add a configuration variable to force --full-name to be default for
+ "git grep".
 
+ This may cause regressions on scripted users that do not expect
+ this new behaviour.
 
-* fr/add-interactive-argv-array (2014-03-18) 1 commit
-  (merged to 'next' on 2014-03-20 at 9d65f3d)
- + add: use struct argv_array in run_add_interactive()
-
- Will merge to 'master'.
-
-
-* jk/pack-bitmap (2014-03-17) 1 commit
-  (merged to 'next' on 2014-03-20 at bba6246)
- + pack-objects: turn off bitmaps when skipping objects
-
- Instead of dying when asked to (re)pack with the reachability
- bitmap when a bitmap cannot be built, just (re)pack without
- producing a bitmap in such a case, with a warning.
-
- Will merge to 'master', and probably to 'maint' later.
-
-
-* jk/pack-bitmap-progress (2014-03-17) 2 commits
-  (merged to 'next' on 2014-03-20 at c7a83f9)
- + pack-objects: show reused packfile objects in "Counting objects"
- + pack-objects: show progress for reused packfiles
-
- The progress output while repacking and transferring objects showed
- an apparent large silence while writing the objects out of existing
- packfiles, when the reachability bitmap was in use.
-
- Will merge to 'master', and probably to 'maint' later.
-
-
-* jk/subtree-prefix (2014-03-17) 1 commit
-  (merged to 'next' on 2014-03-20 at 81367fa)
- + subtree: initialize "prefix" variable
-
- A stray environment variable $prefix could have leaked into and
- affected the behaviour of the "subtree" script.
-
- Will merge to 'master'.
+ Will hold.
 
 
 * nd/gc-aggressive (2014-03-17) 4 commits
@@ -483,13 +480,6 @@ of the repositories listed at
  - gc --aggressive: make --depth configurable
  - pack-objects: support --keep
  - environment.c: fix constness for odb_pack_keep()
-
-
-* bg/rebase-off-of-previous-branch (2014-03-19) 1 commit
-  (merged to 'next' on 2014-03-21 at 916b759)
- + rebase: allow "-" short-hand for the previous branch
-
- Will merge to 'master'.
 
 
 * dt/tests-with-env-not-subshell (2014-03-19) 1 commit
@@ -507,11 +497,11 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* mm/status-porcelain-format-i18n-fix (2014-03-20) 2 commits
- - SQUASH??? fix decl-after-stmt and simplify
- - status: disable translation when --porcelain is used
+* mm/status-porcelain-format-i18n-fix (2014-03-26) 1 commit
+  (merged to 'next' on 2014-03-26 at 41680fc)
+ + status: disable translation when --porcelain is used
 
- Will merge to 'next' after squashing in the fixup.
+ Will merge to 'master'.
 
 
 * ap/remote-hg-skip-null-bookmarks (2014-03-25) 1 commit
@@ -521,45 +511,19 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* ys/fsck-commit-parsing (2014-03-19) 2 commits
-  (merged to 'next' on 2014-03-21 at 2728983)
- + fsck.c:fsck_commit(): use skip_prefix() to verify and skip constant
- + fsck.c:fsck_ident(): ident points at a const string
-
- Will merge to 'master'.
-
-
-* bp/commit-p-editor (2014-03-18) 7 commits
-  (merged to 'next' on 2014-03-21 at 23b6b06)
- + run-command: mark run_hook_with_custom_index as deprecated
- + merge hook tests: fix and update tests
- + merge: fix GIT_EDITOR override for commit hook
- + commit: fix patch hunk editing with "commit -p -m"
- + test patch hunk editing with "commit -p -m"
- + merge hook tests: use 'test_must_fail' instead of '!'
- + merge hook tests: fix missing '&&' in test
-
- When it is not necessary to edit a commit log message (e.g. "git
- commit -m" is given a message without specifying "-e"), we used to
- disable the spawning of the editor by overriding GIT_EDITOR, but
- this means all the uses of the editor, other than to edit the
- commit log message, are also affected.
-
- Will merge to 'master'.
-
-
-* cn/fetch-prune-overlapping-destination (2014-03-24) 3 commits
- - SQUASH??? style and leak fix
- - fetch: handle overlaping refspecs on --prune
- - fetch: add a failing test for prunning with overlapping refspecs
+* cn/fetch-prune-overlapping-destination (2014-03-26) 2 commits
+  (merged to 'next' on 2014-03-28 at 954513a)
+ + fetch: handle overlaping refspecs on --prune
+ + fetch: add a failing test for prunning with overlapping refspecs
 
  Protect refs in a hierarchy that can come from more than one remote
  hierarcies from incorrect removal by "git fetch --prune".
 
  Since I didn't get any responses to my earlier "Comments?", I ended
- up reading it myself again and found a small leak.
+ up reading it myself again and found a small leak, whose fix has
+ been squashed in to the tip commit.
 
- Hoping to be able to merge a fix for this issue soonish.
+ Will merge to 'master'.
 
 
 * nd/multiple-work-trees (2014-03-25) 28 commits
@@ -597,7 +561,7 @@ of the repositories listed at
  by making the borrowee and borrowers aware of each other.
 
 
-* ks/tree-diff-nway (2014-03-20) 19 commits
+* ks/tree-diff-nway (2014-03-27) 19 commits
  - combine-diff: speed it up, by using multiparent diff tree-walker directly
  - tree-diff: rework diff_tree() to generate diffs for multiparent cases as well
  - Portable alloca for Git
@@ -628,19 +592,19 @@ of the repositories listed at
  2-way diff-tree, which is very nice.
 
 
-* nd/log-show-linear-break (2014-03-20) 2 commits
- - log: add --show-linear-break to help see non-linear history
- - object.h: centralize object flag allocation
+* nd/log-show-linear-break (2014-03-25) 2 commits
+  (merged to 'next' on 2014-03-28 at ea4a8db)
+ + log: add --show-linear-break to help see non-linear history
+ + object.h: centralize object flag allocation
 
  Attempts to show where a single-strand-of-pearls break in "git log"
  output.
 
- The implementation seems to have got worse compared to the previous
- round.  Will hold.
+ Will merge to 'master'.
 
 
-* cc/interpret-trailers (2014-03-07) 11 commits
- - Documentation: add documentation for 'git interpret-trailers'
+* cc/interpret-trailers (2014-03-26) 12 commits
+ - trailers: add documentation for 'git interpret-trailers'
  - trailer: add tests for commands in config file
  - trailer: execute command from 'trailer.<name>.command'
  - trailer: add tests for "git interpret-trailers"
@@ -649,28 +613,9 @@ of the repositories listed at
  - trailer: parse trailers from stdin
  - trailer: process command line trailer arguments
  - trailer: read and process config information
+ - Move lower case functions into wrapper.c
  - trailer: process trailers from stdin and arguments
  - trailers: add data structures and basic functions
 
  A new filter to programatically edit the tail end of the commit log
  messages.
-
- Will merge to 'next'.
-
---------------------------------------------------
-[Discarded]
-
-* jk/diff-funcname-cpp-regex (2014-03-05) 1 commit
- . diff: simplify cpp funcname regex
-
- Superceded.
-
-
-* pw/branch-config-message (2014-03-13) 1 commit
- . install_branch_config(): simplify verbose messages logic
-
- Among the many attempts to microproject #8, this seemed to be the
- most "done" among the table based ones; I however tend to think
- that the original with minimum refactoring would be easier to read.
-
- an/branch-config-message supersedes this topic.
