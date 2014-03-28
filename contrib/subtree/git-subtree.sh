@@ -46,6 +46,7 @@ ignore_joins=
 annotate=
 squash=
 message=
+prefix=
 
 debug()
 {
