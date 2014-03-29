@@ -52,9 +52,9 @@ int fnmatch_icase(const char *pattern, const char *string, int flags)
 	return fnmatch(pattern, string, flags | (ignore_case ? FNM_CASEFOLD : 0));
 }
 
-inline int git_fnmatch(const struct pathspec_item *item,
-		       const char *pattern, const char *string,
-		       int prefix)
+int git_fnmatch(const struct pathspec_item *item,
+		const char *pattern, const char *string,
+		int prefix)
 {
 	if (prefix > 0) {
 		if (ps_strncmp(item, pattern, string, prefix))
