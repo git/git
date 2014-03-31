@@ -1,0 +1,7 @@
+void wrong()
+{
+}
+
+struct RIGHT_iterator_tag {};
+
+int ChangeMe;
