@@ -131,8 +131,13 @@ Variables
 
 Note that this list is non-comprehensive and not necessarily complete.
 For command-specific variables, you will find a more detailed description
-in the appropriate manual page. You will find a description of non-core
-porcelain configuration variables in the respective porcelain documentation.
+in the appropriate manual page.
+
+Other git-related tools may and do use their own variables.  When
+inventing new variables for use in your own tool, make sure their
+names do not conflict with those that are used by Git itself and
+other popular tools, and describe them in your documentation.
+
 
 advice.*::
 	These variables control various optional help messages designed to
