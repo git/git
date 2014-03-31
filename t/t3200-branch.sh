@@ -859,11 +859,7 @@ test_expect_success 'detect typo in branch name when using --edit-description' '
 	write_script editor <<-\EOF &&
 		echo "New contents" >"$1"
 	EOF
-	(
-		EDITOR=./editor &&
-		export EDITOR &&
-		test_must_fail git branch --edit-description no-such-branch
-	)
+	test_must_fail env EDITOR=./editor git branch --edit-description no-such-branch
 '
 
 test_expect_success 'refuse --edit-description on unborn branch for now' '
@@ -871,11 +867,7 @@ test_expect_success 'refuse --edit-description on unborn branch for now' '
 		echo "New contents" >"$1"
 	EOF
 	git checkout --orphan unborn &&
-	(
-		EDITOR=./editor &&
-		export EDITOR &&
-		test_must_fail git branch --edit-description
-	)
+	test_must_fail env EDITOR=./editor git branch --edit-description
 '
 
 test_expect_success '--merged catches invalid object names' '

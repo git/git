@@ -45,9 +45,7 @@ test_expect_success 'unpack objects' '
 test_expect_success 'check unpacked result (have commit, no tag)' '
 	git rev-list --objects $commit >list.expect &&
 	(
-		GIT_DIR=clone.git &&
-		export GIT_DIR &&
-		test_must_fail git cat-file -e $tag &&
+		test_must_fail env GIT_DIR=clone.git git cat-file -e $tag &&
 		git rev-list --objects $commit
 	) >list.actual &&
 	test_cmp list.expect list.actual

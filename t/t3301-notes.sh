@@ -17,7 +17,7 @@ GIT_EDITOR=./fake_editor.sh
 export GIT_EDITOR
 
 test_expect_success 'cannot annotate non-existing HEAD' '
-	(MSG=3 && export MSG && test_must_fail git notes add)
+	test_must_fail env MSG=3 git notes add
 '
 
 test_expect_success setup '
@@ -32,22 +32,16 @@ test_expect_success setup '
 '
 
 test_expect_success 'need valid notes ref' '
-	(MSG=1 GIT_NOTES_REF=/ && export MSG GIT_NOTES_REF &&
-	 test_must_fail git notes add) &&
-	(MSG=2 GIT_NOTES_REF=/ && export MSG GIT_NOTES_REF &&
-	 test_must_fail git notes show)
+	test_must_fail env MSG=1 GIT_NOTES_REF=/ git notes show &&
+	test_must_fail env MSG=2 GIT_NOTES_REF=/ git notes show
 '
 
 test_expect_success 'refusing to add notes in refs/heads/' '
-	(MSG=1 GIT_NOTES_REF=refs/heads/bogus &&
-	 export MSG GIT_NOTES_REF &&
-	 test_must_fail git notes add)
+	test_must_fail env MSG=1 GIT_NOTES_REF=refs/heads/bogus git notes add
 '
 
 test_expect_success 'refusing to edit notes in refs/remotes/' '
-	(MSG=1 GIT_NOTES_REF=refs/remotes/bogus &&
-	 export MSG GIT_NOTES_REF &&
-	 test_must_fail git notes edit)
+	test_must_fail env MSG=1 GIT_NOTES_REF=refs/heads/bogus git notes edit
 '
 
 # 1 indicates caught gracefully by die, 128 means git-show barked
@@ -865,11 +859,7 @@ test_expect_success 'create note from non-existing note with "git notes add -c" 
 	git add a10 &&
 	test_tick &&
 	git commit -m 10th &&
-	(
-		MSG="yet another note" &&
-		export MSG &&
-		test_must_fail git notes add -c deadbeef
-	) &&
+	test_must_fail env MSG="yet another note" git notes add -c deadbeef &&
 	test_must_fail git notes list HEAD
 '
 

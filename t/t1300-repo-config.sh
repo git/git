@@ -974,24 +974,15 @@ test_expect_success SYMLINKS 'symlinked configuration' '
 '
 
 test_expect_success 'nonexistent configuration' '
-	(
-		GIT_CONFIG=doesnotexist &&
-		export GIT_CONFIG &&
-		test_must_fail git config --list &&
-		test_must_fail git config test.xyzzy
-	)
+	test_must_fail env GIT_CONFIG=doesnotexist git config --list &&
+	test_must_fail env GIT_CONFIG=doesnotexist git config test.xyzzy
 '
 
 test_expect_success SYMLINKS 'symlink to nonexistent configuration' '
 	ln -s doesnotexist linktonada &&
 	ln -s linktonada linktolinktonada &&
-	(
-		GIT_CONFIG=linktonada &&
-		export GIT_CONFIG &&
-		test_must_fail git config --list &&
-		GIT_CONFIG=linktolinktonada &&
-		test_must_fail git config --list
-	)
+	test_must_fail env GIT_CONFIG=linktonada git config --list &&
+	test_must_fail env GIT_CONFIG=linktolinktonada git config --list
 '
 
 test_expect_success 'check split_cmdline return' "
