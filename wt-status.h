@@ -50,6 +50,7 @@ struct wt_status {
 	enum commit_whence whence;
 	int nowarn;
 	int use_color;
+	int no_gettext;
 	int display_comment_prefix;
 	int relative_paths;
 	int submodule_summary;
