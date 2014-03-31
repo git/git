@@ -19,7 +19,7 @@ test_expect_success 'setup' '
 
 	test_create_repo "test" &&
 	test_create_repo "test2" &&
-	GIT_CONFIG=test2/.git/config git config core.repositoryformatversion 99
+	git config --file=test2/.git/config core.repositoryformatversion 99
 '
 
 test_expect_success 'gitdir selection on normal repos' '

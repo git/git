@@ -25,7 +25,6 @@ perl -e 'use DBI; use DBD::SQLite' >/dev/null 2>&1 || {
     test_done
 }
 
-unset GIT_DIR GIT_CONFIG
 WORKDIR=$(pwd)
 SERVERDIR=$(pwd)/gitcvs.git
 git_config="$SERVERDIR/config"

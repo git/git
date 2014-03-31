@@ -67,7 +67,7 @@ test_expect_success 'fetch fails on ee' '
 	'
 
 tmp_config_get () {
-	GIT_CONFIG=.git/svn/.metadata git config --get "$1"
+	git config --file=.git/svn/.metadata --get "$1"
 }
 
 test_expect_success 'failure happened without negative side effects' '
@@ -97,7 +97,6 @@ test_expect_success 'fresh clone with svn.authors-file in config' '
 		test x = x"$(git config svn.authorsfile)" &&
 		test_config="$HOME"/.gitconfig &&
 		sane_unset GIT_DIR &&
-		sane_unset GIT_CONFIG &&
 		git config --global \
 		  svn.authorsfile "$HOME"/svn-authors &&
 		test x"$HOME"/svn-authors = x"$(git config svn.authorsfile)" &&
