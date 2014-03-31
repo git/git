@@ -1123,7 +1123,7 @@ static void report_helper(const struct string_list *list,
 	const char *msg;
 	switch (seen_bits) {
 	case 0:
-		msg = "no corresponding .idx nor .pack";
+		msg = "no corresponding .idx or .pack";
 		break;
 	case 1:
 		msg = "no corresponding .idx";

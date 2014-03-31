@@ -480,8 +480,8 @@ sub refname {
 	# It cannot end with a slash /, we'll throw up on this because
 	# SVN can't have directories with a slash in their name, either:
 	if ($refname =~ m{/$}) {
-		die "ref: '$refname' ends with a trailing slash, this is ",
-		    "not permitted by git nor Subversion\n";
+		die "ref: '$refname' ends with a trailing slash; this is ",
+		    "not permitted by git or Subversion\n";
 	}
 
 	# It cannot have ASCII control character space, tilde ~, caret ^,
