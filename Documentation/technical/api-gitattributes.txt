@@ -99,7 +99,7 @@ static void setup_check(void)
 		The attribute is Unset, by listing the name of the
 		attribute prefixed with a dash - for the path.
 	} else if (ATTR_UNSET(value)) {
-		The attribute is not set nor unset for the path.
+		The attribute is neither set nor unset for the path.
 	} else if (!strcmp(value, "input")) {
 		If none of ATTR_TRUE(), ATTR_FALSE(), or ATTR_UNSET() is
 		true, the value is a string set in the gitattributes

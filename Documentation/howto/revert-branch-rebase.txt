@@ -137,7 +137,7 @@ $ make clean test ;# make sure it did not cause other breakage.
 ------------------------------------------------
 
 Everything is in the good order.  I do not need the temporary branch
-nor tag anymore, so remove them:
+or tag anymore, so remove them:
 
 ------------------------------------------------
 $ rm -f .git/refs/tags/pu-anchor

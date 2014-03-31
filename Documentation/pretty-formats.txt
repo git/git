@@ -78,7 +78,7 @@ The 'raw' format shows the entire commit exactly as
 stored in the commit object.  Notably, the SHA-1s are
 displayed in full, regardless of whether --abbrev or
 --no-abbrev are used, and 'parents' information show the
-true parent commits, without taking grafts nor history
+true parent commits, without taking grafts or history
 simplification into account.
 
 * 'format:<string>'

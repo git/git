@@ -89,7 +89,7 @@ OPTIONS
 	Show references matching one or more patterns. Patterns are matched from
 	the end of the full name, and only complete parts are matched, e.g.
 	'master' matches 'refs/heads/master', 'refs/remotes/origin/master',
-	'refs/tags/jedi/master' but not 'refs/heads/mymaster' nor
+	'refs/tags/jedi/master' but not 'refs/heads/mymaster' or
 	'refs/remotes/master/jedi'.
 
 OUTPUT

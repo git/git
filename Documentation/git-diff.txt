@@ -158,8 +158,8 @@ $ git diff --name-status                <2>
 $ git diff arch/i386 include/asm-i386   <3>
 ------------
 +
-<1> Show only modification, rename and copy, but not addition
-nor deletion.
+<1> Show only modification, rename, and copy, but not addition
+or deletion.
 <2> Show only names and the nature of change, but not actual
 diff output.
 <3> Limit diff output to named subtrees.

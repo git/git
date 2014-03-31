@@ -57,7 +57,7 @@ OPTIONS
 -n::
 --dry-run::
 	Check if the command would error out, without updating the index
-	nor the files in the working tree for real.
+	or the files in the working tree for real.
 
 -v::
 	Show the progress of checking files out.
