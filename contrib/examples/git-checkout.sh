@@ -168,7 +168,7 @@ cd_to_toplevel
 # branch.  However, if "git checkout HEAD" detaches the HEAD
 # from the current branch, even though that may be logically
 # correct, it feels somewhat funny.  More importantly, we do not
-# want "git checkout" nor "git checkout -f" to detach HEAD.
+# want "git checkout" or "git checkout -f" to detach HEAD.
 
 detached=
 detach_warn=

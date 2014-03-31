@@ -1409,7 +1409,7 @@ int match_push_refs(struct ref *src, struct ref **dst,
 				/*
 				 * Remote doesn't have it, and we have no
 				 * explicit pattern, and we don't have
-				 * --all nor --mirror.
+				 * --all or --mirror.
 				 */
 				goto free_name;
 
