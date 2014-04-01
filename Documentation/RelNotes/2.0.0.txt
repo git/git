@@ -126,11 +126,6 @@ UI, Workflows & Features
    fully for paths the index knows about but the tree-ish the command
    resets to does not (these paths are kept as intend-to-add entries).
 
- * Newly cloned submodule repositories by "git submodule update",
-   when the "checkout" update mode is used, will be on a local
-   branch instead of on a detached HEAD, just like submodules added
-   with "git submodule add".
-
 
 Performance, Internal Implementation, etc.
 
