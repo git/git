@@ -162,7 +162,7 @@ update::
 +
 For updates that clone missing submodules, checkout-mode updates will
 create submodules with detached HEADs; all other modes will create
-submodules with a local branch named after `submodule.<name>.branch`.
+submodules with a local branch named after `submodule.<path>.branch`.
 +
 For updates that do not clone missing submodules, the submodule's HEAD
 is only touched when the remote reference does not match the
