@@ -1,18 +1,22 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Mar 2014, #07; Fri, 28)
-X-master-at: 96e67c86f817b4fbd492b12f57dae4bd821571ba
-X-next-at: f39dc61b64e8fe9f0fb9ad70df8bb78bf1f5f911
+Subject: What's cooking in git.git (Mar 2014, #08; Mon, 31)
+X-master-at: 25d1ac0e59f4471c3b124a0c19cad9f9511a26ad
+X-next-at: 875d83ee45ac54ebd34015807b9d6c3817e4b249
 
-What's cooking in git.git (Mar 2014, #07; Fri, 28)
+What's cooking in git.git (Mar 2014, #08; Mon, 31)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-More topics merged to 'master', many of which are fallouts from GSoC
-microprojects.
+More topics merged to 'master', some of which are fallouts from GSoC
+microprojects, some are updates to docs.  C/C++ funcname pattern
+update is now in.
+
+I haven't reverted the merge of that "submodule update" topic yet; I
+should do that soonish.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -22,141 +26,186 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* ah/doc-gitk-config (2014-03-20) 1 commit
-  (merged to 'next' on 2014-03-20 at d671b60)
- + Documentation/gitk: document the location of the configulation file
+* an/branch-config-message (2014-03-24) 1 commit
+  (merged to 'next' on 2014-03-26 at 26f9741)
+ + branch.c: install_branch_config: simplify if chain
 
 
-* bg/rebase-off-of-previous-branch (2014-03-19) 1 commit
-  (merged to 'next' on 2014-03-21 at 916b759)
- + rebase: allow "-" short-hand for the previous branch
-
- "git rebase" learned to interpret a lone "-" as "@{-1}", the
- branch that we were previously on.
+* ca/doc-config-third-party (2014-03-21) 1 commit
+  (merged to 'next' on 2014-03-25 at 731e011)
+ + config.txt: third-party tools may and do use their own variables
 
 
-* bp/commit-p-editor (2014-03-18) 7 commits
-  (merged to 'next' on 2014-03-21 at 23b6b06)
- + run-command: mark run_hook_with_custom_index as deprecated
- + merge hook tests: fix and update tests
- + merge: fix GIT_EDITOR override for commit hook
- + commit: fix patch hunk editing with "commit -p -m"
- + test patch hunk editing with "commit -p -m"
- + merge hook tests: use 'test_must_fail' instead of '!'
- + merge hook tests: fix missing '&&' in test
-
- When it is not necessary to edit a commit log message (e.g. "git
- commit -m" is given a message without specifying "-e"), we used to
- disable the spawning of the editor by overriding GIT_EDITOR, but
- this means all the uses of the editor, other than to edit the
- commit log message, are also affected.
+* dp/makefile-charset-lib-doc (2014-03-23) 1 commit
+  (merged to 'next' on 2014-03-25 at b32e3ad)
+ + Makefile: describe CHARSET_LIB better
 
 
-* fr/add-interactive-argv-array (2014-03-18) 1 commit
-  (merged to 'next' on 2014-03-20 at 9d65f3d)
- + add: use struct argv_array in run_add_interactive()
+* dt/tests-with-env-not-subshell (2014-03-19) 1 commit
+  (merged to 'next' on 2014-03-25 at 19fe25f)
+ + tests: use "env" to run commands with temporary env-var settings
+ (this branch is used by jk/tests-cleanup.)
 
 
-* jk/pack-bitmap (2014-03-17) 1 commit
-  (merged to 'next' on 2014-03-20 at bba6246)
- + pack-objects: turn off bitmaps when skipping objects
-
- Instead of dying when asked to (re)pack with the reachability
- bitmap when a bitmap cannot be built, just (re)pack without
- producing a bitmap in such a case, with a warning.
+* dw/doc-status-no-longer-shows-pound-prefix (2014-03-21) 1 commit
+  (merged to 'next' on 2014-03-25 at 2683eb6)
+ + doc: status, remove leftover statement about '#' prefix
 
 
-* jk/pack-bitmap-progress (2014-03-17) 2 commits
-  (merged to 'next' on 2014-03-20 at c7a83f9)
- + pack-objects: show reused packfile objects in "Counting objects"
- + pack-objects: show progress for reused packfiles
-
- The progress output while repacking and transferring objects showed
- an apparent large silence while writing the objects out of existing
- packfiles, when the reachability bitmap was in use.
+* hs/simplify-bit-setting-in-fsck-tree (2014-03-20) 1 commit
+  (merged to 'next' on 2014-03-25 at 08efd68)
+ + fsck: use bitwise-or assignment operator to set flag
 
 
-* jk/subtree-prefix (2014-03-17) 1 commit
-  (merged to 'next' on 2014-03-20 at 81367fa)
- + subtree: initialize "prefix" variable
+* ib/rev-parse-parseopt-argh (2014-03-23) 2 commits
+  (merged to 'next' on 2014-03-25 at d9083ed)
+ + t1502: protect runs of SPs used in the indentation
+ + rev-parse --parseopt: option argument name hints
+ (this branch is used by jc/rev-parse-argh-dashed-multi-words.)
 
- A stray environment variable $prefix could have leaked into and
- affected the behaviour of the "subtree" script.
-
-
-* ys/fsck-commit-parsing (2014-03-19) 2 commits
-  (merged to 'next' on 2014-03-21 at 2728983)
- + fsck.c:fsck_commit(): use skip_prefix() to verify and skip constant
- + fsck.c:fsck_ident(): ident points at a const string
-
---------------------------------------------------
-[New Topics]
-
-* jc/apply-ignore-whitespace (2014-03-26) 1 commit
- - apply --ignore-space-change: lines with and without leading whitespaces do not match
-
- An RFC.  "--ignore-space-change" option of "git apply" ignored the
- spaces at the beginning of line too aggressively, which is
- inconsistent with the option of the same name "diff" and "git diff"
- have.
-
- Will hold.
+ Teaches the "rev-parse --parseopt" mechanism used by scripted
+ Porcelains to parse command line options and give help text how to
+ supply argv-help (the placeholder string for an option parameter,
+ e.g. "key-id" in "--gpg-sign=<key-id>").
 
 
-* jc/rev-parse-argh-dashed-multi-words (2014-03-24) 3 commits
- - parse-options: make sure argh string does not have SP or _
- - update-index: teach --cacheinfo a new syntax "mode,sha1,path"
- - parse-options: multi-word argh should use dash to separate words
- (this branch uses ib/rev-parse-parseopt-argh.)
-
- Make sure that the help text given to describe the "<param>" part
- of the "git cmd --option=<param>" does not contain SP or _,
- e.g. "--gpg-sign=<key-id>" option for "git commit" is not spelled
- as "--gpg-sign=<key id>".
-
- Will merge to 'next'.
-
-
-* jk/commit-dates-parsing-fix (2014-03-26) 1 commit
- - t4212: loosen far-in-future test for AIX
-
- I think we agreed that a simpler test would be a better way
- forward.
+* jk/tests-cleanup (2014-03-21) 12 commits
+  (merged to 'next' on 2014-03-26 at 4a72b49)
+ + t0001: drop subshells just for "cd"
+ + t0001: drop useless subshells
+ + t0001: use test_must_fail
+ + t0001: use test_config_global
+ + t0001: use test_path_is_*
+ + t0001: make symlink reinit test more careful
+ + t: prefer "git config --file" to GIT_CONFIG
+ + t: prefer "git config --file" to GIT_CONFIG with test_must_fail
+ + t: stop using GIT_CONFIG to cross repo boundaries
+ + t: drop useless sane_unset GIT_* calls
+ + t/test-lib: drop redundant unset of GIT_CONFIG
+ + t/Makefile: stop setting GIT_CONFIG
+ (this branch uses dt/tests-with-env-not-subshell.)
 
 
-* mr/msvc-link-with-invalidcontinue (2014-03-28) 1 commit
- - MSVC: link in invalidcontinue.obj for better POSIX compatibility
+* js/userdiff-cc (2014-03-21) 10 commits
+  (merged to 'next' on 2014-03-25 at 8c0e585)
+ + userdiff: have 'cpp' hunk header pattern catch more C++ anchor points
+ + t4018: test cases showing that the cpp pattern misses many anchor points
+ + t4018: test cases for the built-in cpp pattern
+ + t4018: reduce test files for pattern compilation tests
+ + t4018: convert custom pattern test to the new infrastructure
+ + t4018: convert java pattern test to the new infrastructure
+ + t4018: convert perl pattern tests to the new infrastructure
+ + t4018: an infrastructure to test hunk headers
+ + userdiff: support unsigned and long long suffixes of integer constants
+ + userdiff: support C++ ->* and .* operators in the word regexp
 
- Will merge to 'next'.
+ Improves the pattern to match the hunk-header for C/C++.
+
+
+* mm/status-porcelain-format-i18n-fix (2014-03-26) 1 commit
+  (merged to 'next' on 2014-03-26 at 41680fc)
+ + status: disable translation when --porcelain is used
 
 
 * mr/msvc-link-with-lcurl (2014-03-27) 1 commit
   (merged to 'next' on 2014-03-28 at 3281dab)
  + MSVC: allow linking with the cURL library
 
- Will merge to 'master'.
-
 
 * wt/doc-submodule-name-path-confusion-1 (2014-03-27) 1 commit
   (merged to 'next' on 2014-03-28 at 225f241)
  + doc: submodule.* config are keyed by submodule names
-
- Will merge to 'master'.
 
 
 * wt/doc-submodule-name-path-confusion-2 (2014-03-27) 1 commit
   (merged to 'next' on 2014-03-28 at ec5bcf3)
  + doc: submodule.*.branch config is keyed by name
 
- Will merge to 'master'.
+--------------------------------------------------
+[New Topics]
+
+* cb/aix (2014-03-31) 2 commits
+ - tests: don't rely on strerror text when testing rmdir failure
+ - dir.c: make git_fnmatch() not inline
+
+ Will merge to 'next'.
 
 
-* ep/shell-command-substitution (2014-03-25) 2 commits
-  (merged to 'next' on 2014-03-28 at 99a512a)
- + git-am.sh: use the $(...) construct for command substitution
- + check-builtins.sh: use the $(...) construct for command substitution
+* jc/fix-diff-no-index-diff-opt-parse (2014-03-31) 1 commit
+ - diff-no-index: correctly diagnose error return from diff_opt_parse()
 
- Will merge to 'master'.
+ "diff --no-index -Mq a b" fell into an infinite loop.
+
+ Will merge to 'next'.
+
+
+* mr/opt-set-ptr (2014-03-31) 3 commits
+ - parse-options: remove unused OPT_SET_PTR
+ - parse-options: add cast to correct pointer type to OPT_SET_PTR
+ - MSVC: fix t0040-parse-options crash
+
+ OPT_SET_PTR() implementation was broken on IL32P64 platforms.
+
+ We may just want directly to go to the endgame of removing
+ OPT_SET_PTR macro, which nobody seems to use.
+
+
+* mt/patch-id-stable (2014-03-31) 3 commits
+ - patch-id-test: test --stable and --unstable flags
+ - patch-id: document new behaviour
+ - patch-id: make it stable against hunk reordering
+
+ Introduce a new way to compute patch-id for a patch that is not
+ affected by the order of the paths that appear in the input.
+
+
+* jl/nor-or-nand-and (2014-03-31) 4 commits
+ - code and test: fix misuses of "nor"
+ - comments: fix misuses of "nor"
+ - contrib: fix misuses of "nor"
+ - Documentation: fix misuses of "nor"
+
+ Eradicate mistaken use of "nor" (that is, essentially "nor" used
+ not in "neither A nor B" ;-)) from in-code comments, command output
+ strings, and documentations.
+
+
+* mh/ref-transaction (2014-03-31) 27 commits
+ - ref_transaction_commit(): work with transaction->updates in place
+ - struct ref_update: add type field
+ - struct ref_update: add a lock member
+ - ref_transaction_commit(): simplify expressions
+ - struct ref_update: store refname as a FLEX_ARRAY
+ - struct ref_update: rename field "ref_name" to "refname"
+ - refs: remove API function update_refs()
+ - update-ref --stdin: reimplement using reference transactions
+ - refs: add a concept of a reference transaction
+ - update-ref --stdin: harmonize error messages
+ - update-ref --stdin: improve the error message for unexpected EOF
+ - t1400: test one breakage at a time
+ - update-ref --stdin -z: deprecate interpreting the empty string as zeros
+ - update-ref.c: extract a new function, parse_next_sha1()
+ - t1400: test that stdin -z update treats empty <newvalue> as zeros
+ - update-ref --stdin: simplify error messages for missing oldvalues
+ - update-ref --stdin: make error messages more consistent
+ - update-ref --stdin: improve error messages for invalid values
+ - update-ref.c: extract a new function, parse_refname()
+ - parse_cmd_verify(): copy old_sha1 instead of evaluating <oldvalue> twice
+ - update-ref --stdin: read the whole input at once
+ - update_refs(): tighten constness
+ - refs.h: rename the action_on_err constants
+ - t1400: add some more tests involving quoted arguments
+ - parse_arg(): really test that argument is properly terminated
+ - t1400: provide more usual input to the command
+ - t1400: fix test name and expected result of one test
+
+ Update "update-ref --stdin [-z]" and then introduce a transactional
+ support for (multi-)reference updates.
+
+ I think the earlier part should be merged to 'next' soonish in
+ order to keep the topic that is still in flux reasonably short.  I
+ haven't read the "transaction" part carefully yet.
+
 
 --------------------------------------------------
 [Stalled]
@@ -231,9 +280,7 @@ of the repositories listed at
 * kb/fast-hashmap-pack-struct (2014-02-24) 1 commit
  - hashmap.h: make sure map entries are tightly packed
 
- I am inclined to drop this; an alternative is to replace it with
- the "more portable" one that uses #pragma, which I am willing to
- try doing so on 'pu', though.
+ Will discard.
 
 
 * po/everyday-doc (2014-01-27) 1 commit
@@ -363,74 +410,49 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* jk/tests-cleanup (2014-03-21) 12 commits
-  (merged to 'next' on 2014-03-26 at 4a72b49)
- + t0001: drop subshells just for "cd"
- + t0001: drop useless subshells
- + t0001: use test_must_fail
- + t0001: use test_config_global
- + t0001: use test_path_is_*
- + t0001: make symlink reinit test more careful
- + t: prefer "git config --file" to GIT_CONFIG
- + t: prefer "git config --file" to GIT_CONFIG with test_must_fail
- + t: stop using GIT_CONFIG to cross repo boundaries
- + t: drop useless sane_unset GIT_* calls
- + t/test-lib: drop redundant unset of GIT_CONFIG
- + t/Makefile: stop setting GIT_CONFIG
- (this branch uses dt/tests-with-env-not-subshell.)
+* jc/apply-ignore-whitespace (2014-03-26) 1 commit
+ - apply --ignore-space-change: lines with and without leading whitespaces do not match
+
+ An RFC.  "--ignore-space-change" option of "git apply" ignored the
+ spaces at the beginning of line too aggressively, which is
+ inconsistent with the option of the same name "diff" and "git diff"
+ have.
+
+ Will hold.
+
+
+* jc/rev-parse-argh-dashed-multi-words (2014-03-24) 3 commits
+  (merged to 'next' on 2014-03-31 at 1c48649)
+ + parse-options: make sure argh string does not have SP or _
+ + update-index: teach --cacheinfo a new syntax "mode,sha1,path"
+ + parse-options: multi-word argh should use dash to separate words
+
+ Make sure that the help text given to describe the "<param>" part
+ of the "git cmd --option=<param>" does not contain SP or _,
+ e.g. "--gpg-sign=<key-id>" option for "git commit" is not spelled
+ as "--gpg-sign=<key id>".
 
  Will merge to 'master'.
 
 
-* ca/doc-config-third-party (2014-03-21) 1 commit
-  (merged to 'next' on 2014-03-25 at 731e011)
- + config.txt: third-party tools may and do use their own variables
+* jk/commit-dates-parsing-fix (2014-03-26) 1 commit
+ - t4212: loosen far-in-future test for AIX
+
+ I think we agreed that a simpler test would be a better way
+ forward.
+
+
+* mr/msvc-link-with-invalidcontinue (2014-03-28) 1 commit
+  (merged to 'next' on 2014-03-31 at 051a29e)
+ + MSVC: link in invalidcontinue.obj for better POSIX compatibility
 
  Will merge to 'master'.
 
 
-* dw/doc-status-no-longer-shows-pound-prefix (2014-03-21) 1 commit
-  (merged to 'next' on 2014-03-25 at 2683eb6)
- + doc: status, remove leftover statement about '#' prefix
-
- Will merge to 'master'.
-
-
-* js/userdiff-cc (2014-03-21) 10 commits
-  (merged to 'next' on 2014-03-25 at 8c0e585)
- + userdiff: have 'cpp' hunk header pattern catch more C++ anchor points
- + t4018: test cases showing that the cpp pattern misses many anchor points
- + t4018: test cases for the built-in cpp pattern
- + t4018: reduce test files for pattern compilation tests
- + t4018: convert custom pattern test to the new infrastructure
- + t4018: convert java pattern test to the new infrastructure
- + t4018: convert perl pattern tests to the new infrastructure
- + t4018: an infrastructure to test hunk headers
- + userdiff: support unsigned and long long suffixes of integer constants
- + userdiff: support C++ ->* and .* operators in the word regexp
-
- Improves the pattern to match the hunk-header for C/C++.
-
- Will merge to 'master'.
-
-
-* dp/makefile-charset-lib-doc (2014-03-23) 1 commit
-  (merged to 'next' on 2014-03-25 at b32e3ad)
- + Makefile: describe CHARSET_LIB better
-
- Will merge to 'master'.
-
-
-* ib/rev-parse-parseopt-argh (2014-03-23) 2 commits
-  (merged to 'next' on 2014-03-25 at d9083ed)
- + t1502: protect runs of SPs used in the indentation
- + rev-parse --parseopt: option argument name hints
- (this branch is used by jc/rev-parse-argh-dashed-multi-words.)
-
- Teaches the "rev-parse --parseopt" mechanism used by scripted
- Porcelains to parse command line options and give help text how to
- supply argv-help (the placeholder string for an option parameter,
- e.g. "key-id" in "--gpg-sign=<key-id>").
+* ep/shell-command-substitution (2014-03-25) 2 commits
+  (merged to 'next' on 2014-03-28 at 99a512a)
+ + git-am.sh: use the $(...) construct for command substitution
+ + check-builtins.sh: use the $(...) construct for command substitution
 
  Will merge to 'master'.
 
@@ -455,13 +477,6 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* an/branch-config-message (2014-03-24) 1 commit
-  (merged to 'next' on 2014-03-26 at 26f9741)
- + branch.c: install_branch_config: simplify if chain
-
- Will merge to 'master'.
-
-
 * as/grep-fullname-config (2014-03-20) 1 commit
   (merged to 'next' on 2014-03-28 at 810a076)
  + grep: add grep.fullName config variable
@@ -475,33 +490,14 @@ of the repositories listed at
  Will hold.
 
 
-* nd/gc-aggressive (2014-03-17) 4 commits
- - gc --aggressive: three phase repacking
- - gc --aggressive: make --depth configurable
- - pack-objects: support --keep
+* nd/gc-aggressive (2014-03-31) 2 commits
  - environment.c: fix constness for odb_pack_keep()
+ - gc --aggressive: make --depth configurable
 
+ Allow tweaking the maximum length of the delta-chain produced by
+ "gc --aggressive".
 
-* dt/tests-with-env-not-subshell (2014-03-19) 1 commit
-  (merged to 'next' on 2014-03-25 at 19fe25f)
- + tests: use "env" to run commands with temporary env-var settings
- (this branch is used by jk/tests-cleanup.)
-
- Will merge to 'master'.
-
-
-* hs/simplify-bit-setting-in-fsck-tree (2014-03-20) 1 commit
-  (merged to 'next' on 2014-03-25 at 08efd68)
- + fsck: use bitwise-or assignment operator to set flag
-
- Will merge to 'master'.
-
-
-* mm/status-porcelain-format-i18n-fix (2014-03-26) 1 commit
-  (merged to 'next' on 2014-03-26 at 41680fc)
- + status: disable translation when --porcelain is used
-
- Will merge to 'master'.
+ Will merge to 'next'.
 
 
 * ap/remote-hg-skip-null-bookmarks (2014-03-25) 1 commit
@@ -560,16 +556,21 @@ of the repositories listed at
  rely on symbolic links and make sharing of objects and refs safer
  by making the borrowee and borrowers aware of each other.
 
+ What is the doneness of this thing?  I remember reading it through
+ once and sent review comments on earlier parts, but have there been
+ a lot of discussions on this topic?
+
 
 * ks/tree-diff-nway (2014-03-27) 19 commits
  - combine-diff: speed it up, by using multiparent diff tree-walker directly
  - tree-diff: rework diff_tree() to generate diffs for multiparent cases as well
  - Portable alloca for Git
- - tree-diff: reuse base str(buf) memory on sub-tree recursion
- - tree-diff: no need to call "full" diff_tree_sha1 from show_path()
- - tree-diff: rework diff_tree interface to be sha1 based
- - tree-diff: diff_tree() should now be static
- - tree-diff: remove special-case diff-emitting code for empty-tree cases
+  (merged to 'next' on 2014-03-31 at 16a7bd4)
+ + tree-diff: reuse base str(buf) memory on sub-tree recursion
+ + tree-diff: no need to call "full" diff_tree_sha1 from show_path()
+ + tree-diff: rework diff_tree interface to be sha1 based
+ + tree-diff: diff_tree() should now be static
+ + tree-diff: remove special-case diff-emitting code for empty-tree cases
   (merged to 'next' on 2014-03-25 at cfcbdac)
  + tree-diff: simplify tree_entry_pathcmp
  + tree-diff: show_path prototype is not needed anymore
@@ -590,6 +591,9 @@ of the repositories listed at
  N pair-wise diff-tree results to be processed through rename
  detections and such.  And N=2 case nicely degenerates to the usual
  2-way diff-tree, which is very nice.
+
+ The preparatory steps are all in 'next'.  The real fun part should
+ follow soonish (hopefully).
 
 
 * nd/log-show-linear-break (2014-03-25) 2 commits
