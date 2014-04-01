@@ -77,11 +77,9 @@ test_expect_success 'date parser recognizes time_t overflow' '
 '
 
 # date is within 2^63-1, but enough to choke glibc's gmtime
-test_expect_success 'absurdly far-in-future dates produce sentinel' '
+test_expect_success 'absurdly far-in-future date' '
 	commit=$(munge_author_date HEAD 999999999999999999) &&
-	echo "Thu Jan 1 00:00:00 1970 +0000" >expect &&
-	git log -1 --format=%ad $commit >actual &&
-	test_cmp expect actual
+	git log -1 --format=%ad $commit
 '
 
 test_done
