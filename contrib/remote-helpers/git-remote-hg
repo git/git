@@ -643,7 +643,10 @@ def do_list(parser):
             print "? refs/heads/branches/%s" % gitref(branch)
 
     for bmark in bmarks:
-        print "? refs/heads/%s" % gitref(bmark)
+        if  bmarks[bmark].hex() == '0000000000000000000000000000000000000000':
+            warn("Ignoring invalid bookmark '%s'", bmark)
+        else:
+            print "? refs/heads/%s" % gitref(bmark)
 
     for tag, node in repo.tagslist():
         if tag == 'tip':
