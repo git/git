@@ -721,7 +721,7 @@ void sort_in_topological_order(struct commit_list **list, enum rev_sort_order so
 
 /* merge-base stuff */
 
-/* bits #0..15 in revision.h */
+/* Remember to update object flag allocation in object.h */
 #define PARENT1		(1u<<16)
 #define PARENT2		(1u<<17)
 #define STALE		(1u<<18)

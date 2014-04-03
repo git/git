@@ -758,6 +758,13 @@ This enables parent rewriting, see 'History Simplification' below.
 This implies the `--topo-order` option by default, but the
 `--date-order` option may also be specified.
 
+--show-linear-break[=<barrier>]::
+	When --graph is not used, all history branches are flattened
+	which can make it hard to see that the two consecutive commits
+	do not belong to a linear branch. This option puts a barrier
+	in between them in that case. If `<barrier>` is specified, it
+	is the string that will be shown instead of the default one.
+
 ifdef::git-rev-list[]
 --count::
 	Print a number stating how many commits would have been

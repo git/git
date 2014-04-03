@@ -60,6 +60,7 @@ static int process_tree(struct walker *walker, struct tree *tree)
 	return 0;
 }
 
+/* Remember to update object flag allocation in object.h */
 #define COMPLETE	(1U << 0)
 #define SEEN		(1U << 1)
 #define TO_SCAN		(1U << 2)
