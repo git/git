@@ -1,0 +1,38 @@
+Git v1.9.2 Release Notes
+========================
+
+Fixes since v1.9.1
+------------------
+
+ * "git mv" that moves a submodule forgot to adjust the array that
+   uses to keep track of which submodules were to be moved to update
+   its configuration.
+
+ * Length limit for the pathname used when removing a path in a deep
+   subdirectory has been removed to avoid buffer overflows.
+
+ * The test helper lib-terminal always run an actual test_expect_*
+   when included, which screwed up with the use of skil-all that may
+   have to be done later.
+
+ * "git index-pack" used a wrong variable to name the keep-file in an
+   error message when the file cannot be written or closed.
+
+ * "rebase -i" produced a broken insn sheet when the title of a commit
+   happened to contain '\n' (or ended with '\c') due to a careless use
+   of 'echo'.
+
+ * There were a few instances of 'git-foo' remaining in the
+   documentation that should have been spelled 'git foo'.
+
+ * Serving objects from a shallow repository needs to write a
+   new file to hold the temporary shallow boundaries but it was not
+   cleaned when we exit due to die() or a signal.
+
+ * When "git stash pop" stops after failing to apply the stash
+   (e.g. due to conflicting changes), the stash is not dropped. State
+   that explicitly in the output to let the users know.
+
+ * The labels in "git status" output that describe the nature of
+   conflicts (e.g. "both deleted") were limited to 20 bytes, which was
+   too short for some l10n (e.g. fr).
