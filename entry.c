@@ -44,33 +44,33 @@ static void create_directories(const char *path, int path_len,
 	free(buf);
 }
 
-static void remove_subtree(const char *path)
+static void remove_subtree(struct strbuf *path)
 {
-	DIR *dir = opendir(path);
+	DIR *dir = opendir(path->buf);
 	struct dirent *de;
-	char pathbuf[PATH_MAX];
-	char *name;
+	int origlen = path->len;
 
 	if (!dir)
-		die_errno("cannot opendir '%s'", path);
-	strcpy(pathbuf, path);
-	name = pathbuf + strlen(path);
-	*name++ = '/';
+		die_errno("cannot opendir '%s'", path->buf);
 	while ((de = readdir(dir)) != NULL) {
 		struct stat st;
+
 		if (is_dot_or_dotdot(de->d_name))
 			continue;
-		strcpy(name, de->d_name);
-		if (lstat(pathbuf, &st))
-			die_errno("cannot lstat '%s'", pathbuf);
+
+		strbuf_addch(path, '/');
+		strbuf_addstr(path, de->d_name);
+		if (lstat(path->buf, &st))
+			die_errno("cannot lstat '%s'", path->buf);
 		if (S_ISDIR(st.st_mode))
-			remove_subtree(pathbuf);
-		else if (unlink(pathbuf))
-			die_errno("cannot unlink '%s'", pathbuf);
+			remove_subtree(path);
+		else if (unlink(path->buf))
+			die_errno("cannot unlink '%s'", path->buf);
+		strbuf_setlen(path, origlen);
 	}
 	closedir(dir);
-	if (rmdir(path))
-		die_errno("cannot rmdir '%s'", path);
+	if (rmdir(path->buf))
+		die_errno("cannot rmdir '%s'", path->buf);
 }
 
 static int create_file(const char *path, unsigned int mode)
@@ -245,27 +245,25 @@ static int check_path(const char *path, int len, struct stat *st, int skiplen)
 int checkout_entry(struct cache_entry *ce,
 		   const struct checkout *state, char *topath)
 {
-	static struct strbuf path_buf = STRBUF_INIT;
-	char *path;
+	static struct strbuf path = STRBUF_INIT;
 	struct stat st;
-	int len;
 
 	if (topath)
 		return write_entry(ce, topath, state, 1);
 
-	strbuf_reset(&path_buf);
-	strbuf_add(&path_buf, state->base_dir, state->base_dir_len);
-	strbuf_add(&path_buf, ce->name, ce_namelen(ce));
-	path = path_buf.buf;
-	len = path_buf.len;
+	strbuf_reset(&path);
+	strbuf_add(&path, state->base_dir, state->base_dir_len);
+	strbuf_add(&path, ce->name, ce_namelen(ce));
 
-	if (!check_path(path, len, &st, state->base_dir_len)) {
+	if (!check_path(path.buf, path.len, &st, state->base_dir_len)) {
 		unsigned changed = ce_match_stat(ce, &st, CE_MATCH_IGNORE_VALID|CE_MATCH_IGNORE_SKIP_WORKTREE);
 		if (!changed)
 			return 0;
 		if (!state->force) {
 			if (!state->quiet)
-				fprintf(stderr, "%s already exists, no checkout\n", path);
+				fprintf(stderr,
+					"%s already exists, no checkout\n",
+					path.buf);
 			return -1;
 		}
 
@@ -280,12 +278,14 @@ int checkout_entry(struct cache_entry *ce,
 			if (S_ISGITLINK(ce->ce_mode))
 				return 0;
 			if (!state->force)
-				return error("%s is a directory", path);
-			remove_subtree(path);
-		} else if (unlink(path))
-			return error("unable to unlink old '%s' (%s)", path, strerror(errno));
+				return error("%s is a directory", path.buf);
+			remove_subtree(&path);
+		} else if (unlink(path.buf))
+			return error("unable to unlink old '%s' (%s)",
+				     path.buf, strerror(errno));
 	} else if (state->not_new)
 		return 0;
-	create_directories(path, len, state);
-	return write_entry(ce, path, state, 0);
+
+	create_directories(path.buf, path.len, state);
+	return write_entry(ce, path.buf, state, 0);
 }
