@@ -124,6 +124,9 @@ the value, the more time is spent optimizing the delta compression.  See
 the documentation for the --window' option in linkgit:git-repack[1] for
 more details.  This defaults to 250.
 
+Similarly, the optional configuration variable 'gc.aggressiveDepth'
+controls --depth option in linkgit:git-repack[1]. This defaults to 250.
+
 The optional configuration variable 'gc.pruneExpire' controls how old
 the unreferenced loose objects have to be before they are pruned.  The
 default is "2 weeks ago".

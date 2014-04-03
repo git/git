@@ -237,7 +237,7 @@ int odb_mkstemp(char *template, size_t limit, const char *pattern)
 	return xmkstemp_mode(template, mode);
 }
 
-int odb_pack_keep(char *name, size_t namesz, unsigned char *sha1)
+int odb_pack_keep(char *name, size_t namesz, const unsigned char *sha1)
 {
 	int fd;
 
