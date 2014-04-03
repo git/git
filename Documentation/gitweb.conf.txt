@@ -450,7 +450,7 @@ project config.  Per-repository configuration takes precedence over value
 composed from `@git_base_url_list` elements and project name.
 +
 You can setup one single value (single entry/item in this list) at build
-time by setting the `GITWEB_BASE_URL` built-time configuration variable.
+time by setting the `GITWEB_BASE_URL` build-time configuration variable.
 By default it is set to (), i.e. an empty list.  This means that gitweb
 would not try to create project URL (to fetch) from project name.
 
