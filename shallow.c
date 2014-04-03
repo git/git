@@ -8,9 +8,10 @@
 #include "diff.h"
 #include "revision.h"
 #include "commit-slab.h"
+#include "sigchain.h"
 
 static int is_shallow = -1;
-static struct stat shallow_stat;
+static struct stat_validity shallow_stat;
 static char *alternate_shallow_file;
 
 void set_alternate_shallow_file(const char *path, int override)
@@ -52,12 +53,12 @@ int is_repository_shallow(void)
 	 * shallow file should be used. We could just open it and it
 	 * will likely fail. But let's do an explicit check instead.
 	 */
-	if (!*path ||
-	    stat(path, &shallow_stat) ||
-	    (fp = fopen(path, "r")) == NULL) {
+	if (!*path || (fp = fopen(path, "r")) == NULL) {
+		stat_validity_clear(&shallow_stat);
 		is_shallow = 0;
 		return is_shallow;
 	}
+	stat_validity_update(&shallow_stat, fileno(fp));
 	is_shallow = 1;
 
 	while (fgets(buf, sizeof(buf), fp)) {
@@ -137,21 +138,11 @@ struct commit_list *get_shallow_commits(struct object_array *heads, int depth,
 
 void check_shallow_file_for_update(void)
 {
-	struct stat st;
-
-	if (!is_shallow)
-		return;
-	else if (is_shallow == -1)
+	if (is_shallow == -1)
 		die("BUG: shallow must be initialized by now");
 
-	if (stat(git_path("shallow"), &st))
-		die("shallow file was removed during fetch");
-	else if (st.st_mtime != shallow_stat.st_mtime
-#ifdef USE_NSEC
-		 || ST_MTIME_NSEC(st) != ST_MTIME_NSEC(shallow_stat)
-#endif
-		   )
-		die("shallow file was changed during fetch");
+	if (!stat_validity_check(&shallow_stat, git_path("shallow")))
+		die("shallow file has changed since we read it");
 }
 
 #define SEEN_ONLY 1
@@ -216,27 +207,53 @@ int write_shallow_commits(struct strbuf *out, int use_pack_protocol,
 	return write_shallow_commits_1(out, use_pack_protocol, extra, 0);
 }
 
-char *setup_temporary_shallow(const struct sha1_array *extra)
+static struct strbuf temporary_shallow = STRBUF_INIT;
+
+static void remove_temporary_shallow(void)
 {
+	if (temporary_shallow.len) {
+		unlink_or_warn(temporary_shallow.buf);
+		strbuf_reset(&temporary_shallow);
+	}
+}
+
+static void remove_temporary_shallow_on_signal(int signo)
+{
+	remove_temporary_shallow();
+	sigchain_pop(signo);
+	raise(signo);
+}
+
+const char *setup_temporary_shallow(const struct sha1_array *extra)
+{
+	static int installed_handler;
 	struct strbuf sb = STRBUF_INIT;
 	int fd;
 
+	if (temporary_shallow.len)
+		die("BUG: attempt to create two temporary shallow files");
+
 	if (write_shallow_commits(&sb, 0, extra)) {
-		struct strbuf path = STRBUF_INIT;
-		strbuf_addstr(&path, git_path("shallow_XXXXXX"));
-		fd = xmkstemp(path.buf);
+		strbuf_addstr(&temporary_shallow, git_path("shallow_XXXXXX"));
+		fd = xmkstemp(temporary_shallow.buf);
+
+		if (!installed_handler) {
+			atexit(remove_temporary_shallow);
+			sigchain_push_common(remove_temporary_shallow_on_signal);
+		}
+
 		if (write_in_full(fd, sb.buf, sb.len) != sb.len)
 			die_errno("failed to write to %s",
-				  path.buf);
+				  temporary_shallow.buf);
 		close(fd);
 		strbuf_release(&sb);
-		return strbuf_detach(&path, NULL);
+		return temporary_shallow.buf;
 	}
 	/*
 	 * is_repository_shallow() sees empty string as "no shallow
 	 * file".
 	 */
-	return xstrdup("");
+	return temporary_shallow.buf;
 }
 
 void setup_alternate_shallow(struct lock_file *shallow_lock,
@@ -246,9 +263,9 @@ void setup_alternate_shallow(struct lock_file *shallow_lock,
 	struct strbuf sb = STRBUF_INIT;
 	int fd;
 
-	check_shallow_file_for_update();
 	fd = hold_lock_file_for_update(shallow_lock, git_path("shallow"),
 				       LOCK_DIE_ON_ERROR);
+	check_shallow_file_for_update();
 	if (write_shallow_commits(&sb, 0, extra)) {
 		if (write_in_full(fd, sb.buf, sb.len) != sb.len)
 			die_errno("failed to write to %s",
@@ -293,9 +310,9 @@ void prune_shallow(int show_only)
 		strbuf_release(&sb);
 		return;
 	}
-	check_shallow_file_for_update();
 	fd = hold_lock_file_for_update(&shallow_lock, git_path("shallow"),
 				       LOCK_DIE_ON_ERROR);
+	check_shallow_file_for_update();
 	if (write_shallow_commits_1(&sb, 0, NULL, SEEN_ONLY)) {
 		if (write_in_full(fd, sb.buf, sb.len) != sb.len)
 			die_errno("failed to write to %s",

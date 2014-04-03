@@ -81,7 +81,7 @@ static void create_pack_file(void)
 	const char *argv[12];
 	int i, arg = 0;
 	FILE *pipe_fd;
-	char *shallow_file = NULL;
+	const char *shallow_file = NULL;
 
 	if (shallow_nr) {
 		shallow_file = setup_temporary_shallow(NULL);
@@ -241,11 +241,6 @@ static void create_pack_file(void)
 	if (finish_command(&pack_objects)) {
 		error("git upload-pack: git-pack-objects died with error.");
 		goto fail;
-	}
-	if (shallow_file) {
-		if (*shallow_file)
-			unlink(shallow_file);
-		free(shallow_file);
 	}
 
 	/* flush the data */
