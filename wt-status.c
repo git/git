@@ -245,51 +245,90 @@ static void wt_status_print_trailer(struct wt_status *s)
 
 #define quote_path quote_path_relative
 
-static void wt_status_print_unmerged_data(struct wt_status *s,
-					  struct string_list_item *it)
+static const char *wt_status_unmerged_status_string(int stagemask)
 {
-	const char *c = color(WT_STATUS_UNMERGED, s);
-	struct wt_status_change_data *d = it->util;
-	struct strbuf onebuf = STRBUF_INIT;
-	const char *one, *how = _("bug");
-
-	one = quote_path(it->string, s->prefix, &onebuf);
-	status_printf(s, color(WT_STATUS_HEADER, s), "\t");
-	switch (d->stagemask) {
-	case 1: how = _("both deleted:"); break;
-	case 2: how = _("added by us:"); break;
-	case 3: how = _("deleted by them:"); break;
-	case 4: how = _("added by them:"); break;
-	case 5: how = _("deleted by us:"); break;
-	case 6: how = _("both added:"); break;
-	case 7: how = _("both modified:"); break;
+	switch (stagemask) {
+	case 1:
+		return _("both deleted:");
+	case 2:
+		return _("added by us:");
+	case 3:
+		return _("deleted by them:");
+	case 4:
+		return _("added by them:");
+	case 5:
+		return _("deleted by us:");
+	case 6:
+		return _("both added:");
+	case 7:
+		return _("both modified:");
+	default:
+		die(_("bug: unhandled unmerged status %x"), stagemask);
 	}
-	status_printf_more(s, c, "%-20s%s\n", how, one);
-	strbuf_release(&onebuf);
 }
 
 static const char *wt_status_diff_status_string(int status)
 {
 	switch (status) {
 	case DIFF_STATUS_ADDED:
-		return _("new file");
+		return _("new file:");
 	case DIFF_STATUS_COPIED:
-		return _("copied");
+		return _("copied:");
 	case DIFF_STATUS_DELETED:
-		return _("deleted");
+		return _("deleted:");
 	case DIFF_STATUS_MODIFIED:
-		return _("modified");
+		return _("modified:");
 	case DIFF_STATUS_RENAMED:
-		return _("renamed");
+		return _("renamed:");
 	case DIFF_STATUS_TYPE_CHANGED:
-		return _("typechange");
+		return _("typechange:");
 	case DIFF_STATUS_UNKNOWN:
-		return _("unknown");
+		return _("unknown:");
 	case DIFF_STATUS_UNMERGED:
-		return _("unmerged");
+		return _("unmerged:");
 	default:
 		return NULL;
 	}
+}
+
+static int maxwidth(const char *(*label)(int), int minval, int maxval)
+{
+	int result = 0, i;
+
+	for (i = minval; i <= maxval; i++) {
+		const char *s = label(i);
+		int len = s ? utf8_strwidth(s) : 0;
+		if (len > result)
+			result = len;
+	}
+	return result;
+}
+
+static void wt_status_print_unmerged_data(struct wt_status *s,
+					  struct string_list_item *it)
+{
+	const char *c = color(WT_STATUS_UNMERGED, s);
+	struct wt_status_change_data *d = it->util;
+	struct strbuf onebuf = STRBUF_INIT;
+	static char *padding;
+	static int label_width;
+	const char *one, *how;
+	int len;
+
+	if (!padding) {
+		label_width = maxwidth(wt_status_unmerged_status_string, 1, 7);
+		label_width += strlen(" ");
+		padding = xmallocz(label_width);
+		memset(padding, ' ', label_width);
+	}
+
+	one = quote_path(it->string, s->prefix, &onebuf);
+	status_printf(s, color(WT_STATUS_HEADER, s), "\t");
+
+	how = wt_status_unmerged_status_string(d->stagemask);
+	len = label_width - utf8_strwidth(how);
+	status_printf_more(s, c, "%s%.*s%s\n", how, len, padding, one);
+	strbuf_release(&onebuf);
 }
 
 static void wt_status_print_change_data(struct wt_status *s,
@@ -305,21 +344,16 @@ static void wt_status_print_change_data(struct wt_status *s,
 	struct strbuf onebuf = STRBUF_INIT, twobuf = STRBUF_INIT;
 	struct strbuf extra = STRBUF_INIT;
 	static char *padding;
+	static int label_width;
 	const char *what;
 	int len;
 
 	if (!padding) {
-		int width = 0;
-		/* If DIFF_STATUS_* uses outside this range, we're in trouble */
-		for (status = 'A'; status <= 'Z'; status++) {
-			what = wt_status_diff_status_string(status);
-			len = what ? strlen(what) : 0;
-			if (len > width)
-				width = len;
-		}
-		width += 2;	/* colon and a space */
-		padding = xmallocz(width);
-		memset(padding, ' ', width);
+		/* If DIFF_STATUS_* uses outside the range [A..Z], we're in trouble */
+		label_width = maxwidth(wt_status_diff_status_string, 'A', 'Z');
+		label_width += strlen(" ");
+		padding = xmallocz(label_width);
+		memset(padding, ' ', label_width);
 	}
 
 	one_name = two_name = it->string;
@@ -355,14 +389,13 @@ static void wt_status_print_change_data(struct wt_status *s,
 	what = wt_status_diff_status_string(status);
 	if (!what)
 		die(_("bug: unhandled diff status %c"), status);
-	/* 1 for colon, which is not part of "what" */
-	len = strlen(padding) - (utf8_strwidth(what) + 1);
+	len = label_width - utf8_strwidth(what);
 	assert(len >= 0);
 	if (status == DIFF_STATUS_COPIED || status == DIFF_STATUS_RENAMED)
-		status_printf_more(s, c, "%s:%.*s%s -> %s",
+		status_printf_more(s, c, "%s%.*s%s -> %s",
 				   what, len, padding, one, two);
 	else
-		status_printf_more(s, c, "%s:%.*s%s",
+		status_printf_more(s, c, "%s%.*s%s",
 				   what, len, padding, one);
 	if (extra.len) {
 		status_printf_more(s, color(WT_STATUS_HEADER, s), "%s", extra.buf);

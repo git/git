@@ -33,7 +33,7 @@ You have unmerged paths.
 Unmerged paths:
   (use "git add <file>..." to mark resolution)
 
-	both modified:      main.txt
+	both modified:   main.txt
 
 no changes added to commit (use "git add" and/or "git commit -a")
 EOF
@@ -87,7 +87,7 @@ Unmerged paths:
   (use "git reset HEAD <file>..." to unstage)
   (use "git add <file>..." to mark resolution)
 
-	both modified:      main.txt
+	both modified:   main.txt
 
 no changes added to commit (use "git add" and/or "git commit -a")
 EOF
@@ -146,7 +146,7 @@ Unmerged paths:
   (use "git reset HEAD <file>..." to unstage)
   (use "git add <file>..." to mark resolution)
 
-	both modified:      main.txt
+	both modified:   main.txt
 
 no changes added to commit (use "git add" and/or "git commit -a")
 EOF
@@ -602,7 +602,7 @@ rebase in progress; onto $ONTO
 You are currently rebasing branch '\''statushints_disabled'\'' on '\''$ONTO'\''.
 
 Unmerged paths:
-	both modified:      main.txt
+	both modified:   main.txt
 
 no changes added to commit
 EOF
@@ -636,7 +636,7 @@ You are currently cherry-picking commit $TO_CHERRY_PICK.
 Unmerged paths:
   (use "git add <file>..." to mark resolution)
 
-	both modified:      main.txt
+	both modified:   main.txt
 
 no changes added to commit (use "git add" and/or "git commit -a")
 EOF
@@ -707,7 +707,7 @@ Unmerged paths:
   (use "git reset HEAD <file>..." to unstage)
   (use "git add <file>..." to mark resolution)
 
-	both modified:      to-revert.txt
+	both modified:   to-revert.txt
 
 no changes added to commit (use "git add" and/or "git commit -a")
 EOF
