@@ -47,6 +47,13 @@ Updates since v1.9 series
 
 UI, Workflows & Features
 
+ * "git gc --aggressive" learned "--depth" option and
+   "gc.aggressiveDepth" configuration variable to allow use of a less
+   insane depth than the built-in default value of 250.
+
+ * "git log" learned the "--show-linear-break" option to show where a
+   single strand-of-pearls is broken in its output.
+
  * The "rev-parse --parseopt" mechanism used by scripted Porcelains to
    parse command line options and to give help text learned to take
    the argv-help (the placeholder string for an option parameter,
@@ -129,6 +136,8 @@ UI, Workflows & Features
 
 Performance, Internal Implementation, etc.
 
+ * The compilation options to port to AIX has been updated.
+
  * We started using wildmatch() in place of fnmatch(3) a few releases
    ago; complete the process and stop using fnmatch(3).
 
@@ -160,6 +169,22 @@ Fixes since v1.9 series
 Unless otherwise noted, all the fixes since v1.9 in the maintenance
 track are contained in this release (see the maintenance releases'
 notes for details).
+
+ * "git diff --no-index -Mq a b" fell into an infinite loop.
+   (merge ad1c3fb jc/fix-diff-no-index-diff-opt-parse later to maint).
+
+ * "git fetch --prune", when the right-hand-side of multiple fetch
+   refspecs overlap (e.g. storing "refs/heads/*" to
+   "refs/remotes/origin/*", while storing "refs/frotz/*" to
+   "refs/remotes/origin/fr/*"), aggressively thought that lack of
+   "refs/heads/fr/otz" on the origin site meant we should remove
+   "refs/remotes/origin/fr/otz" from us, without checking their
+   "refs/frotz/otz" first.
+
+   Note that such a configuration is inherently unsafe (think what
+   should happen when "refs/heads/fr/otz" does appear on the origin
+   site), but that is not a reason not to be extra careful.
+   (merge e6f6371 cn/fetch-prune-overlapping-destination later to maint).
 
  * "git status --porcelain --branch" showed its output with labels
    "ahead/behind/gone" translated to the user's locale.
