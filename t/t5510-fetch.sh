@@ -113,6 +113,26 @@ test_expect_success 'fetch --prune with a namespace keeps other namespaces' '
 	git rev-parse origin/master
 '
 
+test_expect_success 'fetch --prune handles overlapping refspecs' '
+	cd "$D" &&
+	git update-ref refs/pull/42/head master &&
+	git clone . prune-overlapping &&
+	cd prune-overlapping &&
+	git config --add remote.origin.fetch refs/pull/*/head:refs/remotes/origin/pr/* &&
+
+	git fetch --prune origin &&
+	git rev-parse origin/master &&
+	git rev-parse origin/pr/42 &&
+
+	git config --unset-all remote.origin.fetch
+	git config remote.origin.fetch refs/pull/*/head:refs/remotes/origin/pr/* &&
+	git config --add remote.origin.fetch refs/heads/*:refs/remotes/origin/* &&
+
+	git fetch --prune origin &&
+	git rev-parse origin/master &&
+	git rev-parse origin/pr/42
+'
+
 test_expect_success 'fetch --prune --tags prunes branches but not tags' '
 	cd "$D" &&
 	git clone . prune-tags &&
