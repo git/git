@@ -14,8 +14,8 @@ sort |
     bad=0
     while read builtin
     do
-	base=`expr "$builtin" : 'git-\(.*\)'`
-	x=`sed -ne 's/.*{ "'$base'", \(cmd_[^, ]*\).*/'$base'	\1/p' git.c`
+	base=$(expr "$builtin" : 'git-\(.*\)')
+	x=$(sed -ne 's/.*{ "'$base'", \(cmd_[^, ]*\).*/'$base'	\1/p' git.c)
 	if test -z "$x"
 	then
 		echo "$base is builtin but not listed in git.c command list"

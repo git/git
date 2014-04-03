@@ -125,7 +125,7 @@ cannot_fallback () {
 }
 
 fall_back_3way () {
-    O_OBJECT=`cd "$GIT_OBJECT_DIRECTORY" && pwd`
+    O_OBJECT=$(cd "$GIT_OBJECT_DIRECTORY" && pwd)
 
     rm -fr "$dotest"/patch-merge-*
     mkdir "$dotest/patch-merge-tmp-dir"
@@ -275,7 +275,7 @@ split_patches () {
 		then
 			clean_abort "$(gettext "Only one StGIT patch series can be applied at once")"
 		fi
-		series_dir=`dirname "$1"`
+		series_dir=$(dirname "$1")
 		series_file="$1"
 		shift
 		{
@@ -298,8 +298,8 @@ split_patches () {
 		this=0
 		for stgit in "$@"
 		do
-			this=`expr "$this" + 1`
-			msgnum=`printf "%0${prec}d" $this`
+			this=$(expr "$this" + 1)
+			msgnum=$(printf "%0${prec}d" $this)
 			# Perl version of StGIT parse_patch. The first nonemptyline
 			# not starting with Author, From or Date is the
 			# subject, and the body starts with the next nonempty
@@ -644,26 +644,26 @@ fi
 git_apply_opt=$(cat "$dotest/apply-opt")
 if test "$(cat "$dotest/sign")" = t
 then
-	SIGNOFF=`git var GIT_COMMITTER_IDENT | sed -e '
+	SIGNOFF=$(git var GIT_COMMITTER_IDENT | sed -e '
 			s/>.*/>/
 			s/^/Signed-off-by: /'
-		`
+		)
 else
 	SIGNOFF=
 fi
 
-last=`cat "$dotest/last"`
-this=`cat "$dotest/next"`
+last=$(cat "$dotest/last")
+this=$(cat "$dotest/next")
 if test "$skip" = t
 then
-	this=`expr "$this" + 1`
+	this=$(expr "$this" + 1)
 	resume=
 fi
 
 while test "$this" -le "$last"
 do
-	msgnum=`printf "%0${prec}d" $this`
-	next=`expr "$this" + 1`
+	msgnum=$(printf "%0${prec}d" $this)
+	next=$(expr "$this" + 1)
 	test -f "$dotest/$msgnum" || {
 		resume=
 		go_next
@@ -739,16 +739,16 @@ To restore the original branch and stop patching run \"\$cmdline --abort\"."
 	'')
 	    if test '' != "$SIGNOFF"
 	    then
-		LAST_SIGNED_OFF_BY=`
+		LAST_SIGNED_OFF_BY=$(
 		    sed -ne '/^Signed-off-by: /p' \
 		    "$dotest/msg-clean" |
 		    sed -ne '$p'
-		`
-		ADD_SIGNOFF=`
+		)
+		ADD_SIGNOFF=$(
 		    test "$LAST_SIGNED_OFF_BY" = "$SIGNOFF" || {
 		    test '' = "$LAST_SIGNED_OFF_BY" && echo
 		    echo "$SIGNOFF"
-		}`
+		})
 	    else
 		ADD_SIGNOFF=
 	    fi
