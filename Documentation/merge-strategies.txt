@@ -1,10 +1,10 @@
 MERGE STRATEGIES
 ----------------
 
-The merge mechanism ('git-merge' and 'git-pull' commands) allows the
+The merge mechanism (`git merge` and `git pull` commands) allows the
 backend 'merge strategies' to be chosen with `-s` option.  Some strategies
 can also take their own options, which can be passed by giving `-X<option>`
-arguments to 'git-merge' and/or 'git-pull'.
+arguments to `git merge` and/or `git pull`.
 
 resolve::
 	This can only resolve two heads (i.e. the current branch
