@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Mar 2014, #08; Mon, 31)
-X-master-at: 25d1ac0e59f4471c3b124a0c19cad9f9511a26ad
-X-next-at: 875d83ee45ac54ebd34015807b9d6c3817e4b249
+Subject: What's cooking in git.git (Apr 2014, #01; Fri, 4)
+X-master-at: e4eef26d985177e4bdd32bf58b6ae40e7ae67289
+X-next-at: 3e70902d3cca37d1cd975a63c61e4c0966946084
 
-What's cooking in git.git (Mar 2014, #08; Mon, 31)
+What's cooking in git.git (Apr 2014, #01; Fri, 4)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -26,186 +26,122 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* an/branch-config-message (2014-03-24) 1 commit
-  (merged to 'next' on 2014-03-26 at 26f9741)
- + branch.c: install_branch_config: simplify if chain
+* ap/remote-hg-skip-null-bookmarks (2014-03-25) 1 commit
+  (merged to 'next' on 2014-03-25 at a8cd922)
+ + remote-hg: do not fail on invalid bookmarks
 
 
-* ca/doc-config-third-party (2014-03-21) 1 commit
-  (merged to 'next' on 2014-03-25 at 731e011)
- + config.txt: third-party tools may and do use their own variables
+* cb/aix (2014-03-31) 2 commits
+  (merged to 'next' on 2014-04-01 at dd6b3d8)
+ + tests: don't rely on strerror text when testing rmdir failure
+ + dir.c: make git_fnmatch() not inline
 
 
-* dp/makefile-charset-lib-doc (2014-03-23) 1 commit
-  (merged to 'next' on 2014-03-25 at b32e3ad)
- + Makefile: describe CHARSET_LIB better
+* cn/fetch-prune-overlapping-destination (2014-03-26) 2 commits
+  (merged to 'next' on 2014-03-28 at 954513a)
+ + fetch: handle overlaping refspecs on --prune
+ + fetch: add a failing test for prunning with overlapping refspecs
+
+ Protect refs in a hierarchy that can come from more than one remote
+ hierarcies from incorrect removal by "git fetch --prune".
 
 
-* dt/tests-with-env-not-subshell (2014-03-19) 1 commit
-  (merged to 'next' on 2014-03-25 at 19fe25f)
- + tests: use "env" to run commands with temporary env-var settings
- (this branch is used by jk/tests-cleanup.)
+* ep/shell-command-substitution (2014-03-25) 2 commits
+  (merged to 'next' on 2014-03-28 at 99a512a)
+ + git-am.sh: use the $(...) construct for command substitution
+ + check-builtins.sh: use the $(...) construct for command substitution
 
 
-* dw/doc-status-no-longer-shows-pound-prefix (2014-03-21) 1 commit
-  (merged to 'next' on 2014-03-25 at 2683eb6)
- + doc: status, remove leftover statement about '#' prefix
+* jc/fix-diff-no-index-diff-opt-parse (2014-03-31) 1 commit
+  (merged to 'next' on 2014-04-01 at b8ae26b)
+ + diff-no-index: correctly diagnose error return from diff_opt_parse()
+
+ "diff --no-index -Mq a b" fell into an infinite loop.
 
 
-* hs/simplify-bit-setting-in-fsck-tree (2014-03-20) 1 commit
-  (merged to 'next' on 2014-03-25 at 08efd68)
- + fsck: use bitwise-or assignment operator to set flag
+* nd/gc-aggressive (2014-03-31) 2 commits
+  (merged to 'next' on 2014-04-01 at e9f89b3)
+ + environment.c: fix constness for odb_pack_keep()
+ + gc --aggressive: make --depth configurable
+
+ Allow tweaking the maximum length of the delta-chain produced by
+ "gc --aggressive".
 
 
-* ib/rev-parse-parseopt-argh (2014-03-23) 2 commits
-  (merged to 'next' on 2014-03-25 at d9083ed)
- + t1502: protect runs of SPs used in the indentation
- + rev-parse --parseopt: option argument name hints
- (this branch is used by jc/rev-parse-argh-dashed-multi-words.)
+* nd/log-show-linear-break (2014-03-25) 2 commits
+  (merged to 'next' on 2014-03-28 at ea4a8db)
+ + log: add --show-linear-break to help see non-linear history
+ + object.h: centralize object flag allocation
 
- Teaches the "rev-parse --parseopt" mechanism used by scripted
- Porcelains to parse command line options and give help text how to
- supply argv-help (the placeholder string for an option parameter,
- e.g. "key-id" in "--gpg-sign=<key-id>").
+ Attempts to show where a single-strand-of-pearls break in "git log"
+ output.
 
 
-* jk/tests-cleanup (2014-03-21) 12 commits
-  (merged to 'next' on 2014-03-26 at 4a72b49)
- + t0001: drop subshells just for "cd"
- + t0001: drop useless subshells
- + t0001: use test_must_fail
- + t0001: use test_config_global
- + t0001: use test_path_is_*
- + t0001: make symlink reinit test more careful
- + t: prefer "git config --file" to GIT_CONFIG
- + t: prefer "git config --file" to GIT_CONFIG with test_must_fail
- + t: stop using GIT_CONFIG to cross repo boundaries
- + t: drop useless sane_unset GIT_* calls
- + t/test-lib: drop redundant unset of GIT_CONFIG
- + t/Makefile: stop setting GIT_CONFIG
- (this branch uses dt/tests-with-env-not-subshell.)
+* rs/pickaxe-i (2014-03-24) 10 commits
+  (merged to 'next' on 2014-03-25 at 3b6f21f)
+ + pickaxe: simplify kwset loop in contains()
+ + pickaxe: call strlen only when necessary in diffcore_pickaxe_count()
+ + pickaxe: move pickaxe() after pickaxe_match()
+ + pickaxe: merge diffcore_pickaxe_grep() and diffcore_pickaxe_count() into diffcore_pickaxe()
+ + pickaxe: honor -i when used with -S and --pickaxe-regex
+ + t4209: use helper functions to test --author
+ + t4209: use helper functions to test --grep
+ + t4209: factor out helper function test_log_icase()
+ + t4209: factor out helper function test_log()
+ + t4209: set up expectations up front
 
-
-* js/userdiff-cc (2014-03-21) 10 commits
-  (merged to 'next' on 2014-03-25 at 8c0e585)
- + userdiff: have 'cpp' hunk header pattern catch more C++ anchor points
- + t4018: test cases showing that the cpp pattern misses many anchor points
- + t4018: test cases for the built-in cpp pattern
- + t4018: reduce test files for pattern compilation tests
- + t4018: convert custom pattern test to the new infrastructure
- + t4018: convert java pattern test to the new infrastructure
- + t4018: convert perl pattern tests to the new infrastructure
- + t4018: an infrastructure to test hunk headers
- + userdiff: support unsigned and long long suffixes of integer constants
- + userdiff: support C++ ->* and .* operators in the word regexp
-
- Improves the pattern to match the hunk-header for C/C++.
-
-
-* mm/status-porcelain-format-i18n-fix (2014-03-26) 1 commit
-  (merged to 'next' on 2014-03-26 at 41680fc)
- + status: disable translation when --porcelain is used
-
-
-* mr/msvc-link-with-lcurl (2014-03-27) 1 commit
-  (merged to 'next' on 2014-03-28 at 3281dab)
- + MSVC: allow linking with the cURL library
-
-
-* wt/doc-submodule-name-path-confusion-1 (2014-03-27) 1 commit
-  (merged to 'next' on 2014-03-28 at 225f241)
- + doc: submodule.* config are keyed by submodule names
-
-
-* wt/doc-submodule-name-path-confusion-2 (2014-03-27) 1 commit
-  (merged to 'next' on 2014-03-28 at ec5bcf3)
- + doc: submodule.*.branch config is keyed by name
+ Allow the options -i/--regexp-ignore-case, --pickaxe-regex, and -S
+ to be used together and work as expected to perform a pickaxe
+ search using case-insensitive regular expression matching.
 
 --------------------------------------------------
 [New Topics]
 
-* cb/aix (2014-03-31) 2 commits
- - tests: don't rely on strerror text when testing rmdir failure
- - dir.c: make git_fnmatch() not inline
+* ib/rev-parse-parseopt-argh (2014-04-01) 1 commit
+  (merged to 'next' on 2014-04-01 at 025578d)
+ + rev-parse: fix typo in example on manpage
+
+ Finishing touch to a new topic scheduled for 2.0
+
+ Will merge to 'master'.
+
+
+* mh/lockfile (2014-04-02) 22 commits
+ - lockfile: allow new file contents to be written while retaining lock
+ - lockfile: extract a function reset_lock_file()
+ - remove_lock_file(): call rollback_lock_file()
+ - struct lock_file: rename lock_filename field to staging_filename
+ - lockfile: also keep track of the filename of the file being locked
+ - lock_file(): exit early if lockfile cannot be opened
+ - commit_lock_file(): don't work with a fixed-length buffer
+ - resolve_symlink(): use a strbuf internally
+ - lockfile: use strbufs when handling (most) paths
+ - config: change write_error() to take a (struct lock_file *) argument
+ - delete_ref_loose(): don't muck around in the lock_file's filename
+ - lockfile: define a constant LOCK_SUFFIX_LEN
+ - lockfile.c: document the various states of lock_file objects
+ - api-lockfile: expand the documentation
+ - struct lock_file: replace on_list field with flags field
+ - lock_file(): always add lock_file object to lock_file_list
+ - hold_lock_file_for_append(): release lock on errors
+ - lockfile: unlock file if lockfile permissions cannot be adjusted
+ - rollback_lock_file(): set fd to -1
+ - rollback_lock_file(): do not clear filename redundantly
+ - try_merge_strategy(): remove redundant lock_file allocation
+ - t3204: test deleting references when lock files already exist
+
+
+* mh/update-ref-batch-create-fix (2014-04-02) 1 commit
+  (merged to 'next' on 2014-04-04 at 97e3f12)
+ + update-ref: fail create operation over stdin if ref already exists
+
+ Will merge to 'master'.
+
+
+* jk/pack-bitmap (2014-04-04) 1 commit
+ - add `ignore_missing_links` mode to revwalk
 
  Will merge to 'next'.
-
-
-* jc/fix-diff-no-index-diff-opt-parse (2014-03-31) 1 commit
- - diff-no-index: correctly diagnose error return from diff_opt_parse()
-
- "diff --no-index -Mq a b" fell into an infinite loop.
-
- Will merge to 'next'.
-
-
-* mr/opt-set-ptr (2014-03-31) 3 commits
- - parse-options: remove unused OPT_SET_PTR
- - parse-options: add cast to correct pointer type to OPT_SET_PTR
- - MSVC: fix t0040-parse-options crash
-
- OPT_SET_PTR() implementation was broken on IL32P64 platforms.
-
- We may just want directly to go to the endgame of removing
- OPT_SET_PTR macro, which nobody seems to use.
-
-
-* mt/patch-id-stable (2014-03-31) 3 commits
- - patch-id-test: test --stable and --unstable flags
- - patch-id: document new behaviour
- - patch-id: make it stable against hunk reordering
-
- Introduce a new way to compute patch-id for a patch that is not
- affected by the order of the paths that appear in the input.
-
-
-* jl/nor-or-nand-and (2014-03-31) 4 commits
- - code and test: fix misuses of "nor"
- - comments: fix misuses of "nor"
- - contrib: fix misuses of "nor"
- - Documentation: fix misuses of "nor"
-
- Eradicate mistaken use of "nor" (that is, essentially "nor" used
- not in "neither A nor B" ;-)) from in-code comments, command output
- strings, and documentations.
-
-
-* mh/ref-transaction (2014-03-31) 27 commits
- - ref_transaction_commit(): work with transaction->updates in place
- - struct ref_update: add type field
- - struct ref_update: add a lock member
- - ref_transaction_commit(): simplify expressions
- - struct ref_update: store refname as a FLEX_ARRAY
- - struct ref_update: rename field "ref_name" to "refname"
- - refs: remove API function update_refs()
- - update-ref --stdin: reimplement using reference transactions
- - refs: add a concept of a reference transaction
- - update-ref --stdin: harmonize error messages
- - update-ref --stdin: improve the error message for unexpected EOF
- - t1400: test one breakage at a time
- - update-ref --stdin -z: deprecate interpreting the empty string as zeros
- - update-ref.c: extract a new function, parse_next_sha1()
- - t1400: test that stdin -z update treats empty <newvalue> as zeros
- - update-ref --stdin: simplify error messages for missing oldvalues
- - update-ref --stdin: make error messages more consistent
- - update-ref --stdin: improve error messages for invalid values
- - update-ref.c: extract a new function, parse_refname()
- - parse_cmd_verify(): copy old_sha1 instead of evaluating <oldvalue> twice
- - update-ref --stdin: read the whole input at once
- - update_refs(): tighten constness
- - refs.h: rename the action_on_err constants
- - t1400: add some more tests involving quoted arguments
- - parse_arg(): really test that argument is properly terminated
- - t1400: provide more usual input to the command
- - t1400: fix test name and expected result of one test
-
- Update "update-ref --stdin [-z]" and then introduce a transactional
- support for (multi-)reference updates.
-
- I think the earlier part should be merged to 'next' soonish in
- order to keep the topic that is still in flux reasonably short.  I
- haven't read the "transaction" part carefully yet.
-
 
 --------------------------------------------------
 [Stalled]
@@ -232,15 +168,16 @@ of the repositories listed at
  with conflicts the person who recorded the merge would have seen
  and the final conflict resolution that was recorded in the merge.
 
- RFC.  This latest round clashes with the kb/fast-hashmap topic in
- 'master'.
+ Needs to be rebased, now kb/fast-hashmap topic is in.
 
 
 * sz/mingw-index-pack-threaded (2014-03-19) 1 commit
  - Enable index-pack threading in msysgit.
 
- Still under discussion among Windows folks.  A failure report
- exists ($gmane/245170).
+ What is the status of this topic?  A failure report exists
+ ($gmane/245170), and I am aware of Duy's $gmane/245034 but that was
+ where the discussion stalled.  Is everybody waiting for everybody
+ else to get the discussion unstuck?
 
 
 * bc/blame-crlf-test (2014-02-18) 1 commit
@@ -275,12 +212,6 @@ of the repositories listed at
  dependency rules.
 
  Expecting a reroll.
-
-
-* kb/fast-hashmap-pack-struct (2014-02-24) 1 commit
- - hashmap.h: make sure map entries are tightly packed
-
- Will discard.
 
 
 * po/everyday-doc (2014-01-27) 1 commit
@@ -343,25 +274,6 @@ of the repositories listed at
  This was primarily a RFH ($gmane/239580).
 
 
-* hv/submodule-ignore-fix (2013-12-06) 4 commits
- - disable complete ignorance of submodules for index <-> HEAD diff
- - always show committed submodules in summary after commit
- - teach add -f option for ignored submodules
- - fix 'git add' to skip submodules configured as ignored
-
- Teach "git add" to be consistent with "git status" when changes to
- submodules are set to be ignored, to avoid surprises after checking
- with "git status" to see there isn't any change to be further added
- and then see that "git add ." adds changes to them.
-
- I think a reroll is coming, so this may need to be replaced, but I
- needed some practice with heavy conflict resolution.  It conflicts
- with two changes to "git add" that have been scheduled for Git 2.0
- quite badly, and I think I got the resolution right this time.
-
- Waiting for a reroll.
-
-
 * np/pack-v4 (2013-09-18) 90 commits
  . packv4-parse.c: add tree offset caching
  . t1050: replace one instance of show-index with verify-pack
@@ -373,8 +285,7 @@ of the repositories listed at
  Nico and Duy advancing the eternal vaporware pack-v4.  This is here
  primarily for wider distribution of the preview edition.
 
- Temporarily ejected from 'pu', to try out jk/pack-bitmap, which
- this topic conflicts with.
+ Needs to be rebased, now the pack-bitmap series is in.
 
 
 * tg/perf-lib-test-perf-cleanup (2013-09-19) 2 commits
@@ -410,15 +321,85 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* jc/apply-ignore-whitespace (2014-03-26) 1 commit
- - apply --ignore-space-change: lines with and without leading whitespaces do not match
+* mr/opt-set-ptr (2014-03-31) 3 commits
+  (merged to 'next' on 2014-04-03 at a26385b)
+ + parse-options: remove unused OPT_SET_PTR
+ + parse-options: add cast to correct pointer type to OPT_SET_PTR
+ + MSVC: fix t0040-parse-options crash
 
- An RFC.  "--ignore-space-change" option of "git apply" ignored the
+ OPT_SET_PTR() implementation was broken on IL32P64 platforms;
+ it turns out that the macro is not used by any real user.
+
+
+* mt/patch-id-stable (2014-03-31) 3 commits
+ - patch-id-test: test --stable and --unstable flags
+ - patch-id: document new behaviour
+ - patch-id: make it stable against hunk reordering
+
+ Introduce a new way to compute patch-id for a patch that is not
+ affected by the order of the paths that appear in the input.
+
+ Will merge to 'next' and keep it there for the remainder of this cycle.
+
+
+* jl/nor-or-nand-and (2014-03-31) 4 commits
+ - code and test: fix misuses of "nor"
+ - comments: fix misuses of "nor"
+ - contrib: fix misuses of "nor"
+ - Documentation: fix misuses of "nor"
+
+ Eradicate mistaken use of "nor" (that is, essentially "nor" used
+ not in "neither A nor B" ;-)) from in-code comments, command output
+ strings, and documentations.
+
+ Will merge to 'next'.
+
+
+* mh/ref-transaction (2014-04-01) 27 commits
+ - ref_transaction_commit(): work with transaction->updates in place
+ - struct ref_update: add type field
+ - struct ref_update: add a lock member
+ - ref_transaction_commit(): introduce temporary variables
+ - struct ref_update: store refname as a FLEX_ARRAY
+ - struct ref_update: rename field "ref_name" to "refname"
+ - refs: remove API function update_refs()
+ - update-ref --stdin: reimplement using reference transactions
+ - refs: add a concept of a reference transaction
+ - update-ref --stdin: harmonize error messages
+ - update-ref --stdin: improve the error message for unexpected EOF
+ - t1400: test one mistake at a time
+ - update-ref --stdin -z: deprecate interpreting the empty string as zeros
+ - update-ref.c: extract a new function, parse_next_sha1()
+ - t1400: test that stdin -z update treats empty <newvalue> as zeros
+ - update-ref --stdin: simplify error messages for missing oldvalues
+ - update-ref --stdin: make error messages more consistent
+ - update-ref --stdin: improve error messages for invalid values
+ - update-ref.c: extract a new function, parse_refname()
+ - parse_cmd_verify(): copy old_sha1 instead of evaluating <oldvalue> twice
+ - update-ref --stdin: read the whole input at once
+ - update_refs(): fix constness
+ - refs.h: rename the action_on_err constants
+ - t1400: add some more tests involving quoted arguments
+ - parse_arg(): really test that argument is properly terminated
+ - t1400: provide more usual input to the command
+ - t1400: fix name and expected result of one test
+
+ Update "update-ref --stdin [-z]" and then introduce a transactional
+ support for (multi-)reference updates.
+
+ Replaced with an unpublished "v3".
+
+
+* jc/apply-ignore-whitespace (2014-03-26) 1 commit
+  (merged to 'next' on 2014-04-04 at 53779a7)
+ + apply --ignore-space-change: lines with and without leading whitespaces do not match
+
+ "--ignore-space-change" option of "git apply" ignored the
  spaces at the beginning of line too aggressively, which is
  inconsistent with the option of the same name "diff" and "git diff"
  have.
 
- Will hold.
+ Will keep in 'next' for the remainder of this cycle.
 
 
 * jc/rev-parse-argh-dashed-multi-words (2014-03-24) 3 commits
@@ -435,44 +416,17 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* jk/commit-dates-parsing-fix (2014-03-26) 1 commit
- - t4212: loosen far-in-future test for AIX
+* jk/commit-dates-parsing-fix (2014-04-01) 2 commits
+  (merged to 'next' on 2014-04-04 at c16eeb0)
+ + t4212: loosen far-in-future test for AIX
+ + date: recognize bogus FreeBSD gmtime output
 
- I think we agreed that a simpler test would be a better way
- forward.
+ Will merge to 'master' and later to 'maint'.
 
 
 * mr/msvc-link-with-invalidcontinue (2014-03-28) 1 commit
   (merged to 'next' on 2014-03-31 at 051a29e)
  + MSVC: link in invalidcontinue.obj for better POSIX compatibility
-
- Will merge to 'master'.
-
-
-* ep/shell-command-substitution (2014-03-25) 2 commits
-  (merged to 'next' on 2014-03-28 at 99a512a)
- + git-am.sh: use the $(...) construct for command substitution
- + check-builtins.sh: use the $(...) construct for command substitution
-
- Will merge to 'master'.
-
-
-* rs/pickaxe-i (2014-03-24) 10 commits
-  (merged to 'next' on 2014-03-25 at 3b6f21f)
- + pickaxe: simplify kwset loop in contains()
- + pickaxe: call strlen only when necessary in diffcore_pickaxe_count()
- + pickaxe: move pickaxe() after pickaxe_match()
- + pickaxe: merge diffcore_pickaxe_grep() and diffcore_pickaxe_count() into diffcore_pickaxe()
- + pickaxe: honor -i when used with -S and --pickaxe-regex
- + t4209: use helper functions to test --author
- + t4209: use helper functions to test --grep
- + t4209: factor out helper function test_log_icase()
- + t4209: factor out helper function test_log()
- + t4209: set up expectations up front
-
- Allow the options -i/--regexp-ignore-case, --pickaxe-regex, and -S
- to be used together and work as expected to perform a pickaxe
- search using case-insensitive regular expression matching.
 
  Will merge to 'master'.
 
@@ -487,39 +441,7 @@ of the repositories listed at
  This may cause regressions on scripted users that do not expect
  this new behaviour.
 
- Will hold.
-
-
-* nd/gc-aggressive (2014-03-31) 2 commits
- - environment.c: fix constness for odb_pack_keep()
- - gc --aggressive: make --depth configurable
-
- Allow tweaking the maximum length of the delta-chain produced by
- "gc --aggressive".
-
- Will merge to 'next'.
-
-
-* ap/remote-hg-skip-null-bookmarks (2014-03-25) 1 commit
-  (merged to 'next' on 2014-03-25 at a8cd922)
- + remote-hg: do not fail on invalid bookmarks
-
- Will merge to 'master'.
-
-
-* cn/fetch-prune-overlapping-destination (2014-03-26) 2 commits
-  (merged to 'next' on 2014-03-28 at 954513a)
- + fetch: handle overlaping refspecs on --prune
- + fetch: add a failing test for prunning with overlapping refspecs
-
- Protect refs in a hierarchy that can come from more than one remote
- hierarcies from incorrect removal by "git fetch --prune".
-
- Since I didn't get any responses to my earlier "Comments?", I ended
- up reading it myself again and found a small leak, whose fix has
- been squashed in to the tip commit.
-
- Will merge to 'master'.
+ Will keep in 'next' for the remainder of this cycle.
 
 
 * nd/multiple-work-trees (2014-03-25) 28 commits
@@ -556,9 +478,7 @@ of the repositories listed at
  rely on symbolic links and make sharing of objects and refs safer
  by making the borrowee and borrowers aware of each other.
 
- What is the doneness of this thing?  I remember reading it through
- once and sent review comments on earlier parts, but have there been
- a lot of discussions on this topic?
+ Will hold.
 
 
 * ks/tree-diff-nway (2014-03-27) 19 commits
@@ -592,23 +512,13 @@ of the repositories listed at
  detections and such.  And N=2 case nicely degenerates to the usual
  2-way diff-tree, which is very nice.
 
- The preparatory steps are all in 'next'.  The real fun part should
- follow soonish (hopefully).
+ The preparatory steps are all in 'next'.
+
+ Will merge to 'next' and keep it there for the remainder of this cycle.
 
 
-* nd/log-show-linear-break (2014-03-25) 2 commits
-  (merged to 'next' on 2014-03-28 at ea4a8db)
- + log: add --show-linear-break to help see non-linear history
- + object.h: centralize object flag allocation
-
- Attempts to show where a single-strand-of-pearls break in "git log"
- output.
-
- Will merge to 'master'.
-
-
-* cc/interpret-trailers (2014-03-26) 12 commits
- - trailers: add documentation for 'git interpret-trailers'
+* cc/interpret-trailers (2014-04-01) 11 commits
+ - Documentation: add documentation for 'git interpret-trailers'
  - trailer: add tests for commands in config file
  - trailer: execute command from 'trailer.<name>.command'
  - trailer: add tests for "git interpret-trailers"
@@ -617,9 +527,25 @@ of the repositories listed at
  - trailer: parse trailers from stdin
  - trailer: process command line trailer arguments
  - trailer: read and process config information
- - Move lower case functions into wrapper.c
  - trailer: process trailers from stdin and arguments
- - trailers: add data structures and basic functions
+ - trailer: add data structures and basic functions
 
  A new filter to programatically edit the tail end of the commit log
  messages.
+
+ Will merge to 'next'.
+
+--------------------------------------------------
+[Discarded]
+
+* hv/submodule-ignore-fix (2013-12-06) 4 commits
+ . disable complete ignorance of submodules for index <-> HEAD diff
+ . always show committed submodules in summary after commit
+ . teach add -f option for ignored submodules
+ . fix 'git add' to skip submodules configured as ignored
+
+ Being reworked in a new topic.
+
+
+* kb/fast-hashmap-pack-struct (2014-02-24) 1 commit
+ . hashmap.h: make sure map entries are tightly packed
