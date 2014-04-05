@@ -3871,7 +3871,7 @@ proc read_line_source {fd inst} {
 	    set id $nullid2
 	}
 	if {[commitinview $id $curview]} {
-	    selectline [rowofcommit $id] 1 [list $fname $lnum]
+	    selectline [rowofcommit $id] 1 [list $fname $lnum] 1
 	} else {
 	    error_popup [mc "That line comes from commit %s, \
 			     which is not in this view" [shortids $id]]
@@ -7162,7 +7162,7 @@ proc make_idmark {id} {
     $canv raise $t
 }
 
-proc selectline {l isnew {desired_loc {}}} {
+proc selectline {l isnew {desired_loc {}} {switch_to_patch 0}} {
     global canv ctext commitinfo selectedline
     global canvy0 linespc parents children curview
     global currentid sha1entry
@@ -7186,6 +7186,10 @@ proc selectline {l isnew {desired_loc {}}} {
     set currentid $id
     if {$lastscrollrows < $numcommits} {
 	setcanvscroll
+    }
+
+    if {$cmitmode ne "patch" && $switch_to_patch} {
+        set cmitmode "patch"
     }
 
     set y [expr {$canvy0 + $l * $linespc}]
