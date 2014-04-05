@@ -1523,7 +1523,7 @@ EOF
 	test_i18ngrep "^M. sm" output
 '
 
-test_expect_failure 'git commit -m will commit a staged but ignored submodule' '
+test_expect_success 'git commit -m will commit a staged but ignored submodule' '
 	git commit -uno -m message &&
 	git status -s --ignore-submodules=dirty >output &&
 	 test_i18ngrep ! "^M. sm" output &&
