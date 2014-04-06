@@ -15,6 +15,10 @@ struct diff_filespec;
 struct userdiff_driver;
 struct sha1_array;
 struct commit;
+struct combine_diff_path;
+
+typedef int (*pathchange_fn_t)(struct diff_options *options,
+		 struct combine_diff_path *path);
 
 typedef void (*change_fn_t)(struct diff_options *options,
 		 unsigned old_mode, unsigned new_mode,
@@ -157,6 +161,7 @@ struct diff_options {
 	int close_file;
 
 	struct pathspec pathspec;
+	pathchange_fn_t pathchange;
 	change_fn_t change;
 	add_remove_fn_t add_remove;
 	diff_format_fn_t format_callback;
@@ -189,6 +194,10 @@ const char *diff_line_prefix(struct diff_options *);
 
 extern const char mime_boundary_leader[];
 
+extern struct combine_diff_path *diff_tree_paths(
+	struct combine_diff_path *p, const unsigned char *sha1,
+	const unsigned char **parent_sha1, int nparent,
+	struct strbuf *base, struct diff_options *opt);
 extern int diff_tree_sha1(const unsigned char *old, const unsigned char *new,
 			  const char *base, struct diff_options *opt);
 extern int diff_root_tree_sha1(const unsigned char *new, const char *base,

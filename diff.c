@@ -3216,6 +3216,7 @@ void diff_setup(struct diff_options *options)
 	options->context = diff_context_default;
 	DIFF_OPT_SET(options, RENAME_EMPTY);
 
+	/* pathchange left =NULL by default */
 	options->change = diff_change;
 	options->add_remove = diff_addremove;
 	options->use_color = diff_use_color_default;
