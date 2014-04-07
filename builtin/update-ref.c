@@ -178,8 +178,8 @@ static int parse_next_sha1(struct strbuf *input, const char **next,
 
  eof:
 	die(flags & PARSE_SHA1_OLD ?
-	    "%s %s missing <oldvalue>" :
-	    "%s %s missing <newvalue>",
+	    "%s %s: unexpected end of input when reading <oldvalue>" :
+	    "%s %s: unexpected end of input when reading <newvalue>",
 	    command, refname);
 }
 

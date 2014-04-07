@@ -709,7 +709,7 @@ test_expect_success 'stdin -z fails create with bad ref name' '
 test_expect_success 'stdin -z fails create with no new value' '
 	printf $F "create $a" >stdin &&
 	test_must_fail git update-ref -z --stdin <stdin 2>err &&
-	grep "fatal: create $a missing <newvalue>" err
+	grep "fatal: create $a: unexpected end of input when reading <newvalue>" err
 '
 
 test_expect_success 'stdin -z fails create with too many arguments' '
@@ -727,7 +727,7 @@ test_expect_success 'stdin -z fails update with no ref' '
 test_expect_success 'stdin -z fails update with too few args' '
 	printf $F "update $a" "$m" >stdin &&
 	test_must_fail git update-ref -z --stdin <stdin 2>err &&
-	grep "fatal: update $a missing <oldvalue>" err
+	grep "fatal: update $a: unexpected end of input when reading <oldvalue>" err
 '
 
 test_expect_success 'stdin -z fails update with bad ref name' '
@@ -747,13 +747,13 @@ test_expect_success 'stdin -z emits warning with empty new value' '
 test_expect_success 'stdin -z fails update with no new value' '
 	printf $F "update $a" >stdin &&
 	test_must_fail git update-ref -z --stdin <stdin 2>err &&
-	grep "fatal: update $a missing <newvalue>" err
+	grep "fatal: update $a: unexpected end of input when reading <newvalue>" err
 '
 
 test_expect_success 'stdin -z fails update with no old value' '
 	printf $F "update $a" "$m" >stdin &&
 	test_must_fail git update-ref -z --stdin <stdin 2>err &&
-	grep "fatal: update $a missing <oldvalue>" err
+	grep "fatal: update $a: unexpected end of input when reading <oldvalue>" err
 '
 
 test_expect_success 'stdin -z fails update with too many arguments' '
@@ -777,7 +777,7 @@ test_expect_success 'stdin -z fails delete with bad ref name' '
 test_expect_success 'stdin -z fails delete with no old value' '
 	printf $F "delete $a" >stdin &&
 	test_must_fail git update-ref -z --stdin <stdin 2>err &&
-	grep "fatal: delete $a missing <oldvalue>" err
+	grep "fatal: delete $a: unexpected end of input when reading <oldvalue>" err
 '
 
 test_expect_success 'stdin -z fails delete with too many arguments' '
@@ -795,7 +795,7 @@ test_expect_success 'stdin -z fails verify with too many arguments' '
 test_expect_success 'stdin -z fails verify with no old value' '
 	printf $F "verify $a" >stdin &&
 	test_must_fail git update-ref -z --stdin <stdin 2>err &&
-	grep "fatal: verify $a missing <oldvalue>" err
+	grep "fatal: verify $a: unexpected end of input when reading <oldvalue>" err
 '
 
 test_expect_success 'stdin -z fails option with unknown name' '
