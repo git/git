@@ -1,0 +1,33 @@
+Release 1.0.0
+=============
+
+* Fix encoding of non-ASCII email addresses in email headers.
+
+* Fix backwards-compatibility bugs for older Python 2.x versions.
+
+* Fix a backwards-compatibility bug for Git 1.7.1.
+
+* Add an option commitDiffOpts to customize logs for revisions.
+
+* Pass "-oi" to sendmail by default to prevent premature termination
+  on a line containing only ".".
+
+* Stagger email "Date:" values in an attempt to help mail clients
+  thread the emails in the right order.
+
+* If a mailing list setting is missing, just skip sending the
+  corresponding email (with a warning) instead of failing.
+
+* Add a X-Git-Host header that can be used for email filtering.
+
+* Allow the sender's fully-qualified domain name to be configured.
+
+* Minor documentation improvements.
+
+* Add this CHANGES file.
+
+
+Release 0.9.0
+=============
+
+* Initial release.
