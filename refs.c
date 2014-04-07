@@ -3413,19 +3413,17 @@ int ref_transaction_commit(struct ref_transaction *transaction,
 			   const char *msg, enum action_on_err onerr)
 {
 	int ret = 0, delnum = 0, i;
-	struct ref_update **updates;
 	const char **delnames;
 	int n = transaction->nr;
+	struct ref_update **updates = transaction->updates;
 
 	if (!n)
 		return 0;
 
 	/* Allocate work space */
-	updates = xmalloc(sizeof(*updates) * n);
 	delnames = xmalloc(sizeof(*delnames) * n);
 
 	/* Copy, sort, and reject duplicate refs */
-	memcpy(updates, transaction->updates, sizeof(*updates) * n);
 	qsort(updates, n, sizeof(*updates), ref_update_compare);
 	ret = ref_update_reject_duplicates(updates, n, onerr);
 	if (ret)
@@ -3480,7 +3478,6 @@ cleanup:
 	for (i = 0; i < n; i++)
 		if (updates[i]->lock)
 			unlock_ref(updates[i]->lock);
-	free(updates);
 	free(delnames);
 	ref_transaction_free(transaction);
 	return ret;
