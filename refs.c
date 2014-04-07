@@ -3435,10 +3435,12 @@ int ref_transaction_commit(struct ref_transaction *transaction,
 
 	/* Acquire all locks while verifying old values */
 	for (i = 0; i < n; i++) {
-		locks[i] = update_ref_lock(updates[i]->refname,
-					   (updates[i]->have_old ?
-					    updates[i]->old_sha1 : NULL),
-					   updates[i]->flags,
+		struct ref_update *update = updates[i];
+
+		locks[i] = update_ref_lock(update->refname,
+					   (update->have_old ?
+					    update->old_sha1 : NULL),
+					   update->flags,
 					   &types[i], onerr);
 		if (!locks[i]) {
 			ret = 1;
@@ -3447,16 +3449,19 @@ int ref_transaction_commit(struct ref_transaction *transaction,
 	}
 
 	/* Perform updates first so live commits remain referenced */
-	for (i = 0; i < n; i++)
-		if (!is_null_sha1(updates[i]->new_sha1)) {
+	for (i = 0; i < n; i++) {
+		struct ref_update *update = updates[i];
+
+		if (!is_null_sha1(update->new_sha1)) {
 			ret = update_ref_write(msg,
-					       updates[i]->refname,
-					       updates[i]->new_sha1,
+					       update->refname,
+					       update->new_sha1,
 					       locks[i], onerr);
 			locks[i] = NULL; /* freed by update_ref_write */
 			if (ret)
 				goto cleanup;
 		}
+	}
 
 	/* Perform deletes now that updates are safely completed */
 	for (i = 0; i < n; i++)
