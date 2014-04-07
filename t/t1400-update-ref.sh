@@ -912,7 +912,7 @@ test_expect_success 'stdin -z update refs works with identity updates' '
 
 test_expect_success 'stdin -z update refs fails with wrong old value' '
 	git update-ref $c $m &&
-	printf $F "update $a" "$m" "$m" "update $b" "$m" "$m" "update $c" "" "$Z" >stdin &&
+	printf $F "update $a" "$m" "$m" "update $b" "$m" "$m" "update $c" "$m" "$Z" >stdin &&
 	test_must_fail git update-ref -z --stdin <stdin 2>err &&
 	grep "fatal: Cannot lock the ref '"'"'$c'"'"'" err &&
 	git rev-parse $m >expect &&
