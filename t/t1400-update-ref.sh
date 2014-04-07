@@ -518,14 +518,14 @@ test_expect_success 'stdin update ref fails with wrong old value' '
 test_expect_success 'stdin update ref fails with bad old value' '
 	echo "update $c $m does-not-exist" >stdin &&
 	test_must_fail git update-ref --stdin <stdin 2>err &&
-	grep "fatal: invalid old value for ref $c: does-not-exist" err &&
+	grep "fatal: update $c: invalid old value: does-not-exist" err &&
 	test_must_fail git rev-parse --verify -q $c
 '
 
 test_expect_success 'stdin create ref fails with bad new value' '
 	echo "create $c does-not-exist" >stdin &&
 	test_must_fail git update-ref --stdin <stdin 2>err &&
-	grep "fatal: invalid new value for ref $c: does-not-exist" err &&
+	grep "fatal: create $c: invalid new value: does-not-exist" err &&
 	test_must_fail git rev-parse --verify -q $c
 '
 
@@ -840,14 +840,14 @@ test_expect_success 'stdin -z update ref fails with wrong old value' '
 test_expect_success 'stdin -z update ref fails with bad old value' '
 	printf $F "update $c" "$m" "does-not-exist" >stdin &&
 	test_must_fail git update-ref -z --stdin <stdin 2>err &&
-	grep "fatal: invalid old value for ref $c: does-not-exist" err &&
+	grep "fatal: update $c: invalid old value: does-not-exist" err &&
 	test_must_fail git rev-parse --verify -q $c
 '
 
 test_expect_success 'stdin -z create ref fails with bad new value' '
 	printf $F "create $c" "does-not-exist" >stdin &&
 	test_must_fail git update-ref -z --stdin <stdin 2>err &&
-	grep "fatal: invalid new value for ref $c: does-not-exist" err &&
+	grep "fatal: create $c: invalid new value: does-not-exist" err &&
 	test_must_fail git rev-parse --verify -q $c
 '
 

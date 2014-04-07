@@ -35,20 +35,22 @@ static struct ref_update *update_alloc(void)
 	return update;
 }
 
-static void update_store_new_sha1(struct ref_update *update,
+static void update_store_new_sha1(const char *command,
+				  struct ref_update *update,
 				  const char *newvalue)
 {
 	if (*newvalue && get_sha1(newvalue, update->new_sha1))
-		die("invalid new value for ref %s: %s",
-		    update->ref_name, newvalue);
+		die("%s %s: invalid new value: %s",
+		    command, update->ref_name, newvalue);
 }
 
-static void update_store_old_sha1(struct ref_update *update,
+static void update_store_old_sha1(const char *command,
+				  struct ref_update *update,
 				  const char *oldvalue)
 {
 	if (*oldvalue && get_sha1(oldvalue, update->old_sha1))
-		die("invalid old value for ref %s: %s",
-		    update->ref_name, oldvalue);
+		die("%s %s: invalid old value: %s",
+		    command, update->ref_name, oldvalue);
 
 	/* We have an old value if non-empty, or if empty without -z */
 	update->have_old = *oldvalue || line_termination;
@@ -165,12 +167,12 @@ static const char *parse_cmd_update(struct strbuf *input, const char *next)
 		die("update line missing <ref>");
 
 	if (!parse_next_arg(input, &next, &newvalue))
-		update_store_new_sha1(update, newvalue.buf);
+		update_store_new_sha1("update", update, newvalue.buf);
 	else
 		die("update %s missing <newvalue>", update->ref_name);
 
 	if (!parse_next_arg(input, &next, &oldvalue)) {
-		update_store_old_sha1(update, oldvalue.buf);
+		update_store_old_sha1("update", update, oldvalue.buf);
 		if (*next != line_termination)
 			die("update %s has extra input: %s", update->ref_name, next);
 	} else if (!line_termination)
@@ -191,7 +193,7 @@ static const char *parse_cmd_create(struct strbuf *input, const char *next)
 		die("create line missing <ref>");
 
 	if (!parse_next_arg(input, &next, &newvalue))
-		update_store_new_sha1(update, newvalue.buf);
+		update_store_new_sha1("create", update, newvalue.buf);
 	else
 		die("create %s missing <newvalue>", update->ref_name);
 
@@ -216,7 +218,7 @@ static const char *parse_cmd_delete(struct strbuf *input, const char *next)
 		die("delete line missing <ref>");
 
 	if (!parse_next_arg(input, &next, &oldvalue)) {
-		update_store_old_sha1(update, oldvalue.buf);
+		update_store_old_sha1("delete", update, oldvalue.buf);
 		if (update->have_old && is_null_sha1(update->old_sha1))
 			die("delete %s given zero old value", update->ref_name);
 	} else if (!line_termination)
@@ -240,7 +242,7 @@ static const char *parse_cmd_verify(struct strbuf *input, const char *next)
 		die("verify line missing <ref>");
 
 	if (!parse_next_arg(input, &next, &value)) {
-		update_store_old_sha1(update, value.buf);
+		update_store_old_sha1("verify", update, value.buf);
 		hashcpy(update->new_sha1, update->old_sha1);
 	} else if (!line_termination)
 		die("verify %s missing [<oldvalue>] NUL", update->ref_name);
