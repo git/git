@@ -35,27 +35,6 @@ static struct ref_update *update_alloc(void)
 	return update;
 }
 
-static void update_store_new_sha1(const char *command,
-				  struct ref_update *update,
-				  const char *newvalue)
-{
-	if (*newvalue && get_sha1(newvalue, update->new_sha1))
-		die("%s %s: invalid <newvalue>: %s",
-		    command, update->ref_name, newvalue);
-}
-
-static void update_store_old_sha1(const char *command,
-				  struct ref_update *update,
-				  const char *oldvalue)
-{
-	if (*oldvalue && get_sha1(oldvalue, update->old_sha1))
-		die("%s %s: invalid <oldvalue>: %s",
-		    command, update->ref_name, oldvalue);
-
-	/* We have an old value if non-empty, or if empty without -z */
-	update->have_old = *oldvalue || line_termination;
-}
-
 /*
  * Parse one whitespace- or NUL-terminated, possibly C-quoted argument
  * and append the result to arg.  Return a pointer to the terminator.
@@ -112,35 +91,94 @@ static char *parse_refname(struct strbuf *input, const char **next)
 }
 
 /*
- * Parse a SP/NUL separator followed by the next SP- or NUL-terminated
- * argument, if any.  If there is an argument, write it to arg, set
- * *next to point at the character terminating the argument, and
- * return 0.  If there is no argument at all (not even the empty
- * string), return a non-zero result and leave *next unchanged.
+ * The value being parsed is <oldvalue> (as opposed to <newvalue>; the
+ * difference affects which error messages are generated):
  */
-static int parse_next_arg(struct strbuf *input, const char **next,
-			  struct strbuf *arg)
+#define PARSE_SHA1_OLD 0x01
+
+/*
+ * For backwards compatibility, accept an empty string for update's
+ * <newvalue> in binary mode to be equivalent to specifying zeros.
+ */
+#define PARSE_SHA1_ALLOW_EMPTY 0x02
+
+/*
+ * Parse an argument separator followed by the next argument, if any.
+ * If there is an argument, convert it to a SHA-1, write it to sha1,
+ * set *next to point at the character terminating the argument, and
+ * return 0.  If there is no argument at all (not even the empty
+ * string), return 1 and leave *next unchanged.  If the value is
+ * provided but cannot be converted to a SHA-1, die.  flags can
+ * include PARSE_SHA1_OLD and/or PARSE_SHA1_ALLOW_EMPTY.
+ */
+static int parse_next_sha1(struct strbuf *input, const char **next,
+			   unsigned char *sha1,
+			   const char *command, const char *refname,
+			   int flags)
 {
-	strbuf_reset(arg);
+	struct strbuf arg = STRBUF_INIT;
+	int ret = 0;
+
+	if (*next == input->buf + input->len)
+		goto eof;
+
 	if (line_termination) {
 		/* Without -z, consume SP and use next argument */
 		if (!**next || **next == line_termination)
-			return -1;
+			return 1;
 		if (**next != ' ')
-			die("expected SP but got: %s", *next);
+			die("%s %s: expected SP but got: %s",
+			    command, refname, *next);
 		(*next)++;
-		*next = parse_arg(*next, arg);
+		*next = parse_arg(*next, &arg);
+		if (arg.len) {
+			if (get_sha1(arg.buf, sha1))
+				goto invalid;
+		} else {
+			/* Without -z, an empty value means all zeros: */
+			hashclr(sha1);
+		}
 	} else {
 		/* With -z, read the next NUL-terminated line */
 		if (**next)
-			die("expected NUL but got: %s", *next);
+			die("%s %s: expected NUL but got: %s",
+			    command, refname, *next);
 		(*next)++;
 		if (*next == input->buf + input->len)
-			return -1;
-		strbuf_addstr(arg, *next);
-		*next += arg->len;
+			goto eof;
+		strbuf_addstr(&arg, *next);
+		*next += arg.len;
+
+		if (arg.len) {
+			if (get_sha1(arg.buf, sha1))
+				goto invalid;
+		} else if (flags & PARSE_SHA1_ALLOW_EMPTY) {
+			/* With -z, treat an empty value as all zeros: */
+			hashclr(sha1);
+		} else {
+			/*
+			 * With -z, an empty non-required value means
+			 * unspecified:
+			 */
+			ret = 1;
+		}
 	}
-	return 0;
+
+	strbuf_release(&arg);
+
+	return ret;
+
+ invalid:
+	die(flags & PARSE_SHA1_OLD ?
+	    "%s %s: invalid <oldvalue>: %s" :
+	    "%s %s: invalid <newvalue>: %s",
+	    command, refname, arg.buf);
+
+ eof:
+	die(flags & PARSE_SHA1_OLD ?
+	    "%s %s missing <oldvalue>" :
+	    "%s %s missing <newvalue>",
+	    command, refname);
 }
 
 
@@ -156,8 +194,6 @@ static int parse_next_arg(struct strbuf *input, const char **next,
 
 static const char *parse_cmd_update(struct strbuf *input, const char *next)
 {
-	struct strbuf newvalue = STRBUF_INIT;
-	struct strbuf oldvalue = STRBUF_INIT;
 	struct ref_update *update;
 
 	update = update_alloc();
@@ -166,24 +202,23 @@ static const char *parse_cmd_update(struct strbuf *input, const char *next)
 	if (!update->ref_name)
 		die("update line missing <ref>");
 
-	if (!parse_next_arg(input, &next, &newvalue))
-		update_store_new_sha1("update", update, newvalue.buf);
-	else
+	if (parse_next_sha1(input, &next, update->new_sha1,
+			    "update", update->ref_name,
+			    PARSE_SHA1_ALLOW_EMPTY))
 		die("update %s missing <newvalue>", update->ref_name);
 
-	if (!parse_next_arg(input, &next, &oldvalue)) {
-		update_store_old_sha1("update", update, oldvalue.buf);
-		if (*next != line_termination)
-			die("update %s has extra input: %s", update->ref_name, next);
-	} else if (!line_termination)
-		die("update %s missing <oldvalue>", update->ref_name);
+	update->have_old = !parse_next_sha1(input, &next, update->old_sha1,
+					    "update", update->ref_name,
+					    PARSE_SHA1_OLD);
+
+	if (*next != line_termination)
+		die("update %s has extra input: %s", update->ref_name, next);
 
 	return next;
 }
 
 static const char *parse_cmd_create(struct strbuf *input, const char *next)
 {
-	struct strbuf newvalue = STRBUF_INIT;
 	struct ref_update *update;
 
 	update = update_alloc();
@@ -192,9 +227,8 @@ static const char *parse_cmd_create(struct strbuf *input, const char *next)
 	if (!update->ref_name)
 		die("create line missing <ref>");
 
-	if (!parse_next_arg(input, &next, &newvalue))
-		update_store_new_sha1("create", update, newvalue.buf);
-	else
+	if (parse_next_sha1(input, &next, update->new_sha1,
+			    "create", update->ref_name, 0))
 		die("create %s missing <newvalue>", update->ref_name);
 
 	if (is_null_sha1(update->new_sha1))
@@ -208,7 +242,6 @@ static const char *parse_cmd_create(struct strbuf *input, const char *next)
 
 static const char *parse_cmd_delete(struct strbuf *input, const char *next)
 {
-	struct strbuf oldvalue = STRBUF_INIT;
 	struct ref_update *update;
 
 	update = update_alloc();
@@ -217,12 +250,14 @@ static const char *parse_cmd_delete(struct strbuf *input, const char *next)
 	if (!update->ref_name)
 		die("delete line missing <ref>");
 
-	if (!parse_next_arg(input, &next, &oldvalue)) {
-		update_store_old_sha1("delete", update, oldvalue.buf);
-		if (update->have_old && is_null_sha1(update->old_sha1))
+	if (parse_next_sha1(input, &next, update->old_sha1,
+			    "delete", update->ref_name, PARSE_SHA1_OLD)) {
+		update->have_old = 0;
+	} else {
+		if (is_null_sha1(update->old_sha1))
 			die("delete %s given zero <oldvalue>", update->ref_name);
-	} else if (!line_termination)
-		die("delete %s missing <oldvalue>", update->ref_name);
+		update->have_old = 1;
+	}
 
 	if (*next != line_termination)
 		die("delete %s has extra input: %s", update->ref_name, next);
@@ -232,7 +267,6 @@ static const char *parse_cmd_delete(struct strbuf *input, const char *next)
 
 static const char *parse_cmd_verify(struct strbuf *input, const char *next)
 {
-	struct strbuf value = STRBUF_INIT;
 	struct ref_update *update;
 
 	update = update_alloc();
@@ -241,11 +275,13 @@ static const char *parse_cmd_verify(struct strbuf *input, const char *next)
 	if (!update->ref_name)
 		die("verify line missing <ref>");
 
-	if (!parse_next_arg(input, &next, &value)) {
-		update_store_old_sha1("verify", update, value.buf);
+	if (parse_next_sha1(input, &next, update->old_sha1,
+			    "verify", update->ref_name, PARSE_SHA1_OLD)) {
+		update->have_old = 0;
+	} else {
 		hashcpy(update->new_sha1, update->old_sha1);
-	} else if (!line_termination)
-		die("verify %s missing <oldvalue>", update->ref_name);
+		update->have_old = 1;
+	}
 
 	if (*next != line_termination)
 		die("verify %s has extra input: %s", update->ref_name, next);
