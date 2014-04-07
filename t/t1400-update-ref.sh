@@ -350,10 +350,16 @@ test_expect_success 'stdin fails on unknown command' '
 	grep "fatal: unknown command: unknown $a" err
 '
 
-test_expect_success 'stdin fails on badly quoted input' '
+test_expect_success 'stdin fails on unbalanced quotes' '
 	echo "create $a \"master" >stdin &&
 	test_must_fail git update-ref --stdin <stdin 2>err &&
 	grep "fatal: badly quoted argument: \\\"master" err
+'
+
+test_expect_success 'stdin fails on invalid escape' '
+	echo "create $a \"ma\zter\"" >stdin &&
+	test_must_fail git update-ref --stdin <stdin 2>err &&
+	grep "fatal: badly quoted argument: \\\"ma\\\\zter\\\"" err
 '
 
 test_expect_success 'stdin fails on junk after quoted argument' '
@@ -452,6 +458,24 @@ test_expect_success 'stdin fails with duplicate refs' '
 
 test_expect_success 'stdin create ref works' '
 	echo "create $a $m" >stdin &&
+	git update-ref --stdin <stdin &&
+	git rev-parse $m >expect &&
+	git rev-parse $a >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'stdin succeeds with quoted argument' '
+	git update-ref -d $a &&
+	echo "create $a \"$m\"" >stdin &&
+	git update-ref --stdin <stdin &&
+	git rev-parse $m >expect &&
+	git rev-parse $a >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'stdin succeeds with escaped character' '
+	git update-ref -d $a &&
+	echo "create $a \"ma\\163ter\"" >stdin &&
 	git update-ref --stdin <stdin &&
 	git rev-parse $m >expect &&
 	git rev-parse $a >actual &&
