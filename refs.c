@@ -3267,6 +3267,96 @@ static int update_ref_write(const char *action, const char *refname,
 	return 0;
 }
 
+/*
+ * Data structure for holding a reference transaction, which can
+ * consist of checks and updates to multiple references, carried out
+ * as atomically as possible.  This structure is opaque to callers.
+ */
+struct ref_transaction {
+	struct ref_update **updates;
+	size_t alloc;
+	size_t nr;
+};
+
+struct ref_transaction *ref_transaction_begin(void)
+{
+	return xcalloc(1, sizeof(struct ref_transaction));
+}
+
+static void ref_transaction_free(struct ref_transaction *transaction)
+{
+	int i;
+
+	for (i = 0; i < transaction->nr; i++) {
+		struct ref_update *update = transaction->updates[i];
+
+		free((char *)update->ref_name);
+		free(update);
+	}
+
+	free(transaction->updates);
+	free(transaction);
+}
+
+void ref_transaction_rollback(struct ref_transaction *transaction)
+{
+	ref_transaction_free(transaction);
+}
+
+static struct ref_update *add_update(struct ref_transaction *transaction,
+				     const char *refname)
+{
+	struct ref_update *update = xcalloc(1, sizeof(*update));
+
+	update->ref_name = xstrdup(refname);
+	ALLOC_GROW(transaction->updates, transaction->nr + 1, transaction->alloc);
+	transaction->updates[transaction->nr++] = update;
+	return update;
+}
+
+void ref_transaction_update(struct ref_transaction *transaction,
+			    const char *refname,
+			    unsigned char *new_sha1, unsigned char *old_sha1,
+			    int flags, int have_old)
+{
+	struct ref_update *update = add_update(transaction, refname);
+
+	hashcpy(update->new_sha1, new_sha1);
+	update->flags = flags;
+	update->have_old = have_old;
+	if (have_old)
+		hashcpy(update->old_sha1, old_sha1);
+}
+
+void ref_transaction_create(struct ref_transaction *transaction,
+			    const char *refname,
+			    unsigned char *new_sha1,
+			    int flags)
+{
+	struct ref_update *update = add_update(transaction, refname);
+
+	assert(!is_null_sha1(new_sha1));
+	hashcpy(update->new_sha1, new_sha1);
+	hashclr(update->old_sha1);
+	update->flags = flags;
+	update->have_old = 1;
+}
+
+void ref_transaction_delete(struct ref_transaction *transaction,
+			    const char *refname,
+			    unsigned char *old_sha1,
+			    int flags, int have_old)
+{
+	struct ref_update *update = add_update(transaction, refname);
+
+	update->flags = flags;
+	update->have_old = have_old;
+	if (have_old) {
+		assert(!is_null_sha1(old_sha1));
+		hashcpy(update->old_sha1, old_sha1);
+	}
+}
+
 int update_ref(const char *action, const char *refname,
 	       const unsigned char *sha1, const unsigned char *oldval,
 	       int flags, enum action_on_err onerr)
@@ -3375,6 +3465,15 @@ cleanup:
 	free(types);
 	free(locks);
 	free(delnames);
+	return ret;
+}
+
+int ref_transaction_commit(struct ref_transaction *transaction,
+			   const char *msg, enum action_on_err onerr)
+{
+	int ret = update_refs(msg, transaction->updates, transaction->nr,
+			      onerr);
+	ref_transaction_free(transaction);
 	return ret;
 }
 
