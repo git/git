@@ -249,7 +249,7 @@ static const char *parse_cmd_verify(struct strbuf *input, const char *next)
 
 	if (!parse_next_arg(input, &next, &value)) {
 		update_store_old_sha1(update, value.buf);
-		update_store_new_sha1(update, value.buf);
+		hashcpy(update->new_sha1, update->old_sha1);
 	} else if (!line_termination)
 		die("verify %s missing [<oldvalue>] NUL", ref.buf);
 
