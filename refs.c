@@ -3274,7 +3274,7 @@ static int update_ref_write(const char *action, const char *refname,
  * value or to zero to ensure the ref does not exist before update.
  */
 struct ref_update {
-	const char *ref_name;
+	const char *refname;
 	unsigned char new_sha1[20];
 	unsigned char old_sha1[20];
 	int flags; /* REF_NODEREF? */
@@ -3304,7 +3304,7 @@ static void ref_transaction_free(struct ref_transaction *transaction)
 	for (i = 0; i < transaction->nr; i++) {
 		struct ref_update *update = transaction->updates[i];
 
-		free((char *)update->ref_name);
+		free((char *)update->refname);
 		free(update);
 	}
 
@@ -3322,7 +3322,7 @@ static struct ref_update *add_update(struct ref_transaction *transaction,
 {
 	struct ref_update *update = xcalloc(1, sizeof(*update));
 
-	update->ref_name = xstrdup(refname);
+	update->refname = xstrdup(refname);
 	ALLOC_GROW(transaction->updates, transaction->nr + 1, transaction->alloc);
 	transaction->updates[transaction->nr++] = update;
 	return update;
@@ -3386,7 +3386,7 @@ static int ref_update_compare(const void *r1, const void *r2)
 {
 	const struct ref_update * const *u1 = r1;
 	const struct ref_update * const *u2 = r2;
-	return strcmp((*u1)->ref_name, (*u2)->ref_name);
+	return strcmp((*u1)->refname, (*u2)->refname);
 }
 
 static int ref_update_reject_duplicates(struct ref_update **updates, int n,
@@ -3394,14 +3394,14 @@ static int ref_update_reject_duplicates(struct ref_update **updates, int n,
 {
 	int i;
 	for (i = 1; i < n; i++)
-		if (!strcmp(updates[i - 1]->ref_name, updates[i]->ref_name)) {
+		if (!strcmp(updates[i - 1]->refname, updates[i]->refname)) {
 			const char *str =
 				"Multiple updates for ref '%s' not allowed.";
 			switch (onerr) {
 			case UPDATE_REFS_MSG_ON_ERR:
-				error(str, updates[i]->ref_name); break;
+				error(str, updates[i]->refname); break;
 			case UPDATE_REFS_DIE_ON_ERR:
-				die(str, updates[i]->ref_name); break;
+				die(str, updates[i]->refname); break;
 			case UPDATE_REFS_QUIET_ON_ERR:
 				break;
 			}
@@ -3438,7 +3438,7 @@ int ref_transaction_commit(struct ref_transaction *transaction,
 
 	/* Acquire all locks while verifying old values */
 	for (i = 0; i < n; i++) {
-		locks[i] = update_ref_lock(updates[i]->ref_name,
+		locks[i] = update_ref_lock(updates[i]->refname,
 					   (updates[i]->have_old ?
 					    updates[i]->old_sha1 : NULL),
 					   updates[i]->flags,
@@ -3453,7 +3453,7 @@ int ref_transaction_commit(struct ref_transaction *transaction,
 	for (i = 0; i < n; i++)
 		if (!is_null_sha1(updates[i]->new_sha1)) {
 			ret = update_ref_write(msg,
-					       updates[i]->ref_name,
+					       updates[i]->refname,
 					       updates[i]->new_sha1,
 					       locks[i], onerr);
 			locks[i] = NULL; /* freed by update_ref_write */
