@@ -62,16 +62,26 @@ static void update_store_old_sha1(struct ref_update *update,
 	update->have_old = *oldvalue || line_termination;
 }
 
+/*
+ * Parse one whitespace- or NUL-terminated, possibly C-quoted argument
+ * and append the result to arg.  Return a pointer to the terminator.
+ * Die if there is an error in how the argument is C-quoted.  This
+ * function is only used if not -z.
+ */
 static const char *parse_arg(const char *next, struct strbuf *arg)
 {
-	/* Parse SP-terminated, possibly C-quoted argument */
-	if (*next != '"')
+	if (*next == '"') {
+		const char *orig = next;
+
+		if (unquote_c_style(arg, next, &next))
+			die("badly quoted argument: %s", orig);
+		if (*next && !isspace(*next))
+			die("unexpected character after quoted argument: %s", orig);
+	} else {
 		while (*next && !isspace(*next))
 			strbuf_addch(arg, *next++);
-	else if (unquote_c_style(arg, next, &next))
-		die("badly quoted argument: %s", next);
+	}
 
-	/* Return position after the argument */
 	return next;
 }
 

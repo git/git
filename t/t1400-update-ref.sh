@@ -356,10 +356,10 @@ test_expect_success 'stdin fails on badly quoted input' '
 	grep "fatal: badly quoted argument: \\\"master" err
 '
 
-test_expect_success 'stdin fails on arguments not separated by space' '
+test_expect_success 'stdin fails on junk after quoted argument' '
 	echo "create \"$a\"master" >stdin &&
 	test_must_fail git update-ref --stdin <stdin 2>err &&
-	grep "fatal: expected SP but got: master" err
+	grep "fatal: unexpected character after quoted argument: \\\"$a\\\"master" err
 '
 
 test_expect_success 'stdin fails create with no ref' '
