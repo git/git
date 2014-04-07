@@ -730,10 +730,11 @@ test_expect_success 'stdin -z fails update with bad ref name' '
 	grep "fatal: invalid ref format: ~a" err
 '
 
-test_expect_success 'stdin -z treats empty new value as zeros' '
+test_expect_success 'stdin -z emits warning with empty new value' '
 	git update-ref $a $m &&
 	printf $F "update $a" "" "" >stdin &&
-	git update-ref -z --stdin <stdin &&
+	git update-ref -z --stdin <stdin 2>err &&
+	grep "warning: update $a: missing <newvalue>, treating as zero" err &&
 	test_must_fail git rev-parse --verify -q $a
 '
 

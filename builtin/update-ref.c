@@ -154,6 +154,8 @@ static int parse_next_sha1(struct strbuf *input, const char **next,
 				goto invalid;
 		} else if (flags & PARSE_SHA1_ALLOW_EMPTY) {
 			/* With -z, treat an empty value as all zeros: */
+			warning("%s %s: missing <newvalue>, treating as zero",
+				command, refname);
 			hashclr(sha1);
 		} else {
 			/*
