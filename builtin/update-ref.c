@@ -14,7 +14,7 @@ static const char * const git_update_ref_usage[] = {
 
 static int updates_alloc;
 static int updates_count;
-static const struct ref_update **updates;
+static struct ref_update **updates;
 
 static char line_termination = '\n';
 static int update_flags;

@@ -3306,7 +3306,7 @@ static int ref_update_reject_duplicates(struct ref_update **updates, int n,
 	return 0;
 }
 
-int update_refs(const char *action, const struct ref_update **updates_orig,
+int update_refs(const char *action, struct ref_update * const *updates_orig,
 		int n, enum action_on_err onerr)
 {
 	int ret = 0, delnum = 0, i;

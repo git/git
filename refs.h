@@ -228,7 +228,7 @@ int update_ref(const char *action, const char *refname,
 /**
  * Lock all refs and then perform all modifications.
  */
-int update_refs(const char *action, const struct ref_update **updates,
+int update_refs(const char *action, struct ref_update * const *updates,
 		int n, enum action_on_err onerr);
 
 extern int parse_hide_refs_config(const char *var, const char *value, const char *);
