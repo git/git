@@ -40,7 +40,7 @@ static void update_store_new_sha1(const char *command,
 				  const char *newvalue)
 {
 	if (*newvalue && get_sha1(newvalue, update->new_sha1))
-		die("%s %s: invalid new value: %s",
+		die("%s %s: invalid <newvalue>: %s",
 		    command, update->ref_name, newvalue);
 }
 
@@ -49,7 +49,7 @@ static void update_store_old_sha1(const char *command,
 				  const char *oldvalue)
 {
 	if (*oldvalue && get_sha1(oldvalue, update->old_sha1))
-		die("%s %s: invalid old value: %s",
+		die("%s %s: invalid <oldvalue>: %s",
 		    command, update->ref_name, oldvalue);
 
 	/* We have an old value if non-empty, or if empty without -z */
@@ -198,7 +198,7 @@ static const char *parse_cmd_create(struct strbuf *input, const char *next)
 		die("create %s missing <newvalue>", update->ref_name);
 
 	if (is_null_sha1(update->new_sha1))
-		die("create %s given zero new value", update->ref_name);
+		die("create %s given zero <newvalue>", update->ref_name);
 
 	if (*next != line_termination)
 		die("create %s has extra input: %s", update->ref_name, next);
@@ -220,7 +220,7 @@ static const char *parse_cmd_delete(struct strbuf *input, const char *next)
 	if (!parse_next_arg(input, &next, &oldvalue)) {
 		update_store_old_sha1("delete", update, oldvalue.buf);
 		if (update->have_old && is_null_sha1(update->old_sha1))
-			die("delete %s given zero old value", update->ref_name);
+			die("delete %s given zero <oldvalue>", update->ref_name);
 	} else if (!line_termination)
 		die("delete %s missing [<oldvalue>] NUL", update->ref_name);
 
