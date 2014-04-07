@@ -35,14 +35,6 @@ static struct ref_update *update_alloc(void)
 	return update;
 }
 
-static void update_store_ref_name(struct ref_update *update,
-				  const char *ref_name)
-{
-	if (check_refname_format(ref_name, REFNAME_ALLOW_ONELEVEL))
-		die("invalid ref format: %s", ref_name);
-	update->ref_name = xstrdup(ref_name);
-}
-
 static void update_store_new_sha1(struct ref_update *update,
 				  const char *newvalue)
 {
@@ -86,23 +78,35 @@ static const char *parse_arg(const char *next, struct strbuf *arg)
 }
 
 /*
- * Parse the argument immediately after "command SP".  If not -z, then
- * handle C-quoting.  Write the argument to arg.  Set *next to point
- * at the character that terminates the argument.  Die if C-quoting is
- * malformed.
+ * Parse the reference name immediately after "command SP".  If not
+ * -z, then handle C-quoting.  Return a pointer to a newly allocated
+ * string containing the name of the reference, or NULL if there was
+ * an error.  Update *next to point at the character that terminates
+ * the argument.  Die if C-quoting is malformed or the reference name
+ * is invalid.
  */
-static void parse_first_arg(struct strbuf *input, const char **next,
-			    struct strbuf *arg)
+static char *parse_refname(struct strbuf *input, const char **next)
 {
-	strbuf_reset(arg);
+	struct strbuf ref = STRBUF_INIT;
+
 	if (line_termination) {
 		/* Without -z, use the next argument */
-		*next = parse_arg(*next, arg);
+		*next = parse_arg(*next, &ref);
 	} else {
 		/* With -z, use everything up to the next NUL */
-		strbuf_addstr(arg, *next);
-		*next += arg->len;
+		strbuf_addstr(&ref, *next);
+		*next += ref.len;
 	}
+
+	if (!ref.len) {
+		strbuf_release(&ref);
+		return NULL;
+	}
+
+	if (check_refname_format(ref.buf, REFNAME_ALLOW_ONELEVEL))
+		die("invalid ref format: %s", ref.buf);
+
+	return strbuf_detach(&ref, NULL);
 }
 
 /*
@@ -150,111 +154,99 @@ static int parse_next_arg(struct strbuf *input, const char **next,
 
 static const char *parse_cmd_update(struct strbuf *input, const char *next)
 {
-	struct strbuf ref = STRBUF_INIT;
 	struct strbuf newvalue = STRBUF_INIT;
 	struct strbuf oldvalue = STRBUF_INIT;
 	struct ref_update *update;
 
 	update = update_alloc();
 
-	parse_first_arg(input, &next, &ref);
-	if (ref.buf[0])
-		update_store_ref_name(update, ref.buf);
-	else
+	update->ref_name = parse_refname(input, &next);
+	if (!update->ref_name)
 		die("update line missing <ref>");
 
 	if (!parse_next_arg(input, &next, &newvalue))
 		update_store_new_sha1(update, newvalue.buf);
 	else
-		die("update %s missing <newvalue>", ref.buf);
+		die("update %s missing <newvalue>", update->ref_name);
 
 	if (!parse_next_arg(input, &next, &oldvalue)) {
 		update_store_old_sha1(update, oldvalue.buf);
 		if (*next != line_termination)
-			die("update %s has extra input: %s", ref.buf, next);
+			die("update %s has extra input: %s", update->ref_name, next);
 	} else if (!line_termination)
-		die("update %s missing [<oldvalue>] NUL", ref.buf);
+		die("update %s missing [<oldvalue>] NUL", update->ref_name);
 
 	return next;
 }
 
 static const char *parse_cmd_create(struct strbuf *input, const char *next)
 {
-	struct strbuf ref = STRBUF_INIT;
 	struct strbuf newvalue = STRBUF_INIT;
 	struct ref_update *update;
 
 	update = update_alloc();
 
-	parse_first_arg(input, &next, &ref);
-	if (ref.buf[0])
-		update_store_ref_name(update, ref.buf);
-	else
+	update->ref_name = parse_refname(input, &next);
+	if (!update->ref_name)
 		die("create line missing <ref>");
 
 	if (!parse_next_arg(input, &next, &newvalue))
 		update_store_new_sha1(update, newvalue.buf);
 	else
-		die("create %s missing <newvalue>", ref.buf);
+		die("create %s missing <newvalue>", update->ref_name);
 
 	if (is_null_sha1(update->new_sha1))
-		die("create %s given zero new value", ref.buf);
+		die("create %s given zero new value", update->ref_name);
 
 	if (*next != line_termination)
-		die("create %s has extra input: %s", ref.buf, next);
+		die("create %s has extra input: %s", update->ref_name, next);
 
 	return next;
 }
 
 static const char *parse_cmd_delete(struct strbuf *input, const char *next)
 {
-	struct strbuf ref = STRBUF_INIT;
 	struct strbuf oldvalue = STRBUF_INIT;
 	struct ref_update *update;
 
 	update = update_alloc();
 
-	parse_first_arg(input, &next, &ref);
-	if (ref.buf[0])
-		update_store_ref_name(update, ref.buf);
-	else
+	update->ref_name = parse_refname(input, &next);
+	if (!update->ref_name)
 		die("delete line missing <ref>");
 
 	if (!parse_next_arg(input, &next, &oldvalue)) {
 		update_store_old_sha1(update, oldvalue.buf);
 		if (update->have_old && is_null_sha1(update->old_sha1))
-			die("delete %s given zero old value", ref.buf);
+			die("delete %s given zero old value", update->ref_name);
 	} else if (!line_termination)
-		die("delete %s missing [<oldvalue>] NUL", ref.buf);
+		die("delete %s missing [<oldvalue>] NUL", update->ref_name);
 
 	if (*next != line_termination)
-		die("delete %s has extra input: %s", ref.buf, next);
+		die("delete %s has extra input: %s", update->ref_name, next);
 
 	return next;
 }
 
 static const char *parse_cmd_verify(struct strbuf *input, const char *next)
 {
-	struct strbuf ref = STRBUF_INIT;
 	struct strbuf value = STRBUF_INIT;
 	struct ref_update *update;
 
 	update = update_alloc();
 
-	parse_first_arg(input, &next, &ref);
-	if (ref.buf[0])
-		update_store_ref_name(update, ref.buf);
-	else
+	update->ref_name = parse_refname(input, &next);
+	if (!update->ref_name)
 		die("verify line missing <ref>");
 
 	if (!parse_next_arg(input, &next, &value)) {
 		update_store_old_sha1(update, value.buf);
 		hashcpy(update->new_sha1, update->old_sha1);
 	} else if (!line_termination)
-		die("verify %s missing [<oldvalue>] NUL", ref.buf);
+		die("verify %s missing [<oldvalue>] NUL", update->ref_name);
 
 	if (*next != line_termination)
-		die("verify %s has extra input: %s", ref.buf, next);
+		die("verify %s has extra input: %s", update->ref_name, next);
 
 	return next;
 }
