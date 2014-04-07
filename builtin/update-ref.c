@@ -12,28 +12,10 @@ static const char * const git_update_ref_usage[] = {
 	NULL
 };
 
-static int updates_alloc;
-static int updates_count;
-static struct ref_update **updates;
+static struct ref_transaction *transaction;
 
 static char line_termination = '\n';
 static int update_flags;
-
-static struct ref_update *update_alloc(void)
-{
-	struct ref_update *update;
-
-	/* Allocate and zero-init a struct ref_update */
-	update = xcalloc(1, sizeof(*update));
-	ALLOC_GROW(updates, updates_count + 1, updates_alloc);
-	updates[updates_count++] = update;
-
-	/* Store and reset accumulated options */
-	update->flags = update_flags;
-	update_flags = 0;
-
-	return update;
-}
 
 /*
  * Parse one whitespace- or NUL-terminated, possibly C-quoted argument
@@ -196,97 +178,119 @@ static int parse_next_sha1(struct strbuf *input, const char **next,
 
 static const char *parse_cmd_update(struct strbuf *input, const char *next)
 {
-	struct ref_update *update;
+	char *refname;
+	unsigned char new_sha1[20];
+	unsigned char old_sha1[20];
+	int have_old;
 
-	update = update_alloc();
-
-	update->ref_name = parse_refname(input, &next);
-	if (!update->ref_name)
+	refname = parse_refname(input, &next);
+	if (!refname)
 		die("update: missing <ref>");
 
-	if (parse_next_sha1(input, &next, update->new_sha1,
-			    "update", update->ref_name,
+	if (parse_next_sha1(input, &next, new_sha1, "update", refname,
 			    PARSE_SHA1_ALLOW_EMPTY))
-		die("update %s: missing <newvalue>", update->ref_name);
+		die("update %s: missing <newvalue>", refname);
 
-	update->have_old = !parse_next_sha1(input, &next, update->old_sha1,
-					    "update", update->ref_name,
-					    PARSE_SHA1_OLD);
+	have_old = !parse_next_sha1(input, &next, old_sha1, "update", refname,
+				    PARSE_SHA1_OLD);
 
 	if (*next != line_termination)
-		die("update %s: extra input: %s", update->ref_name, next);
+		die("update %s: extra input: %s", refname, next);
+
+	ref_transaction_update(transaction, refname, new_sha1, old_sha1,
+			       update_flags, have_old);
+
+	update_flags = 0;
+	free(refname);
 
 	return next;
 }
 
 static const char *parse_cmd_create(struct strbuf *input, const char *next)
 {
-	struct ref_update *update;
+	char *refname;
+	unsigned char new_sha1[20];
 
-	update = update_alloc();
-
-	update->ref_name = parse_refname(input, &next);
-	if (!update->ref_name)
+	refname = parse_refname(input, &next);
+	if (!refname)
 		die("create: missing <ref>");
 
-	if (parse_next_sha1(input, &next, update->new_sha1,
-			    "create", update->ref_name, 0))
-		die("create %s: missing <newvalue>", update->ref_name);
+	if (parse_next_sha1(input, &next, new_sha1, "create", refname, 0))
+		die("create %s: missing <newvalue>", refname);
 
-	if (is_null_sha1(update->new_sha1))
-		die("create %s: zero <newvalue>", update->ref_name);
+	if (is_null_sha1(new_sha1))
+		die("create %s: zero <newvalue>", refname);
 
 	if (*next != line_termination)
-		die("create %s: extra input: %s", update->ref_name, next);
+		die("create %s: extra input: %s", refname, next);
+
+	ref_transaction_create(transaction, refname, new_sha1, update_flags);
+
+	update_flags = 0;
+	free(refname);
 
 	return next;
 }
 
 static const char *parse_cmd_delete(struct strbuf *input, const char *next)
 {
-	struct ref_update *update;
+	char *refname;
+	unsigned char old_sha1[20];
+	int have_old;
 
-	update = update_alloc();
-
-	update->ref_name = parse_refname(input, &next);
-	if (!update->ref_name)
+	refname = parse_refname(input, &next);
+	if (!refname)
 		die("delete: missing <ref>");
 
-	if (parse_next_sha1(input, &next, update->old_sha1,
-			    "delete", update->ref_name, PARSE_SHA1_OLD)) {
-		update->have_old = 0;
+	if (parse_next_sha1(input, &next, old_sha1, "delete", refname,
+			    PARSE_SHA1_OLD)) {
+		have_old = 0;
 	} else {
-		if (is_null_sha1(update->old_sha1))
-			die("delete %s: zero <oldvalue>", update->ref_name);
-		update->have_old = 1;
+		if (is_null_sha1(old_sha1))
+			die("delete %s: zero <oldvalue>", refname);
+		have_old = 1;
 	}
 
 	if (*next != line_termination)
-		die("delete %s: extra input: %s", update->ref_name, next);
+		die("delete %s: extra input: %s", refname, next);
+
+	ref_transaction_delete(transaction, refname, old_sha1,
+			       update_flags, have_old);
+
+	update_flags = 0;
+	free(refname);
 
 	return next;
 }
 
 static const char *parse_cmd_verify(struct strbuf *input, const char *next)
 {
-	struct ref_update *update;
+	char *refname;
+	unsigned char new_sha1[20];
+	unsigned char old_sha1[20];
+	int have_old;
 
-	update = update_alloc();
-
-	update->ref_name = parse_refname(input, &next);
-	if (!update->ref_name)
+	refname = parse_refname(input, &next);
+	if (!refname)
 		die("verify: missing <ref>");
 
-	if (parse_next_sha1(input, &next, update->old_sha1,
-			    "verify", update->ref_name, PARSE_SHA1_OLD)) {
-		update->have_old = 0;
+	if (parse_next_sha1(input, &next, old_sha1, "verify", refname,
+			    PARSE_SHA1_OLD)) {
+		hashclr(new_sha1);
+		have_old = 0;
 	} else {
-		hashcpy(update->new_sha1, update->old_sha1);
-		update->have_old = 1;
+		hashcpy(new_sha1, old_sha1);
+		have_old = 1;
 	}
 
 	if (*next != line_termination)
-		die("verify %s: extra input: %s", update->ref_name, next);
+		die("verify %s: extra input: %s", refname, next);
+
+	ref_transaction_update(transaction, refname, new_sha1, old_sha1,
+			       update_flags, have_old);
+
+	update_flags = 0;
+	free(refname);
 
 	return next;
 }
@@ -355,13 +359,17 @@ int cmd_update_ref(int argc, const char **argv, const char *prefix)
 		die("Refusing to perform update with empty message.");
 
 	if (read_stdin) {
+		int ret;
+		transaction = ref_transaction_begin();
+
 		if (delete || no_deref || argc > 0)
 			usage_with_options(git_update_ref_usage, options);
 		if (end_null)
 			line_termination = '\0';
 		update_refs_stdin();
-		return update_refs(msg, updates, updates_count,
-				   UPDATE_REFS_DIE_ON_ERR);
+		ret = ref_transaction_commit(transaction, msg,
+					     UPDATE_REFS_DIE_ON_ERR);
+		return ret;
 	}
 
 	if (end_null)
