@@ -3279,6 +3279,7 @@ struct ref_update {
 	int flags; /* REF_NODEREF? */
 	int have_old; /* 1 if old_sha1 is valid, 0 otherwise */
 	struct ref_lock *lock;
+	int type;
 	const char refname[FLEX_ARRAY];
 };
 
@@ -3413,7 +3414,6 @@ int ref_transaction_commit(struct ref_transaction *transaction,
 {
 	int ret = 0, delnum = 0, i;
 	struct ref_update **updates;
-	int *types;
 	const char **delnames;
 	int n = transaction->nr;
 
@@ -3422,7 +3422,6 @@ int ref_transaction_commit(struct ref_transaction *transaction,
 
 	/* Allocate work space */
 	updates = xmalloc(sizeof(*updates) * n);
-	types = xmalloc(sizeof(*types) * n);
 	delnames = xmalloc(sizeof(*delnames) * n);
 
 	/* Copy, sort, and reject duplicate refs */
@@ -3440,7 +3439,7 @@ int ref_transaction_commit(struct ref_transaction *transaction,
 					       (update->have_old ?
 						update->old_sha1 : NULL),
 					       update->flags,
-					       &types[i], onerr);
+					       &update->type, onerr);
 		if (!update->lock) {
 			ret = 1;
 			goto cleanup;
@@ -3468,7 +3467,7 @@ int ref_transaction_commit(struct ref_transaction *transaction,
 
 		if (update->lock) {
 			delnames[delnum++] = update->lock->ref_name;
-			ret |= delete_ref_loose(update->lock, types[i]);
+			ret |= delete_ref_loose(update->lock, update->type);
 		}
 	}
 
@@ -3482,7 +3481,6 @@ cleanup:
 		if (updates[i]->lock)
 			unlock_ref(updates[i]->lock);
 	free(updates);
-	free(types);
 	free(delnames);
 	ref_transaction_free(transaction);
 	return ret;
