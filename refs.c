@@ -3278,6 +3278,7 @@ struct ref_update {
 	unsigned char old_sha1[20];
 	int flags; /* REF_NODEREF? */
 	int have_old; /* 1 if old_sha1 is valid, 0 otherwise */
+	struct ref_lock *lock;
 	const char refname[FLEX_ARRAY];
 };
 
@@ -3413,7 +3414,6 @@ int ref_transaction_commit(struct ref_transaction *transaction,
 	int ret = 0, delnum = 0, i;
 	struct ref_update **updates;
 	int *types;
-	struct ref_lock **locks;
 	const char **delnames;
 	int n = transaction->nr;
 
@@ -3423,7 +3423,6 @@ int ref_transaction_commit(struct ref_transaction *transaction,
 	/* Allocate work space */
 	updates = xmalloc(sizeof(*updates) * n);
 	types = xmalloc(sizeof(*types) * n);
-	locks = xcalloc(n, sizeof(*locks));
 	delnames = xmalloc(sizeof(*delnames) * n);
 
 	/* Copy, sort, and reject duplicate refs */
@@ -3437,12 +3436,12 @@ int ref_transaction_commit(struct ref_transaction *transaction,
 	for (i = 0; i < n; i++) {
 		struct ref_update *update = updates[i];
 
-		locks[i] = update_ref_lock(update->refname,
-					   (update->have_old ?
-					    update->old_sha1 : NULL),
-					   update->flags,
-					   &types[i], onerr);
-		if (!locks[i]) {
+		update->lock = update_ref_lock(update->refname,
+					       (update->have_old ?
+						update->old_sha1 : NULL),
+					       update->flags,
+					       &types[i], onerr);
+		if (!update->lock) {
 			ret = 1;
 			goto cleanup;
 		}
@@ -3456,19 +3455,23 @@ int ref_transaction_commit(struct ref_transaction *transaction,
 			ret = update_ref_write(msg,
 					       update->refname,
 					       update->new_sha1,
-					       locks[i], onerr);
-			locks[i] = NULL; /* freed by update_ref_write */
+					       update->lock, onerr);
+			update->lock = NULL; /* freed by update_ref_write */
 			if (ret)
 				goto cleanup;
 		}
 	}
 
 	/* Perform deletes now that updates are safely completed */
-	for (i = 0; i < n; i++)
-		if (locks[i]) {
-			delnames[delnum++] = locks[i]->ref_name;
-			ret |= delete_ref_loose(locks[i], types[i]);
+	for (i = 0; i < n; i++) {
+		struct ref_update *update = updates[i];
+
+		if (update->lock) {
+			delnames[delnum++] = update->lock->ref_name;
+			ret |= delete_ref_loose(update->lock, types[i]);
 		}
+	}
+
 	ret |= repack_without_refs(delnames, delnum);
 	for (i = 0; i < delnum; i++)
 		unlink_or_warn(git_path("logs/%s", delnames[i]));
@@ -3476,11 +3479,10 @@ int ref_transaction_commit(struct ref_transaction *transaction,
 
 cleanup:
 	for (i = 0; i < n; i++)
-		if (locks[i])
-			unlock_ref(locks[i]);
+		if (updates[i]->lock)
+			unlock_ref(updates[i]->lock);
 	free(updates);
 	free(types);
-	free(locks);
 	free(delnames);
 	ref_transaction_free(transaction);
 	return ret;
