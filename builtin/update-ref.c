@@ -282,7 +282,8 @@ int cmd_update_ref(int argc, const char **argv, const char *prefix)
 		if (end_null)
 			line_termination = '\0';
 		update_refs_stdin();
-		return update_refs(msg, updates, updates_count, DIE_ON_ERR);
+		return update_refs(msg, updates, updates_count,
+				   UPDATE_REFS_DIE_ON_ERR);
 	}
 
 	if (end_null)
@@ -314,5 +315,5 @@ int cmd_update_ref(int argc, const char **argv, const char *prefix)
 		return delete_ref(refname, oldval ? oldsha1 : NULL, flags);
 	else
 		return update_ref(msg, refname, sha1, oldval ? oldsha1 : NULL,
-				  flags, DIE_ON_ERR);
+				  flags, UPDATE_REFS_DIE_ON_ERR);
 }

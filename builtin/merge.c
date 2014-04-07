@@ -398,7 +398,7 @@ static void finish(struct commit *head_commit,
 			const char *argv_gc_auto[] = { "gc", "--auto", NULL };
 			update_ref(reflog_message.buf, "HEAD",
 				new_head, head, 0,
-				DIE_ON_ERR);
+				UPDATE_REFS_DIE_ON_ERR);
 			/*
 			 * We ignore errors in 'gc --auto', since the
 			 * user should see them.
@@ -1222,7 +1222,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 			die(_("%s - not something we can merge"), argv[0]);
 		read_empty(remote_head->object.sha1, 0);
 		update_ref("initial pull", "HEAD", remote_head->object.sha1,
-			   NULL, 0, DIE_ON_ERR);
+			   NULL, 0, UPDATE_REFS_DIE_ON_ERR);
 		goto done;
 	} else {
 		struct strbuf merge_names = STRBUF_INIT;
@@ -1339,7 +1339,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	}
 
 	update_ref("updating ORIG_HEAD", "ORIG_HEAD", head_commit->object.sha1,
-		   NULL, 0, DIE_ON_ERR);
+		   NULL, 0, UPDATE_REFS_DIE_ON_ERR);
 
 	if (remoteheads && !common)
 		; /* No common ancestors found. We need a real merge. */

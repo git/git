@@ -214,8 +214,13 @@ extern int rename_ref(const char *oldref, const char *newref, const char *logmsg
  */
 extern int resolve_gitlink_ref(const char *path, const char *refname, unsigned char *sha1);
 
-/** lock a ref and then write its file */
-enum action_on_err { MSG_ON_ERR, DIE_ON_ERR, QUIET_ON_ERR };
+enum action_on_err {
+	UPDATE_REFS_MSG_ON_ERR,
+	UPDATE_REFS_DIE_ON_ERR,
+	UPDATE_REFS_QUIET_ON_ERR
+};
+
+/** Lock a ref and then write its file */
 int update_ref(const char *action, const char *refname,
 		const unsigned char *sha1, const unsigned char *oldval,
 		int flags, enum action_on_err onerr);

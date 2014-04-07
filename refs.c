@@ -3243,9 +3243,9 @@ static struct ref_lock *update_ref_lock(const char *refname,
 	if (!lock) {
 		const char *str = "Cannot lock the ref '%s'.";
 		switch (onerr) {
-		case MSG_ON_ERR: error(str, refname); break;
-		case DIE_ON_ERR: die(str, refname); break;
-		case QUIET_ON_ERR: break;
+		case UPDATE_REFS_MSG_ON_ERR: error(str, refname); break;
+		case UPDATE_REFS_DIE_ON_ERR: die(str, refname); break;
+		case UPDATE_REFS_QUIET_ON_ERR: break;
 		}
 	}
 	return lock;
@@ -3258,9 +3258,9 @@ static int update_ref_write(const char *action, const char *refname,
 	if (write_ref_sha1(lock, sha1, action) < 0) {
 		const char *str = "Cannot update the ref '%s'.";
 		switch (onerr) {
-		case MSG_ON_ERR: error(str, refname); break;
-		case DIE_ON_ERR: die(str, refname); break;
-		case QUIET_ON_ERR: break;
+		case UPDATE_REFS_MSG_ON_ERR: error(str, refname); break;
+		case UPDATE_REFS_DIE_ON_ERR: die(str, refname); break;
+		case UPDATE_REFS_QUIET_ON_ERR: break;
 		}
 		return 1;
 	}
@@ -3294,11 +3294,11 @@ static int ref_update_reject_duplicates(struct ref_update **updates, int n,
 			const char *str =
 				"Multiple updates for ref '%s' not allowed.";
 			switch (onerr) {
-			case MSG_ON_ERR:
+			case UPDATE_REFS_MSG_ON_ERR:
 				error(str, updates[i]->ref_name); break;
-			case DIE_ON_ERR:
+			case UPDATE_REFS_DIE_ON_ERR:
 				die(str, updates[i]->ref_name); break;
-			case QUIET_ON_ERR:
+			case UPDATE_REFS_QUIET_ON_ERR:
 				break;
 			}
 			return 1;
