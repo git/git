@@ -2,22 +2,10 @@
 
 kup=../kup/kup
 
-for s in git-*.sig
-do
-	test -f "$s" &&
-	v=$(expr "$s" : '^git.*-\([^-]*\)\.tar\.sig$') &&
-	case "$v" in
-	*.rc[0-9]*)
-		dest=/pub/software/scm/git/testing/ ;;
-	*)
-		dest=/pub/software/scm/git/ ;;
-	esac &&
+# LOOK HERE!!!
+: <<'EOF'
 
-	$kup --host kup.kernel.org put "${s%.sig}.gz" "$s" "$dest" || exit
-done
-
-pw=$(sed -ne '/code.google.com login jch2355@gmail.com/s/.* password //p' $HOME/.netrc)
-
+pw=$(sed -ne '/code.google.com login jch2355@gmail.com/s/.* password //p' $HOME/.netrc) &&
 for s in git-*.sign
 do
 	test -f "$s" &&
@@ -30,4 +18,19 @@ do
 	googlecode_upload.py -p git-core -u jch2355@gmail.com -w "$pw" \
 	    -s "Git $v documentation pages (man)" git-manpages-$v.tar.gz &&
 	cat git-$v.sign || break
+done
+EOF
+
+for s in git-*.sig
+do
+	test -f "$s" &&
+	v=$(expr "$s" : '^git.*-\([^-]*\)\.tar\.sig$') &&
+	case "$v" in
+	*.rc[0-9]*)
+		dest=/pub/software/scm/git/testing/ ;;
+	*)
+		dest=/pub/software/scm/git/ ;;
+	esac &&
+
+	$kup --host kup.kernel.org put "${s%.sig}.gz" "$s" "$dest" || exit
 done
