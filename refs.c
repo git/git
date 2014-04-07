@@ -3267,6 +3267,20 @@ static int update_ref_write(const char *action, const char *refname,
 	return 0;
 }
 
+/**
+ * Information needed for a single ref update.  Set new_sha1 to the
+ * new value or to zero to delete the ref.  To check the old value
+ * while locking the ref, set have_old to 1 and set old_sha1 to the
+ * value or to zero to ensure the ref does not exist before update.
+ */
+struct ref_update {
+	const char *ref_name;
+	unsigned char new_sha1[20];
+	unsigned char old_sha1[20];
+	int flags; /* REF_NODEREF? */
+	int have_old; /* 1 if old_sha1 is valid, 0 otherwise */
+};
+
 /*
  * Data structure for holding a reference transaction, which can
  * consist of checks and updates to multiple references, carried out
@@ -3396,16 +3410,17 @@ static int ref_update_reject_duplicates(struct ref_update **updates, int n,
 	return 0;
 }
 
-int update_refs(const char *action, struct ref_update * const *updates_orig,
-		int n, enum action_on_err onerr)
+int ref_transaction_commit(struct ref_transaction *transaction,
+			   const char *msg, enum action_on_err onerr)
 {
 	int ret = 0, delnum = 0, i;
 	struct ref_update **updates;
 	int *types;
 	struct ref_lock **locks;
 	const char **delnames;
+	int n = transaction->nr;
 
-	if (!updates_orig || !n)
+	if (!n)
 		return 0;
 
 	/* Allocate work space */
@@ -3415,7 +3430,7 @@ int update_refs(const char *action, struct ref_update * const *updates_orig,
 	delnames = xmalloc(sizeof(*delnames) * n);
 
 	/* Copy, sort, and reject duplicate refs */
-	memcpy(updates, updates_orig, sizeof(*updates) * n);
+	memcpy(updates, transaction->updates, sizeof(*updates) * n);
 	qsort(updates, n, sizeof(*updates), ref_update_compare);
 	ret = ref_update_reject_duplicates(updates, n, onerr);
 	if (ret)
@@ -3437,7 +3452,7 @@ int update_refs(const char *action, struct ref_update * const *updates_orig,
 	/* Perform updates first so live commits remain referenced */
 	for (i = 0; i < n; i++)
 		if (!is_null_sha1(updates[i]->new_sha1)) {
-			ret = update_ref_write(action,
+			ret = update_ref_write(msg,
 					       updates[i]->ref_name,
 					       updates[i]->new_sha1,
 					       locks[i], onerr);
@@ -3465,14 +3480,6 @@ cleanup:
 	free(types);
 	free(locks);
 	free(delnames);
-	return ret;
-}
-
-int ref_transaction_commit(struct ref_transaction *transaction,
-			   const char *msg, enum action_on_err onerr)
-{
-	int ret = update_refs(msg, transaction->updates, transaction->nr,
-			      onerr);
 	ref_transaction_free(transaction);
 	return ret;
 }
