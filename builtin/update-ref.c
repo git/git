@@ -176,7 +176,7 @@ static const char *parse_cmd_update(struct strbuf *input, const char *next)
 		if (*next != line_termination)
 			die("update %s has extra input: %s", update->ref_name, next);
 	} else if (!line_termination)
-		die("update %s missing [<oldvalue>] NUL", update->ref_name);
+		die("update %s missing <oldvalue>", update->ref_name);
 
 	return next;
 }
@@ -222,7 +222,7 @@ static const char *parse_cmd_delete(struct strbuf *input, const char *next)
 		if (update->have_old && is_null_sha1(update->old_sha1))
 			die("delete %s given zero <oldvalue>", update->ref_name);
 	} else if (!line_termination)
-		die("delete %s missing [<oldvalue>] NUL", update->ref_name);
+		die("delete %s missing <oldvalue>", update->ref_name);
 
 	if (*next != line_termination)
 		die("delete %s has extra input: %s", update->ref_name, next);
@@ -245,7 +245,7 @@ static const char *parse_cmd_verify(struct strbuf *input, const char *next)
 		update_store_old_sha1("verify", update, value.buf);
 		hashcpy(update->new_sha1, update->old_sha1);
 	} else if (!line_termination)
-		die("verify %s missing [<oldvalue>] NUL", update->ref_name);
+		die("verify %s missing <oldvalue>", update->ref_name);
 
 	if (*next != line_termination)
 		die("verify %s has extra input: %s", update->ref_name, next);

@@ -739,7 +739,7 @@ test_expect_success 'stdin -z fails update with no new value' '
 test_expect_success 'stdin -z fails update with no old value' '
 	printf $F "update $a" "$m" >stdin &&
 	test_must_fail git update-ref -z --stdin <stdin 2>err &&
-	grep "fatal: update $a missing \\[<oldvalue>\\] NUL" err
+	grep "fatal: update $a missing <oldvalue>" err
 '
 
 test_expect_success 'stdin -z fails update with too many arguments' '
@@ -763,7 +763,7 @@ test_expect_success 'stdin -z fails delete with bad ref name' '
 test_expect_success 'stdin -z fails delete with no old value' '
 	printf $F "delete $a" >stdin &&
 	test_must_fail git update-ref -z --stdin <stdin 2>err &&
-	grep "fatal: delete $a missing \\[<oldvalue>\\] NUL" err
+	grep "fatal: delete $a missing <oldvalue>" err
 '
 
 test_expect_success 'stdin -z fails delete with too many arguments' '
@@ -781,7 +781,7 @@ test_expect_success 'stdin -z fails verify with too many arguments' '
 test_expect_success 'stdin -z fails verify with no old value' '
 	printf $F "verify $a" >stdin &&
 	test_must_fail git update-ref -z --stdin <stdin 2>err &&
-	grep "fatal: verify $a missing \\[<oldvalue>\\] NUL" err
+	grep "fatal: verify $a missing <oldvalue>" err
 '
 
 test_expect_success 'stdin -z fails option with unknown name' '
