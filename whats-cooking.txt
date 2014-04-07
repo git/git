@@ -1,22 +1,15 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Apr 2014, #01; Fri, 4)
+Subject: What's cooking in git.git (Apr 2014, #02; Mon, 7)
 X-master-at: e4eef26d985177e4bdd32bf58b6ae40e7ae67289
-X-next-at: 3e70902d3cca37d1cd975a63c61e4c0966946084
+X-next-at: 0306834402c2cffa7f83ae33bcc31a47c1cdccd0
 
-What's cooking in git.git (Apr 2014, #01; Fri, 4)
+What's cooking in git.git (Apr 2014, #02; Mon, 7)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
-
-More topics merged to 'master', some of which are fallouts from GSoC
-microprojects, some are updates to docs.  C/C++ funcname pattern
-update is now in.
-
-I haven't reverted the merge of that "submodule update" topic yet; I
-should do that soonish.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -24,124 +17,15 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* ap/remote-hg-skip-null-bookmarks (2014-03-25) 1 commit
-  (merged to 'next' on 2014-03-25 at a8cd922)
- + remote-hg: do not fail on invalid bookmarks
-
-
-* cb/aix (2014-03-31) 2 commits
-  (merged to 'next' on 2014-04-01 at dd6b3d8)
- + tests: don't rely on strerror text when testing rmdir failure
- + dir.c: make git_fnmatch() not inline
-
-
-* cn/fetch-prune-overlapping-destination (2014-03-26) 2 commits
-  (merged to 'next' on 2014-03-28 at 954513a)
- + fetch: handle overlaping refspecs on --prune
- + fetch: add a failing test for prunning with overlapping refspecs
-
- Protect refs in a hierarchy that can come from more than one remote
- hierarcies from incorrect removal by "git fetch --prune".
-
-
-* ep/shell-command-substitution (2014-03-25) 2 commits
-  (merged to 'next' on 2014-03-28 at 99a512a)
- + git-am.sh: use the $(...) construct for command substitution
- + check-builtins.sh: use the $(...) construct for command substitution
-
-
-* jc/fix-diff-no-index-diff-opt-parse (2014-03-31) 1 commit
-  (merged to 'next' on 2014-04-01 at b8ae26b)
- + diff-no-index: correctly diagnose error return from diff_opt_parse()
-
- "diff --no-index -Mq a b" fell into an infinite loop.
-
-
-* nd/gc-aggressive (2014-03-31) 2 commits
-  (merged to 'next' on 2014-04-01 at e9f89b3)
- + environment.c: fix constness for odb_pack_keep()
- + gc --aggressive: make --depth configurable
-
- Allow tweaking the maximum length of the delta-chain produced by
- "gc --aggressive".
-
-
-* nd/log-show-linear-break (2014-03-25) 2 commits
-  (merged to 'next' on 2014-03-28 at ea4a8db)
- + log: add --show-linear-break to help see non-linear history
- + object.h: centralize object flag allocation
-
- Attempts to show where a single-strand-of-pearls break in "git log"
- output.
-
-
-* rs/pickaxe-i (2014-03-24) 10 commits
-  (merged to 'next' on 2014-03-25 at 3b6f21f)
- + pickaxe: simplify kwset loop in contains()
- + pickaxe: call strlen only when necessary in diffcore_pickaxe_count()
- + pickaxe: move pickaxe() after pickaxe_match()
- + pickaxe: merge diffcore_pickaxe_grep() and diffcore_pickaxe_count() into diffcore_pickaxe()
- + pickaxe: honor -i when used with -S and --pickaxe-regex
- + t4209: use helper functions to test --author
- + t4209: use helper functions to test --grep
- + t4209: factor out helper function test_log_icase()
- + t4209: factor out helper function test_log()
- + t4209: set up expectations up front
-
- Allow the options -i/--regexp-ignore-case, --pickaxe-regex, and -S
- to be used together and work as expected to perform a pickaxe
- search using case-insensitive regular expression matching.
-
---------------------------------------------------
 [New Topics]
 
-* ib/rev-parse-parseopt-argh (2014-04-01) 1 commit
-  (merged to 'next' on 2014-04-01 at 025578d)
- + rev-parse: fix typo in example on manpage
-
- Finishing touch to a new topic scheduled for 2.0
-
- Will merge to 'master'.
+* jl/status-added-submodule-is-never-ignored (2014-04-07) 2 commits
+ - commit -m: commit staged submodules regardless of ignore config
+ - status/commit: show staged submodules regardless of ignore config
 
 
-* mh/lockfile (2014-04-02) 22 commits
- - lockfile: allow new file contents to be written while retaining lock
- - lockfile: extract a function reset_lock_file()
- - remove_lock_file(): call rollback_lock_file()
- - struct lock_file: rename lock_filename field to staging_filename
- - lockfile: also keep track of the filename of the file being locked
- - lock_file(): exit early if lockfile cannot be opened
- - commit_lock_file(): don't work with a fixed-length buffer
- - resolve_symlink(): use a strbuf internally
- - lockfile: use strbufs when handling (most) paths
- - config: change write_error() to take a (struct lock_file *) argument
- - delete_ref_loose(): don't muck around in the lock_file's filename
- - lockfile: define a constant LOCK_SUFFIX_LEN
- - lockfile.c: document the various states of lock_file objects
- - api-lockfile: expand the documentation
- - struct lock_file: replace on_list field with flags field
- - lock_file(): always add lock_file object to lock_file_list
- - hold_lock_file_for_append(): release lock on errors
- - lockfile: unlock file if lockfile permissions cannot be adjusted
- - rollback_lock_file(): set fd to -1
- - rollback_lock_file(): do not clear filename redundantly
- - try_merge_strategy(): remove redundant lock_file allocation
- - t3204: test deleting references when lock files already exist
-
-
-* mh/update-ref-batch-create-fix (2014-04-02) 1 commit
-  (merged to 'next' on 2014-04-04 at 97e3f12)
- + update-ref: fail create operation over stdin if ref already exists
-
- Will merge to 'master'.
-
-
-* jk/pack-bitmap (2014-04-04) 1 commit
- - add `ignore_missing_links` mode to revwalk
-
- Will merge to 'next'.
+* mh/multimail (2014-04-07) 1 commit
+ - git-multimail: update to version 1.0.0
 
 --------------------------------------------------
 [Stalled]
@@ -321,6 +205,60 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* ib/rev-parse-parseopt-argh (2014-04-01) 1 commit
+  (merged to 'next' on 2014-04-01 at 025578d)
+ + rev-parse: fix typo in example on manpage
+
+ Finishing touch to a new topic scheduled for 2.0
+
+ Will merge to 'master'.
+
+
+* mh/lockfile (2014-04-07) 25 commits
+ - trim_last_path_elm(): replace last_path_elm()
+ - resolve_symlink(): take a strbuf parameter
+ - resolve_symlink(): use a strbuf for internal scratch space
+ - Change lock_file::filename into a strbuf
+ - commit_lock_file(): use a strbuf to manage temporary space
+ - try_merge_strategy(): use a statically-allocated lock_file object
+ - try_merge_strategy(): remove redundant lock_file allocation
+ - lockfile: avoid transitory invalid states
+ - commit_lock_file(): make committing an unlocked lockfile a NOP
+ - commit_lock_file(): inline temporary variable
+ - remove_lock_file(): call rollback_lock_file()
+ - lock_file(): exit early if lockfile cannot be opened
+ - write_packed_entry_fn(): convert cb_data into a (const int *)
+ - prepare_index(): declare return value to be (const char *)
+ - delete_ref_loose(): don't muck around in the lock_file's filename
+ - lockfile: define a constant LOCK_SUFFIX_LEN
+ - lockfile.c: document the various states of lock_file objects
+ - struct lock_file: replace on_list field with flags field
+ - lock_file(): always add lock_file object to lock_file_list
+ - hold_lock_file_for_append(): release lock on errors
+ - lockfile: unlock file if lockfile permissions cannot be adjusted
+ - rollback_lock_file(): set fd to -1
+ - rollback_lock_file(): do not clear filename redundantly
+ - unable_to_lock_die(): rename function from unable_to_lock_index_die()
+ - api-lockfile: expand the documentation
+
+ Refactor and fix corner-case bugs in the lockfile API.
+
+
+* mh/update-ref-batch-create-fix (2014-04-02) 1 commit
+  (merged to 'next' on 2014-04-04 at 97e3f12)
+ + update-ref: fail create operation over stdin if ref already exists
+
+ Will merge to 'master'.
+
+
+* jk/pack-bitmap (2014-04-04) 2 commits
+  (merged to 'next' on 2014-04-04 at 0306834)
+ + pack-objects: do not reuse packfiles without --delta-base-offset
+ + add `ignore_missing_links` mode to revwalk
+
+ Will merge to 'master'.
+
+
 * mr/opt-set-ptr (2014-03-31) 3 commits
   (merged to 'next' on 2014-04-03 at a26385b)
  + parse-options: remove unused OPT_SET_PTR
@@ -329,6 +267,8 @@ of the repositories listed at
 
  OPT_SET_PTR() implementation was broken on IL32P64 platforms;
  it turns out that the macro is not used by any real user.
+
+ Will merge to 'master'.
 
 
 * mt/patch-id-stable (2014-03-31) 3 commits
@@ -343,23 +283,24 @@ of the repositories listed at
 
 
 * jl/nor-or-nand-and (2014-03-31) 4 commits
- - code and test: fix misuses of "nor"
- - comments: fix misuses of "nor"
- - contrib: fix misuses of "nor"
- - Documentation: fix misuses of "nor"
+  (merged to 'next' on 2014-04-04 at b5d1ac5)
+ + code and test: fix misuses of "nor"
+ + comments: fix misuses of "nor"
+ + contrib: fix misuses of "nor"
+ + Documentation: fix misuses of "nor"
 
  Eradicate mistaken use of "nor" (that is, essentially "nor" used
  not in "neither A nor B" ;-)) from in-code comments, command output
  strings, and documentations.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* mh/ref-transaction (2014-04-01) 27 commits
+* mh/ref-transaction (2014-04-07) 27 commits
  - ref_transaction_commit(): work with transaction->updates in place
- - struct ref_update: add type field
- - struct ref_update: add a lock member
- - ref_transaction_commit(): introduce temporary variables
+ - struct ref_update: add a type field
+ - struct ref_update: add a lock field
+ - ref_transaction_commit(): simplify code using temporary variables
  - struct ref_update: store refname as a FLEX_ARRAY
  - struct ref_update: rename field "ref_name" to "refname"
  - refs: remove API function update_refs()
@@ -386,8 +327,6 @@ of the repositories listed at
 
  Update "update-ref --stdin [-z]" and then introduce a transactional
  support for (multi-)reference updates.
-
- Replaced with an unpublished "v3".
 
 
 * jc/apply-ignore-whitespace (2014-03-26) 1 commit
@@ -481,7 +420,7 @@ of the repositories listed at
  Will hold.
 
 
-* ks/tree-diff-nway (2014-03-27) 19 commits
+* ks/tree-diff-nway (2014-04-07) 19 commits
  - combine-diff: speed it up, by using multiparent diff tree-walker directly
  - tree-diff: rework diff_tree() to generate diffs for multiparent cases as well
  - Portable alloca for Git
@@ -517,7 +456,8 @@ of the repositories listed at
  Will merge to 'next' and keep it there for the remainder of this cycle.
 
 
-* cc/interpret-trailers (2014-04-01) 11 commits
+* cc/interpret-trailers (2014-04-07) 12 commits
+ - trailer: add blank line before the trailers if needed
  - Documentation: add documentation for 'git interpret-trailers'
  - trailer: add tests for commands in config file
  - trailer: execute command from 'trailer.<name>.command'
@@ -533,19 +473,4 @@ of the repositories listed at
  A new filter to programatically edit the tail end of the commit log
  messages.
 
- Will merge to 'next'.
-
---------------------------------------------------
-[Discarded]
-
-* hv/submodule-ignore-fix (2013-12-06) 4 commits
- . disable complete ignorance of submodules for index <-> HEAD diff
- . always show committed submodules in summary after commit
- . teach add -f option for ignored submodules
- . fix 'git add' to skip submodules configured as ignored
-
- Being reworked in a new topic.
-
-
-* kb/fast-hashmap-pack-struct (2014-02-24) 1 commit
- . hashmap.h: make sure map entries are tightly packed
+ Will merge to 'next' and keep it there for the remainder of this cycle.
