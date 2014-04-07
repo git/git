@@ -724,8 +724,14 @@ test_expect_success 'stdin -z fails update with no ref' '
 	grep "fatal: update line missing <ref>" err
 '
 
+test_expect_success 'stdin -z fails update with too few args' '
+	printf $F "update $a" "$m" >stdin &&
+	test_must_fail git update-ref -z --stdin <stdin 2>err &&
+	grep "fatal: update $a missing <oldvalue>" err
+'
+
 test_expect_success 'stdin -z fails update with bad ref name' '
-	printf $F "update ~a" "$m" >stdin &&
+	printf $F "update ~a" "$m" "" >stdin &&
 	test_must_fail git update-ref -z --stdin <stdin 2>err &&
 	grep "fatal: invalid ref format: ~a" err
 '
