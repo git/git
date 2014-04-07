@@ -3274,11 +3274,11 @@ static int update_ref_write(const char *action, const char *refname,
  * value or to zero to ensure the ref does not exist before update.
  */
 struct ref_update {
-	const char *refname;
 	unsigned char new_sha1[20];
 	unsigned char old_sha1[20];
 	int flags; /* REF_NODEREF? */
 	int have_old; /* 1 if old_sha1 is valid, 0 otherwise */
+	const char refname[FLEX_ARRAY];
 };
 
 /*
@@ -3301,12 +3301,8 @@ static void ref_transaction_free(struct ref_transaction *transaction)
 {
 	int i;
 
-	for (i = 0; i < transaction->nr; i++) {
-		struct ref_update *update = transaction->updates[i];
-
-		free((char *)update->refname);
-		free(update);
-	}
+	for (i = 0; i < transaction->nr; i++)
+		free(transaction->updates[i]);
 
 	free(transaction->updates);
 	free(transaction);
@@ -3320,9 +3316,10 @@ void ref_transaction_rollback(struct ref_transaction *transaction)
 static struct ref_update *add_update(struct ref_transaction *transaction,
 				     const char *refname)
 {
-	struct ref_update *update = xcalloc(1, sizeof(*update));
+	size_t len = strlen(refname);
+	struct ref_update *update = xcalloc(1, sizeof(*update) + len + 1);
 
-	update->refname = xstrdup(refname);
+	strcpy((char *)update->refname, refname);
 	ALLOC_GROW(transaction->updates, transaction->nr + 1, transaction->alloc);
 	transaction->updates[transaction->nr++] = update;
 	return update;
