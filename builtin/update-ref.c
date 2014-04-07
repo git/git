@@ -202,19 +202,19 @@ static const char *parse_cmd_update(struct strbuf *input, const char *next)
 
 	update->ref_name = parse_refname(input, &next);
 	if (!update->ref_name)
-		die("update line missing <ref>");
+		die("update: missing <ref>");
 
 	if (parse_next_sha1(input, &next, update->new_sha1,
 			    "update", update->ref_name,
 			    PARSE_SHA1_ALLOW_EMPTY))
-		die("update %s missing <newvalue>", update->ref_name);
+		die("update %s: missing <newvalue>", update->ref_name);
 
 	update->have_old = !parse_next_sha1(input, &next, update->old_sha1,
 					    "update", update->ref_name,
 					    PARSE_SHA1_OLD);
 
 	if (*next != line_termination)
-		die("update %s has extra input: %s", update->ref_name, next);
+		die("update %s: extra input: %s", update->ref_name, next);
 
 	return next;
 }
@@ -227,17 +227,17 @@ static const char *parse_cmd_create(struct strbuf *input, const char *next)
 
 	update->ref_name = parse_refname(input, &next);
 	if (!update->ref_name)
-		die("create line missing <ref>");
+		die("create: missing <ref>");
 
 	if (parse_next_sha1(input, &next, update->new_sha1,
 			    "create", update->ref_name, 0))
-		die("create %s missing <newvalue>", update->ref_name);
+		die("create %s: missing <newvalue>", update->ref_name);
 
 	if (is_null_sha1(update->new_sha1))
-		die("create %s given zero <newvalue>", update->ref_name);
+		die("create %s: zero <newvalue>", update->ref_name);
 
 	if (*next != line_termination)
-		die("create %s has extra input: %s", update->ref_name, next);
+		die("create %s: extra input: %s", update->ref_name, next);
 
 	return next;
 }
@@ -250,19 +250,19 @@ static const char *parse_cmd_delete(struct strbuf *input, const char *next)
 
 	update->ref_name = parse_refname(input, &next);
 	if (!update->ref_name)
-		die("delete line missing <ref>");
+		die("delete: missing <ref>");
 
 	if (parse_next_sha1(input, &next, update->old_sha1,
 			    "delete", update->ref_name, PARSE_SHA1_OLD)) {
 		update->have_old = 0;
 	} else {
 		if (is_null_sha1(update->old_sha1))
-			die("delete %s given zero <oldvalue>", update->ref_name);
+			die("delete %s: zero <oldvalue>", update->ref_name);
 		update->have_old = 1;
 	}
 
 	if (*next != line_termination)
-		die("delete %s has extra input: %s", update->ref_name, next);
+		die("delete %s: extra input: %s", update->ref_name, next);
 
 	return next;
 }
@@ -275,7 +275,7 @@ static const char *parse_cmd_verify(struct strbuf *input, const char *next)
 
 	update->ref_name = parse_refname(input, &next);
 	if (!update->ref_name)
-		die("verify line missing <ref>");
+		die("verify: missing <ref>");
 
 	if (parse_next_sha1(input, &next, update->old_sha1,
 			    "verify", update->ref_name, PARSE_SHA1_OLD)) {
@@ -286,7 +286,7 @@ static const char *parse_cmd_verify(struct strbuf *input, const char *next)
 	}
 
 	if (*next != line_termination)
-		die("verify %s has extra input: %s", update->ref_name, next);
+		die("verify %s: extra input: %s", update->ref_name, next);
 
 	return next;
 }

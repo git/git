@@ -371,7 +371,7 @@ test_expect_success 'stdin fails on junk after quoted argument' '
 test_expect_success 'stdin fails create with no ref' '
 	echo "create " >stdin &&
 	test_must_fail git update-ref --stdin <stdin 2>err &&
-	grep "fatal: create line missing <ref>" err
+	grep "fatal: create: missing <ref>" err
 '
 
 test_expect_success 'stdin fails create with bad ref name' '
@@ -383,19 +383,19 @@ test_expect_success 'stdin fails create with bad ref name' '
 test_expect_success 'stdin fails create with no new value' '
 	echo "create $a" >stdin &&
 	test_must_fail git update-ref --stdin <stdin 2>err &&
-	grep "fatal: create $a missing <newvalue>" err
+	grep "fatal: create $a: missing <newvalue>" err
 '
 
 test_expect_success 'stdin fails create with too many arguments' '
 	echo "create $a $m $m" >stdin &&
 	test_must_fail git update-ref --stdin <stdin 2>err &&
-	grep "fatal: create $a has extra input:  $m" err
+	grep "fatal: create $a: extra input:  $m" err
 '
 
 test_expect_success 'stdin fails update with no ref' '
 	echo "update " >stdin &&
 	test_must_fail git update-ref --stdin <stdin 2>err &&
-	grep "fatal: update line missing <ref>" err
+	grep "fatal: update: missing <ref>" err
 '
 
 test_expect_success 'stdin fails update with bad ref name' '
@@ -407,19 +407,19 @@ test_expect_success 'stdin fails update with bad ref name' '
 test_expect_success 'stdin fails update with no new value' '
 	echo "update $a" >stdin &&
 	test_must_fail git update-ref --stdin <stdin 2>err &&
-	grep "fatal: update $a missing <newvalue>" err
+	grep "fatal: update $a: missing <newvalue>" err
 '
 
 test_expect_success 'stdin fails update with too many arguments' '
 	echo "update $a $m $m $m" >stdin &&
 	test_must_fail git update-ref --stdin <stdin 2>err &&
-	grep "fatal: update $a has extra input:  $m" err
+	grep "fatal: update $a: extra input:  $m" err
 '
 
 test_expect_success 'stdin fails delete with no ref' '
 	echo "delete " >stdin &&
 	test_must_fail git update-ref --stdin <stdin 2>err &&
-	grep "fatal: delete line missing <ref>" err
+	grep "fatal: delete: missing <ref>" err
 '
 
 test_expect_success 'stdin fails delete with bad ref name' '
@@ -431,13 +431,13 @@ test_expect_success 'stdin fails delete with bad ref name' '
 test_expect_success 'stdin fails delete with too many arguments' '
 	echo "delete $a $m $m" >stdin &&
 	test_must_fail git update-ref --stdin <stdin 2>err &&
-	grep "fatal: delete $a has extra input:  $m" err
+	grep "fatal: delete $a: extra input:  $m" err
 '
 
 test_expect_success 'stdin fails verify with too many arguments' '
 	echo "verify $a $m $m" >stdin &&
 	test_must_fail git update-ref --stdin <stdin 2>err &&
-	grep "fatal: verify $a has extra input:  $m" err
+	grep "fatal: verify $a: extra input:  $m" err
 '
 
 test_expect_success 'stdin fails option with unknown name' '
@@ -532,7 +532,7 @@ test_expect_success 'stdin create ref fails with bad new value' '
 test_expect_success 'stdin create ref fails with zero new value' '
 	echo "create $c " >stdin &&
 	test_must_fail git update-ref --stdin <stdin 2>err &&
-	grep "fatal: create $c given zero <newvalue>" err &&
+	grep "fatal: create $c: zero <newvalue>" err &&
 	test_must_fail git rev-parse --verify -q $c
 '
 
@@ -556,7 +556,7 @@ test_expect_success 'stdin delete ref fails with wrong old value' '
 test_expect_success 'stdin delete ref fails with zero old value' '
 	echo "delete $a " >stdin &&
 	test_must_fail git update-ref --stdin <stdin 2>err &&
-	grep "fatal: delete $a given zero <oldvalue>" err &&
+	grep "fatal: delete $a: zero <oldvalue>" err &&
 	git rev-parse $m >expect &&
 	git rev-parse $a >actual &&
 	test_cmp expect actual
@@ -697,7 +697,7 @@ test_expect_success 'stdin -z fails on unknown command' '
 test_expect_success 'stdin -z fails create with no ref' '
 	printf $F "create " >stdin &&
 	test_must_fail git update-ref -z --stdin <stdin 2>err &&
-	grep "fatal: create line missing <ref>" err
+	grep "fatal: create: missing <ref>" err
 '
 
 test_expect_success 'stdin -z fails create with bad ref name' '
@@ -721,7 +721,7 @@ test_expect_success 'stdin -z fails create with too many arguments' '
 test_expect_success 'stdin -z fails update with no ref' '
 	printf $F "update " >stdin &&
 	test_must_fail git update-ref -z --stdin <stdin 2>err &&
-	grep "fatal: update line missing <ref>" err
+	grep "fatal: update: missing <ref>" err
 '
 
 test_expect_success 'stdin -z fails update with too few args' '
@@ -765,7 +765,7 @@ test_expect_success 'stdin -z fails update with too many arguments' '
 test_expect_success 'stdin -z fails delete with no ref' '
 	printf $F "delete " >stdin &&
 	test_must_fail git update-ref -z --stdin <stdin 2>err &&
-	grep "fatal: delete line missing <ref>" err
+	grep "fatal: delete: missing <ref>" err
 '
 
 test_expect_success 'stdin -z fails delete with bad ref name' '
@@ -868,7 +868,7 @@ test_expect_success 'stdin -z create ref fails with bad new value' '
 test_expect_success 'stdin -z create ref fails with empty new value' '
 	printf $F "create $c" "" >stdin &&
 	test_must_fail git update-ref -z --stdin <stdin 2>err &&
-	grep "fatal: create $c missing <newvalue>" err &&
+	grep "fatal: create $c: missing <newvalue>" err &&
 	test_must_fail git rev-parse --verify -q $c
 '
 
@@ -892,7 +892,7 @@ test_expect_success 'stdin -z delete ref fails with wrong old value' '
 test_expect_success 'stdin -z delete ref fails with zero old value' '
 	printf $F "delete $a" "$Z" >stdin &&
 	test_must_fail git update-ref -z --stdin <stdin 2>err &&
-	grep "fatal: delete $a given zero <oldvalue>" err &&
+	grep "fatal: delete $a: zero <oldvalue>" err &&
 	git rev-parse $m >expect &&
 	git rev-parse $a >actual &&
 	test_cmp expect actual
