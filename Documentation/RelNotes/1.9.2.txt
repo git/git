@@ -4,6 +4,15 @@ Git v1.9.2 Release Notes
 Fixes since v1.9.1
 ------------------
 
+ * When it is not necessary to edit a commit log message (e.g. "git
+   commit -m" is given a message without specifying "-e"), we used to
+   disable the spawning of the editor by overriding GIT_EDITOR, but
+   this means all the uses of the editor, other than to edit the
+   commit log message, are also affected.
+
+ * "git status --porcelain --branch" showed its output with labels
+   "ahead/behind/gone" translated to the user's locale.
+
  * "git mv" that moves a submodule forgot to adjust the array that
    uses to keep track of which submodules were to be moved to update
    its configuration.
