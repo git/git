@@ -75,7 +75,8 @@ struct rev_info {
 	enum rev_sort_order sort_order;
 
 	unsigned int	early_output:1,
-			ignore_missing:1;
+			ignore_missing:1,
+			ignore_missing_links:1;
 
 	/* Traversal flags */
 	unsigned int	dense:1,
