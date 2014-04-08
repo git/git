@@ -147,6 +147,7 @@ static void parse_cmd_create(const char *next)
 	struct ref_update *update;
 
 	update = update_alloc();
+	update->have_old = 1;
 
 	if ((next = parse_first_arg(next, &ref)) != NULL && ref.buf[0])
 		update_store_ref_name(update, ref.buf);
