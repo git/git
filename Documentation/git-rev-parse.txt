@@ -363,7 +363,7 @@ usage: some-command [options] <args>...
     -h, --help            show the help
     --foo                 some nifty option --foo
     --bar ...             some cool option --bar with an argument
-    --bar <arg>           another cool option --baz with a named argument
+    --baz <arg>           another cool option --baz with a named argument
     --qux[=<path>]        qux may take a path argument but has meaning by itself
 
 An option group Header
