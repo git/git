@@ -237,10 +237,10 @@ The client now sends the maximum commit history depth it wants for
 this transaction, which is the number of commits it wants from the
 tip of the history, if any, as a 'deepen' line.  A depth of 0 is the
 same as not making a depth request. The client does not want to receive
-any commits beyond this depth, nor objects needed only to complete
-those commits. Commits whose parents are not received as a result are
-defined as shallow and marked as such in the server. This information
-is sent back to the client in the next step.
+any commits beyond this depth, nor does it want objects needed only to
+complete those commits. Commits whose parents are not received as a
+result are defined as shallow and marked as such in the server. This
+information is sent back to the client in the next step.
 
 Once all the 'want's and 'shallow's (and optional 'deepen') are
 transferred, clients MUST send a flush-pkt, to tell the server side

@@ -174,7 +174,7 @@ added, from the point of view of that parent).
 In the above example output, the function signature was changed
 from both files (hence two `-` removals from both file1 and
 file2, plus `++` to mean one line that was added does not appear
-in either file1 nor file2).  Also eight other lines are the same
+in either file1 or file2).  Also eight other lines are the same
 from file1 but do not appear in file2 (hence prefixed with `+`).
 
 When shown by `git diff-tree -c`, it compares the parents of a

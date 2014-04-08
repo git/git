@@ -63,14 +63,13 @@ merge.
 
 --squash::
 --no-squash::
-	Produce the working tree and index state as if a real
-	merge happened (except for the merge information),
-	but do not actually make a commit or
-	move the `HEAD`, nor record `$GIT_DIR/MERGE_HEAD` to
-	cause the next `git commit` command to create a merge
-	commit.  This allows you to create a single commit on
-	top of the current branch whose effect is the same as
-	merging another branch (or more in case of an octopus).
+	Produce the working tree and index state as if a real merge
+	happened (except for the merge information), but do not actually
+	make a commit, move the `HEAD`, or record `$GIT_DIR/MERGE_HEAD`
+	(to cause the next `git commit` command to create a merge
+	commit).  This allows you to create a single commit on top of
+	the current branch whose effect is the same as merging another
+	branch (or more in case of an octopus).
 +
 With --no-squash perform the merge and commit the result. This
 option can be used to override --squash.

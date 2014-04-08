@@ -385,7 +385,7 @@ will now start building on top of B.
 The command by default does not allow an update that is not a fast-forward
 to prevent such loss of history.
 
-If you do not want to lose your work (history from X to B) nor the work by
+If you do not want to lose your work (history from X to B) or the work by
 the other person (history from X to A), you would need to first fetch the
 history from the repository, create a history that contains changes done
 by both parties, and push the result back.

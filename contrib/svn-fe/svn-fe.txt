@@ -40,8 +40,8 @@ manual page.
 NOTES
 -----
 Subversion dumps do not record a separate author and committer for
-each revision, nor a separate display name and email address for
-each author.  Like git-svn(1), 'svn-fe' will use the name
+each revision, nor do they record a separate display name and email
+address for each author.  Like git-svn(1), 'svn-fe' will use the name
 
 ---------
 user <user@UUID>

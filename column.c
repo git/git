@@ -311,8 +311,8 @@ static int parse_config(unsigned int *colopts, const char *value)
 		value += strspn(value, sep);
 	}
 	/*
-	 * Setting layout implies "always" if neither always, never
-	 * nor auto is specified.
+	 * If none of "always", "never", and "auto" is specified, then setting
+	 * layout implies "always".
 	 *
 	 * Current value in COL_ENABLE_MASK is disregarded. This means if
 	 * you set column.ui = auto and pass --column=row, then "auto"

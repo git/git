@@ -40,7 +40,7 @@ case "$1" in --) shift ;; esac
 
 # git reset --mixed tree [--] paths... can be used to
 # load chosen paths from the tree into the index without
-# affecting the working tree nor HEAD.
+# affecting the working tree or HEAD.
 if test $# != 0
 then
 	test "$reset_type" = "--mixed" ||
@@ -60,7 +60,7 @@ then
 	update=-u
 fi
 
-# Soft reset does not touch the index file nor the working tree
+# Soft reset does not touch the index file or the working tree
 # at all, but requires them in a good order.  Other resets reset
 # the index file to the tree object we are switching to.
 if test "$reset_type" = "--soft"

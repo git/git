@@ -13,8 +13,7 @@
 /*
  * We detect based on the cURL version if multi-transfer is
  * usable in this implementation and define this symbol accordingly.
- * This is not something Makefile should set nor users should pass
- * via CFLAGS.
+ * This shouldn't be set by the Makefile or by the user (e.g. via CFLAGS).
  */
 #undef USE_CURL_MULTI
 
