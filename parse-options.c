@@ -127,10 +127,6 @@ static int get_value(struct parse_opt_ctx_t *p,
 		*(int *)opt->value = opt->defval;
 		return 0;
 
-	case OPTION_SET_PTR:
-		*(void **)opt->value = unset ? NULL : (void *)opt->defval;
-		return 0;
-
 	case OPTION_STRING:
 		if (unset)
 			*(const char **)opt->value = NULL;
@@ -367,7 +363,6 @@ static void parse_options_check(const struct option *opts)
 		case OPTION_BIT:
 		case OPTION_NEGBIT:
 		case OPTION_SET_INT:
-		case OPTION_SET_PTR:
 		case OPTION_NUMBER:
 			if ((opts->flags & PARSE_OPT_OPTARG) ||
 			    !(opts->flags & PARSE_OPT_NOARG))

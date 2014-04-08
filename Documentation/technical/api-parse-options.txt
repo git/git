@@ -160,10 +160,6 @@ There are some macros to easily define options:
 	`int_var` is set to `integer` with `--option`, and
 	reset to zero with `--no-option`.
 
-`OPT_SET_PTR(short, long, &ptr_var, description, ptr)`::
-	Introduce a boolean option.
-	If used, set `ptr_var` to `ptr`.
-
 `OPT_STRING(short, long, &str_var, arg_str, description)`::
 	Introduce an option with string argument.
 	The string argument is put into `str_var`.
