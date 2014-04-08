@@ -12,7 +12,7 @@ SYNOPSIS
 'git update-index'
 	     [--add] [--remove | --force-remove] [--replace]
 	     [--refresh] [-q] [--unmerged] [--ignore-missing]
-	     [(--cacheinfo <mode> <object> <file>)...]
+	     [(--cacheinfo <mode>,<object>,<file>)...]
 	     [--chmod=(+|-)x]
 	     [--[no-]assume-unchanged]
 	     [--[no-]skip-worktree]
@@ -68,8 +68,12 @@ OPTIONS
 --ignore-missing::
 	Ignores missing files during a --refresh
 
+--cacheinfo <mode>,<object>,<path>::
 --cacheinfo <mode> <object> <path>::
-	Directly insert the specified info into the index.
+	Directly insert the specified info into the index.  For
+	backward compatibility, you can also give these three
+	arguments as three separate parameters, but new users are
+	encouraged to use a single-parameter form.
 
 --index-info::
         Read index information from stdin.
