@@ -260,6 +260,7 @@ class Parser:
         return (user, int(date), -tz)
 
 def fix_file_path(path):
+    path = os.path.normpath(path)
     if not os.path.isabs(path):
         return path
     return os.path.relpath(path, '/')
