@@ -28,8 +28,9 @@ test_expect_success 'set up basic repos' '
 	git add foo &&
 	test_tick &&
 	git config i18n.commitEncoding iso8859-1 &&
-	commit_msg iso8859-1 > commit_msg &&
-	git commit --file commit_msg &&
+	# "git commit -m" would break MinGW, as Windows refuse to pass
+	# iso8859-1 encoded parameter to git.
+	commit_msg iso8859-1 | git commit -F - &&
 	git add bar &&
 	test_tick &&
 	git commit -m "add bar" &&
