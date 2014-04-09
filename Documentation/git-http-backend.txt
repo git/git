@@ -191,7 +191,7 @@ ScriptAlias /git/ /var/www/cgi-bin/gitweb.cgi/
 ----------------------------------------------------------------
 
 Lighttpd::
-	Ensure that `mod_cgi`, `mod_alias, `mod_auth`, `mod_setenv` are
+	Ensure that `mod_cgi`, `mod_alias`, `mod_auth`, `mod_setenv` are
 	loaded, then set `GIT_PROJECT_ROOT` appropriately and redirect
 	all requests to the CGI:
 +
