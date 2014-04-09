@@ -1380,9 +1380,8 @@ test_expect_success 'multiple --points-at are OR-ed together' '
 	test_cmp expect actual
 '
 
-# what about a deep repo ?
-
 >expect
+# ulimit is a bash builtin; we can rely on that in MinGW, but nowhere else
 test_expect_success MINGW '--contains works in a deep repo' '
 	ulimit -s 64
 	i=1 &&
