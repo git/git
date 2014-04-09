@@ -99,12 +99,11 @@ static int contains_test(struct commit *candidate,
 }
 
 /*
- * This stack on the heap mimics the real stack in the previous implementation
- * of contains_recurse() that had to be replaced because it easily led to a
- * stack overflow.
+ * Mimicking the real stack, this stack lives on the heap, avoiding stack
+ * overflows.
  *
- * Every stack item points at a certain commit whose parents are iterated over.
- * Each item's current parent is the current next stack item's commit.
+ * At each recursion step, the stack items points to the commits whose
+ * ancestors are to be inspected.
  */
 struct stack {
 	int nr, alloc;
