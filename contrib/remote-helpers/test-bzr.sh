@@ -391,4 +391,28 @@ test_expect_success 'export utf-8 authors' '
 	test_cmp expected actual
 '
 
+test_expect_success 'push different author' '
+	test_when_finished "rm -rf bzrrepo gitrepo" &&
+
+	bzr init bzrrepo &&
+
+	(
+	git init gitrepo &&
+	cd gitrepo &&
+	echo john >> content &&
+	git add content &&
+	git commit -m john --author "John Doe <jdoe@example.com>" &&
+	git remote add bzr "bzr::../bzrrepo" &&
+	git push bzr master
+	) &&
+
+	(
+	cd bzrrepo &&
+	bzr log | grep "^author: " > ../actual
+	) &&
+
+	echo "author: John Doe <jdoe@example.com>" > expected &&
+	test_cmp expected actual
+'
+
 test_done

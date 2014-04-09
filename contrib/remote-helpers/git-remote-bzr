@@ -618,10 +618,12 @@ def parse_commit(parser):
         files[path] = f
 
     committer, date, tz = committer
+    author, _, _ = author
     parents = [mark_to_rev(p) for p in parents]
     revid = bzrlib.generate_ids.gen_revision_id(committer, date)
     props = {}
     props['branch-nick'] = branch.nick
+    props['authors'] = author
 
     mtree = CustomTree(branch, revid, parents, files)
     changes = mtree.iter_changes()
