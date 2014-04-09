@@ -188,6 +188,7 @@ ifeq ($(uname_S),FreeBSD)
 	endif
 	PYTHON_PATH = /usr/local/bin/python
 	HAVE_PATHS_H = YesPlease
+	GMTIME_UNRELIABLE_ERRORS = UnfortunatelyYes
 endif
 ifeq ($(uname_S),OpenBSD)
 	NO_STRCASESTR = YesPlease
