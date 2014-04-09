@@ -4,6 +4,26 @@ Git v1.9.2 Release Notes
 Fixes since v1.9.1
 ------------------
 
+ * Documentation and in-code comments had many instances of mistaken
+   use of "nor", which have been corrected.
+
+ * "git fetch --prune", when the right-hand-side of multiple fetch
+   refspecs overlap (e.g. storing "refs/heads/*" to
+   "refs/remotes/origin/*", while storing "refs/frotz/*" to
+   "refs/remotes/origin/fr/*"), aggressively thought that lack of
+   "refs/heads/fr/otz" on the origin site meant we should remove
+   "refs/remotes/origin/fr/otz" from us, without checking their
+   "refs/frotz/otz" first.
+
+   Note that such a configuration is inherently unsafe (think what
+   should happen when "refs/heads/fr/otz" does appear on the origin
+   site), but that is not a reason not to be extra careful.
+
+ * "git update-ref --stdin" did not fail a request to create a ref
+   when the ref already existed.
+
+ * "git diff --no-index -Mq a b" fell into an infinite loop.
+
  * When it is not necessary to edit a commit log message (e.g. "git
    commit -m" is given a message without specifying "-e"), we used to
    disable the spawning of the editor by overriding GIT_EDITOR, but
