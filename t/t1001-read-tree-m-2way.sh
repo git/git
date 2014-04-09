@@ -18,7 +18,7 @@ In the test, these paths are used:
         frotz   - not in H added in M
         nitfol  - in H, stays in M unmodified
         rezrov  - in H, deleted in M
-        yomin   - not in H nor M
+	yomin   - not in H or M
 '
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-read-tree.sh

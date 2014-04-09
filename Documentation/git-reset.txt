@@ -21,7 +21,7 @@ to HEAD in all forms.
 
 'git reset' [-q] [<tree-ish>] [--] <paths>...::
 	This form resets the index entries for all <paths> to their
-	state at <tree-ish>.  (It does not affect the working tree, nor
+	state at <tree-ish>.  (It does not affect the working tree or
 	the current branch.)
 +
 This means that `git reset <paths>` is the opposite of `git add
@@ -51,7 +51,7 @@ section of linkgit:git-add[1] to learn how to operate the `--patch` mode.
 +
 --
 --soft::
-	Does not touch the index file nor the working tree at all (but
+	Does not touch the index file or the working tree at all (but
 	resets the head to <commit>, just like all modes do). This leaves
 	all your changed files "Changes to be committed", as 'git status'
 	would put it.
@@ -115,7 +115,7 @@ and changes with these files are distracting.
 <2> Somebody asks you to pull, and the changes sounds worthy of merging.
 <3> However, you already dirtied the index (i.e. your index does
 not match the HEAD commit).  But you know the pull you are going
-to make does not affect frotz.c nor filfre.c, so you revert the
+to make does not affect frotz.c or filfre.c, so you revert the
 index changes for these two files.  Your changes in working tree
 remain there.
 <4> Then you can pull and merge, leaving frotz.c and filfre.c

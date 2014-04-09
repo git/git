@@ -237,7 +237,7 @@ list.
 	reflog entries from the most recent one to older ones.
 	When this option is used you cannot specify commits to
 	exclude (that is, '{caret}commit', 'commit1..commit2',
-	nor 'commit1\...commit2' notations cannot be used).
+	and 'commit1\...commit2' notations cannot be used).
 +
 With `--pretty` format other than `oneline` (for obvious reasons),
 this causes the output to have two extra lines of information

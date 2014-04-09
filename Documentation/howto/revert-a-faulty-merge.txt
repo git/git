@@ -54,7 +54,7 @@ where C and D are to fix what was broken in A and B, and you may already
 have some other changes on the mainline after W.
 
 If you merge the updated side branch (with D at its tip), none of the
-changes made in A nor B will be in the result, because they were reverted
+changes made in A or B will be in the result, because they were reverted
 by W.  That is what Alan saw.
 
 Linus explains the situation:
@@ -90,7 +90,7 @@ with:
     $ git revert W
 
 This history would (ignoring possible conflicts between what W and W..Y
-changed) be equivalent to not having W nor Y at all in the history:
+changed) be equivalent to not having W or Y at all in the history:
 
  ---o---o---o---M---x---x-------x----
 	       /

@@ -1,6 +1,6 @@
 package Git::SVN::Migration;
 # these version numbers do NOT correspond to actual version numbers
-# of git nor git-svn.  They are just relative.
+# of git or git-svn.  They are just relative.
 #
 # v0 layout: .git/$id/info/url, refs/heads/$id-HEAD
 #

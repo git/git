@@ -280,7 +280,7 @@ case "$#,$also,$only,$amend" in
 0,,,*)
 	;;
 *,,,*)
-	only_include_assumed="# Explicit paths specified without -i nor -o; assuming --only paths..."
+	only_include_assumed="# Explicit paths specified without -i or -o; assuming --only paths..."
 	also=
 	;;
 esac

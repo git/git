@@ -263,7 +263,7 @@ that are not quite ready.
 <5> create topic branch as needed and apply, again with my
 sign-offs.
 <6> rebase internal topic branch that has not been merged to the
-master, nor exposed as a part of a stable branch.
+master or exposed as a part of a stable branch.
 <7> restart `pu` every time from the next.
 <8> and bundle topic branches still cooking.
 <9> backport a critical fix.

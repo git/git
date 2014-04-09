@@ -73,7 +73,7 @@ test_expect_success \
 
 # tree has COPYING and rezrov.  work tree has the same COPYING and
 # copy-edited COPYING.1, and unchanged rezrov.  We should not say
-# anything about rezrov nor COPYING, since the revised again diff-raw
+# anything about rezrov or COPYING, since the revised again diff-raw
 # nows how to say Copy.
 
 test_expect_success \

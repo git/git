@@ -78,8 +78,8 @@ be escaped: use `\"` for `"` and `\\` for `\`.
 
 The following escape sequences (beside `\"` and `\\`) are recognized:
 `\n` for newline character (NL), `\t` for horizontal tabulation (HT, TAB)
-and `\b` for backspace (BS).  No other char escape sequence, nor octal
-char sequences are valid.
+and `\b` for backspace (BS).  Other char escape sequences (including octal
+escape sequences) are invalid.
 
 Variable values ending in a `\` are continued on the next line in the
 customary UNIX fashion.
@@ -827,7 +827,7 @@ color.diff::
 	commands will only use color when output is to the terminal.
 	Defaults to false.
 +
-This does not affect linkgit:git-format-patch[1] nor the
+This does not affect linkgit:git-format-patch[1] or the
 'git-diff-{asterisk}' plumbing commands.  Can be overridden on the
 command line with the `--color[=<when>]` option.
 

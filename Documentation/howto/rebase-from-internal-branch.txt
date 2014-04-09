@@ -139,7 +139,7 @@ You fetch from upstream, but not merge.
     $ git fetch upstream
 
 This leaves the updated upstream head in .git/FETCH_HEAD but
-does not touch your .git/HEAD nor .git/refs/heads/master.
+does not touch your .git/HEAD or .git/refs/heads/master.
 You run "git rebase" now.
 
     $ git rebase FETCH_HEAD master

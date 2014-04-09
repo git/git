@@ -388,7 +388,7 @@ test_expect_failure 'git detects conflict w/ criss-cross+contrived resolution' '
 
 #
 # criss-cross + d/f conflict via add/add:
-#   Commit A: Neither file 'a' nor directory 'a/' exist.
+#   Commit A: Neither file 'a' nor directory 'a/' exists.
 #   Commit B: Introduce 'a'
 #   Commit C: Introduce 'a/file'
 #   Commit D: Merge B & C, keeping 'a' and deleting 'a/'

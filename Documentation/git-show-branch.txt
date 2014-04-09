@@ -25,7 +25,7 @@ and/or refs/tags) semi-visually.
 It cannot show more than 29 branches and commits at a time.
 
 It uses `showbranch.default` multi-valued configuration items if
-no <rev> nor <glob> is given on the command line.
+no <rev> or <glob> is given on the command line.
 
 
 OPTIONS

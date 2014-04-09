@@ -39,7 +39,7 @@ More specifically, they:
   caret `^`, colon `:`, question-mark `?`, asterisk `*`,
   or open bracket `[` anywhere.
 
-. They cannot end with a slash `/` nor a dot `.`.
+. They cannot end with a slash `/` or a dot `.`.
 
 . They cannot end with the sequence `.lock`.
 
