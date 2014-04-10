@@ -279,6 +279,7 @@ struct index_state {
 		 initialized : 1;
 	struct hash_table name_hash;
 	struct hash_table dir_hash;
+	unsigned char sha1[20];
 };
 
 extern struct index_state the_index;
@@ -1199,6 +1200,8 @@ extern void fsync_or_die(int fd, const char *);
 
 extern ssize_t read_in_full(int fd, void *buf, size_t count);
 extern ssize_t write_in_full(int fd, const void *buf, size_t count);
+extern ssize_t pread_in_full(int fd, void *buf, size_t count, off_t offset);
+
 static inline ssize_t write_str_in_full(int fd, const char *str)
 {
 	return write_in_full(fd, str, strlen(str));
