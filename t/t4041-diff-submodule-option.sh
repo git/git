@@ -13,7 +13,7 @@ This test tries to verify the sanity of the --submodule option of git diff.
 
 # String "added" in German (translated with Google Translate), encoded in UTF-8,
 # used in sample commit log messages in add_file() function below.
-added=$(printf "hinzugef\303\274gt" | iconv -t utf-8)
+added=$(printf "hinzugef\303\274gt")
 add_file () {
 	(
 		cd "$1" &&
@@ -23,8 +23,10 @@ add_file () {
 			echo "$name" >"$name" &&
 			git add "$name" &&
 			test_tick &&
-			msg_added_iso88591=$(echo "Add $name ($added $name)" | iconv -f utf-8 -t iso8859-1) &&
-			git -c 'i18n.commitEncoding=iso8859-1' commit -m "$msg_added_iso88591"
+			# "git commit -m" would break MinGW, as Windows refuse to pass
+			# iso8859-1 encoded parameter to git.
+			echo "Add $name ($added $name)" | iconv -f utf-8 -t iso8859-1 |
+			git -c 'i18n.commitEncoding=iso8859-1' commit -F -
 		done >/dev/null &&
 		git rev-parse --short --verify HEAD
 	)
