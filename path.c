@@ -133,7 +133,7 @@ char *git_path(const char *fmt, ...)
 void home_config_paths(char **global, char **xdg, char *file)
 {
 	char *xdg_home = getenv("XDG_CONFIG_HOME");
-	char *home = getenv("HOME");
+	const char *home = get_home_directory();
 	char *to_free = NULL;
 
 	if (!home) {
@@ -274,7 +274,7 @@ char *expand_user_path(const char *path)
 		const char *username = path + 1;
 		size_t username_len = first_slash - username;
 		if (username_len == 0) {
-			const char *home = getenv("HOME");
+			const char *home = get_home_directory();
 			if (!home)
 				goto return_null;
 			strbuf_add(&user_path, home, strlen(home));
@@ -822,11 +822,4 @@ int daemon_avoid_alias(const char *p)
 			ndot = 0;
 		}
 	}
-}
-
-int offset_1st_component(const char *path)
-{
-	if (has_dos_drive_prefix(path))
-		return 2 + is_dir_sep(path[2]);
-	return is_dir_sep(path[0]);
 }

@@ -270,6 +270,10 @@ extern char *gitbasename(char *);
 #define has_dos_drive_prefix(path) 0
 #endif
 
+#ifndef offset_1st_component
+#define offset_1st_component(path) (is_dir_sep((path)[0]))
+#endif
+
 #ifndef is_dir_sep
 #define is_dir_sep(c) ((c) == '/')
 #endif
@@ -726,6 +730,14 @@ struct tm *git_gmtime(const time_t *);
 struct tm *git_gmtime_r(const time_t *, struct tm *);
 #define gmtime git_gmtime
 #define gmtime_r git_gmtime_r
+#endif
+
+#ifndef mark_as_git_dir
+#define mark_as_git_dir(x) /* noop */
+#endif
+
+#ifndef get_home_directory
+#define get_home_directory() getenv("HOME")
 #endif
 
 #endif

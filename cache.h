@@ -594,6 +594,13 @@ extern int precomposed_unicode;
  */
 extern char comment_line_char;
 
+enum hide_dotfiles_type {
+	HIDE_DOTFILES_FALSE = 0,
+	HIDE_DOTFILES_TRUE,
+	HIDE_DOTFILES_DOTGITONLY,
+};
+extern enum hide_dotfiles_type hide_dotfiles;
+
 enum branch_track {
 	BRANCH_TRACK_UNSPECIFIED = -1,
 	BRANCH_TRACK_NEVER = 0,
@@ -781,7 +788,6 @@ int normalize_path_copy(char *dst, const char *src);
 int longest_ancestor_length(const char *path, struct string_list *prefixes);
 char *strip_path_suffix(const char *path, const char *suffix);
 int daemon_avoid_alias(const char *path);
-int offset_1st_component(const char *path);
 
 /* object replacement */
 #define LOOKUP_REPLACE_OBJECT 1

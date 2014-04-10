@@ -364,6 +364,8 @@ static inline char *mingw_find_last_dir_sep(const char *path)
 	return ret;
 }
 #define find_last_dir_sep mingw_find_last_dir_sep
+int mingw_offset_1st_component(const char *path);
+#define offset_1st_component mingw_offset_1st_component
 #define PATH_SEP ';'
 #define PRIuMAX "I64u"
 #define PRId64 "I64d"
@@ -503,3 +505,6 @@ static int mingw_main(c,v)
  * Used by Pthread API implementation for Windows
  */
 extern int err_win_to_posix(DWORD winerr);
+
+extern const char *get_windows_home_directory();
+#define get_home_directory() get_windows_home_directory()
