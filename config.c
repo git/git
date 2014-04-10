@@ -572,7 +572,7 @@ static void die_bad_number(const char *name, const char *value)
 
 int git_config_int(const char *name, const char *value)
 {
-	int ret;
+	int ret = 0;
 	if (!git_parse_int(value, &ret))
 		die_bad_number(name, value);
 	return ret;
@@ -580,7 +580,7 @@ int git_config_int(const char *name, const char *value)
 
 int64_t git_config_int64(const char *name, const char *value)
 {
-	int64_t ret;
+	int64_t ret = 0;
 	if (!git_parse_int64(value, &ret))
 		die_bad_number(name, value);
 	return ret;
