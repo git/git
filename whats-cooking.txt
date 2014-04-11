@@ -1,15 +1,22 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Apr 2014, #02; Mon, 7)
-X-master-at: e4eef26d985177e4bdd32bf58b6ae40e7ae67289
-X-next-at: 0306834402c2cffa7f83ae33bcc31a47c1cdccd0
+Subject: What's cooking in git.git (Apr 2014, #03; Fri, 11)
+X-master-at: 68773ac915580e88016c34ce1269730382b501d4
+X-next-at: 5ae4ba539641e54f43a36c773306acca96600f24
 
-What's cooking in git.git (Apr 2014, #02; Mon, 7)
+What's cooking in git.git (Apr 2014, #03; Fri, 11)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
+
+The number of topics cooking in 'next' has been shrinking, and the
+cycle is getting long. Hopefully we will have -rc0 late next week to
+close the 'master' branch and a few rounds of -rc iterations until
+2.0 final. Other topics under discussion may continue to flow to
+'next', as usual, during that time, to be pushed out early in the
+next cycle.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -19,13 +26,164 @@ of the repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* jl/status-added-submodule-is-never-ignored (2014-04-07) 2 commits
- - commit -m: commit staged submodules regardless of ignore config
- - status/commit: show staged submodules regardless of ignore config
+* nd/index-pack-one-fd-per-thread (2014-04-09) 1 commit
+ - index-pack: work around thread-unsafe pread()
+
+ Enable threaded index-pack on platforms without thread-unsafe
+ pread() emulation.
+
+ Will merge to 'next' and keep it there for the remainder of the cycle.
 
 
-* mh/multimail (2014-04-07) 1 commit
- - git-multimail: update to version 1.0.0
+* tb/unicode-6.3-zero-width (2014-04-09) 1 commit
+ - utf8.c: partially update to version 6.3
+
+ Teach our display-column-counting logic about decomposed umlauts
+ and friends.
+
+ Will merge to 'next'.
+
+
+* fc/complete-aliased-push (2014-04-09) 1 commit
+ - completion: fix completing args of aliased "push", "fetch", etc.
+
+ Will merge to 'next'.
+
+
+* fc/remote-helper-fixes (2014-04-09) 4 commits
+ - remote-bzr: include authors field in pushed commits
+ - remote-bzr: add support for older versions
+ - remote-hg: always normalize paths
+ - remote-helpers: allow all tests running from any dir
+
+ Will merge to 'next'.
+
+
+* fc/publish-vs-upstream (2014-04-11) 8 commits
+ - sha1_name: add support for @{publish} marks
+ - sha1_name: simplify track finding
+ - sha1_name: cleanup interpret_branch_name()
+ - branch: display publish branch
+ - push: add --set-publish option
+ - branch: add --set-publish-to option
+ - Add concept of 'publish' branch
+ - t5516 (fetch-push): fix test restoration
+
+ Add branch@{publish}; this round v3 hasn't yet seen much reviews
+ yet.
+
+ Seems to have some interactions to break tests when merged to 'pu'.
+
+
+* ym/fix-opportunistic-index-update-race (2014-04-10) 2 commits
+ - read-cache.c: verify index file before we opportunistically update it
+ - wrapper.c: add xpread() similar to xread()
+
+ Duy raised a good point that we may need to do the same for the
+ normal writeout codepath, not just the "opportunistic" update
+ codepath.  While that is true, nobody sane would be running two
+ simultaneous operations that are clearly write-oriented competing
+ with each other against the same index file.  So in that sense that
+ can be done as a less urgent follow-up for this topic.
+
+
+* km/avoid-bs-in-shell-glob (2014-04-11) 1 commit
+ - test: fix t5560 on FreeBSD
+
+ Portability fix.
+ Will merge to 'next' and to 'master'.
+
+
+* km/avoid-cp-a (2014-04-11) 1 commit
+ - test: fix t7001 cp to use POSIX options
+
+ Portability fix.
+ Will merge to 'next' and hopefully to 'master'.
+
+
+* rs/ref-closer-to-atomic (2014-04-11) 3 commits
+ - refs.c: change ref_transaction_commit to run the commit loops once all work is finished
+ - refs.c: split delete_ref_loose() into a separate flag-for-deletion and commit phase
+ - refs.c: split writing and commiting a ref into two separate functions
+ (this branch uses mh/ref-transaction.)
+
+ Builds on top of Michael's ref-transaction series to shrink the
+ race window during multiple ref updates.
+
+ Appears to break some tests even standalone, and somewhat conflicts
+ with Michael's mh/lockfile topic when merging to 'pu'.
+
+--------------------------------------------------
+[Graduated to "master"]
+
+* ib/rev-parse-parseopt-argh (2014-04-01) 1 commit
+  (merged to 'next' on 2014-04-01 at 025578d)
+ + rev-parse: fix typo in example on manpage
+
+ Finishing touch to a new topic scheduled for 2.0
+
+
+* jc/rev-parse-argh-dashed-multi-words (2014-03-24) 3 commits
+  (merged to 'next' on 2014-03-31 at 1c48649)
+ + parse-options: make sure argh string does not have SP or _
+ + update-index: teach --cacheinfo a new syntax "mode,sha1,path"
+ + parse-options: multi-word argh should use dash to separate words
+
+ Make sure that the help text given to describe the "<param>" part
+ of the "git cmd --option=<param>" does not contain SP or _,
+ e.g. "--gpg-sign=<key-id>" option for "git commit" is not spelled
+ as "--gpg-sign=<key id>".
+
+
+* jk/commit-dates-parsing-fix (2014-04-01) 2 commits
+  (merged to 'next' on 2014-04-04 at c16eeb0)
+ + t4212: loosen far-in-future test for AIX
+ + date: recognize bogus FreeBSD gmtime output
+
+ Finishing touches for portability.
+
+
+* jk/pack-bitmap (2014-04-04) 2 commits
+  (merged to 'next' on 2014-04-04 at 0306834)
+ + pack-objects: do not reuse packfiles without --delta-base-offset
+ + add `ignore_missing_links` mode to revwalk
+
+ Fixes the pack-bitmap already in 'master'.
+
+
+* jl/nor-or-nand-and (2014-03-31) 4 commits
+  (merged to 'next' on 2014-04-04 at b5d1ac5)
+ + code and test: fix misuses of "nor"
+ + comments: fix misuses of "nor"
+ + contrib: fix misuses of "nor"
+ + Documentation: fix misuses of "nor"
+
+ Eradicate mistaken use of "nor" (that is, essentially "nor" used
+ not in "neither A nor B" ;-)) from in-code comments, command output
+ strings, and documentations.
+
+
+* mh/update-ref-batch-create-fix (2014-04-02) 1 commit
+  (merged to 'next' on 2014-04-04 at 97e3f12)
+ + update-ref: fail create operation over stdin if ref already exists
+
+ Requesting "update-ref --stdin" to create a ref that already exists
+ should have errored out, but didn't.
+
+
+* mr/msvc-link-with-invalidcontinue (2014-03-28) 1 commit
+  (merged to 'next' on 2014-03-31 at 051a29e)
+ + MSVC: link in invalidcontinue.obj for better POSIX compatibility
+
+
+* mr/opt-set-ptr (2014-03-31) 3 commits
+  (merged to 'next' on 2014-04-03 at a26385b)
+ + parse-options: remove unused OPT_SET_PTR
+ + parse-options: add cast to correct pointer type to OPT_SET_PTR
+ + MSVC: fix t0040-parse-options crash
+
+ OPT_SET_PTR() implementation was broken on IL32P64 platforms;
+ it turns out that the macro is not used by any real user.
 
 --------------------------------------------------
 [Stalled]
@@ -53,15 +211,6 @@ of the repositories listed at
  and the final conflict resolution that was recorded in the merge.
 
  Needs to be rebased, now kb/fast-hashmap topic is in.
-
-
-* sz/mingw-index-pack-threaded (2014-03-19) 1 commit
- - Enable index-pack threading in msysgit.
-
- What is the status of this topic?  A failure report exists
- ($gmane/245170), and I am aware of Duy's $gmane/245034 but that was
- where the discussion stalled.  Is everybody waiting for everybody
- else to get the discussion unstuck?
 
 
 * bc/blame-crlf-test (2014-02-18) 1 commit
@@ -111,11 +260,11 @@ of the repositories listed at
 
 
 * jk/branch-at-publish-rebased (2014-01-17) 5 commits
- - t1507 (rev-parse-upstream): fix typo in test title
- - implement @{publish} shorthand
- - branch_get: provide per-branch pushremote pointers
- - branch_get: return early on error
- - sha1_name: refactor upstream_mark
+ . t1507 (rev-parse-upstream): fix typo in test title
+ . implement @{publish} shorthand
+ . branch_get: provide per-branch pushremote pointers
+ . branch_get: return early on error
+ . sha1_name: refactor upstream_mark
 
  Give an easier access to the tracking branches from "other" side in
  a triangular workflow by introducing B@{publish} that works in a
@@ -123,7 +272,7 @@ of the repositories listed at
 
  Meant to be used as a basis for whatever Ram wants to build on.
 
- Will hold.
+ Ejected from 'pu' to make room for fc/publish-vs-upstream topic.
 
 
 * rb/merge-prepare-commit-msg-hook (2014-01-10) 4 commits
@@ -205,13 +354,13 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* ib/rev-parse-parseopt-argh (2014-04-01) 1 commit
-  (merged to 'next' on 2014-04-01 at 025578d)
- + rev-parse: fix typo in example on manpage
+* jl/status-added-submodule-is-never-ignored (2014-04-07) 2 commits
+ - commit -m: commit staged submodules regardless of ignore config
+ - status/commit: show staged submodules regardless of ignore config
 
- Finishing touch to a new topic scheduled for 2.0
 
- Will merge to 'master'.
+* mh/multimail (2014-04-07) 1 commit
+ - git-multimail: update to version 1.0.0
 
 
 * mh/lockfile (2014-04-07) 25 commits
@@ -244,56 +393,22 @@ of the repositories listed at
  Refactor and fix corner-case bugs in the lockfile API.
 
 
-* mh/update-ref-batch-create-fix (2014-04-02) 1 commit
-  (merged to 'next' on 2014-04-04 at 97e3f12)
- + update-ref: fail create operation over stdin if ref already exists
-
- Will merge to 'master'.
-
-
-* jk/pack-bitmap (2014-04-04) 2 commits
-  (merged to 'next' on 2014-04-04 at 0306834)
- + pack-objects: do not reuse packfiles without --delta-base-offset
- + add `ignore_missing_links` mode to revwalk
-
- Will merge to 'master'.
-
-
-* mr/opt-set-ptr (2014-03-31) 3 commits
-  (merged to 'next' on 2014-04-03 at a26385b)
- + parse-options: remove unused OPT_SET_PTR
- + parse-options: add cast to correct pointer type to OPT_SET_PTR
- + MSVC: fix t0040-parse-options crash
-
- OPT_SET_PTR() implementation was broken on IL32P64 platforms;
- it turns out that the macro is not used by any real user.
-
- Will merge to 'master'.
-
-
 * mt/patch-id-stable (2014-03-31) 3 commits
- - patch-id-test: test --stable and --unstable flags
- - patch-id: document new behaviour
- - patch-id: make it stable against hunk reordering
+  (merged to 'next' on 2014-04-08 at 0188d44)
+ + patch-id-test: test --stable and --unstable flags
+ + patch-id: document new behaviour
+ + patch-id: make it stable against hunk reordering
 
  Introduce a new way to compute patch-id for a patch that is not
  affected by the order of the paths that appear in the input.
 
- Will merge to 'next' and keep it there for the remainder of this cycle.
+ This changes the generated patch-id unless the users add an extra
+ option to their command lines, but I deliberately queued the series
+ to 'next' without reverting that compatibility breakage to see if
+ people complain.  It could be that we do not have to worry about
+ the default flipping at all.  We'll see.
 
-
-* jl/nor-or-nand-and (2014-03-31) 4 commits
-  (merged to 'next' on 2014-04-04 at b5d1ac5)
- + code and test: fix misuses of "nor"
- + comments: fix misuses of "nor"
- + contrib: fix misuses of "nor"
- + Documentation: fix misuses of "nor"
-
- Eradicate mistaken use of "nor" (that is, essentially "nor" used
- not in "neither A nor B" ;-)) from in-code comments, command output
- strings, and documentations.
-
- Will merge to 'master'.
+ Will keep in 'next' for the remainder of this cycle.
 
 
 * mh/ref-transaction (2014-04-07) 27 commits
@@ -324,9 +439,12 @@ of the repositories listed at
  - parse_arg(): really test that argument is properly terminated
  - t1400: provide more usual input to the command
  - t1400: fix name and expected result of one test
+ (this branch is used by rs/ref-closer-to-atomic.)
 
  Update "update-ref --stdin [-z]" and then introduce a transactional
  support for (multi-)reference updates.
+
+ Is this ready to be merged to 'next' for wider exposure?
 
 
 * jc/apply-ignore-whitespace (2014-03-26) 1 commit
@@ -339,35 +457,6 @@ of the repositories listed at
  have.
 
  Will keep in 'next' for the remainder of this cycle.
-
-
-* jc/rev-parse-argh-dashed-multi-words (2014-03-24) 3 commits
-  (merged to 'next' on 2014-03-31 at 1c48649)
- + parse-options: make sure argh string does not have SP or _
- + update-index: teach --cacheinfo a new syntax "mode,sha1,path"
- + parse-options: multi-word argh should use dash to separate words
-
- Make sure that the help text given to describe the "<param>" part
- of the "git cmd --option=<param>" does not contain SP or _,
- e.g. "--gpg-sign=<key-id>" option for "git commit" is not spelled
- as "--gpg-sign=<key id>".
-
- Will merge to 'master'.
-
-
-* jk/commit-dates-parsing-fix (2014-04-01) 2 commits
-  (merged to 'next' on 2014-04-04 at c16eeb0)
- + t4212: loosen far-in-future test for AIX
- + date: recognize bogus FreeBSD gmtime output
-
- Will merge to 'master' and later to 'maint'.
-
-
-* mr/msvc-link-with-invalidcontinue (2014-03-28) 1 commit
-  (merged to 'next' on 2014-03-31 at 051a29e)
- + MSVC: link in invalidcontinue.obj for better POSIX compatibility
-
- Will merge to 'master'.
 
 
 * as/grep-fullname-config (2014-03-20) 1 commit
@@ -420,10 +509,13 @@ of the repositories listed at
  Will hold.
 
 
-* ks/tree-diff-nway (2014-04-07) 19 commits
- - combine-diff: speed it up, by using multiparent diff tree-walker directly
- - tree-diff: rework diff_tree() to generate diffs for multiparent cases as well
- - Portable alloca for Git
+* ks/tree-diff-nway (2014-04-09) 20 commits
+  (merged to 'next' on 2014-04-09 at c17228e)
+ + mingw: activate alloca
+  (merged to 'next' on 2014-04-08 at 6b74773)
+ + combine-diff: speed it up, by using multiparent diff tree-walker directly
+ + tree-diff: rework diff_tree() to generate diffs for multiparent cases as well
+ + Portable alloca for Git
   (merged to 'next' on 2014-03-31 at 16a7bd4)
  + tree-diff: reuse base str(buf) memory on sub-tree recursion
  + tree-diff: no need to call "full" diff_tree_sha1 from show_path()
@@ -451,9 +543,7 @@ of the repositories listed at
  detections and such.  And N=2 case nicely degenerates to the usual
  2-way diff-tree, which is very nice.
 
- The preparatory steps are all in 'next'.
-
- Will merge to 'next' and keep it there for the remainder of this cycle.
+ Will keep in 'next' for the remainder of this cycle.
 
 
 * cc/interpret-trailers (2014-04-07) 12 commits
@@ -473,4 +563,14 @@ of the repositories listed at
  A new filter to programatically edit the tail end of the commit log
  messages.
 
- Will merge to 'next' and keep it there for the remainder of this cycle.
+ I was planning to merge it to 'next' and keep it there for the
+ remainder of this cycle, but it appears that there still will be
+ another round of reroll, at least for the documentation?
+
+--------------------------------------------------
+[Discarded]
+
+* sz/mingw-index-pack-threaded (2014-03-19) 1 commit
+ . Enable index-pack threading in msysgit.
+
+ Queued a different attempt by Duy on nd/index-pack-one-fd-per-thread
