@@ -362,7 +362,7 @@ test_expect_success 'strip' '
 '
 
 test_expect_success 'export utf-8 authors' '
-	test_when_finished "rm -rf bzrrepo gitrepo && LC_ALL=C && unset GIT_COMMITTER_NAME" &&
+	test_when_finished "rm -rf bzrrepo gitrepo && LC_ALL=C && GIT_COMMITTER_NAME=\"C O Mitter\""
 
 	LC_ALL=en_US.UTF-8
 	export LC_ALL
