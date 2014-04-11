@@ -77,6 +77,10 @@ test_expect_success 'test basic "submodule foreach" usage' '
 		git config foo.bar zar &&
 		git submodule foreach "git config --file \"\$toplevel/.git/config\" foo.bar"
 	) &&
+	if test_have_prereq MINGW
+	then
+		dos2unix actual
+	fi &&
 	test_i18ncmp expect actual
 '
 
@@ -174,6 +178,10 @@ test_expect_success 'test messages from "foreach --recursive"' '
 		cd clone2 &&
 		git submodule foreach --recursive "true" > ../actual
 	) &&
+	if test_have_prereq MINGW
+	then
+		dos2unix actual
+	fi &&
 	test_i18ncmp expect actual
 '
 
@@ -192,7 +200,11 @@ test_expect_success 'test "foreach --quiet --recursive"' '
 		cd clone2 &&
 		git submodule foreach -q --recursive "echo \$name-\$path" > ../actual
 	) &&
-	test_cmp_text expect actual
+	if test_have_prereq MINGW
+	then
+		dos2unix actual
+	fi &&
+	test_cmp expect actual
 '
 
 test_expect_success 'use "update --recursive" to checkout all submodules' '
@@ -239,6 +251,10 @@ test_expect_success 'test "status --recursive"' '
 		cd clone3 &&
 		git submodule status --recursive > ../actual
 	) &&
+	if test_have_prereq MINGW
+	then
+		dos2unix actual
+	fi &&
 	test_cmp expect actual
 '
 
