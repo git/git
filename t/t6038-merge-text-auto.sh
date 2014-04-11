@@ -72,10 +72,6 @@ test_expect_success 'Merge after setting text=auto' '
 	same line
 	EOF
 
-	if test_have_prereq NATIVE_CRLF; then
-		append_cr <expected >expected.temp &&
-		mv expected.temp expected
-	fi &&
 	git config merge.renormalize true &&
 	git rm -fr . &&
 	rm -f .gitattributes &&
@@ -90,10 +86,6 @@ test_expect_success 'Merge addition of text=auto' '
 	same line
 	EOF
 
-	if test_have_prereq NATIVE_CRLF; then
-		append_cr <expected >expected.temp &&
-		mv expected.temp expected
-	fi &&
 	git config merge.renormalize true &&
 	git rm -fr . &&
 	rm -f .gitattributes &&
@@ -103,19 +95,16 @@ test_expect_success 'Merge addition of text=auto' '
 '
 
 test_expect_success 'Detect CRLF/LF conflict after setting text=auto' '
-	echo "<<<<<<<" >expected &&
-	if test_have_prereq NATIVE_CRLF; then
-		echo first line | append_cr >>expected &&
-		echo same line | append_cr >>expected &&
-		echo ======= | append_cr >>expected
-	else
-		echo first line >>expected &&
-		echo same line >>expected &&
-		echo ======= >>expected
-	fi &&
-	echo first line | append_cr >>expected &&
-	echo same line | append_cr >>expected &&
-	echo ">>>>>>>" >>expected &&
+	q_to_cr <<-\EOF >expected &&
+	<<<<<<<
+	first line
+	same line
+	=======
+	first lineQ
+	same lineQ
+	>>>>>>>
+	EOF
+
 	git config merge.renormalize false &&
 	rm -f .gitattributes &&
 	git reset --hard a &&
@@ -125,19 +114,16 @@ test_expect_success 'Detect CRLF/LF conflict after setting text=auto' '
 '
 
 test_expect_success 'Detect LF/CRLF conflict from addition of text=auto' '
-	echo "<<<<<<<" >expected &&
-	echo first line | append_cr >>expected &&
-	echo same line | append_cr >>expected &&
-	if test_have_prereq NATIVE_CRLF; then
-		echo ======= | append_cr >>expected &&
-		echo first line | append_cr >>expected &&
-		echo same line | append_cr >>expected 
-	else
-		echo ======= >>expected &&
-		echo first line >>expected &&
-		echo same line >>expected
-	fi &&
-	echo ">>>>>>>" >>expected &&
+	q_to_cr <<-\EOF >expected &&
+	<<<<<<<
+	first lineQ
+	same lineQ
+	=======
+	first line
+	same line
+	>>>>>>>
+	EOF
+
 	git config merge.renormalize false &&
 	rm -f .gitattributes &&
 	git reset --hard b &&

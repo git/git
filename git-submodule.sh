@@ -428,11 +428,9 @@ cmd_add()
 
 	if test -z "$force" && ! git add --dry-run --ignore-missing "$sm_path" > /dev/null 2>&1
 	then
-		cat >&2 <<EOF
-The following path is ignored by one of your .gitignore files:
-$(eval_gettextln $sm_path)
-Use -f if you really want to add it.
-EOF
+		eval_gettextln "The following path is ignored by one of your .gitignore files:
+\$sm_path
+Use -f if you really want to add it." >&2
 		exit 1
 	fi
 

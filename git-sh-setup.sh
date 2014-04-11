@@ -59,9 +59,7 @@ GIT_QUIET=
 say () {
 	if test -z "$GIT_QUIET"
 	then
-		cat <<EOF
-$*
-EOF
+		printf '%s\n' "$*"
 	fi
 }
 

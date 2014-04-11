@@ -5,13 +5,7 @@ test_description=check-ignore
 . ./test-lib.sh
 
 init_vars () {
-	# On Windows, avoid using "C:" in the global-excludes paths.
-	if test_have_prereq MINGW
-	then
-		global_excludes="global-excludes"
-	else
-		global_excludes="$(pwd)/global-excludes"
-	fi
+	global_excludes="$(pwd)/global-excludes"
 }
 
 enable_global_excludes () {

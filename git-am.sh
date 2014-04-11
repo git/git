@@ -182,9 +182,7 @@ It does not apply to blobs recorded in its index.")"
 }
 
 clean_abort () {
-	test $# = 0 || cat >&2 <<EOF
-$@
-EOF
+	test $# = 0 || echo >&2 "$@"
 	rm -fr "$dotest"
 	exit 1
 }

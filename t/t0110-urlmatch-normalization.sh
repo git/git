@@ -117,7 +117,7 @@ test_expect_success 'url general escapes' '
 	test "$(test-urlmatch-normalization -p "X://W?'\!'")" = "x://w/?'\!'"
 '
 
-test_expect_success !MINGW 'url high-bit escapes' '
+test_expect_success 'url high-bit escapes' '
 	test "$(test-urlmatch-normalization -p "$(cat "$tu-1")")" = "x://q/%01%02%03%04%05%06%07%08%0E%0F%10%11%12" &&
 	test "$(test-urlmatch-normalization -p "$(cat "$tu-2")")" = "x://q/%13%14%15%16%17%18%19%1B%1C%1D%1E%1F%7F" &&
 	test "$(test-urlmatch-normalization -p "$(cat "$tu-3")")" = "x://q/%80%81%82%83%84%85%86%87%88%89%8A%8B%8C%8D%8E%8F" &&

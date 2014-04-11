@@ -22,15 +22,13 @@ test_expect_success 'setup' '
 	: >foo &&
 	git add foo &&
 	git config i18n.commitEncoding iso8859-1 &&
-	echo "$added_iso88591" > commit-msg &&
-	git commit -F commit-msg &&
+	git commit -m "$added_iso88591" &&
 	head1=$(git rev-parse --verify HEAD) &&
 	head1_short=$(git rev-parse --verify --short $head1) &&
 	tree1=$(git rev-parse --verify HEAD:) &&
 	tree1_short=$(git rev-parse --verify --short $tree1) &&
 	echo "$changed" > foo &&
-	echo "$changed_iso88591" > commit-msg &&
-	git commit -a -F commit-msg &&
+	git commit -a -m "$changed_iso88591" &&
 	head2=$(git rev-parse --verify HEAD) &&
 	head2_short=$(git rev-parse --verify --short $head2) &&
 	tree2=$(git rev-parse --verify HEAD:) &&
@@ -208,12 +206,13 @@ test_expect_success '%C(auto) respects --color=auto (stdout not tty)' '
 	)
 '
 
-printf "Test printing of complex bodies
+iconv -f utf-8 -t iso8859-1 > commit-msg <<EOF
+Test printing of complex bodies
 
 This commit message is much longer than the others,
 and it will be encoded in iso8859-1. We should therefore
-include an iso8859 character: \302\241bueno!
-" | iconv -f utf-8 -t iso8859-1 > commit-msg
+include an iso8859 character: ¡bueno!
+EOF
 
 test_expect_success 'setup complex body' '
 	git config i18n.commitencoding iso8859-1 &&
