@@ -16,7 +16,7 @@ commit_msg () {
 	msg="modify 2nd file (ge\303\244ndert)\n"
 	if test -n "$1"
 	then
-		printf "$msg" | iconv -f utf-8 -t "$1"
+		printf "$msg" | iconv -t "$1"
 	else
 		printf "$msg"
 	fi
@@ -41,9 +41,7 @@ test_expect_success 'creating initial files and commits' '
 
 	echo "1st line 2nd file" >secondfile &&
 	echo "2nd line 2nd file" >>secondfile &&
-	# "git commit -m" would break MinGW, as Windows refuse to pass
-	# iso8859-1 encoded parameter to git.
-	commit_msg iso8859-1 | git -c "i18n.commitEncoding=iso8859-1" commit -a -F - &&
+	git -c "i18n.commitEncoding=iso8859-1" commit -a -m "$(commit_msg iso8859-1)" &&
 	head5=$(git rev-parse --verify HEAD)
 '
 # git log --pretty=oneline # to see those SHA1 involved
@@ -62,7 +60,7 @@ check_changes () {
 test_expect_success 'reset --hard message' '
 	hex=$(git log -1 --format="%h") &&
 	git reset --hard > .actual &&
-	echo HEAD is now at $hex $(commit_msg) > .expected &&
+	echo HEAD is now at $hex $(commit_msg utf-8) > .expected &&
 	test_cmp .expected .actual
 '
 
@@ -333,9 +331,7 @@ test_expect_success 'redoing the last two commits should succeed' '
 
 	echo "1st line 2nd file" >secondfile &&
 	echo "2nd line 2nd file" >>secondfile &&
-	# "git commit -m" would break MinGW, as Windows refuse to pass
-	# iso8859-1 encoded parameter to git.
-	commit_msg iso8859-1 | git -c "i18n.commitEncoding=iso8859-1" commit -a -F - &&
+	git -c "i18n.commitEncoding=iso8859-1" commit -a -m "$(commit_msg iso8859-1)" &&
 	check_changes $head5
 '
 
