@@ -195,15 +195,9 @@ static struct child_process *get_helper(struct transport *transport)
 		} else if (!strcmp(capname, "signed-tags")) {
 			data->signed_tags = 1;
 		} else if (starts_with(capname, "export-marks ")) {
-			struct strbuf arg = STRBUF_INIT;
-			strbuf_addstr(&arg, "--export-marks=");
-			strbuf_addstr(&arg, capname + strlen("export-marks "));
-			data->export_marks = strbuf_detach(&arg, NULL);
+			data->export_marks = xstrdup(capname + strlen("export-marks "));
 		} else if (starts_with(capname, "import-marks")) {
-			struct strbuf arg = STRBUF_INIT;
-			strbuf_addstr(&arg, "--import-marks=");
-			strbuf_addstr(&arg, capname + strlen("import-marks "));
-			data->import_marks = strbuf_detach(&arg, NULL);
+			data->import_marks = xstrdup(capname + strlen("import-marks "));
 		} else if (starts_with(capname, "no-private-update")) {
 			data->no_private_update = 1;
 		} else if (mandatory) {
@@ -428,6 +422,8 @@ static int get_exporter(struct transport *transport,
 	struct helper_data *data = transport->data;
 	struct child_process *helper = get_helper(transport);
 	int argc = 0, i;
+	struct strbuf tmp = STRBUF_INIT;
+
 	memset(fastexport, 0, sizeof(*fastexport));
 
 	/* we need to duplicate helper->in because we want to use it after
@@ -438,10 +434,14 @@ static int get_exporter(struct transport *transport,
 	fastexport->argv[argc++] = "--use-done-feature";
 	fastexport->argv[argc++] = data->signed_tags ?
 		"--signed-tags=verbatim" : "--signed-tags=warn-strip";
-	if (data->export_marks)
-		fastexport->argv[argc++] = data->export_marks;
-	if (data->import_marks)
-		fastexport->argv[argc++] = data->import_marks;
+	if (data->export_marks) {
+		strbuf_addf(&tmp, "--export-marks=%s", data->export_marks);
+		fastexport->argv[argc++] = strbuf_detach(&tmp, NULL);
+	}
+	if (data->import_marks) {
+		strbuf_addf(&tmp, "--import-marks=%s", data->import_marks);
+		fastexport->argv[argc++] = strbuf_detach(&tmp, NULL);
+	}
 
 	for (i = 0; i < revlist_args->nr; i++)
 		fastexport->argv[argc++] = revlist_args->items[i].string;
