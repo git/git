@@ -435,7 +435,7 @@ static int get_exporter(struct transport *transport,
 	fastexport->argv[argc++] = data->signed_tags ?
 		"--signed-tags=verbatim" : "--signed-tags=warn-strip";
 	if (data->export_marks) {
-		strbuf_addf(&tmp, "--export-marks=%s", data->export_marks);
+		strbuf_addf(&tmp, "--export-marks=%s.tmp", data->export_marks);
 		fastexport->argv[argc++] = strbuf_detach(&tmp, NULL);
 	}
 	if (data->import_marks) {
@@ -911,7 +911,16 @@ static int push_refs_with_export(struct transport *transport,
 
 	if (finish_command(&exporter))
 		die("Error while running fast-export");
-	return push_update_refs_status(data, remote_refs, flags);
+	if (push_update_refs_status(data, remote_refs, flags))
+		return 1;
+
+	if (data->export_marks) {
+		strbuf_addf(&buf, "%s.tmp", data->export_marks);
+		rename(buf.buf, data->export_marks);
+		strbuf_release(&buf);
+	}
+
+	return 0;
 }
 
 static int push_refs(struct transport *transport,
