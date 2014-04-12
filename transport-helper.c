@@ -71,12 +71,6 @@ static int recvline(struct helper_data *helper, struct strbuf *buffer)
 	return recvline_fh(helper->out, buffer, helper->name);
 }
 
-static void xchgline(struct helper_data *helper, struct strbuf *buffer)
-{
-	sendline(helper, buffer);
-	recvline(helper, buffer);
-}
-
 static void write_constant(int fd, const char *str)
 {
 	if (debug)
@@ -307,7 +301,8 @@ static int set_helper_option(struct transport *transport,
 		quote_c_style(value, &buf, NULL, 0);
 	strbuf_addch(&buf, '\n');
 
-	xchgline(data, &buf);
+	sendline(data, &buf);
+	recvline(data, &buf);
 
 	if (!strcmp(buf.buf, "ok"))
 		ret = 0;
