@@ -6136,7 +6136,7 @@ msgstr "Fehler beim Auflösen der Unterschiede"
 #: builtin/index-pack.c:1138
 #, c-format
 msgid "completed with %d local objects"
-msgstr "vervollständigt mit %d lokalen Objekten"
+msgstr "abgeschlossen mit %d lokalen Objekten"
 
 #: builtin/index-pack.c:1148
 #, c-format
