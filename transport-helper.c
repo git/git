@@ -739,17 +739,22 @@ static int push_update_ref_status(struct strbuf *buf,
 	return !(status == REF_STATUS_OK);
 }
 
-static void push_update_refs_status(struct helper_data *data,
+static int push_update_refs_status(struct helper_data *data,
 				    struct ref *remote_refs,
 				    int flags)
 {
 	struct strbuf buf = STRBUF_INIT;
 	struct ref *ref = remote_refs;
+	int ret = 0;
+
 	for (;;) {
 		char *private;
 
-		if (recvline(data, &buf))
-			exit(128);
+		if (recvline(data, &buf)) {
+			ret = 1;
+			break;
+		}
+
 		if (!buf.len)
 			break;
 
@@ -767,6 +772,7 @@ static void push_update_refs_status(struct helper_data *data,
 		free(private);
 	}
 	strbuf_release(&buf);
+	return ret;
 }
 
 static int push_refs_with_push(struct transport *transport,
@@ -847,8 +853,7 @@ static int push_refs_with_push(struct transport *transport,
 	sendline(data, &buf);
 	strbuf_release(&buf);
 
-	push_update_refs_status(data, remote_refs, flags);
-	return 0;
+	return push_update_refs_status(data, remote_refs, flags);
 }
 
 static int push_refs_with_export(struct transport *transport,
@@ -906,8 +911,7 @@ static int push_refs_with_export(struct transport *transport,
 
 	if (finish_command(&exporter))
 		die("Error while running fast-export");
-	push_update_refs_status(data, remote_refs, flags);
-	return 0;
+	return push_update_refs_status(data, remote_refs, flags);
 }
 
 static int push_refs(struct transport *transport,
