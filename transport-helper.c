@@ -58,7 +58,7 @@ static int recvline_fh(FILE *helper, struct strbuf *buffer, const char *name)
 	if (strbuf_getline(buffer, helper, '\n') == EOF) {
 		if (debug)
 			fprintf(stderr, "Debug: Remote helper quit.\n");
-		exit(128);
+		return 1;
 	}
 
 	if (debug)
@@ -157,7 +157,8 @@ static struct child_process *get_helper(struct transport *transport)
 	while (1) {
 		const char *capname;
 		int mandatory = 0;
-		recvline(data, &buf);
+		if (recvline(data, &buf))
+			exit(128);
 
 		if (!*buf.buf)
 			break;
@@ -302,7 +303,8 @@ static int set_helper_option(struct transport *transport,
 	strbuf_addch(&buf, '\n');
 
 	sendline(data, &buf);
-	recvline(data, &buf);
+	if (recvline(data, &buf))
+		exit(128);
 
 	if (!strcmp(buf.buf, "ok"))
 		ret = 0;
@@ -374,7 +376,8 @@ static int fetch_with_fetch(struct transport *transport,
 	sendline(data, &buf);
 
 	while (1) {
-		recvline(data, &buf);
+		if (recvline(data, &buf))
+			exit(128);
 
 		if (starts_with(buf.buf, "lock ")) {
 			const char *name = buf.buf + 5;
@@ -558,7 +561,9 @@ static int process_connect_service(struct transport *transport,
 		goto exit;
 
 	sendline(data, &cmdbuf);
-	recvline_fh(input, &cmdbuf, name);
+	if (recvline_fh(input, &cmdbuf, name))
+		exit(128);
+
 	if (!strcmp(cmdbuf.buf, "")) {
 		data->no_disconnect_req = 1;
 		if (debug)
@@ -743,7 +748,8 @@ static void push_update_refs_status(struct helper_data *data,
 	for (;;) {
 		char *private;
 
-		recvline(data, &buf);
+		if (recvline(data, &buf))
+			exit(128);
 		if (!buf.len)
 			break;
 
@@ -969,7 +975,8 @@ static struct ref *get_refs_list(struct transport *transport, int for_push)
 
 	while (1) {
 		char *eov, *eon;
-		recvline(data, &buf);
+		if (recvline(data, &buf))
+			exit(128);
 
 		if (!*buf.buf)
 			break;
