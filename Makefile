@@ -37,6 +37,9 @@ all::
 # Define CURL_CONFIG to the path to a curl-config binary other than the
 # default 'curl-config'.
 #
+# Define CURL_STATIC to statically link libcurl.  Only applies if
+# CURL_CONFIG is used.
+#
 # Define CURLDIR=/foo/bar if your curl header and library files are in
 # /foo/bar/include and /foo/bar/lib directories.  This overrides CURL_CONFIG,
 # but is less robust.
@@ -1139,9 +1142,16 @@ else
 	else
 		CURL_CONFIG ?= curl-config
 		BASIC_CFLAGS += $(shell $(CURL_CONFIG) --cflags)
-		CURL_LIBCURL = $(shell $(CURL_CONFIG) --libs)
-		ifeq "$(CURL_LIBCURL)" ""
-			$(error curl not detected; try setting CURLDIR)
+		ifdef CURL_STATIC
+			CURL_LIBCURL = $(shell $(CURL_CONFIG) --static-libs)
+			ifeq "$(CURL_LIBCURL)" ""
+				$(error libcurl not detected or not compiled with static support)
+			endif
+		else
+			CURL_LIBCURL = $(shell $(CURL_CONFIG) --libs)
+			ifeq "$(CURL_LIBCURL)" ""
+				$(error libcurl not detected; try setting CURLDIR)
+			endif
 		endif
 	endif
 
