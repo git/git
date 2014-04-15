@@ -149,7 +149,9 @@ no)
 
 			mark_cut
 
-			EDITOR=: git merge $accept_rerere --edit "$branch" ||
+			rebuild=$(git config "branch.$branch.rebuild" || :)
+
+			EDITOR=: git merge $rebuild $accept_rerere --edit "$branch" ||
 			accept_rerere ||
 			exit
 
