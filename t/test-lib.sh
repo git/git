@@ -15,6 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see http://www.gnu.org/licenses/ .
 
+# for git on windows so stdin will not be misdetected as attached to a
+# terminal
+exec < /dev/null
+
 # Keep the original TERM for say_color
 ORIGINAL_TERM=$TERM
 
