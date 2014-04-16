@@ -75,7 +75,7 @@ case "$common" in
 		GIT_INDEX_FILE=$G git read-tree -m $c $head $merge \
 			2>/dev/null || continue
 		# Count the paths that are unmerged.
-		cnt=`GIT_INDEX_FILE=$G git ls-files --unmerged | wc -l`
+		cnt=$(GIT_INDEX_FILE=$G git ls-files --unmerged | wc -l)
 		if test $best_cnt -le 0 -o $cnt -le $best_cnt
 		then
 			best=$c
