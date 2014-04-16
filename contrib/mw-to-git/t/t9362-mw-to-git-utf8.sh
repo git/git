@@ -70,8 +70,8 @@ test_expect_success 'The shallow option works with accents' '
 	test_path_is_file mw_dir_4/Main_Page.mw &&
 	(
 		cd mw_dir_4 &&
-		test `git log --oneline Néoà.mw | wc -l` -eq 1 &&
-		test `git log --oneline Main_Page.mw | wc -l ` -eq 1
+		test $(git log --oneline Néoà.mw | wc -l) -eq 1 &&
+		test $(git log --oneline Main_Page.mw | wc -l ) -eq 1
 	) &&
 	wiki_check_content mw_dir_4/Néoà.mw Néoà &&
 	wiki_check_content mw_dir_4/Main_Page.mw Main_Page
