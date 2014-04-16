@@ -65,6 +65,7 @@ struct startup_info *startup_info;
 unsigned long pack_size_limit_cfg;
 enum hide_dotfiles_type hide_dotfiles = HIDE_DOTFILES_DOTGITONLY;
 int core_fscache;
+int core_long_paths;
 
 /*
  * The character that begins a commented line in user-editable file
