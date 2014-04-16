@@ -137,7 +137,7 @@ cherry-pick)
 		q
 	}'
 
-	logmsg=`git show -s --pretty=raw --encoding="$encoding" "$commit"`
+	logmsg=$(git show -s --pretty=raw --encoding="$encoding" "$commit")
 	set_author_env=`echo "$logmsg" |
 	LANG=C LC_ALL=C sed -ne "$pick_author_script"`
 	eval "$set_author_env"
