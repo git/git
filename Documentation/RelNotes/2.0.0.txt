@@ -47,6 +47,9 @@ Updates since v1.9 series
 
 UI, Workflows & Features
 
+ * The "multi-mail" post-receive hook (in contrib/) has been updated
+   to a more recent version from the upstream.
+
  * "git gc --aggressive" learned "--depth" option and
    "gc.aggressiveDepth" configuration variable to allow use of a less
    insane depth than the built-in default value of 250.
@@ -170,6 +173,14 @@ Fixes since v1.9 series
 Unless otherwise noted, all the fixes since v1.9 in the maintenance
 track are contained in this release (see the maintenance releases'
 notes for details).
+
+ * Some more Unicode codepoints defined in Unicode 6.3 as having zero
+   width have been taught to our display column counting logic.
+   (merge d813ab9 tb/unicode-6.3-zero-width later to maint).
+
+ * Some tests used shell constructs that did not work well on FreeBSD
+   (merge ff7a1c6 km/avoid-bs-in-shell-glob later to maint).
+   (merge 00764ca km/avoid-cp-a later to maint).
 
  * "git update-ref --stdin" did not fail a request to create a ref
    when the ref already existed.
