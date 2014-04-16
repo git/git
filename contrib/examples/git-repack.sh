@@ -49,7 +49,7 @@ do
 	shift
 done
 
-case "`git config --bool repack.usedeltabaseoffset || echo true`" in
+case "$(git config --bool repack.usedeltabaseoffset || echo true)" in
 true)
 	extra="$extra --delta-base-offset" ;;
 esac
