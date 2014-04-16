@@ -131,7 +131,7 @@ test_expect_success 'Detect LF/CRLF conflict from addition of text=auto' '
 	if test_have_prereq NATIVE_CRLF; then
 		echo ======= | append_cr >>expected &&
 		echo first line | append_cr >>expected &&
-		echo same line | append_cr >>expected 
+		echo same line | append_cr >>expected
 	else
 		echo ======= >>expected &&
 		echo first line >>expected &&
