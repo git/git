@@ -91,9 +91,10 @@ Requirements
   been tested; if you do so, please report your results.)
 
 * To send emails using the default configuration, a standard sendmail
-  program must be located at '/usr/sbin/sendmail' and configured
-  correctly to send emails.  If this is not the case, see the
-  multimailhook.mailer configuration variable below for how to
+  program must be located at '/usr/sbin/sendmail' or
+  '/usr/lib/sendmail' and must be configured correctly to send emails.
+  If this is not the case, set multimailhook.sendmailCommand, or see
+  the multimailhook.mailer configuration variable below for how to
   configure git-multimail to send emails via an SMTP server.
 
 
@@ -169,7 +170,7 @@ multimailhook.repoName
     for gitolite repositories, or otherwise to derive this value from
     the repository path name.
 
-multimailhook.mailinglist
+multimailhook.mailingList
 
     The list of email addresses to which notification emails should be
     sent, as RFC 2822 email addresses separated by commas.  This
@@ -184,26 +185,29 @@ multimailhook.refchangeList
     reference changes should be sent, as RFC 2822 email addresses
     separated by commas.  This configuration option can be
     multivalued.  The default is the value in
-    multimailhook.mailinglist.  Set this value to the empty string to
-    prevent reference change emails from being sent.
+    multimailhook.mailingList.  Set this value to the empty string to
+    prevent reference change emails from being sent even if
+    multimailhook.mailingList is set.
 
 multimailhook.announceList
 
     The list of email addresses to which emails about new annotated
     tags should be sent, as RFC 2822 email addresses separated by
     commas.  This configuration option can be multivalued.  The
-    default is the value in multimailhook.refchangelist or
-    multimailhook.mailinglist.  Set this value to the empty string to
-    prevent annotated tag announcement emails from being sent.
+    default is the value in multimailhook.refchangeList or
+    multimailhook.mailingList.  Set this value to the empty string to
+    prevent annotated tag announcement emails from being sent even if
+    one of the other values is set.
 
 multimailhook.commitList
 
     The list of email addresses to which emails about individual new
     commits should be sent, as RFC 2822 email addresses separated by
     commas.  This configuration option can be multivalued.  The
-    default is the value in multimailhook.mailinglist.  Set this value
+    default is the value in multimailhook.mailingList.  Set this value
     to the empty string to prevent notification emails about
-    individual commits from being sent.
+    individual commits from being sent even if
+    multimailhook.mailingList is set.
 
 multimailhook.announceShortlog
 
@@ -237,10 +241,11 @@ multimailhook.mailer
            quoting is allowed in the value of this setting, but remember that
            Git requires double-quotes to be escaped; e.g.,
 
-             git config multimailhook.sendmailcommand '/usr/sbin/sendmail -t -F \"Git Repo\"'
+             git config multimailhook.sendmailcommand '/usr/sbin/sendmail -oi -t -F \"Git Repo\"'
 
-           Default is '/usr/sbin/sendmail -t' or '/usr/lib/sendmail
-           -t' (depending on which file is present and executable).
+           Default is '/usr/sbin/sendmail -oi -t' or
+           '/usr/lib/sendmail -oi -t' (depending on which file is
+           present and executable).
 
        multimailhook.envelopeSender
 
@@ -344,6 +349,14 @@ multimailhook.logOpts
       [multimailhook]
               logopts = --pretty=format:\"%h %aN <%aE>%n%s%n%n%b%n\"
 
+multimailhook.commitLogOpts
+
+    Options passed to "git log" to generate additional info for
+    revision change emails.  For example, adding --ignore-all-spaces
+    will suppress whitespace changes.  The default options are "-C
+    --stat -p --cc".  Shell quoting is allowed; see
+    multimailhook.logOpts for details.
+
 multimailhook.emailDomain
 
     Domain name appended to the username of the person doing the push
@@ -381,8 +394,8 @@ Email filtering aids
 
 All emails include extra headers to enable fine tuned filtering and
 give information for debugging.  All emails include the headers
-"X-Git-Repo", "X-Git-Refname", and "X-Git-Reftype".  ReferenceChange
-emails also include headers "X-Git-Oldrev" and "X-Git-Newrev";
+"X-Git-Host", "X-Git-Repo", "X-Git-Refname", and "X-Git-Reftype".
+ReferenceChange emails also include headers "X-Git-Oldrev" and "X-Git-Newrev";
 Revision emails also include header "X-Git-Rev".
 
 
@@ -463,6 +476,7 @@ The git-multimail project itself is currently hosted on GitHub:
 We use the GitHub issue tracker to keep track of bugs and feature
 requests, and GitHub pull requests to exchange patches (though, if you
 prefer, you can send patches via the Git mailing list with cc to me).
+Please sign off your patches as per the Git project practice.
 
 Please note that although a copy of git-multimail will probably be
 distributed in the "contrib" section of the main Git project,

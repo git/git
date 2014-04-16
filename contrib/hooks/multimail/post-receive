@@ -66,10 +66,10 @@ mailer = git_multimail.choose_mailer(config, environment)
 # Alternatively, you may hardcode the mailer using code like one of
 # the following:
 
-# Use "/usr/sbin/sendmail -t" to send emails.  The envelopesender
+# Use "/usr/sbin/sendmail -oi -t" to send emails.  The envelopesender
 # argument is optional:
 #mailer = git_multimail.SendMailer(
-#    command=['/usr/sbin/sendmail', '-t'],
+#    command=['/usr/sbin/sendmail', '-oi', '-t'],
 #    envelopesender='git-repo@example.com',
 #    )
 
