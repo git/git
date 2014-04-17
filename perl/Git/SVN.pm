@@ -1178,7 +1178,7 @@ sub find_parent_branch {
 			  or die "SVN connection failed somewhere...\n";
 		}
 		print STDERR "Successfully followed parent\n" unless $::_q > 1;
-		return $self->make_log_entry($rev, [$parent], $ed);
+		return $self->make_log_entry($rev, [$parent], $ed, $r0, $branch_from);
 	}
 	return undef;
 }
@@ -1210,7 +1210,7 @@ sub do_fetch {
 	unless ($self->ra->gs_do_update($last_rev, $rev, $self, $ed)) {
 		die "SVN connection failed somewhere...\n";
 	}
-	$self->make_log_entry($rev, \@parents, $ed);
+	$self->make_log_entry($rev, \@parents, $ed, $last_rev);
 }
 
 sub mkemptydirs {
@@ -1478,9 +1478,9 @@ sub find_extra_svk_parents {
 sub lookup_svn_merge {
 	my $uuid = shift;
 	my $url = shift;
-	my $merge = shift;
+	my $source = shift;
+	my $revs = shift;
 
-	my ($source, $revs) = split ":", $merge;
 	my $path = $source;
 	$path =~ s{^/}{};
 	my $gs = Git::SVN->find_by_url($url.$source, $url, $path);
@@ -1702,6 +1702,62 @@ sub parents_exclude {
 	return @excluded;
 }
 
+# Compute what's new in svn:mergeinfo.
+sub mergeinfo_changes {
+	my ($self, $old_path, $old_rev, $path, $rev, $mergeinfo_prop) = @_;
+	my %minfo = map {split ":", $_ } split "\n", $mergeinfo_prop;
+	my $old_minfo = {};
+
+	# Initialize cache on the first call.
+	unless (defined $self->{cached_mergeinfo_rev}) {
+		$self->{cached_mergeinfo_rev} = {};
+		$self->{cached_mergeinfo} = {};
+	}
+
+	my $cached_rev = $self->{cached_mergeinfo_rev}{$old_path};
+	if (defined $cached_rev && $cached_rev == $old_rev) {
+		$old_minfo = $self->{cached_mergeinfo}{$old_path};
+	} else {
+		my $ra = $self->ra;
+		# Give up if $old_path isn't in the repo.
+		# This is probably a merge on a subtree.
+		if ($ra->check_path($old_path, $old_rev) != $SVN::Node::dir) {
+			warn "W: ignoring svn:mergeinfo on $old_path, ",
+				"directory didn't exist in r$old_rev\n";
+			return {};
+		}
+		my (undef, undef, $props) =
+			$self->ra->get_dir($old_path, $old_rev);
+		if (defined $props->{"svn:mergeinfo"}) {
+			my %omi = map {split ":", $_ } split "\n",
+				$props->{"svn:mergeinfo"};
+			$old_minfo = \%omi;
+		}
+		$self->{cached_mergeinfo}{$old_path} = $old_minfo;
+		$self->{cached_mergeinfo_rev}{$old_path} = $old_rev;
+	}
+
+	# Cache the new mergeinfo.
+	$self->{cached_mergeinfo}{$path} = \%minfo;
+	$self->{cached_mergeinfo_rev}{$path} = $rev;
+
+	my %changes = ();
+	foreach my $p (keys %minfo) {
+		my $a = $old_minfo->{$p} || "";
+		my $b = $minfo{$p};
+		# Omit merged branches whose ranges lists are unchanged.
+		next if $a eq $b;
+		# Remove any common range list prefix.
+		($a ^ $b) =~ /^[\0]*/;
+		my $common_prefix = rindex $b, ",", $+[0] - 1;
+		$changes{$p} = substr $b, $common_prefix + 1;
+	}
+	print STDERR "Checking svn:mergeinfo changes since r$old_rev: ",
+		scalar(keys %minfo), " sources, ",
+		scalar(keys %changes), " changed\n";
+
+	return \%changes;
+}
 
 # note: this function should only be called if the various dirprops
 # have actually changed
@@ -1715,14 +1771,15 @@ sub find_extra_svn_parents {
 	# history.  Then, we figure out which git revisions are in
 	# that tip, but not this revision.  If all of those revisions
 	# are now marked as merge, we can add the tip as a parent.
-	my @merges = split "\n", $mergeinfo;
+	my @merges = sort keys %$mergeinfo;
 	my @merge_tips;
 	my $url = $self->url;
 	my $uuid = $self->ra_uuid;
 	my @all_ranges;
 	for my $merge ( @merges ) {
 		my ($tip_commit, @ranges) =
-			lookup_svn_merge( $uuid, $url, $merge );
+			lookup_svn_merge( $uuid, $url,
+					  $merge, $mergeinfo->{$merge} );
 		unless (!$tip_commit or
 				grep { $_ eq $tip_commit } @$parents ) {
 			push @merge_tips, $tip_commit;
@@ -1738,8 +1795,9 @@ sub find_extra_svn_parents {
 	# check merge tips for new parents
 	my @new_parents;
 	for my $merge_tip ( @merge_tips ) {
-		my $spec = shift @merges;
+		my $merge = shift @merges;
 		next unless $merge_tip and $excluded{$merge_tip};
+		my $spec = "$merge:$mergeinfo->{$merge}";
 
 		# check out 'new' tips
 		my $merge_base;
@@ -1770,7 +1828,7 @@ sub find_extra_svn_parents {
 				.@incomplete." commit(s) (eg $incomplete[0])\n";
 		} else {
 			warn
-				"Found merge parent (svn:mergeinfo prop): ",
+				"Found merge parent ($spec): ",
 					$merge_tip, "\n";
 			push @new_parents, $merge_tip;
 		}
@@ -1797,7 +1855,7 @@ sub find_extra_svn_parents {
 }
 
 sub make_log_entry {
-	my ($self, $rev, $parents, $ed) = @_;
+	my ($self, $rev, $parents, $ed, $parent_rev, $parent_path) = @_;
 	my $untracked = $self->get_untracked($ed);
 
 	my @parents = @$parents;
@@ -1809,10 +1867,12 @@ sub make_log_entry {
 				($ed, $props->{"svk:merge"}, \@parents);
 		}
 		if ( $props->{"svn:mergeinfo"} ) {
+			my $mi_changes = $self->mergeinfo_changes
+				($parent_path || $path, $parent_rev,
+				 $path, $rev,
+				 $props->{"svn:mergeinfo"});
 			$self->find_extra_svn_parents
-				($ed,
-				 $props->{"svn:mergeinfo"},
-				 \@parents);
+				($ed, $mi_changes, \@parents);
 		}
 	}
 
