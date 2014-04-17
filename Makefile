@@ -2102,7 +2102,7 @@ pdf:
 
 XGETTEXT_FLAGS = \
 	--force-po \
-	--add-comments \
+	--add-comments=TRANSLATORS: \
 	--msgid-bugs-address="Git Mailing List <git@vger.kernel.org>" \
 	--from-code=UTF-8
 XGETTEXT_FLAGS_C = $(XGETTEXT_FLAGS) --language=C \
