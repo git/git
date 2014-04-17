@@ -1210,7 +1210,7 @@ sub do_fetch {
 	unless ($self->ra->gs_do_update($last_rev, $rev, $self, $ed)) {
 		die "SVN connection failed somewhere...\n";
 	}
-	$self->make_log_entry($rev, \@parents, $ed, $last_rev);
+	$self->make_log_entry($rev, \@parents, $ed, $last_rev, $self->path);
 }
 
 sub mkemptydirs {
@@ -1859,21 +1859,18 @@ sub make_log_entry {
 	my $untracked = $self->get_untracked($ed);
 
 	my @parents = @$parents;
-	my $ps = $ed->{path_strip} || "";
-	for my $path ( grep { m/$ps/ } %{$ed->{dir_prop}} ) {
-		my $props = $ed->{dir_prop}{$path};
-		if ( $props->{"svk:merge"} ) {
-			$self->find_extra_svk_parents
-				($ed, $props->{"svk:merge"}, \@parents);
-		}
-		if ( $props->{"svn:mergeinfo"} ) {
-			my $mi_changes = $self->mergeinfo_changes
-				($parent_path || $path, $parent_rev,
-				 $path, $rev,
-				 $props->{"svn:mergeinfo"});
-			$self->find_extra_svn_parents
-				($ed, $mi_changes, \@parents);
-		}
+	my $props = $ed->{dir_prop}{$self->path};
+	if ( $props->{"svk:merge"} ) {
+		$self->find_extra_svk_parents
+			($ed, $props->{"svk:merge"}, \@parents);
+	}
+	if ( $props->{"svn:mergeinfo"} ) {
+		my $mi_changes = $self->mergeinfo_changes
+			($parent_path, $parent_rev,
+			 $self->path, $rev,
+			 $props->{"svn:mergeinfo"});
+		$self->find_extra_svn_parents
+			($ed, $mi_changes, \@parents);
 	}
 
 	open my $un, '>>', "$self->{dir}/unhandled.log" or croak $!;
