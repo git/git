@@ -1380,10 +1380,11 @@ test_expect_success 'multiple --points-at are OR-ed together' '
 	test_cmp expect actual
 '
 
+test_lazy_prereq BASH 'bash --version'
+
 >expect
-# ulimit is a bash builtin; we can rely on that in MinGW, but nowhere else
-test_expect_success MINGW '--contains works in a deep repo' '
-	ulimit -s 64
+# we require bash for its 'ulimit' builtin
+test_expect_success BASH '--contains works in a deep repo' '
 	i=1 &&
 	while test $i -lt 1000
 	do
@@ -1397,7 +1398,7 @@ EOF"
 	done | git fast-import &&
 	git checkout master &&
 	git tag far-far-away HEAD^ &&
-	git tag --contains HEAD >actual &&
+	bash -c "ulimit -s 64 && git tag --contains HEAD >actual" &&
 	test_cmp expect actual
 '
 

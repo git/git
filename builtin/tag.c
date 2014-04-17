@@ -73,11 +73,17 @@ static int in_commit_list(const struct commit_list *want, struct commit *c)
 	return 0;
 }
 
+enum contains_result {
+	CONTAINS_UNKNOWN = -1,
+	CONTAINS_NO = 0,
+	CONTAINS_YES = 1,
+};
+
 /*
  * Test whether the candidate or one of its parents is contained in the list.
  * Do not recurse to find out, though, but return -1 if inconclusive.
  */
-static int contains_test(struct commit *candidate,
+static enum contains_result contains_test(struct commit *candidate,
 			    const struct commit_list *want)
 {
 	/* was it previously marked as containing a want commit? */
@@ -121,12 +127,13 @@ static void push_to_stack(struct commit *candidate, struct stack *stack)
 	stack->stack[index].parents = candidate->parents;
 }
 
-static int contains(struct commit *candidate, const struct commit_list *want)
+static enum contains_result contains(struct commit *candidate,
+		const struct commit_list *want)
 {
 	struct stack stack = { 0, 0, NULL };
 	int result = contains_test(candidate, want);
 
-	if (result >= 0)
+	if (result != CONTAINS_UNKNOWN)
 		return result;
 
 	push_to_stack(candidate, &stack);
@@ -136,7 +143,7 @@ static int contains(struct commit *candidate, const struct commit_list *want)
 		struct commit_list *parents = entry->parents;
 
 		if (!parents) {
-			commit->object.flags = UNINTERESTING;
+			commit->object.flags |= UNINTERESTING;
 			stack.nr--;
 		}
 		/*
@@ -144,14 +151,14 @@ static int contains(struct commit *candidate, const struct commit_list *want)
 		 * therefore contains_test will return a meaningful 0 or 1.
 		 */
 		else switch (contains_test(parents->item, want)) {
-		case 1:
+		case CONTAINS_YES:
 			commit->object.flags |= TMP_MARK;
 			stack.nr--;
 			break;
-		case 0:
+		case CONTAINS_NO:
 			entry->parents = parents->next;
 			break;
-		default:
+		case CONTAINS_UNKNOWN:
 			push_to_stack(parents->item, &stack);
 			break;
 		}
