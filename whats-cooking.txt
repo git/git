@@ -1,20 +1,21 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Apr 2014, #05; Thu, 17)
-X-master-at: 3f0c02a1c018ddaced5c97b58f550b2ad17dd0a9
-X-next-at: fab3363ed5bd07db28d6fcb0637f15275ad77226
+Subject: What's cooking in git.git (Apr 2014, #06; Fri, 18)
+X-master-at: cc291953df19aa4a97bee3590e708dc1fc557500
+X-next-at: 0bd75c508e7c03265459d39a0fa838a04b338cc4
 
-What's cooking in git.git (Apr 2014, #05; Thu, 17)
+What's cooking in git.git (Apr 2014, #06; Fri, 18)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-Hopefully we can merge a few more topics slated for 'master' before
-cutting an early preview release -rc0 tomorrow.  Many of the topics
-that are in 'next' have sizable impact on the codebase and I'd feel
-safer to keep them cooking for the remainder of the cycle.
+The tip of the 'master' branch is at v2.0.0-rc0, an early preview
+release.  There are a handful of topics still in 'next' (and a few
+that are not in 'next') that I'd like to have in v2.0.0-rc1, but
+other than that, this hopefully is fairly a close approximation of
+the upcoming release.
 
 Also I am still waiting for acks for a few topics before merging
 them to 'next'.  I would feel it would be good if we can merge them
@@ -30,62 +31,23 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* km/avoid-bs-in-shell-glob (2014-04-11) 1 commit
-  (merged to 'next' on 2014-04-14 at a3d9a58)
- + test: fix t5560 on FreeBSD
-
- Portability fix.
- May want to merge to 'maint' later.
+* fc/complete-aliased-push (2014-04-09) 1 commit
+  (merged to 'next' on 2014-04-16 at ab798d1)
+ + completion: fix completing args of aliased "push", "fetch", etc.
 
 
-* km/avoid-cp-a (2014-04-11) 1 commit
-  (merged to 'next' on 2014-04-14 at be661c4)
- + test: fix t7001 cp to use POSIX options
-
- Portability fix.
- May want to merge to 'maint' later.
+* fc/prompt-zsh-read-from-file (2014-04-14) 1 commit
+  (merged to 'next' on 2014-04-16 at 0e5fec0)
+ + prompt: fix missing file errors in zsh
 
 
-* mh/multimail (2014-04-07) 1 commit
-  (merged to 'next' on 2014-04-15 at eaba915)
- + git-multimail: update to version 1.0.0
-
-
-* tb/unicode-6.3-zero-width (2014-04-09) 1 commit
-  (merged to 'next' on 2014-04-14 at 72ce72a)
- + utf8.c: partially update to version 6.3
-
- Teach our display-column-counting logic about decomposed umlauts
- and friends.
-
---------------------------------------------------
-[New Topics]
-
-* jl/git-gui-show-added-submodule-changes (2014-04-15) 1 commit
- - git-gui: show staged submodules regardless of ignore config
-
- Tentatively queued what I expect to receive via Pat Thoyts.
-
-
-* jl/gitk-show-added-submodule-changes (2014-04-15) 3 commits
- - gitk: show staged submodules regardless of ignore config
- - gitk: Merge branch 'new' of https://github.com/vnwildman/gitk
- - l10n: Init Vietnamese translation
-
- Tentatively queued what I expect to receive via Paul Mackerras.
-
-
-* bg/rebase-off-of-previous-branch (2014-04-16) 1 commit
- - git-rebase: print name of rev when using shorthand
-
- Teach "git rebase -" to report the concrete name of the branch
- (i.e. the previous one).
-
- But it stops short and does not do the same for "git rebase @{-1}".
-
-
-* ef/send-email-absolute-path-to-the-command (2014-04-16) 1 commit
- - send-email: recognize absolute path on Windows
+* fc/remote-helper-fixes (2014-04-14) 5 commits
+  (merged to 'next' on 2014-04-16 at 180482e)
+ + remote-bzr: trivial test fix
+ + remote-bzr: include authors field in pushed commits
+ + remote-bzr: add support for older versions
+ + remote-hg: always normalize paths
+ + remote-helpers: allow all tests running from any dir
 
 
 * jk/config-die-bad-number-noreturn (2014-04-16) 1 commit
@@ -93,50 +55,6 @@ of the repositories listed at
  + config.c: mark die_bad_number as NORETURN
 
  Squelch a false compiler warning from older gcc.
-
- Will merge to 'master'.
-
-
-* ep/shell-command-substitution (2014-04-17) 14 commits
- - t9362-mw-to-git-utf8.sh: use the $( ... ) construct for command substitution
- - t9360-mw-to-git-clone.sh: use the $( ... ) construct for command substitution
- - git-tag.sh: use the $( ... ) construct for command substitution
- - git-revert.sh: use the $( ... ) construct for command substitution
- - git-resolve.sh: use the $( ... ) construct for command substitution
- - git-repack.sh: use the $( ... ) construct for command substitution
- - git-merge.sh: use the $( ... ) construct for command substitution
- - git-ls-remote.sh: use the $( ... ) construct for command substitution
- - git-fetch.sh: use the $( ... ) construct for command substitution
- - git-commit.sh: use the $( ... ) construct for command substitution
- - git-clone.sh: use the $( ... ) construct for command substitution
- - git-checkout.sh: use the $( ... ) construct for command substitution
- - install-webdoc.sh: use the $( ... ) construct for command substitution
- - howto-index.sh: use the $( ... ) construct for command substitution
-
- Will merge to 'next' and perhaps to 'master'.
-
-
-* jh/submodule-tests (2014-04-17) 1 commit
- - t7410: 210 tests for various 'git submodule update' scenarios
-
-
-* jx/i18n (2014-04-17) 3 commits
- - i18n: only extract comments marked with "TRANSLATORS:"
- - i18n: remove obsolete comments for translators in diffstat generation
- - i18n: fix uncatchable comments for translators in date.c
-
- The tip one is somewhat unfortunate to force us deviate from our
- multi-line comment formatting convention when writing comments for
- translators.
-
-
-* rs/ref-update-check-errors-early (2014-04-17) 2 commits
- - commit.c: check for lock error and return early
- - sequencer.c: check for lock failure and bail early in fast_forward_to
-
-
-* sk/svn-parse-datestamp (2014-04-17) 1 commit
- - SVN.pm::parse_svn_date: allow timestamps with a single-digit hour
 
 --------------------------------------------------
 [Stalled]
@@ -325,11 +243,81 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* fc/prompt-zsh-read-from-file (2014-04-14) 1 commit
-  (merged to 'next' on 2014-04-16 at 0e5fec0)
- + prompt: fix missing file errors in zsh
+* jl/git-gui-show-added-submodule-changes (2014-04-15) 1 commit
+ - git-gui: show staged submodules regardless of ignore config
 
- Will merge to 'master'.
+ Tentatively queued what I expect to receive via Pat Thoyts.
+
+
+* jl/gitk-show-added-submodule-changes (2014-04-15) 3 commits
+ - gitk: show staged submodules regardless of ignore config
+ - gitk: Merge branch 'new' of https://github.com/vnwildman/gitk
+ - l10n: Init Vietnamese translation
+
+ Tentatively queued what I expect to receive via Paul Mackerras.
+
+
+* bg/rebase-off-of-previous-branch (2014-04-16) 1 commit
+ - git-rebase: print name of rev when using shorthand
+
+ Teach "git rebase -" to report the concrete name of the branch
+ (i.e. the previous one).
+
+ But it stops short and does not do the same for "git rebase @{-1}".
+ Expecting a reroll.
+
+
+* ef/send-email-absolute-path-to-the-command (2014-04-16) 1 commit
+ - send-email: recognize absolute path on Windows
+
+ Will merge to 'next'.
+
+
+* ep/shell-command-substitution (2014-04-17) 14 commits
+  (merged to 'next' on 2014-04-18 at ebd996d)
+ + t9362-mw-to-git-utf8.sh: use the $( ... ) construct for command substitution
+ + t9360-mw-to-git-clone.sh: use the $( ... ) construct for command substitution
+ + git-tag.sh: use the $( ... ) construct for command substitution
+ + git-revert.sh: use the $( ... ) construct for command substitution
+ + git-resolve.sh: use the $( ... ) construct for command substitution
+ + git-repack.sh: use the $( ... ) construct for command substitution
+ + git-merge.sh: use the $( ... ) construct for command substitution
+ + git-ls-remote.sh: use the $( ... ) construct for command substitution
+ + git-fetch.sh: use the $( ... ) construct for command substitution
+ + git-commit.sh: use the $( ... ) construct for command substitution
+ + git-clone.sh: use the $( ... ) construct for command substitution
+ + git-checkout.sh: use the $( ... ) construct for command substitution
+ + install-webdoc.sh: use the $( ... ) construct for command substitution
+ + howto-index.sh: use the $( ... ) construct for command substitution
+
+ Will merge to 'master' by -rc1 if no regressions are reported.
+
+
+* jh/submodule-tests (2014-04-17) 1 commit
+ - t7410: 210 tests for various 'git submodule update' scenarios
+
+
+* jx/i18n (2014-04-18) 4 commits
+  (merged to 'next' on 2014-04-18 at 2ace126)
+ + i18n: mention "TRANSLATORS:" marker in Documentation/CodingGuidelines
+ + i18n: only extract comments marked with "TRANSLATORS:"
+ + i18n: remove obsolete comments for translators in diffstat generation
+ + i18n: fix uncatchable comments for translators in date.c
+
+ Will merge to 'master' by -rc1 if no regressions are reported.
+
+
+* rs/ref-update-check-errors-early (2014-04-17) 2 commits
+ - commit.c: check for lock error and return early
+ - sequencer.c: check for lock failure and bail early in fast_forward_to
+
+ Will merge to 'next' and keep it there for the remainder of the cycle.
+
+
+* sk/svn-parse-datestamp (2014-04-17) 1 commit
+ - SVN.pm::parse_svn_date: allow timestamps with a single-digit hour
+
+ Will merge to 'next' and keep it there for the remainder of the cycle.
 
 
 * fc/transport-helper-sync-error-fix (2014-04-14) 5 commits
@@ -349,16 +337,14 @@ of the repositories listed at
 
 
 * km/avoid-non-function-return-in-rebase (2014-04-17) 2 commits
- - Revert "rebase: fix run_specific_rebase's use of "return" on FreeBSD"
- - rebase: avoid non-function use of "return" on FreeBSD
+  (merged to 'next' on 2014-04-18 at 6982c3e)
+ + Revert "rebase: fix run_specific_rebase's use of "return" on FreeBSD"
+ + rebase: avoid non-function use of "return" on FreeBSD
 
  Work around /bin/sh that does not like "return" at the top-level
  of a file that is dot-sourced from inside a function definition.
 
- Will merge to 'next' after the discussion on in-code comment settles.
-
- We may want to merge it to 'master' by -rc1 if no regressions are
- reported.
+ Will merge to 'master' by -rc1 if no regressions are reported.
 
 
 * db/make-with-curl (2014-04-15) 2 commits
@@ -380,24 +366,6 @@ of the repositories listed at
  pread() emulation.
 
  Will keep in 'next' for the remainder of the cycle.
-
-
-* fc/complete-aliased-push (2014-04-09) 1 commit
-  (merged to 'next' on 2014-04-16 at ab798d1)
- + completion: fix completing args of aliased "push", "fetch", etc.
-
- Will merge to 'master'.
-
-
-* fc/remote-helper-fixes (2014-04-14) 5 commits
-  (merged to 'next' on 2014-04-16 at 180482e)
- + remote-bzr: trivial test fix
- + remote-bzr: include authors field in pushed commits
- + remote-bzr: add support for older versions
- + remote-hg: always normalize paths
- + remote-helpers: allow all tests running from any dir
-
- Will merge to 'master'.
 
 
 * ym/fix-opportunistic-index-update-race (2014-04-10) 2 commits
