@@ -22,10 +22,9 @@ esac
 case "$vername" in
 *-rc[0-9]*)
 	rpmroot=testing
-	vername=$(echo "$vername" | tr "-" ".")
 	case "$vername" in
 	*-rc0)
-		kind="An early preview"
+		kind="An early preview release"
 		;;
 	*)
 		kind="A release candidate"
@@ -39,6 +38,8 @@ case "$vername" in
 	;;
 esac
 
+vername=$(echo "$vername" | tr "-" ".")
+
 cat <<EOF
 To: git@vger.kernel.org
 Cc: Linux Kernel <linux-kernel@vger.kernel.org>
@@ -51,25 +52,14 @@ fmt -68 <<EOF
 $kind Git $relname is now available$for_testing at the usual places.
 EOF
 
-cat <<\EOF
-
-The release tarballs are found at:
-
-    http://code.google.com/p/git-core/downloads/list
-
-and their SHA-1 checksums are:
-
-EOF
-
-if test -f git-$vername.sign
-then
-	sed -e '1,/^$/d' -e '/^-----BEGIN PGP SIGNATURE/,$d' git-$vername.sign
-fi
-
 cat <<EOF
 
-The following public repositories all have a copy of the $relname
-tag and the $branch branch that the tag points at:
+The tarballs are found at:
+
+    https://www.kernel.org/pub/software/scm/git/${for_testing+testing/}
+
+The following public repositories all have a copy of the '$relname'
+tag and the '$branch' branch that the tag points at:
 
   url = https://kernel.googlesource.com/pub/scm/git/git
   url = git://repo.or.cz/alt-git.git
@@ -80,18 +70,12 @@ tag and the $branch branch that the tag points at:
 
 EOF
 
-test -n "$for_testing" ||
-cat <<EOF
-Also, http://www.kernel.org/pub/software/scm/git/ has copies of the
-release tarballs.
-
-EOF
-
 RelNotes=$(git cat-file blob "${branch}:RelNotes") &&
 git cat-file blob "${branch}:$RelNotes" |
 case "$relname" in
 *-rc[0-9]*)
-	sed -e 's/^Git .* Release Notes$/& (draft)/'
+	sed -e 's/^Git .* Release Notes$/& (draft)/' \
+	    -e 's/^=============/&========/'
 	;;
 *)
 	cat
@@ -108,4 +92,3 @@ EOF
 
 git log --no-merges "$previous".."$branch" |
 git shortlog
-
