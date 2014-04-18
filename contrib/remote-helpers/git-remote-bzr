@@ -618,10 +618,12 @@ def parse_commit(parser):
         files[path] = f
 
     committer, date, tz = committer
+    author, _, _ = author
     parents = [mark_to_rev(p) for p in parents]
     revid = bzrlib.generate_ids.gen_revision_id(committer, date)
     props = {}
     props['branch-nick'] = branch.nick
+    props['authors'] = author
 
     mtree = CustomTree(branch, revid, parents, files)
     changes = mtree.iter_changes()
@@ -784,7 +786,7 @@ def clone(path, remote_branch):
 def get_remote_branch(name):
     remote_branch = bzrlib.branch.Branch.open(branches[name],
                                               possible_transports=transports)
-    if isinstance(remote_branch.user_transport, bzrlib.transport.local.LocalTransport):
+    if isinstance(remote_branch.bzrdir.root_transport, bzrlib.transport.local.LocalTransport):
         return remote_branch
 
     branch_path = os.path.join(dirname, 'clone', name)
@@ -867,7 +869,7 @@ def get_repo(url, alias):
     if not wanted:
         try:
             repo = origin.open_repository()
-            if not repo.user_transport.listable():
+            if not repo.bzrdir.root_transport.listable():
                 # this repository is not usable for us
                 raise bzrlib.errors.NoRepositoryPresent(repo.bzrdir)
         except bzrlib.errors.NoRepositoryPresent:
