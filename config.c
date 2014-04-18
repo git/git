@@ -557,6 +557,7 @@ int git_parse_ulong(const char *value, unsigned long *ret)
 	return 1;
 }
 
+NORETURN
 static void die_bad_number(const char *name, const char *value)
 {
 	const char *reason = errno == ERANGE ?
