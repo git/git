@@ -2909,7 +2909,6 @@ static void run_external_diff(const char *pgm,
 {
 	struct argv_array argv = ARGV_ARRAY_INIT;
 	struct argv_array env = ARGV_ARRAY_INIT;
-	int retval;
 	struct diff_queue_struct *q = &diff_queued_diff;
 
 	if (one && two) {
@@ -2938,14 +2937,12 @@ static void run_external_diff(const char *pgm,
 	argv_array_pushf(&env, "GIT_DIFF_PATH_COUNTER=%d", ++o->diff_path_counter);
 	argv_array_pushf(&env, "GIT_DIFF_PATH_TOTAL=%d", q->nr);
 
-	retval = run_command_v_opt_cd_env(argv.argv, RUN_USING_SHELL, NULL, env.argv);
+	if (run_command_v_opt_cd_env(argv.argv, RUN_USING_SHELL, NULL, env.argv))
+		die(_("external diff died, stopping at %s"), name);
+
 	remove_tempfile();
 	argv_array_clear(&argv);
 	argv_array_clear(&env);
-	if (retval) {
-		fprintf(stderr, "external diff died, stopping at %s.\n", name);
-		exit(1);
-	}
 }
 
 static int similarity_index(struct diff_filepair *p)

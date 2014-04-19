@@ -58,7 +58,7 @@ test_expect_success PERL 'custom tool commands override built-ins' '
 
 test_expect_success PERL 'difftool ignores bad --tool values' '
 	: >expect &&
-	test_expect_code 1 \
+	test_must_fail \
 		git difftool --no-prompt --tool=bad-tool branch >actual &&
 	test_cmp expect actual
 '
