@@ -2911,13 +2911,14 @@ static void run_external_diff(const char *pgm,
 	struct argv_array env = ARGV_ARRAY_INIT;
 	struct diff_queue_struct *q = &diff_queued_diff;
 
+	argv_array_push(&argv, pgm);
+	argv_array_push(&argv, name);
+
 	if (one && two) {
 		struct diff_tempfile *temp_one, *temp_two;
 		const char *othername = (other ? other : name);
 		temp_one = prepare_temp_file(name, one);
 		temp_two = prepare_temp_file(othername, two);
-		argv_array_push(&argv, pgm);
-		argv_array_push(&argv, name);
 		argv_array_push(&argv, temp_one->name);
 		argv_array_push(&argv, temp_one->hex);
 		argv_array_push(&argv, temp_one->mode);
@@ -2928,9 +2929,6 @@ static void run_external_diff(const char *pgm,
 			argv_array_push(&argv, other);
 			argv_array_push(&argv, xfrm_msg);
 		}
-	} else {
-		argv_array_push(&argv, pgm);
-		argv_array_push(&argv, name);
 	}
 
 	argv_array_pushf(&env, "GIT_DIFF_PATH_COUNTER=%d", ++o->diff_path_counter);
