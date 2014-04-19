@@ -2892,6 +2892,16 @@ static struct diff_tempfile *prepare_temp_file(const char *name,
 	return temp;
 }
 
+static void add_external_diff_name(struct argv_array *argv,
+				   const char *name,
+				   struct diff_filespec *df)
+{
+	struct diff_tempfile *temp = prepare_temp_file(name, df);
+	argv_array_push(argv, temp->name);
+	argv_array_push(argv, temp->hex);
+	argv_array_push(argv, temp->mode);
+}
+
 /* An external diff command takes:
  *
  * diff-cmd name infile1 infile1-sha1 infile1-mode \
@@ -2915,17 +2925,11 @@ static void run_external_diff(const char *pgm,
 	argv_array_push(&argv, name);
 
 	if (one && two) {
-		struct diff_tempfile *temp_one, *temp_two;
-		const char *othername = (other ? other : name);
-		temp_one = prepare_temp_file(name, one);
-		temp_two = prepare_temp_file(othername, two);
-		argv_array_push(&argv, temp_one->name);
-		argv_array_push(&argv, temp_one->hex);
-		argv_array_push(&argv, temp_one->mode);
-		argv_array_push(&argv, temp_two->name);
-		argv_array_push(&argv, temp_two->hex);
-		argv_array_push(&argv, temp_two->mode);
-		if (other) {
+		add_external_diff_name(&argv, name, one);
+		if (!other)
+			add_external_diff_name(&argv, name, two);
+		else {
+			add_external_diff_name(&argv, other, two);
 			argv_array_push(&argv, other);
 			argv_array_push(&argv, xfrm_msg);
 		}
