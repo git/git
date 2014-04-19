@@ -2932,7 +2932,6 @@ static void run_external_diff(const char *pgm,
 		argv_array_push(&argv, pgm);
 		argv_array_push(&argv, name);
 	}
-	fflush(NULL);
 
 	argv_array_pushf(&env, "GIT_DIFF_PATH_COUNTER=%d", ++o->diff_path_counter);
 	argv_array_pushf(&env, "GIT_DIFF_PATH_TOTAL=%d", q->nr);
