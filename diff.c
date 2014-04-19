@@ -2908,11 +2908,9 @@ static void run_external_diff(const char *pgm,
 			      struct diff_options *o)
 {
 	struct argv_array argv = ARGV_ARRAY_INIT;
+	struct argv_array env = ARGV_ARRAY_INIT;
 	int retval;
 	struct diff_queue_struct *q = &diff_queued_diff;
-	const char *env[3] = { NULL };
-	char env_counter[50];
-	char env_total[50];
 
 	if (one && two) {
 		struct diff_tempfile *temp_one, *temp_two;
@@ -2937,15 +2935,13 @@ static void run_external_diff(const char *pgm,
 	}
 	fflush(NULL);
 
-	env[0] = env_counter;
-	snprintf(env_counter, sizeof(env_counter), "GIT_DIFF_PATH_COUNTER=%d",
-		 ++o->diff_path_counter);
-	env[1] = env_total;
-	snprintf(env_total, sizeof(env_total), "GIT_DIFF_PATH_TOTAL=%d", q->nr);
+	argv_array_pushf(&env, "GIT_DIFF_PATH_COUNTER=%d", ++o->diff_path_counter);
+	argv_array_pushf(&env, "GIT_DIFF_PATH_TOTAL=%d", q->nr);
 
-	retval = run_command_v_opt_cd_env(argv.argv, RUN_USING_SHELL, NULL, env);
+	retval = run_command_v_opt_cd_env(argv.argv, RUN_USING_SHELL, NULL, env.argv);
 	remove_tempfile();
 	argv_array_clear(&argv);
+	argv_array_clear(&env);
 	if (retval) {
 		fprintf(stderr, "external diff died, stopping at %s.\n", name);
 		exit(1);
