@@ -2902,7 +2902,7 @@ static void run_external_diff(const char *pgm,
 			      int complete_rewrite,
 			      struct diff_options *o)
 {
-	const char *spawn_arg[10];
+	const char *spawn_arg[11];
 	int retval;
 	const char **arg = &spawn_arg[0];
 	struct diff_queue_struct *q = &diff_queued_diff;
