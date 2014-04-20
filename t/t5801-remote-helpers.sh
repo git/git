@@ -102,6 +102,14 @@ test_expect_success 'push new branch with HEAD:new refspec' '
 	compare_refs local HEAD server refs/heads/new-refspec-2
 '
 
+test_expect_success 'push delete branch' '
+	(cd local &&
+	 git push origin :new-name
+	) &&
+	test_must_fail git --git-dir="server/.git" \
+	 rev-parse --verify refs/heads/new-name
+'
+
 test_expect_success 'forced push' '
 	(cd local &&
 	git checkout -b force-test &&
