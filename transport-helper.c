@@ -876,8 +876,6 @@ static int push_refs_with_export(struct transport *transport,
 
 	write_constant(helper->in, "export\n");
 
-	strbuf_reset(&buf);
-
 	for (ref = remote_refs; ref; ref = ref->next) {
 		char *private;
 		unsigned char sha1[20];
@@ -892,8 +890,6 @@ static int push_refs_with_export(struct transport *transport,
 
 		if (ref->peer_ref) {
 			if (strcmp(ref->name, ref->peer_ref->name)) {
-				struct strbuf buf = STRBUF_INIT;
-
 				if (!ref->deletion) {
 					const char *name;
 					int flag;
