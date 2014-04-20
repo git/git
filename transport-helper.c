@@ -896,7 +896,16 @@ static int push_refs_with_export(struct transport *transport,
 		if (ref->peer_ref) {
 			if (strcmp(ref->name, ref->peer_ref->name)) {
 				struct strbuf buf = STRBUF_INIT;
-				strbuf_addf(&buf, "%s:%s", ref->peer_ref->name, ref->name);
+				const char *name;
+				int flag;
+
+				/* Follow symbolic refs (mainly for HEAD). */
+				name = resolve_ref_unsafe(ref->peer_ref->name, sha1, 1, &flag);
+				if (!name || !(flag & REF_ISSYMREF))
+					name = ref->peer_ref->name;
+
+				strbuf_addf(&buf, "%s:%s", name, ref->name);
+
 				string_list_append(&revlist_args, "--refspec");
 				string_list_append(&revlist_args, buf.buf);
 				strbuf_release(&buf);
