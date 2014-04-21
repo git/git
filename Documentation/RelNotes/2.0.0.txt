@@ -41,6 +41,11 @@ with "git diff-files --diff-filter=d").
 
 "git request-pull" lost a few "heuristics" that often led to mistakes.
 
+The default prefix for "git svn" has changed in Git 2.0.  For a long
+time, "git svn" created its remote-tracking branches directly under
+refs/remotes, but it now places them under refs/remotes/origin/ unless
+it is told otherwise with its --prefix option.
+
 
 Updates since v1.9 series
 -------------------------
@@ -83,9 +88,9 @@ UI, Workflows & Features
  * "git grep" learned to behave in a way similar to native grep when
    "-h" (no header) and "-c" (count) options are given.
 
- * transport-helper, fast-import and fast-export have been updated to
-   allow the ref mapping and ref deletion in a way similar to the
-   natively supported transports.
+ * "git push" via transport-helper interface (e.g. remote-hg) has
+   been updated to allow ref deletion in a way similar to the natively
+   supported transports.
 
  * The "simple" mode is the default for "git push".
 
@@ -173,6 +178,10 @@ Fixes since v1.9 series
 Unless otherwise noted, all the fixes since v1.9 in the maintenance
 track are contained in this release (see the maintenance releases'
 notes for details).
+
+ * "git rebase" used a POSIX shell construct FreeBSD /bin/sh does not
+   work well with.
+   (merge 8cd6596 km/avoid-non-function-return-in-rebase later to maint).
 
  * zsh prompt (in contrib/) leaked unnecessary error messages.
 
