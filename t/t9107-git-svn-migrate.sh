@@ -45,27 +45,27 @@ test_expect_success 'initialize old-style (v0) git svn layout' '
 test_expect_success 'initialize a multi-repository repo' '
 	git svn init "$svnrepo" -T trunk -t tags -b branches &&
 	git config --get-all svn-remote.svn.fetch > fetch.out &&
-	grep "^trunk:refs/remotes/trunk$" fetch.out &&
+	grep "^trunk:refs/remotes/origin/trunk$" fetch.out &&
 	test -n "`git config --get svn-remote.svn.branches \
-	            "^branches/\*:refs/remotes/\*$"`" &&
+	            "^branches/\*:refs/remotes/origin/\*$"`" &&
 	test -n "`git config --get svn-remote.svn.tags \
-	            "^tags/\*:refs/remotes/tags/\*$"`" &&
+	            "^tags/\*:refs/remotes/origin/tags/\*$"`" &&
 	git config --unset svn-remote.svn.branches \
-	                        "^branches/\*:refs/remotes/\*$" &&
+	                        "^branches/\*:refs/remotes/origin/\*$" &&
 	git config --unset svn-remote.svn.tags \
-	                        "^tags/\*:refs/remotes/tags/\*$" &&
-	git config --add svn-remote.svn.fetch "branches/a:refs/remotes/a" &&
-	git config --add svn-remote.svn.fetch "branches/b:refs/remotes/b" &&
+	                        "^tags/\*:refs/remotes/origin/tags/\*$" &&
+	git config --add svn-remote.svn.fetch "branches/a:refs/remotes/origin/a" &&
+	git config --add svn-remote.svn.fetch "branches/b:refs/remotes/origin/b" &&
 	for i in tags/0.1 tags/0.2 tags/0.3; do
 		git config --add svn-remote.svn.fetch \
-		                 $i:refs/remotes/$i || exit 1; done &&
+		                 $i:refs/remotes/origin/$i || exit 1; done &&
 	git config --get-all svn-remote.svn.fetch > fetch.out &&
-	grep "^trunk:refs/remotes/trunk$" fetch.out &&
-	grep "^branches/a:refs/remotes/a$" fetch.out &&
-	grep "^branches/b:refs/remotes/b$" fetch.out &&
-	grep "^tags/0\.1:refs/remotes/tags/0\.1$" fetch.out &&
-	grep "^tags/0\.2:refs/remotes/tags/0\.2$" fetch.out &&
-	grep "^tags/0\.3:refs/remotes/tags/0\.3$" fetch.out &&
+	grep "^trunk:refs/remotes/origin/trunk$" fetch.out &&
+	grep "^branches/a:refs/remotes/origin/a$" fetch.out &&
+	grep "^branches/b:refs/remotes/origin/b$" fetch.out &&
+	grep "^tags/0\.1:refs/remotes/origin/tags/0\.1$" fetch.out &&
+	grep "^tags/0\.2:refs/remotes/origin/tags/0\.2$" fetch.out &&
+	grep "^tags/0\.3:refs/remotes/origin/tags/0\.3$" fetch.out &&
 	grep "^:refs/${remotes_git_svn}" fetch.out
 	'
 
@@ -73,14 +73,14 @@ test_expect_success 'initialize a multi-repository repo' '
 test_expect_success 'multi-fetch works on partial urls + paths' "
 	git svn multi-fetch &&
 	for i in trunk a b tags/0.1 tags/0.2 tags/0.3; do
-		git rev-parse --verify refs/remotes/\$i^0 >> refs.out || exit 1;
+		git rev-parse --verify refs/remotes/origin/\$i^0 >> refs.out || exit 1;
 	    done &&
 	test -z \"\`sort < refs.out | uniq -d\`\" &&
 	for i in trunk a b tags/0.1 tags/0.2 tags/0.3; do
 	  for j in trunk a b tags/0.1 tags/0.2 tags/0.3; do
 		if test \$j != \$i; then continue; fi
-	    test -z \"\`git diff refs/remotes/\$i \
-	                         refs/remotes/\$j\`\" ||exit 1; done; done
+	    test -z \"\`git diff refs/remotes/origin/\$i \
+	                         refs/remotes/origin/\$j\`\" ||exit 1; done; done
 	"
 
 test_expect_success 'migrate --minimize on old inited layout' '
@@ -98,27 +98,27 @@ test_expect_success 'migrate --minimize on old inited layout' '
 	git svn migrate --minimize &&
 	test -z "`git config -l | grep "^svn-remote\.git-svn\."`" &&
 	git config --get-all svn-remote.svn.fetch > fetch.out &&
-	grep "^trunk:refs/remotes/trunk$" fetch.out &&
-	grep "^branches/a:refs/remotes/a$" fetch.out &&
-	grep "^branches/b:refs/remotes/b$" fetch.out &&
-	grep "^tags/0\.1:refs/remotes/tags/0\.1$" fetch.out &&
-	grep "^tags/0\.2:refs/remotes/tags/0\.2$" fetch.out &&
-	grep "^tags/0\.3:refs/remotes/tags/0\.3$" fetch.out &&
+	grep "^trunk:refs/remotes/origin/trunk$" fetch.out &&
+	grep "^branches/a:refs/remotes/origin/a$" fetch.out &&
+	grep "^branches/b:refs/remotes/origin/b$" fetch.out &&
+	grep "^tags/0\.1:refs/remotes/origin/tags/0\.1$" fetch.out &&
+	grep "^tags/0\.2:refs/remotes/origin/tags/0\.2$" fetch.out &&
+	grep "^tags/0\.3:refs/remotes/origin/tags/0\.3$" fetch.out &&
 	grep "^:refs/${remotes_git_svn}" fetch.out
 	'
 
 test_expect_success  ".rev_db auto-converted to .rev_map.UUID" '
 	git svn fetch -i trunk &&
-	test -z "$(ls "$GIT_DIR"/svn/refs/remotes/trunk/.rev_db.* 2>/dev/null)" &&
-	expect="$(ls "$GIT_DIR"/svn/refs/remotes/trunk/.rev_map.*)" &&
+	test -z "$(ls "$GIT_DIR"/svn/refs/remotes/origin/trunk/.rev_db.* 2>/dev/null)" &&
+	expect="$(ls "$GIT_DIR"/svn/refs/remotes/origin/trunk/.rev_map.*)" &&
 	test -n "$expect" &&
 	rev_db="$(echo $expect | sed -e "s,_map,_db,")" &&
 	convert_to_rev_db "$expect" "$rev_db" &&
 	rm -f "$expect" &&
 	test -f "$rev_db" &&
 	git svn fetch -i trunk &&
-	test -z "$(ls "$GIT_DIR"/svn/refs/remotes/trunk/.rev_db.* 2>/dev/null)" &&
-	test ! -e "$GIT_DIR"/svn/refs/remotes/trunk/.rev_db &&
+	test -z "$(ls "$GIT_DIR"/svn/refs/remotes/origin/trunk/.rev_db.* 2>/dev/null)" &&
+	test ! -e "$GIT_DIR"/svn/refs/remotes/origin/trunk/.rev_db &&
 	test -f "$expect"
 	'
 

@@ -86,13 +86,11 @@ COMMANDS
 	(refs/remotes/$remote/*). Setting a prefix is also useful
 	if you wish to track multiple projects that share a common
 	repository.
+	By default, the prefix is set to 'origin/'.
 +
-NOTE: In Git v2.0, the default prefix will CHANGE from "" (no prefix)
-to "origin/". This is done to put SVN-tracking refs at
-"refs/remotes/origin/*" instead of "refs/remotes/*", and make them
-more compatible with how Git's own remote-tracking refs are organized
-(i.e. refs/remotes/$remote/*). You can enjoy the same benefits today,
-by using the --prefix option.
+NOTE: Before Git v2.0, the default prefix was "" (no prefix). This
+meant that SVN-tracking refs were put at "refs/remotes/*", which is
+incompatible with how Git's own remote-tracking refs are organized.
 
 --ignore-paths=<regex>;;
 	When passed to 'init' or 'clone' this regular expression will
@@ -993,16 +991,6 @@ required, it is easiest to only clone one directory (typically trunk),
 without giving any repository layout options.  If the full history with
 branches and tags is required, the options '--trunk' / '--branches' /
 '--tags' must be used.
-
-When using the options for describing the repository layout (--trunk,
---tags, --branches, --stdlayout), please also specify the --prefix
-option (e.g. '--prefix=origin/') to cause your SVN-tracking refs to be
-placed at refs/remotes/origin/* rather than the default refs/remotes/*.
-The former is more compatible with the layout of Git's "regular"
-remote-tracking refs (refs/remotes/$remote/*), and may potentially
-prevent similarly named SVN branches and Git remotes from clobbering
-each other. In Git v2.0 the default prefix used (i.e. when no --prefix
-is given) will change from "" (no prefix) to "origin/".
 
 When using multiple --branches or --tags, 'git svn' does not automatically
 handle name collisions (for example, if two branches from different paths have

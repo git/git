@@ -18,8 +18,8 @@ test_expect_success 'load svn dump' "
 
 test_expect_success 'propagate merge information' '
 	git config svn.pushmergeinfo yes &&
-	git checkout svnb1 &&
-	git merge --no-ff svnb2 &&
+	git checkout origin/svnb1 &&
+	git merge --no-ff origin/svnb2 &&
 	git svn dcommit
 	'
 
@@ -29,7 +29,7 @@ test_expect_success 'check svn:mergeinfo' '
 	'
 
 test_expect_success 'merge another branch' '
-	git merge --no-ff svnb3 &&
+	git merge --no-ff origin/svnb3 &&
 	git svn dcommit
 	'
 
@@ -40,7 +40,7 @@ test_expect_success 'check primary parent mergeinfo respected' '
 	'
 
 test_expect_success 'merge existing merge' '
-	git merge --no-ff svnb4 &&
+	git merge --no-ff origin/svnb4 &&
 	git svn dcommit
 	'
 
@@ -53,7 +53,7 @@ test_expect_success "check both parents' mergeinfo respected" '
 	'
 
 test_expect_success 'make further commits to branch' '
-	git checkout svnb2 &&
+	git checkout origin/svnb2 &&
 	touch newb2file &&
 	git add newb2file &&
 	git commit -m "later b2 commit" &&
@@ -64,8 +64,8 @@ test_expect_success 'make further commits to branch' '
 	'
 
 test_expect_success 'second forward merge' '
-	git checkout svnb1 &&
-	git merge --no-ff svnb2 &&
+	git checkout origin/svnb1 &&
+	git merge --no-ff origin/svnb2 &&
 	git svn dcommit
 	'
 
@@ -78,8 +78,8 @@ test_expect_success 'check new mergeinfo added' '
 	'
 
 test_expect_success 'reintegration merge' '
-	git checkout svnb4 &&
-	git merge --no-ff svnb1 &&
+	git checkout origin/svnb4 &&
+	git merge --no-ff origin/svnb1 &&
 	git svn dcommit
 	'
 
@@ -92,11 +92,11 @@ test_expect_success 'check reintegration mergeinfo' '
 	'
 
 test_expect_success 'dcommit a merge at the top of a stack' '
-	git checkout svnb1 &&
+	git checkout origin/svnb1 &&
 	touch anotherfile &&
 	git add anotherfile &&
 	git commit -m "a commit" &&
-	git merge svnb4 &&
+	git merge origin/svnb4 &&
 	git svn dcommit
 	'
 
