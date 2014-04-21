@@ -222,7 +222,7 @@ else
 
 	# Match the index to the working tree, and do a three-way.
 	git diff-files --name-only | git update-index --remove --stdin &&
-	work=`git write-tree` &&
+	work=$(git write-tree) &&
 	git read-tree $v --reset -u $new || exit
 
 	eval GITHEAD_$new='${new_name:-${branch:-$new}}' &&
@@ -233,7 +233,7 @@ else
 	# Do not register the cleanly merged paths in the index yet.
 	# this is not a real merge before committing, but just carrying
 	# the working tree changes along.
-	unmerged=`git ls-files -u`
+	unmerged=$(git ls-files -u)
 	git read-tree $v --reset $new
 	case "$unmerged" in
 	'')	;;
@@ -269,7 +269,7 @@ if [ "$?" -eq 0 ]; then
 	fi
 	if test -n "$branch"
 	then
-		old_branch_name=`expr "z$oldbranch" : 'zrefs/heads/\(.*\)'`
+		old_branch_name=$(expr "z$oldbranch" : 'zrefs/heads/\(.*\)')
 		GIT_DIR="$GIT_DIR" git symbolic-ref -m "checkout: moving from ${old_branch_name:-$old} to $branch" HEAD "refs/heads/$branch"
 		if test -n "$quiet"
 		then
@@ -282,7 +282,7 @@ if [ "$?" -eq 0 ]; then
 		fi
 	elif test -n "$detached"
 	then
-		old_branch_name=`expr "z$oldbranch" : 'zrefs/heads/\(.*\)'`
+		old_branch_name=$(expr "z$oldbranch" : 'zrefs/heads/\(.*\)')
 		git update-ref --no-deref -m "checkout: moving from ${old_branch_name:-$old} to $arg" HEAD "$detached" ||
 			die "Cannot detach HEAD"
 		if test -n "$detach_warn"

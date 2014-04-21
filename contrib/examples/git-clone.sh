@@ -40,7 +40,7 @@ eval "$(echo "$OPTIONS_SPEC" | git rev-parse --parseopt -- "$@" || echo exit $?)
 
 get_repo_base() {
 	(
-		cd "`/bin/pwd`" &&
+		cd "$(/bin/pwd)" &&
 		cd "$1" || cd "$1.git" &&
 		{
 			cd .git
@@ -50,7 +50,7 @@ get_repo_base() {
 }
 
 if [ -n "$GIT_SSL_NO_VERIFY" -o \
-	"`git config --bool http.sslVerify`" = false ]; then
+	"$(git config --bool http.sslVerify)" = false ]; then
     curl_extra_args="-k"
 fi
 
@@ -70,7 +70,7 @@ clone_dumb_http () {
 	clone_tmp="$GIT_DIR/clone-tmp" &&
 	mkdir -p "$clone_tmp" || exit 1
 	if [ -n "$GIT_CURL_FTP_NO_EPSV" -o \
-		"`git config --bool http.noEPSV`" = true ]; then
+		"$(git config --bool http.noEPSV)" = true ]; then
 		curl_extra_args="${curl_extra_args} --disable-epsv"
 	fi
 	http_fetch "$1/info/refs" "$clone_tmp/refs" ||
@@ -79,7 +79,7 @@ Perhaps git-update-server-info needs to be run there?"
 	test "z$quiet" = z && v=-v || v=
 	while read sha1 refname
 	do
-		name=`expr "z$refname" : 'zrefs/\(.*\)'` &&
+		name=$(expr "z$refname" : 'zrefs/\(.*\)') &&
 		case "$name" in
 		*^*)	continue;;
 		esac
@@ -88,7 +88,7 @@ Perhaps git-update-server-info needs to be run there?"
 		*)	continue ;;
 		esac
 		if test -n "$use_separate_remote" &&
-		   branch_name=`expr "z$name" : 'zheads/\(.*\)'`
+		   branch_name=$(expr "z$name" : 'zheads/\(.*\)')
 		then
 			tname="remotes/$origin/$branch_name"
 		else
@@ -100,7 +100,7 @@ Perhaps git-update-server-info needs to be run there?"
 	http_fetch "$1/HEAD" "$GIT_DIR/REMOTE_HEAD" ||
 	rm -f "$GIT_DIR/REMOTE_HEAD"
 	if test -f "$GIT_DIR/REMOTE_HEAD"; then
-		head_sha1=`cat "$GIT_DIR/REMOTE_HEAD"`
+		head_sha1=$(cat "$GIT_DIR/REMOTE_HEAD")
 		case "$head_sha1" in
 		'ref: refs/'*)
 			;;
@@ -444,15 +444,15 @@ then
 	# a non-bare repository is always in separate-remote layout
 	remote_top="refs/remotes/$origin"
 	head_sha1=
-	test ! -r "$GIT_DIR/REMOTE_HEAD" || head_sha1=`cat "$GIT_DIR/REMOTE_HEAD"`
+	test ! -r "$GIT_DIR/REMOTE_HEAD" || head_sha1=$(cat "$GIT_DIR/REMOTE_HEAD")
 	case "$head_sha1" in
 	'ref: refs/'*)
 		# Uh-oh, the remote told us (http transport done against
 		# new style repository with a symref HEAD).
 		# Ideally we should skip the guesswork but for now
 		# opt for minimum change.
-		head_sha1=`expr "z$head_sha1" : 'zref: refs/heads/\(.*\)'`
-		head_sha1=`cat "$GIT_DIR/$remote_top/$head_sha1"`
+		head_sha1=$(expr "z$head_sha1" : 'zref: refs/heads/\(.*\)')
+		head_sha1=$(cat "$GIT_DIR/$remote_top/$head_sha1")
 		;;
 	esac
 
@@ -467,7 +467,7 @@ then
 		while read name
 		do
 			test t = $done && continue
-			branch_tip=`cat "$GIT_DIR/$remote_top/$name"`
+			branch_tip=$(cat "$GIT_DIR/$remote_top/$name")
 			if test "$head_sha1" = "$branch_tip"
 			then
 				echo "$name"

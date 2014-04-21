@@ -18,17 +18,17 @@ do
 	else
 		echo >&2 "# install $h $T/$h"
 		rm -f "$T/$h"
-		mkdir -p `dirname "$T/$h"`
+		mkdir -p $(dirname "$T/$h")
 		cp "$h" "$T/$h"
 	fi
 done
-strip_leading=`echo "$T/" | sed -e 's|.|.|g'`
+strip_leading=$(echo "$T/" | sed -e 's|.|.|g')
 for th in \
 	"$T"/*.html "$T"/*.txt \
 	"$T"/howto/*.txt "$T"/howto/*.html \
 	"$T"/technical/*.txt "$T"/technical/*.html
 do
-	h=`expr "$th" : "$strip_leading"'\(.*\)'`
+	h=$(expr "$th" : "$strip_leading"'\(.*\)')
 	case "$h" in
 	RelNotes-*.txt | index.html) continue ;;
 	esac

@@ -191,10 +191,10 @@ test_expect_success 'Git clone works with the shallow option' '
 	test_path_is_file mw_dir_11/Main_Page.mw &&
 	(
 		cd mw_dir_11 &&
-		test `git log --oneline Nyan.mw | wc -l` -eq 1 &&
-		test `git log --oneline Foo.mw | wc -l` -eq 1 &&
-		test `git log --oneline Bar.mw | wc -l` -eq 1 &&
-		test `git log --oneline Main_Page.mw | wc -l ` -eq 1
+		test $(git log --oneline Nyan.mw | wc -l) -eq 1 &&
+		test $(git log --oneline Foo.mw | wc -l) -eq 1 &&
+		test $(git log --oneline Bar.mw | wc -l) -eq 1 &&
+		test $(git log --oneline Main_Page.mw | wc -l ) -eq 1
 	) &&
 	wiki_check_content mw_dir_11/Nyan.mw Nyan &&
 	wiki_check_content mw_dir_11/Foo.mw Foo &&
@@ -218,9 +218,9 @@ test_expect_success 'Git clone works with the shallow option with a delete page'
 	test_path_is_file mw_dir_12/Main_Page.mw &&
 	(
 		cd mw_dir_12 &&
-		test `git log --oneline Nyan.mw | wc -l` -eq 1 &&
-		test `git log --oneline Bar.mw | wc -l` -eq 1 &&
-		test `git log --oneline Main_Page.mw | wc -l ` -eq 1
+		test $(git log --oneline Nyan.mw | wc -l) -eq 1 &&
+		test $(git log --oneline Bar.mw | wc -l) -eq 1 &&
+		test $(git log --oneline Main_Page.mw | wc -l ) -eq 1
 	) &&
 	wiki_check_content mw_dir_12/Nyan.mw Nyan &&
 	wiki_check_content mw_dir_12/Bar.mw Bar &&
