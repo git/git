@@ -412,11 +412,9 @@ int init_db(const char *template_dir, unsigned int flags)
 	if (!(flags & INIT_DB_QUIET)) {
 		int len = strlen(git_dir);
 
-		/*
-		 * TRANSLATORS: The first '%s' is either "Reinitialized
-		 * existing" or "Initialized empty", the second " shared" or
-		 * "", and the last '%s%s' is the verbatim directory name.
-		 */
+		/* TRANSLATORS: The first '%s' is either "Reinitialized
+		   existing" or "Initialized empty", the second " shared" or
+		   "", and the last '%s%s' is the verbatim directory name. */
 		printf(_("%s%s Git repository in %s%s\n"),
 		       reinit ? _("Reinitialized existing") : _("Initialized empty"),
 		       shared_repository ? _(" shared") : "",

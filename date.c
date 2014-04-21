@@ -144,8 +144,8 @@ void show_date_relative(unsigned long time, int tz,
 		if (months) {
 			struct strbuf sb = STRBUF_INIT;
 			strbuf_addf(&sb, Q_("%lu year", "%lu years", years), years);
-			/* TRANSLATORS: "%s" is "<n> years" */
 			strbuf_addf(timebuf,
+				 /* TRANSLATORS: "%s" is "<n> years" */
 				 Q_("%s, %lu month ago", "%s, %lu months ago", months),
 				 sb.buf, months);
 			strbuf_release(&sb);
