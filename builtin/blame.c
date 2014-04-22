@@ -2338,7 +2338,14 @@ parse_done:
 		blame_date_width = sizeof("2006-10-19");
 		break;
 	case DATE_RELATIVE:
-		/* "normal" is used as the fallback for "relative" */
+		/* TRANSLATORS: This string is used to tell us the maximum
+		   display width for a relative timestamp in "git blame"
+		   output.  For C locale, "4 years, 11 months ago", which
+		   takes 22 places, is the longest among various forms of
+		   relative timestamps, but your language may need more or
+		   fewer display columns. */
+		blame_date_width = utf8_strwidth(_("4 years, 11 months ago")) + 1; /* add the null */
+		break;
 	case DATE_LOCAL:
 	case DATE_NORMAL:
 		blame_date_width = sizeof("Thu Oct 19 16:00:04 2006 -0700");
