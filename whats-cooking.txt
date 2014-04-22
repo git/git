@@ -1,27 +1,21 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Apr 2014, #06; Fri, 18)
-X-master-at: cc291953df19aa4a97bee3590e708dc1fc557500
-X-next-at: 0bd75c508e7c03265459d39a0fa838a04b338cc4
+Subject: What's cooking in git.git (Apr 2014, #07; Tue, 22)
+X-master-at: 779792a5f24bb4e8049c4f88ad752e70d4a8a080
+X-next-at: 4f984835015ed69c2885f183cdc0198f90d08135
 
-What's cooking in git.git (Apr 2014, #06; Fri, 18)
+What's cooking in git.git (Apr 2014, #07; Tue, 22)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-The tip of the 'master' branch is at v2.0.0-rc0, an early preview
-release.  There are a handful of topics still in 'next' (and a few
-that are not in 'next') that I'd like to have in v2.0.0-rc1, but
-other than that, this hopefully is fairly a close approximation of
-the upcoming release.
-
-Also I am still waiting for acks for a few topics before merging
-them to 'next'.  I would feel it would be good if we can merge them
-early to 'next' for wider and longer exposure and some of them may
-even deserve to be in -rc1, but as none of them is a regression fix,
-it is also OK to wait until 2.0 final.
+The tip of the 'master' branch has passed v2.0.0-rc0, an early
+preview release.  There are a handful of topics still in 'next' (and
+a few that are not in 'next') that I'd like to have in v2.0.0-rc1,
+but other than that, this hopefully is fairly a close approximation
+of the upcoming release.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -29,52 +23,186 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
+[New Topics]
+
+* fc/remote-helpers-hg-bzr-graduation (2014-04-21) 3 commits
+ - remote-helpers: move tests out of contrib
+ - remote-helpers: move out of contrib
+ - remote-helpers: squelch python import exceptions
+
+ Move remote-hg and remote-bzr out of contrib/.
+
+ Will merge to 'next' and keep it there for the remainder of the cycle.
+
+
+* rs/ref-transaction (2014-04-22) 14 commits
+ . SQUASH???
+ . refs.c: change update_ref to use a transaction
+ . walker.c: use ref transaction for ref updates
+ . branch.c: use ref transaction for all ref updates
+ . fast-import.c: change update_branch to use ref transactions
+ . sequencer.c: use ref transactions for all ref updates
+ . commit.c: use ref transactions for updates
+ . replace.c: use the ref transaction functions for updates
+ . tag.c: use ref transactions when doing updates
+ . refs.c: ref_transaction_delete to check for error and return status
+ . refs.c: change ref_transaction_create to do error checking and return status
+ . refs.c: change ref_transaction_update() to do error checking and return status
+ . refs.c: use a single exit path from transaction commit and handle onerr
+ . refs.c: constify the sha arguments for ref_transaction_create|delete|update
+ (this branch uses mh/ref-transaction.)
+
+ Updates most of the callsites to write_sha1_ref(), the low-level
+ mechanism to update a ref, to use the ref-transaction API.
+
+ Seems to break the dumb walker test (t5550) when merged to 'pu',
+ possibly due to misconversion of walker.c.  Kept out of 'pu' as I
+ didn't want to resolve conflicts with the other topics only to get
+ a known-broken version.
+
+
+* fc/remote-helper-refmap (2014-04-21) 8 commits
+ - transport-helper: remove unnecessary strbuf resets
+ - transport-helper: add support to delete branches
+ - fast-export: add support to delete refs
+ - fast-import: add support to delete refs
+ - transport-helper: add support to push symbolic refs
+ - transport-helper: add support for old:new refspec
+ - fast-export: add new --refspec option
+ - fast-export: improve argument parsing
+
+ Allow remote-helper/fast-import based transport to rename the refs
+ while transferring the history.
+
+ Will merge to 'next' and keep it there for the remainder of the cycle.
+
+
+* jk/external-diff-use-argv-array (2014-04-21) 6 commits
+ - run_external_diff: refactor cmdline setup logic
+ - run_external_diff: hoist common bits out of conditional
+ - run_external_diff: drop fflush(NULL)
+ - run_external_diff: clean up error handling
+ - run_external_diff: use an argv_array for the environment
+ - run_external_diff: use an argv_array for the command line
+
+ Code clean-up.
+
+ Will keep in 'next' for the remainder of the cycle.
+
+
+* jx/blame-align-relative-time (2014-04-22) 2 commits
+ - blame: dynamic blame_date_width for different locales
+ - blame:: fix broken time_buf paddings in relative timestamp
+
+ "git blame" miscounted number of columns needed to show localized
+ timestamps, resulting in jaggy left-side-edge of the source code
+ lines in its output.
+
+ Will merge to 'next' and keep it there for the remainder of the cycle.
+
+
+* fc/merge-default-to-upstream (2014-04-22) 1 commit
+  (merged to 'next' on 2014-04-22 at 4f98483)
+ + merge: enable defaulttoupstream by default
+
+ "git merge" without argument, even when there is an upstream
+ defined for the current branch, refused to run until
+ merge.defaultToUpstream is set to true. Flip the default of that
+ configuration variable to true.
+
+ Will keep in 'next' for the remainder of the cycle.
+
+
+* fc/mergetool-prompt (2014-04-22) 1 commit
+  (merged to 'next' on 2014-04-22 at dcaec94)
+ + mergetool: run prompt only if guessed tool
+
+ mergetool.prompt used to default to 'true', always causing a confirmation
+ "do you really want to run the tool on this path" to be shown.
+
+ Among the two purposes the prompt serves, ignore the use case to
+ confirm that the user wants to view particular path with the named
+ tool, and make the prompt only to confirm the choice of the tool
+ made by autodetection and defaulting.  For those who configured the
+ tool explicitly, the prompt shown for the latter purpose is simply
+ annoying.
+ 
+ Strictly speaking, this is a backward incompatible change and the
+ users need to explicitly set the variable to 'true' if they want to
+ resurrect the now-ignored use case.
+
+ Will keep in 'next' for the remainder of the cycle.
+
+
+* fc/mergetools-vimdiff3 (2014-04-22) 1 commit
+  (merged to 'next' on 2014-04-22 at d843e75)
+ + mergetools: add vimdiff3 mode
+
+ Will keep in 'next' for the remainder of the cycle.
+
+
+* km/git-svn-workaround-older-getopt-long (2014-04-22) 1 commit
+ - t9117: use --prefix "" instead of --prefix=""
+
+ Will merge to 'next' and hopefully merge to 'master' by -rc2 if not earlier.
+
+
+* lr/git-run-setup-gently (2014-04-22) 1 commit
+ - git.c: treat RUN_SETUP_GENTLY and RUN_SETUP as mutually exclusive
+
+ Will keep in 'next' for the remainder of the cycle.
+
+
+* mk/doc-git-gui-display-untracked (2014-04-21) 1 commit
+ - Documentation: git-gui: describe gui.displayuntracked
+
+ Will merge to 'next' and hopefully merge to 'master' by -rc2 if not earlier.
+
+
+* rh/prompt-pcmode-avoid-eval-on-refname (2014-04-22) 1 commit
+ - git-prompt.sh: don't put unsanitized branch names in $PS1
+
+ Will merge to 'next' and hopefully merge to 'master' by -rc2 if not earlier.
+
+--------------------------------------------------
 [Graduated to "master"]
 
-* fc/complete-aliased-push (2014-04-09) 1 commit
-  (merged to 'next' on 2014-04-16 at ab798d1)
- + completion: fix completing args of aliased "push", "fetch", etc.
+* ep/shell-command-substitution (2014-04-17) 14 commits
+  (merged to 'next' on 2014-04-18 at ebd996d)
+ + t9362-mw-to-git-utf8.sh: use the $( ... ) construct for command substitution
+ + t9360-mw-to-git-clone.sh: use the $( ... ) construct for command substitution
+ + git-tag.sh: use the $( ... ) construct for command substitution
+ + git-revert.sh: use the $( ... ) construct for command substitution
+ + git-resolve.sh: use the $( ... ) construct for command substitution
+ + git-repack.sh: use the $( ... ) construct for command substitution
+ + git-merge.sh: use the $( ... ) construct for command substitution
+ + git-ls-remote.sh: use the $( ... ) construct for command substitution
+ + git-fetch.sh: use the $( ... ) construct for command substitution
+ + git-commit.sh: use the $( ... ) construct for command substitution
+ + git-clone.sh: use the $( ... ) construct for command substitution
+ + git-checkout.sh: use the $( ... ) construct for command substitution
+ + install-webdoc.sh: use the $( ... ) construct for command substitution
+ + howto-index.sh: use the $( ... ) construct for command substitution
 
 
-* fc/prompt-zsh-read-from-file (2014-04-14) 1 commit
-  (merged to 'next' on 2014-04-16 at 0e5fec0)
- + prompt: fix missing file errors in zsh
+* jx/i18n (2014-04-18) 4 commits
+  (merged to 'next' on 2014-04-18 at 2ace126)
+ + i18n: mention "TRANSLATORS:" marker in Documentation/CodingGuidelines
+ + i18n: only extract comments marked with "TRANSLATORS:"
+ + i18n: remove obsolete comments for translators in diffstat generation
+ + i18n: fix uncatchable comments for translators in date.c
 
 
-* fc/remote-helper-fixes (2014-04-14) 5 commits
-  (merged to 'next' on 2014-04-16 at 180482e)
- + remote-bzr: trivial test fix
- + remote-bzr: include authors field in pushed commits
- + remote-bzr: add support for older versions
- + remote-hg: always normalize paths
- + remote-helpers: allow all tests running from any dir
+* km/avoid-non-function-return-in-rebase (2014-04-17) 2 commits
+  (merged to 'next' on 2014-04-18 at 6982c3e)
+ + Revert "rebase: fix run_specific_rebase's use of "return" on FreeBSD"
+ + rebase: avoid non-function use of "return" on FreeBSD
 
-
-* jk/config-die-bad-number-noreturn (2014-04-16) 1 commit
-  (merged to 'next' on 2014-04-16 at 4d49036)
- + config.c: mark die_bad_number as NORETURN
-
- Squelch a false compiler warning from older gcc.
+ Work around /bin/sh that does not like "return" at the top-level
+ of a file that is dot-sourced from inside a function definition.
 
 --------------------------------------------------
 [Stalled]
-
-* fc/publish-vs-upstream (2014-04-11) 8 commits
- - sha1_name: add support for @{publish} marks
- - sha1_name: simplify track finding
- - sha1_name: cleanup interpret_branch_name()
- - branch: display publish branch
- - push: add --set-publish option
- - branch: add --set-publish-to option
- - Add concept of 'publish' branch
- - t5516 (fetch-push): fix test restoration
-
- Add branch@{publish}; it seems that this is somewhat different from
- Ram and Peff started working on.  There are still many discussion
- messages going back and forth but not updates to the patches.
-
- Seems to have some interactions to break t5516 when merged to 'pu'.
-
 
 * tr/merge-recursive-index-only (2014-02-05) 3 commits
  - merge-recursive: -Xindex-only to leave worktree unchanged
@@ -243,6 +371,22 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* fc/publish-vs-upstream (2014-04-21) 8 commits
+ - sha1_name: add support for @{publish} marks
+ - sha1_name: simplify track finding
+ - sha1_name: cleanup interpret_branch_name()
+ - branch: display publish branch
+ - push: add --set-publish option
+ - branch: add --set-publish-to option
+ - Add concept of 'publish' branch
+ - t5516 (fetch-push): fix test restoration
+
+ Add branch@{publish}; it seems that this is somewhat different from
+ Ram and Peff started working on.  There were many discussion
+ messages going back and forth but it does not appear that the
+ design issues have been worked out among participants yet.
+
+
 * jl/git-gui-show-added-submodule-changes (2014-04-15) 1 commit
  - git-gui: show staged submodules regardless of ignore config
 
@@ -268,81 +412,43 @@ of the repositories listed at
 
 
 * ef/send-email-absolute-path-to-the-command (2014-04-16) 1 commit
- - send-email: recognize absolute path on Windows
+  (merged to 'next' on 2014-04-21 at 43bebb5)
+ + send-email: recognize absolute path on Windows
 
- Will merge to 'next'.
-
-
-* ep/shell-command-substitution (2014-04-17) 14 commits
-  (merged to 'next' on 2014-04-18 at ebd996d)
- + t9362-mw-to-git-utf8.sh: use the $( ... ) construct for command substitution
- + t9360-mw-to-git-clone.sh: use the $( ... ) construct for command substitution
- + git-tag.sh: use the $( ... ) construct for command substitution
- + git-revert.sh: use the $( ... ) construct for command substitution
- + git-resolve.sh: use the $( ... ) construct for command substitution
- + git-repack.sh: use the $( ... ) construct for command substitution
- + git-merge.sh: use the $( ... ) construct for command substitution
- + git-ls-remote.sh: use the $( ... ) construct for command substitution
- + git-fetch.sh: use the $( ... ) construct for command substitution
- + git-commit.sh: use the $( ... ) construct for command substitution
- + git-clone.sh: use the $( ... ) construct for command substitution
- + git-checkout.sh: use the $( ... ) construct for command substitution
- + install-webdoc.sh: use the $( ... ) construct for command substitution
- + howto-index.sh: use the $( ... ) construct for command substitution
-
- Will merge to 'master' by -rc1 if no regressions are reported.
+ Will keep in 'next' for the remainder of the cycle.
 
 
 * jh/submodule-tests (2014-04-17) 1 commit
  - t7410: 210 tests for various 'git submodule update' scenarios
 
 
-* jx/i18n (2014-04-18) 4 commits
-  (merged to 'next' on 2014-04-18 at 2ace126)
- + i18n: mention "TRANSLATORS:" marker in Documentation/CodingGuidelines
- + i18n: only extract comments marked with "TRANSLATORS:"
- + i18n: remove obsolete comments for translators in diffstat generation
- + i18n: fix uncatchable comments for translators in date.c
-
- Will merge to 'master' by -rc1 if no regressions are reported.
-
-
 * rs/ref-update-check-errors-early (2014-04-17) 2 commits
- - commit.c: check for lock error and return early
- - sequencer.c: check for lock failure and bail early in fast_forward_to
+  (merged to 'next' on 2014-04-21 at acc62aa)
+ + commit.c: check for lock error and return early
+ + sequencer.c: check for lock failure and bail early in fast_forward_to
 
- Will merge to 'next' and keep it there for the remainder of the cycle.
+ Will keep in 'next' for the remainder of the cycle.
 
 
 * sk/svn-parse-datestamp (2014-04-17) 1 commit
- - SVN.pm::parse_svn_date: allow timestamps with a single-digit hour
+  (merged to 'next' on 2014-04-21 at 5ff519f)
+ + SVN.pm::parse_svn_date: allow timestamps with a single-digit hour
 
- Will merge to 'next' and keep it there for the remainder of the cycle.
+ Will keep in 'next' for the remainder of the cycle.
 
 
-* fc/transport-helper-sync-error-fix (2014-04-14) 5 commits
- - transport-helper: fix sync issue on crashes
- - transport-helper: trivial cleanup
- - transport-helper: propagate recvline() error pushing
- - remote-helpers: make recvline return an error
- - transport-helper: remove barely used xchgline()
+* fc/transport-helper-sync-error-fix (2014-04-21) 6 commits
+  (merged to 'next' on 2014-04-21 at f53a08a)
+ + t5801 (remote-helpers): cleanup environment sets
+ + transport-helper: fix sync issue on crashes
+ + transport-helper: trivial cleanup
+ + transport-helper: propagate recvline() error pushing
+ + remote-helpers: make recvline return an error
+ + transport-helper: remove barely used xchgline()
 
  Make sure the marks are not written out when the transport helper
  did not finish happily, to avoid marks file that is out of sync
  with the reality.
-
- As I had to resolve some conflicts with the recent code, will wait
- until getting an OK from Felipe on the conflict resolution and then
- hopefully can be merged to 'next' and then later to 'master'.
-
-
-* km/avoid-non-function-return-in-rebase (2014-04-17) 2 commits
-  (merged to 'next' on 2014-04-18 at 6982c3e)
- + Revert "rebase: fix run_specific_rebase's use of "return" on FreeBSD"
- + rebase: avoid non-function use of "return" on FreeBSD
-
- Work around /bin/sh that does not like "return" at the top-level
- of a file that is dot-sourced from inside a function definition.
 
  Will merge to 'master' by -rc1 if no regressions are reported.
 
@@ -480,6 +586,7 @@ of the repositories listed at
  + parse_arg(): really test that argument is properly terminated
  + t1400: provide more usual input to the command
  + t1400: fix name and expected result of one test
+ (this branch is used by rs/ref-transaction.)
 
  Update "update-ref --stdin [-z]" and then introduce a transactional
  support for (multi-)reference updates.
