@@ -1380,11 +1380,12 @@ test_expect_success 'multiple --points-at are OR-ed together' '
 	test_cmp expect actual
 '
 
-test_lazy_prereq BASH 'bash --version'
+ulimit_stack="ulimit -s 64"
+test_lazy_prereq ULIMIT 'bash -c "'"$ulimit_stack"'"'
 
 >expect
 # we require bash for its 'ulimit' builtin
-test_expect_success BASH '--contains works in a deep repo' '
+test_expect_success ULIMIT '--contains works in a deep repo' '
 	i=1 &&
 	while test $i -lt 1000
 	do
@@ -1398,7 +1399,7 @@ EOF"
 	done | git fast-import &&
 	git checkout master &&
 	git tag far-far-away HEAD^ &&
-	bash -c "ulimit -s 64 && git tag --contains HEAD >actual" &&
+	bash -c "'"$ulimit_stack"' && git tag --contains HEAD >actual" &&
 	test_cmp expect actual
 '
 
