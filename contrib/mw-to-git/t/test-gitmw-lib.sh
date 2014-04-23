@@ -90,7 +90,7 @@ test_diff_directories () {
 #
 # Check that <dir> contains exactly <N> files
 test_contains_N_files () {
-	if test `ls -- "$1" | wc -l` -ne "$2"; then
+	if test $(ls -- "$1" | wc -l) -ne "$2"; then
 		echo "directory $1 should contain $2 files"
 		echo "it contains these files:"
 		ls "$1"
@@ -341,10 +341,10 @@ wiki_install () {
 			"http://download.wikimedia.org/mediawiki/$MW_VERSION_MAJOR/"\
 			"$MW_FILENAME. "\
 			"Please fix your connection and launch the script again."
-		echo "$MW_FILENAME downloaded in `pwd`. "\
+		echo "$MW_FILENAME downloaded in $(pwd). "\
 			"You can delete it later if you want."
 	else
-		echo "Reusing existing $MW_FILENAME downloaded in `pwd`."
+		echo "Reusing existing $MW_FILENAME downloaded in $(pwd)."
 	fi
 	archive_abs_path=$(pwd)/$MW_FILENAME
 	cd "$WIKI_DIR_INST/$WIKI_DIR_NAME/" ||
