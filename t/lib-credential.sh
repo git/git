@@ -281,7 +281,7 @@ helper_test_timeout() {
 cat >askpass <<\EOF
 #!/bin/sh
 echo >&2 askpass: $*
-what=`echo $1 | cut -d" " -f1 | tr A-Z a-z | tr -cd a-z`
+what=$(echo $1 | cut -d" " -f1 | tr A-Z a-z | tr -cd a-z)
 echo "askpass-$what"
 EOF
 chmod +x askpass
