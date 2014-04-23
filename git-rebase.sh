@@ -462,8 +462,8 @@ then
 else
 	if test -z "$onto"
 	then
-		empty_tree=`git hash-object -t tree /dev/null`
-		onto=`git commit-tree $empty_tree </dev/null`
+		empty_tree=$(git hash-object -t tree /dev/null)
+		onto=$(git commit-tree $empty_tree </dev/null)
 		squash_onto="$onto"
 	fi
 	unset upstream_name
@@ -521,10 +521,10 @@ case "$#" in
 	;;
 0)
 	# Do not need to switch branches, we are already on it.
-	if branch_name=`git symbolic-ref -q HEAD`
+	if branch_name=$(git symbolic-ref -q HEAD)
 	then
 		head_name=$branch_name
-		branch_name=`expr "z$branch_name" : 'zrefs/heads/\(.*\)'`
+		branch_name=$(expr "z$branch_name" : 'zrefs/heads/\(.*\)')
 	else
 		head_name="detached HEAD"
 		branch_name=HEAD ;# detached
