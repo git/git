@@ -1,6 +1,6 @@
 #!/bin/sh
 
-gpg_version=`gpg --version 2>&1`
+gpg_version=$(gpg --version 2>&1)
 if test $? = 127; then
 	say "You do not seem to have gpg installed"
 else
