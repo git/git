@@ -1118,7 +1118,7 @@ sub file_name_is_absolute {
 
 	# msys does not grok DOS drive-prefixes
 	if ($^O eq 'msys') {
-		return ($path =~ m#^/# || $path =~ m#[a-zA-Z]\:#)
+		return ($path =~ m#^/# || $path =~ m#^[a-zA-Z]\:#)
 	}
 
 	require File::Spec::Functions;
