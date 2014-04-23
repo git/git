@@ -24,7 +24,7 @@ continue_merge () {
 		die "$resolvemsg"
 	fi
 
-	cmt=`cat "$state_dir/current"`
+	cmt=$(cat "$state_dir/current")
 	if ! git diff-index --quiet --ignore-submodules HEAD --
 	then
 		if ! git commit ${gpg_sign_opt:+"$gpg_sign_opt"} --no-verify -C "$cmt"
@@ -132,7 +132,7 @@ echo "$onto_name" > "$state_dir/onto_name"
 write_basic_state
 
 msgnum=0
-for cmt in `git rev-list --reverse --no-merges "$revisions"`
+for cmt in $(git rev-list --reverse --no-merges "$revisions")
 do
 	msgnum=$(($msgnum + 1))
 	echo "$cmt" > "$state_dir/cmt.$msgnum"
