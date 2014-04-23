@@ -20,6 +20,8 @@ usage () {
 	echo "		install | -i :	Install a wiki on your computer."
 	echo "		delete | -d : Delete the wiki and all its pages and "
 	echo "			content."
+	echo "		start  | -s : Start the previously configured lighttpd daemon"
+	echo "		stop        : Stop lighttpd daemon."
 }
 
 
@@ -32,6 +34,14 @@ case "$1" in
 	"delete" | "-d")
 		wiki_delete
 		exit 0
+		;;
+	"start" | "-s")
+		start_lighttpd
+		exit
+		;;
+	"stop")
+		stop_lighttpd
+		exit
 		;;
 	"--help" | "-h")
 		usage
