@@ -1423,4 +1423,30 @@ EOF
 	test_cmp expect actual
 '
 
+run_with_limited_stack () {
+	(ulimit -s 64 && "$@")
+}
+
+test_lazy_prereq ULIMIT 'run_with_limited_stack true'
+
+# we require ulimit, this excludes Windows
+test_expect_success ULIMIT '--contains works in a deep repo' '
+	>expect &&
+	i=1 &&
+	while test $i -lt 4000
+	do
+		echo "commit refs/heads/master
+committer A U Thor <author@example.com> $((1000000000 + $i * 100)) +0200
+data <<EOF
+commit #$i
+EOF"
+		test $i = 1 && echo "from refs/heads/master^0"
+		i=$(($i + 1))
+	done | git fast-import &&
+	git checkout master &&
+	git tag far-far-away HEAD^ &&
+	run_with_limited_stack git tag --contains HEAD >actual &&
+	test_cmp expect actual
+'
+
 test_done
