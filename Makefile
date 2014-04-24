@@ -34,8 +34,15 @@ all::
 # git-http-push are not built, and you cannot use http:// and https://
 # transports (neither smart nor dumb).
 #
+# Define CURL_CONFIG to the path to a curl-config binary other than the
+# default 'curl-config'.
+#
+# Define CURL_STATIC to statically link libcurl.  Only applies if
+# CURL_CONFIG is used.
+#
 # Define CURLDIR=/foo/bar if your curl header and library files are in
-# /foo/bar/include and /foo/bar/lib directories.
+# /foo/bar/include and /foo/bar/lib directories.  This overrides CURL_CONFIG,
+# but is less robust.
 #
 # Define NO_EXPAT if you do not have expat installed.  git-http-push is
 # not built, and you cannot push using http:// and https:// transports (dumb).
@@ -143,9 +150,11 @@ all::
 #
 # Define NEEDS_SSL_WITH_CRYPTO if you need -lssl when using -lcrypto (Darwin).
 #
-# Define NEEDS_SSL_WITH_CURL if you need -lssl with -lcurl (Minix).
+# Define NEEDS_SSL_WITH_CURL if you need -lssl with -lcurl (Minix).  Only used
+# if CURLDIR is set.
 #
-# Define NEEDS_IDN_WITH_CURL if you need -lidn when using -lcurl (Minix).
+# Define NEEDS_IDN_WITH_CURL if you need -lidn when using -lcurl (Minix).  Only
+# used if CURLDIR is set.
 #
 # Define NEEDS_LIBICONV if linking with libc is not enough (Darwin).
 #
@@ -1121,17 +1130,29 @@ else
 		# Try "-Wl,-rpath=$(CURLDIR)/$(lib)" in such a case.
 		BASIC_CFLAGS += -I$(CURLDIR)/include
 		CURL_LIBCURL = -L$(CURLDIR)/$(lib) $(CC_LD_DYNPATH)$(CURLDIR)/$(lib) -lcurl
-	else
-		CURL_LIBCURL = -lcurl
-	endif
-	ifdef NEEDS_SSL_WITH_CURL
-		CURL_LIBCURL += -lssl
-		ifdef NEEDS_CRYPTO_WITH_SSL
-			CURL_LIBCURL += -lcrypto
+		ifdef NEEDS_SSL_WITH_CURL
+			CURL_LIBCURL += -lssl
+			ifdef NEEDS_CRYPTO_WITH_SSL
+				CURL_LIBCURL += -lcrypto
+			endif
 		endif
-	endif
-	ifdef NEEDS_IDN_WITH_CURL
-		CURL_LIBCURL += -lidn
+		ifdef NEEDS_IDN_WITH_CURL
+			CURL_LIBCURL += -lidn
+		endif
+	else
+		CURL_CONFIG ?= curl-config
+		BASIC_CFLAGS += $(shell $(CURL_CONFIG) --cflags)
+		ifdef CURL_STATIC
+			CURL_LIBCURL = $(shell $(CURL_CONFIG) --static-libs)
+			ifeq "$(CURL_LIBCURL)" ""
+				$(error libcurl not detected or not compiled with static support)
+			endif
+		else
+			CURL_LIBCURL = $(shell $(CURL_CONFIG) --libs)
+			ifeq "$(CURL_LIBCURL)" ""
+				$(error libcurl not detected; try setting CURLDIR)
+			endif
+		endif
 	endif
 
 	REMOTE_CURL_PRIMARY = git-remote-http$X
