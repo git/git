@@ -29,7 +29,7 @@ static int abspath_part_inside_repo(char *path)
 		return -1;
 	wtlen = strlen(work_tree);
 	len = strlen(path);
-	off = 0;
+	off = offset_1st_component(path);
 
 	/* check if work tree is already the prefix */
 	if (wtlen <= len && !strncmp(path, work_tree, wtlen)) {
@@ -45,7 +45,7 @@ static int abspath_part_inside_repo(char *path)
 		off = wtlen;
 	}
 	path0 = path;
-	path += offset_1st_component(path) + off;
+	path += off;
 
 	/* check each '/'-terminated level */
 	while (*path) {
