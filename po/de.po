@@ -550,12 +550,12 @@ msgid ""
 "Continuing under the assumption that you meant '%s'"
 msgstr ""
 "Warnung: Sie haben das nicht existierende Git-Kommando '%s' ausgeführt.\n"
-"Setze fort unter der Annahme, dass Sie '%s' gemeint haben"
+"Setze fort unter der Annahme, dass Sie '%s' gemeint haben."
 
 #: help.c:373
 #, c-format
 msgid "in %0.1f seconds automatically..."
-msgstr "automatisch in %0.1f Sekunden..."
+msgstr "Automatische Ausführung in %0.1f Sekunden..."
 
 #: help.c:380
 #, c-format
