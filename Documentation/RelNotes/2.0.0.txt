@@ -179,6 +179,11 @@ Unless otherwise noted, all the fixes since v1.9 in the maintenance
 track are contained in this release (see the maintenance releases'
 notes for details).
 
+ * The remote-helepr interface to fast-import/fast-export via the
+   transport-helper has been tightened to avoid leaving the import
+   marks file from a failed/crashed run, as such a file that is out of
+   sync with the reality confuses a later invocation of itself.
+
  * "git rebase" used a POSIX shell construct FreeBSD /bin/sh does not
    work well with.
    (merge 8cd6596 km/avoid-non-function-return-in-rebase later to maint).
