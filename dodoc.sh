@@ -72,7 +72,7 @@ dd='
 if test -z "$DOC_FROM_SCRATCH"
 then
 	case "$NID" in
-	?*-?*) ;;
+	?*-g*) ;;
 	?*) DOC_FROM_SCRATCH=yes ;;
 	esac
 fi
