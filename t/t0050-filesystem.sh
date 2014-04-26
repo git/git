@@ -45,7 +45,7 @@ test_expect_success "detection of filesystem w/o symlink support during repo ini
 	test "$(git config --bool core.symlinks)" = true
 '
 else
-test_expect_success "detection of filesystem w/o symlink support during repo init" '
+test_expect_failure "detection of filesystem w/o symlink support during repo init" '
 	v=$(git config --bool core.symlinks) &&
 	test "$v" = false
 '
