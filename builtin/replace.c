@@ -123,18 +123,16 @@ static int delete_replace_ref(const char *name, const char *ref,
 	return 0;
 }
 
-static int replace_object(const char *object_ref, const char *replace_ref,
-			  int force)
+static int replace_object_sha1(const char *object_ref,
+			       unsigned char object[20],
+			       const char *replace_ref,
+			       unsigned char repl[20],
+			       int force)
 {
-	unsigned char object[20], prev[20], repl[20];
+	unsigned char prev[20];
 	enum object_type obj_type, repl_type;
 	char ref[PATH_MAX];
 	struct ref_lock *lock;
-
-	if (get_sha1(object_ref, object))
-		die("Failed to resolve '%s' as a valid ref.", object_ref);
-	if (get_sha1(replace_ref, repl))
-		die("Failed to resolve '%s' as a valid ref.", replace_ref);
 
 	if (snprintf(ref, sizeof(ref),
 		     "refs/replace/%s",
@@ -164,6 +162,18 @@ static int replace_object(const char *object_ref, const char *replace_ref,
 		die("%s: cannot update the ref", ref);
 
 	return 0;
+}
+
+static int replace_object(const char *object_ref, const char *replace_ref, int force)
+{
+	unsigned char object[20], repl[20];
+
+	if (get_sha1(object_ref, object))
+		die("Failed to resolve '%s' as a valid ref.", object_ref);
+	if (get_sha1(replace_ref, repl))
+		die("Failed to resolve '%s' as a valid ref.", replace_ref);
+
+	return replace_object_sha1(object_ref, object, replace_ref, repl, force);
 }
 
 int cmd_replace(int argc, const char **argv, const char *prefix)
