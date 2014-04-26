@@ -23,9 +23,9 @@
  */
 
 #include "cache.h"
+#include "credential.h"
 #include "exec_cmd.h"
 #include "run-command.h"
-#include "prompt.h"
 #ifdef NO_OPENSSL
 typedef void *SSL;
 #endif
@@ -946,6 +946,7 @@ static int auth_cram_md5(struct imap_store *ctx, struct imap_cmd *cmd, const cha
 
 static struct imap_store *imap_open_store(struct imap_server_conf *srvc)
 {
+	struct credential cred = CREDENTIAL_INIT;
 	struct imap_store *ctx;
 	struct imap *imap;
 	char *arg, *rsp;
@@ -1101,19 +1102,11 @@ static struct imap_store *imap_open_store(struct imap_server_conf *srvc)
 			goto bail;
 		}
 		if (!srvc->pass) {
-			struct strbuf prompt = STRBUF_INIT;
-			strbuf_addf(&prompt, "Password (%s@%s): ", srvc->user, srvc->host);
-			arg = git_getpass(prompt.buf);
-			strbuf_release(&prompt);
-			if (!*arg) {
-				fprintf(stderr, "Skipping account %s@%s, no password\n", srvc->user, srvc->host);
-				goto bail;
-			}
-			/*
-			 * getpass() returns a pointer to a static buffer.  make a copy
-			 * for long term storage.
-			 */
-			srvc->pass = xstrdup(arg);
+			cred.username = xstrdup(srvc->user);
+			cred.protocol = xstrdup("imap");
+			cred.host = xstrdup(srvc->host);
+			credential_fill(&cred);
+			srvc->pass = xstrdup(cred.password);
 		}
 		if (CAP(NOLOGIN)) {
 			fprintf(stderr, "Skipping account %s@%s, server forbids LOGIN\n", srvc->user, srvc->host);
@@ -1153,10 +1146,18 @@ static struct imap_store *imap_open_store(struct imap_server_conf *srvc)
 		}
 	} /* !preauth */
 
+	if (cred.username)
+		credential_approve(&cred);
+	credential_clear(&cred);
+
 	ctx->prefix = "";
 	return ctx;
 
 bail:
+	if (cred.username)
+		credential_reject(&cred);
+	credential_clear(&cred);
+
 	imap_close_store(ctx);
 	return NULL;
 }
