@@ -596,6 +596,28 @@ library for your script to use.
 		...
 	'
 
+ - test_write_lines <text>
+
+   Split <text> to white-space separated words and write it out on standard
+   output, one word per line.
+   Useful to prepare multi-line files in a compact form.
+
+   Example:
+
+	test_write_lines "a b c d e f g" >foo
+
+   Is a more compact equivalent of:
+	cat >foo <<-EOF
+	a
+	b
+	c
+	d
+	e
+	f
+	g
+	EOF
+
+
  - test_pause
 
 	This command is useful for writing and debugging tests and must be

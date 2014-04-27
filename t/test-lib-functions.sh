@@ -712,6 +712,11 @@ test_ln_s_add () {
 	fi
 }
 
+# This function writes out its parameters, one per line
+test_write_lines () {
+	printf "%s\n" "$@"
+}
+
 perl () {
 	command "$PERL_PATH" "$@"
 }
