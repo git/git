@@ -43,7 +43,7 @@ OPTIONS
 	   of "-O<orderfile>", thereby making existing databases storing such
 	   "unstable" or historical patch-ids unusable.
 
-	This is the default if patchid.stable is set to true.
+	This is the default.
 
 --unstable::
 	Use an "unstable" hash as the patch ID. With this option,
@@ -52,7 +52,7 @@ OPTIONS
 	patch-ids produced by git 1.9 and older (who do not deal with reordered
 	patches) may want to use this option.
 
-	This is the default.
+	This is the default if patchid.stable is set to false.
 
 <patch>::
 	The diff to create the ID of.
