@@ -14,7 +14,7 @@ do
 	git update-index --add infocom
 	echo xyzzy >infocom
 
-	files=`git diff-files -p`
+	files=$(git diff-files -p)
 	test_expect_success \
 	"Racy GIT trial #$trial part A" \
 	'test "" != "$files"'
@@ -23,7 +23,7 @@ do
 	echo xyzzy >cornerstone
 	git update-index --add cornerstone
 
-	files=`git diff-files -p`
+	files=$(git diff-files -p)
 	test_expect_success \
 	"Racy GIT trial #$trial part B" \
 	'test "" != "$files"'
