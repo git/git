@@ -35,14 +35,17 @@ all::
 # transports (neither smart nor dumb).
 #
 # Define CURL_CONFIG to the path to a curl-config binary other than the
-# default 'curl-config'.
+# default 'curl-config'.  If CURL_CONFIG is unset or points to a binary that
+# is not found, defaults to the CURLDIR behavior.
 #
 # Define CURL_STATIC to statically link libcurl.  Only applies if
 # CURL_CONFIG is used.
 #
 # Define CURLDIR=/foo/bar if your curl header and library files are in
-# /foo/bar/include and /foo/bar/lib directories.  This overrides CURL_CONFIG,
-# but is less robust.
+# /foo/bar/include and /foo/bar/lib directories.  This overrides
+# CURL_CONFIG, but is less robust.  If not set, and CURL_CONFIG is not set,
+# uses -lcurl with no additional library detection (other than
+# NEEDS_*_WITH_CURL).
 #
 # Define NO_EXPAT if you do not have expat installed.  git-http-push is
 # not built, and you cannot push using http:// and https:// transports (dumb).
@@ -1127,9 +1130,27 @@ ifdef NO_CURL
 	REMOTE_CURL_NAMES =
 else
 	ifdef CURLDIR
-		# Try "-Wl,-rpath=$(CURLDIR)/$(lib)" in such a case.
-		BASIC_CFLAGS += -I$(CURLDIR)/include
-		CURL_LIBCURL = -L$(CURLDIR)/$(lib) $(CC_LD_DYNPATH)$(CURLDIR)/$(lib) -lcurl
+		CURL_LIBCURL =
+	else
+		CURL_CONFIG = curl-config
+		ifeq "$(CURL_CONFIG)" ""
+			CURL_LIBCURL =
+		else
+			CURL_LIBCURL := $(shell $(CURL_CONFIG) --libs)
+		endif
+	endif
+
+	ifeq "$(CURL_LIBCURL)" ""
+		ifdef CURL_STATIC
+$(error "CURL_STATIC must be used with CURL_CONFIG")
+		endif
+		ifdef CURLDIR
+			# Try "-Wl,-rpath=$(CURLDIR)/$(lib)" in such a case.
+			BASIC_CFLAGS += -I$(CURLDIR)/include
+			CURL_LIBCURL = -L$(CURLDIR)/$(lib) $(CC_LD_DYNPATH)$(CURLDIR)/$(lib) -lcurl
+		else
+			CURL_LIBCURL = -lcurl
+		endif
 		ifdef NEEDS_SSL_WITH_CURL
 			CURL_LIBCURL += -lssl
 			ifdef NEEDS_CRYPTO_WITH_SSL
@@ -1140,17 +1161,11 @@ else
 			CURL_LIBCURL += -lidn
 		endif
 	else
-		CURL_CONFIG ?= curl-config
 		BASIC_CFLAGS += $(shell $(CURL_CONFIG) --cflags)
 		ifdef CURL_STATIC
 			CURL_LIBCURL = $(shell $(CURL_CONFIG) --static-libs)
 			ifeq "$(CURL_LIBCURL)" ""
-				$(error libcurl not detected or not compiled with static support)
-			endif
-		else
-			CURL_LIBCURL = $(shell $(CURL_CONFIG) --libs)
-			ifeq "$(CURL_LIBCURL)" ""
-				$(error libcurl not detected; try setting CURLDIR)
+$(error libcurl not detected or not compiled with static support)
 			endif
 		endif
 	endif
