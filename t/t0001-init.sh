@@ -250,7 +250,7 @@ test_expect_success 'init --bare/--shared overrides system/global config' '
 	) &&
 	check_config init-bare-shared-override true unset &&
 	test x0666 = \
-	x`git config -f init-bare-shared-override/config core.sharedRepository`
+	x$(git config -f init-bare-shared-override/config core.sharedRepository)
 '
 
 test_expect_success 'init honors global core.sharedRepository' '
@@ -262,7 +262,7 @@ test_expect_success 'init honors global core.sharedRepository' '
 		git init
 	) &&
 	test x0666 = \
-	x`git config -f shared-honor-global/.git/config core.sharedRepository`
+	x$(git config -f shared-honor-global/.git/config core.sharedRepository)
 '
 
 test_expect_success 'init rejects insanely long --template' '
@@ -374,7 +374,7 @@ test_expect_success 'init prefers command line to GIT_DIR' '
 test_expect_success 'init with separate gitdir' '
 	rm -rf newdir &&
 	git init --separate-git-dir realgitdir newdir &&
-	echo "gitdir: `pwd`/realgitdir" >expected &&
+	echo "gitdir: $(pwd)/realgitdir" >expected &&
 	test_cmp expected newdir/.git &&
 	test -d realgitdir/refs
 '
@@ -388,7 +388,7 @@ test_expect_success 're-init to update git link' '
 	cd newdir &&
 	git init --separate-git-dir ../surrealgitdir
 	) &&
-	echo "gitdir: `pwd`/surrealgitdir" >expected &&
+	echo "gitdir: $(pwd)/surrealgitdir" >expected &&
 	test_cmp expected newdir/.git &&
 	test -d surrealgitdir/refs &&
 	! test -d realgitdir/refs
@@ -401,7 +401,7 @@ test_expect_success 're-init to move gitdir' '
 	cd newdir &&
 	git init --separate-git-dir ../realgitdir
 	) &&
-	echo "gitdir: `pwd`/realgitdir" >expected &&
+	echo "gitdir: $(pwd)/realgitdir" >expected &&
 	test_cmp expected newdir/.git &&
 	test -d realgitdir/refs
 '
@@ -415,7 +415,7 @@ test_expect_success SYMLINKS 're-init to move gitdir symlink' '
 	ln -s here .git &&
 	git init --separate-git-dir ../realgitdir
 	) &&
-	echo "gitdir: `pwd`/realgitdir" >expected &&
+	echo "gitdir: $(pwd)/realgitdir" >expected &&
 	test_cmp expected newdir/.git &&
 	test -d realgitdir/refs &&
 	! test -d newdir/here
