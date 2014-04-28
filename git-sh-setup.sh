@@ -306,8 +306,10 @@ case $(uname -s) in
 	find () {
 		/usr/bin/find "$@"
 	}
-	# Let pwd always return the uniqe real windows path
-	alias pwd='pwd -W'
+	# git sees Windows-style pwd
+	pwd () {
+		builtin pwd -W
+	}
 	is_absolute_path () {
 		case "$1" in
 		[/\\]* | [A-Za-z]:*)
