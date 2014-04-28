@@ -225,22 +225,22 @@ test_expect_success \
 
 test_expect_success \
     'text without newline at end should end with newline' '
-    test `printf "$ttt" | git stripspace | wc -l` -gt 0 &&
-    test `printf "$ttt$ttt" | git stripspace | wc -l` -gt 0 &&
-    test `printf "$ttt$ttt$ttt" | git stripspace | wc -l` -gt 0 &&
-    test `printf "$ttt$ttt$ttt$ttt" | git stripspace | wc -l` -gt 0
+    test $(printf "$ttt" | git stripspace | wc -l) -gt 0 &&
+    test $(printf "$ttt$ttt" | git stripspace | wc -l) -gt 0 &&
+    test $(printf "$ttt$ttt$ttt" | git stripspace | wc -l) -gt 0 &&
+    test $(printf "$ttt$ttt$ttt$ttt" | git stripspace | wc -l) -gt 0
 '
 
 # text plus spaces at the end:
 
 test_expect_success \
     'text plus spaces without newline at end should end with newline' '
-    test `printf "$ttt$sss" | git stripspace | wc -l` -gt 0 &&
-    test `printf "$ttt$ttt$sss" | git stripspace | wc -l` -gt 0 &&
-    test `printf "$ttt$ttt$ttt$sss" | git stripspace | wc -l` -gt 0 &&
-    test `printf "$ttt$sss$sss" | git stripspace | wc -l` -gt 0 &&
-    test `printf "$ttt$ttt$sss$sss" | git stripspace | wc -l` -gt 0 &&
-    test `printf "$ttt$sss$sss$sss" | git stripspace | wc -l` -gt 0
+    test $(printf "$ttt$sss" | git stripspace | wc -l) -gt 0 &&
+    test $(printf "$ttt$ttt$sss" | git stripspace | wc -l) -gt 0 &&
+    test $(printf "$ttt$ttt$ttt$sss" | git stripspace | wc -l) -gt 0 &&
+    test $(printf "$ttt$sss$sss" | git stripspace | wc -l) -gt 0 &&
+    test $(printf "$ttt$ttt$sss$sss" | git stripspace | wc -l) -gt 0 &&
+    test $(printf "$ttt$sss$sss$sss" | git stripspace | wc -l) -gt 0
 '
 
 test_expect_success \
