@@ -20,14 +20,14 @@ test_expect_success setup '
 
 	git commit -m initial &&
 
-	one=`git rev-parse HEAD:one` &&
-	dir=`git rev-parse HEAD:dir` &&
-	two=`git rev-parse HEAD:dir/two` &&
-	three=`git rev-parse HEAD:three` &&
+	one=$(git rev-parse HEAD:one) &&
+	dir=$(git rev-parse HEAD:dir) &&
+	two=$(git rev-parse HEAD:dir/two) &&
+	three=$(git rev-parse HEAD:three) &&
 
 	for w in Some extra lines here; do echo $w; done >>one &&
 	git diff >patch.file &&
-	patched=`git hash-object --stdin <one` &&
+	patched=$(git hash-object --stdin <one) &&
 	git read-tree --reset -u HEAD &&
 
 	echo happy.
@@ -111,7 +111,7 @@ test_expect_success 'update with autocrlf=input' '
 		}
 	done &&
 
-	differs=`git diff-index --cached HEAD` &&
+	differs=$(git diff-index --cached HEAD) &&
 	test -z "$differs" || {
 		echo Oops "$differs"
 		false
@@ -135,7 +135,7 @@ test_expect_success 'update with autocrlf=true' '
 		}
 	done &&
 
-	differs=`git diff-index --cached HEAD` &&
+	differs=$(git diff-index --cached HEAD) &&
 	test -z "$differs" || {
 		echo Oops "$differs"
 		false
@@ -158,9 +158,9 @@ test_expect_success 'checkout with autocrlf=true' '
 			break
 		}
 	done &&
-	test "$one" = `git hash-object --stdin <one` &&
-	test "$two" = `git hash-object --stdin <dir/two` &&
-	differs=`git diff-index --cached HEAD` &&
+	test "$one" = $(git hash-object --stdin <one) &&
+	test "$two" = $(git hash-object --stdin <dir/two) &&
+	differs=$(git diff-index --cached HEAD) &&
 	test -z "$differs" || {
 		echo Oops "$differs"
 		false
@@ -184,9 +184,9 @@ test_expect_success 'checkout with autocrlf=input' '
 			git update-index -- $f
 		fi
 	done &&
-	test "$one" = `git hash-object --stdin <one` &&
-	test "$two" = `git hash-object --stdin <dir/two` &&
-	differs=`git diff-index --cached HEAD` &&
+	test "$one" = $(git hash-object --stdin <one) &&
+	test "$two" = $(git hash-object --stdin <dir/two) &&
+	differs=$(git diff-index --cached HEAD) &&
 	test -z "$differs" || {
 		echo Oops "$differs"
 		false
@@ -200,7 +200,7 @@ test_expect_success 'apply patch (autocrlf=input)' '
 	git read-tree --reset -u HEAD &&
 
 	git apply patch.file &&
-	test "$patched" = "`git hash-object --stdin <one`" || {
+	test "$patched" = "$(git hash-object --stdin <one)" || {
 		echo "Eh?  apply without index"
 		false
 	}
@@ -213,7 +213,7 @@ test_expect_success 'apply patch --cached (autocrlf=input)' '
 	git read-tree --reset -u HEAD &&
 
 	git apply --cached patch.file &&
-	test "$patched" = `git rev-parse :one` || {
+	test "$patched" = $(git rev-parse :one) || {
 		echo "Eh?  apply with --cached"
 		false
 	}
@@ -226,8 +226,8 @@ test_expect_success 'apply patch --index (autocrlf=input)' '
 	git read-tree --reset -u HEAD &&
 
 	git apply --index patch.file &&
-	test "$patched" = `git rev-parse :one` &&
-	test "$patched" = `git hash-object --stdin <one` || {
+	test "$patched" = $(git rev-parse :one) &&
+	test "$patched" = $(git hash-object --stdin <one) || {
 		echo "Eh?  apply with --index"
 		false
 	}
@@ -240,7 +240,7 @@ test_expect_success 'apply patch (autocrlf=true)' '
 	git read-tree --reset -u HEAD &&
 
 	git apply patch.file &&
-	test "$patched" = "`remove_cr <one | git hash-object --stdin`" || {
+	test "$patched" = "$(remove_cr <one | git hash-object --stdin)" || {
 		echo "Eh?  apply without index"
 		false
 	}
@@ -253,7 +253,7 @@ test_expect_success 'apply patch --cached (autocrlf=true)' '
 	git read-tree --reset -u HEAD &&
 
 	git apply --cached patch.file &&
-	test "$patched" = `git rev-parse :one` || {
+	test "$patched" = $(git rev-parse :one) || {
 		echo "Eh?  apply without index"
 		false
 	}
@@ -266,8 +266,8 @@ test_expect_success 'apply patch --index (autocrlf=true)' '
 	git read-tree --reset -u HEAD &&
 
 	git apply --index patch.file &&
-	test "$patched" = `git rev-parse :one` &&
-	test "$patched" = "`remove_cr <one | git hash-object --stdin`" || {
+	test "$patched" = $(git rev-parse :one) &&
+	test "$patched" = "$(remove_cr <one | git hash-object --stdin)" || {
 		echo "Eh?  apply with --index"
 		false
 	}
