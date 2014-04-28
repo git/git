@@ -36,7 +36,7 @@ compare_change () {
 }
 
 check_cache_at () {
-	clean_if_empty=`git diff-files -- "$1"`
+	clean_if_empty=$(git diff-files -- "$1")
 	case "$clean_if_empty" in
 	'')  echo "$1: clean" ;;
 	?*)  echo "$1: dirty" ;;
@@ -68,14 +68,14 @@ test_expect_success \
      echo rezrov >rezrov &&
      echo yomin >yomin &&
      git update-index --add nitfol bozbar rezrov &&
-     treeH=`git write-tree` &&
+     treeH=$(git write-tree) &&
      echo treeH $treeH &&
      git ls-tree $treeH &&
 
      cat bozbar-new >bozbar &&
      git update-index --add frotz bozbar --force-remove rezrov &&
      git ls-files --stage >M.out &&
-     treeM=`git write-tree` &&
+     treeM=$(git write-tree) &&
      echo treeM $treeM &&
      git ls-tree $treeM &&
      git diff-tree $treeH $treeM'
@@ -315,7 +315,7 @@ test_expect_success \
     'rm -f .git/index &&
      echo DF >DF &&
      git update-index --add DF &&
-     treeDF=`git write-tree` &&
+     treeDF=$(git write-tree) &&
      echo treeDF $treeDF &&
      git ls-tree $treeDF &&
 
@@ -323,7 +323,7 @@ test_expect_success \
      mkdir DF &&
      echo DF/DF >DF/DF &&
      git update-index --add --remove DF DF/DF &&
-     treeDFDF=`git write-tree` &&
+     treeDFDF=$(git write-tree) &&
      echo treeDFDF $treeDFDF &&
      git ls-tree $treeDFDF &&
      git ls-files --stage >DFDF.out'
@@ -345,7 +345,7 @@ test_expect_success \
     'rm -f .git/index &&
      : >a &&
      git update-index --add a &&
-     treeM=`git write-tree` &&
+     treeM=$(git write-tree) &&
      echo treeM $treeM &&
      git ls-tree $treeM &&
      git ls-files --stage >treeM.out &&
@@ -354,7 +354,7 @@ test_expect_success \
      git update-index --remove a &&
      mkdir a &&
      : >a/b &&
-     treeH=`git write-tree` &&
+     treeH=$(git write-tree) &&
      echo treeH $treeH &&
      git ls-tree $treeH'
 
@@ -372,7 +372,7 @@ test_expect_success \
      mkdir c &&
      : >c/d &&
      git update-index --add a c/d &&
-     treeM=`git write-tree` &&
+     treeM=$(git write-tree) &&
      echo treeM $treeM &&
      git ls-tree $treeM &&
      git ls-files --stage >treeM.out &&
@@ -381,7 +381,7 @@ test_expect_success \
      mkdir a &&
      : >a/b &&
      git update-index --add --remove a a/b &&
-     treeH=`git write-tree` &&
+     treeH=$(git write-tree) &&
      echo treeH $treeH &&
      git ls-tree $treeH'
 
