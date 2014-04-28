@@ -513,6 +513,17 @@ AC_CHECK_LIB([curl], [curl_global_init],
 [NO_CURL=],
 [NO_CURL=YesPlease])
 
+if test -z "$NO_CURL"; then
+
+AC_CHECK_DECLS([curl_multi_init],
+[NO_CURL_MULTI=],
+[NO_CURL_MULTI=UnfortunatelyYes],
+[[#include <curl/curl.h>]])
+
+GIT_CONF_SUBST([NO_CURL_MULTI])
+
+fi
+
 GIT_UNSTASH_FLAGS($CURLDIR)
 
 GIT_CONF_SUBST([NO_CURL])
