@@ -679,7 +679,7 @@ static void read_and_refresh_cache(struct replay_opts *opts)
 	if (read_index_preload(&the_index, NULL) < 0)
 		die(_("git %s: failed to read the index"), action_name(opts));
 	refresh_index(&the_index, REFRESH_QUIET|REFRESH_UNMERGED, NULL, NULL, NULL);
-	if (the_index.cache_changed) {
+	if (the_index.cache_changed && index_fd >= 0) {
 		if (write_index(&the_index, index_fd) ||
 		    commit_locked_index(&index_lock))
 			die(_("git %s: failed to refresh the index"), action_name(opts));
