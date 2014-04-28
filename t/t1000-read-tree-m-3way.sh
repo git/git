@@ -519,10 +519,10 @@ test_expect_success \
     'rm -f .git/index F16 &&
     echo F16 >F16 &&
     git update-index --add F16 &&
-    tree0=`git write-tree` &&
+    tree0=$(git write-tree) &&
     echo E16 >F16 &&
     git update-index F16 &&
-    tree1=`git write-tree` &&
+    tree1=$(git write-tree) &&
     read_tree_must_succeed -m $tree0 $tree1 $tree1 $tree0 &&
     git ls-files --stage'
 
