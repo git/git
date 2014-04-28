@@ -20,8 +20,8 @@ test_expect_success setup '
 
 	git commit -m initial &&
 
-	one=`git rev-parse HEAD:one` &&
-	two=`git rev-parse HEAD:two` &&
+	one=$(git rev-parse HEAD:one) &&
+	two=$(git rev-parse HEAD:two) &&
 
 	echo happy.
 '
@@ -34,8 +34,8 @@ test_expect_success 'eol=lf puts LFs in normalized file' '
 
 	! has_cr one &&
 	! has_cr two &&
-	onediff=`git diff one` &&
-	twodiff=`git diff two` &&
+	onediff=$(git diff one) &&
+	twodiff=$(git diff two) &&
 	test -z "$onediff" -a -z "$twodiff"
 '
 
@@ -47,8 +47,8 @@ test_expect_success 'eol=crlf puts CRLFs in normalized file' '
 
 	has_cr one &&
 	! has_cr two &&
-	onediff=`git diff one` &&
-	twodiff=`git diff two` &&
+	onediff=$(git diff one) &&
+	twodiff=$(git diff two) &&
 	test -z "$onediff" -a -z "$twodiff"
 '
 
@@ -61,8 +61,8 @@ test_expect_success 'autocrlf=true overrides eol=lf' '
 
 	has_cr one &&
 	has_cr two &&
-	onediff=`git diff one` &&
-	twodiff=`git diff two` &&
+	onediff=$(git diff one) &&
+	twodiff=$(git diff two) &&
 	test -z "$onediff" -a -z "$twodiff"
 '
 
@@ -75,8 +75,8 @@ test_expect_success 'autocrlf=true overrides unset eol' '
 
 	has_cr one &&
 	has_cr two &&
-	onediff=`git diff one` &&
-	twodiff=`git diff two` &&
+	onediff=$(git diff one) &&
+	twodiff=$(git diff two) &&
 	test -z "$onediff" -a -z "$twodiff"
 '
 
