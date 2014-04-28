@@ -99,7 +99,7 @@ int ewah_serialize(struct ewah_bitmap *self, int fd);
 int ewah_serialize_native(struct ewah_bitmap *self, int fd);
 
 int ewah_deserialize(struct ewah_bitmap *self, int fd);
-int ewah_read_mmap(struct ewah_bitmap *self, void *map, size_t len);
+int ewah_read_mmap(struct ewah_bitmap *self, const void *map, size_t len);
 int ewah_read_mmap_native(struct ewah_bitmap *self, void *map, size_t len);
 
 uint32_t ewah_checksum(struct ewah_bitmap *self);
