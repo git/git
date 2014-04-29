@@ -1334,6 +1334,51 @@ test_expect_success $PREREQ '--force sends cover letter template anyway' '
 	test -n "$(ls msgtxt*)"
 '
 
+test_cover_addresses () {
+	header="$1"
+	shift
+	clean_fake_sendmail &&
+	rm -fr outdir &&
+	git format-patch --cover-letter -2 -o outdir &&
+	cover=`echo outdir/0000-*.patch` &&
+	mv $cover cover-to-edit.patch &&
+	sed "s/^From:/$header: extra@address.com\nFrom:/" cover-to-edit.patch >"$cover" &&
+	git send-email \
+	  --force \
+	  --from="Example <nobody@example.com>" \
+	  --no-to --no-cc \
+	  "$@" \
+	  --smtp-server="$(pwd)/fake.sendmail" \
+	  outdir/0000-*.patch \
+	  outdir/0001-*.patch \
+	  outdir/0002-*.patch \
+	  2>errors >out &&
+	grep "^$header: extra@address.com" msgtxt1 >to1 &&
+	grep "^$header: extra@address.com" msgtxt2 >to2 &&
+	grep "^$header: extra@address.com" msgtxt3 >to3 &&
+	test_line_count = 1 to1 &&
+	test_line_count = 1 to2 &&
+	test_line_count = 1 to3
+}
+
+test_expect_success $PREREQ 'to-cover adds To to all mail' '
+	test_cover_addresses "To" --to-cover
+'
+
+test_expect_success $PREREQ 'cc-cover adds Cc to all mail' '
+	test_cover_addresses "Cc" --cc-cover
+'
+
+test_expect_success $PREREQ 'tocover adds To to all mail' '
+	test_config sendemail.tocover true &&
+	test_cover_addresses "To"
+'
+
+test_expect_success $PREREQ 'cccover adds Cc to all mail' '
+	test_config sendemail.cccover true &&
+	test_cover_addresses "Cc"
+'
+
 test_expect_success $PREREQ 'sendemail.aliasfiletype=mailrc' '
 	clean_fake_sendmail &&
 	echo "alias sbd  somebody@example.org" >.mailrc &&
