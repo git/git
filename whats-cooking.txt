@@ -1,18 +1,21 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Apr 2014, #08; Fri, 25)
-X-master-at: 35936f8fc38a214cc7d2595070641d39a541dfb1
-X-next-at: 6b2797783cb3e61a56a96669ce7848480f49f38f
+Subject: What's cooking in git.git (Apr 2014, #09; Tue, 29)
+X-master-at: d8779e1e2536bdd024254af14d2c046bba2bbb01
+X-next-at: fe24852931172d52dd7fafff92f32bb80ce75764
 
-What's cooking in git.git (Apr 2014, #08; Fri, 25)
+What's cooking in git.git (Apr 2014, #09; Tue, 29)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-The tip of the 'master' branch is at v2.0.0-rc1.  Last minute fixes
-to newly added code keep flowing in, which is good.
+The tip of the 'master' branch has passed v2.0.0-rc1.  Last minute
+fixes to newly added code keep flowing in, which is good.  I've
+picked up some topics that will not be part of the upcoming release
+to 'pu' not to lose them, but I didn't have time to give them a deep
+reading.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -20,120 +23,81 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* db/make-with-curl (2014-04-15) 2 commits
-  (merged to 'next' on 2014-04-16 at b9c8527)
- + Makefile: allow static linking against libcurl
- + Makefile: use curl-config to determine curl flags
-
- Ask curl-config how to link with the curl library, instead of
- having only a limited configurability knobs in the Makefile.
-
-
-* fc/transport-helper-sync-error-fix (2014-04-21) 6 commits
-  (merged to 'next' on 2014-04-21 at f53a08a)
- + t5801 (remote-helpers): cleanup environment sets
- + transport-helper: fix sync issue on crashes
- + transport-helper: trivial cleanup
- + transport-helper: propagate recvline() error pushing
- + remote-helpers: make recvline return an error
- + transport-helper: remove barely used xchgline()
-
- Make sure the marks are not written out when the transport helper
- did not finish happily, to avoid marks file that is out of sync
- with the reality.
-
-
-* jk/pack-bitmap (2014-04-22) 1 commit
-  (merged to 'next' on 2014-04-22 at ba58737)
- + ewah_bitmap.c: do not assume size_t and eword_t are the same size
-
- A last minute (and hopefully the last) fix to avoid coredumps due
- to an incorrect pointer arithmetic.
-
---------------------------------------------------
 [New Topics]
 
-* ep/shell-command-substitution (2014-04-23) 13 commits
- - p5302-pack-index.sh: use the $( ... ) construct for command substitution
- - lib-gpg.sh: use the $( ... ) construct for command substitution
- - lib-cvs.sh: use the $( ... ) construct for command substitution
- - lib-credential.sh: use the $( ... ) construct for command substitution
- - git-web--browse.sh: use the $( ... ) construct for command substitution
- - git-stash.sh: use the $( ... ) construct for command substitution
- - git-rebase.sh: use the $( ... ) construct for command substitution
- - git-rebase--merge.sh: use the $( ... ) construct for command substitution
- - git-pull.sh: use the $( ... ) construct for command substitution
- - appp.sh: use the $( ... ) construct for command substitution
- - t7900-subtree.sh: use the $( ... ) construct for command substitution
- - test-gitmw-lib.sh: use the $( ... ) construct for command substitution
- - t9365-continuing-queries.sh: use the $( ... ) construct for command substitution
-
- Adjust shell scripts to use $(cmd) instead of `cmd`.
-
- Will merge to 'next' and keep it there for the remainder of the cycle.
+* cc/replace-edit (2014-04-29) 4 commits
+ - replace: add --edit option
+ - replace: factor object resolution out of replace_object
+ - replace: use OPT_CMDMODE to handle modes
+ - replace: refactor command-mode determination
 
 
-* ib/test-selectively-run (2014-04-23) 3 commits
- - test-lib: '--run' to run only specific tests
- - test-lib: tests skipped by GIT_SKIP_TESTS say so
- - test-lib: Document short options in t/README
-
- Allow specifying only certain individual test pieces to be run
- using a range notation (e.g. "t1234-test.sh --run='1-4 6 8 9-'").
+* da/imap-send-use-credential-helper (2014-04-29) 1 commit
+ - imap-send: use git-credential
 
 
-* mm/mediawiki-encoding-fix (2014-04-23) 2 commits
- - git-remote-mediawiki: fix encoding issue for UTF-8 media files
- - git-remote-mediawiki: allow stop/start-ing the test server
-
- Will merge to 'next' and keep it there for the remainder of the cycle.
+* dk/blame-reorg (2014-04-28) 1 commit
+ - blame: large-scale performance rewrite
 
 
-* mw/symlinks (2014-04-24) 1 commit
-  (merged to 'next' on 2014-04-25 at 20b2af6)
- + setup: fix windows path buffer over-stepping
-
- A finishing touch fix to a new change already in 'master'.
-
- Will merge to 'master' by -rc2.
+* je/pager-do-not-recurse (2014-04-28) 1 commit
+ - pager: do allow spawning pager recursively
 
 
-* sk/tag-contains-wo-recursion (2014-04-25) 1 commit
-  (merged to 'next' on 2014-04-25 at f320750)
- + git tag --contains: avoid stack overflow
+* jk/commit-C-pick-empty (2014-04-28) 1 commit
+ - commit: do not complain of empty messages from -C
 
- Will keep in 'next' for the remainder of the cycle.
+
+* jk/utf8-switch-between-nfd-and-nfc (2014-04-29) 1 commit
+ - t3910: show failure of core.precomposeunicode with decomposed filenames
+
+
+* mt/send-email-cover-to-cc (2014-04-29) 2 commits
+ - test/send-email: to-cover, cc-cover tests
+ - git-send-email: two new options: to-cover, cc-cover
+
+
+* nd/split-index (2014-04-29) 33 commits
+ - SQUASH???
+ - t1700: new tests for split-index mode
+ - t2104: make sure split index mode is off for the version test
+ - read-cache: force split index mode with GIT_TEST_SPLIT_INDEX
+ - read-tree: note about dropping split-index mode or index version
+ - read-tree: force split-index mode off on --index-output
+ - rev-parse: add --shared-index-path to get shared index path
+ - update-index --split-index: do not split if $GIT_DIR is read only
+ - update-index: new options to enable/disable split index mode
+ - split-index: strip pathname of on-disk replaced entries
+ - split-index: do not invalidate cache-tree at read time
+ - split-index: the reading part
+ - split-index: the writing part
+ - read-cache: mark updated entries for split index
+ - read-cache: save deleted entries in split index
+ - read-cache: mark new entries for split index
+ - read-cache: split-index mode
+ - read-cache: save index SHA-1 after reading
+ - entry.c: update cache_changed if refresh_cache is set in checkout_entry()
+ - cache-tree: mark istate->cache_changed on prime_cache_tree()
+ - cache-tree: mark istate->cache_changed on cache tree update
+ - cache-tree: mark istate->cache_changed on cache tree invalidation
+ - unpack-trees: be specific what part of the index has changed
+ - resolve-undo: be specific what part of the index has changed
+ - update-index: be specific what part of the index has changed
+ - read-cache: be specific what part of the index has changed
+ - read-cache: be strict about "changed" in remove_marked_cache_entries()
+ - read-cache: store in-memory flags in the first 12 bits of ce_flags
+ - read-cache: relocate and unexport commit_locked_index()
+ - read-cache: new API write_locked_index instead of write_index/write_cache
+ - sequencer: do not update/refresh index if the lock cannot be held
+ - ewah: delete unused ewah_read_mmap_native declaration
+ - ewah: fix constness of ewah_read_mmap
+
+
+* tl/relax-in-poll-emulation (2014-04-29) 1 commit
+ - compat/poll: sleep 1 millisecond to avoid busy wait
 
 --------------------------------------------------
 [Stalled]
-
-* rs/ref-transaction (2014-04-22) 14 commits
- . SQUASH???
- . refs.c: change update_ref to use a transaction
- . walker.c: use ref transaction for ref updates
- . branch.c: use ref transaction for all ref updates
- . fast-import.c: change update_branch to use ref transactions
- . sequencer.c: use ref transactions for all ref updates
- . commit.c: use ref transactions for updates
- . replace.c: use the ref transaction functions for updates
- . tag.c: use ref transactions when doing updates
- . refs.c: ref_transaction_delete to check for error and return status
- . refs.c: change ref_transaction_create to do error checking and return status
- . refs.c: change ref_transaction_update() to do error checking and return status
- . refs.c: use a single exit path from transaction commit and handle onerr
- . refs.c: constify the sha arguments for ref_transaction_create|delete|update
- (this branch uses mh/ref-transaction.)
-
- Updates most of the callsites to write_sha1_ref(), the low-level
- mechanism to update a ref, to use the ref-transaction API.
-
- Seems to break the dumb walker test (t5550) when merged to 'pu',
- possibly due to misconversion of walker.c.  Kept out of 'pu' as I
- didn't want to resolve conflicts with the other topics only to get
- a known-broken version.
-
 
 * tr/merge-recursive-index-only (2014-02-05) 3 commits
  - merge-recursive: -Xindex-only to leave worktree unchanged
@@ -160,15 +124,6 @@ of the repositories listed at
  Needs to be rebased, now kb/fast-hashmap topic is in.
 
 
-* bc/blame-crlf-test (2014-02-18) 1 commit
- - blame: add a failing test for a CRLF issue.
-
- I have a feeling that a fix for this should be fairly isolated and
- trivial (it should be just the matter of paying attention to the
- crlf settings when synthesizing the fake commit)---perhaps somebody
- can squash in a fix to this?
-
-
 * jk/makefile (2014-02-05) 16 commits
  - FIXUP
  - move LESS/LV pager environment to Makefile
@@ -186,6 +141,7 @@ of the repositories listed at
  - Makefile: introduce make-var helper function
  - Makefile: fix git-instaweb dependency on gitweb
  - Makefile: drop USE_GETTEXT_SCHEME from GIT-CFLAGS
+ (this branch is used by mm/pager-less-sans-S.)
 
  Simplify the Makefile rules and macros that exist primarily for
  quoting purposes, and make it easier to robustly express the
@@ -302,15 +258,132 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* fc/remote-helpers-hg-bzr-graduation (2014-04-21) 3 commits
+* bc/blame-crlf-test (2014-04-28) 1 commit
+ - blame: correctly handle files regardless of autocrlf.
+
+
+* rs/ref-transaction (2014-04-29) 27 commits
+ - refs.c: make lock_ref_sha1 static
+ - refs.c: make write_ref_sha1 static
+ - walker.c: use ref transaction for ref updates
+ - fast-import.c: use a ref transaction when dumping tags
+ - receive-pack.c: use a reference transaction for updating the refs
+ - fetch.c: use a single ref transaction for all ref updates
+ - fetch.c: change s_update_ref to use a ref transaction
+ - fetch.c: clear errno before calling functions that might set it
+ - refs.c: ref_transaction_commit should not free the transaction
+ - refs.c: free the transaction before returning when number of updates is 0
+ - refs.c: change update_ref to use a transaction
+ - branch.c: use ref transaction for all ref updates
+ - fast-import.c: change update_branch to use ref transactions
+ - sequencer.c: use ref transactions for all ref updates
+ - commit.c: use ref transactions for updates
+ - replace.c: use the ref transaction functions for updates
+ - tag.c: use ref transactions when doing updates
+ - refs.c: ref_transaction_delete to check for error and return status
+ - refs.c: change ref_transaction_create to do error checking and return status
+ - refs.c: change ref_transaction_update() to do error checking and return status
+ - refs.c: remove the onerr argument to ref_transaction_commit
+ - refs.c: make update_ref_write update a strbuf on failure
+ - update-ref.c: log transaction error from the update_ref
+ - refs.c: make ref_update_reject_duplicates take a strbuf argument for errors
+ - refs.c: add a strbuf argument to ref_transaction_commit for error logging
+ - refs.c: allow passing NULL to ref_transaction_free
+ - refs.c: constify the sha arguments for ref_transaction_create|delete|update
+ (this branch uses mh/ref-transaction.)
+
+ Updates most of the callsites to write_sha1_ref(), the low-level
+ mechanism to update a ref, to use the ref-transaction API.
+
+ Expecting a reroll.
+
+
+* ep/shell-command-substitution (2014-04-29) 27 commits
+ - t1050-large.sh: use the $( ... ) construct for command substitution
+ - t1020-subdirectory.sh: use the $( ... ) construct for command substitution
+ - t1004-read-tree-m-u-wf.sh: use the $( ... ) construct for command substitution
+ - t1003-read-tree-prefix.sh: use the $( ... ) construct for command substitution
+ - t1002-read-tree-m-u-2way.sh: use the $( ... ) construct for command substitution
+ - t1001-read-tree-m-2way.sh: use the $( ... ) construct for command substitution
+ - t1000-read-tree-m-3way.sh: use the $( ... ) construct for command substitution
+ - t0300-credentials.sh: use the $( ... ) construct for command substitution
+ - t0030-stripspace.sh: use the $( ... ) construct for command substitution
+ - t0026-eol-config.sh: use the $( ... ) construct for command substitution
+ - t0025-crlf-auto.sh: use the $( ... ) construct for command substitution
+ - t0020-crlf.sh: use the $( ... ) construct for command substitution
+ - t0010-racy-git.sh: use the $( ... ) construct for command substitution
+ - t0001-init.sh: use the $( ... ) construct for command substitution
+ - p5302-pack-index.sh: use the $( ... ) construct for command substitution
+ - lib-gpg.sh: use the $( ... ) construct for command substitution
+ - lib-cvs.sh: use the $( ... ) construct for command substitution
+ - lib-credential.sh: use the $( ... ) construct for command substitution
+ - git-web--browse.sh: use the $( ... ) construct for command substitution
+ - git-stash.sh: use the $( ... ) construct for command substitution
+ - git-rebase.sh: use the $( ... ) construct for command substitution
+ - git-rebase--merge.sh: use the $( ... ) construct for command substitution
+ - git-pull.sh: use the $( ... ) construct for command substitution
+ - appp.sh: use the $( ... ) construct for command substitution
+ - t7900-subtree.sh: use the $( ... ) construct for command substitution
+ - test-gitmw-lib.sh: use the $( ... ) construct for command substitution
+ - t9365-continuing-queries.sh: use the $( ... ) construct for command substitution
+
+ Adjust shell scripts to use $(cmd) instead of `cmd`.
+
+ Will merge to 'next' and keep it there for the remainder of the cycle.
+
+
+* ib/test-selectively-run (2014-04-23) 3 commits
+ - test-lib: '--run' to run only specific tests
+ - test-lib: tests skipped by GIT_SKIP_TESTS say so
+ - test-lib: Document short options in t/README
+
+ Allow specifying only certain individual test pieces to be run
+ using a range notation (e.g. "t1234-test.sh --run='1-4 6 8 9-'").
+
+
+* mm/mediawiki-encoding-fix (2014-04-23) 2 commits
+ - git-remote-mediawiki: fix encoding issue for UTF-8 media files
+ - git-remote-mediawiki: allow stop/start-ing the test server
+
+ Will merge to 'next' and keep it there for the remainder of the cycle.
+
+
+* mw/symlinks (2014-04-24) 1 commit
+  (merged to 'next' on 2014-04-25 at 20b2af6)
+ + setup: fix windows path buffer over-stepping
+
+ A finishing touch fix to a new change already in 'master'.
+
+ Will merge to 'master' by -rc2.
+
+
+* sk/tag-contains-wo-recursion (2014-04-25) 1 commit
+  (merged to 'next' on 2014-04-25 at f320750)
+ + git tag --contains: avoid stack overflow
+
+ Will keep in 'next' for the remainder of the cycle.
+
+
+* fc/remote-helpers-hg-bzr-graduation (2014-04-29) 11 commits
+ - remote-hg: trivial cleanups
+ - remote-hg: make sure we omit multiple heads
+ - git-remote-hg: use internal clone's hgrc
+ - t: remote-hg: split into setup test
+ - remote-hg: properly detect missing contexts
+ - remote-{hg,bzr}: store marks only on success
+ - remote-hg: update to 'public' phase when pushing
+ - remote-hg: fix parsing of custom committer
   (merged to 'next' on 2014-04-22 at fed170a)
  + remote-helpers: move tests out of contrib
  + remote-helpers: move out of contrib
  + remote-helpers: squelch python import exceptions
 
- Move remote-hg and remote-bzr out of contrib/.
+ Move remote-hg and remote-bzr out of contrib/.  There were some
+ suggestions on the follow-up fix patches still not in 'next', which
+ may result in a reroll.
 
- Will keep in 'next' for the remainder of the cycle.
+ Will merge to 'next' and keep it there for the remainder of the
+ cycle.
 
 
 * fc/remote-helper-refmap (2014-04-21) 8 commits
@@ -330,16 +403,15 @@ of the repositories listed at
  Will keep in 'next' for the remainder of the cycle.
 
 
-* jk/external-diff-use-argv-array (2014-04-21) 6 commits
+* jk/external-diff-use-argv-array (2014-04-21) 5 commits
   (merged to 'next' on 2014-04-22 at e6d92d7)
  + run_external_diff: refactor cmdline setup logic
  + run_external_diff: hoist common bits out of conditional
  + run_external_diff: drop fflush(NULL)
  + run_external_diff: clean up error handling
  + run_external_diff: use an argv_array for the environment
- + run_external_diff: use an argv_array for the command line
 
- Code clean-up.
+ Code clean-up (and a bugfix which has been merged for 2.0).
 
  Will keep in 'next' for the remainder of the cycle.
 
@@ -568,22 +640,17 @@ of the repositories listed at
  Expecting a reroll.
 
 
-* mt/patch-id-stable (2014-03-31) 3 commits
-  (merged to 'next' on 2014-04-08 at 0188d44)
- + patch-id-test: test --stable and --unstable flags
- + patch-id: document new behaviour
- + patch-id: make it stable against hunk reordering
+* mt/patch-id-stable (2014-04-29) 5 commits
+ - t4204-patch-id.sh: default is now stable
+ - patch-id: change default to stable
+ - patch-id-test: test stable and unstable behaviour
+ - test: add test_write_lines helper
+ - patch-id: make it stable against hunk reordering
 
  Introduce a new way to compute patch-id for a patch that is not
  affected by the order of the paths that appear in the input.
 
- This changes the generated patch-id unless the users add an extra
- option to their command lines, but I deliberately queued the series
- to 'next' without reverting that compatibility breakage to see if
- people complain.  It could be that we do not have to worry about
- the default flipping at all.  We'll see.
-
- Will keep in 'next' for the remainder of the cycle.
+ Will merge to 'next' and keep it there for the remainder of the cycle.
 
 
 * mh/ref-transaction (2014-04-07) 27 commits
@@ -722,23 +789,18 @@ of the repositories listed at
  Will keep in 'next' for the remainder of the cycle.
 
 
-* cc/interpret-trailers (2014-04-07) 12 commits
- - trailer: add blank line before the trailers if needed
+* cc/interpret-trailers (2014-04-29) 11 commits
  - Documentation: add documentation for 'git interpret-trailers'
  - trailer: add tests for commands in config file
  - trailer: execute command from 'trailer.<name>.command'
  - trailer: add tests for "git interpret-trailers"
  - trailer: add interpret-trailers command
  - trailer: put all the processing together and print
- - trailer: parse trailers from stdin
+ - trailer: parse trailers from file or stdin
  - trailer: process command line trailer arguments
  - trailer: read and process config information
- - trailer: process trailers from stdin and arguments
+ - trailer: process trailers from input message and arguments
  - trailer: add data structures and basic functions
 
  A new filter to programatically edit the tail end of the commit log
  messages.
-
- I was planning to merge it to 'next' and keep it there for the
- remainder of the cycle, but it appears that there still will be
- another round of reroll, at least for the documentation?
