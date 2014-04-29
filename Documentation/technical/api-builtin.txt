@@ -22,11 +22,14 @@ Git:
 where options is the bitwise-or of:
 
 `RUN_SETUP`::
+	If there is not a Git directory to work on, abort.  If there
+	is a work tree, chdir to the top of it if the command was
+	invoked in a subdirectory.  If there is no work tree, no
+	chdir() is done.
 
-	Make sure there is a Git directory to work on, and if there is a
-	work tree, chdir to the top of it if the command was invoked
-	in a subdirectory.  If there is no work tree, no chdir() is
-	done.
+`RUN_SETUP_GENTLY`::
+	If there is a Git directory, chdir as per RUN_SETUP, otherwise,
+	don't chdir anywhere.
 
 `USE_PAGER`::
 
