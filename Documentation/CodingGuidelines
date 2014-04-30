@@ -42,7 +42,17 @@ For shell scripts specifically (not exhaustive):
 
  - We use tabs for indentation.
 
- - Case arms are indented at the same depth as case and esac lines.
+ - Case arms are indented at the same depth as case and esac lines,
+   like this:
+
+	case "$variable" in
+	pattern1)
+		do this
+		;;
+	pattern2)
+		do that
+		;;
+	esac
 
  - Redirection operators should be written with space before, but no
    space after them.  In other words, write 'echo test >"$file"'
