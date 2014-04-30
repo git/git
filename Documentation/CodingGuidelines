@@ -61,6 +61,14 @@ For shell scripts specifically (not exhaustive):
    redirection target in a variable (as shown above), our code does so
    because some versions of bash issue a warning without the quotes.
 
+	(incorrect)
+	cat hello > world < universe
+	echo hello >$world
+
+	(correct)
+	cat hello >world <universe
+	echo hello >"$world"
+
  - We prefer $( ... ) for command substitution; unlike ``, it
    properly nests.  It should have been the way Bourne spelled
    it from day one, but unfortunately isn't.
