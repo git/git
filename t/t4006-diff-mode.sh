@@ -13,7 +13,7 @@ sed_script='s/\(:100644 100755\) \('"$_x40"'\) \2 /\1 X X /'
 test_expect_success 'setup' '
 	echo frotz >rezrov &&
 	git update-index --add rezrov &&
-	tree=`git write-tree` &&
+	tree=$(git write-tree) &&
 	echo $tree
 '
 
