@@ -42,7 +42,7 @@ test_expect_success 'attach and signoff do not duplicate mime headers' '
 
 	GIT_COMMITTER_NAME="はまの ふにおう" \
 	git format-patch -s --stdout -1 --attach >output &&
-	test `grep -ci ^MIME-Version: output` = 1
+	test $(grep -ci ^MIME-Version: output) = 1
 
 '
 
