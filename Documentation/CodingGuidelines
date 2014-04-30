@@ -18,6 +18,14 @@ code.  For Git in general, three rough rules are:
    judgement call, the decision based more on real world
    constraints people face than what the paper standard says.
 
+ - Fixing style violations while working on a real change as a
+   preparatory clean-up step is good, but otherwise avoid useless code
+   churn for the sake of conforming to the style.
+
+   "Once it _is_ in the tree, it's not really worth the patch noise to
+   go and fix it up."
+   Cf. http://article.gmane.org/gmane.linux.kernel/943020
+
 Make your code readable and sensible, and don't try to be clever.
 
 As for more concrete guidelines, just imitate the existing code
