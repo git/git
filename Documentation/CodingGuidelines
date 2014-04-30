@@ -107,6 +107,17 @@ For shell scripts specifically (not exhaustive):
    "then" should be on the next line for if statements, and "do"
    should be on the next line for "while" and "for".
 
+	(incorrect)
+	if test -f hello; then
+		do this
+	fi
+
+	(correct)
+	if test -f hello
+	then
+		do this
+	fi
+
  - We prefer "test" over "[ ... ]".
 
  - We do not write the noiseword "function" in front of shell
