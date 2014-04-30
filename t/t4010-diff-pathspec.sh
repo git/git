@@ -18,7 +18,7 @@ test_expect_success \
      mkdir path1 &&
      echo rezrov >path1/file1 &&
      git update-index --add file0 path1/file1 &&
-     tree=`git write-tree` &&
+     tree=$(git write-tree) &&
      echo "$tree" &&
      echo nitfol >file0 &&
      echo yomin >path1/file1 &&
@@ -131,7 +131,7 @@ test_expect_success 'diff multiple wildcard pathspecs' '
 	mkdir path2 &&
 	echo rezrov >path2/file1 &&
 	git update-index --add path2/file1 &&
-	tree3=`git write-tree` &&
+	tree3=$(git write-tree) &&
 	git diff --name-only $tree $tree3 -- "path2*1" "path1*1" >actual &&
 	cat <<-\EOF >expect &&
 	path1/file1
