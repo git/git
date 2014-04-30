@@ -5,7 +5,7 @@ test_description='combined diff show only paths that are different to all parent
 . ./test-lib.sh
 
 # verify that diffc.expect matches output of
-# `git diff -c --name-only HEAD HEAD^ HEAD^2`
+# $(git diff -c --name-only HEAD HEAD^ HEAD^2)
 diffc_verify () {
 	git diff -c --name-only HEAD HEAD^ HEAD^2 >diffc.actual &&
 	test_cmp diffc.expect diffc.actual
