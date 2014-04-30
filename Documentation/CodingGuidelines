@@ -194,7 +194,7 @@ For C programs:
    of "else if" statements, it can make sense to add braces to
    single line blocks.
 
- - We try to avoid assignments inside if().
+ - We try to avoid assignments in the condition of an "if" statement.
 
  - Try to make your code understandable.  You may put comments
    in, but comments invariably tend to stale out when the code
