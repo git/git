@@ -191,6 +191,14 @@ do
 		immediate=t; shift ;;
 	-l|--l|--lo|--lon|--long|--long-|--long-t|--long-te|--long-tes|--long-test|--long-tests)
 		GIT_TEST_LONG=t; export GIT_TEST_LONG; shift ;;
+	-r)
+		shift; test "$#" -ne 0 || {
+			echo 'error: -r requires an argument' >&2;
+			exit 1;
+		}
+		run_list=$1; shift ;;
+	--run=*)
+		run_list=$(expr "z$1" : 'z[^=]*=\(.*\)'); shift ;;
 	-h|--h|--he|--hel|--help)
 		help=t; shift ;;
 	-v|--v|--ve|--ver|--verb|--verbo|--verbos|--verbose)
@@ -366,6 +374,99 @@ match_pattern_list () {
 	return 1
 }
 
+match_test_selector_list () {
+	title="$1"
+	shift
+	arg="$1"
+	shift
+	test -z "$1" && return 0
+
+	# Both commas and whitespace are accepted as separators.
+	OLDIFS=$IFS
+	IFS=' 	,'
+	set -- $1
+	IFS=$OLDIFS
+
+	# If the first selector is negative we include by default.
+	include=
+	case "$1" in
+		!*) include=t ;;
+	esac
+
+	for selector
+	do
+		orig_selector=$selector
+
+		positive=t
+		case "$selector" in
+			!*)
+				positive=
+				selector=${selector##?}
+				;;
+		esac
+
+		test -z "$selector" && continue
+
+		case "$selector" in
+			*-*)
+				if expr "z${selector%%-*}" : "z[0-9]*[^0-9]" >/dev/null
+				then
+					echo "error: $title: invalid non-numeric in range" \
+						"start: '$orig_selector'" >&2
+					exit 1
+				fi
+				if expr "z${selector#*-}" : "z[0-9]*[^0-9]" >/dev/null
+				then
+					echo "error: $title: invalid non-numeric in range" \
+						"end: '$orig_selector'" >&2
+					exit 1
+				fi
+				;;
+			*)
+				if expr "z$selector" : "z[0-9]*[^0-9]" >/dev/null
+				then
+					echo "error: $title: invalid non-numeric in test" \
+						"selector: '$orig_selector'" >&2
+					exit 1
+				fi
+		esac
+
+		# Short cut for "obvious" cases
+		test -z "$include" && test -z "$positive" && continue
+		test -n "$include" && test -n "$positive" && continue
+
+		case "$selector" in
+			-*)
+				if test $arg -le ${selector#-}
+				then
+					include=$positive
+				fi
+				;;
+			*-)
+				if test $arg -ge ${selector%-}
+				then
+					include=$positive
+				fi
+				;;
+			*-*)
+				if test ${selector%%-*} -le $arg \
+					&& test $arg -le ${selector#*-}
+				then
+					include=$positive
+				fi
+				;;
+			*)
+				if test $arg -eq $selector
+				then
+					include=$positive
+				fi
+				;;
+		esac
+	done
+
+	test -n "$include"
+}
+
 maybe_teardown_verbose () {
 	test -z "$verbose_only" && return
 	exec 4>/dev/null 3>/dev/null
@@ -470,6 +571,13 @@ test_skip () {
 		fi
 		skipped_reason="missing $missing_prereq${of_prereq}"
 	fi
+	if test -z "$to_skip" && test -n "$run_list" &&
+		! match_test_selector_list '--run' $test_count "$run_list"
+	then
+		to_skip=t
+		skipped_reason="--run"
+	fi
+
 	case "$to_skip" in
 	t)
 		say_color skip >&3 "skipping test: $@"

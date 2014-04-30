@@ -42,9 +42,9 @@ test_expect_success 'success is reported like this' '
 	:
 '
 
-run_sub_test_lib_test () {
-	name="$1" descr="$2" # stdin is the body of the test code
-	shift 2
+_run_sub_test_lib_test_common () {
+	neg="$1" name="$2" descr="$3" # stdin is the body of the test code
+	shift 3
 	mkdir "$name" &&
 	(
 		# Pretend we're not running under a test harness, whether we
@@ -70,8 +70,21 @@ run_sub_test_lib_test () {
 		export TEST_DIRECTORY &&
 		TEST_OUTPUT_DIRECTORY=$(pwd) &&
 		export TEST_OUTPUT_DIRECTORY &&
-		./"$name.sh" "$@" >out 2>err
+		if test -z "$neg"
+		then
+			./"$name.sh" "$@" >out 2>err
+		else
+			!  ./"$name.sh" "$@" >out 2>err
+		fi
 	)
+}
+
+run_sub_test_lib_test () {
+	_run_sub_test_lib_test_common '' "$@"
+}
+
+run_sub_test_lib_test_err () {
+	_run_sub_test_lib_test_common '!' "$@"
 }
 
 check_sub_test_lib_test () {
@@ -81,6 +94,18 @@ check_sub_test_lib_test () {
 		! test -s err &&
 		sed -e 's/^> //' -e 's/Z$//' >expect &&
 		test_cmp expect out
+	)
+}
+
+check_sub_test_lib_test_err () {
+	name="$1" # stdin is the expected output output from the test
+	# expected error output is in descriptior 3
+	(
+		cd "$name" &&
+		sed -e 's/^> //' -e 's/Z$//' >expect.out &&
+		test_cmp expect.out out &&
+		sed -e 's/^> //' -e 's/Z$//' <&3 >expect.err &&
+		test_cmp expect.err err
 	)
 }
 
@@ -332,6 +357,329 @@ test_expect_success 'GIT_SKIP_TESTS sh pattern' "
 	> 1..6
 	EOF
 "
+
+test_expect_success '--run basic' "
+	run_sub_test_lib_test run-basic \
+		'--run basic' --run='1 3 5' <<-\\EOF &&
+	for i in 1 2 3 4 5 6
+	do
+		test_expect_success \"passing test #\$i\" 'true'
+	done
+	test_done
+	EOF
+	check_sub_test_lib_test run-basic <<-\\EOF
+	> ok 1 - passing test #1
+	> ok 2 # skip passing test #2 (--run)
+	> ok 3 - passing test #3
+	> ok 4 # skip passing test #4 (--run)
+	> ok 5 - passing test #5
+	> ok 6 # skip passing test #6 (--run)
+	> # passed all 6 test(s)
+	> 1..6
+	EOF
+"
+
+test_expect_success '--run with a range' "
+	run_sub_test_lib_test run-range \
+		'--run with a range' --run='1-3' <<-\\EOF &&
+	for i in 1 2 3 4 5 6
+	do
+		test_expect_success \"passing test #\$i\" 'true'
+	done
+	test_done
+	EOF
+	check_sub_test_lib_test run-range <<-\\EOF
+	> ok 1 - passing test #1
+	> ok 2 - passing test #2
+	> ok 3 - passing test #3
+	> ok 4 # skip passing test #4 (--run)
+	> ok 5 # skip passing test #5 (--run)
+	> ok 6 # skip passing test #6 (--run)
+	> # passed all 6 test(s)
+	> 1..6
+	EOF
+"
+
+test_expect_success '--run with two ranges' "
+	run_sub_test_lib_test run-two-ranges \
+		'--run with two ranges' --run='1-2 5-6' <<-\\EOF &&
+	for i in 1 2 3 4 5 6
+	do
+		test_expect_success \"passing test #\$i\" 'true'
+	done
+	test_done
+	EOF
+	check_sub_test_lib_test run-two-ranges <<-\\EOF
+	> ok 1 - passing test #1
+	> ok 2 - passing test #2
+	> ok 3 # skip passing test #3 (--run)
+	> ok 4 # skip passing test #4 (--run)
+	> ok 5 - passing test #5
+	> ok 6 - passing test #6
+	> # passed all 6 test(s)
+	> 1..6
+	EOF
+"
+
+test_expect_success '--run with a left open range' "
+	run_sub_test_lib_test run-left-open-range \
+		'--run with a left open range' --run='-3' <<-\\EOF &&
+	for i in 1 2 3 4 5 6
+	do
+		test_expect_success \"passing test #\$i\" 'true'
+	done
+	test_done
+	EOF
+	check_sub_test_lib_test run-left-open-range <<-\\EOF
+	> ok 1 - passing test #1
+	> ok 2 - passing test #2
+	> ok 3 - passing test #3
+	> ok 4 # skip passing test #4 (--run)
+	> ok 5 # skip passing test #5 (--run)
+	> ok 6 # skip passing test #6 (--run)
+	> # passed all 6 test(s)
+	> 1..6
+	EOF
+"
+
+test_expect_success '--run with a right open range' "
+	run_sub_test_lib_test run-right-open-range \
+		'--run with a right open range' --run='4-' <<-\\EOF &&
+	for i in 1 2 3 4 5 6
+	do
+		test_expect_success \"passing test #\$i\" 'true'
+	done
+	test_done
+	EOF
+	check_sub_test_lib_test run-right-open-range <<-\\EOF
+	> ok 1 # skip passing test #1 (--run)
+	> ok 2 # skip passing test #2 (--run)
+	> ok 3 # skip passing test #3 (--run)
+	> ok 4 - passing test #4
+	> ok 5 - passing test #5
+	> ok 6 - passing test #6
+	> # passed all 6 test(s)
+	> 1..6
+	EOF
+"
+
+test_expect_success '--run with basic negation' "
+	run_sub_test_lib_test run-basic-neg \
+		'--run with basic negation' --run='"'!3'"' <<-\\EOF &&
+	for i in 1 2 3 4 5 6
+	do
+		test_expect_success \"passing test #\$i\" 'true'
+	done
+	test_done
+	EOF
+	check_sub_test_lib_test run-basic-neg <<-\\EOF
+	> ok 1 - passing test #1
+	> ok 2 - passing test #2
+	> ok 3 # skip passing test #3 (--run)
+	> ok 4 - passing test #4
+	> ok 5 - passing test #5
+	> ok 6 - passing test #6
+	> # passed all 6 test(s)
+	> 1..6
+	EOF
+"
+
+test_expect_success '--run with two negations' "
+	run_sub_test_lib_test run-two-neg \
+		'--run with two negations' --run='"'!3 !6'"' <<-\\EOF &&
+	for i in 1 2 3 4 5 6
+	do
+		test_expect_success \"passing test #\$i\" 'true'
+	done
+	test_done
+	EOF
+	check_sub_test_lib_test run-two-neg <<-\\EOF
+	> ok 1 - passing test #1
+	> ok 2 - passing test #2
+	> ok 3 # skip passing test #3 (--run)
+	> ok 4 - passing test #4
+	> ok 5 - passing test #5
+	> ok 6 # skip passing test #6 (--run)
+	> # passed all 6 test(s)
+	> 1..6
+	EOF
+"
+
+test_expect_success '--run a range and negation' "
+	run_sub_test_lib_test run-range-and-neg \
+		'--run a range and negation' --run='"'-4 !2'"' <<-\\EOF &&
+	for i in 1 2 3 4 5 6
+	do
+		test_expect_success \"passing test #\$i\" 'true'
+	done
+	test_done
+	EOF
+	check_sub_test_lib_test run-range-and-neg <<-\\EOF
+	> ok 1 - passing test #1
+	> ok 2 # skip passing test #2 (--run)
+	> ok 3 - passing test #3
+	> ok 4 - passing test #4
+	> ok 5 # skip passing test #5 (--run)
+	> ok 6 # skip passing test #6 (--run)
+	> # passed all 6 test(s)
+	> 1..6
+	EOF
+"
+
+test_expect_success '--run range negation' "
+	run_sub_test_lib_test run-range-neg \
+		'--run range negation' --run='"'!1-3'"' <<-\\EOF &&
+	for i in 1 2 3 4 5 6
+	do
+		test_expect_success \"passing test #\$i\" 'true'
+	done
+	test_done
+	EOF
+	check_sub_test_lib_test run-range-neg <<-\\EOF
+	> ok 1 # skip passing test #1 (--run)
+	> ok 2 # skip passing test #2 (--run)
+	> ok 3 # skip passing test #3 (--run)
+	> ok 4 - passing test #4
+	> ok 5 - passing test #5
+	> ok 6 - passing test #6
+	> # passed all 6 test(s)
+	> 1..6
+	EOF
+"
+
+test_expect_success '--run include, exclude and include' "
+	run_sub_test_lib_test run-inc-neg-inc \
+		'--run include, exclude and include' \
+		--run='"'1-5 !1-3 2'"' <<-\\EOF &&
+	for i in 1 2 3 4 5 6
+	do
+		test_expect_success \"passing test #\$i\" 'true'
+	done
+	test_done
+	EOF
+	check_sub_test_lib_test run-inc-neg-inc <<-\\EOF
+	> ok 1 # skip passing test #1 (--run)
+	> ok 2 - passing test #2
+	> ok 3 # skip passing test #3 (--run)
+	> ok 4 - passing test #4
+	> ok 5 - passing test #5
+	> ok 6 # skip passing test #6 (--run)
+	> # passed all 6 test(s)
+	> 1..6
+	EOF
+"
+
+test_expect_success '--run include, exclude and include, comma separated' "
+	run_sub_test_lib_test run-inc-neg-inc-comma \
+		'--run include, exclude and include, comma separated' \
+		--run=1-5,\!1-3,2 <<-\\EOF &&
+	for i in 1 2 3 4 5 6
+	do
+		test_expect_success \"passing test #\$i\" 'true'
+	done
+	test_done
+	EOF
+	check_sub_test_lib_test run-inc-neg-inc-comma <<-\\EOF
+	> ok 1 # skip passing test #1 (--run)
+	> ok 2 - passing test #2
+	> ok 3 # skip passing test #3 (--run)
+	> ok 4 - passing test #4
+	> ok 5 - passing test #5
+	> ok 6 # skip passing test #6 (--run)
+	> # passed all 6 test(s)
+	> 1..6
+	EOF
+"
+
+test_expect_success '--run exclude and include' "
+	run_sub_test_lib_test run-neg-inc \
+		'--run exclude and include' \
+		--run='"'!3- 5'"' <<-\\EOF &&
+	for i in 1 2 3 4 5 6
+	do
+		test_expect_success \"passing test #\$i\" 'true'
+	done
+	test_done
+	EOF
+	check_sub_test_lib_test run-neg-inc <<-\\EOF
+	> ok 1 - passing test #1
+	> ok 2 - passing test #2
+	> ok 3 # skip passing test #3 (--run)
+	> ok 4 # skip passing test #4 (--run)
+	> ok 5 - passing test #5
+	> ok 6 # skip passing test #6 (--run)
+	> # passed all 6 test(s)
+	> 1..6
+	EOF
+"
+
+test_expect_success '--run empty selectors' "
+	run_sub_test_lib_test run-empty-sel \
+		'--run empty selectors' \
+		--run='1,,3,,,5' <<-\\EOF &&
+	for i in 1 2 3 4 5 6
+	do
+		test_expect_success \"passing test #\$i\" 'true'
+	done
+	test_done
+	EOF
+	check_sub_test_lib_test run-empty-sel <<-\\EOF
+	> ok 1 - passing test #1
+	> ok 2 # skip passing test #2 (--run)
+	> ok 3 - passing test #3
+	> ok 4 # skip passing test #4 (--run)
+	> ok 5 - passing test #5
+	> ok 6 # skip passing test #6 (--run)
+	> # passed all 6 test(s)
+	> 1..6
+	EOF
+"
+
+test_expect_success '--run invalid range start' "
+	run_sub_test_lib_test_err run-inv-range-start \
+		'--run invalid range start' \
+		--run='a-5' <<-\\EOF &&
+	test_expect_success \"passing test #1\" 'true'
+	test_done
+	EOF
+	check_sub_test_lib_test_err run-inv-range-start \
+		<<-\\EOF_OUT 3<<-\\EOF_ERR
+	> FATAL: Unexpected exit with code 1
+	EOF_OUT
+	> error: --run: invalid non-numeric in range start: 'a-5'
+	EOF_ERR
+"
+
+test_expect_success '--run invalid range end' "
+	run_sub_test_lib_test_err run-inv-range-end \
+		'--run invalid range end' \
+		--run='1-z' <<-\\EOF &&
+	test_expect_success \"passing test #1\" 'true'
+	test_done
+	EOF
+	check_sub_test_lib_test_err run-inv-range-end \
+		<<-\\EOF_OUT 3<<-\\EOF_ERR
+	> FATAL: Unexpected exit with code 1
+	EOF_OUT
+	> error: --run: invalid non-numeric in range end: '1-z'
+	EOF_ERR
+"
+
+test_expect_success '--run invalid selector' "
+	run_sub_test_lib_test_err run-inv-selector \
+		'--run invalid selector' \
+		--run='1?' <<-\\EOF &&
+	test_expect_success \"passing test #1\" 'true'
+	test_done
+	EOF
+	check_sub_test_lib_test_err run-inv-selector \
+		<<-\\EOF_OUT 3<<-\\EOF_ERR
+	> FATAL: Unexpected exit with code 1
+	EOF_OUT
+	> error: --run: invalid non-numeric in test selector: '1?'
+	EOF_ERR
+"
+
 
 test_set_prereq HAVEIT
 haveit=no
