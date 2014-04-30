@@ -71,6 +71,7 @@ You can pass --verbose (or -v), --debug (or -d), and --immediate
 (or -i) command line argument to the test, or by setting GIT_TEST_OPTS
 appropriately before running "make".
 
+-v::
 --verbose::
 	This makes the test more verbose.  Specifically, the
 	command being run and their output if any are also
@@ -81,6 +82,7 @@ appropriately before running "make".
 	numbers matching <pattern>.  The number matched against is
 	simply the running count of the test within the file.
 
+-d::
 --debug::
 	This may help the person who is developing a new test.
 	It causes the command defined with test_debug to run.
@@ -89,6 +91,7 @@ appropriately before running "make".
 	failed tests so that you can inspect its contents after
 	the test finished.
 
+-i::
 --immediate::
 	This causes the test to immediately exit upon the first
 	failed test. Cleanup commands requested with
@@ -96,6 +99,7 @@ appropriately before running "make".
 	in order to keep the state for inspection by the tester
 	to diagnose the bug.
 
+-l::
 --long-tests::
 	This causes additional long-running tests to be run (where
 	available), for more exhaustive testing.
