@@ -270,6 +270,69 @@ test_expect_success 'test --verbose-only' '
 	EOF
 '
 
+test_expect_success 'GIT_SKIP_TESTS' "
+	GIT_SKIP_TESTS='git.2' \
+		run_sub_test_lib_test git-skip-tests-basic \
+		'GIT_SKIP_TESTS' <<-\\EOF &&
+	for i in 1 2 3
+	do
+		test_expect_success \"passing test #\$i\" 'true'
+	done
+	test_done
+	EOF
+	check_sub_test_lib_test git-skip-tests-basic <<-\\EOF
+	> ok 1 - passing test #1
+	> ok 2 # skip passing test #2 (GIT_SKIP_TESTS)
+	> ok 3 - passing test #3
+	> # passed all 3 test(s)
+	> 1..3
+	EOF
+"
+
+test_expect_success 'GIT_SKIP_TESTS several tests' "
+	GIT_SKIP_TESTS='git.2 git.5' \
+		run_sub_test_lib_test git-skip-tests-several \
+		'GIT_SKIP_TESTS several tests' <<-\\EOF &&
+	for i in 1 2 3 4 5 6
+	do
+		test_expect_success \"passing test #\$i\" 'true'
+	done
+	test_done
+	EOF
+	check_sub_test_lib_test git-skip-tests-several <<-\\EOF
+	> ok 1 - passing test #1
+	> ok 2 # skip passing test #2 (GIT_SKIP_TESTS)
+	> ok 3 - passing test #3
+	> ok 4 - passing test #4
+	> ok 5 # skip passing test #5 (GIT_SKIP_TESTS)
+	> ok 6 - passing test #6
+	> # passed all 6 test(s)
+	> 1..6
+	EOF
+"
+
+test_expect_success 'GIT_SKIP_TESTS sh pattern' "
+	GIT_SKIP_TESTS='git.[2-5]' \
+		run_sub_test_lib_test git-skip-tests-sh-pattern \
+		'GIT_SKIP_TESTS sh pattern' <<-\\EOF &&
+	for i in 1 2 3 4 5 6
+	do
+		test_expect_success \"passing test #\$i\" 'true'
+	done
+	test_done
+	EOF
+	check_sub_test_lib_test git-skip-tests-sh-pattern <<-\\EOF
+	> ok 1 - passing test #1
+	> ok 2 # skip passing test #2 (GIT_SKIP_TESTS)
+	> ok 3 # skip passing test #3 (GIT_SKIP_TESTS)
+	> ok 4 # skip passing test #4 (GIT_SKIP_TESTS)
+	> ok 5 # skip passing test #5 (GIT_SKIP_TESTS)
+	> ok 6 - passing test #6
+	> # passed all 6 test(s)
+	> 1..6
+	EOF
+"
+
 test_set_prereq HAVEIT
 haveit=no
 test_expect_success HAVEIT 'test runs if prerequisite is satisfied' '
