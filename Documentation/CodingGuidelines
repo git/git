@@ -123,9 +123,17 @@ For shell scripts specifically (not exhaustive):
  - We do not write the noiseword "function" in front of shell
    functions.
 
- - We prefer a space between the function name and the parentheses. The
-   opening "{" should also be on the same line.
-   E.g.: my_function () {
+ - We prefer a space between the function name and the parentheses,
+   and no space inside the parentheses. The opening "{" should also
+   be on the same line.
+
+	(incorrect)
+	my_function(){
+		...
+
+	(correct)
+	my_function () {
+		...
 
  - As to use of grep, stick to a subset of BRE (namely, no \{m,n\},
    [::], [==], or [..]) for portability.
