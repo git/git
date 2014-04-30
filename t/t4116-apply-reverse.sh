@@ -30,10 +30,10 @@ test_expect_success setup '
 
 test_expect_success 'apply in forward' '
 
-	T0=`git rev-parse "second^{tree}"` &&
+	T0=$(git rev-parse "second^{tree}") &&
 	git reset --hard initial &&
 	git apply --index --binary patch &&
-	T1=`git write-tree` &&
+	T1=$(git write-tree) &&
 	test "$T0" = "$T1"
 '
 
@@ -62,22 +62,22 @@ test_expect_success 'setup separate repository lacking postimage' '
 
 test_expect_success 'apply in forward without postimage' '
 
-	T0=`git rev-parse "second^{tree}"` &&
+	T0=$(git rev-parse "second^{tree}") &&
 	(
 		cd initial &&
 		git apply --index --binary ../patch &&
-		T1=`git write-tree` &&
+		T1=$(git write-tree) &&
 		test "$T0" = "$T1"
 	)
 '
 
 test_expect_success 'apply in reverse without postimage' '
 
-	T0=`git rev-parse "initial^{tree}"` &&
+	T0=$(git rev-parse "initial^{tree}") &&
 	(
 		cd second &&
 		git apply --index --binary --reverse ../patch &&
-		T1=`git write-tree` &&
+		T1=$(git write-tree) &&
 		test "$T0" = "$T1"
 	)
 '
