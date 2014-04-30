@@ -222,6 +222,33 @@ For C programs:
  - Double negation is often harder to understand than no negation
    at all.
 
+ - There are two schools of thought when it comes to comparison,
+   especially inside a loop. Some people prefer to have the less stable
+   value on the left hand side and the more stable value on the right hand
+   side, e.g. if you have a loop that counts variable i down to the
+   lower bound,
+
+	while (i > lower_bound) {
+		do something;
+		i--;
+	}
+
+   Other people prefer to have the textual order of values match the
+   actual order of values in their comparison, so that they can
+   mentally draw a number line from left to right and place these
+   values in order, i.e.
+
+	while (lower_bound < i) {
+		do something;
+		i--;
+	}
+
+   Both are valid, and we use both.  However, the more "stable" the
+   stable side becomes, the more we tend to prefer the former
+   (comparison with a constant, "i > 0", is an extreme example).
+   Just do not mix styles in the same part of the code and mimic
+   existing styles in the neighbourhood.
+
  - Some clever tricks, like using the !! operator with arithmetic
    constructs, can be extremely confusing to others.  Avoid them,
    unless there is a compelling reason to use them.
