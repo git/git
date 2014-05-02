@@ -592,6 +592,11 @@ static void split_ident_or_die(struct ident_split *id, const struct strbuf *buf)
 		die(_("Malformed ident string: '%s'"), buf->buf);
 }
 
+static int author_date_is_interesting(void)
+{
+	return author_message || force_date;
+}
+
 static int prepare_to_commit(const char *index_file, const char *prefix,
 			     struct commit *current_head,
 			     struct wt_status *s,
@@ -804,6 +809,13 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 				ident_shown++ ? "" : "\n",
 				(int)(ai.name_end - ai.name_begin), ai.name_begin,
 				(int)(ai.mail_end - ai.mail_begin), ai.mail_begin);
+
+		if (author_date_is_interesting())
+			status_printf_ln(s, GIT_COLOR_NORMAL,
+				_("%s"
+				"Date:      %s"),
+				ident_shown++ ? "" : "\n",
+				show_ident_date(&ai, DATE_NORMAL));
 
 		if (!committer_ident_sufficiently_given())
 			status_printf_ln(s, GIT_COLOR_NORMAL,
@@ -1354,6 +1366,13 @@ static void print_summary(const char *prefix, const unsigned char *sha1,
 	if (strbuf_cmp(&author_ident, &committer_ident)) {
 		strbuf_addstr(&format, "\n Author: ");
 		strbuf_addbuf_percentquote(&format, &author_ident);
+	}
+	if (author_date_is_interesting()) {
+		struct strbuf date = STRBUF_INIT;
+		format_commit_message(commit, "%ad", &date, &pctx);
+		strbuf_addstr(&format, "\n Date: ");
+		strbuf_addbuf_percentquote(&format, &date);
+		strbuf_release(&date);
 	}
 	if (!committer_ident_sufficiently_given()) {
 		strbuf_addstr(&format, "\n Committer: ");

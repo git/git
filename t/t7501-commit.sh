@@ -346,6 +346,11 @@ test_expect_success 'amend commit to fix date' '
 
 '
 
+test_expect_success 'commit mentions forced date in output' '
+	git commit --amend --date=2010-01-02T03:04:05 >output &&
+	grep "Date: *Sat Jan 2 03:04:05 2010" output
+'
+
 test_expect_success 'commit complains about bogus date' '
 	test_must_fail git commit --amend --date=10.11.2010
 '

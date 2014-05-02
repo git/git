@@ -65,12 +65,15 @@ test_expect_success 'output to keep user entertained during multi-pick' '
 	cat <<-\EOF >expected &&
 	[master OBJID] second
 	 Author: A U Thor <author@example.com>
+	 Date: Thu Apr 7 15:14:13 2005 -0700
 	 1 file changed, 1 insertion(+)
 	[master OBJID] third
 	 Author: A U Thor <author@example.com>
+	 Date: Thu Apr 7 15:15:13 2005 -0700
 	 1 file changed, 1 insertion(+)
 	[master OBJID] fourth
 	 Author: A U Thor <author@example.com>
+	 Date: Thu Apr 7 15:16:13 2005 -0700
 	 1 file changed, 1 insertion(+)
 	EOF
 
@@ -98,14 +101,17 @@ test_expect_success 'output during multi-pick indicates merge strategy' '
 	Trying simple merge.
 	[master OBJID] second
 	 Author: A U Thor <author@example.com>
+	 Date: Thu Apr 7 15:14:13 2005 -0700
 	 1 file changed, 1 insertion(+)
 	Trying simple merge.
 	[master OBJID] third
 	 Author: A U Thor <author@example.com>
+	 Date: Thu Apr 7 15:15:13 2005 -0700
 	 1 file changed, 1 insertion(+)
 	Trying simple merge.
 	[master OBJID] fourth
 	 Author: A U Thor <author@example.com>
+	 Date: Thu Apr 7 15:16:13 2005 -0700
 	 1 file changed, 1 insertion(+)
 	EOF
 
