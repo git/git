@@ -585,13 +585,11 @@ static void determine_author_info(struct strbuf *author_ident)
 	}
 }
 
-static char *cut_ident_timestamp_part(char *string)
+static void split_ident_or_die(struct ident_split *id, const struct strbuf *buf)
 {
-	char *ket = strrchr(string, '>');
-	if (!ket || ket[1] != ' ')
-		die(_("Malformed ident string: '%s'"), string);
-	*++ket = '\0';
-	return ket;
+	if (split_ident_line(id, buf->buf, buf->len) ||
+	    !sane_ident_split(id))
+		die(_("Malformed ident string: '%s'"), buf->buf);
 }
 
 static int prepare_to_commit(const char *index_file, const char *prefix,
@@ -755,7 +753,8 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 	if (use_editor && include_status) {
 		int ident_shown = 0;
 		int saved_color_setting;
-		char *ai_tmp, *ci_tmp;
+		struct ident_split ci, ai;
+
 		if (whence != FROM_COMMIT) {
 			if (cleanup_mode == CLEANUP_SCISSORS)
 				wt_status_add_cut_line(s->fp);
@@ -795,21 +794,24 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 			status_printf_ln(s, GIT_COLOR_NORMAL,
 					"%s", only_include_assumed);
 
-		ai_tmp = cut_ident_timestamp_part(author_ident->buf);
-		ci_tmp = cut_ident_timestamp_part(committer_ident.buf);
-		if (strcmp(author_ident->buf, committer_ident.buf))
+		split_ident_or_die(&ai, author_ident);
+		split_ident_or_die(&ci, &committer_ident);
+
+		if (ident_cmp(&ai, &ci))
 			status_printf_ln(s, GIT_COLOR_NORMAL,
 				_("%s"
-				"Author:    %s"),
+				"Author:    %.*s <%.*s>"),
 				ident_shown++ ? "" : "\n",
-				author_ident->buf);
+				(int)(ai.name_end - ai.name_begin), ai.name_begin,
+				(int)(ai.mail_end - ai.mail_begin), ai.mail_begin);
 
 		if (!committer_ident_sufficiently_given())
 			status_printf_ln(s, GIT_COLOR_NORMAL,
 				_("%s"
-				"Committer: %s"),
+				"Committer: %.*s <%.*s>"),
 				ident_shown++ ? "" : "\n",
-				committer_ident.buf);
+				(int)(ci.name_end - ci.name_begin), ci.name_begin,
+				(int)(ci.mail_end - ci.mail_begin), ci.mail_begin);
 
 		if (ident_shown)
 			status_printf_ln(s, GIT_COLOR_NORMAL, "");
@@ -818,9 +820,6 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		s->use_color = 0;
 		commitable = run_status(s->fp, index_file, prefix, 1, s);
 		s->use_color = saved_color_setting;
-
-		*ai_tmp = ' ';
-		*ci_tmp = ' ';
 	} else {
 		unsigned char sha1[20];
 		const char *parent = "HEAD";
