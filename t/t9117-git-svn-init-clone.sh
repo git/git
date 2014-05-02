@@ -101,18 +101,18 @@ test_expect_success 'clone with -s/-T/-b/-t assumes --prefix=origin/' '
 	rm -f warning
 	'
 
-test_expect_success 'init with -s/-T/-b/-t and --prefix="" still works' '
+test_expect_success 'init with -s/-T/-b/-t and --prefix "" still works' '
 	test ! -d project &&
-	git svn init -s "$svnrepo"/project project --prefix="" 2>warning &&
+	git svn init -s "$svnrepo"/project project --prefix "" 2>warning &&
 	test_must_fail grep -q prefix warning &&
 	test_svn_configured_prefix "" &&
 	rm -rf project &&
 	rm -f warning
 	'
 
-test_expect_success 'clone with -s/-T/-b/-t and --prefix="" still works' '
+test_expect_success 'clone with -s/-T/-b/-t and --prefix "" still works' '
 	test ! -d project &&
-	git svn clone -s "$svnrepo"/project --prefix="" 2>warning &&
+	git svn clone -s "$svnrepo"/project --prefix "" 2>warning &&
 	test_must_fail grep -q prefix warning &&
 	test_svn_configured_prefix "" &&
 	rm -rf project &&

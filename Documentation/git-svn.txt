@@ -91,6 +91,9 @@ COMMANDS
 NOTE: Before Git v2.0, the default prefix was "" (no prefix). This
 meant that SVN-tracking refs were put at "refs/remotes/*", which is
 incompatible with how Git's own remote-tracking refs are organized.
+If you still want the old default, you can get it by passing
+`--prefix ""` on the command line (`--prefix=""` may not work if
+your Perl's Getopt::Long is < v2.37).
 
 --ignore-paths=<regex>;;
 	When passed to 'init' or 'clone' this regular expression will
