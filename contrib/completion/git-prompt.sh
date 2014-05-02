@@ -207,7 +207,18 @@ __git_ps1_show_upstream ()
 			p=" u+${count#*	}-${count%	*}" ;;
 		esac
 		if [[ -n "$count" && -n "$name" ]]; then
-			p="$p $(git rev-parse --abbrev-ref "$upstream" 2>/dev/null)"
+			__git_ps1_upstream_name=$(git rev-parse \
+				--abbrev-ref "$upstream" 2>/dev/null)
+			if [ $pcmode = yes ]; then
+				# see the comments around the
+				# __git_ps1_branch_name variable below
+				p="$p \${__git_ps1_upstream_name}"
+			else
+				p="$p ${__git_ps1_upstream_name}"
+				# not needed anymore; keep user's
+				# environment clean
+				unset __git_ps1_upstream_name
+			fi
 		fi
 	fi
 
@@ -445,8 +456,27 @@ __git_ps1 ()
 		__git_ps1_colorize_gitstring
 	fi
 
+	b=${b##refs/heads/}
+	if [ $pcmode = yes ]; then
+		# In pcmode (and only pcmode) the contents of
+		# $gitstring are subject to expansion by the shell.
+		# Avoid putting the raw ref name in the prompt to
+		# protect the user from arbitrary code execution via
+		# specially crafted ref names (e.g., a ref named
+		# '$(IFS=_;cmd=sudo_rm_-rf_/;$cmd)' would execute
+		# 'sudo rm -rf /' when the prompt is drawn).  Instead,
+		# put the ref name in a new global variable (in the
+		# __git_ps1_* namespace to avoid colliding with the
+		# user's environment) and reference that variable from
+		# PS1.
+		__git_ps1_branch_name=$b
+		# note that the $ is escaped -- the variable will be
+		# expanded later (when it's time to draw the prompt)
+		b="\${__git_ps1_branch_name}"
+	fi
+
 	local f="$w$i$s$u"
-	local gitstring="$c${b##refs/heads/}${f:+$z$f}$r$p"
+	local gitstring="$c$b${f:+$z$f}$r$p"
 
 	if [ $pcmode = yes ]; then
 		if [ "${__git_printf_supports_v-}" != yes ]; then
