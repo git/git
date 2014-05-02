@@ -101,17 +101,17 @@ static inline uint64_t git_bswap64(uint64_t x)
 #undef ntohll
 #undef htonll
 
-#if defined(BYTE_ORDER) && defined(LITTLE_ENDIAN) && defined(BIG_ENDIAN)
-
-# define GIT_BYTE_ORDER BYTE_ORDER
-# define GIT_LITTLE_ENDIAN LITTLE_ENDIAN
-# define GIT_BIG_ENDIAN BIG_ENDIAN
-
-#elif defined(__BYTE_ORDER) && defined(__LITTLE_ENDIAN) && defined(__BIG_ENDIAN)
+#if defined(__BYTE_ORDER) && defined(__LITTLE_ENDIAN) && defined(__BIG_ENDIAN)
 
 # define GIT_BYTE_ORDER __BYTE_ORDER
 # define GIT_LITTLE_ENDIAN __LITTLE_ENDIAN
 # define GIT_BIG_ENDIAN __BIG_ENDIAN
+
+#elif defined(BYTE_ORDER) && defined(LITTLE_ENDIAN) && defined(BIG_ENDIAN)
+
+# define GIT_BYTE_ORDER BYTE_ORDER
+# define GIT_LITTLE_ENDIAN LITTLE_ENDIAN
+# define GIT_BIG_ENDIAN BIG_ENDIAN
 
 #else
 
