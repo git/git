@@ -1046,6 +1046,13 @@ struct ident_split {
 extern int split_ident_line(struct ident_split *, const char *, int);
 
 /*
+ * Like show_date, but pull the timestamp and tz parameters from
+ * the ident_split. It will also sanity-check the values and produce
+ * a well-known sentinel date if they appear bogus.
+ */
+const char *show_ident_date(const struct ident_split *id, enum date_mode mode);
+
+/*
  * Compare split idents for equality or strict ordering. Note that we
  * compare only the ident part of the line, ignoring any timestamp.
  *

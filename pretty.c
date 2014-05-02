@@ -393,8 +393,8 @@ static void add_rfc2047(struct strbuf *sb, const char *line, size_t len,
 	strbuf_addstr(sb, "?=");
 }
 
-static const char *show_ident_date(const struct ident_split *ident,
-				   enum date_mode mode)
+const char *show_ident_date(const struct ident_split *ident,
+			    enum date_mode mode)
 {
 	unsigned long date = 0;
 	long tz = 0;
