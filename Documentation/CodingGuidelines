@@ -249,6 +249,61 @@ For C programs:
    Just do not mix styles in the same part of the code and mimic
    existing styles in the neighbourhood.
 
+ - There are two schools of thought when it comes to splitting a long
+   logical line into multiple lines.  Some people push the second and
+   subsequent lines far enough to the right with tabs and align them:
+
+        if (the_beginning_of_a_very_long_expression_that_has_to ||
+		span_more_than_a_single_line_of ||
+		the_source_text) {
+                ...
+
+   while other people prefer to align the second and the subsequent
+   lines with the column immediately inside the opening parenthesis,
+   with tabs and spaces, following our "tabstop is always a multiple
+   of 8" convention:
+
+        if (the_beginning_of_a_very_long_expression_that_has_to ||
+	    span_more_than_a_single_line_of ||
+	    the_source_text) {
+                ...
+
+   Both are valid, and we use both.  Again, just do not mix styles in
+   the same part of the code and mimic existing styles in the
+   neighbourhood.
+
+ - When splitting a long logical line, some people change line before
+   a binary operator, so that the result looks like a parse tree when
+   you turn your head 90-degrees counterclockwise:
+
+        if (the_beginning_of_a_very_long_expression_that_has_to
+	    || span_more_than_a_single_line_of_the_source_text) {
+
+   while other people prefer to leave the operator at the end of the
+   line:
+
+        if (the_beginning_of_a_very_long_expression_that_has_to ||
+	    span_more_than_a_single_line_of_the_source_text) {
+
+   Both are valid, but we tend to use the latter more, unless the
+   expression gets fairly complex, in which case the former tends to
+   be easier to read.  Again, just do not mix styles in the same part
+   of the code and mimic existing styles in the neighbourhood.
+
+ - When splitting a long logical line, with everything else being
+   equal, it is preferable to split after the operator at higher
+   level in the parse tree.  That is, this is more preferable:
+
+	if (a_very_long_variable * that_is_used_in +
+	    a_very_long_expression) {
+		...
+
+   than
+
+	if (a_very_long_variable *
+	    that_is_used_in + a_very_long_expression) {
+		...
+
  - Some clever tricks, like using the !! operator with arithmetic
    constructs, can be extremely confusing to others.  Avoid them,
    unless there is a compelling reason to use them.
