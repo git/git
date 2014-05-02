@@ -179,7 +179,12 @@ Unless otherwise noted, all the fixes since v1.9 in the maintenance
 track are contained in this release (see the maintenance releases'
 notes for details).
 
- * The remote-helepr interface to fast-import/fast-export via the
+ * The shell prompt script (in contrib/), when using the PROMPT_COMMAND
+   interface, used an unsafe construct when showing the branch name in
+   $PS1.
+   (merge 8976500 rh/prompt-pcmode-avoid-eval-on-refname later to maint).
+
+ * The remote-helper interface to fast-import/fast-export via the
    transport-helper has been tightened to avoid leaving the import
    marks file from a failed/crashed run, as such a file that is out of
    sync with the reality confuses a later invocation of itself.
