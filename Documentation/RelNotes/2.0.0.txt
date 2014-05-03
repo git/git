@@ -68,7 +68,7 @@ UI, Workflows & Features
    e.g. "key-id" in "--gpg-sign=<key-id>").
 
  * The pattern to find where the function begins in C/C++ used in
-   "diff" and "grep -p" have been updated to help C++ source better.
+   "diff" and "grep -p" has been updated to help C++ source better.
 
  * "git rebase" learned to interpret a lone "-" as "@{-1}", the
    branch that we were previously on.
@@ -98,7 +98,7 @@ UI, Workflows & Features
    tree-wide operation even when run inside a subdirectory of a
    working tree.
 
- * "git add <path> is the same as "git add -A <path>" now.
+ * "git add <path>" is the same as "git add -A <path>" now.
 
  * "core.statinfo" configuration variable, which is a
    never-advertised synonym to "core.checkstat", has been removed.
@@ -137,7 +137,7 @@ UI, Workflows & Features
  * "git pull" can be told to only accept fast-forward by setting the
    new "pull.ff" configuration.
 
- * "git reset" learned "-N" option, which does not reset the index
+ * "git reset" learned the "-N" option, which does not reset the index
    fully for paths the index knows about but the tree-ish the command
    resets to does not (these paths are kept as intend-to-add entries).
 
@@ -156,11 +156,11 @@ Performance, Internal Implementation, etc.
    "easy" interface.
 
  * The bitmap-index feature from JGit has been ported, which should
-   significantly improve performance when serving objects form a
+   significantly improve performance when serving objects from a
    repository that uses it.
 
  * The way "git log --cc" shows a combined diff against multiple
-   parents have been optimized.
+   parents has been optimized.
 
  * The prefixcmp() and suffixcmp() functions are gone.  Use
    starts_with() and ends_with(), and also consider if skip_prefix()
