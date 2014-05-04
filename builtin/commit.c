@@ -805,7 +805,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 				committer_ident.buf);
 
 		if (ident_shown)
-			status_printf_ln(s, GIT_COLOR_NORMAL, "");
+			status_printf_ln(s, GIT_COLOR_NORMAL, "%s", "");
 
 		saved_color_setting = s->use_color;
 		s->use_color = 0;
