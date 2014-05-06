@@ -3,7 +3,7 @@
 
 prefix ?= /usr/local
 mandir ?= $(prefix)/share/man
-libexecdir ?= $(prefix)/libexec/git-core
+gitexecdir ?= $(prefix)/libexec/git-core
 man1dir ?= $(mandir)/man1
 
 ../../GIT-VERSION-FILE: FORCE
@@ -33,8 +33,8 @@ $(GIT_SUBTREE): $(GIT_SUBTREE_SH)
 doc: $(GIT_SUBTREE_DOC) $(GIT_SUBTREE_HTML)
 
 install: $(GIT_SUBTREE)
-	$(INSTALL) -d -m 755 $(DESTDIR)$(libexecdir)
-	$(INSTALL) -m 755 $(GIT_SUBTREE) $(DESTDIR)$(libexecdir)
+	$(INSTALL) -d -m 755 $(DESTDIR)$(gitexecdir)
+	$(INSTALL) -m 755 $(GIT_SUBTREE) $(DESTDIR)$(gitexecdir)
 
 install-doc: install-man
 
