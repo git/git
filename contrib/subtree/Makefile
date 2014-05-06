@@ -14,8 +14,11 @@ man1dir ?= $(mandir)/man1
 # this should be set to a 'standard' bsd-type install program
 INSTALL ?= install
 
-ASCIIDOC_CONF      = ../../Documentation/asciidoc.conf
-MANPAGE_NORMAL_XSL =  ../../Documentation/manpage-normal.xsl
+ASCIIDOC = asciidoc
+XMLTO    = xmlto
+
+ASCIIDOC_CONF = ../../Documentation/asciidoc.conf
+MANPAGE_XSL   = ../../Documentation/manpage-normal.xsl
 
 GIT_SUBTREE_SH := git-subtree.sh
 GIT_SUBTREE    := git-subtree
@@ -43,14 +46,14 @@ install-man: $(GIT_SUBTREE_DOC)
 	$(INSTALL) -m 644 $^ $(DESTDIR)$(man1dir)
 
 $(GIT_SUBTREE_DOC): $(GIT_SUBTREE_XML)
-	xmlto -m $(MANPAGE_NORMAL_XSL)  man $^
+	$(XMLTO) -m $(MANPAGE_XSL) man $^
 
 $(GIT_SUBTREE_XML): $(GIT_SUBTREE_TXT)
-	asciidoc -b docbook -d manpage -f $(ASCIIDOC_CONF) \
+	$(ASCIIDOC) -b docbook -d manpage -f $(ASCIIDOC_CONF) \
 		-agit_version=$(GIT_VERSION) $^
 
 $(GIT_SUBTREE_HTML): $(GIT_SUBTREE_TXT)
-	asciidoc -b xhtml11 -d manpage -f $(ASCIIDOC_CONF) \
+	$(ASCIIDOC) -b xhtml11 -d manpage -f $(ASCIIDOC_CONF) \
 		-agit_version=$(GIT_VERSION) $^
 
 test:
