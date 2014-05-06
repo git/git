@@ -343,7 +343,11 @@ extern void warning(const char *err, ...) __attribute__((format (printf, 1, 2)))
  * using the function as usual.
  */
 #if defined(__GNUC__) && ! defined(__clang__)
-#define error(...) (error(__VA_ARGS__), -1)
+static inline int const_error(void)
+{
+	return -1;
+}
+#define error(...) (error(__VA_ARGS__), const_error())
 #endif
 
 extern void set_die_routine(NORETURN_PTR void (*routine)(const char *err, va_list params));
