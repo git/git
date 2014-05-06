@@ -651,10 +651,7 @@ static void update_refs_for_switch(const struct checkout_opts *opts,
 			}
 		}
 		if (old->path && old->name) {
-			char ref_file[PATH_MAX];
-
-			git_snpath(ref_file, sizeof(ref_file), "%s", old->path);
-			if (!file_exists(ref_file) && reflog_exists(old->path))
+			if (!ref_exists(old->path) && reflog_exists(old->path))
 				delete_reflog(old->path);
 		}
 	}
