@@ -12,7 +12,8 @@ man1dir ?= $(mandir)/man1
 -include ../../GIT-VERSION-FILE
 
 # this should be set to a 'standard' bsd-type install program
-INSTALL ?= install
+INSTALL  ?= install
+RM       ?= rm -f
 
 ASCIIDOC = asciidoc
 XMLTO    = xmlto
@@ -60,7 +61,7 @@ test:
 	$(MAKE) -C t/ test
 
 clean:
-	rm -f *~ *.xml *.html *.1
-	rm -rf subproj mainline
+	$(RM) $(GIT_SUBTREE)
+	$(RM) *.xml *.html *.1
 
 .PHONY: FORCE
