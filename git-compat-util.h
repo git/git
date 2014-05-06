@@ -342,7 +342,7 @@ extern void warning(const char *err, ...) __attribute__((format (printf, 1, 2)))
  * trying to help gcc, anyway, it's OK; other compilers will fall back to
  * using the function as usual.
  */
-#if defined(__GNUC__) && ! defined(__clang__)
+#if defined(__GNUC__)
 static inline int const_error(void)
 {
 	return -1;
