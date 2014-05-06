@@ -6,7 +6,10 @@ mandir ?= $(prefix)/share/man
 libexecdir ?= $(prefix)/libexec/git-core
 man1dir ?= $(mandir)/man1
 
-gitver ?= $(word 3,$(shell git --version))
+../../GIT-VERSION-FILE: FORCE
+	$(MAKE) -C ../../ GIT-VERSION-FILE
+
+-include ../../GIT-VERSION-FILE
 
 # this should be set to a 'standard' bsd-type install program
 INSTALL ?= install
@@ -44,11 +47,11 @@ $(GIT_SUBTREE_DOC): $(GIT_SUBTREE_XML)
 
 $(GIT_SUBTREE_XML): $(GIT_SUBTREE_TXT)
 	asciidoc -b docbook -d manpage -f $(ASCIIDOC_CONF) \
-		-agit_version=$(gitver) $^
+		-agit_version=$(GIT_VERSION) $^
 
 $(GIT_SUBTREE_HTML): $(GIT_SUBTREE_TXT)
 	asciidoc -b xhtml11 -d manpage -f $(ASCIIDOC_CONF) \
-		-agit_version=$(gitver) $^
+		-agit_version=$(GIT_VERSION) $^
 
 test:
 	$(MAKE) -C t/ test
@@ -56,3 +59,5 @@ test:
 clean:
 	rm -f *~ *.xml *.html *.1
 	rm -rf subproj mainline
+
+.PHONY: FORCE
