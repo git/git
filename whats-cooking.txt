@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Apr 2014, #09; Tue, 29)
-X-master-at: d8779e1e2536bdd024254af14d2c046bba2bbb01
-X-next-at: fe24852931172d52dd7fafff92f32bb80ce75764
+Subject: What's cooking in git.git (May 2014, #01; Tue, 6)
+X-master-at: b4f86a4ce85e4e370a67455de6586a02f158a789
+X-next-at: cfa251bb0195ab6f98c8c86125e8419cea21247d
 
-What's cooking in git.git (Apr 2014, #09; Tue, 29)
+What's cooking in git.git (May 2014, #01; Tue, 6)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -23,78 +23,112 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
+[Graduated to "master"]
+
+* km/git-svn-workaround-older-getopt-long (2014-04-23) 1 commit
+  (merged to 'next' on 2014-04-23 at 3f35586)
+ + t9117: use --prefix "" instead of --prefix=""
+
+ Finishing touches to a change that is already in 'master'.
+
+
+* mk/doc-git-gui-display-untracked (2014-04-21) 1 commit
+  (merged to 'next' on 2014-04-22 at 385d39a)
+ + Documentation: git-gui: describe gui.displayuntracked
+
+
+* mw/symlinks (2014-04-24) 1 commit
+  (merged to 'next' on 2014-04-25 at 20b2af6)
+ + setup: fix windows path buffer over-stepping
+
+ A finishing touch fix to a new change already in 'master'.
+
+
+* rh/prompt-pcmode-avoid-eval-on-refname (2014-04-22) 1 commit
+  (merged to 'next' on 2014-04-22 at 3a1506f)
+ + git-prompt.sh: don't put unsanitized branch names in $PS1
+
+--------------------------------------------------
 [New Topics]
 
-* cc/replace-edit (2014-04-29) 4 commits
- - replace: add --edit option
- - replace: factor object resolution out of replace_object
- - replace: use OPT_CMDMODE to handle modes
- - replace: refactor command-mode determination
+* bg/strbuf-trim (2014-04-30) 2 commits
+ - api-strbuf.txt: Add docs for _trim and _ltrim
+ - strbuf: Use _rtrim and _ltrim in strbuf_trim
+
+ Will merge to 'next'.
 
 
-* da/imap-send-use-credential-helper (2014-04-29) 1 commit
- - imap-send: use git-credential
+* cb/byte-order (2014-05-02) 2 commits
+ - compat/bswap.h: restore preference __BIG_ENDIAN over BIG_ENDIAN
+ - compat/bswap.h: detect endianness on more platforms that don't use BYTE_ORDER
+
+ Will merge to 'next'.
 
 
-* dk/blame-reorg (2014-04-28) 1 commit
- - blame: large-scale performance rewrite
+* dt/api-doc-setup-gently (2014-04-30) 1 commit
+ - docs: document RUN_SETUP_GENTLY and clarify RUN_SETUP
+
+ Will merge to 'next'.
 
 
-* je/pager-do-not-recurse (2014-04-28) 1 commit
- - pager: do allow spawning pager recursively
+* dt/merge-recursive-case-insensitive (2014-05-06) 1 commit
+ - merge-recursive.c: Fix case-changing merge bug
 
 
-* jk/commit-C-pick-empty (2014-04-28) 1 commit
- - commit: do not complain of empty messages from -C
+* ew/config-protect-mode (2014-05-06) 1 commit
+ - config: preserve config file permissions on edits
+
+ Will merge to 'next'.
 
 
-* jk/utf8-switch-between-nfd-and-nfc (2014-04-29) 1 commit
- - t3910: show failure of core.precomposeunicode with decomposed filenames
+* fc/rerere-conflict-style (2014-04-30) 1 commit
+ - rerere: fix for merge.conflictstyle
+
+ Will merge to 'next'.
 
 
-* mt/send-email-cover-to-cc (2014-04-29) 2 commits
- - test/send-email: to-cover, cc-cover tests
- - git-send-email: two new options: to-cover, cc-cover
+* jc/coding-guidelines (2014-05-02) 8 commits
+ - CodingGuidelines: on splitting a long line
+ - CodingGuidelines: on comparison
+ - CodingGuidelines: do not call the conditional statement "if()"
+ - CodingGuidelines: give an example for shell function preamble
+ - CodingGuidelines: give an example for control statements
+ - CodingGuidelines: give an example for redirection
+ - CodingGuidelines: give an example for case/esac statement
+ - CodingGuidelines: once it is in, it is not worth the code churn
+
+ Needs to be rerolled.
 
 
-* nd/split-index (2014-04-29) 33 commits
- - SQUASH???
- - t1700: new tests for split-index mode
- - t2104: make sure split index mode is off for the version test
- - read-cache: force split index mode with GIT_TEST_SPLIT_INDEX
- - read-tree: note about dropping split-index mode or index version
- - read-tree: force split-index mode off on --index-output
- - rev-parse: add --shared-index-path to get shared index path
- - update-index --split-index: do not split if $GIT_DIR is read only
- - update-index: new options to enable/disable split index mode
- - split-index: strip pathname of on-disk replaced entries
- - split-index: do not invalidate cache-tree at read time
- - split-index: the reading part
- - split-index: the writing part
- - read-cache: mark updated entries for split index
- - read-cache: save deleted entries in split index
- - read-cache: mark new entries for split index
- - read-cache: split-index mode
- - read-cache: save index SHA-1 after reading
- - entry.c: update cache_changed if refresh_cache is set in checkout_entry()
- - cache-tree: mark istate->cache_changed on prime_cache_tree()
- - cache-tree: mark istate->cache_changed on cache tree update
- - cache-tree: mark istate->cache_changed on cache tree invalidation
- - unpack-trees: be specific what part of the index has changed
- - resolve-undo: be specific what part of the index has changed
- - update-index: be specific what part of the index has changed
- - read-cache: be specific what part of the index has changed
- - read-cache: be strict about "changed" in remove_marked_cache_entries()
- - read-cache: store in-memory flags in the first 12 bits of ce_flags
- - read-cache: relocate and unexport commit_locked_index()
- - read-cache: new API write_locked_index instead of write_index/write_cache
- - sequencer: do not update/refresh index if the lock cannot be held
- - ewah: delete unused ewah_read_mmap_native declaration
- - ewah: fix constness of ewah_read_mmap
+* jd/subtree (2014-05-06) 5 commits
+ - contrib/subtree/Makefile: clean rule cleanup
+ - contrib/subtree/Makefile: Doc-gen rules cleanup
+ - contrib/subtree/Makefile: s/libexecdir/gitexecdir
+ - contrib/subtree/Makefile: Use GIT-VERSION-FILE
+ - contrib/subtree/Makefile: scrap unused $(gitdir)
+
+ Will merge to 'next'.
 
 
-* tl/relax-in-poll-emulation (2014-04-29) 1 commit
- - compat/poll: sleep 1 millisecond to avoid busy wait
+* jk/commit-date-approxidate (2014-05-02) 4 commits
+ - commit: accept more date formats for "--date"
+ - commit: print "Date" line when the user has set date
+ - pretty: make show_ident_date public
+ - commit: use split_ident_line to compare author/committer
+
+ Will merge to 'next'.
+
+
+* mm/pager-less-sans-S (2014-04-30) 1 commit
+ - pager: remove 'S' from $LESS by default
+
+ Will merge to 'next'.
+
+
+* sk/msvc-dynlink-crt (2014-05-06) 1 commit
+ - MSVC: link dynamically to the CRT
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -141,7 +175,6 @@ of the repositories listed at
  - Makefile: introduce make-var helper function
  - Makefile: fix git-instaweb dependency on gitweb
  - Makefile: drop USE_GETTEXT_SCHEME from GIT-CFLAGS
- (this branch is used by mm/pager-less-sans-S.)
 
  Simplify the Makefile rules and macros that exist primarily for
  quoting purposes, and make it easier to robustly express the
@@ -235,17 +268,6 @@ of the repositories listed at
  Will hold.
 
 
-* jc/format-patch (2013-04-22) 2 commits
- - format-patch: --inline-single
- - format-patch: rename "no_inline" field
-
- A new option to send a single patch to the standard output to be
- appended at the bottom of a message.  I personally have no need for
- this, but it was easy enough to cobble together.  Tests, docs and
- stripping out more MIMEy stuff are left as exercises to interested
- parties.
-
-
 * jc/show-branch (2014-03-24) 5 commits
  - show-branch: use commit slab to represent bitflags of arbitrary width
  - show-branch.c: remove "all_mask"
@@ -257,6 +279,78 @@ of the repositories listed at
 
 --------------------------------------------------
 [Cooking]
+
+* cc/replace-edit (2014-04-29) 4 commits
+ - replace: add --edit option
+ - replace: factor object resolution out of replace_object
+ - replace: use OPT_CMDMODE to handle modes
+ - replace: refactor command-mode determination
+
+
+* da/imap-send-use-credential-helper (2014-04-29) 1 commit
+ - imap-send: use git-credential
+
+
+* dk/blame-reorg (2014-04-28) 1 commit
+ - blame: large-scale performance rewrite
+
+
+* je/pager-do-not-recurse (2014-04-28) 1 commit
+ - pager: do allow spawning pager recursively
+
+
+* jk/commit-C-pick-empty (2014-04-28) 1 commit
+ - commit: do not complain of empty messages from -C
+
+
+* jk/utf8-switch-between-nfd-and-nfc (2014-04-29) 1 commit
+ - t3910: show failure of core.precomposeunicode with decomposed filenames
+
+
+* mt/send-email-cover-to-cc (2014-04-29) 2 commits
+ - test/send-email: to-cover, cc-cover tests
+ - git-send-email: two new options: to-cover, cc-cover
+
+
+* nd/split-index (2014-04-29) 33 commits
+ - SQUASH???
+ - t1700: new tests for split-index mode
+ - t2104: make sure split index mode is off for the version test
+ - read-cache: force split index mode with GIT_TEST_SPLIT_INDEX
+ - read-tree: note about dropping split-index mode or index version
+ - read-tree: force split-index mode off on --index-output
+ - rev-parse: add --shared-index-path to get shared index path
+ - update-index --split-index: do not split if $GIT_DIR is read only
+ - update-index: new options to enable/disable split index mode
+ - split-index: strip pathname of on-disk replaced entries
+ - split-index: do not invalidate cache-tree at read time
+ - split-index: the reading part
+ - split-index: the writing part
+ - read-cache: mark updated entries for split index
+ - read-cache: save deleted entries in split index
+ - read-cache: mark new entries for split index
+ - read-cache: split-index mode
+ - read-cache: save index SHA-1 after reading
+ - entry.c: update cache_changed if refresh_cache is set in checkout_entry()
+ - cache-tree: mark istate->cache_changed on prime_cache_tree()
+ - cache-tree: mark istate->cache_changed on cache tree update
+ - cache-tree: mark istate->cache_changed on cache tree invalidation
+ - unpack-trees: be specific what part of the index has changed
+ - resolve-undo: be specific what part of the index has changed
+ - update-index: be specific what part of the index has changed
+ - read-cache: be specific what part of the index has changed
+ - read-cache: be strict about "changed" in remove_marked_cache_entries()
+ - read-cache: store in-memory flags in the first 12 bits of ce_flags
+ - read-cache: relocate and unexport commit_locked_index()
+ - read-cache: new API write_locked_index instead of write_index/write_cache
+ - sequencer: do not update/refresh index if the lock cannot be held
+ - ewah: delete unused ewah_read_mmap_native declaration
+ - ewah: fix constness of ewah_read_mmap
+
+
+* tl/relax-in-poll-emulation (2014-04-29) 1 commit
+ - compat/poll: sleep 1 millisecond to avoid busy wait
+
 
 * bc/blame-crlf-test (2014-04-28) 1 commit
  - blame: correctly handle files regardless of autocrlf.
@@ -298,7 +392,21 @@ of the repositories listed at
  Expecting a reroll.
 
 
-* ep/shell-command-substitution (2014-04-29) 27 commits
+* ep/shell-command-substitution (2014-04-30) 41 commits
+ - t5000-tar-tree.sh: use the $( ... ) construct for command substitution
+ - t4204-patch-id.sh: use the $( ... ) construct for command substitution
+ - t4119-apply-config.sh: use the $( ... ) construct for command substitution
+ - t4116-apply-reverse.sh: use the $( ... ) construct for command substitution
+ - t4057-diff-combined-paths.sh: use the $( ... ) construct for command substitution
+ - t4038-diff-combined.sh: use the $( ... ) construct for command substitution
+ - t4036-format-patch-signer-mime.sh: use the $( ... ) construct for command substitution
+ - t4014-format-patch.sh: use the $( ... ) construct for command substitution
+ - t4013-diff-various.sh: use the $( ... ) construct for command substitution
+ - t4012-diff-binary.sh: use the $( ... ) construct for command substitution
+ - t4010-diff-pathspec.sh: use the $( ... ) construct for command substitution
+ - t4006-diff-mode.sh: use the $( ... ) construct for command substitution
+ - t3910-mac-os-precompose.sh: use the $( ... ) construct for command substitution
+ - t3905-stash-include-untracked.sh: use the $( ... ) construct for command substitution
  - t1050-large.sh: use the $( ... ) construct for command substitution
  - t1020-subdirectory.sh: use the $( ... ) construct for command substitution
  - t1004-read-tree-m-u-wf.sh: use the $( ... ) construct for command substitution
@@ -332,7 +440,7 @@ of the repositories listed at
  Will merge to 'next' and keep it there for the remainder of the cycle.
 
 
-* ib/test-selectively-run (2014-04-23) 3 commits
+* ib/test-selectively-run (2014-05-06) 3 commits
  - test-lib: '--run' to run only specific tests
  - test-lib: tests skipped by GIT_SKIP_TESTS say so
  - test-lib: Document short options in t/README
@@ -342,19 +450,11 @@ of the repositories listed at
 
 
 * mm/mediawiki-encoding-fix (2014-04-23) 2 commits
- - git-remote-mediawiki: fix encoding issue for UTF-8 media files
- - git-remote-mediawiki: allow stop/start-ing the test server
+  (merged to 'next' on 2014-05-02 at 7744361)
+ + git-remote-mediawiki: fix encoding issue for UTF-8 media files
+ + git-remote-mediawiki: allow stop/start-ing the test server
 
- Will merge to 'next' and keep it there for the remainder of the cycle.
-
-
-* mw/symlinks (2014-04-24) 1 commit
-  (merged to 'next' on 2014-04-25 at 20b2af6)
- + setup: fix windows path buffer over-stepping
-
- A finishing touch fix to a new change already in 'master'.
-
- Will merge to 'master' by -rc2.
+ Will keep in 'next' for the remainder of the cycle.
 
 
 * sk/tag-contains-wo-recursion (2014-04-25) 1 commit
@@ -382,8 +482,11 @@ of the repositories listed at
  suggestions on the follow-up fix patches still not in 'next', which
  may result in a reroll.
 
- Will merge to 'next' and keep it there for the remainder of the
- cycle.
+ I tend to agree with John Keeping that remote helpers that are
+ actively maintained can and should aim to graduate from my tree and
+ given to the user directly.
+
+ Will hold.
 
 
 * fc/remote-helper-refmap (2014-04-21) 8 commits
@@ -441,7 +544,8 @@ of the repositories listed at
 
 
 * fc/mergetool-prompt (2014-04-24) 2 commits
- - mergetool: document the default for --[no-]prompt
+  (merged to 'next' on 2014-05-02 at a554691)
+ + mergetool: document the default for --[no-]prompt
   (merged to 'next' on 2014-04-22 at dcaec94)
  + mergetool: run prompt only if guessed tool
 
@@ -459,7 +563,7 @@ of the repositories listed at
  users need to explicitly set the variable to 'true' if they want to
  resurrect the now-ignored use case.
 
- Will merge to 'next' and keep it there for the remainder of the cycle.
+ Will keep in 'next' for the remainder of the cycle.
 
 
 * fc/mergetools-vimdiff3 (2014-04-22) 1 commit
@@ -469,32 +573,11 @@ of the repositories listed at
  Will keep in 'next' for the remainder of the cycle.
 
 
-* km/git-svn-workaround-older-getopt-long (2014-04-23) 1 commit
-  (merged to 'next' on 2014-04-23 at 3f35586)
- + t9117: use --prefix "" instead of --prefix=""
-
- Will merge to 'master' by -rc2.
-
-
 * lr/git-run-setup-gently (2014-04-22) 1 commit
   (merged to 'next' on 2014-04-22 at 5c2523f)
  + git.c: treat RUN_SETUP_GENTLY and RUN_SETUP as mutually exclusive
 
  Will keep in 'next' for the remainder of the cycle.
-
-
-* mk/doc-git-gui-display-untracked (2014-04-21) 1 commit
-  (merged to 'next' on 2014-04-22 at 385d39a)
- + Documentation: git-gui: describe gui.displayuntracked
-
- Will merge to 'master' by -rc2.
-
-
-* rh/prompt-pcmode-avoid-eval-on-refname (2014-04-22) 1 commit
-  (merged to 'next' on 2014-04-22 at 3a1506f)
- + git-prompt.sh: don't put unsanitized branch names in $PS1
-
- Will merge to 'master' by -rc2.
 
 
 * fc/publish-vs-upstream (2014-04-21) 8 commits
@@ -640,12 +723,15 @@ of the repositories listed at
  Expecting a reroll.
 
 
-* mt/patch-id-stable (2014-04-29) 5 commits
- - t4204-patch-id.sh: default is now stable
- - patch-id: change default to stable
- - patch-id-test: test stable and unstable behaviour
- - test: add test_write_lines helper
- - patch-id: make it stable against hunk reordering
+* mt/patch-id-stable (2014-05-06) 6 commits
+ - test doc: test_write_lines does not split its arguments
+  (merged to 'next' on 2014-05-02 at cfa251b)
+ + t4204-patch-id.sh: default is now stable
+ + patch-id: change default to stable
+  (merged to 'next' on 2014-05-02 at b69326a)
+ + patch-id-test: test stable and unstable behaviour
+ + test: add test_write_lines helper
+ + patch-id: make it stable against hunk reordering
 
  Introduce a new way to compute patch-id for a patch that is not
  affected by the order of the paths that appear in the input.
@@ -804,3 +890,19 @@ of the repositories listed at
 
  A new filter to programatically edit the tail end of the commit log
  messages.
+
+
+--------------------------------------------------
+[Discarded]
+
+* jc/format-patch (2013-04-22) 2 commits
+ . format-patch: --inline-single
+ . format-patch: rename "no_inline" field
+
+ A new option to send a single patch to the standard output to be
+ appended at the bottom of a message.  I personally have no need for
+ this, but it was easy enough to cobble together.  Tests, docs and
+ stripping out more MIMEy stuff are left as exercises to interested
+ parties.
+
+
