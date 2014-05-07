@@ -361,9 +361,7 @@ static void run_pager(struct grep_opt *opt, const char *prefix)
 		argv[i] = path_list->items[i].string;
 	argv[path_list->nr] = NULL;
 
-	if (prefix && chdir(prefix))
-		die(_("Failed to chdir: %s"), prefix);
-	status = run_command_v_opt(argv, RUN_USING_SHELL);
+	status = run_command_v_opt_cd_env(argv, RUN_USING_SHELL, prefix, NULL);
 	if (status)
 		exit(status);
 	free(argv);
