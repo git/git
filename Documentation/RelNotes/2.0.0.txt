@@ -89,8 +89,8 @@ UI, Workflows & Features
    "-h" (no header) and "-c" (count) options are given.
 
  * "git push" via transport-helper interface (e.g. remote-hg) has
-   been updated to allow ref deletion in a way similar to the natively
-   supported transports.
+   been updated to allow forced ref updates in a way similar to the
+   natively supported transports.
 
  * The "simple" mode is the default for "git push".
 
@@ -178,6 +178,10 @@ Fixes since v1.9 series
 Unless otherwise noted, all the fixes since v1.9 in the maintenance
 track are contained in this release (see the maintenance releases'
 notes for details).
+
+ * "git p4" was broken in 1.9 release to deal with changes in binary
+   files.
+   (merge 749b668 cl/p4-use-diff-tree later to maint).
 
  * The shell prompt script (in contrib/), when using the PROMPT_COMMAND
    interface, used an unsafe construct when showing the branch name in
