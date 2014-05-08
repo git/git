@@ -35,7 +35,7 @@ test_expect_success 'merge with case-changing rename on both sides' '
 	git reset --hard baseline &&
 	git branch -D with-camel &&
 	git checkout -b with-camel &&
-	git mv --force TestCase testcase &&
+	git mv TestCase testcase &&
 	git commit -m "recase on branch" &&
 	>foo &&
 	git add foo &&
