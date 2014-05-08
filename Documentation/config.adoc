@@ -519,6 +519,8 @@ include::config/safe.adoc[]
 
 include::config/sendemail.adoc[]
 
+include::config/sendpack.adoc[]
+
 include::config/sequencer.adoc[]
 
 include::config/showbranch.adoc[]
