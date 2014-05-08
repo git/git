@@ -13,6 +13,16 @@
 #include "sha1-array.h"
 #include "gpg-interface.h"
 
+static int config_use_sideband = 1;
+
+static int send_pack_config(const char *var, const char *value, void *unused)
+{
+	if (!strcmp("sendpack.sideband", var))
+		config_use_sideband = git_config_bool(var, value);
+
+	return 0;
+}
+
 static int feed_object(const unsigned char *sha1, int fd, int negative)
 {
 	char buf[42];
@@ -353,6 +363,8 @@ int send_pack(struct send_pack_args *args,
 	struct async demux;
 	const char *push_cert_nonce = NULL;
 
+	git_config(send_pack_config, NULL);
+
 	/* Does the other end support the reporting? */
 	if (server_supports("report-status"))
 		status_report = 1;
@@ -360,7 +372,7 @@ int send_pack(struct send_pack_args *args,
 		allow_deleting_refs = 1;
 	if (server_supports("ofs-delta"))
 		args->use_ofs_delta = 1;
-	if (server_supports("side-band-64k"))
+	if (config_use_sideband && server_supports("side-band-64k"))
 		use_sideband = 1;
 	if (server_supports("quiet"))
 		quiet_supported = 1;
