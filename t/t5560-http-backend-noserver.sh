@@ -9,8 +9,8 @@ test_have_prereq GREP_STRIPS_CR && export GREP_OPTIONS=-U
 
 run_backend() {
 	echo "$2" |
-	QUERY_STRING="${1#*\?}" \
-	PATH_TRANSLATED="$HTTPD_DOCUMENT_ROOT_PATH/${1%%\?*}" \
+	QUERY_STRING="${1#*[?]}" \
+	PATH_TRANSLATED="$HTTPD_DOCUMENT_ROOT_PATH/${1%%[?]*}" \
 	git http-backend >act.out 2>act.err
 }
 
