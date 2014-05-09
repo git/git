@@ -126,6 +126,19 @@ static int git_wcwidth(ucs_char_t ch)
 		{ 0x1D1AA, 0x1D1AD }, { 0xE0001, 0xE0001 },
 		{ 0xE0020, 0xE007F }, { 0xE0100, 0xE01EF }
 	};
+	static const struct interval double_width[] = {
+		{ 0x1100, 0x115F },
+		{ 0x2329, 0x232A },
+		{ 0x2E80, 0x303E },
+		{ 0x3040, 0xA4CF },
+		{ 0xAC00, 0xD7A3 },
+		{ 0xF900, 0xFAFF },
+		{ 0xFE30, 0xFE6F },
+		{ 0xFF00, 0xFF60 },
+		{ 0xFFE0, 0xFFE6 },
+		{ 0x20000, 0x2FFFD },
+		{ 0x30000, 0x3FFFD }
+	};
 
 	/* test for 8-bit control characters */
 	if (ch == 0)
@@ -138,30 +151,12 @@ static int git_wcwidth(ucs_char_t ch)
 				/ sizeof(struct interval) - 1))
 		return 0;
 
-	/*
-	 * If we arrive here, ch is neither a combining nor a C0/C1
-	 * control character.
-	 */
+	/* binary search in table of double width characters */
+	if (bisearch(ch, double_width, sizeof(double_width)
+				/ sizeof(struct interval) - 1))
+		return 2;
 
-	return 1 +
-		(ch >= 0x1100 &&
-                    /* Hangul Jamo init. consonants */
-		 (ch <= 0x115f ||
-		  ch == 0x2329 || ch == 0x232a ||
-                  /* CJK ... Yi */
-		  (ch >= 0x2e80 && ch <= 0xa4cf &&
-		   ch != 0x303f) ||
-		  /* Hangul Syllables */
-		  (ch >= 0xac00 && ch <= 0xd7a3) ||
-		  /* CJK Compatibility Ideographs */
-		  (ch >= 0xf900 && ch <= 0xfaff) ||
-		  /* CJK Compatibility Forms */
-		  (ch >= 0xfe30 && ch <= 0xfe6f) ||
-		  /* Fullwidth Forms */
-		  (ch >= 0xff00 && ch <= 0xff60) ||
-		  (ch >= 0xffe0 && ch <= 0xffe6) ||
-		  (ch >= 0x20000 && ch <= 0x2fffd) ||
-		  (ch >= 0x30000 && ch <= 0x3fffd)));
+	return 1;
 }
 
 /*
