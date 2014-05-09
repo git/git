@@ -1,21 +1,19 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (May 2014, #01; Tue, 6)
-X-master-at: b4f86a4ce85e4e370a67455de6586a02f158a789
-X-next-at: cfa251bb0195ab6f98c8c86125e8419cea21247d
+Subject: What's cooking in git.git (May 2014, #02; Fri, 9)
+X-master-at: b28aeab4ec1df28f3be3cb62ff4b85e5332d8d13
+X-next-at: b2ff043d5327709c5228ef35b94974af38e78e42
 
-What's cooking in git.git (May 2014, #01; Tue, 6)
+What's cooking in git.git (May 2014, #02; Fri, 9)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-The tip of the 'master' branch has passed v2.0.0-rc1.  Last minute
-fixes to newly added code keep flowing in, which is good.  I've
-picked up some topics that will not be part of the upcoming release
-to 'pu' not to lose them, but I didn't have time to give them a deep
-reading.
+The tip of the 'master' branch is at v2.0.0-rc3, which is in sync
+with v1.9.3 with respect to bugfixes that was also tagged today.
+Hopefully we can tag v2.0.0 final late next week.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -23,112 +21,101 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* km/git-svn-workaround-older-getopt-long (2014-04-23) 1 commit
-  (merged to 'next' on 2014-04-23 at 3f35586)
- + t9117: use --prefix "" instead of --prefix=""
-
- Finishing touches to a change that is already in 'master'.
-
-
-* mk/doc-git-gui-display-untracked (2014-04-21) 1 commit
-  (merged to 'next' on 2014-04-22 at 385d39a)
- + Documentation: git-gui: describe gui.displayuntracked
-
-
-* mw/symlinks (2014-04-24) 1 commit
-  (merged to 'next' on 2014-04-25 at 20b2af6)
- + setup: fix windows path buffer over-stepping
-
- A finishing touch fix to a new change already in 'master'.
-
-
-* rh/prompt-pcmode-avoid-eval-on-refname (2014-04-22) 1 commit
-  (merged to 'next' on 2014-04-22 at 3a1506f)
- + git-prompt.sh: don't put unsanitized branch names in $PS1
-
---------------------------------------------------
 [New Topics]
 
-* bg/strbuf-trim (2014-04-30) 2 commits
- - api-strbuf.txt: Add docs for _trim and _ltrim
- - strbuf: Use _rtrim and _ltrim in strbuf_trim
+* dk/raise-core-deltabasecachelimit (2014-05-06) 1 commit
+ - Bump core.deltaBaseCacheLimit to 96m
 
- Will merge to 'next'.
+ The original 16 MiB limit for the in-core delta-base-cache
+ introduced in 18bdec11 (Limit the size of the new delta_base_cache,
+ 2007-03-19) is turning too small.
 
-
-* cb/byte-order (2014-05-02) 2 commits
- - compat/bswap.h: restore preference __BIG_ENDIAN over BIG_ENDIAN
- - compat/bswap.h: detect endianness on more platforms that don't use BYTE_ORDER
-
- Will merge to 'next'.
+ Will merge to 'next' and keep it there for the rest of this cycle.
 
 
-* dt/api-doc-setup-gently (2014-04-30) 1 commit
- - docs: document RUN_SETUP_GENTLY and clarify RUN_SETUP
+* fc/remote-hg-fixes-for-hg-3.0 (2014-05-08) 5 commits
+ - [DONTMERGE-not signed-off] remote-hg: work with older versions of mercurial
+ - remote-hg: add support for hg v3.0
+ - t: remote-hg: trivial cleanups and fixes
+ - t: remote-hg: add file operation tests
+ - remote-hg: add more tests
 
- Will merge to 'next'.
+ Update remote-hg helper to work with newer versions of Mercurial,
+ and fixes an incompatibility with older versions triggered by new
+ tests.
 
-
-* dt/merge-recursive-case-insensitive (2014-05-06) 1 commit
- - merge-recursive.c: Fix case-changing merge bug
-
-
-* ew/config-protect-mode (2014-05-06) 1 commit
- - config: preserve config file permissions on edits
-
- Will merge to 'next'.
+ Will merge to 'next' and keep it there for the rest of this cycle.
 
 
-* fc/rerere-conflict-style (2014-04-30) 1 commit
- - rerere: fix for merge.conflictstyle
+* fc/status-printf-squelch-format-zero-length-warnings (2014-05-07) 1 commit
+ - silence a bunch of format-zero-length warnings
 
- Will merge to 'next'.
-
-
-* jc/coding-guidelines (2014-05-02) 8 commits
- - CodingGuidelines: on splitting a long line
- - CodingGuidelines: on comparison
- - CodingGuidelines: do not call the conditional statement "if()"
- - CodingGuidelines: give an example for shell function preamble
- - CodingGuidelines: give an example for control statements
- - CodingGuidelines: give an example for redirection
- - CodingGuidelines: give an example for case/esac statement
- - CodingGuidelines: once it is in, it is not worth the code churn
-
- Needs to be rerolled.
+ Will merge to 'next' and keep it there for the rest of this cycle.
 
 
-* jd/subtree (2014-05-06) 5 commits
- - contrib/subtree/Makefile: clean rule cleanup
- - contrib/subtree/Makefile: Doc-gen rules cleanup
- - contrib/subtree/Makefile: s/libexecdir/gitexecdir
- - contrib/subtree/Makefile: Use GIT-VERSION-FILE
- - contrib/subtree/Makefile: scrap unused $(gitdir)
+* jk/grep-tell-run-command-to-cd-when-running-pager (2014-05-07) 1 commit
+ - grep: use run-command's "dir" option for --open-files-in-pager
 
- Will merge to 'next'.
+ Will merge to 'next' and keep it there for the rest of this cycle.
 
 
-* jk/commit-date-approxidate (2014-05-02) 4 commits
- - commit: accept more date formats for "--date"
- - commit: print "Date" line when the user has set date
- - pretty: make show_ident_date public
- - commit: use split_ident_line to compare author/committer
+* jk/squelch-compiler-warning-from-funny-error-macro (2014-05-06) 2 commits
+ - let clang use the constant-return error() macro
+ - inline constant return from error() function
 
- Will merge to 'next'.
+ Will merge to 'next' and keep it there for the rest of this cycle.
 
 
-* mm/pager-less-sans-S (2014-04-30) 1 commit
- - pager: remove 'S' from $LESS by default
+* rs/reflog-exists (2014-05-08) 2 commits
+ - checkout.c: use ref_exists instead of file_exist
+ - refs.c: add new functions reflog_exists and delete_reflog
 
- Will merge to 'next'.
+ Will merge to 'next' and keep it there for the rest of this cycle.
 
 
-* sk/msvc-dynlink-crt (2014-05-06) 1 commit
- - MSVC: link dynamically to the CRT
+* tg/tag-state-tag-name-in-editor-hints (2014-05-07) 1 commit
+ - builtin/tag.c: show tag name to hint in the message editor
 
- Will merge to 'next'.
+ Will merge to 'next' and keep it there for the rest of this cycle.
+
+
+* sk/submodules-absolute-path-on-windows (2014-05-08) 1 commit
+ - Revert "submodules: fix ambiguous absolute paths under Windows"
+
+ Will merge to 'next' and keep it there for the rest of this cycle.
+
+
+* jn/contrib-remove-diffall (2014-05-09) 1 commit
+ - contrib: remove git-diffall
+
+ Spring cleaning of contrib/.
+
+ Will merge to 'next' and keep it there for the rest of this cycle.
+
+
+* jn/contrib-remove-vim (2014-05-09) 1 commit
+ - contrib: remove vim support instructions
+
+ Spring cleaning of contrib/.
+
+ Will merge to 'next' and keep it there for the rest of this cycle.
+
+
+* ss/howto-manage-trunk (2014-05-09) 8 commits
+ - SQUASH describe what the picture shows
+ - SQUASH minor typographic fix
+ - SQUASH clarify the informal description of 'trunk'
+ - SQUASH typeset literal commands with `git command`
+ - SQUASH use a better URL
+ - SQUASH mark-up fix
+ - SQUASH typofix
+ - How to keep a project's canonical history correct.
+
+
+* wg/svn-fe-style-fixes (2014-05-09) 1 commit
+ - svn-fe: Conform to pep8
+
+ Will merge to 'next' and keep it there for the rest of this cycle.
 
 --------------------------------------------------
 [Stalled]
@@ -280,36 +267,164 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* bg/strbuf-trim (2014-05-06) 2 commits
+  (merged to 'next' on 2014-05-07 at 978f378)
+ + api-strbuf.txt: add docs for _trim and _ltrim
+ + strbuf: use _rtrim and _ltrim in strbuf_trim
+
+ Will keep in 'next' for the remainder of the cycle.
+
+
+* cb/byte-order (2014-05-02) 2 commits
+  (merged to 'next' on 2014-05-07 at f55c040)
+ + compat/bswap.h: restore preference __BIG_ENDIAN over BIG_ENDIAN
+ + compat/bswap.h: detect endianness on more platforms that don't use BYTE_ORDER
+
+ Compatibility enhancement for Solaris.
+
+ Will keep in 'next' for the remainder of the cycle.
+
+
+* dt/api-doc-setup-gently (2014-04-30) 1 commit
+  (merged to 'next' on 2014-05-07 at 6054b08)
+ + docs: document RUN_SETUP_GENTLY and clarify RUN_SETUP
+
+ Will keep in 'next' for the remainder of the cycle.
+
+
+* dt/merge-recursive-case-insensitive (2014-05-08) 2 commits
+ - mv: allow renaming to fix case on case insensitive filesystems
+ - merge-recursive.c: fix case-changing merge bug
+
+ On a case insensitive filesystem, merge-recursive incorrectly
+ deleted the file that is to be renamed to a name that is the same
+ except for case differences.
+
+ Will merge to 'next' and keep it there for the rest of this cycle.
+
+
+* ew/config-protect-mode (2014-05-06) 1 commit
+  (merged to 'next' on 2014-05-07 at 8443093)
+ + config: preserve config file permissions on edits
+
+ Will keep in 'next' for the remainder of the cycle.
+
+
+* fc/rerere-conflict-style (2014-04-30) 1 commit
+  (merged to 'next' on 2014-05-07 at bde7fd0)
+ + rerere: fix for merge.conflictstyle
+
+ Will keep in 'next' for the remainder of the cycle.
+
+
+* jc/coding-guidelines (2014-05-02) 8 commits
+ - CodingGuidelines: on splitting a long line
+ - CodingGuidelines: on comparison
+ - CodingGuidelines: do not call the conditional statement "if()"
+ - CodingGuidelines: give an example for shell function preamble
+ - CodingGuidelines: give an example for control statements
+ - CodingGuidelines: give an example for redirection
+ - CodingGuidelines: give an example for case/esac statement
+ - CodingGuidelines: once it is in, it is not worth the code churn
+
+ Will merge to 'next' and keep it there for the rest of this cycle.
+
+
+* jd/subtree (2014-05-06) 5 commits
+  (merged to 'next' on 2014-05-07 at 81b375d)
+ + contrib/subtree/Makefile: clean up rule for "clean"
+ + contrib/subtree/Makefile: clean up rules to generate documentation
+ + contrib/subtree/Makefile: s/libexecdir/gitexecdir/
+ + contrib/subtree/Makefile: use GIT-VERSION-FILE
+ + contrib/subtree/Makefile: scrap unused $(gitdir)
+
+ Will keep in 'next' for the remainder of the cycle.
+
+
+* jk/commit-date-approxidate (2014-05-02) 4 commits
+  (merged to 'next' on 2014-05-07 at 7ec8f7d)
+ + commit: accept more date formats for "--date"
+ + commit: print "Date" line when the user has set date
+ + pretty: make show_ident_date public
+ + commit: use split_ident_line to compare author/committer
+
+ Will keep in 'next' for the remainder of the cycle.
+
+
+* mm/pager-less-sans-S (2014-05-07) 1 commit
+  (merged to 'next' on 2014-05-07 at 66ce999)
+ + pager: remove 'S' from $LESS by default
+
+ Will keep in 'next' for the remainder of the cycle.
+
+
+* sk/msvc-dynlink-crt (2014-05-06) 1 commit
+  (merged to 'next' on 2014-05-07 at 20f4839)
+ + MSVC: link dynamically to the CRT
+
+ Will keep in 'next' for the remainder of the cycle.
+
+
 * cc/replace-edit (2014-04-29) 4 commits
  - replace: add --edit option
  - replace: factor object resolution out of replace_object
  - replace: use OPT_CMDMODE to handle modes
  - replace: refactor command-mode determination
 
+ "git replace" learns a new "--edit" option.
+
+ Will merge to 'next' and keep it there for the rest of this cycle.
+
 
 * da/imap-send-use-credential-helper (2014-04-29) 1 commit
  - imap-send: use git-credential
+
+ "git imap-send" learns to ask the credential helper for
+ authentication material.
+
+ Will merge to 'next' and keep it there for the rest of this cycle.
 
 
 * dk/blame-reorg (2014-04-28) 1 commit
  - blame: large-scale performance rewrite
 
+ I haven't found any "WAT" in my daily use, but I need to find time
+ to re-read the whole thing once again.  After doing that, will
+ merge to 'next' and keep it there for the rest of this cycle.
+
 
 * je/pager-do-not-recurse (2014-04-28) 1 commit
  - pager: do allow spawning pager recursively
+
+ We used to unconditionally disabled the pager in the pager process
+ we spawn to feed out output, but that prevents people who want to
+ run less within less from doing so.
+
+ Will merge to 'next' and keep it there for the rest of this cycle.
 
 
 * jk/commit-C-pick-empty (2014-04-28) 1 commit
  - commit: do not complain of empty messages from -C
 
+ "git commit --allow-empty-message -C $commit" did not work when the
+ commit did not have any log message.
+
+ Will merge to 'next' and keep it there for the rest of this cycle.
+
 
 * jk/utf8-switch-between-nfd-and-nfc (2014-04-29) 1 commit
  - t3910: show failure of core.precomposeunicode with decomposed filenames
+
+ Document a known breakage with a test.
+
+ Will merge to 'next' and keep it there for the rest of this cycle.
 
 
 * mt/send-email-cover-to-cc (2014-04-29) 2 commits
  - test/send-email: to-cover, cc-cover tests
  - git-send-email: two new options: to-cover, cc-cover
+
+ Will merge to 'next' and keep it there for the rest of this cycle.
 
 
 * nd/split-index (2014-04-29) 33 commits
@@ -347,13 +462,24 @@ of the repositories listed at
  - ewah: delete unused ewah_read_mmap_native declaration
  - ewah: fix constness of ewah_read_mmap
 
+ The tip one is a reminder that needs to be squashed to squelch
+ a "may be unused" compilation warning that is a false positive.
+
 
 * tl/relax-in-poll-emulation (2014-04-29) 1 commit
  - compat/poll: sleep 1 millisecond to avoid busy wait
 
+ Will merge to 'next' and keep it there for the rest of this cycle.
 
-* bc/blame-crlf-test (2014-04-28) 1 commit
- - blame: correctly handle files regardless of autocrlf.
+
+* bc/blame-crlf-test (2014-05-08) 1 commit
+ - blame: correctly handle files regardless of autocrlf
+
+ If a file contained CRLF line endings in a repository with
+ core.autocrlf=input, then blame always marked lines as "Not
+ Committed Yet", even if they were unmodified.
+
+ Will merge to 'next' and keep it there for the rest of this cycle.
 
 
 * rs/ref-transaction (2014-04-29) 27 commits
@@ -393,51 +519,52 @@ of the repositories listed at
 
 
 * ep/shell-command-substitution (2014-04-30) 41 commits
- - t5000-tar-tree.sh: use the $( ... ) construct for command substitution
- - t4204-patch-id.sh: use the $( ... ) construct for command substitution
- - t4119-apply-config.sh: use the $( ... ) construct for command substitution
- - t4116-apply-reverse.sh: use the $( ... ) construct for command substitution
- - t4057-diff-combined-paths.sh: use the $( ... ) construct for command substitution
- - t4038-diff-combined.sh: use the $( ... ) construct for command substitution
- - t4036-format-patch-signer-mime.sh: use the $( ... ) construct for command substitution
- - t4014-format-patch.sh: use the $( ... ) construct for command substitution
- - t4013-diff-various.sh: use the $( ... ) construct for command substitution
- - t4012-diff-binary.sh: use the $( ... ) construct for command substitution
- - t4010-diff-pathspec.sh: use the $( ... ) construct for command substitution
- - t4006-diff-mode.sh: use the $( ... ) construct for command substitution
- - t3910-mac-os-precompose.sh: use the $( ... ) construct for command substitution
- - t3905-stash-include-untracked.sh: use the $( ... ) construct for command substitution
- - t1050-large.sh: use the $( ... ) construct for command substitution
- - t1020-subdirectory.sh: use the $( ... ) construct for command substitution
- - t1004-read-tree-m-u-wf.sh: use the $( ... ) construct for command substitution
- - t1003-read-tree-prefix.sh: use the $( ... ) construct for command substitution
- - t1002-read-tree-m-u-2way.sh: use the $( ... ) construct for command substitution
- - t1001-read-tree-m-2way.sh: use the $( ... ) construct for command substitution
- - t1000-read-tree-m-3way.sh: use the $( ... ) construct for command substitution
- - t0300-credentials.sh: use the $( ... ) construct for command substitution
- - t0030-stripspace.sh: use the $( ... ) construct for command substitution
- - t0026-eol-config.sh: use the $( ... ) construct for command substitution
- - t0025-crlf-auto.sh: use the $( ... ) construct for command substitution
- - t0020-crlf.sh: use the $( ... ) construct for command substitution
- - t0010-racy-git.sh: use the $( ... ) construct for command substitution
- - t0001-init.sh: use the $( ... ) construct for command substitution
- - p5302-pack-index.sh: use the $( ... ) construct for command substitution
- - lib-gpg.sh: use the $( ... ) construct for command substitution
- - lib-cvs.sh: use the $( ... ) construct for command substitution
- - lib-credential.sh: use the $( ... ) construct for command substitution
- - git-web--browse.sh: use the $( ... ) construct for command substitution
- - git-stash.sh: use the $( ... ) construct for command substitution
- - git-rebase.sh: use the $( ... ) construct for command substitution
- - git-rebase--merge.sh: use the $( ... ) construct for command substitution
- - git-pull.sh: use the $( ... ) construct for command substitution
- - appp.sh: use the $( ... ) construct for command substitution
- - t7900-subtree.sh: use the $( ... ) construct for command substitution
- - test-gitmw-lib.sh: use the $( ... ) construct for command substitution
- - t9365-continuing-queries.sh: use the $( ... ) construct for command substitution
+  (merged to 'next' on 2014-05-07 at e9952c7)
+ + t5000-tar-tree.sh: use the $( ... ) construct for command substitution
+ + t4204-patch-id.sh: use the $( ... ) construct for command substitution
+ + t4119-apply-config.sh: use the $( ... ) construct for command substitution
+ + t4116-apply-reverse.sh: use the $( ... ) construct for command substitution
+ + t4057-diff-combined-paths.sh: use the $( ... ) construct for command substitution
+ + t4038-diff-combined.sh: use the $( ... ) construct for command substitution
+ + t4036-format-patch-signer-mime.sh: use the $( ... ) construct for command substitution
+ + t4014-format-patch.sh: use the $( ... ) construct for command substitution
+ + t4013-diff-various.sh: use the $( ... ) construct for command substitution
+ + t4012-diff-binary.sh: use the $( ... ) construct for command substitution
+ + t4010-diff-pathspec.sh: use the $( ... ) construct for command substitution
+ + t4006-diff-mode.sh: use the $( ... ) construct for command substitution
+ + t3910-mac-os-precompose.sh: use the $( ... ) construct for command substitution
+ + t3905-stash-include-untracked.sh: use the $( ... ) construct for command substitution
+ + t1050-large.sh: use the $( ... ) construct for command substitution
+ + t1020-subdirectory.sh: use the $( ... ) construct for command substitution
+ + t1004-read-tree-m-u-wf.sh: use the $( ... ) construct for command substitution
+ + t1003-read-tree-prefix.sh: use the $( ... ) construct for command substitution
+ + t1002-read-tree-m-u-2way.sh: use the $( ... ) construct for command substitution
+ + t1001-read-tree-m-2way.sh: use the $( ... ) construct for command substitution
+ + t1000-read-tree-m-3way.sh: use the $( ... ) construct for command substitution
+ + t0300-credentials.sh: use the $( ... ) construct for command substitution
+ + t0030-stripspace.sh: use the $( ... ) construct for command substitution
+ + t0026-eol-config.sh: use the $( ... ) construct for command substitution
+ + t0025-crlf-auto.sh: use the $( ... ) construct for command substitution
+ + t0020-crlf.sh: use the $( ... ) construct for command substitution
+ + t0010-racy-git.sh: use the $( ... ) construct for command substitution
+ + t0001-init.sh: use the $( ... ) construct for command substitution
+ + p5302-pack-index.sh: use the $( ... ) construct for command substitution
+ + lib-gpg.sh: use the $( ... ) construct for command substitution
+ + lib-cvs.sh: use the $( ... ) construct for command substitution
+ + lib-credential.sh: use the $( ... ) construct for command substitution
+ + git-web--browse.sh: use the $( ... ) construct for command substitution
+ + git-stash.sh: use the $( ... ) construct for command substitution
+ + git-rebase.sh: use the $( ... ) construct for command substitution
+ + git-rebase--merge.sh: use the $( ... ) construct for command substitution
+ + git-pull.sh: use the $( ... ) construct for command substitution
+ + appp.sh: use the $( ... ) construct for command substitution
+ + t7900-subtree.sh: use the $( ... ) construct for command substitution
+ + test-gitmw-lib.sh: use the $( ... ) construct for command substitution
+ + t9365-continuing-queries.sh: use the $( ... ) construct for command substitution
 
  Adjust shell scripts to use $(cmd) instead of `cmd`.
 
- Will merge to 'next' and keep it there for the remainder of the cycle.
+ Will keep in 'next' for the remainder of the cycle.
 
 
 * ib/test-selectively-run (2014-05-06) 3 commits
@@ -478,15 +605,11 @@ of the repositories listed at
  + remote-helpers: move out of contrib
  + remote-helpers: squelch python import exceptions
 
- Move remote-hg and remote-bzr out of contrib/.  There were some
- suggestions on the follow-up fix patches still not in 'next', which
- may result in a reroll.
-
- I tend to agree with John Keeping that remote helpers that are
- actively maintained can and should aim to graduate from my tree and
- given to the user directly.
-
- Will hold.
+ As there were announcements for these two to be maintained as
+ independent third-party projects ($gmane/248561, $gmane/248583),
+ this topic would need to be discarded after 2.0 final, and copies
+ in contrib/remote-helpers/ may need to be replaced with a README
+ with pointers to their canonical repository.
 
 
 * fc/remote-helper-refmap (2014-04-21) 8 commits
@@ -724,7 +847,8 @@ of the repositories listed at
 
 
 * mt/patch-id-stable (2014-05-06) 6 commits
- - test doc: test_write_lines does not split its arguments
+  (merged to 'next' on 2014-05-07 at 6ade68e)
+ + test doc: test_write_lines does not split its arguments
   (merged to 'next' on 2014-05-02 at cfa251b)
  + t4204-patch-id.sh: default is now stable
  + patch-id: change default to stable
@@ -736,7 +860,7 @@ of the repositories listed at
  Introduce a new way to compute patch-id for a patch that is not
  affected by the order of the paths that appear in the input.
 
- Will merge to 'next' and keep it there for the remainder of the cycle.
+ Will keep in 'next' for the remainder of the cycle.
 
 
 * mh/ref-transaction (2014-04-07) 27 commits
@@ -891,7 +1015,6 @@ of the repositories listed at
  A new filter to programatically edit the tail end of the commit log
  messages.
 
-
 --------------------------------------------------
 [Discarded]
 
@@ -904,5 +1027,3 @@ of the repositories listed at
  this, but it was easy enough to cobble together.  Tests, docs and
  stripping out more MIMEy stuff are left as exercises to interested
  parties.
-
-
