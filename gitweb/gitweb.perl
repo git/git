@@ -4543,6 +4543,29 @@ sub git_print_page_path {
 			print $cgi->a({-href => href(action=>"blob_plain", file_name=>$file_name,
 			                             hash_base=>$hb),
 			              -title => $name}, esc_path($basename));
+			if (gitweb_check_feature('highlight')) {
+				print '&nbsp;&nbsp;&nbsp;&nbsp;
+<a id="lineNoToggle" href="#" onclick="toggleLineNumbers();"></a>
+<script>
+function toggleLineNumbers() {
+        e = document.getElementById("lineNoStyle");
+        e2 = document.getElementById("lineNoToggle");
+        if (e2.innerHTML == "[Hide line numbers]") {
+                e.innerHTML = ".linenr { display:none; }";
+                e2.innerHTML = "[Show line numbers]";
+        }
+        else {
+                e.innerHTML = "";
+                e2.innerHTML = "[Hide line numbers]";
+        }
+}
+var style = document.createElement("style");
+style.setAttribute("id", "lineNoStyle");
+document.getElementsByTagName("head")[0].appendChild(style);
+toggleLineNumbers();
+</script>
+';
+			}
 		} elsif (defined $type && $type eq 'tree') {
 			print $cgi->a({-href => href(action=>"tree", file_name=>$file_name,
 			                             hash_base=>$hb),
@@ -7054,7 +7077,19 @@ sub git_blob {
 	# we can have blame only for text/* mimetype
 	$have_blame &&= ($mimetype =~ m!^text/!);
 
+	my $highlight_js = gitweb_check_feature('syntaxhighlighter_js');
+	if ($highlight_js) {
+		push @stylesheets, $highlight_js->{url} . '/styles/shCore'
+			. $highlight_js->{style} . '.css';
+		push @stylesheets, $highlight_js->{url} . '/styles/shTheme'
+			. $highlight_js->{theme} . '.css';
+	}
+
 	my $highlight = gitweb_check_feature('highlight');
+	if ($highlight_js && $highlight) {
+		die_error(500, 'The highlight and syntaxhighlighter_js are'
+			. 'mutually exclusive');
+	}
 	my $syntax = guess_file_syntax($highlight, $mimetype, $file_name);
 	$fd = run_highlighter($fd, $highlight, $syntax)
 		if $syntax;
@@ -7102,6 +7137,72 @@ sub git_blob {
 		      href(action=>"blob_plain", hash=>$hash,
 		           hash_base=>$hash_base, file_name=>$file_name) .
 		      qq!" />\n!;
+	} elsif ($highlight_js) {
+		my $ext = $file_name;
+		$ext =~ s/.*\.//;
+		print qq!<pre class="brush:!.$ext.qq!">!;
+		while (my $line = <$fd>) {
+			$line =~ s!&!\&#38;!g;
+			$line =~ s!<!\&#60;!g;
+			print $line;
+		}
+		print qq!</pre>!;
+		foreach my $name ('Core', 'Autoloader') {
+			print qq!<script src="!.$highlight_js->{url}
+				.qq!/scripts/sh!.$name
+				.qq!.js" type="text/javascript"></script>!;
+		}
+		print qq!<script type="text/javascript">!;
+		print qq!SyntaxHighlighter.defaults["pad-line-numbers"] = 3;!;
+		print qq!SyntaxHighlighter.defaults["toolbar"] = false;!;
+		# for XHTML compliance
+		print qq!SyntaxHighlighter.config["space"] = '&#160;';!;
+		print qq!SyntaxHighlighter.autoloader(!;
+		my $brush_prefix = $highlight_js->{url} . '/scripts/shBrush';
+		foreach my $language ('applescript AppleScript',
+				'actionscript3 as3 AS3',
+				'bash shell Bash',
+				'clj Clojure',
+				'coldfusion cf ColdFusion',
+				'cpp c Cpp',
+				'c# c-sharp csharp CSharp',
+				'css Css',
+				'delphi pascal Delphi',
+				'diff patch pas Diff',
+				'erl erlang Erlang',
+				'groovy Groovy',
+				'java Java',
+				'jfx javafx JavaFX',
+				'js jscript javascript JScript',
+				'perl pl Perl',
+				'php Php',
+				'text plain Plain',
+				'py python Python',
+				'ruby rails ror rb Ruby',
+				'scala Scala',
+				'scm Scheme',
+				'sql Sql',
+				'vb vbnet Vb',
+				'xml xhtml xslt html Xml') {
+			my $lang = $language;
+			$lang =~ s! (\S+)$! $brush_prefix$1!;
+			print "'".$lang.qq!.js',!;
+		}
+		print qq!''); SyntaxHighlighter.all();!
+			.qq!function scrollTo(number) {!
+			.qq!  var elements = document.getElementsByClassName(number);!
+			.qq!  if (elements.length == 0) setTimeout('scrollTo("' + number + '");', 50);!
+			.qq!  else {!
+			.qq!    window.scroll(0, elements[0].offsetTop);!
+			.qq!    window.scrollTo(0, elements[0].offsetTop);!
+			.qq!    elements[0].style.color = '#ff0000';!
+			.qq!  }!
+			.qq!}!
+			.qq!var lineRegex = /#l(\\d+)\$/;!
+			.qq!var lineNumber = lineRegex.exec(document.URL);!
+			.qq!if (lineNumber)!
+			.qq!  scrollTo('number' + lineNumber[1]);!
+			.qq!</script>!;
 	} else {
 		my $nr;
 		while (my $line = <$fd>) {
