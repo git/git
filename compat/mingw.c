@@ -1969,6 +1969,23 @@ pid_t waitpid(pid_t pid, int *status, int options)
 	return -1;
 }
 
+const char *get_windows_home_directory(void)
+{
+	static const char *home_directory = NULL;
+	struct strbuf buf = STRBUF_INIT;
+
+	if (home_directory)
+		return home_directory;
+
+	home_directory = getenv("HOME");
+	if (home_directory && *home_directory)
+		return home_directory;
+
+	strbuf_addf(&buf, "%s/%s", getenv("HOMEDRIVE"), getenv("HOMEPATH"));
+	home_directory = strbuf_detach(&buf, NULL);
+
+	return home_directory;
+}
 int xutftowcsn(wchar_t *wcs, const char *utfs, size_t wcslen, int utflen)
 {
 	int upos = 0, wpos = 0;
@@ -2157,4 +2174,28 @@ void mingw_startup()
 
 	/* initialize Unicode console */
 	winansi_init();
+}
+
+int mingw_offset_1st_component(const char *path)
+{
+	int offset = 0;
+	if (has_dos_drive_prefix(path))
+		offset = 2;
+
+	/* unc paths */
+	else if (is_dir_sep(path[0]) && is_dir_sep(path[1])) {
+
+		/* skip server name */
+		char *pos = strpbrk(path + 2, "\\/");
+		if (!pos)
+			return 0; /* Error: malformed unc path */
+
+		do {
+			pos++;
+		} while (*pos && !is_dir_sep(*pos));
+
+		offset = pos - path;
+	}
+
+	return offset + is_dir_sep(path[offset]);
 }
