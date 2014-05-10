@@ -36,6 +36,11 @@ then
 	test_done
 fi
 
+if ! test_have_prereq SANITY; then
+	test_skip_or_die $GIT_TEST_HTTPD \
+		"Cannot run httpd tests as root"
+fi
+
 HTTPD_PARA=""
 
 for DEFAULT_HTTPD_PATH in '/usr/sbin/httpd' '/usr/sbin/apache2'
