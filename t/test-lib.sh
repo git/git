@@ -794,6 +794,10 @@ yes () {
 	done
 }
 
+abspath_of_dir () {
+	(cd "$1" ; pwd -P)
+}
+
 # Fix some commands on Windows
 case $(uname -s) in
 *MINGW*)
