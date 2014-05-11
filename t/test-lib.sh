@@ -858,6 +858,11 @@ case $(uname -s) in
 		*) builtin test "$@";;
 		esac
 	}
+
+	abspath_of_dir () {
+		(cd "$1" ; pwd -P | sed 's+^/\([a-z]\)\/+\1:/+')
+	}
+
 	# no POSIX permissions
 	# backslashes in pathspec are converted to '/'
 	# exec does not inherit the PID
