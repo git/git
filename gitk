@@ -11580,7 +11580,29 @@ proc prefsok {} {
 proc formatdate {d} {
     global datetimeformat
     if {$d ne {}} {
-	set d [clock format [lindex $d 0] -format $datetimeformat]
+	# If $datetimeformat includes a timezone, display in the
+	# timezone of the argument.  Otherwise, display in local time.
+	if {[string match {*%[zZ]*} $datetimeformat]} {
+	    if {[catch {set d [clock format [lindex $d 0] -timezone [lindex $d 1] -format $datetimeformat]}]} {
+		# Tcl < 8.5 does not support -timezone.  Emulate it by
+		# setting TZ (e.g. TZ=<-0430>+04:30).
+		global env
+		if {[info exists env(TZ)]} {
+		    set savedTZ $env(TZ)
+		}
+		set zone [lindex $d 1]
+		set sign [string map {+ - - +} [string index $zone 0]]
+		set env(TZ) <$zone>$sign[string range $zone 1 2]:[string range $zone 3 4]
+		set d [clock format [lindex $d 0] -format $datetimeformat]
+		if {[info exists savedTZ]} {
+		    set env(TZ) $savedTZ
+		} else {
+		    unset env(TZ)
+		}
+	    }
+	} else {
+	    set d [clock format [lindex $d 0] -format $datetimeformat]
+	}
     }
     return $d
 }
