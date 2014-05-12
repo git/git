@@ -29,6 +29,10 @@ my ($fraginfo_color) =
 	$diff_use_color ? (
 		$repo->get_color('color.diff.frag', 'cyan'),
 	) : ();
+my ($funcname_color) =
+	$diff_use_color ? (
+		$repo->get_color('color.diff.func', ''),
+	) : ();
 my ($diff_plain_color) =
 	$diff_use_color ? (
 		$repo->get_color('color.diff.plain', ''),
@@ -899,7 +903,7 @@ sub split_hunk {
 		unshift @{$hunk->{DISPLAY}}, join(
 			"",
 			$diff_use_color ? colored($fraginfo_color, $fraginfo) : $fraginfo,
-			$heading,
+			$diff_use_color ? colored($funcname_color, $heading) : $heading,
 			"\n"
 		);
 	}
