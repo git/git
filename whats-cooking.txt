@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (May 2014, #02; Fri, 9)
-X-master-at: b28aeab4ec1df28f3be3cb62ff4b85e5332d8d13
-X-next-at: b2ff043d5327709c5228ef35b94974af38e78e42
+Subject: What's cooking in git.git (May 2014, #03; Tue, 13)
+X-master-at: 6308767f0bb58116cb405e1f4f77f5dfc1589920
+X-next-at: 7b9918a45049db8fa9b101e28a314928c31e0b5f
 
-What's cooking in git.git (May 2014, #02; Fri, 9)
+What's cooking in git.git (May 2014, #03; Tue, 13)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -23,97 +23,49 @@ of the repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* dk/raise-core-deltabasecachelimit (2014-05-06) 1 commit
- - Bump core.deltaBaseCacheLimit to 96m
+* ab/add-interactive-show-diff-func-name (2014-05-12) 2 commits
+ - SQUASH??? git-add--interactive: Preserve diff heading when splitting hunks
+ - git-add--interactive: Preserve diff heading when splitting hunks
 
- The original 16 MiB limit for the in-core delta-base-cache
- introduced in 18bdec11 (Limit the size of the new delta_base_cache,
- 2007-03-19) is turning too small.
-
- Will merge to 'next' and keep it there for the rest of this cycle.
+ Waiting for a reroll.
 
 
-* fc/remote-hg-fixes-for-hg-3.0 (2014-05-08) 5 commits
- - [DONTMERGE-not signed-off] remote-hg: work with older versions of mercurial
- - remote-hg: add support for hg v3.0
- - t: remote-hg: trivial cleanups and fixes
- - t: remote-hg: add file operation tests
- - remote-hg: add more tests
-
- Update remote-hg helper to work with newer versions of Mercurial,
- and fixes an incompatibility with older versions triggered by new
- tests.
+* jk/do-not-run-httpd-tests-as-root (2014-05-12) 1 commit
+ - t/lib-httpd: require SANITY prereq
 
  Will merge to 'next' and keep it there for the rest of this cycle.
 
 
-* fc/status-printf-squelch-format-zero-length-warnings (2014-05-07) 1 commit
- - silence a bunch of format-zero-length warnings
+* jk/index-pack-report-missing (2014-05-12) 1 commit
+ - index-pack: distinguish missing objects from type errors
 
  Will merge to 'next' and keep it there for the rest of this cycle.
 
 
-* jk/grep-tell-run-command-to-cd-when-running-pager (2014-05-07) 1 commit
- - grep: use run-command's "dir" option for --open-files-in-pager
+* tb/unicode-6.3-zero-width (2014-05-12) 2 commits
+ - utf8: make it easier to auto-update git_wcwidth()
+ - utf8.c: use a table for double_width
+
+ Update the logic to compute the display width needed for utf8
+ strings and allow us to more easily maintain the tables used in
+ that logic.
+
+ We may want to let the users choose if codepoints with ambiguous
+ widths are treated as a double or single width in a follow-up patch.
 
  Will merge to 'next' and keep it there for the rest of this cycle.
 
 
-* jk/squelch-compiler-warning-from-funny-error-macro (2014-05-06) 2 commits
- - let clang use the constant-return error() macro
- - inline constant return from error() function
+* mk/show-s-no-extra-blank-line-for-merges (2014-05-13) 3 commits
+ - fixup! git-show: fix 'git show -s' to not add extra terminator after merge commit
+ - t: git-show: adapt tests to fixed 'git show'
+ - git-show: fix 'git show -s' to not add extra terminator after merge commit
 
- Will merge to 'next' and keep it there for the rest of this cycle.
-
-
-* rs/reflog-exists (2014-05-08) 2 commits
- - checkout.c: use ref_exists instead of file_exist
- - refs.c: add new functions reflog_exists and delete_reflog
-
- Will merge to 'next' and keep it there for the rest of this cycle.
+ Waiting for a reroll.
 
 
-* tg/tag-state-tag-name-in-editor-hints (2014-05-07) 1 commit
- - builtin/tag.c: show tag name to hint in the message editor
-
- Will merge to 'next' and keep it there for the rest of this cycle.
-
-
-* sk/submodules-absolute-path-on-windows (2014-05-08) 1 commit
- - Revert "submodules: fix ambiguous absolute paths under Windows"
-
- Will merge to 'next' and keep it there for the rest of this cycle.
-
-
-* jn/contrib-remove-diffall (2014-05-09) 1 commit
- - contrib: remove git-diffall
-
- Spring cleaning of contrib/.
-
- Will merge to 'next' and keep it there for the rest of this cycle.
-
-
-* jn/contrib-remove-vim (2014-05-09) 1 commit
- - contrib: remove vim support instructions
-
- Spring cleaning of contrib/.
-
- Will merge to 'next' and keep it there for the rest of this cycle.
-
-
-* ss/howto-manage-trunk (2014-05-09) 8 commits
- - SQUASH describe what the picture shows
- - SQUASH minor typographic fix
- - SQUASH clarify the informal description of 'trunk'
- - SQUASH typeset literal commands with `git command`
- - SQUASH use a better URL
- - SQUASH mark-up fix
- - SQUASH typofix
- - How to keep a project's canonical history correct.
-
-
-* wg/svn-fe-style-fixes (2014-05-09) 1 commit
- - svn-fe: Conform to pep8
+* wk/doc-clarify-upstream (2014-05-13) 1 commit
+ - Documentation: mention config sources for @{upstream}
 
  Will merge to 'next' and keep it there for the rest of this cycle.
 
@@ -267,6 +219,108 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* dk/raise-core-deltabasecachelimit (2014-05-06) 1 commit
+  (merged to 'next' on 2014-05-12 at 97ec92a)
+ + Bump core.deltaBaseCacheLimit to 96m
+
+ The original 16 MiB limit for the in-core delta-base-cache
+ introduced in 18bdec11 (Limit the size of the new delta_base_cache,
+ 2007-03-19) is turning too small.
+
+ Will keep in 'next' for the remainder of the cycle.
+
+
+* fc/remote-hg-fixes-for-hg-3.0 (2014-05-08) 5 commits
+ - [DONTMERGE-not signed-off] remote-hg: work with older versions of mercurial
+ - remote-hg: add support for hg v3.0
+ - t: remote-hg: trivial cleanups and fixes
+ - t: remote-hg: add file operation tests
+ - remote-hg: add more tests
+
+ Update remote-hg helper to work with newer versions of Mercurial,
+ and fixes an incompatibility with older versions triggered by new
+ tests.
+
+
+* fc/status-printf-squelch-format-zero-length-warnings (2014-05-07) 1 commit
+  (merged to 'next' on 2014-05-12 at 6b04e23)
+ + silence a bunch of format-zero-length warnings
+
+ Will keep in 'next' for the remainder of the cycle.
+
+
+* jk/grep-tell-run-command-to-cd-when-running-pager (2014-05-07) 1 commit
+  (merged to 'next' on 2014-05-12 at 065cb22)
+ + grep: use run-command's "dir" option for --open-files-in-pager
+
+ Will keep in 'next' for the remainder of the cycle.
+
+
+* jk/squelch-compiler-warning-from-funny-error-macro (2014-05-06) 2 commits
+  (merged to 'next' on 2014-05-12 at d9daf8d)
+ + let clang use the constant-return error() macro
+ + inline constant return from error() function
+
+ Will keep in 'next' for the remainder of the cycle.
+
+
+* rs/reflog-exists (2014-05-08) 2 commits
+  (merged to 'next' on 2014-05-12 at 24a1d01)
+ + checkout.c: use ref_exists instead of file_exist
+ + refs.c: add new functions reflog_exists and delete_reflog
+
+ Will keep in 'next' for the remainder of the cycle.
+
+
+* tg/tag-state-tag-name-in-editor-hints (2014-05-07) 1 commit
+  (merged to 'next' on 2014-05-12 at 0b7db32)
+ + builtin/tag.c: show tag name to hint in the message editor
+
+ Will keep in 'next' for the remainder of the cycle.
+
+
+* sk/submodules-absolute-path-on-windows (2014-05-08) 1 commit
+ - Revert "submodules: fix ambiguous absolute paths under Windows"
+
+ Will merge to 'next' and keep it there for the rest of this cycle.
+
+
+* jn/contrib-remove-diffall (2014-05-09) 1 commit
+  (merged to 'next' on 2014-05-12 at 416009e)
+ + contrib: remove git-diffall
+
+ Spring cleaning of contrib/.
+
+ Will keep in 'next' for the remainder of the cycle.
+
+
+* jn/contrib-remove-vim (2014-05-09) 1 commit
+  (merged to 'next' on 2014-05-12 at 9e727c8)
+ + contrib: remove vim support instructions
+
+ Spring cleaning of contrib/.
+
+ Will keep in 'next' for the remainder of the cycle.
+
+
+* ss/howto-manage-trunk (2014-05-09) 8 commits
+ - SQUASH describe what the picture shows
+ - SQUASH minor typographic fix
+ - SQUASH clarify the informal description of 'trunk'
+ - SQUASH typeset literal commands with `git command`
+ - SQUASH use a better URL
+ - SQUASH mark-up fix
+ - SQUASH typofix
+ - How to keep a project's canonical history correct.
+
+
+* wg/svn-fe-style-fixes (2014-05-12) 1 commit
+  (merged to 'next' on 2014-05-12 at 88c0e0d)
+ + svn-fe: conform to pep8
+
+ Will keep in 'next' for the remainder of the cycle.
+
+
 * bg/strbuf-trim (2014-05-06) 2 commits
   (merged to 'next' on 2014-05-07 at 978f378)
  + api-strbuf.txt: add docs for _trim and _ltrim
@@ -293,14 +347,15 @@ of the repositories listed at
 
 
 * dt/merge-recursive-case-insensitive (2014-05-08) 2 commits
- - mv: allow renaming to fix case on case insensitive filesystems
- - merge-recursive.c: fix case-changing merge bug
+  (merged to 'next' on 2014-05-12 at 820d524)
+ + mv: allow renaming to fix case on case insensitive filesystems
+ + merge-recursive.c: fix case-changing merge bug
 
  On a case insensitive filesystem, merge-recursive incorrectly
  deleted the file that is to be renamed to a name that is the same
  except for case differences.
 
- Will merge to 'next' and keep it there for the rest of this cycle.
+ Will keep in 'next' for the remainder of the cycle.
 
 
 * ew/config-protect-mode (2014-05-06) 1 commit
@@ -318,19 +373,21 @@ of the repositories listed at
 
 
 * jc/coding-guidelines (2014-05-02) 8 commits
- - CodingGuidelines: on splitting a long line
- - CodingGuidelines: on comparison
- - CodingGuidelines: do not call the conditional statement "if()"
- - CodingGuidelines: give an example for shell function preamble
- - CodingGuidelines: give an example for control statements
- - CodingGuidelines: give an example for redirection
- - CodingGuidelines: give an example for case/esac statement
- - CodingGuidelines: once it is in, it is not worth the code churn
+  (merged to 'next' on 2014-05-12 at e1fcf62)
+ + CodingGuidelines: on splitting a long line
+ + CodingGuidelines: on comparison
+ + CodingGuidelines: do not call the conditional statement "if()"
+ + CodingGuidelines: give an example for shell function preamble
+ + CodingGuidelines: give an example for control statements
+ + CodingGuidelines: give an example for redirection
+ + CodingGuidelines: give an example for case/esac statement
+ + CodingGuidelines: once it is in, it is not worth the code churn
 
- Will merge to 'next' and keep it there for the rest of this cycle.
+ Will keep in 'next' for the remainder of the cycle.
 
 
-* jd/subtree (2014-05-06) 5 commits
+* jd/subtree (2014-05-13) 6 commits
+ - contrib/subtree: allow adding an annotated tag
   (merged to 'next' on 2014-05-07 at 81b375d)
  + contrib/subtree/Makefile: clean up rule for "clean"
  + contrib/subtree/Makefile: clean up rules to generate documentation
@@ -366,65 +423,69 @@ of the repositories listed at
 
 
 * cc/replace-edit (2014-04-29) 4 commits
- - replace: add --edit option
- - replace: factor object resolution out of replace_object
- - replace: use OPT_CMDMODE to handle modes
- - replace: refactor command-mode determination
+  (merged to 'next' on 2014-05-12 at 71449bf)
+ + replace: add --edit option
+ + replace: factor object resolution out of replace_object
+ + replace: use OPT_CMDMODE to handle modes
+ + replace: refactor command-mode determination
 
  "git replace" learns a new "--edit" option.
 
- Will merge to 'next' and keep it there for the rest of this cycle.
+ Will keep in 'next' for the remainder of the cycle.
 
 
 * da/imap-send-use-credential-helper (2014-04-29) 1 commit
- - imap-send: use git-credential
+  (merged to 'next' on 2014-05-12 at b0698a5)
+ + imap-send: use git-credential
 
  "git imap-send" learns to ask the credential helper for
  authentication material.
 
- Will merge to 'next' and keep it there for the rest of this cycle.
+ Will keep in 'next' for the remainder of the cycle.
 
 
 * dk/blame-reorg (2014-04-28) 1 commit
  - blame: large-scale performance rewrite
 
- I haven't found any "WAT" in my daily use, but I need to find time
- to re-read the whole thing once again.  After doing that, will
- merge to 'next' and keep it there for the rest of this cycle.
+ Will merge to 'next' and keep it there for the rest of this cycle.
 
 
 * je/pager-do-not-recurse (2014-04-28) 1 commit
- - pager: do allow spawning pager recursively
+  (merged to 'next' on 2014-05-12 at 32de470)
+ + pager: do allow spawning pager recursively
 
  We used to unconditionally disabled the pager in the pager process
  we spawn to feed out output, but that prevents people who want to
  run less within less from doing so.
 
- Will merge to 'next' and keep it there for the rest of this cycle.
+ Will keep in 'next' for the remainder of the cycle.
 
 
 * jk/commit-C-pick-empty (2014-04-28) 1 commit
- - commit: do not complain of empty messages from -C
+  (merged to 'next' on 2014-05-12 at c187e1e)
+ + commit: do not complain of empty messages from -C
 
  "git commit --allow-empty-message -C $commit" did not work when the
  commit did not have any log message.
 
- Will merge to 'next' and keep it there for the rest of this cycle.
+ Will keep in 'next' for the remainder of the cycle.
 
 
 * jk/utf8-switch-between-nfd-and-nfc (2014-04-29) 1 commit
- - t3910: show failure of core.precomposeunicode with decomposed filenames
+  (merged to 'next' on 2014-05-12 at 948823c)
+ + t3910: show failure of core.precomposeunicode with decomposed filenames
 
  Document a known breakage with a test.
 
- Will merge to 'next' and keep it there for the rest of this cycle.
+ Will keep in 'next' for the remainder of the cycle.
 
 
 * mt/send-email-cover-to-cc (2014-04-29) 2 commits
- - test/send-email: to-cover, cc-cover tests
- - git-send-email: two new options: to-cover, cc-cover
+  (merged to 'next' on 2014-05-12 at b696006)
+ + test/send-email: to-cover, cc-cover tests
+ + git-send-email: two new options: to-cover, cc-cover
 
- Will merge to 'next' and keep it there for the rest of this cycle.
+ Will keep in 'next' for the remainder of the cycle.
 
 
 * nd/split-index (2014-04-29) 33 commits
@@ -467,9 +528,10 @@ of the repositories listed at
 
 
 * tl/relax-in-poll-emulation (2014-04-29) 1 commit
- - compat/poll: sleep 1 millisecond to avoid busy wait
+  (merged to 'next' on 2014-05-12 at 9369b08)
+ + compat/poll: sleep 1 millisecond to avoid busy wait
 
- Will merge to 'next' and keep it there for the rest of this cycle.
+ Will keep in 'next' for the remainder of the cycle.
 
 
 * bc/blame-crlf-test (2014-05-08) 1 commit
