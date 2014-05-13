@@ -43,6 +43,9 @@ import re
 import StringIO
 import atexit, shutil, hashlib, urlparse, subprocess
 
+sys.stderr.write('WARNING: git-remote-bzr is now maintained independently.\n')
+sys.stderr.write('WARNING: For more information visit https://github.com/felipec/git-remote-bzr\n')
+
 NAME_RE = re.compile('^([^<>]+)')
 AUTHOR_RE = re.compile('^([^<>]+?)? ?[<>]([^<>]*)(?:$|>)')
 EMAIL_RE = re.compile(r'([^ \t<>]+@[^ \t<>]+)')
