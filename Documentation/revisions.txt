@@ -94,7 +94,9 @@ some output processing may assume ref names in UTF-8.
 '<branchname>@\{upstream\}', e.g. 'master@\{upstream\}', '@\{u\}'::
   The suffix '@\{upstream\}' to a branchname (short form '<branchname>@\{u\}')
   refers to the branch that the branch specified by branchname is set to build on
-  top of.  A missing branchname defaults to the current one.
+  top of (configured with `branch.<name>.remote` and
+  `branch.<name>.merge`).  A missing branchname defaults to the
+  current one.
 
 '<rev>{caret}', e.g. 'HEAD{caret}, v1.5.1{caret}0'::
   A suffix '{caret}' to a revision parameter means the first parent of
