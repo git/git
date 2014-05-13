@@ -270,7 +270,7 @@ __git_ps1_colorize_gitstring ()
 	r="$c_clear$r"
 }
 
-eread ()
+__git_eread ()
 {
 	f="$1"
 	shift
@@ -339,9 +339,9 @@ __git_ps1 ()
 	local step=""
 	local total=""
 	if [ -d "$g/rebase-merge" ]; then
-		eread "$g/rebase-merge/head-name" b
-		eread "$g/rebase-merge/msgnum" step
-		eread "$g/rebase-merge/end" total
+		__git_eread "$g/rebase-merge/head-name" b
+		__git_eread "$g/rebase-merge/msgnum" step
+		__git_eread "$g/rebase-merge/end" total
 		if [ -f "$g/rebase-merge/interactive" ]; then
 			r="|REBASE-i"
 		else
@@ -349,10 +349,10 @@ __git_ps1 ()
 		fi
 	else
 		if [ -d "$g/rebase-apply" ]; then
-			eread "$g/rebase-apply/next" step
-			eread "$g/rebase-apply/last" total
+			__git_eread "$g/rebase-apply/next" step
+			__git_eread "$g/rebase-apply/last" total
 			if [ -f "$g/rebase-apply/rebasing" ]; then
-				eread "$g/rebase-apply/head-name" b
+				__git_eread "$g/rebase-apply/head-name" b
 				r="|REBASE"
 			elif [ -f "$g/rebase-apply/applying" ]; then
 				r="|AM"
@@ -376,7 +376,7 @@ __git_ps1 ()
 			b="$(git symbolic-ref HEAD 2>/dev/null)"
 		else
 			local head=""
-			if ! eread "$g/HEAD" head; then
+			if ! __git_eread "$g/HEAD" head; then
 				if [ $pcmode = yes ]; then
 					PS1="$ps1pc_start$ps1pc_end"
 				fi
