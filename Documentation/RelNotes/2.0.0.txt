@@ -88,10 +88,6 @@ UI, Workflows & Features
  * "git grep" learned to behave in a way similar to native grep when
    "-h" (no header) and "-c" (count) options are given.
 
- * "git push" via transport-helper interface (e.g. remote-hg) has
-   been updated to allow forced ref updates in a way similar to the
-   natively supported transports.
-
  * The "simple" mode is the default for "git push".
 
  * "git add -u" and "git add -A", when run without any pathspec, is a

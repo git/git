@@ -58,7 +58,7 @@ static int recvline_fh(FILE *helper, struct strbuf *buffer, const char *name)
 	if (strbuf_getline(buffer, helper, '\n') == EOF) {
 		if (debug)
 			fprintf(stderr, "Debug: Remote helper quit.\n");
-		return 1;
+		exit(128);
 	}
 
 	if (debug)
@@ -69,6 +69,12 @@ static int recvline_fh(FILE *helper, struct strbuf *buffer, const char *name)
 static int recvline(struct helper_data *helper, struct strbuf *buffer)
 {
 	return recvline_fh(helper->out, buffer, helper->name);
+}
+
+static void xchgline(struct helper_data *helper, struct strbuf *buffer)
+{
+	sendline(helper, buffer);
+	recvline(helper, buffer);
 }
 
 static void write_constant(int fd, const char *str)
@@ -157,8 +163,7 @@ static struct child_process *get_helper(struct transport *transport)
 	while (1) {
 		const char *capname;
 		int mandatory = 0;
-		if (recvline(data, &buf))
-			exit(128);
+		recvline(data, &buf);
 
 		if (!*buf.buf)
 			break;
@@ -195,9 +200,15 @@ static struct child_process *get_helper(struct transport *transport)
 		} else if (!strcmp(capname, "signed-tags")) {
 			data->signed_tags = 1;
 		} else if (starts_with(capname, "export-marks ")) {
-			data->export_marks = xstrdup(capname + strlen("export-marks "));
+			struct strbuf arg = STRBUF_INIT;
+			strbuf_addstr(&arg, "--export-marks=");
+			strbuf_addstr(&arg, capname + strlen("export-marks "));
+			data->export_marks = strbuf_detach(&arg, NULL);
 		} else if (starts_with(capname, "import-marks")) {
-			data->import_marks = xstrdup(capname + strlen("import-marks "));
+			struct strbuf arg = STRBUF_INIT;
+			strbuf_addstr(&arg, "--import-marks=");
+			strbuf_addstr(&arg, capname + strlen("import-marks "));
+			data->import_marks = strbuf_detach(&arg, NULL);
 		} else if (starts_with(capname, "no-private-update")) {
 			data->no_private_update = 1;
 		} else if (mandatory) {
@@ -296,9 +307,7 @@ static int set_helper_option(struct transport *transport,
 		quote_c_style(value, &buf, NULL, 0);
 	strbuf_addch(&buf, '\n');
 
-	sendline(data, &buf);
-	if (recvline(data, &buf))
-		exit(128);
+	xchgline(data, &buf);
 
 	if (!strcmp(buf.buf, "ok"))
 		ret = 0;
@@ -370,8 +379,7 @@ static int fetch_with_fetch(struct transport *transport,
 	sendline(data, &buf);
 
 	while (1) {
-		if (recvline(data, &buf))
-			exit(128);
+		recvline(data, &buf);
 
 		if (starts_with(buf.buf, "lock ")) {
 			const char *name = buf.buf + 5;
@@ -422,8 +430,6 @@ static int get_exporter(struct transport *transport,
 	struct helper_data *data = transport->data;
 	struct child_process *helper = get_helper(transport);
 	int argc = 0, i;
-	struct strbuf tmp = STRBUF_INIT;
-
 	memset(fastexport, 0, sizeof(*fastexport));
 
 	/* we need to duplicate helper->in because we want to use it after
@@ -434,14 +440,10 @@ static int get_exporter(struct transport *transport,
 	fastexport->argv[argc++] = "--use-done-feature";
 	fastexport->argv[argc++] = data->signed_tags ?
 		"--signed-tags=verbatim" : "--signed-tags=warn-strip";
-	if (data->export_marks) {
-		strbuf_addf(&tmp, "--export-marks=%s.tmp", data->export_marks);
-		fastexport->argv[argc++] = strbuf_detach(&tmp, NULL);
-	}
-	if (data->import_marks) {
-		strbuf_addf(&tmp, "--import-marks=%s", data->import_marks);
-		fastexport->argv[argc++] = strbuf_detach(&tmp, NULL);
-	}
+	if (data->export_marks)
+		fastexport->argv[argc++] = data->export_marks;
+	if (data->import_marks)
+		fastexport->argv[argc++] = data->import_marks;
 
 	for (i = 0; i < revlist_args->nr; i++)
 		fastexport->argv[argc++] = revlist_args->items[i].string;
@@ -561,9 +563,7 @@ static int process_connect_service(struct transport *transport,
 		goto exit;
 
 	sendline(data, &cmdbuf);
-	if (recvline_fh(input, &cmdbuf, name))
-		exit(128);
-
+	recvline_fh(input, &cmdbuf, name);
 	if (!strcmp(cmdbuf.buf, "")) {
 		data->no_disconnect_req = 1;
 		if (debug)
@@ -739,22 +739,16 @@ static int push_update_ref_status(struct strbuf *buf,
 	return !(status == REF_STATUS_OK);
 }
 
-static int push_update_refs_status(struct helper_data *data,
+static void push_update_refs_status(struct helper_data *data,
 				    struct ref *remote_refs,
 				    int flags)
 {
 	struct strbuf buf = STRBUF_INIT;
 	struct ref *ref = remote_refs;
-	int ret = 0;
-
 	for (;;) {
 		char *private;
 
-		if (recvline(data, &buf)) {
-			ret = 1;
-			break;
-		}
-
+		recvline(data, &buf);
 		if (!buf.len)
 			break;
 
@@ -772,7 +766,6 @@ static int push_update_refs_status(struct helper_data *data,
 		free(private);
 	}
 	strbuf_release(&buf);
-	return ret;
 }
 
 static int push_refs_with_push(struct transport *transport,
@@ -853,7 +846,8 @@ static int push_refs_with_push(struct transport *transport,
 	sendline(data, &buf);
 	strbuf_release(&buf);
 
-	return push_update_refs_status(data, remote_refs, flags);
+	push_update_refs_status(data, remote_refs, flags);
+	return 0;
 }
 
 static int push_refs_with_export(struct transport *transport,
@@ -911,15 +905,7 @@ static int push_refs_with_export(struct transport *transport,
 
 	if (finish_command(&exporter))
 		die("Error while running fast-export");
-	if (push_update_refs_status(data, remote_refs, flags))
-		return 1;
-
-	if (data->export_marks) {
-		strbuf_addf(&buf, "%s.tmp", data->export_marks);
-		rename(buf.buf, data->export_marks);
-		strbuf_release(&buf);
-	}
-
+	push_update_refs_status(data, remote_refs, flags);
 	return 0;
 }
 
@@ -988,8 +974,7 @@ static struct ref *get_refs_list(struct transport *transport, int for_push)
 
 	while (1) {
 		char *eov, *eon;
-		if (recvline(data, &buf))
-			exit(128);
+		recvline(data, &buf);
 
 		if (!*buf.buf)
 			break;
