@@ -144,6 +144,10 @@ static inline int mingw_SSL_set_wfd(SSL *ssl, int fd)
 #define SSL_set_wfd mingw_SSL_set_wfd
 #endif
 
+#undef symlink_with_type
+#define symlink_with_type(a,b,c) mingw_symlink((a),(b),(c))
+#define symlink(a,b) mingw_symlink((a),(b),GIT_TARGET_UNKNOWN)
+
 /*
  * implementations of missing functions
  */
@@ -159,7 +163,8 @@ struct passwd *getpwuid(uid_t uid);
 int setitimer(int type, struct itimerval *in, struct itimerval *out);
 int sigaction(int sig, struct sigaction *in, struct sigaction *out);
 int link(const char *oldpath, const char *newpath);
-int symlink(const char *oldpath, const char *newpath);
+
+int mingw_symlink(const char *oldpath, const char *newpath, enum git_target_type targettype);
 int readlink(const char *path, char *buf, size_t bufsiz);
 
 /*

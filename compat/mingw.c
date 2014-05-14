@@ -2268,6 +2268,8 @@ void mingw_open_html(const char *unixpath)
 	}
 }
 
+#define SYMBOLIC_LINK_FLAG_DIRECTORY 0x1
+
 int link(const char *oldpath, const char *newpath)
 {
 	typedef BOOL (WINAPI *T)(LPCWSTR, LPCWSTR, LPSECURITY_ATTRIBUTES);
@@ -2305,12 +2307,13 @@ int link(const char *oldpath, const char *newpath)
 	return 0;
 }
 
-int symlink(const char *oldpath, const char *newpath)
+int mingw_symlink(const char *oldpath, const char *newpath, enum git_target_type targettype)
 {
 	typedef BOOL WINAPI (*symlink_fn)(const wchar_t*, const wchar_t*, DWORD);
 	static symlink_fn create_symbolic_link = NULL;
 	wchar_t woldpath[MAX_PATH], wnewpath[MAX_PATH], wbuf[MAX_PATH];
 	struct stat  st;
+	int flags = 0;
 
 	if (xutftowcs(woldpath, oldpath, MAX_PATH) < 0)
 		return -1;
@@ -2325,6 +2328,57 @@ int symlink(const char *oldpath, const char *newpath)
 			return -1;
 	}
 
+	switch (targettype) {
+		case GIT_TARGET_UNKNOWN:
+			{
+				/* Determine the target symbolic link type from the
+				   Filesystem.
+				  */
+				wchar_t wcurdir[MAX_PATH] = L"";
+				if (!is_absolute_pathw(woldpath)) {
+					/* If woldpath is relative, then stat needs to be
+					   from the directory containing the original file.
+					 */
+
+					wchar_t *pos, *wlast=NULL, oldc;
+					int ret;
+
+					for (pos = wnewpath; *pos; ++pos)
+						if (is_dir_sep(*pos))
+							wlast = pos;
+
+					if (wlast != NULL)  {
+						do_getcwd(wcurdir, MAX_PATH);
+
+						oldc = *wlast;
+						*wlast = L'\0';
+
+						ret = do_wchdir(wnewpath);
+						if (ret)
+							*wcurdir = L'\0';
+
+						*wlast = oldc;
+						if (ret)
+							return -1;
+					}
+				}
+
+				if (!do_wlstat(1, woldpath, &st, wbuf, MAX_PATH)) {
+					if (S_ISDIR(st.st_mode) )
+						flags = SYMBOLIC_LINK_FLAG_DIRECTORY;
+				}
+
+				if (*wcurdir)
+					do_wchdir(wcurdir);
+			}
+			break;
+		case GIT_TARGET_ISDIR:
+			flags = SYMBOLIC_LINK_FLAG_DIRECTORY;
+			break;
+		case GIT_TARGET_ISFILE:
+			break;
+	}
+
 	if (!create_symbolic_link) {
 		create_symbolic_link = (symlink_fn) GetProcAddress(
 				GetModuleHandle("kernel32.dll"), "CreateSymbolicLinkW");
@@ -2336,7 +2390,7 @@ int symlink(const char *oldpath, const char *newpath)
 		return -1;
 	}
 
-	if (!create_symbolic_link(wnewpath, woldpath, 0)) {
+	if (!create_symbolic_link(wnewpath, woldpath, flags)) {
 		errno = err_win_to_posix(GetLastError());
 		return -1;
 	}
