@@ -57,11 +57,10 @@ create_merge_msgs () {
 		git log --no-merges ^HEAD c2 c3
 	} >squash.1-5-9 &&
 	: >msg.nologff &&
-	echo >msg.nolognoff &&
+	: >msg.nolognoff &&
 	{
 		echo "* tag 'c3':" &&
-		echo "  commit 3" &&
-		echo
+		echo "  commit 3"
 	} >msg.log
 }
 
@@ -71,7 +70,7 @@ verify_merge () {
 	git diff --exit-code &&
 	if test -n "$3"
 	then
-		git show -s --pretty=format:%s HEAD >msg.act &&
+		git show -s --pretty=tformat:%s HEAD >msg.act &&
 		test_cmp "$3" msg.act
 	fi
 }
@@ -620,10 +619,10 @@ test_expect_success 'merge early part of c2' '
 	git tag c6 &&
 	git branch -f c5-branch c5 &&
 	git merge c5-branch~1 &&
-	git show -s --pretty=format:%s HEAD >actual.branch &&
+	git show -s --pretty=tformat:%s HEAD >actual.branch &&
 	git reset --keep HEAD^ &&
 	git merge c5~1 &&
-	git show -s --pretty=format:%s HEAD >actual.tag &&
+	git show -s --pretty=tformat:%s HEAD >actual.tag &&
 	test_cmp expected.branch actual.branch &&
 	test_cmp expected.tag actual.tag
 '
