@@ -29,6 +29,11 @@ static void remove_lock_file_on_signal(int signo)
 	raise(signo);
 }
 
+/* mingw requires its own version of resolve_symlink to be use,
+ * including in lock_file below
+ */
+#ifndef resolve_symlink
+
 /*
  * p = absolute or relative path name
  *
@@ -121,6 +126,7 @@ static char *resolve_symlink(char *p, size_t s)
 	return p;
 }
 
+#endif
 
 static int lock_file(struct lock_file *lk, const char *path, int flags)
 {
