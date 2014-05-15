@@ -2597,7 +2597,7 @@ int repack_without_refs(const char **refnames, int n, struct strbuf *err)
 	return ret;
 }
 
-static int delete_ref_loose(struct ref_lock *lock, int flag)
+static int delete_ref_loose(struct ref_lock *lock, int flag, struct strbuf *err)
 {
 	if (!(flag & REF_ISPACKED) || flag & REF_ISSYMREF) {
 		/*
@@ -2605,9 +2605,9 @@ static int delete_ref_loose(struct ref_lock *lock, int flag)
 		 * lockfile name, minus ".lock":
 		 */
 		char *loose_filename = get_locked_file_path(lock->lk);
-		int err = unlink_or_warn(loose_filename);
+		int res = unlink_or_msg(loose_filename, err);
 		free(loose_filename);
-		if (err)
+		if (res)
 			return 1;
 	}
 	return 0;
@@ -3658,7 +3658,8 @@ int ref_transaction_commit(struct ref_transaction *transaction,
 		struct ref_update *update = updates[i];
 
 		if (update->lock) {
-			ret |= delete_ref_loose(update->lock, update->type);
+			ret |= delete_ref_loose(update->lock, update->type,
+						err);
 			if (!(update->flags & REF_ISPRUNING))
 				delnames[delnum++] = update->lock->ref_name;
 		}
