@@ -109,6 +109,13 @@ terminated), of which .argv[0] is the program name to run (usually
 without a path). If the command to run is a git command, set argv[0] to
 the command name without the 'git-' prefix and set .git_cmd = 1.
 
+Note that the ownership of the memory pointed to by .argv stays with the
+caller, but it should survive until `finish_command` completes. If the
+.argv member is NULL, `start_command` will point it at the .args
+`argv_array` (so you may use one or the other, but you must use exactly
+one). The memory in .args will be cleaned up automatically during
+`finish_command` (or during `start_command` when it is unsuccessful).
+
 The members .in, .out, .err are used to redirect stdin, stdout,
 stderr as follows:
 
