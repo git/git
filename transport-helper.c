@@ -101,7 +101,6 @@ static void do_take_over(struct transport *transport)
 static struct child_process *get_helper(struct transport *transport)
 {
 	struct helper_data *data = transport->data;
-	struct argv_array argv = ARGV_ARRAY_INIT;
 	struct strbuf buf = STRBUF_INIT;
 	struct child_process *helper;
 	const char **refspecs = NULL;
@@ -123,10 +122,9 @@ static struct child_process *get_helper(struct transport *transport)
 	helper->in = -1;
 	helper->out = -1;
 	helper->err = 0;
-	argv_array_pushf(&argv, "git-remote-%s", data->name);
-	argv_array_push(&argv, transport->remote->name);
-	argv_array_push(&argv, remove_ext_force(transport->url));
-	helper->argv = argv_array_detach(&argv, NULL);
+	argv_array_pushf(&helper->args, "git-remote-%s", data->name);
+	argv_array_push(&helper->args, transport->remote->name);
+	argv_array_push(&helper->args, remove_ext_force(transport->url));
 	helper->git_cmd = 0;
 	helper->silent_exec_failure = 1;
 
@@ -245,7 +243,6 @@ static int disconnect_helper(struct transport *transport)
 		close(data->helper->out);
 		fclose(data->out);
 		res = finish_command(data->helper);
-		argv_array_free_detached(data->helper->argv);
 		free(data->helper);
 		data->helper = NULL;
 	}
