@@ -866,3 +866,11 @@ mingw_read_file_strip_cr_ () {
 		eval "$1=\$$1\$line"
 	done
 }
+
+# Perform dos2unix line ending conversion for binary files
+d2u_force() {
+	if test_have_prereq MINGW
+	then
+		dos2unix --force "$1"
+	fi
+}
