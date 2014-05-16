@@ -605,9 +605,7 @@ restart:
 
   if (!rc && timeout == INFTIM)
     {
-      /* Sleep 1 millisecond to avoid busy wait */
-      SleepEx(1, TRUE);
-
+      SleepEx (1, TRUE);
       goto restart;
     }
 

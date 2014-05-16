@@ -1380,12 +1380,17 @@ test_expect_success 'multiple --points-at are OR-ed together' '
 	test_cmp expect actual
 '
 
->expect
-# ulimit is a bash builtin; we can rely on that in MinGW, but nowhere else
-test_expect_success MINGW '--contains works in a deep repo' '
-	ulimit -s 64
+run_with_limited_stack () {
+	(ulimit -s 64 && "$@")
+}
+
+test_lazy_prereq ULIMIT 'run_with_limited_stack true'
+
+# we require ulimit, this excludes Windows
+test_expect_success ULIMIT '--contains works in a deep repo' '
+	>expect &&
 	i=1 &&
-	while test $i -lt 1000
+	while test $i -lt 4000
 	do
 		echo "commit refs/heads/master
 committer A U Thor <author@example.com> $((1000000000 + $i * 100)) +0200
@@ -1397,7 +1402,7 @@ EOF"
 	done | git fast-import &&
 	git checkout master &&
 	git tag far-far-away HEAD^ &&
-	git tag --contains HEAD >actual &&
+	run_with_limited_stack git tag --contains HEAD >actual &&
 	test_cmp expect actual
 '
 
