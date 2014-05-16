@@ -118,6 +118,12 @@ then
 	status=1
 fi
 
+# Special case: turn "for_linus" to "tags/for_linus" when it is correct
+if test "$ref" = "refs/tags/$pretty_remote"
+then
+	pretty_remote=tags/$pretty_remote
+fi
+
 url=$(git ls-remote --get-url "$url")
 
 git show -s --format='The following changes since commit %H:
