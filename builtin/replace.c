@@ -275,6 +275,9 @@ static int edit_and_replace(const char *object_ref, int force)
 
 	free(tmpfile);
 
+	if (!hashcmp(old, new))
+		return error("new object is the same as the old one: '%s'", sha1_to_hex(old));
+
 	return replace_object_sha1(object_ref, old, "replacement", new, force);
 }
 
