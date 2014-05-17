@@ -828,8 +828,11 @@ static int git_default_core_config(const char *var, const char *value)
 		int ret = git_config_string(&comment, var, value);
 		if (ret)
 			return ret;
+		else if (!strcasecmp(comment, "auto"))
+			auto_comment_line_char = 1;
 		else if (comment[0] && !comment[1]) {
 			comment_line_char = comment[0];
+			auto_comment_line_char = 0;
 		} else
 			return error("core.commentChar should only be one character");
 		return 0;

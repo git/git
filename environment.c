@@ -69,6 +69,7 @@ unsigned long pack_size_limit_cfg;
  * that is subject to stripspace.
  */
 char comment_line_char = '#';
+int auto_comment_line_char;
 
 /* Parallel index stat data preload? */
 int core_preload_index = 0;

@@ -602,6 +602,7 @@ extern int precomposed_unicode;
  * that is subject to stripspace.
  */
 extern char comment_line_char;
+extern int auto_comment_line_char;
 
 enum branch_track {
 	BRANCH_TRACK_UNSPECIFIED = -1,
