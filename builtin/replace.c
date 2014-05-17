@@ -124,6 +124,25 @@ static int delete_replace_ref(const char *name, const char *ref,
 	return 0;
 }
 
+static void check_ref_valid(unsigned char object[20],
+			    unsigned char prev[20],
+			    char *ref,
+			    int ref_size,
+			    int force)
+{
+	if (snprintf(ref, ref_size,
+		     "refs/replace/%s",
+		     sha1_to_hex(object)) > ref_size - 1)
+		die("replace ref name too long: %.*s...", 50, ref);
+	if (check_refname_format(ref, 0))
+		die("'%s' is not a valid ref name.", ref);
+
+	if (read_ref(ref, prev))
+		hashclr(prev);
+	else if (!force)
+		die("replace ref '%s' already exists", ref);
+}
+
 static int replace_object_sha1(const char *object_ref,
 			       unsigned char object[20],
 			       const char *replace_ref,
@@ -135,13 +154,6 @@ static int replace_object_sha1(const char *object_ref,
 	char ref[PATH_MAX];
 	struct ref_lock *lock;
 
-	if (snprintf(ref, sizeof(ref),
-		     "refs/replace/%s",
-		     sha1_to_hex(object)) > sizeof(ref) - 1)
-		die("replace ref name too long: %.*s...", 50, ref);
-	if (check_refname_format(ref, 0))
-		die("'%s' is not a valid ref name.", ref);
-
 	obj_type = sha1_object_info(object, NULL);
 	repl_type = sha1_object_info(repl, NULL);
 	if (!force && obj_type != repl_type)
@@ -151,10 +163,7 @@ static int replace_object_sha1(const char *object_ref,
 		    object_ref, typename(obj_type),
 		    replace_ref, typename(repl_type));
 
-	if (read_ref(ref, prev))
-		hashclr(prev);
-	else if (!force)
-		die("replace ref '%s' already exists", ref);
+	check_ref_valid(object, prev, ref, sizeof(ref), force);
 
 	lock = lock_any_ref_for_update(ref, prev, 0, NULL);
 	if (!lock)
