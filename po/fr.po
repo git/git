@@ -296,11 +296,11 @@ msgid ""
 msgstr ""
 "\n"
 "Si vous comptez baser votre travail sur une branche\n"
-"amont qui existe déjà sur le serveur distant, vous pourriez\n"
-"devoir lancer \"git fetch\" pour la récupérer.\n"
+"amont qui existe déjà sur le serveur distant, vous pouvez\n"
+"lancer \"git fetch\" pour la récupérer.\n"
 "\n"
 "Si vous comptez pousser une nouvelle branche locale qui suivra\n"
-"sa jumelle distante, vous souhaiterez utiliser \"git push -u\"\n"
+"sa jumelle distante, vous pouvez utiliser \"git push -u\"\n"
 "pour paramétrer le suivi distant en même temps que vous poussez."
 
 #: branch.c:260
@@ -343,7 +343,7 @@ msgstr "impossible d'ouvrir '%s'"
 
 #: bundle.c:138
 msgid "Repository lacks these prerequisite commits:"
-msgstr "Le dépôt ne dispose pas des commits prérequis :"
+msgstr "Le dépôt ne dispose pas des commits prérequis suivants :"
 
 #: bundle.c:162 sequencer.c:669 sequencer.c:1123 builtin/log.c:332
 #: builtin/log.c:821 builtin/log.c:1418 builtin/log.c:1644 builtin/merge.c:357
@@ -620,7 +620,7 @@ msgid ""
 msgstr ""
 "ATTENTION : vous avez invoqué une commande Git nommée '%s' qui n'existe "
 "pas.\n"
-"Poursuite en supposant que vous avez voulu dire '%s'"
+"Continuons en supposant que vous avez voulu dire '%s'"
 
 #: help.c:373
 #, c-format
@@ -3480,12 +3480,12 @@ msgid_plural ""
 "\n"
 "%s\n"
 msgstr[0] ""
-"Attention : vous laissez %d commit en retard, non connectés à\n"
+"Attention : vous abandonnez %d commit, non connecté à\n"
 "une branche :\n"
 "\n"
 "%s\n"
 msgstr[1] ""
-"Attention : vous laissez %d commits en retard, non connectés à\n"
+"Attention : vous abandonnez %d commits, non connectés à\n"
 "une branche :\n"
 "\n"
 "%s\n"
@@ -3501,7 +3501,7 @@ msgid ""
 msgstr ""
 "Si vous souhaitez les garder en créant une nouvelle branche, c'est le bon "
 "moment\n"
-"de le faire avec :\n"
+"pour le faire avec :\n"
 "\n"
 "git branch nouvelle_branche %s\n"
 "\n"
@@ -3576,7 +3576,7 @@ msgstr "détacher la HEAD à la validation nommée"
 
 #: builtin/checkout.c:1096
 msgid "set upstream info for new branch"
-msgstr "paramétrer l'information de branche amont pour une nouvelle branche"
+msgstr "paramétrer les coordonnées de branche amont pour une nouvelle branche"
 
 #: builtin/checkout.c:1098
 msgid "new-branch"
@@ -3846,7 +3846,7 @@ msgstr "git clone [options] [--] <dépôt> [<répertoire>]"
 #: builtin/clone.c:64 builtin/fetch.c:97 builtin/merge.c:222
 #: builtin/push.c:504
 msgid "force progress reporting"
-msgstr "forcer l'état d'avancement"
+msgstr "forcer l'affichage de l'état d'avancement"
 
 #: builtin/clone.c:66
 msgid "don't create a checkout"
@@ -4156,7 +4156,7 @@ msgid ""
 msgstr ""
 "Votre nom et votre adresse e-mail ont été configurés automatiquement en se "
 "fondant\n"
-"sur votre nom d'utilisateur et votre nom d'ordinateur. Veuillez vérifier "
+"sur votre nom d'utilisateur et le nom de votre machine. Veuillez vérifier "
 "qu'ils sont corrects.\n"
 "Vous pouvez supprimer ce message en les paramétrant explicitement :\n"
 "\n"
@@ -4565,12 +4565,12 @@ msgstr "réutiliser le message du commit spécifié"
 #: builtin/commit.c:1496
 msgid "use autosquash formatted message to fixup specified commit"
 msgstr ""
-"utiliser un message formaté par autosquash pour corriger le commit spécifié"
+"utiliser un message au format autosquash pour corriger le commit spécifié"
 
 #: builtin/commit.c:1497
 msgid "use autosquash formatted message to squash specified commit"
 msgstr ""
-"utiliser un message formaté par autosquash pour compresser le commit spécifié"
+"utiliser un message au format autosquash pour compresser le commit spécifié"
 
 #: builtin/commit.c:1498
 msgid "the commit is authored by me now (used with -C/-c/--amend)"
@@ -6404,7 +6404,7 @@ msgstr "Exactement une plage nécessaire."
 
 #: builtin/log.c:809
 msgid "Not a range."
-msgstr "Pas une plage."
+msgstr "Ceci n'est pas une plage."
 
 #: builtin/log.c:911
 msgid "Cover letter needs email format"
@@ -6527,7 +6527,7 @@ msgstr "répondre dans le premier message à <id-message>"
 
 #: builtin/log.c:1221 builtin/log.c:1224
 msgid "boundary"
-msgstr "frontière"
+msgstr "limite"
 
 #: builtin/log.c:1222
 msgid "attach the patch"
@@ -8092,7 +8092,7 @@ msgstr ""
 #: builtin/push.c:361
 #, c-format
 msgid "Pushing to %s\n"
-msgstr "Poussage vers %s\n"
+msgstr "Poussée vers %s\n"
 
 #: builtin/push.c:365
 #, c-format
@@ -8185,7 +8185,7 @@ msgstr "check"
 
 #: builtin/push.c:497
 msgid "control recursive pushing of submodules"
-msgstr "contrôler le poussage récursif des sous-modules"
+msgstr "contrôler la poussée récursive des sous-modules"
 
 #: builtin/push.c:499
 msgid "use thin pack"
@@ -8736,12 +8736,12 @@ msgstr "Impossible de paramétrer %s"
 #: builtin/remote.c:1307
 #, c-format
 msgid " %s will become dangling!"
-msgstr " %s deviendra en suspens !"
+msgstr " %s se retrouvera en suspens !"
 
 #: builtin/remote.c:1308
 #, c-format
 msgid " %s has become dangling!"
-msgstr " %s est devenu en suspens !"
+msgstr " %s se retrouve en suspens !"
 
 #: builtin/remote.c:1314
 #, c-format
@@ -10643,7 +10643,7 @@ msgstr "Conflits dans l'index. Essayez sans --index."
 
 #: git-stash.sh:457
 msgid "Could not save index tree"
-msgstr "Impossible de sauver l'arbre d'index"
+msgstr "Impossible de sauvegarder l'arbre d'index"
 
 #: git-stash.sh:491
 msgid "Cannot unstage modified files"
@@ -10799,7 +10799,7 @@ msgstr ""
 #, sh-format
 msgid "No url found for submodule path '$displaypath' in .gitmodules"
 msgstr ""
-"URL non trouvé pour le chemin de sous-module '$displaypath' dans .gitmodules"
+"URL non trouvée pour le chemin de sous-module '$displaypath' dans .gitmodules"
 
 #: git-submodule.sh:620
 #, sh-format
