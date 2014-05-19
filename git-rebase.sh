@@ -147,7 +147,7 @@ move_to_original_branch () {
 	esac
 }
 
-finish_rebase () {
+apply_autostash () {
 	if test -f "$state_dir/autostash"
 	then
 		stash_sha1=$(cat "$state_dir/autostash")
@@ -166,6 +166,10 @@ You can run "git stash pop" or "git stash drop" at any time.
 '
 		fi
 	fi
+}
+
+finish_rebase () {
+	apply_autostash &&
 	git gc --auto &&
 	rm -rf "$state_dir"
 }
@@ -181,6 +185,11 @@ run_specific_rebase () {
 	if test $ret -eq 0
 	then
 		finish_rebase
+	elif test $ret -eq 2 # special exit status for rebase -i
+	then
+		apply_autostash &&
+		rm -rf "$state_dir" &&
+		die "Nothing to do"
 	fi
 	exit $ret
 }

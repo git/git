@@ -970,14 +970,14 @@ fi
 
 
 has_action "$todo" ||
-	die_abort "Nothing to do"
+	return 2
 
 cp "$todo" "$todo".backup
 git_sequence_editor "$todo" ||
 	die_abort "Could not execute editor"
 
 has_action "$todo" ||
-	die_abort "Nothing to do"
+	return 2
 
 test -d "$rewritten" || test -n "$force_rebase" || skip_unnecessary_picks
 
