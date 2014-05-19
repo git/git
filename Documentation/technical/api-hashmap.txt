@@ -166,7 +166,6 @@ Usage example
 -------------
 
 Here's a simple usage example that maps long keys to double values.
-[source,c]
 ------------
 struct hashmap map;
 
