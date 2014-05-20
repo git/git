@@ -25,6 +25,9 @@ import atexit
 import urlparse, hashlib
 import time as ptime
 
+sys.stderr.write('WARNING: git-remote-hg is now maintained independently.\n')
+sys.stderr.write('WARNING: For more information visit https://github.com/felipec/git-remote-hg\n')
+
 #
 # If you want to see Mercurial revisions as Git commit notes:
 # git config core.notesRef refs/notes/hg
