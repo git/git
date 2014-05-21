@@ -220,7 +220,7 @@ EOF
 	test_cmp expected actual
 '
 
-test_expect_failure 'left alignment formatting with trunc. i18n.logOutputEncoding' '
+test_expect_success 'left alignment formatting with trunc. i18n.logOutputEncoding' '
 	git -c i18n.logOutputEncoding=$test_encoding log --pretty="tformat:%<(10,trunc)%s" >actual &&
 	qz_to_tab_space <<EOF | iconv -f utf-8 -t $test_encoding >expected &&
 message ..
@@ -242,7 +242,7 @@ EOF
 	test_cmp expected actual
 '
 
-test_expect_failure 'left alignment formatting with ltrunc. i18n.logOutputEncoding' '
+test_expect_success 'left alignment formatting with ltrunc. i18n.logOutputEncoding' '
 	git -c i18n.logOutputEncoding=$test_encoding log --pretty="tformat:%<(10,ltrunc)%s" >actual &&
 	qz_to_tab_space <<EOF | iconv -f utf-8 -t $test_encoding >expected &&
 ..sage two
@@ -264,7 +264,7 @@ EOF
 	test_cmp expected actual
 '
 
-test_expect_failure 'left alignment formatting with mtrunc. i18n.logOutputEncoding' '
+test_expect_success 'left alignment formatting with mtrunc. i18n.logOutputEncoding' '
 	git -c i18n.logOutputEncoding=$test_encoding log --pretty="tformat:%<(10,mtrunc)%s" >actual &&
 	qz_to_tab_space <<EOF | iconv -f utf-8 -t $test_encoding >expected &&
 mess.. two
@@ -420,7 +420,7 @@ initial...   A U Thor
 EOF
 	test_cmp expected actual
 '
-test_expect_failure 'left/right alignment formatting with stealing. i18n.logOutputEncoding' '
+test_expect_success 'left/right alignment formatting with stealing. i18n.logOutputEncoding' '
 	git -c i18n.logOutputEncoding=$test_encoding log --pretty="tformat:%<(10,trunc)%s%>>(10,ltrunc)% an" >actual &&
 	cat <<EOF | iconv -f utf-8 -t $test_encoding >expected &&
 short long  long long
