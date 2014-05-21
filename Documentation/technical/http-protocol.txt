@@ -374,7 +374,7 @@ C: Send one `$GIT_URL/git-upload-pack` request:
    C: 0000
 
 The stream is organized into "commands", with each command
-appearing by itself in a pkt-line.  Within a command line
+appearing by itself in a pkt-line.  Within a command line,
 the text leading up to the first space is the command name,
 and the remainder of the line to the first LF is the value.
 Command lines are terminated with an LF as the last byte of

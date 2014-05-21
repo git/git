@@ -80,9 +80,9 @@ CONFIGURATION VARIABLES
 help.format
 ~~~~~~~~~~~
 
-If no command line option is passed, the 'help.format' configuration
+If no command-line option is passed, the 'help.format' configuration
 variable will be checked. The following values are supported for this
-variable; they make 'git help' behave as their corresponding command
+variable; they make 'git help' behave as their corresponding command-
 line option:
 
 * "man" corresponds to '-m|--man',
@@ -93,15 +93,15 @@ help.browser, web.browser and browser.<tool>.path
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The 'help.browser', 'web.browser' and 'browser.<tool>.path' will also
-be checked if the 'web' format is chosen (either by command line
+be checked if the 'web' format is chosen (either by command-line
 option or configuration variable). See '-w|--web' in the OPTIONS
 section above and linkgit:git-web{litdd}browse[1].
 
 man.viewer
 ~~~~~~~~~~
 
-The 'man.viewer' config variable will be checked if the 'man' format
-is chosen. The following values are currently supported:
+The 'man.viewer' configuration variable will be checked if the 'man'
+format is chosen. The following values are currently supported:
 
 * "man": use the 'man' program as usual,
 * "woman": use 'emacsclient' to launch the "woman" mode in emacs
@@ -124,7 +124,7 @@ For example, this configuration:
 		viewer = woman
 ------------------------------------------------
 
-will try to use konqueror first. But this may fail (for example if
+will try to use konqueror first. But this may fail (for example, if
 DISPLAY is not set) and in that case emacs' woman mode will be tried.
 
 If everything fails, or if no viewer is configured, the viewer specified

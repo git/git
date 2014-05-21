@@ -29,7 +29,7 @@ in-depth introduction.
 After you mastered the basic concepts, you can come back to this
 page to learn what commands Git offers.  You can learn more about
 individual Git commands with "git help command".  linkgit:gitcli[7]
-manual page gives you an overview of the command line command syntax.
+manual page gives you an overview of the command-line command syntax.
 
 Formatted and hyperlinked version of the latest Git documentation
 can be viewed at `http://git-htmldocs.googlecode.com/git/git.html`.
@@ -39,7 +39,7 @@ ifdef::stalenotes[]
 ============
 
 You are reading the documentation for the latest (possibly
-unreleased) version of Git, that is available from 'master'
+unreleased) version of Git, that is available from the 'master'
 branch of the `git.git` repository.
 Documentation for older releases are available here:
 
@@ -749,7 +749,7 @@ Git so take care if using Cogito etc.
 
 'GIT_WORK_TREE'::
 	Set the path to the root of the working tree.
-	This can also be controlled by the '--work-tree' command line
+	This can also be controlled by the '--work-tree' command-line
 	option and the core.worktree configuration variable.
 
 'GIT_NAMESPACE'::
@@ -874,7 +874,7 @@ for further details.
 'GIT_ASKPASS'::
 	If this environment variable is set, then Git commands which need to
 	acquire passwords or passphrases (e.g. for HTTP or IMAP authentication)
-	will call this program with a suitable prompt as command line argument
+	will call this program with a suitable prompt as command-line argument
 	and read the password from its STDOUT. See also the 'core.askpass'
 	option in linkgit:git-config[1].
 

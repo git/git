@@ -4231,9 +4231,9 @@ Most of what `git rev-list` did is contained in `revision.c` and
 controls how and what revisions are walked, and more.
 
 The original job of `git rev-parse` is now taken by the function
-`setup_revisions()`, which parses the revisions and the common command line
+`setup_revisions()`, which parses the revisions and the common command-line
 options for the revision walker. This information is stored in the struct
-`rev_info` for later consumption. You can do your own command line option
+`rev_info` for later consumption. You can do your own command-line option
 parsing after calling `setup_revisions()`. After that, you have to call
 `prepare_revision_walk()` for initialization, and then you can get the
 commits one by one with the function `get_revision()`.

@@ -148,8 +148,8 @@ the same local time zone.
 [verse]
 config key: svn-remote.<name>.ignore-paths
 +
-If the ignore-paths config key is set and the command line option is
-also given, both regular expressions will be used.
+If the ignore-paths configuration key is set, and the command-line
+option is also given, both regular expressions will be used.
 +
 Examples:
 +

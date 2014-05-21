@@ -181,7 +181,7 @@ On Debian:
 
    Most tests should pass.
 
-A command line tool to test WebDAV is cadaver. If you prefer GUIs, for
+A command-line tool to test WebDAV is cadaver. If you prefer GUIs, for
 example, konqueror can open WebDAV URLs as "webdav://..." or
 "webdavs://...".
 
