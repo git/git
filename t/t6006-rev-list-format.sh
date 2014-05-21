@@ -15,11 +15,21 @@ test_encoding="ISO8859-1"
 # String "added" in German
 # (translated with Google Translate),
 # encoded in UTF-8, used as a commit log message below.
-added=$(printf "added (hinzugef\303\274gt) foo")
+added_utf8_part=$(printf "\303\274")
+added_utf8_part_iso88591=$(echo "$added_utf8_part" | iconv -f utf-8 -t $test_encoding)
+added=$(printf "added (hinzugef${added_utf8_part}gt) foo")
 added_iso88591=$(echo "$added" | iconv -f utf-8 -t $test_encoding)
 # same but "changed"
-changed=$(printf "changed (ge\303\244ndert) foo")
+changed_utf8_part=$(printf "\303\244")
+changed_utf8_part_iso88591=$(echo "$changed_utf8_part" | iconv -f utf-8 -t $test_encoding)
+changed=$(printf "changed (ge${changed_utf8_part}ndert) foo")
 changed_iso88591=$(echo "$changed" | iconv -f utf-8 -t $test_encoding)
+
+# Count of char to truncate
+# Number is chosen so, that non-ACSII characters
+# (see $added_utf8_part and $changed_utf8_part)
+# fall into truncated parts of appropriate words both from left and right
+truncate_count=20
 
 test_expect_success 'setup' '
 	: >foo &&
@@ -139,6 +149,13 @@ commit $head1
 $added
 EOF
 
+test_format subject-truncated "%<($truncate_count,trunc)%s" <<EOF
+commit $head2
+changed (ge${changed_utf8_part}ndert)..
+commit $head1
+added (hinzugef${added_utf8_part}gt..
+EOF
+
 test_format body %b <<EOF
 commit $head2
 commit $head1
@@ -239,6 +256,33 @@ commit $head1
 $added_iso88591
 EOF
 
+test_format complex-subject-trunc "%<($truncate_count,trunc)%s" failure <<EOF
+commit $head3
+Test printing of c..
+commit $head2
+changed (ge${changed_utf8_part_iso88591}ndert)..
+commit $head1
+added (hinzugef${added_utf8_part_iso88591}gt..
+EOF
+
+test_format complex-subject-mtrunc "%<($truncate_count,mtrunc)%s" failure <<EOF
+commit $head3
+Test prin..ex bodies
+commit $head2
+changed (..dert) foo
+commit $head1
+added (hi..f${added_utf8_part_iso88591}gt) foo
+EOF
+
+test_format complex-subject-ltrunc "%<($truncate_count,ltrunc)%s" failure <<EOF
+commit $head3
+.. of complex bodies
+commit $head2
+..ged (ge${changed_utf8_part_iso88591}ndert) foo
+commit $head1
+.. (hinzugef${added_utf8_part_iso88591}gt) foo
+EOF
+
 test_expect_success 'prepare expected messages (for test %b)' '
 	cat <<-EOF >expected.utf-8 &&
 	commit $head3
@@ -265,6 +309,33 @@ commit $head2
 $changed
 commit $head1
 $added
+EOF
+
+test_format complex-subject-commitencoding-unset-trunc "%<($truncate_count,trunc)%s" <<EOF
+commit $head3
+Test printing of c..
+commit $head2
+changed (ge${changed_utf8_part}ndert)..
+commit $head1
+added (hinzugef${added_utf8_part}gt..
+EOF
+
+test_format complex-subject-commitencoding-unset-mtrunc "%<($truncate_count,mtrunc)%s" <<EOF
+commit $head3
+Test prin..ex bodies
+commit $head2
+changed (..dert) foo
+commit $head1
+added (hi..f${added_utf8_part}gt) foo
+EOF
+
+test_format complex-subject-commitencoding-unset-ltrunc "%<($truncate_count,ltrunc)%s" <<EOF
+commit $head3
+.. of complex bodies
+commit $head2
+..ged (ge${changed_utf8_part}ndert) foo
+commit $head1
+.. (hinzugef${added_utf8_part}gt) foo
 EOF
 
 test_format complex-body-commitencoding-unset %b <expected.utf-8
