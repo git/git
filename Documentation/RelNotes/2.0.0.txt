@@ -55,8 +55,9 @@ UI, Workflows & Features
  * The "multi-mail" post-receive hook (in contrib/) has been updated
    to a more recent version from upstream.
 
- * The "remote-hg/bzr" remote-helper interfaces (in contrib/) are
-   now maintained separately as a third-party plug-in.
+ * The "remote-hg/bzr" remote-helper interfaces (used to be in
+   contrib/) are no more.  They are now maintained separately as
+   third-party plug-ins in their own repositories.
 
  * "git gc --aggressive" learned "--depth" option and
    "gc.aggressiveDepth" configuration variable to allow use of a less
@@ -190,12 +191,7 @@ notes for details).
  * The shell prompt script (in contrib/), when using the PROMPT_COMMAND
    interface, used an unsafe construct when showing the branch name in
    $PS1.
-   (merge 8976500 rh/prompt-pcmode-avoid-eval-on-refname later to maint).
-
- * The remote-helper interface to fast-import/fast-export via the
-   transport-helper has been tightened to avoid leaving the import
-   marks file from a failed/crashed run, as such a file that is out-of-
-   sync with reality confuses a later invocation of itself.
+   (merge 1e4119c8 rh/prompt-pcmode-avoid-eval-on-refname later to maint).
 
  * "git rebase" used a POSIX shell construct FreeBSD's /bin/sh does not
    work well with.
@@ -344,7 +340,7 @@ notes for details).
    the pathspec is given as an absolute pathname (which is a
    practice not particularly encouraged) that points at a symbolic
    link in the working tree.
-   (merge later 655ee9e mw/symlinks to maint.)
+   (merge 6127ff6 mw/symlinks later to maint.)
 
  * "git diff --quiet -- pathspec1 pathspec2" sometimes did not return
    the correct status value.
