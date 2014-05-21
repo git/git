@@ -22,10 +22,10 @@ If you sent a patch and you did not hear any response from anybody for
 several days, it could be that your patch was totally uninteresting,
 but it also is possible that it was simply lost in the noise.  Please
 do not hesitate to send a reminder message in such a case.  Messages
-getting lost in the noise is a sign that people involved don't have
-enough mental/time bandwidth to process them right at the moment, and
-it often helps to wait until the list traffic becomes calmer before
-sending such a reminder.
+getting lost in the noise may be a sign that those who can evaluate
+your patch don't have enough mental/time bandwidth to process them
+right at the moment, and it often helps to wait until the list traffic
+becomes calmer before sending such a reminder.
 
 The list archive is available at a few public sites:
 
@@ -33,7 +33,7 @@ The list archive is available at a few public sites:
         http://marc.theaimsgroup.com/?l=git
         http://www.spinics.net/lists/git/
 
-For those who prefer to read it over NNTP (including the maintainer):
+For those who prefer to read it over NNTP:
 
         nntp://news.gmane.org/gmane.comp.version-control.git
 
@@ -45,10 +45,12 @@ gmane is often the easiest to follow by readers, like this:
 as it also allows people who subscribe to the mailing list as gmane
 newsgroup to "jump to" the article.
 
-Some members of the development community can sometimes also be found
-on the #git IRC channel on Freenode.  Its log is available at:
+Some members of the development community can sometimes be found on
+the #git and #git-devel IRC channels on Freenode.  Their logs are
+available at:
 
         http://colabti.org/irclogger/irclogger_log/git
+        http://colabti.org/irclogger/irclogger_log/git-devel
 
 * Reporting bugs
 
@@ -111,18 +113,26 @@ of git: "master", "maint", "next", and "pu".
 
 The "master" branch is meant to contain what are very well tested and
 ready to be used in a production setting.  Every now and then, a
-"feature release" is cut from the tip of this branch and they
-typically are named with three dotted decimal digits.  The last such
-release was 1.8.2 done on Mar 13, 2013. You can expect that the tip of
-the "master" branch is always more stable than any of the released
-versions.
+"feature release" is cut from the tip of this branch.  They used to be
+named with three dotted decimal digits (e.g. "1.8.5"), but recently we
+switched the versioning scheme and "feature releases" are named with
+three-dotted decimal digits that ends with ".0" (e.g. "1.9.0").
+
+The last such release was 1.9.0 done on Feb 14, 2014. You can expect
+that the tip of the "master" branch is always more stable than any of
+the released versions.
 
 Whenever a feature release is made, "maint" branch is forked off from
-"master" at that point.  Obvious, safe and urgent fixes after a feature
-release are applied to this branch and maintenance releases are cut from
-it.  The maintenance releases are named with four dotted decimal, named
-after the feature release they are updates to; the last such release was
-1.8.1.5.  New features never go to this branch.  This branch is also
+"master" at that point.  Obvious, safe and urgent fixes after a
+feature release are applied to this branch and maintenance releases
+are cut from it.  The maintenance releases used to be named with four
+dotted decimal, named after the feature release they are updates to
+(e.g. "1.8.5.1" was the first maintenance release for "1.8.5" feature
+release).  These days, maintenance releases are named by incrementing
+the last digit of three-dotted decimal name (e.g. "1.9.1" is the first
+maintenance relaese for "1.9.0" series).
+
+New features never go to the 'maint' branch.  This branch is also
 merged into "master" to propagate the fixes forward as needed.
 
 A new development does not usually happen on "master". When you send a
@@ -138,10 +148,16 @@ breakage. The "next" branch is where new and exciting things take place. A
 topic that is in "next" is expected to be polished to perfection before it
 is merged to "master".
 
-The "pu" (proposed updates) branch bundles all the remaining topic branches.
-The topics on the branch are not complete, well tested, nor well documented
-and need further work. When a topic that was in "pu" proves to be in a
-testable shape, it is merged to "next".
+The "pu" (proposed updates) branch bundles all the remaining topic
+branches the maintainer happens to have.  There is no guarantee that
+the maintainer has enough bandwidth to pick up any and all topics that
+are remotely promising from the list traffic, so please do not read
+too much into a topic being on (or not on) the "pu" branch.  This
+branch is mainly to remind the maintainer that the topics in them may
+turn out to be interesting when they are polished, nothing more.  The
+topics on this branch aren't usually complete, well tested, or well
+documented and they need further work.  When a topic that was in "pu"
+proves to be in a testable shape, it is merged to "next".
 
 You can run "git log --first-parent master..pu" to see what topics are
 currently in flight.  Sometimes, an idea that looked promising turns out
@@ -156,7 +172,7 @@ Note that being in "next" is not a guarantee to appear in the next
 release, nor even in any future release.  There were cases that topics
 needed reverting a few commits in them before graduating to "master",
 or a topic that already was in "next" was reverted from "next" because
-fatal flaws were found in it after it was merged.
+fatal flaws were found in it after it was merged to "next".
 
 
 * Other people's trees, trusted lieutenants and credits.
@@ -180,48 +196,3 @@ own authoritative repository and maintainers:
 
 	https://github.com/git-l10n/git-po/
 
-I would like to thank everybody who helped to raise git into the current
-shape.  Especially I would like to thank the git list regulars whose help
-I have relied on and expect to continue relying on heavily:
-
- - Linus Torvalds, Shawn Pearce, Johannes Schindelin, Nicolas Pitre,
-   René Scharfe, Jeff King, Jonathan Nieder, Johan Herland, Johannes
-   Sixt, Sverre Rabbelier, Michael J Gruber, Nguyễn Thái Ngọc Duy,
-   Ævar Arnfjörð Bjarmason and Thomas Rast for helping with general
-   design and implementation issues and reviews on the mailing list.
-
- - Shawn and Nicolas Pitre for helping with packfile design and
-   implementation issues.
-
- - Martin Langhoff, Frank Lichtenheld and Ævar Arnfjörð Bjarmason for
-   cvsserver and cvsimport.
-
- - Paul Mackerras for gitk.
-
- - Eric Wong, David D. Kilzer and Sam Vilain for git-svn.
-
- - Simon Hausmann, Pete Wyckoff and Luke Diamond for git-p4.
-
- - Jakub Narebski, John Hawley, Petr Baudis, Luben Tuikov, Giuseppe
-   Bilotta for maintaining and enhancing gitweb.
-
- - Ævar Arnfjörð Bjarmason for kicking off the i18n effort, and Jiang
-   Xin for volunteering to be the l10n coordinator.
-
- - Jens Lehmann, Heiko Voigt and Lars Hjemli for submodule related
-   Porcelains.
-
- - J. Bruce Fields, Jonathan Nieder, Michael J Gruber and Thomas Rast for
-   documentation (and countless others for proofreading and fixing).
-
- - Alexandre Julliard for Emacs integration.
-
- - David Aguilar and Charles Bailey for taking good care of git-mergetool
-   (and Theodore Ts'o for creating it in the first place) and git-difftool.
-
- - Johannes Schindelin, Johannes Sixt, Erik Faye-Lund, Pat Thoyts and others
-   for their effort to move things forward on the Windows front.
-
- - People on non-Linux platforms for keeping their eyes on portability;
-   especially, Randal Schwartz, Theodore Ts'o, Jason Riedy, Thomas Glanzmann,
-   Brandon Casey, Jeff King, Alex Riesen and countless others.
