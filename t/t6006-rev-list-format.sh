@@ -9,19 +9,22 @@ test_description='git rev-list --pretty=format test'
 . "$TEST_DIRECTORY"/lib-terminal.sh
 
 test_tick
+# Tested non-UTF-8 encoding
+test_encoding="ISO8859-1"
+
 # String "added" in German
 # (translated with Google Translate),
 # encoded in UTF-8, used as a commit log message below.
 added=$(printf "added (hinzugef\303\274gt) foo")
-added_iso88591=$(echo "$added" | iconv -f utf-8 -t iso8859-1)
+added_iso88591=$(echo "$added" | iconv -f utf-8 -t $test_encoding)
 # same but "changed"
 changed=$(printf "changed (ge\303\244ndert) foo")
-changed_iso88591=$(echo "$changed" | iconv -f utf-8 -t iso8859-1)
+changed_iso88591=$(echo "$changed" | iconv -f utf-8 -t $test_encoding)
 
 test_expect_success 'setup' '
 	: >foo &&
 	git add foo &&
-	git config i18n.commitEncoding iso8859-1 &&
+	git config i18n.commitEncoding $test_encoding &&
 	git commit -m "$added_iso88591" &&
 	head1=$(git rev-parse --verify HEAD) &&
 	head1_short=$(git rev-parse --verify --short $head1) &&
@@ -124,9 +127,9 @@ EOF
 
 test_format encoding %e <<EOF
 commit $head2
-iso8859-1
+$test_encoding
 commit $head1
-iso8859-1
+$test_encoding
 EOF
 
 test_format subject %s <<EOF
@@ -203,16 +206,16 @@ test_expect_success '%C(auto) respects --color=auto (stdout not tty)' '
 	)
 '
 
-iconv -f utf-8 -t iso8859-1 > commit-msg <<EOF
+iconv -f utf-8 -t $test_encoding > commit-msg <<EOF
 Test printing of complex bodies
 
 This commit message is much longer than the others,
-and it will be encoded in iso8859-1. We should therefore
-include an iso8859 character: ¡bueno!
+and it will be encoded in $test_encoding. We should therefore
+include an ISO8859 character: ¡bueno!
 EOF
 
 test_expect_success 'setup complex body' '
-	git config i18n.commitencoding iso8859-1 &&
+	git config i18n.commitencoding $test_encoding &&
 	echo change2 >foo && git commit -a -F commit-msg &&
 	head3=$(git rev-parse --verify HEAD) &&
 	head3_short=$(git rev-parse --short $head3)
@@ -220,11 +223,11 @@ test_expect_success 'setup complex body' '
 
 test_format complex-encoding %e <<EOF
 commit $head3
-iso8859-1
+$test_encoding
 commit $head2
-iso8859-1
+$test_encoding
 commit $head1
-iso8859-1
+$test_encoding
 EOF
 
 test_format complex-subject %s <<EOF
@@ -240,16 +243,16 @@ test_expect_success 'prepare expected messages (for test %b)' '
 	cat <<-EOF >expected.utf-8 &&
 	commit $head3
 	This commit message is much longer than the others,
-	and it will be encoded in iso8859-1. We should therefore
-	include an iso8859 character: ¡bueno!
+	and it will be encoded in $test_encoding. We should therefore
+	include an ISO8859 character: ¡bueno!
 
 	commit $head2
 	commit $head1
 	EOF
-	iconv -f utf-8 -t iso8859-1 expected.utf-8 >expected.iso8859-1
+	iconv -f utf-8 -t $test_encoding expected.utf-8 >expected.ISO8859-1
 '
 
-test_format complex-body %b <expected.iso8859-1
+test_format complex-body %b <expected.ISO8859-1
 
 # Git uses i18n.commitEncoding if no i18n.logOutputEncoding set
 # so unset i18n.commitEncoding to test encoding conversion
