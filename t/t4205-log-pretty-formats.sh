@@ -144,9 +144,7 @@ test_expect_success 'setup more commits' '
 '
 
 test_expect_success 'left alignment formatting' '
-	git log --pretty="format:%<(40)%s" >actual &&
-	# complete the incomplete line at the end
-	echo >>actual &&
+	git log --pretty="tformat:%<(40)%s" >actual &&
 	qz_to_tab_space <<EOF >expected &&
 message two                            Z
 message one                            Z
@@ -157,9 +155,7 @@ EOF
 '
 
 test_expect_success 'left alignment formatting at the nth column' '
-	git log --pretty="format:%h %<|(40)%s" >actual &&
-	# complete the incomplete line at the end
-	echo >>actual &&
+	git log --pretty="tformat:%h %<|(40)%s" >actual &&
 	qz_to_tab_space <<EOF >expected &&
 $head1 message two                    Z
 $head2 message one                    Z
@@ -170,9 +166,7 @@ EOF
 '
 
 test_expect_success 'left alignment formatting with no padding' '
-	git log --pretty="format:%<(1)%s" >actual &&
-	# complete the incomplete line at the end
-	echo >>actual &&
+	git log --pretty="tformat:%<(1)%s" >actual &&
 	cat <<EOF >expected &&
 message two
 message one
@@ -183,9 +177,7 @@ EOF
 '
 
 test_expect_success 'left alignment formatting with trunc' '
-	git log --pretty="format:%<(10,trunc)%s" >actual &&
-	# complete the incomplete line at the end
-	echo >>actual &&
+	git log --pretty="tformat:%<(10,trunc)%s" >actual &&
 	qz_to_tab_space <<EOF >expected &&
 message ..
 message ..
@@ -196,9 +188,7 @@ EOF
 '
 
 test_expect_success 'left alignment formatting with ltrunc' '
-	git log --pretty="format:%<(10,ltrunc)%s" >actual &&
-	# complete the incomplete line at the end
-	echo >>actual &&
+	git log --pretty="tformat:%<(10,ltrunc)%s" >actual &&
 	qz_to_tab_space <<EOF >expected &&
 ..sage two
 ..sage one
@@ -209,9 +199,7 @@ EOF
 '
 
 test_expect_success 'left alignment formatting with mtrunc' '
-	git log --pretty="format:%<(10,mtrunc)%s" >actual &&
-	# complete the incomplete line at the end
-	echo >>actual &&
+	git log --pretty="tformat:%<(10,mtrunc)%s" >actual &&
 	qz_to_tab_space <<EOF >expected &&
 mess.. two
 mess.. one
@@ -222,9 +210,7 @@ EOF
 '
 
 test_expect_success 'right alignment formatting' '
-	git log --pretty="format:%>(40)%s" >actual &&
-	# complete the incomplete line at the end
-	echo >>actual &&
+	git log --pretty="tformat:%>(40)%s" >actual &&
 	qz_to_tab_space <<EOF >expected &&
 Z                            message two
 Z                            message one
@@ -235,9 +221,7 @@ EOF
 '
 
 test_expect_success 'right alignment formatting at the nth column' '
-	git log --pretty="format:%h %>|(40)%s" >actual &&
-	# complete the incomplete line at the end
-	echo >>actual &&
+	git log --pretty="tformat:%h %>|(40)%s" >actual &&
 	qz_to_tab_space <<EOF >expected &&
 $head1                      message two
 $head2                      message one
@@ -248,9 +232,7 @@ EOF
 '
 
 test_expect_success 'right alignment formatting with no padding' '
-	git log --pretty="format:%>(1)%s" >actual &&
-	# complete the incomplete line at the end
-	echo >>actual &&
+	git log --pretty="tformat:%>(1)%s" >actual &&
 	cat <<EOF >expected &&
 message two
 message one
@@ -261,9 +243,7 @@ EOF
 '
 
 test_expect_success 'center alignment formatting' '
-	git log --pretty="format:%><(40)%s" >actual &&
-	# complete the incomplete line at the end
-	echo >>actual &&
+	git log --pretty="tformat:%><(40)%s" >actual &&
 	qz_to_tab_space <<EOF >expected &&
 Z             message two              Z
 Z             message one              Z
@@ -274,9 +254,7 @@ EOF
 '
 
 test_expect_success 'center alignment formatting at the nth column' '
-	git log --pretty="format:%h %><|(40)%s" >actual &&
-	# complete the incomplete line at the end
-	echo >>actual &&
+	git log --pretty="tformat:%h %><|(40)%s" >actual &&
 	qz_to_tab_space <<EOF >expected &&
 $head1           message two          Z
 $head2           message one          Z
@@ -287,9 +265,7 @@ EOF
 '
 
 test_expect_success 'center alignment formatting with no padding' '
-	git log --pretty="format:%><(1)%s" >actual &&
-	# complete the incomplete line at the end
-	echo >>actual &&
+	git log --pretty="tformat:%><(1)%s" >actual &&
 	cat <<EOF >expected &&
 message two
 message one
@@ -305,9 +281,7 @@ old_head1=$(git rev-parse --verify HEAD~0)
 
 test_expect_success 'left/right alignment formatting with stealing' '
 	git commit --amend -m short --author "long long long <long@me.com>" &&
-	git log --pretty="format:%<(10,trunc)%s%>>(10,ltrunc)% an" >actual &&
-	# complete the incomplete line at the end
-	echo >>actual &&
+	git log --pretty="tformat:%<(10,trunc)%s%>>(10,ltrunc)% an" >actual &&
 	cat <<EOF >expected &&
 short long  long long
 message ..   A U Thor
