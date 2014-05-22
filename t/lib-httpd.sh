@@ -105,10 +105,14 @@ else
 		"Could not identify web server at '$LIB_HTTPD_PATH'"
 fi
 
+install_script () {
+	write_script "$HTTPD_ROOT_PATH/$1" <"$TEST_PATH/$1"
+}
+
 prepare_httpd() {
 	mkdir -p "$HTTPD_DOCUMENT_ROOT_PATH"
 	cp "$TEST_PATH"/passwd "$HTTPD_ROOT_PATH"
-	cp "$TEST_PATH"/broken-smart-http.sh "$HTTPD_ROOT_PATH"
+	install_script broken-smart-http.sh
 
 	ln -s "$LIB_HTTPD_MODULE_PATH" "$HTTPD_ROOT_PATH/modules"
 
