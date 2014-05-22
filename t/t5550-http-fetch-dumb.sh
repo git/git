@@ -171,5 +171,15 @@ test_expect_success 'did not use upload-pack service' '
 	test_cmp exp act
 '
 
+test_expect_success 'git client shows text/plain errors' '
+	test_must_fail git clone "$HTTPD_URL/error/text" 2>stderr &&
+	grep "this is the error message" stderr
+'
+
+test_expect_success 'git client does not show html errors' '
+	test_must_fail git clone "$HTTPD_URL/error/html" 2>stderr &&
+	! grep "this is the error message" stderr
+'
+
 stop_httpd
 test_done
