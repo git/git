@@ -396,19 +396,6 @@ static int urlmatch_collect_fn(const char *var, const char *value, void *cb)
 	return 0;
 }
 
-static char *dup_downcase(const char *string)
-{
-	char *result;
-	size_t len, i;
-
-	len = strlen(string);
-	result = xmalloc(len + 1);
-	for (i = 0; i < len; i++)
-		result[i] = tolower(string[i]);
-	result[i] = '\0';
-	return result;
-}
-
 static int get_urlmatch(const char *var, const char *url)
 {
 	char *section_tail;
@@ -423,7 +410,7 @@ static int get_urlmatch(const char *var, const char *url)
 	if (!url_normalize(url, &config.url))
 		die("%s", config.url.err);
 
-	config.section = dup_downcase(var);
+	config.section = xstrdup_tolower(var);
 	section_tail = strchr(config.section, '.');
 	if (section_tail) {
 		*section_tail = '\0';
