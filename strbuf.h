@@ -45,6 +45,7 @@ static inline void strbuf_setlen(struct strbuf *sb, size_t len)
 extern void strbuf_trim(struct strbuf *);
 extern void strbuf_rtrim(struct strbuf *);
 extern void strbuf_ltrim(struct strbuf *);
+extern int strbuf_reencode(struct strbuf *sb, const char *from, const char *to);
 extern int strbuf_cmp(const struct strbuf *, const struct strbuf *);
 
 /*
