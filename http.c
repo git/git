@@ -978,6 +978,9 @@ static void extract_content_type(struct strbuf *raw, struct strbuf *type,
 		while (*p && !isspace(*p))
 			p++;
 	}
+
+	if (!charset->len && starts_with(type->buf, "text/"))
+		strbuf_addstr(charset, "ISO-8859-1");
 }
 
 /* http_request() targets */
