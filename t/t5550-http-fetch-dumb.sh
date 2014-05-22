@@ -186,5 +186,10 @@ test_expect_success 'git client shows text/plain with a charset' '
 	grep "this is the error message" stderr
 '
 
+test_expect_success 'http error messages are reencoded' '
+	test_must_fail git clone "$HTTPD_URL/error/utf16" 2>stderr &&
+	grep "this is the error message" stderr
+'
+
 stop_httpd
 test_done
