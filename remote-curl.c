@@ -205,7 +205,7 @@ static int show_http_message(struct strbuf *type, struct strbuf *msg)
 	 * TODO should handle "; charset=XXX", and re-encode into
 	 * logoutputencoding
 	 */
-	if (strcasecmp(type->buf, "text/plain"))
+	if (strcmp(type->buf, "text/plain"))
 		return -1;
 
 	strbuf_trim(msg);

@@ -181,5 +181,10 @@ test_expect_success 'git client does not show html errors' '
 	! grep "this is the error message" stderr
 '
 
+test_expect_success 'git client shows text/plain with a charset' '
+	test_must_fail git clone "$HTTPD_URL/error/charset" 2>stderr &&
+	grep "this is the error message" stderr
+'
+
 stop_httpd
 test_done
