@@ -5,7 +5,11 @@ test_description='test git-http-backend-noserver'
 
 HTTPD_DOCUMENT_ROOT_PATH="$TRASH_DIRECTORY"
 
-test_have_prereq GREP_STRIPS_CR && export GREP_OPTIONS=-U
+if test_have_prereq GREP_STRIPS_CR
+then
+	GREP_OPTIONS=-U
+	export GREP_OPTIONS
+fi
 
 run_backend() {
 	echo "$2" |
