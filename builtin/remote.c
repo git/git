@@ -789,10 +789,6 @@ static int rm(int argc, const char **argv)
 	known_remotes.to_delete = remote;
 	for_each_remote(add_known_remote, &known_remotes);
 
-	strbuf_addf(&buf, "remote.%s", remote->name);
-	if (git_config_rename_section(buf.buf, NULL) < 1)
-		return error(_("Could not remove config section '%s'"), buf.buf);
-
 	read_branches();
 	for (i = 0; i < branch_list.nr; i++) {
 		struct string_list_item *item = branch_list.items + i;
@@ -836,6 +832,12 @@ static int rm(int argc, const char **argv)
 				skipped.items[i].string);
 	}
 	string_list_clear(&skipped, 0);
+
+	if (!result) {
+		strbuf_addf(&buf, "remote.%s", remote->name);
+		if (git_config_rename_section(buf.buf, NULL) < 1)
+			return error(_("Could not remove config section '%s'"), buf.buf);
+	}
 
 	return result;
 }
