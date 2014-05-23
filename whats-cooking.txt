@@ -1,19 +1,19 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (May 2014, #04; Wed, 21)
+Subject: What's cooking in git.git (May 2014, #05; Fri, 23)
 X-master-at: 4a28f169ad29ba452e0e7bea2583914c10c58322
 X-next-at: daf83cafd8ed3cb640a2047d5069cdbf9d18e7c0
 
-What's cooking in git.git (May 2014, #04; Wed, 21)
+What's cooking in git.git (May 2014, #05; Fri, 23)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-The tip of the 'master' branch has past v2.0.0-rc4, as there were
-last minute regressions to be taken care of.  Hopefully we can tag
-v2.0.0 final soonish.
+The tip of the 'master' branch has past v2.0.0-rc4 (which was
+unplanned, but there were last minute regressions to be taken care
+of).  Hopefully we can tag v2.0.0 final early next week.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -23,101 +23,57 @@ of the repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* sk/wincred (2014-05-14) 2 commits
-  (merged to 'next' on 2014-05-21 at a3b9ca3)
- + wincred: avoid overwriting configured variables
- + wincred: add install target
+* ep/shell-assign-and-export-vars (2014-05-23) 2 commits
+ - scripts: more "export VAR=VALUE" fixes
+ - scripts: get rid of the non portable "export VAR=VALUE" costruct
 
- Will keep in 'next' for the remainder of the cycle.
+ Will merge to 'next' after fixing typos in the log message.
 
 
-* as/pretty-truncate (2014-05-21) 5 commits
- - pretty.c: format string with truncate respects logOutputEncoding
- - t4205, t6006: add tests that fail with i18n.logOutputEncoding set
- - t4205 (log-pretty-format): use `tformat` rather than `format`
- - t4041, t4205, t6006, t7102: don't hardcode tested encoding value
- - t4205 (log-pretty-formats): don't hardcode SHA-1 in expected outputs
+* jn/test-lint-unmoor (2014-05-23) 1 commit
+ - test-lint: find unportable sed, echo, test, and export usage after &&
 
  Will merge to 'next' and keep it there for the rest of this cycle.
 
 
-* cc/replace-graft (2014-05-19) 1 commit
-  (merged to 'next' on 2014-05-21 at 7d90c4e)
- + replace: add --graft option
- (this branch uses cc/replace-edit.)
-
- Will keep in 'next' for the remainder of the cycle.
-
-
-
-* jk/argv-array-for-child-process (2014-05-15) 7 commits
-  (merged to 'next' on 2014-05-21 at 5b2fa64)
- + argv-array: drop "detach" code
- + get_importer: use run-command's internal argv_array
- + get_exporter: use argv_array
- + get_helper: use run-command's internal argv_array
- + git_connect: use argv_array
- + run_column_filter: use argv_array
- + run-command: store an optional argv_array
-
- Will keep in 'next' for the remainder of the cycle.
-
-
-* jk/diff-files-assume-unchanged (2014-05-15) 1 commit
-  (merged to 'next' on 2014-05-21 at 142d2c8)
- + run_diff_files: do not look at uninitialized stat data
-
- Will keep in 'next' for the remainder of the cycle.
-
-
-* jk/report-fail-to-read-objects-better (2014-05-15) 1 commit
-  (merged to 'next' on 2014-05-21 at 77c89fe)
- + open_sha1_file: report "most interesting" errno
-
- Will keep in 'next' for the remainder of the cycle.
-
-
-* mt/rebase-i-keep-empty-test (2014-05-19) 1 commit
-  (merged to 'next' on 2014-05-21 at d87d266)
- + rebase --keep-empty -i: add test
-
- Will keep in 'next' for the remainder of the cycle.
-
-
-* nd/status-auto-comment-char (2014-05-19) 2 commits
-  (merged to 'next' on 2014-05-21 at f762e62)
- + commit: allow core.commentChar=auto for character auto selection
- + config: be strict on core.commentChar
-
- Will keep in 'next' for the remainder of the cycle.
-
-
-* rr/rebase-autostash-fix (2014-05-20) 2 commits
-  (merged to 'next' on 2014-05-21 at ca4aa40)
- + rebase -i: test "Nothing to do" case with autostash
- + rebase -i: handle "Nothing to do" case with autostash
-
- Will keep in 'next' for the remainder of the cycle.
-
-
-* sk/spawn-less-case-insensitively-from-grep-O-i (2014-05-15) 1 commit
-  (merged to 'next' on 2014-05-21 at eb28305)
- + git grep -O -i: if the pager is 'less', pass the '-I' option
-
- Will keep in 'next' for the remainder of the cycle.
-
-
-* sk/windows-unc-path (2014-05-20) 1 commit
-  (merged to 'next' on 2014-05-21 at d1f1350)
- + Windows: Allow using UNC path for git repository
-
- Will keep in 'next' for the remainder of the cycle.
-
-
-* jk/diff-follow-must-take-one-pathspec (2014-05-20) 1 commit
- - move "--follow needs one pathspec" rule to diff_setup_done
+* jj/command-line-adjective (2014-05-21) 1 commit
+ - Documentation: use "command-line" when used as a compound adjective, and fix other minor grammatical issues
 
  Will merge to 'next' and keep it there for the rest of this cycle.
+
+
+* jk/daemon-tolower (2014-05-23) 1 commit
+ - daemon/config: factor out duplicate xstrdup_tolower
+
+ Will merge to 'next' and keep it there for the rest of this cycle.
+
+
+* jk/strbuf-tolower (2014-05-23) 1 commit
+ - strbuf: add strbuf_tolower function
+
+ Will merge to 'next' and keep it there for the rest of this cycle.
+
+
+* jk/http-errors (2014-05-23) 8 commits
+ - http: default text charset to iso-8859-1
+ - remote-curl: reencode http error messages
+ - strbuf: add strbuf_reencode helper
+ - http: optionally extract charset parameter from content-type
+ - http: extract type/subtype portion of content-type
+ - t5550: test display of remote http error messages
+ - t/lib-httpd: use write_script to copy CGI scripts
+ - test-lib: preserve GIT_CURL_VERBOSE from the environment
+
+ The fourth from the bottom needs additional comments $gmane/250024
+ squashed in before this is merged to 'next'.
+
+
+* jm/format-patch-mail-sig (2014-05-22) 2 commits
+ - format-patch: --signature-file=<file>
+ - format-patch: make newline after signature conditional
+
+ Looked more-or-less ready, except for some negative tests.
+
 
 --------------------------------------------------
 [Stalled]
@@ -286,6 +242,102 @@ of the repositories listed at
 
 --------------------------------------------------
 [Cooking]
+
+* sk/wincred (2014-05-14) 2 commits
+  (merged to 'next' on 2014-05-21 at a3b9ca3)
+ + wincred: avoid overwriting configured variables
+ + wincred: add install target
+
+ Will keep in 'next' for the remainder of the cycle.
+
+
+* as/pretty-truncate (2014-05-21) 5 commits
+ - pretty.c: format string with truncate respects logOutputEncoding
+ - t4205, t6006: add tests that fail with i18n.logOutputEncoding set
+ - t4205 (log-pretty-format): use `tformat` rather than `format`
+ - t4041, t4205, t6006, t7102: don't hardcode tested encoding value
+ - t4205 (log-pretty-formats): don't hardcode SHA-1 in expected outputs
+
+ Will merge to 'next' and keep it there for the rest of this cycle.
+
+
+* cc/replace-graft (2014-05-19) 1 commit
+  (merged to 'next' on 2014-05-21 at 7d90c4e)
+ + replace: add --graft option
+ (this branch uses cc/replace-edit.)
+
+ Will keep in 'next' for the remainder of the cycle.
+
+
+* jk/argv-array-for-child-process (2014-05-15) 7 commits
+  (merged to 'next' on 2014-05-21 at 5b2fa64)
+ + argv-array: drop "detach" code
+ + get_importer: use run-command's internal argv_array
+ + get_exporter: use argv_array
+ + get_helper: use run-command's internal argv_array
+ + git_connect: use argv_array
+ + run_column_filter: use argv_array
+ + run-command: store an optional argv_array
+
+ Will keep in 'next' for the remainder of the cycle.
+
+
+* jk/diff-files-assume-unchanged (2014-05-15) 1 commit
+  (merged to 'next' on 2014-05-21 at 142d2c8)
+ + run_diff_files: do not look at uninitialized stat data
+
+ Will keep in 'next' for the remainder of the cycle.
+
+
+* jk/report-fail-to-read-objects-better (2014-05-15) 1 commit
+  (merged to 'next' on 2014-05-21 at 77c89fe)
+ + open_sha1_file: report "most interesting" errno
+
+ Will keep in 'next' for the remainder of the cycle.
+
+
+* mt/rebase-i-keep-empty-test (2014-05-19) 1 commit
+  (merged to 'next' on 2014-05-21 at d87d266)
+ + rebase --keep-empty -i: add test
+
+ Will keep in 'next' for the remainder of the cycle.
+
+
+* nd/status-auto-comment-char (2014-05-19) 2 commits
+  (merged to 'next' on 2014-05-21 at f762e62)
+ + commit: allow core.commentChar=auto for character auto selection
+ + config: be strict on core.commentChar
+
+ Will keep in 'next' for the remainder of the cycle.
+
+
+* rr/rebase-autostash-fix (2014-05-20) 2 commits
+  (merged to 'next' on 2014-05-21 at ca4aa40)
+ + rebase -i: test "Nothing to do" case with autostash
+ + rebase -i: handle "Nothing to do" case with autostash
+
+ Will keep in 'next' for the remainder of the cycle.
+
+
+* sk/spawn-less-case-insensitively-from-grep-O-i (2014-05-15) 1 commit
+  (merged to 'next' on 2014-05-21 at eb28305)
+ + git grep -O -i: if the pager is 'less', pass the '-I' option
+
+ Will keep in 'next' for the remainder of the cycle.
+
+
+* sk/windows-unc-path (2014-05-20) 1 commit
+  (merged to 'next' on 2014-05-21 at d1f1350)
+ + Windows: Allow using UNC path for git repository
+
+ Will keep in 'next' for the remainder of the cycle.
+
+
+* jk/diff-follow-must-take-one-pathspec (2014-05-20) 1 commit
+ - move "--follow needs one pathspec" rule to diff_setup_done
+
+ Will merge to 'next' and keep it there for the rest of this cycle.
+
 
 * ab/add-interactive-show-diff-func-name (2014-05-12) 2 commits
  - SQUASH??? git-add--interactive: Preserve diff heading when splitting hunks
@@ -714,15 +766,14 @@ of the repositories listed at
  Will keep in 'next' for the remainder of the cycle.
 
 
-* ib/test-selectively-run (2014-05-06) 3 commits
+* ib/test-selectively-run (2014-05-21) 4 commits
+ - t0000-*.sh: Fix the GIT_SKIP_TESTS sub-tests
  - test-lib: '--run' to run only specific tests
  - test-lib: tests skipped by GIT_SKIP_TESTS say so
  - test-lib: Document short options in t/README
 
  Allow specifying only certain individual test pieces to be run
  using a range notation (e.g. "t1234-test.sh --run='1-4 6 8 9-'").
-
- Needs a reroll/squash to fix bash-isms.
 
 
 * mm/mediawiki-encoding-fix (2014-04-23) 2 commits
