@@ -1313,6 +1313,7 @@ static int prune_remote(const char *remote, int dry_run)
 {
 	int result = 0, i;
 	struct ref_states states;
+	struct string_list delete_refs_list = STRING_LIST_INIT_NODUP;
 	const char **delete_refs;
 	const char *dangling_msg = dry_run
 		? _(" %s will become dangling!")
@@ -1339,6 +1340,8 @@ static int prune_remote(const char *remote, int dry_run)
 	for (i = 0; i < states.stale.nr; i++) {
 		const char *refname = states.stale.items[i].util;
 
+		string_list_insert(&delete_refs_list, refname);
+
 		if (!dry_run)
 			result |= delete_ref(refname, NULL, 0);
 
@@ -1348,8 +1351,10 @@ static int prune_remote(const char *remote, int dry_run)
 		else
 			printf_ln(_(" * [pruned] %s"),
 			       abbrev_ref(refname, "refs/remotes/"));
-		warn_dangling_symref(stdout, dangling_msg, refname);
 	}
+
+	warn_dangling_symrefs(stdout, dangling_msg, &delete_refs_list);
+	string_list_clear(&delete_refs_list, 0);
 
 	free_remote_ref_states(&states);
 	return result;
