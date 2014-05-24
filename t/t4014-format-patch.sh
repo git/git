@@ -762,6 +762,67 @@ test_expect_success 'format-patch --signature="" suppresses signatures' '
 	! grep "^-- \$" output
 '
 
+test_expect_success 'prepare mail-signature input' '
+	cat >mail-signature <<-\EOF
+
+	Test User <test.email@kernel.org>
+	http://git.kernel.org/cgit/git/git.git
+
+	git.kernel.org/?p=git/git.git;a=summary
+
+	EOF
+'
+
+test_expect_success '--signature-file=file works' '
+	git format-patch --stdout --signature-file=mail-signature -1 >output &&
+	check_patch output &&
+	sed -e "1,/^-- \$/d" <output >actual &&
+	{
+		cat mail-signature && echo
+	} >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'format.signaturefile works' '
+	test_config format.signaturefile mail-signature &&
+	git format-patch --stdout -1 >output &&
+	check_patch output &&
+	sed -e "1,/^-- \$/d" <output >actual &&
+	{
+		cat mail-signature && echo
+	} >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success '--no-signature suppresses format.signaturefile ' '
+	test_config format.signaturefile mail-signature &&
+	git format-patch --stdout --no-signature -1 >output &&
+	check_patch output &&
+	! grep "^-- \$" output
+'
+
+test_expect_success '--signature-file overrides format.signaturefile' '
+	cat >other-mail-signature <<-\EOF
+	Use this other signature instead of mail-signature.
+	EOF
+	test_config format.signaturefile mail-signature &&
+	git format-patch --stdout \
+			--signature-file=other-mail-signature -1 >output &&
+	check_patch output &&
+	sed -e "1,/^-- \$/d" <output >actual &&
+	{
+		cat other-mail-signature && echo
+	} >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success '--signature overrides format.signaturefile' '
+	test_config format.signaturefile mail-signature &&
+	git format-patch --stdout --signature="my sig" -1 >output &&
+	check_patch output &&
+	grep "my sig" output
+'
+
 test_expect_success TTY 'format-patch --stdout paginates' '
 	rm -f pager_used &&
 	test_terminal env GIT_PAGER="wc >pager_used" git format-patch --stdout --all &&
