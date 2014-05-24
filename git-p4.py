@@ -1238,6 +1238,28 @@ class P4Submit(Command, P4UserMap):
             if response == 'n':
                 return False
 
+    def get_diff_description(self, editedFiles):
+        # diff
+        if os.environ.has_key("P4DIFF"):
+            del(os.environ["P4DIFF"])
+        diff = ""
+        for editedFile in editedFiles:
+            diff += p4_read_pipe(['diff', '-du',
+                                  wildcard_encode(editedFile)])
+
+        # new file diff
+        newdiff = ""
+        for newFile in filesToAdd:
+            newdiff += "==== new file ====\n"
+            newdiff += "--- /dev/null\n"
+            newdiff += "+++ %s\n" % newFile
+            f = open(newFile, "r")
+            for line in f.readlines():
+                newdiff += "+" + line
+            f.close()
+
+        return diff + newdiff
+
     def applyCommit(self, id):
         """Apply one commit, return True if it succeeded."""
 
@@ -1398,34 +1420,15 @@ class P4Submit(Command, P4UserMap):
             submitTemplate += "######## Variable git-p4.skipUserNameCheck hides this message.\n"
 
         separatorLine = "######## everything below this line is just the diff #######\n"
+        if not self.prepare_p4_only:
+            submitTemplate += separatorLine
+            submitTemplate += self.get_diff_description(editedFiles)
 
-        # diff
-        if os.environ.has_key("P4DIFF"):
-            del(os.environ["P4DIFF"])
-        diff = ""
-        for editedFile in editedFiles:
-            diff += p4_read_pipe(['diff', '-du',
-                                  wildcard_encode(editedFile)])
-
-        # new file diff
-        newdiff = ""
-        for newFile in filesToAdd:
-            newdiff += "==== new file ====\n"
-            newdiff += "--- /dev/null\n"
-            newdiff += "+++ %s\n" % newFile
-            f = open(newFile, "r")
-            for line in f.readlines():
-                newdiff += "+" + line
-            f.close()
-
-        # change description file: submitTemplate, separatorLine, diff, newdiff
         (handle, fileName) = tempfile.mkstemp()
         tmpFile = os.fdopen(handle, "w+")
         if self.isWindows:
             submitTemplate = submitTemplate.replace("\n", "\r\n")
-            separatorLine = separatorLine.replace("\n", "\r\n")
-            newdiff = newdiff.replace("\n", "\r\n")
-        tmpFile.write(submitTemplate + separatorLine + diff + newdiff)
+        tmpFile.write(submitTemplate)
         tmpFile.close()
 
         if self.prepare_p4_only:
