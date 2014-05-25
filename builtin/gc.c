@@ -26,6 +26,7 @@ static const char * const builtin_gc_usage[] = {
 };
 
 static int pack_refs = 1;
+static int prune_reflogs = 1;
 static int aggressive_window = 250;
 static int gc_auto_threshold = 6700;
 static int gc_auto_pack_limit = 50;
@@ -252,6 +253,19 @@ static const char *lock_repo_for_gc(int force, pid_t* ret_pid)
 	return NULL;
 }
 
+static int gc_before_repack(void)
+{
+	if (pack_refs && run_command_v_opt(pack_refs_cmd.argv, RUN_GIT_CMD))
+		return error(FAILED_RUN, pack_refs_cmd.argv[0]);
+
+	if (prune_reflogs && run_command_v_opt(reflog.argv, RUN_GIT_CMD))
+		return error(FAILED_RUN, reflog.argv[0]);
+
+	pack_refs = 0;
+	prune_reflogs = 0;
+	return 0;
+}
+
 int cmd_gc(int argc, const char **argv, const char *prefix)
 {
 	int aggressive = 0;
@@ -313,12 +327,15 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 				fprintf(stderr, _("Auto packing the repository for optimum performance.\n"));
 			fprintf(stderr, _("See \"git help gc\" for manual housekeeping.\n"));
 		}
-		if (detach_auto)
+		if (detach_auto) {
+			if (gc_before_repack())
+				return -1;
 			/*
 			 * failure to daemonize is ok, we'll continue
 			 * in foreground
 			 */
 			daemonize();
+		}
 	} else
 		add_repack_all_option();
 
@@ -330,11 +347,8 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 		    name, (uintmax_t)pid);
 	}
 
-	if (pack_refs && run_command_v_opt(pack_refs_cmd.argv, RUN_GIT_CMD))
-		return error(FAILED_RUN, pack_refs_cmd.argv[0]);
-
-	if (run_command_v_opt(reflog.argv, RUN_GIT_CMD))
-		return error(FAILED_RUN, reflog.argv[0]);
+	if (gc_before_repack())
+		return -1;
 
 	if (run_command_v_opt(repack.argv, RUN_GIT_CMD))
 		return error(FAILED_RUN, repack.argv[0]);
