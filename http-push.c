@@ -1732,7 +1732,7 @@ int main(int argc, char **argv)
 
 	git_extract_argv0_path(argv[0]);
 
-	repo = xcalloc(sizeof(*repo), 1);
+	repo = xcalloc(1, sizeof(*repo));
 
 	argv++;
 	for (i = 1; i < argc; i++, argv++) {
