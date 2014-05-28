@@ -209,9 +209,7 @@ __git_ps1_show_upstream ()
 		if [[ -n "$count" && -n "$name" ]]; then
 			__git_ps1_upstream_name=$(git rev-parse \
 				--abbrev-ref "$upstream" 2>/dev/null)
-			if [ $pcmode = yes ]; then
-				# see the comments around the
-				# __git_ps1_branch_name variable below
+			if [ $pcmode = yes ] && [ $ps1_expanded = yes ]; then
 				p="$p \${__git_ps1_upstream_name}"
 			else
 				p="$p ${__git_ps1_upstream_name}"
@@ -300,6 +298,43 @@ __git_ps1 ()
 		*)	return
 		;;
 	esac
+
+	# ps1_expanded:  This variable is set to 'yes' if the shell
+	# subjects the value of PS1 to parameter expansion:
+	#
+	#   * bash does unless the promptvars option is disabled
+	#   * zsh does not unless the PROMPT_SUBST option is set
+	#   * POSIX shells always do
+	#
+	# If the shell would expand the contents of PS1 when drawing
+	# the prompt, a raw ref name must not be included in PS1.
+	# This protects the user from arbitrary code execution via
+	# specially crafted ref names.  For example, a ref named
+	# 'refs/heads/$(IFS=_;cmd=sudo_rm_-rf_/;$cmd)' might cause the
+	# shell to execute 'sudo rm -rf /' when the prompt is drawn.
+	#
+	# Instead, the ref name should be placed in a separate global
+	# variable (in the __git_ps1_* namespace to avoid colliding
+	# with the user's environment) and that variable should be
+	# referenced from PS1.  For example:
+	#
+	#     __git_ps1_foo=$(do_something_to_get_ref_name)
+	#     PS1="...stuff...\${__git_ps1_foo}...stuff..."
+	#
+	# If the shell does not expand the contents of PS1, the raw
+	# ref name must be included in PS1.
+	#
+	# The value of this variable is only relevant when in pcmode.
+	#
+	# Assume that the shell follows the POSIX specification and
+	# expands PS1 unless determined otherwise.  (This is more
+	# likely to be correct if the user has a non-bash, non-zsh
+	# shell and safer than the alternative if the assumption is
+	# incorrect.)
+	#
+	local ps1_expanded=yes
+	[ -z "$ZSH_VERSION" ] || [[ -o PROMPT_SUBST ]] || ps1_expanded=no
+	[ -z "$BASH_VERSION" ] || shopt -q promptvars || ps1_expanded=no
 
 	local repo_info rev_parse_exit_code
 	repo_info="$(git rev-parse --git-dir --is-inside-git-dir \
@@ -450,21 +485,8 @@ __git_ps1 ()
 	fi
 
 	b=${b##refs/heads/}
-	if [ $pcmode = yes ]; then
-		# In pcmode (and only pcmode) the contents of
-		# $gitstring are subject to expansion by the shell.
-		# Avoid putting the raw ref name in the prompt to
-		# protect the user from arbitrary code execution via
-		# specially crafted ref names (e.g., a ref named
-		# '$(IFS=_;cmd=sudo_rm_-rf_/;$cmd)' would execute
-		# 'sudo rm -rf /' when the prompt is drawn).  Instead,
-		# put the ref name in a new global variable (in the
-		# __git_ps1_* namespace to avoid colliding with the
-		# user's environment) and reference that variable from
-		# PS1.
+	if [ $pcmode = yes ] && [ $ps1_expanded = yes ]; then
 		__git_ps1_branch_name=$b
-		# note that the $ is escaped -- the variable will be
-		# expanded later (when it's time to draw the prompt)
 		b="\${__git_ps1_branch_name}"
 	fi
 
