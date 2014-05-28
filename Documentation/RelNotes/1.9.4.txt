@@ -1,0 +1,16 @@
+Git v1.9.4 Release Notes
+========================
+
+Fixes since v1.9.3
+------------------
+
+ * Commands that take pathspecs on the command line misbehaved when
+   the pathspec is given as an absolute pathname (which is a
+   practice not particularly encouraged) that points at a symbolic
+   link in the working tree.
+
+ * An earlier fix to the shell prompt script (in contrib/) for using
+   the PROMPT_COMMAND interface did not correctly check if the extra
+   code path needs to trigger, causing the branch name not to appear
+   when 'promptvars' option is disabled in bash or PROMPT_SUBST is
+   unset in zsh.
