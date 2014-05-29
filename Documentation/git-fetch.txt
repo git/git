@@ -17,20 +17,22 @@ SYNOPSIS
 
 DESCRIPTION
 -----------
-Fetches named heads or tags from one or more other repositories,
-along with the objects necessary to complete them.
+Fetch branches and/or tags (collectively, "refs") from one or more
+other repositories, along with the objects necessary to complete
+their histories.
 
-The ref names and their object names of fetched refs are stored
-in `.git/FETCH_HEAD`.  This information is left for a later merge
-operation done by 'git merge'.
+The names of refs that are fetched, together with the object names
+they point at, are written to `.git/FETCH_HEAD`.  This information
+can be used to learn what was fetched.  In addition, the remote-tracking
+branches are updated (see description on <refspec> below for details).
 
-By default, tags are auto-followed.  This means that when fetching
-from a remote, any tags on the remote that point to objects that exist
-in the local repository are fetched.  The effect is to fetch tags that
+By default, any tag that points into the histories being fetched is
+also fetched; the effect is to fetch tags that
 point at branches that you are interested in.  This default behavior
-can be changed by using the --tags or --no-tags options, by
-configuring remote.<name>.tagopt, or by using a refspec that fetches
-tags explicitly.
+can be changed by using the --tags or --no-tags options or by
+configuring remote.<name>.tagopt.  By using a refspec that fetches tags
+explicitly, you can fetch tags that do not point into branches you
+are interested in as well.
 
 'git fetch' can fetch from either a single named repository,
 or from several repositories at once if <group> is given and
