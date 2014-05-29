@@ -267,6 +267,10 @@ extern char *gitbasename(char *);
 #define has_dos_drive_prefix(path) 0
 #endif
 
+#ifndef offset_1st_component
+#define offset_1st_component(path) (is_dir_sep((path)[0]))
+#endif
+
 #ifndef is_dir_sep
 #define is_dir_sep(c) ((c) == '/')
 #endif

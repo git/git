@@ -874,6 +874,9 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		if (len > 4 && is_dir_sep(pager[len - 5]))
 			pager += len - 4;
 
+		if (opt.ignore_case && !strcmp("less", pager))
+			string_list_append(&path_list, "-I");
+
 		if (!strcmp("less", pager) || !strcmp("vi", pager)) {
 			struct strbuf buf = STRBUF_INIT;
 			strbuf_addf(&buf, "+/%s%s",
