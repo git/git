@@ -36,19 +36,6 @@ in a repository with this behavior; the pulling user simply
 must know this is the expected usage pattern for a branch.
 +
 [NOTE]
-You never do your own development on branches that appear
-on the right hand side of a <refspec> colon on `Pull:` lines;
-they are to be updated by 'git fetch'.  If you intend to do
-development derived from a remote branch `B`, have a `Pull:`
-line to track it (i.e. `Pull: B:remote-B`), and have a separate
-branch `my-B` to do your development on top of it.  The latter
-is created by `git branch my-B remote-B` (or its equivalent `git
-checkout -b my-B remote-B`).  Run `git fetch` to keep track of
-the progress of the remote side, and when you see something new
-on the remote branch, merge it into your development branch with
-`git pull . remote-B`, while you are on `my-B` branch.
-+
-[NOTE]
 There is a difference between listing multiple <refspec>
 directly on 'git pull' command line and having multiple
 `Pull:` <refspec> lines for a <repository> and running
