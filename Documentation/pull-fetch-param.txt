@@ -17,6 +17,9 @@ endif::git-pull[]
 	by a colon `:`, followed by the destination ref <dst>.
 	The colon can be omitted when <dst> is empty.
 +
+`tag <tag>` means the same as `refs/tags/<tag>:refs/tags/<tag>`;
+it requests fetching everything up to the given tag.
++
 The remote ref that matches <src>
 is fetched, and if <dst> is not empty string, the local
 ref that matches it is fast-forwarded using <src>.
@@ -56,16 +59,3 @@ Octopus from remote refs is rarely done, while keeping track
 of multiple remote heads in one-go by fetching more than one
 is often useful.
 endif::git-pull[]
-+
-Some short-cut notations are also supported.
-+
-* `tag <tag>` means the same as `refs/tags/<tag>:refs/tags/<tag>`;
-  it requests fetching everything up to the given tag.
-ifndef::git-pull[]
-* A parameter <ref> without a colon fetches that ref into FETCH_HEAD,
-endif::git-pull[]
-ifdef::git-pull[]
-* A parameter <ref> without a colon merges <ref> into the current
-  branch,
-endif::git-pull[]
-  and updates the remote-tracking branches (if any).
