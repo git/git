@@ -34,22 +34,27 @@ will be needed for such branches.  There is no way to
 determine or declare that a branch will be made available
 in a repository with this behavior; the pulling user simply
 must know this is the expected usage pattern for a branch.
+ifdef::git-pull[]
 +
 [NOTE]
 There is a difference between listing multiple <refspec>
 directly on 'git pull' command line and having multiple
-`Pull:` <refspec> lines for a <repository> and running
+`remote.<repository>.fetch` entries in your configuration
+for a <repository> and running a
 'git pull' command without any explicit <refspec> parameters.
-<refspec> listed explicitly on the command line are always
+<refspec>s listed explicitly on the command line are always
 merged into the current branch after fetching.  In other words,
-if you list more than one remote refs, you would be making
-an Octopus.  While 'git pull' run without any explicit <refspec>
-parameter takes default <refspec>s from `Pull:` lines, it
-merges only the first <refspec> found into the current branch,
-after fetching all the remote refs.  This is because making an
+if you list more than one remote ref, 'git pull' will create
+an Octopus merge.  On the other hand, if you do not list any
+explicit <refspec> parameter on the command line, 'git pull'
+will fetch all the <refspec>s it finds in the
+`remote.<repository>.fetch` configuration and merge
+only the first <refspec> found into the current branch.
+This is because making an
 Octopus from remote refs is rarely done, while keeping track
 of multiple remote heads in one-go by fetching more than one
 is often useful.
+endif::git-pull[]
 +
 Some short-cut notations are also supported.
 +
