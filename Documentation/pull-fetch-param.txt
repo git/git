@@ -24,15 +24,15 @@ is updated even if it does not result in a fast-forward
 update.
 +
 [NOTE]
-If the remote branch from which you want to pull is
-modified in non-linear ways such as being rewound and
-rebased frequently, then a pull will attempt a merge with
-an older version of itself, likely conflict, and fail.
-It is under these conditions that you would want to use
-the `+` sign to indicate non-fast-forward updates will
-be needed.  There is currently no easy way to determine
-or declare that a branch will be made available in a
-repository with this behavior; the pulling user simply
+When the remote branch you want to fetch is known to
+be rewound and rebased regularly, it is expected that
+its new tip will not be descendant of its previous tip
+(as stored in your remote-tracking branch the last time
+you fetched).  You would want
+to use the `+` sign to indicate non-fast-forward updates
+will be needed for such branches.  There is no way to
+determine or declare that a branch will be made available
+in a repository with this behavior; the pulling user simply
 must know this is the expected usage pattern for a branch.
 +
 [NOTE]
