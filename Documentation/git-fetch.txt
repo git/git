@@ -51,6 +51,51 @@ include::pull-fetch-param.txt[]
 include::urls-remotes.txt[]
 
 
+CONFIGURED REMOTE-TRACKING BRANCHES
+-----------------------------------
+
+You often interact with the same remote repository by
+regularly and repeatedly fetching from it.  In order to keep track
+of the progress of such a remote repository, `git fetch` allows you
+to configure `remote.<repository>.fetch` configuration variables.
+
+Typically such a variable may look like this:
+
+------------------------------------------------
+[remote "origin"]
+	fetch = +refs/heads/*:refs/remotes/origin/*
+------------------------------------------------
+
+This configuration is used in two ways:
+
+* When `git fetch` is run without specifying what branches
+  and/or tags to fetch on the command line, e.g. `git fetch origin`
+  or `git fetch`, `remote.<repository>.fetch` values are used as
+  the refspecs---they specify which refs to fetch and which local refs
+  to update.  The example above will fetch
+  all branches that exist in the `origin` (i.e. any ref that matches
+  the left-hand side of the value, `refs/heads/*`) and update the
+  corresponding remote-tracking branches in the `refs/remotes/origin/*`
+  hierarchy.
+
+* When `git fetch` is run with explicit branches and/or tags
+  to fetch on the command line, e.g. `git fetch origin master`, the
+  <refspec>s given on the command line determine what are to be
+  fetched (e.g. `master` in the example,
+  which is a short-hand for `master:`, which in turn means
+  "fetch the 'master' branch but I do not explicitly say what
+  remote-tracking branch to update with it from the command line"),
+  and the example command will
+  fetch _only_ the 'master' branch.  The `remote.<repository>.fetch`
+  values determine which
+  remote-tracking branch, if any, is updated.  When used in this
+  way, the `remote.<repository>.fetch` values do not have any
+  effect in deciding _what_ gets fetched (i.e. the values are not
+  used as refspecs when the command-line lists refspecs); they are
+  only used to decide _where_ the refs that are fetched are stored
+  by acting as a mapping.
+
+
 EXAMPLES
 --------
 
