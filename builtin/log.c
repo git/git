@@ -63,6 +63,8 @@ static int parse_decoration_style(const char *var, const char *value)
 		return DECORATE_FULL_REFS;
 	else if (!strcmp(value, "short"))
 		return DECORATE_SHORT_REFS;
+	else if (!strcmp(value, "auto"))
+		return (isatty(1) || pager_in_use()) ? DECORATE_SHORT_REFS : 0;
 	return -1;
 }
 
