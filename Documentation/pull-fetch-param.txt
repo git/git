@@ -15,6 +15,7 @@ endif::git-pull[]
 	The format of a <refspec> parameter is an optional plus
 	`+`, followed by the source ref <src>, followed
 	by a colon `:`, followed by the destination ref <dst>.
+	The colon can be omitted when <dst> is empty.
 +
 The remote ref that matches <src>
 is fetched, and if <dst> is not empty string, the local
