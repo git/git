@@ -556,9 +556,20 @@ static void get_tags_and_duplicates(struct rev_cmdline_info *info)
 	}
 }
 
+static void handle_reset(const char *name, struct object *object)
+{
+	int mark = get_object_mark(object);
+
+	if (mark)
+		printf("reset %s\nfrom :%d\n\n", name,
+		       get_object_mark(object));
+	else
+		printf("reset %s\nfrom %s\n\n", name,
+		       sha1_to_hex(object->sha1));
+}
+
 static void handle_tags_and_duplicates(void)
 {
-	struct commit *commit;
 	int i;
 
 	for (i = extra_refs.nr - 1; i >= 0; i--) {
@@ -570,9 +581,7 @@ static void handle_tags_and_duplicates(void)
 			break;
 		case OBJ_COMMIT:
 			/* create refs pointing to already seen commits */
-			commit = (struct commit *)object;
-			printf("reset %s\nfrom :%d\n\n", name,
-			       get_object_mark(&commit->object));
+			handle_reset(name, object);
 			show_progress();
 			break;
 		}
