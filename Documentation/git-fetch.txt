@@ -95,6 +95,10 @@ This configuration is used in two ways:
   only used to decide _where_ the refs that are fetched are stored
   by acting as a mapping.
 
+The latter use of the `remote.<repository>.fetch` values can be
+overridden by giving the `--refmap=<refspec>` parameter(s) on the
+command line.
+
 
 EXAMPLES
 --------

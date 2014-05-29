@@ -45,6 +45,8 @@ static struct transport *gsecondary;
 static const char *submodule_prefix = "";
 static const char *recurse_submodules_default;
 static int shown_url = 0;
+static int refmap_alloc, refmap_nr;
+static const char **refmap_array;
 
 static int option_parse_recurse_submodules(const struct option *opt,
 				   const char *arg, int unset)
@@ -66,6 +68,19 @@ static int git_fetch_config(const char *k, const char *v, void *cb)
 		fetch_prune_config = git_config_bool(k, v);
 		return 0;
 	}
+	return 0;
+}
+
+static int parse_refmap_arg(const struct option *opt, const char *arg, int unset)
+{
+	ALLOC_GROW(refmap_array, refmap_nr + 1, refmap_alloc);
+
+	/*
+	 * "git fetch --refmap='' origin foo"
+	 * can be used to tell the command not to store anywhere
+	 */
+	if (*arg)
+		refmap_array[refmap_nr++] = arg;
 	return 0;
 }
 
@@ -107,6 +122,8 @@ static struct option builtin_fetch_options[] = {
 		   N_("default mode for recursion"), PARSE_OPT_HIDDEN },
 	OPT_BOOL(0, "update-shallow", &update_shallow,
 		 N_("accept refs that update .git/shallow")),
+	{ OPTION_CALLBACK, 0, "refmap", NULL, N_("refmap"),
+	  N_("specify fetch refmap"), PARSE_OPT_NONEG, parse_refmap_arg },
 	OPT_END()
 };
 
@@ -278,6 +295,9 @@ static struct ref *get_ref_map(struct transport *transport,
 	const struct ref *remote_refs = transport_get_remote_refs(transport);
 
 	if (refspec_count) {
+		struct refspec *fetch_refspec;
+		int fetch_refspec_nr;
+
 		for (i = 0; i < refspec_count; i++) {
 			get_fetch_map(remote_refs, &refspecs[i], &tail, 0);
 			if (refspecs[i].dst && refspecs[i].dst[0])
@@ -307,12 +327,21 @@ static struct ref *get_ref_map(struct transport *transport,
 		 * by ref_remove_duplicates() in favor of one of these
 		 * opportunistic entries with FETCH_HEAD_IGNORE.
 		 */
-		for (i = 0; i < transport->remote->fetch_refspec_nr; i++)
-			get_fetch_map(ref_map, &transport->remote->fetch[i],
-				      &oref_tail, 1);
+		if (refmap_array) {
+			fetch_refspec = parse_fetch_refspec(refmap_nr, refmap_array);
+			fetch_refspec_nr = refmap_nr;
+		} else {
+			fetch_refspec = transport->remote->fetch;
+			fetch_refspec_nr = transport->remote->fetch_refspec_nr;
+		}
+
+		for (i = 0; i < fetch_refspec_nr; i++)
+			get_fetch_map(ref_map, &fetch_refspec[i], &oref_tail, 1);
 
 		if (tags == TAGS_SET)
 			get_fetch_map(remote_refs, tag_refspec, &tail, 0);
+	} else if (refmap_array) {
+		die("--refmap option is only meaningful with command-line refspec(s).");
 	} else {
 		/* Use the defaults */
 		struct remote *remote = transport->remote;
