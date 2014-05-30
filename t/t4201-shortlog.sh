@@ -172,4 +172,10 @@ test_expect_success 'shortlog encoding' '
 	git shortlog HEAD~2.. > out &&
 test_cmp expect out'
 
+test_expect_success 'shortlog with revision pseudo options' '
+	git shortlog --all &&
+	git shortlog --branches &&
+	git shortlog --exclude=refs/heads/m* --all
+'
+
 test_done
