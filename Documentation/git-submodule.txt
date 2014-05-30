@@ -15,8 +15,8 @@ SYNOPSIS
 'git submodule' [--quiet] init [--] [<path>...]
 'git submodule' [--quiet] deinit [-f|--force] [--] <path>...
 'git submodule' [--quiet] update [--init] [--remote] [-N|--no-fetch]
-	      [-f|--force] [--rebase] [--reference <repository>] [--depth <depth>]
-	      [--merge] [--recursive] [--] [<path>...]
+	      [-f|--force] [--rebase|--merge] [--reference <repository>]
+	      [--depth <depth>] [--recursive] [--] [<path>...]
 'git submodule' [--quiet] summary [--cached|--files] [(-n|--summary-limit) <n>]
 	      [commit] [--] [<path>...]
 'git submodule' [--quiet] foreach [--recursive] <command>
@@ -229,7 +229,7 @@ OPTIONS
 -b::
 --branch::
 	Branch of repository to add as submodule.
-	The name of the branch is recorded as `submodule.<path>.branch` in
+	The name of the branch is recorded as `submodule.<name>.branch` in
 	`.gitmodules` for `update --remote`.
 
 -f::
@@ -281,11 +281,30 @@ In order to ensure a current tracking branch state, `update --remote`
 fetches the submodule's remote repository before calculating the
 SHA-1.  If you don't want to fetch, you should use `submodule update
 --remote --no-fetch`.
++
+Use this option to integrate changes from the upstream subproject with
+your submodule's current HEAD.  Alternatively, you can run `git pull`
+from the submodule, which is equivalent except for the remote branch
+name: `update --remote` uses the default upstream repository and
+`submodule.<name>.branch`, while `git pull` uses the submodule's
+`branch.<name>.merge`.  Prefer `submodule.<name>.branch` if you want
+to distribute the default upstream branch with the superproject and
+`branch.<name>.merge` if you want a more native feel while working in
+the submodule itself.
 
 -N::
 --no-fetch::
 	This option is only valid for the update command.
 	Don't fetch new objects from the remote site.
+
+--checkout::
+	This option is only valid for the update command.
+	Checkout the commit recorded in the superproject on a detached HEAD
+	in the submodule. This is the default behavior, the main use of
+	this option is to override `submodule.$name.update` when set to
+	`merge`, `rebase` or `none`.
+	If the key `submodule.$name.update` is either not explicitly set or
+	set to `checkout`, this option is implicit.
 
 --merge::
 	This option is only valid for the update command.

@@ -36,7 +36,7 @@ static int show_reference(const char *refname, const unsigned char *sha1,
 {
 	struct show_data *data = cb_data;
 
-	if (!fnmatch(data->pattern, refname, 0)) {
+	if (!wildmatch(data->pattern, refname, 0, NULL)) {
 		if (data->format == REPLACE_FORMAT_SHORT)
 			printf("%s\n", refname);
 		else if (data->format == REPLACE_FORMAT_MEDIUM)
@@ -178,7 +178,7 @@ int cmd_replace(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
-	read_replace_refs = 0;
+	check_replace_refs = 0;
 
 	argc = parse_options(argc, argv, prefix, options, git_replace_usage, 0);
 

@@ -864,7 +864,7 @@ static int grab_single_ref(const char *refname, const unsigned char *sha1, int f
 			     refname[plen] == '/' ||
 			     p[plen-1] == '/'))
 				break;
-			if (!fnmatch(p, refname, FNM_PATHNAME))
+			if (!wildmatch(p, refname, WM_PATHNAME, NULL))
 				break;
 		}
 		if (!*pattern)

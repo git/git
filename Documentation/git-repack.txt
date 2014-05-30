@@ -9,7 +9,7 @@ git-repack - Pack unpacked objects in a repository
 SYNOPSIS
 --------
 [verse]
-'git repack' [-a] [-A] [-d] [-f] [-F] [-l] [-n] [-q] [--window=<n>] [--depth=<n>]
+'git repack' [-a] [-A] [-d] [-f] [-F] [-l] [-n] [-q] [-b] [--window=<n>] [--depth=<n>]
 
 DESCRIPTION
 -----------
@@ -110,6 +110,21 @@ other objects in that pack they already have locally.
 	The default is unlimited, unless the config variable
 	`pack.packSizeLimit` is set.
 
+-b::
+--write-bitmap-index::
+	Write a reachability bitmap index as part of the repack. This
+	only makes sense when used with `-a` or `-A`, as the bitmaps
+	must be able to refer to all reachable objects. This option
+	overrides the setting of `pack.writebitmaps`.
+
+--pack-kept-objects::
+	Include objects in `.keep` files when repacking.  Note that we
+	still do not delete `.keep` packs after `pack-objects` finishes.
+	This means that we may duplicate objects, but this makes the
+	option safe to use when there are concurrent pushes or fetches.
+	This option is generally only useful if you are writing bitmaps
+	with `-b` or `pack.writebitmaps`, as it ensures that the
+	bitmapped packfile has the necessary objects.
 
 Configuration
 -------------

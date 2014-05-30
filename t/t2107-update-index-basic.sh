@@ -48,4 +48,17 @@ test_expect_success '--cacheinfo does not accept gitlink null sha1' '
 	test_cmp expect actual
 '
 
+test_expect_success '--cacheinfo mode,sha1,path (new syntax)' '
+	echo content >file &&
+	git hash-object -w --stdin <file >expect &&
+
+	git update-index --add --cacheinfo 100644 "$(cat expect)" file &&
+	git rev-parse :file >actual &&
+	test_cmp expect actual &&
+
+	git update-index --add --cacheinfo "100644,$(cat expect),elif" &&
+	git rev-parse :elif >actual &&
+	test_cmp expect actual
+'
+
 test_done

@@ -10,7 +10,7 @@ SYNOPSIS
 [verse]
 'git reset' [-q] [<tree-ish>] [--] <paths>...
 'git reset' (--patch | -p) [<tree-ish>] [--] [<paths>...]
-'git reset' [--soft | --mixed | --hard | --merge | --keep] [-q] [<commit>]
+'git reset' [--soft | --mixed [-N] | --hard | --merge | --keep] [-q] [<commit>]
 
 DESCRIPTION
 -----------
@@ -60,6 +60,9 @@ section of linkgit:git-add[1] to learn how to operate the `--patch` mode.
 	Resets the index but not the working tree (i.e., the changed files
 	are preserved but not marked for commit) and reports what has not
 	been updated. This is the default action.
++
+If `-N` is specified, removed paths are marked as intent-to-add (see
+linkgit:git-add[1]).
 
 --hard::
 	Resets the index and working tree. Any changes to tracked files in the

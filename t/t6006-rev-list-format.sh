@@ -190,12 +190,9 @@ test_expect_success '%C(auto) respects --no-color' '
 '
 
 test_expect_success TTY '%C(auto) respects --color=auto (stdout is tty)' '
-	(
-		TERM=vt100 && export TERM &&
-		test_terminal \
-			git log --format=$AUTO_COLOR -1 --color=auto >actual &&
-		has_color actual
-	)
+	test_terminal env TERM=vt100 \
+		git log --format=$AUTO_COLOR -1 --color=auto >actual &&
+	has_color actual
 '
 
 test_expect_success '%C(auto) respects --color=auto (stdout not tty)' '

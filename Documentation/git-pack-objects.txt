@@ -64,6 +64,8 @@ base-name::
 	the same way as 'git rev-list' with the `--objects` flag
 	uses its `commit` arguments to build the list of objects it
 	outputs.  The objects on the resulting list are packed.
+	Besides revisions, `--not` or `--shallow <SHA-1>` lines are
+	also accepted.
 
 --unpacked::
 	This implies `--revs`.  When processing the list of

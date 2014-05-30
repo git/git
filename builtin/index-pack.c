@@ -1502,7 +1502,7 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 	if (argc == 2 && !strcmp(argv[1], "-h"))
 		usage(index_pack_usage);
 
-	read_replace_refs = 0;
+	check_replace_refs = 0;
 
 	reset_pack_idx_option(&opts);
 	git_config(git_index_pack_config, &opts);

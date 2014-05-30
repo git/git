@@ -711,8 +711,7 @@ test_expect_success 'checking out a commit after submodule removal needs manual 
 	git submodule update &&
 	git checkout -q HEAD^ 2>actual &&
 	git checkout -q master 2>actual &&
-	echo "warning: unable to rmdir submod: Directory not empty" >expected &&
-	test_i18ncmp expected actual &&
+	test_i18ngrep "^warning: unable to rmdir submod:" actual &&
 	git status -s submod >actual &&
 	echo "?? submod/" >expected &&
 	test_cmp expected actual &&

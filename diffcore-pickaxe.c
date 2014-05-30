@@ -12,47 +12,6 @@ typedef int (*pickaxe_fn)(mmfile_t *one, mmfile_t *two,
 			  struct diff_options *o,
 			  regex_t *regexp, kwset_t kws);
 
-static int pickaxe_match(struct diff_filepair *p, struct diff_options *o,
-			 regex_t *regexp, kwset_t kws, pickaxe_fn fn);
-
-static void pickaxe(struct diff_queue_struct *q, struct diff_options *o,
-		    regex_t *regexp, kwset_t kws, pickaxe_fn fn)
-{
-	int i;
-	struct diff_queue_struct outq;
-
-	DIFF_QUEUE_CLEAR(&outq);
-
-	if (o->pickaxe_opts & DIFF_PICKAXE_ALL) {
-		/* Showing the whole changeset if needle exists */
-		for (i = 0; i < q->nr; i++) {
-			struct diff_filepair *p = q->queue[i];
-			if (pickaxe_match(p, o, regexp, kws, fn))
-				return; /* do not munge the queue */
-		}
-
-		/*
-		 * Otherwise we will clear the whole queue by copying
-		 * the empty outq at the end of this function, but
-		 * first clear the current entries in the queue.
-		 */
-		for (i = 0; i < q->nr; i++)
-			diff_free_filepair(q->queue[i]);
-	} else {
-		/* Showing only the filepairs that has the needle */
-		for (i = 0; i < q->nr; i++) {
-			struct diff_filepair *p = q->queue[i];
-			if (pickaxe_match(p, o, regexp, kws, fn))
-				diff_q(&outq, p);
-			else
-				diff_free_filepair(p);
-		}
-	}
-
-	free(q->queue);
-	*q = outq;
-}
-
 struct diffgrep_cb {
 	regex_t *regexp;
 	int hit;
@@ -108,29 +67,6 @@ static int diff_grep(mmfile_t *one, mmfile_t *two,
 	return ecbdata.hit;
 }
 
-static void diffcore_pickaxe_grep(struct diff_options *o)
-{
-	int err;
-	regex_t regex;
-	int cflags = REG_EXTENDED | REG_NEWLINE;
-
-	if (DIFF_OPT_TST(o, PICKAXE_IGNORE_CASE))
-		cflags |= REG_ICASE;
-
-	err = regcomp(&regex, o->pickaxe, cflags);
-	if (err) {
-		char errbuf[1024];
-		regerror(err, &regex, errbuf, 1024);
-		regfree(&regex);
-		die("invalid regex: %s", errbuf);
-	}
-
-	pickaxe(&diff_queued_diff, o, &regex, NULL, diff_grep);
-
-	regfree(&regex);
-	return;
-}
-
 static unsigned int contains(mmfile_t *mf, regex_t *regexp, kwset_t kws)
 {
 	unsigned int cnt;
@@ -158,13 +94,10 @@ static unsigned int contains(mmfile_t *mf, regex_t *regexp, kwset_t kws)
 		while (sz) {
 			struct kwsmatch kwsm;
 			size_t offset = kwsexec(kws, data, sz, &kwsm);
-			const char *found;
 			if (offset == -1)
 				break;
-			else
-				found = data + offset;
-			sz -= found - data + kwsm.size[0];
-			data = found + kwsm.size[0];
+			sz -= offset + kwsm.size[0];
+			data += offset + kwsm.size[0];
 			cnt++;
 		}
 	}
@@ -227,17 +160,57 @@ static int pickaxe_match(struct diff_filepair *p, struct diff_options *o,
 	return ret;
 }
 
-static void diffcore_pickaxe_count(struct diff_options *o)
+static void pickaxe(struct diff_queue_struct *q, struct diff_options *o,
+		    regex_t *regexp, kwset_t kws, pickaxe_fn fn)
+{
+	int i;
+	struct diff_queue_struct outq;
+
+	DIFF_QUEUE_CLEAR(&outq);
+
+	if (o->pickaxe_opts & DIFF_PICKAXE_ALL) {
+		/* Showing the whole changeset if needle exists */
+		for (i = 0; i < q->nr; i++) {
+			struct diff_filepair *p = q->queue[i];
+			if (pickaxe_match(p, o, regexp, kws, fn))
+				return; /* do not munge the queue */
+		}
+
+		/*
+		 * Otherwise we will clear the whole queue by copying
+		 * the empty outq at the end of this function, but
+		 * first clear the current entries in the queue.
+		 */
+		for (i = 0; i < q->nr; i++)
+			diff_free_filepair(q->queue[i]);
+	} else {
+		/* Showing only the filepairs that has the needle */
+		for (i = 0; i < q->nr; i++) {
+			struct diff_filepair *p = q->queue[i];
+			if (pickaxe_match(p, o, regexp, kws, fn))
+				diff_q(&outq, p);
+			else
+				diff_free_filepair(p);
+		}
+	}
+
+	free(q->queue);
+	*q = outq;
+}
+
+void diffcore_pickaxe(struct diff_options *o)
 {
 	const char *needle = o->pickaxe;
 	int opts = o->pickaxe_opts;
-	unsigned long len = strlen(needle);
 	regex_t regex, *regexp = NULL;
 	kwset_t kws = NULL;
 
-	if (opts & DIFF_PICKAXE_REGEX) {
+	if (opts & (DIFF_PICKAXE_REGEX | DIFF_PICKAXE_KIND_G)) {
 		int err;
-		err = regcomp(&regex, needle, REG_EXTENDED | REG_NEWLINE);
+		int cflags = REG_EXTENDED | REG_NEWLINE;
+		if (DIFF_OPT_TST(o, PICKAXE_IGNORE_CASE))
+			cflags |= REG_ICASE;
+		err = regcomp(&regex, needle, cflags);
 		if (err) {
 			/* The POSIX.2 people are surely sick */
 			char errbuf[1024];
@@ -249,24 +222,17 @@ static void diffcore_pickaxe_count(struct diff_options *o)
 	} else {
 		kws = kwsalloc(DIFF_OPT_TST(o, PICKAXE_IGNORE_CASE)
 			       ? tolower_trans_tbl : NULL);
-		kwsincr(kws, needle, len);
+		kwsincr(kws, needle, strlen(needle));
 		kwsprep(kws);
 	}
 
-	pickaxe(&diff_queued_diff, o, regexp, kws, has_changes);
+	/* Might want to warn when both S and G are on; I don't care... */
+	pickaxe(&diff_queued_diff, o, regexp, kws,
+		(opts & DIFF_PICKAXE_KIND_G) ? diff_grep : has_changes);
 
-	if (opts & DIFF_PICKAXE_REGEX)
-		regfree(&regex);
+	if (regexp)
+		regfree(regexp);
 	else
 		kwsfree(kws);
 	return;
-}
-
-void diffcore_pickaxe(struct diff_options *o)
-{
-	/* Might want to warn when both S and G are on; I don't care... */
-	if (o->pickaxe_opts & DIFF_PICKAXE_KIND_G)
-		diffcore_pickaxe_grep(o);
-	else
-		diffcore_pickaxe_count(o);
 }

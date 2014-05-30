@@ -190,6 +190,27 @@ test_expect_success SYMLINKS 'real path works on symlinks' '
 	test "$sym" = "$(test-path-utils real_path "$dir2/syml")"
 '
 
+test_expect_success SYMLINKS 'prefix_path works with absolute paths to work tree symlinks' '
+	ln -s target symlink &&
+	test "$(test-path-utils prefix_path prefix "$(pwd)/symlink")" = "symlink"
+'
+
+test_expect_success 'prefix_path works with only absolute path to work tree' '
+	echo "" >expected &&
+	test-path-utils prefix_path prefix "$(pwd)" >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'prefix_path rejects absolute path to dir with same beginning as work tree' '
+	test_must_fail test-path-utils prefix_path prefix "$(pwd)a"
+'
+
+test_expect_success SYMLINKS 'prefix_path works with absolute path to a symlink to work tree having  same beginning as work tree' '
+	git init repo &&
+	ln -s repo repolink &&
+	test "a" = "$(cd repo && test-path-utils prefix_path prefix "$(pwd)/../repolink/a")"
+'
+
 relative_path /foo/a/b/c/	/foo/a/b/	c/
 relative_path /foo/a/b/c/	/foo/a/b	c/
 relative_path /foo/a//b//c/	///foo/a/b//	c/		POSIX

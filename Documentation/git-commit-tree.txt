@@ -55,7 +55,12 @@ OPTIONS
 	from the standard input.
 
 -S[<keyid>]::
+--gpg-sign[=<keyid>]::
 	GPG-sign commit.
+
+--no-gpg-sign::
+	Countermand `commit.gpgsign` configuration variable that is
+	set to force each and every commit to be signed.
 
 
 Commit Information

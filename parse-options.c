@@ -127,10 +127,6 @@ static int get_value(struct parse_opt_ctx_t *p,
 		*(int *)opt->value = opt->defval;
 		return 0;
 
-	case OPTION_SET_PTR:
-		*(void **)opt->value = unset ? NULL : (void *)opt->defval;
-		return 0;
-
 	case OPTION_STRING:
 		if (unset)
 			*(const char **)opt->value = NULL;
@@ -223,12 +219,9 @@ static int parse_long_opt(struct parse_opt_ctx_t *p, const char *arg,
                           const struct option *options)
 {
 	const struct option *all_opts = options;
-	const char *arg_end = strchr(arg, '=');
+	const char *arg_end = strchrnul(arg, '=');
 	const struct option *abbrev_option = NULL, *ambiguous_option = NULL;
 	int abbrev_flags = 0, ambiguous_flags = 0;
-
-	if (!arg_end)
-		arg_end = arg + strlen(arg);
 
 	for (; options->type != OPTION_END; options++) {
 		const char *rest, *long_name = options->long_name;
@@ -370,7 +363,6 @@ static void parse_options_check(const struct option *opts)
 		case OPTION_BIT:
 		case OPTION_NEGBIT:
 		case OPTION_SET_INT:
-		case OPTION_SET_PTR:
 		case OPTION_NUMBER:
 			if ((opts->flags & PARSE_OPT_OPTARG) ||
 			    !(opts->flags & PARSE_OPT_NOARG))
@@ -378,6 +370,9 @@ static void parse_options_check(const struct option *opts)
 		default:
 			; /* ok. (usually accepts an argument) */
 		}
+		if (opts->argh &&
+		    strcspn(opts->argh, " _") != strlen(opts->argh))
+			err |= optbug(opts, "multi-word argh should use dash to separate words");
 	}
 	if (err)
 		exit(128);

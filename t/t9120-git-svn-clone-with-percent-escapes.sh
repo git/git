@@ -58,19 +58,19 @@ test_expect_success 'test clone --stdlayout with percent escapes' '
 	git svn clone --stdlayout "$svnrepo/pr%20ject" percent &&
 	(
 		cd percent &&
-		git rev-parse refs/remotes/trunk^0 &&
-		git rev-parse refs/remotes/b^0 &&
-		git rev-parse refs/remotes/tags/v1^0
+		git rev-parse refs/remotes/origin/trunk^0 &&
+		git rev-parse refs/remotes/origin/b^0 &&
+		git rev-parse refs/remotes/origin/tags/v1^0
 	)
 '
 
 test_expect_success 'test clone -s with unescaped space' '
-	git svn clone -s "$svnrepo/pr ject" space &&
+	git svn clone -s "$svnrepo/pr ject" --prefix origin/ space &&
 	(
 		cd space &&
-		git rev-parse refs/remotes/trunk^0 &&
-		git rev-parse refs/remotes/b^0 &&
-		git rev-parse refs/remotes/tags/v1^0
+		git rev-parse refs/remotes/origin/trunk^0 &&
+		git rev-parse refs/remotes/origin/b^0 &&
+		git rev-parse refs/remotes/origin/tags/v1^0
 	)
 '
 

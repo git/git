@@ -126,6 +126,17 @@ For C programs:
    "char * string".  This makes it easier to understand code
    like "char *string, c;".
 
+ - Use whitespace around operators and keywords, but not inside
+   parentheses and not around functions. So:
+
+        while (condition)
+		func(bar + 1);
+
+   and not:
+
+        while( condition )
+		func (bar+1);
+
  - We avoid using braces unnecessarily.  I.e.
 
 	if (bla) {
@@ -152,6 +163,16 @@ For C programs:
 	 * A very long
 	 * multi-line comment.
 	 */
+
+   Note however that a comment that explains a translatable string to
+   translators uses a convention of starting with a magic token
+   "TRANSLATORS: " immediately after the opening delimiter, even when
+   it spans multiple lines.  We do not add an asterisk at the beginning
+   of each line, either.  E.g.
+
+	/* TRANSLATORS: here is a comment that explains the string
+	   to be translated, that follows immediately after it */
+	_("Here is a translatable string explained by the above.");
 
  - Double negation is often harder to understand than no negation
    at all.

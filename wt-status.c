@@ -17,7 +17,7 @@
 #include "strbuf.h"
 #include "utf8.h"
 
-static char cut_line[] =
+static const char cut_line[] =
 "------------------------ >8 ------------------------\n";
 
 static char default_wt_status_colors[][COLOR_MAXLEN] = {
@@ -841,6 +841,17 @@ void wt_status_truncate_message_at_cut_line(struct strbuf *buf)
 	strbuf_release(&pattern);
 }
 
+void wt_status_add_cut_line(FILE *fp)
+{
+	const char *explanation = _("Do not touch the line above.\nEverything below will be removed.");
+	struct strbuf buf = STRBUF_INIT;
+
+	fprintf(fp, "%c %s", comment_line_char, cut_line);
+	strbuf_add_commented_lines(&buf, explanation, strlen(explanation));
+	fputs(buf.buf, fp);
+	strbuf_release(&buf);
+}
+
 static void wt_status_print_verbose(struct wt_status *s)
 {
 	struct rev_info rev;
@@ -866,14 +877,8 @@ static void wt_status_print_verbose(struct wt_status *s)
 	 * diff before committing.
 	 */
 	if (s->fp != stdout) {
-		const char *explanation = _("Do not touch the line above.\nEverything below will be removed.");
-		struct strbuf buf = STRBUF_INIT;
-
 		rev.diffopt.use_color = 0;
-		fprintf(s->fp, "%c %s", comment_line_char, cut_line);
-		strbuf_add_commented_lines(&buf, explanation, strlen(explanation));
-		fputs(buf.buf, s->fp);
-		strbuf_release(&buf);
+		wt_status_add_cut_line(s->fp);
 	}
 	run_diff_index(&rev, 1);
 }

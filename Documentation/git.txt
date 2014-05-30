@@ -43,6 +43,11 @@ unreleased) version of Git, that is available from 'master'
 branch of the `git.git` repository.
 Documentation for older releases are available here:
 
+* link:v2.0.0/git.html[documentation for release 2.0]
+
+* release notes for
+  link:RelNotes/2.0.0.txt[2.0.0].
+
 * link:v1.9.3/git.html[documentation for release 1.9.3]
 
 * release notes for
@@ -722,6 +727,11 @@ Git so take care if using Cogito etc.
 	This environment allows the specification of an alternate
 	index file. If not specified, the default of `$GIT_DIR/index`
 	is used.
+
+'GIT_INDEX_VERSION'::
+	This environment variable allows the specification of an index
+	version for new repositories.  It won't affect existing index
+	files.  By default index file version [23] is used.
 
 'GIT_OBJECT_DIRECTORY'::
 	If the object storage directory is specified via this

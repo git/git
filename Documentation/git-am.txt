@@ -14,7 +14,7 @@ SYNOPSIS
 	 [--ignore-date] [--ignore-space-change | --ignore-whitespace]
 	 [--whitespace=<option>] [-C<n>] [-p<n>] [--directory=<dir>]
 	 [--exclude=<path>] [--include=<path>] [--reject] [-q | --quiet]
-	 [--[no-]scissors]
+	 [--[no-]scissors] [-S[<keyid>]] [--patch-format=<format>]
 	 [(<mbox> | <Maildir>)...]
 'git am' (--continue | --skip | --abort)
 
@@ -97,6 +97,12 @@ default.   You can use `--no-utf8` to override this.
 	program that applies
 	the patch.
 
+--patch-format::
+	By default the command will try to detect the patch format
+	automatically. This option allows the user to bypass the automatic
+	detection and specify the patch format that the patch(es) should be
+	interpreted as. Valid formats are mbox, stgit, stgit-series and hg.
+
 -i::
 --interactive::
 	Run interactively.
@@ -118,6 +124,10 @@ default.   You can use `--no-utf8` to override this.
 --skip::
 	Skip the current patch.  This is only meaningful when
 	restarting an aborted patch.
+
+-S[<keyid>]::
+--gpg-sign[=<keyid>]::
+	GPG-sign commits.
 
 --continue::
 -r::
@@ -189,6 +199,11 @@ commits, like running 'git am' on the wrong branch or an error in the
 commits that is more easily fixed by changing the mailbox (e.g.
 errors in the "From:" lines).
 
+HOOKS
+-----
+This command can run `applypatch-msg`, `pre-applypatch`,
+and `post-applypatch` hooks.  See linkgit:githooks[5] for more
+information.
 
 SEE ALSO
 --------

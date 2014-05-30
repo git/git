@@ -539,6 +539,21 @@ test_expect_success 'reset with paths accepts tree' '
 	git diff HEAD --exit-code
 '
 
+test_expect_success 'reset -N keeps removed files as intent-to-add' '
+	echo new-file >new-file &&
+	git add new-file &&
+	git reset -N HEAD &&
+
+	tree=$(git write-tree) &&
+	git ls-tree $tree new-file >actual &&
+	>expect &&
+	test_cmp expect actual &&
+
+	git diff --name-only >actual &&
+	echo new-file >expect &&
+	test_cmp expect actual
+'
+
 test_expect_success 'reset --mixed sets up work tree' '
 	git init mixed_worktree &&
 	(

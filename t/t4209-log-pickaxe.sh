@@ -3,82 +3,72 @@
 test_description='log --grep/--author/--regexp-ignore-case/-S/-G'
 . ./test-lib.sh
 
+test_log () {
+	expect=$1
+	kind=$2
+	needle=$3
+	shift 3
+	rest=$@
+
+	case $kind in
+	--*)
+		opt=$kind=$needle
+		;;
+	*)
+		opt=$kind$needle
+		;;
+	esac
+	case $expect in
+	expect_nomatch)
+		match=nomatch
+		;;
+	*)
+		match=match
+		;;
+	esac
+
+	test_expect_success "log $kind${rest:+ $rest} ($match)" "
+		git log $rest $opt --format=%H >actual &&
+		test_cmp $expect actual
+	"
+}
+
+# test -i and --regexp-ignore-case and expect both to behave the same way
+test_log_icase () {
+	test_log $@ --regexp-ignore-case
+	test_log $@ -i
+}
+
 test_expect_success setup '
+	>expect_nomatch &&
+
 	>file &&
 	git add file &&
 	test_tick &&
 	git commit -m initial &&
+	git rev-parse --verify HEAD >expect_initial &&
 
 	echo Picked >file &&
+	git add file &&
 	test_tick &&
-	git commit -a --author="Another Person <another@example.com>" -m second
+	git commit --author="Another Person <another@example.com>" -m second &&
+	git rev-parse --verify HEAD >expect_second
 '
 
-test_expect_success 'log --grep' '
-	git log --grep=initial --format=%H >actual &&
-	git rev-parse --verify HEAD^ >expect &&
-	test_cmp expect actual
-'
+test_log	expect_initial	--grep initial
+test_log	expect_nomatch	--grep InItial
+test_log_icase	expect_initial	--grep InItial
+test_log_icase	expect_nomatch	--grep initail
 
-test_expect_success 'log --grep --regexp-ignore-case' '
-	git log --regexp-ignore-case --grep=InItial --format=%H >actual &&
-	git rev-parse --verify HEAD^ >expect &&
-	test_cmp expect actual
-'
+test_log	expect_second	--author Person
+test_log	expect_nomatch	--author person
+test_log_icase	expect_second	--author person
+test_log_icase	expect_nomatch	--author spreon
 
-test_expect_success 'log --grep -i' '
-	git log -i --grep=InItial --format=%H >actual &&
-	git rev-parse --verify HEAD^ >expect &&
-	test_cmp expect actual
-'
-
-test_expect_success 'log --author --regexp-ignore-case' '
-	git log --regexp-ignore-case --author=person --format=%H >actual &&
-	git rev-parse --verify HEAD >expect &&
-	test_cmp expect actual
-'
-
-test_expect_success 'log --author -i' '
-	git log -i --author=person --format=%H >actual &&
-	git rev-parse --verify HEAD >expect &&
-	test_cmp expect actual
-'
-
-test_expect_success 'log -G (nomatch)' '
-	git log -Gpicked --format=%H >actual &&
-	>expect &&
-	test_cmp expect actual
-'
-
-test_expect_success 'log -G (match)' '
-	git log -GPicked --format=%H >actual &&
-	git rev-parse --verify HEAD >expect &&
-	test_cmp expect actual
-'
-
-test_expect_success 'log -G --regexp-ignore-case (nomatch)' '
-	git log --regexp-ignore-case -Gpickle --format=%H >actual &&
-	>expect &&
-	test_cmp expect actual
-'
-
-test_expect_success 'log -G -i (nomatch)' '
-	git log -i -Gpickle --format=%H >actual &&
-	>expect &&
-	test_cmp expect actual
-'
-
-test_expect_success 'log -G --regexp-ignore-case (match)' '
-	git log --regexp-ignore-case -Gpicked --format=%H >actual &&
-	git rev-parse --verify HEAD >expect &&
-	test_cmp expect actual
-'
-
-test_expect_success 'log -G -i (match)' '
-	git log -i -Gpicked --format=%H >actual &&
-	git rev-parse --verify HEAD >expect &&
-	test_cmp expect actual
-'
+test_log	expect_nomatch	-G picked
+test_log	expect_second	-G Picked
+test_log_icase	expect_nomatch	-G pickle
+test_log_icase	expect_second	-G picked
 
 test_expect_success 'log -G --textconv (missing textconv tool)' '
 	echo "* diff=test" >.gitattributes &&
@@ -89,46 +79,19 @@ test_expect_success 'log -G --textconv (missing textconv tool)' '
 test_expect_success 'log -G --no-textconv (missing textconv tool)' '
 	echo "* diff=test" >.gitattributes &&
 	git -c diff.test.textconv=missing log -Gfoo --no-textconv >actual &&
-	>expect &&
-	test_cmp expect actual &&
+	test_cmp expect_nomatch actual &&
 	rm .gitattributes
 '
 
-test_expect_success 'log -S (nomatch)' '
-	git log -Spicked --format=%H >actual &&
-	>expect &&
-	test_cmp expect actual
-'
+test_log	expect_nomatch	-S picked
+test_log	expect_second	-S Picked
+test_log_icase	expect_second	-S picked
+test_log_icase	expect_nomatch	-S pickle
 
-test_expect_success 'log -S (match)' '
-	git log -SPicked --format=%H >actual &&
-	git rev-parse --verify HEAD >expect &&
-	test_cmp expect actual
-'
-
-test_expect_success 'log -S --regexp-ignore-case (match)' '
-	git log --regexp-ignore-case -Spicked --format=%H >actual &&
-	git rev-parse --verify HEAD >expect &&
-	test_cmp expect actual
-'
-
-test_expect_success 'log -S -i (match)' '
-	git log -i -Spicked --format=%H >actual &&
-	git rev-parse --verify HEAD >expect &&
-	test_cmp expect actual
-'
-
-test_expect_success 'log -S --regexp-ignore-case (nomatch)' '
-	git log --regexp-ignore-case -Spickle --format=%H >actual &&
-	>expect &&
-	test_cmp expect actual
-'
-
-test_expect_success 'log -S -i (nomatch)' '
-	git log -i -Spickle --format=%H >actual &&
-	>expect &&
-	test_cmp expect actual
-'
+test_log	expect_nomatch	-S p.cked --pickaxe-regex
+test_log	expect_second	-S P.cked --pickaxe-regex
+test_log_icase	expect_second	-S p.cked --pickaxe-regex
+test_log_icase	expect_nomatch	-S p.ckle --pickaxe-regex
 
 test_expect_success 'log -S --textconv (missing textconv tool)' '
 	echo "* diff=test" >.gitattributes &&
@@ -139,8 +102,7 @@ test_expect_success 'log -S --textconv (missing textconv tool)' '
 test_expect_success 'log -S --no-textconv (missing textconv tool)' '
 	echo "* diff=test" >.gitattributes &&
 	git -c diff.test.textconv=missing log -Sfoo --no-textconv >actual &&
-	>expect &&
-	test_cmp expect actual &&
+	test_cmp expect_nomatch actual &&
 	rm .gitattributes
 '
 

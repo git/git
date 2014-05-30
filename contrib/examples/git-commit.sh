@@ -91,7 +91,7 @@ signoff=
 force_author=
 only_include_assumed=
 untracked_files=
-templatefile="`git config commit.template`"
+templatefile="$(git config commit.template)"
 while test $# != 0
 do
 	case "$1" in
@@ -350,7 +350,7 @@ t,)
 		TMP_INDEX="$GIT_DIR/tmp-index$$"
 		W=
 		test -z "$initial_commit" && W=--with-tree=HEAD
-		commit_only=`git ls-files --error-unmatch $W -- "$@"` || exit
+		commit_only=$(git ls-files --error-unmatch $W -- "$@") || exit
 
 		# Build a temporary index and update the real index
 		# the same way.
@@ -475,8 +475,8 @@ then
 fi
 if test '' != "$force_author"
 then
-	GIT_AUTHOR_NAME=`expr "z$force_author" : 'z\(.*[^ ]\) *<.*'` &&
-	GIT_AUTHOR_EMAIL=`expr "z$force_author" : '.*\(<.*\)'` &&
+	GIT_AUTHOR_NAME=$(expr "z$force_author" : 'z\(.*[^ ]\) *<.*') &&
+	GIT_AUTHOR_EMAIL=$(expr "z$force_author" : '.*\(<.*\)') &&
 	test '' != "$GIT_AUTHOR_NAME" &&
 	test '' != "$GIT_AUTHOR_EMAIL" ||
 	die "malformed --author parameter"
@@ -489,7 +489,7 @@ then
 	rloga='commit'
 	if [ -f "$GIT_DIR/MERGE_HEAD" ]; then
 		rloga='commit (merge)'
-		PARENTS="-p HEAD "`sed -e 's/^/-p /' "$GIT_DIR/MERGE_HEAD"`
+		PARENTS="-p HEAD "$(sed -e 's/^/-p /' "$GIT_DIR/MERGE_HEAD")
 	elif test -n "$amend"; then
 		rloga='commit (amend)'
 		PARENTS=$(git cat-file commit HEAD |

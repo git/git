@@ -1222,7 +1222,7 @@ static int resolve_gitlink_packed_ref(struct ref_cache *refs,
 	if (ref == NULL)
 		return -1;
 
-	memcpy(sha1, ref->u.value.sha1, 20);
+	hashcpy(sha1, ref->u.value.sha1);
 	return 0;
 }
 
@@ -1477,7 +1477,7 @@ static int filter_refs(const char *refname, const unsigned char *sha1, int flags
 		       void *data)
 {
 	struct ref_filter *filter = (struct ref_filter *)data;
-	if (fnmatch(filter->pattern, refname, 0))
+	if (wildmatch(filter->pattern, refname, 0, NULL))
 		return 0;
 	return filter->fn(refname, sha1, flags, filter->cb_data);
 }

@@ -21,8 +21,7 @@ static const char *argv_checkout[] = {"checkout", "-q", NULL, "--", NULL};
 static const char *argv_show_branch[] = {"show-branch", NULL, NULL};
 static const char *argv_update_ref[] = {"update-ref", "--no-deref", "BISECT_HEAD", NULL, NULL};
 
-/* bits #0-15 in revision.h */
-
+/* Remember to update object flag allocation in object.h */
 #define COUNTED		(1u<<16)
 
 /*
@@ -685,7 +684,6 @@ static void mark_expected_rev(char *bisect_rev_hex)
 
 static int bisect_checkout(char *bisect_rev_hex, int no_checkout)
 {
-	int res;
 
 	mark_expected_rev(bisect_rev_hex);
 
@@ -696,6 +694,7 @@ static int bisect_checkout(char *bisect_rev_hex, int no_checkout)
 			die("update-ref --no-deref HEAD failed on %s",
 			    bisect_rev_hex);
 	} else {
+		int res;
 		res = run_command_v_opt(argv_checkout, RUN_GIT_CMD);
 		if (res)
 			exit(res);

@@ -59,9 +59,9 @@ all::
 # FreeBSD can use either, but MinGW and some others need to use
 # libcharset.h's locale_charset() instead.
 #
-# Define CHARSET_LIB to you need to link with library other than -liconv to
+# Define CHARSET_LIB to the library you need to link with in order to
 # use locale_charset() function.  On some platforms this needs to set to
-# -lcharset
+# -lcharset, on others to -liconv .
 #
 # Define LIBC_CONTAINS_LIBINTL if your gettext implementation doesn't
 # need -lintl when linking.
@@ -100,14 +100,6 @@ all::
 # Define MKDIR_WO_TRAILING_SLASH if your mkdir() can't deal with trailing slash.
 #
 # Define NO_MKSTEMPS if you don't have mkstemps in the C library.
-#
-# Define NO_FNMATCH if you don't have fnmatch in the C library.
-#
-# Define NO_FNMATCH_CASEFOLD if your fnmatch function doesn't have the
-# FNM_CASEFOLD GNU extension.
-#
-# Define NO_WILDMATCH if you do not want to use Git's wildmatch
-# implementation as fnmatch
 #
 # Define NO_GECOS_IN_PWENT if you don't have pw_gecos in struct passwd
 # in the C library.
@@ -342,6 +334,10 @@ all::
 # Define DEFAULT_HELP_FORMAT to "man", "info" or "html"
 # (defaults to "man") if you want to have a different default when
 # "git help" is called without a parameter specifying the format.
+#
+# Define TEST_GIT_INDEX_VERSION to 2, 3 or 4 to run the test suite
+# with a different indexfile format version.  If it isn't set the index
+# file format used is index-v[23].
 #
 # Define GMTIME_UNRELIABLE_ERRORS if your gmtime() function does not
 # return NULL when it receives a bogus time_t.
@@ -667,6 +663,8 @@ LIB_H += diff.h
 LIB_H += diffcore.h
 LIB_H += dir.h
 LIB_H += exec_cmd.h
+LIB_H += ewah/ewok.h
+LIB_H += ewah/ewok_rlw.h
 LIB_H += fetch-pack.h
 LIB_H += fmt-merge-msg.h
 LIB_H += fsck.h
@@ -675,7 +673,6 @@ LIB_H += git-compat-util.h
 LIB_H += gpg-interface.h
 LIB_H += graph.h
 LIB_H += grep.h
-LIB_H += hash.h
 LIB_H += hashmap.h
 LIB_H += help.h
 LIB_H += http.h
@@ -695,8 +692,10 @@ LIB_H += notes-merge.h
 LIB_H += notes-utils.h
 LIB_H += notes.h
 LIB_H += object.h
+LIB_H += pack-objects.h
 LIB_H += pack-revindex.h
 LIB_H += pack.h
+LIB_H += pack-bitmap.h
 LIB_H += parse-options.h
 LIB_H += patch-ids.h
 LIB_H += pathspec.h
@@ -800,6 +799,10 @@ LIB_OBJS += dir.o
 LIB_OBJS += editor.o
 LIB_OBJS += entry.o
 LIB_OBJS += environment.o
+LIB_OBJS += ewah/bitmap.o
+LIB_OBJS += ewah/ewah_bitmap.o
+LIB_OBJS += ewah/ewah_io.o
+LIB_OBJS += ewah/ewah_rlw.o
 LIB_OBJS += exec_cmd.o
 LIB_OBJS += fetch-pack.o
 LIB_OBJS += fsck.o
@@ -807,7 +810,6 @@ LIB_OBJS += gettext.o
 LIB_OBJS += gpg-interface.o
 LIB_OBJS += graph.o
 LIB_OBJS += grep.o
-LIB_OBJS += hash.o
 LIB_OBJS += hashmap.o
 LIB_OBJS += help.o
 LIB_OBJS += hex.o
@@ -832,7 +834,10 @@ LIB_OBJS += notes-cache.o
 LIB_OBJS += notes-merge.o
 LIB_OBJS += notes-utils.o
 LIB_OBJS += object.o
+LIB_OBJS += pack-bitmap.o
+LIB_OBJS += pack-bitmap-write.o
 LIB_OBJS += pack-check.o
+LIB_OBJS += pack-objects.o
 LIB_OBJS += pack-revindex.o
 LIB_OBJS += pack-write.o
 LIB_OBJS += pager.o
@@ -890,6 +895,7 @@ LIB_OBJS += userdiff.o
 LIB_OBJS += utf8.o
 LIB_OBJS += varint.o
 LIB_OBJS += version.o
+LIB_OBJS += versioncmp.o
 LIB_OBJS += walker.o
 LIB_OBJS += wildmatch.o
 LIB_OBJS += wrapper.o
@@ -1274,20 +1280,6 @@ ifdef NO_STRTOUMAX
 endif
 ifdef NO_STRTOULL
 	COMPAT_CFLAGS += -DNO_STRTOULL
-endif
-ifdef NO_FNMATCH
-	COMPAT_CFLAGS += -Icompat/fnmatch
-	COMPAT_CFLAGS += -DNO_FNMATCH
-	COMPAT_OBJS += compat/fnmatch/fnmatch.o
-else
-ifdef NO_FNMATCH_CASEFOLD
-	COMPAT_CFLAGS += -Icompat/fnmatch
-	COMPAT_CFLAGS += -DNO_FNMATCH_CASEFOLD
-	COMPAT_OBJS += compat/fnmatch/fnmatch.o
-endif
-endif
-ifndef NO_WILDMATCH
-	COMPAT_CFLAGS += -DUSE_WILDMATCH
 endif
 ifdef NO_SETENV
 	COMPAT_CFLAGS += -DNO_SETENV
@@ -2111,7 +2103,7 @@ pdf:
 
 XGETTEXT_FLAGS = \
 	--force-po \
-	--add-comments \
+	--add-comments=TRANSLATORS: \
 	--msgid-bugs-address="Git Mailing List <git@vger.kernel.org>" \
 	--from-code=UTF-8
 XGETTEXT_FLAGS_C = $(XGETTEXT_FLAGS) --language=C \
@@ -2233,6 +2225,9 @@ ifdef GIT_PERF_LARGE_REPO
 endif
 ifdef GIT_PERF_MAKE_OPTS
 	@echo GIT_PERF_MAKE_OPTS=\''$(subst ','\'',$(subst ','\'',$(GIT_PERF_MAKE_OPTS)))'\' >>$@
+endif
+ifdef TEST_GIT_INDEX_VERSION
+	@echo TEST_GIT_INDEX_VERSION=\''$(subst ','\'',$(subst ','\'',$(TEST_GIT_INDEX_VERSION)))'\' >>$@
 endif
 
 ### Detect Python interpreter path changes
@@ -2491,8 +2486,9 @@ profile-clean:
 	$(RM) $(addsuffix *.gcno,$(addprefix $(PROFILE_DIR)/, $(object_dirs)))
 
 clean: profile-clean coverage-clean
-	$(RM) *.o *.res block-sha1/*.o ppc/*.o compat/*.o compat/*/*.o xdiff/*.o vcs-svn/*.o \
-		builtin/*.o $(LIB_FILE) $(XDIFF_LIB) $(VCSSVN_LIB)
+	$(RM) *.o *.res block-sha1/*.o ppc/*.o compat/*.o compat/*/*.o
+	$(RM) xdiff/*.o vcs-svn/*.o ewah/*.o builtin/*.o
+	$(RM) $(LIB_FILE) $(XDIFF_LIB) $(VCSSVN_LIB)
 	$(RM) $(ALL_PROGRAMS) $(SCRIPT_LIB) $(BUILT_INS) git$X
 	$(RM) $(TEST_PROGRAMS) $(NO_INSTALL)
 	$(RM) -r bin-wrappers $(dep_dirs)

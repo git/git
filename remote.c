@@ -1062,11 +1062,13 @@ int count_refspec_match(const char *pattern,
 		}
 	}
 	if (!matched) {
-		*matched_ref = matched_weak;
+		if (matched_ref)
+			*matched_ref = matched_weak;
 		return weak_match;
 	}
 	else {
-		*matched_ref = matched;
+		if (matched_ref)
+			*matched_ref = matched;
 		return match;
 	}
 }
@@ -1086,18 +1088,25 @@ static struct ref *alloc_delete_ref(void)
 	return ref;
 }
 
-static struct ref *try_explicit_object_name(const char *name)
+static int try_explicit_object_name(const char *name,
+				    struct ref **match)
 {
 	unsigned char sha1[20];
-	struct ref *ref;
 
-	if (!*name)
-		return alloc_delete_ref();
+	if (!*name) {
+		if (match)
+			*match = alloc_delete_ref();
+		return 0;
+	}
+
 	if (get_sha1(name, sha1))
-		return NULL;
-	ref = alloc_ref(name);
-	hashcpy(ref->new_sha1, sha1);
-	return ref;
+		return -1;
+
+	if (match) {
+		*match = alloc_ref(name);
+		hashcpy((*match)->new_sha1, sha1);
+	}
+	return 0;
 }
 
 static struct ref *make_linked_ref(const char *name, struct ref ***tail)
@@ -1127,12 +1136,37 @@ static char *guess_ref(const char *name, struct ref *peer)
 	return strbuf_detach(&buf, NULL);
 }
 
+static int match_explicit_lhs(struct ref *src,
+			      struct refspec *rs,
+			      struct ref **match,
+			      int *allocated_match)
+{
+	switch (count_refspec_match(rs->src, src, match)) {
+	case 1:
+		if (allocated_match)
+			*allocated_match = 0;
+		return 0;
+	case 0:
+		/* The source could be in the get_sha1() format
+		 * not a reference name.  :refs/other is a
+		 * way to delete 'other' ref at the remote end.
+		 */
+		if (try_explicit_object_name(rs->src, match) < 0)
+			return error("src refspec %s does not match any.", rs->src);
+		if (allocated_match)
+			*allocated_match = 1;
+		return 0;
+	default:
+		return error("src refspec %s matches more than one.", rs->src);
+	}
+}
+
 static int match_explicit(struct ref *src, struct ref *dst,
 			  struct ref ***dst_tail,
 			  struct refspec *rs)
 {
 	struct ref *matched_src, *matched_dst;
-	int copy_src;
+	int allocated_src;
 
 	const char *dst_value = rs->dst;
 	char *dst_guess;
@@ -1141,23 +1175,8 @@ static int match_explicit(struct ref *src, struct ref *dst,
 		return 0;
 
 	matched_src = matched_dst = NULL;
-	switch (count_refspec_match(rs->src, src, &matched_src)) {
-	case 1:
-		copy_src = 1;
-		break;
-	case 0:
-		/* The source could be in the get_sha1() format
-		 * not a reference name.  :refs/other is a
-		 * way to delete 'other' ref at the remote end.
-		 */
-		matched_src = try_explicit_object_name(rs->src);
-		if (!matched_src)
-			return error("src refspec %s does not match any.", rs->src);
-		copy_src = 0;
-		break;
-	default:
-		return error("src refspec %s matches more than one.", rs->src);
-	}
+	if (match_explicit_lhs(src, rs, &matched_src, &allocated_src) < 0)
+		return -1;
 
 	if (!dst_value) {
 		unsigned char sha1[20];
@@ -1202,7 +1221,9 @@ static int match_explicit(struct ref *src, struct ref *dst,
 		return error("dst ref %s receives from more than one src.",
 		      matched_dst->name);
 	else {
-		matched_dst->peer_ref = copy_src ? copy_ref(matched_src) : matched_src;
+		matched_dst->peer_ref = allocated_src ?
+					matched_src :
+					copy_ref(matched_src);
 		matched_dst->force = rs->force;
 	}
 	return 0;
@@ -1381,6 +1402,31 @@ static void prepare_ref_index(struct string_list *ref_index, struct ref *ref)
 		string_list_append_nodup(ref_index, ref->name)->util = ref;
 
 	sort_string_list(ref_index);
+}
+
+/*
+ * Given only the set of local refs, sanity-check the set of push
+ * refspecs. We can't catch all errors that match_push_refs would,
+ * but we can catch some errors early before even talking to the
+ * remote side.
+ */
+int check_push_refs(struct ref *src, int nr_refspec, const char **refspec_names)
+{
+	struct refspec *refspec = parse_push_refspec(nr_refspec, refspec_names);
+	int ret = 0;
+	int i;
+
+	for (i = 0; i < nr_refspec; i++) {
+		struct refspec *rs = refspec + i;
+
+		if (rs->pattern || rs->matching)
+			continue;
+
+		ret |= match_explicit_lhs(src, rs, NULL, NULL);
+	}
+
+	free_refspec(nr_refspec, refspec);
+	return ret;
 }
 
 /*

@@ -213,6 +213,15 @@ test_expect_success 'clients cannot access unreachable commits' '
 	test_must_fail git archive --remote=. $sha1 >remote.tar
 '
 
+test_expect_success 'upload-archive can allow unreachable commits' '
+	test_commit unreachable1 &&
+	sha1=`git rev-parse HEAD` &&
+	git reset --hard HEAD^ &&
+	git archive $sha1 >remote.tar &&
+	test_config uploadarchive.allowUnreachable true &&
+	git archive --remote=. $sha1 >remote.tar
+'
+
 test_expect_success 'setup tar filters' '
 	git config tar.tar.foo.command "tr ab ba" &&
 	git config tar.bar.command "tr ab ba" &&

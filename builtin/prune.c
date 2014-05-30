@@ -150,7 +150,7 @@ int cmd_prune(int argc, const char **argv, const char *prefix)
 
 	expire = ULONG_MAX;
 	save_commit_buffer = 0;
-	read_replace_refs = 0;
+	check_replace_refs = 0;
 	init_revisions(&revs, prefix);
 
 	argc = parse_options(argc, argv, prefix, options, prune_usage, 0);
@@ -169,7 +169,7 @@ int cmd_prune(int argc, const char **argv, const char *prefix)
 	if (show_progress == -1)
 		show_progress = isatty(2);
 	if (show_progress)
-		progress = start_progress_delay("Checking connectivity", 0, 0, 2);
+		progress = start_progress_delay(_("Checking connectivity"), 0, 0, 2);
 
 	mark_reachable_objects(&revs, 1, progress);
 	stop_progress(&progress);

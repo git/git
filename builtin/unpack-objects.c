@@ -480,7 +480,7 @@ static void unpack_all(void)
 	use(sizeof(struct pack_header));
 
 	if (!quiet)
-		progress = start_progress("Unpacking objects", nr_objects);
+		progress = start_progress(_("Unpacking objects"), nr_objects);
 	obj_list = xcalloc(nr_objects, sizeof(*obj_list));
 	for (i = 0; i < nr_objects; i++) {
 		unpack_one(i);
@@ -497,7 +497,7 @@ int cmd_unpack_objects(int argc, const char **argv, const char *prefix)
 	int i;
 	unsigned char sha1[20];
 
-	read_replace_refs = 0;
+	check_replace_refs = 0;
 
 	git_config(git_default_config, NULL);
 

@@ -3,7 +3,7 @@ git-remote(1)
 
 NAME
 ----
-git-remote - manage set of tracked repositories
+git-remote - Manage set of tracked repositories
 
 
 SYNOPSIS

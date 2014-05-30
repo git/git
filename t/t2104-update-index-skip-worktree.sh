@@ -7,6 +7,8 @@ test_description='skip-worktree bit test'
 
 . ./test-lib.sh
 
+test_set_index_version 3
+
 cat >expect.full <<EOF
 H 1
 H 2

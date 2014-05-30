@@ -3086,7 +3086,7 @@ class P4Rebase(Command):
         print "Rebasing the current branch onto %s" % upstream
         oldHead = read_pipe("git rev-parse HEAD").strip()
         system("git rebase %s" % upstream)
-        system("git diff-tree --stat --summary -M %s HEAD" % oldHead)
+        system("git diff-tree --stat --summary -M %s HEAD --" % oldHead)
         return True
 
 class P4Clone(P4Sync):

@@ -275,36 +275,32 @@ static void chmod_path(int flip, const char *path)
 	die("git update-index: cannot chmod %cx '%s'", flip, path);
 }
 
-static void update_one(const char *path, const char *prefix, int prefix_length)
+static void update_one(const char *path)
 {
-	const char *p = prefix_path(prefix, prefix_length, path);
-	if (!verify_path(p)) {
+	if (!verify_path(path)) {
 		fprintf(stderr, "Ignoring path %s\n", path);
-		goto free_return;
+		return;
 	}
 	if (mark_valid_only) {
-		if (mark_ce_flags(p, CE_VALID, mark_valid_only == MARK_FLAG))
+		if (mark_ce_flags(path, CE_VALID, mark_valid_only == MARK_FLAG))
 			die("Unable to mark file %s", path);
-		goto free_return;
+		return;
 	}
 	if (mark_skip_worktree_only) {
-		if (mark_ce_flags(p, CE_SKIP_WORKTREE, mark_skip_worktree_only == MARK_FLAG))
+		if (mark_ce_flags(path, CE_SKIP_WORKTREE, mark_skip_worktree_only == MARK_FLAG))
 			die("Unable to mark file %s", path);
-		goto free_return;
+		return;
 	}
 
 	if (force_remove) {
-		if (remove_file_from_cache(p))
+		if (remove_file_from_cache(path))
 			die("git update-index: unable to remove %s", path);
 		report("remove '%s'", path);
-		goto free_return;
+		return;
 	}
-	if (process_path(p))
+	if (process_path(path))
 		die("Unable to process path %s", path);
 	report("add '%s'", path);
- free_return:
-	if (p < path || p > path + strlen(path))
-		free((char *)p);
 }
 
 static void read_index_info(int line_termination)
@@ -564,6 +560,7 @@ static int do_reupdate(int ac, const char **av,
 		const struct cache_entry *ce = active_cache[pos];
 		struct cache_entry *old = NULL;
 		int save_nr;
+		char *path;
 
 		if (ce_stage(ce) || !ce_path_match(ce, &pathspec, NULL))
 			continue;
@@ -580,7 +577,9 @@ static int do_reupdate(int ac, const char **av,
 		 * or worse yet 'allow_replace', active_nr may decrease.
 		 */
 		save_nr = active_nr;
-		update_one(ce->name + prefix_length, prefix, prefix_length);
+		path = xstrdup(ce->name);
+		update_one(path);
+		free(path);
 		if (save_nr != active_nr)
 			goto redo;
 	}
@@ -630,14 +629,42 @@ static int resolve_undo_clear_callback(const struct option *opt,
 	return 0;
 }
 
+static int parse_new_style_cacheinfo(const char *arg,
+				     unsigned int *mode,
+				     unsigned char sha1[],
+				     const char **path)
+{
+	unsigned long ul;
+	char *endp;
+
+	errno = 0;
+	ul = strtoul(arg, &endp, 8);
+	if (errno || endp == arg || *endp != ',' || (unsigned int) ul != ul)
+		return -1; /* not a new-style cacheinfo */
+	*mode = ul;
+	endp++;
+	if (get_sha1_hex(endp, sha1) || endp[40] != ',')
+		return -1;
+	*path = endp + 41;
+	return 0;
+}
+
 static int cacheinfo_callback(struct parse_opt_ctx_t *ctx,
 				const struct option *opt, int unset)
 {
 	unsigned char sha1[20];
 	unsigned int mode;
+	const char *path;
 
+	if (!parse_new_style_cacheinfo(ctx->argv[1], &mode, sha1, &path)) {
+		if (add_cacheinfo(mode, sha1, path, 0))
+			die("git update-index: --cacheinfo cannot add %s", path);
+		ctx->argv++;
+		ctx->argc--;
+		return 0;
+	}
 	if (ctx->argc <= 3)
-		return error("option 'cacheinfo' expects three arguments");
+		return error("option 'cacheinfo' expects <mode>,<sha1>,<path>");
 	if (strtoul_ui(*++ctx->argv, 8, &mode) ||
 	    get_sha1_hex(*++ctx->argv, sha1) ||
 	    add_cacheinfo(mode, sha1, *++ctx->argv, 0))
@@ -741,9 +768,9 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 			PARSE_OPT_NOARG | PARSE_OPT_NONEG,
 			really_refresh_callback},
 		{OPTION_LOWLEVEL_CALLBACK, 0, "cacheinfo", NULL,
-			N_("<mode> <object> <path>"),
+			N_("<mode>,<object>,<path>"),
 			N_("add the specified entry to the index"),
-			PARSE_OPT_NOARG |	/* disallow --cacheinfo=<mode> form */
+			PARSE_OPT_NOARG | /* disallow --cacheinfo=<mode> form */
 			PARSE_OPT_NONEG | PARSE_OPT_LITERAL_ARGHELP,
 			(parse_opt_cb *) cacheinfo_callback},
 		{OPTION_CALLBACK, 0, "chmod", &set_executable_bit, N_("(+/-)x"),
@@ -837,11 +864,10 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 
 			setup_work_tree();
 			p = prefix_path(prefix, prefix_length, path);
-			update_one(p, NULL, 0);
+			update_one(p);
 			if (set_executable_bit)
 				chmod_path(set_executable_bit, p);
-			if (p < path || p > path + strlen(path))
-				free((char *)p);
+			free((char *)p);
 			ctx.argc--;
 			ctx.argv++;
 			break;
@@ -880,11 +906,10 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 				strbuf_swap(&buf, &nbuf);
 			}
 			p = prefix_path(prefix, prefix_length, buf.buf);
-			update_one(p, NULL, 0);
+			update_one(p);
 			if (set_executable_bit)
 				chmod_path(set_executable_bit, p);
-			if (p < buf.buf || p > buf.buf + buf.len)
-				free((char *)p);
+			free((char *)p);
 		}
 		strbuf_release(&nbuf);
 		strbuf_release(&buf);

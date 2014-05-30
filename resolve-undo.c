@@ -119,6 +119,7 @@ int unmerge_index_entry_at(struct index_state *istate, int pos)
 	struct string_list_item *item;
 	struct resolve_undo_info *ru;
 	int i, err = 0, matched;
+	char *name;
 
 	if (!istate->resolve_undo)
 		return pos;
@@ -138,20 +139,22 @@ int unmerge_index_entry_at(struct index_state *istate, int pos)
 	if (!ru)
 		return pos;
 	matched = ce->ce_flags & CE_MATCHED;
+	name = xstrdup(ce->name);
 	remove_index_entry_at(istate, pos);
 	for (i = 0; i < 3; i++) {
 		struct cache_entry *nce;
 		if (!ru->mode[i])
 			continue;
 		nce = make_cache_entry(ru->mode[i], ru->sha1[i],
-				       ce->name, i + 1, 0);
+				       name, i + 1, 0);
 		if (matched)
 			nce->ce_flags |= CE_MATCHED;
 		if (add_index_entry(istate, nce, ADD_CACHE_OK_TO_ADD)) {
 			err = 1;
-			error("cannot unmerge '%s'", ce->name);
+			error("cannot unmerge '%s'", name);
 		}
 	}
+	free(name);
 	if (err)
 		return pos;
 	free(ru);

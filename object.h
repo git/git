@@ -26,6 +26,19 @@ struct object_array {
 #define OBJECT_ARRAY_INIT { 0, 0, NULL }
 
 #define TYPE_BITS   3
+/*
+ * object flag allocation:
+ * revision.h:      0---------10                                26
+ * fetch-pack.c:    0---4
+ * walker.c:        0-2
+ * upload-pack.c:               11----------------19
+ * builtin/blame.c:               12-13
+ * bisect.c:                               16
+ * bundle.c:                               16
+ * http-push.c:                            16-----19
+ * commit.c:                               16-----19
+ * sha1_name.c:                                     20
+ */
 #define FLAG_BITS  27
 
 /*
@@ -42,7 +55,14 @@ struct object {
 extern const char *typename(unsigned int type);
 extern int type_from_string(const char *str);
 
+/*
+ * Return the current number of buckets in the object hashmap.
+ */
 extern unsigned int get_max_object_index(void);
+
+/*
+ * Return the object from the specified bucket in the object hashmap.
+ */
 extern struct object *get_indexed_object(unsigned int);
 
 /*

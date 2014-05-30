@@ -88,6 +88,23 @@ test_expect_success 'rebase from ambiguous branch name' '
 	git rebase master
 '
 
+test_expect_success 'rebase off of the previous branch using "-"' '
+	git checkout master &&
+	git checkout HEAD^ &&
+	git rebase @{-1} >expect.messages &&
+	git merge-base master HEAD >expect.forkpoint &&
+
+	git checkout master &&
+	git checkout HEAD^ &&
+	git rebase - >actual.messages &&
+	git merge-base master HEAD >actual.forkpoint &&
+
+	test_cmp expect.forkpoint actual.forkpoint &&
+	# the next one is dubious---we may want to say "-",
+	# instead of @{-1}, in the message
+	test_i18ncmp expect.messages actual.messages
+'
+
 test_expect_success 'rebase a single mode change' '
 	git checkout master &&
 	git branch -D topic &&

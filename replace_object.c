@@ -3,8 +3,13 @@
 #include "refs.h"
 #include "commit.h"
 
+/*
+ * An array of replacements.  The array is kept sorted by the original
+ * sha1.
+ */
 static struct replace_object {
-	unsigned char sha1[2][20];
+	unsigned char original[20];
+	unsigned char replacement[20];
 } **replace_object;
 
 static int replace_object_alloc, replace_object_nr;
@@ -12,7 +17,7 @@ static int replace_object_alloc, replace_object_nr;
 static const unsigned char *replace_sha1_access(size_t index, void *table)
 {
 	struct replace_object **replace = table;
-	return replace[index]->sha1[0];
+	return replace[index]->original;
 }
 
 static int replace_object_pos(const unsigned char *sha1)
@@ -24,7 +29,7 @@ static int replace_object_pos(const unsigned char *sha1)
 static int register_replace_object(struct replace_object *replace,
 				   int ignore_dups)
 {
-	int pos = replace_object_pos(replace->sha1[0]);
+	int pos = replace_object_pos(replace->original);
 
 	if (0 <= pos) {
 		if (ignore_dups)
@@ -36,12 +41,8 @@ static int register_replace_object(struct replace_object *replace,
 		return 1;
 	}
 	pos = -pos - 1;
-	if (replace_object_alloc <= ++replace_object_nr) {
-		replace_object_alloc = alloc_nr(replace_object_alloc);
-		replace_object = xrealloc(replace_object,
-					  sizeof(*replace_object) *
-					  replace_object_alloc);
-	}
+	ALLOC_GROW(replace_object, replace_object_nr + 1, replace_object_alloc);
+	replace_object_nr++;
 	if (pos < replace_object_nr)
 		memmove(replace_object + pos + 1,
 			replace_object + pos,
@@ -60,14 +61,14 @@ static int register_replace_ref(const char *refname,
 	const char *hash = slash ? slash + 1 : refname;
 	struct replace_object *repl_obj = xmalloc(sizeof(*repl_obj));
 
-	if (strlen(hash) != 40 || get_sha1_hex(hash, repl_obj->sha1[0])) {
+	if (strlen(hash) != 40 || get_sha1_hex(hash, repl_obj->original)) {
 		free(repl_obj);
 		warning("bad replace ref name: %s", refname);
 		return 0;
 	}
 
 	/* Copy sha1 from the read ref */
-	hashcpy(repl_obj->sha1[1], sha1);
+	hashcpy(repl_obj->replacement, sha1);
 
 	/* Register new object */
 	if (register_replace_object(repl_obj, 1))
@@ -86,12 +87,19 @@ static void prepare_replace_object(void)
 	for_each_replace_ref(register_replace_ref, NULL);
 	replace_object_prepared = 1;
 	if (!replace_object_nr)
-		read_replace_refs = 0;
+		check_replace_refs = 0;
 }
 
 /* We allow "recursive" replacement. Only within reason, though */
 #define MAXREPLACEDEPTH 5
 
+/*
+ * If a replacement for object sha1 has been set up, return the
+ * replacement object's name (replaced recursively, if necessary).
+ * The return value is either sha1 or a pointer to a
+ * permanently-allocated value.  This function always respects replace
+ * references, regardless of the value of check_replace_refs.
+ */
 const unsigned char *do_lookup_replace_object(const unsigned char *sha1)
 {
 	int pos, depth = MAXREPLACEDEPTH;
@@ -107,7 +115,7 @@ const unsigned char *do_lookup_replace_object(const unsigned char *sha1)
 
 		pos = replace_object_pos(cur);
 		if (0 <= pos)
-			cur = replace_object[pos]->sha1[1];
+			cur = replace_object[pos]->replacement;
 	} while (0 <= pos);
 
 	return cur;

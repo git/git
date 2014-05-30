@@ -12,21 +12,14 @@ test_expect_success setup '
 '
 
 test_expect_success 'clone calls git upload-pack unqualified with no -u option' '
-	(
-		GIT_SSH=./not_ssh &&
-		export GIT_SSH &&
-		test_must_fail git clone localhost:/path/to/repo junk
-	) &&
+	test_must_fail env GIT_SSH=./not_ssh git clone localhost:/path/to/repo junk &&
 	echo "localhost git-upload-pack '\''/path/to/repo'\''" >expected &&
 	test_cmp expected not_ssh_output
 '
 
 test_expect_success 'clone calls specified git upload-pack with -u option' '
-	(
-		GIT_SSH=./not_ssh &&
-		export GIT_SSH &&
-		test_must_fail git clone -u ./something/bin/git-upload-pack localhost:/path/to/repo junk
-	) &&
+	test_must_fail env GIT_SSH=./not_ssh \
+		git clone -u ./something/bin/git-upload-pack localhost:/path/to/repo junk &&
 	echo "localhost ./something/bin/git-upload-pack '\''/path/to/repo'\''" >expected &&
 	test_cmp expected not_ssh_output
 '

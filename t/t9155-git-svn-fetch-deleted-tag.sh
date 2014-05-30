@@ -35,8 +35,8 @@ test_expect_success 'fetch deleted tags from same revision with checksum error' 
 	cd git_project &&
 	git svn fetch &&
 
-	git diff --exit-code mybranch:trunk/subdir/file tags/mytag:file &&
-	git diff --exit-code master:subdir/file tags/mytag^:file
+	git diff --exit-code origin/mybranch:trunk/subdir/file origin/tags/mytag:file &&
+	git diff --exit-code master:subdir/file origin/tags/mytag^:file
 '
 
 test_done

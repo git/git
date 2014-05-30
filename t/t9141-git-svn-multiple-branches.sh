@@ -66,18 +66,18 @@ test_expect_success 'clone multiple branch and tag paths' '
 		      -t tags_A/* --tags tags_B \
 		      "$svnrepo/project" git_project &&
 	( cd git_project &&
-		git rev-parse refs/remotes/first &&
-		git rev-parse refs/remotes/second &&
-		git rev-parse refs/remotes/1 &&
-		git rev-parse refs/remotes/2 &&
-		git rev-parse refs/remotes/tags/1.0 &&
-		git rev-parse refs/remotes/tags/2.0 &&
-		git rev-parse refs/remotes/tags/3.0 &&
-		git rev-parse refs/remotes/tags/4.0 &&
-		git rev-parse refs/remotes/tags/v5 &&
-		git rev-parse refs/remotes/tags/v6 &&
-		git rev-parse refs/remotes/tags/v7 &&
-		git rev-parse refs/remotes/tags/v8
+		git rev-parse refs/remotes/origin/first &&
+		git rev-parse refs/remotes/origin/second &&
+		git rev-parse refs/remotes/origin/1 &&
+		git rev-parse refs/remotes/origin/2 &&
+		git rev-parse refs/remotes/origin/tags/1.0 &&
+		git rev-parse refs/remotes/origin/tags/2.0 &&
+		git rev-parse refs/remotes/origin/tags/3.0 &&
+		git rev-parse refs/remotes/origin/tags/4.0 &&
+		git rev-parse refs/remotes/origin/tags/v5 &&
+		git rev-parse refs/remotes/origin/tags/v6 &&
+		git rev-parse refs/remotes/origin/tags/v7 &&
+		git rev-parse refs/remotes/origin/tags/v8
 	)
 '
 
@@ -85,8 +85,8 @@ test_expect_success 'Multiple branch or tag paths require -d' '
 	( cd git_project &&
 		test_must_fail git svn branch -m "No new branch" Nope &&
 		test_must_fail git svn tag -m "No new tag" Tagless &&
-		test_must_fail git rev-parse refs/remotes/Nope &&
-		test_must_fail git rev-parse refs/remotes/tags/Tagless
+		test_must_fail git rev-parse refs/remotes/origin/Nope &&
+		test_must_fail git rev-parse refs/remotes/origin/tags/Tagless
 	) &&
 	( cd svn_project &&
 		svn_cmd up &&

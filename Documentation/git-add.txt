@@ -53,8 +53,14 @@ OPTIONS
 	Files to add content from.  Fileglobs (e.g. `*.c`) can
 	be given to add all matching files.  Also a
 	leading directory name (e.g. `dir` to add `dir/file1`
-	and `dir/file2`) can be given to add all files in the
-	directory, recursively.
+	and `dir/file2`) can be given to update the index to
+	match the current state of the directory as a whole (e.g.
+	specifying `dir` will record not just a file `dir/file1`
+	modified in the working tree, a file `dir/file2` added to
+	the working tree, but also a file `dir/file3` removed from
+	the working tree.  Note that older versions of Git used
+	to ignore removed files; use `--no-all` option if you want
+	to add modified or new files but ignore removed	ones.
 
 -n::
 --dry-run::
@@ -104,10 +110,10 @@ apply to the index. See EDITING PATCHES below.
 	<pathspec>.  This removes as well as modifies index entries to
 	match the working tree, but adds no new files.
 +
-If no <pathspec> is given, the current version of Git defaults to
-"."; in other words, update all tracked files in the current directory
-and its subdirectories. This default will change in a future version
-of Git, hence the form without <pathspec> should not be used.
+If no <pathspec> is given when `-u` option is used, all
+tracked files in the entire working tree are updated (old versions
+of Git used to limit the update to the current directory and its
+subdirectories).
 
 -A::
 --all::
@@ -117,10 +123,10 @@ of Git, hence the form without <pathspec> should not be used.
 	entry.	This adds, modifies, and removes index entries to
 	match the working tree.
 +
-If no <pathspec> is given, the current version of Git defaults to
-"."; in other words, update all files in the current directory
-and its subdirectories. This default will change in a future version
-of Git, hence the form without <pathspec> should not be used.
+If no <pathspec> is given when `-A` option is used, all
+files in the entire working tree are updated (old versions
+of Git used to limit the update to the current directory and its
+subdirectories).
 
 --no-all::
 --ignore-removal::
@@ -129,11 +135,9 @@ of Git, hence the form without <pathspec> should not be used.
 	files that have been removed from the working tree.  This
 	option is a no-op when no <pathspec> is used.
 +
-This option is primarily to help the current users of Git, whose
-"git add <pathspec>..." ignores removed files.  In future versions
-of Git, "git add <pathspec>..." will be a synonym to "git add -A
-<pathspec>..." and "git add --ignore-removal <pathspec>..." will behave like
-today's "git add <pathspec>...", ignoring removed files.
+This option is primarily to help users who are used to older
+versions of Git, whose "git add <pathspec>..." was a synonym
+for "git add --no-all <pathspec>...", i.e. ignored removed files.
 
 -N::
 --intent-to-add::

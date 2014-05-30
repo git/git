@@ -55,15 +55,12 @@ repository is specified as a URL, then this flag is ignored (and we
 never use the local optimizations).  Specifying `--no-local` will
 override the default when `/path/to/repo` is given, using the regular
 Git transport instead.
-+
-To force copying instead of hardlinking (which may be desirable if you
-are trying to make a back-up of your repository), but still avoid the
-usual "Git aware" transport mechanism, `--no-hardlinks` can be used.
 
 --no-hardlinks::
-	Optimize the cloning process from a repository on a
-	local filesystem by copying files under `.git/objects`
-	directory.
+	Force the cloning process from a repository on a local
+	filesystem to copy the files under the `.git/objects`
+	directory instead of using hardlinks. This may be desirable
+	if you are trying to make a back-up of your repository.
 
 --shared::
 -s::

@@ -11,8 +11,8 @@ EOF
 
 for txt
 do
-	title=`expr "$txt" : '.*/\(.*\)\.txt$'`
-	from=`sed -ne '
+	title=$(expr "$txt" : '.*/\(.*\)\.txt$')
+	from=$(sed -ne '
 	/^$/q
 	/^From:[ 	]/{
 		s///
@@ -21,9 +21,9 @@ do
 		s/^/by /
 		p
 	}
-	' "$txt"`
+	' "$txt")
 
-	abstract=`sed -ne '
+	abstract=$(sed -ne '
 	/^Abstract:[ 	]/{
 		s/^[^ 	]*//
 		x
@@ -39,11 +39,11 @@ do
 		x
 		p
 		q
-	}' "$txt"`
+	}' "$txt")
 
 	if grep 'Content-type: text/asciidoc' >/dev/null $txt
 	then
-		file=`expr "$txt" : '\(.*\)\.txt$'`.html
+		file=$(expr "$txt" : '\(.*\)\.txt$').html
 	else
 		file="$txt"
 	fi

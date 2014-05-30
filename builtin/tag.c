@@ -27,9 +27,16 @@ static const char * const git_tag_usage[] = {
 	NULL
 };
 
+#define STRCMP_SORT     0	/* must be zero */
+#define VERCMP_SORT     1
+#define SORT_MASK       0x7fff
+#define REVERSE_SORT    0x8000
+
 struct tag_filter {
 	const char **patterns;
 	int lines;
+	int sort;
+	struct string_list tags;
 	struct commit_list *with_commit;
 };
 
@@ -42,7 +49,7 @@ static int match_pattern(const char **patterns, const char *ref)
 	if (!*patterns)
 		return 1;
 	for (; *patterns; patterns++)
-		if (!fnmatch(*patterns, ref, 0))
+		if (!wildmatch(*patterns, ref, 0, NULL))
 			return 1;
 	return 0;
 }
@@ -226,7 +233,10 @@ static int show_reference(const char *refname, const unsigned char *sha1,
 			return 0;
 
 		if (!filter->lines) {
-			printf("%s\n", refname);
+			if (filter->sort)
+				string_list_append(&filter->tags, refname);
+			else
+				printf("%s\n", refname);
 			return 0;
 		}
 		printf("%-15s ", refname);
@@ -237,17 +247,39 @@ static int show_reference(const char *refname, const unsigned char *sha1,
 	return 0;
 }
 
+static int sort_by_version(const void *a_, const void *b_)
+{
+	const struct string_list_item *a = a_;
+	const struct string_list_item *b = b_;
+	return versioncmp(a->string, b->string);
+}
+
 static int list_tags(const char **patterns, int lines,
-			struct commit_list *with_commit)
+		     struct commit_list *with_commit, int sort)
 {
 	struct tag_filter filter;
 
 	filter.patterns = patterns;
 	filter.lines = lines;
+	filter.sort = sort;
 	filter.with_commit = with_commit;
+	memset(&filter.tags, 0, sizeof(filter.tags));
+	filter.tags.strdup_strings = 1;
 
 	for_each_tag_ref(show_reference, (void *) &filter);
-
+	if (sort) {
+		int i;
+		if ((sort & SORT_MASK) == VERCMP_SORT)
+			qsort(filter.tags.items, filter.tags.nr,
+			      sizeof(struct string_list_item), sort_by_version);
+		if (sort & REVERSE_SORT)
+			for (i = filter.tags.nr - 1; i >= 0; i--)
+				printf("%s\n", filter.tags.items[i].string);
+		else
+			for (i = 0; i < filter.tags.nr; i++)
+				printf("%s\n", filter.tags.items[i].string);
+		string_list_clear(&filter.tags, 0);
+	}
 	return 0;
 }
 
@@ -487,6 +519,29 @@ static int parse_opt_points_at(const struct option *opt __attribute__((unused)),
 	return 0;
 }
 
+static int parse_opt_sort(const struct option *opt, const char *arg, int unset)
+{
+	int *sort = opt->value;
+	int flags = 0;
+
+	if (*arg == '-') {
+		flags |= REVERSE_SORT;
+		arg++;
+	}
+	if (starts_with(arg, "version:")) {
+		*sort = VERCMP_SORT;
+		arg += 8;
+	} else if (starts_with(arg, "v:")) {
+		*sort = VERCMP_SORT;
+		arg += 2;
+	} else
+		*sort = STRCMP_SORT;
+	if (strcmp(arg, "refname"))
+		die(_("unsupported sort specification %s"), arg);
+	*sort |= flags;
+	return 0;
+}
+
 int cmd_tag(int argc, const char **argv, const char *prefix)
 {
 	struct strbuf buf = STRBUF_INIT;
@@ -497,7 +552,7 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 	struct create_tag_options opt;
 	char *cleanup_arg = NULL;
 	int annotate = 0, force = 0, lines = -1;
-	int cmdmode = 0;
+	int cmdmode = 0, sort = 0;
 	const char *msgfile = NULL, *keyid = NULL;
 	struct msg_arg msg = { 0, STRBUF_INIT };
 	struct commit_list *with_commit = NULL;
@@ -518,16 +573,26 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 		OPT_BOOL('s', "sign", &opt.sign, N_("annotated and GPG-signed tag")),
 		OPT_STRING(0, "cleanup", &cleanup_arg, N_("mode"),
 			N_("how to strip spaces and #comments from message")),
-		OPT_STRING('u', "local-user", &keyid, N_("key id"),
+		OPT_STRING('u', "local-user", &keyid, N_("key-id"),
 					N_("use another key to sign the tag")),
 		OPT__FORCE(&force, N_("replace the tag if exists")),
 		OPT_COLUMN(0, "column", &colopts, N_("show tag list in columns")),
+		{
+			OPTION_CALLBACK, 0, "sort", &sort, N_("type"), N_("sort tags"),
+			PARSE_OPT_NONEG, parse_opt_sort
+		},
 
 		OPT_GROUP(N_("Tag listing options")),
 		{
 			OPTION_CALLBACK, 0, "contains", &with_commit, N_("commit"),
 			N_("print only tags that contain the commit"),
 			PARSE_OPT_LASTARG_DEFAULT,
+			parse_opt_with_commit, (intptr_t)"HEAD",
+		},
+		{
+			OPTION_CALLBACK, 0, "with", &with_commit, N_("commit"),
+			N_("print only tags that contain the commit"),
+			PARSE_OPT_HIDDEN | PARSE_OPT_LASTARG_DEFAULT,
 			parse_opt_with_commit, (intptr_t)"HEAD",
 		},
 		{
@@ -569,7 +634,9 @@ int cmd_tag(int argc, const char **argv, const char *prefix)
 			copts.padding = 2;
 			run_column_filter(colopts, &copts);
 		}
-		ret = list_tags(argv, lines == -1 ? 0 : lines, with_commit);
+		if (lines != -1 && sort)
+			die(_("--sort and -n are incompatible"));
+		ret = list_tags(argv, lines == -1 ? 0 : lines, with_commit, sort);
 		if (column_active(colopts))
 			stop_column_filter();
 		return ret;

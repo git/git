@@ -156,7 +156,7 @@ prev=0000000000000000000000000000000000000000
 if git show-ref --verify --quiet -- "refs/tags/$name"
 then
     test -n "$force" || die "tag '$name' already exists"
-    prev=`git rev-parse "refs/tags/$name"`
+    prev=$(git rev-parse "refs/tags/$name")
 fi
 shift
 git check-ref-format "tags/$name" ||

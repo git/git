@@ -162,7 +162,8 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 					if (strncmp(path, src_w_slash, len_w_slash))
 						break;
 				}
-				free((char *)src_w_slash);
+				if (src_w_slash != src)
+					free((char *)src_w_slash);
 
 				if (last - first < 1)
 					bad = _("source directory is empty");

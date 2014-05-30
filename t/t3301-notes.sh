@@ -17,7 +17,7 @@ GIT_EDITOR=./fake_editor.sh
 export GIT_EDITOR
 
 test_expect_success 'cannot annotate non-existing HEAD' '
-	(MSG=3 && export MSG && test_must_fail git notes add)
+	test_must_fail env MSG=3 git notes add
 '
 
 test_expect_success setup '
@@ -32,22 +32,16 @@ test_expect_success setup '
 '
 
 test_expect_success 'need valid notes ref' '
-	(MSG=1 GIT_NOTES_REF=/ && export MSG GIT_NOTES_REF &&
-	 test_must_fail git notes add) &&
-	(MSG=2 GIT_NOTES_REF=/ && export MSG GIT_NOTES_REF &&
-	 test_must_fail git notes show)
+	test_must_fail env MSG=1 GIT_NOTES_REF=/ git notes show &&
+	test_must_fail env MSG=2 GIT_NOTES_REF=/ git notes show
 '
 
 test_expect_success 'refusing to add notes in refs/heads/' '
-	(MSG=1 GIT_NOTES_REF=refs/heads/bogus &&
-	 export MSG GIT_NOTES_REF &&
-	 test_must_fail git notes add)
+	test_must_fail env MSG=1 GIT_NOTES_REF=refs/heads/bogus git notes add
 '
 
 test_expect_success 'refusing to edit notes in refs/remotes/' '
-	(MSG=1 GIT_NOTES_REF=refs/remotes/bogus &&
-	 export MSG GIT_NOTES_REF &&
-	 test_must_fail git notes edit)
+	test_must_fail env MSG=1 GIT_NOTES_REF=refs/heads/bogus git notes edit
 '
 
 # 1 indicates caught gracefully by die, 128 means git-show barked
@@ -812,6 +806,33 @@ test_expect_success 'create note from non-existing note with "git notes add -C" 
 	test_must_fail git notes list HEAD
 '
 
+test_expect_success 'create note from non-blob with "git notes add -C" fails' '
+	commit=$(git rev-parse --verify HEAD) &&
+	tree=$(git rev-parse --verify HEAD:) &&
+	test_must_fail git notes add -C $commit &&
+	test_must_fail git notes add -C $tree &&
+	test_must_fail git notes list HEAD
+'
+
+cat > expect << EOF
+commit 80d796defacd5db327b7a4e50099663902fbdc5c
+Author: A U Thor <author@example.com>
+Date:   Thu Apr 7 15:20:13 2005 -0700
+
+    8th
+
+Notes (other):
+    This is a blob object
+EOF
+
+test_expect_success 'create note from blob with "git notes add -C" reuses blob id' '
+	blob=$(echo "This is a blob object" | git hash-object -w --stdin) &&
+	git notes add -C $blob &&
+	git log -1 > actual &&
+	test_cmp expect actual &&
+	test "$(git notes list HEAD)" = "$blob"
+'
+
 cat > expect << EOF
 commit 016e982bad97eacdbda0fcbd7ce5b0ba87c81f1b
 Author: A U Thor <author@example.com>
@@ -838,11 +859,7 @@ test_expect_success 'create note from non-existing note with "git notes add -c" 
 	git add a10 &&
 	test_tick &&
 	git commit -m 10th &&
-	(
-		MSG="yet another note" &&
-		export MSG &&
-		test_must_fail git notes add -c deadbeef
-	) &&
+	test_must_fail env MSG="yet another note" git notes add -c deadbeef &&
 	test_must_fail git notes list HEAD
 '
 

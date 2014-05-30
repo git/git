@@ -16,6 +16,7 @@
 #include "submodule.h"
 #include "ll-merge.h"
 #include "string-list.h"
+#include "argv-array.h"
 
 #ifdef NO_FAST_WORKING_DIRECTORY
 #define FAST_WORKING_DIRECTORY 0
@@ -1361,11 +1362,7 @@ static struct diffstat_file *diffstat_add(struct diffstat_t *diffstat,
 {
 	struct diffstat_file *x;
 	x = xcalloc(sizeof (*x), 1);
-	if (diffstat->nr == diffstat->alloc) {
-		diffstat->alloc = alloc_nr(diffstat->alloc);
-		diffstat->files = xrealloc(diffstat->files,
-				diffstat->alloc * sizeof(x));
-	}
+	ALLOC_GROW(diffstat->files, diffstat->nr + 1, diffstat->alloc);
 	diffstat->files[diffstat->nr++] = x;
 	if (name_b) {
 		x->from_name = xstrdup(name_a);
@@ -1465,20 +1462,12 @@ int print_stat_summary(FILE *fp, int files, int insertions, int deletions)
 	 * but nothing about added/removed lines? Is this a bug in Git?").
 	 */
 	if (insertions || deletions == 0) {
-		/*
-		 * TRANSLATORS: "+" in (+) is a line addition marker;
-		 * do not translate it.
-		 */
 		strbuf_addf(&sb,
 			    (insertions == 1) ? ", %d insertion(+)" : ", %d insertions(+)",
 			    insertions);
 	}
 
 	if (deletions || insertions == 0) {
-		/*
-		 * TRANSLATORS: "-" in (-) is a line removal marker;
-		 * do not translate it.
-		 */
 		strbuf_addf(&sb,
 			    (deletions == 1) ? ", %d deletion(-)" : ", %d deletions(-)",
 			    deletions);
@@ -2906,9 +2895,8 @@ static void run_external_diff(const char *pgm,
 			      int complete_rewrite,
 			      struct diff_options *o)
 {
-	const char *spawn_arg[10];
+	struct argv_array argv = ARGV_ARRAY_INIT;
 	int retval;
-	const char **arg = &spawn_arg[0];
 	struct diff_queue_struct *q = &diff_queued_diff;
 	const char *env[3] = { NULL };
 	char env_counter[50];
@@ -2919,23 +2907,22 @@ static void run_external_diff(const char *pgm,
 		const char *othername = (other ? other : name);
 		temp_one = prepare_temp_file(name, one);
 		temp_two = prepare_temp_file(othername, two);
-		*arg++ = pgm;
-		*arg++ = name;
-		*arg++ = temp_one->name;
-		*arg++ = temp_one->hex;
-		*arg++ = temp_one->mode;
-		*arg++ = temp_two->name;
-		*arg++ = temp_two->hex;
-		*arg++ = temp_two->mode;
+		argv_array_push(&argv, pgm);
+		argv_array_push(&argv, name);
+		argv_array_push(&argv, temp_one->name);
+		argv_array_push(&argv, temp_one->hex);
+		argv_array_push(&argv, temp_one->mode);
+		argv_array_push(&argv, temp_two->name);
+		argv_array_push(&argv, temp_two->hex);
+		argv_array_push(&argv, temp_two->mode);
 		if (other) {
-			*arg++ = other;
-			*arg++ = xfrm_msg;
+			argv_array_push(&argv, other);
+			argv_array_push(&argv, xfrm_msg);
 		}
 	} else {
-		*arg++ = pgm;
-		*arg++ = name;
+		argv_array_push(&argv, pgm);
+		argv_array_push(&argv, name);
 	}
-	*arg = NULL;
 	fflush(NULL);
 
 	env[0] = env_counter;
@@ -2944,8 +2931,9 @@ static void run_external_diff(const char *pgm,
 	env[1] = env_total;
 	snprintf(env_total, sizeof(env_total), "GIT_DIFF_PATH_TOTAL=%d", q->nr);
 
-	retval = run_command_v_opt_cd_env(spawn_arg, RUN_USING_SHELL, NULL, env);
+	retval = run_command_v_opt_cd_env(argv.argv, RUN_USING_SHELL, NULL, env);
 	remove_tempfile();
+	argv_array_clear(&argv);
 	if (retval) {
 		fprintf(stderr, "external diff died, stopping at %s.\n", name);
 		exit(1);
@@ -3366,14 +3354,11 @@ static int opt_arg(const char *arg, int arg_short, const char *arg_long, int *va
 	if (c != '-')
 		return 0;
 	arg++;
-	eq = strchr(arg, '=');
-	if (eq)
-		len = eq - arg;
-	else
-		len = strlen(arg);
+	eq = strchrnul(arg, '=');
+	len = eq - arg;
 	if (!len || strncmp(arg, arg_long, len))
 		return 0;
-	if (eq) {
+	if (*eq) {
 		int n;
 		char *end;
 		if (!isdigit(*++eq))
@@ -3598,14 +3583,6 @@ static int parse_diff_filter_opt(const char *optarg, struct diff_options *opt)
 			opt->filter |= bit;
 	}
 	return 0;
-}
-
-/* Used only by "diff-files" and "diff --no-index" */
-void handle_deprecated_show_diff_q(struct diff_options *opt)
-{
-	warning("'diff -q' and 'diff-files -q' are deprecated.");
-	warning("Use 'diff --diff-filter=d' instead to ignore deleted filepairs.");
-	parse_diff_filter_opt("d", opt);
 }
 
 static void enable_patch_output(int *fmt) {
@@ -3966,11 +3943,7 @@ struct diff_queue_struct diff_queued_diff;
 
 void diff_q(struct diff_queue_struct *queue, struct diff_filepair *dp)
 {
-	if (queue->alloc <= queue->nr) {
-		queue->alloc = alloc_nr(queue->alloc);
-		queue->queue = xrealloc(queue->queue,
-					sizeof(dp) * queue->alloc);
-	}
+	ALLOC_GROW(queue->queue, queue->nr + 1, queue->alloc);
 	queue->queue[queue->nr++] = dp;
 }
 

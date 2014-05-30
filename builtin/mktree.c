@@ -23,10 +23,7 @@ static void append_to_tree(unsigned mode, unsigned char *sha1, char *path)
 	if (strchr(path, '/'))
 		die("path %s contains slash", path);
 
-	if (alloc <= used) {
-		alloc = alloc_nr(used);
-		entries = xrealloc(entries, sizeof(*entries) * alloc);
-	}
+	ALLOC_GROW(entries, used + 1, alloc);
 	ent = entries[used++] = xmalloc(sizeof(**entries) + len + 1);
 	ent->mode = mode;
 	ent->len = len;

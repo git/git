@@ -49,16 +49,18 @@ int strncmp_icase(const char *a, const char *b, size_t count)
 
 int fnmatch_icase(const char *pattern, const char *string, int flags)
 {
-	return fnmatch(pattern, string, flags | (ignore_case ? FNM_CASEFOLD : 0));
+	return wildmatch(pattern, string,
+			 flags | (ignore_case ? WM_CASEFOLD : 0),
+			 NULL);
 }
 
-inline int git_fnmatch(const struct pathspec_item *item,
-		       const char *pattern, const char *string,
-		       int prefix)
+int git_fnmatch(const struct pathspec_item *item,
+		const char *pattern, const char *string,
+		int prefix)
 {
 	if (prefix > 0) {
 		if (ps_strncmp(item, pattern, string, prefix))
-			return FNM_NOMATCH;
+			return WM_NOMATCH;
 		pattern += prefix;
 		string += prefix;
 	}
@@ -76,8 +78,9 @@ inline int git_fnmatch(const struct pathspec_item *item,
 				 NULL);
 	else
 		/* wildmatch has not learned no FNM_PATHNAME mode yet */
-		return fnmatch(pattern, string,
-			       item->magic & PATHSPEC_ICASE ? FNM_CASEFOLD : 0);
+		return wildmatch(pattern, string,
+				 item->magic & PATHSPEC_ICASE ? WM_CASEFOLD : 0,
+				 NULL);
 }
 
 static int fnmatch_icase_mem(const char *pattern, int patternlen,
@@ -503,6 +506,25 @@ void clear_exclude_list(struct exclude_list *el)
 	el->filebuf = NULL;
 }
 
+static void trim_trailing_spaces(char *buf)
+{
+	int i, last_space = -1, nr_spaces, len = strlen(buf);
+	for (i = 0; i < len; i++)
+		if (buf[i] == '\\')
+			i++;
+		else if (buf[i] == ' ') {
+			if (last_space == -1) {
+				last_space = i;
+				nr_spaces = 1;
+			} else
+				nr_spaces++;
+		} else
+			last_space = -1;
+
+	if (last_space != -1 && last_space + nr_spaces == len)
+		buf[last_space] = '\0';
+}
+
 int add_excludes_from_file_to_list(const char *fname,
 				   const char *base,
 				   int baselen,
@@ -554,6 +576,7 @@ int add_excludes_from_file_to_list(const char *fname,
 		if (buf[i] == '\n') {
 			if (entry != buf + i && entry[0] != '#') {
 				buf[i - (i && buf[i-1] == '\r')] = 0;
+				trim_trailing_spaces(entry);
 				add_exclude(entry, base, baselen, el, lineno);
 			}
 			lineno++;
@@ -1341,10 +1364,7 @@ static struct path_simplify *create_simplify(const char **pathspec)
 
 	for (nr = 0 ; ; nr++) {
 		const char *match;
-		if (nr >= alloc) {
-			alloc = alloc_nr(alloc);
-			simplify = xrealloc(simplify, alloc * sizeof(*simplify));
-		}
+		ALLOC_GROW(simplify, nr + 1, alloc);
 		match = *pathspec++;
 		if (!match)
 			break;

@@ -30,9 +30,10 @@
 # Copyright (c) 2008 Clemens Buchacher <drizzd@aon.at>
 #
 
-if test -z "$GIT_TEST_HTTPD"
+test_tristate GIT_TEST_HTTPD
+if test "$GIT_TEST_HTTPD" = false
 then
-	skip_all="Network testing disabled (define GIT_TEST_HTTPD to enable)"
+	skip_all="Network testing disabled (unset GIT_TEST_HTTPD to enable)"
 	test_done
 fi
 
@@ -76,8 +77,7 @@ GIT_VALGRIND_OPTIONS=$GIT_VALGRIND_OPTIONS; export GIT_VALGRIND_OPTIONS
 
 if ! test -x "$LIB_HTTPD_PATH"
 then
-	skip_all="skipping test, no web server found at '$LIB_HTTPD_PATH'"
-	test_done
+	test_skip_or_die $GIT_TEST_HTTPD "no web server found at '$LIB_HTTPD_PATH'"
 fi
 
 HTTPD_VERSION=`$LIB_HTTPD_PATH -v | \
@@ -89,19 +89,20 @@ then
 	then
 		if ! test $HTTPD_VERSION -ge 2
 		then
-			skip_all="skipping test, at least Apache version 2 is required"
-			test_done
+			test_skip_or_die $GIT_TEST_HTTPD \
+				"at least Apache version 2 is required"
 		fi
 		if ! test -d "$DEFAULT_HTTPD_MODULE_PATH"
 		then
-			skip_all="Apache module directory not found.  Skipping tests."
-			test_done
+			test_skip_or_die $GIT_TEST_HTTPD \
+				"Apache module directory not found"
 		fi
 
 		LIB_HTTPD_MODULE_PATH="$DEFAULT_HTTPD_MODULE_PATH"
 	fi
 else
-	error "Could not identify web server at '$LIB_HTTPD_PATH'"
+	test_skip_or_die $GIT_TEST_HTTPD \
+		"Could not identify web server at '$LIB_HTTPD_PATH'"
 fi
 
 prepare_httpd() {
@@ -155,9 +156,8 @@ start_httpd() {
 		>&3 2>&4
 	if test $? -ne 0
 	then
-		skip_all="skipping test, web server setup failed"
 		trap 'die' EXIT
-		test_done
+		test_skip_or_die $GIT_TEST_HTTPD "web server setup failed"
 	fi
 }
 

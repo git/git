@@ -46,7 +46,7 @@ struct diff_filespec {
 	unsigned is_stdin : 1;
 	unsigned has_more_entries : 1; /* only appear in combined diff */
 	/* data should be considered "binary"; -1 means "don't know yet" */
-	int is_binary : 2;
+	signed int is_binary : 2;
 	struct userdiff_driver *driver;
 };
 
@@ -110,6 +110,20 @@ extern void diffcore_rename(struct diff_options *);
 extern void diffcore_merge_broken(void);
 extern void diffcore_pickaxe(struct diff_options *);
 extern void diffcore_order(const char *orderfile);
+
+/* low-level interface to diffcore_order */
+struct obj_order {
+	void *obj;	/* setup by caller */
+
+	/* setup/used by order_objects() */
+	int orig_order;
+	int order;
+};
+
+typedef const char *(*obj_path_fn_t)(void *obj);
+
+void order_objects(const char *orderfile, obj_path_fn_t obj_path,
+		   struct obj_order *objs, int nr);
 
 #define DIFF_DEBUG 0
 #if DIFF_DEBUG

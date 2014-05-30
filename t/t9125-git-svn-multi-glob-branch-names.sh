@@ -20,14 +20,14 @@ test_expect_success 'test clone with multi-glob in branch names' '
 	git svn clone -T trunk -b branches/*/* -t tags \
 	              "$svnrepo/project" project &&
 	(cd project &&
-		git rev-parse "refs/remotes/v14.1/beta" &&
-		git rev-parse "refs/remotes/v14.1/gold"
+		git rev-parse "refs/remotes/origin/v14.1/beta" &&
+		git rev-parse "refs/remotes/origin/v14.1/gold"
 	)
 	'
 
 test_expect_success 'test dcommit to multi-globbed branch' "
 	(cd project &&
-	git reset --hard 'refs/remotes/v14.1/gold' &&
+	git reset --hard 'refs/remotes/origin/v14.1/gold' &&
 	echo hello >> foo &&
 	git commit -m 'hello' -- foo &&
 	git svn dcommit

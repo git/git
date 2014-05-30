@@ -94,6 +94,19 @@ test_expect_failure 'push new branch with old:new refspec' '
 	compare_refs local HEAD server refs/heads/new-refspec
 '
 
+test_expect_success 'forced push' '
+	(cd local &&
+	git checkout -b force-test &&
+	echo content >> file &&
+	git commit -a -m eight &&
+	git push origin force-test &&
+	echo content >> file &&
+	git commit -a --amend -m eight-modified &&
+	git push --force origin force-test
+	) &&
+	compare_refs local refs/heads/force-test server refs/heads/force-test
+'
+
 test_expect_success 'cloning without refspec' '
 	GIT_REMOTE_TESTGIT_REFSPEC="" \
 	git clone "testgit::${PWD}/server" local2 2>error &&
@@ -199,29 +212,42 @@ test_expect_success 'push update refs failure' '
 	echo "update fail" >>file &&
 	git commit -a -m "update fail" &&
 	git rev-parse --verify testgit/origin/heads/update >expect &&
-	GIT_REMOTE_TESTGIT_PUSH_ERROR="non-fast forward" &&
-	export GIT_REMOTE_TESTGIT_PUSH_ERROR &&
-	test_expect_code 1 git push origin update &&
+	test_expect_code 1 env GIT_REMOTE_TESTGIT_FAILURE="non-fast forward" \
+		git push origin update &&
 	git rev-parse --verify testgit/origin/heads/update >actual &&
 	test_cmp expect actual
 	)
 '
 
+clean_mark () {
+	cut -f 2 -d ' ' "$1" |
+	git cat-file --batch-check |
+	grep commit |
+	sort >$(basename "$1")
+}
+
+cmp_marks () {
+	test_when_finished "rm -rf git.marks testgit.marks" &&
+	clean_mark ".git/testgit/$1/git.marks" &&
+	clean_mark ".git/testgit/$1/testgit.marks" &&
+	test_cmp git.marks testgit.marks
+}
+
 test_expect_success 'proper failure checks for fetching' '
-	(GIT_REMOTE_TESTGIT_FAILURE=1 &&
-	export GIT_REMOTE_TESTGIT_FAILURE &&
-	cd local &&
-	test_must_fail git fetch 2> error &&
+	(cd local &&
+	test_must_fail env GIT_REMOTE_TESTGIT_FAILURE=1 git fetch 2>error &&
 	cat error &&
 	grep -q "Error while running fast-import" error
 	)
 '
 
 test_expect_success 'proper failure checks for pushing' '
-	(GIT_REMOTE_TESTGIT_FAILURE=1 &&
-	export GIT_REMOTE_TESTGIT_FAILURE &&
-	cd local &&
-	test_must_fail git push --all
+	(cd local &&
+	git checkout -b crash master &&
+	echo crash >>file &&
+	git commit -a -m crash &&
+	test_must_fail env GIT_REMOTE_TESTGIT_FAILURE=1 git push --all &&
+	cmp_marks origin
 	)
 '
 

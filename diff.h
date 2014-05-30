@@ -198,7 +198,6 @@ extern int diff_root_tree_sha1(const unsigned char *new, const char *base,
 
 struct combine_diff_path {
 	struct combine_diff_path *next;
-	int len;
 	char *path;
 	unsigned int mode;
 	unsigned char sha1[20];
@@ -345,8 +344,6 @@ extern struct userdiff_driver *get_textconv(struct diff_filespec *one);
 extern int parse_rename_score(const char **cp_p);
 
 extern long parse_algorithm_value(const char *value);
-
-extern void handle_deprecated_show_diff_q(struct diff_options *);
 
 extern int print_stat_summary(FILE *fp, int files,
 			      int insertions, int deletions);

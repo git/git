@@ -154,7 +154,7 @@ static int remove_dirs(struct strbuf *path, const char *prefix, int force_flag,
 	DIR *dir;
 	struct strbuf quoted = STRBUF_INIT;
 	struct dirent *e;
-	int res = 0, ret = 0, gone = 1, original_len = path->len, len, i;
+	int res = 0, ret = 0, gone = 1, original_len = path->len, len;
 	unsigned char submodule_head[20];
 	struct string_list dels = STRING_LIST_INIT_DUP;
 
@@ -242,6 +242,7 @@ static int remove_dirs(struct strbuf *path, const char *prefix, int force_flag,
 	}
 
 	if (!*dir_gone && !quiet) {
+		int i;
 		for (i = 0; i < dels.nr; i++)
 			printf(dry_run ?  _(msg_would_remove) : _(msg_remove), dels.items[i].string);
 	}

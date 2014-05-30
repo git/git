@@ -450,7 +450,7 @@ static int append_matching_ref(const char *refname, const unsigned char *sha1, i
 			slash--;
 	if (!*tail)
 		return 0;
-	if (fnmatch(match_ref_pattern, tail, 0))
+	if (wildmatch(match_ref_pattern, tail, 0, NULL))
 		return 0;
 	if (starts_with(refname, "refs/heads/"))
 		return append_head_ref(refname, sha1, flag, cb_data);
