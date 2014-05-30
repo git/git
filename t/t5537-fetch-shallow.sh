@@ -173,33 +173,6 @@ EOF
 	)
 '
 
-if test -n "$NO_CURL" -o -z "$GIT_TEST_HTTPD"; then
-	say 'skipping remaining tests, git built without http support'
-	test_done
-fi
-
-LIB_HTTPD_PORT=${LIB_HTTPD_PORT-'5537'}
-. "$TEST_DIRECTORY"/lib-httpd.sh
-start_httpd
-
-test_expect_success 'clone http repository' '
-	git clone --bare --no-local shallow "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
-	git clone $HTTPD_URL/smart/repo.git clone &&
-	(
-	cd clone &&
-	git fsck &&
-	git log --format=%s origin/master >actual &&
-	cat <<EOF >expect &&
-7
-6
-5
-4
-3
-EOF
-	test_cmp expect actual
-	)
-'
-
 test_expect_success POSIXPERM,SANITY 'shallow fetch from a read-only repo' '
 	cp -R .git read-only.git &&
 	find read-only.git -print | xargs chmod -w &&
@@ -213,5 +186,4 @@ EOF
 	test_cmp expect actual
 '
 
-stop_httpd
 test_done
