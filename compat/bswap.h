@@ -120,7 +120,7 @@ static inline uint64_t git_bswap64(uint64_t x)
 
 # if defined(_BIG_ENDIAN) && !defined(_LITTLE_ENDIAN)
 #  define GIT_BYTE_ORDER GIT_BIG_ENDIAN
-# elif defined(_BIG_ENDIAN) && !defined(_LITTLE_ENDIAN)
+# elif defined(_LITTLE_ENDIAN) && !defined(_BIG_ENDIAN)
 #  define GIT_BYTE_ORDER GIT_LITTLE_ENDIAN
 # else
 #  error "Cannot determine endianness"
