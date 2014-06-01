@@ -334,7 +334,7 @@ static int check_header(const struct strbuf *line,
 	}
 	if (!prefixcmp(line->buf, "[PATCH]") && isspace(line->buf[7])) {
 		for (i = 0; header[i]; i++) {
-			if (!memcmp("Subject", header[i], 7)) {
+			if (!strcmp("Subject", header[i])) {
 				handle_header(&hdr_data[i], line);
 				ret = 1;
 				goto check_header_out;
@@ -929,13 +929,13 @@ static void handle_info(void)
 		else
 			continue;
 
-		if (!memcmp(header[i], "Subject", 7)) {
+		if (!strcmp(header[i], "Subject")) {
 			if (!keep_subject) {
 				cleanup_subject(hdr);
 				cleanup_space(hdr);
 			}
 			output_header_lines(fout, "Subject", hdr);
-		} else if (!memcmp(header[i], "From", 4)) {
+		} else if (!strcmp(header[i], "From")) {
 			cleanup_space(hdr);
 			handle_from(hdr);
 			fprintf(fout, "Author: %s\n", name.buf);
