@@ -806,4 +806,27 @@ test_expect_success !MINGW 'quoting allows trailing whitespace' '
 	test_cmp err.expect err
 '
 
+test_expect_success NOT_MINGW,NOT_CYGWIN 'correct handling of backslashes' '
+	rm -rf whitespace &&
+	mkdir whitespace &&
+	>"whitespace/trailing 1  " &&
+	>"whitespace/trailing 2 \\\\" &&
+	>"whitespace/trailing 3 \\\\" &&
+	>"whitespace/trailing 4   \\ " &&
+	>"whitespace/trailing 5 \\ \\ " &&
+	>"whitespace/trailing 6 \\a\\" &&
+	>whitespace/untracked &&
+	echo "whitespace/trailing 1 \\    " >ignore  &&
+	echo "whitespace/trailing 2 \\\\\\\\\\\\\\\\" >>ignore &&
+	echo "whitespace/trailing 3 \\\\\\\\\\\\\\\\ " >>ignore &&
+	echo "whitespace/trailing 4   \\\\\\\\\\\\    " >>ignore &&
+	echo "whitespace/trailing 5 \\\\\\\\ \\\\\\\\\\\\   " >>ignore &&
+	echo "whitespace/trailing 6 \\\\\\\\a\\\\\\\\" >>ignore &&
+	echo whitespace/untracked >expect &&
+	>err.expect &&
+	git ls-files -o -X ignore whitespace >actual 2>err &&
+	test_cmp expect actual &&
+	test_cmp err.expect err
+'
+
 test_done
