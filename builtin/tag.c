@@ -80,11 +80,19 @@ static int in_commit_list(const struct commit_list *want, struct commit *c)
 	return 0;
 }
 
-static int contains_recurse(struct commit *candidate,
+enum contains_result {
+	CONTAINS_UNKNOWN = -1,
+	CONTAINS_NO = 0,
+	CONTAINS_YES = 1,
+};
+
+/*
+ * Test whether the candidate or one of its parents is contained in the list.
+ * Do not recurse to find out, though, but return -1 if inconclusive.
+ */
+static enum contains_result contains_test(struct commit *candidate,
 			    const struct commit_list *want)
 {
-	struct commit_list *p;
-
 	/* was it previously marked as containing a want commit? */
 	if (candidate->object.flags & TMP_MARK)
 		return 1;
@@ -92,26 +100,78 @@ static int contains_recurse(struct commit *candidate,
 	if (candidate->object.flags & UNINTERESTING)
 		return 0;
 	/* or are we it? */
-	if (in_commit_list(want, candidate))
+	if (in_commit_list(want, candidate)) {
+		candidate->object.flags |= TMP_MARK;
 		return 1;
+	}
 
 	if (parse_commit(candidate) < 0)
 		return 0;
 
-	/* Otherwise recurse and mark ourselves for future traversals. */
-	for (p = candidate->parents; p; p = p->next) {
-		if (contains_recurse(p->item, want)) {
-			candidate->object.flags |= TMP_MARK;
-			return 1;
-		}
-	}
-	candidate->object.flags |= UNINTERESTING;
-	return 0;
+	return -1;
 }
 
-static int contains(struct commit *candidate, const struct commit_list *want)
+/*
+ * Mimicking the real stack, this stack lives on the heap, avoiding stack
+ * overflows.
+ *
+ * At each recursion step, the stack items points to the commits whose
+ * ancestors are to be inspected.
+ */
+struct stack {
+	int nr, alloc;
+	struct stack_entry {
+		struct commit *commit;
+		struct commit_list *parents;
+	} *stack;
+};
+
+static void push_to_stack(struct commit *candidate, struct stack *stack)
 {
-	return contains_recurse(candidate, want);
+	int index = stack->nr++;
+	ALLOC_GROW(stack->stack, stack->nr, stack->alloc);
+	stack->stack[index].commit = candidate;
+	stack->stack[index].parents = candidate->parents;
+}
+
+static enum contains_result contains(struct commit *candidate,
+		const struct commit_list *want)
+{
+	struct stack stack = { 0, 0, NULL };
+	int result = contains_test(candidate, want);
+
+	if (result != CONTAINS_UNKNOWN)
+		return result;
+
+	push_to_stack(candidate, &stack);
+	while (stack.nr) {
+		struct stack_entry *entry = &stack.stack[stack.nr - 1];
+		struct commit *commit = entry->commit;
+		struct commit_list *parents = entry->parents;
+
+		if (!parents) {
+			commit->object.flags |= UNINTERESTING;
+			stack.nr--;
+		}
+		/*
+		 * If we just popped the stack, parents->item has been marked,
+		 * therefore contains_test will return a meaningful 0 or 1.
+		 */
+		else switch (contains_test(parents->item, want)) {
+		case CONTAINS_YES:
+			commit->object.flags |= TMP_MARK;
+			stack.nr--;
+			break;
+		case CONTAINS_NO:
+			entry->parents = parents->next;
+			break;
+		case CONTAINS_UNKNOWN:
+			push_to_stack(parents->item, &stack);
+			break;
+		}
+	}
+	free(stack.stack);
+	return contains_test(candidate, want);
 }
 
 static void show_tag_lines(const unsigned char *sha1, int lines)
