@@ -277,7 +277,7 @@ merge_file () {
 	echo "Normal merge conflict for '$MERGED':"
 	describe_file "$local_mode" "local" "$LOCAL"
 	describe_file "$remote_mode" "remote" "$REMOTE"
-	if "$prompt" = true
+	if test "$guessed_merge_tool" = true || test "$prompt" = true
 	then
 		printf "Hit return to start merge resolution tool (%s): " "$merge_tool"
 		read ans || return 1
@@ -315,7 +315,8 @@ merge_file () {
 	return 0
 }
 
-prompt=$(git config --bool mergetool.prompt || echo true)
+prompt=$(git config --bool mergetool.prompt)
+guessed_merge_tool=false
 
 while test $# != 0
 do
@@ -373,7 +374,14 @@ prompt_after_failed_merge () {
 
 if test -z "$merge_tool"
 then
-	merge_tool=$(get_merge_tool "$merge_tool") || exit
+	# Check if a merge tool has been configured
+	merge_tool=$(get_configured_merge_tool)
+	# Try to guess an appropriate merge tool if no tool has been set.
+	if test -z "$merge_tool"
+	then
+		merge_tool=$(guess_merge_tool) || exit
+		guessed_merge_tool=true
+	fi
 fi
 merge_keep_backup="$(git config --bool mergetool.keepBackup || echo true)"
 merge_keep_temporaries="$(git config --bool mergetool.keepTemporaries || echo false)"
