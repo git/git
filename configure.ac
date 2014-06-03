@@ -272,6 +272,14 @@ AS_HELP_STRING([],           [ARG can be also prefix for libpcre library and hea
 	GIT_CONF_SUBST([LIBPCREDIR])
     fi)
 #
+# Define HAVE_ALLOCA_H if you have working alloca(3) defined in that header.
+AC_FUNC_ALLOCA
+case $ac_cv_working_alloca_h in
+    yes)    HAVE_ALLOCA_H=YesPlease;;
+    *)      HAVE_ALLOCA_H='';;
+esac
+GIT_CONF_SUBST([HAVE_ALLOCA_H])
+#
 # Define NO_CURL if you do not have curl installed.  git-http-pull and
 # git-http-push are not built, and you cannot use http:// and https://
 # transports.

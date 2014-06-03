@@ -75,6 +75,21 @@ unsigned long git_deflate_bound(git_zstream *, unsigned long);
 #define S_ISGITLINK(m)	(((m) & S_IFMT) == S_IFGITLINK)
 
 /*
+ * Some mode bits are also used internally for computations.
+ *
+ * They *must* not overlap with any valid modes, and they *must* not be emitted
+ * to outside world - i.e. appear on disk or network. In other words, it's just
+ * temporary fields, which we internally use, but they have to stay in-house.
+ *
+ * ( such approach is valid, as standard S_IF* fits into 16 bits, and in Git
+ *   codebase mode is `unsigned int` which is assumed to be at least 32 bits )
+ */
+
+/* used internally in tree-diff */
+#define S_DIFFTREE_IFXMIN_NEQ	0x80000000
+
+
+/*
  * Intensive research over the course of many years has shown that
  * port 9418 is totally unused by anything else. Or
  *
