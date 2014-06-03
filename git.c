@@ -290,7 +290,7 @@ static int run_builtin(struct cmd_struct *p, int argc, const char **argv)
 	if (!help) {
 		if (p->option & RUN_SETUP)
 			prefix = setup_git_directory();
-		if (p->option & RUN_SETUP_GENTLY) {
+		else if (p->option & RUN_SETUP_GENTLY) {
 			int nongit_ok;
 			prefix = setup_git_directory_gently(&nongit_ok);
 		}
