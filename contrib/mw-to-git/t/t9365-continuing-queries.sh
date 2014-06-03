@@ -9,7 +9,7 @@ test_check_precond
 
 test_expect_success 'creating page w/ >500 revisions' '
 	wiki_reset &&
-	for i in `test_seq 501`
+	for i in $(test_seq 501)
 	do
 		echo "creating revision $i" &&
 		wiki_editpage foo "revision $i<br/>" true

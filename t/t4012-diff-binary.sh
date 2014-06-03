@@ -67,18 +67,18 @@ test_expect_success C_LOCALE_OUTPUT 'apply detecting corrupt patch correctly' '
 	git diff >output &&
 	sed -e "s/-CIT/xCIT/" <output >broken &&
 	test_must_fail git apply --stat --summary broken 2>detected &&
-	detected=`cat detected` &&
-	detected=`expr "$detected" : "fatal.*at line \\([0-9]*\\)\$"` &&
-	detected=`sed -ne "${detected}p" broken` &&
+	detected=$(cat detected) &&
+	detected=$(expr "$detected" : "fatal.*at line \\([0-9]*\\)\$") &&
+	detected=$(sed -ne "${detected}p" broken) &&
 	test "$detected" = xCIT
 '
 
 test_expect_success C_LOCALE_OUTPUT 'apply detecting corrupt patch correctly' '
 	git diff --binary | sed -e "s/-CIT/xCIT/" >broken &&
 	test_must_fail git apply --stat --summary broken 2>detected &&
-	detected=`cat detected` &&
-	detected=`expr "$detected" : "fatal.*at line \\([0-9]*\\)\$"` &&
-	detected=`sed -ne "${detected}p" broken` &&
+	detected=$(cat detected) &&
+	detected=$(expr "$detected" : "fatal.*at line \\([0-9]*\\)\$") &&
+	detected=$(sed -ne "${detected}p" broken) &&
 	test "$detected" = xCIT
 '
 
@@ -88,7 +88,7 @@ test_expect_success 'initial commit' 'git commit -a -m initial'
 test_expect_success 'diff-index with --binary' '
 	echo AIT >a && mv b e && echo CIT >c && cat e >d &&
 	git update-index --add --remove a b c d e &&
-	tree0=`git write-tree` &&
+	tree0=$(git write-tree) &&
 	git diff --cached --binary >current &&
 	git apply --stat --summary current
 '
@@ -96,7 +96,7 @@ test_expect_success 'diff-index with --binary' '
 test_expect_success 'apply binary patch' '
 	git reset --hard &&
 	git apply --binary --index <current &&
-	tree1=`git write-tree` &&
+	tree1=$(git write-tree) &&
 	test "$tree1" = "$tree0"
 '
 

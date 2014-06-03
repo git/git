@@ -11,7 +11,7 @@ test_description='git read-tree --prefix test.
 test_expect_success setup '
 	echo hello >one &&
 	git update-index --add one &&
-	tree=`git write-tree` &&
+	tree=$(git write-tree) &&
 	echo tree is $tree
 '
 

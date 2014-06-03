@@ -107,14 +107,14 @@ test_expect_success setup '
 +*++ [initial] Initial
 EOF
 
-V=`git version | sed -e 's/^git version //' -e 's/\./\\./g'`
+V=$(git version | sed -e 's/^git version //' -e 's/\./\\./g')
 while read cmd
 do
 	case "$cmd" in
 	'' | '#'*) continue ;;
 	esac
-	test=`echo "$cmd" | sed -e 's|[/ ][/ ]*|_|g'`
-	pfx=`printf "%04d" $test_count`
+	test=$(echo "$cmd" | sed -e 's|[/ ][/ ]*|_|g')
+	pfx=$(printf "%04d" $test_count)
 	expect="$TEST_DIRECTORY/t4013/diff.$test"
 	actual="$pfx-diff.$test"
 

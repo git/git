@@ -59,7 +59,7 @@ do
 	-b|--browser*|-t|--tool*)
 		case "$#,$1" in
 		*,*=*)
-			browser=`expr "z$1" : 'z-[^=]*=\(.*\)'`
+			browser=$(expr "z$1" : 'z-[^=]*=\(.*\)')
 			;;
 		1,*)
 			usage ;;
@@ -71,7 +71,7 @@ do
 	-c|--config*)
 		case "$#,$1" in
 		*,*=*)
-			conf=`expr "z$1" : 'z-[^=]*=\(.*\)'`
+			conf=$(expr "z$1" : 'z-[^=]*=\(.*\)')
 			;;
 		1,*)
 			usage ;;
@@ -100,7 +100,7 @@ then
 	for opt in "$conf" "web.browser"
 	do
 		test -z "$opt" && continue
-		browser="`git config $opt`"
+		browser="$(git config $opt)"
 		test -z "$browser" || break
 	done
 	if test -n "$browser" && ! valid_tool "$browser"; then

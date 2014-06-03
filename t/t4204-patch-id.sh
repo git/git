@@ -45,8 +45,8 @@ test_expect_success 'patch-id supports git-format-patch output' '
 	git checkout same &&
 	git format-patch -1 --stdout | calc_patch_id same &&
 	test_cmp patch-id_master patch-id_same &&
-	set `git format-patch -1 --stdout | git patch-id` &&
-	test "$2" = `git rev-parse HEAD`
+	set $(git format-patch -1 --stdout | git patch-id) &&
+	test "$2" = $(git rev-parse HEAD)
 '
 
 test_expect_success 'whitespace is irrelevant in footer' '
