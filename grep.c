@@ -86,6 +86,11 @@ int grep_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
+	if (!strcmp(var, "grep.fullname")) {
+		opt->relative = !git_config_bool(var, value);
+		return 0;
+	}
+
 	if (!strcmp(var, "color.grep"))
 		opt->color = git_config_colorbool(var, value);
 	else if (!strcmp(var, "color.grep.context"))
