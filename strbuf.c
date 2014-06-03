@@ -78,15 +78,8 @@ void strbuf_grow(struct strbuf *sb, size_t extra)
 
 void strbuf_trim(struct strbuf *sb)
 {
-	char *b = sb->buf;
-	while (sb->len > 0 && isspace((unsigned char)sb->buf[sb->len - 1]))
-		sb->len--;
-	while (sb->len > 0 && isspace(*b)) {
-		b++;
-		sb->len--;
-	}
-	memmove(sb->buf, b, sb->len);
-	sb->buf[sb->len] = '\0';
+	strbuf_rtrim(sb);
+	strbuf_ltrim(sb);
 }
 void strbuf_rtrim(struct strbuf *sb)
 {
