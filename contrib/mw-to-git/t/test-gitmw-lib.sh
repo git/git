@@ -289,7 +289,6 @@ start_lighttpd () {
 # Kill daemon lighttpd and removes files and folders associated.
 stop_lighttpd () {
 	test -f "$WEB_TMP/pid" && kill $(cat "$WEB_TMP/pid")
-	rm -rf "$WEB"
 }
 
 # Create the SQLite database of the MediaWiki. If the database file already
@@ -415,6 +414,7 @@ wiki_reset () {
 wiki_delete () {
 	if test $LIGHTTPD = "true"; then
 		stop_lighttpd
+		rm -fr "$WEB"
 	else
 		# Delete the wiki's directory.
 		rm -rf "$WIKI_DIR_INST/$WIKI_DIR_NAME" ||
