@@ -63,7 +63,7 @@ static int verbosity;
 static int allow_rerere_auto;
 static int abort_current_merge;
 static int show_progress = -1;
-static int default_to_upstream;
+static int default_to_upstream = 1;
 static const char *sign_commit;
 
 static struct strategy all_strategy[] = {
