@@ -1672,6 +1672,10 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 					   ? NULL
 					   : current_head->object.sha1,
 					   0, NULL);
+	if (!ref_lock) {
+		rollback_index_files();
+		die(_("cannot lock HEAD ref"));
+	}
 
 	nl = strchr(sb.buf, '\n');
 	if (nl)
@@ -1681,10 +1685,6 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	strbuf_insert(&sb, 0, reflog_msg, strlen(reflog_msg));
 	strbuf_insert(&sb, strlen(reflog_msg), ": ", 2);
 
-	if (!ref_lock) {
-		rollback_index_files();
-		die(_("cannot lock HEAD ref"));
-	}
 	if (write_ref_sha1(ref_lock, sha1, sb.buf) < 0) {
 		rollback_index_files();
 		die(_("cannot update HEAD ref"));
