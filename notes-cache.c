@@ -62,7 +62,7 @@ int notes_cache_write(struct notes_cache *c)
 	if (commit_tree(&msg, tree_sha1, NULL, commit_sha1, NULL, NULL) < 0)
 		return -1;
 	if (update_ref("update notes cache", c->tree.ref, commit_sha1, NULL,
-		       0, QUIET_ON_ERR) < 0)
+		       0, UPDATE_REFS_QUIET_ON_ERR) < 0)
 		return -1;
 
 	return 0;

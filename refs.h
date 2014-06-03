@@ -10,19 +10,7 @@ struct ref_lock {
 	int force_write;
 };
 
-/**
- * Information needed for a single ref update.  Set new_sha1 to the
- * new value or to zero to delete the ref.  To check the old value
- * while locking the ref, set have_old to 1 and set old_sha1 to the
- * value or to zero to ensure the ref does not exist before update.
- */
-struct ref_update {
-	const char *ref_name;
-	unsigned char new_sha1[20];
-	unsigned char old_sha1[20];
-	int flags; /* REF_NODEREF? */
-	int have_old; /* 1 if old_sha1 is valid, 0 otherwise */
-};
+struct ref_transaction;
 
 /*
  * Bit values set in the flags argument passed to each_ref_fn():
@@ -166,7 +154,7 @@ extern void unlock_ref(struct ref_lock *lock);
 extern int write_ref_sha1(struct ref_lock *lock, const unsigned char *sha1, const char *msg);
 
 /** Setup reflog before using. **/
-int log_ref_setup(const char *ref_name, char *logfile, int bufsize);
+int log_ref_setup(const char *refname, char *logfile, int bufsize);
 
 /** Reads log for the value of ref during at_time. **/
 extern int read_ref_at(const char *refname, unsigned long at_time, int cnt,
@@ -214,17 +202,79 @@ extern int rename_ref(const char *oldref, const char *newref, const char *logmsg
  */
 extern int resolve_gitlink_ref(const char *path, const char *refname, unsigned char *sha1);
 
-/** lock a ref and then write its file */
-enum action_on_err { MSG_ON_ERR, DIE_ON_ERR, QUIET_ON_ERR };
+enum action_on_err {
+	UPDATE_REFS_MSG_ON_ERR,
+	UPDATE_REFS_DIE_ON_ERR,
+	UPDATE_REFS_QUIET_ON_ERR
+};
+
+/*
+ * Begin a reference transaction.  The reference transaction must
+ * eventually be commited using ref_transaction_commit() or rolled
+ * back using ref_transaction_rollback().
+ */
+struct ref_transaction *ref_transaction_begin(void);
+
+/*
+ * Roll back a ref_transaction and free all associated data.
+ */
+void ref_transaction_rollback(struct ref_transaction *transaction);
+
+
+/*
+ * The following functions add a reference check or update to a
+ * ref_transaction.  In all of them, refname is the name of the
+ * reference to be affected.  The functions make internal copies of
+ * refname, so the caller retains ownership of the parameter.  flags
+ * can be REF_NODEREF; it is passed to update_ref_lock().
+ */
+
+
+/*
+ * Add a reference update to transaction.  new_sha1 is the value that
+ * the reference should have after the update, or zeros if it should
+ * be deleted.  If have_old is true, then old_sha1 holds the value
+ * that the reference should have had before the update, or zeros if
+ * it must not have existed beforehand.
+ */
+void ref_transaction_update(struct ref_transaction *transaction,
+			    const char *refname,
+			    unsigned char *new_sha1, unsigned char *old_sha1,
+			    int flags, int have_old);
+
+/*
+ * Add a reference creation to transaction.  new_sha1 is the value
+ * that the reference should have after the update; it must not be the
+ * null SHA-1.  It is verified that the reference does not exist
+ * already.
+ */
+void ref_transaction_create(struct ref_transaction *transaction,
+			    const char *refname,
+			    unsigned char *new_sha1,
+			    int flags);
+
+/*
+ * Add a reference deletion to transaction.  If have_old is true, then
+ * old_sha1 holds the value that the reference should have had before
+ * the update (which must not be the null SHA-1).
+ */
+void ref_transaction_delete(struct ref_transaction *transaction,
+			    const char *refname,
+			    unsigned char *old_sha1,
+			    int flags, int have_old);
+
+/*
+ * Commit all of the changes that have been queued in transaction, as
+ * atomically as possible.  Return a nonzero value if there is a
+ * problem.  The ref_transaction is freed by this function.
+ */
+int ref_transaction_commit(struct ref_transaction *transaction,
+			   const char *msg, enum action_on_err onerr);
+
+/** Lock a ref and then write its file */
 int update_ref(const char *action, const char *refname,
 		const unsigned char *sha1, const unsigned char *oldval,
 		int flags, enum action_on_err onerr);
-
-/**
- * Lock all refs and then perform all modifications.
- */
-int update_refs(const char *action, const struct ref_update **updates,
-		int n, enum action_on_err onerr);
 
 extern int parse_hide_refs_config(const char *var, const char *value, const char *);
 extern int ref_is_hidden(const char *);

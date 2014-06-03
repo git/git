@@ -48,7 +48,8 @@ void commit_notes(struct notes_tree *t, const char *msg)
 
 	create_notes_commit(t, NULL, &buf, commit_sha1);
 	strbuf_insert(&buf, 0, "notes: ", 7); /* commit message starts at index 7 */
-	update_ref(buf.buf, t->ref, commit_sha1, NULL, 0, DIE_ON_ERR);
+	update_ref(buf.buf, t->ref, commit_sha1, NULL, 0,
+		   UPDATE_REFS_DIE_ON_ERR);
 
 	strbuf_release(&buf);
 }
