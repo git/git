@@ -1,19 +1,24 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (May 2014, #05; Fri, 23)
-X-master-at: 4a28f169ad29ba452e0e7bea2583914c10c58322
-X-next-at: daf83cafd8ed3cb640a2047d5069cdbf9d18e7c0
+Subject: What's cooking in git.git (Jun 2014, #01; Tue, 3)
+X-master-at: 79dcccc503ac228630ecf15dcf8e1d9455daef2d
+X-next-at: cc83a7f2654514ddbeb91a63300d3b726f6df536
 
-What's cooking in git.git (May 2014, #05; Fri, 23)
+What's cooking in git.git (Jun 2014, #01; Tue, 3)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-The tip of the 'master' branch has past v2.0.0-rc4 (which was
-unplanned, but there were last minute regressions to be taken care
-of).  Hopefully we can tag v2.0.0 final early next week.
+The first batch of topics, all of which have been cooking for quite
+a while on the 'next' branch, have been merged to 'master'.  I'll
+
+ - merge another batch to 'master', then
+ - rewind the tip of 'next' in preparation to start accepting new topics
+
+sometime mid-next week.  I'll also update tinyurl.com/gitCal for this
+cycle soonish.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -21,62 +26,554 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
+[Graduated to "master"]
+
+* as/grep-fullname-config (2014-03-20) 1 commit
+  (merged to 'next' on 2014-03-28 at 810a076)
+ + grep: add grep.fullName config variable
+
+ Add a configuration variable to force --full-name to be default for
+ "git grep".
+
+ This may cause regressions on scripted users that do not expect
+ this new behaviour.
+
+
+* bg/strbuf-trim (2014-05-06) 2 commits
+  (merged to 'next' on 2014-05-07 at 978f378)
+ + api-strbuf.txt: add docs for _trim and _ltrim
+ + strbuf: use _rtrim and _ltrim in strbuf_trim
+
+
+* dt/api-doc-setup-gently (2014-04-30) 1 commit
+  (merged to 'next' on 2014-05-07 at 6054b08)
+ + docs: document RUN_SETUP_GENTLY and clarify RUN_SETUP
+
+
+* ef/send-email-absolute-path-to-the-command (2014-04-23) 2 commits
+  (merged to 'next' on 2014-04-23 at a657e5e)
+ + send-email: windows drive prefix (e.g. C:) appears only at the beginning
+  (merged to 'next' on 2014-04-21 at 43bebb5)
+ + send-email: recognize absolute path on Windows
+
+
+* ep/shell-command-substitution (2014-04-30) 41 commits
+  (merged to 'next' on 2014-05-07 at e9952c7)
+ + t5000-tar-tree.sh: use the $( ... ) construct for command substitution
+ + t4204-patch-id.sh: use the $( ... ) construct for command substitution
+ + t4119-apply-config.sh: use the $( ... ) construct for command substitution
+ + t4116-apply-reverse.sh: use the $( ... ) construct for command substitution
+ + t4057-diff-combined-paths.sh: use the $( ... ) construct for command substitution
+ + t4038-diff-combined.sh: use the $( ... ) construct for command substitution
+ + t4036-format-patch-signer-mime.sh: use the $( ... ) construct for command substitution
+ + t4014-format-patch.sh: use the $( ... ) construct for command substitution
+ + t4013-diff-various.sh: use the $( ... ) construct for command substitution
+ + t4012-diff-binary.sh: use the $( ... ) construct for command substitution
+ + t4010-diff-pathspec.sh: use the $( ... ) construct for command substitution
+ + t4006-diff-mode.sh: use the $( ... ) construct for command substitution
+ + t3910-mac-os-precompose.sh: use the $( ... ) construct for command substitution
+ + t3905-stash-include-untracked.sh: use the $( ... ) construct for command substitution
+ + t1050-large.sh: use the $( ... ) construct for command substitution
+ + t1020-subdirectory.sh: use the $( ... ) construct for command substitution
+ + t1004-read-tree-m-u-wf.sh: use the $( ... ) construct for command substitution
+ + t1003-read-tree-prefix.sh: use the $( ... ) construct for command substitution
+ + t1002-read-tree-m-u-2way.sh: use the $( ... ) construct for command substitution
+ + t1001-read-tree-m-2way.sh: use the $( ... ) construct for command substitution
+ + t1000-read-tree-m-3way.sh: use the $( ... ) construct for command substitution
+ + t0300-credentials.sh: use the $( ... ) construct for command substitution
+ + t0030-stripspace.sh: use the $( ... ) construct for command substitution
+ + t0026-eol-config.sh: use the $( ... ) construct for command substitution
+ + t0025-crlf-auto.sh: use the $( ... ) construct for command substitution
+ + t0020-crlf.sh: use the $( ... ) construct for command substitution
+ + t0010-racy-git.sh: use the $( ... ) construct for command substitution
+ + t0001-init.sh: use the $( ... ) construct for command substitution
+ + p5302-pack-index.sh: use the $( ... ) construct for command substitution
+ + lib-gpg.sh: use the $( ... ) construct for command substitution
+ + lib-cvs.sh: use the $( ... ) construct for command substitution
+ + lib-credential.sh: use the $( ... ) construct for command substitution
+ + git-web--browse.sh: use the $( ... ) construct for command substitution
+ + git-stash.sh: use the $( ... ) construct for command substitution
+ + git-rebase.sh: use the $( ... ) construct for command substitution
+ + git-rebase--merge.sh: use the $( ... ) construct for command substitution
+ + git-pull.sh: use the $( ... ) construct for command substitution
+ + appp.sh: use the $( ... ) construct for command substitution
+ + t7900-subtree.sh: use the $( ... ) construct for command substitution
+ + test-gitmw-lib.sh: use the $( ... ) construct for command substitution
+ + t9365-continuing-queries.sh: use the $( ... ) construct for command substitution
+
+ Adjust shell scripts to use $(cmd) instead of `cmd`.
+
+
+* ew/config-protect-mode (2014-05-06) 1 commit
+  (merged to 'next' on 2014-05-07 at 8443093)
+ + config: preserve config file permissions on edits
+
+
+* fc/merge-default-to-upstream (2014-04-22) 1 commit
+  (merged to 'next' on 2014-04-22 at 4f98483)
+ + merge: enable defaulttoupstream by default
+
+ "git merge" without argument, even when there is an upstream
+ defined for the current branch, refused to run until
+ merge.defaultToUpstream is set to true. Flip the default of that
+ configuration variable to true.
+
+
+* fc/mergetool-prompt (2014-04-24) 2 commits
+  (merged to 'next' on 2014-05-02 at a554691)
+ + mergetool: document the default for --[no-]prompt
+  (merged to 'next' on 2014-04-22 at dcaec94)
+ + mergetool: run prompt only if guessed tool
+
+ mergetool.prompt used to default to 'true', always causing a confirmation
+ "do you really want to run the tool on this path" to be shown.
+
+ Among the two purposes the prompt serves, ignore the use case to
+ confirm that the user wants to view particular path with the named
+ tool, and make the prompt only to confirm the choice of the tool
+ made by autodetection and defaulting.  For those who configured the
+ tool explicitly, the prompt shown for the latter purpose is simply
+ annoying.
+
+ Strictly speaking, this is a backward incompatible change and the
+ users need to explicitly set the variable to 'true' if they want to
+ resurrect the now-ignored use case.
+
+
+* fc/mergetools-vimdiff3 (2014-04-22) 1 commit
+  (merged to 'next' on 2014-04-22 at d843e75)
+ + mergetools: add vimdiff3 mode
+
+
+* fc/rerere-conflict-style (2014-04-30) 1 commit
+  (merged to 'next' on 2014-05-07 at bde7fd0)
+ + rerere: fix for merge.conflictstyle
+
+ "git rerere forget" did not work well when merge.conflictstyle
+ was set to a non-default value.
+
+
+* jc/apply-ignore-whitespace (2014-03-26) 1 commit
+  (merged to 'next' on 2014-04-04 at 53779a7)
+ + apply --ignore-space-change: lines with and without leading whitespaces do not match
+
+ "--ignore-space-change" option of "git apply" ignored the
+ spaces at the beginning of line too aggressively, which is
+ inconsistent with the option of the same name "diff" and "git diff"
+ have.
+
+
+* jk/commit-date-approxidate (2014-05-02) 4 commits
+  (merged to 'next' on 2014-05-07 at 7ec8f7d)
+ + commit: accept more date formats for "--date"
+ + commit: print "Date" line when the user has set date
+ + pretty: make show_ident_date public
+ + commit: use split_ident_line to compare author/committer
+
+ "git commit --date=<date>" option learned to read from more
+ timestamp formats, including "--date=now".
+
+
+* jk/external-diff-use-argv-array (2014-04-21) 5 commits
+  (merged to 'next' on 2014-04-22 at e6d92d7)
+ + run_external_diff: refactor cmdline setup logic
+ + run_external_diff: hoist common bits out of conditional
+ + run_external_diff: drop fflush(NULL)
+ + run_external_diff: clean up error handling
+ + run_external_diff: use an argv_array for the environment
+
+ Code clean-up (and a bugfix which has been merged for 2.0).
+
+
+* jx/blame-align-relative-time (2014-04-23) 2 commits
+  (merged to 'next' on 2014-04-23 at 858df39)
+ + blame: dynamic blame_date_width for different locales
+ + blame: fix broken time_buf paddings in relative timestamp
+
+ "git blame" miscounted number of columns needed to show localized
+ timestamps, resulting in jaggy left-side-edge of the source code
+ lines in its output.
+
+
+* ks/tree-diff-nway (2014-04-09) 20 commits
+  (merged to 'next' on 2014-04-09 at c17228e)
+ + mingw: activate alloca
+  (merged to 'next' on 2014-04-08 at 6b74773)
+ + combine-diff: speed it up, by using multiparent diff tree-walker directly
+ + tree-diff: rework diff_tree() to generate diffs for multiparent cases as well
+ + Portable alloca for Git
+  (merged to 'next' on 2014-03-31 at 16a7bd4)
+ + tree-diff: reuse base str(buf) memory on sub-tree recursion
+ + tree-diff: no need to call "full" diff_tree_sha1 from show_path()
+ + tree-diff: rework diff_tree interface to be sha1 based
+ + tree-diff: diff_tree() should now be static
+ + tree-diff: remove special-case diff-emitting code for empty-tree cases
+  (merged to 'next' on 2014-03-25 at cfcbdac)
+ + tree-diff: simplify tree_entry_pathcmp
+ + tree-diff: show_path prototype is not needed anymore
+ + tree-diff: rename compare_tree_entry -> tree_entry_pathcmp
+ + tree-diff: move all action-taking code out of compare_tree_entry()
+ + tree-diff: don't assume compare_tree_entry() returns -1,0,1
+  (merged to 'next' on 2014-03-21 at d872679)
+ + tree-diff: consolidate code for emitting diffs and recursion in one place
+ + tree-diff: show_tree() is not needed
+ + tree-diff: no need to pass match to skip_uninteresting()
+ + tree-diff: no need to manually verify that there is no mode change for a path
+ + combine-diff: move changed-paths scanning logic into its own function
+ + combine-diff: move show_log_first logic/action out of paths scanning
+
+ Instead of running N pair-wise diff-trees when inspecting a
+ N-parent merge, find the set of paths that were touched by walking
+ N+1 trees in parallel.  These set of paths can then be turned into
+ N pair-wise diff-tree results to be processed through rename
+ detections and such.  And N=2 case nicely degenerates to the usual
+ 2-way diff-tree, which is very nice.
+
+
+* lr/git-run-setup-gently (2014-04-22) 1 commit
+  (merged to 'next' on 2014-04-22 at 5c2523f)
+ + git.c: treat RUN_SETUP_GENTLY and RUN_SETUP as mutually exclusive
+
+
+* mh/ref-transaction (2014-04-07) 27 commits
+  (merged to 'next' on 2014-04-16 at a99f84d)
+ + ref_transaction_commit(): work with transaction->updates in place
+ + struct ref_update: add a type field
+ + struct ref_update: add a lock field
+ + ref_transaction_commit(): simplify code using temporary variables
+ + struct ref_update: store refname as a FLEX_ARRAY
+ + struct ref_update: rename field "ref_name" to "refname"
+ + refs: remove API function update_refs()
+ + update-ref --stdin: reimplement using reference transactions
+ + refs: add a concept of a reference transaction
+ + update-ref --stdin: harmonize error messages
+ + update-ref --stdin: improve the error message for unexpected EOF
+ + t1400: test one mistake at a time
+ + update-ref --stdin -z: deprecate interpreting the empty string as zeros
+ + update-ref.c: extract a new function, parse_next_sha1()
+ + t1400: test that stdin -z update treats empty <newvalue> as zeros
+ + update-ref --stdin: simplify error messages for missing oldvalues
+ + update-ref --stdin: make error messages more consistent
+ + update-ref --stdin: improve error messages for invalid values
+ + update-ref.c: extract a new function, parse_refname()
+ + parse_cmd_verify(): copy old_sha1 instead of evaluating <oldvalue> twice
+ + update-ref --stdin: read the whole input at once
+ + update_refs(): fix constness
+ + refs.h: rename the action_on_err constants
+ + t1400: add some more tests involving quoted arguments
+ + parse_arg(): really test that argument is properly terminated
+ + t1400: provide more usual input to the command
+ + t1400: fix name and expected result of one test
+
+ Update "update-ref --stdin [-z]" and then introduce a transactional
+ support for (multi-)reference updates.
+
+
+* mm/mediawiki-encoding-fix (2014-04-23) 2 commits
+  (merged to 'next' on 2014-05-02 at 7744361)
+ + git-remote-mediawiki: fix encoding issue for UTF-8 media files
+ + git-remote-mediawiki: allow stop/start-ing the test server
+
+
+* nd/index-pack-one-fd-per-thread (2014-04-16) 1 commit
+  (merged to 'next' on 2014-04-16 at b38d5a9)
+ + index-pack: work around thread-unsafe pread()
+
+ Enable threaded index-pack on platforms without thread-safe
+ pread() emulation.
+
+
+* rs/ref-update-check-errors-early (2014-04-17) 2 commits
+  (merged to 'next' on 2014-04-21 at acc62aa)
+ + commit.c: check for lock error and return early
+ + sequencer.c: check for lock failure and bail early in fast_forward_to
+
+
+* sk/msvc-dynlink-crt (2014-05-06) 1 commit
+  (merged to 'next' on 2014-05-07 at 20f4839)
+ + MSVC: link dynamically to the CRT
+
+
+* sk/svn-parse-datestamp (2014-04-17) 1 commit
+  (merged to 'next' on 2014-04-21 at 5ff519f)
+ + SVN.pm::parse_svn_date: allow timestamps with a single-digit hour
+
+ "git svn" learned to cope with malformed timestamps with only one
+ digit in the hour part, e.g. 2014-01-07T5:01:02.048176Z, emitted
+ by some broken subversion server implementations.
+
+
+* sk/tag-contains-wo-recursion (2014-04-25) 1 commit
+  (merged to 'next' on 2014-04-25 at f320750)
+ + git tag --contains: avoid stack overflow
+
+
+* ym/fix-opportunistic-index-update-race (2014-04-10) 2 commits
+  (merged to 'next' on 2014-04-16 at cb92f4f)
+ + read-cache.c: verify index file before we opportunistically update it
+ + wrapper.c: add xpread() similar to xread()
+
+ Read-only operations such as "git status" that internally refreshes
+ the index write out the refreshed index to the disk to optimize
+ future accesses to the working tree, but this could race with a
+ "read-write" operation that modify the index while it is running.
+ Detect such a race and avoid overwriting the index.
+
+ Duy raised a good point that we may need to do the same for the
+ normal writeout codepath, not just the "opportunistic" update
+ codepath.  While that is true, nobody sane would be running two
+ simultaneous operations that are clearly write-oriented competing
+ with each other against the same index file.  So in that sense that
+ can be done as a less urgent follow-up for this topic.
+
+--------------------------------------------------
 [New Topics]
 
-* ep/shell-assign-and-export-vars (2014-05-23) 2 commits
- - scripts: more "export VAR=VALUE" fixes
- - scripts: get rid of the non portable "export VAR=VALUE" costruct
+* bg/xcalloc-nmemb-then-size (2014-05-27) 12 commits
+ - transport-helper.c: rearrange xcalloc arguments
+ - remote.c: rearrange xcalloc arguments
+ - reflog-walk.c: rearrange xcalloc arguments
+ - pack-revindex.c: rearrange xcalloc arguments
+ - notes.c: rearrange xcalloc arguments
+ - imap-send.c: rearrange xcalloc arguments
+ - http-push.c: rearrange xcalloc arguments
+ - diff.c: rearrange xcalloc arguments
+ - config.c: rearrange xcalloc arguments
+ - commit.c: rearrange xcalloc arguments
+ - builtin/remote.c: rearrange xcalloc arguments
+ - builtin/ls-remote.c: rearrange xcalloc arguments
 
- Will merge to 'next' after fixing typos in the log message.
+ Like calloc(3), xcalloc() takes nmemb and then size.
 
-
-* jn/test-lint-unmoor (2014-05-23) 1 commit
- - test-lint: find unportable sed, echo, test, and export usage after &&
-
- Will merge to 'next' and keep it there for the rest of this cycle.
-
-
-* jj/command-line-adjective (2014-05-21) 1 commit
- - Documentation: use "command-line" when used as a compound adjective, and fix other minor grammatical issues
-
- Will merge to 'next' and keep it there for the rest of this cycle.
-
-
-* jk/daemon-tolower (2014-05-23) 1 commit
- - daemon/config: factor out duplicate xstrdup_tolower
-
- Will merge to 'next' and keep it there for the rest of this cycle.
+ Will merge to 'next'.
 
 
-* jk/strbuf-tolower (2014-05-23) 1 commit
- - strbuf: add strbuf_tolower function
+* jk/complete-merge-pull (2014-05-27) 2 commits
+ - completion: add missing options for git-merge
+ - completion: add a note that merge options are shared
 
- Will merge to 'next' and keep it there for the rest of this cycle.
+ The completion code did not know about quite a few options that are
+ common between "git merge" and "git pull", and a couple of options
+ unique to "git merge".
 
-
-* jk/http-errors (2014-05-23) 8 commits
- - http: default text charset to iso-8859-1
- - remote-curl: reencode http error messages
- - strbuf: add strbuf_reencode helper
- - http: optionally extract charset parameter from content-type
- - http: extract type/subtype portion of content-type
- - t5550: test display of remote http error messages
- - t/lib-httpd: use write_script to copy CGI scripts
- - test-lib: preserve GIT_CURL_VERBOSE from the environment
-
- The fourth from the bottom needs additional comments $gmane/250024
- squashed in before this is merged to 'next'.
+ Will merge to 'next'.
 
 
-* jm/format-patch-mail-sig (2014-05-22) 2 commits
- - format-patch: --signature-file=<file>
- - format-patch: make newline after signature conditional
+* jl/remote-rm-prune (2014-05-27) 3 commits
+ - remote prune: optimize "dangling symref" check/warning
+ - remote: repack packed-refs once when deleting multiple refs
+ - remote rm: delete remote configuration as the last
 
- Looked more-or-less ready, except for some negative tests.
+ "git remote rm" and "git remote prune" can involve removing many
+ refs at once, which is not a very efficient thing to do when very
+ many refs exist in the packed-refs file.
 
+ Will merge to 'next'.
+
+
+* jm/instaweb-apache-24 (2014-05-27) 1 commit
+ - git-instaweb: add support for Apache 2.4
+
+ Will merge to 'next'.
+
+
+* jm/t9138-style-fix (2014-05-27) 1 commit
+ - t9138-git-svn-authors-prog.sh fixups
+
+ Will merge to 'next'.
+
+
+* mc/git-p4-pre-are-p4-only (2014-05-27) 1 commit
+  (merged to 'next' on 2014-05-27 at 71572fe)
+ + git-p4: Do not include diff in spec file when just preparing p4
+
+ Will merge to 'master'.
+
+
+* nd/daemonize-gc (2014-05-27) 1 commit
+ - gc --auto: do not lock refs in the background
+
+ Will merge to 'next'.
+
+
+* ow/config-mailmap-pathname (2014-05-27) 1 commit
+ - config: respect '~' and '~user' in mailmap.file
+
+ Will merge to 'next'.
+
+
+* rh/prompt-tests (2014-05-30) 10 commits
+ - t9904: new __git_ps1 tests for Zsh
+ - lib-prompt-tests.sh: add variable for string that encodes percent in PS1
+ - lib-prompt-tests.sh: put all tests inside a function
+ - t9903: move prompt tests to a new lib-prompt-tests.sh file
+ - t9903: move PS1 color code variable definitions to lib-bash.sh
+ - t9903: include "Bash" in test names via new $shellname var
+ - t9903: run pc mode tests again with PS1 expansion disabled
+ - t9903: move test name prefix to a separate variable
+ - t9903: put the Bash pc mode prompt test cases in a function
+ - t9903: remove Zsh test from the suite of Bash prompt tests
+
+ Will merge to 'next'.
+
+
+* jm/doc-wording-tweaks (2014-05-28) 1 commit
+ - Documentation: wording fixes in the user manual and glossary
+
+ Will merge to 'next'.
+
+
+* jn/gitweb-utf8-in-links (2014-05-27) 1 commit
+ - gitweb: Harden UTF-8 handling in generated links
+
+ Will merge to 'next'.
+
+
+* mn/sideband-no-ansi (2014-06-02) 1 commit
+ - sideband.c: do not use ANSI control sequence on non-terminal
+
+ Will merge to 'next'.
+
+
+* jc/fetch-push-refmap (2014-06-02) 9 commits
+ - fetch: allow explicit --refmap to override configuration
+ - fetch doc: add a section on configured remote-tracking branches
+ - fetch doc: remove "short-cut" section
+ - fetch doc: update refspec format description
+ - fetch doc: on pulling multiple refspecs
+ - fetch doc: remove notes on outdated "mixed layout"
+ - fetch doc: update note on '+' in front of the refspec
+ - fetch doc: move FETCH_HEAD material lower and add an example
+ - fetch doc: update introductory part for clarity
+
+
+* jc/shortlog-ref-exclude (2014-05-30) 1 commit
+ - shortlog: allow --exclude=<glob> to be passed
+
+ Needs rewording the proposed log message ($gmane/250469, 250475).
+
+
+* lt/log-auto-decorate (2014-05-30) 1 commit
+ - git log: support "auto" decorations
+
+ Will merge to 'next'.
+
+
+* lt/request-pull (2014-06-02) 1 commit
+ - fix brown paper bag breakage in t5150-request-pull.sh
+
+ Will merge to 'next'.
+
+
+* na/no-http-test-in-the-middle (2014-05-30) 1 commit
+ - t5538: move http push tests out to t5542
+
+ Will merge to 'next'.
+
+
+* pb/trim-trailing-spaces (2014-06-02) 1 commit
+ - dir.c:trim_trailing_spaces(): fix for " \ " sequence
+
+ Will merge to 'next'.
+
+
+* rs/mailinfo-header-cmp (2014-06-02) 1 commit
+ - mailinfo: use strcmp() for string comparison
+
+ Will merge to 'next'.
+
+
+* rs/pack-objects-no-unnecessary-realloc (2014-06-02) 1 commit
+ - pack-objects: use free()+xcalloc() instead of xrealloc()+memset()
+
+ Will merge to 'next'.
+
+
+* ss/userdiff-update-csharp-java (2014-06-02) 2 commits
+ - userdiff: support Java try keyword
+ - userdiff: support C# async methods and correct C# keywords
+
+
+* jk/error-resolve-conflict-advice (2014-06-03) 2 commits
+ - error_resolve_conflict: drop quotations around operation
+ - error_resolve_conflict: rewrap advice message
+
+ Will merge to 'next'.
+
+
+* rs/read-ref-at (2014-06-03) 1 commit
+ - refs.c: change read_ref_at to use the reflog iterators
+
+ Will merge to 'next'.
+
+
+* sh/enable-preloadindex (2014-06-03) 1 commit
+ - environment.c: enable core.preloadindex by default
+
+ Will merge to 'next'.
+
+
+* ta/string-list-init (2014-06-03) 1 commit
+ - string-list: Add a value to string_list initializer lists
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
+
+* jl/status-added-submodule-is-never-ignored (2014-04-07) 2 commits
+ - commit -m: commit staged submodules regardless of ignore config
+ - status/commit: show staged submodules regardless of ignore config
+
+ There also are a few patches Ronald Weiss and Jens are working on
+ polishing around this topic, and a patch from Jens each for gitk
+ and git-gui.
+
+ Waiting for the dust to settle until picking them up all.
+
+
+* mh/lockfile (2014-04-15) 25 commits
+ - trim_last_path_elm(): replace last_path_elm()
+ - resolve_symlink(): take a strbuf parameter
+ - resolve_symlink(): use a strbuf for internal scratch space
+ - change lock_file::filename into a strbuf
+ - commit_lock_file(): use a strbuf to manage temporary space
+ - try_merge_strategy(): use a statically-allocated lock_file object
+ - try_merge_strategy(): remove redundant lock_file allocation
+ - struct lock_file: declare some fields volatile
+ - lockfile: avoid transitory invalid states
+ - commit_lock_file(): die() if called for unlocked lockfile object
+ - commit_lock_file(): inline temporary variable
+ - remove_lock_file(): call rollback_lock_file()
+ - lock_file(): exit early if lockfile cannot be opened
+ - write_packed_entry_fn(): convert cb_data into a (const int *)
+ - prepare_index(): declare return value to be (const char *)
+ - delete_ref_loose(): don't muck around in the lock_file's filename
+ - cache.h: define constants LOCK_SUFFIX and LOCK_SUFFIX_LEN
+ - lockfile.c: document the various states of lock_file objects
+ - lock_file(): always add lock_file object to lock_file_list
+ - hold_lock_file_for_append(): release lock on errors
+ - lockfile: unlock file if lockfile permissions cannot be adjusted
+ - rollback_lock_file(): set fd to -1
+ - rollback_lock_file(): do not clear filename redundantly
+ - api-lockfile: expand the documentation
+ - unable_to_lock_die(): rename function from unable_to_lock_index_die()
+
+ Refactor and fix corner-case bugs in the lockfile API, all looked
+ sensible.
+
+ Expecting a reroll.
+
+
+* bg/rebase-off-of-previous-branch (2014-04-16) 1 commit
+ - git-rebase: print name of rev when using shorthand
+
+ Teach "git rebase -" to report the concrete name of the branch
+ (i.e. the previous one).
+
+ But it stops short and does not do the same for "git rebase @{-1}".
+ Expecting a reroll.
+
 
 * tr/merge-recursive-index-only (2014-02-05) 3 commits
  - merge-recursive: -Xindex-only to leave worktree unchanged
@@ -243,22 +740,79 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* ep/shell-assign-and-export-vars (2014-05-23) 2 commits
+  (merged to 'next' on 2014-05-23 at 7699c0e)
+ + scripts: more "export VAR=VALUE" fixes
+ + scripts: "export VAR=VALUE" construct is not portable
+
+ Will merge to 'master'.
+
+
+* jn/test-lint-unmoor (2014-05-23) 1 commit
+  (merged to 'next' on 2014-05-23 at aa997bc)
+ + test-lint: find unportable sed, echo, test, and export usage after &&
+
+ Will merge to 'master'.
+
+
+* jj/command-line-adjective (2014-05-21) 1 commit
+  (merged to 'next' on 2014-05-23 at fe136c8)
+ + Documentation: use "command-line" when used as a compound adjective, and fix other minor grammatical issues
+
+ Will merge to 'master'.
+
+
+* jk/daemon-tolower (2014-05-23) 1 commit
+  (merged to 'next' on 2014-05-23 at 23c796d)
+ + daemon/config: factor out duplicate xstrdup_tolower
+
+ Will merge to 'master'.
+
+
+* jk/strbuf-tolower (2014-05-23) 1 commit
+  (merged to 'next' on 2014-05-23 at b172137)
+ + strbuf: add strbuf_tolower function
+
+ Will merge to 'master'.
+
+
+* jk/http-errors (2014-05-27) 8 commits
+ - http: default text charset to iso-8859-1
+ - remote-curl: reencode http error messages
+ - strbuf: add strbuf_reencode helper
+ - http: optionally extract charset parameter from content-type
+ - http: extract type/subtype portion of content-type
+ - t5550: test display of remote http error messages
+ - t/lib-httpd: use write_script to copy CGI scripts
+ - test-lib: preserve GIT_CURL_VERBOSE from the environment
+
+ Will merge to 'next'.
+
+
+* jm/format-patch-mail-sig (2014-05-27) 2 commits
+ - format-patch: add "--signature-file=<file>" option
+ - format-patch: make newline after signature conditional
+
+ Will merge to 'next'.
+
+
 * sk/wincred (2014-05-14) 2 commits
   (merged to 'next' on 2014-05-21 at a3b9ca3)
  + wincred: avoid overwriting configured variables
  + wincred: add install target
 
- Will keep in 'next' for the remainder of the cycle.
+ Will merge to 'master'.
 
 
 * as/pretty-truncate (2014-05-21) 5 commits
- - pretty.c: format string with truncate respects logOutputEncoding
- - t4205, t6006: add tests that fail with i18n.logOutputEncoding set
- - t4205 (log-pretty-format): use `tformat` rather than `format`
- - t4041, t4205, t6006, t7102: don't hardcode tested encoding value
- - t4205 (log-pretty-formats): don't hardcode SHA-1 in expected outputs
+  (merged to 'next' on 2014-05-23 at 94d4c51)
+ + pretty.c: format string with truncate respects logOutputEncoding
+ + t4205, t6006: add tests that fail with i18n.logOutputEncoding set
+ + t4205 (log-pretty-format): use `tformat` rather than `format`
+ + t4041, t4205, t6006, t7102: don't hardcode tested encoding value
+ + t4205 (log-pretty-formats): don't hardcode SHA-1 in expected outputs
 
- Will merge to 'next' and keep it there for the rest of this cycle.
+ Will merge to 'master'.
 
 
 * cc/replace-graft (2014-05-19) 1 commit
@@ -266,7 +820,7 @@ of the repositories listed at
  + replace: add --graft option
  (this branch uses cc/replace-edit.)
 
- Will keep in 'next' for the remainder of the cycle.
+ Will eject from 'next' and replace with a newer reroll.
 
 
 * jk/argv-array-for-child-process (2014-05-15) 7 commits
@@ -279,28 +833,28 @@ of the repositories listed at
  + run_column_filter: use argv_array
  + run-command: store an optional argv_array
 
- Will keep in 'next' for the remainder of the cycle.
+ Will merge to 'master'.
 
 
 * jk/diff-files-assume-unchanged (2014-05-15) 1 commit
   (merged to 'next' on 2014-05-21 at 142d2c8)
  + run_diff_files: do not look at uninitialized stat data
 
- Will keep in 'next' for the remainder of the cycle.
+ Will merge to 'master'.
 
 
 * jk/report-fail-to-read-objects-better (2014-05-15) 1 commit
   (merged to 'next' on 2014-05-21 at 77c89fe)
  + open_sha1_file: report "most interesting" errno
 
- Will keep in 'next' for the remainder of the cycle.
+ Will merge to 'master'.
 
 
 * mt/rebase-i-keep-empty-test (2014-05-19) 1 commit
   (merged to 'next' on 2014-05-21 at d87d266)
  + rebase --keep-empty -i: add test
 
- Will keep in 'next' for the remainder of the cycle.
+ Will merge to 'master'.
 
 
 * nd/status-auto-comment-char (2014-05-19) 2 commits
@@ -308,7 +862,7 @@ of the repositories listed at
  + commit: allow core.commentChar=auto for character auto selection
  + config: be strict on core.commentChar
 
- Will keep in 'next' for the remainder of the cycle.
+ Will merge to 'master'.
 
 
 * rr/rebase-autostash-fix (2014-05-20) 2 commits
@@ -316,27 +870,28 @@ of the repositories listed at
  + rebase -i: test "Nothing to do" case with autostash
  + rebase -i: handle "Nothing to do" case with autostash
 
- Will keep in 'next' for the remainder of the cycle.
+ Will merge to 'master'.
 
 
 * sk/spawn-less-case-insensitively-from-grep-O-i (2014-05-15) 1 commit
   (merged to 'next' on 2014-05-21 at eb28305)
  + git grep -O -i: if the pager is 'less', pass the '-I' option
 
- Will keep in 'next' for the remainder of the cycle.
+ Will merge to 'master'.
 
 
 * sk/windows-unc-path (2014-05-20) 1 commit
   (merged to 'next' on 2014-05-21 at d1f1350)
  + Windows: Allow using UNC path for git repository
 
- Will keep in 'next' for the remainder of the cycle.
+ Will merge to 'master'.
 
 
 * jk/diff-follow-must-take-one-pathspec (2014-05-20) 1 commit
- - move "--follow needs one pathspec" rule to diff_setup_done
+  (merged to 'next' on 2014-05-23 at 4653133)
+ + move "--follow needs one pathspec" rule to diff_setup_done
 
- Will merge to 'next' and keep it there for the rest of this cycle.
+ Will merge to 'master'.
 
 
 * ab/add-interactive-show-diff-func-name (2014-05-12) 2 commits
@@ -350,14 +905,14 @@ of the repositories listed at
   (merged to 'next' on 2014-05-21 at 676392b)
  + t/lib-httpd: require SANITY prereq
 
- Will keep in 'next' for the remainder of the cycle.
+ Will merge to 'master'.
 
 
 * jk/index-pack-report-missing (2014-05-12) 1 commit
   (merged to 'next' on 2014-05-14 at 72d40e1)
  + index-pack: distinguish missing objects from type errors
 
- Will keep in 'next' for the remainder of the cycle.
+ Will merge to 'master'.
 
 
 * tb/unicode-6.3-zero-width (2014-05-12) 2 commits
@@ -372,21 +927,21 @@ of the repositories listed at
  We may want to let the users choose if codepoints with ambiguous
  widths are treated as a double or single width in a follow-up patch.
 
- Will keep in 'next' for the remainder of the cycle.
+ Will merge to 'master'.
 
 
 * mk/show-s-no-extra-blank-line-for-merges (2014-05-15) 1 commit
   (merged to 'next' on 2014-05-21 at 3b98b35)
  + git-show: fix 'git show -s' to not add extra terminator after merge commit
 
- Will keep in 'next' for the remainder of the cycle.
+ Will merge to 'master'.
 
 
 * wk/doc-clarify-upstream (2014-05-13) 1 commit
   (merged to 'next' on 2014-05-14 at 6c8fb52)
  + Documentation: mention config sources for @{upstream}
 
- Will keep in 'next' for the remainder of the cycle.
+ Will merge to 'master'.
 
 
 * dk/raise-core-deltabasecachelimit (2014-05-06) 1 commit
@@ -395,23 +950,23 @@ of the repositories listed at
 
  The original 16 MiB limit for the in-core delta-base-cache
  introduced in 18bdec11 (Limit the size of the new delta_base_cache,
- 2007-03-19) is turning too small.
+ 2007-03-19) is turning out to be too small.
 
- Will keep in 'next' for the remainder of the cycle.
+ Will merge to 'master'.
 
 
 * fc/status-printf-squelch-format-zero-length-warnings (2014-05-07) 1 commit
   (merged to 'next' on 2014-05-12 at 6b04e23)
  + silence a bunch of format-zero-length warnings
 
- Will keep in 'next' for the remainder of the cycle.
+ Will merge to 'master'.
 
 
 * jk/grep-tell-run-command-to-cd-when-running-pager (2014-05-07) 1 commit
   (merged to 'next' on 2014-05-12 at 065cb22)
  + grep: use run-command's "dir" option for --open-files-in-pager
 
- Will keep in 'next' for the remainder of the cycle.
+ Will merge to 'master'.
 
 
 * jk/squelch-compiler-warning-from-funny-error-macro (2014-05-06) 2 commits
@@ -419,7 +974,7 @@ of the repositories listed at
  + let clang use the constant-return error() macro
  + inline constant return from error() function
 
- Will keep in 'next' for the remainder of the cycle.
+ Will merge to 'master'.
 
 
 * rs/reflog-exists (2014-05-08) 2 commits
@@ -427,21 +982,21 @@ of the repositories listed at
  + checkout.c: use ref_exists instead of file_exist
  + refs.c: add new functions reflog_exists and delete_reflog
 
- Will keep in 'next' for the remainder of the cycle.
+ Will merge to 'master'.
 
 
 * tg/tag-state-tag-name-in-editor-hints (2014-05-07) 1 commit
   (merged to 'next' on 2014-05-12 at 0b7db32)
  + builtin/tag.c: show tag name to hint in the message editor
 
- Will keep in 'next' for the remainder of the cycle.
+ Will merge to 'master'.
 
 
 * sk/submodules-absolute-path-on-windows (2014-05-08) 1 commit
   (merged to 'next' on 2014-05-14 at 83a05d9)
  + Revert "submodules: fix ambiguous absolute paths under Windows"
 
- Will keep in 'next' for the remainder of the cycle.
+ Will merge to 'master'.
 
 
 * jn/contrib-remove-diffall (2014-05-09) 1 commit
@@ -450,7 +1005,7 @@ of the repositories listed at
 
  Spring cleaning of contrib/.
 
- Will keep in 'next' for the remainder of the cycle.
+ Will merge to 'master'.
 
 
 * jn/contrib-remove-vim (2014-05-09) 1 commit
@@ -459,52 +1014,33 @@ of the repositories listed at
 
  Spring cleaning of contrib/.
 
- Will keep in 'next' for the remainder of the cycle.
+ Will merge to 'master'.
 
 
-* ss/howto-manage-trunk (2014-05-09) 8 commits
- - SQUASH describe what the picture shows
- - SQUASH minor typographic fix
- - SQUASH clarify the informal description of 'trunk'
- - SQUASH typeset literal commands with `git command`
- - SQUASH use a better URL
- - SQUASH mark-up fix
- - SQUASH typofix
- - How to keep a project's canonical history correct.
+* ss/howto-manage-trunk (2014-05-28) 1 commit
+  (merged to 'next' on 2014-05-28 at 5318336)
+ + How to keep a project's canonical history correct.
 
- Will squash and then merge to 'next'.
+ Will merge to 'master'.
 
 
 * wg/svn-fe-style-fixes (2014-05-12) 1 commit
   (merged to 'next' on 2014-05-12 at 88c0e0d)
  + svn-fe: conform to pep8
 
- Will keep in 'next' for the remainder of the cycle.
+ Will merge to 'master'.
 
 
-* bg/strbuf-trim (2014-05-06) 2 commits
-  (merged to 'next' on 2014-05-07 at 978f378)
- + api-strbuf.txt: add docs for _trim and _ltrim
- + strbuf: use _rtrim and _ltrim in strbuf_trim
-
- Will keep in 'next' for the remainder of the cycle.
-
-
-* cb/byte-order (2014-05-02) 2 commits
+* cb/byte-order (2014-05-30) 3 commits
+  (merged to 'next' on 2014-05-30 at 857617e)
+ + compat/bswap.h: fix endianness detection
   (merged to 'next' on 2014-05-07 at f55c040)
  + compat/bswap.h: restore preference __BIG_ENDIAN over BIG_ENDIAN
  + compat/bswap.h: detect endianness on more platforms that don't use BYTE_ORDER
 
  Compatibility enhancement for Solaris.
 
- Will keep in 'next' for the remainder of the cycle.
-
-
-* dt/api-doc-setup-gently (2014-04-30) 1 commit
-  (merged to 'next' on 2014-05-07 at 6054b08)
- + docs: document RUN_SETUP_GENTLY and clarify RUN_SETUP
-
- Will keep in 'next' for the remainder of the cycle.
+ Will merge to 'master'.
 
 
 * dt/merge-recursive-case-insensitive (2014-05-08) 2 commits
@@ -516,25 +1052,12 @@ of the repositories listed at
  deleted the file that is to be renamed to a name that is the same
  except for case differences.
 
- Will keep in 'next' for the remainder of the cycle.
-
-
-* ew/config-protect-mode (2014-05-06) 1 commit
-  (merged to 'next' on 2014-05-07 at 8443093)
- + config: preserve config file permissions on edits
-
- Will keep in 'next' for the remainder of the cycle.
-
-
-* fc/rerere-conflict-style (2014-04-30) 1 commit
-  (merged to 'next' on 2014-05-07 at bde7fd0)
- + rerere: fix for merge.conflictstyle
-
- Will keep in 'next' for the remainder of the cycle.
+ Will merge to 'master'.
 
 
 * jc/coding-guidelines (2014-05-20) 9 commits
- - CodingGuidelines: avoid "test <cond> -a/-o <cond>"
+  (merged to 'next' on 2014-05-23 at bb351fc)
+ + CodingGuidelines: avoid "test <cond> -a/-o <cond>"
   (merged to 'next' on 2014-05-12 at e1fcf62)
  + CodingGuidelines: on splitting a long line
  + CodingGuidelines: on comparison
@@ -545,7 +1068,7 @@ of the repositories listed at
  + CodingGuidelines: give an example for case/esac statement
  + CodingGuidelines: once it is in, it is not worth the code churn
 
- Will merge to 'next' and keep it there for the rest of this cycle.
+ Will merge to 'master'.
 
 
 * jd/subtree (2014-05-13) 6 commits
@@ -558,31 +1081,14 @@ of the repositories listed at
  + contrib/subtree/Makefile: use GIT-VERSION-FILE
  + contrib/subtree/Makefile: scrap unused $(gitdir)
 
- Will keep in 'next' for the remainder of the cycle.
-
-
-* jk/commit-date-approxidate (2014-05-02) 4 commits
-  (merged to 'next' on 2014-05-07 at 7ec8f7d)
- + commit: accept more date formats for "--date"
- + commit: print "Date" line when the user has set date
- + pretty: make show_ident_date public
- + commit: use split_ident_line to compare author/committer
-
- Will keep in 'next' for the remainder of the cycle.
+ Will merge to 'master'.
 
 
 * mm/pager-less-sans-S (2014-05-07) 1 commit
   (merged to 'next' on 2014-05-07 at 66ce999)
  + pager: remove 'S' from $LESS by default
 
- Will keep in 'next' for the remainder of the cycle.
-
-
-* sk/msvc-dynlink-crt (2014-05-06) 1 commit
-  (merged to 'next' on 2014-05-07 at 20f4839)
- + MSVC: link dynamically to the CRT
-
- Will keep in 'next' for the remainder of the cycle.
+ Will merge to 'master'.
 
 
 * cc/replace-edit (2014-05-19) 10 commits
@@ -602,7 +1108,7 @@ of the repositories listed at
 
  "git replace" learns a new "--edit" option.
 
- Will keep in 'next' for the remainder of the cycle.
+ Will merge to 'master'.
 
 
 * da/imap-send-use-credential-helper (2014-04-29) 1 commit
@@ -612,14 +1118,14 @@ of the repositories listed at
  "git imap-send" learns to ask the credential helper for
  authentication material.
 
- Will keep in 'next' for the remainder of the cycle.
+ Will merge to 'master'.
 
 
 * dk/blame-reorg (2014-04-28) 1 commit
   (merged to 'next' on 2014-05-14 at 354a0e3)
  + blame: large-scale performance rewrite
 
- Will keep in 'next' for the remainder of the cycle.
+ Will merge to 'master'.
 
 
 * je/pager-do-not-recurse (2014-04-28) 1 commit
@@ -630,7 +1136,7 @@ of the repositories listed at
  we spawn to feed out output, but that prevents people who want to
  run less within less from doing so.
 
- Will keep in 'next' for the remainder of the cycle.
+ Will merge to 'master'.
 
 
 * jk/commit-C-pick-empty (2014-04-28) 1 commit
@@ -640,7 +1146,7 @@ of the repositories listed at
  "git commit --allow-empty-message -C $commit" did not work when the
  commit did not have any log message.
 
- Will keep in 'next' for the remainder of the cycle.
+ Will merge to 'master'.
 
 
 * jk/utf8-switch-between-nfd-and-nfc (2014-04-29) 1 commit
@@ -649,7 +1155,7 @@ of the repositories listed at
 
  Document a known breakage with a test.
 
- Will keep in 'next' for the remainder of the cycle.
+ Will merge to 'master'.
 
 
 * mt/send-email-cover-to-cc (2014-04-29) 2 commits
@@ -657,10 +1163,11 @@ of the repositories listed at
  + test/send-email: to-cover, cc-cover tests
  + git-send-email: two new options: to-cover, cc-cover
 
- Will keep in 'next' for the remainder of the cycle.
+ Will merge to 'master'.
 
 
-* nd/split-index (2014-04-29) 33 commits
+* nd/split-index (2014-06-02) 34 commits
+ - fixup! read-cache: new API write_locked_index instead of write_index/write_cache
  - SQUASH???
  - t1700: new tests for split-index mode
  - t2104: make sure split index mode is off for the version test
@@ -695,15 +1202,15 @@ of the repositories listed at
  - ewah: delete unused ewah_read_mmap_native declaration
  - ewah: fix constness of ewah_read_mmap
 
- The tip one is a reminder that needs to be squashed to squelch
- a "may be unused" compilation warning that is a false positive.
+ The tip two remind us the need for a minor reroll.  If I find time
+ I could try to squash them myself, but it is low priority for me.
 
 
 * tl/relax-in-poll-emulation (2014-04-29) 1 commit
   (merged to 'next' on 2014-05-12 at 9369b08)
  + compat/poll: sleep 1 millisecond to avoid busy wait
 
- Will keep in 'next' for the remainder of the cycle.
+ Will merge to 'master'.
 
 
 * bc/blame-crlf-test (2014-05-08) 1 commit
@@ -714,56 +1221,7 @@ of the repositories listed at
  core.autocrlf=input, then blame always marked lines as "Not
  Committed Yet", even if they were unmodified.
 
- Will keep in 'next' for the remainder of the cycle.
-
-
-* ep/shell-command-substitution (2014-04-30) 41 commits
-  (merged to 'next' on 2014-05-07 at e9952c7)
- + t5000-tar-tree.sh: use the $( ... ) construct for command substitution
- + t4204-patch-id.sh: use the $( ... ) construct for command substitution
- + t4119-apply-config.sh: use the $( ... ) construct for command substitution
- + t4116-apply-reverse.sh: use the $( ... ) construct for command substitution
- + t4057-diff-combined-paths.sh: use the $( ... ) construct for command substitution
- + t4038-diff-combined.sh: use the $( ... ) construct for command substitution
- + t4036-format-patch-signer-mime.sh: use the $( ... ) construct for command substitution
- + t4014-format-patch.sh: use the $( ... ) construct for command substitution
- + t4013-diff-various.sh: use the $( ... ) construct for command substitution
- + t4012-diff-binary.sh: use the $( ... ) construct for command substitution
- + t4010-diff-pathspec.sh: use the $( ... ) construct for command substitution
- + t4006-diff-mode.sh: use the $( ... ) construct for command substitution
- + t3910-mac-os-precompose.sh: use the $( ... ) construct for command substitution
- + t3905-stash-include-untracked.sh: use the $( ... ) construct for command substitution
- + t1050-large.sh: use the $( ... ) construct for command substitution
- + t1020-subdirectory.sh: use the $( ... ) construct for command substitution
- + t1004-read-tree-m-u-wf.sh: use the $( ... ) construct for command substitution
- + t1003-read-tree-prefix.sh: use the $( ... ) construct for command substitution
- + t1002-read-tree-m-u-2way.sh: use the $( ... ) construct for command substitution
- + t1001-read-tree-m-2way.sh: use the $( ... ) construct for command substitution
- + t1000-read-tree-m-3way.sh: use the $( ... ) construct for command substitution
- + t0300-credentials.sh: use the $( ... ) construct for command substitution
- + t0030-stripspace.sh: use the $( ... ) construct for command substitution
- + t0026-eol-config.sh: use the $( ... ) construct for command substitution
- + t0025-crlf-auto.sh: use the $( ... ) construct for command substitution
- + t0020-crlf.sh: use the $( ... ) construct for command substitution
- + t0010-racy-git.sh: use the $( ... ) construct for command substitution
- + t0001-init.sh: use the $( ... ) construct for command substitution
- + p5302-pack-index.sh: use the $( ... ) construct for command substitution
- + lib-gpg.sh: use the $( ... ) construct for command substitution
- + lib-cvs.sh: use the $( ... ) construct for command substitution
- + lib-credential.sh: use the $( ... ) construct for command substitution
- + git-web--browse.sh: use the $( ... ) construct for command substitution
- + git-stash.sh: use the $( ... ) construct for command substitution
- + git-rebase.sh: use the $( ... ) construct for command substitution
- + git-rebase--merge.sh: use the $( ... ) construct for command substitution
- + git-pull.sh: use the $( ... ) construct for command substitution
- + appp.sh: use the $( ... ) construct for command substitution
- + t7900-subtree.sh: use the $( ... ) construct for command substitution
- + test-gitmw-lib.sh: use the $( ... ) construct for command substitution
- + t9365-continuing-queries.sh: use the $( ... ) construct for command substitution
-
- Adjust shell scripts to use $(cmd) instead of `cmd`.
-
- Will keep in 'next' for the remainder of the cycle.
+ Will merge to 'master'.
 
 
 * ib/test-selectively-run (2014-05-21) 4 commits
@@ -774,21 +1232,6 @@ of the repositories listed at
 
  Allow specifying only certain individual test pieces to be run
  using a range notation (e.g. "t1234-test.sh --run='1-4 6 8 9-'").
-
-
-* mm/mediawiki-encoding-fix (2014-04-23) 2 commits
-  (merged to 'next' on 2014-05-02 at 7744361)
- + git-remote-mediawiki: fix encoding issue for UTF-8 media files
- + git-remote-mediawiki: allow stop/start-ing the test server
-
- Will keep in 'next' for the remainder of the cycle.
-
-
-* sk/tag-contains-wo-recursion (2014-04-25) 1 commit
-  (merged to 'next' on 2014-04-25 at f320750)
- + git tag --contains: avoid stack overflow
-
- Will keep in 'next' for the remainder of the cycle.
 
 
 * fc/remote-helper-refmap (2014-04-21) 8 commits
@@ -805,82 +1248,6 @@ of the repositories listed at
  Allow remote-helper/fast-import based transport to rename the refs
  while transferring the history.
 
- Will keep in 'next' for the remainder of the cycle.
-
-
-* jk/external-diff-use-argv-array (2014-04-21) 5 commits
-  (merged to 'next' on 2014-04-22 at e6d92d7)
- + run_external_diff: refactor cmdline setup logic
- + run_external_diff: hoist common bits out of conditional
- + run_external_diff: drop fflush(NULL)
- + run_external_diff: clean up error handling
- + run_external_diff: use an argv_array for the environment
-
- Code clean-up (and a bugfix which has been merged for 2.0).
-
- Will keep in 'next' for the remainder of the cycle.
-
-
-* jx/blame-align-relative-time (2014-04-23) 2 commits
-  (merged to 'next' on 2014-04-23 at 858df39)
- + blame: dynamic blame_date_width for different locales
- + blame: fix broken time_buf paddings in relative timestamp
-
- "git blame" miscounted number of columns needed to show localized
- timestamps, resulting in jaggy left-side-edge of the source code
- lines in its output.
-
- Will keep in 'next' for the remainder of the cycle.
-
-
-* fc/merge-default-to-upstream (2014-04-22) 1 commit
-  (merged to 'next' on 2014-04-22 at 4f98483)
- + merge: enable defaulttoupstream by default
-
- "git merge" without argument, even when there is an upstream
- defined for the current branch, refused to run until
- merge.defaultToUpstream is set to true. Flip the default of that
- configuration variable to true.
-
- Will keep in 'next' for the remainder of the cycle.
-
-
-* fc/mergetool-prompt (2014-04-24) 2 commits
-  (merged to 'next' on 2014-05-02 at a554691)
- + mergetool: document the default for --[no-]prompt
-  (merged to 'next' on 2014-04-22 at dcaec94)
- + mergetool: run prompt only if guessed tool
-
- mergetool.prompt used to default to 'true', always causing a confirmation
- "do you really want to run the tool on this path" to be shown.
-
- Among the two purposes the prompt serves, ignore the use case to
- confirm that the user wants to view particular path with the named
- tool, and make the prompt only to confirm the choice of the tool
- made by autodetection and defaulting.  For those who configured the
- tool explicitly, the prompt shown for the latter purpose is simply
- annoying.
-
- Strictly speaking, this is a backward incompatible change and the
- users need to explicitly set the variable to 'true' if they want to
- resurrect the now-ignored use case.
-
- Will keep in 'next' for the remainder of the cycle.
-
-
-* fc/mergetools-vimdiff3 (2014-04-22) 1 commit
-  (merged to 'next' on 2014-04-22 at d843e75)
- + mergetools: add vimdiff3 mode
-
- Will keep in 'next' for the remainder of the cycle.
-
-
-* lr/git-run-setup-gently (2014-04-22) 1 commit
-  (merged to 'next' on 2014-04-22 at 5c2523f)
- + git.c: treat RUN_SETUP_GENTLY and RUN_SETUP as mutually exclusive
-
- Will keep in 'next' for the remainder of the cycle.
-
 
 * jl/git-gui-show-added-submodule-changes (2014-04-15) 1 commit
  - git-gui: show staged submodules regardless of ignore config
@@ -896,117 +1263,8 @@ of the repositories listed at
  Tentatively queued what I expect to receive via Paul Mackerras.
 
 
-* bg/rebase-off-of-previous-branch (2014-04-16) 1 commit
- - git-rebase: print name of rev when using shorthand
-
- Teach "git rebase -" to report the concrete name of the branch
- (i.e. the previous one).
-
- But it stops short and does not do the same for "git rebase @{-1}".
- Expecting a reroll.
-
-
-* ef/send-email-absolute-path-to-the-command (2014-04-23) 2 commits
-  (merged to 'next' on 2014-04-23 at a657e5e)
- + send-email: windows drive prefix (e.g. C:) appears only at the beginning
-  (merged to 'next' on 2014-04-21 at 43bebb5)
- + send-email: recognize absolute path on Windows
-
- Will keep in 'next' for the remainder of the cycle.
-
-
 * jh/submodule-tests (2014-04-17) 1 commit
  - t7410: 210 tests for various 'git submodule update' scenarios
-
-
-* rs/ref-update-check-errors-early (2014-04-17) 2 commits
-  (merged to 'next' on 2014-04-21 at acc62aa)
- + commit.c: check for lock error and return early
- + sequencer.c: check for lock failure and bail early in fast_forward_to
-
- Will keep in 'next' for the remainder of the cycle.
-
-
-* sk/svn-parse-datestamp (2014-04-17) 1 commit
-  (merged to 'next' on 2014-04-21 at 5ff519f)
- + SVN.pm::parse_svn_date: allow timestamps with a single-digit hour
-
- Will keep in 'next' for the remainder of the cycle.
-
-
-* nd/index-pack-one-fd-per-thread (2014-04-16) 1 commit
-  (merged to 'next' on 2014-04-16 at b38d5a9)
- + index-pack: work around thread-unsafe pread()
-
- Enable threaded index-pack on platforms without thread-unsafe
- pread() emulation.
-
- Will keep in 'next' for the remainder of the cycle.
-
-
-* ym/fix-opportunistic-index-update-race (2014-04-10) 2 commits
-  (merged to 'next' on 2014-04-16 at cb92f4f)
- + read-cache.c: verify index file before we opportunistically update it
- + wrapper.c: add xpread() similar to xread()
-
- Read-only operations such as "git status" that internally refreshes
- the index write out the refreshed index to the disk to optimize
- future accesses to the working tree, but this could race with a
- "read-write" operation that modify the index while it is running.
- Detect such a race and avoid overwriting the index.
-
- Duy raised a good point that we may need to do the same for the
- normal writeout codepath, not just the "opportunistic" update
- codepath.  While that is true, nobody sane would be running two
- simultaneous operations that are clearly write-oriented competing
- with each other against the same index file.  So in that sense that
- can be done as a less urgent follow-up for this topic.
-
- Will keep in 'next' for the remainder of the cycle.
-
-
-* jl/status-added-submodule-is-never-ignored (2014-04-07) 2 commits
- - commit -m: commit staged submodules regardless of ignore config
- - status/commit: show staged submodules regardless of ignore config
-
- There also are a few patches Ronald Weiss and Jens are working on
- polishing around this topic, and a patch from Jens each for gitk
- and git-gui.
-
- Waiting for the dust to settle until picking them up all.
-
-
-* mh/lockfile (2014-04-15) 25 commits
- - trim_last_path_elm(): replace last_path_elm()
- - resolve_symlink(): take a strbuf parameter
- - resolve_symlink(): use a strbuf for internal scratch space
- - change lock_file::filename into a strbuf
- - commit_lock_file(): use a strbuf to manage temporary space
- - try_merge_strategy(): use a statically-allocated lock_file object
- - try_merge_strategy(): remove redundant lock_file allocation
- - struct lock_file: declare some fields volatile
- - lockfile: avoid transitory invalid states
- - commit_lock_file(): die() if called for unlocked lockfile object
- - commit_lock_file(): inline temporary variable
- - remove_lock_file(): call rollback_lock_file()
- - lock_file(): exit early if lockfile cannot be opened
- - write_packed_entry_fn(): convert cb_data into a (const int *)
- - prepare_index(): declare return value to be (const char *)
- - delete_ref_loose(): don't muck around in the lock_file's filename
- - cache.h: define constants LOCK_SUFFIX and LOCK_SUFFIX_LEN
- - lockfile.c: document the various states of lock_file objects
- - lock_file(): always add lock_file object to lock_file_list
- - hold_lock_file_for_append(): release lock on errors
- - lockfile: unlock file if lockfile permissions cannot be adjusted
- - rollback_lock_file(): set fd to -1
- - rollback_lock_file(): do not clear filename redundantly
- - api-lockfile: expand the documentation
- - unable_to_lock_die(): rename function from unable_to_lock_index_die()
-
- Refactor and fix corner-case bugs in the lockfile API, all looked
- sensible.
-
- Expecting a reroll.
 
 
 * mt/patch-id-stable (2014-05-06) 6 commits
@@ -1023,68 +1281,7 @@ of the repositories listed at
  Introduce a new way to compute patch-id for a patch that is not
  affected by the order of the paths that appear in the input.
 
- Will keep in 'next' for the remainder of the cycle.
-
-
-* mh/ref-transaction (2014-04-07) 27 commits
-  (merged to 'next' on 2014-04-16 at a99f84d)
- + ref_transaction_commit(): work with transaction->updates in place
- + struct ref_update: add a type field
- + struct ref_update: add a lock field
- + ref_transaction_commit(): simplify code using temporary variables
- + struct ref_update: store refname as a FLEX_ARRAY
- + struct ref_update: rename field "ref_name" to "refname"
- + refs: remove API function update_refs()
- + update-ref --stdin: reimplement using reference transactions
- + refs: add a concept of a reference transaction
- + update-ref --stdin: harmonize error messages
- + update-ref --stdin: improve the error message for unexpected EOF
- + t1400: test one mistake at a time
- + update-ref --stdin -z: deprecate interpreting the empty string as zeros
- + update-ref.c: extract a new function, parse_next_sha1()
- + t1400: test that stdin -z update treats empty <newvalue> as zeros
- + update-ref --stdin: simplify error messages for missing oldvalues
- + update-ref --stdin: make error messages more consistent
- + update-ref --stdin: improve error messages for invalid values
- + update-ref.c: extract a new function, parse_refname()
- + parse_cmd_verify(): copy old_sha1 instead of evaluating <oldvalue> twice
- + update-ref --stdin: read the whole input at once
- + update_refs(): fix constness
- + refs.h: rename the action_on_err constants
- + t1400: add some more tests involving quoted arguments
- + parse_arg(): really test that argument is properly terminated
- + t1400: provide more usual input to the command
- + t1400: fix name and expected result of one test
-
- Update "update-ref --stdin [-z]" and then introduce a transactional
- support for (multi-)reference updates.
-
- Will keep in 'next' for the remainder of the cycle.
-
-
-* jc/apply-ignore-whitespace (2014-03-26) 1 commit
-  (merged to 'next' on 2014-04-04 at 53779a7)
- + apply --ignore-space-change: lines with and without leading whitespaces do not match
-
- "--ignore-space-change" option of "git apply" ignored the
- spaces at the beginning of line too aggressively, which is
- inconsistent with the option of the same name "diff" and "git diff"
- have.
-
- Will keep in 'next' for the remainder of the cycle.
-
-
-* as/grep-fullname-config (2014-03-20) 1 commit
-  (merged to 'next' on 2014-03-28 at 810a076)
- + grep: add grep.fullName config variable
-
- Add a configuration variable to force --full-name to be default for
- "git grep".
-
- This may cause regressions on scripted users that do not expect
- this new behaviour.
-
- Will keep in 'next' for the remainder of the cycle.
+ Will merge to 'master'.
 
 
 * nd/multiple-work-trees (2014-03-25) 28 commits
@@ -1124,44 +1321,7 @@ of the repositories listed at
  Will hold.
 
 
-* ks/tree-diff-nway (2014-04-09) 20 commits
-  (merged to 'next' on 2014-04-09 at c17228e)
- + mingw: activate alloca
-  (merged to 'next' on 2014-04-08 at 6b74773)
- + combine-diff: speed it up, by using multiparent diff tree-walker directly
- + tree-diff: rework diff_tree() to generate diffs for multiparent cases as well
- + Portable alloca for Git
-  (merged to 'next' on 2014-03-31 at 16a7bd4)
- + tree-diff: reuse base str(buf) memory on sub-tree recursion
- + tree-diff: no need to call "full" diff_tree_sha1 from show_path()
- + tree-diff: rework diff_tree interface to be sha1 based
- + tree-diff: diff_tree() should now be static
- + tree-diff: remove special-case diff-emitting code for empty-tree cases
-  (merged to 'next' on 2014-03-25 at cfcbdac)
- + tree-diff: simplify tree_entry_pathcmp
- + tree-diff: show_path prototype is not needed anymore
- + tree-diff: rename compare_tree_entry -> tree_entry_pathcmp
- + tree-diff: move all action-taking code out of compare_tree_entry()
- + tree-diff: don't assume compare_tree_entry() returns -1,0,1
-  (merged to 'next' on 2014-03-21 at d872679)
- + tree-diff: consolidate code for emitting diffs and recursion in one place
- + tree-diff: show_tree() is not needed
- + tree-diff: no need to pass match to skip_uninteresting()
- + tree-diff: no need to manually verify that there is no mode change for a path
- + combine-diff: move changed-paths scanning logic into its own function
- + combine-diff: move show_log_first logic/action out of paths scanning
-
- Instead of running N pair-wise diff-trees when inspecting a
- N-parent merge, find the set of paths that were touched by walking
- N+1 trees in parallel.  These set of paths can then be turned into
- N pair-wise diff-tree results to be processed through rename
- detections and such.  And N=2 case nicely degenerates to the usual
- 2-way diff-tree, which is very nice.
-
- Will keep in 'next' for the remainder of the cycle.
-
-
-* cc/interpret-trailers (2014-04-29) 11 commits
+* cc/interpret-trailers (2014-05-28) 11 commits
  - Documentation: add documentation for 'git interpret-trailers'
  - trailer: add tests for commands in config file
  - trailer: execute command from 'trailer.<name>.command'
@@ -1191,13 +1351,6 @@ of the repositories listed at
  parties.
 
 
-* jc/graduate-remote-hg-bzr (2014-05-19) 1 commit
-  (merged to 'next' on 2014-05-19 at eeb9af6)
- + remote-helpers: give short instructions to download the latest
-
- Reverted from 'next'.
-
-
 * mt/rebase-i-ack (2014-05-19) 6 commits
  . git-ack: record an ack
  . rebase: test ack
@@ -1208,16 +1361,6 @@ of the repositories listed at
  (this branch is tangled with mt/patch-id-stable.)
 
  Will be rerolled post 2.0
-
-
-* fc/remote-hg-fixes-for-hg-3.0 (2014-05-08) 5 commits
- . [DONTMERGE-not signed-off] remote-hg: work with older versions of mercurial
- . remote-hg: add support for hg v3.0
- . t: remote-hg: trivial cleanups and fixes
- . t: remote-hg: add file operation tests
- . remote-hg: add more tests
-
- No longer relevant, as 'master' unbundles contrib/remote-helpers/.
 
 
 * rs/ref-transaction (2014-04-29) 27 commits
@@ -1254,20 +1397,3 @@ of the repositories listed at
  flight, and the topic is still being worked on with frequent
  rerolls.  Will pick up a reroll once things settle down a bit after
  the release.
-
-
-* fc/remote-helpers-hg-bzr-graduation (2014-04-29) 11 commits
- . remote-hg: trivial cleanups
- . remote-hg: make sure we omit multiple heads
- . git-remote-hg: use internal clone's hgrc
- . t: remote-hg: split into setup test
- . remote-hg: properly detect missing contexts
- . remote-{hg,bzr}: store marks only on success
- . remote-hg: update to 'public' phase when pushing
- . remote-hg: fix parsing of custom committer
-  (merged to 'next' on 2014-04-22 at fed170a)
- + remote-helpers: move tests out of contrib
- + remote-helpers: move out of contrib
- + remote-helpers: squelch python import exceptions
-
- No longer relevant, as 'master' unbundles contrib/remote-helpers/.
