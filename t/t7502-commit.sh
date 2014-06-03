@@ -344,6 +344,13 @@ test_expect_success 'message shows author when it is not equal to committer' '
 	  .git/COMMIT_EDITMSG
 '
 
+test_expect_success 'message shows date when it is explicitly set' '
+	git commit --allow-empty -e -m foo --date="2010-01-02T03:04:05" &&
+	test_i18ngrep \
+	  "^# Date: *Sat Jan 2 03:04:05 2010 +0000" \
+	  .git/COMMIT_EDITMSG
+'
+
 test_expect_success AUTOIDENT 'message shows committer when it is automatic' '
 
 	echo >>negative &&
