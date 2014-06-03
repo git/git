@@ -40,17 +40,13 @@ struct base_data {
 	int ofs_first, ofs_last;
 };
 
-#if !defined(NO_PTHREADS) && defined(NO_THREAD_SAFE_PREAD)
-/* pread() emulation is not thread-safe. Disable threading. */
-#define NO_PTHREADS
-#endif
-
 struct thread_local {
 #ifndef NO_PTHREADS
 	pthread_t thread;
 #endif
 	struct base_data *base_cache;
 	size_t base_cache_used;
+	int pack_fd;
 };
 
 /*
@@ -91,7 +87,8 @@ static off_t consumed_bytes;
 static unsigned deepest_delta;
 static git_SHA_CTX input_ctx;
 static uint32_t input_crc32;
-static int input_fd, output_fd, pack_fd;
+static int input_fd, output_fd;
+static const char *curr_pack;
 
 #ifndef NO_PTHREADS
 
@@ -134,6 +131,7 @@ static inline void unlock_mutex(pthread_mutex_t *mutex)
  */
 static void init_thread(void)
 {
+	int i;
 	init_recursive_mutex(&read_mutex);
 	pthread_mutex_init(&counter_mutex, NULL);
 	pthread_mutex_init(&work_mutex, NULL);
@@ -141,11 +139,18 @@ static void init_thread(void)
 		pthread_mutex_init(&deepest_delta_mutex, NULL);
 	pthread_key_create(&key, NULL);
 	thread_data = xcalloc(nr_threads, sizeof(*thread_data));
+	for (i = 0; i < nr_threads; i++) {
+		thread_data[i].pack_fd = open(curr_pack, O_RDONLY);
+		if (thread_data[i].pack_fd == -1)
+			die_errno(_("unable to open %s"), curr_pack);
+	}
+
 	threads_active = 1;
 }
 
 static void cleanup_thread(void)
 {
+	int i;
 	if (!threads_active)
 		return;
 	threads_active = 0;
@@ -154,6 +159,8 @@ static void cleanup_thread(void)
 	pthread_mutex_destroy(&work_mutex);
 	if (show_stat)
 		pthread_mutex_destroy(&deepest_delta_mutex);
+	for (i = 0; i < nr_threads; i++)
+		close(thread_data[i].pack_fd);
 	pthread_key_delete(key);
 	free(thread_data);
 }
@@ -288,13 +295,13 @@ static const char *open_pack_file(const char *pack_name)
 			output_fd = open(pack_name, O_CREAT|O_EXCL|O_RDWR, 0600);
 		if (output_fd < 0)
 			die_errno(_("unable to create '%s'"), pack_name);
-		pack_fd = output_fd;
+		nothread_data.pack_fd = output_fd;
 	} else {
 		input_fd = open(pack_name, O_RDONLY);
 		if (input_fd < 0)
 			die_errno(_("cannot open packfile '%s'"), pack_name);
 		output_fd = -1;
-		pack_fd = input_fd;
+		nothread_data.pack_fd = input_fd;
 	}
 	git_SHA1_Init(&input_ctx);
 	return pack_name;
@@ -542,7 +549,7 @@ static void *unpack_data(struct object_entry *obj,
 
 	do {
 		ssize_t n = (len < 64*1024) ? len : 64*1024;
-		n = xpread(pack_fd, inbuf, n, from);
+		n = xpread(get_thread_data()->pack_fd, inbuf, n, from);
 		if (n < 0)
 			die_errno(_("cannot pread pack file"));
 		if (!n)
@@ -1490,7 +1497,7 @@ static void show_pack_info(int stat_only)
 int cmd_index_pack(int argc, const char **argv, const char *prefix)
 {
 	int i, fix_thin_pack = 0, verify = 0, stat_only = 0;
-	const char *curr_pack, *curr_index;
+	const char *curr_index;
 	const char *index_name = NULL, *pack_name = NULL;
 	const char *keep_name = NULL, *keep_msg = NULL;
 	char *index_name_buf = NULL, *keep_name_buf = NULL;
