@@ -56,7 +56,7 @@ cat <<EOF
 
 The tarballs are found at:
 
-    https://www.kernel.org/pub/software/scm/git/${for_testing+testing/}
+    https://www.kernel.org/pub/software/scm/git/${for_testing:+testing/}
 
 The following public repositories all have a copy of the '$relname'
 tag and the '$branch' branch that the tag points at:
