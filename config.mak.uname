@@ -363,16 +363,16 @@ ifeq ($(uname_S),Windows)
 		compat/win32/pthread.o compat/win32/syslog.o \
 		compat/win32/dirent.o
 	COMPAT_CFLAGS = -D__USE_MINGW_ACCESS -DNOGDI -DHAVE_STRING_H -Icompat -Icompat/regex -Icompat/win32 -DSTRIP_EXTENSION=\".exe\"
-	BASIC_LDFLAGS = -IGNORE:4217 -IGNORE:4049 -NOLOGO -SUBSYSTEM:CONSOLE -NODEFAULTLIB:MSVCRT.lib
+	BASIC_LDFLAGS = -IGNORE:4217 -IGNORE:4049 -NOLOGO -SUBSYSTEM:CONSOLE
 	EXTLIBS = user32.lib advapi32.lib shell32.lib wininet.lib ws2_32.lib invalidcontinue.obj
 	PTHREAD_LIBS =
 	lib =
 ifndef DEBUG
-	BASIC_CFLAGS += -GL -Os -MT
+	BASIC_CFLAGS += -GL -Os -MD
 	BASIC_LDFLAGS += -LTCG
 	AR += -LTCG
 else
-	BASIC_CFLAGS += -Zi -MTd
+	BASIC_CFLAGS += -Zi -MDd
 endif
 	X = .exe
 endif
