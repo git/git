@@ -881,6 +881,7 @@ case $(uname -s) in
 	test_set_prereq SED_STRIPS_CR
 	test_set_prereq GREP_STRIPS_CR
 	GIT_TEST_CMP=mingw_test_cmp
+	GIT_TEST_CMP_BIN="cmp -s -c"
 	;;
 *CYGWIN*)
 	test_set_prereq POSIXPERM

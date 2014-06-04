@@ -68,7 +68,7 @@ test_expect_missing	worktree2/ignored-by-worktree
 
 test_expect_success 'git archive vs. bare' '
 	(cd bare && git archive HEAD) >bare-archive.tar &&
-	test_cmp archive.tar bare-archive.tar
+	test_cmp_bin archive.tar bare-archive.tar
 '
 
 test_expect_success 'git archive with worktree attributes, bare' '

@@ -617,6 +617,14 @@ test_cmp() {
 	$GIT_TEST_CMP "$@"
 }
 
+test_cmp_bin() {
+	if test -z "$GIT_TEST_CMP_BIN" ; then
+		$GIT_TEST_CMP "$@"
+	else
+		$GIT_TEST_CMP_BIN "$@"
+	fi
+}
+
 # Check if the file expected to be empty is indeed empty, and barfs
 # otherwise.
 
