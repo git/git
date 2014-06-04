@@ -97,15 +97,15 @@ test_expect_success \
 
 test_expect_success \
     'git archive --format=zip vs. the same in a bare repo' \
-    'test_cmp d.zip d1.zip'
+    'test_cmp_bin d.zip d1.zip'
 
 test_expect_success 'git archive --format=zip with --output' \
     'git archive --format=zip --output=d2.zip HEAD &&
-    test_cmp d.zip d2.zip'
+    test_cmp_bin d.zip d2.zip'
 
 test_expect_success 'git archive with --output, inferring format' '
 	git archive --output=d3.zip HEAD &&
-	test_cmp d.zip d3.zip
+	test_cmp_bin d.zip d3.zip
 '
 
 test_expect_success \
