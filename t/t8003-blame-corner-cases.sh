@@ -191,4 +191,13 @@ test_expect_success 'indent of line numbers, ten lines' '
 	test $(grep -c "  " actual) = 9
 '
 
+test_expect_success 'blaming files with CRLF newlines' '
+	git config core.autocrlf false &&
+	printf "testcase\r\n" >crlffile &&
+	git add crlffile &&
+	git commit -m testcase &&
+	git -c core.autocrlf=input blame crlffile >actual &&
+	grep "A U Thor" actual
+'
+
 test_done
