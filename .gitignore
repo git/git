@@ -226,6 +226,7 @@
 /config.mak.autogen
 /config.mak.append
 /configure
+/unicode
 /tags
 /TAGS
 /cscope*
