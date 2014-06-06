@@ -1,17 +1,60 @@
 Git v2.1 Release Notes
 ======================
 
+Backward compatibility notes
+----------------------------
+
+ * The default value we give to the environment variable LESS has been
+   changed from "FRSX" to "FRX", losing "S" (chop long lines instead
+   of wrapping).  Existing users who prefer not to see line-wrapped
+   output may want to set
+
+     $ git config core.pager "less -S"
+
+   to restore the traditional behaviour.  It is expected that people
+   find output from the most subcommands easier to read with the new
+   default, except for "blame" which tends to produce really long
+   lines.  To override the new default only for "git blame", you can
+   do this:
+
+     $ git config pager.blame "less -S"
+
+ * A few disused directories in contrib/ have been retired.
+
+
 Updates since v2.0
 ------------------
 
 UI, Workflows & Features
 
+ * Since the very beginning of Git, we gave the LESS environment a
+   default value "FRSX" when we spawn "less" as the pager.  "S" (chop
+   long lines instead of wrapping) has been removed from this default
+   set of options, because it is more or less a personal taste thing,
+   as opposed to others that have good justifications (i.e. "R" is
+   very much justified because many kinds of output we produce are
+   colored and "FX" is justified because output we produce is often
+   shorter than a page).
+
+ * The logic and data used to compute the display width needed for
+   UTF-8 strings have been updated to match Unicode 6.3 better.
+
  * "git commit --date=<date>" option learned to read from more
    timestamp formats, including "--date=now".
+
+ * The `core.commentChar` configuration variable is used to specify a
+   custom comment character other than the default "#" to be used in
+   the commit log editor.  This can be set to `auto` to attempt to
+   choose a different character that does not conflict with what
+   already starts a line in the message being edited for cases like
+   "git commit --amend".
 
  * "git grep" learned grep.fullname configuration variable to force
    "--full-name" to be default.  This may cause regressions on
    scripted users that do not expect this new behaviour.
+
+ * "git imap-send" learned to ask the credential helper for auth
+   material.
 
  * "git merge" without argument, even when there is an upstream
    defined for the current branch, refused to run until
@@ -37,8 +80,20 @@ UI, Workflows & Features
    digit in the hour part, e.g. 2014-01-07T5:01:02.048176Z, emitted
    by some broken subversion server implementations.
 
+ * "git tag" when editing the tag message shows the name of the tag
+   being edited as a comment in the editor.
+
 
 Performance, Internal Implementation, etc.
+
+ * Build procedure for 'subtree' (in contrib/) has been cleaned up.
+
+ * The `core.deltabasecachelimit` used to default to 16 MiB , but this
+   proved to be too small, and has been bumped to 96 MiB.
+
+ * "git blame" has been optimized greatly by reorganising the data
+   structure that is used to keep track of the work to be done, thanks
+   to David Karstrup <dak@gnu.org>.
 
  * "git diff" that compares 3-or-more trees (e.g. parents and the
    result of a merge) have been optimized.
@@ -59,6 +114,11 @@ Unless otherwise noted, all the fixes since v2.0 in the maintenance
 track are contained in this release (see the maintenance releases'
 notes for details).
 
+ * We used to unconditionally disable the pager in the pager process
+   we spawn to feed out output, but that prevented people who want to
+   run "less" within "less" from doing so.
+   (merge c0459ca je/pager-do-not-recurse later to maint).
+
  * "--ignore-space-change" option of "git apply" ignored the spaces
    at the beginning of line too aggressively, which is inconsistent
    with the option of the same name "diff" and "git diff" have.
@@ -69,14 +129,41 @@ notes for details).
    lines in its output.
    (merge dd75553 jx/blame-align-relative-time later to maint).
 
+ * "git blame" assigned the blame to the copy in the working-tree if
+   the repository is set to core.autocrlf=input and the file used CRLF
+   line endings.
+   (merge 4d4813a bc/blame-crlf-test later to maint).
+
+ * "git commit --allow-empty-messag -C $commit" did not work when the
+   commit did not have any log message.
+   (merge 076cbd6 jk/commit-C-pick-empty later to maint).
+
+ * "git grep -O" to show the lines that hit in the pager did not work
+   well with case insensitive search.  We now spawn "less" with its
+   "-I" option when it is used as the pager (which is the default).
+   (merge f7febbe sk/spawn-less-case-insensitively-from-grep-O-i later to maint).
+
  * We used to disable threaded "git index-pack" on platforms without
    thread-safe pread(); use a different workaround for such
    platforms to allow threaded "git index-pack".
    (merge 3953949 nd/index-pack-one-fd-per-thread later to maint).
 
+ * The error reporting from "git index-pack" has been improved to
+   distinguish missing objects from type errors.
+   (merge 77583e7 jk/index-pack-report-missing later to maint).
+
+ * On a case insensitive filesystem, merge-recursive incorrectly
+   deleted the file that is to be renamed to a name that is the same
+   except for case differences.
+   (merge baa37bf dt/merge-recursive-case-insensitive later to maint).
+
  * "git rerere forget" did not work well when merge.conflictstyle
    was set to a non-default value.
    (merge de3d8bb fc/rerere-conflict-style later to maint).
+
+ * "git show -s" (i.e. show log message only) used to incorrectly emit
+   an extra blank line after a merge commit.
+   (merge ad2f725 mk/show-s-no-extra-blank-line-for-merges later to maint).
 
  * "git status", even though it is a read-only operation, tries to
    update the index with refreshed lstat(2) info to optimize future
