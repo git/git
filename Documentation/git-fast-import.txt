@@ -231,7 +231,7 @@ Date Formats
 ~~~~~~~~~~~~
 The following date formats are supported.  A frontend should select
 the format it will use for this import by passing the format name
-in the \--date-format=<fmt> command line option.
+in the \--date-format=<fmt> command-line option.
 
 `raw`::
 	This is the Git native format and is `<time> SP <offutc>`.
@@ -348,7 +348,7 @@ and control the current import process.  More detailed discussion
 `done`::
 	Marks the end of the stream. This command is optional
 	unless the `done` feature was requested using the
-	`--done` command line option or `feature done` command.
+	`--done` command-line option or `feature done` command.
 
 `cat-blob`::
 	Causes fast-import to print a blob in 'cat-file --batch'
@@ -437,7 +437,7 @@ the email address from the other fields in the line.  Note that
 of bytes, except `LT`, `GT` and `LF`.  `<name>` is typically UTF-8 encoded.
 
 The time of the change is specified by `<when>` using the date format
-that was selected by the \--date-format=<fmt> command line option.
+that was selected by the \--date-format=<fmt> command-line option.
 See ``Date Formats'' above for the set of supported formats, and
 their syntax.
 
@@ -1085,7 +1085,7 @@ Option commands must be the first commands on the input (not counting
 feature commands), to give an option command after any non-option
 command is an error.
 
-The following commandline options change import semantics and may therefore
+The following command-line options change import semantics and may therefore
 not be passed as option:
 
 * date-format
@@ -1099,7 +1099,7 @@ not be passed as option:
 If the `done` feature is not in use, treated as if EOF was read.
 This can be used to tell fast-import to finish early.
 
-If the `--done` command line option or `feature done` command is
+If the `--done` command-line option or `feature done` command is
 in use, the `done` command is mandatory and marks the end of the
 stream.
 

@@ -117,7 +117,7 @@ $ git bisect visualize
 `view` may also be used as a synonym for `visualize`.
 
 If the 'DISPLAY' environment variable is not set, 'git log' is used
-instead.  You can also give command line options such as `-p` and
+instead.  You can also give command-line options such as `-p` and
 `--stat`.
 
 ------------

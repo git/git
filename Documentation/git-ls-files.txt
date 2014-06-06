@@ -185,15 +185,15 @@ specifies the format of exclude patterns.
 
 These exclude patterns come from these places, in order:
 
-  1. The command line flag --exclude=<pattern> specifies a
+  1. The command-line flag --exclude=<pattern> specifies a
      single pattern.  Patterns are ordered in the same order
      they appear in the command line.
 
-  2. The command line flag --exclude-from=<file> specifies a
+  2. The command-line flag --exclude-from=<file> specifies a
      file containing a list of patterns.  Patterns are ordered
      in the same order they appear in the file.
 
-  3. The command line flag --exclude-per-directory=<name> specifies
+  3. The command-line flag --exclude-per-directory=<name> specifies
      a name of the file in each directory 'git ls-files'
      examines, normally `.gitignore`.  Files in deeper
      directories take precedence.  Patterns are ordered in the

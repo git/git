@@ -3,7 +3,7 @@ gitcli(7)
 
 NAME
 ----
-gitcli - Git command line interface and conventions
+gitcli - Git command-line interface and conventions
 
 SYNOPSIS
 --------
@@ -66,13 +66,13 @@ you will.
 Here are the rules regarding the "flags" that you should follow when you are
 scripting Git:
 
- * it's preferred to use the non dashed form of Git commands, which means that
+ * it's preferred to use the non-dashed form of Git commands, which means that
    you should prefer `git foo` to `git-foo`.
 
  * splitting short options to separate words (prefer `git foo -a -b`
    to `git foo -ab`, the latter may not even work).
 
- * when a command line option takes an argument, use the 'stuck' form.  In
+ * when a command-line option takes an argument, use the 'stuck' form.  In
    other words, write `git foo -oArg` instead of `git foo -o Arg` for short
    options, and `git foo --long-opt=Arg` instead of `git foo --long-opt Arg`
    for long options.  An option that takes optional option-argument must be
@@ -103,7 +103,7 @@ Here is a list of the facilities provided by this option parser.
 Magic Options
 ~~~~~~~~~~~~~
 Commands which have the enhanced option parser activated all understand a
-couple of magic command line options:
+couple of magic command-line options:
 
 -h::
 	gives a pretty printed usage of the command.

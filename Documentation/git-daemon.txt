@@ -169,7 +169,7 @@ Git configuration files in that directory are readable by `<user>`.
 --forbid-override=<service>::
 	Allow/forbid overriding the site-wide default with per
 	repository configuration.  By default, all the services
-	are overridable.
+	may be overridden.
 
 --[no-]informative-errors::
 	When informative errors are turned on, git-daemon will report
@@ -184,7 +184,7 @@ Git configuration files in that directory are readable by `<user>`.
 	Every time a client connects, first run an external command
 	specified by the <path> with service name (e.g. "upload-pack"),
 	path to the repository, hostname (%H), canonical hostname
-	(%CH), ip address (%IP), and tcp port (%P) as its command line
+	(%CH), IP address (%IP), and TCP port (%P) as its command-line
 	arguments. The external command can decide to decline the
 	service by exiting with a non-zero status (or to allow it by
 	exiting with a zero status).  It can also look at the $REMOTE_ADDR
@@ -204,7 +204,7 @@ SERVICES
 --------
 
 These services can be globally enabled/disabled using the
-command line options of this command.  If a finer-grained
+command-line options of this command.  If finer-grained
 control is desired (e.g. to allow 'git archive' to be run
 against only in a few selected repositories the daemon serves),
 the per-repository configuration file can be used to enable or
