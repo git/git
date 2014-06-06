@@ -1,7 +1,8 @@
 /*
  * Blame
  *
- * Copyright (c) 2006, Junio C Hamano
+ * Copyright (c) 2006, 2014 by its authors
+ * See COPYING for licensing conditions
  */
 
 #include "cache.h"
@@ -18,7 +19,9 @@
 #include "cache-tree.h"
 #include "string-list.h"
 #include "mailmap.h"
+#include "mergesort.h"
 #include "parse-options.h"
+#include "prio-queue.h"
 #include "utf8.h"
 #include "userdiff.h"
 #include "line-range.h"
@@ -83,11 +86,42 @@ static unsigned blame_copy_score;
  */
 struct origin {
 	int refcnt;
+	/* Record preceding blame record for this blob */
 	struct origin *previous;
+	/* origins are put in a list linked via `next' hanging off the
+	 * corresponding commit's util field in order to make finding
+	 * them fast.  The presence in this chain does not count
+	 * towards the origin's reference count.  It is tempting to
+	 * let it count as long as the commit is pending examination,
+	 * but even under circumstances where the commit will be
+	 * present multiple times in the priority queue of unexamined
+	 * commits, processing the first instance will not leave any
+	 * work requiring the origin data for the second instance.  An
+	 * interspersed commit changing that would have to be
+	 * preexisting with a different ancestry and with the same
+	 * commit date in order to wedge itself between two instances
+	 * of the same commit in the priority queue _and_ produce
+	 * blame entries relevant for it.  While we don't want to let
+	 * us get tripped up by this case, it certainly does not seem
+	 * worth optimizing for.
+	 */
+	struct origin *next;
 	struct commit *commit;
+	/* `suspects' contains blame entries that may be attributed to
+	 * this origin's commit or to parent commits.  When a commit
+	 * is being processed, all suspects will be moved, either by
+	 * assigning them to an origin in a different commit, or by
+	 * shipping them to the scoreboard's ent list because they
+	 * cannot be attributed to a different commit.
+	 */
+	struct blame_entry *suspects;
 	mmfile_t file;
 	unsigned char blob_sha1[20];
 	unsigned mode;
+	/* guilty gets set when shipping any suspects to the final
+	 * blame list instead of other commits
+	 */
+	char guilty;
 	char path[FLEX_ARRAY];
 };
 
@@ -176,10 +210,22 @@ static inline struct origin *origin_incref(struct origin *o)
 static void origin_decref(struct origin *o)
 {
 	if (o && --o->refcnt <= 0) {
+		struct origin *p, *l = NULL;
 		if (o->previous)
 			origin_decref(o->previous);
 		free(o->file.ptr);
-		free(o);
+		/* Should be present exactly once in commit chain */
+		for (p = o->commit->util; p; l = p, p = p->next) {
+			if (p == o) {
+				if (l)
+					l->next = p->next;
+				else
+					o->commit->util = p->next;
+				free(o);
+				return;
+			}
+		}
+		die("internal error in blame::origin_decref");
 	}
 }
 
@@ -193,8 +239,12 @@ static void drop_origin_blob(struct origin *o)
 
 /*
  * Each group of lines is described by a blame_entry; it can be split
- * as we pass blame to the parents.  They form a linked list in the
- * scoreboard structure, sorted by the target line number.
+ * as we pass blame to the parents.  They are arranged in linked lists
+ * kept as `suspects' of some unprocessed origin, or entered (when the
+ * blame origin has been finalized) into the scoreboard structure.
+ * While the scoreboard structure is only sorted at the end of
+ * processing (according to final image line number), the lists
+ * attached to an origin are sorted by the target line number.
  */
 struct blame_entry {
 	struct blame_entry *next;
@@ -210,15 +260,6 @@ struct blame_entry {
 	/* the commit that introduced this group into the final image */
 	struct origin *suspect;
 
-	/* true if the suspect is truly guilty; false while we have not
-	 * checked if the group came from one of its parents.
-	 */
-	char guilty;
-
-	/* true if the entry has been scanned for copies in the current parent
-	 */
-	char scanned;
-
 	/* the line number of the first line of this group in the
 	 * suspect's file; internally all line numbers are 0 based.
 	 */
@@ -231,11 +272,112 @@ struct blame_entry {
 };
 
 /*
+ * Any merge of blames happens on lists of blames that arrived via
+ * different parents in a single suspect.  In this case, we want to
+ * sort according to the suspect line numbers as opposed to the final
+ * image line numbers.  The function body is somewhat longish because
+ * it avoids unnecessary writes.
+ */
+
+static struct blame_entry *blame_merge(struct blame_entry *list1,
+				       struct blame_entry *list2)
+{
+	struct blame_entry *p1 = list1, *p2 = list2,
+		**tail = &list1;
+
+	if (!p1)
+		return p2;
+	if (!p2)
+		return p1;
+
+	if (p1->s_lno <= p2->s_lno) {
+		do {
+			tail = &p1->next;
+			if ((p1 = *tail) == NULL) {
+				*tail = p2;
+				return list1;
+			}
+		} while (p1->s_lno <= p2->s_lno);
+	}
+	for (;;) {
+		*tail = p2;
+		do {
+			tail = &p2->next;
+			if ((p2 = *tail) == NULL)  {
+				*tail = p1;
+				return list1;
+			}
+		} while (p1->s_lno > p2->s_lno);
+		*tail = p1;
+		do {
+			tail = &p1->next;
+			if ((p1 = *tail) == NULL) {
+				*tail = p2;
+				return list1;
+			}
+		} while (p1->s_lno <= p2->s_lno);
+	}
+}
+
+static void *get_next_blame(const void *p)
+{
+	return ((struct blame_entry *)p)->next;
+}
+
+static void set_next_blame(void *p1, void *p2)
+{
+	((struct blame_entry *)p1)->next = p2;
+}
+
+/*
+ * Final image line numbers are all different, so we don't need a
+ * three-way comparison here.
+ */
+
+static int compare_blame_final(const void *p1, const void *p2)
+{
+	return ((struct blame_entry *)p1)->lno > ((struct blame_entry *)p2)->lno
+		? 1 : -1;
+}
+
+static int compare_blame_suspect(const void *p1, const void *p2)
+{
+	const struct blame_entry *s1 = p1, *s2 = p2;
+	/*
+	 * to allow for collating suspects, we sort according to the
+	 * respective pointer value as the primary sorting criterion.
+	 * The actual relation is pretty unimportant as long as it
+	 * establishes a total order.  Comparing as integers gives us
+	 * that.
+	 */
+	if (s1->suspect != s2->suspect)
+		return (intptr_t)s1->suspect > (intptr_t)s2->suspect ? 1 : -1;
+	if (s1->s_lno == s2->s_lno)
+		return 0;
+	return s1->s_lno > s2->s_lno ? 1 : -1;
+}
+
+static struct blame_entry *blame_sort(struct blame_entry *head,
+				      int (*compare_fn)(const void *, const void *))
+{
+	return llist_mergesort (head, get_next_blame, set_next_blame, compare_fn);
+}
+
+static int compare_commits_by_reverse_commit_date(const void *a,
+						  const void *b,
+						  void *c)
+{
+	return -compare_commits_by_commit_date(a, b, c);
+}
+
+/*
  * The current state of the blame assignment.
  */
 struct scoreboard {
 	/* the final commit (i.e. where we started digging from) */
 	struct commit *final;
+	/* Priority queue for commits with unassigned blame records */
+	struct prio_queue commits;
 	struct rev_info *revs;
 	const char *path;
 
@@ -268,7 +410,6 @@ static void coalesce(struct scoreboard *sb)
 
 	for (ent = sb->ent; ent && (next = ent->next); ent = next) {
 		if (ent->suspect == next->suspect &&
-		    ent->guilty == next->guilty &&
 		    ent->s_lno + ent->num_lines == next->s_lno) {
 			ent->num_lines += next->num_lines;
 			ent->next = next->next;
@@ -284,6 +425,30 @@ static void coalesce(struct scoreboard *sb)
 }
 
 /*
+ * Merge the given sorted list of blames into a preexisting origin.
+ * If there were no previous blames to that commit, it is entered into
+ * the commit priority queue of the score board.
+ */
+
+static void queue_blames(struct scoreboard *sb, struct origin *porigin,
+			 struct blame_entry *sorted)
+{
+	if (porigin->suspects)
+		porigin->suspects = blame_merge(porigin->suspects, sorted);
+	else {
+		struct origin *o;
+		for (o = porigin->commit->util; o; o = o->next) {
+			if (o->suspects) {
+				porigin->suspects = sorted;
+				return;
+			}
+		}
+		porigin->suspects = sorted;
+		prio_queue_put(&sb->commits, porigin->commit);
+	}
+}
+
+/*
  * Given a commit and a path in it, create a new origin structure.
  * The callers that add blame to the scoreboard should use
  * get_origin() to obtain shared, refcounted copy instead of calling
@@ -295,23 +460,32 @@ static struct origin *make_origin(struct commit *commit, const char *path)
 	o = xcalloc(1, sizeof(*o) + strlen(path) + 1);
 	o->commit = commit;
 	o->refcnt = 1;
+	o->next = commit->util;
+	commit->util = o;
 	strcpy(o->path, path);
 	return o;
 }
 
 /*
  * Locate an existing origin or create a new one.
+ * This moves the origin to front position in the commit util list.
  */
 static struct origin *get_origin(struct scoreboard *sb,
 				 struct commit *commit,
 				 const char *path)
 {
-	struct blame_entry *e;
+	struct origin *o, *l;
 
-	for (e = sb->ent; e; e = e->next) {
-		if (e->suspect->commit == commit &&
-		    !strcmp(e->suspect->path, path))
-			return origin_incref(e->suspect);
+	for (o = commit->util, l = NULL; o; l = o, o = o->next) {
+		if (!strcmp(o->path, path)) {
+			/* bump to front */
+			if (l) {
+				l->next = o->next;
+				o->next = commit->util;
+				commit->util = o;
+			}
+			return origin_incref(o);
+		}
 	}
 	return make_origin(commit, path);
 }
@@ -350,41 +524,19 @@ static struct origin *find_origin(struct scoreboard *sb,
 				  struct commit *parent,
 				  struct origin *origin)
 {
-	struct origin *porigin = NULL;
+	struct origin *porigin;
 	struct diff_options diff_opts;
 	const char *paths[2];
 
-	if (parent->util) {
-		/*
-		 * Each commit object can cache one origin in that
-		 * commit.  This is a freestanding copy of origin and
-		 * not refcounted.
-		 */
-		struct origin *cached = parent->util;
-		if (!strcmp(cached->path, origin->path)) {
+	/* First check any existing origins */
+	for (porigin = parent->util; porigin; porigin = porigin->next)
+		if (!strcmp(porigin->path, origin->path)) {
 			/*
 			 * The same path between origin and its parent
 			 * without renaming -- the most common case.
 			 */
-			porigin = get_origin(sb, parent, cached->path);
-
-			/*
-			 * If the origin was newly created (i.e. get_origin
-			 * would call make_origin if none is found in the
-			 * scoreboard), it does not know the blob_sha1/mode,
-			 * so copy it.  Otherwise porigin was in the
-			 * scoreboard and already knows blob_sha1/mode.
-			 */
-			if (porigin->refcnt == 1) {
-				hashcpy(porigin->blob_sha1, cached->blob_sha1);
-				porigin->mode = cached->mode;
-			}
-			return porigin;
+			return origin_incref (porigin);
 		}
-		/* otherwise it was not very useful; free it */
-		free(parent->util);
-		parent->util = NULL;
-	}
 
 	/* See if the origin->path is different between parent
 	 * and origin first.  Most of the time they are the
@@ -450,19 +602,6 @@ static struct origin *find_origin(struct scoreboard *sb,
 	}
 	diff_flush(&diff_opts);
 	free_pathspec(&diff_opts.pathspec);
-	if (porigin) {
-		/*
-		 * Create a freestanding copy that is not part of
-		 * the refcounted origin found in the scoreboard, and
-		 * cache it in the commit.
-		 */
-		struct origin *cached;
-
-		cached = make_origin(porigin->commit, porigin->path);
-		hashcpy(cached->blob_sha1, porigin->blob_sha1);
-		cached->mode = porigin->mode;
-		parent->util = cached;
-	}
 	return porigin;
 }
 
@@ -509,46 +648,31 @@ static struct origin *find_rename(struct scoreboard *sb,
 }
 
 /*
- * Link in a new blame entry to the scoreboard.  Entries that cover the
- * same line range have been removed from the scoreboard previously.
+ * Append a new blame entry to a given output queue.
  */
-static void add_blame_entry(struct scoreboard *sb, struct blame_entry *e)
+static void add_blame_entry(struct blame_entry ***queue, struct blame_entry *e)
 {
-	struct blame_entry *ent, *prev = NULL;
-
 	origin_incref(e->suspect);
 
-	for (ent = sb->ent; ent && ent->lno < e->lno; ent = ent->next)
-		prev = ent;
-
-	/* prev, if not NULL, is the last one that is below e */
-
-	if (prev) {
-		e->next = prev->next;
-		prev->next = e;
-	}
-	else {
-		e->next = sb->ent;
-		sb->ent = e;
-	}
+	e->next = **queue;
+	**queue = e;
+	*queue = &e->next;
 }
 
 /*
  * src typically is on-stack; we want to copy the information in it to
- * a malloced blame_entry that is already on the linked list of the
- * scoreboard.  The origin of dst loses a refcnt while the origin of src
- * gains one.
+ * a malloced blame_entry that gets added to the given queue.  The
+ * origin of dst loses a refcnt.
  */
-static void dup_entry(struct blame_entry *dst, struct blame_entry *src)
+static void dup_entry(struct blame_entry ***queue,
+		      struct blame_entry *dst, struct blame_entry *src)
 {
-	struct blame_entry *n;
-
-	n = dst->next;
 	origin_incref(src->suspect);
 	origin_decref(dst->suspect);
 	memcpy(dst, src, sizeof(*src));
-	dst->next = n;
-	dst->score = 0;
+	dst->next = **queue;
+	**queue = dst;
+	*queue = &dst->next;
 }
 
 static const char *nth_line(struct scoreboard *sb, long lno)
@@ -620,10 +744,11 @@ static void split_overlap(struct blame_entry *split,
 
 /*
  * split_overlap() divided an existing blame e into up to three parts
- * in split.  Adjust the linked list of blames in the scoreboard to
+ * in split.  Any assigned blame is moved to queue to
  * reflect the split.
  */
-static void split_blame(struct scoreboard *sb,
+static void split_blame(struct blame_entry ***blamed,
+			struct blame_entry ***unblamed,
 			struct blame_entry *split,
 			struct blame_entry *e)
 {
@@ -631,61 +756,39 @@ static void split_blame(struct scoreboard *sb,
 
 	if (split[0].suspect && split[2].suspect) {
 		/* The first part (reuse storage for the existing entry e) */
-		dup_entry(e, &split[0]);
+		dup_entry(unblamed, e, &split[0]);
 
 		/* The last part -- me */
 		new_entry = xmalloc(sizeof(*new_entry));
 		memcpy(new_entry, &(split[2]), sizeof(struct blame_entry));
-		add_blame_entry(sb, new_entry);
+		add_blame_entry(unblamed, new_entry);
 
 		/* ... and the middle part -- parent */
 		new_entry = xmalloc(sizeof(*new_entry));
 		memcpy(new_entry, &(split[1]), sizeof(struct blame_entry));
-		add_blame_entry(sb, new_entry);
+		add_blame_entry(blamed, new_entry);
 	}
 	else if (!split[0].suspect && !split[2].suspect)
 		/*
 		 * The parent covers the entire area; reuse storage for
 		 * e and replace it with the parent.
 		 */
-		dup_entry(e, &split[1]);
+		dup_entry(blamed, e, &split[1]);
 	else if (split[0].suspect) {
 		/* me and then parent */
-		dup_entry(e, &split[0]);
+		dup_entry(unblamed, e, &split[0]);
 
 		new_entry = xmalloc(sizeof(*new_entry));
 		memcpy(new_entry, &(split[1]), sizeof(struct blame_entry));
-		add_blame_entry(sb, new_entry);
+		add_blame_entry(blamed, new_entry);
 	}
 	else {
 		/* parent and then me */
-		dup_entry(e, &split[1]);
+		dup_entry(blamed, e, &split[1]);
 
 		new_entry = xmalloc(sizeof(*new_entry));
 		memcpy(new_entry, &(split[2]), sizeof(struct blame_entry));
-		add_blame_entry(sb, new_entry);
-	}
-
-	if (DEBUG) { /* sanity */
-		struct blame_entry *ent;
-		int lno = sb->ent->lno, corrupt = 0;
-
-		for (ent = sb->ent; ent; ent = ent->next) {
-			if (lno != ent->lno)
-				corrupt = 1;
-			if (ent->s_lno < 0)
-				corrupt = 1;
-			lno += ent->num_lines;
-		}
-		if (corrupt) {
-			lno = sb->ent->lno;
-			for (ent = sb->ent; ent; ent = ent->next) {
-				printf("L %8d l %8d n %8d\n",
-				       lno, ent->lno, ent->num_lines);
-				lno = ent->lno + ent->num_lines;
-			}
-			die("oops");
-		}
+		add_blame_entry(unblamed, new_entry);
 	}
 }
 
@@ -702,74 +805,146 @@ static void decref_split(struct blame_entry *split)
 }
 
 /*
- * Helper for blame_chunk().  blame_entry e is known to overlap with
- * the patch hunk; split it and pass blame to the parent.
+ * reverse_blame reverses the list given in head, appending tail.
+ * That allows us to build lists in reverse order, then reverse them
+ * afterwards.  This can be faster than building the list in proper
+ * order right away.  The reason is that building in proper order
+ * requires writing a link in the _previous_ element, while building
+ * in reverse order just requires placing the list head into the
+ * _current_ element.
  */
-static void blame_overlap(struct scoreboard *sb, struct blame_entry *e,
-			  int tlno, int plno, int same,
-			  struct origin *parent)
+
+static struct blame_entry *reverse_blame(struct blame_entry *head,
+					 struct blame_entry *tail)
 {
-	struct blame_entry split[3];
-
-	split_overlap(split, e, tlno, plno, same, parent);
-	if (split[1].suspect)
-		split_blame(sb, split, e);
-	decref_split(split);
-}
-
-/*
- * Find the line number of the last line the target is suspected for.
- */
-static int find_last_in_target(struct scoreboard *sb, struct origin *target)
-{
-	struct blame_entry *e;
-	int last_in_target = -1;
-
-	for (e = sb->ent; e; e = e->next) {
-		if (e->guilty || e->suspect != target)
-			continue;
-		if (last_in_target < e->s_lno + e->num_lines)
-			last_in_target = e->s_lno + e->num_lines;
+	while (head) {
+		struct blame_entry *next = head->next;
+		head->next = tail;
+		tail = head;
+		head = next;
 	}
-	return last_in_target;
+	return tail;
 }
 
 /*
  * Process one hunk from the patch between the current suspect for
- * blame_entry e and its parent.  Find and split the overlap, and
- * pass blame to the overlapping part to the parent.
+ * blame_entry e and its parent.  This first blames any unfinished
+ * entries before the chunk (which is where target and parent start
+ * differing) on the parent, and then splits blame entries at the
+ * start and at the end of the difference region.  Since use of -M and
+ * -C options may lead to overlapping/duplicate source line number
+ * ranges, all we can rely on from sorting/merging is the order of the
+ * first suspect line number.
  */
-static void blame_chunk(struct scoreboard *sb,
-			int tlno, int plno, int same,
-			struct origin *target, struct origin *parent)
+static void blame_chunk(struct blame_entry ***dstq, struct blame_entry ***srcq,
+			int tlno, int offset, int same,
+			struct origin *parent)
 {
-	struct blame_entry *e;
+	struct blame_entry *e = **srcq;
+	struct blame_entry *samep = NULL, *diffp = NULL;
 
-	for (e = sb->ent; e; e = e->next) {
-		if (e->guilty || e->suspect != target)
-			continue;
-		if (same <= e->s_lno)
-			continue;
-		if (tlno < e->s_lno + e->num_lines)
-			blame_overlap(sb, e, tlno, plno, same, parent);
+	while (e && e->s_lno < tlno) {
+		struct blame_entry *next = e->next;
+		/*
+		 * current record starts before differing portion.  If
+		 * it reaches into it, we need to split it up and
+		 * examine the second part separately.
+		 */
+		if (e->s_lno + e->num_lines > tlno) {
+			/* Move second half to a new record */
+			int len = tlno - e->s_lno;
+			struct blame_entry *n = xcalloc(1, sizeof (struct blame_entry));
+			n->suspect = e->suspect;
+			n->lno = e->lno + len;
+			n->s_lno = e->s_lno + len;
+			n->num_lines = e->num_lines - len;
+			e->num_lines = len;
+			e->score = 0;
+			/* Push new record to diffp */
+			n->next = diffp;
+			diffp = n;
+		} else
+			origin_decref(e->suspect);
+		/* Pass blame for everything before the differing
+		 * chunk to the parent */
+		e->suspect = origin_incref(parent);
+		e->s_lno += offset;
+		e->next = samep;
+		samep = e;
+		e = next;
 	}
+	/*
+	 * As we don't know how much of a common stretch after this
+	 * diff will occur, the currently blamed parts are all that we
+	 * can assign to the parent for now.
+	 */
+
+	if (samep) {
+		**dstq = reverse_blame(samep, **dstq);
+		*dstq = &samep->next;
+	}
+	/*
+	 * Prepend the split off portions: everything after e starts
+	 * after the blameable portion.
+	 */
+	e = reverse_blame(diffp, e);
+
+	/*
+	 * Now retain records on the target while parts are different
+	 * from the parent.
+	 */
+	samep = NULL;
+	diffp = NULL;
+	while (e && e->s_lno < same) {
+		struct blame_entry *next = e->next;
+
+		/*
+		 * If current record extends into sameness, need to split.
+		 */
+		if (e->s_lno + e->num_lines > same) {
+			/*
+			 * Move second half to a new record to be
+			 * processed by later chunks
+			 */
+			int len = same - e->s_lno;
+			struct blame_entry *n = xcalloc(1, sizeof (struct blame_entry));
+			n->suspect = origin_incref(e->suspect);
+			n->lno = e->lno + len;
+			n->s_lno = e->s_lno + len;
+			n->num_lines = e->num_lines - len;
+			e->num_lines = len;
+			e->score = 0;
+			/* Push new record to samep */
+			n->next = samep;
+			samep = n;
+		}
+		e->next = diffp;
+		diffp = e;
+		e = next;
+	}
+	**srcq = reverse_blame(diffp, reverse_blame(samep, e));
+	/* Move across elements that are in the unblamable portion */
+	if (diffp)
+		*srcq = &diffp->next;
 }
 
 struct blame_chunk_cb_data {
-	struct scoreboard *sb;
-	struct origin *target;
 	struct origin *parent;
-	long plno;
-	long tlno;
+	long offset;
+	struct blame_entry **dstq;
+	struct blame_entry **srcq;
 };
 
+/* diff chunks are from parent to target */
 static int blame_chunk_cb(long start_a, long count_a,
 			  long start_b, long count_b, void *data)
 {
 	struct blame_chunk_cb_data *d = data;
-	blame_chunk(d->sb, d->tlno, d->plno, start_b, d->target, d->parent);
-	d->plno = start_a + count_a;
-	d->tlno = start_b + count_b;
+	if (start_a - start_b != d->offset)
+		die("internal error in blame::blame_chunk_cb");
+	blame_chunk(&d->dstq, &d->srcq, start_b, start_a - start_b,
+		    start_b + count_b, d->parent);
+	d->offset = start_a + count_a - (start_b + count_b);
 	return 0;
 }
 
@@ -778,29 +953,32 @@ static int blame_chunk_cb(long start_a, long count_a,
  * for the lines it is suspected to its parent.  Run diff to find
  * which lines came from parent and pass blame for them.
  */
-static int pass_blame_to_parent(struct scoreboard *sb,
-				struct origin *target,
-				struct origin *parent)
+static void pass_blame_to_parent(struct scoreboard *sb,
+				 struct origin *target,
+				 struct origin *parent)
 {
-	int last_in_target;
 	mmfile_t file_p, file_o;
 	struct blame_chunk_cb_data d;
+	struct blame_entry *newdest = NULL;
 
-	memset(&d, 0, sizeof(d));
-	d.sb = sb; d.target = target; d.parent = parent;
-	last_in_target = find_last_in_target(sb, target);
-	if (last_in_target < 0)
-		return 1; /* nothing remains for this target */
+	if (!target->suspects)
+		return; /* nothing remains for this target */
+
+	d.parent = parent;
+	d.offset = 0;
+	d.dstq = &newdest; d.srcq = &target->suspects;
 
 	fill_origin_blob(&sb->revs->diffopt, parent, &file_p);
 	fill_origin_blob(&sb->revs->diffopt, target, &file_o);
 	num_get_patch++;
 
 	diff_hunks(&file_p, &file_o, 0, blame_chunk_cb, &d);
-	/* The rest (i.e. anything after tlno) are the same as the parent */
-	blame_chunk(sb, d.tlno, d.plno, last_in_target, target, parent);
+	/* The rest are the same as the parent */
+	blame_chunk(&d.dstq, &d.srcq, INT_MAX, d.offset, INT_MAX, parent);
+	*d.dstq = NULL;
+	queue_blames(sb, parent, newdest);
 
-	return 0;
+	return;
 }
 
 /*
@@ -945,43 +1123,80 @@ static void find_copy_in_blob(struct scoreboard *sb,
 	handle_split(sb, ent, d.tlno, d.plno, ent->num_lines, parent, split);
 }
 
+/* Move all blame entries from list *source that have a score smaller
+ * than score_min to the front of list *small.
+ * Returns a pointer to the link pointing to the old head of the small list.
+ */
+
+static struct blame_entry **filter_small(struct scoreboard *sb,
+					 struct blame_entry **small,
+					 struct blame_entry **source,
+					 unsigned score_min)
+{
+	struct blame_entry *p = *source;
+	struct blame_entry *oldsmall = *small;
+	while (p) {
+		if (ent_score(sb, p) <= score_min) {
+			*small = p;
+			small = &p->next;
+			p = *small;
+		} else {
+			*source = p;
+			source = &p->next;
+			p = *source;
+		}
+	}
+	*small = oldsmall;
+	*source = NULL;
+	return small;
+}
+
 /*
  * See if lines currently target is suspected for can be attributed to
  * parent.
  */
-static int find_move_in_parent(struct scoreboard *sb,
-			       struct origin *target,
-			       struct origin *parent)
+static void find_move_in_parent(struct scoreboard *sb,
+				struct blame_entry ***blamed,
+				struct blame_entry **toosmall,
+				struct origin *target,
+				struct origin *parent)
 {
-	int last_in_target, made_progress;
 	struct blame_entry *e, split[3];
+	struct blame_entry *unblamed = target->suspects;
+	struct blame_entry *leftover = NULL;
 	mmfile_t file_p;
 
-	last_in_target = find_last_in_target(sb, target);
-	if (last_in_target < 0)
-		return 1; /* nothing remains for this target */
+	if (!unblamed)
+		return; /* nothing remains for this target */
 
 	fill_origin_blob(&sb->revs->diffopt, parent, &file_p);
 	if (!file_p.ptr)
-		return 0;
+		return;
 
-	made_progress = 1;
-	while (made_progress) {
-		made_progress = 0;
-		for (e = sb->ent; e; e = e->next) {
-			if (e->guilty || e->suspect != target ||
-			    ent_score(sb, e) < blame_move_score)
-				continue;
+	/* At each iteration, unblamed has a NULL-terminated list of
+	 * entries that have not yet been tested for blame.  leftover
+	 * contains the reversed list of entries that have been tested
+	 * without being assignable to the parent.
+	 */
+	do {
+		struct blame_entry **unblamedtail = &unblamed;
+		struct blame_entry *next;
+		for (e = unblamed; e; e = next) {
+			next = e->next;
 			find_copy_in_blob(sb, e, parent, split, &file_p);
 			if (split[1].suspect &&
 			    blame_move_score < ent_score(sb, &split[1])) {
-				split_blame(sb, split, e);
-				made_progress = 1;
+				split_blame(blamed, &unblamedtail, split, e);
+			} else {
+				e->next = leftover;
+				leftover = e;
 			}
 			decref_split(split);
 		}
-	}
-	return 0;
+		*unblamedtail = NULL;
+		toosmall = filter_small(sb, toosmall, &unblamed, blame_move_score);
+	} while (unblamed);
+	target->suspects = reverse_blame(leftover, NULL);
 }
 
 struct blame_list {
@@ -993,40 +1208,22 @@ struct blame_list {
  * Count the number of entries the target is suspected for,
  * and prepare a list of entry and the best split.
  */
-static struct blame_list *setup_blame_list(struct scoreboard *sb,
-					   struct origin *target,
-					   int min_score,
+static struct blame_list *setup_blame_list(struct blame_entry *unblamed,
 					   int *num_ents_p)
 {
 	struct blame_entry *e;
 	int num_ents, i;
 	struct blame_list *blame_list = NULL;
 
-	for (e = sb->ent, num_ents = 0; e; e = e->next)
-		if (!e->scanned && !e->guilty &&
-		    e->suspect == target &&
-		    min_score < ent_score(sb, e))
-			num_ents++;
+	for (e = unblamed, num_ents = 0; e; e = e->next)
+		num_ents++;
 	if (num_ents) {
 		blame_list = xcalloc(num_ents, sizeof(struct blame_list));
-		for (e = sb->ent, i = 0; e; e = e->next)
-			if (!e->scanned && !e->guilty &&
-			    e->suspect == target &&
-			    min_score < ent_score(sb, e))
-				blame_list[i++].ent = e;
+		for (e = unblamed, i = 0; e; e = e->next)
+			blame_list[i++].ent = e;
 	}
 	*num_ents_p = num_ents;
 	return blame_list;
-}
-
-/*
- * Reset the scanned status on all entries.
- */
-static void reset_scanned_flag(struct scoreboard *sb)
-{
-	struct blame_entry *e;
-	for (e = sb->ent; e; e = e->next)
-		e->scanned = 0;
 }
 
 /*
@@ -1034,21 +1231,23 @@ static void reset_scanned_flag(struct scoreboard *sb)
  * across file boundary from the parent commit.  porigin is the path
  * in the parent we already tried.
  */
-static int find_copy_in_parent(struct scoreboard *sb,
-			       struct origin *target,
-			       struct commit *parent,
-			       struct origin *porigin,
-			       int opt)
+static void find_copy_in_parent(struct scoreboard *sb,
+				struct blame_entry ***blamed,
+				struct blame_entry **toosmall,
+				struct origin *target,
+				struct commit *parent,
+				struct origin *porigin,
+				int opt)
 {
 	struct diff_options diff_opts;
 	int i, j;
-	int retval;
 	struct blame_list *blame_list;
 	int num_ents;
+	struct blame_entry *unblamed = target->suspects;
+	struct blame_entry *leftover = NULL;
 
-	blame_list = setup_blame_list(sb, target, blame_copy_score, &num_ents);
-	if (!blame_list)
-		return 1; /* nothing remains for this target */
+	if (!unblamed)
+		return; /* nothing remains for this target */
 
 	diff_setup(&diff_opts);
 	DIFF_OPT_SET(&diff_opts, RECURSIVE);
@@ -1078,9 +1277,9 @@ static int find_copy_in_parent(struct scoreboard *sb,
 	if (!DIFF_OPT_TST(&diff_opts, FIND_COPIES_HARDER))
 		diffcore_std(&diff_opts);
 
-	retval = 0;
-	while (1) {
-		int made_progress = 0;
+	do {
+		struct blame_entry **unblamedtail = &unblamed;
+		blame_list = setup_blame_list(unblamed, &num_ents);
 
 		for (i = 0; i < diff_queued_diff.nr; i++) {
 			struct diff_filepair *p = diff_queued_diff.queue[i];
@@ -1117,27 +1316,21 @@ static int find_copy_in_parent(struct scoreboard *sb,
 			struct blame_entry *split = blame_list[j].split;
 			if (split[1].suspect &&
 			    blame_copy_score < ent_score(sb, &split[1])) {
-				split_blame(sb, split, blame_list[j].ent);
-				made_progress = 1;
+				split_blame(blamed, &unblamedtail, split,
+					    blame_list[j].ent);
+			} else {
+				blame_list[j].ent->next = leftover;
+				leftover = blame_list[j].ent;
 			}
-			else
-				blame_list[j].ent->scanned = 1;
 			decref_split(split);
 		}
 		free(blame_list);
-
-		if (!made_progress)
-			break;
-		blame_list = setup_blame_list(sb, target, blame_copy_score, &num_ents);
-		if (!blame_list) {
-			retval = 1;
-			break;
-		}
-	}
-	reset_scanned_flag(sb);
+		*unblamedtail = NULL;
+		toosmall = filter_small(sb, toosmall, &unblamed, blame_copy_score);
+	} while (unblamed);
+	target->suspects = reverse_blame(leftover, NULL);
 	diff_flush(&diff_opts);
 	free_pathspec(&diff_opts.pathspec);
-	return retval;
 }
 
 /*
@@ -1147,20 +1340,21 @@ static int find_copy_in_parent(struct scoreboard *sb,
 static void pass_whole_blame(struct scoreboard *sb,
 			     struct origin *origin, struct origin *porigin)
 {
-	struct blame_entry *e;
+	struct blame_entry *e, *suspects;
 
 	if (!porigin->file.ptr && origin->file.ptr) {
 		/* Steal its file */
 		porigin->file = origin->file;
 		origin->file.ptr = NULL;
 	}
-	for (e = sb->ent; e; e = e->next) {
-		if (e->suspect != origin)
-			continue;
+	suspects = origin->suspects;
+	origin->suspects = NULL;
+	for (e = suspects; e; e = e->next) {
 		origin_incref(porigin);
 		origin_decref(e->suspect);
 		e->suspect = porigin;
 	}
+	queue_blames(sb, porigin, suspects);
 }
 
 /*
@@ -1184,6 +1378,27 @@ static int num_scapegoats(struct rev_info *revs, struct commit *commit)
 	return cnt;
 }
 
+/* Distribute collected unsorted blames to the respected sorted lists
+ * in the various origins.
+ */
+static void distribute_blame(struct scoreboard *sb, struct blame_entry *blamed)
+{
+	blamed = blame_sort(blamed, compare_blame_suspect);
+	while (blamed)
+	{
+		struct origin *porigin = blamed->suspect;
+		struct blame_entry *suspects = NULL;
+		do {
+			struct blame_entry *next = blamed->next;
+			blamed->next = suspects;
+			suspects = blamed;
+			blamed = next;
+		} while (blamed && blamed->suspect == porigin);
+		suspects = reverse_blame(suspects, NULL);
+		queue_blames(sb, porigin, suspects);
+	}
+}
+
 #define MAXSG 16
 
 static void pass_blame(struct scoreboard *sb, struct origin *origin, int opt)
@@ -1194,6 +1409,8 @@ static void pass_blame(struct scoreboard *sb, struct origin *origin, int opt)
 	struct commit_list *sg;
 	struct origin *sg_buf[MAXSG];
 	struct origin *porigin, **sg_origin = sg_buf;
+	struct blame_entry *toosmall = NULL;
+	struct blame_entry *blames, **blametail = &blames;
 
 	num_sg = num_scapegoats(revs, commit);
 	if (!num_sg)
@@ -1255,38 +1472,71 @@ static void pass_blame(struct scoreboard *sb, struct origin *origin, int opt)
 			origin_incref(porigin);
 			origin->previous = porigin;
 		}
-		if (pass_blame_to_parent(sb, origin, porigin))
+		pass_blame_to_parent(sb, origin, porigin);
+		if (!origin->suspects)
 			goto finish;
 	}
 
 	/*
 	 * Optionally find moves in parents' files.
 	 */
-	if (opt & PICKAXE_BLAME_MOVE)
-		for (i = 0, sg = first_scapegoat(revs, commit);
-		     i < num_sg && sg;
-		     sg = sg->next, i++) {
-			struct origin *porigin = sg_origin[i];
-			if (!porigin)
-				continue;
-			if (find_move_in_parent(sb, origin, porigin))
-				goto finish;
+	if (opt & PICKAXE_BLAME_MOVE) {
+		filter_small(sb, &toosmall, &origin->suspects, blame_move_score);
+		if (origin->suspects) {
+			for (i = 0, sg = first_scapegoat(revs, commit);
+			     i < num_sg && sg;
+			     sg = sg->next, i++) {
+				struct origin *porigin = sg_origin[i];
+				if (!porigin)
+					continue;
+				find_move_in_parent(sb, &blametail, &toosmall, origin, porigin);
+				if (!origin->suspects)
+					break;
+			}
 		}
+	}
 
 	/*
 	 * Optionally find copies from parents' files.
 	 */
-	if (opt & PICKAXE_BLAME_COPY)
+	if (opt & PICKAXE_BLAME_COPY) {
+		if (blame_copy_score > blame_move_score)
+			filter_small(sb, &toosmall, &origin->suspects, blame_copy_score);
+		else if (blame_copy_score < blame_move_score) {
+			origin->suspects = blame_merge(origin->suspects, toosmall);
+			toosmall = NULL;
+			filter_small(sb, &toosmall, &origin->suspects, blame_copy_score);
+		}
+		if (!origin->suspects)
+			goto finish;
+
 		for (i = 0, sg = first_scapegoat(revs, commit);
 		     i < num_sg && sg;
 		     sg = sg->next, i++) {
 			struct origin *porigin = sg_origin[i];
-			if (find_copy_in_parent(sb, origin, sg->item,
-						porigin, opt))
+			find_copy_in_parent(sb, &blametail, &toosmall,
+					    origin, sg->item, porigin, opt);
+			if (!origin->suspects)
 				goto finish;
 		}
+	}
 
- finish:
+finish:
+	*blametail = NULL;
+	distribute_blame(sb, blames);
+	/*
+	 * prepend toosmall to origin->suspects
+	 *
+	 * There is no point in sorting: this ends up on a big
+	 * unsorted list in the caller anyway.
+	 */
+	if (toosmall) {
+		struct blame_entry **tail = &toosmall;
+		while (*tail)
+			tail = &(*tail)->next;
+		*tail = origin->suspects;
+		origin->suspects = toosmall;
+	}
 	for (i = 0; i < num_sg; i++) {
 		if (sg_origin[i]) {
 			drop_origin_blob(sg_origin[i]);
@@ -1481,14 +1731,11 @@ static int emit_one_suspect_detail(struct origin *suspect, int repeat)
 }
 
 /*
- * The blame_entry is found to be guilty for the range.  Mark it
- * as such, and show it in incremental output.
+ * The blame_entry is found to be guilty for the range.
+ * Show it in incremental output.
  */
 static void found_guilty_entry(struct blame_entry *ent)
 {
-	if (ent->guilty)
-		return;
-	ent->guilty = 1;
 	if (incremental) {
 		struct origin *suspect = ent->suspect;
 
@@ -1502,32 +1749,34 @@ static void found_guilty_entry(struct blame_entry *ent)
 }
 
 /*
- * The main loop -- while the scoreboard has lines whose true origin
- * is still unknown, pick one blame_entry, and allow its current
- * suspect to pass blames to its parents.
- */
+ * The main loop -- while we have blobs with lines whose true origin
+ * is still unknown, pick one blob, and allow its lines to pass blames
+ * to its parents. */
 static void assign_blame(struct scoreboard *sb, int opt)
 {
 	struct rev_info *revs = sb->revs;
+	struct commit *commit = prio_queue_get(&sb->commits);
 
-	while (1) {
+	while (commit) {
 		struct blame_entry *ent;
-		struct commit *commit;
-		struct origin *suspect = NULL;
+		struct origin *suspect = commit->util;
 
 		/* find one suspect to break down */
-		for (ent = sb->ent; !suspect && ent; ent = ent->next)
-			if (!ent->guilty)
-				suspect = ent->suspect;
-		if (!suspect)
-			return; /* all done */
+		while (suspect && !suspect->suspects)
+			suspect = suspect->next;
+
+		if (!suspect) {
+			commit = prio_queue_get(&sb->commits);
+			continue;
+		}
+
+		assert(commit == suspect->commit);
 
 		/*
 		 * We will use this suspect later in the loop,
 		 * so hold onto it in the meantime.
 		 */
 		origin_incref(suspect);
-		commit = suspect->commit;
 		parse_commit(commit);
 		if (reverse ||
 		    (!(commit->object.flags & UNINTERESTING) &&
@@ -1543,9 +1792,22 @@ static void assign_blame(struct scoreboard *sb, int opt)
 			commit->object.flags |= UNINTERESTING;
 
 		/* Take responsibility for the remaining entries */
-		for (ent = sb->ent; ent; ent = ent->next)
-			if (ent->suspect == suspect)
+		ent = suspect->suspects;
+		if (ent) {
+			suspect->guilty = 1;
+			for (;;) {
+				struct blame_entry *next = ent->next;
 				found_guilty_entry(ent);
+				if (next) {
+					ent = next;
+					continue;
+				}
+				ent->next = sb->ent;
+				sb->ent = suspect->suspects;
+				suspect->suspects = NULL;
+				break;
+			}
+		}
 		origin_decref(suspect);
 
 		if (DEBUG) /* sanity */
@@ -1609,9 +1871,8 @@ static void emit_porcelain(struct scoreboard *sb, struct blame_entry *ent,
 	char hex[41];
 
 	strcpy(hex, sha1_to_hex(suspect->commit->object.sha1));
-	printf("%s%c%d %d %d\n",
+	printf("%s %d %d %d\n",
 	       hex,
-	       ent->guilty ? ' ' : '*', /* purely for debugging */
 	       ent->s_lno + 1,
 	       ent->lno + 1,
 	       ent->num_lines);
@@ -1724,17 +1985,16 @@ static void output(struct scoreboard *sb, int option)
 
 	if (option & OUTPUT_PORCELAIN) {
 		for (ent = sb->ent; ent; ent = ent->next) {
-			struct blame_entry *oth;
-			struct origin *suspect = ent->suspect;
-			struct commit *commit = suspect->commit;
+			int count = 0;
+			struct origin *suspect;
+			struct commit *commit = ent->suspect->commit;
 			if (commit->object.flags & MORE_THAN_ONE_PATH)
 				continue;
-			for (oth = ent->next; oth; oth = oth->next) {
-				if ((oth->suspect->commit != commit) ||
-				    !strcmp(oth->suspect->path, suspect->path))
-					continue;
-				commit->object.flags |= MORE_THAN_ONE_PATH;
-				break;
+			for (suspect = commit->util; suspect; suspect = suspect->next) {
+				if (suspect->guilty && count++) {
+					commit->object.flags |= MORE_THAN_ONE_PATH;
+					break;
+				}
 			}
 		}
 	}
@@ -2099,7 +2359,6 @@ static struct commit *fake_working_tree_commit(struct diff_options *opt,
 	origin->file.ptr = buf.buf;
 	origin->file.size = buf.len;
 	pretend_sha1_file(buf.buf, buf.len, OBJ_BLOB, origin->blob_sha1);
-	commit->util = origin;
 
 	/*
 	 * Read the current index, replace the path entry with
@@ -2417,12 +2676,16 @@ parse_done:
 	memset(&sb, 0, sizeof(sb));
 
 	sb.revs = &revs;
-	if (!reverse)
+	if (!reverse) {
 		final_commit_name = prepare_final(&sb);
+		sb.commits.compare = compare_commits_by_commit_date;
+	}
 	else if (contents_from)
 		die("--contents and --children do not blend well.");
-	else
+	else {
 		final_commit_name = prepare_initial(&sb);
+		sb.commits.compare = compare_commits_by_reverse_commit_date;
+	}
 
 	if (!sb.final) {
 		/*
@@ -2511,12 +2774,16 @@ parse_done:
 		ent->next = next;
 		origin_incref(o);
 	}
+
+	o->suspects = ent;
+	prio_queue_put(&sb.commits, o->commit);
+
 	origin_decref(o);
 
 	range_set_release(&ranges);
 	string_list_clear(&range_list, 0);
 
-	sb.ent = ent;
+	sb.ent = NULL;
 	sb.path = path;
 
 	read_mailmap(&mailmap, NULL);
@@ -2528,6 +2795,8 @@ parse_done:
 
 	if (incremental)
 		return 0;
+
+	sb.ent = blame_sort(sb.ent, compare_blame_final);
 
 	coalesce(&sb);
 
