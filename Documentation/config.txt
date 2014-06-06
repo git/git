@@ -558,14 +558,19 @@ core.pager::
 	configuration, then `$PAGER`, and then the default chosen at
 	compile time (usually 'less').
 +
-When the `LESS` environment variable is unset, Git sets it to `FRSX`
+When the `LESS` environment variable is unset, Git sets it to `FRX`
 (if `LESS` environment variable is set, Git does not change it at
 all).  If you want to selectively override Git's default setting
-for `LESS`, you can set `core.pager` to e.g. `less -+S`.  This will
+for `LESS`, you can set `core.pager` to e.g. `less -S`.  This will
 be passed to the shell by Git, which will translate the final
-command to `LESS=FRSX less -+S`. The environment tells the command
-to set the `S` option to chop long lines but the command line
-resets it to the default to fold long lines.
+command to `LESS=FRX less -S`. The environment does not set the
+`S` option but the command line does, instructing less to truncate
+long lines. Similarly, setting `core.pager` to `less -+F` will
+deactivate the `F` option specified by the environment from the
+command-line, deactivating the "quit if one screen" behavior of
+`less`.  One can specifically activate some flags for particular
+commands: for example, setting `pager.blame` to `less -S` enables
+line truncation only for `git blame`.
 +
 Likewise, when the `LV` environment variable is unset, Git sets it
 to `-c`.  You can override this setting by exporting `LV` with

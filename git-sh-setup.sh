@@ -160,7 +160,7 @@ git_pager() {
 	else
 		GIT_PAGER=cat
 	fi
-	: ${LESS=-FRSX}
+	: ${LESS=-FRX}
 	: ${LV=-c}
 	export LESS LV
 
