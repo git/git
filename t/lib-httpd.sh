@@ -132,7 +132,7 @@ prepare_httpd() {
 	HTTPD_URL_USER=$HTTPD_PROTO://user%40host@$HTTPD_DEST
 	HTTPD_URL_USER_PASS=$HTTPD_PROTO://user%40host:pass%40host@$HTTPD_DEST
 
-	if test -n "$LIB_HTTPD_DAV" -o -n "$LIB_HTTPD_SVN"
+	if test -n "$LIB_HTTPD_DAV" || test -n "$LIB_HTTPD_SVN"
 	then
 		HTTPD_PARA="$HTTPD_PARA -DDAV"
 
