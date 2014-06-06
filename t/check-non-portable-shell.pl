@@ -16,12 +16,12 @@ sub err {
 
 while (<>) {
 	chomp;
-	/^\s*sed\s+-i/ and err 'sed -i is not portable';
-	/^\s*echo\s+-n/ and err 'echo -n is not portable (please use printf)';
+	/\bsed\s+-i/ and err 'sed -i is not portable';
+	/\becho\s+-n/ and err 'echo -n is not portable (please use printf)';
 	/^\s*declare\s+/ and err 'arrays/declare not portable';
 	/^\s*[^#]\s*which\s/ and err 'which is not portable (please use type)';
-	/test\s+[^=]*==/ and err '"test a == b" is not portable (please use =)';
-	/^\s*export\s+[^=]*=/ and err '"export FOO=bar" is not portable (please use FOO=bar && export FOO)';
+	/\btest\s+[^=]*==/ and err '"test a == b" is not portable (please use =)';
+	/\bexport\s+[A-Za-z0-9_]*=/ and err '"export FOO=bar" is not portable (please use FOO=bar && export FOO)';
 	# this resets our $. for each file
 	close ARGV if eof;
 }
