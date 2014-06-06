@@ -121,7 +121,7 @@ EOF
 	)
 '
 
-if test -n "$NO_CURL" -o -z "$GIT_TEST_HTTPD"; then
+if test -n "$NO_CURL" || test -z "$GIT_TEST_HTTPD"; then
 	say 'skipping remaining tests, git built without http support'
 	test_done
 fi
