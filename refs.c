@@ -1999,7 +1999,6 @@ int dwim_log(const char *str, int len, unsigned char *sha1, char **log)
 
 	*log = NULL;
 	for (p = ref_rev_parse_rules; *p; p++) {
-		struct stat st;
 		unsigned char hash[20];
 		char path[PATH_MAX];
 		const char *ref, *it;
@@ -2008,12 +2007,9 @@ int dwim_log(const char *str, int len, unsigned char *sha1, char **log)
 		ref = resolve_ref_unsafe(path, hash, 1, NULL);
 		if (!ref)
 			continue;
-		if (!stat(git_path("logs/%s", path), &st) &&
-		    S_ISREG(st.st_mode))
+		if (reflog_exists(path))
 			it = path;
-		else if (strcmp(ref, path) &&
-			 !stat(git_path("logs/%s", ref), &st) &&
-			 S_ISREG(st.st_mode))
+		else if (strcmp(ref, path) && reflog_exists(ref))
 			it = ref;
 		else
 			continue;
@@ -3044,6 +3040,19 @@ int read_ref_at(const char *refname, unsigned long at_time, int cnt,
 	if (cutoff_cnt)
 		*cutoff_cnt = reccnt;
 	return 1;
+}
+
+int reflog_exists(const char *refname)
+{
+	struct stat st;
+
+	return !lstat(git_path("logs/%s", refname), &st) &&
+		S_ISREG(st.st_mode);
+}
+
+int delete_reflog(const char *refname)
+{
+	return remove_path(git_path("logs/%s", refname));
 }
 
 static int show_one_reflog_ent(struct strbuf *sb, each_reflog_ent_fn fn, void *cb_data)
