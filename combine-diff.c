@@ -1396,7 +1396,8 @@ void diff_tree_combined(const unsigned char *sha1,
 	if (show_log_first) {
 		show_log(rev);
 
-		if (rev->verbose_header && opt->output_format)
+		if (rev->verbose_header && opt->output_format &&
+		    opt->output_format != DIFF_FORMAT_NO_OUTPUT)
 			printf("%s%c", diff_line_prefix(opt),
 			       opt->line_termination);
 	}

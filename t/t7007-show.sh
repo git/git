@@ -24,7 +24,8 @@ test_expect_success 'set up a bit of history' '
 	git tag -m "annotated tag" annotated &&
 	git checkout -b side HEAD^^ &&
 	test_commit side2 &&
-	test_commit side3
+	test_commit side3 &&
+	test_merge merge main3
 '
 
 test_expect_success 'showing two commits' '
@@ -109,8 +110,11 @@ test_expect_success 'showing range' '
 '
 
 test_expect_success '-s suppresses diff' '
-	echo main3 >expect &&
-	git show -s --format=%s main3 >actual &&
+	cat >expect <<-\EOF &&
+	merge
+	main3
+	EOF
+	git show -s --format=%s merge main3 >actual &&
 	test_cmp expect actual
 '
 
