@@ -826,9 +826,16 @@ static int git_default_core_config(const char *var, const char *value)
 	if (!strcmp(var, "core.commentchar")) {
 		const char *comment;
 		int ret = git_config_string(&comment, var, value);
-		if (!ret)
+		if (ret)
+			return ret;
+		else if (!strcasecmp(comment, "auto"))
+			auto_comment_line_char = 1;
+		else if (comment[0] && !comment[1]) {
 			comment_line_char = comment[0];
-		return ret;
+			auto_comment_line_char = 0;
+		} else
+			return error("core.commentChar should only be one character");
+		return 0;
 	}
 
 	if (!strcmp(var, "core.askpass"))

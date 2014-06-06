@@ -544,6 +544,9 @@ core.commentchar::
 	messages consider a line that begins with this character
 	commented, and removes them after the editor returns
 	(default '#').
++
+If set to "auto", `git-commit` would select a character that is not
+the beginning character of any line in existing commit messages.
 
 sequence.editor::
 	Text editor used by `git rebase -i` for editing the rebase instruction file.
