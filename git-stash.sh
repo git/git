@@ -94,7 +94,8 @@ create_stash () {
 		# ease of unpacking later.
 		u_commit=$(
 			untracked_files | (
-				export GIT_INDEX_FILE="$TMPindex"
+				GIT_INDEX_FILE="$TMPindex" &&
+				export GIT_INDEX_FILE &&
 				rm -f "$TMPindex" &&
 				git update-index -z --add --remove --stdin &&
 				u_tree=$(git write-tree) &&
