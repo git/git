@@ -140,6 +140,16 @@ test_expect_success "Add long precomposed filename" '
 	git add * &&
 	git commit -m "Long filename"
 '
+
+test_expect_failure 'handle existing decomposed filenames' '
+	echo content >"verbatim.$Adiarnfd" &&
+	git -c core.precomposeunicode=false add "verbatim.$Adiarnfd" &&
+	git commit -m "existing decomposed file" &&
+	>expect &&
+	git ls-files --exclude-standard -o "verbatim*" >untracked &&
+	test_cmp expect untracked
+'
+
 # Test if the global core.precomposeunicode stops autosensing
 # Must be the last test case
 test_expect_success "respect git config --global core.precomposeunicode" '
