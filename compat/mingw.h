@@ -372,7 +372,7 @@ static int mingw_main(c,v); \
 int main(int argc, char **argv) \
 { \
 	mingw_startup(); \
-	return mingw_main(__argc, __argv); \
+	return mingw_main(__argc, (void *)__argv); \
 } \
 static int mingw_main(c,v)
 
