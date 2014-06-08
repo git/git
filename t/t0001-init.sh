@@ -56,7 +56,7 @@ test_expect_success 'plain through aliased command, outside any git repo' '
 	check_config plain-aliased/.git false unset
 '
 
-test_expect_failure 'plain nested through aliased command' '
+test_expect_success 'plain nested through aliased command' '
 	(
 		git init plain-ancestor-aliased &&
 		cd plain-ancestor-aliased &&
@@ -68,7 +68,7 @@ test_expect_failure 'plain nested through aliased command' '
 	check_config plain-ancestor-aliased/plain-nested/.git false unset
 '
 
-test_expect_failure 'plain nested in bare through aliased command' '
+test_expect_success 'plain nested in bare through aliased command' '
 	(
 		git init --bare bare-ancestor-aliased.git &&
 		cd bare-ancestor-aliased.git &&
