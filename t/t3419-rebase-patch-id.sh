@@ -6,7 +6,6 @@ test_description='git rebase - test patch id computation'
 
 test_set_prereq NOT_EXPENSIVE
 test -n "$GIT_PATCHID_TIMING_TESTS" && test_set_prereq EXPENSIVE
-test -x /usr/bin/time && test_set_prereq USR_BIN_TIME
 
 count()
 {
