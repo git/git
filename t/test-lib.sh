@@ -855,6 +855,10 @@ test_lazy_prereq AUTOIDENT '
 	git var GIT_AUTHOR_IDENT
 '
 
+test_lazy_prereq EXPENSIVE '
+	test -n "$GIT_TEST_LONG"
+'
+
 # When the tests are run as root, permission tests will report that
 # things are writable when they shouldn't be.
 test -w / || test_set_prereq SANITY
