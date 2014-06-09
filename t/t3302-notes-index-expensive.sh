@@ -7,7 +7,6 @@ test_description='Test commit notes index (expensive!)'
 
 . ./test-lib.sh
 
-test_set_prereq NOT_EXPENSIVE
 test -n "$GIT_NOTES_TIMING_TESTS" && test_set_prereq EXPENSIVE
 
 create_repo () {
@@ -103,8 +102,7 @@ time_notes () {
 }
 
 do_tests () {
-	pr=$1
-	count=$2
+	count=$1 pr=${2-}
 
 	test_expect_success $pr "setup $count" '
 		mkdir "$count" &&
@@ -121,7 +119,7 @@ do_tests () {
 		)
 	'
 
-	test_expect_success USR_BIN_TIME,$pr 'notes timing with /usr/bin/time' '
+	test_expect_success "USR_BIN_TIME${pr:+,$pr}" 'notes timing with /usr/bin/time' '
 		(
 			cd "$count" &&
 			time_notes 100
@@ -129,10 +127,10 @@ do_tests () {
 	'
 }
 
-do_tests NOT_EXPENSIVE 10
+do_tests 10
 for count in 100 1000 10000
 do
-	do_tests EXPENSIVE $count
+	do_tests "$count" EXPENSIVE
 done
 
 test_done
