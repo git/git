@@ -637,6 +637,9 @@ static int parse_new_style_cacheinfo(const char *arg,
 	unsigned long ul;
 	char *endp;
 
+	if (!arg)
+		return -1;
+
 	errno = 0;
 	ul = strtoul(arg, &endp, 8);
 	if (errno || endp == arg || *endp != ',' || (unsigned int) ul != ul)
