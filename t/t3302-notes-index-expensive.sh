@@ -106,18 +106,27 @@ do_tests () {
 	pr=$1
 	count=$2
 
-	test_expect_success $pr 'setup / mkdir' '
-		mkdir $count &&
-		cd $count
+	test_expect_success $pr "setup $count" '
+		mkdir "$count" &&
+		(
+			cd "$count" &&
+			create_repo "$count"
+		)
 	'
 
-	test_expect_success $pr "setup $count" "create_repo $count"
+	test_expect_success $pr 'notes work' '
+		(
+			cd "$count" &&
+			test_notes "$count"
+		)
+	'
 
-	test_expect_success $pr 'notes work' "test_notes $count"
-
-	test_expect_success USR_BIN_TIME,$pr 'notes timing with /usr/bin/time' "time_notes 100"
-
-	test_expect_success $pr 'teardown / cd ..' 'cd ..'
+	test_expect_success USR_BIN_TIME,$pr 'notes timing with /usr/bin/time' '
+		(
+			cd "$count" &&
+			time_notes 100
+		)
+	'
 }
 
 do_tests NOT_EXPENSIVE 10
