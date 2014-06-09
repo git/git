@@ -92,8 +92,7 @@ Performance, Internal Implementation, etc.
    proved to be too small, and has been bumped to 96 MiB.
 
  * "git blame" has been optimized greatly by reorganising the data
-   structure that is used to keep track of the work to be done, thanks
-   to David Karstrup <dak@gnu.org>.
+   structure that is used to keep track of the work to be done.
 
  * "git diff" that compares 3-or-more trees (e.g. parents and the
    result of a merge) have been optimized.
@@ -118,6 +117,17 @@ notes for details).
    we spawn to feed out output, but that prevented people who want to
    run "less" within "less" from doing so.
    (merge c0459ca je/pager-do-not-recurse later to maint).
+
+ * Tools that read diagnostic output in our standard error stream do
+   not want to see terminal control sequence (e.g. erase-to-eol).
+   Detect them by checking if the standard error stream is connected
+   to a tty.
+   (merge 38de156 mn/sideband-no-ansi later to maint).
+
+ * Mishandling of patterns in .gitignore that has trailing SPs quoted
+   with backslashes (e.g. ones that end with "\ ") have been
+   corrected.
+   (merge e61a6c1 pb/trim-trailing-spaces later to maint).
 
  * "--ignore-space-change" option of "git apply" ignored the spaces
    at the beginning of line too aggressively, which is inconsistent
@@ -152,6 +162,10 @@ notes for details).
    distinguish missing objects from type errors.
    (merge 77583e7 jk/index-pack-report-missing later to maint).
 
+ * "git mailinfo" used to read beyond the end of header string while
+   parsing an incoming e-mail message to extract the patch.
+   (merge b1a013d rs/mailinfo-header-cmp later to maint).
+
  * On a case insensitive filesystem, merge-recursive incorrectly
    deleted the file that is to be renamed to a name that is the same
    except for case differences.
@@ -160,6 +174,12 @@ notes for details).
  * "git rerere forget" did not work well when merge.conflictstyle
    was set to a non-default value.
    (merge de3d8bb fc/rerere-conflict-style later to maint).
+
+ * "git log --exclude=<glob> --all | git shortlog" worked as expected,
+   but "git shortlog --exclude=<glob> --all", which is supposed to be
+   identical to the above pipeline, was not accepted at the command
+   line argument parser level.
+   (merge eb07774 jc/shortlog-ref-exclude later to maint).
 
  * "git show -s" (i.e. show log message only) used to incorrectly emit
    an extra blank line after a merge commit.
@@ -171,3 +191,10 @@ notes for details).
    race with a "read-write" operation that modify the index while it
    is running.  Detect such a race and avoid overwriting the index.
    (merge 426ddee ym/fix-opportunistic-index-update-race later to maint).
+
+ * "git update-index --cacheinfo" in 2.0 release crashed on a
+   malformed command line.
+   (merge c8e1ee4 jc/rev-parse-argh-dashed-multi-words later to maint).
+
+ * The mode to run tests with HTTP server tests disabled was broken.
+   (merge afa53fe na/no-http-test-in-the-middle later to maint).
