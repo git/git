@@ -672,7 +672,8 @@ int notes_merge_commit(struct notes_merge_options *o,
 	DIR *dir;
 	struct dirent *e;
 	struct strbuf path = STRBUF_INIT;
-	char *msg = strstr(partial_commit->buffer, "\n\n");
+	const char *buffer = get_commit_buffer(partial_commit);
+	const char *msg = strstr(buffer, "\n\n");
 	int baselen;
 
 	strbuf_addstr(&path, git_path(NOTES_MERGE_WORKTREE));
@@ -721,6 +722,7 @@ int notes_merge_commit(struct notes_merge_options *o,
 
 	create_notes_commit(partial_tree, partial_commit->parents,
 			    msg, strlen(msg), result_sha1);
+	unuse_commit_buffer(partial_commit, buffer);
 	if (o->verbosity >= 4)
 		printf("Finalized notes merge commit: %s\n",
 			sha1_to_hex(result_sha1));

@@ -276,9 +276,10 @@ static int fsck_ident(const char **ident, struct object *obj, fsck_error error_f
 	return 0;
 }
 
-static int fsck_commit(struct commit *commit, fsck_error error_func)
+static int fsck_commit_buffer(struct commit *commit, const char *buffer,
+			      fsck_error error_func)
 {
-	const char *buffer = commit->buffer, *tmp;
+	const char *tmp;
 	unsigned char tree_sha1[20], sha1[20];
 	struct commit_graft *graft;
 	int parents = 0;
@@ -334,6 +335,14 @@ static int fsck_commit(struct commit *commit, fsck_error error_func)
 		return error_func(&commit->object, FSCK_ERROR, "could not load commit's tree %s", sha1_to_hex(tree_sha1));
 
 	return 0;
+}
+
+static int fsck_commit(struct commit *commit, fsck_error error_func)
+{
+	const char *buffer = get_commit_buffer(commit);
+	int ret = fsck_commit_buffer(commit, buffer, error_func);
+	unuse_commit_buffer(commit, buffer);
+	return ret;
 }
 
 static int fsck_tag(struct tag *tag, fsck_error error_func)

@@ -662,10 +662,12 @@ static int format_todo(struct strbuf *buf, struct commit_list *todo_list,
 	int subject_len;
 
 	for (cur = todo_list; cur; cur = cur->next) {
+		const char *commit_buffer = get_commit_buffer(cur->item);
 		sha1_abbrev = find_unique_abbrev(cur->item->object.sha1, DEFAULT_ABBREV);
-		subject_len = find_commit_subject(cur->item->buffer, &subject);
+		subject_len = find_commit_subject(commit_buffer, &subject);
 		strbuf_addf(buf, "%s %s %.*s\n", action_str, sha1_abbrev,
 			subject_len, subject);
+		unuse_commit_buffer(cur->item, commit_buffer);
 	}
 	return 0;
 }

@@ -918,9 +918,12 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 	log_write_email_headers(rev, head, &pp.subject, &pp.after_subject,
 				&need_8bit_cte);
 
-	for (i = 0; !need_8bit_cte && i < nr; i++)
-		if (has_non_ascii(list[i]->buffer))
+	for (i = 0; !need_8bit_cte && i < nr; i++) {
+		const char *buf = get_commit_buffer(list[i]);
+		if (has_non_ascii(buf))
 			need_8bit_cte = 1;
+		unuse_commit_buffer(list[i], buf);
+	}
 
 	if (!branch_name)
 		branch_name = find_branch_name(rev);
