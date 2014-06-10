@@ -2019,7 +2019,7 @@ static struct commit *fake_working_tree_commit(struct diff_options *opt,
 	struct strbuf msg = STRBUF_INIT;
 
 	time(&now);
-	commit = xcalloc(1, sizeof(*commit));
+	commit = alloc_commit_node();
 	commit->object.parsed = 1;
 	commit->date = now;
 	commit->object.type = OBJ_COMMIT;
