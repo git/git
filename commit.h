@@ -20,7 +20,6 @@ struct commit {
 	unsigned long date;
 	struct commit_list *parents;
 	struct tree *tree;
-	char *buffer;
 };
 
 extern int save_commit_buffer;

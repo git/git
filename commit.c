@@ -245,14 +245,17 @@ int unregister_shallow(const unsigned char *sha1)
 	return 0;
 }
 
+define_commit_slab(buffer_slab, void *);
+static struct buffer_slab buffer_slab = COMMIT_SLAB_INIT(1, buffer_slab);
+
 void set_commit_buffer(struct commit *commit, void *buffer)
 {
-	commit->buffer = buffer;
+	*buffer_slab_at(&buffer_slab, commit) = buffer;
 }
 
 const void *get_cached_commit_buffer(const struct commit *commit)
 {
-	return commit->buffer;
+	return *buffer_slab_at(&buffer_slab, commit);
 }
 
 const void *get_commit_buffer(const struct commit *commit)
@@ -274,20 +277,23 @@ const void *get_commit_buffer(const struct commit *commit)
 
 void unuse_commit_buffer(const struct commit *commit, const void *buffer)
 {
-	if (commit->buffer != buffer)
+	void *cached = *buffer_slab_at(&buffer_slab, commit);
+	if (cached != buffer)
 		free((void *)buffer);
 }
 
 void free_commit_buffer(struct commit *commit)
 {
-	free(commit->buffer);
-	commit->buffer = NULL;
+	void **b = buffer_slab_at(&buffer_slab, commit);
+	free(*b);
+	*b = NULL;
 }
 
 const void *detach_commit_buffer(struct commit *commit)
 {
-	void *ret = commit->buffer;
-	commit->buffer = NULL;
+	void **b = buffer_slab_at(&buffer_slab, commit);
+	void *ret = *b;
+	*b = NULL;
 	return ret;
 }
 
