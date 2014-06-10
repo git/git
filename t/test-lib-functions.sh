@@ -617,6 +617,12 @@ test_cmp() {
 	$GIT_TEST_CMP "$@"
 }
 
+# test_cmp_bin - helper to compare binary files
+
+test_cmp_bin() {
+	cmp "$@"
+}
+
 # Check if the file expected to be empty is indeed empty, and barfs
 # otherwise.
 
