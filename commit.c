@@ -17,7 +17,6 @@ static struct commit_extra_header *read_commit_extra_header_lines(const char *bu
 int save_commit_buffer = 1;
 
 const char *commit_type = "commit";
-static int commit_count;
 
 static struct commit *check_commit(struct object *obj,
 				   const unsigned char *sha1,
@@ -64,7 +63,6 @@ struct commit *lookup_commit(const unsigned char *sha1)
 	struct object *obj = lookup_object(sha1);
 	if (!obj) {
 		struct commit *c = alloc_commit_node();
-		c->index = commit_count++;
 		return create_object(sha1, OBJ_COMMIT, c);
 	}
 	if (!obj->type)
