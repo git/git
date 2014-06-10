@@ -101,19 +101,34 @@ static inline uint64_t git_bswap64(uint64_t x)
 #undef ntohll
 #undef htonll
 
-#if !defined(__BYTE_ORDER)
-# if defined(BYTE_ORDER) && defined(LITTLE_ENDIAN) && defined(BIG_ENDIAN)
-#  define __BYTE_ORDER BYTE_ORDER
-#  define __LITTLE_ENDIAN LITTLE_ENDIAN
-#  define __BIG_ENDIAN BIG_ENDIAN
+#if defined(__BYTE_ORDER) && defined(__LITTLE_ENDIAN) && defined(__BIG_ENDIAN)
+
+# define GIT_BYTE_ORDER __BYTE_ORDER
+# define GIT_LITTLE_ENDIAN __LITTLE_ENDIAN
+# define GIT_BIG_ENDIAN __BIG_ENDIAN
+
+#elif defined(BYTE_ORDER) && defined(LITTLE_ENDIAN) && defined(BIG_ENDIAN)
+
+# define GIT_BYTE_ORDER BYTE_ORDER
+# define GIT_LITTLE_ENDIAN LITTLE_ENDIAN
+# define GIT_BIG_ENDIAN BIG_ENDIAN
+
+#else
+
+# define GIT_BIG_ENDIAN 4321
+# define GIT_LITTLE_ENDIAN 1234
+
+# if defined(_BIG_ENDIAN) && !defined(_LITTLE_ENDIAN)
+#  define GIT_BYTE_ORDER GIT_BIG_ENDIAN
+# elif defined(_LITTLE_ENDIAN) && !defined(_BIG_ENDIAN)
+#  define GIT_BYTE_ORDER GIT_LITTLE_ENDIAN
+# else
+#  error "Cannot determine endianness"
 # endif
+
 #endif
 
-#if !defined(__BYTE_ORDER)
-# error "Cannot determine endianness"
-#endif
-
-#if __BYTE_ORDER == __BIG_ENDIAN
+#if GIT_BYTE_ORDER == GIT_BIG_ENDIAN
 # define ntohll(n) (n)
 # define htonll(n) (n)
 #else
