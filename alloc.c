@@ -57,13 +57,14 @@ static void report(const char *name, unsigned int count, size_t size)
 			name, count, (uintmax_t) size);
 }
 
-#define REPORT(name)	\
-    report(#name, name##_allocs, name##_allocs * sizeof(struct name) >> 10)
+#define REPORT(name, type)	\
+    report(#name, name##_allocs, name##_allocs * sizeof(type) >> 10)
 
 void alloc_report(void)
 {
-	REPORT(blob);
-	REPORT(tree);
-	REPORT(commit);
-	REPORT(tag);
+	REPORT(blob, struct blob);
+	REPORT(tree, struct tree);
+	REPORT(commit, struct commit);
+	REPORT(tag, struct tag);
+	REPORT(object, union any_object);
 }
