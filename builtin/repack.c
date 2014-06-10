@@ -10,6 +10,7 @@
 
 static int delta_base_offset = 1;
 static int pack_kept_objects = -1;
+static int write_bitmap = -1;
 static char *packdir, *packtmp;
 
 static const char *const git_repack_usage[] = {
@@ -25,6 +26,10 @@ static int repack_config(const char *var, const char *value, void *cb)
 	}
 	if (!strcmp(var, "repack.packkeptobjects")) {
 		pack_kept_objects = git_config_bool(var, value);
+		return 0;
+	}
+	if (!strcmp(var, "pack.writebitmaps")) {
+		write_bitmap = git_config_bool(var, value);
 		return 0;
 	}
 	return git_default_config(var, value, cb);
@@ -149,7 +154,6 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	int no_update_server_info = 0;
 	int quiet = 0;
 	int local = 0;
-	int write_bitmap = -1;
 
 	struct option builtin_repack_options[] = {
 		OPT_BIT('a', NULL, &pack_everything,
