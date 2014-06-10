@@ -235,7 +235,7 @@ module_name()
 		sed -n -e 's|^submodule\.\(.*\)\.path '"$re"'$|\1|p' )
 	test -z "$name" &&
 	die "$(eval_gettext "No submodule mapping found in .gitmodules for path '\$sm_path'")"
-	echo "$name"
+	printf '%s\n' "$name"
 }
 
 #
@@ -305,10 +305,10 @@ module_clone()
 	b=${b%/}
 
 	# Turn each leading "*/" component into "../"
-	rel=$(echo $b | sed -e 's|[^/][^/]*|..|g')
-	echo "gitdir: $rel/$a" >"$sm_path/.git"
+	rel=$(printf '%s\n' "$b" | sed -e 's|[^/][^/]*|..|g')
+	printf '%s\n' "gitdir: $rel/$a" >"$sm_path/.git"
 
-	rel=$(echo $a | sed -e 's|[^/][^/]*|..|g')
+	rel=$(printf '%s\n' "$a" | sed -e 's|[^/][^/]*|..|g')
 	(clear_local_git_env; cd "$sm_path" && GIT_WORK_TREE=. git config core.worktree "$rel/$b")
 }
 
@@ -389,7 +389,7 @@ cmd_add()
 	sm_path=$2
 
 	if test -z "$sm_path"; then
-		sm_path=$(echo "$repo" |
+		sm_path=$(printf '%s\n' "$repo" |
 			sed -e 's|/$||' -e 's|:*/*\.git$||' -e 's|.*[/:]||g')
 	fi
 
@@ -1058,7 +1058,7 @@ cmd_summary() {
 			# Always show modules deleted or type-changed (blob<->module)
 			if test "$status" = D || test "$status" = T
 			then
-				echo "$sm_path"
+				printf '%s\n' "$sm_path"
 				continue
 			fi
 			# Respect the ignore setting for --for-status.
@@ -1070,7 +1070,7 @@ cmd_summary() {
 			fi
 			# Also show added or modified modules which are checked out
 			GIT_DIR="$sm_path/.git" git-rev-parse --git-dir >/dev/null 2>&1 &&
-			echo "$sm_path"
+			printf '%s\n' "$sm_path"
 		done
 	)
 
@@ -1311,7 +1311,7 @@ cmd_sync()
 		./*|../*)
 			# rewrite foo/bar as ../.. to find path from
 			# submodule work tree to superproject work tree
-			up_path="$(echo "$sm_path" | sed "s/[^/][^/]*/../g")" &&
+			up_path="$(printf '%s\n' "$sm_path" | sed "s/[^/][^/]*/../g")" &&
 			# guarantee a trailing /
 			up_path=${up_path%/}/ &&
 			# path from submodule work tree to submodule origin repo
