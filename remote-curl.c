@@ -194,19 +194,19 @@ static void free_discovery(struct discovery *d)
 	}
 }
 
-static int show_http_message(struct strbuf *type, struct strbuf *msg)
+static int show_http_message(struct strbuf *type, struct strbuf *charset,
+			     struct strbuf *msg)
 {
 	const char *p, *eol;
 
 	/*
 	 * We only show text/plain parts, as other types are likely
 	 * to be ugly to look at on the user's terminal.
-	 *
-	 * TODO should handle "; charset=XXX", and re-encode into
-	 * logoutputencoding
 	 */
-	if (strcasecmp(type->buf, "text/plain"))
+	if (strcmp(type->buf, "text/plain"))
 		return -1;
+	if (charset->len)
+		strbuf_reencode(msg, charset->buf, get_log_output_encoding());
 
 	strbuf_trim(msg);
 	if (!msg->len)
@@ -225,6 +225,7 @@ static struct discovery* discover_refs(const char *service, int for_push)
 {
 	struct strbuf exp = STRBUF_INIT;
 	struct strbuf type = STRBUF_INIT;
+	struct strbuf charset = STRBUF_INIT;
 	struct strbuf buffer = STRBUF_INIT;
 	struct strbuf refs_url = STRBUF_INIT;
 	struct strbuf effective_url = STRBUF_INIT;
@@ -249,6 +250,7 @@ static struct discovery* discover_refs(const char *service, int for_push)
 
 	memset(&options, 0, sizeof(options));
 	options.content_type = &type;
+	options.charset = &charset;
 	options.effective_url = &effective_url;
 	options.base_url = &url;
 	options.no_cache = 1;
@@ -259,13 +261,13 @@ static struct discovery* discover_refs(const char *service, int for_push)
 	case HTTP_OK:
 		break;
 	case HTTP_MISSING_TARGET:
-		show_http_message(&type, &buffer);
+		show_http_message(&type, &charset, &buffer);
 		die("repository '%s' not found", url.buf);
 	case HTTP_NOAUTH:
-		show_http_message(&type, &buffer);
+		show_http_message(&type, &charset, &buffer);
 		die("Authentication failed for '%s'", url.buf);
 	default:
-		show_http_message(&type, &buffer);
+		show_http_message(&type, &charset, &buffer);
 		die("unable to access '%s': %s", url.buf, curl_errorstr);
 	}
 
@@ -310,6 +312,7 @@ static struct discovery* discover_refs(const char *service, int for_push)
 	strbuf_release(&refs_url);
 	strbuf_release(&exp);
 	strbuf_release(&type);
+	strbuf_release(&charset);
 	strbuf_release(&effective_url);
 	strbuf_release(&buffer);
 	last_discovery = last;

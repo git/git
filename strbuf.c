@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "refs.h"
+#include "utf8.h"
 
 int starts_with(const char *str, const char *prefix)
 {
@@ -97,6 +98,22 @@ void strbuf_ltrim(struct strbuf *sb)
 	}
 	memmove(sb->buf, b, sb->len);
 	sb->buf[sb->len] = '\0';
+}
+
+int strbuf_reencode(struct strbuf *sb, const char *from, const char *to)
+{
+	char *out;
+	int len;
+
+	if (same_encoding(from, to))
+		return 0;
+
+	out = reencode_string_len(sb->buf, sb->len, to, from, &len);
+	if (!out)
+		return -1;
+
+	strbuf_attach(sb, out, len, len);
+	return 0;
 }
 
 void strbuf_tolower(struct strbuf *sb)

@@ -144,6 +144,13 @@ struct http_get_options {
 	struct strbuf *content_type;
 
 	/*
+	 * If non-NULL, and content_type above is non-NULL, returns
+	 * the charset parameter from the content-type. If none is
+	 * present, returns an empty string.
+	 */
+	struct strbuf *charset;
+
+	/*
 	 * If non-NULL, returns the URL we ended up at, including any
 	 * redirects we followed.
 	 */

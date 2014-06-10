@@ -906,6 +906,83 @@ static CURLcode curlinfo_strbuf(CURL *curl, CURLINFO info, struct strbuf *buf)
 	return ret;
 }
 
+/*
+ * Check for and extract a content-type parameter. "raw"
+ * should be positioned at the start of the potential
+ * parameter, with any whitespace already removed.
+ *
+ * "name" is the name of the parameter. The value is appended
+ * to "out".
+ */
+static int extract_param(const char *raw, const char *name,
+			 struct strbuf *out)
+{
+	size_t len = strlen(name);
+
+	if (strncasecmp(raw, name, len))
+		return -1;
+	raw += len;
+
+	if (*raw != '=')
+		return -1;
+	raw++;
+
+	while (*raw && !isspace(*raw))
+		strbuf_addch(out, *raw++);
+	return 0;
+}
+
+/*
+ * Extract a normalized version of the content type, with any
+ * spaces suppressed, all letters lowercased, and no trailing ";"
+ * or parameters.
+ *
+ * Note that we will silently remove even invalid whitespace. For
+ * example, "text / plain" is specifically forbidden by RFC 2616,
+ * but "text/plain" is the only reasonable output, and this keeps
+ * our code simple.
+ *
+ * If the "charset" argument is not NULL, store the value of any
+ * charset parameter there.
+ *
+ * Example:
+ *   "TEXT/PLAIN; charset=utf-8" -> "text/plain", "utf-8"
+ *   "text / plain" -> "text/plain"
+ */
+static void extract_content_type(struct strbuf *raw, struct strbuf *type,
+				 struct strbuf *charset)
+{
+	const char *p;
+
+	strbuf_reset(type);
+	strbuf_grow(type, raw->len);
+	for (p = raw->buf; *p; p++) {
+		if (isspace(*p))
+			continue;
+		if (*p == ';') {
+			p++;
+			break;
+		}
+		strbuf_addch(type, tolower(*p));
+	}
+
+	if (!charset)
+		return;
+
+	strbuf_reset(charset);
+	while (*p) {
+		while (isspace(*p))
+			p++;
+		if (!extract_param(p, "charset", charset))
+			return;
+		while (*p && !isspace(*p))
+			p++;
+	}
+
+	if (!charset->len && starts_with(type->buf, "text/"))
+		strbuf_addstr(charset, "ISO-8859-1");
+}
+
 /* http_request() targets */
 #define HTTP_REQUEST_STRBUF	0
 #define HTTP_REQUEST_FILE	1
@@ -957,9 +1034,13 @@ static int http_request(const char *url,
 
 	ret = run_one_slot(slot, &results);
 
-	if (options && options->content_type)
-		curlinfo_strbuf(slot->curl, CURLINFO_CONTENT_TYPE,
-				options->content_type);
+	if (options && options->content_type) {
+		struct strbuf raw = STRBUF_INIT;
+		curlinfo_strbuf(slot->curl, CURLINFO_CONTENT_TYPE, &raw);
+		extract_content_type(&raw, options->content_type,
+				     options->charset);
+		strbuf_release(&raw);
+	}
 
 	if (options && options->effective_url)
 		curlinfo_strbuf(slot->curl, CURLINFO_EFFECTIVE_URL,
