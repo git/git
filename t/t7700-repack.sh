@@ -37,7 +37,7 @@ test_expect_success 'objects in packs marked .keep are not repacked' '
 
 test_expect_success 'writing bitmaps can duplicate .keep objects' '
 	# build on $objsha1, $packsha1, and .keep state from previous
-	git repack -Adl &&
+	git repack -Adbl &&
 	test_when_finished "found_duplicate_object=" &&
 	for p in .git/objects/pack/*.idx; do
 		idx=$(basename $p)
