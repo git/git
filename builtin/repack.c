@@ -28,7 +28,8 @@ static int repack_config(const char *var, const char *value, void *cb)
 		pack_kept_objects = git_config_bool(var, value);
 		return 0;
 	}
-	if (!strcmp(var, "pack.writebitmaps")) {
+	if (!strcmp(var, "repack.writebitmaps") ||
+	    !strcmp(var, "pack.writebitmaps")) {
 		write_bitmaps = git_config_bool(var, value);
 		return 0;
 	}

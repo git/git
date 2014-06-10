@@ -1865,12 +1865,7 @@ pack.useBitmaps::
 	you are debugging pack bitmaps.
 
 pack.writebitmaps::
-	When true, git will write a bitmap index when packing all
-	objects to disk (e.g., when `git repack -a` is run).  This
-	index can speed up the "counting objects" phase of subsequent
-	packs created for clones and fetches, at the cost of some disk
-	space and extra time spent on the initial repack.  Defaults to
-	false.
+	This is a deprecated synonym for `repack.writeBitmaps`.
 
 pack.writeBitmapHashCache::
 	When true, git will include a "hash cache" section in the bitmap
@@ -2133,7 +2128,15 @@ repack.packKeptObjects::
 	`--pack-kept-objects` was passed. See linkgit:git-repack[1] for
 	details. Defaults to `false` normally, but `true` if a bitmap
 	index is being written (either via `--write-bitmap-index` or
-	`pack.writeBitmaps`).
+	`repack.writeBitmaps`).
+
+repack.writeBitmaps::
+	When true, git will write a bitmap index when packing all
+	objects to disk (e.g., when `git repack -a` is run).  This
+	index can speed up the "counting objects" phase of subsequent
+	packs created for clones and fetches, at the cost of some disk
+	space and extra time spent on the initial repack.  Defaults to
+	false.
 
 rerere.autoupdate::
 	When set to true, `git-rerere` updates the index with the

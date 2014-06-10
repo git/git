@@ -53,7 +53,7 @@ test_expect_success 'writing bitmaps via command-line can duplicate .keep object
 
 test_expect_success 'writing bitmaps via config can duplicate .keep objects' '
 	# build on $objsha1, $packsha1, and .keep state from previous
-	git -c pack.writebitmaps=true repack -Adl &&
+	git -c repack.writebitmaps=true repack -Adl &&
 	test_when_finished "found_duplicate_object=" &&
 	for p in .git/objects/pack/*.idx; do
 		idx=$(basename $p)
