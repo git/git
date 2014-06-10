@@ -9,6 +9,7 @@ SYNOPSIS
 --------
 [verse]
 'git replace' [-f] <object> <replacement>
+'git replace' [-f] --edit <object>
 'git replace' -d <object>...
 'git replace' [--format=<format>] [-l [<pattern>]]
 
@@ -63,6 +64,15 @@ OPTIONS
 --delete::
 	Delete existing replace refs for the given objects.
 
+--edit <object>::
+	Edit an object's content interactively. The existing content
+	for <object> is pretty-printed into a temporary file, an
+	editor is launched on the file, and the result is parsed to
+	create a new object of the same type as <object>. A
+	replacement ref is then created to replace <object> with the
+	newly created object. See linkgit:git-var[1] for details about
+	how the editor will be chosen.
+
 -l <pattern>::
 --list <pattern>::
 	List replace refs for objects that match the given pattern (or
@@ -92,7 +102,9 @@ CREATING REPLACEMENT OBJECTS
 
 linkgit:git-filter-branch[1], linkgit:git-hash-object[1] and
 linkgit:git-rebase[1], among other git commands, can be used to create
-replacement objects from existing objects.
+replacement objects from existing objects. The `--edit` option can
+also be used with 'git replace' to create a replacement object by
+editing an existing object.
 
 If you want to replace many blobs, trees or commits that are part of a
 string of commits, you may just want to create a replacement string of
@@ -117,6 +129,8 @@ linkgit:git-filter-branch[1]
 linkgit:git-rebase[1]
 linkgit:git-tag[1]
 linkgit:git-branch[1]
+linkgit:git-commit[1]
+linkgit:git-var[1]
 linkgit:git[1]
 
 GIT
