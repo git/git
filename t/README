@@ -71,6 +71,7 @@ You can pass --verbose (or -v), --debug (or -d), and --immediate
 (or -i) command line argument to the test, or by setting GIT_TEST_OPTS
 appropriately before running "make".
 
+-v::
 --verbose::
 	This makes the test more verbose.  Specifically, the
 	command being run and their output if any are also
@@ -81,6 +82,7 @@ appropriately before running "make".
 	numbers matching <pattern>.  The number matched against is
 	simply the running count of the test within the file.
 
+-d::
 --debug::
 	This may help the person who is developing a new test.
 	It causes the command defined with test_debug to run.
@@ -89,6 +91,7 @@ appropriately before running "make".
 	failed tests so that you can inspect its contents after
 	the test finished.
 
+-i::
 --immediate::
 	This causes the test to immediately exit upon the first
 	failed test. Cleanup commands requested with
@@ -96,9 +99,16 @@ appropriately before running "make".
 	in order to keep the state for inspection by the tester
 	to diagnose the bug.
 
+-l::
 --long-tests::
 	This causes additional long-running tests to be run (where
 	available), for more exhaustive testing.
+
+-r::
+--run=<test-selector>::
+	Run only the subset of tests indicated by
+	<test-selector>.  See section "Skipping Tests" below for
+	<test-selector> syntax.
 
 --valgrind=<tool>::
 	Execute all Git binaries under valgrind tool <tool> and exit
@@ -187,10 +197,77 @@ and either can match the "t[0-9]{4}" part to skip the whole
 test, or t[0-9]{4} followed by ".$number" to say which
 particular test to skip.
 
-Note that some tests in the existing test suite rely on previous
-test item, so you cannot arbitrarily disable one and expect the
-remainder of test to check what the test originally was intended
-to check.
+For an individual test suite --run could be used to specify that
+only some tests should be run or that some tests should be
+excluded from a run.
+
+The argument for --run is a list of individual test numbers or
+ranges with an optional negation prefix that define what tests in
+a test suite to include in the run.  A range is two numbers
+separated with a dash and matches a range of tests with both ends
+been included.  You may omit the first or the second number to
+mean "from the first test" or "up to the very last test"
+respectively.
+
+Optional prefix of '!' means that the test or a range of tests
+should be excluded from the run.
+
+If --run starts with an unprefixed number or range the initial
+set of tests to run is empty. If the first item starts with '!'
+all the tests are added to the initial set.  After initial set is
+determined every test number or range is added or excluded from
+the set one by one, from left to right.
+
+Individual numbers or ranges could be separated either by a space
+or a comma.
+
+For example, to run only tests up to a specific test (21), one
+could do this:
+
+    $ sh ./t9200-git-cvsexport-commit.sh --run='1-21'
+
+or this:
+
+    $ sh ./t9200-git-cvsexport-commit.sh --run='-21'
+
+Common case is to run several setup tests (1, 2, 3) and then a
+specific test (21) that relies on that setup:
+
+    $ sh ./t9200-git-cvsexport-commit.sh --run='1 2 3 21'
+
+or:
+
+    $ sh ./t9200-git-cvsexport-commit.sh --run=1,2,3,21
+
+or:
+
+    $ sh ./t9200-git-cvsexport-commit.sh --run='-3 21'
+
+As noted above, the test set is built going though items left to
+right, so this:
+
+    $ sh ./t9200-git-cvsexport-commit.sh --run='1-4 !3'
+
+will run tests 1, 2, and 4.  Items that comes later have higher
+precendence.  It means that this:
+
+    $ sh ./t9200-git-cvsexport-commit.sh --run='!3 1-4'
+
+would just run tests from 1 to 4, including 3.
+
+You may use negation with ranges.  The following will run all
+test in the test suite except from 7 up to 11:
+
+    $ sh ./t9200-git-cvsexport-commit.sh --run='!7-11'
+
+Some tests in a test suite rely on the previous tests performing
+certain actions, specifically some tests are designated as
+"setup" test, so you cannot _arbitrarily_ disable one test and
+expect the rest to function correctly.
+
+--run is mostly useful when you want to focus on a specific test
+and know what setup is needed for it.  Or when you want to run
+everything up to a certain test.
 
 
 Naming Tests
