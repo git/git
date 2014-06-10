@@ -2199,10 +2199,6 @@ static int git_pack_config(const char *k, const char *v, void *cb)
 		cache_max_small_delta_size = git_config_int(k, v);
 		return 0;
 	}
-	if (!strcmp(k, "pack.writebitmaps")) {
-		write_bitmap_index = git_config_bool(k, v);
-		return 0;
-	}
 	if (!strcmp(k, "pack.writebitmaphashcache")) {
 		if (git_config_bool(k, v))
 			write_bitmap_options |= BITMAP_OPT_HASH_CACHE;
