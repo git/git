@@ -1999,6 +1999,18 @@ static void append_merge_parents(struct commit_list **tail)
 }
 
 /*
+ * This isn't as simple as passing sb->buf and sb->len, because we
+ * want to transfer ownership of the buffer to the commit (so we
+ * must use detach).
+ */
+static void set_commit_buffer_from_strbuf(struct commit *c, struct strbuf *sb)
+{
+	size_t len;
+	void *buf = strbuf_detach(sb, &len);
+	set_commit_buffer(c, buf, len);
+}
+
+/*
  * Prepare a dummy commit that represents the work tree (or staged) item.
  * Note that annotating work tree item never works in the reverse.
  */
@@ -2046,7 +2058,7 @@ static struct commit *fake_working_tree_commit(struct diff_options *opt,
 		    ident, ident, path,
 		    (!contents_from ? path :
 		     (!strcmp(contents_from, "-") ? "standard input" : contents_from)));
-	set_commit_buffer(commit, strbuf_detach(&msg, NULL));
+	set_commit_buffer_from_strbuf(commit, &msg);
 
 	if (!contents_from || strcmp("-", contents_from)) {
 		struct stat st;

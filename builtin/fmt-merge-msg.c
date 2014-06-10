@@ -236,7 +236,7 @@ static void record_person(int which, struct string_list *people,
 	const char *field;
 
 	field = (which == 'a') ? "\nauthor " : "\ncommitter ";
-	buffer = get_commit_buffer(commit);
+	buffer = get_commit_buffer(commit, NULL);
 	name = strstr(buffer, field);
 	if (!name)
 		return;

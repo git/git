@@ -613,7 +613,7 @@ const char *logmsg_reencode(const struct commit *commit,
 	static const char *utf8 = "UTF-8";
 	const char *use_encoding;
 	char *encoding;
-	const char *msg = get_commit_buffer(commit);
+	const char *msg = get_commit_buffer(commit, NULL);
 	char *out;
 
 	if (!output_encoding || !*output_encoding) {
@@ -642,7 +642,7 @@ const char *logmsg_reencode(const struct commit *commit,
 		 * the cached copy from get_commit_buffer, we need to duplicate it
 		 * to avoid munging the cached copy.
 		 */
-		if (msg == get_cached_commit_buffer(commit))
+		if (msg == get_cached_commit_buffer(commit, NULL))
 			out = xstrdup(msg);
 		else
 			out = (char *)msg;

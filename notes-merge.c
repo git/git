@@ -672,7 +672,7 @@ int notes_merge_commit(struct notes_merge_options *o,
 	DIR *dir;
 	struct dirent *e;
 	struct strbuf path = STRBUF_INIT;
-	const char *buffer = get_commit_buffer(partial_commit);
+	const char *buffer = get_commit_buffer(partial_commit, NULL);
 	const char *msg = strstr(buffer, "\n\n");
 	int baselen;
 

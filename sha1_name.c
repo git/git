@@ -869,7 +869,7 @@ static int get_sha1_oneline(const char *prefix, unsigned char *sha1,
 		commit = pop_most_recent_commit(&list, ONELINE_SEEN);
 		if (!parse_object(commit->object.sha1))
 			continue;
-		buf = get_commit_buffer(commit);
+		buf = get_commit_buffer(commit, NULL);
 		p = strstr(buf, "\n\n");
 		matches = p && !regexec(&regex, p + 2, 0, NULL, 0);
 		unuse_commit_buffer(commit, buf);

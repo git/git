@@ -190,7 +190,7 @@ static void output_commit_title(struct merge_options *o, struct commit *commit)
 			printf(_("(bad commit)\n"));
 		else {
 			const char *title;
-			const char *msg = get_commit_buffer(commit);
+			const char *msg = get_commit_buffer(commit, NULL);
 			int len = find_commit_subject(msg, &title);
 			if (len)
 				printf("%.*s\n", len, title);

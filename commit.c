@@ -245,22 +245,31 @@ int unregister_shallow(const unsigned char *sha1)
 	return 0;
 }
 
-define_commit_slab(buffer_slab, void *);
+struct commit_buffer {
+	void *buffer;
+	unsigned long size;
+};
+define_commit_slab(buffer_slab, struct commit_buffer);
 static struct buffer_slab buffer_slab = COMMIT_SLAB_INIT(1, buffer_slab);
 
-void set_commit_buffer(struct commit *commit, void *buffer)
+void set_commit_buffer(struct commit *commit, void *buffer, unsigned long size)
 {
-	*buffer_slab_at(&buffer_slab, commit) = buffer;
+	struct commit_buffer *v = buffer_slab_at(&buffer_slab, commit);
+	v->buffer = buffer;
+	v->size = size;
 }
 
-const void *get_cached_commit_buffer(const struct commit *commit)
+const void *get_cached_commit_buffer(const struct commit *commit, unsigned long *sizep)
 {
-	return *buffer_slab_at(&buffer_slab, commit);
+	struct commit_buffer *v = buffer_slab_at(&buffer_slab, commit);
+	if (sizep)
+		*sizep = v->size;
+	return v->buffer;
 }
 
-const void *get_commit_buffer(const struct commit *commit)
+const void *get_commit_buffer(const struct commit *commit, unsigned long *sizep)
 {
-	const void *ret = get_cached_commit_buffer(commit);
+	const void *ret = get_cached_commit_buffer(commit, sizep);
 	if (!ret) {
 		enum object_type type;
 		unsigned long size;
@@ -271,29 +280,38 @@ const void *get_commit_buffer(const struct commit *commit)
 		if (type != OBJ_COMMIT)
 			die("expected commit for %s, got %s",
 			    sha1_to_hex(commit->object.sha1), typename(type));
+		if (sizep)
+			*sizep = size;
 	}
 	return ret;
 }
 
 void unuse_commit_buffer(const struct commit *commit, const void *buffer)
 {
-	void *cached = *buffer_slab_at(&buffer_slab, commit);
-	if (cached != buffer)
+	struct commit_buffer *v = buffer_slab_at(&buffer_slab, commit);
+	if (v->buffer != buffer)
 		free((void *)buffer);
 }
 
 void free_commit_buffer(struct commit *commit)
 {
-	void **b = buffer_slab_at(&buffer_slab, commit);
-	free(*b);
-	*b = NULL;
+	struct commit_buffer *v = buffer_slab_at(&buffer_slab, commit);
+	free(v->buffer);
+	v->buffer = NULL;
+	v->size = 0;
 }
 
-const void *detach_commit_buffer(struct commit *commit)
+const void *detach_commit_buffer(struct commit *commit, unsigned long *sizep)
 {
-	void **b = buffer_slab_at(&buffer_slab, commit);
-	void *ret = *b;
-	*b = NULL;
+	struct commit_buffer *v = buffer_slab_at(&buffer_slab, commit);
+	void *ret;
+
+	ret = v->buffer;
+	if (sizep)
+		*sizep = v->size;
+
+	v->buffer = NULL;
+	v->size = 0;
 	return ret;
 }
 
@@ -374,7 +392,7 @@ int parse_commit(struct commit *item)
 	}
 	ret = parse_commit_buffer(item, buffer, size);
 	if (save_commit_buffer && !ret) {
-		set_commit_buffer(item, buffer);
+		set_commit_buffer(item, buffer, size);
 		return 0;
 	}
 	free(buffer);
@@ -589,7 +607,7 @@ static void record_author_date(struct author_date_slab *author_date,
 			       struct commit *commit)
 {
 	const char *buf, *line_end, *ident_line;
-	const char *buffer = get_commit_buffer(commit);
+	const char *buffer = get_commit_buffer(commit, NULL);
 	struct ident_split ident;
 	char *date_end;
 	unsigned long date;
