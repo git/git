@@ -1,7 +1,7 @@
 [[def_alternate_object_database]]alternate object database::
 	Via the alternates mechanism, a <<def_repository,repository>>
 	can inherit part of its <<def_object_database,object database>>
-	from another object database, which is called "alternate".
+	from another object database, which is called an "alternate".
 
 [[def_bare_repository]]bare repository::
 	A bare repository is normally an appropriately
