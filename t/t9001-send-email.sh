@@ -1342,7 +1342,7 @@ test_cover_addresses () {
 	git format-patch --cover-letter -2 -o outdir &&
 	cover=`echo outdir/0000-*.patch` &&
 	mv $cover cover-to-edit.patch &&
-	sed "s/^From:/$header: extra@address.com\nFrom:/" cover-to-edit.patch >"$cover" &&
+	perl -pe "s/^From:/$header: extra\@address.com\nFrom:/" cover-to-edit.patch >"$cover" &&
 	git send-email \
 	  --force \
 	  --from="Example <nobody@example.com>" \
