@@ -59,7 +59,7 @@ int notes_cache_write(struct notes_cache *c)
 		return -1;
 	strbuf_attach(&msg, c->validity,
 		      strlen(c->validity), strlen(c->validity) + 1);
-	if (commit_tree(&msg, tree_sha1, NULL, commit_sha1, NULL, NULL) < 0)
+	if (commit_tree(msg.buf, msg.len, tree_sha1, NULL, commit_sha1, NULL, NULL) < 0)
 		return -1;
 	if (update_ref("update notes cache", c->tree.ref, commit_sha1, NULL,
 		       0, QUIET_ON_ERR) < 0)

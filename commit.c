@@ -1344,7 +1344,8 @@ void free_commit_extra_headers(struct commit_extra_header *extra)
 	}
 }
 
-int commit_tree(const struct strbuf *msg, const unsigned char *tree,
+int commit_tree(const char *msg, size_t msg_len,
+		const unsigned char *tree,
 		struct commit_list *parents, unsigned char *ret,
 		const char *author, const char *sign_commit)
 {
@@ -1352,7 +1353,7 @@ int commit_tree(const struct strbuf *msg, const unsigned char *tree,
 	int result;
 
 	append_merge_tag_headers(parents, &tail);
-	result = commit_tree_extended(msg, tree, parents, ret,
+	result = commit_tree_extended(msg, msg_len, tree, parents, ret,
 				      author, sign_commit, extra);
 	free_commit_extra_headers(extra);
 	return result;
@@ -1473,7 +1474,8 @@ static const char commit_utf8_warn[] =
 "You may want to amend it after fixing the message, or set the config\n"
 "variable i18n.commitencoding to the encoding your project uses.\n";
 
-int commit_tree_extended(const struct strbuf *msg, const unsigned char *tree,
+int commit_tree_extended(const char *msg, size_t msg_len,
+			 const unsigned char *tree,
 			 struct commit_list *parents, unsigned char *ret,
 			 const char *author, const char *sign_commit,
 			 struct commit_extra_header *extra)
@@ -1484,7 +1486,7 @@ int commit_tree_extended(const struct strbuf *msg, const unsigned char *tree,
 
 	assert_sha1_type(tree, OBJ_TREE);
 
-	if (memchr(msg->buf, '\0', msg->len))
+	if (memchr(msg, '\0', msg_len))
 		return error("a NUL byte in commit log message not allowed.");
 
 	/* Not having i18n.commitencoding is the same as having utf-8 */
@@ -1523,7 +1525,7 @@ int commit_tree_extended(const struct strbuf *msg, const unsigned char *tree,
 	strbuf_addch(&buffer, '\n');
 
 	/* And add the comment */
-	strbuf_addbuf(&buffer, msg);
+	strbuf_add(&buffer, msg, msg_len);
 
 	/* And check the encoding */
 	if (encoding_is_utf8 && !verify_utf8(&buffer))

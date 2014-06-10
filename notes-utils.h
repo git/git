@@ -15,7 +15,7 @@
  * The resulting commit SHA1 is stored in result_sha1.
  */
 void create_notes_commit(struct notes_tree *t, struct commit_list *parents,
-			 const struct strbuf *msg, unsigned char *result_sha1);
+			 const char *msg, size_t msg_len, unsigned char *result_sha1);
 
 void commit_notes(struct notes_tree *t, const char *msg);
 
