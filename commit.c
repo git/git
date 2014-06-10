@@ -583,22 +583,12 @@ static void record_author_date(struct author_date_slab *author_date,
 			       struct commit *commit)
 {
 	const char *buf, *line_end, *ident_line;
-	char *buffer = NULL;
+	const char *buffer = get_commit_buffer(commit);
 	struct ident_split ident;
 	char *date_end;
 	unsigned long date;
 
-	if (!commit->buffer) {
-		unsigned long size;
-		enum object_type type;
-		buffer = read_sha1_file(commit->object.sha1, &type, &size);
-		if (!buffer)
-			return;
-	}
-
-	for (buf = commit->buffer ? commit->buffer : buffer;
-	     buf;
-	     buf = line_end + 1) {
+	for (buf = buffer; buf; buf = line_end + 1) {
 		line_end = strchrnul(buf, '\n');
 		ident_line = skip_prefix(buf, "author ");
 		if (!ident_line) {
@@ -619,7 +609,7 @@ static void record_author_date(struct author_date_slab *author_date,
 	*(author_date_slab_at(author_date, commit)) = date;
 
 fail_exit:
-	free(buffer);
+	unuse_commit_buffer(commit, buffer);
 }
 
 static int compare_commits_by_author_date(const void *a_, const void *b_,
