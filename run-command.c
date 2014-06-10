@@ -279,6 +279,9 @@ int start_command(struct child_process *cmd)
 	int failed_errno;
 	char *str;
 
+	if (!cmd->argv)
+		cmd->argv = cmd->args.argv;
+
 	/*
 	 * In case of errors we must keep the promise to close FDs
 	 * that have been passed in via ->in and ->out.
@@ -328,6 +331,7 @@ int start_command(struct child_process *cmd)
 fail_pipe:
 			error("cannot create %s pipe for %s: %s",
 				str, cmd->argv[0], strerror(failed_errno));
+			argv_array_clear(&cmd->args);
 			errno = failed_errno;
 			return -1;
 		}
@@ -519,6 +523,7 @@ fail_pipe:
 			close_pair(fderr);
 		else if (cmd->err)
 			close(cmd->err);
+		argv_array_clear(&cmd->args);
 		errno = failed_errno;
 		return -1;
 	}
@@ -543,7 +548,9 @@ fail_pipe:
 
 int finish_command(struct child_process *cmd)
 {
-	return wait_or_whine(cmd->pid, cmd->argv[0]);
+	int ret = wait_or_whine(cmd->pid, cmd->argv[0]);
+	argv_array_clear(&cmd->args);
+	return ret;
 }
 
 int run_command(struct child_process *cmd)
