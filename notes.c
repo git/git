@@ -303,7 +303,7 @@ static int note_tree_insert(struct notes_tree *t, struct int_node *tree,
 		free(entry);
 		return 0;
 	}
-	new_node = (struct int_node *) xcalloc(sizeof(struct int_node), 1);
+	new_node = (struct int_node *) xcalloc(1, sizeof(struct int_node));
 	ret = note_tree_insert(t, new_node, n + 1, l, GET_PTR_TYPE(*p),
 			       combine_notes);
 	if (ret)
@@ -443,7 +443,7 @@ static void load_subtree(struct notes_tree *t, struct leaf_node *subtree,
 		if (len <= 20) {
 			type = PTR_TYPE_NOTE;
 			l = (struct leaf_node *)
-				xcalloc(sizeof(struct leaf_node), 1);
+				xcalloc(1, sizeof(struct leaf_node));
 			hashcpy(l->key_sha1, object_sha1);
 			hashcpy(l->val_sha1, entry.sha1);
 			if (len < 20) {
@@ -1003,7 +1003,7 @@ void init_notes(struct notes_tree *t, const char *notes_ref,
 	if (!combine_notes)
 		combine_notes = combine_notes_concatenate;
 
-	t->root = (struct int_node *) xcalloc(sizeof(struct int_node), 1);
+	t->root = (struct int_node *) xcalloc(1, sizeof(struct int_node));
 	t->first_non_note = NULL;
 	t->prev_non_note = NULL;
 	t->ref = notes_ref ? xstrdup(notes_ref) : NULL;

@@ -1014,7 +1014,7 @@ static struct ref *get_refs_list(struct transport *transport, int for_push)
 
 int transport_helper_init(struct transport *transport, const char *name)
 {
-	struct helper_data *data = xcalloc(sizeof(*data), 1);
+	struct helper_data *data = xcalloc(1, sizeof(*data));
 	data->name = name;
 
 	if (getenv("GIT_TRANSPORT_HELPER_DEBUG"))

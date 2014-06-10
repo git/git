@@ -92,7 +92,7 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 
 	if (argv[i]) {
 		int j;
-		pattern = xcalloc(sizeof(const char *), argc - i + 1);
+		pattern = xcalloc(argc - i + 1, sizeof(const char *));
 		for (j = i; j < argc; j++) {
 			int len = strlen(argv[j]);
 			char *p = xmalloc(len + 3);

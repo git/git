@@ -523,7 +523,7 @@ static void free_refspecs(struct refspec *refspec, int nr_refspec)
 static struct refspec *parse_refspec_internal(int nr_refspec, const char **refspec, int fetch, int verify)
 {
 	int i;
-	struct refspec *rs = xcalloc(sizeof(*rs), nr_refspec);
+	struct refspec *rs = xcalloc(nr_refspec, sizeof(*rs));
 
 	for (i = 0; i < nr_refspec; i++) {
 		size_t llen;
