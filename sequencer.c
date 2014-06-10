@@ -116,39 +116,23 @@ static const char *action_name(const struct replay_opts *opts)
 	return opts->action == REPLAY_REVERT ? "revert" : "cherry-pick";
 }
 
-static char *get_encoding(const char *message);
-
 struct commit_message {
 	char *parent_label;
 	const char *label;
 	const char *subject;
-	char *reencoded_message;
 	const char *message;
 };
 
 static int get_message(struct commit *commit, struct commit_message *out)
 {
-	const char *encoding;
 	const char *abbrev, *subject;
 	int abbrev_len, subject_len;
 	char *q;
 
-	if (!commit->buffer)
-		return -1;
-	encoding = get_encoding(commit->buffer);
-	if (!encoding)
-		encoding = "UTF-8";
 	if (!git_commit_encoding)
 		git_commit_encoding = "UTF-8";
 
-	out->reencoded_message = NULL;
-	out->message = commit->buffer;
-	if (same_encoding(encoding, git_commit_encoding))
-		out->reencoded_message = reencode_string(commit->buffer,
-					git_commit_encoding, encoding);
-	if (out->reencoded_message)
-		out->message = out->reencoded_message;
-
+	out->message = logmsg_reencode(commit, NULL, git_commit_encoding);
 	abbrev = find_unique_abbrev(commit->object.sha1, DEFAULT_ABBREV);
 	abbrev_len = strlen(abbrev);
 
@@ -167,29 +151,10 @@ static int get_message(struct commit *commit, struct commit_message *out)
 	return 0;
 }
 
-static void free_message(struct commit_message *msg)
+static void free_message(struct commit *commit, struct commit_message *msg)
 {
 	free(msg->parent_label);
-	free(msg->reencoded_message);
-}
-
-static char *get_encoding(const char *message)
-{
-	const char *p = message, *eol;
-
-	while (*p && *p != '\n') {
-		for (eol = p + 1; *eol && *eol != '\n'; eol++)
-			; /* do nothing */
-		if (starts_with(p, "encoding ")) {
-			char *result = xmalloc(eol - 8 - p);
-			strlcpy(result, p + 9, eol - 8 - p);
-			return result;
-		}
-		p = eol;
-		if (*p == '\n')
-			p++;
-	}
-	return NULL;
+	logmsg_free(msg->message, commit);
 }
 
 static void write_cherry_pick_head(struct commit *commit, const char *pseudoref)
@@ -485,7 +450,7 @@ static int do_pick_commit(struct commit *commit, struct replay_opts *opts)
 	unsigned char head[20];
 	struct commit *base, *next, *parent;
 	const char *base_label, *next_label;
-	struct commit_message msg = { NULL, NULL, NULL, NULL, NULL };
+	struct commit_message msg = { NULL, NULL, NULL, NULL };
 	char *defmsg = NULL;
 	struct strbuf msgbuf = STRBUF_INIT;
 	int res, unborn = 0, allow;
@@ -650,7 +615,7 @@ static int do_pick_commit(struct commit *commit, struct replay_opts *opts)
 		res = run_git_commit(defmsg, opts, allow);
 
 leave:
-	free_message(&msg);
+	free_message(commit, &msg);
 	free(defmsg);
 
 	return res;
