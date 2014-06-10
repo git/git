@@ -613,21 +613,8 @@ const char *logmsg_reencode(const struct commit *commit,
 	static const char *utf8 = "UTF-8";
 	const char *use_encoding;
 	char *encoding;
-	char *msg = commit->buffer;
+	const char *msg = get_commit_buffer(commit);
 	char *out;
-
-	if (!msg) {
-		enum object_type type;
-		unsigned long size;
-
-		msg = read_sha1_file(commit->object.sha1, &type, &size);
-		if (!msg)
-			die("Cannot read commit object %s",
-			    sha1_to_hex(commit->object.sha1));
-		if (type != OBJ_COMMIT)
-			die("Expected commit for '%s', got %s",
-			    sha1_to_hex(commit->object.sha1), typename(type));
-	}
 
 	if (!output_encoding || !*output_encoding) {
 		if (commit_encoding)
@@ -652,12 +639,13 @@ const char *logmsg_reencode(const struct commit *commit,
 		 * Otherwise, we still want to munge the encoding header in the
 		 * result, which will be done by modifying the buffer. If we
 		 * are using a fresh copy, we can reuse it. But if we are using
-		 * the cached copy from commit->buffer, we need to duplicate it
-		 * to avoid munging commit->buffer.
+		 * the cached copy from get_commit_buffer, we need to duplicate it
+		 * to avoid munging the cached copy.
 		 */
-		out = msg;
-		if (out == commit->buffer)
-			out = xstrdup(out);
+		if (msg == get_cached_commit_buffer(commit))
+			out = xstrdup(msg);
+		else
+			out = (char *)msg;
 	}
 	else {
 		/*
@@ -667,8 +655,8 @@ const char *logmsg_reencode(const struct commit *commit,
 		 * copy, we can free it.
 		 */
 		out = reencode_string(msg, output_encoding, use_encoding);
-		if (out && msg != commit->buffer)
-			free(msg);
+		if (out)
+			unuse_commit_buffer(commit, msg);
 	}
 
 	/*
@@ -685,12 +673,6 @@ const char *logmsg_reencode(const struct commit *commit,
 	 * case we just return the commit message verbatim.
 	 */
 	return out ? out : msg;
-}
-
-void logmsg_free(const char *msg, const struct commit *commit)
-{
-	if (msg != commit->buffer)
-		free((void *)msg);
 }
 
 static int mailmap_name(const char **email, size_t *email_len,
@@ -1531,7 +1513,7 @@ void format_commit_message(const struct commit *commit,
 	}
 
 	free(context.commit_encoding);
-	logmsg_free(context.message, commit);
+	unuse_commit_buffer(commit, context.message);
 	free(context.signature_check.gpg_output);
 	free(context.signature_check.signer);
 }
@@ -1767,7 +1749,7 @@ void pretty_print_commit(struct pretty_print_context *pp,
 	if (pp->fmt == CMIT_FMT_EMAIL && sb->len <= beginning_of_body)
 		strbuf_addch(sb, '\n');
 
-	logmsg_free(reencoded, commit);
+	unuse_commit_buffer(commit, reencoded);
 }
 
 void pp_commit_easy(enum cmit_fmt fmt, const struct commit *commit,

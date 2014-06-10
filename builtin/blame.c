@@ -1416,7 +1416,7 @@ static void get_commit_info(struct commit *commit,
 		    &ret->author_time, &ret->author_tz);
 
 	if (!detailed) {
-		logmsg_free(message, commit);
+		unuse_commit_buffer(commit, message);
 		return;
 	}
 
@@ -1430,7 +1430,7 @@ static void get_commit_info(struct commit *commit,
 	else
 		strbuf_addf(&ret->summary, "(%s)", sha1_to_hex(commit->object.sha1));
 
-	logmsg_free(message, commit);
+	unuse_commit_buffer(commit, message);
 }
 
 /*

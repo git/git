@@ -2844,7 +2844,7 @@ static int commit_match(struct commit *commit, struct rev_info *opt)
 		retval = grep_buffer(&opt->grep_filter,
 				     (char *)message, strlen(message));
 	strbuf_release(&buf);
-	logmsg_free(message, commit);
+	unuse_commit_buffer(commit, message);
 	return retval;
 }
 
