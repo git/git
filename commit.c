@@ -245,6 +245,11 @@ int unregister_shallow(const unsigned char *sha1)
 	return 0;
 }
 
+void set_commit_buffer(struct commit *commit, void *buffer)
+{
+	commit->buffer = buffer;
+}
+
 void free_commit_buffer(struct commit *commit)
 {
 	free(commit->buffer);
@@ -335,7 +340,7 @@ int parse_commit(struct commit *item)
 	}
 	ret = parse_commit_buffer(item, buffer, size);
 	if (save_commit_buffer && !ret) {
-		item->buffer = buffer;
+		set_commit_buffer(item, buffer);
 		return 0;
 	}
 	free(buffer);

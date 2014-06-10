@@ -2046,7 +2046,7 @@ static struct commit *fake_working_tree_commit(struct diff_options *opt,
 		    ident, ident, path,
 		    (!contents_from ? path :
 		     (!strcmp(contents_from, "-") ? "standard input" : contents_from)));
-	commit->buffer = strbuf_detach(&msg, NULL);
+	set_commit_buffer(commit, strbuf_detach(&msg, NULL));
 
 	if (!contents_from || strcmp("-", contents_from)) {
 		struct stat st;

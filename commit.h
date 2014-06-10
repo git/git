@@ -52,6 +52,12 @@ int parse_commit(struct commit *item);
 void parse_commit_or_die(struct commit *item);
 
 /*
+ * Associate an object buffer with the commit. The ownership of the
+ * memory is handed over to the commit, and must be free()-able.
+ */
+void set_commit_buffer(struct commit *, void *buffer);
+
+/*
  * Free any cached object buffer associated with the commit.
  */
 void free_commit_buffer(struct commit *);

@@ -198,7 +198,7 @@ struct object *parse_object_buffer(const unsigned char *sha1, enum object_type t
 			if (parse_commit_buffer(commit, buffer, size))
 				return NULL;
 			if (!commit->buffer) {
-				commit->buffer = buffer;
+				set_commit_buffer(commit, buffer);
 				*eaten_p = 1;
 			}
 			obj = &commit->object;
