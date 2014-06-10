@@ -606,9 +606,9 @@ static char *replace_encoding_header(char *buf, const char *encoding)
 	return strbuf_detach(&tmp, NULL);
 }
 
-char *logmsg_reencode(const struct commit *commit,
-		      char **commit_encoding,
-		      const char *output_encoding)
+const char *logmsg_reencode(const struct commit *commit,
+			    char **commit_encoding,
+			    const char *output_encoding)
 {
 	static const char *utf8 = "UTF-8";
 	const char *use_encoding;
@@ -687,10 +687,10 @@ char *logmsg_reencode(const struct commit *commit,
 	return out ? out : msg;
 }
 
-void logmsg_free(char *msg, const struct commit *commit)
+void logmsg_free(const char *msg, const struct commit *commit)
 {
 	if (msg != commit->buffer)
-		free(msg);
+		free((void *)msg);
 }
 
 static int mailmap_name(const char **email, size_t *email_len,
@@ -796,7 +796,7 @@ struct format_commit_context {
 	struct signature_check signature_check;
 	enum flush_type flush_type;
 	enum trunc_type truncate;
-	char *message;
+	const char *message;
 	char *commit_encoding;
 	size_t width, indent1, indent2;
 	int auto_color;
@@ -1700,7 +1700,7 @@ void pretty_print_commit(struct pretty_print_context *pp,
 	unsigned long beginning_of_body;
 	int indent = 4;
 	const char *msg;
-	char *reencoded;
+	const char *reencoded;
 	const char *encoding;
 	int need_8bit_cte = pp->need_8bit_cte;
 

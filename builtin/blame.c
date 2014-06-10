@@ -1405,7 +1405,7 @@ static void get_commit_info(struct commit *commit,
 {
 	int len;
 	const char *subject, *encoding;
-	char *message;
+	const char *message;
 
 	commit_info_init(ret);
 

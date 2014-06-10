@@ -115,10 +115,10 @@ struct userformat_want {
 
 extern int has_non_ascii(const char *text);
 struct rev_info; /* in revision.h, it circularly uses enum cmit_fmt */
-extern char *logmsg_reencode(const struct commit *commit,
-			     char **commit_encoding,
-			     const char *output_encoding);
-extern void logmsg_free(char *msg, const struct commit *commit);
+extern const char *logmsg_reencode(const struct commit *commit,
+				   char **commit_encoding,
+				   const char *output_encoding);
+extern void logmsg_free(const char *msg, const struct commit *commit);
 extern void get_commit_format(const char *arg, struct rev_info *);
 extern const char *format_subject(struct strbuf *sb, const char *msg,
 				  const char *line_separator);
