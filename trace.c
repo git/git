@@ -75,7 +75,6 @@ static void trace_vprintf(const char *key, const char *format, va_list ap)
 	strbuf_release(&buf);
 }
 
-__attribute__((format (printf, 2, 3)))
 void trace_printf_key(const char *key, const char *format, ...)
 {
 	va_list ap;
