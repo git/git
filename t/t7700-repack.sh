@@ -21,7 +21,7 @@ test_expect_success 'objects in packs marked .keep are not repacked' '
 	objsha1=$(git verify-pack -v pack-$packsha1.idx | head -n 1 |
 		sed -e "s/^\([0-9a-f]\{40\}\).*/\1/") &&
 	mv pack-* .git/objects/pack/ &&
-	git repack --no-pack-kept-objects -A -d -l &&
+	git repack -A -d -l &&
 	git prune-packed &&
 	for p in .git/objects/pack/*.idx; do
 		idx=$(basename $p)
