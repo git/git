@@ -58,11 +58,9 @@ pull_ff=$(git config pull.ff)
 case "$pull_ff" in
 false)
 	no_ff=--no-ff
-	break
 	;;
 only)
 	ff_only=--ff-only
-	break
 	;;
 esac
 
