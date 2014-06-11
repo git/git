@@ -10533,13 +10533,13 @@ msgstr "Bitte committen Sie die Änderungen oder benutzen Sie \"stash\"."
 #: git-rebase.sh:585
 #, sh-format
 msgid "Current branch $branch_name is up to date."
-msgstr "Aktueller Branch $branch_name ist auf dem neusten Stand."
+msgstr "Aktueller Branch $branch_name ist auf dem neuesten Stand."
 
 #: git-rebase.sh:589
 #, sh-format
 msgid "Current branch $branch_name is up to date, rebase forced."
 msgstr ""
-"Aktueller Branch $branch_name ist auf dem neusten Stand, Rebase erzwungen."
+"Aktueller Branch $branch_name ist auf dem neuesten Stand, Rebase erzwungen."
 
 #: git-rebase.sh:600
 #, sh-format
