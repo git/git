@@ -12,10 +12,20 @@ ifndef::git-pull[]
 endif::git-pull[]
 
 <refspec>::
-	The format of a <refspec> parameter is an optional plus
-	`+`, followed by the source ref <src>, followed
-	by a colon `:`, followed by the destination ref <dst>.
-	The colon can be omitted when <dst> is empty.
+	Specifies which refs to fetch and which local refs to update.
+	When no <refspec>s appear on the command line, the refs to fetch
+	are read from `remote.<repository>.fetch` variables instead
+ifndef::git-pull[]
+	(see <<CRTB,CONFIGURED REMOTE-TRACKING BRANCHES>> below).
+endif::git-pull[]
+ifdef::git-pull[]
+	(see linkgit:git-fetch[1]).
+endif::git-pull[]
++
+The format of a <refspec> parameter is an optional plus
+`+`, followed by the source ref <src>, followed
+by a colon `:`, followed by the destination ref <dst>.
+The colon can be omitted when <dst> is empty.
 +
 `tag <tag>` means the same as `refs/tags/<tag>:refs/tags/<tag>`;
 it requests fetching everything up to the given tag.

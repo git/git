@@ -51,8 +51,8 @@ include::pull-fetch-param.txt[]
 include::urls-remotes.txt[]
 
 
-CONFIGURED REMOTE-TRACKING BRANCHES
------------------------------------
+CONFIGURED REMOTE-TRACKING BRANCHES[[CRTB]]
+-------------------------------------------
 
 You often interact with the same remote repository by
 regularly and repeatedly fetching from it.  In order to keep track
