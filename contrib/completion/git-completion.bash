@@ -21,6 +21,12 @@
 #        source ~/.git-completion.sh
 #    3) Consider changing your PS1 to also show the current branch,
 #       see git-prompt.sh for details.
+#
+# If you use complex aliases of form '!f() { ... }; f', you can use the null
+# command ':' as the first command in the function body to declare the desired
+# completion style.  For example '!f() { : git commit ; ... }; f' will
+# tell the completion to use commit completion.  This also works with aliases
+# of form "!sh -c '...'".  For example, "!sh -c ': git commit ; ... '".
 
 case "$COMP_WORDBREAKS" in
 *:*) : great ;;
@@ -781,6 +787,10 @@ __git_aliased_command ()
 		-*)	: option ;;
 		*=*)	: setting env ;;
 		git)	: git itself ;;
+		\(\))   : skip parens of shell function definition ;;
+		{)	: skip start of shell helper function ;;
+		:)	: skip null command ;;
+		\'*)	: skip opening quote after sh -c ;;
 		*)
 			echo "$word"
 			return
