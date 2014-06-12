@@ -51,6 +51,17 @@ int parse_commit_buffer(struct commit *item, const void *buffer, unsigned long s
 int parse_commit(struct commit *item);
 void parse_commit_or_die(struct commit *item);
 
+/*
+ * Free any cached object buffer associated with the commit.
+ */
+void free_commit_buffer(struct commit *);
+
+/*
+ * Disassociate any cached object buffer from the commit, but do not free it.
+ * The buffer (or NULL, if none) is returned.
+ */
+const void *detach_commit_buffer(struct commit *);
+
 /* Find beginning and length of commit subject. */
 int find_commit_subject(const char *commit_buffer, const char **subject);
 

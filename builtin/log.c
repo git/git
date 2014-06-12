@@ -349,8 +349,7 @@ static int cmd_log_walk(struct rev_info *rev)
 			rev->max_count++;
 		if (!rev->reflog_info) {
 			/* we allow cycles in reflog ancestry */
-			free(commit->buffer);
-			commit->buffer = NULL;
+			free_commit_buffer(commit);
 		}
 		free_commit_list(commit->parents);
 		commit->parents = NULL;
@@ -1508,8 +1507,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 		    reopen_stdout(rev.numbered_files ? NULL : commit, NULL, &rev, quiet))
 			die(_("Failed to create output files"));
 		shown = log_tree_commit(&rev, commit);
-		free(commit->buffer);
-		commit->buffer = NULL;
+		free_commit_buffer(commit);
 
 		/* We put one extra blank line between formatted
 		 * patches and this flag is used by log-tree code

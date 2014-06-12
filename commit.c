@@ -245,6 +245,19 @@ int unregister_shallow(const unsigned char *sha1)
 	return 0;
 }
 
+void free_commit_buffer(struct commit *commit)
+{
+	free(commit->buffer);
+	commit->buffer = NULL;
+}
+
+const void *detach_commit_buffer(struct commit *commit)
+{
+	void *ret = commit->buffer;
+	commit->buffer = NULL;
+	return ret;
+}
+
 int parse_commit_buffer(struct commit *item, const void *buffer, unsigned long size)
 {
 	const char *tail = buffer;
