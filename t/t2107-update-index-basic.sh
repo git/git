@@ -29,6 +29,10 @@ test_expect_success 'update-index -h with corrupt index' '
 	test_i18ngrep "[Uu]sage: git update-index" broken/usage
 '
 
+test_expect_success '--cacheinfo complains of missing arguments' '
+	test_must_fail git update-index --cacheinfo
+'
+
 test_expect_success '--cacheinfo does not accept blob null sha1' '
 	echo content >file &&
 	git add file &&
