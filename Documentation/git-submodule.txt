@@ -20,7 +20,7 @@ SYNOPSIS
 'git submodule' [--quiet] summary [--cached|--files] [(-n|--summary-limit) <n>]
 	      [commit] [--] [<path>...]
 'git submodule' [--quiet] foreach [--recursive] <command>
-'git submodule' [--quiet] sync [--] [<path>...]
+'git submodule' [--quiet] sync [--recursive] [--] [<path>...]
 
 
 DESCRIPTION
