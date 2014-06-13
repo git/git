@@ -51,7 +51,7 @@ static void replace_index_entry(struct index_state *istate, int nr, struct cache
 	remove_name_hash(istate, old);
 	free(old);
 	set_index_entry(istate, nr, ce);
-	istate->cache_changed = 1;
+	istate->cache_changed |= CE_ENTRY_CHANGED;
 }
 
 void rename_index_entry_at(struct index_state *istate, int nr, const char *new_name)
@@ -482,7 +482,7 @@ int remove_index_entry_at(struct index_state *istate, int pos)
 	record_resolve_undo(istate, ce);
 	remove_name_hash(istate, ce);
 	free(ce);
-	istate->cache_changed = 1;
+	istate->cache_changed |= CE_ENTRY_REMOVED;
 	istate->cache_nr--;
 	if (pos >= istate->cache_nr)
 		return 0;
@@ -512,7 +512,7 @@ void remove_marked_cache_entries(struct index_state *istate)
 	}
 	if (j == istate->cache_nr)
 		return;
-	istate->cache_changed = 1;
+	istate->cache_changed |= CE_ENTRY_REMOVED;
 	istate->cache_nr = j;
 }
 
@@ -1002,7 +1002,7 @@ int add_index_entry(struct index_state *istate, struct cache_entry *ce, int opti
 			istate->cache + pos,
 			(istate->cache_nr - pos - 1) * sizeof(ce));
 	set_index_entry(istate, pos, ce);
-	istate->cache_changed = 1;
+	istate->cache_changed |= CE_ENTRY_ADDED;
 	return 0;
 }
 
@@ -1101,6 +1101,7 @@ static struct cache_entry *refresh_cache_ent(struct index_state *istate,
 	    !(ce->ce_flags & CE_VALID))
 		updated->ce_flags &= ~CE_VALID;
 
+	/* istate->cache_changed is updated in the caller */
 	return updated;
 }
 
@@ -1182,7 +1183,7 @@ int refresh_index(struct index_state *istate, unsigned int flags,
 				 * means the index is not valid anymore.
 				 */
 				ce->ce_flags &= ~CE_VALID;
-				istate->cache_changed = 1;
+				istate->cache_changed |= CE_ENTRY_CHANGED;
 			}
 			if (quiet)
 				continue;

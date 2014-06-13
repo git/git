@@ -268,6 +268,11 @@ static inline unsigned int canon_mode(unsigned int mode)
 
 #define cache_entry_size(len) (offsetof(struct cache_entry,name) + (len) + 1)
 
+#define SOMETHING_CHANGED	(1 << 0) /* unclassified changes go here */
+#define CE_ENTRY_CHANGED	(1 << 1)
+#define CE_ENTRY_REMOVED	(1 << 2)
+#define CE_ENTRY_ADDED		(1 << 3)
+
 struct index_state {
 	struct cache_entry **cache;
 	unsigned int version;

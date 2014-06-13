@@ -56,7 +56,7 @@ static int mark_ce_flags(const char *path, int flag, int mark)
 		else
 			active_cache[pos]->ce_flags &= ~flag;
 		cache_tree_invalidate_path(active_cache_tree, path);
-		active_cache_changed = 1;
+		active_cache_changed = SOMETHING_CHANGED;
 		return 0;
 	}
 	return -1;
@@ -268,7 +268,7 @@ static void chmod_path(int flip, const char *path)
 		goto fail;
 	}
 	cache_tree_invalidate_path(active_cache_tree, path);
-	active_cache_changed = 1;
+	active_cache_changed = SOMETHING_CHANGED;
 	report("chmod %cx '%s'", flip, path);
 	return;
  fail:
@@ -889,7 +889,7 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 			    INDEX_FORMAT_LB, INDEX_FORMAT_UB);
 
 		if (the_index.version != preferred_index_format)
-			active_cache_changed = 1;
+			active_cache_changed = SOMETHING_CHANGED;
 		the_index.version = preferred_index_format;
 	}
 
