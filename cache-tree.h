@@ -46,7 +46,7 @@ int update_main_cache_tree(int);
 #define WRITE_TREE_PREFIX_ERROR (-3)
 
 int write_cache_as_tree(unsigned char *sha1, int flags, const char *prefix);
-void prime_cache_tree(struct cache_tree **, struct tree *);
+void prime_cache_tree(struct index_state *, struct tree *);
 
 extern int cache_tree_matches_traversal(struct cache_tree *, struct name_entry *ent, struct traverse_info *info);
 
