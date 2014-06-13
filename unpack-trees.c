@@ -1046,6 +1046,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 	o->result.timestamp.sec = o->src_index->timestamp.sec;
 	o->result.timestamp.nsec = o->src_index->timestamp.nsec;
 	o->result.version = o->src_index->version;
+	hashcpy(o->result.sha1, o->src_index->sha1);
 	o->merge_size = len;
 	mark_all_ce_unused(o->src_index);
 
