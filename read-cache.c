@@ -2030,14 +2030,21 @@ static void remove_temporary_sharedindex_on_signal(int signo)
 	raise(signo);
 }
 
-static int write_shared_index(struct index_state *istate)
+static int write_shared_index(struct index_state *istate,
+			      struct lock_file *lock, unsigned flags)
 {
 	struct split_index *si = istate->split_index;
 	static int installed_handler;
 	int fd, ret;
 
 	temporary_sharedindex = git_pathdup("sharedindex_XXXXXX");
-	fd = xmkstemp(temporary_sharedindex);
+	fd = mkstemp(temporary_sharedindex);
+	if (fd < 0) {
+		free(temporary_sharedindex);
+		temporary_sharedindex = NULL;
+		hashclr(si->base_sha1);
+		return do_write_locked_index(istate, lock, flags);
+	}
 	if (!installed_handler) {
 		atexit(remove_temporary_sharedindex);
 		sigchain_push_common(remove_temporary_sharedindex_on_signal);
@@ -2070,7 +2077,7 @@ int write_locked_index(struct index_state *istate, struct lock_file *lock,
 	}
 
 	if (istate->cache_changed & SPLIT_INDEX_ORDERED) {
-		int ret = write_shared_index(istate);
+		int ret = write_shared_index(istate, lock, flags);
 		if (ret)
 			return ret;
 	}
