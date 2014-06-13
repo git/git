@@ -1569,8 +1569,6 @@ int read_index_from(struct index_state *istate, const char *path)
 
 	if (is_null_sha1(split_index->base_sha1))
 		return ret;
-	if (istate->cache_nr)
-		die("index in split-index mode must contain no entries");
 
 	if (split_index->base)
 		discard_index(split_index->base);

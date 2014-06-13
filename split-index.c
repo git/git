@@ -16,13 +16,27 @@ int read_link_extension(struct index_state *istate,
 {
 	const unsigned char *data = data_;
 	struct split_index *si;
+	int ret;
+
 	if (sz < 20)
 		return error("corrupt link extension (too short)");
 	si = init_split_index(istate);
 	hashcpy(si->base_sha1, data);
 	data += 20;
 	sz -= 20;
-	if (sz)
+	if (!sz)
+		return 0;
+	si->delete_bitmap = ewah_new();
+	ret = ewah_read_mmap(si->delete_bitmap, data, sz);
+	if (ret < 0)
+		return error("corrupt delete bitmap in link extension");
+	data += ret;
+	sz -= ret;
+	si->replace_bitmap = ewah_new();
+	ret = ewah_read_mmap(si->replace_bitmap, data, sz);
+	if (ret < 0)
+		return error("corrupt replace bitmap in link extension");
+	if (ret != sz)
 		return error("garbage at the end of link extension");
 	return 0;
 }
@@ -60,15 +74,81 @@ static void mark_base_index_entries(struct index_state *base)
 		base->cache[i]->index = i + 1;
 }
 
+static void mark_entry_for_delete(size_t pos, void *data)
+{
+	struct index_state *istate = data;
+	if (pos >= istate->cache_nr)
+		die("position for delete %d exceeds base index size %d",
+		    (int)pos, istate->cache_nr);
+	istate->cache[pos]->ce_flags |= CE_REMOVE;
+	istate->split_index->nr_deletions = 1;
+}
+
+static void replace_entry(size_t pos, void *data)
+{
+	struct index_state *istate = data;
+	struct split_index *si = istate->split_index;
+	struct cache_entry *dst, *src;
+	if (pos >= istate->cache_nr)
+		die("position for replacement %d exceeds base index size %d",
+		    (int)pos, istate->cache_nr);
+	if (si->nr_replacements >= si->saved_cache_nr)
+		die("too many replacements (%d vs %d)",
+		    si->nr_replacements, si->saved_cache_nr);
+	dst = istate->cache[pos];
+	if (dst->ce_flags & CE_REMOVE)
+		die("entry %d is marked as both replaced and deleted",
+		    (int)pos);
+	src = si->saved_cache[si->nr_replacements];
+	src->index = pos + 1;
+	src->ce_flags |= CE_UPDATE_IN_BASE;
+	free(dst);
+	dst = src;
+	si->nr_replacements++;
+}
+
 void merge_base_index(struct index_state *istate)
 {
 	struct split_index *si = istate->split_index;
+	unsigned int i;
 
 	mark_base_index_entries(si->base);
-	istate->cache_nr = si->base->cache_nr;
+
+	si->saved_cache	    = istate->cache;
+	si->saved_cache_nr  = istate->cache_nr;
+	istate->cache_nr    = si->base->cache_nr;
+	istate->cache	    = NULL;
+	istate->cache_alloc = 0;
 	ALLOC_GROW(istate->cache, istate->cache_nr, istate->cache_alloc);
 	memcpy(istate->cache, si->base->cache,
 	       sizeof(*istate->cache) * istate->cache_nr);
+
+	si->nr_deletions = 0;
+	si->nr_replacements = 0;
+	ewah_each_bit(si->replace_bitmap, replace_entry, istate);
+	ewah_each_bit(si->delete_bitmap, mark_entry_for_delete, istate);
+	if (si->nr_deletions)
+		remove_marked_cache_entries(istate);
+
+	for (i = si->nr_replacements; i < si->saved_cache_nr; i++) {
+		add_index_entry(istate, si->saved_cache[i],
+				ADD_CACHE_OK_TO_ADD |
+				/*
+				 * we may have to replay what
+				 * merge-recursive.c:update_stages()
+				 * does, which has this flag on
+				 */
+				ADD_CACHE_SKIP_DFCHECK);
+		si->saved_cache[i] = NULL;
+	}
+
+	ewah_free(si->delete_bitmap);
+	ewah_free(si->replace_bitmap);
+	free(si->saved_cache);
+	si->delete_bitmap  = NULL;
+	si->replace_bitmap = NULL;
+	si->saved_cache	   = NULL;
+	si->saved_cache_nr = 0;
 }
 
 void prepare_to_write_split_index(struct index_state *istate)

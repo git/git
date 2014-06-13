@@ -12,6 +12,8 @@ struct split_index {
 	struct ewah_bitmap *replace_bitmap;
 	struct cache_entry **saved_cache;
 	unsigned int saved_cache_nr;
+	unsigned int nr_deletions;
+	unsigned int nr_replacements;
 	int refcount;
 };
 
