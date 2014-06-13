@@ -89,6 +89,7 @@ static void replace_entry(size_t pos, void *data)
 	struct index_state *istate = data;
 	struct split_index *si = istate->split_index;
 	struct cache_entry *dst, *src;
+
 	if (pos >= istate->cache_nr)
 		die("position for replacement %d exceeds base index size %d",
 		    (int)pos, istate->cache_nr);
@@ -100,10 +101,14 @@ static void replace_entry(size_t pos, void *data)
 		die("entry %d is marked as both replaced and deleted",
 		    (int)pos);
 	src = si->saved_cache[si->nr_replacements];
+	if (ce_namelen(src))
+		die("corrupt link extension, entry %d should have "
+		    "zero length name", (int)pos);
 	src->index = pos + 1;
 	src->ce_flags |= CE_UPDATE_IN_BASE;
-	free(dst);
-	dst = src;
+	src->ce_namelen = dst->ce_namelen;
+	copy_cache_entry(dst, src);
+	free(src);
 	si->nr_replacements++;
 }
 
@@ -131,6 +136,9 @@ void merge_base_index(struct index_state *istate)
 		remove_marked_cache_entries(istate);
 
 	for (i = si->nr_replacements; i < si->saved_cache_nr; i++) {
+		if (!ce_namelen(si->saved_cache[i]))
+			die("corrupt link extension, entry %d should "
+			    "have non-zero length name", i);
 		add_index_entry(istate, si->saved_cache[i],
 				ADD_CACHE_OK_TO_ADD |
 				ADD_CACHE_KEEP_CACHE_TREE |
@@ -213,6 +221,7 @@ void prepare_to_write_split_index(struct index_state *istate)
 				ewah_set(si->delete_bitmap, i);
 			else if (ce->ce_flags & CE_UPDATE_IN_BASE) {
 				ewah_set(si->replace_bitmap, i);
+				ce->ce_flags |= CE_STRIP_NAME;
 				ALLOC_GROW(entries, nr_entries+1, nr_alloc);
 				entries[nr_entries++] = ce;
 			}
@@ -222,6 +231,7 @@ void prepare_to_write_split_index(struct index_state *istate)
 	for (i = 0; i < istate->cache_nr; i++) {
 		ce = istate->cache[i];
 		if ((!si->base || !ce->index) && !(ce->ce_flags & CE_REMOVE)) {
+			assert(!(ce->ce_flags & CE_STRIP_NAME));
 			ALLOC_GROW(entries, nr_entries+1, nr_alloc);
 			entries[nr_entries++] = ce;
 		}

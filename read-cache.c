@@ -1787,8 +1787,14 @@ static int ce_write_entry(git_SHA_CTX *c, int fd, struct cache_entry *ce,
 {
 	int size;
 	struct ondisk_cache_entry *ondisk;
+	int saved_namelen = saved_namelen; /* compiler workaround */
 	char *name;
 	int result;
+
+	if (ce->ce_flags & CE_STRIP_NAME) {
+		saved_namelen = ce_namelen(ce);
+		ce->ce_namelen = 0;
+	}
 
 	if (!previous_name) {
 		size = ondisk_ce_size(ce);
@@ -1820,6 +1826,10 @@ static int ce_write_entry(git_SHA_CTX *c, int fd, struct cache_entry *ce,
 
 		strbuf_splice(previous_name, common, to_remove,
 			      ce->name + common, ce_namelen(ce) - common);
+	}
+	if (ce->ce_flags & CE_STRIP_NAME) {
+		ce->ce_namelen = saved_namelen;
+		ce->ce_flags &= ~CE_STRIP_NAME;
 	}
 
 	result = ce_write(c, fd, ondisk, size);

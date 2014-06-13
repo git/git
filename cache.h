@@ -170,6 +170,7 @@ struct cache_entry {
 #define CE_MATCHED           (1 << 26)
 
 #define CE_UPDATE_IN_BASE    (1 << 27)
+#define CE_STRIP_NAME        (1 << 28)
 
 /*
  * Extended on-disk flags
