@@ -20,7 +20,6 @@ static WORD attr;
 static int negative;
 static int non_ascii_used = 0;
 static HANDLE hthread, hread, hwrite;
-static HANDLE hwrite1 = INVALID_HANDLE_VALUE, hwrite2 = INVALID_HANDLE_VALUE;
 static HANDLE hconsole1, hconsole2;
 
 #ifdef __MINGW32__
@@ -435,10 +434,6 @@ static void winansi_exit(void)
 	WaitForSingleObject(hthread, INFINITE);
 
 	/* cleanup handles... */
-	if (hwrite1 != INVALID_HANDLE_VALUE)
-		CloseHandle(hwrite1);
-	if (hwrite2 != INVALID_HANDLE_VALUE)
-		CloseHandle(hwrite2);
 	CloseHandle(hwrite);
 	CloseHandle(hthread);
 }
@@ -565,14 +560,9 @@ void winansi_init(void)
 
 	/* redirect stdout / stderr to the pipe */
 	if (con1)
-		hconsole1 = swap_osfhnd(1, hwrite1 = duplicate_handle(hwrite));
+		hconsole1 = swap_osfhnd(1, duplicate_handle(hwrite));
 	if (con2)
-		hconsole2 = swap_osfhnd(2, hwrite2 = duplicate_handle(hwrite));
-}
-
-static int is_same_handle(HANDLE hnd, int fd)
-{
-	return hnd != INVALID_HANDLE_VALUE && hnd == (HANDLE) _get_osfhandle(fd);
+		hconsole2 = swap_osfhnd(2, duplicate_handle(hwrite));
 }
 
 /*
@@ -581,10 +571,9 @@ static int is_same_handle(HANDLE hnd, int fd)
  */
 HANDLE winansi_get_osfhandle(int fd)
 {
-	if (fd == 1 && is_same_handle(hwrite1, 1))
-		return hconsole1;
-	else if (fd == 2 && is_same_handle(hwrite2, 2))
-		return hconsole2;
-	else
-		return (HANDLE) _get_osfhandle(fd);
+	HANDLE hnd = (HANDLE) _get_osfhandle(fd);
+	if ((fd == 1 || fd == 2) && isatty(fd)
+	    && GetFileType(hnd) == FILE_TYPE_PIPE)
+		return (fd == 1) ? hconsole1 : hconsole2;
+	return hnd;
 }
