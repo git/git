@@ -5,7 +5,6 @@
 #include "sigchain.h"
 
 static struct lock_file *lock_file_list;
-static const char *alternate_index_output;
 
 static void remove_lock_file(void)
 {
@@ -250,25 +249,6 @@ int hold_locked_index(struct lock_file *lk, int die_on_error)
 					 die_on_error
 					 ? LOCK_DIE_ON_ERROR
 					 : 0);
-}
-
-void set_alternate_index_output(const char *name)
-{
-	alternate_index_output = name;
-}
-
-int commit_locked_index(struct lock_file *lk)
-{
-	if (alternate_index_output) {
-		if (lk->fd >= 0 && close_lock_file(lk))
-			return -1;
-		if (rename(lk->filename, alternate_index_output))
-			return -1;
-		lk->filename[0] = 0;
-		return 0;
-	}
-	else
-		return commit_lock_file(lk);
 }
 
 void rollback_lock_file(struct lock_file *lk)

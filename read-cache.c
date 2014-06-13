@@ -36,6 +36,7 @@ static struct cache_entry *refresh_cache_entry(struct cache_entry *ce,
 #define CACHE_EXT_RESOLVE_UNDO 0x52455543 /* "REUC" */
 
 struct index_state the_index;
+static const char *alternate_index_output;
 
 static void set_index_entry(struct index_state *istate, int nr, struct cache_entry *ce)
 {
@@ -1873,6 +1874,25 @@ static int do_write_index(struct index_state *istate, int newfd)
 	istate->timestamp.sec = (unsigned int)st.st_mtime;
 	istate->timestamp.nsec = ST_MTIME_NSEC(st);
 	return 0;
+}
+
+void set_alternate_index_output(const char *name)
+{
+	alternate_index_output = name;
+}
+
+static int commit_locked_index(struct lock_file *lk)
+{
+	if (alternate_index_output) {
+		if (lk->fd >= 0 && close_lock_file(lk))
+			return -1;
+		if (rename(lk->filename, alternate_index_output))
+			return -1;
+		lk->filename[0] = 0;
+		return 0;
+	} else {
+		return commit_lock_file(lk);
+	}
 }
 
 static int do_write_locked_index(struct index_state *istate, struct lock_file *lock,
