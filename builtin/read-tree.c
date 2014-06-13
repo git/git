@@ -155,6 +155,15 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 	if (1 < opts.merge + opts.reset + prefix_set)
 		die("Which one? -m, --reset, or --prefix?");
 
+	/*
+	 * NEEDSWORK
+	 *
+	 * The old index should be read anyway even if we're going to
+	 * destroy all index entries because we still need to preserve
+	 * certain information such as index version or split-index
+	 * mode.
+	 */
+
 	if (opts.reset || opts.merge || opts.prefix) {
 		if (read_cache_unmerged() && (opts.prefix || opts.merge))
 			die("You need to resolve your current index first");
