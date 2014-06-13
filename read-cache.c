@@ -38,7 +38,8 @@ static struct cache_entry *refresh_cache_entry(struct cache_entry *ce,
 #define CACHE_EXT_LINK 0x6c696e6b	  /* "link" */
 
 /* changes that can be kept in $GIT_DIR/index (basically all extensions) */
-#define EXTMASK (RESOLVE_UNDO_CHANGED | CACHE_TREE_CHANGED)
+#define EXTMASK (RESOLVE_UNDO_CHANGED | CACHE_TREE_CHANGED | \
+		 CE_ENTRY_ADDED)
 
 struct index_state the_index;
 static const char *alternate_index_output;
