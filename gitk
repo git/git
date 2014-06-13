@@ -3493,10 +3493,17 @@ proc flist_hl {only} {
 }
 
 proc gitknewtmpdir {} {
-    global diffnum gitktmpdir gitdir
+    global diffnum gitktmpdir gitdir env
 
     if {![info exists gitktmpdir]} {
-	set gitktmpdir [file join $gitdir [format ".gitk-tmp.%s" [pid]]]
+	if {[info exists env(GITK_TMPDIR)]} {
+	    set tmpdir $env(GITK_TMPDIR)
+	} elseif {[info exists env(TMPDIR)]} {
+	    set tmpdir $env(TMPDIR)
+	} else {
+	    set tmpdir $gitdir
+	}
+	set gitktmpdir [file join $tmpdir [format ".gitk-tmp.%s" [pid]]]
 	if {[catch {file mkdir $gitktmpdir} err]} {
 	    error_popup "[mc "Error creating temporary directory %s:" $gitktmpdir] $err"
 	    unset gitktmpdir
