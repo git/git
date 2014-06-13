@@ -325,7 +325,7 @@ struct merge_remote_desc {
  */
 struct commit *get_merge_parent(const char *name);
 
-extern int parse_signed_commit(const unsigned char *sha1,
+extern int parse_signed_commit(const struct commit *commit,
 			       struct strbuf *message, struct strbuf *signature);
 extern void print_commit_list(struct commit_list *list,
 			      const char *format_cur,

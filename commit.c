@@ -1138,17 +1138,14 @@ static int do_sign_commit(struct strbuf *buf, const char *keyid)
 	return 0;
 }
 
-int parse_signed_commit(const unsigned char *sha1,
+int parse_signed_commit(const struct commit *commit,
 			struct strbuf *payload, struct strbuf *signature)
 {
-	unsigned long size;
-	enum object_type type;
-	char *buffer = read_sha1_file(sha1, &type, &size);
-	int in_signature, saw_signature = -1;
-	char *line, *tail;
 
-	if (!buffer || type != OBJ_COMMIT)
-		goto cleanup;
+	unsigned long size;
+	const char *buffer = get_commit_buffer(commit, &size);
+	int in_signature, saw_signature = -1;
+	const char *line, *tail;
 
 	line = buffer;
 	tail = buffer + size;
@@ -1156,7 +1153,7 @@ int parse_signed_commit(const unsigned char *sha1,
 	saw_signature = 0;
 	while (line < tail) {
 		const char *sig = NULL;
-		char *next = memchr(line, '\n', tail - line);
+		const char *next = memchr(line, '\n', tail - line);
 
 		next = next ? next + 1 : tail;
 		if (in_signature && line[0] == ' ')
@@ -1177,8 +1174,7 @@ int parse_signed_commit(const unsigned char *sha1,
 		}
 		line = next;
 	}
- cleanup:
-	free(buffer);
+	unuse_commit_buffer(commit, buffer);
 	return saw_signature;
 }
 
@@ -1269,8 +1265,7 @@ void check_commit_signature(const struct commit* commit, struct signature_check 
 
 	sigc->result = 'N';
 
-	if (parse_signed_commit(commit->object.sha1,
-				&payload, &signature) <= 0)
+	if (parse_signed_commit(commit, &payload, &signature) <= 0)
 		goto out;
 	status = verify_signed_buffer(payload.buf, payload.len,
 				      signature.buf, signature.len,
@@ -1315,11 +1310,9 @@ struct commit_extra_header *read_commit_extra_headers(struct commit *commit,
 {
 	struct commit_extra_header *extra = NULL;
 	unsigned long size;
-	enum object_type type;
-	char *buffer = read_sha1_file(commit->object.sha1, &type, &size);
-	if (buffer && type == OBJ_COMMIT)
-		extra = read_commit_extra_header_lines(buffer, size, exclude);
-	free(buffer);
+	const char *buffer = get_commit_buffer(commit, &size);
+	extra = read_commit_extra_header_lines(buffer, size, exclude);
+	unuse_commit_buffer(commit, buffer);
 	return extra;
 }
 
