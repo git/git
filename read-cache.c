@@ -2070,7 +2070,8 @@ int write_locked_index(struct index_state *istate, struct lock_file *lock,
 {
 	struct split_index *si = istate->split_index;
 
-	if (!si || (istate->cache_changed & ~EXTMASK)) {
+	if (!si || alternate_index_output ||
+	    (istate->cache_changed & ~EXTMASK)) {
 		if (si)
 			hashclr(si->base_sha1);
 		return do_write_locked_index(istate, lock, flags);
