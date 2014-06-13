@@ -133,6 +133,7 @@ void merge_base_index(struct index_state *istate)
 	for (i = si->nr_replacements; i < si->saved_cache_nr; i++) {
 		add_index_entry(istate, si->saved_cache[i],
 				ADD_CACHE_OK_TO_ADD |
+				ADD_CACHE_KEEP_CACHE_TREE |
 				/*
 				 * we may have to replay what
 				 * merge-recursive.c:update_stages()
