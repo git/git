@@ -13,6 +13,9 @@ struct split_index {
 
 struct split_index *init_split_index(struct index_state *istate);
 void save_or_free_index_entry(struct index_state *istate, struct cache_entry *ce);
+void replace_index_entry_in_base(struct index_state *istate,
+				 struct cache_entry *old,
+				 struct cache_entry *new);
 int read_link_extension(struct index_state *istate,
 			const void *data, unsigned long sz);
 int write_link_extension(struct strbuf *sb,

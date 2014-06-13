@@ -257,8 +257,10 @@ static int apply_sparse_checkout(struct index_state *istate,
 		ce->ce_flags |= CE_SKIP_WORKTREE;
 	else
 		ce->ce_flags &= ~CE_SKIP_WORKTREE;
-	if (was_skip_worktree != ce_skip_worktree(ce))
+	if (was_skip_worktree != ce_skip_worktree(ce)) {
+		ce->ce_flags |= CE_UPDATE_IN_BASE;
 		istate->cache_changed |= CE_ENTRY_CHANGED;
+	}
 
 	/*
 	 * if (!was_skip_worktree && !ce_skip_worktree()) {

@@ -39,7 +39,7 @@ static struct cache_entry *refresh_cache_entry(struct cache_entry *ce,
 
 /* changes that can be kept in $GIT_DIR/index (basically all extensions) */
 #define EXTMASK (RESOLVE_UNDO_CHANGED | CACHE_TREE_CHANGED | \
-		 CE_ENTRY_ADDED | CE_ENTRY_REMOVED)
+		 CE_ENTRY_ADDED | CE_ENTRY_REMOVED | CE_ENTRY_CHANGED)
 
 struct index_state the_index;
 static const char *alternate_index_output;
@@ -54,9 +54,11 @@ static void replace_index_entry(struct index_state *istate, int nr, struct cache
 {
 	struct cache_entry *old = istate->cache[nr];
 
+	replace_index_entry_in_base(istate, old, ce);
 	remove_name_hash(istate, old);
 	free(old);
 	set_index_entry(istate, nr, ce);
+	ce->ce_flags |= CE_UPDATE_IN_BASE;
 	istate->cache_changed |= CE_ENTRY_CHANGED;
 }
 
@@ -1192,6 +1194,7 @@ int refresh_index(struct index_state *istate, unsigned int flags,
 				 * means the index is not valid anymore.
 				 */
 				ce->ce_flags &= ~CE_VALID;
+				ce->ce_flags |= CE_UPDATE_IN_BASE;
 				istate->cache_changed |= CE_ENTRY_CHANGED;
 			}
 			if (quiet)
