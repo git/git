@@ -39,7 +39,7 @@ static struct cache_entry *refresh_cache_entry(struct cache_entry *ce,
 
 /* changes that can be kept in $GIT_DIR/index (basically all extensions) */
 #define EXTMASK (RESOLVE_UNDO_CHANGED | CACHE_TREE_CHANGED | \
-		 CE_ENTRY_ADDED)
+		 CE_ENTRY_ADDED | CE_ENTRY_REMOVED)
 
 struct index_state the_index;
 static const char *alternate_index_output;
@@ -488,7 +488,7 @@ int remove_index_entry_at(struct index_state *istate, int pos)
 
 	record_resolve_undo(istate, ce);
 	remove_name_hash(istate, ce);
-	free(ce);
+	save_or_free_index_entry(istate, ce);
 	istate->cache_changed |= CE_ENTRY_REMOVED;
 	istate->cache_nr--;
 	if (pos >= istate->cache_nr)
@@ -512,7 +512,7 @@ void remove_marked_cache_entries(struct index_state *istate)
 	for (i = j = 0; i < istate->cache_nr; i++) {
 		if (ce_array[i]->ce_flags & CE_REMOVE) {
 			remove_name_hash(istate, ce_array[i]);
-			free(ce_array[i]);
+			save_or_free_index_entry(istate, ce_array[i]);
 		}
 		else
 			ce_array[j++] = ce_array[i];
@@ -577,7 +577,9 @@ static int different_name(struct cache_entry *ce, struct cache_entry *alias)
  * So we use the CE_ADDED flag to verify that the alias was an old
  * one before we accept it as
  */
-static struct cache_entry *create_alias_ce(struct cache_entry *ce, struct cache_entry *alias)
+static struct cache_entry *create_alias_ce(struct index_state *istate,
+					   struct cache_entry *ce,
+					   struct cache_entry *alias)
 {
 	int len;
 	struct cache_entry *new;
@@ -590,7 +592,7 @@ static struct cache_entry *create_alias_ce(struct cache_entry *ce, struct cache_
 	new = xcalloc(1, cache_entry_size(len));
 	memcpy(new->name, alias->name, len);
 	copy_cache_entry(new, ce);
-	free(ce);
+	save_or_free_index_entry(istate, ce);
 	return new;
 }
 
@@ -683,7 +685,7 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 		set_object_name_for_intent_to_add_entry(ce);
 
 	if (ignore_case && alias && different_name(ce, alias))
-		ce = create_alias_ce(ce, alias);
+		ce = create_alias_ce(istate, ce, alias);
 	ce->ce_flags |= CE_ADDED;
 
 	/* It was suspected to be racily clean, but it turns out to be Ok */
