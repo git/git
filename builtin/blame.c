@@ -1741,6 +1741,12 @@ static void output(struct scoreboard *sb, int option)
 	}
 }
 
+static const char *get_next_line(const char *start, const char *end)
+{
+	const char *nl = memchr(start, '\n', end - start);
+	return nl ? nl + 1 : NULL;
+}
+
 /*
  * To allow quick access to the contents of nth line in the
  * final image, prepare an index in the scoreboard.
@@ -1754,15 +1760,8 @@ static int prepare_lines(struct scoreboard *sb)
 	int *lineno;
 	int num = 0, incomplete = 0;
 
-	for (p = buf;;) {
-		p = memchr(p, '\n', end - p);
-		if (p) {
-			p++;
-			num++;
-			continue;
-		}
-		break;
-	}
+	for (p = get_next_line(buf, end); p; p = get_next_line(p, end))
+		num++;
 
 	if (len && end[-1] != '\n')
 		incomplete++; /* incomplete line at the end */
@@ -1771,15 +1770,8 @@ static int prepare_lines(struct scoreboard *sb)
 	lineno = sb->lineno;
 
 	*lineno++ = 0;
-	for (p = buf;;) {
-		p = memchr(p, '\n', end - p);
-		if (p) {
-			p++;
-			*lineno++ = p - buf;
-			continue;
-		}
-		break;
-	}
+	for (p = get_next_line(buf, end); p; p = get_next_line(p, end))
+		*lineno++ = p - buf;
 
 	if (incomplete)
 		*lineno++ = len;
