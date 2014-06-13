@@ -7,6 +7,8 @@ test_description='skip-worktree bit test'
 
 . ./test-lib.sh
 
+sane_unset GIT_TEST_SPLIT_INDEX
+
 test_set_index_version 3
 
 cat >expect.full <<EOF
