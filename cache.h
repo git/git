@@ -278,6 +278,7 @@ static inline unsigned int canon_mode(unsigned int mode)
 #define CE_ENTRY_ADDED		(1 << 3)
 #define RESOLVE_UNDO_CHANGED	(1 << 4)
 #define CACHE_TREE_CHANGED	(1 << 5)
+#define SPLIT_INDEX_ORDERED	(1 << 6)
 
 struct split_index;
 struct index_state {

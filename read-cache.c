@@ -15,6 +15,7 @@
 #include "strbuf.h"
 #include "varint.h"
 #include "split-index.h"
+#include "sigchain.h"
 
 static struct cache_entry *refresh_cache_entry(struct cache_entry *ce,
 					       unsigned int options);
@@ -39,7 +40,8 @@ static struct cache_entry *refresh_cache_entry(struct cache_entry *ce,
 
 /* changes that can be kept in $GIT_DIR/index (basically all extensions) */
 #define EXTMASK (RESOLVE_UNDO_CHANGED | CACHE_TREE_CHANGED | \
-		 CE_ENTRY_ADDED | CE_ENTRY_REMOVED | CE_ENTRY_CHANGED)
+		 CE_ENTRY_ADDED | CE_ENTRY_REMOVED | CE_ENTRY_CHANGED | \
+		 SPLIT_INDEX_ORDERED)
 
 struct index_state the_index;
 static const char *alternate_index_output;
@@ -1860,7 +1862,8 @@ void update_index_if_able(struct index_state *istate, struct lock_file *lockfile
 		rollback_lock_file(lockfile);
 }
 
-static int do_write_index(struct index_state *istate, int newfd)
+static int do_write_index(struct index_state *istate, int newfd,
+			  int strip_extensions)
 {
 	git_SHA_CTX c;
 	struct cache_header hdr;
@@ -1923,7 +1926,7 @@ static int do_write_index(struct index_state *istate, int newfd)
 	strbuf_release(&previous_name_buf);
 
 	/* Write extension data here */
-	if (istate->split_index) {
+	if (!strip_extensions && istate->split_index) {
 		struct strbuf sb = STRBUF_INIT;
 
 		err = write_link_extension(&sb, istate) < 0 ||
@@ -1934,7 +1937,7 @@ static int do_write_index(struct index_state *istate, int newfd)
 		if (err)
 			return -1;
 	}
-	if (istate->cache_tree) {
+	if (!strip_extensions && istate->cache_tree) {
 		struct strbuf sb = STRBUF_INIT;
 
 		cache_tree_write(&sb, istate->cache_tree);
@@ -1944,7 +1947,7 @@ static int do_write_index(struct index_state *istate, int newfd)
 		if (err)
 			return -1;
 	}
-	if (istate->resolve_undo) {
+	if (!strip_extensions && istate->resolve_undo) {
 		struct strbuf sb = STRBUF_INIT;
 
 		resolve_undo_write(&sb, istate->resolve_undo);
@@ -1985,7 +1988,7 @@ static int commit_locked_index(struct lock_file *lk)
 static int do_write_locked_index(struct index_state *istate, struct lock_file *lock,
 				 unsigned flags)
 {
-	int ret = do_write_index(istate, lock->fd);
+	int ret = do_write_index(istate, lock->fd, 0);
 	if (ret)
 		return ret;
 	assert((flags & (COMMIT_LOCK | CLOSE_LOCK)) !=
@@ -2009,6 +2012,52 @@ static int write_split_index(struct index_state *istate,
 	return ret;
 }
 
+static char *temporary_sharedindex;
+
+static void remove_temporary_sharedindex(void)
+{
+	if (temporary_sharedindex) {
+		unlink_or_warn(temporary_sharedindex);
+		free(temporary_sharedindex);
+		temporary_sharedindex = NULL;
+	}
+}
+
+static void remove_temporary_sharedindex_on_signal(int signo)
+{
+	remove_temporary_sharedindex();
+	sigchain_pop(signo);
+	raise(signo);
+}
+
+static int write_shared_index(struct index_state *istate)
+{
+	struct split_index *si = istate->split_index;
+	static int installed_handler;
+	int fd, ret;
+
+	temporary_sharedindex = git_pathdup("sharedindex_XXXXXX");
+	fd = xmkstemp(temporary_sharedindex);
+	if (!installed_handler) {
+		atexit(remove_temporary_sharedindex);
+		sigchain_push_common(remove_temporary_sharedindex_on_signal);
+	}
+	move_cache_to_base_index(istate);
+	ret = do_write_index(si->base, fd, 1);
+	close(fd);
+	if (ret) {
+		remove_temporary_sharedindex();
+		return ret;
+	}
+	ret = rename(temporary_sharedindex,
+		     git_path("sharedindex.%s", sha1_to_hex(si->base->sha1)));
+	free(temporary_sharedindex);
+	temporary_sharedindex = NULL;
+	if (!ret)
+		hashcpy(si->base_sha1, si->base->sha1);
+	return ret;
+}
+
 int write_locked_index(struct index_state *istate, struct lock_file *lock,
 		       unsigned flags)
 {
@@ -2018,6 +2067,12 @@ int write_locked_index(struct index_state *istate, struct lock_file *lock,
 		if (si)
 			hashclr(si->base_sha1);
 		return do_write_locked_index(istate, lock, flags);
+	}
+
+	if (istate->cache_changed & SPLIT_INDEX_ORDERED) {
+		int ret = write_shared_index(istate);
+		if (ret)
+			return ret;
 	}
 
 	return write_split_index(istate, lock, flags);

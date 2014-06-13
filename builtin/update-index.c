@@ -13,6 +13,7 @@
 #include "parse-options.h"
 #include "pathspec.h"
 #include "dir.h"
+#include "split-index.h"
 
 /*
  * Default to not allowing changes to the list of files. The
@@ -742,6 +743,7 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 	char set_executable_bit = 0;
 	struct refresh_params refresh_args = {0, &has_errors};
 	int lock_error = 0;
+	int split_index = -1;
 	struct lock_file *lock_file;
 	struct parse_opt_ctx_t ctx;
 	int parseopt_state = PARSE_OPT_UNKNOWN;
@@ -824,6 +826,8 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 			resolve_undo_clear_callback},
 		OPT_INTEGER(0, "index-version", &preferred_index_format,
 			N_("write index in this format")),
+		OPT_BOOL(0, "split-index", &split_index,
+			N_("enable or disable split index")),
 		OPT_END()
 	};
 
@@ -915,6 +919,20 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 		}
 		strbuf_release(&nbuf);
 		strbuf_release(&buf);
+	}
+
+	if (split_index > 0) {
+		init_split_index(&the_index);
+		the_index.cache_changed |= SPLIT_INDEX_ORDERED;
+	} else if (!split_index && the_index.split_index) {
+		/*
+		 * can't discard_split_index(&the_index); because that
+		 * will destroy split_index->base->cache[], which may
+		 * be shared with the_index.cache[]. So yeah we're
+		 * leaking a bit here.
+		 */
+		the_index.split_index = NULL;
+		the_index.cache_changed |= SOMETHING_CHANGED;
 	}
 
 	if (active_cache_changed) {
