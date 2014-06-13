@@ -1885,8 +1885,11 @@ static int do_write_index(struct index_state *istate, int newfd,
 		}
 	}
 
-	if (!istate->version)
+	if (!istate->version) {
 		istate->version = get_index_format_default();
+		if (getenv("GIT_TEST_SPLIT_INDEX"))
+			init_split_index(istate);
+	}
 
 	/* demote version 3 to version 2 when the latter suffices */
 	if (istate->version == 3 || istate->version == 2)
@@ -2077,6 +2080,11 @@ int write_locked_index(struct index_state *istate, struct lock_file *lock,
 		return do_write_locked_index(istate, lock, flags);
 	}
 
+	if (getenv("GIT_TEST_SPLIT_INDEX")) {
+		int v = si->base_sha1[0];
+		if ((v & 15) < 6)
+			istate->cache_changed |= SPLIT_INDEX_ORDERED;
+	}
 	if (istate->cache_changed & SPLIT_INDEX_ORDERED) {
 		int ret = write_shared_index(istate, lock, flags);
 		if (ret)
