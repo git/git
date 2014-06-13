@@ -23,7 +23,7 @@ struct cache_tree {
 
 struct cache_tree *cache_tree(void);
 void cache_tree_free(struct cache_tree **);
-void cache_tree_invalidate_path(struct cache_tree *, const char *);
+void cache_tree_invalidate_path(struct index_state *, const char *);
 struct cache_tree_sub *cache_tree_sub(struct cache_tree *, const char *);
 
 void cache_tree_write(struct strbuf *, struct cache_tree *root);

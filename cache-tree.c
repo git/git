@@ -98,7 +98,7 @@ struct cache_tree_sub *cache_tree_sub(struct cache_tree *it, const char *path)
 	return find_subtree(it, path, pathlen, 1);
 }
 
-void cache_tree_invalidate_path(struct cache_tree *it, const char *path)
+static int do_invalidate_path(struct cache_tree *it, const char *path)
 {
 	/* a/b/c
 	 * ==> invalidate self
@@ -116,7 +116,7 @@ void cache_tree_invalidate_path(struct cache_tree *it, const char *path)
 #endif
 
 	if (!it)
-		return;
+		return 0;
 	slash = strchrnul(path, '/');
 	namelen = slash - path;
 	it->entry_count = -1;
@@ -137,11 +137,18 @@ void cache_tree_invalidate_path(struct cache_tree *it, const char *path)
 				(it->subtree_nr - pos - 1));
 			it->subtree_nr--;
 		}
-		return;
+		return 1;
 	}
 	down = find_subtree(it, path, namelen, 0);
 	if (down)
-		cache_tree_invalidate_path(down->cache_tree, slash + 1);
+		do_invalidate_path(down->cache_tree, slash + 1);
+	return 1;
+}
+
+void cache_tree_invalidate_path(struct index_state *istate, const char *path)
+{
+	if (do_invalidate_path(istate->cache_tree, path))
+		istate->cache_changed |= CACHE_TREE_CHANGED;
 }
 
 static int verify_cache(const struct cache_entry * const *cache,

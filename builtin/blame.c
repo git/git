@@ -2126,7 +2126,7 @@ static struct commit *fake_working_tree_commit(struct diff_options *opt,
 	 * right now, but someday we might optimize diff-index --cached
 	 * with cache-tree information.
 	 */
-	cache_tree_invalidate_path(active_cache_tree, path);
+	cache_tree_invalidate_path(&the_index, path);
 
 	return commit;
 }

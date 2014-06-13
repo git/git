@@ -65,7 +65,7 @@ void rename_index_entry_at(struct index_state *istate, int nr, const char *new_n
 	new->ce_namelen = namelen;
 	memcpy(new->name, new_name, namelen + 1);
 
-	cache_tree_invalidate_path(istate->cache_tree, old->name);
+	cache_tree_invalidate_path(istate, old->name);
 	remove_index_entry_at(istate, nr);
 	add_index_entry(istate, new, ADD_CACHE_OK_TO_ADD|ADD_CACHE_OK_TO_REPLACE);
 }
@@ -521,7 +521,7 @@ int remove_file_from_index(struct index_state *istate, const char *path)
 	int pos = index_name_pos(istate, path, strlen(path));
 	if (pos < 0)
 		pos = -pos-1;
-	cache_tree_invalidate_path(istate->cache_tree, path);
+	cache_tree_invalidate_path(istate, path);
 	while (pos < istate->cache_nr && !strcmp(istate->cache[pos]->name, path))
 		remove_index_entry_at(istate, pos);
 	return 0;
@@ -939,7 +939,7 @@ static int add_index_entry_with_check(struct index_state *istate, struct cache_e
 	int skip_df_check = option & ADD_CACHE_SKIP_DFCHECK;
 	int new_only = option & ADD_CACHE_NEW_ONLY;
 
-	cache_tree_invalidate_path(istate->cache_tree, ce->name);
+	cache_tree_invalidate_path(istate, ce->name);
 	pos = index_name_stage_pos(istate, ce->name, ce_namelen(ce), ce_stage(ce));
 
 	/* existing match? Just replace it. */

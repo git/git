@@ -55,7 +55,7 @@ static int mark_ce_flags(const char *path, int flag, int mark)
 			active_cache[pos]->ce_flags |= flag;
 		else
 			active_cache[pos]->ce_flags &= ~flag;
-		cache_tree_invalidate_path(active_cache_tree, path);
+		cache_tree_invalidate_path(&the_index, path);
 		active_cache_changed |= CE_ENTRY_CHANGED;
 		return 0;
 	}
@@ -267,7 +267,7 @@ static void chmod_path(int flip, const char *path)
 	default:
 		goto fail;
 	}
-	cache_tree_invalidate_path(active_cache_tree, path);
+	cache_tree_invalidate_path(&the_index, path);
 	active_cache_changed |= CE_ENTRY_CHANGED;
 	report("chmod %cx '%s'", flip, path);
 	return;
