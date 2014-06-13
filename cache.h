@@ -145,7 +145,7 @@ struct cache_entry {
 #define CE_STAGESHIFT 12
 
 /*
- * Range 0xFFFF0000 in ce_flags is divided into
+ * Range 0xFFFF0FFF in ce_flags is divided into
  * two parts: in-memory flags and on-disk ones.
  * Flags in CE_EXTENDED_FLAGS will get saved on-disk
  * if you want to save a new flag, add it in
