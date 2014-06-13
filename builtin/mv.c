@@ -63,7 +63,7 @@ static struct lock_file lock_file;
 
 int cmd_mv(int argc, const char **argv, const char *prefix)
 {
-	int i, newfd, gitmodules_modified = 0;
+	int i, gitmodules_modified = 0;
 	int verbose = 0, show_only = 0, force = 0, ignore_errors = 0;
 	struct option builtin_mv_options[] = {
 		OPT__VERBOSE(&verbose, N_("be verbose")),
@@ -85,7 +85,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 	if (--argc < 1)
 		usage_with_options(builtin_mv_usage, builtin_mv_options);
 
-	newfd = hold_locked_index(&lock_file, 1);
+	hold_locked_index(&lock_file, 1);
 	if (read_cache() < 0)
 		die(_("index file corrupt"));
 
@@ -275,8 +275,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 		stage_updated_gitmodules();
 
 	if (active_cache_changed) {
-		if (write_cache(newfd, active_cache, active_nr) ||
-		    commit_locked_index(&lock_file))
+		if (write_locked_index(&the_index, &lock_file, COMMIT_LOCK))
 			die(_("Unable to write new index file"));
 	}
 

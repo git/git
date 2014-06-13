@@ -921,8 +921,7 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 				exit(128);
 			unable_to_lock_index_die(get_index_file(), lock_error);
 		}
-		if (write_cache(newfd, active_cache, active_nr) ||
-		    commit_locked_index(lock_file))
+		if (write_locked_index(&the_index, lock_file, COMMIT_LOCK))
 			die("Unable to write new index file");
 	}
 

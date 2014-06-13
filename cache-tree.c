@@ -595,8 +595,7 @@ int write_cache_as_tree(unsigned char *sha1, int flags, const char *prefix)
 				      active_nr, flags) < 0)
 			return WRITE_TREE_UNMERGED_INDEX;
 		if (0 <= newfd) {
-			if (!write_cache(newfd, active_cache, active_nr) &&
-			    !commit_lock_file(lock_file))
+			if (!write_locked_index(&the_index, lock_file, COMMIT_LOCK))
 				newfd = -1;
 		}
 		/* Not being able to write is fine -- we are only interested
