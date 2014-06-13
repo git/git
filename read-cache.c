@@ -510,6 +510,8 @@ void remove_marked_cache_entries(struct index_state *istate)
 		else
 			ce_array[j++] = ce_array[i];
 	}
+	if (j == istate->cache_nr)
+		return;
 	istate->cache_changed = 1;
 	istate->cache_nr = j;
 }
