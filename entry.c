@@ -210,9 +210,11 @@ static int write_entry(struct cache_entry *ce,
 
 finish:
 	if (state->refresh_cache) {
+		assert(state->istate);
 		if (!fstat_done)
 			lstat(ce->name, &st);
 		fill_stat_cache_info(ce, &st);
+		state->istate->cache_changed |= CE_ENTRY_CHANGED;
 	}
 	return 0;
 }

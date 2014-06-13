@@ -1063,6 +1063,7 @@ extern int split_ident_line(struct ident_split *, const char *, int);
 extern int ident_cmp(const struct ident_split *, const struct ident_split *);
 
 struct checkout {
+	struct index_state *istate;
 	const char *base_dir;
 	int base_dir_len;
 	unsigned force:1,

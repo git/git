@@ -1029,6 +1029,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 	state.force = 1;
 	state.quiet = 1;
 	state.refresh_cache = 1;
+	state.istate = &o->result;
 
 	memset(&el, 0, sizeof(el));
 	if (!core_apply_sparse_checkout || !o->update)

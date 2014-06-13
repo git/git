@@ -3084,13 +3084,15 @@ static void prepare_fn_table(struct patch *patch)
 	}
 }
 
-static int checkout_target(struct cache_entry *ce, struct stat *st)
+static int checkout_target(struct index_state *istate,
+			   struct cache_entry *ce, struct stat *st)
 {
 	struct checkout costate;
 
 	memset(&costate, 0, sizeof(costate));
 	costate.base_dir = "";
 	costate.refresh_cache = 1;
+	costate.istate = istate;
 	if (checkout_entry(ce, &costate, NULL) || lstat(ce->name, st))
 		return error(_("cannot checkout %s"), ce->name);
 	return 0;
@@ -3257,7 +3259,7 @@ static int load_current(struct image *image, struct patch *patch)
 	if (lstat(name, &st)) {
 		if (errno != ENOENT)
 			return error(_("%s: %s"), name, strerror(errno));
-		if (checkout_target(ce, &st))
+		if (checkout_target(&the_index, ce, &st))
 			return -1;
 	}
 	if (verify_index_match(ce, &st))
@@ -3411,7 +3413,7 @@ static int check_preimage(struct patch *patch, struct cache_entry **ce, struct s
 		}
 		*ce = active_cache[pos];
 		if (stat_ret < 0) {
-			if (checkout_target(*ce, st))
+			if (checkout_target(&the_index, *ce, st))
 				return -1;
 		}
 		if (!cached && verify_index_match(*ce, st))
