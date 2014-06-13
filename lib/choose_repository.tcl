@@ -530,7 +530,7 @@ method _do_clone {} {
 		-text [mc "Recursively clone submodules too"] \
 		-variable @recursive \
 		-onvalue true -offvalue false
-	pack $args.type_f.recursive
+	pack $args.type_f.recursive -anchor w
 	grid $args.type_l $args.type_f -sticky new
 
 	grid columnconfigure $args 1 -weight 1
