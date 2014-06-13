@@ -3,10 +3,14 @@
 
 struct index_state;
 struct strbuf;
+struct ewah_bitmap;
 
 struct split_index {
 	unsigned char base_sha1[20];
 	struct index_state *base;
+	struct ewah_bitmap *delete_bitmap;
+	struct ewah_bitmap *replace_bitmap;
+	struct cache_entry **saved_cache;
 	unsigned int saved_cache_nr;
 	int refcount;
 };
