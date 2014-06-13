@@ -246,7 +246,9 @@ static int verify_absent_sparse(const struct cache_entry *ce,
 				enum unpack_trees_error_types,
 				struct unpack_trees_options *o);
 
-static int apply_sparse_checkout(struct cache_entry *ce, struct unpack_trees_options *o)
+static int apply_sparse_checkout(struct index_state *istate,
+				 struct cache_entry *ce,
+				 struct unpack_trees_options *o)
 {
 	int was_skip_worktree = ce_skip_worktree(ce);
 
@@ -254,6 +256,8 @@ static int apply_sparse_checkout(struct cache_entry *ce, struct unpack_trees_opt
 		ce->ce_flags |= CE_SKIP_WORKTREE;
 	else
 		ce->ce_flags &= ~CE_SKIP_WORKTREE;
+	if (was_skip_worktree != ce_skip_worktree(ce))
+		istate->cache_changed |= CE_ENTRY_CHANGED;
 
 	/*
 	 * if (!was_skip_worktree && !ce_skip_worktree()) {
@@ -1131,7 +1135,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 				ret = -1;
 			}
 
-			if (apply_sparse_checkout(ce, o)) {
+			if (apply_sparse_checkout(&o->result, ce, o)) {
 				if (!o->show_all_errors)
 					goto return_failed;
 				ret = -1;
