@@ -135,6 +135,7 @@ struct cache_entry {
 	unsigned int ce_mode;
 	unsigned int ce_flags;
 	unsigned int ce_namelen;
+	unsigned int index;	/* for link extension */
 	unsigned char sha1[20];
 	char name[FLEX_ARRAY]; /* more */
 };
@@ -275,12 +276,14 @@ static inline unsigned int canon_mode(unsigned int mode)
 #define RESOLVE_UNDO_CHANGED	(1 << 4)
 #define CACHE_TREE_CHANGED	(1 << 5)
 
+struct split_index;
 struct index_state {
 	struct cache_entry **cache;
 	unsigned int version;
 	unsigned int cache_nr, cache_alloc, cache_changed;
 	struct string_list *resolve_undo;
 	struct cache_tree *cache_tree;
+	struct split_index *split_index;
 	struct cache_time timestamp;
 	unsigned name_hash_initialized : 1,
 		 initialized : 1;

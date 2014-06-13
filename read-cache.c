@@ -14,6 +14,7 @@
 #include "resolve-undo.h"
 #include "strbuf.h"
 #include "varint.h"
+#include "split-index.h"
 
 static struct cache_entry *refresh_cache_entry(struct cache_entry *ce,
 					       unsigned int options);
@@ -34,6 +35,10 @@ static struct cache_entry *refresh_cache_entry(struct cache_entry *ce,
 #define CACHE_EXT(s) ( (s[0]<<24)|(s[1]<<16)|(s[2]<<8)|(s[3]) )
 #define CACHE_EXT_TREE 0x54524545	/* "TREE" */
 #define CACHE_EXT_RESOLVE_UNDO 0x52455543 /* "REUC" */
+#define CACHE_EXT_LINK 0x6c696e6b	  /* "link" */
+
+/* changes that can be kept in $GIT_DIR/index (basically all extensions) */
+#define EXTMASK (RESOLVE_UNDO_CHANGED | CACHE_TREE_CHANGED)
 
 struct index_state the_index;
 static const char *alternate_index_output;
@@ -63,6 +68,7 @@ void rename_index_entry_at(struct index_state *istate, int nr, const char *new_n
 	copy_cache_entry(new, old);
 	new->ce_flags &= ~CE_HASHED;
 	new->ce_namelen = namelen;
+	new->index = 0;
 	memcpy(new->name, new_name, namelen + 1);
 
 	cache_tree_invalidate_path(istate, old->name);
@@ -1335,6 +1341,10 @@ static int read_index_extension(struct index_state *istate,
 	case CACHE_EXT_RESOLVE_UNDO:
 		istate->resolve_undo = resolve_undo_read(data, sz);
 		break;
+	case CACHE_EXT_LINK:
+		if (read_link_extension(istate, data, sz))
+			return -1;
+		break;
 	default:
 		if (*ext < 'A' || 'Z' < *ext)
 			return error("index uses %.4s extension, which we do not understand",
@@ -1369,6 +1379,7 @@ static struct cache_entry *cache_entry_from_ondisk(struct ondisk_cache_entry *on
 	ce->ce_stat_data.sd_size  = get_be32(&ondisk->size);
 	ce->ce_flags = flags & ~CE_NAMEMASK;
 	ce->ce_namelen = len;
+	ce->index = 0;
 	hashcpy(ce->sha1, ondisk->sha1);
 	memcpy(ce->name, name, len);
 	ce->name[len] = '\0';
@@ -1443,7 +1454,8 @@ static struct cache_entry *create_from_disk(struct ondisk_cache_entry *ondisk,
 }
 
 /* remember to discard_cache() before reading a different cache! */
-int read_index_from(struct index_state *istate, const char *path)
+static int do_read_index(struct index_state *istate, const char *path,
+			 int must_exist)
 {
 	int fd, i;
 	struct stat st;
@@ -1460,9 +1472,9 @@ int read_index_from(struct index_state *istate, const char *path)
 	istate->timestamp.nsec = 0;
 	fd = open(path, O_RDONLY);
 	if (fd < 0) {
-		if (errno == ENOENT)
+		if (!must_exist && errno == ENOENT)
 			return 0;
-		die_errno("index file open failed");
+		die_errno("%s: index file open failed", path);
 	}
 
 	if (fstat(fd, &st))
@@ -1535,6 +1547,42 @@ unmap:
 	die("index file corrupt");
 }
 
+int read_index_from(struct index_state *istate, const char *path)
+{
+	struct split_index *split_index;
+	int ret;
+
+	/* istate->initialized covers both .git/index and .git/sharedindex.xxx */
+	if (istate->initialized)
+		return istate->cache_nr;
+
+	ret = do_read_index(istate, path, 0);
+	split_index = istate->split_index;
+	if (!split_index)
+		return ret;
+
+	if (is_null_sha1(split_index->base_sha1))
+		return ret;
+	if (istate->cache_nr)
+		die("index in split-index mode must contain no entries");
+
+	if (split_index->base)
+		discard_index(split_index->base);
+	else
+		split_index->base = xcalloc(1, sizeof(*split_index->base));
+	ret = do_read_index(split_index->base,
+			    git_path("sharedindex.%s",
+				     sha1_to_hex(split_index->base_sha1)), 1);
+	if (hashcmp(split_index->base_sha1, split_index->base->sha1))
+		die("broken index, expect %s in %s, got %s",
+		    sha1_to_hex(split_index->base_sha1),
+		    git_path("sharedindex.%s",
+				     sha1_to_hex(split_index->base_sha1)),
+		    sha1_to_hex(split_index->base->sha1));
+	merge_base_index(istate);
+	return ret;
+}
+
 int is_index_unborn(struct index_state *istate)
 {
 	return (!istate->cache_nr && !istate->timestamp.sec);
@@ -1544,8 +1592,15 @@ int discard_index(struct index_state *istate)
 {
 	int i;
 
-	for (i = 0; i < istate->cache_nr; i++)
+	for (i = 0; i < istate->cache_nr; i++) {
+		if (istate->cache[i]->index &&
+		    istate->split_index &&
+		    istate->split_index->base &&
+		    istate->cache[i]->index <= istate->split_index->base->cache_nr &&
+		    istate->cache[i] == istate->split_index->base->cache[istate->cache[i]->index - 1])
+			continue;
 		free(istate->cache[i]);
+	}
 	resolve_undo_clear_index(istate);
 	istate->cache_nr = 0;
 	istate->cache_changed = 0;
@@ -1557,6 +1612,7 @@ int discard_index(struct index_state *istate)
 	free(istate->cache);
 	istate->cache = NULL;
 	istate->cache_alloc = 0;
+	discard_split_index(istate);
 	return 0;
 }
 
@@ -1852,6 +1908,17 @@ static int do_write_index(struct index_state *istate, int newfd)
 	strbuf_release(&previous_name_buf);
 
 	/* Write extension data here */
+	if (istate->split_index) {
+		struct strbuf sb = STRBUF_INIT;
+
+		err = write_link_extension(&sb, istate) < 0 ||
+			write_index_ext_header(&c, newfd, CACHE_EXT_LINK,
+					       sb.len) < 0 ||
+			ce_write(&c, newfd, sb.buf, sb.len) < 0;
+		strbuf_release(&sb);
+		if (err)
+			return -1;
+	}
 	if (istate->cache_tree) {
 		struct strbuf sb = STRBUF_INIT;
 
@@ -1916,10 +1983,29 @@ static int do_write_locked_index(struct index_state *istate, struct lock_file *l
 		return ret;
 }
 
+static int write_split_index(struct index_state *istate,
+			     struct lock_file *lock,
+			     unsigned flags)
+{
+	int ret;
+	prepare_to_write_split_index(istate);
+	ret = do_write_locked_index(istate, lock, flags);
+	finish_writing_split_index(istate);
+	return ret;
+}
+
 int write_locked_index(struct index_state *istate, struct lock_file *lock,
 		       unsigned flags)
 {
-	return do_write_locked_index(istate, lock, flags);
+	struct split_index *si = istate->split_index;
+
+	if (!si || (istate->cache_changed & ~EXTMASK)) {
+		if (si)
+			hashclr(si->base_sha1);
+		return do_write_locked_index(istate, lock, flags);
+	}
+
+	return write_split_index(istate, lock, flags);
 }
 
 /*
