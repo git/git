@@ -272,6 +272,7 @@ static inline unsigned int canon_mode(unsigned int mode)
 #define CE_ENTRY_CHANGED	(1 << 1)
 #define CE_ENTRY_REMOVED	(1 << 2)
 #define CE_ENTRY_ADDED		(1 << 3)
+#define RESOLVE_UNDO_CHANGED	(1 << 4)
 
 struct index_state {
 	struct cache_entry **cache;
