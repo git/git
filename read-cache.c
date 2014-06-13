@@ -1463,8 +1463,7 @@ static struct cache_entry *create_from_disk(struct ondisk_cache_entry *ondisk,
 }
 
 /* remember to discard_cache() before reading a different cache! */
-static int do_read_index(struct index_state *istate, const char *path,
-			 int must_exist)
+int do_read_index(struct index_state *istate, const char *path, int must_exist)
 {
 	int fd, i;
 	struct stat st;

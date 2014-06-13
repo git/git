@@ -180,6 +180,7 @@
 /test-date
 /test-delta
 /test-dump-cache-tree
+/test-dump-split-index
 /test-scrap-cache-tree
 /test-genrandom
 /test-hashmap
