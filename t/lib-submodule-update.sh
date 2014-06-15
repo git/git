@@ -402,7 +402,16 @@ test_submodule_switch () {
 
 	########################## Modified submodule #########################
 	# Updating a submodule sha1 doesn't update the submodule's work tree
-	test_expect_success "$command: modified submodule does not update submodule work tree" '
+	if test "$KNOWN_FAILURE_CHERRY_PICK_SEES_EMPTY_COMMIT" = 1
+	then
+		# When cherry picking a SHA-1 update for an ignored submodule
+		# the commit incorrectly fails with "The previous cherry-pick
+		# is now empty, possibly due to conflict resolution."
+		RESULT="failure"
+	else
+		RESULT="success"
+	fi
+	test_expect_$RESULT "$command: modified submodule does not update submodule work tree" '
 		prolog &&
 		reset_work_tree_to add_sub1 &&
 		(
@@ -418,7 +427,7 @@ test_submodule_switch () {
 
 	# Updating a submodule to an invalid sha1 doesn't update the
 	# submodule's work tree, subsequent update will fail
-	test_expect_success "$command: modified submodule does not update submodule work tree to invalid commit" '
+	test_expect_$RESULT "$command: modified submodule does not update submodule work tree to invalid commit" '
 		prolog &&
 		reset_work_tree_to add_sub1 &&
 		(
@@ -433,7 +442,7 @@ test_submodule_switch () {
 	'
 	# Updating a submodule from an invalid sha1 doesn't update the
 	# submodule's work tree, subsequent update will succeed
-	test_expect_success "$command: modified submodule does not update submodule work tree from invalid commit" '
+	test_expect_$RESULT "$command: modified submodule does not update submodule work tree from invalid commit" '
 		prolog &&
 		reset_work_tree_to invalid_sub1 &&
 		(
