@@ -183,4 +183,6 @@ extern int printf_ln(const char *fmt, ...);
 __attribute__((format (printf,2,3)))
 extern int fprintf_ln(FILE *fp, const char *fmt, ...);
 
+char *xstrdup_tolower(const char *);
+
 #endif /* STRBUF_H */
