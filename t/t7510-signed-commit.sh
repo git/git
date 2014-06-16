@@ -47,7 +47,7 @@ test_expect_success GPG 'create signed commits' '
 
 test_expect_success GPG 'show signatures' '
 	(
-		for commit in initial second merge fourth-signed fifth-signed sixth-signed master
+		for commit in initial second merge fourth-signed fifth-signed sixth-signed seventh-signed
 		do
 			git show --pretty=short --show-signature $commit >actual &&
 			grep "Good signature from" actual || exit 1
@@ -67,7 +67,7 @@ test_expect_success GPG 'show signatures' '
 '
 
 test_expect_success GPG 'detect fudged signature' '
-	git cat-file commit master >raw &&
+	git cat-file commit seventh-signed >raw &&
 
 	sed -e "s/seventh/7th forged/" raw >forged1 &&
 	git hash-object -w -t commit forged1 >forged1.commit &&
@@ -77,7 +77,7 @@ test_expect_success GPG 'detect fudged signature' '
 '
 
 test_expect_success GPG 'detect fudged signature with NUL' '
-	git cat-file commit master >raw &&
+	git cat-file commit seventh-signed >raw &&
 	cat raw >forged2 &&
 	echo Qwik | tr "Q" "\000" >>forged2 &&
 	git hash-object -w -t commit forged2 >forged2.commit &&
