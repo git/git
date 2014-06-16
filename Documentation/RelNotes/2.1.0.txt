@@ -39,6 +39,13 @@ UI, Workflows & Features
  * The logic and data used to compute the display width needed for
    UTF-8 strings have been updated to match Unicode 6.3 better.
 
+ * HTTP-based transports learned to propagate the error messages from
+   the webserver better to the client coming over the HTTP transport.
+
+ * The "core.preloadindex" configuration variable is by default
+   enabled, allowing modern platforms to take advantage of the
+   multiple cores they have.
+
  * "git commit --date=<date>" option learned to read from more
    timestamp formats, including "--date=now".
 
@@ -49,12 +56,19 @@ UI, Workflows & Features
    already starts a line in the message being edited for cases like
    "git commit --amend".
 
+ * "git format-patch" learned --signature-file=<file> to take the mail
+   signature from.
+
  * "git grep" learned grep.fullname configuration variable to force
    "--full-name" to be default.  This may cause regressions on
    scripted users that do not expect this new behaviour.
 
  * "git imap-send" learned to ask the credential helper for auth
    material.
+
+ * "git log" and friends now understand the value "auto" set to the
+   "log.decorate" configuration variable to enable the "--decorate"
+   option automatically when the output is sent to tty.
 
  * "git merge" without argument, even when there is an upstream
    defined for the current branch, refused to run until
@@ -75,6 +89,8 @@ UI, Workflows & Features
    Strictly speaking, this is a backward incompatible change and the
    users need to explicitly set the variable to 'true' if they want
    to resurrect the now-ignored use case.
+
+ * "git replace" learned the "--edit" subcommand.
 
  * "git svn" learned to cope with malformed timestamps with only one
    digit in the hour part, e.g. 2014-01-07T5:01:02.048176Z, emitted
@@ -101,6 +117,10 @@ Performance, Internal Implementation, etc.
    updates to multiple references in a transactional way.  As an
    example, "update-ref --stdin [-z]" has been updated to use this
    API.
+
+ * Parts of the test scripts can be skipped by using a range notation,
+   e.g. "sh t1234-test.sh --run='1-4 6 8-'" to omit test piece 5 and 7
+   and run everything else.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -129,6 +149,27 @@ notes for details).
    corrected.
    (merge e61a6c1 pb/trim-trailing-spaces later to maint).
 
+ * Reworded the error message given upon a failure to open an existing
+   loose object file due to e.g. permission issues; it was reported as
+   the object being corrupt, but that is not quite true.
+   (merge d6c8a05 jk/report-fail-to-read-objects-better later to maint).
+
+ * The "%<(10,trunc)%s" pretty format specifier in the log family of
+   commands is used to truncate the string to a given length (e.g. 10
+   in the example) with padding to column-align the output, but did
+   not take into account that number of bytes and number of display
+   columns are different.
+   (merge 7d50987 as/pretty-truncate later to maint).
+
+ * The "mailmap.file" configuration option did not support the tilde
+   expansion (i.e. ~user/path and ~/path).
+   (merge 9352fd5 ow/config-mailmap-pathname later to maint).
+
+ * The completion scripts (in contrib/) did not know about quite a few
+   options that are common between "git merge" and "git pull", and a
+   couple of options unique to "git merge".
+   (merge 8fee872 jk/complete-merge-pull later to maint).
+
  * "--ignore-space-change" option of "git apply" ignored the spaces
    at the beginning of line too aggressively, which is inconsistent
    with the option of the same name "diff" and "git diff" have.
@@ -147,6 +188,22 @@ notes for details).
  * "git commit --allow-empty-messag -C $commit" did not work when the
    commit did not have any log message.
    (merge 076cbd6 jk/commit-C-pick-empty later to maint).
+
+ * "git diff --find-copies-harder" sometimes pretended as if the mode
+   bits have changed for paths that are marked with assume-unchanged
+   bit.
+   (merge 5304810 jk/diff-files-assume-unchanged later to maint).
+
+ * "git format-patch" did not enforce the rule that the "--follow"
+   option from the log/diff family of commands must be used with
+   exactly one pathspec.
+   (merge dd63f16 jk/diff-follow-must-take-one-pathspec later to maint).
+
+ * "git gc --auto" was recently changed to run in the background to
+   give control back early to the end-user sitting in front of the
+   terminal, but it forgot that housekeeping involving reflogs should
+   be done without other processes competing for accesses to the refs.
+   (merge 62aad18 nd/daemonize-gc later to maint).
 
  * "git grep -O" to show the lines that hit in the pager did not work
    well with case insensitive search.  We now spawn "less" with its
@@ -171,15 +228,30 @@ notes for details).
    except for case differences.
    (merge baa37bf dt/merge-recursive-case-insensitive later to maint).
 
+ * "git pack-objects" unnecessarily copied the previous contents when
+   extending the hashtable, even though it will populate the table
+   from scratch anyway.
+   (merge fb79947 rs/pack-objects-no-unnecessary-realloc later to maint).
+
  * "git rerere forget" did not work well when merge.conflictstyle
    was set to a non-default value.
    (merge de3d8bb fc/rerere-conflict-style later to maint).
+
+ * "git remote rm" and "git remote prune" can involve removing many
+   refs at once, which is not a very efficient thing to do when very
+   many refs exist in the packed-refs file.
+   (merge e6bea66 jl/remote-rm-prune later to maint).
 
  * "git log --exclude=<glob> --all | git shortlog" worked as expected,
    but "git shortlog --exclude=<glob> --all", which is supposed to be
    identical to the above pipeline, was not accepted at the command
    line argument parser level.
    (merge eb07774 jc/shortlog-ref-exclude later to maint).
+
+ * The autostash mode of "git rebase -i" did not restore the dirty
+   working tree state if the user aborted the interactive rebase by
+   emptying the insn sheet.
+   (merge ddb5432 rr/rebase-autostash-fix later to maint).
 
  * "git show -s" (i.e. show log message only) used to incorrectly emit
    an extra blank line after a merge commit.
@@ -191,6 +263,14 @@ notes for details).
    race with a "read-write" operation that modify the index while it
    is running.  Detect such a race and avoid overwriting the index.
    (merge 426ddee ym/fix-opportunistic-index-update-race later to maint).
+
+ * "git status" (and "git commit") behaved as if changes in a modified
+   submodule are not there if submodule.*.ignore configuration is set,
+   which was misleading.  The configuration is only to unclutter diff
+   output during the course of development, and should not to hide
+   changes in the "status" output to cause the users forget to commit
+   them.
+   (merge c215d3d jl/status-added-submodule-is-never-ignored later to maint).
 
  * "git update-index --cacheinfo" in 2.0 release crashed on a
    malformed command line.
