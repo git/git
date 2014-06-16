@@ -621,9 +621,9 @@ core.preloadindex::
 +
 This can speed up operations like 'git diff' and 'git status' especially
 on filesystems like NFS that have weak caching semantics and thus
-relatively high IO latencies.  With this set to 'true', Git will do the
+relatively high IO latencies.  When enabled, Git will do the
 index comparison to the filesystem data in parallel, allowing
-overlapping IO's.
+overlapping IO's.  Defaults to true.
 
 core.createObject::
 	You can set this to 'link', in which case a hardlink followed by

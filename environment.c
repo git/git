@@ -72,7 +72,7 @@ char comment_line_char = '#';
 int auto_comment_line_char;
 
 /* Parallel index stat data preload? */
-int core_preload_index = 0;
+int core_preload_index = 1;
 
 /* This is set by setup_git_dir_gently() and/or git_default_config() */
 char *git_work_tree_cfg;
