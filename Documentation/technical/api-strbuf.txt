@@ -134,6 +134,10 @@ Functions
 
 	Strip whitespace from the beginning of a string.
 
+`strbuf_tolower`::
+
+	Lowercase each character in the buffer using `tolower`.
+
 `strbuf_cmp`::
 
 	Compare two buffers. Returns an integer less than, equal to, or greater
