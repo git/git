@@ -53,11 +53,12 @@ continue_merge () {
 }
 
 call_merge () {
-	cmt="$(cat "$state_dir/cmt.$1")"
+	msgnum="$1"
+	echo "$msgnum" >"$state_dir/msgnum"
+	cmt="$(cat "$state_dir/cmt.$msgnum")"
 	echo "$cmt" > "$state_dir/current"
 	hd=$(git rev-parse --verify HEAD)
 	cmt_name=$(git symbolic-ref HEAD 2> /dev/null || echo HEAD)
-	msgnum=$(cat "$state_dir/msgnum")
 	eval GITHEAD_$cmt='"${cmt_name##refs/heads/}~$(($end - $msgnum))"'
 	eval GITHEAD_$hd='$onto_name'
 	export GITHEAD_$cmt GITHEAD_$hd
