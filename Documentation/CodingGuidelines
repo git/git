@@ -264,6 +264,15 @@ For Python scripts:
    documentation for version 2.6 does not mention this prefix, it has
    been supported since version 2.6.0.
 
+Error Messages
+
+ - Do not end error messages with a full stop.
+
+ - Do not capitalize ("unable to open %s", not "Unable to open %s")
+
+ - Say what the error is first ("cannot open %s", not "%s: cannot open")
+
+
 Writing Documentation:
 
  Most (if not all) of the documentation pages are written in the
