@@ -14,6 +14,7 @@ SYNOPSIS
 		   [(--attach|--inline)[=<boundary>] | --no-attach]
 		   [-s | --signoff]
 		   [--signature=<signature> | --no-signature]
+		   [--signature-file=<file>]
 		   [-n | --numbered | -N | --no-numbered]
 		   [--start-number <n>] [--numbered-files]
 		   [--in-reply-to=Message-Id] [--suffix=.<sfx>]
@@ -232,6 +233,9 @@ configuration options in linkgit:git-notes[1] to use this workflow).
 	is separated from the body by a line with '-- ' on it. If the
 	signature option is omitted the signature defaults to the Git version
 	number.
+
+--signature-file=<file>::
+	Works just like --signature except the signature is read from a file.
 
 --suffix=.<sfx>::
 	Instead of using `.patch` as the suffix for generated
