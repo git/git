@@ -200,3 +200,5 @@ Represents the list itself.
   You should not tamper with it.
 . Setting the `strdup_strings` member to 1 will strdup() the strings
   before adding them, see above.
+. The `compare_strings_fn` member is used to specify a custom compare
+  function, otherwise `strcmp()` is used as the default function.
