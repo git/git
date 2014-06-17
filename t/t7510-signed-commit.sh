@@ -50,18 +50,18 @@ test_expect_success GPG 'show signatures' '
 		for commit in initial second merge fourth-signed fifth-signed sixth-signed seventh-signed
 		do
 			git show --pretty=short --show-signature $commit >actual &&
-			grep "Good signature from" actual || exit 1
-			! grep "BAD signature from" actual || exit 1
-			echo $commit OK
+			grep "Good signature from" actual &&
+			! grep "BAD signature from" actual &&
+			echo $commit OK || exit 1
 		done
 	) &&
 	(
 		for commit in merge^2 fourth-unsigned sixth-unsigned seventh-unsigned
 		do
 			git show --pretty=short --show-signature $commit >actual &&
-			grep "Good signature from" actual && exit 1
-			! grep "BAD signature from" actual || exit 1
-			echo $commit OK
+			! grep "Good signature from" actual &&
+			! grep "BAD signature from" actual &&
+			echo $commit OK || exit 1
 		done
 	)
 '
