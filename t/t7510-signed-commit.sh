@@ -107,4 +107,44 @@ test_expect_success GPG 'amending already signed commit' '
 	! grep "BAD signature from" actual
 '
 
+test_expect_success GPG 'show good signature with custom format' '
+	cat >expect <<-\EOF &&
+	G
+	13B6F51ECDDE430D
+	C O Mitter <committer@example.com>
+	EOF
+	git log -1 --format="%G?%n%GK%n%GS" sixth-signed >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success GPG 'show bad signature with custom format' '
+	cat >expect <<-\EOF &&
+	B
+	13B6F51ECDDE430D
+	C O Mitter <committer@example.com>
+	EOF
+	git log -1 --format="%G?%n%GK%n%GS" $(cat forged1.commit) >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success GPG 'show unknown signature with custom format' '
+	cat >expect <<-\EOF &&
+	U
+	61092E85B7227189
+	Eris Discordia <discord@example.net>
+	EOF
+	git log -1 --format="%G?%n%GK%n%GS" eighth-signed-alt >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success GPG 'show lack of signature with custom format' '
+	cat >expect <<-\EOF &&
+	N
+
+
+	EOF
+	git log -1 --format="%G?%n%GK%n%GS" seventh-unsigned >actual &&
+	test_cmp expect actual
+'
+
 test_done
