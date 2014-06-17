@@ -43,6 +43,9 @@ test_expect_success GPG 'create signed commits' '
 
 	test_tick && git rebase -f HEAD^^ && git tag sixth-signed HEAD^ &&
 	git tag seventh-signed
+
+	echo 8 >file && test_tick && git commit -a -m eighth -SB7227189 &&
+	git tag eighth-signed-alt
 '
 
 test_expect_success GPG 'show signatures' '
@@ -61,6 +64,16 @@ test_expect_success GPG 'show signatures' '
 			git show --pretty=short --show-signature $commit >actual &&
 			! grep "Good signature from" actual &&
 			! grep "BAD signature from" actual &&
+			echo $commit OK || exit 1
+		done
+	) &&
+	(
+		for commit in eighth-signed-alt
+		do
+			git show --pretty=short --show-signature $commit >actual &&
+			grep "Good signature from" actual &&
+			! grep "BAD signature from" actual &&
+			grep "not certified" actual &&
 			echo $commit OK || exit 1
 		done
 	)
