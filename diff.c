@@ -3422,7 +3422,8 @@ static int stat_opt(struct diff_options *options, const char **av)
 	int count = options->stat_count;
 	int argcount = 1;
 
-	arg += strlen("--stat");
+	if (!skip_prefix(arg, "--stat", &arg))
+		die("BUG: stat option does not begin with --stat: %s", arg);
 	end = (char *)arg;
 
 	switch (*arg) {
