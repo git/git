@@ -129,6 +129,7 @@ struct ref **get_remote_heads(int in, char *src_buf, size_t src_len,
 		char *name;
 		int len, name_len;
 		char *buffer = packet_buffer;
+		const char *arg;
 
 		len = packet_read(in, &src_buf, &src_len,
 				  packet_buffer, sizeof(packet_buffer),
@@ -140,12 +141,12 @@ struct ref **get_remote_heads(int in, char *src_buf, size_t src_len,
 		if (!len)
 			break;
 
-		if (len > 4 && starts_with(buffer, "ERR "))
-			die("remote error: %s", buffer + 4);
+		if (len > 4 && skip_prefix(buffer, "ERR ", &arg))
+			die("remote error: %s", arg);
 
-		if (len == 48 && starts_with(buffer, "shallow ")) {
-			if (get_sha1_hex(buffer + 8, old_sha1))
-				die("protocol error: expected shallow sha-1, got '%s'", buffer + 8);
+		if (len == 48 && skip_prefix(buffer, "shallow ", &arg)) {
+			if (get_sha1_hex(arg, old_sha1))
+				die("protocol error: expected shallow sha-1, got '%s'", arg);
 			if (!shallow_points)
 				die("repository on the other end cannot be shallow");
 			sha1_array_append(shallow_points, old_sha1);

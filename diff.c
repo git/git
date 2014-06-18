@@ -231,6 +231,8 @@ int git_diff_ui_config(const char *var, const char *value, void *cb)
 
 int git_diff_basic_config(const char *var, const char *value, void *cb)
 {
+	const char *name;
+
 	if (!strcmp(var, "diff.renamelimit")) {
 		diff_rename_limit_default = git_config_int(var, value);
 		return 0;
@@ -239,8 +241,9 @@ int git_diff_basic_config(const char *var, const char *value, void *cb)
 	if (userdiff_config(var, value) < 0)
 		return -1;
 
-	if (starts_with(var, "diff.color.") || starts_with(var, "color.diff.")) {
-		int slot = parse_diff_color_slot(var + 11);
+	if (skip_prefix(var, "diff.color.", &name) ||
+	    skip_prefix(var, "color.diff.", &name)) {
+		int slot = parse_diff_color_slot(name);
 		if (slot < 0)
 			return 0;
 		if (!value)
@@ -2341,6 +2344,7 @@ static void builtin_diff(const char *name_a,
 	} else {
 		/* Crazy xdl interfaces.. */
 		const char *diffopts = getenv("GIT_DIFF_OPTS");
+		const char *v;
 		xpparam_t xpp;
 		xdemitconf_t xecfg;
 		struct emit_callback ecbdata;
@@ -2379,10 +2383,10 @@ static void builtin_diff(const char *name_a,
 			xdiff_set_find_func(&xecfg, pe->pattern, pe->cflags);
 		if (!diffopts)
 			;
-		else if (starts_with(diffopts, "--unified="))
-			xecfg.ctxlen = strtoul(diffopts + 10, NULL, 10);
-		else if (starts_with(diffopts, "-u"))
-			xecfg.ctxlen = strtoul(diffopts + 2, NULL, 10);
+		else if (skip_prefix(diffopts, "--unified=", &v))
+			xecfg.ctxlen = strtoul(v, NULL, 10);
+		else if (skip_prefix(diffopts, "-u", &v))
+			xecfg.ctxlen = strtoul(v, NULL, 10);
 		if (o->word_diff)
 			init_diff_words_data(&ecbdata, o, one, two);
 		xdi_diff_outf(&mf1, &mf2, fn_out_consume, &ecbdata,
@@ -3609,17 +3613,17 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		options->output_format |= DIFF_FORMAT_SHORTSTAT;
 	else if (!strcmp(arg, "-X") || !strcmp(arg, "--dirstat"))
 		return parse_dirstat_opt(options, "");
-	else if (starts_with(arg, "-X"))
-		return parse_dirstat_opt(options, arg + 2);
-	else if (starts_with(arg, "--dirstat="))
-		return parse_dirstat_opt(options, arg + 10);
+	else if (skip_prefix(arg, "-X", &arg))
+		return parse_dirstat_opt(options, arg);
+	else if (skip_prefix(arg, "--dirstat=", &arg))
+		return parse_dirstat_opt(options, arg);
 	else if (!strcmp(arg, "--cumulative"))
 		return parse_dirstat_opt(options, "cumulative");
 	else if (!strcmp(arg, "--dirstat-by-file"))
 		return parse_dirstat_opt(options, "files");
-	else if (starts_with(arg, "--dirstat-by-file=")) {
+	else if (skip_prefix(arg, "--dirstat-by-file=", &arg)) {
 		parse_dirstat_opt(options, "files");
-		return parse_dirstat_opt(options, arg + 18);
+		return parse_dirstat_opt(options, arg);
 	}
 	else if (!strcmp(arg, "--check"))
 		options->output_format |= DIFF_FORMAT_CHECKDIFF;
@@ -3669,9 +3673,9 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		DIFF_OPT_CLR(options, RENAME_EMPTY);
 	else if (!strcmp(arg, "--relative"))
 		DIFF_OPT_SET(options, RELATIVE_NAME);
-	else if (starts_with(arg, "--relative=")) {
+	else if (skip_prefix(arg, "--relative=", &arg)) {
 		DIFF_OPT_SET(options, RELATIVE_NAME);
-		options->prefix = arg + 11;
+		options->prefix = arg;
 	}
 
 	/* xdiff options */
@@ -3722,8 +3726,8 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		DIFF_OPT_CLR(options, FOLLOW_RENAMES);
 	else if (!strcmp(arg, "--color"))
 		options->use_color = 1;
-	else if (starts_with(arg, "--color=")) {
-		int value = git_config_colorbool(NULL, arg+8);
+	else if (skip_prefix(arg, "--color=", &arg)) {
+		int value = git_config_colorbool(NULL, arg);
 		if (value < 0)
 			return error("option `color' expects \"always\", \"auto\", or \"never\"");
 		options->use_color = value;
@@ -3734,29 +3738,28 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 		options->use_color = 1;
 		options->word_diff = DIFF_WORDS_COLOR;
 	}
-	else if (starts_with(arg, "--color-words=")) {
+	else if (skip_prefix(arg, "--color-words=", &arg)) {
 		options->use_color = 1;
 		options->word_diff = DIFF_WORDS_COLOR;
-		options->word_regex = arg + 14;
+		options->word_regex = arg;
 	}
 	else if (!strcmp(arg, "--word-diff")) {
 		if (options->word_diff == DIFF_WORDS_NONE)
 			options->word_diff = DIFF_WORDS_PLAIN;
 	}
-	else if (starts_with(arg, "--word-diff=")) {
-		const char *type = arg + 12;
-		if (!strcmp(type, "plain"))
+	else if (skip_prefix(arg, "--word-diff=", &arg)) {
+		if (!strcmp(arg, "plain"))
 			options->word_diff = DIFF_WORDS_PLAIN;
-		else if (!strcmp(type, "color")) {
+		else if (!strcmp(arg, "color")) {
 			options->use_color = 1;
 			options->word_diff = DIFF_WORDS_COLOR;
 		}
-		else if (!strcmp(type, "porcelain"))
+		else if (!strcmp(arg, "porcelain"))
 			options->word_diff = DIFF_WORDS_PORCELAIN;
-		else if (!strcmp(type, "none"))
+		else if (!strcmp(arg, "none"))
 			options->word_diff = DIFF_WORDS_NONE;
 		else
-			die("bad --word-diff argument: %s", type);
+			die("bad --word-diff argument: %s", arg);
 	}
 	else if ((argcount = parse_long_opt("word-diff-regex", av, &optarg))) {
 		if (options->word_diff == DIFF_WORDS_NONE)
@@ -3779,13 +3782,13 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 	else if (!strcmp(arg, "--ignore-submodules")) {
 		DIFF_OPT_SET(options, OVERRIDE_SUBMODULE_CONFIG);
 		handle_ignore_submodules_arg(options, "all");
-	} else if (starts_with(arg, "--ignore-submodules=")) {
+	} else if (skip_prefix(arg, "--ignore-submodules=", &arg)) {
 		DIFF_OPT_SET(options, OVERRIDE_SUBMODULE_CONFIG);
-		handle_ignore_submodules_arg(options, arg + 20);
+		handle_ignore_submodules_arg(options, arg);
 	} else if (!strcmp(arg, "--submodule"))
 		DIFF_OPT_SET(options, SUBMODULE_LOG);
-	else if (starts_with(arg, "--submodule="))
-		return parse_submodule_opt(options, arg + 12);
+	else if (skip_prefix(arg, "--submodule=", &arg))
+		return parse_submodule_opt(options, arg);
 
 	/* misc options */
 	else if (!strcmp(arg, "-z"))
@@ -3820,8 +3823,8 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 	}
 	else if (!strcmp(arg, "--abbrev"))
 		options->abbrev = DEFAULT_ABBREV;
-	else if (starts_with(arg, "--abbrev=")) {
-		options->abbrev = strtoul(arg + 9, NULL, 10);
+	else if (skip_prefix(arg, "--abbrev=", &arg)) {
+		options->abbrev = strtoul(arg, NULL, 10);
 		if (options->abbrev < MINIMUM_ABBREV)
 			options->abbrev = MINIMUM_ABBREV;
 		else if (40 < options->abbrev)

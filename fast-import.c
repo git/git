@@ -1912,8 +1912,9 @@ static void skip_optional_lf(void)
 
 static void parse_mark(void)
 {
-	if (starts_with(command_buf.buf, "mark :")) {
-		next_mark = strtoumax(command_buf.buf + 6, NULL, 10);
+	const char *v;
+	if (skip_prefix(command_buf.buf, "mark :", &v)) {
+		next_mark = strtoumax(v, NULL, 10);
 		read_next_command();
 	}
 	else
@@ -1922,14 +1923,15 @@ static void parse_mark(void)
 
 static int parse_data(struct strbuf *sb, uintmax_t limit, uintmax_t *len_res)
 {
+	const char *data;
 	strbuf_reset(sb);
 
-	if (!starts_with(command_buf.buf, "data "))
+	if (!skip_prefix(command_buf.buf, "data ", &data))
 		die("Expected 'data n' command, found: %s", command_buf.buf);
 
-	if (starts_with(command_buf.buf + 5, "<<")) {
-		char *term = xstrdup(command_buf.buf + 5 + 2);
-		size_t term_len = command_buf.len - 5 - 2;
+	if (skip_prefix(data, "<<", &data)) {
+		char *term = xstrdup(data);
+		size_t term_len = command_buf.len - (data - command_buf.buf);
 
 		strbuf_detach(&command_buf, NULL);
 		for (;;) {
@@ -1944,7 +1946,7 @@ static int parse_data(struct strbuf *sb, uintmax_t limit, uintmax_t *len_res)
 		free(term);
 	}
 	else {
-		uintmax_t len = strtoumax(command_buf.buf + 5, NULL, 10);
+		uintmax_t len = strtoumax(data, NULL, 10);
 		size_t n = 0, length = (size_t)len;
 
 		if (limit && limit < len) {
@@ -2676,6 +2678,7 @@ static void parse_new_commit(void)
 	struct hash_list *merge_list = NULL;
 	unsigned int merge_count;
 	unsigned char prev_fanout, new_fanout;
+	const char *v;
 
 	/* Obtain the branch name from the rest of our command */
 	sp = strchr(command_buf.buf, ' ') + 1;
@@ -2685,12 +2688,12 @@ static void parse_new_commit(void)
 
 	read_next_command();
 	parse_mark();
-	if (starts_with(command_buf.buf, "author ")) {
-		author = parse_ident(command_buf.buf + 7);
+	if (skip_prefix(command_buf.buf, "author ", &v)) {
+		author = parse_ident(v);
 		read_next_command();
 	}
-	if (starts_with(command_buf.buf, "committer ")) {
-		committer = parse_ident(command_buf.buf + 10);
+	if (skip_prefix(command_buf.buf, "committer ", &v)) {
+		committer = parse_ident(v);
 		read_next_command();
 	}
 	if (!committer)
@@ -2777,6 +2780,7 @@ static void parse_new_tag(void)
 	uintmax_t from_mark = 0;
 	unsigned char sha1[20];
 	enum object_type type;
+	const char *v;
 
 	/* Obtain the new tag name from the rest of our command */
 	sp = strchr(command_buf.buf, ' ') + 1;
@@ -2819,8 +2823,8 @@ static void parse_new_tag(void)
 	read_next_command();
 
 	/* tagger ... */
-	if (starts_with(command_buf.buf, "tagger ")) {
-		tagger = parse_ident(command_buf.buf + 7);
+	if (skip_prefix(command_buf.buf, "tagger ", &v)) {
+		tagger = parse_ident(v);
 		read_next_command();
 	} else
 		tagger = NULL;
@@ -3207,9 +3211,9 @@ static void option_export_pack_edges(const char *edges)
 
 static int parse_one_option(const char *option)
 {
-	if (starts_with(option, "max-pack-size=")) {
+	if (skip_prefix(option, "max-pack-size=", &option)) {
 		unsigned long v;
-		if (!git_parse_ulong(option + 14, &v))
+		if (!git_parse_ulong(option, &v))
 			return 0;
 		if (v < 8192) {
 			warning("max-pack-size is now in bytes, assuming --max-pack-size=%lum", v);
@@ -3219,17 +3223,17 @@ static int parse_one_option(const char *option)
 			v = 1024 * 1024;
 		}
 		max_packsize = v;
-	} else if (starts_with(option, "big-file-threshold=")) {
+	} else if (skip_prefix(option, "big-file-threshold=", &option)) {
 		unsigned long v;
-		if (!git_parse_ulong(option + 19, &v))
+		if (!git_parse_ulong(option, &v))
 			return 0;
 		big_file_threshold = v;
-	} else if (starts_with(option, "depth=")) {
-		option_depth(option + 6);
-	} else if (starts_with(option, "active-branches=")) {
-		option_active_branches(option + 16);
-	} else if (starts_with(option, "export-pack-edges=")) {
-		option_export_pack_edges(option + 18);
+	} else if (skip_prefix(option, "depth=", &option)) {
+		option_depth(option);
+	} else if (skip_prefix(option, "active-branches=", &option)) {
+		option_active_branches(option);
+	} else if (skip_prefix(option, "export-pack-edges=", &option)) {
+		option_export_pack_edges(option);
 	} else if (starts_with(option, "quiet")) {
 		show_stats = 0;
 	} else if (starts_with(option, "stats")) {
@@ -3243,15 +3247,16 @@ static int parse_one_option(const char *option)
 
 static int parse_one_feature(const char *feature, int from_stream)
 {
-	if (starts_with(feature, "date-format=")) {
-		option_date_format(feature + 12);
-	} else if (starts_with(feature, "import-marks=")) {
-		option_import_marks(feature + 13, from_stream, 0);
-	} else if (starts_with(feature, "import-marks-if-exists=")) {
-		option_import_marks(feature + strlen("import-marks-if-exists="),
-					from_stream, 1);
-	} else if (starts_with(feature, "export-marks=")) {
-		option_export_marks(feature + 13);
+	const char *arg;
+
+	if (skip_prefix(feature, "date-format=", &arg)) {
+		option_date_format(arg);
+	} else if (skip_prefix(feature, "import-marks=", &arg)) {
+		option_import_marks(arg, from_stream, 0);
+	} else if (skip_prefix(feature, "import-marks-if-exists=", &arg)) {
+		option_import_marks(arg, from_stream, 1);
+	} else if (skip_prefix(feature, "export-marks=", &arg)) {
+		option_export_marks(arg);
 	} else if (!strcmp(feature, "cat-blob")) {
 		; /* Don't die - this feature is supported */
 	} else if (!strcmp(feature, "relative-marks")) {

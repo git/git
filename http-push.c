@@ -770,9 +770,9 @@ static void handle_new_lock_ctx(struct xml_ctx *ctx, int tag_closed)
 			lock->owner = xmalloc(strlen(ctx->cdata) + 1);
 			strcpy(lock->owner, ctx->cdata);
 		} else if (!strcmp(ctx->name, DAV_ACTIVELOCK_TIMEOUT)) {
-			if (starts_with(ctx->cdata, "Second-"))
-				lock->timeout =
-					strtol(ctx->cdata + 7, NULL, 10);
+			const char *arg;
+			if (skip_prefix(ctx->cdata, "Second-", &arg))
+				lock->timeout = strtol(arg, NULL, 10);
 		} else if (!strcmp(ctx->name, DAV_ACTIVELOCK_TOKEN)) {
 			lock->token = xmalloc(strlen(ctx->cdata) + 1);
 			strcpy(lock->token, ctx->cdata);
@@ -1561,6 +1561,7 @@ static void fetch_symref(const char *path, char **symref, unsigned char *sha1)
 {
 	char *url;
 	struct strbuf buffer = STRBUF_INIT;
+	const char *name;
 
 	url = xmalloc(strlen(repo->url) + strlen(path) + 1);
 	sprintf(url, "%s%s", repo->url, path);
@@ -1578,8 +1579,8 @@ static void fetch_symref(const char *path, char **symref, unsigned char *sha1)
 		return;
 
 	/* If it's a symref, set the refname; otherwise try for a sha1 */
-	if (starts_with((char *)buffer.buf, "ref: ")) {
-		*symref = xmemdupz((char *)buffer.buf + 5, buffer.len - 6);
+	if (skip_prefix(buffer.buf, "ref: ", &name)) {
+		*symref = xmemdupz(name, buffer.len - (name - buffer.buf));
 	} else {
 		get_sha1_hex(buffer.buf, sha1);
 	}
