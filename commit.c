@@ -556,8 +556,7 @@ static void record_author_date(struct author_date_slab *author_date,
 	     buf;
 	     buf = line_end + 1) {
 		line_end = strchrnul(buf, '\n');
-		ident_line = skip_prefix(buf, "author ");
-		if (!ident_line) {
+		if (!skip_prefix(buf, "author ", &ident_line)) {
 			if (!line_end[0] || line_end[1] == '\n')
 				return; /* end of header */
 			continue;
@@ -1183,8 +1182,7 @@ static void parse_gpg_output(struct signature_check *sigc)
 	for (i = 0; i < ARRAY_SIZE(sigcheck_gpg_status); i++) {
 		const char *found, *next;
 
-		found = skip_prefix(buf, sigcheck_gpg_status[i].check + 1);
-		if (!found) {
+		if (!skip_prefix(buf, sigcheck_gpg_status[i].check + 1, &found)) {
 			found = strstr(buf, sigcheck_gpg_status[i].check);
 			if (!found)
 				continue;

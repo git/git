@@ -127,11 +127,10 @@ static NORETURN int die_push_simple(struct branch *branch, struct remote *remote
 	 * them the big ugly fully qualified ref.
 	 */
 	const char *advice_maybe = "";
-	const char *short_upstream =
-		skip_prefix(branch->merge[0]->src, "refs/heads/");
+	const char *short_upstream = branch->merge[0]->src;
 
-	if (!short_upstream)
-		short_upstream = branch->merge[0]->src;
+	skip_prefix(short_upstream, "refs/heads/", &short_upstream);
+
 	/*
 	 * Don't show advice for people who explicitly set
 	 * push.default.

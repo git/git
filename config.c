@@ -138,8 +138,7 @@ int git_config_include(const char *var, const char *value, void *data)
 	if (ret < 0)
 		return ret;
 
-	type = skip_prefix(var, "include.");
-	if (!type)
+	if (!skip_prefix(var, "include.", &type))
 		return ret;
 
 	if (!strcmp(type, "path"))
