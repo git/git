@@ -488,9 +488,8 @@ static void read_config(void)
 	current_branch = NULL;
 	head_ref = resolve_ref_unsafe("HEAD", sha1, 0, &flag);
 	if (head_ref && (flag & REF_ISSYMREF) &&
-	    starts_with(head_ref, "refs/heads/")) {
-		current_branch =
-			make_branch(head_ref + strlen("refs/heads/"), 0);
+	    skip_prefix(head_ref, "refs/heads/", &head_ref)) {
+		current_branch = make_branch(head_ref, 0);
 	}
 	git_config(handle_config, NULL);
 	if (branch_pushremote_name) {

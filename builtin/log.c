@@ -872,7 +872,7 @@ static char *find_branch_name(struct rev_info *rev)
 	int i, positive = -1;
 	unsigned char branch_sha1[20];
 	const unsigned char *tip_sha1;
-	const char *ref;
+	const char *ref, *v;
 	char *full_ref, *branch = NULL;
 
 	for (i = 0; i < rev->cmdline.nr; i++) {
@@ -888,9 +888,9 @@ static char *find_branch_name(struct rev_info *rev)
 	ref = rev->cmdline.rev[positive].name;
 	tip_sha1 = rev->cmdline.rev[positive].item->sha1;
 	if (dwim_ref(ref, strlen(ref), branch_sha1, &full_ref) &&
-	    starts_with(full_ref, "refs/heads/") &&
+	    skip_prefix(full_ref, "refs/heads/", &v) &&
 	    !hashcmp(tip_sha1, branch_sha1))
-		branch = xstrdup(full_ref + strlen("refs/heads/"));
+		branch = xstrdup(v);
 	free(full_ref);
 	return branch;
 }
@@ -1394,10 +1394,10 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 
 		if (check_head) {
 			unsigned char sha1[20];
-			const char *ref;
+			const char *ref, *v;
 			ref = resolve_ref_unsafe("HEAD", sha1, 1, NULL);
-			if (ref && starts_with(ref, "refs/heads/"))
-				branch_name = xstrdup(ref + strlen("refs/heads/"));
+			if (ref && skip_prefix(ref, "refs/heads/", &v))
+				branch_name = xstrdup(v);
 			else
 				branch_name = xstrdup(""); /* no branch */
 		}

@@ -911,10 +911,8 @@ static int grab_nth_branch_switch(unsigned char *osha1, unsigned char *nsha1,
 	const char *match = NULL, *target = NULL;
 	size_t len;
 
-	if (starts_with(message, "checkout: moving from ")) {
-		match = message + strlen("checkout: moving from ");
+	if (skip_prefix(message, "checkout: moving from ", &match))
 		target = strstr(match, " to ");
-	}
 
 	if (!match || !target)
 		return 0;

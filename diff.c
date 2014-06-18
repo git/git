@@ -3395,12 +3395,10 @@ int parse_long_opt(const char *opt, const char **argv,
 		   const char **optarg)
 {
 	const char *arg = argv[0];
-	if (arg[0] != '-' || arg[1] != '-')
+	if (!skip_prefix(arg, "--", &arg))
 		return 0;
-	arg += strlen("--");
-	if (!starts_with(arg, opt))
+	if (!skip_prefix(arg, opt, &arg))
 		return 0;
-	arg += strlen(opt);
 	if (*arg == '=') { /* stuck form: --option=value */
 		*optarg = arg + 1;
 		return 1;
@@ -3429,8 +3427,7 @@ static int stat_opt(struct diff_options *options, const char **av)
 
 	switch (*arg) {
 	case '-':
-		if (starts_with(arg, "-width")) {
-			arg += strlen("-width");
+		if (skip_prefix(arg, "-width", &arg)) {
 			if (*arg == '=')
 				width = strtoul(arg + 1, &end, 10);
 			else if (!*arg && !av[1])
@@ -3439,8 +3436,7 @@ static int stat_opt(struct diff_options *options, const char **av)
 				width = strtoul(av[1], &end, 10);
 				argcount = 2;
 			}
-		} else if (starts_with(arg, "-name-width")) {
-			arg += strlen("-name-width");
+		} else if (skip_prefix(arg, "-name-width", &arg)) {
 			if (*arg == '=')
 				name_width = strtoul(arg + 1, &end, 10);
 			else if (!*arg && !av[1])
@@ -3449,8 +3445,7 @@ static int stat_opt(struct diff_options *options, const char **av)
 				name_width = strtoul(av[1], &end, 10);
 				argcount = 2;
 			}
-		} else if (starts_with(arg, "-graph-width")) {
-			arg += strlen("-graph-width");
+		} else if (skip_prefix(arg, "-graph-width", &arg)) {
 			if (*arg == '=')
 				graph_width = strtoul(arg + 1, &end, 10);
 			else if (!*arg && !av[1])
@@ -3459,8 +3454,7 @@ static int stat_opt(struct diff_options *options, const char **av)
 				graph_width = strtoul(av[1], &end, 10);
 				argcount = 2;
 			}
-		} else if (starts_with(arg, "-count")) {
-			arg += strlen("-count");
+		} else if (skip_prefix(arg, "-count", &arg)) {
 			if (*arg == '=')
 				count = strtoul(arg + 1, &end, 10);
 			else if (!*arg && !av[1])
@@ -3905,16 +3899,13 @@ static int diff_scoreopt_parse(const char *opt)
 	cmd = *opt++;
 	if (cmd == '-') {
 		/* convert the long-form arguments into short-form versions */
-		if (starts_with(opt, "break-rewrites")) {
-			opt += strlen("break-rewrites");
+		if (skip_prefix(opt, "break-rewrites", &opt)) {
 			if (*opt == 0 || *opt++ == '=')
 				cmd = 'B';
-		} else if (starts_with(opt, "find-copies")) {
-			opt += strlen("find-copies");
+		} else if (skip_prefix(opt, "find-copies", &opt)) {
 			if (*opt == 0 || *opt++ == '=')
 				cmd = 'C';
-		} else if (starts_with(opt, "find-renames")) {
-			opt += strlen("find-renames");
+		} else if (skip_prefix(opt, "find-renames", &opt)) {
 			if (*opt == 0 || *opt++ == '=')
 				cmd = 'M';
 		}

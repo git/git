@@ -2063,6 +2063,8 @@ void init_merge_options(struct merge_options *o)
 
 int parse_merge_opt(struct merge_options *o, const char *s)
 {
+	const char *arg;
+
 	if (!s || !*s)
 		return -1;
 	if (!strcmp(s, "ours"))
@@ -2071,14 +2073,14 @@ int parse_merge_opt(struct merge_options *o, const char *s)
 		o->recursive_variant = MERGE_RECURSIVE_THEIRS;
 	else if (!strcmp(s, "subtree"))
 		o->subtree_shift = "";
-	else if (starts_with(s, "subtree="))
-		o->subtree_shift = s + strlen("subtree=");
+	else if (skip_prefix(s, "subtree=", &arg))
+		o->subtree_shift = arg;
 	else if (!strcmp(s, "patience"))
 		o->xdl_opts = DIFF_WITH_ALG(o, PATIENCE_DIFF);
 	else if (!strcmp(s, "histogram"))
 		o->xdl_opts = DIFF_WITH_ALG(o, HISTOGRAM_DIFF);
-	else if (starts_with(s, "diff-algorithm=")) {
-		long value = parse_algorithm_value(s + strlen("diff-algorithm="));
+	else if (skip_prefix(s, "diff-algorithm=", &arg)) {
+		long value = parse_algorithm_value(arg);
 		if (value < 0)
 			return -1;
 		/* clear out previous settings */
@@ -2096,9 +2098,8 @@ int parse_merge_opt(struct merge_options *o, const char *s)
 		o->renormalize = 1;
 	else if (!strcmp(s, "no-renormalize"))
 		o->renormalize = 0;
-	else if (starts_with(s, "rename-threshold=")) {
-		const char *score = s + strlen("rename-threshold=");
-		if ((o->rename_score = parse_rename_score(&score)) == -1 || *score != 0)
+	else if (skip_prefix(s, "rename-threshold=", &arg)) {
+		if ((o->rename_score = parse_rename_score(&arg)) == -1 || *arg != 0)
 			return -1;
 	}
 	else

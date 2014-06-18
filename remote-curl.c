@@ -791,9 +791,9 @@ static void parse_fetch(struct strbuf *buf)
 	int alloc_heads = 0, nr_heads = 0;
 
 	do {
-		if (starts_with(buf->buf, "fetch ")) {
-			char *p = buf->buf + strlen("fetch ");
-			char *name;
+		const char *p;
+		if (skip_prefix(buf->buf, "fetch ", &p)) {
+			const char *name;
 			struct ref *ref;
 			unsigned char old_sha1[20];
 
@@ -968,6 +968,8 @@ int main(int argc, const char **argv)
 	http_init(remote, url.buf, 0);
 
 	do {
+		const char *arg;
+
 		if (strbuf_getline(&buf, stdin, '\n') == EOF) {
 			if (ferror(stdin))
 				fprintf(stderr, "Error reading command stream\n");
@@ -989,9 +991,8 @@ int main(int argc, const char **argv)
 		} else if (starts_with(buf.buf, "push ")) {
 			parse_push(&buf);
 
-		} else if (starts_with(buf.buf, "option ")) {
-			char *name = buf.buf + strlen("option ");
-			char *value = strchr(name, ' ');
+		} else if (skip_prefix(buf.buf, "option ", &arg)) {
+			char *value = strchr(arg, ' ');
 			int result;
 
 			if (value)
@@ -999,7 +1000,7 @@ int main(int argc, const char **argv)
 			else
 				value = "true";
 
-			result = set_option(name, value);
+			result = set_option(arg, value);
 			if (!result)
 				printf("ok\n");
 			else if (result < 0)

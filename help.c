@@ -414,11 +414,12 @@ static int append_similar_ref(const char *refname, const unsigned char *sha1,
 {
 	struct similar_ref_cb *cb = (struct similar_ref_cb *)(cb_data);
 	char *branch = strrchr(refname, '/') + 1;
+	const char *remote;
+
 	/* A remote branch of the same name is deemed similar */
-	if (starts_with(refname, "refs/remotes/") &&
+	if (skip_prefix(refname, "refs/remotes/", &remote) &&
 	    !strcmp(branch, cb->base_ref))
-		string_list_append(cb->similar_refs,
-				   refname + strlen("refs/remotes/"));
+		string_list_append(cb->similar_refs, remote);
 	return 0;
 }
 
