@@ -52,23 +52,23 @@ static char diff_colors[][COLOR_MAXLEN] = {
 	GIT_COLOR_NORMAL,	/* FUNCINFO */
 };
 
-static int parse_diff_color_slot(const char *var, int ofs)
+static int parse_diff_color_slot(const char *var)
 {
-	if (!strcasecmp(var+ofs, "plain"))
+	if (!strcasecmp(var, "plain"))
 		return DIFF_PLAIN;
-	if (!strcasecmp(var+ofs, "meta"))
+	if (!strcasecmp(var, "meta"))
 		return DIFF_METAINFO;
-	if (!strcasecmp(var+ofs, "frag"))
+	if (!strcasecmp(var, "frag"))
 		return DIFF_FRAGINFO;
-	if (!strcasecmp(var+ofs, "old"))
+	if (!strcasecmp(var, "old"))
 		return DIFF_FILE_OLD;
-	if (!strcasecmp(var+ofs, "new"))
+	if (!strcasecmp(var, "new"))
 		return DIFF_FILE_NEW;
-	if (!strcasecmp(var+ofs, "commit"))
+	if (!strcasecmp(var, "commit"))
 		return DIFF_COMMIT;
-	if (!strcasecmp(var+ofs, "whitespace"))
+	if (!strcasecmp(var, "whitespace"))
 		return DIFF_WHITESPACE;
-	if (!strcasecmp(var+ofs, "func"))
+	if (!strcasecmp(var, "func"))
 		return DIFF_FUNCINFO;
 	return -1;
 }
@@ -240,7 +240,7 @@ int git_diff_basic_config(const char *var, const char *value, void *cb)
 		return -1;
 
 	if (starts_with(var, "diff.color.") || starts_with(var, "color.diff.")) {
-		int slot = parse_diff_color_slot(var, 11);
+		int slot = parse_diff_color_slot(var + 11);
 		if (slot < 0)
 			return 0;
 		if (!value)
