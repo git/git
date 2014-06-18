@@ -2269,7 +2269,7 @@ static uintmax_t parse_mark_ref_space(const char **p)
 	char *end;
 
 	mark = parse_mark_ref(*p, &end);
-	if (*end != ' ')
+	if (*end++ != ' ')
 		die("Missing space after mark: %s", command_buf.buf);
 	*p = end;
 	return mark;
@@ -2304,20 +2304,17 @@ static void file_change_m(const char *p, struct branch *b)
 	if (*p == ':') {
 		oe = find_mark(parse_mark_ref_space(&p));
 		hashcpy(sha1, oe->idx.sha1);
-	} else if (starts_with(p, "inline ")) {
+	} else if (skip_prefix(p, "inline ", &p)) {
 		inline_data = 1;
 		oe = NULL; /* not used with inline_data, but makes gcc happy */
-		p += strlen("inline");  /* advance to space */
 	} else {
 		if (get_sha1_hex(p, sha1))
 			die("Invalid dataref: %s", command_buf.buf);
 		oe = find_object(sha1);
 		p += 40;
-		if (*p != ' ')
+		if (*p++ != ' ')
 			die("Missing space after SHA1: %s", command_buf.buf);
 	}
-	assert(*p == ' ');
-	p++;  /* skip space */
 
 	strbuf_reset(&uq);
 	if (!unquote_c_style(&uq, p, &endp)) {
@@ -2474,20 +2471,17 @@ static void note_change_n(const char *p, struct branch *b, unsigned char *old_fa
 	if (*p == ':') {
 		oe = find_mark(parse_mark_ref_space(&p));
 		hashcpy(sha1, oe->idx.sha1);
-	} else if (starts_with(p, "inline ")) {
+	} else if (skip_prefix(p, "inline ", &p)) {
 		inline_data = 1;
 		oe = NULL; /* not used with inline_data, but makes gcc happy */
-		p += strlen("inline");  /* advance to space */
 	} else {
 		if (get_sha1_hex(p, sha1))
 			die("Invalid dataref: %s", command_buf.buf);
 		oe = find_object(sha1);
 		p += 40;
-		if (*p != ' ')
+		if (*p++ != ' ')
 			die("Missing space after SHA1: %s", command_buf.buf);
 	}
-	assert(*p == ' ');
-	p++;  /* skip space */
 
 	/* <commit-ish> */
 	s = lookup_branch(p);
@@ -3003,6 +2997,8 @@ static struct object_entry *parse_treeish_dataref(const char **p)
 			die("Invalid dataref: %s", command_buf.buf);
 		e = find_object(sha1);
 		*p += 40;
+		if (*(*p)++ != ' ')
+			die("Missing space after tree-ish: %s", command_buf.buf);
 	}
 
 	while (!e || e->type != OBJ_TREE)
@@ -3054,8 +3050,6 @@ static void parse_ls(const char *p, struct branch *b)
 		if (!is_null_sha1(root->versions[1].sha1))
 			root->versions[1].mode = S_IFDIR;
 		load_tree(root);
-		if (*p++ != ' ')
-			die("Missing space after tree-ish: %s", command_buf.buf);
 	}
 	if (*p == '"') {
 		static struct strbuf uq = STRBUF_INIT;
