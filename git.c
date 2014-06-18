@@ -588,8 +588,8 @@ int main(int argc, char **av)
 	argc--;
 	handle_options(&argv, &argc, NULL);
 	if (argc > 0) {
-		if (starts_with(argv[0], "--"))
-			argv[0] += 2;
+		/* translate --help and --version into commands */
+		skip_prefix(argv[0], "--", &argv[0]);
 	} else {
 		/* The user didn't specify a command; give them help */
 		commit_pager_choice();
