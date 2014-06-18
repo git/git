@@ -39,8 +39,8 @@ static int strict_paths;
 static int export_all_trees;
 
 /* Take all paths relative to this one if non-NULL */
-static char *base_path;
-static char *interpolated_path;
+static const char *base_path;
+static const char *interpolated_path;
 static int base_path_relaxed;
 
 /* Flag indicating client sent extra args. */
@@ -106,12 +106,12 @@ static void NORETURN daemon_die(const char *err, va_list params)
 	exit(1);
 }
 
-static const char *path_ok(char *directory)
+static const char *path_ok(const char *directory)
 {
 	static char rpath[PATH_MAX];
 	static char interp_path[PATH_MAX];
 	const char *path;
-	char *dir;
+	const char *dir;
 
 	dir = directory;
 
@@ -131,7 +131,7 @@ static const char *path_ok(char *directory)
 			 * "~alice/%s/foo".
 			 */
 			int namlen, restlen = strlen(dir);
-			char *slash = strchr(dir, '/');
+			const char *slash = strchr(dir, '/');
 			if (!slash)
 				slash = dir + restlen;
 			namlen = slash - dir;
@@ -253,7 +253,7 @@ static int daemon_error(const char *dir, const char *msg)
 	return -1;
 }
 
-static char *access_hook;
+static const char *access_hook;
 
 static int run_access_hook(struct daemon_service *service, const char *dir, const char *path)
 {
@@ -318,7 +318,7 @@ error_return:
 	return -1;
 }
 
-static int run_service(char *dir, struct daemon_service *service)
+static int run_service(const char *dir, struct daemon_service *service)
 {
 	const char *path;
 	int enabled = service->enabled;
