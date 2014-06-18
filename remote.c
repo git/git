@@ -170,7 +170,6 @@ static struct branch *make_branch(const char *name, int len)
 {
 	struct branch *ret;
 	int i;
-	char *refname;
 
 	for (i = 0; i < branches_nr; i++) {
 		if (len ? (!strncmp(name, branches[i]->name, len) &&
@@ -186,10 +185,7 @@ static struct branch *make_branch(const char *name, int len)
 		ret->name = xstrndup(name, len);
 	else
 		ret->name = xstrdup(name);
-	refname = xmalloc(strlen(name) + strlen("refs/heads/") + 1);
-	strcpy(refname, "refs/heads/");
-	strcpy(refname + strlen("refs/heads/"), ret->name);
-	ret->refname = refname;
+	ret->refname = xstrfmt("refs/heads/%s", ret->name);
 
 	return ret;
 }
