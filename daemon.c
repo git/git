@@ -626,15 +626,16 @@ static int execute(void)
 
 	for (i = 0; i < ARRAY_SIZE(daemon_service); i++) {
 		struct daemon_service *s = &(daemon_service[i]);
-		int namelen = strlen(s->name);
-		if (starts_with(line, "git-") &&
-		    !strncmp(s->name, line + 4, namelen) &&
-		    line[namelen + 4] == ' ') {
+		const char *arg;
+
+		if (skip_prefix(line, "git-", &arg) &&
+		    skip_prefix(arg, s->name, &arg) &&
+		    *arg++ == ' ') {
 			/*
 			 * Note: The directory here is probably context sensitive,
 			 * and might depend on the actual service being performed.
 			 */
-			return run_service(line + namelen + 5, s);
+			return run_service(arg, s);
 		}
 	}
 
