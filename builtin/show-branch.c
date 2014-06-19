@@ -755,7 +755,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 		}
 
 		for (i = 0; i < reflog; i++) {
-			char *logmsg, *m;
+			char *logmsg;
 			const char *msg;
 			unsigned long timestamp;
 			int tz;
@@ -770,11 +770,9 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 				msg = "(none)";
 			else
 				msg++;
-			m = xmalloc(strlen(msg) + 200);
-			sprintf(m, "(%s) %s",
-				show_date(timestamp, tz, 1),
-				msg);
-			reflog_msg[i] = m;
+			reflog_msg[i] = xstrfmt("(%s) %s",
+						show_date(timestamp, tz, 1),
+						msg);
 			free(logmsg);
 			sprintf(nth_desc, "%s@{%d}", *av, base+i);
 			append_ref(nth_desc, sha1, 1);

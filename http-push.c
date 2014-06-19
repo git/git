@@ -854,8 +854,7 @@ static struct remote_lock *lock_remote(const char *path, long timeout)
 	struct xml_ctx ctx;
 	char *escaped;
 
-	url = xmalloc(strlen(repo->url) + strlen(path) + 1);
-	sprintf(url, "%s%s", repo->url, path);
+	url = xstrfmt("%s%s", repo->url, path);
 
 	/* Make sure leading directories exist for the remote ref */
 	ep = strchr(url + strlen(repo->url) + 1, '/');
@@ -1115,7 +1114,7 @@ static void remote_ls(const char *path, int flags,
 		      void (*userFunc)(struct remote_ls_ctx *ls),
 		      void *userData)
 {
-	char *url = xmalloc(strlen(repo->url) + strlen(path) + 1);
+	char *url = xstrfmt("%s%s", repo->url, path);
 	struct active_request_slot *slot;
 	struct slot_results results;
 	struct strbuf in_buffer = STRBUF_INIT;
@@ -1130,8 +1129,6 @@ static void remote_ls(const char *path, int flags,
 	ls.dentry_flags = 0;
 	ls.userData = userData;
 	ls.userFunc = userFunc;
-
-	sprintf(url, "%s%s", repo->url, path);
 
 	strbuf_addf(&out_buffer.buf, PROPFIND_ALL_REQUEST);
 
@@ -1534,10 +1531,9 @@ static void update_remote_info_refs(struct remote_lock *lock)
 
 static int remote_exists(const char *path)
 {
-	char *url = xmalloc(strlen(repo->url) + strlen(path) + 1);
+	char *url = xstrfmt("%s%s", repo->url, path);
 	int ret;
 
-	sprintf(url, "%s%s", repo->url, path);
 
 	switch (http_get_strbuf(url, NULL, NULL)) {
 	case HTTP_OK:
@@ -1557,11 +1553,8 @@ static int remote_exists(const char *path)
 
 static void fetch_symref(const char *path, char **symref, unsigned char *sha1)
 {
-	char *url;
+	char *url = xstrfmt("%s%s", repo->url, path);
 	struct strbuf buffer = STRBUF_INIT;
-
-	url = xmalloc(strlen(repo->url) + strlen(path) + 1);
-	sprintf(url, "%s%s", repo->url, path);
 
 	if (http_get_strbuf(url, &buffer, NULL) != HTTP_OK)
 		die("Couldn't get %s for remote symref\n%s", url,
@@ -1671,8 +1664,7 @@ static int delete_remote_branch(const char *pattern, int force)
 	fprintf(stderr, "Removing remote branch '%s'\n", remote_ref->name);
 	if (dry_run)
 		return 0;
-	url = xmalloc(strlen(repo->url) + strlen(remote_ref->name) + 1);
-	sprintf(url, "%s%s", repo->url, remote_ref->name);
+	url = xstrfmt("%s%s", repo->url, remote_ref->name);
 	slot = get_active_slot();
 	slot->results = &results;
 	curl_setup_http_get(slot->curl, url, DAV_DELETE);

@@ -178,11 +178,8 @@ static int handle_line(char *line, struct merge_parents *merge_parents)
 		int len = strlen(origin);
 		if (origin[0] == '\'' && origin[len - 1] == '\'')
 			origin = xmemdupz(origin + 1, len - 2);
-	} else {
-		char *new_origin = xmalloc(strlen(origin) + strlen(src) + 5);
-		sprintf(new_origin, "%s of %s", origin, src);
-		origin = new_origin;
-	}
+	} else
+		origin = xstrfmt("%s of %s", origin, src);
 	if (strcmp(".", src))
 		origin_data->is_local_branch = 0;
 	string_list_append(&origins, origin)->util = origin_data;
