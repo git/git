@@ -489,6 +489,17 @@ test_path_is_dir () {
 	fi
 }
 
+# Check if the directory exists and is empty as expected, barf otherwise.
+test_dir_is_empty () {
+	test_path_is_dir "$1" &&
+	if test -n "$(ls -a1 "$1" | egrep -v '^\.\.?$')"
+	then
+		echo "Directory '$1' is not empty, it contains:"
+		ls -la "$1"
+		return 1
+	fi
+}
+
 test_path_is_missing () {
 	if [ -e "$1" ]
 	then
