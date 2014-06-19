@@ -614,12 +614,9 @@ static void run_update_post_hook(struct command *commands)
 	argv[0] = hook;
 
 	for (argc = 1, cmd = commands; cmd; cmd = cmd->next) {
-		char *p;
 		if (cmd->error_string || cmd->did_not_exist)
 			continue;
-		p = xmalloc(strlen(cmd->ref_name) + 1);
-		strcpy(p, cmd->ref_name);
-		argv[argc] = p;
+		argv[argc] = xstrdup(cmd->ref_name);
 		argc++;
 	}
 	argv[argc] = NULL;
