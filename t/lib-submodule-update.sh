@@ -227,7 +227,14 @@ test_submodule_switch () {
 	command="$1"
 	######################### Appearing submodule #########################
 	# Switching to a commit letting a submodule appear creates empty dir ...
-	test_expect_success "$command: added submodule creates empty directory" '
+	if test "$KNOWN_FAILURE_STASH_DOES_IGNORE_SUBMODULE_CHANGES" = 1
+	then
+		# Restoring stash fails to restore submodule index entry
+		RESULT="failure"
+	else
+		RESULT="success"
+	fi
+	test_expect_$RESULT "$command: added submodule creates empty directory" '
 		prolog &&
 		reset_work_tree_to no_submodule &&
 		(
@@ -241,7 +248,7 @@ test_submodule_switch () {
 		)
 	'
 	# ... and doesn't care if it already exists ...
-	test_expect_success "$command: added submodule leaves existing empty directory alone" '
+	test_expect_$RESULT "$command: added submodule leaves existing empty directory alone" '
 		prolog &&
 		reset_work_tree_to no_submodule &&
 		(
@@ -270,7 +277,7 @@ test_submodule_switch () {
 	'
 	# Replacing a tracked file with a submodule produces an empty
 	# directory ...
-	test_expect_success "$command: replace tracked file with submodule creates empty directory" '
+	test_expect_$RESULT "$command: replace tracked file with submodule creates empty directory" '
 		prolog &&
 		reset_work_tree_to replace_sub1_with_file &&
 		(
@@ -310,7 +317,13 @@ test_submodule_switch () {
 
 	######################## Disappearing submodule #######################
 	# Removing a submodule doesn't remove its work tree ...
-	test_expect_success "$command: removed submodule leaves submodule directory and its contents in place" '
+	if test "$KNOWN_FAILURE_STASH_DOES_IGNORE_SUBMODULE_CHANGES" = 1
+	then
+		RESULT="failure"
+	else
+		RESULT="success"
+	fi
+	test_expect_$RESULT "$command: removed submodule leaves submodule directory and its contents in place" '
 		prolog &&
 		reset_work_tree_to add_sub1 &&
 		(
@@ -322,7 +335,7 @@ test_submodule_switch () {
 		)
 	'
 	# ... especially when it contains a .git directory.
-	test_expect_success "$command: removed submodule leaves submodule containing a .git directory alone" '
+	test_expect_$RESULT "$command: removed submodule leaves submodule containing a .git directory alone" '
 		prolog &&
 		reset_work_tree_to add_sub1 &&
 		(
