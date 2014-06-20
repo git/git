@@ -1152,7 +1152,7 @@ static int match_explicit_lhs(struct ref *src,
 		 * way to delete 'other' ref at the remote end.
 		 */
 		if (try_explicit_object_name(rs->src, match) < 0)
-			return error("src refspec %s does not match any.", rs->src);
+			return error("src refspec %s does not match any.  You probably mispelled your branch name or something.", rs->src);
 		if (allocated_match)
 			*allocated_match = 1;
 		return 0;
