@@ -190,8 +190,6 @@ test_expect_success 'required filter clean failure' '
 	test_must_fail git add test.fc
 '
 
-test -n "$GIT_TEST_LONG" && test_set_prereq EXPENSIVE
-
 test_expect_success EXPENSIVE 'filter large file' '
 	git config filter.largefile.smudge cat &&
 	git config filter.largefile.clean cat &&

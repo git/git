@@ -213,8 +213,6 @@ test_expect_success 'cookies stored in http.cookiefile when http.savecookies set
 	test_cmp expect_cookies.txt cookies_tail.txt
 '
 
-test -n "$GIT_TEST_LONG" && test_set_prereq EXPENSIVE
-
 test_expect_success EXPENSIVE 'create 50,000 tags in the repo' '
 	(
 	cd "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&

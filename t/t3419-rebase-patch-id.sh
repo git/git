@@ -4,12 +4,9 @@ test_description='git rebase - test patch id computation'
 
 . ./test-lib.sh
 
-test_set_prereq NOT_EXPENSIVE
 test -n "$GIT_PATCHID_TIMING_TESTS" && test_set_prereq EXPENSIVE
-test -x /usr/bin/time && test_set_prereq USR_BIN_TIME
 
-count()
-{
+count () {
 	i=0
 	while test $i -lt $1
 	do
@@ -18,8 +15,7 @@ count()
 	done
 }
 
-scramble()
-{
+scramble () {
 	i=0
 	while read x
 	do
@@ -28,12 +24,11 @@ scramble()
 			echo "$x"
 		fi
 		i=$((($i+1) % 10))
-	done < "$1" > "$1.new"
+	done <"$1" >"$1.new"
 	mv -f "$1.new" "$1"
 }
 
-run()
-{
+run () {
 	echo \$ "$@"
 	/usr/bin/time "$@" >/dev/null
 }
@@ -43,10 +38,8 @@ test_expect_success 'setup' '
 	git tag root
 '
 
-do_tests()
-{
-	pr=$1
-	nlines=$2
+do_tests () {
+	nlines=$1 pr=${2-}
 
 	test_expect_success $pr "setup: $nlines lines" "
 		rm -f .gitattributes &&
@@ -103,7 +96,7 @@ do_tests()
 	"
 }
 
-do_tests NOT_EXPENSIVE 500
-do_tests EXPENSIVE 50000
+do_tests 500
+do_tests 50000 EXPENSIVE
 
 test_done
