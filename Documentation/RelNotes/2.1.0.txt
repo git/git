@@ -92,6 +92,10 @@ UI, Workflows & Features
 
  * "git replace" learned the "--edit" subcommand.
 
+ * "git send-email" learned "--to-cover" and "--cc-cover" options, to
+   tell it to copy To: and Cc: headers found in the first input file
+   when emitting later input files.
+
  * "git svn" learned to cope with malformed timestamps with only one
    digit in the hour part, e.g. 2014-01-07T5:01:02.048176Z, emitted
    by some broken subversion server implementations.
@@ -153,6 +157,11 @@ notes for details).
    loose object file due to e.g. permission issues; it was reported as
    the object being corrupt, but that is not quite true.
    (merge d6c8a05 jk/report-fail-to-read-objects-better later to maint).
+
+ * "git log -2master" is a common typo that shows two commits starting
+   from whichever random branch that is not 'master' that happens to
+   be checked out currently.
+   (merge e3fa568 jc/revision-dash-count-parsing later to maint).
 
  * The "%<(10,trunc)%s" pretty format specifier in the log family of
    commands is used to truncate the string to a given length (e.g. 10
