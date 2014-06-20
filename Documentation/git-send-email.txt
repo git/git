@@ -248,6 +248,18 @@ Automating
 	cc list. Default is the value of 'sendemail.signedoffbycc' configuration
 	value; if that is unspecified, default to --signed-off-by-cc.
 
+--[no-]cc-cover::
+	If this is set, emails found in Cc: headers in the first patch of
+	the series (typically the cover letter) are added to the cc list
+	for each email set. Default is the value of 'sendemail.cccover'
+	configuration value; if that is unspecified, default to --no-cc-cover.
+
+--[no-]to-cover::
+	If this is set, emails found in To: headers in the first patch of
+	the series (typically the cover letter) are added to the to list
+	for each email set. Default is the value of 'sendemail.tocover'
+	configuration value; if that is unspecified, default to --no-to-cover.
+
 --suppress-cc=<category>::
 	Specify an additional category of recipients to suppress the
 	auto-cc of:
