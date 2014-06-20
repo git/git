@@ -76,7 +76,7 @@ case "$common" in
 			2>/dev/null || continue
 		# Count the paths that are unmerged.
 		cnt=$(GIT_INDEX_FILE=$G git ls-files --unmerged | wc -l)
-		if test $best_cnt -le 0 -o $cnt -le $best_cnt
+		if test $best_cnt -le 0 || test $cnt -le $best_cnt
 		then
 			best=$c
 			best_cnt=$cnt
