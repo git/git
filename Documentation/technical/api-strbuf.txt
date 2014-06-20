@@ -7,10 +7,10 @@ use the mem* functions than a str* one (memchr vs. strchr e.g.).
 Though, one has to be careful about the fact that str* functions often
 stop on NULs and that strbufs may have embedded NULs.
 
-An strbuf is NUL terminated for convenience, but no function in the
+A strbuf is NUL terminated for convenience, but no function in the
 strbuf API actually relies on the string being free of NULs.
 
-strbufs has some invariants that are very important to keep in mind:
+strbufs have some invariants that are very important to keep in mind:
 
 . The `buf` member is never NULL, so it can be used in any usual C
 string operations safely. strbuf's _have_ to be initialized either by
@@ -56,8 +56,8 @@ Data structures
 * `struct strbuf`
 
 This is the string buffer structure. The `len` member can be used to
-determine the current length of the string, and `buf` member provides access to
-the string itself.
+determine the current length of the string, and `buf` member provides
+access to the string itself.
 
 Functions
 ---------
@@ -202,7 +202,7 @@ strbuf_addstr(sb, "immediate string");
 
 `strbuf_addbuf`::
 
-	Copy the contents of an other buffer at the end of the current one.
+	Copy the contents of another buffer at the end of the current one.
 
 `strbuf_adddup`::
 
