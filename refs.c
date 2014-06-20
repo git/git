@@ -3334,7 +3334,7 @@ struct ref_transaction *ref_transaction_begin(void)
 	return xcalloc(1, sizeof(struct ref_transaction));
 }
 
-static void ref_transaction_free(struct ref_transaction *transaction)
+void ref_transaction_free(struct ref_transaction *transaction)
 {
 	int i;
 
@@ -3343,11 +3343,6 @@ static void ref_transaction_free(struct ref_transaction *transaction)
 
 	free(transaction->updates);
 	free(transaction);
-}
-
-void ref_transaction_rollback(struct ref_transaction *transaction)
-{
-	ref_transaction_free(transaction);
 }
 
 static struct ref_update *add_update(struct ref_transaction *transaction,

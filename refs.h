@@ -219,16 +219,10 @@ enum action_on_err {
 
 /*
  * Begin a reference transaction.  The reference transaction must
- * eventually be commited using ref_transaction_commit() or rolled
- * back using ref_transaction_rollback().
+ * eventually be commited using ref_transaction_commit() or freed by
+ * calling ref_transaction_free().
  */
 struct ref_transaction *ref_transaction_begin(void);
-
-/*
- * Roll back a ref_transaction and free all associated data.
- */
-void ref_transaction_rollback(struct ref_transaction *transaction);
-
 
 /*
  * The following functions add a reference check or update to a
@@ -237,7 +231,6 @@ void ref_transaction_rollback(struct ref_transaction *transaction);
  * refname, so the caller retains ownership of the parameter.  flags
  * can be REF_NODEREF; it is passed to update_ref_lock().
  */
-
 
 /*
  * Add a reference update to transaction.  new_sha1 is the value that
@@ -279,6 +272,11 @@ void ref_transaction_delete(struct ref_transaction *transaction,
  */
 int ref_transaction_commit(struct ref_transaction *transaction,
 			   const char *msg, enum action_on_err onerr);
+
+/*
+ * Free an existing transaction and all associated data.
+ */
+void ref_transaction_free(struct ref_transaction *transaction);
 
 /** Lock a ref and then write its file */
 int update_ref(const char *action, const char *refname,
