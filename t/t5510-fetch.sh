@@ -447,6 +447,43 @@ test_expect_success 'explicit pull should update tracking' '
 	)
 '
 
+test_expect_success 'explicit --refmap is allowed only with command-line refspec' '
+	cd "$D" &&
+	(
+		cd three &&
+		test_must_fail git fetch --refmap="*:refs/remotes/none/*"
+	)
+'
+
+test_expect_success 'explicit --refmap option overrides remote.*.fetch' '
+	cd "$D" &&
+	git branch -f side &&
+	(
+		cd three &&
+		git update-ref refs/remotes/origin/master base-origin-master &&
+		o=$(git rev-parse --verify refs/remotes/origin/master) &&
+		git fetch --refmap="refs/heads/*:refs/remotes/other/*" origin master &&
+		n=$(git rev-parse --verify refs/remotes/origin/master) &&
+		test "$o" = "$n" &&
+		test_must_fail git rev-parse --verify refs/remotes/origin/side &&
+		git rev-parse --verify refs/remotes/other/master
+	)
+'
+
+test_expect_success 'explicitly empty --refmap option disables remote.*.fetch' '
+	cd "$D" &&
+	git branch -f side &&
+	(
+		cd three &&
+		git update-ref refs/remotes/origin/master base-origin-master &&
+		o=$(git rev-parse --verify refs/remotes/origin/master) &&
+		git fetch --refmap="" origin master &&
+		n=$(git rev-parse --verify refs/remotes/origin/master) &&
+		test "$o" = "$n" &&
+		test_must_fail git rev-parse --verify refs/remotes/origin/side
+	)
+'
+
 test_expect_success 'configured fetch updates tracking' '
 
 	cd "$D" &&
