@@ -60,7 +60,7 @@ Because Git repositories are accessed by standard path components
 server administrators MAY use directory based permissions within
 their HTTP server to control repository access.
 
-Clients SHOULD support Basic authentication as described by RFC 2616.
+Clients SHOULD support Basic authentication as described by RFC 2617.
 Servers SHOULD support Basic authentication by relying upon the
 HTTP server placed in front of the Git server software.
 
