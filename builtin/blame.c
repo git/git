@@ -2008,6 +2008,12 @@ static void output(struct scoreboard *sb, int option)
 	}
 }
 
+static const char *get_next_line(const char *start, const char *end)
+{
+	const char *nl = memchr(start, '\n', end - start);
+	return nl ? nl + 1 : end;
+}
+
 /*
  * To allow quick access to the contents of nth line in the
  * final image, prepare an index in the scoreboard.
@@ -2019,39 +2025,19 @@ static int prepare_lines(struct scoreboard *sb)
 	const char *end = buf + len;
 	const char *p;
 	int *lineno;
-	int num = 0, incomplete = 0;
+	int num = 0;
 
-	for (p = buf;;) {
-		p = memchr(p, '\n', end - p);
-		if (p) {
-			p++;
-			num++;
-			continue;
-		}
-		break;
-	}
+	for (p = buf; p < end; p = get_next_line(p, end))
+		num++;
 
-	if (len && end[-1] != '\n')
-		incomplete++; /* incomplete line at the end */
+	sb->lineno = lineno = xmalloc(sizeof(*sb->lineno) * (num + 1));
 
-	sb->lineno = xmalloc(sizeof(*sb->lineno) * (num + incomplete + 1));
-	lineno = sb->lineno;
+	for (p = buf; p < end; p = get_next_line(p, end))
+		*lineno++ = p - buf;
 
-	*lineno++ = 0;
-	for (p = buf;;) {
-		p = memchr(p, '\n', end - p);
-		if (p) {
-			p++;
-			*lineno++ = p - buf;
-			continue;
-		}
-		break;
-	}
+	*lineno = len;
 
-	if (incomplete)
-		*lineno++ = len;
-
-	sb->num_lines = num + incomplete;
+	sb->num_lines = num;
 	return sb->num_lines;
 }
 
