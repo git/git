@@ -240,8 +240,7 @@ test_expect_success EXPENSIVE 'create 50,000 tags in the repo' '
 '
 
 test_expect_success EXPENSIVE 'clone the 50,000 tag repo to check OS command line overflow' '
-	git clone $HTTPD_URL/smart/repo.git too-many-refs 2>err &&
-	test_line_count = 0 err &&
+	git clone $HTTPD_URL/smart/repo.git too-many-refs &&
 	(
 		cd too-many-refs &&
 		test $(git for-each-ref refs/tags | wc -l) = 50000
