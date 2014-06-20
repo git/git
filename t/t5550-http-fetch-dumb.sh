@@ -191,5 +191,10 @@ test_expect_success 'http error messages are reencoded' '
 	grep "this is the error message" stderr
 '
 
+test_expect_success 'reencoding is robust to whitespace oddities' '
+	test_must_fail git clone "$HTTPD_URL/error/odd-spacing" 2>stderr &&
+	grep "this is the error message" stderr
+'
+
 stop_httpd
 test_done

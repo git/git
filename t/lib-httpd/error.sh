@@ -19,6 +19,10 @@ case "$PATH_INFO" in
 	printf "text/plain; charset=utf-16"
 	charset=utf-16
 	;;
+*odd-spacing*)
+	printf "text/plain; foo=bar ;charset=utf-16; other=nonsense"
+	charset=utf-16
+	;;
 esac
 printf "\n"
 
