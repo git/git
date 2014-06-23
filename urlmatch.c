@@ -483,8 +483,7 @@ int urlmatch_config_entry(const char *var, const char *value, void *cb)
 	int user_matched = 0;
 	int retval;
 
-	key = skip_prefix(var, collect->section);
-	if (!key || *(key++) != '.') {
+	if (!skip_prefix(var, collect->section, &key) || *(key++) != '.') {
 		if (collect->cascade_fn)
 			return collect->cascade_fn(var, value, cb);
 		return 0; /* not interested */

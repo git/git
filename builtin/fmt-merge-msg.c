@@ -100,7 +100,8 @@ static int handle_line(char *line, struct merge_parents *merge_parents)
 {
 	int i, len = strlen(line);
 	struct origin_data *origin_data;
-	char *src, *origin;
+	char *src;
+	const char *origin;
 	struct src_data *src_data;
 	struct string_list_item *item;
 	int pulling_head = 0;
@@ -164,8 +165,7 @@ static int handle_line(char *line, struct merge_parents *merge_parents)
 		origin = line;
 		string_list_append(&src_data->tag, origin + 4);
 		src_data->head_status |= 2;
-	} else if (starts_with(line, "remote-tracking branch ")) {
-		origin = line + strlen("remote-tracking branch ");
+	} else if (skip_prefix(line, "remote-tracking branch ", &origin)) {
 		string_list_append(&src_data->r_branch, origin);
 		src_data->head_status |= 2;
 	} else {
@@ -300,8 +300,8 @@ static void credit_people(struct strbuf *out,
 	if (!them->nr ||
 	    (them->nr == 1 &&
 	     me &&
-	     (me = skip_prefix(me, them->items->string)) != NULL &&
-	     skip_prefix(me, " <")))
+	     skip_prefix(me, them->items->string, &me) &&
+	     starts_with(me, " <")))
 		return;
 	strbuf_addf(out, "\n%c %s ", comment_line_char, label);
 	add_people_count(out, them);

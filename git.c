@@ -91,8 +91,7 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 		/*
 		 * Check remaining flags.
 		 */
-		if (starts_with(cmd, "--exec-path")) {
-			cmd += 11;
+		if (skip_prefix(cmd, "--exec-path", &cmd)) {
 			if (*cmd == '=')
 				git_set_argv_exec_path(cmd + 1);
 			else {
@@ -129,8 +128,8 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 				*envchanged = 1;
 			(*argv)++;
 			(*argc)--;
-		} else if (starts_with(cmd, "--git-dir=")) {
-			setenv(GIT_DIR_ENVIRONMENT, cmd + 10, 1);
+		} else if (skip_prefix(cmd, "--git-dir=", &cmd)) {
+			setenv(GIT_DIR_ENVIRONMENT, cmd, 1);
 			if (envchanged)
 				*envchanged = 1;
 		} else if (!strcmp(cmd, "--namespace")) {
@@ -143,8 +142,8 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 				*envchanged = 1;
 			(*argv)++;
 			(*argc)--;
-		} else if (starts_with(cmd, "--namespace=")) {
-			setenv(GIT_NAMESPACE_ENVIRONMENT, cmd + 12, 1);
+		} else if (skip_prefix(cmd, "--namespace=", &cmd)) {
+			setenv(GIT_NAMESPACE_ENVIRONMENT, cmd, 1);
 			if (envchanged)
 				*envchanged = 1;
 		} else if (!strcmp(cmd, "--work-tree")) {
@@ -157,8 +156,8 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 				*envchanged = 1;
 			(*argv)++;
 			(*argc)--;
-		} else if (starts_with(cmd, "--work-tree=")) {
-			setenv(GIT_WORK_TREE_ENVIRONMENT, cmd + 12, 1);
+		} else if (skip_prefix(cmd, "--work-tree=", &cmd)) {
+			setenv(GIT_WORK_TREE_ENVIRONMENT, cmd, 1);
 			if (envchanged)
 				*envchanged = 1;
 		} else if (!strcmp(cmd, "--bare")) {
@@ -623,8 +622,7 @@ int main(int argc, char **av)
 	 * So we just directly call the builtin handler, and die if
 	 * that one cannot handle it.
 	 */
-	if (starts_with(cmd, "git-")) {
-		cmd += 4;
+	if (skip_prefix(cmd, "git-", &cmd)) {
 		argv[0] = cmd;
 		handle_builtin(argc, argv);
 		die("cannot handle %s as a builtin", cmd);
@@ -635,8 +633,8 @@ int main(int argc, char **av)
 	argc--;
 	handle_options(&argv, &argc, NULL);
 	if (argc > 0) {
-		if (starts_with(argv[0], "--"))
-			argv[0] += 2;
+		/* translate --help and --version into commands */
+		skip_prefix(argv[0], "--", &argv[0]);
 	} else {
 		/* The user didn't specify a command; give them help */
 		commit_pager_choice();

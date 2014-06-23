@@ -1020,7 +1020,7 @@ static int message_is_empty(struct strbuf *sb)
 static int template_untouched(struct strbuf *sb)
 {
 	struct strbuf tmpl = STRBUF_INIT;
-	char *start;
+	const char *start;
 
 	if (cleanup_mode == CLEANUP_NONE && sb->len)
 		return 0;
@@ -1029,8 +1029,7 @@ static int template_untouched(struct strbuf *sb)
 		return 0;
 
 	stripspace(&tmpl, cleanup_mode == CLEANUP_ALL);
-	start = (char *)skip_prefix(sb->buf, tmpl.buf);
-	if (!start)
+	if (!skip_prefix(sb->buf, tmpl.buf, &start))
 		start = sb->buf;
 	strbuf_release(&tmpl);
 	return rest_is_empty(sb, start - sb->buf);

@@ -336,8 +336,9 @@ static int column_config(const char *var, const char *value,
 int git_column_config(const char *var, const char *value,
 		      const char *command, unsigned int *colopts)
 {
-	const char *it = skip_prefix(var, "column.");
-	if (!it)
+	const char *it;
+
+	if (!skip_prefix(var, "column.", &it))
 		return 0;
 
 	if (!strcmp(it, "ui"))

@@ -40,10 +40,9 @@ static int git_pretty_formats_config(const char *var, const char *value, void *c
 	const char *fmt;
 	int i;
 
-	if (!starts_with(var, "pretty."))
+	if (!skip_prefix(var, "pretty.", &name))
 		return 0;
 
-	name = var + strlen("pretty.");
 	for (i = 0; i < builtin_formats_len; i++) {
 		if (!strcmp(commit_formats[i].name, name))
 			return 0;

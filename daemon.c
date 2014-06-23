@@ -39,8 +39,8 @@ static int strict_paths;
 static int export_all_trees;
 
 /* Take all paths relative to this one if non-NULL */
-static char *base_path;
-static char *interpolated_path;
+static const char *base_path;
+static const char *interpolated_path;
 static int base_path_relaxed;
 
 /* Flag indicating client sent extra args. */
@@ -106,12 +106,12 @@ static void NORETURN daemon_die(const char *err, va_list params)
 	exit(1);
 }
 
-static const char *path_ok(char *directory)
+static const char *path_ok(const char *directory)
 {
 	static char rpath[PATH_MAX];
 	static char interp_path[PATH_MAX];
 	const char *path;
-	char *dir;
+	const char *dir;
 
 	dir = directory;
 
@@ -131,7 +131,7 @@ static const char *path_ok(char *directory)
 			 * "~alice/%s/foo".
 			 */
 			int namlen, restlen = strlen(dir);
-			char *slash = strchr(dir, '/');
+			const char *slash = strchr(dir, '/');
 			if (!slash)
 				slash = dir + restlen;
 			namlen = slash - dir;
@@ -235,8 +235,10 @@ static int service_enabled;
 
 static int git_daemon_config(const char *var, const char *value, void *cb)
 {
-	if (starts_with(var, "daemon.") &&
-	    !strcmp(var + 7, service_looking_at->config_name)) {
+	const char *service;
+
+	if (skip_prefix(var, "daemon.", &service) &&
+	    !strcmp(service, service_looking_at->config_name)) {
 		service_enabled = git_config_bool(var, value);
 		return 0;
 	}
@@ -253,7 +255,7 @@ static int daemon_error(const char *dir, const char *msg)
 	return -1;
 }
 
-static char *access_hook;
+static const char *access_hook;
 
 static int run_access_hook(struct daemon_service *service, const char *dir, const char *path)
 {
@@ -318,7 +320,7 @@ error_return:
 	return -1;
 }
 
-static int run_service(char *dir, struct daemon_service *service)
+static int run_service(const char *dir, struct daemon_service *service)
 {
 	const char *path;
 	int enabled = service->enabled;
@@ -624,15 +626,16 @@ static int execute(void)
 
 	for (i = 0; i < ARRAY_SIZE(daemon_service); i++) {
 		struct daemon_service *s = &(daemon_service[i]);
-		int namelen = strlen(s->name);
-		if (starts_with(line, "git-") &&
-		    !strncmp(s->name, line + 4, namelen) &&
-		    line[namelen + 4] == ' ') {
+		const char *arg;
+
+		if (skip_prefix(line, "git-", &arg) &&
+		    skip_prefix(arg, s->name, &arg) &&
+		    *arg++ == ' ') {
 			/*
 			 * Note: The directory here is probably context sensitive,
 			 * and might depend on the actual service being performed.
 			 */
-			return run_service(line + namelen + 5, s);
+			return run_service(arg, s);
 		}
 	}
 
@@ -1133,16 +1136,17 @@ int main(int argc, char **argv)
 
 	for (i = 1; i < argc; i++) {
 		char *arg = argv[i];
+		const char *v;
 
-		if (starts_with(arg, "--listen=")) {
-			string_list_append(&listen_addr, xstrdup_tolower(arg + 9));
+		if (skip_prefix(arg, "--listen=", &v)) {
+			string_list_append(&listen_addr, xstrdup_tolower(v));
 			continue;
 		}
-		if (starts_with(arg, "--port=")) {
+		if (skip_prefix(arg, "--port=", &v)) {
 			char *end;
 			unsigned long n;
-			n = strtoul(arg+7, &end, 0);
-			if (arg[7] && !*end) {
+			n = strtoul(v, &end, 0);
+			if (*v && !*end) {
 				listen_port = n;
 				continue;
 			}
@@ -1168,20 +1172,20 @@ int main(int argc, char **argv)
 			export_all_trees = 1;
 			continue;
 		}
-		if (starts_with(arg, "--access-hook=")) {
-			access_hook = arg + 14;
+		if (skip_prefix(arg, "--access-hook=", &v)) {
+			access_hook = v;
 			continue;
 		}
-		if (starts_with(arg, "--timeout=")) {
-			timeout = atoi(arg+10);
+		if (skip_prefix(arg, "--timeout=", &v)) {
+			timeout = atoi(v);
 			continue;
 		}
-		if (starts_with(arg, "--init-timeout=")) {
-			init_timeout = atoi(arg+15);
+		if (skip_prefix(arg, "--init-timeout=", &v)) {
+			init_timeout = atoi(v);
 			continue;
 		}
-		if (starts_with(arg, "--max-connections=")) {
-			max_connections = atoi(arg+18);
+		if (skip_prefix(arg, "--max-connections=", &v)) {
+			max_connections = atoi(v);
 			if (max_connections < 0)
 				max_connections = 0;	        /* unlimited */
 			continue;
@@ -1190,16 +1194,16 @@ int main(int argc, char **argv)
 			strict_paths = 1;
 			continue;
 		}
-		if (starts_with(arg, "--base-path=")) {
-			base_path = arg+12;
+		if (skip_prefix(arg, "--base-path=", &v)) {
+			base_path = v;
 			continue;
 		}
 		if (!strcmp(arg, "--base-path-relaxed")) {
 			base_path_relaxed = 1;
 			continue;
 		}
-		if (starts_with(arg, "--interpolated-path=")) {
-			interpolated_path = arg+20;
+		if (skip_prefix(arg, "--interpolated-path=", &v)) {
+			interpolated_path = v;
 			continue;
 		}
 		if (!strcmp(arg, "--reuseaddr")) {
@@ -1210,12 +1214,12 @@ int main(int argc, char **argv)
 			user_path = "";
 			continue;
 		}
-		if (starts_with(arg, "--user-path=")) {
-			user_path = arg + 12;
+		if (skip_prefix(arg, "--user-path=", &v)) {
+			user_path = v;
 			continue;
 		}
-		if (starts_with(arg, "--pid-file=")) {
-			pid_file = arg + 11;
+		if (skip_prefix(arg, "--pid-file=", &v)) {
+			pid_file = v;
 			continue;
 		}
 		if (!strcmp(arg, "--detach")) {
@@ -1223,28 +1227,28 @@ int main(int argc, char **argv)
 			log_syslog = 1;
 			continue;
 		}
-		if (starts_with(arg, "--user=")) {
-			user_name = arg + 7;
+		if (skip_prefix(arg, "--user=", &v)) {
+			user_name = v;
 			continue;
 		}
-		if (starts_with(arg, "--group=")) {
-			group_name = arg + 8;
+		if (skip_prefix(arg, "--group=", &v)) {
+			group_name = v;
 			continue;
 		}
-		if (starts_with(arg, "--enable=")) {
-			enable_service(arg + 9, 1);
+		if (skip_prefix(arg, "--enable=", &v)) {
+			enable_service(v, 1);
 			continue;
 		}
-		if (starts_with(arg, "--disable=")) {
-			enable_service(arg + 10, 0);
+		if (skip_prefix(arg, "--disable=", &v)) {
+			enable_service(v, 0);
 			continue;
 		}
-		if (starts_with(arg, "--allow-override=")) {
-			make_service_overridable(arg + 17, 1);
+		if (skip_prefix(arg, "--allow-override=", &v)) {
+			make_service_overridable(v, 1);
 			continue;
 		}
-		if (starts_with(arg, "--forbid-override=")) {
-			make_service_overridable(arg + 18, 0);
+		if (skip_prefix(arg, "--forbid-override=", &v)) {
+			make_service_overridable(v, 0);
 			continue;
 		}
 		if (!strcmp(arg, "--informative-errors")) {

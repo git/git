@@ -349,13 +349,32 @@ extern void set_die_is_recursing_routine(int (*routine)(void));
 extern int starts_with(const char *str, const char *prefix);
 extern int ends_with(const char *str, const char *suffix);
 
-static inline const char *skip_prefix(const char *str, const char *prefix)
+/*
+ * If the string "str" begins with the string found in "prefix", return 1.
+ * The "out" parameter is set to "str + strlen(prefix)" (i.e., to the point in
+ * the string right after the prefix).
+ *
+ * Otherwise, return 0 and leave "out" untouched.
+ *
+ * Examples:
+ *
+ *   [extract branch name, fail if not a branch]
+ *   if (!skip_prefix(ref, "refs/heads/", &branch)
+ *	return -1;
+ *
+ *   [skip prefix if present, otherwise use whole string]
+ *   skip_prefix(name, "refs/heads/", &name);
+ */
+static inline int skip_prefix(const char *str, const char *prefix,
+			      const char **out)
 {
 	do {
-		if (!*prefix)
-			return str;
+		if (!*prefix) {
+			*out = str;
+			return 1;
+		}
 	} while (*str++ == *prefix++);
-	return NULL;
+	return 0;
 }
 
 #if defined(NO_MMAP) || defined(USE_WIN32_MMAP)
