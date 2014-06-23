@@ -45,10 +45,11 @@ test_expect_success GPG 'create signed commits' '
 	git tag seventh-signed
 '
 
-test_expect_success GPG 'show signatures' '
+test_expect_success GPG 'verify and show signatures' '
 	(
 		for commit in initial second merge fourth-signed fifth-signed sixth-signed master
 		do
+			git verify-commit $commit &&
 			git show --pretty=short --show-signature $commit >actual &&
 			grep "Good signature from" actual &&
 			! grep "BAD signature from" actual || exit 1
@@ -58,6 +59,7 @@ test_expect_success GPG 'show signatures' '
 	(
 		for commit in merge^2 fourth-unsigned sixth-unsigned seventh-unsigned
 		do
+			test_must_fail git verify-commit $commit &&
 			git show --pretty=short --show-signature $commit >actual &&
 			! grep "Good signature from" actual &&
 			! grep "BAD signature from" actual || exit 1
@@ -66,11 +68,25 @@ test_expect_success GPG 'show signatures' '
 	)
 '
 
+test_expect_success GPG 'show signed commit with signature' '
+	git show -s initial >commit &&
+	git show -s --show-signature initial >show &&
+	git verify-commit -v initial >verify.1 2>verify.2 &&
+	git cat-file commit initial >cat &&
+	grep -v "gpg: " show >show.commit &&
+	grep "gpg: " show >show.gpg &&
+	grep -v "^ " cat | grep -v "^gpgsig " >cat.commit &&
+	test_cmp show.commit commit &&
+	test_cmp show.gpg verify.2 &&
+	test_cmp cat.commit verify.1
+'
+
 test_expect_success GPG 'detect fudged signature' '
 	git cat-file commit master >raw &&
 
 	sed -e "s/seventh/7th forged/" raw >forged1 &&
 	git hash-object -w -t commit forged1 >forged1.commit &&
+	! git verify-commit $(cat forged1.commit) &&
 	git show --pretty=short --show-signature $(cat forged1.commit) >actual1 &&
 	grep "BAD signature from" actual1 &&
 	! grep "Good signature from" actual1
@@ -81,6 +97,7 @@ test_expect_success GPG 'detect fudged signature with NUL' '
 	cat raw >forged2 &&
 	echo Qwik | tr "Q" "\000" >>forged2 &&
 	git hash-object -w -t commit forged2 >forged2.commit &&
+	! git verify-commit $(cat forged2.commit) &&
 	git show --pretty=short --show-signature $(cat forged2.commit) >actual2 &&
 	grep "BAD signature from" actual2 &&
 	! grep "Good signature from" actual2
@@ -89,6 +106,7 @@ test_expect_success GPG 'detect fudged signature with NUL' '
 test_expect_success GPG 'amending already signed commit' '
 	git checkout fourth-signed^0 &&
 	git commit --amend -S --no-edit &&
+	git verify-commit HEAD &&
 	git show -s --show-signature HEAD >actual &&
 	grep "Good signature from" actual &&
 	! grep "BAD signature from" actual
