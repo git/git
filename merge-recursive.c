@@ -603,25 +603,36 @@ static int remove_file(struct merge_options *o, int clean,
 	return 0;
 }
 
+/* add a string to a strbuf, but converting "/" to "_" */
+static void add_flattened_path(struct strbuf *out, const char *s)
+{
+	size_t i = out->len;
+	strbuf_addstr(out, s);
+	for (; i < out->len; i++)
+		if (out->buf[i] == '/')
+			out->buf[i] = '_';
+}
+
 static char *unique_path(struct merge_options *o, const char *path, const char *branch)
 {
-	char *newpath = xmalloc(strlen(path) + 1 + strlen(branch) + 8 + 1);
+	struct strbuf newpath = STRBUF_INIT;
 	int suffix = 0;
 	struct stat st;
-	char *p = newpath + strlen(path);
-	strcpy(newpath, path);
-	*(p++) = '~';
-	strcpy(p, branch);
-	for (; *p; ++p)
-		if ('/' == *p)
-			*p = '_';
-	while (string_list_has_string(&o->current_file_set, newpath) ||
-	       string_list_has_string(&o->current_directory_set, newpath) ||
-	       lstat(newpath, &st) == 0)
-		sprintf(p, "_%d", suffix++);
+	size_t base_len;
 
-	string_list_insert(&o->current_file_set, newpath);
-	return newpath;
+	strbuf_addf(&newpath, "%s~", path);
+	add_flattened_path(&newpath, branch);
+
+	base_len = newpath.len;
+	while (string_list_has_string(&o->current_file_set, newpath.buf) ||
+	       string_list_has_string(&o->current_directory_set, newpath.buf) ||
+	       lstat(newpath.buf, &st) == 0) {
+		strbuf_setlen(&newpath, base_len);
+		strbuf_addf(&newpath, "_%d", suffix++);
+	}
+
+	string_list_insert(&o->current_file_set, newpath.buf);
+	return strbuf_detach(&newpath, NULL);
 }
 
 static int dir_in_way(const char *path, int check_working_copy)
@@ -971,14 +982,10 @@ merge_file_special_markers(struct merge_options *o,
 	char *side2 = NULL;
 	struct merge_file_info mfi;
 
-	if (filename1) {
-		side1 = xmalloc(strlen(branch1) + strlen(filename1) + 2);
-		sprintf(side1, "%s:%s", branch1, filename1);
-	}
-	if (filename2) {
-		side2 = xmalloc(strlen(branch2) + strlen(filename2) + 2);
-		sprintf(side2, "%s:%s", branch2, filename2);
-	}
+	if (filename1)
+		side1 = xstrfmt("%s:%s", branch1, filename1);
+	if (filename2)
+		side2 = xstrfmt("%s:%s", branch2, filename2);
 
 	mfi = merge_file_1(o, one, a, b,
 			   side1 ? side1 : branch1, side2 ? side2 : branch2);

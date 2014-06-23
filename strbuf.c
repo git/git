@@ -600,3 +600,22 @@ char *xstrdup_tolower(const char *string)
 	result[i] = '\0';
 	return result;
 }
+
+char *xstrvfmt(const char *fmt, va_list ap)
+{
+	struct strbuf buf = STRBUF_INIT;
+	strbuf_vaddf(&buf, fmt, ap);
+	return strbuf_detach(&buf, NULL);
+}
+
+char *xstrfmt(const char *fmt, ...)
+{
+	va_list ap;
+	char *ret;
+
+	va_start(ap, fmt);
+	ret = xstrvfmt(fmt, ap);
+	va_end(ap);
+
+	return ret;
+}

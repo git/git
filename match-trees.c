@@ -140,17 +140,12 @@ static void match_trees(const unsigned char *hash1,
 			goto next;
 		score = score_trees(elem, hash2);
 		if (*best_score < score) {
-			char *newpath;
-			newpath = xmalloc(strlen(base) + strlen(path) + 1);
-			sprintf(newpath, "%s%s", base, path);
 			free(*best_match);
-			*best_match = newpath;
+			*best_match = xstrfmt("%s%s", base, path);
 			*best_score = score;
 		}
 		if (recurse_limit) {
-			char *newbase;
-			newbase = xmalloc(strlen(base) + strlen(path) + 2);
-			sprintf(newbase, "%s%s/", base, path);
+			char *newbase = xstrfmt("%s%s/", base, path);
 			match_trees(elem, hash2, best_score, best_match,
 				    newbase, recurse_limit - 1);
 			free(newbase);
