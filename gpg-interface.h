@@ -2,6 +2,7 @@
 #define GPG_INTERFACE_H
 
 struct signature_check {
+	char *payload;
 	char *gpg_output;
 	char *gpg_status;
 	char result; /* 0 (not checked),
