@@ -23,9 +23,9 @@ static const char * const git_replace_usage[] = {
 };
 
 enum replace_format {
-      REPLACE_FORMAT_SHORT,
-      REPLACE_FORMAT_MEDIUM,
-      REPLACE_FORMAT_LONG
+	REPLACE_FORMAT_SHORT,
+	REPLACE_FORMAT_MEDIUM,
+	REPLACE_FORMAT_LONG
 };
 
 struct show_data {
