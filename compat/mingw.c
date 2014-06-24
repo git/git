@@ -1,5 +1,6 @@
 #include "../git-compat-util.h"
 #include "win32.h"
+#include <winioctl.h>
 #include <conio.h>
 #include <wchar.h>
 #include "../strbuf.h"
@@ -201,16 +202,46 @@ static int ask_yes_no_if_possible(const char *format, ...)
 	}
 }
 
-int mingw_unlink(const char *pathname)
+int do_wunlink(const wchar_t *wpathname)
 {
-	int ret, tries = 0;
-	wchar_t wpathname[MAX_LONG_PATH];
-	if (xutftowcs_long_path(wpathname, pathname) < 0)
+	int ret, tries;
+	WIN32_FIND_DATAW findbuf;
+	HANDLE handle;
+
+	/* Check for directories and symlinks */
+	handle = FindFirstFileW(wpathname, &findbuf);
+	if (handle == INVALID_HANDLE_VALUE) {
+		errno = ENOENT;
 		return -1;
+	}
+	FindClose(handle);
 
 	/* read-only files cannot be removed */
 	_wchmod(wpathname, 0666);
-	while ((ret = _wunlink(wpathname)) == -1 && tries < ARRAY_SIZE(delay)) {
+
+	tries = 0;
+
+	do {
+		if (findbuf.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) {
+			BOOL bres;
+			if (findbuf.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+				bres = RemoveDirectoryW(wpathname);
+			else
+				bres = DeleteFileW(wpathname);
+			if (!bres)
+				ret = -1;
+			else
+				ret =  0;
+		}
+		else if (findbuf.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+			ret = _wrmdir(wpathname);
+		}
+		else
+			ret =  _wunlink(wpathname);
+
+		if (ret == 0)
+			break;
+
 		if (!is_file_in_use_error(GetLastError()))
 			break;
 		/*
@@ -220,15 +251,60 @@ int mingw_unlink(const char *pathname)
 		 * complete its operation, we give up our time slice now.
 		 * If we have to retry again, we do sleep a bit.
 		 */
+		if (tries >= ARRAY_SIZE(delay))
+			break;
 		Sleep(delay[tries]);
 		tries++;
-	}
-	while (ret == -1 && is_file_in_use_error(GetLastError()) &&
-	       ask_yes_no_if_possible("Unlink of file '%s' failed. "
-			"Should I try again?", pathname))
-	       ret = _wunlink(wpathname);
+	} while (TRUE);
+
 	return ret;
 }
+
+int mingw_wunlink(const wchar_t *wpathname)
+{
+	char pathname[PATH_MAX];
+	int ret;
+
+	do {
+
+		ret = do_wunlink(wpathname);
+
+		if (ret == 0)
+			break;
+
+		if (xwcstoutf(pathname, wpathname, PATH_MAX) < 0)
+			return -1;
+
+	} while (is_file_in_use_error(GetLastError()) &&
+	       ask_yes_no_if_possible("Unlink of file '%s' failed. "
+			"Should I try again?", pathname));
+
+	return ret;
+
+
+}
+
+static inline wchar_t *to_backslash_wpath(wchar_t *path);
+
+int mingw_unlink(const char *pathname)
+{
+	wchar_t wpathname[MAX_LONG_PATH];
+	int ret;
+
+	do {
+
+		if (xutftowcs_long_path(wpathname, pathname) < 0)
+			return -1;
+
+		ret = do_wunlink(to_backslash_wpath(wpathname));
+
+	} while (ret != 0 && is_file_in_use_error(GetLastError()) &&
+	       ask_yes_no_if_possible("Unlink of file '%s' failed. "
+			"Should I try again?", pathname));
+
+	return ret;
+}
+
 
 static int is_dir_empty(const wchar_t *wpath)
 {
@@ -258,6 +334,7 @@ int mingw_rmdir(const char *pathname)
 	wchar_t wpathname[MAX_LONG_PATH];
 	if (xutftowcs_long_path(wpathname, pathname) < 0)
 		return -1;
+	to_backslash_wpath(wpathname);
 
 	while ((ret = _wrmdir(wpathname)) == -1 && tries < ARRAY_SIZE(delay)) {
 		if (!is_file_in_use_error(GetLastError()))
@@ -461,6 +538,46 @@ int mingw_access(const char *filename, int mode)
 	return _waccess(wfilename, mode & ~X_OK);
 }
 
+static int do_wlstat(int follow, const wchar_t *wfilename, struct stat *buf, wchar_t *wbuffer, int buffersize);
+static int do_readlink(const wchar_t *path, wchar_t *buf, size_t bufsiz);
+static wchar_t *do_resolve_symlink(wchar_t *pathname, size_t bufsize);
+static inline int is_absolute_pathw(const wchar_t *path);
+static wchar_t *do_getcwd(wchar_t *wpointer, int len);
+
+/*
+ * When changing to a directory that contains symbolic links in the path,
+ * we need to follow the unix behaviour, which is to unravel the symbolic links.
+ *
+ * Windows seems to leave the symbolic links intact.
+ * This breaks functions like make_absolute_path() that requires the unix behaviour to work.
+ *
+ */
+static int do_wchdir(wchar_t *dirname)
+{
+	wchar_t resolved[MAX_PATH];
+	int ret;
+
+	if (! is_absolute_pathw(dirname)) {
+
+		/*
+		 * Change to real, symlink-resolved, CWD first.
+		 * This enforces unix behaviour when CWD is a symlink.
+		 */
+		if (!do_getcwd(resolved, MAX_PATH)) {
+			errno = ENOENT;  /* CWD is not a path. */
+			return -1;
+		}
+
+		ret = _wchdir(resolved);
+		if (ret)
+			return ret;
+	}
+	wcscpy(resolved, dirname);
+	do_resolve_symlink(resolved, MAX_PATH);
+	return _wchdir(resolved);
+}
+
+
 /* cached length of current directory for handle_long_path */
 static int current_directory_len = 0;
 
@@ -471,7 +588,7 @@ int mingw_chdir(const char *dirname)
 	/* SetCurrentDirectoryW doesn't support long paths */
 	if (xutftowcs_path(wdirname, dirname) < 0)
 		return -1;
-	result = _wchdir(wdirname);
+	return do_wchdir(to_backslash_wpath(wdirname));
 	current_directory_len = GetCurrentDirectoryW(0, NULL);
 	return result;
 }
@@ -484,21 +601,187 @@ int mingw_chmod(const char *filename, int mode)
 	return _wchmod(wfilename, mode);
 }
 
-/* We keep the do_lstat code in a separate function to avoid recursion.
- * When a path ends with a slash, the stat will fail with ENOENT. In
- * this case, we strip the trailing slashes and stat again.
+#ifndef FSCTL_GET_REPARSE_POINT
+#define FSCTL_GET_REPARSE_POINT  0x000900a8
+#endif
+
+static int do_readlink(const wchar_t *path, wchar_t *buf, size_t bufsiz)
+{
+	HANDLE handle = CreateFileW(path, GENERIC_READ,
+			FILE_SHARE_READ|FILE_SHARE_WRITE|FILE_SHARE_DELETE,
+			NULL, OPEN_EXISTING,
+			FILE_FLAG_BACKUP_SEMANTICS | FILE_FLAG_OPEN_REPARSE_POINT,
+			NULL);
+
+	if (handle != INVALID_HANDLE_VALUE) {
+		unsigned char buffer[MAXIMUM_REPARSE_DATA_BUFFER_SIZE];
+		DWORD dummy = 0;
+		if (DeviceIoControl(handle, FSCTL_GET_REPARSE_POINT, NULL, 0, buffer,
+			MAXIMUM_REPARSE_DATA_BUFFER_SIZE, &dummy, NULL)) {
+			REPARSE_DATA_BUFFER *b = (REPARSE_DATA_BUFFER *) buffer;
+			if (b->ReparseTag == IO_REPARSE_TAG_SYMLINK) {
+				int len = b->SymbolicLinkReparseBuffer.SubstituteNameLength / sizeof(wchar_t);
+				int offset = b->SymbolicLinkReparseBuffer.SubstituteNameOffset / sizeof(wchar_t);
+				len = (bufsiz < len) ? bufsiz : len;
+				/* Get rid of the \??\ prefix that gets put into absolute reparse points, something
+				 * to do with the NT drive namespace.
+				 */
+				if (len >4 && wcsncmp(b->SymbolicLinkReparseBuffer.PathBuffer+offset,L"\\??\\",4) == 0) {
+					offset += 4;
+					len -= 4;
+				}
+				wcsncpy(buf, & b->SymbolicLinkReparseBuffer.PathBuffer[offset], len);
+				buf[len] = 0;
+				CloseHandle(handle);
+				return len;
+			}
+		}
+
+		CloseHandle(handle);
+	}
+
+	errno = EINVAL;
+	return -1;
+}
+
+#define has_dos_drive_prefixw(path) (iswalpha(*(path)) && (path)[1] == ':')
+static inline int is_absolute_pathw(const wchar_t *path)
+{
+	return is_dir_sep(path[0]) || has_dos_drive_prefixw(path);
+}
+
+char *mingw_resolve_symlink(char *pathname, size_t bufsize) {
+	wchar_t wpathname[MAX_PATH+1];
+	if (xutftowcs(wpathname, pathname, MAX_PATH) >= 0) {
+		do_resolve_symlink(to_backslash_wpath(wpathname), MAX_PATH);
+		xwcstoutf(pathname, wpathname, bufsize);
+	}
+	return pathname;
+}
+
+/*
+ * This resolves symlinks with support for symlinks in the path along the way.
  *
- * If follow is true then act like stat() and report on the link
- * target. Otherwise report on the link itself.
+ * It is based on resolve_symlink in lockfile.c with support for widechars.
+ *
+ * To do this, it uses a left-to-right approach, checking each part of the path
+ * for a symlink and then replacing that section (depending on whether it is
+ * absolute or relative) with the link.
+ *
+ * This implementation is required to pass tests for make_absolute_path.
  */
-static int do_lstat(int follow, const char *file_name, struct stat *buf)
+const int MAXDEPTH = 10;
+static wchar_t *do_resolve_symlink(wchar_t *pathname, size_t bufsize)
+{
+	/* Limit the number of links we resolve to prevent recursion */
+	int depth = MAXDEPTH;
+
+	wchar_t *start=pathname;
+	wchar_t *from=pathname;
+	wchar_t *last;
+	wchar_t link[MAX_PATH+1];
+
+	while (*from && depth > 0) {
+		wchar_t endch;
+		int link_len;
+		/* Find the next section. */
+		from = wcschr(start+1, '\\');
+		if (!from)
+			from = start+wcslen(start);
+		else {
+			/* Skip drive letters */
+			if (from > start && from[-1] == ':') {
+				from = wcschr(from+1, '\\');
+				if (!from)
+					from = start+wcslen(start);
+			}
+		}
+		if (start > pathname && from-start == 3 && start[1]=='.' && start[2] == '.' ) {
+			/* Handle /../ */
+			if (start[-1] != ':') {
+				for (last = start-1; last > pathname; --last)
+					if (*last == '\\')
+						break;
+				if (last > pathname) {
+					memmove(last, from, (pathname-from)+bufsize );
+				}
+			}
+		}
+
+		/* Temporarily replace pathsep with \0 */
+		endch = *from;
+		*from = L'\0';
+		/* and read the link up to that point */
+		link_len = do_readlink(pathname, link, MAX_PATH);
+		*from = endch;
+
+		if (link_len >=0) {
+			/* It's a link - make sure it will fit */
+			if ((link_len + (from-pathname)) > MAX_PATH) {
+				char path[MAX_PATH];
+				xwcstoutf(path, pathname, MAX_PATH);
+				warning("%s: symlink too long", path);
+				return pathname;
+			}
+			/* readlink() never null-terminates */
+			link[link_len] = L'\0';
+
+			if (is_absolute_pathw(link)) {
+				/* Concat rest onto link */
+				wcscat(link, from);
+				if (wcslen(link) > bufsize) {
+					char path[MAX_PATH];
+					xwcstoutf(path, pathname, MAX_PATH);
+					warning("%s: symlink too long", path);
+					return pathname;
+				}
+				/* Absolute path replace all*/
+				wcscpy(pathname, link);
+				start = pathname;
+			} else {
+				if ((wcslen(link)+(start-pathname) > bufsize)) {
+					char path[MAX_PATH];
+					xwcstoutf(path, pathname, MAX_PATH);
+					warning("%s: symlink too long", path);
+					return pathname;
+				}
+				/* Concat rest onto link */
+				wcscat(link, from);
+
+				if (start[0] == L'.' && start[1] == L'\0') {
+					/* Special case of '.' and a relative symlink,
+					   since this has to be actually relative to
+					   one directory up.
+					*/
+					wcscpy(start, L"..\\");
+					/* Concat with link and rest of filename.
+					 */
+					wcscpy(start+3, link);
+				} else {
+					/* replace bit from  start
+					 * with link and rest of filename.
+					 */
+					wcscpy(start, link);
+				}
+			}
+			--depth;
+		} else {
+			/* Move to next section.
+			 */
+			start = from+1;
+			while (*start == '\\')
+				++start;
+		}
+	}
+	return pathname;
+}
+
+static int do_wlstat(int follow, const wchar_t *wfilename, struct stat *buf, wchar_t *wbuffer, int buffersize)
 {
 	WIN32_FILE_ATTRIBUTE_DATA fdata;
-	wchar_t wfilename[MAX_LONG_PATH];
-	if (xutftowcs_long_path(wfilename, file_name) < 0)
-		return -1;
+	int usebuffer = 0;
 
-	if (GetFileAttributesExW(wfilename, GetFileExInfoStandard, &fdata)) {
+	while (GetFileAttributesExW(wfilename, GetFileExInfoStandard, &fdata)) {
 		buf->st_ino = 0;
 		buf->st_gid = 0;
 		buf->st_uid = 0;
@@ -512,24 +795,54 @@ static int do_lstat(int follow, const char *file_name, struct stat *buf)
 		buf->st_ctime = filetime_to_time_t(&(fdata.ftCreationTime));
 		if (fdata.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) {
 			WIN32_FIND_DATAW findbuf;
+			int len;
+			/* Check for trailing pathsep and remove it. */
+			len = wcslen(wfilename);
+			if (len > 0 && wfilename[len-1] == L'\\') {
+				if (!usebuffer) {
+					/* don't modify original */
+					usebuffer = 1;
+					wcscpy(wbuffer, wfilename);
+					/* Now continuing using passed-in buffer. */
+					wfilename = wbuffer;
+				}
+				wbuffer[len-1] = L'\0';
+			}
+
 			HANDLE handle = FindFirstFileW(wfilename, &findbuf);
-			if (handle != INVALID_HANDLE_VALUE) {
+			if (handle == INVALID_HANDLE_VALUE) {
+				/* Prevent infinite loop */
+				break;
+			} else {
 				if ((findbuf.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) &&
 						(findbuf.dwReserved0 == IO_REPARSE_TAG_SYMLINK)) {
-					if (follow) {
-						char buffer[MAXIMUM_REPARSE_DATA_BUFFER_SIZE];
-						buf->st_size = readlink(file_name, buffer, MAXIMUM_REPARSE_DATA_BUFFER_SIZE);
+					if (!follow || !wbuffer) {
+						wchar_t buffer[MAX_PATH];
+						buf->st_size = do_readlink(wfilename, buffer, MAX_PATH);
+						buf->st_mode = S_IFLNK;
+						buf->st_mode |= S_IREAD;
+						if (!(findbuf.dwFileAttributes & FILE_ATTRIBUTE_READONLY))
+							buf->st_mode |= S_IWRITE;
+						FindClose(handle);
+						return 0;
 					} else {
 						buf->st_mode = S_IFLNK;
+						wcscpy(wbuffer, wfilename);
+						if (do_resolve_symlink(wbuffer, buffersize) <= 0) {
+							FindClose(handle);
+							break;
+						}
+						/* Now continuing using link in passed-in buffer.
+						 */
+						wfilename = wbuffer;
+						usebuffer = 1;
 					}
-					buf->st_mode |= S_IREAD;
-					if (!(findbuf.dwFileAttributes & FILE_ATTRIBUTE_READONLY))
-						buf->st_mode |= S_IWRITE;
 				}
 				FindClose(handle);
 			}
 		}
-		return 0;
+		else
+			return 0;
 	}
 	switch (GetLastError()) {
 	case ERROR_ACCESS_DENIED:
@@ -549,6 +862,22 @@ static int do_lstat(int follow, const char *file_name, struct stat *buf)
 		break;
 	}
 	return -1;
+}
+
+/* We keep the do_lstat code in a separate function to avoid recursion.
+ * When a path ends with a slash, the stat will fail with ENOENT. In
+ * this case, we strip the trailing slashes and stat again.
+ *
+ * If follow is true then act like stat() and report on the link
+ * target. Otherwise report on the link itself.
+ */
+static int do_lstat(int follow, const char *file_name, struct stat *buf)
+{
+	wchar_t wfilename[MAX_LONG_PATH];
+	if (xutftowcs_long_path(wfilename, file_name) < 0)
+		return -1;
+	to_backslash_wpath(wfilename);
+	return do_wlstat(follow, wfilename, buf, wfilename, MAX_PATH);
 }
 
 /* We provide our own lstat/fstat functions, since the provided
@@ -755,17 +1084,35 @@ struct tm *localtime_r(const time_t *timep, struct tm *result)
 	return result;
 }
 
-char *mingw_getcwd(char *pointer, int len)
+static wchar_t *do_getcwd(wchar_t *wpointer, int len)
 {
 	int i;
+	if (!_wgetcwd(wpointer, len))
+		return NULL;
+
+	/* Unix getcwd resolves symlinks
+	 */
+	do_resolve_symlink(wpointer, len);
+	i = wcslen(wpointer);
+	/* Unix getcwd doesn't appear ever to have a trailing /
+	 * which do_resolve_symlink can append.
+	 */
+	if (wpointer[i-1] == L'\\')
+		wpointer[i-1] = L'\0';
+	return wpointer;
+}
+
+static inline wchar_t *to_unix_wpath(wchar_t *path);
+
+char *mingw_getcwd(char *pointer, int len)
+{
 	wchar_t wpointer[MAX_PATH];
-	if (!_wgetcwd(wpointer, ARRAY_SIZE(wpointer)))
+	if (!do_getcwd(wpointer, ARRAY_SIZE(wpointer)))
 		return NULL;
-	if (xwcstoutf(pointer, wpointer, len) < 0)
+
+	if (xwcstoutf(pointer, to_unix_wpath(wpointer), len) < 0)
 		return NULL;
-	for (i = 0; pointer[i]; i++)
-		if (pointer[i] == '\\')
-			pointer[i] = '/';
+
 	return pointer;
 }
 
@@ -1856,25 +2203,49 @@ int mingw_raise(int sig)
 	}
 }
 
-
-static const char *make_backslash_path(const char *path)
+static inline wchar_t *to_unix_wpath(wchar_t *path)
 {
-	static char buf[PATH_MAX + 1];
-	char *c;
+	wchar_t *c;
+	for (c = path; *c; c++) {
+		if (*c == '\\')
+			*c = '/';
+	}
+	return path;
+}
 
-	if (strlcpy(buf, path, PATH_MAX) >= PATH_MAX)
-		die("Too long path: %.*s", 60, path);
-
-	for (c = buf; *c; c++) {
+static inline wchar_t *to_backslash_wpath(wchar_t *path)
+{
+	wchar_t *c;
+	for (c = path; *c; c++) {
 		if (*c == '/')
 			*c = '\\';
 	}
-	return buf;
+	return path;
+}
+
+
+static inline char *backslash_path(char *path)
+{
+	char *c;
+	for (c = path; *c; c++) {
+		if (*c == '/')
+			*c = '\\';
+	}
+	return path;
+}
+
+static const char *make_backslash_path(const char *path, char *buf)
+{
+	if (strlcpy(buf, path, PATH_MAX) >= PATH_MAX)
+		die("Too long path: %.*s", 60, path);
+
+	return backslash_path(buf);
 }
 
 void mingw_open_html(const char *unixpath)
 {
-	const char *htmlpath = make_backslash_path(unixpath);
+	char buf[PATH_MAX + 1];
+	const char *htmlpath = make_backslash_path(unixpath, buf);
 	typedef HINSTANCE (WINAPI *T)(HWND, const char *,
 			const char *, const char *, const char *, INT);
 	T ShellExecute;
@@ -1897,14 +2268,27 @@ void mingw_open_html(const char *unixpath)
 	}
 }
 
+#define SYMBOLIC_LINK_FLAG_DIRECTORY 0x1
+
 int link(const char *oldpath, const char *newpath)
 {
 	typedef BOOL (WINAPI *T)(LPCWSTR, LPCWSTR, LPSECURITY_ATTRIBUTES);
 	static T create_hard_link = NULL;
-	wchar_t woldpath[MAX_LONG_PATH], wnewpath[MAX_LONG_PATH];
+	wchar_t woldpath[MAX_LONG_PATH], wnewpath[MAX_LONG_PATH], wbuf[MAX_LONG_PATH];
+	struct stat  st;
+
 	if (xutftowcs_long_path(woldpath, oldpath) < 0 ||
 	    xutftowcs_long_path(wnewpath, newpath) < 0)
 		return -1;
+	to_backslash_wpath(woldpath);
+	to_backslash_wpath(wnewpath);
+
+	if (!do_wlstat(0, wnewpath, &st, wbuf, MAX_PATH)) {
+		/* Delete the file if it exists.
+		 */
+		if (mingw_wunlink(wnewpath))
+			return -1;
+	}
 
 	if (!create_hard_link) {
 		create_hard_link = (T) GetProcAddress(
@@ -1921,6 +2305,111 @@ int link(const char *oldpath, const char *newpath)
 		return -1;
 	}
 	return 0;
+}
+
+int mingw_symlink(const char *oldpath, const char *newpath, enum git_target_type targettype)
+{
+	typedef BOOL WINAPI (*symlink_fn)(const wchar_t*, const wchar_t*, DWORD);
+	static symlink_fn create_symbolic_link = NULL;
+	wchar_t woldpath[MAX_PATH], wnewpath[MAX_PATH], wbuf[MAX_PATH];
+	struct stat  st;
+	int flags = 0;
+
+	if (xutftowcs(woldpath, oldpath, MAX_PATH) < 0)
+		return -1;
+	if (xutftowcs(wnewpath, newpath, MAX_PATH) < 0)
+		return -1;
+	to_backslash_wpath(woldpath);
+	to_backslash_wpath(wnewpath);
+	if (!do_wlstat(0, wnewpath, &st, wbuf, MAX_PATH)) {
+		/* Delete the file if it exists.
+		 */
+		if (mingw_wunlink(wnewpath))
+			return -1;
+	}
+
+	switch (targettype) {
+		case GIT_TARGET_UNKNOWN:
+			{
+				/* Determine the target symbolic link type from the
+				   Filesystem.
+				  */
+				wchar_t wcurdir[MAX_PATH] = L"";
+				if (!is_absolute_pathw(woldpath)) {
+					/* If woldpath is relative, then stat needs to be
+					   from the directory containing the original file.
+					 */
+
+					wchar_t *pos, *wlast=NULL, oldc;
+					int ret;
+
+					for (pos = wnewpath; *pos; ++pos)
+						if (is_dir_sep(*pos))
+							wlast = pos;
+
+					if (wlast != NULL)  {
+						do_getcwd(wcurdir, MAX_PATH);
+
+						oldc = *wlast;
+						*wlast = L'\0';
+
+						ret = do_wchdir(wnewpath);
+						if (ret)
+							*wcurdir = L'\0';
+
+						*wlast = oldc;
+						if (ret)
+							return -1;
+					}
+				}
+
+				if (!do_wlstat(1, woldpath, &st, wbuf, MAX_PATH)) {
+					if (S_ISDIR(st.st_mode) )
+						flags = SYMBOLIC_LINK_FLAG_DIRECTORY;
+				}
+
+				if (*wcurdir)
+					do_wchdir(wcurdir);
+			}
+			break;
+		case GIT_TARGET_ISDIR:
+			flags = SYMBOLIC_LINK_FLAG_DIRECTORY;
+			break;
+		case GIT_TARGET_ISFILE:
+			break;
+	}
+
+	if (!create_symbolic_link) {
+		create_symbolic_link = (symlink_fn) GetProcAddress(
+				GetModuleHandle("kernel32.dll"), "CreateSymbolicLinkW");
+		if (!create_symbolic_link)
+			create_symbolic_link = (symlink_fn)-1;
+	}
+	if (create_symbolic_link == (symlink_fn)-1) {
+		errno = ENOSYS;
+		return -1;
+	}
+
+	if (!create_symbolic_link(wnewpath, woldpath, flags)) {
+		errno = err_win_to_posix(GetLastError());
+		return -1;
+	}
+	return 0;
+}
+
+int do_readlink(const wchar_t *path, wchar_t *buf, size_t bufsiz);
+
+int readlink(const char *path, char *buf, size_t bufsiz)
+{
+	wchar_t wpath[MAX_PATH], wbuffer[MAX_PATH];
+	int result;
+	if (xutftowcs(wpath, path, MAX_PATH) < 0)
+		return -1;
+	result = do_readlink(wpath, wbuffer, MAX_PATH);
+	if (result >= 0) {
+		return xwcstoutf(buf, to_unix_wpath(wbuffer), bufsiz);
+	}
+	return -1;
 }
 
 pid_t waitpid(pid_t pid, int *status, int options)

@@ -22,8 +22,10 @@ test_expect_success SYMLINKS \
 
 test_expect_success SYMLINKS \
     'prepare work tree' \
-    'mv frotz rezrov &&
+    '>xyzzy  &&
+     mv frotz rezrov &&
      rm -f yomin &&
+     rm -f xyzzy &&
      ln -s xyzzy nitfol &&
      ln -s xzzzy bozbar &&
     git update-index --add --remove frotz rezrov nitfol bozbar yomin'

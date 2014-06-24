@@ -10,6 +10,7 @@ test_expect_success setup '
 	>yomin &&
 	>caskly &&
 	if test_have_prereq SYMLINKS; then
+		touch frotz
 		ln -s frotz nitfol &&
 		T_letter=T
 	else
@@ -33,13 +34,13 @@ test_expect_success modify '
 	>nitfol &&
 	# rezrov/bozbar disappears
 	rm -fr rezrov &&
+	mkdir xyzzy &&
 	if test_have_prereq SYMLINKS; then
 		ln -s xyzzy rezrov
 	else
 		printf %s xyzzy > rezrov
 	fi &&
 	# xyzzy disappears (not a submodule)
-	mkdir xyzzy &&
 	echo gnusto >xyzzy/bozbar &&
 	# yomin gets replaced with a submodule
 	mkdir yomin &&

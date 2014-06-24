@@ -1,5 +1,52 @@
 #!/bin/sh
 
+# Fix some commands on Windows
+case $(uname -s) in
+*MINGW*)
+	winpath () {
+		# pwd -W is the only way of getting msys to convert the path, especially mounted paths like /usr
+		# since cmd /c only takes a single parameter preventing msys automatic path conversion.
+		if test  "${1:~-1:1}" != "/" ; then
+			echo "$1" | sed 's+/+\\+g'
+		elif test -d "$1" ; then
+			(cd "$1"; pwd -W) | sed 's+/+\\+g'
+		elif test -d "${1%/*}" ; then
+			(cd "${1%/*}"; echo "$(pwd -W)/${1##*/}") | sed 's+/+\\+g'
+		else
+			echo "$1" | sed -e 's+^/\([a-z]\)/+\1:/+' -e 's+/+\\+g'
+		fi
+	}
+	# git sees Windows-style pwd
+	pwd () {
+		builtin pwd -W
+	}
+	# use mklink
+	ln () {
+
+		ln_sym_hard=/H
+		ln_sym_dir=
+		if test "$1" = "-s"
+		then
+			ln_sym_hard=
+			shift
+		fi
+		pushd $(dirname "$2") 2>&1 > /dev/null
+		builtin test -d "$1" && ln_sym_dir=/D
+		popd > /dev/null 2> /dev/null
+		cmd /c "mklink ${ln_sym_hard}${ln_sym_dir} \"$(winpath "$2")\" \"$(winpath "$1")\">/dev/null " 2>/dev/null
+	}
+
+	test () {
+		case "$1" in
+			-h)
+				test_file=$(cmd /c "@dir /b/a:l \"$(winpath "${2}")\" 2> nul" )
+				builtin test -n "${test_file}"
+			;;
+		*) builtin test "$@";;
+		esac
+	}
+esac
+
 usage () {
 	echo "usage:" $@
 	exit 127
@@ -70,6 +117,7 @@ do
 		mkdir -p "$(dirname "$new_workdir/.git/$x")"
 		;;
 	esac
+	test -e "$git_dir/$x" || mkdir "$git_dir/$x"
 	ln -s "$git_dir/$x" "$new_workdir/.git/$x"
 done
 

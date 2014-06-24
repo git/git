@@ -178,7 +178,7 @@ test_expect_success SYMLINKS 'real path works on symlinks' '
 	mkdir second &&
 	ln -s ../first second/other &&
 	mkdir third &&
-	dir="$(cd .git; pwd -P)" &&
+	dir="$(abspath_of_dir .git)" &&
 	dir2=third/../second/other/.git &&
 	test "$dir" = "$(test-path-utils real_path $dir2)" &&
 	file="$dir"/index &&

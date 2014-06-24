@@ -85,6 +85,16 @@
 #define _NETBSD_SOURCE 1
 #define _SGI_SOURCE 1
 
+/* default is not to pass type - mingw needs this */
+#define symlink_with_type(a,b,c) symlink((a),(b))
+
+/* Used for 'Target Type' Parameter for symlink_with_type */
+enum git_target_type {
+	GIT_TARGET_UNKNOWN,
+	GIT_TARGET_ISFILE,
+	GIT_TARGET_ISDIR
+};
+
 #if defined(WIN32) && !defined(__CYGWIN__) /* Both MinGW and MSVC */
 # if defined (_MSC_VER) && !defined(_WIN32_WINNT)
 #  define _WIN32_WINNT 0x0502

@@ -371,7 +371,7 @@ do
 done >actual
 EOF
 
-test_expect_success PERL,SYMLINKS 'difftool --dir-diff --symlink without unstaged changes' '
+test_expect_success PERL,SYMLINKS_SH 'difftool --dir-diff --symlink without unstaged changes' '
 	cat >expect <<-EOF &&
 	file
 	$(pwd)/file

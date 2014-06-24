@@ -308,7 +308,7 @@ test_expect_success SYMLINKS 'stash file to symlink' '
 	test -f file &&
 	test bar = "$(cat file)" &&
 	git stash apply &&
-	case "$(ls -l file)" in *" file -> file2") :;; *) false;; esac
+	check_symlink file file2
 '
 
 test_expect_success SYMLINKS 'stash file to symlink (stage rm)' '
@@ -319,7 +319,7 @@ test_expect_success SYMLINKS 'stash file to symlink (stage rm)' '
 	test -f file &&
 	test bar = "$(cat file)" &&
 	git stash apply &&
-	case "$(ls -l file)" in *" file -> file2") :;; *) false;; esac
+	check_symlink file file2
 '
 
 test_expect_success SYMLINKS 'stash file to symlink (full stage)' '
@@ -331,7 +331,7 @@ test_expect_success SYMLINKS 'stash file to symlink (full stage)' '
 	test -f file &&
 	test bar = "$(cat file)" &&
 	git stash apply &&
-	case "$(ls -l file)" in *" file -> file2") :;; *) false;; esac
+	check_symlink file file2
 '
 
 # This test creates a commit with a symlink used for the following tests
@@ -347,7 +347,7 @@ test_expect_success 'stash symlink to file' '
 
 test_expect_success SYMLINKS 'this must have re-created the symlink' '
 	test -h filelink &&
-	case "$(ls -l filelink)" in *" filelink -> file") :;; *) false;; esac
+	check_symlink filelink file
 '
 
 test_expect_success 'unstash must re-create the file' '
@@ -365,7 +365,7 @@ test_expect_success 'stash symlink to file (stage rm)' '
 
 test_expect_success SYMLINKS 'this must have re-created the symlink' '
 	test -h filelink &&
-	case "$(ls -l filelink)" in *" filelink -> file") :;; *) false;; esac
+	check_symlink filelink file
 '
 
 test_expect_success 'unstash must re-create the file' '
@@ -384,7 +384,7 @@ test_expect_success 'stash symlink to file (full stage)' '
 
 test_expect_success SYMLINKS 'this must have re-created the symlink' '
 	test -h filelink &&
-	case "$(ls -l filelink)" in *" filelink -> file") :;; *) false;; esac
+	check_symlink filelink file
 '
 
 test_expect_success 'unstash must re-create the file' '

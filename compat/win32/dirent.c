@@ -16,7 +16,14 @@ static inline void finddata2dirent(struct dirent *ent, WIN32_FIND_DATAW *fdata)
 	xwcstoutf(ent->d_name, fdata->cFileName, MAX_PATH * 3);
 
 	/* Set file type, based on WIN32_FIND_DATA */
-	if (fdata->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+	/* First check for symlinks since a directory symlink has the FILE_ATTRIBUTE_DIRECTORY
+	 * attribute as well. Posix doesn't distinguish between directory/file symlinks, but
+	 * NTFS does.
+	 */
+	if (fdata->dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT
+			&& (fdata->dwReserved0 == IO_REPARSE_TAG_SYMLINK))
+		ent->d_type = DT_LNK;
+	else if (fdata->dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
 		ent->d_type = DT_DIR;
 	else
 		ent->d_type = DT_REG;

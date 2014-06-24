@@ -84,10 +84,6 @@ struct itimerval {
  * trivial stubs
  */
 
-static inline int readlink(const char *path, char *buf, size_t bufsiz)
-{ errno = ENOSYS; return -1; }
-static inline int symlink(const char *oldpath, const char *newpath)
-{ errno = ENOSYS; return -1; }
 static inline int fchmod(int fildes, mode_t mode)
 { errno = ENOSYS; return -1; }
 static inline pid_t fork(void)
@@ -148,6 +144,10 @@ static inline int mingw_SSL_set_wfd(SSL *ssl, int fd)
 #define SSL_set_wfd mingw_SSL_set_wfd
 #endif
 
+#undef symlink_with_type
+#define symlink_with_type(a,b,c) mingw_symlink((a),(b),(c))
+#define symlink(a,b) mingw_symlink((a),(b),GIT_TARGET_UNKNOWN)
+
 /*
  * implementations of missing functions
  */
@@ -163,6 +163,9 @@ struct passwd *getpwuid(uid_t uid);
 int setitimer(int type, struct itimerval *in, struct itimerval *out);
 int sigaction(int sig, struct sigaction *in, struct sigaction *out);
 int link(const char *oldpath, const char *newpath);
+
+int mingw_symlink(const char *oldpath, const char *newpath, enum git_target_type targettype);
+int readlink(const char *path, char *buf, size_t bufsiz);
 
 /*
  * replacements of existing functions
@@ -375,6 +378,9 @@ void mingw_open_html(const char *path);
 
 void mingw_mark_as_git_dir(const char *dir);
 #define mark_as_git_dir mingw_mark_as_git_dir
+
+char *mingw_resolve_symlink(char *p, size_t s);
+#define resolve_symlink mingw_resolve_symlink
 
 /**
  * Max length of long paths (exceeding MAX_PATH). The actual maximum supported

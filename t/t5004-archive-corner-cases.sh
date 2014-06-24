@@ -45,7 +45,7 @@ test_expect_success HEADER_ONLY_TAR_OK 'tar archive of commit with empty tree' '
 test_expect_success 'tar archive of empty tree is empty' '
 	git archive --format=tar HEAD: >empty.tar &&
 	perl -e "print \"\\0\" x 10240" >10knuls.tar &&
-	test_cmp 10knuls.tar empty.tar
+	test_cmp_bin 10knuls.tar empty.tar
 '
 
 test_expect_success 'tar archive of empty tree with prefix' '
