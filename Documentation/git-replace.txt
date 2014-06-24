@@ -73,6 +73,14 @@ OPTIONS
 	newly created object. See linkgit:git-var[1] for details about
 	how the editor will be chosen.
 
+--raw::
+	When editing, provide the raw object contents rather than
+	pretty-printed ones. Currently this only affects trees, which
+	will be shown in their binary form. This is harder to work with,
+	but can help when repairing a tree that is so corrupted it
+	cannot be pretty-printed. Note that you may need to configure
+	your editor to cleanly read and write binary data.
+
 -l <pattern>::
 --list <pattern>::
 	List replace refs for objects that match the given pattern (or
