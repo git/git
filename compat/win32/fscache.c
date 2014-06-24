@@ -33,6 +33,8 @@ struct fsentry {
 	union {
 		/* Reference count of the directory listing. */
 		volatile long refcnt;
+		/* Handle to wait on the loading thread. */
+		HANDLE hwait;
 		struct {
 			/* More stat members (only used for file entries). */
 			off64_t st_size;
@@ -246,15 +248,42 @@ static inline int fscache_enabled(const char *path)
 }
 
 /*
+ * Looks up a cache entry, waits if its being loaded by another thread.
+ * The mutex must be owned by the calling thread.
+ */
+static struct fsentry *fscache_get_wait(struct fsentry *key)
+{
+	struct fsentry *fse = hashmap_get(&map, key, NULL);
+
+	/* return if its a 'real' entry (future entries have refcnt == 0) */
+	if (!fse || fse->list || fse->refcnt)
+		return fse;
+
+	/* create an event and link our key to the future entry */
+	key->hwait = CreateEvent(NULL, TRUE, FALSE, NULL);
+	key->next = fse->next;
+	fse->next = key;
+
+	/* wait for the loading thread to signal us */
+	LeaveCriticalSection(&mutex);
+	WaitForSingleObject(key->hwait, INFINITE);
+	CloseHandle(key->hwait);
+	EnterCriticalSection(&mutex);
+
+	/* repeat cache lookup */
+	return hashmap_get(&map, key, NULL);
+}
+
+/*
  * Looks up or creates a cache entry for the specified key.
  */
 static struct fsentry *fscache_get(struct fsentry *key)
 {
-	struct fsentry *fse;
+	struct fsentry *fse, *future, *waiter;
 
 	EnterCriticalSection(&mutex);
 	/* check if entry is in cache */
-	fse = hashmap_get(&map, key, NULL);
+	fse = fscache_get_wait(key);
 	if (fse) {
 		fsentry_addref(fse);
 		LeaveCriticalSection(&mutex);
@@ -262,7 +291,7 @@ static struct fsentry *fscache_get(struct fsentry *key)
 	}
 	/* if looking for a file, check if directory listing is in cache */
 	if (!fse && key->list) {
-		fse = hashmap_get(&map, key->list, NULL);
+		fse = fscache_get_wait(key->list);
 		if (fse) {
 			LeaveCriticalSection(&mutex);
 			/* dir entry without file entry -> file doesn't exist */
@@ -271,16 +300,34 @@ static struct fsentry *fscache_get(struct fsentry *key)
 		}
 	}
 
+	/* add future entry to indicate that we're loading it */
+	future = key->list ? key->list : key;
+	future->next = NULL;
+	future->refcnt = 0;
+	hashmap_add(&map, future);
+
 	/* create the directory listing (outside mutex!) */
 	LeaveCriticalSection(&mutex);
-	fse = fsentry_create_list(key->list ? key->list : key);
-	if (!fse)
-		return NULL;
-
+	fse = fsentry_create_list(future);
 	EnterCriticalSection(&mutex);
-	/* add directory listing if it hasn't been added by some other thread */
-	if (!hashmap_get(&map, key, NULL))
-		fscache_add(fse);
+
+	/* remove future entry and signal waiting threads */
+	hashmap_remove(&map, future, NULL);
+	waiter = future->next;
+	while (waiter) {
+		HANDLE h = waiter->hwait;
+		waiter = waiter->next;
+		SetEvent(h);
+	}
+
+	/* leave on error (errno set by fsentry_create_list) */
+	if (!fse) {
+		LeaveCriticalSection(&mutex);
+		return NULL;
+	}
+
+	/* add directory listing to the cache */
+	fscache_add(fse);
 
 	/* lookup file entry if requested (fse already points to directory) */
 	if (key->list)
