@@ -207,8 +207,6 @@ static void export_object(const unsigned char *sha1, const char *filename)
 
 	if (run_command(&cmd))
 		die("cat-file reported failure");
-
-	close(fd);
 }
 
 /*
