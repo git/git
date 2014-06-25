@@ -111,7 +111,6 @@ sed -e 's/T/	/g' > main.c.final <<\EOF
 #include <stdio.h>
 
 void print_int(int num);
-T/* a comment */
 int func(int num);
 
 int main() {
@@ -154,7 +153,8 @@ test_expect_success 'patch2 reverse applies with --ignore-space-change' '
 git config apply.ignorewhitespace change
 
 test_expect_success 'patch2 applies (apply.ignorewhitespace = change)' '
-	git apply patch2.patch
+	git apply patch2.patch &&
+	test_cmp main.c.final main.c
 '
 
 test_expect_success 'patch3 fails (missing string at EOL)' '
@@ -165,12 +165,8 @@ test_expect_success 'patch4 fails (missing EOL at EOF)' '
 	test_must_fail git apply patch4.patch
 '
 
-test_expect_success 'patch5 applies (leading whitespace)' '
-	git apply patch5.patch
-'
-
-test_expect_success 'patches do not mangle whitespace' '
-	test_cmp main.c main.c.final
+test_expect_success 'patch5 fails (leading whitespace differences matter)' '
+	test_must_fail git apply patch5.patch
 '
 
 test_expect_success 're-create file (with --ignore-whitespace)' '
