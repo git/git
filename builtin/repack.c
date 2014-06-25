@@ -10,6 +10,7 @@
 
 static int delta_base_offset = 1;
 static int pack_kept_objects = -1;
+static int write_bitmaps = -1;
 static char *packdir, *packtmp;
 
 static const char *const git_repack_usage[] = {
@@ -25,6 +26,10 @@ static int repack_config(const char *var, const char *value, void *cb)
 	}
 	if (!strcmp(var, "repack.packkeptobjects")) {
 		pack_kept_objects = git_config_bool(var, value);
+		return 0;
+	}
+	if (!strcmp(var, "pack.writebitmaps")) {
+		write_bitmaps = git_config_bool(var, value);
 		return 0;
 	}
 	return git_default_config(var, value, cb);
@@ -149,7 +154,6 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	int no_update_server_info = 0;
 	int quiet = 0;
 	int local = 0;
-	int write_bitmap = -1;
 
 	struct option builtin_repack_options[] = {
 		OPT_BIT('a', NULL, &pack_everything,
@@ -168,7 +172,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		OPT__QUIET(&quiet, N_("be quiet")),
 		OPT_BOOL('l', "local", &local,
 				N_("pass --local to git-pack-objects")),
-		OPT_BOOL('b', "write-bitmap-index", &write_bitmap,
+		OPT_BOOL('b', "write-bitmap-index", &write_bitmaps,
 				N_("write bitmap index")),
 		OPT_STRING(0, "unpack-unreachable", &unpack_unreachable, N_("approxidate"),
 				N_("with -A, do not loosen objects older than this")),
@@ -191,7 +195,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 				git_repack_usage, 0);
 
 	if (pack_kept_objects < 0)
-		pack_kept_objects = write_bitmap;
+		pack_kept_objects = write_bitmaps > 0;
 
 	packdir = mkpathdup("%s/pack", get_object_directory());
 	packtmp = mkpathdup("%s/.tmp-%d-pack", packdir, (int)getpid());
@@ -217,9 +221,9 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		argv_array_pushf(&cmd_args, "--no-reuse-delta");
 	if (no_reuse_object)
 		argv_array_pushf(&cmd_args, "--no-reuse-object");
-	if (write_bitmap >= 0)
+	if (write_bitmaps >= 0)
 		argv_array_pushf(&cmd_args, "--%swrite-bitmap-index",
-				 write_bitmap ? "" : "no-");
+				 write_bitmaps ? "" : "no-");
 
 	if (pack_everything & ALL_INTO_ONE) {
 		get_non_kept_pack_filenames(&existing_packs);
