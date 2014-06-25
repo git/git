@@ -36,7 +36,7 @@ test_expect_success 'eol=lf puts LFs in normalized file' '
 	! has_cr two &&
 	onediff=$(git diff one) &&
 	twodiff=$(git diff two) &&
-	test -z "$onediff" -a -z "$twodiff"
+	test -z "$onediff" && test -z "$twodiff"
 '
 
 test_expect_success 'eol=crlf puts CRLFs in normalized file' '
@@ -49,7 +49,7 @@ test_expect_success 'eol=crlf puts CRLFs in normalized file' '
 	! has_cr two &&
 	onediff=$(git diff one) &&
 	twodiff=$(git diff two) &&
-	test -z "$onediff" -a -z "$twodiff"
+	test -z "$onediff" && test -z "$twodiff"
 '
 
 test_expect_success 'autocrlf=true overrides eol=lf' '
@@ -63,7 +63,7 @@ test_expect_success 'autocrlf=true overrides eol=lf' '
 	has_cr two &&
 	onediff=$(git diff one) &&
 	twodiff=$(git diff two) &&
-	test -z "$onediff" -a -z "$twodiff"
+	test -z "$onediff" && test -z "$twodiff"
 '
 
 test_expect_success 'autocrlf=true overrides unset eol' '
@@ -77,7 +77,7 @@ test_expect_success 'autocrlf=true overrides unset eol' '
 	has_cr two &&
 	onediff=$(git diff one) &&
 	twodiff=$(git diff two) &&
-	test -z "$onediff" -a -z "$twodiff"
+	test -z "$onediff" && test -z "$twodiff"
 '
 
 test_done

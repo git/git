@@ -36,7 +36,7 @@ test_expect_success 'default settings cause no changes' '
 	onediff=$(git diff one) &&
 	twodiff=$(git diff two) &&
 	threediff=$(git diff three) &&
-	test -z "$onediff" -a -z "$twodiff" -a -z "$threediff"
+	test -z "$onediff" && test -z "$twodiff" && test -z "$threediff"
 '
 
 test_expect_success 'crlf=true causes a CRLF file to be normalized' '
@@ -111,7 +111,7 @@ test_expect_success 'autocrlf=true does not normalize CRLF files' '
 	onediff=$(git diff one) &&
 	twodiff=$(git diff two) &&
 	threediff=$(git diff three) &&
-	test -z "$onediff" -a -z "$twodiff" -a -z "$threediff"
+	test -z "$onediff" && test -z "$twodiff" && test -z "$threediff"
 '
 
 test_expect_success 'text=auto, autocrlf=true _does_ normalize CRLF files' '
@@ -126,7 +126,7 @@ test_expect_success 'text=auto, autocrlf=true _does_ normalize CRLF files' '
 	onediff=$(git diff one) &&
 	twodiff=$(git diff two) &&
 	threediff=$(git diff three) &&
-	test -z "$onediff" -a -n "$twodiff" -a -z "$threediff"
+	test -z "$onediff" && test -n "$twodiff" && test -z "$threediff"
 '
 
 test_expect_success 'text=auto, autocrlf=true does not normalize binary files' '

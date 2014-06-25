@@ -2,7 +2,7 @@
 bindir="$1"
 gitexecdir="$2"
 gitcmd="$3"
-if test "$bindir" != "$gitexecdir" -a -x "$gitcmd"
+if test "$bindir" != "$gitexecdir" && test -x "$gitcmd"
 then
 	echo
 	echo "!! You have installed git-* commands to new gitexecdir."

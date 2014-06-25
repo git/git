@@ -52,6 +52,6 @@ EOF
 
 test_expect_success 'apply copy' \
     'git apply --index --stat --summary --apply test-patch &&
-     test "$(cat bar)" = "This is bar" -a "$(cat foo)" = "This is foo"'
+     test "$(cat bar)" = "This is bar" && test "$(cat foo)" = "This is foo"'
 
 test_done

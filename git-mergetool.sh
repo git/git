@@ -205,7 +205,7 @@ checkout_staged_file () {
 		"$(git checkout-index --temp --stage="$1" "$2" 2>/dev/null)" \
 		: '\([^	]*\)	')
 
-	if test $? -eq 0 -a -n "$tmpfile"
+	if test $? -eq 0 && test -n "$tmpfile"
 	then
 		mv -- "$(git rev-parse --show-cdup)$tmpfile" "$3"
 	else
@@ -256,7 +256,7 @@ merge_file () {
 	checkout_staged_file 2 "$MERGED" "$LOCAL"
 	checkout_staged_file 3 "$MERGED" "$REMOTE"
 
-	if test -z "$local_mode" -o -z "$remote_mode"
+	if test -z "$local_mode" || test -z "$remote_mode"
 	then
 		echo "Deleted merge conflict for '$MERGED':"
 		describe_file "$local_mode" "local" "$LOCAL"
