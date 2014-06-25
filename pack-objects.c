@@ -47,8 +47,8 @@ static void rehash_objects(struct packing_data *pdata)
 	if (pdata->index_size < 1024)
 		pdata->index_size = 1024;
 
-	pdata->index = xrealloc(pdata->index, sizeof(uint32_t) * pdata->index_size);
-	memset(pdata->index, 0, sizeof(int) * pdata->index_size);
+	free(pdata->index);
+	pdata->index = xcalloc(pdata->index_size, sizeof(*pdata->index));
 
 	entry = pdata->objects;
 
