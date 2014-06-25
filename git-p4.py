@@ -1238,7 +1238,7 @@ class P4Submit(Command, P4UserMap):
             if response == 'n':
                 return False
 
-    def get_diff_description(self, editedFiles):
+    def get_diff_description(self, editedFiles, filesToAdd):
         # diff
         if os.environ.has_key("P4DIFF"):
             del(os.environ["P4DIFF"])
@@ -1258,7 +1258,7 @@ class P4Submit(Command, P4UserMap):
                 newdiff += "+" + line
             f.close()
 
-        return diff + newdiff
+        return (diff + newdiff).replace('\r\n', '\n')
 
     def applyCommit(self, id):
         """Apply one commit, return True if it succeeded."""
@@ -1422,10 +1422,10 @@ class P4Submit(Command, P4UserMap):
         separatorLine = "######## everything below this line is just the diff #######\n"
         if not self.prepare_p4_only:
             submitTemplate += separatorLine
-            submitTemplate += self.get_diff_description(editedFiles)
+            submitTemplate += self.get_diff_description(editedFiles, filesToAdd)
 
         (handle, fileName) = tempfile.mkstemp()
-        tmpFile = os.fdopen(handle, "w+")
+        tmpFile = os.fdopen(handle, "w+b")
         if self.isWindows:
             submitTemplate = submitTemplate.replace("\n", "\r\n")
         tmpFile.write(submitTemplate)
@@ -1475,9 +1475,9 @@ class P4Submit(Command, P4UserMap):
             tmpFile = open(fileName, "rb")
             message = tmpFile.read()
             tmpFile.close()
-            submitTemplate = message[:message.index(separatorLine)]
             if self.isWindows:
-                submitTemplate = submitTemplate.replace("\r\n", "\n")
+                message = message.replace("\r\n", "\n")
+            submitTemplate = message[:message.index(separatorLine)]
             p4_write_pipe(['submit', '-i'], submitTemplate)
 
             if self.preserveUser:
