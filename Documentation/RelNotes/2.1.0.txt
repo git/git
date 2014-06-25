@@ -37,10 +37,13 @@ UI, Workflows & Features
    shorter than a page).
 
  * The logic and data used to compute the display width needed for
-   UTF-8 strings have been updated to match Unicode 6.3 better.
+   UTF-8 strings have been updated to match Unicode 7.0 better.
 
  * HTTP-based transports learned to propagate the error messages from
    the webserver better to the client coming over the HTTP transport.
+
+ * The completion script for bash (in contrib/) has been updated to
+   handle aliases that define complex sequence of commands better.
 
  * The "core.preloadindex" configuration variable is by default
    enabled, allowing modern platforms to take advantage of the
@@ -151,7 +154,7 @@ notes for details).
  * Mishandling of patterns in .gitignore that has trailing SPs quoted
    with backslashes (e.g. ones that end with "\ ") have been
    corrected.
-   (merge e61a6c1 pb/trim-trailing-spaces later to maint).
+   (merge 97c1364be6b pb/trim-trailing-spaces later to maint).
 
  * Reworded the error message given upon a failure to open an existing
    loose object file due to e.g. permission issues; it was reported as
@@ -242,6 +245,11 @@ notes for details).
    from scratch anyway.
    (merge fb79947 rs/pack-objects-no-unnecessary-realloc later to maint).
 
+ * Recent updates to "git repack" started to duplicate objects that
+   are in packfiles marked with .keep flag into the new packfile by
+   mistake.
+   (merge d078d85 jk/repack-pack-keep-objects later to maint).
+
  * "git rerere forget" did not work well when merge.conflictstyle
    was set to a non-default value.
    (merge de3d8bb fc/rerere-conflict-style later to maint).
@@ -280,6 +288,10 @@ notes for details).
    changes in the "status" output to cause the users forget to commit
    them.
    (merge c215d3d jl/status-added-submodule-is-never-ignored later to maint).
+
+ * Documentation for "git submodule sync" forgot to say that the subcommand
+   can take the "--recursive" option.
+   (merge 9393ae7 mc/doc-submodule-sync-recurse later to maint).
 
  * "git update-index --cacheinfo" in 2.0 release crashed on a
    malformed command line.
