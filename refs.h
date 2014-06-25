@@ -89,6 +89,7 @@ static inline const char *has_glob_specials(const char *pattern)
 extern int for_each_rawref(each_ref_fn, void *);
 
 extern void warn_dangling_symref(FILE *fp, const char *msg_fmt, const char *refname);
+extern void warn_dangling_symrefs(FILE *fp, const char *msg_fmt, const struct string_list* refnames);
 
 /*
  * Lock the packed-refs file for writing.  Flags is passed to
@@ -131,6 +132,8 @@ extern void rollback_packed_refs(void);
  * flags: Combination of the above PACK_REFS_* flags.
  */
 int pack_refs(unsigned int flags);
+
+extern int repack_without_refs(const char **refnames, int n);
 
 extern int ref_exists(const char *);
 

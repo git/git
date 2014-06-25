@@ -749,15 +749,23 @@ static int mv(int argc, const char **argv)
 
 static int remove_branches(struct string_list *branches)
 {
+	const char **branch_names;
 	int i, result = 0;
+
+	branch_names = xmalloc(branches->nr * sizeof(*branch_names));
+	for (i = 0; i < branches->nr; i++)
+		branch_names[i] = branches->items[i].string;
+	result |= repack_without_refs(branch_names, branches->nr);
+	free(branch_names);
+
 	for (i = 0; i < branches->nr; i++) {
 		struct string_list_item *item = branches->items + i;
 		const char *refname = item->string;
-		unsigned char *sha1 = item->util;
 
-		if (delete_ref(refname, sha1, 0))
+		if (delete_ref(refname, NULL, 0))
 			result |= error(_("Could not remove branch %s"), refname);
 	}
+
 	return result;
 }
 
@@ -788,10 +796,6 @@ static int rm(int argc, const char **argv)
 
 	known_remotes.to_delete = remote;
 	for_each_remote(add_known_remote, &known_remotes);
-
-	strbuf_addf(&buf, "remote.%s", remote->name);
-	if (git_config_rename_section(buf.buf, NULL) < 1)
-		return error(_("Could not remove config section '%s'"), buf.buf);
 
 	read_branches();
 	for (i = 0; i < branch_list.nr; i++) {
@@ -836,6 +840,12 @@ static int rm(int argc, const char **argv)
 				skipped.items[i].string);
 	}
 	string_list_clear(&skipped, 0);
+
+	if (!result) {
+		strbuf_addf(&buf, "remote.%s", remote->name);
+		if (git_config_rename_section(buf.buf, NULL) < 1)
+			return error(_("Could not remove config section '%s'"), buf.buf);
+	}
 
 	return result;
 }
@@ -1303,6 +1313,8 @@ static int prune_remote(const char *remote, int dry_run)
 {
 	int result = 0, i;
 	struct ref_states states;
+	struct string_list delete_refs_list = STRING_LIST_INIT_NODUP;
+	const char **delete_refs;
 	const char *dangling_msg = dry_run
 		? _(" %s will become dangling!")
 		: _(" %s has become dangling!");
@@ -1316,10 +1328,19 @@ static int prune_remote(const char *remote, int dry_run)
 		       states.remote->url_nr
 		       ? states.remote->url[0]
 		       : _("(no URL)"));
+
+		delete_refs = xmalloc(states.stale.nr * sizeof(*delete_refs));
+		for (i = 0; i < states.stale.nr; i++)
+			delete_refs[i] = states.stale.items[i].util;
+		if (!dry_run)
+			result |= repack_without_refs(delete_refs, states.stale.nr);
+		free(delete_refs);
 	}
 
 	for (i = 0; i < states.stale.nr; i++) {
 		const char *refname = states.stale.items[i].util;
+
+		string_list_insert(&delete_refs_list, refname);
 
 		if (!dry_run)
 			result |= delete_ref(refname, NULL, 0);
@@ -1330,8 +1351,10 @@ static int prune_remote(const char *remote, int dry_run)
 		else
 			printf_ln(_(" * [pruned] %s"),
 			       abbrev_ref(refname, "refs/remotes/"));
-		warn_dangling_symref(stdout, dangling_msg, refname);
 	}
+
+	warn_dangling_symrefs(stdout, dangling_msg, &delete_refs_list);
+	string_list_clear(&delete_refs_list, 0);
 
 	free_remote_ref_states(&states);
 	return result;
