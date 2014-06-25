@@ -832,8 +832,22 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 
 		if (get_sha1(parent, sha1))
 			commitable = !!active_nr;
-		else
-			commitable = index_differs_from(parent, 0);
+		else {
+			/*
+			 * Unless the user did explicitly request a submodule
+			 * ignore mode by passing a command line option we do
+			 * not ignore any changed submodule SHA-1s when
+			 * comparing index and parent, no matter what is
+			 * configured. Otherwise we won't commit any
+			 * submodules which were manually staged, which would
+			 * be really confusing.
+			 */
+			int diff_flags = DIFF_OPT_OVERRIDE_SUBMODULE_CONFIG;
+			if (ignore_submodule_arg &&
+			    !strcmp(ignore_submodule_arg, "all"))
+				diff_flags |= DIFF_OPT_IGNORE_SUBMODULES;
+			commitable = index_differs_from(parent, diff_flags);
+		}
 	}
 	strbuf_release(&committer_ident);
 
