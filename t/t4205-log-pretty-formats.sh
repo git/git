@@ -7,6 +7,9 @@
 test_description='Test pretty formats'
 . ./test-lib.sh
 
+# Tested non-UTF-8 encoding
+test_encoding="ISO8859-1"
+
 sample_utf8_part=$(printf "f\303\244ng")
 
 commit_msg () {
@@ -27,8 +30,8 @@ test_expect_success 'set up basic repos' '
 	>bar &&
 	git add foo &&
 	test_tick &&
-	git config i18n.commitEncoding iso8859-1 &&
-	git commit -m "$(commit_msg iso8859-1)" &&
+	git config i18n.commitEncoding $test_encoding &&
+	git commit -m "$(commit_msg $test_encoding)" &&
 	git add bar &&
 	test_tick &&
 	git commit -m "add bar" &&
@@ -56,8 +59,8 @@ test_expect_success 'alias user-defined format' '
 	test_cmp expected actual
 '
 
-test_expect_success 'alias user-defined tformat with %s (iso8859-1 encoding)' '
-	git config i18n.logOutputEncoding iso8859-1 &&
+test_expect_success 'alias user-defined tformat with %s (ISO8859-1 encoding)' '
+	git config i18n.logOutputEncoding $test_encoding &&
 	git log --oneline >expected-s &&
 	git log --pretty="tformat:%h %s" >actual-s &&
 	git config --unset i18n.logOutputEncoding &&
@@ -141,9 +144,7 @@ test_expect_success 'setup more commits' '
 '
 
 test_expect_success 'left alignment formatting' '
-	git log --pretty="format:%<(40)%s" >actual &&
-	# complete the incomplete line at the end
-	echo >>actual &&
+	git log --pretty="tformat:%<(40)%s" >actual &&
 	qz_to_tab_space <<EOF >expected &&
 message two                            Z
 message one                            Z
@@ -153,10 +154,19 @@ EOF
 	test_cmp expected actual
 '
 
+test_expect_success 'left alignment formatting. i18n.logOutputEncoding' '
+	git -c i18n.logOutputEncoding=$test_encoding log --pretty="tformat:%<(40)%s" >actual &&
+	qz_to_tab_space <<EOF | iconv -f utf-8 -t $test_encoding >expected &&
+message two                            Z
+message one                            Z
+add bar                                Z
+$(commit_msg)                    Z
+EOF
+	test_cmp expected actual
+'
+
 test_expect_success 'left alignment formatting at the nth column' '
-	git log --pretty="format:%h %<|(40)%s" >actual &&
-	# complete the incomplete line at the end
-	echo >>actual &&
+	git log --pretty="tformat:%h %<|(40)%s" >actual &&
 	qz_to_tab_space <<EOF >expected &&
 $head1 message two                    Z
 $head2 message one                    Z
@@ -166,11 +176,31 @@ EOF
 	test_cmp expected actual
 '
 
+test_expect_success 'left alignment formatting at the nth column. i18n.logOutputEncoding' '
+	git -c i18n.logOutputEncoding=$test_encoding log --pretty="tformat:%h %<|(40)%s" >actual &&
+	qz_to_tab_space <<EOF | iconv -f utf-8 -t $test_encoding >expected &&
+$head1 message two                    Z
+$head2 message one                    Z
+$head3 add bar                        Z
+$head4 $(commit_msg)            Z
+EOF
+	test_cmp expected actual
+'
+
 test_expect_success 'left alignment formatting with no padding' '
-	git log --pretty="format:%<(1)%s" >actual &&
-	# complete the incomplete line at the end
-	echo >>actual &&
+	git log --pretty="tformat:%<(1)%s" >actual &&
 	cat <<EOF >expected &&
+message two
+message one
+add bar
+$(commit_msg)
+EOF
+	test_cmp expected actual
+'
+
+test_expect_success 'left alignment formatting with no padding. i18n.logOutputEncoding' '
+	git -c i18n.logOutputEncoding=$test_encoding log --pretty="tformat:%<(1)%s" >actual &&
+	cat <<EOF | iconv -f utf-8 -t $test_encoding >expected &&
 message two
 message one
 add bar
@@ -180,9 +210,7 @@ EOF
 '
 
 test_expect_success 'left alignment formatting with trunc' '
-	git log --pretty="format:%<(10,trunc)%s" >actual &&
-	# complete the incomplete line at the end
-	echo >>actual &&
+	git log --pretty="tformat:%<(10,trunc)%s" >actual &&
 	qz_to_tab_space <<EOF >expected &&
 message ..
 message ..
@@ -192,10 +220,19 @@ EOF
 	test_cmp expected actual
 '
 
+test_expect_success 'left alignment formatting with trunc. i18n.logOutputEncoding' '
+	git -c i18n.logOutputEncoding=$test_encoding log --pretty="tformat:%<(10,trunc)%s" >actual &&
+	qz_to_tab_space <<EOF | iconv -f utf-8 -t $test_encoding >expected &&
+message ..
+message ..
+add bar  Z
+initial...
+EOF
+	test_cmp expected actual
+'
+
 test_expect_success 'left alignment formatting with ltrunc' '
-	git log --pretty="format:%<(10,ltrunc)%s" >actual &&
-	# complete the incomplete line at the end
-	echo >>actual &&
+	git log --pretty="tformat:%<(10,ltrunc)%s" >actual &&
 	qz_to_tab_space <<EOF >expected &&
 ..sage two
 ..sage one
@@ -205,10 +242,19 @@ EOF
 	test_cmp expected actual
 '
 
+test_expect_success 'left alignment formatting with ltrunc. i18n.logOutputEncoding' '
+	git -c i18n.logOutputEncoding=$test_encoding log --pretty="tformat:%<(10,ltrunc)%s" >actual &&
+	qz_to_tab_space <<EOF | iconv -f utf-8 -t $test_encoding >expected &&
+..sage two
+..sage one
+add bar  Z
+..${sample_utf8_part}lich
+EOF
+	test_cmp expected actual
+'
+
 test_expect_success 'left alignment formatting with mtrunc' '
-	git log --pretty="format:%<(10,mtrunc)%s" >actual &&
-	# complete the incomplete line at the end
-	echo >>actual &&
+	git log --pretty="tformat:%<(10,mtrunc)%s" >actual &&
 	qz_to_tab_space <<EOF >expected &&
 mess.. two
 mess.. one
@@ -218,10 +264,19 @@ EOF
 	test_cmp expected actual
 '
 
+test_expect_success 'left alignment formatting with mtrunc. i18n.logOutputEncoding' '
+	git -c i18n.logOutputEncoding=$test_encoding log --pretty="tformat:%<(10,mtrunc)%s" >actual &&
+	qz_to_tab_space <<EOF | iconv -f utf-8 -t $test_encoding >expected &&
+mess.. two
+mess.. one
+add bar  Z
+init..lich
+EOF
+	test_cmp expected actual
+'
+
 test_expect_success 'right alignment formatting' '
-	git log --pretty="format:%>(40)%s" >actual &&
-	# complete the incomplete line at the end
-	echo >>actual &&
+	git log --pretty="tformat:%>(40)%s" >actual &&
 	qz_to_tab_space <<EOF >expected &&
 Z                            message two
 Z                            message one
@@ -231,10 +286,19 @@ EOF
 	test_cmp expected actual
 '
 
+test_expect_success 'right alignment formatting. i18n.logOutputEncoding' '
+	git -c i18n.logOutputEncoding=$test_encoding log --pretty="tformat:%>(40)%s" >actual &&
+	qz_to_tab_space <<EOF | iconv -f utf-8 -t $test_encoding >expected &&
+Z                            message two
+Z                            message one
+Z                                add bar
+Z                    $(commit_msg)
+EOF
+	test_cmp expected actual
+'
+
 test_expect_success 'right alignment formatting at the nth column' '
-	git log --pretty="format:%h %>|(40)%s" >actual &&
-	# complete the incomplete line at the end
-	echo >>actual &&
+	git log --pretty="tformat:%h %>|(40)%s" >actual &&
 	qz_to_tab_space <<EOF >expected &&
 $head1                      message two
 $head2                      message one
@@ -244,10 +308,19 @@ EOF
 	test_cmp expected actual
 '
 
+test_expect_success 'right alignment formatting at the nth column. i18n.logOutputEncoding' '
+	git -c i18n.logOutputEncoding=$test_encoding log --pretty="tformat:%h %>|(40)%s" >actual &&
+	qz_to_tab_space <<EOF | iconv -f utf-8 -t $test_encoding >expected &&
+$head1                      message two
+$head2                      message one
+$head3                          add bar
+$head4              $(commit_msg)
+EOF
+	test_cmp expected actual
+'
+
 test_expect_success 'right alignment formatting with no padding' '
-	git log --pretty="format:%>(1)%s" >actual &&
-	# complete the incomplete line at the end
-	echo >>actual &&
+	git log --pretty="tformat:%>(1)%s" >actual &&
 	cat <<EOF >expected &&
 message two
 message one
@@ -257,10 +330,19 @@ EOF
 	test_cmp expected actual
 '
 
+test_expect_success 'right alignment formatting with no padding. i18n.logOutputEncoding' '
+	git -c i18n.logOutputEncoding=$test_encoding log --pretty="tformat:%>(1)%s" >actual &&
+	cat <<EOF | iconv -f utf-8 -t $test_encoding >expected &&
+message two
+message one
+add bar
+$(commit_msg)
+EOF
+	test_cmp expected actual
+'
+
 test_expect_success 'center alignment formatting' '
-	git log --pretty="format:%><(40)%s" >actual &&
-	# complete the incomplete line at the end
-	echo >>actual &&
+	git log --pretty="tformat:%><(40)%s" >actual &&
 	qz_to_tab_space <<EOF >expected &&
 Z             message two              Z
 Z             message one              Z
@@ -270,10 +352,18 @@ EOF
 	test_cmp expected actual
 '
 
+test_expect_success 'center alignment formatting. i18n.logOutputEncoding' '
+	git -c i18n.logOutputEncoding=$test_encoding log --pretty="tformat:%><(40)%s" >actual &&
+	qz_to_tab_space <<EOF | iconv -f utf-8 -t $test_encoding >expected &&
+Z             message two              Z
+Z             message one              Z
+Z               add bar                Z
+Z         $(commit_msg)          Z
+EOF
+	test_cmp expected actual
+'
 test_expect_success 'center alignment formatting at the nth column' '
-	git log --pretty="format:%h %><|(40)%s" >actual &&
-	# complete the incomplete line at the end
-	echo >>actual &&
+	git log --pretty="tformat:%h %><|(40)%s" >actual &&
 	qz_to_tab_space <<EOF >expected &&
 $head1           message two          Z
 $head2           message one          Z
@@ -283,11 +373,34 @@ EOF
 	test_cmp expected actual
 '
 
+test_expect_success 'center alignment formatting at the nth column. i18n.logOutputEncoding' '
+	git -c i18n.logOutputEncoding=$test_encoding log --pretty="tformat:%h %><|(40)%s" >actual &&
+	qz_to_tab_space <<EOF | iconv -f utf-8 -t $test_encoding >expected &&
+$head1           message two          Z
+$head2           message one          Z
+$head3             add bar            Z
+$head4       $(commit_msg)      Z
+EOF
+	test_cmp expected actual
+'
+
 test_expect_success 'center alignment formatting with no padding' '
-	git log --pretty="format:%><(1)%s" >actual &&
-	# complete the incomplete line at the end
-	echo >>actual &&
+	git log --pretty="tformat:%><(1)%s" >actual &&
 	cat <<EOF >expected &&
+message two
+message one
+add bar
+$(commit_msg)
+EOF
+	test_cmp expected actual
+'
+
+# save HEAD's SHA-1 digest (with no abbreviations) to use it below
+# as far as the next test amends HEAD
+old_head1=$(git rev-parse --verify HEAD~0)
+test_expect_success 'center alignment formatting with no padding. i18n.logOutputEncoding' '
+	git -c i18n.logOutputEncoding=$test_encoding log --pretty="tformat:%><(1)%s" >actual &&
+	cat <<EOF | iconv -f utf-8 -t $test_encoding >expected &&
 message two
 message one
 add bar
@@ -298,9 +411,7 @@ EOF
 
 test_expect_success 'left/right alignment formatting with stealing' '
 	git commit --amend -m short --author "long long long <long@me.com>" &&
-	git log --pretty="format:%<(10,trunc)%s%>>(10,ltrunc)% an" >actual &&
-	# complete the incomplete line at the end
-	echo >>actual &&
+	git log --pretty="tformat:%<(10,trunc)%s%>>(10,ltrunc)% an" >actual &&
 	cat <<EOF >expected &&
 short long  long long
 message ..   A U Thor
@@ -309,6 +420,20 @@ initial...   A U Thor
 EOF
 	test_cmp expected actual
 '
+test_expect_success 'left/right alignment formatting with stealing. i18n.logOutputEncoding' '
+	git -c i18n.logOutputEncoding=$test_encoding log --pretty="tformat:%<(10,trunc)%s%>>(10,ltrunc)% an" >actual &&
+	cat <<EOF | iconv -f utf-8 -t $test_encoding >expected &&
+short long  long long
+message ..   A U Thor
+add bar      A U Thor
+initial...   A U Thor
+EOF
+	test_cmp expected actual
+'
+
+# get new digests (with no abbreviations)
+head1=$(git rev-parse --verify HEAD~0) &&
+head2=$(git rev-parse --verify HEAD~1) &&
 
 test_expect_success 'log decoration properly follows tag chain' '
 	git tag -a tag1 -m tag1 &&
@@ -317,9 +442,9 @@ test_expect_success 'log decoration properly follows tag chain' '
 	git commit --amend -m shorter &&
 	git log --no-walk --tags --pretty="%H %d" --decorate=full >actual &&
 	cat <<EOF >expected &&
-6a908c10688b2503073c39c9ba26322c73902bb5  (tag: refs/tags/tag2)
-9f716384d92283fb915a4eee5073f030638e05f9  (tag: refs/tags/message-one)
-b87e4cccdb77336ea79d89224737be7ea8e95367  (tag: refs/tags/message-two)
+$head1  (tag: refs/tags/tag2)
+$head2  (tag: refs/tags/message-one)
+$old_head1  (tag: refs/tags/message-two)
 EOF
 	sort actual >actual1 &&
 	test_cmp expected actual1
