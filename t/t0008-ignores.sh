@@ -816,12 +816,14 @@ test_expect_success NOT_MINGW,NOT_CYGWIN 'correct handling of backslashes' '
 	>"whitespace/trailing 5 \\ \\ " &&
 	>"whitespace/trailing 6 \\a\\" &&
 	>whitespace/untracked &&
-	echo "whitespace/trailing 1 \\    " >ignore  &&
-	echo "whitespace/trailing 2 \\\\\\\\\\\\\\\\" >>ignore &&
-	echo "whitespace/trailing 3 \\\\\\\\\\\\\\\\ " >>ignore &&
-	echo "whitespace/trailing 4   \\\\\\\\\\\\    " >>ignore &&
-	echo "whitespace/trailing 5 \\\\\\\\ \\\\\\\\\\\\   " >>ignore &&
-	echo "whitespace/trailing 6 \\\\\\\\a\\\\\\\\" >>ignore &&
+	sed -e "s/Z$//" >ignore <<-\EOF &&
+	whitespace/trailing 1 \    Z
+	whitespace/trailing 2 \\\\Z
+	whitespace/trailing 3 \\\\ Z
+	whitespace/trailing 4   \\\    Z
+	whitespace/trailing 5 \\ \\\   Z
+	whitespace/trailing 6 \\a\\Z
+	EOF
 	echo whitespace/untracked >expect &&
 	>err.expect &&
 	git ls-files -o -X ignore whitespace >actual 2>err &&
