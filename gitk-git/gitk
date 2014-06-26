@@ -2585,6 +2585,7 @@ proc makewindow {} {
     bind $fstring <Key-Return> {dofind 1 1}
     bind $sha1entry <Key-Return> {gotocommit; break}
     bind $sha1entry <<PasteSelection>> clearsha1
+    bind $sha1entry <<Paste>> clearsha1
     bind $cflist <1> {sel_flist %W %x %y; break}
     bind $cflist <B1-Motion> {sel_flist %W %x %y; break}
     bind $cflist <ButtonRelease-1> {treeclick %W %x %y}
@@ -3870,7 +3871,7 @@ proc read_line_source {fd inst} {
 	    set id $nullid2
 	}
 	if {[commitinview $id $curview]} {
-	    selectline [rowofcommit $id] 1 [list $fname $lnum]
+	    selectline [rowofcommit $id] 1 [list $fname $lnum] 1
 	} else {
 	    error_popup [mc "That line comes from commit %s, \
 			     which is not in this view" [shortids $id]]
@@ -5205,11 +5206,15 @@ proc dohidelocalchanges {} {
 # spawn off a process to do git diff-index --cached HEAD
 proc dodiffindex {} {
     global lserial showlocalchanges vfilelimit curview
-    global hasworktree
+    global hasworktree git_version
 
     if {!$showlocalchanges || !$hasworktree} return
     incr lserial
-    set cmd "|git diff-index --cached HEAD"
+    if {[package vcompare $git_version "1.7.2"] >= 0} {
+	set cmd "|git diff-index --cached --ignore-submodules=dirty HEAD"
+    } else {
+	set cmd "|git diff-index --cached HEAD"
+    }
     if {$vfilelimit($curview) ne {}} {
 	set cmd [concat $cmd -- $vfilelimit($curview)]
     }
@@ -7161,7 +7166,7 @@ proc make_idmark {id} {
     $canv raise $t
 }
 
-proc selectline {l isnew {desired_loc {}}} {
+proc selectline {l isnew {desired_loc {}} {switch_to_patch 0}} {
     global canv ctext commitinfo selectedline
     global canvy0 linespc parents children curview
     global currentid sha1entry
@@ -7185,6 +7190,10 @@ proc selectline {l isnew {desired_loc {}}} {
     set currentid $id
     if {$lastscrollrows < $numcommits} {
 	setcanvscroll
+    }
+
+    if {$cmitmode ne "patch" && $switch_to_patch} {
+        set cmitmode "patch"
     }
 
     set y [expr {$canvy0 + $l * $linespc}]
@@ -7705,7 +7714,7 @@ proc addtocflist {ids} {
 }
 
 proc diffcmd {ids flags} {
-    global log_showroot nullid nullid2
+    global log_showroot nullid nullid2 git_version
 
     set i [lsearch -exact $ids $nullid]
     set j [lsearch -exact $ids $nullid2]
@@ -7726,6 +7735,9 @@ proc diffcmd {ids flags} {
 	    }
 	}
     } elseif {$j >= 0} {
+	if {[package vcompare $git_version "1.7.2"] >= 0} {
+	    set flags "$flags --ignore-submodules=dirty"
+	}
 	set cmd [concat | git diff-index --cached $flags]
 	if {[llength $ids] > 1} {
 	    # comparing index with specific revision
@@ -11575,7 +11587,29 @@ proc prefsok {} {
 proc formatdate {d} {
     global datetimeformat
     if {$d ne {}} {
-	set d [clock format [lindex $d 0] -format $datetimeformat]
+	# If $datetimeformat includes a timezone, display in the
+	# timezone of the argument.  Otherwise, display in local time.
+	if {[string match {*%[zZ]*} $datetimeformat]} {
+	    if {[catch {set d [clock format [lindex $d 0] -timezone [lindex $d 1] -format $datetimeformat]}]} {
+		# Tcl < 8.5 does not support -timezone.  Emulate it by
+		# setting TZ (e.g. TZ=<-0430>+04:30).
+		global env
+		if {[info exists env(TZ)]} {
+		    set savedTZ $env(TZ)
+		}
+		set zone [lindex $d 1]
+		set sign [string map {+ - - +} [string index $zone 0]]
+		set env(TZ) <$zone>$sign[string range $zone 1 2]:[string range $zone 3 4]
+		set d [clock format [lindex $d 0] -format $datetimeformat]
+		if {[info exists savedTZ]} {
+		    set env(TZ) $savedTZ
+		} else {
+		    unset env(TZ)
+		}
+	    }
+	} else {
+	    set d [clock format [lindex $d 0] -format $datetimeformat]
+	}
     }
     return $d
 }
