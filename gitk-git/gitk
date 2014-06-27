@@ -2787,7 +2787,7 @@ proc savestuff {w} {
     global mainheadcirclecolor workingfilescirclecolor indexcirclecolor
     global linkfgcolor circleoutlinecolor
     global autoselect autosellen extdifftool perfile_attrs markbgcolor use_ttk
-    global hideremotes want_ttk maxrefs
+    global hideremotes want_ttk maxrefs visiblerefs
     global config_file config_file_tmp
 
     if {$stuffsaved} return
@@ -2813,6 +2813,7 @@ proc savestuff {w} {
 	puts $f [list set autosellen $autosellen]
 	puts $f [list set showneartags $showneartags]
 	puts $f [list set maxrefs $maxrefs]
+	puts $f [list set visiblerefs $visiblerefs]
 	puts $f [list set hideremotes $hideremotes]
 	puts $f [list set showlocalchanges $showlocalchanges]
 	puts $f [list set datetimeformat $datetimeformat]
@@ -3493,10 +3494,20 @@ proc flist_hl {only} {
 }
 
 proc gitknewtmpdir {} {
-    global diffnum gitktmpdir gitdir
+    global diffnum gitktmpdir gitdir env
 
     if {![info exists gitktmpdir]} {
-	set gitktmpdir [file join $gitdir [format ".gitk-tmp.%s" [pid]]]
+	if {[info exists env(GITK_TMPDIR)]} {
+	    set tmpdir $env(GITK_TMPDIR)
+	} elseif {[info exists env(TMPDIR)]} {
+	    set tmpdir $env(TMPDIR)
+	} else {
+	    set tmpdir $gitdir
+	}
+	set gitktmpformat [file join $tmpdir ".gitk-tmp.XXXXXX"]
+	if {[catch {set gitktmpdir [exec mktemp -d $gitktmpformat]}]} {
+	    set gitktmpdir [file join $gitdir [format ".gitk-tmp.%s" [pid]]]
+	}
 	if {[catch {file mkdir $gitktmpdir} err]} {
 	    error_popup "[mc "Error creating temporary directory %s:" $gitktmpdir] $err"
 	    unset gitktmpdir
@@ -7025,7 +7036,7 @@ proc viewnextline {dir} {
 # add a list of tag or branch names at position pos
 # returns the number of names inserted
 proc appendrefs {pos ids var} {
-    global ctext linknum curview $var maxrefs mainheadid
+    global ctext linknum curview $var maxrefs visiblerefs mainheadid
 
     if {[catch {$ctext index $pos}]} {
 	return 0
@@ -7046,14 +7057,14 @@ proc appendrefs {pos ids var} {
     if {[llength $tags] > $maxrefs} {
 	# If we are displaying heads, and there are too many,
 	# see if there are some important heads to display.
-	# Currently this means "master" and the current head.
+	# Currently that are the current head and heads listed in $visiblerefs option
 	set itags {}
 	if {$var eq "idheads"} {
 	    set utags {}
 	    foreach ti $tags {
 		set hname [lindex $ti 0]
 		set id [lindex $ti 1]
-		if {($hname eq "master" || $id eq $mainheadid) &&
+		if {([lsearch -exact $visiblerefs $hname] != -1 || $id eq $mainheadid) &&
 		    [llength $itags] < $maxrefs} {
 		    lappend itags $ti
 		} else {
@@ -12035,6 +12046,7 @@ set wrapcomment "none"
 set showneartags 1
 set hideremotes 0
 set maxrefs 20
+set visiblerefs {"master"}
 set maxlinelen 200
 set showlocalchanges 1
 set limitdiffs 1
