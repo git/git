@@ -245,11 +245,11 @@ static int xdl_fill_merge_buffer(xdfenv_t *xe1, const char *name1,
 					      dest ? dest + size : NULL);
 			/* Postimage from side #1 */
 			if (m->mode & 1)
-				size += xdl_recs_copy(xe1, m->i1, m->chg1, 1,
+				size += xdl_recs_copy(xe1, m->i1, m->chg1, (m->mode & 2),
 						      dest ? dest + size : NULL);
 			/* Postimage from side #2 */
 			if (m->mode & 2)
-				size += xdl_recs_copy(xe2, m->i2, m->chg2, 1,
+				size += xdl_recs_copy(xe2, m->i2, m->chg2, 0,
 						      dest ? dest + size : NULL);
 		} else
 			continue;
