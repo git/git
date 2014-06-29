@@ -734,7 +734,6 @@ static void wt_status_print_changed(struct wt_status *s)
 static void wt_status_print_submodule_summary(struct wt_status *s, int uncommitted)
 {
 	struct child_process sm_summary;
-	char summary_limit[64];
 	struct argv_array env = ARGV_ARRAY_INIT;
 	struct argv_array argv = ARGV_ARRAY_INIT;
 	struct strbuf cmd_stdout = STRBUF_INIT;
@@ -742,7 +741,6 @@ static void wt_status_print_submodule_summary(struct wt_status *s, int uncommitt
 	char *summary_content;
 	size_t len;
 
-	sprintf(summary_limit, "%d", s->submodule_summary);
 	argv_array_pushf(&env, "GIT_INDEX_FILE=%s", s->index_file);
 
 	argv_array_push(&argv, "submodule");
@@ -750,7 +748,7 @@ static void wt_status_print_submodule_summary(struct wt_status *s, int uncommitt
 	argv_array_push(&argv, uncommitted ? "--files" : "--cached");
 	argv_array_push(&argv, "--for-status");
 	argv_array_push(&argv, "--summary-limit");
-	argv_array_push(&argv, summary_limit);
+	argv_array_pushf(&argv, "%d", s->submodule_summary);
 	if (!uncommitted)
 		argv_array_push(&argv, s->amend ? "HEAD^" : "HEAD");
 
