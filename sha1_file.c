@@ -1204,7 +1204,7 @@ static void prepare_packed_git_one(char *objdir, int local)
 		strbuf_setlen(&path, dirnamelen);
 		strbuf_addstr(&path, de->d_name);
 
-		if (has_extension(de->d_name, ".idx")) {
+		if (ends_with(de->d_name, ".idx")) {
 			/* Don't reopen a pack we already have. */
 			for (p = packed_git; p; p = p->next) {
 				if (!memcmp(path.buf, p->pack_name, path.len - 4))
@@ -1222,10 +1222,10 @@ static void prepare_packed_git_one(char *objdir, int local)
 		if (!report_garbage)
 			continue;
 
-		if (has_extension(de->d_name, ".idx") ||
-		    has_extension(de->d_name, ".pack") ||
-		    has_extension(de->d_name, ".bitmap") ||
-		    has_extension(de->d_name, ".keep"))
+		if (ends_with(de->d_name, ".idx") ||
+		    ends_with(de->d_name, ".pack") ||
+		    ends_with(de->d_name, ".bitmap") ||
+		    ends_with(de->d_name, ".keep"))
 			string_list_append(&garbage, path.buf);
 		else
 			report_garbage("garbage found", path.buf);

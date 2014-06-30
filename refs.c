@@ -1151,7 +1151,7 @@ static void read_loose_refs(const char *dirname, struct ref_dir *dir)
 
 		if (de->d_name[0] == '.')
 			continue;
-		if (has_extension(de->d_name, ".lock"))
+		if (ends_with(de->d_name, ".lock"))
 			continue;
 		strbuf_addstr(&refname, de->d_name);
 		refdir = *refs->name
@@ -3215,7 +3215,7 @@ static int do_for_each_reflog(struct strbuf *name, each_ref_fn fn, void *cb_data
 
 		if (de->d_name[0] == '.')
 			continue;
-		if (has_extension(de->d_name, ".lock"))
+		if (ends_with(de->d_name, ".lock"))
 			continue;
 		strbuf_addstr(name, de->d_name);
 		if (stat(git_path("logs/%s", name->buf), &st) < 0) {

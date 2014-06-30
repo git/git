@@ -1603,7 +1603,7 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 		die(_("--fix-thin cannot be used without --stdin"));
 	if (!index_name && pack_name) {
 		int len = strlen(pack_name);
-		if (!has_extension(pack_name, ".pack"))
+		if (!ends_with(pack_name, ".pack"))
 			die(_("packfile name '%s' does not end with '.pack'"),
 			    pack_name);
 		index_name_buf = xmalloc(len);
@@ -1613,7 +1613,7 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 	}
 	if (keep_msg && !keep_name && pack_name) {
 		int len = strlen(pack_name);
-		if (!has_extension(pack_name, ".pack"))
+		if (!ends_with(pack_name, ".pack"))
 			die(_("packfile name '%s' does not end with '.pack'"),
 			    pack_name);
 		keep_name_buf = xmalloc(len);
