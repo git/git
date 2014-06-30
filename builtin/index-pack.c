@@ -1505,7 +1505,8 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 	const char *curr_index;
 	const char *index_name = NULL, *pack_name = NULL;
 	const char *keep_name = NULL, *keep_msg = NULL;
-	char *index_name_buf = NULL, *keep_name_buf = NULL;
+	struct strbuf index_name_buf = STRBUF_INIT,
+		      keep_name_buf = STRBUF_INIT;
 	struct pack_idx_entry **idx_objects;
 	struct pack_idx_option opts;
 	unsigned char pack_sha1[20];
@@ -1602,24 +1603,22 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 	if (fix_thin_pack && !from_stdin)
 		die(_("--fix-thin cannot be used without --stdin"));
 	if (!index_name && pack_name) {
-		int len = strlen(pack_name);
-		if (!ends_with(pack_name, ".pack"))
+		size_t len;
+		if (!strip_suffix(pack_name, ".pack", &len))
 			die(_("packfile name '%s' does not end with '.pack'"),
 			    pack_name);
-		index_name_buf = xmalloc(len);
-		memcpy(index_name_buf, pack_name, len - 5);
-		strcpy(index_name_buf + len - 5, ".idx");
-		index_name = index_name_buf;
+		strbuf_add(&index_name_buf, pack_name, len);
+		strbuf_addstr(&index_name_buf, ".idx");
+		index_name = index_name_buf.buf;
 	}
 	if (keep_msg && !keep_name && pack_name) {
-		int len = strlen(pack_name);
-		if (!ends_with(pack_name, ".pack"))
+		size_t len;
+		if (!strip_suffix(pack_name, ".pack", &len))
 			die(_("packfile name '%s' does not end with '.pack'"),
 			    pack_name);
-		keep_name_buf = xmalloc(len);
-		memcpy(keep_name_buf, pack_name, len - 5);
-		strcpy(keep_name_buf + len - 5, ".keep");
-		keep_name = keep_name_buf;
+		strbuf_add(&keep_name_buf, pack_name, len);
+		strbuf_addstr(&keep_name_buf, ".idx");
+		keep_name = keep_name_buf.buf;
 	}
 	if (verify) {
 		if (!index_name)
@@ -1667,8 +1666,8 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 	else
 		close(input_fd);
 	free(objects);
-	free(index_name_buf);
-	free(keep_name_buf);
+	strbuf_release(&index_name_buf);
+	strbuf_release(&keep_name_buf);
 	if (pack_name == NULL)
 		free((void *) curr_pack);
 	if (index_name == NULL)
