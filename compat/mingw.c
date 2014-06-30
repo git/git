@@ -441,7 +441,7 @@ static int do_lstat(int follow, const char *file_name, struct stat *buf)
 static int do_stat_internal(int follow, const char *file_name, struct stat *buf)
 {
 	int namelen;
-	static char alt_name[PATH_MAX];
+	char alt_name[PATH_MAX];
 
 	if (!do_lstat(follow, file_name, buf))
 		return 0;
@@ -831,9 +831,10 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **env,
 			      const char *dir,
 			      int prepend_cmd, int fhin, int fhout, int fherr)
 {
-	STARTUPINFO si;
+	STARTUPINFOW si;
 	PROCESS_INFORMATION pi;
 	struct strbuf envblk, args;
+	wchar_t wcmd[MAX_PATH], wdir[MAX_PATH], *wargs;
 	unsigned flags;
 	BOOL ret;
 
@@ -869,6 +870,11 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **env,
 	si.hStdOutput = winansi_get_osfhandle(fhout);
 	si.hStdError = winansi_get_osfhandle(fherr);
 
+	if (xutftowcs_path(wcmd, cmd) < 0)
+		return -1;
+	if (dir && xutftowcs_path(wdir, dir) < 0)
+		return -1;
+
 	/* concatenate argv, quoting args as we go */
 	strbuf_init(&args, 0);
 	if (prepend_cmd) {
@@ -885,6 +891,10 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **env,
 		if (quoted != *argv)
 			free(quoted);
 	}
+
+	wargs = xmalloc((2 * args.len + 1) * sizeof(wchar_t));
+	xutftowcs(wargs, args.buf, 2 * args.len + 1);
+	strbuf_release(&args);
 
 	if (env) {
 		int count = 0;
@@ -907,12 +917,12 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **env,
 	}
 
 	memset(&pi, 0, sizeof(pi));
-	ret = CreateProcess(cmd, args.buf, NULL, NULL, TRUE, flags,
-		env ? envblk.buf : NULL, dir, &si, &pi);
+	ret = CreateProcessW(wcmd, wargs, NULL, NULL, TRUE, flags,
+		env ? envblk.buf : NULL, dir ? wdir : NULL, &si, &pi);
 
 	if (env)
 		strbuf_release(&envblk);
-	strbuf_release(&args);
+	free(wargs);
 
 	if (!ret) {
 		errno = ENOENT;
@@ -941,10 +951,9 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **env,
 	return (pid_t)pi.dwProcessId;
 }
 
-static pid_t mingw_spawnve(const char *cmd, const char **argv, char **env,
-			   int prepend_cmd)
+static pid_t mingw_spawnv(const char *cmd, const char **argv, int prepend_cmd)
 {
-	return mingw_spawnve_fd(cmd, argv, env, NULL, prepend_cmd, 0, 1, 2);
+	return mingw_spawnve_fd(cmd, argv, environ, NULL, prepend_cmd, 0, 1, 2);
 }
 
 pid_t mingw_spawnvpe(const char *cmd, const char **argv, char **env,
@@ -986,7 +995,7 @@ pid_t mingw_spawnvpe(const char *cmd, const char **argv, char **env,
 	return pid;
 }
 
-static int try_shell_exec(const char *cmd, char *const *argv, char **env)
+static int try_shell_exec(const char *cmd, char *const *argv)
 {
 	const char *interpr = parse_interpreter(cmd);
 	char **path;
@@ -1004,7 +1013,7 @@ static int try_shell_exec(const char *cmd, char *const *argv, char **env)
 		argv2 = xmalloc(sizeof(*argv) * (argc+1));
 		argv2[0] = (char *)cmd;	/* full path to the script file */
 		memcpy(&argv2[1], &argv[1], sizeof(*argv) * argc);
-		pid = mingw_spawnve(prog, argv2, env, 1);
+		pid = mingw_spawnv(prog, argv2, 1);
 		if (pid >= 0) {
 			int status;
 			if (waitpid(pid, &status, 0) < 0)
@@ -1019,19 +1028,20 @@ static int try_shell_exec(const char *cmd, char *const *argv, char **env)
 	return pid;
 }
 
-static void mingw_execve(const char *cmd, char *const *argv, char *const *env)
+int mingw_execv(const char *cmd, char *const *argv)
 {
 	/* check if git_command is a shell script */
-	if (!try_shell_exec(cmd, argv, (char **)env)) {
+	if (!try_shell_exec(cmd, argv)) {
 		int pid, status;
 
-		pid = mingw_spawnve(cmd, (const char **)argv, (char **)env, 0);
+		pid = mingw_spawnv(cmd, (const char **)argv, 0);
 		if (pid < 0)
-			return;
+			return -1;
 		if (waitpid(pid, &status, 0) < 0)
 			status = 255;
 		exit(status);
 	}
+	return -1;
 }
 
 int mingw_execvp(const char *cmd, char *const *argv)
@@ -1040,18 +1050,12 @@ int mingw_execvp(const char *cmd, char *const *argv)
 	char *prog = path_lookup(cmd, path, 0);
 
 	if (prog) {
-		mingw_execve(prog, argv, environ);
+		mingw_execv(prog, argv);
 		free(prog);
 	} else
 		errno = ENOENT;
 
 	free_path_split(path);
-	return -1;
-}
-
-int mingw_execv(const char *cmd, char *const *argv)
-{
-	mingw_execve(cmd, argv, environ);
 	return -1;
 }
 
@@ -1933,10 +1937,54 @@ int xwcstoutf(char *utf, const wchar_t *wcs, size_t utflen)
 	return -1;
 }
 
+/*
+ * Disable MSVCRT command line wildcard expansion (__getmainargs called from
+ * mingw startup code, see init.c in mingw runtime).
+ */
+int _CRT_glob = 0;
+
+typedef struct {
+	int newmode;
+} _startupinfo;
+
+extern int __wgetmainargs(int *argc, wchar_t ***argv, wchar_t ***env, int glob,
+		_startupinfo *si);
+
+static NORETURN void die_startup()
+{
+	fputs("fatal: not enough memory for initialization", stderr);
+	exit(128);
+}
+
 void mingw_startup()
 {
-	/* copy executable name to argv[0] */
-	__argv[0] = xstrdup(_pgmptr);
+	int i, len, maxlen, argc;
+	char *buffer;
+	wchar_t **wenv, **wargv;
+	_startupinfo si;
+
+	/* get wide char arguments and environment */
+	si.newmode = 0;
+	if (__wgetmainargs(&argc, &wargv, &wenv, _CRT_glob, &si) < 0)
+		die_startup();
+
+	/* determine size of argv and environ conversion buffer */
+	maxlen = wcslen(_wpgmptr);
+	for (i = 1; i < argc; i++)
+		maxlen = max(maxlen, wcslen(wargv[i]));
+
+	/* allocate buffer (wchar_t encodes to max 3 UTF-8 bytes) */
+	maxlen = 3 * maxlen + 1;
+	buffer = xmalloc(maxlen);
+
+	/* convert command line arguments and environment to UTF-8 */
+	len = xwcstoutf(buffer, _wpgmptr, maxlen);
+	__argv[0] = xmemdupz(buffer, len);
+	for (i = 1; i < argc; i++) {
+		len = xwcstoutf(buffer, wargv[i], maxlen);
+		__argv[i] = xmemdupz(buffer, len);
+	}
+	free(buffer);
 
 	/* initialize critical section for waitpid pinfo_t list */
 	InitializeCriticalSection(&pinfo_cs);
