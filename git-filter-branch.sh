@@ -332,7 +332,13 @@ while read commit parents; do
 	parentstr=
 	for parent in $parents; do
 		for reparent in $(map "$parent"); do
-			parentstr="$parentstr -p $reparent"
+			case "$parentstr " in
+			*" -p $reparent "*)
+				;;
+			*)
+				parentstr="$parentstr -p $reparent"
+				;;
+			esac
 		done
 	done
 	if [ "$filter_parent" ]; then
