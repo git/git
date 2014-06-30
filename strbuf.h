@@ -47,6 +47,15 @@ extern void strbuf_rtrim(struct strbuf *);
 extern void strbuf_ltrim(struct strbuf *);
 extern int strbuf_cmp(const struct strbuf *, const struct strbuf *);
 
+static inline int strbuf_strip_suffix(struct strbuf *sb, const char *suffix)
+{
+	if (strip_suffix_mem(sb->buf, &sb->len, suffix)) {
+		strbuf_setlen(sb, sb->len);
+		return 1;
+	} else
+		return 0;
+}
+
 /*
  * Split str (of length slen) at the specified terminator character.
  * Return a null-terminated array of pointers to strbuf objects
