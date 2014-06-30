@@ -339,7 +339,6 @@ extern void set_error_routine(void (*routine)(const char *err, va_list params));
 extern void set_die_is_recursing_routine(int (*routine)(void));
 
 extern int starts_with(const char *str, const char *prefix);
-extern int ends_with(const char *str, const char *suffix);
 
 static inline const char *skip_prefix(const char *str, const char *prefix)
 {
@@ -375,6 +374,12 @@ static inline int strip_suffix(const char *str, const char *suffix, size_t *len)
 {
 	*len = strlen(str);
 	return strip_suffix_mem(str, len, suffix);
+}
+
+static inline int ends_with(const char *str, const char *suffix)
+{
+	size_t len;
+	return strip_suffix(str, suffix, &len);
 }
 
 #if defined(NO_MMAP) || defined(USE_WIN32_MMAP)
