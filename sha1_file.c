@@ -1197,6 +1197,7 @@ static void prepare_packed_git_one(char *objdir, int local)
 	dirnamelen = path.len;
 	while ((de = readdir(dir)) != NULL) {
 		struct packed_git *p;
+		size_t base_len;
 
 		if (is_dot_or_dotdot(de->d_name))
 			continue;
@@ -1204,10 +1205,14 @@ static void prepare_packed_git_one(char *objdir, int local)
 		strbuf_setlen(&path, dirnamelen);
 		strbuf_addstr(&path, de->d_name);
 
-		if (ends_with(de->d_name, ".idx")) {
+		base_len = path.len;
+		if (strip_suffix_mem(path.buf, &base_len, ".idx")) {
 			/* Don't reopen a pack we already have. */
 			for (p = packed_git; p; p = p->next) {
-				if (!memcmp(path.buf, p->pack_name, path.len - 4))
+				size_t len;
+				if (strip_suffix(p->pack_name, ".pack", &len) &&
+				    len == base_len &&
+				    !memcmp(p->pack_name, path.buf, len))
 					break;
 			}
 			if (p == NULL &&
