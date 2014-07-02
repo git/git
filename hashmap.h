@@ -13,6 +13,17 @@ extern unsigned int strihash(const char *buf);
 extern unsigned int memhash(const void *buf, size_t len);
 extern unsigned int memihash(const void *buf, size_t len);
 
+static inline unsigned int sha1hash(const unsigned char *sha1)
+{
+	/*
+	 * Equivalent to 'return *(unsigned int *)sha1;', but safe on
+	 * platforms that don't support unaligned reads.
+	 */
+	unsigned int hash;
+	memcpy(&hash, sha1, sizeof(hash));
+	return hash;
+}
+
 /* data structures */
 
 struct hashmap_entry {

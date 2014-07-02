@@ -58,6 +58,15 @@ Functions
 +
 `strihash` and `memihash` are case insensitive versions.
 
+`unsigned int sha1hash(const unsigned char *sha1)`::
+
+	Converts a cryptographic hash (e.g. SHA-1) into an int-sized hash code
+	for use in hash tables. Cryptographic hashes are supposed to have
+	uniform distribution, so in contrast to `memhash()`, this just copies
+	the first `sizeof(int)` bytes without shuffling any bits. Note that
+	the results will be different on big-endian and little-endian
+	platforms, so they should not be stored or transferred over the net.
+
 `void hashmap_init(struct hashmap *map, hashmap_cmp_fn equals_function, size_t initial_size)`::
 
 	Initializes a hashmap structure.
