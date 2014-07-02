@@ -83,7 +83,7 @@ static int in_commit_list(const struct commit_list *want, struct commit *c)
 enum contains_result {
 	CONTAINS_UNKNOWN = -1,
 	CONTAINS_NO = 0,
-	CONTAINS_YES = 1,
+	CONTAINS_YES = 1
 };
 
 /*
