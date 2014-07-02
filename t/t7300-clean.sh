@@ -426,10 +426,10 @@ test_expect_success SANITY 'removal failure' '
 
 	mkdir foo &&
 	touch foo/bar &&
+	test_when_finished "chmod 755 foo" &&
 	(exec <foo/bar &&
 	 chmod 0 foo &&
-	 test_must_fail git clean -f -d &&
-	 chmod 755 foo)
+	 test_must_fail git clean -f -d)
 '
 
 test_expect_success 'nested git work tree' '
