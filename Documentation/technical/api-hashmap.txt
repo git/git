@@ -193,6 +193,21 @@ more entries.
 `hashmap_iter_first` is a combination of both (i.e. initializes the iterator
 and returns the first entry, if any).
 
+`const char *strintern(const char *string)`::
+`const void *memintern(const void *data, size_t len)`::
+
+	Returns the unique, interned version of the specified string or data,
+	similar to the `String.intern` API in Java and .NET, respectively.
+	Interned strings remain valid for the entire lifetime of the process.
++
+Can be used as `[x]strdup()` or `xmemdupz` replacement, except that interned
+strings / data must not be modified or freed.
++
+Interned strings are best used for short strings with high probability of
+duplicates.
++
+Uses a hashmap to store the pool of interned strings.
+
 Usage example
 -------------
 

@@ -226,3 +226,41 @@ void *hashmap_iter_next(struct hashmap_iter *iter)
 		current = iter->map->table[iter->tablepos++];
 	}
 }
+
+struct pool_entry {
+	struct hashmap_entry ent;
+	size_t len;
+	unsigned char data[FLEX_ARRAY];
+};
+
+static int pool_entry_cmp(const struct pool_entry *e1,
+			  const struct pool_entry *e2,
+			  const unsigned char *keydata)
+{
+	return e1->data != keydata &&
+	       (e1->len != e2->len || memcmp(e1->data, keydata, e1->len));
+}
+
+const void *memintern(const void *data, size_t len)
+{
+	static struct hashmap map;
+	struct pool_entry key, *e;
+
+	/* initialize string pool hashmap */
+	if (!map.tablesize)
+		hashmap_init(&map, (hashmap_cmp_fn) pool_entry_cmp, 0);
+
+	/* lookup interned string in pool */
+	hashmap_entry_init(&key, memhash(data, len));
+	key.len = len;
+	e = hashmap_get(&map, &key, data);
+	if (!e) {
+		/* not found: create it */
+		e = xmallocz(sizeof(struct pool_entry) + len);
+		hashmap_entry_init(e, key.ent.hash);
+		e->len = len;
+		memcpy(e->data, data, len);
+		hashmap_add(&map, e);
+	}
+	return e->data;
+}

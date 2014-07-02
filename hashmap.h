@@ -87,4 +87,12 @@ static inline void *hashmap_iter_first(struct hashmap *map,
 	return hashmap_iter_next(iter);
 }
 
+/* string interning */
+
+extern const void *memintern(const void *data, size_t len);
+static inline const char *strintern(const char *string)
+{
+	return memintern(string, strlen(string));
+}
+
 #endif

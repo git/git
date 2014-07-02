@@ -234,6 +234,20 @@ int main(int argc, char *argv[])
 			/* print table sizes */
 			printf("%u %u\n", map.tablesize, map.size);
 
+		} else if (!strcmp("intern", cmd) && l1) {
+
+			/* test that strintern works */
+			const char *i1 = strintern(p1);
+			const char *i2 = strintern(p1);
+			if (strcmp(i1, p1))
+				printf("strintern(%s) returns %s\n", p1, i1);
+			else if (i1 == p1)
+				printf("strintern(%s) returns input pointer\n", p1);
+			else if (i1 != i2)
+				printf("strintern(%s) != strintern(%s)", i1, i2);
+			else
+				printf("%s\n", i1);
+
 		} else if (!strcmp("perfhashmap", cmd) && l1 && l2) {
 
 			perf_hashmap(atoi(p1), atoi(p2));
