@@ -1520,8 +1520,6 @@ void format_commit_message(const struct commit *commit,
 
 	free(context.commit_encoding);
 	unuse_commit_buffer(commit, context.message);
-	free(context.signature_check.gpg_output);
-	free(context.signature_check.signer);
 }
 
 static void pp_header(struct pretty_print_context *pp,
