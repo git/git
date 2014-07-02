@@ -121,7 +121,7 @@ static int lstat_cache_matchlen(struct cache_def *cache,
 	 */
 	*ret_flags = FL_DIR;
 	last_slash_dir = last_slash;
-	max_len = len < PATH_MAX ? len : PATH_MAX;
+	max_len = len < MAX_LONG_PATH ? len : MAX_LONG_PATH;
 	while (match_len < max_len) {
 		do {
 			cache->path[match_len] = name[match_len];
@@ -158,12 +158,12 @@ static int lstat_cache_matchlen(struct cache_def *cache,
 	 * for the moment!
 	 */
 	save_flags = *ret_flags & track_flags & (FL_NOENT|FL_SYMLINK);
-	if (save_flags && last_slash > 0 && last_slash <= PATH_MAX) {
+	if (save_flags && last_slash > 0 && last_slash <= MAX_LONG_PATH) {
 		cache->path[last_slash] = '\0';
 		cache->len = last_slash;
 		cache->flags = save_flags;
 	} else if ((track_flags & FL_DIR) &&
-		   last_slash_dir > 0 && last_slash_dir <= PATH_MAX) {
+		   last_slash_dir > 0 && last_slash_dir <= MAX_LONG_PATH) {
 		/*
 		 * We have a separate test for the directory case,
 		 * since it could be that we have found a symlink or a
@@ -274,7 +274,7 @@ static int threaded_has_dirs_only_path(struct cache_def *cache, const char *name
 }
 
 static struct removal_def {
-	char path[PATH_MAX];
+	char path[MAX_LONG_PATH];
 	int len;
 } removal;
 
