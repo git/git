@@ -376,7 +376,7 @@ static void show_signature(struct rev_info *opt, struct commit *commit)
 	struct strbuf gpg_output = STRBUF_INIT;
 	int status;
 
-	if (parse_signed_commit(commit->object.sha1, &payload, &signature) <= 0)
+	if (parse_signed_commit(commit, &payload, &signature) <= 0)
 		goto out;
 
 	status = verify_signed_buffer(payload.buf, payload.len,
@@ -588,7 +588,7 @@ void show_log(struct rev_info *opt)
 		show_mergetag(opt, commit);
 	}
 
-	if (!commit->buffer)
+	if (!get_cached_commit_buffer(commit, NULL))
 		return;
 
 	if (opt->show_notes) {

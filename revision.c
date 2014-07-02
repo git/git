@@ -2791,7 +2791,7 @@ static int commit_match(struct commit *commit, struct rev_info *opt)
 {
 	int retval;
 	const char *encoding;
-	char *message;
+	const char *message;
 	struct strbuf buf = STRBUF_INIT;
 
 	if (!opt->grep_filter.pattern_list && !opt->grep_filter.header_list)
@@ -2833,14 +2833,21 @@ static int commit_match(struct commit *commit, struct rev_info *opt)
 		format_display_notes(commit->object.sha1, &buf, encoding, 1);
 	}
 
-	/* Find either in the original commit message, or in the temporary */
+	/*
+	 * Find either in the original commit message, or in the temporary.
+	 * Note that we cast away the constness of "message" here. It is
+	 * const because it may come from the cached commit buffer. That's OK,
+	 * because we know that it is modifiable heap memory, and that while
+	 * grep_buffer may modify it for speed, it will restore any
+	 * changes before returning.
+	 */
 	if (buf.len)
 		retval = grep_buffer(&opt->grep_filter, buf.buf, buf.len);
 	else
 		retval = grep_buffer(&opt->grep_filter,
-				     message, strlen(message));
+				     (char *)message, strlen(message));
 	strbuf_release(&buf);
-	logmsg_free(message, commit);
+	unuse_commit_buffer(commit, message);
 	return retval;
 }
 
