@@ -927,7 +927,7 @@ static int extract_param(const char *raw, const char *name,
 		return -1;
 	raw++;
 
-	while (*raw && !isspace(*raw))
+	while (*raw && !isspace(*raw) && *raw != ';')
 		strbuf_addch(out, *raw++);
 	return 0;
 }
@@ -971,7 +971,7 @@ static void extract_content_type(struct strbuf *raw, struct strbuf *type,
 
 	strbuf_reset(charset);
 	while (*p) {
-		while (isspace(*p))
+		while (isspace(*p) || *p == ';')
 			p++;
 		if (!extract_param(p, "charset", charset))
 			return;
