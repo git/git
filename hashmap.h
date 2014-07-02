@@ -68,6 +68,14 @@ extern void *hashmap_put(struct hashmap *map, void *entry);
 extern void *hashmap_remove(struct hashmap *map, const void *key,
 		const void *keydata);
 
+static inline void *hashmap_get_from_hash(const struct hashmap *map,
+		unsigned int hash, const void *keydata)
+{
+	struct hashmap_entry key;
+	hashmap_entry_init(&key, hash);
+	return hashmap_get(map, &key, keydata);
+}
+
 /* hashmap_iter functions */
 
 extern void hashmap_iter_init(struct hashmap *map, struct hashmap_iter *iter);

@@ -115,9 +115,8 @@ static void perf_hashmap(unsigned int method, unsigned int rounds)
 
 		for (j = 0; j < rounds; j++) {
 			for (i = 0; i < TEST_SIZE; i++) {
-				struct hashmap_entry key;
-				hashmap_entry_init(&key, hashes[i]);
-				hashmap_get(&map, &key, entries[i]->key);
+				hashmap_get_from_hash(&map, hashes[i],
+						      entries[i]->key);
 			}
 		}
 
@@ -199,12 +198,8 @@ int main(int argc, char *argv[])
 
 		} else if (!strcmp("get", cmd) && l1) {
 
-			/* setup static key */
-			struct hashmap_entry key;
-			hashmap_entry_init(&key, hash);
-
 			/* lookup entry in hashmap */
-			entry = hashmap_get(&map, &key, p1);
+			entry = hashmap_get_from_hash(&map, hash, p1);
 
 			/* print result */
 			if (!entry)

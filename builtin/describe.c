@@ -58,9 +58,7 @@ static int commit_name_cmp(const struct commit_name *cn1,
 
 static inline struct commit_name *find_commit_name(const unsigned char *peeled)
 {
-	struct commit_name key;
-	hashmap_entry_init(&key, sha1hash(peeled));
-	return hashmap_get(&names, &key, peeled);
+	return hashmap_get_from_hash(&names, sha1hash(peeled), peeled);
 }
 
 static int replace_name(struct commit_name *e,

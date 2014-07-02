@@ -118,6 +118,20 @@ hashmap_entry) that has at least been initialized with the proper hash code
 If an entry with matching hash code is found, `key` and `keydata` are passed
 to `hashmap_cmp_fn` to decide whether the entry matches the key.
 
+`void *hashmap_get_from_hash(const struct hashmap *map, unsigned int hash, const void *keydata)`::
+
+	Returns the hashmap entry for the specified hash code and key data,
+	or NULL if not found.
++
+`map` is the hashmap structure.
++
+`hash` is the hash code of the entry to look up.
++
+If an entry with matching hash code is found, `keydata` is passed to
+`hashmap_cmp_fn` to decide whether the entry matches the key. The
+`entry_or_key` parameter points to a bogus hashmap_entry structure that
+should not be used in the comparison.
+
 `void *hashmap_get_next(const struct hashmap *map, const void *entry)`::
 
 	Returns the next equal hashmap entry, or NULL if not found. This can be
