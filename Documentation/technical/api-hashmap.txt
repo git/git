@@ -8,11 +8,19 @@ Data Structures
 
 `struct hashmap`::
 
-	The hash table structure.
+	The hash table structure. Members can be used as follows, but should
+	not be modified directly:
 +
-The `size` member keeps track of the total number of entries. The `cmpfn`
-member is a function used to compare two entries for equality. The `table` and
-`tablesize` members store the hash table and its size, respectively.
+The `size` member keeps track of the total number of entries (0 means the
+hashmap is empty).
++
+`tablesize` is the allocated size of the hash table. A non-0 value indicates
+that the hashmap is initialized. It may also be useful for statistical purposes
+(i.e. `size / tablesize` is the current load factor).
++
+`cmpfn` stores the comparison function specified in `hashmap_init()`. In
+advanced scenarios, it may be useful to change this, e.g. to switch between
+case-sensitive and case-insensitive lookup.
 
 `struct hashmap_entry`::
 
