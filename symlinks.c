@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "strbuf.h"
 
 static int threaded_check_leading_path(struct cache_def *cache, const char *name, int len);
 static int threaded_has_dirs_only_path(struct cache_def *cache, const char *name, int len, int prefix_len);
@@ -73,7 +74,7 @@ static int lstat_cache_matchlen(struct cache_def *cache,
 				int prefix_len_stat_func)
 {
 	int match_len, last_slash, last_slash_dir, previous_slash;
-	int save_flags, max_len, ret;
+	int save_flags, ret;
 	struct stat st;
 
 	if (cache->track_flags != track_flags ||
@@ -121,13 +122,12 @@ static int lstat_cache_matchlen(struct cache_def *cache,
 	 */
 	*ret_flags = FL_DIR;
 	last_slash_dir = last_slash;
-	max_len = len < PATH_MAX ? len : PATH_MAX;
-	while (match_len < max_len) {
+	while (match_len < len) {
 		do {
 			cache->path[match_len] = name[match_len];
 			match_len++;
-		} while (match_len < max_len && name[match_len] != '/');
-		if (match_len >= max_len && !(track_flags & FL_FULLPATH))
+		} while (match_len < len && name[match_len] != '/');
+		if (match_len >= len && !(track_flags & FL_FULLPATH))
 			break;
 		last_slash = match_len;
 		cache->path[last_slash] = '\0';
@@ -273,21 +273,18 @@ static int threaded_has_dirs_only_path(struct cache_def *cache, const char *name
 		FL_DIR;
 }
 
-static struct removal_def {
-	char path[PATH_MAX];
-	int len;
-} removal;
+struct strbuf removal = STRBUF_INIT;
 
 static void do_remove_scheduled_dirs(int new_len)
 {
 	while (removal.len > new_len) {
-		removal.path[removal.len] = '\0';
-		if (rmdir(removal.path))
+		removal.buf[removal.len] = '\0';
+		if (rmdir(removal.buf))
 			break;
 		do {
 			removal.len--;
 		} while (removal.len > new_len &&
-			 removal.path[removal.len] != '/');
+			 removal.buf[removal.len] != '/');
 	}
 	removal.len = new_len;
 }
@@ -297,7 +294,7 @@ void schedule_dir_for_removal(const char *name, int len)
 	int match_len, last_slash, i, previous_slash;
 
 	match_len = last_slash = i =
-		longest_path_match(name, len, removal.path, removal.len,
+		longest_path_match(name, len, removal.buf, removal.len,
 				   &previous_slash);
 	/* Find last slash inside 'name' */
 	while (i < len) {
@@ -317,11 +314,8 @@ void schedule_dir_for_removal(const char *name, int len)
 	 * If we go deeper down the directory tree, we only need to
 	 * save the new path components as we go down.
 	 */
-	if (match_len < last_slash) {
-		memcpy(&removal.path[match_len], &name[match_len],
-		       last_slash - match_len);
-		removal.len = last_slash;
-	}
+	if (match_len < last_slash)
+		strbuf_add(&removal, &name[match_len], last_slash - match_len);
 }
 
 void remove_scheduled_dirs(void)
