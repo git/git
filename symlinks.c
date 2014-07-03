@@ -121,7 +121,7 @@ static int lstat_cache_matchlen(struct cache_def *cache,
 	 */
 	*ret_flags = FL_DIR;
 	last_slash_dir = last_slash;
-	max_len = len < MAX_LONG_PATH ? len : MAX_LONG_PATH;
+	max_len = len < PATH_MAX ? len : PATH_MAX;
 	while (match_len < max_len) {
 		do {
 			cache->path[match_len] = name[match_len];
@@ -274,7 +274,7 @@ static int threaded_has_dirs_only_path(struct cache_def *cache, const char *name
 }
 
 static struct removal_def {
-	char path[MAX_LONG_PATH];
+	char path[PATH_MAX];
 	int len;
 } removal;
 
