@@ -158,12 +158,12 @@ static int lstat_cache_matchlen(struct cache_def *cache,
 	 * for the moment!
 	 */
 	save_flags = *ret_flags & track_flags & (FL_NOENT|FL_SYMLINK);
-	if (save_flags && last_slash > 0 && last_slash <= MAX_LONG_PATH) {
+	if (save_flags && last_slash > 0 && last_slash <= PATH_MAX) {
 		cache->path[last_slash] = '\0';
 		cache->len = last_slash;
 		cache->flags = save_flags;
 	} else if ((track_flags & FL_DIR) &&
-		   last_slash_dir > 0 && last_slash_dir <= MAX_LONG_PATH) {
+		   last_slash_dir > 0 && last_slash_dir <= PATH_MAX) {
 		/*
 		 * We have a separate test for the directory case,
 		 * since it could be that we have found a symlink or a
