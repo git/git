@@ -1068,12 +1068,16 @@ struct checkout {
 extern int checkout_entry(struct cache_entry *ce, const struct checkout *state, char *topath);
 
 struct cache_def {
-	char path[PATH_MAX + 1];
-	int len;
+	struct strbuf path;
 	int flags;
 	int track_flags;
 	int prefix_len_stat_func;
 };
+#define CACHE_DEF_INIT { STRBUF_INIT, 0, 0, 0 }
+static inline void cache_def_free(struct cache_def *cache)
+{
+	strbuf_release(&cache->path);
+}
 
 extern int has_symlink_leading_path(const char *name, int len);
 extern int threaded_has_symlink_leading_path(struct cache_def *, const char *, int);
