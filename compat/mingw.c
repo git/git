@@ -1008,7 +1008,7 @@ static int do_lstat(int follow, const char *file_name, struct stat *buf)
 static int do_stat_internal(int follow, const char *file_name, struct stat *buf)
 {
 	size_t namelen;
-	char alt_name[PATH_MAX];
+	char alt_name[MAX_LONG_PATH];
 
 	if (!do_lstat(follow, file_name, buf))
 		return 0;
@@ -1024,7 +1024,7 @@ static int do_stat_internal(int follow, const char *file_name, struct stat *buf)
 		return -1;
 	while (namelen && file_name[namelen-1] == '/')
 		--namelen;
-	if (!namelen || namelen >= PATH_MAX)
+	if (!namelen || namelen >= MAX_LONG_PATH)
 		return -1;
 
 	memcpy(alt_name, file_name, namelen);
