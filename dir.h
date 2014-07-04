@@ -111,13 +111,13 @@ struct dir_struct {
 	 * per-directory exclude lists.
 	 *
 	 * exclude_stack points to the top of the exclude_stack, and
-	 * basebuf contains the full path to the current
+	 * base contains the full path to the current
 	 * (sub)directory in the traversal. Exclude points to the
 	 * matching exclude struct if the directory is excluded.
 	 */
 	struct exclude_stack *exclude_stack;
 	struct exclude *exclude;
-	char basebuf[PATH_MAX];
+	struct strbuf base;
 };
 
 /*
