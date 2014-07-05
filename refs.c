@@ -153,6 +153,7 @@ int check_refname_format(const char *refname, int flags)
 	const __m128i tilde_lb = _mm_set1_epi8('~' - 1);
 
 	int component_count = 0;
+	int orig_flags = flags;
 
 	if (refname[0] == 0 || refname[0] == '/') {
 		/* entirely empty ref or initial ref component */
@@ -178,7 +179,7 @@ int check_refname_format(const char *refname, int flags)
 			 * End-of-page; fall back to slow method for
 			 * this entire ref.
 			 */
-			return check_refname_format_bytewise(refname, flags);
+			return check_refname_format_bytewise(refname, orig_flags);
 
 		tmp = _mm_loadu_si128((__m128i *)cp);
 		tmp1 = _mm_loadu_si128((__m128i *)(cp + 1));
