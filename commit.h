@@ -312,6 +312,11 @@ extern struct commit_extra_header *read_commit_extra_headers(struct commit *, co
 
 extern void free_commit_extra_headers(struct commit_extra_header *extra);
 
+typedef void (*each_mergetag_fn)(struct commit *commit, struct commit_extra_header *extra,
+				 void *cb_data);
+
+extern void for_each_mergetag(each_mergetag_fn fn, struct commit *commit, void *data);
+
 struct merge_remote_desc {
 	struct object *obj; /* the named object, could be a tag */
 	const char *name;
