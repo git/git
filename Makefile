@@ -1643,13 +1643,20 @@ SHELL = $(SHELL_PATH)
 all:: shell_compatibility_test
 
 ifeq "$(PROFILE)" "BUILD"
-ifeq ($(filter all,$(MAKECMDGOALS)),all)
-all:: profile-clean
+all:: profile
+endif
+
+profile:: profile-clean
 	$(MAKE) PROFILE=GEN all
 	$(MAKE) PROFILE=GEN -j1 test
 	$(MAKE) PROFILE=GEN -j1 perf
-endif
-endif
+	$(MAKE) PROFILE=USE all
+
+profile-fast: profile-clean
+	$(MAKE) PROFILE=GEN all
+	$(MAKE) PROFILE=GEN -j1 perf
+	$(MAKE) PROFILE=USE all
+
 
 all:: $(ALL_PROGRAMS) $(SCRIPT_LIB) $(BUILT_INS) $(OTHER_PROGRAMS) GIT-BUILD-OPTIONS
 ifneq (,$X)
@@ -2335,6 +2342,12 @@ endif
 mergetools_instdir_SQ = $(subst ','\'',$(mergetools_instdir))
 
 install_bindir_programs := $(patsubst %,%$X,$(BINDIR_PROGRAMS_NEED_X)) $(BINDIR_PROGRAMS_NO_X)
+
+profile-install: profile
+	$(MAKE) install
+
+profile-fast-install: profile-fast
+	$(MAKE) install
 
 install: all
 	$(INSTALL) -d -m 755 '$(DESTDIR_SQ)$(bindir_SQ)'
