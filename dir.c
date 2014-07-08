@@ -798,7 +798,7 @@ static void prep_exclude(struct dir_struct *dir, const char *base, int baselen)
 	 * path being checked. */
 	while ((stk = dir->exclude_stack) != NULL) {
 		if (stk->baselen <= baselen &&
-		    !strncmp(dir->basebuf, base, stk->baselen))
+		    !strncmp(dir->base.buf, base, stk->baselen))
 			break;
 		el = &group->el[dir->exclude_stack->exclude_ix];
 		dir->exclude_stack = stk->prev;
@@ -833,48 +833,50 @@ static void prep_exclude(struct dir_struct *dir, const char *base, int baselen)
 		stk->baselen = cp - base;
 		stk->exclude_ix = group->nr;
 		el = add_exclude_list(dir, EXC_DIRS, NULL);
-		memcpy(dir->basebuf + current, base + current,
+		strbuf_grow(&dir->base, stk->baselen);
+		memcpy(dir->base.buf + current, base + current,
 		       stk->baselen - current);
 
 		/* Abort if the directory is excluded */
 		if (stk->baselen) {
 			int dt = DT_DIR;
-			dir->basebuf[stk->baselen - 1] = 0;
+			dir->base.buf[stk->baselen - 1] = 0;
 			dir->exclude = last_exclude_matching_from_lists(dir,
-				dir->basebuf, stk->baselen - 1,
-				dir->basebuf + current, &dt);
-			dir->basebuf[stk->baselen - 1] = '/';
+				dir->base.buf, stk->baselen - 1,
+				dir->base.buf + current, &dt);
+			dir->base.buf[stk->baselen - 1] = '/';
 			if (dir->exclude &&
 			    dir->exclude->flags & EXC_FLAG_NEGATIVE)
 				dir->exclude = NULL;
 			if (dir->exclude) {
-				dir->basebuf[stk->baselen] = 0;
+				dir->base.buf[stk->baselen] = 0;
 				dir->exclude_stack = stk;
 				return;
 			}
 		}
 
-		/* Try to read per-directory file unless path is too long */
-		if (dir->exclude_per_dir &&
-		    stk->baselen + strlen(dir->exclude_per_dir) < PATH_MAX) {
-			strcpy(dir->basebuf + stk->baselen,
+		/* Try to read per-directory file */
+		if (dir->exclude_per_dir) {
+			strbuf_grow(&dir->base, stk->baselen +
+				    strlen(dir->exclude_per_dir));
+			strcpy(dir->base.buf + stk->baselen,
 					dir->exclude_per_dir);
 			/*
-			 * dir->basebuf gets reused by the traversal, but we
+			 * dir->base gets reused by the traversal, but we
 			 * need fname to remain unchanged to ensure the src
 			 * member of each struct exclude correctly
 			 * back-references its source file.  Other invocations
 			 * of add_exclude_list provide stable strings, so we
 			 * strdup() and free() here in the caller.
 			 */
-			el->src = strdup(dir->basebuf);
-			add_excludes_from_file_to_list(dir->basebuf,
-					dir->basebuf, stk->baselen, el, 1);
+			el->src = strdup(dir->base.buf);
+			add_excludes_from_file_to_list(dir->base.buf,
+					dir->base.buf, stk->baselen, el, 1);
 		}
 		dir->exclude_stack = stk;
 		current = stk->baselen;
 	}
-	dir->basebuf[baselen] = '\0';
+	dir->base.buf[baselen] = '\0';
 }
 
 /*
@@ -1671,4 +1673,5 @@ void clear_directory(struct dir_struct *dir)
 		free(stk);
 		stk = prev;
 	}
+	strbuf_release(&dir->base);
 }
