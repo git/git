@@ -1647,6 +1647,7 @@ ifeq ($(filter all,$(MAKECMDGOALS)),all)
 all:: profile-clean
 	$(MAKE) PROFILE=GEN all
 	$(MAKE) PROFILE=GEN -j1 test
+	$(MAKE) PROFILE=GEN -j1 perf
 endif
 endif
 
