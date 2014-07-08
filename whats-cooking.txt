@@ -1,22 +1,15 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jun 2014, #06; Thu, 26)
-X-master-at: ea0e524ebd60f87546a9998e447d307d3f51a3e3
-X-next-at: 2fd69c3c8efbb671c0151b34525ef25f1f782297
+Subject: What's cooking in git.git (Jul 2014, #01; Tue, 8)
+X-master-at: 72c779457cd72928e36f2bc43c3ff7f3ae7b77c3
+X-next-at: 35b839c24c6ee47bec1710eabfa8653925462638
 
-What's cooking in git.git (Jun 2014, #06; Thu, 26)
+What's cooking in git.git (Jul 2014, #01; Tue, 8)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
-
-Fixes accumulated on the 'master' front made into 2.0.1.  The topics
-in flight continue to separate into two distinct layers (i.e.
-stalled-and-need-to-be-rerolld vs sure-to-graduate-soon).
-
-Four mingw series are still in limbo--are they in good enough shape
-for Windows folks who wanted to upstream them?
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -26,129 +19,210 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* ep/avoid-test-a-o (2014-06-19) 20 commits
-  (merged to 'next' on 2014-06-20 at c47322b)
- + git-submodule.sh: avoid "echo" path-like values
- + git-submodule.sh: avoid "test <cond> -a/-o <cond>"
- + t/test-lib-functions.sh: avoid "test <cond> -a/-o <cond>"
- + t/t9814-git-p4-rename.sh: avoid "test <cond> -a/-o <cond>"
- + t/t5538-push-shallow.sh: avoid "test <cond> -a/-o <cond>"
- + t/t5403-post-checkout-hook.sh: avoid "test <cond> -a/-o <cond>"
- + t/t5000-tar-tree.sh: avoid "test <cond> -a/-o <cond>"
- + t/t4102-apply-rename.sh: avoid "test <cond> -a/-o <cond>"
- + t/t0026-eol-config.sh: avoid "test <cond> -a/-o <cond>"
- + t/t0025-crlf-auto.sh: avoid "test <cond> -a/-o <cond>"
- + t/lib-httpd.sh: avoid "test <cond> -a/-o <cond>"
- + git-rebase--interactive.sh: avoid "test <cond> -a/-o <cond>"
- + git-mergetool.sh: avoid "test <cond> -a/-o <cond>"
- + git-bisect.sh: avoid "test <cond> -a/-o <cond>"
- + contrib/examples/git-resolve.sh: avoid "test <cond> -a/-o <cond>"
- + contrib/examples/git-repack.sh: avoid "test <cond> -a/-o <cond>"
- + contrib/examples/git-merge.sh: avoid "test <cond> -a/-o <cond>"
- + contrib/examples/git-commit.sh: avoid "test <cond> -a/-o <cond>"
- + contrib/examples/git-clone.sh: avoid "test <cond> -a/-o <cond>"
- + check_bindir: avoid "test <cond> -a/-o <cond>"
+* bc/fix-rebase-merge-skip (2014-06-16) 1 commit
+  (merged to 'next' on 2014-06-20 at 01f81f5)
+ + rebase--merge: fix --skip with two conflicts in a row
 
- Update tests and scripts to avoid "test ... -a ...", which is often
- more error-prone than "test ... && test ...".
-
- Squashed misconversion fix-up into git-submodule.sh updates.
+ "git rebase --skip" did not work well when it stopped due to a
+ conflict twice in a row.
 
 
-* fr/sequencer-fail-with-not-one-upon-no-ff (2014-06-09) 1 commit
-  (merged to 'next' on 2014-06-16 at 29734cc)
- + sequencer: signal failed ff as an aborted, not a conflicted merge
+* dt/refs-check-refname-component-sse (2014-06-18) 1 commit
+  (merged to 'next' on 2014-06-20 at d286027)
+ + refs.c: SSE2 optimizations for check_refname_component
+
+ Further micro-optimization of a leaf-function.
 
 
-* jk/repack-pack-keep-objects (2014-06-10) 3 commits
-  (merged to 'next' on 2014-06-16 at 89716c9)
- + repack: s/write_bitmap/&s/ in code
- + repack: respect pack.writebitmaps
- + repack: do not accidentally pack kept objects by default
- (this branch is used by jk/repack-pack-writebitmaps-config.)
+* jk/commit-buffer-length (2014-06-13) 18 commits
+  (merged to 'next' on 2014-06-16 at b2d2d7b)
+ + reuse cached commit buffer when parsing signatures
+ + commit: record buffer length in cache
+ + commit: convert commit->buffer to a slab
+ + commit-slab: provide a static initializer
+ + use get_commit_buffer everywhere
+ + convert logmsg_reencode to get_commit_buffer
+ + use get_commit_buffer to avoid duplicate code
+ + use get_cached_commit_buffer where appropriate
+ + provide helpers to access the commit buffer
+ + provide a helper to set the commit buffer
+ + provide a helper to free commit buffer
+ + sequencer: use logmsg_reencode in get_message
+ + logmsg_reencode: return const buffer
+ + do not create "struct commit" with xcalloc
+ + commit: push commit_index update into alloc_commit_node
+ + alloc: include any-object allocations in alloc_report
+ + replace dangerous uses of strbuf_attach
+ + commit_tree: take a pointer/len pair rather than a const strbuf
 
- Recent updates to "git repack" started to duplicate objects that
- are in packfiles marked with .keep flag into the new packfile by
- mistake.
-
-
-* jk/repack-pack-writebitmaps-config (2014-06-12) 4 commits
-  (merged to 'next' on 2014-06-16 at 777005d)
- + t7700: drop explicit --no-pack-kept-objects from .keep test
- + repack: introduce repack.writeBitmaps config option
- + repack: simplify handling of --write-bitmap-index
- + pack-objects: stop respecting pack.writebitmaps
- (this branch uses jk/repack-pack-keep-objects.)
-
-
-* jm/dedup-name-compare (2014-06-20) 2 commits
- + cleanup duplicate name_compare() functions
- + name-hash.c: replace cache_name_compare() with memcmp(3)
-
-
-* mc/doc-submodule-sync-recurse (2014-06-13) 1 commit
-  (merged to 'next' on 2014-06-20 at 04815e3)
- + submodule: document "sync --recursive"
+ Move "commit->buffer" out of the in-core commit object and keep
+ track of their lengths.  Use this to optimize the code paths to
+ validate GPG signatures in commit objects.
 
 
-* mc/git-p4-prepare-p4-only (2014-06-13) 1 commit
-  (merged to 'next' on 2014-06-16 at 3c05e19)
- + git-p4: fix submit in non --prepare-p4-only mode
-
-
-* nd/init-restore-env (2014-06-10) 1 commit
-  (merged to 'next' on 2014-06-16 at ecbbfca)
- + git potty: restore environments after alias expansion
-
-
-* pb/trim-trailing-spaces (2014-06-13) 1 commit
-  (merged to 'next' on 2014-06-20 at 6985153)
- + t0008: do not depend on 'echo' handling backslashes specially
-
-
-* rs/blame-refactor (2014-06-13) 2 commits
-  (merged to 'next' on 2014-06-20 at ddaa722)
- + blame: simplify prepare_lines()
- + blame: factor out get_next_line()
-
-
-* sp/complete-ext-alias (2014-06-13) 1 commit
-  (merged to 'next' on 2014-06-16 at 399679e)
- + completion: handle '!f() { ... }; f' and "!sh -c '...' -" aliases
-
-
-* tb/unicode-7.0-display-width (2014-06-18) 1 commit
-  (merged to 'next' on 2014-06-20 at 111b246)
- + Update of unicode_width.h to Unicode Version 7.0
-
-
-* ye/doc-http-proto (2014-06-16) 1 commit
-  (merged to 'next' on 2014-06-20 at 24f347d)
- + http-protocol.txt: Basic Auth is defined in RFC 2617, not RFC 2616
+* ye/http-extract-charset (2014-06-17) 1 commit
+  (merged to 'next' on 2014-06-20 at 9492bae)
+ + http: fix charset detection of extract_content_type()
 
 --------------------------------------------------
 [New Topics]
 
-* jc/fix-clone-single-starting-at-a-tag (2014-06-23) 1 commit
- - builtin/clone.c: detect a clone starting at a tag correctly
+* cc/replace-edit (2014-06-25) 3 commits
+ - replace: use argv_array in export_object
+ - avoid double close of descriptors handed to run_command
+ - replace: replace spaces with tabs in indentation
+ (this branch is used by jk/replace-edit-raw.)
+
+ Will merge to 'next'.
+
+
+* ep/submodule-code-cleanup (2014-06-30) 1 commit
+ - submodule.c: use the ARRAY_SIZE macro
+
+ Will merge to 'next'.
+
+
+* jk/replace-edit-raw (2014-06-25) 1 commit
+ - replace: add a --raw mode for --edit
+ (this branch uses cc/replace-edit.)
+
+ Will merge to 'next'.
+
+
+* jk/strip-suffix (2014-06-30) 9 commits
+ - prepare_packed_git_one: refactor duplicate-pack check
+ - verify-pack: use strbuf_strip_suffix
+ - strbuf: implement strbuf_strip_suffix
+ - index-pack: use strip_suffix to avoid magic numbers
+ - use strip_suffix instead of ends_with in simple cases
+ - replace has_extension with ends_with
+ - implement ends_with via strip_suffix
+ - add strip_suffix function
+ - sha1_file: replace PATH_MAX buffer with strbuf in prepare_packed_git_one()
+
+ Will merge to 'next'.
+
+
+* jk/tag-contains (2014-06-30) 8 commits
+ - perf: add tests for tag --contains
+ - tag: use commit_contains
+ - commit: provide a fast multi-tip contains function
+ - string-list: add pos to iterator callback
+ - add functions for memory-efficient bitmaps
+ - paint_down_to_common: use prio_queue
+ - tag: factor out decision to stream tags
+ - tag: allow --sort with -n
+
+ Expecting a reroll.
+
+
+* mg/fix-log-mergetag-color (2014-06-30) 1 commit
+ - log: correctly identify mergetag signature verification status
+
+ Will merge to 'next'.
+
+
+* mk/merge-incomplete-files (2014-06-30) 2 commits
+ - git-merge-file: do not add LF at EOF while applying unrelated change
+ - t6023-merge-file.sh: fix and mark as broken invalid tests
+
+ Will merge to 'next'.
+
+
+* rs/status-code-clean-up (2014-06-29) 2 commits
+  (merged to 'next' on 2014-07-08 at db67965)
+ + wt-status: simplify building of summary limit argument
+ + wt-status: use argv_array for environment
+
+ Will merge to 'master'.
+
+
+* tb/crlf-tests (2014-07-08) 2 commits
+  (merged to 'next' on 2014-07-08 at 40764b7)
+ + t0027: combinations of core.autocrlf, core.eol and text
+ + t0025: rename the test files
+
+ Will merge to 'master'.
+
+
+* ak/profile-feedback-build (2014-07-08) 4 commits
+ - Fix profile feedback with -jN and add profile-fast
+ - Run the perf test suite for profile feedback too
+ - Don't define away __attribute__ on gcc
+ - Use BASIC_FLAGS for profile feedback
+
+ Will merge to 'next'.
+
+
+* cb/filter-branch-prune-empty-degenerate-merges (2014-07-01) 1 commit
+ - filter-branch: eliminate duplicate mapped parents
+
+ Will merge to 'next'.
+
+
+* cc/for-each-mergetag (2014-07-07) 1 commit
+ - commit: add for_each_mergetag()
+ (this branch is used by cc/replace-graft.)
+
+ Will merge to 'next'.
+
+
+* dt/cache-tree-repair (2014-07-08) 4 commits
+ - cache-tree: write updated cache-tree after commit
+ - cache-tree: subdirectory tests
+ - test-dump-cache-tree: invalid trees are not errors
+ - cache-tree: create/update cache-tree on checkout
+
+ Reviews seen; waiting for a response.
+
+
+* jl/test-lint-scripts (2014-07-07) 3 commits
+ - DONTMERGE: missing sign-off
+ - t/Makefile: always test all lint targets when running tests
+ - t/Makefile: check helper scripts for non-portable shell commands too
+
+
+* kb/hashmap-updates (2014-07-07) 4 commits
+ - hashmap: add string interning API
+ - hashmap: add simplified hashmap_get_from_hash() API
+ - hashmap: improve struct hashmap member documentation
+ - hashmap: factor out getting a hash code from a SHA1
+
+ Reviews sent; waiting for a response.
+
+
+* kb/path-max-must-go (2014-07-07) 2 commits
+  (merged to 'next' on 2014-07-08 at 4d41c18)
+ + dir: remove PATH_MAX limitation
+ + symlinks: remove PATH_MAX limitation
+
+ Will merge to 'master'.
+
+
+* rs/fix-alt-odb-path-comparison (2014-07-01) 1 commit
+  (merged to 'next' on 2014-07-08 at f9c69e5)
+ + sha1_file: avoid overrunning alternate object base string
+
+ Will merge to 'master'.
+
+
+* rs/simplify-archive-tests (2014-07-07) 1 commit
+  (merged to 'next' on 2014-07-08 at c46cfac)
+ + t5000, t5003: simplify commit
+
+ Will merge to 'master'.
+
+
+* zk/log-graph-showsig (2014-07-08) 1 commit
+ - log: fix indentation for --graph --show-signature
+
+ The "--show-signature" option did not pay much attention to
+ "--graph".
 
  Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
-
-* cc/replace-graft (2014-06-09) 5 commits
- - DONTMERGE: wise to wait for peff's commit->buffer length series
- - contrib: add convert-grafts-to-replace-refs.sh
- - Documentation: replace: add --graft option
- - replace: add test for --graft
- - replace: add --graft option
-
- "git replace" learned a "--graft" option to rewrite parents of a
- commit.
-
- Expecting a reroll on top of jk/commit-buffer-length.
-
 
 * ab/add-interactive-show-diff-func-name (2014-05-12) 2 commits
  - SQUASH??? git-add--interactive: Preserve diff heading when splitting hunks
@@ -441,31 +515,49 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* mg/verify-commit (2014-06-23) 5 commits
- - t7510: test verify-commit
- - t7510: exit for loop with test result
- - verify-commit: scriptable commit signature verification
- - gpg-interface: provide access to the payload
- - gpg-interface: provide clear helper for struct signature_check
+* cc/replace-graft (2014-07-07) 9 commits
+ - replace: add test for --graft with a mergetag
+ - replace: check mergetags when using --graft
+ - replace: add test for --graft with signed commit
+ - replace: remove signature when using --graft
+ - contrib: add convert-grafts-to-replace-refs.sh
+ - Documentation: replace: add --graft option
+ - replace: add test for --graft
+ - replace: add --graft option
+ - replace: cleanup redirection style in tests
+ (this branch uses cc/for-each-mergetag.)
 
- Add 'verify-commit' to be used in a way similar to 'verify-tag' is
- used.  Further work on verifying the mergetags might be needed.
-
- Will merge to 'next'.
+ "git replace" learned a "--graft" option to rewrite parents of a
+ commit.
 
 
-* dt/refs-check-refname-component-sse (2014-06-18) 1 commit
-  (merged to 'next' on 2014-06-20 at d286027)
- + refs.c: SSE2 optimizations for check_refname_component
-
- Further micro-optimization of a leaf-function.
+* jc/fix-clone-single-starting-at-a-tag (2014-06-23) 1 commit
+  (merged to 'next' on 2014-07-02 at cc0c4b1)
+ + builtin/clone.c: detect a clone starting at a tag correctly
 
  Will merge to 'master'.
 
 
-* ye/http-extract-charset (2014-06-17) 1 commit
-  (merged to 'next' on 2014-06-20 at 9492bae)
- + http: fix charset detection of extract_content_type()
+* mg/verify-commit (2014-06-23) 5 commits
+  (merged to 'next' on 2014-07-02 at 6d77bcf)
+ + t7510: test verify-commit
+ + t7510: exit for loop with test result
+ + verify-commit: scriptable commit signature verification
+ + gpg-interface: provide access to the payload
+ + gpg-interface: provide clear helper for struct signature_check
+
+ Add 'verify-commit' to be used in a way similar to 'verify-tag' is
+ used.  Further work on verifying the mergetags might be needed.
+
+ Will merge to 'master'.
+
+
+* dt/refs-check-refname-component-sse-fix (2014-07-08) 2 commits
+  (merged to 'next' on 2014-07-08 at 35b839c)
+ + refs: fix valgrind suppression file
+ + refs.c: handle REFNAME_REFSPEC_PATTERN at end of page
+
+ Fixes to a topic that is already in 'master'.
 
  Will merge to 'master'.
 
@@ -512,44 +604,36 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* kb/perf-trace (2014-06-20) 11 commits
+* kb/perf-trace (2014-07-07) 17 commits
+ - progress: simplify performance measurement by using getnanotime()
+ - wt-status: simplify performance measurement by using getnanotime()
  - git: add performance tracing for git's main() function to debug scripts
  - trace: add trace_performance facility to debug performance issues
  - trace: add high resolution timer function to debug performance issues
  - trace: add 'file:line' to all trace output
  - trace: move code around, in preparation to file:line output
  - trace: add current timestamp to all trace output
+ - trace: disable additional trace output for unit tests
  - trace: add infrastructure to augment trace output with additional info
- - trace: factor out printing to the trace file
+ - sha1_file: change GIT_TRACE_PACK_ACCESS logging to use trace API
+ - Documentation/git.txt: improve documentation of 'GIT_TRACE*' variables
+ - trace.h: suppress some sparse warnings and errors
+ - trace: improve trace performance
  - trace: remove redundant printf format attribute
  - trace: consistently name the format parameter
  - trace: move trace declarations from cache.h to new trace.h
 
- Expecting a reroll.
+ Will merge to 'next'.
 
 
-* hv/submodule-config (2014-06-13) 6 commits
- - SQUASH compilation fix
+* hv/submodule-config (2014-06-30) 4 commits
  - do not die on error of parsing fetchrecursesubmodules option
  - use new config API for worktree configurations of submodules
  - extract functions for submodule config set and lookup
  - implement submodule config cache for lookup of submodule names
- - hashmap: add enum for hashmap free_entries option
-
- Expecting a reroll.
 
 
-* bc/fix-rebase-merge-skip (2014-06-16) 1 commit
-  (merged to 'next' on 2014-06-20 at 01f81f5)
- + rebase--merge: fix --skip with two conflicts in a row
-
- "git rebase --skip" did not work well when it stopped due to a
- conflict twice in a row.
-
- Will merge to 'master'.
-
-
-* jl/submodule-tests (2014-06-20) 15 commits
+* jl/submodule-tests (2014-07-07) 14 commits
  - revert: add t3513 for submodule updates
  - stash: add t3906 for submodule updates
  - am: add t4255 for submodule updates
@@ -562,11 +646,10 @@ of the repositories listed at
  - read-tree: add t1013 for submodule updates
  - apply: add t4137 for submodule updates
  - checkout: call the new submodule update test framework
- - SQUASH???
- - submodules: Add the lib-submodule-update.sh test library
+ - submodules: add the lib-submodule-update.sh test library
  - test-lib: add test_dir_is_empty()
 
- Expecting a reroll.
+ Will merge to 'next'.
 
 
 * po/error-message-style (2014-06-16) 1 commit
@@ -625,11 +708,10 @@ of the repositories listed at
  - refs.c: ref_transaction_commit should not free the transaction
  - refs.c: remove ref_transaction_rollback
 
- Updated in response to review comments from Michael.
-
  Portability workaround may be needed on top ($gmane/252496).
- Will merge to 'next'.
-
+ Updates in response to review comments from Michael ($gmane/253033)
+ may be needed for later parts, but the earlier parts look ready
+ for 'next'.
 
 
 * jk/pretty-G-format-fixes (2014-06-25) 6 commits
@@ -646,40 +728,46 @@ of the repositories listed at
 
 
 * nd/split-index (2014-06-13) 32 commits
- - t1700: new tests for split-index mode
- - t2104: make sure split index mode is off for the version test
- - read-cache: force split index mode with GIT_TEST_SPLIT_INDEX
- - read-tree: note about dropping split-index mode or index version
- - read-tree: force split-index mode off on --index-output
- - rev-parse: add --shared-index-path to get shared index path
- - update-index --split-index: do not split if $GIT_DIR is read only
- - update-index: new options to enable/disable split index mode
- - split-index: strip pathname of on-disk replaced entries
- - split-index: do not invalidate cache-tree at read time
- - split-index: the reading part
- - split-index: the writing part
- - read-cache: mark updated entries for split index
- - read-cache: save deleted entries in split index
- - read-cache: mark new entries for split index
- - read-cache: split-index mode
- - read-cache: save index SHA-1 after reading
- - entry.c: update cache_changed if refresh_cache is set in checkout_entry()
- - cache-tree: mark istate->cache_changed on prime_cache_tree()
- - cache-tree: mark istate->cache_changed on cache tree update
- - cache-tree: mark istate->cache_changed on cache tree invalidation
- - unpack-trees: be specific what part of the index has changed
- - resolve-undo: be specific what part of the index has changed
- - update-index: be specific what part of the index has changed
- - read-cache: be specific what part of the index has changed
- - read-cache: be strict about "changed" in remove_marked_cache_entries()
- - read-cache: store in-memory flags in the first 12 bits of ce_flags
- - read-cache: relocate and unexport commit_locked_index()
- - read-cache: new API write_locked_index instead of write_index/write_cache
- - sequencer: do not update/refresh index if the lock cannot be held
- - ewah: delete unused ewah_read_mmap_native declaration
- - ewah: fix constness of ewah_read_mmap
+  (merged to 'next' on 2014-07-08 at 49325ef)
+ + t1700: new tests for split-index mode
+ + t2104: make sure split index mode is off for the version test
+ + read-cache: force split index mode with GIT_TEST_SPLIT_INDEX
+ + read-tree: note about dropping split-index mode or index version
+ + read-tree: force split-index mode off on --index-output
+ + rev-parse: add --shared-index-path to get shared index path
+ + update-index --split-index: do not split if $GIT_DIR is read only
+ + update-index: new options to enable/disable split index mode
+ + split-index: strip pathname of on-disk replaced entries
+ + split-index: do not invalidate cache-tree at read time
+ + split-index: the reading part
+ + split-index: the writing part
+ + read-cache: mark updated entries for split index
+ + read-cache: save deleted entries in split index
+ + read-cache: mark new entries for split index
+ + read-cache: split-index mode
+ + read-cache: save index SHA-1 after reading
+ + entry.c: update cache_changed if refresh_cache is set in checkout_entry()
+ + cache-tree: mark istate->cache_changed on prime_cache_tree()
+ + cache-tree: mark istate->cache_changed on cache tree update
+ + cache-tree: mark istate->cache_changed on cache tree invalidation
+ + unpack-trees: be specific what part of the index has changed
+ + resolve-undo: be specific what part of the index has changed
+ + update-index: be specific what part of the index has changed
+ + read-cache: be specific what part of the index has changed
+ + read-cache: be strict about "changed" in remove_marked_cache_entries()
+ + read-cache: store in-memory flags in the first 12 bits of ce_flags
+ + read-cache: relocate and unexport commit_locked_index()
+ + read-cache: new API write_locked_index instead of write_index/write_cache
+ + sequencer: do not update/refresh index if the lock cannot be held
+ + ewah: delete unused ewah_read_mmap_native declaration
+ + ewah: fix constness of ewah_read_mmap
 
- What's the doneness of this one?
+ An experiment to use two files (the base file and incremental
+ changes relative to it) to represent the index to reduce I/O cost
+ of rewriting a large index when only small part of the working tree
+ changes.
+
+ Will merge to 'master'.
 
 
 * jc/test-lazy-prereq (2014-06-13) 1 commit
@@ -690,75 +778,51 @@ of the repositories listed at
  Will hold.
 
 
-* jk/commit-buffer-length (2014-06-13) 18 commits
-  (merged to 'next' on 2014-06-16 at b2d2d7b)
- + reuse cached commit buffer when parsing signatures
- + commit: record buffer length in cache
- + commit: convert commit->buffer to a slab
- + commit-slab: provide a static initializer
- + use get_commit_buffer everywhere
- + convert logmsg_reencode to get_commit_buffer
- + use get_commit_buffer to avoid duplicate code
- + use get_cached_commit_buffer where appropriate
- + provide helpers to access the commit buffer
- + provide a helper to set the commit buffer
- + provide a helper to free commit buffer
- + sequencer: use logmsg_reencode in get_message
- + logmsg_reencode: return const buffer
- + do not create "struct commit" with xcalloc
- + commit: push commit_index update into alloc_commit_node
- + alloc: include any-object allocations in alloc_report
- + replace dangerous uses of strbuf_attach
- + commit_tree: take a pointer/len pair rather than a const strbuf
-
- Move "commit->buffer" out of the in-core commit object and keep
- track of their lengths.  Use this to optimize the code paths to
- validate GPG signatures in commit objects.
+* sk/mingw-unicode-spawn-args (2014-06-16) 6 commits
+  (merged to 'next' on 2014-06-30 at c8f79d0)
+ + Win32: Unicode arguments (incoming)
+ + Win32: Unicode arguments (outgoing)
+ + MinGW: disable CRT command line globbing
+ + Win32: fix potential multi-threading issue
+ + Win32: simplify internal mingw_spawn* APIs
+ + Win32: let mingw_execve() return an int
+ (this branch uses sk/mingw-main and sk/mingw-uni-console.)
 
  Will merge to 'master'.
 
 
-* sk/mingw-unicode-spawn-args (2014-06-16) 6 commits
- - Win32: Unicode arguments (incoming)
- - Win32: Unicode arguments (outgoing)
- - MinGW: disable CRT command line globbing
- - Win32: fix potential multi-threading issue
- - Win32: simplify internal mingw_spawn* APIs
- - Win32: let mingw_execve() return an int
- (this branch uses sk/mingw-main and sk/mingw-uni-console.)
-
- Are Windows folks happy with all four mingw topics?
-
-
 * sk/mingw-dirent (2014-06-09) 5 commits
- - Win32 dirent: improve dirent implementation
- - Win32 dirent: clarify #include directives
- - Win32 dirent: change FILENAME_MAX to MAX_PATH
- - Win32 dirent: remove unused dirent.d_reclen member
- - Win32 dirent: remove unused dirent.d_ino member
+  (merged to 'next' on 2014-06-30 at ae9e2d6)
+ + Win32 dirent: improve dirent implementation
+ + Win32 dirent: clarify #include directives
+ + Win32 dirent: change FILENAME_MAX to MAX_PATH
+ + Win32 dirent: remove unused dirent.d_reclen member
+ + Win32 dirent: remove unused dirent.d_ino member
 
- Are Windows folks happy with all four mingw topics?
+ Will merge to 'master'.
 
 
 * sk/mingw-main (2014-06-10) 2 commits
- - mingw: avoid const warning
- - Win32: move main macro to a function
+  (merged to 'next' on 2014-06-30 at 447cb50)
+ + mingw: avoid const warning
+ + Win32: move main macro to a function
  (this branch is used by sk/mingw-uni-console and sk/mingw-unicode-spawn-args.)
 
- Are Windows folks happy with all four mingw topics?
+ Will merge to 'master'.
 
 
 * sk/mingw-uni-console (2014-06-16) 7 commits
- - Win32: reliably detect console pipe handles
- - Win32: fix broken pipe detection
- - Win32: Thread-safe windows console output
- - Win32: add Unicode conversion functions
- - Win32: warn if the console font doesn't support Unicode
- - Win32: detect console streams more reliably
- - Win32: support Unicode console output
+  (merged to 'next' on 2014-06-30 at f4fbc41)
+ + Win32: reliably detect console pipe handles
+ + Win32: fix broken pipe detection
+ + Win32: Thread-safe windows console output
+ + Win32: add Unicode conversion functions
+ + Win32: warn if the console font doesn't support Unicode
+ + Win32: detect console streams more reliably
+ + Win32: support Unicode console output
  (this branch is used by sk/mingw-unicode-spawn-args; uses sk/mingw-main.)
 
- Are Windows folks happy with all four mingw topics?
+ Will merge to 'master'.
 
 
 * mt/patch-id-stable (2014-06-10) 1 commit
@@ -770,19 +834,3 @@ of the repositories listed at
  is left out of 'master' for now.
 
  Will hold.
-
---------------------------------------------------
-[Discarded]
-
-* jl/git-gui-show-added-submodule-changes (2014-04-15) 1 commit
- . git-gui: show staged submodules regardless of ignore config
-
- Merged to the upstream.
-
-
-* jl/gitk-show-added-submodule-changes (2014-04-15) 1 commit
- . gitk: show staged submodules regardless of ignore config
-
- Merged to the upstream.
-
-
