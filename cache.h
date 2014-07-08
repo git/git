@@ -150,6 +150,7 @@ struct cache_entry {
 	unsigned int ce_mode;
 	unsigned int ce_flags;
 	unsigned int ce_namelen;
+	unsigned int index;	/* for link extension */
 	unsigned char sha1[20];
 	char name[FLEX_ARRAY]; /* more */
 };
@@ -160,7 +161,7 @@ struct cache_entry {
 #define CE_STAGESHIFT 12
 
 /*
- * Range 0xFFFF0000 in ce_flags is divided into
+ * Range 0xFFFF0FFF in ce_flags is divided into
  * two parts: in-memory flags and on-disk ones.
  * Flags in CE_EXTENDED_FLAGS will get saved on-disk
  * if you want to save a new flag, add it in
@@ -182,6 +183,9 @@ struct cache_entry {
 
 /* used to temporarily mark paths matched by pathspecs */
 #define CE_MATCHED           (1 << 26)
+
+#define CE_UPDATE_IN_BASE    (1 << 27)
+#define CE_STRIP_NAME        (1 << 28)
 
 /*
  * Extended on-disk flags
@@ -283,12 +287,22 @@ static inline unsigned int canon_mode(unsigned int mode)
 
 #define cache_entry_size(len) (offsetof(struct cache_entry,name) + (len) + 1)
 
+#define SOMETHING_CHANGED	(1 << 0) /* unclassified changes go here */
+#define CE_ENTRY_CHANGED	(1 << 1)
+#define CE_ENTRY_REMOVED	(1 << 2)
+#define CE_ENTRY_ADDED		(1 << 3)
+#define RESOLVE_UNDO_CHANGED	(1 << 4)
+#define CACHE_TREE_CHANGED	(1 << 5)
+#define SPLIT_INDEX_ORDERED	(1 << 6)
+
+struct split_index;
 struct index_state {
 	struct cache_entry **cache;
 	unsigned int version;
 	unsigned int cache_nr, cache_alloc, cache_changed;
 	struct string_list *resolve_undo;
 	struct cache_tree *cache_tree;
+	struct split_index *split_index;
 	struct cache_time timestamp;
 	unsigned name_hash_initialized : 1,
 		 initialized : 1;
@@ -317,7 +331,6 @@ extern void free_name_hash(struct index_state *istate);
 #define read_cache_preload(pathspec) read_index_preload(&the_index, (pathspec))
 #define is_cache_unborn() is_index_unborn(&the_index)
 #define read_cache_unmerged() read_index_unmerged(&the_index)
-#define write_cache(newfd, cache, entries) write_index(&the_index, (newfd))
 #define discard_cache() discard_index(&the_index)
 #define unmerged_cache() unmerged_index(&the_index)
 #define cache_name_pos(name, namelen) index_name_pos(&the_index,(name),(namelen))
@@ -472,12 +485,17 @@ extern int daemonize(void);
 	} while (0)
 
 /* Initialize and use the cache information */
+struct lock_file;
 extern int read_index(struct index_state *);
 extern int read_index_preload(struct index_state *, const struct pathspec *pathspec);
+extern int do_read_index(struct index_state *istate, const char *path,
+			 int must_exist); /* for testting only! */
 extern int read_index_from(struct index_state *, const char *path);
 extern int is_index_unborn(struct index_state *);
 extern int read_index_unmerged(struct index_state *);
-extern int write_index(struct index_state *, int newfd);
+#define COMMIT_LOCK		(1 << 0)
+#define CLOSE_LOCK		(1 << 1)
+extern int write_locked_index(struct index_state *, struct lock_file *lock, unsigned flags);
 extern int discard_index(struct index_state *);
 extern int unmerged_index(const struct index_state *);
 extern int verify_path(const char *path);
@@ -489,6 +507,7 @@ extern int index_name_pos(const struct index_state *, const char *name, int name
 #define ADD_CACHE_SKIP_DFCHECK 4	/* Ok to skip DF conflict checks */
 #define ADD_CACHE_JUST_APPEND 8		/* Append only; tree.c::read_tree() */
 #define ADD_CACHE_NEW_ONLY 16		/* Do not replace existing ones */
+#define ADD_CACHE_KEEP_CACHE_TREE 32	/* Do not invalidate cache-tree */
 extern int add_index_entry(struct index_state *, struct cache_entry *ce, int option);
 extern void rename_index_entry_at(struct index_state *, int pos, const char *new_name);
 extern int remove_index_entry_at(struct index_state *, int pos);
@@ -566,7 +585,6 @@ extern int commit_lock_file(struct lock_file *);
 extern void update_index_if_able(struct index_state *, struct lock_file *);
 
 extern int hold_locked_index(struct lock_file *, int);
-extern int commit_locked_index(struct lock_file *);
 extern void set_alternate_index_output(const char *);
 extern int close_lock_file(struct lock_file *);
 extern void rollback_lock_file(struct lock_file *);
@@ -1078,6 +1096,7 @@ const char *show_ident_date(const struct ident_split *id, enum date_mode mode);
 extern int ident_cmp(const struct ident_split *, const struct ident_split *);
 
 struct checkout {
+	struct index_state *istate;
 	const char *base_dir;
 	int base_dir_len;
 	unsigned force:1,

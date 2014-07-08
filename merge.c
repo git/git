@@ -50,13 +50,13 @@ int checkout_fast_forward(const unsigned char *head,
 	struct tree *trees[MAX_UNPACK_TREES];
 	struct unpack_trees_options opts;
 	struct tree_desc t[MAX_UNPACK_TREES];
-	int i, fd, nr_trees = 0;
+	int i, nr_trees = 0;
 	struct dir_struct dir;
 	struct lock_file *lock_file = xcalloc(1, sizeof(struct lock_file));
 
 	refresh_cache(REFRESH_QUIET);
 
-	fd = hold_locked_index(lock_file, 1);
+	hold_locked_index(lock_file, 1);
 
 	memset(&trees, 0, sizeof(trees));
 	memset(&opts, 0, sizeof(opts));
@@ -89,8 +89,7 @@ int checkout_fast_forward(const unsigned char *head,
 	}
 	if (unpack_trees(nr_trees, t, &opts))
 		return -1;
-	if (write_cache(fd, active_cache, active_nr) ||
-		commit_locked_index(lock_file))
+	if (write_locked_index(&the_index, lock_file, COMMIT_LOCK))
 		die(_("unable to write new index file"));
 	return 0;
 }

@@ -129,6 +129,9 @@ Git index format
   (Version 4) In version 4, the padding after the pathname does not
   exist.
 
+  Interpretation of index entries in split index mode is completely
+  different. See below for details.
+
 == Extensions
 
 === Cached tree
@@ -198,3 +201,35 @@ Git index format
   - At most three 160-bit object names of the entry in stages from 1 to 3
     (nothing is written for a missing stage).
 
+=== Split index
+
+  In split index mode, the majority of index entries could be stored
+  in a separate file. This extension records the changes to be made on
+  top of that to produce the final index.
+
+  The signature for this extension is { 'l', 'i, 'n', 'k' }.
+
+  The extension consists of:
+
+  - 160-bit SHA-1 of the shared index file. The shared index file path
+    is $GIT_DIR/sharedindex.<SHA-1>. If all 160 bits are zero, the
+    index does not require a shared index file.
+
+  - An ewah-encoded delete bitmap, each bit represents an entry in the
+    shared index. If a bit is set, its corresponding entry in the
+    shared index will be removed from the final index.  Note, because
+    a delete operation changes index entry positions, but we do need
+    original positions in replace phase, it's best to just mark
+    entries for removal, then do a mass deletion after replacement.
+
+  - An ewah-encoded replace bitmap, each bit represents an entry in
+    the shared index. If a bit is set, its corresponding entry in the
+    shared index will be replaced with an entry in this index
+    file. All replaced entries are stored in sorted order in this
+    index. The first "1" bit in the replace bitmap corresponds to the
+    first index entry, the second "1" bit to the second entry and so
+    on. Replaced entries may have empty path names to save space.
+
+  The remaining index entries after replaced ones will be added to the
+  final index. These added entries are also sorted by entry namme then
+  stage.

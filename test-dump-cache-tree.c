@@ -56,11 +56,12 @@ static int dump_cache_tree(struct cache_tree *it,
 
 int main(int ac, char **av)
 {
+	struct index_state istate;
 	struct cache_tree *another = cache_tree();
 	if (read_cache() < 0)
 		die("unable to read index file");
-	cache_tree_update(another,
-			  (const struct cache_entry * const *)active_cache,
-			  active_nr, WRITE_TREE_DRY_RUN);
+	istate = the_index;
+	istate.cache_tree = another;
+	cache_tree_update(&istate, WRITE_TREE_DRY_RUN);
 	return dump_cache_tree(active_cache_tree, another, "");
 }

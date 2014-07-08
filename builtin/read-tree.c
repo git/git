@@ -99,7 +99,7 @@ static struct lock_file lock_file;
 
 int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 {
-	int i, newfd, stage = 0;
+	int i, stage = 0;
 	unsigned char sha1[20];
 	struct tree_desc t[MAX_UNPACK_TREES];
 	struct unpack_trees_options opts;
@@ -149,11 +149,20 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 	argc = parse_options(argc, argv, unused_prefix, read_tree_options,
 			     read_tree_usage, 0);
 
-	newfd = hold_locked_index(&lock_file, 1);
+	hold_locked_index(&lock_file, 1);
 
 	prefix_set = opts.prefix ? 1 : 0;
 	if (1 < opts.merge + opts.reset + prefix_set)
 		die("Which one? -m, --reset, or --prefix?");
+
+	/*
+	 * NEEDSWORK
+	 *
+	 * The old index should be read anyway even if we're going to
+	 * destroy all index entries because we still need to preserve
+	 * certain information such as index version or split-index
+	 * mode.
+	 */
 
 	if (opts.reset || opts.merge || opts.prefix) {
 		if (read_cache_unmerged() && (opts.prefix || opts.merge))
@@ -231,10 +240,9 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 	 * what came from the tree.
 	 */
 	if (nr_trees == 1 && !opts.prefix)
-		prime_cache_tree(&active_cache_tree, trees[0]);
+		prime_cache_tree(&the_index, trees[0]);
 
-	if (write_cache(newfd, active_cache, active_nr) ||
-	    commit_locked_index(&lock_file))
+	if (write_locked_index(&the_index, &lock_file, COMMIT_LOCK))
 		die("unable to write new index file");
 	return 0;
 }

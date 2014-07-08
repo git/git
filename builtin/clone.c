@@ -617,7 +617,7 @@ static int checkout(void)
 	struct unpack_trees_options opts;
 	struct tree *tree;
 	struct tree_desc t;
-	int err = 0, fd;
+	int err = 0;
 
 	if (option_no_checkout)
 		return 0;
@@ -641,7 +641,7 @@ static int checkout(void)
 	setup_work_tree();
 
 	lock_file = xcalloc(1, sizeof(struct lock_file));
-	fd = hold_locked_index(lock_file, 1);
+	hold_locked_index(lock_file, 1);
 
 	memset(&opts, 0, sizeof opts);
 	opts.update = 1;
@@ -657,8 +657,7 @@ static int checkout(void)
 	if (unpack_trees(1, &t, &opts) < 0)
 		die(_("unable to checkout working tree"));
 
-	if (write_cache(fd, active_cache, active_nr) ||
-	    commit_locked_index(lock_file))
+	if (write_locked_index(&the_index, lock_file, COMMIT_LOCK))
 		die(_("unable to write new index file"));
 
 	err |= run_hook_le(NULL, "post-checkout", sha1_to_hex(null_sha1),

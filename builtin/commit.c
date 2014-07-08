@@ -305,7 +305,6 @@ static void refresh_cache_or_die(int refresh_flags)
 static char *prepare_index(int argc, const char **argv, const char *prefix,
 			   const struct commit *current_head, int is_status)
 {
-	int fd;
 	struct string_list partial;
 	struct pathspec pathspec;
 	int refresh_flags = REFRESH_QUIET;
@@ -321,12 +320,11 @@ static char *prepare_index(int argc, const char **argv, const char *prefix,
 
 	if (interactive) {
 		char *old_index_env = NULL;
-		fd = hold_locked_index(&index_lock, 1);
+		hold_locked_index(&index_lock, 1);
 
 		refresh_cache_or_die(refresh_flags);
 
-		if (write_cache(fd, active_cache, active_nr) ||
-		    close_lock_file(&index_lock))
+		if (write_locked_index(&the_index, &index_lock, CLOSE_LOCK))
 			die(_("unable to create temporary index"));
 
 		old_index_env = getenv(INDEX_ENVIRONMENT);
@@ -360,12 +358,11 @@ static char *prepare_index(int argc, const char **argv, const char *prefix,
 	 * (B) on failure, rollback the real index.
 	 */
 	if (all || (also && pathspec.nr)) {
-		fd = hold_locked_index(&index_lock, 1);
+		hold_locked_index(&index_lock, 1);
 		add_files_to_cache(also ? prefix : NULL, &pathspec, 0);
 		refresh_cache_or_die(refresh_flags);
 		update_main_cache_tree(WRITE_TREE_SILENT);
-		if (write_cache(fd, active_cache, active_nr) ||
-		    close_lock_file(&index_lock))
+		if (write_locked_index(&the_index, &index_lock, CLOSE_LOCK))
 			die(_("unable to write new_index file"));
 		commit_style = COMMIT_NORMAL;
 		return index_lock.filename;
@@ -381,12 +378,12 @@ static char *prepare_index(int argc, const char **argv, const char *prefix,
 	 * We still need to refresh the index here.
 	 */
 	if (!only && !pathspec.nr) {
-		fd = hold_locked_index(&index_lock, 1);
+		hold_locked_index(&index_lock, 1);
 		refresh_cache_or_die(refresh_flags);
 		if (active_cache_changed) {
 			update_main_cache_tree(WRITE_TREE_SILENT);
-			if (write_cache(fd, active_cache, active_nr) ||
-			    commit_locked_index(&index_lock))
+			if (write_locked_index(&the_index, &index_lock,
+					       COMMIT_LOCK))
 				die(_("unable to write new_index file"));
 		} else {
 			rollback_lock_file(&index_lock);
@@ -432,24 +429,22 @@ static char *prepare_index(int argc, const char **argv, const char *prefix,
 	if (read_cache() < 0)
 		die(_("cannot read the index"));
 
-	fd = hold_locked_index(&index_lock, 1);
+	hold_locked_index(&index_lock, 1);
 	add_remove_files(&partial);
 	refresh_cache(REFRESH_QUIET);
-	if (write_cache(fd, active_cache, active_nr) ||
-	    close_lock_file(&index_lock))
+	if (write_locked_index(&the_index, &index_lock, CLOSE_LOCK))
 		die(_("unable to write new_index file"));
 
-	fd = hold_lock_file_for_update(&false_lock,
-				       git_path("next-index-%"PRIuMAX,
-						(uintmax_t) getpid()),
-				       LOCK_DIE_ON_ERROR);
+	hold_lock_file_for_update(&false_lock,
+				  git_path("next-index-%"PRIuMAX,
+					   (uintmax_t) getpid()),
+				  LOCK_DIE_ON_ERROR);
 
 	create_base_index(current_head);
 	add_remove_files(&partial);
 	refresh_cache(REFRESH_QUIET);
 
-	if (write_cache(fd, active_cache, active_nr) ||
-	    close_lock_file(&false_lock))
+	if (write_locked_index(&the_index, &false_lock, CLOSE_LOCK))
 		die(_("unable to write temporary index file"));
 
 	discard_cache();
