@@ -43,31 +43,44 @@ test_expect_success GPG 'create signed commits' '
 
 	test_tick && git rebase -f HEAD^^ && git tag sixth-signed HEAD^ &&
 	git tag seventh-signed
+
+	echo 8 >file && test_tick && git commit -a -m eighth -SB7227189 &&
+	git tag eighth-signed-alt
 '
 
 test_expect_success GPG 'show signatures' '
 	(
-		for commit in initial second merge fourth-signed fifth-signed sixth-signed master
+		for commit in initial second merge fourth-signed fifth-signed sixth-signed seventh-signed
 		do
 			git show --pretty=short --show-signature $commit >actual &&
-			grep "Good signature from" actual || exit 1
-			! grep "BAD signature from" actual || exit 1
-			echo $commit OK
+			grep "Good signature from" actual &&
+			! grep "BAD signature from" actual &&
+			echo $commit OK || exit 1
 		done
 	) &&
 	(
 		for commit in merge^2 fourth-unsigned sixth-unsigned seventh-unsigned
 		do
 			git show --pretty=short --show-signature $commit >actual &&
-			grep "Good signature from" actual && exit 1
-			! grep "BAD signature from" actual || exit 1
-			echo $commit OK
+			! grep "Good signature from" actual &&
+			! grep "BAD signature from" actual &&
+			echo $commit OK || exit 1
+		done
+	) &&
+	(
+		for commit in eighth-signed-alt
+		do
+			git show --pretty=short --show-signature $commit >actual &&
+			grep "Good signature from" actual &&
+			! grep "BAD signature from" actual &&
+			grep "not certified" actual &&
+			echo $commit OK || exit 1
 		done
 	)
 '
 
 test_expect_success GPG 'detect fudged signature' '
-	git cat-file commit master >raw &&
+	git cat-file commit seventh-signed >raw &&
 
 	sed -e "s/seventh/7th forged/" raw >forged1 &&
 	git hash-object -w -t commit forged1 >forged1.commit &&
@@ -77,7 +90,7 @@ test_expect_success GPG 'detect fudged signature' '
 '
 
 test_expect_success GPG 'detect fudged signature with NUL' '
-	git cat-file commit master >raw &&
+	git cat-file commit seventh-signed >raw &&
 	cat raw >forged2 &&
 	echo Qwik | tr "Q" "\000" >>forged2 &&
 	git hash-object -w -t commit forged2 >forged2.commit &&
@@ -92,6 +105,46 @@ test_expect_success GPG 'amending already signed commit' '
 	git show -s --show-signature HEAD >actual &&
 	grep "Good signature from" actual &&
 	! grep "BAD signature from" actual
+'
+
+test_expect_success GPG 'show good signature with custom format' '
+	cat >expect <<-\EOF &&
+	G
+	13B6F51ECDDE430D
+	C O Mitter <committer@example.com>
+	EOF
+	git log -1 --format="%G?%n%GK%n%GS" sixth-signed >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success GPG 'show bad signature with custom format' '
+	cat >expect <<-\EOF &&
+	B
+	13B6F51ECDDE430D
+	C O Mitter <committer@example.com>
+	EOF
+	git log -1 --format="%G?%n%GK%n%GS" $(cat forged1.commit) >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success GPG 'show unknown signature with custom format' '
+	cat >expect <<-\EOF &&
+	U
+	61092E85B7227189
+	Eris Discordia <discord@example.net>
+	EOF
+	git log -1 --format="%G?%n%GK%n%GS" eighth-signed-alt >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success GPG 'show lack of signature with custom format' '
+	cat >expect <<-\EOF &&
+	N
+
+
+	EOF
+	git log -1 --format="%G?%n%GK%n%GS" seventh-unsigned >actual &&
+	test_cmp expect actual
 '
 
 test_done

@@ -468,4 +468,10 @@ test_expect_success 'single-character name is parsed correctly' '
 	test_cmp expect actual
 '
 
+test_expect_success 'unused %G placeholders are passed through' '
+	echo "%GX %G" >expect &&
+	git log -1 --format="%GX %G" >actual &&
+	test_cmp expect actual
+'
+
 test_done
