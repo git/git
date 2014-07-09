@@ -776,8 +776,8 @@ static int switch_branches(const struct checkout_opts *opts,
 	if (!(flag & REF_ISSYMREF))
 		old.path = NULL;
 
-	if (old.path && starts_with(old.path, "refs/heads/"))
-		old.name = old.path + strlen("refs/heads/");
+	if (old.path)
+		skip_prefix(old.path, "refs/heads/", &old.name);
 
 	if (!new->name) {
 		new->name = "HEAD";

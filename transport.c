@@ -192,7 +192,9 @@ static void set_upstreams(struct transport *transport, struct ref *refs,
 
 static const char *rsync_url(const char *url)
 {
-	return !starts_with(url, "rsync://") ? skip_prefix(url, "rsync:") : url;
+	if (!starts_with(url, "rsync://"))
+		skip_prefix(url, "rsync:", &url);
+	return url;
 }
 
 static struct ref *get_refs_via_rsync(struct transport *transport, int for_push)

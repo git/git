@@ -1328,12 +1328,8 @@ static char *imap_folder;
 
 static int git_imap_config(const char *key, const char *val, void *cb)
 {
-	char imap_key[] = "imap.";
-
-	if (strncmp(key, imap_key, sizeof imap_key - 1))
+	if (!skip_prefix(key, "imap.", &key))
 		return 0;
-
-	key += sizeof imap_key - 1;
 
 	/* check booleans first, and barf on others */
 	if (!strcmp("sslverify", key))

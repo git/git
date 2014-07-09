@@ -109,14 +109,12 @@ static int read_request(FILE *fh, struct credential *c,
 	const char *p;
 
 	strbuf_getline(&item, fh, '\n');
-	p = skip_prefix(item.buf, "action=");
-	if (!p)
+	if (!skip_prefix(item.buf, "action=", &p))
 		return error("client sent bogus action line: %s", item.buf);
 	strbuf_addstr(action, p);
 
 	strbuf_getline(&item, fh, '\n');
-	p = skip_prefix(item.buf, "timeout=");
-	if (!p)
+	if (!skip_prefix(item.buf, "timeout=", &p))
 		return error("client sent bogus timeout line: %s", item.buf);
 	*timeout = atoi(p);
 

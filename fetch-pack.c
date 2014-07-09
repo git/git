@@ -189,20 +189,23 @@ static enum ack_type get_ack(int fd, unsigned char *result_sha1)
 {
 	int len;
 	char *line = packet_read_line(fd, &len);
+	const char *arg;
 
 	if (!len)
 		die("git fetch-pack: expected ACK/NAK, got EOF");
 	if (!strcmp(line, "NAK"))
 		return NAK;
-	if (starts_with(line, "ACK ")) {
-		if (!get_sha1_hex(line+4, result_sha1)) {
-			if (len < 45)
+	if (skip_prefix(line, "ACK ", &arg)) {
+		if (!get_sha1_hex(arg, result_sha1)) {
+			arg += 40;
+			len -= arg - line;
+			if (len < 1)
 				return ACK;
-			if (strstr(line+45, "continue"))
+			if (strstr(arg, "continue"))
 				return ACK_continue;
-			if (strstr(line+45, "common"))
+			if (strstr(arg, "common"))
 				return ACK_common;
-			if (strstr(line+45, "ready"))
+			if (strstr(arg, "ready"))
 				return ACK_ready;
 			return ACK;
 		}
@@ -319,18 +322,19 @@ static int find_common(struct fetch_pack_args *args,
 
 	if (args->depth > 0) {
 		char *line;
+		const char *arg;
 		unsigned char sha1[20];
 
 		send_request(args, fd[1], &req_buf);
 		while ((line = packet_read_line(fd[0], NULL))) {
-			if (starts_with(line, "shallow ")) {
-				if (get_sha1_hex(line + 8, sha1))
+			if (skip_prefix(line, "shallow ", &arg)) {
+				if (get_sha1_hex(arg, sha1))
 					die("invalid shallow line: %s", line);
 				register_shallow(sha1);
 				continue;
 			}
-			if (starts_with(line, "unshallow ")) {
-				if (get_sha1_hex(line + 10, sha1))
+			if (skip_prefix(line, "unshallow ", &arg)) {
+				if (get_sha1_hex(arg, sha1))
 					die("invalid unshallow line: %s", line);
 				if (!lookup_object(sha1))
 					die("object not found: %s", line);

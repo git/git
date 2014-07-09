@@ -279,20 +279,17 @@ static int fsck_ident(const char **ident, struct object *obj, fsck_error error_f
 static int fsck_commit_buffer(struct commit *commit, const char *buffer,
 			      fsck_error error_func)
 {
-	const char *tmp;
 	unsigned char tree_sha1[20], sha1[20];
 	struct commit_graft *graft;
 	int parents = 0;
 	int err;
 
-	buffer = skip_prefix(buffer, "tree ");
-	if (!buffer)
+	if (!skip_prefix(buffer, "tree ", &buffer))
 		return error_func(&commit->object, FSCK_ERROR, "invalid format - expected 'tree' line");
 	if (get_sha1_hex(buffer, tree_sha1) || buffer[40] != '\n')
 		return error_func(&commit->object, FSCK_ERROR, "invalid 'tree' line format - bad sha1");
 	buffer += 41;
-	while ((tmp = skip_prefix(buffer, "parent "))) {
-		buffer = tmp;
+	while (skip_prefix(buffer, "parent ", &buffer)) {
 		if (get_sha1_hex(buffer, sha1) || buffer[40] != '\n')
 			return error_func(&commit->object, FSCK_ERROR, "invalid 'parent' line format - bad sha1");
 		buffer += 41;
@@ -319,14 +316,12 @@ static int fsck_commit_buffer(struct commit *commit, const char *buffer,
 		if (p || parents)
 			return error_func(&commit->object, FSCK_ERROR, "parent objects missing");
 	}
-	buffer = skip_prefix(buffer, "author ");
-	if (!buffer)
+	if (!skip_prefix(buffer, "author ", &buffer))
 		return error_func(&commit->object, FSCK_ERROR, "invalid format - expected 'author' line");
 	err = fsck_ident(&buffer, &commit->object, error_func);
 	if (err)
 		return err;
-	buffer = skip_prefix(buffer, "committer ");
-	if (!buffer)
+	if (!skip_prefix(buffer, "committer ", &buffer))
 		return error_func(&commit->object, FSCK_ERROR, "invalid format - expected 'committer' line");
 	err = fsck_ident(&buffer, &commit->object, error_func);
 	if (err)
