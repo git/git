@@ -111,6 +111,9 @@ Performance, Internal Implementation, etc.
 
  * Build procedure for 'subtree' (in contrib/) has been cleaned up.
 
+ * Patches maintained by msysgit folks for Windows port are being
+   upstreamed here a bit by bit.
+
  * The `core.deltabasecachelimit` used to default to 16 MiB , but this
    proved to be too small, and has been bumped to 96 MiB.
 
@@ -172,6 +175,17 @@ notes for details).
    not take into account that number of bytes and number of display
    columns are different.
    (merge 7d50987 as/pretty-truncate later to maint).
+
+ * "%G" (nothing after G) is an invalid pretty format specifier, but
+   the parser did not notice it as garbage.
+   (merge 958b2eb jk/pretty-G-format-fixes later to maint).
+
+ * A handful of code paths had to read the commit object more than
+   once when showing header fields that are usually not parsed.  The
+   internal data structure to keep track of the contents of the commit
+   object has been updated to reduce the need for this double-reading,
+   and to allow the caller find the length of the object.
+   (merge 218aa3a jk/commit-buffer-length later to maint).
 
  * The "mailmap.file" configuration option did not support the tilde
    expansion (i.e. ~user/path and ~/path).
@@ -269,6 +283,10 @@ notes for details).
    working tree state if the user aborted the interactive rebase by
    emptying the insn sheet.
    (merge ddb5432 rr/rebase-autostash-fix later to maint).
+
+ * During "git rebase --merge", a conflicted patch could not be
+   skipped with "--skip" if the next one also conflicted.
+   (merge 95104c7 bc/fix-rebase-merge-skip later to maint).
 
  * "git show -s" (i.e. show log message only) used to incorrectly emit
    an extra blank line after a merge commit.
