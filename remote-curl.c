@@ -949,7 +949,7 @@ int main(int argc, const char **argv)
 	git_extract_argv0_path(argv[0]);
 	setup_git_directory_gently(&nongit);
 	if (argc < 2) {
-		error("remote needed");
+		error("remote-curl: usage: git remote-curl <remote> [<url>]");
 		return 1;
 	}
 
@@ -970,14 +970,14 @@ int main(int argc, const char **argv)
 	do {
 		if (strbuf_getline(&buf, stdin, '\n') == EOF) {
 			if (ferror(stdin))
-				error("error reading command stream");
+				error("remote-curl: error reading command stream from git");
 			return 1;
 		}
 		if (buf.len == 0)
 			break;
 		if (starts_with(buf.buf, "fetch ")) {
 			if (nongit)
-				die("Fetch attempted without a local repo");
+				die("remote-curl: fetch attempted without a local repo");
 			parse_fetch(&buf);
 
 		} else if (!strcmp(buf.buf, "list") || starts_with(buf.buf, "list ")) {
@@ -1014,7 +1014,7 @@ int main(int argc, const char **argv)
 			printf("\n");
 			fflush(stdout);
 		} else {
-			error("unknown command '%s'", buf.buf);
+			error("remote-curl: unknown command '%s' from git", buf.buf);
 			return 1;
 		}
 		strbuf_reset(&buf);
