@@ -365,6 +365,7 @@ static void show_sig_lines(struct rev_info *opt, int status, const char *bol)
 		eol = strchrnul(bol, '\n');
 		printf("%s%.*s%s%s", color, (int)(eol - bol), bol, reset,
 		       *eol ? "\n" : "");
+		graph_show_oneline(opt->graph);
 		bol = (*eol) ? (eol + 1) : eol;
 	}
 }
