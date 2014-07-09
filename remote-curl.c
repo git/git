@@ -396,7 +396,7 @@ static curlioerr rpc_ioctl(CURL *handle, int cmd, void *clientp)
 			rpc->pos = 0;
 			return CURLIOE_OK;
 		}
-		fprintf(stderr, "Unable to rewind rpc post data - try increasing http.postBuffer\n");
+		error("unable to rewind rpc post data - try increasing http.postBuffer");
 		return CURLIOE_FAILRESTART;
 
 	default:
@@ -709,7 +709,7 @@ static int fetch_dumb(int nr_heads, struct ref **to_fetch)
 		free(targets[i]);
 	free(targets);
 
-	return ret ? error("Fetch failed.") : 0;
+	return ret ? error("fetch failed.") : 0;
 }
 
 static int fetch_git(struct discovery *heads,
@@ -949,7 +949,7 @@ int main(int argc, const char **argv)
 	git_extract_argv0_path(argv[0]);
 	setup_git_directory_gently(&nongit);
 	if (argc < 2) {
-		fprintf(stderr, "Remote needed\n");
+		error("remote needed");
 		return 1;
 	}
 
@@ -970,7 +970,7 @@ int main(int argc, const char **argv)
 	do {
 		if (strbuf_getline(&buf, stdin, '\n') == EOF) {
 			if (ferror(stdin))
-				fprintf(stderr, "Error reading command stream\n");
+				error("error reading command stream");
 			return 1;
 		}
 		if (buf.len == 0)
@@ -1014,7 +1014,7 @@ int main(int argc, const char **argv)
 			printf("\n");
 			fflush(stdout);
 		} else {
-			fprintf(stderr, "Unknown command '%s'\n", buf.buf);
+			error("unknown command '%s'", buf.buf);
 			return 1;
 		}
 		strbuf_reset(&buf);
