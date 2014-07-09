@@ -341,8 +341,7 @@ static void fetch_alternates(struct walker *walker, const char *base)
 	if (walker->get_verbosely)
 		fprintf(stderr, "Getting alternates list for %s\n", base);
 
-	url = xmalloc(strlen(base) + 31);
-	sprintf(url, "%s/objects/info/http-alternates", base);
+	url = xstrfmt("%s/objects/info/http-alternates", base);
 
 	/*
 	 * Use a callback to process the result, since another request
@@ -566,8 +565,7 @@ struct walker *get_http_walker(const char *url)
 	struct walker *walker = xmalloc(sizeof(struct walker));
 
 	data->alt = xmalloc(sizeof(*data->alt));
-	data->alt->base = xmalloc(strlen(url) + 1);
-	strcpy(data->alt->base, url);
+	data->alt->base = xstrdup(url);
 	for (s = data->alt->base + strlen(data->alt->base) - 1; *s == '/'; --s)
 		*s = 0;
 
