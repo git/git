@@ -971,8 +971,6 @@ int main(int argc, const char **argv)
 		if (strbuf_getline(&buf, stdin, '\n') == EOF) {
 			if (ferror(stdin))
 				fprintf(stderr, "Error reading command stream\n");
-			else
-				fprintf(stderr, "Unexpected end of command stream\n");
 			return 1;
 		}
 		if (buf.len == 0)
