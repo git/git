@@ -308,6 +308,17 @@ test_expect_success 'Prune empty commits' '
 	test_cmp expect actual
 '
 
+test_expect_success 'prune empty collapsed merges' '
+	test_config merge.ff false &&
+	git rev-list HEAD >expect &&
+	test_commit to_remove_2 &&
+	git reset --hard HEAD^ &&
+	test_merge non-ff to_remove_2 &&
+	git filter-branch -f --index-filter "git update-index --remove to_remove_2.t" --prune-empty HEAD &&
+	git rev-list HEAD >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success '--remap-to-ancestor with filename filters' '
 	git checkout master &&
 	git reset --hard A &&
