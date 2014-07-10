@@ -144,7 +144,7 @@ static void list_commands_in_dir(struct cmdnames *cmds,
 
 	while ((de = readdir(dir)) != NULL) {
 		const char *ent;
-		int entlen;
+		size_t entlen;
 
 		if (!skip_prefix(de->d_name, prefix, &ent))
 			continue;
@@ -155,8 +155,7 @@ static void list_commands_in_dir(struct cmdnames *cmds,
 			continue;
 
 		entlen = strlen(ent);
-		if (has_extension(ent, ".exe"))
-			entlen -= 4;
+		strip_suffix(ent, ".exe", &entlen);
 
 		add_cmdname(cmds, ent, entlen);
 	}

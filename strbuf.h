@@ -49,6 +49,15 @@ extern int strbuf_reencode(struct strbuf *sb, const char *from, const char *to);
 extern void strbuf_tolower(struct strbuf *sb);
 extern int strbuf_cmp(const struct strbuf *, const struct strbuf *);
 
+static inline int strbuf_strip_suffix(struct strbuf *sb, const char *suffix)
+{
+	if (strip_suffix_mem(sb->buf, &sb->len, suffix)) {
+		strbuf_setlen(sb, sb->len);
+		return 1;
+	} else
+		return 0;
+}
+
 /*
  * Split str (of length slen) at the specified terminator character.
  * Return a null-terminated array of pointers to strbuf objects

@@ -263,16 +263,17 @@ static int config_read_branches(const char *key, const char *value, void *cb)
 		struct string_list_item *item;
 		struct branch_info *info;
 		enum { REMOTE, MERGE, REBASE } type;
+		size_t key_len;
 
 		key += 7;
-		if (ends_with(key, ".remote")) {
-			name = xstrndup(key, strlen(key) - 7);
+		if (strip_suffix(key, ".remote", &key_len)) {
+			name = xmemdupz(key, key_len);
 			type = REMOTE;
-		} else if (ends_with(key, ".merge")) {
-			name = xstrndup(key, strlen(key) - 6);
+		} else if (strip_suffix(key, ".merge", &key_len)) {
+			name = xmemdupz(key, key_len);
 			type = MERGE;
-		} else if (ends_with(key, ".rebase")) {
-			name = xstrndup(key, strlen(key) - 7);
+		} else if (strip_suffix(key, ".rebase", &key_len)) {
+			name = xmemdupz(key, key_len);
 			type = REBASE;
 		} else
 			return 0;

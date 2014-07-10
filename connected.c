@@ -31,6 +31,7 @@ static int check_everything_connected_real(sha1_iterate_fn fn,
 	unsigned char sha1[20];
 	int err = 0, ac = 0;
 	struct packed_git *new_pack = NULL;
+	size_t base_len;
 
 	if (fn(cb_data, sha1))
 		return err;
@@ -38,10 +39,9 @@ static int check_everything_connected_real(sha1_iterate_fn fn,
 	if (transport && transport->smart_options &&
 	    transport->smart_options->self_contained_and_connected &&
 	    transport->pack_lockfile &&
-	    ends_with(transport->pack_lockfile, ".keep")) {
+	    strip_suffix(transport->pack_lockfile, ".keep", &base_len)) {
 		struct strbuf idx_file = STRBUF_INIT;
-		strbuf_addstr(&idx_file, transport->pack_lockfile);
-		strbuf_setlen(&idx_file, idx_file.len - 5); /* ".keep" */
+		strbuf_add(&idx_file, transport->pack_lockfile, base_len);
 		strbuf_addstr(&idx_file, ".idx");
 		new_pack = add_packed_git(idx_file.buf, idx_file.len, 1);
 		strbuf_release(&idx_file);
