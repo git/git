@@ -171,7 +171,7 @@ static void output(struct merge_options *o, int v, const char *fmt, ...)
 	strbuf_vaddf(&o->obuf, fmt, ap);
 	va_end(ap);
 
-	strbuf_add(&o->obuf, "\n", 1);
+	strbuf_addch(&o->obuf, '\n');
 	if (!o->buffer_output)
 		flush_output(o);
 }
