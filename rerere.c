@@ -207,11 +207,11 @@ static int handle_path(unsigned char *sha1, struct rerere_io *io, int marker_siz
 			strbuf_reset(&one);
 			strbuf_reset(&two);
 		} else if (hunk == RR_SIDE_1)
-			strbuf_addstr(&one, buf.buf);
+			strbuf_addbuf(&one, &buf);
 		else if (hunk == RR_ORIGINAL)
 			; /* discard */
 		else if (hunk == RR_SIDE_2)
-			strbuf_addstr(&two, buf.buf);
+			strbuf_addbuf(&two, &buf);
 		else
 			rerere_io_putstr(buf.buf, io);
 		continue;

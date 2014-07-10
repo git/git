@@ -946,7 +946,7 @@ static int interpret_nth_prior_checkout(const char *name, int namelen,
 	retval = 0;
 	if (0 < for_each_reflog_ent_reverse("HEAD", grab_nth_branch_switch, &cb)) {
 		strbuf_reset(buf);
-		strbuf_add(buf, cb.buf.buf, cb.buf.len);
+		strbuf_addbuf(buf, &cb.buf);
 		retval = brace - name + 1;
 	}
 
