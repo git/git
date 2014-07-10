@@ -778,7 +778,6 @@ static void handle(int incoming, struct sockaddr *addr, socklen_t addrlen)
 		logerror("unable to fork");
 	else
 		add_child(&cld, addr, addrlen);
-	close(incoming);
 }
 
 static void child_handler(int signo)
