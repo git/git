@@ -106,13 +106,26 @@ UI, Workflows & Features
  * "git tag" when editing the tag message shows the name of the tag
    being edited as a comment in the editor.
 
+ * "git verify-commit" command to check GPG signature in signed
+   commits, in a way similar to "git verify-tag" is used to check
+   signed tags, was added.
+
 
 Performance, Internal Implementation, etc.
 
  * Build procedure for 'subtree' (in contrib/) has been cleaned up.
 
+ * Effort to shrink the size of patches Windows folks maintain on top
+   by upstreaming them continues.
+
  * Patches maintained by msysgit folks for Windows port are being
    upstreamed here a bit by bit.
+
+ * The leaf function to check validity of a refname format has been
+   micro-optimized, using SSE2 instructions when available.  A few
+   breakages during its development have been caught and fixed already
+   but there might remain some more still; please test and report if
+   you find any.
 
  * The `core.deltabasecachelimit` used to default to 16 MiB , but this
    proved to be too small, and has been bumped to 96 MiB.
@@ -169,6 +182,10 @@ notes for details).
    be checked out currently.
    (merge e3fa568 jc/revision-dash-count-parsing later to maint).
 
+ * Code to avoid adding the same alternate object store twice was
+   subtly broken for a long time, but nobody seems to have noticed.
+   (merge 80b4785 rs/fix-alt-odb-path-comparison later to maint).
+
  * The "%<(10,trunc)%s" pretty format specifier in the log family of
    commands is used to truncate the string to a given length (e.g. 10
    in the example) with padding to column-align the output, but did
@@ -210,6 +227,11 @@ notes for details).
    the repository is set to core.autocrlf=input and the file used CRLF
    line endings.
    (merge 4d4813a bc/blame-crlf-test later to maint).
+
+ * "git clone -b brefs/tags/bar" would have mistakenly thought we were
+   following a single tag, even though it was a name of the branch,
+   because it incorrectly used strstr().
+   (merge 60a5f5f jc/fix-clone-single-starting-at-a-tag later to maint).
 
  * "git commit --allow-empty-messag -C $commit" did not work when the
    commit did not have any log message.

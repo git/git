@@ -1,0 +1,13 @@
+Git v2.0.2 Release Notes
+========================
+
+ * Documentation for "git submodule sync" forgot to say that the subcommand
+   can take the "--recursive" option.
+
+ * Mishandling of patterns in .gitignore that has trailing SPs quoted
+   with backslashes (e.g. ones that end with "\ ") have been
+   corrected.
+
+ * Recent updates to "git repack" started to duplicate objects that
+   are in packfiles marked with .keep flag into the new packfile by
+   mistake.
