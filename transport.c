@@ -1220,7 +1220,7 @@ int transport_push(struct transport *transport,
 		if (porcelain && !push_ret)
 			puts("Done");
 		else if (!quiet && !ret && !transport_refs_pushed(remote_refs))
-			fprintf(stderr, "Everything up-to-date\n");
+			fprintf(stderr, "Already up-to-date\n");
 
 		return ret;
 	}
