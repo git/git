@@ -734,37 +734,34 @@ static void wt_status_print_changed(struct wt_status *s)
 static void wt_status_print_submodule_summary(struct wt_status *s, int uncommitted)
 {
 	struct child_process sm_summary;
-	char summary_limit[64];
-	char index[PATH_MAX];
-	const char *env[] = { NULL, NULL };
+	struct argv_array env = ARGV_ARRAY_INIT;
 	struct argv_array argv = ARGV_ARRAY_INIT;
 	struct strbuf cmd_stdout = STRBUF_INIT;
 	struct strbuf summary = STRBUF_INIT;
 	char *summary_content;
 	size_t len;
 
-	sprintf(summary_limit, "%d", s->submodule_summary);
-	snprintf(index, sizeof(index), "GIT_INDEX_FILE=%s", s->index_file);
+	argv_array_pushf(&env, "GIT_INDEX_FILE=%s", s->index_file);
 
-	env[0] = index;
 	argv_array_push(&argv, "submodule");
 	argv_array_push(&argv, "summary");
 	argv_array_push(&argv, uncommitted ? "--files" : "--cached");
 	argv_array_push(&argv, "--for-status");
 	argv_array_push(&argv, "--summary-limit");
-	argv_array_push(&argv, summary_limit);
+	argv_array_pushf(&argv, "%d", s->submodule_summary);
 	if (!uncommitted)
 		argv_array_push(&argv, s->amend ? "HEAD^" : "HEAD");
 
 	memset(&sm_summary, 0, sizeof(sm_summary));
 	sm_summary.argv = argv.argv;
-	sm_summary.env = env;
+	sm_summary.env = env.argv;
 	sm_summary.git_cmd = 1;
 	sm_summary.no_stdin = 1;
 	fflush(s->fp);
 	sm_summary.out = -1;
 
 	run_command(&sm_summary);
+	argv_array_clear(&env);
 	argv_array_clear(&argv);
 
 	len = strbuf_read(&cmd_stdout, sm_summary.out, 1024);
