@@ -696,7 +696,7 @@ static void write_refspec_config(const char* src_ref_prefix,
 	if (option_mirror || !option_bare) {
 		if (option_single_branch && !option_mirror) {
 			if (option_branch) {
-				if (strstr(our_head_points_at->name, "refs/tags/"))
+				if (starts_with(our_head_points_at->name, "refs/tags/"))
 					strbuf_addf(&value, "+%s:%s", our_head_points_at->name,
 						our_head_points_at->name);
 				else
