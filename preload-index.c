@@ -63,7 +63,7 @@ static void *preload_thread(void *_data)
 			continue;
 		ce_mark_uptodate(ce);
 	} while (--nr > 0);
-	cache_def_free(&cache);
+	cache_def_clear(&cache);
 	return NULL;
 }
 
