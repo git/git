@@ -704,6 +704,10 @@ void git_qsort(void *base, size_t nmemb, size_t size,
 #endif
 #endif
 
+#if defined(__GNUC__) || (_MSC_VER >= 1400)
+#define HAVE_VARIADIC_MACROS 1
+#endif
+
 /*
  * Preserves errno, prints a message, but gives no warning for ENOENT.
  * Always returns the return value of unlink(2).

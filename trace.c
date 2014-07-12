@@ -85,7 +85,8 @@ void trace_disable(struct trace_key *key)
 static const char err_msg[] = "Could not trace into fd given by "
 	"GIT_TRACE environment variable";
 
-static int prepare_trace_line(struct trace_key *key, struct strbuf *buf)
+static int prepare_trace_line(const char *file, int line,
+			      struct trace_key *key, struct strbuf *buf)
 {
 	static struct trace_key trace_bare = TRACE_KEY_INIT(BARE);
 	struct timeval tv;
@@ -108,6 +109,14 @@ static int prepare_trace_line(struct trace_key *key, struct strbuf *buf)
 	strbuf_addf(buf, "%02d:%02d:%02d.%06ld ", tm.tm_hour, tm.tm_min,
 		    tm.tm_sec, (long) tv.tv_usec);
 
+#ifdef HAVE_VARIADIC_MACROS
+	/* print file:line */
+	strbuf_addf(buf, "%s:%d ", file, line);
+	/* align trace output (column 40 catches most files names in git) */
+	while (buf->len < 40)
+		strbuf_addch(buf, ' ');
+#endif
+
 	return 1;
 }
 
@@ -121,49 +130,52 @@ static void print_trace_line(struct trace_key *key, struct strbuf *buf)
 	strbuf_release(buf);
 }
 
-static void trace_vprintf(struct trace_key *key, const char *format, va_list ap)
+static void trace_vprintf_fl(const char *file, int line, struct trace_key *key,
+			     const char *format, va_list ap)
 {
 	struct strbuf buf = STRBUF_INIT;
 
-	if (!prepare_trace_line(key, &buf))
+	if (!prepare_trace_line(file, line, key, &buf))
 		return;
 
 	strbuf_vaddf(&buf, format, ap);
 	print_trace_line(key, &buf);
 }
 
-void trace_argv_printf(const char **argv, const char *format, ...)
+static void trace_argv_vprintf_fl(const char *file, int line,
+				  const char **argv, const char *format,
+				  va_list ap)
 {
 	struct strbuf buf = STRBUF_INIT;
-	va_list ap;
 
-	if (!prepare_trace_line(NULL, &buf))
+	if (!prepare_trace_line(file, line, NULL, &buf))
 		return;
 
-	va_start(ap, format);
 	strbuf_vaddf(&buf, format, ap);
-	va_end(ap);
 
 	sq_quote_argv(&buf, argv, 0);
 	print_trace_line(NULL, &buf);
 }
 
-void trace_strbuf(struct trace_key *key, const struct strbuf *data)
+void trace_strbuf_fl(const char *file, int line, struct trace_key *key,
+		     const struct strbuf *data)
 {
 	struct strbuf buf = STRBUF_INIT;
 
-	if (!prepare_trace_line(key, &buf))
+	if (!prepare_trace_line(file, line, key, &buf))
 		return;
 
 	strbuf_addbuf(&buf, data);
 	print_trace_line(key, &buf);
 }
 
+#ifndef HAVE_VARIADIC_MACROS
+
 void trace_printf(const char *format, ...)
 {
 	va_list ap;
 	va_start(ap, format);
-	trace_vprintf(NULL, format, ap);
+	trace_vprintf_fl(NULL, 0, NULL, format, ap);
 	va_end(ap);
 }
 
@@ -171,9 +183,45 @@ void trace_printf_key(struct trace_key *key, const char *format, ...)
 {
 	va_list ap;
 	va_start(ap, format);
-	trace_vprintf(key, format, ap);
+	trace_vprintf_fl(NULL, 0, key, format, ap);
 	va_end(ap);
 }
+
+void trace_argv_printf(const char **argv, const char *format, ...)
+{
+	va_list ap;
+	va_start(ap, format);
+	trace_argv_vprintf_fl(NULL, 0, argv, format, ap);
+	va_end(ap);
+}
+
+void trace_strbuf(const char *key, const struct strbuf *data)
+{
+	trace_strbuf_fl(NULL, 0, key, data);
+}
+
+#else
+
+void trace_printf_key_fl(const char *file, int line, struct trace_key *key,
+			 const char *format, ...)
+{
+	va_list ap;
+	va_start(ap, format);
+	trace_vprintf_fl(file, line, key, format, ap);
+	va_end(ap);
+}
+
+void trace_argv_printf_fl(const char *file, int line, const char **argv,
+			  const char *format, ...)
+{
+	va_list ap;
+	va_start(ap, format);
+	trace_argv_vprintf_fl(file, line, argv, format, ap);
+	va_end(ap);
+}
+
+#endif /* HAVE_VARIADIC_MACROS */
+
 
 static const char *quote_crnl(const char *path)
 {
