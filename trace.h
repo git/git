@@ -22,6 +22,6 @@ extern int trace_want(struct trace_key *key);
 extern void trace_disable(struct trace_key *key);
 __attribute__((format (printf, 2, 3)))
 extern void trace_printf_key(struct trace_key *key, const char *format, ...);
-extern void trace_strbuf(struct trace_key *key, const struct strbuf *buf);
+extern void trace_strbuf(struct trace_key *key, const struct strbuf *data);
 
 #endif /* TRACE_H */
