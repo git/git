@@ -88,6 +88,9 @@ static const char err_msg[] = "Could not trace into fd given by "
 static int prepare_trace_line(struct trace_key *key, struct strbuf *buf)
 {
 	static struct trace_key trace_bare = TRACE_KEY_INIT(BARE);
+	struct timeval tv;
+	struct tm tm;
+	time_t secs;
 
 	if (!trace_want(key))
 		return 0;
@@ -98,7 +101,12 @@ static int prepare_trace_line(struct trace_key *key, struct strbuf *buf)
 	if (trace_want(&trace_bare))
 		return 1;
 
-	/* add line prefix here */
+	/* print current timestamp */
+	gettimeofday(&tv, NULL);
+	secs = tv.tv_sec;
+	localtime_r(&secs, &tm);
+	strbuf_addf(buf, "%02d:%02d:%02d.%06ld ", tm.tm_hour, tm.tm_min,
+		    tm.tm_sec, (long) tv.tv_usec);
 
 	return 1;
 }
