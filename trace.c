@@ -132,33 +132,6 @@ static void trace_vprintf(struct trace_key *key, const char *format, va_list ap)
 	print_trace_line(key, &buf);
 }
 
-void trace_printf_key(struct trace_key *key, const char *format, ...)
-{
-	va_list ap;
-	va_start(ap, format);
-	trace_vprintf(key, format, ap);
-	va_end(ap);
-}
-
-void trace_printf(const char *format, ...)
-{
-	va_list ap;
-	va_start(ap, format);
-	trace_vprintf(NULL, format, ap);
-	va_end(ap);
-}
-
-void trace_strbuf(struct trace_key *key, const struct strbuf *data)
-{
-	struct strbuf buf = STRBUF_INIT;
-
-	if (!prepare_trace_line(key, &buf))
-		return;
-
-	strbuf_addbuf(&buf, data);
-	print_trace_line(key, &buf);
-}
-
 void trace_argv_printf(const char **argv, const char *format, ...)
 {
 	struct strbuf buf = STRBUF_INIT;
@@ -173,6 +146,33 @@ void trace_argv_printf(const char **argv, const char *format, ...)
 
 	sq_quote_argv(&buf, argv, 0);
 	print_trace_line(NULL, &buf);
+}
+
+void trace_strbuf(struct trace_key *key, const struct strbuf *data)
+{
+	struct strbuf buf = STRBUF_INIT;
+
+	if (!prepare_trace_line(key, &buf))
+		return;
+
+	strbuf_addbuf(&buf, data);
+	print_trace_line(key, &buf);
+}
+
+void trace_printf(const char *format, ...)
+{
+	va_list ap;
+	va_start(ap, format);
+	trace_vprintf(NULL, format, ap);
+	va_end(ap);
+}
+
+void trace_printf_key(struct trace_key *key, const char *format, ...)
+{
+	va_list ap;
+	va_start(ap, format);
+	trace_vprintf(key, format, ap);
+	va_end(ap);
 }
 
 static const char *quote_crnl(const char *path)
