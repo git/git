@@ -938,6 +938,11 @@ Unsetting the variable, or setting it to empty, "0" or
 	starting with "PACK".
 	See 'GIT_TRACE' for available trace output options.
 
+'GIT_TRACE_PERFORMANCE'::
+	Enables performance related trace messages, e.g. total execution
+	time of each Git command.
+	See 'GIT_TRACE' for available trace output options.
+
 'GIT_TRACE_SETUP'::
 	Enables trace messages printing the .git, working tree and current
 	working directory after Git has completed its setup phase.
