@@ -925,11 +925,11 @@ Unsetting the variable, or setting it to empty, "0" or
 "false" (case insensitive) disables trace messages.
 
 'GIT_TRACE_PACK_ACCESS'::
-	If this variable is set to a path, a file will be created at
-	the given path logging all accesses to any packs. For each
+	Enables trace messages for all accesses to any packs. For each
 	access, the pack file name and an offset in the pack is
 	recorded. This may be helpful for troubleshooting some
 	pack-related performance problems.
+	See 'GIT_TRACE' for available trace output options.
 
 'GIT_TRACE_PACKET'::
 	Enables trace messages for all packets coming in or out of a
