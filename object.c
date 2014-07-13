@@ -213,8 +213,6 @@ struct object *parse_object_buffer(const unsigned char *sha1, enum object_type t
 		warning("object %s has unknown type id %d", sha1_to_hex(sha1), type);
 		obj = NULL;
 	}
-	if (obj && obj->type == OBJ_NONE)
-		obj->type = type;
 	return obj;
 }
 
