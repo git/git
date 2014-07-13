@@ -20,7 +20,7 @@ require_work_tree
 cd_to_toplevel
 
 TMP="$GIT_DIR/.git-stash.$$"
-TMPindex=${GIT_INDEX_FILE-"$GIT_DIR/index"}.stash.$$
+TMPindex=${GIT_INDEX_FILE-"$(git rev-parse --git-path index)"}.stash.$$
 trap 'rm -f "$TMP-"* "$TMPindex"' 0
 
 ref_stash=refs/stash
