@@ -19,22 +19,10 @@
 #define BLOCKING 1024
 
 #define DEFINE_ALLOCATOR(name, type)				\
-static unsigned int name##_allocs;				\
+static struct alloc_state name##_state;				\
 void *alloc_##name##_node(void)					\
 {								\
-	static int nr;						\
-	static type *block;					\
-	void *ret;						\
-								\
-	if (!nr) {						\
-		nr = BLOCKING;					\
-		block = xmalloc(BLOCKING * sizeof(type));	\
-	}							\
-	nr--;							\
-	name##_allocs++;					\
-	ret = block++;						\
-	memset(ret, 0, sizeof(type));				\
-	return ret;						\
+	return alloc_node(&name##_state, sizeof(type));		\
 }
 
 union any_object {
@@ -45,16 +33,39 @@ union any_object {
 	struct tag tag;
 };
 
+struct alloc_state {
+	int count; /* total number of nodes allocated */
+	int nr;    /* number of nodes left in current allocation */
+	void *p;   /* first free node in current allocation */
+};
+
+static inline void *alloc_node(struct alloc_state *s, size_t node_size)
+{
+	void *ret;
+
+	if (!s->nr) {
+		s->nr = BLOCKING;
+		s->p = xmalloc(BLOCKING * node_size);
+	}
+	s->nr--;
+	s->count++;
+	ret = s->p;
+	s->p = (char *)s->p + node_size;
+	memset(ret, 0, node_size);
+	return ret;
+}
+
 DEFINE_ALLOCATOR(blob, struct blob)
 DEFINE_ALLOCATOR(tree, struct tree)
-DEFINE_ALLOCATOR(raw_commit, struct commit)
 DEFINE_ALLOCATOR(tag, struct tag)
 DEFINE_ALLOCATOR(object, union any_object)
+
+static struct alloc_state commit_state;
 
 void *alloc_commit_node(void)
 {
 	static int commit_count;
-	struct commit *c = alloc_raw_commit_node();
+	struct commit *c = alloc_node(&commit_state, sizeof(struct commit));
 	c->index = commit_count++;
 	return c;
 }
@@ -66,13 +77,13 @@ static void report(const char *name, unsigned int count, size_t size)
 }
 
 #define REPORT(name, type)	\
-    report(#name, name##_allocs, name##_allocs * sizeof(type) >> 10)
+    report(#name, name##_state.count, name##_state.count * sizeof(type) >> 10)
 
 void alloc_report(void)
 {
 	REPORT(blob, struct blob);
 	REPORT(tree, struct tree);
-	REPORT(raw_commit, struct commit);
+	REPORT(commit, struct commit);
 	REPORT(tag, struct tag);
 	REPORT(object, union any_object);
 }
