@@ -1376,6 +1376,7 @@ extern void *alloc_commit_node(void);
 extern void *alloc_tag_node(void);
 extern void *alloc_object_node(void);
 extern void alloc_report(void);
+extern unsigned int alloc_commit_index(void);
 
 /* trace.c */
 __attribute__((format (printf, 1, 2)))
