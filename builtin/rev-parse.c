@@ -757,6 +757,10 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				printf("%s%s.git\n", cwd, len && cwd[len-1] != '/' ? "/" : "");
 				continue;
 			}
+			if (!strcmp(arg, "--git-common-dir")) {
+				puts(get_git_common_dir());
+				continue;
+			}
 			if (!strcmp(arg, "--resolve-git-dir")) {
 				const char *gitdir = argv[++i];
 				if (!gitdir)
