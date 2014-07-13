@@ -18,13 +18,6 @@
 
 #define BLOCKING 1024
 
-#define DEFINE_ALLOCATOR(name, type)				\
-static struct alloc_state name##_state;				\
-void *alloc_##name##_node(void)					\
-{								\
-	return alloc_node(&name##_state, sizeof(type));		\
-}
-
 union any_object {
 	struct object object;
 	struct blob blob;
@@ -55,10 +48,33 @@ static inline void *alloc_node(struct alloc_state *s, size_t node_size)
 	return ret;
 }
 
-DEFINE_ALLOCATOR(blob, struct blob)
-DEFINE_ALLOCATOR(tree, struct tree)
-DEFINE_ALLOCATOR(tag, struct tag)
-DEFINE_ALLOCATOR(object, union any_object)
+static struct alloc_state blob_state;
+void *alloc_blob_node(void)
+{
+	struct blob *b = alloc_node(&blob_state, sizeof(struct blob));
+	return b;
+}
+
+static struct alloc_state tree_state;
+void *alloc_tree_node(void)
+{
+	struct tree *t = alloc_node(&tree_state, sizeof(struct tree));
+	return t;
+}
+
+static struct alloc_state tag_state;
+void *alloc_tag_node(void)
+{
+	struct tag *t = alloc_node(&tag_state, sizeof(struct tag));
+	return t;
+}
+
+static struct alloc_state object_state;
+void *alloc_object_node(void)
+{
+	struct object *obj = alloc_node(&object_state, sizeof(union any_object));
+	return obj;
+}
 
 static struct alloc_state commit_state;
 
