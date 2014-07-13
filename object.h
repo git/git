@@ -81,6 +81,8 @@ struct object *lookup_object(const unsigned char *sha1);
 
 extern void *create_object(const unsigned char *sha1, void *obj);
 
+void *object_as_type(struct object *obj, enum object_type type, int quiet);
+
 /*
  * Returns the object, having parsed it to find out what it is.
  *
