@@ -13,13 +13,14 @@ test_expect_success 'checkout --to not updating paths' '
 '
 
 test_expect_success 'checkout --to a new worktree' '
+	git rev-parse HEAD >expect &&
 	git checkout --to here master &&
 	(
 		cd here &&
 		test_cmp ../init.t init.t &&
-		git symbolic-ref HEAD >actual &&
-		echo refs/heads/master >expect &&
-		test_cmp expect actual &&
+		test_must_fail git symbolic-ref HEAD &&
+		git rev-parse HEAD >actual &&
+		test_cmp ../expect actual &&
 		git fsck
 	)
 '
@@ -42,6 +43,22 @@ test_expect_success 'checkout --to a new worktree creating new branch' '
 		echo refs/heads/newmaster >expect &&
 		test_cmp expect actual &&
 		git fsck
+	)
+'
+
+test_expect_success 'detach if the same branch is already checked out' '
+	(
+		cd here &&
+		git checkout newmaster &&
+		test_must_fail git symbolic-ref HEAD
+	)
+'
+
+test_expect_success 'not detach on re-checking out current branch' '
+	(
+		cd there &&
+		git checkout newmaster &&
+		git symbolic-ref HEAD
 	)
 '
 

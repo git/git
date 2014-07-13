@@ -432,6 +432,11 @@ struct branch_info {
 	const char *name; /* The short name used */
 	const char *path; /* The full name of a real branch */
 	struct commit *commit; /* The named commit */
+	/*
+	 * if not null the branch is detached because it's already
+	 * checked out in this checkout
+	 */
+	char *checkout;
 };
 
 static void setup_branch_path(struct branch_info *branch)
@@ -640,6 +645,11 @@ static void update_refs_for_switch(const struct checkout_opts *opts,
 			if (old->path && advice_detached_head)
 				detach_advice(new->name);
 			describe_detached_head(_("HEAD is now at"), new->commit);
+			if (new->checkout && !*new->checkout)
+				fprintf(stderr, _("hint: the main checkout is holding this branch\n"));
+			else if (new->checkout)
+				fprintf(stderr, _("hint: the linked checkout %s is holding this branch\n"),
+					new->checkout);
 		}
 	} else if (new->path) {	/* Switch branches. */
 		create_symref("HEAD", new->path, msg.buf);
@@ -982,6 +992,71 @@ static const char *unique_tracking_name(const char *name, unsigned char *sha1)
 	return NULL;
 }
 
+static int check_linked_checkout(struct branch_info *new,
+				  const char *name, const char *path)
+{
+	struct strbuf sb = STRBUF_INIT;
+	const char *start, *end;
+	if (strbuf_read_file(&sb, path, 0) < 0 ||
+	    !skip_prefix(sb.buf, "ref:", &start)) {
+		strbuf_release(&sb);
+		return 0;
+	}
+
+	while (isspace(*start))
+		start++;
+	end = start;
+	while (*end && !isspace(*end))
+		end++;
+	if (!strncmp(start, new->path, end - start) &&
+	    new->path[end - start] == '\0') {
+		strbuf_release(&sb);
+		new->path = NULL; /* detach */
+		new->checkout = xstrdup(name); /* reason */
+		return 1;
+	}
+	strbuf_release(&sb);
+	return 0;
+}
+
+static void check_linked_checkouts(struct branch_info *new)
+{
+	struct strbuf path = STRBUF_INIT;
+	DIR *dir;
+	struct dirent *d;
+
+	strbuf_addf(&path, "%s/repos", get_git_common_dir());
+	if ((dir = opendir(path.buf)) == NULL) {
+		strbuf_release(&path);
+		return;
+	}
+
+	strbuf_reset(&path);
+	strbuf_addf(&path, "%s/HEAD", get_git_common_dir());
+	/*
+	 * $GIT_COMMON_DIR/HEAD is practically outside
+	 * $GIT_DIR so resolve_ref_unsafe() won't work (it
+	 * uses git_path). Parse the ref ourselves.
+	 */
+	if (check_linked_checkout(new, "", path.buf)) {
+		strbuf_release(&path);
+		closedir(dir);
+		return;
+	}
+
+	while ((d = readdir(dir)) != NULL) {
+		if (!strcmp(d->d_name, ".") || !strcmp(d->d_name, ".."))
+			continue;
+		strbuf_reset(&path);
+		strbuf_addf(&path, "%s/repos/%s/HEAD",
+			    get_git_common_dir(), d->d_name);
+		if (check_linked_checkout(new, d->d_name, path.buf))
+			break;
+	}
+	strbuf_release(&path);
+	closedir(dir);
+}
+
 static int parse_branchname_arg(int argc, const char **argv,
 				int dwim_new_local_branch_ok,
 				struct branch_info *new,
@@ -1108,6 +1183,15 @@ static int parse_branchname_arg(int argc, const char **argv,
 		hashcpy(rev, branch_rev);
 	else
 		new->path = NULL; /* not an existing branch */
+
+	if (new->path) {
+		unsigned char sha1[20];
+		int flag;
+		char *head_ref = resolve_refdup("HEAD", sha1, 0, &flag);
+		if (!(flag & REF_ISSYMREF) || strcmp(head_ref, new->path))
+			check_linked_checkouts(new);
+		free(head_ref);
+	}
 
 	new->commit = lookup_commit_reference_gently(rev, 1);
 	if (!new->commit) {
