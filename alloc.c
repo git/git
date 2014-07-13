@@ -52,6 +52,7 @@ static struct alloc_state blob_state;
 void *alloc_blob_node(void)
 {
 	struct blob *b = alloc_node(&blob_state, sizeof(struct blob));
+	b->object.type = OBJ_BLOB;
 	return b;
 }
 
@@ -59,6 +60,7 @@ static struct alloc_state tree_state;
 void *alloc_tree_node(void)
 {
 	struct tree *t = alloc_node(&tree_state, sizeof(struct tree));
+	t->object.type = OBJ_TREE;
 	return t;
 }
 
@@ -66,6 +68,7 @@ static struct alloc_state tag_state;
 void *alloc_tag_node(void)
 {
 	struct tag *t = alloc_node(&tag_state, sizeof(struct tag));
+	t->object.type = OBJ_TAG;
 	return t;
 }
 
@@ -73,6 +76,7 @@ static struct alloc_state object_state;
 void *alloc_object_node(void)
 {
 	struct object *obj = alloc_node(&object_state, sizeof(union any_object));
+	obj->type = OBJ_NONE;
 	return obj;
 }
 
@@ -82,6 +86,7 @@ void *alloc_commit_node(void)
 {
 	static int commit_count;
 	struct commit *c = alloc_node(&commit_state, sizeof(struct commit));
+	c->object.type = OBJ_COMMIT;
 	c->index = commit_count++;
 	return c;
 }
