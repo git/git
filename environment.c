@@ -83,6 +83,7 @@ static size_t namespace_len;
 
 static const char *git_dir;
 static char *git_object_dir, *git_index_file, *git_graft_file;
+int git_db_env, git_index_env, git_graft_env;
 
 /*
  * Repository-local GIT_* environment variables; see cache.h for details.
@@ -124,10 +125,18 @@ static char *expand_namespace(const char *raw_namespace)
 	return strbuf_detach(&buf, NULL);
 }
 
-static char *git_path_from_env(const char *envvar, const char *path)
+static char *git_path_from_env(const char *envvar, const char *path,
+			       int *fromenv)
 {
 	const char *value = getenv(envvar);
-	return value ? xstrdup(value) : git_pathdup("%s", path);
+	if (!value) {
+		char *buf = xmalloc(strlen(git_dir) + strlen(path) + 2);
+		sprintf(buf, "%s/%s", git_dir, path);
+		return buf;
+	}
+	if (fromenv)
+		*fromenv = 1;
+	return xstrdup(value);
 }
 
 static void setup_git_env(void)
@@ -140,9 +149,9 @@ static void setup_git_env(void)
 		git_dir = DEFAULT_GIT_DIR_ENVIRONMENT;
 	gitfile = read_gitfile(git_dir);
 	git_dir = xstrdup(gitfile ? gitfile : git_dir);
-	git_object_dir = git_path_from_env(DB_ENVIRONMENT, "objects");
-	git_index_file = git_path_from_env(INDEX_ENVIRONMENT, "index");
-	git_graft_file = git_path_from_env(GRAFT_ENVIRONMENT, "info/grafts");
+	git_object_dir = git_path_from_env(DB_ENVIRONMENT, "objects", &git_db_env);
+	git_index_file = git_path_from_env(INDEX_ENVIRONMENT, "index", &git_index_env);
+	git_graft_file = git_path_from_env(GRAFT_ENVIRONMENT, "info/grafts", &git_graft_env);
 	if (getenv(NO_REPLACE_OBJECTS_ENVIRONMENT))
 		check_replace_refs = 0;
 	namespace = expand_namespace(getenv(GIT_NAMESPACE_ENVIRONMENT));
