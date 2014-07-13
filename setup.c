@@ -224,6 +224,33 @@ void verify_non_filename(const char *prefix, const char *arg)
 	    "'git <command> [<revision>...] -- [<file>...]'", arg);
 }
 
+static void get_common_dir(struct strbuf *sb, const char *gitdir)
+{
+	struct strbuf data = STRBUF_INIT;
+	struct strbuf path = STRBUF_INIT;
+	const char *git_common_dir = getenv(GIT_COMMON_DIR_ENVIRONMENT);
+	if (git_common_dir) {
+		strbuf_addstr(sb, git_common_dir);
+		return;
+	}
+	strbuf_addf(&path, "%s/commondir", gitdir);
+	if (file_exists(path.buf)) {
+		if (strbuf_read_file(&data, path.buf, 0) <= 0)
+			die_errno(_("failed to read %s"), path.buf);
+		while (data.len && (data.buf[data.len - 1] == '\n' ||
+				    data.buf[data.len - 1] == '\r'))
+			data.len--;
+		data.buf[data.len] = '\0';
+		strbuf_reset(&path);
+		if (!is_absolute_path(data.buf))
+			strbuf_addf(&path, "%s/", gitdir);
+		strbuf_addbuf(&path, &data);
+		strbuf_addstr(sb, real_path(path.buf));
+	} else
+		strbuf_addstr(sb, gitdir);
+	strbuf_release(&data);
+	strbuf_release(&path);
+}
 
 /*
  * Test if it looks like we're at a git directory.
@@ -242,13 +269,22 @@ int is_git_directory(const char *suspect)
 	int ret = 0;
 	size_t len;
 
-	strbuf_addstr(&path, suspect);
+	/* Check worktree-related signatures */
+	strbuf_addf(&path, "%s/HEAD", suspect);
+	if (validate_headref(path.buf))
+		goto done;
+
+	strbuf_reset(&path);
+	get_common_dir(&path, suspect);
 	len = path.len;
+
+	/* Check non-worktree-related signatures */
 	if (getenv(DB_ENVIRONMENT)) {
 		if (access(getenv(DB_ENVIRONMENT), X_OK))
 			goto done;
 	}
 	else {
+		strbuf_setlen(&path, len);
 		strbuf_addstr(&path, "/objects");
 		if (access(path.buf, X_OK))
 			goto done;
@@ -257,11 +293,6 @@ int is_git_directory(const char *suspect)
 	strbuf_setlen(&path, len);
 	strbuf_addstr(&path, "/refs");
 	if (access(path.buf, X_OK))
-		goto done;
-
-	strbuf_setlen(&path, len);
-	strbuf_addstr(&path, "/HEAD");
-	if (validate_headref(path.buf))
 		goto done;
 
 	ret = 1;
