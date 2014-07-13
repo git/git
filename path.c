@@ -90,6 +90,38 @@ static void replace_dir(struct strbuf *buf, int len, const char *newdir)
 		buf->buf[newlen] = '/';
 }
 
+static const char *common_list[] = {
+	"/branches", "/hooks", "/info", "/logs", "/lost-found", "/modules",
+	"/objects", "/refs", "/remotes", "/rr-cache", "/svn",
+	"config", "gc.pid", "packed-refs", "shallow",
+	NULL
+};
+
+static void update_common_dir(struct strbuf *buf, int git_dir_len)
+{
+	char *base = buf->buf + git_dir_len;
+	const char **p;
+
+	if (is_dir_file(base, "logs", "HEAD"))
+		return;	/* keep this in $GIT_DIR */
+	for (p = common_list; *p; p++) {
+		const char *path = *p;
+		int is_dir = 0;
+		if (*path == '/') {
+			path++;
+			is_dir = 1;
+		}
+		if (is_dir && dir_prefix(base, path)) {
+			replace_dir(buf, git_dir_len, get_git_common_dir());
+			return;
+		}
+		if (!is_dir && !strcmp(base, path)) {
+			replace_dir(buf, git_dir_len, get_git_common_dir());
+			return;
+		}
+	}
+}
+
 static void adjust_git_path(struct strbuf *buf, int git_dir_len)
 {
 	const char *base = buf->buf + git_dir_len;
@@ -101,6 +133,8 @@ static void adjust_git_path(struct strbuf *buf, int git_dir_len)
 			      get_index_file(), strlen(get_index_file()));
 	else if (git_db_env && dir_prefix(base, "objects"))
 		replace_dir(buf, git_dir_len + 7, get_object_directory());
+	else if (git_common_dir_env)
+		update_common_dir(buf, git_dir_len);
 }
 
 static void do_git_path(struct strbuf *buf, const char *fmt, va_list args)
