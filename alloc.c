@@ -82,12 +82,17 @@ void *alloc_object_node(void)
 
 static struct alloc_state commit_state;
 
+unsigned int alloc_commit_index(void)
+{
+	static unsigned int count;
+	return count++;
+}
+
 void *alloc_commit_node(void)
 {
-	static int commit_count;
 	struct commit *c = alloc_node(&commit_state, sizeof(struct commit));
 	c->object.type = OBJ_COMMIT;
-	c->index = commit_count++;
+	c->index = alloc_commit_index();
 	return c;
 }
 
