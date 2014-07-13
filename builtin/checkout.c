@@ -585,7 +585,7 @@ static void update_refs_for_switch(const struct checkout_opts *opts,
 			if (opts->new_branch_log && !log_all_ref_updates) {
 				int temp;
 				char log_file[PATH_MAX];
-				char *ref_name = mkpath("refs/heads/%s", opts->new_orphan_branch);
+				const char *ref_name = mkpath("refs/heads/%s", opts->new_orphan_branch);
 
 				temp = log_all_ref_updates;
 				log_all_ref_updates = 1;
