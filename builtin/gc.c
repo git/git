@@ -55,6 +55,17 @@ static void remove_pidfile_on_signal(int signo)
 	raise(signo);
 }
 
+static int git_config_date_string(const char **output,
+				  const char *var, const char *value)
+{
+	if (value && strcmp(value, "now")) {
+		unsigned long now = approxidate("now");
+		if (approxidate(value) >= now)
+			return error(_("Invalid %s: '%s'"), var, value);
+	}
+	return git_config_string(output, var, value);
+}
+
 static int gc_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "gc.packrefs")) {
@@ -84,14 +95,8 @@ static int gc_config(const char *var, const char *value, void *cb)
 		detach_auto = git_config_bool(var, value);
 		return 0;
 	}
-	if (!strcmp(var, "gc.pruneexpire")) {
-		if (value && strcmp(value, "now")) {
-			unsigned long now = approxidate("now");
-			if (approxidate(value) >= now)
-				return error(_("Invalid %s: '%s'"), var, value);
-		}
-		return git_config_string(&prune_expire, var, value);
-	}
+	if (!strcmp(var, "gc.pruneexpire"))
+		return git_config_date_string(&prune_expire, var, value);
 	return git_default_config(var, value, cb);
 }
 
