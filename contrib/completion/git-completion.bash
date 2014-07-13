@@ -1102,7 +1102,11 @@ _git_clone ()
 			--template=
 			--depth
 			--single-branch
+			--no-single-branch
 			--branch
+			--separate-git-dir
+			--recursive
+			--recurse-submodules
 			"
 		return
 		;;
