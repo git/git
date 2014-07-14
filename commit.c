@@ -786,44 +786,40 @@ void sort_in_topological_order(struct commit_list **list, enum rev_sort_order so
 
 static const unsigned all_flags = (PARENT1 | PARENT2 | STALE | RESULT);
 
-static struct commit *interesting(struct commit_list *list)
+static int queue_has_nonstale(struct prio_queue *queue)
 {
-	while (list) {
-		struct commit *commit = list->item;
-		list = list->next;
-		if (commit->object.flags & STALE)
-			continue;
-		return commit;
+	int i;
+	for (i = 0; i < queue->nr; i++) {
+		struct commit *commit = queue->array[i].data;
+		if (!(commit->object.flags & STALE))
+			return 1;
 	}
-	return NULL;
+	return 0;
 }
 
 /* all input commits in one and twos[] must have been parsed! */
 static struct commit_list *paint_down_to_common(struct commit *one, int n, struct commit **twos)
 {
-	struct commit_list *list = NULL;
+	struct prio_queue queue = { compare_commits_by_commit_date };
 	struct commit_list *result = NULL;
 	int i;
 
 	one->object.flags |= PARENT1;
-	commit_list_insert_by_date(one, &list);
-	if (!n)
-		return list;
+	if (!n) {
+		commit_list_append(one, &result);
+		return result;
+	}
+	prio_queue_put(&queue, one);
+
 	for (i = 0; i < n; i++) {
 		twos[i]->object.flags |= PARENT2;
-		commit_list_insert_by_date(twos[i], &list);
+		prio_queue_put(&queue, twos[i]);
 	}
 
-	while (interesting(list)) {
-		struct commit *commit;
+	while (queue_has_nonstale(&queue)) {
+		struct commit *commit = prio_queue_get(&queue);
 		struct commit_list *parents;
-		struct commit_list *next;
 		int flags;
-
-		commit = list->item;
-		next = list->next;
-		free(list);
-		list = next;
 
 		flags = commit->object.flags & (PARENT1 | PARENT2 | STALE);
 		if (flags == (PARENT1 | PARENT2)) {
@@ -843,11 +839,11 @@ static struct commit_list *paint_down_to_common(struct commit *one, int n, struc
 			if (parse_commit(p))
 				return NULL;
 			p->object.flags |= flags;
-			commit_list_insert_by_date(p, &list);
+			prio_queue_put(&queue, p);
 		}
 	}
 
-	free_commit_list(list);
+	clear_prio_queue(&queue);
 	return result;
 }
 
