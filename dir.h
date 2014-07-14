@@ -119,7 +119,7 @@ struct dir_struct {
 	 */
 	struct exclude_stack *exclude_stack;
 	struct exclude *exclude;
-	char basebuf[PATH_MAX];
+	struct strbuf basebuf;
 };
 
 /*
