@@ -3,14 +3,16 @@
 
 static inline int compare(struct prio_queue *queue, int i, int j)
 {
-	int cmp = queue->compare(queue->array[i], queue->array[j],
+	int cmp = queue->compare(queue->array[i].data, queue->array[j].data,
 				 queue->cb_data);
+	if (!cmp)
+		cmp = queue->array[i].ctr - queue->array[j].ctr;
 	return cmp;
 }
 
 static inline void swap(struct prio_queue *queue, int i, int j)
 {
-	void *tmp = queue->array[i];
+	struct prio_queue_entry tmp = queue->array[i];
 	queue->array[i] = queue->array[j];
 	queue->array[j] = tmp;
 }
@@ -31,6 +33,7 @@ void clear_prio_queue(struct prio_queue *queue)
 	queue->nr = 0;
 	queue->alloc = 0;
 	queue->array = NULL;
+	queue->insertion_ctr = 0;
 }
 
 void prio_queue_put(struct prio_queue *queue, void *thing)
@@ -39,7 +42,9 @@ void prio_queue_put(struct prio_queue *queue, void *thing)
 
 	/* Append at the end */
 	ALLOC_GROW(queue->array, queue->nr + 1, queue->alloc);
-	queue->array[queue->nr++] = thing;
+	queue->array[queue->nr].ctr = queue->insertion_ctr++;
+	queue->array[queue->nr].data = thing;
+	queue->nr++;
 	if (!queue->compare)
 		return; /* LIFO */
 
@@ -61,9 +66,9 @@ void *prio_queue_get(struct prio_queue *queue)
 	if (!queue->nr)
 		return NULL;
 	if (!queue->compare)
-		return queue->array[--queue->nr]; /* LIFO */
+		return queue->array[--queue->nr].data; /* LIFO */
 
-	result = queue->array[0];
+	result = queue->array[0].data;
 	if (!--queue->nr)
 		return result;
 

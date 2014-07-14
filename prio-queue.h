@@ -21,11 +21,17 @@
  */
 typedef int (*prio_queue_compare_fn)(const void *one, const void *two, void *cb_data);
 
+struct prio_queue_entry {
+	unsigned ctr;
+	void *data;
+};
+
 struct prio_queue {
 	prio_queue_compare_fn compare;
+	unsigned insertion_ctr;
 	void *cb_data;
 	int alloc, nr;
-	void **array;
+	struct prio_queue_entry *array;
 };
 
 /*
