@@ -15,6 +15,27 @@ struct dir_entry {
 #define EXC_FLAG_MUSTBEDIR 8
 #define EXC_FLAG_NEGATIVE 16
 
+struct exclude {
+	/*
+	 * This allows callers of last_exclude_matching() etc.
+	 * to determine the origin of the matching pattern.
+	 */
+	struct exclude_list *el;
+
+	const char *pattern;
+	int patternlen;
+	int nowildcardlen;
+	const char *base;
+	int baselen;
+	int flags;
+
+	/*
+	 * Counting starts from 1 for line numbers in ignore files,
+	 * and from -1 decrementing for patterns from CLI args.
+	 */
+	int srcpos;
+};
+
 /*
  * Each excludes file will be parsed into a fresh exclude_list which
  * is appended to the relevant exclude_list_group (either EXC_DIRS or
@@ -32,26 +53,7 @@ struct exclude_list {
 	/* origin of list, e.g. path to filename, or descriptive string */
 	const char *src;
 
-	struct exclude {
-		/*
-		 * This allows callers of last_exclude_matching() etc.
-		 * to determine the origin of the matching pattern.
-		 */
-		struct exclude_list *el;
-
-		const char *pattern;
-		int patternlen;
-		int nowildcardlen;
-		const char *base;
-		int baselen;
-		int flags;
-
-		/*
-		 * Counting starts from 1 for line numbers in ignore files,
-		 * and from -1 decrementing for patterns from CLI args.
-		 */
-		int srcpos;
-	} **excludes;
+	struct exclude **excludes;
 };
 
 /*
