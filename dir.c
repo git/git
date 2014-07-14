@@ -557,8 +557,7 @@ int add_excludes_from_file_to_list(const char *fname,
 			buf = xrealloc(buf, size+1);
 			buf[size++] = '\n';
 		}
-	}
-	else {
+	} else {
 		size = xsize_t(st.st_size);
 		if (size == 0) {
 			close(fd);
@@ -793,9 +792,11 @@ static void prep_exclude(struct dir_struct *dir, const char *base, int baselen)
 
 	group = &dir->exclude_list_group[EXC_DIRS];
 
-	/* Pop the exclude lists from the EXCL_DIRS exclude_list_group
+	/*
+	 * Pop the exclude lists from the EXCL_DIRS exclude_list_group
 	 * which originate from directories not in the prefix of the
-	 * path being checked. */
+	 * path being checked.
+	 */
 	while ((stk = dir->exclude_stack) != NULL) {
 		if (stk->baselen <= baselen &&
 		    !strncmp(dir->basebuf, base, stk->baselen))
@@ -822,8 +823,7 @@ static void prep_exclude(struct dir_struct *dir, const char *base, int baselen)
 		if (current < 0) {
 			cp = base;
 			current = 0;
-		}
-		else {
+		} else {
 			cp = strchr(base + current + 1, '/');
 			if (!cp)
 				die("oops in prep_exclude");
