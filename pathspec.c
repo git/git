@@ -338,7 +338,7 @@ static void NORETURN unsupported_magic(const char *pattern,
 		if (!(magic & m->bit))
 			continue;
 		if (sb.len)
-			strbuf_addstr(&sb, " ");
+			strbuf_addch(&sb, ' ');
 		if (short_magic & m->bit)
 			strbuf_addf(&sb, "'%c'", m->mnemonic);
 		else
