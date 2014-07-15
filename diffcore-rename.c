@@ -242,14 +242,12 @@ struct file_similarity {
 
 static unsigned int hash_filespec(struct diff_filespec *filespec)
 {
-	unsigned int hash;
 	if (!filespec->sha1_valid) {
 		if (diff_populate_filespec(filespec, 0))
 			return 0;
 		hash_sha1_file(filespec->data, filespec->size, "blob", filespec->sha1);
 	}
-	memcpy(&hash, filespec->sha1, sizeof(hash));
-	return hash;
+	return sha1hash(filespec->sha1);
 }
 
 static int find_identical_files(struct hashmap *srcs,
@@ -259,15 +257,14 @@ static int find_identical_files(struct hashmap *srcs,
 	int renames = 0;
 
 	struct diff_filespec *target = rename_dst[dst_index].two;
-	struct file_similarity *p, *best, dst;
+	struct file_similarity *p, *best = NULL;
 	int i = 100, best_score = -1;
 
 	/*
 	 * Find the best source match for specified destination.
 	 */
-	best = NULL;
-	hashmap_entry_init(&dst, hash_filespec(target));
-	for (p = hashmap_get(srcs, &dst, NULL); p; p = hashmap_get_next(srcs, p)) {
+	p = hashmap_get_from_hash(srcs, hash_filespec(target), NULL);
+	for (; p; p = hashmap_get_next(srcs, p)) {
 		int score;
 		struct diff_filespec *source = p->filespec;
 

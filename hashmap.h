@@ -13,6 +13,17 @@ extern unsigned int strihash(const char *buf);
 extern unsigned int memhash(const void *buf, size_t len);
 extern unsigned int memihash(const void *buf, size_t len);
 
+static inline unsigned int sha1hash(const unsigned char *sha1)
+{
+	/*
+	 * Equivalent to 'return *(unsigned int *)sha1;', but safe on
+	 * platforms that don't support unaligned reads.
+	 */
+	unsigned int hash;
+	memcpy(&hash, sha1, sizeof(hash));
+	return hash;
+}
+
 /* data structures */
 
 struct hashmap_entry {
@@ -57,6 +68,14 @@ extern void *hashmap_put(struct hashmap *map, void *entry);
 extern void *hashmap_remove(struct hashmap *map, const void *key,
 		const void *keydata);
 
+static inline void *hashmap_get_from_hash(const struct hashmap *map,
+		unsigned int hash, const void *keydata)
+{
+	struct hashmap_entry key;
+	hashmap_entry_init(&key, hash);
+	return hashmap_get(map, &key, keydata);
+}
+
 /* hashmap_iter functions */
 
 extern void hashmap_iter_init(struct hashmap *map, struct hashmap_iter *iter);
@@ -66,6 +85,14 @@ static inline void *hashmap_iter_first(struct hashmap *map,
 {
 	hashmap_iter_init(map, iter);
 	return hashmap_iter_next(iter);
+}
+
+/* string interning */
+
+extern const void *memintern(const void *data, size_t len);
+static inline const char *strintern(const char *string)
+{
+	return memintern(string, strlen(string));
 }
 
 #endif
