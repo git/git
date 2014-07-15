@@ -2810,7 +2810,7 @@ static int log_ref_write(const char *refname, const unsigned char *old_sha1,
 	return 0;
 }
 
-static int is_branch(const char *refname)
+int is_branch(const char *refname)
 {
 	return !strcmp(refname, "HEAD") || starts_with(refname, "refs/heads/");
 }
