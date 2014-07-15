@@ -412,7 +412,9 @@ static int show_head_ref(const char *refname, const unsigned char *sha1,
 
 	if (flag & REF_ISSYMREF) {
 		unsigned char unused[20];
-		const char *target = resolve_ref_unsafe(refname, unused, 1, NULL);
+		const char *target = resolve_ref_unsafe(refname,
+							RESOLVE_REF_READING,
+							unused, NULL);
 		const char *target_nons = strip_namespace(target);
 
 		strbuf_addf(buf, "ref: %s\n", target_nons);

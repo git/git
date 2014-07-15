@@ -1515,7 +1515,7 @@ static void print_summary(const char *prefix, const unsigned char *sha1,
 	rev.diffopt.break_opt = 0;
 	diff_setup_done(&rev.diffopt);
 
-	head = resolve_ref_unsafe("HEAD", junk_sha1, 0, NULL);
+	head = resolve_ref_unsafe("HEAD", 0, junk_sha1, NULL);
 	if (!strcmp(head, "HEAD"))
 		head = _("detached HEAD");
 	else

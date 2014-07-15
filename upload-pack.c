@@ -744,7 +744,7 @@ static int find_symref(const char *refname, const unsigned char *sha1, int flag,
 
 	if ((flag & REF_ISSYMREF) == 0)
 		return 0;
-	symref_target = resolve_ref_unsafe(refname, unused, 0, &flag);
+	symref_target = resolve_ref_unsafe(refname, 0, unused, &flag);
 	if (!symref_target || (flag & REF_ISSYMREF) == 0)
 		die("'%s' is a symref but it is not?", refname);
 	item = string_list_append(cb_data, refname);
