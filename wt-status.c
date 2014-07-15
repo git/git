@@ -574,13 +574,10 @@ static void wt_status_collect_untracked(struct wt_status *s)
 {
 	int i;
 	struct dir_struct dir;
-	struct timeval t_begin;
+	uint64_t t_begin = getnanotime();
 
 	if (!s->show_untracked_files)
 		return;
-
-	if (advice_status_u_option)
-		gettimeofday(&t_begin, NULL);
 
 	memset(&dir, 0, sizeof(dir));
 	if (s->show_untracked_files != SHOW_ALL_UNTRACKED_FILES)
@@ -612,13 +609,8 @@ static void wt_status_collect_untracked(struct wt_status *s)
 	free(dir.ignored);
 	clear_directory(&dir);
 
-	if (advice_status_u_option) {
-		struct timeval t_end;
-		gettimeofday(&t_end, NULL);
-		s->untracked_in_ms =
-			(uint64_t)t_end.tv_sec * 1000 + t_end.tv_usec / 1000 -
-			((uint64_t)t_begin.tv_sec * 1000 + t_begin.tv_usec / 1000);
-	}
+	if (advice_status_u_option)
+		s->untracked_in_ms = (getnanotime() - t_begin) / 1000000;
 }
 
 void wt_status_collect(struct wt_status *s)

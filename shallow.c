@@ -325,7 +325,7 @@ void prune_shallow(int show_only)
 	strbuf_release(&sb);
 }
 
-#define TRACE_KEY "GIT_TRACE_SHALLOW"
+struct trace_key trace_shallow = TRACE_KEY_INIT(SHALLOW);
 
 /*
  * Step 1, split sender shallow commits into "ours" and "theirs"
@@ -334,7 +334,7 @@ void prune_shallow(int show_only)
 void prepare_shallow_info(struct shallow_info *info, struct sha1_array *sa)
 {
 	int i;
-	trace_printf_key(TRACE_KEY, "shallow: prepare_shallow_info\n");
+	trace_printf_key(&trace_shallow, "shallow: prepare_shallow_info\n");
 	memset(info, 0, sizeof(*info));
 	info->shallow = sa;
 	if (!sa)
@@ -365,7 +365,7 @@ void remove_nonexistent_theirs_shallow(struct shallow_info *info)
 {
 	unsigned char (*sha1)[20] = info->shallow->sha1;
 	int i, dst;
-	trace_printf_key(TRACE_KEY, "shallow: remove_nonexistent_theirs_shallow\n");
+	trace_printf_key(&trace_shallow, "shallow: remove_nonexistent_theirs_shallow\n");
 	for (i = dst = 0; i < info->nr_theirs; i++) {
 		if (i != dst)
 			info->theirs[dst] = info->theirs[i];
@@ -516,7 +516,7 @@ void assign_shallow_commits_to_refs(struct shallow_info *info,
 	int *shallow, nr_shallow = 0;
 	struct paint_info pi;
 
-	trace_printf_key(TRACE_KEY, "shallow: assign_shallow_commits_to_refs\n");
+	trace_printf_key(&trace_shallow, "shallow: assign_shallow_commits_to_refs\n");
 	shallow = xmalloc(sizeof(*shallow) * (info->nr_ours + info->nr_theirs));
 	for (i = 0; i < info->nr_ours; i++)
 		shallow[nr_shallow++] = info->ours[i];
@@ -622,7 +622,7 @@ static void post_assign_shallow(struct shallow_info *info,
 	int bitmap_nr = (info->ref->nr + 31) / 32;
 	struct commit_array ca;
 
-	trace_printf_key(TRACE_KEY, "shallow: post_assign_shallow\n");
+	trace_printf_key(&trace_shallow, "shallow: post_assign_shallow\n");
 	if (ref_status)
 		memset(ref_status, 0, sizeof(*ref_status) * info->ref->nr);
 
