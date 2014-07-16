@@ -644,7 +644,8 @@ int notes_merge(struct notes_merge_options *o,
 		struct commit_list *parents = NULL;
 		commit_list_insert(remote, &parents); /* LIFO order */
 		commit_list_insert(local, &parents);
-		create_notes_commit(local_tree, parents, &o->commit_msg,
+		create_notes_commit(local_tree, parents,
+				    o->commit_msg.buf, o->commit_msg.len,
 				    result_sha1);
 	}
 
@@ -671,8 +672,8 @@ int notes_merge_commit(struct notes_merge_options *o,
 	DIR *dir;
 	struct dirent *e;
 	struct strbuf path = STRBUF_INIT;
-	char *msg = strstr(partial_commit->buffer, "\n\n");
-	struct strbuf sb_msg = STRBUF_INIT;
+	const char *buffer = get_commit_buffer(partial_commit, NULL);
+	const char *msg = strstr(buffer, "\n\n");
 	int baselen;
 
 	strbuf_addstr(&path, git_path(NOTES_MERGE_WORKTREE));
@@ -719,9 +720,9 @@ int notes_merge_commit(struct notes_merge_options *o,
 		strbuf_setlen(&path, baselen);
 	}
 
-	strbuf_attach(&sb_msg, msg, strlen(msg), strlen(msg) + 1);
-	create_notes_commit(partial_tree, partial_commit->parents, &sb_msg,
-			    result_sha1);
+	create_notes_commit(partial_tree, partial_commit->parents,
+			    msg, strlen(msg), result_sha1);
+	unuse_commit_buffer(partial_commit, buffer);
 	if (o->verbosity >= 4)
 		printf("Finalized notes merge commit: %s\n",
 			sha1_to_hex(result_sha1));
