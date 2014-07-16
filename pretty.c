@@ -1249,6 +1249,8 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 			if (c->signature_check.key)
 				strbuf_addstr(sb, c->signature_check.key);
 			break;
+		default:
+			return 0;
 		}
 		return 2;
 	}
