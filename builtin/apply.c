@@ -3084,13 +3084,15 @@ static void prepare_fn_table(struct patch *patch)
 	}
 }
 
-static int checkout_target(struct cache_entry *ce, struct stat *st)
+static int checkout_target(struct index_state *istate,
+			   struct cache_entry *ce, struct stat *st)
 {
 	struct checkout costate;
 
 	memset(&costate, 0, sizeof(costate));
 	costate.base_dir = "";
 	costate.refresh_cache = 1;
+	costate.istate = istate;
 	if (checkout_entry(ce, &costate, NULL) || lstat(ce->name, st))
 		return error(_("cannot checkout %s"), ce->name);
 	return 0;
@@ -3257,7 +3259,7 @@ static int load_current(struct image *image, struct patch *patch)
 	if (lstat(name, &st)) {
 		if (errno != ENOENT)
 			return error(_("%s: %s"), name, strerror(errno));
-		if (checkout_target(ce, &st))
+		if (checkout_target(&the_index, ce, &st))
 			return -1;
 	}
 	if (verify_index_match(ce, &st))
@@ -3411,7 +3413,7 @@ static int check_preimage(struct patch *patch, struct cache_entry **ce, struct s
 		}
 		*ce = active_cache[pos];
 		if (stat_ret < 0) {
-			if (checkout_target(*ce, st))
+			if (checkout_target(&the_index, *ce, st))
 				return -1;
 		}
 		if (!cached && verify_index_match(*ce, st))
@@ -3644,7 +3646,7 @@ static void build_fake_ancestor(struct patch *list, const char *filename)
 {
 	struct patch *patch;
 	struct index_state result = { NULL };
-	int fd;
+	static struct lock_file lock;
 
 	/* Once we start supporting the reverse patch, it may be
 	 * worth showing the new sha1 prefix, but until then...
@@ -3682,8 +3684,8 @@ static void build_fake_ancestor(struct patch *list, const char *filename)
 			die ("Could not add %s to temporary index", name);
 	}
 
-	fd = open(filename, O_WRONLY | O_CREAT, 0666);
-	if (fd < 0 || write_index(&result, fd) || close(fd))
+	hold_lock_file_for_update(&lock, filename, LOCK_DIE_ON_ERROR);
+	if (write_locked_index(&result, &lock, COMMIT_LOCK))
 		die ("Could not write temporary index to %s", filename);
 
 	discard_index(&result);
@@ -4502,8 +4504,7 @@ int cmd_apply(int argc, const char **argv, const char *prefix_)
 	}
 
 	if (update_index) {
-		if (write_cache(newfd, active_cache, active_nr) ||
-		    commit_locked_index(&lock_file))
+		if (write_locked_index(&the_index, &lock_file, COMMIT_LOCK))
 			die(_("Unable to write new index file"));
 	}
 

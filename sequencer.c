@@ -263,11 +263,11 @@ static int do_recursive_merge(struct commit *base, struct commit *next,
 {
 	struct merge_options o;
 	struct tree *result, *next_tree, *base_tree, *head_tree;
-	int clean, index_fd;
+	int clean;
 	const char **xopt;
 	static struct lock_file index_lock;
 
-	index_fd = hold_locked_index(&index_lock, 1);
+	hold_locked_index(&index_lock, 1);
 
 	read_cache();
 
@@ -288,8 +288,7 @@ static int do_recursive_merge(struct commit *base, struct commit *next,
 			    next_tree, base_tree, &result);
 
 	if (active_cache_changed &&
-	    (write_cache(index_fd, active_cache, active_nr) ||
-	     commit_locked_index(&index_lock)))
+	    write_locked_index(&the_index, &index_lock, COMMIT_LOCK))
 		/* TRANSLATORS: %s will be "revert" or "cherry-pick" */
 		die(_("%s: Unable to write new index file"), action_name(opts));
 	rollback_lock_file(&index_lock);
@@ -341,9 +340,7 @@ static int is_index_unchanged(void)
 		active_cache_tree = cache_tree();
 
 	if (!cache_tree_fully_valid(active_cache_tree))
-		if (cache_tree_update(active_cache_tree,
-				      (const struct cache_entry * const *)active_cache,
-				      active_nr, 0))
+		if (cache_tree_update(&the_index, 0))
 			return error(_("Unable to update cache tree\n"));
 
 	return !hashcmp(active_cache_tree->sha1, head_commit->tree->object.sha1);
@@ -643,9 +640,8 @@ static void read_and_refresh_cache(struct replay_opts *opts)
 	if (read_index_preload(&the_index, NULL) < 0)
 		die(_("git %s: failed to read the index"), action_name(opts));
 	refresh_index(&the_index, REFRESH_QUIET|REFRESH_UNMERGED, NULL, NULL, NULL);
-	if (the_index.cache_changed) {
-		if (write_index(&the_index, index_fd) ||
-		    commit_locked_index(&index_lock))
+	if (the_index.cache_changed && index_fd >= 0) {
+		if (write_locked_index(&the_index, &index_lock, COMMIT_LOCK))
 			die(_("git %s: failed to refresh the index"), action_name(opts));
 	}
 	rollback_lock_file(&index_lock);

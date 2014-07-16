@@ -135,6 +135,7 @@ static int option_parse_u(const struct option *opt,
 	int *newfd = opt->value;
 
 	state.refresh_cache = 1;
+	state.istate = &the_index;
 	if (*newfd < 0)
 		*newfd = hold_locked_index(&lock_file, 1);
 	return 0;
@@ -279,8 +280,7 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 		checkout_all(prefix, prefix_length);
 
 	if (0 <= newfd &&
-	    (write_cache(newfd, active_cache, active_nr) ||
-	     commit_locked_index(&lock_file)))
+	    write_locked_index(&the_index, &lock_file, COMMIT_LOCK))
 		die("Unable to write new index file");
 	return 0;
 }

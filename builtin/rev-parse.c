@@ -11,6 +11,7 @@
 #include "parse-options.h"
 #include "diff.h"
 #include "revision.h"
+#include "split-index.h"
 
 #define DO_REVS		1
 #define DO_NOREV	2
@@ -773,6 +774,15 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 			if (!strcmp(arg, "--is-bare-repository")) {
 				printf("%s\n", is_bare_repository() ? "true"
 						: "false");
+				continue;
+			}
+			if (!strcmp(arg, "--shared-index-path")) {
+				if (read_cache() < 0)
+					die(_("Could not read the index"));
+				if (the_index.split_index) {
+					const unsigned char *sha1 = the_index.split_index->base_sha1;
+					puts(git_path("sharedindex.%s", sha1_to_hex(sha1)));
+				}
 				continue;
 			}
 			if (starts_with(arg, "--since=")) {

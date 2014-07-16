@@ -155,6 +155,10 @@ index::
 	The current index file for the repository.  It is
 	usually not found in a bare repository.
 
+sharedindex.<SHA-1>::
+	The shared index part, to be referenced by $GIT_DIR/index and
+	other temporary index files. Only valid in split index mode.
+
 info::
 	Additional information about the repository is recorded
 	in this directory.
