@@ -274,7 +274,7 @@ static void add_rfc822_quoted(struct strbuf *out, const char *s, int len)
 
 enum rfc2047_type {
 	RFC2047_SUBJECT,
-	RFC2047_ADDRESS,
+	RFC2047_ADDRESS
 };
 
 static int is_rfc2047_special(char ch, enum rfc2047_type type)

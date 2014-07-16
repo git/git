@@ -5,20 +5,18 @@
  */
 #include "git-compat-util.h"
 #include "builtin.h"
+#include "argv-array.h"
 
 int cmd_annotate(int argc, const char **argv, const char *prefix)
 {
-	const char **nargv;
+	struct argv_array args = ARGV_ARRAY_INIT;
 	int i;
-	nargv = xmalloc(sizeof(char *) * (argc + 2));
 
-	nargv[0] = "annotate";
-	nargv[1] = "-c";
+	argv_array_pushl(&args, "annotate", "-c", NULL);
 
 	for (i = 1; i < argc; i++) {
-		nargv[i+1] = argv[i];
+		argv_array_push(&args, argv[i]);
 	}
-	nargv[argc + 1] = NULL;
 
-	return cmd_blame(argc + 1, nargv, prefix);
+	return cmd_blame(args.argc, args.argv, prefix);
 }
