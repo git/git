@@ -93,7 +93,8 @@ UI, Workflows & Features
    users need to explicitly set the variable to 'true' if they want
    to resurrect the now-ignored use case.
 
- * "git replace" learned the "--edit" subcommand.
+ * "git replace" learned the "--edit" subcommand to create a
+   replacement by editing an existing object.
 
  * "git send-email" learned "--to-cover" and "--cc-cover" options, to
    tell it to copy To: and Cc: headers found in the first input file
@@ -114,6 +115,11 @@ UI, Workflows & Features
 Performance, Internal Implementation, etc.
 
  * Build procedure for 'subtree' (in contrib/) has been cleaned up.
+
+ * An experimental format to use two files (the base file and
+   incremental changes relative to it) to represent the index has been
+   introduced; this may reduce I/O cost of rewriting a large index
+   when only small part of the working tree changes.
 
  * Effort to shrink the size of patches Windows folks maintain on top
    by upstreaming them continues.
@@ -140,6 +146,9 @@ Performance, Internal Implementation, etc.
    updates to multiple references in a transactional way.  As an
    example, "update-ref --stdin [-z]" has been updated to use this
    API.
+
+ * skip_prefix() and strip_suffix() API functions are used a lot more
+   widely throughout the codebase now.
 
  * Parts of the test scripts can be skipped by using a range notation,
    e.g. "sh t1234-test.sh --run='1-4 6 8-'" to omit test piece 5 and 7
@@ -213,6 +222,10 @@ notes for details).
    couple of options unique to "git merge".
    (merge 8fee872 jk/complete-merge-pull later to maint).
 
+ * An ancient rewrite passed a wrong pointer to a curl library
+   function in a rarely used code path.
+   (merge 479eaa8 ah/fix-http-push later to maint).
+
  * "--ignore-space-change" option of "git apply" ignored the spaces
    at the beginning of line too aggressively, which is inconsistent
    with the option of the same name "diff" and "git diff" have.
@@ -242,6 +255,11 @@ notes for details).
    bit.
    (merge 5304810 jk/diff-files-assume-unchanged later to maint).
 
+ * "filter-branch" left an empty single-parent commit that results when
+   all parents of a merge commit gets mapped to the same commit, even
+   under "--prune-empty".
+   (merge 79bc4ef cb/filter-branch-prune-empty-degenerate-merges later to maint).
+
  * "git format-patch" did not enforce the rule that the "--follow"
    option from the log/diff family of commands must be used with
    exactly one pathspec.
@@ -267,6 +285,13 @@ notes for details).
    distinguish missing objects from type errors.
    (merge 77583e7 jk/index-pack-report-missing later to maint).
 
+ * "log --show-signature" incorrectly decided the color to paint a
+   mergetag that was and was not correctly validated.
+   (merge 42c55ce mg/fix-log-mergetag-color later to maint).
+
+ * "log --show-signature" did not pay attention to "--graph" option.
+   (merge cf3983d zk/log-graph-showsig later to maint).
+
  * "git mailinfo" used to read beyond the end of header string while
    parsing an incoming e-mail message to extract the patch.
    (merge b1a013d rs/mailinfo-header-cmp later to maint).
@@ -275,6 +300,11 @@ notes for details).
    deleted the file that is to be renamed to a name that is the same
    except for case differences.
    (merge baa37bf dt/merge-recursive-case-insensitive later to maint).
+
+ * Merging changes into a file that ends in an incomplete line made the
+   last line into a complete one, even when the other branch did not
+   change anything around the end of file.
+   (merge ba31180 mk/merge-incomplete-files later to maint).
 
  * "git pack-objects" unnecessarily copied the previous contents when
    extending the hashtable, even though it will populate the table
