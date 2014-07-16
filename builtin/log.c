@@ -861,7 +861,7 @@ static void add_branch_description(struct strbuf *buf, const char *branch_name)
 	read_branch_desc(&desc, branch_name);
 	if (desc.len) {
 		strbuf_addch(buf, '\n');
-		strbuf_add(buf, desc.buf, desc.len);
+		strbuf_addbuf(buf, &desc);
 		strbuf_addch(buf, '\n');
 	}
 }

@@ -281,7 +281,7 @@ static int fsck_commit_buffer(struct commit *commit, const char *buffer,
 {
 	unsigned char tree_sha1[20], sha1[20];
 	struct commit_graft *graft;
-	int parents = 0;
+	unsigned parent_count, parent_line_count = 0;
 	int err;
 
 	if (!skip_prefix(buffer, "tree ", &buffer))
@@ -293,27 +293,17 @@ static int fsck_commit_buffer(struct commit *commit, const char *buffer,
 		if (get_sha1_hex(buffer, sha1) || buffer[40] != '\n')
 			return error_func(&commit->object, FSCK_ERROR, "invalid 'parent' line format - bad sha1");
 		buffer += 41;
-		parents++;
+		parent_line_count++;
 	}
 	graft = lookup_commit_graft(commit->object.sha1);
+	parent_count = commit_list_count(commit->parents);
 	if (graft) {
-		struct commit_list *p = commit->parents;
-		parents = 0;
-		while (p) {
-			p = p->next;
-			parents++;
-		}
-		if (graft->nr_parent == -1 && !parents)
+		if (graft->nr_parent == -1 && !parent_count)
 			; /* shallow commit */
-		else if (graft->nr_parent != parents)
+		else if (graft->nr_parent != parent_count)
 			return error_func(&commit->object, FSCK_ERROR, "graft objects missing");
 	} else {
-		struct commit_list *p = commit->parents;
-		while (p && parents) {
-			p = p->next;
-			parents--;
-		}
-		if (p || parents)
+		if (parent_count != parent_line_count)
 			return error_func(&commit->object, FSCK_ERROR, "parent objects missing");
 	}
 	if (!skip_prefix(buffer, "author ", &buffer))
