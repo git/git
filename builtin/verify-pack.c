@@ -27,10 +27,9 @@ static int verify_one_pack(const char *path, unsigned int flags)
 	 * normalize these forms to "foo.pack" for "index-pack --verify".
 	 */
 	strbuf_addstr(&arg, path);
-	if (has_extension(arg.buf, ".idx"))
-		strbuf_splice(&arg, arg.len - 3, 3, "pack", 4);
-	else if (!has_extension(arg.buf, ".pack"))
-		strbuf_add(&arg, ".pack", 5);
+	if (strbuf_strip_suffix(&arg, ".idx") ||
+	    !ends_with(arg.buf, ".pack"))
+		strbuf_addstr(&arg, ".pack");
 	argv[2] = arg.buf;
 
 	memset(&index_pack, 0, sizeof(index_pack));
