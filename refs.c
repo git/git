@@ -2607,7 +2607,7 @@ static int delete_ref_loose(struct ref_lock *lock, int flag)
 		char *loose_filename = get_locked_file_path(lock->lk);
 		int err = unlink_or_warn(loose_filename);
 		free(loose_filename);
-		if (err && errno != ENOENT)
+		if (err)
 			return 1;
 	}
 	return 0;

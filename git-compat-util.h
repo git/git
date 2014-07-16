@@ -777,11 +777,14 @@ void git_qsort(void *base, size_t nmemb, size_t size,
 
 /*
  * Preserves errno, prints a message, but gives no warning for ENOENT.
- * Always returns the return value of unlink(2).
+ * Returns 0 on success, which includes trying to unlink an object that does
+ * not exist.
  */
 int unlink_or_warn(const char *path);
 /*
- * Likewise for rmdir(2).
+ * Preserves errno, prints a message, but gives no warning for ENOENT.
+ * Returns 0 on success, which includes trying to remove a directory that does
+ * not exist.
  */
 int rmdir_or_warn(const char *path);
 /*
