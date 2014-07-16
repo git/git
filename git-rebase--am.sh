@@ -45,14 +45,16 @@ then
 	# itself well to recording empty patches.  fortunately, cherry-pick
 	# makes this easy
 	git cherry-pick ${gpg_sign_opt:+"$gpg_sign_opt"} --allow-empty \
-		--right-only "$revisions"
+		--right-only "$revisions" \
+		${restrict_revision+^$restrict_revision}
 	ret=$?
 else
 	rm -f "$GIT_DIR/rebased-patches"
 
 	git format-patch -k --stdout --full-index --cherry-pick --right-only \
 		--src-prefix=a/ --dst-prefix=b/ --no-renames --no-cover-letter \
-		"$revisions" >"$GIT_DIR/rebased-patches"
+		"$revisions" ${restrict_revision+^$restrict_revision} \
+		>"$GIT_DIR/rebased-patches"
 	ret=$?
 
 	if test 0 != $ret
