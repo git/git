@@ -188,10 +188,12 @@ static int replace_object(const char *object_ref, const char *replace_ref, int f
 }
 
 /*
- * Write the contents of the object named by "sha1" to the file "filename",
- * pretty-printed for human editing based on its type.
+ * Write the contents of the object named by "sha1" to the file "filename".
+ * If "raw" is true, then the object's raw contents are printed according to
+ * "type". Otherwise, we pretty-print the contents for human editing.
  */
-static void export_object(const unsigned char *sha1, const char *filename)
+static void export_object(const unsigned char *sha1, enum object_type type,
+			  int raw, const char *filename)
 {
 	struct child_process cmd = { NULL };
 	int fd;
@@ -202,7 +204,10 @@ static void export_object(const unsigned char *sha1, const char *filename)
 
 	argv_array_push(&cmd.args, "--no-replace-objects");
 	argv_array_push(&cmd.args, "cat-file");
-	argv_array_push(&cmd.args, "-p");
+	if (raw)
+		argv_array_push(&cmd.args, typename(type));
+	else
+		argv_array_push(&cmd.args, "-p");
 	argv_array_push(&cmd.args, sha1_to_hex(sha1));
 	cmd.git_cmd = 1;
 	cmd.out = fd;
@@ -217,7 +222,7 @@ static void export_object(const unsigned char *sha1, const char *filename)
  * The sha1 of the written object is returned via sha1.
  */
 static void import_object(unsigned char *sha1, enum object_type type,
-			  const char *filename)
+			  int raw, const char *filename)
 {
 	int fd;
 
@@ -225,7 +230,7 @@ static void import_object(unsigned char *sha1, enum object_type type,
 	if (fd < 0)
 		die_errno("unable to open %s for reading", filename);
 
-	if (type == OBJ_TREE) {
+	if (!raw && type == OBJ_TREE) {
 		const char *argv[] = { "mktree", NULL };
 		struct child_process cmd = { argv };
 		struct strbuf result = STRBUF_INIT;
@@ -265,7 +270,7 @@ static void import_object(unsigned char *sha1, enum object_type type,
 	 */
 }
 
-static int edit_and_replace(const char *object_ref, int force)
+static int edit_and_replace(const char *object_ref, int force, int raw)
 {
 	char *tmpfile = git_pathdup("REPLACE_EDITOBJ");
 	enum object_type type;
@@ -281,10 +286,10 @@ static int edit_and_replace(const char *object_ref, int force)
 
 	check_ref_valid(old, prev, ref, sizeof(ref), force);
 
-	export_object(old, tmpfile);
+	export_object(old, type, raw, tmpfile);
 	if (launch_editor(tmpfile, NULL, NULL) < 0)
 		die("editing object file failed");
-	import_object(new, type, tmpfile);
+	import_object(new, type, raw, tmpfile);
 
 	free(tmpfile);
 
@@ -297,6 +302,7 @@ static int edit_and_replace(const char *object_ref, int force)
 int cmd_replace(int argc, const char **argv, const char *prefix)
 {
 	int force = 0;
+	int raw = 0;
 	const char *format = NULL;
 	enum {
 		MODE_UNSPECIFIED = 0,
@@ -310,6 +316,7 @@ int cmd_replace(int argc, const char **argv, const char *prefix)
 		OPT_CMDMODE('d', "delete", &cmdmode, N_("delete replace refs"), MODE_DELETE),
 		OPT_CMDMODE('e', "edit", &cmdmode, N_("edit existing object"), MODE_EDIT),
 		OPT_BOOL('f', "force", &force, N_("replace the ref if it exists")),
+		OPT_BOOL(0, "raw", &raw, N_("do not pretty-print contents for --edit")),
 		OPT_STRING(0, "format", &format, N_("format"), N_("use this format")),
 		OPT_END()
 	};
@@ -329,6 +336,10 @@ int cmd_replace(int argc, const char **argv, const char *prefix)
 		usage_msg_opt("-f only makes sense when writing a replacement",
 			      git_replace_usage, options);
 
+	if (raw && cmdmode != MODE_EDIT)
+		usage_msg_opt("--raw only makes sense with --edit",
+			      git_replace_usage, options);
+
 	switch (cmdmode) {
 	case MODE_DELETE:
 		if (argc < 1)
@@ -346,7 +357,7 @@ int cmd_replace(int argc, const char **argv, const char *prefix)
 		if (argc != 1)
 			usage_msg_opt("-e needs exactly one argument",
 				      git_replace_usage, options);
-		return edit_and_replace(argv[0], force);
+		return edit_and_replace(argv[0], force, raw);
 
 	case MODE_LIST:
 		if (argc > 1)
