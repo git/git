@@ -987,12 +987,7 @@ struct commit_list *get_merge_bases_many(struct commit *one,
 	}
 
 	/* There are more than one */
-	cnt = 0;
-	list = result;
-	while (list) {
-		list = list->next;
-		cnt++;
-	}
+	cnt = commit_list_count(result);
 	rslt = xcalloc(cnt, sizeof(*rslt));
 	for (list = result, i = 0; list; list = list->next)
 		rslt[i++] = list->item;
