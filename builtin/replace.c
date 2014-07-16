@@ -23,9 +23,9 @@ static const char * const git_replace_usage[] = {
 };
 
 enum replace_format {
-      REPLACE_FORMAT_SHORT,
-      REPLACE_FORMAT_MEDIUM,
-      REPLACE_FORMAT_LONG
+	REPLACE_FORMAT_SHORT,
+	REPLACE_FORMAT_MEDIUM,
+	REPLACE_FORMAT_LONG
 };
 
 struct show_data {
@@ -193,22 +193,22 @@ static int replace_object(const char *object_ref, const char *replace_ref, int f
  */
 static void export_object(const unsigned char *sha1, const char *filename)
 {
-	const char *argv[] = { "--no-replace-objects", "cat-file", "-p", NULL, NULL };
-	struct child_process cmd = { argv };
+	struct child_process cmd = { NULL };
 	int fd;
 
 	fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0666);
 	if (fd < 0)
 		die_errno("unable to open %s for writing", filename);
 
-	argv[3] = sha1_to_hex(sha1);
+	argv_array_push(&cmd.args, "--no-replace-objects");
+	argv_array_push(&cmd.args, "cat-file");
+	argv_array_push(&cmd.args, "-p");
+	argv_array_push(&cmd.args, sha1_to_hex(sha1));
 	cmd.git_cmd = 1;
 	cmd.out = fd;
 
 	if (run_command(&cmd))
 		die("cat-file reported failure");
-
-	close(fd);
 }
 
 /*
