@@ -277,16 +277,16 @@ char *expand_user_path(const char *path)
 			const char *home = getenv("HOME");
 			if (!home)
 				goto return_null;
-			strbuf_add(&user_path, home, strlen(home));
+			strbuf_addstr(&user_path, home);
 		} else {
 			struct passwd *pw = getpw_str(username, username_len);
 			if (!pw)
 				goto return_null;
-			strbuf_add(&user_path, pw->pw_dir, strlen(pw->pw_dir));
+			strbuf_addstr(&user_path, pw->pw_dir);
 		}
 		to_copy = first_slash;
 	}
-	strbuf_add(&user_path, to_copy, strlen(to_copy));
+	strbuf_addstr(&user_path, to_copy);
 	return strbuf_detach(&user_path, NULL);
 return_null:
 	strbuf_release(&user_path);

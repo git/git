@@ -525,9 +525,9 @@ static void emit_hunk_header(struct emit_callback *ecbdata,
 	ep += 2; /* skip over @@ */
 
 	/* The hunk header in fraginfo color */
-	strbuf_add(&msgbuf, frag, strlen(frag));
+	strbuf_addstr(&msgbuf, frag);
 	strbuf_add(&msgbuf, line, ep - line);
-	strbuf_add(&msgbuf, reset, strlen(reset));
+	strbuf_addstr(&msgbuf, reset);
 
 	/*
 	 * trailing "\r\n"
@@ -541,15 +541,15 @@ static void emit_hunk_header(struct emit_callback *ecbdata,
 		if (*ep != ' ' && *ep != '\t')
 			break;
 	if (ep != cp) {
-		strbuf_add(&msgbuf, plain, strlen(plain));
+		strbuf_addstr(&msgbuf, plain);
 		strbuf_add(&msgbuf, cp, ep - cp);
-		strbuf_add(&msgbuf, reset, strlen(reset));
+		strbuf_addstr(&msgbuf, reset);
 	}
 
 	if (ep < line + len) {
-		strbuf_add(&msgbuf, func, strlen(func));
+		strbuf_addstr(&msgbuf, func);
 		strbuf_add(&msgbuf, ep, line + len - ep);
-		strbuf_add(&msgbuf, reset, strlen(reset));
+		strbuf_addstr(&msgbuf, reset);
 	}
 
 	strbuf_add(&msgbuf, line + len, org_len - len);
