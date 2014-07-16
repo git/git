@@ -35,6 +35,9 @@ typedef int socklen_t;
 #ifndef EWOULDBLOCK
 #define EWOULDBLOCK EAGAIN
 #endif
+#ifndef ELOOP
+#define ELOOP EMLINK
+#endif
 #define SHUT_WR SD_SEND
 
 #define SIGHUP 1
