@@ -2113,6 +2113,10 @@ void mingw_startup()
 			setenv("TMPDIR", tmp, 1);
 	}
 
+	/* simulate TERM to enable auto-color (see color.c) */
+	if (!getenv("TERM"))
+		setenv("TERM", "cygwin", 1);
+
 	/* initialize critical section for waitpid pinfo_t list */
 	InitializeCriticalSection(&pinfo_cs);
 
