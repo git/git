@@ -168,7 +168,7 @@ extern int write_ref_sha1(struct ref_lock *lock, const unsigned char *sha1, cons
 /*
  * Setup reflog before using. Set errno to something meaningful on failure.
  */
-int log_ref_setup(const char *refname, char *logfile, int bufsize);
+int log_ref_setup(const char *refname, struct strbuf *logfile);
 
 /** Reads log for the value of ref during at_time. **/
 extern int read_ref_at(const char *refname, unsigned long at_time, int cnt,

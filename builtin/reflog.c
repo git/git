@@ -372,7 +372,7 @@ static int expire_reflog(const char *ref, const unsigned char *sha1, int unused,
 	if (!reflog_exists(ref))
 		goto finish;
 	if (!cmd->dry_run) {
-		newlog_path = git_pathdup("logs/%s.lock", ref);
+		newlog_path = mkpathdup("%s.lock", log_file);
 		cb.newlog = fopen(newlog_path, "w");
 	}
 

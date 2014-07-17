@@ -225,6 +225,13 @@ This means that you can use `git checkout -p` to selectively discard
 edits from your current working tree. See the ``Interactive Mode''
 section of linkgit:git-add[1] to learn how to operate the `--patch` mode.
 
+--to=<path>::
+	Check out a new branch in a separate working directory at
+	`<path>`. A new working directory is linked to the current
+	repository, sharing everything except working directory
+	specific files such as HEAD, index... See "MULTIPLE CHECKOUT
+	MODE" section for more information.
+
 <branch>::
 	Branch to checkout; if it refers to a branch (i.e., a name that,
 	when prepended with "refs/heads/", is a valid ref), then that
@@ -387,6 +394,33 @@ can use either of these commands:
 $ git reflog -2 HEAD # or
 $ git log -g -2 HEAD
 ------------
+
+MULTIPLE CHECKOUT MODE
+----------------------
+Normally a working directory is attached to repository. When "git
+checkout --to" is used, a new working directory is attached to the
+current repository. This new working directory is called "linked
+checkout" as compared to the "main checkout" prepared by "git init" or
+"git clone". A repository has one main checkout and zero or more
+linked checkouts.
+
+All checkouts share the same repository. Linked checkouts see the
+repository a bit different from the main checkout. When the checkout
+"new" reads the path $GIT_DIR/HEAD for example, the actual path
+returned could be $GIT_DIR/repos/new/HEAD. This ensures checkouts
+won't step on each other.
+
+Each linked checkout has a private space in $GIT_DIR/repos, usually
+named after the base name of the working directory with a number added
+to make it unique. The linked checkout's $GIT_DIR points to this
+private space while $GIT_COMMON_DIR points to the main checkout's
+$GIT_DIR. These settings are done by "git checkout --to".
+
+Because in this mode $GIT_DIR becomes a lightweight virtual file
+system where a path could be rewritten to some place else, accessing
+$GIT_DIR from scripts should use `git rev-parse --git-path` to resolve
+a path instead of using it directly unless the path is known to be
+private to the working directory.
 
 EXAMPLES
 --------
