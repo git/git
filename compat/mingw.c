@@ -1220,14 +1220,14 @@ static char **env_setenv(char **env, const char *name)
 			for (i = 0; env[i]; i++)
 				;
 			env = xrealloc(env, (i+2)*sizeof(*env));
-			env[i] = xstrdup(name);
+			env[i] = (char*) name;
 			env[i+1] = NULL;
 		}
 	}
 	else {
 		free(env[i]);
 		if (*eq)
-			env[i] = xstrdup(name);
+			env[i] = (char*) name;
 		else
 			for (; env[i]; i++)
 				env[i] = env[i+1];
@@ -1242,8 +1242,10 @@ char **make_augmented_environ(const char *const *vars)
 {
 	char **env = copy_environ();
 
-	while (*vars)
-		env = env_setenv(env, *vars++);
+	while (*vars) {
+		const char *v = *vars++;
+		env = env_setenv(env, strchr(v, '=') ? xstrdup(v) : v);
+	}
 	return env;
 }
 
