@@ -4,6 +4,7 @@
 #include <wchar.h>
 #include "../strbuf.h"
 #include "../run-command.h"
+#include "../cache.h"
 
 static const int delay[] = { 0, 1, 10, 20, 40 };
 
@@ -919,9 +920,9 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **env,
 {
 	STARTUPINFOW si;
 	PROCESS_INFORMATION pi;
-	struct strbuf envblk, args;
-	wchar_t wcmd[MAX_PATH], wdir[MAX_PATH], *wargs;
-	unsigned flags;
+	struct strbuf args;
+	wchar_t wcmd[MAX_PATH], wdir[MAX_PATH], *wargs, *wenvblk = NULL;
+	unsigned flags = CREATE_UNICODE_ENVIRONMENT;
 	BOOL ret;
 
 	/* Determine whether or not we are associated to a console */
@@ -938,7 +939,7 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **env,
 		 * instead of CREATE_NO_WINDOW to make ssh
 		 * recognize that it has no console.
 		 */
-		flags = DETACHED_PROCESS;
+		flags |= DETACHED_PROCESS;
 	} else {
 		/* There is already a console. If we specified
 		 * DETACHED_PROCESS here, too, Windows would
@@ -946,7 +947,6 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **env,
 		 * The same is true for CREATE_NO_WINDOW.
 		 * Go figure!
 		 */
-		flags = 0;
 		CloseHandle(cons);
 	}
 	memset(&si, 0, sizeof(si));
@@ -985,6 +985,7 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **env,
 	if (env) {
 		int count = 0;
 		char **e, **sorted_env;
+		int size = 0, wenvsz = 0, wenvpos = 0;
 
 		for (e = env; *e; e++)
 			count++;
@@ -994,20 +995,22 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **env,
 		memcpy(sorted_env, env, sizeof(*sorted_env) * (count + 1));
 		qsort(sorted_env, count, sizeof(*sorted_env), env_compare);
 
-		strbuf_init(&envblk, 0);
+		/* create environment block from temporary environment */
 		for (e = sorted_env; *e; e++) {
-			strbuf_addstr(&envblk, *e);
-			strbuf_addch(&envblk, '\0');
+			size = 2 * strlen(*e) + 2; /* +2 for final \0 */
+			ALLOC_GROW(wenvblk, (wenvpos + size) * sizeof(wchar_t), wenvsz);
+			wenvpos += xutftowcs(&wenvblk[wenvpos], *e, size) + 1;
 		}
+		/* add final \0 terminator */
+		wenvblk[wenvpos] = 0;
 		free(sorted_env);
 	}
 
 	memset(&pi, 0, sizeof(pi));
 	ret = CreateProcessW(wcmd, wargs, NULL, NULL, TRUE, flags,
-		env ? envblk.buf : NULL, dir ? wdir : NULL, &si, &pi);
+		wenvblk, dir ? wdir : NULL, &si, &pi);
 
-	if (env)
-		strbuf_release(&envblk);
+	free(wenvblk);
 	free(wargs);
 
 	if (!ret) {
