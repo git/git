@@ -212,9 +212,18 @@ test_expect_success '__gitdir - non-existing $GIT_DIR' '
 	)
 '
 
+function pwd_P_W () {
+	if test_have_prereq MINGW
+	then
+		pwd -W
+	else
+		pwd -P
+	fi
+}
+
 test_expect_success '__gitdir - gitfile in cwd' '
-	echo "$(pwd -P)/otherrepo/.git" >expected &&
-	echo "gitdir: $TRASH_DIRECTORY/otherrepo/.git" >subdir/.git &&
+	echo "$(pwd_P_W)/otherrepo/.git" >expected &&
+	echo "gitdir: $(pwd_P_W)/otherrepo/.git" >subdir/.git &&
 	test_when_finished "rm -f subdir/.git" &&
 	(
 		cd subdir &&
@@ -224,8 +233,8 @@ test_expect_success '__gitdir - gitfile in cwd' '
 '
 
 test_expect_success '__gitdir - gitfile in parent' '
-	echo "$(pwd -P)/otherrepo/.git" >expected &&
-	echo "gitdir: $TRASH_DIRECTORY/otherrepo/.git" >subdir/.git &&
+	echo "$(pwd_P_W)/otherrepo/.git" >expected &&
+	echo "gitdir: $(pwd_P_W)/otherrepo/.git" >subdir/.git &&
 	test_when_finished "rm -f subdir/.git" &&
 	(
 		cd subdir/subsubdir &&
