@@ -906,6 +906,36 @@ static int compareenv(const void *a, const void *b)
 	return strcasecmp(*ea, *eb);
 }
 
+/*
+ * Create environment block suitable for CreateProcess.
+ */
+static wchar_t *make_environment_block(char **env)
+{
+	wchar_t *wenvblk = NULL;
+	int count = 0;
+	char **e, **tmpenv;
+	int size = 0, wenvsz = 0, wenvpos = 0;
+
+	for (e = env; *e; e++)
+		count++;
+
+	/* environment must be sorted */
+	tmpenv = xmalloc(sizeof(*tmpenv) * (count + 1));
+	memcpy(tmpenv, env, sizeof(*tmpenv) * (count + 1));
+	qsort(tmpenv, count, sizeof(*tmpenv), compareenv);
+
+	/* create environment block from temporary environment */
+	for (e = tmpenv; *e; e++) {
+		size = 2 * strlen(*e) + 2; /* +2 for final \0 */
+		ALLOC_GROW(wenvblk, (wenvpos + size) * sizeof(wchar_t), wenvsz);
+		wenvpos += xutftowcs(&wenvblk[wenvpos], *e, size) + 1;
+	}
+	/* add final \0 terminator */
+	wenvblk[wenvpos] = 0;
+	free(tmpenv);
+	return wenvblk;
+}
+
 struct pinfo_t {
 	struct pinfo_t *next;
 	pid_t pid;
@@ -982,29 +1012,8 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **env,
 	xutftowcs(wargs, args.buf, 2 * args.len + 1);
 	strbuf_release(&args);
 
-	if (env) {
-		int count = 0;
-		char **e, **sorted_env;
-		int size = 0, wenvsz = 0, wenvpos = 0;
-
-		for (e = env; *e; e++)
-			count++;
-
-		/* environment must be sorted */
-		sorted_env = xmalloc(sizeof(*sorted_env) * (count + 1));
-		memcpy(sorted_env, env, sizeof(*sorted_env) * (count + 1));
-		qsort(sorted_env, count, sizeof(*sorted_env), compareenv);
-
-		/* create environment block from temporary environment */
-		for (e = sorted_env; *e; e++) {
-			size = 2 * strlen(*e) + 2; /* +2 for final \0 */
-			ALLOC_GROW(wenvblk, (wenvpos + size) * sizeof(wchar_t), wenvsz);
-			wenvpos += xutftowcs(&wenvblk[wenvpos], *e, size) + 1;
-		}
-		/* add final \0 terminator */
-		wenvblk[wenvpos] = 0;
-		free(sorted_env);
-	}
+	if (env)
+		wenvblk = make_environment_block(env);
 
 	memset(&pi, 0, sizeof(pi));
 	ret = CreateProcessW(wcmd, wargs, NULL, NULL, TRUE, flags,
