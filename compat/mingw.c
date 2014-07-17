@@ -899,7 +899,12 @@ static char *path_lookup(const char *cmd, char **path, int exe_only)
 	return prog;
 }
 
-static char **do_putenv(char **env, const char *name, int free_old);
+static int do_putenv(char **env, const char *name, int size, int free_old);
+
+/* used number of elements of environ array, including terminating NULL */
+static int environ_size = 0;
+/* allocated size of environ array, in bytes */
+static int environ_alloc = 0;
 
 static int compareenv(const void *a, const void *b)
 {
@@ -915,31 +920,28 @@ static int compareenv(const void *a, const void *b)
 static wchar_t *make_environment_block(char **deltaenv)
 {
 	wchar_t *wenvblk = NULL;
-	int count = 0;
-	char **e, **tmpenv;
-	int size = 0, wenvsz = 0, wenvpos = 0;
+	char **tmpenv;
+	int i = 0, size = environ_size, wenvsz = 0, wenvpos = 0;
 
-	while (environ[count])
-		count++;
+	while (deltaenv && deltaenv[i])
+		i++;
 
-	/* copy the environment */
-	tmpenv = xmalloc(sizeof(*tmpenv) * (count + 1));
-	memcpy(tmpenv, environ, sizeof(*tmpenv) * (count + 1));
+	/* copy the environment, leaving space for changes */
+	tmpenv = xmalloc((size + i) * sizeof(char*));
+	memcpy(tmpenv, environ, size * sizeof(char*));
 
 	/* merge supplied environment changes into the temporary environment */
-	for (e = deltaenv; e && *e; e++)
-		tmpenv = do_putenv(tmpenv, *e, 0);
+	for (i = 0; deltaenv && deltaenv[i]; i++)
+		size = do_putenv(tmpenv, deltaenv[i], size, 0);
 
 	/* environment must be sorted */
-	for (count = 0; tmpenv[count]; )
-		count++;
-	qsort(tmpenv, count, sizeof(*tmpenv), compareenv);
+	qsort(tmpenv, size - 1, sizeof(char*), compareenv);
 
 	/* create environment block from temporary environment */
-	for (e = tmpenv; *e; e++) {
-		size = 2 * strlen(*e) + 2; /* +2 for final \0 */
+	for (i = 0; tmpenv[i]; i++) {
+		size = 2 * strlen(tmpenv[i]) + 2; /* +2 for final \0 */
 		ALLOC_GROW(wenvblk, (wenvpos + size) * sizeof(wchar_t), wenvsz);
-		wenvpos += xutftowcs(&wenvblk[wenvpos], *e, size) + 1;
+		wenvpos += xutftowcs(&wenvblk[wenvpos], tmpenv[i], size) + 1;
 	}
 	/* add final \0 terminator */
 	wenvblk[wenvpos] = 0;
@@ -1206,19 +1208,19 @@ static int lookupenv(char **env, const char *name, size_t nmln)
 
 /*
  * If name contains '=', then sets the variable, otherwise it unsets it
+ * Size includes the terminating NULL. Env must have room for size + 1 entries
+ * (in case of insert). Returns the new size. Optionally frees removed entries.
  */
-static char **do_putenv(char **env, const char *name, int free_old)
+static int do_putenv(char **env, const char *name, int size, int free_old)
 {
 	char *eq = strchrnul(name, '=');
 	int i = lookupenv(env, name, eq-name);
 
 	if (i < 0) {
 		if (*eq) {
-			for (i = 0; env[i]; i++)
-				;
-			env = xrealloc(env, (i+2)*sizeof(*env));
-			env[i] = (char*) name;
-			env[i+1] = NULL;
+			env[size - 1] = (char*) name;
+			env[size] = NULL;
+			size++;
 		}
 	}
 	else {
@@ -1226,11 +1228,13 @@ static char **do_putenv(char **env, const char *name, int free_old)
 			free(env[i]);
 		if (*eq)
 			env[i] = (char*) name;
-		else
+		else {
 			for (; env[i]; i++)
 				env[i] = env[i+1];
+			size--;
+		}
 	}
-	return env;
+	return size;
 }
 
 #undef getenv
@@ -1248,7 +1252,8 @@ char *mingw_getenv(const char *name)
 
 int mingw_putenv(const char *namevalue)
 {
-	environ = do_putenv(environ, namevalue, 1);
+	ALLOC_GROW(environ, (environ_size + 1) * sizeof(char*), environ_alloc);
+	environ_size = do_putenv(environ, namevalue, environ_size, 1);
 	return 0;
 }
 
@@ -2048,7 +2053,9 @@ void mingw_startup()
 		maxlen = max(maxlen, wcslen(wenv[i]));
 
 	/* nedmalloc can't free CRT memory, allocate resizable environment list */
-	environ = xcalloc(i + 1, sizeof(char*));
+	environ = NULL;
+	environ_size = i + 1;
+	ALLOC_GROW(environ, environ_size * sizeof(char*), environ_alloc);
 
 	/* allocate buffer (wchar_t encodes to max 3 UTF-8 bytes) */
 	maxlen = 3 * maxlen + 1;
@@ -2065,6 +2072,7 @@ void mingw_startup()
 		len = xwcstoutf(buffer, wenv[i], maxlen);
 		environ[i] = xmemdupz(buffer, len);
 	}
+	environ[i] = NULL;
 	free(buffer);
 
 	/* initialize critical section for waitpid pinfo_t list */
