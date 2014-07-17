@@ -899,6 +899,8 @@ static char *path_lookup(const char *cmd, char **path, int exe_only)
 	return prog;
 }
 
+static char **do_putenv(char **env, const char *name, int free_old);
+
 static int compareenv(const void *a, const void *b)
 {
 	char *const *ea = a;
@@ -907,21 +909,30 @@ static int compareenv(const void *a, const void *b)
 }
 
 /*
- * Create environment block suitable for CreateProcess.
+ * Create environment block suitable for CreateProcess. Merges current
+ * process environment and the supplied environment changes.
  */
-static wchar_t *make_environment_block(char **env)
+static wchar_t *make_environment_block(char **deltaenv)
 {
 	wchar_t *wenvblk = NULL;
 	int count = 0;
 	char **e, **tmpenv;
 	int size = 0, wenvsz = 0, wenvpos = 0;
 
-	for (e = env; *e; e++)
+	while (environ[count])
 		count++;
 
-	/* environment must be sorted */
+	/* copy the environment */
 	tmpenv = xmalloc(sizeof(*tmpenv) * (count + 1));
-	memcpy(tmpenv, env, sizeof(*tmpenv) * (count + 1));
+	memcpy(tmpenv, environ, sizeof(*tmpenv) * (count + 1));
+
+	/* merge supplied environment changes into the temporary environment */
+	for (e = deltaenv; e && *e; e++)
+		tmpenv = do_putenv(tmpenv, *e, 0);
+
+	/* environment must be sorted */
+	for (count = 0; tmpenv[count]; )
+		count++;
 	qsort(tmpenv, count, sizeof(*tmpenv), compareenv);
 
 	/* create environment block from temporary environment */
@@ -944,7 +955,7 @@ struct pinfo_t {
 static struct pinfo_t *pinfo = NULL;
 CRITICAL_SECTION pinfo_cs;
 
-static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **env,
+static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaenv,
 			      const char *dir,
 			      int prepend_cmd, int fhin, int fhout, int fherr)
 {
@@ -1012,8 +1023,7 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **env,
 	xutftowcs(wargs, args.buf, 2 * args.len + 1);
 	strbuf_release(&args);
 
-	if (env)
-		wenvblk = make_environment_block(env);
+	wenvblk = make_environment_block(deltaenv);
 
 	memset(&pi, 0, sizeof(pi));
 	ret = CreateProcessW(wcmd, wargs, NULL, NULL, TRUE, flags,
@@ -1051,10 +1061,10 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **env,
 
 static pid_t mingw_spawnv(const char *cmd, const char **argv, int prepend_cmd)
 {
-	return mingw_spawnve_fd(cmd, argv, environ, NULL, prepend_cmd, 0, 1, 2);
+	return mingw_spawnve_fd(cmd, argv, NULL, NULL, prepend_cmd, 0, 1, 2);
 }
 
-pid_t mingw_spawnvpe(const char *cmd, const char **argv, char **env,
+pid_t mingw_spawnvpe(const char *cmd, const char **argv, char **deltaenv,
 		     const char *dir,
 		     int fhin, int fhout, int fherr)
 {
@@ -1078,14 +1088,14 @@ pid_t mingw_spawnvpe(const char *cmd, const char **argv, char **env,
 				pid = -1;
 			}
 			else {
-				pid = mingw_spawnve_fd(iprog, argv, env, dir, 1,
+				pid = mingw_spawnve_fd(iprog, argv, deltaenv, dir, 1,
 						       fhin, fhout, fherr);
 				free(iprog);
 			}
 			argv[0] = argv0;
 		}
 		else
-			pid = mingw_spawnve_fd(prog, argv, env, dir, 0,
+			pid = mingw_spawnve_fd(prog, argv, deltaenv, dir, 0,
 					       fhin, fhout, fherr);
 		free(prog);
 	}
@@ -1182,27 +1192,6 @@ int mingw_kill(pid_t pid, int sig)
 	return -1;
 }
 
-static char **copy_environ(void)
-{
-	char **env;
-	int i = 0;
-	while (environ[i])
-		i++;
-	env = xmalloc((i+1)*sizeof(*env));
-	for (i = 0; environ[i]; i++)
-		env[i] = xstrdup(environ[i]);
-	env[i] = NULL;
-	return env;
-}
-
-void free_environ(char **env)
-{
-	int i;
-	for (i = 0; env[i]; i++)
-		free(env[i]);
-	free(env);
-}
-
 static int lookupenv(char **env, const char *name, size_t nmln)
 {
 	int i;
@@ -1218,7 +1207,7 @@ static int lookupenv(char **env, const char *name, size_t nmln)
 /*
  * If name contains '=', then sets the variable, otherwise it unsets it
  */
-static char **do_putenv(char **env, const char *name)
+static char **do_putenv(char **env, const char *name, int free_old)
 {
 	char *eq = strchrnul(name, '=');
 	int i = lookupenv(env, name, eq-name);
@@ -1233,26 +1222,13 @@ static char **do_putenv(char **env, const char *name)
 		}
 	}
 	else {
-		free(env[i]);
+		if (free_old)
+			free(env[i]);
 		if (*eq)
 			env[i] = (char*) name;
 		else
 			for (; env[i]; i++)
 				env[i] = env[i+1];
-	}
-	return env;
-}
-
-/*
- * Copies global environ and adjusts variables as specified by vars.
- */
-char **make_augmented_environ(const char *const *vars)
-{
-	char **env = copy_environ();
-
-	while (*vars) {
-		const char *v = *vars++;
-		env = do_putenv(env, strchr(v, '=') ? xstrdup(v) : v);
 	}
 	return env;
 }
@@ -1272,7 +1248,7 @@ char *mingw_getenv(const char *name)
 
 int mingw_putenv(const char *namevalue)
 {
-	environ = do_putenv(environ, namevalue);
+	environ = do_putenv(environ, namevalue, 1);
 	return 0;
 }
 
