@@ -544,10 +544,7 @@ static int push_submodule(const char *path)
 int push_unpushed_submodules(unsigned char new_sha1[20], const char *remotes_name)
 {
 	int i, ret = 1;
-	struct string_list needs_pushing;
-
-	memset(&needs_pushing, 0, sizeof(struct string_list));
-	needs_pushing.strdup_strings = 1;
+	struct string_list needs_pushing = STRING_LIST_INIT_DUP;
 
 	if (!find_unpushed_submodules(new_sha1, remotes_name, &needs_pushing))
 		return 1;

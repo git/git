@@ -423,8 +423,7 @@ static char *prepare_index(int argc, const char **argv, const char *prefix,
 			die(_("cannot do a partial commit during a cherry-pick."));
 	}
 
-	memset(&partial, 0, sizeof(partial));
-	partial.strdup_strings = 1;
+	string_list_init(&partial, 1);
 	if (list_paths(&partial, !current_head ? NULL : "HEAD", prefix, &pathspec))
 		exit(1);
 
