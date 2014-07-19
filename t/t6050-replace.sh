@@ -418,4 +418,26 @@ test_expect_success GPG '--graft with a signed commit' '
 	git replace -d $HASH8
 '
 
+test_expect_success GPG 'set up a merge commit with a mergetag' '
+	git reset --hard HEAD &&
+	git checkout -b test_branch HEAD~2 &&
+	echo "line 1 from test branch" >>hello &&
+	echo "line 2 from test branch" >>hello &&
+	git add hello &&
+	test_tick &&
+	git commit -m "hello: 2 more lines from a test branch" &&
+	HASH9=$(git rev-parse --verify HEAD) &&
+	git tag -s -m "tag for testing with a mergetag" test_tag HEAD &&
+	git checkout master &&
+	git merge -s ours test_tag &&
+	HASH10=$(git rev-parse --verify HEAD) &&
+	git cat-file commit $HASH10 | grep "^mergetag object"
+'
+
+test_expect_success GPG '--graft on a commit with a mergetag' '
+	test_must_fail git replace --graft $HASH10 $HASH8^1 &&
+	git replace --graft $HASH10 $HASH8^1 $HASH9 &&
+	git replace -d $HASH10
+'
+
 test_done
