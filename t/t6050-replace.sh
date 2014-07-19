@@ -8,7 +8,7 @@ exec </dev/null
 
 . ./test-lib.sh
 
-add_and_commit_file()
+add_and_commit_file ()
 {
     _file="$1"
     _msg="$2"
@@ -16,6 +16,38 @@ add_and_commit_file()
     git add $_file || return $?
     test_tick || return $?
     git commit --quiet -m "$_file: $_msg"
+}
+
+commit_buffer_contains_parents ()
+{
+    git cat-file commit "$1" >payload &&
+    sed -n -e '/^$/q' -e '/^parent /p' <payload >actual &&
+    shift &&
+    for _parent
+    do
+	echo "parent $_parent"
+    done >expected &&
+    test_cmp expected actual
+}
+
+commit_peeling_shows_parents ()
+{
+    _parent_number=1
+    _commit="$1"
+    shift &&
+    for _parent
+    do
+	_found=$(git rev-parse --verify $_commit^$_parent_number) || return 1
+	test "$_found" = "$_parent" || return 1
+	_parent_number=$(( $_parent_number + 1 ))
+    done &&
+    test_must_fail git rev-parse --verify $_commit^$_parent_number
+}
+
+commit_has_parents ()
+{
+    commit_buffer_contains_parents "$@" &&
+    commit_peeling_shows_parents "$@"
 }
 
 HASH1=
@@ -349,6 +381,17 @@ test_expect_success 'replace ref cleanup' '
 	test -n "$(git replace)" &&
 	git replace -d $(git replace) &&
 	test -z "$(git replace)"
+'
+
+test_expect_success '--graft with and without already replaced object' '
+	test $(git log --oneline | wc -l) = 7 &&
+	git replace --graft $HASH5 &&
+	test $(git log --oneline | wc -l) = 3 &&
+	commit_has_parents $HASH5 &&
+	test_must_fail git replace --graft $HASH5 $HASH4 $HASH3 &&
+	git replace --force -g $HASH5 $HASH4 $HASH3 &&
+	commit_has_parents $HASH5 $HASH4 $HASH3 &&
+	git replace -d $HASH5
 '
 
 test_done
