@@ -1226,8 +1226,7 @@ static int WSAAPI getaddrinfo_stub(const char *node, const char *service,
 	else
 		ai->ai_canonname = NULL;
 
-	sin = xmalloc(ai->ai_addrlen);
-	memset(sin, 0, ai->ai_addrlen);
+	sin = xcalloc(1, ai->ai_addrlen);
 	sin->sin_family = AF_INET;
 	/* Note: getaddrinfo is supposed to allow service to be a string,
 	 * which should be looked up using getservbyname. This is
