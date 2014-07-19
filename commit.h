@@ -332,6 +332,8 @@ struct commit *get_merge_parent(const char *name);
 
 extern int parse_signed_commit(const struct commit *commit,
 			       struct strbuf *message, struct strbuf *signature);
+extern int remove_signature(struct strbuf *buf);
+
 extern void print_commit_list(struct commit_list *list,
 			      const char *format_cur,
 			      const char *format_last);

@@ -344,6 +344,11 @@ static int create_graft(int argc, const char **argv, int force)
 
 	replace_parents(&buf, argc - 1, &argv[1]);
 
+	if (remove_signature(&buf)) {
+		warning(_("the original commit '%s' has a gpg signature."), old_ref);
+		warning(_("the signature will be removed in the replacement commit!"));
+	}
+
 	if (write_sha1_file(buf.buf, buf.len, commit_type, new))
 		die(_("could not write replacement commit for: '%s'"), old_ref);
 
