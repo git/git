@@ -249,9 +249,7 @@ int validate_headref(const char *path)
 static struct passwd *getpw_str(const char *username, size_t len)
 {
 	struct passwd *pw;
-	char *username_z = xmalloc(len + 1);
-	memcpy(username_z, username, len);
-	username_z[len] = '\0';
+	char *username_z = xmemdupz(username, len);
 	pw = getpwnam(username_z);
 	free(username_z);
 	return pw;

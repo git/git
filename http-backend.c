@@ -607,9 +607,7 @@ int main(int argc, char **argv)
 
 			cmd = c;
 			n = out[0].rm_eo - out[0].rm_so;
-			cmd_arg = xmalloc(n);
-			memcpy(cmd_arg, dir + out[0].rm_so + 1, n-1);
-			cmd_arg[n-1] = '\0';
+			cmd_arg = xmemdupz(dir + out[0].rm_so + 1, n - 1);
 			dir[out[0].rm_so] = 0;
 			break;
 		}

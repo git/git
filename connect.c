@@ -64,9 +64,7 @@ static void parse_one_symref_info(struct string_list *symref, const char *val, i
 	if (!len)
 		return; /* just "symref" */
 	/* e.g. "symref=HEAD:refs/heads/master" */
-	sym = xmalloc(len + 1);
-	memcpy(sym, val, len);
-	sym[len] = '\0';
+	sym = xmemdupz(val, len);
 	target = strchr(sym, ':');
 	if (!target)
 		/* just "symref=something" */
