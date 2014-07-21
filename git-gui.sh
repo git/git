@@ -49,7 +49,11 @@ catch {rename send {}} ; # What an evil concept...
 ##
 ## locate our library
 
-set oguilib {@@GITGUI_LIBDIR@@}
+if { [info exists ::env(GIT_GUI_LIB_DIR) ] } {
+	set oguilib $::env(GIT_GUI_LIB_DIR)
+} else {
+	set oguilib {@@GITGUI_LIBDIR@@}
+}
 set oguirel {@@GITGUI_RELATIVE@@}
 if {$oguirel eq {1}} {
 	set oguilib [file dirname [file normalize $argv0]]
