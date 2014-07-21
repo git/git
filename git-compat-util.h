@@ -291,8 +291,10 @@ extern char *gitbasename(char *);
 #else
 #define NORETURN
 #define NORETURN_PTR
+#ifndef __GNUC__
 #ifndef __attribute__
 #define __attribute__(x)
+#endif
 #endif
 #endif
 
