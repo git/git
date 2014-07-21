@@ -98,7 +98,7 @@ eval "set -- $(git rev-parse --sq --prefix "$prefix" "$@")"
 +
 If you want to make sure that the output actually names an object in
 your object database and/or can be used as a specific type of object
-you require, you can add "^{type}" peeling operator to the parameter.
+you require, you can add "\^{type}" peeling operator to the parameter.
 For example, `git rev-parse "$VAR^{commit}"` will make sure `$VAR`
 names an existing object that is a commit-ish (i.e. a commit, or an
 annotated tag that points at a commit).  To make sure that `$VAR`
