@@ -1310,6 +1310,19 @@ struct commit_extra_header *read_commit_extra_headers(struct commit *commit,
 	return extra;
 }
 
+void for_each_mergetag(each_mergetag_fn fn, struct commit *commit, void *data)
+{
+	struct commit_extra_header *extra, *to_free;
+
+	to_free = read_commit_extra_headers(commit, NULL);
+	for (extra = to_free; extra; extra = extra->next) {
+		if (strcmp(extra->key, "mergetag"))
+			continue; /* not a merge tag */
+		fn(commit, extra, data);
+	}
+	free_commit_extra_headers(to_free);
+}
+
 static inline int standard_header_field(const char *field, size_t len)
 {
 	return ((len == 4 && !memcmp(field, "tree ", 5)) ||
