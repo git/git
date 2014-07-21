@@ -318,7 +318,7 @@ test_expect_success 'clone myhost:src uses ssh' '
 	expect_ssh myhost src
 '
 
-test_expect_success NOT_MINGW,NOT_CYGWIN 'clone local path foo:bar' '
+test_expect_success !MINGW,!CYGWIN 'clone local path foo:bar' '
 	cp -R src "foo:bar" &&
 	git clone "foo:bar" foobar &&
 	expect_ssh none
@@ -339,7 +339,7 @@ test_clone_url () {
 	expect_ssh "$2" "$3"
 }
 
-test_expect_success NOT_MINGW 'clone c:temp is ssl' '
+test_expect_success !MINGW 'clone c:temp is ssl' '
 	test_clone_url c:temp c temp
 '
 
