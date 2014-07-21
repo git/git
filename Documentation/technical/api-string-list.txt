@@ -68,6 +68,11 @@ Functions
 
 * General ones (works with sorted and unsorted lists as well)
 
+`string_list_init`::
+
+	Initialize the members of the string_list, set `strdup_strings`
+	member according to the value of the second parameter.
+
 `filter_string_list`::
 
 	Apply a function to each item in a list, retaining only the

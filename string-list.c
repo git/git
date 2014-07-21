@@ -1,6 +1,12 @@
 #include "cache.h"
 #include "string-list.h"
 
+void string_list_init(struct string_list *list, int strdup_strings)
+{
+	memset(list, 0, sizeof(*list));
+	list->strdup_strings = strdup_strings;
+}
+
 /* if there is no exact match, point to the index where the entry could be
  * inserted */
 static int get_entry_index(const struct string_list *list, const char *string,
