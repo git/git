@@ -268,9 +268,9 @@ static struct alternate_object_database **alt_odb_tail;
  * SHA1, an extra slash for the first level indirection, and the
  * terminating NUL.
  */
-static int link_alt_odb_entry(const char *entry, const char *relative_base, int depth)
+static int link_alt_odb_entry(const char *entry, const char *relative_base,
+	int depth, const char *normalized_objdir)
 {
-	const char *objdir = get_object_directory();
 	struct alternate_object_database *ent;
 	struct alternate_object_database *alt;
 	int pfxlen, entlen;
@@ -321,7 +321,7 @@ static int link_alt_odb_entry(const char *entry, const char *relative_base, int 
 			return -1;
 		}
 	}
-	if (!strcmp(ent->base, objdir)) {
+	if (!strcmp_icase(ent->base, normalized_objdir)) {
 		free(ent);
 		return -1;
 	}
@@ -345,12 +345,16 @@ static void link_alt_odb_entries(const char *alt, int len, int sep,
 	struct string_list entries = STRING_LIST_INIT_NODUP;
 	char *alt_copy;
 	int i;
+	struct strbuf objdirbuf = STRBUF_INIT;
 
 	if (depth > 5) {
 		error("%s: ignoring alternate object stores, nesting too deep.",
 				relative_base);
 		return;
 	}
+
+	strbuf_addstr(&objdirbuf, absolute_path(get_object_directory()));
+	normalize_path_copy(objdirbuf.buf, objdirbuf.buf);
 
 	alt_copy = xmemdupz(alt, len);
 	string_list_split_in_place(&entries, alt_copy, sep, -1);
@@ -362,11 +366,12 @@ static void link_alt_odb_entries(const char *alt, int len, int sep,
 			error("%s: ignoring relative alternate object store %s",
 					relative_base, entry);
 		} else {
-			link_alt_odb_entry(entry, relative_base, depth);
+			link_alt_odb_entry(entry, relative_base, depth, objdirbuf.buf);
 		}
 	}
 	string_list_clear(&entries, 0);
 	free(alt_copy);
+	strbuf_release(&objdirbuf);
 }
 
 void read_info_alternates(const char * relative_base, int depth)
