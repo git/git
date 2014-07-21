@@ -2324,7 +2324,7 @@ static void file_change_m(const char *p, struct branch *b)
 	}
 
 	/* Git does not track empty, non-toplevel directories. */
-	if (S_ISDIR(mode) && !memcmp(sha1, EMPTY_TREE_SHA1_BIN, 20) && *p) {
+	if (S_ISDIR(mode) && !hashcmp(sha1, EMPTY_TREE_SHA1_BIN) && *p) {
 		tree_content_remove(&b->branch_tree, p, NULL, 0);
 		return;
 	}

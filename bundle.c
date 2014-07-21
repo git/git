@@ -237,8 +237,6 @@ int create_bundle(struct bundle_header *header, const char *path,
 	static struct lock_file lock;
 	int bundle_fd = -1;
 	int bundle_to_stdout;
-	struct argv_array argv_boundary = ARGV_ARRAY_INIT;
-	struct argv_array argv_pack = ARGV_ARRAY_INIT;
 	int i, ref_count = 0;
 	struct strbuf buf = STRBUF_INIT;
 	struct rev_info revs;
@@ -260,14 +258,12 @@ int create_bundle(struct bundle_header *header, const char *path,
 	init_revisions(&revs, NULL);
 
 	/* write prerequisites */
-	argv_array_pushl(&argv_boundary,
+	memset(&rls, 0, sizeof(rls));
+	argv_array_pushl(&rls.args,
 			 "rev-list", "--boundary", "--pretty=oneline",
 			 NULL);
 	for (i = 1; i < argc; i++)
-		argv_array_push(&argv_boundary, argv[i]);
-
-	memset(&rls, 0, sizeof(rls));
-	rls.argv = argv_boundary.argv;
+		argv_array_push(&rls.args, argv[i]);
 	rls.out = -1;
 	rls.git_cmd = 1;
 	if (start_command(&rls))
@@ -382,12 +378,11 @@ int create_bundle(struct bundle_header *header, const char *path,
 	write_or_die(bundle_fd, "\n", 1);
 
 	/* write pack */
-	argv_array_pushl(&argv_pack,
+	memset(&rls, 0, sizeof(rls));
+	argv_array_pushl(&rls.args,
 			 "pack-objects", "--all-progress-implied",
 			 "--stdout", "--thin", "--delta-base-offset",
 			 NULL);
-	memset(&rls, 0, sizeof(rls));
-	rls.argv = argv_pack.argv;
 	rls.in = -1;
 	rls.out = bundle_fd;
 	rls.git_cmd = 1;
