@@ -56,18 +56,9 @@ static int commit_name_cmp(const struct commit_name *cn1,
 	return hashcmp(cn1->peeled, peeled ? peeled : cn2->peeled);
 }
 
-static inline unsigned int hash_sha1(const unsigned char *sha1)
-{
-	unsigned int hash;
-	memcpy(&hash, sha1, sizeof(hash));
-	return hash;
-}
-
 static inline struct commit_name *find_commit_name(const unsigned char *peeled)
 {
-	struct commit_name key;
-	hashmap_entry_init(&key, hash_sha1(peeled));
-	return hashmap_get(&names, &key, peeled);
+	return hashmap_get_from_hash(&names, sha1hash(peeled), peeled);
 }
 
 static int replace_name(struct commit_name *e,
@@ -114,7 +105,7 @@ static void add_to_known_names(const char *path,
 		if (!e) {
 			e = xmalloc(sizeof(struct commit_name));
 			hashcpy(e->peeled, peeled);
-			hashmap_entry_init(e, hash_sha1(peeled));
+			hashmap_entry_init(e, sha1hash(peeled));
 			hashmap_add(&names, e);
 			e->path = NULL;
 		}

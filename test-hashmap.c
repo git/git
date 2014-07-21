@@ -115,9 +115,8 @@ static void perf_hashmap(unsigned int method, unsigned int rounds)
 
 		for (j = 0; j < rounds; j++) {
 			for (i = 0; i < TEST_SIZE; i++) {
-				struct hashmap_entry key;
-				hashmap_entry_init(&key, hashes[i]);
-				hashmap_get(&map, &key, entries[i]->key);
+				hashmap_get_from_hash(&map, hashes[i],
+						      entries[i]->key);
 			}
 		}
 
@@ -199,12 +198,8 @@ int main(int argc, char *argv[])
 
 		} else if (!strcmp("get", cmd) && l1) {
 
-			/* setup static key */
-			struct hashmap_entry key;
-			hashmap_entry_init(&key, hash);
-
 			/* lookup entry in hashmap */
-			entry = hashmap_get(&map, &key, p1);
+			entry = hashmap_get_from_hash(&map, hash, p1);
 
 			/* print result */
 			if (!entry)
@@ -238,6 +233,20 @@ int main(int argc, char *argv[])
 
 			/* print table sizes */
 			printf("%u %u\n", map.tablesize, map.size);
+
+		} else if (!strcmp("intern", cmd) && l1) {
+
+			/* test that strintern works */
+			const char *i1 = strintern(p1);
+			const char *i2 = strintern(p1);
+			if (strcmp(i1, p1))
+				printf("strintern(%s) returns %s\n", p1, i1);
+			else if (i1 == p1)
+				printf("strintern(%s) returns input pointer\n", p1);
+			else if (i1 != i2)
+				printf("strintern(%s) != strintern(%s)", i1, i2);
+			else
+				printf("%s\n", i1);
 
 		} else if (!strcmp("perfhashmap", cmd) && l1 && l2) {
 
