@@ -116,6 +116,9 @@ Performance, Internal Implementation, etc.
 
  * Build procedure for 'subtree' (in contrib/) has been cleaned up.
 
+ * The support for the profile-feedback build, which has been left
+   bit-rotten for quite a while, has been updated.
+
  * An experimental format to use two files (the base file and
    incremental changes relative to it) to represent the index has been
    introduced; this may reduce I/O cost of rewriting a large index
@@ -194,6 +197,7 @@ notes for details).
  * Code to avoid adding the same alternate object store twice was
    subtly broken for a long time, but nobody seems to have noticed.
    (merge 80b4785 rs/fix-alt-odb-path-comparison later to maint).
+   (merge 539e750 ek/alt-odb-entry-fix later to maint).
 
  * The "%<(10,trunc)%s" pretty format specifier in the log family of
    commands is used to truncate the string to a given length (e.g. 10
