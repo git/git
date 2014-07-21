@@ -278,9 +278,7 @@ static string_list_ty variables_set;
 static void
 note_variable (const char *var_ptr, size_t var_len)
 {
-  char *string = xmalloc (var_len + 1);
-  memcpy (string, var_ptr, var_len);
-  string[var_len] = '\0';
+  char *string = xmemdupz (var_ptr, var_len);
 
   string_list_append (&variables_set, string);
 }

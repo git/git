@@ -389,8 +389,7 @@ void parse_pathspec(struct pathspec *pathspec,
 		if (!(flags & PATHSPEC_PREFER_CWD))
 			die("BUG: PATHSPEC_PREFER_CWD requires arguments");
 
-		pathspec->items = item = xmalloc(sizeof(*item));
-		memset(item, 0, sizeof(*item));
+		pathspec->items = item = xcalloc(1, sizeof(*item));
 		item->match = prefix;
 		item->original = prefix;
 		item->nowildcard_len = item->len = strlen(prefix);
