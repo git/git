@@ -3,7 +3,7 @@
 
 char packet_buffer[LARGE_PACKET_MAX];
 static const char *packet_trace_prefix = "git";
-static const char trace_key[] = "GIT_TRACE_PACKET";
+static struct trace_key trace_packet = TRACE_KEY_INIT(PACKET);
 
 void packet_trace_identity(const char *prog)
 {
@@ -15,7 +15,7 @@ static void packet_trace(const char *buf, unsigned int len, int write)
 	int i;
 	struct strbuf out;
 
-	if (!trace_want(trace_key))
+	if (!trace_want(&trace_packet))
 		return;
 
 	/* +32 is just a guess for header + quoting */
@@ -27,7 +27,7 @@ static void packet_trace(const char *buf, unsigned int len, int write)
 	if ((len >= 4 && starts_with(buf, "PACK")) ||
 	    (len >= 5 && starts_with(buf+1, "PACK"))) {
 		strbuf_addstr(&out, "PACK ...");
-		unsetenv(trace_key);
+		trace_disable(&trace_packet);
 	}
 	else {
 		/* XXX we should really handle printable utf8 */
@@ -43,7 +43,7 @@ static void packet_trace(const char *buf, unsigned int len, int write)
 	}
 
 	strbuf_addch(&out, '\n');
-	trace_strbuf(trace_key, &out);
+	trace_strbuf(&trace_packet, &out);
 	strbuf_release(&out);
 }
 

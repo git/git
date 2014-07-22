@@ -906,31 +906,54 @@ for further details.
 	based on whether stdout appears to be redirected to a file or not.
 
 'GIT_TRACE'::
-	If this variable is set to "1", "2" or "true" (comparison
-	is case insensitive), Git will print `trace:` messages on
-	stderr telling about alias expansion, built-in command
-	execution and external command execution.
-	If this variable is set to an integer value greater than 1
-	and lower than 10 (strictly) then Git will interpret this
-	value as an open file descriptor and will try to write the
-	trace messages into this file descriptor.
-	Alternatively, if this variable is set to an absolute path
-	(starting with a '/' character), Git will interpret this
-	as a file path and will try to write the trace messages
-	into it.
+	Enables general trace messages, e.g. alias expansion, built-in
+	command execution and external command execution.
++
+If this variable is set to "1", "2" or "true" (comparison
+is case insensitive), trace messages will be printed to
+stderr.
++
+If the variable is set to an integer value greater than 2
+and lower than 10 (strictly) then Git will interpret this
+value as an open file descriptor and will try to write the
+trace messages into this file descriptor.
++
+Alternatively, if the variable is set to an absolute path
+(starting with a '/' character), Git will interpret this
+as a file path and will try to write the trace messages
+into it.
++
+Unsetting the variable, or setting it to empty, "0" or
+"false" (case insensitive) disables trace messages.
 
 'GIT_TRACE_PACK_ACCESS'::
-	If this variable is set to a path, a file will be created at
-	the given path logging all accesses to any packs. For each
+	Enables trace messages for all accesses to any packs. For each
 	access, the pack file name and an offset in the pack is
 	recorded. This may be helpful for troubleshooting some
 	pack-related performance problems.
+	See 'GIT_TRACE' for available trace output options.
 
 'GIT_TRACE_PACKET'::
-	If this variable is set, it shows a trace of all packets
-	coming in or out of a given program. This can help with
-	debugging object negotiation or other protocol issues. Tracing
-	is turned off at a packet starting with "PACK".
+	Enables trace messages for all packets coming in or out of a
+	given program. This can help with debugging object negotiation
+	or other protocol issues. Tracing is turned off at a packet
+	starting with "PACK".
+	See 'GIT_TRACE' for available trace output options.
+
+'GIT_TRACE_PERFORMANCE'::
+	Enables performance related trace messages, e.g. total execution
+	time of each Git command.
+	See 'GIT_TRACE' for available trace output options.
+
+'GIT_TRACE_SETUP'::
+	Enables trace messages printing the .git, working tree and current
+	working directory after Git has completed its setup phase.
+	See 'GIT_TRACE' for available trace output options.
+
+'GIT_TRACE_SHALLOW'::
+	Enables trace messages that can help debugging fetching /
+	cloning of shallow repositories.
+	See 'GIT_TRACE' for available trace output options.
 
 GIT_LITERAL_PATHSPECS::
 	Setting this variable to `1` will cause Git to treat all
