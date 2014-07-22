@@ -175,8 +175,8 @@ static int cmd_import(const char *line)
 	char *note_msg;
 	unsigned char head_sha1[20];
 	unsigned int startrev;
-	struct argv_array svndump_argv = ARGV_ARRAY_INIT;
 	struct child_process svndump_proc;
+	const char *command = "svnrdump";
 
 	if (read_ref(private_ref, head_sha1))
 		startrev = 0;
@@ -202,15 +202,14 @@ static int cmd_import(const char *line)
 	} else {
 		memset(&svndump_proc, 0, sizeof(struct child_process));
 		svndump_proc.out = -1;
-		argv_array_push(&svndump_argv, "svnrdump");
-		argv_array_push(&svndump_argv, "dump");
-		argv_array_push(&svndump_argv, url);
-		argv_array_pushf(&svndump_argv, "-r%u:HEAD", startrev);
-		svndump_proc.argv = svndump_argv.argv;
+		argv_array_push(&svndump_proc.args, command);
+		argv_array_push(&svndump_proc.args, "dump");
+		argv_array_push(&svndump_proc.args, url);
+		argv_array_pushf(&svndump_proc.args, "-r%u:HEAD", startrev);
 
 		code = start_command(&svndump_proc);
 		if (code)
-			die("Unable to start %s, code %d", svndump_proc.argv[0], code);
+			die("Unable to start %s, code %d", command, code);
 		dumpin_fd = svndump_proc.out;
 	}
 	/* setup marks file import/export */
@@ -226,8 +225,7 @@ static int cmd_import(const char *line)
 	if (!dump_from_file) {
 		code = finish_command(&svndump_proc);
 		if (code)
-			warning("%s, returned %d", svndump_proc.argv[0], code);
-		argv_array_clear(&svndump_argv);
+			warning("%s, returned %d", command, code);
 	}
 
 	return 0;
