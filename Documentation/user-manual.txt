@@ -416,12 +416,11 @@ REVISIONS" section of linkgit:gitrevisions[7].
 Updating a repository with git fetch
 ------------------------------------
 
-Eventually the developer cloned from will do additional work in her
-repository, creating new commits and advancing the branches to point
-at the new commits.
+After you clone a repository and commit a few changes of your own, you
+may wish to check the original repository for updates.
 
-The command `git fetch`, with no arguments, will update all of the
-remote-tracking branches to the latest version found in her
+The `git-fetch` command, with no arguments, will update all of the
+remote-tracking branches to the latest version found in the original
 repository.  It will not touch any of your own branches--not even the
 "master" branch that was created for you on clone.
 
@@ -1811,8 +1810,8 @@ manner.
 You can then import these into your mail client and send them by
 hand.  However, if you have a lot to send at once, you may prefer to
 use the linkgit:git-send-email[1] script to automate the process.
-Consult the mailing list for your project first to determine how they
-prefer such patches be handled.
+Consult the mailing list for your project first to determine
+their requirements for submitting patches.
 
 [[importing-patches]]
 Importing patches to a project
@@ -2255,7 +2254,7 @@ $ git checkout test && git merge speed-up-spinlocks
 It is unlikely that you would have any conflicts here ... but you might if you
 spent a while on this step and had also pulled new versions from upstream.
 
-Some time later when enough time has passed and testing done, you can pull the
+Sometime later when enough time has passed and testing done, you can pull the
 same branch into the `release` tree ready to go upstream.  This is where you
 see the value of keeping each patch (or patch series) in its own branch.  It
 means that the patches can be moved into the `release` tree in any order.
