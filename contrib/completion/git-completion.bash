@@ -1635,6 +1635,7 @@ _git_push ()
 	--*)
 		__gitcomp "
 			--all --mirror --tags --dry-run --force --verbose
+			--quiet --prune --delete --follow-tags
 			--receive-pack= --repo= --set-upstream
 			--recurse-submodules=
 		"
