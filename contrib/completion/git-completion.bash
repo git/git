@@ -1617,6 +1617,11 @@ _git_push ()
 	--repo)
 		__gitcomp_nl "$(__git_remotes)"
 		return
+		;;
+	--recurse-submodules)
+		__gitcomp "$__git_push_recurse_submodules"
+		return
+		;;
 	esac
 	case "$cur" in
 	--repo=*)
