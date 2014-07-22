@@ -99,11 +99,12 @@ int unix_stream_listen(const char *path)
 	struct sockaddr_un sa;
 	struct unix_sockaddr_context ctx;
 
+	unlink(path);
+
 	if (unix_sockaddr_init(&sa, path, &ctx) < 0)
 		return -1;
 	fd = unix_stream_socket();
 
-	unlink(path);
 	if (bind(fd, (struct sockaddr *)&sa, sizeof(sa)) < 0)
 		goto fail;
 
