@@ -1089,7 +1089,7 @@ struct commit_list *reduce_heads(struct commit_list *heads)
 		p->item->object.flags |= STALE;
 		num_head++;
 	}
-	array = xcalloc(sizeof(*array), num_head);
+	array = xcalloc(num_head, sizeof(*array));
 	for (p = heads, i = 0; p; p = p->next) {
 		if (p->item->object.flags & STALE) {
 			array[i++] = p->item;

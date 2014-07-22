@@ -45,7 +45,7 @@ static void init_pack_revindex(void)
 	if (!num)
 		return;
 	pack_revindex_hashsz = num * 11;
-	pack_revindex = xcalloc(sizeof(*pack_revindex), pack_revindex_hashsz);
+	pack_revindex = xcalloc(pack_revindex_hashsz, sizeof(*pack_revindex));
 	for (p = packed_git; p; p = p->next) {
 		num = pack_revindex_ix(p);
 		num = - 1 - num;
