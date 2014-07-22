@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jul 2014, #03; Wed, 16)
-X-master-at: f2c9f21369931c2e4254e49d8f3b3fac5ba8a60b
-X-next-at: 90283d95492651270a8e9db89e85c40d47c28585
+Subject: What's cooking in git.git (Jul 2014, #04; Tue, 22)
+X-master-at: 247b4d5f3807dc3c2230bb4bf497f84a1fc59e49
+X-next-at: 4e82b8a515ec47d61c8bae6e6c474815e9e9b827
 
-What's cooking in git.git (Jul 2014, #03; Wed, 16)
+What's cooking in git.git (Jul 2014, #04; Tue, 22)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -23,33 +23,110 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[New Topics]
+[Graduated to "master"]
+
+* ak/profile-feedback-build (2014-07-08) 4 commits
+  (merged to 'next' on 2014-07-14 at c40e86e)
+ + Fix profile feedback with -jN and add profile-fast
+ + Run the perf test suite for profile feedback too
+ + Don't define away __attribute__ on gcc
+ + Use BASIC_FLAGS for profile feedback
+
+ The support for the profile-feedback build, which has been left
+ bit-rotten for quite a while, has been updated.
+
+
+* cc/for-each-mergetag (2014-07-07) 1 commit
+  (merged to 'next' on 2014-07-15 at c5dd3ee)
+ + commit: add for_each_mergetag()
+ (this branch is used by cc/replace-graft.)
+
 
 * ek/alt-odb-entry-fix (2014-07-15) 1 commit
- - sha1_file: do not add own object directory as alternate
-
- Will merge to 'next'.
-
-
-* jk/rebase-am-fork-point (2014-07-16) 2 commits
- - rebase: omit patch-identical commits with --fork-point
- - rebase--am: use --cherry-pick instead of --ignore-if-in-upstream
-
- Will merge to 'next'.
+  (merged to 'next' on 2014-07-17 at a5f43e2)
+ + sha1_file: do not add own object directory as alternate
 
 
-* jk/stable-prio-queue (2014-07-15) 4 commits
- - t5539: update a flaky test
- - paint_down_to_common: use prio_queue
- - prio-queue: make output stable with respect to insertion
- - prio-queue: factor out compare and swap operations
+* jk/alloc-commit-id (2014-07-13) 8 commits
+  (merged to 'next' on 2014-07-16 at f14c01a)
+ + diff-tree: avoid lookup_unknown_object
+ + object_as_type: set commit index
+ + alloc: factor out commit index
+ + add object_as_type helper for casting objects
+ + parse_object_buffer: do not set object type
+ + move setting of object->type to alloc_* functions
+ + alloc: write out allocator definitions
+ + alloc.c: remove the alloc_raw_commit_node() function
+
+ Make sure all in-core commit objects are assigned a unique number
+ so that they can be annotated using the commit-slab API.
 
 
-* jk/tag-sort (2014-07-13) 2 commits
- - tag: support configuring --sort via .gitconfig
- - tag: fix --sort tests to use cat<<-\EOF format
+* jk/remote-curl-squelch-extra-errors (2014-07-10) 3 commits
+  (merged to 'next' on 2014-07-14 at a2efa2f)
+ + remote-curl: mark helper-protocol errors more clearly
+ + remote-curl: use error instead of fprintf(stderr)
+ + remote-curl: do not complain on EOF from parent git
 
- v10 ($gmane/253695) needs to be picked up and replace these.
+ Show HTTP transfer errors from remote-curl helper more clearly to
+ help avoid user confusion.
+
+
+* jl/submodule-tests (2014-07-14) 14 commits
+  (merged to 'next' on 2014-07-14 at 0c750bb)
+ + revert: add t3513 for submodule updates
+ + stash: add t3906 for submodule updates
+ + am: add t4255 for submodule updates
+ + cherry-pick: add t3512 for submodule updates
+ + pull: add t5572 for submodule updates
+ + rebase: add t3426 for submodule updates
+ + merge: add t7613 for submodule updates
+ + bisect: add t6041 for submodule updates
+ + reset: add t7112 for submodule updates
+ + read-tree: add t1013 for submodule updates
+ + apply: add t4137 for submodule updates
+ + checkout: call the new submodule update test framework
+ + submodules: add the lib-submodule-update.sh test library
+ + test-lib: add test_dir_is_empty()
+
+
+* kb/avoid-fchmod-for-now (2014-07-16) 1 commit
+  (merged to 'next' on 2014-07-17 at fc26c4b)
+ + config: use chmod() instead of fchmod()
+
+ Replace the only two uses of fchmod() with chmod() because the
+ former does not work on Windows port and because luckily we can.
+
+
+* kb/hashmap-updates (2014-07-07) 4 commits
+  (merged to 'next' on 2014-07-15 at 6dd6611)
+ + hashmap: add string interning API
+ + hashmap: add simplified hashmap_get_from_hash() API
+ + hashmap: improve struct hashmap member documentation
+ + hashmap: factor out getting a hash code from a SHA1
+
+
+* kb/perf-trace (2014-07-13) 17 commits
+  (merged to 'next' on 2014-07-15 at 09ade08)
+ + api-trace.txt: add trace API documentation
+ + progress: simplify performance measurement by using getnanotime()
+ + wt-status: simplify performance measurement by using getnanotime()
+ + git: add performance tracing for git's main() function to debug scripts
+ + trace: add trace_performance facility to debug performance issues
+ + trace: add high resolution timer function to debug performance issues
+ + trace: add 'file:line' to all trace output
+ + trace: move code around, in preparation to file:line output
+ + trace: add current timestamp to all trace output
+ + trace: disable additional trace output for unit tests
+ + trace: add infrastructure to augment trace output with additional info
+ + sha1_file: change GIT_TRACE_PACK_ACCESS logging to use trace API
+ + Documentation/git.txt: improve documentation of 'GIT_TRACE*' variables
+ + trace: improve trace performance
+ + trace: remove redundant printf format attribute
+ + trace: consistently name the format parameter
+ + trace: move trace declarations from cache.h to new trace.h
+
+ Show timestamps in GIT_TRACE output.
 
 
 * nd/path-max-must-go (2014-07-14) 3 commits
@@ -58,216 +135,168 @@ of the repositories listed at
  + dir.h: move struct exclude declaration to top level
  + dir.c: coding style fix
 
+ Lift arbitrary PATH_MAX limit in the code to enumerate paths in the
+ working tree.
+
+
+* rs/code-cleaning (2014-07-18) 7 commits
+  (merged to 'next' on 2014-07-21 at 7312ddc)
+ + remote-testsvn: use internal argv_array of struct child_process in cmd_import()
+ + bundle: use internal argv_array of struct child_process in create_bundle()
+ + fast-import: use hashcmp() for SHA1 hash comparison
+ + transport: simplify fetch_objs_via_rsync() using argv_array
+ + run-command: use internal argv_array of struct child_process in run_hook_ve()
+ + use commit_list_count() to count the members of commit_lists
+ + strbuf: use strbuf_addstr() for adding C strings
+
+
+* rs/ref-transaction-0 (2014-07-14) 19 commits
+  (merged to 'next' on 2014-07-14 at b21bcee)
+ + refs.c: change ref_transaction_update() to do error checking and return status
+ + refs.c: remove the onerr argument to ref_transaction_commit
+ + update-ref: use err argument to get error from ref_transaction_commit
+ + refs.c: make update_ref_write update a strbuf on failure
+ + refs.c: make ref_update_reject_duplicates take a strbuf argument for errors
+ + refs.c: log_ref_write should try to return meaningful errno
+ + refs.c: make resolve_ref_unsafe set errno to something meaningful on error
+ + refs.c: commit_packed_refs to return a meaningful errno on failure
+ + refs.c: make remove_empty_directories always set errno to something sane
+ + refs.c: verify_lock should set errno to something meaningful
+ + refs.c: make sure log_ref_setup returns a meaningful errno
+ + refs.c: add an err argument to repack_without_refs
+ + lockfile.c: make lock_file return a meaningful errno on failurei
+ + lockfile.c: add a new public function unable_to_lock_message
+ + refs.c: add a strbuf argument to ref_transaction_commit for error logging
+ + refs.c: allow passing NULL to ref_transaction_free
+ + refs.c: constify the sha arguments for ref_transaction_create|delete|update
+ + refs.c: ref_transaction_commit should not free the transaction
+ + refs.c: remove ref_transaction_rollback
+ (this branch is used by rs/ref-transaction and rs/ref-transaction-1.)
+
+ Early part of the "ref transaction" topic.
+
+
+* rs/unify-is-branch (2014-07-16) 1 commit
+  (merged to 'next' on 2014-07-17 at 55f530b)
+ + refs.c: add a public is_branch function
+
+
+* sk/mingw-uni-fix (2014-07-15) 2 commits
+  (merged to 'next' on 2014-07-17 at ffef7a1)
+ + Win32: Unicode file name support (dirent)
+ + Win32: Unicode file name support (except dirent)
+ (this branch is used by sk/mingw-uni-fix-more.)
+
+--------------------------------------------------
+[New Topics]
+
+* mb/local-clone-after-applying-insteadof (2014-07-17) 1 commit
+  (merged to 'next' on 2014-07-21 at ebe07c2)
+ + use local cloning if insteadOf makes a local URL
+
+ Apply the "if cloning from a local disk, physically copy repository
+ using hardlinks, unless otherwise told not to with --no-local"
+ optimization when url.*.insteadOf mechanism rewrites a "git clone
+ $URL" that refers to a repository over the network to a clone from
+ a local disk.
+
  Will merge to 'master'.
 
 
-* sk/mingw-uni-fix (2014-07-15) 3 commits
- - tests: do not pass iso8859-1 encoded parameter
- - Win32: Unicode file name support (dirent)
- - Win32: Unicode file name support (except dirent)
-
- Will merge to 'next'.
-
-
-* ta/config-set (2014-07-15) 2 commits
- - test-config: add tests for the config_set API
- - add `config_set` API for caching config-like files
+* nd/path-max-is-better-than-hardcoded-magic-1024 (2014-07-17) 1 commit
+ - abspath.c: use PATH_MAX in real_path_internal()
 
  Still being discussed.
 
 
-* kb/avoid-fchmod-for-now (2014-07-16) 1 commit
- - config: use chmod() instead of fchmod()
+* sk/mingw-uni-fix-more (2014-07-21) 14 commits
+ - Win32: enable color output in Windows cmd.exe
+ - Win32: patch Windows environment on startup
+ - Win32: keep the environment sorted
+ - Win32: use low-level memory allocation during initialization
+ - Win32: reduce environment array reallocations
+ - Win32: don't copy the environment twice when spawning child processes
+ - Win32: factor out environment block creation
+ - Win32: unify environment function names
+ - Win32: unify environment case-sensitivity
+ - Win32: fix environment memory leaks
+ - Win32: Unicode environment (incoming)
+ - Win32: Unicode environment (outgoing)
+ - Revert "Windows: teach getenv to do a case-sensitive search"
+ - tests: do not pass iso8859-1 encoded parameter
 
- Replaces the only two uses of fchmod() with chmod() because the
- former does not work on Windows port and because luckily we can.
+ Most of these are battle-tested in msysgit and are needed to
+ complete what has been merged to 'master' already.
 
-
-* rs/ref-transaction-1 (2014-07-16) 20 commits
- - refs.c: make delete_ref use a transaction
- - refs.c: make prune_ref use a transaction to delete the ref
- - refs.c: remove lock_ref_sha1
- - refs.c: remove the update_ref_write function
- - refs.c: remove the update_ref_lock function
- - refs.c: make lock_ref_sha1 static
- - walker.c: use ref transaction for ref updates
- - fast-import.c: use a ref transaction when dumping tags
- - receive-pack.c: use a reference transaction for updating the refs
- - refs.c: change update_ref to use a transaction
- - branch.c: use ref transaction for all ref updates
- - fast-import.c: change update_branch to use ref transactions
- - sequencer.c: use ref transactions for all ref updates
- - commit.c: use ref transactions for updates
- - replace.c: use the ref transaction functions for updates
- - tag.c: use ref transactions when doing updates
- - refs.c: add transaction.status and track OPEN/CLOSED/ERROR
- - refs.c: make ref_transaction_begin take an err argument
- - refs.c: update ref_transaction_delete to check for error and return status
- - refs.c: change ref_transaction_create to do error checking and return status
- (this branch is used by rs/ref-transaction; uses rs/ref-transaction-0.)
-
- The second batch of the transactional ref update series.
+ A fix has been squashed into "Unicode environ (outgoing)"; is this
+ now ready to go?
 
 
-* rs/unify-is-branch (2014-07-16) 1 commit
- - refs.c: add a public is_branch function
+* sk/mingw-tests-workaround (2014-07-21) 6 commits
+ - t800[12]: work around MSys limitation
+ - t9902: mingw-specific fix for gitfile link files
+ - t4210: skip command-line encoding tests on mingw
+ - MinGW: disable legacy encoding tests
+ - t0110/MinGW: skip tests that pass arbitrary bytes on the command line
+ - MinGW: Skip test redirecting to fd 4
+ (this branch is used by jc/not-mingw-cygwin.)
 
- Will merge to 'next'.
+ Make tests pass on msysgit by mostly disabling ones that are
+ infeasible on that platform.
 
---------------------------------------------------
-[Graduated to "master"]
-
-* ah/fix-http-push (2014-07-13) 1 commit
-  (merged to 'next' on 2014-07-14 at 5d06516)
- + http-push.c: make CURLOPT_IOCTLDATA a usable pointer
-
- An ancient rewrite passed a wrong pointer to a curl library
- function in a rarely used code path.
-
-
-* cb/filter-branch-prune-empty-degenerate-merges (2014-07-01) 1 commit
-  (merged to 'next' on 2014-07-10 at 860cfea)
- + filter-branch: eliminate duplicate mapped parents
-
- "filter-branch" left an empty single-parent commit that results when
- all parents of a merge commit gets mapped to the same commit, even
- under "--prune-empty".
+ The t0110 one has been replaced; is this now ready to go?
 
 
-* cc/replace-edit (2014-06-25) 3 commits
-  (merged to 'next' on 2014-07-10 at 097cd5e)
- + replace: use argv_array in export_object
- + avoid double close of descriptors handed to run_command
- + replace: replace spaces with tabs in indentation
- (this branch is used by jk/replace-edit-raw.)
+* ta/string-list-init (2014-07-21) 2 commits
+  (merged to 'next' on 2014-07-21 at 63e8891)
+ + replace memset with string-list initializers
+ + string-list: add string_list initializer helper function
+ (this branch is tangled with ta/config-set.)
 
- Teach "git replace" an "--edit" mode.
-
-
-* ep/submodule-code-cleanup (2014-06-30) 1 commit
-  (merged to 'next' on 2014-07-10 at d4de30a)
- + submodule.c: use the ARRAY_SIZE macro
+ Will merge to 'master'.
 
 
-* jk/replace-edit-raw (2014-06-25) 1 commit
-  (merged to 'next' on 2014-07-10 at b934bb0)
- + replace: add a --raw mode for --edit
- (this branch uses cc/replace-edit.)
-
- Teach "git replace --edit" mode a "--raw" option to allow
- editing the bare-metal representation data of objects.
+* cb/mergetool-difftool (2014-07-21) 2 commits
+ - difftool: don't assume that default sh is sane
+ - mergetool: don't require a work tree for --tool-help
 
 
-* jk/skip-prefix (2014-07-10) 1 commit
-  (merged to 'next' on 2014-07-14 at 0fbd06e)
- + tag: use skip_prefix instead of magic numbers
- (this branch is used by jk/tag-sort.)
+* rs/fix-unlink-unix-socket (2014-07-21) 1 commit
+  (merged to 'next' on 2014-07-22 at fad8c29)
+ + unix-socket: remove stale socket before calling chdir()
 
- One more to an already graduated topic.
+ The unix-domain socket used by the sample credential cache daemon
+ tried to unlink an existing stale one at a wrong path, if the path
+ to the socket was given as an overlong path that does not fit in
+ sun_path member of the sockaddr_un structure.
 
-
-* jk/strip-suffix (2014-06-30) 9 commits
-  (merged to 'next' on 2014-07-10 at e6cfa29)
- + prepare_packed_git_one: refactor duplicate-pack check
- + verify-pack: use strbuf_strip_suffix
- + strbuf: implement strbuf_strip_suffix
- + index-pack: use strip_suffix to avoid magic numbers
- + use strip_suffix instead of ends_with in simple cases
- + replace has_extension with ends_with
- + implement ends_with via strip_suffix
- + add strip_suffix function
- + sha1_file: replace PATH_MAX buffer with strbuf in prepare_packed_git_one()
+ Will merge to 'master'.
 
 
-* jl/test-lint-scripts (2014-07-10) 2 commits
-  (merged to 'next' on 2014-07-14 at c03721c)
- + t/Makefile: always test all lint targets when running tests
- + t/Makefile: check helper scripts for non-portable shell commands too
+* rs/strbuf-getcwd (2014-07-21) 4 commits
+ - use xgetcwd() get the current directory or die
+ - wrapper: add xgetcwd()
+ - use strbuf_getcwd() to get the current working directory without fixed-sized buffers
+ - strbuf: add strbuf_getcwd()
+
+ Still being discussed.
 
 
-* mg/fix-log-mergetag-color (2014-07-10) 1 commit
-  (merged to 'next' on 2014-07-14 at e90dba1)
- + log: correctly identify mergetag signature verification status
+* jc/not-mingw-cygwin (2014-07-21) 2 commits
+ - test prerequisites: enumerate with commas
+ - test prerequisites: eradicate NOT_FOO
+ (this branch uses sk/mingw-tests-workaround.)
+
+ We have been using NOT_{MINGW,CYGWIN} test prerequisites long
+ before Peff invented support for negated prerequisites e.g. !MINGW
+ and we still add more uses of the former.  Convert them to the
+ latter to avoid confusion.
 
 
-* mk/merge-incomplete-files (2014-06-30) 2 commits
-  (merged to 'next' on 2014-07-10 at d1115f4)
- + git-merge-file: do not add LF at EOF while applying unrelated change
- + t6023-merge-file.sh: fix and mark as broken invalid tests
-
- Merging changes into a file that ends in an incomplete line made the
- last line into a complete one, even when the other branch did not
- change anything around the end of file.
-
-
-* nd/split-index (2014-06-13) 32 commits
-  (merged to 'next' on 2014-07-08 at 49325ef)
- + t1700: new tests for split-index mode
- + t2104: make sure split index mode is off for the version test
- + read-cache: force split index mode with GIT_TEST_SPLIT_INDEX
- + read-tree: note about dropping split-index mode or index version
- + read-tree: force split-index mode off on --index-output
- + rev-parse: add --shared-index-path to get shared index path
- + update-index --split-index: do not split if $GIT_DIR is read only
- + update-index: new options to enable/disable split index mode
- + split-index: strip pathname of on-disk replaced entries
- + split-index: do not invalidate cache-tree at read time
- + split-index: the reading part
- + split-index: the writing part
- + read-cache: mark updated entries for split index
- + read-cache: save deleted entries in split index
- + read-cache: mark new entries for split index
- + read-cache: split-index mode
- + read-cache: save index SHA-1 after reading
- + entry.c: update cache_changed if refresh_cache is set in checkout_entry()
- + cache-tree: mark istate->cache_changed on prime_cache_tree()
- + cache-tree: mark istate->cache_changed on cache tree update
- + cache-tree: mark istate->cache_changed on cache tree invalidation
- + unpack-trees: be specific what part of the index has changed
- + resolve-undo: be specific what part of the index has changed
- + update-index: be specific what part of the index has changed
- + read-cache: be specific what part of the index has changed
- + read-cache: be strict about "changed" in remove_marked_cache_entries()
- + read-cache: store in-memory flags in the first 12 bits of ce_flags
- + read-cache: relocate and unexport commit_locked_index()
- + read-cache: new API write_locked_index instead of write_index/write_cache
- + sequencer: do not update/refresh index if the lock cannot be held
- + ewah: delete unused ewah_read_mmap_native declaration
- + ewah: fix constness of ewah_read_mmap
- (this branch is used by jc/reopen-lock-file.)
-
- An experiment to use two files (the base file and incremental
- changes relative to it) to represent the index to reduce I/O cost
- of rewriting a large index when only small part of the working tree
- changes.
-
-
-* po/error-message-style (2014-07-10) 1 commit
-  (merged to 'next' on 2014-07-14 at ed17678)
- + doc: give some guidelines for error messages
-
-
-* rs/code-cleaning (2014-07-10) 5 commits
-  (merged to 'next' on 2014-07-14 at d5a89c8)
- + fsck: simplify fsck_commit_buffer() by using commit_list_count()
- + commit: use commit_list_append() instead of duplicating its code
- + merge: simplify merge_trivial() by using commit_list_append()
- + use strbuf_addch for adding single characters
- + use strbuf_addbuf for adding strbufs
-
-
-* tb/crlf-tests (2014-07-08) 2 commits
-  (merged to 'next' on 2014-07-08 at 40764b7)
- + t0027: combinations of core.autocrlf, core.eol and text
- + t0025: rename the test files
-
-
-* zk/log-graph-showsig (2014-07-09) 1 commit
-  (merged to 'next' on 2014-07-14 at 4429c2e)
- + log: fix indentation for --graph --show-signature
-
- The "--show-signature" option did not pay much attention to
- "--graph".
+* jk/more-push-completion (2014-07-22) 3 commits
+ - completion: complete `git push --force-with-lease=`
+ - completion: add some missing options to `git push`
+ - completion: complete "unstuck" `git push --recurse-submodules`
 
 --------------------------------------------------
 [Stalled]
@@ -493,215 +522,162 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* jk/rebase-am-fork-point (2014-07-16) 2 commits
+  (merged to 'next' on 2014-07-22 at 7648293)
+ + rebase: omit patch-identical commits with --fork-point
+ + rebase--am: use --cherry-pick instead of --ignore-if-in-upstream
+
+ "git rebase --fork-point" did not filter out patch-identical
+ commits correctly.
+
+ Will merge to 'master'.
+
+
+* jk/stable-prio-queue (2014-07-15) 4 commits
+  (merged to 'next' on 2014-07-22 at 46e9bc3)
+ + t5539: update a flaky test
+ + paint_down_to_common: use prio_queue
+ + prio-queue: make output stable with respect to insertion
+ + prio-queue: factor out compare and swap operations
+
+ Will merge to 'master'.
+
+
+* jk/tag-sort (2014-07-17) 2 commits
+  (merged to 'next' on 2014-07-21 at bc34738)
+ + tag: support configuring --sort via .gitconfig
+ + tag: fix --sort tests to use cat<<-\EOF format
+
+ Will merge to 'master'.
+
+
+* ta/config-set (2014-07-21) 3 commits
+ - test-config: add tests for the config_set API
+ - add `config_set` API for caching config-like files
+ + string-list: add string_list initializer helper function
+ (this branch is tangled with ta/string-list-init.)
+
+ Almost there.
+
+
+* rs/ref-transaction-1 (2014-07-16) 20 commits
+ - refs.c: make delete_ref use a transaction
+ - refs.c: make prune_ref use a transaction to delete the ref
+ - refs.c: remove lock_ref_sha1
+ - refs.c: remove the update_ref_write function
+ - refs.c: remove the update_ref_lock function
+ - refs.c: make lock_ref_sha1 static
+ - walker.c: use ref transaction for ref updates
+ - fast-import.c: use a ref transaction when dumping tags
+ - receive-pack.c: use a reference transaction for updating the refs
+ - refs.c: change update_ref to use a transaction
+ - branch.c: use ref transaction for all ref updates
+ - fast-import.c: change update_branch to use ref transactions
+ - sequencer.c: use ref transactions for all ref updates
+ - commit.c: use ref transactions for updates
+ - replace.c: use the ref transaction functions for updates
+ - tag.c: use ref transactions when doing updates
+ - refs.c: add transaction.status and track OPEN/CLOSED/ERROR
+ - refs.c: make ref_transaction_begin take an err argument
+ - refs.c: update ref_transaction_delete to check for error and return status
+ - refs.c: change ref_transaction_create to do error checking and return status
+ (this branch is used by rs/ref-transaction.)
+
+ The second batch of the transactional ref update series.
+
+
 * jc/reopen-lock-file (2014-07-14) 1 commit
- - lockfile: allow reopening a closed but still locked file
+  (merged to 'next' on 2014-07-21 at 8277dc9)
+ + lockfile: allow reopening a closed but still locked file
 
  Needed in the "commit -p" code path to update the cache tree in the
  index.
 
 
-* jk/alloc-commit-id (2014-07-13) 8 commits
-  (merged to 'next' on 2014-07-16 at f14c01a)
- + diff-tree: avoid lookup_unknown_object
- + object_as_type: set commit index
- + alloc: factor out commit index
- + add object_as_type helper for casting objects
- + parse_object_buffer: do not set object type
- + move setting of object->type to alloc_* functions
- + alloc: write out allocator definitions
- + alloc.c: remove the alloc_raw_commit_node() function
-
- Make sure all in-core commit objects are assigned a unique number
- so that they can be annotated using the commit-slab API.
-
- Will merge to 'master'.
-
-
-* jk/remote-curl-squelch-extra-errors (2014-07-10) 3 commits
-  (merged to 'next' on 2014-07-14 at a2efa2f)
- + remote-curl: mark helper-protocol errors more clearly
- + remote-curl: use error instead of fprintf(stderr)
- + remote-curl: do not complain on EOF from parent git
-
- Will merge to 'master'.
-
-
-* rs/ref-transaction-0 (2014-07-14) 19 commits
-  (merged to 'next' on 2014-07-14 at b21bcee)
- + refs.c: change ref_transaction_update() to do error checking and return status
- + refs.c: remove the onerr argument to ref_transaction_commit
- + update-ref: use err argument to get error from ref_transaction_commit
- + refs.c: make update_ref_write update a strbuf on failure
- + refs.c: make ref_update_reject_duplicates take a strbuf argument for errors
- + refs.c: log_ref_write should try to return meaningful errno
- + refs.c: make resolve_ref_unsafe set errno to something meaningful on error
- + refs.c: commit_packed_refs to return a meaningful errno on failure
- + refs.c: make remove_empty_directories always set errno to something sane
- + refs.c: verify_lock should set errno to something meaningful
- + refs.c: make sure log_ref_setup returns a meaningful errno
- + refs.c: add an err argument to repack_without_refs
- + lockfile.c: make lock_file return a meaningful errno on failurei
- + lockfile.c: add a new public function unable_to_lock_message
- + refs.c: add a strbuf argument to ref_transaction_commit for error logging
- + refs.c: allow passing NULL to ref_transaction_free
- + refs.c: constify the sha arguments for ref_transaction_create|delete|update
- + refs.c: ref_transaction_commit should not free the transaction
- + refs.c: remove ref_transaction_rollback
- (this branch is used by rs/ref-transaction and rs/ref-transaction-1.)
-
- Early part of the "ref transaction" topic.
- Will merge to 'master'.
-
-
-* nd/multiple-work-trees (2014-07-14) 31 commits
- - checkout: don't require a work tree when checking out into a new one
- - git_path(): keep "info/sparse-checkout" per work-tree
- - count-objects: report unused files in $GIT_DIR/repos/...
- - gc: support prune --repos
- - gc: factor out gc.pruneexpire parsing code
- - gc: style change -- no SP before closing parenthesis
- - prune: strategies for linked checkouts
- - checkout: detach if the branch is already checked out elsewhere
- - checkout: clean up half-prepared directories in --to mode
- - checkout: support checking out into a new working directory
- - use new wrapper write_file() for simple file writing
- - wrapper.c: wrapper to open a file, fprintf then close
- - setup.c: support multi-checkout repo setup
- - setup.c: detect $GIT_COMMON_DIR check_repository_format_gently()
- - setup.c: convert check_repository_format_gently to use strbuf
- - setup.c: detect $GIT_COMMON_DIR in is_git_directory()
- - setup.c: convert is_git_directory() to use strbuf
- - git-stash: avoid hardcoding $GIT_DIR/logs/....
- - *.sh: avoid hardcoding $GIT_DIR/hooks/...
- - git-sh-setup.sh: use rev-parse --git-path to get $GIT_DIR/objects
- - $GIT_COMMON_DIR: a new environment variable
- - commit: use SEQ_DIR instead of hardcoding "sequencer"
- - fast-import: use git_path() for accessing .git dir instead of get_git_dir()
- - reflog: avoid constructing .lock path with git_path
- - *.sh: respect $GIT_INDEX_FILE
- - git_path(): be aware of file relocation in $GIT_DIR
- - path.c: group git_path(), git_pathdup() and strbuf_git_path() together
- - path.c: rename vsnpath() to do_git_path()
- - git_snpath(): retire and replace with strbuf_git_path()
- - path.c: make get_pathname() call sites return const char *
- - path.c: make get_pathname() return strbuf instead of static buffer
+* nd/multiple-work-trees (2014-07-17) 31 commits
+  (merged to 'next' on 2014-07-17 at a29d310)
+ + checkout: don't require a work tree when checking out into a new one
+ + git_path(): keep "info/sparse-checkout" per work-tree
+ + count-objects: report unused files in $GIT_DIR/repos/...
+ + gc: support prune --repos
+ + gc: factor out gc.pruneexpire parsing code
+ + gc: style change -- no SP before closing parenthesis
+ + prune: strategies for linked checkouts
+ + checkout: detach if the branch is already checked out elsewhere
+ + checkout: clean up half-prepared directories in --to mode
+ + checkout: support checking out into a new working directory
+ + use new wrapper write_file() for simple file writing
+ + wrapper.c: wrapper to open a file, fprintf then close
+ + setup.c: support multi-checkout repo setup
+ + setup.c: detect $GIT_COMMON_DIR check_repository_format_gently()
+ + setup.c: convert check_repository_format_gently to use strbuf
+ + setup.c: detect $GIT_COMMON_DIR in is_git_directory()
+ + setup.c: convert is_git_directory() to use strbuf
+ + git-stash: avoid hardcoding $GIT_DIR/logs/....
+ + *.sh: avoid hardcoding $GIT_DIR/hooks/...
+ + git-sh-setup.sh: use rev-parse --git-path to get $GIT_DIR/objects
+ + $GIT_COMMON_DIR: a new environment variable
+ + commit: use SEQ_DIR instead of hardcoding "sequencer"
+ + fast-import: use git_path() for accessing .git dir instead of get_git_dir()
+ + reflog: avoid constructing .lock path with git_path
+ + *.sh: respect $GIT_INDEX_FILE
+ + git_path(): be aware of file relocation in $GIT_DIR
+ + path.c: group git_path(), git_pathdup() and strbuf_git_path() together
+ + path.c: rename vsnpath() to do_git_path()
+ + git_snpath(): retire and replace with strbuf_git_path()
+ + path.c: make get_pathname() call sites return const char *
+ + path.c: make get_pathname() return strbuf instead of static buffer
 
  A replacement for contrib/workdir/git-new-workdir that does not
  rely on symbolic links and make sharing of objects and refs safer
  by making the borrowee and borrowers aware of each other.
 
- Will merge to 'next' and cook there for a while.
-
-
-* ak/profile-feedback-build (2014-07-08) 4 commits
-  (merged to 'next' on 2014-07-14 at c40e86e)
- + Fix profile feedback with -jN and add profile-fast
- + Run the perf test suite for profile feedback too
- + Don't define away __attribute__ on gcc
- + Use BASIC_FLAGS for profile feedback
-
- Will merge to 'master'.
-
-
-* cc/for-each-mergetag (2014-07-07) 1 commit
-  (merged to 'next' on 2014-07-15 at c5dd3ee)
- + commit: add for_each_mergetag()
- (this branch is used by cc/replace-graft.)
-
- Will merge to 'master'.
+ Will cook in 'next'.
 
 
 * dt/cache-tree-repair (2014-07-14) 4 commits
- - cache-tree: Write updated cache-tree after commit
- - cache-tree: subdirectory tests
- - test-dump-cache-tree: invalid trees are not errors
- - cache-tree: create/update cache-tree on checkout
+  (merged to 'next' on 2014-07-21 at e83db34)
+ + cache-tree: Write updated cache-tree after commit
+ + cache-tree: subdirectory tests
+ + test-dump-cache-tree: invalid trees are not errors
+ + cache-tree: create/update cache-tree on checkout
 
  Add a few more places in "commit" and "checkout" that make sure
  that the cache-tree is fully populated in the index.
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
-* kb/hashmap-updates (2014-07-07) 4 commits
-  (merged to 'next' on 2014-07-15 at 6dd6611)
- + hashmap: add string interning API
- + hashmap: add simplified hashmap_get_from_hash() API
- + hashmap: improve struct hashmap member documentation
- + hashmap: factor out getting a hash code from a SHA1
-
- Will merge to 'master'.
-
-
-* cc/replace-graft (2014-07-07) 9 commits
- - replace: add test for --graft with a mergetag
- - replace: check mergetags when using --graft
- - replace: add test for --graft with signed commit
- - replace: remove signature when using --graft
- - contrib: add convert-grafts-to-replace-refs.sh
- - Documentation: replace: add --graft option
- - replace: add test for --graft
- - replace: add --graft option
- - replace: cleanup redirection style in tests
- (this branch uses cc/for-each-mergetag.)
+* cc/replace-graft (2014-07-21) 9 commits
+  (merged to 'next' on 2014-07-22 at 9b14090)
+ + replace: add test for --graft with a mergetag
+ + replace: check mergetags when using --graft
+ + replace: add test for --graft with signed commit
+ + replace: remove signature when using --graft
+ + contrib: add convert-grafts-to-replace-refs.sh
+ + Documentation: replace: add --graft option
+ + replace: add test for --graft
+ + replace: add --graft option
+ + replace: cleanup redirection style in tests
 
  "git replace" learned a "--graft" option to rewrite parents of a
  commit.
-
-
-* kb/perf-trace (2014-07-13) 17 commits
-  (merged to 'next' on 2014-07-15 at 09ade08)
- + api-trace.txt: add trace API documentation
- + progress: simplify performance measurement by using getnanotime()
- + wt-status: simplify performance measurement by using getnanotime()
- + git: add performance tracing for git's main() function to debug scripts
- + trace: add trace_performance facility to debug performance issues
- + trace: add high resolution timer function to debug performance issues
- + trace: add 'file:line' to all trace output
- + trace: move code around, in preparation to file:line output
- + trace: add current timestamp to all trace output
- + trace: disable additional trace output for unit tests
- + trace: add infrastructure to augment trace output with additional info
- + sha1_file: change GIT_TRACE_PACK_ACCESS logging to use trace API
- + Documentation/git.txt: improve documentation of 'GIT_TRACE*' variables
- + trace: improve trace performance
- + trace: remove redundant printf format attribute
- + trace: consistently name the format parameter
- + trace: move trace declarations from cache.h to new trace.h
 
  Will merge to 'master'.
 
 
 * hv/submodule-config (2014-06-30) 4 commits
- - do not die on error of parsing fetchrecursesubmodules option
- - use new config API for worktree configurations of submodules
- - extract functions for submodule config set and lookup
- - implement submodule config cache for lookup of submodule names
+  (merged to 'next' on 2014-07-17 at 5e0ce45)
+ + do not die on error of parsing fetchrecursesubmodules option
+ + use new config API for worktree configurations of submodules
+ + extract functions for submodule config set and lookup
+ + implement submodule config cache for lookup of submodule names
 
- Will merge to 'next' and cook there for a while.
-
-
-* jl/submodule-tests (2014-07-14) 14 commits
-  (merged to 'next' on 2014-07-14 at 0c750bb)
- + revert: add t3513 for submodule updates
- + stash: add t3906 for submodule updates
- + am: add t4255 for submodule updates
- + cherry-pick: add t3512 for submodule updates
- + pull: add t5572 for submodule updates
- + rebase: add t3426 for submodule updates
- + merge: add t7613 for submodule updates
- + bisect: add t6041 for submodule updates
- + reset: add t7112 for submodule updates
- + read-tree: add t1013 for submodule updates
- + apply: add t4137 for submodule updates
- + checkout: call the new submodule update test framework
- + submodules: add the lib-submodule-update.sh test library
- + test-lib: add test_dir_is_empty()
-
- Will merge to 'master'.
+ Will cook in 'next'.
 
 
-* rs/ref-transaction (2014-07-16) 9 commits
+* rs/ref-transaction (2014-07-17) 12 commits
+ - refs.c: fix handling of badly named refs
  - refs.c: make write_ref_sha1 static
  - fetch.c: change s_update_ref to use a ref transaction
  - refs.c: propagate any errno==ENOTDIR from _commit back to the callers
@@ -711,7 +687,9 @@ of the repositories listed at
  - refs.c: pass NULL as *flags to read_ref_full
  - refs.c: pass the ref log message to _create/delete/update instead of _commit
  - refs.c: add an err argument to delete_ref_loose
- (this branch uses rs/ref-transaction-0 and rs/ref-transaction-1.)
+ - wrapper.c: add a new function unlink_or_msg
+ - wrapper.c: simplify warn_if_unremovable
+ (this branch uses rs/ref-transaction-1.)
 
 
 * jc/test-lazy-prereq (2014-06-13) 1 commit
