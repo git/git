@@ -229,7 +229,7 @@ test_expect_success 'pull request format' '
 		cd local &&
 		git request-pull initial "$downstream_url" full
 	) >request &&
-	grep ' tags/full$'
+	grep " tags/full\$" request
 '
 
 test_expect_success 'request-pull ignores OPTIONS_KEEPDASHDASH poison' '
