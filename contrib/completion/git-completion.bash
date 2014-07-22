@@ -1611,6 +1611,22 @@ _git_pull ()
 
 __git_push_recurse_submodules="check on-demand"
 
+__git_complete_force_with_lease ()
+{
+	local cur_=$1
+
+	case "$cur_" in
+	--*=)
+		;;
+	*:*)
+		__gitcomp_nl "$(__git_refs)" "" "${cur_#*:}"
+		;;
+	*)
+		__gitcomp_nl "$(__git_refs)" "" "$cur_"
+		;;
+	esac
+}
+
 _git_push ()
 {
 	case "$prev" in
@@ -1632,12 +1648,16 @@ _git_push ()
 		__gitcomp "$__git_push_recurse_submodules" "" "${cur##--recurse-submodules=}"
 		return
 		;;
+	--force-with-lease=*)
+		__git_complete_force_with_lease "${cur##--force-with-lease=}"
+		return
+		;;
 	--*)
 		__gitcomp "
 			--all --mirror --tags --dry-run --force --verbose
 			--quiet --prune --delete --follow-tags
 			--receive-pack= --repo= --set-upstream
-			--recurse-submodules=
+			--force-with-lease --force-with-lease= --recurse-submodules=
 		"
 		return
 		;;
