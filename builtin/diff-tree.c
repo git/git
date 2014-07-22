@@ -68,9 +68,7 @@ static int diff_tree_stdin(char *line)
 	line[len-1] = 0;
 	if (get_sha1_hex(line, sha1))
 		return -1;
-	obj = lookup_unknown_object(sha1);
-	if (!obj || !obj->parsed)
-		obj = parse_object(sha1);
+	obj = parse_object(sha1);
 	if (!obj)
 		return -1;
 	if (obj->type == OBJ_COMMIT)

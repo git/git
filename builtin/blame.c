@@ -2287,7 +2287,6 @@ static struct commit *fake_working_tree_commit(struct diff_options *opt,
 	commit = alloc_commit_node();
 	commit->object.parsed = 1;
 	commit->date = now;
-	commit->object.type = OBJ_COMMIT;
 	parent_tail = &commit->parents;
 
 	if (!resolve_ref_unsafe("HEAD", head_sha1, 1, NULL))
