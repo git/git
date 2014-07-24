@@ -1161,7 +1161,9 @@ sub cmd_branch {
 	::_req_svn();
 
 	my $ctx = SVN::Client->new(
-		auth    => Git::SVN::Ra::_auth_providers(),
+		config => SVN::Core::config_get_config(
+			$Git::SVN::Ra::config_dir
+		),
 		log_msg => sub {
 			${ $_[0] } = defined $_message
 				? $_message
