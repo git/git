@@ -1073,7 +1073,7 @@ static int gitdiff_index(const char *line, struct patch *patch)
 
 	line = ptr + 2;
 	ptr = strchr(line, ' ');
-	eol = strchr(line, '\n');
+	eol = strchrnul(line, '\n');
 
 	if (!ptr || eol < ptr)
 		ptr = eol;
