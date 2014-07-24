@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jul 2014, #04; Tue, 22)
-X-master-at: 247b4d5f3807dc3c2230bb4bf497f84a1fc59e49
-X-next-at: 4e82b8a515ec47d61c8bae6e6c474815e9e9b827
+Subject: What's cooking in git.git (Jul 2014, #05; Thu, 24)
+X-master-at: 996b0fdbb4ff63bfd880b3901f054139c95611cf
+X-next-at: 7327a17171fc87d5f8f5c790eb1ba1d0e031482d
 
-What's cooking in git.git (Jul 2014, #04; Tue, 22)
+What's cooking in git.git (Jul 2014, #05; Thu, 24)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -15,7 +15,7 @@ We would need to start slowing down to prepare for -rc0 preview at
 the end of this week and then feature freeze.  Some topics that
 joined 'next' late may want to stay there for the remainder of this
 cycle.  Many of the accumulated fixes have been flushed to 'maint'
-and Git 2.0.2 has been tagged.
+and Git 2.0.3 has been tagged.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -25,170 +25,14 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* ak/profile-feedback-build (2014-07-08) 4 commits
-  (merged to 'next' on 2014-07-14 at c40e86e)
- + Fix profile feedback with -jN and add profile-fast
- + Run the perf test suite for profile feedback too
- + Don't define away __attribute__ on gcc
- + Use BASIC_FLAGS for profile feedback
+* jk/tag-sort (2014-07-17) 2 commits
+  (merged to 'next' on 2014-07-21 at bc34738)
+ + tag: support configuring --sort via .gitconfig
+ + tag: fix --sort tests to use cat<<-\EOF format
 
- The support for the profile-feedback build, which has been left
- bit-rotten for quite a while, has been updated.
+ Teach "git tag" to pay attention to "tag.sort" configuration, to be
+ used as the default sort order when no --sort=<value> is given.
 
-
-* cc/for-each-mergetag (2014-07-07) 1 commit
-  (merged to 'next' on 2014-07-15 at c5dd3ee)
- + commit: add for_each_mergetag()
- (this branch is used by cc/replace-graft.)
-
-
-* ek/alt-odb-entry-fix (2014-07-15) 1 commit
-  (merged to 'next' on 2014-07-17 at a5f43e2)
- + sha1_file: do not add own object directory as alternate
-
-
-* jk/alloc-commit-id (2014-07-13) 8 commits
-  (merged to 'next' on 2014-07-16 at f14c01a)
- + diff-tree: avoid lookup_unknown_object
- + object_as_type: set commit index
- + alloc: factor out commit index
- + add object_as_type helper for casting objects
- + parse_object_buffer: do not set object type
- + move setting of object->type to alloc_* functions
- + alloc: write out allocator definitions
- + alloc.c: remove the alloc_raw_commit_node() function
-
- Make sure all in-core commit objects are assigned a unique number
- so that they can be annotated using the commit-slab API.
-
-
-* jk/remote-curl-squelch-extra-errors (2014-07-10) 3 commits
-  (merged to 'next' on 2014-07-14 at a2efa2f)
- + remote-curl: mark helper-protocol errors more clearly
- + remote-curl: use error instead of fprintf(stderr)
- + remote-curl: do not complain on EOF from parent git
-
- Show HTTP transfer errors from remote-curl helper more clearly to
- help avoid user confusion.
-
-
-* jl/submodule-tests (2014-07-14) 14 commits
-  (merged to 'next' on 2014-07-14 at 0c750bb)
- + revert: add t3513 for submodule updates
- + stash: add t3906 for submodule updates
- + am: add t4255 for submodule updates
- + cherry-pick: add t3512 for submodule updates
- + pull: add t5572 for submodule updates
- + rebase: add t3426 for submodule updates
- + merge: add t7613 for submodule updates
- + bisect: add t6041 for submodule updates
- + reset: add t7112 for submodule updates
- + read-tree: add t1013 for submodule updates
- + apply: add t4137 for submodule updates
- + checkout: call the new submodule update test framework
- + submodules: add the lib-submodule-update.sh test library
- + test-lib: add test_dir_is_empty()
-
-
-* kb/avoid-fchmod-for-now (2014-07-16) 1 commit
-  (merged to 'next' on 2014-07-17 at fc26c4b)
- + config: use chmod() instead of fchmod()
-
- Replace the only two uses of fchmod() with chmod() because the
- former does not work on Windows port and because luckily we can.
-
-
-* kb/hashmap-updates (2014-07-07) 4 commits
-  (merged to 'next' on 2014-07-15 at 6dd6611)
- + hashmap: add string interning API
- + hashmap: add simplified hashmap_get_from_hash() API
- + hashmap: improve struct hashmap member documentation
- + hashmap: factor out getting a hash code from a SHA1
-
-
-* kb/perf-trace (2014-07-13) 17 commits
-  (merged to 'next' on 2014-07-15 at 09ade08)
- + api-trace.txt: add trace API documentation
- + progress: simplify performance measurement by using getnanotime()
- + wt-status: simplify performance measurement by using getnanotime()
- + git: add performance tracing for git's main() function to debug scripts
- + trace: add trace_performance facility to debug performance issues
- + trace: add high resolution timer function to debug performance issues
- + trace: add 'file:line' to all trace output
- + trace: move code around, in preparation to file:line output
- + trace: add current timestamp to all trace output
- + trace: disable additional trace output for unit tests
- + trace: add infrastructure to augment trace output with additional info
- + sha1_file: change GIT_TRACE_PACK_ACCESS logging to use trace API
- + Documentation/git.txt: improve documentation of 'GIT_TRACE*' variables
- + trace: improve trace performance
- + trace: remove redundant printf format attribute
- + trace: consistently name the format parameter
- + trace: move trace declarations from cache.h to new trace.h
-
- Show timestamps in GIT_TRACE output.
-
-
-* nd/path-max-must-go (2014-07-14) 3 commits
-  (merged to 'next' on 2014-07-15 at ce68dde)
- + prep_exclude: remove the artificial PATH_MAX limit
- + dir.h: move struct exclude declaration to top level
- + dir.c: coding style fix
-
- Lift arbitrary PATH_MAX limit in the code to enumerate paths in the
- working tree.
-
-
-* rs/code-cleaning (2014-07-18) 7 commits
-  (merged to 'next' on 2014-07-21 at 7312ddc)
- + remote-testsvn: use internal argv_array of struct child_process in cmd_import()
- + bundle: use internal argv_array of struct child_process in create_bundle()
- + fast-import: use hashcmp() for SHA1 hash comparison
- + transport: simplify fetch_objs_via_rsync() using argv_array
- + run-command: use internal argv_array of struct child_process in run_hook_ve()
- + use commit_list_count() to count the members of commit_lists
- + strbuf: use strbuf_addstr() for adding C strings
-
-
-* rs/ref-transaction-0 (2014-07-14) 19 commits
-  (merged to 'next' on 2014-07-14 at b21bcee)
- + refs.c: change ref_transaction_update() to do error checking and return status
- + refs.c: remove the onerr argument to ref_transaction_commit
- + update-ref: use err argument to get error from ref_transaction_commit
- + refs.c: make update_ref_write update a strbuf on failure
- + refs.c: make ref_update_reject_duplicates take a strbuf argument for errors
- + refs.c: log_ref_write should try to return meaningful errno
- + refs.c: make resolve_ref_unsafe set errno to something meaningful on error
- + refs.c: commit_packed_refs to return a meaningful errno on failure
- + refs.c: make remove_empty_directories always set errno to something sane
- + refs.c: verify_lock should set errno to something meaningful
- + refs.c: make sure log_ref_setup returns a meaningful errno
- + refs.c: add an err argument to repack_without_refs
- + lockfile.c: make lock_file return a meaningful errno on failurei
- + lockfile.c: add a new public function unable_to_lock_message
- + refs.c: add a strbuf argument to ref_transaction_commit for error logging
- + refs.c: allow passing NULL to ref_transaction_free
- + refs.c: constify the sha arguments for ref_transaction_create|delete|update
- + refs.c: ref_transaction_commit should not free the transaction
- + refs.c: remove ref_transaction_rollback
- (this branch is used by rs/ref-transaction and rs/ref-transaction-1.)
-
- Early part of the "ref transaction" topic.
-
-
-* rs/unify-is-branch (2014-07-16) 1 commit
-  (merged to 'next' on 2014-07-17 at 55f530b)
- + refs.c: add a public is_branch function
-
-
-* sk/mingw-uni-fix (2014-07-15) 2 commits
-  (merged to 'next' on 2014-07-17 at ffef7a1)
- + Win32: Unicode file name support (dirent)
- + Win32: Unicode file name support (except dirent)
- (this branch is used by sk/mingw-uni-fix-more.)
-
---------------------------------------------------
-[New Topics]
 
 * mb/local-clone-after-applying-insteadof (2014-07-17) 1 commit
   (merged to 'next' on 2014-07-21 at ebe07c2)
@@ -200,66 +44,6 @@ of the repositories listed at
  $URL" that refers to a repository over the network to a clone from
  a local disk.
 
- Will merge to 'master'.
-
-
-* nd/path-max-is-better-than-hardcoded-magic-1024 (2014-07-17) 1 commit
- - abspath.c: use PATH_MAX in real_path_internal()
-
- Still being discussed.
-
-
-* sk/mingw-uni-fix-more (2014-07-21) 14 commits
- - Win32: enable color output in Windows cmd.exe
- - Win32: patch Windows environment on startup
- - Win32: keep the environment sorted
- - Win32: use low-level memory allocation during initialization
- - Win32: reduce environment array reallocations
- - Win32: don't copy the environment twice when spawning child processes
- - Win32: factor out environment block creation
- - Win32: unify environment function names
- - Win32: unify environment case-sensitivity
- - Win32: fix environment memory leaks
- - Win32: Unicode environment (incoming)
- - Win32: Unicode environment (outgoing)
- - Revert "Windows: teach getenv to do a case-sensitive search"
- - tests: do not pass iso8859-1 encoded parameter
-
- Most of these are battle-tested in msysgit and are needed to
- complete what has been merged to 'master' already.
-
- A fix has been squashed into "Unicode environ (outgoing)"; is this
- now ready to go?
-
-
-* sk/mingw-tests-workaround (2014-07-21) 6 commits
- - t800[12]: work around MSys limitation
- - t9902: mingw-specific fix for gitfile link files
- - t4210: skip command-line encoding tests on mingw
- - MinGW: disable legacy encoding tests
- - t0110/MinGW: skip tests that pass arbitrary bytes on the command line
- - MinGW: Skip test redirecting to fd 4
- (this branch is used by jc/not-mingw-cygwin.)
-
- Make tests pass on msysgit by mostly disabling ones that are
- infeasible on that platform.
-
- The t0110 one has been replaced; is this now ready to go?
-
-
-* ta/string-list-init (2014-07-21) 2 commits
-  (merged to 'next' on 2014-07-21 at 63e8891)
- + replace memset with string-list initializers
- + string-list: add string_list initializer helper function
- (this branch is tangled with ta/config-set.)
-
- Will merge to 'master'.
-
-
-* cb/mergetool-difftool (2014-07-21) 2 commits
- - difftool: don't assume that default sh is sane
- - mergetool: don't require a work tree for --tool-help
-
 
 * rs/fix-unlink-unix-socket (2014-07-21) 1 commit
   (merged to 'next' on 2014-07-22 at fad8c29)
@@ -270,33 +54,59 @@ of the repositories listed at
  to the socket was given as an overlong path that does not fit in
  sun_path member of the sockaddr_un structure.
 
- Will merge to 'master'.
+
+* ta/string-list-init (2014-07-21) 2 commits
+  (merged to 'next' on 2014-07-21 at 63e8891)
+ + replace memset with string-list initializers
+ + string-list: add string_list initializer helper function
+ (this branch is tangled with ta/config-set.)
+
+--------------------------------------------------
+[New Topics]
+
+* nd/multiple-work-trees-1 (2014-07-23) 5 commits
+ - environment.c: fix incorrect git_graft_file initialization
+ - checkout --to: fix dangling pointers in remove_junk()
+ - checkout --to: no auto-detach if the ref is already checked out
+ - prune --repos: fix uninitialized access
+ - gitrepository-layout.txt: s/ignored/ignored if/
+ (this branch uses nd/multiple-work-trees.)
+
+ Continue polishing nd/multiple-work-trees topic in 'next'.
 
 
-* rs/strbuf-getcwd (2014-07-21) 4 commits
- - use xgetcwd() get the current directory or die
- - wrapper: add xgetcwd()
- - use strbuf_getcwd() to get the current working directory without fixed-sized buffers
- - strbuf: add strbuf_getcwd()
+* jk/misc-fixes-maint (2014-07-24) 5 commits
+ - apply: avoid possible bogus pointer
+ - fix memory leak parsing core.commentchar
+ - transport: fix leaks in refs_from_alternate_cb
+ - free ref string returned by dwim_ref
+ - receive-pack: don't copy "dir" parameter
 
- Still being discussed.
+ Miscellaneous fixes.
 
-
-* jc/not-mingw-cygwin (2014-07-21) 2 commits
- - test prerequisites: enumerate with commas
- - test prerequisites: eradicate NOT_FOO
- (this branch uses sk/mingw-tests-workaround.)
-
- We have been using NOT_{MINGW,CYGWIN} test prerequisites long
- before Peff invented support for negated prerequisites e.g. !MINGW
- and we still add more uses of the former.  Convert them to the
- latter to avoid confusion.
+ Will merge to 'next' and then to 'master'.
 
 
-* jk/more-push-completion (2014-07-22) 3 commits
- - completion: complete `git push --force-with-lease=`
- - completion: add some missing options to `git push`
- - completion: complete "unstuck" `git push --recurse-submodules`
+* rs/ref-transaction-reflog (2014-07-23) 15 commits
+ - refs.c: allow deleting refs with a broken sha1
+ - refs.c: remove lock_any_ref_for_update
+ - refs.c: make unlock_ref/close_ref/commit_ref static
+ - refs.c: rename log_ref_setup to create_reflog
+ - reflog.c: use a reflog transaction when writing during expire
+ - refs.c: allow multiple reflog updates during a single transaction
+ - refs.c: only write reflog update if msg is non-NULL
+ - refs.c: add a flag to allow reflog updates to truncate the log
+ - refs.c: add a transaction function to append a reflog entry
+ - lockfile.c: make hold_lock_file_for_append preserve meaningful errno
+ - refs.c: add a function to append a reflog entry to a fd
+ - refs.c: add a new update_type field to ref_update
+ - refs.c: rename the transaction functions
+ - refs.c: make ref_transaction_delete a wrapper for ref_transaction_update
+ - refs.c: make ref_transaction_create a wrapper to ref_transaction_update
+ (this branch uses rs/ref-transaction and rs/ref-transaction-1.)
+
+ Cover updates to reflog with the same transaction mechanism as used
+ for reflog manipulations.
 
 --------------------------------------------------
 [Stalled]
@@ -522,6 +332,81 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* nd/path-max-is-better-than-hardcoded-magic-1024 (2014-07-17) 1 commit
+ - abspath.c: use PATH_MAX in real_path_internal()
+
+ Still being discussed.
+
+
+* sk/mingw-uni-fix-more (2014-07-21) 14 commits
+ - Win32: enable color output in Windows cmd.exe
+ - Win32: patch Windows environment on startup
+ - Win32: keep the environment sorted
+ - Win32: use low-level memory allocation during initialization
+ - Win32: reduce environment array reallocations
+ - Win32: don't copy the environment twice when spawning child processes
+ - Win32: factor out environment block creation
+ - Win32: unify environment function names
+ - Win32: unify environment case-sensitivity
+ - Win32: fix environment memory leaks
+ - Win32: Unicode environment (incoming)
+ - Win32: Unicode environment (outgoing)
+ - Revert "Windows: teach getenv to do a case-sensitive search"
+ - tests: do not pass iso8859-1 encoded parameter
+
+ Most of these are battle-tested in msysgit and are needed to
+ complete what has been merged to 'master' already.
+
+ A fix has been squashed into "Unicode environ (outgoing)"; is this
+ now ready to go?
+
+
+* sk/mingw-tests-workaround (2014-07-21) 6 commits
+ - t800[12]: work around MSys limitation
+ - t9902: mingw-specific fix for gitfile link files
+ - t4210: skip command-line encoding tests on mingw
+ - MinGW: disable legacy encoding tests
+ - t0110/MinGW: skip tests that pass arbitrary bytes on the command line
+ - MinGW: Skip test redirecting to fd 4
+ (this branch is used by jc/not-mingw-cygwin.)
+
+ Make tests pass on msysgit by mostly disabling ones that are
+ infeasible on that platform.
+
+ The t0110 one has been replaced; is this now ready to go?
+
+
+* cb/mergetool-difftool (2014-07-21) 2 commits
+ - difftool: don't assume that default sh is sane
+ - mergetool: don't require a work tree for --tool-help
+
+
+* rs/strbuf-getcwd (2014-07-21) 4 commits
+ - use xgetcwd() get the current directory or die
+ - wrapper: add xgetcwd()
+ - use strbuf_getcwd() to get the current working directory without fixed-sized buffers
+ - strbuf: add strbuf_getcwd()
+
+ Still being discussed.
+
+
+* jc/not-mingw-cygwin (2014-07-21) 2 commits
+ - test prerequisites: enumerate with commas
+ - test prerequisites: eradicate NOT_FOO
+ (this branch uses sk/mingw-tests-workaround.)
+
+ We have been using NOT_{MINGW,CYGWIN} test prerequisites long
+ before Peff invented support for negated prerequisites e.g. !MINGW
+ and we still add more uses of the former.  Convert them to the
+ latter to avoid confusion.
+
+
+* jk/more-push-completion (2014-07-22) 3 commits
+ - completion: complete `git push --force-with-lease=`
+ - completion: add some missing options to `git push`
+ - completion: complete "unstuck" `git push --recurse-submodules`
+
+
 * jk/rebase-am-fork-point (2014-07-16) 2 commits
   (merged to 'next' on 2014-07-22 at 7648293)
  + rebase: omit patch-identical commits with --fork-point
@@ -543,21 +428,11 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* jk/tag-sort (2014-07-17) 2 commits
-  (merged to 'next' on 2014-07-21 at bc34738)
- + tag: support configuring --sort via .gitconfig
- + tag: fix --sort tests to use cat<<-\EOF format
-
- Will merge to 'master'.
-
-
-* ta/config-set (2014-07-21) 3 commits
+* ta/config-set (2014-07-24) 2 commits
  - test-config: add tests for the config_set API
  - add `config_set` API for caching config-like files
- + string-list: add string_list initializer helper function
- (this branch is tangled with ta/string-list-init.)
 
- Almost there.
+ More or less solidified enough to be built other enhancements upon.
 
 
 * rs/ref-transaction-1 (2014-07-16) 20 commits
@@ -581,7 +456,7 @@ of the repositories listed at
  - refs.c: make ref_transaction_begin take an err argument
  - refs.c: update ref_transaction_delete to check for error and return status
  - refs.c: change ref_transaction_create to do error checking and return status
- (this branch is used by rs/ref-transaction.)
+ (this branch is used by rs/ref-transaction and rs/ref-transaction-reflog.)
 
  The second batch of the transactional ref update series.
 
@@ -627,6 +502,7 @@ of the repositories listed at
  + git_snpath(): retire and replace with strbuf_git_path()
  + path.c: make get_pathname() call sites return const char *
  + path.c: make get_pathname() return strbuf instead of static buffer
+ (this branch is used by nd/multiple-work-trees-1.)
 
  A replacement for contrib/workdir/git-new-workdir that does not
  rely on symbolic links and make sharing of objects and refs safer
@@ -689,7 +565,7 @@ of the repositories listed at
  - refs.c: add an err argument to delete_ref_loose
  - wrapper.c: add a new function unlink_or_msg
  - wrapper.c: simplify warn_if_unremovable
- (this branch uses rs/ref-transaction-1.)
+ (this branch is used by rs/ref-transaction-reflog; uses rs/ref-transaction-1.)
 
 
 * jc/test-lazy-prereq (2014-06-13) 1 commit
