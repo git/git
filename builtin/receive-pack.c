@@ -1125,7 +1125,7 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 	int advertise_refs = 0;
 	int stateless_rpc = 0;
 	int i;
-	char *dir = NULL;
+	const char *dir = NULL;
 	struct command *commands;
 	struct sha1_array shallow = SHA1_ARRAY_INIT;
 	struct sha1_array ref = SHA1_ARRAY_INIT;
@@ -1160,7 +1160,7 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 		}
 		if (dir)
 			usage(receive_pack_usage);
-		dir = xstrdup(arg);
+		dir = arg;
 	}
 	if (!dir)
 		usage(receive_pack_usage);
