@@ -148,10 +148,12 @@ void home_config_paths(char **global, char **xdg, char *file)
 			*global = mkpathdup("%s/.gitconfig", home);
 	}
 
-	if (!xdg_home)
-		*xdg = NULL;
-	else
-		*xdg = mkpathdup("%s/git/%s", xdg_home, file);
+	if (xdg) {
+		if (!xdg_home)
+			*xdg = NULL;
+		else
+			*xdg = mkpathdup("%s/git/%s", xdg_home, file);
+	}
 
 	free(to_free);
 }
