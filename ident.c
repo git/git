@@ -102,7 +102,7 @@ static void copy_email(const struct passwd *pw, struct strbuf *email)
 	add_domainname(email);
 }
 
-static const char *ident_default_name(void)
+const char *ident_default_name(void)
 {
 	if (!git_default_name.len) {
 		copy_gecos(xgetpwuid_self(), &git_default_name);

@@ -458,6 +458,20 @@ static int get_urlmatch(const char *var, const char *url)
 	return 0;
 }
 
+static char *default_user_config(void)
+{
+	struct strbuf buf = STRBUF_INIT;
+	strbuf_addf(&buf,
+		    _("# This is Git's per-user configuration file.\n"
+		      "[core]\n"
+		      "# Please adapt and uncomment the following lines:\n"
+		      "#	user = %s\n"
+		      "#	email = %s\n"),
+		    ident_default_name(),
+		    ident_default_email());
+	return strbuf_detach(&buf, NULL);
+}
+
 int cmd_config(int argc, const char **argv, const char *prefix)
 {
 	int nongit = !startup_info->have_repository;
@@ -564,6 +578,8 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		}
 	}
 	else if (actions == ACTION_EDIT) {
+		const char *config_file = given_config_source.file ?
+			given_config_source.file : git_path("config");
 		check_argc(argc, 0, 0);
 		if (!given_config_source.file && nongit)
 			die("not in a git directory");
@@ -572,9 +588,18 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		if (given_config_source.blob)
 			die("editing blobs is not supported");
 		git_config(git_default_config, NULL);
-		launch_editor(given_config_source.file ?
-			      given_config_source.file : git_path("config"),
-			      NULL, NULL);
+		if (use_global_config) {
+			int fd = open(config_file, O_CREAT | O_EXCL | O_WRONLY, 0666);
+			if (fd) {
+				char *content = default_user_config();
+				write_str_in_full(fd, content);
+				free(content);
+				close(fd);
+			}
+			else if (errno != EEXIST)
+				die_errno(_("cannot create configuration file %s"), config_file);
+		}
+		launch_editor(config_file, NULL, NULL);
 	}
 	else if (actions == ACTION_SET) {
 		int ret;
