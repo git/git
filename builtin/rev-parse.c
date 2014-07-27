@@ -151,6 +151,7 @@ static void show_rev(int type, const unsigned char *sha1, const char *name)
 				error("refname '%s' is ambiguous", name);
 				break;
 			}
+			free(full);
 		} else {
 			show_with_type(type, name);
 		}
