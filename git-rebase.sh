@@ -59,6 +59,7 @@ If you prefer to skip this patch, run "git rebase --skip" instead.
 To check out the original branch and stop rebasing, run "git rebase --abort".')
 "
 unset onto
+unset restrict_revision
 cmd=
 strategy=
 strategy_opts=
@@ -546,7 +547,7 @@ then
 			"${switch_to:-HEAD}")
 	if test -n "$new_upstream"
 	then
-		upstream=$new_upstream
+		restrict_revision=$new_upstream
 	fi
 fi
 
@@ -572,7 +573,7 @@ require_clean_work_tree "rebase" "$(gettext "Please commit or stash them.")"
 # and if this is not an interactive rebase.
 mb=$(git merge-base "$onto" "$orig_head")
 if test "$type" != interactive && test "$upstream" = "$onto" &&
-	test "$mb" = "$onto" &&
+	test "$mb" = "$onto" && test -z "$restrict_revision" &&
 	# linear history?
 	! (git rev-list --parents "$onto".."$orig_head" | sane_grep " .* ") > /dev/null
 then
@@ -626,7 +627,7 @@ if test -n "$rebase_root"
 then
 	revisions="$onto..$orig_head"
 else
-	revisions="$upstream..$orig_head"
+	revisions="${restrict_revision-$upstream}..$orig_head"
 fi
 
 run_specific_rebase
