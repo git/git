@@ -49,6 +49,12 @@ UI, Workflows & Features
    enabled, allowing modern platforms to take advantage of the
    multiple cores they have.
 
+ * "git clone" applies the "if cloning from a local disk, physically
+   copy repository using hardlinks, unless otherwise told not to with
+   --no-local" optimization when url.*.insteadOf mechanism rewrites a
+   "git clone $URL" that refers to a repository over the network to a
+   clone from a local disk.
+
  * "git commit --date=<date>" option learned to read from more
    timestamp formats, including "--date=now".
 
@@ -96,6 +102,9 @@ UI, Workflows & Features
  * "git replace" learned the "--edit" subcommand to create a
    replacement by editing an existing object.
 
+ * "git replace" learned a "--graft" option to rewrite parents of a
+   commit.
+
  * "git send-email" learned "--to-cover" and "--cc-cover" options, to
    tell it to copy To: and Cc: headers found in the first input file
    when emitting later input files.
@@ -106,6 +115,10 @@ UI, Workflows & Features
 
  * "git tag" when editing the tag message shows the name of the tag
    being edited as a comment in the editor.
+
+ * "git tag" learned to pay attention to "tag.sort" configuration, to
+   be used as the default sort order when no --sort=<value> the option
+   is given.
 
  * "git verify-commit" command to check GPG signature in signed
    commits, in a way similar to "git verify-tag" is used to check
@@ -226,6 +239,12 @@ notes for details).
    couple of options unique to "git merge".
    (merge 8fee872 jk/complete-merge-pull later to maint).
 
+ * The unix-domain socket used by the sample credential cache daemon
+   tried to unlink an existing stale one at a wrong path, if the path
+   to the socket was given as an overlong path that does not fit in
+   sun_path member of the sockaddr_un structure.
+   (merge 2869b3e rs/fix-unlink-unix-socket later to maint).
+
  * An ancient rewrite passed a wrong pointer to a curl library
    function in a rarely used code path.
    (merge 479eaa8 ah/fix-http-push later to maint).
@@ -339,6 +358,9 @@ notes for details).
    working tree state if the user aborted the interactive rebase by
    emptying the insn sheet.
    (merge ddb5432 rr/rebase-autostash-fix later to maint).
+
+ * "git rebase --fork-point" did not filter out patch-identical
+   commits correctly.
 
  * During "git rebase --merge", a conflicted patch could not be
    skipped with "--skip" if the next one also conflicted.
