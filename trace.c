@@ -158,13 +158,12 @@ void trace_repo_setup(const char *prefix)
 {
 	static const char *key = "GIT_TRACE_SETUP";
 	const char *git_work_tree;
-	char cwd[PATH_MAX];
+	char *cwd;
 
 	if (!trace_want(key))
 		return;
 
-	if (!getcwd(cwd, PATH_MAX))
-		die("Unable to get current working directory");
+	cwd = xgetcwd();
 
 	if (!(git_work_tree = get_git_work_tree()))
 		git_work_tree = "(null)";
@@ -176,6 +175,8 @@ void trace_repo_setup(const char *prefix)
 	trace_printf_key(key, "setup: worktree: %s\n", quote_crnl(git_work_tree));
 	trace_printf_key(key, "setup: cwd: %s\n", quote_crnl(cwd));
 	trace_printf_key(key, "setup: prefix: %s\n", quote_crnl(prefix));
+
+	free(cwd);
 }
 
 int trace_want(const char *key)
