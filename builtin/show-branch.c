@@ -777,6 +777,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 			sprintf(nth_desc, "%s@{%d}", *av, base+i);
 			append_ref(nth_desc, sha1, 1);
 		}
+		free(ref);
 	}
 	else if (all_heads + all_remotes)
 		snarf_refs(all_heads, all_remotes);
