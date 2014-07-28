@@ -35,13 +35,13 @@ test_expect_success 'setup' '
 	: >foo &&
 	git add foo &&
 	git config i18n.commitEncoding $test_encoding &&
-	git commit -m "$added_iso88591" &&
+	echo "$added_iso88591" | git commit -F - &&
 	head1=$(git rev-parse --verify HEAD) &&
 	head1_short=$(git rev-parse --verify --short $head1) &&
 	tree1=$(git rev-parse --verify HEAD:) &&
 	tree1_short=$(git rev-parse --verify --short $tree1) &&
 	echo "$changed" > foo &&
-	git commit -a -m "$changed_iso88591" &&
+	echo "$changed_iso88591" | git commit -a -F - &&
 	head2=$(git rev-parse --verify HEAD) &&
 	head2_short=$(git rev-parse --verify --short $head2) &&
 	tree2=$(git rev-parse --verify HEAD:) &&

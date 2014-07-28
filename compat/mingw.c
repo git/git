@@ -4,6 +4,7 @@
 #include <wchar.h>
 #include "../strbuf.h"
 #include "../run-command.h"
+#include "../cache.h"
 
 static const int delay[] = { 0, 1, 10, 20, 40 };
 
@@ -898,11 +899,44 @@ static char *path_lookup(const char *cmd, char **path, int exe_only)
 	return prog;
 }
 
-static int env_compare(const void *a, const void *b)
+static int do_putenv(char **env, const char *name, int size, int free_old);
+
+/* used number of elements of environ array, including terminating NULL */
+static int environ_size = 0;
+/* allocated size of environ array, in bytes */
+static int environ_alloc = 0;
+
+/*
+ * Create environment block suitable for CreateProcess. Merges current
+ * process environment and the supplied environment changes.
+ */
+static wchar_t *make_environment_block(char **deltaenv)
 {
-	char *const *ea = a;
-	char *const *eb = b;
-	return strcasecmp(*ea, *eb);
+	wchar_t *wenvblk = NULL;
+	char **tmpenv;
+	int i = 0, size = environ_size, wenvsz = 0, wenvpos = 0;
+
+	while (deltaenv && deltaenv[i])
+		i++;
+
+	/* copy the environment, leaving space for changes */
+	tmpenv = xmalloc((size + i) * sizeof(char*));
+	memcpy(tmpenv, environ, size * sizeof(char*));
+
+	/* merge supplied environment changes into the temporary environment */
+	for (i = 0; deltaenv && deltaenv[i]; i++)
+		size = do_putenv(tmpenv, deltaenv[i], size, 0);
+
+	/* create environment block from temporary environment */
+	for (i = 0; tmpenv[i]; i++) {
+		size = 2 * strlen(tmpenv[i]) + 2; /* +2 for final \0 */
+		ALLOC_GROW(wenvblk, (wenvpos + size) * sizeof(wchar_t), wenvsz);
+		wenvpos += xutftowcs(&wenvblk[wenvpos], tmpenv[i], size) + 1;
+	}
+	/* add final \0 terminator */
+	wenvblk[wenvpos] = 0;
+	free(tmpenv);
+	return wenvblk;
 }
 
 struct pinfo_t {
@@ -913,15 +947,15 @@ struct pinfo_t {
 static struct pinfo_t *pinfo = NULL;
 CRITICAL_SECTION pinfo_cs;
 
-static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **env,
+static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaenv,
 			      const char *dir,
 			      int prepend_cmd, int fhin, int fhout, int fherr)
 {
 	STARTUPINFOW si;
 	PROCESS_INFORMATION pi;
-	struct strbuf envblk, args;
-	wchar_t wcmd[MAX_PATH], wdir[MAX_PATH], *wargs;
-	unsigned flags;
+	struct strbuf args;
+	wchar_t wcmd[MAX_PATH], wdir[MAX_PATH], *wargs, *wenvblk = NULL;
+	unsigned flags = CREATE_UNICODE_ENVIRONMENT;
 	BOOL ret;
 
 	/* Determine whether or not we are associated to a console */
@@ -938,7 +972,7 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **env,
 		 * instead of CREATE_NO_WINDOW to make ssh
 		 * recognize that it has no console.
 		 */
-		flags = DETACHED_PROCESS;
+		flags |= DETACHED_PROCESS;
 	} else {
 		/* There is already a console. If we specified
 		 * DETACHED_PROCESS here, too, Windows would
@@ -946,7 +980,6 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **env,
 		 * The same is true for CREATE_NO_WINDOW.
 		 * Go figure!
 		 */
-		flags = 0;
 		CloseHandle(cons);
 	}
 	memset(&si, 0, sizeof(si));
@@ -982,32 +1015,13 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **env,
 	xutftowcs(wargs, args.buf, 2 * args.len + 1);
 	strbuf_release(&args);
 
-	if (env) {
-		int count = 0;
-		char **e, **sorted_env;
-
-		for (e = env; *e; e++)
-			count++;
-
-		/* environment must be sorted */
-		sorted_env = xmalloc(sizeof(*sorted_env) * (count + 1));
-		memcpy(sorted_env, env, sizeof(*sorted_env) * (count + 1));
-		qsort(sorted_env, count, sizeof(*sorted_env), env_compare);
-
-		strbuf_init(&envblk, 0);
-		for (e = sorted_env; *e; e++) {
-			strbuf_addstr(&envblk, *e);
-			strbuf_addch(&envblk, '\0');
-		}
-		free(sorted_env);
-	}
+	wenvblk = make_environment_block(deltaenv);
 
 	memset(&pi, 0, sizeof(pi));
 	ret = CreateProcessW(wcmd, wargs, NULL, NULL, TRUE, flags,
-		env ? envblk.buf : NULL, dir ? wdir : NULL, &si, &pi);
+		wenvblk, dir ? wdir : NULL, &si, &pi);
 
-	if (env)
-		strbuf_release(&envblk);
+	free(wenvblk);
 	free(wargs);
 
 	if (!ret) {
@@ -1039,10 +1053,10 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **env,
 
 static pid_t mingw_spawnv(const char *cmd, const char **argv, int prepend_cmd)
 {
-	return mingw_spawnve_fd(cmd, argv, environ, NULL, prepend_cmd, 0, 1, 2);
+	return mingw_spawnve_fd(cmd, argv, NULL, NULL, prepend_cmd, 0, 1, 2);
 }
 
-pid_t mingw_spawnvpe(const char *cmd, const char **argv, char **env,
+pid_t mingw_spawnvpe(const char *cmd, const char **argv, char **deltaenv,
 		     const char *dir,
 		     int fhin, int fhout, int fherr)
 {
@@ -1066,14 +1080,14 @@ pid_t mingw_spawnvpe(const char *cmd, const char **argv, char **env,
 				pid = -1;
 			}
 			else {
-				pid = mingw_spawnve_fd(iprog, argv, env, dir, 1,
+				pid = mingw_spawnve_fd(iprog, argv, deltaenv, dir, 1,
 						       fhin, fhout, fherr);
 				free(iprog);
 			}
 			argv[0] = argv0;
 		}
 		else
-			pid = mingw_spawnve_fd(prog, argv, env, dir, 0,
+			pid = mingw_spawnve_fd(prog, argv, deltaenv, dir, 0,
 					       fhin, fhout, fherr);
 		free(prog);
 	}
@@ -1170,108 +1184,88 @@ int mingw_kill(pid_t pid, int sig)
 	return -1;
 }
 
-static char **copy_environ(void)
+/*
+ * Compare environment entries by key (i.e. stopping at '=' or '\0').
+ */
+static int compareenv(const void *v1, const void *v2)
 {
-	char **env;
-	int i = 0;
-	while (environ[i])
-		i++;
-	env = xmalloc((i+1)*sizeof(*env));
-	for (i = 0; environ[i]; i++)
-		env[i] = xstrdup(environ[i]);
-	env[i] = NULL;
-	return env;
-}
+	const char *e1 = *(const char**)v1;
+	const char *e2 = *(const char**)v2;
 
-void free_environ(char **env)
-{
-	int i;
-	for (i = 0; env[i]; i++)
-		free(env[i]);
-	free(env);
-}
-
-static int lookup_env(char **env, const char *name, size_t nmln)
-{
-	int i;
-
-	for (i = 0; env[i]; i++) {
-		if (0 == strncmp(env[i], name, nmln)
-		    && '=' == env[i][nmln])
-			/* matches */
-			return i;
+	for (;;) {
+		int c1 = *e1++;
+		int c2 = *e2++;
+		c1 = (c1 == '=') ? 0 : tolower(c1);
+		c2 = (c2 == '=') ? 0 : tolower(c2);
+		if (c1 > c2)
+			return 1;
+		if (c1 < c2)
+			return -1;
+		if (c1 == 0)
+			return 0;
 	}
-	return -1;
+}
+
+static int bsearchenv(char **env, const char *name, size_t size)
+{
+	unsigned low = 0, high = size;
+	while (low < high) {
+		unsigned mid = low + ((high - low) >> 1);
+		int cmp = compareenv(&env[mid], &name);
+		if (cmp < 0)
+			low = mid + 1;
+		else if (cmp > 0)
+			high = mid;
+		else
+			return mid;
+	}
+	return ~low; /* not found, return 1's complement of insert position */
 }
 
 /*
  * If name contains '=', then sets the variable, otherwise it unsets it
+ * Size includes the terminating NULL. Env must have room for size + 1 entries
+ * (in case of insert). Returns the new size. Optionally frees removed entries.
  */
-static char **env_setenv(char **env, const char *name)
+static int do_putenv(char **env, const char *name, int size, int free_old)
 {
-	char *eq = strchrnul(name, '=');
-	int i = lookup_env(env, name, eq-name);
+	int i = bsearchenv(env, name, size - 1);
 
-	if (i < 0) {
-		if (*eq) {
-			for (i = 0; env[i]; i++)
-				;
-			env = xrealloc(env, (i+2)*sizeof(*env));
-			env[i] = xstrdup(name);
-			env[i+1] = NULL;
-		}
-	}
-	else {
+	/* optionally free removed / replaced entry */
+	if (i >= 0 && free_old)
 		free(env[i]);
-		if (*eq)
-			env[i] = xstrdup(name);
-		else
-			for (; env[i]; i++)
-				env[i] = env[i+1];
+
+	if (strchr(name, '=')) {
+		/* if new value ('key=value') is specified, insert or replace entry */
+		if (i < 0) {
+			i = ~i;
+			memmove(&env[i + 1], &env[i], (size - i) * sizeof(char*));
+			size++;
+		}
+		env[i] = (char*) name;
+	} else if (i >= 0) {
+		/* otherwise ('key') remove existing entry */
+		size--;
+		memmove(&env[i], &env[i + 1], (size - i) * sizeof(char*));
 	}
-	return env;
-}
-
-/*
- * Copies global environ and adjusts variables as specified by vars.
- */
-char **make_augmented_environ(const char *const *vars)
-{
-	char **env = copy_environ();
-
-	while (*vars)
-		env = env_setenv(env, *vars++);
-	return env;
-}
-
-#undef getenv
-
-/*
- * The system's getenv looks up the name in a case-insensitive manner.
- * This version tries a case-sensitive lookup and falls back to
- * case-insensitive if nothing was found.  This is necessary because,
- * as a prominent example, CMD sets 'Path', but not 'PATH'.
- * Warning: not thread-safe.
- */
-static char *getenv_cs(const char *name)
-{
-	size_t len = strlen(name);
-	int i = lookup_env(environ, name, len);
-	if (i >= 0)
-		return environ[i] + len + 1;	/* skip past name and '=' */
-	return getenv(name);
+	return size;
 }
 
 char *mingw_getenv(const char *name)
 {
-	char *result = getenv_cs(name);
-	if (!result && !strcmp(name, "TMPDIR")) {
-		/* on Windows it is TMP and TEMP */
-		result = getenv_cs("TMP");
-		if (!result)
-			result = getenv_cs("TEMP");
-	}
-	return result;
+	char *value;
+	int pos = bsearchenv(environ, name, environ_size - 1);
+	if (pos < 0)
+		return NULL;
+	value = strchr(environ[pos], '=');
+	return value ? &value[1] : NULL;
+}
+
+int mingw_putenv(const char *namevalue)
+{
+	ALLOC_GROW(environ, (environ_size + 1) * sizeof(char*), environ_alloc);
+	environ_size = do_putenv(environ, namevalue, environ_size, 1);
+	return 0;
 }
 
 /*
@@ -2049,9 +2043,23 @@ static NORETURN void die_startup()
 	exit(128);
 }
 
+static void *malloc_startup(size_t size)
+{
+	void *result = malloc(size);
+	if (!result)
+		die_startup();
+	return result;
+}
+
+static char *wcstoutfdup_startup(char *buffer, const wchar_t *wcs, size_t len)
+{
+	len = xwcstoutf(buffer, wcs, len) + 1;
+	return memcpy(malloc_startup(len), buffer, len);
+}
+
 void mingw_startup()
 {
-	int i, len, maxlen, argc;
+	int i, maxlen, argc;
 	char *buffer;
 	wchar_t **wenv, **wargv;
 	_startupinfo si;
@@ -2065,19 +2073,48 @@ void mingw_startup()
 	maxlen = wcslen(_wpgmptr);
 	for (i = 1; i < argc; i++)
 		maxlen = max(maxlen, wcslen(wargv[i]));
+	for (i = 0; wenv[i]; i++)
+		maxlen = max(maxlen, wcslen(wenv[i]));
+
+	/*
+	 * nedmalloc can't free CRT memory, allocate resizable environment
+	 * list. Note that xmalloc / xmemdupz etc. call getenv, so we cannot
+	 * use it while initializing the environment itself.
+	 */
+	environ_size = i + 1;
+	environ_alloc = alloc_nr(environ_size * sizeof(char*));
+	environ = malloc_startup(environ_alloc);
 
 	/* allocate buffer (wchar_t encodes to max 3 UTF-8 bytes) */
 	maxlen = 3 * maxlen + 1;
-	buffer = xmalloc(maxlen);
+	buffer = malloc_startup(maxlen);
 
 	/* convert command line arguments and environment to UTF-8 */
-	len = xwcstoutf(buffer, _wpgmptr, maxlen);
-	__argv[0] = xmemdupz(buffer, len);
-	for (i = 1; i < argc; i++) {
-		len = xwcstoutf(buffer, wargv[i], maxlen);
-		__argv[i] = xmemdupz(buffer, len);
-	}
+	__argv[0] = wcstoutfdup_startup(buffer, _wpgmptr, maxlen);
+	for (i = 1; i < argc; i++)
+		__argv[i] = wcstoutfdup_startup(buffer, wargv[i], maxlen);
+	for (i = 0; wenv[i]; i++)
+		environ[i] = wcstoutfdup_startup(buffer, wenv[i], maxlen);
+	environ[i] = NULL;
 	free(buffer);
+
+	/* sort environment for O(log n) getenv / putenv */
+	qsort(environ, i, sizeof(char*), compareenv);
+
+	/* fix Windows specific environment settings */
+
+	/* on Windows it is TMP and TEMP */
+	if (!mingw_getenv("TMPDIR")) {
+		const char *tmp = mingw_getenv("TMP");
+		if (!tmp)
+			tmp = mingw_getenv("TEMP");
+		if (tmp)
+			setenv("TMPDIR", tmp, 1);
+	}
+
+	/* simulate TERM to enable auto-color (see color.c) */
+	if (!getenv("TERM"))
+		setenv("TERM", "cygwin", 1);
 
 	/* initialize critical section for waitpid pinfo_t list */
 	InitializeCriticalSection(&pinfo_cs);
