@@ -18,19 +18,6 @@ int save_commit_buffer = 1;
 
 const char *commit_type = "commit";
 
-static struct commit *check_commit(struct object *obj,
-				   const unsigned char *sha1,
-				   int quiet)
-{
-	if (obj->type != OBJ_COMMIT) {
-		if (!quiet)
-			error("Object %s is a %s, not a commit",
-			      sha1_to_hex(sha1), typename(obj->type));
-		return NULL;
-	}
-	return (struct commit *) obj;
-}
-
 struct commit *lookup_commit_reference_gently(const unsigned char *sha1,
 					      int quiet)
 {
@@ -38,7 +25,7 @@ struct commit *lookup_commit_reference_gently(const unsigned char *sha1,
 
 	if (!obj)
 		return NULL;
-	return check_commit(obj, sha1, quiet);
+	return object_as_type(obj, OBJ_COMMIT, quiet);
 }
 
 struct commit *lookup_commit_reference(const unsigned char *sha1)
@@ -61,13 +48,9 @@ struct commit *lookup_commit_or_die(const unsigned char *sha1, const char *ref_n
 struct commit *lookup_commit(const unsigned char *sha1)
 {
 	struct object *obj = lookup_object(sha1);
-	if (!obj) {
-		struct commit *c = alloc_commit_node();
-		return create_object(sha1, OBJ_COMMIT, c);
-	}
-	if (!obj->type)
-		obj->type = OBJ_COMMIT;
-	return check_commit(obj, sha1, 0);
+	if (!obj)
+		return create_object(sha1, alloc_commit_node());
+	return object_as_type(obj, OBJ_COMMIT, 0);
 }
 
 struct commit *lookup_commit_reference_by_name(const char *name)
