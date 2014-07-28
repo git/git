@@ -163,6 +163,7 @@ extern size_t strbuf_fread(struct strbuf *, size_t, FILE *);
 extern ssize_t strbuf_read(struct strbuf *, int fd, size_t hint);
 extern int strbuf_read_file(struct strbuf *sb, const char *path, size_t hint);
 extern int strbuf_readlink(struct strbuf *sb, const char *path, size_t hint);
+extern int strbuf_getcwd(struct strbuf *sb);
 
 extern int strbuf_getwholeline(struct strbuf *, FILE *, int);
 extern int strbuf_getline(struct strbuf *, FILE *, int);

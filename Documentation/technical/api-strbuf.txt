@@ -289,6 +289,10 @@ same behaviour as well.
 	use it unless you need the correct position in the file
 	descriptor.
 
+`strbuf_getcwd`::
+
+	Set the buffer to the path of the current working directory.
+
 `stripspace`::
 
 	Strip whitespace from a buffer. The second parameter controls if
