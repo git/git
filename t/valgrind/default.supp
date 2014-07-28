@@ -49,18 +49,3 @@
 	Memcheck:Addr4
 	fun:copy_ref
 }
-{
-	ignore-sse-check_refname_format-addr
-	Memcheck:Addr8
-	fun:check_refname_format
-}
-{
-	ignore-sse-check_refname_format-cond
-	Memcheck:Cond
-	fun:check_refname_format
-}
-{
-	ignore-sse-check_refname_format-value
-	Memcheck:Value8
-	fun:check_refname_format
-}

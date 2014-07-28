@@ -324,4 +324,14 @@ test_expect_success 'diff --cached -- file on unborn branch' '
 	test_cmp "$TEST_DIRECTORY/t4013/diff.diff_--cached_--_file0" result
 '
 
+test_expect_success 'diff-tree --stdin with log formatting' '
+	cat >expect <<-\EOF &&
+	Side
+	Third
+	Second
+	EOF
+	git rev-list master | git diff-tree --stdin --format=%s -s >actual &&
+	test_cmp expect actual
+'
+
 test_done
