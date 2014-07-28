@@ -41,7 +41,7 @@ static const char *real_path_internal(const char *path, int die_on_error)
 	 * here so that we can chdir() back to it at the end of the
 	 * function:
 	 */
-	char cwd[1024] = "";
+	struct strbuf cwd = STRBUF_INIT;
 
 	int buf_index = 1;
 
@@ -80,7 +80,7 @@ static const char *real_path_internal(const char *path, int die_on_error)
 		}
 
 		if (*buf) {
-			if (!*cwd && !getcwd(cwd, sizeof(cwd))) {
+			if (!cwd.len && strbuf_getcwd(&cwd)) {
 				if (die_on_error)
 					die_errno("Could not get current working directory");
 				else
@@ -142,8 +142,9 @@ static const char *real_path_internal(const char *path, int die_on_error)
 	retval = buf;
 error_out:
 	free(last_elem);
-	if (*cwd && chdir(cwd))
-		die_errno("Could not change back to '%s'", cwd);
+	if (cwd.len && chdir(cwd.buf))
+		die_errno("Could not change back to '%s'", cwd.buf);
+	strbuf_release(&cwd);
 
 	return retval;
 }
