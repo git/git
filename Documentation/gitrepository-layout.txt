@@ -139,7 +139,7 @@ is often called 'detached HEAD.'  See linkgit:git-checkout[1]
 for details.
 
 config::
-	Repository specific configuration file. This file is ignored
+	Repository specific configuration file. This file is ignored if
 	$GIT_COMMON_DIR is set and "$GIT_COMMON_DIR/config" will be
 	used instead.
 
@@ -220,7 +220,7 @@ remotes::
 logs::
 	Records of changes made to refs are stored in this
 	directory.  See linkgit:git-update-ref[1]
-	for more information. This directory is ignored
+	for more information. This directory is ignored if
 	$GIT_COMMON_DIR is set and "$GIT_COMMON_DIR/logs" will be used
 	instead.
 
@@ -252,7 +252,7 @@ modules::
 repos::
 	Contains worktree specific information of linked
 	checkouts. Each subdirectory contains the worktree-related
-	part of a linked checkout. This directory is ignored
+	part of a linked checkout. This directory is ignored if
 	$GIT_COMMON_DIR is set and "$GIT_COMMON_DIR/repos" will be
 	used instead.
 
