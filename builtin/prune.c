@@ -112,8 +112,9 @@ static void prune_object_dir(const char *path)
 	}
 }
 
-static int prune_repo_dir(const char *id, struct stat *st, struct strbuf *reason)
+static int prune_repo_dir(const char *id, struct strbuf *reason)
 {
+	struct stat st;
 	char *path;
 	int fd, len;
 
@@ -123,26 +124,23 @@ static int prune_repo_dir(const char *id, struct stat *st, struct strbuf *reason
 	}
 	if (file_exists(git_path("repos/%s/locked", id)))
 		return 0;
-	if (stat(git_path("repos/%s/gitdir", id), st)) {
-		st->st_mtime = expire;
+	if (stat(git_path("repos/%s/gitdir", id), &st)) {
 		strbuf_addf(reason, _("Removing repos/%s: gitdir file does not exist"), id);
 		return 1;
 	}
 	fd = open(git_path("repos/%s/gitdir", id), O_RDONLY);
 	if (fd < 0) {
-		st->st_mtime = expire;
 		strbuf_addf(reason, _("Removing repos/%s: unable to read gitdir file (%s)"),
 			    id, strerror(errno));
 		return 1;
 	}
-	len = st->st_size;
+	len = st.st_size;
 	path = xmalloc(len + 1);
 	read_in_full(fd, path, len);
 	close(fd);
 	while (len && (path[len - 1] == '\n' || path[len - 1] == '\r'))
 		len--;
 	if (!len) {
-		st->st_mtime = expire;
 		strbuf_addf(reason, _("Removing repos/%s: invalid gitdir file"), id);
 		free(path);
 		return 1;
@@ -162,7 +160,7 @@ static int prune_repo_dir(const char *id, struct stat *st, struct strbuf *reason
 		return 1;
 	}
 	free(path);
-	return 0;
+	return st.st_mtime <= expire;
 }
 
 static void prune_repos_dir(void)
@@ -172,15 +170,13 @@ static void prune_repos_dir(void)
 	DIR *dir = opendir(git_path("repos"));
 	struct dirent *d;
 	int ret;
-	struct stat st;
 	if (!dir)
 		return;
 	while ((d = readdir(dir)) != NULL) {
 		if (!strcmp(d->d_name, ".") || !strcmp(d->d_name, ".."))
 			continue;
 		strbuf_reset(&reason);
-		if (!prune_repo_dir(d->d_name, &st, &reason) ||
-		    st.st_mtime > expire)
+		if (!prune_repo_dir(d->d_name, &reason))
 			continue;
 		if (show_only || verbose)
 			printf("%s\n", reason.buf);
