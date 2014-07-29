@@ -24,6 +24,11 @@ static size_t commit_formats_len;
 static size_t commit_formats_alloc;
 static struct cmt_fmt_map *find_commit_format(const char *sought);
 
+int commit_format_is_empty(enum cmit_fmt fmt)
+{
+	return fmt == CMIT_FMT_USERFORMAT && !*user_format;
+}
+
 static void save_user_format(struct rev_info *rev, const char *cp, int is_tformat)
 {
 	free(user_format);

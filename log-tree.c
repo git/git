@@ -649,7 +649,7 @@ void show_log(struct rev_info *opt)
 		graph_show_commit_msg(opt->graph, &msgbuf);
 	else
 		fwrite(msgbuf.buf, sizeof(char), msgbuf.len, stdout);
-	if (opt->use_terminator) {
+	if (opt->use_terminator && !commit_format_is_empty(opt->commit_format)) {
 		if (!opt->missing_newline)
 			graph_show_padding(opt->graph);
 		putchar(opt->diffopt.line_termination);
@@ -676,7 +676,8 @@ int log_tree_diff_flush(struct rev_info *opt)
 		show_log(opt);
 		if ((opt->diffopt.output_format & ~DIFF_FORMAT_NO_OUTPUT) &&
 		    opt->verbose_header &&
-		    opt->commit_format != CMIT_FMT_ONELINE) {
+		    opt->commit_format != CMIT_FMT_ONELINE &&
+		    !commit_format_is_empty(opt->commit_format)) {
 			/*
 			 * When showing a verbose header (i.e. log message),
 			 * and not in --pretty=oneline format, we would want
