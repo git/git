@@ -201,6 +201,10 @@ advice.*::
 	rmHints::
 		In case of failure in the output of linkgit:git-rm[1],
 		show directions on how to proceed from the current state.
+	checkoutLocked::
+		In multiple checkout setup, attempting to checkout a
+		branch already checked out elsewhere will fail. Show
+		some useful options to proceed.
 --
 
 core.fileMode::
