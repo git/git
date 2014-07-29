@@ -146,7 +146,7 @@ void get_commit_format(const char *arg, struct rev_info *rev)
 	struct cmt_fmt_map *commit_format;
 
 	rev->use_terminator = 0;
-	if (!arg || !*arg) {
+	if (!arg) {
 		rev->commit_format = CMIT_FMT_DEFAULT;
 		return;
 	}
@@ -155,7 +155,7 @@ void get_commit_format(const char *arg, struct rev_info *rev)
 		return;
 	}
 
-	if (strchr(arg, '%')) {
+	if (!*arg || strchr(arg, '%')) {
 		save_user_format(rev, arg, 1);
 		return;
 	}
