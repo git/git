@@ -1,21 +1,15 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jul 2014, #05; Thu, 24)
-X-master-at: 996b0fdbb4ff63bfd880b3901f054139c95611cf
-X-next-at: 7327a17171fc87d5f8f5c790eb1ba1d0e031482d
+Subject: What's cooking in git.git (Jul 2014, #06; Tue, 29)
+X-master-at: 583b61c1af1bac12d6b48b2583ad508b5ab9964c
+X-next-at: fbdcabe3ee4652186b0b2370eb0646ec0abf433e
 
-What's cooking in git.git (Jul 2014, #05; Thu, 24)
+What's cooking in git.git (Jul 2014, #06; Tue, 29)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
-
-We would need to start slowing down to prepare for -rc0 preview at
-the end of this week and then feature freeze.  Some topics that
-joined 'next' late may want to stay there for the remainder of this
-cycle.  Many of the accumulated fixes have been flushed to 'maint'
-and Git 2.0.3 has been tagged.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -25,88 +19,71 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* jk/tag-sort (2014-07-17) 2 commits
-  (merged to 'next' on 2014-07-21 at bc34738)
- + tag: support configuring --sort via .gitconfig
- + tag: fix --sort tests to use cat<<-\EOF format
+* cc/replace-graft (2014-07-21) 9 commits
+  (merged to 'next' on 2014-07-22 at 9b14090)
+ + replace: add test for --graft with a mergetag
+ + replace: check mergetags when using --graft
+ + replace: add test for --graft with signed commit
+ + replace: remove signature when using --graft
+ + contrib: add convert-grafts-to-replace-refs.sh
+ + Documentation: replace: add --graft option
+ + replace: add test for --graft
+ + replace: add --graft option
+ + replace: cleanup redirection style in tests
 
- Teach "git tag" to pay attention to "tag.sort" configuration, to be
- used as the default sort order when no --sort=<value> is given.
-
-
-* mb/local-clone-after-applying-insteadof (2014-07-17) 1 commit
-  (merged to 'next' on 2014-07-21 at ebe07c2)
- + use local cloning if insteadOf makes a local URL
-
- Apply the "if cloning from a local disk, physically copy repository
- using hardlinks, unless otherwise told not to with --no-local"
- optimization when url.*.insteadOf mechanism rewrites a "git clone
- $URL" that refers to a repository over the network to a clone from
- a local disk.
+ "git replace" learned a "--graft" option to rewrite parents of a
+ commit.
 
 
-* rs/fix-unlink-unix-socket (2014-07-21) 1 commit
-  (merged to 'next' on 2014-07-22 at fad8c29)
- + unix-socket: remove stale socket before calling chdir()
+* jk/misc-fixes-maint (2014-07-24) 5 commits
+  (merged to 'next' on 2014-07-27 at 321a77c)
+ + apply: avoid possible bogus pointer
+ + fix memory leak parsing core.commentchar
+ + transport: fix leaks in refs_from_alternate_cb
+ + free ref string returned by dwim_ref
+ + receive-pack: don't copy "dir" parameter
 
- The unix-domain socket used by the sample credential cache daemon
- tried to unlink an existing stale one at a wrong path, if the path
- to the socket was given as an overlong path that does not fit in
- sun_path member of the sockaddr_un structure.
+ Miscellaneous fixes.
 
 
-* ta/string-list-init (2014-07-21) 2 commits
-  (merged to 'next' on 2014-07-21 at 63e8891)
- + replace memset with string-list initializers
- + string-list: add string_list initializer helper function
- (this branch is tangled with ta/config-set.)
+* jk/rebase-am-fork-point (2014-07-16) 2 commits
+  (merged to 'next' on 2014-07-22 at 7648293)
+ + rebase: omit patch-identical commits with --fork-point
+ + rebase--am: use --cherry-pick instead of --ignore-if-in-upstream
+
+ "git rebase --fork-point" did not filter out patch-identical
+ commits correctly.
+
+
+* jk/stable-prio-queue (2014-07-15) 4 commits
+  (merged to 'next' on 2014-07-22 at 46e9bc3)
+ + t5539: update a flaky test
+ + paint_down_to_common: use prio_queue
+ + prio-queue: make output stable with respect to insertion
+ + prio-queue: factor out compare and swap operations
 
 --------------------------------------------------
 [New Topics]
 
-* nd/multiple-work-trees-1 (2014-07-23) 5 commits
- - environment.c: fix incorrect git_graft_file initialization
- - checkout --to: fix dangling pointers in remove_junk()
- - checkout --to: no auto-detach if the ref is already checked out
- - prune --repos: fix uninitialized access
- - gitrepository-layout.txt: s/ignored/ignored if/
- (this branch uses nd/multiple-work-trees.)
+* ep/avoid-test-a-o (2014-07-25) 1 commit
+  (merged to 'next' on 2014-07-27 at 45de31d)
+ + t9814: fix misconversion from test $a -o $b to test $a || test $b
 
- Continue polishing nd/multiple-work-trees topic in 'next'.
+ Will merge to 'master'.
 
 
-* jk/misc-fixes-maint (2014-07-24) 5 commits
- - apply: avoid possible bogus pointer
- - fix memory leak parsing core.commentchar
- - transport: fix leaks in refs_from_alternate_cb
- - free ref string returned by dwim_ref
- - receive-pack: don't copy "dir" parameter
+* mm/config-edit-global (2014-07-25) 3 commits
+ - commit: advertise config --global --edit on guessed identity
+ - home_config_paths(): let the caller ignore xdg path
+ - config --global --edit: create a template file if needed
 
- Miscellaneous fixes.
-
- Will merge to 'next' and then to 'master'.
+ Will merge to 'next'.
 
 
-* rs/ref-transaction-reflog (2014-07-23) 15 commits
- - refs.c: allow deleting refs with a broken sha1
- - refs.c: remove lock_any_ref_for_update
- - refs.c: make unlock_ref/close_ref/commit_ref static
- - refs.c: rename log_ref_setup to create_reflog
- - reflog.c: use a reflog transaction when writing during expire
- - refs.c: allow multiple reflog updates during a single transaction
- - refs.c: only write reflog update if msg is non-NULL
- - refs.c: add a flag to allow reflog updates to truncate the log
- - refs.c: add a transaction function to append a reflog entry
- - lockfile.c: make hold_lock_file_for_append preserve meaningful errno
- - refs.c: add a function to append a reflog entry to a fd
- - refs.c: add a new update_type field to ref_update
- - refs.c: rename the transaction functions
- - refs.c: make ref_transaction_delete a wrapper for ref_transaction_update
- - refs.c: make ref_transaction_create a wrapper to ref_transaction_update
- (this branch uses rs/ref-transaction and rs/ref-transaction-1.)
+* rs/init-no-duplicate-real-path (2014-07-28) 1 commit
+ - init: avoid superfluous real_path() calls
 
- Cover updates to reflog with the same transaction mechanism as used
- for reflog manipulations.
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -323,57 +300,88 @@ of the repositories listed at
 
  Waiting for the final step to lift the hard-limit before sending it out.
 
-
-* jh/submodule-tests (2014-04-17) 1 commit
- - t7410: 210 tests for various 'git submodule update' scenarios
-
- More or less abandoned.  Will drop.
-
 --------------------------------------------------
 [Cooking]
+
+* nd/multiple-work-trees-1 (2014-07-29) 8 commits
+ - checkout --to: do not touch existing target directory
+ - checkout: prefix --to argument properly when cwd is moved
+ - environment.c: fix incorrect git_graft_file initialization
+ - checkout --to: fix dangling pointers in remove_junk()
+ - checkout: no auto-detach if the ref is already checked out
+ - prune --repos: fix uninitialized access
+ - checkout: no need to call check_linked_checkouts if head_ref is NULL
+ - gitrepository-layout.txt: s/ignored/ignored if/
+ (this branch uses nd/multiple-work-trees.)
+
+ Continue polishing nd/multiple-work-trees topic in 'next'.
+
+
+* rs/ref-transaction-reflog (2014-07-23) 15 commits
+ - refs.c: allow deleting refs with a broken sha1
+ - refs.c: remove lock_any_ref_for_update
+ - refs.c: make unlock_ref/close_ref/commit_ref static
+ - refs.c: rename log_ref_setup to create_reflog
+ - reflog.c: use a reflog transaction when writing during expire
+ - refs.c: allow multiple reflog updates during a single transaction
+ - refs.c: only write reflog update if msg is non-NULL
+ - refs.c: add a flag to allow reflog updates to truncate the log
+ - refs.c: add a transaction function to append a reflog entry
+ - lockfile.c: make hold_lock_file_for_append preserve meaningful errno
+ - refs.c: add a function to append a reflog entry to a fd
+ - refs.c: add a new update_type field to ref_update
+ - refs.c: rename the transaction functions
+ - refs.c: make ref_transaction_delete a wrapper for ref_transaction_update
+ - refs.c: make ref_transaction_create a wrapper to ref_transaction_update
+ (this branch is used by rs/ref-transaction-multi and rs/ref-transaction-rename; uses rs/ref-transaction and rs/ref-transaction-1.)
+
+ Cover updates to reflog with the same transaction mechanism as used
+ for reflog manipulations.
+
 
 * nd/path-max-is-better-than-hardcoded-magic-1024 (2014-07-17) 1 commit
  - abspath.c: use PATH_MAX in real_path_internal()
 
- Still being discussed.
+ Will drop; rs/strbuf-getcwd topic covers this codepath.
 
 
 * sk/mingw-uni-fix-more (2014-07-21) 14 commits
- - Win32: enable color output in Windows cmd.exe
- - Win32: patch Windows environment on startup
- - Win32: keep the environment sorted
- - Win32: use low-level memory allocation during initialization
- - Win32: reduce environment array reallocations
- - Win32: don't copy the environment twice when spawning child processes
- - Win32: factor out environment block creation
- - Win32: unify environment function names
- - Win32: unify environment case-sensitivity
- - Win32: fix environment memory leaks
- - Win32: Unicode environment (incoming)
- - Win32: Unicode environment (outgoing)
- - Revert "Windows: teach getenv to do a case-sensitive search"
- - tests: do not pass iso8859-1 encoded parameter
+  (merged to 'next' on 2014-07-28 at 0945196)
+ + Win32: enable color output in Windows cmd.exe
+ + Win32: patch Windows environment on startup
+ + Win32: keep the environment sorted
+ + Win32: use low-level memory allocation during initialization
+ + Win32: reduce environment array reallocations
+ + Win32: don't copy the environment twice when spawning child processes
+ + Win32: factor out environment block creation
+ + Win32: unify environment function names
+ + Win32: unify environment case-sensitivity
+ + Win32: fix environment memory leaks
+ + Win32: Unicode environment (incoming)
+ + Win32: Unicode environment (outgoing)
+ + Revert "Windows: teach getenv to do a case-sensitive search"
+ + tests: do not pass iso8859-1 encoded parameter
 
  Most of these are battle-tested in msysgit and are needed to
  complete what has been merged to 'master' already.
 
- A fix has been squashed into "Unicode environ (outgoing)"; is this
- now ready to go?
+ Will merge to 'master'.
 
 
 * sk/mingw-tests-workaround (2014-07-21) 6 commits
- - t800[12]: work around MSys limitation
- - t9902: mingw-specific fix for gitfile link files
- - t4210: skip command-line encoding tests on mingw
- - MinGW: disable legacy encoding tests
- - t0110/MinGW: skip tests that pass arbitrary bytes on the command line
- - MinGW: Skip test redirecting to fd 4
+  (merged to 'next' on 2014-07-28 at 2f3b7ac)
+ + t800[12]: work around MSys limitation
+ + t9902: mingw-specific fix for gitfile link files
+ + t4210: skip command-line encoding tests on mingw
+ + MinGW: disable legacy encoding tests
+ + t0110/MinGW: skip tests that pass arbitrary bytes on the command line
+ + MinGW: Skip test redirecting to fd 4
  (this branch is used by jc/not-mingw-cygwin.)
 
  Make tests pass on msysgit by mostly disabling ones that are
  infeasible on that platform.
 
- The t0110 one has been replaced; is this now ready to go?
+ Will merge to 'master'.
 
 
 * cb/mergetool-difftool (2014-07-21) 2 commits
@@ -381,13 +389,19 @@ of the repositories listed at
  - mergetool: don't require a work tree for --tool-help
 
 
-* rs/strbuf-getcwd (2014-07-21) 4 commits
- - use xgetcwd() get the current directory or die
+* rs/strbuf-getcwd (2014-07-29) 10 commits
+ - use strbuf_add_absolute_path() to add absolute paths
+ - abspath: convert absolute_path() to strbuf
+ - use xgetcwd() to set $GIT_DIR
+ - use xgetcwd() to get the current directory or die
  - wrapper: add xgetcwd()
- - use strbuf_getcwd() to get the current working directory without fixed-sized buffers
+ - abspath: convert real_path_internal() to strbuf
+ - abspath: use strbuf_getcwd() to remember original working directory
+ - setup: convert setup_git_directory_gently_1 et al. to strbuf
+ - unix-sockets: use strbuf_getcwd()
  - strbuf: add strbuf_getcwd()
 
- Still being discussed.
+ Will merge to 'next'.
 
 
 * jc/not-mingw-cygwin (2014-07-21) 2 commits
@@ -402,37 +416,20 @@ of the repositories listed at
 
 
 * jk/more-push-completion (2014-07-22) 3 commits
- - completion: complete `git push --force-with-lease=`
- - completion: add some missing options to `git push`
- - completion: complete "unstuck" `git push --recurse-submodules`
-
-
-* jk/rebase-am-fork-point (2014-07-16) 2 commits
-  (merged to 'next' on 2014-07-22 at 7648293)
- + rebase: omit patch-identical commits with --fork-point
- + rebase--am: use --cherry-pick instead of --ignore-if-in-upstream
-
- "git rebase --fork-point" did not filter out patch-identical
- commits correctly.
+  (merged to 'next' on 2014-07-28 at d1d4c27)
+ + completion: complete `git push --force-with-lease=`
+ + completion: add some missing options to `git push`
+ + completion: complete "unstuck" `git push --recurse-submodules`
 
  Will merge to 'master'.
 
 
-* jk/stable-prio-queue (2014-07-15) 4 commits
-  (merged to 'next' on 2014-07-22 at 46e9bc3)
- + t5539: update a flaky test
- + paint_down_to_common: use prio_queue
- + prio-queue: make output stable with respect to insertion
- + prio-queue: factor out compare and swap operations
-
- Will merge to 'master'.
-
-
-* ta/config-set (2014-07-24) 2 commits
+* ta/config-set (2014-07-29) 2 commits
  - test-config: add tests for the config_set API
  - add `config_set` API for caching config-like files
 
  More or less solidified enough to be built other enhancements upon.
+ Will merge to 'next'.
 
 
 * rs/ref-transaction-1 (2014-07-16) 20 commits
@@ -456,7 +453,7 @@ of the repositories listed at
  - refs.c: make ref_transaction_begin take an err argument
  - refs.c: update ref_transaction_delete to check for error and return status
  - refs.c: change ref_transaction_create to do error checking and return status
- (this branch is used by rs/ref-transaction and rs/ref-transaction-reflog.)
+ (this branch is used by rs/ref-transaction, rs/ref-transaction-multi, rs/ref-transaction-reflog and rs/ref-transaction-rename.)
 
  The second batch of the transactional ref update series.
 
@@ -524,24 +521,6 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* cc/replace-graft (2014-07-21) 9 commits
-  (merged to 'next' on 2014-07-22 at 9b14090)
- + replace: add test for --graft with a mergetag
- + replace: check mergetags when using --graft
- + replace: add test for --graft with signed commit
- + replace: remove signature when using --graft
- + contrib: add convert-grafts-to-replace-refs.sh
- + Documentation: replace: add --graft option
- + replace: add test for --graft
- + replace: add --graft option
- + replace: cleanup redirection style in tests
-
- "git replace" learned a "--graft" option to rewrite parents of a
- commit.
-
- Will merge to 'master'.
-
-
 * hv/submodule-config (2014-06-30) 4 commits
   (merged to 'next' on 2014-07-17 at 5e0ce45)
  + do not die on error of parsing fetchrecursesubmodules option
@@ -565,7 +544,7 @@ of the repositories listed at
  - refs.c: add an err argument to delete_ref_loose
  - wrapper.c: add a new function unlink_or_msg
  - wrapper.c: simplify warn_if_unremovable
- (this branch is used by rs/ref-transaction-reflog; uses rs/ref-transaction-1.)
+ (this branch is used by rs/ref-transaction-multi, rs/ref-transaction-reflog and rs/ref-transaction-rename; uses rs/ref-transaction-1.)
 
 
 * jc/test-lazy-prereq (2014-06-13) 1 commit
@@ -585,3 +564,9 @@ of the repositories listed at
  is left out of 'master' for now.
 
  Will hold.
+
+--------------------------------------------------
+[Discarded]
+
+* jh/submodule-tests (2014-04-17) 1 commit
+ . t7410: 210 tests for various 'git submodule update' scenarios
