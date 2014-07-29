@@ -1202,7 +1202,8 @@ static int parse_branchname_arg(int argc, const char **argv,
 		unsigned char sha1[20];
 		int flag;
 		char *head_ref = resolve_refdup("HEAD", sha1, 0, &flag);
-		if (!(flag & REF_ISSYMREF) || strcmp(head_ref, new->path))
+		if (head_ref &&
+		    (!(flag & REF_ISSYMREF) || strcmp(head_ref, new->path)))
 			check_linked_checkouts(new);
 		free(head_ref);
 	}
