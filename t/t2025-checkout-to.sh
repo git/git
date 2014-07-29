@@ -12,6 +12,12 @@ test_expect_success 'checkout --to not updating paths' '
 	test_must_fail git checkout --to -- init.t
 '
 
+test_expect_success 'checkout --to refuses to checkout locked branch' '
+	test_must_fail git checkout --to zere master &&
+	! test -d zere &&
+	! test -d .git/repos/zere
+'
+
 test_expect_success 'checkout --to a new worktree' '
 	git rev-parse HEAD >expect &&
 	git checkout --detach --to here master &&
