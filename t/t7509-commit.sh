@@ -77,6 +77,7 @@ test_expect_success '--amend option copies authorship' '
 	git commit -a --amend -m "amend test" &&
 	author_header Initial >expect &&
 	author_header HEAD >actual &&
+	test_cmp expect actual &&
 
 	echo "amend test" >expect &&
 	message_body HEAD >actual &&
