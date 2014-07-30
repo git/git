@@ -138,10 +138,12 @@ Performance, Internal Implementation, etc.
    when only small part of the working tree changes.
 
  * Effort to shrink the size of patches Windows folks maintain on top
-   by upstreaming them continues.
+   by upstreaming them continues.  More tests that are not applicable
+   to the Windows environment are identified and either skipped or
+   made more portable.
 
- * Patches maintained by msysgit folks for Windows port are being
-   upstreamed here a bit by bit.
+ * Eradication of "test $condition -a $condition" from our scripts
+   continues.
 
  * The leaf function to check validity of a refname format has been
    micro-optimized, using SSE2 instructions when available.  A few
