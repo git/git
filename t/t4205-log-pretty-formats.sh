@@ -31,7 +31,7 @@ test_expect_success 'set up basic repos' '
 	git add foo &&
 	test_tick &&
 	git config i18n.commitEncoding $test_encoding &&
-	git commit -m "$(commit_msg $test_encoding)" &&
+	commit_msg $test_encoding | git commit -F - &&
 	git add bar &&
 	test_tick &&
 	git commit -m "add bar" &&
