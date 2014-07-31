@@ -85,6 +85,9 @@
 # the colored output of "git status -sb" and are available only when
 # using __git_ps1 for PROMPT_COMMAND or precmd.
 
+# If you woult like the prompt to contain the name of the current repo,
+# set GIT_PS1_SHOWREPONAME to a nonempty value.
+
 # check whether printf supports -v
 __git_printf_supports_v=
 printf -v __git_printf_supports_v -- '%s' yes >/dev/null 2>&1
@@ -346,7 +349,7 @@ __git_ps1 ()
 	local repo_info rev_parse_exit_code
 	repo_info="$(git rev-parse --git-dir --is-inside-git-dir \
 		--is-bare-repository --is-inside-work-tree \
-		--short HEAD 2>/dev/null)"
+		--short HEAD --show-toplevel 2>/dev/null)"
 	rev_parse_exit_code="$?"
 
 	if [ -z "$repo_info" ]; then
@@ -357,9 +360,11 @@ __git_ps1 ()
 		return
 	fi
 
-	local short_sha
+	local short_sha reponame
 	if [ "$rev_parse_exit_code" = "0" ]; then
 		short_sha="${repo_info##*$'\n'}"
+		repo_info="${repo_info%$'\n'*}"
+		reponame="$(basename ${repo_info##*$'\n'})"
 		repo_info="${repo_info%$'\n'*}"
 	fi
 	local inside_worktree="${repo_info##*$'\n'}"
@@ -443,6 +448,7 @@ __git_ps1 ()
 		r="$r $step/$total"
 	fi
 
+    local t=""
 	local w=""
 	local i=""
 	local s=""
@@ -482,6 +488,10 @@ __git_ps1 ()
 		if [ -n "${GIT_PS1_SHOWUPSTREAM-}" ]; then
 			__git_ps1_show_upstream
 		fi
+
+		if [ -n "${GIT_PS1_SHOWREPONAME-}" ]; then
+			t=${reponame:+$reponame }
+		fi
 	fi
 
 	local z="${GIT_PS1_STATESEPARATOR-" "}"
@@ -498,7 +508,7 @@ __git_ps1 ()
 	fi
 
 	local f="$w$i$s$u"
-	local gitstring="$c$b${f:+$z$f}$r$p"
+	local gitstring="$t$c$b${f:+$z$f}$r$p"
 
 	if [ $pcmode = yes ]; then
 		if [ "${__git_printf_supports_v-}" != yes ]; then
