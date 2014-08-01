@@ -203,7 +203,7 @@ static int load_bitmap_entries_v1(struct bitmap_index *index)
 
 	uint32_t i;
 	struct stored_bitmap **recent_bitmaps;
-	struct bitmap_disk_entry *entry;
+	unsigned char *entry;
 
 	recent_bitmaps = xcalloc(MAX_XOR_OFFSET, sizeof(struct stored_bitmap));
 
@@ -214,14 +214,14 @@ static int load_bitmap_entries_v1(struct bitmap_index *index)
 		uint32_t commit_idx_pos;
 		const unsigned char *sha1;
 
-		entry = (struct bitmap_disk_entry *)(index->map + index->map_pos);
-		index->map_pos += sizeof(struct bitmap_disk_entry);
+		entry = index->map + index->map_pos;
+		index->map_pos += BITMAP_DISK_ENTRY_LEN;
 
-		commit_idx_pos = ntohl(entry->object_pos);
+		commit_idx_pos = bitmap_disk_entry_object_pos(entry);
 		sha1 = nth_packed_object_sha1(index->pack, commit_idx_pos);
 
-		xor_offset = (int)entry->xor_offset;
-		flags = (int)entry->flags;
+		xor_offset = (int)bitmap_disk_entry_xor_offset(entry);
+		flags = (int)bitmap_disk_entry_flags(entry);
 
 		bitmap = read_bitmap_1(index);
 		if (!bitmap)
