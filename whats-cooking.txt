@@ -1,15 +1,18 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jul 2014, #06; Tue, 29)
-X-master-at: 583b61c1af1bac12d6b48b2583ad508b5ab9964c
-X-next-at: fbdcabe3ee4652186b0b2370eb0646ec0abf433e
+Subject: What's cooking in git.git (Aug 2014, #01; Fri, 1)
+X-master-at: aa544bfbc6eb11e4f0471f3144d3e3ac75c0e4a9
+X-next-at: 6a8ef70a0a7fa126e4e0002b8f284fdec4c0f9a3
 
-What's cooking in git.git (Jul 2014, #06; Tue, 29)
+What's cooking in git.git (Aug 2014, #01; Fri, 1)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
+
+First release candidate 2.1.0-rc1 expected early next week, after
+merging a couple of obvious documentation update patches.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -19,71 +22,126 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* cc/replace-graft (2014-07-21) 9 commits
-  (merged to 'next' on 2014-07-22 at 9b14090)
- + replace: add test for --graft with a mergetag
- + replace: check mergetags when using --graft
- + replace: add test for --graft with signed commit
- + replace: remove signature when using --graft
- + contrib: add convert-grafts-to-replace-refs.sh
- + Documentation: replace: add --graft option
- + replace: add test for --graft
- + replace: add --graft option
- + replace: cleanup redirection style in tests
-
- "git replace" learned a "--graft" option to rewrite parents of a
- commit.
-
-
-* jk/misc-fixes-maint (2014-07-24) 5 commits
-  (merged to 'next' on 2014-07-27 at 321a77c)
- + apply: avoid possible bogus pointer
- + fix memory leak parsing core.commentchar
- + transport: fix leaks in refs_from_alternate_cb
- + free ref string returned by dwim_ref
- + receive-pack: don't copy "dir" parameter
-
- Miscellaneous fixes.
-
-
-* jk/rebase-am-fork-point (2014-07-16) 2 commits
-  (merged to 'next' on 2014-07-22 at 7648293)
- + rebase: omit patch-identical commits with --fork-point
- + rebase--am: use --cherry-pick instead of --ignore-if-in-upstream
-
- "git rebase --fork-point" did not filter out patch-identical
- commits correctly.
-
-
-* jk/stable-prio-queue (2014-07-15) 4 commits
-  (merged to 'next' on 2014-07-22 at 46e9bc3)
- + t5539: update a flaky test
- + paint_down_to_common: use prio_queue
- + prio-queue: make output stable with respect to insertion
- + prio-queue: factor out compare and swap operations
-
---------------------------------------------------
-[New Topics]
-
 * ep/avoid-test-a-o (2014-07-25) 1 commit
   (merged to 'next' on 2014-07-27 at 45de31d)
  + t9814: fix misconversion from test $a -o $b to test $a || test $b
 
+ Fix a post v2.0 regression in 'master'.
+
+
+* jk/more-push-completion (2014-07-22) 3 commits
+  (merged to 'next' on 2014-07-28 at d1d4c27)
+ + completion: complete `git push --force-with-lease=`
+ + completion: add some missing options to `git push`
+ + completion: complete "unstuck" `git push --recurse-submodules`
+
+
+* sk/mingw-tests-workaround (2014-07-21) 6 commits
+  (merged to 'next' on 2014-07-28 at 2f3b7ac)
+ + t800[12]: work around MSys limitation
+ + t9902: mingw-specific fix for gitfile link files
+ + t4210: skip command-line encoding tests on mingw
+ + MinGW: disable legacy encoding tests
+ + t0110/MinGW: skip tests that pass arbitrary bytes on the command line
+ + MinGW: Skip test redirecting to fd 4
+ (this branch is used by jc/not-mingw-cygwin.)
+
+ Make tests pass on msysgit by mostly disabling ones that are
+ infeasible on that platform.
+
+
+* sk/mingw-uni-fix-more (2014-07-21) 14 commits
+  (merged to 'next' on 2014-07-28 at 0945196)
+ + Win32: enable color output in Windows cmd.exe
+ + Win32: patch Windows environment on startup
+ + Win32: keep the environment sorted
+ + Win32: use low-level memory allocation during initialization
+ + Win32: reduce environment array reallocations
+ + Win32: don't copy the environment twice when spawning child processes
+ + Win32: factor out environment block creation
+ + Win32: unify environment function names
+ + Win32: unify environment case-sensitivity
+ + Win32: fix environment memory leaks
+ + Win32: Unicode environment (incoming)
+ + Win32: Unicode environment (outgoing)
+ + Revert "Windows: teach getenv to do a case-sensitive search"
+ + tests: do not pass iso8859-1 encoded parameter
+
+ Most of these are battle-tested in msysgit and are needed to
+ complete what has been merged to 'master' already.
+
+--------------------------------------------------
+[New Topics]
+
+* jk/stash-list-p (2014-07-30) 7 commits
+ - SQUASH??? future-proof, log --cc should imply -p without being told
+ - stash: show combined diff with "stash show"
+ - stash: default listing to "--cc --simplify-combined-diff"
+ - add --simplify-combined-diff option
+ - pretty: make empty userformats truly empty
+ - pretty: treat "--format=" as an empty userformat
+ - revision: drop useless string offset when parsing "--pretty"
+
+ Teach "git stash list -p" to DWIM to "git stash list -p --cc", with
+ even nicer twist to collapse combined diff from identical two
+ parents into a regular diff.
+
+
+* pr/remotes-in-hashmap (2014-07-30) 1 commit
+ - use a hashmap to make remotes faster
+
+ Optimize remotes configuration look-up in a repository with very
+ many remotes defined.
+
+
+* rs/ref-transaction-multi (2014-07-31) 5 commits
+ - refs.c: make the *_packed_refs functions static
+ - refs.c: make repack_without_refs static
+ - remote.c: use a transaction for deleting refs
+ - refs.c: write updates to packed refs when a transaction has more than one ref
+ - refs.c: move reflog updates into its own function
+ (this branch uses rs/ref-transaction, rs/ref-transaction-1, rs/ref-transaction-reflog and rs/ref-transaction-rename.)
+
+ Follow-up on rs/ref-transaction series to use the packed-ref to
+ achieve atomicity when multiple refs are involved.
+
+
+* rs/ref-transaction-rename (2014-07-31) 5 commits
+ - refs.c: rollback the lockfile before we die() in repack_without_refs
+ - refs.c: update rename_ref to use a transaction
+ - refs.c: use packed refs when deleting refs during a transaction
+ - refs.c: return error instead of dying when locking fails during transaction
+ - refs.c: allow passing raw git_committer_info as email to _update_reflog
+ (this branch is used by rs/ref-transaction-multi; uses rs/ref-transaction, rs/ref-transaction-1 and rs/ref-transaction-reflog.)
+
+ Follow-up on rs/ref-transaction series to make renaming a ref
+ transactional (i.e. "delete old and create new" should not leave
+ an in-between state behind when it fails).
+
+
+* ta/doc-config (2014-07-30) 1 commit
+  (merged to 'next' on 2014-07-31 at ec577fa)
+ + add documentation for writing config files
+
  Will merge to 'master'.
 
 
-* mm/config-edit-global (2014-07-25) 3 commits
- - commit: advertise config --global --edit on guessed identity
- - home_config_paths(): let the caller ignore xdg path
- - config --global --edit: create a template file if needed
+* tf/maint-doc-push (2014-07-31) 1 commit
+  (merged to 'next' on 2014-07-31 at 6a8ef70)
+ + git-push: fix link in man page
 
- Will merge to 'next'.
+ Will merge to 'master' and later to 'maint'.
 
 
-* rs/init-no-duplicate-real-path (2014-07-28) 1 commit
- - init: avoid superfluous real_path() calls
+* nd/lock-paths-absolute (2014-08-01) 3 commits
+ - lockfile.c: store absolute path
+ - lockfile.c: remove PATH_MAX limit in resolve_symlink()
+ - lockfile.c: remove PATH_MAX limitation (except in resolve_symlink)
+ (this branch uses rs/strbuf-getcwd.)
 
- Will merge to 'next'.
+
+* mm/config-message-i18n (2014-08-01) 1 commit
+ - config.c: mark error and warnings strings for translation
 
 --------------------------------------------------
 [Stalled]
@@ -303,18 +361,26 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* nd/multiple-work-trees-1 (2014-07-29) 8 commits
- - checkout --to: do not touch existing target directory
- - checkout: prefix --to argument properly when cwd is moved
- - environment.c: fix incorrect git_graft_file initialization
- - checkout --to: fix dangling pointers in remove_junk()
- - checkout: no auto-detach if the ref is already checked out
- - prune --repos: fix uninitialized access
- - checkout: no need to call check_linked_checkouts if head_ref is NULL
- - gitrepository-layout.txt: s/ignored/ignored if/
- (this branch uses nd/multiple-work-trees.)
+* mm/config-edit-global (2014-07-25) 3 commits
+  (merged to 'next' on 2014-07-31 at ecce1c7)
+ + commit: advertise config --global --edit on guessed identity
+ + home_config_paths(): let the caller ignore xdg path
+ + config --global --edit: create a template file if needed
 
- Continue polishing nd/multiple-work-trees topic in 'next'.
+ Start "git config --edit --global" from a skeletal per-user
+ configuration file contents, instead of a total blank, when the
+ user does not already have any.  This immediately reduces the need
+ for a later "Have you forgotten setting core.user?" and we can add
+ more to the template as we gain more experience.
+
+ Will cook in 'next'.
+
+
+* rs/init-no-duplicate-real-path (2014-07-28) 1 commit
+  (merged to 'next' on 2014-07-31 at 683112e)
+ + init: avoid superfluous real_path() calls
+
+ Will cook in 'next'.
 
 
 * rs/ref-transaction-reflog (2014-07-23) 15 commits
@@ -339,75 +405,31 @@ of the repositories listed at
  for reflog manipulations.
 
 
-* nd/path-max-is-better-than-hardcoded-magic-1024 (2014-07-17) 1 commit
- - abspath.c: use PATH_MAX in real_path_internal()
-
- Will drop; rs/strbuf-getcwd topic covers this codepath.
-
-
-* sk/mingw-uni-fix-more (2014-07-21) 14 commits
-  (merged to 'next' on 2014-07-28 at 0945196)
- + Win32: enable color output in Windows cmd.exe
- + Win32: patch Windows environment on startup
- + Win32: keep the environment sorted
- + Win32: use low-level memory allocation during initialization
- + Win32: reduce environment array reallocations
- + Win32: don't copy the environment twice when spawning child processes
- + Win32: factor out environment block creation
- + Win32: unify environment function names
- + Win32: unify environment case-sensitivity
- + Win32: fix environment memory leaks
- + Win32: Unicode environment (incoming)
- + Win32: Unicode environment (outgoing)
- + Revert "Windows: teach getenv to do a case-sensitive search"
- + tests: do not pass iso8859-1 encoded parameter
-
- Most of these are battle-tested in msysgit and are needed to
- complete what has been merged to 'master' already.
-
- Will merge to 'master'.
-
-
-* sk/mingw-tests-workaround (2014-07-21) 6 commits
-  (merged to 'next' on 2014-07-28 at 2f3b7ac)
- + t800[12]: work around MSys limitation
- + t9902: mingw-specific fix for gitfile link files
- + t4210: skip command-line encoding tests on mingw
- + MinGW: disable legacy encoding tests
- + t0110/MinGW: skip tests that pass arbitrary bytes on the command line
- + MinGW: Skip test redirecting to fd 4
- (this branch is used by jc/not-mingw-cygwin.)
-
- Make tests pass on msysgit by mostly disabling ones that are
- infeasible on that platform.
-
- Will merge to 'master'.
-
-
 * cb/mergetool-difftool (2014-07-21) 2 commits
  - difftool: don't assume that default sh is sane
  - mergetool: don't require a work tree for --tool-help
 
 
 * rs/strbuf-getcwd (2014-07-29) 10 commits
- - use strbuf_add_absolute_path() to add absolute paths
- - abspath: convert absolute_path() to strbuf
- - use xgetcwd() to set $GIT_DIR
- - use xgetcwd() to get the current directory or die
- - wrapper: add xgetcwd()
- - abspath: convert real_path_internal() to strbuf
- - abspath: use strbuf_getcwd() to remember original working directory
- - setup: convert setup_git_directory_gently_1 et al. to strbuf
- - unix-sockets: use strbuf_getcwd()
- - strbuf: add strbuf_getcwd()
+  (merged to 'next' on 2014-07-31 at 6edc3bc)
+ + use strbuf_add_absolute_path() to add absolute paths
+ + abspath: convert absolute_path() to strbuf
+ + use xgetcwd() to set $GIT_DIR
+ + use xgetcwd() to get the current directory or die
+ + wrapper: add xgetcwd()
+ + abspath: convert real_path_internal() to strbuf
+ + abspath: use strbuf_getcwd() to remember original working directory
+ + setup: convert setup_git_directory_gently_1 et al. to strbuf
+ + unix-sockets: use strbuf_getcwd()
+ + strbuf: add strbuf_getcwd()
+ (this branch is used by nd/lock-paths-absolute.)
 
- Will merge to 'next'.
+ Will cook in 'next'.
 
 
 * jc/not-mingw-cygwin (2014-07-21) 2 commits
  - test prerequisites: enumerate with commas
  - test prerequisites: eradicate NOT_FOO
- (this branch uses sk/mingw-tests-workaround.)
 
  We have been using NOT_{MINGW,CYGWIN} test prerequisites long
  before Peff invented support for negated prerequisites e.g. !MINGW
@@ -415,21 +437,12 @@ of the repositories listed at
  latter to avoid confusion.
 
 
-* jk/more-push-completion (2014-07-22) 3 commits
-  (merged to 'next' on 2014-07-28 at d1d4c27)
- + completion: complete `git push --force-with-lease=`
- + completion: add some missing options to `git push`
- + completion: complete "unstuck" `git push --recurse-submodules`
-
- Will merge to 'master'.
-
-
 * ta/config-set (2014-07-29) 2 commits
  - test-config: add tests for the config_set API
  - add `config_set` API for caching config-like files
 
- More or less solidified enough to be built other enhancements upon.
- Will merge to 'next'.
+ Add in-core caching layer to let us avoid reading the same
+ configuration files number of times.
 
 
 * rs/ref-transaction-1 (2014-07-16) 20 commits
@@ -463,7 +476,9 @@ of the repositories listed at
  + lockfile: allow reopening a closed but still locked file
 
  Needed in the "commit -p" code path to update the cache tree in the
- index.
+ index (e.g. for dt/cache-tree-repair topic).
+
+ Will cook in 'next'.
 
 
 * nd/multiple-work-trees (2014-07-17) 31 commits
@@ -506,6 +521,20 @@ of the repositories listed at
  by making the borrowee and borrowers aware of each other.
 
  Will cook in 'next'.
+
+
+* nd/multiple-work-trees-1 (2014-07-29) 8 commits
+ - checkout --to: do not touch existing target directory
+ - checkout: prefix --to argument properly when cwd is moved
+ - environment.c: fix incorrect git_graft_file initialization
+ - checkout --to: fix dangling pointers in remove_junk()
+ - checkout: no auto-detach if the ref is already checked out
+ - prune --repos: fix uninitialized access
+ - checkout: no need to call check_linked_checkouts if head_ref is NULL
+ - gitrepository-layout.txt: s/ignored/ignored if/
+ (this branch uses nd/multiple-work-trees.)
+
+ Continue polishing nd/multiple-work-trees topic in 'next'.
 
 
 * dt/cache-tree-repair (2014-07-14) 4 commits
@@ -570,3 +599,9 @@ of the repositories listed at
 
 * jh/submodule-tests (2014-04-17) 1 commit
  . t7410: 210 tests for various 'git submodule update' scenarios
+
+
+* nd/path-max-is-better-than-hardcoded-magic-1024 (2014-07-17) 1 commit
+ . abspath.c: use PATH_MAX in real_path_internal()
+
+ rs/strbuf-getcwd topic covers this codepath in a better way.
