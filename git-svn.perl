@@ -1477,10 +1477,37 @@ sub cmd_commit_diff {
 	}
 }
 
-
 sub cmd_info {
-	my $path = canonicalize_path(defined($_[0]) ? $_[0] : ".");
-	my $fullpath = canonicalize_path($cmd_dir_prefix . $path);
+	my $path_arg = defined($_[0]) ? $_[0] : '.';
+	my $path = $path_arg;
+	if (File::Spec->file_name_is_absolute($path)) {
+		$path = canonicalize_path($path);
+
+		my $toplevel = eval {
+			my @cmd = qw/rev-parse --show-toplevel/;
+			command_oneline(\@cmd, STDERR => 0);
+		};
+
+		# remove $toplevel from the absolute path:
+		my ($vol, $dirs, $file) = File::Spec->splitpath($path);
+		my (undef, $tdirs, $tfile) = File::Spec->splitpath($toplevel);
+		my @dirs = File::Spec->splitdir($dirs);
+		my @tdirs = File::Spec->splitdir($tdirs);
+		pop @dirs if $dirs[-1] eq '';
+		pop @tdirs if $tdirs[-1] eq '';
+		push @dirs, $file;
+		push @tdirs, $tfile;
+		while (@tdirs && @dirs && $tdirs[0] eq $dirs[0]) {
+			shift @dirs;
+			shift @tdirs;
+		}
+		$dirs = File::Spec->catdir(@dirs);
+		$path = File::Spec->catpath($vol, $dirs);
+
+		$path = canonicalize_path($path);
+	} else {
+		$path = canonicalize_path($cmd_dir_prefix . $path);
+	}
 	if (exists $_[1]) {
 		die "Too many arguments specified\n";
 	}
@@ -1501,14 +1528,14 @@ sub cmd_info {
 	# canonicalize_path() will return "" to make libsvn 1.5.x happy,
 	$path = "." if $path eq "";
 
-	my $full_url = canonicalize_url( add_path_to_url( $url, $fullpath ) );
+	my $full_url = canonicalize_url( add_path_to_url( $url, $path ) );
 
 	if ($_url) {
 		print "$full_url\n";
 		return;
 	}
 
-	my $result = "Path: $path\n";
+	my $result = "Path: $path_arg\n";
 	$result .= "Name: " . basename($path) . "\n" if $file_type ne "dir";
 	$result .= "URL: $full_url\n";
 
@@ -1539,7 +1566,7 @@ sub cmd_info {
 	}
 
 	my ($lc_author, $lc_rev, $lc_date_utc);
-	my @args = Git::SVN::Log::git_svn_log_cmd($rev, $rev, "--", $fullpath);
+	my @args = Git::SVN::Log::git_svn_log_cmd($rev, $rev, "--", $path);
 	my $log = command_output_pipe(@args);
 	my $esc_color = qr/(?:\033\[(?:(?:\d+;)*\d*)?m)*/;
 	while (<$log>) {
