@@ -77,7 +77,7 @@ PATTERN FORMAT
    Put a backslash ("`\`") in front of the first hash for patterns
    that begin with a hash.
 
- - Trailing spaces are ignored unless they are quoted with backlash
+ - Trailing spaces are ignored unless they are quoted with backslash
    ("`\`").
 
  - An optional prefix "`!`" which negates the pattern; any
