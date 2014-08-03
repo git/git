@@ -113,4 +113,9 @@ test_expect_success 'archive empty subtree by direct pathspec' '
 	check_dir extract sub
 '
 
+test_expect_success 'archive applies umask even for pax headers' '
+	git archive --format=tar HEAD >archive.tar &&
+	! grep 0666 archive.tar
+'
+
 test_done
