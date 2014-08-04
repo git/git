@@ -429,6 +429,11 @@ example the following invocations are equivalent:
 	given will override values from configuration files.
 	The <name> is expected in the same format as listed by
 	'git config' (subkeys separated by dots).
++
+Note that omitting the `=` in `git -c foo.bar ...` is allowed and sets
+`foo.bar` to the boolean true value (just like `[foo]bar` would in a
+config file). Including the equals but with an empty value (like `git -c
+foo.bar= ...`) sets `foo.bar` to the empty string.
 
 --exec-path[=<path>]::
 	Path to wherever your core Git programs are installed.
