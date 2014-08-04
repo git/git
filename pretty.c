@@ -66,7 +66,9 @@ static int git_pretty_formats_config(const char *var, const char *value, void *c
 
 	commit_format->name = xstrdup(name);
 	commit_format->format = CMIT_FMT_USERFORMAT;
-	git_config_string(&fmt, var, value);
+	if (git_config_string(&fmt, var, value))
+		return -1;
+
 	if (starts_with(fmt, "format:") || starts_with(fmt, "tformat:")) {
 		commit_format->is_tformat = fmt[0] == 't';
 		fmt = strchr(fmt, ':') + 1;
