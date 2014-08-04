@@ -137,4 +137,33 @@ int read_file_with_include(const char *file, config_fn_t fn, void *data)
 Writing Config Files
 --------------------
 
-TODO
+Git gives multiple entry points in the Config API to write config values to
+files namely `git_config_set_in_file` and `git_config_set`, which write to
+a specific config file or to `.git/config` respectively. They both take a
+key/value pair as parameter.
+In the end they both call `git_config_set_multivar_in_file` which takes four
+parameters:
+
+- the name of the file, as a string, to which key/value pairs will be written.
+
+- the name of key, as a string. This is in canonical "flat" form: the section,
+  subsection, and variable segments will be separated by dots, and the section
+  and variable segments will be all lowercase.
+  E.g., `core.ignorecase`, `diff.SomeType.textconv`.
+
+- the value of the variable, as a string. If value is equal to NULL, it will
+  remove the matching key from the config file.
+
+- the value regex, as a string. It will disregard key/value pairs where value
+  does not match.
+
+- a multi_replace value, as an int. If value is equal to zero, nothing or only
+  one matching key/value is replaced, else all matching key/values (regardless
+  how many) are removed, before the new pair is written.
+
+It returns 0 on success.
+
+Also, there are functions `git_config_rename_section` and
+`git_config_rename_section_in_file` with parameters `old_name` and `new_name`
+for renaming or removing sections in the config files. If NULL is passed
+through `new_name` parameter, the section will be removed from the config file.
