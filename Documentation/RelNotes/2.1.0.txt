@@ -145,12 +145,6 @@ Performance, Internal Implementation, etc.
  * Eradication of "test $condition -a $condition" from our scripts
    continues.
 
- * The leaf function to check validity of a refname format has been
-   micro-optimized, using SSE2 instructions when available.  A few
-   breakages during its development have been caught and fixed already
-   but there might remain some more still; please test and report if
-   you find any.
-
  * The `core.deltabasecachelimit` used to default to 16 MiB , but this
    proved to be too small, and has been bumped to 96 MiB.
 
