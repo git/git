@@ -38,18 +38,17 @@ Variables
 imap.folder::
 	The folder to drop the mails into, which is typically the Drafts
 	folder. For example: "INBOX.Drafts", "INBOX/Drafts" or
-	"[Gmail]/Drafts". Required to use imap-send.
+	"[Gmail]/Drafts". Required.
 
 imap.tunnel::
 	Command used to setup a tunnel to the IMAP server through which
 	commands will be piped instead of using a direct network connection
-	to the server. Required when imap.host is not set to use imap-send.
+	to the server. Required when imap.host is not set.
 
 imap.host::
 	A URL identifying the server. Use a `imap://` prefix for non-secure
 	connections and a `imaps://` prefix for secure connections.
-	Ignored when imap.tunnel is set, but required to use imap-send
-	otherwise.
+	Ignored when imap.tunnel is set, but required otherwise.
 
 imap.user::
 	The username to use when logging in to the server.
