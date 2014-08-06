@@ -1938,6 +1938,49 @@ static void prefix_patch(struct patch *p)
 }
 
 /*
+ * include/exclude
+ */
+
+static struct string_list limit_by_name;
+static int has_include;
+static void add_name_limit(const char *name, int exclude)
+{
+	struct string_list_item *it;
+
+	it = string_list_append(&limit_by_name, name);
+	it->util = exclude ? NULL : (void *) 1;
+}
+
+static int use_patch(struct patch *p)
+{
+	const char *pathname = p->new_name ? p->new_name : p->old_name;
+	int i;
+
+	/* Paths outside are not touched regardless of "--include" */
+	if (0 < prefix_length) {
+		int pathlen = strlen(pathname);
+		if (pathlen <= prefix_length ||
+		    memcmp(prefix, pathname, prefix_length))
+			return 0;
+	}
+
+	/* See if it matches any of exclude/include rule */
+	for (i = 0; i < limit_by_name.nr; i++) {
+		struct string_list_item *it = &limit_by_name.items[i];
+		if (!fnmatch(it->string, pathname, 0))
+			return (it->util != NULL);
+	}
+
+	/*
+	 * If we had any include, a path that does not match any rule is
+	 * not used.  Otherwise, we saw bunch of exclude rules (or none)
+	 * and such a path is used.
+	 */
+	return !has_include;
+}
+
+
+/*
  * Read the patch text in "buffer" that extends for "size" bytes; stop
  * reading after seeing a single patch (i.e. changes to a single file).
  * Create fragments (i.e. patch hunks) and hang them to the given patch.
@@ -4144,44 +4187,6 @@ static int write_out_results(struct patch *list)
 }
 
 static struct lock_file lock_file;
-
-static struct string_list limit_by_name;
-static int has_include;
-static void add_name_limit(const char *name, int exclude)
-{
-	struct string_list_item *it;
-
-	it = string_list_append(&limit_by_name, name);
-	it->util = exclude ? NULL : (void *) 1;
-}
-
-static int use_patch(struct patch *p)
-{
-	const char *pathname = p->new_name ? p->new_name : p->old_name;
-	int i;
-
-	/* Paths outside are not touched regardless of "--include" */
-	if (0 < prefix_length) {
-		int pathlen = strlen(pathname);
-		if (pathlen <= prefix_length ||
-		    memcmp(prefix, pathname, prefix_length))
-			return 0;
-	}
-
-	/* See if it matches any of exclude/include rule */
-	for (i = 0; i < limit_by_name.nr; i++) {
-		struct string_list_item *it = &limit_by_name.items[i];
-		if (!fnmatch(it->string, pathname, 0))
-			return (it->util != NULL);
-	}
-
-	/*
-	 * If we had any include, a path that does not match any rule is
-	 * not used.  Otherwise, we saw bunch of exclude rules (or none)
-	 * and such a path is used.
-	 */
-	return !has_include;
-}
 
 #define INACCURATE_EOF	(1<<0)
 #define RECOUNT		(1<<1)
