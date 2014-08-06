@@ -296,7 +296,7 @@ have_stash () {
 
 list_stash () {
 	have_stash || return 0
-	git log --format="%gd: %gs" -g "$@" $ref_stash --
+	git log --format="%gd: %gs" -g --first-parent -m "$@" $ref_stash --
 }
 
 show_stash () {
