@@ -1997,9 +1997,12 @@ static int parse_chunk(char *buffer, unsigned long size, struct patch *patch)
 
 	prefix_patch(patch);
 
-	patch->ws_rule = whitespace_rule(patch->new_name
-					 ? patch->new_name
-					 : patch->old_name);
+	if (!use_patch(patch))
+		patch->ws_rule = 0;
+	else
+		patch->ws_rule = whitespace_rule(patch->new_name
+						 ? patch->new_name
+						 : patch->old_name);
 
 	patchsize = parse_single_patch(buffer + offset + hdrsize,
 				       size - offset - hdrsize, patch);
