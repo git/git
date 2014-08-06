@@ -1920,6 +1920,23 @@ static int parse_binary(char *buffer, unsigned long size, struct patch *patch)
 	return used;
 }
 
+static void prefix_one(char **name)
+{
+	char *old_name = *name;
+	if (!old_name)
+		return;
+	*name = xstrdup(prefix_filename(prefix, prefix_length, *name));
+	free(old_name);
+}
+
+static void prefix_patch(struct patch *p)
+{
+	if (!prefix || p->is_toplevel_relative)
+		return;
+	prefix_one(&p->new_name);
+	prefix_one(&p->old_name);
+}
+
 /*
  * Read the patch text in "buffer" that extends for "size" bytes; stop
  * reading after seeing a single patch (i.e. changes to a single file).
@@ -1934,6 +1951,8 @@ static int parse_chunk(char *buffer, unsigned long size, struct patch *patch)
 
 	if (offset < 0)
 		return offset;
+
+	prefix_patch(patch);
 
 	patch->ws_rule = whitespace_rule(patch->new_name
 					 ? patch->new_name
@@ -4164,26 +4183,6 @@ static int use_patch(struct patch *p)
 	return !has_include;
 }
 
-
-static void prefix_one(char **name)
-{
-	char *old_name = *name;
-	if (!old_name)
-		return;
-	*name = xstrdup(prefix_filename(prefix, prefix_length, *name));
-	free(old_name);
-}
-
-static void prefix_patches(struct patch *p)
-{
-	if (!prefix || p->is_toplevel_relative)
-		return;
-	for ( ; p; p = p->next) {
-		prefix_one(&p->new_name);
-		prefix_one(&p->old_name);
-	}
-}
-
 #define INACCURATE_EOF	(1<<0)
 #define RECOUNT		(1<<1)
 
@@ -4209,8 +4208,6 @@ static int apply_patch(int fd, const char *filename, int options)
 			break;
 		if (apply_in_reverse)
 			reverse_patches(patch);
-		if (prefix)
-			prefix_patches(patch);
 		if (use_patch(patch)) {
 			patch_stats(patch);
 			*listp = patch;
