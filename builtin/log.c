@@ -859,6 +859,7 @@ static void add_branch_description(struct strbuf *buf, const char *branch_name)
 		strbuf_add(buf, desc.buf, desc.len);
 		strbuf_addch(buf, '\n');
 	}
+	strbuf_release(&desc);
 }
 
 static char *find_branch_name(struct rev_info *rev)
