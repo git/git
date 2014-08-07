@@ -230,23 +230,6 @@ struct daemon_service {
 	int overridable;
 };
 
-static struct daemon_service *service_looking_at;
-static int service_enabled;
-
-static int git_daemon_config(const char *var, const char *value, void *cb)
-{
-	const char *service;
-
-	if (skip_prefix(var, "daemon.", &service) &&
-	    !strcmp(service, service_looking_at->config_name)) {
-		service_enabled = git_config_bool(var, value);
-		return 0;
-	}
-
-	/* we are not interested in parsing any other configuration here */
-	return 0;
-}
-
 static int daemon_error(const char *dir, const char *msg)
 {
 	if (!informative_errors)
@@ -324,6 +307,7 @@ static int run_service(const char *dir, struct daemon_service *service)
 {
 	const char *path;
 	int enabled = service->enabled;
+	struct strbuf var = STRBUF_INIT;
 
 	loginfo("Request %s for '%s'", service->name, dir);
 
@@ -354,11 +338,9 @@ static int run_service(const char *dir, struct daemon_service *service)
 	}
 
 	if (service->overridable) {
-		service_looking_at = service;
-		service_enabled = -1;
-		git_config(git_daemon_config, NULL);
-		if (0 <= service_enabled)
-			enabled = service_enabled;
+		strbuf_addf(&var, "daemon.%s", service->config_name);
+		git_config_get_bool(var.buf, &enabled);
+		strbuf_release(&var);
 	}
 	if (!enabled) {
 		logerror("'%s': service not enabled for '%s'",
