@@ -108,8 +108,8 @@ By default, the configuration flag `receive.denyNonFastForwards` is enabled
 in shared repositories, so that you cannot force a non fast-forwarding push
 into it.
 
-If you name a (possibly non-existent) directory at the end of the command
-line, the command is run inside the directory (possibly after creating it).
+If you provide a 'directory', the command is run inside it. If this directory
+does not exist, it will be created.
 
 --
 
