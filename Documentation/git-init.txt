@@ -57,12 +57,12 @@ DIRECTORY" section below.)
 
 --separate-git-dir=<git dir>::
 
-Instead of initializing the repository where it is supposed to be,
-place a filesytem-agnostic Git symbolic link there, pointing to the
-specified path, and initialize a Git repository at the path. The
-result is Git repository can be separated from working tree. If this
-is reinitialization, the repository will be moved to the specified
-path.
+Instead of initializing the repository as a directory to either `$GIT_DIR` or
+`./.git/`, create a text file there containing the path to the actual
+repository.  This file acts as filesystem-agnostic Git symbolic link to the
+repository.
++
+If this is reinitialization, the repository will be moved to the specified path.
 
 --shared[=(false|true|umask|group|all|world|everybody|0xxx)]::
 
