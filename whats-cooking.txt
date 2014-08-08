@@ -1,18 +1,19 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Aug 2014, #01; Fri, 1)
-X-master-at: aa544bfbc6eb11e4f0471f3144d3e3ac75c0e4a9
-X-next-at: 6a8ef70a0a7fa126e4e0002b8f284fdec4c0f9a3
+Subject: What's cooking in git.git (Aug 2014, #02; Fri, 8)
+X-master-at: f82887f29010e1ec88ec1930a99ddc56b6438452
+X-next-at: edb03e5a9b9b63d0864557f99f339b2b5f3a9e4e
 
-What's cooking in git.git (Aug 2014, #01; Fri, 1)
+What's cooking in git.git (Aug 2014, #02; Fri, 8)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-First release candidate 2.1.0-rc1 expected early next week, after
-merging a couple of obvious documentation update patches.
+The second release candidate snapshot is out.  Hopefully after a
+week of a calm pre-release "bugfix-only" period, we can do the 2.1
+final late next week.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -22,126 +23,139 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* ep/avoid-test-a-o (2014-07-25) 1 commit
-  (merged to 'next' on 2014-07-27 at 45de31d)
- + t9814: fix misconversion from test $a -o $b to test $a || test $b
-
- Fix a post v2.0 regression in 'master'.
-
-
-* jk/more-push-completion (2014-07-22) 3 commits
-  (merged to 'next' on 2014-07-28 at d1d4c27)
- + completion: complete `git push --force-with-lease=`
- + completion: add some missing options to `git push`
- + completion: complete "unstuck" `git push --recurse-submodules`
-
-
-* sk/mingw-tests-workaround (2014-07-21) 6 commits
-  (merged to 'next' on 2014-07-28 at 2f3b7ac)
- + t800[12]: work around MSys limitation
- + t9902: mingw-specific fix for gitfile link files
- + t4210: skip command-line encoding tests on mingw
- + MinGW: disable legacy encoding tests
- + t0110/MinGW: skip tests that pass arbitrary bytes on the command line
- + MinGW: Skip test redirecting to fd 4
- (this branch is used by jc/not-mingw-cygwin.)
-
- Make tests pass on msysgit by mostly disabling ones that are
- infeasible on that platform.
-
-
-* sk/mingw-uni-fix-more (2014-07-21) 14 commits
-  (merged to 'next' on 2014-07-28 at 0945196)
- + Win32: enable color output in Windows cmd.exe
- + Win32: patch Windows environment on startup
- + Win32: keep the environment sorted
- + Win32: use low-level memory allocation during initialization
- + Win32: reduce environment array reallocations
- + Win32: don't copy the environment twice when spawning child processes
- + Win32: factor out environment block creation
- + Win32: unify environment function names
- + Win32: unify environment case-sensitivity
- + Win32: fix environment memory leaks
- + Win32: Unicode environment (incoming)
- + Win32: Unicode environment (outgoing)
- + Revert "Windows: teach getenv to do a case-sensitive search"
- + tests: do not pass iso8859-1 encoded parameter
-
- Most of these are battle-tested in msysgit and are needed to
- complete what has been merged to 'master' already.
-
---------------------------------------------------
-[New Topics]
-
-* jk/stash-list-p (2014-07-30) 7 commits
- - SQUASH??? future-proof, log --cc should imply -p without being told
- - stash: show combined diff with "stash show"
- - stash: default listing to "--cc --simplify-combined-diff"
- - add --simplify-combined-diff option
- - pretty: make empty userformats truly empty
- - pretty: treat "--format=" as an empty userformat
- - revision: drop useless string offset when parsing "--pretty"
-
- Teach "git stash list -p" to DWIM to "git stash list -p --cc", with
- even nicer twist to collapse combined diff from identical two
- parents into a regular diff.
-
-
-* pr/remotes-in-hashmap (2014-07-30) 1 commit
- - use a hashmap to make remotes faster
-
- Optimize remotes configuration look-up in a repository with very
- many remotes defined.
-
-
-* rs/ref-transaction-multi (2014-07-31) 5 commits
- - refs.c: make the *_packed_refs functions static
- - refs.c: make repack_without_refs static
- - remote.c: use a transaction for deleting refs
- - refs.c: write updates to packed refs when a transaction has more than one ref
- - refs.c: move reflog updates into its own function
- (this branch uses rs/ref-transaction, rs/ref-transaction-1, rs/ref-transaction-reflog and rs/ref-transaction-rename.)
-
- Follow-up on rs/ref-transaction series to use the packed-ref to
- achieve atomicity when multiple refs are involved.
-
-
-* rs/ref-transaction-rename (2014-07-31) 5 commits
- - refs.c: rollback the lockfile before we die() in repack_without_refs
- - refs.c: update rename_ref to use a transaction
- - refs.c: use packed refs when deleting refs during a transaction
- - refs.c: return error instead of dying when locking fails during transaction
- - refs.c: allow passing raw git_committer_info as email to _update_reflog
- (this branch is used by rs/ref-transaction-multi; uses rs/ref-transaction, rs/ref-transaction-1 and rs/ref-transaction-reflog.)
-
- Follow-up on rs/ref-transaction series to make renaming a ref
- transactional (i.e. "delete old and create new" should not leave
- an in-between state behind when it fails).
-
-
 * ta/doc-config (2014-07-30) 1 commit
   (merged to 'next' on 2014-07-31 at ec577fa)
  + add documentation for writing config files
-
- Will merge to 'master'.
 
 
 * tf/maint-doc-push (2014-07-31) 1 commit
   (merged to 'next' on 2014-07-31 at 6a8ef70)
  + git-push: fix link in man page
 
- Will merge to 'master' and later to 'maint'.
+--------------------------------------------------
+[New Topics]
+
+* tf/imap-send-create (2014-08-01) 3 commits
+ - SQUASH??? varargs form of issue-imap-cmd is no longer used
+ - imap-send: create target mailbox if it is missing
+ - imap-send: clarify CRAM-MD5 vs LOGIN documentation
+
+ Will merge to 'next' after dealing with the SQUASH??? fix-up.
 
 
-* nd/lock-paths-absolute (2014-08-01) 3 commits
- - lockfile.c: store absolute path
- - lockfile.c: remove PATH_MAX limit in resolve_symlink()
- - lockfile.c: remove PATH_MAX limitation (except in resolve_symlink)
- (this branch uses rs/strbuf-getcwd.)
+* bc/archive-pax-header-mode (2014-08-04) 1 commit
+ - archive: honor tar.umask even for pax headers
+
+ Implementations of "tar" that do not understand an extended pax
+ header would extract the contents of it in a regular file; make
+ sure the permission bits of this file follows the same tar.umask
+ configuration setting.
+
+ Will merge to 'next'.
 
 
-* mm/config-message-i18n (2014-08-01) 1 commit
+* bc/imap-send-doc (2014-08-05) 1 commit
+ - imap-send doc: omit confusing "to use imap-send" modifier
+
+ Will merge to 'next'.
+
+
+* jc/apply-ws-prefix (2014-08-07) 3 commits
+ - apply: omit ws check for excluded paths
+ - apply: hoist use_patch() helper for path exclusion up
+ - apply: use the right attribute for paths in non-Git patches
+
+ Applying a patch not generated by Git in a subdirectory used to
+ check the whitespace breakage using the attributes for incorrect
+ paths. Also whitespace checks were performed even for paths
+ excluded via "git apply --exclude=<path>" mechanism.
+
+ Will merge to 'next'.
+
+
+* jk/command-line-config-empty-string (2014-08-05) 1 commit
+ - config: teach "git -c" to recognize an empty string
+
+ "git -c section.var command" and "git -c section.var= command"
+ should pass the configuration differently (the former should be
+ a boolean true, the latter should be an empty string).
+
+ Will merge to 'next'.
+
+
+* jk/pack-bitmap (2014-08-04) 1 commit
+ - pack-bitmap: do not use gcc packed attribute
+
+ Will merge to 'next'.
+
+
+* jk/pretty-empty-format (2014-07-30) 3 commits
+ - pretty: make empty userformats truly empty
+ - pretty: treat "--format=" as an empty userformat
+ - revision: drop useless string offset when parsing "--pretty"
+
+ "git log --pretty/format=" with an empty format string did not mean
+ the more obvious "No output whatsoever" but "Use default format",
+ which was counterintuitive.
+
+ Will merge to 'next'.
+
+
+* la/init-doc (2014-08-08) 7 commits
+ - Documentation: git-init: flesh out example
+ - Documentation: git-init: template directory: reword and cross-reference
+ - Documentation: git-init: reword parenthetical statements
+ - Documentation: git-init: --separate-git-dir: clarify
+ - Documentation: git-init: template directory: reword
+ - Documentation: git-init: list items facelift
+ - Documentation: git-init: typographical fixes
+
+ Will merge to 'next'.
+
+
+* lf/bundle-exclusion (2014-08-07) 1 commit
+ - bundle: fix exclusion of annotated tags
+
+ Will merge to 'next'.
+
+
+* mm/log-branch-desc-plug-leak (2014-08-07) 1 commit
+ - builtin/log.c: fix minor memory leak
+
+ Will merge to 'next'.
+
+
+* ta/config-set-1 (2014-08-07) 8 commits
+ - add tests for `git_config_get_string_const()`
+ - add a test for semantic errors in config files
+ - rewrite git_config() to use the config-set API
+ - config: add `git_die_config()` to the config-set API
+ - change `git_config()` return value to void
+ - add line number and file name info to `config_set`
+ - config.c: fix accuracy of line number in errors
  - config.c: mark error and warnings strings for translation
+ (this branch is used by ta/config-set-2; uses ta/config-set.)
+
+
+* ta/config-set-2 (2014-08-07) 11 commits
+ - branch.c: replace `git_config()` with `git_config_get_string()
+ - alias.c: replace `git_config()` with `git_config_get_string()`
+ - imap-send.c: replace `git_config()` with `git_config_get_*()` family
+ - pager.c: replace `git_config()` with `git_config_get_value()`
+ - builtin/gc.c: replace `git_config()` with `git_config_get_*()` family
+ - rerere.c: replace `git_config()` with `git_config_get_*()` family
+ - fetchpack.c: replace `git_config()` with `git_config_get_*()` family
+ - archive.c: replace `git_config()` with `git_config_get_bool()` family
+ - read-cache.c: replace `git_config()` with `git_config_get_*()` family
+ - http-backend.c: replace `git_config()` with `git_config_get_bool()` family
+ - daemon.c: replace `git_config()` with `git_config_get_bool()` family
+ (this branch uses ta/config-set and ta/config-set-1.)
+
+
+* ta/pretty-parse-config (2014-08-04) 1 commit
+ - pretty.c: make git_pretty_formats_config return -1 on git_config_string failure
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -361,6 +375,69 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* jk/stash-list-p (2014-08-07) 1 commit
+ - stash: default listing to working-tree diff
+
+ Teach "git stash list -p" to show the difference between the base
+ commit version and the working tree version, which is in line with
+ what "git show" gives.
+
+ Will merge to 'next'.
+
+
+* pr/remotes-in-hashmap (2014-07-30) 1 commit
+ - use a hashmap to make remotes faster
+
+ Optimize remotes configuration look-up in a repository with very
+ many remotes defined.
+
+ Will merge to 'next'.
+
+
+* rs/ref-transaction-multi (2014-07-31) 5 commits
+ - refs.c: make the *_packed_refs functions static
+ - refs.c: make repack_without_refs static
+ - remote.c: use a transaction for deleting refs
+ - refs.c: write updates to packed refs when a transaction has more than one ref
+ - refs.c: move reflog updates into its own function
+ (this branch uses rs/ref-transaction, rs/ref-transaction-1, rs/ref-transaction-reflog and rs/ref-transaction-rename.)
+
+ Follow-up on rs/ref-transaction series to use the packed-ref to
+ achieve atomicity when multiple refs are involved.
+
+ No more nitpicks and better design suggestions?
+
+
+* rs/ref-transaction-rename (2014-07-31) 5 commits
+ - refs.c: rollback the lockfile before we die() in repack_without_refs
+ - refs.c: update rename_ref to use a transaction
+ - refs.c: use packed refs when deleting refs during a transaction
+ - refs.c: return error instead of dying when locking fails during transaction
+ - refs.c: allow passing raw git_committer_info as email to _update_reflog
+ (this branch is used by rs/ref-transaction-multi; uses rs/ref-transaction, rs/ref-transaction-1 and rs/ref-transaction-reflog.)
+
+ Follow-up on rs/ref-transaction series to make renaming a ref
+ transactional (i.e. "delete old and create new" should not leave
+ an in-between state behind when it fails).
+
+ No more nitpicks and better design suggestions?
+
+
+* nd/lock-paths-absolute (2014-08-01) 3 commits
+ - lockfile.c: store absolute path
+ - lockfile.c: remove PATH_MAX limit in resolve_symlink()
+ - lockfile.c: remove PATH_MAX limitation (except in resolve_symlink)
+ (this branch uses rs/strbuf-getcwd.)
+
+ Will merge to 'next'.
+
+
+* mm/config-message-i18n (2014-08-01) 1 commit
+ - config.c: mark error and warnings strings for translation
+
+ Will discard (now at the bottom of ta/config-set-1 topic).
+
+
 * mm/config-edit-global (2014-07-25) 3 commits
   (merged to 'next' on 2014-07-31 at ecce1c7)
  + commit: advertise config --global --edit on guessed identity
@@ -404,10 +481,17 @@ of the repositories listed at
  Cover updates to reflog with the same transaction mechanism as used
  for reflog manipulations.
 
+ No more nitpicks and better design suggestions?
+
 
 * cb/mergetool-difftool (2014-07-21) 2 commits
  - difftool: don't assume that default sh is sane
  - mergetool: don't require a work tree for --tool-help
+
+ Update the way the "difftool --help" shows the help message that is
+ shared with the "mergetool" to reduce one shell dependency.
+
+ Will merge to 'next'.
 
 
 * rs/strbuf-getcwd (2014-07-29) 10 commits
@@ -440,9 +524,12 @@ of the repositories listed at
 * ta/config-set (2014-07-29) 2 commits
  - test-config: add tests for the config_set API
  - add `config_set` API for caching config-like files
+ (this branch is used by ta/config-set-1 and ta/config-set-2.)
 
  Add in-core caching layer to let us avoid reading the same
  configuration files number of times.
+
+ Will merge to 'next'.
 
 
 * rs/ref-transaction-1 (2014-07-16) 20 commits
@@ -469,6 +556,8 @@ of the repositories listed at
  (this branch is used by rs/ref-transaction, rs/ref-transaction-multi, rs/ref-transaction-reflog and rs/ref-transaction-rename.)
 
  The second batch of the transactional ref update series.
+
+ No more nitpicks and better design suggestions?
 
 
 * jc/reopen-lock-file (2014-07-14) 1 commit
@@ -535,6 +624,8 @@ of the repositories listed at
  (this branch uses nd/multiple-work-trees.)
 
  Continue polishing nd/multiple-work-trees topic in 'next'.
+
+ Will merge to 'next'.
 
 
 * dt/cache-tree-repair (2014-07-14) 4 commits
