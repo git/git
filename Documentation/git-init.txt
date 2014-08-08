@@ -119,15 +119,15 @@ TEMPLATE DIRECTORY
 The template directory contains files and directories that will be copied to
 the `$GIT_DIR` after it is created.
 
-The template directory used will be (in order):
+The template directory will be one of the following (in order):
 
- - The argument given with the `--template` option.
+ - the argument given with the `--template` option;
 
- - The contents of the `$GIT_TEMPLATE_DIR` environment variable.
+ - the contents of the `$GIT_TEMPLATE_DIR` environment variable;
 
- - The `init.templatedir` configuration variable.
+ - the `init.templatedir` configuration variable; or
 
- - The default template directory: `/usr/share/git-core/templates`.
+ - the default template directory: `/usr/share/git-core/templates`.
 
 The default template directory includes some directory structure, some
 suggested "exclude patterns", and copies of sample "hook" files.
