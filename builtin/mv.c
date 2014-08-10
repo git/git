@@ -108,7 +108,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 		destination = internal_copy_pathspec(dest_path[0], argv, argc, DUP_BASENAME);
 	} else {
 		if (argc != 1)
-			die("destination '%s' is not a directory", dest_path[0]);
+			die(_("destination '%s' is not a directory"), dest_path[0]);
 		destination = dest_path;
 	}
 
