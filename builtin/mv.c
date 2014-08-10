@@ -61,6 +61,23 @@ static const char *add_slash(const char *path)
 static struct lock_file lock_file;
 #define SUBMODULE_WITH_GITDIR ((const char *)1)
 
+static void prepare_move_submodule(const char *src, int first,
+				   const char **submodule_gitfile)
+{
+	struct strbuf submodule_dotgit = STRBUF_INIT;
+	if (!S_ISGITLINK(active_cache[first]->ce_mode))
+		die(_("Directory %s is in index and no submodule?"), src);
+	if (!is_staging_gitmodules_ok())
+		die(_("Please stage your changes to .gitmodules or stash them to proceed"));
+	strbuf_addf(&submodule_dotgit, "%s/.git", src);
+	*submodule_gitfile = read_gitfile(submodule_dotgit.buf);
+	if (*submodule_gitfile)
+		*submodule_gitfile = xstrdup(*submodule_gitfile);
+	else
+		*submodule_gitfile = SUBMODULE_WITH_GITDIR;
+	strbuf_release(&submodule_dotgit);
+}
+
 int cmd_mv(int argc, const char **argv, const char *prefix)
 {
 	int i, gitmodules_modified = 0;
@@ -132,20 +149,11 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 			bad = _("cannot move directory over file");
 		else if (src_is_dir) {
 			int first = cache_name_pos(src, length);
-			if (first >= 0) {
-				struct strbuf submodule_dotgit = STRBUF_INIT;
-				if (!S_ISGITLINK(active_cache[first]->ce_mode))
-					die (_("Huh? Directory %s is in index and no submodule?"), src);
-				if (!is_staging_gitmodules_ok())
-					die (_("Please, stage your changes to .gitmodules or stash them to proceed"));
-				strbuf_addf(&submodule_dotgit, "%s/.git", src);
-				submodule_gitfile[i] = read_gitfile(submodule_dotgit.buf);
-				if (submodule_gitfile[i])
-					submodule_gitfile[i] = xstrdup(submodule_gitfile[i]);
-				else
-					submodule_gitfile[i] = SUBMODULE_WITH_GITDIR;
-				strbuf_release(&submodule_dotgit);
-			} else {
+
+			if (first >= 0)
+				prepare_move_submodule(src, first,
+						       submodule_gitfile + i);
+			else {
 				const char *src_w_slash = add_slash(src);
 				int last, len_w_slash = length + 1;
 
