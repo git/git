@@ -1898,7 +1898,8 @@ int stat_tracking_info(struct branch *branch, int *num_ours, int *num_theirs)
 
 	init_revisions(&revs, NULL);
 	setup_revisions(rev_argc, rev_argv, &revs, NULL);
-	prepare_revision_walk(&revs);
+	if (prepare_revision_walk(&revs))
+		die("revision walk setup failed");
 
 	/* ... and count the commits on each side. */
 	*num_ours = 0;

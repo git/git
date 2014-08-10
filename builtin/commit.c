@@ -989,7 +989,8 @@ static const char *find_author_by_nickname(const char *name)
 	revs.mailmap = &mailmap;
 	read_mailmap(revs.mailmap, NULL);
 
-	prepare_revision_walk(&revs);
+	if (prepare_revision_walk(&revs))
+		die(_("revision walk setup failed"));
 	commit = get_revision(&revs);
 	if (commit) {
 		struct pretty_print_context ctx = {0};
