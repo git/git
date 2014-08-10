@@ -225,24 +225,22 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 		else
 			string_list_insert(&src_for_dst, dst);
 
-		if (bad) {
-			if (ignore_errors) {
-				if (--argc > 0) {
-					memmove(source + i, source + i + 1,
-						(argc - i) * sizeof(char *));
-					memmove(destination + i,
-						destination + i + 1,
-						(argc - i) * sizeof(char *));
-					memmove(modes + i, modes + i + 1,
-						(argc - i) * sizeof(enum update_mode));
-					memmove(submodule_gitfile + i,
-						submodule_gitfile + i + 1,
-						(argc - i) * sizeof(char *));
-					i--;
-				}
-			} else
-				die (_("%s, source=%s, destination=%s"),
-				     bad, src, dst);
+		if (!bad)
+			continue;
+		if (!ignore_errors)
+			die (_("%s, source=%s, destination=%s"),
+			     bad, src, dst);
+		if (--argc > 0) {
+			int n = argc - i;
+			memmove(source + i, source + i + 1,
+				n * sizeof(char *));
+			memmove(destination + i, destination + i + 1,
+				n * sizeof(char *));
+			memmove(modes + i, modes + i + 1,
+				n * sizeof(enum update_mode));
+			memmove(submodule_gitfile + i, submodule_gitfile + i + 1,
+				n * sizeof(char *));
+			i--;
 		}
 	}
 
