@@ -2594,6 +2594,9 @@ proc makewindow {} {
     bind $ctext $ctxbut {pop_diff_menu %W %X %Y %x %y}
     bind $ctext <Button-1> {focus %W}
     bind $ctext <<Selection>> rehighlight_search_results
+    for {set i 1} {$i < 10} {incr i} {
+	bind . <$M1B-Key-$i> [list go_to_parent $i]
+    }
 
     set maincursor [. cget -cursor]
     set textcursor [$ctext cget -cursor]
@@ -3017,6 +3020,7 @@ proc keys {} {
 [mc "<Down>, n, j	Move down one commit"]
 [mc "<Left>, z, h	Go back in history list"]
 [mc "<Right>, x, l	Go forward in history list"]
+[mc "<%s-n>	Go to n-th parent of current commit in history list" $M1T]
 [mc "<PageUp>	Move up one page in commit list"]
 [mc "<PageDown>	Move down one page in commit list"]
 [mc "<%s-Home>	Scroll to top of commit list" $M1T]
@@ -7494,6 +7498,14 @@ proc goforw {} {
     }
     if {$historyindex >= [llength $history]} {
 	.tf.bar.rightbut conf -state disabled
+    }
+}
+
+proc go_to_parent {i} {
+    global parents curview targetid
+    set ps $parents($curview,$targetid)
+    if {[llength $ps] >= $i} {
+	selbyid [lindex $ps [expr $i - 1]]
     }
 }
 
