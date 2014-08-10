@@ -1000,5 +1000,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	strbuf_release(&key);
 	strbuf_release(&value);
 	junk_mode = JUNK_LEAVE_ALL;
+
+	free(refspec);
 	return err;
 }
