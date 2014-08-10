@@ -229,7 +229,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 		if (!bad)
 			continue;
 		if (!ignore_errors)
-			die (_("%s, source=%s, destination=%s"),
+			die(_("%s, source=%s, destination=%s"),
 			     bad, src, dst);
 		if (--argc > 0) {
 			int n = argc - i;
@@ -253,7 +253,7 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 			printf(_("Renaming %s to %s\n"), src, dst);
 		if (!show_only && mode != INDEX) {
 			if (rename(src, dst) < 0 && !ignore_errors)
-				die_errno (_("renaming '%s' failed"), src);
+				die_errno(_("renaming '%s' failed"), src);
 			if (submodule_gitfile[i]) {
 				if (submodule_gitfile[i] != SUBMODULE_WITH_GITDIR)
 					connect_work_tree_and_git_dir(dst, submodule_gitfile[i]);
