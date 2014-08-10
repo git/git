@@ -444,6 +444,9 @@ void strbuf_utf8_replace(struct strbuf *sb_src, int pos, int width,
 			dst += n;
 		}
 
+		if (src >= end)
+			break;
+
 		old = src;
 		n = utf8_width((const char**)&src, NULL);
 		if (!src) 	/* broken utf-8, do nothing */
