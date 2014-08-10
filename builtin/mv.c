@@ -176,22 +176,14 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 				if (last - first < 1)
 					bad = _("source directory is empty");
 				else {
-					int j, dst_len;
+					int j, dst_len, n;
 
-					if (last - first > 0) {
-						source = xrealloc(source,
-								(argc + last - first)
-								* sizeof(char *));
-						destination = xrealloc(destination,
-								(argc + last - first)
-								* sizeof(char *));
-						modes = xrealloc(modes,
-								(argc + last - first)
-								* sizeof(enum update_mode));
-						submodule_gitfile = xrealloc(submodule_gitfile,
-								(argc + last - first)
-								* sizeof(char *));
-					}
+					n = argc + last - first;
+					source = xrealloc(source, n * sizeof(char *));
+					destination = xrealloc(destination, n * sizeof(char *));
+					modes = xrealloc(modes, n * sizeof(enum update_mode));
+					submodule_gitfile =
+						xrealloc(submodule_gitfile, n * sizeof(char *));
 
 					dst = add_slash(dst);
 					dst_len = strlen(dst);
