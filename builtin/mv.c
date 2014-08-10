@@ -171,43 +171,36 @@ int cmd_mv(int argc, const char **argv, const char *prefix)
 				&& lstat(dst, &st) == 0)
 			bad = _("cannot move directory over file");
 		else if (src_is_dir) {
-			int first = cache_name_pos(src, length);
+			int first = cache_name_pos(src, length), last;
 
 			if (first >= 0)
 				prepare_move_submodule(src, first,
 						       submodule_gitfile + i);
-			else {
-				int last;
+			else if (index_range_of_same_dir(src, length,
+							 &first, &last) < 1)
+				bad = _("source directory is empty");
+			else { /* last - first >= 1 */
+				int j, dst_len, n;
 
 				modes[i] = WORKING_DIRECTORY;
-				index_range_of_same_dir(src, length, &first, &last);
-				if (last - first < 1)
-					bad = _("source directory is empty");
-				else {
-					int j, dst_len, n;
+				n = argc + last - first;
+				source = xrealloc(source, n * sizeof(char *));
+				destination = xrealloc(destination, n * sizeof(char *));
+				modes = xrealloc(modes, n * sizeof(enum update_mode));
+				submodule_gitfile = xrealloc(submodule_gitfile, n * sizeof(char *));
 
-					n = argc + last - first;
-					source = xrealloc(source, n * sizeof(char *));
-					destination = xrealloc(destination, n * sizeof(char *));
-					modes = xrealloc(modes, n * sizeof(enum update_mode));
-					submodule_gitfile =
-						xrealloc(submodule_gitfile, n * sizeof(char *));
+				dst = add_slash(dst);
+				dst_len = strlen(dst);
 
-					dst = add_slash(dst);
-					dst_len = strlen(dst);
-
-					for (j = 0; j < last - first; j++) {
-						const char *path =
-							active_cache[first + j]->name;
-						source[argc + j] = path;
-						destination[argc + j] =
-							prefix_path(dst, dst_len,
-								path + length + 1);
-						modes[argc + j] = INDEX;
-						submodule_gitfile[argc + j] = NULL;
-					}
-					argc += last - first;
+				for (j = 0; j < last - first; j++) {
+					const char *path = active_cache[first + j]->name;
+					source[argc + j] = path;
+					destination[argc + j] =
+						prefix_path(dst, dst_len, path + length + 1);
+					modes[argc + j] = INDEX;
+					submodule_gitfile[argc + j] = NULL;
 				}
+				argc += last - first;
 			}
 		} else if (cache_name_pos(src, length) < 0)
 			bad = _("not under version control");
