@@ -2438,7 +2438,7 @@ parse_done:
 	 * uninteresting.
 	 */
 	if (prepare_revision_walk(&revs))
-		die("revision walk setup failed");
+		die(_("revision walk setup failed"));
 
 	if (is_null_sha1(sb.final->object.sha1)) {
 		char *buf;
