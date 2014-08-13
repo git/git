@@ -157,7 +157,7 @@ static void setup_git_env(void)
 					   "objects", &git_db_env);
 	git_index_file = git_path_from_env(INDEX_ENVIRONMENT, git_dir,
 					   "index", &git_index_env);
-	git_graft_file = git_path_from_env(GRAFT_ENVIRONMENT, git_dir,
+	git_graft_file = git_path_from_env(GRAFT_ENVIRONMENT, git_common_dir,
 					   "info/grafts", &git_graft_env);
 	if (getenv(NO_REPLACE_OBJECTS_ENVIRONMENT))
 		check_replace_refs = 0;

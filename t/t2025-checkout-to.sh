@@ -12,9 +12,15 @@ test_expect_success 'checkout --to not updating paths' '
 	test_must_fail git checkout --to -- init.t
 '
 
+test_expect_success 'checkout --to refuses to checkout locked branch' '
+	test_must_fail git checkout --to zere master &&
+	! test -d zere &&
+	! test -d .git/repos/zere
+'
+
 test_expect_success 'checkout --to a new worktree' '
 	git rev-parse HEAD >expect &&
-	git checkout --to here master &&
+	git checkout --detach --to here master &&
 	(
 		cd here &&
 		test_cmp ../init.t init.t &&
@@ -28,7 +34,7 @@ test_expect_success 'checkout --to a new worktree' '
 test_expect_success 'checkout --to from a linked checkout' '
 	(
 		cd here &&
-		git checkout --to nested-here master
+		git checkout --detach --to nested-here master
 		cd nested-here &&
 		git fsck
 	)
@@ -46,19 +52,17 @@ test_expect_success 'checkout --to a new worktree creating new branch' '
 	)
 '
 
-test_expect_success 'detach if the same branch is already checked out' '
+test_expect_success 'die the same branch is already checked out' '
 	(
 		cd here &&
-		git checkout newmaster &&
-		test_must_fail git symbolic-ref HEAD
+		test_must_fail git checkout newmaster
 	)
 '
 
-test_expect_success 'not detach on re-checking out current branch' '
+test_expect_success 'not die on re-checking out current branch' '
 	(
 		cd there &&
-		git checkout newmaster &&
-		git symbolic-ref HEAD
+		git checkout newmaster
 	)
 '
 
@@ -66,7 +70,7 @@ test_expect_success 'checkout --to from a bare repo' '
 	(
 		git clone --bare . bare &&
 		cd bare &&
-		git checkout --to ../there2 master
+		git checkout --to ../there2 -b bare-master master
 	)
 '
 
@@ -75,6 +79,24 @@ test_expect_success 'checkout from a bare repo without --to' '
 		cd bare &&
 		test_must_fail git checkout master
 	)
+'
+
+test_expect_success 'checkout with grafts' '
+	test_when_finished rm .git/info/grafts &&
+	test_commit abc &&
+	SHA1=`git rev-parse HEAD` &&
+	test_commit def &&
+	test_commit xyz &&
+	echo "`git rev-parse HEAD` $SHA1" >.git/info/grafts &&
+	cat >expected <<-\EOF &&
+	xyz
+	abc
+	EOF
+	git log --format=%s -2 >actual &&
+	test_cmp expected actual &&
+	git checkout --detach --to grafted master &&
+	git --git-dir=grafted/.git log --format=%s -2 >actual &&
+	test_cmp expected actual
 '
 
 test_done

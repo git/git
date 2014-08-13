@@ -77,7 +77,7 @@ test_expect_success 'not prune recent checkouts' '
 	mkdir zz &&
 	mkdir -p .git/repos/jlm &&
 	echo "$TRASH_DIRECTORY"/zz >.git/repos/jlm/gitdir &&
-	git prune --repos --verbose &&
+	git prune --repos --verbose --expire=2.days.ago &&
 	test -d .git/repos/jlm
 '
 
