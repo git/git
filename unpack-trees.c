@@ -1771,8 +1771,7 @@ int twoway_merge(const struct cache_entry * const *src,
 					return merged_entry(newtree, current, o);
 			}
 			return o->gently ? -1 : reject_merge(current, o);
-		}
-		else if ((!oldtree && !newtree) || /* 4 and 5 */
+		} else if ((!oldtree && !newtree) || /* 4 and 5 */
 			 (!oldtree && newtree &&
 			  same(current, newtree)) || /* 6 and 7 */
 			 (oldtree && newtree &&
@@ -1781,17 +1780,14 @@ int twoway_merge(const struct cache_entry * const *src,
 			  !same(oldtree, newtree) && /* 18 and 19 */
 			  same(current, newtree))) {
 			return keep_entry(current, o);
-		}
-		else if (oldtree && !newtree && same(current, oldtree)) {
+		} else if (oldtree && !newtree && same(current, oldtree)) {
 			/* 10 or 11 */
 			return deleted_entry(oldtree, current, o);
-		}
-		else if (oldtree && newtree &&
+		} else if (oldtree && newtree &&
 			 same(current, oldtree) && !same(current, newtree)) {
 			/* 20 or 21 */
 			return merged_entry(newtree, current, o);
-		}
-		else
+		} else
 			return o->gently ? -1 : reject_merge(current, o);
 	}
 	else if (newtree) {
