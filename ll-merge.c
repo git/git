@@ -225,11 +225,8 @@ static int read_merge_config(const char *var, const char *value, void *cb)
 	const char *key, *name;
 	int namelen;
 
-	if (!strcmp(var, "merge.default")) {
-		if (value)
-			default_ll_merge = xstrdup(value);
-		return 0;
-	}
+	if (!strcmp(var, "merge.default"))
+		return git_config_string(&default_ll_merge, var, value);
 
 	/*
 	 * We are not interested in anything but "merge.<name>.variable";
@@ -254,12 +251,8 @@ static int read_merge_config(const char *var, const char *value, void *cb)
 		ll_user_merge_tail = &(fn->next);
 	}
 
-	if (!strcmp("name", key)) {
-		if (!value)
-			return error("%s: lacks value", var);
-		fn->description = xstrdup(value);
-		return 0;
-	}
+	if (!strcmp("name", key))
+		return git_config_string(&fn->description, var, value);
 
 	if (!strcmp("driver", key)) {
 		if (!value)
@@ -285,12 +278,8 @@ static int read_merge_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
-	if (!strcmp("recursive", key)) {
-		if (!value)
-			return error("%s: lacks value", var);
-		fn->recursive = xstrdup(value);
-		return 0;
-	}
+	if (!strcmp("recursive", key))
+		return git_config_string(&fn->recursive, var, value);
 
 	return 0;
 }
