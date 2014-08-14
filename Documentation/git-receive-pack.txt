@@ -56,7 +56,21 @@ sha1-old and sha1-new should be valid objects in the repository.
 When accepting a signed push (see linkgit:git-push[1]), the signed
 push certificate is stored in a blob and an environment variable
 `GIT_PUSH_CERT` can be consulted for its object name.  See the
-description of `post-receive` hook for an example.
+description of `post-receive` hook for an example.  In addition, the
+certificate is verified using GPG and the result is exported with
+the following environment variables:
+
+`GIT_PUSH_CERT_SIGNER`::
+	The name and the e-mail address of the owner of the key that
+	signed the push certificate.
+
+`GIT_PUSH_CERT_KEY`::
+	The GPG key ID of the key that signed the push certificate.
+
+`GIT_PUSH_CERT_STATUS`::
+	The status of GPG verification of the push certificate,
+	using the same mnemonic as used in `%G?` format of `git log`
+	family of commands (see linkgit:git-log[1]).
 
 This hook is called before any refname is updated and before any
 fast-forward checks are performed.
@@ -106,13 +120,13 @@ the update.  Refs that were created will have sha1-old equal to
 0\{40}, otherwise sha1-old and sha1-new should be valid objects in
 the repository.
 
-The `GIT_PUSH_CERT` environment variable can be inspected, just as
+The `GIT_PUSH_CERT*` environment variables can be inspected, just as
 in `pre-receive` hook, after accepting a signed push.
 
 Using this hook, it is easy to generate mails describing the updates
 to the repository.  This example script sends one mail message per
 ref listing the commits pushed to the repository, and logs the push
-certificates of signed pushes to a logger
+certificates of signed pushes with good signatures to a logger
 service:
 
 	#!/bin/sh
@@ -130,11 +144,11 @@ service:
 		mail -s "Changes to ref $ref" commit-list@mydomain
 	done
 	# log signed push certificate, if any
-	if test -n "${GIT_PUSH_CERT-}"
+	if test -n "${GIT_PUSH_CERT-}" && test ${GIT_PUSH_CERT_STATUS} = G
 	then
 		(
 			git cat-file blob ${GIT_PUSH_CERT}
-		) | mail -s "push certificate" push-log@mydomain
+		) | mail -s "push certificate from $GIT_PUSH_CERT_SIGNER" push-log@mydomain
 	fi
 	exit 0
 
