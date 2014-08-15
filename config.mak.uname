@@ -88,6 +88,7 @@ ifeq ($(uname_S),Darwin)
 	NEEDS_LIBICONV = YesPlease
 	ifeq ($(shell expr "$(uname_R)" : '[15678]\.'),2)
 		OLD_ICONV = UnfortunatelyYes
+		NO_APPLE_COMMON_CRYPTO = YesPlease
 	endif
 	ifeq ($(shell expr "$(uname_R)" : '[15]\.'),2)
 		NO_STRLCPY = YesPlease
