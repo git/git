@@ -116,6 +116,16 @@ test_expect_success 'diff --stat' '
 	git diff --stat HEAD^ HEAD
 '
 
+test_expect_success 'diff' '
+	git diff HEAD^ HEAD >actual &&
+	grep "Binary files.*differ" actual
+'
+
+test_expect_success 'diff --cached' '
+	git diff --cached HEAD^ >actual &&
+	grep "Binary files.*differ" actual
+'
+
 test_expect_success 'hash-object' '
 	git hash-object large1
 '
