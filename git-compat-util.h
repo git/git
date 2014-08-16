@@ -267,19 +267,35 @@ extern char *gitbasename(char *);
 #endif
 
 #ifndef has_dos_drive_prefix
-#define has_dos_drive_prefix(path) 0
-#endif
-
-#ifndef offset_1st_component
-#define offset_1st_component(path) (is_dir_sep((path)[0]))
+static inline int git_has_dos_drive_prefix(const char *path)
+{
+	return 0;
+}
+#define has_dos_drive_prefix git_has_dos_drive_prefix
 #endif
 
 #ifndef is_dir_sep
-#define is_dir_sep(c) ((c) == '/')
+static inline int git_is_dir_sep(int c)
+{
+	return c == '/';
+}
+#define is_dir_sep git_is_dir_sep
+#endif
+
+#ifndef offset_1st_component
+static inline int git_offset_1st_component(const char *path)
+{
+	return is_dir_sep(path[0]);
+}
+#define offset_1st_component git_offset_1st_component
 #endif
 
 #ifndef find_last_dir_sep
-#define find_last_dir_sep(path) strrchr(path, '/')
+static inline char *git_find_last_dir_sep(const char *path)
+{
+	return strrchr(path, '/');
+}
+#define find_last_dir_sep git_find_last_dir_sep
 #endif
 
 #if defined(__HP_cc) && (__HP_cc >= 61000)
