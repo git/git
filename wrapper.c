@@ -9,16 +9,23 @@ static void do_nothing(size_t size)
 
 static void (*try_to_free_routine)(size_t size) = do_nothing;
 
-static void memory_limit_check(size_t size)
+static int memory_limit_check(size_t size, int gentle)
 {
 	static int limit = -1;
 	if (limit == -1) {
 		const char *env = getenv("GIT_ALLOC_LIMIT");
 		limit = env ? atoi(env) * 1024 : 0;
 	}
-	if (limit && size > limit)
-		die("attempting to allocate %"PRIuMAX" over limit %d",
-		    (intmax_t)size, limit);
+	if (limit && size > limit) {
+		if (gentle) {
+			error("attempting to allocate %"PRIuMAX" over limit %d",
+			      (intmax_t)size, limit);
+			return -1;
+		} else
+			die("attempting to allocate %"PRIuMAX" over limit %d",
+			    (intmax_t)size, limit);
+	}
+	return 0;
 }
 
 try_to_free_t set_try_to_free_routine(try_to_free_t routine)
@@ -42,11 +49,12 @@ char *xstrdup(const char *str)
 	return ret;
 }
 
-void *xmalloc(size_t size)
+static void *do_xmalloc(size_t size, int gentle)
 {
 	void *ret;
 
-	memory_limit_check(size);
+	if (memory_limit_check(size, gentle))
+		return NULL;
 	ret = malloc(size);
 	if (!ret && !size)
 		ret = malloc(1);
@@ -55,9 +63,16 @@ void *xmalloc(size_t size)
 		ret = malloc(size);
 		if (!ret && !size)
 			ret = malloc(1);
-		if (!ret)
-			die("Out of memory, malloc failed (tried to allocate %lu bytes)",
-			    (unsigned long)size);
+		if (!ret) {
+			if (!gentle)
+				die("Out of memory, malloc failed (tried to allocate %lu bytes)",
+				    (unsigned long)size);
+			else {
+				error("Out of memory, malloc failed (tried to allocate %lu bytes)",
+				      (unsigned long)size);
+				return NULL;
+			}
+		}
 	}
 #ifdef XMALLOC_POISON
 	memset(ret, 0xA5, size);
@@ -65,14 +80,35 @@ void *xmalloc(size_t size)
 	return ret;
 }
 
-void *xmallocz(size_t size)
+void *xmalloc(size_t size)
+{
+	return do_xmalloc(size, 0);
+}
+
+static void *do_xmallocz(size_t size, int gentle)
 {
 	void *ret;
-	if (unsigned_add_overflows(size, 1))
-		die("Data too large to fit into virtual memory space.");
-	ret = xmalloc(size + 1);
-	((char*)ret)[size] = 0;
+	if (unsigned_add_overflows(size, 1)) {
+		if (gentle) {
+			error("Data too large to fit into virtual memory space.");
+			return NULL;
+		} else
+			die("Data too large to fit into virtual memory space.");
+	}
+	ret = do_xmalloc(size + 1, gentle);
+	if (ret)
+		((char*)ret)[size] = 0;
 	return ret;
+}
+
+void *xmallocz(size_t size)
+{
+	return do_xmallocz(size, 0);
+}
+
+void *xmallocz_gently(size_t size)
+{
+	return do_xmallocz(size, 1);
 }
 
 /*
@@ -96,7 +132,7 @@ void *xrealloc(void *ptr, size_t size)
 {
 	void *ret;
 
-	memory_limit_check(size);
+	memory_limit_check(size, 0);
 	ret = realloc(ptr, size);
 	if (!ret && !size)
 		ret = realloc(ptr, 1);
@@ -115,7 +151,7 @@ void *xcalloc(size_t nmemb, size_t size)
 {
 	void *ret;
 
-	memory_limit_check(size * nmemb);
+	memory_limit_check(size * nmemb, 0);
 	ret = calloc(nmemb, size);
 	if (!ret && (!nmemb || !size))
 		ret = calloc(1, 1);
