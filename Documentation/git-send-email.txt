@@ -20,7 +20,7 @@ files in the directory), or directly as a revision list.  In the
 last case, any format accepted by linkgit:git-format-patch[1] can
 be passed to git send-email.
 
-The header of the email is configurable by command line options.  If not
+The header of the email is configurable via command-line options.  If not
 specified on the command line, the user will be prompted with a ReadLine
 enabled interface to provide the necessary information.
 
@@ -68,7 +68,7 @@ The --cc option must be repeated for each user you want on the cc list.
 When '--compose' is used, git send-email will use the From, Subject, and
 In-Reply-To headers specified in the message. If the body of the message
 (what you type after the headers and a blank line) only contains blank
-(or Git: prefixed) lines the summary won't be sent, but From, Subject,
+(or Git: prefixed) lines, the summary won't be sent, but From, Subject,
 and In-Reply-To headers will be used unless they are removed.
 +
 Missing From or In-Reply-To headers will be prompted for.
@@ -78,7 +78,7 @@ See the CONFIGURATION section for 'sendemail.multiedit'.
 --from=<address>::
 	Specify the sender of the emails.  If not specified on the command line,
 	the value of the 'sendemail.from' configuration option is used.  If
-	neither the command line option nor 'sendemail.from' are set, then the
+	neither the command-line option nor 'sendemail.from' are set, then the
 	user will be prompted for the value.  The default for the prompt will be
 	the value of GIT_AUTHOR_IDENT, or GIT_COMMITTER_IDENT if that is not
 	set, as returned by "git var -l".
@@ -247,6 +247,18 @@ Automating
 	If this is set, add emails found in Signed-off-by: or Cc: lines to the
 	cc list. Default is the value of 'sendemail.signedoffbycc' configuration
 	value; if that is unspecified, default to --signed-off-by-cc.
+
+--[no-]cc-cover::
+	If this is set, emails found in Cc: headers in the first patch of
+	the series (typically the cover letter) are added to the cc list
+	for each email set. Default is the value of 'sendemail.cccover'
+	configuration value; if that is unspecified, default to --no-cc-cover.
+
+--[no-]to-cover::
+	If this is set, emails found in To: headers in the first patch of
+	the series (typically the cover letter) are added to the to list
+	for each email set. Default is the value of 'sendemail.tocover'
+	configuration value; if that is unspecified, default to --no-to-cover.
 
 --suppress-cc=<category>::
 	Specify an additional category of recipients to suppress the

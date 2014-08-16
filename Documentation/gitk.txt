@@ -27,7 +27,7 @@ gitk-specific options.
 
 gitk generally only understands options with arguments in the
 'sticked' form (see linkgit:gitcli[7]) due to limitations in the
-command line parser.
+command-line parser.
 
 rev-list options and arguments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

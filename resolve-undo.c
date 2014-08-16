@@ -110,7 +110,7 @@ void resolve_undo_clear_index(struct index_state *istate)
 	string_list_clear(resolve_undo, 1);
 	free(resolve_undo);
 	istate->resolve_undo = NULL;
-	istate->cache_changed = 1;
+	istate->cache_changed |= RESOLVE_UNDO_CHANGED;
 }
 
 int unmerge_index_entry_at(struct index_state *istate, int pos)

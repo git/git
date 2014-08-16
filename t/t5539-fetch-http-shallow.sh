@@ -54,6 +54,7 @@ EOF
 test_expect_success 'no shallow lines after receiving ACK ready' '
 	(
 		cd shallow &&
+		test_tick &&
 		for i in $(test_seq 15)
 		do
 			git checkout --orphan unrelated$i &&

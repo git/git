@@ -300,11 +300,13 @@ static int fuzzy_matchlines(const char *s1, size_t n1,
 	while ((*last2 == '\r') || (*last2 == '\n'))
 		last2--;
 
-	/* skip leading whitespace */
-	while (isspace(*s1) && (s1 <= last1))
-		s1++;
-	while (isspace(*s2) && (s2 <= last2))
-		s2++;
+	/* skip leading whitespaces, if both begin with whitespace */
+	if (s1 <= last1 && s2 <= last2 && isspace(*s1) && isspace(*s2)) {
+		while (isspace(*s1) && (s1 <= last1))
+			s1++;
+		while (isspace(*s2) && (s2 <= last2))
+			s2++;
+	}
 	/* early return if both lines are empty */
 	if ((s1 > last1) && (s2 > last2))
 		return 1;
@@ -1073,7 +1075,7 @@ static int gitdiff_index(const char *line, struct patch *patch)
 
 	line = ptr + 2;
 	ptr = strchr(line, ' ');
-	eol = strchr(line, '\n');
+	eol = strchrnul(line, '\n');
 
 	if (!ptr || eol < ptr)
 		ptr = eol;
@@ -1279,9 +1281,7 @@ static int parse_git_header(const char *line, int len, unsigned int size, struct
 	 */
 	patch->def_name = git_header_name(line, len);
 	if (patch->def_name && root) {
-		char *s = xmalloc(root_len + strlen(patch->def_name) + 1);
-		strcpy(s, root);
-		strcpy(s + root_len, patch->def_name);
+		char *s = xstrfmt("%s%s", root, patch->def_name);
 		free(patch->def_name);
 		patch->def_name = s;
 	}
@@ -2867,9 +2867,7 @@ static int apply_binary_fragment(struct image *img, struct patch *patch)
 	case BINARY_LITERAL_DEFLATED:
 		clear_image(img);
 		img->len = fragment->size;
-		img->buf = xmalloc(img->len+1);
-		memcpy(img->buf, fragment->patch, img->len);
-		img->buf[img->len] = '\0';
+		img->buf = xmemdupz(fragment->patch, img->len);
 		return 0;
 	}
 	return -1;
@@ -3084,13 +3082,15 @@ static void prepare_fn_table(struct patch *patch)
 	}
 }
 
-static int checkout_target(struct cache_entry *ce, struct stat *st)
+static int checkout_target(struct index_state *istate,
+			   struct cache_entry *ce, struct stat *st)
 {
 	struct checkout costate;
 
 	memset(&costate, 0, sizeof(costate));
 	costate.base_dir = "";
 	costate.refresh_cache = 1;
+	costate.istate = istate;
 	if (checkout_entry(ce, &costate, NULL) || lstat(ce->name, st))
 		return error(_("cannot checkout %s"), ce->name);
 	return 0;
@@ -3257,7 +3257,7 @@ static int load_current(struct image *image, struct patch *patch)
 	if (lstat(name, &st)) {
 		if (errno != ENOENT)
 			return error(_("%s: %s"), name, strerror(errno));
-		if (checkout_target(ce, &st))
+		if (checkout_target(&the_index, ce, &st))
 			return -1;
 	}
 	if (verify_index_match(ce, &st))
@@ -3411,7 +3411,7 @@ static int check_preimage(struct patch *patch, struct cache_entry **ce, struct s
 		}
 		*ce = active_cache[pos];
 		if (stat_ret < 0) {
-			if (checkout_target(*ce, st))
+			if (checkout_target(&the_index, *ce, st))
 				return -1;
 		}
 		if (!cached && verify_index_match(*ce, st))
@@ -3644,7 +3644,7 @@ static void build_fake_ancestor(struct patch *list, const char *filename)
 {
 	struct patch *patch;
 	struct index_state result = { NULL };
-	int fd;
+	static struct lock_file lock;
 
 	/* Once we start supporting the reverse patch, it may be
 	 * worth showing the new sha1 prefix, but until then...
@@ -3682,8 +3682,8 @@ static void build_fake_ancestor(struct patch *list, const char *filename)
 			die ("Could not add %s to temporary index", name);
 	}
 
-	fd = open(filename, O_WRONLY | O_CREAT, 0666);
-	if (fd < 0 || write_index(&result, fd) || close(fd))
+	hold_lock_file_for_update(&lock, filename, LOCK_DIE_ON_ERROR);
+	if (write_locked_index(&result, &lock, COMMIT_LOCK))
 		die ("Could not write temporary index to %s", filename);
 
 	discard_index(&result);
@@ -3845,9 +3845,10 @@ static void add_index_file(const char *path, unsigned mode, void *buf, unsigned 
 	ce->ce_flags = create_ce_flags(0);
 	ce->ce_namelen = namelen;
 	if (S_ISGITLINK(mode)) {
-		const char *s = buf;
+		const char *s;
 
-		if (get_sha1_hex(s + strlen("Subproject commit "), ce->sha1))
+		if (!skip_prefix(buf, "Subproject commit ", &s) ||
+		    get_sha1_hex(s, ce->sha1))
 			die(_("corrupt patch for submodule %s"), path);
 	} else {
 		if (!cached) {
@@ -4501,8 +4502,7 @@ int cmd_apply(int argc, const char **argv, const char *prefix_)
 	}
 
 	if (update_index) {
-		if (write_cache(newfd, active_cache, active_nr) ||
-		    commit_locked_index(&lock_file))
+		if (write_locked_index(&the_index, &lock_file, COMMIT_LOCK))
 			die(_("Unable to write new index file"));
 	}
 

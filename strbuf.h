@@ -45,7 +45,18 @@ static inline void strbuf_setlen(struct strbuf *sb, size_t len)
 extern void strbuf_trim(struct strbuf *);
 extern void strbuf_rtrim(struct strbuf *);
 extern void strbuf_ltrim(struct strbuf *);
+extern int strbuf_reencode(struct strbuf *sb, const char *from, const char *to);
+extern void strbuf_tolower(struct strbuf *sb);
 extern int strbuf_cmp(const struct strbuf *, const struct strbuf *);
+
+static inline int strbuf_strip_suffix(struct strbuf *sb, const char *suffix)
+{
+	if (strip_suffix_mem(sb->buf, &sb->len, suffix)) {
+		strbuf_setlen(sb, sb->len);
+		return 1;
+	} else
+		return 0;
+}
 
 /*
  * Split str (of length slen) at the specified terminator character.
@@ -182,5 +193,16 @@ __attribute__((format (printf,1,2)))
 extern int printf_ln(const char *fmt, ...);
 __attribute__((format (printf,2,3)))
 extern int fprintf_ln(FILE *fp, const char *fmt, ...);
+
+char *xstrdup_tolower(const char *);
+
+/*
+ * Create a newly allocated string using printf format. You can do this easily
+ * with a strbuf, but this provides a shortcut to save a few lines.
+ */
+__attribute__((format (printf, 1, 0)))
+char *xstrvfmt(const char *fmt, va_list ap);
+__attribute__((format (printf, 1, 2)))
+char *xstrfmt(const char *fmt, ...);
 
 #endif /* STRBUF_H */

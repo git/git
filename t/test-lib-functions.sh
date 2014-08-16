@@ -489,6 +489,17 @@ test_path_is_dir () {
 	fi
 }
 
+# Check if the directory exists and is empty as expected, barf otherwise.
+test_dir_is_empty () {
+	test_path_is_dir "$1" &&
+	if test -n "$(ls -a1 "$1" | egrep -v '^\.\.?$')"
+	then
+		echo "Directory '$1' is not empty, it contains:"
+		ls -la "$1"
+		return 1
+	fi
+}
+
 test_path_is_missing () {
 	if [ -e "$1" ]
 	then
@@ -542,7 +553,7 @@ test_must_fail () {
 	if test $exit_code = 0; then
 		echo >&2 "test_must_fail: command succeeded: $*"
 		return 1
-	elif test $exit_code -gt 129 -a $exit_code -le 192; then
+	elif test $exit_code -gt 129 && test $exit_code -le 192; then
 		echo >&2 "test_must_fail: died by signal: $*"
 		return 1
 	elif test $exit_code = 127; then
@@ -569,7 +580,7 @@ test_must_fail () {
 test_might_fail () {
 	"$@"
 	exit_code=$?
-	if test $exit_code -gt 129 -a $exit_code -le 192; then
+	if test $exit_code -gt 129 && test $exit_code -le 192; then
 		echo >&2 "test_might_fail: died by signal: $*"
 		return 1
 	elif test $exit_code = 127; then
@@ -617,12 +628,10 @@ test_cmp() {
 	$GIT_TEST_CMP "$@"
 }
 
+# test_cmp_bin - helper to compare binary files
+
 test_cmp_bin() {
-	if test -z "$GIT_TEST_CMP_BIN" ; then
-		$GIT_TEST_CMP "$@"
-	else
-		$GIT_TEST_CMP_BIN "$@"
-	fi
+	cmp "$@"
 }
 
 # Check if the file expected to be empty is indeed empty, and barfs
@@ -723,6 +732,11 @@ test_ln_s_add () {
 		ln_s_obj=$(git hash-object -w "$2") &&
 		git update-index --add --cacheinfo 120000 $ln_s_obj "$2"
 	fi
+}
+
+# This function writes out its parameters, one per line
+test_write_lines () {
+	printf "%s\n" "$@"
 }
 
 perl () {

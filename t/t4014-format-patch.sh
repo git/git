@@ -43,7 +43,7 @@ test_expect_success setup '
 test_expect_success "format-patch --ignore-if-in-upstream" '
 
 	git format-patch --stdout master..side >patch0 &&
-	cnt=`grep "^From " patch0 | wc -l` &&
+	cnt=$(grep "^From " patch0 | wc -l) &&
 	test $cnt = 3
 
 '
@@ -52,7 +52,7 @@ test_expect_success "format-patch --ignore-if-in-upstream" '
 
 	git format-patch --stdout \
 		--ignore-if-in-upstream master..side >patch1 &&
-	cnt=`grep "^From " patch1 | wc -l` &&
+	cnt=$(grep "^From " patch1 | wc -l) &&
 	test $cnt = 2
 
 '
@@ -69,7 +69,7 @@ test_expect_success "format-patch doesn't consider merge commits" '
 	git checkout -b merger master &&
 	test_tick &&
 	git merge --no-ff slave &&
-	cnt=`git format-patch -3 --stdout | grep "^From " | wc -l` &&
+	cnt=$(git format-patch -3 --stdout | grep "^From " | wc -l) &&
 	test $cnt = 3
 '
 
@@ -77,7 +77,7 @@ test_expect_success "format-patch result applies" '
 
 	git checkout -b rebuild-0 master &&
 	git am -3 patch0 &&
-	cnt=`git rev-list master.. | wc -l` &&
+	cnt=$(git rev-list master.. | wc -l) &&
 	test $cnt = 2
 '
 
@@ -85,7 +85,7 @@ test_expect_success "format-patch --ignore-if-in-upstream result applies" '
 
 	git checkout -b rebuild-1 master &&
 	git am -3 patch1 &&
-	cnt=`git rev-list master.. | wc -l` &&
+	cnt=$(git rev-list master.. | wc -l) &&
 	test $cnt = 2
 '
 
@@ -760,6 +760,67 @@ test_expect_success 'format-patch --signature="" suppresses signatures' '
 	git format-patch --stdout --signature="" -1 >output &&
 	check_patch output &&
 	! grep "^-- \$" output
+'
+
+test_expect_success 'prepare mail-signature input' '
+	cat >mail-signature <<-\EOF
+
+	Test User <test.email@kernel.org>
+	http://git.kernel.org/cgit/git/git.git
+
+	git.kernel.org/?p=git/git.git;a=summary
+
+	EOF
+'
+
+test_expect_success '--signature-file=file works' '
+	git format-patch --stdout --signature-file=mail-signature -1 >output &&
+	check_patch output &&
+	sed -e "1,/^-- \$/d" <output >actual &&
+	{
+		cat mail-signature && echo
+	} >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success 'format.signaturefile works' '
+	test_config format.signaturefile mail-signature &&
+	git format-patch --stdout -1 >output &&
+	check_patch output &&
+	sed -e "1,/^-- \$/d" <output >actual &&
+	{
+		cat mail-signature && echo
+	} >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success '--no-signature suppresses format.signaturefile ' '
+	test_config format.signaturefile mail-signature &&
+	git format-patch --stdout --no-signature -1 >output &&
+	check_patch output &&
+	! grep "^-- \$" output
+'
+
+test_expect_success '--signature-file overrides format.signaturefile' '
+	cat >other-mail-signature <<-\EOF
+	Use this other signature instead of mail-signature.
+	EOF
+	test_config format.signaturefile mail-signature &&
+	git format-patch --stdout \
+			--signature-file=other-mail-signature -1 >output &&
+	check_patch output &&
+	sed -e "1,/^-- \$/d" <output >actual &&
+	{
+		cat other-mail-signature && echo
+	} >expect &&
+	test_cmp expect actual
+'
+
+test_expect_success '--signature overrides format.signaturefile' '
+	test_config format.signaturefile mail-signature &&
+	git format-patch --stdout --signature="my sig" -1 >output &&
+	check_patch output &&
+	grep "my sig" output
 '
 
 test_expect_success TTY 'format-patch --stdout paginates' '

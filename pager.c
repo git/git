@@ -64,7 +64,7 @@ void setup_pager(void)
 {
 	const char *pager = git_pager(isatty(1));
 
-	if (!pager || pager_in_use())
+	if (!pager)
 		return;
 
 	/*
@@ -85,7 +85,7 @@ void setup_pager(void)
 		int i = 0;
 
 		if (!getenv("LESS"))
-			env[i++] = "LESS=FRSX";
+			env[i++] = "LESS=FRX";
 		if (!getenv("LV"))
 			env[i++] = "LV=-c";
 		env[i] = NULL;

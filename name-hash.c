@@ -179,7 +179,7 @@ static int same_name(const struct cache_entry *ce, const char *name, int namelen
 	 * Always do exact compare, even if we want a case-ignoring comparison;
 	 * we do the quick exact one first, because it will be the common case.
 	 */
-	if (len == namelen && !cache_name_compare(name, namelen, ce->name, len))
+	if (len == namelen && !memcmp(name, ce->name, len))
 		return 1;
 
 	if (!icase)
@@ -213,12 +213,11 @@ struct cache_entry *index_dir_exists(struct index_state *istate, const char *nam
 struct cache_entry *index_file_exists(struct index_state *istate, const char *name, int namelen, int icase)
 {
 	struct cache_entry *ce;
-	struct hashmap_entry key;
 
 	lazy_init_name_hash(istate);
 
-	hashmap_entry_init(&key, memihash(name, namelen));
-	ce = hashmap_get(&istate->name_hash, &key, NULL);
+	ce = hashmap_get_from_hash(&istate->name_hash,
+				   memihash(name, namelen), NULL);
 	while (ce) {
 		if (same_name(ce, name, namelen, icase))
 			return ce;

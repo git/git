@@ -68,23 +68,3 @@ void argv_array_clear(struct argv_array *array)
 	}
 	argv_array_init(array);
 }
-
-const char **argv_array_detach(struct argv_array *array, int *argc)
-{
-	const char **argv =
-		array->argv == empty_argv || array->argc == 0 ? NULL : array->argv;
-	if (argc)
-		*argc = array->argc;
-	argv_array_init(array);
-	return argv;
-}
-
-void argv_array_free_detached(const char **argv)
-{
-	if (argv) {
-		int i;
-		for (i = 0; argv[i]; i++)
-			free((char **)argv[i]);
-		free(argv);
-	}
-}

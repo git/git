@@ -188,4 +188,10 @@ test_expect_success 'shortlog ignores commits with missing authors' '
 	test_cmp expect actual
 '
 
+test_expect_success 'shortlog with revision pseudo options' '
+	git shortlog --all &&
+	git shortlog --branches &&
+	git shortlog --exclude=refs/heads/m* --all
+'
+
 test_done

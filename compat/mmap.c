@@ -14,7 +14,7 @@ void *git_mmap(void *start, size_t length, int prot, int flags, int fd, off_t of
 	}
 
 	while (n < length) {
-		ssize_t count = pread(fd, (char *)start + n, length - n, offset + n);
+		ssize_t count = xpread(fd, (char *)start + n, length - n, offset + n);
 
 		if (count == 0) {
 			memset((char *)start+n, 0, length-n);
@@ -22,8 +22,6 @@ void *git_mmap(void *start, size_t length, int prot, int flags, int fd, off_t of
 		}
 
 		if (count < 0) {
-			if (errno == EAGAIN || errno == EINTR)
-				continue;
 			free(start);
 			errno = EACCES;
 			return MAP_FAILED;

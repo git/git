@@ -72,6 +72,14 @@ endif::git-pull[]
 	setting. See linkgit:git-config[1].
 
 ifndef::git-pull[]
+--refmap=<refspec>::
+	When fetching refs listed on the command line, use the
+	specified refspec (can be given more than once) to map the
+	refs to remote-tracking branches, instead of the values of
+	`remote.*.fetch` configuration variables for the remote
+	repository.  See section on "Configured Remote-tracking
+	Branches" for details.
+
 -t::
 --tags::
 	Fetch all tags from the remote (i.e., fetch remote tags

@@ -169,6 +169,29 @@ test_expect_success 'default to common base in @{upstream}s reflog if no upstrea
 	test_cmp expect actual
 '
 
+test_expect_success 'cherry-picked commits and fork-point work together' '
+	git checkout default-base &&
+	echo Amended >A &&
+	git commit -a --no-edit --amend &&
+	test_commit B B &&
+	test_commit new_B B "New B" &&
+	test_commit C C &&
+	git checkout default &&
+	git reset --hard default-base@{4} &&
+	test_commit D D &&
+	git cherry-pick -2 default-base^ &&
+	test_commit final_B B "Final B" &&
+	git rebase &&
+	echo Amended >expect &&
+	test_cmp A expect &&
+	echo "Final B" >expect &&
+	test_cmp B expect &&
+	echo C >expect &&
+	test_cmp C expect &&
+	echo D >expect &&
+	test_cmp D expect
+'
+
 test_expect_success 'rebase -q is quiet' '
 	git checkout -b quiet topic &&
 	git rebase -q master >output.out 2>&1 &&

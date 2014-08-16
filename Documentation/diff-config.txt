@@ -76,7 +76,7 @@ diff.ignoreSubmodules::
 	this setting when reporting uncommitted changes. Setting it to
 	'all' disables the submodule summary normally shown by 'git commit'
 	and 'git status' when 'status.submodulesummary' is set unless it is
-	overridden by using the --ignore-submodules command line option.
+	overridden by using the --ignore-submodules command-line option.
 	The 'git submodule' commands are not affected by this setting.
 
 diff.mnemonicprefix::

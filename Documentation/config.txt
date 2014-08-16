@@ -387,7 +387,7 @@ false), while all other repositories are assumed to be bare (bare
 core.worktree::
 	Set the path to the root of the working tree.
 	This can be overridden by the GIT_WORK_TREE environment
-	variable and the '--work-tree' command line option.
+	variable and the '--work-tree' command-line option.
 	The value can be an absolute path or relative to the path to
 	the .git directory, which is either specified by --git-dir
 	or GIT_DIR, or automatically discovered.
@@ -495,7 +495,7 @@ core.deltaBaseCacheLimit::
 	to avoid unpacking and decompressing frequently used base
 	objects multiple times.
 +
-Default is 16 MiB on all platforms.  This should be reasonable
+Default is 96 MiB on all platforms.  This should be reasonable
 for all users/operating systems, except on the largest projects.
 You probably do not need to adjust this value.
 +
@@ -529,7 +529,7 @@ core.askpass::
 	environment variable. If not set, fall back to the value of the
 	'SSH_ASKPASS' environment variable or, failing that, a simple password
 	prompt. The external program shall be given a suitable prompt as
-	command line argument and write the password on its STDOUT.
+	command-line argument and write the password on its STDOUT.
 
 core.attributesfile::
 	In addition to '.gitattributes' (per-directory) and
@@ -550,6 +550,9 @@ core.commentchar::
 	messages consider a line that begins with this character
 	commented, and removes them after the editor returns
 	(default '#').
++
+If set to "auto", `git-commit` would select a character that is not
+the beginning character of any line in existing commit messages.
 
 sequence.editor::
 	Text editor used by `git rebase -i` for editing the rebase instruction file.
@@ -564,14 +567,19 @@ core.pager::
 	configuration, then `$PAGER`, and then the default chosen at
 	compile time (usually 'less').
 +
-When the `LESS` environment variable is unset, Git sets it to `FRSX`
+When the `LESS` environment variable is unset, Git sets it to `FRX`
 (if `LESS` environment variable is set, Git does not change it at
 all).  If you want to selectively override Git's default setting
-for `LESS`, you can set `core.pager` to e.g. `less -+S`.  This will
+for `LESS`, you can set `core.pager` to e.g. `less -S`.  This will
 be passed to the shell by Git, which will translate the final
-command to `LESS=FRSX less -+S`. The environment tells the command
-to set the `S` option to chop long lines but the command line
-resets it to the default to fold long lines.
+command to `LESS=FRX less -S`. The environment does not set the
+`S` option but the command line does, instructing less to truncate
+long lines. Similarly, setting `core.pager` to `less -+F` will
+deactivate the `F` option specified by the environment from the
+command-line, deactivating the "quit if one screen" behavior of
+`less`.  One can specifically activate some flags for particular
+commands: for example, setting `pager.blame` to `less -S` enables
+line truncation only for `git blame`.
 +
 Likewise, when the `LV` environment variable is unset, Git sets it
 to `-c`.  You can override this setting by exporting `LV` with
@@ -619,9 +627,9 @@ core.preloadindex::
 +
 This can speed up operations like 'git diff' and 'git status' especially
 on filesystems like NFS that have weak caching semantics and thus
-relatively high IO latencies.  With this set to 'true', Git will do the
+relatively high IO latencies.  When enabled, Git will do the
 index comparison to the filesystem data in parallel, allowing
-overlapping IO's.
+overlapping IO's.  Defaults to true.
 
 core.fscache::
 	Enable additional caching of file system data for some operations.
@@ -1134,6 +1142,10 @@ format.signature::
 	Set this variable to the empty string ("") to suppress
 	signature generation.
 
+format.signaturefile::
+	Works just like format.signature except the contents of the
+	file specified by this variable will be used as the signature.
+
 format.suffix::
 	The default for format-patch is to output files with the suffix
 	`.patch`. Use this variable to change that suffix (make sure to
@@ -1344,7 +1356,7 @@ grep.extendedRegexp::
 gpg.program::
 	Use this custom program instead of "gpg" found on $PATH when
 	making or verifying a PGP signature. The program must support the
-	same command line interface as GPG, namely, to verify a detached
+	same command-line interface as GPG, namely, to verify a detached
 	signature, "gpg --verify $file - <$signature" is run, and the
 	program is expected to signal a good signature by exiting with
 	code 0, and to generate an ascii-armored detached signature, the
@@ -1913,12 +1925,7 @@ pack.useBitmaps::
 	you are debugging pack bitmaps.
 
 pack.writebitmaps::
-	When true, git will write a bitmap index when packing all
-	objects to disk (e.g., when `git repack -a` is run).  This
-	index can speed up the "counting objects" phase of subsequent
-	packs created for clones and fetches, at the cost of some disk
-	space and extra time spent on the initial repack.  Defaults to
-	false.
+	This is a deprecated synonym for `repack.writeBitmaps`.
 
 pack.writeBitmapHashCache::
 	When true, git will include a "hash cache" section in the bitmap
@@ -2200,7 +2207,15 @@ repack.packKeptObjects::
 	`--pack-kept-objects` was passed. See linkgit:git-repack[1] for
 	details. Defaults to `false` normally, but `true` if a bitmap
 	index is being written (either via `--write-bitmap-index` or
-	`pack.writeBitmaps`).
+	`repack.writeBitmaps`).
+
+repack.writeBitmaps::
+	When true, git will write a bitmap index when packing all
+	objects to disk (e.g., when `git repack -a` is run).  This
+	index can speed up the "counting objects" phase of subsequent
+	packs created for clones and fetches, at the cost of some disk
+	space and extra time spent on the initial repack.  Defaults to
+	false.
 
 rerere.autoupdate::
 	When set to true, `git-rerere` updates the index with the
@@ -2318,9 +2333,11 @@ status.submodulesummary::
 	--summary-limit option of linkgit:git-submodule[1]). Please note
 	that the summary output command will be suppressed for all
 	submodules when `diff.ignoreSubmodules` is set to 'all' or only
-	for those submodules where `submodule.<name>.ignore=all`. To
+	for those submodules where `submodule.<name>.ignore=all`. The only
+	exception to that rule is that status and commit will show staged
+	submodule changes. To
 	also view the summary for ignored submodules you can either use
-	the --ignore-submodules=dirty command line option or the 'git
+	the --ignore-submodules=dirty command-line option or the 'git
 	submodule summary' command, which shows a similar output but does
 	not honor these settings.
 
@@ -2342,14 +2359,16 @@ submodule.<name>.branch::
 submodule.<name>.fetchRecurseSubmodules::
 	This option can be used to control recursive fetching of this
 	submodule. It can be overridden by using the --[no-]recurse-submodules
-	command line option to "git fetch" and "git pull".
+	command-line option to "git fetch" and "git pull".
 	This setting will override that from in the linkgit:gitmodules[5]
 	file.
 
 submodule.<name>.ignore::
 	Defines under what circumstances "git status" and the diff family show
 	a submodule as modified. When set to "all", it will never be considered
-	modified, "dirty" will ignore all changes to the submodules work tree and
+	modified (but it will nonetheless show up in the output of status and
+	commit when it has been staged), "dirty" will ignore all changes
+	to the submodules work tree and
 	takes only differences between the HEAD of the submodule and the commit
 	recorded in the superproject into account. "untracked" will additionally
 	let submodules with modified tracked files in their work tree show up.
@@ -2359,6 +2378,11 @@ submodule.<name>.ignore::
 	both settings can be overridden on the command line by using the
 	"--ignore-submodules" option. The 'git submodule' commands are not
 	affected by this setting.
+
+tag.sort::
+	This variable controls the sort ordering of tags when displayed by
+	linkgit:git-tag[1]. Without the "--sort=<value>" option provided, the
+	value of this variable will be used as the default.
 
 tar.umask::
 	This variable can be used to restrict the permission bits of

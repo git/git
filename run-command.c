@@ -279,6 +279,9 @@ int start_command(struct child_process *cmd)
 	int failed_errno;
 	char *str;
 
+	if (!cmd->argv)
+		cmd->argv = cmd->args.argv;
+
 	/*
 	 * In case of errors we must keep the promise to close FDs
 	 * that have been passed in via ->in and ->out.
@@ -328,6 +331,7 @@ int start_command(struct child_process *cmd)
 fail_pipe:
 			error("cannot create %s pipe for %s: %s",
 				str, cmd->argv[0], strerror(failed_errno));
+			argv_array_clear(&cmd->args);
 			errno = failed_errno;
 			return -1;
 		}
@@ -513,6 +517,7 @@ fail_pipe:
 			close_pair(fderr);
 		else if (cmd->err)
 			close(cmd->err);
+		argv_array_clear(&cmd->args);
 		errno = failed_errno;
 		return -1;
 	}
@@ -537,7 +542,9 @@ fail_pipe:
 
 int finish_command(struct child_process *cmd)
 {
-	return wait_or_whine(cmd->pid, cmd->argv[0]);
+	int ret = wait_or_whine(cmd->pid, cmd->argv[0]);
+	argv_array_clear(&cmd->args);
+	return ret;
 }
 
 int run_command(struct child_process *cmd)
@@ -757,28 +764,21 @@ char *find_hook(const char *name)
 int run_hook_ve(const char *const *env, const char *name, va_list args)
 {
 	struct child_process hook;
-	struct argv_array argv = ARGV_ARRAY_INIT;
 	const char *p;
-	int ret;
 
 	p = find_hook(name);
 	if (!p)
 		return 0;
 
-	argv_array_push(&argv, p);
-
-	while ((p = va_arg(args, const char *)))
-		argv_array_push(&argv, p);
-
 	memset(&hook, 0, sizeof(hook));
-	hook.argv = argv.argv;
+	argv_array_push(&hook.args, p);
+	while ((p = va_arg(args, const char *)))
+		argv_array_push(&hook.args, p);
 	hook.env = env;
 	hook.no_stdin = 1;
 	hook.stdout_to_stderr = 1;
 
-	ret = run_command(&hook);
-	argv_array_clear(&argv);
-	return ret;
+	return run_command(&hook);
 }
 
 int run_hook_le(const char *const *env, const char *name, ...)

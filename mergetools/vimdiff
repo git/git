@@ -20,16 +20,26 @@ merge_cmd () {
 		"$merge_tool_path" -f -d -c 'wincmd l' \
 			"$LOCAL" "$MERGED" "$REMOTE"
 		;;
+	gvimdiff3|vimdiff3)
+		if $base_present
+		then
+			"$merge_tool_path" -f -d -c 'hid | hid | hid' \
+				"$LOCAL" "$REMOTE" "$BASE" "$MERGED"
+		else
+			"$merge_tool_path" -f -d -c 'hid | hid' \
+				"$LOCAL" "$REMOTE" "$MERGED"
+		fi
+		;;
 	esac
 	check_unchanged
 }
 
 translate_merge_tool_path() {
 	case "$1" in
-	gvimdiff|gvimdiff2)
+	gvimdiff|gvimdiff2|gvimdiff3)
 		echo gvim
 		;;
-	vimdiff|vimdiff2)
+	vimdiff|vimdiff2|vimdiff3)
 		echo vim
 		;;
 	esac

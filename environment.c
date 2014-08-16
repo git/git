@@ -37,7 +37,7 @@ int core_compression_seen;
 int fsync_object_files;
 size_t packed_git_window_size = DEFAULT_PACKED_GIT_WINDOW_SIZE;
 size_t packed_git_limit = DEFAULT_PACKED_GIT_LIMIT;
-size_t delta_base_cache_limit = 16 * 1024 * 1024;
+size_t delta_base_cache_limit = 96 * 1024 * 1024;
 unsigned long big_file_threshold = 512 * 1024 * 1024;
 const char *pager_program;
 int pager_use_color = 1;
@@ -72,9 +72,10 @@ int core_long_paths;
  * that is subject to stripspace.
  */
 char comment_line_char = '#';
+int auto_comment_line_char;
 
 /* Parallel index stat data preload? */
-int core_preload_index = 0;
+int core_preload_index = 1;
 
 /* This is set by setup_git_dir_gently() and/or git_default_config() */
 char *git_work_tree_cfg;
@@ -126,6 +127,12 @@ static char *expand_namespace(const char *raw_namespace)
 	return strbuf_detach(&buf, NULL);
 }
 
+static char *git_path_from_env(const char *envvar, const char *path)
+{
+	const char *value = getenv(envvar);
+	return value ? xstrdup(value) : git_pathdup("%s", path);
+}
+
 static void setup_git_env(void)
 {
 	const char *gitfile;
@@ -136,19 +143,9 @@ static void setup_git_env(void)
 		git_dir = DEFAULT_GIT_DIR_ENVIRONMENT;
 	gitfile = read_gitfile(git_dir);
 	git_dir = xstrdup(gitfile ? gitfile : git_dir);
-	git_object_dir = getenv(DB_ENVIRONMENT);
-	if (!git_object_dir) {
-		git_object_dir = xmalloc(strlen(git_dir) + 9);
-		sprintf(git_object_dir, "%s/objects", git_dir);
-	}
-	git_index_file = getenv(INDEX_ENVIRONMENT);
-	if (!git_index_file) {
-		git_index_file = xmalloc(strlen(git_dir) + 7);
-		sprintf(git_index_file, "%s/index", git_dir);
-	}
-	git_graft_file = getenv(GRAFT_ENVIRONMENT);
-	if (!git_graft_file)
-		git_graft_file = git_pathdup("info/grafts");
+	git_object_dir = git_path_from_env(DB_ENVIRONMENT, "objects");
+	git_index_file = git_path_from_env(INDEX_ENVIRONMENT, "index");
+	git_graft_file = git_path_from_env(GRAFT_ENVIRONMENT, "info/grafts");
 	if (getenv(NO_REPLACE_OBJECTS_ENVIRONMENT))
 		check_replace_refs = 0;
 	namespace = expand_namespace(getenv(GIT_NAMESPACE_ENVIRONMENT));

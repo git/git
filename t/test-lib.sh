@@ -95,6 +95,7 @@ unset VISUAL EMAIL LANGUAGE COLUMNS $("$PERL_PATH" -e '
 		VALGRIND
 		UNZIP
 		PERF_
+		CURL_VERBOSE
 	));
 	my @vars = grep(/^GIT_/ && !/^GIT_($ok)/o, @env);
 	print join("\n", @vars);
@@ -111,6 +112,10 @@ export GIT_MERGE_VERBOSITY GIT_MERGE_AUTOEDIT
 export GIT_AUTHOR_EMAIL GIT_AUTHOR_NAME
 export GIT_COMMITTER_EMAIL GIT_COMMITTER_NAME
 export EDITOR
+
+# Tests using GIT_TRACE typically don't want <timestamp> <file>:<line> output
+GIT_TRACE_BARE=1
+export GIT_TRACE_BARE
 
 if test -n "${TEST_GIT_INDEX_VERSION:+isset}"
 then
@@ -195,6 +200,14 @@ do
 		immediate=t; shift ;;
 	-l|--l|--lo|--lon|--long|--long-|--long-t|--long-te|--long-tes|--long-test|--long-tests)
 		GIT_TEST_LONG=t; export GIT_TEST_LONG; shift ;;
+	-r)
+		shift; test "$#" -ne 0 || {
+			echo 'error: -r requires an argument' >&2;
+			exit 1;
+		}
+		run_list=$1; shift ;;
+	--run=*)
+		run_list=$(expr "z$1" : 'z[^=]*=\(.*\)'); shift ;;
 	-h|--h|--he|--hel|--help)
 		help=t; shift ;;
 	-v|--v|--ve|--ver|--verb|--verbo|--verbos|--verbose)
@@ -370,6 +383,99 @@ match_pattern_list () {
 	return 1
 }
 
+match_test_selector_list () {
+	title="$1"
+	shift
+	arg="$1"
+	shift
+	test -z "$1" && return 0
+
+	# Both commas and whitespace are accepted as separators.
+	OLDIFS=$IFS
+	IFS=' 	,'
+	set -- $1
+	IFS=$OLDIFS
+
+	# If the first selector is negative we include by default.
+	include=
+	case "$1" in
+		!*) include=t ;;
+	esac
+
+	for selector
+	do
+		orig_selector=$selector
+
+		positive=t
+		case "$selector" in
+			!*)
+				positive=
+				selector=${selector##?}
+				;;
+		esac
+
+		test -z "$selector" && continue
+
+		case "$selector" in
+			*-*)
+				if expr "z${selector%%-*}" : "z[0-9]*[^0-9]" >/dev/null
+				then
+					echo "error: $title: invalid non-numeric in range" \
+						"start: '$orig_selector'" >&2
+					exit 1
+				fi
+				if expr "z${selector#*-}" : "z[0-9]*[^0-9]" >/dev/null
+				then
+					echo "error: $title: invalid non-numeric in range" \
+						"end: '$orig_selector'" >&2
+					exit 1
+				fi
+				;;
+			*)
+				if expr "z$selector" : "z[0-9]*[^0-9]" >/dev/null
+				then
+					echo "error: $title: invalid non-numeric in test" \
+						"selector: '$orig_selector'" >&2
+					exit 1
+				fi
+		esac
+
+		# Short cut for "obvious" cases
+		test -z "$include" && test -z "$positive" && continue
+		test -n "$include" && test -n "$positive" && continue
+
+		case "$selector" in
+			-*)
+				if test $arg -le ${selector#-}
+				then
+					include=$positive
+				fi
+				;;
+			*-)
+				if test $arg -ge ${selector%-}
+				then
+					include=$positive
+				fi
+				;;
+			*-*)
+				if test ${selector%%-*} -le $arg \
+					&& test $arg -le ${selector#*-}
+				then
+					include=$positive
+				fi
+				;;
+			*)
+				if test $arg -eq $selector
+				then
+					include=$positive
+				fi
+				;;
+		esac
+	done
+
+	test -n "$include"
+}
+
 maybe_teardown_verbose () {
 	test -z "$verbose_only" && return
 	exec 4>/dev/null 3>/dev/null
@@ -456,25 +562,35 @@ test_finish_ () {
 
 test_skip () {
 	to_skip=
+	skipped_reason=
 	if match_pattern_list $this_test.$test_count $GIT_SKIP_TESTS
 	then
 		to_skip=t
+		skipped_reason="GIT_SKIP_TESTS"
 	fi
 	if test -z "$to_skip" && test -n "$test_prereq" &&
 	   ! test_have_prereq "$test_prereq"
 	then
 		to_skip=t
-	fi
-	case "$to_skip" in
-	t)
+
 		of_prereq=
 		if test "$missing_prereq" != "$test_prereq"
 		then
 			of_prereq=" of $test_prereq"
 		fi
+		skipped_reason="missing $missing_prereq${of_prereq}"
+	fi
+	if test -z "$to_skip" && test -n "$run_list" &&
+		! match_test_selector_list '--run' $test_count "$run_list"
+	then
+		to_skip=t
+		skipped_reason="--run"
+	fi
 
+	case "$to_skip" in
+	t)
 		say_color skip >&3 "skipping test: $@"
-		say_color skip "ok $test_count # skip $1 (missing $missing_prereq${of_prereq})"
+		say_color skip "ok $test_count # skip $1 ($skipped_reason)"
 		: true
 		;;
 	*)
@@ -694,63 +810,6 @@ case "$TRASH_DIRECTORY" in
  *) TRASH_DIRECTORY="$TEST_OUTPUT_DIRECTORY/$TRASH_DIRECTORY" ;;
 esac
 test ! -z "$debug" || remove_trash=$TRASH_DIRECTORY
-
-case $(uname -s) in
-*MINGW*)
-	# Converting to win32 path to supply to cmd.exe command.
-	winpath () {
-		# pwd -W is the only way of getting msys to convert the path, especially mounted paths like /usr
-		# since cmd /c only takes a single parameter preventing msys automatic path conversion.
-		if builtin test  "${1:~-1:1}" != "/" ; then
-			echo "$1" | sed 's+/+\\+g'
-		elif builtin test -d "$1" ; then
-			(cd "$1"; pwd -W) | sed 's+/+\\+g'
-		elif builtin test -d "${1%/*}" ; then
-			(cd "${1%/*}"; echo "$(pwd -W)/${1##*/}") | sed 's+/+\\+g'
-		else
-			echo "$1" | sed -e 's+^/\([a-z]\)/+\1:/+' -e 's+/+\\+g'
-		fi
-	}
-	rm () {
-		rm_is_f=0
-		rm_is_r=0
-		for ARG in "$@"
-		do
-			case "$ARG" in
-			-rf|-fr) rm_is_r=1 ; rm_is_f=1 ;;
-			-f) rm_is_f=1 ;;
-			-r) rm_is_r=1 ;;
-			-*) ;; # ignore
-			*)
-				rm_arg_winpath="$(winpath "$ARG")"
-				if test -d "$ARG" ; then
-					if test $rm_is_r -eq 1 ; then
-						# Delete files, then remove directories.
-						# Force so make sure the result is true
-						cmd /c "del /s/q/f \"$rm_arg_winpath\" 2>nul && rmdir /q/s \"$rm_arg_winpath\" 2>nul" >/dev/null || true
-					else
-						# Works for symlinks as well
-						cmd /c "@rmdir /q \"$rm_arg_winpath\""
-					fi
-					builtin test -d "$ARG" && echo "rm: unable to delete \"$ARG\"" 1>&2 && return 1
-				else
-					# Using del works for symlinks as well
-					if test $rm_is_f -eq 1 ; then
-						# Force so make sure the result is true
-						cmd /c "@del /q/f \"$rm_arg_winpath\" 2>nul" >/dev/null || true
-					else
-						cmd /c "@del /q/f \"$rm_arg_winpath\" 2>nul" >/dev/null
-					fi
-					test -f "$ARG" && echo "rm: unable to delete \"$ARG\"" 1>&2 && return 1
-				fi
-			;;
-			esac
-		done
-		return 0
-	}
-	;;
-esac
-
 rm -fr "$TRASH_DIRECTORY" || {
 	GIT_EXIT_OK=t
 	echo >&5 "FATAL: Cannot prepare test area"
@@ -794,14 +853,6 @@ yes () {
 	done
 }
 
-abspath_of_dir () {
-	(cd "$1" ; pwd -P)
-}
-
-check_symlink() {
-	case "$(ls -l $1)" in *" $1 -> $2") :;; *) false;; esac
-}
-
 # Fix some commands on Windows
 case $(uname -s) in
 *MINGW*)
@@ -819,59 +870,6 @@ case $(uname -s) in
 	pwd () {
 		builtin pwd -W
 	}
-	# use mklink
-	ln () {
-
-		ln_sym_hard=/H
-		ln_sym_dir=
-		if test "$1" = "-s"
-		then
-			ln_sym_hard=
-			shift
-		fi
-		pushd $(dirname "$2") 2>&1 > /dev/null
-		builtin test -d "$1" && ln_sym_dir=/D
-		popd > /dev/null 2> /dev/null
-		cmd /c "mklink ${ln_sym_hard}${ln_sym_dir} \"$(winpath "$2")\" \"$(winpath "$1")\">/dev/null " 2>/dev/null
-		ln_eval_ret=$?
-		if test $ln_eval_ret != 0 -a -n "$ln_sym_hard"  ; then
-			cp "$1" "$2"
-		else
-			return $ln_eval_ret
-		fi
-	}
-	test () {
-		case "$1" in
-			-[hL])
-				if builtin test -d "$2" ; then
-					test_sym_dir=$(dirname "$2")
-					builtin test -n "${test_sym_dir}" && pushd "${test_sym_dir}"  2>&1 > /dev/null
-					test_sym_base=$(basename "$2")
-					test_file=$(cmd /c "@dir /b/a:l \"${test_sym_base}?\" 2> nul" | grep "^${test_sym_base}$" )
-					builtin test -n "${test_sym_dir}" && popd 2>&1 > /dev/null
-					builtin test -n "${test_file}"
-				else
-					test_file=$(cmd /c "@dir /b/a:l \"$(winpath "$2")\" 2> nul" )
-					builtin test -n "${test_file}"
-				fi
-			;;
-		-f)
-			test_file=$(cmd /c "@dir /b/a:-d-l-s \"$(winpath "$2")\" 2> nul" )
-			builtin test -n "${test_file}"
-			;;
-		*) builtin test "$@";;
-		esac
-	}
-
-	abspath_of_dir () {
-		(cd "$1" ; pwd -P | sed 's+^/\([a-z]\)\/+\1:/+')
-	}
-
-	check_symlink() {
-		check_symlink_LINK="$(cmd /c "dir $1" | grep \<SYMLINK\> | sed 's/^.*\[\([^]]*\)\].*$/\1/')"
-		test "$check_symlink_LINK" = "$2"
-	}
-
 	# no POSIX permissions
 	# backslashes in pathspec are converted to '/'
 	# exec does not inherit the PID
@@ -881,7 +879,6 @@ case $(uname -s) in
 	test_set_prereq SED_STRIPS_CR
 	test_set_prereq GREP_STRIPS_CR
 	GIT_TEST_CMP=mingw_test_cmp
-	GIT_TEST_CMP_BIN="cmp -s -c"
 	;;
 *CYGWIN*)
 	test_set_prereq POSIXPERM
@@ -956,14 +953,7 @@ test_lazy_prereq PIPE '
 
 test_lazy_prereq SYMLINKS '
 	# test whether the filesystem supports symbolic links
-	touch x
 	ln -s x y && test -h y
-'
-test_lazy_prereq SYMLINKS_SH '
-	# test whether the filesystem supports symbolic links
-	touch x
-	# Then check it is supported by the shell (not using overridden test)
-	ln -s x y && builtin test -h y
 '
 
 test_lazy_prereq FILEMODE '
@@ -993,6 +983,14 @@ test_lazy_prereq AUTOIDENT '
 	sane_unset GIT_AUTHOR_NAME &&
 	sane_unset GIT_AUTHOR_EMAIL &&
 	git var GIT_AUTHOR_IDENT
+'
+
+test_lazy_prereq EXPENSIVE '
+	test -n "$GIT_TEST_LONG"
+'
+
+test_lazy_prereq USR_BIN_TIME '
+	test -x /usr/bin/time
 '
 
 # When the tests are run as root, permission tests will report that

@@ -100,7 +100,8 @@ static int handle_line(char *line, struct merge_parents *merge_parents)
 {
 	int i, len = strlen(line);
 	struct origin_data *origin_data;
-	char *src, *origin;
+	char *src;
+	const char *origin;
 	struct src_data *src_data;
 	struct string_list_item *item;
 	int pulling_head = 0;
@@ -164,8 +165,7 @@ static int handle_line(char *line, struct merge_parents *merge_parents)
 		origin = line;
 		string_list_append(&src_data->tag, origin + 4);
 		src_data->head_status |= 2;
-	} else if (starts_with(line, "remote-tracking branch ")) {
-		origin = line + strlen("remote-tracking branch ");
+	} else if (skip_prefix(line, "remote-tracking branch ", &origin)) {
 		string_list_append(&src_data->r_branch, origin);
 		src_data->head_status |= 2;
 	} else {
@@ -178,11 +178,8 @@ static int handle_line(char *line, struct merge_parents *merge_parents)
 		int len = strlen(origin);
 		if (origin[0] == '\'' && origin[len - 1] == '\'')
 			origin = xmemdupz(origin + 1, len - 2);
-	} else {
-		char *new_origin = xmalloc(strlen(origin) + strlen(src) + 5);
-		sprintf(new_origin, "%s of %s", origin, src);
-		origin = new_origin;
-	}
+	} else
+		origin = xstrfmt("%s of %s", origin, src);
 	if (strcmp(".", src))
 		origin_data->is_local_branch = 0;
 	string_list_append(&origins, origin)->util = origin_data;
@@ -230,12 +227,14 @@ static void add_branch_desc(struct strbuf *out, const char *name)
 static void record_person(int which, struct string_list *people,
 			  struct commit *commit)
 {
+	const char *buffer;
 	char *name_buf, *name, *name_end;
 	struct string_list_item *elem;
 	const char *field;
 
 	field = (which == 'a') ? "\nauthor " : "\ncommitter ";
-	name = strstr(commit->buffer, field);
+	buffer = get_commit_buffer(commit, NULL);
+	name = strstr(buffer, field);
 	if (!name)
 		return;
 	name += strlen(field);
@@ -247,6 +246,7 @@ static void record_person(int which, struct string_list *people,
 	if (name_end < name)
 		return;
 	name_buf = xmemdupz(name, name_end - name + 1);
+	unuse_commit_buffer(commit, buffer);
 
 	elem = string_list_lookup(people, name_buf);
 	if (!elem) {
@@ -297,8 +297,8 @@ static void credit_people(struct strbuf *out,
 	if (!them->nr ||
 	    (them->nr == 1 &&
 	     me &&
-	     (me = skip_prefix(me, them->items->string)) != NULL &&
-	     skip_prefix(me, " <")))
+	     skip_prefix(me, them->items->string, &me) &&
+	     starts_with(me, " <")))
 		return;
 	strbuf_addf(out, "\n%c %s ", comment_line_char, label);
 	add_people_count(out, them);

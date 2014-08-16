@@ -68,7 +68,12 @@ performs all modifications together.  Specify commands of the form:
 	option SP <opt> LF
 
 Quote fields containing whitespace as if they were strings in C source
-code.  Alternatively, use `-z` to specify commands without quoting:
+code; i.e., surrounded by double-quotes and with backslash escapes.
+Use 40 "0" characters or the empty string to specify a zero value.  To
+specify a missing value, omit the value and its preceding SP entirely.
+
+Alternatively, use `-z` to specify in NUL-terminated format, without
+quoting:
 
 	update SP <ref> NUL <newvalue> NUL [<oldvalue>] NUL
 	create SP <ref> NUL <newvalue> NUL
@@ -76,8 +81,12 @@ code.  Alternatively, use `-z` to specify commands without quoting:
 	verify SP <ref> NUL [<oldvalue>] NUL
 	option SP <opt> NUL
 
-Lines of any other format or a repeated <ref> produce an error.
-Command meanings are:
+In this format, use 40 "0" to specify a zero value, and use the empty
+string to specify a missing value.
+
+In either format, values can be specified in any form that Git
+recognizes as an object name.  Commands in any other format or a
+repeated <ref> produce an error.  Command meanings are:
 
 update::
 	Set <ref> to <newvalue> after verifying <oldvalue>, if given.
@@ -101,9 +110,6 @@ option::
 	Modify behavior of the next command naming a <ref>.
 	The only valid option is `no-deref` to avoid dereferencing
 	a symbolic ref.
-
-Use 40 "0" or the empty string to specify a zero value, except that
-with `-z` an empty <oldvalue> is considered missing.
 
 If all <ref>s can be locked with matching <oldvalue>s
 simultaneously, all modifications are performed.  Otherwise, no

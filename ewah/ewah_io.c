@@ -110,9 +110,9 @@ int ewah_serialize(struct ewah_bitmap *self, int fd)
 	return ewah_serialize_to(self, write_helper, (void *)(intptr_t)fd);
 }
 
-int ewah_read_mmap(struct ewah_bitmap *self, void *map, size_t len)
+int ewah_read_mmap(struct ewah_bitmap *self, const void *map, size_t len)
 {
-	uint8_t *ptr = map;
+	const uint8_t *ptr = map;
 	size_t i;
 
 	self->bit_size = get_be32(ptr);

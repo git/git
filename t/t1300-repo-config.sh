@@ -1158,4 +1158,14 @@ test_expect_failure 'adding a key into an empty section reuses header' '
 	test_cmp expect .git/config
 '
 
+test_expect_success POSIXPERM,PERL 'preserves existing permissions' '
+	chmod 0600 .git/config &&
+	git config imap.pass Hunter2 &&
+	perl -e \
+	  "die q(badset) if ((stat(q(.git/config)))[2] & 07777) != 0600" &&
+	git config --rename-section imap pop &&
+	perl -e \
+	  "die q(badrename) if ((stat(q(.git/config)))[2] & 07777) != 0600"
+'
+
 test_done

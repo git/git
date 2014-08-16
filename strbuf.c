@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "refs.h"
+#include "utf8.h"
 
 int starts_with(const char *str, const char *prefix)
 {
@@ -8,15 +9,6 @@ int starts_with(const char *str, const char *prefix)
 			return 1;
 		else if (*str != *prefix)
 			return 0;
-}
-
-int ends_with(const char *str, const char *suffix)
-{
-	int len = strlen(str), suflen = strlen(suffix);
-	if (len < suflen)
-		return 0;
-	else
-		return !strcmp(str + len - suflen, suffix);
 }
 
 /*
@@ -78,15 +70,8 @@ void strbuf_grow(struct strbuf *sb, size_t extra)
 
 void strbuf_trim(struct strbuf *sb)
 {
-	char *b = sb->buf;
-	while (sb->len > 0 && isspace((unsigned char)sb->buf[sb->len - 1]))
-		sb->len--;
-	while (sb->len > 0 && isspace(*b)) {
-		b++;
-		sb->len--;
-	}
-	memmove(sb->buf, b, sb->len);
-	sb->buf[sb->len] = '\0';
+	strbuf_rtrim(sb);
+	strbuf_ltrim(sb);
 }
 void strbuf_rtrim(struct strbuf *sb)
 {
@@ -104,6 +89,29 @@ void strbuf_ltrim(struct strbuf *sb)
 	}
 	memmove(sb->buf, b, sb->len);
 	sb->buf[sb->len] = '\0';
+}
+
+int strbuf_reencode(struct strbuf *sb, const char *from, const char *to)
+{
+	char *out;
+	int len;
+
+	if (same_encoding(from, to))
+		return 0;
+
+	out = reencode_string_len(sb->buf, sb->len, to, from, &len);
+	if (!out)
+		return -1;
+
+	strbuf_attach(sb, out, len, len);
+	return 0;
+}
+
+void strbuf_tolower(struct strbuf *sb)
+{
+	char *p = sb->buf, *end = sb->buf + sb->len;
+	for (; p < end; p++)
+		*p = tolower(*p);
 }
 
 struct strbuf **strbuf_split_buf(const char *str, size_t slen,
@@ -569,4 +577,36 @@ int fprintf_ln(FILE *fp, const char *fmt, ...)
 	if (ret < 0 || putc('\n', fp) == EOF)
 		return -1;
 	return ret + 1;
+}
+
+char *xstrdup_tolower(const char *string)
+{
+	char *result;
+	size_t len, i;
+
+	len = strlen(string);
+	result = xmalloc(len + 1);
+	for (i = 0; i < len; i++)
+		result[i] = tolower(string[i]);
+	result[i] = '\0';
+	return result;
+}
+
+char *xstrvfmt(const char *fmt, va_list ap)
+{
+	struct strbuf buf = STRBUF_INIT;
+	strbuf_vaddf(&buf, fmt, ap);
+	return strbuf_detach(&buf, NULL);
+}
+
+char *xstrfmt(const char *fmt, ...)
+{
+	va_list ap;
+	char *ret;
+
+	va_start(ap, fmt);
+	ret = xstrvfmt(fmt, ap);
+	va_end(ap);
+
+	return ret;
 }

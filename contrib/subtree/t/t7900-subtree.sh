@@ -8,7 +8,8 @@ This test verifies the basic operation of the merge, pull, add
 and split subcommands of git subtree.
 '
 
-export TEST_DIRECTORY=$(pwd)/../../../t
+TEST_DIRECTORY=$(pwd)/../../../t
+export TEST_DIRECTORY
 
 . ../../../t/test-lib.sh
 
@@ -76,7 +77,7 @@ test_expect_success 'add sub1' '
 
 # Save this hash for testing later.
 
-subdir_hash=`git rev-parse HEAD`
+subdir_hash=$(git rev-parse HEAD)
 
 test_expect_success 'add sub2' '
         create sub2 &&

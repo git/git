@@ -62,7 +62,7 @@ CONF.VAR (from -c option) and web.browser
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The web browser can be specified using a configuration variable passed
-with the -c (or --config) command line option, or the 'web.browser'
+with the -c (or --config) command-line option, or the 'web.browser'
 configuration variable if the former is not used.
 
 browser.<tool>.path
@@ -87,7 +87,7 @@ the URLs passed as arguments.
 Note about konqueror
 --------------------
 
-When 'konqueror' is specified by a command line option or a
+When 'konqueror' is specified by a command-line option or a
 configuration variable, we launch 'kfmclient' to try to open the HTML
 man page on an already opened konqueror in a new tab if possible.
 

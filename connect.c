@@ -64,9 +64,7 @@ static void parse_one_symref_info(struct string_list *symref, const char *val, i
 	if (!len)
 		return; /* just "symref" */
 	/* e.g. "symref=HEAD:refs/heads/master" */
-	sym = xmalloc(len + 1);
-	memcpy(sym, val, len);
-	sym[len] = '\0';
+	sym = xmemdupz(val, len);
 	target = strchr(sym, ':');
 	if (!target)
 		/* just "symref=something" */
@@ -129,6 +127,7 @@ struct ref **get_remote_heads(int in, char *src_buf, size_t src_len,
 		char *name;
 		int len, name_len;
 		char *buffer = packet_buffer;
+		const char *arg;
 
 		len = packet_read(in, &src_buf, &src_len,
 				  packet_buffer, sizeof(packet_buffer),
@@ -140,12 +139,12 @@ struct ref **get_remote_heads(int in, char *src_buf, size_t src_len,
 		if (!len)
 			break;
 
-		if (len > 4 && starts_with(buffer, "ERR "))
-			die("remote error: %s", buffer + 4);
+		if (len > 4 && skip_prefix(buffer, "ERR ", &arg))
+			die("remote error: %s", arg);
 
-		if (len == 48 && starts_with(buffer, "shallow ")) {
-			if (get_sha1_hex(buffer + 8, old_sha1))
-				die("protocol error: expected shallow sha-1, got '%s'", buffer + 8);
+		if (len == 48 && skip_prefix(buffer, "shallow ", &arg)) {
+			if (get_sha1_hex(arg, old_sha1))
+				die("protocol error: expected shallow sha-1, got '%s'", arg);
 			if (!shallow_points)
 				die("repository on the other end cannot be shallow");
 			sha1_array_append(shallow_points, old_sha1);
@@ -534,22 +533,18 @@ static int git_use_proxy(const char *host)
 static struct child_process *git_proxy_connect(int fd[2], char *host)
 {
 	const char *port = STR(DEFAULT_GIT_PORT);
-	const char **argv;
 	struct child_process *proxy;
 
 	get_host_and_port(&host, &port);
 
-	argv = xmalloc(sizeof(*argv) * 4);
-	argv[0] = git_proxy_command;
-	argv[1] = host;
-	argv[2] = port;
-	argv[3] = NULL;
 	proxy = xcalloc(1, sizeof(*proxy));
-	proxy->argv = argv;
+	argv_array_push(&proxy->args, git_proxy_command);
+	argv_array_push(&proxy->args, host);
+	argv_array_push(&proxy->args, port);
 	proxy->in = -1;
 	proxy->out = -1;
 	if (start_command(proxy))
-		die("cannot start proxy %s", argv[0]);
+		die("cannot start proxy %s", git_proxy_command);
 	fd[0] = proxy->out; /* read from proxy stdout */
 	fd[1] = proxy->in;  /* write to proxy stdin */
 	return proxy;
@@ -663,7 +658,6 @@ struct child_process *git_connect(int fd[2], const char *url,
 	char *hostandport, *path;
 	struct child_process *conn = &no_fork;
 	enum protocol protocol;
-	const char **arg;
 	struct strbuf cmd = STRBUF_INIT;
 
 	/* Without this we cannot rely on waitpid() to tell
@@ -707,7 +701,6 @@ struct child_process *git_connect(int fd[2], const char *url,
 		sq_quote_buf(&cmd, path);
 
 		conn->in = conn->out = -1;
-		conn->argv = arg = xcalloc(7, sizeof(*arg));
 		if (protocol == PROTO_SSH) {
 			const char *ssh = getenv("GIT_SSH");
 			int putty = ssh && strcasestr(ssh, "plink");
@@ -718,22 +711,21 @@ struct child_process *git_connect(int fd[2], const char *url,
 
 			if (!ssh) ssh = "ssh";
 
-			*arg++ = ssh;
+			argv_array_push(&conn->args, ssh);
 			if (putty && !strcasestr(ssh, "tortoiseplink"))
-				*arg++ = "-batch";
+				argv_array_push(&conn->args, "-batch");
 			if (port) {
 				/* P is for PuTTY, p is for OpenSSH */
-				*arg++ = putty ? "-P" : "-p";
-				*arg++ = port;
+				argv_array_push(&conn->args, putty ? "-P" : "-p");
+				argv_array_push(&conn->args, port);
 			}
-			*arg++ = ssh_host;
+			argv_array_push(&conn->args, ssh_host);
 		} else {
 			/* remove repo-local variables from the environment */
 			conn->env = local_repo_env;
 			conn->use_shell = 1;
 		}
-		*arg++ = cmd.buf;
-		*arg = NULL;
+		argv_array_push(&conn->args, cmd.buf);
 
 		if (start_command(conn))
 			die("unable to fork");
@@ -759,7 +751,6 @@ int finish_connect(struct child_process *conn)
 		return 0;
 
 	code = finish_command(conn);
-	free(conn->argv);
 	free(conn);
 	return code;
 }

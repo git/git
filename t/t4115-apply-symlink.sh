@@ -10,8 +10,7 @@ test_description='git apply symlinks and partial files
 . ./test-lib.sh
 
 test_expect_success setup '
-	mkdir -p path1/path2/path3/path4/
-	> path1/path2/path3/path4/path5
+
 	test_ln_s_add path1/path2/path3/path4/path5 link1 &&
 	git commit -m initial &&
 
@@ -19,7 +18,6 @@ test_expect_success setup '
 
 	rm -f link? &&
 
-	> htap6
 	test_ln_s_add htap6 link1 &&
 	git commit -m second &&
 

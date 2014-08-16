@@ -103,7 +103,6 @@ static void do_take_over(struct transport *transport)
 static struct child_process *get_helper(struct transport *transport)
 {
 	struct helper_data *data = transport->data;
-	struct argv_array argv = ARGV_ARRAY_INIT;
 	struct strbuf buf = STRBUF_INIT;
 	struct child_process *helper;
 	const char **refspecs = NULL;
@@ -125,10 +124,9 @@ static struct child_process *get_helper(struct transport *transport)
 	helper->in = -1;
 	helper->out = -1;
 	helper->err = 0;
-	argv_array_pushf(&argv, "git-remote-%s", data->name);
-	argv_array_push(&argv, transport->remote->name);
-	argv_array_push(&argv, remove_ext_force(transport->url));
-	helper->argv = argv_array_detach(&argv, NULL);
+	argv_array_pushf(&helper->args, "git-remote-%s", data->name);
+	argv_array_push(&helper->args, transport->remote->name);
+	argv_array_push(&helper->args, remove_ext_force(transport->url));
 	helper->git_cmd = 0;
 	helper->silent_exec_failure = 1;
 
@@ -157,7 +155,7 @@ static struct child_process *get_helper(struct transport *transport)
 	write_constant(helper->in, "capabilities\n");
 
 	while (1) {
-		const char *capname;
+		const char *capname, *arg;
 		int mandatory = 0;
 		if (recvline(data, &buf))
 			exit(128);
@@ -187,19 +185,19 @@ static struct child_process *get_helper(struct transport *transport)
 			data->export = 1;
 		else if (!strcmp(capname, "check-connectivity"))
 			data->check_connectivity = 1;
-		else if (!data->refspecs && starts_with(capname, "refspec ")) {
+		else if (!data->refspecs && skip_prefix(capname, "refspec ", &arg)) {
 			ALLOC_GROW(refspecs,
 				   refspec_nr + 1,
 				   refspec_alloc);
-			refspecs[refspec_nr++] = xstrdup(capname + strlen("refspec "));
+			refspecs[refspec_nr++] = xstrdup(arg);
 		} else if (!strcmp(capname, "connect")) {
 			data->connect = 1;
 		} else if (!strcmp(capname, "signed-tags")) {
 			data->signed_tags = 1;
-		} else if (starts_with(capname, "export-marks ")) {
-			data->export_marks = xstrdup(capname + strlen("export-marks "));
-		} else if (starts_with(capname, "import-marks")) {
-			data->import_marks = xstrdup(capname + strlen("import-marks "));
+		} else if (skip_prefix(capname, "export-marks ", &arg)) {
+			data->export_marks = xstrdup(arg);
+		} else if (skip_prefix(capname, "import-marks ", &arg)) {
+			data->import_marks = xstrdup(arg);
 		} else if (starts_with(capname, "no-private-update")) {
 			data->no_private_update = 1;
 		} else if (mandatory) {
@@ -247,7 +245,6 @@ static int disconnect_helper(struct transport *transport)
 		close(data->helper->out);
 		fclose(data->out);
 		res = finish_command(data->helper);
-		argv_array_free_detached(data->helper->argv);
 		free(data->helper);
 		data->helper = NULL;
 	}
@@ -399,18 +396,16 @@ static int get_importer(struct transport *transport, struct child_process *fasti
 {
 	struct child_process *helper = get_helper(transport);
 	struct helper_data *data = transport->data;
-	struct argv_array argv = ARGV_ARRAY_INIT;
 	int cat_blob_fd, code;
 	memset(fastimport, 0, sizeof(*fastimport));
 	fastimport->in = helper->out;
-	argv_array_push(&argv, "fast-import");
-	argv_array_push(&argv, debug ? "--stats" : "--quiet");
+	argv_array_push(&fastimport->args, "fast-import");
+	argv_array_push(&fastimport->args, debug ? "--stats" : "--quiet");
 
 	if (data->bidi_import) {
 		cat_blob_fd = xdup(helper->in);
-		argv_array_pushf(&argv, "--cat-blob-fd=%d", cat_blob_fd);
+		argv_array_pushf(&fastimport->args, "--cat-blob-fd=%d", cat_blob_fd);
 	}
-	fastimport->argv = argv.argv;
 	fastimport->git_cmd = 1;
 
 	code = start_command(fastimport);
@@ -423,32 +418,26 @@ static int get_exporter(struct transport *transport,
 {
 	struct helper_data *data = transport->data;
 	struct child_process *helper = get_helper(transport);
-	int argc = 0, i;
-	struct strbuf tmp = STRBUF_INIT;
+	int i;
 
 	memset(fastexport, 0, sizeof(*fastexport));
 
 	/* we need to duplicate helper->in because we want to use it after
 	 * fastexport is done with it. */
 	fastexport->out = dup(helper->in);
-	fastexport->argv = xcalloc(7 + revlist_args->nr, sizeof(*fastexport->argv));
-	fastexport->argv[argc++] = "fast-export";
-	fastexport->argv[argc++] = "--use-done-feature";
-	fastexport->argv[argc++] = data->signed_tags ?
-		"--signed-tags=verbatim" : "--signed-tags=warn-strip";
-	if (data->export_marks) {
-		strbuf_addf(&tmp, "--export-marks=%s.tmp", data->export_marks);
-		fastexport->argv[argc++] = strbuf_detach(&tmp, NULL);
-	}
-	if (data->import_marks) {
-		strbuf_addf(&tmp, "--import-marks=%s", data->import_marks);
-		fastexport->argv[argc++] = strbuf_detach(&tmp, NULL);
-	}
+	argv_array_push(&fastexport->args, "fast-export");
+	argv_array_push(&fastexport->args, "--use-done-feature");
+	argv_array_push(&fastexport->args, data->signed_tags ?
+		"--signed-tags=verbatim" : "--signed-tags=warn-strip");
+	if (data->export_marks)
+		argv_array_pushf(&fastexport->args, "--export-marks=%s.tmp", data->export_marks);
+	if (data->import_marks)
+		argv_array_pushf(&fastexport->args, "--import-marks=%s", data->import_marks);
 
 	for (i = 0; i < revlist_args->nr; i++)
-		fastexport->argv[argc++] = revlist_args->items[i].string;
+		argv_array_push(&fastexport->args, revlist_args->items[i].string);
 
-	fastexport->argv[argc++] = "--";
+	argv_array_push(&fastexport->args, "--");
 
 	fastexport->git_cmd = 1;
 	return start_command(fastexport);
@@ -502,7 +491,6 @@ static int fetch_with_import(struct transport *transport,
 
 	if (finish_command(&fastimport))
 		die("Error while running fast-import");
-	argv_array_free_detached(fastimport.argv);
 	check_helper_status(data);
 
 	/*
@@ -886,7 +874,7 @@ static int push_refs_with_export(struct transport *transport,
 	struct ref *ref;
 	struct child_process *helper, exporter;
 	struct helper_data *data = transport->data;
-	struct string_list revlist_args = STRING_LIST_INIT_NODUP;
+	struct string_list revlist_args = STRING_LIST_INIT_DUP;
 	struct strbuf buf = STRBUF_INIT;
 
 	if (!data->refspecs)
@@ -906,14 +894,9 @@ static int push_refs_with_export(struct transport *transport,
 
 	write_constant(helper->in, "export\n");
 
-	strbuf_reset(&buf);
-
 	for (ref = remote_refs; ref; ref = ref->next) {
 		char *private;
 		unsigned char sha1[20];
-
-		if (ref->deletion)
-			die("remote-helpers do not support ref deletion");
 
 		private = apply_refspecs(data->refspecs, data->refspec_nr, ref->name);
 		if (private && !get_sha1(private, sha1)) {
@@ -924,14 +907,33 @@ static int push_refs_with_export(struct transport *transport,
 		free(private);
 
 		if (ref->peer_ref) {
-			if (strcmp(ref->peer_ref->name, ref->name))
-				die("remote-helpers do not support old:new syntax");
-			string_list_append(&revlist_args, ref->peer_ref->name);
+			if (strcmp(ref->name, ref->peer_ref->name)) {
+				if (!ref->deletion) {
+					const char *name;
+					int flag;
+
+					/* Follow symbolic refs (mainly for HEAD). */
+					name = resolve_ref_unsafe(ref->peer_ref->name, sha1, 1, &flag);
+					if (!name || !(flag & REF_ISSYMREF))
+						name = ref->peer_ref->name;
+
+					strbuf_addf(&buf, "%s:%s", name, ref->name);
+				} else
+					strbuf_addf(&buf, ":%s", ref->name);
+
+				string_list_append(&revlist_args, "--refspec");
+				string_list_append(&revlist_args, buf.buf);
+				strbuf_release(&buf);
+			}
+			if (!ref->deletion)
+				string_list_append(&revlist_args, ref->peer_ref->name);
 		}
 	}
 
 	if (get_exporter(transport, &exporter, &revlist_args))
 		die("Couldn't run fast-export");
+
+	string_list_clear(&revlist_args, 1);
 
 	if (finish_command(&exporter))
 		die("Error while running fast-export");
@@ -1051,7 +1053,7 @@ static struct ref *get_refs_list(struct transport *transport, int for_push)
 
 int transport_helper_init(struct transport *transport, const char *name)
 {
-	struct helper_data *data = xcalloc(sizeof(*data), 1);
+	struct helper_data *data = xcalloc(1, sizeof(*data));
 	data->name = name;
 
 	if (getenv("GIT_TRANSPORT_HELPER_DEBUG"))

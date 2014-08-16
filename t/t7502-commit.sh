@@ -344,6 +344,13 @@ test_expect_success 'message shows author when it is not equal to committer' '
 	  .git/COMMIT_EDITMSG
 '
 
+test_expect_success 'message shows date when it is explicitly set' '
+	git commit --allow-empty -e -m foo --date="2010-01-02T03:04:05" &&
+	test_i18ngrep \
+	  "^# Date: *Sat Jan 2 03:04:05 2010 +0000" \
+	  .git/COMMIT_EDITMSG
+'
+
 test_expect_success AUTOIDENT 'message shows committer when it is automatic' '
 
 	echo >>negative &&
@@ -561,6 +568,32 @@ test_expect_success 'commit --status with custom comment character' '
 	test_config core.commentchar ";" &&
 	try_commit --status &&
 	test_i18ngrep "^; Changes to be committed:" .git/COMMIT_EDITMSG
+'
+
+test_expect_success 'switch core.commentchar' '
+	test_commit "#foo" foo &&
+	GIT_EDITOR=.git/FAKE_EDITOR git -c core.commentChar=auto commit --amend &&
+	test_i18ngrep "^; Changes to be committed:" .git/COMMIT_EDITMSG
+'
+
+test_expect_success 'switch core.commentchar but out of options' '
+	cat >text <<\EOF &&
+# 1
+; 2
+@ 3
+! 4
+$ 5
+% 6
+^ 7
+& 8
+| 9
+: 10
+EOF
+	git commit --amend -F text &&
+	(
+		test_set_editor .git/FAKE_EDITOR &&
+		test_must_fail git -c core.commentChar=auto commit --amend
+	)
 '
 
 test_done

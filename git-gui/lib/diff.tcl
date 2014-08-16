@@ -287,6 +287,9 @@ proc start_show_diff {cont_info {add_opts {}}} {
 	if {$w eq $ui_index} {
 		lappend cmd diff-index
 		lappend cmd --cached
+		if {[git-version >= "1.7.2"]} {
+			lappend cmd --ignore-submodules=dirty
+		}
 	} elseif {$w eq $ui_workdir} {
 		if {[string first {U} $m] >= 0} {
 			lappend cmd diff

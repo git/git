@@ -14,13 +14,13 @@ then
 fi
 
 # create utf-8 variables
-Adiarnfc=`printf '\303\204'`
-Adiarnfd=`printf 'A\314\210'`
+Adiarnfc=$(printf '\303\204')
+Adiarnfd=$(printf 'A\314\210')
 
-Odiarnfc=`printf '\303\226'`
-Odiarnfd=`printf 'O\314\210'`
-AEligatu=`printf '\303\206'`
-Invalidu=`printf '\303\377'`
+Odiarnfc=$(printf '\303\226')
+Odiarnfd=$(printf 'O\314\210')
+AEligatu=$(printf '\303\206')
+Invalidu=$(printf '\303\377')
 
 
 #Create a string with 255 bytes (decomposed)
@@ -35,7 +35,7 @@ Alongc=$Alongc$Alongc$Alongc$Alongc$Alongc           #250 Byte
 Alongc=$Alongc$AEligatu$AEligatu                     #254 Byte
 
 test_expect_success "detect if nfd needed" '
-	precomposeunicode=`git config core.precomposeunicode` &&
+	precomposeunicode=$(git config core.precomposeunicode) &&
 	test "$precomposeunicode" = true &&
 	git config core.precomposeunicode true
 '
@@ -140,13 +140,23 @@ test_expect_success "Add long precomposed filename" '
 	git add * &&
 	git commit -m "Long filename"
 '
+
+test_expect_failure 'handle existing decomposed filenames' '
+	echo content >"verbatim.$Adiarnfd" &&
+	git -c core.precomposeunicode=false add "verbatim.$Adiarnfd" &&
+	git commit -m "existing decomposed file" &&
+	>expect &&
+	git ls-files --exclude-standard -o "verbatim*" >untracked &&
+	test_cmp expect untracked
+'
+
 # Test if the global core.precomposeunicode stops autosensing
 # Must be the last test case
 test_expect_success "respect git config --global core.precomposeunicode" '
 	git config --global core.precomposeunicode true &&
 	rm -rf .git &&
 	git init &&
-	precomposeunicode=`git config core.precomposeunicode` &&
+	precomposeunicode=$(git config core.precomposeunicode) &&
 	test "$precomposeunicode" = "true"
 '
 

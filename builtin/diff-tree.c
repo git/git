@@ -22,14 +22,10 @@ static int stdin_diff_commit(struct commit *commit, char *line, int len)
 	if (isspace(line[40]) && !get_sha1_hex(line+41, sha1)) {
 		/* Graft the fake parents locally to the commit */
 		int pos = 41;
-		struct commit_list **pptr, *parents;
+		struct commit_list **pptr;
 
 		/* Free the real parent list */
-		for (parents = commit->parents; parents; ) {
-			struct commit_list *tmp = parents->next;
-			free(parents);
-			parents = tmp;
-		}
+		free_commit_list(commit->parents);
 		commit->parents = NULL;
 		pptr = &(commit->parents);
 		while (line[pos] && !get_sha1_hex(line + pos, sha1)) {
@@ -72,9 +68,7 @@ static int diff_tree_stdin(char *line)
 	line[len-1] = 0;
 	if (get_sha1_hex(line, sha1))
 		return -1;
-	obj = lookup_unknown_object(sha1);
-	if (!obj || !obj->parsed)
-		obj = parse_object(sha1);
+	obj = parse_object(sha1);
 	if (!obj)
 		return -1;
 	if (obj->type == OBJ_COMMIT)

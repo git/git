@@ -68,7 +68,7 @@ test_expect_success 'apply --whitespace=strip from config' '
 	check_result sub/file1
 '
 
-D=`pwd`
+D=$(pwd)
 
 test_expect_success 'apply --whitespace=strip in subdir' '
 

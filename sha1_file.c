@@ -36,9 +36,6 @@ static inline uintmax_t sz_fmt(size_t s) { return s; }
 
 const unsigned char null_sha1[20];
 
-static const char *no_log_pack_access = "no_log_pack_access";
-static const char *log_pack_access;
-
 /*
  * This is meant to hold a *small* number of objects that you would
  * want read_sha1_file() to be able to return, but yet you do not want
@@ -268,9 +265,9 @@ static struct alternate_object_database **alt_odb_tail;
  * SHA1, an extra slash for the first level indirection, and the
  * terminating NUL.
  */
-static int link_alt_odb_entry(const char *entry, const char *relative_base, int depth)
+static int link_alt_odb_entry(const char *entry, const char *relative_base,
+	int depth, const char *normalized_objdir)
 {
-	const char *objdir = get_object_directory();
 	struct alternate_object_database *ent;
 	struct alternate_object_database *alt;
 	int pfxlen, entlen;
@@ -315,12 +312,13 @@ static int link_alt_odb_entry(const char *entry, const char *relative_base, int 
 	 * thing twice, or object directory itself.
 	 */
 	for (alt = alt_odb_list; alt; alt = alt->next) {
-		if (!memcmp(ent->base, alt->base, pfxlen)) {
+		if (pfxlen == alt->name - alt->base - 1 &&
+		    !memcmp(ent->base, alt->base, pfxlen)) {
 			free(ent);
 			return -1;
 		}
 	}
-	if (!strcmp(ent->base, objdir)) {
+	if (!strcmp_icase(ent->base, normalized_objdir)) {
 		free(ent);
 		return -1;
 	}
@@ -344,12 +342,16 @@ static void link_alt_odb_entries(const char *alt, int len, int sep,
 	struct string_list entries = STRING_LIST_INIT_NODUP;
 	char *alt_copy;
 	int i;
+	struct strbuf objdirbuf = STRBUF_INIT;
 
 	if (depth > 5) {
 		error("%s: ignoring alternate object stores, nesting too deep.",
 				relative_base);
 		return;
 	}
+
+	strbuf_addstr(&objdirbuf, absolute_path(get_object_directory()));
+	normalize_path_copy(objdirbuf.buf, objdirbuf.buf);
 
 	alt_copy = xmemdupz(alt, len);
 	string_list_split_in_place(&entries, alt_copy, sep, -1);
@@ -361,11 +363,12 @@ static void link_alt_odb_entries(const char *alt, int len, int sep,
 			error("%s: ignoring relative alternate object store %s",
 					relative_base, entry);
 		} else {
-			link_alt_odb_entry(entry, relative_base, depth);
+			link_alt_odb_entry(entry, relative_base, depth, objdirbuf.buf);
 		}
 	}
 	string_list_clear(&entries, 0);
 	free(alt_copy);
+	strbuf_release(&objdirbuf);
 }
 
 void read_info_alternates(const char * relative_base, int depth)
@@ -1177,48 +1180,42 @@ static void report_pack_garbage(struct string_list *list)
 
 static void prepare_packed_git_one(char *objdir, int local)
 {
-	/* Ensure that this buffer is large enough so that we can
-	   append "/pack/" without clobbering the stack even if
-	   strlen(objdir) were PATH_MAX.  */
-	char path[PATH_MAX + 1 + 4 + 1 + 1];
-	int len;
+	struct strbuf path = STRBUF_INIT;
+	size_t dirnamelen;
 	DIR *dir;
 	struct dirent *de;
 	struct string_list garbage = STRING_LIST_INIT_DUP;
 
-	sprintf(path, "%s/pack", objdir);
-	len = strlen(path);
-	dir = opendir(path);
+	strbuf_addstr(&path, objdir);
+	strbuf_addstr(&path, "/pack");
+	dir = opendir(path.buf);
 	if (!dir) {
 		if (errno != ENOENT)
 			error("unable to open object pack directory: %s: %s",
-			      path, strerror(errno));
+			      path.buf, strerror(errno));
+		strbuf_release(&path);
 		return;
 	}
-	path[len++] = '/';
+	strbuf_addch(&path, '/');
+	dirnamelen = path.len;
 	while ((de = readdir(dir)) != NULL) {
-		int namelen = strlen(de->d_name);
 		struct packed_git *p;
-
-		if (len + namelen + 1 > sizeof(path)) {
-			if (report_garbage) {
-				struct strbuf sb = STRBUF_INIT;
-				strbuf_addf(&sb, "%.*s/%s", len - 1, path, de->d_name);
-				report_garbage("path too long", sb.buf);
-				strbuf_release(&sb);
-			}
-			continue;
-		}
+		size_t base_len;
 
 		if (is_dot_or_dotdot(de->d_name))
 			continue;
 
-		strcpy(path + len, de->d_name);
+		strbuf_setlen(&path, dirnamelen);
+		strbuf_addstr(&path, de->d_name);
 
-		if (has_extension(de->d_name, ".idx")) {
+		base_len = path.len;
+		if (strip_suffix_mem(path.buf, &base_len, ".idx")) {
 			/* Don't reopen a pack we already have. */
 			for (p = packed_git; p; p = p->next) {
-				if (!memcmp(path, p->pack_name, len + namelen - 4))
+				size_t len;
+				if (strip_suffix(p->pack_name, ".pack", &len) &&
+				    len == base_len &&
+				    !memcmp(p->pack_name, path.buf, len))
 					break;
 			}
 			if (p == NULL &&
@@ -1226,24 +1223,25 @@ static void prepare_packed_git_one(char *objdir, int local)
 			     * See if it really is a valid .idx file with
 			     * corresponding .pack file that we can map.
 			     */
-			    (p = add_packed_git(path, len + namelen, local)) != NULL)
+			    (p = add_packed_git(path.buf, path.len, local)) != NULL)
 				install_packed_git(p);
 		}
 
 		if (!report_garbage)
 			continue;
 
-		if (has_extension(de->d_name, ".idx") ||
-		    has_extension(de->d_name, ".pack") ||
-		    has_extension(de->d_name, ".bitmap") ||
-		    has_extension(de->d_name, ".keep"))
-			string_list_append(&garbage, path);
+		if (ends_with(de->d_name, ".idx") ||
+		    ends_with(de->d_name, ".pack") ||
+		    ends_with(de->d_name, ".bitmap") ||
+		    ends_with(de->d_name, ".keep"))
+			string_list_append(&garbage, path.buf);
 		else
-			report_garbage("garbage found", path);
+			report_garbage("garbage found", path.buf);
 	}
 	closedir(dir);
 	report_pack_garbage(&garbage);
 	string_list_clear(&garbage, 0);
+	strbuf_release(&path);
 }
 
 static int sort_pack(const void *a_, const void *b_)
@@ -1437,19 +1435,23 @@ static int open_sha1_file(const unsigned char *sha1)
 {
 	int fd;
 	struct alternate_object_database *alt;
+	int most_interesting_errno;
 
 	fd = git_open_noatime(sha1_file_name(sha1));
 	if (fd >= 0)
 		return fd;
+	most_interesting_errno = errno;
 
 	prepare_alt_odb();
-	errno = ENOENT;
 	for (alt = alt_odb_list; alt; alt = alt->next) {
 		fill_sha1_path(alt->name, sha1);
 		fd = git_open_noatime(alt->base);
 		if (fd >= 0)
 			return fd;
+		if (most_interesting_errno == ENOENT)
+			most_interesting_errno = errno;
 	}
+	errno = most_interesting_errno;
 	return -1;
 }
 
@@ -2081,27 +2083,9 @@ static void *read_object(const unsigned char *sha1, enum object_type *type,
 
 static void write_pack_access_log(struct packed_git *p, off_t obj_offset)
 {
-	static FILE *log_file;
-
-	if (!log_pack_access)
-		log_pack_access = getenv("GIT_TRACE_PACK_ACCESS");
-	if (!log_pack_access)
-		log_pack_access = no_log_pack_access;
-	if (log_pack_access == no_log_pack_access)
-		return;
-
-	if (!log_file) {
-		log_file = fopen(log_pack_access, "w");
-		if (!log_file) {
-			error("cannot open pack access log '%s' for writing: %s",
-			      log_pack_access, strerror(errno));
-			log_pack_access = no_log_pack_access;
-			return;
-		}
-	}
-	fprintf(log_file, "%s %"PRIuMAX"\n",
-		p->pack_name, (uintmax_t)obj_offset);
-	fflush(log_file);
+	static struct trace_key pack_access = TRACE_KEY_INIT(PACK_ACCESS);
+	trace_printf_key(&pack_access, "%s %"PRIuMAX"\n",
+			 p->pack_name, (uintmax_t)obj_offset);
 }
 
 int do_check_packed_object_crc;
@@ -2126,8 +2110,7 @@ void *unpack_entry(struct packed_git *p, off_t obj_offset,
 	int delta_stack_nr = 0, delta_stack_alloc = UNPACK_ENTRY_STACK_PREALLOC;
 	int base_from_cache = 0;
 
-	if (log_pack_access != no_log_pack_access)
-		write_pack_access_log(p, obj_offset);
+	write_pack_access_log(p, obj_offset);
 
 	/* PHASE 1: drill down to the innermost base object */
 	for (;;) {

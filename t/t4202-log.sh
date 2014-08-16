@@ -3,6 +3,7 @@
 test_description='git log'
 
 . ./test-lib.sh
+. "$TEST_DIRECTORY/lib-gpg.sh"
 
 test_expect_success setup '
 
@@ -839,6 +840,36 @@ test_expect_success 'dotdot is a parent directory' '
 	( echo sixth && echo fifth ) >expect &&
 	( cd a/b && git log --format=%s .. ) >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success GPG 'log --graph --show-signature' '
+	test_when_finished "git reset --hard && git checkout master" &&
+	git checkout -b signed master &&
+	echo foo >foo &&
+	git add foo &&
+	git commit -S -m signed_commit &&
+	git log --graph --show-signature -n1 signed >actual &&
+	grep "^| gpg: Signature made" actual &&
+	grep "^| gpg: Good signature" actual
+'
+
+test_expect_success GPG 'log --graph --show-signature for merged tag' '
+	test_when_finished "git reset --hard && git checkout master" &&
+	git checkout -b plain master &&
+	echo aaa >bar &&
+	git add bar &&
+	git commit -m bar_commit &&
+	git checkout -b tagged master &&
+	echo bbb >baz &&
+	git add baz &&
+	git commit -m baz_commit &&
+	git tag -s -m signed_tag_msg signed_tag &&
+	git checkout plain &&
+	git merge --no-ff -m msg signed_tag &&
+	git log --graph --show-signature -n1 plain >actual &&
+	grep "^|\\\  merged tag" actual &&
+	grep "^| | gpg: Signature made" actual &&
+	grep "^| | gpg: Good signature" actual
 '
 
 test_done

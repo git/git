@@ -8,7 +8,7 @@ test_perf_large_repo
 
 test_expect_success 'repack' '
 	git repack -ad &&
-	PACK=`ls .git/objects/pack/*.pack | head -n1` &&
+	PACK=$(ls .git/objects/pack/*.pack | head -n1) &&
 	test -f "$PACK" &&
 	export PACK
 '

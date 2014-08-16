@@ -67,6 +67,14 @@ test_expect_success 'setup' '
 SHELL=
 export SHELL
 
+test_expect_success 'rebase --keep-empty' '
+	git checkout -b emptybranch master &&
+	git commit --allow-empty -m "empty" &&
+	git rebase --keep-empty -i HEAD~2 &&
+	git log --oneline >actual &&
+	test_line_count = 6 actual
+'
+
 test_expect_success 'rebase -i with the exec command' '
 	git checkout master &&
 	(

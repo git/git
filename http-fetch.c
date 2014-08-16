@@ -6,12 +6,11 @@
 static const char http_fetch_usage[] = "git http-fetch "
 "[-c] [-t] [-a] [-v] [--recover] [-w ref] [--stdin] commit-id url";
 
-int main(int argc, char **av)
+int main(int argc, const char **argv)
 {
 	struct walker *walker;
 	int commits_on_stdin = 0;
 	int commits;
-	const char **argv = (const char **)av;
 	const char **write_ref = NULL;
 	char **commit_id;
 	char *url = NULL;

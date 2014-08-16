@@ -20,7 +20,6 @@ struct commit {
 	unsigned long date;
 	struct commit_list *parents;
 	struct tree *tree;
-	char *buffer;
 };
 
 extern int save_commit_buffer;
@@ -50,6 +49,44 @@ struct commit *lookup_commit_or_die(const unsigned char *sha1, const char *ref_n
 int parse_commit_buffer(struct commit *item, const void *buffer, unsigned long size);
 int parse_commit(struct commit *item);
 void parse_commit_or_die(struct commit *item);
+
+/*
+ * Associate an object buffer with the commit. The ownership of the
+ * memory is handed over to the commit, and must be free()-able.
+ */
+void set_commit_buffer(struct commit *, void *buffer, unsigned long size);
+
+/*
+ * Get any cached object buffer associated with the commit. Returns NULL
+ * if none. The resulting memory should not be freed.
+ */
+const void *get_cached_commit_buffer(const struct commit *, unsigned long *size);
+
+/*
+ * Get the commit's object contents, either from cache or by reading the object
+ * from disk. The resulting memory should not be modified, and must be given
+ * to unuse_commit_buffer when the caller is done.
+ */
+const void *get_commit_buffer(const struct commit *, unsigned long *size);
+
+/*
+ * Tell the commit subsytem that we are done with a particular commit buffer.
+ * The commit and buffer should be the input and return value, respectively,
+ * from an earlier call to get_commit_buffer.  The buffer may or may not be
+ * freed by this call; callers should not access the memory afterwards.
+ */
+void unuse_commit_buffer(const struct commit *, const void *buffer);
+
+/*
+ * Free any cached object buffer associated with the commit.
+ */
+void free_commit_buffer(struct commit *);
+
+/*
+ * Disassociate any cached object buffer from the commit, but do not free it.
+ * The buffer (or NULL, if none) is returned.
+ */
+const void *detach_commit_buffer(struct commit *, unsigned long *sizep);
 
 /* Find beginning and length of commit subject. */
 int find_commit_subject(const char *commit_buffer, const char **subject);
@@ -115,10 +152,9 @@ struct userformat_want {
 
 extern int has_non_ascii(const char *text);
 struct rev_info; /* in revision.h, it circularly uses enum cmit_fmt */
-extern char *logmsg_reencode(const struct commit *commit,
-			     char **commit_encoding,
-			     const char *output_encoding);
-extern void logmsg_free(char *msg, const struct commit *commit);
+extern const char *logmsg_reencode(const struct commit *commit,
+				   char **commit_encoding,
+				   const char *output_encoding);
 extern void get_commit_format(const char *arg, struct rev_info *);
 extern const char *format_subject(struct strbuf *sb, const char *msg,
 				  const char *line_separator);
@@ -235,6 +271,7 @@ extern void assign_shallow_commits_to_refs(struct shallow_info *info,
 					   int *ref_status);
 extern int delayed_reachability_test(struct shallow_info *si, int c);
 extern void prune_shallow(int show_only);
+extern struct trace_key trace_shallow;
 
 int is_descendant_of(struct commit *, struct commit_list *);
 int in_merge_bases(struct commit *, struct commit *);
@@ -261,11 +298,13 @@ struct commit_extra_header {
 extern void append_merge_tag_headers(struct commit_list *parents,
 				     struct commit_extra_header ***tail);
 
-extern int commit_tree(const struct strbuf *msg, const unsigned char *tree,
+extern int commit_tree(const char *msg, size_t msg_len,
+		       const unsigned char *tree,
 		       struct commit_list *parents, unsigned char *ret,
 		       const char *author, const char *sign_commit);
 
-extern int commit_tree_extended(const struct strbuf *msg, const unsigned char *tree,
+extern int commit_tree_extended(const char *msg, size_t msg_len,
+				const unsigned char *tree,
 				struct commit_list *parents, unsigned char *ret,
 				const char *author, const char *sign_commit,
 				struct commit_extra_header *);
@@ -273,6 +312,11 @@ extern int commit_tree_extended(const struct strbuf *msg, const unsigned char *t
 extern struct commit_extra_header *read_commit_extra_headers(struct commit *, const char **);
 
 extern void free_commit_extra_headers(struct commit_extra_header *extra);
+
+typedef void (*each_mergetag_fn)(struct commit *commit, struct commit_extra_header *extra,
+				 void *cb_data);
+
+extern void for_each_mergetag(each_mergetag_fn fn, struct commit *commit, void *data);
 
 struct merge_remote_desc {
 	struct object *obj; /* the named object, could be a tag */
@@ -287,8 +331,10 @@ struct merge_remote_desc {
  */
 struct commit *get_merge_parent(const char *name);
 
-extern int parse_signed_commit(const unsigned char *sha1,
+extern int parse_signed_commit(const struct commit *commit,
 			       struct strbuf *message, struct strbuf *signature);
+extern int remove_signature(struct strbuf *buf);
+
 extern void print_commit_list(struct commit_list *list,
 			      const char *format_cur,
 			      const char *format_last);

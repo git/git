@@ -245,4 +245,12 @@ test_expect_success 'gc.reflogexpire=false' '
 
 '
 
+test_expect_success 'checkout should not delete log for packed ref' '
+	test $(git reflog master | wc -l) = 4 &&
+	git branch foo &&
+	git pack-refs --all &&
+	git checkout foo &&
+	test $(git reflog master | wc -l) = 4
+'
+
 test_done

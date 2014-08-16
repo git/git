@@ -365,6 +365,7 @@ static void show_sig_lines(struct rev_info *opt, int status, const char *bol)
 		eol = strchrnul(bol, '\n');
 		printf("%s%.*s%s%s", color, (int)(eol - bol), bol, reset,
 		       *eol ? "\n" : "");
+		graph_show_oneline(opt->graph);
 		bol = (*eol) ? (eol + 1) : eol;
 	}
 }
@@ -376,7 +377,7 @@ static void show_signature(struct rev_info *opt, struct commit *commit)
 	struct strbuf gpg_output = STRBUF_INIT;
 	int status;
 
-	if (parse_signed_commit(commit->object.sha1, &payload, &signature) <= 0)
+	if (parse_signed_commit(commit, &payload, &signature) <= 0)
 		goto out;
 
 	status = verify_signed_buffer(payload.buf, payload.len,
@@ -413,10 +414,11 @@ static int is_common_merge(const struct commit *commit)
 		&& !commit->parents->next->next);
 }
 
-static void show_one_mergetag(struct rev_info *opt,
+static void show_one_mergetag(struct commit *commit,
 			      struct commit_extra_header *extra,
-			      struct commit *commit)
+			      void *data)
 {
+	struct rev_info *opt = (struct rev_info *)data;
 	unsigned char sha1[20];
 	struct tag *tag;
 	struct strbuf verify_message;
@@ -446,16 +448,17 @@ static void show_one_mergetag(struct rev_info *opt,
 
 	payload_size = parse_signature(extra->value, extra->len);
 	status = -1;
-	if (extra->len > payload_size)
-		if (verify_signed_buffer(extra->value, payload_size,
-					 extra->value + payload_size,
-					 extra->len - payload_size,
-					 &verify_message, NULL)) {
-			if (verify_message.len <= gpg_message_offset)
-				strbuf_addstr(&verify_message, "No signature\n");
-			else
-				status = 0;
-		}
+	if (extra->len > payload_size) {
+		/* could have a good signature */
+		if (!verify_signed_buffer(extra->value, payload_size,
+					  extra->value + payload_size,
+					  extra->len - payload_size,
+					  &verify_message, NULL))
+			status = 0; /* good */
+		else if (verify_message.len <= gpg_message_offset)
+			strbuf_addstr(&verify_message, "No signature\n");
+		/* otherwise we couldn't verify, which is shown as bad */
+	}
 
 	show_sig_lines(opt, status, verify_message.buf);
 	strbuf_release(&verify_message);
@@ -463,15 +466,7 @@ static void show_one_mergetag(struct rev_info *opt,
 
 static void show_mergetag(struct rev_info *opt, struct commit *commit)
 {
-	struct commit_extra_header *extra, *to_free;
-
-	to_free = read_commit_extra_headers(commit, NULL);
-	for (extra = to_free; extra; extra = extra->next) {
-		if (strcmp(extra->key, "mergetag"))
-			continue; /* not a merge tag */
-		show_one_mergetag(opt, extra, commit);
-	}
-	free_commit_extra_headers(to_free);
+	for_each_mergetag(show_one_mergetag, commit, opt);
 }
 
 void show_log(struct rev_info *opt)
@@ -588,7 +583,7 @@ void show_log(struct rev_info *opt)
 		show_mergetag(opt, commit);
 	}
 
-	if (!commit->buffer)
+	if (!get_cached_commit_buffer(commit, NULL))
 		return;
 
 	if (opt->show_notes) {

@@ -72,7 +72,7 @@ check_tar() {
 			for header in *.paxheader
 			do
 				data=${header%.paxheader}.data &&
-				if test -h $data -o -e $data
+				if test -h $data || test -e $data
 				then
 					path=$(get_pax_header $header path) &&
 					if test -n "$path"
@@ -105,7 +105,6 @@ test_expect_success \
      printf "A\$Format:%s\$O" "$SUBSTFORMAT" >a/substfile1 &&
      printf "A not substituted O" >a/substfile2 &&
      if test_have_prereq SYMLINKS; then
-	> a/a
 	ln -s a a/l1
      else
 	printf %s a > a/l1
@@ -120,14 +119,10 @@ test_expect_success \
     'echo ignore me >a/ignored &&
      echo ignored export-ignore >.git/info/attributes'
 
-test_expect_success \
-    'add files to repository' \
-    'find a -type f | xargs git update-index --add &&
-     find a -type l | xargs git update-index --add &&
-     treeid=`git write-tree` &&
-     echo $treeid >treeid &&
-     git update-ref HEAD $(TZ=GMT GIT_COMMITTER_DATE="2005-05-27 22:00:00" \
-     git commit-tree $treeid </dev/null)'
+test_expect_success 'add files to repository' '
+	git add a &&
+	GIT_COMMITTER_DATE="2005-05-27 22:00" git commit -m initial
+'
 
 test_expect_success 'setup export-subst' '
 	echo "substfile?" export-subst >>.git/info/attributes &&
@@ -208,7 +203,7 @@ test_expect_success \
 
 test_expect_success 'clients cannot access unreachable commits' '
 	test_commit unreachable &&
-	sha1=`git rev-parse HEAD` &&
+	sha1=$(git rev-parse HEAD) &&
 	git reset --hard HEAD^ &&
 	git archive $sha1 >remote.tar &&
 	test_must_fail git archive --remote=. $sha1 >remote.tar
@@ -216,7 +211,7 @@ test_expect_success 'clients cannot access unreachable commits' '
 
 test_expect_success 'upload-archive can allow unreachable commits' '
 	test_commit unreachable1 &&
-	sha1=`git rev-parse HEAD` &&
+	sha1=$(git rev-parse HEAD) &&
 	git reset --hard HEAD^ &&
 	git archive $sha1 >remote.tar &&
 	test_config uploadarchive.allowUnreachable true &&

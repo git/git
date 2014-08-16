@@ -320,19 +320,12 @@ static const double __ac_HASH_UPPER = 0.77;
 		code;												\
 	} }
 
-static inline khint_t __kh_oid_hash(const unsigned char *oid)
-{
-	khint_t hash;
-	memcpy(&hash, oid, sizeof(hash));
-	return hash;
-}
-
 #define __kh_oid_cmp(a, b) (hashcmp(a, b) == 0)
 
-KHASH_INIT(sha1, const unsigned char *, void *, 1, __kh_oid_hash, __kh_oid_cmp)
+KHASH_INIT(sha1, const unsigned char *, void *, 1, sha1hash, __kh_oid_cmp)
 typedef kh_sha1_t khash_sha1;
 
-KHASH_INIT(sha1_pos, const unsigned char *, int, 1, __kh_oid_hash, __kh_oid_cmp)
+KHASH_INIT(sha1_pos, const unsigned char *, int, 1, sha1hash, __kh_oid_cmp)
 typedef kh_sha1_pos_t khash_sha1_pos;
 
 #endif /* __AC_KHASH_H */

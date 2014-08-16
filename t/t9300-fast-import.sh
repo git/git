@@ -2687,7 +2687,7 @@ test_expect_success 'R: verify created pack' '
 test_expect_success \
 	'R: verify written objects' \
 	'git --git-dir=R/.git cat-file blob big-file:big1 >actual &&
-	 test_cmp_bin expect actual &&
+	 test_cmp expect actual &&
 	 a=$(git --git-dir=R/.git rev-parse big-file:big1) &&
 	 b=$(git --git-dir=R/.git rev-parse big-file:big2) &&
 	 test $a = $b'
@@ -2997,6 +2997,24 @@ test_expect_success 'T: ls root tree' '
 	ls $sha1 ""
 	EOF
 	test_cmp expect actual
+'
+
+test_expect_success 'T: delete branch' '
+	git branch to-delete &&
+	git fast-import <<-EOF &&
+	reset refs/heads/to-delete
+	from 0000000000000000000000000000000000000000
+	EOF
+	test_must_fail git rev-parse --verify refs/heads/to-delete
+'
+
+test_expect_success 'T: empty reset doesnt delete branch' '
+	git branch not-to-delete &&
+	git fast-import <<-EOF &&
+	reset refs/heads/not-to-delete
+	EOF
+	git show-ref &&
+	git rev-parse --verify refs/heads/not-to-delete
 '
 
 test_done

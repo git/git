@@ -41,7 +41,7 @@ static int read_one_reflog(unsigned char *osha1, unsigned char *nsha1,
 static struct complete_reflogs *read_complete_reflog(const char *ref)
 {
 	struct complete_reflogs *reflogs =
-		xcalloc(sizeof(struct complete_reflogs), 1);
+		xcalloc(1, sizeof(struct complete_reflogs));
 	reflogs->ref = xstrdup(ref);
 	for_each_reflog_ent(ref, read_one_reflog, reflogs);
 	if (reflogs->nr == 0) {
@@ -135,7 +135,7 @@ struct reflog_walk_info {
 
 void init_reflog_walk(struct reflog_walk_info** info)
 {
-	*info = xcalloc(sizeof(struct reflog_walk_info), 1);
+	*info = xcalloc(1, sizeof(struct reflog_walk_info));
 }
 
 int add_reflog_for_walk(struct reflog_walk_info *info,
@@ -199,7 +199,7 @@ int add_reflog_for_walk(struct reflog_walk_info *info,
 			= reflogs;
 	}
 
-	commit_reflog = xcalloc(sizeof(struct commit_reflog), 1);
+	commit_reflog = xcalloc(1, sizeof(struct commit_reflog));
 	if (recno < 0) {
 		commit_reflog->recno = get_reflog_recno_by_time(reflogs, timestamp);
 		if (commit_reflog->recno < 0) {
@@ -242,7 +242,7 @@ void fake_reflog_parent(struct reflog_walk_info *info, struct commit *commit)
 		return;
 	}
 
-	commit->parents = xcalloc(sizeof(struct commit_list), 1);
+	commit->parents = xcalloc(1, sizeof(struct commit_list));
 	commit->parents->item = commit_info->commit;
 }
 

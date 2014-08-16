@@ -71,11 +71,13 @@ success of the resolution after the custom tool has exited.
 --no-prompt::
 	Don't prompt before each invocation of the merge resolution
 	program.
+	This is the default if the merge resolution program is
+	explicitly specified with the `--tool` option or with the
+	`merge.tool` configuration variable.
 
 --prompt::
-	Prompt before each invocation of the merge resolution program.
-	This is the default behaviour; the option is provided to
-	override any configuration settings.
+	Prompt before each invocation of the merge resolution program
+	to give the user a chance to skip the path.
 
 TEMPORARY FILES
 ---------------

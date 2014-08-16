@@ -20,27 +20,27 @@ test_expect_success setup '
 
 test_expect_success 'update-index and ls-files' '
 	git update-index --add one &&
-	case "`git ls-files`" in
+	case "$(git ls-files)" in
 	one) echo pass one ;;
 	*) echo bad one; exit 1 ;;
 	esac &&
 	(
 		cd dir &&
 		git update-index --add two &&
-		case "`git ls-files`" in
+		case "$(git ls-files)" in
 		two) echo pass two ;;
 		*) echo bad two; exit 1 ;;
 		esac
 	) &&
-	case "`git ls-files`" in
+	case "$(git ls-files)" in
 	dir/two"$LF"one) echo pass both ;;
 	*) echo bad; exit 1 ;;
 	esac
 '
 
 test_expect_success 'cat-file' '
-	two=`git ls-files -s dir/two` &&
-	two=`expr "$two" : "[0-7]* \\([0-9a-f]*\\)"` &&
+	two=$(git ls-files -s dir/two) &&
+	two=$(expr "$two" : "[0-7]* \\([0-9a-f]*\\)") &&
 	echo "$two" &&
 	git cat-file -p "$two" >actual &&
 	cmp dir/two actual &&
@@ -55,18 +55,18 @@ rm -f actual dir/actual
 test_expect_success 'diff-files' '
 	echo a >>one &&
 	echo d >>dir/two &&
-	case "`git diff-files --name-only`" in
+	case "$(git diff-files --name-only)" in
 	dir/two"$LF"one) echo pass top ;;
 	*) echo bad top; exit 1 ;;
 	esac &&
 	# diff should not omit leading paths
 	(
 		cd dir &&
-		case "`git diff-files --name-only`" in
+		case "$(git diff-files --name-only)" in
 		dir/two"$LF"one) echo pass subdir ;;
 		*) echo bad subdir; exit 1 ;;
 		esac &&
-		case "`git diff-files --name-only .`" in
+		case "$(git diff-files --name-only .)" in
 		dir/two) echo pass subdir limited ;;
 		*) echo bad subdir limited; exit 1 ;;
 		esac
@@ -74,11 +74,11 @@ test_expect_success 'diff-files' '
 '
 
 test_expect_success 'write-tree' '
-	top=`git write-tree` &&
+	top=$(git write-tree) &&
 	echo $top &&
 	(
 		cd dir &&
-		sub=`git write-tree` &&
+		sub=$(git write-tree) &&
 		echo $sub &&
 		test "z$top" = "z$sub"
 	)
@@ -96,7 +96,7 @@ test_expect_success 'checkout-index' '
 
 test_expect_success 'read-tree' '
 	rm -f one dir/two &&
-	tree=`git write-tree` &&
+	tree=$(git write-tree) &&
 	read_tree_u_must_succeed --reset -u "$tree" &&
 	cmp one original.one &&
 	cmp dir/two original.two &&

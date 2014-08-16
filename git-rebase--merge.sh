@@ -24,7 +24,7 @@ continue_merge () {
 		die "$resolvemsg"
 	fi
 
-	cmt=`cat "$state_dir/current"`
+	cmt=$(cat "$state_dir/current")
 	if ! git diff-index --quiet --ignore-submodules HEAD --
 	then
 		if ! git commit ${gpg_sign_opt:+"$gpg_sign_opt"} --no-verify -C "$cmt"
@@ -53,11 +53,12 @@ continue_merge () {
 }
 
 call_merge () {
-	cmt="$(cat "$state_dir/cmt.$1")"
+	msgnum="$1"
+	echo "$msgnum" >"$state_dir/msgnum"
+	cmt="$(cat "$state_dir/cmt.$msgnum")"
 	echo "$cmt" > "$state_dir/current"
 	hd=$(git rev-parse --verify HEAD)
 	cmt_name=$(git symbolic-ref HEAD 2> /dev/null || echo HEAD)
-	msgnum=$(cat "$state_dir/msgnum")
 	eval GITHEAD_$cmt='"${cmt_name##refs/heads/}~$(($end - $msgnum))"'
 	eval GITHEAD_$hd='$onto_name'
 	export GITHEAD_$cmt GITHEAD_$hd
@@ -143,7 +144,7 @@ echo "$onto_name" > "$state_dir/onto_name"
 write_basic_state
 
 msgnum=0
-for cmt in `git rev-list --reverse --no-merges "$revisions"`
+for cmt in $(git rev-list --reverse --no-merges "$revisions")
 do
 	msgnum=$(($msgnum + 1))
 	echo "$cmt" > "$state_dir/cmt.$msgnum"

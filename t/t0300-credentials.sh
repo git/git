@@ -6,7 +6,7 @@ test_description='basic credential helper tests'
 
 test_expect_success 'setup helper scripts' '
 	cat >dump <<-\EOF &&
-	whoami=`echo $0 | sed s/.*git-credential-//`
+	whoami=$(echo $0 | sed s/.*git-credential-//)
 	echo >&2 "$whoami: $*"
 	OIFS=$IFS
 	IFS==

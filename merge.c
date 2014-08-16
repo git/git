@@ -18,39 +18,23 @@ int try_merge_command(const char *strategy, size_t xopts_nr,
 		      const char **xopts, struct commit_list *common,
 		      const char *head_arg, struct commit_list *remotes)
 {
-	const char **args;
-	int i = 0, x = 0, ret;
+	struct argv_array args = ARGV_ARRAY_INIT;
+	int i, ret;
 	struct commit_list *j;
-	struct strbuf buf = STRBUF_INIT;
 
-	args = xmalloc((4 + xopts_nr + commit_list_count(common) +
-			commit_list_count(remotes)) * sizeof(char *));
-	strbuf_addf(&buf, "merge-%s", strategy);
-	args[i++] = buf.buf;
-	for (x = 0; x < xopts_nr; x++) {
-		char *s = xmalloc(strlen(xopts[x])+2+1);
-		strcpy(s, "--");
-		strcpy(s+2, xopts[x]);
-		args[i++] = s;
-	}
+	argv_array_pushf(&args, "merge-%s", strategy);
+	for (i = 0; i < xopts_nr; i++)
+		argv_array_pushf(&args, "--%s", xopts[i]);
 	for (j = common; j; j = j->next)
-		args[i++] = xstrdup(merge_argument(j->item));
-	args[i++] = "--";
-	args[i++] = head_arg;
+		argv_array_push(&args, merge_argument(j->item));
+	argv_array_push(&args, "--");
+	argv_array_push(&args, head_arg);
 	for (j = remotes; j; j = j->next)
-		args[i++] = xstrdup(merge_argument(j->item));
-	args[i] = NULL;
-	ret = run_command_v_opt(args, RUN_GIT_CMD);
-	strbuf_release(&buf);
-	i = 1;
-	for (x = 0; x < xopts_nr; x++)
-		free((void *)args[i++]);
-	for (j = common; j; j = j->next)
-		free((void *)args[i++]);
-	i += 2;
-	for (j = remotes; j; j = j->next)
-		free((void *)args[i++]);
-	free(args);
+		argv_array_push(&args, merge_argument(j->item));
+
+	ret = run_command_v_opt(args.argv, RUN_GIT_CMD);
+	argv_array_clear(&args);
+
 	discard_cache();
 	if (read_cache() < 0)
 		die(_("failed to read the cache"));
@@ -66,13 +50,13 @@ int checkout_fast_forward(const unsigned char *head,
 	struct tree *trees[MAX_UNPACK_TREES];
 	struct unpack_trees_options opts;
 	struct tree_desc t[MAX_UNPACK_TREES];
-	int i, fd, nr_trees = 0;
+	int i, nr_trees = 0;
 	struct dir_struct dir;
 	struct lock_file *lock_file = xcalloc(1, sizeof(struct lock_file));
 
 	refresh_cache(REFRESH_QUIET);
 
-	fd = hold_locked_index(lock_file, 1);
+	hold_locked_index(lock_file, 1);
 
 	memset(&trees, 0, sizeof(trees));
 	memset(&opts, 0, sizeof(opts));
@@ -105,8 +89,7 @@ int checkout_fast_forward(const unsigned char *head,
 	}
 	if (unpack_trees(nr_trees, t, &opts))
 		return -1;
-	if (write_cache(fd, active_cache, active_nr) ||
-		commit_locked_index(lock_file))
+	if (write_locked_index(&the_index, lock_file, COMMIT_LOCK))
 		die(_("unable to write new index file"));
 	return 0;
 }

@@ -161,6 +161,17 @@ may not support it yet.
 	Only meaningful with `--stdin` or `--index-info`; paths are
 	separated with NUL character instead of LF.
 
+--split-index::
+--no-split-index::
+	Enable or disable split index mode. If enabled, the index is
+	split into two files, $GIT_DIR/index and $GIT_DIR/sharedindex.<SHA-1>.
+	Changes are accumulated in $GIT_DIR/index while the shared
+	index file contains all index entries stays unchanged. If
+	split-index mode is already enabled and `--split-index` is
+	given again, all changes in $GIT_DIR/index are pushed back to
+	the shared index file. This mode is designed for very large
+	indexes that take a signficant amount of time to read or write.
+
 \--::
 	Do not interpret any more arguments as options.
 

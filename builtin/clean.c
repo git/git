@@ -48,7 +48,7 @@ enum color_clean {
 	CLEAN_COLOR_PROMPT = 2,
 	CLEAN_COLOR_HEADER = 3,
 	CLEAN_COLOR_HELP = 4,
-	CLEAN_COLOR_ERROR = 5,
+	CLEAN_COLOR_ERROR = 5
 };
 
 #define MENU_OPTS_SINGLETON		01
@@ -621,8 +621,7 @@ static int *list_and_choose(struct menu_opts *opts, struct menu_stuff *stuff)
 				nr += chosen[i];
 		}
 
-		result = xmalloc(sizeof(int) * (nr + 1));
-		memset(result, 0, sizeof(int) * (nr + 1));
+		result = xcalloc(nr + 1, sizeof(int));
 		for (i = 0; i < stuff->nr && j < nr; i++) {
 			if (chosen[i])
 				result[j++] = i;

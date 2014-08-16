@@ -193,7 +193,7 @@ static int verify_format(const char *format)
 		at = parse_atom(sp + 2, ep);
 		cp = ep + 1;
 
-		if (!memcmp(used_atom[at], "color:", 6))
+		if (starts_with(used_atom[at], "color:"))
 			need_color_reset_at_eol = !!strcmp(used_atom[at], color_reset);
 	}
 	return 0;
@@ -283,18 +283,6 @@ static void grab_tag_values(struct atom_value *val, int deref, struct object *ob
 	}
 }
 
-static int num_parents(struct commit *commit)
-{
-	struct commit_list *parents;
-	int i;
-
-	for (i = 0, parents = commit->parents;
-	     parents;
-	     parents = parents->next)
-		i++;
-	return i;
-}
-
 /* See grab_values */
 static void grab_commit_values(struct atom_value *val, int deref, struct object *obj, void *buf, unsigned long sz)
 {
@@ -315,12 +303,12 @@ static void grab_commit_values(struct atom_value *val, int deref, struct object 
 		}
 		if (!strcmp(name, "numparent")) {
 			char *s = xmalloc(40);
-			v->ul = num_parents(commit);
+			v->ul = commit_list_count(commit->parents);
 			sprintf(s, "%lu", v->ul);
 			v->s = s;
 		}
 		else if (!strcmp(name, "parent")) {
-			int num = num_parents(commit);
+			int num = commit_list_count(commit->parents);
 			int i;
 			struct commit_list *parents;
 			char *s = xmalloc(41 * num + 1);

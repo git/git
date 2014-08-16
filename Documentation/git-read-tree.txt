@@ -283,7 +283,7 @@ merge. The different stages represent the "result tree" (stage 0, aka
 you are trying to merge (stage 2 and 3 respectively).
 
 The order of stages 1, 2 and 3 (hence the order of three
-<tree-ish> command line arguments) are significant when you
+<tree-ish> command-line arguments) are significant when you
 start a 3-way merge with an index file that is already
 populated.  Here is an outline of how the algorithm works:
 

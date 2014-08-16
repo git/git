@@ -94,7 +94,7 @@ test_expect_success 'setup for --cc --raw' '
 	blob=$(echo file | git hash-object --stdin -w) &&
 	base_tree=$(echo "100644 blob $blob	file" | git mktree) &&
 	trees= &&
-	for i in `test_seq 1 40`
+	for i in $(test_seq 1 40)
 	do
 		blob=$(echo file$i | git hash-object --stdin -w) &&
 		trees="$trees$(echo "100644 blob $blob	file" | git mktree)$LF"

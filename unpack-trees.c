@@ -8,6 +8,7 @@
 #include "progress.h"
 #include "refs.h"
 #include "attr.h"
+#include "split-index.h"
 
 /*
  * Error messages expected by scripts out of plumbing commands such as
@@ -56,17 +57,15 @@ void setup_unpack_trees_porcelain(struct unpack_trees_options *opts,
 	int i;
 	const char **msgs = opts->msgs;
 	const char *msg;
-	char *tmp;
 	const char *cmd2 = strcmp(cmd, "checkout") ? cmd : "switch branches";
+
 	if (advice_commit_before_merge)
 		msg = "Your local changes to the following files would be overwritten by %s:\n%%s"
 			"Please, commit your changes or stash them before you can %s.";
 	else
 		msg = "Your local changes to the following files would be overwritten by %s:\n%%s";
-	tmp = xmalloc(strlen(msg) + strlen(cmd) + strlen(cmd2) - 2);
-	sprintf(tmp, msg, cmd, cmd2);
-	msgs[ERROR_WOULD_OVERWRITE] = tmp;
-	msgs[ERROR_NOT_UPTODATE_FILE] = tmp;
+	msgs[ERROR_WOULD_OVERWRITE] = msgs[ERROR_NOT_UPTODATE_FILE] =
+		xstrfmt(msg, cmd, cmd2);
 
 	msgs[ERROR_NOT_UPTODATE_DIR] =
 		"Updating the following directories would lose untracked files in it:\n%s";
@@ -76,12 +75,9 @@ void setup_unpack_trees_porcelain(struct unpack_trees_options *opts,
 			"Please move or remove them before you can %s.";
 	else
 		msg = "The following untracked working tree files would be %s by %s:\n%%s";
-	tmp = xmalloc(strlen(msg) + strlen(cmd) + strlen("removed") + strlen(cmd2) - 4);
-	sprintf(tmp, msg, "removed", cmd, cmd2);
-	msgs[ERROR_WOULD_LOSE_UNTRACKED_REMOVED] = tmp;
-	tmp = xmalloc(strlen(msg) + strlen(cmd) + strlen("overwritten") + strlen(cmd2) - 4);
-	sprintf(tmp, msg, "overwritten", cmd, cmd2);
-	msgs[ERROR_WOULD_LOSE_UNTRACKED_OVERWRITTEN] = tmp;
+
+	msgs[ERROR_WOULD_LOSE_UNTRACKED_REMOVED] = xstrfmt(msg, "removed", cmd, cmd2);
+	msgs[ERROR_WOULD_LOSE_UNTRACKED_OVERWRITTEN] = xstrfmt(msg, "overwritten", cmd, cmd2);
 
 	/*
 	 * Special case: ERROR_BIND_OVERLAP refers to a pair of paths, we
@@ -246,7 +242,9 @@ static int verify_absent_sparse(const struct cache_entry *ce,
 				enum unpack_trees_error_types,
 				struct unpack_trees_options *o);
 
-static int apply_sparse_checkout(struct cache_entry *ce, struct unpack_trees_options *o)
+static int apply_sparse_checkout(struct index_state *istate,
+				 struct cache_entry *ce,
+				 struct unpack_trees_options *o)
 {
 	int was_skip_worktree = ce_skip_worktree(ce);
 
@@ -254,6 +252,10 @@ static int apply_sparse_checkout(struct cache_entry *ce, struct unpack_trees_opt
 		ce->ce_flags |= CE_SKIP_WORKTREE;
 	else
 		ce->ce_flags &= ~CE_SKIP_WORKTREE;
+	if (was_skip_worktree != ce_skip_worktree(ce)) {
+		ce->ce_flags |= CE_UPDATE_IN_BASE;
+		istate->cache_changed |= CE_ENTRY_CHANGED;
+	}
 
 	/*
 	 * if (!was_skip_worktree && !ce_skip_worktree()) {
@@ -620,17 +622,6 @@ static int unpack_failed(struct unpack_trees_options *o, const char *message)
 		return -1;
 	}
 	return -1;
-}
-
-/* NEEDSWORK: give this a better name and share with tree-walk.c */
-static int name_compare(const char *a, int a_len,
-			const char *b, int b_len)
-{
-	int len = (a_len < b_len) ? a_len : b_len;
-	int cmp = memcmp(a, b, len);
-	if (cmp)
-		return cmp;
-	return (a_len - b_len);
 }
 
 /*
@@ -1025,6 +1016,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 	state.force = 1;
 	state.quiet = 1;
 	state.refresh_cache = 1;
+	state.istate = &o->result;
 
 	memset(&el, 0, sizeof(el));
 	if (!core_apply_sparse_checkout || !o->update)
@@ -1041,6 +1033,10 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 	o->result.timestamp.sec = o->src_index->timestamp.sec;
 	o->result.timestamp.nsec = o->src_index->timestamp.nsec;
 	o->result.version = o->src_index->version;
+	o->result.split_index = o->src_index->split_index;
+	if (o->result.split_index)
+		o->result.split_index->refcount++;
+	hashcpy(o->result.sha1, o->src_index->sha1);
 	o->merge_size = len;
 	mark_all_ce_unused(o->src_index);
 
@@ -1131,7 +1127,7 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 				ret = -1;
 			}
 
-			if (apply_sparse_checkout(ce, o)) {
+			if (apply_sparse_checkout(&o->result, ce, o)) {
 				if (!o->show_all_errors)
 					goto return_failed;
 				ret = -1;
@@ -1259,7 +1255,7 @@ static void invalidate_ce_path(const struct cache_entry *ce,
 			       struct unpack_trees_options *o)
 {
 	if (ce)
-		cache_tree_invalidate_path(o->src_index->cache_tree, ce->name);
+		cache_tree_invalidate_path(o->src_index, ce->name);
 }
 
 /*

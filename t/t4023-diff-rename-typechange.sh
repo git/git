@@ -8,7 +8,6 @@ test_expect_success setup '
 
 	rm -f foo bar &&
 	cat "$TEST_DIRECTORY"/../COPYING >foo &&
-	touch linklink
 	test_ln_s_add linklink bar &&
 	git add foo &&
 	git commit -a -m Initial &&

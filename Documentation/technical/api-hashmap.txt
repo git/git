@@ -8,11 +8,19 @@ Data Structures
 
 `struct hashmap`::
 
-	The hash table structure.
+	The hash table structure. Members can be used as follows, but should
+	not be modified directly:
 +
-The `size` member keeps track of the total number of entries. The `cmpfn`
-member is a function used to compare two entries for equality. The `table` and
-`tablesize` members store the hash table and its size, respectively.
+The `size` member keeps track of the total number of entries (0 means the
+hashmap is empty).
++
+`tablesize` is the allocated size of the hash table. A non-0 value indicates
+that the hashmap is initialized. It may also be useful for statistical purposes
+(i.e. `size / tablesize` is the current load factor).
++
+`cmpfn` stores the comparison function specified in `hashmap_init()`. In
+advanced scenarios, it may be useful to change this, e.g. to switch between
+case-sensitive and case-insensitive lookup.
 
 `struct hashmap_entry`::
 
@@ -58,6 +66,15 @@ Functions
 +
 `strihash` and `memihash` are case insensitive versions.
 
+`unsigned int sha1hash(const unsigned char *sha1)`::
+
+	Converts a cryptographic hash (e.g. SHA-1) into an int-sized hash code
+	for use in hash tables. Cryptographic hashes are supposed to have
+	uniform distribution, so in contrast to `memhash()`, this just copies
+	the first `sizeof(int)` bytes without shuffling any bits. Note that
+	the results will be different on big-endian and little-endian
+	platforms, so they should not be stored or transferred over the net.
+
 `void hashmap_init(struct hashmap *map, hashmap_cmp_fn equals_function, size_t initial_size)`::
 
 	Initializes a hashmap structure.
@@ -100,6 +117,20 @@ hashmap_entry) that has at least been initialized with the proper hash code
 +
 If an entry with matching hash code is found, `key` and `keydata` are passed
 to `hashmap_cmp_fn` to decide whether the entry matches the key.
+
+`void *hashmap_get_from_hash(const struct hashmap *map, unsigned int hash, const void *keydata)`::
+
+	Returns the hashmap entry for the specified hash code and key data,
+	or NULL if not found.
++
+`map` is the hashmap structure.
++
+`hash` is the hash code of the entry to look up.
++
+If an entry with matching hash code is found, `keydata` is passed to
+`hashmap_cmp_fn` to decide whether the entry matches the key. The
+`entry_or_key` parameter points to a bogus hashmap_entry structure that
+should not be used in the comparison.
 
 `void *hashmap_get_next(const struct hashmap *map, const void *entry)`::
 
@@ -161,6 +192,21 @@ more entries.
 +
 `hashmap_iter_first` is a combination of both (i.e. initializes the iterator
 and returns the first entry, if any).
+
+`const char *strintern(const char *string)`::
+`const void *memintern(const void *data, size_t len)`::
+
+	Returns the unique, interned version of the specified string or data,
+	similar to the `String.intern` API in Java and .NET, respectively.
+	Interned strings remain valid for the entire lifetime of the process.
++
+Can be used as `[x]strdup()` or `xmemdupz` replacement, except that interned
+strings / data must not be modified or freed.
++
+Interned strings are best used for short strings with high probability of
+duplicates.
++
+Uses a hashmap to store the pool of interned strings.
 
 Usage example
 -------------

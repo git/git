@@ -87,11 +87,27 @@ test_expect_success 'push new branch by name' '
 	compare_refs local HEAD server refs/heads/new-name
 '
 
-test_expect_failure 'push new branch with old:new refspec' '
+test_expect_success 'push new branch with old:new refspec' '
 	(cd local &&
 	 git push origin new-name:new-refspec
 	) &&
 	compare_refs local HEAD server refs/heads/new-refspec
+'
+
+test_expect_success 'push new branch with HEAD:new refspec' '
+	(cd local &&
+	 git checkout new-name
+	 git push origin HEAD:new-refspec-2
+	) &&
+	compare_refs local HEAD server refs/heads/new-refspec-2
+'
+
+test_expect_success 'push delete branch' '
+	(cd local &&
+	 git push origin :new-name
+	) &&
+	test_must_fail git --git-dir="server/.git" \
+	 rev-parse --verify refs/heads/new-name
 '
 
 test_expect_success 'forced push' '
@@ -212,7 +228,7 @@ test_expect_success 'push update refs failure' '
 	echo "update fail" >>file &&
 	git commit -a -m "update fail" &&
 	git rev-parse --verify testgit/origin/heads/update >expect &&
-	test_expect_code 1 env GIT_REMOTE_TESTGIT_PUSH_ERROR="non-fast forward" \
+	test_must_fail env GIT_REMOTE_TESTGIT_FAILURE="non-fast forward" \
 		git push origin update &&
 	git rev-parse --verify testgit/origin/heads/update >actual &&
 	test_cmp expect actual

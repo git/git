@@ -30,7 +30,7 @@ int recv_sideband(const char *me, int in_stream, int out)
 
 	memcpy(buf, PREFIX, pf);
 	term = getenv("TERM");
-	if (term && strcmp(term, "dumb"))
+	if (isatty(2) && term && strcmp(term, "dumb"))
 		suffix = ANSI_SUFFIX;
 	else
 		suffix = DUMB_SUFFIX;
