@@ -2188,8 +2188,8 @@ int diff_filespec_is_binary(struct diff_filespec *one)
 			one->is_binary = one->driver->binary;
 		else {
 			if (!one->data && DIFF_FILE_VALID(one))
-				diff_populate_filespec(one, 0);
-			if (one->data)
+				diff_populate_filespec(one, CHECK_BINARY);
+			if (one->is_binary == -1 && one->data)
 				one->is_binary = buffer_is_binary(one->data,
 						one->size);
 			if (one->is_binary == -1)
@@ -2725,6 +2725,11 @@ int diff_populate_filespec(struct diff_filespec *s, unsigned int flags)
 		}
 		if (size_only)
 			return 0;
+		if ((flags & CHECK_BINARY) &&
+		    s->size > big_file_threshold && s->is_binary == -1) {
+			s->is_binary = 1;
+			return 0;
+		}
 		fd = open(s->path, O_RDONLY);
 		if (fd < 0)
 			goto err_empty;
@@ -2746,16 +2751,21 @@ int diff_populate_filespec(struct diff_filespec *s, unsigned int flags)
 	}
 	else {
 		enum object_type type;
-		if (size_only) {
+		if (size_only || (flags & CHECK_BINARY)) {
 			type = sha1_object_info(s->sha1, &s->size);
 			if (type < 0)
 				die("unable to read %s", sha1_to_hex(s->sha1));
-		} else {
-			s->data = read_sha1_file(s->sha1, &type, &s->size);
-			if (!s->data)
-				die("unable to read %s", sha1_to_hex(s->sha1));
-			s->should_free = 1;
+			if (size_only)
+				return 0;
+			if (s->size > big_file_threshold && s->is_binary == -1) {
+				s->is_binary = 1;
+				return 0;
+			}
 		}
+		s->data = read_sha1_file(s->sha1, &type, &s->size);
+		if (!s->data)
+			die("unable to read %s", sha1_to_hex(s->sha1));
+		s->should_free = 1;
 	}
 	return 0;
 }

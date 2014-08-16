@@ -56,6 +56,7 @@ extern void fill_filespec(struct diff_filespec *, const unsigned char *,
 			  int, unsigned short);
 
 #define CHECK_SIZE_ONLY 1
+#define CHECK_BINARY    2
 extern int diff_populate_filespec(struct diff_filespec *, unsigned int);
 extern void diff_free_filespec_data(struct diff_filespec *);
 extern void diff_free_filespec_blob(struct diff_filespec *);

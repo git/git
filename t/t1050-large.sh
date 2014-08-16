@@ -112,6 +112,10 @@ test_expect_success 'diff --raw' '
 	git diff --raw HEAD^
 '
 
+test_expect_success 'diff --stat' '
+	git diff --stat HEAD^ HEAD
+'
+
 test_expect_success 'hash-object' '
 	git hash-object large1
 '
