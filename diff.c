@@ -376,7 +376,7 @@ static unsigned long diff_filespec_size(struct diff_filespec *one)
 {
 	if (!DIFF_FILE_VALID(one))
 		return 0;
-	diff_populate_filespec(one, 1);
+	diff_populate_filespec(one, CHECK_SIZE_ONLY);
 	return one->size;
 }
 
@@ -1910,11 +1910,11 @@ static void show_dirstat(struct diff_options *options)
 			diff_free_filespec_data(p->one);
 			diff_free_filespec_data(p->two);
 		} else if (DIFF_FILE_VALID(p->one)) {
-			diff_populate_filespec(p->one, 1);
+			diff_populate_filespec(p->one, CHECK_SIZE_ONLY);
 			copied = added = 0;
 			diff_free_filespec_data(p->one);
 		} else if (DIFF_FILE_VALID(p->two)) {
-			diff_populate_filespec(p->two, 1);
+			diff_populate_filespec(p->two, CHECK_SIZE_ONLY);
 			copied = 0;
 			added = p->two->size;
 			diff_free_filespec_data(p->two);
@@ -2668,8 +2668,9 @@ static int diff_populate_gitlink(struct diff_filespec *s, int size_only)
  * grab the data for the blob (or file) for our own in-core comparison.
  * diff_filespec has data and size fields for this purpose.
  */
-int diff_populate_filespec(struct diff_filespec *s, int size_only)
+int diff_populate_filespec(struct diff_filespec *s, unsigned int flags)
 {
+	int size_only = flags & CHECK_SIZE_ONLY;
 	int err = 0;
 	/*
 	 * demote FAIL to WARN to allow inspecting the situation
@@ -4688,8 +4689,8 @@ static int diff_filespec_check_stat_unmatch(struct diff_filepair *p)
 	    !DIFF_FILE_VALID(p->two) ||
 	    (p->one->sha1_valid && p->two->sha1_valid) ||
 	    (p->one->mode != p->two->mode) ||
-	    diff_populate_filespec(p->one, 1) ||
-	    diff_populate_filespec(p->two, 1) ||
+	    diff_populate_filespec(p->one, CHECK_SIZE_ONLY) ||
+	    diff_populate_filespec(p->two, CHECK_SIZE_ONLY) ||
 	    (p->one->size != p->two->size) ||
 	    !diff_filespec_is_identical(p->one, p->two)) /* (2) */
 		p->skip_stat_unmatch_result = 1;
