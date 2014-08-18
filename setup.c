@@ -734,7 +734,7 @@ static const char *setup_git_directory_gently_1(int *nongit_ok)
 		string_list_clear(&ceiling_dirs, 0);
 	}
 
-	if (ceil_offset < 0 && has_dos_drive_prefix(cwd))
+	if (ceil_offset < 0 && has_dos_drive_prefix(cwd.buf))
 		ceil_offset = 1;
 
 	/*
