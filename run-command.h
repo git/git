@@ -44,6 +44,8 @@ struct child_process {
 	unsigned clean_on_exit:1;
 };
 
+#define CHILD_PROCESS_INIT { NULL, ARGV_ARRAY_INIT }
+
 int start_command(struct child_process *);
 int finish_command(struct child_process *);
 int run_command(struct child_process *);

@@ -259,7 +259,7 @@ static const char *access_hook;
 
 static int run_access_hook(struct daemon_service *service, const char *dir, const char *path)
 {
-	struct child_process child;
+	struct child_process child = CHILD_PROCESS_INIT;
 	struct strbuf buf = STRBUF_INIT;
 	const char *argv[8];
 	const char **arg = argv;
@@ -277,7 +277,6 @@ static int run_access_hook(struct daemon_service *service, const char *dir, cons
 	*arg = NULL;
 #undef STRARG
 
-	memset(&child, 0, sizeof(child));
 	child.use_shell = 1;
 	child.argv = argv;
 	child.no_stdin = 1;
@@ -406,9 +405,8 @@ static void copy_to_log(int fd)
 
 static int run_service_command(const char **argv)
 {
-	struct child_process cld;
+	struct child_process cld = CHILD_PROCESS_INIT;
 
-	memset(&cld, 0, sizeof(cld));
 	cld.argv = argv;
 	cld.git_cmd = 1;
 	cld.err = -1;
@@ -733,7 +731,7 @@ static void check_dead_children(void)
 static char **cld_argv;
 static void handle(int incoming, struct sockaddr *addr, socklen_t addrlen)
 {
-	struct child_process cld = { NULL };
+	struct child_process cld = CHILD_PROCESS_INIT;
 	char addrbuf[300] = "REMOTE_ADDR=", portbuf[300];
 	char *env[] = { addrbuf, portbuf, NULL };
 

@@ -433,13 +433,12 @@ static int submodule_needs_pushing(const char *path, const unsigned char sha1[20
 		return 0;
 
 	if (for_each_remote_ref_submodule(path, has_remote, NULL) > 0) {
-		struct child_process cp;
+		struct child_process cp = CHILD_PROCESS_INIT;
 		const char *argv[] = {"rev-list", NULL, "--not", "--remotes", "-n", "1" , NULL};
 		struct strbuf buf = STRBUF_INIT;
 		int needs_pushing = 0;
 
 		argv[1] = sha1_to_hex(sha1);
-		memset(&cp, 0, sizeof(cp));
 		cp.argv = argv;
 		cp.env = local_repo_env;
 		cp.git_cmd = 1;
@@ -524,10 +523,9 @@ static int push_submodule(const char *path)
 		return 1;
 
 	if (for_each_remote_ref_submodule(path, has_remote, NULL) > 0) {
-		struct child_process cp;
+		struct child_process cp = CHILD_PROCESS_INIT;
 		const char *argv[] = {"push", NULL};
 
-		memset(&cp, 0, sizeof(cp));
 		cp.argv = argv;
 		cp.env = local_repo_env;
 		cp.git_cmd = 1;
@@ -569,12 +567,11 @@ static int is_submodule_commit_present(const char *path, unsigned char sha1[20])
 	if (!add_submodule_odb(path) && lookup_commit_reference(sha1)) {
 		/* Even if the submodule is checked out and the commit is
 		 * present, make sure it is reachable from a ref. */
-		struct child_process cp;
+		struct child_process cp = CHILD_PROCESS_INIT;
 		const char *argv[] = {"rev-list", "-n", "1", NULL, "--not", "--all", NULL};
 		struct strbuf buf = STRBUF_INIT;
 
 		argv[3] = sha1_to_hex(sha1);
-		memset(&cp, 0, sizeof(cp));
 		cp.argv = argv;
 		cp.env = local_repo_env;
 		cp.git_cmd = 1;
@@ -695,7 +692,7 @@ int fetch_populated_submodules(const struct argv_array *options,
 			       int quiet)
 {
 	int i, result = 0;
-	struct child_process cp;
+	struct child_process cp = CHILD_PROCESS_INIT;
 	struct argv_array argv = ARGV_ARRAY_INIT;
 	struct string_list_item *name_for_path;
 	const char *work_tree = get_git_work_tree();
@@ -711,7 +708,6 @@ int fetch_populated_submodules(const struct argv_array *options,
 	argv_array_push(&argv, "--recurse-submodules-default");
 	/* default value, "--submodule-prefix" and its value are added later */
 
-	memset(&cp, 0, sizeof(cp));
 	cp.env = local_repo_env;
 	cp.git_cmd = 1;
 	cp.no_stdin = 1;
@@ -794,7 +790,7 @@ out:
 unsigned is_submodule_modified(const char *path, int ignore_untracked)
 {
 	ssize_t len;
-	struct child_process cp;
+	struct child_process cp = CHILD_PROCESS_INIT;
 	const char *argv[] = {
 		"status",
 		"--porcelain",
@@ -821,7 +817,6 @@ unsigned is_submodule_modified(const char *path, int ignore_untracked)
 	if (ignore_untracked)
 		argv[2] = "-uno";
 
-	memset(&cp, 0, sizeof(cp));
 	cp.argv = argv;
 	cp.env = local_repo_env;
 	cp.git_cmd = 1;
@@ -862,7 +857,7 @@ unsigned is_submodule_modified(const char *path, int ignore_untracked)
 
 int submodule_uses_gitfile(const char *path)
 {
-	struct child_process cp;
+	struct child_process cp = CHILD_PROCESS_INIT;
 	const char *argv[] = {
 		"submodule",
 		"foreach",
@@ -883,7 +878,6 @@ int submodule_uses_gitfile(const char *path)
 	strbuf_release(&buf);
 
 	/* Now test that all nested submodules use a gitfile too */
-	memset(&cp, 0, sizeof(cp));
 	cp.argv = argv;
 	cp.env = local_repo_env;
 	cp.git_cmd = 1;
@@ -901,7 +895,7 @@ int ok_to_remove_submodule(const char *path)
 {
 	struct stat st;
 	ssize_t len;
-	struct child_process cp;
+	struct child_process cp = CHILD_PROCESS_INIT;
 	const char *argv[] = {
 		"status",
 		"--porcelain",
@@ -918,7 +912,6 @@ int ok_to_remove_submodule(const char *path)
 	if (!submodule_uses_gitfile(path))
 		return 0;
 
-	memset(&cp, 0, sizeof(cp));
 	cp.argv = argv;
 	cp.env = local_repo_env;
 	cp.git_cmd = 1;

@@ -639,7 +639,7 @@ static enum protocol parse_connect_url(const char *url_orig, char **ret_host,
 	return protocol;
 }
 
-static struct child_process no_fork;
+static struct child_process no_fork = CHILD_PROCESS_INIT;
 
 /*
  * This returns a dummy child_process if the transport protocol does not

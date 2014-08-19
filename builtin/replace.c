@@ -197,7 +197,7 @@ static int replace_object(const char *object_ref, const char *replace_ref, int f
 static void export_object(const unsigned char *sha1, enum object_type type,
 			  int raw, const char *filename)
 {
-	struct child_process cmd = { NULL };
+	struct child_process cmd = CHILD_PROCESS_INIT;
 	int fd;
 
 	fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, 0666);
@@ -234,7 +234,7 @@ static void import_object(unsigned char *sha1, enum object_type type,
 
 	if (!raw && type == OBJ_TREE) {
 		const char *argv[] = { "mktree", NULL };
-		struct child_process cmd = { argv };
+		struct child_process cmd = CHILD_PROCESS_INIT;
 		struct strbuf result = STRBUF_INIT;
 
 		cmd.argv = argv;

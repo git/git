@@ -763,14 +763,13 @@ char *find_hook(const char *name)
 
 int run_hook_ve(const char *const *env, const char *name, va_list args)
 {
-	struct child_process hook;
+	struct child_process hook = CHILD_PROCESS_INIT;
 	const char *p;
 
 	p = find_hook(name);
 	if (!p)
 		return 0;
 
-	memset(&hook, 0, sizeof(hook));
 	argv_array_push(&hook.args, p);
 	while ((p = va_arg(args, const char *)))
 		argv_array_push(&hook.args, p);

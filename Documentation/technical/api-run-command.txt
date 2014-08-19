@@ -96,8 +96,8 @@ command to run in a sub-process.
 
 The caller:
 
-1. allocates and clears (memset(&chld, 0, sizeof(chld));) a
-   struct child_process variable;
+1. allocates and clears (memset(&chld, 0, sizeof(chld)); or
+   using CHILD_PROCESS_INIT) a struct child_process variable;
 2. initializes the members;
 3. calls start_command();
 4. processes the data;

@@ -1508,7 +1508,7 @@ static int run_rewrite_hook(const unsigned char *oldsha1,
 {
 	/* oldsha1 SP newsha1 LF NUL */
 	static char buf[2*40 + 3];
-	struct child_process proc;
+	struct child_process proc = CHILD_PROCESS_INIT;
 	const char *argv[3];
 	int code;
 	size_t n;
@@ -1520,7 +1520,6 @@ static int run_rewrite_hook(const unsigned char *oldsha1,
 	argv[1] = "amend";
 	argv[2] = NULL;
 
-	memset(&proc, 0, sizeof(proc));
 	proc.argv = argv;
 	proc.in = -1;
 	proc.stdout_to_stderr = 1;

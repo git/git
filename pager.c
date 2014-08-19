@@ -18,7 +18,7 @@ struct pager_config {
  */
 
 static const char *pager_argv[] = { NULL, NULL };
-static struct child_process pager_process;
+static struct child_process pager_process = CHILD_PROCESS_INIT;
 
 static void wait_for_pager(void)
 {

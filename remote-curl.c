@@ -623,10 +623,9 @@ static int rpc_service(struct rpc_state *rpc, struct discovery *heads)
 	const char *svc = rpc->service_name;
 	struct strbuf buf = STRBUF_INIT;
 	struct strbuf *preamble = rpc->stdin_preamble;
-	struct child_process client;
+	struct child_process client = CHILD_PROCESS_INIT;
 	int err = 0;
 
-	memset(&client, 0, sizeof(client));
 	client.in = -1;
 	client.out = -1;
 	client.git_cmd = 1;

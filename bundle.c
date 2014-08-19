@@ -240,7 +240,7 @@ int create_bundle(struct bundle_header *header, const char *path,
 	int i, ref_count = 0;
 	struct strbuf buf = STRBUF_INIT;
 	struct rev_info revs;
-	struct child_process rls;
+	struct child_process rls = CHILD_PROCESS_INIT;
 	FILE *rls_fout;
 
 	bundle_to_stdout = !strcmp(path, "-");
@@ -258,7 +258,6 @@ int create_bundle(struct bundle_header *header, const char *path,
 	init_revisions(&revs, NULL);
 
 	/* write prerequisites */
-	memset(&rls, 0, sizeof(rls));
 	argv_array_pushl(&rls.args,
 			 "rev-list", "--boundary", "--pretty=oneline",
 			 NULL);
@@ -417,14 +416,13 @@ int unbundle(struct bundle_header *header, int bundle_fd, int flags)
 {
 	const char *argv_index_pack[] = {"index-pack",
 					 "--fix-thin", "--stdin", NULL, NULL};
-	struct child_process ip;
+	struct child_process ip = CHILD_PROCESS_INIT;
 
 	if (flags & BUNDLE_VERBOSE)
 		argv_index_pack[3] = "-v";
 
 	if (verify_bundle(header, 0))
 		return -1;
-	memset(&ip, 0, sizeof(ip));
 	ip.argv = argv_index_pack;
 	ip.in = bundle_fd;
 	ip.no_stdout = 1;

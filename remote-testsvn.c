@@ -175,7 +175,7 @@ static int cmd_import(const char *line)
 	char *note_msg;
 	unsigned char head_sha1[20];
 	unsigned int startrev;
-	struct child_process svndump_proc;
+	struct child_process svndump_proc = CHILD_PROCESS_INIT;
 	const char *command = "svnrdump";
 
 	if (read_ref(private_ref, head_sha1))
@@ -200,7 +200,6 @@ static int cmd_import(const char *line)
 		if(dumpin_fd < 0)
 			die_errno("Couldn't open svn dump file %s.", url);
 	} else {
-		memset(&svndump_proc, 0, sizeof(struct child_process));
 		svndump_proc.out = -1;
 		argv_array_push(&svndump_proc.args, command);
 		argv_array_push(&svndump_proc.args, "dump");

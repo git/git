@@ -962,7 +962,7 @@ static struct imap_store *imap_open_store(struct imap_server_conf *srvc)
 
 	if (srvc->tunnel) {
 		const char *argv[] = { srvc->tunnel, NULL };
-		struct child_process tunnel = {NULL};
+		struct child_process tunnel = CHILD_PROCESS_INIT;
 
 		imap_info("Starting tunnel '%s'... ", srvc->tunnel);
 
