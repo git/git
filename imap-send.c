@@ -69,6 +69,7 @@ struct imap_server_conf {
 	char *tunnel;
 	char *host;
 	int port;
+	char *folder;
 	char *user;
 	char *pass;
 	int use_ssl;
@@ -82,6 +83,7 @@ static struct imap_server_conf server = {
 	NULL,	/* tunnel */
 	NULL,	/* host */
 	0,	/* port */
+	NULL,	/* folder */
 	NULL,	/* user */
 	NULL,	/* pass */
 	0,   	/* use_ssl */
@@ -1323,8 +1325,6 @@ static int split_msg(struct strbuf *all_msgs, struct strbuf *msg, int *ofs)
 	return 1;
 }
 
-static char *imap_folder;
-
 static int git_imap_config(const char *key, const char *val, void *cb)
 {
 	if (!skip_prefix(key, "imap.", &key))
@@ -1339,7 +1339,7 @@ static int git_imap_config(const char *key, const char *val, void *cb)
 		return config_error_nonbool(key);
 
 	if (!strcmp("folder", key)) {
-		imap_folder = xstrdup(val);
+		server.folder = xstrdup(val);
 	} else if (!strcmp("host", key)) {
 		if (starts_with(val, "imap:"))
 			val += 5;
@@ -1387,7 +1387,7 @@ int main(int argc, char **argv)
 	if (!server.port)
 		server.port = server.use_ssl ? 993 : 143;
 
-	if (!imap_folder) {
+	if (!server.folder) {
 		fprintf(stderr, "no imap store specified\n");
 		return 1;
 	}
@@ -1424,7 +1424,7 @@ int main(int argc, char **argv)
 	}
 
 	fprintf(stderr, "sending %d message%s\n", total, (total != 1) ? "s" : "");
-	ctx->name = imap_folder;
+	ctx->name = server.folder;
 	while (1) {
 		unsigned percent = n * 100 / total;
 
