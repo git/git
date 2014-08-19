@@ -8,6 +8,12 @@
 # define SHELL_PATH "/bin/sh"
 #endif
 
+void child_process_init(struct child_process *child)
+{
+	memset(child, 0, sizeof(*child));
+	argv_array_init(&child->args);
+}
+
 struct child_to_clean {
 	pid_t pid;
 	struct child_to_clean *next;

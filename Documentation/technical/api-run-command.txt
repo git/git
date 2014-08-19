@@ -13,6 +13,10 @@ produces in the caller in order to process it.
 Functions
 ---------
 
+`child_process_init`
+
+	Initialize a struct child_process variable.
+
 `start_command`::
 
 	Start a sub-process. Takes a pointer to a `struct child_process`
@@ -96,8 +100,8 @@ command to run in a sub-process.
 
 The caller:
 
-1. allocates and clears (memset(&chld, 0, sizeof(chld)); or
-   using CHILD_PROCESS_INIT) a struct child_process variable;
+1. allocates and clears (using child_process_init() or
+   CHILD_PROCESS_INIT) a struct child_process variable;
 2. initializes the members;
 3. calls start_command();
 4. processes the data;

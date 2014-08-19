@@ -45,6 +45,7 @@ struct child_process {
 };
 
 #define CHILD_PROCESS_INIT { NULL, ARGV_ARRAY_INIT }
+void child_process_init(struct child_process *);
 
 int start_command(struct child_process *);
 int finish_command(struct child_process *);
