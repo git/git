@@ -1230,10 +1230,15 @@ static struct {
 
 static int matches(const char *key, const char *value)
 {
-	return !strcmp(key, store.key) &&
-		(store.value_regex == NULL ||
-		 (store.do_not_match ^
-		  (value && !regexec(store.value_regex, value, 0, NULL, 0))));
+	if (strcmp(key, store.key))
+		return 0; /* not ours */
+	if (!store.value_regex)
+		return 1; /* always matches */
+	if (store.value_regex == CONFIG_REGEX_NONE)
+		return 0; /* never matches */
+
+	return store.do_not_match ^
+		(value && !regexec(store.value_regex, value, 0, NULL, 0));
 }
 
 static int store_aux(const char *key, const char *value, void *cb)
@@ -1495,6 +1500,8 @@ out_free_ret_1:
 /*
  * If value==NULL, unset in (remove from) config,
  * if value_regex!=NULL, disregard key/value pairs where value does not match.
+ * if value_regex==CONFIG_REGEX_NONE, do not match any existing values
+ *     (only add a new one)
  * if multi_replace==0, nothing, or only one matching key/value is replaced,
  *     else all matching key/values (regardless how many) are removed,
  *     before the new pair is written.
@@ -1578,6 +1585,8 @@ int git_config_set_multivar_in_file(const char *config_filename,
 
 		if (value_regex == NULL)
 			store.value_regex = NULL;
+		else if (value_regex == CONFIG_REGEX_NONE)
+			store.value_regex = CONFIG_REGEX_NONE;
 		else {
 			if (value_regex[0] == '!') {
 				store.do_not_match = 1;
@@ -1609,7 +1618,8 @@ int git_config_set_multivar_in_file(const char *config_filename,
 		if (git_config_from_file(store_aux, config_filename, NULL)) {
 			error("invalid config file %s", config_filename);
 			free(store.key);
-			if (store.value_regex != NULL) {
+			if (store.value_regex != NULL &&
+			    store.value_regex != CONFIG_REGEX_NONE) {
 				regfree(store.value_regex);
 				free(store.value_regex);
 			}
@@ -1618,7 +1628,8 @@ int git_config_set_multivar_in_file(const char *config_filename,
 		}
 
 		free(store.key);
-		if (store.value_regex != NULL) {
+		if (store.value_regex != NULL &&
+		    store.value_regex != CONFIG_REGEX_NONE) {
 			regfree(store.value_regex);
 			free(store.value_regex);
 		}
