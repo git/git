@@ -204,7 +204,7 @@ static int mark_complete(const char *path, const unsigned char *sha1, int flag, 
 	struct commit *commit = lookup_commit_reference_gently(sha1, 1);
 	if (commit) {
 		commit->object.flags |= COMPLETE;
-		commit_list_insert_by_date(commit, &complete);
+		commit_list_insert(commit, &complete);
 	}
 	return 0;
 }
@@ -269,8 +269,10 @@ int walker_fetch(struct walker *walker, int targets, char **target,
 		}
 	}
 
-	if (!walker->get_recover)
+	if (!walker->get_recover) {
 		for_each_ref(mark_complete, NULL);
+		commit_list_sort_by_date(&complete);
+	}
 
 	for (i = 0; i < targets; i++) {
 		if (interpret_target(walker, target[i], &sha1[20 * i])) {
