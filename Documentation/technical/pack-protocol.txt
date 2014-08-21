@@ -485,6 +485,7 @@ references.
 		      PKT-LINE("certificate version 0.1" LF)
 		      PKT-LINE("pusher" SP ident LF)
 		      PKT-LINE("pushee" SP url LF)
+		      PKT-LINE("nonce" SP nonce LF)
 		      PKT-LINE(LF)
 		      *PKT-LINE(command LF)
 		      *PKT-LINE(gpg-signature-lines LF)
@@ -532,6 +533,11 @@ Currently, the following header fields are defined:
 	The repository URL (anonymized, if the URL contains
 	authentication material) the user who ran `git push`
 	intended to push into.
+
+`nonce` nonce::
+	The 'nonce' string the receiving repository asked the
+	pushing user to include in the certificate, to prevent
+	replay attacks.
 
 The GPG signature lines are a detached signature for the contents
 recorded in the push certificate before the signature block begins.

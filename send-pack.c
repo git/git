@@ -228,7 +228,8 @@ static const char *next_line(const char *line, size_t len)
 static int generate_push_cert(struct strbuf *req_buf,
 			      const struct ref *remote_refs,
 			      struct send_pack_args *args,
-			      const char *cap_string)
+			      const char *cap_string,
+			      const char *push_cert_nonce)
 {
 	const struct ref *ref;
 	char stamp[60];
@@ -245,6 +246,8 @@ static int generate_push_cert(struct strbuf *req_buf,
 		strbuf_addf(&cert, "pushee %s\n", anon_url);
 		free(anon_url);
 	}
+	if (push_cert_nonce[0])
+		strbuf_addf(&cert, "nonce %s\n", push_cert_nonce);
 	strbuf_addstr(&cert, "\n");
 
 	for (ref = remote_refs; ref; ref = ref->next) {
@@ -295,6 +298,7 @@ int send_pack(struct send_pack_args *args,
 	unsigned cmds_sent = 0;
 	int ret;
 	struct async demux;
+	const char *push_cert_nonce = NULL;
 
 	/* Does the other end support the reporting? */
 	if (server_supports("report-status"))
@@ -311,8 +315,14 @@ int send_pack(struct send_pack_args *args,
 		agent_supported = 1;
 	if (server_supports("no-thin"))
 		args->use_thin_pack = 0;
-	if (args->push_cert && !server_supports("push-cert"))
-		die(_("the receiving end does not support --signed push"));
+	if (args->push_cert) {
+		int len;
+
+		push_cert_nonce = server_feature_value("push-cert", &len);
+		if (!push_cert_nonce)
+			die(_("the receiving end does not support --signed push"));
+		push_cert_nonce = xmemdupz(push_cert_nonce, len);
+	}
 
 	if (!remote_refs) {
 		fprintf(stderr, "No refs in common and none specified; doing nothing.\n"
@@ -343,7 +353,7 @@ int send_pack(struct send_pack_args *args,
 
 	if (!args->dry_run && args->push_cert)
 		cmds_sent = generate_push_cert(&req_buf, remote_refs, args,
-					       cap_buf.buf);
+					       cap_buf.buf, push_cert_nonce);
 
 	/*
 	 * Clear the status for each ref and see if we need to send

@@ -50,7 +50,6 @@ test_expect_success 'unsigned push does not send push certificate' '
 test_expect_success 'talking with a receiver without push certificate support' '
 	prepare_dst &&
 	mkdir -p dst/.git/hooks &&
-	git -C dst config receive.acceptpushcert no &&
 	write_script dst/.git/hooks/post-receive <<-\EOF &&
 	# discard the update list
 	cat >/dev/null
@@ -68,7 +67,6 @@ test_expect_success 'talking with a receiver without push certificate support' '
 test_expect_success 'push --signed fails with a receiver without push certificate support' '
 	prepare_dst &&
 	mkdir -p dst/.git/hooks &&
-	git -C dst config receive.acceptpushcert no &&
 	test_must_fail git push --signed dst noop ff +noff 2>err &&
 	test_i18ngrep "the receiving end does not support" err
 '
@@ -89,6 +87,7 @@ test_expect_success GPG 'no certificate for a signed push with no update' '
 test_expect_success GPG 'signed push sends push certificate' '
 	prepare_dst &&
 	mkdir -p dst/.git/hooks &&
+	git -C dst config receive.certnonceseed sekrit &&
 	write_script dst/.git/hooks/post-receive <<-\EOF &&
 	# discard the update list
 	cat >/dev/null
@@ -102,17 +101,24 @@ test_expect_success GPG 'signed push sends push certificate' '
 	SIGNER=${GIT_PUSH_CERT_SIGNER-nobody}
 	KEY=${GIT_PUSH_CERT_KEY-nokey}
 	STATUS=${GIT_PUSH_CERT_STATUS-nostatus}
+	NONCE_STATUS=${GIT_PUSH_CERT_NONCE_STATUS-nononcestatus}
+	NONCE=${GIT_PUSH_CERT_NONCE-nononce}
 	E_O_F
 
 	EOF
 
-	cat >expect <<-\EOF &&
-	SIGNER=C O Mitter <committer@example.com>
-	KEY=13B6F51ECDDE430D
-	STATUS=G
-	EOF
-
 	git push --signed dst noop ff +noff &&
+
+	(
+		cat <<-\EOF &&
+		SIGNER=C O Mitter <committer@example.com>
+		KEY=13B6F51ECDDE430D
+		STATUS=G
+		NONCE_STATUS=OK
+		EOF
+		sed -n -e "s/^nonce /NONCE=/p" -e "/^$/q" dst/push-cert
+	) >expect &&
+
 	grep "$(git rev-parse noop ff) refs/heads/ff" dst/push-cert &&
 	grep "$(git rev-parse noop noff) refs/heads/noff" dst/push-cert &&
 	test_cmp expect dst/push-cert-status

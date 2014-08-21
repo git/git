@@ -2038,16 +2038,16 @@ rebase.autostash::
 	successful rebase might result in non-trivial conflicts.
 	Defaults to false.
 
-receive.acceptpushcert::
-	By default, `git receive-pack` will advertise that it
-	accepts `git push --signed`.  Setting this variable to
-	false disables it (this is a tentative variable that
-	will go away at the end of this series).
-
 receive.autogc::
 	By default, git-receive-pack will run "git-gc --auto" after
 	receiving data from git-push and updating refs.  You can stop
 	it by setting this variable to false.
+
+receive.certnonceseed::
+	By setting this variable to a string, `git receive-pack`
+	will accept a `git push --signed` and verifies it by using
+	a "nonce" protected by HMAC using this string as a secret
+	key.
 
 receive.fsckObjects::
 	If it is set to true, git-receive-pack will check all received

@@ -251,10 +251,11 @@ If the upload-pack server advertises this capability, fetch-pack may
 send "want" lines with SHA-1s that exist at the server but are not
 advertised by upload-pack.
 
-push-cert
----------
+push-cert=<nonce>
+-----------------
 
 The receive-pack server that advertises this capability is willing
-to accept a signed push certificate.  A send-pack client MUST NOT
+to accept a signed push certificate, and asks the <nonce> to be
+included in the push certificate.  A send-pack client MUST NOT
 send a push-cert packet unless the receive-pack server advertises
 this capability.
