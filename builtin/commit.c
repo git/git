@@ -1783,6 +1783,8 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 
 	rerere(0);
 	run_commit_hook(use_editor, get_index_file(), "post-commit", NULL);
+	if (whence == FROM_MERGE)
+		run_hook_le(NULL, "post-merge", "0", NULL);
 	if (amend && !no_post_rewrite) {
 		struct notes_rewrite_cfg *cfg;
 		cfg = init_copy_notes_for_rewrite("amend");
