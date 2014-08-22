@@ -317,9 +317,6 @@ all::
 # dependency rules.  The default is "auto", which means to use computed header
 # dependencies if your compiler is detected to support it.
 #
-# Define CHECK_HEADER_DEPENDENCIES to check for problems in the hard-coded
-# dependency rules.
-#
 # Define NATIVE_CRLF if your platform uses CRLF for line endings.
 #
 # Define XDL_FAST_HASH to use an alternative line-hashing method in
@@ -902,11 +899,6 @@ sysconfdir = /etc
 else
 sysconfdir = etc
 endif
-endif
-
-ifdef CHECK_HEADER_DEPENDENCIES
-COMPUTE_HEADER_DEPENDENCIES = no
-USE_COMPUTED_HEADER_DEPENDENCIES =
 endif
 
 ifndef COMPUTE_HEADER_DEPENDENCIES
@@ -1809,28 +1801,12 @@ $(dep_dirs):
 missing_dep_dirs := $(filter-out $(wildcard $(dep_dirs)),$(dep_dirs))
 dep_file = $(dir $@).depend/$(notdir $@).d
 dep_args = -MF $(dep_file) -MQ $@ -MMD -MP
-ifdef CHECK_HEADER_DEPENDENCIES
-$(error cannot compute header dependencies outside a normal build. \
-Please unset CHECK_HEADER_DEPENDENCIES and try again)
-endif
 endif
 
 ifneq ($(COMPUTE_HEADER_DEPENDENCIES),yes)
-ifndef CHECK_HEADER_DEPENDENCIES
 dep_dirs =
 missing_dep_dirs =
 dep_args =
-endif
-endif
-
-ifdef CHECK_HEADER_DEPENDENCIES
-ifndef PRINT_HEADER_DEPENDENCIES
-missing_deps = $(filter-out $(notdir $^), \
-	$(notdir $(shell $(MAKE) -s $@ \
-		CHECK_HEADER_DEPENDENCIES=YesPlease \
-		USE_COMPUTED_HEADER_DEPENDENCIES=YesPlease \
-		PRINT_HEADER_DEPENDENCIES=YesPlease)))
-endif
 endif
 
 ASM_SRC := $(wildcard $(OBJECTS:o=S))
@@ -1839,45 +1815,10 @@ C_OBJ := $(filter-out $(ASM_OBJ),$(OBJECTS))
 
 .SUFFIXES:
 
-ifdef PRINT_HEADER_DEPENDENCIES
-$(C_OBJ): %.o: %.c FORCE
-	echo $^
-$(ASM_OBJ): %.o: %.S FORCE
-	echo $^
-
-ifndef CHECK_HEADER_DEPENDENCIES
-$(error cannot print header dependencies during a normal build. \
-Please set CHECK_HEADER_DEPENDENCIES and try again)
-endif
-endif
-
-ifndef PRINT_HEADER_DEPENDENCIES
-ifdef CHECK_HEADER_DEPENDENCIES
-$(C_OBJ): %.o: %.c $(dep_files) FORCE
-	@set -e; echo CHECK $@; \
-	missing_deps="$(missing_deps)"; \
-	if test "$$missing_deps"; \
-	then \
-		echo missing dependencies: $$missing_deps; \
-		false; \
-	fi
-$(ASM_OBJ): %.o: %.S $(dep_files) FORCE
-	@set -e; echo CHECK $@; \
-	missing_deps="$(missing_deps)"; \
-	if test "$$missing_deps"; \
-	then \
-		echo missing dependencies: $$missing_deps; \
-		false; \
-	fi
-endif
-endif
-
-ifndef CHECK_HEADER_DEPENDENCIES
 $(C_OBJ): %.o: %.c GIT-CFLAGS $(missing_dep_dirs)
 	$(QUIET_CC)$(CC) -o $*.o -c $(dep_args) $(ALL_CFLAGS) $(EXTRA_CPPFLAGS) $<
 $(ASM_OBJ): %.o: %.S GIT-CFLAGS $(missing_dep_dirs)
 	$(QUIET_CC)$(CC) -o $*.o -c $(dep_args) $(ALL_CFLAGS) $(EXTRA_CPPFLAGS) $<
-endif
 
 %.s: %.c GIT-CFLAGS FORCE
 	$(QUIET_CC)$(CC) -o $@ -S $(ALL_CFLAGS) $(EXTRA_CPPFLAGS) $<
