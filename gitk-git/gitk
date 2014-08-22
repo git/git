@@ -6482,8 +6482,10 @@ proc drawtags {id x xt y1} {
     global headbgcolor headfgcolor headoutlinecolor remotebgcolor
     global tagbgcolor tagfgcolor tagoutlinecolor
     global reflinecolor
+    global filtertag
 
     set marks {}
+    set tags {}
     set ntags 0
     set nheads 0
     set singletag 0
@@ -6494,7 +6496,16 @@ proc drawtags {id x xt y1} {
     set extra [expr {$delta + $lthickness + $linespc}]
 
     if {[info exists idtags($id)]} {
-	set marks $idtags($id)
+	set tags $idtags($id)
+	if {[string length $filtertag] ne 0} {
+	    foreach tag $tags {
+		if {![regexp $filtertag $tag]} {
+		    lappend marks $tag
+		}
+	    }
+	} else {
+	    set marks $tags
+	}
 	set ntags [llength $marks]
 	if {$ntags > $maxtags ||
 	    [totalwidth $marks mainfont $extra] > $maxwidth} {
@@ -12197,6 +12208,7 @@ set revtreeargs {}
 set cmdline_files {}
 set i 0
 set revtreeargscmd {}
+set filtertag ""
 foreach arg $argv {
     switch -glob -- $arg {
 	"" { }
@@ -12209,6 +12221,9 @@ foreach arg $argv {
 	}
 	"--argscmd=*" {
 	    set revtreeargscmd [string range $arg 10 end]
+	}
+	"--filtertag=*" {
+	    set filtertag [string range $arg 12 end]
 	}
 	default {
 	    lappend revtreeargs $arg
