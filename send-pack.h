@@ -2,6 +2,7 @@
 #define SEND_PACK_H
 
 struct send_pack_args {
+	const char *url;
 	unsigned verbose:1,
 		quiet:1,
 		porcelain:1,

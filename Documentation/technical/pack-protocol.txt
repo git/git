@@ -484,6 +484,7 @@ references.
   push-cert         = PKT-LINE("push-cert" NUL capability-list LF)
 		      PKT-LINE("certificate version 0.1" LF)
 		      PKT-LINE("pusher" SP ident LF)
+		      PKT-LINE("pushee" SP url LF)
 		      PKT-LINE(LF)
 		      *PKT-LINE(command LF)
 		      *PKT-LINE(gpg-signature-lines LF)
@@ -526,6 +527,11 @@ Currently, the following header fields are defined:
 `pusher` ident::
 	Identify the GPG key in "Human Readable Name <email@address>"
 	format.
+
+`pushee` url::
+	The repository URL (anonymized, if the URL contains
+	authentication material) the user who ran `git push`
+	intended to push into.
 
 The GPG signature lines are a detached signature for the contents
 recorded in the push certificate before the signature block begins.
