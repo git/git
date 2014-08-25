@@ -2017,23 +2017,16 @@ static const char *make_backslash_path(const char *path)
 void mingw_open_html(const char *unixpath)
 {
 	const char *htmlpath = make_backslash_path(unixpath);
-	typedef HINSTANCE (WINAPI *T)(HWND, const char *,
-			const char *, const char *, const char *, INT);
-	T ShellExecute;
-	HMODULE shell32;
 	int r;
+	DECLARE_PROC_ADDR(shell32.dll, HINSTANCE, ShellExecuteA,
+			HWND, LPCSTR, LPCSTR, LPCSTR, LPCSTR, INT);
 
-	shell32 = LoadLibrary("shell32.dll");
-	if (!shell32)
+	if (!INIT_PROC_ADDR(ShellExecuteA))
 		die("cannot load shell32.dll");
-	ShellExecute = (T)GetProcAddress(shell32, "ShellExecuteA");
-	if (!ShellExecute)
-		die("cannot run browser");
 
 	printf("Launching default browser to display HTML ...\n");
-	r = HCAST(int, ShellExecute(NULL, "open", htmlpath,
+	r = HCAST(int, ShellExecuteA(NULL, "open", htmlpath,
 				NULL, "\\", SW_SHOWNORMAL));
-	FreeLibrary(shell32);
 	/* see the MSDN documentation referring to the result codes here */
 	if (r <= 32) {
 		die("failed to launch browser for %.*s", MAX_PATH, unixpath);
@@ -2042,24 +2035,18 @@ void mingw_open_html(const char *unixpath)
 
 int link(const char *oldpath, const char *newpath)
 {
-	typedef BOOL (WINAPI *T)(LPCWSTR, LPCWSTR, LPSECURITY_ATTRIBUTES);
-	static T create_hard_link = NULL;
+	DECLARE_PROC_ADDR(kernel32.dll, BOOL, CreateHardLinkW,
+			LPCWSTR, LPCWSTR, LPSECURITY_ATTRIBUTES);
 	wchar_t woldpath[MAX_LONG_PATH], wnewpath[MAX_LONG_PATH];
+
+	if (!INIT_PROC_ADDR(CreateHardLinkW))
+		return -1;
+
 	if (xutftowcs_long_path(woldpath, oldpath) < 0 ||
 	    xutftowcs_long_path(wnewpath, newpath) < 0)
 		return -1;
 
-	if (!create_hard_link) {
-		create_hard_link = (T) GetProcAddress(
-			GetModuleHandle("kernel32.dll"), "CreateHardLinkW");
-		if (!create_hard_link)
-			create_hard_link = (T)-1;
-	}
-	if (create_hard_link == (T)-1) {
-		errno = ENOSYS;
-		return -1;
-	}
-	if (!create_hard_link(wnewpath, woldpath, NULL)) {
+	if (!CreateHardLinkW(wnewpath, woldpath, NULL)) {
 		errno = err_win_to_posix(GetLastError());
 		return -1;
 	}
