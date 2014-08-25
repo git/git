@@ -5,6 +5,10 @@ Language:	bg (Bulgarian)
 Repository:	https://github.com/git-l10n/git-po
 Leader:		Alexander Shopov <ash@kambanaria.org>
 
+Language:	ca (Catalan)
+Repository:	https://github.com/alexhenrie/git-po
+Leader:		Alex Henrie <alexhenrie24@gmail.com>
+
 Language:	de (German)
 Repository:	https://github.com/ralfth/git-po-de
 Leader:		Ralf Thielow <ralf.thielow@googlemail.com>

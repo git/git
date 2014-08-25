@@ -3412,17 +3412,17 @@ msgstr "Bereits auf '%s'\n"
 #: builtin/checkout.c:645
 #, c-format
 msgid "Switched to and reset branch '%s'\n"
-msgstr "Gewechselt zu umgesetzten Branch '%s'\n"
+msgstr "Zu umgesetztem Branch '%s' gewechselt\n"
 
 #: builtin/checkout.c:647 builtin/checkout.c:1032
 #, c-format
 msgid "Switched to a new branch '%s'\n"
-msgstr "Gewechselt zu einem neuem Branch '%s'\n"
+msgstr "Zu neuem Branch '%s' gewechselt\n"
 
 #: builtin/checkout.c:649
 #, c-format
 msgid "Switched to branch '%s'\n"
-msgstr "Gewechselt zu Branch '%s'\n"
+msgstr "Zu Branch '%s' gewechselt\n"
 
 #: builtin/checkout.c:705
 #, c-format
@@ -10533,13 +10533,13 @@ msgstr "Bitte committen Sie die Änderungen oder benutzen Sie \"stash\"."
 #: git-rebase.sh:585
 #, sh-format
 msgid "Current branch $branch_name is up to date."
-msgstr "Aktueller Branch $branch_name ist auf dem neusten Stand."
+msgstr "Aktueller Branch $branch_name ist auf dem neuesten Stand."
 
 #: git-rebase.sh:589
 #, sh-format
 msgid "Current branch $branch_name is up to date, rebase forced."
 msgstr ""
-"Aktueller Branch $branch_name ist auf dem neusten Stand, Rebase erzwungen."
+"Aktueller Branch $branch_name ist auf dem neuesten Stand, Rebase erzwungen."
 
 #: git-rebase.sh:600
 #, sh-format
