@@ -432,7 +432,6 @@ XDIFF_OBJS =
 VCSSVN_OBJS =
 GENERATED_H =
 EXTRA_CPPFLAGS =
-LIB_H =
 LIB_OBJS =
 PROGRAM_OBJS =
 PROGRAMS =
@@ -631,131 +630,11 @@ VCSSVN_LIB = vcs-svn/lib.a
 
 GENERATED_H += common-cmds.h
 
-LIB_H += advice.h
-LIB_H += archive.h
-LIB_H += argv-array.h
-LIB_H += attr.h
-LIB_H += bisect.h
-LIB_H += blob.h
-LIB_H += branch.h
-LIB_H += builtin.h
-LIB_H += bulk-checkin.h
-LIB_H += bundle.h
-LIB_H += cache-tree.h
-LIB_H += cache.h
-LIB_H += color.h
-LIB_H += column.h
-LIB_H += commit.h
-LIB_H += compat/bswap.h
-LIB_H += compat/mingw.h
-LIB_H += compat/obstack.h
-LIB_H += compat/poll/poll.h
-LIB_H += compat/precompose_utf8.h
-LIB_H += compat/terminal.h
-LIB_H += compat/win32/dirent.h
-LIB_H += compat/win32/pthread.h
-LIB_H += compat/win32/syslog.h
-LIB_H += connected.h
-LIB_H += convert.h
-LIB_H += credential.h
-LIB_H += csum-file.h
-LIB_H += decorate.h
-LIB_H += delta.h
-LIB_H += diff.h
-LIB_H += diffcore.h
-LIB_H += dir.h
-LIB_H += exec_cmd.h
-LIB_H += ewah/ewok.h
-LIB_H += ewah/ewok_rlw.h
-LIB_H += fetch-pack.h
-LIB_H += fmt-merge-msg.h
-LIB_H += fsck.h
-LIB_H += gettext.h
-LIB_H += git-compat-util.h
-LIB_H += gpg-interface.h
-LIB_H += graph.h
-LIB_H += grep.h
-LIB_H += hashmap.h
-LIB_H += help.h
-LIB_H += http.h
-LIB_H += kwset.h
-LIB_H += levenshtein.h
-LIB_H += line-log.h
-LIB_H += line-range.h
-LIB_H += list-objects.h
-LIB_H += ll-merge.h
-LIB_H += log-tree.h
-LIB_H += mailmap.h
-LIB_H += merge-blobs.h
-LIB_H += merge-recursive.h
-LIB_H += mergesort.h
-LIB_H += notes-cache.h
-LIB_H += notes-merge.h
-LIB_H += notes-utils.h
-LIB_H += notes.h
-LIB_H += object.h
-LIB_H += pack-objects.h
-LIB_H += pack-revindex.h
-LIB_H += pack.h
-LIB_H += pack-bitmap.h
-LIB_H += parse-options.h
-LIB_H += patch-ids.h
-LIB_H += pathspec.h
-LIB_H += pkt-line.h
-LIB_H += prio-queue.h
-LIB_H += progress.h
-LIB_H += prompt.h
-LIB_H += quote.h
-LIB_H += reachable.h
-LIB_H += reflog-walk.h
-LIB_H += refs.h
-LIB_H += remote.h
-LIB_H += rerere.h
-LIB_H += resolve-undo.h
-LIB_H += revision.h
-LIB_H += run-command.h
-LIB_H += send-pack.h
-LIB_H += sequencer.h
-LIB_H += sha1-array.h
-LIB_H += sha1-lookup.h
-LIB_H += shortlog.h
-LIB_H += sideband.h
-LIB_H += sigchain.h
-LIB_H += strbuf.h
-LIB_H += streaming.h
-LIB_H += string-list.h
-LIB_H += submodule.h
-LIB_H += tag.h
-LIB_H += tar.h
-LIB_H += thread-utils.h
-LIB_H += transport.h
-LIB_H += tree-walk.h
-LIB_H += tree.h
-LIB_H += unpack-trees.h
-LIB_H += unicode_width.h
-LIB_H += url.h
-LIB_H += urlmatch.h
-LIB_H += userdiff.h
-LIB_H += utf8.h
-LIB_H += varint.h
-LIB_H += vcs-svn/fast_export.h
-LIB_H += vcs-svn/line_buffer.h
-LIB_H += vcs-svn/repo_tree.h
-LIB_H += vcs-svn/sliding_window.h
-LIB_H += vcs-svn/svndiff.h
-LIB_H += vcs-svn/svndump.h
-LIB_H += walker.h
-LIB_H += wildmatch.h
-LIB_H += wt-status.h
-LIB_H += xdiff-interface.h
-LIB_H += xdiff/xdiff.h
-LIB_H += xdiff/xdiffi.h
-LIB_H += xdiff/xemit.h
-LIB_H += xdiff/xinclude.h
-LIB_H += xdiff/xmacros.h
-LIB_H += xdiff/xprepare.h
-LIB_H += xdiff/xtypes.h
-LIB_H += xdiff/xutils.h
+LIB_H = $(shell $(FIND) . \
+	-name .git -prune -o \
+	-name t -prune -o \
+	-name Documentation -prune -o \
+	-name '*.h' -print)
 
 LIB_OBJS += abspath.o
 LIB_OBJS += advice.o
@@ -1381,7 +1260,6 @@ ifdef NO_INET_PTON
 endif
 ifndef NO_UNIX_SOCKETS
 	LIB_OBJS += unix-socket.o
-	LIB_H += unix-socket.h
 	PROGRAM_OBJS += credential-cache.o
 	PROGRAM_OBJS += credential-cache--daemon.o
 endif
@@ -1405,12 +1283,10 @@ endif
 ifdef BLK_SHA1
 	SHA1_HEADER = "block-sha1/sha1.h"
 	LIB_OBJS += block-sha1/sha1.o
-	LIB_H += block-sha1/sha1.h
 else
 ifdef PPC_SHA1
 	SHA1_HEADER = "ppc/sha1.h"
 	LIB_OBJS += ppc/sha1.o ppc/sha1ppc.o
-	LIB_H += ppc/sha1.h
 else
 ifdef APPLE_COMMON_CRYPTO
 	COMPAT_CFLAGS += -DCOMMON_DIGEST_FOR_OPENSSL
@@ -2128,9 +2004,9 @@ XGETTEXT_FLAGS_C = $(XGETTEXT_FLAGS) --language=C \
 XGETTEXT_FLAGS_SH = $(XGETTEXT_FLAGS) --language=Shell \
 	--keyword=gettextln --keyword=eval_gettextln
 XGETTEXT_FLAGS_PERL = $(XGETTEXT_FLAGS) --keyword=__ --language=Perl
-LOCALIZED_C := $(C_OBJ:o=c) $(LIB_H) $(GENERATED_H)
-LOCALIZED_SH := $(SCRIPT_SH)
-LOCALIZED_PERL := $(SCRIPT_PERL)
+LOCALIZED_C = $(C_OBJ:o=c) $(LIB_H) $(GENERATED_H)
+LOCALIZED_SH = $(SCRIPT_SH)
+LOCALIZED_PERL = $(SCRIPT_PERL)
 
 ifdef XGETTEXT_INCLUDE_TESTS
 LOCALIZED_C += t/t0200/test.c
