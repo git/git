@@ -34,6 +34,18 @@ struct name_decoration {
 	char name[1];
 };
 
+enum decoration_type {
+	DECORATION_NONE = 0,
+	DECORATION_REF_LOCAL,
+	DECORATION_REF_REMOTE,
+	DECORATION_REF_TAG,
+	DECORATION_REF_STASH,
+	DECORATION_REF_HEAD,
+	DECORATION_GRAFTED,
+};
+
+void add_name_decoration(enum decoration_type type, const char *name, struct object *obj);
+
 struct commit *lookup_commit(const unsigned char *sha1);
 struct commit *lookup_commit_reference(const unsigned char *sha1);
 struct commit *lookup_commit_reference_gently(const unsigned char *sha1,

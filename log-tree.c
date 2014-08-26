@@ -14,16 +14,6 @@
 
 struct decoration name_decoration = { "object names" };
 
-enum decoration_type {
-	DECORATION_NONE = 0,
-	DECORATION_REF_LOCAL,
-	DECORATION_REF_REMOTE,
-	DECORATION_REF_TAG,
-	DECORATION_REF_STASH,
-	DECORATION_REF_HEAD,
-	DECORATION_GRAFTED,
-};
-
 static char decoration_colors[][COLOR_MAXLEN] = {
 	GIT_COLOR_RESET,
 	GIT_COLOR_BOLD_GREEN,	/* REF_LOCAL */
@@ -84,7 +74,7 @@ int parse_decorate_color_config(const char *var, const int ofs, const char *valu
 #define decorate_get_color_opt(o, ix) \
 	decorate_get_color((o)->use_color, ix)
 
-static void add_name_decoration(enum decoration_type type, const char *name, struct object *obj)
+void add_name_decoration(enum decoration_type type, const char *name, struct object *obj)
 {
 	int nlen = strlen(name);
 	struct name_decoration *res = xmalloc(sizeof(struct name_decoration) + nlen);
