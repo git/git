@@ -1,21 +1,22 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Aug 2014, #03; Wed, 20)
-X-master-at: 6c4ab27f2378ce67940b4496365043119d7ffff2
-X-next-at: 9eef2c89753895da807c936ff1ba3a255c8370c9
+Subject: What's cooking in git.git (Aug 2014, #04; Tue, 26)
+X-master-at: 4109c28e055dba27d73cefb956bea5e611f66ec0
+X-next-at: 11be0d652a0216982fcd6503ffcadf94f8ac3fd9
 
-What's cooking in git.git (Aug 2014, #03; Wed, 20)
+What's cooking in git.git (Aug 2014, #04; Tue, 26)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-A few fixes for regressions have been posted since 2.1 was tagged,
-which I'd like to address before moving any topic to 'master',
-rewinding 'next', or doing anything for the 2.2 cycle.  Hopefully by
-the end of this week 'next' will be rewound and rebuilt and then we
-can start taking patches for new topics in earnest from that point.
+The 'maint' branch now is for the 2.1.x maintenance track, and a few
+fixes for recent regressions have been merged to 'maint' and 'master'.
+The 'next' has been rewound, while kicking a couple of topics back
+to 'pu' per topic owners' requests.  I still haven't caught up with
+new topics and rerolls that came late in the last cycle yet but
+hopefully I can in the coming days.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -23,164 +24,133 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[New Topics]
+[Graduated to "master"]
 
-* br/http-init-fix (2014-08-18) 2 commits
- - http: style fixes for curl_multi_init error check
- - http.c: die if curl_*_init fails
+* jk/diff-tree-t-fix (2014-08-20) 1 commit
+  (merged to 'next' on 2014-08-21 at 0f652d6)
+ + intersect_paths: respect mode in git's tree-sort
 
- Needs S-o-b from peff for the topmost one.
-
-
-* br/imap-send-simplify-tunnel-child-process (2014-08-20) 2 commits
- - imap-send.c: imap_folder -> imap_server_conf.folder
- - git-imap-send: simplify tunnel construction
-
- Will merge to 'next'.
-
-
-* jc/config-mak-document-darwin-vs-macosx (2014-08-15) 1 commit
- - config.mak.uname: add hint on uname_R for MacOS X
- (this branch uses km/no-apple-common-crypto-on-darwin-8-and-below.)
-
- Will merge to 'next'.
+ Fix (rarely used) "git diff-tree -t" regression in 2.0.
 
 
 * jk/fix-profile-feedback-build (2014-08-19) 1 commit
- - Makefile: make perf tests optional for profile build
+  (merged to 'next' on 2014-08-21 at b282021)
+ + Makefile: make perf tests optional for profile build
 
  Fix profile-feedback build broken in 2.1 for tarball releases.
 
- Will merge to 'next'.
-
 
 * jk/pack-shallow-always-without-bitmap (2014-08-12) 1 commit
- - pack-objects: turn off bitmaps when we see --shallow lines
+  (merged to 'next' on 2014-08-21 at e04c935)
+ + pack-objects: turn off bitmaps when we see --shallow lines
 
  Reachability bitmaps do not work with shallow operations.
+ Fixes regression in 2.0.
+
+--------------------------------------------------
+[New Topics]
+
+* et/spell-poll-infinite-with-minus-one-only (2014-08-22) 1 commit
+ - upload-pack: keep poll(2)'s timeout to -1
+
+ We used to pass -1000 to poll(2), expecting it to also mean "no
+ timeout", which should be spelled as -1.
 
  Will merge to 'next'.
 
 
-* jn/header-dependencies (2014-08-10) 1 commit
- - Update hard-coded header dependencies
+* jk/make-simplify-dependencies (2014-08-25) 2 commits
+ - Makefile: use `find` to determine static header dependencies
+ - i18n: treat "make pot" as an explicitly-invoked target
 
- Needs further discussions on the list.
-
-
-* jn/unpack-trees-checkout-m-carry-deletion (2014-08-13) 4 commits
- - SQUASH???
- - checkout -m: attempt merge when deletion of path was staged
- - unpack-trees: use 'cuddled' style for if-else cascade
- - unpack-trees: simplify 'all other failures' case
-
- Needs tests; perhaps squashing in the topmost "SQUASH???" is enough.
-
-
-* km/no-apple-common-crypto-on-darwin-8-and-below (2014-08-15) 1 commit
- - config.mak.uname: set NO_APPLE_COMMON_CRYPTO on older systems
- (this branch is used by jc/config-mak-document-darwin-vs-macosx.)
-
- Build automation for older versions of MacOS X.
+ Admit that keeping LIB_H up-to-date, only for those that do not use
+ the automatically generated dependencies, is a losing battle, and
+ make it conservative by making everything depend on anything.
 
  Will merge to 'next'.
 
 
-* nd/large-blobs (2014-08-18) 5 commits
- - diff: shortcut for diff'ing two binary SHA-1 objects
- - diff --stat: mark any file larger than core.bigfilethreshold binary
- - diff.c: allow to pass more flags to diff_populate_filespec
- - sha1_file.c: do not die failing to malloc in unpack_compressed_entry
- - wrapper.c: introduce gentle xmallocz that does not die()
+* jk/prompt-stash-could-be-packed (2014-08-25) 1 commit
+ - git-prompt: do not look for refs/stash in $GIT_DIR
+
+ The prompt script checked $GIT_DIR/ref/stash file to see if there
+ is a stash, which was a no-no.
 
  Will merge to 'next'.
 
 
-* nd/mv-code-cleaning (2014-08-11) 9 commits
- - SQUASH???
- - mv: no SP between function name and the first opening parenthese
- - mv: combine two if(s)
- - mv: unindent one level for directory move code
- - mv: move index search code out
- - mv: remove an "if" that's always true
- - mv: split submodule move preparation code out
- - mv: flatten error handling code block
- - mv: mark strings for translations
+* jk/prune-top-level-refs-after-packing (2014-08-25) 1 commit
+ - pack-refs: prune top-level refs like "refs/foo"
 
- Needs rerolling to account for the topmost "SQUASH???" simplification.
-
-
-* nd/strbuf-utf8-replace (2014-08-11) 1 commit
- - utf8.c: fix strbuf_utf8_replace() consuming data beyond input string
+ After "pack-refs --prune" packed refs at the top-level, it failed
+ to prune them.
 
  Will merge to 'next'.
 
 
-* rr/mergetool-temporary-filename-tweak (2014-08-19) 1 commit
- - Allow the user to change the temporary file name for mergetool
+* jk/fast-import-fixes (2014-08-25) 2 commits
+ - fast-import: fix buffer overflow in dump_tags
+ - fast-import: clean up pack_data pointer in end_packfile
 
- Needs rerolling (new paragraph in doc seems to be in a wrong place)
-
-
-* rs/clean-menu-item-defn (2014-08-18) 1 commit
- - clean: use f(void) instead of f() to declare a pointer to a function without arguments
+ With sufficiently long refnames, fast-import could have overflown
+ an on-stack buffer.
 
  Will merge to 'next'.
 
 
-* rs/inline-compat-path-macros (2014-08-18) 1 commit
- - turn path macros into inline function
+* nd/fetch-pass-quiet-to-gc-child-process (2014-08-18) 2 commits
+ - fetch: silence git-gc if --quiet is given
+ - fetch: convert argv_gc_auto to struct argv_array
+
+ Progress output from "git gc --auto" was visible in "git fetch -q".
 
  Will merge to 'next'.
 
 
-* rs/refresh-beyond-symlink (2014-08-10) 1 commit
- - read-cache: check for leading symlinks when refreshing index
+* rs/list-optim (2014-08-25) 2 commits
+ - walker: avoid quadratic list insertion in mark_complete
+ - sha1_name: avoid quadratic list insertion in handle_one_ref
 
- "git add x" where x that used to be a directory has become a
- symbolic link to a directory misbehaved.
-
- Will merge to 'next'.
-
-
-* sb/blame-msg-i18n (2014-08-12) 1 commit
- - builtin/blame.c: add translation to warning about failed revision walk
+ Fix a couple of "accumulate into a sorted list" to "accumulate and
+ then sort the list".
 
  Will merge to 'next'.
 
 
-* sb/plug-leaks (2014-08-10) 2 commits
- - clone.c: don't leak memory in cmd_clone
- - remote.c: don't leak the base branch name in format_tracking_info
+* sb/mailsplit-dead-code-removal (2014-08-13) 1 commit
+ - mailsplit.c: remove dead code
 
  Will merge to 'next'.
 
 
-* sb/prepare-revision-walk-error-check (2014-08-12) 1 commit
- - prepare_revision_walk(): check for return value in all places
+* tb/pretty-format-cd-date-format (2014-08-21) 1 commit
+ - pretty: note that %cd respects the --date= option
+
+ Documentation update.
 
  Will merge to 'next'.
 
 
-* sb/unpack-trees-dead-code-removal (2014-08-12) 2 commits
- - SQUASH???
- - unpack-tree.c: remove dead code
+* jk/name-decoration-alloc (2014-08-26) 3 commits
+ - log-tree: use FLEX_ARRAY in name_decoration
+ - log-tree: make name_decoration hash static
+ - log-tree: make add_name_decoration a public function
 
- Will discard (jn/unpack-trees-checkout-m-carry-deletion should do the same).
-
-
-* so/rebase-doc (2014-08-12) 1 commit
- - Documentation/git-rebase.txt: -f forces a rebase that would otherwise be a no-op
-
- May need description on what makes various modes of operation to
- decide that the request can become a "no-op".
+ The API to allocate the structure to keep track of commit
+ decoration was cumbersome to use, inviting lazy code to
+ overallocate memory.
 
  Will merge to 'next'.
 
+--------------------------------------------------
+[Stalled]
 
-* sp/stream-clean-filter (2014-08-12) 2 commits
- - convert: Stream from fd to required clean filter instead of mmap
- - convert: Refactor would_convert_to_git() to single arg 'path'
+* cb/mergetool-difftool (2014-07-21) 2 commits
+ - difftool: don't assume that default sh is sane
+ - mergetool: don't require a work tree for --tool-help
+
+ Update the way the "difftool --help" shows the help message that is
+ shared with the "mergetool" to reduce one shell dependency.
 
  Will be rerolled.
 
@@ -191,54 +161,11 @@ of the repositories listed at
  Will be rerolled.
 
 
-* jc/push-cert (2014-08-19) 18 commits
- - signed push: final protocol update
- - send-pack: send feature request on push-cert packet
- - receive-pack: GPG-validate push certificates
- - the beginning of the signed push
- - pack-protocol doc: typofix for PKT-LINE
- - gpg-interface: move parse_signature() to where it should be
- - gpg-interface: move parse_gpg_output() to where it should be
- - send-pack: clarify that cmds_sent is a boolean
- - send-pack: refactor inspecting and resetting status and sending commands
- - send-pack: rename "new_refs" to "need_pack_data"
- - send-pack: factor out capability string generation
- - send-pack: always send capabilities
- - send-pack: refactor decision to send update per ref
- - send-pack: move REF_STATUS_REJECT_NODELETE logic a bit higher
- - receive-pack: factor out queueing of command
- - receive-pack: do not reuse old_sha1[] to other things
- - receive-pack: parse feature request a bit earlier
- - receive-pack: do not overallocate command structure
+* rr/mergetool-temporary-filename-tweak (2014-08-21) 1 commit
+ - Allow the user to change the temporary file name for mergetool
 
- Allow "git push" request to be signed, so that it can be verified
- audited, using the GPG signature of the person who pushed, that the
- tips of branches at a public repository really point the commits
- the pusher wanted to, without having to "trust" the server.
+ Needs rerolling (new paragraph in doc seems to be in a wrong place)
 
- Needs further discussion and then a reroll.
-
- Replay attack prevention needs to be tightened and also need to fix
- a few minor typos.
-
-* jk/diff-tree-t-fix (2014-08-20) 1 commit
- - intersect_paths: respect mode in git's tree-sort
-
- Fix (rarely used) "git diff-tree -t" regression in 2.0.
-
- Will merge to 'next'.
-
-
-* rs/child-process-init (2014-08-20) 4 commits
- - run-command: inline prepare_run_command_v_opt()
- - run-command: call run_command_v_opt_cd_env() instead of duplicating it
- - run-command: introduce child_process_init()
- - run-command: introduce CHILD_PROCESS_INIT
-
- Will merge to 'next'.
-
---------------------------------------------------
-[Stalled]
 
 * jk/tag-contains (2014-06-30) 8 commits
  . perf: add tests for tag --contains
@@ -305,9 +232,6 @@ of the repositories listed at
 
  A new filter to programatically edit the tail end of the commit log
  messages.
-
- What is the status of this one?  I think I saw reviews by Michael
- but after that I do not recall seeing any updates.
 
 
 * mh/lockfile (2014-04-15) 25 commits
@@ -455,17 +379,184 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* tf/imap-send-create (2014-08-01) 3 commits
- - SQUASH??? varargs form of issue-imap-cmd is no longer used
+* br/http-init-fix (2014-08-21) 2 commits
+ - http: style fixes for curl_multi_init error check
+ - http.c: die if curl_*_init fails
+
+ Will merge to 'next'.
+
+
+* br/imap-send-simplify-tunnel-child-process (2014-08-20) 2 commits
+ - imap-send.c: imap_folder -> imap_server_conf.folder
+ - git-imap-send: simplify tunnel construction
+
+ Will merge to 'next'.
+
+
+* jc/config-mak-document-darwin-vs-macosx (2014-08-15) 1 commit
+ - config.mak.uname: add hint on uname_R for MacOS X
+ (this branch uses km/no-apple-common-crypto-on-darwin-8-and-below.)
+
+ Will merge to 'next'.
+
+
+* jn/unpack-trees-checkout-m-carry-deletion (2014-08-25) 3 commits
+ - checkout -m: attempt merge when deletion of path was staged
+ - unpack-trees: use 'cuddled' style for if-else cascade
+ - unpack-trees: simplify 'all other failures' case
+
+ Will merge to 'next'.
+
+
+* km/no-apple-common-crypto-on-darwin-8-and-below (2014-08-15) 1 commit
+ - config.mak.uname: set NO_APPLE_COMMON_CRYPTO on older systems
+ (this branch is used by jc/config-mak-document-darwin-vs-macosx.)
+
+ Build automation for older versions of MacOS X.
+
+ Will merge to 'next'.
+
+
+* nd/large-blobs (2014-08-18) 5 commits
+ - diff: shortcut for diff'ing two binary SHA-1 objects
+ - diff --stat: mark any file larger than core.bigfilethreshold binary
+ - diff.c: allow to pass more flags to diff_populate_filespec
+ - sha1_file.c: do not die failing to malloc in unpack_compressed_entry
+ - wrapper.c: introduce gentle xmallocz that does not die()
+
+ Will merge to 'next'.
+
+
+* nd/mv-code-cleaning (2014-08-11) 9 commits
+ - SQUASH???
+ - mv: no SP between function name and the first opening parenthese
+ - mv: combine two if(s)
+ - mv: unindent one level for directory move code
+ - mv: move index search code out
+ - mv: remove an "if" that's always true
+ - mv: split submodule move preparation code out
+ - mv: flatten error handling code block
+ - mv: mark strings for translations
+
+ SQUASH!!! Will merge to 'next'.
+
+
+* nd/strbuf-utf8-replace (2014-08-11) 1 commit
+ - utf8.c: fix strbuf_utf8_replace() consuming data beyond input string
+
+ Will merge to 'next'.
+
+
+* rs/clean-menu-item-defn (2014-08-18) 1 commit
+ - clean: use f(void) instead of f() to declare a pointer to a function without arguments
+
+ Will merge to 'next'.
+
+
+* rs/inline-compat-path-macros (2014-08-18) 1 commit
+ - turn path macros into inline function
+
+ Will merge to 'next'.
+
+
+* rs/refresh-beyond-symlink (2014-08-10) 1 commit
+ - read-cache: check for leading symlinks when refreshing index
+
+ "git add x" where x that used to be a directory has become a
+ symbolic link to a directory misbehaved.
+
+ Will merge to 'next'.
+
+
+* sb/blame-msg-i18n (2014-08-12) 1 commit
+ - builtin/blame.c: add translation to warning about failed revision walk
+
+ Will merge to 'next'.
+
+
+* sb/plug-leaks (2014-08-10) 2 commits
+ - clone.c: don't leak memory in cmd_clone
+ - remote.c: don't leak the base branch name in format_tracking_info
+
+ Will merge to 'next'.
+
+
+* sb/prepare-revision-walk-error-check (2014-08-12) 1 commit
+ - prepare_revision_walk(): check for return value in all places
+
+ Will merge to 'next'.
+
+
+* so/rebase-doc (2014-08-12) 1 commit
+ - Documentation/git-rebase.txt: -f forces a rebase that would otherwise be a no-op
+
+ May need description on what makes various modes of operation to
+ decide that the request can become a "no-op".
+
+ Will merge to 'next'.
+
+
+* sp/stream-clean-filter (2014-08-22) 4 commits
+ - convert: stream from fd to required clean filter instead of mmap
+ - memory_limit_check(): allow a limit that does not fit in "int"
+ - sha1_file.c: introduce GIT_MMAP_LIMIT to limit mmap size
+ - convert: drop arguments other than 'path' from would_convert_to_git()
+
+ Reroll posted but haven't had time to look at it yet.
+
+
+* jc/push-cert (2014-08-25) 20 commits
+ - signed push: fortify against replay attacks
+ - signed-push: add "pushee" header to push certificate
+ - signed push: remove duplicated protocol info
+ - send-pack: send feature request on push-cert packet
+ - receive-pack: GPG-validate push certificates
+ - the beginning of the signed push
+ - pack-protocol doc: typofix for PKT-LINE
+ - gpg-interface: move parse_signature() to where it should be
+ - gpg-interface: move parse_gpg_output() to where it should be
+ - send-pack: clarify that cmds_sent is a boolean
+ - send-pack: refactor inspecting and resetting status and sending commands
+ - send-pack: rename "new_refs" to "need_pack_data"
+ - send-pack: factor out capability string generation
+ - send-pack: always send capabilities
+ - send-pack: refactor decision to send update per ref
+ - send-pack: move REF_STATUS_REJECT_NODELETE logic a bit higher
+ - receive-pack: factor out queueing of command
+ - receive-pack: do not reuse old_sha1[] for other things
+ - receive-pack: parse feature request a bit earlier
+ - receive-pack: do not overallocate command structure
+
+ Allow "git push" request to be signed, so that it can be verified
+ audited, using the GPG signature of the person who pushed, that the
+ tips of branches at a public repository really point the commits
+ the pusher wanted to, without having to "trust" the server.
+
+ The tip two feels still a bit slushy, but otherwise should be
+ reasonably solid to build upon.
+
+
+* rs/child-process-init (2014-08-20) 4 commits
+ - run-command: inline prepare_run_command_v_opt()
+ - run-command: call run_command_v_opt_cd_env() instead of duplicating it
+ - run-command: introduce child_process_init()
+ - run-command: introduce CHILD_PROCESS_INIT
+
+ Will merge to 'next'.
+
+
+* tf/imap-send-create (2014-08-25) 2 commits
  - imap-send: create target mailbox if it is missing
  - imap-send: clarify CRAM-MD5 vs LOGIN documentation
 
- Will merge to 'next' after dealing with the SQUASH??? fix-up.
+ Will merge to 'next'.
 
 
 * bc/archive-pax-header-mode (2014-08-04) 1 commit
-  (merged to 'next' on 2014-08-13 at 9972bb2)
+  (merged to 'next' on 2014-08-26 at 51fca1a)
  + archive: honor tar.umask even for pax headers
+
+ Originally merged to 'next' on 2014-08-13
 
  Implementations of "tar" that do not understand an extended pax
  header would extract the contents of it in a regular file; make
@@ -511,10 +602,12 @@ of the repositories listed at
 
 
 * jk/pretty-empty-format (2014-07-30) 3 commits
-  (merged to 'next' on 2014-08-13 at 543bb4d)
+  (merged to 'next' on 2014-08-26 at 1eb7cc3)
  + pretty: make empty userformats truly empty
  + pretty: treat "--format=" as an empty userformat
  + revision: drop useless string offset when parsing "--pretty"
+
+ Originally merged to 'next' on 2014-08-13
 
  "git log --pretty/format=" with an empty format string did not mean
  the more obvious "No output whatsoever" but "Use default format",
@@ -558,6 +651,8 @@ of the repositories listed at
  - config.c: mark error and warnings strings for translation
  (this branch is used by ta/config-set-2; uses ta/config-set.)
 
+ Will merge to 'next'.
+
 
 * ta/config-set-2 (2014-08-13) 15 commits
  - builtin/apply.c: replace `git_config()` with `git_config_get_string_const()`
@@ -577,10 +672,14 @@ of the repositories listed at
  - daemon.c: replace `git_config()` with `git_config_get_bool()` family
  (this branch uses ta/config-set and ta/config-set-1.)
 
+ Will merge to 'next'.
+
 
 * ta/pretty-parse-config (2014-08-04) 1 commit
-  (merged to 'next' on 2014-08-13 at 07396f4)
+  (merged to 'next' on 2014-08-26 at 901e8c2)
  + pretty.c: make git_pretty_formats_config return -1 on git_config_string failure
+
+ Originally merged to 'next' on 2014-08-13
 
  Will merge to 'master'.
 
@@ -596,8 +695,10 @@ of the repositories listed at
 
 
 * pr/remotes-in-hashmap (2014-07-30) 1 commit
-  (merged to 'next' on 2014-08-13 at 850c14a)
+  (merged to 'next' on 2014-08-26 at 2052a31)
  + use a hashmap to make remotes faster
+
+ Originally merged to 'next' on 2014-08-13
 
  Optimize remotes configuration look-up in a repository with very
  many remotes defined.
@@ -634,25 +735,13 @@ of the repositories listed at
  No more nitpicks and better design suggestions?
 
 
-* nd/lock-paths-absolute (2014-08-01) 3 commits
- - lockfile.c: store absolute path
- - lockfile.c: remove PATH_MAX limit in resolve_symlink()
- - lockfile.c: remove PATH_MAX limitation (except in resolve_symlink)
-
- Will drop and ask Michael to possibly cooperate and merge with mh/lockfile.
-
-
-* mm/config-message-i18n (2014-08-01) 1 commit
- - config.c: mark error and warnings strings for translation
-
- Will discard (now at the bottom of ta/config-set-1 topic).
-
-
 * mm/config-edit-global (2014-07-25) 3 commits
-  (merged to 'next' on 2014-07-31 at ecce1c7)
+  (merged to 'next' on 2014-08-26 at 3a47fc5)
  + commit: advertise config --global --edit on guessed identity
  + home_config_paths(): let the caller ignore xdg path
  + config --global --edit: create a template file if needed
+
+ Originally merged to 'next' on 2014-07-31
 
  Start "git config --edit --global" from a skeletal per-user
  configuration file contents, instead of a total blank, when the
@@ -660,14 +749,16 @@ of the repositories listed at
  for a later "Have you forgotten setting core.user?" and we can add
  more to the template as we gain more experience.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * rs/init-no-duplicate-real-path (2014-07-28) 1 commit
-  (merged to 'next' on 2014-07-31 at 683112e)
+  (merged to 'next' on 2014-08-26 at c66e1c4)
  + init: avoid superfluous real_path() calls
 
- Will cook in 'next'.
+ Originally merged to 'next' on 2014-07-31
+
+ Will merge to 'master'.
 
 
 * rs/ref-transaction-reflog (2014-07-23) 15 commits
@@ -694,20 +785,8 @@ of the repositories listed at
  No more nitpicks and better design suggestions?
 
 
-* cb/mergetool-difftool (2014-07-21) 2 commits
- - difftool: don't assume that default sh is sane
- - mergetool: don't require a work tree for --tool-help
-
- Update the way the "difftool --help" shows the help message that is
- shared with the "mergetool" to reduce one shell dependency.
-
- Will be rerolled.
-
-
-* rs/strbuf-getcwd (2014-08-18) 11 commits
-  (merged to 'next' on 2014-08-18 at 9eef2c8)
- + fixup! setup: convert setup_git_directory_gently_1 et al. to strbuf
-  (merged to 'next' on 2014-07-31 at 6edc3bc)
+* rs/strbuf-getcwd (2014-08-26) 10 commits
+  (merged to 'next' on 2014-08-26 at 11be0d6)
  + use strbuf_add_absolute_path() to add absolute paths
  + abspath: convert absolute_path() to strbuf
  + use xgetcwd() to set $GIT_DIR
@@ -718,8 +797,14 @@ of the repositories listed at
  + setup: convert setup_git_directory_gently_1 et al. to strbuf
  + unix-sockets: use strbuf_getcwd()
  + strbuf: add strbuf_getcwd()
+ (this branch is tangled with nd/lock-paths-absolute.)
 
- Will cook in 'next'.
+ Originally merged to 'next' on 2014-08-18
+
+ Reduce the use of fixed sized buffer passed to getcwd() calls
+ by introducing xgetcwd() helper.
+
+ Will merge to 'master'.
 
 
 * jc/not-mingw-cygwin (2014-07-21) 2 commits
@@ -731,12 +816,16 @@ of the repositories listed at
  and we still add more uses of the former.  Convert them to the
  latter to avoid confusion.
 
+ Will merge to 'next'.
+
 
 * ta/config-set (2014-07-29) 2 commits
-  (merged to 'next' on 2014-08-13 at 99011c8)
+  (merged to 'next' on 2014-08-26 at 81395f9)
  + test-config: add tests for the config_set API
  + add `config_set` API for caching config-like files
  (this branch is used by ta/config-set-1 and ta/config-set-2.)
+
+ Originally merged to 'next' on 2014-08-13
 
  Add in-core caching layer to let us avoid reading the same
  configuration files number of times.
@@ -773,95 +862,87 @@ of the repositories listed at
 
 
 * jc/reopen-lock-file (2014-07-14) 1 commit
-  (merged to 'next' on 2014-07-21 at 8277dc9)
+  (merged to 'next' on 2014-08-26 at c5a5a12)
  + lockfile: allow reopening a closed but still locked file
+
+ Originally merged to 'next' on 2014-07-21
 
  Needed in the "commit -p" code path to update the cache tree in the
  index (e.g. for dt/cache-tree-repair topic).
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
-* nd/multiple-work-trees (2014-07-17) 31 commits
-  (merged to 'next' on 2014-07-17 at a29d310)
- + checkout: don't require a work tree when checking out into a new one
- + git_path(): keep "info/sparse-checkout" per work-tree
- + count-objects: report unused files in $GIT_DIR/repos/...
- + gc: support prune --repos
- + gc: factor out gc.pruneexpire parsing code
- + gc: style change -- no SP before closing parenthesis
- + prune: strategies for linked checkouts
- + checkout: detach if the branch is already checked out elsewhere
- + checkout: clean up half-prepared directories in --to mode
- + checkout: support checking out into a new working directory
- + use new wrapper write_file() for simple file writing
- + wrapper.c: wrapper to open a file, fprintf then close
- + setup.c: support multi-checkout repo setup
- + setup.c: detect $GIT_COMMON_DIR check_repository_format_gently()
- + setup.c: convert check_repository_format_gently to use strbuf
- + setup.c: detect $GIT_COMMON_DIR in is_git_directory()
- + setup.c: convert is_git_directory() to use strbuf
- + git-stash: avoid hardcoding $GIT_DIR/logs/....
- + *.sh: avoid hardcoding $GIT_DIR/hooks/...
- + git-sh-setup.sh: use rev-parse --git-path to get $GIT_DIR/objects
- + $GIT_COMMON_DIR: a new environment variable
- + commit: use SEQ_DIR instead of hardcoding "sequencer"
- + fast-import: use git_path() for accessing .git dir instead of get_git_dir()
- + reflog: avoid constructing .lock path with git_path
- + *.sh: respect $GIT_INDEX_FILE
- + git_path(): be aware of file relocation in $GIT_DIR
- + path.c: group git_path(), git_pathdup() and strbuf_git_path() together
- + path.c: rename vsnpath() to do_git_path()
- + git_snpath(): retire and replace with strbuf_git_path()
- + path.c: make get_pathname() call sites return const char *
- + path.c: make get_pathname() return strbuf instead of static buffer
- (this branch is used by nd/multiple-work-trees-1.)
+* nd/multiple-work-trees (2014-07-29) 39 commits
+ - checkout --to: do not touch existing target directory
+ - checkout: prefix --to argument properly when cwd is moved
+ - environment.c: fix incorrect git_graft_file initialization
+ - checkout --to: fix dangling pointers in remove_junk()
+ - checkout: no auto-detach if the ref is already checked out
+ - prune --repos: fix uninitialized access
+ - checkout: no need to call check_linked_checkouts if head_ref is NULL
+ - gitrepository-layout.txt: s/ignored/ignored if/
+ - checkout: don't require a work tree when checking out into a new one
+ - git_path(): keep "info/sparse-checkout" per work-tree
+ - count-objects: report unused files in $GIT_DIR/repos/...
+ - gc: support prune --repos
+ - gc: factor out gc.pruneexpire parsing code
+ - gc: style change -- no SP before closing parenthesis
+ - prune: strategies for linked checkouts
+ - checkout: detach if the branch is already checked out elsewhere
+ - checkout: clean up half-prepared directories in --to mode
+ - checkout: support checking out into a new working directory
+ - use new wrapper write_file() for simple file writing
+ - wrapper.c: wrapper to open a file, fprintf then close
+ - setup.c: support multi-checkout repo setup
+ - setup.c: detect $GIT_COMMON_DIR check_repository_format_gently()
+ - setup.c: convert check_repository_format_gently to use strbuf
+ - setup.c: detect $GIT_COMMON_DIR in is_git_directory()
+ - setup.c: convert is_git_directory() to use strbuf
+ - git-stash: avoid hardcoding $GIT_DIR/logs/....
+ - *.sh: avoid hardcoding $GIT_DIR/hooks/...
+ - git-sh-setup.sh: use rev-parse --git-path to get $GIT_DIR/objects
+ - $GIT_COMMON_DIR: a new environment variable
+ - commit: use SEQ_DIR instead of hardcoding "sequencer"
+ - fast-import: use git_path() for accessing .git dir instead of get_git_dir()
+ - reflog: avoid constructing .lock path with git_path
+ - *.sh: respect $GIT_INDEX_FILE
+ - git_path(): be aware of file relocation in $GIT_DIR
+ - path.c: group git_path(), git_pathdup() and strbuf_git_path() together
+ - path.c: rename vsnpath() to do_git_path()
+ - git_snpath(): retire and replace with strbuf_git_path()
+ - path.c: make get_pathname() call sites return const char *
+ - path.c: make get_pathname() return strbuf instead of static buffer
 
  A replacement for contrib/workdir/git-new-workdir that does not
  rely on symbolic links and make sharing of objects and refs safer
  by making the borrowee and borrowers aware of each other.
 
- Will kick back to 'pu'.
-
-
-* nd/multiple-work-trees-1 (2014-07-29) 8 commits
-  (merged to 'next' on 2014-08-13 at 4f3a585)
- + checkout --to: do not touch existing target directory
- + checkout: prefix --to argument properly when cwd is moved
- + environment.c: fix incorrect git_graft_file initialization
- + checkout --to: fix dangling pointers in remove_junk()
- + checkout: no auto-detach if the ref is already checked out
- + prune --repos: fix uninitialized access
- + checkout: no need to call check_linked_checkouts if head_ref is NULL
- + gitrepository-layout.txt: s/ignored/ignored if/
- (this branch uses nd/multiple-work-trees.)
-
- Continue polishing nd/multiple-work-trees topic in 'next'.
-
- Will kick back to 'pu'.
+ Kicked back to 'pu'.
 
 
 * dt/cache-tree-repair (2014-07-14) 4 commits
-  (merged to 'next' on 2014-07-21 at e83db34)
+  (merged to 'next' on 2014-08-26 at 6faccdb)
  + cache-tree: Write updated cache-tree after commit
  + cache-tree: subdirectory tests
  + test-dump-cache-tree: invalid trees are not errors
  + cache-tree: create/update cache-tree on checkout
 
+ Originally merged to 'next' on 2014-07-21
+
  Add a few more places in "commit" and "checkout" that make sure
  that the cache-tree is fully populated in the index.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * hv/submodule-config (2014-06-30) 4 commits
-  (merged to 'next' on 2014-07-17 at 5e0ce45)
- + do not die on error of parsing fetchrecursesubmodules option
- + use new config API for worktree configurations of submodules
- + extract functions for submodule config set and lookup
- + implement submodule config cache for lookup of submodule names
+ - do not die on error of parsing fetchrecursesubmodules option
+ - use new config API for worktree configurations of submodules
+ - extract functions for submodule config set and lookup
+ - implement submodule config cache for lookup of submodule names
 
- Will cook in 'next'.
+ Kicked back to 'pu'.
 
 
 * rs/ref-transaction (2014-07-17) 12 commits
@@ -909,3 +990,30 @@ of the repositories listed at
  . abspath.c: use PATH_MAX in real_path_internal()
 
  rs/strbuf-getcwd topic covers this codepath in a better way.
+
+
+* jn/header-dependencies (2014-08-10) 1 commit
+ . Update hard-coded header dependencies
+
+ Replaced by jk/make-simplify-dependencies topic.
+
+
+* sb/unpack-trees-dead-code-removal (2014-08-12) 2 commits
+ . SQUASH???
+ . unpack-tree.c: remove dead code
+
+ Replaced by jn/unpack-trees-checkout-m-carry-deletion topic.
+
+
+* mm/config-message-i18n (2014-08-01) 1 commit
+ . config.c: mark error and warnings strings for translation
+
+ Now at the bottom of ta/config-set-1 topic.
+
+
+* nd/lock-paths-absolute (2014-08-01) 3 commits
+ . lockfile.c: store absolute path
+ . lockfile.c: remove PATH_MAX limit in resolve_symlink()
+ . lockfile.c: remove PATH_MAX limitation (except in resolve_symlink)
+
+ Will drop and ask Michael to possibly cooperate and merge with mh/lockfile.
