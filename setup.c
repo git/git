@@ -625,6 +625,15 @@ static const char *setup_git_directory_gently_1(int *nongit_ok)
 	int one_filesystem = 1;
 
 	/*
+	 * We may have read an incomplete configuration before
+	 * setting-up the git directory. If so, clear the cache so
+	 * that the next queries to the configuration reload complete
+	 * configuration (including the per-repo config file that we
+	 * ignored previously).
+	 */
+	git_config_clear();
+
+	/*
 	 * Let's assume that we are in a git repository.
 	 * If it turns out later that we are somewhere else, the value will be
 	 * updated accordingly.
