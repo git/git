@@ -27,7 +27,6 @@ extern int save_commit_buffer;
 extern const char *commit_type;
 
 /* While we can decorate any object with a name, it's only used for commits.. */
-extern struct decoration name_decoration;
 struct name_decoration {
 	struct name_decoration *next;
 	int type;
@@ -45,6 +44,7 @@ enum decoration_type {
 };
 
 void add_name_decoration(enum decoration_type type, const char *name, struct object *obj);
+const struct name_decoration *get_name_decoration(const struct object *obj);
 
 struct commit *lookup_commit(const unsigned char *sha1);
 struct commit *lookup_commit_reference(const unsigned char *sha1);
