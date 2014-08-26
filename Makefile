@@ -1659,7 +1659,11 @@ endif
 profile:: profile-clean
 	$(MAKE) PROFILE=GEN all
 	$(MAKE) PROFILE=GEN -j1 test
-	$(MAKE) PROFILE=GEN -j1 perf
+	@if test -n "$$GIT_PERF_REPO" || test -d .git; then \
+		$(MAKE) PROFILE=GEN -j1 perf; \
+	else \
+		echo "Skipping profile of perf tests..."; \
+	fi
 	$(MAKE) PROFILE=USE all
 
 profile-fast: profile-clean
