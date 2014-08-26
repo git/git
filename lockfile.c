@@ -237,6 +237,16 @@ int close_lock_file(struct lock_file *lk)
 	return close(fd);
 }
 
+int reopen_lock_file(struct lock_file *lk)
+{
+	if (0 <= lk->fd)
+		die(_("BUG: reopen a lockfile that is still open"));
+	if (!lk->filename[0])
+		die(_("BUG: reopen a lockfile that has been committed"));
+	lk->fd = open(lk->filename, O_WRONLY);
+	return lk->fd;
+}
+
 int commit_lock_file(struct lock_file *lk)
 {
 	char result_file[PATH_MAX];
