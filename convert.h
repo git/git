@@ -44,6 +44,11 @@ static inline int would_convert_to_git(const char *path)
 {
 	return convert_to_git(path, NULL, 0, NULL, 0);
 }
+/* Precondition: would_convert_to_git_filter_fd(path) == true */
+extern void convert_to_git_filter_fd(const char *path, int fd,
+				     struct strbuf *dst,
+				     enum safe_crlf checksafe);
+extern int would_convert_to_git_filter_fd(const char *path);
 
 /*****************************************************************
  *
