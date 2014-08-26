@@ -307,6 +307,16 @@ same behaviour as well.
 	use it unless you need the correct position in the file
 	descriptor.
 
+`strbuf_getcwd`::
+
+	Set the buffer to the path of the current working directory.
+
+`strbuf_add_absolute_path`
+
+	Add a path to a buffer, converting a relative path to an
+	absolute one in the process.  Symbolic links are not
+	resolved.
+
 `stripspace`::
 
 	Strip whitespace from a buffer. The second parameter controls if
