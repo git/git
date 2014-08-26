@@ -11,14 +11,15 @@ static void (*try_to_free_routine)(size_t size) = do_nothing;
 
 static void memory_limit_check(size_t size)
 {
-	static int limit = -1;
-	if (limit == -1) {
-		const char *env = getenv("GIT_ALLOC_LIMIT");
-		limit = env ? atoi(env) * 1024 : 0;
+	static size_t limit = 0;
+	if (!limit) {
+		limit = git_env_ulong("GIT_ALLOC_LIMIT", 0);
+		if (!limit)
+			limit = SIZE_MAX;
 	}
-	if (limit && size > limit)
-		die("attempting to allocate %"PRIuMAX" over limit %d",
-		    (intmax_t)size, limit);
+	if (size > limit)
+		die("attempting to allocate %"PRIuMAX" over limit %"PRIuMAX,
+		    (uintmax_t)size, (uintmax_t)limit);
 }
 
 try_to_free_t set_try_to_free_routine(try_to_free_t routine)
