@@ -30,7 +30,7 @@ extern const char *commit_type;
 struct name_decoration {
 	struct name_decoration *next;
 	int type;
-	char name[1];
+	char name[FLEX_ARRAY];
 };
 
 enum decoration_type {
