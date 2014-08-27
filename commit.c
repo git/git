@@ -594,7 +594,7 @@ static void record_author_date(struct author_date_slab *author_date,
 		line_end = strchrnul(buf, '\n');
 		if (!skip_prefix(buf, "author ", &ident_line)) {
 			if (!line_end[0] || line_end[1] == '\n')
-				return; /* end of header */
+				goto fail_exit; /* end of header */
 			continue;
 		}
 		if (split_ident_line(&ident,
