@@ -520,19 +520,16 @@ static int sane_ident_split(struct ident_split *person)
 	return 1;
 }
 
-static int parse_force_date(const char *in, char *out, int len)
+static int parse_force_date(const char *in, struct strbuf *out)
 {
-	if (len < 1)
-		return -1;
-	*out++ = '@';
-	len--;
+	strbuf_addch(out, '@');
 
-	if (parse_date(in, out, len) < 0) {
+	if (parse_date(in, out) < 0) {
 		int errors = 0;
 		unsigned long t = approxidate_careful(in, &errors);
 		if (errors)
 			return -1;
-		snprintf(out, len, "%lu", t);
+		strbuf_addf(out, "%lu", t);
 	}
 
 	return 0;
@@ -542,7 +539,7 @@ static void determine_author_info(struct strbuf *author_ident)
 {
 	char *name, *email, *date;
 	struct ident_split author;
-	char date_buf[64];
+	struct strbuf date_buf = STRBUF_INIT;
 
 	name = getenv("GIT_AUTHOR_NAME");
 	email = getenv("GIT_AUTHOR_EMAIL");
@@ -588,9 +585,10 @@ static void determine_author_info(struct strbuf *author_ident)
 	}
 
 	if (force_date) {
-		if (parse_force_date(force_date, date_buf, sizeof(date_buf)))
+		strbuf_reset(&date_buf);
+		if (parse_force_date(force_date, &date_buf))
 			die(_("invalid date format: %s"), force_date);
-		date = date_buf;
+		date = date_buf.buf;
 	}
 
 	strbuf_addstr(author_ident, fmt_ident(name, email, date, IDENT_STRICT));
@@ -600,6 +598,8 @@ static void determine_author_info(struct strbuf *author_ident)
 		export_one("GIT_AUTHOR_EMAIL", author.mail_begin, author.mail_end, 0);
 		export_one("GIT_AUTHOR_DATE", author.date_begin, author.tz_end, '@');
 	}
+
+	strbuf_release(&date_buf);
 }
 
 static void split_ident_or_die(struct ident_split *id, const struct strbuf *buf)
