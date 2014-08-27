@@ -535,15 +535,26 @@ static int parse_force_date(const char *in, struct strbuf *out)
 	return 0;
 }
 
+static void set_ident_var(char **buf, char *val)
+{
+	free(*buf);
+	*buf = val;
+}
+
+static char *envdup(const char *var)
+{
+	const char *val = getenv(var);
+	return val ? xstrdup(val) : NULL;
+}
+
 static void determine_author_info(struct strbuf *author_ident)
 {
 	char *name, *email, *date;
 	struct ident_split author;
-	struct strbuf date_buf = STRBUF_INIT;
 
-	name = getenv("GIT_AUTHOR_NAME");
-	email = getenv("GIT_AUTHOR_EMAIL");
-	date = getenv("GIT_AUTHOR_DATE");
+	name = envdup("GIT_AUTHOR_NAME");
+	email = envdup("GIT_AUTHOR_EMAIL");
+	date = envdup("GIT_AUTHOR_DATE");
 
 	if (author_message) {
 		struct ident_split ident;
@@ -556,15 +567,16 @@ static void determine_author_info(struct strbuf *author_ident)
 		if (split_ident_line(&ident, a, len) < 0)
 			die(_("commit '%s' has malformed author line"), author_message);
 
-		name = xmemdupz(ident.name_begin, ident.name_end - ident.name_begin);
-		email = xmemdupz(ident.mail_begin, ident.mail_end - ident.mail_begin);
+		set_ident_var(&name, xmemdupz(ident.name_begin, ident.name_end - ident.name_begin));
+		set_ident_var(&email, xmemdupz(ident.mail_begin, ident.mail_end - ident.mail_begin));
+
 		if (ident.date_begin) {
-			strbuf_reset(&date_buf);
+			struct strbuf date_buf = STRBUF_INIT;
 			strbuf_addch(&date_buf, '@');
 			strbuf_add(&date_buf, ident.date_begin, ident.date_end - ident.date_begin);
 			strbuf_addch(&date_buf, ' ');
 			strbuf_add(&date_buf, ident.tz_begin, ident.tz_end - ident.tz_begin);
-			date = date_buf.buf;
+			set_ident_var(&date, strbuf_detach(&date_buf, NULL));
 		}
 	}
 
@@ -573,15 +585,15 @@ static void determine_author_info(struct strbuf *author_ident)
 
 		if (split_ident_line(&ident, force_author, strlen(force_author)) < 0)
 			die(_("malformed --author parameter"));
-		name = xmemdupz(ident.name_begin, ident.name_end - ident.name_begin);
-		email = xmemdupz(ident.mail_begin, ident.mail_end - ident.mail_begin);
+		set_ident_var(&name, xmemdupz(ident.name_begin, ident.name_end - ident.name_begin));
+		set_ident_var(&email, xmemdupz(ident.mail_begin, ident.mail_end - ident.mail_begin));
 	}
 
 	if (force_date) {
-		strbuf_reset(&date_buf);
+		struct strbuf date_buf = STRBUF_INIT;
 		if (parse_force_date(force_date, &date_buf))
 			die(_("invalid date format: %s"), force_date);
-		date = date_buf.buf;
+		set_ident_var(&date, strbuf_detach(&date_buf, NULL));
 	}
 
 	strbuf_addstr(author_ident, fmt_ident(name, email, date, IDENT_STRICT));
@@ -592,7 +604,9 @@ static void determine_author_info(struct strbuf *author_ident)
 		export_one("GIT_AUTHOR_DATE", author.date_begin, author.tz_end, '@');
 	}
 
-	strbuf_release(&date_buf);
+	free(name);
+	free(email);
+	free(date);
 }
 
 static void split_ident_or_die(struct ident_split *id, const struct strbuf *buf)
