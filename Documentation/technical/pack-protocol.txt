@@ -467,7 +467,7 @@ references.
 ----
   update-request    =  *shallow command-list [pack-file]
 
-  shallow           =  PKT-LINE("shallow" SP obj-id)
+  shallow           =  PKT-LINE("shallow" SP obj-id LF)
 
   command-list      =  PKT-LINE(command NUL capability-list LF)
 		       *PKT-LINE(command LF)
