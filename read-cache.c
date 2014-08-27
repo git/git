@@ -1971,7 +1971,6 @@ int read_index_unmerged(struct index_state *istate)
 		if (add_index_entry(istate, new_ce, 0))
 			return error("%s: cannot drop to stage #0",
 				     new_ce->name);
-		i = index_name_pos(istate, new_ce->name, len);
 	}
 	return unmerged;
 }
