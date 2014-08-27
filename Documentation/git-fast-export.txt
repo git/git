@@ -105,6 +105,12 @@ marks the same across runs.
 	in the commit (as opposed to just listing the files which are
 	different from the commit's first parent).
 
+--anonymize::
+	Replace all refnames, paths, blob contents, commit and tag
+	messages, names, and email addresses in the output with
+	anonymized data, while still retaining the shape of history and
+	of the stored tree.
+
 --refspec::
 	Apply the specified refspec to each ref exported. Multiple of them can
 	be specified.
