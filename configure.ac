@@ -746,6 +746,14 @@ case $ac_cv_type_socklen_t in
 esac
 GIT_CONF_SUBST([SOCKLEN_T])
 
+#
+# Define NO_STRUCT_ITIMERVAL if you don't have struct itimerval.
+AC_CHECK_TYPES([struct itimerval],
+[NO_STRUCT_ITIMERVAL=],
+[NO_STRUCT_ITIMERVAL=UnfortunatelyYes],
+[#include <sys/time.h>])
+GIT_CONF_SUBST([NO_STRUCT_ITIMERVAL])
+#
 # Define NO_D_INO_IN_DIRENT if you don't have d_ino in your struct dirent.
 AC_CHECK_MEMBER(struct dirent.d_ino,
 [NO_D_INO_IN_DIRENT=],
