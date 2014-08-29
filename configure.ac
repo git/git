@@ -911,6 +911,12 @@ AC_CHECK_LIB([iconv], [locale_charset],
                      [CHARSET_LIB=-lcharset])])
 GIT_CONF_SUBST([CHARSET_LIB])
 #
+# Define NO_SETITIMER if you don't have setitimer.
+GIT_CHECK_FUNC(setitimer,
+[NO_SETITIMER=],
+[NO_SETITIMER=YesPlease])
+GIT_CONF_SUBST([NO_SETITIMER])
+#
 # Define NO_STRCASESTR if you don't have strcasestr.
 GIT_CHECK_FUNC(strcasestr,
 [NO_STRCASESTR=],
