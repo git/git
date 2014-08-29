@@ -468,7 +468,8 @@ __git_ps1 ()
 			fi
 		fi
 		if [ -n "${GIT_PS1_SHOWSTASHSTATE-}" ] &&
-		   [ -r "$g/refs/stash" ]; then
+		   git rev-parse --verify --quiet refs/stash >/dev/null
+		then
 			s="$"
 		fi
 
