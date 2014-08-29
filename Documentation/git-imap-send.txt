@@ -75,7 +75,8 @@ imap.preformattedHTML::
 
 imap.authMethod::
 	Specify authenticate method for authentication with IMAP server.
-	Current supported method is 'CRAM-MD5' only.
+	Current supported method is 'CRAM-MD5' only. If this is not set
+	then 'git imap-send' uses the basic IMAP plaintext LOGIN command.
 
 Examples
 ~~~~~~~~
