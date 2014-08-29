@@ -3107,7 +3107,7 @@ D ""
 
 INPUT_END
 
-test_expect_failure 'U: filedelete root succeeds' '
+test_expect_success 'U: filedelete root succeeds' '
     git fast-import <input
 '
 
@@ -3117,7 +3117,7 @@ EOF
 
 git diff-tree -M -r U^1 U >actual
 
-test_expect_failure 'U: validate root delete result' '
+test_expect_success 'U: validate root delete result' '
 	compare_diff_raw expect actual
 '
 

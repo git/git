@@ -1419,13 +1419,17 @@ static void mktree(struct tree_content *t, int v, struct strbuf *b)
 
 static void store_tree(struct tree_entry *root)
 {
-	struct tree_content *t = root->tree;
+	struct tree_content *t;
 	unsigned int i, j, del;
 	struct last_object lo = { STRBUF_INIT, 0, 0, /* no_swap */ 1 };
 	struct object_entry *le = NULL;
 
 	if (!is_null_sha1(root->versions[1].sha1))
 		return;
+
+	if (!root->tree)
+		load_tree(root);
+	t = root->tree;
 
 	for (i = 0; i < t->entry_count; i++) {
 		if (t->entries[i]->tree)
