@@ -118,7 +118,7 @@ test_expect_success 'alias expansion' '
 	)
 '
 
-test_expect_success NOT_MINGW '!alias expansion' '
+test_expect_success !MINGW '!alias expansion' '
 	pwd >expect &&
 	(
 		git config alias.test-alias-directory !pwd &&

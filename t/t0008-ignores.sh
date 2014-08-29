@@ -806,7 +806,7 @@ test_expect_success !MINGW 'quoting allows trailing whitespace' '
 	test_cmp err.expect err
 '
 
-test_expect_success NOT_MINGW,NOT_CYGWIN 'correct handling of backslashes' '
+test_expect_success !MINGW,!CYGWIN 'correct handling of backslashes' '
 	rm -rf whitespace &&
 	mkdir whitespace &&
 	>"whitespace/trailing 1  " &&
