@@ -653,7 +653,9 @@ static int print_ref_list(int kinds, int detached, int verbose, int abbrev, stru
 		add_pending_object(&ref_list.revs,
 				   (struct object *) filter, "");
 		ref_list.revs.limited = 1;
-		prepare_revision_walk(&ref_list.revs);
+
+		if (prepare_revision_walk(&ref_list.revs))
+			die(_("revision walk setup failed"));
 		if (verbose)
 			ref_list.maxwidth = calc_maxwidth(&ref_list);
 	}
