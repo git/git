@@ -677,7 +677,7 @@ include::pretty-options.txt[]
 --relative-date::
 	Synonym for `--date=relative`.
 
---date=(relative|local|default|iso|rfc|short|raw)::
+--date=(relative|local|default|iso|iso-strict|rfc|short|raw)::
 	Only takes effect for dates shown in human-readable format, such
 	as when using `--pretty`. `log.date` config variable sets a default
 	value for the log command's `--date` option.
@@ -687,7 +687,16 @@ e.g. ``2 hours ago''.
 +
 `--date=local` shows timestamps in user's local time zone.
 +
-`--date=iso` (or `--date=iso8601`) shows timestamps in ISO 8601 format.
+`--date=iso` (or `--date=iso8601`) shows timestamps in a ISO 8601-like format.
+The differences to the strict ISO 8601 format are:
+
+	- a space instead of the `T` date/time delimiter
+	- a space between time and time zone
+	- no colon between hours and minutes of the time zone
+
++
+`--date=iso-strict` (or `--date=iso8601-strict`) shows timestamps in strict
+ISO 8601 format.
 +
 `--date=rfc` (or `--date=rfc2822`) shows timestamps in RFC 2822
 format, often found in email messages.

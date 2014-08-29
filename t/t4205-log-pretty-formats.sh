@@ -431,6 +431,14 @@ EOF
 	test_cmp expected actual
 '
 
+# ISO strict date format
+test_expect_success 'ISO and ISO-strict date formats display the same values' '
+	git log --format=%ai%n%ci |
+	sed -e "s/ /T/; s/ //; s/..\$/:&/" >expected &&
+	git log --format=%aI%n%cI >actual &&
+	test_cmp expected actual
+'
+
 # get new digests (with no abbreviations)
 head1=$(git rev-parse --verify HEAD~0) &&
 head2=$(git rev-parse --verify HEAD~1) &&

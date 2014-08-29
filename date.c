@@ -200,7 +200,16 @@ const char *show_date(unsigned long time, int tz, enum date_mode mode)
 				tm->tm_mday,
 				tm->tm_hour, tm->tm_min, tm->tm_sec,
 				tz);
-	else if (mode == DATE_RFC2822)
+	else if (mode == DATE_ISO8601_STRICT) {
+		char sign = (tz >= 0) ? '+' : '-';
+		tz = abs(tz);
+		strbuf_addf(&timebuf, "%04d-%02d-%02dT%02d:%02d:%02d%c%02d:%02d",
+				tm->tm_year + 1900,
+				tm->tm_mon + 1,
+				tm->tm_mday,
+				tm->tm_hour, tm->tm_min, tm->tm_sec,
+				sign, tz / 100, tz % 100);
+	} else if (mode == DATE_RFC2822)
 		strbuf_addf(&timebuf, "%.3s, %d %.3s %d %02d:%02d:%02d %+05d",
 			weekday_names[tm->tm_wday], tm->tm_mday,
 			month_names[tm->tm_mon], tm->tm_year + 1900,
@@ -751,6 +760,9 @@ enum date_mode parse_date_format(const char *format)
 	else if (!strcmp(format, "iso8601") ||
 		 !strcmp(format, "iso"))
 		return DATE_ISO8601;
+	else if (!strcmp(format, "iso8601-strict") ||
+		 !strcmp(format, "iso-strict"))
+		return DATE_ISO8601_STRICT;
 	else if (!strcmp(format, "rfc2822") ||
 		 !strcmp(format, "rfc"))
 		return DATE_RFC2822;

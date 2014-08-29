@@ -2580,6 +2580,9 @@ parse_done:
 	case DATE_RFC2822:
 		blame_date_width = sizeof("Thu, 19 Oct 2006 16:00:04 -0700");
 		break;
+	case DATE_ISO8601_STRICT:
+		blame_date_width = sizeof("2006-10-19T16:00:04-07:00");
+		break;
 	case DATE_ISO8601:
 		blame_date_width = sizeof("2006-10-19 16:00:04 -0700");
 		break;
