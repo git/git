@@ -685,4 +685,46 @@ test_expect_success 'handle stash specification with spaces' '
 	grep pig file
 '
 
+test_expect_success 'setup stash with index and worktree changes' '
+	git stash clear &&
+	git reset --hard &&
+	echo index >file &&
+	git add file &&
+	echo working >file &&
+	git stash
+'
+
+test_expect_success 'stash list implies --first-parent -m' '
+	cat >expect <<-\EOF &&
+	stash@{0}: WIP on master: b27a2bc subdir
+
+	diff --git a/file b/file
+	index 257cc56..d26b33d 100644
+	--- a/file
+	+++ b/file
+	@@ -1 +1 @@
+	-foo
+	+working
+	EOF
+	git stash list -p >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'stash list --cc shows combined diff' '
+	cat >expect <<-\EOF &&
+	stash@{0}: WIP on master: b27a2bc subdir
+
+	diff --cc file
+	index 257cc56,9015a7a..d26b33d
+	--- a/file
+	+++ b/file
+	@@@ -1,1 -1,1 +1,1 @@@
+	- foo
+	 -index
+	++working
+	EOF
+	git stash list -p --cc >actual &&
+	test_cmp expect actual
+'
+
 test_done
