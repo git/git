@@ -69,7 +69,7 @@ test_expect_success 'object with bad sha1' '
 	git update-ref refs/heads/bogus $cmt &&
 	test_when_finished "git update-ref -d refs/heads/bogus" &&
 
-	test_might_fail git fsck 2>out &&
+	test_must_fail git fsck 2>out &&
 	cat out &&
 	grep "$sha.*corrupt" out
 '
@@ -101,7 +101,7 @@ test_expect_success 'email with embedded > is not okay' '
 	test_when_finished "remove_object $new" &&
 	git update-ref refs/heads/bogus "$new" &&
 	test_when_finished "git update-ref -d refs/heads/bogus" &&
-	git fsck 2>out &&
+	test_must_fail git fsck 2>out &&
 	cat out &&
 	grep "error in commit $new" out
 '
@@ -113,7 +113,7 @@ test_expect_success 'missing < email delimiter is reported nicely' '
 	test_when_finished "remove_object $new" &&
 	git update-ref refs/heads/bogus "$new" &&
 	test_when_finished "git update-ref -d refs/heads/bogus" &&
-	git fsck 2>out &&
+	test_must_fail git fsck 2>out &&
 	cat out &&
 	grep "error in commit $new.* - bad name" out
 '
@@ -125,7 +125,7 @@ test_expect_success 'missing email is reported nicely' '
 	test_when_finished "remove_object $new" &&
 	git update-ref refs/heads/bogus "$new" &&
 	test_when_finished "git update-ref -d refs/heads/bogus" &&
-	git fsck 2>out &&
+	test_must_fail git fsck 2>out &&
 	cat out &&
 	grep "error in commit $new.* - missing email" out
 '
@@ -137,7 +137,7 @@ test_expect_success '> in name is reported' '
 	test_when_finished "remove_object $new" &&
 	git update-ref refs/heads/bogus "$new" &&
 	test_when_finished "git update-ref -d refs/heads/bogus" &&
-	git fsck 2>out &&
+	test_must_fail git fsck 2>out &&
 	cat out &&
 	grep "error in commit $new" out
 '
@@ -151,9 +151,29 @@ test_expect_success 'integer overflow in timestamps is reported' '
 	test_when_finished "remove_object $new" &&
 	git update-ref refs/heads/bogus "$new" &&
 	test_when_finished "git update-ref -d refs/heads/bogus" &&
-	git fsck 2>out &&
+	test_must_fail git fsck 2>out &&
 	cat out &&
 	grep "error in commit $new.*integer overflow" out
+'
+
+test_expect_success 'malformatted tree object' '
+	test_when_finished "git update-ref -d refs/tags/wrong" &&
+	test_when_finished "remove_object \$T" &&
+	T=$(
+		GIT_INDEX_FILE=test-index &&
+		export GIT_INDEX_FILE &&
+		rm -f test-index &&
+		>x &&
+		git add x &&
+		T=$(git write-tree) &&
+		(
+			git cat-file tree $T &&
+			git cat-file tree $T
+		) |
+		git hash-object -w -t tree --stdin
+	) &&
+	test_must_fail git fsck 2>out &&
+	grep "error in tree .*contains duplicate file entries" out
 '
 
 test_expect_success 'tag pointing to nonexistent' '

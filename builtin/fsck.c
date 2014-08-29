@@ -389,7 +389,8 @@ static void fsck_sha1_list(void)
 		unsigned char *sha1 = entry->sha1;
 
 		sha1_list.entry[i] = NULL;
-		fsck_sha1(sha1);
+		if (fsck_sha1(sha1))
+			errors_found |= ERROR_OBJECT;
 		free(entry);
 	}
 	sha1_list.nr = 0;
