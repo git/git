@@ -67,7 +67,7 @@ struct menu_item {
 	char hotkey;
 	const char *title;
 	int selected;
-	int (*fn)();
+	int (*fn)(void);
 };
 
 enum menu_stuff_type {
