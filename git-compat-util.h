@@ -191,7 +191,7 @@ extern int compat_mkdir_wo_trailing_slash(const char*, mode_t);
 struct itimerval {
 	struct timeval it_interval;
 	struct timeval it_value;
-}
+};
 #endif
 
 #ifdef NO_SETITIMER
