@@ -43,7 +43,7 @@ OPTIONS
 -q::
 --quiet::
 
-Only print error and warning messages, all other output will be suppressed.
+Only print error and warning messages; all other output will be suppressed.
 
 --bare::
 
@@ -57,12 +57,12 @@ DIRECTORY" section below.)
 
 --separate-git-dir=<git dir>::
 
-Instead of initializing the repository where it is supposed to be,
-place a filesytem-agnostic Git symbolic link there, pointing to the
-specified path, and initialize a Git repository at the path. The
-result is Git repository can be separated from working tree. If this
-is reinitialization, the repository will be moved to the specified
-path.
+Instead of initializing the repository as a directory to either `$GIT_DIR` or
+`./.git/`, create a text file there containing the path to the actual
+repository.  This file acts as filesystem-agnostic Git symbolic link to the
+repository.
++
+If this is reinitialization, the repository will be moved to the specified path.
 
 --shared[=(false|true|umask|group|all|world|everybody|0xxx)]::
 
@@ -72,40 +72,46 @@ repository.  When specified, the config variable "core.sharedRepository" is
 set so that files and directories under `$GIT_DIR` are created with the
 requested permissions.  When not specified, Git will use permissions reported
 by umask(2).
-
++
 The option can have the following values, defaulting to 'group' if no value
 is given:
++
+--
+'umask' (or 'false')::
 
- - 'umask' (or 'false'): Use permissions reported by umask(2). The default,
-   when `--shared` is not specified.
+Use permissions reported by umask(2). The default, when `--shared` is not
+specified.
 
- - 'group' (or 'true'): Make the repository group-writable, (and g+sx, since
-   the git group may be not the primary group of all users).
-   This is used to loosen the permissions of an otherwise safe umask(2) value.
-   Note that the umask still applies to the other permission bits (e.g. if
-   umask is '0022', using 'group' will not remove read privileges from other
-   (non-group) users). See '0xxx' for how to exactly specify the repository
-   permissions.
+'group' (or 'true')::
 
- - 'all' (or 'world' or 'everybody'): Same as 'group', but make the repository
-   readable by all users.
+Make the repository group-writable, (and g+sx, since the git group may be not
+the primary group of all users). This is used to loosen the permissions of an
+otherwise safe umask(2) value. Note that the umask still applies to the other
+permission bits (e.g. if umask is '0022', using 'group' will not remove read
+privileges from other (non-group) users). See '0xxx' for how to exactly specify
+the repository permissions.
 
- - '0xxx': '0xxx' is an octal number and each file will have mode '0xxx'.
-   '0xxx' will override users' umask(2) value (and not only loosen permissions
-   as 'group' and 'all' does). '0640' will create a repository which is
-   group-readable, but not group-writable or accessible to others. '0660' will
-   create a repo that is readable and writable to the current user and group,
-   but inaccessible to others.
+'all' (or 'world' or 'everybody')::
 
-By default, the configuration flag receive.denyNonFastForwards is enabled
+Same as 'group', but make the repository readable by all users.
+
+'0xxx'::
+
+'0xxx' is an octal number and each file will have mode '0xxx'. '0xxx' will
+override users' umask(2) value (and not only loosen permissions as 'group' and
+'all' does). '0640' will create a repository which is group-readable, but not
+group-writable or accessible to others. '0660' will create a repo that is
+readable and writable to the current user and group, but inaccessible to others.
+--
+
+By default, the configuration flag `receive.denyNonFastForwards` is enabled
 in shared repositories, so that you cannot force a non fast-forwarding push
 into it.
 
-If you name a (possibly non-existent) directory at the end of the command
-line, the command is run inside the directory (possibly after creating it).
+If you provide a 'directory', the command is run inside it. If this directory
+does not exist, it will be created.
 
 --
-
 
 TEMPLATE DIRECTORY
 ------------------
@@ -113,19 +119,18 @@ TEMPLATE DIRECTORY
 The template directory contains files and directories that will be copied to
 the `$GIT_DIR` after it is created.
 
-The template directory used will (in order):
+The template directory will be one of the following (in order):
 
- - The argument given with the `--template` option.
+ - the argument given with the `--template` option;
 
- - The contents of the `$GIT_TEMPLATE_DIR` environment variable.
+ - the contents of the `$GIT_TEMPLATE_DIR` environment variable;
 
- - The `init.templatedir` configuration variable.
+ - the `init.templatedir` configuration variable; or
 
- - The default template directory: `/usr/share/git-core/templates`.
+ - the default template directory: `/usr/share/git-core/templates`.
 
-The default template directory includes some directory structure, some
-suggested "exclude patterns", and copies of sample "hook" files.
-The suggested patterns and hook files are all modifiable and extensible.
+The default template directory includes some directory structure, suggested
+"exclude patterns" (see linkgit:gitignore[5]), and sample hook files (see linkgit:githooks[5]).
 
 EXAMPLES
 --------
@@ -136,10 +141,12 @@ Start a new Git repository for an existing code base::
 $ cd /path/to/my/codebase
 $ git init      <1>
 $ git add .     <2>
+$ git commit    <3>
 ----------------
 +
-<1> prepare /path/to/my/codebase/.git directory
-<2> add all existing file to the index
+<1> Create a /path/to/my/codebase/.git directory.
+<2> Add all existing files to the index.
+<3> Record the pristine state as the first commit in the history.
 
 GIT
 ---
