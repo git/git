@@ -122,7 +122,7 @@ The placeholders are:
 - '%ce': committer email
 - '%cE': committer email (respecting .mailmap, see
   linkgit:git-shortlog[1] or linkgit:git-blame[1])
-- '%cd': committer date
+- '%cd': committer date (format respects --date= option)
 - '%cD': committer date, RFC2822 style
 - '%cr': committer date, relative
 - '%ct': committer date, UNIX timestamp
