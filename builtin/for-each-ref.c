@@ -633,7 +633,7 @@ static void populate_value(struct refinfo *ref)
 	unsigned long size;
 	const unsigned char *tagged;
 
-	ref->value = xcalloc(sizeof(struct atom_value), used_atom_cnt);
+	ref->value = xcalloc(used_atom_cnt, sizeof(struct atom_value));
 
 	if (need_symref && (ref->flag & REF_ISSYMREF) && !ref->symref) {
 		unsigned char unused1[20];
