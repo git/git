@@ -394,7 +394,7 @@ parse_flags_and_rev()
 
 	REV=$(git rev-parse --quiet --symbolic --verify "$1" 2>/dev/null) || {
 		reference="$1"
-		die "$(eval_gettext "\$reference is not valid reference")"
+		die "$(eval_gettext "\$reference is not a valid reference")"
 	}
 
 	i_commit=$(git rev-parse --quiet --verify "$REV^2" 2>/dev/null) &&

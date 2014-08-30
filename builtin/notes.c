@@ -211,7 +211,7 @@ static void create_note(const unsigned char *object, struct msg_arg *msg,
 		if (write_sha1_file(msg->buf.buf, msg->buf.len, blob_type, result)) {
 			error(_("unable to write note object"));
 			if (path)
-				error(_("The note contents has been left in %s"),
+				error(_("The note contents have been left in %s"),
 				      path);
 			exit(128);
 		}

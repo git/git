@@ -474,7 +474,7 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 		OPT_BOOL('k', "killed", &show_killed,
 			N_("show files on the filesystem that need to be removed")),
 		OPT_BIT(0, "directory", &dir.flags,
-			N_("show 'other' directories' name only"),
+			N_("show 'other' directories' names only"),
 			DIR_SHOW_OTHER_DIRECTORIES),
 		OPT_NEGBIT(0, "empty-directory", &dir.flags,
 			N_("don't show empty directories"),
