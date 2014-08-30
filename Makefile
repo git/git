@@ -1474,6 +1474,9 @@ ifdef NO_REGEX
 	COMPAT_CFLAGS += -Icompat/regex
 	COMPAT_OBJS += compat/regex/regex.o
 endif
+ifdef NATIVE_CRLF
+	BASIC_CFLAGS += -DNATIVE_CRLF
+endif
 
 ifdef USE_NED_ALLOCATOR
        COMPAT_CFLAGS += -Icompat/nedmalloc
