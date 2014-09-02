@@ -445,7 +445,7 @@ proc stop_instance {inst} {
 	set pid [pid $fd]
 
 	if {$::tcl_platform(platform) eq {windows}} {
-	    exec kill -f $pid
+	    exec taskkill /pid $pid
 	} else {
 	    exec kill $pid
 	}
