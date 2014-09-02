@@ -316,6 +316,7 @@ static int update_one(struct cache_tree *it,
 		int pathlen, entlen;
 		const unsigned char *sha1;
 		unsigned mode;
+		int expected_missing = 0;
 
 		path = ce->name;
 		pathlen = ce_namelen(ce);
@@ -332,8 +333,10 @@ static int update_one(struct cache_tree *it,
 			i += sub->count;
 			sha1 = sub->cache_tree->sha1;
 			mode = S_IFDIR;
-			if (sub->cache_tree->entry_count < 0)
+			if (sub->cache_tree->entry_count < 0) {
 				to_invalidate = 1;
+				expected_missing = 1;
+			}
 		}
 		else {
 			sha1 = ce->sha1;
@@ -343,6 +346,8 @@ static int update_one(struct cache_tree *it,
 		}
 		if (mode != S_IFGITLINK && !missing_ok && !has_sha1_file(sha1)) {
 			strbuf_release(&buffer);
+			if (expected_missing)
+				return -1;
 			return error("invalid object %06o %s for '%.*s'",
 				mode, sha1_to_hex(sha1), entlen+baselen, path);
 		}

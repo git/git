@@ -210,4 +210,12 @@ test_expect_success 'partial commit gives cache-tree' '
 	test_cache_tree
 '
 
+test_expect_success 'no phantom error when switching trees' '
+	mkdir newdir &&
+	>newdir/one &&
+	git add newdir/one &&
+	git checkout 2>errors &&
+	! test -s errors
+'
+
 test_done
