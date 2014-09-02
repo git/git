@@ -1,0 +1,52 @@
+Git v2.2 Release Notes
+======================
+
+Updates since v2.1
+------------------
+
+UI, Workflows & Features
+
+ * "git config --edit --global" starts from a skeletal per-user
+   configuration file contents, instead of a total blank, when the
+   user does not already have any.  This immediately reduces the
+   need for a later "Have you forgotten setting core.user?" and we
+   can add more to the template as we gain more experience.
+
+
+Performance, Internal Implementation, etc.
+
+ * Looking up remotes configuration in a repository with very many
+   remotes defined has been optimized.
+
+ * There are cases where you lock and open to write a file, close it
+   to show the updated contents to external processes, and then have
+   to update the file again while still holding the lock, but the
+   lockfile API lacked support for such an access pattern.
+
+ * An in-core caching layer to let us avoid reading the same
+   configuration files number of times has been added.
+
+ * Various code paths have been cleaned up and simplified by using
+   "strbuf", "starts_with()", and "skip_prefix()" APIs more.
+
+
+Also contains various documentation updates and code clean-ups.
+
+
+Fixes since v2.1
+----------------
+
+ * "git log --pretty/format=" with an empty format string did not
+   mean the more obvious "No output whatsoever" but "Use default
+   format", which was counterintuitive.
+   (merge b9c7d6e jk/pretty-empty-format later to maint).
+
+ * Implementations of "tar" that do not understand an extended pax
+   header would extract the contents of it in a regular file; make
+   sure the permission bits of this file follows the same tar.umask
+   configuration setting.
+
+
+Unless otherwise noted, all the fixes since v2.1 in the maintenance
+track are contained in this release (see the maintenance releases'
+notes for details).
