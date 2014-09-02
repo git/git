@@ -15,6 +15,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see http://www.gnu.org/licenses/ .
 
+# for git on windows so stdin will not be misdetected as attached to a
+# terminal
+exec < /dev/null
+
 # Keep the original TERM for say_color
 ORIGINAL_TERM=$TERM
 
@@ -871,6 +875,7 @@ case $(uname -s) in
 	# exec does not inherit the PID
 	test_set_prereq MINGW
 	test_set_prereq NOT_CYGWIN
+	test_set_prereq NATIVE_CRLF
 	test_set_prereq SED_STRIPS_CR
 	test_set_prereq GREP_STRIPS_CR
 	GIT_TEST_CMP=mingw_test_cmp
