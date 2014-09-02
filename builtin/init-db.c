@@ -330,12 +330,12 @@ int set_git_dir_init(const char *git_dir, const char *real_git_dir,
 		 * moving the target repo later on in separate_git_dir()
 		 */
 		git_link = xstrdup(real_path(git_dir));
+		set_git_dir(real_path(real_git_dir));
 	}
 	else {
-		real_git_dir = real_path(git_dir);
+		set_git_dir(real_path(git_dir));
 		git_link = NULL;
 	}
-	set_git_dir(real_path(real_git_dir));
 	return 0;
 }
 
@@ -578,7 +578,7 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 				die_errno (_("Cannot access current working directory"));
 		}
 		if (work_tree)
-			set_git_work_tree(real_path(work_tree));
+			set_git_work_tree(work_tree);
 		else
 			set_git_work_tree(git_work_tree_cfg);
 		if (access(get_git_work_tree(), X_OK))
@@ -587,7 +587,7 @@ int cmd_init_db(int argc, const char **argv, const char *prefix)
 	}
 	else {
 		if (work_tree)
-			set_git_work_tree(real_path(work_tree));
+			set_git_work_tree(work_tree);
 	}
 
 	set_git_dir_init(git_dir, real_git_dir, 1);
