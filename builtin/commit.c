@@ -42,7 +42,20 @@ static const char * const builtin_status_usage[] = {
 	NULL
 };
 
-static const char implicit_ident_advice[] =
+static const char implicit_ident_advice_noconfig[] =
+N_("Your name and email address were configured automatically based\n"
+"on your username and hostname. Please check that they are accurate.\n"
+"You can suppress this message by setting them explicitly. Run the\n"
+"following command and follow the instructions in your editor to edit\n"
+"your configuration file:\n"
+"\n"
+"    git config --global --edit\n"
+"\n"
+"After doing this, you may fix the identity used for this commit with:\n"
+"\n"
+"    git commit --amend --reset-author\n");
+
+static const char implicit_ident_advice_config[] =
 N_("Your name and email address were configured automatically based\n"
 "on your username and hostname. Please check that they are accurate.\n"
 "You can suppress this message by setting them explicitly:\n"
@@ -1402,6 +1415,24 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 	return 0;
 }
 
+static const char *implicit_ident_advice(void)
+{
+	char *user_config = NULL;
+	char *xdg_config = NULL;
+	int config_exists;
+
+	home_config_paths(&user_config, &xdg_config, "config");
+	config_exists = file_exists(user_config) || file_exists(xdg_config);
+	free(user_config);
+	free(xdg_config);
+
+	if (config_exists)
+		return _(implicit_ident_advice_config);
+	else
+		return _(implicit_ident_advice_noconfig);
+
+}
+
 static void print_summary(const char *prefix, const unsigned char *sha1,
 			  int initial_commit)
 {
@@ -1440,7 +1471,7 @@ static void print_summary(const char *prefix, const unsigned char *sha1,
 		strbuf_addbuf_percentquote(&format, &committer_ident);
 		if (advice_implicit_identity) {
 			strbuf_addch(&format, '\n');
-			strbuf_addstr(&format, _(implicit_ident_advice));
+			strbuf_addstr(&format, implicit_ident_advice());
 		}
 	}
 	strbuf_release(&author_ident);
