@@ -20,7 +20,7 @@ const char git_more_info_string[] =
 
 static struct startup_info git_startup_info;
 static int use_pager = -1;
-static char orig_cwd[PATH_MAX];
+static char *orig_cwd;
 static const char *env_names[] = {
 	GIT_DIR_ENVIRONMENT,
 	GIT_WORK_TREE_ENVIRONMENT,
@@ -36,8 +36,7 @@ static void save_env(void)
 	if (saved_environment)
 		return;
 	saved_environment = 1;
-	if (!getcwd(orig_cwd, sizeof(orig_cwd)))
-		die_errno("cannot getcwd");
+	orig_cwd = xgetcwd();
 	for (i = 0; i < ARRAY_SIZE(env_names); i++) {
 		orig_env[i] = getenv(env_names[i]);
 		if (orig_env[i])
@@ -48,8 +47,9 @@ static void save_env(void)
 static void restore_env(void)
 {
 	int i;
-	if (*orig_cwd && chdir(orig_cwd))
+	if (orig_cwd && chdir(orig_cwd))
 		die_errno("could not move to %s", orig_cwd);
+	free(orig_cwd);
 	for (i = 0; i < ARRAY_SIZE(env_names); i++) {
 		if (orig_env[i])
 			setenv(env_names[i], orig_env[i], 1);
@@ -161,9 +161,10 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 			if (envchanged)
 				*envchanged = 1;
 		} else if (!strcmp(cmd, "--bare")) {
-			static char git_dir[PATH_MAX+1];
+			char *cwd = xgetcwd();
 			is_bare_repository_cfg = 1;
-			setenv(GIT_DIR_ENVIRONMENT, getcwd(git_dir, sizeof(git_dir)), 0);
+			setenv(GIT_DIR_ENVIRONMENT, cwd, 0);
+			free(cwd);
 			setenv(GIT_IMPLICIT_WORK_TREE_ENVIRONMENT, "0", 1);
 			if (envchanged)
 				*envchanged = 1;

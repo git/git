@@ -350,7 +350,7 @@ static void link_alt_odb_entries(const char *alt, int len, int sep,
 		return;
 	}
 
-	strbuf_addstr(&objdirbuf, absolute_path(get_object_directory()));
+	strbuf_add_absolute_path(&objdirbuf, get_object_directory());
 	normalize_path_copy(objdirbuf.buf, objdirbuf.buf);
 
 	alt_copy = xmemdupz(alt, len);
