@@ -16,7 +16,6 @@ static struct ref_transaction *transaction;
 
 static char line_termination = '\n';
 static int update_flags;
-static struct strbuf err = STRBUF_INIT;
 
 /*
  * Parse one whitespace- or NUL-terminated, possibly C-quoted argument
@@ -179,6 +178,7 @@ static int parse_next_sha1(struct strbuf *input, const char **next,
 
 static const char *parse_cmd_update(struct strbuf *input, const char *next)
 {
+	struct strbuf err = STRBUF_INIT;
 	char *refname;
 	unsigned char new_sha1[20];
 	unsigned char old_sha1[20];
@@ -204,12 +204,14 @@ static const char *parse_cmd_update(struct strbuf *input, const char *next)
 
 	update_flags = 0;
 	free(refname);
+	strbuf_release(&err);
 
 	return next;
 }
 
 static const char *parse_cmd_create(struct strbuf *input, const char *next)
 {
+	struct strbuf err = STRBUF_INIT;
 	char *refname;
 	unsigned char new_sha1[20];
 
@@ -232,12 +234,14 @@ static const char *parse_cmd_create(struct strbuf *input, const char *next)
 
 	update_flags = 0;
 	free(refname);
+	strbuf_release(&err);
 
 	return next;
 }
 
 static const char *parse_cmd_delete(struct strbuf *input, const char *next)
 {
+	struct strbuf err = STRBUF_INIT;
 	char *refname;
 	unsigned char old_sha1[20];
 	int have_old;
@@ -264,12 +268,14 @@ static const char *parse_cmd_delete(struct strbuf *input, const char *next)
 
 	update_flags = 0;
 	free(refname);
+	strbuf_release(&err);
 
 	return next;
 }
 
 static const char *parse_cmd_verify(struct strbuf *input, const char *next)
 {
+	struct strbuf err = STRBUF_INIT;
 	char *refname;
 	unsigned char new_sha1[20];
 	unsigned char old_sha1[20];
@@ -297,6 +303,7 @@ static const char *parse_cmd_verify(struct strbuf *input, const char *next)
 
 	update_flags = 0;
 	free(refname);
+	strbuf_release(&err);
 
 	return next;
 }
@@ -365,6 +372,8 @@ int cmd_update_ref(int argc, const char **argv, const char *prefix)
 		die("Refusing to perform update with empty message.");
 
 	if (read_stdin) {
+		struct strbuf err = STRBUF_INIT;
+
 		transaction = ref_transaction_begin(&err);
 		if (!transaction)
 			die("%s", err.buf);
