@@ -2,6 +2,7 @@
 #define REMOTE_H
 
 #include "parse-options.h"
+#include "hashmap.h"
 
 enum {
 	REMOTE_CONFIG,
@@ -10,6 +11,8 @@ enum {
 };
 
 struct remote {
+	struct hashmap_entry ent;  /* must be first */
+
 	const char *name;
 	int origin;
 
