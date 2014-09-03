@@ -402,14 +402,6 @@ static int parse_archive_args(int argc, const char **argv,
 	return argc;
 }
 
-static int git_default_archive_config(const char *var, const char *value,
-				      void *cb)
-{
-	if (!strcmp(var, "uploadarchive.allowunreachable"))
-		remote_allow_unreachable = git_config_bool(var, value);
-	return git_default_config(var, value, cb);
-}
-
 int write_archive(int argc, const char **argv, const char *prefix,
 		  int setup_prefix, const char *name_hint, int remote)
 {
@@ -420,7 +412,9 @@ int write_archive(int argc, const char **argv, const char *prefix,
 	if (setup_prefix && prefix == NULL)
 		prefix = setup_git_directory_gently(&nongit);
 
-	git_config(git_default_archive_config, NULL);
+	git_config_get_bool("uploadarchive.allowunreachable", &remote_allow_unreachable);
+	git_config(git_default_config, NULL);
+
 	init_tar_archiver();
 	init_zip_archiver();
 
