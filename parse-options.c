@@ -14,8 +14,12 @@ static int parse_options_usage(struct parse_opt_ctx_t *ctx,
 
 int optbug(const struct option *opt, const char *reason)
 {
-	if (opt->long_name)
+	if (opt->long_name) {
+		if (opt->short_name)
+			return error("BUG: switch '%c' (--%s) %s",
+				     opt->short_name, opt->long_name, reason);
 		return error("BUG: option '%s' %s", opt->long_name, reason);
+	}
 	return error("BUG: switch '%c' %s", opt->short_name, reason);
 }
 
@@ -345,12 +349,20 @@ static void check_typos(const char *arg, const struct option *options)
 static void parse_options_check(const struct option *opts)
 {
 	int err = 0;
+	char short_opts[128];
 
+	memset(short_opts, '\0', sizeof(short_opts));
 	for (; opts->type != OPTION_END; opts++) {
 		if ((opts->flags & PARSE_OPT_LASTARG_DEFAULT) &&
 		    (opts->flags & PARSE_OPT_OPTARG))
 			err |= optbug(opts, "uses incompatible flags "
 					"LASTARG_DEFAULT and OPTARG");
+		if (opts->short_name) {
+			if (0x7F <= opts->short_name)
+				err |= optbug(opts, "invalid short name");
+			else if (short_opts[opts->short_name]++)
+				err |= optbug(opts, "short name already used");
+		}
 		if (opts->flags & PARSE_OPT_NODASH &&
 		    ((opts->flags & PARSE_OPT_OPTARG) ||
 		     !(opts->flags & PARSE_OPT_NOARG) ||
