@@ -47,7 +47,7 @@ static int pack_objects(int fd, struct ref *refs, struct sha1_array *extra, stru
 		NULL,
 		NULL,
 	};
-	struct child_process po;
+	struct child_process po = CHILD_PROCESS_INIT;
 	int i;
 
 	i = 4;
@@ -59,7 +59,6 @@ static int pack_objects(int fd, struct ref *refs, struct sha1_array *extra, stru
 		argv[i++] = "-q";
 	if (args->progress)
 		argv[i++] = "--progress";
-	memset(&po, 0, sizeof(po));
 	po.argv = argv;
 	po.in = -1;
 	po.out = args->stateless_rpc ? -1 : fd;

@@ -118,7 +118,8 @@ static struct child_process *get_helper(struct transport *transport)
 	if (data->helper)
 		return data->helper;
 
-	helper = xcalloc(1, sizeof(*helper));
+	helper = xmalloc(sizeof(*helper));
+	child_process_init(helper);
 	helper->in = -1;
 	helper->out = -1;
 	helper->err = 0;
@@ -395,7 +396,7 @@ static int get_importer(struct transport *transport, struct child_process *fasti
 	struct child_process *helper = get_helper(transport);
 	struct helper_data *data = transport->data;
 	int cat_blob_fd, code;
-	memset(fastimport, 0, sizeof(*fastimport));
+	child_process_init(fastimport);
 	fastimport->in = helper->out;
 	argv_array_push(&fastimport->args, "fast-import");
 	argv_array_push(&fastimport->args, debug ? "--stats" : "--quiet");

@@ -8,6 +8,12 @@
 # define SHELL_PATH "/bin/sh"
 #endif
 
+void child_process_init(struct child_process *child)
+{
+	memset(child, 0, sizeof(*child));
+	argv_array_init(&child->args);
+}
+
 struct child_to_clean {
 	pid_t pid;
 	struct child_to_clean *next;
@@ -555,31 +561,21 @@ int run_command(struct child_process *cmd)
 	return finish_command(cmd);
 }
 
-static void prepare_run_command_v_opt(struct child_process *cmd,
-				      const char **argv,
-				      int opt)
-{
-	memset(cmd, 0, sizeof(*cmd));
-	cmd->argv = argv;
-	cmd->no_stdin = opt & RUN_COMMAND_NO_STDIN ? 1 : 0;
-	cmd->git_cmd = opt & RUN_GIT_CMD ? 1 : 0;
-	cmd->stdout_to_stderr = opt & RUN_COMMAND_STDOUT_TO_STDERR ? 1 : 0;
-	cmd->silent_exec_failure = opt & RUN_SILENT_EXEC_FAILURE ? 1 : 0;
-	cmd->use_shell = opt & RUN_USING_SHELL ? 1 : 0;
-	cmd->clean_on_exit = opt & RUN_CLEAN_ON_EXIT ? 1 : 0;
-}
-
 int run_command_v_opt(const char **argv, int opt)
 {
-	struct child_process cmd;
-	prepare_run_command_v_opt(&cmd, argv, opt);
-	return run_command(&cmd);
+	return run_command_v_opt_cd_env(argv, opt, NULL, NULL);
 }
 
 int run_command_v_opt_cd_env(const char **argv, int opt, const char *dir, const char *const *env)
 {
-	struct child_process cmd;
-	prepare_run_command_v_opt(&cmd, argv, opt);
+	struct child_process cmd = CHILD_PROCESS_INIT;
+	cmd.argv = argv;
+	cmd.no_stdin = opt & RUN_COMMAND_NO_STDIN ? 1 : 0;
+	cmd.git_cmd = opt & RUN_GIT_CMD ? 1 : 0;
+	cmd.stdout_to_stderr = opt & RUN_COMMAND_STDOUT_TO_STDERR ? 1 : 0;
+	cmd.silent_exec_failure = opt & RUN_SILENT_EXEC_FAILURE ? 1 : 0;
+	cmd.use_shell = opt & RUN_USING_SHELL ? 1 : 0;
+	cmd.clean_on_exit = opt & RUN_CLEAN_ON_EXIT ? 1 : 0;
 	cmd.dir = dir;
 	cmd.env = env;
 	return run_command(&cmd);
@@ -763,14 +759,13 @@ char *find_hook(const char *name)
 
 int run_hook_ve(const char *const *env, const char *name, va_list args)
 {
-	struct child_process hook;
+	struct child_process hook = CHILD_PROCESS_INIT;
 	const char *p;
 
 	p = find_hook(name);
 	if (!p)
 		return 0;
 
-	memset(&hook, 0, sizeof(hook));
 	argv_array_push(&hook.args, p);
 	while ((p = va_arg(args, const char *)))
 		argv_array_push(&hook.args, p);

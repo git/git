@@ -537,7 +537,8 @@ static struct child_process *git_proxy_connect(int fd[2], char *host)
 
 	get_host_and_port(&host, &port);
 
-	proxy = xcalloc(1, sizeof(*proxy));
+	proxy = xmalloc(sizeof(*proxy));
+	child_process_init(proxy);
 	argv_array_push(&proxy->args, git_proxy_command);
 	argv_array_push(&proxy->args, host);
 	argv_array_push(&proxy->args, port);
@@ -639,7 +640,7 @@ static enum protocol parse_connect_url(const char *url_orig, char **ret_host,
 	return protocol;
 }
 
-static struct child_process no_fork;
+static struct child_process no_fork = CHILD_PROCESS_INIT;
 
 /*
  * This returns a dummy child_process if the transport protocol does not
@@ -694,7 +695,8 @@ struct child_process *git_connect(int fd[2], const char *url,
 			     target_host, 0);
 		free(target_host);
 	} else {
-		conn = xcalloc(1, sizeof(*conn));
+		conn = xmalloc(sizeof(*conn));
+		child_process_init(conn);
 
 		strbuf_addstr(&cmd, prog);
 		strbuf_addch(&cmd, ' ');

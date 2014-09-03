@@ -1332,7 +1332,7 @@ int finish_http_pack_request(struct http_pack_request *preq)
 	struct packed_git **lst;
 	struct packed_git *p = preq->target;
 	char *tmp_idx;
-	struct child_process ip;
+	struct child_process ip = CHILD_PROCESS_INIT;
 	const char *ip_argv[8];
 
 	close_pack_index(p);
@@ -1355,7 +1355,6 @@ int finish_http_pack_request(struct http_pack_request *preq)
 	ip_argv[3] = preq->tmpfile;
 	ip_argv[4] = NULL;
 
-	memset(&ip, 0, sizeof(ip));
 	ip.argv = ip_argv;
 	ip.git_cmd = 1;
 	ip.no_stdin = 1;

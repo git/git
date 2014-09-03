@@ -316,7 +316,7 @@ static void run_service(const char **argv)
 	const char *host = getenv("REMOTE_ADDR");
 	struct argv_array env = ARGV_ARRAY_INIT;
 	int gzipped_request = 0;
-	struct child_process cld;
+	struct child_process cld = CHILD_PROCESS_INIT;
 
 	if (encoding && !strcmp(encoding, "gzip"))
 		gzipped_request = 1;
@@ -334,7 +334,6 @@ static void run_service(const char **argv)
 		argv_array_pushf(&env, "GIT_COMMITTER_EMAIL=%s@http.%s",
 				 user, host);
 
-	memset(&cld, 0, sizeof(cld));
 	cld.argv = argv;
 	cld.env = env.argv;
 	if (gzipped_request)

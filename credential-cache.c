@@ -37,12 +37,11 @@ static int send_request(const char *socket, const struct strbuf *out)
 
 static void spawn_daemon(const char *socket)
 {
-	struct child_process daemon;
+	struct child_process daemon = CHILD_PROCESS_INIT;
 	const char *argv[] = { NULL, NULL, NULL };
 	char buf[128];
 	int r;
 
-	memset(&daemon, 0, sizeof(daemon));
 	argv[0] = "git-credential-cache--daemon";
 	argv[1] = socket;
 	daemon.argv = argv;

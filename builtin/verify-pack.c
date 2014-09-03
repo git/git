@@ -8,7 +8,7 @@
 
 static int verify_one_pack(const char *path, unsigned int flags)
 {
-	struct child_process index_pack;
+	struct child_process index_pack = CHILD_PROCESS_INIT;
 	const char *argv[] = {"index-pack", NULL, NULL, NULL };
 	struct strbuf arg = STRBUF_INIT;
 	int verbose = flags & VERIFY_PACK_VERBOSE;
@@ -32,7 +32,6 @@ static int verify_one_pack(const char *path, unsigned int flags)
 		strbuf_addstr(&arg, ".pack");
 	argv[2] = arg.buf;
 
-	memset(&index_pack, 0, sizeof(index_pack));
 	index_pack.argv = argv;
 	index_pack.git_cmd = 1;
 

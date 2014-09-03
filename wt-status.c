@@ -725,7 +725,7 @@ static void wt_status_print_changed(struct wt_status *s)
 
 static void wt_status_print_submodule_summary(struct wt_status *s, int uncommitted)
 {
-	struct child_process sm_summary;
+	struct child_process sm_summary = CHILD_PROCESS_INIT;
 	struct argv_array env = ARGV_ARRAY_INIT;
 	struct argv_array argv = ARGV_ARRAY_INIT;
 	struct strbuf cmd_stdout = STRBUF_INIT;
@@ -744,7 +744,6 @@ static void wt_status_print_submodule_summary(struct wt_status *s, int uncommitt
 	if (!uncommitted)
 		argv_array_push(&argv, s->amend ? "HEAD^" : "HEAD");
 
-	memset(&sm_summary, 0, sizeof(sm_summary));
 	sm_summary.argv = argv.argv;
 	sm_summary.env = env.argv;
 	sm_summary.git_cmd = 1;

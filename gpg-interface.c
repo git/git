@@ -55,12 +55,11 @@ const char *get_signing_key(void)
  */
 int sign_buffer(struct strbuf *buffer, struct strbuf *signature, const char *signing_key)
 {
-	struct child_process gpg;
+	struct child_process gpg = CHILD_PROCESS_INIT;
 	const char *args[4];
 	ssize_t len;
 	size_t i, j, bottom;
 
-	memset(&gpg, 0, sizeof(gpg));
 	gpg.argv = args;
 	gpg.in = -1;
 	gpg.out = -1;
@@ -116,7 +115,7 @@ int verify_signed_buffer(const char *payload, size_t payload_size,
 			 const char *signature, size_t signature_size,
 			 struct strbuf *gpg_output, struct strbuf *gpg_status)
 {
-	struct child_process gpg;
+	struct child_process gpg = CHILD_PROCESS_INIT;
 	const char *args_gpg[] = {NULL, "--status-fd=1", "--verify", "FILE", "-", NULL};
 	char path[PATH_MAX];
 	int fd, ret;
@@ -133,7 +132,6 @@ int verify_signed_buffer(const char *payload, size_t payload_size,
 			     path, strerror(errno));
 	close(fd);
 
-	memset(&gpg, 0, sizeof(gpg));
 	gpg.argv = args_gpg;
 	gpg.in = -1;
 	gpg.out = -1;

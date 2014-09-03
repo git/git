@@ -122,12 +122,11 @@ static void write_commented_object(int fd, const unsigned char *object)
 {
 	const char *show_args[5] =
 		{"show", "--stat", "--no-notes", sha1_to_hex(object), NULL};
-	struct child_process show;
+	struct child_process show = CHILD_PROCESS_INIT;
 	struct strbuf buf = STRBUF_INIT;
 	struct strbuf cbuf = STRBUF_INIT;
 
 	/* Invoke "git show --stat --no-notes $object" */
-	memset(&show, 0, sizeof(show));
 	show.argv = show_args;
 	show.no_stdin = 1;
 	show.out = -1;

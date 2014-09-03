@@ -367,7 +367,7 @@ int parseopt_column_callback(const struct option *opt,
 }
 
 static int fd_out = -1;
-static struct child_process column_process;
+static struct child_process column_process = CHILD_PROCESS_INIT;
 
 int run_column_filter(int colopts, const struct column_options *opts)
 {

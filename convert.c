@@ -321,7 +321,7 @@ static int filter_buffer(int in, int out, void *data)
 	/*
 	 * Spawn cmd and feed the buffer contents through its stdin.
 	 */
-	struct child_process child_process;
+	struct child_process child_process = CHILD_PROCESS_INIT;
 	struct filter_params *params = (struct filter_params *)data;
 	int write_err, status;
 	const char *argv[] = { NULL, NULL };
@@ -344,7 +344,6 @@ static int filter_buffer(int in, int out, void *data)
 
 	argv[0] = cmd.buf;
 
-	memset(&child_process, 0, sizeof(child_process));
 	child_process.argv = argv;
 	child_process.use_shell = 1;
 	child_process.in = -1;
