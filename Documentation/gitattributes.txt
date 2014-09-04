@@ -440,8 +440,8 @@ Unspecified::
 
 	A path to which the `diff` attribute is unspecified
 	first gets its contents inspected, and if it looks like
-	text, it is treated as text.  Otherwise it would
-	generate `Binary files differ`.
+	text and is smaller than core.bigFileThreshold, it is treated
+	as text. Otherwise it would generate `Binary files differ`.
 
 String::
 

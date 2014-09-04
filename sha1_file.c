@@ -1923,7 +1923,9 @@ static void *unpack_compressed_entry(struct packed_git *p,
 	git_zstream stream;
 	unsigned char *buffer, *in;
 
-	buffer = xmallocz(size);
+	buffer = xmallocz_gently(size);
+	if (!buffer)
+		return NULL;
 	memset(&stream, 0, sizeof(stream));
 	stream.next_out = buffer;
 	stream.avail_out = size + 1;

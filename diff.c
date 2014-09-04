@@ -376,7 +376,7 @@ static unsigned long diff_filespec_size(struct diff_filespec *one)
 {
 	if (!DIFF_FILE_VALID(one))
 		return 0;
-	diff_populate_filespec(one, 1);
+	diff_populate_filespec(one, CHECK_SIZE_ONLY);
 	return one->size;
 }
 
@@ -1910,11 +1910,11 @@ static void show_dirstat(struct diff_options *options)
 			diff_free_filespec_data(p->one);
 			diff_free_filespec_data(p->two);
 		} else if (DIFF_FILE_VALID(p->one)) {
-			diff_populate_filespec(p->one, 1);
+			diff_populate_filespec(p->one, CHECK_SIZE_ONLY);
 			copied = added = 0;
 			diff_free_filespec_data(p->one);
 		} else if (DIFF_FILE_VALID(p->two)) {
-			diff_populate_filespec(p->two, 1);
+			diff_populate_filespec(p->two, CHECK_SIZE_ONLY);
 			copied = 0;
 			added = p->two->size;
 			diff_free_filespec_data(p->two);
@@ -2188,8 +2188,8 @@ int diff_filespec_is_binary(struct diff_filespec *one)
 			one->is_binary = one->driver->binary;
 		else {
 			if (!one->data && DIFF_FILE_VALID(one))
-				diff_populate_filespec(one, 0);
-			if (one->data)
+				diff_populate_filespec(one, CHECK_BINARY);
+			if (one->is_binary == -1 && one->data)
 				one->is_binary = buffer_is_binary(one->data,
 						one->size);
 			if (one->is_binary == -1)
@@ -2324,6 +2324,19 @@ static void builtin_diff(const char *name_a,
 	} else if (!DIFF_OPT_TST(o, TEXT) &&
 	    ( (!textconv_one && diff_filespec_is_binary(one)) ||
 	      (!textconv_two && diff_filespec_is_binary(two)) )) {
+		if (!one->data && !two->data &&
+		    S_ISREG(one->mode) && S_ISREG(two->mode) &&
+		    !DIFF_OPT_TST(o, BINARY)) {
+			if (!hashcmp(one->sha1, two->sha1)) {
+				if (must_show_header)
+					fprintf(o->file, "%s", header.buf);
+				goto free_ab_and_return;
+			}
+			fprintf(o->file, "%s", header.buf);
+			fprintf(o->file, "%sBinary files %s and %s differ\n",
+				line_prefix, lbl[0], lbl[1]);
+			goto free_ab_and_return;
+		}
 		if (fill_mmfile(&mf1, one) < 0 || fill_mmfile(&mf2, two) < 0)
 			die("unable to read files to diff");
 		/* Quite common confusing case */
@@ -2668,8 +2681,9 @@ static int diff_populate_gitlink(struct diff_filespec *s, int size_only)
  * grab the data for the blob (or file) for our own in-core comparison.
  * diff_filespec has data and size fields for this purpose.
  */
-int diff_populate_filespec(struct diff_filespec *s, int size_only)
+int diff_populate_filespec(struct diff_filespec *s, unsigned int flags)
 {
+	int size_only = flags & CHECK_SIZE_ONLY;
 	int err = 0;
 	/*
 	 * demote FAIL to WARN to allow inspecting the situation
@@ -2724,6 +2738,11 @@ int diff_populate_filespec(struct diff_filespec *s, int size_only)
 		}
 		if (size_only)
 			return 0;
+		if ((flags & CHECK_BINARY) &&
+		    s->size > big_file_threshold && s->is_binary == -1) {
+			s->is_binary = 1;
+			return 0;
+		}
 		fd = open(s->path, O_RDONLY);
 		if (fd < 0)
 			goto err_empty;
@@ -2745,16 +2764,21 @@ int diff_populate_filespec(struct diff_filespec *s, int size_only)
 	}
 	else {
 		enum object_type type;
-		if (size_only) {
+		if (size_only || (flags & CHECK_BINARY)) {
 			type = sha1_object_info(s->sha1, &s->size);
 			if (type < 0)
 				die("unable to read %s", sha1_to_hex(s->sha1));
-		} else {
-			s->data = read_sha1_file(s->sha1, &type, &s->size);
-			if (!s->data)
-				die("unable to read %s", sha1_to_hex(s->sha1));
-			s->should_free = 1;
+			if (size_only)
+				return 0;
+			if (s->size > big_file_threshold && s->is_binary == -1) {
+				s->is_binary = 1;
+				return 0;
+			}
 		}
+		s->data = read_sha1_file(s->sha1, &type, &s->size);
+		if (!s->data)
+			die("unable to read %s", sha1_to_hex(s->sha1));
+		s->should_free = 1;
 	}
 	return 0;
 }
@@ -4688,8 +4712,8 @@ static int diff_filespec_check_stat_unmatch(struct diff_filepair *p)
 	    !DIFF_FILE_VALID(p->two) ||
 	    (p->one->sha1_valid && p->two->sha1_valid) ||
 	    (p->one->mode != p->two->mode) ||
-	    diff_populate_filespec(p->one, 1) ||
-	    diff_populate_filespec(p->two, 1) ||
+	    diff_populate_filespec(p->one, CHECK_SIZE_ONLY) ||
+	    diff_populate_filespec(p->two, CHECK_SIZE_ONLY) ||
 	    (p->one->size != p->two->size) ||
 	    !diff_filespec_is_identical(p->one, p->two)) /* (2) */
 		p->skip_stat_unmatch_result = 1;
