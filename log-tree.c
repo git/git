@@ -12,17 +12,7 @@
 #include "sequencer.h"
 #include "line-log.h"
 
-struct decoration name_decoration = { "object names" };
-
-enum decoration_type {
-	DECORATION_NONE = 0,
-	DECORATION_REF_LOCAL,
-	DECORATION_REF_REMOTE,
-	DECORATION_REF_TAG,
-	DECORATION_REF_STASH,
-	DECORATION_REF_HEAD,
-	DECORATION_GRAFTED,
-};
+static struct decoration name_decoration = { "object names" };
 
 static char decoration_colors[][COLOR_MAXLEN] = {
 	GIT_COLOR_RESET,
@@ -84,13 +74,18 @@ int parse_decorate_color_config(const char *var, const int ofs, const char *valu
 #define decorate_get_color_opt(o, ix) \
 	decorate_get_color((o)->use_color, ix)
 
-static void add_name_decoration(enum decoration_type type, const char *name, struct object *obj)
+void add_name_decoration(enum decoration_type type, const char *name, struct object *obj)
 {
 	int nlen = strlen(name);
-	struct name_decoration *res = xmalloc(sizeof(struct name_decoration) + nlen);
+	struct name_decoration *res = xmalloc(sizeof(*res) + nlen + 1);
 	memcpy(res->name, name, nlen + 1);
 	res->type = type;
 	res->next = add_decoration(&name_decoration, obj, res);
+}
+
+const struct name_decoration *get_name_decoration(const struct object *obj)
+{
+	return lookup_decoration(&name_decoration, obj);
 }
 
 static int add_ref_decoration(const char *refname, const unsigned char *sha1, int flags, void *cb_data)
@@ -187,13 +182,13 @@ void format_decorations(struct strbuf *sb,
 			int use_color)
 {
 	const char *prefix;
-	struct name_decoration *decoration;
+	const struct name_decoration *decoration;
 	const char *color_commit =
 		diff_get_color(use_color, DIFF_COMMIT);
 	const char *color_reset =
 		decorate_get_color(use_color, DECORATION_NONE);
 
-	decoration = lookup_decoration(&name_decoration, &commit->object);
+	decoration = get_name_decoration(&commit->object);
 	if (!decoration)
 		return;
 	prefix = " (";

@@ -26,12 +26,24 @@ extern int save_commit_buffer;
 extern const char *commit_type;
 
 /* While we can decorate any object with a name, it's only used for commits.. */
-extern struct decoration name_decoration;
 struct name_decoration {
 	struct name_decoration *next;
 	int type;
-	char name[1];
+	char name[FLEX_ARRAY];
 };
+
+enum decoration_type {
+	DECORATION_NONE = 0,
+	DECORATION_REF_LOCAL,
+	DECORATION_REF_REMOTE,
+	DECORATION_REF_TAG,
+	DECORATION_REF_STASH,
+	DECORATION_REF_HEAD,
+	DECORATION_GRAFTED,
+};
+
+void add_name_decoration(enum decoration_type type, const char *name, struct object *obj);
+const struct name_decoration *get_name_decoration(const struct object *obj);
 
 struct commit *lookup_commit(const unsigned char *sha1);
 struct commit *lookup_commit_reference(const unsigned char *sha1);

@@ -473,7 +473,7 @@ static int rev_compare_tree(struct rev_info *revs,
 		 * If we are simplifying by decoration, then the commit
 		 * is worth showing if it has a tag pointing at it.
 		 */
-		if (lookup_decoration(&name_decoration, &commit->object))
+		if (get_name_decoration(&commit->object))
 			return REV_TREE_DIFFERENT;
 		/*
 		 * A commit that is not pointed by a tag is uninteresting
