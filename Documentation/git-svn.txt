@@ -608,21 +608,6 @@ config key: svn.authorsfile
 	Make 'git svn' less verbose. Specify a second time to make it
 	even less verbose.
 
---repack[=<n>]::
---repack-flags=<flags>::
-	These should help keep disk usage sane for large fetches with
-	many revisions.
-+
---repack takes an optional argument for the number of revisions
-to fetch before repacking.  This defaults to repacking every
-1000 commits fetched if no argument is specified.
-+
---repack-flags are passed directly to 'git repack'.
-+
-[verse]
-config key: svn.repack
-config key: svn.repackflags
-
 -m::
 --merge::
 -s<strategy>::
