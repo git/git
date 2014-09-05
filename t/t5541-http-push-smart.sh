@@ -340,21 +340,26 @@ test_expect_success GPG 'push with post-receive to inspect certificate' '
 		SIGNER=${GIT_PUSH_CERT_SIGNER-nobody}
 		KEY=${GIT_PUSH_CERT_KEY-nokey}
 		STATUS=${GIT_PUSH_CERT_STATUS-nostatus}
+		NONCE_STATUS=${GIT_PUSH_CERT_NONCE_STATUS-nononcestatus}
+		NONCE=${GIT_PUSH_CERT_NONCE-nononce}
 		E_O_F
 		EOF
 
-		git config receive.certnonceseed sekrit
+		git config receive.certnonceseed sekrit &&
+		git config receive.certnonceslop 30
 	) &&
 	cd "$ROOT_PATH/test_repo_clone" &&
 	test_commit cert-test &&
 	git push --signed "$HTTPD_URL/smart/test_repo.git" &&
 	(
 		cd "$HTTPD_DOCUMENT_ROOT_PATH" &&
-		cat <<-\EOF
+		cat <<-\EOF &&
 		SIGNER=C O Mitter <committer@example.com>
 		KEY=13B6F51ECDDE430D
 		STATUS=G
+		NONCE_STATUS=OK
 		EOF
+		sed -n -e "s/^nonce /NONCE=/p" -e "/^$/q" push-cert
 	) >expect &&
 	test_cmp expect "$HTTPD_DOCUMENT_ROOT_PATH/push-cert-status"
 '

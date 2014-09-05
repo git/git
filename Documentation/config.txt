@@ -2049,6 +2049,19 @@ receive.certnonceseed::
 	a "nonce" protected by HMAC using this string as a secret
 	key.
 
+receive.certnonceslop::
+	When a `git push --signed` sent a push certificate with a
+	"nonce" that was issued by a receive-pack serving the same
+	repository within this many seconds, export the "nonce"
+	found in the certificate to `GIT_PUSH_CERT_NONCE` to the
+	hooks (instead of what the receive-pack asked the sending
+	side to include).  This may allow writing checks in
+	`pre-receive` and `post-receive` a bit easier.  Instead of
+	checking `GIT_PUSH_CERT_NONCE_SLOP` environment variable
+	that records by how many seconds the nonce is stale to
+	decide if they want to accept the certificate, they only
+	can check `GIT_PUSH_CERT_NONCE_STATUS` is `OK`.
+
 receive.fsckObjects::
 	If it is set to true, git-receive-pack will check all received
 	objects. It will abort in the case of a malformed object or a

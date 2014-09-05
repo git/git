@@ -89,6 +89,19 @@ the following environment variables:
 	"git push --signed" sent a bogus nonce.
 `OK`;;
 	"git push --signed" sent the nonce we asked it to send.
+`SLOP`;;
+	"git push --signed" sent a nonce different from what we
+	asked it to send now, but in a previous session.  See
+	`GIT_PUSH_CERT_NONCE_SLOP` environment variable.
+
+`GIT_PUSH_CERT_NONCE_SLOP`::
+	"git push --signed" sent a nonce different from what we
+	asked it to send now, but in a different session whose
+	starting time is different by this many seconds from the
+	current session.  Only meaningful when
+	`GIT_PUSH_CERT_NONCE_STATUS` says `SLOP`.
+	Also read about `receive.certnonceslop` variable in
+	linkgit:git-config[1].
 
 This hook is called before any refname is updated and before any
 fast-forward checks are performed.
