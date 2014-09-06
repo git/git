@@ -981,7 +981,7 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 	struct userdiff_driver *textconv = NULL;
 	int is_binary;
 	const char *line_prefix = diff_line_prefix(opt);
-	int dense = rev->dense_combined_merges;
+	int dense = (rev->merge_diff_mode == MERGE_DIFF_COMBINED_CONDENSED);
 
 	context = opt->context;
 	userdiff = userdiff_find_by_path(elem->path);

@@ -170,7 +170,8 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 			 */
 			i--;
 
-			if (revs->combine_merges && num_compare_stages == 2) {
+			if (merge_diff_mode_is_any_combined(revs) &&
+			    num_compare_stages == 2) {
 				show_combined_diff(dpath, 2, revs);
 				free(dpath);
 				continue;
@@ -322,7 +323,7 @@ static int show_modified(struct rev_info *revs,
 		return -1;
 	}
 
-	if (revs->combine_merges && !cached &&
+	if (merge_diff_mode_is_any_combined(revs) && !cached &&
 	    (hashcmp(sha1, old->sha1) || hashcmp(old->sha1, new->sha1))) {
 		struct combine_diff_path *p;
 		int pathlen = ce_namelen(new);
@@ -380,7 +381,7 @@ static void do_oneway_diff(struct unpack_trees_options *o,
 	 * But with the revision flag parsing, that's found in
 	 * "!revs->ignore_merges".
 	 */
-	match_missing = !revs->ignore_merges;
+	match_missing = (revs->merge_diff_mode == MERGE_DIFF_EACH);
 
 	if (cached && idx && ce_stage(idx)) {
 		struct diff_filepair *pair;

@@ -482,9 +482,7 @@ static void find_unpushed_submodule_commits(struct commit *commit,
 	struct rev_info rev;
 
 	init_revisions(&rev, NULL);
-	rev.ignore_merges = 0;
-	rev.combined_merges = 1;
-	rev.dense_combined_merges = 1;
+	rev.merge_diff_mode = MERGE_DIFF_COMBINED_CONDENSED;
 	rev.diffopt.output_format |= DIFF_FORMAT_CALLBACK;
 	rev.diffopt.format_callback = collect_submodules_from_diff;
 	rev.diffopt.format_callback_data = needs_pushing;

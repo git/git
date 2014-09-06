@@ -747,9 +747,9 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 
 	/* More than one parent? */
 	if (parents && parents->next) {
-		if (opt->ignore_merges)
+		if (opt->merge_diff_mode == MERGE_DIFF_IGNORE)
 			return 0;
-		else if (opt->combine_merges)
+		else if (merge_diff_mode_is_any_combined(opt))
 			return do_diff_combined(opt, commit);
 		else if (opt->first_parent_only) {
 			/*
