@@ -1962,7 +1962,7 @@ int merge_recursive(struct merge_options *o,
 	}
 
 	discard_cache();
-	if (!o->call_depth)
+	if (!o->call_depth && o->use_ondisk_index)
 		read_cache();
 
 	o->ancestor = "merged common ancestors";
@@ -2057,6 +2057,7 @@ void init_merge_options(struct merge_options *o)
 	o->diff_rename_limit = -1;
 	o->merge_rename_limit = -1;
 	o->renormalize = 0;
+	o->use_ondisk_index = 1;
 	git_config(merge_recursive_config, o);
 	if (getenv("GIT_MERGE_VERBOSITY"))
 		o->verbosity =

@@ -1815,6 +1815,8 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->merge_diff_mode = MERGE_DIFF_COMBINED;
 	} else if (!strcmp(arg, "--cc")) {
 		revs->merge_diff_mode = MERGE_DIFF_COMBINED_CONDENSED;
+	} else if (!strcmp(arg, "--remerge-diff")) {
+		revs->merge_diff_mode = MERGE_DIFF_REMERGE;
 	} else if (!strcmp(arg, "-v")) {
 		revs->verbose_header = 1;
 	} else if (!strcmp(arg, "--pretty")) {
