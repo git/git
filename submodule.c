@@ -482,10 +482,13 @@ static void find_unpushed_submodule_commits(struct commit *commit,
 	struct rev_info rev;
 
 	init_revisions(&rev, NULL);
+	rev.ignore_merges = 0;
+	rev.combined_merges = 1;
+	rev.dense_combined_merges = 1;
 	rev.diffopt.output_format |= DIFF_FORMAT_CALLBACK;
 	rev.diffopt.format_callback = collect_submodules_from_diff;
 	rev.diffopt.format_callback_data = needs_pushing;
-	diff_tree_combined_merge(commit, 1, &rev);
+	diff_tree_combined_merge(commit, &rev);
 }
 
 int find_unpushed_submodules(unsigned char new_sha1[20],
