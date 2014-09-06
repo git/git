@@ -743,6 +743,8 @@ static void update_file_flags(struct merge_options *o,
 			      int update_cache,
 			      int update_wd)
 {
+	if (o->conflicts_in_index)
+		update_cache = 1;
 	if (o->call_depth || o->no_worktree)
 		update_wd = 0;
 
@@ -2110,6 +2112,8 @@ int parse_merge_opt(struct merge_options *o, const char *s)
 	}
 	else if (!strcmp(s, "index-only"))
 		o->no_worktree = 1;
+	else if (!strcmp(s, "conflicts-in-index"))
+		o->conflicts_in_index = 1;
 	else
 		return -1;
 	return 0;
