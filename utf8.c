@@ -302,13 +302,6 @@ int is_utf8(const char *text)
 	return 1;
 }
 
-static void strbuf_addchars(struct strbuf *sb, int c, size_t n)
-{
-	strbuf_grow(sb, n);
-	memset(sb->buf + sb->len, c, n);
-	strbuf_setlen(sb, sb->len + n);
-}
-
 static void strbuf_add_indented_text(struct strbuf *buf, const char *text,
 				     int indent, int indent2)
 {

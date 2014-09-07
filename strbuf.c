@@ -196,6 +196,13 @@ void strbuf_adddup(struct strbuf *sb, size_t pos, size_t len)
 	strbuf_setlen(sb, sb->len + len);
 }
 
+void strbuf_addchars(struct strbuf *sb, int c, size_t n)
+{
+	strbuf_grow(sb, n);
+	memset(sb->buf + sb->len, c, n);
+	strbuf_setlen(sb, sb->len + n);
+}
+
 void strbuf_addf(struct strbuf *sb, const char *fmt, ...)
 {
 	va_list ap;

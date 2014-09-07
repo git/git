@@ -142,6 +142,10 @@ then they will free() it.
 
 	Add a single character to the buffer.
 
+`strbuf_addchars`::
+
+	Add a character the specified number of times to the buffer.
+
 `strbuf_insert`::
 
 	Insert data to the given position of the buffer. The remaining contents
