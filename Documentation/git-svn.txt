@@ -386,11 +386,13 @@ Any other arguments are passed directly to 'git log'
 	tree-ish to specify which branch should be searched).  When given a
 	tree-ish, returns the corresponding SVN revision number.
 +
+-B;;
 --before;;
 	Don't require an exact match if given an SVN revision, instead find
 	the commit corresponding to the state of the SVN repository (on the
 	current branch) at the specified revision.
 +
+-A;;
 --after;;
 	Don't require an exact match if given an SVN revision; if there is
 	not an exact match return the closest match searching forward in the
