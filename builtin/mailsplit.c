@@ -53,14 +53,16 @@ static int keep_cr;
  */
 static int split_one(FILE *mbox, const char *name, int allow_bare)
 {
-	FILE *output = NULL;
+	FILE *output;
 	int fd;
 	int status = 0;
 	int is_bare = !is_from_line(buf.buf, buf.len);
 
-	if (is_bare && !allow_bare)
-		goto corrupt;
-
+	if (is_bare && !allow_bare) {
+		unlink(name);
+		fprintf(stderr, "corrupt mailbox\n");
+		exit(1);
+	}
 	fd = open(name, O_WRONLY | O_CREAT | O_EXCL, 0666);
 	if (fd < 0)
 		die_errno("cannot open output file '%s'", name);
@@ -91,13 +93,6 @@ static int split_one(FILE *mbox, const char *name, int allow_bare)
 	}
 	fclose(output);
 	return status;
-
- corrupt:
-	if (output)
-		fclose(output);
-	unlink(name);
-	fprintf(stderr, "corrupt mailbox\n");
-	exit(1);
 }
 
 static int populate_maildir_list(struct string_list *list, const char *path)
