@@ -294,6 +294,8 @@ proc parseviewrevs {view revs} {
 
     if {$revs eq {}} {
 	set revs HEAD
+    } elseif {[lsearch -exact $revs --all] >= 0} {
+	lappend revs HEAD
     }
     if {[catch {set ids [eval exec git rev-parse $revs]} err]} {
 	# we get stdout followed by stderr in $err
