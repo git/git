@@ -89,8 +89,13 @@ ifeq ($(uname_S),Darwin)
 	NEEDS_CRYPTO_WITH_SSL = YesPlease
 	NEEDS_SSL_WITH_CRYPTO = YesPlease
 	NEEDS_LIBICONV = YesPlease
+	# Note: $(uname_R) gives us the underlying Darwin version.
+	# - MacOS 10.0.* and MacOS 10.1.0 = Darwin 1.*
+	# - MacOS 10.x.* = Darwin (x+4).* for (1 <= x)
+	# i.e. "begins with [15678] and a dot" means "10.4.* or older".
 	ifeq ($(shell expr "$(uname_R)" : '[15678]\.'),2)
 		OLD_ICONV = UnfortunatelyYes
+		NO_APPLE_COMMON_CRYPTO = YesPlease
 	endif
 	ifeq ($(shell expr "$(uname_R)" : '[15]\.'),2)
 		NO_STRLCPY = YesPlease
