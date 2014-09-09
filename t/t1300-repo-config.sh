@@ -1010,6 +1010,17 @@ test_expect_success 'git -c "key=value" support' '
 	test_must_fail git -c name=value config core.name
 '
 
+# We just need a type-specifier here that cares about the
+# distinction internally between a NULL boolean and a real
+# string (because most of git's internal parsers do care).
+# Using "--path" works, but we do not otherwise care about
+# its semantics.
+test_expect_success 'git -c can represent empty string' '
+	echo >expect &&
+	git -c foo.empty= config --path foo.empty >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success 'key sanity-checking' '
 	test_must_fail git config foo=bar &&
 	test_must_fail git config foo=.bar &&
