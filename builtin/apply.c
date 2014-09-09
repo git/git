@@ -1920,6 +1920,66 @@ static int parse_binary(char *buffer, unsigned long size, struct patch *patch)
 	return used;
 }
 
+static void prefix_one(char **name)
+{
+	char *old_name = *name;
+	if (!old_name)
+		return;
+	*name = xstrdup(prefix_filename(prefix, prefix_length, *name));
+	free(old_name);
+}
+
+static void prefix_patch(struct patch *p)
+{
+	if (!prefix || p->is_toplevel_relative)
+		return;
+	prefix_one(&p->new_name);
+	prefix_one(&p->old_name);
+}
+
+/*
+ * include/exclude
+ */
+
+static struct string_list limit_by_name;
+static int has_include;
+static void add_name_limit(const char *name, int exclude)
+{
+	struct string_list_item *it;
+
+	it = string_list_append(&limit_by_name, name);
+	it->util = exclude ? NULL : (void *) 1;
+}
+
+static int use_patch(struct patch *p)
+{
+	const char *pathname = p->new_name ? p->new_name : p->old_name;
+	int i;
+
+	/* Paths outside are not touched regardless of "--include" */
+	if (0 < prefix_length) {
+		int pathlen = strlen(pathname);
+		if (pathlen <= prefix_length ||
+		    memcmp(prefix, pathname, prefix_length))
+			return 0;
+	}
+
+	/* See if it matches any of exclude/include rule */
+	for (i = 0; i < limit_by_name.nr; i++) {
+		struct string_list_item *it = &limit_by_name.items[i];
+		if (!wildmatch(it->string, pathname, 0, NULL))
+			return (it->util != NULL);
+	}
+
+	/*
+	 * If we had any include, a path that does not match any rule is
+	 * not used.  Otherwise, we saw bunch of exclude rules (or none)
+	 * and such a path is used.
+	 */
+	return !has_include;
+}
+
+
 /*
  * Read the patch text in "buffer" that extends for "size" bytes; stop
  * reading after seeing a single patch (i.e. changes to a single file).
@@ -1935,9 +1995,14 @@ static int parse_chunk(char *buffer, unsigned long size, struct patch *patch)
 	if (offset < 0)
 		return offset;
 
-	patch->ws_rule = whitespace_rule(patch->new_name
-					 ? patch->new_name
-					 : patch->old_name);
+	prefix_patch(patch);
+
+	if (!use_patch(patch))
+		patch->ws_rule = 0;
+	else
+		patch->ws_rule = whitespace_rule(patch->new_name
+						 ? patch->new_name
+						 : patch->old_name);
 
 	patchsize = parse_single_patch(buffer + offset + hdrsize,
 				       size - offset - hdrsize, patch);
@@ -4127,64 +4192,6 @@ static int write_out_results(struct patch *list)
 
 static struct lock_file lock_file;
 
-static struct string_list limit_by_name;
-static int has_include;
-static void add_name_limit(const char *name, int exclude)
-{
-	struct string_list_item *it;
-
-	it = string_list_append(&limit_by_name, name);
-	it->util = exclude ? NULL : (void *) 1;
-}
-
-static int use_patch(struct patch *p)
-{
-	const char *pathname = p->new_name ? p->new_name : p->old_name;
-	int i;
-
-	/* Paths outside are not touched regardless of "--include" */
-	if (0 < prefix_length) {
-		int pathlen = strlen(pathname);
-		if (pathlen <= prefix_length ||
-		    memcmp(prefix, pathname, prefix_length))
-			return 0;
-	}
-
-	/* See if it matches any of exclude/include rule */
-	for (i = 0; i < limit_by_name.nr; i++) {
-		struct string_list_item *it = &limit_by_name.items[i];
-		if (!wildmatch(it->string, pathname, 0, NULL))
-			return (it->util != NULL);
-	}
-
-	/*
-	 * If we had any include, a path that does not match any rule is
-	 * not used.  Otherwise, we saw bunch of exclude rules (or none)
-	 * and such a path is used.
-	 */
-	return !has_include;
-}
-
-
-static void prefix_one(char **name)
-{
-	char *old_name = *name;
-	if (!old_name)
-		return;
-	*name = xstrdup(prefix_filename(prefix, prefix_length, *name));
-	free(old_name);
-}
-
-static void prefix_patches(struct patch *p)
-{
-	if (!prefix || p->is_toplevel_relative)
-		return;
-	for ( ; p; p = p->next) {
-		prefix_one(&p->new_name);
-		prefix_one(&p->old_name);
-	}
-}
-
 #define INACCURATE_EOF	(1<<0)
 #define RECOUNT		(1<<1)
 
@@ -4210,8 +4217,6 @@ static int apply_patch(int fd, const char *filename, int options)
 			break;
 		if (apply_in_reverse)
 			reverse_patches(patch);
-		if (prefix)
-			prefix_patches(patch);
 		if (use_patch(patch)) {
 			patch_stats(patch);
 			*listp = patch;
