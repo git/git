@@ -14,7 +14,7 @@ test_expect_success 'add p4 files with wildcards in the names' '
 		printf "file2\nhas\nsome\nrandom\ntext\n" >file2 &&
 		p4 add file2 &&
 		echo file-wild-hash >file-wild#hash &&
-		if test_have_prereq NOT_MINGW NOT_CYGWIN
+		if test_have_prereq !MINGW,!CYGWIN
 		then
 			echo file-wild-star >file-wild\*star
 		fi &&
@@ -31,7 +31,7 @@ test_expect_success 'wildcard files git p4 clone' '
 	(
 		cd "$git" &&
 		test -f file-wild#hash &&
-		if test_have_prereq NOT_MINGW NOT_CYGWIN
+		if test_have_prereq !MINGW,!CYGWIN
 		then
 			test -f file-wild\*star
 		fi &&
@@ -46,7 +46,7 @@ test_expect_success 'wildcard files submit back to p4, add' '
 	(
 		cd "$git" &&
 		echo git-wild-hash >git-wild#hash &&
-		if test_have_prereq NOT_MINGW NOT_CYGWIN
+		if test_have_prereq !MINGW,!CYGWIN
 		then
 			echo git-wild-star >git-wild\*star
 		fi &&
@@ -60,7 +60,7 @@ test_expect_success 'wildcard files submit back to p4, add' '
 	(
 		cd "$cli" &&
 		test_path_is_file git-wild#hash &&
-		if test_have_prereq NOT_MINGW NOT_CYGWIN
+		if test_have_prereq !MINGW,!CYGWIN
 		then
 			test_path_is_file git-wild\*star
 		fi &&
@@ -75,7 +75,7 @@ test_expect_success 'wildcard files submit back to p4, modify' '
 	(
 		cd "$git" &&
 		echo new-line >>git-wild#hash &&
-		if test_have_prereq NOT_MINGW NOT_CYGWIN
+		if test_have_prereq !MINGW,!CYGWIN
 		then
 			echo new-line >>git-wild\*star
 		fi &&
@@ -89,7 +89,7 @@ test_expect_success 'wildcard files submit back to p4, modify' '
 	(
 		cd "$cli" &&
 		test_line_count = 2 git-wild#hash &&
-		if test_have_prereq NOT_MINGW NOT_CYGWIN
+		if test_have_prereq !MINGW,!CYGWIN
 		then
 			test_line_count = 2 git-wild\*star
 		fi &&
@@ -152,7 +152,7 @@ test_expect_success 'wildcard files submit back to p4, delete' '
 	(
 		cd "$cli" &&
 		test_path_is_missing git-wild#hash &&
-		if test_have_prereq NOT_MINGW NOT_CYGWIN
+		if test_have_prereq !MINGW,!CYGWIN
 		then
 			test_path_is_missing git-wild\*star
 		fi &&
