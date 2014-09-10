@@ -277,7 +277,7 @@ static int fsck_ident(const char **ident, struct object *obj, fsck_error error_f
 }
 
 static int fsck_commit_buffer(struct commit *commit, const char *buffer,
-			      fsck_error error_func)
+	unsigned long size, fsck_error error_func)
 {
 	unsigned char tree_sha1[20], sha1[20];
 	struct commit_graft *graft;
@@ -322,15 +322,18 @@ static int fsck_commit_buffer(struct commit *commit, const char *buffer,
 	return 0;
 }
 
-static int fsck_commit(struct commit *commit, fsck_error error_func)
+static int fsck_commit(struct commit *commit, const char *data,
+	unsigned long size, fsck_error error_func)
 {
-	const char *buffer = get_commit_buffer(commit, NULL);
-	int ret = fsck_commit_buffer(commit, buffer, error_func);
-	unuse_commit_buffer(commit, buffer);
+	const char *buffer = data ?  data : get_commit_buffer(commit, &size);
+	int ret = fsck_commit_buffer(commit, buffer, size, error_func);
+	if (!data)
+		unuse_commit_buffer(commit, buffer);
 	return ret;
 }
 
-static int fsck_tag(struct tag *tag, fsck_error error_func)
+static int fsck_tag(struct tag *tag, const char *data,
+	unsigned long size, fsck_error error_func)
 {
 	struct object *tagged = tag->tagged;
 
@@ -339,7 +342,8 @@ static int fsck_tag(struct tag *tag, fsck_error error_func)
 	return 0;
 }
 
-int fsck_object(struct object *obj, int strict, fsck_error error_func)
+int fsck_object(struct object *obj, void *data, unsigned long size,
+	int strict, fsck_error error_func)
 {
 	if (!obj)
 		return error_func(obj, FSCK_ERROR, "no valid object to fsck");
@@ -349,9 +353,11 @@ int fsck_object(struct object *obj, int strict, fsck_error error_func)
 	if (obj->type == OBJ_TREE)
 		return fsck_tree((struct tree *) obj, strict, error_func);
 	if (obj->type == OBJ_COMMIT)
-		return fsck_commit((struct commit *) obj, error_func);
+		return fsck_commit((struct commit *) obj, (const char *) data,
+			size, error_func);
 	if (obj->type == OBJ_TAG)
-		return fsck_tag((struct tag *) obj, error_func);
+		return fsck_tag((struct tag *) obj, (const char *) data,
+			size, error_func);
 
 	return error_func(obj, FSCK_ERROR, "unknown type '%d' (internal fsck error)",
 			  obj->type);
