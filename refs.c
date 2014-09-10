@@ -2191,25 +2191,12 @@ struct ref_lock *lock_any_ref_for_update(const char *refname,
  * Write an entry to the packed-refs file for the specified refname.
  * If peeled is non-NULL, write it as the entry's peeled value.
  */
-static void write_packed_entry(int fd, char *refname, unsigned char *sha1,
+static void write_packed_entry(FILE *fh, char *refname, unsigned char *sha1,
 			       unsigned char *peeled)
 {
-	char line[PATH_MAX + 100];
-	int len;
-
-	len = snprintf(line, sizeof(line), "%s %s\n",
-		       sha1_to_hex(sha1), refname);
-	/* this should not happen but just being defensive */
-	if (len > sizeof(line))
-		die("too long a refname '%s'", refname);
-	write_or_die(fd, line, len);
-
-	if (peeled) {
-		if (snprintf(line, sizeof(line), "^%s\n",
-			     sha1_to_hex(peeled)) != PEELED_LINE_LENGTH)
-			die("internal error");
-		write_or_die(fd, line, PEELED_LINE_LENGTH);
-	}
+	fprintf_or_die(fh, "%s %s\n", sha1_to_hex(sha1), refname);
+	if (peeled)
+		fprintf_or_die(fh, "^%s\n", sha1_to_hex(peeled));
 }
 
 /*
@@ -2217,13 +2204,12 @@ static void write_packed_entry(int fd, char *refname, unsigned char *sha1,
  */
 static int write_packed_entry_fn(struct ref_entry *entry, void *cb_data)
 {
-	int *fd = cb_data;
 	enum peel_status peel_status = peel_entry(entry, 0);
 
 	if (peel_status != PEEL_PEELED && peel_status != PEEL_NON_TAG)
 		error("internal error: %s is not a valid packed reference!",
 		      entry->name);
-	write_packed_entry(*fd, entry->name, entry->u.value.sha1,
+	write_packed_entry(cb_data, entry->name, entry->u.value.sha1,
 			   peel_status == PEEL_PEELED ?
 			   entry->u.value.peeled : NULL);
 	return 0;
@@ -2259,15 +2245,22 @@ int commit_packed_refs(void)
 		get_packed_ref_cache(&ref_cache);
 	int error = 0;
 	int save_errno = 0;
+	FILE *out;
 
 	if (!packed_ref_cache->lock)
 		die("internal error: packed-refs not locked");
-	write_or_die(packed_ref_cache->lock->fd,
-		     PACKED_REFS_HEADER, strlen(PACKED_REFS_HEADER));
 
+	out = fdopen(packed_ref_cache->lock->fd, "w");
+	if (!out)
+		die_errno("unable to fdopen packed-refs descriptor");
+
+	fprintf_or_die(out, "%s", PACKED_REFS_HEADER);
 	do_for_each_entry_in_dir(get_packed_ref_dir(packed_ref_cache),
-				 0, write_packed_entry_fn,
-				 &packed_ref_cache->lock->fd);
+				 0, write_packed_entry_fn, out);
+	if (fclose(out))
+		die_errno("write error");
+	packed_ref_cache->lock->fd = -1;
+
 	if (commit_lock_file(packed_ref_cache->lock)) {
 		save_errno = errno;
 		error = -1;
