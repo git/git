@@ -11,7 +11,9 @@ semantic is still the same.
 '
 . ./test-lib.sh
 
-echo '[core] logallrefupdates = true' >>.git/config
+test_expect_success 'enable reflogs' '
+	git config core.logallrefupdates true
+'
 
 test_expect_success \
     'prepare a trivial repository' \
@@ -149,6 +151,33 @@ test_expect_success 'delete ref while another dangling packed ref' '
 	git prune --expire=all &&
 	git branch -d lamb 2>result &&
 	test_cmp /dev/null result
+'
+
+test_expect_success 'disable reflogs' '
+	git config core.logallrefupdates false &&
+	rm -rf .git/logs
+'
+
+test_expect_success 'create packed foo/bar/baz branch' '
+	git branch foo/bar/baz &&
+	git pack-refs --all --prune &&
+	test_path_is_missing .git/refs/heads/foo/bar/baz &&
+	test_path_is_missing .git/logs/refs/heads/foo/bar/baz
+'
+
+test_expect_success 'notice d/f conflict with existing directory' '
+	test_must_fail git branch foo &&
+	test_must_fail git branch foo/bar
+'
+
+test_expect_success 'existing directory reports concrete ref' '
+	test_must_fail git branch foo 2>stderr &&
+	grep refs/heads/foo/bar/baz stderr
+'
+
+test_expect_success 'notice d/f conflict with existing ref' '
+	test_must_fail git branch foo/bar/baz/extra &&
+	test_must_fail git branch foo/bar/baz/lots/of/extra/components
 '
 
 test_done
