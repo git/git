@@ -946,10 +946,12 @@ static void unkeep_all_packs(void)
 
 static void end_packfile(void)
 {
-	struct packed_git *old_p = pack_data, *new_p;
+	if (!pack_data)
+		return;
 
 	clear_delta_base_cache();
 	if (object_count) {
+		struct packed_git *new_p;
 		unsigned char cur_pack_sha1[20];
 		char *idx_name;
 		int i;
@@ -991,10 +993,11 @@ static void end_packfile(void)
 		pack_id++;
 	}
 	else {
-		close(old_p->pack_fd);
-		unlink_or_warn(old_p->pack_name);
+		close(pack_data->pack_fd);
+		unlink_or_warn(pack_data->pack_name);
 	}
-	free(old_p);
+	free(pack_data);
+	pack_data = NULL;
 
 	/* We can't carry a delta across packfiles. */
 	strbuf_release(&last_blob.data);
