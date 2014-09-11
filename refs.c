@@ -2389,7 +2389,7 @@ static void prune_ref(struct ref_to_prune *r)
 	struct ref_transaction *transaction;
 	struct strbuf err = STRBUF_INIT;
 
-	if (check_refname_format(r->name + 5, 0))
+	if (check_refname_format(r->name, 0))
 		return;
 
 	transaction = ref_transaction_begin(&err);
