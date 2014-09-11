@@ -236,7 +236,8 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 		free(name);
 
 		name = mkpathdup(fmt, bname.buf);
-		target = resolve_ref_unsafe(name, 0, sha1, &flags);
+		target = resolve_ref_unsafe(name, RESOLVE_REF_NO_RECURSE,
+					    sha1, &flags);
 		if (!target ||
 		    (!(flags & REF_ISSYMREF) && is_null_sha1(sha1))) {
 			error(remote_branch

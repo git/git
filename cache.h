@@ -973,6 +973,11 @@ extern int read_ref(const char *refname, unsigned char *sha1);
  *   "writing" to the ref, the return value is the name of the ref
  *   that will actually be created or changed.
  *
+ * If the RESOLVE_REF_NO_RECURSE flag is passed, only resolves one
+ * level of symbolic reference.  The value stored in sha1 for a symbolic
+ * reference will always be null_sha1 in this case, and the return
+ * value is the reference that the symref refers to directly.
+ *
  * If flags is non-NULL, set the value that it points to the
  * combination of REF_ISPACKED (if the reference was found among the
  * packed references), REF_ISSYMREF (if the initial reference was a
@@ -985,6 +990,7 @@ extern int read_ref(const char *refname, unsigned char *sha1);
  * errno is set to something meaningful on error.
  */
 #define RESOLVE_REF_READING 0x01
+#define RESOLVE_REF_NO_RECURSE 0x02
 extern const char *resolve_ref_unsafe(const char *ref, int resolve_flags, unsigned char *sha1, int *flags);
 extern char *resolve_refdup(const char *ref, int resolve_flags, unsigned char *sha1, int *flags);
 

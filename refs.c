@@ -1467,6 +1467,10 @@ const char *resolve_ref_unsafe(const char *refname, int resolve_flags, unsigned 
 				refname = refname_buffer;
 				if (flags)
 					*flags |= REF_ISSYMREF;
+				if (resolve_flags & RESOLVE_REF_NO_RECURSE) {
+					hashclr(sha1);
+					return refname;
+				}
 				continue;
 			}
 		}
@@ -1523,13 +1527,17 @@ const char *resolve_ref_unsafe(const char *refname, int resolve_flags, unsigned 
 		buf = buffer + 4;
 		while (isspace(*buf))
 			buf++;
+		refname = strcpy(refname_buffer, buf);
+		if (resolve_flags & RESOLVE_REF_NO_RECURSE) {
+			hashclr(sha1);
+			return refname;
+		}
 		if (check_refname_format(buf, REFNAME_ALLOW_ONELEVEL)) {
 			if (flags)
 				*flags |= REF_ISBROKEN;
 			errno = EINVAL;
 			return NULL;
 		}
-		refname = strcpy(refname_buffer, buf);
 	}
 }
 
@@ -2170,6 +2178,8 @@ static struct ref_lock *lock_ref_sha1_basic(const char *refname,
 
 	if (mustexist)
 		resolve_flags |= RESOLVE_REF_READING;
+	if (flags & REF_NODEREF && flags & REF_DELETING)
+		resolve_flags |= RESOLVE_REF_NO_RECURSE;
 
 	refname = resolve_ref_unsafe(refname, resolve_flags,
 				     lock->old_sha1, &type);
@@ -3664,13 +3674,16 @@ int ref_transaction_commit(struct ref_transaction *transaction,
 	/* Acquire all locks while verifying old values */
 	for (i = 0; i < n; i++) {
 		struct ref_update *update = updates[i];
+		int flags = update->flags;
 
+		if (is_null_sha1(update->new_sha1))
+			flags |= REF_DELETING;
 		update->lock = lock_ref_sha1_basic(update->refname,
 						   (update->have_old ?
 						    update->old_sha1 :
 						    NULL),
 						   NULL,
-						   update->flags,
+						   flags,
 						   &update->type);
 		if (!update->lock) {
 			ret = (errno == ENOTDIR)
