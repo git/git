@@ -236,10 +236,11 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 		free(name);
 
 		name = mkpathdup(fmt, bname.buf);
-		target = resolve_ref_unsafe(name, RESOLVE_REF_NO_RECURSE,
+		target = resolve_ref_unsafe(name,
+					    RESOLVE_REF_READING
+					    | RESOLVE_REF_NO_RECURSE,
 					    sha1, &flags);
-		if (!target ||
-		    (!(flags & REF_ISSYMREF) && is_null_sha1(sha1))) {
+		if (!target) {
 			error(remote_branch
 			      ? _("remote branch '%s' not found.")
 			      : _("branch '%s' not found."), bname.buf);
