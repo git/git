@@ -237,6 +237,26 @@ static int fsck_tree(struct tree *item, int strict, fsck_error error_func)
 	return retval;
 }
 
+static int require_end_of_header(const void *data, unsigned long size,
+	struct object *obj, fsck_error error_func)
+{
+	const char *buffer = (const char *)data;
+	unsigned long i;
+
+	for (i = 0; i < size; i++) {
+		switch (buffer[i]) {
+		case '\0':
+			return error_func(obj, FSCK_ERROR,
+				"unterminated header: NUL at offset %d", i);
+		case '\n':
+			if (i + 1 < size && buffer[i + 1] == '\n')
+				return 0;
+		}
+	}
+
+	return error_func(obj, FSCK_ERROR, "unterminated header");
+}
+
 static int fsck_ident(const char **ident, struct object *obj, fsck_error error_func)
 {
 	char *end;
@@ -283,6 +303,9 @@ static int fsck_commit_buffer(struct commit *commit, const char *buffer,
 	struct commit_graft *graft;
 	unsigned parent_count, parent_line_count = 0;
 	int err;
+
+	if (require_end_of_header(buffer, size, &commit->object, error_func))
+		return -1;
 
 	if (!skip_prefix(buffer, "tree ", &buffer))
 		return error_func(&commit->object, FSCK_ERROR, "invalid format - expected 'tree' line");
