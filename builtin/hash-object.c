@@ -36,9 +36,7 @@ static void hash_object(const char *path, const char *type, int write_object,
 	hash_fd(fd, type, write_object, vpath);
 }
 
-static int no_filters;
-
-static void hash_stdin_paths(const char *type, int write_objects)
+static void hash_stdin_paths(const char *type, int write_objects, int no_filters)
 {
 	struct strbuf buf = STRBUF_INIT, nbuf = STRBUF_INIT;
 
@@ -50,41 +48,37 @@ static void hash_stdin_paths(const char *type, int write_objects)
 			strbuf_swap(&buf, &nbuf);
 		}
 		hash_object(buf.buf, type, write_objects,
-		    no_filters ? NULL : buf.buf);
+			    no_filters ? NULL : buf.buf);
 	}
 	strbuf_release(&buf);
 	strbuf_release(&nbuf);
 }
 
-static const char * const hash_object_usage[] = {
-	N_("git hash-object [-t <type>] [-w] [--path=<file>|--no-filters] [--stdin] [--] <file>..."),
-	N_("git hash-object  --stdin-paths < <list-of-paths>"),
-	NULL
-};
-
-static const char *type;
-static int write_object;
-static int hashstdin;
-static int stdin_paths;
-static const char *vpath;
-
-static const struct option hash_object_options[] = {
-	OPT_STRING('t', NULL, &type, N_("type"), N_("object type")),
-	OPT_BOOL('w', NULL, &write_object, N_("write the object into the object database")),
-	OPT_COUNTUP( 0 , "stdin", &hashstdin, N_("read the object from stdin")),
-	OPT_BOOL( 0 , "stdin-paths", &stdin_paths, N_("read file names from stdin")),
-	OPT_BOOL( 0 , "no-filters", &no_filters, N_("store file as is without filters")),
-	OPT_STRING( 0 , "path", &vpath, N_("file"), N_("process file as it were from this path")),
-	OPT_END()
-};
-
 int cmd_hash_object(int argc, const char **argv, const char *prefix)
 {
+	static const char * const hash_object_usage[] = {
+		N_("git hash-object [-t <type>] [-w] [--path=<file>|--no-filters] [--stdin] [--] <file>..."),
+		N_("git hash-object  --stdin-paths < <list-of-paths>"),
+		NULL
+	};
+	const char *type = blob_type;
+	int hashstdin = 0;
+	int stdin_paths = 0;
+	int write_object = 0;
+	int no_filters = 0;
+	const char *vpath = NULL;
+	const struct option hash_object_options[] = {
+		OPT_STRING('t', NULL, &type, N_("type"), N_("object type")),
+		OPT_BOOL('w', NULL, &write_object, N_("write the object into the object database")),
+		OPT_COUNTUP( 0 , "stdin", &hashstdin, N_("read the object from stdin")),
+		OPT_BOOL( 0 , "stdin-paths", &stdin_paths, N_("read file names from stdin")),
+		OPT_BOOL( 0 , "no-filters", &no_filters, N_("store file as is without filters")),
+		OPT_STRING( 0 , "path", &vpath, N_("file"), N_("process file as it were from this path")),
+		OPT_END()
+	};
 	int i;
 	int prefix_length = -1;
 	const char *errstr = NULL;
-
-	type = blob_type;
 
 	argc = parse_options(argc, argv, NULL, hash_object_options,
 			     hash_object_usage, 0);
@@ -131,7 +125,7 @@ int cmd_hash_object(int argc, const char **argv, const char *prefix)
 	}
 
 	if (stdin_paths)
-		hash_stdin_paths(type, write_object);
+		hash_stdin_paths(type, write_object, no_filters);
 
 	return 0;
 }
