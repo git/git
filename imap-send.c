@@ -69,6 +69,7 @@ struct imap_server_conf {
 	char *tunnel;
 	char *host;
 	int port;
+	char *folder;
 	char *user;
 	char *pass;
 	int use_ssl;
@@ -82,6 +83,7 @@ static struct imap_server_conf server = {
 	NULL,	/* tunnel */
 	NULL,	/* host */
 	0,	/* port */
+	NULL,	/* folder */
 	NULL,	/* user */
 	NULL,	/* pass */
 	0,   	/* use_ssl */
@@ -523,7 +525,7 @@ static struct imap_cmd *issue_imap_cmd(struct imap_store *ctx,
 	if (Verbose) {
 		if (imap->num_in_progress)
 			printf("(%d in progress) ", imap->num_in_progress);
-		if (memcmp(cmd->cmd, "LOGIN", 5))
+		if (!starts_with(cmd->cmd, "LOGIN"))
 			printf(">>> %s", buf);
 		else
 			printf(">>> %d LOGIN <user> <pass>\n", cmd->tag);
@@ -791,7 +793,7 @@ static int get_cmd_result(struct imap_store *ctx, struct imap_cmd *tcmd)
 				else /*if (!strcmp("BAD", arg))*/
 					resp = RESP_BAD;
 				fprintf(stderr, "IMAP command '%s' returned response (%s) - %s\n",
-					 memcmp(cmdp->cmd, "LOGIN", 5) ?
+					!starts_with(cmdp->cmd, "LOGIN") ?
 							cmdp->cmd : "LOGIN <user> <pass>",
 							arg, cmd ? cmd : "");
 			}
@@ -924,17 +926,16 @@ static struct imap_store *imap_open_store(struct imap_server_conf *srvc, char *f
 	/* open connection to IMAP server */
 
 	if (srvc->tunnel) {
-		const char *argv[] = { srvc->tunnel, NULL };
 		struct child_process tunnel = CHILD_PROCESS_INIT;
 
 		imap_info("Starting tunnel '%s'... ", srvc->tunnel);
 
-		tunnel.argv = argv;
+		argv_array_push(&tunnel.args, srvc->tunnel);
 		tunnel.use_shell = 1;
 		tunnel.in = -1;
 		tunnel.out = -1;
 		if (start_command(&tunnel))
-			die("cannot start proxy %s", argv[0]);
+			die("cannot start proxy %s", srvc->tunnel);
 
 		imap->buf.sock.fd[0] = tunnel.out;
 		imap->buf.sock.fd[1] = tunnel.in;
@@ -1306,15 +1307,13 @@ static int split_msg(struct strbuf *all_msgs, struct strbuf *msg, int *ofs)
 	return 1;
 }
 
-static char *imap_folder;
-
 static void git_imap_config(void)
 {
 	const char *val = NULL;
 
 	git_config_get_bool("imap.sslverify", &server.ssl_verify);
 	git_config_get_bool("imap.preformattedhtml", &server.use_html);
-	git_config_get_string("imap.folder", &imap_folder);
+	git_config_get_string("imap.folder", &server.folder);
 
 	if (!git_config_get_value("imap.host", &val)) {
 		if (!val) {
@@ -1362,7 +1361,7 @@ int main(int argc, char **argv)
 	if (!server.port)
 		server.port = server.use_ssl ? 993 : 143;
 
-	if (!imap_folder) {
+	if (!server.folder) {
 		fprintf(stderr, "no imap store specified\n");
 		return 1;
 	}
@@ -1392,7 +1391,7 @@ int main(int argc, char **argv)
 	}
 
 	/* write it to the imap server */
-	ctx = imap_open_store(&server, imap_folder);
+	ctx = imap_open_store(&server, server.folder);
 	if (!ctx) {
 		fprintf(stderr, "failed to open store\n");
 		return 1;
