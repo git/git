@@ -246,8 +246,11 @@ static int update_one(struct cache_tree *it,
 	struct strbuf buffer;
 	int missing_ok = flags & WRITE_TREE_MISSING_OK;
 	int dryrun = flags & WRITE_TREE_DRY_RUN;
+	int repair = flags & WRITE_TREE_REPAIR;
 	int to_invalidate = 0;
 	int i;
+
+	assert(!(dryrun && repair));
 
 	*skip_count = 0;
 
@@ -320,6 +323,7 @@ static int update_one(struct cache_tree *it,
 		int pathlen, entlen;
 		const unsigned char *sha1;
 		unsigned mode;
+		int expected_missing = 0;
 
 		path = ce->name;
 		pathlen = ce_namelen(ce);
@@ -336,8 +340,10 @@ static int update_one(struct cache_tree *it,
 			i += sub->count;
 			sha1 = sub->cache_tree->sha1;
 			mode = S_IFDIR;
-			if (sub->cache_tree->entry_count < 0)
+			if (sub->cache_tree->entry_count < 0) {
 				to_invalidate = 1;
+				expected_missing = 1;
+			}
 		}
 		else {
 			sha1 = ce->sha1;
@@ -347,6 +353,8 @@ static int update_one(struct cache_tree *it,
 		}
 		if (mode != S_IFGITLINK && !missing_ok && !has_sha1_file(sha1)) {
 			strbuf_release(&buffer);
+			if (expected_missing)
+				return -1;
 			return error("invalid object %06o %s for '%.*s'",
 				mode, sha1_to_hex(sha1), entlen+baselen, path);
 		}
@@ -381,7 +389,14 @@ static int update_one(struct cache_tree *it,
 #endif
 	}
 
-	if (dryrun)
+	if (repair) {
+		unsigned char sha1[20];
+		hash_sha1_file(buffer.buf, buffer.len, tree_type, sha1);
+		if (has_sha1_file(sha1))
+			hashcpy(it->sha1, sha1);
+		else
+			to_invalidate = 1;
+	} else if (dryrun)
 		hash_sha1_file(buffer.buf, buffer.len, tree_type, it->sha1);
 	else if (write_sha1_file(buffer.buf, buffer.len, tree_type, it->sha1)) {
 		strbuf_release(&buffer);
