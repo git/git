@@ -3274,36 +3274,34 @@ static void parse_option(const char *option)
 	die("This version of fast-import does not support option: %s", option);
 }
 
-static int git_pack_config(const char *k, const char *v, void *cb)
+static void git_pack_config(void)
 {
-	if (!strcmp(k, "pack.depth")) {
-		max_depth = git_config_int(k, v);
+	int indexversion_value;
+	unsigned long packsizelimit_value;
+
+	if (!git_config_get_ulong("pack.depth", &max_depth)) {
 		if (max_depth > MAX_DEPTH)
 			max_depth = MAX_DEPTH;
-		return 0;
 	}
-	if (!strcmp(k, "pack.compression")) {
-		int level = git_config_int(k, v);
-		if (level == -1)
-			level = Z_DEFAULT_COMPRESSION;
-		else if (level < 0 || level > Z_BEST_COMPRESSION)
-			die("bad pack compression level %d", level);
-		pack_compression_level = level;
+	if (!git_config_get_int("pack.compression", &pack_compression_level)) {
+		if (pack_compression_level == -1)
+			pack_compression_level = Z_DEFAULT_COMPRESSION;
+		else if (pack_compression_level < 0 ||
+			 pack_compression_level > Z_BEST_COMPRESSION)
+			git_die_config("pack.compression",
+					"bad pack compression level %d", pack_compression_level);
 		pack_compression_seen = 1;
-		return 0;
 	}
-	if (!strcmp(k, "pack.indexversion")) {
-		pack_idx_opts.version = git_config_int(k, v);
+	if (!git_config_get_int("pack.indexversion", &indexversion_value)) {
+		pack_idx_opts.version = indexversion_value;
 		if (pack_idx_opts.version > 2)
-			die("bad pack.indexversion=%"PRIu32,
-			    pack_idx_opts.version);
-		return 0;
+			git_die_config("pack.indexversion",
+					"bad pack.indexversion=%"PRIu32, pack_idx_opts.version);
 	}
-	if (!strcmp(k, "pack.packsizelimit")) {
-		max_packsize = git_config_ulong(k, v);
-		return 0;
-	}
-	return git_default_config(k, v, cb);
+	if (!git_config_get_ulong("pack.packsizelimit", &packsizelimit_value))
+		max_packsize = packsizelimit_value;
+
+	git_config(git_default_config, NULL);
 }
 
 static const char fast_import_usage[] =
@@ -3356,7 +3354,7 @@ int main(int argc, char **argv)
 
 	setup_git_directory();
 	reset_pack_idx_option(&pack_idx_opts);
-	git_config(git_pack_config, NULL);
+	git_pack_config();
 	if (!pack_compression_seen && core_compression_seen)
 		pack_compression_level = core_compression_level;
 

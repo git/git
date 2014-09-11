@@ -2026,22 +2026,12 @@ int merge_recursive_generic(struct merge_options *o,
 	return clean ? 0 : 1;
 }
 
-static int merge_recursive_config(const char *var, const char *value, void *cb)
+static void merge_recursive_config(struct merge_options *o)
 {
-	struct merge_options *o = cb;
-	if (!strcmp(var, "merge.verbosity")) {
-		o->verbosity = git_config_int(var, value);
-		return 0;
-	}
-	if (!strcmp(var, "diff.renamelimit")) {
-		o->diff_rename_limit = git_config_int(var, value);
-		return 0;
-	}
-	if (!strcmp(var, "merge.renamelimit")) {
-		o->merge_rename_limit = git_config_int(var, value);
-		return 0;
-	}
-	return git_xmerge_config(var, value, cb);
+	git_config_get_int("merge.verbosity", &o->verbosity);
+	git_config_get_int("diff.renamelimit", &o->diff_rename_limit);
+	git_config_get_int("merge.renamelimit", &o->merge_rename_limit);
+	git_config(git_xmerge_config, NULL);
 }
 
 void init_merge_options(struct merge_options *o)
@@ -2052,7 +2042,7 @@ void init_merge_options(struct merge_options *o)
 	o->diff_rename_limit = -1;
 	o->merge_rename_limit = -1;
 	o->renormalize = 0;
-	git_config(merge_recursive_config, o);
+	merge_recursive_config(o);
 	if (getenv("GIT_MERGE_VERBOSITY"))
 		o->verbosity =
 			strtol(getenv("GIT_MERGE_VERBOSITY"), NULL, 10);
