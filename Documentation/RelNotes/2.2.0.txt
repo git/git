@@ -25,6 +25,15 @@ UI, Workflows & Features
 
 Performance, Internal Implementation, etc.
 
+ * The API to manipulate the "refs" is currently undergoing a revamp
+   to make it more transactional, with the eventual goal to allow
+   all-or-none atomic updates and migrating the storage to something
+   other than the traditional filesystem based one (e.g. databases).
+
+ * We no longer attempt to keep track of individual dependencies to
+   the header files in the build procedure, relying on automated
+   dependency generation support from modern compilers.
+
  * In tests, we have been using NOT_{MINGW,CYGWIN} test prerequisites
    long before negated prerequisites e.g. !MINGW were invented.
    The former has been converted to the latter to avoid confusion.
@@ -37,11 +46,24 @@ Performance, Internal Implementation, etc.
    to update the file again while still holding the lock, but the
    lockfile API lacked support for such an access pattern.
 
+ * The API to allocate the structure to keep track of commit
+   decoration has been updated to make it less cumbersome to use.
+
  * An in-core caching layer to let us avoid reading the same
-   configuration files number of times has been added.
+   configuration files number of times has been added.  A few commands
+   have been converted to use this subsystem.
 
  * Various code paths have been cleaned up and simplified by using
    "strbuf", "starts_with()", and "skip_prefix()" APIs more.
+
+ * A few codepaths that died when large blobs that would not fit in
+   core are involved in their operation have been taught to punt
+   instead, by e.g. marking too large a blob as not to be diffed.
+
+ * A few more code paths in "commit" and "checkout" have been taught
+   to repopulate the cache-tree in the index, to help speed up later
+   "write-tree" (used in "commit") and "diff-index --cached" (used in
+   "status").
 
 
 Also contains various documentation updates and code clean-ups.
@@ -89,3 +111,22 @@ notes for details).
 
  * Pack-protocol documentation had a minor typo.
    (merge 5d146f7 sp/pack-protocol-doc-on-shallow later to maint).
+
+ * "git checkout -m" did not switch to another branch while carrying
+   the local changes forward when a path was deleted from the index.
+   (merge 6a143aa jn/unpack-trees-checkout-m-carry-deletion later to maint).
+
+ * With sufficiently long refnames, "git fast-import" could have
+   overflown an on-stack buffer.
+   (merge c252785 jk/fast-import-fixes later to maint).
+
+ * After "pack-refs --prune" packed refs at the top-level, it failed
+   to prune them.
+   (merge afd11d3 jk/prune-top-level-refs-after-packing later to maint).
+
+ * Progress output from "git gc --auto" was visible in "git fetch -q".
+   (merge 6fceed3 nd/fetch-pass-quiet-to-gc-child-process later to maint).
+
+ * We used to pass -1000 to poll(2), expecting it to also mean "no
+   timeout", which should be spelled as -1.
+   (merge 6c71f8b et/spell-poll-infinite-with-minus-one-only later to maint).
