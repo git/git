@@ -155,6 +155,19 @@ as well as retrieval for the queried variable, including:
 	Similar to `git_config_get_string`, but expands `~` or `~user` into
 	the user's home directory when found at the beginning of the path.
 
+`git_die_config(const char *key, const char *err, ...)`::
+
+	First prints the error message specified by the caller in `err` and then
+	dies printing the line number and the file name of the highest priority
+	value for the configuration variable `key`.
+
+`void git_die_config_linenr(const char *key, const char *filename, int linenr)`::
+
+	Helper function which formats the die error message according to the
+	parameters entered. Used by `git_die_config()`. It can be used by callers
+	handling `git_config_get_value_multi()` to print the correct error message
+	for the desired value.
+
 See test-config.c for usage examples.
 
 Value Parsing Helpers
