@@ -255,7 +255,7 @@ static int copy_to_sideband(int in, int out, void *arg)
 typedef int (*feed_fn)(void *, const char **, size_t *);
 static int run_and_feed_hook(const char *hook_name, feed_fn feed, void *feed_state)
 {
-	struct child_process proc;
+	struct child_process proc = CHILD_PROCESS_INIT;
 	struct async muxer;
 	const char *argv[2];
 	int code;
@@ -266,7 +266,6 @@ static int run_and_feed_hook(const char *hook_name, feed_fn feed, void *feed_sta
 
 	argv[1] = NULL;
 
-	memset(&proc, 0, sizeof(proc));
 	proc.argv = argv;
 	proc.in = -1;
 	proc.stdout_to_stderr = 1;
@@ -350,7 +349,7 @@ static int run_receive_hook(struct command *commands, const char *hook_name,
 static int run_update_hook(struct command *cmd)
 {
 	const char *argv[5];
-	struct child_process proc;
+	struct child_process proc = CHILD_PROCESS_INIT;
 	int code;
 
 	argv[0] = find_hook("update");
@@ -362,7 +361,6 @@ static int run_update_hook(struct command *cmd)
 	argv[3] = sha1_to_hex(cmd->new_sha1);
 	argv[4] = NULL;
 
-	memset(&proc, 0, sizeof(proc));
 	proc.no_stdin = 1;
 	proc.stdout_to_stderr = 1;
 	proc.err = use_sideband ? -1 : 0;
@@ -598,7 +596,7 @@ static void run_update_post_hook(struct command *commands)
 	struct command *cmd;
 	int argc;
 	const char **argv;
-	struct child_process proc;
+	struct child_process proc = CHILD_PROCESS_INIT;
 	char *hook;
 
 	hook = find_hook("post-update");
@@ -621,7 +619,6 @@ static void run_update_post_hook(struct command *commands)
 	}
 	argv[argc] = NULL;
 
-	memset(&proc, 0, sizeof(proc));
 	proc.no_stdin = 1;
 	proc.stdout_to_stderr = 1;
 	proc.err = use_sideband ? -1 : 0;
@@ -911,7 +908,7 @@ static const char *unpack(int err_fd, struct shallow_info *si)
 	const char *hdr_err;
 	int status;
 	char hdr_arg[38];
-	struct child_process child;
+	struct child_process child = CHILD_PROCESS_INIT;
 	int fsck_objects = (receive_fsck_objects >= 0
 			    ? receive_fsck_objects
 			    : transfer_fsck_objects >= 0
@@ -933,7 +930,6 @@ static const char *unpack(int err_fd, struct shallow_info *si)
 		argv_array_pushl(&av, "--shallow-file", alt_shallow_file, NULL);
 	}
 
-	memset(&child, 0, sizeof(child));
 	if (ntohl(hdr.hdr_entries) < unpack_limit) {
 		argv_array_pushl(&av, "unpack-objects", hdr_arg, NULL);
 		if (quiet)

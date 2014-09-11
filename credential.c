@@ -205,11 +205,10 @@ static int run_credential_helper(struct credential *c,
 				 const char *cmd,
 				 int want_output)
 {
-	struct child_process helper;
+	struct child_process helper = CHILD_PROCESS_INIT;
 	const char *argv[] = { NULL, NULL };
 	FILE *fp;
 
-	memset(&helper, 0, sizeof(helper));
 	argv[0] = cmd;
 	helper.argv = argv;
 	helper.use_shell = 1;

@@ -6,7 +6,7 @@
 
 static char *do_askpass(const char *cmd, const char *prompt)
 {
-	struct child_process pass;
+	struct child_process pass = CHILD_PROCESS_INIT;
 	const char *args[3];
 	static struct strbuf buffer = STRBUF_INIT;
 	int err = 0;
@@ -15,7 +15,6 @@ static char *do_askpass(const char *cmd, const char *prompt)
 	args[1]	= prompt;
 	args[2] = NULL;
 
-	memset(&pass, 0, sizeof(pass));
 	pass.argv = args;
 	pass.out = -1;
 

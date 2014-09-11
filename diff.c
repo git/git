@@ -4931,7 +4931,7 @@ static char *run_textconv(const char *pgm, struct diff_filespec *spec,
 	struct diff_tempfile *temp;
 	const char *argv[3];
 	const char **arg = argv;
-	struct child_process child;
+	struct child_process child = CHILD_PROCESS_INIT;
 	struct strbuf buf = STRBUF_INIT;
 	int err = 0;
 
@@ -4940,7 +4940,6 @@ static char *run_textconv(const char *pgm, struct diff_filespec *spec,
 	*arg++ = temp->name;
 	*arg = NULL;
 
-	memset(&child, 0, sizeof(child));
 	child.use_shell = 1;
 	child.argv = argv;
 	child.out = -1;

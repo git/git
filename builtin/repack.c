@@ -133,7 +133,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		{".idx"},
 		{".bitmap", 1},
 	};
-	struct child_process cmd;
+	struct child_process cmd = CHILD_PROCESS_INIT;
 	struct string_list_item *item;
 	struct argv_array cmd_args = ARGV_ARRAY_INIT;
 	struct string_list names = STRING_LIST_INIT_DUP;
@@ -250,7 +250,6 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 
 	argv_array_push(&cmd_args, packtmp);
 
-	memset(&cmd, 0, sizeof(cmd));
 	cmd.argv = cmd_args.argv;
 	cmd.git_cmd = 1;
 	cmd.out = -1;

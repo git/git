@@ -179,9 +179,8 @@ static void send_git_request(int stdin_fd, const char *serv, const char *repo,
 static int run_child(const char *arg, const char *service)
 {
 	int r;
-	struct child_process child;
+	struct child_process child = CHILD_PROCESS_INIT;
 
-	memset(&child, 0, sizeof(child));
 	child.in = -1;
 	child.out = -1;
 	child.err = 0;

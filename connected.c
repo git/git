@@ -25,7 +25,7 @@ static int check_everything_connected_real(sha1_iterate_fn fn,
 					   struct transport *transport,
 					   const char *shallow_file)
 {
-	struct child_process rev_list;
+	struct child_process rev_list = CHILD_PROCESS_INIT;
 	const char *argv[9];
 	char commit[41];
 	unsigned char sha1[20];
@@ -60,7 +60,6 @@ static int check_everything_connected_real(sha1_iterate_fn fn,
 		argv[ac++] = "--quiet";
 	argv[ac] = NULL;
 
-	memset(&rev_list, 0, sizeof(rev_list));
 	rev_list.argv = argv;
 	rev_list.git_cmd = 1;
 	rev_list.in = -1;

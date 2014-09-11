@@ -15,9 +15,7 @@
 
 int main(int argc, char **argv)
 {
-	struct child_process proc;
-
-	memset(&proc, 0, sizeof(proc));
+	struct child_process proc = CHILD_PROCESS_INIT;
 
 	if (argc < 3)
 		return 1;

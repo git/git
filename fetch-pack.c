@@ -666,7 +666,7 @@ static int get_pack(struct fetch_pack_args *args,
 	char hdr_arg[256];
 	const char **av, *cmd_name;
 	int do_keep = args->keep_pack;
-	struct child_process cmd;
+	struct child_process cmd = CHILD_PROCESS_INIT;
 	int ret;
 
 	memset(&demux, 0, sizeof(demux));
@@ -685,7 +685,6 @@ static int get_pack(struct fetch_pack_args *args,
 	else
 		demux.out = xd[0];
 
-	memset(&cmd, 0, sizeof(cmd));
 	cmd.argv = argv;
 	av = argv;
 	*hdr_arg = 0;
