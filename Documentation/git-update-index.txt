@@ -191,7 +191,7 @@ merging.
 To pretend you have a file with mode and sha1 at path, say:
 
 ----------------
-$ git update-index --cacheinfo mode sha1 path
+$ git update-index --cacheinfo <mode>,<sha1>,<path>
 ----------------
 
 '--info-only' is used to register files without placing them in the object
