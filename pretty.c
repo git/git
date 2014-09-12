@@ -738,8 +738,11 @@ static size_t format_person_part(struct strbuf *sb, char part,
 	case 'r':	/* date, relative */
 		strbuf_addstr(sb, show_ident_date(&s, DATE_RELATIVE));
 		return placeholder_len;
-	case 'i':	/* date, ISO 8601 */
+	case 'i':	/* date, ISO 8601-like */
 		strbuf_addstr(sb, show_ident_date(&s, DATE_ISO8601));
+		return placeholder_len;
+	case 'I':	/* date, ISO 8601 strict */
+		strbuf_addstr(sb, show_ident_date(&s, DATE_ISO8601_STRICT));
 		return placeholder_len;
 	}
 
