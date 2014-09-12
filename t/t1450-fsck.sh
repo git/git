@@ -302,4 +302,60 @@ test_expect_success 'fsck notices ".git" in trees' '
 	)
 '
 
+# create a static test repo which is broken by omitting
+# one particular object ($1, which is looked up via rev-parse
+# in the new repository).
+create_repo_missing () {
+	rm -rf missing &&
+	git init missing &&
+	(
+		cd missing &&
+		git commit -m one --allow-empty &&
+		mkdir subdir &&
+		echo content >subdir/file &&
+		git add subdir/file &&
+		git commit -m two &&
+		unrelated=$(echo unrelated | git hash-object --stdin -w) &&
+		git tag -m foo tag $unrelated &&
+		sha1=$(git rev-parse --verify "$1") &&
+		path=$(echo $sha1 | sed 's|..|&/|') &&
+		rm .git/objects/$path
+	)
+}
+
+test_expect_success 'fsck notices missing blob' '
+	create_repo_missing HEAD:subdir/file &&
+	test_must_fail git -C missing fsck
+'
+
+test_expect_success 'fsck notices missing subtree' '
+	create_repo_missing HEAD:subdir &&
+	test_must_fail git -C missing fsck
+'
+
+test_expect_success 'fsck notices missing root tree' '
+	create_repo_missing HEAD^{tree} &&
+	test_must_fail git -C missing fsck
+'
+
+test_expect_success 'fsck notices missing parent' '
+	create_repo_missing HEAD^ &&
+	test_must_fail git -C missing fsck
+'
+
+test_expect_success 'fsck notices missing tagged object' '
+	create_repo_missing tag^{blob} &&
+	test_must_fail git -C missing fsck
+'
+
+test_expect_success 'fsck notices ref pointing to missing commit' '
+	create_repo_missing HEAD &&
+	test_must_fail git -C missing fsck
+'
+
+test_expect_success 'fsck notices ref pointing to missing tag' '
+	create_repo_missing tag &&
+	test_must_fail git -C missing fsck
+'
+
 test_done
