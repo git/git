@@ -1377,9 +1377,7 @@ static size_t format_and_pad_commit(struct strbuf *sb, /* in UTF-8 */
 		 * convert it back to chars
 		 */
 		padding = padding - len + local_sb.len;
-		strbuf_grow(sb, padding);
-		strbuf_setlen(sb, sb_len + padding);
-		memset(sb->buf + sb_len, ' ', sb->len - sb_len);
+		strbuf_addchars(sb, ' ', padding);
 		memcpy(sb->buf + sb_len + offset, local_sb.buf,
 		       local_sb.len);
 	}
@@ -1654,10 +1652,8 @@ void pp_remainder(struct pretty_print_context *pp,
 		first = 0;
 
 		strbuf_grow(sb, linelen + indent + 20);
-		if (indent) {
-			memset(sb->buf + sb->len, ' ', indent);
-			strbuf_setlen(sb, sb->len + indent);
-		}
+		if (indent)
+			strbuf_addchars(sb, ' ', indent);
 		strbuf_add(sb, line, linelen);
 		strbuf_addch(sb, '\n');
 	}
