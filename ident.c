@@ -9,7 +9,7 @@
 
 static struct strbuf git_default_name = STRBUF_INIT;
 static struct strbuf git_default_email = STRBUF_INIT;
-static char git_default_date[50];
+static struct strbuf git_default_date = STRBUF_INIT;
 
 #define IDENT_NAME_GIVEN 01
 #define IDENT_MAIL_GIVEN 02
@@ -129,9 +129,9 @@ const char *ident_default_email(void)
 
 static const char *ident_default_date(void)
 {
-	if (!git_default_date[0])
-		datestamp(git_default_date, sizeof(git_default_date));
-	return git_default_date;
+	if (!git_default_date.len)
+		datestamp(&git_default_date);
+	return git_default_date.buf;
 }
 
 static int crud(unsigned char c)
@@ -292,7 +292,6 @@ const char *fmt_ident(const char *name, const char *email,
 		      const char *date_str, int flag)
 {
 	static struct strbuf ident = STRBUF_INIT;
-	char date[50];
 	int strict = (flag & IDENT_STRICT);
 	int want_date = !(flag & IDENT_NO_DATE);
 	int want_name = !(flag & IDENT_NO_NAME);
@@ -320,15 +319,6 @@ const char *fmt_ident(const char *name, const char *email,
 		die("unable to auto-detect email address (got '%s')", email);
 	}
 
-	if (want_date) {
-		if (date_str && date_str[0]) {
-			if (parse_date(date_str, date, sizeof(date)) < 0)
-				die("invalid date format: %s", date_str);
-		}
-		else
-			strcpy(date, ident_default_date());
-	}
-
 	strbuf_reset(&ident);
 	if (want_name) {
 		strbuf_addstr_without_crud(&ident, name);
@@ -339,8 +329,14 @@ const char *fmt_ident(const char *name, const char *email,
 			strbuf_addch(&ident, '>');
 	if (want_date) {
 		strbuf_addch(&ident, ' ');
-		strbuf_addstr_without_crud(&ident, date);
+		if (date_str && date_str[0]) {
+			if (parse_date(date_str, &ident) < 0)
+				die("invalid date format: %s", date_str);
+		}
+		else
+			strbuf_addstr(&ident, ident_default_date());
 	}
+
 	return ident.buf;
 }
 
