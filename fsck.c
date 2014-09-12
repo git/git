@@ -6,6 +6,7 @@
 #include "commit.h"
 #include "tag.h"
 #include "fsck.h"
+#include "refs.h"
 
 static int fsck_walk_tree(struct tree *tree, fsck_walk_func walk, void *data)
 {
@@ -237,6 +238,26 @@ static int fsck_tree(struct tree *item, int strict, fsck_error error_func)
 	return retval;
 }
 
+static int require_end_of_header(const void *data, unsigned long size,
+	struct object *obj, fsck_error error_func)
+{
+	const char *buffer = (const char *)data;
+	unsigned long i;
+
+	for (i = 0; i < size; i++) {
+		switch (buffer[i]) {
+		case '\0':
+			return error_func(obj, FSCK_ERROR,
+				"unterminated header: NUL at offset %d", i);
+		case '\n':
+			if (i + 1 < size && buffer[i + 1] == '\n')
+				return 0;
+		}
+	}
+
+	return error_func(obj, FSCK_ERROR, "unterminated header");
+}
+
 static int fsck_ident(const char **ident, struct object *obj, fsck_error error_func)
 {
 	char *end;
@@ -277,12 +298,15 @@ static int fsck_ident(const char **ident, struct object *obj, fsck_error error_f
 }
 
 static int fsck_commit_buffer(struct commit *commit, const char *buffer,
-			      fsck_error error_func)
+	unsigned long size, fsck_error error_func)
 {
 	unsigned char tree_sha1[20], sha1[20];
 	struct commit_graft *graft;
 	unsigned parent_count, parent_line_count = 0;
 	int err;
+
+	if (require_end_of_header(buffer, size, &commit->object, error_func))
+		return -1;
 
 	if (!skip_prefix(buffer, "tree ", &buffer))
 		return error_func(&commit->object, FSCK_ERROR, "invalid format - expected 'tree' line");
@@ -322,24 +346,111 @@ static int fsck_commit_buffer(struct commit *commit, const char *buffer,
 	return 0;
 }
 
-static int fsck_commit(struct commit *commit, fsck_error error_func)
+static int fsck_commit(struct commit *commit, const char *data,
+	unsigned long size, fsck_error error_func)
 {
-	const char *buffer = get_commit_buffer(commit, NULL);
-	int ret = fsck_commit_buffer(commit, buffer, error_func);
-	unuse_commit_buffer(commit, buffer);
+	const char *buffer = data ?  data : get_commit_buffer(commit, &size);
+	int ret = fsck_commit_buffer(commit, buffer, size, error_func);
+	if (!data)
+		unuse_commit_buffer(commit, buffer);
 	return ret;
 }
 
-static int fsck_tag(struct tag *tag, fsck_error error_func)
+static int fsck_tag_buffer(struct tag *tag, const char *data,
+	unsigned long size, fsck_error error_func)
+{
+	unsigned char sha1[20];
+	int ret = 0;
+	const char *buffer;
+	char *to_free = NULL, *eol;
+	struct strbuf sb = STRBUF_INIT;
+
+	if (data)
+		buffer = data;
+	else {
+		enum object_type type;
+
+		buffer = to_free =
+			read_sha1_file(tag->object.sha1, &type, &size);
+		if (!buffer)
+			return error_func(&tag->object, FSCK_ERROR,
+				"cannot read tag object");
+
+		if (type != OBJ_TAG) {
+			ret = error_func(&tag->object, FSCK_ERROR,
+				"expected tag got %s",
+			    typename(type));
+			goto done;
+		}
+	}
+
+	if (require_end_of_header(buffer, size, &tag->object, error_func))
+		goto done;
+
+	if (!skip_prefix(buffer, "object ", &buffer)) {
+		ret = error_func(&tag->object, FSCK_ERROR, "invalid format - expected 'object' line");
+		goto done;
+	}
+	if (get_sha1_hex(buffer, sha1) || buffer[40] != '\n') {
+		ret = error_func(&tag->object, FSCK_ERROR, "invalid 'object' line format - bad sha1");
+		goto done;
+	}
+	buffer += 41;
+
+	if (!skip_prefix(buffer, "type ", &buffer)) {
+		ret = error_func(&tag->object, FSCK_ERROR, "invalid format - expected 'type' line");
+		goto done;
+	}
+	eol = strchr(buffer, '\n');
+	if (!eol) {
+		ret = error_func(&tag->object, FSCK_ERROR, "invalid format - unexpected end after 'type' line");
+		goto done;
+	}
+	if (type_from_string_gently(buffer, eol - buffer, 1) < 0)
+		ret = error_func(&tag->object, FSCK_ERROR, "invalid 'type' value");
+	if (ret)
+		goto done;
+	buffer = eol + 1;
+
+	if (!skip_prefix(buffer, "tag ", &buffer)) {
+		ret = error_func(&tag->object, FSCK_ERROR, "invalid format - expected 'tag' line");
+		goto done;
+	}
+	eol = strchr(buffer, '\n');
+	if (!eol) {
+		ret = error_func(&tag->object, FSCK_ERROR, "invalid format - unexpected end after 'type' line");
+		goto done;
+	}
+	strbuf_addf(&sb, "refs/tags/%.*s", (int)(eol - buffer), buffer);
+	if (check_refname_format(sb.buf, 0))
+		error_func(&tag->object, FSCK_WARN, "invalid 'tag' name: %s", buffer);
+	buffer = eol + 1;
+
+	if (!skip_prefix(buffer, "tagger ", &buffer))
+		/* early tags do not contain 'tagger' lines; warn only */
+		error_func(&tag->object, FSCK_WARN, "invalid format - expected 'tagger' line");
+	else
+		ret = fsck_ident(&buffer, &tag->object, error_func);
+
+done:
+	strbuf_release(&sb);
+	free(to_free);
+	return ret;
+}
+
+static int fsck_tag(struct tag *tag, const char *data,
+	unsigned long size, fsck_error error_func)
 {
 	struct object *tagged = tag->tagged;
 
 	if (!tagged)
 		return error_func(&tag->object, FSCK_ERROR, "could not load tagged object");
-	return 0;
+
+	return fsck_tag_buffer(tag, data, size, error_func);
 }
 
-int fsck_object(struct object *obj, int strict, fsck_error error_func)
+int fsck_object(struct object *obj, void *data, unsigned long size,
+	int strict, fsck_error error_func)
 {
 	if (!obj)
 		return error_func(obj, FSCK_ERROR, "no valid object to fsck");
@@ -349,9 +460,11 @@ int fsck_object(struct object *obj, int strict, fsck_error error_func)
 	if (obj->type == OBJ_TREE)
 		return fsck_tree((struct tree *) obj, strict, error_func);
 	if (obj->type == OBJ_COMMIT)
-		return fsck_commit((struct commit *) obj, error_func);
+		return fsck_commit((struct commit *) obj, (const char *) data,
+			size, error_func);
 	if (obj->type == OBJ_TAG)
-		return fsck_tag((struct tag *) obj, error_func);
+		return fsck_tag((struct tag *) obj, (const char *) data,
+			size, error_func);
 
 	return error_func(obj, FSCK_ERROR, "unknown type '%d' (internal fsck error)",
 			  obj->type);

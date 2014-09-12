@@ -28,6 +28,8 @@ int fsck_error_function(struct object *obj, int type, const char *fmt, ...);
  *    0		everything OK
  */
 int fsck_walk(struct object *obj, fsck_walk_func walk, void *data);
-int fsck_object(struct object *obj, int strict, fsck_error error_func);
+/* If NULL is passed for data, we assume the object is local and read it. */
+int fsck_object(struct object *obj, void *data, unsigned long size,
+	int strict, fsck_error error_func);
 
 #endif
