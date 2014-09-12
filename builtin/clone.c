@@ -685,9 +685,10 @@ static void write_config(struct string_list *config)
 	}
 }
 
-static void write_refspec_config(const char* src_ref_prefix,
-		const struct ref* our_head_points_at,
-		const struct ref* remote_head_points_at, struct strbuf* branch_top)
+static void write_refspec_config(const char *src_ref_prefix,
+		const struct ref *our_head_points_at,
+		const struct ref *remote_head_points_at,
+		struct strbuf *branch_top)
 {
 	struct strbuf key = STRBUF_INIT;
 	struct strbuf value = STRBUF_INIT;
