@@ -10,7 +10,8 @@ SYNOPSIS
 --------
 [verse]
 'git push' [--all | --mirror | --tags] [--follow-tags] [-n | --dry-run] [--receive-pack=<git-receive-pack>]
-	   [--repo=<repository>] [-f | --force] [--prune] [-v | --verbose] [-u | --set-upstream]
+	   [--repo=<repository>] [-f | --force] [--prune] [-v | --verbose]
+	   [-u | --set-upstream] [--signed]
 	   [--force-with-lease[=<refname>[:<expect>]]]
 	   [--no-verify] [<repository> [<refspec>...]]
 
@@ -128,6 +129,12 @@ already exists on the remote side.
 	and also push annotated tags in `refs/tags` that are missing
 	from the remote but are pointing at commit-ish that are
 	reachable from the refs being pushed.
+
+--signed::
+	GPG-sign the push request to update refs on the receiving
+	side, to allow it to be checked by the hooks and/or be
+	logged.  See linkgit:git-receive-pack[1] for the details
+	on the receiving end.
 
 --receive-pack=<git-receive-pack>::
 --exec=<git-receive-pack>::

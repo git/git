@@ -11,6 +11,7 @@
 #include "transport.h"
 #include "version.h"
 #include "sha1-array.h"
+#include "gpg-interface.h"
 
 static int feed_object(const unsigned char *sha1, int fd, int negative)
 {
@@ -210,6 +211,64 @@ static int ref_update_to_be_sent(const struct ref *ref, const struct send_pack_a
 	}
 }
 
+/*
+ * the beginning of the next line, or the end of buffer.
+ *
+ * NEEDSWORK: perhaps move this to git-compat-util.h or somewhere and
+ * convert many similar uses found by "git grep -A4 memchr".
+ */
+static const char *next_line(const char *line, size_t len)
+{
+	const char *nl = memchr(line, '\n', len);
+	if (!nl)
+		return line + len; /* incomplete line */
+	return nl + 1;
+}
+
+static void generate_push_cert(struct strbuf *req_buf,
+			       const struct ref *remote_refs,
+			       struct send_pack_args *args)
+{
+	const struct ref *ref;
+	char stamp[60];
+	char *signing_key = xstrdup(get_signing_key());
+	const char *cp, *np;
+	struct strbuf cert = STRBUF_INIT;
+	int update_seen = 0;
+
+	datestamp(stamp, sizeof(stamp));
+	strbuf_addf(&cert, "certificate version 0.1\n");
+	strbuf_addf(&cert, "pusher %s %s\n", signing_key, stamp);
+	strbuf_addstr(&cert, "\n");
+
+	for (ref = remote_refs; ref; ref = ref->next) {
+		if (!ref_update_to_be_sent(ref, args))
+			continue;
+		update_seen = 1;
+		strbuf_addf(&cert, "%s %s %s\n",
+			    sha1_to_hex(ref->old_sha1),
+			    sha1_to_hex(ref->new_sha1),
+			    ref->name);
+	}
+	if (!update_seen)
+		goto free_return;
+
+	if (sign_buffer(&cert, &cert, signing_key))
+		die(_("failed to sign the push certificate"));
+
+	packet_buf_write(req_buf, "push-cert\n");
+	for (cp = cert.buf; cp < cert.buf + cert.len; cp = np) {
+		np = next_line(cp, cert.buf + cert.len - cp);
+		packet_buf_write(req_buf,
+				 "%.*s", (int)(np - cp), cp);
+	}
+	packet_buf_write(req_buf, "push-cert-end\n");
+
+free_return:
+	free(signing_key);
+	strbuf_release(&cert);
+}
+
 int send_pack(struct send_pack_args *args,
 	      int fd[], struct child_process *conn,
 	      struct ref *remote_refs,
@@ -245,6 +304,8 @@ int send_pack(struct send_pack_args *args,
 		agent_supported = 1;
 	if (server_supports("no-thin"))
 		args->use_thin_pack = 0;
+	if (args->push_cert && !server_supports("push-cert"))
+		die(_("the receiving end does not support --signed push"));
 
 	if (!remote_refs) {
 		fprintf(stderr, "No refs in common and none specified; doing nothing.\n"
@@ -272,6 +333,9 @@ int send_pack(struct send_pack_args *args,
 
 	if (!args->dry_run)
 		advertise_shallow_grafts_buf(&req_buf);
+
+	if (!args->dry_run && args->push_cert)
+		generate_push_cert(&req_buf, remote_refs, args);
 
 	/*
 	 * Clear the status for each ref and see if we need to send

@@ -53,6 +53,11 @@ the update.  Refs to be created will have sha1-old equal to 0\{40},
 while refs to be deleted will have sha1-new equal to 0\{40}, otherwise
 sha1-old and sha1-new should be valid objects in the repository.
 
+When accepting a signed push (see linkgit:git-push[1]), the signed
+push certificate is stored in a blob and an environment variable
+`GIT_PUSH_CERT` can be consulted for its object name.  See the
+description of `post-receive` hook for an example.
+
 This hook is called before any refname is updated and before any
 fast-forward checks are performed.
 
@@ -101,9 +106,14 @@ the update.  Refs that were created will have sha1-old equal to
 0\{40}, otherwise sha1-old and sha1-new should be valid objects in
 the repository.
 
+The `GIT_PUSH_CERT` environment variable can be inspected, just as
+in `pre-receive` hook, after accepting a signed push.
+
 Using this hook, it is easy to generate mails describing the updates
 to the repository.  This example script sends one mail message per
-ref listing the commits pushed to the repository:
+ref listing the commits pushed to the repository, and logs the push
+certificates of signed pushes to a logger
+service:
 
 	#!/bin/sh
 	# mail out commit update information.
@@ -119,6 +129,13 @@ ref listing the commits pushed to the repository:
 		fi |
 		mail -s "Changes to ref $ref" commit-list@mydomain
 	done
+	# log signed push certificate, if any
+	if test -n "${GIT_PUSH_CERT-}"
+	then
+		(
+			git cat-file blob ${GIT_PUSH_CERT}
+		) | mail -s "push certificate" push-log@mydomain
+	fi
 	exit 0
 
 The exit code from this hook invocation is ignored, however a
