@@ -68,6 +68,7 @@ void prune_packed_objects(int opts)
 		rmdir(pathname.buf);
 	}
 	stop_progress(&progress);
+	strbuf_release(&pathname);
 }
 
 int cmd_prune_packed(int argc, const char **argv, const char *prefix)
