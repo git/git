@@ -14,11 +14,11 @@ all::
 # Define INLINE to a suitable substitute (such as '__inline' or '') if git
 # fails to compile with errors about undefined inline functions or similar.
 #
-# Define SNPRINTF_RETURNS_BOGUS if your are on a system which snprintf()
+# Define SNPRINTF_RETURNS_BOGUS if you are on a system which snprintf()
 # or vsnprintf() return -1 instead of number of characters which would
 # have been written to the final string if enough space had been available.
 #
-# Define FREAD_READS_DIRECTORIES if your are on a system which succeeds
+# Define FREAD_READS_DIRECTORIES if you are on a system which succeeds
 # when attempting to read from an fopen'ed directory.
 #
 # Define NO_OPENSSL environment variable if you do not have OpenSSL.
