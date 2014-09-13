@@ -233,6 +233,14 @@ static void init_pack_info(const char *infofile, int force)
 		info[i]->new_num = i;
 }
 
+static void free_pack_info(void)
+{
+	int i;
+	for (i = 0; i < num_pack; i++)
+		free(info[i]);
+	free(info);
+}
+
 static int write_pack_info_file(FILE *fp)
 {
 	int i;
@@ -252,6 +260,7 @@ static int update_info_packs(int force)
 
 	init_pack_info(infofile, force);
 	ret = update_info_file(infofile, write_pack_info_file);
+	free_pack_info();
 	free(infofile);
 	return ret;
 }
