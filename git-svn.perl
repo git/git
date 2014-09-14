@@ -306,13 +306,16 @@ sub readline {
 }
 package main;
 
-my $term = eval {
-	$ENV{"GIT_SVN_NOTTY"}
-		? new Term::ReadLine 'git-svn', \*STDIN, \*STDOUT
-		: new Term::ReadLine 'git-svn';
-};
-if ($@) {
-	$term = new FakeTerm "$@: going non-interactive";
+my $term;
+sub term_init {
+	$term = eval {
+		$ENV{"GIT_SVN_NOTTY"}
+			? new Term::ReadLine 'git-svn', \*STDIN, \*STDOUT
+			: new Term::ReadLine 'git-svn';
+	};
+	if ($@) {
+		$term = new FakeTerm "$@: going non-interactive";
+	}
 }
 
 my $cmd;
@@ -424,6 +427,7 @@ sub ask {
 	my $default = $arg{default};
 	my $resp;
 	my $i = 0;
+	term_init() unless $term;
 
 	if ( !( defined($term->IN)
             && defined( fileno($term->IN) )
