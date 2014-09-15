@@ -78,7 +78,7 @@ static int decorate_callback(const struct option *opt, const char *arg, int unse
 		decoration_style = DECORATE_SHORT_REFS;
 
 	if (decoration_style < 0)
-		die("invalid --decorate option: %s", arg);
+		die(_("invalid --decorate option: %s"), arg);
 
 	decoration_given = 1;
 
@@ -130,7 +130,7 @@ static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 		{ OPTION_CALLBACK, 0, "decorate", NULL, NULL, N_("decorate options"),
 		  PARSE_OPT_OPTARG, decorate_callback},
 		OPT_CALLBACK('L', NULL, &line_cb, "n,m:file",
-			     "Process line range n,m in file, counting from 1",
+			     N_("Process line range n,m in file, counting from 1"),
 			     log_line_range_callback),
 		OPT_END()
 	};
@@ -150,7 +150,7 @@ static void cmd_log_init_finish(int argc, const char **argv, const char *prefix,
 
 	/* Any arguments at this point are not recognized */
 	if (argc > 1)
-		die("unrecognized argument: %s", argv[1]);
+		die(_("unrecognized argument: %s"), argv[1]);
 
 	memset(&w, 0, sizeof(w));
 	userformat_find_requirements(NULL, &w);
@@ -447,13 +447,13 @@ static int show_blob_object(const unsigned char *sha1, struct rev_info *rev, con
 		return stream_blob_to_fd(1, sha1, NULL, 0);
 
 	if (get_sha1_with_context(obj_name, 0, sha1c, &obj_context))
-		die("Not a valid object name %s", obj_name);
+		die(_("Not a valid object name %s"), obj_name);
 	if (!obj_context.path[0] ||
 	    !textconv_object(obj_context.path, obj_context.mode, sha1c, 1, &buf, &size))
 		return stream_blob_to_fd(1, sha1, NULL, 0);
 
 	if (!buf)
-		die("git show %s: bad file", obj_name);
+		die(_("git show %s: bad file"), obj_name);
 
 	write_or_die(1, buf, size);
 	return 0;
