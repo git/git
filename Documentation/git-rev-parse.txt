@@ -114,6 +114,7 @@ can be used.
 	Only meaningful in `--verify` mode. Do not output an error
 	message if the first argument is not a valid object name;
 	instead exit with non-zero status silently.
+	SHA-1s for valid object names are printed to stdout on success.
 
 --sq::
 	Usually the output is made one line per flag and
