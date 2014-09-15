@@ -813,7 +813,8 @@ rm -fr "$TRASH_DIRECTORY" || {
 }
 
 HOME="$TRASH_DIRECTORY"
-export HOME
+GNUPGHOME="$HOME/gnupg-home-not-used"
+export HOME GNUPGHOME
 
 if test -z "$TEST_NO_CREATE_REPO"
 then

@@ -12,6 +12,7 @@ if test -n "$NO_CURL"; then
 fi
 
 ROOT_PATH="$PWD"
+. "$TEST_DIRECTORY"/lib-gpg.sh
 . "$TEST_DIRECTORY"/lib-httpd.sh
 . "$TEST_DIRECTORY"/lib-terminal.sh
 start_httpd
@@ -321,6 +322,41 @@ test_expect_success 'push into half-auth-complete requires password' '
 		log -1 --format=%s >actual &&
 	expect_askpass both user@host &&
 	test_cmp expect actual
+'
+
+test_expect_success GPG 'push with post-receive to inspect certificate' '
+	(
+		cd "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.git &&
+		mkdir -p hooks &&
+		write_script hooks/post-receive <<-\EOF &&
+		# discard the update list
+		cat >/dev/null
+		# record the push certificate
+		if test -n "${GIT_PUSH_CERT-}"
+		then
+			git cat-file blob $GIT_PUSH_CERT >../push-cert
+		fi &&
+		cat >../push-cert-status <<E_O_F
+		SIGNER=${GIT_PUSH_CERT_SIGNER-nobody}
+		KEY=${GIT_PUSH_CERT_KEY-nokey}
+		STATUS=${GIT_PUSH_CERT_STATUS-nostatus}
+		E_O_F
+		EOF
+
+		git config receive.certnonceseed sekrit
+	) &&
+	cd "$ROOT_PATH/test_repo_clone" &&
+	test_commit cert-test &&
+	git push --signed "$HTTPD_URL/smart/test_repo.git" &&
+	(
+		cd "$HTTPD_DOCUMENT_ROOT_PATH" &&
+		cat <<-\EOF
+		SIGNER=C O Mitter <committer@example.com>
+		KEY=13B6F51ECDDE430D
+		STATUS=G
+		EOF
+	) >expect &&
+	test_cmp expect "$HTTPD_DOCUMENT_ROOT_PATH/push-cert-status"
 '
 
 stop_httpd

@@ -259,7 +259,8 @@ static const char *unsupported_options[] = {
 static const char *boolean_options[] = {
 	TRANS_OPT_THIN,
 	TRANS_OPT_KEEP,
-	TRANS_OPT_FOLLOWTAGS
+	TRANS_OPT_FOLLOWTAGS,
+	TRANS_OPT_PUSH_CERT
 	};
 
 static int set_helper_option(struct transport *transport,
@@ -835,6 +836,9 @@ static int push_refs_with_push(struct transport *transport,
 	if (flags & TRANSPORT_PUSH_DRY_RUN) {
 		if (set_helper_option(transport, "dry-run", "true") != 0)
 			die("helper %s does not support dry-run", data->name);
+	} else if (flags & TRANSPORT_PUSH_CERT) {
+		if (set_helper_option(transport, TRANS_OPT_PUSH_CERT, "true") != 0)
+			die("helper %s does not support --signed", data->name);
 	}
 
 	strbuf_addch(&buf, '\n');
@@ -858,6 +862,9 @@ static int push_refs_with_export(struct transport *transport,
 
 	if (flags & TRANSPORT_PUSH_DRY_RUN) {
 		if (set_helper_option(transport, "dry-run", "true") != 0)
+			die("helper %s does not support dry-run", data->name);
+	} else if (flags & TRANSPORT_PUSH_CERT) {
+		if (set_helper_option(transport, TRANS_OPT_PUSH_CERT, "true") != 0)
 			die("helper %s does not support dry-run", data->name);
 	}
 
