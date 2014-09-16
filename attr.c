@@ -97,8 +97,7 @@ static struct git_attr *git_attr_internal(const char *name, int len)
 	a->attr_nr = attr_nr++;
 	git_attr_hash[pos] = a;
 
-	check_all_attr = xrealloc(check_all_attr,
-				  sizeof(*check_all_attr) * attr_nr);
+	REALLOC_ARRAY(check_all_attr, attr_nr);
 	check_all_attr[a->attr_nr].attr = a;
 	check_all_attr[a->attr_nr].value = ATTR__UNKNOWN;
 	return a;

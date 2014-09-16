@@ -92,8 +92,7 @@ struct object_entry *packlist_alloc(struct packing_data *pdata,
 
 	if (pdata->nr_objects >= pdata->nr_alloc) {
 		pdata->nr_alloc = (pdata->nr_alloc  + 1024) * 3 / 2;
-		pdata->objects = xrealloc(pdata->objects,
-					  pdata->nr_alloc * sizeof(*new_entry));
+		REALLOC_ARRAY(pdata->objects, pdata->nr_alloc);
 	}
 
 	new_entry = pdata->objects + pdata->nr_objects++;

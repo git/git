@@ -392,8 +392,7 @@ static uint32_t *paint_alloc(struct paint_info *info)
 	void *p;
 	if (!info->slab_count || info->free + size > info->end) {
 		info->slab_count++;
-		info->slab = xrealloc(info->slab,
-				      info->slab_count * sizeof(*info->slab));
+		REALLOC_ARRAY(info->slab, info->slab_count);
 		info->free = xmalloc(COMMIT_SLAB_SIZE);
 		info->slab[info->slab_count - 1] = info->free;
 		info->end = info->free + COMMIT_SLAB_SIZE;

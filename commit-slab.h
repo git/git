@@ -90,8 +90,7 @@ static MAYBE_UNUSED elemtype *slabname## _at(struct slabname *s,	\
 									\
 	if (s->slab_count <= nth_slab) {				\
 		int i;							\
-		s->slab = xrealloc(s->slab,				\
-				   (nth_slab + 1) * sizeof(*s->slab));	\
+		REALLOC_ARRAY(s->slab, nth_slab + 1);			\
 		stat_ ##slabname## realloc++;				\
 		for (i = s->slab_count; i <= nth_slab; i++)		\
 			s->slab[i] = NULL;				\

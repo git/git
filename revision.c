@@ -1397,7 +1397,7 @@ static void prepare_show_merge(struct rev_info *revs)
 			continue;
 		if (ce_path_match(ce, &revs->prune_data, NULL)) {
 			prune_num++;
-			prune = xrealloc(prune, sizeof(*prune) * prune_num);
+			REALLOC_ARRAY(prune, prune_num);
 			prune[prune_num-2] = ce->name;
 			prune[prune_num-1] = NULL;
 		}

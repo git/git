@@ -81,8 +81,7 @@ static void compute_column_width(struct column_data *data)
  */
 static void shrink_columns(struct column_data *data)
 {
-	data->width = xrealloc(data->width,
-			       sizeof(*data->width) * data->cols);
+	REALLOC_ARRAY(data->width, data->cols);
 	while (data->rows > 1) {
 		int x, total_width, cols, rows;
 		rows = data->rows;
@@ -91,8 +90,7 @@ static void shrink_columns(struct column_data *data)
 		data->rows--;
 		data->cols = DIV_ROUND_UP(data->list->nr, data->rows);
 		if (data->cols != cols)
-			data->width = xrealloc(data->width,
-					       sizeof(*data->width) * data->cols);
+			REALLOC_ARRAY(data->width, data->cols);
 		compute_column_width(data);
 
 		total_width = strlen(data->opts.indent);

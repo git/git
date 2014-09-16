@@ -138,10 +138,8 @@ static int parse_atom(const char *atom, const char *ep)
 	/* Add it in, including the deref prefix */
 	at = used_atom_cnt;
 	used_atom_cnt++;
-	used_atom = xrealloc(used_atom,
-			     (sizeof *used_atom) * used_atom_cnt);
-	used_atom_type = xrealloc(used_atom_type,
-				  (sizeof(*used_atom_type) * used_atom_cnt));
+	REALLOC_ARRAY(used_atom, used_atom_cnt);
+	REALLOC_ARRAY(used_atom_type, used_atom_cnt);
 	used_atom[at] = xmemdupz(atom, ep - atom);
 	used_atom_type[at] = valid_atom[i].cmp_type;
 	if (*atom == '*')
@@ -870,8 +868,7 @@ static int grab_single_ref(const char *refname, const unsigned char *sha1, int f
 	ref->flag = flag;
 
 	cnt = cb->grab_cnt;
-	cb->grab_array = xrealloc(cb->grab_array,
-				  sizeof(*cb->grab_array) * (cnt + 1));
+	REALLOC_ARRAY(cb->grab_array, cnt + 1);
 	cb->grab_array[cnt++] = ref;
 	cb->grab_cnt = cnt;
 	return 0;

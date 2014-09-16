@@ -400,10 +400,8 @@ static int ext_index_add_object(struct object *object, const char *name)
 	if (hash_ret > 0) {
 		if (eindex->count >= eindex->alloc) {
 			eindex->alloc = (eindex->alloc + 16) * 3 / 2;
-			eindex->objects = xrealloc(eindex->objects,
-				eindex->alloc * sizeof(struct object *));
-			eindex->hashes = xrealloc(eindex->hashes,
-				eindex->alloc * sizeof(uint32_t));
+			REALLOC_ARRAY(eindex->objects, eindex->alloc);
+			REALLOC_ARRAY(eindex->hashes, eindex->alloc);
 		}
 
 		bitmap_pos = eindex->count;

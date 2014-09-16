@@ -482,7 +482,7 @@ extern int daemonize(void);
 				alloc = (nr); \
 			else \
 				alloc = alloc_nr(alloc); \
-			x = xrealloc((x), alloc * sizeof(*(x))); \
+			REALLOC_ARRAY(x, alloc); \
 		} \
 	} while (0)
 
