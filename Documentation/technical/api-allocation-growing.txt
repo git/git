@@ -34,3 +34,6 @@ item[nr++] = value you like;
 ------------
 
 You are responsible for updating the `nr` variable.
+
+If you need to specify the number of elements to allocate explicitly
+then use the macro `REALLOC_ARRAY(item, alloc)` instead of `ALLOC_GROW`.
