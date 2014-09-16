@@ -72,15 +72,15 @@ test_expect_success 'fails with any bad rev or many good revs' '
 
 test_expect_success 'fails silently when using -q' '
 	test_must_fail git rev-parse --verify --quiet 2>error &&
-	test -z "$(cat error)" &&
+	test_must_be_empty error &&
 	test_must_fail git rev-parse -q --verify foo 2>error &&
-	test -z "$(cat error)" &&
+	test_must_be_empty error &&
 	test_must_fail git rev-parse --verify -q HEAD bar 2>error &&
-	test -z "$(cat error)" &&
+	test_must_be_empty error &&
 	test_must_fail git rev-parse --quiet --verify baz HEAD 2>error &&
-	test -z "$(cat error)" &&
+	test_must_be_empty error &&
 	test_must_fail git rev-parse -q --verify $HASH2 HEAD 2>error &&
-	test -z "$(cat error)"
+	test_must_be_empty error
 '
 
 test_expect_success 'no stdout output on error' '
