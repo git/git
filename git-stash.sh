@@ -50,7 +50,7 @@ clear_stash () {
 	then
 		die "$(gettext "git stash clear with parameters is unimplemented")"
 	fi
-	if current=$(git rev-parse --verify $ref_stash 2>/dev/null)
+	if current=$(git rev-parse --verify --quiet $ref_stash)
 	then
 		git update-ref -d $ref_stash $current
 	fi
@@ -292,7 +292,7 @@ save_stash () {
 }
 
 have_stash () {
-	git rev-parse --verify $ref_stash >/dev/null 2>&1
+	git rev-parse --verify --quiet $ref_stash >/dev/null
 }
 
 list_stash () {
@@ -392,12 +392,12 @@ parse_flags_and_rev()
 		;;
 	esac
 
-	REV=$(git rev-parse --quiet --symbolic --verify "$1" 2>/dev/null) || {
+	REV=$(git rev-parse --symbolic --verify --quiet "$1") || {
 		reference="$1"
 		die "$(eval_gettext "\$reference is not valid reference")"
 	}
 
-	i_commit=$(git rev-parse --quiet --verify "$REV^2" 2>/dev/null) &&
+	i_commit=$(git rev-parse --verify --quiet "$REV^2") &&
 	set -- $(git rev-parse "$REV" "$REV^1" "$REV:" "$REV^1:" "$REV^2:" 2>/dev/null) &&
 	s=$1 &&
 	w_commit=$1 &&
@@ -409,7 +409,7 @@ parse_flags_and_rev()
 	test "$ref_stash" = "$(git rev-parse --symbolic-full-name "${REV%@*}")" &&
 	IS_STASH_REF=t
 
-	u_commit=$(git rev-parse --quiet --verify "$REV^3" 2>/dev/null) &&
+	u_commit=$(git rev-parse --verify --quiet "$REV^3") &&
 	u_tree=$(git rev-parse "$REV^3:" 2>/dev/null)
 }
 
@@ -531,7 +531,8 @@ drop_stash () {
 		die "$(eval_gettext "\${REV}: Could not drop stash entry")"
 
 	# clear_stash if we just dropped the last stash entry
-	git rev-parse --verify "$ref_stash@{0}" >/dev/null 2>&1 || clear_stash
+	git rev-parse --verify --quiet "$ref_stash@{0}" >/dev/null ||
+	clear_stash
 }
 
 apply_to_branch () {
