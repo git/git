@@ -312,7 +312,7 @@ const char *help_unknown_cmd(const char *cmd)
 	add_cmd_list(&main_cmds, &aliases);
 	add_cmd_list(&main_cmds, &other_cmds);
 	qsort(main_cmds.names, main_cmds.cnt,
-	      sizeof(main_cmds.names), cmdname_compare);
+	      sizeof(*main_cmds.names), cmdname_compare);
 	uniq(&main_cmds);
 
 	/* This reuses cmdname->len for similarity index */
