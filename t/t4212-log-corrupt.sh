@@ -14,7 +14,7 @@ test_expect_success 'setup' '
 '
 
 test_expect_success 'fsck notices broken commit' '
-	git fsck 2>actual &&
+	test_must_fail git fsck 2>actual &&
 	test_i18ngrep invalid.author actual
 '
 
