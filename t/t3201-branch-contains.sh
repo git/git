@@ -130,4 +130,33 @@ test_expect_success 'implicit --list conflicts with modification options' '
 
 '
 
+# We want to set up a case where the walk for the tracking info
+# of one branch crosses the tip of another branch (and make sure
+# that the latter walk does not mess up our flag to see if it was
+# merged).
+#
+# Here "topic" tracks "master" with one extra commit, and "zzz" points to the
+# same tip as master The name "zzz" must come alphabetically after "topic"
+# as we process them in that order.
+test_expect_success 'branch --merged with --verbose' '
+	git branch --track topic master &&
+	git branch zzz topic &&
+	git checkout topic &&
+	test_commit foo &&
+	git branch --merged topic >actual &&
+	cat >expect <<-\EOF &&
+	  master
+	* topic
+	  zzz
+	EOF
+	test_cmp expect actual &&
+	git branch --verbose --merged topic >actual &&
+	cat >expect <<-\EOF &&
+	  master c77a0a9 second on master
+	* topic  2c939f4 [ahead 1] foo
+	  zzz    c77a0a9 second on master
+	EOF
+	test_cmp expect actual
+'
+
 test_done
