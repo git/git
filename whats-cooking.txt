@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Sep 2014, #03; Thu, 11)
-X-master-at: ce1d3a93a6405b8a0313491df3099919ed3d150f
-X-next-at: 9363127135f6ed0af0d141c3fc3ac63acc2d9010
+Subject: What's cooking in git.git (Sep 2014, #04; Thu, 18)
+X-master-at: 30d45f798d1a4b14759cd977b68be4476d66ea17
+X-next-at: 6f8c9d7a18026a70d5a66a800d0d849658729a92
 
-What's cooking in git.git (Sep 2014, #03; Thu, 11)
+What's cooking in git.git (Sep 2014, #04; Thu, 18)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -21,350 +21,166 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* br/http-init-fix (2014-08-21) 2 commits
-  (merged to 'next' on 2014-09-03 at 6d42f5e)
- + http: style fixes for curl_multi_init error check
- + http.c: die if curl_*_init fails
-
- Code clean-up.
-
-
-* br/imap-send-simplify-tunnel-child-process (2014-09-02) 3 commits
-  (merged to 'next' on 2014-09-04 at a182987)
- + imap-send: simplify v_issue_imap_cmd() and get_cmd_result() using starts_with()
- + imap-send.c: imap_folder -> imap_server_conf.folder
- + git-imap-send: simplify tunnel construction
-
- Code clean-up.
-
-
-* dt/cache-tree-repair (2014-09-03) 5 commits
-  (merged to 'next' on 2014-09-03 at 1c8ff65)
- + cache-tree: do not try to use an invalidated subtree info to build a tree
-  (merged to 'next' on 2014-08-26 at 6faccdb)
- + cache-tree: Write updated cache-tree after commit
- + cache-tree: subdirectory tests
- + test-dump-cache-tree: invalid trees are not errors
- + cache-tree: create/update cache-tree on checkout
-
- Add a few more places in "commit" and "checkout" that make sure
- that the cache-tree is fully populated in the index.
-
-
-* et/spell-poll-infinite-with-minus-one-only (2014-08-22) 1 commit
-  (merged to 'next' on 2014-09-03 at 5be5957)
- + upload-pack: keep poll(2)'s timeout to -1
-
- We used to pass -1000 to poll(2), expecting it to also mean "no
- timeout", which should be spelled as -1.
-
-
-* jk/contrib-subtree-make-all (2014-08-18) 1 commit
-  (merged to 'next' on 2014-09-03 at 919d889)
- + subtree: make "all" default target of Makefile
-
-
-* jk/fast-import-fixes (2014-08-25) 2 commits
-  (merged to 'next' on 2014-09-04 at 74838e5)
- + fast-import: fix buffer overflow in dump_tags
- + fast-import: clean up pack_data pointer in end_packfile
-
- With sufficiently long refnames, fast-import could have overflown
- an on-stack buffer.
-
-
-* jk/make-simplify-dependencies (2014-08-26) 3 commits
-  (merged to 'next' on 2014-09-03 at 820a600)
- + Makefile: drop CHECK_HEADER_DEPENDENCIES code
- + Makefile: use `find` to determine static header dependencies
- + i18n: treat "make pot" as an explicitly-invoked target
-
- Admit that keeping LIB_H up-to-date, only for those that do not use
- the automatically generated dependencies, is a losing battle, and
- make it conservative by making everything depend on anything.
-
-
-* jk/name-decoration-alloc (2014-08-27) 3 commits
-  (merged to 'next' on 2014-09-04 at 05f0d29)
- + log-tree: use FLEX_ARRAY in name_decoration
- + log-tree: make name_decoration hash static
- + log-tree: make add_name_decoration a public function
-
- The API to allocate the structure to keep track of commit
- decoration was cumbersome to use, inviting lazy code to
- overallocate memory.
-
-
-* jk/prune-top-level-refs-after-packing (2014-08-25) 1 commit
-  (merged to 'next' on 2014-09-04 at bfe3873)
- + pack-refs: prune top-level refs like "refs/foo"
-
- After "pack-refs --prune" packed refs at the top-level, it failed
- to prune them.
-
-
-* jn/unpack-trees-checkout-m-carry-deletion (2014-08-25) 3 commits
-  (merged to 'next' on 2014-09-04 at e15803a)
- + checkout -m: attempt merge when deletion of path was staged
- + unpack-trees: use 'cuddled' style for if-else cascade
- + unpack-trees: simplify 'all other failures' case
-
- "git checkout -m" did not switch to another branch while carrying
- the local changes forward when a path was deleted from the index.
-
-
-* mm/discourage-commit-a-to-finish-conflict-resolution (2014-08-28) 1 commit
-  (merged to 'next' on 2014-09-03 at e3f872f)
- + merge, pull: stop advising 'commit -a' in case of conflict
-
-
-* nd/fetch-pass-quiet-to-gc-child-process (2014-08-18) 2 commits
-  (merged to 'next' on 2014-09-04 at 028cd42)
- + fetch: silence git-gc if --quiet is given
- + fetch: convert argv_gc_auto to struct argv_array
-
- Progress output from "git gc --auto" was visible in "git fetch -q".
-
-
-* nd/large-blobs (2014-08-18) 5 commits
-  (merged to 'next' on 2014-09-04 at 16d7c62)
- + diff: shortcut for diff'ing two binary SHA-1 objects
- + diff --stat: mark any file larger than core.bigfilethreshold binary
- + diff.c: allow to pass more flags to diff_populate_filespec
- + sha1_file.c: do not die failing to malloc in unpack_compressed_entry
- + wrapper.c: introduce gentle xmallocz that does not die()
-
- Teach a few codepaths to punt (instead of dying) when large blobs
- that would not fit in core are involved in the operation.
-
-
-* nd/mv-code-cleaning (2014-09-03) 8 commits
-  (merged to 'next' on 2014-09-03 at 4315447)
- + mv: no SP between function name and the first opening parenthese
- + mv: combine two if(s)
- + mv: unindent one level for directory move code
- + mv: move index search code out
- + mv: remove an "if" that's always true
- + mv: split submodule move preparation code out
- + mv: flatten error handling code block
- + mv: mark strings for translations
-
- Code clean-up.
-
-
-* rs/child-process-init (2014-08-20) 4 commits
-  (merged to 'next' on 2014-09-03 at c17c06c)
- + run-command: inline prepare_run_command_v_opt()
- + run-command: call run_command_v_opt_cd_env() instead of duplicating it
- + run-command: introduce child_process_init()
- + run-command: introduce CHILD_PROCESS_INIT
-
- Code clean-up.
-
-
-* rs/list-optim (2014-08-25) 2 commits
-  (merged to 'next' on 2014-09-04 at eecaf99)
- + walker: avoid quadratic list insertion in mark_complete
- + sha1_name: avoid quadratic list insertion in handle_one_ref
-
- Fix a couple of "accumulate into a sorted list" to "accumulate and
- then sort the list".
-
-
-* rs/ref-transaction-1 (2014-09-03) 22 commits
-  (merged to 'next' on 2014-09-03 at 68e20b8)
- + update-ref --stdin: pass transaction around explicitly
- + update-ref --stdin: narrow scope of err strbuf
- + refs.c: make delete_ref use a transaction
- + refs.c: make prune_ref use a transaction to delete the ref
- + refs.c: remove lock_ref_sha1
- + refs.c: remove the update_ref_write function
- + refs.c: remove the update_ref_lock function
- + refs.c: make lock_ref_sha1 static
- + walker.c: use ref transaction for ref updates
- + fast-import.c: use a ref transaction when dumping tags
- + receive-pack.c: use a reference transaction for updating the refs
- + refs.c: change update_ref to use a transaction
- + branch.c: use ref transaction for all ref updates
- + fast-import.c: change update_branch to use ref transactions
- + sequencer.c: use ref transactions for all ref updates
- + commit.c: use ref transactions for updates
- + replace.c: use the ref transaction functions for updates
- + tag.c: use ref transactions when doing updates
- + refs.c: add transaction.status and track OPEN/CLOSED
- + refs.c: make ref_transaction_begin take an err argument
- + refs.c: update ref_transaction_delete to check for error and return status
- + refs.c: change ref_transaction_create to do error checking and return status
- (this branch is used by rs/ref-transaction, rs/ref-transaction-multi, rs/ref-transaction-reflog and rs/ref-transaction-rename.)
-
- The second batch of the transactional ref update series.
-
-
-* ta/config-set-1 (2014-08-07) 8 commits
-  (merged to 'next' on 2014-09-03 at 184b2ef)
- + add tests for `git_config_get_string_const()`
- + add a test for semantic errors in config files
- + rewrite git_config() to use the config-set API
- + config: add `git_die_config()` to the config-set API
- + change `git_config()` return value to void
- + add line number and file name info to `config_set`
- + config.c: fix accuracy of line number in errors
- + config.c: mark error and warnings strings for translation
- (this branch is used by ta/config-set-2.)
-
- Use the new caching config-set API in git_config() calls.
-
-
-* ta/config-set-2 (2014-08-13) 15 commits
-  (merged to 'next' on 2014-09-03 at f2eff02)
- + builtin/apply.c: replace `git_config()` with `git_config_get_string_const()`
- + merge-recursive.c: replace `git_config()` with `git_config_get_int()`
- + ll-merge.c: refactor `read_merge_config()` to use `git_config_string()`
- + fast-import.c: replace `git_config()` with `git_config_get_*()` family
- + branch.c: replace `git_config()` with `git_config_get_string()
- + alias.c: replace `git_config()` with `git_config_get_string()`
- + imap-send.c: replace `git_config()` with `git_config_get_*()` family
- + pager.c: replace `git_config()` with `git_config_get_value()`
- + builtin/gc.c: replace `git_config()` with `git_config_get_*()` family
- + rerere.c: replace `git_config()` with `git_config_get_*()` family
- + fetchpack.c: replace `git_config()` with `git_config_get_*()` family
- + archive.c: replace `git_config()` with `git_config_get_bool()` family
- + read-cache.c: replace `git_config()` with `git_config_get_*()` family
- + http-backend.c: replace `git_config()` with `git_config_get_bool()` family
- + daemon.c: replace `git_config()` with `git_config_get_bool()` family
- (this branch uses ta/config-set-1.)
-
- Update git_config() users with callback functions for a very narrow
- scope with calls to config-set API that lets us query a single
- variable.
-
---------------------------------------------------
 [New Topics]
 
-* jc/hash-object (2014-09-11) 3 commits
- - hash-object: add --literally option
- - hash-object: pass 'write_object' as a flag
- - hash-object: reduce file-scope statics
- (this branch is used by jc/hash-object-fsck-tag.)
+* jk/faster-name-conflicts (2014-09-12) 1 commit
+ - refs: speed up is_refname_available
 
- "hash-object" learned a new "--literally" option to hash any random
- garbage into a loose object, to allow us to create a test data for
- mechanisms to catch corrupt objects.
-
-
-* jc/hash-object-fsck-tag (2014-09-11) 2 commits
- - t1450: make sure fsck detects a malformed tagger line
- - Merge branch 'js/fsck-tag-validation' into HEAD
- (this branch uses jc/hash-object and js/fsck-tag-validation.)
-
- Using "hash-object --literally", test one of the new breakages
- js/fsck-tag-validation topic teaches "fsck" to catch is caught.
-
-
-* jk/fsck-exit-code-fix (2014-09-10) 1 commit
- - fsck: exit with non-zero status upon error from fsck_obj()
-
- "git fsck" failed to report that it found corrupt objects via its
- exit status in some cases.
+ Optimize the check to see if a ref $F can be created by making sure
+ no existing ref has $F/ as its prefix, which especially matters in
+ a repository with a large number of existing refs.
 
  Will merge to 'next'.
 
 
-* js/fsck-tag-validation (2014-09-11) 6 commits
- - Make sure that index-pack --strict checks tag objects
- - Add regression tests for stricter tag fsck'ing
- - fsck: check tag objects' headers
- - Make sure fsck_commit_buffer() does not run out of the buffer
- - fsck_object(): allow passing object data separately from the object itself
- - Refactor type_from_string() to allow continuing after detecting an error
- (this branch is used by jc/hash-object-fsck-tag.)
+* jk/write-packed-refs-via-stdio (2014-09-10) 1 commit
+ - refs: write packed_refs file using stdio
 
- Teach "git fsck" to inspect the contents of annotated tag objects.
+ Optimize the code path to write out the packed-refs file, which
+ especially matters in a repository with a large number of refs.
+
+ Will merge to 'next'.
+
+
+* js/no-test-cmp-for-binaries (2014-09-12) 1 commit
+  (merged to 'next' on 2014-09-15 at c5609e9)
+ + t9300: use test_cmp_bin instead of test_cmp to compare binary files
+
+ Will merge to 'master'.
+
+
+* sp/doc-update-index-cacheinfo (2014-09-11) 1 commit
+  (merged to 'next' on 2014-09-15 at 11ec716)
+ + Documentation: use single-parameter --cacheinfo in example
+
+ Will merge to 'master'.
+
+
+* wk/pre-push-sample-hook (2014-09-11) 1 commit
+  (merged to 'next' on 2014-09-18 at 6f8c9d7)
+ + pre-push.sample: Write error message to stderr
+
+ Will merge to 'master'.
+
+
+* da/include-compat-util-first-in-c (2014-09-15) 4 commits
+ - SQUASH???
+ - check-headers: add header usage checks for .c files
+ - Makefile: add check-headers target
+ - cleanups: ensure that git-compat-util.h is included first
+
+
+* da/rev-parse-verify-quiet (2014-09-18) 4 commits
+ - stash: prefer --quiet over shell redirection of the standard error stream
+ - refs: make rev-parse --quiet actually quiet
+ - t1503: use test_must_be_empty
+ - Documentation: a note about stdout for git rev-parse --verify --quiet
+
+
+* hj/pretty-naked-decoration (2014-09-16) 2 commits
+ - SQUASH???
+ - pretty: add %D format specifier
+
+
+* ir/makefile-typofix (2014-09-15) 1 commit
+  (merged to 'next' on 2014-09-18 at bc1c273)
+ + Makefile: fix some typos in the preamble
+
+ Will merge to 'master'.
+
+
+* jc/ignore-sigpipe-while-running-hooks (2014-09-16) 1 commit
+ - receive-pack: allow hooks to ignore its standard input stream
+
+ Will merge to 'next'.
+
+
+* jk/close-stderr-of-credential-cache-deamon (2014-09-16) 1 commit
+ - credential-cache: close stderr in daemon process
+
+ Will merge to 'next'.
+
+
+* jk/mbox-from-line (2014-09-16) 1 commit
+ - mailinfo: make ">From" in-body header check more robust
+
+ Will merge to 'next'.
+
+
+* jk/prune-packed-server-info (2014-09-15) 4 commits
+ - repack: call prune_packed_objects() and update_server_info() directly
+ - server-info: clean up after writing info/packs
+ - make update-server-info more robust
+ - prune-packed: fix minor memory leak
+
+ Will merge to 'next'.
+
+
+* mr/mark-i18n-log-rerere (2014-09-15) 2 commits
+  (merged to 'next' on 2014-09-15 at ba35eb3)
+ + builtin/log.c: mark strings for translation
+ + rerere.h: mark string for translation
+
+ Will merge to 'master'.
+
+
+* pr/use-default-sigpipe-setting (2014-09-18) 1 commit
+ - unblock and unignore SIGPIPE
+
+ Will merge to 'next'.
+
+
+* rs/realloc-array (2014-09-18) 2 commits
+ - use REALLOC_ARRAY for changing the allocation size of arrays
+ - add macro REALLOC_ARRAY
+
+ Will merge to 'next'.
+
+
+* so/rebase-doc (2014-09-16) 1 commit
+  (merged to 'next' on 2014-09-18 at cce521d)
+ + Documentation/git-rebase.txt: <upstream> must be given to specify <branch>
+
+ Will merge to 'master'.
+
+
+* ss/compat-default-source-for-newer-gnu (2014-09-15) 1 commit
+  (merged to 'next' on 2014-09-15 at 0e87594)
+ + compat-util: add _DEFAULT_SOURCE define
+
+ Will merge to 'master'.
+
+
+* jk/branch-verbose-merged (2014-09-18) 1 commit
+ - branch: clean up commit flags after merge-filter walk
+
+ Will merge to 'next'.
+
+
+* sb/help-unknown-command-sort-fix (2014-09-18) 1 commit
+ - help: fix the size passed to qsort
 
  Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
 
-* rs/ref-transaction-multi (2014-09-03) 7 commits
- - ### rs/ref-transaction-multi
- - refs.c: make the *_packed_refs functions static
- - refs.c: make repack_without_refs static
- - remote.c: use a transaction for deleting refs
- - refs.c: write updates to packed refs when a transaction has more than one ref
- - refs.c: move reflog updates into its own function
- - ### rs/ref-transaction-rename
- (this branch uses rs/ref-transaction, rs/ref-transaction-reflog and rs/ref-transaction-rename.)
+* tr/remerge-diff (2014-09-08) 8 commits
+ - log --remerge-diff: show what the conflict resolution changed
+ - name-hash: allow dir hashing even when !ignore_case
+ - merge-recursive: allow storing conflict hunks in index
+ - merge_diff_mode: fold all merge diff variants into an enum
+ - combine-diff: do not pass revs->dense_combined_merges redundantly
+ - merge-recursive: -Xindex-only to leave worktree unchanged
+ - merge-recursive: internal flag to avoid touching the worktree
+ - merge-recursive: remove dead conditional in update_stages()
 
- Follow-up on rs/ref-transaction series to use the packed-ref to
- achieve atomicity when multiple refs are involved.
+ "log -p" output learns a new way to let users inspect a merge
+ commit by showing the differences between the automerged result
+ with conflicts the person who recorded the merge would have seen
+ and the final conflict resolution that was recorded in the merge.
 
- It appears that rs/ref-transaction series is being rerolled, so
- these will be rerolled as well.
-
-
-* rs/ref-transaction-rename (2014-09-03) 6 commits
- - refs.c: rollback the lockfile before we die() in repack_without_refs
- - refs.c: update rename_ref to use a transaction
- - refs.c: use packed refs when deleting refs during a transaction
- - refs.c: return error instead of dying when locking fails during transaction
- - refs.c: allow passing raw git_committer_info as email to _update_reflog
- - ### rs/ref-transaction-reflog
- (this branch is used by rs/ref-transaction-multi; uses rs/ref-transaction and rs/ref-transaction-reflog.)
-
- Follow-up on rs/ref-transaction series to make renaming a ref
- transactional (i.e. "delete old and create new" should not leave
- an in-between state behind when it fails).
-
- It appears that rs/ref-transaction series is being rerolled, so
- these will be rerolled as well.
-
-
-* rs/ref-transaction-reflog (2014-09-03) 16 commits
- - refs.c: allow deleting refs with a broken sha1
- - refs.c: remove lock_any_ref_for_update
- - refs.c: make unlock_ref/close_ref/commit_ref static
- - refs.c: rename log_ref_setup to create_reflog
- - reflog.c: use a reflog transaction when writing during expire
- - refs.c: allow multiple reflog updates during a single transaction
- - refs.c: only write reflog update if msg is non-NULL
- - refs.c: add a flag to allow reflog updates to truncate the log
- - refs.c: add a transaction function to append a reflog entry
- - lockfile.c: make hold_lock_file_for_append preserve meaningful errno
- - refs.c: add a function to append a reflog entry to a fd
- - refs.c: add a new update_type field to ref_update
- - refs.c: rename the transaction functions
- - refs.c: make ref_transaction_delete a wrapper for ref_transaction_update
- - refs.c: make ref_transaction_create a wrapper to ref_transaction_update
- - ### rs/ref-transaction
- (this branch is used by rs/ref-transaction-multi and rs/ref-transaction-rename; uses rs/ref-transaction.)
-
- Cover updates to reflog with the same transaction mechanism as used
- for reflog manipulations.
-
- It appears that rs/ref-transaction series is being rerolled, so
- these will be rerolled as well.
-
-
-* rs/ref-transaction (2014-09-03) 13 commits
- - refs.c: fix handling of badly named refs
- - refs.c: make write_ref_sha1 static
- - fetch.c: change s_update_ref to use a ref transaction
- - refs.c: propagate any errno==ENOTDIR from _commit back to the callers
- - refs.c: pass a skip list to name_conflict_fn
- - refs.c: call lock_ref_sha1_basic directly from commit
- - refs.c: move the check for valid refname to lock_ref_sha1_basic
- - refs.c: pass NULL as *flags to read_ref_full
- - refs.c: pass the ref log message to _create/delete/update instead of _commit
- - refs.c: add an err argument to delete_ref_loose
- - wrapper.c: add a new function unlink_or_msg
- - wrapper.c: simplify warn_if_unremovable
- - ### rs/ref-transaction-1
- (this branch is used by rs/ref-transaction-multi, rs/ref-transaction-reflog and rs/ref-transaction-rename.)
-
- Rerolled and was asked to wait.  Seems to break "git remote rm".
+ Review comments sent.
 
 
 * hv/submodule-config (2014-06-30) 4 commits
@@ -553,80 +369,147 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* rs/ref-transaction (2014-09-12) 20 commits
+ . remote rm/prune: print a message when writing packed-refs fails
+ . ref_transaction_commit: bail out on failure to remove a ref
+ . lockfile: remove unable_to_lock_error
+ . refs.c: do not permit err == NULL
+ . for-each-ref.c: improve message before aborting on broken ref
+ . refs.c: fix handling of badly named refs
+ . branch -d: avoid repeated symref resolution
+ . refs.c: change resolve_ref_unsafe reading argument to be a flags field
+ . refs.c: make write_ref_sha1 static
+ . fetch.c: change s_update_ref to use a ref transaction
+ . refs.c: ref_transaction_commit: distinguish name conflicts from other errors
+ . refs.c: pass a skip list to name_conflict_fn
+ . refs.c: call lock_ref_sha1_basic directly from commit
+ . refs.c: move the check for valid refname to lock_ref_sha1_basic
+ . rename_ref: don't ask read_ref_full where the ref came from
+ . refs.c: pass the ref log message to _create/delete/update instead of _commit
+ . refs.c: add an err argument to delete_ref_loose
+ . wrapper.c: add a new function unlink_or_msg
+ . wrapper.c: remove/unlink_or_warn: simplify, treat ENOENT as success
+ . mv test: recreate mod/ directory instead of relying on stale copy
+
+ Rerolled and was asked to wait.  Seems to break HEAD reflog
+ upon "checkout HEAD^0".
+
+ Expecting another reroll.
+
+
+* jc/hash-object (2014-09-11) 3 commits
+ - hash-object: add --literally option
+ - hash-object: pass 'write_object' as a flag
+ - hash-object: reduce file-scope statics
+ (this branch is used by jc/hash-object-fsck-tag.)
+
+ "hash-object" learned a new "--literally" option to hash any random
+ garbage into a loose object, to allow us to create a test data for
+ mechanisms to catch corrupt objects.
+
+ Will merge to 'next'.
+
+
+* jc/hash-object-fsck-tag (2014-09-12) 2 commits
+ - t1450: make sure fsck detects a malformed tagger line
+ - Merge branch 'js/fsck-tag-validation' into HEAD
+ (this branch uses jc/hash-object and js/fsck-tag-validation.)
+
+ Using "hash-object --literally", test one of the new breakages
+ js/fsck-tag-validation topic teaches "fsck" to catch is caught.
+
+ Will merge to 'next'.
+
+
+* jk/fsck-exit-code-fix (2014-09-12) 2 commits
+  (merged to 'next' on 2014-09-18 at 34c696f)
+ + fsck: return non-zero status on missing ref tips
+ + fsck: exit with non-zero status upon error from fsck_obj()
+
+ "git fsck" failed to report that it found corrupt objects via its
+ exit status in some cases.
+
+ Will merge to 'master'.
+
+
+* js/fsck-tag-validation (2014-09-12) 6 commits
+ - Make sure that index-pack --strict checks tag objects
+ - Add regression tests for stricter tag fsck'ing
+ - fsck: check tag objects' headers
+ - Make sure fsck_commit_buffer() does not run out of the buffer
+ - fsck_object(): allow passing object data separately from the object itself
+ - Refactor type_from_string() to allow continuing after detecting an error
+ (this branch is used by jc/hash-object-fsck-tag.)
+
+ Teach "git fsck" to inspect the contents of annotated tag objects.
+
+ Will merge to 'next'.
+
+
 * as/calloc-takes-nmemb-then-size (2014-09-03) 1 commit
- - calloc() and xcalloc() takes nmemb and then size
+  (merged to 'next' on 2014-09-12 at a287484)
+ + calloc() and xcalloc() takes nmemb and then size
 
  Code clean-up.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * tb/complete-diff-ignore-blank-lines (2014-09-03) 1 commit
- - completion: Add --ignore-blank-lines for diff
+  (merged to 'next' on 2014-09-12 at 1b7d259)
+ + completion: Add --ignore-blank-lines for diff
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jc/parseopt-verify-short-name (2014-09-04) 1 commit
- - parse-options: detect attempt to add a duplicate short option name
+  (merged to 'next' on 2014-09-12 at 43dba24)
+ + parse-options: detect attempt to add a duplicate short option name
 
  Add checks for a common programming mistake to assign the same
  short option name to two separate options to help developers.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * rs/more-uses-of-skip-prefix (2014-09-02) 2 commits
- - pack-write: simplify index_pack_lockfile using skip_prefix() and xstrfmt()
- - connect: simplify check_ref() using skip_prefix() and starts_with()
+  (merged to 'next' on 2014-09-12 at 156a436)
+ + pack-write: simplify index_pack_lockfile using skip_prefix() and xstrfmt()
+ + connect: simplify check_ref() using skip_prefix() and starts_with()
 
  Code clean-up.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * kb/perf-trace (2014-09-08) 1 commit
- - trace: correct trace_strbuf() parameter type for !HAVE_VARIADIC_MACROS
+  (merged to 'next' on 2014-09-12 at 371df71)
+ + trace: correct trace_strbuf() parameter type for !HAVE_VARIADIC_MACROS
 
  Compilation fix for some compilers.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * rs/export-strbuf-addchars (2014-09-08) 2 commits
- - strbuf: use strbuf_addchars() for adding a char multiple times
- - strbuf: export strbuf_addchars()
+  (merged to 'next' on 2014-09-12 at 8b25fe0)
+ + strbuf: use strbuf_addchars() for adding a char multiple times
+ + strbuf: export strbuf_addchars()
 
  Code clean-up.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* tr/remerge-diff (2014-09-08) 8 commits
- - log --remerge-diff: show what the conflict resolution changed
- - name-hash: allow dir hashing even when !ignore_case
- - merge-recursive: allow storing conflict hunks in index
- - merge_diff_mode: fold all merge diff variants into an enum
- - combine-diff: do not pass revs->dense_combined_merges redundantly
- - merge-recursive: -Xindex-only to leave worktree unchanged
- - merge-recursive: internal flag to avoid touching the worktree
- - merge-recursive: remove dead conditional in update_stages()
-
- "log -p" output learns a new way to let users inspect a merge
- commit by showing the differences between the automerged result
- with conflicts the person who recorded the merge would have seen
- and the final conflict resolution that was recorded in the merge.
-
- Review comments sent.
-
-
-* mh/lockfile (2014-09-11) 33 commits
- - lockfile.c: store absolute path
- - Extract a function commit_lock_file_to()
- - trim_last_path_elm(): replace last_path_elm()
+* mh/lockfile (2014-09-16) 35 commits
+ - get_locked_file_path(): new function
+ - lockfile.c: rename static functions
+ - lockfile: rename LOCK_NODEREF to LOCK_NO_DEREF
+ - commit_locked_index(): extract a function commit_lock_file_to()
+ - trim_last_path_component(): replace last_path_elm()
  - resolve_symlink(): take a strbuf parameter
  - resolve_symlink(): use a strbuf for internal scratch space
- - Change lock_file::filename into a strbuf
+ - struct lock_file: change the filename member into a strbuf
  - commit_lock_file(): use a strbuf to manage temporary space
  - try_merge_strategy(): use a statically-allocated lock_file object
  - try_merge_strategy(): remove redundant lock_file allocation
@@ -655,52 +538,51 @@ of the repositories listed at
  - api-lockfile: expand the documentation
  - unable_to_lock_die(): rename function from unable_to_lock_index_die()
 
- Rerolled and reviews starting.
+ Rerolled, reviews in progress; it seems that we will see another reroll?
 
 
-* nd/multiple-work-trees (2014-09-03) 32 commits
- . t2025: add a test to make sure grafts is working from a linked checkout
- . checkout: don't require a work tree when checking out into a new one
- . git_path(): keep "info/sparse-checkout" per work-tree
- . count-objects: report unused files in $GIT_DIR/repos/...
- . gc: support prune --repos
- . gc: factor out gc.pruneexpire parsing code
- . gc: style change -- no SP before closing parenthesis
- . prune: strategies for linked checkouts
- . checkout: reject if the branch is already checked out elsewhere
- . checkout: clean up half-prepared directories in --to mode
- . checkout: support checking out into a new working directory
- . use new wrapper write_file() for simple file writing
- . wrapper.c: wrapper to open a file, fprintf then close
- . setup.c: support multi-checkout repo setup
- . setup.c: detect $GIT_COMMON_DIR check_repository_format_gently()
- . setup.c: convert check_repository_format_gently to use strbuf
- . setup.c: detect $GIT_COMMON_DIR in is_git_directory()
- . setup.c: convert is_git_directory() to use strbuf
- . git-stash: avoid hardcoding $GIT_DIR/logs/....
- . *.sh: avoid hardcoding $GIT_DIR/hooks/...
- . git-sh-setup.sh: use rev-parse --git-path to get $GIT_DIR/objects
- . $GIT_COMMON_DIR: a new environment variable
- . commit: use SEQ_DIR instead of hardcoding "sequencer"
- . fast-import: use git_path() for accessing .git dir instead of get_git_dir()
- . reflog: avoid constructing .lock path with git_path
- . *.sh: respect $GIT_INDEX_FILE
- . git_path(): be aware of file relocation in $GIT_DIR
- . path.c: group git_path(), git_pathdup() and strbuf_git_path() together
- . path.c: rename vsnpath() to do_git_path()
- . git_snpath(): retire and replace with strbuf_git_path()
- . path.c: make get_pathname() call sites return const char *
- . path.c: make get_pathname() return strbuf instead of static buffer
+* nd/multiple-work-trees (2014-09-16) 32 commits
+ - t2025: add a test to make sure grafts is working from a linked checkout
+ - checkout: don't require a work tree when checking out into a new one
+ - git_path(): keep "info/sparse-checkout" per work-tree
+ - count-objects: report unused files in $GIT_DIR/worktrees/...
+ - gc: support prune --worktrees
+ - gc: factor out gc.pruneexpire parsing code
+ - gc: style change -- no SP before closing parenthesis
+ - checkout: clean up half-prepared directories in --to mode
+ - checkout: reject if the branch is already checked out elsewhere
+ - prune: strategies for linked checkouts
+ - checkout: support checking out into a new working directory
+ - use new wrapper write_file() for simple file writing
+ - wrapper.c: wrapper to open a file, fprintf then close
+ - setup.c: support multi-checkout repo setup
+ - setup.c: detect $GIT_COMMON_DIR check_repository_format_gently()
+ - setup.c: convert check_repository_format_gently to use strbuf
+ - setup.c: detect $GIT_COMMON_DIR in is_git_directory()
+ - setup.c: convert is_git_directory() to use strbuf
+ - git-stash: avoid hardcoding $GIT_DIR/logs/....
+ - *.sh: avoid hardcoding $GIT_DIR/hooks/...
+ - git-sh-setup.sh: use rev-parse --git-path to get $GIT_DIR/objects
+ - $GIT_COMMON_DIR: a new environment variable
+ - commit: use SEQ_DIR instead of hardcoding "sequencer"
+ - fast-import: use git_path() for accessing .git dir instead of get_git_dir()
+ - reflog: avoid constructing .lock path with git_path
+ - *.sh: respect $GIT_INDEX_FILE
+ - git_path(): be aware of file relocation in $GIT_DIR
+ - path.c: group git_path(), git_pathdup() and strbuf_git_path() together
+ - path.c: rename vsnpath() to do_git_path()
+ - git_snpath(): retire and replace with strbuf_git_path()
+ - path.c: make get_pathname() call sites return const char *
+ - path.c: make get_pathname() return strbuf instead of static buffer
 
  A replacement for contrib/workdir/git-new-workdir that does not
  rely on symbolic links and make sharing of objects and refs safer
  by making the borrowee and borrowers aware of each other.
 
- Re-reroll posted but haven't had a chance to pick it up yet.
- The series already received a few comments.
+ Rerolled, reviews in progress; it seems that we will see another reroll?
 
 
-* cc/interpret-trailers (2014-05-28) 11 commits
+* cc/interpret-trailers (2014-09-15) 11 commits
  - Documentation: add documentation for 'git interpret-trailers'
  - trailer: add tests for commands in config file
  - trailer: execute command from 'trailer.<name>.command'
@@ -716,35 +598,39 @@ of the repositories listed at
  A new filter to programatically edit the tail end of the commit log
  messages.
 
- Comments & reviews?
+ Rerolled, with some review comments but not much; it seems that we
+ will see another reroll?
 
 
 * bb/date-iso-strict (2014-08-29) 1 commit
- - pretty: provide a strict ISO 8601 date format
+  (merged to 'next' on 2014-09-12 at c9d415d)
+ + pretty: provide a strict ISO 8601 date format
 
  "log --date=iso" uses a slight variant of ISO 8601 format that is
  made more human readable.  A new "--date=iso-strict" option gives
  datetime output that is more strictly conformant.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jk/commit-author-parsing (2014-08-29) 6 commits
- - determine_author_info(): copy getenv output
- - determine_author_info(): reuse parsing functions
- - date: use strbufs in date-formatting functions
- - record_author_date(): use find_commit_header()
- - record_author_date(): fix memory leak on malformed commit
- - commit: provide a function to find a header in a buffer
+  (merged to 'next' on 2014-09-12 at cfbb6b6)
+ + determine_author_info(): copy getenv output
+ + determine_author_info(): reuse parsing functions
+ + date: use strbufs in date-formatting functions
+ + record_author_date(): use find_commit_header()
+ + record_author_date(): fix memory leak on malformed commit
+ + commit: provide a function to find a header in a buffer
 
  Code clean-up.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jk/fast-export-anonymize (2014-08-28) 2 commits
- - docs/fast-export: explain --anonymize more completely
- - teach fast-export an --anonymize option
+  (merged to 'next' on 2014-09-12 at 0af10fa)
+ + docs/fast-export: explain --anonymize more completely
+ + teach fast-export an --anonymize option
 
  Sometimes users want to report a bug they experience on their
  repository, but they are not at liberty to share the contents of
@@ -752,33 +638,36 @@ of the repositories listed at
  to replace blob contents, names of people and paths and log
  messages with bland and simple strings to help them.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jk/index-pack-threading-races (2014-08-29) 1 commit
- - index-pack: fix race condition with duplicate bases
+  (merged to 'next' on 2014-09-12 at 9241312)
+ + index-pack: fix race condition with duplicate bases
 
  When receiving an invalid pack stream that records the same object
  twice, multiple threads got confused due to a race.  We should
  reject or correct such a stream upon receiving, but that will be a
  larger change.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jk/send-pack-many-refspecs (2014-08-26) 1 commit
- - send-pack: take refspecs over stdin
+  (merged to 'next' on 2014-09-12 at 7f4ae4e)
+ + send-pack: take refspecs over stdin
 
  The number of refs that can be pushed at once over smart HTTP was
  limited by the command line length.  The limitation has been lifted
  by passing these refs from the standard input of send-pack.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jp/index-with-corrupt-stages (2014-08-29) 2 commits
- - read_index_unmerged(): remove unnecessary loop index adjustment
- - read_index_from(): catch out of order entries when reading an index file
+  (merged to 'next' on 2014-09-12 at 54016d5)
+ + read_index_unmerged(): remove unnecessary loop index adjustment
+ + read_index_from(): catch out of order entries when reading an index file
 
  A broken reimplementation of Git could write an invalid index that
  records both stage #0 and higher stage entries for the same path.
@@ -787,86 +676,94 @@ of the repositories listed at
  remove higher stage entries, or if it wanted to unresolve and
  forgot to remove the stage#0 entry).
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * mb/build-contrib-svn-fe (2014-08-28) 1 commit
- - contrib/svn-fe: fix Makefile
+  (merged to 'next' on 2014-09-12 at acb252b)
+ + contrib/svn-fe: fix Makefile
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * mb/fast-import-delete-root (2014-08-29) 2 commits
- - fast-import: fix segfault in store_tree()
- - t9300: test filedelete command
+  (merged to 'next' on 2014-09-12 at d0fda49)
+ + fast-import: fix segfault in store_tree()
+ + t9300: test filedelete command
 
  An attempt to remove the entire tree in the "git fast-import" input
  stream caused it to misbehave.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * ah/grammofix (2014-09-02) 1 commit
- - grammofix in user-facing messages
+  (merged to 'next' on 2014-09-12 at 58fbb44)
+ + grammofix in user-facing messages
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * da/styles (2014-09-02) 1 commit
- - stylefix: asterisks stick to the variable, not the type
+  (merged to 'next' on 2014-09-12 at a22322e)
+ + stylefix: asterisks stick to the variable, not the type
 
- Will merge to 'next'.
-
-
-* da/use-rev-parse-verify-quiet-in-stash (2014-09-09) 1 commit
- - stash: prefer --quiet over shell redirection of the standard error stream
-
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * mk/reachable-protect-detached-head (2014-09-03) 1 commit
- - reachable.c: add HEAD to reachability starting commits
+  (merged to 'next' on 2014-09-12 at de2b50b)
+ + reachable.c: add HEAD to reachability starting commits
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * rs/merge-tree-simplify (2014-09-02) 1 commit
- - merge-tree: remove unused df_conflict arguments
+  (merged to 'next' on 2014-09-12 at 5b4c349)
+ + merge-tree: remove unused df_conflict arguments
 
  Code clean-up.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * rs/simplify-config-include (2014-09-02) 1 commit
- - config: simplify git_config_include()
+  (merged to 'next' on 2014-09-12 at e4ffd6d)
+ + config: simplify git_config_include()
 
  Code clean-up.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * rs/simplify-http-walker (2014-09-02) 1 commit
- - http-walker: simplify process_alternates_response() using strbuf
+  (merged to 'next' on 2014-09-12 at b5178d2)
+ + http-walker: simplify process_alternates_response() using strbuf
 
  Code clean-up.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * tb/crlf-tests (2014-09-02) 3 commits
- - MinGW: update tests to handle a native eol of crlf
- - Makefile: propagate NATIVE_CRLF to C
- - t0027: Tests for core.eol=native, eol=lf, eol=crlf
+  (merged to 'next' on 2014-09-12 at 2c950af)
+ + MinGW: update tests to handle a native eol of crlf
+ + Makefile: propagate NATIVE_CRLF to C
+ + t0027: Tests for core.eol=native, eol=lf, eol=crlf
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* ta/config-add-to-empty-or-true-fix (2014-08-18) 1 commit
+* ta/config-add-to-empty-or-true-fix (2014-09-11) 2 commits
+  (merged to 'next' on 2014-09-15 at af779a7)
+ + config: avoid a funny sentinel value "a^"
   (merged to 'next' on 2014-08-29 at d219212)
  + make config --add behave correctly for empty and NULL values
 
- We may want to undo the "a^" bit along the lines of $gmane/255445
+ "git config --add section.var val" used to lose existing
+ section.var whose value was an empty string.
+
+ Will merge to 'master'.
 
 
 * sp/stream-clean-filter (2014-08-28) 6 commits
@@ -880,8 +777,9 @@ of the repositories listed at
  Rerolled.  Comments & reviews?
 
 
-* jc/push-cert (2014-09-08) 22 commits
+* jc/push-cert (2014-09-17) 23 commits
  - signed push: allow stale nonce in stateless mode
+ - signed push: teach smart-HTTP to pass "git push --signed" around
  - signed push: fortify against replay attacks
  - signed push: add "pushee" header to push certificate
  - signed push: remove duplicated protocol info
@@ -909,7 +807,7 @@ of the repositories listed at
  tips of branches at a public repository really point the commits
  the pusher wanted to, without having to "trust" the server.
 
- Comments & reviews?
+ Will start merging early bits to 'next'.
 
 
 * jc/test-lazy-prereq (2014-06-13) 1 commit
@@ -929,5 +827,16 @@ of the repositories listed at
  is backward incompatible, the last bit to flip it to be the default
  is left out of 'master' for now.
 
- Nobody seems to be jumping up & down requesting this last step.
- Perhaps will drop.
+ Nobody seems to be jumping up & down requesting this last step,
+ which makes the result somewhat backward incompatible.
+ Will perhaps drop.
+
+--------------------------------------------------
+[Discarded]
+
+* rs/ref-transaction-multi (2014-09-03) 7 commits
+* rs/ref-transaction-rename (2014-09-03) 6 commits
+* rs/ref-transaction-reflog (2014-09-03) 29 commits
+
+ It appears that rs/ref-transaction series is being rerolled, so
+ these will be rerolled as well.
