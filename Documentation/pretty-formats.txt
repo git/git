@@ -128,6 +128,7 @@ The placeholders are:
 - '%ct': committer date, UNIX timestamp
 - '%ci': committer date, ISO 8601 format
 - '%d': ref names, like the --decorate option of linkgit:git-log[1]
+- '%D': ref names without the " (", ")" wrapping.
 - '%e': encoding
 - '%s': subject
 - '%f': sanitized subject line, suitable for a filename
@@ -182,8 +183,9 @@ The placeholders are:
 NOTE: Some placeholders may depend on other options given to the
 revision traversal engine. For example, the `%g*` reflog options will
 insert an empty string unless we are traversing reflog entries (e.g., by
-`git log -g`). The `%d` placeholder will use the "short" decoration
-format if `--decorate` was not already provided on the command line.
+`git log -g`). The `%d` and `%D` placeholders will use the "short"
+decoration format if `--decorate` was not already provided on the command
+line.
 
 If you add a `+` (plus sign) after '%' of a placeholder, a line-feed
 is inserted immediately before the expansion if and only if the
