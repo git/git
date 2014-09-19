@@ -2687,7 +2687,7 @@ test_expect_success 'R: verify created pack' '
 test_expect_success \
 	'R: verify written objects' \
 	'git --git-dir=R/.git cat-file blob big-file:big1 >actual &&
-	 test_cmp expect actual &&
+	 test_cmp_bin expect actual &&
 	 a=$(git --git-dir=R/.git rev-parse big-file:big1) &&
 	 b=$(git --git-dir=R/.git rev-parse big-file:big2) &&
 	 test $a = $b'
