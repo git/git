@@ -151,4 +151,11 @@ test_expect_success 'delete ref while another dangling packed ref' '
 	test_cmp /dev/null result
 '
 
+test_expect_success 'pack ref directly below refs/' '
+	git update-ref refs/top HEAD &&
+	git pack-refs --all --prune &&
+	grep refs/top .git/packed-refs &&
+	test_path_is_missing .git/refs/top
+'
+
 test_done
