@@ -221,7 +221,7 @@ static int show_http_message(struct strbuf *type, struct strbuf *charset,
 	return 0;
 }
 
-static struct discovery* discover_refs(const char *service, int for_push)
+static struct discovery *discover_refs(const char *service, int for_push)
 {
 	struct strbuf exp = STRBUF_INIT;
 	struct strbuf type = STRBUF_INIT;
