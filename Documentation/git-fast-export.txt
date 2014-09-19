@@ -105,6 +105,11 @@ marks the same across runs.
 	in the commit (as opposed to just listing the files which are
 	different from the commit's first parent).
 
+--anonymize::
+	Anonymize the contents of the repository while still retaining
+	the shape of the history and stored tree.  See the section on
+	`ANONYMIZING` below.
+
 --refspec::
 	Apply the specified refspec to each ref exported. Multiple of them can
 	be specified.
@@ -139,6 +144,62 @@ This makes a new branch called 'other' from 'master~5..master'
 Note that this assumes that none of the blobs and commit messages
 referenced by that revision range contains the string
 'refs/heads/master'.
+
+
+ANONYMIZING
+-----------
+
+If the `--anonymize` option is given, git will attempt to remove all
+identifying information from the repository while still retaining enough
+of the original tree and history patterns to reproduce some bugs. The
+goal is that a git bug which is found on a private repository will
+persist in the anonymized repository, and the latter can be shared with
+git developers to help solve the bug.
+
+With this option, git will replace all refnames, paths, blob contents,
+commit and tag messages, names, and email addresses in the output with
+anonymized data.  Two instances of the same string will be replaced
+equivalently (e.g., two commits with the same author will have the same
+anonymized author in the output, but bear no resemblance to the original
+author string). The relationship between commits, branches, and tags is
+retained, as well as the commit timestamps (but the commit messages and
+refnames bear no resemblance to the originals). The relative makeup of
+the tree is retained (e.g., if you have a root tree with 10 files and 3
+trees, so will the output), but their names and the contents of the
+files will be replaced.
+
+If you think you have found a git bug, you can start by exporting an
+anonymized stream of the whole repository:
+
+---------------------------------------------------
+$ git fast-export --anonymize --all >anon-stream
+---------------------------------------------------
+
+Then confirm that the bug persists in a repository created from that
+stream (many bugs will not, as they really do depend on the exact
+repository contents):
+
+---------------------------------------------------
+$ git init anon-repo
+$ cd anon-repo
+$ git fast-import <../anon-stream
+$ ... test your bug ...
+---------------------------------------------------
+
+If the anonymized repository shows the bug, it may be worth sharing
+`anon-stream` along with a regular bug report. Note that the anonymized
+stream compresses very well, so gzipping it is encouraged. If you want
+to examine the stream to see that it does not contain any private data,
+you can peruse it directly before sending. You may also want to try:
+
+---------------------------------------------------
+$ perl -pe 's/\d+/X/g' <anon-stream | sort -u | less
+---------------------------------------------------
+
+which shows all of the unique lines (with numbers converted to "X", to
+collapse "User 0", "User 1", etc into "User X"). This produces a much
+smaller output, and it is usually easy to quickly confirm that there is
+no private data in the stream.
 
 
 Limitations
