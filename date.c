@@ -614,7 +614,7 @@ static int match_tz(const char *date, int *offp)
 	return end - date;
 }
 
-static int date_string(unsigned long date, int offset, char *buf, int len)
+static void date_string(unsigned long date, int offset, struct strbuf *buf)
 {
 	int sign = '+';
 
@@ -622,7 +622,7 @@ static int date_string(unsigned long date, int offset, char *buf, int len)
 		offset = -offset;
 		sign = '-';
 	}
-	return snprintf(buf, len, "%lu %c%02d%02d", date, sign, offset / 60, offset % 60);
+	strbuf_addf(buf, "%lu %c%02d%02d", date, sign, offset / 60, offset % 60);
 }
 
 /*
@@ -744,13 +744,14 @@ int parse_expiry_date(const char *date, unsigned long *timestamp)
 	return errors;
 }
 
-int parse_date(const char *date, char *result, int maxlen)
+int parse_date(const char *date, struct strbuf *result)
 {
 	unsigned long timestamp;
 	int offset;
 	if (parse_date_basic(date, &timestamp, &offset))
 		return -1;
-	return date_string(timestamp, offset, result, maxlen);
+	date_string(timestamp, offset, result);
+	return 0;
 }
 
 enum date_mode parse_date_format(const char *format)
@@ -778,7 +779,7 @@ enum date_mode parse_date_format(const char *format)
 		die("unknown date format %s", format);
 }
 
-void datestamp(char *buf, int bufsize)
+void datestamp(struct strbuf *out)
 {
 	time_t now;
 	int offset;
@@ -788,7 +789,7 @@ void datestamp(char *buf, int bufsize)
 	offset = tm_to_time_t(localtime(&now)) - now;
 	offset /= 60;
 
-	date_string(now, offset, buf, bufsize);
+	date_string(now, offset, out);
 }
 
 /*

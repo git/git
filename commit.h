@@ -326,6 +326,17 @@ extern struct commit_extra_header *read_commit_extra_headers(struct commit *, co
 
 extern void free_commit_extra_headers(struct commit_extra_header *extra);
 
+/*
+ * Search the commit object contents given by "msg" for the header "key".
+ * Returns a pointer to the start of the header contents, or NULL. The length
+ * of the header, up to the first newline, is returned via out_len.
+ *
+ * Note that some headers (like mergetag) may be multi-line. It is the caller's
+ * responsibility to parse further in this case!
+ */
+extern const char *find_commit_header(const char *msg, const char *key,
+				      size_t *out_len);
+
 typedef void (*each_mergetag_fn)(struct commit *commit, struct commit_extra_header *extra,
 				 void *cb_data);
 

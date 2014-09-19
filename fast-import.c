@@ -1996,7 +1996,7 @@ static int parse_data(struct strbuf *sb, uintmax_t limit, uintmax_t *len_res)
 	return 1;
 }
 
-static int validate_raw_date(const char *src, char *result, int maxlen)
+static int validate_raw_date(const char *src, struct strbuf *result)
 {
 	const char *orig_src = src;
 	char *endp;
@@ -2014,11 +2014,10 @@ static int validate_raw_date(const char *src, char *result, int maxlen)
 		return -1;
 
 	num = strtoul(src + 1, &endp, 10);
-	if (errno || endp == src + 1 || *endp || (endp - orig_src) >= maxlen ||
-	    1400 < num)
+	if (errno || endp == src + 1 || *endp || 1400 < num)
 		return -1;
 
-	strcpy(result, orig_src);
+	strbuf_addstr(result, orig_src);
 	return 0;
 }
 
@@ -2026,7 +2025,7 @@ static char *parse_ident(const char *buf)
 {
 	const char *ltgt;
 	size_t name_len;
-	char *ident;
+	struct strbuf ident = STRBUF_INIT;
 
 	/* ensure there is a space delimiter even if there is no name */
 	if (*buf == '<')
@@ -2045,26 +2044,25 @@ static char *parse_ident(const char *buf)
 		die("Missing space after > in ident string: %s", buf);
 	ltgt++;
 	name_len = ltgt - buf;
-	ident = xmalloc(name_len + 24);
-	strncpy(ident, buf, name_len);
+	strbuf_add(&ident, buf, name_len);
 
 	switch (whenspec) {
 	case WHENSPEC_RAW:
-		if (validate_raw_date(ltgt, ident + name_len, 24) < 0)
+		if (validate_raw_date(ltgt, &ident) < 0)
 			die("Invalid raw date \"%s\" in ident: %s", ltgt, buf);
 		break;
 	case WHENSPEC_RFC2822:
-		if (parse_date(ltgt, ident + name_len, 24) < 0)
+		if (parse_date(ltgt, &ident) < 0)
 			die("Invalid rfc2822 date \"%s\" in ident: %s", ltgt, buf);
 		break;
 	case WHENSPEC_NOW:
 		if (strcmp("now", ltgt))
 			die("Date in ident must be 'now': %s", buf);
-		datestamp(ident + name_len, 24);
+		datestamp(&ident);
 		break;
 	}
 
-	return ident;
+	return strbuf_detach(&ident, NULL);
 }
 
 static void parse_and_store_blob(
