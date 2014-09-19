@@ -110,6 +110,7 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 	int flags;
 	unsigned int reject_reasons;
 	int progress = -1;
+	int from_stdin = 0;
 	struct push_cas_option cas = {0};
 
 	argv++;
@@ -169,6 +170,10 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 				args.stateless_rpc = 1;
 				continue;
 			}
+			if (!strcmp(arg, "--stdin")) {
+				from_stdin = 1;
+				continue;
+			}
 			if (!strcmp(arg, "--helper-status")) {
 				helper_status = 1;
 				continue;
@@ -201,6 +206,28 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 	}
 	if (!dest)
 		usage(send_pack_usage);
+
+	if (from_stdin) {
+		struct argv_array all_refspecs = ARGV_ARRAY_INIT;
+
+		for (i = 0; i < nr_refspecs; i++)
+			argv_array_push(&all_refspecs, refspecs[i]);
+
+		if (args.stateless_rpc) {
+			const char *buf;
+			while ((buf = packet_read_line(0, NULL)))
+				argv_array_push(&all_refspecs, buf);
+		} else {
+			struct strbuf line = STRBUF_INIT;
+			while (strbuf_getline(&line, stdin, '\n') != EOF)
+				argv_array_push(&all_refspecs, line.buf);
+			strbuf_release(&line);
+		}
+
+		refspecs = all_refspecs.argv;
+		nr_refspecs = all_refspecs.argc;
+	}
+
 	/*
 	 * --all and --mirror are incompatible; neither makes sense
 	 * with any refspecs.
