@@ -24,6 +24,6 @@ extern void rerere_clear(struct string_list *);
 extern void rerere_gc(struct string_list *);
 
 #define OPT_RERERE_AUTOUPDATE(v) OPT_UYN(0, "rerere-autoupdate", (v), \
-	"update the index with reused conflict resolution if possible")
+	N_("update the index with reused conflict resolution if possible"))
 
 #endif
