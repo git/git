@@ -1285,6 +1285,8 @@ extern int update_server_info(int);
 #define CONFIG_INVALID_PATTERN 6
 #define CONFIG_GENERIC_ERROR 7
 
+#define CONFIG_REGEX_NONE ((void *)1)
+
 struct git_config_source {
 	unsigned int use_stdin:1;
 	const char *file;
