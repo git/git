@@ -65,7 +65,7 @@ static void error_removing_concrete_submodules(struct string_list *files, int *e
 			  Q_("the following submodule (or one of its nested "
 			     "submodules)\n"
 			     "uses a .git directory:",
-			     "the following submodules (or one of its nested "
+			     "the following submodules (or one of their nested "
 			     "submodules)\n"
 			     "use a .git directory:", files->nr),
 			  _("\n(use 'rm -rf' if you really want to remove "

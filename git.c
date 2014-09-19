@@ -14,7 +14,7 @@ const char git_usage_string[] =
 	"           <command> [<args>]";
 
 const char git_more_info_string[] =
-	N_("'git help -a' and 'git help -g' lists available subcommands and some\n"
+	N_("'git help -a' and 'git help -g' list available subcommands and some\n"
 	   "concept guides. See 'git help <command>' or 'git help <concept>'\n"
 	   "to read about a specific subcommand or concept.");
 

@@ -286,11 +286,11 @@ bisect_next_check() {
 
 		if test -s "$GIT_DIR/BISECT_START"
 		then
-			gettextln "You need to give me at least one good and one bad revisions.
+			gettextln "You need to give me at least one good and one bad revision.
 (You can use \"git bisect bad\" and \"git bisect good\" for that.)" >&2
 		else
 			gettextln "You need to start by \"git bisect start\".
-You then need to give me at least one good and one bad revisions.
+You then need to give me at least one good and one bad revision.
 (You can use \"git bisect bad\" and \"git bisect good\" for that.)" >&2
 		fi
 		exit 1 ;;
