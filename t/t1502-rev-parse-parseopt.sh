@@ -19,7 +19,7 @@ sed -e 's/^|//' >expect <<\END_EXPECT
 |    -d, --data[=...]      short and long option with an optional argument
 |
 |Argument hints
-|    -b <arg>              short option required argument
+|    -B <arg>              short option required argument
 |    --bar2 <arg>          long option required argument
 |    -e, --fuz <with-space>
 |                          short and long option required argument
@@ -51,7 +51,7 @@ sed -e 's/^|//' >optionspec <<\EOF
 |d,data?   short and long option with an optional argument
 |
 | Argument hints
-|b=arg     short option required argument
+|B=arg     short option required argument
 |bar2=arg  long option required argument
 |e,fuz=with-space  short and long option required argument
 |s?some    short option optional argument
