@@ -1161,20 +1161,11 @@ static void graph_padding_line(struct git_graph *graph, struct strbuf *sb)
 	 */
 	for (i = 0; i < graph->num_columns; i++) {
 		struct column *col = &graph->columns[i];
-		struct commit *col_commit = col->commit;
-		if (col_commit == graph->commit) {
-			strbuf_write_column(sb, col, '|');
-
-			if (graph->num_parents < 3)
-				strbuf_addch(sb, ' ');
-			else {
-				int num_spaces = ((graph->num_parents - 2) * 2);
-				strbuf_addchars(sb, ' ', num_spaces);
-			}
-		} else {
-			strbuf_write_column(sb, col, '|');
+		strbuf_write_column(sb, col, '|');
+		if (col->commit == graph->commit && graph->num_parents > 2)
+			strbuf_addchars(sb, ' ', (graph->num_parents - 2) * 2);
+		else
 			strbuf_addch(sb, ' ');
-		}
 	}
 
 	graph_pad_horizontally(graph, sb, graph->num_columns);
