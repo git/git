@@ -1094,7 +1094,7 @@ static int blob_unchanged(const unsigned char *o_sha,
 	 * unchanged since their sha1s have already been compared.
 	 */
 	if (renormalize_buffer(path, o.buf, o.len, &o) |
-	    renormalize_buffer(path, a.buf, o.len, &a))
+	    renormalize_buffer(path, a.buf, a.len, &a))
 		ret = (o.len == a.len && !memcmp(o.buf, a.buf, o.len));
 
 error_return:
