@@ -39,12 +39,12 @@ test_expect_success 'create blob' '
 	git add file
 '
 
-test_expect_success 'a constipated git dies with SIGPIPE' '
+test_expect_success !MINGW 'a constipated git dies with SIGPIPE' '
 	OUT=$( ((large_git; echo $? 1>&3) | :) 3>&1 )
 	test "$OUT" -eq 141
 '
 
-test_expect_success 'a constipated git dies with SIGPIPE even if parent ignores it' '
+test_expect_success !MINGW 'a constipated git dies with SIGPIPE even if parent ignores it' '
 	OUT=$( ((trap "" PIPE; large_git; echo $? 1>&3) | :) 3>&1 )
 	test "$OUT" -eq 141
 '
