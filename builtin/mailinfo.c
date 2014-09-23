@@ -288,9 +288,10 @@ static inline int cmp_header(const struct strbuf *line, const char *hdr)
 			line->buf[len] == ':' && isspace(line->buf[len + 1]);
 }
 
-#define SAMPLE "From e6807f3efca28b30decfecb1732a56c7db1137ee Mon Sep 17 00:00:00 2001\n"
 static int is_format_patch_separator(const char *line, int len)
 {
+	static const char SAMPLE[] =
+		"From e6807f3efca28b30decfecb1732a56c7db1137ee Mon Sep 17 00:00:00 2001\n";
 	const char *cp;
 
 	if (len != strlen(SAMPLE))
