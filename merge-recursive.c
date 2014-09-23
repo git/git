@@ -1107,10 +1107,6 @@ error_return:
 static int process_entry(struct merge_options *o,
 			 const char *path, struct stage_data *entry)
 {
-	/*
-	printf("processing entry, clean cache: %s\n", index_only ? "yes": "no");
-	print_index_entry("\tpath: ", entry);
-	*/
 	int clean_merge = 1;
 	unsigned o_mode = entry->stages[1].mode;
 	unsigned a_mode = entry->stages[2].mode;
