@@ -228,8 +228,8 @@ int walker_targets_stdin(char ***target, const char ***write_ref)
 
 		if (targets >= targets_alloc) {
 			targets_alloc = targets_alloc ? targets_alloc * 2 : 64;
-			*target = xrealloc(*target, targets_alloc * sizeof(**target));
-			*write_ref = xrealloc(*write_ref, targets_alloc * sizeof(**write_ref));
+			REALLOC_ARRAY(*target, targets_alloc);
+			REALLOC_ARRAY(*write_ref, targets_alloc);
 		}
 		(*target)[targets] = xstrdup(tg_one);
 		(*write_ref)[targets] = rf_one ? xstrdup(rf_one) : NULL;
