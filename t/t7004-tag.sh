@@ -1424,7 +1424,7 @@ EOF
 '
 
 run_with_limited_stack () {
-	(ulimit -s 64 && "$@")
+	(ulimit -s 128 && "$@")
 }
 
 test_lazy_prereq ULIMIT 'run_with_limited_stack true'
@@ -1433,7 +1433,7 @@ test_lazy_prereq ULIMIT 'run_with_limited_stack true'
 test_expect_success ULIMIT '--contains works in a deep repo' '
 	>expect &&
 	i=1 &&
-	while test $i -lt 4000
+	while test $i -lt 8000
 	do
 		echo "commit refs/heads/master
 committer A U Thor <author@example.com> $((1000000000 + $i * 100)) +0200
