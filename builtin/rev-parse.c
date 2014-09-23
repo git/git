@@ -508,7 +508,9 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 	int has_dashdash = 0;
 	int output_prefix = 0;
 	unsigned char sha1[20];
+	unsigned int flags = 0;
 	const char *name = NULL;
+	struct object_context unused;
 
 	if (argc > 1 && !strcmp("--parseopt", argv[1]))
 		return cmd_parseopt(argc - 1, argv + 1, prefix);
@@ -596,6 +598,7 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 			}
 			if (!strcmp(arg, "--quiet") || !strcmp(arg, "-q")) {
 				quiet = 1;
+				flags |= GET_SHA1_QUIETLY;
 				continue;
 			}
 			if (!strcmp(arg, "--short") ||
@@ -818,7 +821,7 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 			name++;
 			type = REVERSED;
 		}
-		if (!get_sha1(name, sha1)) {
+		if (!get_sha1_with_context(name, flags, sha1, &unused)) {
 			if (verify)
 				revs_count++;
 			else
