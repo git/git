@@ -63,7 +63,7 @@ test_set_prereq SHORTABSPATH
 test_expect_success SHORTABSPATH 'clean up path close to MAX_PATH' '
 	p=/123456789abcdef/123456789abcdef/123456789abcdef/123456789abc/ef &&
 	p=y$p$p$p$p &&
-	subdir="x$(echo "$p" | tail -c $((253 - ${#abspath})))" &&
+	subdir="x$(echo "$p" | tail -c $((253 - ${#abspath})) - )" &&
 	# Now, $abspath/$subdir has exactly 254 characters, and is inside CWD
 	p2="$abspath/$subdir" &&
 	test 254 = ${#p2} &&
