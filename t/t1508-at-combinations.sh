@@ -29,13 +29,22 @@ fail() {
 	"$@" failure
 }
 
+if test_have_prereq MINGW
+then
+	# MSys interprets `@/abc` to be a file list, and wants to substitute
+	# the Unix-y path with a Windows one (e.g. @C:\msys64\abc)
+	AT_SLASH=@//at-test
+else
+	AT_SLASH=@/at-test
+fi
+
 test_expect_success 'setup' '
 	test_commit master-one &&
 	test_commit master-two &&
 	git checkout -b upstream-branch &&
 	test_commit upstream-one &&
 	test_commit upstream-two &&
-	git checkout -b @/at-test &&
+	git checkout -b $AT_SLASH &&
 	git checkout -b @@/at-test &&
 	git checkout -b @at-test &&
 	git checkout -b old-branch &&
@@ -64,7 +73,7 @@ check "@{-1}@{u}@{1}" commit master-one
 check "@" commit new-two
 check "@@{u}" ref refs/heads/upstream-branch
 check "@@/at-test" ref refs/heads/@@/at-test
-check "@/at-test" ref refs/heads/@/at-test
+check "$AT_SLASH" ref refs/heads/@/at-test
 check "@at-test" ref refs/heads/@at-test
 nonsense "@{u}@{-1}"
 nonsense "@{0}@{0}"
