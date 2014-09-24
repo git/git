@@ -11,6 +11,7 @@
 #include "transport.h"
 #include "version.h"
 #include "sha1-array.h"
+#include "gpg-interface.h"
 
 static int feed_object(const unsigned char *sha1, int fd, int negative)
 {
@@ -189,6 +190,94 @@ static void advertise_shallow_grafts_buf(struct strbuf *sb)
 	for_each_commit_graft(advertise_shallow_grafts_cb, sb);
 }
 
+static int ref_update_to_be_sent(const struct ref *ref, const struct send_pack_args *args)
+{
+	if (!ref->peer_ref && !args->send_mirror)
+		return 0;
+
+	/* Check for statuses set by set_ref_status_for_push() */
+	switch (ref->status) {
+	case REF_STATUS_REJECT_NONFASTFORWARD:
+	case REF_STATUS_REJECT_ALREADY_EXISTS:
+	case REF_STATUS_REJECT_FETCH_FIRST:
+	case REF_STATUS_REJECT_NEEDS_FORCE:
+	case REF_STATUS_REJECT_STALE:
+	case REF_STATUS_REJECT_NODELETE:
+	case REF_STATUS_UPTODATE:
+		return 0;
+	default:
+		return 1;
+	}
+}
+
+/*
+ * the beginning of the next line, or the end of buffer.
+ *
+ * NEEDSWORK: perhaps move this to git-compat-util.h or somewhere and
+ * convert many similar uses found by "git grep -A4 memchr".
+ */
+static const char *next_line(const char *line, size_t len)
+{
+	const char *nl = memchr(line, '\n', len);
+	if (!nl)
+		return line + len; /* incomplete line */
+	return nl + 1;
+}
+
+static int generate_push_cert(struct strbuf *req_buf,
+			      const struct ref *remote_refs,
+			      struct send_pack_args *args,
+			      const char *cap_string,
+			      const char *push_cert_nonce)
+{
+	const struct ref *ref;
+	char *signing_key = xstrdup(get_signing_key());
+	const char *cp, *np;
+	struct strbuf cert = STRBUF_INIT;
+	int update_seen = 0;
+
+	strbuf_addf(&cert, "certificate version 0.1\n");
+	strbuf_addf(&cert, "pusher %s ", signing_key);
+	datestamp(&cert);
+	strbuf_addch(&cert, '\n');
+	if (args->url && *args->url) {
+		char *anon_url = transport_anonymize_url(args->url);
+		strbuf_addf(&cert, "pushee %s\n", anon_url);
+		free(anon_url);
+	}
+	if (push_cert_nonce[0])
+		strbuf_addf(&cert, "nonce %s\n", push_cert_nonce);
+	strbuf_addstr(&cert, "\n");
+
+	for (ref = remote_refs; ref; ref = ref->next) {
+		if (!ref_update_to_be_sent(ref, args))
+			continue;
+		update_seen = 1;
+		strbuf_addf(&cert, "%s %s %s\n",
+			    sha1_to_hex(ref->old_sha1),
+			    sha1_to_hex(ref->new_sha1),
+			    ref->name);
+	}
+	if (!update_seen)
+		goto free_return;
+
+	if (sign_buffer(&cert, &cert, signing_key))
+		die(_("failed to sign the push certificate"));
+
+	packet_buf_write(req_buf, "push-cert%c%s", 0, cap_string);
+	for (cp = cert.buf; cp < cert.buf + cert.len; cp = np) {
+		np = next_line(cp, cert.buf + cert.len - cp);
+		packet_buf_write(req_buf,
+				 "%.*s", (int)(np - cp), cp);
+	}
+	packet_buf_write(req_buf, "push-cert-end\n");
+
+free_return:
+	free(signing_key);
+	strbuf_release(&cert);
+	return update_seen;
+}
+
 int send_pack(struct send_pack_args *args,
 	      int fd[], struct child_process *conn,
 	      struct ref *remote_refs,
@@ -197,8 +286,9 @@ int send_pack(struct send_pack_args *args,
 	int in = fd[0];
 	int out = fd[1];
 	struct strbuf req_buf = STRBUF_INIT;
+	struct strbuf cap_buf = STRBUF_INIT;
 	struct ref *ref;
-	int new_refs;
+	int need_pack_data = 0;
 	int allow_deleting_refs = 0;
 	int status_report = 0;
 	int use_sideband = 0;
@@ -207,6 +297,7 @@ int send_pack(struct send_pack_args *args,
 	unsigned cmds_sent = 0;
 	int ret;
 	struct async demux;
+	const char *push_cert_nonce = NULL;
 
 	/* Does the other end support the reporting? */
 	if (server_supports("report-status"))
@@ -223,6 +314,14 @@ int send_pack(struct send_pack_args *args,
 		agent_supported = 1;
 	if (server_supports("no-thin"))
 		args->use_thin_pack = 0;
+	if (args->push_cert) {
+		int len;
+
+		push_cert_nonce = server_feature_value("push-cert", &len);
+		if (!push_cert_nonce)
+			die(_("the receiving end does not support --signed push"));
+		push_cert_nonce = xmemdupz(push_cert_nonce, len);
+	}
 
 	if (!remote_refs) {
 		fprintf(stderr, "No refs in common and none specified; doing nothing.\n"
@@ -230,64 +329,71 @@ int send_pack(struct send_pack_args *args,
 		return 0;
 	}
 
+	if (status_report)
+		strbuf_addstr(&cap_buf, " report-status");
+	if (use_sideband)
+		strbuf_addstr(&cap_buf, " side-band-64k");
+	if (quiet_supported && (args->quiet || !args->progress))
+		strbuf_addstr(&cap_buf, " quiet");
+	if (agent_supported)
+		strbuf_addf(&cap_buf, " agent=%s", git_user_agent_sanitized());
+
+	/*
+	 * NEEDSWORK: why does delete-refs have to be so specific to
+	 * send-pack machinery that set_ref_status_for_push() cannot
+	 * set this bit for us???
+	 */
+	for (ref = remote_refs; ref; ref = ref->next)
+		if (ref->deletion && !allow_deleting_refs)
+			ref->status = REF_STATUS_REJECT_NODELETE;
+
 	if (!args->dry_run)
 		advertise_shallow_grafts_buf(&req_buf);
+
+	if (!args->dry_run && args->push_cert)
+		cmds_sent = generate_push_cert(&req_buf, remote_refs, args,
+					       cap_buf.buf, push_cert_nonce);
+
+	/*
+	 * Clear the status for each ref and see if we need to send
+	 * the pack data.
+	 */
+	for (ref = remote_refs; ref; ref = ref->next) {
+		if (!ref_update_to_be_sent(ref, args))
+			continue;
+
+		if (!ref->deletion)
+			need_pack_data = 1;
+
+		if (args->dry_run || !status_report)
+			ref->status = REF_STATUS_OK;
+		else
+			ref->status = REF_STATUS_EXPECTING_REPORT;
+	}
 
 	/*
 	 * Finally, tell the other end!
 	 */
-	new_refs = 0;
 	for (ref = remote_refs; ref; ref = ref->next) {
-		if (!ref->peer_ref && !args->send_mirror)
+		char *old_hex, *new_hex;
+
+		if (args->dry_run || args->push_cert)
 			continue;
 
-		/* Check for statuses set by set_ref_status_for_push() */
-		switch (ref->status) {
-		case REF_STATUS_REJECT_NONFASTFORWARD:
-		case REF_STATUS_REJECT_ALREADY_EXISTS:
-		case REF_STATUS_REJECT_FETCH_FIRST:
-		case REF_STATUS_REJECT_NEEDS_FORCE:
-		case REF_STATUS_REJECT_STALE:
-		case REF_STATUS_UPTODATE:
+		if (!ref_update_to_be_sent(ref, args))
 			continue;
-		default:
-			; /* do nothing */
-		}
 
-		if (ref->deletion && !allow_deleting_refs) {
-			ref->status = REF_STATUS_REJECT_NODELETE;
-			continue;
-		}
-
-		if (!ref->deletion)
-			new_refs++;
-
-		if (args->dry_run) {
-			ref->status = REF_STATUS_OK;
+		old_hex = sha1_to_hex(ref->old_sha1);
+		new_hex = sha1_to_hex(ref->new_sha1);
+		if (!cmds_sent) {
+			packet_buf_write(&req_buf,
+					 "%s %s %s%c%s",
+					 old_hex, new_hex, ref->name, 0,
+					 cap_buf.buf);
+			cmds_sent = 1;
 		} else {
-			char *old_hex = sha1_to_hex(ref->old_sha1);
-			char *new_hex = sha1_to_hex(ref->new_sha1);
-			int quiet = quiet_supported && (args->quiet || !args->progress);
-
-			if (!cmds_sent && (status_report || use_sideband ||
-					   quiet || agent_supported)) {
-				packet_buf_write(&req_buf,
-						 "%s %s %s%c%s%s%s%s%s",
-						 old_hex, new_hex, ref->name, 0,
-						 status_report ? " report-status" : "",
-						 use_sideband ? " side-band-64k" : "",
-						 quiet ? " quiet" : "",
-						 agent_supported ? " agent=" : "",
-						 agent_supported ? git_user_agent_sanitized() : ""
-						);
-			}
-			else
-				packet_buf_write(&req_buf, "%s %s %s",
-						 old_hex, new_hex, ref->name);
-			ref->status = status_report ?
-				REF_STATUS_EXPECTING_REPORT :
-				REF_STATUS_OK;
-			cmds_sent++;
+			packet_buf_write(&req_buf, "%s %s %s",
+					 old_hex, new_hex, ref->name);
 		}
 	}
 
@@ -301,6 +407,7 @@ int send_pack(struct send_pack_args *args,
 		packet_flush(out);
 	}
 	strbuf_release(&req_buf);
+	strbuf_release(&cap_buf);
 
 	if (use_sideband && cmds_sent) {
 		memset(&demux, 0, sizeof(demux));
@@ -312,7 +419,7 @@ int send_pack(struct send_pack_args *args,
 		in = demux.out;
 	}
 
-	if (new_refs && cmds_sent) {
+	if (need_pack_data && cmds_sent) {
 		if (pack_objects(out, remote_refs, extra_have, args) < 0) {
 			for (ref = remote_refs; ref; ref = ref->next)
 				ref->status = REF_STATUS_NONE;

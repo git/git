@@ -12,6 +12,7 @@ struct git_transport_options {
 	unsigned check_self_contained_and_connected : 1;
 	unsigned self_contained_and_connected : 1;
 	unsigned update_shallow : 1;
+	unsigned push_cert : 1;
 	int depth;
 	const char *uploadpack;
 	const char *receivepack;
@@ -123,6 +124,7 @@ struct transport {
 #define TRANSPORT_RECURSE_SUBMODULES_ON_DEMAND 256
 #define TRANSPORT_PUSH_NO_HOOK 512
 #define TRANSPORT_PUSH_FOLLOW_TAGS 1024
+#define TRANSPORT_PUSH_CERT 2048
 
 #define TRANSPORT_SUMMARY_WIDTH (2 * DEFAULT_ABBREV + 3)
 #define TRANSPORT_SUMMARY(x) (int)(TRANSPORT_SUMMARY_WIDTH + strlen(x) - gettext_width(x)), (x)
@@ -155,6 +157,9 @@ struct transport *transport_get(struct remote *, const char *);
 
 /* Accept refs that may update .git/shallow without --depth */
 #define TRANS_OPT_UPDATE_SHALLOW "updateshallow"
+
+/* Send push certificates */
+#define TRANS_OPT_PUSH_CERT "pushcert"
 
 /**
  * Returns 0 if the option was used, non-zero otherwise. Prints a

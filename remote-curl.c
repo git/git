@@ -25,7 +25,8 @@ struct options {
 		update_shallow : 1,
 		followtags : 1,
 		dry_run : 1,
-		thin : 1;
+		thin : 1,
+		push_cert : 1;
 };
 static struct options options;
 static struct string_list cas_options = STRING_LIST_INIT_DUP;
@@ -103,6 +104,14 @@ static int set_option(const char *name, const char *value)
 			options.update_shallow = 1;
 		else if (!strcmp(value, "false"))
 			options.update_shallow = 0;
+		else
+			return -1;
+		return 0;
+	} else if (!strcmp(name, "pushcert")) {
+		if (!strcmp(value, "true"))
+			options.push_cert = 1;
+		else if (!strcmp(value, "false"))
+			options.push_cert = 0;
 		else
 			return -1;
 		return 0;
@@ -872,6 +881,8 @@ static int push_git(struct discovery *heads, int nr_spec, char **specs)
 		argv_array_push(&args, "--thin");
 	if (options.dry_run)
 		argv_array_push(&args, "--dry-run");
+	if (options.push_cert)
+		argv_array_push(&args, "--signed");
 	if (options.verbosity == 0)
 		argv_array_push(&args, "--quiet");
 	else if (options.verbosity > 1)
