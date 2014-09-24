@@ -1,30 +1,15 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Sep 2014, #05; Fri, 19)
+Subject: What's cooking in git.git (Sep 2014, #06; Wed, 24)
 X-master-at: 97b8860c071898d9e162678ea1035a8ced2f8b1f
-X-next-at: 7a54a76ab8dddf4a52b3453b206ed4b8f4200891
+X-next-at: b8dfbefaa44d81ef4d724788e2b9e387ee7a8bf8
 
-What's cooking in git.git (Sep 2014, #05; Fri, 19)
+What's cooking in git.git (Sep 2014, #06; Wed, 24)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
-
-Many topics that have been cooking in 'next' are now in 'master'.
-
-For some unknown reason, we ended up seeing that multiple people
-simultaneously cooking topics that are all on the larger side
-(i.e. dozen patches or more).  Inevitably larger topics tend to need
-more rerolls, and they haven't really hit my tree quite yet, even
-though many have been receiving and responding to reviews quite
-actively.  Hopefully some may be able to hit 'next' by the end of
-6th week of this cycle (i.e. early to mid October), or they would
-have to wait until the next cycle.
-
-On the 'maint' front, the first maintenance release for v2.1.x
-series is out, downmerging the fixes that are already on 'master'
-accumulated since v2.1.0.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -32,226 +17,77 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
+[New Topics]
 
-* ah/grammofix (2014-09-02) 1 commit
-  (merged to 'next' on 2014-09-12 at 58fbb44)
- + grammofix in user-facing messages
+* nd/archive-pathspec (2014-09-22) 1 commit
+ - archive: support filtering paths with glob
 
+ "git archive" learned to filter what gets archived with pathspec.
 
-* as/calloc-takes-nmemb-then-size (2014-09-03) 1 commit
-  (merged to 'next' on 2014-09-12 at a287484)
- + calloc() and xcalloc() takes nmemb and then size
+ Will merge to 'next'.
 
- Code clean-up.
 
+* rs/graph-simplify (2014-09-22) 1 commit
+  (merged to 'next' on 2014-09-23 at 72969e2)
+ + graph: simplify graph_padding_line()
 
-* bb/date-iso-strict (2014-08-29) 1 commit
-  (merged to 'next' on 2014-09-12 at c9d415d)
- + pretty: provide a strict ISO 8601 date format
+ Will merge to 'master'.
 
- "log --date=iso" uses a slight variant of ISO 8601 format that is
- made more human readable.  A new "--date=iso-strict" option gives
- datetime output that is more strictly conformant.
 
+* rs/remote-simplify (2014-09-22) 1 commit
+  (merged to 'next' on 2014-09-23 at 176e316)
+ + remote: simplify match_name_with_pattern() using strbuf
 
-* da/styles (2014-09-02) 1 commit
-  (merged to 'next' on 2014-09-12 at a22322e)
- + stylefix: asterisks stick to the variable, not the type
+ Will merge to 'master'.
 
 
-* ir/makefile-typofix (2014-09-15) 1 commit
-  (merged to 'next' on 2014-09-18 at bc1c273)
- + Makefile: fix some typos in the preamble
+* sb/merge-recursive-copy-paste-fix (2014-09-23) 2 commits
+  (merged to 'next' on 2014-09-24 at b8dfbef)
+ + merge-recursive: remove stale commented debugging code
+ + merge-recursive: fix copy-paste mistake
 
+ "git merge-recursive" had a small bug that could have made it
+ mishandle "one side deleted, the other side did not touch it" in a
+ rare corner case, where the other side actually did touch to cause
+ the blob object names to be different but both blobs before and
+ after the change normalize to the same (e.g. correcting mistake to
+ check in a blob with CRLF line endings by replacing it with another
+ blob that records the same contents with LF line endings).
 
-* jc/parseopt-verify-short-name (2014-09-04) 1 commit
-  (merged to 'next' on 2014-09-12 at 43dba24)
- + parse-options: detect attempt to add a duplicate short option name
+ Will merge to 'master'.
 
- Add checks for a common programming mistake to assign the same
- short option name to two separate options to help developers.
 
+* sb/t6031-typofix (2014-09-22) 1 commit
+  (merged to 'next' on 2014-09-23 at aec57a9)
+ + t6031-test-merge-recursive: do not forget to add file to be committed
 
-* jk/commit-author-parsing (2014-08-29) 6 commits
-  (merged to 'next' on 2014-09-12 at cfbb6b6)
- + determine_author_info(): copy getenv output
- + determine_author_info(): reuse parsing functions
- + date: use strbufs in date-formatting functions
- + record_author_date(): use find_commit_header()
- + record_author_date(): fix memory leak on malformed commit
- + commit: provide a function to find a header in a buffer
+ Will merge to 'master'.
 
- Code clean-up.
 
+* sb/t9300-typofix (2014-09-22) 1 commit
+  (merged to 'next' on 2014-09-23 at aa519bd)
+ + t9300-fast-import: fix typo in test description
 
-* jk/fast-export-anonymize (2014-08-28) 2 commits
-  (merged to 'next' on 2014-09-12 at 0af10fa)
- + docs/fast-export: explain --anonymize more completely
- + teach fast-export an --anonymize option
+ Will merge to 'master'.
 
- Sometimes users want to report a bug they experience on their
- repository, but they are not at liberty to share the contents of
- the repository.  "fast-export" was taught an "--anonymize" option
- to replace blob contents, names of people and paths and log
- messages with bland and simple strings to help them.
 
+* so/rebase-doc-fork-point (2014-09-22) 1 commit
+ - Documentation/git-rebase.txt: document when --fork-point is auto-enabled
 
-* jk/fsck-exit-code-fix (2014-09-12) 2 commits
-  (merged to 'next' on 2014-09-18 at 34c696f)
- + fsck: return non-zero status on missing ref tips
- + fsck: exit with non-zero status upon error from fsck_obj()
 
- "git fsck" failed to report that it found corrupt objects via its
- exit status in some cases.
+* sk/tag-contains-wo-recursion (2014-09-23) 1 commit
+ - t7004: give the test a bit more stack space
 
 
-* jk/index-pack-threading-races (2014-08-29) 1 commit
-  (merged to 'next' on 2014-09-12 at 9241312)
- + index-pack: fix race condition with duplicate bases
+* jt/itimer-autoconf (2014-08-29) 3 commits
+ - autoconf: check for setitimer()
+ - autoconf: check for struct itimerval
+ - git-compat-util.h: add missing semicolon after struct itimerval
+ (this branch is used by jt/timer-settime.)
 
- When receiving an invalid pack stream that records the same object
- twice, multiple threads got confused due to a race.  We should
- reject or correct such a stream upon receiving, but that will be a
- larger change.
+ Split the early part of jt/timer-settime topic out into a topic.
 
-
-* jk/send-pack-many-refspecs (2014-08-26) 1 commit
-  (merged to 'next' on 2014-09-12 at 7f4ae4e)
- + send-pack: take refspecs over stdin
-
- The number of refs that can be pushed at once over smart HTTP was
- limited by the command line length.  The limitation has been lifted
- by passing these refs from the standard input of send-pack.
-
-
-* jp/index-with-corrupt-stages (2014-08-29) 2 commits
-  (merged to 'next' on 2014-09-12 at 54016d5)
- + read_index_unmerged(): remove unnecessary loop index adjustment
- + read_index_from(): catch out of order entries when reading an index file
-
- A broken reimplementation of Git could write an invalid index that
- records both stage #0 and higher stage entries for the same path.
- Notice and reject such an index, as there is no sensible fallback
- (we do not know if the broken tool wanted to resolve and forgot to
- remove higher stage entries, or if it wanted to unresolve and
- forgot to remove the stage#0 entry).
-
-
-* js/no-test-cmp-for-binaries (2014-09-12) 1 commit
-  (merged to 'next' on 2014-09-15 at c5609e9)
- + t9300: use test_cmp_bin instead of test_cmp to compare binary files
-
-
-* kb/perf-trace (2014-09-08) 1 commit
-  (merged to 'next' on 2014-09-12 at 371df71)
- + trace: correct trace_strbuf() parameter type for !HAVE_VARIADIC_MACROS
-
- Compilation fix for some compilers.
-
-
-* mb/build-contrib-svn-fe (2014-08-28) 1 commit
-  (merged to 'next' on 2014-09-12 at acb252b)
- + contrib/svn-fe: fix Makefile
-
-
-* mb/fast-import-delete-root (2014-08-29) 2 commits
-  (merged to 'next' on 2014-09-12 at d0fda49)
- + fast-import: fix segfault in store_tree()
- + t9300: test filedelete command
-
- An attempt to remove the entire tree in the "git fast-import" input
- stream caused it to misbehave.
-
-
-* mk/reachable-protect-detached-head (2014-09-03) 1 commit
-  (merged to 'next' on 2014-09-12 at de2b50b)
- + reachable.c: add HEAD to reachability starting commits
-
-
-* mr/mark-i18n-log-rerere (2014-09-15) 2 commits
-  (merged to 'next' on 2014-09-15 at ba35eb3)
- + builtin/log.c: mark strings for translation
- + rerere.h: mark string for translation
-
-
-* rs/export-strbuf-addchars (2014-09-08) 2 commits
-  (merged to 'next' on 2014-09-12 at 8b25fe0)
- + strbuf: use strbuf_addchars() for adding a char multiple times
- + strbuf: export strbuf_addchars()
-
- Code clean-up.
-
-
-* rs/merge-tree-simplify (2014-09-02) 1 commit
-  (merged to 'next' on 2014-09-12 at 5b4c349)
- + merge-tree: remove unused df_conflict arguments
-
- Code clean-up.
-
-
-* rs/more-uses-of-skip-prefix (2014-09-02) 2 commits
-  (merged to 'next' on 2014-09-12 at 156a436)
- + pack-write: simplify index_pack_lockfile using skip_prefix() and xstrfmt()
- + connect: simplify check_ref() using skip_prefix() and starts_with()
-
- Code clean-up.
-
-
-* rs/simplify-config-include (2014-09-02) 1 commit
-  (merged to 'next' on 2014-09-12 at e4ffd6d)
- + config: simplify git_config_include()
-
- Code clean-up.
-
-
-* rs/simplify-http-walker (2014-09-02) 1 commit
-  (merged to 'next' on 2014-09-12 at b5178d2)
- + http-walker: simplify process_alternates_response() using strbuf
-
- Code clean-up.
-
-
-* so/rebase-doc (2014-09-16) 1 commit
-  (merged to 'next' on 2014-09-18 at cce521d)
- + Documentation/git-rebase.txt: <upstream> must be given to specify <branch>
-
-
-* sp/doc-update-index-cacheinfo (2014-09-11) 1 commit
-  (merged to 'next' on 2014-09-15 at 11ec716)
- + Documentation: use single-parameter --cacheinfo in example
-
-
-* ss/compat-default-source-for-newer-gnu (2014-09-15) 1 commit
-  (merged to 'next' on 2014-09-15 at 0e87594)
- + compat-util: add _DEFAULT_SOURCE define
-
-
-* ta/config-add-to-empty-or-true-fix (2014-09-11) 2 commits
-  (merged to 'next' on 2014-09-15 at af779a7)
- + config: avoid a funny sentinel value "a^"
-  (merged to 'next' on 2014-08-29 at d219212)
- + make config --add behave correctly for empty and NULL values
-
- "git config --add section.var val" used to lose existing
- section.var whose value was an empty string.
-
-
-* tb/complete-diff-ignore-blank-lines (2014-09-03) 1 commit
-  (merged to 'next' on 2014-09-12 at 1b7d259)
- + completion: Add --ignore-blank-lines for diff
-
-
-* tb/crlf-tests (2014-09-02) 3 commits
-  (merged to 'next' on 2014-09-12 at 2c950af)
- + MinGW: update tests to handle a native eol of crlf
- + Makefile: propagate NATIVE_CRLF to C
- + t0027: Tests for core.eol=native, eol=lf, eol=crlf
-
-
-* wk/pre-push-sample-hook (2014-09-11) 1 commit
-  (merged to 'next' on 2014-09-18 at 6f8c9d7)
- + pre-push.sample: Write error message to stderr
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -311,16 +147,14 @@ of the repositories listed at
  Kicked back to 'pu' per request ($gmane/255610).
 
 
-* jt/timer-settime (2014-08-29) 9 commits
+* jt/timer-settime (2014-08-29) 6 commits
  - use timer_settime() for new platforms
  - autoconf: check for timer_settime()
  - autoconf: check for struct itimerspec
  - autoconf: check for struct sigevent
  - autoconf: check for struct timespec
  - autoconf: check for timer_t
- - autoconf: check for setitimer()
- - autoconf: check for struct itimerval
- - git-compat-util.h: add missing semicolon after struct itimerval
+ (this branch uses jt/itimer-autoconf.)
 
  Reviewed, discussed and wanting for a reroll.
 
@@ -517,22 +351,28 @@ of the repositories listed at
 
 
 * da/rev-parse-verify-quiet (2014-09-19) 4 commits
- - stash: prefer --quiet over shell redirection of the standard error stream
- - refs: make rev-parse --quiet actually quiet
- - t1503: use test_must_be_empty
- - Documentation: a note about stdout for git rev-parse --verify --quiet
+  (merged to 'next' on 2014-09-23 at 5ed184a)
+ + stash: prefer --quiet over shell redirection of the standard error stream
+ + refs: make rev-parse --quiet actually quiet
+ + t1503: use test_must_be_empty
+ + Documentation: a note about stdout for git rev-parse --verify --quiet
 
  "rev-parse --verify --quiet $name" is meant to quietly exit with a
  non-zero status when $name is not a valid object name, but still
  gave error messages in some cases.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * hj/pretty-naked-decoration (2014-09-18) 1 commit
- - pretty: add %D format specifier
+  (merged to 'next' on 2014-09-23 at fb699c4)
+ + pretty: add %D format specifier
 
- Will merge to 'next'.
+ The pretty-format specifier "%d", which expanded to " (tagname)"
+ for a tagged commit, gained a cousin "%D" that just gives the
+ "tagname" without frills.
+
+ Will merge to 'master'.
 
 
 * jc/ignore-sigpipe-while-running-hooks (2014-09-16) 1 commit
@@ -554,7 +394,9 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* jk/mbox-from-line (2014-09-16) 1 commit
+* jk/mbox-from-line (2014-09-22) 2 commits
+  (merged to 'next' on 2014-09-23 at 506b89b)
+ + mailinfo: work around -Wstring-plus-int warning
   (merged to 'next' on 2014-09-19 at 314af77)
  + mailinfo: make ">From" in-body header check more robust
 
@@ -577,39 +419,44 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* pr/use-default-sigpipe-setting (2014-09-18) 1 commit
- - unblock and unignore SIGPIPE
+* pr/use-default-sigpipe-setting (2014-09-22) 2 commits
+  (merged to 'next' on 2014-09-24 at 2d678ed)
+ + mingw.h: add dummy functions for sigset_t operations
+ + unblock and unignore SIGPIPE
 
  We used to get confused when a process called us with SIGPIPE
  ignored; we do want to die with SIGPIPE when the output is not
  read by default, and do ignore the signal when appropriate.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * rs/realloc-array (2014-09-18) 2 commits
- - use REALLOC_ARRAY for changing the allocation size of arrays
- - add macro REALLOC_ARRAY
+  (merged to 'next' on 2014-09-23 at a5bb3a6)
+ + use REALLOC_ARRAY for changing the allocation size of arrays
+ + add macro REALLOC_ARRAY
 
  Code cleanup.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jk/branch-verbose-merged (2014-09-18) 1 commit
- - branch: clean up commit flags after merge-filter walk
+  (merged to 'next' on 2014-09-23 at d940d15)
+ + branch: clean up commit flags after merge-filter walk
 
  The "--verbose" option no longer breaks "git branch --merged $it".
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * sb/help-unknown-command-sort-fix (2014-09-18) 1 commit
- - help: fix the size passed to qsort
+  (merged to 'next' on 2014-09-23 at 6ab29ed)
+ + help: fix the size passed to qsort
 
  Code cleanup.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jc/hash-object (2014-09-11) 3 commits
@@ -623,7 +470,7 @@ of the repositories listed at
  garbage into a loose object, to allow us to create a test data for
  mechanisms to catch corrupt objects.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jc/hash-object-fsck-tag (2014-09-12) 2 commits
@@ -635,7 +482,7 @@ of the repositories listed at
  Using "hash-object --literally", test one of the new breakages
  js/fsck-tag-validation topic teaches "fsck" to catch is caught.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * js/fsck-tag-validation (2014-09-12) 6 commits
@@ -650,7 +497,7 @@ of the repositories listed at
 
  Teach "git fsck" to inspect the contents of annotated tag objects.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * mh/lockfile (2014-09-16) 35 commits
@@ -734,7 +581,7 @@ of the repositories listed at
  Rerolled, reviews in progress; it seems that we will see another reroll?
 
 
-* cc/interpret-trailers (2014-09-15) 11 commits
+* cc/interpret-trailers (2014-09-22) 11 commits
  - Documentation: add documentation for 'git interpret-trailers'
  - trailer: add tests for commands in config file
  - trailer: execute command from 'trailer.<name>.command'
@@ -750,11 +597,13 @@ of the repositories listed at
  A new filter to programatically edit the tail end of the commit log
  messages.
 
- Rerolled, with some review comments but not much; it seems that we
- will see another reroll?
+ Discussion on the topic with Michael Tsirkin who wants to utilize
+ this machinery is going on.  Finally a real functionality review
+ that is very much welcomed ;-).
 
 
-* sp/stream-clean-filter (2014-08-28) 6 commits
+* sp/stream-clean-filter (2014-09-22) 7 commits
+ - sha1_file: don't convert off_t to size_t too early to avoid potential die()
  - convert: stream from fd to required clean filter to reduce used address space
  - copy_fd(): do not close the input file descriptor
  - mmap_limit: introduce GIT_MMAP_LIMIT to allow testing expected mmap size
@@ -762,40 +611,41 @@ of the repositories listed at
  - config.c: add git_env_ulong() to parse environment variable
  - convert: drop arguments other than 'path' from would_convert_to_git()
 
- Rerolled.  Comments & reviews?
+ Will merge to 'next'.
 
 
 * jc/push-cert (2014-09-17) 23 commits
- - signed push: allow stale nonce in stateless mode
- - signed push: teach smart-HTTP to pass "git push --signed" around
- - signed push: fortify against replay attacks
- - signed push: add "pushee" header to push certificate
- - signed push: remove duplicated protocol info
- - send-pack: send feature request on push-cert packet
- - receive-pack: GPG-validate push certificates
- - push: the beginning of "git push --signed"
- - pack-protocol doc: typofix for PKT-LINE
- - gpg-interface: move parse_signature() to where it should be
- - gpg-interface: move parse_gpg_output() to where it should be
- - send-pack: clarify that cmds_sent is a boolean
- - send-pack: refactor inspecting and resetting status and sending commands
- - send-pack: rename "new_refs" to "need_pack_data"
- - receive-pack: factor out capability string generation
- - send-pack: factor out capability string generation
- - send-pack: always send capabilities
- - send-pack: refactor decision to send update per ref
- - send-pack: move REF_STATUS_REJECT_NODELETE logic a bit higher
- - receive-pack: factor out queueing of command
- - receive-pack: do not reuse old_sha1[] for other things
- - receive-pack: parse feature request a bit earlier
- - receive-pack: do not overallocate command structure
+  (merged to 'next' on 2014-09-24 at a99f5d8)
+ + signed push: allow stale nonce in stateless mode
+ + signed push: teach smart-HTTP to pass "git push --signed" around
+ + signed push: fortify against replay attacks
+ + signed push: add "pushee" header to push certificate
+ + signed push: remove duplicated protocol info
+ + send-pack: send feature request on push-cert packet
+ + receive-pack: GPG-validate push certificates
+ + push: the beginning of "git push --signed"
+ + pack-protocol doc: typofix for PKT-LINE
+ + gpg-interface: move parse_signature() to where it should be
+ + gpg-interface: move parse_gpg_output() to where it should be
+ + send-pack: clarify that cmds_sent is a boolean
+ + send-pack: refactor inspecting and resetting status and sending commands
+ + send-pack: rename "new_refs" to "need_pack_data"
+ + receive-pack: factor out capability string generation
+ + send-pack: factor out capability string generation
+ + send-pack: always send capabilities
+ + send-pack: refactor decision to send update per ref
+ + send-pack: move REF_STATUS_REJECT_NODELETE logic a bit higher
+ + receive-pack: factor out queueing of command
+ + receive-pack: do not reuse old_sha1[] for other things
+ + receive-pack: parse feature request a bit earlier
+ + receive-pack: do not overallocate command structure
 
- Allow "git push" request to be signed, so that it can be verified
+ Allow "git push" request to be signed, so that it can be verified and
  audited, using the GPG signature of the person who pushed, that the
  tips of branches at a public repository really point the commits
  the pusher wanted to, without having to "trust" the server.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jc/test-lazy-prereq (2014-06-13) 1 commit
