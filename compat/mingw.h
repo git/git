@@ -69,7 +69,6 @@ struct sigaction {
 	sig_handler_t sa_handler;
 	unsigned sa_flags;
 };
-#define sigemptyset(x) (void)0
 #define SA_RESTART 0
 
 struct itimerval {
@@ -116,6 +115,12 @@ static inline int fcntl(int fd, int cmd, ...)
 }
 /* bash cannot reliably detect negative return codes as failure */
 #define exit(code) exit((code) & 0xff)
+#define sigemptyset(x) (void)0
+static inline int sigaddset(sigset_t *set, int signum)
+{ return 0; }
+#define SIG_UNBLOCK 0
+static inline int sigprocmask(int how, const sigset_t *set, sigset_t *oldset)
+{ return 0; }
 
 /*
  * simple adaptors
