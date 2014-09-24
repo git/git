@@ -58,7 +58,7 @@ OPTIONS
 -------
 -a::
 --annotate::
-	Make an unsigned, annotated tag object
+	Make an unsigned, annotated tag object.
 
 -s::
 --sign::
@@ -70,7 +70,7 @@ OPTIONS
 
 -f::
 --force::
-	Replace an existing tag with the given name (instead of failing)
+	Replace an existing tag with the given name (instead of failing).
 
 -d::
 --delete::
