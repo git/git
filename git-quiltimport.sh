@@ -6,6 +6,8 @@ git quiltimport [options]
 --
 n,dry-run     dry run
 author=       author name and email address for patches without any
+C=            minimum context (see git apply)
+exact         allow no-fuzz
 patches=      path to the quilt series and patches
 "
 SUBDIRECTORY_ON=Yes
@@ -13,12 +15,25 @@ SUBDIRECTORY_ON=Yes
 
 dry_run=""
 quilt_author=""
+cflag=-C1
 while test $# != 0
 do
 	case "$1" in
 	--author)
 		shift
 		quilt_author="$1"
+		;;
+	-C)
+		shift
+		# ensure numerical parameter
+		case "$1" in
+		''|*[!0-9]*) usage;;
+		*) ;;
+		esac
+		cflag="-C$1"
+		;;
+	--exact)
+		cflag=
 		;;
 	-n|--dry-run)
 		dry_run=1
@@ -130,7 +145,7 @@ do
 	fi
 
 	if [ -z "$dry_run" ] ; then
-		git apply --index -C1 ${level:+"$level"} "$tmp_patch" &&
+		git apply --index $cflag ${level:+"$level"} "$tmp_patch" &&
 		tree=$(git write-tree) &&
 		commit=$( (echo "$SUBJECT"; echo; cat "$tmp_msg") | git commit-tree $tree -p $commit) &&
 		git update-ref -m "quiltimport: $patch_name" HEAD $commit || exit 4
