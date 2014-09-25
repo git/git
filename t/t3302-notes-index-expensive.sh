@@ -7,8 +7,6 @@ test_description='Test commit notes index (expensive!)'
 
 . ./test-lib.sh
 
-test -n "$GIT_NOTES_TIMING_TESTS" && test_set_prereq EXPENSIVE
-
 create_repo () {
 	number_of_commits=$1
 	nr=0
