@@ -288,7 +288,7 @@ static int copy_to_sideband(int in, int out, void *arg)
 
 #define HMAC_BLOCK_SIZE 64
 
-static void hmac_sha1(unsigned char out[20],
+static void hmac_sha1(unsigned char *out,
 		      const char *key_in, size_t key_len,
 		      const char *text, size_t text_len)
 {
@@ -323,7 +323,7 @@ static void hmac_sha1(unsigned char out[20],
 	/* RFC 2104 2. (6) & (7) */
 	git_SHA1_Init(&ctx);
 	git_SHA1_Update(&ctx, k_opad, sizeof(k_opad));
-	git_SHA1_Update(&ctx, out, sizeof(out));
+	git_SHA1_Update(&ctx, out, 20);
 	git_SHA1_Final(out, &ctx);
 }
 
