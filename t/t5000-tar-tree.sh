@@ -305,4 +305,18 @@ test_expect_success GZIP 'remote tar.gz can be disabled' '
 		>remote.tar.gz
 '
 
+test_expect_success 'archive and :(glob)' '
+	git archive -v HEAD -- ":(glob)**/sh" >/dev/null 2>actual &&
+	cat >expect <<EOF &&
+a/
+a/bin/
+a/bin/sh
+EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'catch non-matching pathspec' '
+	test_must_fail git archive -v HEAD -- "*.abc" >/dev/null
+'
+
 test_done

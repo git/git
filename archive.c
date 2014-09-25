@@ -5,6 +5,7 @@
 #include "archive.h"
 #include "parse-options.h"
 #include "unpack-trees.h"
+#include "dir.h"
 
 static char const * const archive_usage[] = {
 	N_("git archive [options] <tree-ish> [<path>...]"),
@@ -98,9 +99,19 @@ static void setup_archive_check(struct git_attr_check *check)
 	check[1].attr = attr_export_subst;
 }
 
+struct directory {
+	struct directory *up;
+	unsigned char sha1[20];
+	int baselen, len;
+	unsigned mode;
+	int stage;
+	char path[FLEX_ARRAY];
+};
+
 struct archiver_context {
 	struct archiver_args *args;
 	write_archive_entry_fn_t write_entry;
+	struct directory *bottom;
 };
 
 static int write_archive_entry(const unsigned char *sha1, const char *base,
@@ -146,6 +157,65 @@ static int write_archive_entry(const unsigned char *sha1, const char *base,
 	return write_entry(args, sha1, path.buf, path.len, mode);
 }
 
+static void queue_directory(const unsigned char *sha1,
+		const char *base, int baselen, const char *filename,
+		unsigned mode, int stage, struct archiver_context *c)
+{
+	struct directory *d;
+	d = xmallocz(sizeof(*d) + baselen + 1 + strlen(filename));
+	d->up	   = c->bottom;
+	d->baselen = baselen;
+	d->mode	   = mode;
+	d->stage   = stage;
+	c->bottom  = d;
+	d->len = sprintf(d->path, "%.*s%s/", baselen, base, filename);
+	hashcpy(d->sha1, sha1);
+}
+
+static int write_directory(struct archiver_context *c)
+{
+	struct directory *d = c->bottom;
+	int ret;
+
+	if (!d)
+		return 0;
+	c->bottom = d->up;
+	d->path[d->len - 1] = '\0'; /* no trailing slash */
+	ret =
+		write_directory(c) ||
+		write_archive_entry(d->sha1, d->path, d->baselen,
+				    d->path + d->baselen, d->mode,
+				    d->stage, c) != READ_TREE_RECURSIVE;
+	free(d);
+	return ret ? -1 : 0;
+}
+
+static int queue_or_write_archive_entry(const unsigned char *sha1,
+		const char *base, int baselen, const char *filename,
+		unsigned mode, int stage, void *context)
+{
+	struct archiver_context *c = context;
+
+	while (c->bottom &&
+	       !(baselen >= c->bottom->len &&
+		 !strncmp(base, c->bottom->path, c->bottom->len))) {
+		struct directory *next = c->bottom->up;
+		free(c->bottom);
+		c->bottom = next;
+	}
+
+	if (S_ISDIR(mode)) {
+		queue_directory(sha1, base, baselen, filename,
+				mode, stage, c);
+		return READ_TREE_RECURSIVE;
+	}
+
+	if (write_directory(c))
+		return -1;
+	return write_archive_entry(sha1, base, baselen, filename, mode,
+				   stage, context);
+}
+
 int write_archive_entries(struct archiver_args *args,
 		write_archive_entry_fn_t write_entry)
 {
@@ -167,6 +237,7 @@ int write_archive_entries(struct archiver_args *args,
 			return err;
 	}
 
+	memset(&context, 0, sizeof(context));
 	context.args = args;
 	context.write_entry = write_entry;
 
@@ -187,9 +258,17 @@ int write_archive_entries(struct archiver_args *args,
 	}
 
 	err = read_tree_recursive(args->tree, "", 0, 0, &args->pathspec,
-				  write_archive_entry, &context);
+				  args->pathspec.has_wildcard ?
+				  queue_or_write_archive_entry :
+				  write_archive_entry,
+				  &context);
 	if (err == READ_TREE_RECURSIVE)
 		err = 0;
+	while (context.bottom) {
+		struct directory *next = context.bottom->up;
+		free(context.bottom);
+		context.bottom = next;
+	}
 	return err;
 }
 
@@ -211,7 +290,16 @@ static int reject_entry(const unsigned char *sha1, const char *base,
 			int baselen, const char *filename, unsigned mode,
 			int stage, void *context)
 {
-	return -1;
+	int ret = -1;
+	if (S_ISDIR(mode)) {
+		struct strbuf sb = STRBUF_INIT;
+		strbuf_addstr(&sb, base);
+		strbuf_addstr(&sb, filename);
+		if (!match_pathspec(context, sb.buf, sb.len, 0, NULL, 1))
+			ret = READ_TREE_RECURSIVE;
+		strbuf_release(&sb);
+	}
+	return ret;
 }
 
 static int path_exists(struct tree *tree, const char *path)
@@ -221,7 +309,9 @@ static int path_exists(struct tree *tree, const char *path)
 	int ret;
 
 	parse_pathspec(&pathspec, 0, 0, "", paths);
-	ret = read_tree_recursive(tree, "", 0, 0, &pathspec, reject_entry, NULL);
+	pathspec.recursive = 1;
+	ret = read_tree_recursive(tree, "", 0, 0, &pathspec,
+				  reject_entry, &pathspec);
 	free_pathspec(&pathspec);
 	return ret != 0;
 }
@@ -237,6 +327,7 @@ static void parse_pathspec_arg(const char **pathspec,
 	parse_pathspec(&ar_args->pathspec, 0,
 		       PATHSPEC_PREFER_FULL,
 		       "", pathspec);
+	ar_args->pathspec.recursive = 1;
 	if (pathspec) {
 		while (*pathspec) {
 			if (**pathspec && !path_exists(ar_args->tree, *pathspec))
