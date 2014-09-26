@@ -135,4 +135,17 @@ test_expect_success 'send-pack stderr contains hook messages' '
 	test_cmp expect actual
 '
 
+test_expect_success 'pre-receive hook that forgets to read its input' '
+	write_script victim.git/hooks/pre-receive <<-\EOF &&
+	exit 0
+	EOF
+	rm -f victim.git/hooks/update victim.git/hooks/post-update &&
+
+	for v in $(test_seq 100 999)
+	do
+		git branch branch_$v master || return
+	done &&
+	git push ./victim.git "+refs/heads/*:refs/heads/*"
+'
+
 test_done
