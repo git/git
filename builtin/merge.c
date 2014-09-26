@@ -556,7 +556,7 @@ static void parse_branch_merge_options(char *bmo)
 	if (argc < 0)
 		die(_("Bad branch.%s.mergeoptions string: %s"), branch,
 		    split_cmdline_strerror(argc));
-	argv = xrealloc(argv, sizeof(*argv) * (argc + 2));
+	REALLOC_ARRAY(argv, argc + 2);
 	memmove(argv + 1, argv, sizeof(*argv) * (argc + 1));
 	argc++;
 	argv[0] = "branch.*.mergeoptions";

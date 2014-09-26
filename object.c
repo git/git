@@ -319,7 +319,7 @@ static void add_object_array_with_mode_context(struct object *obj, const char *n
 
 	if (nr >= alloc) {
 		alloc = (alloc + 32) * 2;
-		objects = xrealloc(objects, alloc * sizeof(*objects));
+		REALLOC_ARRAY(objects, alloc);
 		array->alloc = alloc;
 		array->objects = objects;
 	}

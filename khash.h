@@ -121,13 +121,9 @@ static const double __ac_HASH_UPPER = 0.77;
 				if (!new_flags) return -1;								\
 				memset(new_flags, 0xaa, __ac_fsize(new_n_buckets) * sizeof(khint32_t)); \
 				if (h->n_buckets < new_n_buckets) {	/* expand */		\
-					khkey_t *new_keys = (khkey_t*)xrealloc((void *)h->keys, new_n_buckets * sizeof(khkey_t)); \
-					if (!new_keys) return -1;							\
-					h->keys = new_keys;									\
+					REALLOC_ARRAY(h->keys, new_n_buckets); \
 					if (kh_is_map) {									\
-						khval_t *new_vals = (khval_t*)xrealloc((void *)h->vals, new_n_buckets * sizeof(khval_t)); \
-						if (!new_vals) return -1;						\
-						h->vals = new_vals;								\
+						REALLOC_ARRAY(h->vals, new_n_buckets); \
 					}													\
 				} /* otherwise shrink */								\
 			}															\
@@ -160,8 +156,8 @@ static const double __ac_HASH_UPPER = 0.77;
 				}														\
 			}															\
 			if (h->n_buckets > new_n_buckets) { /* shrink the hash table */ \
-				h->keys = (khkey_t*)xrealloc((void *)h->keys, new_n_buckets * sizeof(khkey_t)); \
-				if (kh_is_map) h->vals = (khval_t*)xrealloc((void *)h->vals, new_n_buckets * sizeof(khval_t)); \
+				REALLOC_ARRAY(h->keys, new_n_buckets); \
+				if (kh_is_map) REALLOC_ARRAY(h->vals, new_n_buckets); \
 			}															\
 			free(h->flags); /* free the working space */				\
 			h->flags = new_flags;										\

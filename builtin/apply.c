@@ -2626,7 +2626,7 @@ static void update_image(struct image *img,
 		 * NOTE: this knows that we never call remove_first_line()
 		 * on anything other than pre/post image.
 		 */
-		img->line = xrealloc(img->line, nr * sizeof(*img->line));
+		REALLOC_ARRAY(img->line, nr);
 		img->line_allocated = img->line;
 	}
 	if (preimage_limit != postimage->nr)

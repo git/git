@@ -563,7 +563,7 @@ static int git_show_branch_config(const char *var, const char *value, void *cb)
 			default_arg[default_num++] = "show-branch";
 		} else if (default_alloc <= default_num + 1) {
 			default_alloc = default_alloc * 3 / 2 + 20;
-			default_arg = xrealloc(default_arg, sizeof *default_arg * default_alloc);
+			REALLOC_ARRAY(default_arg, default_alloc);
 		}
 		default_arg[default_num++] = xstrdup(value);
 		default_arg[default_num] = NULL;
