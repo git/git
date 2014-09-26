@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Sep 2014, #06; Wed, 24)
-X-master-at: 97b8860c071898d9e162678ea1035a8ced2f8b1f
-X-next-at: b8dfbefaa44d81ef4d724788e2b9e387ee7a8bf8
+Subject: What's cooking in git.git (Sep 2014, #07; Fri, 26)
+X-master-at: d29e9c89dbbf0876145dc88615b99308cab5f187
+X-next-at: 85a663a958ab88a0f5f6e875ec30a4bd3f14a9ad
 
-What's cooking in git.git (Sep 2014, #06; Wed, 24)
+What's cooking in git.git (Sep 2014, #07; Fri, 26)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -17,77 +17,131 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
+[Graduated to "master"]
+
+* jc/hash-object (2014-09-11) 3 commits
+  (merged to 'next' on 2014-09-19 at ea6ac62)
+ + hash-object: add --literally option
+ + hash-object: pass 'write_object' as a flag
+ + hash-object: reduce file-scope statics
+ (this branch is used by jc/hash-object-fsck-tag.)
+
+ "hash-object" learned a new "--literally" option to hash any random
+ garbage into a loose object, to allow us to create a test data for
+ mechanisms to catch corrupt objects.
+
+
+* jc/hash-object-fsck-tag (2014-09-12) 2 commits
+  (merged to 'next' on 2014-09-19 at f14a7fe)
+ + t1450: make sure fsck detects a malformed tagger line
+ + Merge branch 'js/fsck-tag-validation' into HEAD
+ (this branch uses jc/hash-object and js/fsck-tag-validation.)
+
+ Using "hash-object --literally", test one of the new breakages
+ js/fsck-tag-validation topic teaches "fsck" to catch is caught.
+
+
+* jc/ignore-sigpipe-while-running-hooks (2014-09-16) 1 commit
+  (merged to 'next' on 2014-09-19 at 7abf293)
+ + receive-pack: allow hooks to ignore its standard input stream
+
+ pre- and post-receive hooks are no longer required to read all
+ their inputs.
+
+
+* jk/branch-verbose-merged (2014-09-18) 1 commit
+  (merged to 'next' on 2014-09-23 at d940d15)
+ + branch: clean up commit flags after merge-filter walk
+
+ The "--verbose" option no longer breaks "git branch --merged $it".
+
+
+* jk/close-stderr-of-credential-cache-deamon (2014-09-16) 1 commit
+  (merged to 'next' on 2014-09-19 at 51ba3be)
+ + credential-cache: close stderr in daemon process
+
+ Plug fd leaks.
+
+
+* jk/faster-name-conflicts (2014-09-12) 1 commit
+  (merged to 'next' on 2014-09-19 at 34d2840)
+ + refs: speed up is_refname_available
+
+ Optimize the check to see if a ref $F can be created by making sure
+ no existing ref has $F/ as its prefix, which especially matters in
+ a repository with a large number of existing refs.
+
+
+* jk/prune-packed-server-info (2014-09-15) 4 commits
+  (merged to 'next' on 2014-09-19 at 5e6c398)
+ + repack: call prune_packed_objects() and update_server_info() directly
+ + server-info: clean up after writing info/packs
+ + make update-server-info more robust
+ + prune-packed: fix minor memory leak
+
+ Code cleanup.
+
+
+* jk/write-packed-refs-via-stdio (2014-09-10) 1 commit
+  (merged to 'next' on 2014-09-19 at f1e94fb)
+ + refs: write packed_refs file using stdio
+
+ Optimize the code path to write out the packed-refs file, which
+ especially matters in a repository with a large number of refs.
+
+
+* js/fsck-tag-validation (2014-09-12) 6 commits
+  (merged to 'next' on 2014-09-19 at 4a62182)
+ + Make sure that index-pack --strict checks tag objects
+ + Add regression tests for stricter tag fsck'ing
+ + fsck: check tag objects' headers
+ + Make sure fsck_commit_buffer() does not run out of the buffer
+ + fsck_object(): allow passing object data separately from the object itself
+ + Refactor type_from_string() to allow continuing after detecting an error
+ (this branch is used by jc/hash-object-fsck-tag.)
+
+ Teach "git fsck" to inspect the contents of annotated tag objects.
+
+
+* rs/realloc-array (2014-09-18) 2 commits
+  (merged to 'next' on 2014-09-23 at a5bb3a6)
+ + use REALLOC_ARRAY for changing the allocation size of arrays
+ + add macro REALLOC_ARRAY
+
+ Code cleanup.
+
+
+* sb/help-unknown-command-sort-fix (2014-09-18) 1 commit
+  (merged to 'next' on 2014-09-23 at 6ab29ed)
+ + help: fix the size passed to qsort
+
+ Code cleanup.
+
+--------------------------------------------------
 [New Topics]
 
-* nd/archive-pathspec (2014-09-22) 1 commit
- - archive: support filtering paths with glob
+* jc/push-cert-hmac-optim (2014-09-25) 2 commits
+ - receive-pack: truncate hmac early and convert only necessary bytes
+ - sha1_to_hex: split out "hex-format n bytes" helper and use it
+ (this branch uses jc/push-cert.)
 
- "git archive" learned to filter what gets archived with pathspec.
+ This is "we could do this if we wanted to", not "we measured and it
+ improves performance critical codepath".
 
- Will merge to 'next'.
-
-
-* rs/graph-simplify (2014-09-22) 1 commit
-  (merged to 'next' on 2014-09-23 at 72969e2)
- + graph: simplify graph_padding_line()
-
- Will merge to 'master'.
+ Will perhaps drop.
 
 
-* rs/remote-simplify (2014-09-22) 1 commit
-  (merged to 'next' on 2014-09-23 at 176e316)
- + remote: simplify match_name_with_pattern() using strbuf
+* je/quiltimport-no-fuzz (2014-09-26) 2 commits
+ - git-quiltimport: flip the default not to allow fuzz
+ - git-quiltimport.sh: allow declining fuzz with --exact option
 
- Will merge to 'master'.
+ "quiltimport" drove "git apply" always with -C1 option to reduce
+ context of the patch in order to give more chance to somewhat stale
+ patches to apply.  Add an "--exact" option to disable, and also
+ "-C$n" option to customize this behaviour.  The top patch
+ optionally flips the default to "--exact".
 
-
-* sb/merge-recursive-copy-paste-fix (2014-09-23) 2 commits
-  (merged to 'next' on 2014-09-24 at b8dfbef)
- + merge-recursive: remove stale commented debugging code
- + merge-recursive: fix copy-paste mistake
-
- "git merge-recursive" had a small bug that could have made it
- mishandle "one side deleted, the other side did not touch it" in a
- rare corner case, where the other side actually did touch to cause
- the blob object names to be different but both blobs before and
- after the change normalize to the same (e.g. correcting mistake to
- check in a blob with CRLF line endings by replacing it with another
- blob that records the same contents with LF line endings).
-
- Will merge to 'master'.
-
-
-* sb/t6031-typofix (2014-09-22) 1 commit
-  (merged to 'next' on 2014-09-23 at aec57a9)
- + t6031-test-merge-recursive: do not forget to add file to be committed
-
- Will merge to 'master'.
-
-
-* sb/t9300-typofix (2014-09-22) 1 commit
-  (merged to 'next' on 2014-09-23 at aa519bd)
- + t9300-fast-import: fix typo in test description
-
- Will merge to 'master'.
-
-
-* so/rebase-doc-fork-point (2014-09-22) 1 commit
- - Documentation/git-rebase.txt: document when --fork-point is auto-enabled
-
-
-* sk/tag-contains-wo-recursion (2014-09-23) 1 commit
- - t7004: give the test a bit more stack space
-
-
-* jt/itimer-autoconf (2014-08-29) 3 commits
- - autoconf: check for setitimer()
- - autoconf: check for struct itimerval
- - git-compat-util.h: add missing semicolon after struct itimerval
- (this branch is used by jt/timer-settime.)
-
- Split the early part of jt/timer-settime topic out into a topic.
-
- Will merge to 'next'.
+ Waiting for an Ack.
 
 --------------------------------------------------
 [Stalled]
@@ -135,7 +189,7 @@ of the repositories listed at
  with conflicts the person who recorded the merge would have seen
  and the final conflict resolution that was recorded in the merge.
 
- Review comments sent.
+ Waiting for a reroll ($gmane/256591).
 
 
 * hv/submodule-config (2014-06-30) 4 commits
@@ -322,23 +376,80 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* jk/faster-name-conflicts (2014-09-12) 1 commit
-  (merged to 'next' on 2014-09-19 at 34d2840)
- + refs: speed up is_refname_available
+* nd/archive-pathspec (2014-09-22) 1 commit
+  (merged to 'next' on 2014-09-25 at 8806f93)
+ + archive: support filtering paths with glob
 
- Optimize the check to see if a ref $F can be created by making sure
- no existing ref has $F/ as its prefix, which especially matters in
- a repository with a large number of existing refs.
+ "git archive" learned to filter what gets archived with pathspec.
 
  Will merge to 'master'.
 
 
-* jk/write-packed-refs-via-stdio (2014-09-10) 1 commit
-  (merged to 'next' on 2014-09-19 at f1e94fb)
- + refs: write packed_refs file using stdio
+* rs/graph-simplify (2014-09-22) 1 commit
+  (merged to 'next' on 2014-09-23 at 72969e2)
+ + graph: simplify graph_padding_line()
 
- Optimize the code path to write out the packed-refs file, which
- especially matters in a repository with a large number of refs.
+ Will merge to 'master'.
+
+
+* rs/remote-simplify (2014-09-22) 1 commit
+  (merged to 'next' on 2014-09-23 at 176e316)
+ + remote: simplify match_name_with_pattern() using strbuf
+
+ Will merge to 'master'.
+
+
+* sb/merge-recursive-copy-paste-fix (2014-09-23) 2 commits
+  (merged to 'next' on 2014-09-24 at b8dfbef)
+ + merge-recursive: remove stale commented debugging code
+ + merge-recursive: fix copy-paste mistake
+
+ "git merge-recursive" had a small bug that could have made it
+ mishandle "one side deleted, the other side did not touch it" in a
+ rare corner case, where the other side actually did touch to cause
+ the blob object names to be different but both blobs before and
+ after the change normalize to the same (e.g. correcting mistake to
+ check in a blob with CRLF line endings by replacing it with another
+ blob that records the same contents with LF line endings).
+
+ Will merge to 'master'.
+
+
+* sb/t6031-typofix (2014-09-22) 1 commit
+  (merged to 'next' on 2014-09-23 at aec57a9)
+ + t6031-test-merge-recursive: do not forget to add file to be committed
+
+ Will merge to 'master'.
+
+
+* sb/t9300-typofix (2014-09-22) 1 commit
+  (merged to 'next' on 2014-09-23 at aa519bd)
+ + t9300-fast-import: fix typo in test description
+
+ Will merge to 'master'.
+
+
+* so/rebase-doc-fork-point (2014-09-22) 1 commit
+ - Documentation/git-rebase.txt: document when --fork-point is auto-enabled
+
+ Expecting a reroll ($gmane/257378).
+
+
+* sk/tag-contains-wo-recursion (2014-09-23) 1 commit
+ - t7004: give the test a bit more stack space
+
+ Waiting for an Ack ($gmane/257448).
+
+
+* jt/itimer-autoconf (2014-08-29) 3 commits
+  (merged to 'next' on 2014-09-25 at efd65ba)
+ + autoconf: check for setitimer()
+ + autoconf: check for struct itimerval
+ + git-compat-util.h: add missing semicolon after struct itimerval
+ (this branch is used by jt/timer-settime.)
+
+ setitmer(2) and related API elements can be configured from
+ Makefile but autoconf did not know about it.
 
  Will merge to 'master'.
 
@@ -348,6 +459,10 @@ of the repositories listed at
  - check-headers: add header usage checks for .c files
  - Makefile: add check-headers target
  - cleanups: ensure that git-compat-util.h is included first
+
+ So... what is happening to this topic?  I think the bottom one is a
+ reasonable clean-up without too much churn, but I am not sure about
+ the rest.
 
 
 * da/rev-parse-verify-quiet (2014-09-19) 4 commits
@@ -375,25 +490,6 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* jc/ignore-sigpipe-while-running-hooks (2014-09-16) 1 commit
-  (merged to 'next' on 2014-09-19 at 7abf293)
- + receive-pack: allow hooks to ignore its standard input stream
-
- pre- and post-receive hooks are no longer required to read all
- their inputs.
-
- Will merge to 'master'.
-
-
-* jk/close-stderr-of-credential-cache-deamon (2014-09-16) 1 commit
-  (merged to 'next' on 2014-09-19 at 51ba3be)
- + credential-cache: close stderr in daemon process
-
- Plug fd leaks.
-
- Will merge to 'master'.
-
-
 * jk/mbox-from-line (2014-09-22) 2 commits
   (merged to 'next' on 2014-09-23 at 506b89b)
  + mailinfo: work around -Wstring-plus-int warning
@@ -403,18 +499,6 @@ of the repositories listed at
  Some MUAs mangled a line in a message that begins with "From " to
  ">From " when writing to a mailbox file and feeding such an input
  to "git am" used to lose such a line.
-
- Will merge to 'master'.
-
-
-* jk/prune-packed-server-info (2014-09-15) 4 commits
-  (merged to 'next' on 2014-09-19 at 5e6c398)
- + repack: call prune_packed_objects() and update_server_info() directly
- + server-info: clean up after writing info/packs
- + make update-server-info more robust
- + prune-packed: fix minor memory leak
-
- Code cleanup.
 
  Will merge to 'master'.
 
@@ -431,84 +515,17 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* rs/realloc-array (2014-09-18) 2 commits
-  (merged to 'next' on 2014-09-23 at a5bb3a6)
- + use REALLOC_ARRAY for changing the allocation size of arrays
- + add macro REALLOC_ARRAY
-
- Code cleanup.
-
- Will merge to 'master'.
-
-
-* jk/branch-verbose-merged (2014-09-18) 1 commit
-  (merged to 'next' on 2014-09-23 at d940d15)
- + branch: clean up commit flags after merge-filter walk
-
- The "--verbose" option no longer breaks "git branch --merged $it".
-
- Will merge to 'master'.
-
-
-* sb/help-unknown-command-sort-fix (2014-09-18) 1 commit
-  (merged to 'next' on 2014-09-23 at 6ab29ed)
- + help: fix the size passed to qsort
-
- Code cleanup.
-
- Will merge to 'master'.
-
-
-* jc/hash-object (2014-09-11) 3 commits
-  (merged to 'next' on 2014-09-19 at ea6ac62)
- + hash-object: add --literally option
- + hash-object: pass 'write_object' as a flag
- + hash-object: reduce file-scope statics
- (this branch is used by jc/hash-object-fsck-tag.)
-
- "hash-object" learned a new "--literally" option to hash any random
- garbage into a loose object, to allow us to create a test data for
- mechanisms to catch corrupt objects.
-
- Will merge to 'master'.
-
-
-* jc/hash-object-fsck-tag (2014-09-12) 2 commits
-  (merged to 'next' on 2014-09-19 at f14a7fe)
- + t1450: make sure fsck detects a malformed tagger line
- + Merge branch 'js/fsck-tag-validation' into HEAD
- (this branch uses jc/hash-object and js/fsck-tag-validation.)
-
- Using "hash-object --literally", test one of the new breakages
- js/fsck-tag-validation topic teaches "fsck" to catch is caught.
-
- Will merge to 'master'.
-
-
-* js/fsck-tag-validation (2014-09-12) 6 commits
-  (merged to 'next' on 2014-09-19 at 4a62182)
- + Make sure that index-pack --strict checks tag objects
- + Add regression tests for stricter tag fsck'ing
- + fsck: check tag objects' headers
- + Make sure fsck_commit_buffer() does not run out of the buffer
- + fsck_object(): allow passing object data separately from the object itself
- + Refactor type_from_string() to allow continuing after detecting an error
- (this branch is used by jc/hash-object-fsck-tag.)
-
- Teach "git fsck" to inspect the contents of annotated tag objects.
-
- Will merge to 'master'.
-
-
-* mh/lockfile (2014-09-16) 35 commits
+* mh/lockfile (2014-09-26) 38 commits
+ - hold_locked_index(): move from lockfile.c to read-cache.c
+ - hold_lock_file_for_append(): restore errno before returning
  - get_locked_file_path(): new function
  - lockfile.c: rename static functions
  - lockfile: rename LOCK_NODEREF to LOCK_NO_DEREF
- - commit_locked_index(): extract a function commit_lock_file_to()
+ - commit_lock_file_to(): refactor a helper out of commit_lock_file()
  - trim_last_path_component(): replace last_path_elm()
  - resolve_symlink(): take a strbuf parameter
  - resolve_symlink(): use a strbuf for internal scratch space
- - struct lock_file: change the filename member into a strbuf
+ - lockfile: change lock_file::filename into a strbuf
  - commit_lock_file(): use a strbuf to manage temporary space
  - try_merge_strategy(): use a statically-allocated lock_file object
  - try_merge_strategy(): remove redundant lock_file allocation
@@ -518,7 +535,7 @@ of the repositories listed at
  - dump_marks(): remove a redundant call to rollback_lock_file()
  - api-lockfile: document edge cases
  - commit_lock_file(): rollback lock file on failure to rename
- - commit_lock_file(): if close fails, roll back
+ - close_lock_file(): if close fails, roll back
  - commit_lock_file(): die() if called for unlocked lockfile object
  - commit_lock_file(): inline temporary variable
  - remove_lock_file(): call rollback_lock_file()
@@ -528,16 +545,20 @@ of the repositories listed at
  - delete_ref_loose(): don't muck around in the lock_file's filename
  - cache.h: define constants LOCK_SUFFIX and LOCK_SUFFIX_LEN
  - lockfile.c: document the various states of lock_file objects
- - lock_file(): always add lock_file object to lock_file_list
+ - lock_file(): always initialize and register lock_file object
  - hold_lock_file_for_append(): release lock on errors
  - lockfile: unlock file if lockfile permissions cannot be adjusted
  - rollback_lock_file(): set fd to -1
  - rollback_lock_file(): exit early if lock is not active
  - rollback_lock_file(): do not clear filename redundantly
- - api-lockfile: expand the documentation
+ - close_lock_file(): exit (successfully) if file is already closed
+ - api-lockfile: revise and expand the documentation
  - unable_to_lock_die(): rename function from unable_to_lock_index_die()
 
- Rerolled, reviews in progress; it seems that we will see another reroll?
+ Rerolled, reviews in progress.
+
+ Interacts with jk/write-packed-refs-via-stdio topic that has recently
+ graduated in an unfortunate way.
 
 
 * nd/multiple-work-trees (2014-09-16) 32 commits
@@ -578,7 +599,7 @@ of the repositories listed at
  rely on symbolic links and make sharing of objects and refs safer
  by making the borrowee and borrowers aware of each other.
 
- Rerolled, reviews in progress; it seems that we will see another reroll?
+ Waiting for a reroll ($gmane/257496).
 
 
 * cc/interpret-trailers (2014-09-22) 11 commits
@@ -599,7 +620,7 @@ of the repositories listed at
 
  Discussion on the topic with Michael Tsirkin who wants to utilize
  this machinery is going on.  Finally a real functionality review
- that is very much welcomed ;-).
+ that is very much welcomed.
 
 
 * sp/stream-clean-filter (2014-09-22) 7 commits
@@ -614,7 +635,9 @@ of the repositories listed at
  Will merge to 'next'.
 
 
-* jc/push-cert (2014-09-17) 23 commits
+* jc/push-cert (2014-09-25) 24 commits
+  (merged to 'next' on 2014-09-25 at 3eb1d69)
+ + receive-pack::hmac_sha1(): copy the entire SHA-1 hash out
   (merged to 'next' on 2014-09-24 at a99f5d8)
  + signed push: allow stale nonce in stateless mode
  + signed push: teach smart-HTTP to pass "git push --signed" around
@@ -639,6 +662,7 @@ of the repositories listed at
  + receive-pack: do not reuse old_sha1[] for other things
  + receive-pack: parse feature request a bit earlier
  + receive-pack: do not overallocate command structure
+ (this branch is used by jc/push-cert-hmac-optim.)
 
  Allow "git push" request to be signed, so that it can be verified and
  audited, using the GPG signature of the person who pushed, that the
@@ -649,11 +673,12 @@ of the repositories listed at
 
 
 * jc/test-lazy-prereq (2014-06-13) 1 commit
- - tests: drop GIT_*_TIMING_TESTS environment variable support
+  (merged to 'next' on 2014-09-25 at ed479f3)
+ + tests: drop GIT_*_TIMING_TESTS environment variable support
 
  Test-script clean-up.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * mt/patch-id-stable (2014-06-10) 1 commit
