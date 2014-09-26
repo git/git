@@ -280,6 +280,7 @@ struct ref_item {
 	char *dest;
 	unsigned int kind, width;
 	struct commit *commit;
+	int ignore;
 };
 
 struct ref_list {
@@ -385,6 +386,7 @@ static int append_ref(const char *refname, const unsigned char *sha1, int flags,
 	newitem->commit = commit;
 	newitem->width = utf8_strwidth(refname);
 	newitem->dest = resolve_symref(orig_refname, prefix);
+	newitem->ignore = 0;
 	/* adjust for "remotes/" */
 	if (newitem->kind == REF_REMOTE_BRANCH &&
 	    ref_list->kinds != REF_REMOTE_BRANCH)
@@ -484,17 +486,6 @@ static void fill_tracking_info(struct strbuf *stat, const char *branch_name,
 	free(ref);
 }
 
-static int matches_merge_filter(struct commit *commit)
-{
-	int is_merged;
-
-	if (merge_filter == NO_FILTER)
-		return 1;
-
-	is_merged = !!(commit->object.flags & UNINTERESTING);
-	return (is_merged == (merge_filter == SHOW_MERGED));
-}
-
 static void add_verbose_info(struct strbuf *out, struct ref_item *item,
 			     int verbose, int abbrev)
 {
@@ -522,10 +513,9 @@ static void print_ref_item(struct ref_item *item, int maxwidth, int verbose,
 {
 	char c;
 	int color;
-	struct commit *commit = item->commit;
 	struct strbuf out = STRBUF_INIT, name = STRBUF_INIT;
 
-	if (!matches_merge_filter(commit))
+	if (item->ignore)
 		return;
 
 	switch (item->kind) {
@@ -575,7 +565,7 @@ static int calc_maxwidth(struct ref_list *refs)
 {
 	int i, w = 0;
 	for (i = 0; i < refs->index; i++) {
-		if (!matches_merge_filter(refs->list[i].commit))
+		if (refs->list[i].ignore)
 			continue;
 		if (refs->list[i].width > w)
 			w = refs->list[i].width;
@@ -618,6 +608,7 @@ static void show_detached(struct ref_list *ref_list)
 		item.kind = REF_LOCAL_BRANCH;
 		item.dest = NULL;
 		item.commit = head_commit;
+		item.ignore = 0;
 		if (item.width > ref_list->maxwidth)
 			ref_list->maxwidth = item.width;
 		print_ref_item(&item, ref_list->maxwidth, ref_list->verbose, ref_list->abbrev, 1, "");
@@ -656,6 +647,20 @@ static int print_ref_list(int kinds, int detached, int verbose, int abbrev, stru
 
 		if (prepare_revision_walk(&ref_list.revs))
 			die(_("revision walk setup failed"));
+
+		for (i = 0; i < ref_list.index; i++) {
+			struct ref_item *item = &ref_list.list[i];
+			struct commit *commit = item->commit;
+			int is_merged = !!(commit->object.flags & UNINTERESTING);
+			item->ignore = is_merged != (merge_filter == SHOW_MERGED);
+		}
+
+		for (i = 0; i < ref_list.index; i++) {
+			struct ref_item *item = &ref_list.list[i];
+			clear_commit_marks(item->commit, ALL_REV_FLAGS);
+		}
+		clear_commit_marks(filter, ALL_REV_FLAGS);
+
 		if (verbose)
 			ref_list.maxwidth = calc_maxwidth(&ref_list);
 	}
