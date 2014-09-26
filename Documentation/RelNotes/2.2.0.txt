@@ -40,6 +40,10 @@ UI, Workflows & Features
    forgot to remove higher stage entries, or if it wanted to unresolve
    and forgot to remove the stage#0 entry).
 
+ * The "pre-receive" and "post-receive" hooks are no longer required
+   to consume their input fully (not following this requirement used
+   to result in intermittent errors in "git push").
+
 
 Performance, Internal Implementation, etc.
 
@@ -86,6 +90,20 @@ Performance, Internal Implementation, etc.
  * A common programming mistake to assign the same short option name
    to two separate options is detected by parse_options() API to help
    developers.
+
+ * The code path to write out the packed-refs file has been optimized,
+   which especially matters in a repository with a large number of
+   refs.
+
+ * The check to see if a ref $F can be created by making sure no
+   existing ref has $F/ as its prefix has been optimized, which
+   especially matters in a repository with a large number of existing
+   refs.
+
+ * "git fsck" was taught to check contents of tag objects a bit more.
+
+ * "git hash-object" was taught a "--literally" option to help
+   debugging.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -169,3 +187,6 @@ notes for details).
  * "git fsck" failed to report that it found corrupt objects via its
    exit status in some cases.
    (merge 30d1038 jk/fsck-exit-code-fix later to maint).
+
+ * Use of "--verbose" option used to break "git branch --merged".
+   (merge 12994dd jk/maint-branch-verbose-merged later to maint).
