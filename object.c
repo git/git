@@ -33,13 +33,20 @@ const char *typename(unsigned int type)
 	return object_type_strings[type];
 }
 
-int type_from_string(const char *str)
+int type_from_string_gently(const char *str, ssize_t len, int gentle)
 {
 	int i;
 
+	if (len < 0)
+		len = strlen(str);
+
 	for (i = 1; i < ARRAY_SIZE(object_type_strings); i++)
-		if (!strcmp(str, object_type_strings[i]))
+		if (!strncmp(str, object_type_strings[i], len))
 			return i;
+
+	if (gentle)
+		return -1;
+
 	die("invalid object type \"%s\"", str);
 }
 

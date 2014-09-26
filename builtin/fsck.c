@@ -298,7 +298,7 @@ static int fsck_obj(struct object *obj)
 
 	if (fsck_walk(obj, mark_used, NULL))
 		objerror(obj, "broken links");
-	if (fsck_object(obj, check_strict, fsck_error_func))
+	if (fsck_object(obj, NULL, 0, check_strict, fsck_error_func))
 		return -1;
 
 	if (obj->type == OBJ_TREE) {
