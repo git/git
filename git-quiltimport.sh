@@ -15,7 +15,8 @@ SUBDIRECTORY_ON=Yes
 
 dry_run=""
 quilt_author=""
-cflag=-C1
+cflag=
+fuzz_specified=
 while test $# != 0
 do
 	case "$1" in
@@ -31,9 +32,11 @@ do
 		*) ;;
 		esac
 		cflag="-C$1"
+		fuzz_specified=yes
 		;;
 	--exact)
 		cflag=
+		fuzz_specified=yes
 		;;
 	-n|--dry-run)
 		dry_run=1
@@ -74,6 +77,25 @@ tmp_msg="$tmp_dir/msg"
 tmp_patch="$tmp_dir/patch"
 tmp_info="$tmp_dir/info"
 
+# Helper to warn about -C$n option
+do_apply () {
+	if git apply --index ${cflag+"$cflag"} "$@"
+	then
+		return
+	fi
+	if test -z "$fuzz_specified" &&
+	   git apply --check --index -C1 "$@" >/dev/null 2>&1
+	then
+		cat >&2 <<-\EOM
+		'git quiltimport' by default no longer attempts to apply
+		patches with reduced context lines to allow fuzz; if you
+		want the old 'unsafe' behaviour, run the command with -C1
+		option.
+		EOM
+
+	fi
+	return 1
+}
 
 # Find the initial commit
 commit=$(git rev-parse HEAD)
@@ -145,7 +167,7 @@ do
 	fi
 
 	if [ -z "$dry_run" ] ; then
-		git apply --index $cflag ${level:+"$level"} "$tmp_patch" &&
+		do_apply ${level:+"$level"} "$tmp_patch" &&
 		tree=$(git write-tree) &&
 		commit=$( (echo "$SUBJECT"; echo; cat "$tmp_msg") | git commit-tree $tree -p $commit) &&
 		git update-ref -m "quiltimport: $patch_name" HEAD $commit || exit 4
