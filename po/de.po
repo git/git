@@ -29,7 +29,7 @@ msgid ""
 "'git commit -a'."
 msgstr ""
 "Korrigieren Sie dies im Arbeitsverzeichnis, und benutzen Sie\n"
-"dann 'git add/rm <Datei>' um die Auflösung entsprechend zu markieren\n"
+"dann 'git add/rm <Datei>', um die Auflösung entsprechend zu markieren\n"
 "und zu committen, oder benutzen Sie 'git commit -a'."
 
 #: archive.c:10
@@ -619,7 +619,7 @@ msgstr "Fehler beim Erstellen des Pfades '%s'%s"
 #: merge-recursive.c:703
 #, c-format
 msgid "Removing %s to make room for subdirectory\n"
-msgstr "Entferne %s um Platz für Unterverzeichnis zu schaffen\n"
+msgstr "Entferne %s, um Platz für Unterverzeichnis zu schaffen\n"
 
 #: merge-recursive.c:717 merge-recursive.c:738
 msgid ": perhaps a D/F conflict?"
@@ -1037,7 +1037,7 @@ msgstr[1] "Ihr Branch ist vor '%s' um %d Commits.\n"
 
 #: remote.c:1960
 msgid "  (use \"git push\" to publish your local commits)\n"
-msgstr "  (benutzen Sie \"git push\" um lokale Commits zu publizieren)\n"
+msgstr "  (benutzen Sie \"git push\", um lokale Commits zu publizieren)\n"
 
 #: remote.c:1963
 #, c-format
@@ -1052,7 +1052,7 @@ msgstr[1] ""
 #: remote.c:1971
 msgid "  (use \"git pull\" to update your local branch)\n"
 msgstr ""
-"  (benutzen Sie \"git pull\" um Ihren lokalen Branch zu aktualisieren)\n"
+"  (benutzen Sie \"git pull\", um Ihren lokalen Branch zu aktualisieren)\n"
 
 #: remote.c:1974
 #, c-format
@@ -1072,7 +1072,7 @@ msgstr[1] ""
 #: remote.c:1984
 msgid "  (use \"git pull\" to merge the remote branch into yours)\n"
 msgstr ""
-"  (benutzen Sie \"git pull\" um Ihren Branch mit dem Remote-Branch "
+"  (benutzen Sie \"git pull\", um Ihren Branch mit dem Remote-Branch "
 "zusammenzuführen)\n"
 
 #: run-command.c:80
@@ -1136,7 +1136,7 @@ msgstr "Ihre lokalen Änderungen würden von \"revert\" überschrieben werden."
 #: sequencer.c:233
 msgid "Commit your changes or stash them to proceed."
 msgstr ""
-"Tragen Sie Ihre Änderungen ein oder benutzen Sie \"stash\" um fortzufahren."
+"Tragen Sie Ihre Änderungen ein oder benutzen Sie \"stash\", um fortzufahren."
 
 #: sequencer.c:250
 msgid "Failed to lock HEAD during fast_forward_to"
@@ -1488,18 +1488,18 @@ msgstr ""
 #: wt-status.c:183
 msgid "  (use \"git add <file>...\" to mark resolution)"
 msgstr ""
-"  (benutzen Sie \"git add/rm <Datei>...\" um die Auflösung zu markieren)"
+"  (benutzen Sie \"git add/rm <Datei>...\", um die Auflösung zu markieren)"
 
 #: wt-status.c:185 wt-status.c:189
 msgid "  (use \"git add/rm <file>...\" as appropriate to mark resolution)"
 msgstr ""
-"  (benutzen Sie \"git add/rm <Datei>...\" um die Auflösung entsprechend zu "
+"  (benutzen Sie \"git add/rm <Datei>...\", um die Auflösung entsprechend zu "
 "markieren)"
 
 #: wt-status.c:187
 msgid "  (use \"git rm <file>...\" to mark resolution)"
 msgstr ""
-"  (benutzen Sie \"git add/rm <Datei>...\" um die Auflösung zu markieren)"
+"  (benutzen Sie \"git add/rm <Datei>...\", um die Auflösung zu markieren)"
 
 #: wt-status.c:198
 msgid "Changes to be committed:"
@@ -1512,20 +1512,20 @@ msgstr "Änderungen, die nicht zum Commit vorgemerkt sind:"
 #: wt-status.c:220
 msgid "  (use \"git add <file>...\" to update what will be committed)"
 msgstr ""
-"  (benutzen Sie \"git add <Datei>...\" um die Änderungen zum Commit "
+"  (benutzen Sie \"git add <Datei>...\", um die Änderungen zum Commit "
 "vorzumerken)"
 
 #: wt-status.c:222
 msgid "  (use \"git add/rm <file>...\" to update what will be committed)"
 msgstr ""
-"  (benutzen Sie \"git add/rm <Datei>...\" um die Änderungen zum Commit "
+"  (benutzen Sie \"git add/rm <Datei>...\", um die Änderungen zum Commit "
 "vorzumerken)"
 
 #: wt-status.c:223
 msgid ""
 "  (use \"git checkout -- <file>...\" to discard changes in working directory)"
 msgstr ""
-"  (benutzen Sie \"git checkout -- <Datei>...\" um die Änderungen im "
+"  (benutzen Sie \"git checkout -- <Datei>...\", um die Änderungen im "
 "Arbeitsverzeichnis zu verwerfen)"
 
 #: wt-status.c:225
@@ -1538,7 +1538,7 @@ msgstr ""
 #, c-format
 msgid "  (use \"git %s <file>...\" to include in what will be committed)"
 msgstr ""
-"  (benutzen Sie \"git %s <Datei>...\" um die Änderungen zum Commit "
+"  (benutzen Sie \"git %s <Datei>...\", um die Änderungen zum Commit "
 "vorzumerken)"
 
 #: wt-status.c:252
@@ -1653,7 +1653,7 @@ msgstr "Alle Konflikte sind behoben, aber Sie sind immer noch beim Merge."
 
 #: wt-status.c:945
 msgid "  (use \"git commit\" to conclude merge)"
-msgstr "  (benutzen Sie \"git commit\" um den Merge abzuschließen)"
+msgstr "  (benutzen Sie \"git commit\", um den Merge abzuschließen)"
 
 #: wt-status.c:955
 msgid "You are in the middle of an am session."
@@ -1670,12 +1670,12 @@ msgstr ""
 
 #: wt-status.c:964
 msgid "  (use \"git am --skip\" to skip this patch)"
-msgstr "  (benutzen Sie \"git am --skip\" um diesen Patch auszulassen)"
+msgstr "  (benutzen Sie \"git am --skip\", um diesen Patch auszulassen)"
 
 #: wt-status.c:966
 msgid "  (use \"git am --abort\" to restore the original branch)"
 msgstr ""
-"  (benutzen Sie \"git am --abort\" um den ursprünglichen Branch "
+"  (benutzen Sie \"git am --abort\", um den ursprünglichen Branch "
 "wiederherzustellen)"
 
 #: wt-status.c:1026 wt-status.c:1043
@@ -1695,12 +1695,12 @@ msgstr ""
 
 #: wt-status.c:1036
 msgid "  (use \"git rebase --skip\" to skip this patch)"
-msgstr "  (benutzen Sie \"git rebase --skip\" um diesen Patch auszulassen)"
+msgstr "  (benutzen Sie \"git rebase --skip\", um diesen Patch auszulassen)"
 
 #: wt-status.c:1038
 msgid "  (use \"git rebase --abort\" to check out the original branch)"
 msgstr ""
-"  (benutzen Sie \"git rebase --abort\" um den ursprünglichen Branch "
+"  (benutzen Sie \"git rebase --abort\", um den ursprünglichen Branch "
 "auszuchecken)"
 
 #: wt-status.c:1051
@@ -1739,7 +1739,7 @@ msgstr "Sie editieren gerade einen Commit während eines Rebase."
 #: wt-status.c:1075
 msgid "  (use \"git commit --amend\" to amend the current commit)"
 msgstr ""
-"  (benutzen Sie \"git commit --amend\" um den aktuellen Commit nachzubessern)"
+"  (benutzen Sie \"git commit --amend\", um den aktuellen Commit nachzubessern)"
 
 #: wt-status.c:1077
 msgid ""
@@ -1767,7 +1767,7 @@ msgstr ""
 #: wt-status.c:1097
 msgid "  (use \"git cherry-pick --abort\" to cancel the cherry-pick operation)"
 msgstr ""
-"  (benutzen Sie \"git cherry-pick --abort\" um die Cherry-Pick-Operation "
+"  (benutzen Sie \"git cherry-pick --abort\", um die Cherry-Pick-Operation "
 "abzubrechen)"
 
 #: wt-status.c:1106
@@ -1788,7 +1788,7 @@ msgstr "  (alle Konflikte behoben: führen Sie \"git revert --continue\" aus)"
 #: wt-status.c:1116
 msgid "  (use \"git revert --abort\" to cancel the revert operation)"
 msgstr ""
-"  (benutzen Sie \"git revert --abort\" um die Revert-Operation abzubrechen)"
+"  (benutzen Sie \"git revert --abort\", um die Revert-Operation abzubrechen)"
 
 #: wt-status.c:1127
 #, c-format
@@ -1802,7 +1802,7 @@ msgstr "Sie sind gerade bei einer binären Suche."
 #: wt-status.c:1134
 msgid "  (use \"git bisect reset\" to get back to the original branch)"
 msgstr ""
-"  (benutzen Sie \"git bisect reset\" um zum ursprünglichen Branch "
+"  (benutzen Sie \"git bisect reset\", um zum ursprünglichen Branch "
 "zurückzukehren)"
 
 #: wt-status.c:1309
@@ -1855,7 +1855,7 @@ msgstr "Unbeobachtete Dateien nicht aufgelistet%s"
 
 #: wt-status.c:1373
 msgid " (use -u option to show untracked files)"
-msgstr " (benutzen Sie die Option -u um unbeobachteten Dateien anzuzeigen)"
+msgstr " (benutzen Sie die Option -u, um unbeobachteten Dateien anzuzeigen)"
 
 #: wt-status.c:1379
 msgid "No changes"
@@ -2235,7 +2235,7 @@ msgstr[1] ""
 #: builtin/apply.c:2818
 #, c-format
 msgid "Context reduced to (%ld/%ld) to apply fragment at %d"
-msgstr "Kontext reduziert zu (%ld/%ld) um Patch-Bereich bei %d anzuwenden"
+msgstr "Kontext reduziert zu (%ld/%ld), um Patch-Bereich bei %d anzuwenden"
 
 #: builtin/apply.c:2824
 #, c-format
@@ -2691,7 +2691,7 @@ msgstr "Unterdrückt den Namen des Autors und den Zeitstempel (Standard: aus)"
 
 #: builtin/blame.c:2514
 msgid "Show author email instead of name (Default: off)"
-msgstr "Zeigt anstatt des Namens die Email-Adresse des Autors (Standard: aus)"
+msgstr "Zeigt anstatt des Namens die E-Mail-Adresse des Autors (Standard: aus)"
 
 #: builtin/blame.c:2515
 msgid "Ignore whitespace differences"
@@ -3085,7 +3085,7 @@ msgstr "zu viele Branches für eine Umbenennen-Operation angegeben"
 
 #: builtin/branch.c:952
 msgid "too many branches to set new upstream"
-msgstr "zu viele Branches angegeben um Upstream-Branch zu setzen"
+msgstr "zu viele Branches angegeben, um Upstream-Branch zu setzen"
 
 #: builtin/branch.c:956
 #, c-format
@@ -3108,7 +3108,7 @@ msgstr "Branch '%s' existiert nicht"
 #: builtin/branch.c:975
 msgid "too many branches to unset upstream"
 msgstr ""
-"zu viele Branches angegeben um Konfiguration zu Upstream-Branch zu entfernen"
+"zu viele Branches angegeben, um Konfiguration zu Upstream-Branch zu entfernen"
 
 #: builtin/branch.c:979
 msgid "could not unset upstream of HEAD when it does not point to any branch."
@@ -5071,7 +5071,7 @@ msgstr "gibt für jeden Commit das gesamte Verzeichnis aus"
 
 #: builtin/fast-export.c:718
 msgid "Use the done feature to terminate the stream"
-msgstr "Benutzt die \"done\"-Funktion um den Strom abzuschließen"
+msgstr "Benutzt die \"done\"-Funktion, um den Strom abzuschließen"
 
 #: builtin/fast-export.c:719
 msgid "Skip output of blob data"
@@ -5268,7 +5268,7 @@ msgid ""
 " 'git remote prune %s' to remove any old, conflicting branches"
 msgstr ""
 "Einige lokale Referenzen konnten nicht aktualisiert werden; versuchen Sie\n"
-"'git remote prune %s' um jeden älteren, widersprüchlichen Branch zu löschen."
+"'git remote prune %s', um jeden älteren, widersprüchlichen Branch zu löschen."
 
 #: builtin/fetch.c:759
 #, c-format
@@ -6535,7 +6535,7 @@ msgstr "zeigt Patchformat anstatt des Standards (Patch + Zusammenfassung)"
 
 #: builtin/log.c:1217
 msgid "Messaging"
-msgstr "Email-Einstellungen"
+msgstr "E-Mail-Einstellungen"
 
 #: builtin/log.c:1218
 msgid "header"
@@ -6543,11 +6543,11 @@ msgstr "Header"
 
 #: builtin/log.c:1219
 msgid "add email header"
-msgstr "fügt Email-Header hinzu"
+msgstr "fügt E-Mail-Header hinzu"
 
 #: builtin/log.c:1220 builtin/log.c:1222
 msgid "email"
-msgstr "Email"
+msgstr "E-Mail"
 
 #: builtin/log.c:1220
 msgid "add To: header"
@@ -6573,7 +6573,7 @@ msgstr "message-id"
 
 #: builtin/log.c:1228
 msgid "make first mail a reply to <message-id>"
-msgstr "macht aus erster Email eine Antwort zu <message-id>"
+msgstr "macht aus erster E-Mail eine Antwort zu <message-id>"
 
 #: builtin/log.c:1229 builtin/log.c:1232
 msgid "boundary"
@@ -6978,7 +6978,7 @@ msgstr "konnte nicht von '%s' lesen"
 #, c-format
 msgid "Not committing merge; use 'git commit' to complete the merge.\n"
 msgstr ""
-"Merge wurde nicht committet; benutzen Sie 'git commit' um den Merge "
+"Merge wurde nicht committet; benutzen Sie 'git commit', um den Merge "
 "abzuschließen.\n"
 
 #: builtin/merge.c:809
@@ -6990,7 +6990,7 @@ msgid ""
 "Lines starting with '%c' will be ignored, and an empty message aborts\n"
 "the commit.\n"
 msgstr ""
-"Bitte geben Sie eine Commit-Beschreibung ein um zu erklären, warum dieser\n"
+"Bitte geben Sie eine Commit-Beschreibung ein, um zu erklären, warum dieser\n"
 "Merge erforderlich ist, insbesondere wenn es einen aktualisierten\n"
 "Upstream-Branch mit einem Thema-Branch zusammenführt.\n"
 "\n"
@@ -7156,7 +7156,7 @@ msgstr "Merge mit Strategie %s fehlgeschlagen.\n"
 #: builtin/merge.c:1539
 #, c-format
 msgid "Using the %s to prepare resolving by hand.\n"
-msgstr "Benutzen Sie \"%s\" um die Auflösung per Hand vorzubereiten.\n"
+msgstr "Benutzen Sie \"%s\", um die Auflösung per Hand vorzubereiten.\n"
 
 #: builtin/merge.c:1551
 #, c-format
@@ -7299,7 +7299,7 @@ msgid "Please, stage your changes to .gitmodules or stash them to proceed"
 msgstr ""
 "Bitte merken Sie Ihre Änderungen in .gitmodules zum Commit vor oder "
 "benutzen\n"
-"Sie \"stash\" um fortzufahren."
+"Sie \"stash\", um fortzufahren."
 
 #: builtin/mv.c:156
 #, c-format
@@ -7368,7 +7368,7 @@ msgstr "zeigt nur Namen an (keine SHA-1)"
 
 #: builtin/name-rev.c:310
 msgid "only use tags to name the commits"
-msgstr "verwendet nur Tags um die Commits zu benennen"
+msgstr "verwendet nur Tags, um die Commits zu benennen"
 
 #: builtin/name-rev.c:312
 msgid "only use refs matching <pattern>"
@@ -7621,7 +7621,7 @@ msgid ""
 "existing notes"
 msgstr ""
 "Konnte Notizen nicht hinzufügen. Existierende Notizen für Objekt %s "
-"gefunden. Verwenden Sie '-f' um die existierenden Notizen zu überschreiben."
+"gefunden. Verwenden Sie '-f', um die existierenden Notizen zu überschreiben."
 
 #: builtin/notes.c:460 builtin/notes.c:537
 #, c-format
@@ -7649,7 +7649,7 @@ msgid ""
 "existing notes"
 msgstr ""
 "Kann Notizen nicht kopieren. Existierende Notizen für Objekt %s gefunden. "
-"Verwenden Sie '-f' um die existierenden Notizen zu überschreiben."
+"Verwenden Sie '-f', um die existierenden Notizen zu überschreiben."
 
 #: builtin/notes.c:543
 #, c-format
@@ -9359,7 +9359,7 @@ msgid ""
 "(use -f to force removal)"
 msgstr ""
 "\n"
-"(benutzen Sie -f um die Löschung zu erzwingen)"
+"(benutzen Sie -f, um die Löschung zu erzwingen)"
 
 #: builtin/rm.c:240
 msgid "the following file has changes staged in the index:"
@@ -9373,7 +9373,7 @@ msgid ""
 "(use --cached to keep the file, or -f to force removal)"
 msgstr ""
 "\n"
-"(benutzen Sie --cached um die Datei zu behalten, oder -f um die Entfernung "
+"(benutzen Sie --cached, um die Datei zu behalten, oder -f, um die Entfernung "
 "zu erzwingen)"
 
 #: builtin/rm.c:252
@@ -9431,7 +9431,7 @@ msgstr "Unterdrückt Commit-Beschreibungen, liefert nur Anzahl der Commits"
 
 #: builtin/shortlog.c:234
 msgid "Show the email address of each author"
-msgstr "Zeigt die Email-Adresse von jedem Autor"
+msgstr "Zeigt die E-Mail-Adresse von jedem Autor"
 
 #: builtin/shortlog.c:235
 msgid "w[,i1[,i2]]"
@@ -9751,7 +9751,7 @@ msgstr "annotiertes und GPG-signiertes Tag"
 
 #: builtin/tag.c:605
 msgid "use another key to sign the tag"
-msgstr "verwendet einen anderen Schlüssel um das Tag zu signieren"
+msgstr "verwendet einen anderen Schlüssel, um das Tag zu signieren"
 
 #: builtin/tag.c:606
 msgid "replace the tag if exists"
@@ -10046,7 +10046,7 @@ msgid ""
 msgstr ""
 "'git help -a' und 'git help -g' listet verfügbare Unterkommandos und\n"
 "einige Anleitungen zu Git-Konzepten auf. Benutzen Sie 'git help <Kommando>'\n"
-"oder 'git help <Konzept>' um mehr über ein spezifisches Kommando oder\n"
+"oder 'git help <Konzept>', um mehr über ein spezifisches Kommando oder\n"
 "Konzept zu erfahren."
 
 #: parse-options.h:143
@@ -10200,7 +10200,7 @@ msgstr ""
 #: git-am.sh:141
 msgid "Using index info to reconstruct a base tree..."
 msgstr ""
-"Verwende Informationen aus der Staging-Area um einen Basisverzeichnis "
+"Verwende Informationen aus der Staging-Area, um einen Basisverzeichnis "
 "nachzustellen"
 
 #: git-am.sh:156
@@ -10257,7 +10257,7 @@ msgid ""
 "Use \"git am --abort\" to remove it."
 msgstr ""
 "Stray $dotest Verzeichnis gefunden.\n"
-"Benutzen Sie \"git am --abort\" um es zu entfernen."
+"Benutzen Sie \"git am --abort\", um es zu entfernen."
 
 #: git-am.sh:535
 msgid "Resolve operation not in progress, we are not resuming."
@@ -10284,7 +10284,7 @@ msgstr ""
 
 #: git-am.sh:732
 msgid "Patch does not have a valid e-mail address."
-msgstr "Patch enthält keine gültige Email-Adresse."
+msgstr "Patch enthält keine gültige E-Mail-Adresse."
 
 #: git-am.sh:779
 msgid "cannot be interactive without stdin connected to a terminal."
@@ -10515,7 +10515,7 @@ msgid ""
 msgstr ""
 "\"pull\" ist nicht möglich, weil Sie nicht zusammengeführte Dateien haben.\n"
 "Bitte korrigieren Sie dies im Arbeitsverzeichnis und benutzen Sie dann \n"
-"'git add/rm <Datei>' um die Auflösung entsprechend zu markieren, oder\n"
+"'git add/rm <Datei>', um die Auflösung entsprechend zu markieren, oder\n"
 "benutzen Sie 'git commit -a'."
 
 #: git-pull.sh:25
@@ -11014,7 +11014,7 @@ msgid ""
 "discard them"
 msgstr ""
 "Arbeitsverzeichnis von Submodul in '$displaypath' enthält lokale Änderungen; "
-"verwenden Sie '-f' um diese zu verwerfen"
+"verwenden Sie '-f', um diese zu verwerfen"
 
 #: git-submodule.sh:701
 #, sh-format
