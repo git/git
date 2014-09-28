@@ -384,7 +384,7 @@ static inline uint64_t gettimeofday_nanos(void)
  * Returns nanoseconds since the epoch (01/01/1970), for performance tracing
  * (i.e. favoring high precision over wall clock time accuracy).
  */
-inline uint64_t getnanotime(void)
+uint64_t getnanotime(void)
 {
 	static uint64_t offset;
 	if (offset > 1) {
