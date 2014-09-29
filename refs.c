@@ -3159,7 +3159,7 @@ static int read_ref_at_ent_oldest(unsigned char *osha1, unsigned char *nsha1,
 	return 1;
 }
 
-int read_ref_at(const char *refname, unsigned long at_time, int cnt,
+int read_ref_at(const char *refname, unsigned int flags, unsigned long at_time, int cnt,
 		unsigned char *sha1, char **msg,
 		unsigned long *cutoff_time, int *cutoff_tz, int *cutoff_cnt)
 {
@@ -3177,8 +3177,12 @@ int read_ref_at(const char *refname, unsigned long at_time, int cnt,
 
 	for_each_reflog_ent_reverse(refname, read_ref_at_ent, &cb);
 
-	if (!cb.reccnt)
-		die("Log for %s is empty.", refname);
+	if (!cb.reccnt) {
+		if (flags & GET_SHA1_QUIETLY)
+			exit(128);
+		else
+			die("Log for %s is empty.", refname);
+	}
 	if (cb.found_it)
 		return 0;
 
