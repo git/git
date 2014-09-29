@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Sep 2014, #07; Fri, 26)
-X-master-at: d29e9c89dbbf0876145dc88615b99308cab5f187
-X-next-at: 85a663a958ab88a0f5f6e875ec30a4bd3f14a9ad
+Subject: What's cooking in git.git (Sep 2014, #08; Mon, 29)
+X-master-at: 0bf7dd652cd7b7d3900e6aed73a97cf2c4978fee
+X-next-at: 4efa26b95dc95d7fe3c51ad0f352ba0a224dc00c
 
-What's cooking in git.git (Sep 2014, #07; Fri, 26)
+What's cooking in git.git (Sep 2014, #08; Mon, 29)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -19,129 +19,71 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* jc/hash-object (2014-09-11) 3 commits
-  (merged to 'next' on 2014-09-19 at ea6ac62)
- + hash-object: add --literally option
- + hash-object: pass 'write_object' as a flag
- + hash-object: reduce file-scope statics
- (this branch is used by jc/hash-object-fsck-tag.)
+* da/rev-parse-verify-quiet (2014-09-19) 4 commits
+  (merged to 'next' on 2014-09-23 at 5ed184a)
+ + stash: prefer --quiet over shell redirection of the standard error stream
+ + refs: make rev-parse --quiet actually quiet
+ + t1503: use test_must_be_empty
+ + Documentation: a note about stdout for git rev-parse --verify --quiet
 
- "hash-object" learned a new "--literally" option to hash any random
- garbage into a loose object, to allow us to create a test data for
- mechanisms to catch corrupt objects.
-
-
-* jc/hash-object-fsck-tag (2014-09-12) 2 commits
-  (merged to 'next' on 2014-09-19 at f14a7fe)
- + t1450: make sure fsck detects a malformed tagger line
- + Merge branch 'js/fsck-tag-validation' into HEAD
- (this branch uses jc/hash-object and js/fsck-tag-validation.)
-
- Using "hash-object --literally", test one of the new breakages
- js/fsck-tag-validation topic teaches "fsck" to catch is caught.
+ "rev-parse --verify --quiet $name" is meant to quietly exit with a
+ non-zero status when $name is not a valid object name, but still
+ gave error messages in some cases.
 
 
-* jc/ignore-sigpipe-while-running-hooks (2014-09-16) 1 commit
-  (merged to 'next' on 2014-09-19 at 7abf293)
- + receive-pack: allow hooks to ignore its standard input stream
+* hj/pretty-naked-decoration (2014-09-18) 1 commit
+  (merged to 'next' on 2014-09-23 at fb699c4)
+ + pretty: add %D format specifier
 
- pre- and post-receive hooks are no longer required to read all
- their inputs.
-
-
-* jk/branch-verbose-merged (2014-09-18) 1 commit
-  (merged to 'next' on 2014-09-23 at d940d15)
- + branch: clean up commit flags after merge-filter walk
-
- The "--verbose" option no longer breaks "git branch --merged $it".
+ The pretty-format specifier "%d", which expanded to " (tagname)"
+ for a tagged commit, gained a cousin "%D" that just gives the
+ "tagname" without frills.
 
 
-* jk/close-stderr-of-credential-cache-deamon (2014-09-16) 1 commit
-  (merged to 'next' on 2014-09-19 at 51ba3be)
- + credential-cache: close stderr in daemon process
+* jk/mbox-from-line (2014-09-22) 2 commits
+  (merged to 'next' on 2014-09-23 at 506b89b)
+ + mailinfo: work around -Wstring-plus-int warning
+  (merged to 'next' on 2014-09-19 at 314af77)
+ + mailinfo: make ">From" in-body header check more robust
 
- Plug fd leaks.
-
-
-* jk/faster-name-conflicts (2014-09-12) 1 commit
-  (merged to 'next' on 2014-09-19 at 34d2840)
- + refs: speed up is_refname_available
-
- Optimize the check to see if a ref $F can be created by making sure
- no existing ref has $F/ as its prefix, which especially matters in
- a repository with a large number of existing refs.
+ Some MUAs mangled a line in a message that begins with "From " to
+ ">From " when writing to a mailbox file and feeding such an input
+ to "git am" used to lose such a line.
 
 
-* jk/prune-packed-server-info (2014-09-15) 4 commits
-  (merged to 'next' on 2014-09-19 at 5e6c398)
- + repack: call prune_packed_objects() and update_server_info() directly
- + server-info: clean up after writing info/packs
- + make update-server-info more robust
- + prune-packed: fix minor memory leak
-
- Code cleanup.
+* rs/graph-simplify (2014-09-22) 1 commit
+  (merged to 'next' on 2014-09-23 at 72969e2)
+ + graph: simplify graph_padding_line()
 
 
-* jk/write-packed-refs-via-stdio (2014-09-10) 1 commit
-  (merged to 'next' on 2014-09-19 at f1e94fb)
- + refs: write packed_refs file using stdio
-
- Optimize the code path to write out the packed-refs file, which
- especially matters in a repository with a large number of refs.
+* rs/remote-simplify (2014-09-22) 1 commit
+  (merged to 'next' on 2014-09-23 at 176e316)
+ + remote: simplify match_name_with_pattern() using strbuf
 
 
-* js/fsck-tag-validation (2014-09-12) 6 commits
-  (merged to 'next' on 2014-09-19 at 4a62182)
- + Make sure that index-pack --strict checks tag objects
- + Add regression tests for stricter tag fsck'ing
- + fsck: check tag objects' headers
- + Make sure fsck_commit_buffer() does not run out of the buffer
- + fsck_object(): allow passing object data separately from the object itself
- + Refactor type_from_string() to allow continuing after detecting an error
- (this branch is used by jc/hash-object-fsck-tag.)
-
- Teach "git fsck" to inspect the contents of annotated tag objects.
+* sb/t6031-typofix (2014-09-22) 1 commit
+  (merged to 'next' on 2014-09-23 at aec57a9)
+ + t6031-test-merge-recursive: do not forget to add file to be committed
 
 
-* rs/realloc-array (2014-09-18) 2 commits
-  (merged to 'next' on 2014-09-23 at a5bb3a6)
- + use REALLOC_ARRAY for changing the allocation size of arrays
- + add macro REALLOC_ARRAY
-
- Code cleanup.
-
-
-* sb/help-unknown-command-sort-fix (2014-09-18) 1 commit
-  (merged to 'next' on 2014-09-23 at 6ab29ed)
- + help: fix the size passed to qsort
-
- Code cleanup.
+* sb/t9300-typofix (2014-09-22) 1 commit
+  (merged to 'next' on 2014-09-23 at aa519bd)
+ + t9300-fast-import: fix typo in test description
 
 --------------------------------------------------
 [New Topics]
 
-* jc/push-cert-hmac-optim (2014-09-25) 2 commits
- - receive-pack: truncate hmac early and convert only necessary bytes
- - sha1_to_hex: split out "hex-format n bytes" helper and use it
- (this branch uses jc/push-cert.)
+* bw/use-write-script-in-tests (2014-09-29) 1 commit
+  (merged to 'next' on 2014-09-29 at be4056e)
+ + t/lib-credential: use write_script
 
- This is "we could do this if we wanted to", not "we measured and it
- improves performance critical codepath".
-
- Will perhaps drop.
+ Will merge to 'master'.
 
 
-* je/quiltimport-no-fuzz (2014-09-26) 2 commits
- - git-quiltimport: flip the default not to allow fuzz
- - git-quiltimport.sh: allow declining fuzz with --exact option
+* bw/trace-no-inline-getnanotime (2014-09-29) 1 commit
+ - trace.c: do not mark getnanotime() as "inline"
 
- "quiltimport" drove "git apply" always with -C1 option to reduce
- context of the patch in order to give more chance to somewhat stale
- patches to apply.  Add an "--exact" option to disable, and also
- "-C$n" option to customize this behaviour.  The top patch
- optionally flips the default to "--exact".
-
- Waiting for an Ack.
+ No file-scope static variables in an inlined function, please.
 
 --------------------------------------------------
 [Stalled]
@@ -320,18 +262,6 @@ of the repositories listed at
  Expecting a reroll.
 
 
-* po/everyday-doc (2014-01-27) 1 commit
- - Make 'git help everyday' work
-
- This may make the said command to emit something, but the source is
- not meant to be formatted into a manual pages to begin with, and
- also its contents are a bit stale.  It may be a good first step in
- the right direction, but needs more work to at least get the
- mark-up right before public consumption.
-
- Waiting for a reroll (thread ending at $gmane/254746)
-
-
 * rb/merge-prepare-commit-msg-hook (2014-01-10) 4 commits
  - merge: drop unused arg from abort_commit method signature
  - merge: make prepare_to_commit responsible for write_merge_state
@@ -376,25 +306,43 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* po/everyday-doc (2014-09-29) 3 commits
+ - Make 'git help everyday' work
+ - doc: Makefile regularise OBSOLETE_HTML list building
+ - doc: modernise everyday.txt wording and format in man page style
+
+ Looks ready for 'next' except for minor nits.
+
+
+* jc/push-cert-hmac-optim (2014-09-25) 2 commits
+ - receive-pack: truncate hmac early and convert only necessary bytes
+ - sha1_to_hex: split out "hex-format n bytes" helper and use it
+ (this branch uses jc/push-cert.)
+
+ This is "we could do this if we wanted to", not "we measured and it
+ improves performance critical codepath".
+
+ Will perhaps drop.
+
+
+* je/quiltimport-no-fuzz (2014-09-26) 2 commits
+ - git-quiltimport: flip the default not to allow fuzz
+ - git-quiltimport.sh: allow declining fuzz with --exact option
+
+ "quiltimport" drove "git apply" always with -C1 option to reduce
+ context of the patch in order to give more chance to somewhat stale
+ patches to apply.  Add an "--exact" option to disable, and also
+ "-C$n" option to customize this behaviour.  The top patch
+ optionally flips the default to "--exact".
+
+ Waiting for an Ack.
+
+
 * nd/archive-pathspec (2014-09-22) 1 commit
   (merged to 'next' on 2014-09-25 at 8806f93)
  + archive: support filtering paths with glob
 
  "git archive" learned to filter what gets archived with pathspec.
-
- Will merge to 'master'.
-
-
-* rs/graph-simplify (2014-09-22) 1 commit
-  (merged to 'next' on 2014-09-23 at 72969e2)
- + graph: simplify graph_padding_line()
-
- Will merge to 'master'.
-
-
-* rs/remote-simplify (2014-09-22) 1 commit
-  (merged to 'next' on 2014-09-23 at 176e316)
- + remote: simplify match_name_with_pattern() using strbuf
 
  Will merge to 'master'.
 
@@ -415,24 +363,10 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* sb/t6031-typofix (2014-09-22) 1 commit
-  (merged to 'next' on 2014-09-23 at aec57a9)
- + t6031-test-merge-recursive: do not forget to add file to be committed
-
- Will merge to 'master'.
-
-
-* sb/t9300-typofix (2014-09-22) 1 commit
-  (merged to 'next' on 2014-09-23 at aa519bd)
- + t9300-fast-import: fix typo in test description
-
- Will merge to 'master'.
-
-
-* so/rebase-doc-fork-point (2014-09-22) 1 commit
+* so/rebase-doc-fork-point (2014-09-29) 1 commit
  - Documentation/git-rebase.txt: document when --fork-point is auto-enabled
 
- Expecting a reroll ($gmane/257378).
+ Will merge to 'next'.
 
 
 * sk/tag-contains-wo-recursion (2014-09-23) 1 commit
@@ -463,44 +397,6 @@ of the repositories listed at
  So... what is happening to this topic?  I think the bottom one is a
  reasonable clean-up without too much churn, but I am not sure about
  the rest.
-
-
-* da/rev-parse-verify-quiet (2014-09-19) 4 commits
-  (merged to 'next' on 2014-09-23 at 5ed184a)
- + stash: prefer --quiet over shell redirection of the standard error stream
- + refs: make rev-parse --quiet actually quiet
- + t1503: use test_must_be_empty
- + Documentation: a note about stdout for git rev-parse --verify --quiet
-
- "rev-parse --verify --quiet $name" is meant to quietly exit with a
- non-zero status when $name is not a valid object name, but still
- gave error messages in some cases.
-
- Will merge to 'master'.
-
-
-* hj/pretty-naked-decoration (2014-09-18) 1 commit
-  (merged to 'next' on 2014-09-23 at fb699c4)
- + pretty: add %D format specifier
-
- The pretty-format specifier "%d", which expanded to " (tagname)"
- for a tagged commit, gained a cousin "%D" that just gives the
- "tagname" without frills.
-
- Will merge to 'master'.
-
-
-* jk/mbox-from-line (2014-09-22) 2 commits
-  (merged to 'next' on 2014-09-23 at 506b89b)
- + mailinfo: work around -Wstring-plus-int warning
-  (merged to 'next' on 2014-09-19 at 314af77)
- + mailinfo: make ">From" in-body header check more robust
-
- Some MUAs mangled a line in a message that begins with "From " to
- ">From " when writing to a mailbox file and feeding such an input
- to "git am" used to lose such a line.
-
- Will merge to 'master'.
 
 
 * pr/use-default-sigpipe-setting (2014-09-22) 2 commits
@@ -561,7 +457,7 @@ of the repositories listed at
  graduated in an unfortunate way.
 
 
-* nd/multiple-work-trees (2014-09-16) 32 commits
+* nd/multiple-work-trees (2014-09-27) 32 commits
  - t2025: add a test to make sure grafts is working from a linked checkout
  - checkout: don't require a work tree when checking out into a new one
  - git_path(): keep "info/sparse-checkout" per work-tree
@@ -599,7 +495,7 @@ of the repositories listed at
  rely on symbolic links and make sharing of objects and refs safer
  by making the borrowee and borrowers aware of each other.
 
- Waiting for a reroll ($gmane/257496).
+ Will merge to 'next'.
 
 
 * cc/interpret-trailers (2014-09-22) 11 commits
