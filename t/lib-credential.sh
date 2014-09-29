@@ -278,12 +278,10 @@ helper_test_timeout() {
 	'
 }
 
-cat >askpass <<\EOF
-#!/bin/sh
+write_script askpass <<\EOF
 echo >&2 askpass: $*
 what=$(echo $1 | cut -d" " -f1 | tr A-Z a-z | tr -cd a-z)
 echo "askpass-$what"
 EOF
-chmod +x askpass
 GIT_ASKPASS="$PWD/askpass"
 export GIT_ASKPASS
