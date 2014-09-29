@@ -13,6 +13,7 @@ test_expect_success 'mode change in one branch: keep changed version' '
 	git commit -m a &&
 	git checkout -b b1 master &&
 	test_chmod +x file1 &&
+	git add file1 &&
 	git commit -m b1 &&
 	git checkout a1 &&
 	git merge-recursive master -- a1 b1 &&
