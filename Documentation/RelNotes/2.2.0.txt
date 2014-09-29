@@ -44,6 +44,9 @@ UI, Workflows & Features
    to consume their input fully (not following this requirement used
    to result in intermittent errors in "git push").
 
+ * The pretty-format specifier "%d", which expanded to " (tagname)"
+   for a tagged commit, gained a cousin "%D" that just gives the
+   "tagname" without frills.
 
 Performance, Internal Implementation, etc.
 
@@ -190,3 +193,12 @@ notes for details).
 
  * Use of "--verbose" option used to break "git branch --merged".
    (merge 12994dd jk/maint-branch-verbose-merged later to maint).
+
+ * Some MUAs mangled a line in a message that begins with "From " to
+   ">From " when writing to a mailbox file and feeding such an input
+   to "git am" used to lose such a line.
+   (merge 85de86a jk/mbox-from-line later to maint).
+
+ * "rev-parse --verify --quiet $name" is meant to quietly exit with a
+   non-zero status when $name is not a valid object name, but still
+   gave error messages in some cases.
