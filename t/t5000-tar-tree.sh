@@ -240,9 +240,11 @@ test_expect_success 'archive --list shows only enabled remote filters' '
 test_expect_success 'invoke tar filter by format' '
 	git archive --format=tar.foo HEAD >config.tar.foo &&
 	tr ab ba <config.tar.foo >config.tar &&
+	d2u_force config.tar &&
 	test_cmp_bin b.tar config.tar &&
 	git archive --format=bar HEAD >config.bar &&
 	tr ab ba <config.bar >config.tar &&
+	d2u_force config.tar &&
 	test_cmp_bin b.tar config.tar
 '
 
@@ -267,6 +269,7 @@ test_expect_success 'only enabled filters are available remotely' '
 	test_must_fail git archive --remote=. --format=tar.foo HEAD \
 		>remote.tar.foo &&
 	git archive --remote=. --format=bar >remote.bar HEAD &&
+	d2u_force config.bar &&
 	test_cmp_bin remote.bar config.bar
 '
 

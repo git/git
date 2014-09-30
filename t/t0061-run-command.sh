@@ -22,7 +22,7 @@ test_expect_success 'run_command can run a command' '
 	chmod +x hello.sh &&
 	test-run-command run-command ./hello.sh >actual 2>err &&
 
-	test_cmp_text hello-script actual &&
+	test_cmp hello-script actual &&
 	test_cmp empty err
 '
 
