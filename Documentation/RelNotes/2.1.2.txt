@@ -1,0 +1,20 @@
+Git v2.1.2 Release Notes
+========================
+
+ * "git push" over HTTP transport had an artificial limit on number of
+   refs that can be pushed imposed by the command line length.
+
+ * When receiving an invalid pack stream that records the same object
+   twice, multiple threads got confused due to a race.
+
+ * An attempt to remove the entire tree in the "git fast-import" input
+   stream caused it to misbehave.
+
+ * Reachability check (used in "git prune" and friends) did not add a
+   detached HEAD as a starting point to traverse objects still in use.
+
+ * "git config --add section.var val" used to lose existing
+   section.var whose value was an empty string.
+
+ * "git fsck" failed to report that it found corrupt objects via its
+   exit status in some cases.
