@@ -586,7 +586,8 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		check_argc(argc, 2, 2);
 		value = normalize_value(argv[0], argv[1]);
 		return git_config_set_multivar_in_file(given_config_source.file,
-						       argv[0], value, "^$", 0);
+						       argv[0], value,
+						       CONFIG_REGEX_NONE, 0);
 	}
 	else if (actions == ACTION_REPLACE_ALL) {
 		check_write();
