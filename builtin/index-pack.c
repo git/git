@@ -112,6 +112,10 @@ static pthread_mutex_t deepest_delta_mutex;
 #define deepest_delta_lock()	lock_mutex(&deepest_delta_mutex)
 #define deepest_delta_unlock()	unlock_mutex(&deepest_delta_mutex)
 
+static pthread_mutex_t type_cas_mutex;
+#define type_cas_lock()		lock_mutex(&type_cas_mutex)
+#define type_cas_unlock()	unlock_mutex(&type_cas_mutex)
+
 static pthread_key_t key;
 
 static inline void lock_mutex(pthread_mutex_t *mutex)
@@ -135,6 +139,7 @@ static void init_thread(void)
 	init_recursive_mutex(&read_mutex);
 	pthread_mutex_init(&counter_mutex, NULL);
 	pthread_mutex_init(&work_mutex, NULL);
+	pthread_mutex_init(&type_cas_mutex, NULL);
 	if (show_stat)
 		pthread_mutex_init(&deepest_delta_mutex, NULL);
 	pthread_key_create(&key, NULL);
@@ -157,6 +162,7 @@ static void cleanup_thread(void)
 	pthread_mutex_destroy(&read_mutex);
 	pthread_mutex_destroy(&counter_mutex);
 	pthread_mutex_destroy(&work_mutex);
+	pthread_mutex_destroy(&type_cas_mutex);
 	if (show_stat)
 		pthread_mutex_destroy(&deepest_delta_mutex);
 	for (i = 0; i < nr_threads; i++)
@@ -862,7 +868,6 @@ static void resolve_delta(struct object_entry *delta_obj,
 {
 	void *base_data, *delta_data;
 
-	delta_obj->real_type = base->obj->real_type;
 	if (show_stat) {
 		delta_obj->delta_depth = base->obj->delta_depth + 1;
 		deepest_delta_lock();
@@ -886,6 +891,26 @@ static void resolve_delta(struct object_entry *delta_obj,
 	counter_lock();
 	nr_resolved_deltas++;
 	counter_unlock();
+}
+
+/*
+ * Standard boolean compare-and-swap: atomically check whether "*type" is
+ * "want"; if so, swap in "set" and return true. Otherwise, leave it untouched
+ * and return false.
+ */
+static int compare_and_swap_type(enum object_type *type,
+				 enum object_type want,
+				 enum object_type set)
+{
+	enum object_type old;
+
+	type_cas_lock();
+	old = *type;
+	if (old == want)
+		*type = set;
+	type_cas_unlock();
+
+	return old == want;
 }
 
 static struct base_data *find_unresolved_deltas_1(struct base_data *base,
@@ -915,7 +940,10 @@ static struct base_data *find_unresolved_deltas_1(struct base_data *base,
 		struct object_entry *child = objects + deltas[base->ref_first].obj_no;
 		struct base_data *result = alloc_base_data();
 
-		assert(child->real_type == OBJ_REF_DELTA);
+		if (!compare_and_swap_type(&child->real_type, OBJ_REF_DELTA,
+					   base->obj->real_type))
+			die("BUG: child->real_type != OBJ_REF_DELTA");
+
 		resolve_delta(child, base, result);
 		if (base->ref_first == base->ref_last && base->ofs_last == -1)
 			free_base_data(base);
@@ -929,6 +957,7 @@ static struct base_data *find_unresolved_deltas_1(struct base_data *base,
 		struct base_data *result = alloc_base_data();
 
 		assert(child->real_type == OBJ_OFS_DELTA);
+		child->real_type = base->obj->real_type;
 		resolve_delta(child, base, result);
 		if (base->ofs_first == base->ofs_last)
 			free_base_data(base);
