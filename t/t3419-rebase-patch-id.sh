@@ -4,8 +4,6 @@ test_description='git rebase - test patch id computation'
 
 . ./test-lib.sh
 
-test -n "$GIT_PATCHID_TIMING_TESTS" && test_set_prereq EXPENSIVE
-
 count () {
 	i=0
 	while test $i -lt $1
