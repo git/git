@@ -41,19 +41,19 @@ test_expect_success PERL 'custom commands' '
 	test_config difftool.test-tool.cmd "cat \"\$REMOTE\"" &&
 	echo master >expect &&
 	git difftool --no-prompt branch >actual &&
-	test_cmp_text expect actual &&
+	test_cmp expect actual &&
 
 	test_config difftool.test-tool.cmd "cat \"\$LOCAL\"" &&
 	echo branch >expect &&
 	git difftool --no-prompt branch >actual &&
-	test_cmp_text expect actual
+	test_cmp expect actual
 '
 
 test_expect_success PERL 'custom tool commands override built-ins' '
 	test_config difftool.vimdiff.cmd "cat \"\$REMOTE\"" &&
 	echo master >expect &&
 	git difftool --tool vimdiff --no-prompt branch >actual &&
-	test_cmp_text expect actual
+	test_cmp expect actual
 '
 
 test_expect_success PERL 'difftool ignores bad --tool values' '
@@ -84,7 +84,7 @@ test_expect_success PERL 'difftool honors --gui' '
 
 	echo branch >expect &&
 	git difftool --no-prompt --gui branch >actual &&
-	test_cmp_text expect actual
+	test_cmp expect actual
 '
 
 test_expect_success PERL 'difftool --gui last setting wins' '
@@ -98,14 +98,14 @@ test_expect_success PERL 'difftool --gui last setting wins' '
 	test_config diff.guitool test-tool &&
 	echo branch >expect &&
 	git difftool --no-prompt --no-gui --gui branch >actual &&
-	test_cmp_text expect actual
+	test_cmp expect actual
 '
 
 test_expect_success PERL 'difftool --gui works without configured diff.guitool' '
 	difftool_test_setup &&
 	echo branch >expect &&
 	git difftool --no-prompt --gui branch >actual &&
-	test_cmp_text expect actual
+	test_cmp expect actual
 '
 
 # Specify the diff tool using $GIT_DIFF_TOOL
@@ -114,7 +114,7 @@ test_expect_success PERL 'GIT_DIFF_TOOL variable' '
 	git config --unset diff.tool &&
 	echo branch >expect &&
 	GIT_DIFF_TOOL=test-tool git difftool --no-prompt branch >actual &&
-	test_cmp_text expect actual
+	test_cmp expect actual
 '
 
 # Test the $GIT_*_TOOL variables and ensure
@@ -126,13 +126,13 @@ test_expect_success PERL 'GIT_DIFF_TOOL overrides' '
 
 	echo branch >expect &&
 	GIT_DIFF_TOOL=test-tool git difftool --no-prompt branch >actual &&
-	test_cmp_text expect actual &&
+	test_cmp expect actual &&
 
 	test_config diff.tool bogus-tool &&
 	test_config merge.tool bogus-tool &&
 	GIT_DIFF_TOOL=bogus-tool \
 		git difftool --no-prompt --tool=test-tool branch >actual &&
-	test_cmp_text expect actual
+	test_cmp expect actual
 '
 
 # Test that we don't have to pass --no-prompt to difftool
@@ -141,7 +141,7 @@ test_expect_success PERL 'GIT_DIFFTOOL_NO_PROMPT variable' '
 	difftool_test_setup &&
 	echo branch >expect &&
 	GIT_DIFFTOOL_NO_PROMPT=true git difftool branch >actual &&
-	test_cmp_text expect actual
+	test_cmp expect actual
 '
 
 # git-difftool supports the difftool.prompt variable.
@@ -161,7 +161,7 @@ test_expect_success PERL 'difftool.prompt config variable is false' '
 	test_config difftool.prompt false &&
 	echo branch >expect &&
 	git difftool branch >actual &&
-	test_cmp_text expect actual
+	test_cmp expect actual
 '
 
 # Test that we don't have to pass --no-prompt when mergetool.prompt is false
@@ -171,7 +171,7 @@ test_expect_success PERL 'difftool merge.prompt = false' '
 	test_config mergetool.prompt false &&
 	echo branch >expect &&
 	git difftool branch >actual &&
-	test_cmp_text expect actual
+	test_cmp expect actual
 '
 
 # Test that the -y flag can override difftool.prompt = true
@@ -180,7 +180,7 @@ test_expect_success PERL 'difftool.prompt can overridden with -y' '
 	test_config difftool.prompt true &&
 	echo branch >expect &&
 	git difftool -y branch >actual &&
-	test_cmp_text expect actual
+	test_cmp expect actual
 '
 
 # Test that the --prompt flag can override difftool.prompt = false
@@ -198,7 +198,7 @@ test_expect_success PERL 'difftool last flag wins' '
 	difftool_test_setup &&
 	echo branch >expect &&
 	git difftool --prompt --no-prompt branch >actual &&
-	test_cmp_text expect actual &&
+	test_cmp expect actual &&
 	echo >input &&
 	git difftool --no-prompt --prompt branch <input >output &&
 	prompt=$(tail -1 <output) &&
@@ -212,13 +212,13 @@ test_expect_success PERL 'difftool + mergetool config variables' '
 	test_config mergetool.test-tool.cmd "cat \$LOCAL" &&
 	echo branch >expect &&
 	git difftool --no-prompt branch >actual &&
-	test_cmp_text expect actual &&
+	test_cmp expect actual &&
 
 	# set merge.tool to something bogus, diff.tool to test-tool
 	test_config merge.tool bogus-tool &&
 	test_config diff.tool test-tool &&
 	git difftool --no-prompt branch >actual &&
-	test_cmp_text expect actual
+	test_cmp expect actual
 '
 
 test_expect_success PERL 'difftool.<tool>.path' '
@@ -232,21 +232,21 @@ test_expect_success PERL 'difftool --extcmd=cat' '
 	echo branch >expect &&
 	echo master >>expect &&
 	git difftool --no-prompt --extcmd=cat branch >actual &&
-	test_cmp_text expect actual
+	test_cmp expect actual
 '
 
 test_expect_success PERL 'difftool --extcmd cat' '
 	echo branch >expect &&
 	echo master >>expect &&
 	git difftool --no-prompt --extcmd=cat branch >actual &&
-	test_cmp_text expect actual
+	test_cmp expect actual
 '
 
 test_expect_success PERL 'difftool -x cat' '
 	echo branch >expect &&
 	echo master >>expect &&
 	git difftool --no-prompt -x cat branch >actual &&
-	test_cmp_text expect actual
+	test_cmp expect actual
 '
 
 test_expect_success PERL 'difftool --extcmd echo arg1' '
@@ -260,14 +260,14 @@ test_expect_success PERL 'difftool --extcmd cat arg1' '
 	echo master >expect &&
 	git difftool --no-prompt \
 		--extcmd sh\ -c\ \"cat\ \$1\" branch >actual &&
-	test_cmp_text expect actual
+	test_cmp expect actual
 '
 
 test_expect_success PERL 'difftool --extcmd cat arg2' '
 	echo branch >expect &&
 	git difftool --no-prompt \
 		--extcmd sh\ -c\ \"cat\ \$2\" branch >actual &&
-	test_cmp_text expect actual
+	test_cmp expect actual
 '
 
 # Create a second file on master and a different version on branch
