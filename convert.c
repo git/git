@@ -312,11 +312,12 @@ static int crlf_to_worktree(const char *path, const char *src, size_t len,
 struct filter_params {
 	const char *src;
 	unsigned long size;
+	int fd;
 	const char *cmd;
 	const char *path;
 };
 
-static int filter_buffer(int in, int out, void *data)
+static int filter_buffer_or_fd(int in, int out, void *data)
 {
 	/*
 	 * Spawn cmd and feed the buffer contents through its stdin.
@@ -354,7 +355,12 @@ static int filter_buffer(int in, int out, void *data)
 
 	sigchain_push(SIGPIPE, SIG_IGN);
 
-	write_err = (write_in_full(child_process.in, params->src, params->size) < 0);
+	if (params->src) {
+		write_err = (write_in_full(child_process.in, params->src, params->size) < 0);
+	} else {
+		write_err = copy_fd(params->fd, child_process.in);
+	}
+
 	if (close(child_process.in))
 		write_err = 1;
 	if (write_err)
@@ -370,7 +376,7 @@ static int filter_buffer(int in, int out, void *data)
 	return (write_err || status);
 }
 
-static int apply_filter(const char *path, const char *src, size_t len,
+static int apply_filter(const char *path, const char *src, size_t len, int fd,
                         struct strbuf *dst, const char *cmd)
 {
 	/*
@@ -391,11 +397,12 @@ static int apply_filter(const char *path, const char *src, size_t len,
 		return 1;
 
 	memset(&async, 0, sizeof(async));
-	async.proc = filter_buffer;
+	async.proc = filter_buffer_or_fd;
 	async.data = &params;
 	async.out = -1;
 	params.src = src;
 	params.size = len;
+	params.fd = fd;
 	params.cmd = cmd;
 	params.path = path;
 
@@ -746,6 +753,25 @@ static void convert_attrs(struct conv_attrs *ca, const char *path)
 	}
 }
 
+int would_convert_to_git_filter_fd(const char *path)
+{
+	struct conv_attrs ca;
+
+	convert_attrs(&ca, path);
+	if (!ca.drv)
+		return 0;
+
+	/*
+	 * Apply a filter to an fd only if the filter is required to succeed.
+	 * We must die if the filter fails, because the original data before
+	 * filtering is not available.
+	 */
+	if (!ca.drv->required)
+		return 0;
+
+	return apply_filter(path, NULL, 0, -1, NULL, ca.drv->clean);
+}
+
 int convert_to_git(const char *path, const char *src, size_t len,
                    struct strbuf *dst, enum safe_crlf checksafe)
 {
@@ -760,7 +786,7 @@ int convert_to_git(const char *path, const char *src, size_t len,
 		required = ca.drv->required;
 	}
 
-	ret |= apply_filter(path, src, len, dst, filter);
+	ret |= apply_filter(path, src, len, -1, dst, filter);
 	if (!ret && required)
 		die("%s: clean filter '%s' failed", path, ca.drv->name);
 
@@ -775,6 +801,23 @@ int convert_to_git(const char *path, const char *src, size_t len,
 		len = dst->len;
 	}
 	return ret | ident_to_git(path, src, len, dst, ca.ident);
+}
+
+void convert_to_git_filter_fd(const char *path, int fd, struct strbuf *dst,
+			      enum safe_crlf checksafe)
+{
+	struct conv_attrs ca;
+	convert_attrs(&ca, path);
+
+	assert(ca.drv);
+	assert(ca.drv->clean);
+
+	if (!apply_filter(path, NULL, 0, fd, dst, ca.drv->clean))
+		die("%s: clean filter '%s' failed", path, ca.drv->name);
+
+	ca.crlf_action = input_crlf_action(ca.crlf_action, ca.eol_attr);
+	crlf_to_git(path, dst->buf, dst->len, dst, ca.crlf_action, checksafe);
+	ident_to_git(path, dst->buf, dst->len, dst, ca.ident);
 }
 
 static int convert_to_working_tree_internal(const char *path, const char *src,
@@ -810,7 +853,7 @@ static int convert_to_working_tree_internal(const char *path, const char *src,
 		}
 	}
 
-	ret_filter = apply_filter(path, src, len, dst, filter);
+	ret_filter = apply_filter(path, src, len, -1, dst, filter);
 	if (!ret_filter && required)
 		die("%s: smudge filter %s failed", path, ca.drv->name);
 

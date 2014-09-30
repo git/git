@@ -13,7 +13,7 @@ test_expect_success setup '
 	echo X | dd of=large2 bs=1k seek=2000 &&
 	echo X | dd of=large3 bs=1k seek=2000 &&
 	echo Y | dd of=huge bs=1k seek=2500 &&
-	GIT_ALLOC_LIMIT=1500 &&
+	GIT_ALLOC_LIMIT=1500k &&
 	export GIT_ALLOC_LIMIT
 '
 
