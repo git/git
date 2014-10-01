@@ -2192,7 +2192,7 @@ static struct ref_lock *lock_ref_sha1_basic(const char *refname,
 	lflags = 0;
 	if (flags & REF_NODEREF) {
 		refname = orig_refname;
-		lflags |= LOCK_NODEREF;
+		lflags |= LOCK_NO_DEREF;
 	}
 	lock->ref_name = xstrdup(refname);
 	lock->orig_ref_name = xstrdup(orig_refname);

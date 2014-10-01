@@ -110,11 +110,11 @@ Flags
 The following flags can be passed to `hold_lock_file_for_update` or
 `hold_lock_file_for_append`:
 
-LOCK_NODEREF::
+LOCK_NO_DEREF::
 
 	Usually symbolic links in the destination path are resolved
 	and the lockfile is created by adding ".lock" to the resolved
-	path. If `LOCK_NODEREF` is set, then the lockfile is created
+	path. If `LOCK_NO_DEREF` is set, then the lockfile is created
 	by adding ".lock" to the path argument itself. This option is
 	used, for example, when locking a symbolic reference, which
 	for backwards-compatibility reasons can be a symbolic link
