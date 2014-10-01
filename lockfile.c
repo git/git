@@ -37,13 +37,14 @@
  *   lockfile, and owner holds the PID of the process that locked the
  *   file.
  *
- * - Locked, lockfile closed (after close_lock_file()).  Same as the
- *   previous state, except that the lockfile is closed and fd is -1.
+ * - Locked, lockfile closed (after successful close_lock_file()).
+ *   Same as the previous state, except that the lockfile is closed
+ *   and fd is -1.
  *
- * - Unlocked (after commit_lock_file(), rollback_lock_file(), or a
- *   failed attempt to lock).  In this state, filename[0] == '\0' and
- *   fd is -1.  The object is left registered in the lock_file_list,
- *   and on_list is set.
+ * - Unlocked (after commit_lock_file(), rollback_lock_file(), a
+ *   failed attempt to lock, or a failed close_lock_file()). In this
+ *   state, filename[0] == '\0' and fd is -1. The object is left
+ *   registered in the lock_file_list, and on_list is set.
  */
 
 static struct lock_file *lock_file_list;
@@ -284,7 +285,13 @@ int close_lock_file(struct lock_file *lk)
 		return 0;
 
 	lk->fd = -1;
-	return close(fd);
+	if (close(fd)) {
+		int save_errno = errno;
+		rollback_lock_file(lk);
+		errno = save_errno;
+		return -1;
+	}
+	return 0;
 }
 
 int reopen_lock_file(struct lock_file *lk)
@@ -330,7 +337,8 @@ void rollback_lock_file(struct lock_file *lk)
 	if (!lk->filename[0])
 		return;
 
-	close_lock_file(lk);
-	unlink_or_warn(lk->filename);
-	lk->filename[0] = 0;
+	if (!close_lock_file(lk)) {
+		unlink_or_warn(lk->filename);
+		lk->filename[0] = 0;
+	}
 }

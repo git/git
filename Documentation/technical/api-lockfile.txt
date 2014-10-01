@@ -162,9 +162,10 @@ close_lock_file::
 	Take a pointer to the `struct lock_file` initialized with an
 	earlier call to `hold_lock_file_for_update` or
 	`hold_lock_file_for_append`, and close the file descriptor.
-	Return 0 upon success or a negative value on failure to
-	close(2). Usually `commit_lock_file` or `rollback_lock_file`
-	should be called after `close_lock_file`.
+	Return 0 upon success. On failure to `close(2)`, return a
+	negative value and rollback the lock file. Usually
+	`commit_lock_file` or `rollback_lock_file` should eventually
+	be called if `close_lock_file` succeeds.
 
 reopen_lock_file::
 
