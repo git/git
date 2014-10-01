@@ -143,6 +143,11 @@ hold_lock_file_for_append::
 	the existing contents of the file (if any) to the lockfile and
 	position its write pointer at the end of the file.
 
+get_locked_file_path::
+
+	Return the path of the file that is locked by the specified
+	lock_file object. The caller must free the memory.
+
 commit_lock_file::
 
 	Take a pointer to the `struct lock_file` initialized with an

@@ -2606,9 +2606,7 @@ static int delete_ref_loose(struct ref_lock *lock, int flag)
 		 * loose.  The loose file name is the same as the
 		 * lockfile name, minus ".lock":
 		 */
-		char *loose_filename = xmemdupz(
-				lock->lk->filename.buf,
-				lock->lk->filename.len - LOCK_SUFFIX_LEN);
+		char *loose_filename = get_locked_file_path(lock->lk);
 		int err = unlink_or_warn(loose_filename);
 		free(loose_filename);
 		if (err && errno != ENOENT)
