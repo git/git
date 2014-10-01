@@ -71,4 +71,24 @@ test_expect_success 'lookup non-existing entry with duplicates' '
 	test "$n" -lt 0
 '
 
+test_expect_success 'lookup with almost duplicate values' '
+	{
+		echo "append 5555555555555555555555555555555555555555" &&
+		echo "append 555555555555555555555555555555555555555f" &&
+		echo20 lookup 55
+	} | test-sha1-array >actual &&
+	n=$(cat actual) &&
+	test "$n" -eq 0
+'
+
+test_expect_success 'lookup with single duplicate value' '
+	{
+		echo20 append 55 55 &&
+		echo20 lookup 55
+	} | test-sha1-array >actual &&
+	n=$(cat actual) &&
+	test "$n" -ge 0 &&
+	test "$n" -le 1
+'
+
 test_done
