@@ -153,6 +153,7 @@ static int lock_file(struct lock_file *lk, const char *path, int flags)
 			int save_errno = errno;
 			error("cannot fix permission bits on %s",
 			      lk->filename);
+			rollback_lock_file(lk);
 			errno = save_errno;
 			return -1;
 		}
