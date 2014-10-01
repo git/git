@@ -23,7 +23,7 @@
  * used to prevent a forked process from closing a lockfile created by
  * its parent.
  *
- * A lock_file object can be in several states:
+ * The possible states of a lock_file object are as follows:
  *
  * - Uninitialized.  In this state the object's on_list field must be
  *   zero but the rest of its contents need not be initialized.  As
@@ -32,19 +32,27 @@
  *
  * - Locked, lockfile open (after hold_lock_file_for_update(),
  *   hold_lock_file_for_append(), or reopen_lock_file()). In this
- *   state, the lockfile exists, filename holds the filename of the
- *   lockfile, fd holds a file descriptor open for writing to the
- *   lockfile, and owner holds the PID of the process that locked the
- *   file.
+ *   state:
+ *   - the lockfile exists
+ *   - active is set
+ *   - filename holds the filename of the lockfile
+ *   - fd holds a file descriptor open for writing to the lockfile
+ *   - owner holds the PID of the process that locked the file
  *
  * - Locked, lockfile closed (after successful close_lock_file()).
  *   Same as the previous state, except that the lockfile is closed
  *   and fd is -1.
  *
  * - Unlocked (after commit_lock_file(), rollback_lock_file(), a
- *   failed attempt to lock, or a failed close_lock_file()). In this
- *   state, filename[0] == '\0' and fd is -1. The object is left
- *   registered in the lock_file_list, and on_list is set.
+ *   failed attempt to lock, or a failed close_lock_file()).  In this
+ *   state:
+ *   - active is unset
+ *   - filename[0] == '\0' (usually, though there are transitory states
+ *     in which this condition doesn't hold). Client code should *not*
+ *     rely on this fact!
+ *   - fd is -1
+ *   - the object is left registered in the lock_file_list, and
+ *     on_list is set.
  */
 
 static struct lock_file *lock_file_list;
@@ -175,9 +183,13 @@ static int lock_file(struct lock_file *lk, const char *path, int flags)
 		atexit(remove_lock_file);
 	}
 
+	if (lk->active)
+		die("BUG: cannot lock_file(\"%s\") using active struct lock_file",
+		    path);
 	if (!lk->on_list) {
 		/* Initialize *lk and add it to lock_file_list: */
 		lk->fd = -1;
+		lk->active = 0;
 		lk->owner = 0;
 		lk->filename[0] = 0;
 		lk->next = lock_file_list;
@@ -199,6 +211,7 @@ static int lock_file(struct lock_file *lk, const char *path, int flags)
 		return -1;
 	}
 	lk->owner = getpid();
+	lk->active = 1;
 	if (adjust_shared_perm(lk->filename)) {
 		int save_errno = errno;
 		error("cannot fix permission bits on %s", lk->filename);
@@ -298,7 +311,7 @@ int reopen_lock_file(struct lock_file *lk)
 {
 	if (0 <= lk->fd)
 		die(_("BUG: reopen a lockfile that is still open"));
-	if (!lk->filename[0])
+	if (!lk->active)
 		die(_("BUG: reopen a lockfile that has been committed"));
 	lk->fd = open(lk->filename, O_WRONLY);
 	return lk->fd;
@@ -308,7 +321,7 @@ int commit_lock_file(struct lock_file *lk)
 {
 	char result_file[PATH_MAX];
 
-	if (!lk->filename[0])
+	if (!lk->active)
 		die("BUG: attempt to commit unlocked object");
 
 	if (close_lock_file(lk))
@@ -325,6 +338,7 @@ int commit_lock_file(struct lock_file *lk)
 		return -1;
 	}
 
+	lk->active = 0;
 	lk->filename[0] = 0;
 	return 0;
 }
@@ -339,11 +353,12 @@ int hold_locked_index(struct lock_file *lk, int die_on_error)
 
 void rollback_lock_file(struct lock_file *lk)
 {
-	if (!lk->filename[0])
+	if (!lk->active)
 		return;
 
 	if (!close_lock_file(lk)) {
 		unlink_or_warn(lk->filename);
+		lk->active = 0;
 		lk->filename[0] = 0;
 	}
 }

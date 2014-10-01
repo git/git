@@ -576,6 +576,7 @@ extern int refresh_index(struct index_state *, unsigned int flags, const struct 
 
 struct lock_file {
 	struct lock_file *next;
+	volatile sig_atomic_t active;
 	int fd;
 	pid_t owner;
 	char on_list;
