@@ -841,7 +841,6 @@ static const char *ip2str(int family, struct sockaddr *sin, socklen_t len)
 static int setup_named_sock(char *listen_addr, int listen_port, struct socketlist *socklist)
 {
 	int socknum = 0;
-	int maxfd = -1;
 	char pbuf[NI_MAXSERV];
 	struct addrinfo hints, *ai0, *ai;
 	int gai;
@@ -909,9 +908,6 @@ static int setup_named_sock(char *listen_addr, int listen_port, struct socketlis
 		ALLOC_GROW(socklist->list, socklist->nr + 1, socklist->alloc);
 		socklist->list[socklist->nr++] = sockfd;
 		socknum++;
-
-		if (maxfd < sockfd)
-			maxfd = sockfd;
 	}
 
 	freeaddrinfo(ai0);
