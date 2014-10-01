@@ -233,6 +233,10 @@ int hold_lock_file_for_append(struct lock_file *lk, const char *path, int flags)
 int close_lock_file(struct lock_file *lk)
 {
 	int fd = lk->fd;
+
+	if (fd < 0)
+		return 0;
+
 	lk->fd = -1;
 	return close(fd);
 }
@@ -251,7 +255,7 @@ int commit_lock_file(struct lock_file *lk)
 {
 	char result_file[PATH_MAX];
 	size_t i;
-	if (lk->fd >= 0 && close_lock_file(lk))
+	if (close_lock_file(lk))
 		return -1;
 	strcpy(result_file, lk->filename);
 	i = strlen(result_file) - 5; /* .lock */

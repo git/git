@@ -2042,7 +2042,7 @@ void set_alternate_index_output(const char *name)
 static int commit_locked_index(struct lock_file *lk)
 {
 	if (alternate_index_output) {
-		if (lk->fd >= 0 && close_lock_file(lk))
+		if (close_lock_file(lk))
 			return -1;
 		if (rename(lk->filename, alternate_index_output))
 			return -1;
