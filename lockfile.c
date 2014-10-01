@@ -318,8 +318,13 @@ int commit_lock_file(struct lock_file *lk)
 	/* remove ".lock": */
 	result_file[strlen(result_file) - LOCK_SUFFIX_LEN] = 0;
 
-	if (rename(lk->filename, result_file))
+	if (rename(lk->filename, result_file)) {
+		int save_errno = errno;
+		rollback_lock_file(lk);
+		errno = save_errno;
 		return -1;
+	}
+
 	lk->filename[0] = 0;
 	return 0;
 }
