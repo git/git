@@ -4,6 +4,7 @@
  * Copyright (C) Linus Torvalds, 2005
  */
 #include "cache.h"
+#include "lockfile.h"
 #include "quote.h"
 #include "cache-tree.h"
 #include "tree-walk.h"

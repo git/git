@@ -6,6 +6,7 @@
  */
 
 #include "cache.h"
+#include "lockfile.h"
 #include "cache-tree.h"
 #include "color.h"
 #include "dir.h"

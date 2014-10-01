@@ -1,5 +1,5 @@
-#include "cache.h"
 #include "builtin.h"
+#include "lockfile.h"
 #include "commit.h"
 #include "refs.h"
 #include "dir.h"

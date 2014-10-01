@@ -8,6 +8,7 @@
  */
 #include "cache.h"
 #include "string-list.h"
+#include "lockfile.h"
 #include "delta.h"
 #include "pack.h"
 #include "blob.h"

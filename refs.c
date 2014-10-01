@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "lockfile.h"
 #include "refs.h"
 #include "object.h"
 #include "tag.h"

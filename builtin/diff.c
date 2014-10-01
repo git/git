@@ -4,6 +4,7 @@
  * Copyright (c) 2006 Junio C Hamano
  */
 #include "cache.h"
+#include "lockfile.h"
 #include "color.h"
 #include "commit.h"
 #include "blob.h"

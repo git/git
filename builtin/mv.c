@@ -3,8 +3,8 @@
  *
  * Copyright (C) 2006 Johannes Schindelin
  */
-#include "cache.h"
 #include "builtin.h"
+#include "lockfile.h"
 #include "dir.h"
 #include "cache-tree.h"
 #include "string-list.h"

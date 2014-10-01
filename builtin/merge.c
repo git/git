@@ -9,6 +9,7 @@
 #include "cache.h"
 #include "parse-options.h"
 #include "builtin.h"
+#include "lockfile.h"
 #include "run-command.h"
 #include "diff.h"
 #include "refs.h"

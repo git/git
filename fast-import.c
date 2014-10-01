@@ -153,6 +153,7 @@ Format of STDIN stream:
 
 #include "builtin.h"
 #include "cache.h"
+#include "lockfile.h"
 #include "object.h"
 #include "blob.h"
 #include "tree.h"

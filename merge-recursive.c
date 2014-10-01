@@ -5,6 +5,7 @@
  */
 #include "advice.h"
 #include "cache.h"
+#include "lockfile.h"
 #include "cache-tree.h"
 #include "commit.h"
 #include "blob.h"
