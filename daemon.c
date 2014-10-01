@@ -579,20 +579,21 @@ static void parse_host_arg(char *extra_args, int buflen)
 		static char addrbuf[HOST_NAME_MAX + 1];
 
 		hent = gethostbyname(hostname);
+		if (hent) {
+			ap = hent->h_addr_list;
+			memset(&sa, 0, sizeof sa);
+			sa.sin_family = hent->h_addrtype;
+			sa.sin_port = htons(0);
+			memcpy(&sa.sin_addr, *ap, hent->h_length);
 
-		ap = hent->h_addr_list;
-		memset(&sa, 0, sizeof sa);
-		sa.sin_family = hent->h_addrtype;
-		sa.sin_port = htons(0);
-		memcpy(&sa.sin_addr, *ap, hent->h_length);
+			inet_ntop(hent->h_addrtype, &sa.sin_addr,
+				  addrbuf, sizeof(addrbuf));
 
-		inet_ntop(hent->h_addrtype, &sa.sin_addr,
-			  addrbuf, sizeof(addrbuf));
-
-		free(canon_hostname);
-		canon_hostname = xstrdup(hent->h_name);
-		free(ip_address);
-		ip_address = xstrdup(addrbuf);
+			free(canon_hostname);
+			canon_hostname = xstrdup(hent->h_name);
+			free(ip_address);
+			ip_address = xstrdup(addrbuf);
+		}
 #endif
 	}
 }
