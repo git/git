@@ -55,7 +55,7 @@
  *     on_list is set.
  */
 
-static struct lock_file *lock_file_list;
+static struct lock_file *volatile lock_file_list;
 
 static void remove_lock_file(void)
 {
