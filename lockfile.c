@@ -57,7 +57,7 @@
 
 static struct lock_file *volatile lock_file_list;
 
-static void remove_lock_file(void)
+static void remove_lock_files(void)
 {
 	pid_t me = getpid();
 
@@ -68,9 +68,9 @@ static void remove_lock_file(void)
 	}
 }
 
-static void remove_lock_file_on_signal(int signo)
+static void remove_lock_files_on_signal(int signo)
 {
-	remove_lock_file();
+	remove_lock_files();
 	sigchain_pop(signo);
 	raise(signo);
 }
@@ -146,8 +146,8 @@ static int lock_file(struct lock_file *lk, const char *path, int flags)
 
 	if (!lock_file_list) {
 		/* One-time initialization */
-		sigchain_push_common(remove_lock_file_on_signal);
-		atexit(remove_lock_file);
+		sigchain_push_common(remove_lock_files_on_signal);
+		atexit(remove_lock_files);
 	}
 
 	if (lk->active)
