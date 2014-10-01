@@ -7,20 +7,29 @@
 
 static struct lock_file *volatile lock_file_list;
 
-static void remove_lock_files(void)
+static void remove_lock_files(int skip_fclose)
 {
 	pid_t me = getpid();
 
 	while (lock_file_list) {
-		if (lock_file_list->owner == me)
+		if (lock_file_list->owner == me) {
+			/* fclose() is not safe to call in a signal handler */
+			if (skip_fclose)
+				lock_file_list->fp = NULL;
 			rollback_lock_file(lock_file_list);
+		}
 		lock_file_list = lock_file_list->next;
 	}
 }
 
+static void remove_lock_files_on_exit(void)
+{
+	remove_lock_files(0);
+}
+
 static void remove_lock_files_on_signal(int signo)
 {
-	remove_lock_files();
+	remove_lock_files(1);
 	sigchain_pop(signo);
 	raise(signo);
 }
@@ -97,7 +106,7 @@ static int lock_file(struct lock_file *lk, const char *path, int flags)
 	if (!lock_file_list) {
 		/* One-time initialization */
 		sigchain_push_common(remove_lock_files_on_signal);
-		atexit(remove_lock_files);
+		atexit(remove_lock_files_on_exit);
 	}
 
 	if (lk->active)
@@ -106,6 +115,7 @@ static int lock_file(struct lock_file *lk, const char *path, int flags)
 	if (!lk->on_list) {
 		/* Initialize *lk and add it to lock_file_list: */
 		lk->fd = -1;
+		lk->fp = NULL;
 		lk->active = 0;
 		lk->owner = 0;
 		strbuf_init(&lk->filename, pathlen + LOCK_SUFFIX_LEN);
@@ -214,6 +224,17 @@ int hold_lock_file_for_append(struct lock_file *lk, const char *path, int flags)
 	return fd;
 }
 
+FILE *fdopen_lock_file(struct lock_file *lk, const char *mode)
+{
+	if (!lk->active)
+		die("BUG: fdopen_lock_file() called for unlocked object");
+	if (lk->fp)
+		die("BUG: fdopen_lock_file() called twice for file '%s'", lk->filename.buf);
+
+	lk->fp = fdopen(lk->fd, mode);
+	return lk->fp;
+}
+
 char *get_locked_file_path(struct lock_file *lk)
 {
 	if (!lk->active)
@@ -226,17 +247,32 @@ char *get_locked_file_path(struct lock_file *lk)
 int close_lock_file(struct lock_file *lk)
 {
 	int fd = lk->fd;
+	FILE *fp = lk->fp;
+	int err;
 
 	if (fd < 0)
 		return 0;
 
 	lk->fd = -1;
-	if (close(fd)) {
+	if (fp) {
+		lk->fp = NULL;
+
+		/*
+		 * Note: no short-circuiting here; we want to fclose()
+		 * in any case!
+		 */
+		err = ferror(fp) | fclose(fp);
+	} else {
+		err = close(fd);
+	}
+
+	if (err) {
 		int save_errno = errno;
 		rollback_lock_file(lk);
 		errno = save_errno;
 		return -1;
 	}
+
 	return 0;
 }
 
