@@ -147,7 +147,8 @@ commit_lock_file::
 	`hold_lock_file_for_append`, close the file descriptor and
 	rename the lockfile to its final destination. Return 0 upon
 	success or a negative value on failure to `close(2)` or
-	`rename(2)`.
+	`rename(2)`. It is a bug to call `commit_lock_file()` for a
+	`lock_file` object that is not currently locked.
 
 rollback_lock_file::
 
