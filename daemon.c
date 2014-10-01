@@ -950,7 +950,7 @@ static int setup_named_sock(char *listen_addr, int listen_port, struct socketlis
 	}
 
 	if ( bind(sockfd, (struct sockaddr *)&sin, sizeof sin) < 0 ) {
-		logerror("Could not listen to %s: %s",
+		logerror("Could not bind to %s: %s",
 			 ip2str(AF_INET, (struct sockaddr *)&sin, sizeof(sin)),
 			 strerror(errno));
 		close(sockfd);
