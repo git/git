@@ -2044,10 +2044,10 @@ static int commit_locked_index(struct lock_file *lk)
 	if (alternate_index_output) {
 		if (close_lock_file(lk))
 			return -1;
-		if (rename(lk->filename, alternate_index_output))
+		if (rename(lk->filename.buf, alternate_index_output))
 			return -1;
 		lk->active = 0;
-		lk->filename[0] = 0;
+		strbuf_reset(&lk->filename);
 		return 0;
 	} else {
 		return commit_lock_file(lk);

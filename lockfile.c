@@ -47,9 +47,9 @@
  *   failed attempt to lock, or a failed close_lock_file()).  In this
  *   state:
  *   - active is unset
- *   - filename[0] == '\0' (usually, though there are transitory states
- *     in which this condition doesn't hold). Client code should *not*
- *     rely on this fact!
+ *   - filename is empty (usually, though there are transitory
+ *     states in which this condition doesn't hold). Client code should
+ *     *not* rely on the filename being empty in this state.
  *   - fd is -1
  *   - the object is left registered in the lock_file_list, and
  *     on_list is set.
@@ -170,13 +170,6 @@ static char *resolve_symlink(char *p, size_t s)
 /* Make sure errno contains a meaningful value on error */
 static int lock_file(struct lock_file *lk, const char *path, int flags)
 {
-	/*
-	 * subtract LOCK_SUFFIX_LEN from size to make sure there's
-	 * room for adding ".lock" for the lock file name:
-	 */
-	static const size_t max_path_len = sizeof(lk->filename) -
-					   LOCK_SUFFIX_LEN;
-
 	if (!lock_file_list) {
 		/* One-time initialization */
 		sigchain_push_common(remove_lock_file_on_signal);
@@ -191,30 +184,32 @@ static int lock_file(struct lock_file *lk, const char *path, int flags)
 		lk->fd = -1;
 		lk->active = 0;
 		lk->owner = 0;
-		lk->filename[0] = 0;
+		strbuf_init(&lk->filename, PATH_MAX);
 		lk->next = lock_file_list;
 		lock_file_list = lk;
 		lk->on_list = 1;
+	} else if (lk->filename.len) {
+		/* This shouldn't happen, but better safe than sorry. */
+		die("BUG: lock_file(\"%s\") called with improperly-reset lock_file object",
+		    path);
 	}
 
-	if (strlen(path) >= max_path_len) {
-		errno = ENAMETOOLONG;
-		return -1;
+	strbuf_addstr(&lk->filename, path);
+	if (!(flags & LOCK_NODEREF)) {
+		resolve_symlink(lk->filename.buf, lk->filename.alloc);
+		strbuf_setlen(&lk->filename, strlen(lk->filename.buf));
 	}
-	strcpy(lk->filename, path);
-	if (!(flags & LOCK_NODEREF))
-		resolve_symlink(lk->filename, max_path_len);
-	strcat(lk->filename, LOCK_SUFFIX);
-	lk->fd = open(lk->filename, O_RDWR | O_CREAT | O_EXCL, 0666);
+	strbuf_addstr(&lk->filename, LOCK_SUFFIX);
+	lk->fd = open(lk->filename.buf, O_RDWR | O_CREAT | O_EXCL, 0666);
 	if (lk->fd < 0) {
-		lk->filename[0] = 0;
+		strbuf_reset(&lk->filename);
 		return -1;
 	}
 	lk->owner = getpid();
 	lk->active = 1;
-	if (adjust_shared_perm(lk->filename)) {
+	if (adjust_shared_perm(lk->filename.buf)) {
 		int save_errno = errno;
-		error("cannot fix permission bits on %s", lk->filename);
+		error("cannot fix permission bits on %s", lk->filename.buf);
 		rollback_lock_file(lk);
 		errno = save_errno;
 		return -1;
@@ -313,7 +308,7 @@ int reopen_lock_file(struct lock_file *lk)
 		die(_("BUG: reopen a lockfile that is still open"));
 	if (!lk->active)
 		die(_("BUG: reopen a lockfile that has been committed"));
-	lk->fd = open(lk->filename, O_WRONLY);
+	lk->fd = open(lk->filename.buf, O_WRONLY);
 	return lk->fd;
 }
 
@@ -329,9 +324,9 @@ int commit_lock_file(struct lock_file *lk)
 		return -1;
 
 	/* remove ".lock": */
-	strbuf_add(&result_file, lk->filename,
-		   strlen(lk->filename) - LOCK_SUFFIX_LEN);
-	err = rename(lk->filename, result_file.buf);
+	strbuf_add(&result_file, lk->filename.buf,
+		   lk->filename.len - LOCK_SUFFIX_LEN);
+	err = rename(lk->filename.buf, result_file.buf);
 	strbuf_reset(&result_file);
 	if (err) {
 		int save_errno = errno;
@@ -341,7 +336,7 @@ int commit_lock_file(struct lock_file *lk)
 	}
 
 	lk->active = 0;
-	lk->filename[0] = 0;
+	strbuf_reset(&lk->filename);
 	return 0;
 }
 
@@ -359,8 +354,8 @@ void rollback_lock_file(struct lock_file *lk)
 		return;
 
 	if (!close_lock_file(lk)) {
-		unlink_or_warn(lk->filename);
+		unlink_or_warn(lk->filename.buf);
 		lk->active = 0;
-		lk->filename[0] = 0;
+		strbuf_reset(&lk->filename);
 	}
 }
