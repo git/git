@@ -49,14 +49,14 @@ The caller:
 When finished writing, the caller can:
 
 * Close the file descriptor and rename the lockfile to its final
-  destination by calling `commit_lock_file`.
+  destination by calling `commit_lock_file` or `commit_lock_file_to`.
 
 * Close the file descriptor and remove the lockfile by calling
   `rollback_lock_file`.
 
 * Close the file descriptor without removing or renaming the lockfile
   by calling `close_lock_file`, and later call `commit_lock_file`,
-  `rollback_lock_file`, or `reopen_lock_file`.
+  `commit_lock_file_to`, `rollback_lock_file`, or `reopen_lock_file`.
 
 Even after the lockfile is committed or rolled back, the `lock_file`
 object must not be freed or altered by the caller. However, it may be
@@ -64,20 +64,19 @@ reused; just pass it to another call of `hold_lock_file_for_update` or
 `hold_lock_file_for_append`.
 
 If the program exits before you have called one of `commit_lock_file`,
-`rollback_lock_file`, or `close_lock_file`, an `atexit(3)` handler
-will close and remove the lockfile, rolling back any uncommitted
-changes.
+`commit_lock_file_to`, `rollback_lock_file`, or `close_lock_file`, an
+`atexit(3)` handler will close and remove the lockfile, rolling back
+any uncommitted changes.
 
 If you need to close the file descriptor you obtained from a
 `hold_lock_file_*` function yourself, do so by calling
 `close_lock_file`. You should never call `close(2)` yourself!
 Otherwise the `struct lock_file` structure would still think that the
-file descriptor needs to be closed, and a later call to
-`commit_lock_file` or `rollback_lock_file` or program exit would
+file descriptor needs to be closed, and a commit or rollback would
 result in duplicate calls to `close(2)`. Worse yet, if you `close(2)`
 and then later open another file descriptor for a completely different
-purpose, then a call to `commit_lock_file` or `rollback_lock_file`
-might close that unrelated file descriptor.
+purpose, then a commit or rollback might close that unrelated file
+descriptor.
 
 
 Error handling
@@ -100,9 +99,9 @@ unable_to_lock_die::
 
 	Emit an appropriate error message and `die()`.
 
-Similarly, `commit_lock_file` and `close_lock_file` return 0 on
-success. On failure they set `errno` appropriately, do their best to
-roll back the lockfile, and return -1.
+Similarly, `commit_lock_file`, `commit_lock_file_to`, and
+`close_lock_file` return 0 on success. On failure they set `errno`
+appropriately, do their best to roll back the lockfile, and return -1.
 
 
 Flags
@@ -156,6 +155,12 @@ commit_lock_file::
 	`commit_lock_file` for a `lock_file` object that is not
 	currently locked.
 
+commit_lock_file_to::
+
+	Like `commit_lock_file()`, except that it takes an explicit
+	`path` argument to which the lockfile should be renamed. The
+	`path` must be on the same filesystem as the lock file.
+
 rollback_lock_file::
 
 	Take a pointer to the `struct lock_file` initialized with an
@@ -172,8 +177,9 @@ close_lock_file::
 	`hold_lock_file_for_append`, and close the file descriptor.
 	Return 0 upon success. On failure to `close(2)`, return a
 	negative value and roll back the lock file. Usually
-	`commit_lock_file` or `rollback_lock_file` should eventually
-	be called if `close_lock_file` succeeds.
+	`commit_lock_file`, `commit_lock_file_to`, or
+	`rollback_lock_file` should eventually be called if
+	`close_lock_file` succeeds.
 
 reopen_lock_file::
 

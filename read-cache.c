@@ -2041,17 +2041,10 @@ void set_alternate_index_output(const char *name)
 
 static int commit_locked_index(struct lock_file *lk)
 {
-	if (alternate_index_output) {
-		if (close_lock_file(lk))
-			return -1;
-		if (rename(lk->filename.buf, alternate_index_output))
-			return -1;
-		lk->active = 0;
-		strbuf_reset(&lk->filename);
-		return 0;
-	} else {
+	if (alternate_index_output)
+		return commit_lock_file_to(lk, alternate_index_output);
+	else
 		return commit_lock_file(lk);
-	}
 }
 
 static int do_write_locked_index(struct index_state *istate, struct lock_file *lock,

@@ -43,9 +43,9 @@
  *   Same as the previous state, except that the lockfile is closed
  *   and fd is -1.
  *
- * - Unlocked (after commit_lock_file(), rollback_lock_file(), a
- *   failed attempt to lock, or a failed close_lock_file()).  In this
- *   state:
+ * - Unlocked (after commit_lock_file(), commit_lock_file_to(),
+ *   rollback_lock_file(), a failed attempt to lock, or a failed
+ *   close_lock_file()).  In this state:
  *   - active is unset
  *   - filename is empty (usually, though there are transitory
  *     states in which this condition doesn't hold). Client code should
@@ -284,23 +284,15 @@ int reopen_lock_file(struct lock_file *lk)
 	return lk->fd;
 }
 
-int commit_lock_file(struct lock_file *lk)
+int commit_lock_file_to(struct lock_file *lk, const char *path)
 {
-	static struct strbuf result_file = STRBUF_INIT;
-	int err;
-
 	if (!lk->active)
-		die("BUG: attempt to commit unlocked object");
+		die("BUG: attempt to commit unlocked object to \"%s\"", path);
 
 	if (close_lock_file(lk))
 		return -1;
 
-	/* remove ".lock": */
-	strbuf_add(&result_file, lk->filename.buf,
-		   lk->filename.len - LOCK_SUFFIX_LEN);
-	err = rename(lk->filename.buf, result_file.buf);
-	strbuf_reset(&result_file);
-	if (err) {
+	if (rename(lk->filename.buf, path)) {
 		int save_errno = errno;
 		rollback_lock_file(lk);
 		errno = save_errno;
@@ -310,6 +302,26 @@ int commit_lock_file(struct lock_file *lk)
 	lk->active = 0;
 	strbuf_reset(&lk->filename);
 	return 0;
+}
+
+int commit_lock_file(struct lock_file *lk)
+{
+	static struct strbuf result_file = STRBUF_INIT;
+	int err;
+
+	if (!lk->active)
+		die("BUG: attempt to commit unlocked object");
+
+	if (lk->filename.len <= LOCK_SUFFIX_LEN ||
+	    strcmp(lk->filename.buf + lk->filename.len - LOCK_SUFFIX_LEN, LOCK_SUFFIX))
+		die("BUG: lockfile filename corrupt");
+
+	/* remove ".lock": */
+	strbuf_add(&result_file, lk->filename.buf,
+		   lk->filename.len - LOCK_SUFFIX_LEN);
+	err = commit_lock_file_to(lk, result_file.buf);
+	strbuf_reset(&result_file);
+	return err;
 }
 
 int hold_locked_index(struct lock_file *lk, int die_on_error)
