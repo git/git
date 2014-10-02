@@ -2134,7 +2134,7 @@ int dwim_log(const char *str, int len, unsigned char *sha1, char **log)
 }
 
 /*
- * Locks a "refs/" ref returning the lock on success and NULL on failure.
+ * Locks a ref returning the lock on success and NULL on failure.
  * On failure errno is set to something meaningful.
  */
 static struct ref_lock *lock_ref_sha1_basic(const char *refname,
