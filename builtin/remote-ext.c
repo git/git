@@ -30,16 +30,14 @@ static char *strip_escapes(const char *str, const char *service,
 	size_t rpos = 0;
 	int escape = 0;
 	char special = 0;
-	size_t psoff = 0;
+	const char *service_noprefix = service;
 	struct strbuf ret = STRBUF_INIT;
 
-	/* Calculate prefix length for \s and lengths for \s and \S */
-	if (!strncmp(service, "git-", 4))
-		psoff = 4;
+	skip_prefix(service_noprefix, "git-", &service_noprefix);
 
 	/* Pass the service to command. */
 	setenv("GIT_EXT_SERVICE", service, 1);
-	setenv("GIT_EXT_SERVICE_NOPREFIX", service + psoff, 1);
+	setenv("GIT_EXT_SERVICE_NOPREFIX", service_noprefix, 1);
 
 	/* Scan the length of argument. */
 	while (str[rpos] && (escape || str[rpos] != ' ')) {
@@ -85,7 +83,7 @@ static char *strip_escapes(const char *str, const char *service,
 				strbuf_addch(&ret, str[rpos]);
 				break;
 			case 's':
-				strbuf_addstr(&ret, service + psoff);
+				strbuf_addstr(&ret, service_noprefix);
 				break;
 			case 'S':
 				strbuf_addstr(&ret, service);

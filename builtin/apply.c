@@ -435,7 +435,7 @@ static unsigned long linelen(const char *buffer, unsigned long size)
 
 static int is_dev_null(const char *str)
 {
-	return !memcmp("/dev/null", str, 9) && isspace(str[9]);
+	return skip_prefix(str, "/dev/null", &str) && isspace(*str);
 }
 
 #define TERM_SPACE	1
