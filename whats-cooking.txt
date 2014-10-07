@@ -1,48 +1,15 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Sep 2014, #09; Tue, 30)
-X-master-at: 565301e41670825ceedf75220f2918ae76831240
-X-next-at: b253abbe256c44261d5bb1dbfb99a834c9987b3e
+Subject: What's cooking in git.git (Oct 2014, #01; Tue, 7)
+X-master-at: 325602ce120e7bd7321b9ed409b49b48fd20888e
+X-next-at: 4587c01894e202cf47b7eeaf1c9cc40e47b01777
 
-What's cooking in git.git (Sep 2014, #09; Tue, 30)
+What's cooking in git.git (Oct 2014, #01; Tue, 7)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
-
-Many fixes on the 'master' has been merged down to 'maint' and the
-tip of the latter is at v2.1.2 now.  Among the topics that have been
-cooking in 'next', easier ones have all graduated to 'master'.
-
-During the remainder of this cycle, I would like to see these topics
-to be in 'master' by the end of the 8th week in late October:
-
- - ref transaction updates by Ronnie and Jonathan
- - lockfile updates by Michael
- - replacement for contrib/workdir by Duy
-
-All of them are of rather nontrivial size, and would need to be in
-'next' for at least a few weeks, which would mean they must be in a
-good enough shape to go incremental by mid October.  I suspect that
-we might be cutting it a bit too close for some of them but we'll
-see.
-
-    Side note: I am not saying that I will ignore other topics; I am
-    just saying that I care about these three topics because their
-    changes have large impact on the current codebase, and they have
-    big positive impact on the future when done right.  We want to
-    see atomic updates to multiple refs.  We want to see our locks
-    behave sensibly.  We want to see safer way to work with multiple
-    working trees checked out of a single repository.
-
-    Other topics in flight are of smaller impact that I would not
-    worry too much about and tend to require less brainpower to
-    judge if the design is good, and I'd be happy to see them go
-    through the usual 'pu' to 'next' to 'master' with their own
-    pace, either by the end of this cycle, extending into the next
-    cycle---in that sense I do not care too much about them to
-    single any out.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -52,61 +19,94 @@ of the repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* dt/cache-tree-repair (2014-09-30) 1 commit
- - t0090: avoid passing empty string to printf %d
+* mh/lockfile-stdio (2014-10-01) 3 commits
+ - commit_packed_refs(): reimplement using fdopen_lock_file()
+ - dump_marks(): reimplement using fdopen_lock_file()
+ - fdopen_lock_file(): access a lockfile using stdio
+ (this branch uses mh/lockfile.)
 
- This fixes a topic that has graduated to 'master'.
  Will merge to 'next'.
 
---------------------------------------------------
-[Graduated to "master"]
 
-* jc/test-lazy-prereq (2014-06-13) 1 commit
-  (merged to 'next' on 2014-09-25 at ed479f3)
- + tests: drop GIT_*_TIMING_TESTS environment variable support
+* rs/daemon-fixes (2014-10-01) 3 commits
+  (merged to 'next' on 2014-10-07 at 4171e10)
+ + daemon: remove write-only variable maxfd
+ + daemon: fix error message after bind()
+ + daemon: handle gethostbyname() error
 
- Test-script clean-up.
+ "git daemon" (with NO_IPV6 build configuration) used to incorrectly
+ use the hostname even when gethostbyname() reported that the given
+ hostname is not found.
 
-
-* jt/itimer-autoconf (2014-08-29) 3 commits
-  (merged to 'next' on 2014-09-25 at efd65ba)
- + autoconf: check for setitimer()
- + autoconf: check for struct itimerval
- + git-compat-util.h: add missing semicolon after struct itimerval
- (this branch is used by jt/timer-settime.)
-
- setitmer(2) and related API elements can be configured from
- Makefile but autoconf did not know about it.
+ Will merge to 'master'.
 
 
-* pr/use-default-sigpipe-setting (2014-09-22) 2 commits
-  (merged to 'next' on 2014-09-24 at 2d678ed)
- + mingw.h: add dummy functions for sigset_t operations
- + unblock and unignore SIGPIPE
+* rs/sha1-array-test (2014-10-01) 2 commits
+ - sha1-lookup: handle duplicates in sha1_pos()
+ - sha1-array: add test-sha1-array and basic tests
 
- We used to get confused when a process called us with SIGPIPE
- ignored; we do want to die with SIGPIPE when the output is not
- read by default, and do ignore the signal when appropriate.
+ Will merge to 'next'.
 
 
-* sb/merge-recursive-copy-paste-fix (2014-09-23) 2 commits
-  (merged to 'next' on 2014-09-24 at b8dfbef)
- + merge-recursive: remove stale commented debugging code
- + merge-recursive: fix copy-paste mistake
+* da/completion-show-signature (2014-10-07) 1 commit
+  (merged to 'next' on 2014-10-07 at 2467c19)
+ + completion: add --show-signature for log and show
 
- "git merge-recursive" had a small bug that could have made it
- mishandle "one side deleted, the other side did not touch it" in a
- rare corner case, where the other side actually did touch to cause
- the blob object names to be different but both blobs before and
- after the change normalize to the same (e.g. correcting mistake to
- check in a blob with CRLF line endings by replacing it with another
- blob that records the same contents with LF line endings).
+ Will merge to 'master'.
+
+
+* jk/prune-mtime (2014-10-04) 18 commits
+ - write_sha1_file: freshen existing objects
+ - pack-objects: match prune logic for discarding objects
+ - pack-objects: refactor unpack-unreachable expiration check
+ - prune: keep objects reachable from recent objects
+ - sha1_file: add for_each iterators for loose and packed objects
+ - count-objects: use for_each_loose_file_in_objdir
+ - count-objects: do not use xsize_t when counting object size
+ - prune: factor out loose-object directory traversal
+ - t5304: use helper to report failure of "test foo = bar"
+ - t5304: use test_path_is_* instead of "test -f"
+ - reachable: clear pending array after walking it
+ - clean up name allocation in prepare_revision_walk
+ - object_array: add a "clear" function
+ - object_array: factor out slopbuf-freeing logic
+ - isxdigit: cast input to unsigned char
+ - foreach_alt_odb: propagate return value from callback
+ - Merge branch 'dt/cache-tree-repair' into jk/prune-mtime
+ - Merge branch 'jc/reopen-lock-file' into jk/prune-mtime
+ (this branch uses dt/cache-tree-repair.)
+
+ Expecting a reroll.
+
+
+* jn/parse-config-slot (2014-10-07) 2 commits
+ - color_parse: do not mention variable name in error message
+ - pass config slots as pointers instead of offsets
+
+ Expecting an Ack/Sign-off or update from Jonathan on the bottom one.
+
+
+* rs/mailsplit (2014-10-07) 1 commit
+ - mailsplit: remove unnecessary unlink(2) call
+
+ Will merge to 'next'.
+
+
+* rs/more-uses-of-skip-prefix (2014-10-07) 1 commit
+ - use skip_prefix() to avoid more magic numbers
+
+ Will merge to 'next'.
+
+
+* rs/plug-leak-in-bundle (2014-10-07) 1 commit
+ - bundle: plug minor memory leak in is_tag_in_date_range()
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
 
-* rs/ref-transaction (2014-09-12) 20 commits
- . remote rm/prune: print a message when writing packed-refs fails
+* rs/ref-transaction (2014-09-10) 19 commits
  . ref_transaction_commit: bail out on failure to remove a ref
  . lockfile: remove unable_to_lock_error
  . refs.c: do not permit err == NULL
@@ -127,10 +127,7 @@ of the repositories listed at
  . wrapper.c: remove/unlink_or_warn: simplify, treat ENOENT as success
  . mv test: recreate mod/ directory instead of relying on stale copy
 
- Rerolled and was asked to wait.  Seems to break HEAD reflog
- upon "checkout HEAD^0".
-
- Expecting another reroll.
+ Expecting the final reroll.
 
 
 * tr/remerge-diff (2014-09-08) 8 commits
@@ -322,6 +319,16 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* dt/cache-tree-repair (2014-09-30) 1 commit
+  (merged to 'next' on 2014-10-07 at 923bd93)
+ + t0090: avoid passing empty string to printf %d
+ (this branch is used by jk/prune-mtime.)
+
+ This fixes a topic that has graduated to 'master'.
+
+ Will merge to 'master'.
+
+
 * bw/use-write-script-in-tests (2014-09-29) 1 commit
   (merged to 'next' on 2014-09-29 at be4056e)
  + t/lib-credential: use write_script
@@ -377,9 +384,10 @@ of the repositories listed at
 
 
 * so/rebase-doc-fork-point (2014-09-29) 1 commit
- - Documentation/git-rebase.txt: document when --fork-point is auto-enabled
+  (merged to 'next' on 2014-10-07 at 03d8ed6)
+ + Documentation/git-rebase.txt: document when --fork-point is auto-enabled
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * sk/tag-contains-wo-recursion (2014-09-23) 1 commit
@@ -388,18 +396,17 @@ of the repositories listed at
  Waiting for an Ack ($gmane/257448).
 
 
-* da/include-compat-util-first-in-c (2014-09-15) 4 commits
- - SQUASH???
- - check-headers: add header usage checks for .c files
- - Makefile: add check-headers target
- - cleanups: ensure that git-compat-util.h is included first
+* da/include-compat-util-first-in-c (2014-09-15) 1 commit
+  (merged to 'next' on 2014-10-07 at ea5bcb4)
+ + cleanups: ensure that git-compat-util.h is included first
 
- So... what is happening to this topic?  I think the bottom one is a
- reasonable clean-up without too much churn, but I am not sure about
- the rest.
+ Code clean-up.
+
+ Will merge to 'master'.
 
 
-* mh/lockfile (2014-09-26) 38 commits
+* mh/lockfile (2014-10-01) 38 commits
+ - lockfile.h: extract new header file for the functions in lockfile.c
  - hold_locked_index(): move from lockfile.c to read-cache.c
  - hold_lock_file_for_append(): restore errno before returning
  - get_locked_file_path(): new function
@@ -424,7 +431,6 @@ of the repositories listed at
  - commit_lock_file(): inline temporary variable
  - remove_lock_file(): call rollback_lock_file()
  - lock_file(): exit early if lockfile cannot be opened
- - write_packed_entry_fn(): convert cb_data into a (const int *)
  - prepare_index(): declare return value to be (const char *)
  - delete_ref_loose(): don't muck around in the lock_file's filename
  - cache.h: define constants LOCK_SUFFIX and LOCK_SUFFIX_LEN
@@ -438,11 +444,11 @@ of the repositories listed at
  - close_lock_file(): exit (successfully) if file is already closed
  - api-lockfile: revise and expand the documentation
  - unable_to_lock_die(): rename function from unable_to_lock_index_die()
+ (this branch is used by mh/lockfile-stdio.)
 
- Rerolled, reviews in progress.
+ The lockfile API and its users have been cleaned up.
 
- Interacts with jk/write-packed-refs-via-stdio topic that has recently
- graduated in an unfortunate way.
+ Will merge to 'next'.
 
 
 * nd/multiple-work-trees (2014-09-27) 32 commits
@@ -483,7 +489,7 @@ of the repositories listed at
  rely on symbolic links and make sharing of objects and refs safer
  by making the borrowee and borrowers aware of each other.
 
- Will merge to 'next'.
+ A few tests need some tweaks for MinGW ($gmane/{257756,257757}).
 
 
 * cc/interpret-trailers (2014-09-22) 11 commits
