@@ -21,15 +21,17 @@ If <branch> is specified, 'git rebase' will perform an automatic
 it remains on the current branch.
 
 If <upstream> is not specified, the upstream configured in
-branch.<name>.remote and branch.<name>.merge options will be used; see
-linkgit:git-config[1] for details.  If you are currently not on any
-branch or if the current branch does not have a configured upstream,
-the rebase will abort.
+branch.<name>.remote and branch.<name>.merge options will be used (see
+linkgit:git-config[1] for details) and the `--fork-point` option is
+assumed.  If you are currently not on any branch or if the current
+branch does not have a configured upstream, the rebase will abort.
 
 All changes made by commits in the current branch but that are not
 in <upstream> are saved to a temporary area.  This is the same set
-of commits that would be shown by `git log <upstream>..HEAD` (or
-`git log HEAD`, if --root is specified).
+of commits that would be shown by `git log <upstream>..HEAD`; or by
+`git log 'fork_point'..HEAD`, if `--fork-point` is active (see the
+description on `--fork-point` below); or by `git log HEAD`, if the
+`--root` option is specified.
 
 The current branch is reset to <upstream>, or <newbase> if the
 --onto option was supplied.  This has the exact same effect as
@@ -327,13 +329,18 @@ link:howto/revert-a-faulty-merge.html[revert-a-faulty-merge How-To] for details)
 
 --fork-point::
 --no-fork-point::
-	Use 'git merge-base --fork-point' to find a better common ancestor
-	between `upstream` and `branch` when calculating which commits have
-	have been introduced by `branch` (see linkgit:git-merge-base[1]).
+	Use reflog to find a better common ancestor between <upstream>
+	and <branch> when calculating which commits have been
+	introduced by <branch>.
 +
-If no non-option arguments are given on the command line, then the default is
-`--fork-point @{u}` otherwise the `upstream` argument is interpreted literally
-unless the `--fork-point` option is specified.
+When --fork-point is active, 'fork_point' will be used instead of
+<upstream> to calculate the set of commits to rebase, where
+'fork_point' is the result of `git merge-base --fork-point <upstream>
+<branch>` command (see linkgit:git-merge-base[1]).  If 'fork_point'
+ends up being empty, the <upstream> will be used as a fallback.
++
+If either <upstream> or --root is given on the command line, then the
+default is `--no-fork-point`, otherwise the default is `--fork-point`.
 
 --ignore-whitespace::
 --whitespace=<option>::
