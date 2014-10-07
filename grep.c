@@ -111,7 +111,7 @@ int grep_config(const char *var, const char *value, void *cb)
 	if (color) {
 		if (!value)
 			return config_error_nonbool(var);
-		color_parse(value, var, color);
+		return color_parse(value, color);
 	}
 	return 0;
 }

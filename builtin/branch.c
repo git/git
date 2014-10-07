@@ -93,8 +93,7 @@ static int git_branch_config(const char *var, const char *value, void *cb)
 			return 0;
 		if (!value)
 			return config_error_nonbool(var);
-		color_parse(value, var, branch_colors[slot]);
-		return 0;
+		return color_parse(value, branch_colors[slot]);
 	}
 	return git_color_default_config(var, value, cb);
 }

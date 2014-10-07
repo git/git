@@ -1295,8 +1295,7 @@ static int git_status_config(const char *k, const char *v, void *cb)
 			return 0;
 		if (!v)
 			return config_error_nonbool(k);
-		color_parse(v, k, s->color_palette[slot]);
-		return 0;
+		return color_parse(v, s->color_palette[slot]);
 	}
 	if (!strcmp(k, "status.relativepaths")) {
 		s->relative_paths = git_config_bool(k, v);

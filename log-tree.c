@@ -73,8 +73,7 @@ int parse_decorate_color_config(const char *var, const char *slot_name, const ch
 		return 0;
 	if (!value)
 		return config_error_nonbool(var);
-	color_parse(value, var, decoration_colors[slot]);
-	return 0;
+	return color_parse(value, decoration_colors[slot]);
 }
 
 /*
