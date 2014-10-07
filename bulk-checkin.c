@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2011, Google Inc.
  */
+#include "cache.h"
 #include "bulk-checkin.h"
 #include "csum-file.h"
 #include "pack.h"

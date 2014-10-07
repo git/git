@@ -1,3 +1,4 @@
+#include "git-compat-util.h"
 #include "varint.h"
 
 uintmax_t decode_varint(const unsigned char **bufp)
