@@ -12,6 +12,8 @@ Ports
 
 UI, Workflows & Features
 
+ * "git archive" learned to filter what gets archived with pathspec.
+
  * "git config --edit --global" starts from a skeletal per-user
    configuration file contents, instead of a total blank, when the
    user does not already have any.  This immediately reduces the
@@ -47,6 +49,14 @@ UI, Workflows & Features
  * The pretty-format specifier "%d", which expanded to " (tagname)"
    for a tagged commit, gained a cousin "%D" that just gives the
    "tagname" without frills.
+
+ * "git push" learned "--signed" push, that allows a push (i.e.
+   request to update the refs on the other side to point at a new
+   history, together with the transmission of necessary objects) to be
+   signed, so that it can be verified and audited, using the GPG
+   signature of the person who pushed, that the tips of branches at a
+   public repository really point the commits the pusher wanted to,
+   without having to "trust" the server.
 
 Performance, Internal Implementation, etc.
 
@@ -108,6 +118,9 @@ Performance, Internal Implementation, etc.
  * "git hash-object" was taught a "--literally" option to help
    debugging.
 
+ * When running a required clean filter, we do not have to mmap the
+   original before feeding the filter.  Instead, stream the file
+   contents directly to the filter and process its output.
 
 Also contains various documentation updates and code clean-ups.
 
