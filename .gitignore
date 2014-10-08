@@ -199,6 +199,7 @@
 /test-revision-walking
 /test-run-command
 /test-sha1
+/test-sha1-array
 /test-sigchain
 /test-string-list
 /test-subprocess
