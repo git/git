@@ -12,6 +12,7 @@ if test -n "$NO_CURL"; then
 fi
 
 ROOT_PATH="$PWD"
+. "$TEST_DIRECTORY"/lib-gpg.sh
 . "$TEST_DIRECTORY"/lib-httpd.sh
 . "$TEST_DIRECTORY"/lib-terminal.sh
 start_httpd
@@ -336,6 +337,46 @@ test_expect_success CMDLINE_LIMIT 'push 2000 tags over http' '
 	  sed "s|.*|$sha1 refs/tags/really-long-tag-name-&|" \
 	  >.git/packed-refs &&
 	run_with_limited_cmdline git push --mirror
+'
+
+test_expect_success GPG 'push with post-receive to inspect certificate' '
+	(
+		cd "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.git &&
+		mkdir -p hooks &&
+		write_script hooks/post-receive <<-\EOF &&
+		# discard the update list
+		cat >/dev/null
+		# record the push certificate
+		if test -n "${GIT_PUSH_CERT-}"
+		then
+			git cat-file blob $GIT_PUSH_CERT >../push-cert
+		fi &&
+		cat >../push-cert-status <<E_O_F
+		SIGNER=${GIT_PUSH_CERT_SIGNER-nobody}
+		KEY=${GIT_PUSH_CERT_KEY-nokey}
+		STATUS=${GIT_PUSH_CERT_STATUS-nostatus}
+		NONCE_STATUS=${GIT_PUSH_CERT_NONCE_STATUS-nononcestatus}
+		NONCE=${GIT_PUSH_CERT_NONCE-nononce}
+		E_O_F
+		EOF
+
+		git config receive.certnonceseed sekrit &&
+		git config receive.certnonceslop 30
+	) &&
+	cd "$ROOT_PATH/test_repo_clone" &&
+	test_commit cert-test &&
+	git push --signed "$HTTPD_URL/smart/test_repo.git" &&
+	(
+		cd "$HTTPD_DOCUMENT_ROOT_PATH" &&
+		cat <<-\EOF &&
+		SIGNER=C O Mitter <committer@example.com>
+		KEY=13B6F51ECDDE430D
+		STATUS=G
+		NONCE_STATUS=OK
+		EOF
+		sed -n -e "s/^nonce /NONCE=/p" -e "/^$/q" push-cert
+	) >expect &&
+	test_cmp expect "$HTTPD_DOCUMENT_ROOT_PATH/push-cert-status"
 '
 
 stop_httpd

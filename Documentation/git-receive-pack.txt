@@ -53,6 +53,56 @@ the update.  Refs to be created will have sha1-old equal to 0\{40},
 while refs to be deleted will have sha1-new equal to 0\{40}, otherwise
 sha1-old and sha1-new should be valid objects in the repository.
 
+When accepting a signed push (see linkgit:git-push[1]), the signed
+push certificate is stored in a blob and an environment variable
+`GIT_PUSH_CERT` can be consulted for its object name.  See the
+description of `post-receive` hook for an example.  In addition, the
+certificate is verified using GPG and the result is exported with
+the following environment variables:
+
+`GIT_PUSH_CERT_SIGNER`::
+	The name and the e-mail address of the owner of the key that
+	signed the push certificate.
+
+`GIT_PUSH_CERT_KEY`::
+	The GPG key ID of the key that signed the push certificate.
+
+`GIT_PUSH_CERT_STATUS`::
+	The status of GPG verification of the push certificate,
+	using the same mnemonic as used in `%G?` format of `git log`
+	family of commands (see linkgit:git-log[1]).
+
+`GIT_PUSH_CERT_NONCE`::
+	The nonce string the process asked the signer to include
+	in the push certificate.  If this does not match the value
+	recorded on the "nonce" header in the push certificate, it
+	may indicate that the certificate is a valid one that is
+	being replayed from a separate "git push" session.
+
+`GIT_PUSH_CERT_NONCE_STATUS`::
+`UNSOLICITED`;;
+	"git push --signed" sent a nonce when we did not ask it to
+	send one.
+`MISSING`;;
+	"git push --signed" did not send any nonce header.
+`BAD`;;
+	"git push --signed" sent a bogus nonce.
+`OK`;;
+	"git push --signed" sent the nonce we asked it to send.
+`SLOP`;;
+	"git push --signed" sent a nonce different from what we
+	asked it to send now, but in a previous session.  See
+	`GIT_PUSH_CERT_NONCE_SLOP` environment variable.
+
+`GIT_PUSH_CERT_NONCE_SLOP`::
+	"git push --signed" sent a nonce different from what we
+	asked it to send now, but in a different session whose
+	starting time is different by this many seconds from the
+	current session.  Only meaningful when
+	`GIT_PUSH_CERT_NONCE_STATUS` says `SLOP`.
+	Also read about `receive.certnonceslop` variable in
+	linkgit:git-config[1].
+
 This hook is called before any refname is updated and before any
 fast-forward checks are performed.
 
@@ -101,9 +151,14 @@ the update.  Refs that were created will have sha1-old equal to
 0\{40}, otherwise sha1-old and sha1-new should be valid objects in
 the repository.
 
+The `GIT_PUSH_CERT*` environment variables can be inspected, just as
+in `pre-receive` hook, after accepting a signed push.
+
 Using this hook, it is easy to generate mails describing the updates
 to the repository.  This example script sends one mail message per
-ref listing the commits pushed to the repository:
+ref listing the commits pushed to the repository, and logs the push
+certificates of signed pushes with good signatures to a logger
+service:
 
 	#!/bin/sh
 	# mail out commit update information.
@@ -119,6 +174,14 @@ ref listing the commits pushed to the repository:
 		fi |
 		mail -s "Changes to ref $ref" commit-list@mydomain
 	done
+	# log signed push certificate, if any
+	if test -n "${GIT_PUSH_CERT-}" && test ${GIT_PUSH_CERT_STATUS} = G
+	then
+		(
+			echo expected nonce is ${GIT_PUSH_NONCE}
+			git cat-file blob ${GIT_PUSH_CERT}
+		) | mail -s "push certificate from $GIT_PUSH_CERT_SIGNER" push-log@mydomain
+	fi
 	exit 0
 
 The exit code from this hook invocation is ignored, however a
