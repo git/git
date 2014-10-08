@@ -2309,16 +2309,13 @@ int commit_packed_refs(void)
 	if (!packed_ref_cache->lock)
 		die("internal error: packed-refs not locked");
 
-	out = fdopen(packed_ref_cache->lock->fd, "w");
+	out = fdopen_lock_file(packed_ref_cache->lock, "w");
 	if (!out)
 		die_errno("unable to fdopen packed-refs descriptor");
 
 	fprintf_or_die(out, "%s", PACKED_REFS_HEADER);
 	do_for_each_entry_in_dir(get_packed_ref_dir(packed_ref_cache),
 				 0, write_packed_entry_fn, out);
-	if (fclose(out))
-		die_errno("write error");
-	packed_ref_cache->lock->fd = -1;
 
 	if (commit_lock_file(packed_ref_cache->lock)) {
 		save_errno = errno;
