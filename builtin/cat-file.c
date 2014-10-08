@@ -82,8 +82,9 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name)
 				enum object_type type;
 				unsigned long size;
 				char *buffer = read_sha1_file(sha1, &type, &size);
-				if (memcmp(buffer, "object ", 7) ||
-				    get_sha1_hex(buffer + 7, blob_sha1))
+				const char *target;
+				if (!skip_prefix(buffer, "object ", &target) ||
+				    get_sha1_hex(target, blob_sha1))
 					die("%s not a valid tag", sha1_to_hex(sha1));
 				free(buffer);
 			} else
