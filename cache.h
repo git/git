@@ -1324,6 +1324,7 @@ extern int git_config_rename_section_in_file(const char *, const char *, const c
 extern const char *git_etc_gitconfig(void);
 extern int check_repository_format_version(const char *var, const char *value, void *cb);
 extern int git_env_bool(const char *, int);
+extern unsigned long git_env_ulong(const char *, unsigned long);
 extern int git_config_system(void);
 extern int config_error_nonbool(const char *);
 #if defined(__GNUC__)

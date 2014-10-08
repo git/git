@@ -153,17 +153,23 @@ test_expect_success 'filter shell-escaped filenames' '
 	:
 '
 
-test_expect_success 'required filter success' '
-	git config filter.required.smudge cat &&
-	git config filter.required.clean cat &&
+test_expect_success 'required filter should filter data' '
+	git config filter.required.smudge ./rot13.sh &&
+	git config filter.required.clean ./rot13.sh &&
 	git config filter.required.required true &&
 
 	echo "*.r filter=required" >.gitattributes &&
 
-	echo test >test.r &&
+	cat test.o >test.r &&
 	git add test.r &&
+
 	rm -f test.r &&
-	git checkout -- test.r
+	git checkout -- test.r &&
+	cmp test.o test.r &&
+
+	./rot13.sh <test.o >expected &&
+	git cat-file blob :test.r >actual &&
+	cmp expected actual
 '
 
 test_expect_success 'required filter smudge failure' '
@@ -188,6 +194,14 @@ test_expect_success 'required filter clean failure' '
 
 	echo test >test.fc &&
 	test_must_fail git add test.fc
+'
+
+test_expect_success 'filtering large input to small output should use little memory' '
+	git config filter.devnull.clean "cat >/dev/null" &&
+	git config filter.devnull.required true &&
+	for i in $(test_seq 1 30); do printf "%1048576d" 1; done >30MB &&
+	echo "30MB filter=devnull" >.gitattributes &&
+	GIT_MMAP_LIMIT=1m GIT_ALLOC_LIMIT=1m git add 30MB
 '
 
 test_expect_success EXPENSIVE 'filter large file' '

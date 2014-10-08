@@ -224,8 +224,11 @@ int hold_lock_file_for_append(struct lock_file *lk, const char *path, int flags)
 	} else if (copy_fd(orig_fd, fd)) {
 		if (flags & LOCK_DIE_ON_ERROR)
 			exit(128);
+		close(orig_fd);
 		close(fd);
 		return -1;
+	} else {
+		close(orig_fd);
 	}
 	return fd;
 }
