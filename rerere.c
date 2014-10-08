@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "lockfile.h"
 #include "string-list.h"
 #include "rerere.h"
 #include "xdiff-interface.h"

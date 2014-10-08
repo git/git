@@ -2,59 +2,52 @@
  * Copyright (c) 2005, Junio C Hamano
  */
 #include "cache.h"
+#include "lockfile.h"
 #include "sigchain.h"
 
-static struct lock_file *lock_file_list;
+static struct lock_file *volatile lock_file_list;
 
-static void remove_lock_file(void)
+static void remove_lock_files(void)
 {
 	pid_t me = getpid();
 
 	while (lock_file_list) {
-		if (lock_file_list->owner == me &&
-		    lock_file_list->filename[0]) {
-			if (lock_file_list->fd >= 0)
-				close(lock_file_list->fd);
-			unlink_or_warn(lock_file_list->filename);
-		}
+		if (lock_file_list->owner == me)
+			rollback_lock_file(lock_file_list);
 		lock_file_list = lock_file_list->next;
 	}
 }
 
-static void remove_lock_file_on_signal(int signo)
+static void remove_lock_files_on_signal(int signo)
 {
-	remove_lock_file();
+	remove_lock_files();
 	sigchain_pop(signo);
 	raise(signo);
 }
 
 /*
- * p = absolute or relative path name
+ * path = absolute or relative path name
  *
- * Return a pointer into p showing the beginning of the last path name
- * element.  If p is empty or the root directory ("/"), just return p.
+ * Remove the last path name element from path (leaving the preceding
+ * "/", if any).  If path is empty or the root directory ("/"), set
+ * path to the empty string.
  */
-static char *last_path_elm(char *p)
+static void trim_last_path_component(struct strbuf *path)
 {
-	/* r starts pointing to null at the end of the string */
-	char *r = strchr(p, '\0');
-
-	if (r == p)
-		return p; /* just return empty string */
-
-	r--; /* back up to last non-null character */
+	int i = path->len;
 
 	/* back up past trailing slashes, if any */
-	while (r > p && *r == '/')
-		r--;
+	while (i && path->buf[i - 1] == '/')
+		i--;
 
 	/*
-	 * then go backwards until I hit a slash, or the beginning of
-	 * the string
+	 * then go backwards until a slash, or the beginning of the
+	 * string
 	 */
-	while (r > p && *(r-1) != '/')
-		r--;
-	return r;
+	while (i && path->buf[i - 1] != '/')
+		i--;
+
+	strbuf_setlen(path, i);
 }
 
 
@@ -62,103 +55,87 @@ static char *last_path_elm(char *p)
 #define MAXDEPTH 5
 
 /*
- * p = path that may be a symlink
- * s = full size of p
+ * path contains a path that might be a symlink.
  *
- * If p is a symlink, attempt to overwrite p with a path to the real
- * file or directory (which may or may not exist), following a chain of
- * symlinks if necessary.  Otherwise, leave p unmodified.
+ * If path is a symlink, attempt to overwrite it with a path to the
+ * real file or directory (which may or may not exist), following a
+ * chain of symlinks if necessary.  Otherwise, leave path unmodified.
  *
- * This is a best-effort routine.  If an error occurs, p will either be
- * left unmodified or will name a different symlink in a symlink chain
- * that started with p's initial contents.
- *
- * Always returns p.
+ * This is a best-effort routine.  If an error occurs, path will
+ * either be left unmodified or will name a different symlink in a
+ * symlink chain that started with the original path.
  */
-
-static char *resolve_symlink(char *p, size_t s)
+static void resolve_symlink(struct strbuf *path)
 {
 	int depth = MAXDEPTH;
+	static struct strbuf link = STRBUF_INIT;
 
 	while (depth--) {
-		char link[PATH_MAX];
-		int link_len = readlink(p, link, sizeof(link));
-		if (link_len < 0) {
-			/* not a symlink anymore */
-			return p;
-		}
-		else if (link_len < sizeof(link))
-			/* readlink() never null-terminates */
-			link[link_len] = '\0';
-		else {
-			warning("%s: symlink too long", p);
-			return p;
-		}
+		if (strbuf_readlink(&link, path->buf, path->len) < 0)
+			break;
 
-		if (is_absolute_path(link)) {
+		if (is_absolute_path(link.buf))
 			/* absolute path simply replaces p */
-			if (link_len < s)
-				strcpy(p, link);
-			else {
-				warning("%s: symlink too long", p);
-				return p;
-			}
-		} else {
+			strbuf_reset(path);
+		else
 			/*
-			 * link is a relative path, so I must replace the
+			 * link is a relative path, so replace the
 			 * last element of p with it.
 			 */
-			char *r = (char *)last_path_elm(p);
-			if (r - p + link_len < s)
-				strcpy(r, link);
-			else {
-				warning("%s: symlink too long", p);
-				return p;
-			}
-		}
+			trim_last_path_component(path);
+
+		strbuf_addbuf(path, &link);
 	}
-	return p;
+	strbuf_reset(&link);
 }
 
 /* Make sure errno contains a meaningful value on error */
 static int lock_file(struct lock_file *lk, const char *path, int flags)
 {
-	/*
-	 * subtract 5 from size to make sure there's room for adding
-	 * ".lock" for the lock file name
-	 */
-	static const size_t max_path_len = sizeof(lk->filename) - 5;
+	size_t pathlen = strlen(path);
 
-	if (strlen(path) >= max_path_len) {
-		errno = ENAMETOOLONG;
+	if (!lock_file_list) {
+		/* One-time initialization */
+		sigchain_push_common(remove_lock_files_on_signal);
+		atexit(remove_lock_files);
+	}
+
+	if (lk->active)
+		die("BUG: cannot lock_file(\"%s\") using active struct lock_file",
+		    path);
+	if (!lk->on_list) {
+		/* Initialize *lk and add it to lock_file_list: */
+		lk->fd = -1;
+		lk->active = 0;
+		lk->owner = 0;
+		strbuf_init(&lk->filename, pathlen + LOCK_SUFFIX_LEN);
+		lk->next = lock_file_list;
+		lock_file_list = lk;
+		lk->on_list = 1;
+	} else if (lk->filename.len) {
+		/* This shouldn't happen, but better safe than sorry. */
+		die("BUG: lock_file(\"%s\") called with improperly-reset lock_file object",
+		    path);
+	}
+
+	strbuf_add(&lk->filename, path, pathlen);
+	if (!(flags & LOCK_NO_DEREF))
+		resolve_symlink(&lk->filename);
+	strbuf_addstr(&lk->filename, LOCK_SUFFIX);
+	lk->fd = open(lk->filename.buf, O_RDWR | O_CREAT | O_EXCL, 0666);
+	if (lk->fd < 0) {
+		strbuf_reset(&lk->filename);
 		return -1;
 	}
-	strcpy(lk->filename, path);
-	if (!(flags & LOCK_NODEREF))
-		resolve_symlink(lk->filename, max_path_len);
-	strcat(lk->filename, ".lock");
-	lk->fd = open(lk->filename, O_RDWR | O_CREAT | O_EXCL, 0666);
-	if (0 <= lk->fd) {
-		if (!lock_file_list) {
-			sigchain_push_common(remove_lock_file_on_signal);
-			atexit(remove_lock_file);
-		}
-		lk->owner = getpid();
-		if (!lk->on_list) {
-			lk->next = lock_file_list;
-			lock_file_list = lk;
-			lk->on_list = 1;
-		}
-		if (adjust_shared_perm(lk->filename)) {
-			int save_errno = errno;
-			error("cannot fix permission bits on %s",
-			      lk->filename);
-			errno = save_errno;
-			return -1;
-		}
+	lk->owner = getpid();
+	lk->active = 1;
+	if (adjust_shared_perm(lk->filename.buf)) {
+		int save_errno = errno;
+		error("cannot fix permission bits on %s", lk->filename.buf);
+		rollback_lock_file(lk);
+		errno = save_errno;
+		return -1;
 	}
-	else
-		lk->filename[0] = 0;
 	return lk->fd;
 }
 
@@ -185,7 +162,7 @@ int unable_to_lock_error(const char *path, int err)
 	return -1;
 }
 
-NORETURN void unable_to_lock_index_die(const char *path, int err)
+NORETURN void unable_to_lock_die(const char *path, int err)
 {
 	struct strbuf buf = STRBUF_INIT;
 
@@ -198,7 +175,7 @@ int hold_lock_file_for_update(struct lock_file *lk, const char *path, int flags)
 {
 	int fd = lock_file(lk, path, flags);
 	if (fd < 0 && (flags & LOCK_DIE_ON_ERROR))
-		unable_to_lock_index_die(path, errno);
+		unable_to_lock_die(path, errno);
 	return fd;
 }
 
@@ -209,23 +186,30 @@ int hold_lock_file_for_append(struct lock_file *lk, const char *path, int flags)
 	fd = lock_file(lk, path, flags);
 	if (fd < 0) {
 		if (flags & LOCK_DIE_ON_ERROR)
-			unable_to_lock_index_die(path, errno);
+			unable_to_lock_die(path, errno);
 		return fd;
 	}
 
 	orig_fd = open(path, O_RDONLY);
 	if (orig_fd < 0) {
 		if (errno != ENOENT) {
+			int save_errno = errno;
+
 			if (flags & LOCK_DIE_ON_ERROR)
 				die("cannot open '%s' for copying", path);
-			close(fd);
-			return error("cannot open '%s' for copying", path);
+			rollback_lock_file(lk);
+			error("cannot open '%s' for copying", path);
+			errno = save_errno;
+			return -1;
 		}
 	} else if (copy_fd(orig_fd, fd)) {
+		int save_errno = errno;
+
 		if (flags & LOCK_DIE_ON_ERROR)
 			exit(128);
 		close(orig_fd);
-		close(fd);
+		rollback_lock_file(lk);
+		errno = save_errno;
 		return -1;
 	} else {
 		close(orig_fd);
@@ -233,52 +217,90 @@ int hold_lock_file_for_append(struct lock_file *lk, const char *path, int flags)
 	return fd;
 }
 
+char *get_locked_file_path(struct lock_file *lk)
+{
+	if (!lk->active)
+		die("BUG: get_locked_file_path() called for unlocked object");
+	if (lk->filename.len <= LOCK_SUFFIX_LEN)
+		die("BUG: get_locked_file_path() called for malformed lock object");
+	return xmemdupz(lk->filename.buf, lk->filename.len - LOCK_SUFFIX_LEN);
+}
+
 int close_lock_file(struct lock_file *lk)
 {
 	int fd = lk->fd;
+
+	if (fd < 0)
+		return 0;
+
 	lk->fd = -1;
-	return close(fd);
+	if (close(fd)) {
+		int save_errno = errno;
+		rollback_lock_file(lk);
+		errno = save_errno;
+		return -1;
+	}
+	return 0;
 }
 
 int reopen_lock_file(struct lock_file *lk)
 {
 	if (0 <= lk->fd)
 		die(_("BUG: reopen a lockfile that is still open"));
-	if (!lk->filename[0])
+	if (!lk->active)
 		die(_("BUG: reopen a lockfile that has been committed"));
-	lk->fd = open(lk->filename, O_WRONLY);
+	lk->fd = open(lk->filename.buf, O_WRONLY);
 	return lk->fd;
+}
+
+int commit_lock_file_to(struct lock_file *lk, const char *path)
+{
+	if (!lk->active)
+		die("BUG: attempt to commit unlocked object to \"%s\"", path);
+
+	if (close_lock_file(lk))
+		return -1;
+
+	if (rename(lk->filename.buf, path)) {
+		int save_errno = errno;
+		rollback_lock_file(lk);
+		errno = save_errno;
+		return -1;
+	}
+
+	lk->active = 0;
+	strbuf_reset(&lk->filename);
+	return 0;
 }
 
 int commit_lock_file(struct lock_file *lk)
 {
-	char result_file[PATH_MAX];
-	size_t i;
-	if (lk->fd >= 0 && close_lock_file(lk))
-		return -1;
-	strcpy(result_file, lk->filename);
-	i = strlen(result_file) - 5; /* .lock */
-	result_file[i] = 0;
-	if (rename(lk->filename, result_file))
-		return -1;
-	lk->filename[0] = 0;
-	return 0;
-}
+	static struct strbuf result_file = STRBUF_INIT;
+	int err;
 
-int hold_locked_index(struct lock_file *lk, int die_on_error)
-{
-	return hold_lock_file_for_update(lk, get_index_file(),
-					 die_on_error
-					 ? LOCK_DIE_ON_ERROR
-					 : 0);
+	if (!lk->active)
+		die("BUG: attempt to commit unlocked object");
+
+	if (lk->filename.len <= LOCK_SUFFIX_LEN ||
+	    strcmp(lk->filename.buf + lk->filename.len - LOCK_SUFFIX_LEN, LOCK_SUFFIX))
+		die("BUG: lockfile filename corrupt");
+
+	/* remove ".lock": */
+	strbuf_add(&result_file, lk->filename.buf,
+		   lk->filename.len - LOCK_SUFFIX_LEN);
+	err = commit_lock_file_to(lk, result_file.buf);
+	strbuf_reset(&result_file);
+	return err;
 }
 
 void rollback_lock_file(struct lock_file *lk)
 {
-	if (lk->filename[0]) {
-		if (lk->fd >= 0)
-			close(lk->fd);
-		unlink_or_warn(lk->filename);
+	if (!lk->active)
+		return;
+
+	if (!close_lock_file(lk)) {
+		unlink_or_warn(lk->filename.buf);
+		lk->active = 0;
+		strbuf_reset(&lk->filename);
 	}
-	lk->filename[0] = 0;
 }

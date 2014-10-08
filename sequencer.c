@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "lockfile.h"
 #include "sequencer.h"
 #include "dir.h"
 #include "object.h"

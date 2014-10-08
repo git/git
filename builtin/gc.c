@@ -11,7 +11,7 @@
  */
 
 #include "builtin.h"
-#include "cache.h"
+#include "lockfile.h"
 #include "parse-options.h"
 #include "run-command.h"
 #include "sigchain.h"
