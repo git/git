@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Oct 2014, #01; Tue, 7)
-X-master-at: 325602ce120e7bd7321b9ed409b49b48fd20888e
-X-next-at: 4587c01894e202cf47b7eeaf1c9cc40e47b01777
+Subject: What's cooking in git.git (Oct 2014, #01; Thu, 9)
+X-master-at: 63a45136a329bab550425c3142db6071434d935e
+X-next-at: 2852361b1a5901b41556bbe4a1bcd5e386b17e5d
 
-What's cooking in git.git (Oct 2014, #01; Tue, 7)
+What's cooking in git.git (Oct 2014, #02; Thu, 9)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -17,15 +17,80 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
+[Graduated to "master"]
+
+* bw/use-write-script-in-tests (2014-09-29) 1 commit
+  (merged to 'next' on 2014-09-29 at be4056e)
+ + t/lib-credential: use write_script
+
+
+* jc/push-cert (2014-09-25) 24 commits
+  (merged to 'next' on 2014-09-25 at 3eb1d69)
+ + receive-pack::hmac_sha1(): copy the entire SHA-1 hash out
+  (merged to 'next' on 2014-09-24 at a99f5d8)
+ + signed push: allow stale nonce in stateless mode
+ + signed push: teach smart-HTTP to pass "git push --signed" around
+ + signed push: fortify against replay attacks
+ + signed push: add "pushee" header to push certificate
+ + signed push: remove duplicated protocol info
+ + send-pack: send feature request on push-cert packet
+ + receive-pack: GPG-validate push certificates
+ + push: the beginning of "git push --signed"
+ + pack-protocol doc: typofix for PKT-LINE
+ + gpg-interface: move parse_signature() to where it should be
+ + gpg-interface: move parse_gpg_output() to where it should be
+ + send-pack: clarify that cmds_sent is a boolean
+ + send-pack: refactor inspecting and resetting status and sending commands
+ + send-pack: rename "new_refs" to "need_pack_data"
+ + receive-pack: factor out capability string generation
+ + send-pack: factor out capability string generation
+ + send-pack: always send capabilities
+ + send-pack: refactor decision to send update per ref
+ + send-pack: move REF_STATUS_REJECT_NODELETE logic a bit higher
+ + receive-pack: factor out queueing of command
+ + receive-pack: do not reuse old_sha1[] for other things
+ + receive-pack: parse feature request a bit earlier
+ + receive-pack: do not overallocate command structure
+ (this branch is used by jc/push-cert-hmac-optim.)
+
+ Allow "git push" request to be signed, so that it can be verified and
+ audited, using the GPG signature of the person who pushed, that the
+ tips of branches at a public repository really point the commits
+ the pusher wanted to, without having to "trust" the server.
+
+
+* nd/archive-pathspec (2014-09-22) 1 commit
+  (merged to 'next' on 2014-09-25 at 8806f93)
+ + archive: support filtering paths with glob
+
+ "git archive" learned to filter what gets archived with pathspec.
+
+
+* sp/stream-clean-filter (2014-09-22) 7 commits
+  (merged to 'next' on 2014-09-29 at 47fc36d)
+ + sha1_file: don't convert off_t to size_t too early to avoid potential die()
+ + convert: stream from fd to required clean filter to reduce used address space
+ + copy_fd(): do not close the input file descriptor
+ + mmap_limit: introduce GIT_MMAP_LIMIT to allow testing expected mmap size
+ + memory_limit: use git_env_ulong() to parse GIT_ALLOC_LIMIT
+ + config.c: add git_env_ulong() to parse environment variable
+ + convert: drop arguments other than 'path' from would_convert_to_git()
+
+ When running a required clean filter, we do not have to mmap the
+ original before feeding the filter.  Instead, stream the file
+ contents directly to the filter and process its output.
+
+--------------------------------------------------
 [New Topics]
 
 * mh/lockfile-stdio (2014-10-01) 3 commits
- - commit_packed_refs(): reimplement using fdopen_lock_file()
- - dump_marks(): reimplement using fdopen_lock_file()
- - fdopen_lock_file(): access a lockfile using stdio
+  (merged to 'next' on 2014-10-08 at e56cebc)
+ + commit_packed_refs(): reimplement using fdopen_lock_file()
+ + dump_marks(): reimplement using fdopen_lock_file()
+ + fdopen_lock_file(): access a lockfile using stdio
  (this branch uses mh/lockfile.)
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * rs/daemon-fixes (2014-10-01) 3 commits
@@ -42,10 +107,11 @@ of the repositories listed at
 
 
 * rs/sha1-array-test (2014-10-01) 2 commits
- - sha1-lookup: handle duplicates in sha1_pos()
- - sha1-array: add test-sha1-array and basic tests
+  (merged to 'next' on 2014-10-08 at 5960711)
+ + sha1-lookup: handle duplicates in sha1_pos()
+ + sha1-array: add test-sha1-array and basic tests
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * da/completion-show-signature (2014-10-07) 1 commit
@@ -87,21 +153,43 @@ of the repositories listed at
 
 
 * rs/mailsplit (2014-10-07) 1 commit
- - mailsplit: remove unnecessary unlink(2) call
+  (merged to 'next' on 2014-10-08 at 58b053e)
+ + mailsplit: remove unnecessary unlink(2) call
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * rs/more-uses-of-skip-prefix (2014-10-07) 1 commit
- - use skip_prefix() to avoid more magic numbers
+  (merged to 'next' on 2014-10-08 at cd153c0)
+ + use skip_prefix() to avoid more magic numbers
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * rs/plug-leak-in-bundle (2014-10-07) 1 commit
- - bundle: plug minor memory leak in is_tag_in_date_range()
+  (merged to 'next' on 2014-10-08 at 5539cd7)
+ + bundle: plug minor memory leak in is_tag_in_date_range()
+
+ Will merge to 'master'.
+
+
+* bc/asciidoc-pretty-formats-fix (2014-10-08) 1 commit
+ - Documentation: fix misrender of pretty-formats in Asciidoctor
 
  Will merge to 'next'.
+
+
+* da/mergetool-temporary-filename (2014-10-09) 1 commit
+ - mergetool: use more conservative temporary filenames
+
+
+
+* jc/completion-no-chdir (2014-10-09) 1 commit
+ - completion: use "git -C $there" instead of (cd $there && git ...)
+
+ Seems to break t9902; we may want to use $gmane/258099 or something
+ like that in the meantime, but on the other hand the topic itself
+ is not that urgent.
 
 --------------------------------------------------
 [Stalled]
@@ -182,12 +270,6 @@ of the repositories listed at
  shared with the "mergetool" to reduce one shell dependency.
 
  Will be rerolled.
-
-
-* rr/mergetool-temporary-filename-tweak (2014-08-21) 1 commit
- - Allow the user to change the temporary file name for mergetool
-
- Needs rerolling (new paragraph in doc seems to be in a wrong place)
 
 
 * jk/tag-contains (2014-06-30) 8 commits
@@ -329,13 +411,6 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* bw/use-write-script-in-tests (2014-09-29) 1 commit
-  (merged to 'next' on 2014-09-29 at be4056e)
- + t/lib-credential: use write_script
-
- Will merge to 'master'.
-
-
 * bw/trace-no-inline-getnanotime (2014-09-29) 1 commit
  - trace.c: do not mark getnanotime() as "inline"
 
@@ -353,7 +428,6 @@ of the repositories listed at
 * jc/push-cert-hmac-optim (2014-09-25) 2 commits
  - receive-pack: truncate hmac early and convert only necessary bytes
  - sha1_to_hex: split out "hex-format n bytes" helper and use it
- (this branch uses jc/push-cert.)
 
  This is "we could do this if we wanted to", not "we measured and it
  improves performance critical codepath".
@@ -374,15 +448,6 @@ of the repositories listed at
  Waiting for an Ack.
 
 
-* nd/archive-pathspec (2014-09-22) 1 commit
-  (merged to 'next' on 2014-09-25 at 8806f93)
- + archive: support filtering paths with glob
-
- "git archive" learned to filter what gets archived with pathspec.
-
- Will merge to 'master'.
-
-
 * so/rebase-doc-fork-point (2014-09-29) 1 commit
   (merged to 'next' on 2014-10-07 at 03d8ed6)
  + Documentation/git-rebase.txt: document when --fork-point is auto-enabled
@@ -391,9 +456,10 @@ of the repositories listed at
 
 
 * sk/tag-contains-wo-recursion (2014-09-23) 1 commit
- - t7004: give the test a bit more stack space
+  (merged to 'next' on 2014-10-08 at e425f54)
+ + t7004: give the test a bit more stack space
 
- Waiting for an Ack ($gmane/257448).
+ Will merge to 'master'.
 
 
 * da/include-compat-util-first-in-c (2014-09-15) 1 commit
@@ -406,49 +472,50 @@ of the repositories listed at
 
 
 * mh/lockfile (2014-10-01) 38 commits
- - lockfile.h: extract new header file for the functions in lockfile.c
- - hold_locked_index(): move from lockfile.c to read-cache.c
- - hold_lock_file_for_append(): restore errno before returning
- - get_locked_file_path(): new function
- - lockfile.c: rename static functions
- - lockfile: rename LOCK_NODEREF to LOCK_NO_DEREF
- - commit_lock_file_to(): refactor a helper out of commit_lock_file()
- - trim_last_path_component(): replace last_path_elm()
- - resolve_symlink(): take a strbuf parameter
- - resolve_symlink(): use a strbuf for internal scratch space
- - lockfile: change lock_file::filename into a strbuf
- - commit_lock_file(): use a strbuf to manage temporary space
- - try_merge_strategy(): use a statically-allocated lock_file object
- - try_merge_strategy(): remove redundant lock_file allocation
- - struct lock_file: declare some fields volatile
- - lockfile: avoid transitory invalid states
- - git_config_set_multivar_in_file(): avoid call to rollback_lock_file()
- - dump_marks(): remove a redundant call to rollback_lock_file()
- - api-lockfile: document edge cases
- - commit_lock_file(): rollback lock file on failure to rename
- - close_lock_file(): if close fails, roll back
- - commit_lock_file(): die() if called for unlocked lockfile object
- - commit_lock_file(): inline temporary variable
- - remove_lock_file(): call rollback_lock_file()
- - lock_file(): exit early if lockfile cannot be opened
- - prepare_index(): declare return value to be (const char *)
- - delete_ref_loose(): don't muck around in the lock_file's filename
- - cache.h: define constants LOCK_SUFFIX and LOCK_SUFFIX_LEN
- - lockfile.c: document the various states of lock_file objects
- - lock_file(): always initialize and register lock_file object
- - hold_lock_file_for_append(): release lock on errors
- - lockfile: unlock file if lockfile permissions cannot be adjusted
- - rollback_lock_file(): set fd to -1
- - rollback_lock_file(): exit early if lock is not active
- - rollback_lock_file(): do not clear filename redundantly
- - close_lock_file(): exit (successfully) if file is already closed
- - api-lockfile: revise and expand the documentation
- - unable_to_lock_die(): rename function from unable_to_lock_index_die()
+  (merged to 'next' on 2014-10-08 at 39cb6da)
+ + lockfile.h: extract new header file for the functions in lockfile.c
+ + hold_locked_index(): move from lockfile.c to read-cache.c
+ + hold_lock_file_for_append(): restore errno before returning
+ + get_locked_file_path(): new function
+ + lockfile.c: rename static functions
+ + lockfile: rename LOCK_NODEREF to LOCK_NO_DEREF
+ + commit_lock_file_to(): refactor a helper out of commit_lock_file()
+ + trim_last_path_component(): replace last_path_elm()
+ + resolve_symlink(): take a strbuf parameter
+ + resolve_symlink(): use a strbuf for internal scratch space
+ + lockfile: change lock_file::filename into a strbuf
+ + commit_lock_file(): use a strbuf to manage temporary space
+ + try_merge_strategy(): use a statically-allocated lock_file object
+ + try_merge_strategy(): remove redundant lock_file allocation
+ + struct lock_file: declare some fields volatile
+ + lockfile: avoid transitory invalid states
+ + git_config_set_multivar_in_file(): avoid call to rollback_lock_file()
+ + dump_marks(): remove a redundant call to rollback_lock_file()
+ + api-lockfile: document edge cases
+ + commit_lock_file(): rollback lock file on failure to rename
+ + close_lock_file(): if close fails, roll back
+ + commit_lock_file(): die() if called for unlocked lockfile object
+ + commit_lock_file(): inline temporary variable
+ + remove_lock_file(): call rollback_lock_file()
+ + lock_file(): exit early if lockfile cannot be opened
+ + prepare_index(): declare return value to be (const char *)
+ + delete_ref_loose(): don't muck around in the lock_file's filename
+ + cache.h: define constants LOCK_SUFFIX and LOCK_SUFFIX_LEN
+ + lockfile.c: document the various states of lock_file objects
+ + lock_file(): always initialize and register lock_file object
+ + hold_lock_file_for_append(): release lock on errors
+ + lockfile: unlock file if lockfile permissions cannot be adjusted
+ + rollback_lock_file(): set fd to -1
+ + rollback_lock_file(): exit early if lock is not active
+ + rollback_lock_file(): do not clear filename redundantly
+ + close_lock_file(): exit (successfully) if file is already closed
+ + api-lockfile: revise and expand the documentation
+ + unable_to_lock_die(): rename function from unable_to_lock_index_die()
  (this branch is used by mh/lockfile-stdio.)
 
  The lockfile API and its users have been cleaned up.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * nd/multiple-work-trees (2014-09-27) 32 commits
@@ -513,60 +580,6 @@ of the repositories listed at
  that is very much welcomed.
 
 
-* sp/stream-clean-filter (2014-09-22) 7 commits
-  (merged to 'next' on 2014-09-29 at 47fc36d)
- + sha1_file: don't convert off_t to size_t too early to avoid potential die()
- + convert: stream from fd to required clean filter to reduce used address space
- + copy_fd(): do not close the input file descriptor
- + mmap_limit: introduce GIT_MMAP_LIMIT to allow testing expected mmap size
- + memory_limit: use git_env_ulong() to parse GIT_ALLOC_LIMIT
- + config.c: add git_env_ulong() to parse environment variable
- + convert: drop arguments other than 'path' from would_convert_to_git()
-
- When running a required clean filter, we do not have to mmap the
- original before feeding the filter.  Instead, stream the file
- contents directly to the filter and process its output.
-
- Will merge to 'master'.
-
-
-* jc/push-cert (2014-09-25) 24 commits
-  (merged to 'next' on 2014-09-25 at 3eb1d69)
- + receive-pack::hmac_sha1(): copy the entire SHA-1 hash out
-  (merged to 'next' on 2014-09-24 at a99f5d8)
- + signed push: allow stale nonce in stateless mode
- + signed push: teach smart-HTTP to pass "git push --signed" around
- + signed push: fortify against replay attacks
- + signed push: add "pushee" header to push certificate
- + signed push: remove duplicated protocol info
- + send-pack: send feature request on push-cert packet
- + receive-pack: GPG-validate push certificates
- + push: the beginning of "git push --signed"
- + pack-protocol doc: typofix for PKT-LINE
- + gpg-interface: move parse_signature() to where it should be
- + gpg-interface: move parse_gpg_output() to where it should be
- + send-pack: clarify that cmds_sent is a boolean
- + send-pack: refactor inspecting and resetting status and sending commands
- + send-pack: rename "new_refs" to "need_pack_data"
- + receive-pack: factor out capability string generation
- + send-pack: factor out capability string generation
- + send-pack: always send capabilities
- + send-pack: refactor decision to send update per ref
- + send-pack: move REF_STATUS_REJECT_NODELETE logic a bit higher
- + receive-pack: factor out queueing of command
- + receive-pack: do not reuse old_sha1[] for other things
- + receive-pack: parse feature request a bit earlier
- + receive-pack: do not overallocate command structure
- (this branch is used by jc/push-cert-hmac-optim.)
-
- Allow "git push" request to be signed, so that it can be verified and
- audited, using the GPG signature of the person who pushed, that the
- tips of branches at a public repository really point the commits
- the pusher wanted to, without having to "trust" the server.
-
- Will merge to 'master'.
-
-
 * mt/patch-id-stable (2014-06-10) 1 commit
  - patch-id: change default to stable
 
@@ -578,3 +591,13 @@ of the repositories listed at
  Nobody seems to be jumping up & down requesting this last step,
  which makes the result somewhat backward incompatible.
  Will perhaps drop.
+
+--------------------------------------------------
+[Discarded]
+
+* rr/mergetool-temporary-filename-tweak (2014-08-21) 1 commit
+ . Allow the user to change the temporary file name for mergetool
+
+ Needed rerolling (new paragraph in doc seems to be in a wrong place)
+ for quite some time but without any activity.
+
