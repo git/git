@@ -634,6 +634,15 @@ test_cmp_bin() {
 	cmp "$@"
 }
 
+# Call any command "$@" but be more verbose about its
+# failure. This is handy for commands like "test" which do
+# not output anything when they fail.
+verbose () {
+	"$@" && return 0
+	echo >&2 "command failed: $(git rev-parse --sq-quote "$@")"
+	return 1
+}
+
 # Check if the file expected to be empty is indeed empty, and barfs
 # otherwise.
 
