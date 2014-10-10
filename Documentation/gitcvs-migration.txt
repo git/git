@@ -194,7 +194,7 @@ linkgit:gittutorial[7],
 linkgit:gittutorial-2[7],
 linkgit:gitcore-tutorial[7],
 linkgit:gitglossary[7],
-link:everyday.html[Everyday Git],
+linkgit:giteveryday[7],
 link:user-manual.html[The Git User's Manual]
 
 GIT

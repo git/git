@@ -27,7 +27,7 @@ Torvalds with help of a group of hackers around the net.
 Please read the file INSTALL for installation instructions.
 
 See Documentation/gittutorial.txt to get started, then see
-Documentation/everyday.txt for a useful minimum set of commands, and
+Documentation/giteveryday.txt for a useful minimum set of commands, and
 Documentation/git-commandname.txt for documentation of each command.
 If git has been correctly installed, then the tutorial can also be
 read with "man gittutorial" or "git help tutorial", and the

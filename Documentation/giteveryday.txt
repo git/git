@@ -381,15 +381,15 @@ $ cat /etc/xinetd.d/git-daemon
 # description: The Git server offers access to Git repositories
 service git
 {
-        disable = no
-        type            = UNLISTED
-        port            = 9418
-        socket_type     = stream
-        wait            = no
-        user            = nobody
-        server          = /usr/bin/git-daemon
-        server_args     = --inetd --export-all --base-path=/pub/scm
-        log_on_failure  += USERID
+	disable = no
+	type            = UNLISTED
+	port            = 9418
+	socket_type     = stream
+	wait            = no
+	user            = nobody
+	server          = /usr/bin/git-daemon
+	server_args     = --inetd --export-all --base-path=/pub/scm
+	log_on_failure  += USERID
 }
 ------------
 +
