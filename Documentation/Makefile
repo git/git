@@ -5,6 +5,7 @@ MAN7_TXT =
 TECH_DOCS =
 ARTICLES =
 SP_ARTICLES =
+OBSOLETE_HTML =
 
 MAN1_TXT += $(filter-out \
 		$(addsuffix .txt, $(ARTICLES) $(SP_ARTICLES)), \
@@ -37,7 +38,7 @@ MAN_TXT = $(MAN1_TXT) $(MAN5_TXT) $(MAN7_TXT)
 MAN_XML = $(patsubst %.txt,%.xml,$(MAN_TXT))
 MAN_HTML = $(patsubst %.txt,%.html,$(MAN_TXT))
 
-OBSOLETE_HTML = git-remote-helpers.html
+OBSOLETE_HTML += git-remote-helpers.html
 DOC_HTML = $(MAN_HTML) $(OBSOLETE_HTML)
 
 ARTICLES += howto-index
