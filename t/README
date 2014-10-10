@@ -82,6 +82,12 @@ appropriately before running "make".
 	numbers matching <pattern>.  The number matched against is
 	simply the running count of the test within the file.
 
+-x::
+	Turn on shell tracing (i.e., `set -x`) during the tests
+	themselves. Implies `--verbose`. Note that this can cause
+	failures in some tests which redirect and test the
+	output of shell functions. Use with caution.
+
 -d::
 --debug::
 	This may help the person who is developing a new test.
