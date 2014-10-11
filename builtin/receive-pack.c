@@ -910,7 +910,6 @@ static const char *pack_lockfile;
 static const char *unpack(int err_fd, struct shallow_info *si)
 {
 	struct pack_header hdr;
-	struct argv_array av = ARGV_ARRAY_INIT;
 	const char *hdr_err;
 	int status;
 	char hdr_arg[38];
@@ -933,17 +932,17 @@ static const char *unpack(int err_fd, struct shallow_info *si)
 
 	if (si->nr_ours || si->nr_theirs) {
 		alt_shallow_file = setup_temporary_shallow(si->shallow);
-		argv_array_pushl(&av, "--shallow-file", alt_shallow_file, NULL);
+		argv_array_push(&child.args, "--shallow-file");
+		argv_array_push(&child.args, alt_shallow_file);
 	}
 
 	memset(&child, 0, sizeof(child));
 	if (ntohl(hdr.hdr_entries) < unpack_limit) {
-		argv_array_pushl(&av, "unpack-objects", hdr_arg, NULL);
+		argv_array_pushl(&child.args, "unpack-objects", hdr_arg, NULL);
 		if (quiet)
-			argv_array_push(&av, "-q");
+			argv_array_push(&child.args, "-q");
 		if (fsck_objects)
-			argv_array_push(&av, "--strict");
-		child.argv = av.argv;
+			argv_array_push(&child.args, "--strict");
 		child.no_stdout = 1;
 		child.err = err_fd;
 		child.git_cmd = 1;
@@ -958,13 +957,12 @@ static const char *unpack(int err_fd, struct shallow_info *si)
 		if (gethostname(keep_arg + s, sizeof(keep_arg) - s))
 			strcpy(keep_arg + s, "localhost");
 
-		argv_array_pushl(&av, "index-pack",
+		argv_array_pushl(&child.args, "index-pack",
 				 "--stdin", hdr_arg, keep_arg, NULL);
 		if (fsck_objects)
-			argv_array_push(&av, "--strict");
+			argv_array_push(&child.args, "--strict");
 		if (fix_thin)
-			argv_array_push(&av, "--fix-thin");
-		child.argv = av.argv;
+			argv_array_push(&child.args, "--fix-thin");
 		child.out = -1;
 		child.err = err_fd;
 		child.git_cmd = 1;
