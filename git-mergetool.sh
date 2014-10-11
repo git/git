@@ -326,6 +326,10 @@ prompt=$(git config --bool mergetool.prompt || echo true)
 while test $# != 0
 do
 	case "$1" in
+	--tool-help=*)
+		TOOL_MODE=${1#--tool-help=}
+		show_tool_help
+		;;
 	--tool-help)
 		show_tool_help
 		;;
