@@ -10,11 +10,11 @@
 
 USAGE='[--tool=tool] [--tool-help] [-y|--no-prompt|--prompt] [file to merge] ...'
 SUBDIRECTORY_OK=Yes
+NONGIT_OK=Yes
 OPTIONS_SPEC=
 TOOL_MODE=merge
 . git-sh-setup
 . git-mergetool--lib
-require_work_tree
 
 # Returns true if the mode reflects a symlink
 is_symlink () {
@@ -376,6 +376,9 @@ prompt_after_failed_merge () {
 		esac
 	done
 }
+
+git_dir_init
+require_work_tree
 
 if test -z "$merge_tool"
 then
