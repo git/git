@@ -23,7 +23,7 @@ check_config () {
 }
 
 test_expect_success 'setup default config' '
-	cat >.git/config <<\EOF
+	cat >.git/config <<-\EOF
 	[case]
 		penguin = very blue
 		Movie = BadPhysics
@@ -185,7 +185,7 @@ test_expect_success 'proper error on error in default config files' '
 	cp .git/config .git/config.old &&
 	test_when_finished "mv .git/config.old .git/config" &&
 	echo "[" >>.git/config &&
-	echo "fatal: bad config file line 35 in .git/config" >expect &&
+	echo "fatal: bad config file line 34 in .git/config" >expect &&
 	test_expect_code 128 test-config get_value foo.bar 2>actual &&
 	test_cmp expect actual
 '
