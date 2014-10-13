@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "string-list.h"
+#include "trailer.h"
 /*
  * Copyright (c) 2013, 2014 Christian Couder <chriscool@tuxfamily.org>
  */
@@ -85,6 +86,35 @@ static void free_trailer_item(struct trailer_item *item)
 	free((char *)item->token);
 	free((char *)item->value);
 	free(item);
+}
+
+static char last_non_space_char(const char *s)
+{
+	int i;
+	for (i = strlen(s) - 1; i >= 0; i--)
+		if (!isspace(s[i]))
+			return s[i];
+	return '\0';
+}
+
+static void print_tok_val(const char *tok, const char *val)
+{
+	char c = last_non_space_char(tok);
+	if (!c)
+		return;
+	if (strchr(separators, c))
+		printf("%s%s\n", tok, val);
+	else
+		printf("%s%c %s\n", tok, separators[0], val);
+}
+
+static void print_all(struct trailer_item *first, int trim_empty)
+{
+	struct trailer_item *item;
+	for (item = first; item; item = item->next) {
+		if (!trim_empty || strlen(item->value) > 0)
+			print_tok_val(item->token, item->value);
+	}
 }
 
 static void update_last(struct trailer_item **last)
@@ -696,4 +726,43 @@ static int process_input_file(struct strbuf **lines,
 	}
 
 	return patch_start;
+}
+
+static void free_all(struct trailer_item **first)
+{
+	while (*first) {
+		struct trailer_item *item = remove_first(first);
+		free_trailer_item(item);
+	}
+}
+
+void process_trailers(const char *file, int trim_empty, struct string_list *trailers)
+{
+	struct trailer_item *in_tok_first = NULL;
+	struct trailer_item *in_tok_last = NULL;
+	struct trailer_item *arg_tok_first;
+	struct strbuf **lines;
+	int patch_start;
+
+	/* Default config must be setup first */
+	git_config(git_trailer_default_config, NULL);
+	git_config(git_trailer_config, NULL);
+
+	lines = read_input_file(file);
+
+	/* Print the lines before the trailers */
+	patch_start = process_input_file(lines, &in_tok_first, &in_tok_last);
+
+	arg_tok_first = process_command_line_args(trailers);
+
+	process_trailers_lists(&in_tok_first, &in_tok_last, &arg_tok_first);
+
+	print_all(in_tok_first, trim_empty);
+
+	free_all(&in_tok_first);
+
+	/* Print the lines after the trailers as is */
+	print_lines(lines, patch_start, INT_MAX);
+
+	strbuf_list_free(lines);
 }
