@@ -67,3 +67,213 @@ static int same_trailer(struct trailer_item *a, struct trailer_item *b)
 {
 	return same_token(a, b) && same_value(a, b);
 }
+
+static void free_trailer_item(struct trailer_item *item)
+{
+	free(item->conf.name);
+	free(item->conf.key);
+	free(item->conf.command);
+	free((char *)item->token);
+	free((char *)item->value);
+	free(item);
+}
+
+static void update_last(struct trailer_item **last)
+{
+	if (*last)
+		while ((*last)->next != NULL)
+			*last = (*last)->next;
+}
+
+static void update_first(struct trailer_item **first)
+{
+	if (*first)
+		while ((*first)->previous != NULL)
+			*first = (*first)->previous;
+}
+
+static void add_arg_to_input_list(struct trailer_item *on_tok,
+				  struct trailer_item *arg_tok,
+				  struct trailer_item **first,
+				  struct trailer_item **last)
+{
+	if (after_or_end(arg_tok->conf.where)) {
+		arg_tok->next = on_tok->next;
+		on_tok->next = arg_tok;
+		arg_tok->previous = on_tok;
+		if (arg_tok->next)
+			arg_tok->next->previous = arg_tok;
+		update_last(last);
+	} else {
+		arg_tok->previous = on_tok->previous;
+		on_tok->previous = arg_tok;
+		arg_tok->next = on_tok;
+		if (arg_tok->previous)
+			arg_tok->previous->next = arg_tok;
+		update_first(first);
+	}
+}
+
+static int check_if_different(struct trailer_item *in_tok,
+			      struct trailer_item *arg_tok,
+			      int check_all)
+{
+	enum action_where where = arg_tok->conf.where;
+	do {
+		if (!in_tok)
+			return 1;
+		if (same_trailer(in_tok, arg_tok))
+			return 0;
+		/*
+		 * if we want to add a trailer after another one,
+		 * we have to check those before this one
+		 */
+		in_tok = after_or_end(where) ? in_tok->previous : in_tok->next;
+	} while (check_all);
+	return 1;
+}
+
+static void remove_from_list(struct trailer_item *item,
+			     struct trailer_item **first,
+			     struct trailer_item **last)
+{
+	struct trailer_item *next = item->next;
+	struct trailer_item *previous = item->previous;
+
+	if (next) {
+		item->next->previous = previous;
+		item->next = NULL;
+	} else if (last)
+		*last = previous;
+
+	if (previous) {
+		item->previous->next = next;
+		item->previous = NULL;
+	} else if (first)
+		*first = next;
+}
+
+static struct trailer_item *remove_first(struct trailer_item **first)
+{
+	struct trailer_item *item = *first;
+	*first = item->next;
+	if (item->next) {
+		item->next->previous = NULL;
+		item->next = NULL;
+	}
+	return item;
+}
+
+static void apply_arg_if_exists(struct trailer_item *in_tok,
+				struct trailer_item *arg_tok,
+				struct trailer_item *on_tok,
+				struct trailer_item **in_tok_first,
+				struct trailer_item **in_tok_last)
+{
+	switch (arg_tok->conf.if_exists) {
+	case EXISTS_DO_NOTHING:
+		free_trailer_item(arg_tok);
+		break;
+	case EXISTS_REPLACE:
+		add_arg_to_input_list(on_tok, arg_tok,
+				      in_tok_first, in_tok_last);
+		remove_from_list(in_tok, in_tok_first, in_tok_last);
+		free_trailer_item(in_tok);
+		break;
+	case EXISTS_ADD:
+		add_arg_to_input_list(on_tok, arg_tok,
+				      in_tok_first, in_tok_last);
+		break;
+	case EXISTS_ADD_IF_DIFFERENT:
+		if (check_if_different(in_tok, arg_tok, 1))
+			add_arg_to_input_list(on_tok, arg_tok,
+					      in_tok_first, in_tok_last);
+		else
+			free_trailer_item(arg_tok);
+		break;
+	case EXISTS_ADD_IF_DIFFERENT_NEIGHBOR:
+		if (check_if_different(on_tok, arg_tok, 0))
+			add_arg_to_input_list(on_tok, arg_tok,
+					      in_tok_first, in_tok_last);
+		else
+			free_trailer_item(arg_tok);
+		break;
+	}
+}
+
+static void apply_arg_if_missing(struct trailer_item **in_tok_first,
+				 struct trailer_item **in_tok_last,
+				 struct trailer_item *arg_tok)
+{
+	struct trailer_item **in_tok;
+	enum action_where where;
+
+	switch (arg_tok->conf.if_missing) {
+	case MISSING_DO_NOTHING:
+		free_trailer_item(arg_tok);
+		break;
+	case MISSING_ADD:
+		where = arg_tok->conf.where;
+		in_tok = after_or_end(where) ? in_tok_last : in_tok_first;
+		if (*in_tok) {
+			add_arg_to_input_list(*in_tok, arg_tok,
+					      in_tok_first, in_tok_last);
+		} else {
+			*in_tok_first = arg_tok;
+			*in_tok_last = arg_tok;
+		}
+		break;
+	}
+}
+
+static int find_same_and_apply_arg(struct trailer_item **in_tok_first,
+				   struct trailer_item **in_tok_last,
+				   struct trailer_item *arg_tok)
+{
+	struct trailer_item *in_tok;
+	struct trailer_item *on_tok;
+	struct trailer_item *following_tok;
+
+	enum action_where where = arg_tok->conf.where;
+	int middle = (where == WHERE_AFTER) || (where == WHERE_BEFORE);
+	int backwards = after_or_end(where);
+	struct trailer_item *start_tok = backwards ? *in_tok_last : *in_tok_first;
+
+	for (in_tok = start_tok; in_tok; in_tok = following_tok) {
+		following_tok = backwards ? in_tok->previous : in_tok->next;
+		if (!same_token(in_tok, arg_tok))
+			continue;
+		on_tok = middle ? in_tok : start_tok;
+		apply_arg_if_exists(in_tok, arg_tok, on_tok,
+				    in_tok_first, in_tok_last);
+		return 1;
+	}
+	return 0;
+}
+
+static void process_trailers_lists(struct trailer_item **in_tok_first,
+				   struct trailer_item **in_tok_last,
+				   struct trailer_item **arg_tok_first)
+{
+	struct trailer_item *arg_tok;
+	struct trailer_item *next_arg;
+
+	if (!*arg_tok_first)
+		return;
+
+	for (arg_tok = *arg_tok_first; arg_tok; arg_tok = next_arg) {
+		int applied = 0;
+
+		next_arg = arg_tok->next;
+		remove_from_list(arg_tok, arg_tok_first, NULL);
+
+		applied = find_same_and_apply_arg(in_tok_first,
+						  in_tok_last,
+						  arg_tok);
+
+		if (!applied)
+			apply_arg_if_missing(in_tok_first,
+					     in_tok_last,
+					     arg_tok);
+	}
+}
