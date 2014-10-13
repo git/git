@@ -212,6 +212,12 @@ The default is true, except linkgit:git-clone[1] or linkgit:git-init[1]
 will probe and set core.fileMode false if appropriate when the
 repository is created.
 
+core.hideDotFiles::
+	(Windows-only) If true (which is the default), mark newly-created
+	directories and files whose name starts with a dot as hidden.
+	If 'dotGitOnly', only the .git/ directory is hidden, but no other
+	files starting with a dot.
+
 core.ignorecase::
 	If true, this option enables various workarounds to enable
 	Git to work better on filesystems that are not case sensitive,
@@ -625,6 +631,19 @@ relatively high IO latencies.  When enabled, Git will do the
 index comparison to the filesystem data in parallel, allowing
 overlapping IO's.  Defaults to true.
 
+core.fscache::
+	Enable additional caching of file system data for some operations.
++
+Git for Windows uses this to bulk-read and cache lstat data of entire
+directories (instead of doing lstat file by file).
+
+core.longpaths::
+	Enable long path (> 260) support for builtin commands in Git for
+	Windows. This is disabled by default, as long paths are not supported
+	by Windows Explorer, cmd.exe and the Git for Windows tool chain
+	(msys, bash, tcl, perl...). Only enable this if you know what you're
+	doing and are prepared to live with a few quirks.
+
 core.createObject::
 	You can set this to 'link', in which case a hardlink followed by
 	a delete of the source are used to make sure that object creation
@@ -776,6 +795,7 @@ branch.<name>.rebase::
 	instead of merging the default branch from the default remote when
 	"git pull" is run. See "pull.rebase" for doing this in a non
 	branch-specific manner.
+	When the value is `interactive`, the rebase is run in interactive mode.
 +
 	When preserve, also pass `--preserve-merges` along to 'git rebase'
 	so that locally committed merge commits will not be flattened
@@ -2076,6 +2096,11 @@ receive.denyCurrentBranch::
 	print a warning of such a push to stderr, but allow the push to
 	proceed. If set to false or "ignore", allow such pushes with no
 	message. Defaults to "refuse".
++
+There are two more options that are meant for Git experts: "updateInstead"
+which will run `read-tree -u -m HEAD` and "detachInstead" which will detach
+the HEAD so it does not need to change.  Both options come with their own
+set of possible *complications*, but can be appropriate in rare workflows.
 
 receive.denyNonFastForwards::
 	If set to true, git-receive-pack will deny a ref update which is
@@ -2459,3 +2484,9 @@ web.browser::
 	Specify a web browser that may be used by some commands.
 	Currently only linkgit:git-instaweb[1] and linkgit:git-help[1]
 	may use it.
+
+sendpack.sideband::
+  Allows to disable the side-band-64k capability for send-pack even
+  when it is advertised by the server. Makes it possible to work
+  around a limitation in the git for windows implementation together
+  with the dump git protocol. Defaults to true.
