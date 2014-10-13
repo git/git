@@ -277,3 +277,188 @@ static void process_trailers_lists(struct trailer_item **in_tok_first,
 					     arg_tok);
 	}
 }
+
+static int set_where(struct conf_info *item, const char *value)
+{
+	if (!strcasecmp("after", value))
+		item->where = WHERE_AFTER;
+	else if (!strcasecmp("before", value))
+		item->where = WHERE_BEFORE;
+	else if (!strcasecmp("end", value))
+		item->where = WHERE_END;
+	else if (!strcasecmp("start", value))
+		item->where = WHERE_START;
+	else
+		return -1;
+	return 0;
+}
+
+static int set_if_exists(struct conf_info *item, const char *value)
+{
+	if (!strcasecmp("addIfDifferent", value))
+		item->if_exists = EXISTS_ADD_IF_DIFFERENT;
+	else if (!strcasecmp("addIfDifferentNeighbor", value))
+		item->if_exists = EXISTS_ADD_IF_DIFFERENT_NEIGHBOR;
+	else if (!strcasecmp("add", value))
+		item->if_exists = EXISTS_ADD;
+	else if (!strcasecmp("replace", value))
+		item->if_exists = EXISTS_REPLACE;
+	else if (!strcasecmp("doNothing", value))
+		item->if_exists = EXISTS_DO_NOTHING;
+	else
+		return -1;
+	return 0;
+}
+
+static int set_if_missing(struct conf_info *item, const char *value)
+{
+	if (!strcasecmp("doNothing", value))
+		item->if_missing = MISSING_DO_NOTHING;
+	else if (!strcasecmp("add", value))
+		item->if_missing = MISSING_ADD;
+	else
+		return -1;
+	return 0;
+}
+
+static void duplicate_conf(struct conf_info *dst, struct conf_info *src)
+{
+	*dst = *src;
+	if (src->name)
+		dst->name = xstrdup(src->name);
+	if (src->key)
+		dst->key = xstrdup(src->key);
+	if (src->command)
+		dst->command = xstrdup(src->command);
+}
+
+static struct trailer_item *get_conf_item(const char *name)
+{
+	struct trailer_item *item;
+	struct trailer_item *previous;
+
+	/* Look up item with same name */
+	for (previous = NULL, item = first_conf_item;
+	     item;
+	     previous = item, item = item->next) {
+		if (!strcasecmp(item->conf.name, name))
+			return item;
+	}
+
+	/* Item does not already exists, create it */
+	item = xcalloc(sizeof(struct trailer_item), 1);
+	duplicate_conf(&item->conf, &default_conf_info);
+	item->conf.name = xstrdup(name);
+
+	if (!previous)
+		first_conf_item = item;
+	else {
+		previous->next = item;
+		item->previous = previous;
+	}
+
+	return item;
+}
+
+enum trailer_info_type { TRAILER_KEY, TRAILER_COMMAND, TRAILER_WHERE,
+			 TRAILER_IF_EXISTS, TRAILER_IF_MISSING };
+
+static struct {
+	const char *name;
+	enum trailer_info_type type;
+} trailer_config_items[] = {
+	{ "key", TRAILER_KEY },
+	{ "command", TRAILER_COMMAND },
+	{ "where", TRAILER_WHERE },
+	{ "ifexists", TRAILER_IF_EXISTS },
+	{ "ifmissing", TRAILER_IF_MISSING }
+};
+
+static int git_trailer_default_config(const char *conf_key, const char *value, void *cb)
+{
+	const char *trailer_item, *variable_name;
+
+	if (!skip_prefix(conf_key, "trailer.", &trailer_item))
+		return 0;
+
+	variable_name = strrchr(trailer_item, '.');
+	if (!variable_name) {
+		if (!strcmp(trailer_item, "where")) {
+			if (set_where(&default_conf_info, value) < 0)
+				warning(_("unknown value '%s' for key '%s'"),
+					value, conf_key);
+		} else if (!strcmp(trailer_item, "ifexists")) {
+			if (set_if_exists(&default_conf_info, value) < 0)
+				warning(_("unknown value '%s' for key '%s'"),
+					value, conf_key);
+		} else if (!strcmp(trailer_item, "ifmissing")) {
+			if (set_if_missing(&default_conf_info, value) < 0)
+				warning(_("unknown value '%s' for key '%s'"),
+					value, conf_key);
+		} else if (!strcmp(trailer_item, "separators")) {
+			separators = xstrdup(value);
+		}
+	}
+	return 0;
+}
+
+static int git_trailer_config(const char *conf_key, const char *value, void *cb)
+{
+	const char *trailer_item, *variable_name;
+	struct trailer_item *item;
+	struct conf_info *conf;
+	char *name = NULL;
+	enum trailer_info_type type;
+	int i;
+
+	if (!skip_prefix(conf_key, "trailer.", &trailer_item))
+		return 0;
+
+	variable_name = strrchr(trailer_item, '.');
+	if (!variable_name)
+		return 0;
+
+	variable_name++;
+	for (i = 0; i < ARRAY_SIZE(trailer_config_items); i++) {
+		if (strcmp(trailer_config_items[i].name, variable_name))
+			continue;
+		name = xstrndup(trailer_item,  variable_name - trailer_item - 1);
+		type = trailer_config_items[i].type;
+		break;
+	}
+
+	if (!name)
+		return 0;
+
+	item = get_conf_item(name);
+	conf = &item->conf;
+	free(name);
+
+	switch (type) {
+	case TRAILER_KEY:
+		if (conf->key)
+			warning(_("more than one %s"), conf_key);
+		conf->key = xstrdup(value);
+		break;
+	case TRAILER_COMMAND:
+		if (conf->command)
+			warning(_("more than one %s"), conf_key);
+		conf->command = xstrdup(value);
+		break;
+	case TRAILER_WHERE:
+		if (set_where(conf, value))
+			warning(_("unknown value '%s' for key '%s'"), value, conf_key);
+		break;
+	case TRAILER_IF_EXISTS:
+		if (set_if_exists(conf, value))
+			warning(_("unknown value '%s' for key '%s'"), value, conf_key);
+		break;
+	case TRAILER_IF_MISSING:
+		if (set_if_missing(conf, value))
+			warning(_("unknown value '%s' for key '%s'"), value, conf_key);
+		break;
+	default:
+		die("internal bug in trailer.c");
+	}
+	return 0;
+}
