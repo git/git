@@ -221,8 +221,8 @@ static int is_tag_in_date_range(struct object *tag, struct rev_info *revs)
 	line = memmem(buf, size, "\ntagger ", 8);
 	if (!line++)
 		return 1;
-	lineend = memchr(line, buf + size - line, '\n');
-	line = memchr(line, lineend ? lineend - line : buf + size - line, '>');
+	lineend = memchr(line, '\n', buf + size - line);
+	line = memchr(line, '>', lineend ? lineend - line : buf + size - line);
 	if (!line++)
 		return 1;
 	date = strtoul(line, NULL, 10);

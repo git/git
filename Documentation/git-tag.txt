@@ -42,7 +42,7 @@ committer identity for the current user is used to find the
 GnuPG key for signing. 	The configuration variable `gpg.program`
 is used to specify custom GnuPG binary.
 
-Tag objects (created with `-a`, `s`, or `-u`) are called "annotated"
+Tag objects (created with `-a`, `-s`, or `-u`) are called "annotated"
 tags; they contain a creation date, the tagger name and e-mail, a
 tagging message, and an optional GnuPG signature. Whereas a
 "lightweight" tag is simply a name for an object (usually a commit

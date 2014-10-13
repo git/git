@@ -1825,7 +1825,7 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 	} else if (!strcmp(arg, "--pretty")) {
 		revs->verbose_header = 1;
 		revs->pretty_given = 1;
-		get_commit_format(arg+8, revs);
+		get_commit_format(NULL, revs);
 	} else if (starts_with(arg, "--pretty=") || starts_with(arg, "--format=")) {
 		/*
 		 * Detached form ("--pretty X" as opposed to "--pretty=X")

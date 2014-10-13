@@ -3017,4 +3017,108 @@ test_expect_success 'T: empty reset doesnt delete branch' '
 	git rev-parse --verify refs/heads/not-to-delete
 '
 
+###
+### series U (filedelete)
+###
+
+cat >input <<INPUT_END
+commit refs/heads/U
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+test setup
+COMMIT
+M 100644 inline hello.c
+data <<BLOB
+blob 1
+BLOB
+M 100644 inline good/night.txt
+data <<BLOB
+sleep well
+BLOB
+M 100644 inline good/bye.txt
+data <<BLOB
+au revoir
+BLOB
+
+INPUT_END
+
+test_expect_success 'U: initialize for U tests' '
+	git fast-import <input
+'
+
+cat >input <<INPUT_END
+commit refs/heads/U
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+delete good/night.txt
+COMMIT
+from refs/heads/U^0
+D good/night.txt
+
+INPUT_END
+
+test_expect_success 'U: filedelete file succeeds' '
+	git fast-import <input
+'
+
+cat >expect <<EOF
+:100644 000000 2907ebb4bf85d91bf0716bb3bd8a68ef48d6da76 0000000000000000000000000000000000000000 D	good/night.txt
+EOF
+
+git diff-tree -M -r U^1 U >actual
+
+test_expect_success 'U: validate file delete result' '
+	compare_diff_raw expect actual
+'
+
+cat >input <<INPUT_END
+commit refs/heads/U
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+delete good dir
+COMMIT
+from refs/heads/U^0
+D good
+
+INPUT_END
+
+test_expect_success 'U: filedelete directory succeeds' '
+	git fast-import <input
+'
+
+cat >expect <<EOF
+:100644 000000 69cb75792f55123d8389c156b0b41c2ff00ed507 0000000000000000000000000000000000000000 D	good/bye.txt
+EOF
+
+git diff-tree -M -r U^1 U >actual
+
+test_expect_success 'U: validate directory delete result' '
+	compare_diff_raw expect actual
+'
+
+cat >input <<INPUT_END
+commit refs/heads/U
+committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
+data <<COMMIT
+must succeed
+COMMIT
+from refs/heads/U^0
+D ""
+
+INPUT_END
+
+test_expect_success 'U: filedelete root succeeds' '
+    git fast-import <input
+'
+
+cat >expect <<EOF
+:100644 000000 c18147dc648481eeb65dc5e66628429a64843327 0000000000000000000000000000000000000000 D	hello.c
+EOF
+
+git diff-tree -M -r U^1 U >actual
+
+test_expect_success 'U: validate root delete result' '
+	compare_diff_raw expect actual
+'
+
 test_done

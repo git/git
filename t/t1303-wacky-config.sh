@@ -111,4 +111,24 @@ test_expect_success 'unset many entries' '
 	test_must_fail git config section.key
 '
 
+test_expect_success '--add appends new value after existing empty value' '
+	cat >expect <<-\EOF &&
+
+
+	fool
+	roll
+	EOF
+	cp .git/config .git/config.old &&
+	test_when_finished "mv .git/config.old .git/config" &&
+	cat >.git/config <<-\EOF &&
+	[foo]
+		baz
+		baz =
+		baz = fool
+	EOF
+	git config --add foo.baz roll &&
+	git config --get-all foo.baz >output &&
+	test_cmp expect output
+'
+
 test_done

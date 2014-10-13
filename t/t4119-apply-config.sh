@@ -159,4 +159,21 @@ test_expect_success 'same but with traditional patch input of depth 2' '
 	check_result sub/file1
 '
 
+test_expect_success 'in subdir with traditional patch input' '
+	cd "$D" &&
+	git config apply.whitespace strip &&
+	cat >.gitattributes <<-EOF &&
+	/* whitespace=blank-at-eol
+	sub/* whitespace=-blank-at-eol
+	EOF
+	rm -f sub/file1 &&
+	cp saved sub/file1 &&
+	git update-index --refresh &&
+
+	cd sub &&
+	git apply ../gpatch.file &&
+	echo "B " >expect &&
+	test_cmp expect file1
+'
+
 test_done

@@ -14,7 +14,10 @@ test_expect_success 'setup' '
 	git tag -d third
 '
 
-test_expect_success 'tags can be excluded by rev-list options' '
+test_expect_success 'annotated tags can be excluded by rev-list options' '
+	git bundle create bundle --all --since=7.Apr.2005.15:14:00.-0700 &&
+	git ls-remote bundle > output &&
+	grep tag output &&
 	git bundle create bundle --all --since=7.Apr.2005.15:16:00.-0700 &&
 	git ls-remote bundle > output &&
 	! grep tag output

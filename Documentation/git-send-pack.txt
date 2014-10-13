@@ -35,6 +35,16 @@ OPTIONS
 	Instead of explicitly specifying which refs to update,
 	update all heads that locally exist.
 
+--stdin::
+	Take the list of refs from stdin, one per line. If there
+	are refs specified on the command line in addition to this
+	option, then the refs from stdin are processed after those
+	on the command line.
++
+If '--stateless-rpc' is specified together with this option then
+the list of refs must be in packet format (pkt-line). Each ref must
+be in a separate packet, and the list must end with a flush packet.
+
 --dry-run::
 	Do everything except actually send the updates.
 
@@ -77,7 +87,8 @@ this flag.
 Without '--all' and without any '<ref>', the heads that exist
 both on the local side and on the remote side are updated.
 
-When one or more '<ref>' are specified explicitly, it can be either a
+When one or more '<ref>' are specified explicitly (whether on the
+command line or via `--stdin`), it can be either a
 single pattern, or a pair of such pattern separated by a colon
 ":" (this means that a ref name cannot have a colon in it).  A
 single pattern '<name>' is just a shorthand for '<name>:<name>'.

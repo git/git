@@ -89,4 +89,22 @@ test_expect_success 'mailinfo on from header without name works' '
 
 '
 
+test_expect_success 'mailinfo finds headers after embedded From line' '
+	mkdir embed-from &&
+	git mailsplit -oembed-from "$TEST_DIRECTORY"/t5100/embed-from.in &&
+	test_cmp "$TEST_DIRECTORY"/t5100/embed-from.in embed-from/0001 &&
+	git mailinfo embed-from/msg embed-from/patch \
+	  <embed-from/0001 >embed-from/out &&
+	test_cmp "$TEST_DIRECTORY"/t5100/embed-from.expect embed-from/out
+'
+
+test_expect_success 'mailinfo on message with quoted >From' '
+	mkdir quoted-from &&
+	git mailsplit -oquoted-from "$TEST_DIRECTORY"/t5100/quoted-from.in &&
+	test_cmp "$TEST_DIRECTORY"/t5100/quoted-from.in quoted-from/0001 &&
+	git mailinfo quoted-from/msg quoted-from/patch \
+	  <quoted-from/0001 >quoted-from/out &&
+	test_cmp "$TEST_DIRECTORY"/t5100/quoted-from.expect quoted-from/msg
+'
+
 test_done

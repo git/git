@@ -323,5 +323,20 @@ test_expect_success 'push into half-auth-complete requires password' '
 	test_cmp expect actual
 '
 
+run_with_limited_cmdline () {
+	(ulimit -s 128 && "$@")
+}
+
+test_lazy_prereq CMDLINE_LIMIT 'run_with_limited_cmdline true'
+
+test_expect_success CMDLINE_LIMIT 'push 2000 tags over http' '
+	sha1=$(git rev-parse HEAD) &&
+	test_seq 2000 |
+	  sort |
+	  sed "s|.*|$sha1 refs/tags/really-long-tag-name-&|" \
+	  >.git/packed-refs &&
+	run_with_limited_cmdline git push --mirror
+'
+
 stop_httpd
 test_done

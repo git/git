@@ -5,12 +5,19 @@ Language:	bg (Bulgarian)
 Repository:	https://github.com/git-l10n/git-po
 Leader:		Alexander Shopov <ash@kambanaria.org>
 
+Language:	ca (Catalan)
+Repository:	https://github.com/alexhenrie/git-po
+Leader:		Alex Henrie <alexhenrie24@gmail.com>
+
 Language:	de (German)
 Repository:	https://github.com/ralfth/git-po-de
 Leader:		Ralf Thielow <ralf.thielow@googlemail.com>
 Members:	Thomas Rast <tr@thomasrast.ch>
 		Jan Krüger <jk@jk.gs>
 		Christian Stimming <stimming@tuhh.de>
+		Phillip Szelat <phillip.szelat@gmail.com>
+		Matthias Rüster <matthias.ruester@gmail.com>
+		Magnus Görlitz <magnus.goerlitz@googlemail.com>
 
 Language:	fr (French)
 Repository:	https://github.com/jnavila/git
