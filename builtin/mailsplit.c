@@ -59,7 +59,6 @@ static int split_one(FILE *mbox, const char *name, int allow_bare)
 	int is_bare = !is_from_line(buf.buf, buf.len);
 
 	if (is_bare && !allow_bare) {
-		unlink(name);
 		fprintf(stderr, "corrupt mailbox\n");
 		exit(1);
 	}
