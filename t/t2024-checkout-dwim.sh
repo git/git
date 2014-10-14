@@ -185,4 +185,22 @@ test_expect_success 'checkout <branch> -- succeeds, even if a file with the same
 	test_branch_upstream spam repo_c spam
 '
 
+test_expect_success 'loosely defined local base branch is reported correctly' '
+
+	git checkout master &&
+	git branch strict &&
+	git branch loose &&
+	git commit --allow-empty -m "a bit more" &&
+
+	test_config branch.strict.remote . &&
+	test_config branch.loose.remote . &&
+	test_config branch.strict.merge refs/heads/master &&
+	test_config branch.loose.merge master &&
+
+	git checkout strict | sed -e "s/strict/BRANCHNAME/g" >expect &&
+	git checkout loose | sed -e "s/loose/BRANCHNAME/g" >actual &&
+
+	test_cmp expect actual
+'
+
 test_done
