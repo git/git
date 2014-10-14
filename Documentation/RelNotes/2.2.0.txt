@@ -65,6 +65,8 @@ Performance, Internal Implementation, etc.
    all-or-none atomic updates and migrating the storage to something
    other than the traditional filesystem based one (e.g. databases).
 
+ * The lockfile API and its users have been cleaned up.
+
  * We no longer attempt to keep track of individual dependencies to
    the header files in the build procedure, relying on automated
    dependency generation support from modern compilers.
@@ -164,6 +166,11 @@ notes for details).
  * "git checkout -m" did not switch to another branch while carrying
    the local changes forward when a path was deleted from the index.
 
+ * "git daemon" (with NO_IPV6 build configuration) used to incorrectly
+   use the hostname even when gethostbyname() reported that the given
+   hostname is not found.
+   (merge 107efbe rs/daemon-fixes later to maint).
+
  * With sufficiently long refnames, "git fast-import" could have
    overflown an on-stack buffer.
 
@@ -215,3 +222,17 @@ notes for details).
  * "rev-parse --verify --quiet $name" is meant to quietly exit with a
    non-zero status when $name is not a valid object name, but still
    gave error messages in some cases.
+
+ * A handful of C source files have been updated to include
+   "git-compat-util.h" as the first thing, to conform better to our
+   coding guidelines.
+   (merge 1c4b660 da/include-compat-util-first-in-c later to maint).
+
+ * t7004 test, which tried to run Git with small stack space, has been
+   updated to give a bit larger stack to avoid false breakage on some
+   platforms.
+   (merge b9a1907 sk/tag-contains-wo-recursion later to maint).
+
+ * A few documentation pages had example sections marked up not quite
+   correctly, which passed AsciiDoc but failed with AsciiDoctor.
+   (merge c30c43c bc/asciidoc-pretty-formats-fix later to maint).
