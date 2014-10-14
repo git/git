@@ -84,8 +84,6 @@ int sha1_pos(const unsigned char *sha1, void *table, size_t nr,
 				die("BUG: assertion failed in binary search");
 			}
 		}
-		if (18 <= ofs)
-			die("cannot happen -- lo and hi are identical");
 	}
 
 	do {
