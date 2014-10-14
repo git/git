@@ -100,6 +100,8 @@ static int parse_clean_color_slot(const char *var)
 
 static int git_clean_config(const char *var, const char *value, void *cb)
 {
+	const char *slot_name;
+
 	if (starts_with(var, "column."))
 		return git_column_config(var, value, "clean", &colopts);
 
@@ -109,9 +111,8 @@ static int git_clean_config(const char *var, const char *value, void *cb)
 		clean_use_color = git_config_colorbool(var, value);
 		return 0;
 	}
-	if (starts_with(var, "color.interactive.")) {
-		int slot = parse_clean_color_slot(var +
-						  strlen("color.interactive."));
+	if (skip_prefix(var, "color.interactive.", &slot_name)) {
+		int slot = parse_clean_color_slot(slot_name);
 		if (slot < 0)
 			return 0;
 		if (!value)

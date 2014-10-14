@@ -81,14 +81,16 @@ static int parse_branch_color_slot(const char *var, int ofs)
 
 static int git_branch_config(const char *var, const char *value, void *cb)
 {
+	const char *slot_name;
+
 	if (starts_with(var, "column."))
 		return git_column_config(var, value, "branch", &colopts);
 	if (!strcmp(var, "color.branch")) {
 		branch_use_color = git_config_colorbool(var, value);
 		return 0;
 	}
-	if (starts_with(var, "color.branch.")) {
-		int slot = parse_branch_color_slot(var, 13);
+	if (skip_prefix(var, "color.branch.", &slot_name)) {
+		int slot = parse_branch_color_slot(var, slot_name - var);
 		if (slot < 0)
 			return 0;
 		if (!value)
@@ -335,20 +337,18 @@ static int append_ref(const char *refname, const unsigned char *sha1, int flags,
 	static struct {
 		int kind;
 		const char *prefix;
-		int pfxlen;
 	} ref_kind[] = {
-		{ REF_LOCAL_BRANCH, "refs/heads/", 11 },
-		{ REF_REMOTE_BRANCH, "refs/remotes/", 13 },
+		{ REF_LOCAL_BRANCH, "refs/heads/" },
+		{ REF_REMOTE_BRANCH, "refs/remotes/" },
 	};
 
 	/* Detect kind */
 	for (i = 0; i < ARRAY_SIZE(ref_kind); i++) {
 		prefix = ref_kind[i].prefix;
-		if (strncmp(refname, prefix, ref_kind[i].pfxlen))
-			continue;
-		kind = ref_kind[i].kind;
-		refname += ref_kind[i].pfxlen;
-		break;
+		if (skip_prefix(refname, prefix, &refname)) {
+			kind = ref_kind[i].kind;
+			break;
+		}
 	}
 	if (ARRAY_SIZE(ref_kind) <= i)
 		return 0;
@@ -872,13 +872,10 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	head = resolve_refdup("HEAD", head_sha1, 0, NULL);
 	if (!head)
 		die(_("Failed to resolve HEAD as a valid ref."));
-	if (!strcmp(head, "HEAD")) {
+	if (!strcmp(head, "HEAD"))
 		detached = 1;
-	} else {
-		if (!starts_with(head, "refs/heads/"))
-			die(_("HEAD not found below refs/heads!"));
-		head += 11;
-	}
+	else if (!skip_prefix(head, "refs/heads/", &head))
+		die(_("HEAD not found below refs/heads!"));
 	hashcpy(merge_filter_ref, head_sha1);
 
 
