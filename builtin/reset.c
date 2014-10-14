@@ -8,6 +8,7 @@
  * Copyright (c) 2005, 2006 Linus Torvalds and Junio C Hamano
  */
 #include "builtin.h"
+#include "lockfile.h"
 #include "tag.h"
 #include "object.h"
 #include "commit.h"

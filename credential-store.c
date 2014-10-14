@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "lockfile.h"
 #include "credential.h"
 #include "string-list.h"
 #include "parse-options.h"

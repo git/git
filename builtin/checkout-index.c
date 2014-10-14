@@ -5,7 +5,7 @@
  *
  */
 #include "builtin.h"
-#include "cache.h"
+#include "lockfile.h"
 #include "quote.h"
 #include "cache-tree.h"
 #include "parse-options.h"

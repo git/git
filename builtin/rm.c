@@ -3,8 +3,8 @@
  *
  * Copyright (C) Linus Torvalds 2006
  */
-#include "cache.h"
 #include "builtin.h"
+#include "lockfile.h"
 #include "dir.h"
 #include "cache-tree.h"
 #include "tree-walk.h"
