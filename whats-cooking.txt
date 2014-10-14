@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Oct 2014, #01; Thu, 9)
-X-master-at: 63a45136a329bab550425c3142db6071434d935e
-X-next-at: 2852361b1a5901b41556bbe4a1bcd5e386b17e5d
+Subject: What's cooking in git.git (Oct 2014, #03; Tue, 14)
+X-master-at: 670a3c1d5a27bfb1cc6b526559c6f5874f00042f
+X-next-at: 1f81b4665aea1209bb138fc973dd7b28b6696920
 
-What's cooking in git.git (Oct 2014, #02; Thu, 9)
+What's cooking in git.git (Oct 2014, #03; Tue, 14)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -19,69 +19,75 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* bw/use-write-script-in-tests (2014-09-29) 1 commit
-  (merged to 'next' on 2014-09-29 at be4056e)
- + t/lib-credential: use write_script
+* bc/asciidoc-pretty-formats-fix (2014-10-08) 1 commit
+  (merged to 'next' on 2014-10-13 at 8208335)
+ + Documentation: fix misrender of pretty-formats in Asciidoctor
 
 
-* jc/push-cert (2014-09-25) 24 commits
-  (merged to 'next' on 2014-09-25 at 3eb1d69)
- + receive-pack::hmac_sha1(): copy the entire SHA-1 hash out
-  (merged to 'next' on 2014-09-24 at a99f5d8)
- + signed push: allow stale nonce in stateless mode
- + signed push: teach smart-HTTP to pass "git push --signed" around
- + signed push: fortify against replay attacks
- + signed push: add "pushee" header to push certificate
- + signed push: remove duplicated protocol info
- + send-pack: send feature request on push-cert packet
- + receive-pack: GPG-validate push certificates
- + push: the beginning of "git push --signed"
- + pack-protocol doc: typofix for PKT-LINE
- + gpg-interface: move parse_signature() to where it should be
- + gpg-interface: move parse_gpg_output() to where it should be
- + send-pack: clarify that cmds_sent is a boolean
- + send-pack: refactor inspecting and resetting status and sending commands
- + send-pack: rename "new_refs" to "need_pack_data"
- + receive-pack: factor out capability string generation
- + send-pack: factor out capability string generation
- + send-pack: always send capabilities
- + send-pack: refactor decision to send update per ref
- + send-pack: move REF_STATUS_REJECT_NODELETE logic a bit higher
- + receive-pack: factor out queueing of command
- + receive-pack: do not reuse old_sha1[] for other things
- + receive-pack: parse feature request a bit earlier
- + receive-pack: do not overallocate command structure
- (this branch is used by jc/push-cert-hmac-optim.)
-
- Allow "git push" request to be signed, so that it can be verified and
- audited, using the GPG signature of the person who pushed, that the
- tips of branches at a public repository really point the commits
- the pusher wanted to, without having to "trust" the server.
+* da/completion-show-signature (2014-10-07) 1 commit
+  (merged to 'next' on 2014-10-07 at 2467c19)
+ + completion: add --show-signature for log and show
 
 
-* nd/archive-pathspec (2014-09-22) 1 commit
-  (merged to 'next' on 2014-09-25 at 8806f93)
- + archive: support filtering paths with glob
+* da/include-compat-util-first-in-c (2014-09-15) 1 commit
+  (merged to 'next' on 2014-10-07 at ea5bcb4)
+ + cleanups: ensure that git-compat-util.h is included first
 
- "git archive" learned to filter what gets archived with pathspec.
+ Code clean-up.
 
 
-* sp/stream-clean-filter (2014-09-22) 7 commits
-  (merged to 'next' on 2014-09-29 at 47fc36d)
- + sha1_file: don't convert off_t to size_t too early to avoid potential die()
- + convert: stream from fd to required clean filter to reduce used address space
- + copy_fd(): do not close the input file descriptor
- + mmap_limit: introduce GIT_MMAP_LIMIT to allow testing expected mmap size
- + memory_limit: use git_env_ulong() to parse GIT_ALLOC_LIMIT
- + config.c: add git_env_ulong() to parse environment variable
- + convert: drop arguments other than 'path' from would_convert_to_git()
+* dt/cache-tree-repair (2014-09-30) 1 commit
+  (merged to 'next' on 2014-10-07 at 923bd93)
+ + t0090: avoid passing empty string to printf %d
+ (this branch is used by jk/prune-mtime.)
 
- When running a required clean filter, we do not have to mmap the
- original before feeding the filter.  Instead, stream the file
- contents directly to the filter and process its output.
+ This fixes a topic that has graduated to 'master'.
 
---------------------------------------------------
-[New Topics]
+
+* mh/lockfile (2014-10-01) 38 commits
+  (merged to 'next' on 2014-10-08 at 39cb6da)
+ + lockfile.h: extract new header file for the functions in lockfile.c
+ + hold_locked_index(): move from lockfile.c to read-cache.c
+ + hold_lock_file_for_append(): restore errno before returning
+ + get_locked_file_path(): new function
+ + lockfile.c: rename static functions
+ + lockfile: rename LOCK_NODEREF to LOCK_NO_DEREF
+ + commit_lock_file_to(): refactor a helper out of commit_lock_file()
+ + trim_last_path_component(): replace last_path_elm()
+ + resolve_symlink(): take a strbuf parameter
+ + resolve_symlink(): use a strbuf for internal scratch space
+ + lockfile: change lock_file::filename into a strbuf
+ + commit_lock_file(): use a strbuf to manage temporary space
+ + try_merge_strategy(): use a statically-allocated lock_file object
+ + try_merge_strategy(): remove redundant lock_file allocation
+ + struct lock_file: declare some fields volatile
+ + lockfile: avoid transitory invalid states
+ + git_config_set_multivar_in_file(): avoid call to rollback_lock_file()
+ + dump_marks(): remove a redundant call to rollback_lock_file()
+ + api-lockfile: document edge cases
+ + commit_lock_file(): rollback lock file on failure to rename
+ + close_lock_file(): if close fails, roll back
+ + commit_lock_file(): die() if called for unlocked lockfile object
+ + commit_lock_file(): inline temporary variable
+ + remove_lock_file(): call rollback_lock_file()
+ + lock_file(): exit early if lockfile cannot be opened
+ + prepare_index(): declare return value to be (const char *)
+ + delete_ref_loose(): don't muck around in the lock_file's filename
+ + cache.h: define constants LOCK_SUFFIX and LOCK_SUFFIX_LEN
+ + lockfile.c: document the various states of lock_file objects
+ + lock_file(): always initialize and register lock_file object
+ + hold_lock_file_for_append(): release lock on errors
+ + lockfile: unlock file if lockfile permissions cannot be adjusted
+ + rollback_lock_file(): set fd to -1
+ + rollback_lock_file(): exit early if lock is not active
+ + rollback_lock_file(): do not clear filename redundantly
+ + close_lock_file(): exit (successfully) if file is already closed
+ + api-lockfile: revise and expand the documentation
+ + unable_to_lock_die(): rename function from unable_to_lock_index_die()
+ (this branch is used by mh/lockfile-stdio.)
+
+ The lockfile API and its users have been cleaned up.
+
 
 * mh/lockfile-stdio (2014-10-01) 3 commits
   (merged to 'next' on 2014-10-08 at e56cebc)
@@ -89,8 +95,6 @@ of the repositories listed at
  + dump_marks(): reimplement using fdopen_lock_file()
  + fdopen_lock_file(): access a lockfile using stdio
  (this branch uses mh/lockfile.)
-
- Will merge to 'master'.
 
 
 * rs/daemon-fixes (2014-10-01) 3 commits
@@ -103,7 +107,20 @@ of the repositories listed at
  use the hostname even when gethostbyname() reported that the given
  hostname is not found.
 
- Will merge to 'master'.
+
+* rs/mailsplit (2014-10-07) 1 commit
+  (merged to 'next' on 2014-10-08 at 58b053e)
+ + mailsplit: remove unnecessary unlink(2) call
+
+
+* rs/more-uses-of-skip-prefix (2014-10-07) 1 commit
+  (merged to 'next' on 2014-10-08 at cd153c0)
+ + use skip_prefix() to avoid more magic numbers
+
+
+* rs/plug-leak-in-bundle (2014-10-07) 1 commit
+  (merged to 'next' on 2014-10-08 at 5539cd7)
+ + bundle: plug minor memory leak in is_tag_in_date_range()
 
 
 * rs/sha1-array-test (2014-10-01) 2 commits
@@ -111,85 +128,97 @@ of the repositories listed at
  + sha1-lookup: handle duplicates in sha1_pos()
  + sha1-array: add test-sha1-array and basic tests
 
- Will merge to 'master'.
+
+* sk/tag-contains-wo-recursion (2014-09-23) 1 commit
+  (merged to 'next' on 2014-10-08 at e425f54)
+ + t7004: give the test a bit more stack space
 
 
-* da/completion-show-signature (2014-10-07) 1 commit
-  (merged to 'next' on 2014-10-07 at 2467c19)
- + completion: add --show-signature for log and show
+* so/rebase-doc-fork-point (2014-09-29) 1 commit
+  (merged to 'next' on 2014-10-07 at 03d8ed6)
+ + Documentation/git-rebase.txt: document when --fork-point is auto-enabled
 
- Will merge to 'master'.
+--------------------------------------------------
+[New Topics]
 
+* bc/asciidoc (2014-10-13) 2 commits
+  (merged to 'next' on 2014-10-14 at d9ff206)
+ + Documentation: fix mismatched delimiters in git-imap-send
+ + Documentation: adjust document title underlining
 
-* jk/prune-mtime (2014-10-04) 18 commits
- - write_sha1_file: freshen existing objects
- - pack-objects: match prune logic for discarding objects
- - pack-objects: refactor unpack-unreachable expiration check
- - prune: keep objects reachable from recent objects
- - sha1_file: add for_each iterators for loose and packed objects
- - count-objects: use for_each_loose_file_in_objdir
- - count-objects: do not use xsize_t when counting object size
- - prune: factor out loose-object directory traversal
- - t5304: use helper to report failure of "test foo = bar"
- - t5304: use test_path_is_* instead of "test -f"
- - reachable: clear pending array after walking it
- - clean up name allocation in prepare_revision_walk
- - object_array: add a "clear" function
- - object_array: factor out slopbuf-freeing logic
- - isxdigit: cast input to unsigned char
- - foreach_alt_odb: propagate return value from callback
- - Merge branch 'dt/cache-tree-repair' into jk/prune-mtime
- - Merge branch 'jc/reopen-lock-file' into jk/prune-mtime
- (this branch uses dt/cache-tree-repair.)
-
- Expecting a reroll.
-
-
-* jn/parse-config-slot (2014-10-07) 2 commits
- - color_parse: do not mention variable name in error message
- - pass config slots as pointers instead of offsets
-
- Expecting an Ack/Sign-off or update from Jonathan on the bottom one.
-
-
-* rs/mailsplit (2014-10-07) 1 commit
-  (merged to 'next' on 2014-10-08 at 58b053e)
- + mailsplit: remove unnecessary unlink(2) call
+ Formatting nitpicks to help a (pickier) reimplementation of
+ AsciiDoc to grok our documentation.
 
  Will merge to 'master'.
 
 
-* rs/more-uses-of-skip-prefix (2014-10-07) 1 commit
-  (merged to 'next' on 2014-10-08 at cd153c0)
- + use skip_prefix() to avoid more magic numbers
-
- Will merge to 'master'.
-
-
-* rs/plug-leak-in-bundle (2014-10-07) 1 commit
-  (merged to 'next' on 2014-10-08 at 5539cd7)
- + bundle: plug minor memory leak in is_tag_in_date_range()
-
- Will merge to 'master'.
-
-
-* bc/asciidoc-pretty-formats-fix (2014-10-08) 1 commit
- - Documentation: fix misrender of pretty-formats in Asciidoctor
-
- Will merge to 'next'.
-
-
-* da/mergetool-temporary-filename (2014-10-09) 1 commit
+* da/mergetool-tool-help (2014-10-13) 4 commits
+ - difftool: don't assume that default sh is sane
+ - mergetool: don't require a work tree for --tool-help
+ - git-sh-setup: move GIT_DIR initialization into a function
  - mergetool: use more conservative temporary filenames
+ (this branch is tangled with da/mergetool-temporary-filename.)
+
+ Allow "git mergetool --help" to run outside a Git repository.
+
+ May want some tests before merging down.
 
 
+* eb/no-pthreads (2014-10-13) 2 commits
+ - pack-objects: set number of threads before checking and warning
+ - index-pack: fix compilation with NO_PTHREADS
 
-* jc/completion-no-chdir (2014-10-09) 1 commit
- - completion: use "git -C $there" instead of (cd $there && git ...)
+ Allow us build with NO_PTHREADS=NoThanks compilation option.  The
+ last change (not queued) needs a bit more explanation in its log
+ message.
 
- Seems to break t9902; we may want to use $gmane/258099 or something
- like that in the meantime, but on the other hand the topic itself
- is not that urgent.
+
+* jk/test-shell-trace (2014-10-13) 3 commits
+  (merged to 'next' on 2014-10-14 at 9118506)
+ + test-lib.sh: support -x option for shell-tracing
+ + t5304: use helper to report failure of "test foo = bar"
+ + t5304: use test_path_is_* instead of "test -f"
+
+ Test scripts were taught to notice "-x" option to show shell trace,
+ as if the tests were run under "sh -x".
+
+ Will merge to 'master'.
+
+
+* rs/receive-pack-argv-leak-fix (2014-10-13) 1 commit
+  (merged to 'next' on 2014-10-14 at e64654d)
+ + receive-pack: plug minor memory leak in unpack()
+
+ Will merge to 'master'.
+
+
+* ta/config-set (2014-10-13) 1 commit
+  (merged to 'next' on 2014-10-14 at ed660e4)
+ + t1308: fix broken here document in test script
+
+ Will merge to 'master'.
+
+
+* jc/checkout-local-track-report (2014-10-14) 1 commit
+ - checkout: report upstream correctly even with loosely defined branch.*.merge
+
+ The report from "git checkout" on a branch that builds on another
+ local branch by setting its branch.*.merge to branch name (not a
+ full refname) incorrectly said that the upstream is gone.
+
+
+* jc/clone-borrow (2014-10-14) 1 commit
+ - clone: --dissociate option to mark that reference is only temporary
+
+ Allow "git clone --reference" to be used more safely.
+
+
+* js/completion-hide-not-a-repo (2014-10-14) 1 commit
+ - completion: silence "fatal: Not a git repository" error
+
+ Some internal error messages leaked out of the bash completion when
+ typing "git cmd <TAB>" and the machinery tried to complete
+ refnames.
 
 --------------------------------------------------
 [Stalled]
@@ -262,16 +291,6 @@ of the repositories listed at
  Hold, waiting for Karsten's replacement.
 
 
-* cb/mergetool-difftool (2014-07-21) 2 commits
- - difftool: don't assume that default sh is sane
- - mergetool: don't require a work tree for --tool-help
-
- Update the way the "difftool --help" shows the help message that is
- shared with the "mergetool" to reduce one shell dependency.
-
- Will be rerolled.
-
-
 * jk/tag-contains (2014-06-30) 8 commits
  . perf: add tests for tag --contains
  . tag: use commit_contains
@@ -296,23 +315,6 @@ of the repositories listed at
  - gitweb: Harden UTF-8 handling in generated links
 
  $gmane/250758?
-
-
-* rh/prompt-tests (2014-06-05) 11 commits
- - t9904: new __git_ps1 tests for Zsh
- - test-lib: make it possible to override how test code is eval'd
- - lib-prompt-tests.sh: add variable for string that encodes percent in PS1
- - lib-prompt-tests.sh: put all tests inside a function
- - t9903: move prompt tests to a new lib-prompt-tests.sh file
- - t9903: move PS1 color code variable definitions to lib-bash.sh
- - t9903: include "Bash" in test names via new $shellname var
- - t9903: run pc mode tests again with PS1 expansion disabled
- - t9903: move test name prefix to a separate variable
- - t9903: put the Bash pc mode prompt test cases in a function
- - t9903: remove Zsh test from the suite of Bash prompt tests
-
- Expecting a reroll to limit the damage to test_eval_; also reported
- to be broken with older zsh that are still in the field ($gmane/251231).
 
 
 * ss/userdiff-update-csharp-java (2014-06-02) 2 commits
@@ -401,28 +403,77 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* dt/cache-tree-repair (2014-09-30) 1 commit
-  (merged to 'next' on 2014-10-07 at 923bd93)
- + t0090: avoid passing empty string to printf %d
- (this branch is used by jk/prune-mtime.)
+* jk/prune-mtime (2014-10-04) 18 commits
+ . write_sha1_file: freshen existing objects
+ . pack-objects: match prune logic for discarding objects
+ . pack-objects: refactor unpack-unreachable expiration check
+ . prune: keep objects reachable from recent objects
+ . sha1_file: add for_each iterators for loose and packed objects
+ . count-objects: use for_each_loose_file_in_objdir
+ . count-objects: do not use xsize_t when counting object size
+ . prune: factor out loose-object directory traversal
+ . t5304: use helper to report failure of "test foo = bar"
+ . t5304: use test_path_is_* instead of "test -f"
+ . reachable: clear pending array after walking it
+ . clean up name allocation in prepare_revision_walk
+ . object_array: add a "clear" function
+ . object_array: factor out slopbuf-freeing logic
+ . isxdigit: cast input to unsigned char
+ . foreach_alt_odb: propagate return value from callback
+ . Merge branch 'dt/cache-tree-repair' into jk/prune-mtime
+ . Merge branch 'jc/reopen-lock-file' into jk/prune-mtime
 
- This fixes a topic that has graduated to 'master'.
+ Expecting a reroll.
+
+
+* jn/parse-config-slot (2014-10-14) 2 commits
+  (merged to 'next' on 2014-10-14 at 7f0a3ad)
+ + color_parse: do not mention variable name in error message
+ + pass config slots as pointers instead of offsets
+
+ Code cleanup.
+
+ Will merge to 'master'.
+
+
+* da/mergetool-temporary-filename (2014-10-13) 2 commits
+ - mergetool: add an option for writing to a temporary directory
+ - mergetool: use more conservative temporary filenames
+ (this branch is tangled with da/mergetool-tool-help.)
+
+ Tweak the names of the three throw-away files "git mergetool" comes
+ up with to feed the merge tool backend, so that a file with a
+ single dot in its name in the original (e.g. "hello.c") will have
+ only one dot in these variants (e.g. "hello_BASE_4321.c").
+
+ Will merge to 'next'.
+
+
+* jc/completion-no-chdir (2014-10-09) 1 commit
+  (merged to 'next' on 2014-10-14 at 1cf12e1)
+ + completion: use "git -C $there" instead of (cd $there && git ...)
 
  Will merge to 'master'.
 
 
 * bw/trace-no-inline-getnanotime (2014-09-29) 1 commit
- - trace.c: do not mark getnanotime() as "inline"
+  (merged to 'next' on 2014-10-14 at 19facbb)
+ + trace.c: do not mark getnanotime() as "inline"
 
  No file-scope static variables in an inlined function, please.
 
+ Will merge to 'master'.
 
-* po/everyday-doc (2014-09-29) 3 commits
- - Make 'git help everyday' work
- - doc: Makefile regularise OBSOLETE_HTML list building
- - doc: modernise everyday.txt wording and format in man page style
 
- Looks ready for 'next' except for minor nits.
+* po/everyday-doc (2014-10-10) 3 commits
+  (merged to 'next' on 2014-10-13 at daf1d03)
+ + doc: add 'everyday' to 'git help'
+ + doc: Makefile regularise OBSOLETE_HTML list building
+ + doc: modernise everyday.txt wording and format in man page style
+
+ "git help everyday" to show the Everyday Git document.
+
+ Will merge to 'master'.
 
 
 * jc/push-cert-hmac-optim (2014-09-25) 2 commits
@@ -446,76 +497,6 @@ of the repositories listed at
  optionally flips the default to "--exact".
 
  Waiting for an Ack.
-
-
-* so/rebase-doc-fork-point (2014-09-29) 1 commit
-  (merged to 'next' on 2014-10-07 at 03d8ed6)
- + Documentation/git-rebase.txt: document when --fork-point is auto-enabled
-
- Will merge to 'master'.
-
-
-* sk/tag-contains-wo-recursion (2014-09-23) 1 commit
-  (merged to 'next' on 2014-10-08 at e425f54)
- + t7004: give the test a bit more stack space
-
- Will merge to 'master'.
-
-
-* da/include-compat-util-first-in-c (2014-09-15) 1 commit
-  (merged to 'next' on 2014-10-07 at ea5bcb4)
- + cleanups: ensure that git-compat-util.h is included first
-
- Code clean-up.
-
- Will merge to 'master'.
-
-
-* mh/lockfile (2014-10-01) 38 commits
-  (merged to 'next' on 2014-10-08 at 39cb6da)
- + lockfile.h: extract new header file for the functions in lockfile.c
- + hold_locked_index(): move from lockfile.c to read-cache.c
- + hold_lock_file_for_append(): restore errno before returning
- + get_locked_file_path(): new function
- + lockfile.c: rename static functions
- + lockfile: rename LOCK_NODEREF to LOCK_NO_DEREF
- + commit_lock_file_to(): refactor a helper out of commit_lock_file()
- + trim_last_path_component(): replace last_path_elm()
- + resolve_symlink(): take a strbuf parameter
- + resolve_symlink(): use a strbuf for internal scratch space
- + lockfile: change lock_file::filename into a strbuf
- + commit_lock_file(): use a strbuf to manage temporary space
- + try_merge_strategy(): use a statically-allocated lock_file object
- + try_merge_strategy(): remove redundant lock_file allocation
- + struct lock_file: declare some fields volatile
- + lockfile: avoid transitory invalid states
- + git_config_set_multivar_in_file(): avoid call to rollback_lock_file()
- + dump_marks(): remove a redundant call to rollback_lock_file()
- + api-lockfile: document edge cases
- + commit_lock_file(): rollback lock file on failure to rename
- + close_lock_file(): if close fails, roll back
- + commit_lock_file(): die() if called for unlocked lockfile object
- + commit_lock_file(): inline temporary variable
- + remove_lock_file(): call rollback_lock_file()
- + lock_file(): exit early if lockfile cannot be opened
- + prepare_index(): declare return value to be (const char *)
- + delete_ref_loose(): don't muck around in the lock_file's filename
- + cache.h: define constants LOCK_SUFFIX and LOCK_SUFFIX_LEN
- + lockfile.c: document the various states of lock_file objects
- + lock_file(): always initialize and register lock_file object
- + hold_lock_file_for_append(): release lock on errors
- + lockfile: unlock file if lockfile permissions cannot be adjusted
- + rollback_lock_file(): set fd to -1
- + rollback_lock_file(): exit early if lock is not active
- + rollback_lock_file(): do not clear filename redundantly
- + close_lock_file(): exit (successfully) if file is already closed
- + api-lockfile: revise and expand the documentation
- + unable_to_lock_die(): rename function from unable_to_lock_index_die()
- (this branch is used by mh/lockfile-stdio.)
-
- The lockfile API and its users have been cleaned up.
-
- Will merge to 'master'.
 
 
 * nd/multiple-work-trees (2014-09-27) 32 commits
@@ -559,7 +540,7 @@ of the repositories listed at
  A few tests need some tweaks for MinGW ($gmane/{257756,257757}).
 
 
-* cc/interpret-trailers (2014-09-22) 11 commits
+* cc/interpret-trailers (2014-10-13) 11 commits
  - Documentation: add documentation for 'git interpret-trailers'
  - trailer: add tests for commands in config file
  - trailer: execute command from 'trailer.<name>.command'
@@ -575,9 +556,7 @@ of the repositories listed at
  A new filter to programatically edit the tail end of the commit log
  messages.
 
- Discussion on the topic with Michael Tsirkin who wants to utilize
- this machinery is going on.  Finally a real functionality review
- that is very much welcomed.
+ Is this ready for 'next' now?
 
 
 * mt/patch-id-stable (2014-06-10) 1 commit
@@ -601,3 +580,27 @@ of the repositories listed at
  Needed rerolling (new paragraph in doc seems to be in a wrong place)
  for quite some time but without any activity.
 
+
+* cb/mergetool-difftool (2014-07-21) 2 commits
+ . difftool: don't assume that default sh is sane
+ . mergetool: don't require a work tree for --tool-help
+
+ Rerolled as da/mergetool-tool-help topic.
+
+
+* rh/prompt-tests (2014-06-05) 11 commits
+ . t9904: new __git_ps1 tests for Zsh
+ . test-lib: make it possible to override how test code is eval'd
+ . lib-prompt-tests.sh: add variable for string that encodes percent in PS1
+ . lib-prompt-tests.sh: put all tests inside a function
+ . t9903: move prompt tests to a new lib-prompt-tests.sh file
+ . t9903: move PS1 color code variable definitions to lib-bash.sh
+ . t9903: include "Bash" in test names via new $shellname var
+ . t9903: run pc mode tests again with PS1 expansion disabled
+ . t9903: move test name prefix to a separate variable
+ . t9903: put the Bash pc mode prompt test cases in a function
+ . t9903: remove Zsh test from the suite of Bash prompt tests
+
+ Was expecting a reroll to limit the damage to test_eval_; also
+ reported to be broken with older zsh that are still in the field
+ ($gmane/251231).
