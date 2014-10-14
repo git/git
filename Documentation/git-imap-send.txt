@@ -97,7 +97,7 @@ Using direct mode:
     host = imap://imap.example.com
     user = bob
     pass = p4ssw0rd
-..........................
+.........................
 
 Using direct mode with SSL:
 
@@ -109,7 +109,7 @@ Using direct mode with SSL:
     pass = p4ssw0rd
     port = 123
     sslverify = false
-..........................
+.........................
 
 
 EXAMPLE
