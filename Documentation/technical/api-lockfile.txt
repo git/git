@@ -42,9 +42,13 @@ The caller:
   of the final destination (e.g. `$GIT_DIR/index`) to
   `hold_lock_file_for_update` or `hold_lock_file_for_append`.
 
-* Writes new content for the destination file by writing to the file
-  descriptor returned by those functions (also available via
-  `lock->fd`).
+* Writes new content for the destination file by either:
+
+  * writing to the file descriptor returned by the `hold_lock_file_*`
+    functions (also available via `lock->fd`).
+
+  * calling `fdopen_lock_file` to get a `FILE` pointer for the open
+    file and writing to the file using stdio.
 
 When finished writing, the caller can:
 
@@ -70,10 +74,10 @@ any uncommitted changes.
 
 If you need to close the file descriptor you obtained from a
 `hold_lock_file_*` function yourself, do so by calling
-`close_lock_file`. You should never call `close(2)` yourself!
-Otherwise the `struct lock_file` structure would still think that the
-file descriptor needs to be closed, and a commit or rollback would
-result in duplicate calls to `close(2)`. Worse yet, if you `close(2)`
+`close_lock_file`. You should never call `close(2)` or `fclose(3)`
+yourself! Otherwise the `struct lock_file` structure would still think
+that the file descriptor needs to be closed, and a commit or rollback
+would result in duplicate calls to `close(2)`. Worse yet, if you close
 and then later open another file descriptor for a completely different
 purpose, then a commit or rollback might close that unrelated file
 descriptor.
@@ -143,6 +147,13 @@ hold_lock_file_for_append::
 	the existing contents of the file (if any) to the lockfile and
 	position its write pointer at the end of the file.
 
+fdopen_lock_file::
+
+	Associate a stdio stream with the lockfile. Return NULL
+	(*without* rolling back the lockfile) on error. The stream is
+	closed automatically when `close_lock_file` is called or when
+	the file is committed or rolled back.
+
 get_locked_file_path::
 
 	Return the path of the file that is locked by the specified
@@ -179,10 +190,11 @@ close_lock_file::
 
 	Take a pointer to the `struct lock_file` initialized with an
 	earlier call to `hold_lock_file_for_update` or
-	`hold_lock_file_for_append`, and close the file descriptor.
-	Return 0 upon success. On failure to `close(2)`, return a
-	negative value and roll back the lock file. Usually
-	`commit_lock_file`, `commit_lock_file_to`, or
+	`hold_lock_file_for_append`. Close the file descriptor (and
+	the file pointer if it has been opened using
+	`fdopen_lock_file`). Return 0 upon success. On failure to
+	`close(2)`, return a negative value and roll back the lock
+	file. Usually `commit_lock_file`, `commit_lock_file_to`, or
 	`rollback_lock_file` should eventually be called if
 	`close_lock_file` succeeds.
 

@@ -34,6 +34,8 @@
  *   - active is set
  *   - filename holds the filename of the lockfile
  *   - fd holds a file descriptor open for writing to the lockfile
+ *   - fp holds a pointer to an open FILE object if and only if
+ *     fdopen_lock_file() has been called on the object
  *   - owner holds the PID of the process that locked the file
  *
  * - Locked, lockfile closed (after successful close_lock_file()).
@@ -56,6 +58,7 @@ struct lock_file {
 	struct lock_file *volatile next;
 	volatile sig_atomic_t active;
 	volatile int fd;
+	FILE *volatile fp;
 	volatile pid_t owner;
 	char on_list;
 	struct strbuf filename;
@@ -74,6 +77,7 @@ extern void unable_to_lock_message(const char *path, int err,
 extern NORETURN void unable_to_lock_die(const char *path, int err);
 extern int hold_lock_file_for_update(struct lock_file *, const char *path, int);
 extern int hold_lock_file_for_append(struct lock_file *, const char *path, int);
+extern FILE *fdopen_lock_file(struct lock_file *, const char *mode);
 extern char *get_locked_file_path(struct lock_file *);
 extern int commit_lock_file_to(struct lock_file *, const char *path);
 extern int commit_lock_file(struct lock_file *);
