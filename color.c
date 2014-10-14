@@ -60,13 +60,12 @@ static int parse_attr(const char *name, int len)
 	return -1;
 }
 
-void color_parse(const char *value, const char *var, char *dst)
+int color_parse(const char *value, char *dst)
 {
-	color_parse_mem(value, strlen(value), var, dst);
+	return color_parse_mem(value, strlen(value), dst);
 }
 
-void color_parse_mem(const char *value, int value_len, const char *var,
-		char *dst)
+int color_parse_mem(const char *value, int value_len, char *dst)
 {
 	const char *ptr = value;
 	int len = value_len;
@@ -76,7 +75,7 @@ void color_parse_mem(const char *value, int value_len, const char *var,
 
 	if (!strncasecmp(value, "reset", len)) {
 		strcpy(dst, GIT_COLOR_RESET);
-		return;
+		return 0;
 	}
 
 	/* [fg [bg]] [attr]... */
@@ -153,9 +152,9 @@ void color_parse_mem(const char *value, int value_len, const char *var,
 		*dst++ = 'm';
 	}
 	*dst = 0;
-	return;
+	return 0;
 bad:
-	die("bad color value '%.*s' for variable '%s'", value_len, value, var);
+	return error(_("invalid color value: %.*s"), value_len, value);
 }
 
 int git_config_colorbool(const char *var, const char *value)

@@ -671,7 +671,8 @@ static void populate_value(struct refinfo *ref)
 		} else if (starts_with(name, "color:")) {
 			char color[COLOR_MAXLEN] = "";
 
-			color_parse(name + 6, "--format", color);
+			if (color_parse(name + 6, color) < 0)
+				die(_("unable to parse format"));
 			v->s = xstrdup(color);
 			continue;
 		} else if (!strcmp(name, "flag")) {
@@ -1004,7 +1005,8 @@ static void show_ref(struct refinfo *info, const char *format, int quote_style)
 		struct atom_value resetv;
 		char color[COLOR_MAXLEN] = "";
 
-		color_parse("reset", "--format", color);
+		if (color_parse("reset", color) < 0)
+			die("BUG: couldn't parse 'reset' as a color");
 		resetv.s = color;
 		print_value(&resetv, quote_style);
 	}

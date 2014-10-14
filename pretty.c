@@ -964,9 +964,8 @@ static size_t parse_color(struct strbuf *sb, /* in UTF-8 */
 			if (!want_color(c->pretty_ctx->color))
 				return end - placeholder + 1;
 		}
-		color_parse_mem(begin,
-				end - begin,
-				"--pretty format", color);
+		if (color_parse_mem(begin, end - begin, color) < 0)
+			die(_("unable to parse --pretty format"));
 		strbuf_addstr(sb, color);
 		return end - placeholder + 1;
 	}
