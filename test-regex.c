@@ -1,4 +1,4 @@
-#include <git-compat-util.h>
+#include "git-compat-util.h"
 
 int main(int argc, char **argv)
 {

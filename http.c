@@ -1,3 +1,4 @@
+#include "git-compat-util.h"
 #include "http.h"
 #include "pack.h"
 #include "sideband.h"
