@@ -1272,6 +1272,17 @@ int for_each_loose_file_in_objdir(const char *path,
 				  each_loose_subdir_fn subdir_cb,
 				  void *data);
 
+/*
+ * Iterate over loose and packed objects in both the local
+ * repository and any alternates repositories.
+ */
+typedef int each_packed_object_fn(const unsigned char *sha1,
+				  struct packed_git *pack,
+				  uint32_t pos,
+				  void *data);
+extern int for_each_loose_object(each_loose_object_fn, void *);
+extern int for_each_packed_object(each_packed_object_fn, void *);
+
 struct object_info {
 	/* Request */
 	enum object_type *typep;

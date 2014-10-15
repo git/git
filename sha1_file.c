@@ -3348,3 +3348,65 @@ int for_each_loose_file_in_objdir(const char *path,
 	strbuf_release(&buf);
 	return r;
 }
+
+struct loose_alt_odb_data {
+	each_loose_object_fn *cb;
+	void *data;
+};
+
+static int loose_from_alt_odb(struct alternate_object_database *alt,
+			      void *vdata)
+{
+	struct loose_alt_odb_data *data = vdata;
+	return for_each_loose_file_in_objdir(alt->base,
+					     data->cb, NULL, NULL,
+					     data->data);
+}
+
+int for_each_loose_object(each_loose_object_fn cb, void *data)
+{
+	struct loose_alt_odb_data alt;
+	int r;
+
+	r = for_each_loose_file_in_objdir(get_object_directory(),
+					  cb, NULL, NULL, data);
+	if (r)
+		return r;
+
+	alt.cb = cb;
+	alt.data = data;
+	return foreach_alt_odb(loose_from_alt_odb, &alt);
+}
+
+static int for_each_object_in_pack(struct packed_git *p, each_packed_object_fn cb, void *data)
+{
+	uint32_t i;
+	int r = 0;
+
+	for (i = 0; i < p->num_objects; i++) {
+		const unsigned char *sha1 = nth_packed_object_sha1(p, i);
+
+		if (!sha1)
+			return error("unable to get sha1 of object %u in %s",
+				     i, p->pack_name);
+
+		r = cb(sha1, p, i, data);
+		if (r)
+			break;
+	}
+	return r;
+}
+
+int for_each_packed_object(each_packed_object_fn cb, void *data)
+{
+	struct packed_git *p;
+	int r = 0;
+
+	prepare_packed_git();
+	for (p = packed_git; p; p = p->next) {
+		r = for_each_object_in_pack(p, cb, data);
+		if (r)
+			break;
+	}
+	return r;
+}
