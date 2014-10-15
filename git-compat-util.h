@@ -677,7 +677,7 @@ extern const unsigned char sane_ctype[256];
 #define iscntrl(x) (sane_istest(x,GIT_CNTRL))
 #define ispunct(x) sane_istest(x, GIT_PUNCT | GIT_REGEX_SPECIAL | \
 		GIT_GLOB_SPECIAL | GIT_PATHSPEC_MAGIC)
-#define isxdigit(x) (hexval_table[x] != -1)
+#define isxdigit(x) (hexval_table[(unsigned char)(x)] != -1)
 #define tolower(x) sane_case((unsigned char)(x), 0x20)
 #define toupper(x) sane_case((unsigned char)(x), 0)
 #define is_pathspec_magic(x) sane_istest(x,GIT_PATHSPEC_MAGIC)

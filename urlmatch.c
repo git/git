@@ -43,11 +43,11 @@ static int append_normalized_escapes(struct strbuf *buf,
 		from_len--;
 		if (ch == '%') {
 			if (from_len < 2 ||
-			    !isxdigit((unsigned char)from[0]) ||
-			    !isxdigit((unsigned char)from[1]))
+			    !isxdigit(from[0]) ||
+			    !isxdigit(from[1]))
 				return 0;
-			ch = hexval_table[(unsigned char)*from++] << 4;
-			ch |= hexval_table[(unsigned char)*from++];
+			ch = hexval(*from++) << 4;
+			ch |= hexval(*from++);
 			from_len -= 2;
 			was_esc = 1;
 		}
