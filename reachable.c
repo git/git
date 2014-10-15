@@ -55,6 +55,8 @@ static void add_cache_refs(struct rev_info *revs)
 
 	read_cache();
 	for (i = 0; i < active_nr; i++) {
+		struct blob *blob;
+
 		/*
 		 * The index can contain blobs and GITLINKs, GITLINKs are hashes
 		 * that don't actually point to objects in the repository, it's
@@ -65,7 +67,10 @@ static void add_cache_refs(struct rev_info *revs)
 		if (S_ISGITLINK(active_cache[i]->ce_mode))
 			continue;
 
-		lookup_blob(active_cache[i]->sha1);
+		blob = lookup_blob(active_cache[i]->sha1);
+		if (blob)
+			blob->object.flags |= SEEN;
+
 		/*
 		 * We could add the blobs to the pending list, but quite
 		 * frankly, we don't care. Once we've looked them up, and
