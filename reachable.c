@@ -8,6 +8,7 @@
 #include "reachable.h"
 #include "cache-tree.h"
 #include "progress.h"
+#include "list-objects.h"
 
 struct connectivity_progress {
 	struct progress *progress;
@@ -19,118 +20,6 @@ static void update_progress(struct connectivity_progress *cp)
 	cp->count++;
 	if ((cp->count & 1023) == 0)
 		display_progress(cp->progress, cp->count);
-}
-
-static void process_blob(struct blob *blob,
-			 struct object_array *p,
-			 struct name_path *path,
-			 const char *name,
-			 struct connectivity_progress *cp)
-{
-	struct object *obj = &blob->object;
-
-	if (!blob)
-		die("bad blob object");
-	if (obj->flags & SEEN)
-		return;
-	obj->flags |= SEEN;
-	update_progress(cp);
-	/* Nothing to do, really .. The blob lookup was the important part */
-}
-
-static void process_gitlink(const unsigned char *sha1,
-			    struct object_array *p,
-			    struct name_path *path,
-			    const char *name)
-{
-	/* I don't think we want to recurse into this, really. */
-}
-
-static void process_tree(struct tree *tree,
-			 struct object_array *p,
-			 struct name_path *path,
-			 const char *name,
-			 struct connectivity_progress *cp)
-{
-	struct object *obj = &tree->object;
-	struct tree_desc desc;
-	struct name_entry entry;
-	struct name_path me;
-
-	if (!tree)
-		die("bad tree object");
-	if (obj->flags & SEEN)
-		return;
-	obj->flags |= SEEN;
-	update_progress(cp);
-	if (parse_tree(tree) < 0)
-		die("bad tree object %s", sha1_to_hex(obj->sha1));
-	add_object(obj, p, path, name);
-	me.up = path;
-	me.elem = name;
-	me.elem_len = strlen(name);
-
-	init_tree_desc(&desc, tree->buffer, tree->size);
-
-	while (tree_entry(&desc, &entry)) {
-		if (S_ISDIR(entry.mode))
-			process_tree(lookup_tree(entry.sha1), p, &me, entry.path, cp);
-		else if (S_ISGITLINK(entry.mode))
-			process_gitlink(entry.sha1, p, &me, entry.path);
-		else
-			process_blob(lookup_blob(entry.sha1), p, &me, entry.path, cp);
-	}
-	free_tree_buffer(tree);
-}
-
-static void process_tag(struct tag *tag, struct object_array *p,
-			const char *name, struct connectivity_progress *cp)
-{
-	struct object *obj = &tag->object;
-
-	if (obj->flags & SEEN)
-		return;
-	obj->flags |= SEEN;
-	update_progress(cp);
-
-	if (parse_tag(tag) < 0)
-		die("bad tag object %s", sha1_to_hex(obj->sha1));
-	if (tag->tagged)
-		add_object(tag->tagged, p, NULL, name);
-}
-
-static void walk_commit_list(struct rev_info *revs,
-			     struct connectivity_progress *cp)
-{
-	int i;
-	struct commit *commit;
-	struct object_array objects = OBJECT_ARRAY_INIT;
-
-	/* Walk all commits, process their trees */
-	while ((commit = get_revision(revs)) != NULL) {
-		process_tree(commit->tree, &objects, NULL, "", cp);
-		update_progress(cp);
-	}
-
-	/* Then walk all the pending objects, recursively processing them too */
-	for (i = 0; i < revs->pending.nr; i++) {
-		struct object_array_entry *pending = revs->pending.objects + i;
-		struct object *obj = pending->item;
-		const char *name = pending->name;
-		if (obj->type == OBJ_TAG) {
-			process_tag((struct tag *) obj, &objects, name, cp);
-			continue;
-		}
-		if (obj->type == OBJ_TREE) {
-			process_tree((struct tree *)obj, &objects, NULL, name, cp);
-			continue;
-		}
-		if (obj->type == OBJ_BLOB) {
-			process_blob((struct blob *)obj, &objects, NULL, name, cp);
-			continue;
-		}
-		die("unknown pending object %s (%s)", sha1_to_hex(obj->sha1), name);
-	}
 }
 
 static int add_one_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
@@ -210,6 +99,21 @@ static void add_cache_refs(struct rev_info *revs)
 		add_cache_tree(active_cache_tree, revs);
 }
 
+/*
+ * The traversal will have already marked us as SEEN, so we
+ * only need to handle any progress reporting here.
+ */
+static void mark_object(struct object *obj, const struct name_path *path,
+			const char *name, void *data)
+{
+	update_progress(data);
+}
+
+static void mark_commit(struct commit *c, void *data)
+{
+	mark_object(&c->object, NULL, NULL, data);
+}
+
 void mark_reachable_objects(struct rev_info *revs, int mark_reflog,
 			    struct progress *progress)
 {
@@ -245,6 +149,6 @@ void mark_reachable_objects(struct rev_info *revs, int mark_reflog,
 	 */
 	if (prepare_revision_walk(revs))
 		die("revision walk setup failed");
-	walk_commit_list(revs, &cp);
+	traverse_commit_list(revs, mark_commit, mark_object, &cp);
 	display_progress(cp.progress, cp.count);
 }
