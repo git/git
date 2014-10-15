@@ -14,7 +14,7 @@ Testing basic merge tool invocation'
 # running mergetool
 
 test_expect_success 'setup' '
-	git config rerere.enabled true &&
+	test_config rerere.enabled true &&
 	echo master >file1 &&
 	echo master spaced >"spaced name" &&
 	echo master file11 >file11 &&
@@ -112,7 +112,7 @@ test_expect_success 'custom mergetool' '
 '
 
 test_expect_success 'mergetool crlf' '
-	git config core.autocrlf true &&
+	test_config core.autocrlf true &&
 	git checkout -b test2 branch1 &&
 	test_must_fail git merge master >/dev/null 2>&1 &&
 	( yes "" | git mergetool file1 >/dev/null 2>&1 ) &&
@@ -129,7 +129,7 @@ test_expect_success 'mergetool crlf' '
 	git submodule update -N &&
 	test "$(cat submod/bar)" = "master submodule" &&
 	git commit -m "branch1 resolved with mergetool - autocrlf" &&
-	git config core.autocrlf false &&
+	test_config core.autocrlf false &&
 	git reset --hard
 '
 
@@ -176,7 +176,7 @@ test_expect_success 'mergetool skips autoresolved' '
 test_expect_success 'mergetool merges all from subdir' '
 	(
 		cd subdir &&
-		git config rerere.enabled false &&
+		test_config rerere.enabled false &&
 		test_must_fail git merge master &&
 		( yes "r" | git mergetool ../submod ) &&
 		( yes "d" "d" | git mergetool --no-prompt ) &&
@@ -190,7 +190,7 @@ test_expect_success 'mergetool merges all from subdir' '
 '
 
 test_expect_success 'mergetool skips resolved paths when rerere is active' '
-	git config rerere.enabled true &&
+	test_config rerere.enabled true &&
 	rm -rf .git/rr-cache &&
 	git checkout -b test5 branch1 &&
 	git submodule update -N &&
@@ -204,7 +204,7 @@ test_expect_success 'mergetool skips resolved paths when rerere is active' '
 '
 
 test_expect_success 'conflicted stash sets up rerere'  '
-	git config rerere.enabled true &&
+	test_config rerere.enabled true &&
 	git checkout stash1 &&
 	echo "Conflicting stash content" >file11 &&
 	git stash &&
@@ -232,7 +232,7 @@ test_expect_success 'conflicted stash sets up rerere'  '
 
 test_expect_success 'mergetool takes partial path' '
 	git reset --hard &&
-	git config rerere.enabled false &&
+	test_config rerere.enabled false &&
 	git checkout -b test12 branch1 &&
 	git submodule update -N &&
 	test_must_fail git merge master &&
@@ -505,14 +505,12 @@ test_expect_success 'file with no base' '
 
 test_expect_success 'custom commands override built-ins' '
 	git checkout -b test14 branch1 &&
-	git config mergetool.defaults.cmd "cat \"\$REMOTE\" >\"\$MERGED\"" &&
-	git config mergetool.defaults.trustExitCode true &&
+	test_config mergetool.defaults.cmd "cat \"\$REMOTE\" >\"\$MERGED\"" &&
+	test_config mergetool.defaults.trustExitCode true &&
 	test_must_fail git merge master &&
 	git mergetool --no-prompt --tool defaults -- both &&
 	echo master both added >expected &&
 	test_cmp both expected &&
-	git config --unset mergetool.defaults.cmd &&
-	git config --unset mergetool.defaults.trustExitCode &&
 	git reset --hard master >/dev/null 2>&1
 '
 
