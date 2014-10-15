@@ -168,6 +168,10 @@ respectively, and they must begin with `refs/` when applied to `--glob`
 or `--all`. If a trailing '/{asterisk}' is intended, it must be given
 explicitly.
 
+--reflog::
+	Pretend as if all objects mentioned by reflogs are listed on the
+	command line as `<commit>`.
+
 --ignore-missing::
 	Upon seeing an invalid object name in the input, pretend as if
 	the bad input was not given.
