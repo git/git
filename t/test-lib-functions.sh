@@ -413,7 +413,7 @@ test_external () {
 		# test_run_, but keep its stdout on our stdout even in
 		# non-verbose mode.
 		"$@" 2>&4
-		if [ "$?" = 0 ]
+		if test "$?" = 0
 		then
 			if test $test_external_has_tap -eq 0; then
 				test_ok_ "$descr"
@@ -440,11 +440,12 @@ test_external_without_stderr () {
 	tmp=${TMPDIR:-/tmp}
 	stderr="$tmp/git-external-stderr.$$.tmp"
 	test_external "$@" 4> "$stderr"
-	[ -f "$stderr" ] || error "Internal error: $stderr disappeared."
+	test -f "$stderr" || error "Internal error: $stderr disappeared."
 	descr="no stderr: $1"
 	shift
 	say >&3 "# expecting no stderr from previous command"
-	if [ ! -s "$stderr" ]; then
+	if test ! -s "$stderr"
+	then
 		rm "$stderr"
 
 		if test $test_external_has_tap -eq 0; then
@@ -454,8 +455,9 @@ test_external_without_stderr () {
 			test_success=$(($test_success + 1))
 		fi
 	else
-		if [ "$verbose" = t ]; then
-			output=`echo; echo "# Stderr is:"; cat "$stderr"`
+		if test "$verbose" = t
+		then
+			output=$(echo; echo "# Stderr is:"; cat "$stderr")
 		else
 			output=
 		fi
@@ -474,7 +476,7 @@ test_external_without_stderr () {
 # The commands test the existence or non-existence of $1. $2 can be
 # given to provide a more precise diagnosis.
 test_path_is_file () {
-	if ! [ -f "$1" ]
+	if ! test -f "$1"
 	then
 		echo "File $1 doesn't exist. $*"
 		false
@@ -482,7 +484,7 @@ test_path_is_file () {
 }
 
 test_path_is_dir () {
-	if ! [ -d "$1" ]
+	if ! test -d "$1"
 	then
 		echo "Directory $1 doesn't exist. $*"
 		false
@@ -490,11 +492,12 @@ test_path_is_dir () {
 }
 
 test_path_is_missing () {
-	if [ -e "$1" ]
+	if test -e "$1"
 	then
 		echo "Path exists:"
 		ls -ld "$1"
-		if [ $# -ge 1 ]; then
+		if test $# -ge 1
+		then
 			echo "$*"
 		fi
 		false
@@ -646,9 +649,12 @@ test_cmp_rev () {
 # similar to GNU seq(1), but the latter might not be available
 # everywhere (and does not do letters).  It may be used like:
 #
-#	for i in `test_seq 100`; do
-#		for j in `test_seq 10 20`; do
-#			for k in `test_seq a z`; do
+#	for i in $(test_seq 100)
+#	do
+#		for j in $(test_seq 10 20)
+#		do
+#			for k in $(test_seq a z)
+#			do
 #				echo $i-$j-$k
 #			done
 #		done
