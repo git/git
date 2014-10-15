@@ -1275,7 +1275,7 @@ static int handle_one_reflog(const char *path, const unsigned char *sha1, int fl
 	return 0;
 }
 
-static void handle_reflog(struct rev_info *revs, unsigned flags)
+void add_reflogs_to_pending(struct rev_info *revs, unsigned flags)
 {
 	struct all_refs_cb cb;
 	cb.all_revs = revs;
@@ -2061,7 +2061,7 @@ static int handle_revision_pseudo_opt(const char *submodule,
 		for_each_glob_ref_in(handle_one_ref, arg + 10, "refs/remotes/", &cb);
 		clear_ref_exclusion(&revs->ref_excludes);
 	} else if (!strcmp(arg, "--reflog")) {
-		handle_reflog(revs, *flags);
+		add_reflogs_to_pending(revs, *flags);
 	} else if (!strcmp(arg, "--not")) {
 		*flags ^= UNINTERESTING | BOTTOM;
 	} else if (!strcmp(arg, "--no-walk")) {

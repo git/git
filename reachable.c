@@ -22,22 +22,6 @@ static void update_progress(struct connectivity_progress *cp)
 		display_progress(cp->progress, cp->count);
 }
 
-static int add_one_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
-		const char *email, unsigned long timestamp, int tz,
-		const char *message, void *cb_data)
-{
-	struct object *object;
-	struct rev_info *revs = (struct rev_info *)cb_data;
-
-	object = parse_object(osha1);
-	if (object)
-		add_pending_object(revs, object, "");
-	object = parse_object(nsha1);
-	if (object)
-		add_pending_object(revs, object, "");
-	return 0;
-}
-
 static int add_one_ref(const char *path, const unsigned char *sha1, int flag, void *cb_data)
 {
 	struct object *object = parse_object_or_die(sha1, path);
@@ -45,12 +29,6 @@ static int add_one_ref(const char *path, const unsigned char *sha1, int flag, vo
 
 	add_pending_object(revs, object, "");
 
-	return 0;
-}
-
-static int add_one_reflog(const char *path, const unsigned char *sha1, int flag, void *cb_data)
-{
-	for_each_reflog_ent(path, add_one_reflog_ent, cb_data);
 	return 0;
 }
 
@@ -138,7 +116,7 @@ void mark_reachable_objects(struct rev_info *revs, int mark_reflog,
 
 	/* Add all reflog info */
 	if (mark_reflog)
-		for_each_reflog(add_one_reflog, revs);
+		add_reflogs_to_pending(revs, 0);
 
 	cp.progress = progress;
 	cp.count = 0;
