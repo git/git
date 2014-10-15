@@ -307,10 +307,9 @@ int object_list_contains(struct object_list *list, struct object *obj)
  */
 static char object_array_slopbuf[1];
 
-static void add_object_array_with_mode_context(struct object *obj, const char *name,
-					       struct object_array *array,
-					       unsigned mode,
-					       struct object_context *context)
+void add_object_array_with_path(struct object *obj, const char *name,
+				struct object_array *array,
+				unsigned mode, const char *path)
 {
 	unsigned nr = array->nr;
 	unsigned alloc = array->alloc;
@@ -333,7 +332,10 @@ static void add_object_array_with_mode_context(struct object *obj, const char *n
 	else
 		entry->name = xstrdup(name);
 	entry->mode = mode;
-	entry->context = context;
+	if (path)
+		entry->path = xstrdup(path);
+	else
+		entry->path = NULL;
 	array->nr = ++nr;
 }
 
@@ -344,15 +346,7 @@ void add_object_array(struct object *obj, const char *name, struct object_array 
 
 void add_object_array_with_mode(struct object *obj, const char *name, struct object_array *array, unsigned mode)
 {
-	add_object_array_with_mode_context(obj, name, array, mode, NULL);
-}
-
-void add_object_array_with_context(struct object *obj, const char *name, struct object_array *array, struct object_context *context)
-{
-	if (context)
-		add_object_array_with_mode_context(obj, name, array, context->mode, context);
-	else
-		add_object_array_with_mode_context(obj, name, array, S_IFINVALID, context);
+	add_object_array_with_path(obj, name, array, mode, NULL);
 }
 
 /*
@@ -363,6 +357,7 @@ static void object_array_release_entry(struct object_array_entry *ent)
 {
 	if (ent->name != object_array_slopbuf)
 		free(ent->name);
+	free(ent->path);
 }
 
 void object_array_filter(struct object_array *array,
