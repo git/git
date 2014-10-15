@@ -514,4 +514,27 @@ test_expect_success 'custom commands override built-ins' '
 	git reset --hard master >/dev/null 2>&1
 '
 
+test_expect_success 'filenames seen by tools start with ./' '
+	git checkout -b test15 branch1 &&
+	test_config mergetool.writeToTemp false &&
+	test_config mergetool.myecho.cmd "echo \"\$LOCAL\"" &&
+	test_config mergetool.myecho.trustExitCode true &&
+	test_must_fail git merge master &&
+	git mergetool --no-prompt --tool myecho -- both >actual &&
+	grep ^\./both_LOCAL_ actual >/dev/null &&
+	git reset --hard master >/dev/null 2>&1
+'
+
+test_expect_success 'temporary filenames are used with mergetool.writeToTemp' '
+	git checkout -b test16 branch1 &&
+	test_config mergetool.writeToTemp true &&
+	test_config mergetool.myecho.cmd "echo \"\$LOCAL\"" &&
+	test_config mergetool.myecho.trustExitCode true &&
+	test_must_fail git merge master &&
+	git mergetool --no-prompt --tool myecho -- both >actual &&
+	test_must_fail grep ^\./both_LOCAL_ actual >/dev/null &&
+	grep /both_LOCAL_ actual >/dev/null &&
+	git reset --hard master >/dev/null 2>&1
+'
+
 test_done
