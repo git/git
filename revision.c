@@ -300,7 +300,7 @@ static struct commit *handle_commit(struct rev_info *revs,
 			revs->limited = 1;
 		}
 		if (revs->show_source && !commit->util)
-			commit->util = (void *) name;
+			commit->util = xstrdup(name);
 		return commit;
 	}
 
@@ -2656,15 +2656,16 @@ void reset_revision_walk(void)
 
 int prepare_revision_walk(struct rev_info *revs)
 {
-	int nr = revs->pending.nr;
-	struct object_array_entry *e, *list;
+	int i;
+	struct object_array old_pending;
 	struct commit_list **next = &revs->commits;
 
-	e = list = revs->pending.objects;
+	memcpy(&old_pending, &revs->pending, sizeof(old_pending));
 	revs->pending.nr = 0;
 	revs->pending.alloc = 0;
 	revs->pending.objects = NULL;
-	while (--nr >= 0) {
+	for (i = 0; i < old_pending.nr; i++) {
+		struct object_array_entry *e = old_pending.objects + i;
 		struct commit *commit = handle_commit(revs, e->item, e->name);
 		if (commit) {
 			if (!(commit->object.flags & SEEN)) {
@@ -2672,10 +2673,9 @@ int prepare_revision_walk(struct rev_info *revs)
 				next = commit_list_append(commit, next);
 			}
 		}
-		e++;
 	}
 	if (!revs->leak_pending)
-		free(list);
+		object_array_clear(&old_pending);
 
 	/* Signal whether we need per-parent treesame decoration */
 	if (revs->simplify_merges ||
