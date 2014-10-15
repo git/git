@@ -192,7 +192,7 @@ test_expect_success 'mergetool merges all from subdir' '
 test_expect_success 'mergetool skips resolved paths when rerere is active' '
 	git config rerere.enabled true &&
 	rm -rf .git/rr-cache &&
-	git checkout -b test5 branch1
+	git checkout -b test5 branch1 &&
 	git submodule update -N &&
 	test_must_fail git merge master >/dev/null 2>&1 &&
 	( yes "l" | git mergetool --no-prompt submod >/dev/null 2>&1 ) &&
@@ -231,17 +231,11 @@ test_expect_success 'conflicted stash sets up rerere'  '
 '
 
 test_expect_success 'mergetool takes partial path' '
-	git reset --hard
+	git reset --hard &&
 	git config rerere.enabled false &&
 	git checkout -b test12 branch1 &&
 	git submodule update -N &&
 	test_must_fail git merge master &&
-
-	#should not need these lines
-	#( yes "d" | git mergetool file11 >/dev/null 2>&1 ) &&
-	#( yes "d" | git mergetool file12 >/dev/null 2>&1 ) &&
-	#( yes "l" | git mergetool submod >/dev/null 2>&1 ) &&
-	#( yes "" | git mergetool file1 file2 >/dev/null 2>&1 ) &&
 
 	( yes "" | git mergetool subdir ) &&
 
