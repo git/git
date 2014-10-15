@@ -183,8 +183,8 @@ static int add_recent_packed(const unsigned char *sha1,
 	return 0;
 }
 
-static int add_unseen_recent_objects_to_traversal(struct rev_info *revs,
-						  unsigned long timestamp)
+int add_unseen_recent_objects_to_traversal(struct rev_info *revs,
+					   unsigned long timestamp)
 {
 	struct recent_data data;
 	int r;

@@ -39,50 +39,67 @@ commit () {
 	git commit -m "$1"
 }
 
-test_expect_success 'disable reflogs' '
-	git config core.logallrefupdates false &&
-	rm -rf .git/logs
-'
+maybe_repack () {
+	if test -n "$repack"; then
+		git repack -ad
+	fi
+}
 
-test_expect_success 'setup basic history' '
-	commit base
-'
+for repack in '' true; do
+	title=${repack:+repack}
+	title=${title:-loose}
 
-test_expect_success 'create and abandon some objects' '
-	git checkout -b experiment &&
-	commit abandon &&
-	git checkout master &&
-	git branch -D experiment
-'
+	test_expect_success "make repo completely empty ($title)" '
+		rm -rf .git &&
+		git init
+	'
 
-test_expect_success 'simulate time passing' '
-	find .git/objects -type f |
-	xargs test-chmtime -v -86400
-'
+	test_expect_success "disable reflogs ($title)" '
+		git config core.logallrefupdates false &&
+		rm -rf .git/logs
+	'
 
-test_expect_success 'start writing new commit with old blob' '
-	tree=$(
-		GIT_INDEX_FILE=index.tmp &&
-		export GIT_INDEX_FILE &&
-		git read-tree HEAD &&
-		add unrelated &&
-		add abandon &&
-		git write-tree
-	)
-'
+	test_expect_success "setup basic history ($title)" '
+		commit base
+	'
 
-test_expect_success 'simultaneous gc' '
-	git gc --prune=12.hours.ago
-'
+	test_expect_success "create and abandon some objects ($title)" '
+		git checkout -b experiment &&
+		commit abandon &&
+		maybe_repack &&
+		git checkout master &&
+		git branch -D experiment
+	'
 
-test_expect_success 'finish writing out commit' '
-	commit=$(echo foo | git commit-tree -p HEAD $tree) &&
-	git update-ref HEAD $commit
-'
+	test_expect_success "simulate time passing ($title)" '
+		find .git/objects -type f |
+		xargs test-chmtime -v -86400
+	'
 
-# "abandon" blob should have been rescued by reference from new tree
-test_expect_success 'repository passes fsck' '
-	git fsck
-'
+	test_expect_success "start writing new commit with old blob ($title)" '
+		tree=$(
+			GIT_INDEX_FILE=index.tmp &&
+			export GIT_INDEX_FILE &&
+			git read-tree HEAD &&
+			add unrelated &&
+			add abandon &&
+			git write-tree
+		)
+	'
+
+	test_expect_success "simultaneous gc ($title)" '
+		git gc --prune=12.hours.ago
+	'
+
+	test_expect_success "finish writing out commit ($title)" '
+		commit=$(echo foo | git commit-tree -p HEAD $tree) &&
+		git update-ref HEAD $commit
+	'
+
+	# "abandon" blob should have been rescued by reference from new tree
+	test_expect_success "repository passes fsck ($title)" '
+		git fsck
+	'
+done
 
 test_done

@@ -20,6 +20,8 @@
 #include "streaming.h"
 #include "thread-utils.h"
 #include "pack-bitmap.h"
+#include "reachable.h"
+#include "sha1-array.h"
 
 static const char *pack_usage[] = {
 	N_("git pack-objects --stdout [options...] [< ref-list | < object-list]"),
@@ -2407,12 +2409,23 @@ static int has_sha1_pack_kept_or_nonlocal(const unsigned char *sha1)
 	return 0;
 }
 
+/*
+ * Store a list of sha1s that are should not be discarded
+ * because they are either written too recently, or are
+ * reachable from another object that was.
+ *
+ * This is filled by get_object_list.
+ */
+static struct sha1_array recent_objects;
+
 static int loosened_object_can_be_discarded(const unsigned char *sha1,
 					    unsigned long mtime)
 {
 	if (!unpack_unreachable_expiration)
 		return 0;
 	if (mtime > unpack_unreachable_expiration)
+		return 0;
+	if (sha1_array_lookup(&recent_objects, sha1) >= 0)
 		return 0;
 	return 1;
 }
@@ -2470,6 +2483,19 @@ static int get_object_list_from_bitmap(struct rev_info *revs)
 	return 0;
 }
 
+static void record_recent_object(struct object *obj,
+				 const struct name_path *path,
+				 const char *last,
+				 void *data)
+{
+	sha1_array_append(&recent_objects, obj->sha1);
+}
+
+static void record_recent_commit(struct commit *commit, void *data)
+{
+	sha1_array_append(&recent_objects, commit->object.sha1);
+}
+
 static void get_object_list(int ac, const char **av)
 {
 	struct rev_info revs;
@@ -2517,10 +2543,23 @@ static void get_object_list(int ac, const char **av)
 	mark_edges_uninteresting(&revs, show_edge);
 	traverse_commit_list(&revs, show_commit, show_object, NULL);
 
+	if (unpack_unreachable_expiration) {
+		revs.ignore_missing_links = 1;
+		if (add_unseen_recent_objects_to_traversal(&revs,
+				unpack_unreachable_expiration))
+			die("unable to add recent objects");
+		if (prepare_revision_walk(&revs))
+			die("revision walk setup failed");
+		traverse_commit_list(&revs, record_recent_commit,
+				     record_recent_object, NULL);
+	}
+
 	if (keep_unreachable)
 		add_objects_in_unpacked_packs(&revs);
 	if (unpack_unreachable)
 		loosen_unused_packed_objects(&revs);
+
+	sha1_array_clear(&recent_objects);
 }
 
 static int option_parse_index_version(const struct option *opt,
