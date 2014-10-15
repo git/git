@@ -100,6 +100,33 @@ for repack in '' true; do
 	test_expect_success "repository passes fsck ($title)" '
 		git fsck
 	'
+
+	test_expect_success "abandon objects again ($title)" '
+		git reset --hard HEAD^ &&
+		find .git/objects -type f |
+		xargs test-chmtime -v -86400
+	'
+
+	test_expect_success "start writing new commit with same tree ($title)" '
+		tree=$(
+			GIT_INDEX_FILE=index.tmp &&
+			export GIT_INDEX_FILE &&
+			git read-tree HEAD &&
+			add abandon &&
+			add unrelated &&
+			git write-tree
+		)
+	'
+
+	test_expect_success "simultaneous gc ($title)" '
+		git gc --prune=12.hours.ago
+	'
+
+	# tree should have been refreshed by write-tree
+	test_expect_success "finish writing out commit ($title)" '
+		commit=$(echo foo | git commit-tree -p HEAD $tree) &&
+		git update-ref HEAD $commit
+	'
 done
 
 test_done

@@ -442,27 +442,53 @@ void prepare_alt_odb(void)
 	read_info_alternates(get_object_directory(), 0);
 }
 
-static int has_loose_object_local(const unsigned char *sha1)
+static int freshen_file(const char *fn)
 {
-	return !access(sha1_file_name(sha1), F_OK);
+	struct utimbuf t;
+	t.actime = t.modtime = time(NULL);
+	return !utime(fn, &t);
 }
 
-int has_loose_object_nonlocal(const unsigned char *sha1)
+static int check_and_freshen_file(const char *fn, int freshen)
+{
+	if (access(fn, F_OK))
+		return 0;
+	if (freshen && freshen_file(fn))
+		return 0;
+	return 1;
+}
+
+static int check_and_freshen_local(const unsigned char *sha1, int freshen)
+{
+	return check_and_freshen_file(sha1_file_name(sha1), freshen);
+}
+
+static int check_and_freshen_nonlocal(const unsigned char *sha1, int freshen)
 {
 	struct alternate_object_database *alt;
 	prepare_alt_odb();
 	for (alt = alt_odb_list; alt; alt = alt->next) {
 		fill_sha1_path(alt->name, sha1);
-		if (!access(alt->base, F_OK))
+		if (check_and_freshen_file(alt->base, freshen))
 			return 1;
 	}
 	return 0;
 }
 
+static int check_and_freshen(const unsigned char *sha1, int freshen)
+{
+	return check_and_freshen_local(sha1, freshen) ||
+	       check_and_freshen_nonlocal(sha1, freshen);
+}
+
+int has_loose_object_nonlocal(const unsigned char *sha1)
+{
+	return check_and_freshen_nonlocal(sha1, 0);
+}
+
 static int has_loose_object(const unsigned char *sha1)
 {
-	return has_loose_object_local(sha1) ||
-	       has_loose_object_nonlocal(sha1);
+	return check_and_freshen(sha1, 0);
 }
 
 static unsigned int pack_used_ctr;
@@ -2965,6 +2991,17 @@ static int write_loose_object(const unsigned char *sha1, char *hdr, int hdrlen,
 	return move_temp_to_file(tmp_file, filename);
 }
 
+static int freshen_loose_object(const unsigned char *sha1)
+{
+	return check_and_freshen(sha1, 1);
+}
+
+static int freshen_packed_object(const unsigned char *sha1)
+{
+	struct pack_entry e;
+	return find_pack_entry(sha1, &e) && freshen_file(e.p->pack_name);
+}
+
 int write_sha1_file(const void *buf, unsigned long len, const char *type, unsigned char *returnsha1)
 {
 	unsigned char sha1[20];
@@ -2977,7 +3014,7 @@ int write_sha1_file(const void *buf, unsigned long len, const char *type, unsign
 	write_sha1_file_prepare(buf, len, type, sha1, hdr, &hdrlen);
 	if (returnsha1)
 		hashcpy(returnsha1, sha1);
-	if (has_sha1_file(sha1))
+	if (freshen_loose_object(sha1) || freshen_packed_object(sha1))
 		return 0;
 	return write_loose_object(sha1, hdr, hdrlen, buf, len, 0);
 }
