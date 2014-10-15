@@ -133,6 +133,12 @@ void object_array_filter(struct object_array *array,
  */
 void object_array_remove_duplicates(struct object_array *array);
 
+/*
+ * Remove any objects from the array, freeing all used memory; afterwards
+ * the array is ready to store more objects with add_object_array().
+ */
+void object_array_clear(struct object_array *array);
+
 void clear_object_flags(unsigned flags);
 
 #endif /* OBJECT_H */
