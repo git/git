@@ -53,7 +53,7 @@ static void count_objects(DIR *d, char *path, int len, int verbose,
 			if (lstat(path, &st) || !S_ISREG(st.st_mode))
 				bad = 1;
 			else
-				(*loose_size) += xsize_t(on_disk_bytes(st));
+				(*loose_size) += on_disk_bytes(st);
 		}
 		if (bad) {
 			if (verbose) {
