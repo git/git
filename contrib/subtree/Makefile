@@ -5,9 +5,10 @@ all::
 -include ../../config.mak
 
 prefix ?= /usr/local
-mandir ?= $(prefix)/share/man
 gitexecdir ?= $(prefix)/libexec/git-core
+mandir ?= $(prefix)/share/man
 man1dir ?= $(mandir)/man1
+htmldir ?= $(prefix)/share/doc/git-doc
 
 ../../GIT-VERSION-FILE: FORCE
 	$(MAKE) -C ../../ GIT-VERSION-FILE
@@ -49,11 +50,15 @@ install: $(GIT_SUBTREE)
 	$(INSTALL) -d -m 755 $(DESTDIR)$(gitexecdir)
 	$(INSTALL) -m 755 $(GIT_SUBTREE) $(DESTDIR)$(gitexecdir)
 
-install-doc: install-man
+install-doc: install-man install-html
 
 install-man: $(GIT_SUBTREE_DOC)
 	$(INSTALL) -d -m 755 $(DESTDIR)$(man1dir)
 	$(INSTALL) -m 644 $^ $(DESTDIR)$(man1dir)
+
+install-html: $(GIT_SUBTREE_HTML)
+	$(INSTALL) -d -m 755 $(DESTDIR)$(htmldir)
+	$(INSTALL) -m 644 $^ $(DESTDIR)$(htmldir)
 
 $(GIT_SUBTREE_DOC): $(GIT_SUBTREE_XML)
 	$(XMLTO) -m $(MANPAGE_XSL) man $^
