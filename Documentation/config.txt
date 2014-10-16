@@ -1754,6 +1754,15 @@ mergetool.<tool>.trustExitCode::
 	if the file has been updated, otherwise the user is prompted to
 	indicate the success of the merge.
 
+mergetool.meld.hasOutput::
+	Older versions of `meld` do not support the `--output` option.
+	Git will attempt to detect whether `meld` supports `--output`
+	by inspecting the output of `meld --help`.  Configuring
+	`mergetool.meld.hasOutput` will make Git skip these checks and
+	use the configured value instead.  Setting `mergetool.meld.hasOutput`
+	to `true` tells Git to unconditionally use the `--output` option,
+	and `false` avoids using `--output`.
+
 mergetool.keepBackup::
 	After performing a merge, the original file with conflict markers
 	can be saved as a file with a `.orig` extension.  If this variable
