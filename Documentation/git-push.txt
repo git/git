@@ -34,7 +34,7 @@ When the command line does not specify what to push with `<refspec>...`
 arguments or `--all`, `--mirror`, `--tags` options, the command finds
 the default `<refspec>` by consulting `remote.*.push` configuration,
 and if it is not found, honors `push.default` configuration to decide
-what to push (See linkgit:git-config[1] for the meaning of `push.default`).
+what to push (See gitlink:git-config[1] for the meaning of `push.default`).
 
 
 OPTIONS[[OPTIONS]]
