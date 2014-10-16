@@ -4100,7 +4100,7 @@ sub print_search_form {
 	if ($use_pathinfo) {
 		$action .= "/".esc_url($project);
 	}
-	print $cgi->startform(-method => "get", -action => $action) .
+	print $cgi->start_form(-method => "get", -action => $action) .
 	      "<div class=\"search\">\n" .
 	      (!$use_pathinfo &&
 	      $cgi->input({-name=>"p", -value=>$project, -type=>"hidden"}) . "\n") .
@@ -5510,7 +5510,7 @@ sub git_project_search_form {
 	}
 
 	print "<div class=\"projsearch\">\n";
-	print $cgi->startform(-method => 'get', -action => $my_uri) .
+	print $cgi->start_form(-method => 'get', -action => $my_uri) .
 	      $cgi->hidden(-name => 'a', -value => 'project_list')  . "\n";
 	print $cgi->hidden(-name => 'pf', -value => $project_filter). "\n"
 		if (defined $project_filter);
