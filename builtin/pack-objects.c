@@ -22,6 +22,7 @@
 #include "pack-bitmap.h"
 #include "reachable.h"
 #include "sha1-array.h"
+#include "argv-array.h"
 
 static const char *pack_usage[] = {
 	N_("git pack-objects --stdout [options...] [< ref-list | < object-list]"),
@@ -2614,8 +2615,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	int use_internal_rev_list = 0;
 	int thin = 0;
 	int all_progress_implied = 0;
-	const char *rp_av[6];
-	int rp_ac = 0;
+	struct argv_array rp = ARGV_ARRAY_INIT;
 	int rev_list_unpacked = 0, rev_list_all = 0, rev_list_reflog = 0;
 	struct option pack_objects_options[] = {
 		OPT_SET_INT('q', "quiet", &progress,
@@ -2705,24 +2705,24 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	if (pack_to_stdout != !base_name || argc)
 		usage_with_options(pack_usage, pack_objects_options);
 
-	rp_av[rp_ac++] = "pack-objects";
+	argv_array_push(&rp, "pack-objects");
 	if (thin) {
 		use_internal_rev_list = 1;
-		rp_av[rp_ac++] = "--objects-edge";
+		argv_array_push(&rp, "--objects-edge");
 	} else
-		rp_av[rp_ac++] = "--objects";
+		argv_array_push(&rp, "--objects");
 
 	if (rev_list_all) {
 		use_internal_rev_list = 1;
-		rp_av[rp_ac++] = "--all";
+		argv_array_push(&rp, "--all");
 	}
 	if (rev_list_reflog) {
 		use_internal_rev_list = 1;
-		rp_av[rp_ac++] = "--reflog";
+		argv_array_push(&rp, "--reflog");
 	}
 	if (rev_list_unpacked) {
 		use_internal_rev_list = 1;
-		rp_av[rp_ac++] = "--unpacked";
+		argv_array_push(&rp, "--unpacked");
 	}
 
 	if (!reuse_object)
@@ -2766,8 +2766,8 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	if (!use_internal_rev_list)
 		read_object_list_from_stdin();
 	else {
-		rp_av[rp_ac] = NULL;
-		get_object_list(rp_ac, rp_av);
+		get_object_list(rp.argc, rp.argv);
+		argv_array_clear(&rp);
 	}
 	cleanup_preferred_base();
 	if (include_tag && nr_result)
