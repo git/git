@@ -950,8 +950,8 @@ extern int for_each_abbrev(const char *prefix, each_abbrev_fn, void *);
 extern int get_sha1_hex(const char *hex, unsigned char *sha1);
 
 extern char *sha1_to_hex(const unsigned char *sha1);	/* static buffer result! */
-extern int read_ref_full(const char *refname, unsigned char *sha1,
-			 int reading, int *flags);
+extern int read_ref_full(const char *refname, int resolve_flags,
+			 unsigned char *sha1, int *flags);
 extern int read_ref(const char *refname, unsigned char *sha1);
 
 /*
@@ -963,29 +963,49 @@ extern int read_ref(const char *refname, unsigned char *sha1);
  * or the input ref.
  *
  * If the reference cannot be resolved to an object, the behavior
- * depends on the "reading" argument:
+ * depends on the RESOLVE_REF_READING flag:
  *
- * - If reading is set, return NULL.
+ * - If RESOLVE_REF_READING is set, return NULL.
  *
- * - If reading is not set, clear sha1 and return the name of the last
- *   reference name in the chain, which will either be a non-symbolic
+ * - If RESOLVE_REF_READING is not set, clear sha1 and return the name of
+ *   the last reference name in the chain, which will either be a non-symbolic
  *   reference or an undefined reference.  If this is a prelude to
  *   "writing" to the ref, the return value is the name of the ref
  *   that will actually be created or changed.
  *
- * If flag is non-NULL, set the value that it points to the
+ * If the RESOLVE_REF_NO_RECURSE flag is passed, only resolves one
+ * level of symbolic reference.  The value stored in sha1 for a symbolic
+ * reference will always be null_sha1 in this case, and the return
+ * value is the reference that the symref refers to directly.
+ *
+ * If flags is non-NULL, set the value that it points to the
  * combination of REF_ISPACKED (if the reference was found among the
- * packed references) and REF_ISSYMREF (if the initial reference was a
- * symbolic reference).
+ * packed references), REF_ISSYMREF (if the initial reference was a
+ * symbolic reference), REF_BAD_NAME (if the reference name is ill
+ * formed --- see RESOLVE_REF_ALLOW_BAD_NAME below), and REF_ISBROKEN
+ * (if the ref is malformed or has a bad name). See refs.h for more detail
+ * on each flag.
  *
  * If ref is not a properly-formatted, normalized reference, return
  * NULL.  If more than MAXDEPTH recursive symbolic lookups are needed,
  * give up and return NULL.
  *
- * errno is set to something meaningful on error.
+ * RESOLVE_REF_ALLOW_BAD_NAME allows resolving refs even when their
+ * name is invalid according to git-check-ref-format(1).  If the name
+ * is bad then the value stored in sha1 will be null_sha1 and the two
+ * flags REF_ISBROKEN and REF_BAD_NAME will be set.
+ *
+ * Even with RESOLVE_REF_ALLOW_BAD_NAME, names that escape the refs/
+ * directory and do not consist of all caps and underscores cannot be
+ * resolved. The function returns NULL for such ref names.
+ * Caps and underscores refers to the special refs, such as HEAD,
+ * FETCH_HEAD and friends, that all live outside of the refs/ directory.
  */
-extern const char *resolve_ref_unsafe(const char *ref, unsigned char *sha1, int reading, int *flag);
-extern char *resolve_refdup(const char *ref, unsigned char *sha1, int reading, int *flag);
+#define RESOLVE_REF_READING 0x01
+#define RESOLVE_REF_NO_RECURSE 0x02
+#define RESOLVE_REF_ALLOW_BAD_NAME 0x04
+extern const char *resolve_ref_unsafe(const char *ref, int resolve_flags, unsigned char *sha1, int *flags);
+extern char *resolve_refdup(const char *ref, int resolve_flags, unsigned char *sha1, int *flags);
 
 extern int dwim_ref(const char *str, int len, unsigned char *sha1, char **ref);
 extern int dwim_log(const char *str, int len, unsigned char *sha1, char **ref);

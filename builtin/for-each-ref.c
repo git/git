@@ -635,7 +635,8 @@ static void populate_value(struct refinfo *ref)
 
 	if (need_symref && (ref->flag & REF_ISSYMREF) && !ref->symref) {
 		unsigned char unused1[20];
-		ref->symref = resolve_refdup(ref->refname, unused1, 1, NULL);
+		ref->symref = resolve_refdup(ref->refname, RESOLVE_REF_READING,
+					     unused1, NULL);
 		if (!ref->symref)
 			ref->symref = "";
 	}
@@ -694,7 +695,8 @@ static void populate_value(struct refinfo *ref)
 			const char *head;
 			unsigned char sha1[20];
 
-			head = resolve_ref_unsafe("HEAD", sha1, 1, NULL);
+			head = resolve_ref_unsafe("HEAD", RESOLVE_REF_READING,
+						  sha1, NULL);
 			if (!strcmp(ref->refname, head))
 				v->s = "*";
 			else
@@ -837,6 +839,11 @@ static int grab_single_ref(const char *refname, const unsigned char *sha1, int f
 	struct grab_ref_cbdata *cb = cb_data;
 	struct refinfo *ref;
 	int cnt;
+
+	if (flag & REF_BAD_NAME) {
+		  warning("ignoring ref with broken name %s", refname);
+		  return 0;
+	}
 
 	if (*cb->grab_pattern) {
 		const char **pattern;

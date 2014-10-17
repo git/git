@@ -350,10 +350,11 @@ test_expect_success 'git mv moves a submodule with a .git directory and .gitmodu
 '
 
 test_expect_success 'git mv moves a submodule with gitfile' '
-	rm -rf mod/sub &&
+	rm -rf mod &&
 	git reset --hard &&
 	git submodule update &&
 	entry="$(git ls-files --stage sub | cut -f 1)" &&
+	mkdir mod &&
 	(
 		cd mod &&
 		git mv ../sub/ .
@@ -372,11 +373,12 @@ test_expect_success 'git mv moves a submodule with gitfile' '
 '
 
 test_expect_success 'mv does not complain when no .gitmodules file is found' '
-	rm -rf mod/sub &&
+	rm -rf mod &&
 	git reset --hard &&
 	git submodule update &&
 	git rm .gitmodules &&
 	entry="$(git ls-files --stage sub | cut -f 1)" &&
+	mkdir mod &&
 	git mv sub mod/sub 2>actual.err &&
 	! test -s actual.err &&
 	! test -e sub &&
@@ -390,11 +392,12 @@ test_expect_success 'mv does not complain when no .gitmodules file is found' '
 '
 
 test_expect_success 'mv will error out on a modified .gitmodules file unless staged' '
-	rm -rf mod/sub &&
+	rm -rf mod &&
 	git reset --hard &&
 	git submodule update &&
 	git config -f .gitmodules foo.bar true &&
 	entry="$(git ls-files --stage sub | cut -f 1)" &&
+	mkdir mod &&
 	test_must_fail git mv sub mod/sub 2>actual.err &&
 	test -s actual.err &&
 	test -e sub &&
@@ -413,13 +416,14 @@ test_expect_success 'mv will error out on a modified .gitmodules file unless sta
 '
 
 test_expect_success 'mv issues a warning when section is not found in .gitmodules' '
-	rm -rf mod/sub &&
+	rm -rf mod &&
 	git reset --hard &&
 	git submodule update &&
 	git config -f .gitmodules --remove-section submodule.sub &&
 	git add .gitmodules &&
 	entry="$(git ls-files --stage sub | cut -f 1)" &&
 	echo "warning: Could not find section in .gitmodules where path=sub" >expect.err &&
+	mkdir mod &&
 	git mv sub mod/sub 2>actual.err &&
 	test_i18ncmp expect.err actual.err &&
 	! test -e sub &&
@@ -433,9 +437,10 @@ test_expect_success 'mv issues a warning when section is not found in .gitmodule
 '
 
 test_expect_success 'mv --dry-run does not touch the submodule or .gitmodules' '
-	rm -rf mod/sub &&
+	rm -rf mod &&
 	git reset --hard &&
 	git submodule update &&
+	mkdir mod &&
 	git mv -n sub mod/sub 2>actual.err &&
 	test -f sub/.git &&
 	git diff-index --exit-code HEAD &&
