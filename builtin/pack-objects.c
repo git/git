@@ -2617,6 +2617,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	int all_progress_implied = 0;
 	struct argv_array rp = ARGV_ARRAY_INIT;
 	int rev_list_unpacked = 0, rev_list_all = 0, rev_list_reflog = 0;
+	int rev_list_index = 0;
 	struct option pack_objects_options[] = {
 		OPT_SET_INT('q', "quiet", &progress,
 			    N_("do not show progress meter"), 0),
@@ -2662,6 +2663,9 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		  PARSE_OPT_NOARG | PARSE_OPT_NONEG, NULL, 1 },
 		{ OPTION_SET_INT, 0, "reflog", &rev_list_reflog, NULL,
 		  N_("include objects referred by reflog entries"),
+		  PARSE_OPT_NOARG | PARSE_OPT_NONEG, NULL, 1 },
+		{ OPTION_SET_INT, 0, "indexed-objects", &rev_list_index, NULL,
+		  N_("include objects referred to by the index"),
 		  PARSE_OPT_NOARG | PARSE_OPT_NONEG, NULL, 1 },
 		OPT_BOOL(0, "stdout", &pack_to_stdout,
 			 N_("output pack to stdout")),
@@ -2719,6 +2723,10 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	if (rev_list_reflog) {
 		use_internal_rev_list = 1;
 		argv_array_push(&rp, "--reflog");
+	}
+	if (rev_list_index) {
+		use_internal_rev_list = 1;
+		argv_array_push(&rp, "--indexed-objects");
 	}
 	if (rev_list_unpacked) {
 		use_internal_rev_list = 1;
