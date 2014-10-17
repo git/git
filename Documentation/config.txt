@@ -1768,6 +1768,12 @@ mergetool.keepTemporaries::
 	preserved, otherwise they will be removed after the tool has
 	exited. Defaults to `false`.
 
+mergetool.writeToTemp::
+	Git writes temporary 'BASE', 'LOCAL', and 'REMOTE' versions of
+	conflicting files in the worktree by default.  Git will attempt
+	to use a temporary directory for these files when set `true`.
+	Defaults to `false`.
+
 mergetool.prompt::
 	Prompt before each invocation of the merge resolution program.
 
