@@ -172,6 +172,11 @@ explicitly.
 	Pretend as if all objects mentioned by reflogs are listed on the
 	command line as `<commit>`.
 
+--indexed-objects::
+	Pretend as if all trees and blobs used by the index are listed
+	on the command line.  Note that you probably want to use
+	`--objects`, too.
+
 --ignore-missing::
 	Upon seeing an invalid object name in the input, pretend as if
 	the bad input was not given.

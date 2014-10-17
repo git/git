@@ -17,6 +17,7 @@
 #include "mailmap.h"
 #include "commit-slab.h"
 #include "dir.h"
+#include "cache-tree.h"
 
 volatile show_early_output_fn_t show_early_output;
 
@@ -1303,6 +1304,53 @@ void add_reflogs_to_pending(struct rev_info *revs, unsigned flags)
 	for_each_reflog(handle_one_reflog, &cb);
 }
 
+static void add_cache_tree(struct cache_tree *it, struct rev_info *revs,
+			   struct strbuf *path)
+{
+	size_t baselen = path->len;
+	int i;
+
+	if (it->entry_count >= 0) {
+		struct tree *tree = lookup_tree(it->sha1);
+		add_pending_object_with_path(revs, &tree->object, "",
+					     040000, path->buf);
+	}
+
+	for (i = 0; i < it->subtree_nr; i++) {
+		struct cache_tree_sub *sub = it->down[i];
+		strbuf_addf(path, "%s%s", baselen ? "/" : "", sub->name);
+		add_cache_tree(sub->cache_tree, revs, path);
+		strbuf_setlen(path, baselen);
+	}
+
+}
+
+void add_index_objects_to_pending(struct rev_info *revs, unsigned flags)
+{
+	int i;
+
+	read_cache();
+	for (i = 0; i < active_nr; i++) {
+		struct cache_entry *ce = active_cache[i];
+		struct blob *blob;
+
+		if (S_ISGITLINK(ce->ce_mode))
+			continue;
+
+		blob = lookup_blob(ce->sha1);
+		if (!blob)
+			die("unable to add index blob to traversal");
+		add_pending_object_with_path(revs, &blob->object, "",
+					     ce->ce_mode, ce->name);
+	}
+
+	if (active_cache_tree) {
+		struct strbuf path = STRBUF_INIT;
+		add_cache_tree(active_cache_tree, revs, &path);
+		strbuf_release(&path);
+	}
+}
+
 static int add_parents_only(struct rev_info *revs, const char *arg_, int flags)
 {
 	unsigned char sha1[20];
@@ -1653,6 +1701,7 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 	    !strcmp(arg, "--reflog") || !strcmp(arg, "--not") ||
 	    !strcmp(arg, "--no-walk") || !strcmp(arg, "--do-walk") ||
 	    !strcmp(arg, "--bisect") || starts_with(arg, "--glob=") ||
+	    !strcmp(arg, "--indexed-objects") ||
 	    starts_with(arg, "--exclude=") ||
 	    starts_with(arg, "--branches=") || starts_with(arg, "--tags=") ||
 	    starts_with(arg, "--remotes=") || starts_with(arg, "--no-walk="))
@@ -2082,6 +2131,8 @@ static int handle_revision_pseudo_opt(const char *submodule,
 		clear_ref_exclusion(&revs->ref_excludes);
 	} else if (!strcmp(arg, "--reflog")) {
 		add_reflogs_to_pending(revs, *flags);
+	} else if (!strcmp(arg, "--indexed-objects")) {
+		add_index_objects_to_pending(revs, *flags);
 	} else if (!strcmp(arg, "--not")) {
 		*flags ^= UNINTERESTING | BOTTOM;
 	} else if (!strcmp(arg, "--no-walk")) {
