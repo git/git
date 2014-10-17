@@ -30,52 +30,42 @@ SHELL_PATH_SQ = $(subst ','\'',$(SHELL_PATH))
 ASCIIDOC_CONF = ../../Documentation/asciidoc.conf
 MANPAGE_XSL   = ../../Documentation/manpage-normal.xsl
 
-GIT_SUBTREE_SH := git-subtree.sh
-GIT_SUBTREE    := git-subtree
+GIT_CONTACTS := git-contacts
 
-GIT_SUBTREE_DOC := git-subtree.1
-GIT_SUBTREE_XML := git-subtree.xml
-GIT_SUBTREE_TXT := git-subtree.txt
-GIT_SUBTREE_HTML := git-subtree.html
+GIT_CONTACTS_DOC := git-contacts.1
+GIT_CONTACTS_XML := git-contacts.xml
+GIT_CONTACTS_TXT := git-contacts.txt
+GIT_CONTACTS_HTML := git-contacts.html
 
-all:: $(GIT_SUBTREE)
+doc: $(GIT_CONTACTS_DOC) $(GIT_CONTACTS_HTML)
 
-$(GIT_SUBTREE): $(GIT_SUBTREE_SH)
-	sed -e '1s|#!.*/sh|#!$(SHELL_PATH_SQ)|' $< >$@
-	chmod +x $@
-
-doc: $(GIT_SUBTREE_DOC) $(GIT_SUBTREE_HTML)
-
-install: $(GIT_SUBTREE)
+install: $(GIT_CONTACTS)
 	$(INSTALL) -d -m 755 $(DESTDIR)$(gitexecdir)
-	$(INSTALL) -m 755 $(GIT_SUBTREE) $(DESTDIR)$(gitexecdir)
+	$(INSTALL) -m 755 $(GIT_CONTACTS) $(DESTDIR)$(gitexecdir)
 
 install-doc: install-man install-html
 
-install-man: $(GIT_SUBTREE_DOC)
+install-man: $(GIT_CONTACTS_DOC)
 	$(INSTALL) -d -m 755 $(DESTDIR)$(man1dir)
 	$(INSTALL) -m 644 $^ $(DESTDIR)$(man1dir)
 
-install-html: $(GIT_SUBTREE_HTML)
+install-html: $(GIT_CONTACTS_HTML)
 	$(INSTALL) -d -m 755 $(DESTDIR)$(htmldir)
 	$(INSTALL) -m 644 $^ $(DESTDIR)$(htmldir)
 
-$(GIT_SUBTREE_DOC): $(GIT_SUBTREE_XML)
+$(GIT_CONTACTS_DOC): $(GIT_CONTACTS_XML)
 	$(XMLTO) -m $(MANPAGE_XSL) man $^
 
-$(GIT_SUBTREE_XML): $(GIT_SUBTREE_TXT)
+$(GIT_CONTACTS_XML): $(GIT_CONTACTS_TXT)
 	$(ASCIIDOC) -b docbook -d manpage -f $(ASCIIDOC_CONF) \
 		-agit_version=$(GIT_VERSION) $^
 
-$(GIT_SUBTREE_HTML): $(GIT_SUBTREE_TXT)
+$(GIT_CONTACTS_HTML): $(GIT_CONTACTS_TXT)
 	$(ASCIIDOC) -b xhtml11 -d manpage -f $(ASCIIDOC_CONF) \
 		-agit_version=$(GIT_VERSION) $^
 
-test:
-	$(MAKE) -C t/ test
-
 clean:
-	$(RM) $(GIT_SUBTREE)
+	$(RM) $(GIT_CONTACTS)
 	$(RM) *.xml *.html *.1
 
 .PHONY: FORCE
