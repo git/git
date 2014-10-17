@@ -32,56 +32,6 @@ static int add_one_ref(const char *path, const unsigned char *sha1, int flag, vo
 	return 0;
 }
 
-static void add_one_tree(const unsigned char *sha1, struct rev_info *revs)
-{
-	struct tree *tree = lookup_tree(sha1);
-	if (tree)
-		add_pending_object(revs, &tree->object, "");
-}
-
-static void add_cache_tree(struct cache_tree *it, struct rev_info *revs)
-{
-	int i;
-
-	if (it->entry_count >= 0)
-		add_one_tree(it->sha1, revs);
-	for (i = 0; i < it->subtree_nr; i++)
-		add_cache_tree(it->down[i]->cache_tree, revs);
-}
-
-static void add_cache_refs(struct rev_info *revs)
-{
-	int i;
-
-	read_cache();
-	for (i = 0; i < active_nr; i++) {
-		struct blob *blob;
-
-		/*
-		 * The index can contain blobs and GITLINKs, GITLINKs are hashes
-		 * that don't actually point to objects in the repository, it's
-		 * almost guaranteed that they are NOT blobs, so we don't call
-		 * lookup_blob() on them, to avoid populating the hash table
-		 * with invalid information
-		 */
-		if (S_ISGITLINK(active_cache[i]->ce_mode))
-			continue;
-
-		blob = lookup_blob(active_cache[i]->sha1);
-		if (blob)
-			blob->object.flags |= SEEN;
-
-		/*
-		 * We could add the blobs to the pending list, but quite
-		 * frankly, we don't care. Once we've looked them up, and
-		 * added them as objects, we've really done everything
-		 * there is to do for a blob
-		 */
-	}
-	if (active_cache_tree)
-		add_cache_tree(active_cache_tree, revs);
-}
-
 /*
  * The traversal will have already marked us as SEEN, so we
  * only need to handle any progress reporting here.
@@ -213,7 +163,7 @@ void mark_reachable_objects(struct rev_info *revs, int mark_reflog,
 	revs->tree_objects = 1;
 
 	/* Add all refs from the index file */
-	add_cache_refs(revs);
+	add_index_objects_to_pending(revs, 0);
 
 	/* Add all external refs */
 	for_each_ref(add_one_ref, revs);
