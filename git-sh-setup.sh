@@ -330,8 +330,7 @@ esac
 
 # Make sure we are in a valid repository of a vintage we understand,
 # if we require to be in a git repository.
-if test -z "$NONGIT_OK"
-then
+git_dir_init () {
 	GIT_DIR=$(git rev-parse --git-dir) || exit
 	if [ -z "$SUBDIRECTORY_OK" ]
 	then
@@ -346,6 +345,11 @@ then
 		exit 1
 	}
 	: ${GIT_OBJECT_DIRECTORY="$GIT_DIR/objects"}
+}
+
+if test -z "$NONGIT_OK"
+then
+	git_dir_init
 fi
 
 peel_committish () {
