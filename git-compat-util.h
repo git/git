@@ -594,6 +594,11 @@ int inet_pton(int af, const char *src, void *dst);
 const char *inet_ntop(int af, const void *src, char *dst, size_t size);
 #endif
 
+#ifdef NO_PTHREADS
+#define atexit git_atexit
+extern int git_atexit(void (*handler)(void));
+#endif
+
 extern void release_pack_memory(size_t);
 
 typedef void (*try_to_free_t)(size_t);
