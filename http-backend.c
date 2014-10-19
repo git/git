@@ -314,7 +314,6 @@ static void run_service(const char **argv)
 	const char *encoding = getenv("HTTP_CONTENT_ENCODING");
 	const char *user = getenv("REMOTE_USER");
 	const char *host = getenv("REMOTE_ADDR");
-	struct argv_array env = ARGV_ARRAY_INIT;
 	int gzipped_request = 0;
 	struct child_process cld = CHILD_PROCESS_INIT;
 
@@ -329,13 +328,12 @@ static void run_service(const char **argv)
 		host = "(none)";
 
 	if (!getenv("GIT_COMMITTER_NAME"))
-		argv_array_pushf(&env, "GIT_COMMITTER_NAME=%s", user);
+		argv_array_pushf(&cld.env_array, "GIT_COMMITTER_NAME=%s", user);
 	if (!getenv("GIT_COMMITTER_EMAIL"))
-		argv_array_pushf(&env, "GIT_COMMITTER_EMAIL=%s@http.%s",
-				 user, host);
+		argv_array_pushf(&cld.env_array,
+				 "GIT_COMMITTER_EMAIL=%s@http.%s", user, host);
 
 	cld.argv = argv;
-	cld.env = env.argv;
 	if (gzipped_request)
 		cld.in = -1;
 	cld.git_cmd = 1;
@@ -350,7 +348,6 @@ static void run_service(const char **argv)
 
 	if (finish_command(&cld))
 		exit(1);
-	argv_array_clear(&env);
 }
 
 static int show_text_ref(const char *name, const unsigned char *sha1,

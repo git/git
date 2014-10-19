@@ -453,7 +453,6 @@ leave:
 static void prepare_push_cert_sha1(struct child_process *proc)
 {
 	static int already_done;
-	struct argv_array env = ARGV_ARRAY_INIT;
 
 	if (!push_cert.len)
 		return;
@@ -487,20 +486,26 @@ static void prepare_push_cert_sha1(struct child_process *proc)
 		nonce_status = check_nonce(push_cert.buf, bogs);
 	}
 	if (!is_null_sha1(push_cert_sha1)) {
-		argv_array_pushf(&env, "GIT_PUSH_CERT=%s", sha1_to_hex(push_cert_sha1));
-		argv_array_pushf(&env, "GIT_PUSH_CERT_SIGNER=%s",
+		argv_array_pushf(&proc->env_array, "GIT_PUSH_CERT=%s",
+				 sha1_to_hex(push_cert_sha1));
+		argv_array_pushf(&proc->env_array, "GIT_PUSH_CERT_SIGNER=%s",
 				 sigcheck.signer ? sigcheck.signer : "");
-		argv_array_pushf(&env, "GIT_PUSH_CERT_KEY=%s",
+		argv_array_pushf(&proc->env_array, "GIT_PUSH_CERT_KEY=%s",
 				 sigcheck.key ? sigcheck.key : "");
-		argv_array_pushf(&env, "GIT_PUSH_CERT_STATUS=%c", sigcheck.result);
+		argv_array_pushf(&proc->env_array, "GIT_PUSH_CERT_STATUS=%c",
+				 sigcheck.result);
 		if (push_cert_nonce) {
-			argv_array_pushf(&env, "GIT_PUSH_CERT_NONCE=%s", push_cert_nonce);
-			argv_array_pushf(&env, "GIT_PUSH_CERT_NONCE_STATUS=%s", nonce_status);
+			argv_array_pushf(&proc->env_array,
+					 "GIT_PUSH_CERT_NONCE=%s",
+					 push_cert_nonce);
+			argv_array_pushf(&proc->env_array,
+					 "GIT_PUSH_CERT_NONCE_STATUS=%s",
+					 nonce_status);
 			if (nonce_status == NONCE_SLOP)
-				argv_array_pushf(&env, "GIT_PUSH_CERT_NONCE_SLOP=%ld",
+				argv_array_pushf(&proc->env_array,
+						 "GIT_PUSH_CERT_NONCE_SLOP=%ld",
 						 nonce_stamp_slop);
 		}
-		proc->env = env.argv;
 	}
 }
 
