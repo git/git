@@ -1537,7 +1537,7 @@ sub _rev_list {
 	@rv;
 }
 
-sub check_cherry_pick {
+sub check_cherry_pick2 {
 	my $base = shift;
 	my $tip = shift;
 	my $parents = shift;
@@ -1552,7 +1552,8 @@ sub check_cherry_pick {
 			delete $commits{$commit};
 		}
 	}
-	return (keys %commits);
+	my @k = (keys %commits);
+	return (scalar @k, $k[0]);
 }
 
 sub has_no_changes {
@@ -1597,7 +1598,7 @@ sub tie_for_persistent_memoization {
 		mkpath([$cache_path]) unless -d $cache_path;
 
 		my %lookup_svn_merge_cache;
-		my %check_cherry_pick_cache;
+		my %check_cherry_pick2_cache;
 		my %has_no_changes_cache;
 		my %_rev_list_cache;
 
@@ -1608,11 +1609,11 @@ sub tie_for_persistent_memoization {
 			LIST_CACHE => ['HASH' => \%lookup_svn_merge_cache],
 		;
 
-		tie_for_persistent_memoization(\%check_cherry_pick_cache,
-		    "$cache_path/check_cherry_pick");
-		memoize 'check_cherry_pick',
+		tie_for_persistent_memoization(\%check_cherry_pick2_cache,
+		    "$cache_path/check_cherry_pick2");
+		memoize 'check_cherry_pick2',
 			SCALAR_CACHE => 'FAULT',
-			LIST_CACHE => ['HASH' => \%check_cherry_pick_cache],
+			LIST_CACHE => ['HASH' => \%check_cherry_pick2_cache],
 		;
 
 		tie_for_persistent_memoization(\%has_no_changes_cache,
@@ -1636,7 +1637,7 @@ sub tie_for_persistent_memoization {
 		$memoized = 0;
 
 		Memoize::unmemoize 'lookup_svn_merge';
-		Memoize::unmemoize 'check_cherry_pick';
+		Memoize::unmemoize 'check_cherry_pick2';
 		Memoize::unmemoize 'has_no_changes';
 		Memoize::unmemoize '_rev_list';
 	}
@@ -1648,7 +1649,8 @@ sub tie_for_persistent_memoization {
 		return unless -d $cache_path;
 
 		for my $cache_file (("$cache_path/lookup_svn_merge",
-				     "$cache_path/check_cherry_pick",
+				     "$cache_path/check_cherry_pick", # old
+				     "$cache_path/check_cherry_pick2",
 				     "$cache_path/has_no_changes")) {
 			for my $suffix (qw(yaml db)) {
 				my $file = "$cache_file.$suffix";
@@ -1817,15 +1819,15 @@ sub find_extra_svn_parents {
 		}
 
 		# double check that there are no missing non-merge commits
-		my (@incomplete) = check_cherry_pick(
+		my ($ninc, $ifirst) = check_cherry_pick2(
 			$merge_base, $merge_tip,
 			$parents,
 			@all_ranges,
 		       );
 
-		if ( @incomplete ) {
-			warn "W:svn cherry-pick ignored ($spec) - missing "
-				.@incomplete." commit(s) (eg $incomplete[0])\n";
+		if ($ninc) {
+			warn "W:svn cherry-pick ignored ($spec) - missing " .
+				"$ninc commit(s) (eg $ifirst)\n";
 		} else {
 			warn
 				"Found merge parent ($spec): ",
