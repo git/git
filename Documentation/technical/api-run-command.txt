@@ -169,6 +169,11 @@ string pointers (NULL terminated) in .env:
 . If the string does not contain '=', it names an environment
   variable that will be removed from the child process's environment.
 
+If the .env member is NULL, `start_command` will point it at the
+.env_array `argv_array` (so you may use one or the other, but not both).
+The memory in .env_array will be cleaned up automatically during
+`finish_command` (or during `start_command` when it is unsuccessful).
+
 To specify a new initial working directory for the sub-process,
 specify it in the .dir member.
 
