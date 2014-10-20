@@ -1,15 +1,25 @@
 To: git@vger.kernel.org
+Cc: Eric Wong <normalperson@yhbt.net>,
+    Paul Mackerras <paulus@samba.org>,
+    Pat Thoyts <patthoyts@users.sourceforge.net>
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Oct 2014, #04; Thu, 16)
-X-master-at: 98349e5364da6164add4ede3e63ceba2cc39159b
-X-next-at: 26a8a7df7daa247250ed7881245ac01138463bad
+Subject: What's cooking in git.git (Oct 2014, #05; Mon, 20)
+X-master-at: 13da0fc092b8cf082eda2f16971c75903aa5aefc
+X-next-at: 72aedf1b35ff671435dd29c2b62e2b2250805689
 
-What's cooking in git.git (Oct 2014, #04; Thu, 16)
+What's cooking in git.git (Oct 2014, #05; Mon, 20)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
+
+According to tinyurl.com/gitCal, the feature freeze for this cycle
+is scheduled for the end of this month.  What's in the 'next' branch
+as of today looks more or less complete picture, I would think.  I'd
+like to ask area maintainers of git-svn, gitk and git-gui to please
+prepare to wrap up the accumulated changes for this cycle and throw
+a pull request to me.  Thanks.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -19,82 +29,113 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* bw/trace-no-inline-getnanotime (2014-09-29) 1 commit
-  (merged to 'next' on 2014-10-14 at 19facbb)
- + trace.c: do not mark getnanotime() as "inline"
+* bc/asciidoc (2014-10-13) 2 commits
+  (merged to 'next' on 2014-10-14 at d9ff206)
+ + Documentation: fix mismatched delimiters in git-imap-send
+ + Documentation: adjust document title underlining
+ (this branch is used by bc/asciidoctor.)
 
- No file-scope static variables in an inlined function, please.
-
-
-* jc/completion-no-chdir (2014-10-09) 1 commit
-  (merged to 'next' on 2014-10-14 at 1cf12e1)
- + completion: use "git -C $there" instead of (cd $there && git ...)
+ Formatting nitpicks to help a (pickier) reimplementation of
+ AsciiDoc to grok our documentation.
 
 
-* po/everyday-doc (2014-10-10) 3 commits
-  (merged to 'next' on 2014-10-13 at daf1d03)
- + doc: add 'everyday' to 'git help'
- + doc: Makefile regularise OBSOLETE_HTML list building
- + doc: modernise everyday.txt wording and format in man page style
+* cc/interpret-trailers (2014-10-13) 11 commits
+  (merged to 'next' on 2014-10-17 at ee4519c)
+ + Documentation: add documentation for 'git interpret-trailers'
+ + trailer: add tests for commands in config file
+ + trailer: execute command from 'trailer.<name>.command'
+ + trailer: add tests for "git interpret-trailers"
+ + trailer: add interpret-trailers command
+ + trailer: put all the processing together and print
+ + trailer: parse trailers from file or stdin
+ + trailer: process command line trailer arguments
+ + trailer: read and process config information
+ + trailer: process trailers from input message and arguments
+ + trailer: add data structures and basic functions
 
- "git help everyday" to show the Everyday Git document.
+ A new filter to programatically edit the tail end of the commit log
+ messages.
+
+
+* jk/test-shell-trace (2014-10-13) 3 commits
+  (merged to 'next' on 2014-10-14 at 9118506)
+ + test-lib.sh: support -x option for shell-tracing
+ + t5304: use helper to report failure of "test foo = bar"
+ + t5304: use test_path_is_* instead of "test -f"
+ (this branch is used by jk/prune-mtime.)
+
+ Test scripts were taught to notice "-x" option to show shell trace,
+ as if the tests were run under "sh -x".
+
+
+* jn/parse-config-slot (2014-10-14) 2 commits
+  (merged to 'next' on 2014-10-14 at 7f0a3ad)
+ + color_parse: do not mention variable name in error message
+ + pass config slots as pointers instead of offsets
+
+ Code cleanup.
+
+
+* rm/gitweb-start-form (2014-10-16) 1 commit
+  (merged to 'next' on 2014-10-17 at 7ca427f)
+ + gitweb: use start_form, not startform that was removed in CGI.pm 4.04
+
+
+* rs/receive-pack-argv-leak-fix (2014-10-13) 1 commit
+  (merged to 'next' on 2014-10-14 at e64654d)
+ + receive-pack: plug minor memory leak in unpack()
+
+
+* ss/contrib-subtree-contacts (2014-10-15) 2 commits
+  (merged to 'next' on 2014-10-17 at 4b3a1d9)
+ + contacts: add a Makefile to generate docs and install
+ + subtree: add an install-html target
+
+
+* ta/config-set (2014-10-13) 1 commit
+  (merged to 'next' on 2014-10-14 at ed660e4)
+ + t1308: fix broken here document in test script
 
 --------------------------------------------------
 [New Topics]
 
-* da/mergetool-temporary-directory (2014-10-16) 2 commits
- - t7610-mergetool: add test cases for mergetool.writeToTemp
- - mergetool: add an option for writing to a temporary directory
- (this branch uses da/mergetool-temporary-filename and da/mergetool-tests; is tangled with da/mergetool-tool-help.)
+* jk/pack-objects-no-bitmap-when-splitting (2014-10-19) 1 commit
+ - pack-objects: turn off bitmaps when we split packs
 
- Allow a temporary directory specified to be used while running "git
- mergetool" backend.
+ Splitting pack-objects output into multiple packs is incompatible
+ with the use of reachability bitmap.
 
  Will merge to 'next'.
 
 
-* da/mergetool-tests (2014-10-16) 4 commits
- - test-lib-functions: adjust style to match CodingGuidelines
- - t7610-mergetool: use test_config to isolate tests
- - t7610-mergetool: add missing && and remove commented-out code
- - t7610-mergetool: use tabs instead of a mix of tabs and spaces
- (this branch is used by da/mergetool-temporary-directory and da/mergetool-temporary-filename; is tangled with da/mergetool-tool-help.)
+* po/doc-status-markup (2014-10-19) 1 commit
+ - doc: fix 'git status --help' character quoting
 
- The clean-up of this test script was long overdue and is a very
- welcome change.
+ Update documentation mark-up.
 
  Will merge to 'next'.
 
 
-* bc/asciidoctor (2014-10-15) 2 commits
- - Documentation: implement linkgit macro for Asciidoctor
- - Documentation: move some AsciiDoc parameters into variables
- (this branch uses bc/asciidoc.)
+* rs/run-command-env-array (2014-10-19) 2 commits
+ - use env_array member of struct child_process
+ - run-command: add env_array, an optional argv_array for env
 
- Add machinery to alternatively use AsciiDoctor to format our
- documentation.
-
- Will merge to 'next'.
-
-
-* da/mergetool-meld (2014-10-16) 1 commit
- - mergetools/meld: make usage of `--output` configurable and more robust
-
- Newer versions of 'meld' breaks the auto-detection we use to see if
- they are new enough to support the `--output` option.
+ Add managed "env" array to child_process to clarify the lifetime
+ rules.
 
  Will merge to 'next'.
 
 
-* rm/gitweb-start-form (2014-10-16) 1 commit
- - gitweb: use start_form, not startform that was removed in CGI.pm 4.04
+* tb/core-filemode-doc (2014-10-19) 1 commit
+ - core.filemode may need manual action
+
+ Doc update.
 
  Will merge to 'next'.
 
 
-* ss/contrib-subtree-contacts (2014-10-15) 2 commits
- - contacts: add a Makefile to generate docs and install
- - subtree: add an install-html target
+* wk/t1304-wo-USER (2014-10-19) 1 commit
+ - t1304: Set LOGNAME even if USER is unset or null
 
  Will merge to 'next'.
 
@@ -112,15 +153,6 @@ of the repositories listed at
  optionally flips the default to "--exact".
 
  Waiting for an Ack.
-
-
-* eb/no-pthreads (2014-10-13) 2 commits
- - pack-objects: set number of threads before checking and warning
- - index-pack: fix compilation with NO_PTHREADS
-
- Allow us build with NO_PTHREADS=NoThanks compilation option.  The
- last change (not queued) needs a bit more explanation in its log
- message.
 
 
 * tr/remerge-diff (2014-09-08) 8 commits
@@ -279,123 +311,153 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* jk/prune-mtime (2014-10-16) 25 commits
- - pack-objects: double-check options before discarding objects
- - repack: pack objects mentioned by the index
- - pack-objects: use argv_array
- - reachable: use revision machinery's --index-objects code
- - rev-list: add --index-objects option
- - rev-list: document --reflog option
- - traverse_commit_list: support pending blobs/trees with paths
- - make add_object_array_with_context interface more sane
- - write_sha1_file: freshen existing objects
- - pack-objects: match prune logic for discarding objects
- - pack-objects: refactor unpack-unreachable expiration check
- - prune: keep objects reachable from recent objects
- - sha1_file: add for_each iterators for loose and packed objects
- - count-objects: use for_each_loose_file_in_objdir
- - count-objects: do not use xsize_t when counting object size
- - prune-packed: use for_each_loose_file_in_objdir
- - reachable: mark index blobs as SEEN
- - prune: factor out loose-object directory traversal
- - reachable: reuse revision.c "add all reflogs" code
- - reachable: use traverse_commit_list instead of custom walk
- - clean up name allocation in prepare_revision_walk
- - object_array: add a "clear" function
- - object_array: factor out slopbuf-freeing logic
- - isxdigit: cast input to unsigned char
- - foreach_alt_odb: propagate return value from callback
- (this branch uses jk/test-shell-trace.)
+* eb/no-pthreads (2014-10-19) 3 commits
+ - Handle atexit list internaly for unthreaded builds
+ - pack-objects: set number of threads before checking and warning
+ - index-pack: fix compilation with NO_PTHREADS
 
- Looked mostly sensible modulo minor nits (and I wasn't looking for
- typos very carefully).  Object enumeration is broken.
+ Allow us build with NO_PTHREADS=NoThanks compilation option.  The
+ last change (not queued) needs a bit more explanation in its log
+ message.
+
+ Will merge to 'next'.
+
+
+* da/mergetool-temporary-directory (2014-10-16) 2 commits
+  (merged to 'next' on 2014-10-17 at 261e74e)
+ + t7610-mergetool: add test cases for mergetool.writeToTemp
+ + mergetool: add an option for writing to a temporary directory
+ (this branch uses da/mergetool-temporary-filename and da/mergetool-tests; is tangled with da/mergetool-tool-help.)
+
+ Allow a temporary directory specified to be used while running "git
+ mergetool" backend.
+
+ Will merge to 'master'.
+
+
+* da/mergetool-tests (2014-10-16) 4 commits
+  (merged to 'next' on 2014-10-17 at 239fefe)
+ + test-lib-functions: adjust style to match CodingGuidelines
+ + t7610-mergetool: use test_config to isolate tests
+ + t7610-mergetool: add missing && and remove commented-out code
+ + t7610-mergetool: use tabs instead of a mix of tabs and spaces
+ (this branch is used by da/mergetool-temporary-directory and da/mergetool-temporary-filename; is tangled with da/mergetool-tool-help.)
+
+ The clean-up of this test script was long overdue and is a very
+ welcome change.
+
+ Will merge to 'master'.
+
+
+* bc/asciidoctor (2014-10-15) 2 commits
+  (merged to 'next' on 2014-10-17 at 12ce2e2)
+ + Documentation: implement linkgit macro for Asciidoctor
+ + Documentation: move some AsciiDoc parameters into variables
+
+ Add machinery to alternatively use AsciiDoctor to format our
+ documentation.
+
+ Brian seems to have a bit more tweaks; will wait for them before
+ moving this topic forward.
+
+
+* da/mergetool-meld (2014-10-16) 1 commit
+  (merged to 'next' on 2014-10-17 at 00ee553)
+ + mergetools/meld: make usage of `--output` configurable and more robust
+
+ Newer versions of 'meld' breaks the auto-detection we use to see if
+ they are new enough to support the `--output` option.
+
+ Will merge to 'master'.
+
+
+* jk/prune-mtime (2014-10-19) 28 commits
+  (merged to 'next' on 2014-10-20 at fdd7ff6)
+ + drop add_object_array_with_mode
+ + revision: remove definition of unused 'add_object' function
+ + pack-objects: double-check options before discarding objects
+ + repack: pack objects mentioned by the index
+ + pack-objects: use argv_array
+ + reachable: use revision machinery's --indexed-objects code
+ + rev-list: add --indexed-objects option
+ + rev-list: document --reflog option
+ + t5516: test pushing a tag of an otherwise unreferenced blob
+ + traverse_commit_list: support pending blobs/trees with paths
+ + make add_object_array_with_context interface more sane
+ + write_sha1_file: freshen existing objects
+ + pack-objects: match prune logic for discarding objects
+ + pack-objects: refactor unpack-unreachable expiration check
+ + prune: keep objects reachable from recent objects
+ + sha1_file: add for_each iterators for loose and packed objects
+ + count-objects: use for_each_loose_file_in_objdir
+ + count-objects: do not use xsize_t when counting object size
+ + prune-packed: use for_each_loose_file_in_objdir
+ + reachable: mark index blobs as SEEN
+ + prune: factor out loose-object directory traversal
+ + reachable: reuse revision.c "add all reflogs" code
+ + reachable: use traverse_commit_list instead of custom walk
+ + clean up name allocation in prepare_revision_walk
+ + object_array: add a "clear" function
+ + object_array: factor out slopbuf-freeing logic
+ + isxdigit: cast input to unsigned char
+ + foreach_alt_odb: propagate return value from callback
+
+ Tighten the logic to decide that an unreachable cruft is
+ sufficiently old by covering corner cases such as an ancient object
+ becoming reachable and then going unreachable again, in which case
+ its retention period should be prolonged.
+
+ Will merge to 'master'.
 
 
 * rs/ref-transaction (2014-10-15) 25 commits
- - ref_transaction_commit: bail out on failure to remove a ref
- - lockfile: remove unable_to_lock_error
- - refs.c: do not permit err == NULL
- - remote rm/prune: print a message when writing packed-refs fails
- - for-each-ref: skip and warn about broken ref names
- - refs.c: allow listing and deleting badly named refs
- - test: put tests for handling of bad ref names in one place
- - packed-ref cache: forbid dot-components in refnames
- - branch -d: simplify by using RESOLVE_REF_READING
- - branch -d: avoid repeated symref resolution
- - reflog test: test interaction with detached HEAD
- - refs.c: change resolve_ref_unsafe reading argument to be a flags field
- - refs.c: make write_ref_sha1 static
- - fetch.c: change s_update_ref to use a ref transaction
- - refs.c: ref_transaction_commit: distinguish name conflicts from other errors
- - refs.c: pass a list of names to skip to is_refname_available
- - refs.c: call lock_ref_sha1_basic directly from commit
- - refs.c: refuse to lock badly named refs in lock_ref_sha1_basic
- - rename_ref: don't ask read_ref_full where the ref came from
- - refs.c: pass the ref log message to _create/delete/update instead of _commit
- - refs.c: add an err argument to delete_ref_loose
- - wrapper.c: add a new function unlink_or_msg
- - refs.c: lock_ref_sha1_basic is used for all refs
- - wrapper.c: remove/unlink_or_warn: simplify, treat ENOENT as success
- - mv test: recreate mod/ directory instead of relying on stale copy
+  (merged to 'next' on 2014-10-17 at 1390624)
+ + ref_transaction_commit: bail out on failure to remove a ref
+ + lockfile: remove unable_to_lock_error
+ + refs.c: do not permit err == NULL
+ + remote rm/prune: print a message when writing packed-refs fails
+ + for-each-ref: skip and warn about broken ref names
+ + refs.c: allow listing and deleting badly named refs
+ + test: put tests for handling of bad ref names in one place
+ + packed-ref cache: forbid dot-components in refnames
+ + branch -d: simplify by using RESOLVE_REF_READING
+ + branch -d: avoid repeated symref resolution
+ + reflog test: test interaction with detached HEAD
+ + refs.c: change resolve_ref_unsafe reading argument to be a flags field
+ + refs.c: make write_ref_sha1 static
+ + fetch.c: change s_update_ref to use a ref transaction
+ + refs.c: ref_transaction_commit: distinguish name conflicts from other errors
+ + refs.c: pass a list of names to skip to is_refname_available
+ + refs.c: call lock_ref_sha1_basic directly from commit
+ + refs.c: refuse to lock badly named refs in lock_ref_sha1_basic
+ + rename_ref: don't ask read_ref_full where the ref came from
+ + refs.c: pass the ref log message to _create/delete/update instead of _commit
+ + refs.c: add an err argument to delete_ref_loose
+ + wrapper.c: add a new function unlink_or_msg
+ + refs.c: lock_ref_sha1_basic is used for all refs
+ + wrapper.c: remove/unlink_or_warn: simplify, treat ENOENT as success
+ + mv test: recreate mod/ directory instead of relying on stale copy
 
  The API to update refs have been restructured to allow introducing
  a true transactional updates later.  We would even allow storing
  refs in backends other than the traditional filesystem-based one.
 
- Will merge to 'next'.
-
-
-* bc/asciidoc (2014-10-13) 2 commits
-  (merged to 'next' on 2014-10-14 at d9ff206)
- + Documentation: fix mismatched delimiters in git-imap-send
- + Documentation: adjust document title underlining
- (this branch is used by bc/asciidoctor.)
-
- Formatting nitpicks to help a (pickier) reimplementation of
- AsciiDoc to grok our documentation.
-
  Will merge to 'master'.
 
 
 * da/mergetool-tool-help (2014-10-15) 8 commits
- - difftool: don't assume that default sh is sane
- - mergetool: don't require a work tree for --tool-help
- - git-sh-setup: move GIT_DIR initialization into a function
- - mergetool: use more conservative temporary filenames
- - test-lib-functions: adjust style to match CodingGuidelines
- - t7610-mergetool: prefer test_config over git config
- - t7610-mergetool: add missing && and remove commented-out code
- - t7610-mergetool: use tabs instead of a mix of tabs and spaces
+  (merged to 'next' on 2014-10-17 at 854654c)
+ + difftool: don't assume that default sh is sane
+ + mergetool: don't require a work tree for --tool-help
+ + git-sh-setup: move GIT_DIR initialization into a function
+ + mergetool: use more conservative temporary filenames
+ + test-lib-functions: adjust style to match CodingGuidelines
+ + t7610-mergetool: prefer test_config over git config
+ + t7610-mergetool: add missing && and remove commented-out code
+ + t7610-mergetool: use tabs instead of a mix of tabs and spaces
  (this branch is tangled with da/mergetool-temporary-directory, da/mergetool-temporary-filename and da/mergetool-tests.)
 
  Allow "git mergetool --help" to run outside a Git repository.
-
- Will merge to 'next'.
-
-
-* jk/test-shell-trace (2014-10-13) 3 commits
-  (merged to 'next' on 2014-10-14 at 9118506)
- + test-lib.sh: support -x option for shell-tracing
- + t5304: use helper to report failure of "test foo = bar"
- + t5304: use test_path_is_* instead of "test -f"
- (this branch is used by jk/prune-mtime.)
-
- Test scripts were taught to notice "-x" option to show shell trace,
- as if the tests were run under "sh -x".
-
- Will merge to 'master'.
-
-
-* rs/receive-pack-argv-leak-fix (2014-10-13) 1 commit
-  (merged to 'next' on 2014-10-14 at e64654d)
- + receive-pack: plug minor memory leak in unpack()
-
- Will merge to 'master'.
-
-
-* ta/config-set (2014-10-13) 1 commit
-  (merged to 'next' on 2014-10-14 at ed660e4)
- + t1308: fix broken here document in test script
 
  Will merge to 'master'.
 
@@ -407,6 +469,8 @@ of the repositories listed at
  local branch by setting its branch.*.merge to branch name (not a
  full refname) incorrectly said that the upstream is gone.
 
+ Will merge to 'next'.
+
 
 * jc/clone-borrow (2014-10-15) 1 commit
  - clone: --dissociate option to mark that reference is only temporary
@@ -415,25 +479,19 @@ of the repositories listed at
 
 
 * js/completion-hide-not-a-repo (2014-10-14) 1 commit
- - completion: silence "fatal: Not a git repository" error
+  (merged to 'next' on 2014-10-17 at 466de3c)
+ + completion: silence "fatal: Not a git repository" error
 
  Some internal error messages leaked out of the bash completion when
  typing "git cmd <TAB>" and the machinery tried to complete
  refnames.
 
-
-* jn/parse-config-slot (2014-10-14) 2 commits
-  (merged to 'next' on 2014-10-14 at 7f0a3ad)
- + color_parse: do not mention variable name in error message
- + pass config slots as pointers instead of offsets
-
- Code cleanup.
-
  Will merge to 'master'.
 
 
 * da/mergetool-temporary-filename (2014-10-16) 1 commit
- - mergetool: use more conservative temporary filenames
+  (merged to 'next' on 2014-10-17 at 3fb95b5)
+ + mergetool: use more conservative temporary filenames
  (this branch is used by da/mergetool-temporary-directory; uses da/mergetool-tests; is tangled with da/mergetool-tool-help.)
 
  Tweak the names of the three throw-away files "git mergetool" comes
@@ -441,7 +499,7 @@ of the repositories listed at
  single dot in its name in the original (e.g. "hello.c") will have
  only one dot in these variants (e.g. "hello_BASE_4321.c").
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jc/push-cert-hmac-optim (2014-09-25) 2 commits
@@ -495,23 +553,6 @@ of the repositories listed at
  A few tests need some tweaks for MinGW ($gmane/{257756,257757}).
  Conflicts with rs/ref-transaction so ejected for now, waiting for a
  reroll.
-
-
-* cc/interpret-trailers (2014-10-13) 11 commits
- - Documentation: add documentation for 'git interpret-trailers'
- - trailer: add tests for commands in config file
- - trailer: execute command from 'trailer.<name>.command'
- - trailer: add tests for "git interpret-trailers"
- - trailer: add interpret-trailers command
- - trailer: put all the processing together and print
- - trailer: parse trailers from file or stdin
- - trailer: process command line trailer arguments
- - trailer: read and process config information
- - trailer: process trailers from input message and arguments
- - trailer: add data structures and basic functions
-
- A new filter to programatically edit the tail end of the commit log
- messages.
 
 
 * mt/patch-id-stable (2014-06-10) 1 commit
