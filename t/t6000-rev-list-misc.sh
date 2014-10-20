@@ -73,4 +73,27 @@ test_expect_success 'symleft flag bit is propagated down from tag' '
 	test_cmp expect actual
 '
 
+test_expect_success 'rev-list can show index objects' '
+	# Of the blobs and trees in the index, note:
+	#
+	#   - we do not show two/three, because it is the
+	#     same blob as "one", and we show objects only once
+	#
+	#   - we do show the tree "two", because it has a valid cache tree
+	#     from the last commit
+	#
+	#   - we do not show the root tree; since we updated the index, it
+	#     does not have a valid cache tree
+	#
+	cat >expect <<-\EOF
+	8e4020bb5a8d8c873b25de15933e75cc0fc275df one
+	d9d3a7417b9605cfd88ee6306b28dadc29e6ab08 only-in-index
+	9200b628cf9dc883a85a7abc8d6e6730baee589c two
+	EOF
+	echo only-in-index >only-in-index &&
+	git add only-in-index &&
+	git rev-list --objects --indexed-objects >actual &&
+	test_cmp expect actual
+'
+
 test_done

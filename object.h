@@ -18,8 +18,8 @@ struct object_array {
 		 * empty string.
 		 */
 		char *name;
+		char *path;
 		unsigned mode;
-		struct object_context *context;
 	} *objects;
 };
 
@@ -114,8 +114,7 @@ int object_list_contains(struct object_list *list, struct object *obj);
 
 /* Object array handling .. */
 void add_object_array(struct object *obj, const char *name, struct object_array *array);
-void add_object_array_with_mode(struct object *obj, const char *name, struct object_array *array, unsigned mode);
-void add_object_array_with_context(struct object *obj, const char *name, struct object_array *array, struct object_context *context);
+void add_object_array_with_path(struct object *obj, const char *name, struct object_array *array, unsigned mode, const char *path);
 
 typedef int (*object_array_each_func_t)(struct object_array_entry *, void *);
 
@@ -132,6 +131,12 @@ void object_array_filter(struct object_array *array,
  * Warning: this function uses an O(N^2) algorithm.
  */
 void object_array_remove_duplicates(struct object_array *array);
+
+/*
+ * Remove any objects from the array, freeing all used memory; afterwards
+ * the array is ready to store more objects with add_object_array().
+ */
+void object_array_clear(struct object_array *array);
 
 void clear_object_flags(unsigned flags);
 
