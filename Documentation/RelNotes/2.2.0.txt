@@ -58,6 +58,14 @@ UI, Workflows & Features
    public repository really point the commits the pusher wanted to,
    without having to "trust" the server.
 
+ * "git interpret-trailers" is a new filter to programatically edit
+    the tail end of the commit log messages.
+
+ * "git help everyday" shows the "Everyday Git in 20 commands or so"
+   document, whose contents have been updated to more modern Git
+   practice.
+
+
 Performance, Internal Implementation, etc.
 
  * The API to manipulate the "refs" is currently undergoing a revamp
@@ -124,6 +132,10 @@ Performance, Internal Implementation, etc.
    original before feeding the filter.  Instead, stream the file
    contents directly to the filter and process its output.
 
+ * The scripts in the test suite can be run with "-x" option to show
+   a shell-trace of each command run in them.
+
+
 Also contains various documentation updates and code clean-ups.
 
 
@@ -137,11 +149,6 @@ notes for details).
  * "git log --pretty/format=" with an empty format string did not
    mean the more obvious "No output whatsoever" but "Use default
    format", which was counterintuitive.
-
- * Implementations of "tar" that do not understand an extended pax
-   header would extract the contents of it in a regular file; make
-   sure the permission bits of this file follows the same tar.umask
-   configuration setting.
 
  * "git -c section.var command" and "git -c section.var= command"
    should pass the configuration differently (the former should be a
@@ -236,3 +243,8 @@ notes for details).
  * A few documentation pages had example sections marked up not quite
    correctly, which passed AsciiDoc but failed with AsciiDoctor.
    (merge c30c43c bc/asciidoc-pretty-formats-fix later to maint).
+   (merge f8a48af bc/asciidoc later to maint).
+
+ * "gitweb" used deprecated CGI::startfrom, which was removed from
+   CGI.pm as of 4.04; use CGI::start_from instead.
+   (merge 4750f4b rm/gitweb-start-form later to maint).
