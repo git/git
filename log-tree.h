@@ -7,7 +7,7 @@ struct log_info {
 	struct commit *commit, *parent;
 };
 
-int parse_decorate_color_config(const char *var, const int ofs, const char *value);
+int parse_decorate_color_config(const char *var, const char *slot_name, const char *value);
 void init_log_tree_opt(struct rev_info *);
 int log_tree_diff_flush(struct rev_info *);
 int log_tree_commit(struct rev_info *, struct commit *);

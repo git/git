@@ -248,8 +248,7 @@ int git_diff_basic_config(const char *var, const char *value, void *cb)
 			return 0;
 		if (!value)
 			return config_error_nonbool(var);
-		color_parse(value, var, diff_colors[slot]);
-		return 0;
+		return color_parse(value, diff_colors[slot]);
 	}
 
 	/* like GNU diff's --suppress-blank-empty option  */

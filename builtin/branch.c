@@ -62,19 +62,19 @@ static unsigned char merge_filter_ref[20];
 static struct string_list output = STRING_LIST_INIT_DUP;
 static unsigned int colopts;
 
-static int parse_branch_color_slot(const char *var, int ofs)
+static int parse_branch_color_slot(const char *slot)
 {
-	if (!strcasecmp(var+ofs, "plain"))
+	if (!strcasecmp(slot, "plain"))
 		return BRANCH_COLOR_PLAIN;
-	if (!strcasecmp(var+ofs, "reset"))
+	if (!strcasecmp(slot, "reset"))
 		return BRANCH_COLOR_RESET;
-	if (!strcasecmp(var+ofs, "remote"))
+	if (!strcasecmp(slot, "remote"))
 		return BRANCH_COLOR_REMOTE;
-	if (!strcasecmp(var+ofs, "local"))
+	if (!strcasecmp(slot, "local"))
 		return BRANCH_COLOR_LOCAL;
-	if (!strcasecmp(var+ofs, "current"))
+	if (!strcasecmp(slot, "current"))
 		return BRANCH_COLOR_CURRENT;
-	if (!strcasecmp(var+ofs, "upstream"))
+	if (!strcasecmp(slot, "upstream"))
 		return BRANCH_COLOR_UPSTREAM;
 	return -1;
 }
@@ -90,13 +90,12 @@ static int git_branch_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 	if (skip_prefix(var, "color.branch.", &slot_name)) {
-		int slot = parse_branch_color_slot(var, slot_name - var);
+		int slot = parse_branch_color_slot(slot_name);
 		if (slot < 0)
 			return 0;
 		if (!value)
 			return config_error_nonbool(var);
-		color_parse(value, var, branch_colors[slot]);
-		return 0;
+		return color_parse(value, branch_colors[slot]);
 	}
 	return git_color_default_config(var, value, cb);
 }
