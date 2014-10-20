@@ -13,8 +13,8 @@ add_blob() {
 	before=$(git count-objects | sed "s/ .*//") &&
 	BLOB=$(echo aleph_0 | git hash-object -w --stdin) &&
 	BLOB_FILE=.git/objects/$(echo $BLOB | sed "s/^../&\//") &&
-	test $((1 + $before)) = $(git count-objects | sed "s/ .*//") &&
-	test -f $BLOB_FILE &&
+	verbose test $((1 + $before)) = $(git count-objects | sed "s/ .*//") &&
+	test_path_is_file $BLOB_FILE &&
 	test-chmtime =+0 $BLOB_FILE
 }
 
@@ -35,9 +35,9 @@ test_expect_success 'prune stale packs' '
 	: > .git/objects/tmp_2.pack &&
 	test-chmtime =-86501 .git/objects/tmp_1.pack &&
 	git prune --expire 1.day &&
-	test -f $orig_pack &&
-	test -f .git/objects/tmp_2.pack &&
-	! test -f .git/objects/tmp_1.pack
+	test_path_is_file $orig_pack &&
+	test_path_is_file .git/objects/tmp_2.pack &&
+	test_path_is_missing .git/objects/tmp_1.pack
 
 '
 
@@ -45,12 +45,12 @@ test_expect_success 'prune --expire' '
 
 	add_blob &&
 	git prune --expire=1.hour.ago &&
-	test $((1 + $before)) = $(git count-objects | sed "s/ .*//") &&
-	test -f $BLOB_FILE &&
+	verbose test $((1 + $before)) = $(git count-objects | sed "s/ .*//") &&
+	test_path_is_file $BLOB_FILE &&
 	test-chmtime =-86500 $BLOB_FILE &&
 	git prune --expire 1.day &&
-	test $before = $(git count-objects | sed "s/ .*//") &&
-	! test -f $BLOB_FILE
+	verbose test $before = $(git count-objects | sed "s/ .*//") &&
+	test_path_is_missing $BLOB_FILE
 
 '
 
@@ -59,12 +59,12 @@ test_expect_success 'gc: implicit prune --expire' '
 	add_blob &&
 	test-chmtime =-$((2*$week-30)) $BLOB_FILE &&
 	git gc &&
-	test $((1 + $before)) = $(git count-objects | sed "s/ .*//") &&
-	test -f $BLOB_FILE &&
+	verbose test $((1 + $before)) = $(git count-objects | sed "s/ .*//") &&
+	test_path_is_file $BLOB_FILE &&
 	test-chmtime =-$((2*$week+1)) $BLOB_FILE &&
 	git gc &&
-	test $before = $(git count-objects | sed "s/ .*//") &&
-	! test -f $BLOB_FILE
+	verbose test $before = $(git count-objects | sed "s/ .*//") &&
+	test_path_is_missing $BLOB_FILE
 
 '
 
@@ -110,7 +110,7 @@ test_expect_success 'prune: do not prune detached HEAD with no reflog' '
 	git commit --allow-empty -m "detached commit" &&
 	# verify that there is no reflogs
 	# (should be removed and disabled by previous test)
-	test ! -e .git/logs &&
+	test_path_is_missing .git/logs &&
 	git prune -n >prune_actual &&
 	: >prune_expected &&
 	test_cmp prune_actual prune_expected
@@ -144,8 +144,8 @@ test_expect_success 'gc --no-prune' '
 	test-chmtime =-$((5001*$day)) $BLOB_FILE &&
 	git config gc.pruneExpire 2.days.ago &&
 	git gc --no-prune &&
-	test 1 = $(git count-objects | sed "s/ .*//") &&
-	test -f $BLOB_FILE
+	verbose test 1 = $(git count-objects | sed "s/ .*//") &&
+	test_path_is_file $BLOB_FILE
 
 '
 
@@ -153,10 +153,10 @@ test_expect_success 'gc respects gc.pruneExpire' '
 
 	git config gc.pruneExpire 5002.days.ago &&
 	git gc &&
-	test -f $BLOB_FILE &&
+	test_path_is_file $BLOB_FILE &&
 	git config gc.pruneExpire 5000.days.ago &&
 	git gc &&
-	test ! -f $BLOB_FILE
+	test_path_is_missing $BLOB_FILE
 
 '
 
@@ -165,9 +165,9 @@ test_expect_success 'gc --prune=<date>' '
 	add_blob &&
 	test-chmtime =-$((5001*$day)) $BLOB_FILE &&
 	git gc --prune=5002.days.ago &&
-	test -f $BLOB_FILE &&
+	test_path_is_file $BLOB_FILE &&
 	git gc --prune=5000.days.ago &&
-	test ! -f $BLOB_FILE
+	test_path_is_missing $BLOB_FILE
 
 '
 
@@ -175,9 +175,9 @@ test_expect_success 'gc --prune=never' '
 
 	add_blob &&
 	git gc --prune=never &&
-	test -f $BLOB_FILE &&
+	test_path_is_file $BLOB_FILE &&
 	git gc --prune=now &&
-	test ! -f $BLOB_FILE
+	test_path_is_missing $BLOB_FILE
 
 '
 
@@ -186,10 +186,10 @@ test_expect_success 'gc respects gc.pruneExpire=never' '
 	git config gc.pruneExpire never &&
 	add_blob &&
 	git gc &&
-	test -f $BLOB_FILE &&
+	test_path_is_file $BLOB_FILE &&
 	git config gc.pruneExpire now &&
 	git gc &&
-	test ! -f $BLOB_FILE
+	test_path_is_missing $BLOB_FILE
 
 '
 
@@ -197,9 +197,9 @@ test_expect_success 'prune --expire=never' '
 
 	add_blob &&
 	git prune --expire=never &&
-	test -f $BLOB_FILE &&
+	test_path_is_file $BLOB_FILE &&
 	git prune &&
-	test ! -f $BLOB_FILE
+	test_path_is_missing $BLOB_FILE
 
 '
 
@@ -209,11 +209,11 @@ test_expect_success 'gc: prune old objects after local clone' '
 	git clone --no-hardlinks . aclone &&
 	(
 		cd aclone &&
-		test 1 = $(git count-objects | sed "s/ .*//") &&
-		test -f $BLOB_FILE &&
+		verbose test 1 = $(git count-objects | sed "s/ .*//") &&
+		test_path_is_file $BLOB_FILE &&
 		git gc --prune &&
-		test 0 = $(git count-objects | sed "s/ .*//") &&
-		! test -f $BLOB_FILE
+		verbose test 0 = $(git count-objects | sed "s/ .*//") &&
+		test_path_is_missing $BLOB_FILE
 	)
 '
 
@@ -250,7 +250,7 @@ test_expect_success 'prune .git/shallow' '
 	grep $SHA1 .git/shallow &&
 	grep $SHA1 out &&
 	git prune &&
-	! test -f .git/shallow
+	test_path_is_missing .git/shallow
 '
 
 test_done
