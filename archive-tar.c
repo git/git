@@ -192,7 +192,7 @@ static int write_extended_header(struct archiver_args *args,
 	unsigned int mode;
 	memset(&header, 0, sizeof(header));
 	*header.typeflag = TYPEFLAG_EXT_HEADER;
-	mode = 0100666 & ~tar_umask;
+	mode = 0100666;
 	sprintf(header.name, "%s.paxheader", sha1_to_hex(sha1));
 	prepare_header(args, &header, mode, size);
 	write_blocked(&header, sizeof(header));
@@ -300,7 +300,7 @@ static int write_global_extended_header(struct archiver_args *args)
 	strbuf_append_ext_header(&ext_header, "comment", sha1_to_hex(sha1), 40);
 	memset(&header, 0, sizeof(header));
 	*header.typeflag = TYPEFLAG_GLOBAL_HEADER;
-	mode = 0100666 & ~tar_umask;
+	mode = 0100666;
 	strcpy(header.name, "pax_global_header");
 	prepare_header(args, &header, mode, ext_header.len);
 	write_blocked(&header, sizeof(header));
