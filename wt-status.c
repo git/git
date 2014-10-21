@@ -726,14 +726,14 @@ static void wt_status_print_changed(struct wt_status *s)
 static void wt_status_print_submodule_summary(struct wt_status *s, int uncommitted)
 {
 	struct child_process sm_summary = CHILD_PROCESS_INIT;
-	struct argv_array env = ARGV_ARRAY_INIT;
 	struct argv_array argv = ARGV_ARRAY_INIT;
 	struct strbuf cmd_stdout = STRBUF_INIT;
 	struct strbuf summary = STRBUF_INIT;
 	char *summary_content;
 	size_t len;
 
-	argv_array_pushf(&env, "GIT_INDEX_FILE=%s", s->index_file);
+	argv_array_pushf(&sm_summary.env_array, "GIT_INDEX_FILE=%s",
+			 s->index_file);
 
 	argv_array_push(&argv, "submodule");
 	argv_array_push(&argv, "summary");
@@ -745,14 +745,12 @@ static void wt_status_print_submodule_summary(struct wt_status *s, int uncommitt
 		argv_array_push(&argv, s->amend ? "HEAD^" : "HEAD");
 
 	sm_summary.argv = argv.argv;
-	sm_summary.env = env.argv;
 	sm_summary.git_cmd = 1;
 	sm_summary.no_stdin = 1;
 	fflush(s->fp);
 	sm_summary.out = -1;
 
 	run_command(&sm_summary);
-	argv_array_clear(&env);
 	argv_array_clear(&argv);
 
 	len = strbuf_read(&cmd_stdout, sm_summary.out, 1024);
