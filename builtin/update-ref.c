@@ -175,7 +175,7 @@ static int parse_next_sha1(struct strbuf *input, const char **next,
  * depending on how line_termination is set.
  */
 
-static const char *parse_cmd_update(struct ref_transaction *transaction,
+static const char *parse_cmd_update(struct transaction *transaction,
 				    struct strbuf *input, const char *next)
 {
 	struct strbuf err = STRBUF_INIT;
@@ -198,7 +198,7 @@ static const char *parse_cmd_update(struct ref_transaction *transaction,
 	if (*next != line_termination)
 		die("update %s: extra input: %s", refname, next);
 
-	if (ref_transaction_update(transaction, refname, new_sha1, old_sha1,
+	if (transaction_update_ref(transaction, refname, new_sha1, old_sha1,
 				   update_flags, have_old, msg, &err))
 		die("%s", err.buf);
 
@@ -209,7 +209,7 @@ static const char *parse_cmd_update(struct ref_transaction *transaction,
 	return next;
 }
 
-static const char *parse_cmd_create(struct ref_transaction *transaction,
+static const char *parse_cmd_create(struct transaction *transaction,
 				    struct strbuf *input, const char *next)
 {
 	struct strbuf err = STRBUF_INIT;
@@ -229,7 +229,7 @@ static const char *parse_cmd_create(struct ref_transaction *transaction,
 	if (*next != line_termination)
 		die("create %s: extra input: %s", refname, next);
 
-	if (ref_transaction_create(transaction, refname, new_sha1,
+	if (transaction_create_ref(transaction, refname, new_sha1,
 				   update_flags, msg, &err))
 		die("%s", err.buf);
 
@@ -240,7 +240,7 @@ static const char *parse_cmd_create(struct ref_transaction *transaction,
 	return next;
 }
 
-static const char *parse_cmd_delete(struct ref_transaction *transaction,
+static const char *parse_cmd_delete(struct transaction *transaction,
 				    struct strbuf *input, const char *next)
 {
 	struct strbuf err = STRBUF_INIT;
@@ -264,7 +264,7 @@ static const char *parse_cmd_delete(struct ref_transaction *transaction,
 	if (*next != line_termination)
 		die("delete %s: extra input: %s", refname, next);
 
-	if (ref_transaction_delete(transaction, refname, old_sha1,
+	if (transaction_delete_ref(transaction, refname, old_sha1,
 				   update_flags, have_old, msg, &err))
 		die("%s", err.buf);
 
@@ -275,7 +275,7 @@ static const char *parse_cmd_delete(struct ref_transaction *transaction,
 	return next;
 }
 
-static const char *parse_cmd_verify(struct ref_transaction *transaction,
+static const char *parse_cmd_verify(struct transaction *transaction,
 				    struct strbuf *input, const char *next)
 {
 	struct strbuf err = STRBUF_INIT;
@@ -300,7 +300,7 @@ static const char *parse_cmd_verify(struct ref_transaction *transaction,
 	if (*next != line_termination)
 		die("verify %s: extra input: %s", refname, next);
 
-	if (ref_transaction_update(transaction, refname, new_sha1, old_sha1,
+	if (transaction_update_ref(transaction, refname, new_sha1, old_sha1,
 				   update_flags, have_old, msg, &err))
 		die("%s", err.buf);
 
@@ -320,7 +320,7 @@ static const char *parse_cmd_option(struct strbuf *input, const char *next)
 	return next + 8;
 }
 
-static void update_refs_stdin(struct ref_transaction *transaction)
+static void update_refs_stdin(struct transaction *transaction)
 {
 	struct strbuf input = STRBUF_INIT;
 	const char *next;
@@ -376,9 +376,9 @@ int cmd_update_ref(int argc, const char **argv, const char *prefix)
 
 	if (read_stdin) {
 		struct strbuf err = STRBUF_INIT;
-		struct ref_transaction *transaction;
+		struct transaction *transaction;
 
-		transaction = ref_transaction_begin(&err);
+		transaction = transaction_begin(&err);
 		if (!transaction)
 			die("%s", err.buf);
 		if (delete || no_deref || argc > 0)
@@ -386,9 +386,9 @@ int cmd_update_ref(int argc, const char **argv, const char *prefix)
 		if (end_null)
 			line_termination = '\0';
 		update_refs_stdin(transaction);
-		if (ref_transaction_commit(transaction, &err))
+		if (transaction_commit(transaction, &err))
 			die("%s", err.buf);
-		ref_transaction_free(transaction);
+		transaction_free(transaction);
 		strbuf_release(&err);
 		return 0;
 	}

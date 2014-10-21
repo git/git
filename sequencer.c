@@ -238,7 +238,7 @@ static int error_dirty_index(struct replay_opts *opts)
 static int fast_forward_to(const unsigned char *to, const unsigned char *from,
 			int unborn, struct replay_opts *opts)
 {
-	struct ref_transaction *transaction;
+	struct transaction *transaction;
 	struct strbuf sb = STRBUF_INIT;
 	struct strbuf err = STRBUF_INIT;
 
@@ -248,13 +248,13 @@ static int fast_forward_to(const unsigned char *to, const unsigned char *from,
 
 	strbuf_addf(&sb, "%s: fast-forward", action_name(opts));
 
-	transaction = ref_transaction_begin(&err);
+	transaction = transaction_begin(&err);
 	if (!transaction ||
-	    ref_transaction_update(transaction, "HEAD",
+	    transaction_update_ref(transaction, "HEAD",
 				   to, unborn ? null_sha1 : from,
 				   0, 1, sb.buf, &err) ||
-	    ref_transaction_commit(transaction, &err)) {
-		ref_transaction_free(transaction);
+	    transaction_commit(transaction, &err)) {
+		transaction_free(transaction);
 		error("%s", err.buf);
 		strbuf_release(&sb);
 		strbuf_release(&err);
@@ -263,7 +263,7 @@ static int fast_forward_to(const unsigned char *to, const unsigned char *from,
 
 	strbuf_release(&sb);
 	strbuf_release(&err);
-	ref_transaction_free(transaction);
+	transaction_free(transaction);
 	return 0;
 }
 

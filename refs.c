@@ -26,7 +26,7 @@ static unsigned char refname_disposition[256] = {
 };
 
 /*
- * Used as a flag to ref_transaction_delete when a loose ref is being
+ * Used as a flag to transaction_delete_ref when a loose ref is being
  * pruned.
  */
 #define REF_ISPRUNING	0x0100
@@ -2533,23 +2533,23 @@ static void try_remove_empty_parents(char *name)
 /* make sure nobody touched the ref, and unlink */
 static void prune_ref(struct ref_to_prune *r)
 {
-	struct ref_transaction *transaction;
+	struct transaction *transaction;
 	struct strbuf err = STRBUF_INIT;
 
 	if (check_refname_format(r->name, 0))
 		return;
 
-	transaction = ref_transaction_begin(&err);
+	transaction = transaction_begin(&err);
 	if (!transaction ||
-	    ref_transaction_delete(transaction, r->name, r->sha1,
+	    transaction_delete_ref(transaction, r->name, r->sha1,
 				   REF_ISPRUNING, 1, NULL, &err) ||
-	    ref_transaction_commit(transaction, &err)) {
-		ref_transaction_free(transaction);
+	    transaction_commit(transaction, &err)) {
+		transaction_free(transaction);
 		error("%s", err.buf);
 		strbuf_release(&err);
 		return;
 	}
-	ref_transaction_free(transaction);
+	transaction_free(transaction);
 	strbuf_release(&err);
 	try_remove_empty_parents(r->name);
 }
@@ -2711,20 +2711,20 @@ static int delete_ref_loose(struct ref_lock *lock, int flag, struct strbuf *err)
 
 int delete_ref(const char *refname, const unsigned char *sha1, int delopt)
 {
-	struct ref_transaction *transaction;
+	struct transaction *transaction;
 	struct strbuf err = STRBUF_INIT;
 
-	transaction = ref_transaction_begin(&err);
+	transaction = transaction_begin(&err);
 	if (!transaction ||
-	    ref_transaction_delete(transaction, refname, sha1, delopt,
+	    transaction_delete_ref(transaction, refname, sha1, delopt,
 				   sha1 && !is_null_sha1(sha1), NULL, &err) ||
-	    ref_transaction_commit(transaction, &err)) {
+	    transaction_commit(transaction, &err)) {
 		error("%s", err.buf);
-		ref_transaction_free(transaction);
+		transaction_free(transaction);
 		strbuf_release(&err);
 		return 1;
 	}
-	ref_transaction_free(transaction);
+	transaction_free(transaction);
 	strbuf_release(&err);
 	return 0;
 }
@@ -3531,9 +3531,9 @@ struct ref_update {
  *         an active transaction or if there is a failure while building
  *         the transaction thus rendering it failed/inactive.
  */
-enum ref_transaction_state {
-	REF_TRANSACTION_OPEN   = 0,
-	REF_TRANSACTION_CLOSED = 1
+enum transaction_state {
+	TRANSACTION_OPEN   = 0,
+	TRANSACTION_CLOSED = 1
 };
 
 /*
@@ -3541,21 +3541,21 @@ enum ref_transaction_state {
  * consist of checks and updates to multiple references, carried out
  * as atomically as possible.  This structure is opaque to callers.
  */
-struct ref_transaction {
+struct transaction {
 	struct ref_update **updates;
 	size_t alloc;
 	size_t nr;
-	enum ref_transaction_state state;
+	enum transaction_state state;
 };
 
-struct ref_transaction *ref_transaction_begin(struct strbuf *err)
+struct transaction *transaction_begin(struct strbuf *err)
 {
 	assert(err);
 
-	return xcalloc(1, sizeof(struct ref_transaction));
+	return xcalloc(1, sizeof(struct transaction));
 }
 
-void ref_transaction_free(struct ref_transaction *transaction)
+void transaction_free(struct transaction *transaction)
 {
 	int i;
 
@@ -3570,7 +3570,7 @@ void ref_transaction_free(struct ref_transaction *transaction)
 	free(transaction);
 }
 
-static struct ref_update *add_update(struct ref_transaction *transaction,
+static struct ref_update *add_update(struct transaction *transaction,
 				     const char *refname)
 {
 	size_t len = strlen(refname);
@@ -3582,7 +3582,7 @@ static struct ref_update *add_update(struct ref_transaction *transaction,
 	return update;
 }
 
-int ref_transaction_update(struct ref_transaction *transaction,
+int transaction_update_ref(struct transaction *transaction,
 			   const char *refname,
 			   const unsigned char *new_sha1,
 			   const unsigned char *old_sha1,
@@ -3593,7 +3593,7 @@ int ref_transaction_update(struct ref_transaction *transaction,
 
 	assert(err);
 
-	if (transaction->state != REF_TRANSACTION_OPEN)
+	if (transaction->state != TRANSACTION_OPEN)
 		die("BUG: update called for transaction that is not open");
 
 	if (have_old && !old_sha1)
@@ -3617,23 +3617,23 @@ int ref_transaction_update(struct ref_transaction *transaction,
 	return 0;
 }
 
-int ref_transaction_create(struct ref_transaction *transaction,
+int transaction_create_ref(struct transaction *transaction,
 			   const char *refname,
 			   const unsigned char *new_sha1,
 			   int flags, const char *msg,
 			   struct strbuf *err)
 {
-	return ref_transaction_update(transaction, refname, new_sha1,
+	return transaction_update_ref(transaction, refname, new_sha1,
 				      null_sha1, flags, 1, msg, err);
 }
 
-int ref_transaction_delete(struct ref_transaction *transaction,
+int transaction_delete_ref(struct transaction *transaction,
 			   const char *refname,
 			   const unsigned char *old_sha1,
 			   int flags, int have_old, const char *msg,
 			   struct strbuf *err)
 {
-	return ref_transaction_update(transaction, refname, null_sha1,
+	return transaction_update_ref(transaction, refname, null_sha1,
 				      old_sha1, flags, have_old, msg, err);
 }
 
@@ -3641,17 +3641,17 @@ int update_ref(const char *action, const char *refname,
 	       const unsigned char *sha1, const unsigned char *oldval,
 	       int flags, enum action_on_err onerr)
 {
-	struct ref_transaction *t;
+	struct transaction *t;
 	struct strbuf err = STRBUF_INIT;
 
-	t = ref_transaction_begin(&err);
+	t = transaction_begin(&err);
 	if (!t ||
-	    ref_transaction_update(t, refname, sha1, oldval, flags,
+	    transaction_update_ref(t, refname, sha1, oldval, flags,
 				   !!oldval, action, &err) ||
-	    ref_transaction_commit(t, &err)) {
+	    transaction_commit(t, &err)) {
 		const char *str = "update_ref failed for ref '%s': %s";
 
-		ref_transaction_free(t);
+		transaction_free(t);
 		switch (onerr) {
 		case UPDATE_REFS_MSG_ON_ERR:
 			error(str, refname, err.buf);
@@ -3666,7 +3666,7 @@ int update_ref(const char *action, const char *refname,
 		return 1;
 	}
 	strbuf_release(&err);
-	ref_transaction_free(t);
+	transaction_free(t);
 	return 0;
 }
 
@@ -3694,8 +3694,8 @@ static int ref_update_reject_duplicates(struct ref_update **updates, int n,
 	return 0;
 }
 
-int ref_transaction_commit(struct ref_transaction *transaction,
-			   struct strbuf *err)
+int transaction_commit(struct transaction *transaction,
+		       struct strbuf *err)
 {
 	int ret = 0, delnum = 0, i;
 	const char **delnames;
@@ -3704,11 +3704,11 @@ int ref_transaction_commit(struct ref_transaction *transaction,
 
 	assert(err);
 
-	if (transaction->state != REF_TRANSACTION_OPEN)
+	if (transaction->state != TRANSACTION_OPEN)
 		die("BUG: commit called for transaction that is not open");
 
 	if (!n) {
-		transaction->state = REF_TRANSACTION_CLOSED;
+		transaction->state = TRANSACTION_CLOSED;
 		return 0;
 	}
 
@@ -3787,7 +3787,7 @@ int ref_transaction_commit(struct ref_transaction *transaction,
 	clear_loose_ref_cache(&ref_cache);
 
 cleanup:
-	transaction->state = REF_TRANSACTION_CLOSED;
+	transaction->state = TRANSACTION_CLOSED;
 
 	for (i = 0; i < n; i++)
 		if (updates[i]->lock)
