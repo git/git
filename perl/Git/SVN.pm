@@ -1710,32 +1710,20 @@ sub mergeinfo_changes {
 	my %minfo = map {split ":", $_ } split "\n", $mergeinfo_prop;
 	my $old_minfo = {};
 
-	# Initialize cache on the first call.
-	unless (defined $self->{cached_mergeinfo_rev}) {
-		$self->{cached_mergeinfo_rev} = {};
+	my $ra = $self->ra;
+	# Give up if $old_path isn't in the repo.
+	# This is probably a merge on a subtree.
+	if ($ra->check_path($old_path, $old_rev) != $SVN::Node::dir) {
+		warn "W: ignoring svn:mergeinfo on $old_path, ",
+			"directory didn't exist in r$old_rev\n";
+		return {};
 	}
-
-	my $cached_rev = $self->{cached_mergeinfo_rev}{$old_path};
-	unless (defined $cached_rev && $cached_rev == $old_rev) {
-		my $ra = $self->ra;
-		# Give up if $old_path isn't in the repo.
-		# This is probably a merge on a subtree.
-		if ($ra->check_path($old_path, $old_rev) != $SVN::Node::dir) {
-			warn "W: ignoring svn:mergeinfo on $old_path, ",
-				"directory didn't exist in r$old_rev\n";
-			return {};
-		}
-	}
-	my (undef, undef, $props) = $self->ra->get_dir($old_path, $old_rev);
+	my (undef, undef, $props) = $ra->get_dir($old_path, $old_rev);
 	if (defined $props->{"svn:mergeinfo"}) {
 		my %omi = map {split ":", $_ } split "\n",
 			$props->{"svn:mergeinfo"};
 		$old_minfo = \%omi;
 	}
-	$self->{cached_mergeinfo_rev}{$old_path} = $old_rev;
-
-	# Cache the new mergeinfo.
-	$self->{cached_mergeinfo_rev}{$path} = $rev;
 
 	my %changes = ();
 	foreach my $p (keys %minfo) {
