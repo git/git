@@ -842,8 +842,9 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 		transaction = ref_transaction_begin(&err);
 		if (!transaction ||
 		    ref_transaction_update(transaction, namespaced_name,
-					   new_sha1, old_sha1, 0, 1, &err) ||
-		    ref_transaction_commit(transaction, "push", &err)) {
+					   new_sha1, old_sha1, 0, 1, "push",
+					   &err) ||
+		    ref_transaction_commit(transaction, &err)) {
 			ref_transaction_free(transaction);
 
 			rp_error("%s", err.buf);
@@ -908,7 +909,7 @@ static void check_aliased_update(struct command *cmd, struct string_list *list)
 	int flag;
 
 	strbuf_addf(&buf, "%s%s", get_git_namespace(), cmd->ref_name);
-	dst_name = resolve_ref_unsafe(buf.buf, sha1, 0, &flag);
+	dst_name = resolve_ref_unsafe(buf.buf, 0, sha1, &flag);
 	strbuf_release(&buf);
 
 	if (!(flag & REF_ISSYMREF))
@@ -1069,7 +1070,7 @@ static void execute_commands(struct command *commands,
 	check_aliased_updates(commands);
 
 	free(head_name_to_free);
-	head_name = head_name_to_free = resolve_refdup("HEAD", sha1, 0, NULL);
+	head_name = head_name_to_free = resolve_refdup("HEAD", 0, sha1, NULL);
 
 	checked_connectivity = 1;
 	for (cmd = commands; cmd; cmd = cmd->next) {

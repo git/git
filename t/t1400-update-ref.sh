@@ -110,6 +110,32 @@ test_expect_success "delete symref without dereference when the referred ref is 
 cp -f .git/HEAD.orig .git/HEAD
 git update-ref -d $m
 
+test_expect_success 'update-ref -d is not confused by self-reference' '
+	git symbolic-ref refs/heads/self refs/heads/self &&
+	test_when_finished "rm -f .git/refs/heads/self" &&
+	test_path_is_file .git/refs/heads/self &&
+	test_must_fail git update-ref -d refs/heads/self &&
+	test_path_is_file .git/refs/heads/self
+'
+
+test_expect_success 'update-ref --no-deref -d can delete self-reference' '
+	git symbolic-ref refs/heads/self refs/heads/self &&
+	test_when_finished "rm -f .git/refs/heads/self" &&
+	test_path_is_file .git/refs/heads/self &&
+	git update-ref --no-deref -d refs/heads/self &&
+	test_path_is_missing .git/refs/heads/self
+'
+
+test_expect_success 'update-ref --no-deref -d can delete reference to bad ref' '
+	>.git/refs/heads/bad &&
+	test_when_finished "rm -f .git/refs/heads/bad" &&
+	git symbolic-ref refs/heads/ref-to-bad refs/heads/bad &&
+	test_when_finished "rm -f .git/refs/heads/ref-to-bad" &&
+	test_path_is_file .git/refs/heads/ref-to-bad &&
+	git update-ref --no-deref -d refs/heads/ref-to-bad &&
+	test_path_is_missing .git/refs/heads/ref-to-bad
+'
+
 test_expect_success '(not) create HEAD with old sha1' "
 	test_must_fail git update-ref HEAD $A $B
 "
@@ -374,12 +400,6 @@ test_expect_success 'stdin fails create with no ref' '
 	grep "fatal: create: missing <ref>" err
 '
 
-test_expect_success 'stdin fails create with bad ref name' '
-	echo "create ~a $m" >stdin &&
-	test_must_fail git update-ref --stdin <stdin 2>err &&
-	grep "fatal: invalid ref format: ~a" err
-'
-
 test_expect_success 'stdin fails create with no new value' '
 	echo "create $a" >stdin &&
 	test_must_fail git update-ref --stdin <stdin 2>err &&
@@ -398,12 +418,6 @@ test_expect_success 'stdin fails update with no ref' '
 	grep "fatal: update: missing <ref>" err
 '
 
-test_expect_success 'stdin fails update with bad ref name' '
-	echo "update ~a $m" >stdin &&
-	test_must_fail git update-ref --stdin <stdin 2>err &&
-	grep "fatal: invalid ref format: ~a" err
-'
-
 test_expect_success 'stdin fails update with no new value' '
 	echo "update $a" >stdin &&
 	test_must_fail git update-ref --stdin <stdin 2>err &&
@@ -420,12 +434,6 @@ test_expect_success 'stdin fails delete with no ref' '
 	echo "delete " >stdin &&
 	test_must_fail git update-ref --stdin <stdin 2>err &&
 	grep "fatal: delete: missing <ref>" err
-'
-
-test_expect_success 'stdin fails delete with bad ref name' '
-	echo "delete ~a $m" >stdin &&
-	test_must_fail git update-ref --stdin <stdin 2>err &&
-	grep "fatal: invalid ref format: ~a" err
 '
 
 test_expect_success 'stdin fails delete with too many arguments' '
@@ -700,12 +708,6 @@ test_expect_success 'stdin -z fails create with no ref' '
 	grep "fatal: create: missing <ref>" err
 '
 
-test_expect_success 'stdin -z fails create with bad ref name' '
-	printf $F "create ~a " "$m" >stdin &&
-	test_must_fail git update-ref -z --stdin <stdin 2>err &&
-	grep "fatal: invalid ref format: ~a " err
-'
-
 test_expect_success 'stdin -z fails create with no new value' '
 	printf $F "create $a" >stdin &&
 	test_must_fail git update-ref -z --stdin <stdin 2>err &&
@@ -728,12 +730,6 @@ test_expect_success 'stdin -z fails update with too few args' '
 	printf $F "update $a" "$m" >stdin &&
 	test_must_fail git update-ref -z --stdin <stdin 2>err &&
 	grep "fatal: update $a: unexpected end of input when reading <oldvalue>" err
-'
-
-test_expect_success 'stdin -z fails update with bad ref name' '
-	printf $F "update ~a" "$m" "" >stdin &&
-	test_must_fail git update-ref -z --stdin <stdin 2>err &&
-	grep "fatal: invalid ref format: ~a" err
 '
 
 test_expect_success 'stdin -z emits warning with empty new value' '
@@ -766,12 +762,6 @@ test_expect_success 'stdin -z fails delete with no ref' '
 	printf $F "delete " >stdin &&
 	test_must_fail git update-ref -z --stdin <stdin 2>err &&
 	grep "fatal: delete: missing <ref>" err
-'
-
-test_expect_success 'stdin -z fails delete with bad ref name' '
-	printf $F "delete ~a" "$m" >stdin &&
-	test_must_fail git update-ref -z --stdin <stdin 2>err &&
-	grep "fatal: invalid ref format: ~a" err
 '
 
 test_expect_success 'stdin -z fails delete with no old value' '

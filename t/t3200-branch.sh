@@ -285,6 +285,15 @@ test_expect_success 'deleting a dangling symref' '
 	test_i18ncmp expect actual
 '
 
+test_expect_success 'deleting a self-referential symref' '
+	git symbolic-ref refs/heads/self-reference refs/heads/self-reference &&
+	test_path_is_file .git/refs/heads/self-reference &&
+	echo "Deleted branch self-reference (was refs/heads/self-reference)." >expect &&
+	git branch -d self-reference >actual &&
+	test_path_is_missing .git/refs/heads/self-reference &&
+	test_i18ncmp expect actual
+'
+
 test_expect_success 'renaming a symref is not allowed' '
 	git symbolic-ref refs/heads/master2 refs/heads/master &&
 	test_must_fail git branch -m master2 master3 &&

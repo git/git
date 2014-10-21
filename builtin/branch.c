@@ -130,7 +130,8 @@ static int branch_merged(int kind, const char *name,
 		    branch->merge[0] &&
 		    branch->merge[0]->dst &&
 		    (reference_name = reference_name_to_free =
-		     resolve_refdup(branch->merge[0]->dst, sha1, 1, NULL)) != NULL)
+		     resolve_refdup(branch->merge[0]->dst, RESOLVE_REF_READING,
+				    sha1, NULL)) != NULL)
 			reference_rev = lookup_commit_reference(sha1);
 	}
 	if (!reference_rev)
@@ -234,9 +235,12 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 		free(name);
 
 		name = mkpathdup(fmt, bname.buf);
-		target = resolve_ref_unsafe(name, sha1, 0, &flags);
-		if (!target ||
-		    (!(flags & REF_ISSYMREF) && is_null_sha1(sha1))) {
+		target = resolve_ref_unsafe(name,
+					    RESOLVE_REF_READING
+					    | RESOLVE_REF_NO_RECURSE
+					    | RESOLVE_REF_ALLOW_BAD_NAME,
+					    sha1, &flags);
+		if (!target) {
 			error(remote_branch
 			      ? _("remote branch '%s' not found.")
 			      : _("branch '%s' not found."), bname.buf);
@@ -244,7 +248,7 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 			continue;
 		}
 
-		if (!(flags & REF_ISSYMREF) &&
+		if (!(flags & (REF_ISSYMREF|REF_ISBROKEN)) &&
 		    check_branch_commit(bname.buf, name, sha1, head_rev, kinds,
 					force)) {
 			ret = 1;
@@ -264,8 +268,8 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 			       ? _("Deleted remote branch %s (was %s).\n")
 			       : _("Deleted branch %s (was %s).\n"),
 			       bname.buf,
-			       (flags & REF_ISSYMREF)
-			       ? target
+			       (flags & REF_ISBROKEN) ? "broken"
+			       : (flags & REF_ISSYMREF) ? target
 			       : find_unique_abbrev(sha1, DEFAULT_ABBREV));
 		}
 		delete_branch_config(bname.buf);
@@ -298,7 +302,7 @@ static char *resolve_symref(const char *src, const char *prefix)
 	int flag;
 	const char *dst;
 
-	dst = resolve_ref_unsafe(src, sha1, 0, &flag);
+	dst = resolve_ref_unsafe(src, 0, sha1, &flag);
 	if (!(dst && (flag & REF_ISSYMREF)))
 		return NULL;
 	if (prefix)
@@ -868,7 +872,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 
 	track = git_branch_track;
 
-	head = resolve_refdup("HEAD", head_sha1, 0, NULL);
+	head = resolve_refdup("HEAD", 0, head_sha1, NULL);
 	if (!head)
 		die(_("Failed to resolve HEAD as a valid ref."));
 	if (!strcmp(head, "HEAD"))

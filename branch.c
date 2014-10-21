@@ -170,7 +170,7 @@ int validate_new_branchname(const char *name, struct strbuf *ref,
 		const char *head;
 		unsigned char sha1[20];
 
-		head = resolve_ref_unsafe("HEAD", sha1, 0, NULL);
+		head = resolve_ref_unsafe("HEAD", 0, sha1, NULL);
 		if (!is_bare_repository() && head && !strcmp(head, ref->buf))
 			die(_("Cannot force update the current branch."));
 	}
@@ -285,8 +285,8 @@ void create_branch(const char *head,
 		transaction = ref_transaction_begin(&err);
 		if (!transaction ||
 		    ref_transaction_update(transaction, ref.buf, sha1,
-					   null_sha1, 0, !forcing, &err) ||
-		    ref_transaction_commit(transaction, msg, &err))
+					   null_sha1, 0, !forcing, msg, &err) ||
+		    ref_transaction_commit(transaction, &err))
 			die("%s", err.buf);
 		ref_transaction_free(transaction);
 		strbuf_release(&err);

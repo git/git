@@ -897,7 +897,10 @@ static int push_refs_with_export(struct transport *transport,
 					int flag;
 
 					/* Follow symbolic refs (mainly for HEAD). */
-					name = resolve_ref_unsafe(ref->peer_ref->name, sha1, 1, &flag);
+					name = resolve_ref_unsafe(
+						 ref->peer_ref->name,
+						 RESOLVE_REF_READING,
+						 sha1, &flag);
 					if (!name || !(flag & REF_ISSYMREF))
 						name = ref->peer_ref->name;
 

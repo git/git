@@ -48,7 +48,8 @@ static struct complete_reflogs *read_complete_reflog(const char *ref)
 		unsigned char sha1[20];
 		const char *name;
 		void *name_to_free;
-		name = name_to_free = resolve_refdup(ref, sha1, 1, NULL);
+		name = name_to_free = resolve_refdup(ref, RESOLVE_REF_READING,
+						     sha1, NULL);
 		if (name) {
 			for_each_reflog_ent(name, read_one_reflog, reflogs);
 			free(name_to_free);
@@ -174,7 +175,7 @@ int add_reflog_for_walk(struct reflog_walk_info *info,
 		if (*branch == '\0') {
 			unsigned char sha1[20];
 			free(branch);
-			branch = resolve_refdup("HEAD", sha1, 0, NULL);
+			branch = resolve_refdup("HEAD", 0, sha1, NULL);
 			if (!branch)
 				die ("No current branch");
 
