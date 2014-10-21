@@ -1,4 +1,5 @@
 #include "builtin.h"
+#include "lockfile.h"
 #include "parse-options.h"
 #include "transport.h"
 #include "remote.h"
@@ -753,6 +754,15 @@ static int remove_branches(struct string_list *branches)
 	const char **branch_names;
 	int i, result = 0;
 
+	if (lock_packed_refs(0)) {
+		struct strbuf err = STRBUF_INIT;
+
+		unable_to_lock_message(git_path("packed-refs"), errno, &err);
+		error("%s", err.buf);
+		strbuf_release(&err);
+		return -1;
+	}
+
 	branch_names = xmalloc(branches->nr * sizeof(*branch_names));
 	for (i = 0; i < branches->nr; i++)
 		branch_names[i] = branches->items[i].string;
@@ -1337,9 +1347,15 @@ static int prune_remote(const char *remote, int dry_run)
 			delete_refs[i] = states.stale.items[i].util;
 		if (!dry_run) {
 			struct strbuf err = STRBUF_INIT;
-			if (repack_without_refs(delete_refs, states.stale.nr,
-						&err))
+
+			if (lock_packed_refs(0)) {
+				unable_to_lock_message(git_path("packed-refs"),
+						       errno, &err);
 				result |= error("%s", err.buf);
+			} else
+				if (repack_without_refs(delete_refs,
+							states.stale.nr, &err))
+					result |= error("%s", err.buf);
 			strbuf_release(&err);
 		}
 		free(delete_refs);
