@@ -228,11 +228,17 @@ merge_file () {
 		return 1
 	fi
 
-	ext="$$$(expr "$MERGED" : '.*\(\.[^/]*\)$')"
-	BACKUP="./$MERGED.BACKUP.$ext"
-	LOCAL="./$MERGED.LOCAL.$ext"
-	REMOTE="./$MERGED.REMOTE.$ext"
-	BASE="./$MERGED.BASE.$ext"
+	if BASE=$(expr "$MERGED" : '\(.*\)\.[^/]*$')
+	then
+		ext=$(expr "$MERGED" : '.*\(\.[^/]*\)$')
+	else
+		BASE=$MERGED
+		ext=
+	fi
+	BACKUP="./${BASE}_BACKUP_$$$ext"
+	LOCAL="./${BASE}_LOCAL_$$$ext"
+	REMOTE="./${BASE}_REMOTE_$$$ext"
+	BASE="./${BASE}_BASE_$$$ext"
 
 	base_mode=$(git ls-files -u -- "$MERGED" | awk '{if ($3==1) print $1;}')
 	local_mode=$(git ls-files -u -- "$MERGED" | awk '{if ($3==2) print $1;}')
