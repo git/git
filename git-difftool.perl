@@ -47,13 +47,9 @@ sub find_worktree
 
 sub print_tool_help
 {
-	my $cmd = 'TOOL_MODE=diff';
-	$cmd .= ' && . "$(git --exec-path)/git-mergetool--lib"';
-	$cmd .= ' && show_tool_help';
-
 	# See the comment at the bottom of file_diff() for the reason behind
 	# using system() followed by exit() instead of exec().
-	my $rc = system('sh', '-c', $cmd);
+	my $rc = system(qw(git mergetool --tool-help=diff));
 	exit($rc | ($rc >> 8));
 }
 
