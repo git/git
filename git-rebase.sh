@@ -44,8 +44,8 @@ abort!             abort and check out the original branch
 skip!              skip current patch and continue
 edit-todo!         edit the todo list during an interactive rebase
 "
-. git-sh-setup
-. git-sh-i18n
+. $(git --exec-path)/git-sh-setup
+. $(git --exec-path)/git-sh-i18n
 set_reflog_action rebase
 require_work_tree_exists
 cd_to_toplevel
@@ -186,7 +186,7 @@ run_specific_rebase () {
 		export GIT_EDITOR
 		autosquash=
 	fi
-	. git-rebase--$type
+	. $(git --exec-path)/git-rebase--$type
 	ret=$?
 	if test $ret -eq 0
 	then
@@ -446,7 +446,7 @@ then
 		if ! upstream_name=$(git rev-parse --symbolic-full-name \
 			--verify -q @{upstream} 2>/dev/null)
 		then
-			. git-parse-remote
+			. $(git --exec-path)/git-parse-remote
 			error_on_missing_default_upstream "rebase" "rebase" \
 				"against" "git rebase <branch>"
 		fi
