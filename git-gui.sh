@@ -670,9 +670,7 @@ proc kill_file_process {fd} {
 
 	catch {
 		if {[is_Windows]} {
-			# Use a Cygwin-specific flag to allow killing
-			# native Windows processes
-			exec kill -f $process
+			exec taskkill /pid $process
 		} else {
 			exec kill $process
 		}
