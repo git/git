@@ -1973,8 +1973,6 @@ static void ll_find_deltas(struct object_entry **list, unsigned list_size,
 
 	init_threaded_search();
 
-	if (!delta_search_threads)	/* --threads=0 means autodetect */
-		delta_search_threads = online_cpus();
 	if (delta_search_threads <= 1) {
 		find_deltas(list, &list_size, window, depth, processed);
 		cleanup_threaded_search();
@@ -2686,6 +2684,10 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		pack_compression_level = Z_DEFAULT_COMPRESSION;
 	else if (pack_compression_level < 0 || pack_compression_level > Z_BEST_COMPRESSION)
 		die("bad pack compression level %d", pack_compression_level);
+
+	if (!delta_search_threads)	/* --threads=0 means autodetect */
+		delta_search_threads = online_cpus();
+
 #ifdef NO_PTHREADS
 	if (delta_search_threads != 1)
 		warning("no threads support, ignoring --threads");
