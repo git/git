@@ -167,6 +167,7 @@ no)
 			then
 				echo >&2 "Fixing up the merge"
 				git cherry-pick --no-commit "refs/merge-fix/$branch" &&
+				git diff --stat HEAD &&
 				EDITOR=: git commit --amend -a || exit
 			fi
 			;;
