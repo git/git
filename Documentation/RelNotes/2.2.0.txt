@@ -9,6 +9,8 @@ Ports
  * Building on older MacOS X systems automatically sets
    the necessary NO_APPLE_COMMON_CRYPTO build-time option.
 
+ * The support to build with NO_PTHREADS has been resurrected.
+
 
 UI, Workflows & Features
 
@@ -144,6 +146,10 @@ Performance, Internal Implementation, etc.
  * The scripts in the test suite can be run with "-x" option to show
    a shell-trace of each command run in them.
 
+ * The "run-command" API learned to manage the argv and environment
+   array for child process, alleviating the need for the callers to
+   allocate and deallocate them.
+
 
 Also contains various documentation updates and code clean-ups.
 
@@ -261,3 +267,8 @@ notes for details).
  * Newer versions of 'meld' breaks the auto-detection we use to see if
    they are new enough to support the `--output` option.
    (merge b12d045 da/mergetool-meld later to maint).
+
+ * "git pack-objects" forgot to disable the codepath to generate
+   object recheability bitmap when it needs to split the resulting
+   pack.
+   (merge 2113471 jk/pack-objects-no-bitmap-when-splitting later to maint).
