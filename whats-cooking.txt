@@ -1,13 +1,10 @@
 To: git@vger.kernel.org
-Cc: Eric Wong <normalperson@yhbt.net>,
-    Paul Mackerras <paulus@samba.org>,
-    Pat Thoyts <patthoyts@users.sourceforge.net>
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Oct 2014, #05; Mon, 20)
-X-master-at: 13da0fc092b8cf082eda2f16971c75903aa5aefc
-X-next-at: 72aedf1b35ff671435dd29c2b62e2b2250805689
+Subject: What's cooking in git.git (Oct 2014, #06; Fri, 24)
+X-master-at: fbecd99861ea5795aeba46faf2ac7a8c1b70d485
+X-next-at: 26228e10cc494c2d5b0b4302c361a1870ba75e35
 
-What's cooking in git.git (Oct 2014, #05; Mon, 20)
+What's cooking in git.git (Oct 2014, #06; Fri, 24)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -15,11 +12,9 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.
 
 According to tinyurl.com/gitCal, the feature freeze for this cycle
-is scheduled for the end of this month.  What's in the 'next' branch
-as of today looks more or less complete picture, I would think.  I'd
-like to ask area maintainers of git-svn, gitk and git-gui to please
-prepare to wrap up the accumulated changes for this cycle and throw
-a pull request to me.  Thanks.
+is scheduled for the end of this month.  What's in the 'master'
+branch as of today looks more or less complete picture, I would
+think.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -29,298 +24,12 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* bc/asciidoc (2014-10-13) 2 commits
-  (merged to 'next' on 2014-10-14 at d9ff206)
- + Documentation: fix mismatched delimiters in git-imap-send
- + Documentation: adjust document title underlining
- (this branch is used by bc/asciidoctor.)
-
- Formatting nitpicks to help a (pickier) reimplementation of
- AsciiDoc to grok our documentation.
-
-
-* cc/interpret-trailers (2014-10-13) 11 commits
-  (merged to 'next' on 2014-10-17 at ee4519c)
- + Documentation: add documentation for 'git interpret-trailers'
- + trailer: add tests for commands in config file
- + trailer: execute command from 'trailer.<name>.command'
- + trailer: add tests for "git interpret-trailers"
- + trailer: add interpret-trailers command
- + trailer: put all the processing together and print
- + trailer: parse trailers from file or stdin
- + trailer: process command line trailer arguments
- + trailer: read and process config information
- + trailer: process trailers from input message and arguments
- + trailer: add data structures and basic functions
-
- A new filter to programatically edit the tail end of the commit log
- messages.
-
-
-* jk/test-shell-trace (2014-10-13) 3 commits
-  (merged to 'next' on 2014-10-14 at 9118506)
- + test-lib.sh: support -x option for shell-tracing
- + t5304: use helper to report failure of "test foo = bar"
- + t5304: use test_path_is_* instead of "test -f"
- (this branch is used by jk/prune-mtime.)
-
- Test scripts were taught to notice "-x" option to show shell trace,
- as if the tests were run under "sh -x".
-
-
-* jn/parse-config-slot (2014-10-14) 2 commits
-  (merged to 'next' on 2014-10-14 at 7f0a3ad)
- + color_parse: do not mention variable name in error message
- + pass config slots as pointers instead of offsets
-
- Code cleanup.
-
-
-* rm/gitweb-start-form (2014-10-16) 1 commit
-  (merged to 'next' on 2014-10-17 at 7ca427f)
- + gitweb: use start_form, not startform that was removed in CGI.pm 4.04
-
-
-* rs/receive-pack-argv-leak-fix (2014-10-13) 1 commit
-  (merged to 'next' on 2014-10-14 at e64654d)
- + receive-pack: plug minor memory leak in unpack()
-
-
-* ss/contrib-subtree-contacts (2014-10-15) 2 commits
-  (merged to 'next' on 2014-10-17 at 4b3a1d9)
- + contacts: add a Makefile to generate docs and install
- + subtree: add an install-html target
-
-
-* ta/config-set (2014-10-13) 1 commit
-  (merged to 'next' on 2014-10-14 at ed660e4)
- + t1308: fix broken here document in test script
-
---------------------------------------------------
-[New Topics]
-
-* jk/pack-objects-no-bitmap-when-splitting (2014-10-19) 1 commit
- - pack-objects: turn off bitmaps when we split packs
-
- Splitting pack-objects output into multiple packs is incompatible
- with the use of reachability bitmap.
-
- Will merge to 'next'.
-
-
-* po/doc-status-markup (2014-10-19) 1 commit
- - doc: fix 'git status --help' character quoting
-
- Update documentation mark-up.
-
- Will merge to 'next'.
-
-
-* rs/run-command-env-array (2014-10-19) 2 commits
- - use env_array member of struct child_process
- - run-command: add env_array, an optional argv_array for env
-
- Add managed "env" array to child_process to clarify the lifetime
- rules.
-
- Will merge to 'next'.
-
-
-* tb/core-filemode-doc (2014-10-19) 1 commit
- - core.filemode may need manual action
-
- Doc update.
-
- Will merge to 'next'.
-
-
-* wk/t1304-wo-USER (2014-10-19) 1 commit
- - t1304: Set LOGNAME even if USER is unset or null
-
- Will merge to 'next'.
-
---------------------------------------------------
-[Stalled]
-
-* je/quiltimport-no-fuzz (2014-09-26) 2 commits
- - git-quiltimport: flip the default not to allow fuzz
- - git-quiltimport.sh: allow declining fuzz with --exact option
-
- "quiltimport" drove "git apply" always with -C1 option to reduce
- context of the patch in order to give more chance to somewhat stale
- patches to apply.  Add an "--exact" option to disable, and also
- "-C$n" option to customize this behaviour.  The top patch
- optionally flips the default to "--exact".
-
- Waiting for an Ack.
-
-
-* tr/remerge-diff (2014-09-08) 8 commits
- - log --remerge-diff: show what the conflict resolution changed
- - name-hash: allow dir hashing even when !ignore_case
- - merge-recursive: allow storing conflict hunks in index
- - merge_diff_mode: fold all merge diff variants into an enum
- - combine-diff: do not pass revs->dense_combined_merges redundantly
- - merge-recursive: -Xindex-only to leave worktree unchanged
- - merge-recursive: internal flag to avoid touching the worktree
- - merge-recursive: remove dead conditional in update_stages()
-
- "log -p" output learns a new way to let users inspect a merge
- commit by showing the differences between the automerged result
- with conflicts the person who recorded the merge would have seen
- and the final conflict resolution that was recorded in the merge.
-
- Waiting for a reroll ($gmane/256591).
-
-
-* hv/submodule-config (2014-06-30) 4 commits
- - do not die on error of parsing fetchrecursesubmodules option
- - use new config API for worktree configurations of submodules
- - extract functions for submodule config set and lookup
- - implement submodule config cache for lookup of submodule names
-
- Kicked back to 'pu' per request ($gmane/255610).
-
-
-* jt/timer-settime (2014-08-29) 6 commits
- - use timer_settime() for new platforms
- - autoconf: check for timer_settime()
- - autoconf: check for struct itimerspec
- - autoconf: check for struct sigevent
- - autoconf: check for struct timespec
- - autoconf: check for timer_t
-
- Reviewed, discussed and wanting for a reroll.
-
-
-* jk/pack-bitmap (2014-08-04) 1 commit
- - pack-bitmap: do not use gcc packed attribute
-
- Hold, waiting for Karsten's replacement.
-
-
-* jk/tag-contains (2014-06-30) 8 commits
- . perf: add tests for tag --contains
- . tag: use commit_contains
- . commit: provide a fast multi-tip contains function
- . string-list: add pos to iterator callback
- . add functions for memory-efficient bitmaps
- . paint_down_to_common: use prio_queue
- . tag: factor out decision to stream tags
- . tag: allow --sort with -n
-
- Expecting a reroll.
-
-
-* ab/add-interactive-show-diff-func-name (2014-05-12) 2 commits
- - SQUASH??? git-add--interactive: Preserve diff heading when splitting hunks
- - git-add--interactive: Preserve diff heading when splitting hunks
-
- Waiting for a reroll.
-
-
-* jn/gitweb-utf8-in-links (2014-05-27) 1 commit
- - gitweb: Harden UTF-8 handling in generated links
-
- $gmane/250758?
-
-
-* ss/userdiff-update-csharp-java (2014-06-02) 2 commits
- - userdiff: support Java try keyword
- - userdiff: support C# async methods and correct C# keywords
-
- Reviews sent; waiting for a response.
-
-
-* bg/rebase-off-of-previous-branch (2014-04-16) 1 commit
- - git-rebase: print name of rev when using shorthand
-
- Teach "git rebase -" to report the concrete name of the branch
- (i.e. the previous one).
-
- But it stops short and does not do the same for "git rebase @{-1}".
- Expecting a reroll.
-
-
-* jk/makefile (2014-02-05) 16 commits
- . FIXUP
- . move LESS/LV pager environment to Makefile
- . Makefile: teach scripts to include make variables
- . FIXUP
- . Makefile: auto-build C strings from make variables
- . Makefile: drop *_SQ variables
- . FIXUP
- . Makefile: add c-quote helper function
- . Makefile: introduce sq function for shell-quoting
- . Makefile: always create files via make-var
- . Makefile: store GIT-* sentinel files in MAKE/
- . Makefile: prefer printf to echo for GIT-*
- . Makefile: use tempfile/mv strategy for GIT-*
- . Makefile: introduce make-var helper function
- . Makefile: fix git-instaweb dependency on gitweb
- . Makefile: drop USE_GETTEXT_SCHEME from GIT-CFLAGS
-
- Simplify the Makefile rules and macros that exist primarily for
- quoting purposes, and make it easier to robustly express the
- dependency rules.
-
- Expecting a reroll.
-
-
-* rb/merge-prepare-commit-msg-hook (2014-01-10) 4 commits
- - merge: drop unused arg from abort_commit method signature
- - merge: make prepare_to_commit responsible for write_merge_state
- - t7505: ensure cleanup after hook blocks merge
- - t7505: add missing &&
-
- Expose more merge states (e.g. $GIT_DIR/MERGE_MODE) to hooks that
- run during "git merge".  The log message stresses too much on one
- hook, prepare-commit-msg, but it would equally apply to other hooks
- like post-merge, I think.
-
- Waiting for a reroll.
-
-
-* jc/graph-post-root-gap (2013-12-30) 3 commits
- - WIP: document what we want at the end
- - graph: remove unused code a bit
- - graph: stuff the current commit into graph->columns[]
-
- This was primarily a RFH ($gmane/239580).
-
-
-* tg/perf-lib-test-perf-cleanup (2013-09-19) 2 commits
- - perf-lib: add test_perf_cleanup target
- - perf-lib: split starting the test from the execution
-
- Add test_perf_cleanup shell function to the perf suite, that allows
- the script writers to define a test with a clean-up action.
-
- Will hold.
-
-
-* jc/show-branch (2014-03-24) 5 commits
- - show-branch: use commit slab to represent bitflags of arbitrary width
- - show-branch.c: remove "all_mask"
- - show-branch.c: abstract out "flags" operation
- - show-branch.c: lift all_mask/all_revs to a global static
- - show-branch.c: update comment style
-
- Waiting for the final step to lift the hard-limit before sending it out.
-
---------------------------------------------------
-[Cooking]
-
-* eb/no-pthreads (2014-10-19) 3 commits
- - Handle atexit list internaly for unthreaded builds
- - pack-objects: set number of threads before checking and warning
- - index-pack: fix compilation with NO_PTHREADS
-
- Allow us build with NO_PTHREADS=NoThanks compilation option.  The
- last change (not queued) needs a bit more explanation in its log
- message.
-
- Will merge to 'next'.
+* da/mergetool-meld (2014-10-16) 1 commit
+  (merged to 'next' on 2014-10-17 at 00ee553)
+ + mergetools/meld: make usage of `--output` configurable and more robust
+
+ Newer versions of 'meld' breaks the auto-detection we use to see if
+ they are new enough to support the `--output` option.
 
 
 * da/mergetool-temporary-directory (2014-10-16) 2 commits
@@ -332,7 +41,16 @@ of the repositories listed at
  Allow a temporary directory specified to be used while running "git
  mergetool" backend.
 
- Will merge to 'master'.
+
+* da/mergetool-temporary-filename (2014-10-16) 1 commit
+  (merged to 'next' on 2014-10-17 at 3fb95b5)
+ + mergetool: use more conservative temporary filenames
+ (this branch is used by da/mergetool-temporary-directory; uses da/mergetool-tests; is tangled with da/mergetool-tool-help.)
+
+ Tweak the names of the three throw-away files "git mergetool" comes
+ up with to feed the merge tool backend, so that a file with a
+ single dot in its name in the original (e.g. "hello.c") will have
+ only one dot in these variants (e.g. "hello_BASE_4321.c").
 
 
 * da/mergetool-tests (2014-10-16) 4 commits
@@ -346,68 +64,62 @@ of the repositories listed at
  The clean-up of this test script was long overdue and is a very
  welcome change.
 
- Will merge to 'master'.
+
+* da/mergetool-tool-help (2014-10-15) 8 commits
+  (merged to 'next' on 2014-10-17 at 854654c)
+ + difftool: don't assume that default sh is sane
+ + mergetool: don't require a work tree for --tool-help
+ + git-sh-setup: move GIT_DIR initialization into a function
+ + mergetool: use more conservative temporary filenames
+ + test-lib-functions: adjust style to match CodingGuidelines
+ + t7610-mergetool: prefer test_config over git config
+ + t7610-mergetool: add missing && and remove commented-out code
+ + t7610-mergetool: use tabs instead of a mix of tabs and spaces
+ (this branch is tangled with da/mergetool-temporary-directory, da/mergetool-temporary-filename and da/mergetool-tests.)
+
+ Allow "git mergetool --help" to run outside a Git repository.
 
 
-* bc/asciidoctor (2014-10-15) 2 commits
-  (merged to 'next' on 2014-10-17 at 12ce2e2)
- + Documentation: implement linkgit macro for Asciidoctor
- + Documentation: move some AsciiDoc parameters into variables
+* eb/no-pthreads (2014-10-19) 3 commits
+  (merged to 'next' on 2014-10-21 at c455d39)
+ + Handle atexit list internaly for unthreaded builds
+ + pack-objects: set number of threads before checking and warning
+ + index-pack: fix compilation with NO_PTHREADS
 
- Add machinery to alternatively use AsciiDoctor to format our
- documentation.
-
- Brian seems to have a bit more tweaks; will wait for them before
- moving this topic forward.
-
-
-* da/mergetool-meld (2014-10-16) 1 commit
-  (merged to 'next' on 2014-10-17 at 00ee553)
- + mergetools/meld: make usage of `--output` configurable and more robust
-
- Newer versions of 'meld' breaks the auto-detection we use to see if
- they are new enough to support the `--output` option.
-
- Will merge to 'master'.
+ Allow us build with NO_PTHREADS=NoThanks compilation option.  The
+ last change (not queued) needs a bit more explanation in its log
+ message.
 
 
-* jk/prune-mtime (2014-10-19) 28 commits
-  (merged to 'next' on 2014-10-20 at fdd7ff6)
- + drop add_object_array_with_mode
- + revision: remove definition of unused 'add_object' function
- + pack-objects: double-check options before discarding objects
- + repack: pack objects mentioned by the index
- + pack-objects: use argv_array
- + reachable: use revision machinery's --indexed-objects code
- + rev-list: add --indexed-objects option
- + rev-list: document --reflog option
- + t5516: test pushing a tag of an otherwise unreferenced blob
- + traverse_commit_list: support pending blobs/trees with paths
- + make add_object_array_with_context interface more sane
- + write_sha1_file: freshen existing objects
- + pack-objects: match prune logic for discarding objects
- + pack-objects: refactor unpack-unreachable expiration check
- + prune: keep objects reachable from recent objects
- + sha1_file: add for_each iterators for loose and packed objects
- + count-objects: use for_each_loose_file_in_objdir
- + count-objects: do not use xsize_t when counting object size
- + prune-packed: use for_each_loose_file_in_objdir
- + reachable: mark index blobs as SEEN
- + prune: factor out loose-object directory traversal
- + reachable: reuse revision.c "add all reflogs" code
- + reachable: use traverse_commit_list instead of custom walk
- + clean up name allocation in prepare_revision_walk
- + object_array: add a "clear" function
- + object_array: factor out slopbuf-freeing logic
- + isxdigit: cast input to unsigned char
- + foreach_alt_odb: propagate return value from callback
+* jk/pack-objects-no-bitmap-when-splitting (2014-10-19) 1 commit
+  (merged to 'next' on 2014-10-21 at c3c8c2a)
+ + pack-objects: turn off bitmaps when we split packs
 
- Tighten the logic to decide that an unreachable cruft is
- sufficiently old by covering corner cases such as an ancient object
- becoming reachable and then going unreachable again, in which case
- its retention period should be prolonged.
+ Splitting pack-objects output into multiple packs is incompatible
+ with the use of reachability bitmap.
 
- Will merge to 'master'.
+
+* js/completion-hide-not-a-repo (2014-10-14) 1 commit
+  (merged to 'next' on 2014-10-17 at 466de3c)
+ + completion: silence "fatal: Not a git repository" error
+
+ Some internal error messages leaked out of the bash completion when
+ typing "git cmd <TAB>" and the machinery tried to complete
+ refnames.
+
+
+* nd/dir-prep-exclude-cleanup (2014-10-21) 1 commit
+  (merged to 'next' on 2014-10-21 at c90ba7a)
+ + dir.c: remove the second declaration of "stk" in prep_exclude()
+
+ Code clean-up.
+
+
+* po/doc-status-markup (2014-10-19) 1 commit
+  (merged to 'next' on 2014-10-21 at efca89c)
+ + doc: fix 'git status --help' character quoting
+
+ Update documentation mark-up.
 
 
 * rs/ref-transaction (2014-10-15) 25 commits
@@ -442,64 +154,128 @@ of the repositories listed at
  a true transactional updates later.  We would even allow storing
  refs in backends other than the traditional filesystem-based one.
 
- Will merge to 'master'.
+
+* rs/run-command-env-array (2014-10-19) 2 commits
+  (merged to 'next' on 2014-10-21 at 4e56fa2)
+ + use env_array member of struct child_process
+ + run-command: add env_array, an optional argv_array for env
+
+ Add managed "env" array to child_process to clarify the lifetime
+ rules.
 
 
-* da/mergetool-tool-help (2014-10-15) 8 commits
-  (merged to 'next' on 2014-10-17 at 854654c)
- + difftool: don't assume that default sh is sane
- + mergetool: don't require a work tree for --tool-help
- + git-sh-setup: move GIT_DIR initialization into a function
- + mergetool: use more conservative temporary filenames
- + test-lib-functions: adjust style to match CodingGuidelines
- + t7610-mergetool: prefer test_config over git config
- + t7610-mergetool: add missing && and remove commented-out code
- + t7610-mergetool: use tabs instead of a mix of tabs and spaces
- (this branch is tangled with da/mergetool-temporary-directory, da/mergetool-temporary-filename and da/mergetool-tests.)
+* sb/plug-transport-leak (2014-10-21) 2 commits
+  (merged to 'next' on 2014-10-21 at 0a462d7)
+ + .mailmap: add Stefan Bellers corporate mail address
+ + transport: free leaking head in transport_print_push_status()
 
- Allow "git mergetool --help" to run outside a Git repository.
-
- Will merge to 'master'.
+ Code clean-up.
 
 
-* jc/checkout-local-track-report (2014-10-14) 1 commit
- - checkout: report upstream correctly even with loosely defined branch.*.merge
+* tb/core-filemode-doc (2014-10-19) 1 commit
+  (merged to 'next' on 2014-10-21 at ad3e63b)
+ + core.filemode may need manual action
 
- The report from "git checkout" on a branch that builds on another
- local branch by setting its branch.*.merge to branch name (not a
- full refname) incorrectly said that the upstream is gone.
-
- Will merge to 'next'.
+ Doc update.
 
 
-* jc/clone-borrow (2014-10-15) 1 commit
- - clone: --dissociate option to mark that reference is only temporary
+* wk/t1304-wo-USER (2014-10-19) 1 commit
+  (merged to 'next' on 2014-10-21 at 00fe6d9)
+ + t1304: Set LOGNAME even if USER is unset or null
 
- Allow "git clone --reference" to be used more safely.
+--------------------------------------------------
+[New Topics]
 
+* zk/grep-color-words (2014-10-22) 1 commit
+  (merged to 'next' on 2014-10-24 at 2d2f8f8)
+ + grep: fix match highlighting for combined patterns with context lines
 
-* js/completion-hide-not-a-repo (2014-10-14) 1 commit
-  (merged to 'next' on 2014-10-17 at 466de3c)
- + completion: silence "fatal: Not a git repository" error
-
- Some internal error messages leaked out of the bash completion when
- typing "git cmd <TAB>" and the machinery tried to complete
- refnames.
+ "git grep --color" highlighted matching tokens on non-matching
+ context lines and function name headers, which was unwanted.
 
  Will merge to 'master'.
 
 
-* da/mergetool-temporary-filename (2014-10-16) 1 commit
-  (merged to 'next' on 2014-10-17 at 3fb95b5)
- + mergetool: use more conservative temporary filenames
- (this branch is used by da/mergetool-temporary-directory; uses da/mergetool-tests; is tangled with da/mergetool-tool-help.)
+* jc/conflict-hint (2014-10-24) 3 commits
+ - merge & sequencer: turn "Conflicts:" hint into a comment
+ - merge & sequencer: unify codepaths that write "Conflicts:" hint
+ - builtin/merge.c: drop a parameter that is never used
 
- Tweak the names of the three throw-away files "git mergetool" comes
- up with to feed the merge tool backend, so that a file with a
- single dot in its name in the original (e.g. "hello.c") will have
- only one dot in these variants (e.g. "hello_BASE_4321.c").
+
+* jc/diff-b-m (2014-10-23) 1 commit
+ - diff -B -M: fix output for "copy and then rewrite" case
+
+
+* oc/mergetools-beyondcompare (2014-10-21) 1 commit
+  (merged to 'next' on 2014-10-24 at e9278e8)
+ + mergetool: rename bc3 to bc
 
  Will merge to 'master'.
+
+
+* rs/ref-transaction-reflog (2014-10-22) 15 commits
+ - refs.c: allow deleting refs with a broken sha1
+ - refs.c: remove lock_any_ref_for_update
+ - refs.c: make unlock_ref/close_ref/commit_ref static
+ - refs.c: rename log_ref_setup to create_reflog
+ - reflog.c: use a reflog transaction when writing during expire
+ - refs.c: allow multiple reflog updates during a single transaction
+ - refs.c: only write reflog update if msg is non-NULL
+ - refs.c: add a flag to allow reflog updates to truncate the log
+ - refs.c: add a transaction function to append a reflog entry
+ - copy.c: make copy_fd preserve meaningful errno
+ - refs.c: add a function to append a reflog entry to a fd
+ - refs.c: add a new update_type field to ref_update
+ - refs.c: rename the transaction functions
+ - refs.c: make ref_transaction_delete a wrapper for ref_transaction_update
+ - refs.c make ref_transaction_create a wrapper to ref_transaction_update
+ (this branch is used by rs/ref-transaction-rename and rs/ref-transaction-send-pack.)
+
+
+* rs/ref-transaction-rename (2014-10-22) 15 commits
+ - refs.c: add an err argument to pack_refs
+ - refs.c: make lock_packed_refs take an err argument
+ - refs.c: make add_packed_ref return an error instead of calling die
+ - refs.c: replace the onerr argument in update_ref with a strbuf err
+ - refs.c: make the *_packed_refs functions static
+ - refs.c: make repack_without_refs static
+ - remote.c: use a transaction for deleting refs
+ - refs.c: write updates to packed refs when a transaction has more than one ref
+ - refs.c: move reflog updates into its own function
+ - refs.c: rollback the lockfile before we die() in repack_without_refs
+ - refs.c: update rename_ref to use a transaction
+ - refs.c: use a stringlist for repack_without_refs
+ - refs.c: use packed refs when deleting refs during a transaction
+ - refs.c: return error instead of dying when locking fails during transaction
+ - refs.c: allow passing raw git_committer_info as email to _update_reflog
+ (this branch is used by rs/ref-transaction-send-pack; uses rs/ref-transaction-reflog.)
+
+
+* rs/ref-transaction-send-pack (2014-10-22) 8 commits
+ - refs.c: add an err argument to create_symref
+ - refs.c: add an err argument to create_reflog
+ - receive-pack.c: add a receive.preferatomicpush configuration variable
+ - t5543-atomic-push.sh: add basic tests for atomic pushes
+ - push.c: add an --atomic-push argument
+ - receive-pack.c: use a single transaction when atomic-push is negotiated
+ - send-pack.c: add an --atomic-push command line argument
+ - receive-pack.c: add protocol support to negotiate atomic-push
+ (this branch uses rs/ref-transaction-reflog and rs/ref-transaction-rename.)
+
+--------------------------------------------------
+[Stalled]
+
+* je/quiltimport-no-fuzz (2014-10-21) 2 commits
+ - git-quiltimport: flip the default not to allow fuzz
+ - git-quiltimport.sh: allow declining fuzz with --exact option
+
+ "quiltimport" drove "git apply" always with -C1 option to reduce
+ context of the patch in order to give more chance to somewhat stale
+ patches to apply.  Add an "--exact" option to disable, and also
+ "-C$n" option to customize this behaviour.  The top patch
+ optionally flips the default to "--exact".
+
+ Waiting for an Ack.
 
 
 * jc/push-cert-hmac-optim (2014-09-25) 2 commits
@@ -567,36 +343,227 @@ of the repositories listed at
  which makes the result somewhat backward incompatible.
  Will perhaps drop.
 
+
+* tr/remerge-diff (2014-09-08) 8 commits
+ - log --remerge-diff: show what the conflict resolution changed
+ - name-hash: allow dir hashing even when !ignore_case
+ - merge-recursive: allow storing conflict hunks in index
+ - merge_diff_mode: fold all merge diff variants into an enum
+ - combine-diff: do not pass revs->dense_combined_merges redundantly
+ - merge-recursive: -Xindex-only to leave worktree unchanged
+ - merge-recursive: internal flag to avoid touching the worktree
+ - merge-recursive: remove dead conditional in update_stages()
+
+ "log -p" output learns a new way to let users inspect a merge
+ commit by showing the differences between the automerged result
+ with conflicts the person who recorded the merge would have seen
+ and the final conflict resolution that was recorded in the merge.
+
+ Waiting for a reroll ($gmane/256591).
+
+
+* hv/submodule-config (2014-06-30) 4 commits
+ - do not die on error of parsing fetchrecursesubmodules option
+ - use new config API for worktree configurations of submodules
+ - extract functions for submodule config set and lookup
+ - implement submodule config cache for lookup of submodule names
+
+ Kicked back to 'pu' per request ($gmane/255610).
+
+
+* jt/timer-settime (2014-08-29) 6 commits
+ - use timer_settime() for new platforms
+ - autoconf: check for timer_settime()
+ - autoconf: check for struct itimerspec
+ - autoconf: check for struct sigevent
+ - autoconf: check for struct timespec
+ - autoconf: check for timer_t
+
+ Reviewed, discussed and wanting for a reroll.
+
+
+* jk/pack-bitmap (2014-08-04) 1 commit
+ - pack-bitmap: do not use gcc packed attribute
+
+ Hold, waiting for Karsten's replacement.
+
+
+* ab/add-interactive-show-diff-func-name (2014-05-12) 2 commits
+ - SQUASH??? git-add--interactive: Preserve diff heading when splitting hunks
+ - git-add--interactive: Preserve diff heading when splitting hunks
+
+ Waiting for a reroll.
+
+
+* jn/gitweb-utf8-in-links (2014-05-27) 1 commit
+ - gitweb: Harden UTF-8 handling in generated links
+
+ $gmane/250758?
+
+
+* ss/userdiff-update-csharp-java (2014-06-02) 2 commits
+ - userdiff: support Java try keyword
+ - userdiff: support C# async methods and correct C# keywords
+
+ Reviews sent; waiting for a response.
+
+
+* bg/rebase-off-of-previous-branch (2014-04-16) 1 commit
+ - git-rebase: print name of rev when using shorthand
+
+ Teach "git rebase -" to report the concrete name of the branch
+ (i.e. the previous one).
+
+ But it stops short and does not do the same for "git rebase @{-1}".
+ Expecting a reroll.
+
+
+* rb/merge-prepare-commit-msg-hook (2014-01-10) 4 commits
+ - merge: drop unused arg from abort_commit method signature
+ - merge: make prepare_to_commit responsible for write_merge_state
+ - t7505: ensure cleanup after hook blocks merge
+ - t7505: add missing &&
+
+ Expose more merge states (e.g. $GIT_DIR/MERGE_MODE) to hooks that
+ run during "git merge".  The log message stresses too much on one
+ hook, prepare-commit-msg, but it would equally apply to other hooks
+ like post-merge, I think.
+
+ Waiting for a reroll.
+
+
+* jc/graph-post-root-gap (2013-12-30) 3 commits
+ - WIP: document what we want at the end
+ - graph: remove unused code a bit
+ - graph: stuff the current commit into graph->columns[]
+
+ This was primarily a RFH ($gmane/239580).
+
+
+* tg/perf-lib-test-perf-cleanup (2013-09-19) 2 commits
+ - perf-lib: add test_perf_cleanup target
+ - perf-lib: split starting the test from the execution
+
+ Add test_perf_cleanup shell function to the perf suite, that allows
+ the script writers to define a test with a clean-up action.
+
+ Will hold.
+
+
+* jc/show-branch (2014-03-24) 5 commits
+ - show-branch: use commit slab to represent bitflags of arbitrary width
+ - show-branch.c: remove "all_mask"
+ - show-branch.c: abstract out "flags" operation
+ - show-branch.c: lift all_mask/all_revs to a global static
+ - show-branch.c: update comment style
+
+ Waiting for the final step to lift the hard-limit before sending it out.
+
+--------------------------------------------------
+[Cooking]
+
+* bc/asciidoctor (2014-10-15) 2 commits
+  (merged to 'next' on 2014-10-17 at 12ce2e2)
+ + Documentation: implement linkgit macro for Asciidoctor
+ + Documentation: move some AsciiDoc parameters into variables
+
+ Add machinery to alternatively use AsciiDoctor to format our
+ documentation.
+
+ Brian seems to have a bit more tweaks; will wait for them before
+ moving this topic forward.
+
+
+* jk/prune-mtime (2014-10-19) 28 commits
+  (merged to 'next' on 2014-10-20 at fdd7ff6)
+ + drop add_object_array_with_mode
+ + revision: remove definition of unused 'add_object' function
+ + pack-objects: double-check options before discarding objects
+ + repack: pack objects mentioned by the index
+ + pack-objects: use argv_array
+ + reachable: use revision machinery's --indexed-objects code
+ + rev-list: add --indexed-objects option
+ + rev-list: document --reflog option
+ + t5516: test pushing a tag of an otherwise unreferenced blob
+ + traverse_commit_list: support pending blobs/trees with paths
+ + make add_object_array_with_context interface more sane
+ + write_sha1_file: freshen existing objects
+ + pack-objects: match prune logic for discarding objects
+ + pack-objects: refactor unpack-unreachable expiration check
+ + prune: keep objects reachable from recent objects
+ + sha1_file: add for_each iterators for loose and packed objects
+ + count-objects: use for_each_loose_file_in_objdir
+ + count-objects: do not use xsize_t when counting object size
+ + prune-packed: use for_each_loose_file_in_objdir
+ + reachable: mark index blobs as SEEN
+ + prune: factor out loose-object directory traversal
+ + reachable: reuse revision.c "add all reflogs" code
+ + reachable: use traverse_commit_list instead of custom walk
+ + clean up name allocation in prepare_revision_walk
+ + object_array: add a "clear" function
+ + object_array: factor out slopbuf-freeing logic
+ + isxdigit: cast input to unsigned char
+ + foreach_alt_odb: propagate return value from callback
+
+ Tighten the logic to decide that an unreachable cruft is
+ sufficiently old by covering corner cases such as an ancient object
+ becoming reachable and then going unreachable again, in which case
+ its retention period should be prolonged.
+
+ Will merge to 'master'.
+
+
+* jc/checkout-local-track-report (2014-10-14) 1 commit
+  (merged to 'next' on 2014-10-21 at f636a00)
+ + checkout: report upstream correctly even with loosely defined branch.*.merge
+
+ The report from "git checkout" on a branch that builds on another
+ local branch by setting its branch.*.merge to branch name (not a
+ full refname) incorrectly said that the upstream is gone.
+
+
+* jc/clone-borrow (2014-10-15) 1 commit
+  (merged to 'next' on 2014-10-21 at b76ea34)
+ + clone: --dissociate option to mark that reference is only temporary
+
+ Allow "git clone --reference" to be used more safely.
+
 --------------------------------------------------
 [Discarded]
 
-* rr/mergetool-temporary-filename-tweak (2014-08-21) 1 commit
- . Allow the user to change the temporary file name for mergetool
+* jk/tag-contains (2014-06-30) 8 commits
+ . perf: add tests for tag --contains
+ . tag: use commit_contains
+ . commit: provide a fast multi-tip contains function
+ . string-list: add pos to iterator callback
+ . add functions for memory-efficient bitmaps
+ . paint_down_to_common: use prio_queue
+ . tag: factor out decision to stream tags
+ . tag: allow --sort with -n
 
- Needed rerolling (new paragraph in doc seems to be in a wrong place)
- for quite some time but without any activity.
+ Expecting a reroll.
 
 
-* cb/mergetool-difftool (2014-07-21) 2 commits
- . difftool: don't assume that default sh is sane
- . mergetool: don't require a work tree for --tool-help
+* jk/makefile (2014-02-05) 16 commits
+ . FIXUP
+ . move LESS/LV pager environment to Makefile
+ . Makefile: teach scripts to include make variables
+ . FIXUP
+ . Makefile: auto-build C strings from make variables
+ . Makefile: drop *_SQ variables
+ . FIXUP
+ . Makefile: add c-quote helper function
+ . Makefile: introduce sq function for shell-quoting
+ . Makefile: always create files via make-var
+ . Makefile: store GIT-* sentinel files in MAKE/
+ . Makefile: prefer printf to echo for GIT-*
+ . Makefile: use tempfile/mv strategy for GIT-*
+ . Makefile: introduce make-var helper function
+ . Makefile: fix git-instaweb dependency on gitweb
+ . Makefile: drop USE_GETTEXT_SCHEME from GIT-CFLAGS
 
- Rerolled as da/mergetool-tool-help topic.
+ Simplify the Makefile rules and macros that exist primarily for
+ quoting purposes, and make it easier to robustly express the
+ dependency rules.
 
-
-* rh/prompt-tests (2014-06-05) 11 commits
- . t9904: new __git_ps1 tests for Zsh
- . test-lib: make it possible to override how test code is eval'd
- . lib-prompt-tests.sh: add variable for string that encodes percent in PS1
- . lib-prompt-tests.sh: put all tests inside a function
- . t9903: move prompt tests to a new lib-prompt-tests.sh file
- . t9903: move PS1 color code variable definitions to lib-bash.sh
- . t9903: include "Bash" in test names via new $shellname var
- . t9903: run pc mode tests again with PS1 expansion disabled
- . t9903: move test name prefix to a separate variable
- . t9903: put the Bash pc mode prompt test cases in a function
- . t9903: remove Zsh test from the suite of Bash prompt tests
-
- Was expecting a reroll to limit the damage to test_eval_; also
- reported to be broken with older zsh that are still in the field
- ($gmane/251231).
+ Expecting a reroll.
