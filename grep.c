@@ -1117,31 +1117,33 @@ static void show_line(struct grep_opt *opt, char *bol, char *eol,
 		output_sep(opt, sign);
 	}
 	if (opt->color) {
-		regmatch_t match;
-		enum grep_context ctx = GREP_CONTEXT_BODY;
-		int ch = *eol;
-		int eflags = 0;
+		if (sign == ':') {
+			/* paint the hits on matched lines */
+			regmatch_t match;
+			enum grep_context ctx = GREP_CONTEXT_BODY;
+			int ch = *eol;
+			int eflags = 0;
 
-		if (sign == ':')
 			line_color = opt->color_selected;
-		else if (sign == '-')
-			line_color = opt->color_context;
-		else if (sign == '=')
-			line_color = opt->color_function;
-		*eol = '\0';
-		while (next_match(opt, bol, eol, ctx, &match, eflags)) {
-			if (match.rm_so == match.rm_eo)
-				break;
+			*eol = '\0';
+			while (next_match(opt, bol, eol, ctx, &match, eflags)) {
+				if (match.rm_so == match.rm_eo)
+					break;
 
-			output_color(opt, bol, match.rm_so, line_color);
-			output_color(opt, bol + match.rm_so,
-				     match.rm_eo - match.rm_so,
-				     opt->color_match);
-			bol += match.rm_eo;
-			rest -= match.rm_eo;
-			eflags = REG_NOTBOL;
+				output_color(opt, bol, match.rm_so, line_color);
+				output_color(opt, bol + match.rm_so,
+					     match.rm_eo - match.rm_so,
+					     opt->color_match);
+				bol += match.rm_eo;
+				rest -= match.rm_eo;
+				eflags = REG_NOTBOL;
+			}
+			*eol = ch;
+		} else if (sign == '-') {
+			line_color = opt->color_context;
+		} else if (sign == '=') {
+			line_color = opt->color_function;
 		}
-		*eol = ch;
 	}
 	output_color(opt, bol, rest, line_color);
 	opt->output(opt, "\n", 1);
