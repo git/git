@@ -376,10 +376,19 @@ sub longest_common_path {
 sub gs_fetch_loop_common {
 	my ($self, $base, $head, $gsv, $globs) = @_;
 	return if ($base > $head);
+	my $gpool = SVN::Pool->new_default;
+	my $ra_url = $self->url;
+	my $reload_ra = sub {
+		$_[0] = undef;
+		$self = undef;
+		$RA = undef;
+		$gpool->clear;
+		$self = Git::SVN::Ra->new($ra_url);
+		$ra_invalid = undef;
+	};
 	my $inc = $_log_window_size;
 	my ($min, $max) = ($base, $head < $base + $inc ? $head : $base + $inc);
 	my $longest_path = longest_common_path($gsv, $globs);
-	my $ra_url = $self->url;
 	my $find_trailing_edge;
 	while (1) {
 		my %revs;
@@ -449,13 +458,7 @@ sub gs_fetch_loop_common {
 				        "$g->{t}-maxRev";
 				Git::SVN::tmp_config($k, $r);
 			}
-			if ($ra_invalid) {
-				$_[0] = undef;
-				$self = undef;
-				$RA = undef;
-				$self = Git::SVN::Ra->new($ra_url);
-				$ra_invalid = undef;
-			}
+			$reload_ra->() if $ra_invalid;
 		}
 		# pre-fill the .rev_db since it'll eventually get filled in
 		# with '0' x40 if something new gets committed
@@ -472,6 +475,8 @@ sub gs_fetch_loop_common {
 		$min = $max + 1;
 		$max += $inc;
 		$max = $head if ($max > $head);
+
+		$reload_ra->();
 	}
 	Git::SVN::gc();
 }
