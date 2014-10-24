@@ -74,17 +74,10 @@ void setup_pager(void)
 	pager_process.use_shell = 1;
 	pager_process.argv = pager_argv;
 	pager_process.in = -1;
-	if (!getenv("LESS") || !getenv("LV")) {
-		static const char *env[3];
-		int i = 0;
-
-		if (!getenv("LESS"))
-			env[i++] = "LESS=FRX";
-		if (!getenv("LV"))
-			env[i++] = "LV=-c";
-		env[i] = NULL;
-		pager_process.env = env;
-	}
+	if (!getenv("LESS"))
+		argv_array_push(&pager_process.env_array, "LESS=FRX");
+	if (!getenv("LV"))
+		argv_array_push(&pager_process.env_array, "LV=-c");
 	if (start_command(&pager_process))
 		return;
 

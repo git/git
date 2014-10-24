@@ -12,6 +12,7 @@ void child_process_init(struct child_process *child)
 {
 	memset(child, 0, sizeof(*child));
 	argv_array_init(&child->args);
+	argv_array_init(&child->env_array);
 }
 
 struct child_to_clean {
@@ -287,6 +288,8 @@ int start_command(struct child_process *cmd)
 
 	if (!cmd->argv)
 		cmd->argv = cmd->args.argv;
+	if (!cmd->env)
+		cmd->env = cmd->env_array.argv;
 
 	/*
 	 * In case of errors we must keep the promise to close FDs
@@ -338,6 +341,7 @@ fail_pipe:
 			error("cannot create %s pipe for %s: %s",
 				str, cmd->argv[0], strerror(failed_errno));
 			argv_array_clear(&cmd->args);
+			argv_array_clear(&cmd->env_array);
 			errno = failed_errno;
 			return -1;
 		}
@@ -524,6 +528,7 @@ fail_pipe:
 		else if (cmd->err)
 			close(cmd->err);
 		argv_array_clear(&cmd->args);
+		argv_array_clear(&cmd->env_array);
 		errno = failed_errno;
 		return -1;
 	}
@@ -550,6 +555,7 @@ int finish_command(struct child_process *cmd)
 {
 	int ret = wait_or_whine(cmd->pid, cmd->argv[0]);
 	argv_array_clear(&cmd->args);
+	argv_array_clear(&cmd->env_array);
 	return ret;
 }
 
