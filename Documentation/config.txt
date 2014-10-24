@@ -1827,10 +1827,11 @@ pack.depth::
 	maximum depth is given on the command line. Defaults to 50.
 
 pack.windowMemory::
-	The window memory size limit used by linkgit:git-pack-objects[1]
-	when no limit is given on the command line.  The value can be
-	suffixed with "k", "m", or "g".  Defaults to 0, meaning no
-	limit.
+	The maximum size of memory that is consumed by each thread
+	in linkgit:git-pack-objects[1] for pack window memory when
+	no limit is given on the command line.  The value can be
+	suffixed with "k", "m", or "g".  When left unconfigured (or
+	set explicitly to 0), there will be no limit.
 
 pack.compression::
 	An integer -1..9, indicating the compression level for objects
