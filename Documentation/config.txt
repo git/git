@@ -204,13 +204,26 @@ advice.*::
 --
 
 core.fileMode::
-	If false, the executable bit differences between the index and
-	the working tree are ignored; useful on broken filesystems like FAT.
-	See linkgit:git-update-index[1].
+	Tells Git if the executable bit of files in the working tree
+	is to be honored.
 +
-The default is true, except linkgit:git-clone[1] or linkgit:git-init[1]
-will probe and set core.fileMode false if appropriate when the
-repository is created.
+Some filesystems lose the executable bit when a file that is
+marked as executable is checked out, or checks out an
+non-executable file with executable bit on.
+linkgit:git-clone[1] or linkgit:git-init[1] probe the filesystem
+to see if it handles the executable bit correctly
+and this variable is automatically set as necessary.
++
+A repository, however, may be on a filesystem that handles
+the filemode correctly, and this variable is set to 'true'
+when created, but later may be made accessible from another
+environment that loses the filemode (e.g. exporting ext4 via
+CIFS mount, visiting a Cygwin created repository with
+Git for Windows or Eclipse).
+In such a case it may be necessary to set this variable to 'false'.
+See linkgit:git-update-index[1].
++
+The default is true (when core.filemode is not specified in the config file).
 
 core.ignorecase::
 	If true, this option enables various workarounds to enable
