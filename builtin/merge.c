@@ -884,7 +884,7 @@ static int finish_automerge(struct commit *head,
 	return 0;
 }
 
-static int suggest_conflicts(int renormalizing)
+static int suggest_conflicts(void)
 {
 	const char *filename;
 	FILE *fp;
@@ -1557,7 +1557,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		fprintf(stderr, _("Automatic merge went well; "
 			"stopped before committing as requested\n"));
 	else
-		ret = suggest_conflicts(option_renormalize);
+		ret = suggest_conflicts();
 
 done:
 	free(branch_to_free);
