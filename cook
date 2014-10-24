@@ -302,7 +302,7 @@ EOF
 }
 
 my $blurb_match = <<'EOF';
-(?i:\s*[a-z]+: .*\n)*?Subject: What's cooking in \S+ \((\w+) (\d+), #(\d+); (\w+), (\d+)\)
+(?:(?i:\s*[a-z]+: .*|\s.*)\n)*?Subject: What's cooking in \S+ \((\w+) (\d+), #(\d+); (\w+), (\d+)\)
 X-master-at: ([0-9a-f]{40})
 X-next-at: ([0-9a-f]{40})
 
