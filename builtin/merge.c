@@ -28,6 +28,7 @@
 #include "remote.h"
 #include "fmt-merge-msg.h"
 #include "gpg-interface.h"
+#include "sequencer.h"
 
 #define DEFAULT_TWOHEAD (1<<0)
 #define DEFAULT_OCTOPUS (1<<1)
@@ -888,24 +889,15 @@ static int suggest_conflicts(void)
 {
 	const char *filename;
 	FILE *fp;
-	int pos;
+	struct strbuf msgbuf = STRBUF_INIT;
 
 	filename = git_path("MERGE_MSG");
 	fp = fopen(filename, "a");
 	if (!fp)
 		die_errno(_("Could not open '%s' for writing"), filename);
-	fprintf(fp, "\nConflicts:\n");
-	for (pos = 0; pos < active_nr; pos++) {
-		const struct cache_entry *ce = active_cache[pos];
 
-		if (ce_stage(ce)) {
-			fprintf(fp, "\t%s\n", ce->name);
-			while (pos + 1 < active_nr &&
-					!strcmp(ce->name,
-						active_cache[pos + 1]->name))
-				pos++;
-		}
-	}
+	append_conflicts_hint(&msgbuf);
+	fputs(msgbuf.buf, fp);
 	fclose(fp);
 	rerere(allow_rerere_auto);
 	printf(_("Automatic merge failed; "
