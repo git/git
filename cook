@@ -536,6 +536,17 @@ sub topic_in_pu {
 	return 0;
 }
 
+sub tweak_willdo {
+	my ($td) = @_;
+	my $desc = $td->{'desc'};
+	my $text = $td->{'text'};
+	$desc =~ s/\n<<\n.*//s;
+	if ($desc =~ /^  \(merged to 'next'/m) {
+		$text =~ s/^ Will merge to 'next'\.$/ Will merge to 'master'./m;
+	}
+	$td->{'text'} = $text;
+}
+
 sub merge_cooking {
 	my ($cooking, $current) = @_;
 	my $td = $cooking->{'topic_description'};
@@ -569,6 +580,7 @@ sub merge_cooking {
 		my $o = $td->{$topic}{'desc'};
 		if ($n ne $o) {
 			$td->{$topic}{'desc'} = $n . "\n<<\n" . $o ."\n>>";
+			tweak_willdo($td->{$topic});
 		}
 	}
 
