@@ -18,6 +18,7 @@ else
 		# No password given, to enable non-interactive operation.
 		cp -R "$TEST_DIRECTORY"/lib-gpg ./gpghome
 		chmod 0700 gpghome
+		chmod 0600 gpghome/*
 		GNUPGHOME="$(pwd)/gpghome"
 		export GNUPGHOME
 		test_set_prereq GPG
