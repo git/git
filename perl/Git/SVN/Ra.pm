@@ -177,10 +177,6 @@ sub get_dir {
 	wantarray ? (\%dirents, $r, $props) : \%dirents;
 }
 
-sub DESTROY {
-	# do not call the real DESTROY since we store ourselves in $RA
-}
-
 # get_log(paths, start, end, limit,
 #         discover_changed_paths, strict_node_history, receiver)
 sub get_log {
