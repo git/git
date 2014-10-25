@@ -431,7 +431,7 @@ sub gs_fetch_loop_common {
 
 		my %exists = map { $_->path => $_ } @$gsv;
 		foreach my $r (sort {$a <=> $b} keys %revs) {
-			my ($paths, $logged) = @{$revs{$r}};
+			my ($paths, $logged) = @{delete $revs{$r}};
 
 			foreach my $gs ($self->match_globs(\%exists, $paths,
 			                                   $globs, $r)) {
