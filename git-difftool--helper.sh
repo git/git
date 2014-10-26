@@ -49,7 +49,8 @@ launch_merge_tool () {
 		else
 			printf "Launch '%s' [Y/n]: " "$merge_tool"
 		fi
-		if read ans && test "$ans" = n
+		read ans || return
+		if test "$ans" = n
 		then
 			return
 		fi
