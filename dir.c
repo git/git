@@ -12,6 +12,7 @@
 #include "refs.h"
 #include "wildmatch.h"
 #include "pathspec.h"
+#include "varint.h"
 
 struct path_simplify {
 	int len;
@@ -2140,4 +2141,88 @@ void clear_directory(struct dir_struct *dir)
 		stk = prev;
 	}
 	strbuf_release(&dir->basebuf);
+}
+
+struct ondisk_untracked_cache {
+	struct stat_data info_exclude_stat;
+	struct stat_data excludes_file_stat;
+	uint32_t dir_flags;
+	unsigned char info_exclude_sha1[20];
+	unsigned char excludes_file_sha1[20];
+	char exclude_per_dir[1];
+};
+
+static void stat_data_to_disk(struct stat_data *to, const struct stat_data *from)
+{
+	to->sd_ctime.sec  = htonl(from->sd_ctime.sec);
+	to->sd_ctime.nsec = htonl(from->sd_ctime.nsec);
+	to->sd_mtime.sec  = htonl(from->sd_mtime.sec);
+	to->sd_mtime.nsec = htonl(from->sd_mtime.nsec);
+	to->sd_dev	  = htonl(from->sd_dev);
+	to->sd_ino	  = htonl(from->sd_ino);
+	to->sd_uid	  = htonl(from->sd_uid);
+	to->sd_gid	  = htonl(from->sd_gid);
+	to->sd_size	  = htonl(from->sd_size);
+}
+
+static void write_one_dir(struct strbuf *out, struct untracked_cache_dir *untracked)
+{
+	struct stat_data stat_data;
+	unsigned char intbuf[16];
+	unsigned int intlen, value;
+	int i;
+
+	stat_data_to_disk(&stat_data, &untracked->stat_data);
+	strbuf_add(out, &stat_data, sizeof(stat_data));
+	strbuf_add(out, untracked->exclude_sha1, 20);
+
+	/*
+	 * untracked_nr should be reset whenever valid is clear, but
+	 * for safety..
+	 */
+	if (!untracked->valid) {
+		untracked->untracked_nr = 0;
+		untracked->check_only = 0;
+	}
+
+	value  = untracked->valid;
+	value |= untracked->check_only   << 1;
+	value |= untracked->untracked_nr << 2;
+	intlen = encode_varint(value, intbuf);
+	strbuf_add(out, intbuf, intlen);
+
+	/* skip non-recurse directories */
+	for (i = 0, value = 0; i < untracked->dirs_nr; i++)
+		if (untracked->dirs[i]->recurse)
+			value++;
+	intlen = encode_varint(value, intbuf);
+	strbuf_add(out, intbuf, intlen);
+
+	strbuf_add(out, untracked->name, strlen(untracked->name) + 1);
+
+	for (i = 0; i < untracked->untracked_nr; i++)
+		strbuf_add(out, untracked->untracked[i],
+			   strlen(untracked->untracked[i]) + 1);
+
+	for (i = 0; i < untracked->dirs_nr; i++)
+		if (untracked->dirs[i]->recurse)
+			write_one_dir(out, untracked->dirs[i]);
+}
+
+void write_untracked_extension(struct strbuf *out, struct untracked_cache *untracked)
+{
+	struct ondisk_untracked_cache *ouc;
+	int len = 0;
+	if (untracked->exclude_per_dir)
+		len = strlen(untracked->exclude_per_dir);
+	ouc = xmalloc(sizeof(*ouc) + len);
+	stat_data_to_disk(&ouc->info_exclude_stat, &untracked->ss_info_exclude.stat);
+	stat_data_to_disk(&ouc->excludes_file_stat, &untracked->ss_excludes_file.stat);
+	hashcpy(ouc->info_exclude_sha1, untracked->ss_info_exclude.sha1);
+	hashcpy(ouc->excludes_file_sha1, untracked->ss_excludes_file.sha1);
+	ouc->dir_flags = htonl(untracked->dir_flags);
+	memcpy(ouc->exclude_per_dir, untracked->exclude_per_dir, len + 1);
+	strbuf_add(out, ouc, sizeof(*ouc) + len);
+	if (untracked->root)
+		write_one_dir(out, untracked->root);
 }
