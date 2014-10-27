@@ -113,8 +113,9 @@ struct untracked_cache_dir {
 	/* null SHA-1 means this directory does not have .gitignore */
 	unsigned char exclude_sha1[20];
 	struct stat_data stat_data;
+	unsigned int recurse : 1;
 	unsigned int check_only : 1;
-	/* all data in this struct are good */
+	/* all data except 'dirs' in this struct are good */
 	unsigned int valid : 1;
 	unsigned int untracked_nr : 29;
 	unsigned int untracked_alloc, dirs_nr, dirs_alloc;
