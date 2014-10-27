@@ -1600,7 +1600,6 @@ sub tie_for_persistent_memoization {
 		my %lookup_svn_merge_cache;
 		my %check_cherry_pick2_cache;
 		my %has_no_changes_cache;
-		my %_rev_list_cache;
 
 		tie_for_persistent_memoization(\%lookup_svn_merge_cache,
 		    "$cache_path/lookup_svn_merge");
@@ -1622,14 +1621,6 @@ sub tie_for_persistent_memoization {
 			SCALAR_CACHE => ['HASH' => \%has_no_changes_cache],
 			LIST_CACHE => 'FAULT',
 		;
-
-		tie_for_persistent_memoization(\%_rev_list_cache,
-		    "$cache_path/_rev_list");
-		memoize '_rev_list',
-			SCALAR_CACHE => 'FAULT',
-			LIST_CACHE => ['HASH' => \%_rev_list_cache],
-		;
-
 	}
 
 	sub unmemoize_svn_mergeinfo_functions {
@@ -1639,7 +1630,6 @@ sub tie_for_persistent_memoization {
 		Memoize::unmemoize 'lookup_svn_merge';
 		Memoize::unmemoize 'check_cherry_pick2';
 		Memoize::unmemoize 'has_no_changes';
-		Memoize::unmemoize '_rev_list';
 	}
 
 	sub clear_memoized_mergeinfo_caches {
