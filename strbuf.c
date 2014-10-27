@@ -222,7 +222,8 @@ static void add_lines(struct strbuf *out,
 		const char *next = memchr(buf, '\n', size);
 		next = next ? (next + 1) : (buf + size);
 
-		prefix = (prefix2 && buf[0] == '\n') ? prefix2 : prefix1;
+		prefix = ((prefix2 && (buf[0] == '\n' || buf[0] == '\t'))
+			  ? prefix2 : prefix1);
 		strbuf_addstr(out, prefix);
 		strbuf_add(out, buf, next - buf);
 		size -= next - buf;

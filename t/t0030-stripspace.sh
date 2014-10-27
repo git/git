@@ -432,4 +432,10 @@ test_expect_success '-c with changed comment char' '
 	test_cmp expect actual
 '
 
+test_expect_success 'avoid SP-HT sequence in commented line' '
+	printf "#\tone\n#\n# two\n" >expect &&
+	printf "\tone\n\ntwo\n" | git stripspace -c >actual &&
+	test_cmp expect actual
+'
+
 test_done
