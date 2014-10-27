@@ -678,7 +678,8 @@ static int add_excludes(const char *fname, const char *base, int baselen,
 		close(fd);
 		if (ss) {
 			int pos;
-			if (ss_valid && !match_stat_data(&ss->stat, &st))
+			if (ss_valid &&
+			    !match_stat_data_racy(&the_index, &ss->stat, &st))
 				; /* no content change, ss->sha1 still good */
 			else if (check_index &&
 				 (pos = cache_name_pos(fname, strlen(fname))) >= 0 &&
@@ -1533,7 +1534,7 @@ static int valid_cached_dir(struct dir_struct *dir,
 		return 0;
 	}
 	if (!untracked->valid ||
-	    match_stat_data(&untracked->stat_data, &st)) {
+	    match_stat_data_racy(&the_index, &untracked->stat_data, &st)) {
 		if (untracked->valid)
 			invalidate_directory(dir->untracked, untracked);
 		fill_stat_data(&untracked->stat_data, &st);
