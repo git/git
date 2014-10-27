@@ -466,7 +466,8 @@ void add_exclude(const char *string, const char *base,
 	x->el = el;
 }
 
-static void *read_skip_worktree_file_from_index(const char *path, size_t *size)
+static void *read_skip_worktree_file_from_index(const char *path, size_t *size,
+						struct sha1_stat *ss)
 {
 	int pos, len;
 	unsigned long sz;
@@ -485,6 +486,10 @@ static void *read_skip_worktree_file_from_index(const char *path, size_t *size)
 		return NULL;
 	}
 	*size = xsize_t(sz);
+	if (ss) {
+		memset(&ss->stat, 0, sizeof(ss->stat));
+		hashcpy(ss->sha1, active_cache[pos]->sha1);
+	}
 	return data;
 }
 
@@ -529,11 +534,18 @@ static void trim_trailing_spaces(char *buf)
 		*last_space = '\0';
 }
 
-int add_excludes_from_file_to_list(const char *fname,
-				   const char *base,
-				   int baselen,
-				   struct exclude_list *el,
-				   int check_index)
+/*
+ * Given a file with name "fname", read it (either from disk, or from
+ * the index if "check_index" is non-zero), parse it and store the
+ * exclude rules in "el".
+ *
+ * If "ss" is not NULL, compute SHA-1 of the exclude file and fill
+ * stat data from disk (only valid if add_excludes returns zero). If
+ * ss_valid is non-zero, "ss" must contain good value as input.
+ */
+static int add_excludes(const char *fname, const char *base, int baselen,
+			struct exclude_list *el, int check_index,
+			struct sha1_stat *ss, int ss_valid)
 {
 	struct stat st;
 	int fd, i, lineno = 1;
@@ -547,7 +559,7 @@ int add_excludes_from_file_to_list(const char *fname,
 		if (0 <= fd)
 			close(fd);
 		if (!check_index ||
-		    (buf = read_skip_worktree_file_from_index(fname, &size)) == NULL)
+		    (buf = read_skip_worktree_file_from_index(fname, &size, ss)) == NULL)
 			return -1;
 		if (size == 0) {
 			free(buf);
@@ -560,6 +572,10 @@ int add_excludes_from_file_to_list(const char *fname,
 	} else {
 		size = xsize_t(st.st_size);
 		if (size == 0) {
+			if (ss) {
+				fill_stat_data(&ss->stat, &st);
+				hashcpy(ss->sha1, EMPTY_BLOB_SHA1_BIN);
+			}
 			close(fd);
 			return 0;
 		}
@@ -571,6 +587,19 @@ int add_excludes_from_file_to_list(const char *fname,
 		}
 		buf[size++] = '\n';
 		close(fd);
+		if (ss) {
+			int pos;
+			if (ss_valid && !match_stat_data(&ss->stat, &st))
+				; /* no content change, ss->sha1 still good */
+			else if (check_index &&
+				 (pos = cache_name_pos(fname, strlen(fname))) >= 0 &&
+				 !ce_stage(active_cache[pos]) &&
+				 ce_uptodate(active_cache[pos]))
+				hashcpy(ss->sha1, active_cache[pos]->sha1);
+			else
+				hash_sha1_file(buf, size, "blob", ss->sha1);
+			fill_stat_data(&ss->stat, &st);
+		}
 	}
 
 	el->filebuf = buf;
@@ -587,6 +616,13 @@ int add_excludes_from_file_to_list(const char *fname,
 		}
 	}
 	return 0;
+}
+
+int add_excludes_from_file_to_list(const char *fname, const char *base,
+				   int baselen, struct exclude_list *el,
+				   int check_index)
+{
+	return add_excludes(fname, base, baselen, el, check_index, NULL, 0);
 }
 
 struct exclude_list *add_exclude_list(struct dir_struct *dir,
