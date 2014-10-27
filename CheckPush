@@ -76,3 +76,6 @@ else
 	echo "git diff --stat next jch"
 	git diff --stat next jch
 fi
+
+match_next=$(git rev-parse 'jch^{/^### match next}') || exit
+git diff --stat "$match_next" next
