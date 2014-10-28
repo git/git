@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Oct 2014, #06; Fri, 24)
+Subject: What's cooking in git.git (Oct 2014, #07; Tue, 28)
 X-master-at: fbecd99861ea5795aeba46faf2ac7a8c1b70d485
-X-next-at: 26228e10cc494c2d5b0b4302c361a1870ba75e35
+X-next-at: fc743598c8bf35b48ad5cdbe5748e497b5f9c1a4
 
-What's cooking in git.git (Oct 2014, #06; Fri, 24)
+What's cooking in git.git (Oct 2014, #07; Tue, 28)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -22,245 +22,99 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* da/mergetool-meld (2014-10-16) 1 commit
-  (merged to 'next' on 2014-10-17 at 00ee553)
- + mergetools/meld: make usage of `--output` configurable and more robust
-
- Newer versions of 'meld' breaks the auto-detection we use to see if
- they are new enough to support the `--output` option.
-
-
-* da/mergetool-temporary-directory (2014-10-16) 2 commits
-  (merged to 'next' on 2014-10-17 at 261e74e)
- + t7610-mergetool: add test cases for mergetool.writeToTemp
- + mergetool: add an option for writing to a temporary directory
- (this branch uses da/mergetool-temporary-filename and da/mergetool-tests; is tangled with da/mergetool-tool-help.)
-
- Allow a temporary directory specified to be used while running "git
- mergetool" backend.
-
-
-* da/mergetool-temporary-filename (2014-10-16) 1 commit
-  (merged to 'next' on 2014-10-17 at 3fb95b5)
- + mergetool: use more conservative temporary filenames
- (this branch is used by da/mergetool-temporary-directory; uses da/mergetool-tests; is tangled with da/mergetool-tool-help.)
-
- Tweak the names of the three throw-away files "git mergetool" comes
- up with to feed the merge tool backend, so that a file with a
- single dot in its name in the original (e.g. "hello.c") will have
- only one dot in these variants (e.g. "hello_BASE_4321.c").
-
-
-* da/mergetool-tests (2014-10-16) 4 commits
-  (merged to 'next' on 2014-10-17 at 239fefe)
- + test-lib-functions: adjust style to match CodingGuidelines
- + t7610-mergetool: use test_config to isolate tests
- + t7610-mergetool: add missing && and remove commented-out code
- + t7610-mergetool: use tabs instead of a mix of tabs and spaces
- (this branch is used by da/mergetool-temporary-directory and da/mergetool-temporary-filename; is tangled with da/mergetool-tool-help.)
-
- The clean-up of this test script was long overdue and is a very
- welcome change.
-
-
-* da/mergetool-tool-help (2014-10-15) 8 commits
-  (merged to 'next' on 2014-10-17 at 854654c)
- + difftool: don't assume that default sh is sane
- + mergetool: don't require a work tree for --tool-help
- + git-sh-setup: move GIT_DIR initialization into a function
- + mergetool: use more conservative temporary filenames
- + test-lib-functions: adjust style to match CodingGuidelines
- + t7610-mergetool: prefer test_config over git config
- + t7610-mergetool: add missing && and remove commented-out code
- + t7610-mergetool: use tabs instead of a mix of tabs and spaces
- (this branch is tangled with da/mergetool-temporary-directory, da/mergetool-temporary-filename and da/mergetool-tests.)
-
- Allow "git mergetool --help" to run outside a Git repository.
-
-
-* eb/no-pthreads (2014-10-19) 3 commits
-  (merged to 'next' on 2014-10-21 at c455d39)
- + Handle atexit list internaly for unthreaded builds
- + pack-objects: set number of threads before checking and warning
- + index-pack: fix compilation with NO_PTHREADS
-
- Allow us build with NO_PTHREADS=NoThanks compilation option.  The
- last change (not queued) needs a bit more explanation in its log
- message.
-
-
-* jk/pack-objects-no-bitmap-when-splitting (2014-10-19) 1 commit
-  (merged to 'next' on 2014-10-21 at c3c8c2a)
- + pack-objects: turn off bitmaps when we split packs
-
- Splitting pack-objects output into multiple packs is incompatible
- with the use of reachability bitmap.
-
-
-* js/completion-hide-not-a-repo (2014-10-14) 1 commit
-  (merged to 'next' on 2014-10-17 at 466de3c)
- + completion: silence "fatal: Not a git repository" error
-
- Some internal error messages leaked out of the bash completion when
- typing "git cmd <TAB>" and the machinery tried to complete
- refnames.
-
-
-* nd/dir-prep-exclude-cleanup (2014-10-21) 1 commit
-  (merged to 'next' on 2014-10-21 at c90ba7a)
- + dir.c: remove the second declaration of "stk" in prep_exclude()
-
- Code clean-up.
-
-
-* po/doc-status-markup (2014-10-19) 1 commit
-  (merged to 'next' on 2014-10-21 at efca89c)
- + doc: fix 'git status --help' character quoting
-
- Update documentation mark-up.
-
-
-* rs/ref-transaction (2014-10-15) 25 commits
-  (merged to 'next' on 2014-10-17 at 1390624)
- + ref_transaction_commit: bail out on failure to remove a ref
- + lockfile: remove unable_to_lock_error
- + refs.c: do not permit err == NULL
- + remote rm/prune: print a message when writing packed-refs fails
- + for-each-ref: skip and warn about broken ref names
- + refs.c: allow listing and deleting badly named refs
- + test: put tests for handling of bad ref names in one place
- + packed-ref cache: forbid dot-components in refnames
- + branch -d: simplify by using RESOLVE_REF_READING
- + branch -d: avoid repeated symref resolution
- + reflog test: test interaction with detached HEAD
- + refs.c: change resolve_ref_unsafe reading argument to be a flags field
- + refs.c: make write_ref_sha1 static
- + fetch.c: change s_update_ref to use a ref transaction
- + refs.c: ref_transaction_commit: distinguish name conflicts from other errors
- + refs.c: pass a list of names to skip to is_refname_available
- + refs.c: call lock_ref_sha1_basic directly from commit
- + refs.c: refuse to lock badly named refs in lock_ref_sha1_basic
- + rename_ref: don't ask read_ref_full where the ref came from
- + refs.c: pass the ref log message to _create/delete/update instead of _commit
- + refs.c: add an err argument to delete_ref_loose
- + wrapper.c: add a new function unlink_or_msg
- + refs.c: lock_ref_sha1_basic is used for all refs
- + wrapper.c: remove/unlink_or_warn: simplify, treat ENOENT as success
- + mv test: recreate mod/ directory instead of relying on stale copy
-
- The API to update refs have been restructured to allow introducing
- a true transactional updates later.  We would even allow storing
- refs in backends other than the traditional filesystem-based one.
-
-
-* rs/run-command-env-array (2014-10-19) 2 commits
-  (merged to 'next' on 2014-10-21 at 4e56fa2)
- + use env_array member of struct child_process
- + run-command: add env_array, an optional argv_array for env
-
- Add managed "env" array to child_process to clarify the lifetime
- rules.
-
-
-* sb/plug-transport-leak (2014-10-21) 2 commits
-  (merged to 'next' on 2014-10-21 at 0a462d7)
- + .mailmap: add Stefan Bellers corporate mail address
- + transport: free leaking head in transport_print_push_status()
-
- Code clean-up.
-
-
-* tb/core-filemode-doc (2014-10-19) 1 commit
-  (merged to 'next' on 2014-10-21 at ad3e63b)
- + core.filemode may need manual action
-
- Doc update.
-
-
-* wk/t1304-wo-USER (2014-10-19) 1 commit
-  (merged to 'next' on 2014-10-21 at 00fe6d9)
- + t1304: Set LOGNAME even if USER is unset or null
-
---------------------------------------------------
 [New Topics]
 
-* zk/grep-color-words (2014-10-22) 1 commit
-  (merged to 'next' on 2014-10-24 at 2d2f8f8)
- + grep: fix match highlighting for combined patterns with context lines
+* da/difftool (2014-10-28) 2 commits
+  (merged to 'next' on 2014-10-28 at 19da3f6)
+ + difftool: add support for --trust-exit-code
+ + difftool--helper: exit when reading a prompt answer fails
 
- "git grep --color" highlighted matching tokens on non-matching
- context lines and function name headers, which was unwanted.
-
- Will merge to 'master'.
-
-
-* jc/conflict-hint (2014-10-24) 3 commits
- - merge & sequencer: turn "Conflicts:" hint into a comment
- - merge & sequencer: unify codepaths that write "Conflicts:" hint
- - builtin/merge.c: drop a parameter that is never used
-
-
-* jc/diff-b-m (2014-10-23) 1 commit
- - diff -B -M: fix output for "copy and then rewrite" case
-
-
-* oc/mergetools-beyondcompare (2014-10-21) 1 commit
-  (merged to 'next' on 2014-10-24 at e9278e8)
- + mergetool: rename bc3 to bc
+ Allow diff tool backend to stop early by exiting with a non-zero
+ status.
 
  Will merge to 'master'.
 
 
-* rs/ref-transaction-reflog (2014-10-22) 15 commits
- - refs.c: allow deleting refs with a broken sha1
- - refs.c: remove lock_any_ref_for_update
- - refs.c: make unlock_ref/close_ref/commit_ref static
- - refs.c: rename log_ref_setup to create_reflog
- - reflog.c: use a reflog transaction when writing during expire
- - refs.c: allow multiple reflog updates during a single transaction
- - refs.c: only write reflog update if msg is non-NULL
- - refs.c: add a flag to allow reflog updates to truncate the log
- - refs.c: add a transaction function to append a reflog entry
- - copy.c: make copy_fd preserve meaningful errno
- - refs.c: add a function to append a reflog entry to a fd
- - refs.c: add a new update_type field to ref_update
- - refs.c: rename the transaction functions
- - refs.c: make ref_transaction_delete a wrapper for ref_transaction_update
- - refs.c make ref_transaction_create a wrapper to ref_transaction_update
- (this branch is used by rs/ref-transaction-rename and rs/ref-transaction-send-pack.)
+* dm/port2zos (2014-10-27) 3 commits
+  (merged to 'next' on 2014-10-28 at d03d3ae)
+ + compat/bswap.h: detect endianness from XL C compiler macros
+ + Makefile: reorder linker flags in the git executable rule
+ + git-compat-util.h: support variadic macros with the XL C compiler
+
+ z/OS port
+
+ Will merge to 'master'.
 
 
-* rs/ref-transaction-rename (2014-10-22) 15 commits
- - refs.c: add an err argument to pack_refs
- - refs.c: make lock_packed_refs take an err argument
- - refs.c: make add_packed_ref return an error instead of calling die
- - refs.c: replace the onerr argument in update_ref with a strbuf err
- - refs.c: make the *_packed_refs functions static
- - refs.c: make repack_without_refs static
- - remote.c: use a transaction for deleting refs
- - refs.c: write updates to packed refs when a transaction has more than one ref
- - refs.c: move reflog updates into its own function
- - refs.c: rollback the lockfile before we die() in repack_without_refs
- - refs.c: update rename_ref to use a transaction
- - refs.c: use a stringlist for repack_without_refs
- - refs.c: use packed refs when deleting refs during a transaction
- - refs.c: return error instead of dying when locking fails during transaction
- - refs.c: allow passing raw git_committer_info as email to _update_reflog
- (this branch is used by rs/ref-transaction-send-pack; uses rs/ref-transaction-reflog.)
+* jc/strbuf-add-lines-avoid-sp-ht-sequence (2014-10-27) 1 commit
+ - strbuf_add_commented_lines(): avoid SP-HT sequence in commented lines
+
+ The commented output used to blindly add a SP before the payload
+ line, resulting in "# \t<indented text>\n" when the payload began
+ with a HT.  Instead, produce "#\t<indented text>\n".
+
+ Will merge to 'next' and cook throughout the remainder of the cycle.
 
 
-* rs/ref-transaction-send-pack (2014-10-22) 8 commits
- - refs.c: add an err argument to create_symref
- - refs.c: add an err argument to create_reflog
- - receive-pack.c: add a receive.preferatomicpush configuration variable
- - t5543-atomic-push.sh: add basic tests for atomic pushes
- - push.c: add an --atomic-push argument
- - receive-pack.c: use a single transaction when atomic-push is negotiated
- - send-pack.c: add an --atomic-push command line argument
- - receive-pack.c: add protocol support to negotiate atomic-push
- (this branch uses rs/ref-transaction-reflog and rs/ref-transaction-rename.)
+* mg/lib-gpg-ro-safety (2014-10-27) 1 commit
+  (merged to 'next' on 2014-10-28 at f396990)
+ + t/lib-gpg: make gpghome files writable
+
+ In a tarball extract whose files are all read-only, running GPG
+ tests would have failed due to unwritable files.
+
+ Will merge to 'master'.
+
+
+* rs/grep-color-words (2014-10-28) 1 commit
+  (merged to 'next' on 2014-10-28 at 4e6659d)
+ + grep: add color.grep.matchcontext and color.grep.matchselected
+
+ Allow painting or not painting (partial) matches in context lines
+ when showing "grep -C<num>" output in color.
+
+ Will merge to 'master'.
+
+
+* nd/untracked-cache (2014-10-27) 19 commits
+ - t7063: tests for untracked cache
+ - update-index: test the system before enabling untracked cache
+ - update-index: manually enable or disable untracked cache
+ - status: enable untracked cache
+ - untracked cache: mark index dirty if untracked cache is updated
+ - untracked cache: print stats with $GIT_TRACE_UNTRACKED_STATS
+ - untracked cache: avoid racy timestamps
+ - read-cache.c: split racy stat test to a separate function
+ - untracked cache: invalidate at index addition or removal
+ - untracked cache: load from UNTR index extension
+ - untracked cache: save to an index extension
+ - untracked cache: don't open non-existent .gitignore
+ - untracked cache: mark what dirs should be recursed/saved
+ - untracked cache: record/validate dir mtime and reuse cached output
+ - untracked cache: make a wrapper around {open,read,close}dir()
+ - untracked cache: invalidate dirs recursively if .gitignore changes
+ - untracked cache: initial untracked cache validation
+ - untracked cache: record .gitignore information and dir hierarchy
+ - dir.c: optionally compute sha-1 of a .gitignore file
+
+
+* rb/pack-window-memory-config-doc (2014-10-28) 1 commit
+  (merged to 'next' on 2014-10-28 at fc74359)
+ + config.txt: pack.windowmemory limit applies per-thread
+
+ Will merge to 'master'.
+
+
+* jc/push-cert (2014-10-28) 1 commit
+ - receive-pack: avoid minor leak in case start_async() fails
+
+ Will merge to 'next'.
+
+
+* rs/use-child-process-init-more (2014-10-28) 1 commit
+ - use child_process_init() to initialize struct child_process variables
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -462,7 +316,105 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* bc/asciidoctor (2014-10-15) 2 commits
+* zk/grep-color-words (2014-10-27) 2 commits
+  (merged to 'next' on 2014-10-28 at 4d0457c)
+ + Revert "grep: fix match highlighting for combined patterns with context lines"
+  (merged to 'next' on 2014-10-24 at 2d2f8f8)
+ + grep: fix match highlighting for combined patterns with context lines
+
+ rs/grep-color-words topic solves it in a different way.
+
+ Will discard.
+
+
+* jc/conflict-hint (2014-10-28) 4 commits
+ - merge & sequencer: turn "Conflicts:" hint into a comment
+ - builtin/commit.c: extract ignore_non_trailer() helper function
+ - merge & sequencer: unify codepaths that write "Conflicts:" hint
+ - builtin/merge.c: drop a parameter that is never used
+
+ Unlike all the other hints given in the commit log editor, the list
+ of conflicted paths were appended at the end without commented out.
+
+ Will merge to 'next' and cook throughout the remainder of the cycle.
+
+
+* jc/diff-b-m (2014-10-23) 1 commit
+  (merged to 'next' on 2014-10-28 at 4daedb1)
+ + diff -B -M: fix output for "copy and then rewrite" case
+
+ Fix long-standing bug in "diff -B -M" output.
+
+ Will cook in 'next' throughout the remainder of the cycle.
+
+
+* oc/mergetools-beyondcompare (2014-10-21) 1 commit
+  (merged to 'next' on 2014-10-24 at e9278e8)
+ + mergetool: rename bc3 to bc
+
+ Will merge to 'master'.
+
+
+* rs/ref-transaction-reflog (2014-10-22) 15 commits
+ - refs.c: allow deleting refs with a broken sha1
+ - refs.c: remove lock_any_ref_for_update
+ - refs.c: make unlock_ref/close_ref/commit_ref static
+ - refs.c: rename log_ref_setup to create_reflog
+ - reflog.c: use a reflog transaction when writing during expire
+ - refs.c: allow multiple reflog updates during a single transaction
+ - refs.c: only write reflog update if msg is non-NULL
+ - refs.c: add a flag to allow reflog updates to truncate the log
+ - refs.c: add a transaction function to append a reflog entry
+ - copy.c: make copy_fd preserve meaningful errno
+ - refs.c: add a function to append a reflog entry to a fd
+ - refs.c: add a new update_type field to ref_update
+ - refs.c: rename the transaction functions
+ - refs.c: make ref_transaction_delete a wrapper for ref_transaction_update
+ - refs.c make ref_transaction_create a wrapper to ref_transaction_update
+ (this branch is used by rs/ref-transaction-rename and rs/ref-transaction-send-pack.)
+
+ Reviews and comments?
+
+
+* rs/ref-transaction-rename (2014-10-22) 15 commits
+ - refs.c: add an err argument to pack_refs
+ - refs.c: make lock_packed_refs take an err argument
+ - refs.c: make add_packed_ref return an error instead of calling die
+ - refs.c: replace the onerr argument in update_ref with a strbuf err
+ - refs.c: make the *_packed_refs functions static
+ - refs.c: make repack_without_refs static
+ - remote.c: use a transaction for deleting refs
+ - refs.c: write updates to packed refs when a transaction has more than one ref
+ - refs.c: move reflog updates into its own function
+ - refs.c: rollback the lockfile before we die() in repack_without_refs
+ - refs.c: update rename_ref to use a transaction
+ - refs.c: use a stringlist for repack_without_refs
+ - refs.c: use packed refs when deleting refs during a transaction
+ - refs.c: return error instead of dying when locking fails during transaction
+ - refs.c: allow passing raw git_committer_info as email to _update_reflog
+ (this branch is used by rs/ref-transaction-send-pack; uses rs/ref-transaction-reflog.)
+
+ Reviews and comments?
+
+
+* rs/ref-transaction-send-pack (2014-10-22) 8 commits
+ - refs.c: add an err argument to create_symref
+ - refs.c: add an err argument to create_reflog
+ - receive-pack.c: add a receive.preferatomicpush configuration variable
+ - t5543-atomic-push.sh: add basic tests for atomic pushes
+ - push.c: add an --atomic-push argument
+ - receive-pack.c: use a single transaction when atomic-push is negotiated
+ - send-pack.c: add an --atomic-push command line argument
+ - receive-pack.c: add protocol support to negotiate atomic-push
+ (this branch uses rs/ref-transaction-reflog and rs/ref-transaction-rename.)
+
+ Reviews and comments?
+
+
+* bc/asciidoctor (2014-10-27) 4 commits
+  (merged to 'next' on 2014-10-28 at a5b6349)
+ + Documentation: remove Asciidoctor linkgit macro
+ + Documentation: refactor common operations into variables
   (merged to 'next' on 2014-10-17 at 12ce2e2)
  + Documentation: implement linkgit macro for Asciidoctor
  + Documentation: move some AsciiDoc parameters into variables
@@ -470,8 +422,7 @@ of the repositories listed at
  Add machinery to alternatively use AsciiDoctor to format our
  documentation.
 
- Brian seems to have a bit more tweaks; will wait for them before
- moving this topic forward.
+ Will merge to 'master'
 
 
 * jk/prune-mtime (2014-10-19) 28 commits
@@ -521,12 +472,16 @@ of the repositories listed at
  local branch by setting its branch.*.merge to branch name (not a
  full refname) incorrectly said that the upstream is gone.
 
+ Will cook in 'next' throughout the remainder of the cycle.
+
 
 * jc/clone-borrow (2014-10-15) 1 commit
   (merged to 'next' on 2014-10-21 at b76ea34)
  + clone: --dissociate option to mark that reference is only temporary
 
  Allow "git clone --reference" to be used more safely.
+
+ Will cook in 'next' throughout the remainder of the cycle.
 
 --------------------------------------------------
 [Discarded]
