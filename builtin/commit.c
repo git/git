@@ -596,32 +596,47 @@ static char *cut_ident_timestamp_part(char *string)
 /*
  * Inspect sb and determine the true "end" of the log message, in
  * order to find where to put a new Signed-off-by: line.  Ignored are
- * trailing "Conflict:" block.
+ * trailing comment lines and blank lines, and also the traditional
+ * "Conflicts:" block that is not commented out, so that we can use
+ * "git commit -s --amend" on an existing commit that forgot to remove
+ * it.
  *
  * Returns the number of bytes from the tail to ignore, to be fed as
  * the second parameter to append_signoff().
  */
 static int ignore_non_trailer(struct strbuf *sb)
 {
-	int ignore_footer = 0;
-	int i, eol, previous = 0;
-	const char *nl;
+	int boc = 0;
+	int bol = 0;
+	int in_old_conflicts_block = 0;
 
-	for (i = 0; i < sb->len; i++) {
-		nl = memchr(sb->buf + i, '\n', sb->len - i);
-		if (nl)
-			eol = nl - sb->buf;
+	while (bol < sb->len) {
+		char *next_line;
+
+		if (!(next_line = memchr(sb->buf + bol, '\n', sb->len - bol)))
+			next_line = sb->buf + sb->len;
 		else
-			eol = sb->len;
-		if (!prefixcmp(sb->buf + previous, "\nConflicts:\n")) {
-			ignore_footer = sb->len - previous;
-			break;
+			next_line++;
+
+		if (sb->buf[bol] == comment_line_char || sb->buf[bol] == '\n') {
+			/* is this the first of the run of comments? */
+			if (!boc)
+				boc = bol;
+			/* otherwise, it is just continuing */
+		} else if (!prefixcmp(sb->buf + bol, "Conflicts:\n")) {
+			in_old_conflicts_block = 1;
+			if (!boc)
+				boc = bol;
+		} else if (in_old_conflicts_block && sb->buf[bol] == '\t') {
+			; /* a pathname in the conflicts block */
+		} else if (boc) {
+			/* the previous was not trailing comment */
+			boc = 0;
+			in_old_conflicts_block = 0;
 		}
-		while (i < eol)
-			i++;
-		previous = eol;
+		bol = next_line - sb->buf;
 	}
-	return ignore_footer;
+	return boc ? sb->len - boc : 0;
 }
 
 static int prepare_to_commit(const char *index_file, const char *prefix,
