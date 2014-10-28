@@ -76,6 +76,49 @@ test_expect_success PERL 'difftool forwards arguments to diff' '
 	rm for-diff
 '
 
+test_expect_success PERL 'difftool ignores exit code' '
+	test_config difftool.error.cmd false &&
+	git difftool -y -t error branch
+'
+
+test_expect_success PERL 'difftool forwards exit code with --trust-exit-code' '
+	test_config difftool.error.cmd false &&
+	test_must_fail git difftool -y --trust-exit-code -t error branch
+'
+
+test_expect_success PERL 'difftool honors difftool.trustExitCode = true' '
+	test_config difftool.error.cmd false &&
+	test_config difftool.trustExitCode true &&
+	test_must_fail git difftool -y -t error branch
+'
+
+test_expect_success PERL 'difftool honors difftool.trustExitCode = false' '
+	test_config difftool.error.cmd false &&
+	test_config difftool.trustExitCode false &&
+	git difftool -y -t error branch
+'
+
+test_expect_success PERL 'difftool ignores exit code with --no-trust-exit-code' '
+	test_config difftool.error.cmd false &&
+	test_config difftool.trustExitCode true &&
+	git difftool -y --no-trust-exit-code -t error branch
+'
+
+test_expect_success PERL 'difftool stops on error with --trust-exit-code' '
+	test_when_finished "rm -f for-diff .git/fail-right-file" &&
+	test_when_finished "git reset -- for-diff" &&
+	write_script .git/fail-right-file <<-\EOF &&
+	echo "$2"
+	exit 1
+	EOF
+	>for-diff &&
+	git add for-diff &&
+	echo file >expect &&
+	test_must_fail git difftool -y --trust-exit-code \
+		--extcmd .git/fail-right-file branch >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success PERL 'difftool honors --gui' '
 	difftool_test_setup &&
 	test_config merge.tool bogus-tool &&
@@ -297,6 +340,14 @@ test_expect_success PERL 'say no to the second file' '
 	git difftool -x cat branch <input >output &&
 	grep master output &&
 	grep branch output &&
+	! grep m2 output &&
+	! grep br2 output
+'
+
+test_expect_success PERL 'ending prompt input with EOF' '
+	git difftool -x cat branch </dev/null >output &&
+	! grep master output &&
+	! grep branch output &&
 	! grep m2 output &&
 	! grep br2 output
 '

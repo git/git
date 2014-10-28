@@ -91,6 +91,15 @@ instead.  `--no-symlinks` is the default on Windows.
 	the default diff tool will be read from the configured
 	`diff.guitool` variable instead of `diff.tool`.
 
+--[no-]trust-exit-code::
+	'git-difftool' invokes a diff tool individually on each file.
+	Errors reported by the diff tool are ignored by default.
+	Use `--trust-exit-code` to make 'git-difftool' exit when an
+	invoked diff tool returns a non-zero exit code.
++
+'git-difftool' will forward the exit code of the invoked tool when
+'--trust-exit-code' is used.
+
 See linkgit:git-diff[1] for the full list of supported options.
 
 CONFIG VARIABLES
@@ -115,6 +124,11 @@ See the `--tool=<tool>` option above for more details.
 
 difftool.prompt::
 	Prompt before each invocation of the diff tool.
+
+difftool.trustExitCode::
+	Exit difftool if the invoked diff tool returns a non-zero exit status.
++
+See the `--trust-exit-code` option above for more details.
 
 SEE ALSO
 --------
