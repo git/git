@@ -374,7 +374,7 @@ int run_column_filter(int colopts, const struct column_options *opts)
 	if (fd_out != -1)
 		return -1;
 
-	memset(&column_process, 0, sizeof(column_process));
+	child_process_init(&column_process);
 	argv = &column_process.args;
 
 	argv_array_push(argv, "column");

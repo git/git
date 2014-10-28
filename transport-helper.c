@@ -414,7 +414,7 @@ static int get_exporter(struct transport *transport,
 	struct child_process *helper = get_helper(transport);
 	int i;
 
-	memset(fastexport, 0, sizeof(*fastexport));
+	child_process_init(fastexport);
 
 	/* we need to duplicate helper->in because we want to use it after
 	 * fastexport is done with it. */

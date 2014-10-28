@@ -381,7 +381,7 @@ int create_bundle(struct bundle_header *header, const char *path,
 	write_or_die(bundle_fd, "\n", 1);
 
 	/* write pack */
-	memset(&rls, 0, sizeof(rls));
+	child_process_init(&rls);
 	argv_array_pushl(&rls.args,
 			 "pack-objects", "--all-progress-implied",
 			 "--stdout", "--thin", "--delta-base-offset",
