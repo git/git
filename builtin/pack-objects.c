@@ -20,6 +20,9 @@
 #include "streaming.h"
 #include "thread-utils.h"
 #include "pack-bitmap.h"
+#include "reachable.h"
+#include "sha1-array.h"
+#include "argv-array.h"
 
 static const char *pack_usage[] = {
 	N_("git pack-objects --stdout [options...] [< ref-list | < object-list]"),
@@ -2406,6 +2409,27 @@ static int has_sha1_pack_kept_or_nonlocal(const unsigned char *sha1)
 	return 0;
 }
 
+/*
+ * Store a list of sha1s that are should not be discarded
+ * because they are either written too recently, or are
+ * reachable from another object that was.
+ *
+ * This is filled by get_object_list.
+ */
+static struct sha1_array recent_objects;
+
+static int loosened_object_can_be_discarded(const unsigned char *sha1,
+					    unsigned long mtime)
+{
+	if (!unpack_unreachable_expiration)
+		return 0;
+	if (mtime > unpack_unreachable_expiration)
+		return 0;
+	if (sha1_array_lookup(&recent_objects, sha1) >= 0)
+		return 0;
+	return 1;
+}
+
 static void loosen_unused_packed_objects(struct rev_info *revs)
 {
 	struct packed_git *p;
@@ -2416,17 +2440,14 @@ static void loosen_unused_packed_objects(struct rev_info *revs)
 		if (!p->pack_local || p->pack_keep)
 			continue;
 
-		if (unpack_unreachable_expiration &&
-		    p->mtime < unpack_unreachable_expiration)
-			continue;
-
 		if (open_pack_index(p))
 			die("cannot open pack index");
 
 		for (i = 0; i < p->num_objects; i++) {
 			sha1 = nth_packed_object_sha1(p, i);
 			if (!packlist_find(&to_pack, sha1, NULL) &&
-				!has_sha1_pack_kept_or_nonlocal(sha1))
+			    !has_sha1_pack_kept_or_nonlocal(sha1) &&
+			    !loosened_object_can_be_discarded(sha1, p->mtime))
 				if (force_object_loose(sha1, p->mtime))
 					die("unable to force loose object");
 		}
@@ -2460,6 +2481,19 @@ static int get_object_list_from_bitmap(struct rev_info *revs)
 
 	traverse_bitmap_commit_list(&add_object_entry_from_bitmap);
 	return 0;
+}
+
+static void record_recent_object(struct object *obj,
+				 const struct name_path *path,
+				 const char *last,
+				 void *data)
+{
+	sha1_array_append(&recent_objects, obj->sha1);
+}
+
+static void record_recent_commit(struct commit *commit, void *data)
+{
+	sha1_array_append(&recent_objects, commit->object.sha1);
 }
 
 static void get_object_list(int ac, const char **av)
@@ -2509,10 +2543,23 @@ static void get_object_list(int ac, const char **av)
 	mark_edges_uninteresting(&revs, show_edge);
 	traverse_commit_list(&revs, show_commit, show_object, NULL);
 
+	if (unpack_unreachable_expiration) {
+		revs.ignore_missing_links = 1;
+		if (add_unseen_recent_objects_to_traversal(&revs,
+				unpack_unreachable_expiration))
+			die("unable to add recent objects");
+		if (prepare_revision_walk(&revs))
+			die("revision walk setup failed");
+		traverse_commit_list(&revs, record_recent_commit,
+				     record_recent_object, NULL);
+	}
+
 	if (keep_unreachable)
 		add_objects_in_unpacked_packs(&revs);
 	if (unpack_unreachable)
 		loosen_unused_packed_objects(&revs);
+
+	sha1_array_clear(&recent_objects);
 }
 
 static int option_parse_index_version(const struct option *opt,
@@ -2567,9 +2614,9 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	int use_internal_rev_list = 0;
 	int thin = 0;
 	int all_progress_implied = 0;
-	const char *rp_av[6];
-	int rp_ac = 0;
+	struct argv_array rp = ARGV_ARRAY_INIT;
 	int rev_list_unpacked = 0, rev_list_all = 0, rev_list_reflog = 0;
+	int rev_list_index = 0;
 	struct option pack_objects_options[] = {
 		OPT_SET_INT('q', "quiet", &progress,
 			    N_("do not show progress meter"), 0),
@@ -2616,6 +2663,9 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		{ OPTION_SET_INT, 0, "reflog", &rev_list_reflog, NULL,
 		  N_("include objects referred by reflog entries"),
 		  PARSE_OPT_NOARG | PARSE_OPT_NONEG, NULL, 1 },
+		{ OPTION_SET_INT, 0, "indexed-objects", &rev_list_index, NULL,
+		  N_("include objects referred to by the index"),
+		  PARSE_OPT_NOARG | PARSE_OPT_NONEG, NULL, 1 },
 		OPT_BOOL(0, "stdout", &pack_to_stdout,
 			 N_("output pack to stdout")),
 		OPT_BOOL(0, "include-tag", &include_tag,
@@ -2658,24 +2708,28 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	if (pack_to_stdout != !base_name || argc)
 		usage_with_options(pack_usage, pack_objects_options);
 
-	rp_av[rp_ac++] = "pack-objects";
+	argv_array_push(&rp, "pack-objects");
 	if (thin) {
 		use_internal_rev_list = 1;
-		rp_av[rp_ac++] = "--objects-edge";
+		argv_array_push(&rp, "--objects-edge");
 	} else
-		rp_av[rp_ac++] = "--objects";
+		argv_array_push(&rp, "--objects");
 
 	if (rev_list_all) {
 		use_internal_rev_list = 1;
-		rp_av[rp_ac++] = "--all";
+		argv_array_push(&rp, "--all");
 	}
 	if (rev_list_reflog) {
 		use_internal_rev_list = 1;
-		rp_av[rp_ac++] = "--reflog";
+		argv_array_push(&rp, "--reflog");
+	}
+	if (rev_list_index) {
+		use_internal_rev_list = 1;
+		argv_array_push(&rp, "--indexed-objects");
 	}
 	if (rev_list_unpacked) {
 		use_internal_rev_list = 1;
-		rp_av[rp_ac++] = "--unpacked";
+		argv_array_push(&rp, "--unpacked");
 	}
 
 	if (!reuse_object)
@@ -2706,6 +2760,8 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 
 	if (keep_unreachable && unpack_unreachable)
 		die("--keep-unreachable and --unpack-unreachable are incompatible.");
+	if (!rev_list_all || !rev_list_reflog || !rev_list_index)
+		unpack_unreachable_expiration = 0;
 
 	if (!use_internal_rev_list || !pack_to_stdout || is_repository_shallow())
 		use_bitmap_index = 0;
@@ -2723,8 +2779,8 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	if (!use_internal_rev_list)
 		read_object_list_from_stdin();
 	else {
-		rp_av[rp_ac] = NULL;
-		get_object_list(rp_ac, rp_av);
+		get_object_list(rp.argc, rp.argv);
+		argv_array_clear(&rp);
 	}
 	cleanup_preferred_base();
 	if (include_tag && nr_result)

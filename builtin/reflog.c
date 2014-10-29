@@ -649,7 +649,7 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 		init_revisions(&cb.revs, prefix);
 		if (cb.verbose)
 			printf("Marking reachable objects...");
-		mark_reachable_objects(&cb.revs, 0, NULL);
+		mark_reachable_objects(&cb.revs, 0, 0, NULL);
 		if (cb.verbose)
 			putchar('\n');
 	}

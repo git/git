@@ -1277,4 +1277,17 @@ EOF
 	git push --no-thin --receive-pack="$rcvpck" no-thin/.git refs/heads/master:refs/heads/foo
 '
 
+test_expect_success 'pushing a tag pushes the tagged object' '
+	rm -rf dst.git &&
+	blob=$(echo unreferenced | git hash-object -w --stdin) &&
+	git tag -m foo tag-of-blob $blob &&
+	git init --bare dst.git &&
+	git push dst.git tag-of-blob &&
+	# the receiving index-pack should have noticed
+	# any problems, but we double check
+	echo unreferenced >expect &&
+	git --git-dir=dst.git cat-file blob tag-of-blob >actual &&
+	test_cmp expect actual
+'
+
 test_done
