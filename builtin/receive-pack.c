@@ -527,8 +527,6 @@ static int run_and_feed_hook(const char *hook_name, feed_fn feed, void *feed_sta
 	proc.in = -1;
 	proc.stdout_to_stderr = 1;
 
-	prepare_push_cert_sha1(&proc);
-
 	if (use_sideband) {
 		memset(&muxer, 0, sizeof(muxer));
 		muxer.proc = copy_to_sideband;
@@ -538,6 +536,8 @@ static int run_and_feed_hook(const char *hook_name, feed_fn feed, void *feed_sta
 			return code;
 		proc.err = muxer.in;
 	}
+
+	prepare_push_cert_sha1(&proc);
 
 	code = start_command(&proc);
 	if (code) {
