@@ -1433,7 +1433,7 @@ sub check_author {
 }
 
 sub find_extra_svk_parents {
-	my ($self, $ed, $tickets, $parents) = @_;
+	my ($self, $tickets, $parents) = @_;
 	# aha!  svk:merge property changed...
 	my @tickets = split "\n", $tickets;
 	my @known_parents;
@@ -1736,7 +1736,7 @@ sub mergeinfo_changes {
 # note: this function should only be called if the various dirprops
 # have actually changed
 sub find_extra_svn_parents {
-	my ($self, $ed, $mergeinfo, $parents) = @_;
+	my ($self, $mergeinfo, $parents) = @_;
 	# aha!  svk:merge property changed...
 
 	memoize_svn_mergeinfo_functions();
@@ -1835,16 +1835,14 @@ sub make_log_entry {
 	my @parents = @$parents;
 	my $props = $ed->{dir_prop}{$self->path};
 	if ( $props->{"svk:merge"} ) {
-		$self->find_extra_svk_parents
-			($ed, $props->{"svk:merge"}, \@parents);
+		$self->find_extra_svk_parents($props->{"svk:merge"}, \@parents);
 	}
 	if ( $props->{"svn:mergeinfo"} ) {
 		my $mi_changes = $self->mergeinfo_changes
 			($parent_path, $parent_rev,
 			 $self->path, $rev,
 			 $props->{"svn:mergeinfo"});
-		$self->find_extra_svn_parents
-			($ed, $mi_changes, \@parents);
+		$self->find_extra_svn_parents($mi_changes, \@parents);
 	}
 
 	open my $un, '>>', "$self->{dir}/unhandled.log" or croak $!;
