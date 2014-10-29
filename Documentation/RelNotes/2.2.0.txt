@@ -11,6 +11,9 @@ Ports
 
  * The support to build with NO_PTHREADS has been resurrected.
 
+ * Compilation options has been updated a bit to support z/OS port
+   better.
+
 
 UI, Workflows & Features
 
@@ -33,9 +36,15 @@ UI, Workflows & Features
    to replace blob contents, names of people and paths and log
    messages with bland and simple strings to help them.
 
+ * "git difftool" learned an option to stop feeding paths to the
+   diff backend when it exits with a non-zero status.
+
  * "log --date=iso" uses a slight variant of ISO 8601 format that is
    made more human readable.  A new "--date=iso-strict" option gives
    datetime output that is more strictly conformant.
+
+ * The logic "git prune" uses is more resilient against various corner
+   cases.
 
  * A broken reimplementation of Git could write an invalid index that
    records both stage #0 and higher stage entries for the same path.
@@ -52,6 +61,10 @@ UI, Workflows & Features
  * The temporary files "git mergetools" uses can be placed in a newly
    creted temporary directory, instead of the current directory, by
    setting the mergetool.writeToTemp configuration variable.
+
+ * "git mergetool" understands "--tool bc" now, as version 4 of
+   BeyondCompare can be driven the same way as its version 3 and it
+   feels awkward to say "--tool bc3".
 
  * The "pre-receive" and "post-receive" hooks are no longer required
    to consume their input fully (not following this requirement used
@@ -149,6 +162,10 @@ Performance, Internal Implementation, etc.
  * The "run-command" API learned to manage the argv and environment
    array for child process, alleviating the need for the callers to
    allocate and deallocate them.
+
+ * Some people use AsciiDoctor, instead of AsciiDoc, to format our
+   documentation set; the documentation has been adjusted, as
+   AsciiDoctor is pickier than AsciiDoc in its input mark-up.
 
 
 Also contains various documentation updates and code clean-ups.
