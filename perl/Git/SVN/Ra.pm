@@ -2,6 +2,7 @@ package Git::SVN::Ra;
 use vars qw/@ISA $config_dir $_ignore_refs_regex $_log_window_size/;
 use strict;
 use warnings;
+use Memoize;
 use SVN::Client;
 use Git::SVN::Utils qw(
 	canonicalize_url
@@ -76,6 +77,40 @@ sub _auth_providers () {
 	\@rv;
 }
 
+sub prepare_config_once {
+	SVN::_Core::svn_config_ensure($config_dir, undef);
+	my ($baton, $callbacks) = SVN::Core::auth_open_helper(_auth_providers);
+	my $config = SVN::Core::config_get_config($config_dir);
+	my $dont_store_passwords = 1;
+	my $conf_t = $config->{'config'};
+
+	no warnings 'once';
+	# The usage of $SVN::_Core::SVN_CONFIG_* variables
+	# produces warnings that variables are used only once.
+	# I had not found the better way to shut them up, so
+	# the warnings of type 'once' are disabled in this block.
+	if (SVN::_Core::svn_config_get_bool($conf_t,
+	    $SVN::_Core::SVN_CONFIG_SECTION_AUTH,
+	    $SVN::_Core::SVN_CONFIG_OPTION_STORE_PASSWORDS,
+	    1) == 0) {
+		SVN::_Core::svn_auth_set_parameter($baton,
+		    $SVN::_Core::SVN_AUTH_PARAM_DONT_STORE_PASSWORDS,
+		    bless (\$dont_store_passwords, "_p_void"));
+	}
+	if (SVN::_Core::svn_config_get_bool($conf_t,
+	    $SVN::_Core::SVN_CONFIG_SECTION_AUTH,
+	    $SVN::_Core::SVN_CONFIG_OPTION_STORE_AUTH_CREDS,
+	    1) == 0) {
+		$Git::SVN::Prompt::_no_auth_cache = 1;
+	}
+
+	return ($config, $baton, $callbacks);
+} # no warnings 'once'
+
+INIT {
+	Memoize::memoize '_auth_providers';
+	Memoize::memoize 'prepare_config_once';
+}
 
 sub new {
 	my ($class, $url) = @_;
@@ -84,34 +119,8 @@ sub new {
 
 	::_req_svn();
 
-	SVN::_Core::svn_config_ensure($config_dir, undef);
-	my ($baton, $callbacks) = SVN::Core::auth_open_helper(_auth_providers);
-	my $config = SVN::Core::config_get_config($config_dir);
 	$RA = undef;
-	my $dont_store_passwords = 1;
-	my $conf_t = ${$config}{'config'};
-	{
-		no warnings 'once';
-		# The usage of $SVN::_Core::SVN_CONFIG_* variables
-		# produces warnings that variables are used only once.
-		# I had not found the better way to shut them up, so
-		# the warnings of type 'once' are disabled in this block.
-		if (SVN::_Core::svn_config_get_bool($conf_t,
-		    $SVN::_Core::SVN_CONFIG_SECTION_AUTH,
-		    $SVN::_Core::SVN_CONFIG_OPTION_STORE_PASSWORDS,
-		    1) == 0) {
-			SVN::_Core::svn_auth_set_parameter($baton,
-			    $SVN::_Core::SVN_AUTH_PARAM_DONT_STORE_PASSWORDS,
-			    bless (\$dont_store_passwords, "_p_void"));
-		}
-		if (SVN::_Core::svn_config_get_bool($conf_t,
-		    $SVN::_Core::SVN_CONFIG_SECTION_AUTH,
-		    $SVN::_Core::SVN_CONFIG_OPTION_STORE_AUTH_CREDS,
-		    1) == 0) {
-			$Git::SVN::Prompt::_no_auth_cache = 1;
-		}
-	} # no warnings 'once'
-
+	my ($config, $baton, $callbacks) = prepare_config_once();
 	my $self = SVN::Ra->new(url => $url, auth => $baton,
 	                      config => $config,
 			      pool => SVN::Pool->new,
