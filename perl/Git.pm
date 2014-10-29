@@ -1294,8 +1294,11 @@ sub _temp_cache {
 			$tmpdir = $self->repo_path();
 		}
 
+		my $n = $name;
+		$n =~ s/\W/_/g; # no strange chars
+
 		($$temp_fd, $fname) = File::Temp::tempfile(
-			'Git_XXXXXX', UNLINK => 1, DIR => $tmpdir,
+			"Git_${n}_XXXXXX", UNLINK => 1, DIR => $tmpdir,
 			) or throw Error::Simple("couldn't open new temp file");
 
 		$$temp_fd->autoflush;
