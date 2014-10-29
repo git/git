@@ -1,0 +1,26 @@
+Git v2.1.3 Release Notes
+========================
+
+ * Some MUAs mangled a line in a message that begins with "From " to
+   ">From " when writing to a mailbox file and feeding such an input to
+   "git am" used to lose such a line.
+
+ * "git daemon" (with NO_IPV6 build configuration) used to incorrectly
+   use the hostname even when gethostbyname() reported that the given
+   hostname is not found.
+
+ * Newer versions of 'meld' breaks the auto-detection we use to see if
+   they are new enough to support the `--output` option.
+
+ * "git pack-objects" forgot to disable the codepath to generate
+   object recheability bitmap when it needs to split the resulting
+   pack.
+
+ * "gitweb" used deprecated CGI::startfrom, which was removed from
+   CGI.pm as of 4.04; use CGI::start_from instead.
+
+ * "git log" documentation had an example section marked up not
+   quite correctly, which passed AsciiDoc but failed with
+   AsciiDoctor.
+
+Also contains some documentation updates.
