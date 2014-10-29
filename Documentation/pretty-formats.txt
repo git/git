@@ -95,7 +95,7 @@ would show something like this:
 The author of fe6e0ee was Junio C Hamano, 23 hours ago
 The title was >>t4119: test autocomputing -p<n> for traditional diff input.<<
 
---------
+-------
 +
 The placeholders are:
 
