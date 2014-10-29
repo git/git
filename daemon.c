@@ -573,20 +573,21 @@ static void parse_host_arg(char *extra_args, int buflen)
 		static char addrbuf[HOST_NAME_MAX + 1];
 
 		hent = gethostbyname(hostname);
+		if (hent) {
+			ap = hent->h_addr_list;
+			memset(&sa, 0, sizeof sa);
+			sa.sin_family = hent->h_addrtype;
+			sa.sin_port = htons(0);
+			memcpy(&sa.sin_addr, *ap, hent->h_length);
 
-		ap = hent->h_addr_list;
-		memset(&sa, 0, sizeof sa);
-		sa.sin_family = hent->h_addrtype;
-		sa.sin_port = htons(0);
-		memcpy(&sa.sin_addr, *ap, hent->h_length);
+			inet_ntop(hent->h_addrtype, &sa.sin_addr,
+				  addrbuf, sizeof(addrbuf));
 
-		inet_ntop(hent->h_addrtype, &sa.sin_addr,
-			  addrbuf, sizeof(addrbuf));
-
-		free(canon_hostname);
-		canon_hostname = xstrdup(hent->h_name);
-		free(ip_address);
-		ip_address = xstrdup(addrbuf);
+			free(canon_hostname);
+			canon_hostname = xstrdup(hent->h_name);
+			free(ip_address);
+			ip_address = xstrdup(addrbuf);
+		}
 #endif
 	}
 }
@@ -834,7 +835,6 @@ static const char *ip2str(int family, struct sockaddr *sin, socklen_t len)
 static int setup_named_sock(char *listen_addr, int listen_port, struct socketlist *socklist)
 {
 	int socknum = 0;
-	int maxfd = -1;
 	char pbuf[NI_MAXSERV];
 	struct addrinfo hints, *ai0, *ai;
 	int gai;
@@ -902,9 +902,6 @@ static int setup_named_sock(char *listen_addr, int listen_port, struct socketlis
 		ALLOC_GROW(socklist->list, socklist->nr + 1, socklist->alloc);
 		socklist->list[socklist->nr++] = sockfd;
 		socknum++;
-
-		if (maxfd < sockfd)
-			maxfd = sockfd;
 	}
 
 	freeaddrinfo(ai0);
@@ -943,7 +940,7 @@ static int setup_named_sock(char *listen_addr, int listen_port, struct socketlis
 	}
 
 	if ( bind(sockfd, (struct sockaddr *)&sin, sizeof sin) < 0 ) {
-		logerror("Could not listen to %s: %s",
+		logerror("Could not bind to %s: %s",
 			 ip2str(AF_INET, (struct sockaddr *)&sin, sizeof(sin)),
 			 strerror(errno));
 		close(sockfd);
