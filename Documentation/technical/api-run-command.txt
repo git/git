@@ -13,7 +13,7 @@ produces in the caller in order to process it.
 Functions
 ---------
 
-`child_process_init`
+`child_process_init`::
 
 	Initialize a struct child_process variable.
 
