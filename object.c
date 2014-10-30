@@ -307,9 +307,10 @@ int object_list_contains(struct object_list *list, struct object *obj)
  */
 static char object_array_slopbuf[1];
 
-void add_object_array_with_path(struct object *obj, const char *name,
-				struct object_array *array,
-				unsigned mode, const char *path)
+static void add_object_array_with_mode_context(struct object *obj, const char *name,
+					       struct object_array *array,
+					       unsigned mode,
+					       struct object_context *context)
 {
 	unsigned nr = array->nr;
 	unsigned alloc = array->alloc;
@@ -332,27 +333,26 @@ void add_object_array_with_path(struct object *obj, const char *name,
 	else
 		entry->name = xstrdup(name);
 	entry->mode = mode;
-	if (path)
-		entry->path = xstrdup(path);
-	else
-		entry->path = NULL;
+	entry->context = context;
 	array->nr = ++nr;
 }
 
 void add_object_array(struct object *obj, const char *name, struct object_array *array)
 {
-	add_object_array_with_path(obj, name, array, S_IFINVALID, NULL);
+	add_object_array_with_mode(obj, name, array, S_IFINVALID);
 }
 
-/*
- * Free all memory associated with an entry; the result is
- * in an unspecified state and should not be examined.
- */
-static void object_array_release_entry(struct object_array_entry *ent)
+void add_object_array_with_mode(struct object *obj, const char *name, struct object_array *array, unsigned mode)
 {
-	if (ent->name != object_array_slopbuf)
-		free(ent->name);
-	free(ent->path);
+	add_object_array_with_mode_context(obj, name, array, mode, NULL);
+}
+
+void add_object_array_with_context(struct object *obj, const char *name, struct object_array *array, struct object_context *context)
+{
+	if (context)
+		add_object_array_with_mode_context(obj, name, array, context->mode, context);
+	else
+		add_object_array_with_mode_context(obj, name, array, S_IFINVALID, context);
 }
 
 void object_array_filter(struct object_array *array,
@@ -367,20 +367,11 @@ void object_array_filter(struct object_array *array,
 				objects[dst] = objects[src];
 			dst++;
 		} else {
-			object_array_release_entry(&objects[src]);
+			if (objects[src].name != object_array_slopbuf)
+				free(objects[src].name);
 		}
 	}
 	array->nr = dst;
-}
-
-void object_array_clear(struct object_array *array)
-{
-	int i;
-	for (i = 0; i < array->nr; i++)
-		object_array_release_entry(&array->objects[i]);
-	free(array->objects);
-	array->objects = NULL;
-	array->nr = array->alloc = 0;
 }
 
 /*
@@ -409,7 +400,8 @@ void object_array_remove_duplicates(struct object_array *array)
 				objects[array->nr] = objects[src];
 			array->nr++;
 		} else {
-			object_array_release_entry(&objects[src]);
+			if (objects[src].name != object_array_slopbuf)
+				free(objects[src].name);
 		}
 	}
 }

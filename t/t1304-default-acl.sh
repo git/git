@@ -26,7 +26,7 @@ test_expect_success 'checking for a working acl setup' '
 
 if test -z "$LOGNAME"
 then
-	LOGNAME="${USER:-$(id -u -n)}"
+	LOGNAME=$USER
 fi
 
 check_perms_and_acl () {

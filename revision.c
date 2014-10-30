@@ -17,7 +17,6 @@
 #include "mailmap.h"
 #include "commit-slab.h"
 #include "dir.h"
-#include "cache-tree.h"
 
 volatile show_early_output_fn_t show_early_output;
 
@@ -85,6 +84,16 @@ void show_object_with_name(FILE *out, struct object *obj,
 	fprintf(out, "%s ", sha1_to_hex(obj->sha1));
 	show_path_truncated(out, &leaf);
 	fputc('\n', out);
+}
+
+void add_object(struct object *obj,
+		struct object_array *p,
+		struct name_path *path,
+		const char *name)
+{
+	char *pn = path_name(path, name);
+	add_object_array(obj, pn, p);
+	free(pn);
 }
 
 static void mark_blob_uninteresting(struct blob *blob)
@@ -189,10 +198,9 @@ void mark_parents_uninteresting(struct commit *commit)
 	}
 }
 
-static void add_pending_object_with_path(struct rev_info *revs,
+static void add_pending_object_with_mode(struct rev_info *revs,
 					 struct object *obj,
-					 const char *name, unsigned mode,
-					 const char *path)
+					 const char *name, unsigned mode)
 {
 	if (!obj)
 		return;
@@ -212,14 +220,7 @@ static void add_pending_object_with_path(struct rev_info *revs,
 		if (st)
 			return;
 	}
-	add_object_array_with_path(obj, name, &revs->pending, mode, path);
-}
-
-static void add_pending_object_with_mode(struct rev_info *revs,
-					 struct object *obj,
-					 const char *name, unsigned mode)
-{
-	add_pending_object_with_path(revs, obj, name, mode, NULL);
+	add_object_array_with_mode(obj, name, &revs->pending, mode);
 }
 
 void add_pending_object(struct rev_info *revs,
@@ -264,12 +265,8 @@ void add_pending_sha1(struct rev_info *revs, const char *name,
 }
 
 static struct commit *handle_commit(struct rev_info *revs,
-				    struct object_array_entry *entry)
+				    struct object *object, const char *name)
 {
-	struct object *object = entry->item;
-	const char *name = entry->name;
-	const char *path = entry->path;
-	unsigned int mode = entry->mode;
 	unsigned long flags = object->flags;
 
 	/*
@@ -288,14 +285,6 @@ static struct commit *handle_commit(struct rev_info *revs,
 			die("bad object %s", sha1_to_hex(tag->tagged->sha1));
 		}
 		object->flags |= flags;
-		/*
-		 * We'll handle the tagged object by looping or dropping
-		 * through to the non-tag handlers below. Do not
-		 * propagate data from the tag's pending entry.
-		 */
-		name = "";
-		path = NULL;
-		mode = 0;
 	}
 
 	/*
@@ -311,7 +300,7 @@ static struct commit *handle_commit(struct rev_info *revs,
 			revs->limited = 1;
 		}
 		if (revs->show_source && !commit->util)
-			commit->util = xstrdup(name);
+			commit->util = (void *) name;
 		return commit;
 	}
 
@@ -327,7 +316,7 @@ static struct commit *handle_commit(struct rev_info *revs,
 			mark_tree_contents_uninteresting(tree);
 			return NULL;
 		}
-		add_pending_object_with_path(revs, object, name, mode, path);
+		add_pending_object(revs, object, "");
 		return NULL;
 	}
 
@@ -339,7 +328,7 @@ static struct commit *handle_commit(struct rev_info *revs,
 			return NULL;
 		if (flags & UNINTERESTING)
 			return NULL;
-		add_pending_object_with_path(revs, object, name, mode, path);
+		add_pending_object(revs, object, "");
 		return NULL;
 	}
 	die("%s is unknown object", name);
@@ -1286,59 +1275,12 @@ static int handle_one_reflog(const char *path, const unsigned char *sha1, int fl
 	return 0;
 }
 
-void add_reflogs_to_pending(struct rev_info *revs, unsigned flags)
+static void handle_reflog(struct rev_info *revs, unsigned flags)
 {
 	struct all_refs_cb cb;
 	cb.all_revs = revs;
 	cb.all_flags = flags;
 	for_each_reflog(handle_one_reflog, &cb);
-}
-
-static void add_cache_tree(struct cache_tree *it, struct rev_info *revs,
-			   struct strbuf *path)
-{
-	size_t baselen = path->len;
-	int i;
-
-	if (it->entry_count >= 0) {
-		struct tree *tree = lookup_tree(it->sha1);
-		add_pending_object_with_path(revs, &tree->object, "",
-					     040000, path->buf);
-	}
-
-	for (i = 0; i < it->subtree_nr; i++) {
-		struct cache_tree_sub *sub = it->down[i];
-		strbuf_addf(path, "%s%s", baselen ? "/" : "", sub->name);
-		add_cache_tree(sub->cache_tree, revs, path);
-		strbuf_setlen(path, baselen);
-	}
-
-}
-
-void add_index_objects_to_pending(struct rev_info *revs, unsigned flags)
-{
-	int i;
-
-	read_cache();
-	for (i = 0; i < active_nr; i++) {
-		struct cache_entry *ce = active_cache[i];
-		struct blob *blob;
-
-		if (S_ISGITLINK(ce->ce_mode))
-			continue;
-
-		blob = lookup_blob(ce->sha1);
-		if (!blob)
-			die("unable to add index blob to traversal");
-		add_pending_object_with_path(revs, &blob->object, "",
-					     ce->ce_mode, ce->name);
-	}
-
-	if (active_cache_tree) {
-		struct strbuf path = STRBUF_INIT;
-		add_cache_tree(active_cache_tree, revs, &path);
-		strbuf_release(&path);
-	}
 }
 
 static int add_parents_only(struct rev_info *revs, const char *arg_, int flags)
@@ -1691,7 +1633,6 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 	    !strcmp(arg, "--reflog") || !strcmp(arg, "--not") ||
 	    !strcmp(arg, "--no-walk") || !strcmp(arg, "--do-walk") ||
 	    !strcmp(arg, "--bisect") || starts_with(arg, "--glob=") ||
-	    !strcmp(arg, "--indexed-objects") ||
 	    starts_with(arg, "--exclude=") ||
 	    starts_with(arg, "--branches=") || starts_with(arg, "--tags=") ||
 	    starts_with(arg, "--remotes=") || starts_with(arg, "--no-walk="))
@@ -2120,9 +2061,7 @@ static int handle_revision_pseudo_opt(const char *submodule,
 		for_each_glob_ref_in(handle_one_ref, arg + 10, "refs/remotes/", &cb);
 		clear_ref_exclusion(&revs->ref_excludes);
 	} else if (!strcmp(arg, "--reflog")) {
-		add_reflogs_to_pending(revs, *flags);
-	} else if (!strcmp(arg, "--indexed-objects")) {
-		add_index_objects_to_pending(revs, *flags);
+		handle_reflog(revs, *flags);
 	} else if (!strcmp(arg, "--not")) {
 		*flags ^= UNINTERESTING | BOTTOM;
 	} else if (!strcmp(arg, "--no-walk")) {
@@ -2717,26 +2656,26 @@ void reset_revision_walk(void)
 
 int prepare_revision_walk(struct rev_info *revs)
 {
-	int i;
-	struct object_array old_pending;
+	int nr = revs->pending.nr;
+	struct object_array_entry *e, *list;
 	struct commit_list **next = &revs->commits;
 
-	memcpy(&old_pending, &revs->pending, sizeof(old_pending));
+	e = list = revs->pending.objects;
 	revs->pending.nr = 0;
 	revs->pending.alloc = 0;
 	revs->pending.objects = NULL;
-	for (i = 0; i < old_pending.nr; i++) {
-		struct object_array_entry *e = old_pending.objects + i;
-		struct commit *commit = handle_commit(revs, e);
+	while (--nr >= 0) {
+		struct commit *commit = handle_commit(revs, e->item, e->name);
 		if (commit) {
 			if (!(commit->object.flags & SEEN)) {
 				commit->object.flags |= SEEN;
 				next = commit_list_append(commit, next);
 			}
 		}
+		e++;
 	}
 	if (!revs->leak_pending)
-		object_array_clear(&old_pending);
+		free(list);
 
 	/* Signal whether we need per-parent treesame decoration */
 	if (revs->simplify_merges ||
