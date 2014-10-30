@@ -391,6 +391,7 @@ static void clone_local(const char *src_repo, const char *dest_repo)
 
 static const char *junk_work_tree;
 static const char *junk_git_dir;
+static pid_t junk_pid;
 static enum {
 	JUNK_LEAVE_NONE,
 	JUNK_LEAVE_REPO,
@@ -417,6 +418,8 @@ static void remove_junk(void)
 		break;
 	}
 
+	if (getpid() != junk_pid)
+		return;
 	if (junk_git_dir) {
 		strbuf_addstr(&sb, junk_git_dir);
 		remove_dir_recursively(&sb, 0);
@@ -756,6 +759,8 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 
 	struct refspec *refspec;
 	const char *fetch_pattern;
+
+	junk_pid = getpid();
 
 	packet_trace_identity("clone");
 	argc = parse_options(argc, argv, prefix, builtin_clone_options,

@@ -204,26 +204,13 @@ advice.*::
 --
 
 core.fileMode::
-	Tells Git if the executable bit of files in the working tree
-	is to be honored.
+	If false, the executable bit differences between the index and
+	the working tree are ignored; useful on broken filesystems like FAT.
+	See linkgit:git-update-index[1].
 +
-Some filesystems lose the executable bit when a file that is
-marked as executable is checked out, or checks out an
-non-executable file with executable bit on.
-linkgit:git-clone[1] or linkgit:git-init[1] probe the filesystem
-to see if it handles the executable bit correctly
-and this variable is automatically set as necessary.
-+
-A repository, however, may be on a filesystem that handles
-the filemode correctly, and this variable is set to 'true'
-when created, but later may be made accessible from another
-environment that loses the filemode (e.g. exporting ext4 via
-CIFS mount, visiting a Cygwin created repository with
-Git for Windows or Eclipse).
-In such a case it may be necessary to set this variable to 'false'.
-See linkgit:git-update-index[1].
-+
-The default is true (when core.filemode is not specified in the config file).
+The default is true, except linkgit:git-clone[1] or linkgit:git-init[1]
+will probe and set core.fileMode false if appropriate when the
+repository is created.
 
 core.ignorecase::
 	If true, this option enables various workarounds to enable
@@ -1856,11 +1843,10 @@ pack.depth::
 	maximum depth is given on the command line. Defaults to 50.
 
 pack.windowMemory::
-	The maximum size of memory that is consumed by each thread
-	in linkgit:git-pack-objects[1] for pack window memory when
-	no limit is given on the command line.  The value can be
-	suffixed with "k", "m", or "g".  When left unconfigured (or
-	set explicitly to 0), there will be no limit.
+	The window memory size limit used by linkgit:git-pack-objects[1]
+	when no limit is given on the command line.  The value can be
+	suffixed with "k", "m", or "g".  Defaults to 0, meaning no
+	limit.
 
 pack.compression::
 	An integer -1..9, indicating the compression level for objects

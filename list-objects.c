@@ -208,7 +208,6 @@ void traverse_commit_list(struct rev_info *revs,
 		struct object_array_entry *pending = revs->pending.objects + i;
 		struct object *obj = pending->item;
 		const char *name = pending->name;
-		const char *path = pending->path;
 		if (obj->flags & (UNINTERESTING | SEEN))
 			continue;
 		if (obj->type == OBJ_TAG) {
@@ -216,21 +215,24 @@ void traverse_commit_list(struct rev_info *revs,
 			show_object(obj, NULL, name, data);
 			continue;
 		}
-		if (!path)
-			path = "";
 		if (obj->type == OBJ_TREE) {
 			process_tree(revs, (struct tree *)obj, show_object,
-				     NULL, &base, path, data);
+				     NULL, &base, name, data);
 			continue;
 		}
 		if (obj->type == OBJ_BLOB) {
 			process_blob(revs, (struct blob *)obj, show_object,
-				     NULL, path, data);
+				     NULL, name, data);
 			continue;
 		}
 		die("unknown pending object %s (%s)",
 		    sha1_to_hex(obj->sha1), name);
 	}
-	object_array_clear(&revs->pending);
+	if (revs->pending.nr) {
+		free(revs->pending.objects);
+		revs->pending.nr = 0;
+		revs->pending.alloc = 0;
+		revs->pending.objects = NULL;
+	}
 	strbuf_release(&base);
 }

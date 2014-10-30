@@ -185,9 +185,6 @@ static void cleanup_thread(void)
 #define deepest_delta_lock()
 #define deepest_delta_unlock()
 
-#define type_cas_lock()
-#define type_cas_unlock()
-
 #endif
 
 
