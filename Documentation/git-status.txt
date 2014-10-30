@@ -116,7 +116,7 @@ In the short-format, the status of each path is shown as
 
 where `PATH1` is the path in the `HEAD`, and the " `-> PATH2`" part is
 shown only when `PATH1` corresponds to a different path in the
-index/worktree (i.e. the file is renamed). The 'XY' is a two-letter
+index/worktree (i.e. the file is renamed). The `XY` is a two-letter
 status code.
 
 The fields (including the `->`) are separated from each other by a
@@ -125,7 +125,7 @@ characters, that field will be quoted in the manner of a C string
 literal: surrounded by ASCII double quote (34) characters, and with
 interior special characters backslash-escaped.
 
-For paths with merge conflicts, `X` and 'Y' show the modification
+For paths with merge conflicts, `X` and `Y` show the modification
 states of each side of the merge. For paths that do not have merge
 conflicts, `X` shows the status of the index, and `Y` shows the status
 of the work tree.  For untracked paths, `XY` are `??`.  Other status

@@ -12,6 +12,7 @@ void child_process_init(struct child_process *child)
 {
 	memset(child, 0, sizeof(*child));
 	argv_array_init(&child->args);
+	argv_array_init(&child->env_array);
 }
 
 struct child_to_clean {
@@ -287,6 +288,8 @@ int start_command(struct child_process *cmd)
 
 	if (!cmd->argv)
 		cmd->argv = cmd->args.argv;
+	if (!cmd->env)
+		cmd->env = cmd->env_array.argv;
 
 	/*
 	 * In case of errors we must keep the promise to close FDs
@@ -338,6 +341,7 @@ fail_pipe:
 			error("cannot create %s pipe for %s: %s",
 				str, cmd->argv[0], strerror(failed_errno));
 			argv_array_clear(&cmd->args);
+			argv_array_clear(&cmd->env_array);
 			errno = failed_errno;
 			return -1;
 		}
@@ -524,6 +528,7 @@ fail_pipe:
 		else if (cmd->err)
 			close(cmd->err);
 		argv_array_clear(&cmd->args);
+		argv_array_clear(&cmd->env_array);
 		errno = failed_errno;
 		return -1;
 	}
@@ -550,6 +555,7 @@ int finish_command(struct child_process *cmd)
 {
 	int ret = wait_or_whine(cmd->pid, cmd->argv[0]);
 	argv_array_clear(&cmd->args);
+	argv_array_clear(&cmd->env_array);
 	return ret;
 }
 
@@ -620,6 +626,45 @@ static int async_die_is_recursing(void)
 	return ret != NULL;
 }
 
+#else
+
+static struct {
+	void (**handlers)(void);
+	size_t nr;
+	size_t alloc;
+} git_atexit_hdlrs;
+
+static int git_atexit_installed;
+
+static void git_atexit_dispatch()
+{
+	size_t i;
+
+	for (i=git_atexit_hdlrs.nr ; i ; i--)
+		git_atexit_hdlrs.handlers[i-1]();
+}
+
+static void git_atexit_clear()
+{
+	free(git_atexit_hdlrs.handlers);
+	memset(&git_atexit_hdlrs, 0, sizeof(git_atexit_hdlrs));
+	git_atexit_installed = 0;
+}
+
+#undef atexit
+int git_atexit(void (*handler)(void))
+{
+	ALLOC_GROW(git_atexit_hdlrs.handlers, git_atexit_hdlrs.nr + 1, git_atexit_hdlrs.alloc);
+	git_atexit_hdlrs.handlers[git_atexit_hdlrs.nr++] = handler;
+	if (!git_atexit_installed) {
+		if (atexit(&git_atexit_dispatch))
+			return -1;
+		git_atexit_installed = 1;
+	}
+	return 0;
+}
+#define atexit git_atexit
+
 #endif
 
 int start_async(struct async *async)
@@ -678,6 +723,7 @@ int start_async(struct async *async)
 			close(fdin[1]);
 		if (need_out)
 			close(fdout[0]);
+		git_atexit_clear();
 		exit(!!async->proc(proc_in, proc_out, async->data));
 	}
 

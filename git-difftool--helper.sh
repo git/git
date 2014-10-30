@@ -49,7 +49,8 @@ launch_merge_tool () {
 		else
 			printf "Launch '%s' [Y/n]: " "$merge_tool"
 		fi
-		if read ans && test "$ans" = n
+		read ans || return
+		if test "$ans" = n
 		then
 			return
 		fi
@@ -84,6 +85,12 @@ else
 	while test $# -gt 6
 	do
 		launch_merge_tool "$1" "$2" "$5"
+		status=$?
+		if test "$status" != 0 &&
+			test "$GIT_DIFFTOOL_TRUST_EXIT_CODE" = true
+		then
+			exit $status
+		fi
 		shift 7
 	done
 fi

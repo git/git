@@ -826,9 +826,9 @@ static void prep_exclude(struct dir_struct *dir, const char *base, int baselen)
 	current = stk ? stk->baselen : -1;
 	strbuf_setlen(&dir->basebuf, current < 0 ? 0 : current);
 	while (current < baselen) {
-		struct exclude_stack *stk = xcalloc(1, sizeof(*stk));
 		const char *cp;
 
+		stk = xcalloc(1, sizeof(*stk));
 		if (current < 0) {
 			cp = base;
 			current = 0;

@@ -413,14 +413,18 @@ void add_to_alternates_file(const char *reference)
 		link_alt_odb_entries(alt, strlen(alt), '\n', NULL, 0);
 }
 
-void foreach_alt_odb(alt_odb_fn fn, void *cb)
+int foreach_alt_odb(alt_odb_fn fn, void *cb)
 {
 	struct alternate_object_database *ent;
+	int r = 0;
 
 	prepare_alt_odb();
-	for (ent = alt_odb_list; ent; ent = ent->next)
-		if (fn(ent, cb))
-			return;
+	for (ent = alt_odb_list; ent; ent = ent->next) {
+		r = fn(ent, cb);
+		if (r)
+			break;
+	}
+	return r;
 }
 
 void prepare_alt_odb(void)
@@ -439,27 +443,53 @@ void prepare_alt_odb(void)
 	read_info_alternates(get_object_directory(), 0);
 }
 
-static int has_loose_object_local(const unsigned char *sha1)
+static int freshen_file(const char *fn)
 {
-	return !access(sha1_file_name(sha1), F_OK);
+	struct utimbuf t;
+	t.actime = t.modtime = time(NULL);
+	return !utime(fn, &t);
 }
 
-int has_loose_object_nonlocal(const unsigned char *sha1)
+static int check_and_freshen_file(const char *fn, int freshen)
+{
+	if (access(fn, F_OK))
+		return 0;
+	if (freshen && freshen_file(fn))
+		return 0;
+	return 1;
+}
+
+static int check_and_freshen_local(const unsigned char *sha1, int freshen)
+{
+	return check_and_freshen_file(sha1_file_name(sha1), freshen);
+}
+
+static int check_and_freshen_nonlocal(const unsigned char *sha1, int freshen)
 {
 	struct alternate_object_database *alt;
 	prepare_alt_odb();
 	for (alt = alt_odb_list; alt; alt = alt->next) {
 		fill_sha1_path(alt->name, sha1);
-		if (!access(alt->base, F_OK))
+		if (check_and_freshen_file(alt->base, freshen))
 			return 1;
 	}
 	return 0;
 }
 
+static int check_and_freshen(const unsigned char *sha1, int freshen)
+{
+	return check_and_freshen_local(sha1, freshen) ||
+	       check_and_freshen_nonlocal(sha1, freshen);
+}
+
+int has_loose_object_nonlocal(const unsigned char *sha1)
+{
+	return check_and_freshen_nonlocal(sha1, 0);
+}
+
 static int has_loose_object(const unsigned char *sha1)
 {
-	return has_loose_object_local(sha1) ||
-	       has_loose_object_nonlocal(sha1);
+	return check_and_freshen(sha1, 0);
 }
 
 static unsigned int pack_used_ctr;
@@ -2962,6 +2992,17 @@ static int write_loose_object(const unsigned char *sha1, char *hdr, int hdrlen,
 	return move_temp_to_file(tmp_file, filename);
 }
 
+static int freshen_loose_object(const unsigned char *sha1)
+{
+	return check_and_freshen(sha1, 1);
+}
+
+static int freshen_packed_object(const unsigned char *sha1)
+{
+	struct pack_entry e;
+	return find_pack_entry(sha1, &e) && freshen_file(e.p->pack_name);
+}
+
 int write_sha1_file(const void *buf, unsigned long len, const char *type, unsigned char *returnsha1)
 {
 	unsigned char sha1[20];
@@ -2974,7 +3015,7 @@ int write_sha1_file(const void *buf, unsigned long len, const char *type, unsign
 	write_sha1_file_prepare(buf, len, type, sha1, hdr, &hdrlen);
 	if (returnsha1)
 		hashcpy(returnsha1, sha1);
-	if (has_sha1_file(sha1))
+	if (freshen_loose_object(sha1) || freshen_packed_object(sha1))
 		return 0;
 	return write_loose_object(sha1, hdr, hdrlen, buf, len, 0);
 }
@@ -3260,4 +3301,150 @@ void assert_sha1_type(const unsigned char *sha1, enum object_type expect)
 	if (type != expect)
 		die("%s is not a valid '%s' object", sha1_to_hex(sha1),
 		    typename(expect));
+}
+
+static int for_each_file_in_obj_subdir(int subdir_nr,
+				       struct strbuf *path,
+				       each_loose_object_fn obj_cb,
+				       each_loose_cruft_fn cruft_cb,
+				       each_loose_subdir_fn subdir_cb,
+				       void *data)
+{
+	size_t baselen = path->len;
+	DIR *dir = opendir(path->buf);
+	struct dirent *de;
+	int r = 0;
+
+	if (!dir) {
+		if (errno == ENOENT)
+			return 0;
+		return error("unable to open %s: %s", path->buf, strerror(errno));
+	}
+
+	while ((de = readdir(dir))) {
+		if (is_dot_or_dotdot(de->d_name))
+			continue;
+
+		strbuf_setlen(path, baselen);
+		strbuf_addf(path, "/%s", de->d_name);
+
+		if (strlen(de->d_name) == 38)  {
+			char hex[41];
+			unsigned char sha1[20];
+
+			snprintf(hex, sizeof(hex), "%02x%s",
+				 subdir_nr, de->d_name);
+			if (!get_sha1_hex(hex, sha1)) {
+				if (obj_cb) {
+					r = obj_cb(sha1, path->buf, data);
+					if (r)
+						break;
+				}
+				continue;
+			}
+		}
+
+		if (cruft_cb) {
+			r = cruft_cb(de->d_name, path->buf, data);
+			if (r)
+				break;
+		}
+	}
+	strbuf_setlen(path, baselen);
+
+	if (!r && subdir_cb)
+		r = subdir_cb(subdir_nr, path->buf, data);
+
+	closedir(dir);
+	return r;
+}
+
+int for_each_loose_file_in_objdir(const char *path,
+			    each_loose_object_fn obj_cb,
+			    each_loose_cruft_fn cruft_cb,
+			    each_loose_subdir_fn subdir_cb,
+			    void *data)
+{
+	struct strbuf buf = STRBUF_INIT;
+	size_t baselen;
+	int r = 0;
+	int i;
+
+	strbuf_addstr(&buf, path);
+	strbuf_addch(&buf, '/');
+	baselen = buf.len;
+
+	for (i = 0; i < 256; i++) {
+		strbuf_addf(&buf, "%02x", i);
+		r = for_each_file_in_obj_subdir(i, &buf, obj_cb, cruft_cb,
+						subdir_cb, data);
+		strbuf_setlen(&buf, baselen);
+		if (r)
+			break;
+	}
+
+	strbuf_release(&buf);
+	return r;
+}
+
+struct loose_alt_odb_data {
+	each_loose_object_fn *cb;
+	void *data;
+};
+
+static int loose_from_alt_odb(struct alternate_object_database *alt,
+			      void *vdata)
+{
+	struct loose_alt_odb_data *data = vdata;
+	return for_each_loose_file_in_objdir(alt->base,
+					     data->cb, NULL, NULL,
+					     data->data);
+}
+
+int for_each_loose_object(each_loose_object_fn cb, void *data)
+{
+	struct loose_alt_odb_data alt;
+	int r;
+
+	r = for_each_loose_file_in_objdir(get_object_directory(),
+					  cb, NULL, NULL, data);
+	if (r)
+		return r;
+
+	alt.cb = cb;
+	alt.data = data;
+	return foreach_alt_odb(loose_from_alt_odb, &alt);
+}
+
+static int for_each_object_in_pack(struct packed_git *p, each_packed_object_fn cb, void *data)
+{
+	uint32_t i;
+	int r = 0;
+
+	for (i = 0; i < p->num_objects; i++) {
+		const unsigned char *sha1 = nth_packed_object_sha1(p, i);
+
+		if (!sha1)
+			return error("unable to get sha1 of object %u in %s",
+				     i, p->pack_name);
+
+		r = cb(sha1, p, i, data);
+		if (r)
+			break;
+	}
+	return r;
+}
+
+int for_each_packed_object(each_packed_object_fn cb, void *data)
+{
+	struct packed_git *p;
+	int r = 0;
+
+	prepare_packed_git();
+	for (p = packed_git; p; p = p->next) {
+		r = for_each_object_in_pack(p, cb, data);
+		if (r)
+			break;
+	}
+	return r;
 }

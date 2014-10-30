@@ -209,6 +209,7 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	argv_array_push(&cmd_args, "--non-empty");
 	argv_array_push(&cmd_args, "--all");
 	argv_array_push(&cmd_args, "--reflog");
+	argv_array_push(&cmd_args, "--indexed-objects");
 	if (window)
 		argv_array_pushf(&cmd_args, "--window=%s", window);
 	if (window_memory)
