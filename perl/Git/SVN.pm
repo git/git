@@ -1798,12 +1798,10 @@ sub find_extra_svn_parents {
 		       );
 
 		if ($ninc) {
-			warn "W:svn cherry-pick ignored ($spec) - missing " .
+			warn "W: svn cherry-pick ignored ($spec) - missing " .
 				"$ninc commit(s) (eg $ifirst)\n";
 		} else {
-			warn
-				"Found merge parent ($spec): ",
-					$merge_tip, "\n";
+			warn "Found merge parent ($spec): ", $merge_tip, "\n";
 			push @new_parents, $merge_tip;
 		}
 	}
