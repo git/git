@@ -310,43 +310,22 @@ static int compute_and_write_prerequisites(int bundle_fd,
 	return 0;
 }
 
-int create_bundle(struct bundle_header *header, const char *path,
-		  int argc, const char **argv)
+/*
+ * Write out bundle refs based on the tips already
+ * parsed into revs.pending. As a side effect, may
+ * manipulate revs.pending to include additional
+ * necessary objects (like tags).
+ *
+ * Returns the number of refs written, or negative
+ * on error.
+ */
+static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 {
-	static struct lock_file lock;
-	int bundle_fd = -1;
-	int bundle_to_stdout;
-	int i, ref_count = 0;
-	struct rev_info revs;
+	int i;
+	int ref_count = 0;
 
-	bundle_to_stdout = !strcmp(path, "-");
-	if (bundle_to_stdout)
-		bundle_fd = 1;
-	else
-		bundle_fd = hold_lock_file_for_update(&lock, path,
-						      LOCK_DIE_ON_ERROR);
-
-	/* write signature */
-	write_or_die(bundle_fd, bundle_signature, strlen(bundle_signature));
-
-	/* init revs to list objects for pack-objects later */
-	save_commit_buffer = 0;
-	init_revisions(&revs, NULL);
-
-	/* write prerequisites */
-	if (compute_and_write_prerequisites(bundle_fd, &revs, argc, argv))
-		return -1;
-
-	/* write references */
-	argc = setup_revisions(argc, argv, &revs, NULL);
-
-	if (argc > 1)
-		return error(_("unrecognized argument: %s"), argv[1]);
-
-	object_array_remove_duplicates(&revs.pending);
-
-	for (i = 0; i < revs.pending.nr; i++) {
-		struct object_array_entry *e = revs.pending.objects + i;
+	for (i = 0; i < revs->pending.nr; i++) {
+		struct object_array_entry *e = revs->pending.objects + i;
 		unsigned char sha1[20];
 		char *ref;
 		const char *display_ref;
@@ -361,7 +340,7 @@ int create_bundle(struct bundle_header *header, const char *path,
 		display_ref = (flag & REF_ISSYMREF) ? e->name : ref;
 
 		if (e->item->type == OBJ_TAG &&
-				!is_tag_in_date_range(e->item, &revs)) {
+				!is_tag_in_date_range(e->item, revs)) {
 			e->item->flags |= UNINTERESTING;
 			continue;
 		}
@@ -407,7 +386,7 @@ int create_bundle(struct bundle_header *header, const char *path,
 				 */
 				obj = parse_object_or_die(sha1, e->name);
 				obj->flags |= SHOWN;
-				add_pending_object(&revs, obj, e->name);
+				add_pending_object(revs, obj, e->name);
 			}
 			free(ref);
 			continue;
@@ -420,11 +399,51 @@ int create_bundle(struct bundle_header *header, const char *path,
 		write_or_die(bundle_fd, "\n", 1);
 		free(ref);
 	}
-	if (!ref_count)
-		die(_("Refusing to create empty bundle."));
 
 	/* end header */
 	write_or_die(bundle_fd, "\n", 1);
+	return ref_count;
+}
+
+int create_bundle(struct bundle_header *header, const char *path,
+		  int argc, const char **argv)
+{
+	static struct lock_file lock;
+	int bundle_fd = -1;
+	int bundle_to_stdout;
+	int ref_count = 0;
+	struct rev_info revs;
+
+	bundle_to_stdout = !strcmp(path, "-");
+	if (bundle_to_stdout)
+		bundle_fd = 1;
+	else
+		bundle_fd = hold_lock_file_for_update(&lock, path,
+						      LOCK_DIE_ON_ERROR);
+
+	/* write signature */
+	write_or_die(bundle_fd, bundle_signature, strlen(bundle_signature));
+
+	/* init revs to list objects for pack-objects later */
+	save_commit_buffer = 0;
+	init_revisions(&revs, NULL);
+
+	/* write prerequisites */
+	if (compute_and_write_prerequisites(bundle_fd, &revs, argc, argv))
+		return -1;
+
+	argc = setup_revisions(argc, argv, &revs, NULL);
+
+	if (argc > 1)
+		return error(_("unrecognized argument: %s"), argv[1]);
+
+	object_array_remove_duplicates(&revs.pending);
+
+	ref_count = write_bundle_refs(bundle_fd, &revs);
+	if (!ref_count)
+		die(_("Refusing to create empty bundle."));
+	else if (ref_count < 0)
+		return -1;
 
 	/* write pack */
 	if (write_pack_data(bundle_fd, &lock, &revs))
