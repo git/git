@@ -596,11 +596,6 @@ int inet_pton(int af, const char *src, void *dst);
 const char *inet_ntop(int af, const void *src, char *dst, size_t size);
 #endif
 
-#ifdef NO_PTHREADS
-#define atexit git_atexit
-extern int git_atexit(void (*handler)(void));
-#endif
-
 extern void release_pack_memory(size_t);
 
 typedef void (*try_to_free_t)(size_t);
@@ -684,7 +679,7 @@ extern const unsigned char sane_ctype[256];
 #define iscntrl(x) (sane_istest(x,GIT_CNTRL))
 #define ispunct(x) sane_istest(x, GIT_PUNCT | GIT_REGEX_SPECIAL | \
 		GIT_GLOB_SPECIAL | GIT_PATHSPEC_MAGIC)
-#define isxdigit(x) (hexval_table[(unsigned char)(x)] != -1)
+#define isxdigit(x) (hexval_table[x] != -1)
 #define tolower(x) sane_case((unsigned char)(x), 0x20)
 #define toupper(x) sane_case((unsigned char)(x), 0)
 #define is_pathspec_magic(x) sane_istest(x,GIT_PATHSPEC_MAGIC)
@@ -778,7 +773,7 @@ void git_qsort(void *base, size_t nmemb, size_t size,
 #endif
 #endif
 
-#if defined(__GNUC__) || (_MSC_VER >= 1400) || defined(__C99_MACRO_WITH_VA_ARGS)
+#if defined(__GNUC__) || (_MSC_VER >= 1400)
 #define HAVE_VARIADIC_MACROS 1
 #endif
 
