@@ -270,33 +270,15 @@ static int write_pack_data(int bundle_fd, struct lock_file *lock, struct rev_inf
 	return 0;
 }
 
-int create_bundle(struct bundle_header *header, const char *path,
-		  int argc, const char **argv)
+static int compute_and_write_prerequisites(int bundle_fd,
+					   struct rev_info *revs,
+					   int argc, const char **argv)
 {
-	static struct lock_file lock;
-	int bundle_fd = -1;
-	int bundle_to_stdout;
-	int i, ref_count = 0;
-	struct strbuf buf = STRBUF_INIT;
-	struct rev_info revs;
 	struct child_process rls = CHILD_PROCESS_INIT;
+	struct strbuf buf = STRBUF_INIT;
 	FILE *rls_fout;
+	int i;
 
-	bundle_to_stdout = !strcmp(path, "-");
-	if (bundle_to_stdout)
-		bundle_fd = 1;
-	else
-		bundle_fd = hold_lock_file_for_update(&lock, path,
-						      LOCK_DIE_ON_ERROR);
-
-	/* write signature */
-	write_or_die(bundle_fd, bundle_signature, strlen(bundle_signature));
-
-	/* init revs to list objects for pack-objects later */
-	save_commit_buffer = 0;
-	init_revisions(&revs, NULL);
-
-	/* write prerequisites */
 	argv_array_pushl(&rls.args,
 			 "rev-list", "--boundary", "--pretty=oneline",
 			 NULL);
@@ -314,7 +296,7 @@ int create_bundle(struct bundle_header *header, const char *path,
 			if (!get_sha1_hex(buf.buf + 1, sha1)) {
 				struct object *object = parse_object_or_die(sha1, buf.buf);
 				object->flags |= UNINTERESTING;
-				add_pending_object(&revs, object, buf.buf);
+				add_pending_object(revs, object, buf.buf);
 			}
 		} else if (!get_sha1_hex(buf.buf, sha1)) {
 			struct object *object = parse_object_or_die(sha1, buf.buf);
@@ -325,6 +307,35 @@ int create_bundle(struct bundle_header *header, const char *path,
 	fclose(rls_fout);
 	if (finish_command(&rls))
 		return error(_("rev-list died"));
+	return 0;
+}
+
+int create_bundle(struct bundle_header *header, const char *path,
+		  int argc, const char **argv)
+{
+	static struct lock_file lock;
+	int bundle_fd = -1;
+	int bundle_to_stdout;
+	int i, ref_count = 0;
+	struct rev_info revs;
+
+	bundle_to_stdout = !strcmp(path, "-");
+	if (bundle_to_stdout)
+		bundle_fd = 1;
+	else
+		bundle_fd = hold_lock_file_for_update(&lock, path,
+						      LOCK_DIE_ON_ERROR);
+
+	/* write signature */
+	write_or_die(bundle_fd, bundle_signature, strlen(bundle_signature));
+
+	/* init revs to list objects for pack-objects later */
+	save_commit_buffer = 0;
+	init_revisions(&revs, NULL);
+
+	/* write prerequisites */
+	if (compute_and_write_prerequisites(bundle_fd, &revs, argc, argv))
+		return -1;
 
 	/* write references */
 	argc = setup_revisions(argc, argv, &revs, NULL);
