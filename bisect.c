@@ -776,7 +776,7 @@ static void check_merge_bases(int no_checkout)
 	int rev_nr;
 	struct commit **rev = get_bad_and_good_commits(&rev_nr);
 
-	result = get_merge_bases_many(rev[0], rev_nr - 1, rev + 1, 1);
+	result = get_merge_bases_many(rev[0], rev_nr - 1, rev + 1);
 
 	for (; result; result = result->next) {
 		const unsigned char *mb = result->item->object.sha1;

@@ -883,7 +883,7 @@ struct commit_list *get_octopus_merge_bases(struct commit_list *in)
 
 		for (j = ret; j; j = j->next) {
 			struct commit_list *bases;
-			bases = get_merge_bases(i->item, j->item, 1);
+			bases = get_merge_bases(i->item, j->item);
 			if (!new)
 				new = bases;
 			else
@@ -952,10 +952,10 @@ static int remove_redundant(struct commit **array, int cnt)
 	return filled;
 }
 
-struct commit_list *get_merge_bases_many(struct commit *one,
-					 int n,
-					 struct commit **twos,
-					 int cleanup)
+static struct commit_list *get_merge_bases_many_0(struct commit *one,
+						  int n,
+						  struct commit **twos,
+						  int cleanup)
 {
 	struct commit_list *list;
 	struct commit **rslt;
@@ -998,10 +998,23 @@ struct commit_list *get_merge_bases_many(struct commit *one,
 	return result;
 }
 
-struct commit_list *get_merge_bases(struct commit *one, struct commit *two,
-				    int cleanup)
+struct commit_list *get_merge_bases_many(struct commit *one,
+					 int n,
+					 struct commit **twos)
 {
-	return get_merge_bases_many(one, 1, &two, cleanup);
+	return get_merge_bases_many_0(one, n, twos, 1);
+}
+
+struct commit_list *get_merge_bases_many_dirty(struct commit *one,
+					       int n,
+					       struct commit **twos)
+{
+	return get_merge_bases_many_0(one, n, twos, 0);
+}
+
+struct commit_list *get_merge_bases(struct commit *one, struct commit *two)
+{
+	return get_merge_bases_many_0(one, 1, &two, 1);
 }
 
 /*

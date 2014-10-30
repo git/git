@@ -277,7 +277,7 @@ static int try_difference(const char *arg)
 			struct commit *a, *b;
 			a = lookup_commit_reference(sha1);
 			b = lookup_commit_reference(end);
-			exclude = get_merge_bases(a, b, 1);
+			exclude = get_merge_bases(a, b);
 			while (exclude) {
 				struct commit_list *n = exclude->next;
 				show_rev(REVERSED,

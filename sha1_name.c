@@ -987,7 +987,7 @@ int get_sha1_mb(const char *name, unsigned char *sha1)
 	two = lookup_commit_reference_gently(sha1_tmp, 0);
 	if (!two)
 		return -1;
-	mbs = get_merge_bases(one, two, 1);
+	mbs = get_merge_bases(one, two);
 	if (!mbs || mbs->next)
 		st = -1;
 	else {
