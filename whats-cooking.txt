@@ -1,20 +1,15 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Oct 2014, #07; Tue, 28)
-X-master-at: fbecd99861ea5795aeba46faf2ac7a8c1b70d485
-X-next-at: fc743598c8bf35b48ad5cdbe5748e497b5f9c1a4
+Subject: What's cooking in git.git (Oct 2014, #08; Fri, 31)
+X-master-at: 4ace7ff4557350b7e0b57d024a2ea311b332e01d
+X-next-at: 35ae3ef5b2d45986e7e641c2f39b5c87b24ead08
 
-What's cooking in git.git (Oct 2014, #07; Tue, 28)
+What's cooking in git.git (Oct 2014, #08; Fri, 31)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
-
-According to tinyurl.com/gitCal, the feature freeze for this cycle
-is scheduled for the end of this month.  What's in the 'master'
-branch as of today looks more or less complete picture, I would
-think.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -22,7 +17,19 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[New Topics]
+[Graduated to "master"]
+
+* bc/asciidoctor (2014-10-27) 4 commits
+  (merged to 'next' on 2014-10-28 at a5b6349)
+ + Documentation: remove Asciidoctor linkgit macro
+ + Documentation: refactor common operations into variables
+  (merged to 'next' on 2014-10-17 at 12ce2e2)
+ + Documentation: implement linkgit macro for Asciidoctor
+ + Documentation: move some AsciiDoc parameters into variables
+
+ Add machinery to alternatively use AsciiDoctor to format our
+ documentation.
+
 
 * da/difftool (2014-10-28) 2 commits
   (merged to 'next' on 2014-10-28 at 19da3f6)
@@ -32,8 +39,6 @@ of the repositories listed at
  Allow diff tool backend to stop early by exiting with a non-zero
  status.
 
- Will merge to 'master'.
-
 
 * dm/port2zos (2014-10-27) 3 commits
   (merged to 'next' on 2014-10-28 at d03d3ae)
@@ -41,19 +46,51 @@ of the repositories listed at
  + Makefile: reorder linker flags in the git executable rule
  + git-compat-util.h: support variadic macros with the XL C compiler
 
- z/OS port
-
- Will merge to 'master'.
+ z/OS port.
 
 
-* jc/strbuf-add-lines-avoid-sp-ht-sequence (2014-10-27) 1 commit
- - strbuf_add_commented_lines(): avoid SP-HT sequence in commented lines
+* jc/push-cert (2014-10-28) 1 commit
+  (merged to 'next' on 2014-10-29 at d3ae2e4)
+ + receive-pack: avoid minor leak in case start_async() fails
 
- The commented output used to blindly add a SP before the payload
- line, resulting in "# \t<indented text>\n" when the payload began
- with a HT.  Instead, produce "#\t<indented text>\n".
+ Leakfix for a topic that is already in 'master'.
 
- Will merge to 'next' and cook throughout the remainder of the cycle.
+
+* jk/prune-mtime (2014-10-19) 28 commits
+  (merged to 'next' on 2014-10-20 at fdd7ff6)
+ + drop add_object_array_with_mode
+ + revision: remove definition of unused 'add_object' function
+ + pack-objects: double-check options before discarding objects
+ + repack: pack objects mentioned by the index
+ + pack-objects: use argv_array
+ + reachable: use revision machinery's --indexed-objects code
+ + rev-list: add --indexed-objects option
+ + rev-list: document --reflog option
+ + t5516: test pushing a tag of an otherwise unreferenced blob
+ + traverse_commit_list: support pending blobs/trees with paths
+ + make add_object_array_with_context interface more sane
+ + write_sha1_file: freshen existing objects
+ + pack-objects: match prune logic for discarding objects
+ + pack-objects: refactor unpack-unreachable expiration check
+ + prune: keep objects reachable from recent objects
+ + sha1_file: add for_each iterators for loose and packed objects
+ + count-objects: use for_each_loose_file_in_objdir
+ + count-objects: do not use xsize_t when counting object size
+ + prune-packed: use for_each_loose_file_in_objdir
+ + reachable: mark index blobs as SEEN
+ + prune: factor out loose-object directory traversal
+ + reachable: reuse revision.c "add all reflogs" code
+ + reachable: use traverse_commit_list instead of custom walk
+ + clean up name allocation in prepare_revision_walk
+ + object_array: add a "clear" function
+ + object_array: factor out slopbuf-freeing logic
+ + isxdigit: cast input to unsigned char
+ + foreach_alt_odb: propagate return value from callback
+
+ Tighten the logic to decide that an unreachable cruft is
+ sufficiently old by covering corner cases such as an ancient object
+ becoming reachable and then going unreachable again, in which case
+ its retention period should be prolonged.
 
 
 * mg/lib-gpg-ro-safety (2014-10-27) 1 commit
@@ -63,7 +100,22 @@ of the repositories listed at
  In a tarball extract whose files are all read-only, running GPG
  tests would have failed due to unwritable files.
 
- Will merge to 'master'.
+
+* oc/mergetools-beyondcompare (2014-10-21) 1 commit
+  (merged to 'next' on 2014-10-24 at e9278e8)
+ + mergetool: rename bc3 to bc
+
+ Take --tool=bc for both BeyondCompare version 3 and 4.
+
+
+* rb/pack-window-memory-config-doc (2014-10-28) 1 commit
+  (merged to 'next' on 2014-10-28 at fc74359)
+ + config.txt: pack.windowmemory limit applies per-thread
+
+
+* rs/child-process-init (2014-10-28) 1 commit
+  (merged to 'next' on 2014-10-29 at 21a76a2)
+ + api-run-command: add missing list item marker
 
 
 * rs/grep-color-words (2014-10-28) 1 commit
@@ -73,48 +125,16 @@ of the repositories listed at
  Allow painting or not painting (partial) matches in context lines
  when showing "grep -C<num>" output in color.
 
- Will merge to 'master'.
+--------------------------------------------------
+[New Topics]
+
+* jc/merge-bases (2014-10-30) 2 commits
+ - get_merge_bases(): always clean-up object flags
+ - bisect: clean flags after checking merge bases
 
 
-* nd/untracked-cache (2014-10-27) 19 commits
- - t7063: tests for untracked cache
- - update-index: test the system before enabling untracked cache
- - update-index: manually enable or disable untracked cache
- - status: enable untracked cache
- - untracked cache: mark index dirty if untracked cache is updated
- - untracked cache: print stats with $GIT_TRACE_UNTRACKED_STATS
- - untracked cache: avoid racy timestamps
- - read-cache.c: split racy stat test to a separate function
- - untracked cache: invalidate at index addition or removal
- - untracked cache: load from UNTR index extension
- - untracked cache: save to an index extension
- - untracked cache: don't open non-existent .gitignore
- - untracked cache: mark what dirs should be recursed/saved
- - untracked cache: record/validate dir mtime and reuse cached output
- - untracked cache: make a wrapper around {open,read,close}dir()
- - untracked cache: invalidate dirs recursively if .gitignore changes
- - untracked cache: initial untracked cache validation
- - untracked cache: record .gitignore information and dir hierarchy
- - dir.c: optionally compute sha-1 of a .gitignore file
-
-
-* rb/pack-window-memory-config-doc (2014-10-28) 1 commit
-  (merged to 'next' on 2014-10-28 at fc74359)
- + config.txt: pack.windowmemory limit applies per-thread
-
- Will merge to 'master'.
-
-
-* jc/push-cert (2014-10-28) 1 commit
- - receive-pack: avoid minor leak in case start_async() fails
-
- Will merge to 'next'.
-
-
-* rs/use-child-process-init-more (2014-10-28) 1 commit
- - use child_process_init() to initialize struct child_process variables
-
- Will merge to 'next'.
+* jk/cache-tree-protect-from-broken-libgit2 (2014-10-30) 1 commit
+ - cache-tree: avoid infinite loop on zero-entry tree
 
 --------------------------------------------------
 [Stalled]
@@ -316,6 +336,48 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* jc/strbuf-add-lines-avoid-sp-ht-sequence (2014-10-27) 1 commit
+  (merged to 'next' on 2014-10-29 at 9167582)
+ + strbuf_add_commented_lines(): avoid SP-HT sequence in commented lines
+
+ The commented output used to blindly add a SP before the payload
+ line, resulting in "# \t<indented text>\n" when the payload began
+ with a HT.  Instead, produce "#\t<indented text>\n".
+
+ Will cook in 'next' throughout the remainder of the cycle.
+
+
+* nd/untracked-cache (2014-10-27) 19 commits
+ - t7063: tests for untracked cache
+ - update-index: test the system before enabling untracked cache
+ - update-index: manually enable or disable untracked cache
+ - status: enable untracked cache
+ - untracked cache: mark index dirty if untracked cache is updated
+ - untracked cache: print stats with $GIT_TRACE_UNTRACKED_STATS
+ - untracked cache: avoid racy timestamps
+ - read-cache.c: split racy stat test to a separate function
+ - untracked cache: invalidate at index addition or removal
+ - untracked cache: load from UNTR index extension
+ - untracked cache: save to an index extension
+ - untracked cache: don't open non-existent .gitignore
+ - untracked cache: mark what dirs should be recursed/saved
+ - untracked cache: record/validate dir mtime and reuse cached output
+ - untracked cache: make a wrapper around {open,read,close}dir()
+ - untracked cache: invalidate dirs recursively if .gitignore changes
+ - untracked cache: initial untracked cache validation
+ - untracked cache: record .gitignore information and dir hierarchy
+ - dir.c: optionally compute sha-1 of a .gitignore file
+
+
+* rs/use-child-process-init-more (2014-10-30) 4 commits
+ - bundle: split out ref writing from bundle_create
+ - bundle: split out a helper function to compute and write prerequisites
+ - bundle: split out a helper function to create pack data
+ - use child_process_init() to initialize struct child_process variables
+
+ Will merge to 'next'.
+
+
 * zk/grep-color-words (2014-10-27) 2 commits
   (merged to 'next' on 2014-10-28 at 4d0457c)
  + Revert "grep: fix match highlighting for combined patterns with context lines"
@@ -328,15 +390,16 @@ of the repositories listed at
 
 
 * jc/conflict-hint (2014-10-28) 4 commits
- - merge & sequencer: turn "Conflicts:" hint into a comment
- - builtin/commit.c: extract ignore_non_trailer() helper function
- - merge & sequencer: unify codepaths that write "Conflicts:" hint
- - builtin/merge.c: drop a parameter that is never used
+  (merged to 'next' on 2014-10-29 at 693250f)
+ + merge & sequencer: turn "Conflicts:" hint into a comment
+ + builtin/commit.c: extract ignore_non_trailer() helper function
+ + merge & sequencer: unify codepaths that write "Conflicts:" hint
+ + builtin/merge.c: drop a parameter that is never used
 
  Unlike all the other hints given in the commit log editor, the list
  of conflicted paths were appended at the end without commented out.
 
- Will merge to 'next' and cook throughout the remainder of the cycle.
+ Will cook in 'next' throughout the remainder of the cycle.
 
 
 * jc/diff-b-m (2014-10-23) 1 commit
@@ -346,13 +409,6 @@ of the repositories listed at
  Fix long-standing bug in "diff -B -M" output.
 
  Will cook in 'next' throughout the remainder of the cycle.
-
-
-* oc/mergetools-beyondcompare (2014-10-21) 1 commit
-  (merged to 'next' on 2014-10-24 at e9278e8)
- + mergetool: rename bc3 to bc
-
- Will merge to 'master'.
 
 
 * rs/ref-transaction-reflog (2014-10-22) 15 commits
@@ -409,59 +465,6 @@ of the repositories listed at
  (this branch uses rs/ref-transaction-reflog and rs/ref-transaction-rename.)
 
  Reviews and comments?
-
-
-* bc/asciidoctor (2014-10-27) 4 commits
-  (merged to 'next' on 2014-10-28 at a5b6349)
- + Documentation: remove Asciidoctor linkgit macro
- + Documentation: refactor common operations into variables
-  (merged to 'next' on 2014-10-17 at 12ce2e2)
- + Documentation: implement linkgit macro for Asciidoctor
- + Documentation: move some AsciiDoc parameters into variables
-
- Add machinery to alternatively use AsciiDoctor to format our
- documentation.
-
- Will merge to 'master'
-
-
-* jk/prune-mtime (2014-10-19) 28 commits
-  (merged to 'next' on 2014-10-20 at fdd7ff6)
- + drop add_object_array_with_mode
- + revision: remove definition of unused 'add_object' function
- + pack-objects: double-check options before discarding objects
- + repack: pack objects mentioned by the index
- + pack-objects: use argv_array
- + reachable: use revision machinery's --indexed-objects code
- + rev-list: add --indexed-objects option
- + rev-list: document --reflog option
- + t5516: test pushing a tag of an otherwise unreferenced blob
- + traverse_commit_list: support pending blobs/trees with paths
- + make add_object_array_with_context interface more sane
- + write_sha1_file: freshen existing objects
- + pack-objects: match prune logic for discarding objects
- + pack-objects: refactor unpack-unreachable expiration check
- + prune: keep objects reachable from recent objects
- + sha1_file: add for_each iterators for loose and packed objects
- + count-objects: use for_each_loose_file_in_objdir
- + count-objects: do not use xsize_t when counting object size
- + prune-packed: use for_each_loose_file_in_objdir
- + reachable: mark index blobs as SEEN
- + prune: factor out loose-object directory traversal
- + reachable: reuse revision.c "add all reflogs" code
- + reachable: use traverse_commit_list instead of custom walk
- + clean up name allocation in prepare_revision_walk
- + object_array: add a "clear" function
- + object_array: factor out slopbuf-freeing logic
- + isxdigit: cast input to unsigned char
- + foreach_alt_odb: propagate return value from callback
-
- Tighten the logic to decide that an unreachable cruft is
- sufficiently old by covering corner cases such as an ancient object
- becoming reachable and then going unreachable again, in which case
- its retention period should be prolonged.
-
- Will merge to 'master'.
 
 
 * jc/checkout-local-track-report (2014-10-14) 1 commit
