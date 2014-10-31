@@ -885,7 +885,11 @@ color.grep.<slot>::
 `linenumber`;;
 	line number prefix (when using `-n`)
 `match`;;
-	matching text
+	matching text (same as setting `matchContext` and `matchSelected`)
+`matchContext`;;
+	matching text in context lines
+`matchSelected`;;
+	matching text in selected lines
 `selected`;;
 	non-matching text in selected lines
 `separator`;;
