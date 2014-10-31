@@ -1178,7 +1178,7 @@ sub find_parent_branch {
 			  or die "SVN connection failed somewhere...\n";
 		}
 		print STDERR "Successfully followed parent\n" unless $::_q > 1;
-		return $self->make_log_entry($rev, [$parent], $ed);
+		return $self->make_log_entry($rev, [$parent], $ed, $r0, $branch_from);
 	}
 	return undef;
 }
@@ -1210,7 +1210,7 @@ sub do_fetch {
 	unless ($self->ra->gs_do_update($last_rev, $rev, $self, $ed)) {
 		die "SVN connection failed somewhere...\n";
 	}
-	$self->make_log_entry($rev, \@parents, $ed);
+	$self->make_log_entry($rev, \@parents, $ed, $last_rev, $self->path);
 }
 
 sub mkemptydirs {
@@ -1433,7 +1433,7 @@ sub check_author {
 }
 
 sub find_extra_svk_parents {
-	my ($self, $ed, $tickets, $parents) = @_;
+	my ($self, $tickets, $parents) = @_;
 	# aha!  svk:merge property changed...
 	my @tickets = split "\n", $tickets;
 	my @known_parents;
@@ -1478,9 +1478,9 @@ sub find_extra_svk_parents {
 sub lookup_svn_merge {
 	my $uuid = shift;
 	my $url = shift;
-	my $merge = shift;
+	my $source = shift;
+	my $revs = shift;
 
-	my ($source, $revs) = split ":", $merge;
 	my $path = $source;
 	$path =~ s{^/}{};
 	my $gs = Git::SVN->find_by_url($url.$source, $url, $path);
@@ -1537,7 +1537,7 @@ sub _rev_list {
 	@rv;
 }
 
-sub check_cherry_pick {
+sub check_cherry_pick2 {
 	my $base = shift;
 	my $tip = shift;
 	my $parents = shift;
@@ -1552,7 +1552,8 @@ sub check_cherry_pick {
 			delete $commits{$commit};
 		}
 	}
-	return (keys %commits);
+	my @k = (keys %commits);
+	return (scalar @k, $k[0]);
 }
 
 sub has_no_changes {
@@ -1597,9 +1598,8 @@ sub tie_for_persistent_memoization {
 		mkpath([$cache_path]) unless -d $cache_path;
 
 		my %lookup_svn_merge_cache;
-		my %check_cherry_pick_cache;
+		my %check_cherry_pick2_cache;
 		my %has_no_changes_cache;
-		my %_rev_list_cache;
 
 		tie_for_persistent_memoization(\%lookup_svn_merge_cache,
 		    "$cache_path/lookup_svn_merge");
@@ -1608,11 +1608,11 @@ sub tie_for_persistent_memoization {
 			LIST_CACHE => ['HASH' => \%lookup_svn_merge_cache],
 		;
 
-		tie_for_persistent_memoization(\%check_cherry_pick_cache,
-		    "$cache_path/check_cherry_pick");
-		memoize 'check_cherry_pick',
+		tie_for_persistent_memoization(\%check_cherry_pick2_cache,
+		    "$cache_path/check_cherry_pick2");
+		memoize 'check_cherry_pick2',
 			SCALAR_CACHE => 'FAULT',
-			LIST_CACHE => ['HASH' => \%check_cherry_pick_cache],
+			LIST_CACHE => ['HASH' => \%check_cherry_pick2_cache],
 		;
 
 		tie_for_persistent_memoization(\%has_no_changes_cache,
@@ -1621,14 +1621,6 @@ sub tie_for_persistent_memoization {
 			SCALAR_CACHE => ['HASH' => \%has_no_changes_cache],
 			LIST_CACHE => 'FAULT',
 		;
-
-		tie_for_persistent_memoization(\%_rev_list_cache,
-		    "$cache_path/_rev_list");
-		memoize '_rev_list',
-			SCALAR_CACHE => 'FAULT',
-			LIST_CACHE => ['HASH' => \%_rev_list_cache],
-		;
-
 	}
 
 	sub unmemoize_svn_mergeinfo_functions {
@@ -1636,9 +1628,8 @@ sub tie_for_persistent_memoization {
 		$memoized = 0;
 
 		Memoize::unmemoize 'lookup_svn_merge';
-		Memoize::unmemoize 'check_cherry_pick';
+		Memoize::unmemoize 'check_cherry_pick2';
 		Memoize::unmemoize 'has_no_changes';
-		Memoize::unmemoize '_rev_list';
 	}
 
 	sub clear_memoized_mergeinfo_caches {
@@ -1648,7 +1639,8 @@ sub tie_for_persistent_memoization {
 		return unless -d $cache_path;
 
 		for my $cache_file (("$cache_path/lookup_svn_merge",
-				     "$cache_path/check_cherry_pick",
+				     "$cache_path/check_cherry_pick", # old
+				     "$cache_path/check_cherry_pick2",
 				     "$cache_path/has_no_changes")) {
 			for my $suffix (qw(yaml db)) {
 				my $file = "$cache_file.$suffix";
@@ -1702,11 +1694,49 @@ sub parents_exclude {
 	return @excluded;
 }
 
+# Compute what's new in svn:mergeinfo.
+sub mergeinfo_changes {
+	my ($self, $old_path, $old_rev, $path, $rev, $mergeinfo_prop) = @_;
+	my %minfo = map {split ":", $_ } split "\n", $mergeinfo_prop;
+	my $old_minfo = {};
+
+	my $ra = $self->ra;
+	# Give up if $old_path isn't in the repo.
+	# This is probably a merge on a subtree.
+	if ($ra->check_path($old_path, $old_rev) != $SVN::Node::dir) {
+		warn "W: ignoring svn:mergeinfo on $old_path, ",
+			"directory didn't exist in r$old_rev\n";
+		return {};
+	}
+	my (undef, undef, $props) = $ra->get_dir($old_path, $old_rev);
+	if (defined $props->{"svn:mergeinfo"}) {
+		my %omi = map {split ":", $_ } split "\n",
+			$props->{"svn:mergeinfo"};
+		$old_minfo = \%omi;
+	}
+
+	my %changes = ();
+	foreach my $p (keys %minfo) {
+		my $a = $old_minfo->{$p} || "";
+		my $b = $minfo{$p};
+		# Omit merged branches whose ranges lists are unchanged.
+		next if $a eq $b;
+		# Remove any common range list prefix.
+		($a ^ $b) =~ /^[\0]*/;
+		my $common_prefix = rindex $b, ",", $+[0] - 1;
+		$changes{$p} = substr $b, $common_prefix + 1;
+	}
+	print STDERR "Checking svn:mergeinfo changes since r$old_rev: ",
+		scalar(keys %minfo), " sources, ",
+		scalar(keys %changes), " changed\n";
+
+	return \%changes;
+}
 
 # note: this function should only be called if the various dirprops
 # have actually changed
 sub find_extra_svn_parents {
-	my ($self, $ed, $mergeinfo, $parents) = @_;
+	my ($self, $mergeinfo, $parents) = @_;
 	# aha!  svk:merge property changed...
 
 	memoize_svn_mergeinfo_functions();
@@ -1715,14 +1745,15 @@ sub find_extra_svn_parents {
 	# history.  Then, we figure out which git revisions are in
 	# that tip, but not this revision.  If all of those revisions
 	# are now marked as merge, we can add the tip as a parent.
-	my @merges = split "\n", $mergeinfo;
+	my @merges = sort keys %$mergeinfo;
 	my @merge_tips;
 	my $url = $self->url;
 	my $uuid = $self->ra_uuid;
 	my @all_ranges;
 	for my $merge ( @merges ) {
 		my ($tip_commit, @ranges) =
-			lookup_svn_merge( $uuid, $url, $merge );
+			lookup_svn_merge( $uuid, $url,
+					  $merge, $mergeinfo->{$merge} );
 		unless (!$tip_commit or
 				grep { $_ eq $tip_commit } @$parents ) {
 			push @merge_tips, $tip_commit;
@@ -1738,8 +1769,9 @@ sub find_extra_svn_parents {
 	# check merge tips for new parents
 	my @new_parents;
 	for my $merge_tip ( @merge_tips ) {
-		my $spec = shift @merges;
+		my $merge = shift @merges;
 		next unless $merge_tip and $excluded{$merge_tip};
+		my $spec = "$merge:$mergeinfo->{$merge}";
 
 		# check out 'new' tips
 		my $merge_base;
@@ -1759,19 +1791,17 @@ sub find_extra_svn_parents {
 		}
 
 		# double check that there are no missing non-merge commits
-		my (@incomplete) = check_cherry_pick(
+		my ($ninc, $ifirst) = check_cherry_pick2(
 			$merge_base, $merge_tip,
 			$parents,
 			@all_ranges,
 		       );
 
-		if ( @incomplete ) {
-			warn "W:svn cherry-pick ignored ($spec) - missing "
-				.@incomplete." commit(s) (eg $incomplete[0])\n";
+		if ($ninc) {
+			warn "W: svn cherry-pick ignored ($spec) - missing " .
+				"$ninc commit(s) (eg $ifirst)\n";
 		} else {
-			warn
-				"Found merge parent (svn:mergeinfo prop): ",
-					$merge_tip, "\n";
+			warn "Found merge parent ($spec): ", $merge_tip, "\n";
 			push @new_parents, $merge_tip;
 		}
 	}
@@ -1797,23 +1827,20 @@ sub find_extra_svn_parents {
 }
 
 sub make_log_entry {
-	my ($self, $rev, $parents, $ed) = @_;
+	my ($self, $rev, $parents, $ed, $parent_rev, $parent_path) = @_;
 	my $untracked = $self->get_untracked($ed);
 
 	my @parents = @$parents;
-	my $ps = $ed->{path_strip} || "";
-	for my $path ( grep { m/$ps/ } %{$ed->{dir_prop}} ) {
-		my $props = $ed->{dir_prop}{$path};
-		if ( $props->{"svk:merge"} ) {
-			$self->find_extra_svk_parents
-				($ed, $props->{"svk:merge"}, \@parents);
-		}
-		if ( $props->{"svn:mergeinfo"} ) {
-			$self->find_extra_svn_parents
-				($ed,
-				 $props->{"svn:mergeinfo"},
-				 \@parents);
-		}
+	my $props = $ed->{dir_prop}{$self->path};
+	if ( $props->{"svk:merge"} ) {
+		$self->find_extra_svk_parents($props->{"svk:merge"}, \@parents);
+	}
+	if ( $props->{"svn:mergeinfo"} ) {
+		my $mi_changes = $self->mergeinfo_changes
+			($parent_path, $parent_rev,
+			 $self->path, $rev,
+			 $props->{"svn:mergeinfo"});
+		$self->find_extra_svn_parents($mi_changes, \@parents);
 	}
 
 	open my $un, '>>', "$self->{dir}/unhandled.log" or croak $!;

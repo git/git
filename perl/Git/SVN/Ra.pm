@@ -2,6 +2,7 @@ package Git::SVN::Ra;
 use vars qw/@ISA $config_dir $_ignore_refs_regex $_log_window_size/;
 use strict;
 use warnings;
+use Memoize;
 use SVN::Client;
 use Git::SVN::Utils qw(
 	canonicalize_url
@@ -76,6 +77,40 @@ sub _auth_providers () {
 	\@rv;
 }
 
+sub prepare_config_once {
+	SVN::_Core::svn_config_ensure($config_dir, undef);
+	my ($baton, $callbacks) = SVN::Core::auth_open_helper(_auth_providers);
+	my $config = SVN::Core::config_get_config($config_dir);
+	my $dont_store_passwords = 1;
+	my $conf_t = $config->{'config'};
+
+	no warnings 'once';
+	# The usage of $SVN::_Core::SVN_CONFIG_* variables
+	# produces warnings that variables are used only once.
+	# I had not found the better way to shut them up, so
+	# the warnings of type 'once' are disabled in this block.
+	if (SVN::_Core::svn_config_get_bool($conf_t,
+	    $SVN::_Core::SVN_CONFIG_SECTION_AUTH,
+	    $SVN::_Core::SVN_CONFIG_OPTION_STORE_PASSWORDS,
+	    1) == 0) {
+		SVN::_Core::svn_auth_set_parameter($baton,
+		    $SVN::_Core::SVN_AUTH_PARAM_DONT_STORE_PASSWORDS,
+		    bless (\$dont_store_passwords, "_p_void"));
+	}
+	if (SVN::_Core::svn_config_get_bool($conf_t,
+	    $SVN::_Core::SVN_CONFIG_SECTION_AUTH,
+	    $SVN::_Core::SVN_CONFIG_OPTION_STORE_AUTH_CREDS,
+	    1) == 0) {
+		$Git::SVN::Prompt::_no_auth_cache = 1;
+	}
+
+	return ($config, $baton, $callbacks);
+} # no warnings 'once'
+
+INIT {
+	Memoize::memoize '_auth_providers';
+	Memoize::memoize 'prepare_config_once';
+}
 
 sub new {
 	my ($class, $url) = @_;
@@ -84,34 +119,8 @@ sub new {
 
 	::_req_svn();
 
-	SVN::_Core::svn_config_ensure($config_dir, undef);
-	my ($baton, $callbacks) = SVN::Core::auth_open_helper(_auth_providers);
-	my $config = SVN::Core::config_get_config($config_dir);
 	$RA = undef;
-	my $dont_store_passwords = 1;
-	my $conf_t = ${$config}{'config'};
-	{
-		no warnings 'once';
-		# The usage of $SVN::_Core::SVN_CONFIG_* variables
-		# produces warnings that variables are used only once.
-		# I had not found the better way to shut them up, so
-		# the warnings of type 'once' are disabled in this block.
-		if (SVN::_Core::svn_config_get_bool($conf_t,
-		    $SVN::_Core::SVN_CONFIG_SECTION_AUTH,
-		    $SVN::_Core::SVN_CONFIG_OPTION_STORE_PASSWORDS,
-		    1) == 0) {
-			SVN::_Core::svn_auth_set_parameter($baton,
-			    $SVN::_Core::SVN_AUTH_PARAM_DONT_STORE_PASSWORDS,
-			    bless (\$dont_store_passwords, "_p_void"));
-		}
-		if (SVN::_Core::svn_config_get_bool($conf_t,
-		    $SVN::_Core::SVN_CONFIG_SECTION_AUTH,
-		    $SVN::_Core::SVN_CONFIG_OPTION_STORE_AUTH_CREDS,
-		    1) == 0) {
-			$Git::SVN::Prompt::_no_auth_cache = 1;
-		}
-	} # no warnings 'once'
-
+	my ($config, $baton, $callbacks) = prepare_config_once();
 	my $self = SVN::Ra->new(url => $url, auth => $baton,
 	                      config => $config,
 			      pool => SVN::Pool->new,
@@ -166,7 +175,17 @@ sub get_dir {
 		}
 	}
 	my $pool = SVN::Pool->new;
-	my ($d, undef, $props) = $self->SUPER::get_dir($dir, $r, $pool);
+	my ($d, undef, $props);
+
+	if (::compare_svn_version('1.4.0') >= 0) {
+		# n.b. in addition to being potentially more efficient,
+		# this works around what appears to be a bug in some
+		# SVN 1.8 versions
+		my $kind = 1; # SVN_DIRENT_KIND
+		($d, undef, $props) = $self->get_dir2($dir, $r, $kind, $pool);
+	} else {
+		($d, undef, $props) = $self->SUPER::get_dir($dir, $r, $pool);
+	}
 	my %dirents = map { $_ => { kind => $d->{$_}->kind } } keys %$d;
 	$pool->clear;
 	if ($r != $cache->{r}) {
@@ -175,10 +194,6 @@ sub get_dir {
 	}
 	$cache->{data}->{$dir} = [ \%dirents, $r, $props ];
 	wantarray ? (\%dirents, $r, $props) : \%dirents;
-}
-
-sub DESTROY {
-	# do not call the real DESTROY since we store ourselves in $RA
 }
 
 # get_log(paths, start, end, limit,
@@ -376,10 +391,19 @@ sub longest_common_path {
 sub gs_fetch_loop_common {
 	my ($self, $base, $head, $gsv, $globs) = @_;
 	return if ($base > $head);
+	my $gpool = SVN::Pool->new_default;
+	my $ra_url = $self->url;
+	my $reload_ra = sub {
+		$_[0] = undef;
+		$self = undef;
+		$RA = undef;
+		$gpool->clear;
+		$self = Git::SVN::Ra->new($ra_url);
+		$ra_invalid = undef;
+	};
 	my $inc = $_log_window_size;
 	my ($min, $max) = ($base, $head < $base + $inc ? $head : $base + $inc);
 	my $longest_path = longest_common_path($gsv, $globs);
-	my $ra_url = $self->url;
 	my $find_trailing_edge;
 	while (1) {
 		my %revs;
@@ -426,7 +450,7 @@ sub gs_fetch_loop_common {
 
 		my %exists = map { $_->path => $_ } @$gsv;
 		foreach my $r (sort {$a <=> $b} keys %revs) {
-			my ($paths, $logged) = @{$revs{$r}};
+			my ($paths, $logged) = @{delete $revs{$r}};
 
 			foreach my $gs ($self->match_globs(\%exists, $paths,
 			                                   $globs, $r)) {
@@ -449,13 +473,7 @@ sub gs_fetch_loop_common {
 				        "$g->{t}-maxRev";
 				Git::SVN::tmp_config($k, $r);
 			}
-			if ($ra_invalid) {
-				$_[0] = undef;
-				$self = undef;
-				$RA = undef;
-				$self = Git::SVN::Ra->new($ra_url);
-				$ra_invalid = undef;
-			}
+			$reload_ra->() if $ra_invalid;
 		}
 		# pre-fill the .rev_db since it'll eventually get filled in
 		# with '0' x40 if something new gets committed
@@ -472,6 +490,8 @@ sub gs_fetch_loop_common {
 		$min = $max + 1;
 		$max += $inc;
 		$max = $head if ($max > $head);
+
+		$reload_ra->();
 	}
 	Git::SVN::gc();
 }

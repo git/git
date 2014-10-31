@@ -39,6 +39,9 @@ UI, Workflows & Features
  * "git difftool" learned an option to stop feeding paths to the
    diff backend when it exits with a non-zero status.
 
+ * "git grep" allows to paint (or not paint) partial matches on
+   context lines whenshowing "grep -C<num>" output in color.
+
  * "log --date=iso" uses a slight variant of ISO 8601 format that is
    made more human readable.  A new "--date=iso-strict" option gives
    datetime output that is more strictly conformant.
@@ -88,6 +91,9 @@ UI, Workflows & Features
  * "git help everyday" shows the "Everyday Git in 20 commands or so"
    document, whose contents have been updated to more modern Git
    practice.
+
+ * On the "git svn" front, work to reduce memory consumption and
+   to improve handling of mergeinfo progresses.
 
 
 Performance, Internal Implementation, etc.

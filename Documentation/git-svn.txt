@@ -252,6 +252,10 @@ Use of 'dcommit' is preferred to 'set-tree' (below).
 config key: svn-remote.<name>.commiturl
 config key: svn.commiturl (overwrites all svn-remote.<name>.commiturl options)
 +
+Note that the SVN URL of the commiturl config key includes the SVN branch.
+If you rather want to set the commit URL for an entire SVN repository use
+svn-remote.<name>.pushurl instead.
++
 Using this option for any other purpose (don't ask) is very strongly
 discouraged.
 
