@@ -175,7 +175,17 @@ sub get_dir {
 		}
 	}
 	my $pool = SVN::Pool->new;
-	my ($d, undef, $props) = $self->SUPER::get_dir($dir, $r, $pool);
+	my ($d, undef, $props);
+
+	if (::compare_svn_version('1.4.0') >= 0) {
+		# n.b. in addition to being potentially more efficient,
+		# this works around what appears to be a bug in some
+		# SVN 1.8 versions
+		my $kind = 1; # SVN_DIRENT_KIND
+		($d, undef, $props) = $self->get_dir2($dir, $r, $kind, $pool);
+	} else {
+		($d, undef, $props) = $self->SUPER::get_dir($dir, $r, $pool);
+	}
 	my %dirents = map { $_ => { kind => $d->{$_}->kind } } keys %$d;
 	$pool->clear;
 	if ($r != $cache->{r}) {
