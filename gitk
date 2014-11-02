@@ -11936,7 +11936,7 @@ if { [info exists ::env(GIT_TRACE)] } {
 }
 
 # defaults...
-set wrcomcmd "git diff-tree --stdin -p --pretty"
+set wrcomcmd "git diff-tree --stdin -p --pretty=email"
 
 set gitencoding {}
 catch {
