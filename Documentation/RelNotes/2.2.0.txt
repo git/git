@@ -40,7 +40,7 @@ UI, Workflows & Features
    diff backend when it exits with a non-zero status.
 
  * "git grep" allows to paint (or not paint) partial matches on
-   context lines whenshowing "grep -C<num>" output in color.
+   context lines when showing "grep -C<num>" output in color.
 
  * "log --date=iso" uses a slight variant of ISO 8601 format that is
    made more human readable.  A new "--date=iso-strict" option gives
@@ -62,7 +62,7 @@ UI, Workflows & Features
    e.g. "hello_BASE_4321.c").
 
  * The temporary files "git mergetools" uses can be placed in a newly
-   creted temporary directory, instead of the current directory, by
+   created temporary directory, instead of the current directory, by
    setting the mergetool.writeToTemp configuration variable.
 
  * "git mergetool" understands "--tool bc" now, as version 4 of
@@ -292,6 +292,6 @@ notes for details).
    (merge b12d045 da/mergetool-meld later to maint).
 
  * "git pack-objects" forgot to disable the codepath to generate
-   object recheability bitmap when it needs to split the resulting
+   object reachability bitmap when it needs to split the resulting
    pack.
    (merge 2113471 jk/pack-objects-no-bitmap-when-splitting later to maint).
