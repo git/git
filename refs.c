@@ -1584,6 +1584,10 @@ const char *resolve_ref_unsafe(const char *refname, int resolve_flags, unsigned 
 			    (buffer[40] != '\0' && !isspace(buffer[40]))) {
 				if (flags)
 					*flags |= REF_ISBROKEN;
+				if (resolve_flags & RESOLVE_REF_ALLOW_BAD_SHA1) {
+					hashclr(sha1);
+					return refname;
+				}
 				errno = EINVAL;
 				return NULL;
 			}
@@ -2265,6 +2269,8 @@ static struct ref_lock *lock_ref_sha1_basic(const char *refname,
 		if (flags & REF_NODEREF)
 			resolve_flags |= RESOLVE_REF_NO_RECURSE;
 	}
+	if (flags & REF_ALLOW_BROKEN)
+		resolve_flags |= RESOLVE_REF_ALLOW_BAD_SHA1;
 
 	refname = resolve_ref_unsafe(refname, resolve_flags,
 				     lock->old_sha1, &type);
