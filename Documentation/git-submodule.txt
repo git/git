@@ -158,7 +158,7 @@ update::
 	checkout the commit specified in the index of the containing repository.
 	This will make the submodules HEAD be detached unless `--rebase` or
 	`--merge` is specified or the key `submodule.$name.update` is set to
-	`rebase`, `merge` or `none`. `none` can be overridden by specifying
+	`rebase`, `merge` or `none`. The configuration can be overridden by specifying
 	`--checkout`. Setting the key `submodule.$name.update` to `!command`
 	will cause `command` to be run. `command` can be any arbitrary shell
 	command that takes a single argument, namely the sha1 to update to.
