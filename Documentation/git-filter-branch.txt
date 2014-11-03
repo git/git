@@ -451,8 +451,8 @@ characteristics:
 
 * By default The BFG takes full advantage of multi-core machines,
   cleansing commit file-trees in parallel. git-filter-branch cleans
-  commits sequentially (ie in a single-threaded manner), though it
-  _is_ possible to write filters that include their own parallellism,
+  commits sequentially (i.e. in a single-threaded manner), though it
+  _is_ possible to write filters that include their own parallelism,
   in the scripts executed against each commit.
 
 * The http://rtyley.github.io/bfg-repo-cleaner/#examples[command options]

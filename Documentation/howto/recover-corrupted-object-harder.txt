@@ -38,7 +38,7 @@ zlib were failing).
 Reading the zlib source code, I found that "incorrect data check" means
 that the adler-32 checksum at the end of the zlib data did not match the
 inflated data. So stepping the data through zlib would not help, as it
-did not fail until the very end, when we realize the crc does not match.
+did not fail until the very end, when we realize the CRC does not match.
 The problematic bytes could be anywhere in the object data.
 
 The first thing I did was pull the broken data out of the packfile. I
@@ -195,7 +195,7 @@ halfway through:
 -------
 
 I let it run to completion, and got a few more hits at the end (where it
-was munging the crc to match our broken data). So there was a good
+was munging the CRC to match our broken data). So there was a good
 chance this middle hit was the source of the problem.
 
 I confirmed by tweaking the byte in a hex editor, zlib inflating the

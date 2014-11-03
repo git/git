@@ -329,7 +329,7 @@ short form, the leading colon `:` is followed by zero or more "magic
 signature" letters (which optionally is terminated by another colon `:`),
 and the remainder is the pattern to match against the path.
 The "magic signature" consists of ASCII symbols that are neither
-alphanumeric, glob, regex special charaters nor colon.
+alphanumeric, glob, regex special characters nor colon.
 The optional colon that terminates the "magic signature" can be
 omitted if the pattern begins with a character that does not belong to
 "magic signature" symbol set and is not a colon.

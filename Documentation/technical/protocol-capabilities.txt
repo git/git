@@ -168,7 +168,7 @@ agent capability). The `X` and `Y` strings may contain any printable
 ASCII characters except space (i.e., the byte range 32 < x < 127), and
 are typically of the form "package/version" (e.g., "git/1.8.3.1"). The
 agent strings are purely informative for statistics and debugging
-purposes, and MUST NOT be used to programatically assume the presence
+purposes, and MUST NOT be used to programmatically assume the presence
 or absence of particular features.
 
 shallow

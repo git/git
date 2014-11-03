@@ -110,7 +110,7 @@ to allow writes to, for example:
 	authdb = /etc/cvsserver/passwd
 
 ------
-The format of these files is username followed by the crypted password,
+The format of these files is username followed by the encrypted password,
 for example:
 
 ------

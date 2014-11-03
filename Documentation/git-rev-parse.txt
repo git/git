@@ -184,7 +184,7 @@ shown.  If the pattern does not contain a globbing character (`?`,
 	consider. Repetitions of this option accumulate exclusion patterns
 	up to the next `--all`, `--branches`, `--tags`, `--remotes`, or
 	`--glob` option (other options or arguments do not clear
-	accumlated patterns).
+	accumulated patterns).
 +
 The patterns given should not begin with `refs/heads`, `refs/tags`, or
 `refs/remotes` when applied to `--branches`, `--tags`, or `--remotes`,

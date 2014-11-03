@@ -665,7 +665,7 @@ data by examining the beginning of the contents. However, sometimes you
 may want to override its decision, either because a blob contains binary
 data later in the file, or because the content, while technically
 composed of text characters, is opaque to a human reader. For example,
-many postscript files contain only ascii characters, but produce noisy
+many postscript files contain only ASCII characters, but produce noisy
 and meaningless diffs.
 
 The simplest way to mark a file as binary is to unset the diff
@@ -680,7 +680,7 @@ patch, if binary patches are enabled) instead of a regular diff.
 
 However, one may also want to specify other diff driver attributes. For
 example, you might want to use `textconv` to convert postscript files to
-an ascii representation for human viewing, but otherwise treat them as
+an ASCII representation for human viewing, but otherwise treat them as
 binary files. You cannot specify both `-diff` and `diff=ps` attributes.
 The solution is to use the `diff.*.binary` config option:
 

@@ -98,7 +98,7 @@ clean::
 filter by pattern::
 
    This shows the files and directories to be deleted and issues an
-   "Input ignore patterns>>" prompt. You can input space-seperated
+   "Input ignore patterns>>" prompt. You can input space-separated
    patterns to exclude files and directories from deletion.
    E.g. "*.c *.h" will excludes files end with ".c" and ".h" from
    deletion. When you are satisfied with the filtered result, press

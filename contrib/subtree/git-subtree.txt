@@ -114,7 +114,7 @@ split::
 	want.
 	
 	Repeated splits of exactly the same history are
-	guaranteed to be identical (ie. to produce the same
+	guaranteed to be identical (i.e. to produce the same
 	commit ids).  Because of this, if you add new commits
 	and then re-split, the new commits will be attached as
 	commits on top of the history you generated last time,

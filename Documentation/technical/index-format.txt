@@ -231,5 +231,5 @@ Git index format
     on. Replaced entries may have empty path names to save space.
 
   The remaining index entries after replaced ones will be added to the
-  final index. These added entries are also sorted by entry namme then
+  final index. These added entries are also sorted by entry name then
   stage.

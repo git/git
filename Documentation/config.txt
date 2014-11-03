@@ -1210,7 +1210,7 @@ gc.autopacklimit::
 	default	value is 50.  Setting this to 0 disables it.
 
 gc.autodetach::
-	Make `git gc --auto` return immediately andrun in background
+	Make `git gc --auto` return immediately and run in background
 	if the system supports it. Default is true.
 
 gc.packrefs::
@@ -1357,7 +1357,7 @@ gpg.program::
 	same command-line interface as GPG, namely, to verify a detached
 	signature, "gpg --verify $file - <$signature" is run, and the
 	program is expected to signal a good signature by exiting with
-	code 0, and to generate an ascii-armored detached signature, the
+	code 0, and to generate an ASCII-armored detached signature, the
 	standard input of "gpg -bsau $key" is fed with the contents to be
 	signed, and the program is expected to send the result to its
 	standard output.
@@ -1592,7 +1592,7 @@ http.useragent::
 	Can be overridden by the 'GIT_HTTP_USER_AGENT' environment variable.
 
 http.<url>.*::
-	Any of the http.* options above can be applied selectively to some urls.
+	Any of the http.* options above can be applied selectively to some URLs.
 	For a config key to match a URL, each element of the config key is
 	compared to that of the URL, in the following order:
 +
@@ -1631,8 +1631,8 @@ if the URL is `https://user@example.com/foo/bar` a config key match of
 +
 All URLs are normalized before attempting any matching (the password part,
 if embedded in the URL, is always ignored for matching purposes) so that
-equivalent urls that are simply spelled differently will match properly.
-Environment variable settings always override any matches.  The urls that are
+equivalent URLs that are simply spelled differently will match properly.
+Environment variable settings always override any matches.  The URLs that are
 matched against are those given directly to Git commands.  This means any URLs
 visited as a result of a redirection do not participate in matching.
 

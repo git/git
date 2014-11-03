@@ -85,7 +85,7 @@ UI, Workflows & Features
    public repository really point the commits the pusher wanted to,
    without having to "trust" the server.
 
- * "git interpret-trailers" is a new filter to programatically edit
+ * "git interpret-trailers" is a new filter to programmatically edit
     the tail end of the commit log messages.
 
  * "git help everyday" shows the "Everyday Git in 20 commands or so"

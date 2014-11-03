@@ -119,7 +119,7 @@ developed and maintained during years or even tens of years by a lot
 of people. And as there are often many people who depend (sometimes
 critically) on such software, regressions are a really big problem.
 
-One such software is the linux kernel. And if we look at the linux
+One such software is the Linux kernel. And if we look at the Linux
 kernel, we can see that a lot of time and effort is spent to fight
 regressions. The release cycle start with a 2 weeks long merge
 window. Then the first release candidate (rc) version is tagged. And
@@ -132,7 +132,7 @@ regressions. And this time is more than 80% of the release cycle
 time. But this is not the end of the fight yet, as of course it
 continues after the release.
 
-And then this is what Ingo Molnar (a well known linux kernel
+And then this is what Ingo Molnar (a well known Linux kernel
 developer) says about his use of git bisect:
 
 _____________

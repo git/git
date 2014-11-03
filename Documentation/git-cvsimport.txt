@@ -219,7 +219,7 @@ Problems related to tags:
 * Multiple tags on the same revision are not imported.
 
 If you suspect that any of these issues may apply to the repository you
-want to imort, consider using cvs2git:
+want to import, consider using cvs2git:
 
 * cvs2git (part of cvs2svn), `http://subversion.apache.org/`
 

@@ -3,7 +3,7 @@ git-interpret-trailers(1)
 
 NAME
 ----
-git-interpret-trailers - help add stuctured information into commit messages
+git-interpret-trailers - help add structured information into commit messages
 
 SYNOPSIS
 --------
@@ -43,7 +43,7 @@ This means that the trimmed <token> and <value> will be separated by
 
 By default the new trailer will appear at the end of all the existing
 trailers. If there is no existing trailer, the new trailer will appear
-after the commit message part of the ouput, and, if there is no line
+after the commit message part of the output, and, if there is no line
 with only spaces at the end of the commit message part, one blank line
 will be added before the new trailer.
 
@@ -56,7 +56,7 @@ minus signs start the patch part of the message.
 
 When reading trailers, there can be whitespaces before and after the
 token, the separator and the value. There can also be whitespaces
-indide the token and the value.
+inside the token and the value.
 
 Note that 'trailers' do not follow and are not intended to follow many
 rules for RFC 822 headers. For example they do not follow the line

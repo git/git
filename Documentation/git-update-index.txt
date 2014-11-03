@@ -170,7 +170,7 @@ may not support it yet.
 	split-index mode is already enabled and `--split-index` is
 	given again, all changes in $GIT_DIR/index are pushed back to
 	the shared index file. This mode is designed for very large
-	indexes that take a signficant amount of time to read or write.
+	indexes that take a significant amount of time to read or write.
 
 \--::
 	Do not interpret any more arguments as options.
