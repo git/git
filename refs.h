@@ -207,11 +207,6 @@ extern int commit_ref(struct ref_lock *lock);
 /** Release any lock taken but not written. **/
 extern void unlock_ref(struct ref_lock *lock);
 
-/*
- * Setup reflog before using. Set errno to something meaningful on failure.
- */
-int log_ref_setup(const char *refname, char *logfile, int bufsize);
-
 /** Reads log for the value of ref during at_time. **/
 extern int read_ref_at(const char *refname, unsigned int flags,
 		       unsigned long at_time, int cnt,
@@ -220,6 +215,9 @@ extern int read_ref_at(const char *refname, unsigned int flags,
 
 /** Check if a particular reflog exists */
 extern int reflog_exists(const char *refname);
+
+/** Create reflog. Set errno to something meaningful on failure. */
+extern int create_reflog(const char *refname);
 
 /** Delete a reflog */
 extern int delete_reflog(const char *refname);
