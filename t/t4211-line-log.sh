@@ -77,4 +77,9 @@ test_expect_success '-L {empty-range} (first -L)' '
 	git log -L$n:b.c
 '
 
+test_expect_success '-L with --first-parent and a merge' '
+	git checkout parallel-change &&
+	git log --first-parent -L 1,1:b.c
+'
+
 test_done

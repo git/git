@@ -1164,6 +1164,9 @@ static int process_ranges_merge_commit(struct rev_info *rev, struct commit *comm
 	int i;
 	int nparents = count_parents(commit);
 
+	if (nparents > 1 && rev->first_parent_only)
+		nparents = 1;
+
 	diffqueues = xmalloc(nparents * sizeof(*diffqueues));
 	cand = xmalloc(nparents * sizeof(*cand));
 	parents = xmalloc(nparents * sizeof(*parents));
