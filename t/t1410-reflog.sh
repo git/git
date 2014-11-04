@@ -245,4 +245,38 @@ test_expect_success 'gc.reflogexpire=false' '
 
 '
 
+test_expect_success 'stale dirs do not cause d/f conflicts (reflogs on)' '
+	test_when_finished "git branch -d a || git branch -d a/b" &&
+
+	git branch a/b master &&
+	echo "a/b@{0} branch: Created from master" >expect &&
+	git log -g --format="%gd %gs" a/b >actual &&
+	test_cmp expect actual &&
+	git branch -d a/b &&
+
+	# now logs/refs/heads/a is a stale directory, but
+	# we should move it out of the way to create "a" reflog
+	git branch a master &&
+	echo "a@{0} branch: Created from master" >expect &&
+	git log -g --format="%gd %gs" a >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'stale dirs do not cause d/f conflicts (reflogs off)' '
+	test_when_finished "git branch -d a || git branch -d a/b" &&
+
+	git branch a/b master &&
+	echo "a/b@{0} branch: Created from master" >expect &&
+	git log -g --format="%gd %gs" a/b >actual &&
+	test_cmp expect actual &&
+	git branch -d a/b &&
+
+	# same as before, but we only create a reflog for "a" if
+	# it already exists, which it does not
+	git -c core.logallrefupdates=false branch a master &&
+	: >expect &&
+	git log -g --format="%gd %gs" a >actual &&
+	test_cmp expect actual
+'
+
 test_done
