@@ -11,6 +11,7 @@ This test checks the following functionality:
 * hooks
 * --porcelain output format
 * hiderefs
+* reflogs
 '
 
 . ./test-lib.sh
@@ -1275,6 +1276,45 @@ EOF
 	git repack -adf &&
 	rcvpck="git receive-pack --reject-thin-pack-for-testing" &&
 	git push --no-thin --receive-pack="$rcvpck" no-thin/.git refs/heads/master:refs/heads/foo
+'
+
+test_expect_success 'push into bare respects core.logallrefupdates' '
+	rm -rf dst.git &&
+	git init --bare dst.git &&
+	git -C dst.git config core.logallrefupdates true &&
+
+	# double push to test both with and without
+	# the actual pack transfer
+	git push dst.git master:one &&
+	echo "one@{0} push" >expect &&
+	git -C dst.git log -g --format="%gd %gs" one >actual &&
+	test_cmp expect actual &&
+
+	git push dst.git master:two &&
+	echo "two@{0} push" >expect &&
+	git -C dst.git log -g --format="%gd %gs" two >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'fetch into bare respects core.logallrefupdates' '
+	rm -rf dst.git &&
+	git init --bare dst.git &&
+	(
+		cd dst.git &&
+		git config core.logallrefupdates true &&
+
+		# as above, we double-fetch to test both
+		# with and without pack transfer
+		git fetch .. master:one &&
+		echo "one@{0} fetch .. master:one: storing head" >expect &&
+		git log -g --format="%gd %gs" one >actual &&
+		test_cmp expect actual &&
+
+		git fetch .. master:two &&
+		echo "two@{0} fetch .. master:two: storing head" >expect &&
+		git log -g --format="%gd %gs" two >actual &&
+		test_cmp expect actual
+	)
 '
 
 test_done
