@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Oct 2014, #08; Fri, 31)
-X-master-at: 4ace7ff4557350b7e0b57d024a2ea311b332e01d
-X-next-at: 35ae3ef5b2d45986e7e641c2f39b5c87b24ead08
+Subject: What's cooking in git.git (Nov 2014, #01; Wed, 5)
+X-master-at: f745acb028ee8f7dcd1c8f10127b8feeaa255cf7
+X-next-at: e7f43d631f3874d59f665b70a7bf5ea08e113c3b
 
-What's cooking in git.git (Oct 2014, #08; Fri, 31)
+What's cooking in git.git (Nov 2014, #01; Wed, 5)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -17,124 +17,58 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* bc/asciidoctor (2014-10-27) 4 commits
-  (merged to 'next' on 2014-10-28 at a5b6349)
- + Documentation: remove Asciidoctor linkgit macro
- + Documentation: refactor common operations into variables
-  (merged to 'next' on 2014-10-17 at 12ce2e2)
- + Documentation: implement linkgit macro for Asciidoctor
- + Documentation: move some AsciiDoc parameters into variables
-
- Add machinery to alternatively use AsciiDoctor to format our
- documentation.
-
-
-* da/difftool (2014-10-28) 2 commits
-  (merged to 'next' on 2014-10-28 at 19da3f6)
- + difftool: add support for --trust-exit-code
- + difftool--helper: exit when reading a prompt answer fails
-
- Allow diff tool backend to stop early by exiting with a non-zero
- status.
-
-
-* dm/port2zos (2014-10-27) 3 commits
-  (merged to 'next' on 2014-10-28 at d03d3ae)
- + compat/bswap.h: detect endianness from XL C compiler macros
- + Makefile: reorder linker flags in the git executable rule
- + git-compat-util.h: support variadic macros with the XL C compiler
-
- z/OS port.
-
-
-* jc/push-cert (2014-10-28) 1 commit
-  (merged to 'next' on 2014-10-29 at d3ae2e4)
- + receive-pack: avoid minor leak in case start_async() fails
-
- Leakfix for a topic that is already in 'master'.
-
-
-* jk/prune-mtime (2014-10-19) 28 commits
-  (merged to 'next' on 2014-10-20 at fdd7ff6)
- + drop add_object_array_with_mode
- + revision: remove definition of unused 'add_object' function
- + pack-objects: double-check options before discarding objects
- + repack: pack objects mentioned by the index
- + pack-objects: use argv_array
- + reachable: use revision machinery's --indexed-objects code
- + rev-list: add --indexed-objects option
- + rev-list: document --reflog option
- + t5516: test pushing a tag of an otherwise unreferenced blob
- + traverse_commit_list: support pending blobs/trees with paths
- + make add_object_array_with_context interface more sane
- + write_sha1_file: freshen existing objects
- + pack-objects: match prune logic for discarding objects
- + pack-objects: refactor unpack-unreachable expiration check
- + prune: keep objects reachable from recent objects
- + sha1_file: add for_each iterators for loose and packed objects
- + count-objects: use for_each_loose_file_in_objdir
- + count-objects: do not use xsize_t when counting object size
- + prune-packed: use for_each_loose_file_in_objdir
- + reachable: mark index blobs as SEEN
- + prune: factor out loose-object directory traversal
- + reachable: reuse revision.c "add all reflogs" code
- + reachable: use traverse_commit_list instead of custom walk
- + clean up name allocation in prepare_revision_walk
- + object_array: add a "clear" function
- + object_array: factor out slopbuf-freeing logic
- + isxdigit: cast input to unsigned char
- + foreach_alt_odb: propagate return value from callback
-
- Tighten the logic to decide that an unreachable cruft is
- sufficiently old by covering corner cases such as an ancient object
- becoming reachable and then going unreachable again, in which case
- its retention period should be prolonged.
-
-
-* mg/lib-gpg-ro-safety (2014-10-27) 1 commit
-  (merged to 'next' on 2014-10-28 at f396990)
- + t/lib-gpg: make gpghome files writable
-
- In a tarball extract whose files are all read-only, running GPG
- tests would have failed due to unwritable files.
-
-
-* oc/mergetools-beyondcompare (2014-10-21) 1 commit
-  (merged to 'next' on 2014-10-24 at e9278e8)
- + mergetool: rename bc3 to bc
-
- Take --tool=bc for both BeyondCompare version 3 and 4.
-
-
-* rb/pack-window-memory-config-doc (2014-10-28) 1 commit
-  (merged to 'next' on 2014-10-28 at fc74359)
- + config.txt: pack.windowmemory limit applies per-thread
-
-
-* rs/child-process-init (2014-10-28) 1 commit
-  (merged to 'next' on 2014-10-29 at 21a76a2)
- + api-run-command: add missing list item marker
-
-
-* rs/grep-color-words (2014-10-28) 1 commit
-  (merged to 'next' on 2014-10-28 at 4e6659d)
- + grep: add color.grep.matchcontext and color.grep.matchselected
-
- Allow painting or not painting (partial) matches in context lines
- when showing "grep -C<num>" output in color.
-
---------------------------------------------------
 [New Topics]
 
-* jc/merge-bases (2014-10-30) 2 commits
- - get_merge_bases(): always clean-up object flags
- - bisect: clean flags after checking merge bases
+* jk/fetch-reflog-df-conflict (2014-11-04) 2 commits
+  (merged to 'next' on 2014-11-05 at b0476c9)
+ + ignore stale directories when checking reflog existence
+ + fetch: load all default config at startup
+
+ Corner-case bugfixes for "git fetch" around reflog handling.
+
+ Will merge to 'master'.
 
 
-* jk/cache-tree-protect-from-broken-libgit2 (2014-10-30) 1 commit
- - cache-tree: avoid infinite loop on zero-entry tree
+* js/diff-highlight-avoid-sigpipe (2014-11-04) 1 commit
+  (merged to 'next' on 2014-11-05 at b0fadd3)
+ + diff-highlight: exit when a pipe is broken
+
+ Will merge to 'master'.
+
+
+* ms/submodule-update-config-doc (2014-11-03) 1 commit
+ - submodule: clarify documentation for update subcommand
+
+
+* nd/lockfile-absolute (2014-11-03) 1 commit
+ - lockfile.c: store absolute path
+
+ The lockfile API can get confused which file to clean up when the
+ process moved the $cwd after creating a lockfile.
+
+ Will merge to 'next' and cook throughout the remainder of the cycle.
+
+
+* tm/line-log-first-parent (2014-11-04) 1 commit
+  (merged to 'next' on 2014-11-05 at 8a6f650)
+ + line-log: fix crash when --first-parent is used
+
+ "git log --first-parent -L..." used to crash.
+
+ Will merge to 'master'.
+
+
+* jh/empty-notes (2014-11-05) 3 commits
+ - notes: add --allow-empty, to allow storing empty notes
+ - t3312-notes-empty: test that 'git notes' removes empty notes by default
+ - builtin/notes: fix premature failure when trying to add the empty blob
+
+
+* nd/gitignore-trailing-whitespace (2014-11-04) 1 commit
+  (merged to 'next' on 2014-11-05 at e7f43d6)
+ + gitignore.txt: fix spelling of "backslash"
+
+ Will merge to 'master'.
 
 --------------------------------------------------
 [Stalled]
@@ -336,6 +270,20 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* jc/merge-bases (2014-10-30) 2 commits
+ - get_merge_bases(): always clean-up object flags
+ - bisect: clean flags after checking merge bases
+
+ Will merge to 'next' and cook throughout the remainder of the cycle.
+
+
+* jk/cache-tree-protect-from-broken-libgit2 (2014-10-30) 1 commit
+  (merged to 'next' on 2014-11-03 at 6ebd88d)
+ + cache-tree: avoid infinite loop on zero-entry tree
+
+ Will merge to 'master'.
+
+
 * jc/strbuf-add-lines-avoid-sp-ht-sequence (2014-10-27) 1 commit
   (merged to 'next' on 2014-10-29 at 9167582)
  + strbuf_add_commented_lines(): avoid SP-HT sequence in commented lines
@@ -370,12 +318,13 @@ of the repositories listed at
 
 
 * rs/use-child-process-init-more (2014-10-30) 4 commits
- - bundle: split out ref writing from bundle_create
- - bundle: split out a helper function to compute and write prerequisites
- - bundle: split out a helper function to create pack data
- - use child_process_init() to initialize struct child_process variables
+  (merged to 'next' on 2014-11-03 at a82d885)
+ + bundle: split out ref writing from bundle_create
+ + bundle: split out a helper function to compute and write prerequisites
+ + bundle: split out a helper function to create pack data
+ + use child_process_init() to initialize struct child_process variables
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * zk/grep-color-words (2014-10-27) 2 commits
@@ -411,7 +360,7 @@ of the repositories listed at
  Will cook in 'next' throughout the remainder of the cycle.
 
 
-* rs/ref-transaction-reflog (2014-10-22) 15 commits
+* rs/ref-transaction-reflog (2014-11-03) 15 commits
  - refs.c: allow deleting refs with a broken sha1
  - refs.c: remove lock_any_ref_for_update
  - refs.c: make unlock_ref/close_ref/commit_ref static
@@ -432,7 +381,7 @@ of the repositories listed at
  Reviews and comments?
 
 
-* rs/ref-transaction-rename (2014-10-22) 15 commits
+* rs/ref-transaction-rename (2014-11-03) 17 commits
  - refs.c: add an err argument to pack_refs
  - refs.c: make lock_packed_refs take an err argument
  - refs.c: make add_packed_ref return an error instead of calling die
@@ -444,6 +393,8 @@ of the repositories listed at
  - refs.c: move reflog updates into its own function
  - refs.c: rollback the lockfile before we die() in repack_without_refs
  - refs.c: update rename_ref to use a transaction
+ - refs.c: add new function copy_reflog_into_strbuf
+ - refs.c: add transaction support for replacing a reflog
  - refs.c: use a stringlist for repack_without_refs
  - refs.c: use packed refs when deleting refs during a transaction
  - refs.c: return error instead of dying when locking fails during transaction
@@ -453,10 +404,9 @@ of the repositories listed at
  Reviews and comments?
 
 
-* rs/ref-transaction-send-pack (2014-10-22) 8 commits
+* rs/ref-transaction-send-pack (2014-11-03) 7 commits
  - refs.c: add an err argument to create_symref
  - refs.c: add an err argument to create_reflog
- - receive-pack.c: add a receive.preferatomicpush configuration variable
  - t5543-atomic-push.sh: add basic tests for atomic pushes
  - push.c: add an --atomic-push argument
  - receive-pack.c: use a single transaction when atomic-push is negotiated
@@ -485,43 +435,3 @@ of the repositories listed at
  Allow "git clone --reference" to be used more safely.
 
  Will cook in 'next' throughout the remainder of the cycle.
-
---------------------------------------------------
-[Discarded]
-
-* jk/tag-contains (2014-06-30) 8 commits
- . perf: add tests for tag --contains
- . tag: use commit_contains
- . commit: provide a fast multi-tip contains function
- . string-list: add pos to iterator callback
- . add functions for memory-efficient bitmaps
- . paint_down_to_common: use prio_queue
- . tag: factor out decision to stream tags
- . tag: allow --sort with -n
-
- Expecting a reroll.
-
-
-* jk/makefile (2014-02-05) 16 commits
- . FIXUP
- . move LESS/LV pager environment to Makefile
- . Makefile: teach scripts to include make variables
- . FIXUP
- . Makefile: auto-build C strings from make variables
- . Makefile: drop *_SQ variables
- . FIXUP
- . Makefile: add c-quote helper function
- . Makefile: introduce sq function for shell-quoting
- . Makefile: always create files via make-var
- . Makefile: store GIT-* sentinel files in MAKE/
- . Makefile: prefer printf to echo for GIT-*
- . Makefile: use tempfile/mv strategy for GIT-*
- . Makefile: introduce make-var helper function
- . Makefile: fix git-instaweb dependency on gitweb
- . Makefile: drop USE_GETTEXT_SCHEME from GIT-CFLAGS
-
- Simplify the Makefile rules and macros that exist primarily for
- quoting purposes, and make it easier to robustly express the
- dependency rules.
-
- Expecting a reroll.
