@@ -26,19 +26,25 @@
 #include "credential.h"
 #include "exec_cmd.h"
 #include "run-command.h"
+#include "parse-options.h"
 #ifdef NO_OPENSSL
 typedef void *SSL;
 #endif
 
-static const char imap_send_usage[] = "git imap-send < <mbox>";
+static int verbosity;
+
+static const char * const imap_send_usage[] = { "git imap-send [-v] [-q] < <mbox>", NULL };
+
+static struct option imap_send_options[] = {
+	OPT__VERBOSITY(&verbosity),
+	OPT_END()
+};
 
 #undef DRV_OK
 #define DRV_OK          0
 #define DRV_MSG_BAD     -1
 #define DRV_BOX_BAD     -2
 #define DRV_STORE_BAD   -3
-
-static int Verbose, Quiet;
 
 __attribute__((format (printf, 1, 2)))
 static void imap_info(const char *, ...);
@@ -418,7 +424,7 @@ static int buffer_gets(struct imap_buffer *b, char **s)
 			if (b->buf[b->offset + 1] == '\n') {
 				b->buf[b->offset] = 0;  /* terminate the string */
 				b->offset += 2; /* next line */
-				if (Verbose)
+				if (0 < verbosity)
 					puts(*s);
 				return 0;
 			}
@@ -433,7 +439,7 @@ static void imap_info(const char *msg, ...)
 {
 	va_list va;
 
-	if (!Quiet) {
+	if (0 <= verbosity) {
 		va_start(va, msg);
 		vprintf(msg, va);
 		va_end(va);
@@ -445,7 +451,7 @@ static void imap_warn(const char *msg, ...)
 {
 	va_list va;
 
-	if (Quiet < 2) {
+	if (-2 < verbosity) {
 		va_start(va, msg);
 		vfprintf(stderr, msg, va);
 		va_end(va);
@@ -522,7 +528,7 @@ static struct imap_cmd *issue_imap_cmd(struct imap_store *ctx,
 				  cmd->tag, cmd->cmd, cmd->cb.dlen,
 				  CAP(LITERALPLUS) ? "+" : "");
 
-	if (Verbose) {
+	if (0 < verbosity) {
 		if (imap->num_in_progress)
 			printf("(%d in progress) ", imap->num_in_progress);
 		if (!starts_with(cmd->cmd, "LOGIN"))
@@ -1352,11 +1358,13 @@ int main(int argc, char **argv)
 
 	git_setup_gettext();
 
-	if (argc != 1)
-		usage(imap_send_usage);
-
 	setup_git_directory_gently(&nongit_ok);
 	git_imap_config();
+
+	argc = parse_options(argc, (const char **)argv, "", imap_send_options, imap_send_usage, 0);
+
+	if (argc)
+		usage_with_options(imap_send_usage, imap_send_options);
 
 	if (!server.port)
 		server.port = server.use_ssl ? 993 : 143;

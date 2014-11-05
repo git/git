@@ -9,7 +9,7 @@ git-imap-send - Send a collection of patches from stdin to an IMAP folder
 SYNOPSIS
 --------
 [verse]
-'git imap-send'
+'git imap-send' [-v] [-q]
 
 
 DESCRIPTION
@@ -24,6 +24,18 @@ that order.
 Typical usage is something like:
 
 git format-patch --signoff --stdout --attach origin | git imap-send
+
+
+OPTIONS
+-------
+
+-v::
+--verbose::
+	Be verbose.
+
+-q::
+--quiet::
+	Be quiet.
 
 
 CONFIGURATION
