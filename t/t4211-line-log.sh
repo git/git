@@ -94,4 +94,9 @@ test_expect_success '-L ,Y (Y == nlines + 2)' '
 	test_must_fail git log -L ,$n:b.c
 '
 
+test_expect_success '-L with --first-parent and a merge' '
+	git checkout parallel-change &&
+	git log --first-parent -L 1,1:b.c
+'
+
 test_done
