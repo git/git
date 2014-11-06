@@ -68,7 +68,7 @@ static int git_fetch_config(const char *k, const char *v, void *cb)
 		fetch_prune_config = git_config_bool(k, v);
 		return 0;
 	}
-	return 0;
+	return git_default_config(k, v, cb);
 }
 
 static int parse_refmap_arg(const struct option *opt, const char *arg, int unset)
