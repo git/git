@@ -303,6 +303,8 @@ static int update_one(struct cache_tree *it,
 				    flags);
 		if (subcnt < 0)
 			return subcnt;
+		if (!subcnt)
+			die("index cache-tree records empty sub-tree");
 		i += subcnt;
 		sub->count = subcnt; /* to be used in the next loop */
 		*skip_count += subskip;
