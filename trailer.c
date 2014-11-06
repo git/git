@@ -237,7 +237,7 @@ static const char *apply_command(const char *command, const char *arg)
 		strbuf_replace(&cmd, TRAILER_ARG_STRING, arg);
 
 	argv[0] = cmd.buf;
-	memset(&cp, 0, sizeof(cp));
+	child_process_init(&cp);
 	cp.argv = argv;
 	cp.env = local_repo_env;
 	cp.no_stdin = 1;
