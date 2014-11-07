@@ -522,6 +522,7 @@ static void write_remote_refs(const struct ref *local_refs)
 static void write_followtags(const struct ref *refs, const char *msg)
 {
 	const struct ref *ref;
+	struct strbuf err = STRBUF_INIT;
 	for (ref = refs; ref; ref = ref->next) {
 		if (!starts_with(ref->name, "refs/tags/"))
 			continue;
@@ -529,8 +530,9 @@ static void write_followtags(const struct ref *refs, const char *msg)
 			continue;
 		if (!has_sha1_file(ref->old_sha1))
 			continue;
-		update_ref(msg, ref->name, ref->old_sha1,
-			   NULL, 0, UPDATE_REFS_DIE_ON_ERR);
+		if (update_ref(msg, ref->name, ref->old_sha1,
+			       NULL, 0, &err))
+			die("%s", err.buf);
 	}
 }
 
@@ -593,28 +595,30 @@ static void update_remote_refs(const struct ref *refs,
 static void update_head(const struct ref *our, const struct ref *remote,
 			const char *msg)
 {
+	struct strbuf err = STRBUF_INIT;
 	const char *head;
 	if (our && skip_prefix(our->name, "refs/heads/", &head)) {
 		/* Local default branch link */
 		create_symref("HEAD", our->name, NULL);
 		if (!option_bare) {
-			update_ref(msg, "HEAD", our->old_sha1, NULL, 0,
-				   UPDATE_REFS_DIE_ON_ERR);
+			update_ref(msg, "HEAD", our->old_sha1, NULL, 0, &err);
 			install_branch_config(0, head, option_origin, our->name);
 		}
 	} else if (our) {
 		struct commit *c = lookup_commit_reference(our->old_sha1);
 		/* --branch specifies a non-branch (i.e. tags), detach HEAD */
-		update_ref(msg, "HEAD", c->object.sha1,
-			   NULL, REF_NODEREF, UPDATE_REFS_DIE_ON_ERR);
+		if (update_ref(msg, "HEAD", c->object.sha1,
+			       NULL, REF_NODEREF, &err))
+			die("%s", err.buf);
 	} else if (remote) {
 		/*
 		 * We know remote HEAD points to a non-branch, or
 		 * HEAD points to a branch but we don't know which one.
 		 * Detach HEAD in all these cases.
 		 */
-		update_ref(msg, "HEAD", remote->old_sha1,
-			   NULL, REF_NODEREF, UPDATE_REFS_DIE_ON_ERR);
+	  if (update_ref(msg, "HEAD", remote->old_sha1,
+			 NULL, REF_NODEREF, &err))
+		die("%s", err.buf);
 	}
 }
 

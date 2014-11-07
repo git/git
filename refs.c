@@ -3707,7 +3707,7 @@ int transaction_delete_ref(struct transaction *transaction,
 
 int update_ref(const char *action, const char *refname,
 	       const unsigned char *sha1, const unsigned char *oldval,
-	       int flags, enum action_on_err onerr)
+	       int flags, struct strbuf *e)
 {
 	struct transaction *t;
 	struct strbuf err = STRBUF_INIT;
@@ -3720,16 +3720,8 @@ int update_ref(const char *action, const char *refname,
 		const char *str = "update_ref failed for ref '%s': %s";
 
 		transaction_free(t);
-		switch (onerr) {
-		case UPDATE_REFS_MSG_ON_ERR:
-			error(str, refname, err.buf);
-			break;
-		case UPDATE_REFS_DIE_ON_ERR:
-			die(str, refname, err.buf);
-			break;
-		case UPDATE_REFS_QUIET_ON_ERR:
-			break;
-		}
+		if (e)
+			strbuf_addf(e, str, refname, err.buf);
 		strbuf_release(&err);
 		return 1;
 	}

@@ -212,12 +212,6 @@ extern int rename_ref(const char *oldref, const char *newref, const char *logmsg
  */
 extern int resolve_gitlink_ref(const char *path, const char *refname, unsigned char *sha1);
 
-enum action_on_err {
-	UPDATE_REFS_MSG_ON_ERR,
-	UPDATE_REFS_DIE_ON_ERR,
-	UPDATE_REFS_QUIET_ON_ERR
-};
-
 /*
  * Begin a reference transaction.  The reference transaction must
  * be freed by calling transaction_free().
@@ -348,8 +342,8 @@ void transaction_free(struct transaction *transaction);
 
 /** Lock a ref and then write its file */
 int update_ref(const char *action, const char *refname,
-		const unsigned char *sha1, const unsigned char *oldval,
-		int flags, enum action_on_err onerr);
+	       const unsigned char *sha1, const unsigned char *oldval,
+	       int flags, struct strbuf *err);
 
 extern int parse_hide_refs_config(const char *var, const char *value, const char *);
 extern int ref_is_hidden(const char *);

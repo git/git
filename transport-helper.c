@@ -735,6 +735,7 @@ static int push_update_refs_status(struct helper_data *data,
 {
 	struct strbuf buf = STRBUF_INIT;
 	struct ref *ref = remote_refs;
+	struct strbuf err = STRBUF_INIT;
 	int ret = 0;
 
 	for (;;) {
@@ -758,7 +759,11 @@ static int push_update_refs_status(struct helper_data *data,
 		private = apply_refspecs(data->refspecs, data->refspec_nr, ref->name);
 		if (!private)
 			continue;
-		update_ref("update by helper", private, ref->new_sha1, NULL, 0, 0);
+		if (update_ref("update by helper", private, ref->new_sha1,
+			       NULL, 0, &err))
+			error("%s", err.buf);
+		strbuf_release(&err);
+
 		free(private);
 	}
 	strbuf_release(&buf);

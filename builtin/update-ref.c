@@ -358,6 +358,7 @@ int cmd_update_ref(int argc, const char **argv, const char *prefix)
 	const char *refname, *oldval;
 	unsigned char sha1[20], oldsha1[20];
 	int delete = 0, no_deref = 0, read_stdin = 0, end_null = 0, flags = 0;
+	struct strbuf err = STRBUF_INIT;
 	struct option options[] = {
 		OPT_STRING( 'm', NULL, &msg, N_("reason"), N_("reason of the update")),
 		OPT_BOOL('d', NULL, &delete, N_("delete the reference")),
@@ -421,6 +422,8 @@ int cmd_update_ref(int argc, const char **argv, const char *prefix)
 	if (delete)
 		return delete_ref(refname, oldval ? oldsha1 : NULL, flags);
 	else
-		return update_ref(msg, refname, sha1, oldval ? oldsha1 : NULL,
-				  flags, UPDATE_REFS_DIE_ON_ERR);
+		if (update_ref(msg, refname, sha1, oldval ? oldsha1 : NULL,
+			       flags, &err))
+			die("%s", err.buf);
+	return 0;
 }
