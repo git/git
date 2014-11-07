@@ -2895,8 +2895,7 @@ static int copy_msg(char *buf, const char *msg)
 	return cp - buf;
 }
 
-/* This function must set a meaningful errno on failure */
-int create_reflog(const char *refname)
+int create_reflog(const char *refname, struct strbuf *err)
 {
 	int logfd, oflags = O_APPEND | O_WRONLY;
 	char logfile[PATH_MAX];
@@ -2907,9 +2906,8 @@ int create_reflog(const char *refname)
 	    starts_with(refname, "refs/notes/") ||
 	    !strcmp(refname, "HEAD")) {
 		if (safe_create_leading_directories(logfile) < 0) {
-			int save_errno = errno;
-			error("unable to create directory for %s", logfile);
-			errno = save_errno;
+			strbuf_addf(err, "unable to create directory for %s. "
+				    "%s", logfile, strerror(errno));
 			return -1;
 		}
 		oflags |= O_CREAT;
@@ -2922,20 +2920,16 @@ int create_reflog(const char *refname)
 
 		if ((oflags & O_CREAT) && errno == EISDIR) {
 			if (remove_empty_directories(logfile)) {
-				int save_errno = errno;
-				error("There are still logs under '%s'",
-				      logfile);
-				errno = save_errno;
+				strbuf_addf(err, "There are still logs under "
+					    "'%s'", logfile);
 				return -1;
 			}
 			logfd = open(logfile, oflags, 0666);
 		}
 
 		if (logfd < 0) {
-			int save_errno = errno;
-			error("Unable to append to %s: %s", logfile,
-			      strerror(errno));
-			errno = save_errno;
+			strbuf_addf(err, "Unable to append to %s: %s",
+				    logfile, strerror(errno));
 			return -1;
 		}
 	}
@@ -2972,7 +2966,8 @@ static int log_ref_write_fd(int fd, const unsigned char *old_sha1,
 }
 
 static int log_ref_write(const char *refname, const unsigned char *old_sha1,
-			 const unsigned char *new_sha1, const char *msg)
+			 const unsigned char *new_sha1, const char *msg,
+			 struct strbuf *err)
 {
 	int logfd, result = 0, oflags = O_APPEND | O_WRONLY;
 	char log_file[PATH_MAX];
@@ -2981,7 +2976,7 @@ static int log_ref_write(const char *refname, const unsigned char *old_sha1,
 		log_all_ref_updates = !is_bare_repository();
 
 	if (log_all_ref_updates && !reflog_exists(refname))
-		result = create_reflog(refname);
+		result = create_reflog(refname, err);
 
 	if (result)
 		return result;
@@ -2994,16 +2989,14 @@ static int log_ref_write(const char *refname, const unsigned char *old_sha1,
 	result = log_ref_write_fd(logfd, old_sha1, new_sha1,
 				  git_committer_info(0), msg);
 	if (result) {
-		int save_errno = errno;
 		close(logfd);
-		error("Unable to append to %s", log_file);
-		errno = save_errno;
+		strbuf_addf(err, "Unable to append to %s. %s", log_file,
+			    strerror(errno));
 		return -1;
 	}
 	if (close(logfd)) {
-		int save_errno = errno;
-		error("Unable to append to %s", log_file);
-		errno = save_errno;
+		strbuf_addf(err, "Unable to append to %s. %s", log_file,
+			    strerror(errno));
 		return -1;
 	}
 	return 0;
@@ -3015,12 +3008,12 @@ int is_branch(const char *refname)
 }
 
 static int write_sha1_update_reflog(struct ref_lock *lock,
-	const unsigned char *sha1, const char *logmsg)
+				    const unsigned char *sha1,
+				    const char *logmsg, struct strbuf *err)
 {
-	if (log_ref_write(lock->ref_name, lock->old_sha1, sha1, logmsg) < 0 ||
+	if (log_ref_write(lock->ref_name, lock->old_sha1, sha1, logmsg, err) < 0 ||
 	    (strcmp(lock->ref_name, lock->orig_ref_name) &&
-	     log_ref_write(lock->orig_ref_name, lock->old_sha1, sha1, logmsg) < 0)) {
-		unlock_ref(lock);
+	     log_ref_write(lock->orig_ref_name, lock->old_sha1, sha1, logmsg, err) < 0)) {
 		return -1;
 	}
 	if (strcmp(lock->orig_ref_name, "HEAD") != 0) {
@@ -3042,8 +3035,11 @@ static int write_sha1_update_reflog(struct ref_lock *lock,
 		head_ref = resolve_ref_unsafe("HEAD", RESOLVE_REF_READING,
 					      head_sha1, &head_flag);
 		if (head_ref && (head_flag & REF_ISSYMREF) &&
-		    !strcmp(head_ref, lock->ref_name))
-			log_ref_write("HEAD", lock->old_sha1, sha1, logmsg);
+		    !strcmp(head_ref, lock->ref_name) &&
+		    log_ref_write("HEAD", lock->old_sha1, sha1, logmsg, err)) {
+			error("%s", err->buf);
+			strbuf_release(err);
+		}
 	}
 	return 0;
 }
@@ -3057,6 +3053,7 @@ static int write_ref_sha1(struct ref_lock *lock,
 {
 	static char term = '\n';
 	struct object *o;
+	struct strbuf err = STRBUF_INIT;
 
 	if (!lock) {
 		errno = EINVAL;
@@ -3091,8 +3088,10 @@ static int write_ref_sha1(struct ref_lock *lock,
 		return -1;
 	}
 	clear_loose_ref_cache(&ref_cache);
-	if (write_sha1_update_reflog(lock, sha1, logmsg)) {
+	if (write_sha1_update_reflog(lock, sha1, logmsg, &err)) {
 		unlock_ref(lock);
+		error("%s", err.buf);
+		strbuf_release(&err);
 		return -1;
 	}
 	if (commit_ref(lock)) {
@@ -3112,6 +3111,7 @@ int create_symref(const char *ref_target, const char *refs_heads_master,
 	int fd, len, written;
 	char *git_HEAD = git_pathdup("%s", ref_target);
 	unsigned char old_sha1[20], new_sha1[20];
+	struct strbuf err = STRBUF_INIT;
 
 	if (logmsg && read_ref(ref_target, old_sha1))
 		hashclr(old_sha1);
@@ -3160,9 +3160,11 @@ int create_symref(const char *ref_target, const char *refs_heads_master,
 #ifndef NO_SYMLINK_HEAD
 	done:
 #endif
-	if (logmsg && !read_ref(refs_heads_master, new_sha1))
-		log_ref_write(ref_target, old_sha1, new_sha1, logmsg);
+	if (logmsg && !read_ref(refs_heads_master, new_sha1) &&
+	    log_ref_write(ref_target, old_sha1, new_sha1, logmsg, &err))
+		error("%s", err.buf);
 
+	strbuf_release(&err);
 	free(git_HEAD);
 	return 0;
 }
@@ -3936,10 +3938,7 @@ int transaction_commit(struct transaction *transaction,
 			goto cleanup;
 		}
 		if (write_sha1_update_reflog(update->lock, update->new_sha1,
-					     update->msg)) {
-			if (err)
-				strbuf_addf(err, "Failed to update log '%s'.",
-					    update->refname);
+					     update->msg, err)) {
 			ret = -1;
 			goto cleanup;
 		}
@@ -3976,7 +3975,7 @@ int transaction_commit(struct transaction *transaction,
 			continue;
 		}
 		if (log_all_ref_updates && !reflog_exists(update->refname) &&
-		    create_reflog(update->refname)) {
+		    create_reflog(update->refname, err)) {
 			ret = -1;
 			if (err)
 				strbuf_addf(err, "Failed to setup reflog for "
