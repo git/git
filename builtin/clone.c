@@ -565,6 +565,7 @@ static void update_remote_refs(const struct ref *refs,
 			       int check_connectivity)
 {
 	const struct ref *rm = mapped_refs;
+	struct strbuf err = STRBUF_INIT;
 
 	if (check_connectivity) {
 		if (transport->progress)
@@ -586,9 +587,12 @@ static void update_remote_refs(const struct ref *refs,
 		struct strbuf head_ref = STRBUF_INIT;
 		strbuf_addstr(&head_ref, branch_top);
 		strbuf_addstr(&head_ref, "HEAD");
-		create_symref(head_ref.buf,
-			      remote_head_points_at->peer_ref->name,
-			      msg);
+		if (create_symref(head_ref.buf,
+				  remote_head_points_at->peer_ref->name,
+				  msg, &err)) {
+			error("%s", err.buf);
+			strbuf_release(&err);
+		}
 	}
 }
 
@@ -599,7 +603,10 @@ static void update_head(const struct ref *our, const struct ref *remote,
 	const char *head;
 	if (our && skip_prefix(our->name, "refs/heads/", &head)) {
 		/* Local default branch link */
-		create_symref("HEAD", our->name, NULL);
+		if (create_symref("HEAD", our->name, NULL, &err)) {
+			error("%s", err.buf);
+			strbuf_release(&err);
+		}
 		if (!option_bare) {
 			update_ref(msg, "HEAD", our->old_sha1, NULL, 0, &err);
 			install_branch_config(0, head, option_origin, our->name);

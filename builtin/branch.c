@@ -698,6 +698,7 @@ static void rename_branch(const char *oldname, const char *newname, int force)
 {
 	struct strbuf oldref = STRBUF_INIT, newref = STRBUF_INIT, logmsg = STRBUF_INIT;
 	struct strbuf oldsection = STRBUF_INIT, newsection = STRBUF_INIT;
+	struct strbuf err = STRBUF_INIT;
 	int recovery = 0;
 	int clobber_head_ok;
 
@@ -734,8 +735,10 @@ static void rename_branch(const char *oldname, const char *newname, int force)
 		warning(_("Renamed a misnamed branch '%s' away"), oldref.buf + 11);
 
 	/* no need to pass logmsg here as HEAD didn't really move */
-	if (!strcmp(oldname, head) && create_symref("HEAD", newref.buf, NULL))
-		die(_("Branch renamed to %s, but HEAD is not updated!"), newname);
+	if (!strcmp(oldname, head) &&
+	    create_symref("HEAD", newref.buf, NULL, &err))
+		die(_("Branch renamed to %s, but HEAD is not updated!. %s"),
+		    newname, err.buf);
 
 	strbuf_addf(&oldsection, "branch.%s", oldref.buf + 11);
 	strbuf_release(&oldref);

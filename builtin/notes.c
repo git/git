@@ -821,9 +821,10 @@ static int merge(int argc, const char **argv, const char *prefix)
 			       0, &err))
 			die("%s", err.buf);
 		/* Store ref-to-be-updated into .git/NOTES_MERGE_REF */
-		if (create_symref("NOTES_MERGE_REF", default_notes_ref(), NULL))
-			die("Failed to store link to current notes ref (%s)",
-			    default_notes_ref());
+		if (create_symref("NOTES_MERGE_REF", default_notes_ref(),
+				  NULL, &err))
+			die("Failed to store link to current notes ref (%s). "
+			    "%s", default_notes_ref(), err.buf);
 		printf("Automatic notes merge failed. Fix conflicts in %s and "
 		       "commit the result with 'git notes merge --commit', or "
 		       "abort the merge with 'git notes merge --abort'.\n",
