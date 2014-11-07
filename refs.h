@@ -354,6 +354,14 @@ int transaction_update_reflog(struct transaction *transaction,
 			      struct strbuf *err);
 
 /*
+ * Rename a reflog.
+ */
+int transaction_rename_reflog(struct transaction *transaction,
+			      const char *oldrefname,
+			      const char *newrefname,
+			      struct strbuf *err);
+
+/*
  * Commit all of the changes that have been queued in transaction, as
  * atomically as possible.
  *
