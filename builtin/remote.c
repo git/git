@@ -750,30 +750,27 @@ static int mv(int argc, const char **argv)
 
 static int remove_branches(struct string_list *branches)
 {
-	struct strbuf err = STRBUF_INIT;
 	int i, result = 0;
+	struct transaction *transaction;
+	struct strbuf err = STRBUF_INIT;
 
-	if (lock_packed_refs(0)) {
-		struct strbuf err = STRBUF_INIT;
+	transaction = transaction_begin(&err);
+	if (!transaction)
+		die("%s", err.buf);
 
-		unable_to_lock_message(git_path("packed-refs"), errno, &err);
-		error("%s", err.buf);
-		strbuf_release(&err);
-		return -1;
-	}
-
-	if (repack_without_refs(branches, &err))
+	for (i = 0; i < branches->nr; i++)
+		if (transaction_delete_ref(transaction,
+					   branches->items[i].string, NULL,
+					   0, 0, "remote-branches", &err)) {
+			result |= error("%s", err.buf);
+			goto cleanup;
+		}
+	if (transaction_commit(transaction, &err))
 		result |= error("%s", err.buf);
+
+ cleanup:
 	strbuf_release(&err);
-
-	for (i = 0; i < branches->nr; i++) {
-		struct string_list_item *item = branches->items + i;
-		const char *refname = item->string;
-
-		if (delete_ref(refname, NULL, 0))
-			result |= error(_("Could not remove branch %s"), refname);
-	}
-
+	transaction_free(transaction);
 	return result;
 }
 
@@ -1325,14 +1322,11 @@ static int prune_remote(const char *remote, int dry_run)
 	const char *dangling_msg = dry_run
 		? _(" %s will become dangling!")
 		: _(" %s has become dangling!");
+	struct transaction *transaction = NULL;
+	struct strbuf err = STRBUF_INIT;
 
 	memset(&states, 0, sizeof(states));
 	get_remote_ref_states(remote, &states, GET_REF_STATES);
-
-	for (i = 0; i < states.stale.nr; i++) {
-		string_list_insert(&delete_refs_list,
-				   states.stale.items[i].util);
-	}
 
 	if (states.stale.nr) {
 		printf_ln(_("Pruning %s"), remote);
@@ -1340,27 +1334,26 @@ static int prune_remote(const char *remote, int dry_run)
 		       states.remote->url_nr
 		       ? states.remote->url[0]
 		       : _("(no URL)"));
-
-		if (!dry_run) {
-			struct strbuf err = STRBUF_INIT;
-
-			if (lock_packed_refs(0)) {
-				unable_to_lock_message(git_path("packed-refs"),
-						       errno, &err);
-				result |= error("%s", err.buf);
-			} else
-				if (repack_without_refs(&delete_refs_list,
-							&err))
-					result |= error("%s", err.buf);
-			strbuf_release(&err);
-		}
 	}
 
+	if (!dry_run) {
+		transaction = transaction_begin(&err);
+		if (!transaction)
+			die("%s", err.buf);
+	}
 	for (i = 0; i < states.stale.nr; i++) {
 		const char *refname = states.stale.items[i].util;
 
-		if (!dry_run)
-			result |= delete_ref(refname, NULL, 0);
+		string_list_insert(&delete_refs_list, refname);
+
+		if (!dry_run) {
+			if (transaction_delete_ref(transaction,
+					   refname, NULL,
+					   0, 0, "remote-branches", &err)) {
+				result |= error("%s", err.buf);
+				goto cleanup;
+			}
+		}
 
 		if (dry_run)
 			printf_ln(_(" * [would prune] %s"),
@@ -1370,6 +1363,13 @@ static int prune_remote(const char *remote, int dry_run)
 			       abbrev_ref(refname, "refs/remotes/"));
 	}
 
+	if (!dry_run)
+		if (transaction_commit(transaction, &err))
+			result |= error("%s", err.buf);
+
+ cleanup:
+	strbuf_release(&err);
+	transaction_free(transaction);
 	warn_dangling_symrefs(stdout, dangling_msg, &delete_refs_list);
 	string_list_clear(&delete_refs_list, 0);
 
