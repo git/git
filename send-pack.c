@@ -190,7 +190,7 @@ static void advertise_shallow_grafts_buf(struct strbuf *sb)
 	for_each_commit_graft(advertise_shallow_grafts_cb, sb);
 }
 
-static int ref_update_to_be_sent(const struct ref *ref, const struct send_pack_args *args)
+static int ref_update_to_be_sent(const struct ref *ref, const struct send_pack_args *args, int *atomic_push_failed)
 {
 	if (!ref->peer_ref && !args->send_mirror)
 		return 0;
@@ -203,6 +203,12 @@ static int ref_update_to_be_sent(const struct ref *ref, const struct send_pack_a
 	case REF_STATUS_REJECT_NEEDS_FORCE:
 	case REF_STATUS_REJECT_STALE:
 	case REF_STATUS_REJECT_NODELETE:
+		if (atomic_push_failed) {
+			fprintf(stderr, "Atomic push failed for ref %s. "
+				"Status:%d\n", ref->name, ref->status);
+			*atomic_push_failed = 1;
+		}
+		/* fallthrough */
 	case REF_STATUS_UPTODATE:
 		return 0;
 	default:
@@ -250,7 +256,7 @@ static int generate_push_cert(struct strbuf *req_buf,
 	strbuf_addstr(&cert, "\n");
 
 	for (ref = remote_refs; ref; ref = ref->next) {
-		if (!ref_update_to_be_sent(ref, args))
+		if (!ref_update_to_be_sent(ref, args, NULL))
 			continue;
 		update_seen = 1;
 		strbuf_addf(&cert, "%s %s %s\n",
@@ -297,7 +303,7 @@ int send_pack(struct send_pack_args *args,
 	int atomic_push_supported = 0;
 	int atomic_push = 0;
 	unsigned cmds_sent = 0;
-	int ret;
+	int ret, atomic_push_failed = 0;
 	struct async demux;
 	const char *push_cert_nonce = NULL;
 
@@ -332,6 +338,11 @@ int send_pack(struct send_pack_args *args,
 			"Perhaps you should specify a branch such as 'master'.\n");
 		return 0;
 	}
+	if (args->use_atomic_push && !atomic_push_supported) {
+		fprintf(stderr, "Server does not support atomic-push.");
+		return -1;
+	}
+	atomic_push = atomic_push_supported && args->use_atomic_push;
 
 	if (status_report)
 		strbuf_addstr(&cap_buf, " report-status");
@@ -365,7 +376,8 @@ int send_pack(struct send_pack_args *args,
 	 * the pack data.
 	 */
 	for (ref = remote_refs; ref; ref = ref->next) {
-		if (!ref_update_to_be_sent(ref, args))
+		if (!ref_update_to_be_sent(ref, args,
+			args->use_atomic_push ? &atomic_push_failed : NULL))
 			continue;
 
 		if (!ref->deletion)
@@ -377,6 +389,23 @@ int send_pack(struct send_pack_args *args,
 			ref->status = REF_STATUS_EXPECTING_REPORT;
 	}
 
+	if (atomic_push_failed) {
+		for (ref = remote_refs; ref; ref = ref->next) {
+			if (!ref->peer_ref && !args->send_mirror)
+				continue;
+
+			switch (ref->status) {
+			case REF_STATUS_EXPECTING_REPORT:
+				ref->status = REF_STATUS_ATOMIC_PUSH_FAILED;
+				continue;
+			default:
+				; /* do nothing */
+			}
+		}
+		fprintf(stderr, "Atomic push failed.");
+		return -1;
+	}
+
 	/*
 	 * Finally, tell the other end!
 	 */
@@ -386,7 +415,7 @@ int send_pack(struct send_pack_args *args,
 		if (args->dry_run || args->push_cert)
 			continue;
 
-		if (!ref_update_to_be_sent(ref, args))
+		if (!ref_update_to_be_sent(ref, args, NULL))
 			continue;
 
 		old_hex = sha1_to_hex(ref->old_sha1);
