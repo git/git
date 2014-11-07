@@ -83,9 +83,9 @@ if {![catch {set _verbose $env(GITGUI_VERBOSE)}]} {
 		return [uplevel 1 real__auto_load $name $args]
 	}
 	rename source real__source
-	proc source {name} {
-		puts stderr "source    $name"
-		uplevel 1 real__source $name
+	proc source {args} {
+		puts stderr "source    $args"
+		uplevel 1 [linsert $args 0 real__source]
 	}
 	if {[tk windowingsystem] eq "win32"} { console show }
 }
