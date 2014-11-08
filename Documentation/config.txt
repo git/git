@@ -669,7 +669,7 @@ alias.*::
 	confusion and troubles with script usage, aliases that
 	hide existing Git commands are ignored. Arguments are split by
 	spaces, the usual shell quoting and escaping is supported.
-	quote pair and a backslash can be used to quote them.
+	A quote pair or a backslash can be used to quote them.
 +
 If the alias expansion is prefixed with an exclamation point,
 it will be treated as a shell command.  For example, defining
