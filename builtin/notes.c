@@ -95,8 +95,18 @@ static const char note_template[] =
 struct note_data {
 	int given;
 	int use_editor;
+	char *edit_path;
 	struct strbuf buf;
 };
+
+static void free_note_data(struct note_data *d)
+{
+	if (d->edit_path) {
+		unlink_or_warn(d->edit_path);
+		free(d->edit_path);
+	}
+	strbuf_release(&d->buf);
+}
 
 static int list_each_note(const unsigned char *object_sha1,
 		const unsigned char *note_sha1, char *note_path,
@@ -153,17 +163,15 @@ static void create_note(const unsigned char *object, struct note_data *d,
 			int append_only, const unsigned char *prev,
 			unsigned char *result)
 {
-	char *path = NULL;
-
 	if (d->use_editor || !d->given) {
 		int fd;
 		struct strbuf buf = STRBUF_INIT;
 
 		/* write the template message before editing: */
-		path = git_pathdup("NOTES_EDITMSG");
-		fd = open(path, O_CREAT | O_TRUNC | O_WRONLY, 0600);
+		d->edit_path = git_pathdup("NOTES_EDITMSG");
+		fd = open(d->edit_path, O_CREAT | O_TRUNC | O_WRONLY, 0600);
 		if (fd < 0)
-			die_errno(_("could not create file '%s'"), path);
+			die_errno(_("could not create file '%s'"), d->edit_path);
 
 		if (d->given)
 			write_or_die(fd, d->buf.buf, d->buf.len);
@@ -181,7 +189,7 @@ static void create_note(const unsigned char *object, struct note_data *d,
 		strbuf_release(&buf);
 		strbuf_reset(&d->buf);
 
-		if (launch_editor(path, &d->buf, NULL)) {
+		if (launch_editor(d->edit_path, &d->buf, NULL)) {
 			die(_("Please supply the note contents using either -m or -F option"));
 		}
 		stripspace(&d->buf, 1);
@@ -208,16 +216,11 @@ static void create_note(const unsigned char *object, struct note_data *d,
 	} else {
 		if (write_sha1_file(d->buf.buf, d->buf.len, blob_type, result)) {
 			error(_("unable to write note object"));
-			if (path)
+			if (d->edit_path)
 				error(_("The note contents have been left in %s"),
-				      path);
+				      d->edit_path);
 			exit(128);
 		}
-	}
-
-	if (path) {
-		unlink_or_warn(path);
-		free(path);
 	}
 }
 
@@ -402,7 +405,7 @@ static int add(int argc, const char **argv, const char *prefix)
 	unsigned char object[20], new_note[20];
 	char logmsg[100];
 	const unsigned char *note;
-	struct note_data d = { 0, 0, STRBUF_INIT };
+	struct note_data d = { 0, 0, NULL, STRBUF_INIT };
 	struct option options[] = {
 		{ OPTION_CALLBACK, 'm', "message", &d, N_("message"),
 			N_("note contents as a string"), PARSE_OPT_NONEG,
@@ -447,6 +450,7 @@ static int add(int argc, const char **argv, const char *prefix)
 				 * therefore still in argv[0-1].
 				 */
 				argv[0] = "edit";
+				free_note_data(&d);
 				free_notes(t);
 				return append_edit(argc, argv, prefix);
 			}
@@ -460,6 +464,7 @@ static int add(int argc, const char **argv, const char *prefix)
 	}
 
 	create_note(object, &d, 0, note, new_note);
+	free_note_data(&d);
 
 	if (is_null_sha1(new_note))
 		remove_note(t, object);
@@ -471,7 +476,6 @@ static int add(int argc, const char **argv, const char *prefix)
 	commit_notes(t, logmsg);
 out:
 	free_notes(t);
-	strbuf_release(&d.buf);
 	return retval;
 }
 
@@ -559,7 +563,7 @@ static int append_edit(int argc, const char **argv, const char *prefix)
 	const unsigned char *note;
 	char logmsg[100];
 	const char * const *usage;
-	struct note_data d = { 0, 0, STRBUF_INIT };
+	struct note_data d = { 0, 0, NULL, STRBUF_INIT };
 	struct option options[] = {
 		{ OPTION_CALLBACK, 'm', "message", &d, N_("message"),
 			N_("note contents as a string"), PARSE_OPT_NONEG,
@@ -600,6 +604,7 @@ static int append_edit(int argc, const char **argv, const char *prefix)
 	note = get_note(t, object);
 
 	create_note(object, &d, !edit, note, new_note);
+	free_note_data(&d);
 
 	if (is_null_sha1(new_note))
 		remove_note(t, object);
@@ -610,7 +615,6 @@ static int append_edit(int argc, const char **argv, const char *prefix)
 		 is_null_sha1(new_note) ? "removed" : "added", argv[0]);
 	commit_notes(t, logmsg);
 	free_notes(t);
-	strbuf_release(&d.buf);
 	return 0;
 }
 
