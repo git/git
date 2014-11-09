@@ -213,7 +213,7 @@ test_expect_success 'with 2 files arguments' '
 '
 
 test_expect_success 'with message that has comments' '
-	cat basic_message >>message_with_comments &&
+	cat basic_message >message_with_comments &&
 	sed -e "s/ Z\$/ /" >>message_with_comments <<-\EOF &&
 		# comment
 
@@ -236,6 +236,36 @@ test_expect_success 'with message that has comments' '
 
 	EOF
 	cat basic_patch >>expected &&
+	git interpret-trailers --trim-empty --trailer "Cc: Peff" message_with_comments >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'with message that has an old style conflict block' '
+	cat basic_message >message_with_comments &&
+	sed -e "s/ Z\$/ /" >>message_with_comments <<-\EOF &&
+		# comment
+
+		# other comment
+		Cc: Z
+		# yet another comment
+		Reviewed-by: Johan
+		Reviewed-by: Z
+		# last comment
+
+		Conflicts:
+
+	EOF
+	cat basic_message >expected &&
+	cat >>expected <<-\EOF &&
+		# comment
+
+		Reviewed-by: Johan
+		Cc: Peff
+		# last comment
+
+		Conflicts:
+
+	EOF
 	git interpret-trailers --trim-empty --trailer "Cc: Peff" message_with_comments >actual &&
 	test_cmp expected actual
 '
