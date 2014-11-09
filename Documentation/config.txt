@@ -2295,7 +2295,7 @@ status.showUntrackedFiles::
 	files which are not currently tracked by Git. Directories which
 	contain only untracked files, are shown with the directory name
 	only. Showing untracked files means that Git needs to lstat() all
-	all the files in the whole repository, which might be slow on some
+	the files in the whole repository, which might be slow on some
 	systems. So, this variable controls how the commands displays
 	the untracked files. Possible values are:
 +
