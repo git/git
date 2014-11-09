@@ -326,6 +326,9 @@ extern struct commit_extra_header *read_commit_extra_headers(struct commit *, co
 
 extern void free_commit_extra_headers(struct commit_extra_header *extra);
 
+/* Find the end of the log message, the right place for a new trailer. */
+extern int ignore_non_trailer(struct strbuf *sb);
+
 typedef void (*each_mergetag_fn)(struct commit *commit, struct commit_extra_header *extra,
 				 void *cb_data);
 
