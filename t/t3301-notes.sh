@@ -1239,4 +1239,31 @@ test_expect_success 'git notes get-ref (--ref)' '
 	test "$(GIT_NOTES_REF=refs/notes/bar git notes --ref=baz get-ref)" = "refs/notes/baz"
 '
 
+test_expect_success 'setup testing of empty notes' '
+	test_unconfig core.notesRef &&
+	test_commit 16th &&
+	empty_blob=$(git hash-object -w /dev/null)
+'
+
+while read cmd
+do
+	test_expect_success "'git notes $cmd' removes empty note" "
+		test_might_fail git notes remove HEAD &&
+		MSG= git notes $cmd &&
+		test_must_fail git notes list HEAD
+	"
+done <<\EOF
+add
+add -F /dev/null
+add -m ""
+add -c "$empty_blob"
+add -C "$empty_blob"
+append
+append -F /dev/null
+append -m ""
+append -c "$empty_blob"
+append -C "$empty_blob"
+edit
+EOF
+
 test_done
