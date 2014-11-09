@@ -232,6 +232,8 @@ test_expect_success 'with message that has comments' '
 
 		Reviewed-by: Johan
 		Cc: Peff
+		# last comment
+
 	EOF
 	cat basic_patch >>expected &&
 	git interpret-trailers --trim-empty --trailer "Cc: Peff" message_with_comments >actual &&
