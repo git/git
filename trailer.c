@@ -228,7 +228,7 @@ static const char *apply_command(const char *command, const char *arg)
 {
 	struct strbuf cmd = STRBUF_INIT;
 	struct strbuf buf = STRBUF_INIT;
-	struct child_process cp;
+	struct child_process cp = CHILD_PROCESS_INIT;
 	const char *argv[] = {NULL, NULL};
 	const char *result;
 
@@ -237,7 +237,6 @@ static const char *apply_command(const char *command, const char *arg)
 		strbuf_replace(&cmd, TRAILER_ARG_STRING, arg);
 
 	argv[0] = cmd.buf;
-	child_process_init(&cp);
 	cp.argv = argv;
 	cp.env = local_repo_env;
 	cp.no_stdin = 1;
