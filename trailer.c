@@ -804,8 +804,10 @@ static int process_input_file(struct strbuf **lines,
 
 	/* Parse trailer lines */
 	for (i = trailer_start; i < patch_start; i++) {
-		struct trailer_item *new = create_trailer_item(lines[i]->buf);
-		add_trailer_item(in_tok_first, in_tok_last, new);
+		if (lines[i]->buf[0] != comment_line_char) {
+			struct trailer_item *new = create_trailer_item(lines[i]->buf);
+			add_trailer_item(in_tok_first, in_tok_last, new);
+		}
 	}
 
 	return patch_start;
