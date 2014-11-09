@@ -583,8 +583,12 @@ static int parse_trailer(struct strbuf *tok, struct strbuf *val, const char *tra
 	strbuf_addch(&seps, '=');
 	len = strcspn(trailer, seps.buf);
 	strbuf_release(&seps);
-	if (len == 0)
-		return error(_("empty trailer token in trailer '%s'"), trailer);
+	if (len == 0) {
+		int l = strlen(trailer);
+		while (l > 0 && isspace(trailer[l - 1]))
+			l--;
+		return error(_("empty trailer token in trailer '%.*s'"), l, trailer);
+	}
 	if (len < strlen(trailer)) {
 		strbuf_add(tok, trailer, len);
 		strbuf_trim(tok);
