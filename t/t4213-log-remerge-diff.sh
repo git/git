@@ -75,7 +75,9 @@ test_expect_success 'unrelated merge: without conflicts' '
 clean_output () {
 	git name-rev --name-only --stdin |
 	# strip away bits that aren't treated by the above
-	sed -e 's/^\(index\|Merge:\|Date:\).*/\1/'
+	sed -e 's/^\(index\).*/\1/' \
+	    -e 's/^\(Merge:\).*/\1/' \
+	    -e 's/^\(Date:\).*/\1/'
 }
 
 cat >expected <<EOF
