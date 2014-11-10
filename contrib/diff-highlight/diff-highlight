@@ -14,6 +14,10 @@ my @removed;
 my @added;
 my $in_hunk;
 
+# Some scripts may not realize that SIGPIPE is being ignored when launching the
+# pager--for instance scripts written in Python.
+$SIG{PIPE} = 'DEFAULT';
+
 while (<>) {
 	if (!$in_hunk) {
 		print;
