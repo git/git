@@ -53,5 +53,6 @@ int sequencer_pick_revisions(struct replay_opts *opts);
 extern const char sign_off_header[];
 
 void append_signoff(struct strbuf *msgbuf, int ignore_footer, unsigned flag);
+void append_conflicts_hint(struct strbuf *msgbuf);
 
 #endif
