@@ -26,7 +26,6 @@ inst_prefix=$(
 )
 
 LANG=C
-old_style_def_fix=b79d18c92d9f4841a6a1a29b7b2373a8ff9871e1
 
 : ${O=-O2}
 
@@ -78,15 +77,6 @@ SunOS)
 	;;
 esac
 
-old_style_def_fix () {
-	rev=$($GIT rev-parse HEAD 2>/dev/null) &&
-	case "$($GIT merge-base "$old_style_def_fix" "$rev")" in
-	$old_style_def_fix)
-		printf "%s\n" "-Wold-style-definition"
-		;;
-	esac
-}
-
 determine_branch () {
 	expr "$($GIT symbolic-ref HEAD 2>/dev/null)" : 'refs/heads/\(.*\)' ||
 	echo detached
@@ -113,9 +103,10 @@ do
 		case "$NO_PEDANTIC" in
 		?*)	;;
 		'')
-			O="-Werror $(old_style_def_fix) -std=c99 $O"
+			O="-Werror -Wold-style-definition -std=c99 $O"
 			O="-Wno-pointer-to-int-cast $O"
 			O="-Wpointer-arith -Woverflow -Wunused $O"
+			O="-Wold-style-declaration -Wstrict-prototypes $O"
 			;;
 		esac
 		# -Wvla
