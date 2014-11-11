@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Nov 2014, #01; Wed, 5)
-X-master-at: f745acb028ee8f7dcd1c8f10127b8feeaa255cf7
-X-next-at: e7f43d631f3874d59f665b70a7bf5ea08e113c3b
+Subject: What's cooking in git.git (Nov 2014, #02; Tue, 11)
+X-master-at: f6f61cbbad0611e03b712cc354f1665b5d7b087e
+X-next-at: 02acac17c0ca601887f1b25ebca898b47d71c009
 
-What's cooking in git.git (Nov 2014, #01; Wed, 5)
+What's cooking in git.git (Nov 2014, #02; Tue, 11)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -17,7 +17,7 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[New Topics]
+[Graduated to "master"]
 
 * jk/fetch-reflog-df-conflict (2014-11-04) 2 commits
   (merged to 'next' on 2014-11-05 at b0476c9)
@@ -26,27 +26,30 @@ of the repositories listed at
 
  Corner-case bugfixes for "git fetch" around reflog handling.
 
- Will merge to 'master'.
+
+* jk/cache-tree-protect-from-broken-libgit2 (2014-10-30) 1 commit
+  (merged to 'next' on 2014-11-03 at 6ebd88d)
+ + cache-tree: avoid infinite loop on zero-entry tree
+
+ Corner-case bugfixes when using a corrupt index file.
 
 
 * js/diff-highlight-avoid-sigpipe (2014-11-04) 1 commit
   (merged to 'next' on 2014-11-05 at b0fadd3)
  + diff-highlight: exit when a pipe is broken
 
- Will merge to 'master'.
+
+* nd/gitignore-trailing-whitespace (2014-11-04) 1 commit
+  (merged to 'next' on 2014-11-05 at e7f43d6)
+ + gitignore.txt: fix spelling of "backslash"
 
 
-* ms/submodule-update-config-doc (2014-11-03) 1 commit
- - submodule: clarify documentation for update subcommand
-
-
-* nd/lockfile-absolute (2014-11-03) 1 commit
- - lockfile.c: store absolute path
-
- The lockfile API can get confused which file to clean up when the
- process moved the $cwd after creating a lockfile.
-
- Will merge to 'next' and cook throughout the remainder of the cycle.
+* rs/use-child-process-init-more (2014-10-30) 4 commits
+  (merged to 'next' on 2014-11-03 at a82d885)
+ + bundle: split out ref writing from bundle_create
+ + bundle: split out a helper function to compute and write prerequisites
+ + bundle: split out a helper function to create pack data
+ + use child_process_init() to initialize struct child_process variables
 
 
 * tm/line-log-first-parent (2014-11-04) 1 commit
@@ -55,20 +58,59 @@ of the repositories listed at
 
  "git log --first-parent -L..." used to crash.
 
- Will merge to 'master'.
+--------------------------------------------------
+[New Topics]
 
-
-* jh/empty-notes (2014-11-05) 3 commits
- - notes: add --allow-empty, to allow storing empty notes
- - t3312-notes-empty: test that 'git notes' removes empty notes by default
- - builtin/notes: fix premature failure when trying to add the empty blob
-
-
-* nd/gitignore-trailing-whitespace (2014-11-04) 1 commit
-  (merged to 'next' on 2014-11-05 at e7f43d6)
- + gitignore.txt: fix spelling of "backslash"
+* jk/fetch-reflog-df-conflict (2014-11-10) 1 commit
+  (merged to 'next' on 2014-11-11 at 88c1491)
+ + t1410: fix breakage on case-insensitive filesystems
 
  Will merge to 'master'.
+
+
+* br/imap-send-verbosity (2014-11-05) 1 commit
+ - imap-send: use parse options API to determine verbosity
+ (this branch is used by br/imap-send-via-libcurl.)
+
+ Will merge to 'next' and cook throughout the remainder of the cycle.
+
+
+* br/imap-send-via-libcurl (2014-11-10) 1 commit
+ - git-imap-send: use libcurl for implementation
+ (this branch uses br/imap-send-verbosity.)
+
+ Will merge to 'next' and cook throughout the remainder of the cycle.
+
+
+* jc/doc-commit-only (2014-11-07) 1 commit
+ - Documentation/git-commit: clarify that --only/--include records the working tree contents
+
+
+* cc/interpret-trailers (2014-11-10) 2 commits
+ - trailer: display a trailer without its trailing newline
+ - trailer: ignore comment lines inside the trailers
+ (this branch is used by cc/interpret-trailers-more.)
+
+
+* cc/interpret-trailers-more (2014-11-10) 4 commits
+ - trailer: add test with an old style conflict block
+ - trailer: reuse ignore_non_trailer() to ignore conflict lines
+ - commit: make ignore_non_trailer() non static
+ - Merge branch 'jc/conflict-hint' into cc/interpret-trailers-more
+ (this branch uses cc/interpret-trailers and jc/conflict-hint.)
+
+
+* js/push-to-update (2014-11-10) 2 commits
+ - receive-pack: add two more options for receive.denyCurrentBranch
+ - finish_command(): clean stale environment pointer
+
+
+* rs/env-array-in-child-process (2014-11-10) 1 commit
+ - use args member of struct child_process
+
+
+* tq/git-ssh-command (2014-11-10) 1 commit
+ - git_connect: set ssh shell command in GIT_SSH_COMMAND
 
 --------------------------------------------------
 [Stalled]
@@ -152,7 +194,8 @@ of the repositories listed at
  Will perhaps drop.
 
 
-* tr/remerge-diff (2014-09-08) 8 commits
+* tr/remerge-diff (2014-11-10) 9 commits
+ - t4213: avoid "|" in sed regexp
  - log --remerge-diff: show what the conflict resolution changed
  - name-hash: allow dir hashing even when !ignore_case
  - merge-recursive: allow storing conflict hunks in index
@@ -170,24 +213,13 @@ of the repositories listed at
  Waiting for a reroll ($gmane/256591).
 
 
-* hv/submodule-config (2014-06-30) 4 commits
+* hv/submodule-config (2014-11-11) 4 commits
  - do not die on error of parsing fetchrecursesubmodules option
  - use new config API for worktree configurations of submodules
  - extract functions for submodule config set and lookup
  - implement submodule config cache for lookup of submodule names
 
  Kicked back to 'pu' per request ($gmane/255610).
-
-
-* jt/timer-settime (2014-08-29) 6 commits
- - use timer_settime() for new platforms
- - autoconf: check for timer_settime()
- - autoconf: check for struct itimerspec
- - autoconf: check for struct sigevent
- - autoconf: check for struct timespec
- - autoconf: check for timer_t
-
- Reviewed, discussed and wanting for a reroll.
 
 
 * jk/pack-bitmap (2014-08-04) 1 commit
@@ -270,18 +302,43 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* ms/submodule-update-config-doc (2014-11-03) 1 commit
+ - submodule: clarify documentation for update subcommand
+
+
+* nd/lockfile-absolute (2014-11-03) 1 commit
+  (merged to 'next' on 2014-11-06 at 68722a9)
+ + lockfile.c: store absolute path
+
+ The lockfile API can get confused which file to clean up when the
+ process moved the $cwd after creating a lockfile.
+
+ Will cook in 'next' throughout the remainder of the cycle.
+
+
+* jh/empty-notes (2014-11-10) 9 commits
+ - t3301: modernize
+ - notes: empty notes should be shown by 'git log'
+ - builtin/notes: add --allow-empty, to allow storing empty notes
+ - builtin/notes: split create_note() to clarify add vs. remove logic
+ - builtin/notes: simplify early exit code in add()
+ - builtin/notes: refactor note file path into struct note_data
+ - builtin/notes: improve naming
+ - t3301: verify that 'git notes' removes empty notes by default
+ - builtin/notes: fix premature failure when trying to add the empty blob
+
+ A request to store an empty note via "git notes" meant to remove
+ note from the object but with --allow-empty we will store a (surprise!)
+ note that is empty.  In the longer run, we might want to deprecate
+ the somewhat unintuitive "emptying means deletion" behaviour.
+
+
 * jc/merge-bases (2014-10-30) 2 commits
- - get_merge_bases(): always clean-up object flags
- - bisect: clean flags after checking merge bases
+  (merged to 'next' on 2014-11-06 at 491e576)
+ + get_merge_bases(): always clean-up object flags
+ + bisect: clean flags after checking merge bases
 
- Will merge to 'next' and cook throughout the remainder of the cycle.
-
-
-* jk/cache-tree-protect-from-broken-libgit2 (2014-10-30) 1 commit
-  (merged to 'next' on 2014-11-03 at 6ebd88d)
- + cache-tree: avoid infinite loop on zero-entry tree
-
- Will merge to 'master'.
+ Will cook in 'next' throughout the remainder of the cycle.
 
 
 * jc/strbuf-add-lines-avoid-sp-ht-sequence (2014-10-27) 1 commit
@@ -317,16 +374,6 @@ of the repositories listed at
  - dir.c: optionally compute sha-1 of a .gitignore file
 
 
-* rs/use-child-process-init-more (2014-10-30) 4 commits
-  (merged to 'next' on 2014-11-03 at a82d885)
- + bundle: split out ref writing from bundle_create
- + bundle: split out a helper function to compute and write prerequisites
- + bundle: split out a helper function to create pack data
- + use child_process_init() to initialize struct child_process variables
-
- Will merge to 'master'.
-
-
 * zk/grep-color-words (2014-10-27) 2 commits
   (merged to 'next' on 2014-10-28 at 4d0457c)
  + Revert "grep: fix match highlighting for combined patterns with context lines"
@@ -344,6 +391,7 @@ of the repositories listed at
  + builtin/commit.c: extract ignore_non_trailer() helper function
  + merge & sequencer: unify codepaths that write "Conflicts:" hint
  + builtin/merge.c: drop a parameter that is never used
+ (this branch is used by cc/interpret-trailers-more.)
 
  Unlike all the other hints given in the commit log editor, the list
  of conflicted paths were appended at the end without commented out.
@@ -381,7 +429,7 @@ of the repositories listed at
  Reviews and comments?
 
 
-* rs/ref-transaction-rename (2014-11-03) 17 commits
+* rs/ref-transaction-rename (2014-11-07) 16 commits
  - refs.c: add an err argument to pack_refs
  - refs.c: make lock_packed_refs take an err argument
  - refs.c: make add_packed_ref return an error instead of calling die
@@ -393,8 +441,7 @@ of the repositories listed at
  - refs.c: move reflog updates into its own function
  - refs.c: rollback the lockfile before we die() in repack_without_refs
  - refs.c: update rename_ref to use a transaction
- - refs.c: add new function copy_reflog_into_strbuf
- - refs.c: add transaction support for replacing a reflog
+ - refs.c: add transaction support for renaming a reflog
  - refs.c: use a stringlist for repack_without_refs
  - refs.c: use packed refs when deleting refs during a transaction
  - refs.c: return error instead of dying when locking fails during transaction
@@ -404,7 +451,7 @@ of the repositories listed at
  Reviews and comments?
 
 
-* rs/ref-transaction-send-pack (2014-11-03) 7 commits
+* rs/ref-transaction-send-pack (2014-11-07) 7 commits
  - refs.c: add an err argument to create_symref
  - refs.c: add an err argument to create_reflog
  - t5543-atomic-push.sh: add basic tests for atomic pushes
@@ -435,3 +482,16 @@ of the repositories listed at
  Allow "git clone --reference" to be used more safely.
 
  Will cook in 'next' throughout the remainder of the cycle.
+
+--------------------------------------------------
+[Discarded]
+
+* jt/timer-settime (2014-08-29) 6 commits
+ . use timer_settime() for new platforms
+ . autoconf: check for timer_settime()
+ . autoconf: check for struct itimerspec
+ . autoconf: check for struct sigevent
+ . autoconf: check for struct timespec
+ . autoconf: check for timer_t
+
+ Was wanting for a reroll.
