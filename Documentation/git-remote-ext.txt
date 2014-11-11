@@ -116,6 +116,10 @@ begins with `ext::`.  Examples:
 	determined by the helper using environment variables (see
 	above).
 
+SEE ALSO
+--------
+linkgit:gitremote-helpers[1]
+
 GIT
 ---
 Part of the linkgit:git[1] suite

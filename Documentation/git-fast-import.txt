@@ -1441,6 +1441,10 @@ operator can use this facility to peek at the objects and refs from an
 import in progress, at the cost of some added running time and worse
 compression.
 
+SEE ALSO
+--------
+linkgit:git-fast-export[1]
+
 GIT
 ---
 Part of the linkgit:git[1] suite
