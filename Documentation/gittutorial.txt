@@ -3,7 +3,7 @@ gittutorial(7)
 
 NAME
 ----
-gittutorial - A tutorial introduction to Git (for version 1.5.1 or newer)
+gittutorial - A tutorial introduction to Git
 
 SYNOPSIS
 --------
