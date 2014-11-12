@@ -1274,4 +1274,16 @@ append -C "$empty_blob"
 edit
 EOF
 
+test_expect_success 'empty notes are displayed by git log' '
+	test_commit 17th &&
+	git log -1 >expect &&
+	cat >>expect <<\EOF &&
+
+Notes:
+EOF
+	git notes add -C "$empty_blob" --allow-empty &&
+	git log -1 >actual &&
+	test_cmp expect actual
+'
+
 test_done
