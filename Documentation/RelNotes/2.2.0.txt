@@ -295,3 +295,17 @@ notes for details).
    object reachability bitmap when it needs to split the resulting
    pack.
    (merge 2113471 jk/pack-objects-no-bitmap-when-splitting later to maint).
+
+ * The code to use cache-tree trusted the on-disk data too much and
+   fell into an infinite loop upon seeing an incorrectly recorded
+   index file.
+   (merge 729dbbd jk/cache-tree-protect-from-broken-libgit2 later to maint).
+
+ * "git fetch" into a repository where branch B was deleted earlier
+   back when it had reflog enabled, and then branch B/C is fetched
+   into it without reflog enabled, which is arguably an unlikely
+   corner case, unnecessarily failed.
+   (merge aae828b jk/fetch-reflog-df-conflict later to maint).
+
+ * "git log --first-parent -L..." used to crash.
+   (merge a8787c5 tm/line-log-first-parent later to maint).
