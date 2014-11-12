@@ -1242,7 +1242,8 @@ test_expect_success 'git notes get-ref (--ref)' '
 test_expect_success 'setup testing of empty notes' '
 	test_unconfig core.notesRef &&
 	test_commit 16th &&
-	empty_blob=$(git hash-object -w /dev/null)
+	empty_blob=$(git hash-object -w /dev/null) &&
+	echo "$empty_blob" >expect_empty
 '
 
 while read cmd
@@ -1251,6 +1252,13 @@ do
 		test_might_fail git notes remove HEAD &&
 		MSG= git notes $cmd &&
 		test_must_fail git notes list HEAD
+	"
+
+	test_expect_success "'git notes $cmd --allow-empty' stores empty note" "
+		test_might_fail git notes remove HEAD &&
+		MSG= git notes $cmd --allow-empty &&
+		git notes list HEAD >actual &&
+		test_cmp expect_empty actual
 	"
 done <<\EOF
 add
