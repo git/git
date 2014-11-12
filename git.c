@@ -486,15 +486,20 @@ static struct cmd_struct commands[] = {
 	{ "write-tree", cmd_write_tree, RUN_SETUP },
 };
 
-int is_builtin(const char *s)
+static struct cmd_struct *get_builtin(const char *s)
 {
 	int i;
 	for (i = 0; i < ARRAY_SIZE(commands); i++) {
-		struct cmd_struct *p = commands+i;
+		struct cmd_struct *p = commands + i;
 		if (!strcmp(s, p->cmd))
-			return 1;
+			return p;
 	}
-	return 0;
+	return NULL;
+}
+
+int is_builtin(const char *s)
+{
+	return !!get_builtin(s);
 }
 
 static void handle_builtin(int argc, const char **argv)
@@ -502,6 +507,7 @@ static void handle_builtin(int argc, const char **argv)
 	const char *cmd = argv[0];
 	int i;
 	static const char ext[] = STRIP_EXTENSION;
+	struct cmd_struct *builtin;
 
 	if (sizeof(ext) > 1) {
 		i = strlen(argv[0]) - strlen(ext);
@@ -518,15 +524,12 @@ static void handle_builtin(int argc, const char **argv)
 		argv[0] = cmd = "help";
 	}
 
-	for (i = 0; i < ARRAY_SIZE(commands); i++) {
-		struct cmd_struct *p = commands+i;
-		if (strcmp(p->cmd, cmd))
-			continue;
-		if (saved_environment && (p->option & NO_SETUP)) {
+	builtin = get_builtin(cmd);
+	if (builtin) {
+		if (saved_environment && (builtin->option & NO_SETUP))
 			restore_env();
-			break;
-		}
-		exit(run_builtin(p, argc, argv));
+		else
+			exit(run_builtin(builtin, argc, argv));
 	}
 }
 
