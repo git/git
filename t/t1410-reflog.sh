@@ -254,36 +254,36 @@ test_expect_success 'checkout should not delete log for packed ref' '
 '
 
 test_expect_success 'stale dirs do not cause d/f conflicts (reflogs on)' '
-	test_when_finished "git branch -d a || git branch -d a/b" &&
+	test_when_finished "git branch -d one || git branch -d one/two" &&
 
-	git branch a/b master &&
-	echo "a/b@{0} branch: Created from master" >expect &&
-	git log -g --format="%gd %gs" a/b >actual &&
+	git branch one/two master &&
+	echo "one/two@{0} branch: Created from master" >expect &&
+	git log -g --format="%gd %gs" one/two >actual &&
 	test_cmp expect actual &&
-	git branch -d a/b &&
+	git branch -d one/two &&
 
-	# now logs/refs/heads/a is a stale directory, but
-	# we should move it out of the way to create "a" reflog
-	git branch a master &&
-	echo "a@{0} branch: Created from master" >expect &&
-	git log -g --format="%gd %gs" a >actual &&
+	# now logs/refs/heads/one is a stale directory, but
+	# we should move it out of the way to create "one" reflog
+	git branch one master &&
+	echo "one@{0} branch: Created from master" >expect &&
+	git log -g --format="%gd %gs" one >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'stale dirs do not cause d/f conflicts (reflogs off)' '
-	test_when_finished "git branch -d a || git branch -d a/b" &&
+	test_when_finished "git branch -d one || git branch -d one/two" &&
 
-	git branch a/b master &&
-	echo "a/b@{0} branch: Created from master" >expect &&
-	git log -g --format="%gd %gs" a/b >actual &&
+	git branch one/two master &&
+	echo "one/two@{0} branch: Created from master" >expect &&
+	git log -g --format="%gd %gs" one/two >actual &&
 	test_cmp expect actual &&
-	git branch -d a/b &&
+	git branch -d one/two &&
 
-	# same as before, but we only create a reflog for "a" if
+	# same as before, but we only create a reflog for "one" if
 	# it already exists, which it does not
-	git -c core.logallrefupdates=false branch a master &&
+	git -c core.logallrefupdates=false branch one master &&
 	: >expect &&
-	git log -g --format="%gd %gs" a >actual &&
+	git log -g --format="%gd %gs" one >actual &&
 	test_cmp expect actual
 '
 
