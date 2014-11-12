@@ -159,9 +159,8 @@ static void write_commented_object(int fd, const unsigned char *object)
 		    sha1_to_hex(object));
 }
 
-static void create_note(const unsigned char *object, struct note_data *d,
-			int append_only, const unsigned char *prev,
-			unsigned char *result)
+static void prepare_note_data(const unsigned char *object, struct note_data *d,
+		const unsigned char *old_note)
 {
 	if (d->use_editor || !d->given) {
 		int fd;
@@ -175,8 +174,8 @@ static void create_note(const unsigned char *object, struct note_data *d,
 
 		if (d->given)
 			write_or_die(fd, d->buf.buf, d->buf.len);
-		else if (prev && !append_only)
-			copy_obj_to_fd(fd, prev);
+		else if (old_note)
+			copy_obj_to_fd(fd, old_note);
 
 		strbuf_addch(&buf, '\n');
 		strbuf_add_commented_lines(&buf, note_template, strlen(note_template));
@@ -194,33 +193,16 @@ static void create_note(const unsigned char *object, struct note_data *d,
 		}
 		stripspace(&d->buf, 1);
 	}
+}
 
-	if (prev && append_only) {
-		/* Append buf to previous note contents */
-		unsigned long size;
-		enum object_type type;
-		char *prev_buf = read_sha1_file(prev, &type, &size);
-
-		strbuf_grow(&d->buf, size + 1);
-		if (d->buf.len && prev_buf && size)
-			strbuf_insert(&d->buf, 0, "\n", 1);
-		if (prev_buf && size)
-			strbuf_insert(&d->buf, 0, prev_buf, size);
-		free(prev_buf);
-	}
-
-	if (!d->buf.len) {
-		fprintf(stderr, _("Removing note for object %s\n"),
-			sha1_to_hex(object));
-		hashclr(result);
-	} else {
-		if (write_sha1_file(d->buf.buf, d->buf.len, blob_type, result)) {
-			error(_("unable to write note object"));
-			if (d->edit_path)
-				error(_("The note contents have been left in %s"),
-				      d->edit_path);
-			exit(128);
-		}
+static void write_note_data(struct note_data *d, unsigned char *sha1)
+{
+	if (write_sha1_file(d->buf.buf, d->buf.len, blob_type, sha1)) {
+		error(_("unable to write note object"));
+		if (d->edit_path)
+			error(_("The note contents have been left in %s"),
+				d->edit_path);
+		exit(128);
 	}
 }
 
@@ -403,7 +385,6 @@ static int add(int argc, const char **argv, const char *prefix)
 	const char *object_ref;
 	struct notes_tree *t;
 	unsigned char object[20], new_note[20];
-	char logmsg[100];
 	const unsigned char *note;
 	struct note_data d = { 0, 0, NULL, STRBUF_INIT };
 	struct option options[] = {
@@ -463,17 +444,20 @@ static int add(int argc, const char **argv, const char *prefix)
 			sha1_to_hex(object));
 	}
 
-	create_note(object, &d, 0, note, new_note);
-	free_note_data(&d);
-
-	if (is_null_sha1(new_note))
+	prepare_note_data(object, &d, note);
+	if (d.buf.len) {
+		write_note_data(&d, new_note);
+		if (add_note(t, object, new_note, combine_notes_overwrite))
+			die("BUG: combine_notes_overwrite failed");
+		commit_notes(t, "Notes added by 'git notes add'");
+	} else {
+		fprintf(stderr, _("Removing note for object %s\n"),
+			sha1_to_hex(object));
 		remove_note(t, object);
-	else if (add_note(t, object, new_note, combine_notes_overwrite))
-		die("BUG: combine_notes_overwrite failed");
+		commit_notes(t, "Notes removed by 'git notes add'");
+	}
 
-	snprintf(logmsg, sizeof(logmsg), "Notes %s by 'git notes %s'",
-		 is_null_sha1(new_note) ? "removed" : "added", "add");
-	commit_notes(t, logmsg);
+	free_note_data(&d);
 	free_notes(t);
 	return 0;
 }
@@ -602,17 +586,38 @@ static int append_edit(int argc, const char **argv, const char *prefix)
 	t = init_notes_check(argv[0]);
 	note = get_note(t, object);
 
-	create_note(object, &d, !edit, note, new_note);
-	free_note_data(&d);
+	prepare_note_data(object, &d, edit ? note : NULL);
 
-	if (is_null_sha1(new_note))
+	if (note && !edit) {
+		/* Append buf to previous note contents */
+		unsigned long size;
+		enum object_type type;
+		char *prev_buf = read_sha1_file(note, &type, &size);
+
+		strbuf_grow(&d.buf, size + 1);
+		if (d.buf.len && prev_buf && size)
+			strbuf_insert(&d.buf, 0, "\n", 1);
+		if (prev_buf && size)
+			strbuf_insert(&d.buf, 0, prev_buf, size);
+		free(prev_buf);
+	}
+
+	if (d.buf.len) {
+		write_note_data(&d, new_note);
+		if (add_note(t, object, new_note, combine_notes_overwrite))
+			die("BUG: combine_notes_overwrite failed");
+		snprintf(logmsg, sizeof(logmsg), "Notes added by 'git notes %s'",
+			argv[0]);
+	} else {
+		fprintf(stderr, _("Removing note for object %s\n"),
+			sha1_to_hex(object));
 		remove_note(t, object);
-	else if (add_note(t, object, new_note, combine_notes_overwrite))
-		die("BUG: combine_notes_overwrite failed");
-
-	snprintf(logmsg, sizeof(logmsg), "Notes %s by 'git notes %s'",
-		 is_null_sha1(new_note) ? "removed" : "added", argv[0]);
+		snprintf(logmsg, sizeof(logmsg), "Notes removed by 'git notes %s'",
+			argv[0]);
+	}
 	commit_notes(t, logmsg);
+
+	free_note_data(&d);
 	free_notes(t);
 	return 0;
 }
