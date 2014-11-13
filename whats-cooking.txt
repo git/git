@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Nov 2014, #02; Tue, 11)
-X-master-at: f6f61cbbad0611e03b712cc354f1665b5d7b087e
-X-next-at: 02acac17c0ca601887f1b25ebca898b47d71c009
+Subject: What's cooking in git.git (Nov 2014, #03; Thu, 13)
+X-master-at: f5709437d963e585df0691989d3ccfee1de1572b
+X-next-at: 9da3436bf99e47e1efc737cce3b3fec70f88f2f7
 
-What's cooking in git.git (Nov 2014, #02; Tue, 11)
+What's cooking in git.git (Nov 2014, #03; Thu, 13)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -17,100 +17,59 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* jk/fetch-reflog-df-conflict (2014-11-04) 2 commits
-  (merged to 'next' on 2014-11-05 at b0476c9)
- + ignore stale directories when checking reflog existence
- + fetch: load all default config at startup
-
- Corner-case bugfixes for "git fetch" around reflog handling.
-
-
-* jk/cache-tree-protect-from-broken-libgit2 (2014-10-30) 1 commit
-  (merged to 'next' on 2014-11-03 at 6ebd88d)
- + cache-tree: avoid infinite loop on zero-entry tree
-
- Corner-case bugfixes when using a corrupt index file.
-
-
-* js/diff-highlight-avoid-sigpipe (2014-11-04) 1 commit
-  (merged to 'next' on 2014-11-05 at b0fadd3)
- + diff-highlight: exit when a pipe is broken
-
-
-* nd/gitignore-trailing-whitespace (2014-11-04) 1 commit
-  (merged to 'next' on 2014-11-05 at e7f43d6)
- + gitignore.txt: fix spelling of "backslash"
-
-
-* rs/use-child-process-init-more (2014-10-30) 4 commits
-  (merged to 'next' on 2014-11-03 at a82d885)
- + bundle: split out ref writing from bundle_create
- + bundle: split out a helper function to compute and write prerequisites
- + bundle: split out a helper function to create pack data
- + use child_process_init() to initialize struct child_process variables
-
-
-* tm/line-log-first-parent (2014-11-04) 1 commit
-  (merged to 'next' on 2014-11-05 at 8a6f650)
- + line-log: fix crash when --first-parent is used
-
- "git log --first-parent -L..." used to crash.
-
---------------------------------------------------
 [New Topics]
 
-* jk/fetch-reflog-df-conflict (2014-11-10) 1 commit
-  (merged to 'next' on 2014-11-11 at 88c1491)
- + t1410: fix breakage on case-insensitive filesystems
+* mh/doc-remote-helper-xref (2014-11-11) 1 commit
+ - doc: add some crossrefs between manual pages
 
- Will merge to 'master'.
-
-
-* br/imap-send-verbosity (2014-11-05) 1 commit
- - imap-send: use parse options API to determine verbosity
- (this branch is used by br/imap-send-via-libcurl.)
-
- Will merge to 'next' and cook throughout the remainder of the cycle.
+ Will merge to 'next'.
 
 
-* br/imap-send-via-libcurl (2014-11-10) 1 commit
- - git-imap-send: use libcurl for implementation
- (this branch uses br/imap-send-verbosity.)
+* ta/tutorial-modernize (2014-11-11) 1 commit
+ - gittutorial.txt: remove reference to ancient Git version
 
- Will merge to 'next' and cook throughout the remainder of the cycle.
-
-
-* jc/doc-commit-only (2014-11-07) 1 commit
- - Documentation/git-commit: clarify that --only/--include records the working tree contents
+ Will merge to 'next'.
 
 
-* cc/interpret-trailers (2014-11-10) 2 commits
- - trailer: display a trailer without its trailing newline
- - trailer: ignore comment lines inside the trailers
- (this branch is used by cc/interpret-trailers-more.)
+* jk/approxidate-avoid-y-d-m-over-future-dates (2014-11-13) 2 commits
+ - approxidate: allow ISO-like dates far in the future
+ - pass TIME_DATE_NOW to approxidate future-check
 
 
-* cc/interpret-trailers-more (2014-11-10) 4 commits
- - trailer: add test with an old style conflict block
- - trailer: reuse ignore_non_trailer() to ignore conflict lines
- - commit: make ignore_non_trailer() non static
- - Merge branch 'jc/conflict-hint' into cc/interpret-trailers-more
- (this branch uses cc/interpret-trailers and jc/conflict-hint.)
+* jk/checkout-from-tree (2014-11-13) 1 commit
+ - checkout $tree: do not throw away unchanged index entries
+
+ Will merge to 'next'.
 
 
-* js/push-to-update (2014-11-10) 2 commits
- - receive-pack: add two more options for receive.denyCurrentBranch
- - finish_command(): clean stale environment pointer
+* mb/enable-lib-terminal-test-on-newer-darwin (2014-11-13) 1 commit
+ - allow TTY tests to run under recent Mac OS
+
+ Will merge to 'next'.
 
 
-* rs/env-array-in-child-process (2014-11-10) 1 commit
- - use args member of struct child_process
+* sn/tutorial-status-output-example (2014-11-13) 1 commit
+ - gittutorial: fix output of 'git status'
+
+ Will merge to 'next'.
 
 
-* tq/git-ssh-command (2014-11-10) 1 commit
- - git_connect: set ssh shell command in GIT_SSH_COMMAND
+* sv/get-builtin (2014-11-13) 1 commit
+ - builtin: move builtin retrieval to get_builtin()
+
+ Will merge to 'next'.
+
+
+* sv/submitting-final-patch (2014-11-13) 1 commit
+ - SubmittingPatches: final submission is To: maintainer and CC: list
+
+ Will merge to 'next'.
+
+
+* tb/no-relative-file-url (2014-11-13) 1 commit
+ - t5705: the file:// URL should be absolute
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -302,8 +261,67 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* br/imap-send-verbosity (2014-11-05) 1 commit
+  (merged to 'next' on 2014-11-12 at d9e58ec)
+ + imap-send: use parse options API to determine verbosity
+ (this branch is used by br/imap-send-via-libcurl.)
+
+ Will cook in 'next' throughout the remainder of the cycle.
+
+
+* br/imap-send-via-libcurl (2014-11-10) 1 commit
+  (merged to 'next' on 2014-11-12 at 5327ab4)
+ + git-imap-send: use libcurl for implementation
+ (this branch uses br/imap-send-verbosity.)
+
+ Will cook in 'next' throughout the remainder of the cycle.
+
+
+* jc/doc-commit-only (2014-11-07) 1 commit
+ - Documentation/git-commit: clarify that --only/--include records the working tree contents
+
+ Will merge to 'next'.
+
+
+* cc/interpret-trailers (2014-11-10) 2 commits
+ - trailer: display a trailer without its trailing newline
+ - trailer: ignore comment lines inside the trailers
+ (this branch is used by cc/interpret-trailers-more.)
+
+ Will merge to 'next'.
+
+
+* cc/interpret-trailers-more (2014-11-10) 4 commits
+ - trailer: add test with an old style conflict block
+ - trailer: reuse ignore_non_trailer() to ignore conflict lines
+ - commit: make ignore_non_trailer() non static
+ - Merge branch 'jc/conflict-hint' into cc/interpret-trailers-more
+ (this branch uses cc/interpret-trailers and jc/conflict-hint.)
+
+
+* js/push-to-update (2014-11-13) 1 commit
+ - Add another option for receive.denyCurrentBranch
+
+ Still being discussed but we seem to have agreed what the desired
+ semantics should be.
+
+
+* rs/env-array-in-child-process (2014-11-10) 1 commit
+ - use args member of struct child_process
+
+ Will merge to 'next'.
+
+
+* tq/git-ssh-command (2014-11-10) 1 commit
+ - git_connect: set ssh shell command in GIT_SSH_COMMAND
+
+ Will merge to 'next'.
+
+
 * ms/submodule-update-config-doc (2014-11-03) 1 commit
  - submodule: clarify documentation for update subcommand
+
+ Needs a reroll ($gmane/259037).
 
 
 * nd/lockfile-absolute (2014-11-03) 1 commit
@@ -316,8 +334,9 @@ of the repositories listed at
  Will cook in 'next' throughout the remainder of the cycle.
 
 
-* jh/empty-notes (2014-11-10) 9 commits
- - t3301: modernize
+* jh/empty-notes (2014-11-12) 10 commits
+ - SQUASH???
+ - t3301: modernize style
  - notes: empty notes should be shown by 'git log'
  - builtin/notes: add --allow-empty, to allow storing empty notes
  - builtin/notes: split create_note() to clarify add vs. remove logic
