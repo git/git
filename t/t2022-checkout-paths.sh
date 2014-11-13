@@ -61,4 +61,21 @@ test_expect_success 'do not touch unmerged entries matching $path but not in $tr
 	test_cmp expect.next0 actual.next0
 '
 
+test_expect_success 'do not touch files that are already up-to-date' '
+	git reset --hard &&
+	echo one >file1 &&
+	echo two >file2 &&
+	git add file1 file2 &&
+	git commit -m base &&
+	echo modified >file1 &&
+	test-chmtime =1000000000 file2 &&
+	git update-index -q --refresh &&
+	git checkout HEAD -- file1 file2 &&
+	echo one >expect &&
+	test_cmp expect file1 &&
+	echo "1000000000	file2" >expect &&
+	test-chmtime -v +0 file2 >actual &&
+	test_cmp expect actual
+'
+
 test_done
