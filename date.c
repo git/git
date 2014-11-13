@@ -432,10 +432,10 @@ static int match_multi_number(unsigned long num, char c, const char *date,
 
 		if (num > 70) {
 			/* yyyy-mm-dd? */
-			if (is_date(num, num2, num3, refuse_future, now, tm))
+			if (is_date(num, num2, num3, NULL, now, tm))
 				break;
 			/* yyyy-dd-mm? */
-			if (is_date(num, num3, num2, refuse_future, now, tm))
+			if (is_date(num, num3, num2, NULL, now, tm))
 				break;
 		}
 		/* Our eastern European friends say dd.mm.yy[yy]
