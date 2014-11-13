@@ -396,9 +396,9 @@ static int is_date(int year, int month, int day, struct tm *now_tm, time_t now, 
 	return 0;
 }
 
-static int match_multi_number(unsigned long num, char c, const char *date, char *end, struct tm *tm)
+static int match_multi_number(unsigned long num, char c, const char *date,
+			      char *end, struct tm *tm, time_t now)
 {
-	time_t now;
 	struct tm now_tm;
 	struct tm *refuse_future;
 	long num2, num3;
@@ -424,7 +424,8 @@ static int match_multi_number(unsigned long num, char c, const char *date, char 
 	case '-':
 	case '/':
 	case '.':
-		now = time(NULL);
+		if (!now)
+			now = time(NULL);
 		refuse_future = NULL;
 		if (gmtime_r(&now, &now_tm))
 			refuse_future = &now_tm;
@@ -504,7 +505,7 @@ static int match_digit(const char *date, struct tm *tm, int *offset, int *tm_gmt
 	case '/':
 	case '-':
 		if (isdigit(end[1])) {
-			int match = match_multi_number(num, *end, date, end, tm);
+			int match = match_multi_number(num, *end, date, end, tm, 0);
 			if (match)
 				return match;
 		}
@@ -1000,7 +1001,8 @@ static const char *approxidate_alpha(const char *date, struct tm *tm, struct tm 
 	return end;
 }
 
-static const char *approxidate_digit(const char *date, struct tm *tm, int *num)
+static const char *approxidate_digit(const char *date, struct tm *tm, int *num,
+				     time_t now)
 {
 	char *end;
 	unsigned long number = strtoul(date, &end, 10);
@@ -1011,7 +1013,8 @@ static const char *approxidate_digit(const char *date, struct tm *tm, int *num)
 	case '/':
 	case '-':
 		if (isdigit(end[1])) {
-			int match = match_multi_number(number, *end, date, end, tm);
+			int match = match_multi_number(number, *end, date, end,
+						       tm, now);
 			if (match)
 				return date + match;
 		}
@@ -1074,7 +1077,7 @@ static unsigned long approxidate_str(const char *date,
 		date++;
 		if (isdigit(c)) {
 			pending_number(&tm, &number);
-			date = approxidate_digit(date-1, &tm, &number);
+			date = approxidate_digit(date-1, &tm, &number, time_sec);
 			touched = 1;
 			continue;
 		}
