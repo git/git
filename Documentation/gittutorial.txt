@@ -107,14 +107,15 @@ summary of the situation with 'git status':
 
 ------------------------------------------------
 $ git status
-# On branch master
-# Changes to be committed:
-#   (use "git reset HEAD <file>..." to unstage)
-#
-#	modified:   file1
-#	modified:   file2
-#	modified:   file3
-#
+On branch master
+Changes to be committed:
+Your branch is up-to-date with 'origin/master'.
+  (use "git reset HEAD <file>..." to unstage)
+
+	modified:   file1
+	modified:   file2
+	modified:   file3
+
 ------------------------------------------------
 
 If you need to make any further adjustments, do so now, and then add any
