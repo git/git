@@ -221,6 +221,7 @@ run_merge_tool () {
 	else
 		run_diff_cmd "$1"
 	fi
+	status=$?
 	return $status
 }
 
