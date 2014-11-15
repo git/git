@@ -2516,6 +2516,13 @@ proc makewindow {} {
     } else {
 	bindall <ButtonRelease-4> "allcanvs yview scroll -5 units"
 	bindall <ButtonRelease-5> "allcanvs yview scroll 5 units"
+	bind $ctext <Button> {
+	    if {"%b" eq 6} {
+		$ctext xview scroll -5 units
+	    } elseif {"%b" eq 7} {
+		$ctext xview scroll 5 units
+	    }
+	}
         if {[tk windowingsystem] eq "aqua"} {
             bindall <MouseWheel> {
                 set delta [expr {- (%D)}]
