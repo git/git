@@ -490,9 +490,9 @@ static int git_parse_signed(const char *value, intmax_t *ret, intmax_t max)
 			errno = EINVAL;
 			return 0;
 		}
-		uval = abs(val);
+		uval = labs(val);
 		uval *= factor;
-		if (uval > max || abs(val) > uval) {
+		if (uval > max || labs(val) > uval) {
 			errno = ERANGE;
 			return 0;
 		}
