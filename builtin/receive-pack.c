@@ -429,7 +429,7 @@ static const char *check_nonce(const char *buf, size_t len)
 	nonce_stamp_slop = (long)ostamp - (long)stamp;
 
 	if (nonce_stamp_slop_limit &&
-	    abs(nonce_stamp_slop) <= nonce_stamp_slop_limit) {
+	    labs(nonce_stamp_slop) <= nonce_stamp_slop_limit) {
 		/*
 		 * Pretend as if the received nonce (which passes the
 		 * HMAC check, so it is not a forged by third-party)
