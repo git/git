@@ -15,6 +15,9 @@ struct merge_options {
 	const char *subtree_shift;
 	unsigned buffer_output : 1;
 	unsigned renormalize : 1;
+	unsigned no_worktree : 1; /* do not touch worktree */
+	unsigned conflicts_in_index : 1; /* index will contain conflict hunks */
+	unsigned use_ondisk_index : 1; /* tree-level merge loads .git/index */
 	long xdl_opts;
 	int verbosity;
 	int diff_rename_limit;

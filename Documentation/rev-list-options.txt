@@ -823,6 +823,13 @@ options may be given. See linkgit:git-diff-files[1] for more options.
 	in that case, the output represents the changes the merge
 	brought _into_ the then-current branch.
 
+--remerge-diff::
+	Diff merge commits against a recursive merge of their parents,
+	with conflict hunks.  Intuitively speaking, this shows what
+	the author of the merge changed to resolve the merge.  It
+	assumes that all (or most) merges are recursive merges; other
+	strategies are not supported.
+
 -r::
 	Show recursive diffs.
 
