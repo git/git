@@ -112,8 +112,8 @@ test_expect_success 'file order is relevant with --unstable' '
 '
 
 #Now test various option combinations.
-test_expect_success 'default is unstable' '
-	test_patch_id relevant default
+test_expect_success 'default is stable' '
+	test_patch_id irrelevant default
 '
 
 test_expect_success 'patchid.stable = true is stable' '
