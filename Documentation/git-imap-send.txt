@@ -9,7 +9,7 @@ git-imap-send - Send a collection of patches from stdin to an IMAP folder
 SYNOPSIS
 --------
 [verse]
-'git imap-send' [-v] [-q]
+'git imap-send' [-v] [-q] [--[no-]curl]
 
 
 DESCRIPTION
@@ -36,6 +36,15 @@ OPTIONS
 -q::
 --quiet::
 	Be quiet.
+
+--curl::
+	Use libcurl to communicate with the IMAP server, unless tunneling
+	into it.  Ignored if Git was built without the USE_CURL_FOR_IMAP_SEND
+	option set.
+
+--no-curl::
+	Talk to the IMAP server using git's own IMAP routines instead of
+	using libcurl.
 
 
 CONFIGURATION
@@ -87,7 +96,9 @@ imap.preformattedHTML::
 
 imap.authMethod::
 	Specify authenticate method for authentication with IMAP server.
-	Current supported method is 'CRAM-MD5' only. If this is not set
+	If Git was built with the NO_CURL option, or if your curl version is older
+	than 7.34.0, or if you're running git-imap-send with the `--no-curl`
+	option, the only supported method is 'CRAM-MD5'. If this is not set
 	then 'git imap-send' uses the basic IMAP plaintext LOGIN command.
 
 Examples
