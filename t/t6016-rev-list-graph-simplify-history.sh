@@ -264,4 +264,59 @@ test_expect_success '--graph --boundary ^C3' '
 	test_cmp expected actual
 	'
 
+one_independent_branch () {
+	git checkout --orphan root$1 A1 &&
+	test_commit root_$1 &&
+	test_commit then_$1 &&
+	test_commit further_$1
+}
+
+test_expect_success 'multi-root setup' '
+	one_independent_branch 0 &&
+	one_independent_branch 1 &&
+	one_independent_branch 2 &&
+
+	git checkout -b merge210 root2 &&
+	test_tick &&
+	git merge -s ours root1 &&
+	test_tick &&
+	git merge -s ours root0
+'
+
+test_expect_success 'multi-root does not emit unnecessary post-root gap' '
+	sed -e "s/ #$/ /" >expect <<-\EOF &&
+	*   Merge branch '\''root0'\'' into merge210
+	|\  #
+	| * further_0
+	| * then_0
+	| * root_0
+	*   Merge branch '\''root1'\'' into merge210
+	|\  #
+	| * further_1
+	| * then_1
+	| * root_1
+	* further_2
+	* then_2
+	* root_2
+	EOF
+	git log --graph --format=%s >actual &&
+	test_cmp expect actual
+'
+
+test_expect_failure 'multi-root does show necessary post-root gap' '
+	sed -e "s/ #$/ /" >expect <<-\EOF &&
+	* further_2
+	* then_2
+	* root_2
+	  * further_1
+	  * then_1
+	  * root_1
+	* further_0
+	* then_0
+	* root_0
+	EOF
+	git log --graph --format=%s root0 root1 root2 >actual &&
+	test_cmp expect actual
+'
+
 test_done
