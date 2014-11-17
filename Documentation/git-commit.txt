@@ -250,9 +250,10 @@ FROM UPSTREAM REBASE" section in linkgit:git-rebase[1].)
 
 -o::
 --only::
-	Make a commit only from the paths specified on the
+	Make a commit by taking the updated working tree contents
+	of the paths specified on the
 	command line, disregarding any contents that have been
-	staged so far. This is the default mode of operation of
+	staged for other paths. This is the default mode of operation of
 	'git commit' if any paths are given on the command line,
 	in which case this option can be omitted.
 	If this option is specified together with '--amend', then
