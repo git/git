@@ -1155,6 +1155,8 @@ int unpack_trees(unsigned len, struct tree_desc *t, struct unpack_trees_options 
 	if (o->dst_index) {
 		discard_index(o->dst_index);
 		*o->dst_index = o->result;
+	} else {
+		discard_index(&o->result);
 	}
 
 done:
