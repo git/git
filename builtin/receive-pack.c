@@ -296,6 +296,7 @@ static int copy_to_sideband(int in, int out, void *arg)
 }
 
 #define HMAC_BLOCK_SIZE 64
+#define HMAC_TRUNCATE 10 /* in bytes */
 
 static void hmac_sha1(unsigned char *out,
 		      const char *key_in, size_t key_len,
@@ -332,21 +333,23 @@ static void hmac_sha1(unsigned char *out,
 	/* RFC 2104 2. (6) & (7) */
 	git_SHA1_Init(&ctx);
 	git_SHA1_Update(&ctx, k_opad, sizeof(k_opad));
-	git_SHA1_Update(&ctx, out, 20);
+	git_SHA1_Update(&ctx, out, HMAC_TRUNCATE);
 	git_SHA1_Final(out, &ctx);
 }
 
 static char *prepare_push_cert_nonce(const char *path, unsigned long stamp)
 {
 	struct strbuf buf = STRBUF_INIT;
-	unsigned char sha1[20];
+	unsigned char hmac[HMAC_TRUNCATE];
+	char hmac_trunc[HMAC_TRUNCATE * 2 + 1];
 
 	strbuf_addf(&buf, "%s:%lu", path, stamp);
-	hmac_sha1(sha1, buf.buf, buf.len, cert_nonce_seed, strlen(cert_nonce_seed));;
+	hmac_sha1(hmac, buf.buf, buf.len, cert_nonce_seed, strlen(cert_nonce_seed));;
 	strbuf_release(&buf);
 
 	/* RFC 2104 5. HMAC-SHA1-80 */
-	strbuf_addf(&buf, "%lu-%.*s", stamp, 20, sha1_to_hex(sha1));
+	bin_to_hex(hmac, HMAC_TRUNCATE, hmac_trunc);
+	strbuf_addf(&buf, "%lu-%s", stamp, hmac_trunc);
 	return strbuf_detach(&buf, NULL);
 }
 

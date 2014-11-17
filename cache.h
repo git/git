@@ -949,6 +949,17 @@ extern int for_each_abbrev(const char *prefix, each_abbrev_fn, void *);
  */
 extern int get_sha1_hex(const char *hex, unsigned char *sha1);
 
+extern const char hexchar_table[];
+static inline void bin_to_hex(const unsigned char *bin, int len, char *hexout)
+{
+	while (0 < len--) {
+		unsigned int val = *bin++;
+		*hexout++ = hexchar_table[val >> 4];
+		*hexout++ = hexchar_table[val & 0xf];
+	}
+	*hexout = '\0';
+}
+
 extern char *sha1_to_hex(const unsigned char *sha1);	/* static buffer result! */
 extern int read_ref_full(const char *refname, int resolve_flags,
 			 unsigned char *sha1, int *flags);
