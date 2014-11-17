@@ -86,6 +86,11 @@ test_expect_success PERL 'difftool forwards exit code with --trust-exit-code' '
 	test_must_fail git difftool -y --trust-exit-code -t error branch
 '
 
+test_expect_success PERL 'difftool forwards exit code with --trust-exit-code for built-ins' '
+	test_config difftool.vimdiff.path false &&
+	test_must_fail git difftool -y --trust-exit-code -t vimdiff branch
+'
+
 test_expect_success PERL 'difftool honors difftool.trustExitCode = true' '
 	test_config difftool.error.cmd false &&
 	test_config difftool.trustExitCode true &&
