@@ -597,6 +597,7 @@ int transport_refs_pushed(struct ref *ref)
 void transport_update_tracking_ref(struct remote *remote, struct ref *ref, int verbose)
 {
 	struct refspec rs;
+	struct strbuf err = STRBUF_INIT;
 
 	if (ref->status != REF_STATUS_OK && ref->status != REF_STATUS_UPTODATE)
 		return;
@@ -609,9 +610,11 @@ void transport_update_tracking_ref(struct remote *remote, struct ref *ref, int v
 			fprintf(stderr, "updating local tracking ref '%s'\n", rs.dst);
 		if (ref->deletion) {
 			delete_ref(rs.dst, NULL, 0);
-		} else
-			update_ref("update by push", rs.dst,
-					ref->new_sha1, NULL, 0, 0);
+		} else if (update_ref("update by push", rs.dst,
+				      ref->new_sha1, NULL, 0, &err))
+			error("%s", err.buf);
+
+		strbuf_release(&err);
 		free(rs.dst);
 	}
 }

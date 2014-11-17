@@ -397,9 +397,11 @@ static void finish(struct commit *head_commit,
 			printf(_("No merge message -- not updating HEAD\n"));
 		else {
 			const char *argv_gc_auto[] = { "gc", "--auto", NULL };
-			update_ref(reflog_message.buf, "HEAD",
-				new_head, head, 0,
-				UPDATE_REFS_DIE_ON_ERR);
+			struct strbuf err = STRBUF_INIT;
+			if (update_ref(reflog_message.buf, "HEAD",
+				       new_head, head, 0,
+				       &err))
+				die("%s", err.buf);
 			/*
 			 * We ignore errors in 'gc --auto', since the
 			 * user should see them.
@@ -1078,6 +1080,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	unsigned char head_sha1[20];
 	struct commit *head_commit;
 	struct strbuf buf = STRBUF_INIT;
+	struct strbuf err = STRBUF_INIT;
 	const char *head_arg;
 	int flag, i, ret = 0, head_subsumed;
 	int best_cnt = -1, merge_was_ok = 0, automerge_was_ok = 0;
@@ -1206,8 +1209,9 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		if (!remote_head)
 			die(_("%s - not something we can merge"), argv[0]);
 		read_empty(remote_head->object.sha1, 0);
-		update_ref("initial pull", "HEAD", remote_head->object.sha1,
-			   NULL, 0, UPDATE_REFS_DIE_ON_ERR);
+		if (update_ref("initial pull", "HEAD", remote_head->object.sha1,
+			       NULL, 0, &err))
+			die("%s", err.buf);
 		goto done;
 	} else {
 		struct strbuf merge_names = STRBUF_INIT;
@@ -1320,8 +1324,10 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		free(list);
 	}
 
-	update_ref("updating ORIG_HEAD", "ORIG_HEAD", head_commit->object.sha1,
-		   NULL, 0, UPDATE_REFS_DIE_ON_ERR);
+	if (update_ref("updating ORIG_HEAD", "ORIG_HEAD",
+		       head_commit->object.sha1,
+		       NULL, 0, &err))
+		die("%s", err.buf);
 
 	if (remoteheads && !common)
 		; /* No common ancestors found. We need a real merge. */
