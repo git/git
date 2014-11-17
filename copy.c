@@ -8,12 +8,17 @@ int copy_fd(int ifd, int ofd)
 		if (!len)
 			break;
 		if (len < 0) {
-			return error("copy-fd: read returned %s",
-				     strerror(errno));
+			int save_errno = errno;
+			error("copy-fd: read returned %s", strerror(errno));
+			errno = save_errno;
+			return -1;
 		}
-		if (write_in_full(ofd, buffer, len) < 0)
-			return error("copy-fd: write returned %s",
-				     strerror(errno));
+		if (write_in_full(ofd, buffer, len) < 0) {
+			int save_errno = errno;
+			error("copy-fd: write returned %s", strerror(errno));
+			errno = save_errno;
+			return -1;
+		}
 	}
 	return 0;
 }

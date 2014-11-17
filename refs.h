@@ -11,22 +11,22 @@ struct ref_lock {
 };
 
 /*
- * A ref_transaction represents a collection of ref updates
+ * A transaction represents a collection of ref updates
  * that should succeed or fail together.
  *
  * Calling sequence
  * ----------------
- * - Allocate and initialize a `struct ref_transaction` by calling
- *   `ref_transaction_begin()`.
+ * - Allocate and initialize a `struct transaction` by calling
+ *   `transaction_begin()`.
  *
  * - List intended ref updates by calling functions like
- *   `ref_transaction_update()` and `ref_transaction_create()`.
+ *   `transaction_update_ref()` and `transaction_create_ref()`.
  *
- * - Call `ref_transaction_commit()` to execute the transaction.
+ * - Call `transaction_commit()` to execute the transaction.
  *   If this succeeds, the ref updates will have taken place and
  *   the transaction cannot be rolled back.
  *
- * - At any time call `ref_transaction_free()` to discard the
+ * - At any time call `transaction_free()` to discard the
  *   transaction and free associated resources.  In particular,
  *   this rolls back the transaction if it has not been
  *   successfully committed.
@@ -42,7 +42,7 @@ struct ref_lock {
  * The message is appended to err without first clearing err.
  * err will not be '\n' terminated.
  */
-struct ref_transaction;
+struct transaction;
 
 /*
  * Bit values set in the flags argument passed to each_ref_fn():
@@ -181,36 +181,17 @@ extern int is_branch(const char *refname);
 extern int peel_ref(const char *refname, unsigned char *sha1);
 
 /*
- * Flags controlling lock_any_ref_for_update(), ref_transaction_update(),
- * ref_transaction_create(), etc.
+ * Flags controlling transaction_update_ref(), transaction_create_ref(), etc.
  * REF_NODEREF: act on the ref directly, instead of dereferencing
  *              symbolic references.
  * REF_DELETING: tolerate broken refs
+ * REF_ALLOW_BROKEN: allow locking refs that are broken.
  *
  * Flags >= 0x100 are reserved for internal use.
  */
-#define REF_NODEREF	0x01
-#define REF_DELETING	0x02
-/*
- * This function sets errno to something meaningful on failure.
- */
-extern struct ref_lock *lock_any_ref_for_update(const char *refname,
-						const unsigned char *old_sha1,
-						int flags, int *type_p);
-
-/** Close the file descriptor owned by a lock and return the status */
-extern int close_ref(struct ref_lock *lock);
-
-/** Close and commit the ref locked by the lock */
-extern int commit_ref(struct ref_lock *lock);
-
-/** Release any lock taken but not written. **/
-extern void unlock_ref(struct ref_lock *lock);
-
-/*
- * Setup reflog before using. Set errno to something meaningful on failure.
- */
-int log_ref_setup(const char *refname, char *logfile, int bufsize);
+#define REF_NODEREF		0x01
+#define REF_DELETING		0x02
+#define REF_ALLOW_BROKEN	0x04
 
 /** Reads log for the value of ref during at_time. **/
 extern int read_ref_at(const char *refname, unsigned int flags,
@@ -220,6 +201,9 @@ extern int read_ref_at(const char *refname, unsigned int flags,
 
 /** Check if a particular reflog exists */
 extern int reflog_exists(const char *refname);
+
+/** Create reflog. Set errno to something meaningful on failure. */
+extern int create_reflog(const char *refname);
 
 /** Delete a reflog */
 extern int delete_reflog(const char *refname);
@@ -269,13 +253,13 @@ enum action_on_err {
 
 /*
  * Begin a reference transaction.  The reference transaction must
- * be freed by calling ref_transaction_free().
+ * be freed by calling transaction_free().
  */
-struct ref_transaction *ref_transaction_begin(struct strbuf *err);
+struct transaction *transaction_begin(struct strbuf *err);
 
 /*
  * The following functions add a reference check or update to a
- * ref_transaction.  In all of them, refname is the name of the
+ * transaction.  In all of them, refname is the name of the
  * reference to be affected.  The functions make internal copies of
  * refname and msg, so the caller retains ownership of these parameters.
  * flags can be REF_NODEREF; it is passed to update_ref_lock().
@@ -283,7 +267,7 @@ struct ref_transaction *ref_transaction_begin(struct strbuf *err);
 
 /*
  * Add a reference update to transaction.  new_sha1 is the value that
- * the reference should have after the update, or zeros if it should
+ * the reference should have after the update, or null_sha1 if it should
  * be deleted.  If have_old is true, then old_sha1 holds the value
  * that the reference should have had before the update, or zeros if
  * it must not have existed beforehand.
@@ -291,7 +275,7 @@ struct ref_transaction *ref_transaction_begin(struct strbuf *err);
  * means that the transaction as a whole has failed and will need to be
  * rolled back.
  */
-int ref_transaction_update(struct ref_transaction *transaction,
+int transaction_update_ref(struct transaction *transaction,
 			   const char *refname,
 			   const unsigned char *new_sha1,
 			   const unsigned char *old_sha1,
@@ -307,7 +291,7 @@ int ref_transaction_update(struct ref_transaction *transaction,
  * means that the transaction as a whole has failed and will need to be
  * rolled back.
  */
-int ref_transaction_create(struct ref_transaction *transaction,
+int transaction_create_ref(struct transaction *transaction,
 			   const char *refname,
 			   const unsigned char *new_sha1,
 			   int flags, const char *msg,
@@ -321,11 +305,32 @@ int ref_transaction_create(struct ref_transaction *transaction,
  * means that the transaction as a whole has failed and will need to be
  * rolled back.
  */
-int ref_transaction_delete(struct ref_transaction *transaction,
+int transaction_delete_ref(struct transaction *transaction,
 			   const char *refname,
 			   const unsigned char *old_sha1,
 			   int flags, int have_old, const char *msg,
 			   struct strbuf *err);
+
+/*
+ * Flags controlling transaction_update_reflog().
+ * REFLOG_TRUNCATE: Truncate the reflog.
+ *
+ * Flags >= 0x100 are reserved for internal use.
+ */
+#define REFLOG_TRUNCATE 0x01
+/*
+ * Append a reflog entry for refname. If the REFLOG_TRUNCATE flag is set
+ * this update will first truncate the reflog before writing the entry.
+ * If msg is NULL no update will be written to the log.
+ */
+int transaction_update_reflog(struct transaction *transaction,
+			      const char *refname,
+			      const unsigned char *new_sha1,
+			      const unsigned char *old_sha1,
+			      const char *email,
+			      unsigned long timestamp, int tz,
+			      const char *msg, int flags,
+			      struct strbuf *err);
 
 /*
  * Commit all of the changes that have been queued in transaction, as
@@ -337,13 +342,13 @@ int ref_transaction_delete(struct ref_transaction *transaction,
 #define TRANSACTION_NAME_CONFLICT -1
 /* All other errors. */
 #define TRANSACTION_GENERIC_ERROR -2
-int ref_transaction_commit(struct ref_transaction *transaction,
-			   struct strbuf *err);
+int transaction_commit(struct transaction *transaction,
+		       struct strbuf *err);
 
 /*
  * Free an existing transaction and all associated data.
  */
-void ref_transaction_free(struct ref_transaction *transaction);
+void transaction_free(struct transaction *transaction);
 
 /** Lock a ref and then write its file */
 int update_ref(const char *action, const char *refname,
