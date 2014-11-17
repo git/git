@@ -76,7 +76,8 @@ test_expect_success 'moves and renames' '
 
 	git diff-tree three four -r --name-status -B -M | sort >actual &&
 	{
-		echo "R100	foo	bar"
+		# see -B -M (#6) in t4008
+		echo "C100	foo	bar"
 		echo "T100	foo"
 	} | sort >expect &&
 	test_cmp expect actual
