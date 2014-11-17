@@ -29,7 +29,12 @@ test_lazy_prereq TTY '
 	# After 2000 iterations or so it hangs.
 	# https://rt.cpan.org/Ticket/Display.html?id=65692
 	#
-	test "$(uname -s)" != Darwin &&
+	# Under Mac OS X 10.9, this problem appears to be gone.
+	#
+	{
+		test "$(uname -s)" != Darwin ||
+		test "$(uname -r | cut -d. -f1)" -ge 13
+	} &&
 
 	perl "$TEST_DIRECTORY"/test-terminal.perl \
 		sh -c "test -t 1 && test -t 2"
