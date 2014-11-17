@@ -301,7 +301,7 @@ static int prepare_submodule_summary(struct rev_info *rev, const char *path,
 	left->object.flags |= SYMMETRIC_LEFT;
 	add_pending_object(rev, &left->object, path);
 	add_pending_object(rev, &right->object, path);
-	merge_bases = get_merge_bases(left, right, 1);
+	merge_bases = get_merge_bases(left, right);
 	if (merge_bases) {
 		if (merge_bases->item == left)
 			*fast_forward = 1;
