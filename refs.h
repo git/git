@@ -116,6 +116,7 @@ static inline const char *has_glob_specials(const char *pattern)
 /* can be used to learn about broken ref and symref */
 extern int for_each_rawref(each_ref_fn, void *);
 
+extern int create_symref(const char *ref, const char *refs_heads_master, const char *logmsg, struct strbuf *err);
 extern void warn_dangling_symref(FILE *fp, const char *msg_fmt, const char *refname);
 extern void warn_dangling_symrefs(FILE *fp, const char *msg_fmt, const struct string_list *refnames);
 
@@ -170,8 +171,8 @@ extern int read_ref_at(const char *refname, unsigned int flags,
 /** Check if a particular reflog exists */
 extern int reflog_exists(const char *refname);
 
-/** Create reflog. Set errno to something meaningful on failure. */
-extern int create_reflog(const char *refname);
+/** Create reflog. Fill in err on failure. */
+extern int create_reflog(const char *refname, struct strbuf *err);
 
 /** Delete a reflog */
 extern int delete_reflog(const char *refname);
