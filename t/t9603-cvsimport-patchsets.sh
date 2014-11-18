@@ -16,7 +16,7 @@ test_description='git cvsimport testing for correct patchset estimation'
 
 setup_cvs_test_repository t9603
 
-test_expect_failure 'import with criss cross times on revisions' '
+test_expect_failure PERL 'import with criss cross times on revisions' '
 
     git cvsimport -p"-x" -C module-git module &&
     (cd module-git &&
