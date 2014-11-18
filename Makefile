@@ -1861,6 +1861,9 @@ $(SCRIPT_PERL_GEN) git-instaweb: % : unimplemented.sh
 	mv $@+ $@
 endif # NO_PERL
 
+# This makes sure we depend on the NO_PYTHON setting itself.
+$(SCRIPT_PYTHON_GEN): GIT-BUILD-OPTIONS
+
 ifndef NO_PYTHON
 $(SCRIPT_PYTHON_GEN): GIT-CFLAGS GIT-PREFIX GIT-PYTHON-VARS
 $(SCRIPT_PYTHON_GEN): % : %.py
