@@ -5645,7 +5645,7 @@ msgstr "die Reflogs prüfen (Standard)"
 
 #: builtin/fsck.c:615
 msgid "also consider packs and alternate objects"
-msgstr ""
+msgstr "ebenso Pakete und alternative Objekte betrachten"
 
 #: builtin/fsck.c:616
 msgid "enable more strict checking"
@@ -8477,7 +8477,7 @@ msgstr "Referenz muss sich auf dem angegebenen Wert befinden"
 
 #: builtin/push.c:506
 msgid "check"
-msgstr ""
+msgstr "check|on-demand"
 
 #: builtin/push.c:507
 msgid "control recursive pushing of submodules"
