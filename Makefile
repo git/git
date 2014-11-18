@@ -1801,6 +1801,9 @@ git.res: git.rc GIT-VERSION-FILE
 	  $(join -DMAJOR= -DMINOR=, $(wordlist 1,2,$(subst -, ,$(subst ., ,$(GIT_VERSION))))) \
 	  -DGIT_VERSION="\\\"$(GIT_VERSION)\\\"" $< -o $@
 
+# This makes sure we depend on the NO_PERL setting itself.
+$(patsubst %.perl,%,$(SCRIPT_PERL)): GIT-BUILD-OPTIONS
+
 ifndef NO_PERL
 $(patsubst %.perl,%,$(SCRIPT_PERL)): perl/perl.mak
 
