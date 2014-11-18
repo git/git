@@ -10,6 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git stripspace' [-s | --strip-comments] < input
+'git stripspace' [-c | --comment-lines] < input
 
 DESCRIPTION
 -----------
