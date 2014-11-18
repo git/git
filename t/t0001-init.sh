@@ -12,6 +12,13 @@ check_config () {
 		echo "expected a directory $1, a file $1/config and $1/refs"
 		return 1
 	fi
+
+	if test_have_prereq POSIXPERM && test -x "$1/config"
+	then
+		echo "$1/config is executable?"
+		return 1
+	fi
+
 	bare=$(cd "$1" && git config --bool core.bare)
 	worktree=$(cd "$1" && git config core.worktree) ||
 	worktree=unset
