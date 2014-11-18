@@ -20,6 +20,10 @@ use File::Basename qw(basename);
 use Time::HiRes qw(gettimeofday tv_interval);
 binmode STDOUT, ':utf8';
 
+if (!defined($CGI::VERSION) || $CGI::VERSION < 4.08) {
+	eval 'sub CGI::multi_param { CGI::param(@_) }'
+}
+
 our $t0 = [ gettimeofday() ];
 our $number_of_git_cmds = 0;
 
@@ -871,7 +875,7 @@ sub evaluate_query_params {
 
 	while (my ($name, $symbol) = each %cgi_param_mapping) {
 		if ($symbol eq 'opt') {
-			$input_params{$name} = [ map { decode_utf8($_) } $cgi->param($symbol) ];
+			$input_params{$name} = [ map { decode_utf8($_) } $cgi->multi_param($symbol) ];
 		} else {
 			$input_params{$name} = decode_utf8($cgi->param($symbol));
 		}
