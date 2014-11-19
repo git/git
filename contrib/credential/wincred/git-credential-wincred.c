@@ -111,14 +111,23 @@ static void write_item(const char *what, LPCWSTR wbuf, int wlen)
  * Match an (optional) expected string and a delimiter in the target string,
  * consuming the matched text by updating the target pointer.
  */
-static int match_part(LPCWSTR *ptarget, LPCWSTR want, LPCWSTR delim)
+
+static LPCWSTR wcsstr_last(LPCWSTR str, LPCWSTR find)
+{
+	LPCWSTR res = NULL, pos;
+	for (pos = wcsstr(str, find); pos; pos = wcsstr(pos + 1, find))
+		res = pos;
+	return res;
+}
+
+static int match_part_with_last(LPCWSTR *ptarget, LPCWSTR want, LPCWSTR delim, int last)
 {
 	LPCWSTR delim_pos, start = *ptarget;
 	int len;
 
 	/* find start of delimiter (or end-of-string if delim is empty) */
 	if (*delim)
-		delim_pos = wcsstr(start, delim);
+		delim_pos = last ? wcsstr_last(start, delim) : wcsstr(start, delim);
 	else
 		delim_pos = start + wcslen(start);
 
@@ -138,6 +147,16 @@ static int match_part(LPCWSTR *ptarget, LPCWSTR want, LPCWSTR delim)
 	return !want || (!wcsncmp(want, start, len) && !want[len]);
 }
 
+static int match_part(LPCWSTR *ptarget, LPCWSTR want, LPCWSTR delim)
+{
+	return match_part_with_last(ptarget, want, delim, 0);
+}
+
+static int match_part_last(LPCWSTR *ptarget, LPCWSTR want, LPCWSTR delim)
+{
+	return match_part_with_last(ptarget, want, delim, 1);
+}
+
 static int match_cred(const CREDENTIALW *cred)
 {
 	LPCWSTR target = cred->TargetName;
@@ -146,7 +165,7 @@ static int match_cred(const CREDENTIALW *cred)
 
 	return match_part(&target, L"git", L":") &&
 		match_part(&target, protocol, L"://") &&
-		match_part(&target, wusername, L"@") &&
+		match_part_last(&target, wusername, L"@") &&
 		match_part(&target, host, L"/") &&
 		match_part(&target, path, L"");
 }
