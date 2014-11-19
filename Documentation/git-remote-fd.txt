@@ -50,6 +50,10 @@ EXAMPLES
 `git push fd::7,8/bar master`::
 	Same as above.
 
+SEE ALSO
+--------
+linkgit:gitremote-helpers[1]
+
 GIT
 ---
 Part of the linkgit:git[1] suite
