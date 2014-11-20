@@ -66,15 +66,14 @@ static int parse_decorate_color_slot(const char *slot)
 	return -1;
 }
 
-int parse_decorate_color_config(const char *var, const int ofs, const char *value)
+int parse_decorate_color_config(const char *var, const char *slot_name, const char *value)
 {
-	int slot = parse_decorate_color_slot(var + ofs);
+	int slot = parse_decorate_color_slot(slot_name);
 	if (slot < 0)
 		return 0;
 	if (!value)
 		return config_error_nonbool(var);
-	color_parse(value, var, decoration_colors[slot]);
-	return 0;
+	return color_parse(value, decoration_colors[slot]);
 }
 
 /*

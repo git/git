@@ -389,7 +389,7 @@ static int git_log_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 	if (starts_with(var, "color.decorate."))
-		return parse_decorate_color_config(var, 15, value);
+		return parse_decorate_color_config(var, var + 15, value);
 	if (!strcmp(var, "log.mailmap")) {
 		use_mailmap_config = git_config_bool(var, value);
 		return 0;
