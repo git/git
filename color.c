@@ -32,10 +32,13 @@ struct color {
 		COLOR_UNSPECIFIED = 0,
 		COLOR_NORMAL,
 		COLOR_ANSI, /* basic 0-7 ANSI colors */
-		COLOR_256
+		COLOR_256,
+		COLOR_RGB
 	} type;
 	/* The numeric value for ANSI and 256-color modes */
 	unsigned char value;
+	/* 24-bit RGB color values */
+	unsigned char red, green, blue;
 };
 
 /*
@@ -45,6 +48,16 @@ struct color {
 static int match_word(const char *word, int len, const char *match)
 {
 	return !strncasecmp(word, match, len) && !match[len];
+}
+
+static int get_hex_color(const char *in, unsigned char *out)
+{
+	unsigned int val;
+	val = (hexval(in[0]) << 4) | hexval(in[1]);
+	if (val & ~0xff)
+		return -1;
+	*out = val;
+	return 0;
 }
 
 static int parse_color(struct color *out, const char *name, int len)
@@ -62,6 +75,16 @@ static int parse_color(struct color *out, const char *name, int len)
 	if (match_word(name, len, "normal")) {
 		out->type = COLOR_NORMAL;
 		return 0;
+	}
+
+	/* Try a 24-bit RGB value */
+	if (len == 7 && name[0] == '#') {
+		if (!get_hex_color(name + 1, &out->red) &&
+		    !get_hex_color(name + 3, &out->green) &&
+		    !get_hex_color(name + 5, &out->blue)) {
+			out->type = COLOR_RGB;
+			return 0;
+		}
 	}
 
 	/* Then pick from our human-readable color names... */
@@ -139,6 +162,10 @@ static char *color_output(char *out, const struct color *c, char type)
 		break;
 	case COLOR_256:
 		out += sprintf(out, "%c8;5;%d", type, c->value);
+		break;
+	case COLOR_RGB:
+		out += sprintf(out, "%c8;2;%d;%d;%d", type,
+			       c->red, c->green, c->blue);
 		break;
 	}
 	return out;

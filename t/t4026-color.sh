@@ -53,6 +53,10 @@ test_expect_success '256 colors' '
 	color "254 bold 255" "[1;38;5;254;48;5;255m"
 '
 
+test_expect_success '24-bit colors' '
+	color "#ff00ff black" "[38;2;255;0;255;40m"
+'
+
 test_expect_success '"normal" yields no color at all"' '
 	color "normal black" "[40m"
 '
