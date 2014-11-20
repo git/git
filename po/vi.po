@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: git v2.2.0\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
 "POT-Creation-Date: 2014-11-20 09:42+0800\n"
-"PO-Revision-Date: 2014-11-20 10:17+0800\n"
+"PO-Revision-Date: 2014-11-20 16:10+0800\n"
 "Last-Translator: Trần Ngọc Quân <vnwildman@gmail.com>\n"
 "Language-Team: Vietnamese <translation-team-vi@lists.sourceforge.net>\n"
 "Language: vi\n"
@@ -8367,10 +8367,6 @@ msgstr "tên-tham-chiếu>:<cần"
 #: builtin/push.c:504
 msgid "require old value of ref to be at this value"
 msgstr "yêu cầu giá-trị cũ của tham chiếu thì là giá-trị này"
-
-#: builtin/push.c:506
-msgid "check"
-msgstr "kiểm tra"
 
 #: builtin/push.c:507
 msgid "control recursive pushing of submodules"

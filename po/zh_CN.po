@@ -13,7 +13,7 @@ msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
 "POT-Creation-Date: 2014-11-20 09:42+0800\n"
-"PO-Revision-Date: 2014-11-20 10:05+0800\n"
+"PO-Revision-Date: 2014-11-20 16:10+0800\n"
 "Last-Translator: Jiang Xin <worldhello.net@gmail.com>\n"
 "Language-Team: GitHub <https://github.com/gotgit/git/>\n"
 "Language: zh_CN\n"
@@ -8190,10 +8190,6 @@ msgstr "引用名>:<期望值"
 #: builtin/push.c:504
 msgid "require old value of ref to be at this value"
 msgstr "要求引用旧的取值为设定值"
-
-#: builtin/push.c:506
-msgid "check"
-msgstr "检查"
 
 #: builtin/push.c:507
 msgid "control recursive pushing of submodules"
