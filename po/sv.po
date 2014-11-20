@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git 2.0.0\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2014-11-01 07:46+0800\n"
-"PO-Revision-Date: 2014-11-01 20:10+0100\n"
+"POT-Creation-Date: 2014-11-20 09:42+0800\n"
+"PO-Revision-Date: 2014-11-20 10:19+0800\n"
 "Last-Translator: Peter Krefting <peter@softwolves.pp.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
 "Language: sv\n"
@@ -285,38 +285,38 @@ msgid_plural "The bundle requires these %d refs:"
 msgstr[0] "Paketet (bundlen) kräver denna referens:"
 msgstr[1] "Paketet (bundlen) kräver dessa %d referenser:"
 
-#: bundle.c:292
+#: bundle.c:251
+msgid "Could not spawn pack-objects"
+msgstr "Kunde inte starta pack-objects"
+
+#: bundle.c:269
+msgid "pack-objects died"
+msgstr "pack-objects misslyckades"
+
+#: bundle.c:309
 msgid "rev-list died"
 msgstr "rev-list dog"
 
-#: bundle.c:298 builtin/log.c:153 builtin/log.c:1342 builtin/shortlog.c:261
-#, c-format
-msgid "unrecognized argument: %s"
-msgstr "okänt argument: %s"
-
-#: bundle.c:333
+#: bundle.c:358
 #, c-format
 msgid "ref '%s' is excluded by the rev-list options"
 msgstr "referensen \"%s\" exkluderas av argumenten till rev-list"
 
-#: bundle.c:378
+#: bundle.c:438 builtin/log.c:153 builtin/log.c:1342 builtin/shortlog.c:261
+#, c-format
+msgid "unrecognized argument: %s"
+msgstr "okänt argument: %s"
+
+#: bundle.c:444
 msgid "Refusing to create empty bundle."
 msgstr "Vägrar skapa ett tomt paket (bundle)."
 
-#: bundle.c:393
-msgid "Could not spawn pack-objects"
-msgstr "Kunde inte starta pack-objects"
-
-#: bundle.c:411
-msgid "pack-objects died"
-msgstr "pack-objects misslyckades"
-
-#: bundle.c:414
+#: bundle.c:454
 #, c-format
 msgid "cannot create '%s'"
 msgstr "kan inte skapa \"%s\""
 
-#: bundle.c:435
+#: bundle.c:475
 msgid "index-pack died"
 msgstr "index-pack dog"
 
@@ -1459,28 +1459,28 @@ msgstr "Kunde inte skapa gitlänk %s"
 msgid "Could not set core.worktree in %s"
 msgstr "Kunde inte sätta core.worktree i %s"
 
-#: trailer.c:500 trailer.c:504 trailer.c:508 trailer.c:562 trailer.c:566
-#: trailer.c:570
+#: trailer.c:499 trailer.c:503 trailer.c:507 trailer.c:561 trailer.c:565
+#: trailer.c:569
 #, c-format
 msgid "unknown value '%s' for key '%s'"
 msgstr "okänt värde \"%s\" för nyckeln \"%s\""
 
-#: trailer.c:552 trailer.c:557 builtin/remote.c:288
+#: trailer.c:551 trailer.c:556 builtin/remote.c:288
 #, c-format
 msgid "more than one %s"
 msgstr "mer än en %s"
 
-#: trailer.c:587
+#: trailer.c:589
 #, c-format
-msgid "empty trailer token in trailer '%s'"
-msgstr "tom släpradssymbol i släpraden \"%s\""
+msgid "empty trailer token in trailer '%.*s'"
+msgstr "tom släpradssymbol i släpraden \"%.*s\""
 
-#: trailer.c:706
+#: trailer.c:709
 #, c-format
 msgid "could not read input file '%s'"
 msgstr "kunde inte läsa indatafilen \"%s\""
 
-#: trailer.c:709
+#: trailer.c:712
 msgid "could not read from stdin"
 msgstr "Kunde inte läsa från standard in"
 
@@ -6358,11 +6358,11 @@ msgstr " delat"
 
 #: builtin/init-db.c:467
 msgid ""
-"git init [-q | --quiet] [--bare] [--template=<template-directory>] [--shared"
-"[=<permissions>]] [directory]"
+"git init [-q | --quiet] [--bare] [--template=<template-directory>] [--"
+"shared[=<permissions>]] [directory]"
 msgstr ""
-"git init [-q | --quiet] [--bare] [--template=<mallkatalog>] [--shared"
-"[=<behörigheter>]] [katalog]"
+"git init [-q | --quiet] [--bare] [--template=<mallkatalog>] [--"
+"shared[=<behörigheter>]] [katalog]"
 
 #: builtin/init-db.c:490
 msgid "permissions"
@@ -6405,8 +6405,8 @@ msgid ""
 "git interpret-trailers [--trim-empty] [(--trailer <token>[(=|:)<value>])...] "
 "[<file>...]"
 msgstr ""
-"git interpret-trailers [--trim-empty] [(--trailer <symbol>[(=|:)"
-"<värde>])...] [<fil>...]"
+"git interpret-trailers [--trim-empty] [(--trailer "
+"<symbol>[(=|:)<värde>])...] [<fil>...]"
 
 #: builtin/interpret-trailers.c:25
 msgid "trim empty trailers"
@@ -9497,11 +9497,11 @@ msgstr "visa <n> nyaste refloggposter med början på bas"
 
 #: builtin/show-ref.c:10
 msgid ""
-"git show-ref [-q|--quiet] [--verify] [--head] [-d|--dereference] [-s|--hash"
-"[=<n>]] [--abbrev[=<n>]] [--tags] [--heads] [--] [pattern*] "
+"git show-ref [-q|--quiet] [--verify] [--head] [-d|--dereference] [-s|--"
+"hash[=<n>]] [--abbrev[=<n>]] [--tags] [--heads] [--] [pattern*] "
 msgstr ""
-"git show-ref [-q|--quiet] [--verify] [--head] [-d|--dereference] [-s|--hash"
-"[=<n>]] [--abbrev[=<n>]] [--tags] [--heads] [--] [mönster*] "
+"git show-ref [-q|--quiet] [--verify] [--head] [-d|--dereference] [-s|--"
+"hash[=<n>]] [--abbrev[=<n>]] [--tags] [--heads] [--] [mönster*] "
 
 #: builtin/show-ref.c:11
 msgid "git show-ref --exclude-existing[=pattern] < ref-list"

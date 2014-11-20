@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2014-10-22 16:02+0800\n"
-"PO-Revision-Date: 2013-07-28 18:42+0200\n"
+"POT-Creation-Date: 2014-11-20 09:42+0800\n"
+"PO-Revision-Date: 2014-11-20 10:19+0800\n"
 "Last-Translator: Ralf Thielow <ralf.thielow@gmail.com>\n"
 "Language-Team: German <>\n"
 "Language: de\n"
@@ -291,38 +291,38 @@ msgid_plural "The bundle requires these %d refs:"
 msgstr[0] "Das Paket benötigt diese Referenz:"
 msgstr[1] "Das Paket benötigt diese %d Referenzen:"
 
-#: bundle.c:292
+#: bundle.c:251
+msgid "Could not spawn pack-objects"
+msgstr "Konnte Paketobjekte nicht erstellen"
+
+#: bundle.c:269
+msgid "pack-objects died"
+msgstr "Erstellung der Paketobjekte abgebrochen"
+
+#: bundle.c:309
 msgid "rev-list died"
 msgstr "\"rev-list\" abgebrochen"
 
-#: bundle.c:298 builtin/log.c:153 builtin/log.c:1342 builtin/shortlog.c:261
-#, c-format
-msgid "unrecognized argument: %s"
-msgstr "nicht erkanntes Argument: %s"
-
-#: bundle.c:333
+#: bundle.c:358
 #, c-format
 msgid "ref '%s' is excluded by the rev-list options"
 msgstr "Referenz '%s' wird durch \"rev-list\" Optionen ausgeschlossen"
 
-#: bundle.c:378
+#: bundle.c:438 builtin/log.c:153 builtin/log.c:1342 builtin/shortlog.c:261
+#, c-format
+msgid "unrecognized argument: %s"
+msgstr "nicht erkanntes Argument: %s"
+
+#: bundle.c:444
 msgid "Refusing to create empty bundle."
 msgstr "Erstellung eines leeren Pakets zurückgewiesen."
 
-#: bundle.c:393
-msgid "Could not spawn pack-objects"
-msgstr "Konnte Paketobjekte nicht erstellen"
-
-#: bundle.c:411
-msgid "pack-objects died"
-msgstr "Erstellung der Paketobjekte abgebrochen"
-
-#: bundle.c:414
+#: bundle.c:454
 #, c-format
 msgid "cannot create '%s'"
 msgstr "kann '%s' nicht erstellen"
 
-#: bundle.c:435
+#: bundle.c:475
 msgid "index-pack died"
 msgstr "Erstellung der Paketindexdatei abgebrochen"
 
@@ -377,16 +377,19 @@ msgstr "Ungültiger Modus für Objekterstellung: %s"
 
 #: config.c:1201
 msgid "unable to parse command-line config"
-msgstr "Konnte die über die Kommandozeile angegebene Konfiguration nicht parsen."
+msgstr ""
+"Konnte die über die Kommandozeile angegebene Konfiguration nicht parsen."
 
 #: config.c:1262
 msgid "unknown error occured while reading the configuration files"
-msgstr "Es trat ein unbekannter Fehler beim Lesen der Konfigurationsdateien auf."
+msgstr ""
+"Es trat ein unbekannter Fehler beim Lesen der Konfigurationsdateien auf."
 
 #: config.c:1586
 #, c-format
 msgid "unable to parse '%s' from command-line config"
-msgstr "Konnte Wert '%s' aus der über die Kommandozeile angegebenen\n"
+msgstr ""
+"Konnte Wert '%s' aus der über die Kommandozeile angegebenen\n"
 "Konfiguration nicht parsen."
 
 #: config.c:1588
@@ -560,17 +563,17 @@ msgstr "konnte temporäre Datei '%s' nicht erstellen: %s"
 msgid "failed writing detached signature to '%s': %s"
 msgstr "Fehler beim Schreiben der Signatur nach '%s': %s"
 
-#: grep.c:1703
+#: grep.c:1718
 #, c-format
 msgid "'%s': unable to read %s"
 msgstr "'%s': konnte nicht lesen %s"
 
-#: grep.c:1720
+#: grep.c:1735
 #, c-format
 msgid "'%s': %s"
 msgstr "'%s': %s"
 
-#: grep.c:1731
+#: grep.c:1746
 #, c-format
 msgid "'%s': short read %s"
 msgstr "'%s': read() zu kurz %s"
@@ -652,7 +655,7 @@ msgid "failed to read the cache"
 msgstr "Lesen des Zwischenspeichers fehlgeschlagen"
 
 #: merge.c:94 builtin/checkout.c:356 builtin/checkout.c:562
-#: builtin/clone.c:662
+#: builtin/clone.c:659
 msgid "unable to write new index file"
 msgstr "Konnte neue Staging-Area-Datei nicht schreiben."
 
@@ -1138,11 +1141,11 @@ msgstr ""
 "  (benutzen Sie \"git pull\", um Ihren Branch mit dem Remote-Branch "
 "zusammenzuführen)\n"
 
-#: run-command.c:86
+#: run-command.c:87
 msgid "open /dev/null failed"
 msgstr "Öffnen von /dev/null fehlgeschlagen"
 
-#: run-command.c:88
+#: run-command.c:89
 #, c-format
 msgid "dup2(%d,%d) failed"
 msgstr "dup2(%d,%d) fehlgeschlagen"
@@ -1153,7 +1156,8 @@ msgstr "Fehler beim Signieren des \"push\"-Zertifikates"
 
 #: send-pack.c:322
 msgid "the receiving end does not support --signed push"
-msgstr "die Gegenseite unterstützt keinen signierten Versand (\"--signed push\")"
+msgstr ""
+"die Gegenseite unterstützt keinen signierten Versand (\"--signed push\")"
 
 #: sequencer.c:172 builtin/merge.c:781 builtin/merge.c:892
 #: builtin/merge.c:1002 builtin/merge.c:1012
@@ -1483,28 +1487,28 @@ msgstr "Konnte git-Verweis %s nicht erstellen"
 msgid "Could not set core.worktree in %s"
 msgstr "Konnte core.worktree in '%s' nicht setzen."
 
-#: trailer.c:500 trailer.c:504 trailer.c:508 trailer.c:562 trailer.c:566
-#: trailer.c:570
+#: trailer.c:499 trailer.c:503 trailer.c:507 trailer.c:561 trailer.c:565
+#: trailer.c:569
 #, c-format
 msgid "unknown value '%s' for key '%s'"
 msgstr "unbekannter Wert '%s' für Schlüssel %s"
 
-#: trailer.c:552 trailer.c:557 builtin/remote.c:288
+#: trailer.c:551 trailer.c:556 builtin/remote.c:288
 #, c-format
 msgid "more than one %s"
 msgstr "mehr als ein %s"
 
-#: trailer.c:587
+#: trailer.c:589
 #, c-format
-msgid "empty trailer token in trailer '%s'"
-msgstr "leerer Anhang-Token in Anhang '%s'"
+msgid "empty trailer token in trailer '%.*s'"
+msgstr "leerer Anhang-Token in Anhang '%.*s'"
 
-#: trailer.c:706
+#: trailer.c:709
 #, c-format
 msgid "could not read input file '%s'"
 msgstr "Konnte Eingabe-Datei '%s' nicht lesen"
 
-#: trailer.c:709
+#: trailer.c:712
 msgid "could not read from stdin"
 msgstr "konnte nicht von der Standard-Eingabe lesen"
 
@@ -1719,15 +1723,15 @@ msgstr "unbeobachteter Inhalt, "
 msgid "bug: unhandled diff status %c"
 msgstr "Fehler: unbehandelter Differenz-Status %c"
 
-#: wt-status.c:763
+#: wt-status.c:761
 msgid "Submodules changed but not updated:"
 msgstr "Submodule geändert, aber nicht aktualisiert:"
 
-#: wt-status.c:765
+#: wt-status.c:763
 msgid "Submodule changes to be committed:"
 msgstr "Änderungen in Submodul zum Committen:"
 
-#: wt-status.c:844
+#: wt-status.c:842
 msgid ""
 "Do not touch the line above.\n"
 "Everything below will be removed."
@@ -1735,75 +1739,75 @@ msgstr ""
 "Ändern Sie nicht die obige Zeile.\n"
 "Alles unterhalb von ihr wird entfernt."
 
-#: wt-status.c:935
+#: wt-status.c:933
 msgid "You have unmerged paths."
 msgstr "Sie haben nicht zusammengeführte Pfade."
 
-#: wt-status.c:938
+#: wt-status.c:936
 msgid "  (fix conflicts and run \"git commit\")"
 msgstr " (beheben Sie die Konflikte und führen Sie \"git commit\" aus)"
 
-#: wt-status.c:941
+#: wt-status.c:939
 msgid "All conflicts fixed but you are still merging."
 msgstr "Alle Konflikte sind behoben, aber Sie sind immer noch beim Merge."
 
-#: wt-status.c:944
+#: wt-status.c:942
 msgid "  (use \"git commit\" to conclude merge)"
 msgstr "  (benutzen Sie \"git commit\", um den Merge abzuschließen)"
 
-#: wt-status.c:954
+#: wt-status.c:952
 msgid "You are in the middle of an am session."
 msgstr "Eine \"am\"-Sitzung ist im Gange."
 
-#: wt-status.c:957
+#: wt-status.c:955
 msgid "The current patch is empty."
 msgstr "Der aktuelle Patch ist leer."
 
-#: wt-status.c:961
+#: wt-status.c:959
 msgid "  (fix conflicts and then run \"git am --continue\")"
 msgstr ""
 "  (beheben Sie die Konflikte und führen Sie dann \"git am --continue\" aus)"
 
-#: wt-status.c:963
+#: wt-status.c:961
 msgid "  (use \"git am --skip\" to skip this patch)"
 msgstr "  (benutzen Sie \"git am --skip\", um diesen Patch auszulassen)"
 
-#: wt-status.c:965
+#: wt-status.c:963
 msgid "  (use \"git am --abort\" to restore the original branch)"
 msgstr ""
 "  (benutzen Sie \"git am --abort\", um den ursprünglichen Branch "
 "wiederherzustellen)"
 
-#: wt-status.c:1025 wt-status.c:1042
+#: wt-status.c:1023 wt-status.c:1040
 #, c-format
 msgid "You are currently rebasing branch '%s' on '%s'."
 msgstr "Sie sind gerade beim Rebase von Branch '%s' auf '%s'."
 
-#: wt-status.c:1030 wt-status.c:1047
+#: wt-status.c:1028 wt-status.c:1045
 msgid "You are currently rebasing."
 msgstr "Sie sind gerade beim Rebase."
 
-#: wt-status.c:1033
+#: wt-status.c:1031
 msgid "  (fix conflicts and then run \"git rebase --continue\")"
 msgstr ""
 "  (beheben Sie die Konflikte und führen Sie dann \"git rebase --continue\" "
 "aus)"
 
-#: wt-status.c:1035
+#: wt-status.c:1033
 msgid "  (use \"git rebase --skip\" to skip this patch)"
 msgstr "  (benutzen Sie \"git rebase --skip\", um diesen Patch auszulassen)"
 
-#: wt-status.c:1037
+#: wt-status.c:1035
 msgid "  (use \"git rebase --abort\" to check out the original branch)"
 msgstr ""
 "  (benutzen Sie \"git rebase --abort\", um den ursprünglichen Branch "
 "auszuchecken)"
 
-#: wt-status.c:1050
+#: wt-status.c:1048
 msgid "  (all conflicts fixed: run \"git rebase --continue\")"
 msgstr "  (alle Konflikte behoben: führen Sie \"git rebase --continue\" aus)"
 
-#: wt-status.c:1054
+#: wt-status.c:1052
 #, c-format
 msgid ""
 "You are currently splitting a commit while rebasing branch '%s' on '%s'."
@@ -1811,130 +1815,130 @@ msgstr ""
 "Sie teilen gerade einen Commit auf, während ein Rebase von Branch '%s' auf "
 "'%s' im Gange ist."
 
-#: wt-status.c:1059
+#: wt-status.c:1057
 msgid "You are currently splitting a commit during a rebase."
 msgstr "Sie teilen gerade einen Commit während eines Rebase auf."
 
-#: wt-status.c:1062
+#: wt-status.c:1060
 msgid "  (Once your working directory is clean, run \"git rebase --continue\")"
 msgstr ""
 "  (Sobald Ihr Arbeitsverzeichnis unverändert ist, führen Sie \"git rebase --"
 "continue\" aus)"
 
-#: wt-status.c:1066
+#: wt-status.c:1064
 #, c-format
 msgid "You are currently editing a commit while rebasing branch '%s' on '%s'."
 msgstr ""
 "Sie editieren gerade einen Commit während eines Rebase von Branch '%s' auf "
 "'%s'."
 
-#: wt-status.c:1071
+#: wt-status.c:1069
 msgid "You are currently editing a commit during a rebase."
 msgstr "Sie editieren gerade einen Commit während eines Rebase."
 
-#: wt-status.c:1074
+#: wt-status.c:1072
 msgid "  (use \"git commit --amend\" to amend the current commit)"
 msgstr ""
 "  (benutzen Sie \"git commit --amend\", um den aktuellen Commit "
 "nachzubessern)"
 
-#: wt-status.c:1076
+#: wt-status.c:1074
 msgid ""
 "  (use \"git rebase --continue\" once you are satisfied with your changes)"
 msgstr ""
 "  (benutzen Sie \"git rebase --continue\" sobald Ihre Änderungen "
 "abgeschlossen sind)"
 
-#: wt-status.c:1086
+#: wt-status.c:1084
 #, c-format
 msgid "You are currently cherry-picking commit %s."
 msgstr "Sie führen gerade \"cherry-pick\" von Commit %s aus."
 
-#: wt-status.c:1091
+#: wt-status.c:1089
 msgid "  (fix conflicts and run \"git cherry-pick --continue\")"
 msgstr ""
 "  (beheben Sie die Konflikte und führen Sie dann \"git cherry-pick --continue"
 "\" aus)"
 
-#: wt-status.c:1094
+#: wt-status.c:1092
 msgid "  (all conflicts fixed: run \"git cherry-pick --continue\")"
 msgstr ""
 "  (alle Konflikte behoben: führen Sie \"git cherry-pick --continue\" aus)"
 
-#: wt-status.c:1096
+#: wt-status.c:1094
 msgid "  (use \"git cherry-pick --abort\" to cancel the cherry-pick operation)"
 msgstr ""
 "  (benutzen Sie \"git cherry-pick --abort\", um die Cherry-Pick-Operation "
 "abzubrechen)"
 
-#: wt-status.c:1105
+#: wt-status.c:1103
 #, c-format
 msgid "You are currently reverting commit %s."
 msgstr "Sie sind gerade an einem Revert von Commit '%s'."
 
-#: wt-status.c:1110
+#: wt-status.c:1108
 msgid "  (fix conflicts and run \"git revert --continue\")"
 msgstr ""
 "  (beheben Sie die Konflikte und führen Sie dann \"git revert --continue\" "
 "aus)"
 
-#: wt-status.c:1113
+#: wt-status.c:1111
 msgid "  (all conflicts fixed: run \"git revert --continue\")"
 msgstr "  (alle Konflikte behoben: führen Sie \"git revert --continue\" aus)"
 
-#: wt-status.c:1115
+#: wt-status.c:1113
 msgid "  (use \"git revert --abort\" to cancel the revert operation)"
 msgstr ""
 "  (benutzen Sie \"git revert --abort\", um die Revert-Operation abzubrechen)"
 
-#: wt-status.c:1126
+#: wt-status.c:1124
 #, c-format
 msgid "You are currently bisecting, started from branch '%s'."
 msgstr "Sie sind gerade bei einer binären Suche, gestartet von Branch '%s'."
 
-#: wt-status.c:1130
+#: wt-status.c:1128
 msgid "You are currently bisecting."
 msgstr "Sie sind gerade bei einer binären Suche."
 
-#: wt-status.c:1133
+#: wt-status.c:1131
 msgid "  (use \"git bisect reset\" to get back to the original branch)"
 msgstr ""
 "  (benutzen Sie \"git bisect reset\", um zum ursprünglichen Branch "
 "zurückzukehren)"
 
-#: wt-status.c:1308
+#: wt-status.c:1306
 msgid "On branch "
 msgstr "Auf Branch "
 
-#: wt-status.c:1315
+#: wt-status.c:1313
 msgid "rebase in progress; onto "
 msgstr "Rebase im Gange; auf "
 
-#: wt-status.c:1322
+#: wt-status.c:1320
 msgid "HEAD detached at "
 msgstr "HEAD losgelöst bei "
 
-#: wt-status.c:1324
+#: wt-status.c:1322
 msgid "HEAD detached from "
 msgstr "HEAD losgelöst von "
 
-#: wt-status.c:1327
+#: wt-status.c:1325
 msgid "Not currently on any branch."
 msgstr "Im Moment auf keinem Branch."
 
-#: wt-status.c:1344
+#: wt-status.c:1342
 msgid "Initial commit"
 msgstr "Initialer Commit"
 
-#: wt-status.c:1358
+#: wt-status.c:1356
 msgid "Untracked files"
 msgstr "Unbeobachtete Dateien"
 
-#: wt-status.c:1360
+#: wt-status.c:1358
 msgid "Ignored files"
 msgstr "Ignorierte Dateien"
 
-#: wt-status.c:1364
+#: wt-status.c:1362
 #, c-format
 msgid ""
 "It took %.2f seconds to enumerate untracked files. 'status -uno'\n"
@@ -1945,32 +1949,32 @@ msgstr ""
 "'status -uno' könnte das beschleunigen, aber Sie müssen darauf achten,\n"
 "neue Dateien selbstständig hinzuzufügen (siehe 'git help status')."
 
-#: wt-status.c:1370
+#: wt-status.c:1368
 #, c-format
 msgid "Untracked files not listed%s"
 msgstr "Unbeobachtete Dateien nicht aufgelistet%s"
 
-#: wt-status.c:1372
+#: wt-status.c:1370
 msgid " (use -u option to show untracked files)"
 msgstr " (benutzen Sie die Option -u, um unbeobachteten Dateien anzuzeigen)"
 
-#: wt-status.c:1378
+#: wt-status.c:1376
 msgid "No changes"
 msgstr "Keine Änderungen"
 
-#: wt-status.c:1383
+#: wt-status.c:1381
 #, c-format
 msgid "no changes added to commit (use \"git add\" and/or \"git commit -a\")\n"
 msgstr ""
 "keine Änderungen zum Commit vorgemerkt (benutzen Sie \"git add\" und/oder "
 "\"git commit -a\")\n"
 
-#: wt-status.c:1386
+#: wt-status.c:1384
 #, c-format
 msgid "no changes added to commit\n"
 msgstr "keine Änderungen zum Commit vorgemerkt\n"
 
-#: wt-status.c:1389
+#: wt-status.c:1387
 #, c-format
 msgid ""
 "nothing added to commit but untracked files present (use \"git add\" to "
@@ -1979,48 +1983,48 @@ msgstr ""
 "nichts zum Commit vorgemerkt, aber es gibt unbeobachtete Dateien (benutzen "
 "Sie \"git add\" zum Beobachten)\n"
 
-#: wt-status.c:1392
+#: wt-status.c:1390
 #, c-format
 msgid "nothing added to commit but untracked files present\n"
 msgstr "nichts zum Commit vorgemerkt, aber es gibt unbeobachtete Dateien\n"
 
-#: wt-status.c:1395
+#: wt-status.c:1393
 #, c-format
 msgid "nothing to commit (create/copy files and use \"git add\" to track)\n"
 msgstr ""
 "nichts zu committen (Erstellen/Kopieren Sie Dateien und benutzen Sie \"git "
 "add\" zum Beobachten)\n"
 
-#: wt-status.c:1398 wt-status.c:1403
+#: wt-status.c:1396 wt-status.c:1401
 #, c-format
 msgid "nothing to commit\n"
 msgstr "nichts zu committen\n"
 
-#: wt-status.c:1401
+#: wt-status.c:1399
 #, c-format
 msgid "nothing to commit (use -u to show untracked files)\n"
 msgstr ""
 "nichts zu committen (benutzen Sie die Option -u, um unbeobachtete Dateien "
 "anzuzeigen)\n"
 
-#: wt-status.c:1405
+#: wt-status.c:1403
 #, c-format
 msgid "nothing to commit, working directory clean\n"
 msgstr "nichts zu committen, Arbeitsverzeichnis unverändert\n"
 
-#: wt-status.c:1514
+#: wt-status.c:1512
 msgid "HEAD (no branch)"
 msgstr "HEAD (kein Branch)"
 
-#: wt-status.c:1520
+#: wt-status.c:1518
 msgid "Initial commit on "
 msgstr "Initialer Commit auf "
 
-#: wt-status.c:1552
+#: wt-status.c:1550
 msgid "gone"
 msgstr "entfernt"
 
-#: wt-status.c:1554 wt-status.c:1562
+#: wt-status.c:1552 wt-status.c:1560
 msgid "behind "
 msgstr "hinterher "
 
@@ -2086,13 +2090,13 @@ msgstr ""
 "ignoriert:\n"
 
 #: builtin/add.c:248 builtin/clean.c:875 builtin/fetch.c:108 builtin/mv.c:110
-#: builtin/prune-packed.c:78 builtin/push.c:488 builtin/remote.c:1375
+#: builtin/prune-packed.c:55 builtin/push.c:499 builtin/remote.c:1375
 #: builtin/rm.c:269
 msgid "dry run"
 msgstr "Probelauf"
 
 #: builtin/add.c:249 builtin/apply.c:4415 builtin/check-ignore.c:19
-#: builtin/commit.c:1362 builtin/count-objects.c:95 builtin/fsck.c:608
+#: builtin/commit.c:1362 builtin/count-objects.c:63 builtin/fsck.c:608
 #: builtin/log.c:1617 builtin/mv.c:109 builtin/read-tree.c:114
 msgid "be verbose"
 msgstr "erweiterte Ausgaben"
@@ -2537,8 +2541,8 @@ msgstr "Anzahl"
 #: builtin/apply.c:4369
 msgid "remove <num> leading slashes from traditional diff paths"
 msgstr ""
-"<Anzahl> vorangestellte Schrägstriche von herkömmlichen "
-"Differenzpfaden entfernen"
+"<Anzahl> vorangestellte Schrägstriche von herkömmlichen Differenzpfaden "
+"entfernen"
 
 #: builtin/apply.c:4372
 msgid "ignore additions made by the patch"
@@ -2574,8 +2578,7 @@ msgstr ""
 
 #: builtin/apply.c:4386
 msgid "apply a patch without touching the working tree"
-msgstr ""
-"Patch anwenden, ohne Änderungen im Arbeitsverzeichnis vorzunehmen"
+msgstr "Patch anwenden, ohne Änderungen im Arbeitsverzeichnis vorzunehmen"
 
 #: builtin/apply.c:4388
 msgid "also apply the patch (use with --stat/--summary/--check)"
@@ -2588,8 +2591,8 @@ msgstr "versuche 3-Wege-Merge, wenn der Patch nicht angewendet werden konnte"
 #: builtin/apply.c:4392
 msgid "build a temporary index based on embedded index information"
 msgstr ""
-"eine temporäre Staging-Area, basierend auf den integrierten Staging-"
-"Area-Informationen, erstellen"
+"eine temporäre Staging-Area, basierend auf den integrierten Staging-Area-"
+"Informationen, erstellen"
 
 #: builtin/apply.c:4394 builtin/checkout-index.c:198 builtin/ls-files.c:455
 msgid "paths are separated with NUL character"
@@ -2597,7 +2600,8 @@ msgstr "Pfade sind getrennt durch NUL Zeichen"
 
 #: builtin/apply.c:4397
 msgid "ensure at least <n> lines of context match"
-msgstr "sicher stellen, dass mindestens <n> Zeilen des Kontextes übereinstimmen"
+msgstr ""
+"sicher stellen, dass mindestens <n> Zeilen des Kontextes übereinstimmen"
 
 #: builtin/apply.c:4398
 msgid "action"
@@ -2772,7 +2776,8 @@ msgstr ""
 
 #: builtin/blame.c:2510
 msgid "Use the same output mode as git-annotate (Default: off)"
-msgstr "Den gleichen Ausgabemodus benutzen wie \"git-annotate\" (Standard: aus)"
+msgstr ""
+"Den gleichen Ausgabemodus benutzen wie \"git-annotate\" (Standard: aus)"
 
 #: builtin/blame.c:2511
 msgid "Show raw timestamp (Default: off)"
@@ -2788,7 +2793,8 @@ msgstr "Den Namen des Autors und den Zeitstempel unterdrücken (Standard: aus)"
 
 #: builtin/blame.c:2514
 msgid "Show author email instead of name (Default: off)"
-msgstr "Anstatt des Namens die E-Mail-Adresse des Autors anzeigen (Standard: aus)"
+msgstr ""
+"Anstatt des Namens die E-Mail-Adresse des Autors anzeigen (Standard: aus)"
 
 #: builtin/blame.c:2515
 msgid "Ignore whitespace differences"
@@ -3146,7 +3152,7 @@ msgstr "Branches in Spalten auflisten"
 msgid "Failed to resolve HEAD as a valid ref."
 msgstr "Konnte HEAD nicht als gültige Referenz auflösen."
 
-#: builtin/branch.c:881 builtin/clone.c:637
+#: builtin/branch.c:881 builtin/clone.c:634
 msgid "HEAD not found below refs/heads!"
 msgstr "HEAD wurde nicht unter \"refs/heads\" gefunden!"
 
@@ -3925,7 +3931,7 @@ msgid "git clone [options] [--] <repo> [<dir>]"
 msgstr "git clone [Optionen] [--] <Repository> [<Verzeichnis>]"
 
 #: builtin/clone.c:65 builtin/fetch.c:112 builtin/merge.c:223
-#: builtin/push.c:503
+#: builtin/push.c:514
 msgid "force progress reporting"
 msgstr "Fortschrittsanzeige erzwingen"
 
@@ -4062,12 +4068,12 @@ msgstr "Konnte Verweis '%s' nicht erstellen"
 msgid "failed to copy file to '%s'"
 msgstr "Konnte Datei nicht nach '%s' kopieren"
 
-#: builtin/clone.c:389 builtin/clone.c:566
+#: builtin/clone.c:389 builtin/clone.c:563
 #, c-format
 msgid "done.\n"
 msgstr "Fertig.\n"
 
-#: builtin/clone.c:402
+#: builtin/clone.c:401
 msgid ""
 "Clone succeeded, but checkout failed.\n"
 "You can inspect what was checked out with 'git status'\n"
@@ -4077,114 +4083,114 @@ msgstr ""
 "Sie können mit 'git status' prüfen, was ausgecheckt worden ist\n"
 "und das Auschecken mit 'git checkout -f HEAD' erneut versuchen.\n"
 
-#: builtin/clone.c:481
+#: builtin/clone.c:478
 #, c-format
 msgid "Could not find remote branch %s to clone."
 msgstr "Konnte zu klonenden Remote-Branch %s nicht finden."
 
-#: builtin/clone.c:561
+#: builtin/clone.c:558
 #, c-format
 msgid "Checking connectivity... "
 msgstr "Prüfe Konnektivität... "
 
-#: builtin/clone.c:564
+#: builtin/clone.c:561
 msgid "remote did not send all necessary objects"
 msgstr "Remote-Repository hat nicht alle erforderlichen Objekte gesendet."
 
-#: builtin/clone.c:628
+#: builtin/clone.c:625
 msgid "remote HEAD refers to nonexistent ref, unable to checkout.\n"
 msgstr ""
 "Externer HEAD bezieht sich auf eine nicht existierende Referenz und kann "
 "nicht ausgecheckt werden.\n"
 
-#: builtin/clone.c:659
+#: builtin/clone.c:656
 msgid "unable to checkout working tree"
 msgstr "Arbeitsverzeichnis konnte nicht ausgecheckt werden"
 
-#: builtin/clone.c:770
+#: builtin/clone.c:765
 msgid "Too many arguments."
 msgstr "Zu viele Argumente."
 
-#: builtin/clone.c:774
+#: builtin/clone.c:769
 msgid "You must specify a repository to clone."
 msgstr "Sie müssen ein Repository zum Klonen angeben."
 
-#: builtin/clone.c:785
+#: builtin/clone.c:780
 #, c-format
 msgid "--bare and --origin %s options are incompatible."
 msgstr "Die Optionen --bare und --origin %s sind inkompatibel."
 
-#: builtin/clone.c:788
+#: builtin/clone.c:783
 msgid "--bare and --separate-git-dir are incompatible."
 msgstr "Die Optionen --bare und --separate-git-dir sind inkompatibel."
 
-#: builtin/clone.c:801
+#: builtin/clone.c:796
 #, c-format
 msgid "repository '%s' does not exist"
 msgstr "Repository '%s' existiert nicht."
 
-#: builtin/clone.c:807 builtin/fetch.c:1155
+#: builtin/clone.c:802 builtin/fetch.c:1155
 #, c-format
 msgid "depth %s is not a positive number"
 msgstr "Tiefe %s ist keine positive Zahl"
 
-#: builtin/clone.c:817
+#: builtin/clone.c:812
 #, c-format
 msgid "destination path '%s' already exists and is not an empty directory."
 msgstr "Zielpfad '%s' existiert bereits und ist kein leeres Verzeichnis."
 
-#: builtin/clone.c:827
+#: builtin/clone.c:822
 #, c-format
 msgid "working tree '%s' already exists."
 msgstr "Arbeitsverzeichnis '%s' existiert bereits."
 
-#: builtin/clone.c:840 builtin/clone.c:852
+#: builtin/clone.c:835 builtin/clone.c:847
 #, c-format
 msgid "could not create leading directories of '%s'"
 msgstr "Konnte führende Verzeichnisse von '%s' nicht erstellen."
 
-#: builtin/clone.c:843
+#: builtin/clone.c:838
 #, c-format
 msgid "could not create work tree dir '%s'."
 msgstr "Konnte Arbeitsverzeichnis '%s' nicht erstellen."
 
-#: builtin/clone.c:862
+#: builtin/clone.c:857
 #, c-format
 msgid "Cloning into bare repository '%s'...\n"
 msgstr "Klone in Bare-Repository '%s'...\n"
 
-#: builtin/clone.c:864
+#: builtin/clone.c:859
 #, c-format
 msgid "Cloning into '%s'...\n"
 msgstr "Klone nach '%s'...\n"
 
-#: builtin/clone.c:900
+#: builtin/clone.c:895
 msgid "--depth is ignored in local clones; use file:// instead."
 msgstr ""
 "Die Option --depth wird in lokalen Klonen ignoriert; benutzen Sie "
 "stattdessen file://"
 
-#: builtin/clone.c:903
+#: builtin/clone.c:898
 msgid "source repository is shallow, ignoring --local"
 msgstr ""
 "Quelle ist ein Repository mit unvollständiger Historie (shallow),ignoriere --"
 "local"
 
-#: builtin/clone.c:908
+#: builtin/clone.c:903
 msgid "--local is ignored"
 msgstr "--local wird ignoriert"
 
-#: builtin/clone.c:912
+#: builtin/clone.c:907
 #, c-format
 msgid "Don't know how to clone %s"
 msgstr "Weiß nicht wie %s zu klonen ist."
 
-#: builtin/clone.c:963 builtin/clone.c:971
+#: builtin/clone.c:958 builtin/clone.c:966
 #, c-format
 msgid "Remote branch %s not found in upstream %s"
 msgstr "Remote-Branch %s nicht im Upstream-Repository %s gefunden"
 
-#: builtin/clone.c:974
+#: builtin/clone.c:969
 msgid "You appear to have cloned an empty repository."
 msgstr "Sie scheinen ein leeres Repository geklont zu haben."
 
@@ -4246,7 +4252,8 @@ msgstr ""
 "Ihres Benutzer- und Rechnernamens konfiguriert. Bitte prüfen Sie, dass\n"
 "diese zutreffend sind. Sie können diese Meldung unterdrücken, indem Sie\n"
 "diese explizit setzen. Führen Sie dazu das folgende Kommando aus und folgen\n"
-"Sie den Anweisungen in Ihrem Editor, um die Konfigurationsdatei zu bearbeiten:\n"
+"Sie den Anweisungen in Ihrem Editor, um die Konfigurationsdatei zu "
+"bearbeiten:\n"
 "\n"
 "    git config --global --edit\n"
 "\n"
@@ -4609,7 +4616,7 @@ msgstr "Status im Kurzformat anzeigen"
 msgid "show branch information"
 msgstr "Branchinformationen anzeigen"
 
-#: builtin/commit.c:1368 builtin/commit.c:1648 builtin/push.c:489
+#: builtin/commit.c:1368 builtin/commit.c:1648 builtin/push.c:500
 msgid "machine-readable output"
 msgstr "maschinenlesbare Ausgabe"
 
@@ -4629,8 +4636,8 @@ msgstr "Modus"
 #: builtin/commit.c:1377 builtin/commit.c:1656
 msgid "show untracked files, optional modes: all, normal, no. (Default: all)"
 msgstr ""
-"nicht beobachtete Dateien anzeigen, optionale Modi: all, normal, no. (Standard: "
-"all)"
+"nicht beobachtete Dateien anzeigen, optionale Modi: all, normal, no. "
+"(Standard: all)"
 
 #: builtin/commit.c:1380
 msgid "show ignored files"
@@ -5015,11 +5022,11 @@ msgstr ""
 msgid "cannot create configuration file %s"
 msgstr "Konnte Konfigurationsdatei '%s' nicht erstellen."
 
-#: builtin/count-objects.c:82
+#: builtin/count-objects.c:55
 msgid "git count-objects [-v] [-H | --human-readable]"
 msgstr "git count-objects [-v] [-H | --human-readable]"
 
-#: builtin/count-objects.c:97
+#: builtin/count-objects.c:65
 msgid "print sizes in human readable format"
 msgstr "gibt Größenangaben in menschenlesbaren Format aus"
 
@@ -5600,7 +5607,7 @@ msgstr "Schüssel"
 msgid "field name to sort on"
 msgstr "sortiere nach diesem Feld"
 
-#: builtin/fsck.c:147 builtin/prune.c:172
+#: builtin/fsck.c:147 builtin/prune.c:136
 msgid "Checking connectivity"
 msgstr "Prüfe Konnektivität"
 
@@ -5648,7 +5655,7 @@ msgstr "genauere Prüfung aktivieren"
 msgid "write dangling objects in .git/lost-found"
 msgstr "unreferenzierte Objekte nach .git/lost-found schreiben"
 
-#: builtin/fsck.c:619 builtin/prune.c:144
+#: builtin/fsck.c:619 builtin/prune.c:108
 msgid "show progress"
 msgstr "Fortschrittsanzeige anzeigen"
 
@@ -5859,8 +5866,8 @@ msgstr ""
 #: builtin/grep.c:696
 msgid "show filename only once above matches from same file"
 msgstr ""
-"den Dateinamen nur einmal oberhalb der Übereinstimmungen aus dieser "
-"Datei anzeigen"
+"den Dateinamen nur einmal oberhalb der Übereinstimmungen aus dieser Datei "
+"anzeigen"
 
 #: builtin/grep.c:699
 msgid "show <n> context lines before and after matches"
@@ -5904,7 +5911,8 @@ msgstr "Übereinstimmungen nur durch Beendigungsstatus anzeigen"
 
 #: builtin/grep.c:731
 msgid "show only matches from files that match all patterns"
-msgstr "nur Übereinstimmungen von Dateien anzeigen, die allen Mustern entsprechen"
+msgstr ""
+"nur Übereinstimmungen von Dateien anzeigen, die allen Mustern entsprechen"
 
 #: builtin/grep.c:733
 msgid "show parse tree for grep expression"
@@ -6130,287 +6138,287 @@ msgstr "für `git %s' wurde der Alias `%s' angelegt"
 msgid "unable to open %s"
 msgstr "kann %s nicht öffnen"
 
-#: builtin/index-pack.c:197
+#: builtin/index-pack.c:200
 #, c-format
 msgid "object type mismatch at %s"
 msgstr "Objekt-Typen passen bei %s nicht zusammen"
 
-#: builtin/index-pack.c:217
+#: builtin/index-pack.c:220
 #, c-format
 msgid "did not receive expected object %s"
 msgstr "konnte erwartetes Objekt %s nicht empfangen"
 
-#: builtin/index-pack.c:220
+#: builtin/index-pack.c:223
 #, c-format
 msgid "object %s: expected type %s, found %s"
 msgstr "Objekt %s: erwarteter Typ %s, %s gefunden"
 
-#: builtin/index-pack.c:262
+#: builtin/index-pack.c:265
 #, c-format
 msgid "cannot fill %d byte"
 msgid_plural "cannot fill %d bytes"
 msgstr[0] "kann %d Byte nicht lesen"
 msgstr[1] "kann %d Bytes nicht lesen"
 
-#: builtin/index-pack.c:272
+#: builtin/index-pack.c:275
 msgid "early EOF"
 msgstr "zu frühes Dateiende"
 
-#: builtin/index-pack.c:273
+#: builtin/index-pack.c:276
 msgid "read error on input"
 msgstr "Fehler beim Lesen der Eingabe"
 
-#: builtin/index-pack.c:285
+#: builtin/index-pack.c:288
 msgid "used more bytes than were available"
 msgstr "verwendete mehr Bytes als verfügbar waren"
 
-#: builtin/index-pack.c:292
+#: builtin/index-pack.c:295
 msgid "pack too large for current definition of off_t"
 msgstr "Paket ist zu groß für die aktuelle Definition von off_t"
 
-#: builtin/index-pack.c:308
+#: builtin/index-pack.c:311
 #, c-format
 msgid "unable to create '%s'"
 msgstr "konnte '%s' nicht erstellen"
 
-#: builtin/index-pack.c:313
+#: builtin/index-pack.c:316
 #, c-format
 msgid "cannot open packfile '%s'"
 msgstr "Kann Paketdatei '%s' nicht öffnen"
 
-#: builtin/index-pack.c:327
+#: builtin/index-pack.c:330
 msgid "pack signature mismatch"
 msgstr "Paketsignatur stimmt nicht überein"
 
-#: builtin/index-pack.c:329
+#: builtin/index-pack.c:332
 #, c-format
 msgid "pack version %<PRIu32> unsupported"
 msgstr "Paketversion %<PRIu32> nicht unterstützt"
 
-#: builtin/index-pack.c:347
+#: builtin/index-pack.c:350
 #, c-format
 msgid "pack has bad object at offset %lu: %s"
 msgstr "Paket hat ein ungültiges Objekt bei Versatz %lu: %s"
 
-#: builtin/index-pack.c:468
+#: builtin/index-pack.c:471
 #, c-format
 msgid "inflate returned %d"
 msgstr "Dekomprimierung gab %d zurück"
 
-#: builtin/index-pack.c:517
+#: builtin/index-pack.c:520
 msgid "offset value overflow for delta base object"
 msgstr "Wert für Versatz bei Differenzobjekt übergelaufen"
 
-#: builtin/index-pack.c:525
+#: builtin/index-pack.c:528
 msgid "delta base offset is out of bound"
 msgstr ""
 "Wert für Versatz bei Differenzobjekt liegt außerhalb des gültigen Bereichs"
 
-#: builtin/index-pack.c:533
+#: builtin/index-pack.c:536
 #, c-format
 msgid "unknown object type %d"
 msgstr "Unbekannter Objekt-Typ %d"
 
-#: builtin/index-pack.c:564
+#: builtin/index-pack.c:567
 msgid "cannot pread pack file"
 msgstr "Kann Paketdatei %s nicht lesen"
 
-#: builtin/index-pack.c:566
+#: builtin/index-pack.c:569
 #, c-format
 msgid "premature end of pack file, %lu byte missing"
 msgid_plural "premature end of pack file, %lu bytes missing"
 msgstr[0] "frühzeitiges Ende der Paketdatei, vermisse %lu Byte"
 msgstr[1] "frühzeitiges Ende der Paketdatei, vermisse %lu Bytes"
 
-#: builtin/index-pack.c:592
+#: builtin/index-pack.c:595
 msgid "serious inflate inconsistency"
 msgstr "ernsthafte Inkonsistenz nach Dekomprimierung"
 
-#: builtin/index-pack.c:683 builtin/index-pack.c:689 builtin/index-pack.c:712
-#: builtin/index-pack.c:746 builtin/index-pack.c:755
+#: builtin/index-pack.c:686 builtin/index-pack.c:692 builtin/index-pack.c:715
+#: builtin/index-pack.c:749 builtin/index-pack.c:758
 #, c-format
 msgid "SHA1 COLLISION FOUND WITH %s !"
 msgstr "SHA1 KOLLISION MIT %s GEFUNDEN !"
 
-#: builtin/index-pack.c:686 builtin/pack-objects.c:161
-#: builtin/pack-objects.c:253
+#: builtin/index-pack.c:689 builtin/pack-objects.c:164
+#: builtin/pack-objects.c:256
 #, c-format
 msgid "unable to read %s"
 msgstr "kann %s nicht lesen"
 
-#: builtin/index-pack.c:752
+#: builtin/index-pack.c:755
 #, c-format
 msgid "cannot read existing object %s"
 msgstr "Kann existierendes Objekt %s nicht lesen."
 
-#: builtin/index-pack.c:766
+#: builtin/index-pack.c:769
 #, c-format
 msgid "invalid blob object %s"
 msgstr "ungültiges Blob-Objekt %s"
 
-#: builtin/index-pack.c:780
+#: builtin/index-pack.c:783
 #, c-format
 msgid "invalid %s"
 msgstr "Ungültiger Objekt-Typ %s"
 
-#: builtin/index-pack.c:784
+#: builtin/index-pack.c:787
 msgid "Error in object"
 msgstr "Fehler in Objekt"
 
-#: builtin/index-pack.c:786
+#: builtin/index-pack.c:789
 #, c-format
 msgid "Not all child objects of %s are reachable"
 msgstr "Nicht alle Kind-Objekte von %s sind erreichbar"
 
-#: builtin/index-pack.c:858 builtin/index-pack.c:887
+#: builtin/index-pack.c:861 builtin/index-pack.c:890
 msgid "failed to apply delta"
 msgstr "Konnte Dateiunterschied nicht anwenden"
 
-#: builtin/index-pack.c:1052
+#: builtin/index-pack.c:1055
 msgid "Receiving objects"
 msgstr "Empfange Objekte"
 
-#: builtin/index-pack.c:1052
+#: builtin/index-pack.c:1055
 msgid "Indexing objects"
 msgstr "Indiziere Objekte"
 
-#: builtin/index-pack.c:1078
+#: builtin/index-pack.c:1081
 msgid "pack is corrupted (SHA1 mismatch)"
 msgstr "Paket ist beschädigt (SHA1 unterschiedlich)"
 
-#: builtin/index-pack.c:1083
+#: builtin/index-pack.c:1086
 msgid "cannot fstat packfile"
 msgstr "kann Paketdatei nicht lesen"
 
-#: builtin/index-pack.c:1086
+#: builtin/index-pack.c:1089
 msgid "pack has junk at the end"
 msgstr "Paketende enthält nicht verwendbaren Inhalt"
 
-#: builtin/index-pack.c:1097
+#: builtin/index-pack.c:1100
 msgid "confusion beyond insanity in parse_pack_objects()"
 msgstr "Fehler beim Ausführen von \"parse_pack_objects()\""
 
-#: builtin/index-pack.c:1120
+#: builtin/index-pack.c:1123
 msgid "Resolving deltas"
 msgstr "Löse Unterschiede auf"
 
-#: builtin/index-pack.c:1130
+#: builtin/index-pack.c:1133
 #, c-format
 msgid "unable to create thread: %s"
 msgstr "kann Thread nicht erzeugen: %s"
 
-#: builtin/index-pack.c:1172
+#: builtin/index-pack.c:1175
 msgid "confusion beyond insanity"
 msgstr "Fehler beim Auflösen der Unterschiede"
 
-#: builtin/index-pack.c:1178
+#: builtin/index-pack.c:1181
 #, c-format
 msgid "completed with %d local objects"
 msgstr "abgeschlossen mit %d lokalen Objekten"
 
-#: builtin/index-pack.c:1188
+#: builtin/index-pack.c:1191
 #, c-format
 msgid "Unexpected tail checksum for %s (disk corruption?)"
 msgstr "Unerwartete Prüfsumme für %s (Festplattenfehler?)"
 
-#: builtin/index-pack.c:1192
+#: builtin/index-pack.c:1195
 #, c-format
 msgid "pack has %d unresolved delta"
 msgid_plural "pack has %d unresolved deltas"
 msgstr[0] "Paket hat %d unaufgelöste Unterschied"
 msgstr[1] "Paket hat %d unaufgelöste Unterschiede"
 
-#: builtin/index-pack.c:1217
+#: builtin/index-pack.c:1220
 #, c-format
 msgid "unable to deflate appended object (%d)"
 msgstr "Konnte angehängtes Objekt (%d) nicht komprimieren"
 
-#: builtin/index-pack.c:1296
+#: builtin/index-pack.c:1299
 #, c-format
 msgid "local object %s is corrupt"
 msgstr "lokales Objekt %s ist beschädigt"
 
-#: builtin/index-pack.c:1320
+#: builtin/index-pack.c:1323
 msgid "error while closing pack file"
 msgstr "Fehler beim Schließen der Paketdatei"
 
-#: builtin/index-pack.c:1333
+#: builtin/index-pack.c:1336
 #, c-format
 msgid "cannot write keep file '%s'"
 msgstr "Kann Paketbeschreibungsdatei '%s' nicht schreiben"
 
-#: builtin/index-pack.c:1341
+#: builtin/index-pack.c:1344
 #, c-format
 msgid "cannot close written keep file '%s'"
 msgstr "Kann eben erstellte Paketbeschreibungsdatei '%s' nicht schließen"
 
-#: builtin/index-pack.c:1354
+#: builtin/index-pack.c:1357
 msgid "cannot store pack file"
 msgstr "Kann Paketdatei nicht speichern"
 
-#: builtin/index-pack.c:1365
+#: builtin/index-pack.c:1368
 msgid "cannot store index file"
 msgstr "Kann Indexdatei nicht speichern"
 
-#: builtin/index-pack.c:1398
+#: builtin/index-pack.c:1401
 #, c-format
 msgid "bad pack.indexversion=%<PRIu32>"
 msgstr "\"pack.indexversion=%<PRIu32>\" ist ungültig"
 
-#: builtin/index-pack.c:1404
+#: builtin/index-pack.c:1407
 #, c-format
 msgid "invalid number of threads specified (%d)"
 msgstr "ungültige Anzahl von Threads angegeben (%d)"
 
-#: builtin/index-pack.c:1408 builtin/index-pack.c:1587
+#: builtin/index-pack.c:1411 builtin/index-pack.c:1590
 #, c-format
 msgid "no threads support, ignoring %s"
 msgstr "keine Unterstützung von Threads, '%s' wird ignoriert"
 
-#: builtin/index-pack.c:1466
+#: builtin/index-pack.c:1469
 #, c-format
 msgid "Cannot open existing pack file '%s'"
 msgstr "Kann existierende Paketdatei '%s' nicht öffnen"
 
-#: builtin/index-pack.c:1468
+#: builtin/index-pack.c:1471
 #, c-format
 msgid "Cannot open existing pack idx file for '%s'"
 msgstr "Kann existierende Indexdatei für Paket '%s' nicht öffnen"
 
-#: builtin/index-pack.c:1515
+#: builtin/index-pack.c:1518
 #, c-format
 msgid "non delta: %d object"
 msgid_plural "non delta: %d objects"
 msgstr[0] "kein Unterschied: %d Objekt"
 msgstr[1] "kein Unterschied: %d Objekte"
 
-#: builtin/index-pack.c:1522
+#: builtin/index-pack.c:1525
 #, c-format
 msgid "chain length = %d: %lu object"
 msgid_plural "chain length = %d: %lu objects"
 msgstr[0] "Länge der Objekt-Liste = %d: %lu Objekt"
 msgstr[1] "Länge der Objekt-Liste = %d: %lu Objekte"
 
-#: builtin/index-pack.c:1551
+#: builtin/index-pack.c:1554
 msgid "Cannot come back to cwd"
 msgstr "Kann nicht zurück zu Arbeitsverzeichnis wechseln"
 
-#: builtin/index-pack.c:1599 builtin/index-pack.c:1602
-#: builtin/index-pack.c:1614 builtin/index-pack.c:1618
+#: builtin/index-pack.c:1602 builtin/index-pack.c:1605
+#: builtin/index-pack.c:1617 builtin/index-pack.c:1621
 #, c-format
 msgid "bad %s"
 msgstr "%s ist ungültig"
 
-#: builtin/index-pack.c:1632
+#: builtin/index-pack.c:1635
 msgid "--fix-thin cannot be used without --stdin"
 msgstr "Die Option --fix-thin kann nicht ohne --stdin verwendet werden."
 
-#: builtin/index-pack.c:1636 builtin/index-pack.c:1645
+#: builtin/index-pack.c:1639 builtin/index-pack.c:1648
 #, c-format
 msgid "packfile name '%s' does not end with '.pack'"
 msgstr "Name der Paketdatei '%s' endet nicht mit '.pack'"
 
-#: builtin/index-pack.c:1653
+#: builtin/index-pack.c:1656
 msgid "--verify with no packfile name given"
 msgstr "Die Option --verify wurde ohne Namen der Paketdatei angegeben."
 
@@ -6521,11 +6529,11 @@ msgstr " gemeinsames"
 
 #: builtin/init-db.c:467
 msgid ""
-"git init [-q | --quiet] [--bare] [--template=<template-directory>] [--shared"
-"[=<permissions>]] [directory]"
+"git init [-q | --quiet] [--bare] [--template=<template-directory>] [--"
+"shared[=<permissions>]] [directory]"
 msgstr ""
-"git init [-q | --quiet] [--bare] [--template=<Vorlagenverzeichnis>] [--shared"
-"[=<Berechtigungen>]] [Verzeichnis]"
+"git init [-q | --quiet] [--bare] [--template=<Vorlagenverzeichnis>] [--"
+"shared[=<Berechtigungen>]] [Verzeichnis]"
 
 #: builtin/init-db.c:490
 msgid "permissions"
@@ -6535,7 +6543,7 @@ msgstr "Berechtigungen"
 msgid "specify that the git repository is to be shared amongst several users"
 msgstr "angeben, dass das Git-Repository mit mehreren Benutzern geteilt wird"
 
-#: builtin/init-db.c:493 builtin/prune-packed.c:80 builtin/repack.c:172
+#: builtin/init-db.c:493 builtin/prune-packed.c:57 builtin/repack.c:172
 msgid "be quiet"
 msgstr "weniger Ausgaben"
 
@@ -6905,15 +6913,16 @@ msgstr "ignorierte Dateien in der Ausgabe anzeigen"
 #: builtin/ls-files.c:473
 msgid "show staged contents' object name in the output"
 msgstr ""
-"Objektnamen von Inhalten, die zum Commit vorgemerkt sind, in der "
-"Ausgabe anzeigen"
+"Objektnamen von Inhalten, die zum Commit vorgemerkt sind, in der Ausgabe "
+"anzeigen"
 
 #: builtin/ls-files.c:475
 msgid "show files on the filesystem that need to be removed"
 msgstr "Dateien im Dateisystem, die gelöscht werden müssen, anzeigen"
 
 #: builtin/ls-files.c:477
-msgid "show 'other' directories' name only"
+#, fuzzy
+msgid "show 'other' directories' names only"
 msgstr "nur Namen von 'sonstigen' Verzeichnissen anzeigen"
 
 #: builtin/ls-files.c:480
@@ -7052,8 +7061,8 @@ msgstr "(Synonym für --stat)"
 #: builtin/merge.c:198
 msgid "add (at most <n>) entries from shortlog to merge commit message"
 msgstr ""
-"(höchstens <n>) Einträge von \"shortlog\" zur Beschreibung des Merge-"
-"Commits hinzufügen"
+"(höchstens <n>) Einträge von \"shortlog\" zur Beschreibung des Merge-Commits "
+"hinzufügen"
 
 #: builtin/merge.c:201
 msgid "create a single commit instead of doing a merge"
@@ -7552,7 +7561,7 @@ msgstr "%s, Quelle=%s, Ziel=%s"
 msgid "Renaming %s to %s\n"
 msgstr "Benenne %s nach %s um\n"
 
-#: builtin/mv.c:256 builtin/remote.c:726 builtin/repack.c:357
+#: builtin/mv.c:256 builtin/remote.c:726 builtin/repack.c:358
 #, c-format
 msgid "renaming '%s' failed"
 msgstr "Umbenennung von '%s' fehlgeschlagen"
@@ -7842,8 +7851,8 @@ msgstr "Objekte von der Standard-Eingabe lesen"
 #: builtin/notes.c:491
 msgid "load rewriting config for <command> (implies --stdin)"
 msgstr ""
-"Konfiguration für <Kommando> beim Umschreiben von Versionen laden (impliziert "
-"--stdin)"
+"Konfiguration für <Kommando> beim Umschreiben von Versionen laden "
+"(impliziert --stdin)"
 
 #: builtin/notes.c:509
 msgid "too few parameters"
@@ -7932,190 +7941,198 @@ msgstr "Notizen von <Notiz-Referenz> verwenden"
 msgid "Unknown subcommand: %s"
 msgstr "Unbekanntes Unterkommando: %s"
 
-#: builtin/pack-objects.c:25
+#: builtin/pack-objects.c:28
 msgid "git pack-objects --stdout [options...] [< ref-list | < object-list]"
 msgstr ""
 "git pack-objects --stdout [Optionen...] [< Referenzliste | < Objektliste]"
 
-#: builtin/pack-objects.c:26
+#: builtin/pack-objects.c:29
 msgid "git pack-objects [options...] base-name [< ref-list | < object-list]"
 msgstr ""
 "git pack-objects [Optionen...] Basis-Name [< Referenzliste | < Objektliste]"
 
-#: builtin/pack-objects.c:174 builtin/pack-objects.c:177
+#: builtin/pack-objects.c:177 builtin/pack-objects.c:180
 #, c-format
 msgid "deflate error (%d)"
 msgstr "Fehler beim Komprimieren (%d)"
 
-#: builtin/pack-objects.c:770
+#: builtin/pack-objects.c:773
 msgid "Writing objects"
 msgstr "Schreibe Objekte"
 
-#: builtin/pack-objects.c:1011
+#: builtin/pack-objects.c:1015
 msgid "disabling bitmap writing, as some objects are not being packed"
 msgstr ""
 "Deaktiviere Schreiben des Bitmap-Index, da einige Objekte nicht in\n"
 "eine Pack-Datei geschrieben wurden"
 
-#: builtin/pack-objects.c:2173
+#: builtin/pack-objects.c:2175
 msgid "Compressing objects"
 msgstr "Komprimiere Objekte"
 
-#: builtin/pack-objects.c:2526
+#: builtin/pack-objects.c:2572
 #, c-format
 msgid "unsupported index version %s"
 msgstr "Nicht unterstützte Staging-Area-Version %s"
 
-#: builtin/pack-objects.c:2530
+#: builtin/pack-objects.c:2576
 #, c-format
 msgid "bad index version '%s'"
 msgstr "Ungültige Staging-Area-Version '%s'"
 
-#: builtin/pack-objects.c:2553
+#: builtin/pack-objects.c:2599
 #, c-format
 msgid "option %s does not accept negative form"
 msgstr "Option %s akzeptiert keine negative Form"
 
-#: builtin/pack-objects.c:2557
+#: builtin/pack-objects.c:2603
 #, c-format
 msgid "unable to parse value '%s' for option %s"
 msgstr "konnte Wert '%s' für Option %s nicht parsen"
 
-#: builtin/pack-objects.c:2576
+#: builtin/pack-objects.c:2622
 msgid "do not show progress meter"
 msgstr "keine Fortschrittsanzeige anzeigen"
 
-#: builtin/pack-objects.c:2578
+#: builtin/pack-objects.c:2624
 msgid "show progress meter"
 msgstr "Fortschrittsanzeige anzeigen"
 
-#: builtin/pack-objects.c:2580
+#: builtin/pack-objects.c:2626
 msgid "show progress meter during object writing phase"
-msgstr "Forschrittsanzeige während der Phase des Schreibens der Objekte anzeigen"
+msgstr ""
+"Forschrittsanzeige während der Phase des Schreibens der Objekte anzeigen"
 
-#: builtin/pack-objects.c:2583
+#: builtin/pack-objects.c:2629
 msgid "similar to --all-progress when progress meter is shown"
 msgstr "ähnlich zu --all-progress wenn Fortschrittsanzeige darstellt wird"
 
-#: builtin/pack-objects.c:2584
+#: builtin/pack-objects.c:2630
 msgid "version[,offset]"
 msgstr "version[,offset]"
 
-#: builtin/pack-objects.c:2585
+#: builtin/pack-objects.c:2631
 msgid "write the pack index file in the specified idx format version"
 msgstr ""
 "die Index-Datei des Paketes in der angegebenen Indexformat-Version schreiben"
 
-#: builtin/pack-objects.c:2588
+#: builtin/pack-objects.c:2634
 msgid "maximum size of each output pack file"
 msgstr "maximale Größe für jede ausgegebene Paketdatei"
 
-#: builtin/pack-objects.c:2590
+#: builtin/pack-objects.c:2636
 msgid "ignore borrowed objects from alternate object store"
 msgstr "geliehene Objekte von alternativem Objektspeicher ignorieren"
 
-#: builtin/pack-objects.c:2592
+#: builtin/pack-objects.c:2638
 msgid "ignore packed objects"
 msgstr "gepackte Objekte ignorieren"
 
-#: builtin/pack-objects.c:2594
+#: builtin/pack-objects.c:2640
 msgid "limit pack window by objects"
 msgstr "Paketfenster durch Objekte begrenzen"
 
-#: builtin/pack-objects.c:2596
+#: builtin/pack-objects.c:2642
 msgid "limit pack window by memory in addition to object limit"
-msgstr "Paketfenster, zusätzlich zur Objektbegrenzung, durch Speicher begrenzen"
+msgstr ""
+"Paketfenster, zusätzlich zur Objektbegrenzung, durch Speicher begrenzen"
 
-#: builtin/pack-objects.c:2598
+#: builtin/pack-objects.c:2644
 msgid "maximum length of delta chain allowed in the resulting pack"
 msgstr ""
 "maximale Länge der erlaubten Differenzverkettung im resultierenden Paket"
 
-#: builtin/pack-objects.c:2600
+#: builtin/pack-objects.c:2646
 msgid "reuse existing deltas"
 msgstr "existierende Unterschiede wiederverwenden"
 
-#: builtin/pack-objects.c:2602
+#: builtin/pack-objects.c:2648
 msgid "reuse existing objects"
 msgstr "existierende Objekte wiederverwenden"
 
-#: builtin/pack-objects.c:2604
+#: builtin/pack-objects.c:2650
 msgid "use OFS_DELTA objects"
 msgstr "OFS_DELTA Objekte verwenden"
 
-#: builtin/pack-objects.c:2606
+#: builtin/pack-objects.c:2652
 msgid "use threads when searching for best delta matches"
 msgstr ""
-"Threads bei der Suche nach den besten Übereinstimmungen bei "
-"Unterschieden verwenden"
+"Threads bei der Suche nach den besten Übereinstimmungen bei Unterschieden "
+"verwenden"
 
-#: builtin/pack-objects.c:2608
+#: builtin/pack-objects.c:2654
 msgid "do not create an empty pack output"
 msgstr "keine leeren Pakete erzeugen"
 
-#: builtin/pack-objects.c:2610
+#: builtin/pack-objects.c:2656
 msgid "read revision arguments from standard input"
 msgstr "Argumente bezüglich Commits von der Standard-Eingabe lesen"
 
-#: builtin/pack-objects.c:2612
+#: builtin/pack-objects.c:2658
 msgid "limit the objects to those that are not yet packed"
 msgstr "die Objekte zu solchen, die noch nicht gepackt wurden, begrenzen"
 
-#: builtin/pack-objects.c:2615
+#: builtin/pack-objects.c:2661
 msgid "include objects reachable from any reference"
 msgstr "Objekte einschließen, die von jeder Referenz erreichbar sind"
 
-#: builtin/pack-objects.c:2618
+#: builtin/pack-objects.c:2664
 msgid "include objects referred by reflog entries"
 msgstr ""
 "Objekte einschließen, die von Einträgen des Reflogs referenziert werden"
 
-#: builtin/pack-objects.c:2621
+#: builtin/pack-objects.c:2667
+#, fuzzy
+msgid "include objects referred to by the index"
+msgstr ""
+"Objekte einschließen, die von Einträgen des Reflogs referenziert werden"
+
+#: builtin/pack-objects.c:2670
 msgid "output pack to stdout"
 msgstr "Paket in die Standard-Ausgabe schreiben"
 
-#: builtin/pack-objects.c:2623
+#: builtin/pack-objects.c:2672
 msgid "include tag objects that refer to objects to be packed"
 msgstr "Tag-Objekte einschließen, die auf gepackte Objekte referenzieren"
 
-#: builtin/pack-objects.c:2625
+#: builtin/pack-objects.c:2674
 msgid "keep unreachable objects"
 msgstr "nicht erreichbare Objekte behalten"
 
-#: builtin/pack-objects.c:2626 parse-options.h:140
+#: builtin/pack-objects.c:2675 parse-options.h:140
 msgid "time"
 msgstr "Zeit"
 
-#: builtin/pack-objects.c:2627
+#: builtin/pack-objects.c:2676
 msgid "unpack unreachable objects newer than <time>"
 msgstr "nicht erreichbare Objekte entpacken, die neuer als <Zeit> sind"
 
-#: builtin/pack-objects.c:2630
+#: builtin/pack-objects.c:2679
 msgid "create thin packs"
 msgstr "dünnere Pakete erzeugen"
 
-#: builtin/pack-objects.c:2632
+#: builtin/pack-objects.c:2681
 msgid "ignore packs that have companion .keep file"
 msgstr "Pakete ignorieren, die .keep Dateien haben"
 
-#: builtin/pack-objects.c:2634
+#: builtin/pack-objects.c:2683
 msgid "pack compression level"
 msgstr "Komprimierungsgrad für Paketierung"
 
-#: builtin/pack-objects.c:2636
+#: builtin/pack-objects.c:2685
 msgid "do not hide commits by grafts"
 msgstr "keine künstlichen Vorgänger-Commit (\"grafts\") verbergen"
 
-#: builtin/pack-objects.c:2638
+#: builtin/pack-objects.c:2687
 msgid "use a bitmap index if available to speed up counting objects"
 msgstr ""
 "Bitmap-Index (falls verfügbar) zur Optimierung der Objektzählung benutzen"
 
-#: builtin/pack-objects.c:2640
+#: builtin/pack-objects.c:2689
 msgid "write a bitmap index together with the pack index"
 msgstr "Bitmap-Index zusammen mit Pack-Index schreiben"
 
-#: builtin/pack-objects.c:2719
+#: builtin/pack-objects.c:2778
 msgid "Counting objects"
 msgstr "Zähle Objekte"
 
@@ -8135,7 +8152,7 @@ msgstr "lose Referenzen entfernen (Standard)"
 msgid "git prune-packed [-n|--dry-run] [-q|--quiet]"
 msgstr "git prune-packed [-n|--dry-run] [-q|--quiet]"
 
-#: builtin/prune-packed.c:49
+#: builtin/prune-packed.c:40
 msgid "Removing duplicate objects"
 msgstr "Lösche doppelte Objekte"
 
@@ -8143,15 +8160,15 @@ msgstr "Lösche doppelte Objekte"
 msgid "git prune [-n] [-v] [--expire <time>] [--] [<head>...]"
 msgstr "git prune [-n] [-v] [--expire <Zeit>] [--] [<head>...]"
 
-#: builtin/prune.c:142
+#: builtin/prune.c:106
 msgid "do not remove, show only"
 msgstr "nicht löschen, nur anzeigen"
 
-#: builtin/prune.c:143
+#: builtin/prune.c:107
 msgid "report pruned objects"
 msgstr "gelöschte Objekte melden"
 
-#: builtin/prune.c:146
+#: builtin/prune.c:110
 msgid "expire objects older than <time>"
 msgstr "Objekte älter als <Zeit> verfallen lassen"
 
@@ -8426,79 +8443,79 @@ msgstr "Die Option --mirror kann nicht mit Refspecs kombiniert werden."
 msgid "--all and --mirror are incompatible"
 msgstr "Die Optionen --all und --mirror sind inkompatibel."
 
-#: builtin/push.c:482
+#: builtin/push.c:493
 msgid "repository"
 msgstr "Repository"
 
-#: builtin/push.c:483
+#: builtin/push.c:494
 msgid "push all refs"
 msgstr "alle Referenzen versenden"
 
-#: builtin/push.c:484
+#: builtin/push.c:495
 msgid "mirror all refs"
 msgstr "alle Referenzen spiegeln"
 
-#: builtin/push.c:486
+#: builtin/push.c:497
 msgid "delete refs"
 msgstr "Referenzen löschen"
 
-#: builtin/push.c:487
+#: builtin/push.c:498
 msgid "push tags (can't be used with --all or --mirror)"
 msgstr "Tags versenden (kann nicht mit --all oder --mirror verwendet werden)"
 
-#: builtin/push.c:490
+#: builtin/push.c:501
 msgid "force updates"
 msgstr "Aktualisierung erzwingen"
 
-#: builtin/push.c:492
+#: builtin/push.c:503
 msgid "refname>:<expect"
 msgstr "Referenzname>:<Erwartungswert"
 
-#: builtin/push.c:493
+#: builtin/push.c:504
 msgid "require old value of ref to be at this value"
 msgstr "Referenz muss sich auf dem angegebenen Wert befinden"
 
-#: builtin/push.c:495
+#: builtin/push.c:506
 msgid "check"
 msgstr ""
 
-#: builtin/push.c:496
+#: builtin/push.c:507
 msgid "control recursive pushing of submodules"
 msgstr "rekursiven \"push\" von Submodulen steuern"
 
-#: builtin/push.c:498
+#: builtin/push.c:509
 msgid "use thin pack"
 msgstr "kleinere Pakete verwenden"
 
-#: builtin/push.c:499 builtin/push.c:500
+#: builtin/push.c:510 builtin/push.c:511
 msgid "receive pack program"
 msgstr "'receive pack' Programm"
 
-#: builtin/push.c:501
+#: builtin/push.c:512
 msgid "set upstream for git pull/status"
 msgstr "Upstream für \"git pull/status\" setzen"
 
-#: builtin/push.c:504
+#: builtin/push.c:515
 msgid "prune locally removed refs"
 msgstr "lokal gelöschte Referenzen entfernen"
 
-#: builtin/push.c:506
+#: builtin/push.c:517
 msgid "bypass pre-push hook"
 msgstr "\"pre-push hook\" umgehen"
 
-#: builtin/push.c:507
+#: builtin/push.c:518
 msgid "push missing but relevant tags"
 msgstr "fehlende, aber relevante Tags versenden"
 
-#: builtin/push.c:509
+#: builtin/push.c:520
 msgid "GPG sign the push"
 msgstr "signiert \"push\" mit GPG"
 
-#: builtin/push.c:518
+#: builtin/push.c:529
 msgid "--delete is incompatible with --all, --mirror and --tags"
 msgstr "Die Option --delete ist inkompatibel mit --all, --mirror und --tags."
 
-#: builtin/push.c:520
+#: builtin/push.c:531
 msgid "--delete doesn't make sense without any refs"
 msgstr "Die Option --delete kann nur mit Referenzen verwendet werden."
 
@@ -9164,7 +9181,7 @@ msgid "repack objects in packs marked with .keep"
 msgstr ""
 "Objekte umpacken, die sich in mit .keep markierten Pack-Dateien befinden"
 
-#: builtin/repack.c:373
+#: builtin/repack.c:374
 #, c-format
 msgid "removing '%s' failed"
 msgstr "Löschen von '%s' fehlgeschlagen"
@@ -9708,7 +9725,8 @@ msgstr "mögliche Merge-Basen anzeigen"
 
 #: builtin/show-branch.c:666
 msgid "show refs unreachable from any other ref"
-msgstr "Referenzen, die unerreichbar von allen anderen Referenzen sind, anzeigen"
+msgstr ""
+"Referenzen, die unerreichbar von allen anderen Referenzen sind, anzeigen"
 
 #: builtin/show-branch.c:668
 msgid "show commits in topological order"
@@ -9736,11 +9754,11 @@ msgstr "die <n> jüngsten Einträge im Reflog, beginnend an der Basis, anzeigen"
 
 #: builtin/show-ref.c:10
 msgid ""
-"git show-ref [-q|--quiet] [--verify] [--head] [-d|--dereference] [-s|--hash"
-"[=<n>]] [--abbrev[=<n>]] [--tags] [--heads] [--] [pattern*] "
+"git show-ref [-q|--quiet] [--verify] [--head] [-d|--dereference] [-s|--"
+"hash[=<n>]] [--abbrev[=<n>]] [--tags] [--heads] [--] [pattern*] "
 msgstr ""
-"git show-ref [-q|--quiet] [--verify] [--head] [-d|--dereference] [-s|--hash"
-"[=<n>]] [--abbrev[=<n>]] [--tags] [--heads] [--] [pattern*] "
+"git show-ref [-q|--quiet] [--verify] [--head] [-d|--dereference] [-s|--"
+"hash[=<n>]] [--abbrev[=<n>]] [--tags] [--heads] [--] [pattern*] "
 
 #: builtin/show-ref.c:11
 msgid "git show-ref --exclude-existing[=pattern] < ref-list"
@@ -9760,7 +9778,8 @@ msgstr "strengere Referenzprüfung, erfordert exakten Referenzpfad"
 
 #: builtin/show-ref.c:173 builtin/show-ref.c:175
 msgid "show the HEAD reference, even if it would be filtered out"
-msgstr "die HEAD-Referenz anzeigen, selbst wenn diese ausgefiltert werden würde"
+msgstr ""
+"die HEAD-Referenz anzeigen, selbst wenn diese ausgefiltert werden würde"
 
 #: builtin/show-ref.c:177
 msgid "dereference tags into object IDs"
@@ -10310,14 +10329,14 @@ msgstr "zwei oder mehr Entwicklungszweige zusammenführen"
 #: common-cmds.h:20
 msgid "Move or rename a file, a directory, or a symlink"
 msgstr ""
-"eine Datei, ein Verzeichnis, oder einen symbolischen "
-"Verweis verschieben oder umbenennen"
+"eine Datei, ein Verzeichnis, oder einen symbolischen Verweis verschieben "
+"oder umbenennen"
 
 #: common-cmds.h:21
 msgid "Fetch from and integrate with another repository or a local branch"
 msgstr ""
-"Objekte von einem externen Repository anfordern und sie mit einem "
-"anderen Repository oder einem lokalen Branch zusammenführen"
+"Objekte von einem externen Repository anfordern und sie mit einem anderen "
+"Repository oder einem lokalen Branch zusammenführen"
 
 #: common-cmds.h:22
 msgid "Update remote refs along with associated objects"
@@ -10371,7 +10390,9 @@ msgstr "benutze <n> Ziffern zur Anzeige von SHA-1s"
 
 #: rerere.h:27
 msgid "update the index with reused conflict resolution if possible"
-msgstr "Staging-Area, wenn möglich, mit wiederverwendeter Konfliktauflösung aktualisieren"
+msgstr ""
+"Staging-Area, wenn möglich, mit wiederverwendeter Konfliktauflösung "
+"aktualisieren"
 
 #: git-am.sh:52
 msgid "You need to set your committer info first"

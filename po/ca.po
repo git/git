@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2014-11-01 07:46+0800\n"
-"PO-Revision-Date: 2014-11-17 13:16-0700\n"
+"POT-Creation-Date: 2014-11-20 09:42+0800\n"
+"PO-Revision-Date: 2014-11-20 10:23+0800\n"
 "Last-Translator: Alex Henrie <alexhenrie24@gmail.com>\n"
 "Language-Team: Catalan\n"
 "Language: ca\n"
@@ -290,38 +290,38 @@ msgid_plural "The bundle requires these %d refs:"
 msgstr[0] "L'embolic requereix aquesta referència:"
 msgstr[1] "L'embolic requereix aquestes %d referències:"
 
-#: bundle.c:292
+#: bundle.c:251
+msgid "Could not spawn pack-objects"
+msgstr "No s'ha pogut executar el pack-objects"
+
+#: bundle.c:269
+msgid "pack-objects died"
+msgstr "El pack-objects s'ha mort"
+
+#: bundle.c:309
 msgid "rev-list died"
 msgstr "El rev-list s'ha mort"
 
-#: bundle.c:298 builtin/log.c:153 builtin/log.c:1342 builtin/shortlog.c:261
-#, c-format
-msgid "unrecognized argument: %s"
-msgstr "paràmetre no reconegut: %s"
-
-#: bundle.c:333
+#: bundle.c:358
 #, c-format
 msgid "ref '%s' is excluded by the rev-list options"
 msgstr "les opcions de la llista de revisions exclouen la referència '%s'"
 
-#: bundle.c:378
+#: bundle.c:438 builtin/log.c:153 builtin/log.c:1342 builtin/shortlog.c:261
+#, c-format
+msgid "unrecognized argument: %s"
+msgstr "paràmetre no reconegut: %s"
+
+#: bundle.c:444
 msgid "Refusing to create empty bundle."
 msgstr "Refusant crear un embolic buit."
 
-#: bundle.c:393
-msgid "Could not spawn pack-objects"
-msgstr "No s'ha pogut executar el pack-objects"
-
-#: bundle.c:411
-msgid "pack-objects died"
-msgstr "El pack-objects s'ha mort"
-
-#: bundle.c:414
+#: bundle.c:454
 #, c-format
 msgid "cannot create '%s'"
 msgstr "no es pot crear '%s'"
 
-#: bundle.c:435
+#: bundle.c:475
 msgid "index-pack died"
 msgstr "L'index-pack s'ha mort"
 
@@ -1475,28 +1475,28 @@ msgstr "No s'ha pogut crear l'enllaç de git %s"
 msgid "Could not set core.worktree in %s"
 msgstr "No s'ha pogut establir core.worktree en %s"
 
-#: trailer.c:500 trailer.c:504 trailer.c:508 trailer.c:562 trailer.c:566
-#: trailer.c:570
+#: trailer.c:499 trailer.c:503 trailer.c:507 trailer.c:561 trailer.c:565
+#: trailer.c:569
 #, c-format
 msgid "unknown value '%s' for key '%s'"
 msgstr "valor desconegut '%s' per a la clau '%s'"
 
-#: trailer.c:552 trailer.c:557 builtin/remote.c:288
+#: trailer.c:551 trailer.c:556 builtin/remote.c:288
 #, c-format
 msgid "more than one %s"
 msgstr "més d'un %s"
 
-#: trailer.c:587
+#: trailer.c:589
 #, c-format
-msgid "empty trailer token in trailer '%s'"
-msgstr "fitxa de remolc buida en el remolc '%s'"
+msgid "empty trailer token in trailer '%.*s'"
+msgstr "fitxa de remolc buida en el remolc '%.*s'"
 
-#: trailer.c:706
+#: trailer.c:709
 #, c-format
 msgid "could not read input file '%s'"
 msgstr "no s'ha pogut llegir el fitxer d'entrada '%s'"
 
-#: trailer.c:709
+#: trailer.c:712
 msgid "could not read from stdin"
 msgstr "No s'ha pogut llegir des d'stdin"
 
