@@ -45,8 +45,19 @@ test_expect_success 'fg bg attr...' '
 	color "blue bold dim ul blink reverse" "[1;2;4;5;7;34m"
 '
 
+# note that nobold and nodim are the same code (22)
+test_expect_success 'attr negation' '
+	color "nobold nodim noul noblink noreverse" "[22;24;25;27m"
+'
+
 test_expect_success 'long color specification' '
 	color "254 255 bold dim ul blink reverse" "[1;2;4;5;7;38;5;254;48;5;255m"
+'
+
+test_expect_success 'absurdly long color specification' '
+	color \
+	  "#ffffff #ffffff bold nobold dim nodim ul noul blink noblink reverse noreverse" \
+	  "[1;2;4;5;7;22;24;25;27;38;2;255;255;255;48;2;255;255;255m"
 '
 
 test_expect_success '256 colors' '

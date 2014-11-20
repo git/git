@@ -824,7 +824,8 @@ accepted are `normal`, `black`, `red`, `green`, `yellow`, `blue`,
 `magenta`, `cyan` and `white`; the attributes are `bold`, `dim`, `ul`,
 `blink` and `reverse`.  The first color given is the foreground; the
 second is the background.  The position of the attribute, if any,
-doesn't matter.
+doesn't matter. Attributes may be turned off specifically by prefixing
+them with `no` (e.g., `noreverse`, `noul`, etc).
 +
 Colors (foreground and background) may also be given as numbers between
 0 and 255; these use ANSI 256-color mode (but note that not all
