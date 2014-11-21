@@ -28,7 +28,7 @@ UI, Workflows & Features
  * "git stash list -p" used to be almost always a no-op because each
    stash entry is represented as a merge commit.  It learned to show
    the difference between the base commit version and the working tree
-   version, which is in line with what "git show" gives.
+   version, which is in line with what "git stash show" gives.
 
  * Sometimes users want to report a bug they experience on their
    repository, but they are not at liberty to share the contents of
@@ -59,15 +59,15 @@ UI, Workflows & Features
  * The temporary files "git mergetool" uses are named to avoid too
    many dots in them (e.g. a temporary file for "hello.c" used to be
    named e.g. "hello.BASE.4321.c" but now uses underscore instead,
-   e.g. "hello_BASE_4321.c").
+   e.g. "hello_BASE_4321.c", to allow us to have multiple variants).
 
- * The temporary files "git mergetools" uses can be placed in a newly
+ * The temporary files "git mergetool" uses can be placed in a newly
    created temporary directory, instead of the current directory, by
    setting the mergetool.writeToTemp configuration variable.
 
  * "git mergetool" understands "--tool bc" now, as version 4 of
    BeyondCompare can be driven the same way as its version 3 and it
-   feels awkward to say "--tool bc3".
+   feels awkward to say "--tool bc3" to run version 4.
 
  * The "pre-receive" and "post-receive" hooks are no longer required
    to consume their input fully (not following this requirement used
@@ -86,17 +86,17 @@ UI, Workflows & Features
    without having to "trust" the server.
 
  * "git interpret-trailers" is a new filter to programmatically edit
-    the tail end of the commit log messages.
+    the tail end of the commit log messages, e.g. "Signed-off-by:".
 
  * "git help everyday" shows the "Everyday Git in 20 commands or so"
-   document, whose contents have been updated to more modern Git
-   practice.
+   document, whose contents have been updated to match more modern
+   Git practice.
 
  * On the "git svn" front, work to reduce memory consumption and
    to improve handling of mergeinfo progresses.
 
 
-Performance, Internal Implementation, etc.
+Performance, Internal Implementation, Development Support etc.
 
  * The API to manipulate the "refs" has been restructured to make it
    more transactional, with the eventual goal to allow all-or-none
@@ -118,8 +118,8 @@ Performance, Internal Implementation, etc.
 
  * There are cases where you lock and open to write a file, close it
    to show the updated contents to external processes, and then have
-   to update the file again while still holding the lock, but the
-   lockfile API lacked support for such an access pattern.
+   to update the file again while still holding the lock; now the
+   lockfile API has support for such an access pattern.
 
  * The API to allocate the structure to keep track of commit
    decoration has been updated to make it less cumbersome to use.
@@ -166,12 +166,13 @@ Performance, Internal Implementation, etc.
    a shell-trace of each command run in them.
 
  * The "run-command" API learned to manage the argv and environment
-   array for child process, alleviating the need for the callers to
+   arrays for child process, alleviating the need for the callers to
    allocate and deallocate them.
 
  * Some people use AsciiDoctor, instead of AsciiDoc, to format our
-   documentation set; the documentation has been adjusted, as
-   AsciiDoctor is pickier than AsciiDoc in its input mark-up.
+   documentation set; the documentation has been adjusted to be usable
+   by both, as AsciiDoctor is pickier than AsciiDoc in its input
+   mark-up.
 
 
 Also contains various documentation updates and code clean-ups.
