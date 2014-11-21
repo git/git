@@ -94,3 +94,5 @@ else
 		shift 7
 	done
 fi
+
+exit 0
