@@ -256,6 +256,8 @@ static int create_default_files(const char *template_path)
 				!lstat(path, &st2) &&
 				st1.st_mode != st2.st_mode &&
 				!chmod(path, st1.st_mode));
+		if (filemode && !reinit && (st1.st_mode & S_IXUSR))
+			filemode = 0;
 	}
 	git_config_set("core.filemode", filemode ? "true" : "false");
 
