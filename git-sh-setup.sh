@@ -81,7 +81,7 @@ if test -n "$OPTIONS_SPEC"; then
 		echo exit $?
 	)"
 else
-	dashless=$(basename "$0" | sed -e 's/-/ /')
+	dashless=$(basename -- "$0" | sed -e 's/-/ /')
 	usage() {
 		die "usage: $dashless $USAGE"
 	}
