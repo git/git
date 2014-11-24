@@ -237,35 +237,32 @@ test_expect_success 'fsck notices submodule entry pointing to null sha1' '
 	)
 '
 
-test_expect_success 'fsck notices "." and ".." in trees' '
-	(
-		git init dots &&
-		cd dots &&
-		blob=$(echo foo | git hash-object -w --stdin) &&
-		tab=$(printf "\\t") &&
-		git mktree <<-EOF &&
-		100644 blob $blob$tab.
-		100644 blob $blob$tab..
-		EOF
-		git fsck 2>out &&
-		cat out &&
-		grep "warning.*\\." out
-	)
-'
-
-test_expect_success 'fsck notices ".git" in trees' '
-	(
-		git init dotgit &&
-		cd dotgit &&
-		blob=$(echo foo | git hash-object -w --stdin) &&
-		tab=$(printf "\\t") &&
-		git mktree <<-EOF &&
-		100644 blob $blob$tab.git
-		EOF
-		git fsck 2>out &&
-		cat out &&
-		grep "warning.*\\.git" out
-	)
-'
+while read name path; do
+	while read mode type; do
+		test_expect_success "fsck notices $path as $type" '
+		(
+			git init $name-$type &&
+			cd $name-$type &&
+			echo content >file &&
+			git add file &&
+			git commit -m base &&
+			blob=$(git rev-parse :file) &&
+			tree=$(git rev-parse HEAD^{tree}) &&
+			value=$(eval "echo \$$type") &&
+			printf "$mode $type %s\t%s" "$value" "$path" >bad &&
+			git mktree <bad &&
+			git fsck 2>out &&
+			cat out &&
+			grep "warning.*\\." out
+		)'
+	done <<-\EOF
+	100644 blob
+	040000 tree
+	EOF
+done <<-\EOF
+dot .
+dotdot ..
+dotgit .git
+EOF
 
 test_done
