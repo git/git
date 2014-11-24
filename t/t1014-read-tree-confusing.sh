@@ -27,6 +27,7 @@ done <<-\EOF
 .
 ..
 .git
+.GIT
 EOF
 
 test_done

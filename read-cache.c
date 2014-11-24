@@ -759,9 +759,10 @@ static int verify_dotfile(const char *rest)
 	 * shares the path end test with the ".." case.
 	 */
 	case 'g':
-		if (rest[1] != 'i')
+	case 'G':
+		if (rest[1] != 'i' && rest[1] != 'I')
 			break;
-		if (rest[2] != 't')
+		if (rest[2] != 't' && rest[2] != 'T')
 			break;
 		rest += 2;
 	/* fallthrough */
