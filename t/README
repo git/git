@@ -335,7 +335,8 @@ Don't:
    dies in an unexpected way (e.g. segfault).
 
    On the other hand, don't use test_must_fail for running regular
-   platform commands; just use '! cmd'.
+   platform commands; just use '! cmd'.  We are not in the business
+   of verifying that the world given to us sanely works.
 
  - use perl without spelling it as "$PERL_PATH". This is to help our
    friends on Windows where the platform Perl often adds CR before
