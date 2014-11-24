@@ -263,6 +263,7 @@ done <<-\EOF
 dot .
 dotdot ..
 dotgit .git
+dotgit-case .GIT
 EOF
 
 test_done
