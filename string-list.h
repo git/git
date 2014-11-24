@@ -61,8 +61,6 @@ int string_list_find_insert_index(const struct string_list *list, const char *st
  * Returns the string_list_item, the string is part of.
  */
 struct string_list_item *string_list_insert(struct string_list *list, const char *string);
-struct string_list_item *string_list_insert_at_index(struct string_list *list,
-						     int insert_at, const char *string);
 
 /*
  * Checks if the given string is part of a sorted list. If it is part of the list,
