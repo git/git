@@ -1337,8 +1337,13 @@ static int prune_remote(const char *remote, int dry_run)
 		  : _("(no URL)"));
 
 	delete_refs = xmalloc(states.stale.nr * sizeof(*delete_refs));
-	for (i = 0; i < states.stale.nr; i++)
-		delete_refs[i] = states.stale.items[i].util;
+	for (i = 0; i < states.stale.nr; i++) {
+		const char *refname = states.stale.items[i].util;
+
+		delete_refs[i] = refname;
+		string_list_insert(&delete_refs_list, refname);
+	}
+
 	if (!dry_run) {
 		struct strbuf err = STRBUF_INIT;
 		if (repack_without_refs(delete_refs, states.stale.nr,
@@ -1346,12 +1351,9 @@ static int prune_remote(const char *remote, int dry_run)
 			result |= error("%s", err.buf);
 		strbuf_release(&err);
 	}
-	free(delete_refs);
 
 	for (i = 0; i < states.stale.nr; i++) {
 		const char *refname = states.stale.items[i].util;
-
-		string_list_insert(&delete_refs_list, refname);
 
 		if (!dry_run)
 			result |= delete_ref(refname, NULL, 0);
@@ -1365,8 +1367,9 @@ static int prune_remote(const char *remote, int dry_run)
 	}
 
 	warn_dangling_symrefs(stdout, dangling_msg, &delete_refs_list);
-	string_list_clear(&delete_refs_list, 0);
 
+	free(delete_refs);
+	string_list_clear(&delete_refs_list, 0);
 	free_remote_ref_states(&states);
 	return result;
 }
