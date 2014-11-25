@@ -58,6 +58,7 @@ git send-email [options] <file | directory | rev-list options >
     --compose                      * Open an editor for introduction.
     --compose-encoding      <str>  * Encoding to assume for introduction.
     --8bit-encoding         <str>  * Encoding to assume 8bit mails if undeclared
+    --transfer-encoding     <str>  * Transfer encoding to use (quoted-printable, 8bit, base64)
 
   Sending:
     --envelope-sender       <str>  * Email envelope sender.
@@ -206,6 +207,7 @@ my ($validate, $confirm);
 my (@suppress_cc);
 my ($auto_8bit_encoding);
 my ($compose_encoding);
+my ($target_xfer_encoding);
 
 my ($debug_net_smtp) = 0;		# Net::SMTP, see send_message()
 
@@ -242,6 +244,7 @@ my %config_settings = (
     "from" => \$sender,
     "assume8bitencoding" => \$auto_8bit_encoding,
     "composeencoding" => \$compose_encoding,
+    "transferencoding" => \$target_xfer_encoding,
 );
 
 my %config_path_settings = (
@@ -314,6 +317,7 @@ my $rc = GetOptions("h" => \$help,
 		    "envelope-sender=s" => \$envelope_sender,
 		    "thread!" => \$thread,
 		    "validate!" => \$validate,
+		    "transfer-encoding=s" => \$target_xfer_encoding,
 		    "format-patch!" => \$format_patch,
 		    "8bit-encoding=s" => \$auto_8bit_encoding,
 		    "compose-encoding=s" => \$compose_encoding,
@@ -1482,6 +1486,12 @@ foreach my $t (@files) {
 			}
 		}
 	}
+	if (defined $target_xfer_encoding) {
+		$xfer_encoding = '8bit' if not defined $xfer_encoding;
+		$message = apply_transfer_encoding(
+			$message, $xfer_encoding, $target_xfer_encoding);
+		$xfer_encoding = $target_xfer_encoding;
+	}
 	if (defined $xfer_encoding) {
 		push @xh, "Content-Transfer-Encoding: $xfer_encoding";
 	}
@@ -1555,6 +1565,32 @@ sub cleanup_compose_files {
 }
 
 $smtp->quit if $smtp;
+
+sub apply_transfer_encoding {
+	my $message = shift;
+	my $from = shift;
+	my $to = shift;
+
+	return $message if ($from eq $to and $from ne '7bit');
+
+	require MIME::QuotedPrint;
+	require MIME::Base64;
+
+	$message = MIME::QuotedPrint::decode($message)
+		if ($from eq 'quoted-printable');
+	$message = MIME::Base64::decode($message)
+		if ($from eq 'base64');
+
+	die "cannot send message as 7bit"
+		if ($to eq '7bit' and $message =~ /[^[:ascii:]]/);
+	return $message
+		if ($to eq '7bit' or $to eq '8bit');
+	return MIME::QuotedPrint::encode($message, "\n", 0)
+		if ($to eq 'quoted-printable');
+	return MIME::Base64::encode($message, "\n")
+		if ($to eq 'base64');
+	die "invalid transfer encoding";
+}
 
 sub unique_email_list {
 	my %seen;

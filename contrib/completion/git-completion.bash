@@ -1875,6 +1875,10 @@ _git_config ()
 		__gitcomp "$__git_send_email_suppresscc_options"
 		return
 		;;
+	sendemail.transferencoding)
+		__gitcomp "7bit 8bit quoted-printable base64"
+		return
+		;;
 	--get|--get-all|--unset|--unset-all)
 		__gitcomp_nl "$(__git_config_get_set_variables)"
 		return
