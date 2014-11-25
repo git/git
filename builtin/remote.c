@@ -1325,25 +1325,28 @@ static int prune_remote(const char *remote, int dry_run)
 	memset(&states, 0, sizeof(states));
 	get_remote_ref_states(remote, &states, GET_REF_STATES);
 
-	if (states.stale.nr) {
-		printf_ln(_("Pruning %s"), remote);
-		printf_ln(_("URL: %s"),
-		       states.remote->url_nr
-		       ? states.remote->url[0]
-		       : _("(no URL)"));
-
-		delete_refs = xmalloc(states.stale.nr * sizeof(*delete_refs));
-		for (i = 0; i < states.stale.nr; i++)
-			delete_refs[i] = states.stale.items[i].util;
-		if (!dry_run) {
-			struct strbuf err = STRBUF_INIT;
-			if (repack_without_refs(delete_refs, states.stale.nr,
-						&err))
-				result |= error("%s", err.buf);
-			strbuf_release(&err);
-		}
-		free(delete_refs);
+	if (!states.stale.nr) {
+		free_remote_ref_states(&states);
+		return 0;
 	}
+
+	printf_ln(_("Pruning %s"), remote);
+	printf_ln(_("URL: %s"),
+		  states.remote->url_nr
+		  ? states.remote->url[0]
+		  : _("(no URL)"));
+
+	delete_refs = xmalloc(states.stale.nr * sizeof(*delete_refs));
+	for (i = 0; i < states.stale.nr; i++)
+		delete_refs[i] = states.stale.items[i].util;
+	if (!dry_run) {
+		struct strbuf err = STRBUF_INIT;
+		if (repack_without_refs(delete_refs, states.stale.nr,
+					&err))
+			result |= error("%s", err.buf);
+		strbuf_release(&err);
+	}
+	free(delete_refs);
 
 	for (i = 0; i < states.stale.nr; i++) {
 		const char *refname = states.stale.items[i].util;
