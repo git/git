@@ -88,12 +88,12 @@ test_expect_success $PREREQ 'Send patches' '
 '
 
 test_expect_success $PREREQ 'setup expect' '
-cat >expected <<\EOF
-!nobody@example.com!
-!author@example.com!
-!one@example.com!
-!two@example.com!
-EOF
+	cat >expected <<-\EOF
+	!nobody@example.com!
+	!author@example.com!
+	!one@example.com!
+	!two@example.com!
+	EOF
 '
 
 test_expect_success $PREREQ 'Verify commandline' '
@@ -106,14 +106,14 @@ test_expect_success $PREREQ 'Send patches with --envelope-sender' '
 '
 
 test_expect_success $PREREQ 'setup expect' '
-cat >expected <<\EOF
-!patch@example.com!
-!-i!
-!nobody@example.com!
-!author@example.com!
-!one@example.com!
-!two@example.com!
-EOF
+	cat >expected <<-\EOF
+	!patch@example.com!
+	!-i!
+	!nobody@example.com!
+	!author@example.com!
+	!one@example.com!
+	!two@example.com!
+	EOF
 '
 
 test_expect_success $PREREQ 'Verify commandline' '
@@ -126,14 +126,14 @@ test_expect_success $PREREQ 'Send patches with --envelope-sender=auto' '
 '
 
 test_expect_success $PREREQ 'setup expect' '
-cat >expected <<\EOF
-!nobody@example.com!
-!-i!
-!nobody@example.com!
-!author@example.com!
-!one@example.com!
-!two@example.com!
-EOF
+	cat >expected <<-\EOF
+	!nobody@example.com!
+	!-i!
+	!nobody@example.com!
+	!author@example.com!
+	!one@example.com!
+	!two@example.com!
+	EOF
 '
 
 test_expect_success $PREREQ 'Verify commandline' '
@@ -1192,7 +1192,7 @@ test_expect_success $PREREQ 'To headers from files reset each patch' '
 '
 
 test_expect_success $PREREQ 'setup expect' '
-cat >email-using-8bit <<EOF
+cat >email-using-8bit <<\EOF
 From fe6ecc66ece37198fe5db91fa2fc41d9f4fe5cc4 Mon Sep 17 00:00:00 2001
 Message-Id: <bogus-message-id@example.com>
 From: author@example.com
@@ -1204,9 +1204,7 @@ EOF
 '
 
 test_expect_success $PREREQ 'setup expect' '
-cat >expected <<EOF
-Subject: subject goes here
-EOF
+	echo "Subject: subject goes here" >expected
 '
 
 test_expect_success $PREREQ 'ASCII subject is not RFC2047 quoted' '
@@ -1221,11 +1219,11 @@ test_expect_success $PREREQ 'ASCII subject is not RFC2047 quoted' '
 '
 
 test_expect_success $PREREQ 'setup expect' '
-cat >content-type-decl <<EOF
-MIME-Version: 1.0
-Content-Type: text/plain; charset=UTF-8
-Content-Transfer-Encoding: 8bit
-EOF
+	cat >content-type-decl <<-\EOF
+	MIME-Version: 1.0
+	Content-Type: text/plain; charset=UTF-8
+	Content-Transfer-Encoding: 8bit
+	EOF
 '
 
 test_expect_success $PREREQ 'asks about and fixes 8bit encodings' '
@@ -1265,21 +1263,21 @@ test_expect_success $PREREQ '--8bit-encoding overrides sendemail.8bitEncoding' '
 '
 
 test_expect_success $PREREQ 'setup expect' '
-cat >email-using-8bit <<EOF
-From fe6ecc66ece37198fe5db91fa2fc41d9f4fe5cc4 Mon Sep 17 00:00:00 2001
-Message-Id: <bogus-message-id@example.com>
-From: author@example.com
-Date: Sat, 12 Jun 2010 15:53:58 +0200
-Subject: Dieser Betreff enthält auch einen Umlaut!
+	cat >email-using-8bit <<-\EOF
+	From fe6ecc66ece37198fe5db91fa2fc41d9f4fe5cc4 Mon Sep 17 00:00:00 2001
+	Message-Id: <bogus-message-id@example.com>
+	From: author@example.com
+	Date: Sat, 12 Jun 2010 15:53:58 +0200
+	Subject: Dieser Betreff enthält auch einen Umlaut!
 
-Nothing to see here.
-EOF
+	Nothing to see here.
+	EOF
 '
 
 test_expect_success $PREREQ 'setup expect' '
-cat >expected <<EOF
-Subject: =?UTF-8?q?Dieser=20Betreff=20enth=C3=A4lt=20auch=20einen=20Umlaut!?=
-EOF
+	cat >expected <<-\EOF
+	Subject: =?UTF-8?q?Dieser=20Betreff=20enth=C3=A4lt=20auch=20einen=20Umlaut!?=
+	EOF
 '
 
 test_expect_success $PREREQ '--8bit-encoding also treats subject' '
@@ -1294,16 +1292,16 @@ test_expect_success $PREREQ '--8bit-encoding also treats subject' '
 '
 
 test_expect_success $PREREQ 'setup expect' '
-cat >email-using-8bit <<EOF
-From fe6ecc66ece37198fe5db91fa2fc41d9f4fe5cc4 Mon Sep 17 00:00:00 2001
-Message-Id: <bogus-message-id@example.com>
-From: A U Thor <author@example.com>
-Date: Sat, 12 Jun 2010 15:53:58 +0200
-Content-Type: text/plain; charset=UTF-8
-Subject: Nothing to see here.
+	cat >email-using-8bit <<-\EOF
+	From fe6ecc66ece37198fe5db91fa2fc41d9f4fe5cc4 Mon Sep 17 00:00:00 2001
+	Message-Id: <bogus-message-id@example.com>
+	From: A U Thor <author@example.com>
+	Date: Sat, 12 Jun 2010 15:53:58 +0200
+	Content-Type: text/plain; charset=UTF-8
+	Subject: Nothing to see here.
 
-Dieser Betreff enthält auch einen Umlaut!
-EOF
+	Dieser Betreff enthält auch einen Umlaut!
+	EOF
 '
 
 test_expect_success $PREREQ 'sendemail.transferencoding=7bit fails on 8bit data' '
@@ -1343,9 +1341,9 @@ test_expect_success $PREREQ 'sendemail.transferencoding=8bit' '
 '
 
 test_expect_success $PREREQ 'setup expect' '
-cat >expected <<EOF
-Dieser Betreff enth=C3=A4lt auch einen Umlaut!
-EOF
+	cat >expected <<-\EOF
+	Dieser Betreff enth=C3=A4lt auch einen Umlaut!
+	EOF
 '
 
 test_expect_success $PREREQ '8-bit and sendemail.transferencoding=quoted-printable' '
@@ -1360,9 +1358,9 @@ test_expect_success $PREREQ '8-bit and sendemail.transferencoding=quoted-printab
 '
 
 test_expect_success $PREREQ 'setup expect' '
-cat >expected <<EOF
-RGllc2VyIEJldHJlZmYgZW50aMOkbHQgYXVjaCBlaW5lbiBVbWxhdXQhCg==
-EOF
+	cat >expected <<-\EOF
+	RGllc2VyIEJldHJlZmYgZW50aMOkbHQgYXVjaCBlaW5lbiBVbWxhdXQhCg==
+	EOF
 '
 
 test_expect_success $PREREQ '8-bit and sendemail.transferencoding=base64' '
@@ -1377,18 +1375,18 @@ test_expect_success $PREREQ '8-bit and sendemail.transferencoding=base64' '
 '
 
 test_expect_success $PREREQ 'setup expect' '
-cat >email-using-qp <<EOF
-From fe6ecc66ece37198fe5db91fa2fc41d9f4fe5cc4 Mon Sep 17 00:00:00 2001
-Message-Id: <bogus-message-id@example.com>
-From: A U Thor <author@example.com>
-Date: Sat, 12 Jun 2010 15:53:58 +0200
-MIME-Version: 1.0
-Content-Transfer-Encoding: quoted-printable
-Content-Type: text/plain; charset=UTF-8
-Subject: Nothing to see here.
+	cat >email-using-qp <<-\EOF
+	From fe6ecc66ece37198fe5db91fa2fc41d9f4fe5cc4 Mon Sep 17 00:00:00 2001
+	Message-Id: <bogus-message-id@example.com>
+	From: A U Thor <author@example.com>
+	Date: Sat, 12 Jun 2010 15:53:58 +0200
+	MIME-Version: 1.0
+	Content-Transfer-Encoding: quoted-printable
+	Content-Type: text/plain; charset=UTF-8
+	Subject: Nothing to see here.
 
-Dieser Betreff enth=C3=A4lt auch einen Umlaut!
-EOF
+	Dieser Betreff enth=C3=A4lt auch einen Umlaut!
+	EOF
 '
 
 test_expect_success $PREREQ 'convert from quoted-printable to base64' '
@@ -1416,9 +1414,9 @@ EOF
 "
 
 test_expect_success $PREREQ 'setup expect' '
-cat >expected <<EOF
-Look, I have a CRLF and an =3D sign!=0D
-EOF
+	cat >expected <<-\EOF
+	Look, I have a CRLF and an =3D sign!=0D
+	EOF
 '
 
 test_expect_success $PREREQ 'CRLF and sendemail.transferencoding=quoted-printable' '
@@ -1433,9 +1431,9 @@ test_expect_success $PREREQ 'CRLF and sendemail.transferencoding=quoted-printabl
 '
 
 test_expect_success $PREREQ 'setup expect' '
-cat >expected <<EOF
-TG9vaywgSSBoYXZlIGEgQ1JMRiBhbmQgYW4gPSBzaWduIQ0K
-EOF
+	cat >expected <<-\EOF
+	TG9vaywgSSBoYXZlIGEgQ1JMRiBhbmQgYW4gPSBzaWduIQ0K
+	EOF
 '
 
 test_expect_success $PREREQ 'CRLF and sendemail.transferencoding=base64' '
