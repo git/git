@@ -17,6 +17,7 @@ s,signoff       add a Signed-off-by line to the commit message
 u,utf8          recode into utf8 (default)
 k,keep          pass -k flag to git-mailinfo
 keep-non-patch  pass -b flag to git-mailinfo
+m,message-id    pass -m flag to git-mailinfo
 keep-cr         pass --keep-cr flag to git-mailsplit for mbox format
 no-keep-cr      do not pass --keep-cr flag to git-mailsplit independent of am.keepcr
 c,scissors      strip everything before a scissors line
@@ -371,12 +372,17 @@ split_patches () {
 prec=4
 dotest="$GIT_DIR/rebase-apply"
 sign= utf8=t keep= keepcr= skip= interactive= resolved= rebasing= abort=
-resolvemsg= resume= scissors= no_inbody_headers=
+messageid= resolvemsg= resume= scissors= no_inbody_headers=
 git_apply_opt=
 committer_date_is_author_date=
 ignore_date=
 allow_rerere_autoupdate=
 gpg_sign_opt=
+
+if test "$(git config --bool --get am.messageid)" = true
+then
+    messageid=t
+fi
 
 if test "$(git config --bool --get am.keepcr)" = true
 then
@@ -400,6 +406,10 @@ it will be removed. Please do not use it anymore."
 		utf8=t ;; # this is now default
 	--no-utf8)
 		utf8= ;;
+	-m|--message-id)
+		messageid=t ;;
+	--no-message-id)
+		messageid=f ;;
 	-k|--keep)
 		keep=t ;;
 	--keep-non-patch)
@@ -567,6 +577,7 @@ Use \"git am --abort\" to remove it.")"
 	echo "$sign" >"$dotest/sign"
 	echo "$utf8" >"$dotest/utf8"
 	echo "$keep" >"$dotest/keep"
+	echo "$messageid" >"$dotest/messageid"
 	echo "$scissors" >"$dotest/scissors"
 	echo "$no_inbody_headers" >"$dotest/no_inbody_headers"
 	echo "$GIT_QUIET" >"$dotest/quiet"
@@ -620,6 +631,12 @@ b)
 	keep=-b ;;
 *)
 	keep= ;;
+esac
+case "$(cat "$dotest/messageid")" in
+t)
+	messageid=-m ;;
+f)
+	messageid= ;;
 esac
 case "$(cat "$dotest/scissors")" in
 t)
@@ -692,7 +709,7 @@ do
 			get_author_ident_from_commit "$commit" >"$dotest/author-script"
 			git diff-tree --root --binary --full-index "$commit" >"$dotest/patch"
 		else
-			git mailinfo $keep $no_inbody_headers $scissors $utf8 "$dotest/msg" "$dotest/patch" \
+			git mailinfo $keep $no_inbody_headers $messageid $scissors $utf8 "$dotest/msg" "$dotest/patch" \
 				<"$dotest/$msgnum" >"$dotest/info" ||
 				stop_here $this
 
