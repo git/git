@@ -14,17 +14,19 @@ test_expect_success $PREREQ 'prepare reference tree' '
 '
 
 test_expect_success $PREREQ 'Setup helper tool' '
-	(echo "#!$SHELL_PATH"
-	echo shift
-	echo output=1
-	echo "while test -f commandline\$output; do output=\$((\$output+1)); done"
-	echo for a
-	echo do
-	echo "  echo \"!\$a!\""
-	echo "done >commandline\$output"
-	echo "cat > msgtxt\$output"
-	) >fake.sendmail &&
-	chmod +x ./fake.sendmail &&
+	write_script fake.sendmail <<-\EOF &&
+	shift
+	output=1
+	while test -f commandline$output
+	do
+		output=$(($output+1))
+	done
+	for a
+	do
+		echo "!$a!"
+	done >commandline$output
+	cat >"msgtxt$output"
+	EOF
 	git add fake.sendmail &&
 	GIT_AUTHOR_NAME="A" git commit -a -m "Second."
 '
@@ -307,11 +309,9 @@ test_expect_success $PREREQ 'tocmd works' '
 	clean_fake_sendmail &&
 	cp $patches tocmd.patch &&
 	echo tocmd--tocmd@example.com >>tocmd.patch &&
-	{
-	  echo "#!$SHELL_PATH"
-	  echo sed -n -e s/^tocmd--//p \"\$1\"
-	} > tocmd-sed &&
-	chmod +x tocmd-sed &&
+	write_script tocmd-sed <<-\EOF &&
+	sed -n -e "s/^tocmd--//p" "$1"
+	EOF
 	git send-email \
 		--from="Example <nobody@example.com>" \
 		--to-cmd=./tocmd-sed \
@@ -325,11 +325,9 @@ test_expect_success $PREREQ 'cccmd works' '
 	clean_fake_sendmail &&
 	cp $patches cccmd.patch &&
 	echo "cccmd--  cccmd@example.com" >>cccmd.patch &&
-	{
-	  echo "#!$SHELL_PATH"
-	  echo sed -n -e s/^cccmd--//p \"\$1\"
-	} > cccmd-sed &&
-	chmod +x cccmd-sed &&
+	write_script cccmd-sed <<-\EOF &&
+	sed -n -e "s/^cccmd--//p" "$1"
+	EOF
 	git send-email \
 		--from="Example <nobody@example.com>" \
 		--to=nobody@example.com \
@@ -459,10 +457,9 @@ test_expect_success $PREREQ 'In-Reply-To with --chain-reply-to' '
 '
 
 test_expect_success $PREREQ 'setup fake editor' '
-	(echo "#!$SHELL_PATH" &&
-	 echo "echo fake edit >>\"\$1\""
-	) >fake-editor &&
-	chmod +x fake-editor
+	write_script fake-editor <<-\EOF
+	echo fake edit >>"$1"
+	EOF
 '
 
 test_set_editor "$(pwd)/fake-editor"
@@ -598,8 +595,9 @@ EOF
 "
 
 test_expect_success $PREREQ 'sendemail.cccmd' '
-	echo echo cc-cmd@example.com > cccmd &&
-	chmod +x cccmd &&
+	write_script cccmd <<-\EOF &&
+	echo cc-cmd@example.com
+	EOF
 	git config sendemail.cccmd ./cccmd &&
 	test_suppression cccmd
 '
@@ -891,10 +889,9 @@ test_expect_success $PREREQ 'utf8 Cc is rfc2047 encoded' '
 
 test_expect_success $PREREQ '--compose adds MIME for utf8 body' '
 	clean_fake_sendmail &&
-	(echo "#!$SHELL_PATH" &&
-	 echo "echo utf8 body: àéìöú >>\"\$1\""
-	) >fake-editor-utf8 &&
-	chmod +x fake-editor-utf8 &&
+	write_script fake-editor-utf8 <<-\EOF &&
+	echo "utf8 body: àéìöú" >>"$1"
+	EOF
 	GIT_EDITOR="\"$(pwd)/fake-editor-utf8\"" \
 	git send-email \
 		--compose --subject foo \
@@ -908,15 +905,16 @@ test_expect_success $PREREQ '--compose adds MIME for utf8 body' '
 
 test_expect_success $PREREQ '--compose respects user mime type' '
 	clean_fake_sendmail &&
-	(echo "#!$SHELL_PATH" &&
-	 echo "(echo MIME-Version: 1.0"
-	 echo " echo Content-Type: text/plain\\; charset=iso-8859-1"
-	 echo " echo Content-Transfer-Encoding: 8bit"
-	 echo " echo Subject: foo"
-	 echo " echo "
-	 echo " echo utf8 body: àéìöú) >\"\$1\""
-	) >fake-editor-utf8-mime &&
-	chmod +x fake-editor-utf8-mime &&
+	write_script fake-editor-utf8-mime <<-\EOF &&
+	cat >"$1" <<-\EOM
+	MIME-Version: 1.0
+	Content-Type: text/plain; charset=iso-8859-1
+	Content-Transfer-Encoding: 8bit
+	Subject: foo
+
+	utf8 body: àéìöú
+	EOM
+	EOF
 	GIT_EDITOR="\"$(pwd)/fake-editor-utf8-mime\"" \
 	git send-email \
 		--compose --subject foo \
@@ -972,10 +970,9 @@ test_expect_success $PREREQ 'utf8 sender is not duplicated' '
 test_expect_success $PREREQ 'sendemail.composeencoding works' '
 	clean_fake_sendmail &&
 	git config sendemail.composeencoding iso-8859-1 &&
-	(echo "#!$SHELL_PATH" &&
-	 echo "echo utf8 body: àéìöú >>\"\$1\""
-	) >fake-editor-utf8 &&
-	chmod +x fake-editor-utf8 &&
+	write_script fake-editor-utf8 <<-\EOF &&
+	echo "utf8 body: àéìöú" >>"$1"
+	EOF
 	GIT_EDITOR="\"$(pwd)/fake-editor-utf8\"" \
 	git send-email \
 		--compose --subject foo \
@@ -989,10 +986,9 @@ test_expect_success $PREREQ 'sendemail.composeencoding works' '
 
 test_expect_success $PREREQ '--compose-encoding works' '
 	clean_fake_sendmail &&
-	(echo "#!$SHELL_PATH" &&
-	 echo "echo utf8 body: àéìöú >>\"\$1\""
-	) >fake-editor-utf8 &&
-	chmod +x fake-editor-utf8 &&
+	write_script fake-editor-utf8 <<-\EOF &&
+	echo "utf8 body: àéìöú" >>"$1"
+	EOF
 	GIT_EDITOR="\"$(pwd)/fake-editor-utf8\"" \
 	git send-email \
 		--compose-encoding iso-8859-1 \
@@ -1008,10 +1004,9 @@ test_expect_success $PREREQ '--compose-encoding works' '
 test_expect_success $PREREQ '--compose-encoding overrides sendemail.composeencoding' '
 	clean_fake_sendmail &&
 	git config sendemail.composeencoding iso-8859-1 &&
-	(echo "#!$SHELL_PATH" &&
-	 echo "echo utf8 body: àéìöú >>\"\$1\""
-	) >fake-editor-utf8 &&
-	chmod +x fake-editor-utf8 &&
+	write_script fake-editor-utf8 <<-\EOF &&
+	echo "utf8 body: àéìöú" >>"$1"
+	EOF
 	GIT_EDITOR="\"$(pwd)/fake-editor-utf8\"" \
 	git send-email \
 		--compose-encoding iso-8859-2 \
