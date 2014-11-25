@@ -6,16 +6,15 @@ test_description='git send-email'
 # May be altered later in the test
 PREREQ="PERL"
 
-test_expect_success $PREREQ \
-    'prepare reference tree' \
-    'echo "1A quick brown fox jumps over the" >file &&
+test_expect_success $PREREQ 'prepare reference tree' '
+     echo "1A quick brown fox jumps over the" >file &&
      echo "lazy dog" >>file &&
      git add file &&
-     GIT_AUTHOR_NAME="A" git commit -a -m "Initial."'
+     GIT_AUTHOR_NAME="A" git commit -a -m "Initial."
+'
 
-test_expect_success $PREREQ \
-    'Setup helper tool' \
-    '(echo "#!$SHELL_PATH"
+test_expect_success $PREREQ 'Setup helper tool' '
+     (echo "#!$SHELL_PATH"
       echo shift
       echo output=1
       echo "while test -f commandline\$output; do output=\$((\$output+1)); done"
@@ -27,7 +26,8 @@ test_expect_success $PREREQ \
       ) >fake.sendmail &&
      chmod +x ./fake.sendmail &&
      git add fake.sendmail &&
-     GIT_AUTHOR_NAME="A" git commit -a -m "Second."'
+     GIT_AUTHOR_NAME="A" git commit -a -m "Second."
+'
 
 clean_fake_sendmail() {
 	rm -f commandline* msgtxt*
@@ -94,9 +94,9 @@ cat >expected <<\EOF
 EOF
 '
 
-test_expect_success $PREREQ \
-    'Verify commandline' \
-    'test_cmp expected commandline1'
+test_expect_success $PREREQ 'Verify commandline' '
+	test_cmp expected commandline1
+'
 
 test_expect_success $PREREQ 'Send patches with --envelope-sender' '
     clean_fake_sendmail &&
@@ -114,9 +114,9 @@ cat >expected <<\EOF
 EOF
 '
 
-test_expect_success $PREREQ \
-    'Verify commandline' \
-    'test_cmp expected commandline1'
+test_expect_success $PREREQ 'Verify commandline' '
+	test_cmp expected commandline1
+'
 
 test_expect_success $PREREQ 'Send patches with --envelope-sender=auto' '
     clean_fake_sendmail &&
@@ -134,9 +134,9 @@ cat >expected <<\EOF
 EOF
 '
 
-test_expect_success $PREREQ \
-    'Verify commandline' \
-    'test_cmp expected commandline1'
+test_expect_success $PREREQ 'Verify commandline' '
+	test_cmp expected commandline1
+'
 
 test_expect_success $PREREQ 'setup expect' "
 cat >expected-show-all-headers <<\EOF
