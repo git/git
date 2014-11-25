@@ -18,9 +18,9 @@ static const char * const builtin_remote_usage[] = {
 	N_("git remote prune [-n | --dry-run] <name>"),
 	N_("git remote [-v | --verbose] update [-p | --prune] [(<group> | <remote>)...]"),
 	N_("git remote set-branches [--add] <name> <branch>..."),
-	N_("git remote set-url [--push] <name> <newurl> [<oldurl>]"),
-	N_("git remote set-url --add <name> <newurl>"),
-	N_("git remote set-url --delete <name> <url>"),
+	N_("git remote set-url [--both | --fetch | --push] <name> <newurl> [<oldurl>]"),
+	N_("git remote set-url [--both | --fetch | --push] --add <name> <newurl>"),
+	N_("git remote set-url [--both | --fetch | --push] --delete <name> <url>"),
 	NULL
 };
 
@@ -66,9 +66,9 @@ static const char * const builtin_remote_update_usage[] = {
 };
 
 static const char * const builtin_remote_seturl_usage[] = {
-	N_("git remote set-url [--push] <name> <newurl> [<oldurl>]"),
-	N_("git remote set-url --add <name> <newurl>"),
-	N_("git remote set-url --delete <name> <url>"),
+	N_("git remote set-url [--both | --fetch | --push] <name> <newurl> [<oldurl>]"),
+	N_("git remote set-url [--both | --fetch | --push] --add <name> <newurl>"),
+	N_("git remote set-url [--both | --fetch | --push] --delete <name> <url>"),
 	NULL
 };
 
@@ -1503,21 +1503,35 @@ static int set_branches(int argc, const char **argv)
 	return set_remote_branches(argv[0], argv + 1, add_mode);
 }
 
+#define MODIFY_TYPE_FETCH       (1 << 0)
+#define MODIFY_TYPE_PUSH        (1 << 1)
+#define MODIFY_TYPE_BOTH        (MODIFY_TYPE_FETCH | MODIFY_TYPE_PUSH)
+#define MODIFY_TYPE_HISTORIC    (MODIFY_TYPE_FETCH | (1 << 2))
+
 static int set_url(int argc, const char **argv)
 {
-	int i, push_mode = 0, add_mode = 0, delete_mode = 0;
+	int i, add_mode = 0, delete_mode = 0;
+	int modify_type = MODIFY_TYPE_HISTORIC;
 	int matches = 0, negative_matches = 0;
 	const char *remotename = NULL;
 	const char *newurl = NULL;
 	const char *oldurl = NULL;
 	struct remote *remote;
 	regex_t old_regex;
-	const char **urlset;
-	int urlset_nr;
-	struct strbuf name_buf = STRBUF_INIT;
+	struct strbuf name_buf_fetch = STRBUF_INIT;
+	struct strbuf name_buf_push = STRBUF_INIT;
 	struct option options[] = {
-		OPT_BOOL('\0', "push", &push_mode,
-			 N_("manipulate push URLs")),
+		OPT_GROUP(""),
+		OPT_SET_INT('\0', "fetch", &modify_type,
+			N_("manipulate just fetch URLs"),
+			MODIFY_TYPE_FETCH),
+		OPT_SET_INT('\0', "push", &modify_type,
+			N_("manipulate just push URLs"),
+			MODIFY_TYPE_PUSH),
+		OPT_SET_INT('\0', "both", &modify_type,
+			N_("manipulate both push and fetch URLs"),
+			MODIFY_TYPE_BOTH),
+		OPT_GROUP(""),
 		OPT_BOOL('\0', "add", &add_mode,
 			 N_("add URL")),
 		OPT_BOOL('\0', "delete", &delete_mode,
@@ -1535,7 +1549,8 @@ static int set_url(int argc, const char **argv)
 
 	remotename = argv[1];
 	newurl = argv[2];
-	if (argc > 3)
+	/* The old URL is only meaningful for the primary non-set operation. */
+	if (argc > 3 && !add_mode && !delete_mode)
 		oldurl = argv[3];
 
 	if (delete_mode)
@@ -1545,47 +1560,72 @@ static int set_url(int argc, const char **argv)
 		die(_("No such remote '%s'"), remotename);
 	remote = remote_get(remotename);
 
-	if (push_mode) {
-		strbuf_addf(&name_buf, "remote.%s.pushurl", remotename);
-		urlset = remote->pushurl;
-		urlset_nr = remote->pushurl_nr;
+	strbuf_addf(&name_buf_fetch, "remote.%s.url", remotename);
+	strbuf_addf(&name_buf_push, "remote.%s.pushurl", remotename);
+
+	if (oldurl && !add_mode) {
+		/* Old URL specified, or deletion. Demand that one matches. */
+		if (regcomp(&old_regex, oldurl, REG_EXTENDED))
+			die(_("Invalid old URL pattern: %s"), oldurl);
+
+		if (modify_type & MODIFY_TYPE_FETCH)
+			for (i = 0; i < remote->url_nr; i++)
+				if (!regexec(&old_regex, remote->url[i], 0, NULL, 0))
+					matches++;
+				else
+					negative_matches++;
+		if (delete_mode && !negative_matches && modify_type & MODIFY_TYPE_FETCH)
+			die(_("Will not delete all non-push URLs"));
+		if (modify_type & MODIFY_TYPE_PUSH)
+			for (i = 0; i < remote->pushurl_nr; i++)
+				if (!regexec(&old_regex, remote->pushurl[i], 0, NULL, 0))
+					matches++;
+				else
+					negative_matches++;
+		if (!delete_mode && !matches)
+			die(_("No such URL found: %s"), oldurl);
+
+		regfree(&old_regex);
+	}
+
+	/* If --fetch was explicitly given, then ensure that the push
+	 * URL does not change by copying the fetch URL to it. */
+	if (modify_type == MODIFY_TYPE_FETCH &&
+			remote->pushurl_nr == 0 && remote->url_nr > 0)
+		for (i = 0; i < remote->url_nr; i++)
+			git_config_set_multivar(name_buf_push.buf,
+				remote->url[i], "^$", 0);
+
+	/* Set the new entry value (not a --add or --delete operation). */
+	if (!add_mode && !delete_mode && !oldurl) {
+		if (modify_type & MODIFY_TYPE_FETCH)
+			git_config_set(name_buf_fetch.buf, newurl);
+		/* URLs will be the same, so remove pushurl. */
+		if (modify_type == MODIFY_TYPE_BOTH)
+			git_config_set(name_buf_push.buf, NULL);
+		else if (modify_type == MODIFY_TYPE_PUSH)
+			git_config_set(name_buf_push.buf, newurl);
+
+		goto cleanup_ok;
+	}
+
+	/* Set operations (--add, --delete) or change request (oldurl given). */
+	if (delete_mode) {
+		if (modify_type & MODIFY_TYPE_FETCH)
+			git_config_set_multivar(name_buf_fetch.buf, NULL, oldurl, 1);
+		if (modify_type & MODIFY_TYPE_PUSH)
+			git_config_set_multivar(name_buf_push.buf, NULL, oldurl, 1);
 	} else {
-		strbuf_addf(&name_buf, "remote.%s.url", remotename);
-		urlset = remote->url;
-		urlset_nr = remote->url_nr;
+		if (add_mode) /* Do not replace oldurl, but add a new one. */
+			oldurl = "^$";
+		if (modify_type & MODIFY_TYPE_FETCH)
+			git_config_set_multivar(name_buf_fetch.buf, newurl, oldurl, 0);
+		if (modify_type & MODIFY_TYPE_PUSH)
+			git_config_set_multivar(name_buf_push.buf, newurl, oldurl, 0);
 	}
-
-	/* Special cases that add new entry. */
-	if ((!oldurl && !delete_mode) || add_mode) {
-		if (add_mode)
-			git_config_set_multivar(name_buf.buf, newurl,
-				"^$", 0);
-		else
-			git_config_set(name_buf.buf, newurl);
-		strbuf_release(&name_buf);
-		return 0;
-	}
-
-	/* Old URL specified. Demand that one matches. */
-	if (regcomp(&old_regex, oldurl, REG_EXTENDED))
-		die(_("Invalid old URL pattern: %s"), oldurl);
-
-	for (i = 0; i < urlset_nr; i++)
-		if (!regexec(&old_regex, urlset[i], 0, NULL, 0))
-			matches++;
-		else
-			negative_matches++;
-	if (!delete_mode && !matches)
-		die(_("No such URL found: %s"), oldurl);
-	if (delete_mode && !negative_matches && !push_mode)
-		die(_("Will not delete all non-push URLs"));
-
-	regfree(&old_regex);
-
-	if (!delete_mode)
-		git_config_set_multivar(name_buf.buf, newurl, oldurl, 0);
-	else
-		git_config_set_multivar(name_buf.buf, NULL, oldurl, 1);
+cleanup_ok:
+	strbuf_release(&name_buf_fetch);
+	strbuf_release(&name_buf_push);
 	return 0;
 }
 

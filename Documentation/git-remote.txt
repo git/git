@@ -15,9 +15,9 @@ SYNOPSIS
 'git remote remove' <name>
 'git remote set-head' <name> (-a | --auto | -d | --delete | <branch>)
 'git remote set-branches' [--add] <name> <branch>...
-'git remote set-url' [--push] <name> <newurl> [<oldurl>]
-'git remote set-url --add' [--push] <name> <newurl>
-'git remote set-url --delete' [--push] <name> <url>
+'git remote set-url' [--both | --fetch | --push] <name> <newurl> [<oldurl>]
+'git remote set-url' [--both | --fetch | --push] '--add' <name> <newurl>
+'git remote set-url' [--both | --fetch | --push] '--delete' <name> <url>
 'git remote' [-v | --verbose] 'show' [-n] <name>...
 'git remote prune' [-n | --dry-run] <name>...
 'git remote' [-v | --verbose] 'update' [-p | --prune] [(<group> | <remote>)...]
@@ -134,7 +134,16 @@ Changes URL remote points to. Sets first URL remote points to matching
 regex <oldurl> (first URL if no <oldurl> is given) to <newurl>. If
 <oldurl> doesn't match any URL, error occurs and nothing is changed.
 +
-With '--push', push URLs are manipulated instead of fetch URLs.
+With '--both', both the fetch and push URLs are manipulated.
++
+With '--fetch', only fetch URLs are manipulated.
++
+With '--push', only push URLs are manipulated.
++
+If none of the '--both', '--fetch' or --push' options are given, then
+'--both' applies only if no push URL was set before. Otherwise '--fetch'
+is assumed for historical reasons. This default may change in the
+future to '--both' to avoid surprises depending on the configuration.
 +
 With '--add', instead of changing some URL, new URL is added.
 +
