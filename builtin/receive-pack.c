@@ -964,7 +964,7 @@ static void check_aliased_updates(struct command *commands)
 			string_list_append(&ref_list, cmd->ref_name);
 		item->util = (void *)cmd;
 	}
-	sort_string_list(&ref_list);
+	string_list_sort(&ref_list);
 
 	for (cmd = commands; cmd; cmd = cmd->next) {
 		if (!cmd->error_string)

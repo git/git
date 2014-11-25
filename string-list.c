@@ -220,7 +220,7 @@ struct string_list_item *string_list_append(struct string_list *list,
 /* Yuck */
 static compare_strings_fn compare_for_qsort;
 
-/* Only call this from inside sort_string_list! */
+/* Only call this from inside string_list_sort! */
 static int cmp_items(const void *a, const void *b)
 {
 	const struct string_list_item *one = a;
@@ -228,7 +228,7 @@ static int cmp_items(const void *a, const void *b)
 	return compare_for_qsort(one->string, two->string);
 }
 
-void sort_string_list(struct string_list *list)
+void string_list_sort(struct string_list *list)
 {
 	compare_for_qsort = list->cmp ? list->cmp : strcmp;
 	qsort(list->items, list->nr, sizeof(*list->items), cmp_items);

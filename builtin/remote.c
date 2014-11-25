@@ -352,9 +352,9 @@ static int get_ref_states(const struct ref *remote_refs, struct ref_states *stat
 	free_refs(stale_refs);
 	free_refs(fetch_map);
 
-	sort_string_list(&states->new);
-	sort_string_list(&states->tracked);
-	sort_string_list(&states->stale);
+	string_list_sort(&states->new);
+	string_list_sort(&states->tracked);
+	string_list_sort(&states->stale);
 
 	return 0;
 }
@@ -909,7 +909,7 @@ static int get_remote_ref_states(const char *name,
 			get_push_ref_states(remote_refs, states);
 	} else {
 		for_each_ref(append_ref_to_tracked_list, states);
-		sort_string_list(&states->tracked);
+		string_list_sort(&states->tracked);
 		get_push_ref_states_noquery(states);
 	}
 
@@ -1128,7 +1128,7 @@ static int show_all(void)
 	if (!result) {
 		int i;
 
-		sort_string_list(&list);
+		string_list_sort(&list);
 		for (i = 0; i < list.nr; i++) {
 			struct string_list_item *item = list.items + i;
 			if (verbose)
@@ -1333,7 +1333,7 @@ static int prune_remote(const char *remote, int dry_run)
 
 	for_each_string_list_item(item, &states.stale)
 		string_list_append(&refs_to_prune, item->util);
-	sort_string_list(&refs_to_prune);
+	string_list_sort(&refs_to_prune);
 
 	if (!dry_run) {
 		struct strbuf err = STRBUF_INIT;

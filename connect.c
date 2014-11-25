@@ -93,7 +93,7 @@ static void annotate_refs_with_symref_info(struct ref *ref)
 		parse_one_symref_info(&symref, val, len);
 		feature_list = val + 1;
 	}
-	sort_string_list(&symref);
+	string_list_sort(&symref);
 
 	for (; ref; ref = ref->next) {
 		struct string_list_item *item;
