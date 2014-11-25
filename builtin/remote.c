@@ -1341,8 +1341,9 @@ static int prune_remote(const char *remote, int dry_run)
 		const char *refname = states.stale.items[i].util;
 
 		delete_refs[i] = refname;
-		string_list_insert(&delete_refs_list, refname);
+		string_list_append(&delete_refs_list, refname);
 	}
+	sort_string_list(&delete_refs_list);
 
 	if (!dry_run) {
 		struct strbuf err = STRBUF_INIT;
