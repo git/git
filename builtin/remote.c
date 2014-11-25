@@ -1309,9 +1309,10 @@ static int set_head(int argc, const char **argv)
 
 static int prune_remote(const char *remote, int dry_run)
 {
-	int result = 0, i;
+	int result = 0;
 	struct ref_states states;
 	struct string_list refs_to_prune = STRING_LIST_INIT_NODUP;
+	struct string_list_item *item;
 	const char *dangling_msg = dry_run
 		? _(" %s will become dangling!")
 		: _(" %s has become dangling!");
@@ -1330,11 +1331,8 @@ static int prune_remote(const char *remote, int dry_run)
 		  ? states.remote->url[0]
 		  : _("(no URL)"));
 
-	for (i = 0; i < states.stale.nr; i++) {
-		const char *refname = states.stale.items[i].util;
-
-		string_list_append(&refs_to_prune, refname);
-	}
+	for_each_string_list_item(item, &states.stale)
+		string_list_append(&refs_to_prune, item->util);
 	sort_string_list(&refs_to_prune);
 
 	if (!dry_run) {
@@ -1344,8 +1342,8 @@ static int prune_remote(const char *remote, int dry_run)
 		strbuf_release(&err);
 	}
 
-	for (i = 0; i < states.stale.nr; i++) {
-		const char *refname = states.stale.items[i].util;
+	for_each_string_list_item(item, &states.stale) {
+		const char *refname = item->util;
 
 		if (!dry_run)
 			result |= delete_ref(refname, NULL, 0);
