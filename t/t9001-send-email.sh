@@ -31,7 +31,7 @@ test_expect_success $PREREQ 'Setup helper tool' '
 	GIT_AUTHOR_NAME="A" git commit -a -m "Second."
 '
 
-clean_fake_sendmail() {
+clean_fake_sendmail () {
 	rm -f commandline* msgtxt*
 }
 
@@ -49,9 +49,9 @@ test_no_confirm () {
 		--to=nobody@example.com \
 		--smtp-server="$(pwd)/fake.sendmail" \
 		$@ \
-		$patches > stdout &&
+		$patches >stdout &&
 		test_must_fail grep "Send this email" stdout &&
-		> no_confirm_okay
+		>no_confirm_okay
 }
 
 # Exit immediately to prevent hang if a no-confirm test fails
@@ -365,7 +365,7 @@ test_expect_success $PREREQ 'Author From: in message body' '
 		--to=nobody@example.com \
 		--smtp-server="$(pwd)/fake.sendmail" \
 		$patches &&
-	sed "1,/^\$/d" < msgtxt1 > msgbody1 &&
+	sed "1,/^\$/d" <msgtxt1 >msgbody1 &&
 	grep "From: A <author@example.com>" msgbody1
 '
 
@@ -376,7 +376,7 @@ test_expect_success $PREREQ 'Author From: not in message body' '
 		--to=nobody@example.com \
 		--smtp-server="$(pwd)/fake.sendmail" \
 		$patches &&
-	sed "1,/^\$/d" < msgtxt1 > msgbody1 &&
+	sed "1,/^\$/d" <msgtxt1 >msgbody1 &&
 	! grep "From: A <author@example.com>" msgbody1
 '
 
@@ -790,7 +790,7 @@ test_confirm () {
 		--from="Example <nobody@example.com>" \
 		--to=nobody@example.com \
 		--smtp-server="$(pwd)/fake.sendmail" \
-		$@ $patches > stdout &&
+		$@ $patches >stdout &&
 	grep "Send this email" stdout
 }
 
@@ -838,7 +838,7 @@ test_expect_success $PREREQ 'confirm detects EOF (inform assumes y)' '
 			--from="Example <nobody@example.com>" \
 			--to=nobody@example.com \
 			--smtp-server="$(pwd)/fake.sendmail" \
-			outdir/*.patch < /dev/null
+			outdir/*.patch </dev/null
 	ret="$?"
 	git config sendemail.confirm ${CONFIRM:-never}
 	test $ret = "0"
@@ -853,7 +853,7 @@ test_expect_success $PREREQ 'confirm detects EOF (auto causes failure)' '
 			--from="Example <nobody@example.com>" \
 			--to=nobody@example.com \
 			--smtp-server="$(pwd)/fake.sendmail" \
-			$patches < /dev/null
+			$patches </dev/null
 	ret="$?"
 	git config sendemail.confirm ${CONFIRM:-never}
 	test $ret = "0"
@@ -1034,7 +1034,7 @@ test_expect_success $PREREQ '--compose-encoding adds correct MIME for subject' '
 '
 
 test_expect_success $PREREQ 'detects ambiguous reference/file conflict' '
-	echo master > master &&
+	echo master >master &&
 	git add master &&
 	git commit -m"add master" &&
 	test_must_fail git send-email --dry-run master 2>errors &&
@@ -1403,7 +1403,7 @@ test_expect_success $PREREQ 'convert from quoted-printable to base64' '
 '
 
 test_expect_success $PREREQ 'setup expect' "
-tr -d '\\015' | tr '%' '\\015' > email-using-crlf <<EOF
+tr -d '\\015' | tr '%' '\\015' >email-using-crlf <<EOF
 From fe6ecc66ece37198fe5db91fa2fc41d9f4fe5cc4 Mon Sep 17 00:00:00 2001
 Message-Id: <bogus-message-id@example.com>
 From: A U Thor <author@example.com>
