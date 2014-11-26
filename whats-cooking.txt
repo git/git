@@ -1,15 +1,20 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Nov 2014, #03; Thu, 13)
-X-master-at: f5709437d963e585df0691989d3ccfee1de1572b
-X-next-at: 9da3436bf99e47e1efc737cce3b3fec70f88f2f7
+Subject: What's cooking in git.git (Nov 2014, #04; Wed, 26)
+X-master-at: b260d265e189728b26e50506ac6ffab6a7d588da
+X-next-at: a0de725a8ff02c1f2a9452c2234bee819242395c
 
-What's cooking in git.git (Nov 2014, #03; Thu, 13)
+What's cooking in git.git (Nov 2014, #04; Wed, 26)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
+
+I haven't had time to write comments (they are essentially release
+notes entries to be used when/if the topic graduates to 'master')
+for new topics, but I am pushing this out to show the current state
+of affairs.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -17,59 +22,234 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[New Topics]
+[Graduated to "master"]
+
+* cc/interpret-trailers (2014-11-10) 2 commits
+  (merged to 'next' on 2014-11-14 at fa0ccc6)
+ + trailer: display a trailer without its trailing newline
+ + trailer: ignore comment lines inside the trailers
+ (this branch is used by cc/interpret-trailers-more.)
+
+ Small fixes to a new experimental command already in 'master'.
+
+
+* da/difftool (2014-11-14) 1 commit
+  (merged to 'next' on 2014-11-17 at 231f559)
+ + difftool: honor --trust-exit-code for builtin tools
+
+ Fix-up to a new feature in 'master'.
+
+
+* jc/doc-commit-only (2014-11-07) 1 commit
+  (merged to 'next' on 2014-11-14 at 29c70d2)
+ + Documentation/git-commit: clarify that --only/--include records the working tree contents
+
 
 * mh/doc-remote-helper-xref (2014-11-11) 1 commit
- - doc: add some crossrefs between manual pages
-
- Will merge to 'next'.
-
-
-* ta/tutorial-modernize (2014-11-11) 1 commit
- - gittutorial.txt: remove reference to ancient Git version
-
- Will merge to 'next'.
-
-
-* jk/approxidate-avoid-y-d-m-over-future-dates (2014-11-13) 2 commits
- - approxidate: allow ISO-like dates far in the future
- - pass TIME_DATE_NOW to approxidate future-check
-
-
-* jk/checkout-from-tree (2014-11-13) 1 commit
- - checkout $tree: do not throw away unchanged index entries
-
- Will merge to 'next'.
-
-
-* mb/enable-lib-terminal-test-on-newer-darwin (2014-11-13) 1 commit
- - allow TTY tests to run under recent Mac OS
-
- Will merge to 'next'.
+  (merged to 'next' on 2014-11-14 at a7f6230)
+ + doc: add some crossrefs between manual pages
 
 
 * sn/tutorial-status-output-example (2014-11-13) 1 commit
- - gittutorial: fix output of 'git status'
-
- Will merge to 'next'.
-
-
-* sv/get-builtin (2014-11-13) 1 commit
- - builtin: move builtin retrieval to get_builtin()
-
- Will merge to 'next'.
+  (merged to 'next' on 2014-11-14 at 0fe4930)
+ + gittutorial: fix output of 'git status'
 
 
 * sv/submitting-final-patch (2014-11-13) 1 commit
- - SubmittingPatches: final submission is To: maintainer and CC: list
+  (merged to 'next' on 2014-11-14 at 9e1220f)
+ + SubmittingPatches: final submission is To: maintainer and CC: list
 
- Will merge to 'next'.
+
+* ta/tutorial-modernize (2014-11-11) 1 commit
+  (merged to 'next' on 2014-11-14 at c45f0ac)
+ + gittutorial.txt: remove reference to ancient Git version
 
 
 * tb/no-relative-file-url (2014-11-13) 1 commit
- - t5705: the file:// URL should be absolute
+  (merged to 'next' on 2014-11-14 at 96e9227)
+ + t5705: the file:// URL should be absolute
 
- Will merge to 'next'.
+--------------------------------------------------
+[New Topics]
+
+* jc/unpack-trees-plug-leak (2014-11-17) 1 commit
+ - unpack_trees: plug leakage of o->result
+
+
+* js/windows-open-eisdir-error (2014-11-17) 1 commit
+  (merged to 'next' on 2014-11-18 at 57b0d49)
+ + Windows: correct detection of EISDIR in mingw_open()
+
+
+* rs/maint-config-use-labs (2014-11-17) 1 commit
+  (merged to 'next' on 2014-11-18 at 53c2404)
+ + use labs() for variables of type long instead of abs()
+
+
+* rs/receive-pack-use-labs (2014-11-17) 1 commit
+  (merged to 'next' on 2014-11-18 at c6d2d94)
+ + use labs() for variables of type long instead of abs()
+
+
+* jk/colors (2014-11-20) 5 commits
+ - diff-highlight: allow configurable colors
+ - parse_color: recognize "no$foo" to clear the $foo attribute
+ - parse_color: support 24-bit RGB values
+ - parse_color: refactor color storage
+ - Merge branch 'jn/parse-config-slot' into jk/colors
+ (this branch uses jk/colors-fix.)
+
+
+* jk/colors-fix (2014-11-20) 3 commits
+ - t4026: test "normal" color
+ - config: fix parsing of "git config --get-color some.key -1"
+ - docs: describe ANSI 256-color mode
+ (this branch is used by jk/colors.)
+
+
+* jk/gitweb-with-newer-cgi-multi-param (2014-11-18) 1 commit
+  (merged to 'next' on 2014-11-18 at 6ac61fe)
+ + gitweb: hack around CGI's list-context param() handling
+
+
+* jk/lock-ref-sha1-basic-return-errors (2014-11-20) 1 commit
+ - lock_ref_sha1_basic: do not die on locking errors
+
+
+* jk/no-perl-tests (2014-11-18) 2 commits
+ - t960[34]: mark cvsimport tests as requiring perl
+ - t0090: mark add-interactive test with PERL prerequisite
+
+
+* jk/rebuild-perl-scripts-with-no-perl-seting-change (2014-11-18) 3 commits
+ - Makefile: have python scripts depend on NO_PYTHON setting
+ - Makefile: simplify by using SCRIPT_{PERL,SH}_GEN macros
+ - Makefile: have perl scripts depend on NO_PERL setting
+
+
+* mh/config-copy-string-from-git-path (2014-11-17) 1 commit
+ - cmd_config(): make a copy of path obtained from git_path()
+
+
+* mh/config-flip-xbit-back-after-checking (2014-11-18) 1 commit
+  (merged to 'next' on 2014-11-18 at 45f7d71)
+ + create_default_files(): don't set u+x bit on $GIT_DIR/config
+ (this branch is used by tb/config-core-filemode-check-on-broken-fs.)
+
+
+* po/everyday-doc (2014-11-17) 1 commit
+ - Documentation: change "gitlink" typo in git-push
+
+
+* ps/new-workdir-into-empty-directory (2014-11-20) 1 commit
+ - git-new-workdir: Don't fail if the target directory is empty
+
+
+* rt/push-recurse-submodule-usage-string (2014-11-18) 1 commit
+ - builtin/push.c: fix description of --recurse-submodules option
+
+
+* sb/copy-fd-errno (2014-11-17) 1 commit
+ - copy.c: make copy_fd preserve meaningful errno
+
+
+* sb/log-ref-write-fd (2014-11-20) 1 commit
+ - refs.c: add a function to append a reflog entry to a fd
+
+
+* sb/ref-transaction-unify-to-update (2014-11-20) 2 commits
+ - refs.c: make ref_transaction_delete a wrapper for ref_transaction_update
+ - refs.c: make ref_transaction_create a wrapper for ref_transaction_update
+
+
+* sv/doc-stripspace (2014-11-19) 1 commit
+ - Documentation/git-stripspace: Update synopsis
+
+
+* sv/typofix-apply-error-message (2014-11-17) 1 commit
+ - apply: fix typo in an error message
+
+
+* da/difftool-mergetool-simplify-reporting-status (2014-11-21) 5 commits
+ - mergetools: stop setting $status in merge_cmd()
+ - mergetool: simplify conditionals
+ - difftool--helper: add explicit exit statement
+ - mergetool--lib: remove use of $status global
+ - mergetool--lib: remove no-op assignment to $status from setup_user_tool
+
+
+* dw/shell-basename-dashdash-before-stripping-leading-dash-from-login (2014-11-25) 1 commit
+ - git-sh-setup.sh: use dashdash with basename call
+
+
+* jc/refer-to-t-readme-from-submitting-patches (2014-11-24) 2 commits
+ - t/README: justify why "! grep foo" is sufficient
+ - SubmittingPatches: refer to t/README for tests
+
+
+* jc/t9001-modernise (2014-11-25) 5 commits
+ - t9001: style modernisation phase #5
+ - t9001: style modernisation phase #4
+ - t9001: style modernisation phase #3
+ - t9001: style modernisation phase #2
+ - t9001: style modernisation phase #1
+ (this branch uses pb/send-email-te.)
+
+
+* js/t5000-dont-copy-bin-sh (2014-11-24) 1 commit
+ - t5000 on Windows: do not mistake "sh.exe" as "sh"
+
+
+* mg/add-ignore-errors (2014-11-21) 1 commit
+ - add: ignore only ignored files
+
+
+* mh/find-uniq-abbrev (2014-11-26) 1 commit
+ - sha1_name: avoid unnecessary sha1 lookup in find_unique_abbrev
+
+
+* mh/simplify-repack-without-refs (2014-11-25) 7 commits
+ - sort_string_list(): rename to string_list_sort()
+ - prune_remote(): iterate using for_each_string_list_item()
+ - prune_remote(): rename local variable
+ - repack_without_refs(): make the refnames argument a string_list
+ - prune_remote(): sort delete_refs_list references en masse
+ - prune_remote(): initialize both delete_refs lists in a single loop
+ - prune_remote(): exit early if there are no stale references
+
+
+* pb/am-message-id-footer (2014-11-25) 2 commits
+ - git-am: add --message-id/--no-message-id
+ - git-mailinfo: add --message-id
+
+
+* pb/send-email-te (2014-11-25) 2 commits
+ - git-send-email: add --transfer-encoding option
+ - git-send-email: delay creation of MIME headers
+ (this branch is used by jc/t9001-modernise.)
+
+
+* pw/remote-set-url-fetch (2014-11-26) 1 commit
+ - remote: add --fetch and --both options to set-url
+
+
+* rj/no-xopen-source-for-cygwin (2014-11-24) 1 commit
+ - git-compat-util.h: don't define _XOPEN_SOURCE on cygwin
+
+
+* sb/string-list (2014-11-25) 3 commits
+ - string_list: remove string_list_insert_at_index() from its API
+ - mailmap: use higher level string list functions
+ - string_list: document string_list_(insert,lookup)
+
+
+* sb/write-sha1-update-reflog (2014-11-24) 1 commit
+ - refs.c: move reflog updates into its own function
+
+
+* tb/config-core-filemode-check-on-broken-fs (2014-11-21) 1 commit
+ - init-db: improve the filemode trustability check
+ (this branch uses mh/config-flip-xbit-back-after-checking.)
 
 --------------------------------------------------
 [Stalled]
@@ -261,6 +441,47 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* jk/approxidate-avoid-y-d-m-over-future-dates (2014-11-13) 2 commits
+  (merged to 'next' on 2014-11-14 at 3c11a1b)
+ + approxidate: allow ISO-like dates far in the future
+ + pass TIME_DATE_NOW to approxidate future-check
+
+ Traditionally we tried to avoid interpreting date strings given by
+ the user as future dates, e.g. GIT_COMMITTER_DATE=2014-12-10 when
+ used early November 2014 was taken as "October 12, 2014" because it
+ is likely that a date in the future, December 10, is a mistake.
+
+ Loosen this and do not tiebreak by future-ness of the date when
+
+ (1) ISO-like format is used, and
+ (2) the string can make sense interpreted as both y-m-d and y-d-m.
+
+ Will cook in 'next' throughout the remainder of the cycle.
+
+
+* jk/checkout-from-tree (2014-11-13) 1 commit
+  (merged to 'next' on 2014-11-14 at ddbffb0)
+ + checkout $tree: do not throw away unchanged index entries
+
+ Will merge to 'master'.
+
+
+* mb/enable-lib-terminal-test-on-newer-darwin (2014-11-14) 1 commit
+  (merged to 'next' on 2014-11-14 at b2aae27)
+ + t/lib-terminal: allow TTY tests to run under recent Mac OS
+
+ Will cook in 'next' throughout the remainder of the cycle.
+
+ We probably should drop this, though. ($gmane/259609).
+
+
+* sv/get-builtin (2014-11-13) 1 commit
+  (merged to 'next' on 2014-11-14 at 9497e17)
+ + builtin: move builtin retrieval to get_builtin()
+
+ Will merge to 'master'.
+
+
 * br/imap-send-verbosity (2014-11-05) 1 commit
   (merged to 'next' on 2014-11-12 at d9e58ec)
  + imap-send: use parse options API to determine verbosity
@@ -277,26 +498,12 @@ of the repositories listed at
  Will cook in 'next' throughout the remainder of the cycle.
 
 
-* jc/doc-commit-only (2014-11-07) 1 commit
- - Documentation/git-commit: clarify that --only/--include records the working tree contents
-
- Will merge to 'next'.
-
-
-* cc/interpret-trailers (2014-11-10) 2 commits
- - trailer: display a trailer without its trailing newline
- - trailer: ignore comment lines inside the trailers
- (this branch is used by cc/interpret-trailers-more.)
-
- Will merge to 'next'.
-
-
 * cc/interpret-trailers-more (2014-11-10) 4 commits
  - trailer: add test with an old style conflict block
  - trailer: reuse ignore_non_trailer() to ignore conflict lines
  - commit: make ignore_non_trailer() non static
  - Merge branch 'jc/conflict-hint' into cc/interpret-trailers-more
- (this branch uses cc/interpret-trailers and jc/conflict-hint.)
+ (this branch uses jc/conflict-hint.)
 
 
 * js/push-to-update (2014-11-13) 1 commit
@@ -307,15 +514,23 @@ of the repositories listed at
 
 
 * rs/env-array-in-child-process (2014-11-10) 1 commit
- - use args member of struct child_process
+  (merged to 'next' on 2014-11-14 at 3f6ba07)
+ + use args member of struct child_process
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * tq/git-ssh-command (2014-11-10) 1 commit
- - git_connect: set ssh shell command in GIT_SSH_COMMAND
+  (merged to 'next' on 2014-11-14 at 83f5dae)
+ + git_connect: set ssh shell command in GIT_SSH_COMMAND
 
- Will merge to 'next'.
+ Allow passing extra set of arguments when ssh is invoked to create
+ an encrypted & authenticated connection, which is not possible with
+ existing GIT_SSH mechanism, which was designed more to match what
+ other programs with similar variables did, not necessarily to be
+ more useful.
+
+ Will merge to 'master'.
 
 
 * ms/submodule-update-config-doc (2014-11-03) 1 commit
@@ -334,17 +549,17 @@ of the repositories listed at
  Will cook in 'next' throughout the remainder of the cycle.
 
 
-* jh/empty-notes (2014-11-12) 10 commits
- - SQUASH???
- - t3301: modernize style
- - notes: empty notes should be shown by 'git log'
- - builtin/notes: add --allow-empty, to allow storing empty notes
- - builtin/notes: split create_note() to clarify add vs. remove logic
- - builtin/notes: simplify early exit code in add()
- - builtin/notes: refactor note file path into struct note_data
- - builtin/notes: improve naming
- - t3301: verify that 'git notes' removes empty notes by default
- - builtin/notes: fix premature failure when trying to add the empty blob
+* jh/empty-notes (2014-11-14) 9 commits
+  (merged to 'next' on 2014-11-18 at 9eeb338)
+ + t3301: modernize style
+ + notes: empty notes should be shown by 'git log'
+ + builtin/notes: add --allow-empty, to allow storing empty notes
+ + builtin/notes: split create_note() to clarify add vs. remove logic
+ + builtin/notes: simplify early exit code in add()
+ + builtin/notes: refactor note file path into struct note_data
+ + builtin/notes: improve naming
+ + t3301: verify that 'git notes' removes empty notes by default
+ + builtin/notes: fix premature failure when trying to add the empty blob
 
  A request to store an empty note via "git notes" meant to remove
  note from the object but with --allow-empty we will store a (surprise!)
@@ -427,62 +642,6 @@ of the repositories listed at
  Will cook in 'next' throughout the remainder of the cycle.
 
 
-* rs/ref-transaction-reflog (2014-11-03) 15 commits
- - refs.c: allow deleting refs with a broken sha1
- - refs.c: remove lock_any_ref_for_update
- - refs.c: make unlock_ref/close_ref/commit_ref static
- - refs.c: rename log_ref_setup to create_reflog
- - reflog.c: use a reflog transaction when writing during expire
- - refs.c: allow multiple reflog updates during a single transaction
- - refs.c: only write reflog update if msg is non-NULL
- - refs.c: add a flag to allow reflog updates to truncate the log
- - refs.c: add a transaction function to append a reflog entry
- - copy.c: make copy_fd preserve meaningful errno
- - refs.c: add a function to append a reflog entry to a fd
- - refs.c: add a new update_type field to ref_update
- - refs.c: rename the transaction functions
- - refs.c: make ref_transaction_delete a wrapper for ref_transaction_update
- - refs.c make ref_transaction_create a wrapper to ref_transaction_update
- (this branch is used by rs/ref-transaction-rename and rs/ref-transaction-send-pack.)
-
- Reviews and comments?
-
-
-* rs/ref-transaction-rename (2014-11-07) 16 commits
- - refs.c: add an err argument to pack_refs
- - refs.c: make lock_packed_refs take an err argument
- - refs.c: make add_packed_ref return an error instead of calling die
- - refs.c: replace the onerr argument in update_ref with a strbuf err
- - refs.c: make the *_packed_refs functions static
- - refs.c: make repack_without_refs static
- - remote.c: use a transaction for deleting refs
- - refs.c: write updates to packed refs when a transaction has more than one ref
- - refs.c: move reflog updates into its own function
- - refs.c: rollback the lockfile before we die() in repack_without_refs
- - refs.c: update rename_ref to use a transaction
- - refs.c: add transaction support for renaming a reflog
- - refs.c: use a stringlist for repack_without_refs
- - refs.c: use packed refs when deleting refs during a transaction
- - refs.c: return error instead of dying when locking fails during transaction
- - refs.c: allow passing raw git_committer_info as email to _update_reflog
- (this branch is used by rs/ref-transaction-send-pack; uses rs/ref-transaction-reflog.)
-
- Reviews and comments?
-
-
-* rs/ref-transaction-send-pack (2014-11-07) 7 commits
- - refs.c: add an err argument to create_symref
- - refs.c: add an err argument to create_reflog
- - t5543-atomic-push.sh: add basic tests for atomic pushes
- - push.c: add an --atomic-push argument
- - receive-pack.c: use a single transaction when atomic-push is negotiated
- - send-pack.c: add an --atomic-push command line argument
- - receive-pack.c: add protocol support to negotiate atomic-push
- (this branch uses rs/ref-transaction-reflog and rs/ref-transaction-rename.)
-
- Reviews and comments?
-
-
 * jc/checkout-local-track-report (2014-10-14) 1 commit
   (merged to 'next' on 2014-10-21 at f636a00)
  + checkout: report upstream correctly even with loosely defined branch.*.merge
@@ -514,3 +673,68 @@ of the repositories listed at
  . autoconf: check for timer_t
 
  Was wanting for a reroll.
+
+
+* rs/ref-transaction-reflog (2014-11-03) 15 commits
+ . refs.c: allow deleting refs with a broken sha1
+ . refs.c: remove lock_any_ref_for_update
+ . refs.c: make unlock_ref/close_ref/commit_ref static
+ . refs.c: rename log_ref_setup to create_reflog
+ . reflog.c: use a reflog transaction when writing during expire
+ . refs.c: allow multiple reflog updates during a single transaction
+ . refs.c: only write reflog update if msg is non-NULL
+ . refs.c: add a flag to allow reflog updates to truncate the log
+ . refs.c: add a transaction function to append a reflog entry
+ . copy.c: make copy_fd preserve meaningful errno
+ . refs.c: add a function to append a reflog entry to a fd
+ . refs.c: add a new update_type field to ref_update
+ . refs.c: rename the transaction functions
+ . refs.c: make ref_transaction_delete a wrapper for ref_transaction_update
+ . refs.c make ref_transaction_create a wrapper to ref_transaction_update
+ (this branch is used by rs/ref-transaction-rename and rs/ref-transaction-send-pack.)
+
+ Stefan Beller started working on reorganizing these three series,
+ which unfortunately did not see much reviews.
+
+
+* rs/ref-transaction-rename (2014-11-07) 16 commits
+ . refs.c: add an err argument to pack_refs
+ . refs.c: make lock_packed_refs take an err argument
+ . refs.c: make add_packed_ref return an error instead of calling die
+ . refs.c: replace the onerr argument in update_ref with a strbuf err
+ . refs.c: make the *_packed_refs functions static
+ . refs.c: make repack_without_refs static
+ . remote.c: use a transaction for deleting refs
+ . refs.c: write updates to packed refs when a transaction has more than one ref
+ . refs.c: move reflog updates into its own function
+ . refs.c: rollback the lockfile before we die() in repack_without_refs
+ . refs.c: update rename_ref to use a transaction
+ . refs.c: add transaction support for renaming a reflog
+ . refs.c: use a stringlist for repack_without_refs
+ . refs.c: use packed refs when deleting refs during a transaction
+ . refs.c: return error instead of dying when locking fails during transaction
+ . refs.c: allow passing raw git_committer_info as email to _update_reflog
+ (this branch is used by rs/ref-transaction-send-pack; uses rs/ref-transaction-reflog.)
+
+ Stefan Beller started working on reorganizing these three series,
+ which unfortunately did not see much reviews.
+
+
+* rs/ref-transaction-send-pack (2014-11-07) 7 commits
+ . refs.c: add an err argument to create_symref
+ . refs.c: add an err argument to create_reflog
+ . t5543-atomic-push.sh: add basic tests for atomic pushes
+ . push.c: add an --atomic-push argument
+ . receive-pack.c: use a single transaction when atomic-push is negotiated
+ . send-pack.c: add an --atomic-push command line argument
+ . receive-pack.c: add protocol support to negotiate atomic-push
+ (this branch uses rs/ref-transaction-reflog and rs/ref-transaction-rename.)
+
+ Stefan Beller started working on reorganizing these three series,
+ which unfortunately did not see much reviews.
+
+
+* sb/simplify-repack-without-refs (2014-11-20) 1 commit
+ . refs.c: use a string_list for repack_without_refs
+
+
