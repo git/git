@@ -1330,4 +1330,30 @@ test_expect_success 'fetch into bare respects core.logallrefupdates' '
 	)
 '
 
+test_expect_success 'receive.denyCurrentBranch = updateInstead' '
+	git push testrepo master &&
+	(cd testrepo &&
+		git reset --hard &&
+		git config receive.denyCurrentBranch updateInstead
+	) &&
+	test_commit third path2 &&
+	git push testrepo master &&
+	test $(git rev-parse HEAD) = $(cd testrepo && git rev-parse HEAD) &&
+	test third = "$(cat testrepo/path2)" &&
+	(cd testrepo &&
+		git update-index -q --refresh &&
+		git diff-files --quiet -- &&
+		git diff-index --quiet --cached HEAD -- &&
+		echo changed >path2 &&
+		git add path2
+	) &&
+	test_commit fourth path2 &&
+	test_must_fail git push testrepo master &&
+	test $(git rev-parse HEAD^) = $(git -C testrepo rev-parse HEAD) &&
+	(cd testrepo &&
+		git diff --quiet &&
+		test changed = "$(cat path2)"
+	)
+'
+
 test_done
