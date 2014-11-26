@@ -118,7 +118,7 @@ named with three dotted decimal digits (e.g. "1.8.5"), but recently we
 switched the versioning scheme and "feature releases" are named with
 three-dotted decimal digits that ends with ".0" (e.g. "1.9.0").
 
-The last such release was 1.9.0 done on Feb 14, 2014. You can expect
+The last such release was 2.2.0 done on Nov 26, 2014. You can expect
 that the tip of the "master" branch is always more stable than any of
 the released versions.
 
@@ -129,8 +129,8 @@ are cut from it.  The maintenance releases used to be named with four
 dotted decimal, named after the feature release they are updates to
 (e.g. "1.8.5.1" was the first maintenance release for "1.8.5" feature
 release).  These days, maintenance releases are named by incrementing
-the last digit of three-dotted decimal name (e.g. "1.9.1" is the first
-maintenance relaese for "1.9.0" series).
+the last digit of three-dotted decimal name (e.g. "2.2.1" will be the
+first maintenance relaese for "2.2" series).
 
 New features never go to the 'maint' branch.  This branch is also
 merged into "master" to propagate the fixes forward as needed.
@@ -156,8 +156,8 @@ too much into a topic being on (or not on) the "pu" branch.  This
 branch is mainly to remind the maintainer that the topics in them may
 turn out to be interesting when they are polished, nothing more.  The
 topics on this branch aren't usually complete, well tested, or well
-documented and they need further work.  When a topic that was in "pu"
-proves to be in a testable shape, it is merged to "next".
+documented and they often need further work.  When a topic that was
+in "pu" proves to be in a testable shape, it is merged to "next".
 
 You can run "git log --first-parent master..pu" to see what topics are
 currently in flight.  Sometimes, an idea that looked promising turns out
