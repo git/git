@@ -39,4 +39,15 @@ extern void sha1flush(struct sha1file *f);
 extern void crc32_begin(struct sha1file *);
 extern uint32_t crc32_end(struct sha1file *);
 
+static inline void sha1write_u8(struct sha1file *f, uint8_t data)
+{
+	sha1write(f, &data, sizeof(data));
+}
+
+static inline void sha1write_be32(struct sha1file *f, uint32_t data)
+{
+	data = htonl(data);
+	sha1write(f, &data, sizeof(data));
+}
+
 #endif
