@@ -644,11 +644,11 @@ msgstr "%s: %s - %s"
 
 #: lockfile.c:275
 msgid "BUG: reopen a lockfile that is still open"
-msgstr "FEHLER: Wiedereröffnen einer bereits geöffneten Lock-Datei"
+msgstr "FEHLER: Wiederöffnen einer bereits geöffneten Lock-Datei"
 
 #: lockfile.c:277
 msgid "BUG: reopen a lockfile that has been committed"
-msgstr "FEHLER: Wiedereröffnen einer bereits committeten Lock-Datei"
+msgstr "FEHLER: Wiederöffnen einer bereits committeten Lock-Datei"
 
 #: merge.c:41
 msgid "failed to read the cache"
@@ -1956,7 +1956,7 @@ msgstr "Unbeobachtete Dateien nicht aufgelistet%s"
 
 #: wt-status.c:1370
 msgid " (use -u option to show untracked files)"
-msgstr " (benutzen Sie die Option -u, um unbeobachteten Dateien anzuzeigen)"
+msgstr " (benutzen Sie die Option -u, um unbeobachtete Dateien anzuzeigen)"
 
 #: wt-status.c:1376
 msgid "No changes"
@@ -2810,7 +2810,7 @@ msgstr "Commits von <Datei> benutzen, anstatt \"git-rev-list\" aufzurufen"
 
 #: builtin/blame.c:2518
 msgid "Use <file>'s contents as the final image"
-msgstr "Inhalte der <Datei>en als entgültiges Abbild benutzen"
+msgstr "Inhalte der <Datei>en als endgültiges Abbild benutzen"
 
 #: builtin/blame.c:2519 builtin/blame.c:2520
 msgid "score"
@@ -3078,7 +3078,7 @@ msgstr "Informationen zum Upstream-Branch ändern"
 
 #: builtin/branch.c:823
 msgid "use colored output"
-msgstr "farbliche Ausgaben verwenden"
+msgstr "farbige Ausgaben verwenden"
 
 #: builtin/branch.c:824
 msgid "act on remote-tracking branches"
@@ -5585,7 +5585,7 @@ msgstr "Platzhalter als Python-String formatieren"
 
 #: builtin/for-each-ref.c:1078
 msgid "quote placeholders suitably for tcl"
-msgstr "Platzhalter als TCL-String formatieren"
+msgstr "Platzhalter als Tcl-String formatieren"
 
 #: builtin/for-each-ref.c:1081
 msgid "show only <n> matched refs"
@@ -6892,7 +6892,7 @@ msgstr ""
 
 #: builtin/ls-files.c:462
 msgid "show cached files in the output (default)"
-msgstr "zwischengespeicherten Dateien in der Ausgabe anzeigen (Standard)"
+msgstr "zwischengespeicherte Dateien in der Ausgabe anzeigen (Standard)"
 
 #: builtin/ls-files.c:464
 msgid "show deleted files in the output"
@@ -8119,7 +8119,7 @@ msgstr "Komprimierungsgrad für Paketierung"
 
 #: builtin/pack-objects.c:2685
 msgid "do not hide commits by grafts"
-msgstr "keine künstlichen Vorgänger-Commit (\"grafts\") verbergen"
+msgstr "keine künstlichen Vorgänger-Commits (\"grafts\") verbergen"
 
 #: builtin/pack-objects.c:2687
 msgid "use a bitmap index if available to speed up counting objects"
@@ -9695,7 +9695,7 @@ msgstr "Remote-Tracking-Branches anzeigen"
 
 #: builtin/show-branch.c:653
 msgid "color '*!+-' corresponding to the branch"
-msgstr "'*!+-' entsprechend des Branches einfärgen"
+msgstr "'*!+-' entsprechend des Branches einfärben"
 
 #: builtin/show-branch.c:655
 msgid "show <n> more commits after the common ancestor"
