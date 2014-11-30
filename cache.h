@@ -695,6 +695,7 @@ extern const char *mkpath(const char *fmt, ...) __attribute__((format (printf, 1
 extern const char *git_path(const char *fmt, ...) __attribute__((format (printf, 1, 2)));
 extern const char *git_path_submodule(const char *path, const char *fmt, ...)
 	__attribute__((format (printf, 2, 3)));
+extern void report_linked_checkout_garbage(void);
 
 /*
  * Return the name of the file in the local object database that would

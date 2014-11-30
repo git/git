@@ -4,6 +4,7 @@
 #include "cache.h"
 #include "strbuf.h"
 #include "string-list.h"
+#include "dir.h"
 
 static int get_st_mode_bits(const char *path, int *mode)
 {
@@ -91,9 +92,9 @@ static void replace_dir(struct strbuf *buf, int len, const char *newdir)
 }
 
 static const char *common_list[] = {
-	"/branches", "/hooks", "/info", "/logs", "/lost-found", "/modules",
+	"/branches", "/hooks", "/info", "!/logs", "/lost-found", "/modules",
 	"/objects", "/refs", "/remotes", "/worktrees", "/rr-cache", "/svn",
-	"config", "gc.pid", "packed-refs", "shallow",
+	"config", "!gc.pid", "packed-refs", "shallow",
 	NULL
 };
 
@@ -107,6 +108,8 @@ static void update_common_dir(struct strbuf *buf, int git_dir_len)
 	for (p = common_list; *p; p++) {
 		const char *path = *p;
 		int is_dir = 0;
+		if (*path == '!')
+			path++;
 		if (*path == '/') {
 			path++;
 			is_dir = 1;
@@ -120,6 +123,28 @@ static void update_common_dir(struct strbuf *buf, int git_dir_len)
 			return;
 		}
 	}
+}
+
+void report_linked_checkout_garbage(void)
+{
+	struct strbuf sb = STRBUF_INIT;
+	const char **p;
+	int len;
+
+	if (!git_common_dir_env)
+		return;
+	strbuf_addf(&sb, "%s/", get_git_dir());
+	len = sb.len;
+	for (p = common_list; *p; p++) {
+		const char *path = *p;
+		if (*path == '!')
+			continue;
+		strbuf_setlen(&sb, len);
+		strbuf_addstr(&sb, path);
+		if (file_exists(sb.buf))
+			report_garbage("unused in linked checkout", sb.buf);
+	}
+	strbuf_release(&sb);
 }
 
 static void adjust_git_path(struct strbuf *buf, int git_dir_len)
