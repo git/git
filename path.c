@@ -103,7 +103,8 @@ static void update_common_dir(struct strbuf *buf, int git_dir_len)
 	char *base = buf->buf + git_dir_len;
 	const char **p;
 
-	if (is_dir_file(base, "logs", "HEAD"))
+	if (is_dir_file(base, "logs", "HEAD") ||
+	    is_dir_file(base, "info", "sparse-checkout"))
 		return;	/* keep this in $GIT_DIR */
 	for (p = common_list; *p; p++) {
 		const char *path = *p;
