@@ -342,7 +342,9 @@ void setup_work_tree(void)
 
 static int check_repository_format_gently(const char *gitdir, int *nongit_ok)
 {
-	char repo_config[PATH_MAX+1];
+	struct strbuf sb = STRBUF_INIT;
+	const char *repo_config;
+	int ret = 0;
 
 	/*
 	 * git_config() can't be used here because it calls git_pathdup()
@@ -353,7 +355,8 @@ static int check_repository_format_gently(const char *gitdir, int *nongit_ok)
 	 * Use a gentler version of git_config() to check if this repo
 	 * is a good one.
 	 */
-	snprintf(repo_config, PATH_MAX, "%s/config", gitdir);
+	strbuf_addf(&sb, "%s/config", gitdir);
+	repo_config = sb.buf;
 	git_config_early(check_repository_format_version, NULL, repo_config);
 	if (GIT_REPO_VERSION < repository_format_version) {
 		if (!nongit_ok)
@@ -363,9 +366,10 @@ static int check_repository_format_gently(const char *gitdir, int *nongit_ok)
 			GIT_REPO_VERSION, repository_format_version);
 		warning("Please upgrade Git");
 		*nongit_ok = -1;
-		return -1;
+		ret = -1;
 	}
-	return 0;
+	strbuf_release(&sb);
+	return ret;
 }
 
 /*
