@@ -33,11 +33,13 @@ static int gc_auto_threshold = 6700;
 static int gc_auto_pack_limit = 50;
 static int detach_auto = 1;
 static const char *prune_expire = "2.weeks.ago";
+static const char *prune_worktrees_expire = "3.months.ago";
 
 static struct argv_array pack_refs_cmd = ARGV_ARRAY_INIT;
 static struct argv_array reflog = ARGV_ARRAY_INIT;
 static struct argv_array repack = ARGV_ARRAY_INIT;
 static struct argv_array prune = ARGV_ARRAY_INIT;
+static struct argv_array prune_worktrees = ARGV_ARRAY_INIT;
 static struct argv_array rerere = ARGV_ARRAY_INIT;
 
 static char *pidfile;
@@ -83,6 +85,7 @@ static void gc_config(void)
 	git_config_get_int("gc.autopacklimit", &gc_auto_pack_limit);
 	git_config_get_bool("gc.autodetach", &detach_auto);
 	git_config_date_string("gc.pruneexpire", &prune_expire);
+	git_config_date_string("gc.pruneworktreesexpire", &prune_worktrees_expire);
 	git_config(git_default_config, NULL);
 }
 
@@ -290,6 +293,7 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 	argv_array_pushl(&reflog, "reflog", "expire", "--all", NULL);
 	argv_array_pushl(&repack, "repack", "-d", "-l", NULL);
 	argv_array_pushl(&prune, "prune", "--expire", NULL);
+	argv_array_pushl(&prune_worktrees, "prune", "--worktrees", "--expire", NULL);
 	argv_array_pushl(&rerere, "rerere", "gc", NULL);
 
 	gc_config();
@@ -357,6 +361,12 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 			argv_array_push(&prune, "--no-progress");
 		if (run_command_v_opt(prune.argv, RUN_GIT_CMD))
 			return error(FAILED_RUN, prune.argv[0]);
+	}
+
+	if (prune_worktrees_expire) {
+		argv_array_push(&prune_worktrees, prune_worktrees_expire);
+		if (run_command_v_opt(prune_worktrees.argv, RUN_GIT_CMD))
+			return error(FAILED_RUN, prune_worktrees.argv[0]);
 	}
 
 	if (run_command_v_opt(rerere.argv, RUN_GIT_CMD))

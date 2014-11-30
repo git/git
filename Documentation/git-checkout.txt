@@ -435,8 +435,11 @@ $GIT_DIR or $GIT_COMMON_DIR when you need to directly access something
 inside $GIT_DIR. Use `git rev-parse --git-path` to get the final path.
 
 When you are done with a linked working tree you can simply delete it.
-You can clean up any stale $GIT_DIR/worktrees entries via `git prune
---worktrees` in the main or any linked working tree.
+The working tree's entry in the repository's $GIT_DIR/worktrees
+directory will eventually be removed automatically (see
+`gc.pruneworktreesexpire` in linkgit::git-config[1]), or you can run
+`git prune --worktrees` in the main or any linked working tree to
+clean up any stale entries in $GIT_DIR/worktrees.
 
 If you move a linked working directory to another file system, or
 within a file system that does not support hard links, you need to run
@@ -444,8 +447,8 @@ at least one git command inside the linked working directory
 (e.g. `git status`) in order to update its entry in $GIT_DIR/worktrees
 so that it does not get automatically removed.
 
-To prevent `git prune --worktrees` from deleting a $GIT_DIR/worktrees
-entry (which can be useful in some situations, such as when the
+To prevent a $GIT_DIR/worktrees entry from from being pruned (which
+can be useful in some situations, such as when the
 entry's working tree is stored on a portable device), add a file named
 'locked' to the entry's directory. The file contains the reason in
 plain text. For example, if a linked working tree's `.git` file points
