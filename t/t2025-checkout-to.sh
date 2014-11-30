@@ -13,8 +13,13 @@ test_expect_success 'checkout --to not updating paths' '
 '
 
 test_expect_success 'checkout --to an existing worktree' '
-	mkdir existing &&
+	mkdir -p existing/subtree &&
 	test_must_fail git checkout --detach --to existing master
+'
+
+test_expect_success 'checkout --to an existing empty worktree' '
+	mkdir existing_empty &&
+	git checkout --detach --to existing_empty master
 '
 
 test_expect_success 'checkout --to refuses to checkout locked branch' '

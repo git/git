@@ -865,7 +865,7 @@ static int prepare_linked_checkout(const struct checkout_opts *opts,
 
 	if (!new->commit)
 		die(_("no branch specified"));
-	if (file_exists(path))
+	if (file_exists(path) && !is_empty_dir(path))
 		die(_("'%s' already exists"), path);
 
 	len = strlen(path);
