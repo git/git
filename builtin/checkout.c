@@ -62,7 +62,7 @@ static int post_checkout_hook(struct commit *old, struct commit *new,
 
 }
 
-static int update_some(const unsigned char *sha1, const char *base, int baselen,
+static int update_some(const unsigned char *sha1, struct strbuf *base,
 		const char *pathname, unsigned mode, int stage, void *context)
 {
 	int len;
@@ -71,11 +71,11 @@ static int update_some(const unsigned char *sha1, const char *base, int baselen,
 	if (S_ISDIR(mode))
 		return READ_TREE_RECURSIVE;
 
-	len = baselen + strlen(pathname);
+	len = base->len + strlen(pathname);
 	ce = xcalloc(1, cache_entry_size(len));
 	hashcpy(ce->sha1, sha1);
-	memcpy(ce->name, base, baselen);
-	memcpy(ce->name + baselen, pathname, len - baselen);
+	memcpy(ce->name, base->buf, base->len);
+	memcpy(ce->name + base->len, pathname, len - base->len);
 	ce->ce_flags = create_ce_flags(0) | CE_UPDATE;
 	ce->ce_namelen = len;
 	ce->ce_mode = create_ce_mode(mode);

@@ -157,18 +157,26 @@ static int write_archive_entry(const unsigned char *sha1, const char *base,
 	return write_entry(args, sha1, path.buf, path.len, mode);
 }
 
+static int write_archive_entry_buf(const unsigned char *sha1, struct strbuf *base,
+		const char *filename, unsigned mode, int stage,
+		void *context)
+{
+	return write_archive_entry(sha1, base->buf, base->len,
+				     filename, mode, stage, context);
+}
+
 static void queue_directory(const unsigned char *sha1,
-		const char *base, int baselen, const char *filename,
+		struct strbuf *base, const char *filename,
 		unsigned mode, int stage, struct archiver_context *c)
 {
 	struct directory *d;
-	d = xmallocz(sizeof(*d) + baselen + 1 + strlen(filename));
+	d = xmallocz(sizeof(*d) + base->len + 1 + strlen(filename));
 	d->up	   = c->bottom;
-	d->baselen = baselen;
+	d->baselen = base->len;
 	d->mode	   = mode;
 	d->stage   = stage;
 	c->bottom  = d;
-	d->len = sprintf(d->path, "%.*s%s/", baselen, base, filename);
+	d->len = sprintf(d->path, "%.*s%s/", (int)base->len, base->buf, filename);
 	hashcpy(d->sha1, sha1);
 }
 
@@ -191,28 +199,28 @@ static int write_directory(struct archiver_context *c)
 }
 
 static int queue_or_write_archive_entry(const unsigned char *sha1,
-		const char *base, int baselen, const char *filename,
+		struct strbuf *base, const char *filename,
 		unsigned mode, int stage, void *context)
 {
 	struct archiver_context *c = context;
 
 	while (c->bottom &&
-	       !(baselen >= c->bottom->len &&
-		 !strncmp(base, c->bottom->path, c->bottom->len))) {
+	       !(base->len >= c->bottom->len &&
+		 !strncmp(base->buf, c->bottom->path, c->bottom->len))) {
 		struct directory *next = c->bottom->up;
 		free(c->bottom);
 		c->bottom = next;
 	}
 
 	if (S_ISDIR(mode)) {
-		queue_directory(sha1, base, baselen, filename,
+		queue_directory(sha1, base, filename,
 				mode, stage, c);
 		return READ_TREE_RECURSIVE;
 	}
 
 	if (write_directory(c))
 		return -1;
-	return write_archive_entry(sha1, base, baselen, filename, mode,
+	return write_archive_entry(sha1, base->buf, base->len, filename, mode,
 				   stage, context);
 }
 
@@ -260,7 +268,7 @@ int write_archive_entries(struct archiver_args *args,
 	err = read_tree_recursive(args->tree, "", 0, 0, &args->pathspec,
 				  args->pathspec.has_wildcard ?
 				  queue_or_write_archive_entry :
-				  write_archive_entry,
+				  write_archive_entry_buf,
 				  &context);
 	if (err == READ_TREE_RECURSIVE)
 		err = 0;
@@ -286,14 +294,14 @@ static const struct archiver *lookup_archiver(const char *name)
 	return NULL;
 }
 
-static int reject_entry(const unsigned char *sha1, const char *base,
-			int baselen, const char *filename, unsigned mode,
+static int reject_entry(const unsigned char *sha1, struct strbuf *base,
+			const char *filename, unsigned mode,
 			int stage, void *context)
 {
 	int ret = -1;
 	if (S_ISDIR(mode)) {
 		struct strbuf sb = STRBUF_INIT;
-		strbuf_addstr(&sb, base);
+		strbuf_addbuf(&sb, base);
 		strbuf_addstr(&sb, filename);
 		if (!match_pathspec(context, sb.buf, sb.len, 0, NULL, 1))
 			ret = READ_TREE_RECURSIVE;
