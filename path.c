@@ -16,11 +16,15 @@ static int get_st_mode_bits(const char *path, int *mode)
 
 static char bad_path[] = "/bad-path/";
 
-static char *get_pathname(void)
+static struct strbuf *get_pathname(void)
 {
-	static char pathname_array[4][PATH_MAX];
+	static struct strbuf pathname_array[4] = {
+		STRBUF_INIT, STRBUF_INIT, STRBUF_INIT, STRBUF_INIT
+	};
 	static int index;
-	return pathname_array[3 & ++index];
+	struct strbuf *sb = &pathname_array[3 & ++index];
+	strbuf_reset(sb);
+	return sb;
 }
 
 static char *cleanup_path(char *path)
@@ -32,6 +36,13 @@ static char *cleanup_path(char *path)
 			path++;
 	}
 	return path;
+}
+
+static void strbuf_cleanup_path(struct strbuf *sb)
+{
+	char *path = cleanup_path(sb->buf);
+	if (path > sb->buf)
+		strbuf_remove(sb, 0, path - sb->buf);
 }
 
 char *mksnpath(char *buf, size_t n, const char *fmt, ...)
@@ -49,85 +60,70 @@ char *mksnpath(char *buf, size_t n, const char *fmt, ...)
 	return cleanup_path(buf);
 }
 
-static char *vsnpath(char *buf, size_t n, const char *fmt, va_list args)
+static void vsnpath(struct strbuf *buf, const char *fmt, va_list args)
 {
 	const char *git_dir = get_git_dir();
-	size_t len;
-
-	len = strlen(git_dir);
-	if (n < len + 1)
-		goto bad;
-	memcpy(buf, git_dir, len);
-	if (len && !is_dir_sep(git_dir[len-1]))
-		buf[len++] = '/';
-	len += vsnprintf(buf + len, n - len, fmt, args);
-	if (len >= n)
-		goto bad;
-	return cleanup_path(buf);
-bad:
-	strlcpy(buf, bad_path, n);
-	return buf;
+	strbuf_addstr(buf, git_dir);
+	if (buf->len && !is_dir_sep(buf->buf[buf->len - 1]))
+		strbuf_addch(buf, '/');
+	strbuf_vaddf(buf, fmt, args);
+	strbuf_cleanup_path(buf);
 }
 
 char *git_snpath(char *buf, size_t n, const char *fmt, ...)
 {
-	char *ret;
+	struct strbuf sb = STRBUF_INIT;
 	va_list args;
 	va_start(args, fmt);
-	ret = vsnpath(buf, n, fmt, args);
+	vsnpath(&sb, fmt, args);
 	va_end(args);
-	return ret;
+	if (sb.len >= n)
+		strlcpy(buf, bad_path, n);
+	else
+		memcpy(buf, sb.buf, sb.len + 1);
+	strbuf_release(&sb);
+	return buf;
 }
 
 char *git_pathdup(const char *fmt, ...)
 {
-	char path[PATH_MAX], *ret;
+	struct strbuf path = STRBUF_INIT;
 	va_list args;
 	va_start(args, fmt);
-	ret = vsnpath(path, sizeof(path), fmt, args);
+	vsnpath(&path, fmt, args);
 	va_end(args);
-	return xstrdup(ret);
+	return strbuf_detach(&path, NULL);
 }
 
 char *mkpathdup(const char *fmt, ...)
 {
-	char *path;
 	struct strbuf sb = STRBUF_INIT;
 	va_list args;
-
 	va_start(args, fmt);
 	strbuf_vaddf(&sb, fmt, args);
 	va_end(args);
-	path = xstrdup(cleanup_path(sb.buf));
-
-	strbuf_release(&sb);
-	return path;
+	strbuf_cleanup_path(&sb);
+	return strbuf_detach(&sb, NULL);
 }
 
 char *mkpath(const char *fmt, ...)
 {
 	va_list args;
-	unsigned len;
-	char *pathname = get_pathname();
-
+	struct strbuf *pathname = get_pathname();
 	va_start(args, fmt);
-	len = vsnprintf(pathname, PATH_MAX, fmt, args);
+	strbuf_vaddf(pathname, fmt, args);
 	va_end(args);
-	if (len >= PATH_MAX)
-		return bad_path;
-	return cleanup_path(pathname);
+	return cleanup_path(pathname->buf);
 }
 
 char *git_path(const char *fmt, ...)
 {
-	char *pathname = get_pathname();
+	struct strbuf *pathname = get_pathname();
 	va_list args;
-	char *ret;
-
 	va_start(args, fmt);
-	ret = vsnpath(pathname, PATH_MAX, fmt, args);
+	vsnpath(pathname, fmt, args);
 	va_end(args);
-	return ret;
+	return pathname->buf;
 }
 
 void home_config_paths(char **global, char **xdg, char *file)
@@ -160,41 +156,27 @@ void home_config_paths(char **global, char **xdg, char *file)
 
 char *git_path_submodule(const char *path, const char *fmt, ...)
 {
-	char *pathname = get_pathname();
-	struct strbuf buf = STRBUF_INIT;
+	struct strbuf *buf = get_pathname();
 	const char *git_dir;
 	va_list args;
-	unsigned len;
 
-	len = strlen(path);
-	if (len > PATH_MAX-100)
-		return bad_path;
+	strbuf_addstr(buf, path);
+	if (buf->len && buf->buf[buf->len - 1] != '/')
+		strbuf_addch(buf, '/');
+	strbuf_addstr(buf, ".git");
 
-	strbuf_addstr(&buf, path);
-	if (len && path[len-1] != '/')
-		strbuf_addch(&buf, '/');
-	strbuf_addstr(&buf, ".git");
-
-	git_dir = read_gitfile(buf.buf);
+	git_dir = read_gitfile(buf->buf);
 	if (git_dir) {
-		strbuf_reset(&buf);
-		strbuf_addstr(&buf, git_dir);
+		strbuf_reset(buf);
+		strbuf_addstr(buf, git_dir);
 	}
-	strbuf_addch(&buf, '/');
-
-	if (buf.len >= PATH_MAX)
-		return bad_path;
-	memcpy(pathname, buf.buf, buf.len + 1);
-
-	strbuf_release(&buf);
-	len = strlen(pathname);
+	strbuf_addch(buf, '/');
 
 	va_start(args, fmt);
-	len += vsnprintf(pathname + len, PATH_MAX - len, fmt, args);
+	strbuf_vaddf(buf, fmt, args);
 	va_end(args);
-	if (len >= PATH_MAX)
-		return bad_path;
-	return cleanup_path(pathname);
+	strbuf_cleanup_path(buf);
+	return buf->buf;
 }
 
 int validate_headref(const char *path)
