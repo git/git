@@ -19,6 +19,14 @@ relative_path() {
 	"test \"\$(test-path-utils relative_path '$1' '$2')\" = '$expected'"
 }
 
+test_git_path() {
+	test_expect_success "git-path $1 $2 => $3" "
+		$1 git rev-parse --git-path $2 >actual &&
+		echo $3 >expect &&
+		test_cmp expect actual
+	"
+}
+
 # On Windows, we are using MSYS's bash, which mangles the paths.
 # Absolute paths are anchored at the MSYS installation directory,
 # which means that the path / accounts for this many characters:
@@ -243,5 +251,16 @@ relative_path "<empty>"		"<null>"	./
 relative_path "<null>"		"<empty>"	./
 relative_path "<null>"		"<null>"	./
 relative_path "<null>"		/foo/a/b	./
+
+test_git_path A=B                info/grafts .git/info/grafts
+test_git_path GIT_GRAFT_FILE=foo info/grafts foo
+test_git_path GIT_GRAFT_FILE=foo info/////grafts foo
+test_git_path GIT_INDEX_FILE=foo index foo
+test_git_path GIT_INDEX_FILE=foo index/foo .git/index/foo
+test_git_path GIT_INDEX_FILE=foo index2 .git/index2
+test_expect_success 'setup fake objects directory foo' 'mkdir foo'
+test_git_path GIT_OBJECT_DIRECTORY=foo objects foo
+test_git_path GIT_OBJECT_DIRECTORY=foo objects/foo foo/foo
+test_git_path GIT_OBJECT_DIRECTORY=foo objects2 .git/objects2
 
 test_done
