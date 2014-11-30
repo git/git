@@ -1499,6 +1499,8 @@ static inline ssize_t write_str_in_full(int fd, const char *str)
 {
 	return write_in_full(fd, str, strlen(str));
 }
+__attribute__((format (printf, 3, 4)))
+extern int write_file(const char *path, int fatal, const char *fmt, ...);
 
 /* pager.c */
 extern void setup_pager(void);
