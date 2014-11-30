@@ -78,6 +78,16 @@ void strbuf_git_path(struct strbuf *sb, const char *fmt, ...)
 	va_end(args);
 }
 
+const char *git_path(const char *fmt, ...)
+{
+	struct strbuf *pathname = get_pathname();
+	va_list args;
+	va_start(args, fmt);
+	do_git_path(pathname, fmt, args);
+	va_end(args);
+	return pathname->buf;
+}
+
 char *git_pathdup(const char *fmt, ...)
 {
 	struct strbuf path = STRBUF_INIT;
@@ -107,16 +117,6 @@ const char *mkpath(const char *fmt, ...)
 	strbuf_vaddf(pathname, fmt, args);
 	va_end(args);
 	return cleanup_path(pathname->buf);
-}
-
-const char *git_path(const char *fmt, ...)
-{
-	struct strbuf *pathname = get_pathname();
-	va_list args;
-	va_start(args, fmt);
-	do_git_path(pathname, fmt, args);
-	va_end(args);
-	return pathname->buf;
 }
 
 void home_config_paths(char **global, char **xdg, char *file)
