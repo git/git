@@ -92,7 +92,7 @@ static void replace_dir(struct strbuf *buf, int len, const char *newdir)
 
 static const char *common_list[] = {
 	"/branches", "/hooks", "/info", "/logs", "/lost-found", "/modules",
-	"/objects", "/refs", "/remotes", "/rr-cache", "/svn",
+	"/objects", "/refs", "/remotes", "/worktrees", "/rr-cache", "/svn",
 	"config", "gc.pid", "packed-refs", "shallow",
 	NULL
 };

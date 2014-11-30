@@ -252,6 +252,13 @@ modules::
 	directory is ignored if $GIT_COMMON_DIR is set and
 	"$GIT_COMMON_DIR/modules" will be used instead.
 
+worktrees::
+	Contains worktree specific information of linked
+	checkouts. Each subdirectory contains the worktree-related
+	part of a linked checkout. This directory is ignored if
+	$GIT_COMMON_DIR is set and "$GIT_COMMON_DIR/worktrees" will be
+	used instead.
+
 SEE ALSO
 --------
 linkgit:git-init[1],
