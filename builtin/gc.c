@@ -287,7 +287,7 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 	argv_array_pushl(&pack_refs_cmd, "pack-refs", "--all", "--prune", NULL);
 	argv_array_pushl(&reflog, "reflog", "expire", "--all", NULL);
 	argv_array_pushl(&repack, "repack", "-d", "-l", NULL);
-	argv_array_pushl(&prune, "prune", "--expire", NULL );
+	argv_array_pushl(&prune, "prune", "--expire", NULL);
 	argv_array_pushl(&rerere, "rerere", "gc", NULL);
 
 	gc_config();
