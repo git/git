@@ -1351,7 +1351,7 @@ static int resolve_gitlink_ref_recursive(struct ref_cache *refs,
 {
 	int fd, len;
 	char buffer[128], *p;
-	char *path;
+	const char *path;
 
 	if (recursion > MAXDEPTH || strlen(refname) > MAXREFLEN)
 		return -1;
@@ -2229,7 +2229,7 @@ static struct ref_lock *lock_ref_sha1_basic(const char *refname,
 					    const struct string_list *skip,
 					    int flags, int *type_p)
 {
-	char *ref_file;
+	const char *ref_file;
 	const char *orig_refname = refname;
 	struct ref_lock *lock;
 	int last_errno = 0;
@@ -2303,7 +2303,7 @@ static struct ref_lock *lock_ref_sha1_basic(const char *refname,
 		lock->force_write = 1;
 
  retry:
-	switch (safe_create_leading_directories(ref_file)) {
+	switch (safe_create_leading_directories_const(ref_file)) {
 	case SCLD_OK:
 		break; /* success */
 	case SCLD_VANISHED:
@@ -2743,7 +2743,7 @@ static int rename_tmp_log(const char *newrefname)
 	int attempts_remaining = 4;
 
  retry:
-	switch (safe_create_leading_directories(git_path("logs/%s", newrefname))) {
+	switch (safe_create_leading_directories_const(git_path("logs/%s", newrefname))) {
 	case SCLD_OK:
 		break; /* success */
 	case SCLD_VANISHED:

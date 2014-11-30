@@ -280,7 +280,7 @@ static void check_notes_merge_worktree(struct notes_merge_options *o)
 				    "(%s exists).", git_path("NOTES_MERGE_*"));
 		}
 
-		if (safe_create_leading_directories(git_path(
+		if (safe_create_leading_directories_const(git_path(
 				NOTES_MERGE_WORKTREE "/.test")))
 			die_errno("unable to create directory %s",
 				  git_path(NOTES_MERGE_WORKTREE));
@@ -295,8 +295,8 @@ static void write_buf_to_worktree(const unsigned char *obj,
 				  const char *buf, unsigned long size)
 {
 	int fd;
-	char *path = git_path(NOTES_MERGE_WORKTREE "/%s", sha1_to_hex(obj));
-	if (safe_create_leading_directories(path))
+	const char *path = git_path(NOTES_MERGE_WORKTREE "/%s", sha1_to_hex(obj));
+	if (safe_create_leading_directories_const(path))
 		die_errno("unable to create directory for '%s'", path);
 	if (file_exists(path))
 		die("found existing file at '%s'", path);
