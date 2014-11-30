@@ -826,7 +826,7 @@ static int prepare_linked_checkout(const struct checkout_opts *opts,
 	const char *path = opts->new_worktree, *name;
 	struct stat st;
 	struct child_process cp;
-	int counter = 0, len;
+	int counter = 0, len, ret;
 
 	if (!new->commit)
 		die(_("no branch specified"));
@@ -857,11 +857,21 @@ static int prepare_linked_checkout(const struct checkout_opts *opts,
 	if (mkdir(sb_repo.buf, 0777))
 		die_errno(_("could not create directory of '%s'"), sb_repo.buf);
 
+	/*
+	 * lock the incomplete repo so prune won't delete it, unlock
+	 * after the preparation is over.
+	 */
+	strbuf_addf(&sb, "%s/locked", sb_repo.buf);
+	write_file(sb.buf, 1, "initializing\n");
+
 	strbuf_addf(&sb_git, "%s/.git", path);
 	if (safe_create_leading_directories_const(sb_git.buf))
 		die_errno(_("could not create leading directories of '%s'"),
 			  sb_git.buf);
 
+	strbuf_reset(&sb);
+	strbuf_addf(&sb, "%s/gitdir", sb_repo.buf);
+	write_file(sb.buf, 1, "%s\n", real_path(sb_git.buf));
 	write_file(sb_git.buf, 1, "gitdir: %s/worktrees/%s\n",
 		   real_path(get_git_common_dir()), name);
 	/*
@@ -870,6 +880,7 @@ static int prepare_linked_checkout(const struct checkout_opts *opts,
 	 * value would do because this value will be ignored and
 	 * replaced at the next (real) checkout.
 	 */
+	strbuf_reset(&sb);
 	strbuf_addf(&sb, "%s/HEAD", sb_repo.buf);
 	write_file(sb.buf, 1, "%s\n", sha1_to_hex(new->commit->object.sha1));
 	strbuf_reset(&sb);
@@ -885,7 +896,11 @@ static int prepare_linked_checkout(const struct checkout_opts *opts,
 	memset(&cp, 0, sizeof(cp));
 	cp.git_cmd = 1;
 	cp.argv = opts->saved_argv;
-	return run_command(&cp);
+	ret = run_command(&cp);
+	strbuf_reset(&sb);
+	strbuf_addf(&sb, "%s/locked", sb_repo.buf);
+	unlink_or_warn(sb.buf);
+	return ret;
 }
 
 static int git_checkout_config(const char *var, const char *value, void *cb)

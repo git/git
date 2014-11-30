@@ -390,6 +390,17 @@ static int check_repository_format_gently(const char *gitdir, int *nongit_ok)
 	return ret;
 }
 
+static void update_linked_gitdir(const char *gitfile, const char *gitdir)
+{
+	struct strbuf path = STRBUF_INIT;
+	struct stat st;
+
+	strbuf_addf(&path, "%s/gitfile", gitdir);
+	if (stat(path.buf, &st) || st.st_mtime + 24 * 3600 < time(NULL))
+		write_file(path.buf, 0, "%s\n", gitfile);
+	strbuf_release(&path);
+}
+
 /*
  * Try to read the location of the git directory from the .git file,
  * return path to git directory if found.
@@ -438,6 +449,8 @@ const char *read_gitfile(const char *path)
 
 	if (!is_git_directory(dir))
 		die("Not a git repository: %s", dir);
+
+	update_linked_gitdir(path, dir);
 	path = real_path(dir);
 
 	free(buf);
