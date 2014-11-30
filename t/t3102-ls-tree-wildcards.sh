@@ -19,4 +19,12 @@ EOF
 	test_cmp expected actual
 '
 
+test_expect_success 'ls-tree outside prefix' '
+	cat >expected <<EOF &&
+100644 blob e69de29bb2d1d6434b8b29ae775ad8c2e48c5391	../a[a]/three
+EOF
+	( cd aa && git ls-tree -r HEAD "../a[a]"; ) >actual &&
+	test_cmp expected actual
+'
+
 test_done
