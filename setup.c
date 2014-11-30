@@ -224,14 +224,15 @@ void verify_non_filename(const char *prefix, const char *arg)
 	    "'git <command> [<revision>...] -- [<file>...]'", arg);
 }
 
-static void get_common_dir(struct strbuf *sb, const char *gitdir)
+int get_common_dir(struct strbuf *sb, const char *gitdir)
 {
 	struct strbuf data = STRBUF_INIT;
 	struct strbuf path = STRBUF_INIT;
 	const char *git_common_dir = getenv(GIT_COMMON_DIR_ENVIRONMENT);
+	int ret = 0;
 	if (git_common_dir) {
 		strbuf_addstr(sb, git_common_dir);
-		return;
+		return 1;
 	}
 	strbuf_addf(&path, "%s/commondir", gitdir);
 	if (file_exists(path.buf)) {
@@ -246,10 +247,12 @@ static void get_common_dir(struct strbuf *sb, const char *gitdir)
 			strbuf_addf(&path, "%s/", gitdir);
 		strbuf_addbuf(&path, &data);
 		strbuf_addstr(sb, real_path(path.buf));
+		ret = 1;
 	} else
 		strbuf_addstr(sb, gitdir);
 	strbuf_release(&data);
 	strbuf_release(&path);
+	return ret;
 }
 
 /*
@@ -340,13 +343,26 @@ void setup_work_tree(void)
 	initialized = 1;
 }
 
+static int check_repo_format(const char *var, const char *value, void *cb)
+{
+	if (strcmp(var, "core.repositoryformatversion") == 0)
+		repository_format_version = git_config_int(var, value);
+	else if (strcmp(var, "core.sharedrepository") == 0)
+		shared_repository = git_config_perm(var, value);
+	return 0;
+}
+
 static int check_repository_format_gently(const char *gitdir, int *nongit_ok)
 {
 	struct strbuf sb = STRBUF_INIT;
 	const char *repo_config;
+	config_fn_t fn;
 	int ret = 0;
 
-	get_common_dir(&sb, gitdir);
+	if (get_common_dir(&sb, gitdir))
+		fn = check_repo_format;
+	else
+		fn = check_repository_format_version;
 	strbuf_addstr(&sb, "/config");
 	repo_config = sb.buf;
 
@@ -359,7 +375,7 @@ static int check_repository_format_gently(const char *gitdir, int *nongit_ok)
 	 * Use a gentler version of git_config() to check if this repo
 	 * is a good one.
 	 */
-	git_config_early(check_repository_format_version, NULL, repo_config);
+	git_config_early(fn, NULL, repo_config);
 	if (GIT_REPO_VERSION < repository_format_version) {
 		if (!nongit_ok)
 			die ("Expected git repo version <= %d, found %d",
@@ -841,11 +857,10 @@ int git_config_perm(const char *var, const char *value)
 
 int check_repository_format_version(const char *var, const char *value, void *cb)
 {
-	if (strcmp(var, "core.repositoryformatversion") == 0)
-		repository_format_version = git_config_int(var, value);
-	else if (strcmp(var, "core.sharedrepository") == 0)
-		shared_repository = git_config_perm(var, value);
-	else if (strcmp(var, "core.bare") == 0) {
+	int ret = check_repo_format(var, value, cb);
+	if (ret)
+		return ret;
+	if (strcmp(var, "core.bare") == 0) {
 		is_bare_repository_cfg = git_config_bool(var, value);
 		if (is_bare_repository_cfg == 1)
 			inside_work_tree = -1;

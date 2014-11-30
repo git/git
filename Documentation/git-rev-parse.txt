@@ -216,6 +216,9 @@ If `$GIT_DIR` is not defined and the current directory
 is not detected to lie in a Git repository or work tree
 print a message to stderr and exit with nonzero status.
 
+--git-common-dir::
+	Show `$GIT_COMMON_DIR` if defined, else `$GIT_DIR`.
+
 --is-inside-git-dir::
 	When the current working directory is below the repository
 	directory print "true", otherwise "false".

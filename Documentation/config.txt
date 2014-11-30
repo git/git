@@ -393,6 +393,8 @@ false), while all other repositories are assumed to be bare (bare
 
 core.worktree::
 	Set the path to the root of the working tree.
+	If GIT_COMMON_DIR environment variable is set, core.worktree
+	is ignored and not used for determining the root of working tree.
 	This can be overridden by the GIT_WORK_TREE environment
 	variable and the '--work-tree' command-line option.
 	The value can be an absolute path or relative to the path to

@@ -346,4 +346,80 @@ test_expect_success 'relative $GIT_WORK_TREE and git subprocesses' '
 	test_cmp expected actual
 '
 
+test_expect_success 'Multi-worktree setup' '
+	mkdir work &&
+	mkdir -p repo.git/repos/foo &&
+	cp repo.git/HEAD repo.git/index repo.git/repos/foo &&
+	sane_unset GIT_DIR GIT_CONFIG GIT_WORK_TREE
+'
+
+test_expect_success 'GIT_DIR set (1)' '
+	echo "gitdir: repo.git/repos/foo" >gitfile &&
+	echo ../.. >repo.git/repos/foo/commondir &&
+	(
+		cd work &&
+		GIT_DIR=../gitfile git rev-parse --git-common-dir >actual &&
+		test-path-utils real_path "$TRASH_DIRECTORY/repo.git" >expect &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'GIT_DIR set (2)' '
+	echo "gitdir: repo.git/repos/foo" >gitfile &&
+	echo "$(pwd)/repo.git" >repo.git/repos/foo/commondir &&
+	(
+		cd work &&
+		GIT_DIR=../gitfile git rev-parse --git-common-dir >actual &&
+		test-path-utils real_path "$TRASH_DIRECTORY/repo.git" >expect &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success 'Auto discovery' '
+	echo "gitdir: repo.git/repos/foo" >.git &&
+	echo ../.. >repo.git/repos/foo/commondir &&
+	(
+		cd work &&
+		git rev-parse --git-common-dir >actual &&
+		test-path-utils real_path "$TRASH_DIRECTORY/repo.git" >expect &&
+		test_cmp expect actual &&
+		echo haha >data1 &&
+		git add data1 &&
+		git ls-files --full-name :/ | grep data1 >actual &&
+		echo work/data1 >expect &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success '$GIT_DIR/common overrides core.worktree' '
+	mkdir elsewhere &&
+	git --git-dir=repo.git config core.worktree "$TRASH_DIRECTORY/elsewhere" &&
+	echo "gitdir: repo.git/repos/foo" >.git &&
+	echo ../.. >repo.git/repos/foo/commondir &&
+	(
+		cd work &&
+		git rev-parse --git-common-dir >actual &&
+		test-path-utils real_path "$TRASH_DIRECTORY/repo.git" >expect &&
+		test_cmp expect actual &&
+		echo haha >data2 &&
+		git add data2 &&
+		git ls-files --full-name :/ | grep data2 >actual &&
+		echo work/data2 >expect &&
+		test_cmp expect actual
+	)
+'
+
+test_expect_success '$GIT_WORK_TREE overrides $GIT_DIR/common' '
+	echo "gitdir: repo.git/repos/foo" >.git &&
+	echo ../.. >repo.git/repos/foo/commondir &&
+	(
+		cd work &&
+		echo haha >data3 &&
+		git --git-dir=../.git --work-tree=. add data3 &&
+		git ls-files --full-name -- :/ | grep data3 >actual &&
+		echo data3 >expect &&
+		test_cmp expect actual
+	)
+'
+
 test_done
