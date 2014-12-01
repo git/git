@@ -27,4 +27,10 @@ EOF
 	test_cmp expected actual
 '
 
+test_expect_failure 'ls-tree does not yet support negated pathspec' '
+	git ls-files ":(exclude)a" "a*" >expect &&
+	git ls-tree --name-only -r HEAD ":(exclude)a" "a*" >actual &&
+	test_cmp expect actual
+'
+
 test_done
