@@ -2131,11 +2131,15 @@ receive.denyCurrentBranch::
 	message. Defaults to "refuse".
 +
 Another option is "updateInstead" which will update the working
-directory (must be clean) if pushing into the current branch. This option is
+tree if pushing into the current branch.  This option is
 intended for synchronizing working directories when one side is not easily
 accessible via interactive ssh (e.g. a live web site, hence the requirement
 that the working directory be clean). This mode also comes in handy when
 developing inside a VM to test and fix code on different Operating Systems.
++
+By default, "updateInstead" will refuse the push if the working tree or
+the index have any difference from the HEAD, but the `push-to-checkout`
+hook can be used to customize this.  See linkgit:githooks[5].
 
 receive.denyNonFastForwards::
 	If set to true, git-receive-pack will deny a ref update which is

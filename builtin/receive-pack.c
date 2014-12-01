@@ -797,6 +797,20 @@ static const char *push_to_deploy(unsigned char *sha1,
 	return NULL;
 }
 
+static const char *push_to_checkout_hook = "push-to-checkout";
+
+static const char *push_to_checkout(unsigned char *sha1,
+				    struct argv_array *env,
+				    const char *work_tree)
+{
+	argv_array_pushf(env, "GIT_WORK_TREE=%s", absolute_path(work_tree));
+	if (run_hook_le(env->argv, push_to_checkout_hook,
+			sha1_to_hex(sha1), NULL))
+		return "push-to-checkout hook declined";
+	else
+		return NULL;
+}
+
 static const char *update_worktree(unsigned char *sha1)
 {
 	const char *retval;
@@ -808,7 +822,10 @@ static const char *update_worktree(unsigned char *sha1)
 
 	argv_array_pushf(&env, "GIT_DIR=%s", absolute_path(get_git_dir()));
 
-	retval = push_to_deploy(sha1, &env, work_tree);
+	if (!find_hook(push_to_checkout_hook))
+		retval = push_to_deploy(sha1, &env, work_tree);
+	else
+		retval = push_to_checkout(sha1, &env, work_tree);
 
 	argv_array_clear(&env);
 	return retval;
