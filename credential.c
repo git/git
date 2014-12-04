@@ -173,6 +173,8 @@ int credential_read(struct credential *c, FILE *fp)
 			c->path = xstrdup(value);
 		} else if (!strcmp(key, "url")) {
 			credential_from_url(c, value);
+		} else if (!strcmp(key, "quit")) {
+			c->quit = !!git_config_bool("quit", value);
 		}
 		/*
 		 * Ignore other lines; we don't know what they mean, but
@@ -275,6 +277,9 @@ void credential_fill(struct credential *c)
 		credential_do(c, c->helpers.items[i].string, "get");
 		if (c->username && c->password)
 			return;
+		if (c->quit)
+			die("credential helper '%s' told us to quit",
+			    c->helpers.items[i].string);
 	}
 
 	credential_getpass(c);
