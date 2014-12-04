@@ -191,6 +191,10 @@ all::
 # Define NO_TRUSTABLE_FILEMODE if your filesystem may claim to support
 # the executable mode bit, but doesn't really do so.
 #
+# Define NEEDS_MODE_TRANSLATION if your OS strays from the typical file type
+# bits in mode values (e.g. z/OS defines I_SFMT to 0xFF000000 as opposed to the
+# usual 0xF000).
+#
 # Define NO_IPV6 if you lack IPv6 support and getaddrinfo().
 #
 # Define NO_UNIX_SOCKETS if your system does not offer unix sockets.
@@ -1354,6 +1358,10 @@ ifdef NO_FAST_WORKING_DIRECTORY
 endif
 ifdef NO_TRUSTABLE_FILEMODE
 	BASIC_CFLAGS += -DNO_TRUSTABLE_FILEMODE
+endif
+ifdef NEEDS_MODE_TRANSLATION
+	COMPAT_CFLAGS += -DNEEDS_MODE_TRANSLATION
+	COMPAT_OBJS += compat/stat.o
 endif
 ifdef NO_IPV6
 	BASIC_CFLAGS += -DNO_IPV6

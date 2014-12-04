@@ -865,6 +865,29 @@ else
 	SNPRINTF_RETURNS_BOGUS=
 fi
 GIT_CONF_SUBST([SNPRINTF_RETURNS_BOGUS])
+#
+# Define NEEDS_MODE_TRANSLATION if your OS strays from the typical file type
+# bits in mode values.
+AC_CACHE_CHECK([whether the platform uses typical file type bits],
+ [ac_cv_sane_mode_bits], [
+AC_EGREP_CPP(yippeeyeswehaveit,
+	AC_LANG_PROGRAM([AC_INCLUDES_DEFAULT],
+[#if S_IFMT == 0170000 && \
+	S_IFREG == 0100000 && S_IFDIR == 0040000 && S_IFLNK == 0120000 && \
+	S_IFBLK == 0060000 && S_IFCHR == 0020000 && \
+	S_IFIFO == 0010000 && S_IFSOCK == 0140000
+yippeeyeswehaveit
+#endif
+]),
+	[ac_cv_sane_mode_bits=yes],
+	[ac_cv_sane_mode_bits=no])
+])
+if test $ac_cv_sane_mode_bits = yes; then
+	NEEDS_MODE_TRANSLATION=
+else
+	NEEDS_MODE_TRANSLATION=UnfortunatelyYes
+fi
+GIT_CONF_SUBST([NEEDS_MODE_TRANSLATION])
 
 
 ## Checks for library functions.

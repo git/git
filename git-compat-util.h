@@ -455,6 +455,40 @@ extern int git_munmap(void *start, size_t length);
 #define on_disk_bytes(st) ((st).st_blocks * 512)
 #endif
 
+#ifdef NEEDS_MODE_TRANSLATION
+#undef S_IFMT
+#undef S_IFREG
+#undef S_IFDIR
+#undef S_IFLNK
+#undef S_IFBLK
+#undef S_IFCHR
+#undef S_IFIFO
+#undef S_IFSOCK
+#define S_IFMT   0170000
+#define S_IFREG  0100000
+#define S_IFDIR  0040000
+#define S_IFLNK  0120000
+#define S_IFBLK  0060000
+#define S_IFCHR  0020000
+#define S_IFIFO  0010000
+#define S_IFSOCK 0140000
+#ifdef stat
+#undef stat
+#endif
+#define stat(path, buf) git_stat(path, buf)
+extern int git_stat(const char *, struct stat *);
+#ifdef fstat
+#undef fstat
+#endif
+#define fstat(fd, buf) git_fstat(fd, buf)
+extern int git_fstat(int, struct stat *);
+#ifdef lstat
+#undef lstat
+#endif
+#define lstat(path, buf) git_lstat(path, buf)
+extern int git_lstat(const char *, struct stat *);
+#endif
+
 #define DEFAULT_PACKED_GIT_LIMIT \
 	((1024L * 1024L) * (sizeof(void*) >= 8 ? 8192 : 256))
 
