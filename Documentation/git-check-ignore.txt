@@ -21,6 +21,9 @@ the exclude mechanism) that decides if the pathname is excluded or
 included.  Later patterns within a file take precedence over earlier
 ones.
 
+By default, tracked files are not shown at all since they are not
+subject to exclude rules; but see `--no-index'.
+
 OPTIONS
 -------
 -q, --quiet::
