@@ -2549,6 +2549,16 @@ _git_tag ()
 		__gitcomp_nl "$(__git_refs)"
 		;;
 	esac
+
+	case "$cur" in
+	--*)
+		__gitcomp "
+			--list --delete --verify --annotate --message --file
+			--sign --cleanup --local-user --force --column --sort
+			--contains --points-at
+			"
+		;;
+	esac
 }
 
 _git_whatchanged ()
