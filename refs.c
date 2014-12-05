@@ -3136,7 +3136,7 @@ int for_each_reflog_ent_reverse(const char *refname, each_reflog_ent_fn fn, void
 
 	}
 	if (!ret && sb.len)
-		ret = show_one_reflog_ent(&sb, fn, cb_data);
+		die("BUG: reverse reflog parser had leftover data");
 
 	fclose(logfp);
 	strbuf_release(&sb);
