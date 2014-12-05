@@ -881,19 +881,21 @@ other
 	and the `core.editor` option in linkgit:git-config[1].
 
 'GIT_SSH'::
-	If this environment variable is set then 'git fetch'
-	and 'git push' will use this command instead
-	of 'ssh' when they need to connect to a remote system.
-	The '$GIT_SSH' command will be given exactly two or
-	four arguments: the 'username@host' (or just 'host')
-	from the URL and the shell command to execute on that
-	remote system, optionally preceded by '-p' (literally) and
-	the 'port' from the URL when it specifies something other
-	than the default SSH port.
+'GIT_SSH_COMMAND'::
+	If either of these environment variables is set then 'git fetch'
+	and 'git push' will use the specified command instead of 'ssh'
+	when they need to connect to a remote system.
+	The command will be given exactly two or four arguments: the
+	'username@host' (or just 'host') from the URL and the shell
+	command to execute on that remote system, optionally preceded by
+	'-p' (literally) and the 'port' from the URL when it specifies
+	something other than the default SSH port.
 +
-To pass options to the program that you want to list in GIT_SSH
-you will need to wrap the program and options into a shell script,
-then set GIT_SSH to refer to the shell script.
+`$GIT_SSH_COMMAND` takes precedence over `$GIT_SSH`, and is interpreted
+by the shell, which allows additional arguments to be included.
+`$GIT_SSH` on the other hand must be just the path to a program
+(which can be a wrapper shell script, if additional arguments are
+needed).
 +
 Usually it is easier to configure any desired options through your
 personal `.ssh/config` file.  Please consult your ssh documentation
