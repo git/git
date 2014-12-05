@@ -135,7 +135,6 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	};
 	struct child_process cmd = CHILD_PROCESS_INIT;
 	struct string_list_item *item;
-	struct argv_array cmd_args = ARGV_ARRAY_INIT;
 	struct string_list names = STRING_LIST_INIT_DUP;
 	struct string_list rollback = STRING_LIST_INIT_NODUP;
 	struct string_list existing_packs = STRING_LIST_INIT_DUP;
@@ -202,56 +201,55 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 
 	sigchain_push_common(remove_pack_on_signal);
 
-	argv_array_push(&cmd_args, "pack-objects");
-	argv_array_push(&cmd_args, "--keep-true-parents");
+	argv_array_push(&cmd.args, "pack-objects");
+	argv_array_push(&cmd.args, "--keep-true-parents");
 	if (!pack_kept_objects)
-		argv_array_push(&cmd_args, "--honor-pack-keep");
-	argv_array_push(&cmd_args, "--non-empty");
-	argv_array_push(&cmd_args, "--all");
-	argv_array_push(&cmd_args, "--reflog");
-	argv_array_push(&cmd_args, "--indexed-objects");
+		argv_array_push(&cmd.args, "--honor-pack-keep");
+	argv_array_push(&cmd.args, "--non-empty");
+	argv_array_push(&cmd.args, "--all");
+	argv_array_push(&cmd.args, "--reflog");
+	argv_array_push(&cmd.args, "--indexed-objects");
 	if (window)
-		argv_array_pushf(&cmd_args, "--window=%s", window);
+		argv_array_pushf(&cmd.args, "--window=%s", window);
 	if (window_memory)
-		argv_array_pushf(&cmd_args, "--window-memory=%s", window_memory);
+		argv_array_pushf(&cmd.args, "--window-memory=%s", window_memory);
 	if (depth)
-		argv_array_pushf(&cmd_args, "--depth=%s", depth);
+		argv_array_pushf(&cmd.args, "--depth=%s", depth);
 	if (max_pack_size)
-		argv_array_pushf(&cmd_args, "--max-pack-size=%s", max_pack_size);
+		argv_array_pushf(&cmd.args, "--max-pack-size=%s", max_pack_size);
 	if (no_reuse_delta)
-		argv_array_pushf(&cmd_args, "--no-reuse-delta");
+		argv_array_pushf(&cmd.args, "--no-reuse-delta");
 	if (no_reuse_object)
-		argv_array_pushf(&cmd_args, "--no-reuse-object");
+		argv_array_pushf(&cmd.args, "--no-reuse-object");
 	if (write_bitmaps)
-		argv_array_push(&cmd_args, "--write-bitmap-index");
+		argv_array_push(&cmd.args, "--write-bitmap-index");
 
 	if (pack_everything & ALL_INTO_ONE) {
 		get_non_kept_pack_filenames(&existing_packs);
 
 		if (existing_packs.nr && delete_redundant) {
 			if (unpack_unreachable)
-				argv_array_pushf(&cmd_args,
+				argv_array_pushf(&cmd.args,
 						"--unpack-unreachable=%s",
 						unpack_unreachable);
 			else if (pack_everything & LOOSEN_UNREACHABLE)
-				argv_array_push(&cmd_args,
+				argv_array_push(&cmd.args,
 						"--unpack-unreachable");
 		}
 	} else {
-		argv_array_push(&cmd_args, "--unpacked");
-		argv_array_push(&cmd_args, "--incremental");
+		argv_array_push(&cmd.args, "--unpacked");
+		argv_array_push(&cmd.args, "--incremental");
 	}
 
 	if (local)
-		argv_array_push(&cmd_args,  "--local");
+		argv_array_push(&cmd.args,  "--local");
 	if (quiet)
-		argv_array_push(&cmd_args,  "--quiet");
+		argv_array_push(&cmd.args,  "--quiet");
 	if (delta_base_offset)
-		argv_array_push(&cmd_args,  "--delta-base-offset");
+		argv_array_push(&cmd.args,  "--delta-base-offset");
 
-	argv_array_push(&cmd_args, packtmp);
+	argv_array_push(&cmd.args, packtmp);
 
-	cmd.argv = cmd_args.argv;
 	cmd.git_cmd = 1;
 	cmd.out = -1;
 	cmd.no_stdin = 1;
@@ -270,7 +268,6 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 	ret = finish_command(&cmd);
 	if (ret)
 		return ret;
-	argv_array_clear(&cmd_args);
 
 	if (!names.nr && !quiet)
 		printf("Nothing new to pack.\n");
