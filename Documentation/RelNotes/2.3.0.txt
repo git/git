@@ -1,0 +1,56 @@
+Git v2.3 Release Notes
+======================
+
+Updates since v2.2
+------------------
+
+Ports
+
+ *
+
+UI, Workflows & Features
+
+ * It was cumbersome to use "GIT_SSH" mechanism when the user wanted
+   to pass an extra set of arguments to the underlying ssh.  A new
+   environment variable GIT_SSH_COMMAND can be used for this.
+
+ * A request to store an empty note via "git notes" meant to remove
+   note from the object but with --allow-empty we will store a
+   (surprise!)  note that is empty.
+
+
+Performance, Internal Implementation, Development Support etc.
+
+ *
+
+
+Also contains various documentation updates and code clean-ups.
+
+
+Fixes since v2.2
+----------------
+
+Unless otherwise noted, all the fixes since v2.2 in the maintenance
+track are contained in this release (see the maintenance releases'
+notes for details).
+
+ * "git checkout $treeish $path", when $path in the index and the
+   working tree already matched what is in $treeish at the $path,
+   still overwrote the $path unnecessarily.
+   (merge c5326bd jk/checkout-from-tree later to maint).
+
+ * open() emulated on Windows platforms did not give EISDIR upon
+   an attempt to open a directory for writing.
+   (merge ba6fad0 js/windows-open-eisdir-error later to maint).
+
+ * A few code paths used abs() when they should have used labs() on
+   long integers.
+   (merge 83915ba rs/maint-config-use-labs later to maint).
+   (merge 31a8aa1 rs/receive-pack-use-labs later to maint).
+
+ * "gitweb" used to depend on a behaviour recent CGI.pm deprecated.
+   (merge 13dbf46 jk/gitweb-with-newer-cgi-multi-param later to maint).
+
+ * "git init" (hence "git clone") initialized the per-repository
+   configuration file .git/config with x-bit by mistake.
+   (merge 1f32ecf mh/config-flip-xbit-back-after-checking later to maint).
