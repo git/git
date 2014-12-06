@@ -78,20 +78,18 @@ OPTIONS
         Set the execute permissions on the updated files.
 
 --[no-]assume-unchanged::
-	When these flags are specified, the object names recorded
-	for the paths are not updated.  Instead, these options
-	set and unset the "assume unchanged" bit for the
-	paths.  When the "assume unchanged" bit is on, Git stops
-	checking the working tree files for possible
-	modifications, so you need to manually unset the bit to
-	tell Git when you change the working tree file. This is
+	When this flag is specified, the object names recorded
+	for the paths are not updated.  Instead, this option
+	sets/unsets the "assume unchanged" bit for the
+	paths.  When the "assume unchanged" bit is on, the user
+	promises not to change the file and allows Git to assume
+	that the working tree file matches what is recorded in
+	the index.  If you want to change the working tree file,
+	you need to unset the bit to tell Git.  This is
 	sometimes helpful when working with a big project on a
 	filesystem that has very slow lstat(2) system call
 	(e.g. cifs).
 +
-This option can be also used as a coarse file-level mechanism
-to ignore uncommitted changes in tracked files (akin to what
-`.gitignore` does for untracked files).
 Git will fail (gracefully) in case it needs to modify this file
 in the index e.g. when merging in a commit;
 thus, in case the assumed-untracked file is changed upstream,
