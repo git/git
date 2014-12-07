@@ -115,7 +115,7 @@ my ($_stdin, $_help, $_edit,
 	$_before, $_after,
 	$_merge, $_strategy, $_preserve_merges, $_dry_run, $_parents, $_local,
 	$_prefix, $_no_checkout, $_url, $_verbose,
-	$_commit_url, $_tag, $_merge_info, $_interactive);
+	$_commit_url, $_tag, $_merge_info, $_interactive, $_set_svn_props);
 
 # This is a refactoring artifact so Git::SVN can get at this git-svn switch.
 sub opt_prefix { return $_prefix || '' }
@@ -193,6 +193,7 @@ my %cmd = (
 			  'dry-run|n' => \$_dry_run,
 			  'fetch-all|all' => \$_fetch_all,
 			  'commit-url=s' => \$_commit_url,
+			  'set-svn-props=s' => \$_set_svn_props,
 			  'revision|r=i' => \$_revision,
 			  'no-rebase' => \$_no_rebase,
 			  'mergeinfo=s' => \$_merge_info,
@@ -228,6 +229,9 @@ my %cmd = (
         'propget' => [ \&cmd_propget,
 		       'Print the value of a property on a file or directory',
 		       { 'revision|r=i' => \$_revision } ],
+        'propset' => [ \&cmd_propset,
+		       'Set the value of a property on a file or directory - will be set on commit',
+		       {} ],
         'proplist' => [ \&cmd_proplist,
 		       'List all properties of a file or directory',
 		       { 'revision|r=i' => \$_revision } ],
@@ -1374,6 +1378,49 @@ sub cmd_propget {
 		fatal("`$path' does not have a `$prop' SVN property.");
 	}
 	print $props->{$prop} . "\n";
+}
+
+# cmd_propset (PROPNAME, PROPVAL, PATH)
+# ------------------------
+# Adjust the SVN property PROPNAME to PROPVAL for PATH.
+sub cmd_propset {
+	my ($propname, $propval, $path) = @_;
+	$path = '.' if not defined $path;
+	$path = $cmd_dir_prefix . $path;
+	usage(1) if not defined $propname;
+	usage(1) if not defined $propval;
+	my $file = basename($path);
+	my $dn = dirname($path);
+	my $cur_props = Git::SVN::Editor::check_attr( "svn-properties", $path );
+	my @new_props;
+	if (!$cur_props || $cur_props eq "unset" || $cur_props eq "" || $cur_props eq "set") {
+		push @new_props, "$propname=$propval";
+	} else {
+		# TODO: handle combining properties better
+		my @props = split(/;/, $cur_props);
+		my $replaced_prop;
+		foreach my $prop (@props) {
+			# Parse 'name=value' syntax and set the property.
+			if ($prop =~ /([^=]+)=(.*)/) {
+				my ($n,$v) = ($1,$2);
+				if ($n eq $propname) {
+					$v = $propval;
+					$replaced_prop = 1;
+				}
+				push @new_props, "$n=$v";
+			}
+		}
+		if (!$replaced_prop) {
+			push @new_props, "$propname=$propval";
+		}
+	}
+	my $attrfile = "$dn/.gitattributes";
+	open my $attrfh, '>>', $attrfile or die "Can't open $attrfile: $!\n";
+	# TODO: don't simply append here if $file already has svn-properties
+	my $new_props = join(';', @new_props);
+	print $attrfh "$file svn-properties=$new_props\n" or
+		die "write to $attrfile: $!\n";
+	close $attrfh or die "close $attrfile: $!\n";
 }
 
 # cmd_proplist (PATH)
