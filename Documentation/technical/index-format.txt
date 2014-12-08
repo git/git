@@ -207,7 +207,7 @@ Git index format
   in a separate file. This extension records the changes to be made on
   top of that to produce the final index.
 
-  The signature for this extension is { 'l', 'i, 'n', 'k' }.
+  The signature for this extension is { 'l', 'i', 'n', 'k' }.
 
   The extension consists of:
 
