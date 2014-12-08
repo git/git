@@ -423,7 +423,8 @@ static int fsck_tag_buffer(struct tag *tag, const char *data,
 	}
 	strbuf_addf(&sb, "refs/tags/%.*s", (int)(eol - buffer), buffer);
 	if (check_refname_format(sb.buf, 0))
-		error_func(&tag->object, FSCK_WARN, "invalid 'tag' name: %s", buffer);
+		error_func(&tag->object, FSCK_WARN, "invalid 'tag' name: %.*s",
+			   (int)(eol - buffer), buffer);
 	buffer = eol + 1;
 
 	if (!skip_prefix(buffer, "tagger ", &buffer))
