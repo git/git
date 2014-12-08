@@ -106,6 +106,11 @@ test_expect_success 'git branch -M o/q o/p should work when o/p exists' '
 	git branch -M o/q o/p
 '
 
+test_expect_success 'git branch -m -f o/q o/p should work when o/p exists' '
+	git branch o/q &&
+	git branch -m -f o/q o/p
+'
+
 test_expect_success 'git branch -m q r/q should fail when r exists' '
 	git branch q &&
 	git branch r &&
