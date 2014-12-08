@@ -438,7 +438,7 @@ static void *unpack_entry_data(unsigned long offset, unsigned long size,
 	if (type == OBJ_BLOB && size > big_file_threshold)
 		buf = fixed_buf;
 	else
-		buf = xmalloc(size);
+		buf = xmallocz(size);
 
 	memset(&stream, 0, sizeof(stream));
 	git_inflate_init(&stream);
@@ -543,7 +543,7 @@ static void *unpack_data(struct object_entry *obj,
 	git_zstream stream;
 	int status;
 
-	data = xmalloc(consume ? 64*1024 : obj->size);
+	data = xmallocz(consume ? 64*1024 : obj->size);
 	inbuf = xmalloc((len < 64*1024) ? len : 64*1024);
 
 	memset(&stream, 0, sizeof(stream));

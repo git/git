@@ -91,7 +91,7 @@ static void use(int bytes)
 static void *get_data(unsigned long size)
 {
 	git_zstream stream;
-	void *buf = xmalloc(size);
+	void *buf = xmallocz(size);
 
 	memset(&stream, 0, sizeof(stream));
 
