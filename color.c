@@ -144,9 +144,6 @@ int color_parse(const char *value, char *dst)
 	return color_parse_mem(value, strlen(value), dst);
 }
 
-#define COLOR_FOREGROUND '3'
-#define COLOR_BACKGROUND '4'
-
 /*
  * Write the ANSI color codes for "c" to "out"; the string should
  * already have the ANSI escape code in it. "out" should have enough
@@ -245,12 +242,14 @@ int color_parse_mem(const char *value, int value_len, char *dst)
 		if (!color_empty(&fg)) {
 			if (sep++)
 				*dst++ = ';';
-			dst = color_output(dst, &fg, COLOR_FOREGROUND);
+			/* foreground colors are all in the 3x range */
+			dst = color_output(dst, &fg, '3');
 		}
 		if (!color_empty(&bg)) {
 			if (sep++)
 				*dst++ = ';';
-			dst = color_output(dst, &bg, COLOR_BACKGROUND);
+			/* background colors are all in the 4x range */
+			dst = color_output(dst, &bg, '4');
 		}
 		*dst++ = 'm';
 	}
