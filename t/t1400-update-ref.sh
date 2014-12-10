@@ -655,7 +655,7 @@ test_expect_success 'stdin verify fails for mistaken null value' '
 	test_cmp expect actual
 '
 
-test_expect_failure 'stdin verify fails for mistaken empty value' '
+test_expect_success 'stdin verify fails for mistaken empty value' '
 	M=$(git rev-parse $m) &&
 	test_when_finished "git update-ref $m $M" &&
 	git rev-parse $m >expect &&
@@ -1020,7 +1020,7 @@ test_expect_success 'stdin -z verify fails for mistaken null value' '
 	test_cmp expect actual
 '
 
-test_expect_failure 'stdin -z verify fails for mistaken empty value' '
+test_expect_success 'stdin -z verify fails for mistaken empty value' '
 	M=$(git rev-parse $m) &&
 	test_when_finished "git update-ref $m $M" &&
 	git rev-parse $m >expect &&
