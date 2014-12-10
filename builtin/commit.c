@@ -504,7 +504,7 @@ static int is_a_merge(const struct commit *current_head)
 
 static void assert_split_ident(struct ident_split *id, const struct strbuf *buf)
 {
-	if (split_ident_line(id, buf->buf, buf->len))
+	if (split_ident_line(id, buf->buf, buf->len) || !id->date_begin)
 		die("BUG: unable to parse our own ident: %s", buf->buf);
 }
 
@@ -516,20 +516,6 @@ static void export_one(const char *var, const char *s, const char *e, int hack)
 	strbuf_addf(&buf, "%.*s", (int)(e - s), s);
 	setenv(var, buf.buf, 1);
 	strbuf_release(&buf);
-}
-
-static int sane_ident_split(struct ident_split *person)
-{
-	if (!person->name_begin || !person->name_end ||
-	    person->name_begin == person->name_end)
-		return 0; /* no human readable name */
-	if (!person->mail_begin || !person->mail_end ||
-	    person->mail_begin == person->mail_end)
-		return 0; /* no usable mail */
-	if (!person->date_begin || !person->date_end ||
-	    !person->tz_begin || !person->tz_end)
-		return 0;
-	return 1;
 }
 
 static int parse_force_date(const char *in, char *out, int len)
@@ -606,12 +592,10 @@ static void determine_author_info(struct strbuf *author_ident)
 	}
 
 	strbuf_addstr(author_ident, fmt_ident(name, email, date, IDENT_STRICT));
-	if (!split_ident_line(&author, author_ident->buf, author_ident->len) &&
-	    sane_ident_split(&author)) {
-		export_one("GIT_AUTHOR_NAME", author.name_begin, author.name_end, 0);
-		export_one("GIT_AUTHOR_EMAIL", author.mail_begin, author.mail_end, 0);
-		export_one("GIT_AUTHOR_DATE", author.date_begin, author.tz_end, '@');
-	}
+	assert_split_ident(&author, author_ident);
+	export_one("GIT_AUTHOR_NAME", author.name_begin, author.name_end, 0);
+	export_one("GIT_AUTHOR_EMAIL", author.mail_begin, author.mail_end, 0);
+	export_one("GIT_AUTHOR_DATE", author.date_begin, author.tz_end, '@');
 }
 
 static int author_date_is_interesting(void)
