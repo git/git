@@ -502,6 +502,12 @@ static int is_a_merge(const struct commit *current_head)
 	return !!(current_head->parents && current_head->parents->next);
 }
 
+static void assert_split_ident(struct ident_split *id, const struct strbuf *buf)
+{
+	if (split_ident_line(id, buf->buf, buf->len))
+		die("BUG: unable to parse our own ident: %s", buf->buf);
+}
+
 static void export_one(const char *var, const char *s, const char *e, int hack)
 {
 	struct strbuf buf = STRBUF_INIT;
@@ -606,13 +612,6 @@ static void determine_author_info(struct strbuf *author_ident)
 		export_one("GIT_AUTHOR_EMAIL", author.mail_begin, author.mail_end, 0);
 		export_one("GIT_AUTHOR_DATE", author.date_begin, author.tz_end, '@');
 	}
-}
-
-static void split_ident_or_die(struct ident_split *id, const struct strbuf *buf)
-{
-	if (split_ident_line(id, buf->buf, buf->len) ||
-	    !sane_ident_split(id))
-		die(_("Malformed ident string: '%s'"), buf->buf);
 }
 
 static int author_date_is_interesting(void)
@@ -822,8 +821,14 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 			status_printf_ln(s, GIT_COLOR_NORMAL,
 					"%s", only_include_assumed);
 
-		split_ident_or_die(&ai, author_ident);
-		split_ident_or_die(&ci, &committer_ident);
+		/*
+		 * These should never fail because they come from our own
+		 * fmt_ident. They may fail the sane_ident test, but we know
+		 * that the name and mail pointers will at least be valid,
+		 * which is enough for our tests and printing here.
+		 */
+		assert_split_ident(&ai, author_ident);
+		assert_split_ident(&ci, &committer_ident);
 
 		if (ident_cmp(&ai, &ci))
 			status_printf_ln(s, GIT_COLOR_NORMAL,
