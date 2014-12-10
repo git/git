@@ -1,21 +1,15 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Dec 2014, #01; Wed, 3)
-X-master-at: b260d265e189728b26e50506ac6ffab6a7d588da
-X-next-at: a0de725a8ff02c1f2a9452c2234bee819242395c
+Subject: What's cooking in git.git (Dec 2014, #02; Wed, 10)
+X-master-at: c18b86734113ee2aeb0e140c922c8fbd4accc860
+X-next-at: 802437b789eb05ee52be21d578fe4cfed918b276
 
-What's cooking in git.git (Dec 2014, #01; Wed, 3)
+What's cooking in git.git (Dec 2014, #02; Wed, 10)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
-
-People, coming up with new topics is fine, but please pay attention
-to what is going around the area you are touching. Does your topic
-applied to either 'master' or 'maint' merge cleanly to 'next' and
-'pu'?  If not, please coordinate with whoever is working in the same
-area.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -23,132 +17,238 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
+[Graduated to "master"]
+
+* jh/empty-notes (2014-11-14) 9 commits
+  (merged to 'next' on 2014-11-18 at 9eeb338)
+ + t3301: modernize style
+ + notes: empty notes should be shown by 'git log'
+ + builtin/notes: add --allow-empty, to allow storing empty notes
+ + builtin/notes: split create_note() to clarify add vs. remove logic
+ + builtin/notes: simplify early exit code in add()
+ + builtin/notes: refactor note file path into struct note_data
+ + builtin/notes: improve naming
+ + t3301: verify that 'git notes' removes empty notes by default
+ + builtin/notes: fix premature failure when trying to add the empty blob
+
+ A request to store an empty note via "git notes" meant to remove
+ note from the object but with --allow-empty we will store a (surprise!)
+ note that is empty.  In the longer run, we might want to deprecate
+ the somewhat unintuitive "emptying means deletion" behaviour.
+
+
+* jk/checkout-from-tree (2014-11-13) 1 commit
+  (merged to 'next' on 2014-11-14 at ddbffb0)
+ + checkout $tree: do not throw away unchanged index entries
+
+ "git checkout $treeish $path", when $path in the index and the
+ working tree already matched what is in $treeish at the $path,
+ still overwrote the $path unnecessarily.
+
+
+* jk/gitweb-with-newer-cgi-multi-param (2014-11-18) 1 commit
+  (merged to 'next' on 2014-11-18 at 6ac61fe)
+ + gitweb: hack around CGI's list-context param() handling
+
+ "gitweb" used to depend on a behaviour recent CGI.pm deprecated.
+
+
+* js/windows-open-eisdir-error (2014-11-17) 1 commit
+  (merged to 'next' on 2014-11-18 at 57b0d49)
+ + Windows: correct detection of EISDIR in mingw_open()
+
+ open() emulated on Windows platforms did not give EISDIR upon an
+ attempt to open a directory for writing.
+
+
+* mh/config-flip-xbit-back-after-checking (2014-11-18) 1 commit
+  (merged to 'next' on 2014-11-18 at 45f7d71)
+ + create_default_files(): don't set u+x bit on $GIT_DIR/config
+ (this branch is used by tb/config-core-filemode-check-on-broken-fs.)
+
+ "git init" (hence "git clone") initialized the per-repository
+ configuration file .git/config with x-bit by mistake.
+
+
+* rs/env-array-in-child-process (2014-11-10) 1 commit
+  (merged to 'next' on 2014-11-14 at 3f6ba07)
+ + use args member of struct child_process
+
+ Code cleanup.
+
+
+* rs/maint-config-use-labs (2014-11-17) 1 commit
+  (merged to 'next' on 2014-11-18 at 53c2404)
+ + use labs() for variables of type long instead of abs()
+
+ A few code paths used abs() when they should have used labs() on
+ long integers.
+
+
+* rs/receive-pack-use-labs (2014-11-17) 1 commit
+  (merged to 'next' on 2014-11-18 at c6d2d94)
+ + use labs() for variables of type long instead of abs()
+
+ A few code paths used abs() when they should have used labs() on
+ long integers.
+
+
+* sv/get-builtin (2014-11-13) 1 commit
+  (merged to 'next' on 2014-11-14 at 9497e17)
+ + builtin: move builtin retrieval to get_builtin()
+
+ Small code consolidation.
+
+
+* tq/git-ssh-command (2014-11-10) 1 commit
+  (merged to 'next' on 2014-11-14 at 83f5dae)
+ + git_connect: set ssh shell command in GIT_SSH_COMMAND
+
+ Allow passing extra set of arguments when ssh is invoked to create
+ an encrypted & authenticated connection, which is not possible with
+ existing GIT_SSH mechanism, which was designed more to match what
+ other programs with similar variables did, not necessarily to be
+ more useful.
+
+--------------------------------------------------
 [New Topics]
 
-* jc/exec-cmd-system-path-leak-fix (2014-11-30) 1 commit
- - system_path(): always return free'able memory to the caller
+* dm/compat-s-ifmt-for-zos (2014-12-04) 1 commit
+ - compat: convert modes to use portable file type values
 
- The function sometimes returned a non-freeable memory and some
- other times returned a piece of memory that must be freed.
-
- Will merge to 'next'.
+ Long overdue departure from the assumption that S_IFMT is shared by
+ everybody made in 2005.
 
 
-* jc/hook-cleanup (2014-12-01) 1 commit
- - run-command.c: retire unused run_hook_with_custom_index()
+* jk/credential-quit (2014-12-04) 2 commits
+ - prompt: respect GIT_TERMINAL_PROMPT to disable terminal prompts
+ - credential: let helpers tell us to quit
 
- Will merge to 'next'.
-
-
-* jk/push-simple (2014-11-30) 1 commit
- - push: truly use "simple" as default, not "upstream"
-
- Will merge to 'next'.
-
-
-* jn/rerere-fail-on-auto-update-failure (2014-12-03) 2 commits
- - SQUASH???
- - rerere: error out on autoupdate failure
-
-
-* js/push-to-deploy (2014-11-30) 2 commits
- - t5516: more tests for receive.denyCurrentBranch=updateInstead
- - receive-pack: add another option for receive.denyCurrentBranch
- (this branch is used by jc/push-to-checkout.)
-
- "git push" into a repository with a working tree normally refuses
- to modify the branch that is checked out.  The command learned to
- optionally do an equivalent of "git reset --hard" only when there
- is no change to the working tree and the index instead, which would
- be useful to "deploy" by pushing into a repository.
+ Credential helpers are asked in turn until one of them give
+ positive response, which is cumbersome to turn off when you need to
+ run Git in an automated setting.  The credential helper interface
+ learned to allow a helper to say "stop, don't ask other helpers."
+ Also GIT_TERMINAL_PROMPT environment can be set to false to disable
+ our built-in prompt mechanism for passwords.
 
  Will merge to 'next'.
 
 
-* jc/push-to-checkout (2014-12-01) 2 commits
- - receive-pack: support push-to-checkout hook
- - receive-pack: refactor updateInstead codepath
- (this branch uses js/push-to-deploy.)
+* mg/branch-d-m-f (2014-12-09) 2 commits
+ - branch: allow -f with -m and -d
+ - t3200-branch: test -M
 
- Extending the js/push-to-deploy topic, the behaviour of "git push"
- when updating the working tree and the index with an update to the
- branch that is checked out can be tweaked by push-to-checkout hook.
-
- Needs docs.
-
-
-* lh/send-email-hide-x-mailer (2014-12-03) 2 commits
- - SQUASH???
- - send-email: add --[no-]xmailer option
-
- "git send-email" normally identifies itself via X-Mailer: header
- in the message it sends out.  A new command line flag allows the
- header to be squelched.
-
-
-* nd/list-files (2014-12-01) 19 commits
- - list-files: -M aka diff-cached
- - list-files -F: show submodules with the new indicator '&'
- - list-files: add -F/--classify
- - list-files: show directories as well as files
- - list-files: do not show duplicate cached entries
- - list-files: sort output and remove duplicates
- - list-files: add -t back
- - list-files: add -1 short for --no-column
- - list-files: add -R/--recursive short for --max-depth=-1
- - list-files: -u does not imply showing stages
- - list-files: a user friendly version of ls-files and more
- - ls-files: support --max-depth
- - ls-files: add --column
- - ls-files: add --color to highlight file names
- - ls-files: buffer full item in strbuf before printing
- - ls_colors.c: highlight submodules like directories
- - ls_colors.c: add a function to color a file name
- - ls_colors.c: parse color.ls.* from config file
- - ls_colors.c: add $LS_COLORS parsing code
-
- A new "git list-files" Porcelain command, "ls-files" with bells and
- whistles.
-
-
-* nd/ls-tree-pathspec (2014-12-01) 5 commits
- - t3102: style modernization
- - t3102: document that ls-tree does not yet support negated pathspec
- - ls-tree: disable negative pathspec because it's not supported
- - ls-tree: remove path filtering logic in show_tree
- - tree.c: update read_tree_recursive callback to pass strbuf as base
-
- "git ls-tree" does not support path selection based on negative
- pathspecs, but did not error out when negative pathspecs are given.
+ "git branch -d" (delete) and "git branch -m" (move) learned to
+ honor "-f" (force) flag; unlike many other subcommands, the way to
+ force these have been with separate "-D/-M" options, which was
+ inconsistent.
 
  Will merge to 'next'.
 
 
-* rj/t0050-passes (2014-11-30) 1 commit
- - t0050-*.sh: mark the rename (case change) test as passing
+* mg/doc-check-ignore-tracked-are-not-ignored (2014-12-04) 1 commit
+ - check-ignore: clarify treatment of tracked files
 
  Will merge to 'next'.
 
 
-* rt/for-each-ref-spell-tcl-as-Tcl (2014-11-30) 1 commit
- - for-each-ref: correct spelling of Tcl in option description
+* rt/completion-tag (2014-12-04) 1 commit
+ - completion: add git-tag options
 
  Will merge to 'next'.
 
 
-* sb/ref-transaction-reflog (2014-12-03) 2 commits
- - refs.c: rename transaction.updates to transaction.ref_updates
- - refs.c: rename the transaction functions
- (this branch uses sb/ref-transaction-unify-to-update.)
+* jk/for-each-reflog-ent-reverse (2014-12-05) 2 commits
+ - for_each_reflog_ent_reverse: turn leftover check into assertion
+ - for_each_reflog_ent_reverse: fix newlines on block boundaries
 
- Still under review discussion.
+ Will merge to 'next'.
 
 
-* ye/http-accept-language (2014-12-03) 2 commits
- - SQUASH???
- - http: send Accept-Language header if possible
+* po/doc-assume-unchanged (2014-12-09) 2 commits
+ - gitignore.txt: do not suggest assume-unchanged
+ - doc: make clear --assume-unchanged's user contract
 
- Still under review discussion.
+ Fixes long-standing misunderstanding of what assume-unchanged is
+ about.  Some text near what is removed by the bottom patch may also
+ have to be removed.
+
+ Will merge to 'next'.
+
+
+* tb/t0027-eol-conversion (2014-12-05) 1 commit
+ - t0027: check the eol conversion warnings
+
+ Will merge to 'next'.
+
+
+* jk/always-allow-large-packets (2014-12-10) 1 commit
+ - pkt-line: allow writing of LARGE_PACKET_MAX buffers
+
+ Will merge to 'next'.
+
+
+* jk/commit-date-approxidate (2014-12-10) 2 commits
+ - commit: always populate GIT_AUTHOR_* variables
+ - commit: loosen ident checks when generating template
+
+ Will merge to 'next'.
+
+
+* jk/read-packed-refs-without-path-max (2014-12-10) 3 commits
+ - read_packed_refs: use skip_prefix instead of static array
+ - read_packed_refs: pass strbuf to parse_ref_line
+ - read_packed_refs: use a strbuf for reading lines
+
+ Will merge to 'next'.
+
+
+* jn/dedup-doc-header (2014-12-09) 2 commits
+ - put string-list API documentation in one place
+ - put strbuf API documentation in one place
+
+ We would want to have an easy way for developers to learn about
+ APIs, and also a way to encourage them to keep the API
+ documentation up to date when they make changes.  Having header
+ comments and API documentation duplicated in two different places
+ risked them going out of sync.
+
+ This removes the duplicates by dropping comments from the header;
+ it is just for discussion at this moment.
+
+
+* jn/doc-api-errors (2014-12-04) 1 commit
+ - doc: document error handling functions and conventions
+
+ For discussion.
+
+
+* js/fsck-tag-validation (2014-12-09) 2 commits
+ - index-pack: terminate object buffers with NUL
+ - fsck: properly bound "invalid tag name" error message
+
+ Follow-up to tag object format validation added in 2.2.
+
+ Will merge to 'next'.
+
+
+* js/test-hashmap-squelch-gcc (2014-12-09) 1 commit
+ - test-hashmap: squelch gcc compiler warning
+
+ Will merge to 'next'.
+
+
+* ok/rebase-i-count-todo (2014-12-10) 1 commit
+ - Show number of TODO items for interactive rebase
+
+ Will merge to 'next'.
+
+
+* rw/apply-does-not-take-ignore-date (2014-12-09) 1 commit
+ - git-am.txt: --ignore-date flag is not passed to git-apply
+
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -297,10 +397,148 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* jk/pack-bitmap (2014-11-30) 1 commit
- - pack-bitmap: do not use gcc packed attribute
+* jc/exec-cmd-system-path-leak-fix (2014-11-30) 1 commit
+ - system_path(): always return free'able memory to the caller
+
+ The function sometimes returned a non-freeable memory and some
+ other times returned a piece of memory that must be freed.
 
  Will merge to 'next'.
+
+
+* jc/hook-cleanup (2014-12-01) 1 commit
+  (merged to 'next' on 2014-12-04 at 17059f5)
+ + run-command.c: retire unused run_hook_with_custom_index()
+
+ Remove unused code.
+
+ Will merge to 'master'.
+
+
+* jk/push-simple (2014-11-30) 1 commit
+  (merged to 'next' on 2014-12-04 at 00785c7)
+ + push: truly use "simple" as default, not "upstream"
+
+ Git 2.0 was supposed to make the "simple" mode for the default of
+ "git push", but it didn't.
+
+ Will merge to 'master'.
+
+
+* jn/rerere-fail-on-auto-update-failure (2014-12-03) 2 commits
+ - SQUASH???
+ - rerere: error out on autoupdate failure
+
+ Will be rerolled as a part of a larger series.
+
+
+* js/push-to-deploy (2014-11-30) 2 commits
+ - t5516: more tests for receive.denyCurrentBranch=updateInstead
+ - receive-pack: add another option for receive.denyCurrentBranch
+ (this branch is used by jc/push-to-checkout.)
+
+ "git push" into a repository with a working tree normally refuses
+ to modify the branch that is checked out.  The command learned to
+ optionally do an equivalent of "git reset --hard" only when there
+ is no change to the working tree and the index instead, which would
+ be useful to "deploy" by pushing into a repository.
+
+ Will merge to 'next'.
+
+
+* jc/push-to-checkout (2014-12-01) 2 commits
+ - receive-pack: support push-to-checkout hook
+ - receive-pack: refactor updateInstead codepath
+ (this branch uses js/push-to-deploy.)
+
+ Extending the js/push-to-deploy topic, the behaviour of "git push"
+ when updating the working tree and the index with an update to the
+ branch that is checked out can be tweaked by push-to-checkout hook.
+
+ Needs docs.
+
+
+* lh/send-email-hide-x-mailer (2014-12-04) 4 commits
+ - SQUASH???
+ - test/send-email: --[no-]xmailer tests
+ - SQUASH???
+ - send-email: add --[no-]xmailer option
+
+ "git send-email" normally identifies itself via X-Mailer: header
+ in the message it sends out.  A new command line flag allows the
+ header to be squelched.
+
+
+* nd/list-files (2014-12-01) 19 commits
+ - list-files: -M aka diff-cached
+ - list-files -F: show submodules with the new indicator '&'
+ - list-files: add -F/--classify
+ - list-files: show directories as well as files
+ - list-files: do not show duplicate cached entries
+ - list-files: sort output and remove duplicates
+ - list-files: add -t back
+ - list-files: add -1 short for --no-column
+ - list-files: add -R/--recursive short for --max-depth=-1
+ - list-files: -u does not imply showing stages
+ - list-files: a user friendly version of ls-files and more
+ - ls-files: support --max-depth
+ - ls-files: add --column
+ - ls-files: add --color to highlight file names
+ - ls-files: buffer full item in strbuf before printing
+ - ls_colors.c: highlight submodules like directories
+ - ls_colors.c: add a function to color a file name
+ - ls_colors.c: parse color.ls.* from config file
+ - ls_colors.c: add $LS_COLORS parsing code
+
+ A new "git list-files" Porcelain command, "ls-files" with bells and
+ whistles.
+
+
+* nd/ls-tree-pathspec (2014-12-01) 5 commits
+ - t3102: style modernization
+ - t3102: document that ls-tree does not yet support negated pathspec
+ - ls-tree: disable negative pathspec because it's not supported
+ - ls-tree: remove path filtering logic in show_tree
+ - tree.c: update read_tree_recursive callback to pass strbuf as base
+
+ "git ls-tree" does not support path selection based on negative
+ pathspecs, but did not error out when negative pathspecs are given.
+
+ Will merge to 'next'.
+
+
+* rj/t0050-passes (2014-11-30) 1 commit
+ - t0050-*.sh: mark the rename (case change) test as passing
+
+ Will merge to 'next'.
+
+
+* rt/for-each-ref-spell-tcl-as-Tcl (2014-11-30) 1 commit
+ - for-each-ref: correct spelling of Tcl in option description
+
+ Will merge to 'next'.
+
+
+* sb/ref-transaction-reflog (2014-12-03) 2 commits
+ - refs.c: rename transaction.updates to transaction.ref_updates
+ - refs.c: rename the transaction functions
+ (this branch uses sb/ref-transaction-unify-to-update.)
+
+ Will be rerolled as a part of a larger series.
+
+
+* ye/http-accept-language (2014-12-03) 2 commits
+ - SQUASH???
+ - http: send Accept-Language header if possible
+
+ Breaks various people ($gmane/260903).
+
+
+* jk/pack-bitmap (2014-11-30) 1 commit
+  (merged to 'next' on 2014-12-04 at eb457ad)
+ + pack-bitmap: do not use gcc packed attribute
+
+ Will merge to 'master'.
 
 
 * nd/multiple-work-trees (2014-12-01) 34 commits
@@ -343,61 +581,37 @@ of the repositories listed at
  rely on symbolic links and make sharing of objects and refs safer
  by making the borrowee and borrowers aware of each other.
 
- A few tests need some tweaks for MinGW ($gmane/{257756,257757}).
- Conflicts with rs/ref-transaction so ejected for now, waiting for a
- reroll.
-
 
 * jc/unpack-trees-plug-leak (2014-11-17) 1 commit
- - unpack_trees: plug leakage of o->result
-
- Will merge to 'next'.
-
-
-* js/windows-open-eisdir-error (2014-11-17) 1 commit
-  (merged to 'next' on 2014-11-18 at 57b0d49)
- + Windows: correct detection of EISDIR in mingw_open()
+  (merged to 'next' on 2014-12-04 at 9f1df30)
+ + unpack_trees: plug leakage of o->result
 
  Will merge to 'master'.
 
 
-* rs/maint-config-use-labs (2014-11-17) 1 commit
-  (merged to 'next' on 2014-11-18 at 53c2404)
- + use labs() for variables of type long instead of abs()
-
- Will merge to 'master'.
-
-
-* rs/receive-pack-use-labs (2014-11-17) 1 commit
-  (merged to 'next' on 2014-11-18 at c6d2d94)
- + use labs() for variables of type long instead of abs()
-
- Will merge to 'master'.
-
-
-* jk/colors (2014-11-20) 5 commits
- - diff-highlight: allow configurable colors
- - parse_color: recognize "no$foo" to clear the $foo attribute
- - parse_color: support 24-bit RGB values
- - parse_color: refactor color storage
- - Merge branch 'jn/parse-config-slot' into jk/colors
+* jk/colors (2014-12-09) 6 commits
+  (merged to 'next' on 2014-12-09 at 802437b)
+ + parse_color: drop COLOR_BACKGROUND macro
+  (merged to 'next' on 2014-12-04 at 8d2e37b)
+ + diff-highlight: allow configurable colors
+ + parse_color: recognize "no$foo" to clear the $foo attribute
+ + parse_color: support 24-bit RGB values
+ + parse_color: refactor color storage
+ + Merge branch 'jn/parse-config-slot' into jk/colors
  (this branch uses jk/colors-fix.)
 
- Will merge to 'next'.
+ "diff-highlight" filter (in contrib/) allows its color output
+ to be customized via configuration variables.
+
+ Will merge to 'master'.
 
 
 * jk/colors-fix (2014-11-20) 3 commits
- - t4026: test "normal" color
- - config: fix parsing of "git config --get-color some.key -1"
- - docs: describe ANSI 256-color mode
+  (merged to 'next' on 2014-12-04 at 0d97d69)
+ + t4026: test "normal" color
+ + config: fix parsing of "git config --get-color some.key -1"
+ + docs: describe ANSI 256-color mode
  (this branch is used by jk/colors.)
-
- Will merge to 'next'.
-
-
-* jk/gitweb-with-newer-cgi-multi-param (2014-11-18) 1 commit
-  (merged to 'next' on 2014-11-18 at 6ac61fe)
- + gitweb: hack around CGI's list-context param() handling
 
  Will merge to 'master'.
 
@@ -409,38 +623,40 @@ of the repositories listed at
 
 
 * jk/no-perl-tests (2014-11-18) 2 commits
- - t960[34]: mark cvsimport tests as requiring perl
- - t0090: mark add-interactive test with PERL prerequisite
+  (merged to 'next' on 2014-12-04 at f166620)
+ + t960[34]: mark cvsimport tests as requiring perl
+ + t0090: mark add-interactive test with PERL prerequisite
 
- Will merge to 'next'.
+ Some tests that depend on perl lacked PERL prerequisite to protect
+ them, breaking build with NO_PERL configuration.
+
+ Will merge to 'master'.
 
 
 * jk/rebuild-perl-scripts-with-no-perl-seting-change (2014-11-18) 3 commits
- - Makefile: have python scripts depend on NO_PYTHON setting
- - Makefile: simplify by using SCRIPT_{PERL,SH}_GEN macros
- - Makefile: have perl scripts depend on NO_PERL setting
+  (merged to 'next' on 2014-12-04 at 27382d3)
+ + Makefile: have python scripts depend on NO_PYTHON setting
+ + Makefile: simplify by using SCRIPT_{PERL,SH}_GEN macros
+ + Makefile: have perl scripts depend on NO_PERL setting
 
- Will merge to 'next'.
+ The build procedure did not bother fixing perl and python scripts
+ when NO_PERL and NO_PYTHON build-time configuration changed.
+
+ Will merge to 'master'.
 
 
 * mh/config-copy-string-from-git-path (2014-11-17) 1 commit
- - cmd_config(): make a copy of path obtained from git_path()
-
- Will merge to 'next'.
-
-
-* mh/config-flip-xbit-back-after-checking (2014-11-18) 1 commit
-  (merged to 'next' on 2014-11-18 at 45f7d71)
- + create_default_files(): don't set u+x bit on $GIT_DIR/config
- (this branch is used by tb/config-core-filemode-check-on-broken-fs.)
+  (merged to 'next' on 2014-12-04 at 9c9518b)
+ + cmd_config(): make a copy of path obtained from git_path()
 
  Will merge to 'master'.
 
 
 * po/everyday-doc (2014-11-17) 1 commit
- - Documentation: change "gitlink" typo in git-push
+  (merged to 'next' on 2014-12-04 at 39d31fb)
+ + Documentation: change "gitlink" typo in git-push
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * ps/new-workdir-into-empty-directory (2014-12-03) 1 commit
@@ -450,24 +666,22 @@ of the repositories listed at
 
 
 * rt/push-recurse-submodule-usage-string (2014-11-18) 1 commit
- - builtin/push.c: fix description of --recurse-submodules option
+  (merged to 'next' on 2014-12-04 at c43e23c)
+ + builtin/push.c: fix description of --recurse-submodules option
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * sb/copy-fd-errno (2014-11-17) 1 commit
  - copy.c: make copy_fd preserve meaningful errno
 
- Jonathan seems to be working in the same area, having a moral
- equivalent.  Have to drop either this or the other one.
+ Will be rerolled as a part of a larger series.
 
 
 * sb/log-ref-write-fd (2014-11-20) 1 commit
  - refs.c: add a function to append a reflog entry to a fd
 
- Moves a part of function around to add a helper that still only has
- one caller.  Need to see how this helps in a bigger picture;
- conflicts with nd/multiple-work-trees.
+ Will be rerolled as a part of a larger series.
 
 
 * sb/ref-transaction-unify-to-update (2014-11-20) 2 commits
@@ -477,29 +691,34 @@ of the repositories listed at
 
  Code simplification.
 
- Will merge to 'next'.
+ Will be rerolled as a part of a larger series.
 
 
-* sv/doc-stripspace (2014-11-19) 1 commit
- - Documentation/git-stripspace: Update synopsis
+* sv/doc-stripspace (2014-12-04) 1 commit
+  (merged to 'next' on 2014-12-04 at 32fd559)
+ + Documentation/git-stripspace: add synopsis for --comment-lines
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * sv/typofix-apply-error-message (2014-11-17) 1 commit
- - apply: fix typo in an error message
+  (merged to 'next' on 2014-12-04 at de7547a)
+ + apply: fix typo in an error message
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * da/difftool-mergetool-simplify-reporting-status (2014-11-21) 5 commits
- - mergetools: stop setting $status in merge_cmd()
- - mergetool: simplify conditionals
- - difftool--helper: add explicit exit statement
- - mergetool--lib: remove use of $status global
- - mergetool--lib: remove no-op assignment to $status from setup_user_tool
+  (merged to 'next' on 2014-12-04 at c3c329f)
+ + mergetools: stop setting $status in merge_cmd()
+ + mergetool: simplify conditionals
+ + difftool--helper: add explicit exit statement
+ + mergetool--lib: remove use of $status global
+ + mergetool--lib: remove no-op assignment to $status from setup_user_tool
 
- Will merge to 'next'.
+ Code simplification.
+
+ Will merge to 'master'.
 
 
 * dw/shell-basename-dashdash-before-stripping-leading-dash-from-login (2014-11-25) 1 commit
@@ -581,13 +800,12 @@ of the repositories listed at
  Will merge to 'next'.
 
 
-* sb/string-list (2014-11-30) 4 commits
+* sb/string-list (2014-12-04) 3 commits
  - string_list: remove string_list_insert_at_index() from its API
- - SQUASH???
  - mailmap: use higher level string list functions
  - string_list: document string_list_(insert,lookup)
 
- Will merge to 'next' after squashing the fixup.
+ Will merge to 'next'.
 
 
 * sb/write-sha1-update-reflog (2014-11-24) 1 commit
@@ -599,7 +817,6 @@ of the repositories listed at
 
 * tb/config-core-filemode-check-on-broken-fs (2014-11-21) 1 commit
  - init-db: improve the filemode trustability check
- (this branch uses mh/config-flip-xbit-back-after-checking.)
 
  Will merge to 'next'.
 
@@ -622,25 +839,11 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* jk/checkout-from-tree (2014-11-13) 1 commit
-  (merged to 'next' on 2014-11-14 at ddbffb0)
- + checkout $tree: do not throw away unchanged index entries
-
- Will merge to 'master'.
-
-
 * mb/enable-lib-terminal-test-on-newer-darwin (2014-11-14) 1 commit
   (merged to 'next' on 2014-11-14 at b2aae27)
  + t/lib-terminal: allow TTY tests to run under recent Mac OS
 
  We probably should drop this ($gmane/259609).
-
-
-* sv/get-builtin (2014-11-13) 1 commit
-  (merged to 'next' on 2014-11-14 at 9497e17)
- + builtin: move builtin retrieval to get_builtin()
-
- Will merge to 'master'.
 
 
 * br/imap-send-verbosity (2014-11-05) 1 commit
@@ -669,26 +872,6 @@ of the repositories listed at
  Will merge to 'next'.
 
 
-* rs/env-array-in-child-process (2014-11-10) 1 commit
-  (merged to 'next' on 2014-11-14 at 3f6ba07)
- + use args member of struct child_process
-
- Will merge to 'master'.
-
-
-* tq/git-ssh-command (2014-11-10) 1 commit
-  (merged to 'next' on 2014-11-14 at 83f5dae)
- + git_connect: set ssh shell command in GIT_SSH_COMMAND
-
- Allow passing extra set of arguments when ssh is invoked to create
- an encrypted & authenticated connection, which is not possible with
- existing GIT_SSH mechanism, which was designed more to match what
- other programs with similar variables did, not necessarily to be
- more useful.
-
- Will merge to 'master'.
-
-
 * nd/lockfile-absolute (2014-11-03) 1 commit
   (merged to 'next' on 2014-11-06 at 68722a9)
  + lockfile.c: store absolute path
@@ -697,26 +880,6 @@ of the repositories listed at
  process moved the $cwd after creating a lockfile.
 
  Will cook in 'next'.
-
-
-* jh/empty-notes (2014-11-14) 9 commits
-  (merged to 'next' on 2014-11-18 at 9eeb338)
- + t3301: modernize style
- + notes: empty notes should be shown by 'git log'
- + builtin/notes: add --allow-empty, to allow storing empty notes
- + builtin/notes: split create_note() to clarify add vs. remove logic
- + builtin/notes: simplify early exit code in add()
- + builtin/notes: refactor note file path into struct note_data
- + builtin/notes: improve naming
- + t3301: verify that 'git notes' removes empty notes by default
- + builtin/notes: fix premature failure when trying to add the empty blob
-
- A request to store an empty note via "git notes" meant to remove
- note from the object but with --allow-empty we will store a (surprise!)
- note that is empty.  In the longer run, we might want to deprecate
- the somewhat unintuitive "emptying means deletion" behaviour.
-
- Will merge to 'master'.
 
 
 * jc/merge-bases (2014-10-30) 2 commits
