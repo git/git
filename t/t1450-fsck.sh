@@ -251,10 +251,10 @@ while read name path pretty; do
 			tree=$(git rev-parse HEAD^{tree}) &&
 			value=$(eval "echo \$$type") &&
 			printf "$mode $type %s\t%s" "$value" "$path" >bad &&
-			git mktree <bad &&
+			bad_tree=$(git mktree <bad) &&
 			git fsck 2>out &&
 			cat out &&
-			grep "warning.*\\." out
+			grep "warning.*tree $bad_tree" out
 		)'
 	done <<-\EOF
 	100644 blob
@@ -266,6 +266,11 @@ dotdot ..
 dotgit .git
 dotgit-case .GIT
 dotgit-unicode .gI${u200c}T .gI{u200c}T
+dotgit-case2 .Git
+git-tilde1 git~1
+dotgitdot .git.
+dot-backslash-case .\\\\.GIT\\\\foobar
+dotgit-case-backslash .git\\\\foobar
 EOF
 
 test_done

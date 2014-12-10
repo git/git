@@ -176,7 +176,8 @@ static int fsck_tree(struct tree *item, int strict, fsck_error error_func)
 			has_dot = 1;
 		if (!strcmp(name, ".."))
 			has_dotdot = 1;
-		if (!strcasecmp(name, ".git") || is_hfs_dotgit(name))
+		if (!strcasecmp(name, ".git") || is_hfs_dotgit(name) ||
+				is_ntfs_dotgit(name))
 			has_dotgit = 1;
 		has_zero_pad |= *(char *)desc.buffer == '0';
 		update_tree_entry(&desc);
