@@ -973,8 +973,10 @@ static const char PACKED_REFS_HEADER[] =
  * Return a pointer to the refname within the line (null-terminated),
  * or NULL if there was a problem.
  */
-static const char *parse_ref_line(char *line, unsigned char *sha1)
+static const char *parse_ref_line(struct strbuf *line, unsigned char *sha1)
 {
+	const char *ref;
+
 	/*
 	 * 42: the answer to everything.
 	 *
@@ -983,22 +985,23 @@ static const char *parse_ref_line(char *line, unsigned char *sha1)
 	 *  +1 (space in between hex and name)
 	 *  +1 (newline at the end of the line)
 	 */
-	int len = strlen(line) - 42;
+	if (line->len <= 42)
+		return NULL;
 
-	if (len <= 0)
+	if (get_sha1_hex(line->buf, sha1) < 0)
 		return NULL;
-	if (get_sha1_hex(line, sha1) < 0)
+	if (!isspace(line->buf[40]))
 		return NULL;
-	if (!isspace(line[40]))
-		return NULL;
-	line += 41;
-	if (isspace(*line))
-		return NULL;
-	if (line[len] != '\n')
-		return NULL;
-	line[len] = 0;
 
-	return line;
+	ref = line->buf + 41;
+	if (isspace(*ref))
+		return NULL;
+
+	if (line->buf[line->len - 1] != '\n')
+		return NULL;
+	line->buf[--line->len] = 0;
+
+	return ref;
 }
 
 /*
@@ -1049,7 +1052,7 @@ static void read_packed_refs(FILE *f, struct ref_dir *dir)
 			continue;
 		}
 
-		refname = parse_ref_line(line.buf, sha1);
+		refname = parse_ref_line(&line, sha1);
 		if (refname) {
 			last = create_ref_entry(refname, sha1, REF_ISPACKED, 1);
 			if (peeled == PEELED_FULLY ||
