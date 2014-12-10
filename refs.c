@@ -1040,10 +1040,9 @@ static void read_packed_refs(FILE *f, struct ref_dir *dir)
 	while (strbuf_getwholeline(&line, f, '\n') != EOF) {
 		unsigned char sha1[20];
 		const char *refname;
-		static const char header[] = "# pack-refs with:";
+		const char *traits;
 
-		if (!strncmp(line.buf, header, sizeof(header)-1)) {
-			const char *traits = line.buf + sizeof(header) - 1;
+		if (skip_prefix(line.buf, "# pack-refs with:", &traits)) {
 			if (strstr(traits, " fully-peeled "))
 				peeled = PEELED_FULLY;
 			else if (strstr(traits, " peeled "))
