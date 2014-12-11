@@ -29,6 +29,23 @@ test_expect_success "-p $*" "
 "
 }
 
+check_config() {
+expect=$1; shift
+cat >expected <<EOF
+diff --git a/$expect b/$expect
+new file mode 100644
+index 0000000..25c05ef
+--- /dev/null
++++ b/$expect
+@@ -0,0 +1 @@
++other content
+EOF
+test_expect_success "git-config diff.relative=true in $1" "
+	(cd $1; git -c diff.relative=true diff -p HEAD^ >../actual) &&
+	test_cmp expected actual
+"
+}
+
 check_numstat() {
 expect=$1; shift
 cat >expected <<EOF
@@ -68,6 +85,10 @@ for type in diff numstat stat raw; do
 	check_$type file2 --relative=subdir/
 	check_$type file2 --relative=subdir
 	check_$type dir/file2 --relative=sub
+done
+for type in config; do
+	check_$type file2 subdir/
+	check_$type file2 subdir
 done
 
 test_done
