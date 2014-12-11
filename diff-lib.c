@@ -101,6 +101,7 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 		struct cache_entry *ce = active_cache[i];
 		int changed;
 		unsigned dirty_submodule = 0;
+		const unsigned char *old_sha1, *new_sha1;
 
 		if (diff_can_quit_early(&revs->diffopt))
 			break;
@@ -224,9 +225,12 @@ int run_diff_files(struct rev_info *revs, unsigned int option)
 				continue;
 		}
 		oldmode = ce->ce_mode;
+		old_sha1 = ce->sha1;
+		new_sha1 = changed ? null_sha1 : ce->sha1;
 		diff_change(&revs->diffopt, oldmode, newmode,
-			    ce->sha1, (changed ? null_sha1 : ce->sha1),
-			    !is_null_sha1(ce->sha1), (changed ? 0 : !is_null_sha1(ce->sha1)),
+			    old_sha1, new_sha1,
+			    !is_null_sha1(old_sha1),
+			    !is_null_sha1(new_sha1),
 			    ce->name, 0, dirty_submodule);
 
 	}
