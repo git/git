@@ -23,13 +23,13 @@ static unsigned long default_reflog_expire_unreachable;
 enum expire_reflog_flags {
 	EXPIRE_REFLOGS_DRY_RUN = 1 << 0,
 	EXPIRE_REFLOGS_UPDATE_REF = 1 << 1,
-	EXPIRE_REFLOGS_VERBOSE = 1 << 2
+	EXPIRE_REFLOGS_VERBOSE = 1 << 2,
+	EXPIRE_REFLOGS_REWRITE = 1 << 3
 };
 
 struct cmd_reflog_expire_cb {
 	struct rev_info revs;
 	int stalefix;
-	int rewrite;
 	unsigned long expire_total;
 	unsigned long expire_unreachable;
 	int recno;
@@ -337,7 +337,7 @@ static int expire_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
 	struct expire_reflog_cb *cb = cb_data;
 	struct expire_reflog_policy_cb *policy_cb = cb->policy_cb;
 
-	if (policy_cb->cmd->rewrite)
+	if (cb->flags & EXPIRE_REFLOGS_REWRITE)
 		osha1 = policy_cb->last_kept_sha1;
 
 	if (should_expire_reflog_ent(osha1, nsha1, email, timestamp, tz,
@@ -687,7 +687,7 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 		else if (!strcmp(arg, "--stale-fix"))
 			cb.stalefix = 1;
 		else if (!strcmp(arg, "--rewrite"))
-			cb.rewrite = 1;
+			flags |= EXPIRE_REFLOGS_REWRITE;
 		else if (!strcmp(arg, "--updateref"))
 			flags |= EXPIRE_REFLOGS_UPDATE_REF;
 		else if (!strcmp(arg, "--all"))
@@ -769,7 +769,7 @@ static int cmd_reflog_delete(int argc, const char **argv, const char *prefix)
 		if (!strcmp(arg, "--dry-run") || !strcmp(arg, "-n"))
 			flags |= EXPIRE_REFLOGS_DRY_RUN;
 		else if (!strcmp(arg, "--rewrite"))
-			cb.rewrite = 1;
+			flags |= EXPIRE_REFLOGS_REWRITE;
 		else if (!strcmp(arg, "--updateref"))
 			flags |= EXPIRE_REFLOGS_UPDATE_REF;
 		else if (!strcmp(arg, "--verbose"))
