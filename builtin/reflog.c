@@ -36,7 +36,6 @@ struct cmd_reflog_expire_cb {
 };
 
 struct expire_reflog_policy_cb {
-	FILE *newlog;
 	enum {
 		UE_NORMAL,
 		UE_ALWAYS,
@@ -45,7 +44,6 @@ struct expire_reflog_policy_cb {
 	struct commit_list *mark_list;
 	unsigned long mark_limit;
 	struct cmd_reflog_expire_cb *cmd;
-	unsigned char last_kept_sha1[20];
 	struct commit *tip_commit;
 	struct commit_list *tips;
 };
@@ -53,6 +51,8 @@ struct expire_reflog_policy_cb {
 struct expire_reflog_cb {
 	unsigned int flags;
 	void *policy_cb;
+	FILE *newlog;
+	unsigned char last_kept_sha1[20];
 };
 
 struct collected_reflog {
@@ -338,23 +338,23 @@ static int expire_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
 	struct expire_reflog_policy_cb *policy_cb = cb->policy_cb;
 
 	if (cb->flags & EXPIRE_REFLOGS_REWRITE)
-		osha1 = policy_cb->last_kept_sha1;
+		osha1 = cb->last_kept_sha1;
 
 	if (should_expire_reflog_ent(osha1, nsha1, email, timestamp, tz,
 				     message, policy_cb)) {
-		if (!policy_cb->newlog)
+		if (!cb->newlog)
 			printf("would prune %s", message);
 		else if (cb->flags & EXPIRE_REFLOGS_VERBOSE)
 			printf("prune %s", message);
 	} else {
-		if (policy_cb->newlog) {
+		if (cb->newlog) {
 			char sign = (tz < 0) ? '-' : '+';
 			int zone = (tz < 0) ? (-tz) : tz;
-			fprintf(policy_cb->newlog, "%s %s %s %lu %c%04d\t%s",
+			fprintf(cb->newlog, "%s %s %s %lu %c%04d\t%s",
 				sha1_to_hex(osha1), sha1_to_hex(nsha1),
 				email, timestamp, sign, zone,
 				message);
-			hashcpy(policy_cb->last_kept_sha1, nsha1);
+			hashcpy(cb->last_kept_sha1, nsha1);
 		}
 		if (cb->flags & EXPIRE_REFLOGS_VERBOSE)
 			printf("keep %s", message);
@@ -468,8 +468,8 @@ static int expire_reflog(const char *refname, const unsigned char *sha1,
 			strbuf_release(&err);
 			goto failure;
 		}
-		policy_cb.newlog = fdopen_lock_file(&reflog_lock, "w");
-		if (!policy_cb.newlog) {
+		cb.newlog = fdopen_lock_file(&reflog_lock, "w");
+		if (!cb.newlog) {
 			error("cannot fdopen %s (%s)",
 			      reflog_lock.filename.buf, strerror(errno));
 			goto failure;
@@ -488,7 +488,7 @@ static int expire_reflog(const char *refname, const unsigned char *sha1,
 					strerror(errno));
 		} else if ((flags & EXPIRE_REFLOGS_UPDATE_REF) &&
 			(write_in_full(lock->lock_fd,
-				sha1_to_hex(policy_cb.last_kept_sha1), 40) != 40 ||
+				sha1_to_hex(cb.last_kept_sha1), 40) != 40 ||
 			 write_str_in_full(lock->lock_fd, "\n") != 1 ||
 			 close_ref(lock) < 0)) {
 			status |= error("couldn't write %s",
