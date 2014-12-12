@@ -69,8 +69,8 @@ static struct option builtin_config_options[] = {
 	OPT_BIT(0, "remove-section", &actions, N_("remove a section: name"), ACTION_REMOVE_SECTION),
 	OPT_BIT('l', "list", &actions, N_("list all"), ACTION_LIST),
 	OPT_BIT('e', "edit", &actions, N_("open an editor"), ACTION_EDIT),
-	OPT_STRING(0, "get-color", &get_color_slot, N_("slot"), N_("find the color configured: [default]")),
-	OPT_STRING(0, "get-colorbool", &get_colorbool_slot, N_("slot"), N_("find the color setting: [stdout-is-tty]")),
+	OPT_BIT(0, "get-color", &actions, N_("find the color configured: slot [default]"), ACTION_GET_COLOR),
+	OPT_BIT(0, "get-colorbool", &actions, N_("find the color setting: slot [stdout-is-tty]"), ACTION_GET_COLORBOOL),
 	OPT_GROUP(N_("Type")),
 	OPT_BIT(0, "bool", &types, N_("value is \"true\" or \"false\""), TYPE_BOOL),
 	OPT_BIT(0, "int", &types, N_("value is decimal number"), TYPE_INT),
@@ -303,8 +303,9 @@ static int git_get_color_config(const char *var, const char *value, void *cb)
 	return 0;
 }
 
-static void get_color(const char *def_color)
+static void get_color(const char *var, const char *def_color)
 {
+	get_color_slot = var;
 	get_color_found = 0;
 	parsed_color[0] = '\0';
 	git_config_with_options(git_get_color_config, NULL,
@@ -333,8 +334,9 @@ static int git_get_colorbool_config(const char *var, const char *value,
 	return 0;
 }
 
-static int get_colorbool(int print)
+static int get_colorbool(const char *var, int print)
 {
+	get_colorbool_slot = var;
 	get_colorbool_found = -1;
 	get_diff_color_found = -1;
 	get_color_ui_found = -1;
@@ -532,12 +534,7 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		usage_with_options(builtin_config_usage, builtin_config_options);
 	}
 
-	if (get_color_slot)
-	    actions |= ACTION_GET_COLOR;
-	if (get_colorbool_slot)
-	    actions |= ACTION_GET_COLORBOOL;
-
-	if ((get_color_slot || get_colorbool_slot) && types) {
+	if ((actions & (ACTION_GET_COLOR|ACTION_GET_COLORBOOL)) && types) {
 		error("--get-color and variable type are incoherent");
 		usage_with_options(builtin_config_usage, builtin_config_options);
 	}
@@ -686,12 +683,14 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 			die("No such section!");
 	}
 	else if (actions == ACTION_GET_COLOR) {
-		get_color(argv[0]);
+		check_argc(argc, 1, 2);
+		get_color(argv[0], argv[1]);
 	}
 	else if (actions == ACTION_GET_COLORBOOL) {
-		if (argc == 1)
-			color_stdout_is_tty = git_config_bool("command line", argv[0]);
-		return get_colorbool(argc != 0);
+		check_argc(argc, 1, 2);
+		if (argc == 2)
+			color_stdout_is_tty = git_config_bool("command line", argv[1]);
+		return get_colorbool(argv[0], argc == 2);
 	}
 
 	return 0;
