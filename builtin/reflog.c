@@ -50,10 +50,15 @@ struct expire_reflog_policy_cb {
 	struct commit_list *tips;
 };
 
+struct expire_reflog_cb {
+	void *policy_cb;
+};
+
 struct collected_reflog {
 	unsigned char sha1[20];
 	char reflog[FLEX_ARRAY];
 };
+
 struct collect_reflog_cb {
 	struct collected_reflog **e;
 	int alloc;
@@ -328,28 +333,29 @@ static int expire_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
 		const char *email, unsigned long timestamp, int tz,
 		const char *message, void *cb_data)
 {
-	struct expire_reflog_policy_cb *cb = cb_data;
+	struct expire_reflog_cb *cb = cb_data;
+	struct expire_reflog_policy_cb *policy_cb = cb->policy_cb;
 
-	if (cb->cmd->rewrite)
-		osha1 = cb->last_kept_sha1;
+	if (policy_cb->cmd->rewrite)
+		osha1 = policy_cb->last_kept_sha1;
 
 	if (should_expire_reflog_ent(osha1, nsha1, email, timestamp, tz,
-				     message, cb_data)) {
-		if (!cb->newlog)
+				     message, policy_cb)) {
+		if (!policy_cb->newlog)
 			printf("would prune %s", message);
-		else if (cb->cmd->verbose)
+		else if (policy_cb->cmd->verbose)
 			printf("prune %s", message);
 	} else {
-		if (cb->newlog) {
+		if (policy_cb->newlog) {
 			char sign = (tz < 0) ? '-' : '+';
 			int zone = (tz < 0) ? (-tz) : tz;
-			fprintf(cb->newlog, "%s %s %s %lu %c%04d\t%s",
+			fprintf(policy_cb->newlog, "%s %s %s %lu %c%04d\t%s",
 				sha1_to_hex(osha1), sha1_to_hex(nsha1),
 				email, timestamp, sign, zone,
 				message);
-			hashcpy(cb->last_kept_sha1, nsha1);
+			hashcpy(policy_cb->last_kept_sha1, nsha1);
 		}
-		if (cb->cmd->verbose)
+		if (policy_cb->cmd->verbose)
 			printf("keep %s", message);
 	}
 	return 0;
@@ -421,12 +427,15 @@ static int expire_reflog(const char *refname, const unsigned char *sha1,
 			 unsigned int flags, struct cmd_reflog_expire_cb *cmd)
 {
 	static struct lock_file reflog_lock;
-	struct expire_reflog_policy_cb cb;
+	struct expire_reflog_cb cb;
+	struct expire_reflog_policy_cb policy_cb;
 	struct ref_lock *lock;
 	char *log_file;
 	int status = 0;
 
 	memset(&cb, 0, sizeof(cb));
+	memset(&policy_cb, 0, sizeof(policy_cb));
+	cb.policy_cb = &policy_cb;
 
 	/*
 	 * The reflog file is locked by holding the lock on the
@@ -457,19 +466,19 @@ static int expire_reflog(const char *refname, const unsigned char *sha1,
 			strbuf_release(&err);
 			goto failure;
 		}
-		cb.newlog = fdopen_lock_file(&reflog_lock, "w");
-		if (!cb.newlog) {
+		policy_cb.newlog = fdopen_lock_file(&reflog_lock, "w");
+		if (!policy_cb.newlog) {
 			error("cannot fdopen %s (%s)",
 			      reflog_lock.filename.buf, strerror(errno));
 			goto failure;
 		}
 	}
 
-	cb.cmd = cmd;
+	policy_cb.cmd = cmd;
 
-	reflog_expiry_prepare(refname, sha1, &cb);
+	reflog_expiry_prepare(refname, sha1, &policy_cb);
 	for_each_reflog_ent(refname, expire_reflog_ent, &cb);
-	reflog_expiry_cleanup(&cb);
+	reflog_expiry_cleanup(&policy_cb);
 
 	if (!(flags & EXPIRE_REFLOGS_DRY_RUN)) {
 		if (close_lock_file(&reflog_lock)) {
@@ -477,7 +486,7 @@ static int expire_reflog(const char *refname, const unsigned char *sha1,
 					strerror(errno));
 		} else if ((flags & EXPIRE_REFLOGS_UPDATE_REF) &&
 			(write_in_full(lock->lock_fd,
-				sha1_to_hex(cb.last_kept_sha1), 40) != 40 ||
+				sha1_to_hex(policy_cb.last_kept_sha1), 40) != 40 ||
 			 write_str_in_full(lock->lock_fd, "\n") != 1 ||
 			 close_ref(lock) < 0)) {
 			status |= error("couldn't write %s",
