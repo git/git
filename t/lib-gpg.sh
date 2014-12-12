@@ -16,21 +16,23 @@ else
 		# Type DSA and Elgamal, size 2048 bits, no expiration date.
 		# Name and email: C O Mitter <committer@example.com>
 		# No password given, to enable non-interactive operation.
-		mkdir ./gpghome
-		chmod 0700 ./gpghome
-		GNUPGHOME="$(pwd)/gpghome"
-		export GNUPGHOME
-		gpg --homedir "${GNUPGHOME}" --import \
-			"$TEST_DIRECTORY"/lib-gpg/keyring.gpg
-		gpg --homedir "${GNUPGHOME}" --import-ownertrust \
-			"$TEST_DIRECTORY"/lib-gpg/ownertrust
+		mkdir ./gpghome &&
+		chmod 0700 ./gpghome &&
+		GNUPGHOME="$(pwd)/gpghome" &&
+		export GNUPGHOME &&
+		gpg --homedir "${GNUPGHOME}" 2>/dev/null --import \
+			"$TEST_DIRECTORY"/lib-gpg/keyring.gpg &&
+		gpg --homedir "${GNUPGHOME}" 2>/dev/null --import-ownertrust \
+			"$TEST_DIRECTORY"/lib-gpg/ownertrust &&
 		test_set_prereq GPG
-		if echo | gpg --homedir "${GNUPGHOME}" -b --rfc1991 >/dev/null 2>&1
-		then
-			test_set_prereq RFC1991
-		fi
 		;;
 	esac
+fi
+
+if test_have_prereq GPG &&
+    echo | gpg --homedir "${GNUPGHOME}" -b --rfc1991 >/dev/null 2>&1
+then
+	test_set_prereq RFC1991
 fi
 
 sanitize_pgp() {
