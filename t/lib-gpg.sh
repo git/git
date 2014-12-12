@@ -16,11 +16,15 @@ else
 		# Type DSA and Elgamal, size 2048 bits, no expiration date.
 		# Name and email: C O Mitter <committer@example.com>
 		# No password given, to enable non-interactive operation.
-		cp -R "$TEST_DIRECTORY"/lib-gpg ./gpghome
-		chmod 0700 gpghome
-		chmod 0600 gpghome/*
+		mkdir ./gpghome
+		chmod 0700 ./gpghome
 		GNUPGHOME="$(pwd)/gpghome"
 		export GNUPGHOME
+		gpg --homedir "${GNUPGHOME}" --import \
+			"$TEST_DIRECTORY"/lib-gpg/pubring.gpg \
+			"$TEST_DIRECTORY"/lib-gpg/secring.gpg
+		gpg --homedir "${GNUPGHOME}" --import-ownertrust \
+			"$TEST_DIRECTORY"/lib-gpg/ownertrust
 		test_set_prereq GPG
 		;;
 	esac
