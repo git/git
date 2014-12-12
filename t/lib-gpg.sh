@@ -21,8 +21,7 @@ else
 		GNUPGHOME="$(pwd)/gpghome"
 		export GNUPGHOME
 		gpg --homedir "${GNUPGHOME}" --import \
-			"$TEST_DIRECTORY"/lib-gpg/pubring.gpg \
-			"$TEST_DIRECTORY"/lib-gpg/secring.gpg
+			"$TEST_DIRECTORY"/lib-gpg/keyring.gpg
 		gpg --homedir "${GNUPGHOME}" --import-ownertrust \
 			"$TEST_DIRECTORY"/lib-gpg/ownertrust
 		test_set_prereq GPG
