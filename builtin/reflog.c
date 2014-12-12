@@ -35,7 +35,7 @@ struct cmd_reflog_expire_cb {
 	int recno;
 };
 
-struct expire_reflog_cb {
+struct expire_reflog_policy_cb {
 	FILE *newlog;
 	enum {
 		UE_NORMAL,
@@ -225,7 +225,7 @@ static int keep_entry(struct commit **it, unsigned char *sha1)
  * the expire_limit and queue them back, so that the caller can call
  * us again to restart the traversal with longer expire_limit.
  */
-static void mark_reachable(struct expire_reflog_cb *cb)
+static void mark_reachable(struct expire_reflog_policy_cb *cb)
 {
 	struct commit *commit;
 	struct commit_list *pending;
@@ -264,7 +264,7 @@ static void mark_reachable(struct expire_reflog_cb *cb)
 	cb->mark_list = leftover;
 }
 
-static int unreachable(struct expire_reflog_cb *cb, struct commit *commit, unsigned char *sha1)
+static int unreachable(struct expire_reflog_policy_cb *cb, struct commit *commit, unsigned char *sha1)
 {
 	/*
 	 * We may or may not have the commit yet - if not, look it
@@ -300,7 +300,7 @@ static int should_expire_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
 				    const char *email, unsigned long timestamp, int tz,
 				    const char *message, void *cb_data)
 {
-	struct expire_reflog_cb *cb = cb_data;
+	struct expire_reflog_policy_cb *cb = cb_data;
 	struct commit *old, *new;
 
 	if (timestamp < cb->cmd->expire_total)
@@ -328,7 +328,7 @@ static int expire_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
 		const char *email, unsigned long timestamp, int tz,
 		const char *message, void *cb_data)
 {
-	struct expire_reflog_cb *cb = cb_data;
+	struct expire_reflog_policy_cb *cb = cb_data;
 
 	if (cb->cmd->rewrite)
 		osha1 = cb->last_kept_sha1;
@@ -355,7 +355,8 @@ static int expire_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
 	return 0;
 }
 
-static int push_tip_to_list(const char *refname, const unsigned char *sha1, int flags, void *cb_data)
+static int push_tip_to_list(const char *refname, const unsigned char *sha1,
+			    int flags, void *cb_data)
 {
 	struct commit_list **list = cb_data;
 	struct commit *tip_commit;
@@ -370,7 +371,7 @@ static int push_tip_to_list(const char *refname, const unsigned char *sha1, int 
 
 static void reflog_expiry_prepare(const char *refname,
 				  const unsigned char *sha1,
-				  struct expire_reflog_cb *cb)
+				  struct expire_reflog_policy_cb *cb)
 {
 	if (!cb->cmd->expire_unreachable || !strcmp(refname, "HEAD")) {
 		cb->tip_commit = NULL;
@@ -402,7 +403,7 @@ static void reflog_expiry_prepare(const char *refname,
 	}
 }
 
-static void reflog_expiry_cleanup(struct expire_reflog_cb *cb)
+static void reflog_expiry_cleanup(struct expire_reflog_policy_cb *cb)
 {
 	if (cb->unreachable_expire_kind != UE_ALWAYS) {
 		if (cb->unreachable_expire_kind == UE_HEAD) {
@@ -420,7 +421,7 @@ static int expire_reflog(const char *refname, const unsigned char *sha1,
 			 unsigned int flags, struct cmd_reflog_expire_cb *cmd)
 {
 	static struct lock_file reflog_lock;
-	struct expire_reflog_cb cb;
+	struct expire_reflog_policy_cb cb;
 	struct ref_lock *lock;
 	char *log_file;
 	int status = 0;
