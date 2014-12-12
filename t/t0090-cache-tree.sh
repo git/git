@@ -131,7 +131,7 @@ test_expect_success 'second commit has cache-tree' '
 	test_cache_tree
 '
 
-test_expect_success 'commit --interactive gives cache-tree on partial commit' '
+test_expect_success PERL 'commit --interactive gives cache-tree on partial commit' '
 	cat <<-\EOT >foo.c &&
 	int foo()
 	{
