@@ -20,5 +20,4 @@ merge_cmd () {
 			-o "$MERGED" "$LOCAL" "$REMOTE" \
 		>/dev/null 2>&1
 	fi
-	status=$?
 }

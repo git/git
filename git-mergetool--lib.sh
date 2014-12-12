@@ -92,7 +92,7 @@ translate_merge_tool_path () {
 check_unchanged () {
 	if test "$MERGED" -nt "$BACKUP"
 	then
-		status=0
+		return 0
 	else
 		while true
 		do
@@ -100,8 +100,8 @@ check_unchanged () {
 			printf "Was the merge successful? [y/n] "
 			read answer || return 1
 			case "$answer" in
-			y*|Y*) status=0; break ;;
-			n*|N*) status=1; break ;;
+			y*|Y*) return 0 ;;
+			n*|N*) return 1 ;;
 			esac
 		done
 	fi
@@ -119,8 +119,6 @@ setup_user_tool () {
 
 	diff_cmd () {
 		( eval $merge_tool_cmd )
-		status=$?
-		return $status
 	}
 
 	merge_cmd () {
@@ -130,13 +128,10 @@ setup_user_tool () {
 		then
 			touch "$BACKUP"
 			( eval $merge_tool_cmd )
-			status=$?
 			check_unchanged
 		else
 			( eval $merge_tool_cmd )
-			status=$?
 		fi
-		return $status
 	}
 }
 
@@ -153,13 +148,11 @@ setup_tool () {
 	}
 
 	diff_cmd () {
-		status=1
-		return $status
+		return 1
 	}
 
 	merge_cmd () {
-		status=1
-		return $status
+		return 1
 	}
 
 	translate_merge_tool_path () {
@@ -210,7 +203,6 @@ run_merge_tool () {
 
 	merge_tool_path=$(get_merge_tool_path "$1") || exit
 	base_present="$2"
-	status=0
 
 	# Bring tool-specific functions into scope
 	setup_tool "$1" || return 1
@@ -221,8 +213,6 @@ run_merge_tool () {
 	else
 		run_diff_cmd "$1"
 	fi
-	status=$?
-	return $status
 }
 
 # Run a either a configured or built-in diff tool

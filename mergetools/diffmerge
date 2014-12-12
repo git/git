@@ -11,5 +11,4 @@ merge_cmd () {
 		"$merge_tool_path" --merge \
 			--result="$MERGED" "$LOCAL" "$REMOTE"
 	fi
-	status=$?
 }
