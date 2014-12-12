@@ -414,7 +414,7 @@ static void reflog_expiry_cleanup(struct expire_reflog_cb *cb)
 }
 
 static int expire_reflog(const char *refname, const unsigned char *sha1,
-			 struct cmd_reflog_expire_cb *cmd)
+			 unsigned int flags, struct cmd_reflog_expire_cb *cmd)
 {
 	static struct lock_file reflog_lock;
 	struct expire_reflog_cb cb;
@@ -642,6 +642,7 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 	unsigned long now = time(NULL);
 	int i, status, do_all;
 	int explicit_expiry = 0;
+	unsigned int flags = 0;
 
 	default_reflog_expire_unreachable = now - 30 * 24 * 3600;
 	default_reflog_expire = now - 90 * 24 * 3600;
@@ -711,7 +712,7 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 		for (i = 0; i < collected.nr; i++) {
 			struct collected_reflog *e = collected.e[i];
 			set_reflog_expiry_param(&cb, explicit_expiry, e->reflog);
-			status |= expire_reflog(e->reflog, e->sha1, &cb);
+			status |= expire_reflog(e->reflog, e->sha1, flags, &cb);
 			free(e);
 		}
 		free(collected.e);
@@ -725,7 +726,7 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 			continue;
 		}
 		set_reflog_expiry_param(&cb, explicit_expiry, ref);
-		status |= expire_reflog(ref, sha1, &cb);
+		status |= expire_reflog(ref, sha1, flags, &cb);
 	}
 	return status;
 }
@@ -744,6 +745,7 @@ static int cmd_reflog_delete(int argc, const char **argv, const char *prefix)
 {
 	struct cmd_reflog_expire_cb cb;
 	int i, status = 0;
+	unsigned int flags = 0;
 
 	memset(&cb, 0, sizeof(cb));
 
@@ -796,7 +798,7 @@ static int cmd_reflog_delete(int argc, const char **argv, const char *prefix)
 			cb.expire_total = 0;
 		}
 
-		status |= expire_reflog(ref, sha1, &cb);
+		status |= expire_reflog(ref, sha1, flags, &cb);
 		free(ref);
 	}
 	return status;
