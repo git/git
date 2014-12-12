@@ -353,4 +353,50 @@ int update_ref(const char *action, const char *refname,
 extern int parse_hide_refs_config(const char *var, const char *value, const char *);
 extern int ref_is_hidden(const char *);
 
+enum expire_reflog_flags {
+	EXPIRE_REFLOGS_DRY_RUN = 1 << 0,
+	EXPIRE_REFLOGS_UPDATE_REF = 1 << 1,
+	EXPIRE_REFLOGS_VERBOSE = 1 << 2,
+	EXPIRE_REFLOGS_REWRITE = 1 << 3
+};
+
+/*
+ * The following interface is used for reflog expiration. The caller
+ * calls reflog_expire(), supplying it with three callback functions,
+ * of the following types. The callback functions define the
+ * expiration policy that is desired.
+ *
+ * reflog_expiry_prepare_fn -- Called once after the reference is
+ *     locked.
+ *
+ * reflog_expiry_should_prune_fn -- Called once for each entry in the
+ *     existing reflog. It should return true iff that entry should be
+ *     pruned.
+ *
+ * reflog_expiry_cleanup_fn -- Called once before the reference is
+ *     unlocked again.
+ */
+typedef void reflog_expiry_prepare_fn(const char *refname,
+				      const unsigned char *sha1,
+				      void *cb_data);
+typedef int reflog_expiry_should_prune_fn(unsigned char *osha1,
+					  unsigned char *nsha1,
+					  const char *email,
+					  unsigned long timestamp, int tz,
+					  const char *message, void *cb_data);
+typedef void reflog_expiry_cleanup_fn(void *cb_data);
+
+/*
+ * Expire reflog entries for the specified reference. sha1 is the old
+ * value of the reference. flags is a combination of the constants in
+ * enum expire_reflog_flags. The three function pointers are described
+ * above. On success, return zero.
+ */
+extern int reflog_expire(const char *refname, const unsigned char *sha1,
+			 unsigned int flags,
+			 reflog_expiry_prepare_fn prepare_fn,
+			 reflog_expiry_should_prune_fn should_prune_fn,
+			 reflog_expiry_cleanup_fn cleanup_fn,
+			 void *policy_cb_data);
+
 #endif /* REFS_H */

@@ -20,13 +20,6 @@ static const char reflog_delete_usage[] =
 static unsigned long default_reflog_expire;
 static unsigned long default_reflog_expire_unreachable;
 
-enum expire_reflog_flags {
-	EXPIRE_REFLOGS_DRY_RUN = 1 << 0,
-	EXPIRE_REFLOGS_UPDATE_REF = 1 << 1,
-	EXPIRE_REFLOGS_VERBOSE = 1 << 2,
-	EXPIRE_REFLOGS_REWRITE = 1 << 3
-};
-
 struct cmd_reflog_expire_cb {
 	struct rev_info revs;
 	int stalefix;
@@ -46,13 +39,6 @@ struct expire_reflog_policy_cb {
 	struct cmd_reflog_expire_cb cmd;
 	struct commit *tip_commit;
 	struct commit_list *tips;
-};
-
-struct expire_reflog_cb {
-	unsigned int flags;
-	void *policy_cb;
-	FILE *newlog;
-	unsigned char last_kept_sha1[20];
 };
 
 struct collected_reflog {
@@ -330,38 +316,6 @@ static int should_expire_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
 	return 0;
 }
 
-static int expire_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
-		const char *email, unsigned long timestamp, int tz,
-		const char *message, void *cb_data)
-{
-	struct expire_reflog_cb *cb = cb_data;
-	struct expire_reflog_policy_cb *policy_cb = cb->policy_cb;
-
-	if (cb->flags & EXPIRE_REFLOGS_REWRITE)
-		osha1 = cb->last_kept_sha1;
-
-	if (should_expire_reflog_ent(osha1, nsha1, email, timestamp, tz,
-				     message, policy_cb)) {
-		if (!cb->newlog)
-			printf("would prune %s", message);
-		else if (cb->flags & EXPIRE_REFLOGS_VERBOSE)
-			printf("prune %s", message);
-	} else {
-		if (cb->newlog) {
-			char sign = (tz < 0) ? '-' : '+';
-			int zone = (tz < 0) ? (-tz) : tz;
-			fprintf(cb->newlog, "%s %s %s %lu %c%04d\t%s",
-				sha1_to_hex(osha1), sha1_to_hex(nsha1),
-				email, timestamp, sign, zone,
-				message);
-			hashcpy(cb->last_kept_sha1, nsha1);
-		}
-		if (cb->flags & EXPIRE_REFLOGS_VERBOSE)
-			printf("keep %s", message);
-	}
-	return 0;
-}
-
 static int push_tip_to_list(const char *refname, const unsigned char *sha1,
 			    int flags, void *cb_data)
 {
@@ -426,90 +380,6 @@ static void reflog_expiry_cleanup(void *cb_data)
 			clear_commit_marks(cb->tip_commit, REACHABLE);
 		}
 	}
-}
-
-static int expire_reflog(const char *refname, const unsigned char *sha1,
-			 unsigned int flags, void *policy_cb_data)
-{
-	static struct lock_file reflog_lock;
-	struct expire_reflog_cb cb;
-	struct ref_lock *lock;
-	char *log_file;
-	int status = 0;
-
-	memset(&cb, 0, sizeof(cb));
-	cb.flags = flags;
-	cb.policy_cb = policy_cb_data;
-
-	/*
-	 * The reflog file is locked by holding the lock on the
-	 * reference itself, plus we might need to update the
-	 * reference if --updateref was specified:
-	 */
-	lock = lock_any_ref_for_update(refname, sha1, 0, NULL);
-	if (!lock)
-		return error("cannot lock ref '%s'", refname);
-	if (!reflog_exists(refname)) {
-		unlock_ref(lock);
-		return 0;
-	}
-
-	log_file = git_pathdup("logs/%s", refname);
-	if (!(flags & EXPIRE_REFLOGS_DRY_RUN)) {
-		/*
-		 * Even though holding $GIT_DIR/logs/$reflog.lock has
-		 * no locking implications, we use the lock_file
-		 * machinery here anyway because it does a lot of the
-		 * work we need, including cleaning up if the program
-		 * exits unexpectedly.
-		 */
-		if (hold_lock_file_for_update(&reflog_lock, log_file, 0) < 0) {
-			struct strbuf err = STRBUF_INIT;
-			unable_to_lock_message(log_file, errno, &err);
-			error("%s", err.buf);
-			strbuf_release(&err);
-			goto failure;
-		}
-		cb.newlog = fdopen_lock_file(&reflog_lock, "w");
-		if (!cb.newlog) {
-			error("cannot fdopen %s (%s)",
-			      reflog_lock.filename.buf, strerror(errno));
-			goto failure;
-		}
-	}
-
-	reflog_expiry_prepare(refname, sha1, cb.policy_cb);
-	for_each_reflog_ent(refname, expire_reflog_ent, &cb);
-	reflog_expiry_cleanup(cb.policy_cb);
-
-	if (!(flags & EXPIRE_REFLOGS_DRY_RUN)) {
-		if (close_lock_file(&reflog_lock)) {
-			status |= error("couldn't write %s: %s", log_file,
-					strerror(errno));
-		} else if ((flags & EXPIRE_REFLOGS_UPDATE_REF) &&
-			(write_in_full(lock->lock_fd,
-				sha1_to_hex(cb.last_kept_sha1), 40) != 40 ||
-			 write_str_in_full(lock->lock_fd, "\n") != 1 ||
-			 close_ref(lock) < 0)) {
-			status |= error("couldn't write %s",
-					lock->lk->filename.buf);
-			rollback_lock_file(&reflog_lock);
-		} else if (commit_lock_file(&reflog_lock)) {
-			status |= error("unable to commit reflog '%s' (%s)",
-					log_file, strerror(errno));
-		} else if ((flags & EXPIRE_REFLOGS_UPDATE_REF) && commit_ref(lock)) {
-			status |= error("couldn't set %s", lock->ref_name);
-		}
-	}
-	free(log_file);
-	unlock_ref(lock);
-	return status;
-
- failure:
-	rollback_lock_file(&reflog_lock);
-	free(log_file);
-	unlock_ref(lock);
-	return -1;
 }
 
 static int collect_reflog(const char *ref, const unsigned char *sha1, int unused, void *cb_data)
@@ -727,7 +597,11 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 		for (i = 0; i < collected.nr; i++) {
 			struct collected_reflog *e = collected.e[i];
 			set_reflog_expiry_param(&cb.cmd, explicit_expiry, e->reflog);
-			status |= expire_reflog(e->reflog, e->sha1, flags, &cb);
+			status |= reflog_expire(e->reflog, e->sha1, flags,
+						reflog_expiry_prepare,
+						should_expire_reflog_ent,
+						reflog_expiry_cleanup,
+						&cb);
 			free(e);
 		}
 		free(collected.e);
@@ -741,7 +615,11 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 			continue;
 		}
 		set_reflog_expiry_param(&cb.cmd, explicit_expiry, ref);
-		status |= expire_reflog(ref, sha1, flags, &cb);
+		status |= reflog_expire(ref, sha1, flags,
+					reflog_expiry_prepare,
+					should_expire_reflog_ent,
+					reflog_expiry_cleanup,
+					&cb);
 	}
 	return status;
 }
@@ -813,7 +691,11 @@ static int cmd_reflog_delete(int argc, const char **argv, const char *prefix)
 			cb.cmd.expire_total = 0;
 		}
 
-		status |= expire_reflog(ref, sha1, flags, &cb);
+		status |= reflog_expire(ref, sha1, flags,
+					reflog_expiry_prepare,
+					should_expire_reflog_ent,
+					reflog_expiry_cleanup,
+					&cb);
 		free(ref);
 	}
 	return status;
