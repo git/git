@@ -6,6 +6,15 @@
 #include "dir.h"
 #include "string-list.h"
 
+struct ref_lock {
+	char *ref_name;
+	char *orig_ref_name;
+	struct lock_file *lk;
+	unsigned char old_sha1[20];
+	int lock_fd;
+	int force_write;
+};
+
 /*
  * How to handle various characters in refnames:
  * 0: An acceptable character for refs

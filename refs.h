@@ -1,15 +1,6 @@
 #ifndef REFS_H
 #define REFS_H
 
-struct ref_lock {
-	char *ref_name;
-	char *orig_ref_name;
-	struct lock_file *lk;
-	unsigned char old_sha1[20];
-	int lock_fd;
-	int force_write;
-};
-
 /*
  * A ref_transaction represents a collection of ref updates
  * that should succeed or fail together.
