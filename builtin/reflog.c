@@ -349,9 +349,9 @@ static int push_tip_to_list(const char *refname, const unsigned char *sha1, int 
 	return 0;
 }
 
-static int expire_reflog(const char *ref, const unsigned char *sha1, int unused, void *cb_data)
+static int expire_reflog(const char *ref, const unsigned char *sha1,
+			 struct cmd_reflog_expire_cb *cmd)
 {
-	struct cmd_reflog_expire_cb *cmd = cb_data;
 	struct expire_reflog_cb cb;
 	struct ref_lock *lock;
 	char *log_file, *newlog_path = NULL;
@@ -663,7 +663,7 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 		for (i = 0; i < collected.nr; i++) {
 			struct collected_reflog *e = collected.e[i];
 			set_reflog_expiry_param(&cb, explicit_expiry, e->reflog);
-			status |= expire_reflog(e->reflog, e->sha1, 0, &cb);
+			status |= expire_reflog(e->reflog, e->sha1, &cb);
 			free(e);
 		}
 		free(collected.e);
@@ -677,7 +677,7 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 			continue;
 		}
 		set_reflog_expiry_param(&cb, explicit_expiry, ref);
-		status |= expire_reflog(ref, sha1, 0, &cb);
+		status |= expire_reflog(ref, sha1, &cb);
 	}
 	return status;
 }
@@ -748,7 +748,7 @@ static int cmd_reflog_delete(int argc, const char **argv, const char *prefix)
 			cb.expire_total = 0;
 		}
 
-		status |= expire_reflog(ref, sha1, 0, &cb);
+		status |= expire_reflog(ref, sha1, &cb);
 		free(ref);
 	}
 	return status;
