@@ -261,7 +261,7 @@ __git_ps1_colorize_gitstring ()
 
 eread ()
 {
-	f="$1"
+	local f="$1"
 	shift
 	test -r "$f" && read "$@" <"$f"
 }
