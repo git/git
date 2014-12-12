@@ -223,6 +223,14 @@ int git_diff_ui_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
+	if (!strcmp(var, "diff.relative")) {
+		if (git_config_bool(var, value))
+			DIFF_OPT_SET(&default_diff_options, RELATIVE_NAME);
+		else
+			DIFF_OPT_CLR(&default_diff_options, RELATIVE_NAME);
+		return 0;
+	}
+
 	if (git_color_config(var, value, cb) < 0)
 		return -1;
 
@@ -267,14 +275,6 @@ int git_diff_basic_config(const char *var, const char *value, void *cb)
 				errmsg.buf);
 		strbuf_release(&errmsg);
 		diff_dirstat_permille_default = default_diff_options.dirstat_permille;
-		return 0;
-	}
-
-	if (!strcmp(var, "diff.relative")) {
-		if (git_config_bool(var, value))
-			DIFF_OPT_SET(&default_diff_options, RELATIVE_NAME);
-		else
-			DIFF_OPT_CLR(&default_diff_options, RELATIVE_NAME);
 		return 0;
 	}
 
