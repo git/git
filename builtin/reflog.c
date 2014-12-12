@@ -349,7 +349,7 @@ static int push_tip_to_list(const char *refname, const unsigned char *sha1, int 
 	return 0;
 }
 
-static int expire_reflog(const char *ref, const unsigned char *sha1,
+static int expire_reflog(const char *refname, const unsigned char *sha1,
 			 struct cmd_reflog_expire_cb *cmd)
 {
 	struct expire_reflog_cb cb;
@@ -365,20 +365,20 @@ static int expire_reflog(const char *ref, const unsigned char *sha1,
 	 * we take the lock for the ref itself to prevent it from
 	 * getting updated.
 	 */
-	lock = lock_any_ref_for_update(ref, sha1, 0, NULL);
+	lock = lock_any_ref_for_update(refname, sha1, 0, NULL);
 	if (!lock)
-		return error("cannot lock ref '%s'", ref);
-	log_file = git_pathdup("logs/%s", ref);
-	if (!reflog_exists(ref))
+		return error("cannot lock ref '%s'", refname);
+	log_file = git_pathdup("logs/%s", refname);
+	if (!reflog_exists(refname))
 		goto finish;
 	if (!cmd->dry_run) {
-		newlog_path = git_pathdup("logs/%s.lock", ref);
+		newlog_path = git_pathdup("logs/%s.lock", refname);
 		cb.newlog = fopen(newlog_path, "w");
 	}
 
 	cb.cmd = cmd;
 
-	if (!cmd->expire_unreachable || !strcmp(ref, "HEAD")) {
+	if (!cmd->expire_unreachable || !strcmp(refname, "HEAD")) {
 		tip_commit = NULL;
 		cb.unreachable_expire_kind = UE_HEAD;
 	} else {
@@ -407,7 +407,7 @@ static int expire_reflog(const char *ref, const unsigned char *sha1,
 		mark_reachable(&cb);
 	}
 
-	for_each_reflog_ent(ref, expire_reflog_ent, &cb);
+	for_each_reflog_ent(refname, expire_reflog_ent, &cb);
 
 	if (cb.unreachable_expire_kind != UE_ALWAYS) {
 		if (cb.unreachable_expire_kind == UE_HEAD) {
