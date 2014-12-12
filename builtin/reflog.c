@@ -22,14 +22,14 @@ static unsigned long default_reflog_expire_unreachable;
 
 enum expire_reflog_flags {
 	EXPIRE_REFLOGS_DRY_RUN = 1 << 0,
-	EXPIRE_REFLOGS_UPDATE_REF = 1 << 1
+	EXPIRE_REFLOGS_UPDATE_REF = 1 << 1,
+	EXPIRE_REFLOGS_VERBOSE = 1 << 2
 };
 
 struct cmd_reflog_expire_cb {
 	struct rev_info revs;
 	int stalefix;
 	int rewrite;
-	int verbose;
 	unsigned long expire_total;
 	unsigned long expire_unreachable;
 	int recno;
@@ -344,7 +344,7 @@ static int expire_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
 				     message, policy_cb)) {
 		if (!policy_cb->newlog)
 			printf("would prune %s", message);
-		else if (policy_cb->cmd->verbose)
+		else if (cb->flags & EXPIRE_REFLOGS_VERBOSE)
 			printf("prune %s", message);
 	} else {
 		if (policy_cb->newlog) {
@@ -356,7 +356,7 @@ static int expire_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
 				message);
 			hashcpy(policy_cb->last_kept_sha1, nsha1);
 		}
-		if (policy_cb->cmd->verbose)
+		if (cb->flags & EXPIRE_REFLOGS_VERBOSE)
 			printf("keep %s", message);
 	}
 	return 0;
@@ -693,7 +693,7 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 		else if (!strcmp(arg, "--all"))
 			do_all = 1;
 		else if (!strcmp(arg, "--verbose"))
-			cb.verbose = 1;
+			flags |= EXPIRE_REFLOGS_VERBOSE;
 		else if (!strcmp(arg, "--")) {
 			i++;
 			break;
@@ -711,10 +711,10 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 	 */
 	if (cb.stalefix) {
 		init_revisions(&cb.revs, prefix);
-		if (cb.verbose)
+		if (flags & EXPIRE_REFLOGS_VERBOSE)
 			printf("Marking reachable objects...");
 		mark_reachable_objects(&cb.revs, 0, 0, NULL);
-		if (cb.verbose)
+		if (flags & EXPIRE_REFLOGS_VERBOSE)
 			putchar('\n');
 	}
 
@@ -773,7 +773,7 @@ static int cmd_reflog_delete(int argc, const char **argv, const char *prefix)
 		else if (!strcmp(arg, "--updateref"))
 			flags |= EXPIRE_REFLOGS_UPDATE_REF;
 		else if (!strcmp(arg, "--verbose"))
-			cb.verbose = 1;
+			flags |= EXPIRE_REFLOGS_VERBOSE;
 		else if (!strcmp(arg, "--")) {
 			i++;
 			break;
