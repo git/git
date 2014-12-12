@@ -5,12 +5,6 @@
 #include "khash.h"
 #include "pack-objects.h"
 
-struct bitmap_disk_entry {
-	uint32_t object_pos;
-	uint8_t xor_offset;
-	uint8_t flags;
-} __attribute__((packed));
-
 struct bitmap_disk_header {
 	char magic[4];
 	uint16_t version;

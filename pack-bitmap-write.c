@@ -472,7 +472,6 @@ static void write_selected_commits_v1(struct sha1file *f,
 
 	for (i = 0; i < writer.selected_nr; ++i) {
 		struct bitmapped_commit *stored = &writer.selected[i];
-		struct bitmap_disk_entry on_disk;
 
 		int commit_pos =
 			sha1_pos(stored->commit->object.sha1, index, index_nr, sha1_access);
@@ -480,11 +479,10 @@ static void write_selected_commits_v1(struct sha1file *f,
 		if (commit_pos < 0)
 			die("BUG: trying to write commit not in index");
 
-		on_disk.object_pos = htonl(commit_pos);
-		on_disk.xor_offset = stored->xor_offset;
-		on_disk.flags = stored->flags;
+		sha1write_be32(f, commit_pos);
+		sha1write_u8(f, stored->xor_offset);
+		sha1write_u8(f, stored->flags);
 
-		sha1write(f, &on_disk, sizeof(on_disk));
 		dump_bitmap(f, stored->write_as);
 	}
 }
