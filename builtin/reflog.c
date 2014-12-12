@@ -368,9 +368,11 @@ static int expire_reflog(const char *refname, const unsigned char *sha1,
 	lock = lock_any_ref_for_update(refname, sha1, 0, NULL);
 	if (!lock)
 		return error("cannot lock ref '%s'", refname);
+	if (!reflog_exists(refname)) {
+		unlock_ref(lock);
+		return 0;
+	}
 	log_file = git_pathdup("logs/%s", refname);
-	if (!reflog_exists(refname))
-		goto finish;
 	if (!cmd->dry_run) {
 		newlog_path = git_pathdup("logs/%s.lock", refname);
 		cb.newlog = fopen(newlog_path, "w");
@@ -419,7 +421,7 @@ static int expire_reflog(const char *refname, const unsigned char *sha1,
 			clear_commit_marks(tip_commit, REACHABLE);
 		}
 	}
- finish:
+
 	if (cb.newlog) {
 		if (fclose(cb.newlog)) {
 			status |= error("%s: %s", strerror(errno),
