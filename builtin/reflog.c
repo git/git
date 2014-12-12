@@ -51,6 +51,7 @@ struct expire_reflog_policy_cb {
 };
 
 struct expire_reflog_cb {
+	unsigned int flags;
 	void *policy_cb;
 };
 
@@ -435,6 +436,7 @@ static int expire_reflog(const char *refname, const unsigned char *sha1,
 
 	memset(&cb, 0, sizeof(cb));
 	memset(&policy_cb, 0, sizeof(policy_cb));
+	cb.flags = flags;
 	cb.policy_cb = &policy_cb;
 
 	/*
