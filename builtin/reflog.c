@@ -43,6 +43,8 @@ struct expire_reflog_cb {
 	unsigned long mark_limit;
 	struct cmd_reflog_expire_cb *cmd;
 	unsigned char last_kept_sha1[20];
+	struct commit *tip_commit;
+	struct commit_list *tips;
 };
 
 struct collected_reflog {
@@ -363,6 +365,54 @@ static int push_tip_to_list(const char *refname, const unsigned char *sha1, int 
 	return 0;
 }
 
+static void reflog_expiry_prepare(const char *refname,
+				  const unsigned char *sha1,
+				  struct expire_reflog_cb *cb)
+{
+	if (!cb->cmd->expire_unreachable || !strcmp(refname, "HEAD")) {
+		cb->tip_commit = NULL;
+		cb->unreachable_expire_kind = UE_HEAD;
+	} else {
+		cb->tip_commit = lookup_commit_reference_gently(sha1, 1);
+		if (!cb->tip_commit)
+			cb->unreachable_expire_kind = UE_ALWAYS;
+		else
+			cb->unreachable_expire_kind = UE_NORMAL;
+	}
+
+	if (cb->cmd->expire_unreachable <= cb->cmd->expire_total)
+		cb->unreachable_expire_kind = UE_ALWAYS;
+
+	cb->mark_list = NULL;
+	cb->tips = NULL;
+	if (cb->unreachable_expire_kind != UE_ALWAYS) {
+		if (cb->unreachable_expire_kind == UE_HEAD) {
+			struct commit_list *elem;
+			for_each_ref(push_tip_to_list, &cb->tips);
+			for (elem = cb->tips; elem; elem = elem->next)
+				commit_list_insert(elem->item, &cb->mark_list);
+		} else {
+			commit_list_insert(cb->tip_commit, &cb->mark_list);
+		}
+		cb->mark_limit = cb->cmd->expire_total;
+		mark_reachable(cb);
+	}
+}
+
+static void reflog_expiry_cleanup(struct expire_reflog_cb *cb)
+{
+	if (cb->unreachable_expire_kind != UE_ALWAYS) {
+		if (cb->unreachable_expire_kind == UE_HEAD) {
+			struct commit_list *elem;
+			for (elem = cb->tips; elem; elem = elem->next)
+				clear_commit_marks(elem->item, REACHABLE);
+			free_commit_list(cb->tips);
+		} else {
+			clear_commit_marks(cb->tip_commit, REACHABLE);
+		}
+	}
+}
+
 static int expire_reflog(const char *refname, const unsigned char *sha1,
 			 struct cmd_reflog_expire_cb *cmd)
 {
@@ -370,8 +420,6 @@ static int expire_reflog(const char *refname, const unsigned char *sha1,
 	struct expire_reflog_cb cb;
 	struct ref_lock *lock;
 	char *log_file;
-	struct commit *tip_commit;
-	struct commit_list *tips;
 	int status = 0;
 
 	memset(&cb, 0, sizeof(cb));
@@ -415,47 +463,9 @@ static int expire_reflog(const char *refname, const unsigned char *sha1,
 
 	cb.cmd = cmd;
 
-	if (!cmd->expire_unreachable || !strcmp(refname, "HEAD")) {
-		tip_commit = NULL;
-		cb.unreachable_expire_kind = UE_HEAD;
-	} else {
-		tip_commit = lookup_commit_reference_gently(sha1, 1);
-		if (!tip_commit)
-			cb.unreachable_expire_kind = UE_ALWAYS;
-		else
-			cb.unreachable_expire_kind = UE_NORMAL;
-	}
-
-	if (cmd->expire_unreachable <= cmd->expire_total)
-		cb.unreachable_expire_kind = UE_ALWAYS;
-
-	cb.mark_list = NULL;
-	tips = NULL;
-	if (cb.unreachable_expire_kind != UE_ALWAYS) {
-		if (cb.unreachable_expire_kind == UE_HEAD) {
-			struct commit_list *elem;
-			for_each_ref(push_tip_to_list, &tips);
-			for (elem = tips; elem; elem = elem->next)
-				commit_list_insert(elem->item, &cb.mark_list);
-		} else {
-			commit_list_insert(tip_commit, &cb.mark_list);
-		}
-		cb.mark_limit = cmd->expire_total;
-		mark_reachable(&cb);
-	}
-
+	reflog_expiry_prepare(refname, sha1, &cb);
 	for_each_reflog_ent(refname, expire_reflog_ent, &cb);
-
-	if (cb.unreachable_expire_kind != UE_ALWAYS) {
-		if (cb.unreachable_expire_kind == UE_HEAD) {
-			struct commit_list *elem;
-			for (elem = tips; elem; elem = elem->next)
-				clear_commit_marks(elem->item, REACHABLE);
-			free_commit_list(tips);
-		} else {
-			clear_commit_marks(tip_commit, REACHABLE);
-		}
-	}
+	reflog_expiry_cleanup(&cb);
 
 	if (cb.newlog) {
 		if (close_lock_file(&reflog_lock)) {
