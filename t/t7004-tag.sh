@@ -1081,7 +1081,7 @@ test_expect_success GPG \
 get_tag_header rfc1991-signed-tag $commit commit $time >expect
 echo "RFC1991 signed tag" >>expect
 echo '-----BEGIN PGP MESSAGE-----' >>expect
-test_expect_success GPG \
+test_expect_success GPG,RFC1991 \
 	'creating a signed tag with rfc1991' '
 	echo "rfc1991" >gpghome/gpg.conf &&
 	git tag -s -m "RFC1991 signed tag" rfc1991-signed-tag $commit &&
@@ -1095,7 +1095,7 @@ cp "$1" actual
 EOF
 chmod +x fakeeditor
 
-test_expect_success GPG \
+test_expect_success GPG,RFC1991 \
 	'reediting a signed tag body omits signature' '
 	echo "rfc1991" >gpghome/gpg.conf &&
 	echo "RFC1991 signed tag" >expect &&
@@ -1103,13 +1103,13 @@ test_expect_success GPG \
 	test_cmp expect actual
 '
 
-test_expect_success GPG \
+test_expect_success GPG,RFC1991 \
 	'verifying rfc1991 signature' '
 	echo "rfc1991" >gpghome/gpg.conf &&
 	git tag -v rfc1991-signed-tag
 '
 
-test_expect_success GPG \
+test_expect_success GPG,RFC1991 \
 	'list tag with rfc1991 signature' '
 	echo "rfc1991" >gpghome/gpg.conf &&
 	echo "rfc1991-signed-tag RFC1991 signed tag" >expect &&
@@ -1123,12 +1123,12 @@ test_expect_success GPG \
 
 rm -f gpghome/gpg.conf
 
-test_expect_success GPG \
+test_expect_success GPG,RFC1991 \
 	'verifying rfc1991 signature without --rfc1991' '
 	git tag -v rfc1991-signed-tag
 '
 
-test_expect_success GPG \
+test_expect_success GPG,RFC1991 \
 	'list tag with rfc1991 signature without --rfc1991' '
 	echo "rfc1991-signed-tag RFC1991 signed tag" >expect &&
 	git tag -l -n1 rfc1991-signed-tag >actual &&
@@ -1139,7 +1139,7 @@ test_expect_success GPG \
 	test_cmp expect actual
 '
 
-test_expect_success GPG \
+test_expect_success GPG,RFC1991 \
 	'reediting a signed tag body omits signature' '
 	echo "RFC1991 signed tag" >expect &&
 	GIT_EDITOR=./fakeeditor git tag -f -s rfc1991-signed-tag $commit &&
