@@ -39,6 +39,10 @@ notes for details).
    still overwrote the $path unnecessarily.
    (merge c5326bd jk/checkout-from-tree later to maint).
 
+ * "git config --get-color" did not parse its command line arguments
+   carefully.
+   (merge cb35722 jk/colors-fix later to maint).
+
  * open() emulated on Windows platforms did not give EISDIR upon
    an attempt to open a directory for writing.
    (merge ba6fad0 js/windows-open-eisdir-error later to maint).
@@ -54,3 +58,17 @@ notes for details).
  * "git init" (hence "git clone") initialized the per-repository
    configuration file .git/config with x-bit by mistake.
    (merge 1f32ecf mh/config-flip-xbit-back-after-checking later to maint).
+
+ * Git 2.0 was supposed to make the "simple" mode for the default of
+   "git push", but it didn't.
+   (merge 00a6fa0 jk/push-simple later to maint).
+
+ * "Everyday" document had a broken link.
+   (merge 366c8d4 po/everyday-doc later to maint).
+
+ * A few test fixes.
+   (merge 880ef58 jk/no-perl-tests later to maint).
+
+ * The build procedure did not bother fixing perl and python scripts
+   when NO_PERL and NO_PYTHON build-time configuration changed.
+   (merge ca2051d jk/rebuild-perl-scripts-with-no-perl-seting-change later to maint).
