@@ -216,8 +216,7 @@ static void add_branch_desc(struct strbuf *out, const char *name)
 			strbuf_addf(out, "  : %.*s", (int)(ep - bp), bp);
 			bp = ep;
 		}
-		if (out->buf[out->len - 1] != '\n')
-			strbuf_addch(out, '\n');
+		strbuf_complete_line(out);
 	}
 	strbuf_release(&desc);
 }

@@ -44,8 +44,7 @@ void commit_notes(struct notes_tree *t, const char *msg)
 
 	/* Prepare commit message and reflog message */
 	strbuf_addstr(&buf, msg);
-	if (buf.buf[buf.len - 1] != '\n')
-		strbuf_addch(&buf, '\n'); /* Make sure msg ends with newline */
+	strbuf_complete_line(&buf);
 
 	create_notes_commit(t, NULL, buf.buf, buf.len, commit_sha1);
 	strbuf_insert(&buf, 0, "notes: ", 7); /* commit message starts at index 7 */
