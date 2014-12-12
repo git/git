@@ -20,9 +20,12 @@ static const char reflog_delete_usage[] =
 static unsigned long default_reflog_expire;
 static unsigned long default_reflog_expire_unreachable;
 
+enum expire_reflog_flags {
+	EXPIRE_REFLOGS_DRY_RUN = 1 << 0
+};
+
 struct cmd_reflog_expire_cb {
 	struct rev_info revs;
-	int dry_run;
 	int stalefix;
 	int rewrite;
 	int updateref;
@@ -438,7 +441,7 @@ static int expire_reflog(const char *refname, const unsigned char *sha1,
 	}
 
 	log_file = git_pathdup("logs/%s", refname);
-	if (!cmd->dry_run) {
+	if (!(flags & EXPIRE_REFLOGS_DRY_RUN)) {
 		/*
 		 * Even though holding $GIT_DIR/logs/$reflog.lock has
 		 * no locking implications, we use the lock_file
@@ -467,7 +470,7 @@ static int expire_reflog(const char *refname, const unsigned char *sha1,
 	for_each_reflog_ent(refname, expire_reflog_ent, &cb);
 	reflog_expiry_cleanup(&cb);
 
-	if (cb.newlog) {
+	if (!(flags & EXPIRE_REFLOGS_DRY_RUN)) {
 		if (close_lock_file(&reflog_lock)) {
 			status |= error("couldn't write %s: %s", log_file,
 					strerror(errno));
@@ -658,7 +661,7 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 		if (!strcmp(arg, "--dry-run") || !strcmp(arg, "-n"))
-			cb.dry_run = 1;
+			flags |= EXPIRE_REFLOGS_DRY_RUN;
 		else if (starts_with(arg, "--expire=")) {
 			if (parse_expiry_date(arg + 9, &cb.expire_total))
 				die(_("'%s' is not a valid timestamp"), arg);
@@ -752,7 +755,7 @@ static int cmd_reflog_delete(int argc, const char **argv, const char *prefix)
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 		if (!strcmp(arg, "--dry-run") || !strcmp(arg, "-n"))
-			cb.dry_run = 1;
+			flags |= EXPIRE_REFLOGS_DRY_RUN;
 		else if (!strcmp(arg, "--rewrite"))
 			cb.rewrite = 1;
 		else if (!strcmp(arg, "--updateref"))
