@@ -912,17 +912,23 @@ $time = time - scalar $#files;
 sub unquote_rfc2047 {
 	local ($_) = @_;
 	my $charset;
-	s{$re_encoded_word}{
-		$charset = $1;
-		my $encoding = $2;
-		my $text = $3;
-		if ($encoding eq 'q' || $encoding eq 'Q') {
-			$text =~ s/_/ /g;
-			$text =~ s/=([0-9A-F]{2})/chr(hex($1))/egi;
-			$text;
-		} else {
-			$&; # other encodings not supported yet
+	my $sep = qr/[ \t]+/;
+	s{$re_encoded_word(?:$sep$re_encoded_word)*}{
+		my @words = split $sep, $&;
+		foreach (@words) {
+			m/$re_encoded_word/;
+			$charset = $1;
+			my $encoding = $2;
+			my $text = $3;
+			if ($encoding eq 'q' || $encoding eq 'Q') {
+				$_ = $text;
+				s/_/ /g;
+				s/=([0-9A-F]{2})/chr(hex($1))/egi;
+			} else {
+				# other encodings not supported yet
+			}
 		}
+		join '', @words;
 	}eg;
 	return wantarray ? ($_, $charset) : $_;
 }

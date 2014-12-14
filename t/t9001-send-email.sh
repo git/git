@@ -240,6 +240,13 @@ test_expect_success $PREREQ 'non-ascii self name is suppressed' "
 		'non_ascii_self_suppressed'
 "
 
+# This name is long enough to force format-patch to split it into multiple
+# encoded-words, assuming it uses UTF-8 with the "Q" encoding.
+test_expect_success $PREREQ 'long non-ascii self name is suppressed' "
+	test_suppress_self_quoted 'Ƒüñníęř €. Nâṁé' 'odd_?=mail@example.com' \
+		'long_non_ascii_self_suppressed'
+"
+
 test_expect_success $PREREQ 'sanitized self name is suppressed' "
 	test_suppress_self_unquoted '\"A U. Thor\"' 'author@example.com' \
 		'self_name_sanitized_suppressed'
