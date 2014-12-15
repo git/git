@@ -1,26 +1,40 @@
 #!/bin/sh
 
 sites='ko repo github2 sfjp sf.net gph '
+nexts='ko repo gph github2'
 
-while :
-do
-	failed=
-	for remote in $sites
+push_retry () {
+	sites=$1
+	shift
+	while :
 	do
-		printf "%s: " "$remote"
-		git push --follow-tags "$remote" "$@" || failed="$failed$remote "
-	done
+		failed=
+		for remote in $sites
+		do
+			printf "%s: " "$remote"
+			git push --follow-tags "$remote" "$@" || failed="$failed$remote "
+		done
 
-	if test -z "$failed"
-	then
-		break
-	elif test "x$sites" = "x$failed"
-	then
-		echo >&2 "Failed to push to: $sites"
-		exit 1
-	fi
-	sites="$failed"
-done
+		if test -z "$failed"
+		then
+			break
+		elif test "x$sites" = "x$failed"
+		then
+			echo >&2 "Failed to push to: $sites"
+			exit 1
+		fi
+		sites="$failed"
+	done
+}
+
+case " $* " in
+*' +next '*)
+	push_retry "$nexts" "$@"
+	exit $?
+	;;
+esac
+
+push_retry "$sites" "$@"
 
 case "$#,$*" in
 0,* | 1,-n)
