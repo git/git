@@ -237,9 +237,10 @@ test_expect_success 'fsck notices submodule entry pointing to null sha1' '
 	)
 '
 
-while read name path; do
+while read name path pretty; do
 	while read mode type; do
-		test_expect_success "fsck notices $path as $type" '
+		: ${pretty:=$path}
+		test_expect_success "fsck notices $pretty as $type" '
 		(
 			git init $name-$type &&
 			cd $name-$type &&
@@ -259,11 +260,12 @@ while read name path; do
 	100644 blob
 	040000 tree
 	EOF
-done <<-\EOF
+done <<-EOF
 dot .
 dotdot ..
 dotgit .git
 dotgit-case .GIT
+dotgit-unicode .gI${u200c}T .gI{u200c}T
 EOF
 
 test_done
