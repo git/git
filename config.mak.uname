@@ -97,6 +97,7 @@ ifeq ($(uname_S),Darwin)
 	HAVE_DEV_TTY = YesPlease
 	COMPAT_OBJS += compat/precompose_utf8.o
 	BASIC_CFLAGS += -DPRECOMPOSE_UNICODE
+	BASIC_CFLAGS += -DPROTECT_HFS_DEFAULT=1
 endif
 ifeq ($(uname_S),SunOS)
 	NEEDS_SOCKET = YesPlease
