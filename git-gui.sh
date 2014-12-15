@@ -1965,19 +1965,21 @@ proc display_all_files {} {
 
 	set to_display [lsort [array names file_states]]
 	set display_limit [get_config gui.maxfilesdisplayed]
-	if {[llength $to_display] > $display_limit} {
-		if {!$files_warning} {
-			# do not repeatedly warn:
-			set files_warning 1
-			info_popup [mc "Displaying only %s of %s files." \
-				$display_limit [llength $to_display]]
-		}
-		set to_display [lrange $to_display 0 [expr {$display_limit-1}]]
-	}
+	set displayed 0
 	foreach path $to_display {
 		set s $file_states($path)
 		set m [lindex $s 0]
 		set icon_name [lindex $s 1]
+
+		if {$displayed > $display_limit && [string index $m 1] eq {O} } {
+			if {!$files_warning} {
+				# do not repeatedly warn:
+				set files_warning 1
+				info_popup [mc "Display limit (gui.maxfilesdisplayed = %s) reached, not showing all %s files." \
+					$display_limit [llength $to_display]]
+			}
+			continue
+		}
 
 		set s [string index $m 0]
 		if {$s ne {U} && $s ne {_}} {
@@ -1993,6 +1995,7 @@ proc display_all_files {} {
 		if {$s ne {_}} {
 			display_all_files_helper $ui_workdir $path \
 				$icon_name $s
+			incr displayed
 		}
 	}
 
