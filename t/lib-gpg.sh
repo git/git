@@ -12,10 +12,20 @@ else
 		say "Your version of gpg (1.0.6) is too buggy for testing"
 		;;
 	*)
-		# key generation info: gpg --homedir t/lib-gpg --gen-key
-		# Type DSA and Elgamal, size 2048 bits, no expiration date.
-		# Name and email: C O Mitter <committer@example.com>
+		# Available key info:
+		# * Type DSA and Elgamal, size 2048 bits, no expiration date,
+		#   name and email: C O Mitter <committer@example.com>
+		# * Type RSA, size 2048 bits, no expiration date,
+		#   name and email: Eris Discordia <discord@example.net>
 		# No password given, to enable non-interactive operation.
+		# To generate new key:
+		#	gpg --homedir /tmp/gpghome --gen-key
+		# To write armored exported key to keyring:
+		#	gpg --homedir /tmp/gpghome --export-secret-keys \
+		#		--armor 0xDEADBEEF >> lib-gpg/keyring.gpg
+		# To export ownertrust:
+		#	gpg --homedir /tmp/gpghome --export-ownertrust \
+		#		> lib-gpg/ownertrust
 		mkdir ./gpghome &&
 		chmod 0700 ./gpghome &&
 		GNUPGHOME="$(pwd)/gpghome" &&
