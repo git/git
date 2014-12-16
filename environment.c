@@ -68,6 +68,11 @@ unsigned long pack_size_limit_cfg;
 #endif
 int protect_hfs = PROTECT_HFS_DEFAULT;
 
+#ifndef PROTECT_NTFS_DEFAULT
+#define PROTECT_NTFS_DEFAULT 0
+#endif
+int protect_ntfs = PROTECT_NTFS_DEFAULT;
+
 /*
  * The character that begins a commented line in user-editable file
  * that is subject to stripspace.
