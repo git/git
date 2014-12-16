@@ -759,6 +759,7 @@ int longest_ancestor_length(const char *path, struct string_list *prefixes);
 char *strip_path_suffix(const char *path, const char *suffix);
 int daemon_avoid_alias(const char *path);
 int offset_1st_component(const char *path);
+extern int is_ntfs_dotgit(const char *name);
 
 /* object replacement */
 #define READ_SHA1_FILE_REPLACE 1
