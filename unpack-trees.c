@@ -102,7 +102,7 @@ void setup_unpack_trees_porcelain(struct unpack_trees_options *opts,
 		opts->unpack_rejects[i].strdup_strings = 1;
 }
 
-static void do_add_entry(struct unpack_trees_options *o, struct cache_entry *ce,
+static int do_add_entry(struct unpack_trees_options *o, struct cache_entry *ce,
 			 unsigned int set, unsigned int clear)
 {
 	clear |= CE_HASHED | CE_UNHASHED;
@@ -112,8 +112,8 @@ static void do_add_entry(struct unpack_trees_options *o, struct cache_entry *ce,
 
 	ce->next = NULL;
 	ce->ce_flags = (ce->ce_flags & ~clear) | set;
-	add_index_entry(&o->result, ce,
-			ADD_CACHE_OK_TO_ADD | ADD_CACHE_OK_TO_REPLACE);
+	return add_index_entry(&o->result, ce,
+			       ADD_CACHE_OK_TO_ADD | ADD_CACHE_OK_TO_REPLACE);
 }
 
 static struct cache_entry *dup_entry(const struct cache_entry *ce)
@@ -608,7 +608,9 @@ static int unpack_nondirectories(int n, unsigned long mask,
 
 	for (i = 0; i < n; i++)
 		if (src[i] && src[i] != o->df_conflict_entry)
-			do_add_entry(o, src[i], 0, 0);
+			if (do_add_entry(o, src[i], 0, 0))
+				return -1;
+
 	return 0;
 }
 

@@ -14,6 +14,7 @@
 #include "resolve-undo.h"
 #include "strbuf.h"
 #include "varint.h"
+#include "utf8.h"
 
 static struct cache_entry *refresh_cache_entry(struct cache_entry *ce, int really);
 
@@ -759,9 +760,10 @@ static int verify_dotfile(const char *rest)
 	 * shares the path end test with the ".." case.
 	 */
 	case 'g':
-		if (rest[1] != 'i')
+	case 'G':
+		if (rest[1] != 'i' && rest[1] != 'I')
 			break;
-		if (rest[2] != 't')
+		if (rest[2] != 't' && rest[2] != 'T')
 			break;
 		rest += 2;
 	/* fallthrough */
@@ -785,6 +787,10 @@ int verify_path(const char *path)
 			return 1;
 		if (is_dir_sep(c)) {
 inside:
+			if (protect_hfs && is_hfs_dotgit(path))
+				return 0;
+			if (protect_ntfs && is_ntfs_dotgit(path))
+				return 0;
 			c = *path++;
 			if ((c == '.' && !verify_dotfile(path)) ||
 			    is_dir_sep(c) || c == '\0')
