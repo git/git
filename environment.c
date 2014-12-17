@@ -64,6 +64,16 @@ int precomposed_unicode = -1; /* see probe_utf8_pathname_composition() */
 struct startup_info *startup_info;
 unsigned long pack_size_limit_cfg;
 
+#ifndef PROTECT_HFS_DEFAULT
+#define PROTECT_HFS_DEFAULT 0
+#endif
+int protect_hfs = PROTECT_HFS_DEFAULT;
+
+#ifndef PROTECT_NTFS_DEFAULT
+#define PROTECT_NTFS_DEFAULT 0
+#endif
+int protect_ntfs = PROTECT_NTFS_DEFAULT;
+
 /*
  * The character that begins a commented line in user-editable file
  * that is subject to stripspace.
