@@ -234,6 +234,17 @@ core.precomposeunicode::
 	When false, file names are handled fully transparent by Git,
 	which is backward compatible with older versions of Git.
 
+core.protectHFS::
+	If set to true, do not allow checkout of paths that would
+	be considered equivalent to `.git` on an HFS+ filesystem.
+	Defaults to `true` on Mac OS, and `false` elsewhere.
+
+core.protectNTFS::
+	If set to true, do not allow checkout of paths that would
+	cause problems with the NTFS filesystem, e.g. conflict with
+	8.3 "short" names.
+	Defaults to `true` on Windows, and `false` elsewhere.
+
 core.trustctime::
 	If false, the ctime differences between the index and the
 	working tree are ignored; useful when the inode change time
