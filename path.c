@@ -821,3 +821,36 @@ int daemon_avoid_alias(const char *p)
 		}
 	}
 }
+
+static int only_spaces_and_periods(const char *path, size_t len, size_t skip)
+{
+	if (len < skip)
+		return 0;
+	len -= skip;
+	path += skip;
+	while (len-- > 0) {
+		char c = *(path++);
+		if (c != ' ' && c != '.')
+			return 0;
+	}
+	return 1;
+}
+
+int is_ntfs_dotgit(const char *name)
+{
+	int len;
+
+	for (len = 0; ; len++)
+		if (!name[len] || name[len] == '\\' || is_dir_sep(name[len])) {
+			if (only_spaces_and_periods(name, len, 4) &&
+					!strncasecmp(name, ".git", 4))
+				return 1;
+			if (only_spaces_and_periods(name, len, 5) &&
+					!strncasecmp(name, "git~1", 5))
+				return 1;
+			if (name[len] != '\\')
+				return 0;
+			name += len + 1;
+			len = -1;
+		}
+}

@@ -271,36 +271,41 @@ test_expect_success 'fsck notices submodule entry pointing to null sha1' '
 	)
 '
 
-test_expect_success 'fsck notices "." and ".." in trees' '
-	(
-		git init dots &&
-		cd dots &&
-		blob=$(echo foo | git hash-object -w --stdin) &&
-		tab=$(printf "\\t") &&
-		git mktree <<-EOF &&
-		100644 blob $blob$tab.
-		100644 blob $blob$tab..
-		EOF
-		git fsck 2>out &&
-		cat out &&
-		grep "warning.*\\." out
-	)
-'
-
-test_expect_success 'fsck notices ".git" in trees' '
-	(
-		git init dotgit &&
-		cd dotgit &&
-		blob=$(echo foo | git hash-object -w --stdin) &&
-		tab=$(printf "\\t") &&
-		git mktree <<-EOF &&
-		100644 blob $blob$tab.git
-		EOF
-		git fsck 2>out &&
-		cat out &&
-		grep "warning.*\\.git" out
-	)
-'
+while read name path pretty; do
+	while read mode type; do
+		: ${pretty:=$path}
+		test_expect_success "fsck notices $pretty as $type" '
+		(
+			git init $name-$type &&
+			cd $name-$type &&
+			echo content >file &&
+			git add file &&
+			git commit -m base &&
+			blob=$(git rev-parse :file) &&
+			tree=$(git rev-parse HEAD^{tree}) &&
+			value=$(eval "echo \$$type") &&
+			printf "$mode $type %s\t%s" "$value" "$path" >bad &&
+			bad_tree=$(git mktree <bad) &&
+			git fsck 2>out &&
+			cat out &&
+			grep "warning.*tree $bad_tree" out
+		)'
+	done <<-\EOF
+	100644 blob
+	040000 tree
+	EOF
+done <<-EOF
+dot .
+dotdot ..
+dotgit .git
+dotgit-case .GIT
+dotgit-unicode .gI${u200c}T .gI{u200c}T
+dotgit-case2 .Git
+git-tilde1 git~1
+dotgitdot .git.
+dot-backslash-case .\\\\.GIT\\\\foobar
+dotgit-case-backslash .git\\\\foobar
+EOF
 
 # create a static test repo which is broken by omitting
 # one particular object ($1, which is looked up via rev-parse

@@ -6,6 +6,7 @@
 #include "commit.h"
 #include "tag.h"
 #include "fsck.h"
+#include "utf8.h"
 
 static int fsck_walk_tree(struct tree *tree, fsck_walk_func walk, void *data)
 {
@@ -170,7 +171,9 @@ static int fsck_tree(struct tree *item, int strict, fsck_error error_func)
 		has_empty_name |= !*name;
 		has_dot |= !strcmp(name, ".");
 		has_dotdot |= !strcmp(name, "..");
-		has_dotgit |= !strcmp(name, ".git");
+		has_dotgit |= (!strcmp(name, ".git") ||
+			       is_hfs_dotgit(name) ||
+			       is_ntfs_dotgit(name));
 		has_zero_pad |= *(char *)desc.buffer == '0';
 		update_tree_entry(&desc);
 
