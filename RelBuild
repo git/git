@@ -14,34 +14,4 @@ make $j dist-doc || exit
 # The above used to be
 # MAN_BASE_URL="http://www.kernel.org/pub/software/scm/git/docs/"
 
-files="
-	git-$version.tar.gz
-	git-htmldocs-$version.tar.gz
-	git-manpages-$version.tar.gz
-"
-
-for file in $files
-do
-	test -f $file || exit
-done
-
-# Use agent
-GPG_TTY=$(tty) &&
-export GPG_TTY &&
-eval $(gpg-agent --daemon) &&
-GPG_AGENT_PID=$(expr "$GPG_AGENT_INFO" : ".*:\([1-9][0-9]*\):[1-9][0-9]*$") &&
-trap 'kill -0 2>/dev/null $GPG_AGENT_PID && kill $GPG_AGENT_PID' 0 1 2 3 15 &&
-kill -0 "$GPG_AGENT_PID" &&
-gpg="gpg --use-agent --local-user 96AFE6CB!" || exit
-
-sha1sum $files | $gpg --clearsign >git-$version.sign || exit
-
-for file in $files
-do
-	gzip -dc <"$file" >"${file%.gz}" &&
-	$gpg -b "${file%.gz}" &&
-	rm "${file%.gz}" || exit
-done
-
-kill $GPG_AGENT_PID
-ls -l git-$version.sign $files git*-$version.tar.sig
+exit $?

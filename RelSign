@@ -1,0 +1,109 @@
+#!/bin/sh
+
+# Use agent
+GPG_TTY=$(tty) &&
+export GPG_TTY &&
+eval $(gpg-agent --daemon) &&
+GPG_AGENT_PID=$(expr "$GPG_AGENT_INFO" : ".*:\([1-9][0-9]*\):[1-9][0-9]*$") &&
+trap 'kill -0 2>/dev/null $GPG_AGENT_PID && kill $GPG_AGENT_PID' 0 1 2 3 15 &&
+kill -0 "$GPG_AGENT_PID" &&
+gpg="gpg --use-agent --local-user 96AFE6CB!" || exit
+
+formats='htmldocs manpages'
+
+products () {
+	with_sig=: with_src=echo
+	case "$1" in
+	with-sig)
+		with_sig=echo
+		shift
+		;;
+	only-sig)
+		with_sig=echo with_src=:
+		shift
+		;;
+	esac
+	version=$1
+	$with_src "git-$version.tar.gz"
+	$with_sig "git-$version.tar.sig"
+	for fmt in $formats
+	do
+		$with_src "git-$fmt-$version.tar.gz"
+		$with_sig "git-$fmt-$version.tar.sig"
+	done
+}
+
+report () {
+	ls -l "git-$1.sign" $(products with-sig "$1")
+}
+
+
+failed=
+for tar in git-[0-9]*.tar.gz
+do
+	version=$(expr "$tar" : 'git-\(.*\)\.tar.gz$')
+
+	if test -f "git-$version.tar.sig"
+	then
+		can_skip=yes
+		for file in $(products with-sig "$version")
+		do
+			if ! test -f "$file"
+			then
+				can_skip=no
+				break
+			fi
+		done
+		if test "$can_skip" = yes
+		then
+			report "$version"
+			continue
+		fi
+	fi
+
+	rm -f $(products only-sig $version)
+
+	files="$tar"
+	missing=
+	for fmt in $formats
+	do
+		doc="git-$fmt-$version.tar.gz"
+		if test -f "$doc"
+		then
+			files="$files $doc"
+		else
+			missing="$missing $doc"
+		fi
+	done
+	case "$missing" in
+	?*)
+		echo >&2 "Missing files: $missing"
+		failed="$failed $version"
+		continue
+		;;
+	esac
+	sha1sum $files | $gpg --clearsign >git-$version.sign || {
+		failed="$failed $version"
+		continue
+	}
+
+	for file in $files
+	do
+		gzip -dc <"$file" >"${file%.gz}" &&
+		$gpg -b "${file%.gz}" || {
+			failed="$failed $version"
+			rm -f "${file%.gz}.sig"
+		}
+		rm -f "${file%.gz}"
+	done
+
+	case " $failed " in
+	*" $version "*)
+		continue
+		;;
+	esac
+
+	report "$version"
+done
+
+kill $GPG_AGENT_PID
