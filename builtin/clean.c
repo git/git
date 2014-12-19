@@ -321,7 +321,7 @@ static void print_highlight_menu_stuff(struct menu_stuff *stuff, int **chosen)
 
 	switch (stuff->type) {
 	default:
-		die("Bad type of menu_staff when print menu");
+		die("Bad type of menu_stuff when print menu");
 	case MENU_STUFF_TYPE_MENU_ITEM:
 		menu_item = (struct menu_item *)stuff->stuff;
 		for (i = 0; i < stuff->nr; i++, menu_item++) {
