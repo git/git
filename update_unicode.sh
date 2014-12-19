@@ -26,12 +26,13 @@ fi &&
 			./configure --enable-warnings=-Werror CFLAGS='-O0 -ggdb'
 		fi &&
 		make
-	) &&
-	echo "static const struct interval zero_width[] = {" >$UNICODEWIDTH_H &&
-	UNICODE_DIR=. ./uniset/uniset --32 cat:Me,Mn,Cf + U+1160..U+11FF - U+00AD |
-	grep -v plane >>$UNICODEWIDTH_H &&
-	echo "};" >>$UNICODEWIDTH_H &&
-	echo "static const struct interval double_width[] = {" >>$UNICODEWIDTH_H &&
-	UNICODE_DIR=. ./uniset/uniset --32 eaw:F,W >>$UNICODEWIDTH_H &&
-	echo "};" >>$UNICODEWIDTH_H
+	) && {
+		echo "static const struct interval zero_width[] = {" &&
+		UNICODE_DIR=. ./uniset/uniset --32 cat:Me,Mn,Cf + U+1160..U+11FF - U+00AD |
+		grep -v plane &&
+		echo "};" &&
+		echo "static const struct interval double_width[] = {" &&
+		UNICODE_DIR=. ./uniset/uniset --32 eaw:F,W &&
+		echo "};"
+	} >$UNICODEWIDTH_H
 )
