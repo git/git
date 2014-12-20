@@ -653,7 +653,7 @@ These options are mostly targeted for packing of Git repositories.
 --objects-edge::
 	Similar to `--objects`, but also print the IDs of excluded
 	commits prefixed with a ``-'' character.  This is used by
-	linkgit:git-pack-objects[1] to build ``thin'' pack, which records
+	linkgit:git-pack-objects[1] to build a ``thin'' pack, which records
 	objects in deltified form based on objects contained in these
 	excluded commits to reduce network traffic.
 
