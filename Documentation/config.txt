@@ -850,6 +850,10 @@ accepted are `normal`, `black`, `red`, `green`, `yellow`, `blue`,
 `blink` and `reverse`.  The first color given is the foreground; the
 second is the background.  The position of the attribute, if any,
 doesn't matter.
++
+Colors (foreground and background) may also be given as numbers between
+0 and 255; these use ANSI 256-color mode (but note that not all
+terminals may support this).
 
 color.diff::
 	Whether to use ANSI escape sequences to add color to patches.

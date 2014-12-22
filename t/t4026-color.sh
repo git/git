@@ -53,6 +53,14 @@ test_expect_success '256 colors' '
 	color "254 bold 255" "[1;38;5;254;48;5;255m"
 '
 
+test_expect_success '"normal" yields no color at all"' '
+	color "normal black" "[40m"
+'
+
+test_expect_success '-1 is a synonym for "normal"' '
+	color "-1 black" "[40m"
+'
+
 test_expect_success 'color too small' '
 	invalid_color "-2"
 '
