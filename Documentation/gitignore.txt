@@ -138,9 +138,6 @@ NOTES
 The purpose of gitignore files is to ensure that certain files
 not tracked by Git remain untracked.
 
-To ignore uncommitted changes in a file that is already tracked,
-use 'git update-index {litdd}assume-unchanged'.
-
 To stop tracking a file that is currently tracked, use
 'git rm --cached'.
 
@@ -203,7 +200,6 @@ everything within `foo/bar`):
 SEE ALSO
 --------
 linkgit:git-rm[1],
-linkgit:git-update-index[1],
 linkgit:gitrepository-layout[5],
 linkgit:git-check-ignore[1]
 
