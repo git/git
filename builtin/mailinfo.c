@@ -15,6 +15,7 @@ static const char *metainfo_charset;
 static struct strbuf line = STRBUF_INIT;
 static struct strbuf name = STRBUF_INIT;
 static struct strbuf email = STRBUF_INIT;
+static char *message_id;
 
 static enum  {
 	TE_DONTCARE, TE_QP, TE_BASE64
@@ -24,6 +25,7 @@ static struct strbuf charset = STRBUF_INIT;
 static int patch_lines;
 static struct strbuf **p_hdr_data, **s_hdr_data;
 static int use_scissors;
+static int add_message_id;
 static int use_inbody_headers = 1;
 
 #define MAX_HDR_PARSED 10
@@ -198,6 +200,12 @@ static void handle_content_type(struct strbuf *line)
 	}
 }
 
+static void handle_message_id(const struct strbuf *line)
+{
+	if (add_message_id)
+		message_id = strdup(line->buf);
+}
+
 static void handle_content_transfer_encoding(const struct strbuf *line)
 {
 	if (strcasestr(line->buf, "base64"))
@@ -339,6 +347,14 @@ static int check_header(const struct strbuf *line,
 		strbuf_add(&sb, line->buf + len, line->len - len);
 		decode_header(&sb);
 		handle_content_transfer_encoding(&sb);
+		ret = 1;
+		goto check_header_out;
+	}
+	if (cmp_header(line, "Message-Id")) {
+		len = strlen("Message-Id: ");
+		strbuf_add(&sb, line->buf + len, line->len - len);
+		decode_header(&sb);
+		handle_message_id(&sb);
 		ret = 1;
 		goto check_header_out;
 	}
@@ -816,6 +832,8 @@ static int handle_commit_msg(struct strbuf *line)
 	}
 
 	if (patchbreak(line)) {
+		if (message_id)
+			fprintf(cmitmsg, "Message-Id: %s\n", message_id);
 		fclose(cmitmsg);
 		cmitmsg = NULL;
 		return 1;
@@ -1013,7 +1031,7 @@ static int git_mailinfo_config(const char *var, const char *value, void *unused)
 }
 
 static const char mailinfo_usage[] =
-	"git mailinfo [-k|-b] [-u | --encoding=<encoding> | -n] [--scissors | --no-scissors] msg patch < mail >info";
+	"git mailinfo [-k|-b] [-m | --message-id] [-u | --encoding=<encoding> | -n] [--scissors | --no-scissors] msg patch < mail >info";
 
 int cmd_mailinfo(int argc, const char **argv, const char *prefix)
 {
@@ -1032,6 +1050,8 @@ int cmd_mailinfo(int argc, const char **argv, const char *prefix)
 			keep_subject = 1;
 		else if (!strcmp(argv[1], "-b"))
 			keep_non_patch_brackets_in_subject = 1;
+		else if (!strcmp(argv[1], "-m") || !strcmp(argv[1], "--message-id"))
+			add_message_id = 1;
 		else if (!strcmp(argv[1], "-u"))
 			metainfo_charset = def_charset;
 		else if (!strcmp(argv[1], "-n"))

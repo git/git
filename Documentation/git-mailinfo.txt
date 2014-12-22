@@ -66,6 +66,11 @@ conversion, even with this flag.
 -n::
 	Disable all charset re-coding of the metadata.
 
+-m::
+--message-id::
+	Copy the Message-ID header at the end of the commit message.  This
+	is useful in order to associate commits with mailing list discussions.
+
 --scissors::
 	Remove everything in body before a scissors line.  A line that
 	mainly consists of scissors (either ">8" or "8<") and perforation

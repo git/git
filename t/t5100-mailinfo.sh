@@ -35,6 +35,10 @@ do
 		then
 			check_mailinfo $mail --no-inbody-headers
 		fi
+		if test -f "$TEST_DIRECTORY"/t5100/msg$mail--message-id
+		then
+			check_mailinfo $mail --message-id
+		fi
 	'
 done
 
