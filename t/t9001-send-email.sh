@@ -1298,6 +1298,163 @@ test_expect_success $PREREQ '--8bit-encoding also treats subject' '
 	test_cmp expected actual
 '
 
+test_expect_success $PREREQ 'setup expect' '
+cat >email-using-8bit <<EOF
+From fe6ecc66ece37198fe5db91fa2fc41d9f4fe5cc4 Mon Sep 17 00:00:00 2001
+Message-Id: <bogus-message-id@example.com>
+From: A U Thor <author@example.com>
+Date: Sat, 12 Jun 2010 15:53:58 +0200
+Content-Type: text/plain; charset=UTF-8
+Subject: Nothing to see here.
+
+Dieser Betreff enthält auch einen Umlaut!
+EOF
+'
+
+test_expect_success $PREREQ 'sendemail.transferencoding=7bit fails on 8bit data' '
+	clean_fake_sendmail &&
+	git config sendemail.transferEncoding 7bit &&
+	test_must_fail git send-email \
+	  --transfer-encoding=7bit \
+	  --smtp-server="$(pwd)/fake.sendmail" \
+	  email-using-8bit \
+	  2>errors >out &&
+	grep "cannot send message as 7bit" errors &&
+	test -z "$(ls msgtxt*)"
+'
+
+test_expect_success $PREREQ '--transfer-encoding overrides sendemail.transferEncoding' '
+	clean_fake_sendmail &&
+	git config sendemail.transferEncoding 8bit
+	test_must_fail git send-email \
+	  --transfer-encoding=7bit \
+	  --smtp-server="$(pwd)/fake.sendmail" \
+	  email-using-8bit \
+	  2>errors >out &&
+	grep "cannot send message as 7bit" errors &&
+	test -z "$(ls msgtxt*)"
+'
+
+test_expect_success $PREREQ 'sendemail.transferencoding=8bit' '
+	clean_fake_sendmail &&
+	git send-email \
+	  --transfer-encoding=8bit \
+	  --smtp-server="$(pwd)/fake.sendmail" \
+	  email-using-8bit \
+	  2>errors >out &&
+	sed '1,/^$/d' msgtxt1 >actual &&
+	sed '1,/^$/d' email-using-8bit >expected &&
+	test_cmp expected actual
+'
+
+test_expect_success $PREREQ 'setup expect' '
+cat >expected <<EOF
+Dieser Betreff enth=C3=A4lt auch einen Umlaut!
+EOF
+'
+
+test_expect_success $PREREQ '8-bit and sendemail.transferencoding=quoted-printable' '
+	clean_fake_sendmail &&
+	git send-email \
+	  --transfer-encoding=quoted-printable \
+	  --smtp-server="$(pwd)/fake.sendmail" \
+	  email-using-8bit \
+	  2>errors >out &&
+	sed '1,/^$/d' msgtxt1 >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success $PREREQ 'setup expect' '
+cat >expected <<EOF
+RGllc2VyIEJldHJlZmYgZW50aMOkbHQgYXVjaCBlaW5lbiBVbWxhdXQhCg==
+EOF
+'
+
+test_expect_success $PREREQ '8-bit and sendemail.transferencoding=base64' '
+	clean_fake_sendmail &&
+	git send-email \
+	  --transfer-encoding=base64 \
+	  --smtp-server="$(pwd)/fake.sendmail" \
+	  email-using-8bit \
+	  2>errors >out &&
+	sed '1,/^$/d' msgtxt1 >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success $PREREQ 'setup expect' '
+cat >email-using-qp <<EOF
+From fe6ecc66ece37198fe5db91fa2fc41d9f4fe5cc4 Mon Sep 17 00:00:00 2001
+Message-Id: <bogus-message-id@example.com>
+From: A U Thor <author@example.com>
+Date: Sat, 12 Jun 2010 15:53:58 +0200
+MIME-Version: 1.0
+Content-Transfer-Encoding: quoted-printable
+Content-Type: text/plain; charset=UTF-8
+Subject: Nothing to see here.
+
+Dieser Betreff enth=C3=A4lt auch einen Umlaut!
+EOF
+'
+
+test_expect_success $PREREQ 'convert from quoted-printable to base64' '
+	clean_fake_sendmail &&
+	git send-email \
+	  --transfer-encoding=base64 \
+	  --smtp-server="$(pwd)/fake.sendmail" \
+	  email-using-qp \
+	  2>errors >out &&
+	sed '1,/^$/d' msgtxt1 >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success $PREREQ 'setup expect' "
+tr -d '\\015' | tr '%' '\\015' > email-using-crlf <<EOF
+From fe6ecc66ece37198fe5db91fa2fc41d9f4fe5cc4 Mon Sep 17 00:00:00 2001
+Message-Id: <bogus-message-id@example.com>
+From: A U Thor <author@example.com>
+Date: Sat, 12 Jun 2010 15:53:58 +0200
+Content-Type: text/plain; charset=UTF-8
+Subject: Nothing to see here.
+
+Look, I have a CRLF and an = sign!%
+EOF
+"
+
+test_expect_success $PREREQ 'setup expect' '
+cat >expected <<EOF
+Look, I have a CRLF and an =3D sign!=0D
+EOF
+'
+
+test_expect_success $PREREQ 'CRLF and sendemail.transferencoding=quoted-printable' '
+	clean_fake_sendmail &&
+	git send-email \
+	  --transfer-encoding=quoted-printable \
+	  --smtp-server="$(pwd)/fake.sendmail" \
+	  email-using-crlf \
+	  2>errors >out &&
+	sed '1,/^$/d' msgtxt1 >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success $PREREQ 'setup expect' '
+cat >expected <<EOF
+TG9vaywgSSBoYXZlIGEgQ1JMRiBhbmQgYW4gPSBzaWduIQ0K
+EOF
+'
+
+test_expect_success $PREREQ 'CRLF and sendemail.transferencoding=base64' '
+	clean_fake_sendmail &&
+	git send-email \
+	  --transfer-encoding=base64 \
+	  --smtp-server="$(pwd)/fake.sendmail" \
+	  email-using-crlf \
+	  2>errors >out &&
+	sed '1,/^$/d' msgtxt1 >actual &&
+	test_cmp expected actual
+'
+
+
 # Note that the patches in this test are deliberately out of order; we
 # want to make sure it works even if the cover-letter is not in the
 # first mail.

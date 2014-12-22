@@ -2318,6 +2318,7 @@ sendemail.smtpserverport::
 sendemail.smtpserveroption::
 sendemail.smtpuser::
 sendemail.thread::
+sendemail.transferencoding::
 sendemail.validate::
 	See linkgit:git-send-email[1] for description.
 
