@@ -91,6 +91,13 @@ test_expect_success 'error out when attempting to add ignored ones without -f' '
 	! (git ls-files | grep "\\.ig")
 '
 
+test_expect_success 'error out when attempting to add ignored ones but add others' '
+	touch a.if &&
+	test_must_fail git add a.?? &&
+	! (git ls-files | grep "\\.ig") &&
+	(git ls-files | grep a.if)
+'
+
 test_expect_success 'add ignored ones with -f' '
 	git add -f a.?? &&
 	git ls-files --error-unmatch a.ig
@@ -311,7 +318,6 @@ cat >expect.err <<\EOF
 The following paths are ignored by one of your .gitignore files:
 ignored-file
 Use -f if you really want to add them.
-fatal: no files added
 EOF
 cat >expect.out <<\EOF
 add 'track-this'
