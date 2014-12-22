@@ -1075,7 +1075,7 @@ int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 		OPT_BIT(0 , "python", &quote_style,
 			N_("quote placeholders suitably for python"), QUOTE_PYTHON),
 		OPT_BIT(0 , "tcl",  &quote_style,
-			N_("quote placeholders suitably for tcl"), QUOTE_TCL),
+			N_("quote placeholders suitably for Tcl"), QUOTE_TCL),
 
 		OPT_GROUP(""),
 		OPT_INTEGER( 0 , "count", &maxcount, N_("show only <n> matched refs")),
