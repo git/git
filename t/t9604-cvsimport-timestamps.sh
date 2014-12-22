@@ -5,7 +5,7 @@ test_description='git cvsimport timestamps'
 
 setup_cvs_test_repository t9604
 
-test_expect_success 'check timestamps are UTC (TZ=CST6CDT)' '
+test_expect_success PERL 'check timestamps are UTC (TZ=CST6CDT)' '
 
 	TZ=CST6CDT git cvsimport -p"-x" -C module-1 module &&
 	git cvsimport -p"-x" -C module-1 module &&
@@ -34,7 +34,7 @@ test_expect_success 'check timestamps are UTC (TZ=CST6CDT)' '
 	test_cmp actual-1 expect-1
 '
 
-test_expect_success 'check timestamps with author-specific timezones' '
+test_expect_success PERL 'check timestamps with author-specific timezones' '
 
 	cat >cvs-authors <<-EOF &&
 	user1=User One <user1@domain.org>
