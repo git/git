@@ -55,16 +55,41 @@ create_gitattributes () {
 	esac
 }
 
+check_warning () {
+	case "$1" in
+	LF_CRLF) grep "LF will be replaced by CRLF" $2;;
+	CRLF_LF) grep "CRLF will be replaced by LF" $2;;
+	'')
+		>expect
+		grep "will be replaced by" $2 >actual
+		test_cmp expect actual
+		;;
+	*) false ;;
+	esac
+}
+
 create_file_in_repo () {
 	crlf=$1
 	attr=$2
+	lfname=$3
+	crlfname=$4
+	lfmixcrlf=$5
+	lfmixcr=$6
+	crlfnul=$7
 	create_gitattributes "$attr" &&
+	pfx=crlf_${crlf}_attr_${attr}
 	for f in LF CRLF LF_mix_CR CRLF_mix_LF CRLF_nul
 	do
-		pfx=crlf_${crlf}_attr_${attr}_$f.txt &&
-		cp $f $pfx && git -c core.autocrlf=$crlf add $pfx
+		fname=${pfx}_$f.txt &&
+		cp $f $fname &&
+		git -c core.autocrlf=$crlf add $fname 2>"${pfx}_$f.err"
 	done &&
-	git commit -m "core.autocrlf $crlf"
+	git commit -m "core.autocrlf $crlf" &&
+	check_warning "$lfname" ${pfx}_LF.err &&
+	check_warning "$crlfname" ${pfx}_CRLF.err &&
+	check_warning "$lfmixcrlf" ${pfx}_CRLF_mix_LF.err &&
+	check_warning "$lfmixcr" ${pfx}_LF_mix_CR.err &&
+	check_warning "$crlfnul" ${pfx}_CRLF_nul.err
 }
 
 check_files_in_repo () {
@@ -140,22 +165,47 @@ test_expect_success 'setup master' '
 '
 
 
-test_expect_success 'create files' '
-	create_file_in_repo false "" &&
-	create_file_in_repo true  "" &&
-	create_file_in_repo input "" &&
 
-	create_file_in_repo false "auto" &&
-	create_file_in_repo true  "auto" &&
-	create_file_in_repo input "auto" &&
+warn_LF_CRLF="LF will be replaced by CRLF"
+warn_CRLF_LF="CRLF will be replaced by LF"
 
-	create_file_in_repo false "text" &&
-	create_file_in_repo true  "text" &&
-	create_file_in_repo input "text" &&
+test_expect_success 'add files empty attr' '
+	create_file_in_repo false ""     ""        ""        ""        ""        "" &&
+	create_file_in_repo true  ""     "LF_CRLF" ""        "LF_CRLF" ""        "" &&
+	create_file_in_repo input ""     ""        "CRLF_LF" "CRLF_LF" ""        ""
+'
 
-	create_file_in_repo false "-text" &&
-	create_file_in_repo true  "-text" &&
-	create_file_in_repo input "-text" &&
+test_expect_success 'add files attr=auto' '
+	create_file_in_repo false "auto" ""        "CRLF_LF" "CRLF_LF" ""        "" &&
+	create_file_in_repo true  "auto" "LF_CRLF" ""        "LF_CRLF" ""        "" &&
+	create_file_in_repo input "auto" ""        "CRLF_LF" "CRLF_LF" ""        ""
+'
+
+test_expect_success 'add files attr=text' '
+	create_file_in_repo false "text" ""        "CRLF_LF" "CRLF_LF" ""        "CRLF_LF" &&
+	create_file_in_repo true  "text" "LF_CRLF" ""        "LF_CRLF" "LF_CRLF" ""        &&
+	create_file_in_repo input "text" ""        "CRLF_LF" "CRLF_LF" ""        "CRLF_LF"
+'
+
+test_expect_success 'add files attr=-text' '
+	create_file_in_repo false "-text" ""       ""        ""        ""        "" &&
+	create_file_in_repo true  "-text" ""       ""        ""        ""        "" &&
+	create_file_in_repo input "-text" ""       ""        ""        ""        ""
+'
+
+test_expect_success 'add files attr=lf' '
+	create_file_in_repo false "lf"    ""       "CRLF_LF" "CRLF_LF"  ""       "CRLF_LF" &&
+	create_file_in_repo true  "lf"    ""       "CRLF_LF" "CRLF_LF"  ""       "CRLF_LF" &&
+	create_file_in_repo input "lf"    ""       "CRLF_LF" "CRLF_LF"  ""       "CRLF_LF"
+'
+
+test_expect_success 'add files attr=crlf' '
+	create_file_in_repo false "crlf" "LF_CRLF" ""        "LF_CRLF" "LF_CRLF" "" &&
+	create_file_in_repo true  "crlf" "LF_CRLF" ""        "LF_CRLF" "LF_CRLF" "" &&
+	create_file_in_repo input "crlf" "LF_CRLF" ""        "LF_CRLF" "LF_CRLF" ""
+'
+
+test_expect_success 'create files cleanup' '
 	rm -f *.txt &&
 	git reset --hard
 '
