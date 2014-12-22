@@ -288,6 +288,7 @@ __git_eread ()
 # In this mode you can request colored hints using GIT_PS1_SHOWCOLORHINTS=true
 __git_ps1 ()
 {
+	local exit=$?
 	local pcmode=no
 	local detached=no
 	local ps1pc_start='\u@\h:\w '
@@ -511,4 +512,7 @@ __git_ps1 ()
 	else
 		printf -- "$printf_format" "$gitstring"
 	fi
+
+	# preserve exit status
+	return $exit
 }
