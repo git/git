@@ -64,7 +64,7 @@ test_expect_success "setup case tests" '
 	git checkout -f master
 '
 
-$test_case 'rename (case change)' '
+test_expect_success 'rename (case change)' '
 	git mv camelcase CamelCase &&
 	git commit -m "rename"
 '
