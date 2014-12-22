@@ -57,7 +57,8 @@ change, the approach taken by the change, and if relevant how this
 differs substantially from the prior version, are all good things
 to have.
 
-Make sure that you have tests for the bug you are fixing.
+Make sure that you have tests for the bug you are fixing.  See
+t/README for guidance.
 
 When adding a new feature, make sure that you have new tests to show
 the feature triggers the new behaviour when it should, and to show the
