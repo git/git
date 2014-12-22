@@ -61,10 +61,11 @@ static int show_recursive(const char *base, int baselen, const char *pathname)
 	}
 }
 
-static int show_tree(const unsigned char *sha1, const char *base, int baselen,
+static int show_tree(const unsigned char *sha1, struct strbuf *base,
 		const char *pathname, unsigned mode, int stage, void *context)
 {
 	int retval = 0;
+	int baselen;
 	const char *type = blob_type;
 
 	if (S_ISGITLINK(mode)) {
@@ -79,7 +80,7 @@ static int show_tree(const unsigned char *sha1, const char *base, int baselen,
 		 */
 		type = commit_type;
 	} else if (S_ISDIR(mode)) {
-		if (show_recursive(base, baselen, pathname)) {
+		if (show_recursive(base->buf, base->len, pathname)) {
 			retval = READ_TREE_RECURSIVE;
 			if (!(ls_options & LS_SHOW_TREES))
 				return retval;
@@ -87,10 +88,6 @@ static int show_tree(const unsigned char *sha1, const char *base, int baselen,
 		type = tree_type;
 	}
 	else if (ls_options & LS_TREE_ONLY)
-		return 0;
-
-	if (chomp_prefix &&
-	    (baselen < chomp_prefix || memcmp(ls_tree_prefix, base, chomp_prefix)))
 		return 0;
 
 	if (!(ls_options & LS_NAME_ONLY)) {
@@ -112,8 +109,12 @@ static int show_tree(const unsigned char *sha1, const char *base, int baselen,
 			printf("%06o %s %s\t", mode, type,
 			       find_unique_abbrev(sha1, abbrev));
 	}
-	write_name_quotedpfx(base + chomp_prefix, baselen - chomp_prefix,
-			  pathname, stdout, line_termination);
+	baselen = base->len;
+	strbuf_addstr(base, pathname);
+	write_name_quoted_relative(base->buf,
+				   chomp_prefix ? ls_tree_prefix : NULL,
+				   stdout, line_termination);
+	strbuf_setlen(base, baselen);
 	return retval;
 }
 
@@ -173,7 +174,8 @@ int cmd_ls_tree(int argc, const char **argv, const char *prefix)
 	 * cannot be lifted until it is converted to use
 	 * match_pathspec() or tree_entry_interesting()
 	 */
-	parse_pathspec(&pathspec, PATHSPEC_GLOB | PATHSPEC_ICASE,
+	parse_pathspec(&pathspec, PATHSPEC_GLOB | PATHSPEC_ICASE |
+				  PATHSPEC_EXCLUDE,
 		       PATHSPEC_PREFER_CWD,
 		       prefix, argv + 1);
 	for (i = 0; i < pathspec.nr; i++)

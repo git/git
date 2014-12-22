@@ -4,6 +4,7 @@
 #include "object.h"
 
 extern const char *tree_type;
+struct strbuf;
 
 struct tree {
 	struct object object;
@@ -22,7 +23,7 @@ void free_tree_buffer(struct tree *tree);
 struct tree *parse_tree_indirect(const unsigned char *sha1);
 
 #define READ_TREE_RECURSIVE 1
-typedef int (*read_tree_fn_t)(const unsigned char *, const char *, int, const char *, unsigned int, int, void *);
+typedef int (*read_tree_fn_t)(const unsigned char *, struct strbuf *, const char *, unsigned int, int, void *);
 
 extern int read_tree_recursive(struct tree *tree,
 			       const char *base, int baselen,

@@ -56,8 +56,6 @@ extern size_t quote_c_style(const char *name, struct strbuf *, FILE *, int no_dq
 extern void quote_two_c_style(struct strbuf *, const char *, const char *, int);
 
 extern void write_name_quoted(const char *name, FILE *, int terminator);
-extern void write_name_quotedpfx(const char *pfx, size_t pfxlen,
-                                 const char *name, FILE *, int terminator);
 extern void write_name_quoted_relative(const char *name, const char *prefix,
 		FILE *fp, int terminator);
 
