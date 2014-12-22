@@ -47,7 +47,7 @@ static struct test_entry *alloc_test_entry(int hash, char *key, int klen,
 
 static unsigned int hash(unsigned int method, unsigned int i, const char *key)
 {
-	unsigned int hash;
+	unsigned int hash = 0;
 	switch (method & 3)
 	{
 	case HASH_METHOD_FNV:
