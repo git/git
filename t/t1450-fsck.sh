@@ -229,8 +229,12 @@ test_expect_success 'tag with incorrect tag name & missing tagger' '
 	echo $tag >.git/refs/tags/wrong &&
 	test_when_finished "git update-ref -d refs/tags/wrong" &&
 	git fsck --tags 2>out &&
-	grep "invalid .tag. name" out &&
-	grep "expected .tagger. line" out
+
+	cat >expect <<-EOF &&
+	warning in tag $tag: invalid '\''tag'\'' name: wrong name format
+	warning in tag $tag: invalid format - expected '\''tagger'\'' line
+	EOF
+	test_cmp expect out
 '
 
 test_expect_success 'tag with bad tagger' '
