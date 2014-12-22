@@ -800,7 +800,7 @@ static int edit_branch_description(const char *branch_name)
 
 int cmd_branch(int argc, const char **argv, const char *prefix)
 {
-	int delete = 0, rename = 0, force_create = 0, list = 0;
+	int delete = 0, rename = 0, force = 0, list = 0;
 	int verbose = 0, abbrev = -1, detached = 0;
 	int reflog = 0, edit_description = 0;
 	int quiet = 0, unset_upstream = 0;
@@ -848,7 +848,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		OPT_BOOL('l', "create-reflog", &reflog, N_("create the branch's reflog")),
 		OPT_BOOL(0, "edit-description", &edit_description,
 			 N_("edit the description for the branch")),
-		OPT__FORCE(&force_create, N_("force creation (when already exists)")),
+		OPT__FORCE(&force, N_("force creation, move/rename, deletion")),
 		{
 			OPTION_CALLBACK, 0, "no-merged", &merge_filter_ref,
 			N_("commit"), N_("print only not merged branches"),
@@ -891,7 +891,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 	if (with_commit || merge_filter != NO_FILTER)
 		list = 1;
 
-	if (!!delete + !!rename + !!force_create + !!new_upstream +
+	if (!!delete + !!rename + !!new_upstream +
 	    list + unset_upstream > 1)
 		usage_with_options(builtin_branch_usage, options);
 
@@ -902,6 +902,11 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		if (explicitly_enable_column(colopts))
 			die(_("--column and --verbose are incompatible"));
 		colopts = 0;
+	}
+
+	if (force) {
+		delete *= 2;
+		rename *= 2;
 	}
 
 	if (delete) {
@@ -1020,7 +1025,7 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 
 		branch_existed = ref_exists(branch->refname);
 		create_branch(head, argv[0], (argc == 2) ? argv[1] : head,
-			      force_create, reflog, 0, quiet, track);
+			      force, reflog, 0, quiet, track);
 
 		/*
 		 * We only show the instructions if the user gave us
