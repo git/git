@@ -58,6 +58,47 @@ following in your git configuration:
 	diff = diff-highlight | less
 ---------------------------------------------
 
+
+Color Config
+------------
+
+You can configure the highlight colors and attributes using git's
+config. The colors for "old" and "new" lines can be specified
+independently. There are two "modes" of configuration:
+
+  1. You can specify a "highlight" color and a matching "reset" color.
+     This will retain any existing colors in the diff, and apply the
+     "highlight" and "reset" colors before and after the highlighted
+     portion.
+
+  2. You can specify a "normal" color and a "highlight" color. In this
+     case, existing colors are dropped from that line. The non-highlighted
+     bits of the line get the "normal" color, and the highlights get the
+     "highlight" color.
+
+If no "new" colors are specified, they default to the "old" colors. If
+no "old" colors are specified, the default is to reverse the foreground
+and background for highlighted portions.
+
+Examples:
+
+---------------------------------------------
+# Underline highlighted portions
+[color "diff-highlight"]
+oldHighlight = ul
+oldReset = noul
+---------------------------------------------
+
+---------------------------------------------
+# Varying background intensities
+[color "diff-highlight"]
+oldNormal = "black #f8cbcb"
+oldHighlight = "black #ffaaaa"
+newNormal = "black #cbeecb"
+newHighlight = "black #aaffaa"
+---------------------------------------------
+
+
 Bugs
 ----
 
