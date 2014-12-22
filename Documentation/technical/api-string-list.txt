@@ -29,7 +29,7 @@ member (you need this if you add things later) and you should set the
   `unsorted_string_list_has_string` and get it from the list using
   `string_list_lookup` for sorted lists.
 
-. Can sort an unsorted list using `sort_string_list`.
+. Can sort an unsorted list using `string_list_sort`.
 
 . Can remove duplicate items from a sorted list using
   `string_list_remove_duplicates`.
@@ -146,7 +146,7 @@ write `string_list_insert(...)->util = ...;`.
 	ownership of a malloc()ed string to a `string_list` that has
 	`strdup_string` set.
 
-`sort_string_list`::
+`string_list_sort`::
 
 	Sort the list's entries by string value in `strcmp()` order.
 

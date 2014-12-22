@@ -1198,7 +1198,7 @@ static void report_pack_garbage(struct string_list *list)
 	if (!report_garbage)
 		return;
 
-	sort_string_list(list);
+	string_list_sort(list);
 
 	for (i = 0; i < list->nr; i++) {
 		const char *path = list->items[i].string;
