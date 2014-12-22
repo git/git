@@ -1640,3 +1640,49 @@ const char *find_commit_header(const char *msg, const char *key, size_t *out_len
 	}
 	return NULL;
 }
+
+/*
+ * Inspect sb and determine the true "end" of the log message, in
+ * order to find where to put a new Signed-off-by: line.  Ignored are
+ * trailing comment lines and blank lines, and also the traditional
+ * "Conflicts:" block that is not commented out, so that we can use
+ * "git commit -s --amend" on an existing commit that forgot to remove
+ * it.
+ *
+ * Returns the number of bytes from the tail to ignore, to be fed as
+ * the second parameter to append_signoff().
+ */
+int ignore_non_trailer(struct strbuf *sb)
+{
+	int boc = 0;
+	int bol = 0;
+	int in_old_conflicts_block = 0;
+
+	while (bol < sb->len) {
+		char *next_line;
+
+		if (!(next_line = memchr(sb->buf + bol, '\n', sb->len - bol)))
+			next_line = sb->buf + sb->len;
+		else
+			next_line++;
+
+		if (sb->buf[bol] == comment_line_char || sb->buf[bol] == '\n') {
+			/* is this the first of the run of comments? */
+			if (!boc)
+				boc = bol;
+			/* otherwise, it is just continuing */
+		} else if (starts_with(sb->buf + bol, "Conflicts:\n")) {
+			in_old_conflicts_block = 1;
+			if (!boc)
+				boc = bol;
+		} else if (in_old_conflicts_block && sb->buf[bol] == '\t') {
+			; /* a pathname in the conflicts block */
+		} else if (boc) {
+			/* the previous was not trailing comment */
+			boc = 0;
+			in_old_conflicts_block = 0;
+		}
+		bol = next_line - sb->buf;
+	}
+	return boc ? sb->len - boc : 0;
+}
