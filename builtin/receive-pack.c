@@ -26,7 +26,8 @@ enum deny_action {
 	DENY_UNCONFIGURED,
 	DENY_IGNORE,
 	DENY_WARN,
-	DENY_REFUSE
+	DENY_REFUSE,
+	DENY_UPDATE_INSTEAD
 };
 
 static int deny_deletes;
@@ -76,6 +77,8 @@ static enum deny_action parse_deny_action(const char *var, const char *value)
 			return DENY_WARN;
 		if (!strcasecmp(value, "refuse"))
 			return DENY_REFUSE;
+		if (!strcasecmp(value, "updateinstead"))
+			return DENY_UPDATE_INSTEAD;
 	}
 	if (git_config_bool(var, value))
 		return DENY_REFUSE;
@@ -730,11 +733,89 @@ static int update_shallow_ref(struct command *cmd, struct shallow_info *si)
 	return 0;
 }
 
+static const char *update_worktree(unsigned char *sha1)
+{
+	const char *update_refresh[] = {
+		"update-index", "-q", "--ignore-submodules", "--refresh", NULL
+	};
+	const char *diff_files[] = {
+		"diff-files", "--quiet", "--ignore-submodules", "--", NULL
+	};
+	const char *diff_index[] = {
+		"diff-index", "--quiet", "--cached", "--ignore-submodules",
+		"HEAD", "--", NULL
+	};
+	const char *read_tree[] = {
+		"read-tree", "-u", "-m", NULL, NULL
+	};
+	const char *work_tree = git_work_tree_cfg ? git_work_tree_cfg : "..";
+	struct argv_array env = ARGV_ARRAY_INIT;
+	struct child_process child = CHILD_PROCESS_INIT;
+
+	if (is_bare_repository())
+		return "denyCurrentBranch = updateInstead needs a worktree";
+
+	argv_array_pushf(&env, "GIT_DIR=%s", absolute_path(get_git_dir()));
+
+	child.argv = update_refresh;
+	child.env = env.argv;
+	child.dir = work_tree;
+	child.no_stdin = 1;
+	child.stdout_to_stderr = 1;
+	child.git_cmd = 1;
+	if (run_command(&child)) {
+		argv_array_clear(&env);
+		return "Up-to-date check failed";
+	}
+
+	/* run_command() does not clean up completely; reinitialize */
+	child_process_init(&child);
+	child.argv = diff_files;
+	child.env = env.argv;
+	child.dir = work_tree;
+	child.no_stdin = 1;
+	child.stdout_to_stderr = 1;
+	child.git_cmd = 1;
+	if (run_command(&child)) {
+		argv_array_clear(&env);
+		return "Working directory has unstaged changes";
+	}
+
+	child_process_init(&child);
+	child.argv = diff_index;
+	child.env = env.argv;
+	child.no_stdin = 1;
+	child.no_stdout = 1;
+	child.stdout_to_stderr = 0;
+	child.git_cmd = 1;
+	if (run_command(&child)) {
+		argv_array_clear(&env);
+		return "Working directory has staged changes";
+	}
+
+	read_tree[3] = sha1_to_hex(sha1);
+	child_process_init(&child);
+	child.argv = read_tree;
+	child.env = env.argv;
+	child.dir = work_tree;
+	child.no_stdin = 1;
+	child.no_stdout = 1;
+	child.stdout_to_stderr = 0;
+	child.git_cmd = 1;
+	if (run_command(&child)) {
+		argv_array_clear(&env);
+		return "Could not update working tree to new HEAD";
+	}
+
+	argv_array_clear(&env);
+	return NULL;
+}
+
 static const char *update(struct command *cmd, struct shallow_info *si)
 {
 	const char *name = cmd->ref_name;
 	struct strbuf namespaced_name_buf = STRBUF_INIT;
-	const char *namespaced_name;
+	const char *namespaced_name, *ret;
 	unsigned char *old_sha1 = cmd->old_sha1;
 	unsigned char *new_sha1 = cmd->new_sha1;
 
@@ -760,6 +841,11 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 			if (deny_current_branch == DENY_UNCONFIGURED)
 				refuse_unconfigured_deny();
 			return "branch is currently checked out";
+		case DENY_UPDATE_INSTEAD:
+			ret = update_worktree(new_sha1);
+			if (ret)
+				return ret;
+			break;
 		}
 	}
 
@@ -784,10 +870,13 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 				break;
 			case DENY_REFUSE:
 			case DENY_UNCONFIGURED:
+			case DENY_UPDATE_INSTEAD:
 				if (deny_delete_current == DENY_UNCONFIGURED)
 					refuse_unconfigured_deny_delete_current();
 				rp_error("refusing to delete the current branch: %s", name);
 				return "deletion of the current branch prohibited";
+			default:
+				return "Invalid denyDeleteCurrent setting";
 			}
 		}
 	}
