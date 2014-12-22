@@ -6,7 +6,9 @@ Updates since v2.2
 
 Ports
 
- *
+ * Recent gcc toolchain on Cygwin started throwing compilation warning,
+   which has been squelched.
+
 
 UI, Workflows & Features
 
@@ -18,10 +20,61 @@ UI, Workflows & Features
    note from the object but with --allow-empty we will store a
    (surprise!)  note that is empty.
 
+ * "git interpret-trailers" learned to properly handle the
+   "Conflicts:" block at the end.
+
+ * "git am" learned "--message-id" option to copy the message ID of
+   the incoming e-mail to the log message of resulting commit.
+
+ * "git send-email" learned "--transfer-encoding" option to force a
+   non-fault Content-Transfer-Encoding header (e.g. base64).
+
+ * "git push" into a repository with a working tree normally refuses
+   to modify the branch that is checked out.  The command learned to
+   optionally do an equivalent of "git reset --hard" only when there
+   is no change to the working tree and the index instead, which would
+   be useful to "deploy" by pushing into a repository.
+
+ * "git new-workdir" (in contrib/) can be used to populate an empty
+   and existing directory now.
+
+ * Credential helpers are asked in turn until one of them give
+   positive response, which is cumbersome to turn off when you need to
+   run Git in an automated setting.  The credential helper interface
+   learned to allow a helper to say "stop, don't ask other helpers."
+   Also GIT_TERMINAL_PROMPT environment can be set to false to disable
+   our built-in prompt mechanism for passwords.
+
+ * "git branch -d" (delete) and "git branch -m" (move) learned to
+   honor "-f" (force) flag; unlike many other subcommands, the way to
+   force these have been with separate "-D/-M" options, which was
+   inconsistent.
+
+ * "diff-highlight" filter (in contrib/) allows its color output to be
+   customized via configuration variables.
+
 
 Performance, Internal Implementation, Development Support etc.
 
- *
+ * Some filesystems assign filemodes in a strange way, fooling then
+   automatic "filemode trustability" check done during a new
+   repository creation.  The initialization codepath has been hardened
+   against this issue.
+
+ * The codepath in "git remote update --prune" to drop many refs has
+   been optimized.
+
+ * Long overdue departure from the assumption that S_IFMT is shared by
+   everybody made in 2005, which was necessary to port to z/OS.
+
+ * "git push" and "git fetch" did not communicate an overlong refname
+   correctly.  Now it uses 64kB sideband to accommodate longer ones.
+
+ * Recent GPG changes the keyring format and drops support for RFC1991
+   formatted signatures, breaking our existing tests.
+
+ * "git-prompt" (in contrib/) used a variable from the global scope,
+   possibly contaminating end-user's namespace.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -33,6 +86,44 @@ Fixes since v2.2
 Unless otherwise noted, all the fixes since v2.2 in the maintenance
 track are contained in this release (see the maintenance releases'
 notes for details).
+
+ * Recent update to "git commit" broke amending an existing commit
+   with bogus author/committer lines without a valid e-mail address.
+   (merge c83a509 jk/commit-date-approxidate later to maint).
+
+ * Git did not correctly read an overlong refname from a packed refs
+   file.
+   (merge ea41783 jk/read-packed-refs-without-path-max later to maint).
+
+ * "git apply" was described in the documentation to take --ignore-date
+   option, which it does not.
+   (merge 0cef4e7 rw/apply-does-not-take-ignore-date later to maint).
+
+ * New tag object format validation added in 2.2 showed garbage after
+   a tagname it reported in its error message.
+   (merge a1e920a js/fsck-tag-validation later to maint).
+
+ * The code that reads the reflog from the newer to the older entries
+   did not handle an entry that crosses a boundary of block it uses to
+   read them correctly.
+   (merge 69216bf jk/for-each-reflog-ent-reverse later to maint).
+
+ * "git ls-tree" does not support path selection based on negative
+   pathspecs, but did not error out when negative pathspecs are given.
+   (merge f1f6224 nd/ls-tree-pathspec later to maint).
+
+ * The function sometimes returned a non-freeable memory and some
+   other times returned a piece of memory that must be freed, leading
+   to inevitable leaks.
+   (merge 59362e5 jc/exec-cmd-system-path-leak-fix later to maint).
+
+ * The code to abbreviate an object name to its short unique prefix
+   has been optimized when no abbreviation was requested.
+   (merge 61e704e mh/find-uniq-abbrev later to maint).
+
+ * "git add --ignore-errors ..." did not ignore an error to
+   give a file that did not exist.
+   (merge 1d31e5a mg/add-ignore-errors later to maint).
 
  * "git checkout $treeish $path", when $path in the index and the
    working tree already matched what is in $treeish at the $path,
