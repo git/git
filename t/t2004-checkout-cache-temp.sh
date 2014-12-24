@@ -198,9 +198,6 @@ test_expect_success 'checkout --temp within subdir' '
 test_expect_success 'checkout --temp symlink' '
 	rm -f path* .merge_* actual .git/index &&
 	test_ln_s_add b a &&
-	t4=$(git write-tree) &&
-	rm -f .git/index &&
-	git read-tree $t4 &&
 	git checkout-index --temp -a >actual &&
 	test_line_count = 1 actual &&
 	test $(cut "-d	" -f2 actual) = a &&
