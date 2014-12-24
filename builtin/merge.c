@@ -894,6 +894,7 @@ static int suggest_conflicts(void)
 
 	append_conflicts_hint(&msgbuf);
 	fputs(msgbuf.buf, fp);
+	strbuf_release(&msgbuf);
 	fclose(fp);
 	rerere(allow_rerere_auto);
 	printf(_("Automatic merge failed; "
