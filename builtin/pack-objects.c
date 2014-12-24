@@ -2711,7 +2711,7 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 	argv_array_push(&rp, "pack-objects");
 	if (thin) {
 		use_internal_rev_list = 1;
-		argv_array_push(&rp, "--objects-edge");
+		argv_array_push(&rp, "--objects-edge-aggressive");
 	} else
 		argv_array_push(&rp, "--objects");
 
