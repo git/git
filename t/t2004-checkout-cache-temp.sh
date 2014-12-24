@@ -206,7 +206,7 @@ test_expect_success 'checkout --temp symlink' '
 	test $(cat $p) = path7
 '
 
-test_expect_failure 'emit well-formed relative path' '
+test_expect_success 'emit well-formed relative path' '
 	rm -f path* .merge_* actual .git/index &&
 	>path0123456789 &&
 	git update-index --add path0123456789 &&
