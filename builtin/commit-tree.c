@@ -66,10 +66,8 @@ int cmd_commit_tree(int argc, const char **argv, const char *prefix)
 			continue;
 		}
 
-		if (!memcmp(arg, "-S", 2)) {
-			sign_commit = arg + 2;
+		if (skip_prefix(arg, "-S", &sign_commit))
 			continue;
-		}
 
 		if (!strcmp(arg, "--no-gpg-sign")) {
 			sign_commit = NULL;
