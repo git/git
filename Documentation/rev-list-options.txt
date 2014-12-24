@@ -659,7 +659,8 @@ These options are mostly targeted for packing of Git repositories.
 
 --objects-edge-aggressive::
 	Similar to `--objects-edge`, but it tries harder to find excluded
-	commits at the cost of increased time.
+	commits at the cost of increased time.  This is used instead of
+	`--objects-edge` to build ``thin'' packs for shallow repositories.
 
 --unpacked::
 	Only useful with `--objects`; print the object IDs that are not

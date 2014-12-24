@@ -86,7 +86,7 @@ static void create_pack_file(void)
 		"corruption on the remote side.";
 	int buffered = -1;
 	ssize_t sz;
-	const char *argv[12];
+	const char *argv[13];
 	int i, arg = 0;
 	FILE *pipe_fd;
 
@@ -100,6 +100,8 @@ static void create_pack_file(void)
 		argv[arg++] = "--thin";
 
 	argv[arg++] = "--stdout";
+	if (shallow_nr)
+		argv[arg++] = "--shallow";
 	if (!no_progress)
 		argv[arg++] = "--progress";
 	if (use_ofs_delta)

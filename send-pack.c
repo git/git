@@ -47,6 +47,7 @@ static int pack_objects(int fd, struct ref *refs, struct sha1_array *extra, stru
 		NULL,
 		NULL,
 		NULL,
+		NULL,
 	};
 	struct child_process po = CHILD_PROCESS_INIT;
 	int i;
@@ -60,6 +61,8 @@ static int pack_objects(int fd, struct ref *refs, struct sha1_array *extra, stru
 		argv[i++] = "-q";
 	if (args->progress)
 		argv[i++] = "--progress";
+	if (is_repository_shallow())
+		argv[i++] = "--shallow";
 	po.argv = argv;
 	po.in = -1;
 	po.out = args->stateless_rpc ? -1 : fd;
