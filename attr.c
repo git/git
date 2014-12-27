@@ -32,6 +32,7 @@ struct git_attr {
 	struct git_attr *next;
 	unsigned h;
 	int attr_nr;
+	int maybe_macro;
 	char name[FLEX_ARRAY];
 };
 static int attr_nr;
@@ -95,6 +96,7 @@ static struct git_attr *git_attr_internal(const char *name, int len)
 	a->h = hval;
 	a->next = git_attr_hash[pos];
 	a->attr_nr = attr_nr++;
+	a->maybe_macro = 0;
 	git_attr_hash[pos] = a;
 
 	REALLOC_ARRAY(check_all_attr, attr_nr);
@@ -244,9 +246,10 @@ static struct match_attr *parse_attr_line(const char *line, const char *src,
 		      sizeof(*res) +
 		      sizeof(struct attr_state) * num_attr +
 		      (is_macro ? 0 : namelen + 1));
-	if (is_macro)
+	if (is_macro) {
 		res->u.attr = git_attr_internal(name, namelen);
-	else {
+		res->u.attr->maybe_macro = 1;
+	} else {
 		char *p = (char *)&(res->state[num_attr]);
 		memcpy(p, name, namelen);
 		res->u.pat.pattern = p;
@@ -687,7 +690,8 @@ static int macroexpand_one(int nr, int rem)
 	struct match_attr *a = NULL;
 	int i;
 
-	if (check_all_attr[nr].value != ATTR__TRUE)
+	if (check_all_attr[nr].value != ATTR__TRUE ||
+	    !check_all_attr[nr].attr->maybe_macro)
 		return rem;
 
 	for (stk = attr_stack; !a && stk; stk = stk->prev)
