@@ -1,20 +1,19 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Dec 2014, #04; Mon, 22)
-X-master-at: bbcefffcea9789e4a1a2023a1c778e2c07db77a7
-X-next-at: 0ad48deaa29372e974d108b05da375b40a954ec2
+Subject: What's cooking in git.git (Dec 2014, #05; Mon, 29)
+X-master-at: c5b9256360b06efb9453c1627b78b14598e288b8
+X-next-at: cc831f245cfe79ce0a9b574baf3c07960f338270
 
-What's cooking in git.git (Dec 2014, #04; Mon, 22)
+What's cooking in git.git (Dec 2014, #05; Mon, 29)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-Quite a few topics have been merged to 'master' as the third batch
-for this cycle, on top of the recent "case sensitive .Git" fix that
-has been publicized very widely.  The next release which is expected
-to be a small one is taking shape.
+It has been understandably somewhat a slow week, and this will be
+the last issue of "What's cooking" report for this year.  See you
+all in the new year.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -24,447 +23,90 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* cc/interpret-trailers-more (2014-11-10) 4 commits
-  (merged to 'next' on 2014-12-15 at 77f6c6a)
- + trailer: add test with an old style conflict block
- + trailer: reuse ignore_non_trailer() to ignore conflict lines
- + commit: make ignore_non_trailer() non static
- + Merge branch 'jc/conflict-hint' into cc/interpret-trailers-more
- (this branch uses jc/conflict-hint.)
-
- "git interpret-trailers" learned to properly handle the
- "Conflicts:" block at the end.
-
-
-* ch/new-gpg-drops-rfc-1991 (2014-12-12) 4 commits
-  (merged to 'next' on 2014-12-15 at 32d7d50)
- + tests: squelch noise from GPG machinery set-up
- + tests: replace binary GPG keyrings with ASCII-armored keys
- + tests: skip RFC1991 tests for gnupg 2.1
- + tests: create gpg homedir on the fly
-
- Recent GPG changes the keyring format and drops support for RFC1991
- formatted signatures, breaking our existing tests.
-
-
-* dm/compat-s-ifmt-for-zos (2014-12-04) 1 commit
-  (merged to 'next' on 2014-12-15 at 0eb2fe6)
- + compat: convert modes to use portable file type values
-
- Long overdue departure from the assumption that S_IFMT is shared by
- everybody made in 2005.
-
-
-* dw/shell-basename-dashdash-before-stripping-leading-dash-from-login (2014-11-25) 1 commit
-  (merged to 'next' on 2014-12-15 at 42937b7)
- + git-sh-setup.sh: use dashdash with basename call
-
-
-* jc/conflict-hint (2014-10-28) 4 commits
-  (merged to 'next' on 2014-12-15 at b72475f)
- + merge & sequencer: turn "Conflicts:" hint into a comment
- + builtin/commit.c: extract ignore_non_trailer() helper function
- + merge & sequencer: unify codepaths that write "Conflicts:" hint
- + builtin/merge.c: drop a parameter that is never used
- (this branch is used by cc/interpret-trailers-more.)
-
- Unlike all the other hints given in the commit log editor, the list
- of conflicted paths were appended at the end without commented out.
-
-
-* jc/exec-cmd-system-path-leak-fix (2014-11-30) 1 commit
-  (merged to 'next' on 2014-12-15 at f926ee5)
- + system_path(): always return free'able memory to the caller
-
- The function sometimes returned a non-freeable memory and some
- other times returned a piece of memory that must be freed.
-
-
-* jc/hook-cleanup (2014-12-01) 1 commit
-  (merged to 'next' on 2014-12-15 at f5759d0)
- + run-command.c: retire unused run_hook_with_custom_index()
-
- Remove unused code.
-
-
-* jc/refer-to-t-readme-from-submitting-patches (2014-11-24) 2 commits
-  (merged to 'next' on 2014-12-15 at 0e88699)
- + t/README: justify why "! grep foo" is sufficient
- + SubmittingPatches: refer to t/README for tests
-
-
-* jg/prompt-localize-temporary (2014-12-12) 1 commit
-  (merged to 'next' on 2014-12-15 at bb9cac9)
- + git-prompt.sh: make $f local to __git_eread()
-
- "git-prompt" (in contrib/) used a variable from the global scope,
- possibly contaminating end-user's namespace.
-
-
-* jk/always-allow-large-packets (2014-12-10) 1 commit
-  (merged to 'next' on 2014-12-15 at c3fb2c8)
- + pkt-line: allow writing of LARGE_PACKET_MAX buffers
-
- "git push" and "git fetch" did not communicate an overlong refname
- correctly.
-
-
-* jk/colors (2014-12-09) 6 commits
-  (merged to 'next' on 2014-12-15 at 20b045f)
- + parse_color: drop COLOR_BACKGROUND macro
- + diff-highlight: allow configurable colors
- + parse_color: recognize "no$foo" to clear the $foo attribute
- + parse_color: support 24-bit RGB values
- + parse_color: refactor color storage
- + Merge branch 'jn/parse-config-slot' into jk/colors
-
- "diff-highlight" filter (in contrib/) allows its color output
- to be customized via configuration variables.
-
-
-* jk/commit-date-approxidate (2014-12-11) 2 commits
-  (merged to 'next' on 2014-12-15 at 047530e)
- + commit: always populate GIT_AUTHOR_* variables
- + commit: loosen ident checks when generating template
-
- Recent update to "git commit" broke amending an existing commit
- with bogus author/committer lines without a valid e-mail address.
-
-
-* jk/credential-quit (2014-12-04) 2 commits
-  (merged to 'next' on 2014-12-15 at 4cfd999)
- + prompt: respect GIT_TERMINAL_PROMPT to disable terminal prompts
- + credential: let helpers tell us to quit
-
- Credential helpers are asked in turn until one of them give
- positive response, which is cumbersome to turn off when you need to
- run Git in an automated setting.  The credential helper interface
- learned to allow a helper to say "stop, don't ask other helpers."
- Also GIT_TERMINAL_PROMPT environment can be set to false to disable
- our built-in prompt mechanism for passwords.
-
-
-* jk/for-each-reflog-ent-reverse (2014-12-05) 2 commits
-  (merged to 'next' on 2014-12-15 at de71f08)
- + for_each_reflog_ent_reverse: turn leftover check into assertion
- + for_each_reflog_ent_reverse: fix newlines on block boundaries
-
- The code that reads the reflog from the newer to the older entries
- did not handle an entry that crosses a boundary of block it uses to
- read them correctly.
-
-
-* jk/lock-ref-sha1-basic-return-errors (2014-11-20) 1 commit
-  (merged to 'next' on 2014-12-15 at c48b110)
- + lock_ref_sha1_basic: do not die on locking errors
-
- Correct an API anomaly.
-
-
-* jk/read-packed-refs-without-path-max (2014-12-10) 3 commits
-  (merged to 'next' on 2014-12-15 at c6d6f56)
- + read_packed_refs: use skip_prefix instead of static array
- + read_packed_refs: pass strbuf to parse_ref_line
- + read_packed_refs: use a strbuf for reading lines
-
- Git did not correctly read an overlong refname from a packed refs
- file.
-
-
-* jk/test-asan (2014-12-11) 1 commit
-  (merged to 'next' on 2014-12-15 at d24cb92)
- + t: support clang/gcc AddressSanitizer
-
-
-* js/fsck-tag-validation (2014-12-09) 2 commits
-  (merged to 'next' on 2014-12-15 at 455f26c)
- + index-pack: terminate object buffers with NUL
- + fsck: properly bound "invalid tag name" error message
-
- New tag object format validation added in 2.2 showed garbage
- after a tagname it reported in its error message.
-
-
-* js/push-to-deploy (2014-11-30) 2 commits
-  (merged to 'next' on 2014-12-15 at ef8c99f)
- + t5516: more tests for receive.denyCurrentBranch=updateInstead
- + receive-pack: add another option for receive.denyCurrentBranch
- (this branch is used by jc/push-to-checkout.)
-
- "git push" into a repository with a working tree normally refuses
- to modify the branch that is checked out.  The command learned to
- optionally do an equivalent of "git reset --hard" only when there
- is no change to the working tree and the index instead, which would
- be useful to "deploy" by pushing into a repository.
-
-
-* js/t5000-dont-copy-bin-sh (2014-11-24) 1 commit
-  (merged to 'next' on 2014-12-15 at 65ffd05)
- + t5000 on Windows: do not mistake "sh.exe" as "sh"
-
-
-* js/test-hashmap-squelch-gcc (2014-12-09) 1 commit
-  (merged to 'next' on 2014-12-15 at a8da691)
- + test-hashmap: squelch gcc compiler warning
-
-
-* mg/add-ignore-errors (2014-11-21) 1 commit
-  (merged to 'next' on 2014-12-15 at 3834789)
- + add: ignore only ignored files
-
- "git add --ignore-errors ..." did not ignore an error to
- give a file that did not exist.
-
-
-* mg/branch-d-m-f (2014-12-09) 2 commits
-  (merged to 'next' on 2014-12-15 at 8366f2c)
- + branch: allow -f with -m and -d
- + t3200-branch: test -M
-
- "git branch -d" (delete) and "git branch -m" (move) learned to
- honor "-f" (force) flag; unlike many other subcommands, the way to
- force these have been with separate "-D/-M" options, which was
- inconsistent.
-
-
-* mg/doc-check-ignore-tracked-are-not-ignored (2014-12-04) 1 commit
-  (merged to 'next' on 2014-12-15 at c50f748)
- + check-ignore: clarify treatment of tracked files
-
-
-* mh/find-uniq-abbrev (2014-11-26) 1 commit
-  (merged to 'next' on 2014-12-15 at e3b2b62)
- + sha1_name: avoid unnecessary sha1 lookup in find_unique_abbrev
-
- The code to abbreviate an object name to its short unique prefix
- has been optimized when no abbreviation was requested.
-
-
-* mh/simplify-repack-without-refs (2014-11-25) 7 commits
-  (merged to 'next' on 2014-12-15 at 351e03e)
- + sort_string_list(): rename to string_list_sort()
- + prune_remote(): iterate using for_each_string_list_item()
- + prune_remote(): rename local variable
- + repack_without_refs(): make the refnames argument a string_list
- + prune_remote(): sort delete_refs_list references en masse
- + prune_remote(): initialize both delete_refs lists in a single loop
- + prune_remote(): exit early if there are no stale references
-
- "git remote update --prune" to drop many refs has been optimized.
-
-
-* nd/ls-tree-pathspec (2014-12-01) 5 commits
-  (merged to 'next' on 2014-12-15 at 8da6e09)
- + t3102: style modernization
- + t3102: document that ls-tree does not yet support negated pathspec
- + ls-tree: disable negative pathspec because it's not supported
- + ls-tree: remove path filtering logic in show_tree
- + tree.c: update read_tree_recursive callback to pass strbuf as base
-
- "git ls-tree" does not support path selection based on negative
- pathspecs, but did not error out when negative pathspecs are given.
-
-
-* nd/split-index (2014-12-11) 1 commit
-  (merged to 'next' on 2014-12-15 at ed6490c)
- + index-format.txt: add a missing closing quote
-
- A typofix to the documentation of a feature already in the release.
-
-
-* ok/rebase-i-count-todo (2014-12-10) 1 commit
-  (merged to 'next' on 2014-12-15 at 4a1f7ed)
- + Show number of TODO items for interactive rebase
-
-
-* pb/am-message-id-footer (2014-11-25) 2 commits
-  (merged to 'next' on 2014-12-15 at b44b6bd)
- + git-am: add --message-id/--no-message-id
- + git-mailinfo: add --message-id
-
- "git am" learned "--message-id" option to copy the message ID of
- the incoming e-mail to the log message of resulting commit.
-
-
-* pb/send-email-te (2014-11-25) 2 commits
-  (merged to 'next' on 2014-12-15 at 38c2810)
- + git-send-email: add --transfer-encoding option
- + git-send-email: delay creation of MIME headers
- (this branch is used by jc/t9001-modernise.)
-
- "git send-email" learned "--transfer-encoding" option to force
- a non-fault Content-Transfer-Encoding header (e.g. base64).
-
-
-* po/doc-assume-unchanged (2014-12-09) 2 commits
-  (merged to 'next' on 2014-12-15 at 646e77e)
- + gitignore.txt: do not suggest assume-unchanged
- + doc: make clear --assume-unchanged's user contract
-
- Fixes long-standing misunderstanding of what assume-unchanged is
- about.  Some text near what is removed by the bottom patch may also
- have to be removed.
-
-
-* ps/new-workdir-into-empty-directory (2014-12-03) 1 commit
-  (merged to 'next' on 2014-12-15 at 0787b56)
- + git-new-workdir: don't fail if the target directory is empty
-
- "git new-workdir" (in contrib/) can be used to populate an empty
- and existing directory now.
-
-
-* rj/no-xopen-source-for-cygwin (2014-11-24) 1 commit
-  (merged to 'next' on 2014-12-15 at 6e8e9ff)
- + git-compat-util.h: don't define _XOPEN_SOURCE on cygwin
-
- Avoid compilation warnings on recent gcc toolchain on Cygwin.
-
-
-* rj/t0050-passes (2014-11-30) 1 commit
-  (merged to 'next' on 2014-12-15 at f56c339)
- + t0050-*.sh: mark the rename (case change) test as passing
-
-
-* rs/use-strbuf-complete-line (2014-12-12) 1 commit
-  (merged to 'next' on 2014-12-15 at d6426a0)
- + use strbuf_complete_line() for adding a newline if needed
-
-
-* rt/completion-tag (2014-12-04) 1 commit
-  (merged to 'next' on 2014-12-15 at b03ee39)
- + completion: add git-tag options
-
-
-* rt/for-each-ref-spell-tcl-as-Tcl (2014-11-30) 1 commit
-  (merged to 'next' on 2014-12-15 at c0fcefb)
- + for-each-ref: correct spelling of Tcl in option description
-
-
-* rw/apply-does-not-take-ignore-date (2014-12-09) 1 commit
-  (merged to 'next' on 2014-12-15 at ded2f99)
- + git-am.txt: --ignore-date flag is not passed to git-apply
-
-
-* sb/string-list (2014-12-04) 3 commits
-  (merged to 'next' on 2014-12-15 at 8bb8ddd)
- + string_list: remove string_list_insert_at_index() from its API
- + mailmap: use higher level string list functions
- + string_list: document string_list_(insert,lookup)
-
- API simplification.
-
-
-* sv/doc-stripspace (2014-12-04) 1 commit
-  (merged to 'next' on 2014-12-15 at e86f8ba)
- + Documentation/git-stripspace: add synopsis for --comment-lines
-
-
-* tb/config-core-filemode-check-on-broken-fs (2014-11-21) 1 commit
-  (merged to 'next' on 2014-12-15 at 3e5490b)
- + init-db: improve the filemode trustability check
-
- Some filesystems assign filemodes in a strange way, fooling then
- automatic "filemode trustability" check done during a new
- repository creation.
-
-
-* tb/t0027-eol-conversion (2014-12-05) 1 commit
-  (merged to 'next' on 2014-12-15 at ba24e75)
- + t0027: check the eol conversion warnings
-
---------------------------------------------------
-[New Topics]
-
-* bb/update-unicode-table (2014-12-22) 5 commits
- - update_unicode.sh: delete the command group
- - update_unicode.sh: make the output structure visible
- - update_unicode.sh: shorten uniset invocation path
- - update_unicode.sh: set UNICODE_DIR only once
- - update_unicode.sh: simplify output capture
-
- Simplify the procedure to generate unicode table.
-
- Will merge to 'next'.
-
-
-* bc/fetch-thin-less-aggressive-in-normal-repository (2014-12-22) 3 commits
- - pack-objects: use --objects-edge-aggressive only for shallow repos
- - rev-list: add an option to mark fewer edges as uninteresting
- - Documentation: add missing article in rev-list-options.txt
-
- Earlier we made "rev-list --object-edge" more aggressively list the
- objects at the edge commits, in order to reduce number of objects
- fetched into a shallow repository, but the change affected cases
- other than "fetching into a shallow repository" and made it
- unusably slow (e.g. fetching into a normal repository should not
- have to suffer the overhead from extra processing).  Limit it to a
- more specific case by introducing --objects-edge-aggressive, a new
- option to rev-list.
-
- Seems to break t5500 when merged to 'pu'.
-
-
-* es/squelch-openssl-warnings-on-macosx (2014-12-18) 1 commit
- - git-compat-util: suppress unavoidable Apple-specific deprecation warnings
-
- Squelch useless compiler warnings on Mac OS X.
-
- Will merge to 'next'.
-
-
-* jh/pre-push-sample-no-custom-ifs (2014-12-22) 1 commit
- - pre-push.sample: remove unnecessary and misleading IFS=' '
-
- The sample pre-push hook used customized IFS=' ' for no good reason.
-
- Will merge to 'next'.
+* jc/t9001-modernise (2014-11-25) 5 commits
+  (merged to 'next' on 2014-12-23 at 3a2ec87)
+ + t9001: style modernisation phase #5
+ + t9001: style modernisation phase #4
+ + t9001: style modernisation phase #3
+ + t9001: style modernisation phase #2
+ + t9001: style modernisation phase #1
 
 
 * mh/update-ref-verify (2014-12-11) 2 commits
- - update-ref: fix "verify" command with missing <oldvalue>
- - t1400: add some more tests of "update-ref --stdin"'s verify command
+  (merged to 'next' on 2014-12-23 at 3aa9a62)
+ + update-ref: fix "verify" command with missing <oldvalue>
+ + t1400: add some more tests of "update-ref --stdin"'s verify command
 
  "git update-ref --stdin"'s verify command did not work well when
  <oldvalue>, which is documented as optional, was missing.
 
- Will merge to 'next'.
+--------------------------------------------------
+[New Topics]
+
+* bw/maint-0090-awk-tweak (2014-12-23) 1 commit
+  (merged to 'next' on 2014-12-29 at 9301c36)
+ + t0090: tweak awk statement for Solaris /usr/xpg4/bin/awk
+
+ Will merge to 'master'.
 
 
-* sb/atomic-push (2014-12-22) 7 commits
- - t5543-atomic-push.sh: add basic tests for atomic pushes
- - push.c: add an --atomic argument
- - receive-pack: move execute_commands_non_atomic before execute_commands
- - receive-pack.c: receive-pack.c: use a single ref_transaction for atomic pushes
- - send-pack.c: add --atomic command line argument
- - send-pack: rename ref_update_to_be_sent to check_to_send_update
- - receive-pack.c: add protocol support to negotiate atomic-push
- (this branch uses mh/reflog-expire.)
+* cc/bisect-rev-parsing (2014-12-29) 2 commits
+ - bisect: add test to check that revs are properly parsed
+ - bisect: parse revs before passing them to check_expected_revs()
 
- "git push" has been taught a "--atomic" option that makes push to
- update more than one ref an "all-or-none" affair.
-
- Will merge to 'next'.
-
-
-* sb/dco-indentation-fix (2014-12-22) 1 commit
- - Documentation/SubmittingPatches: unify whitespace/tabs for the DCO
+ The logic in "git bisect bad HEAD" etc. to avoid forcing the test
+ of the common ancestor of bad and good commits was broken.
 
  Will merge to 'next'.
 
 
-* sb/t5400-remove-unused (2014-12-16) 1 commit
- - t5400: remove dead code
+* es/checkout-index-temp (2014-12-29) 5 commits
+ - checkout-index: fix --temp relative path mangling
+ - t2004: demonstrate broken relative path printing
+ - t2004: standardize file naming in symlink test
+ - t2004: drop unnecessary write-tree/read-tree
+ - t2004: modernize style
+
+ "git checkout-index --temp=$target $path" did not work correctly
+ for paths outside the current subdirectory in the project.
 
  Will merge to 'next'.
 
 
-* tf/prompt-preserve-exit-status (2014-12-22) 1 commit
- - git-prompt: preserve value of $? inside shell prompt
+* js/remote-add-with-insteadof (2014-12-23) 2 commits
+ - Add a regression test for 'git remote add <existing> <same-url>'
+ - git remote: allow adding remotes agreeing with url.<...>.insteadOf
 
- Using the exit status of the last command in the prompt, e.g.
- PS1='$(__git_ps1) $? ', did not work well because the helper
- function stomped on the exit status.
+ "git remote add $name $URL" is now allowed when "url.$URL.insteadOf"
+ is already defined.
+
+
+* rs/plug-strbuf-leak-in-lock-ref (2014-12-29) 1 commit
+ - refs: plug strbuf leak in lock_ref_sha1_basic()
+
+ Will merge to 'next'.
+
+
+* rs/plug-strbuf-leak-in-merge (2014-12-29) 1 commit
+ - merge: release strbuf after use in suggest_conflicts()
+
+ Will merge to 'next'.
+
+
+* rs/simplify-parsing-commit-tree-S (2014-12-29) 1 commit
+ - commit-tree: simplify parsing of option -S using skip_prefix()
+
+ Will merge to 'next'.
+
+
+* rs/simplify-transport-get (2014-12-29) 1 commit
+ - transport: simplify duplicating a substring in transport_get() using xmemdupz()
+
+ Will merge to 'next'.
+
+
+* sb/doc-submitting-patches-keep-notes (2014-12-29) 1 commit
+ - Documentation/SubmittingPatches: Explain the rationale of git notes
 
  Will merge to 'next'.
 
@@ -621,11 +263,97 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* bb/update-unicode-table (2014-12-22) 5 commits
+  (merged to 'next' on 2014-12-23 at b4ce669)
+ + update_unicode.sh: delete the command group
+ + update_unicode.sh: make the output structure visible
+ + update_unicode.sh: shorten uniset invocation path
+ + update_unicode.sh: set UNICODE_DIR only once
+ + update_unicode.sh: simplify output capture
+
+ Simplify the procedure to generate unicode table.
+
+ Will merge to 'master'.
+
+
+* bc/fetch-thin-less-aggressive-in-normal-repository (2014-12-29) 3 commits
+ - pack-objects: use --objects-edge-aggressive for shallow repos
+ - rev-list: add an option to mark fewer edges as uninteresting
+ - Documentation: add missing article in rev-list-options.txt
+
+ Earlier we made "rev-list --object-edge" more aggressively list the
+ objects at the edge commits, in order to reduce number of objects
+ fetched into a shallow repository, but the change affected cases
+ other than "fetching into a shallow repository" and made it
+ unusably slow (e.g. fetching into a normal repository should not
+ have to suffer the overhead from extra processing).  Limit it to a
+ more specific case by introducing --objects-edge-aggressive, a new
+ option to rev-list.
+
+ Will merge to 'next'.
+
+
+* es/squelch-openssl-warnings-on-macosx (2014-12-18) 1 commit
+  (merged to 'next' on 2014-12-23 at e88cf6a)
+ + git-compat-util: suppress unavoidable Apple-specific deprecation warnings
+
+ Squelch useless compiler warnings on Mac OS X.
+
+ Will merge to 'master'.
+
+
+* jh/pre-push-sample-no-custom-ifs (2014-12-22) 1 commit
+  (merged to 'next' on 2014-12-29 at c516021)
+ + pre-push.sample: remove unnecessary and misleading IFS=' '
+
+ The sample pre-push hook used customized IFS=' ' for no good reason.
+
+ Will merge to 'master'.
+
+
+* sb/atomic-push (2014-12-22) 7 commits
+ - t5543-atomic-push.sh: add basic tests for atomic pushes
+ - push.c: add an --atomic argument
+ - receive-pack: move execute_commands_non_atomic before execute_commands
+ - receive-pack.c: receive-pack.c: use a single ref_transaction for atomic pushes
+ - send-pack.c: add --atomic command line argument
+ - send-pack: rename ref_update_to_be_sent to check_to_send_update
+ - receive-pack.c: add protocol support to negotiate atomic-push
+ (this branch uses mh/reflog-expire.)
+
+ "git push" has been taught a "--atomic" option that makes push to
+ update more than one ref an "all-or-none" affair.
+
+
+* sb/dco-indentation-fix (2014-12-22) 1 commit
+  (merged to 'next' on 2014-12-23 at c865690)
+ + Documentation/SubmittingPatches: unify whitespace/tabs for the DCO
+
+ Will merge to 'master'.
+
+
+* sb/t5400-remove-unused (2014-12-16) 1 commit
+  (merged to 'next' on 2014-12-23 at a992011)
+ + t5400: remove dead code
+
+ Will merge to 'master'.
+
+
+* tf/prompt-preserve-exit-status (2014-12-22) 1 commit
+  (merged to 'next' on 2014-12-23 at dfcd89f)
+ + git-prompt: preserve value of $? inside shell prompt
+
+ Using the exit status of the last command in the prompt, e.g.
+ PS1='$(__git_ps1) $? ', did not work well because the helper
+ function stomped on the exit status.
+
+ Will merge to 'master'.
+
+
 * ye/http-accept-language (2014-12-22) 1 commit
  - http: Add Accept-Language header if possible
 
- An earlier iteration broke various people ($gmane/260903).  Please
- retest and comment.
+ Expecting a reroll ($gmane/261810).
 
 
 * jk/strbuf-doc-to-header (2014-12-12) 4 commits
@@ -674,37 +402,41 @@ of the repositories listed at
 
 
 * po/doc-core-ignorestat (2014-12-12) 1 commit
- - doc: core.ignoreStat clarify the --assume-unchanged effect
+  (merged to 'next' on 2014-12-23 at d2b3e84)
+ + doc: core.ignoreStat clarify the --assume-unchanged effect
 
- Expecting a reroll.
+ Will merge to 'master'.
 
 
 * jk/add-i-read-error (2014-12-15) 1 commit
- - add--interactive: leave main loop on read error
+  (merged to 'next' on 2014-12-23 at 9b76001)
+ + add--interactive: leave main loop on read error
 
  "git add -i" did not notice when the interactive command input
  stream went away and kept asking.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * pd/completion-filenames-fix (2014-12-15) 1 commit
- - Update documentation occurrences of filename .sh
+  (merged to 'next' on 2014-12-23 at e2b10ab)
+ + Update documentation occurrences of filename .sh
 
  The top-of-the-file instruction for completion scripts (in contrib/)
  did not name the files correctly.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * rd/send-email-2047-fix (2014-12-15) 2 commits
- - send-email: handle adjacent RFC 2047-encoded words properly
- - send-email: align RFC 2047 decoding more closely with the spec
+  (merged to 'next' on 2014-12-23 at 2b101ce)
+ + send-email: handle adjacent RFC 2047-encoded words properly
+ + send-email: align RFC 2047 decoding more closely with the spec
 
  "git send-email" did not handle RFC 2047 encoded headers quite
  right.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jn/doc-api-errors (2014-12-04) 1 commit
@@ -732,14 +464,15 @@ of the repositories listed at
 
 
 * lh/send-email-hide-x-mailer (2014-12-15) 2 commits
- - test/send-email: --[no-]xmailer tests
- - send-email: add --[no-]xmailer option
+  (merged to 'next' on 2014-12-23 at fc16c68)
+ + test/send-email: --[no-]xmailer tests
+ + send-email: add --[no-]xmailer option
 
  "git send-email" normally identifies itself via X-Mailer: header
  in the message it sends out.  A new command line flag allows the
  header to be squelched.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * nd/list-files (2014-12-01) 19 commits
@@ -814,14 +547,6 @@ of the repositories listed at
  Will be rerolled as a part of a larger series.
 
 
-* jc/t9001-modernise (2014-11-25) 5 commits
- - t9001: style modernisation phase #5
- - t9001: style modernisation phase #4
- - t9001: style modernisation phase #3
- - t9001: style modernisation phase #2
- - t9001: style modernisation phase #1
-
-
 * jk/approxidate-avoid-y-d-m-over-future-dates (2014-11-13) 2 commits
   (merged to 'next' on 2014-12-15 at 397e986)
  + approxidate: allow ISO-like dates far in the future
@@ -837,7 +562,7 @@ of the repositories listed at
  (1) ISO-like format is used, and
  (2) the string can make sense interpreted as both y-m-d and y-d-m.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * br/imap-send-verbosity (2014-11-05) 1 commit
@@ -845,7 +570,7 @@ of the repositories listed at
  + imap-send: use parse options API to determine verbosity
  (this branch is used by br/imap-send-via-libcurl.)
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * br/imap-send-via-libcurl (2014-11-10) 1 commit
@@ -856,7 +581,7 @@ of the repositories listed at
  Newer libCurl knows how to talk IMAP; "git imap-send" has been
  updated to use this instead of a hand-rolled OpenSSL calls.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * nd/lockfile-absolute (2014-11-03) 1 commit
@@ -866,7 +591,7 @@ of the repositories listed at
  The lockfile API can get confused which file to clean up when the
  process moved the $cwd after creating a lockfile.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * jc/merge-bases (2014-10-30) 2 commits
@@ -878,7 +603,7 @@ of the repositories listed at
  copy&paste coders, leaving object flags tainted in the commits that
  needed to be traversed.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * jc/strbuf-add-lines-avoid-sp-ht-sequence (2014-10-27) 1 commit
@@ -889,7 +614,7 @@ of the repositories listed at
  line, resulting in "# \t<indented text>\n" when the payload began
  with a HT.  Instead, produce "#\t<indented text>\n".
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * nd/untracked-cache (2014-12-15) 24 commits
@@ -927,7 +652,7 @@ of the repositories listed at
 
  Fix long-standing bug in "diff -B -M" output.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * jc/checkout-local-track-report (2014-10-14) 1 commit
@@ -938,7 +663,7 @@ of the repositories listed at
  local branch by setting its branch.*.merge to branch name (not a
  full refname) incorrectly said that the upstream is gone.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 
 * jc/clone-borrow (2014-10-15) 1 commit
@@ -947,7 +672,7 @@ of the repositories listed at
 
  Allow "git clone --reference" to be used more safely.
 
- Will cook in 'next'.
+ Will merge to 'master'.
 
 --------------------------------------------------
 [Discarded]
@@ -1069,6 +794,7 @@ of the repositories listed at
  Code simplification.
 
  Will be rerolled as a part of a larger series.
+
 
 * sb/write-sha1-update-reflog (2014-11-24) 1 commit
  . refs.c: move reflog updates into its own function
