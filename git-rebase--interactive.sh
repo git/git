@@ -961,7 +961,7 @@ else
 	revisions=$onto...$orig_head
 	shortrevisions=$shorthead
 fi
-git rev-list $merges_option --pretty=oneline --abbrev-commit \
+git rev-list $merges_option --pretty=">%h (%an <%ae>) %s" \
 	--abbrev=7 --reverse --left-right --topo-order \
 	$revisions ${restrict_revision+^$restrict_revision} | \
 	sed -n "s/^>//p" |
