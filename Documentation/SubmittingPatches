@@ -175,8 +175,11 @@ message starts, you can put a "From: " line to name that person.
 
 You often want to add additional explanation about the patch,
 other than the commit message itself.  Place such "cover letter"
-material between the three dash lines and the diffstat. Git-notes
-can also be inserted using the `--notes` option.
+material between the three-dash line and the diffstat.  For
+patches requiring multiple iterations of review and discussion,
+an explanation of changes between each iteration can be kept in
+Git-notes and inserted automatically following the three-dash
+line via `git format-patch --notes`.
 
 Do not attach the patch as a MIME attachment, compressed or not.
 Do not let your e-mail client send quoted-printable.  Do not let
