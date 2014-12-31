@@ -7802,7 +7802,7 @@ msgstr "zu viele Parameter"
 #: builtin/notes.c:387 builtin/notes.c:646
 #, c-format
 msgid "No note found for object %s."
-msgstr "Kein Notiz für Objekt %s gefunden."
+msgstr "Keine Notiz für Objekt %s gefunden."
 
 #: builtin/notes.c:409 builtin/notes.c:566
 msgid "note contents as a string"
