@@ -182,3 +182,9 @@ diff.algorithm::
 	low-occurrence common elements".
 --
 +
+
+diff.relative::
+	By default, linkgit:git-diff[1] shows changes and pathnames
+	relative to the repository root. Setting this variable to
+	`true` shows pathnames relative to the current directory and
+	excludes changes outside this directory.
