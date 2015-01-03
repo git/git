@@ -37,6 +37,7 @@ struct checkout_opts {
 	int writeout_stage;
 	int overwrite_ignore;
 	int ignore_skipworktree;
+	int ignore_other_worktrees;
 
 	const char *new_branch;
 	const char *new_branch_force;
@@ -1210,7 +1211,8 @@ static int parse_branchname_arg(int argc, const char **argv,
 		int flag;
 		char *head_ref = resolve_refdup("HEAD", 0, sha1, &flag);
 		if (head_ref &&
-		    (!(flag & REF_ISSYMREF) || strcmp(head_ref, new->path)))
+		    (!(flag & REF_ISSYMREF) || strcmp(head_ref, new->path)) &&
+		    !opts->ignore_other_worktrees)
 			check_linked_checkouts(new);
 		free(head_ref);
 	}
@@ -1341,6 +1343,8 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 				N_("second guess 'git checkout no-such-branch'")),
 		OPT_FILENAME(0, "to", &opts.new_worktree,
 			   N_("check a branch out in a separate working directory")),
+		OPT_BOOL(0, "ignore-other-worktrees", &opts.ignore_other_worktrees,
+			 N_("do not check if another worktree is holding the given ref")),
 		OPT_END(),
 	};
 

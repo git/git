@@ -79,6 +79,13 @@ test_expect_success 'die the same branch is already checked out' '
 	)
 '
 
+test_expect_success 'not die the same branch is already checked out' '
+	(
+		cd here &&
+		git checkout --ignore-other-worktrees --to anothernewmaster newmaster
+	)
+'
+
 test_expect_success 'not die on re-checking out current branch' '
 	(
 		cd there &&
