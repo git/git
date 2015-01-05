@@ -334,6 +334,19 @@ test_expect_success 'Check that :track[short] cannot be used with other atoms' '
 	test_must_fail git for-each-ref --format="%(refname:trackshort)" 2>/dev/null
 '
 
+test_expect_success 'Check that :track[short] works when upstream is invalid' '
+	cat >expected <<-\EOF &&
+
+
+	EOF
+	test_when_finished "git config branch.master.merge refs/heads/master" &&
+	git config branch.master.merge refs/heads/does-not-exist &&
+	git for-each-ref \
+		--format="%(upstream:track)$LF%(upstream:trackshort)" \
+		refs/heads >actual &&
+	test_cmp expected actual
+'
+
 cat >expected <<EOF
 $(git rev-parse --short HEAD)
 EOF

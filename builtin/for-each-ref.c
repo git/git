@@ -728,7 +728,10 @@ static void populate_value(struct refinfo *ref)
 				 starts_with(name, "upstream")) {
 				char buf[40];
 
-				stat_tracking_info(branch, &num_ours, &num_theirs);
+				if (stat_tracking_info(branch, &num_ours,
+						       &num_theirs) != 1)
+					continue;
+
 				if (!num_ours && !num_theirs)
 					v->s = "";
 				else if (!num_ours) {
@@ -746,7 +749,11 @@ static void populate_value(struct refinfo *ref)
 			} else if (!strcmp(formatp, "trackshort") &&
 				   starts_with(name, "upstream")) {
 				assert(branch);
-				stat_tracking_info(branch, &num_ours, &num_theirs);
+
+				if (stat_tracking_info(branch, &num_ours,
+							&num_theirs) != 1)
+					continue;
+
 				if (!num_ours && !num_theirs)
 					v->s = "=";
 				else if (!num_ours)
