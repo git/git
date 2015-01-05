@@ -364,15 +364,19 @@ This is useful for excluding servers inside a firewall from
 proxy use, while defaulting to a common proxy for external domains.
 
 core.ignoreStat::
-	If true, commands which modify both the working tree and the index
-	will mark the updated paths with the "assume unchanged" bit in the
-	index. These marked files are then expected to stay unchanged in the
-	working tree. If you change them you should mark their update manually.
-	Git will normally not detect the file changes by lstat() calls.
-	This is useful on systems where those calls are very slow, such as
-	cifs/Microsoft Windows.
-	See linkgit:git-update-index[1].
-	False by default.
+	If true, Git will avoid using lstat() calls to detect if files have
+	changed by setting the "assume-unchanged" bit for those tracked files
+	which it has updated identically in both the index and working tree.
++
+When files are modified outside of Git, the user will need to stage
+the modified files explicitly (e.g. see 'Examples' section in
+linkgit:git-update-index[1]).
+Git will not normally detect changes to those files.
++
+This is useful on systems where lstat() calls are very slow, such as
+CIFS/Microsoft Windows.
++
+False by default.
 
 core.preferSymlinkRefs::
 	Instead of the default "symref" format for HEAD
