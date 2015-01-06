@@ -17,7 +17,7 @@ static int update_info_file(char *path, int (*generate)(FILE *))
 	FILE *fp = NULL;
 
 	safe_create_leading_directories(path);
-	fd = mkstemp(tmp);
+	fd = git_mkstemp_mode(tmp, 0666);
 	if (fd < 0)
 		goto out;
 	fp = fdopen(fd, "w");
