@@ -112,6 +112,7 @@ do
 done
 
 test_expect_success POSIXPERM 'git reflog expire honors core.sharedRepository' '
+	umask 077 &&
 	git config core.sharedRepository group &&
 	git reflog expire --all &&
 	actual="$(ls -l .git/logs/refs/heads/master)" &&
