@@ -1421,8 +1421,8 @@ static CURL *setup_curl(struct imap_server_conf *srvc)
 		strbuf_release(&auth);
 	}
 
-	if (server.use_ssl)
-		curl_easy_setopt(curl, CURLOPT_USE_SSL, (long)CURLUSESSL_ALL);
+	if (!server.use_ssl)
+		curl_easy_setopt(curl, CURLOPT_USE_SSL, (long)CURLUSESSL_TRY);
 
 	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, server.ssl_verify);
 	curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, server.ssl_verify);
