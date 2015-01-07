@@ -299,6 +299,10 @@ __git_ps1 ()
 			ps1pc_start="$1"
 			ps1pc_end="$2"
 			printf_format="${3:-$printf_format}"
+			# set PS1 to a plain prompt so that we can
+			# simply return early if the prompt should not
+			# be decorated
+			PS1="$ps1pc_start$ps1pc_end"
 		;;
 		0|1)	printf_format="${1:-$printf_format}"
 		;;
@@ -350,10 +354,6 @@ __git_ps1 ()
 	rev_parse_exit_code="$?"
 
 	if [ -z "$repo_info" ]; then
-		if [ $pcmode = yes ]; then
-			#In PC mode PS1 always needs to be set
-			PS1="$ps1pc_start$ps1pc_end"
-		fi
 		return
 	fi
 
@@ -412,9 +412,6 @@ __git_ps1 ()
 		else
 			local head=""
 			if ! __git_eread "$g/HEAD" head; then
-				if [ $pcmode = yes ]; then
-					PS1="$ps1pc_start$ps1pc_end"
-				fi
 				return
 			fi
 			# is it a symbolic ref?
