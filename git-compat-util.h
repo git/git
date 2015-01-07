@@ -212,8 +212,12 @@ extern char *gitbasename(char *);
 #endif
 
 #ifndef NO_OPENSSL
+#define __AVAILABILITY_MACROS_USES_AVAILABILITY 0
+#define MAC_OS_X_VERSION_MIN_REQUIRED MAC_OS_X_VERSION_10_6
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#undef MAC_OS_X_VERSION_MIN_REQUIRED
+#undef __AVAILABILITY_MACROS_USES_AVAILABILITY
 #endif
 
 /* On most systems <netdb.h> would have given us this, but
