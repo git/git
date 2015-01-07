@@ -26,8 +26,18 @@ UI, Workflows & Features
  * "git am" learned "--message-id" option to copy the message ID of
    the incoming e-mail to the log message of resulting commit.
 
+ * "git clone --reference=<over there>" learned the "--dissociate"
+   option to go with it; it borrows objects from the reference object
+   store while cloning only to reduce network traffic and then
+   dissociates the resulting clone from the reference by performing
+   local copies of borrowed objects.
+
  * "git send-email" learned "--transfer-encoding" option to force a
    non-fault Content-Transfer-Encoding header (e.g. base64).
+
+ * "git send-email" normally identifies itself via X-Mailer: header in
+   the message it sends out.  A new command line flag --no-xmailer
+   allows the user to squelch the header.
 
  * "git push" into a repository with a working tree normally refuses
    to modify the branch that is checked out.  The command learned to
@@ -53,8 +63,21 @@ UI, Workflows & Features
  * "diff-highlight" filter (in contrib/) allows its color output to be
    customized via configuration variables.
 
+ * "git imap-send" learned to take "-v" (verbose) and "-q" (quiet)
+   command line options.
+
+ * "git imap-send" now can be built to use cURL library to talk to
+   IMAP servers (if the library is recent enough, of course).
+   This allows you to use authenticate method other than CRAM-MD5,
+   among other things.
+
 
 Performance, Internal Implementation, Development Support etc.
+
+ * Squelched useless compiler warnings on Mac OS X regarding the
+   crypto API.
+
+ * The procedure to generate unicode table has been simplified.
 
  * Some filesystems assign filemodes in a strange way, fooling then
    automatic "filemode trustability" check done during a new
@@ -63,6 +86,9 @@ Performance, Internal Implementation, Development Support etc.
 
  * The codepath in "git remote update --prune" to drop many refs has
    been optimized.
+
+ * The API into get_merge_bases*() family of functions was easy to
+   misuse, which has been corrected to make it harder to do so.
 
  * Long overdue departure from the assumption that S_IFMT is shared by
    everybody made in 2005, which was necessary to port to z/OS.
@@ -87,9 +113,40 @@ Unless otherwise noted, all the fixes since v2.2 in the maintenance
 track are contained in this release (see the maintenance releases'
 notes for details).
 
+ * The report from "git checkout" on a branch that builds on another
+   local branch by setting its branch.*.merge to branch name (not a
+   full refname) incorrectly said that the upstream is gone.
+   (merge 05e7368 jc/checkout-local-track-report later to maint).
+
+ * With The git-prompt support (in contrib/), using the exit status of
+   the last command in the prompt, e.g.  PS1='$(__git_ps1) $? ', did
+   not work well, because the helper function stomped on the exit
+   status.
+   (merge eb443e3 tf/prompt-preserve-exit-status later to maint).
+
+
  * Recent update to "git commit" broke amending an existing commit
    with bogus author/committer lines without a valid e-mail address.
    (merge c83a509 jk/commit-date-approxidate later to maint).
+
+ * The lockfile API used to get confused which file to clean up when
+   the process moved the $cwd after creating a lockfile.
+   (merge fa137f6 nd/lockfile-absolute later to maint).
+
+ * Traditionally we tried to avoid interpreting date strings given by
+   the user as future dates, e.g. GIT_COMMITTER_DATE=2014-12-10 when
+   used early November 2014 was taken as "October 12, 2014" because it
+   is likely that a date in the future, December 10, is a mistake.
+   This heuristics has been loosened to allow people to express future
+   dates (most notably, --until=<date> may want to be far in the
+   future) and we no longer tiebreak by future-ness of the date when
+
+    (1) ISO-like format is used, and
+    (2) the string can make sense interpreted as both y-m-d and y-d-m.
+
+   Git may still have to use the heuristics to tiebreak between dd/mm/yy
+   and mm/dd/yy, though.
+   (merge d372395 jk/approxidate-avoid-y-d-m-over-future-dates later to maint).
 
  * Git did not correctly read an overlong refname from a packed refs
    file.
@@ -99,6 +156,14 @@ notes for details).
    option, which it does not.
    (merge 0cef4e7 rw/apply-does-not-take-ignore-date later to maint).
 
+ * "git add -i" did not notice when the interactive command input
+   stream went away and kept asking the same question.
+   (merge a8bec7a jk/add-i-read-error later to maint).
+
+ * "git send-email" did not handle RFC 2047 encoded headers quite
+   right.
+   (merge ab47e2a rd/send-email-2047-fix later to maint).
+
  * New tag object format validation added in 2.2 showed garbage after
    a tagname it reported in its error message.
    (merge a1e920a js/fsck-tag-validation later to maint).
@@ -107,6 +172,23 @@ notes for details).
    did not handle an entry that crosses a boundary of block it uses to
    read them correctly.
    (merge 69216bf jk/for-each-reflog-ent-reverse later to maint).
+
+ * "git diff -B -M" after making a new copy B out of an existing file
+   A and then editing A extensively ought to report that B was created
+   by copying A and A was modified, which is what "git diff -C"
+   reports, but it instead said A was renamed to B and A was edited
+   heavily in place.  This was not just incoherent but also failed to
+   apply with "git apply".  The report has been corrected to match what
+   "git diff -C" produces for this case.
+   (merge 6936b58 jc/diff-b-m later to maint).
+
+ * In files we pre-populate for the user to edit with commented hints,
+   a line of hint that is indented with a tab used to show as '#' (or
+   any comment char), ' ' (space), and then the hint text that began
+   with the tab, which some editors flag as an indentation error (tab
+   following space).  We now omit the space after the comment char in
+   such a case.
+   (merge d55aeb7 jc/strbuf-add-lines-avoid-sp-ht-sequence later to maint).
 
  * "git ls-tree" does not support path selection based on negative
    pathspecs, but did not error out when negative pathspecs are given.
