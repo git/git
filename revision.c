@@ -1441,7 +1441,7 @@ static void prepare_show_merge(struct rev_info *revs)
 	other = lookup_commit_or_die(sha1, "MERGE_HEAD");
 	add_pending_object(revs, &head->object, "HEAD");
 	add_pending_object(revs, &other->object, "MERGE_HEAD");
-	bases = get_merge_bases(head, other, 1);
+	bases = get_merge_bases(head, other);
 	add_rev_cmdline_list(revs, bases, REV_CMD_MERGE_BASE, UNINTERESTING | BOTTOM);
 	add_pending_commit_list(revs, bases, UNINTERESTING | BOTTOM);
 	free_commit_list(bases);
@@ -1546,7 +1546,7 @@ int handle_revision_arg(const char *arg_, struct rev_info *revs, int flags, unsi
 				     : lookup_commit_reference(b_obj->sha1));
 				if (!a || !b)
 					goto missing;
-				exclude = get_merge_bases(a, b, 1);
+				exclude = get_merge_bases(a, b);
 				add_rev_cmdline_list(revs, exclude,
 						     REV_CMD_MERGE_BASE,
 						     flags_exclude);

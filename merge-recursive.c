@@ -1901,7 +1901,7 @@ int merge_recursive(struct merge_options *o,
 	}
 
 	if (!ca) {
-		ca = get_merge_bases(h1, h2, 1);
+		ca = get_merge_bases(h1, h2);
 		ca = reverse_commit_list(ca);
 	}
 

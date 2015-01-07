@@ -1312,7 +1312,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 	if (!remoteheads)
 		; /* already up-to-date */
 	else if (!remoteheads->next)
-		common = get_merge_bases(head_commit, remoteheads->item, 1);
+		common = get_merge_bases(head_commit, remoteheads->item);
 	else {
 		struct commit_list *list = remoteheads;
 		commit_list_insert(head_commit, &list);
@@ -1409,7 +1409,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 			 * merge_bases again, otherwise "git merge HEAD^
 			 * HEAD^^" would be missed.
 			 */
-			common_one = get_merge_bases(head_commit, j->item, 1);
+			common_one = get_merge_bases(head_commit, j->item);
 			if (hashcmp(common_one->item->object.sha1,
 				j->item->object.sha1)) {
 				up_to_date = 0;
