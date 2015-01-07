@@ -141,6 +141,11 @@ Note that no attempts whatsoever are made to validate the encoding.
 	configuration value; if that is unspecified, git will use 8bit and not
 	add a Content-Transfer-Encoding header.
 
+--xmailer::
+--no-xmailer::
+	Add (or prevent adding) the "X-Mailer:" header.  By default,
+	the header is added, but it can be turned off by setting the
+	`sendemail.xmailer` configuration variable to `false`.
 
 Sending
 ~~~~~~~

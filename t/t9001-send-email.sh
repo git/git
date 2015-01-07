@@ -1564,4 +1564,37 @@ test_expect_success $PREREQ 'sendemail.aliasfile=~/.mailrc' '
 	grep "^!someone@example\.org!$" commandline1
 '
 
+do_xmailer_test () {
+	expected=$1 params=$2 &&
+	git format-patch -1 &&
+	git send-email \
+		--from="Example <nobody@example.com>" \
+		--to=someone@example.com \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		$params \
+		0001-*.patch \
+		2>errors >out &&
+	{ grep '^X-Mailer:' out || :; } >mailer &&
+	test_line_count = $expected mailer
+}
+
+test_expect_success $PREREQ '--[no-]xmailer without any configuration' '
+	do_xmailer_test 1 "--xmailer" &&
+	do_xmailer_test 0 "--no-xmailer"
+'
+
+test_expect_success $PREREQ '--[no-]xmailer with sendemail.xmailer=true' '
+	test_config sendemail.xmailer true &&
+	do_xmailer_test 1 "" &&
+	do_xmailer_test 0 "--no-xmailer" &&
+	do_xmailer_test 1 "--xmailer"
+'
+
+test_expect_success $PREREQ '--[no-]xmailer with sendemail.xmailer=false' '
+	test_config sendemail.xmailer false &&
+	do_xmailer_test 0 "" &&
+	do_xmailer_test 0 "--no-xmailer" &&
+	do_xmailer_test 1 "--xmailer"
+'
+
 test_done

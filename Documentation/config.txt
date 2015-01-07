@@ -2329,6 +2329,7 @@ sendemail.smtpuser::
 sendemail.thread::
 sendemail.transferencoding::
 sendemail.validate::
+sendemail.xmailer::
 	See linkgit:git-send-email[1] for description.
 
 sendemail.signedoffcc::
