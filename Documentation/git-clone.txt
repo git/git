@@ -12,7 +12,7 @@ SYNOPSIS
 'git clone' [--template=<template_directory>]
 	  [-l] [-s] [--no-hardlinks] [-q] [-n] [--bare] [--mirror]
 	  [-o <name>] [-b <name>] [-u <upload-pack>] [--reference <repository>]
-	  [--separate-git-dir <git dir>]
+	  [--dissociate] [--separate-git-dir <git dir>]
 	  [--depth <depth>] [--[no-]single-branch]
 	  [--recursive | --recurse-submodules] [--] <repository>
 	  [<directory>]
@@ -98,7 +98,14 @@ objects from the source repository into a pack in the cloned repository.
 	require fewer objects to be copied from the repository
 	being cloned, reducing network and local storage costs.
 +
-*NOTE*: see the NOTE for the `--shared` option.
+*NOTE*: see the NOTE for the `--shared` option, and also the
+`--dissociate` option.
+
+--dissociate::
+	Borrow the objects from reference repositories specified
+	with the `--reference` options only to reduce network
+	transfer and stop borrowing from them after a clone is made
+	by making necessary local copies of borrowed objects.
 
 --quiet::
 -q::

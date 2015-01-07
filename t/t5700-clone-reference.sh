@@ -198,4 +198,21 @@ test_expect_success 'clone using repo pointed at by gitfile as reference' '
 	test_cmp expected "$base_dir/O/.git/objects/info/alternates"
 '
 
+test_expect_success 'clone and dissociate from reference' '
+	git init P &&
+	(
+		cd P &&	test_commit one
+	) &&
+	git clone P Q &&
+	(
+		cd Q && test_commit two
+	) &&
+	git clone --no-local --reference=P Q R &&
+	git clone --no-local --reference=P --dissociate Q S &&
+	# removing the reference P would corrupt R but not S
+	rm -fr P &&
+	test_must_fail git -C R fsck &&
+	git -C S fsck
+'
+
 test_done
