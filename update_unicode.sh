@@ -27,11 +27,14 @@ fi &&
 		fi &&
 		make
 	) &&
-	echo "static const struct interval zero_width[] = {" >$UNICODEWIDTH_H &&
-	UNICODE_DIR=. ./uniset/uniset --32 cat:Me,Mn,Cf + U+1160..U+11FF - U+00AD |
-	grep -v plane >>$UNICODEWIDTH_H &&
-	echo "};" >>$UNICODEWIDTH_H &&
-	echo "static const struct interval double_width[] = {" >>$UNICODEWIDTH_H &&
-	UNICODE_DIR=. ./uniset/uniset --32 eaw:F,W >>$UNICODEWIDTH_H &&
-	echo "};" >>$UNICODEWIDTH_H
+	UNICODE_DIR=. && export UNICODE_DIR &&
+	cat >$UNICODEWIDTH_H <<-EOF
+	static const struct interval zero_width[] = {
+		$(uniset/uniset --32 cat:Me,Mn,Cf + U+1160..U+11FF - U+00AD |
+		  grep -v plane)
+	};
+	static const struct interval double_width[] = {
+		$(uniset/uniset --32 eaw:F,W)
+	};
+	EOF
 )
