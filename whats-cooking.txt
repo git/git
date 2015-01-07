@@ -1,19 +1,19 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Dec 2014, #05; Mon, 29)
+Subject: What's cooking in git.git (Jan 2015, #01; Tue, 6)
 X-master-at: c5b9256360b06efb9453c1627b78b14598e288b8
 X-next-at: cc831f245cfe79ce0a9b574baf3c07960f338270
 
-What's cooking in git.git (Dec 2014, #05; Mon, 29)
+What's cooking in git.git (Jan 2015, #01; Tue, 6)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-It has been understandably somewhat a slow week, and this will be
-the last issue of "What's cooking" report for this year.  See you
-all in the new year.
+A (somewhat belated) happy new year, everybody.  Sorry for being
+silent for a few more days than I intended to.  I'll try to get sick
+and recover before a long holiday ends the next time.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -21,97 +21,107 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* jc/t9001-modernise (2014-11-25) 5 commits
-  (merged to 'next' on 2014-12-23 at 3a2ec87)
- + t9001: style modernisation phase #5
- + t9001: style modernisation phase #4
- + t9001: style modernisation phase #3
- + t9001: style modernisation phase #2
- + t9001: style modernisation phase #1
-
-
-* mh/update-ref-verify (2014-12-11) 2 commits
-  (merged to 'next' on 2014-12-23 at 3aa9a62)
- + update-ref: fix "verify" command with missing <oldvalue>
- + t1400: add some more tests of "update-ref --stdin"'s verify command
-
- "git update-ref --stdin"'s verify command did not work well when
- <oldvalue>, which is documented as optional, was missing.
-
---------------------------------------------------
 [New Topics]
 
-* bw/maint-0090-awk-tweak (2014-12-23) 1 commit
-  (merged to 'next' on 2014-12-29 at 9301c36)
- + t0090: tweak awk statement for Solaris /usr/xpg4/bin/awk
+* cj/grep-none-match (2015-01-06) 1 commit
+ - git-log: added --none-match option
 
- Will merge to 'master'.
+ "git log --none-match --grep=WIP" will show only commits that are
+ not marked as WIP.
 
-
-* cc/bisect-rev-parsing (2014-12-29) 2 commits
- - bisect: add test to check that revs are properly parsed
- - bisect: parse revs before passing them to check_expected_revs()
-
- The logic in "git bisect bad HEAD" etc. to avoid forcing the test
- of the common ancestor of bad and good commits was broken.
-
- Will merge to 'next'.
+ I think "git grep -l --none-match -e foo -e bar" ought to work with
+ the same change but the patch does not seem to go far enough to do
+ so.
 
 
-* es/checkout-index-temp (2014-12-29) 5 commits
- - checkout-index: fix --temp relative path mangling
- - t2004: demonstrate broken relative path printing
- - t2004: standardize file naming in symlink test
- - t2004: drop unnecessary write-tree/read-tree
- - t2004: modernize style
+* jk/prune-packed-server-info (2015-01-06) 2 commits
+ - update-server-info: create info/* with mode 0666
+ - t1301: set umask in reflog sharedrepository=group test
 
- "git checkout-index --temp=$target $path" did not work correctly
- for paths outside the current subdirectory in the project.
-
- Will merge to 'next'.
+ Fix recent breakage in Git 2.2 that started creating info/refs and
+ objects/info/packs files with permission bits tighter than user's
+ umask.
 
 
-* js/remote-add-with-insteadof (2014-12-23) 2 commits
- - Add a regression test for 'git remote add <existing> <same-url>'
- - git remote: allow adding remotes agreeing with url.<...>.insteadOf
+* km/imap-send-libcurl-options (2015-01-06) 2 commits
+ - imap-send.c: set CURLOPT_USE_SSL to CURLUSESSL_TRY
+ - imap-send.c: support GIT_CURL_VERBOSE
+ (this branch uses br/imap-send-verbosity and br/imap-send-via-libcurl.)
 
- "git remote add $name $URL" is now allowed when "url.$URL.insteadOf"
- is already defined.
-
-
-* rs/plug-strbuf-leak-in-lock-ref (2014-12-29) 1 commit
- - refs: plug strbuf leak in lock_ref_sha1_basic()
+ Now imap-send learned to talk to the server using cURL library,
+ allow the same GIT_CURL_VERBOSE environment variable to control the
+ verbosity of the chattering.
 
  Will merge to 'next'.
 
 
-* rs/plug-strbuf-leak-in-merge (2014-12-29) 1 commit
- - merge: release strbuf after use in suggest_conflicts()
+* km/log-usage-string-i18n (2015-01-06) 1 commit
+ - log.c: fix translation markings
 
  Will merge to 'next'.
 
 
-* rs/simplify-parsing-commit-tree-S (2014-12-29) 1 commit
- - commit-tree: simplify parsing of option -S using skip_prefix()
+* rc/for-each-ref-tracking (2015-01-06) 2 commits
+ - SQUASH???
+ - for-each-ref: always check stat_tracking_info()'s return value
+
+ Will merge to 'next', probably after squashing the fixup.
+
+
+* rh/test-color-avoid-terminfo-in-original-home (2015-01-06) 1 commit
+ - test-lib.sh: do tests for color support after changing HOME
+
+ We try to see if "tput" gives a useful result before switching TERM
+ to dumb and moving HOME to point to our fake location for stability
+ of the tests, and then use the command when coloring the output
+ from the tests, but there is no guarantee "tput" works after
+ switching HOME.
 
  Will merge to 'next'.
 
-
-* rs/simplify-transport-get (2014-12-29) 1 commit
- - transport: simplify duplicating a substring in transport_get() using xmemdupz()
-
- Will merge to 'next'.
-
-
-* sb/doc-submitting-patches-keep-notes (2014-12-29) 1 commit
- - Documentation/SubmittingPatches: Explain the rationale of git notes
+* sp/subtree-doc (2015-01-06) 1 commit
+ - subtree: fix AsciiDoc list item continuation
 
  Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
+
+* jn/rerere-fail-on-auto-update-failure (2014-12-03) 2 commits
+ - SQUASH???
+ - rerere: error out on autoupdate failure
+
+ Will be rerolled as a part of a larger series.
+
+
+* jn/doc-api-errors (2014-12-04) 1 commit
+ - doc: document error handling functions and conventions
+
+ For discussion.
+
+
+* sb/copy-fd-errno (2014-11-17) 1 commit
+ - copy.c: make copy_fd preserve meaningful errno
+
+ Will be rerolled as a part of a larger series.
+
+
+* ye/http-accept-language (2014-12-22) 1 commit
+ - http: Add Accept-Language header if possible
+
+ Expecting a reroll ($gmane/261810).
+
+
+* jk/strbuf-doc-to-header (2014-12-12) 4 commits
+ - strbuf.h: reorganize api function grouping headers
+ - strbuf.h: format asciidoc code blocks as 4-space indent
+ - strbuf.h: drop asciidoc list formatting from API docs
+ - strbuf: migrate api-strbuf.txt documentation to strbuf.h
+
+ Resolve the "doc vs header" to favor the latter.
+
+ Expecting to be rerolled.
+
 
 * pw/remote-set-url-fetch (2014-11-26) 1 commit
  - remote: add --fetch and --both options to set-url
@@ -263,6 +273,74 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* bw/maint-0090-awk-tweak (2014-12-23) 1 commit
+  (merged to 'next' on 2014-12-29 at 9301c36)
+ + t0090: tweak awk statement for Solaris /usr/xpg4/bin/awk
+
+ Will merge to 'master'.
+
+
+* cc/bisect-rev-parsing (2014-12-29) 2 commits
+ - bisect: add test to check that revs are properly parsed
+ - bisect: parse revs before passing them to check_expected_revs()
+
+ The logic in "git bisect bad HEAD" etc. to avoid forcing the test
+ of the common ancestor of bad and good commits was broken.
+
+ Will merge to 'next'.
+
+
+* es/checkout-index-temp (2014-12-29) 5 commits
+ - checkout-index: fix --temp relative path mangling
+ - t2004: demonstrate broken relative path printing
+ - t2004: standardize file naming in symlink test
+ - t2004: drop unnecessary write-tree/read-tree
+ - t2004: modernize style
+
+ "git checkout-index --temp=$target $path" did not work correctly
+ for paths outside the current subdirectory in the project.
+
+ Will merge to 'next'.
+
+
+* js/remote-add-with-insteadof (2014-12-23) 2 commits
+ - Add a regression test for 'git remote add <existing> <same-url>'
+ - git remote: allow adding remotes agreeing with url.<...>.insteadOf
+
+ "git remote add $name $URL" is now allowed when "url.$URL.insteadOf"
+ is already defined.
+
+
+* rs/plug-strbuf-leak-in-lock-ref (2014-12-29) 1 commit
+ - refs: plug strbuf leak in lock_ref_sha1_basic()
+
+ Will merge to 'next'.
+
+
+* rs/plug-strbuf-leak-in-merge (2014-12-29) 1 commit
+ - merge: release strbuf after use in suggest_conflicts()
+
+ Will merge to 'next'.
+
+
+* rs/simplify-parsing-commit-tree-S (2014-12-29) 1 commit
+ - commit-tree: simplify parsing of option -S using skip_prefix()
+
+ Will merge to 'next'.
+
+
+* rs/simplify-transport-get (2014-12-29) 1 commit
+ - transport: simplify duplicating a substring in transport_get() using xmemdupz()
+
+ Will merge to 'next'.
+
+
+* sb/doc-submitting-patches-keep-notes (2014-12-29) 1 commit
+ - Documentation/SubmittingPatches: Explain the rationale of git notes
+
+ Will merge to 'next'.
+
+
 * bb/update-unicode-table (2014-12-22) 5 commits
   (merged to 'next' on 2014-12-23 at b4ce669)
  + update_unicode.sh: delete the command group
@@ -324,6 +402,9 @@ of the repositories listed at
  "git push" has been taught a "--atomic" option that makes push to
  update more than one ref an "all-or-none" affair.
 
+ What is queued here is a few iterations old; need to pick a new one
+ up when the dust settles.
+
 
 * sb/dco-indentation-fix (2014-12-22) 1 commit
   (merged to 'next' on 2014-12-23 at c865690)
@@ -348,23 +429,6 @@ of the repositories listed at
  function stomped on the exit status.
 
  Will merge to 'master'.
-
-
-* ye/http-accept-language (2014-12-22) 1 commit
- - http: Add Accept-Language header if possible
-
- Expecting a reroll ($gmane/261810).
-
-
-* jk/strbuf-doc-to-header (2014-12-12) 4 commits
- - strbuf.h: reorganize api function grouping headers
- - strbuf.h: format asciidoc code blocks as 4-space indent
- - strbuf.h: drop asciidoc list formatting from API docs
- - strbuf: migrate api-strbuf.txt documentation to strbuf.h
-
- Resolve the "doc vs header" to favor the latter.
-
- Expecting to be rerolled.
 
 
 * mh/reflog-expire (2014-12-22) 24 commits
@@ -401,11 +465,13 @@ of the repositories listed at
  a sore thumb).
 
 
-* po/doc-core-ignorestat (2014-12-12) 1 commit
+* po/doc-core-ignorestat (2015-01-06) 3 commits
+ - SQUASH???
+ - doc: core.ignoreStat update, and clarify the --assume-unchanged effect
   (merged to 'next' on 2014-12-23 at d2b3e84)
  + doc: core.ignoreStat clarify the --assume-unchanged effect
 
- Will merge to 'master'.
+ Will merge to 'next' after squashing in the fixup.
 
 
 * jk/add-i-read-error (2014-12-15) 1 commit
@@ -437,19 +503,6 @@ of the repositories listed at
  right.
 
  Will merge to 'master'.
-
-
-* jn/doc-api-errors (2014-12-04) 1 commit
- - doc: document error handling functions and conventions
-
- For discussion.
-
-
-* jn/rerere-fail-on-auto-update-failure (2014-12-03) 2 commits
- - SQUASH???
- - rerere: error out on autoupdate failure
-
- Will be rerolled as a part of a larger series.
 
 
 * jc/push-to-checkout (2014-12-01) 2 commits
@@ -499,6 +552,8 @@ of the repositories listed at
  A new "git list-files" Porcelain command, "ls-files" with bells and
  whistles.
 
+ Comments?
+
 
 * nd/multiple-work-trees (2014-12-01) 34 commits
  - git-common-dir: make "modules/" per-working-directory directory
@@ -541,12 +596,6 @@ of the repositories listed at
  by making the borrowee and borrowers aware of each other.
 
 
-* sb/copy-fd-errno (2014-11-17) 1 commit
- - copy.c: make copy_fd preserve meaningful errno
-
- Will be rerolled as a part of a larger series.
-
-
 * jk/approxidate-avoid-y-d-m-over-future-dates (2014-11-13) 2 commits
   (merged to 'next' on 2014-12-15 at 397e986)
  + approxidate: allow ISO-like dates far in the future
@@ -568,7 +617,7 @@ of the repositories listed at
 * br/imap-send-verbosity (2014-11-05) 1 commit
   (merged to 'next' on 2014-12-15 at 504af0b)
  + imap-send: use parse options API to determine verbosity
- (this branch is used by br/imap-send-via-libcurl.)
+ (this branch is used by br/imap-send-via-libcurl and km/imap-send-libcurl-options.)
 
  Will merge to 'master'.
 
@@ -576,7 +625,7 @@ of the repositories listed at
 * br/imap-send-via-libcurl (2014-11-10) 1 commit
   (merged to 'next' on 2014-12-15 at 90db637)
  + git-imap-send: use libcurl for implementation
- (this branch uses br/imap-send-verbosity.)
+ (this branch is used by km/imap-send-libcurl-options; uses br/imap-send-verbosity.)
 
  Newer libCurl knows how to talk IMAP; "git imap-send" has been
  updated to use this instead of a hand-rolled OpenSSL calls.
@@ -617,8 +666,8 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* nd/untracked-cache (2014-12-15) 24 commits
- - SQUASH???
+* nd/untracked-cache (2015-01-06) 24 commits
+ - fixup! untracked cache: load from UNTR index extension
  - untracked cache: guard and disable on system changes
  - mingw32: add uname()
  - t7063: tests for untracked cache
@@ -676,136 +725,3 @@ of the repositories listed at
 
 --------------------------------------------------
 [Discarded]
-
-* mb/enable-lib-terminal-test-on-newer-darwin (2014-11-14) 1 commit
- . t/lib-terminal: allow TTY tests to run under recent Mac OS
-
- We probably should drop this ($gmane/259609).
-
-
-* zk/grep-color-words (2014-10-27) 2 commits
- . Revert "grep: fix match highlighting for combined patterns with context lines"
- . grep: fix match highlighting for combined patterns with context lines
-
- rs/grep-color-words topic solves it in a different way.
-
- Will discard.
-
-
-* jn/dedup-doc-header (2014-12-10) 2 commits
- . put string-list API documentation in one place
- . put strbuf API documentation in one place
-
- We would want to have an easy way for developers to learn about
- APIs, and also a way to encourage them to keep the API
- documentation up to date when they make changes.  Having header
- comments and API documentation duplicated in two different places
- risked them going out of sync.
-
- The approach taken by jk/strbuf-doc-to-header is the other way
- around, which people seem to prefer, so this is discarded.
-
-
-* jt/timer-settime (2014-08-29) 6 commits
- . use timer_settime() for new platforms
- . autoconf: check for timer_settime()
- . autoconf: check for struct itimerspec
- . autoconf: check for struct sigevent
- . autoconf: check for struct timespec
- . autoconf: check for timer_t
-
- Was wanting for a reroll.
-
-
-* rs/ref-transaction-reflog (2014-11-03) 15 commits
- . refs.c: allow deleting refs with a broken sha1
- . refs.c: remove lock_any_ref_for_update
- . refs.c: make unlock_ref/close_ref/commit_ref static
- . refs.c: rename log_ref_setup to create_reflog
- . reflog.c: use a reflog transaction when writing during expire
- . refs.c: allow multiple reflog updates during a single transaction
- . refs.c: only write reflog update if msg is non-NULL
- . refs.c: add a flag to allow reflog updates to truncate the log
- . refs.c: add a transaction function to append a reflog entry
- . copy.c: make copy_fd preserve meaningful errno
- . refs.c: add a function to append a reflog entry to a fd
- . refs.c: add a new update_type field to ref_update
- . refs.c: rename the transaction functions
- . refs.c: make ref_transaction_delete a wrapper for ref_transaction_update
- . refs.c make ref_transaction_create a wrapper to ref_transaction_update
- (this branch is used by rs/ref-transaction-rename and rs/ref-transaction-send-pack.)
-
- Stefan Beller started working on reorganizing these three series,
- which unfortunately did not see much reviews.
-
-
-* rs/ref-transaction-rename (2014-11-07) 16 commits
- . refs.c: add an err argument to pack_refs
- . refs.c: make lock_packed_refs take an err argument
- . refs.c: make add_packed_ref return an error instead of calling die
- . refs.c: replace the onerr argument in update_ref with a strbuf err
- . refs.c: make the *_packed_refs functions static
- . refs.c: make repack_without_refs static
- . remote.c: use a transaction for deleting refs
- . refs.c: write updates to packed refs when a transaction has more than one ref
- . refs.c: move reflog updates into its own function
- . refs.c: rollback the lockfile before we die() in repack_without_refs
- . refs.c: update rename_ref to use a transaction
- . refs.c: add transaction support for renaming a reflog
- . refs.c: use a stringlist for repack_without_refs
- . refs.c: use packed refs when deleting refs during a transaction
- . refs.c: return error instead of dying when locking fails during transaction
- . refs.c: allow passing raw git_committer_info as email to _update_reflog
- (this branch is used by rs/ref-transaction-send-pack; uses rs/ref-transaction-reflog.)
-
- Stefan Beller started working on reorganizing these three series,
- which unfortunately did not see much reviews.
-
-
-* rs/ref-transaction-send-pack (2014-11-07) 7 commits
- . refs.c: add an err argument to create_symref
- . refs.c: add an err argument to create_reflog
- . t5543-atomic-push.sh: add basic tests for atomic pushes
- . push.c: add an --atomic-push argument
- . receive-pack.c: use a single transaction when atomic-push is negotiated
- . send-pack.c: add an --atomic-push command line argument
- . receive-pack.c: add protocol support to negotiate atomic-push
- (this branch uses rs/ref-transaction-reflog and rs/ref-transaction-rename.)
-
- Stefan Beller started working on reorganizing these three series,
- which unfortunately did not see much reviews.
-
-
-* sb/simplify-repack-without-refs (2014-11-20) 1 commit
- . refs.c: use a string_list for repack_without_refs
-
-
-* sb/log-ref-write-fd (2014-11-20) 1 commit
- . refs.c: add a function to append a reflog entry to a fd
-
- Will be rerolled as a part of a larger series.
-
-
-* sb/ref-transaction-unify-to-update (2014-11-20) 2 commits
- . refs.c: make ref_transaction_delete a wrapper for ref_transaction_update
- . refs.c: make ref_transaction_create a wrapper for ref_transaction_update
- (this branch is used by sb/ref-transaction-reflog.)
-
- Code simplification.
-
- Will be rerolled as a part of a larger series.
-
-
-* sb/write-sha1-update-reflog (2014-11-24) 1 commit
- . refs.c: move reflog updates into its own function
-
- Moves a part of function around to add a helper that still only has
- one caller.  Need to see how this helps in a bigger picture.
-
-
-* sb/ref-transaction-reflog (2014-12-03) 2 commits
- . refs.c: rename transaction.updates to transaction.ref_updates
- . refs.c: rename the transaction functions
- (this branch uses sb/ref-transaction-unify-to-update.)
-
- Will be rerolled as a part of a larger series.
