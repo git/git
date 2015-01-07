@@ -349,6 +349,21 @@ dot-backslash-case .\\\\.GIT\\\\foobar
 dotgit-case-backslash .git\\\\foobar
 EOF
 
+test_expect_success 'fsck allows .Ňit' '
+	(
+		git init not-dotgit &&
+		cd not-dotgit &&
+		echo content >file &&
+		git add file &&
+		git commit -m base &&
+		blob=$(git rev-parse :file) &&
+		printf "100644 blob $blob\t.\\305\\207it" >tree &&
+		tree=$(git mktree <tree) &&
+		git fsck 2>err &&
+		test_line_count = 0 err
+	)
+'
+
 # create a static test repo which is broken by omitting
 # one particular object ($1, which is looked up via rev-parse
 # in the new repository).
