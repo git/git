@@ -80,12 +80,12 @@ test_expect_success 'diff.submodule unset with extra file' '
 	run_test $THIRD second-submodule
 '
 
-test_expect_failure 'diff.submodule=log' '
+test_expect_success 'diff.submodule=log' '
 	test_config diff.submodule log &&
 	run_test $SECOND first-submodule
 '
 
-test_expect_failure 'diff.submodule=log with extra file' '
+test_expect_success 'diff.submodule=log with extra file' '
 	test_config diff.submodule log &&
 	run_test $THIRD second-submodule
 '
