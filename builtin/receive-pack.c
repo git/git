@@ -1061,9 +1061,7 @@ static void warn_if_skipped_connectivity_check(struct command *commands,
 		}
 	}
 	if (!checked_connectivity)
-		error("BUG: run 'git fsck' for safety.\n"
-		      "If there are errors, try to remove "
-		      "the reported refs above");
+		die("BUG: connectivity check skipped???");
 }
 
 static void execute_commands(struct command *commands,
