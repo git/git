@@ -35,7 +35,7 @@
 /*
  * If you have 32 registers or more, the compiler can (and should)
  * try to change the array[] accesses into registers. However, on
- * machines with less than ~25 registers, that won't really work,
+ * machines with about less than 25 registers, that won't really work,
  * and at least gcc will make an unholy mess of it.
  *
  * So to avoid that mess which just slows things down, we force

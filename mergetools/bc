@@ -4,7 +4,7 @@ diff_cmd () {
 
 merge_cmd () {
 	touch "$BACKUP"
-	if $base_present
+	if base_present
 	then
 		"$merge_tool_path" "$LOCAL" "$REMOTE" "$BASE" \
 			-mergeoutput="$MERGED"
