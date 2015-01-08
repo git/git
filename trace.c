@@ -322,7 +322,7 @@ int trace_want(struct trace_key *key)
 	return !!get_trace_fd(key);
 }
 
-#ifdef HAVE_CLOCK_GETTIME
+#if defined(HAVE_CLOCK_GETTIME) && defined(HAVE_CLOCK_MONOTONIC)
 
 static inline uint64_t highres_nanos(void)
 {

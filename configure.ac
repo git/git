@@ -947,6 +947,28 @@ AC_CHECK_LIB([iconv], [locale_charset],
                      [CHARSET_LIB=-lcharset])])
 GIT_CONF_SUBST([CHARSET_LIB])
 #
+# Define HAVE_CLOCK_GETTIME=YesPlease if clock_gettime is available.
+GIT_CHECK_FUNC(clock_gettime,
+	[HAVE_CLOCK_GETTIME=YesPlease],
+	[HAVE_CLOCK_GETTIME=])
+GIT_CONF_SUBST([HAVE_CLOCK_GETTIME])
+
+AC_DEFUN([CLOCK_MONOTONIC_SRC], [
+AC_LANG_PROGRAM([[
+#include <time.h>
+clockid_t id = CLOCK_MONOTONIC;
+]])])
+
+#
+# Define HAVE_CLOCK_MONOTONIC=YesPlease if CLOCK_MONOTONIC is available.
+AC_MSG_CHECKING([for CLOCK_MONOTONIC])
+AC_COMPILE_IFELSE([CLOCK_MONOTONIC_SRC],
+	[AC_MSG_RESULT([yes])
+	HAVE_CLOCK_MONOTONIC=YesPlease],
+	[AC_MSG_RESULT([no])
+	HAVE_CLOCK_MONOTONIC=])
+GIT_CONF_SUBST([HAVE_CLOCK_MONOTONIC])
+#
 # Define NO_SETITIMER if you don't have setitimer.
 GIT_CHECK_FUNC(setitimer,
 [NO_SETITIMER=],

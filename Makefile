@@ -343,6 +343,8 @@ all::
 # return NULL when it receives a bogus time_t.
 #
 # Define HAVE_CLOCK_GETTIME if your platform has clock_gettime in librt.
+#
+# Define HAVE_CLOCK_MONOTONIC if your platform has CLOCK_MONOTONIC in librt.
 
 GIT-VERSION-FILE: FORCE
 	@$(SHELL_PATH) ./GIT-VERSION-GEN
@@ -1400,6 +1402,10 @@ endif
 ifdef HAVE_CLOCK_GETTIME
 	BASIC_CFLAGS += -DHAVE_CLOCK_GETTIME
 	EXTLIBS += -lrt
+endif
+
+ifdef HAVE_CLOCK_MONOTONIC
+	BASIC_CFLAGS += -DHAVE_CLOCK_MONOTONIC
 endif
 
 ifeq ($(TCLTK_PATH),)
