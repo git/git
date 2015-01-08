@@ -754,6 +754,19 @@ AC_CHECK_TYPES([struct itimerval],
 [#include <sys/time.h>])
 GIT_CONF_SUBST([NO_STRUCT_ITIMERVAL])
 #
+# Define USE_ST_TIMESPEC=YesPlease when stat.st_mtimespec.tv_nsec exists.
+# Define NO_NSEC=YesPlease when neither stat.st_mtim.tv_nsec nor
+# stat.st_mtimespec.tv_nsec exists.
+AC_CHECK_MEMBER([struct stat.st_mtimespec.tv_nsec])
+AC_CHECK_MEMBER([struct stat.st_mtim.tv_nsec])
+if test x$ac_cv_member_struct_stat_st_mtimespec_tv_nsec = xyes; then
+	USE_ST_TIMESPEC=YesPlease
+	GIT_CONF_SUBST([USE_ST_TIMESPEC])
+elif test x$ac_cv_member_struct_stat_st_mtim_tv_nsec != xyes; then
+	NO_NSEC=YesPlease
+	GIT_CONF_SUBST([NO_NSEC])
+fi
+#
 # Define NO_D_INO_IN_DIRENT if you don't have d_ino in your struct dirent.
 AC_CHECK_MEMBER(struct dirent.d_ino,
 [NO_D_INO_IN_DIRENT=],
