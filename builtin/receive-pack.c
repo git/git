@@ -1064,6 +1064,18 @@ static void warn_if_skipped_connectivity_check(struct command *commands,
 		die("BUG: connectivity check skipped???");
 }
 
+static void execute_commands_non_atomic(struct command *commands,
+					struct shallow_info *si)
+{
+	struct command *cmd;
+	for (cmd = commands; cmd; cmd = cmd->next) {
+		if (!should_process_cmd(cmd))
+			continue;
+
+		cmd->error_string = update(cmd, si);
+	}
+}
+
 static void execute_commands(struct command *commands,
 			     const char *unpacker_error,
 			     struct shallow_info *si)
@@ -1098,12 +1110,7 @@ static void execute_commands(struct command *commands,
 	free(head_name_to_free);
 	head_name = head_name_to_free = resolve_refdup("HEAD", 0, sha1, NULL);
 
-	for (cmd = commands; cmd; cmd = cmd->next) {
-		if (!should_process_cmd(cmd))
-			continue;
-
-		cmd->error_string = update(cmd, si);
-	}
+	execute_commands_non_atomic(commands, si);
 
 	if (shallow_update)
 		warn_if_skipped_connectivity_check(commands, si);
