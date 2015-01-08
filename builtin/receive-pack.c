@@ -37,6 +37,7 @@ static int receive_fsck_objects = -1;
 static int transfer_fsck_objects = -1;
 static int receive_unpack_limit = -1;
 static int transfer_unpack_limit = -1;
+static int advertise_atomic_push = 1;
 static int unpack_limit = 100;
 static int report_status;
 static int use_sideband;
@@ -159,6 +160,11 @@ static int receive_pack_config(const char *var, const char *value, void *cb)
 		return 0;
 	}
 
+	if (strcmp(var, "receive.advertiseatomic") == 0) {
+		advertise_atomic_push = git_config_bool(var, value);
+		return 0;
+	}
+
 	return git_default_config(var, value, cb);
 }
 
@@ -174,6 +180,8 @@ static void show_ref(const char *path, const unsigned char *sha1)
 
 		strbuf_addstr(&cap,
 			      "report-status delete-refs side-band-64k quiet");
+		if (advertise_atomic_push)
+			strbuf_addstr(&cap, " atomic");
 		if (prefer_ofs_delta)
 			strbuf_addstr(&cap, " ofs-delta");
 		if (push_cert_nonce)
@@ -1263,6 +1271,9 @@ static struct command *read_head_info(struct sha1_array *shallow)
 				use_sideband = LARGE_PACKET_MAX;
 			if (parse_feature_request(feature_list, "quiet"))
 				quiet = 1;
+			if (advertise_atomic_push
+			    && parse_feature_request(feature_list, "atomic"))
+				use_atomic = 1;
 		}
 
 		if (!strcmp(line, "push-cert")) {
