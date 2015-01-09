@@ -1,10 +1,7 @@
 #include "builtin.h"
-#include "cache.h"
 #include "exec_cmd.h"
 #include "help.h"
-#include "quote.h"
 #include "run-command.h"
-#include "commit.h"
 
 const char git_usage_string[] =
 	"git [--version] [--help] [-C <path>] [-c name=value]\n"
