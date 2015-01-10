@@ -2365,7 +2365,7 @@ sub _new {
 
 	# Older repos imported by us used $GIT_DIR/svn/foo instead of
 	# $GIT_DIR/svn/refs/remotes/foo when tracking refs/remotes/foo
-	if ($ref_id =~ m{^refs/remotes/(.*)}) {
+	if ($ref_id =~ m{^refs/remotes/(.+)}) {
 		my $old_dir = "$ENV{GIT_DIR}/svn/$1";
 		if (-d $old_dir && ! -d $dir) {
 			$dir = $old_dir;
