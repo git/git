@@ -79,8 +79,6 @@ static int cat_one_file(int opt, const char *exp_type, const char *obj_name)
 		if (type_from_string(exp_type) == OBJ_BLOB) {
 			unsigned char blob_sha1[20];
 			if (sha1_object_info(sha1, NULL) == OBJ_TAG) {
-				enum object_type type;
-				unsigned long size;
 				char *buffer = read_sha1_file(sha1, &type, &size);
 				const char *target;
 				if (!skip_prefix(buffer, "object ", &target) ||
