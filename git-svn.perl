@@ -337,6 +337,12 @@ for (my $i = 0; $i < @ARGV; $i++) {
 # make sure we're always running at the top-level working directory
 if ($cmd && $cmd =~ /(?:clone|init|multi-init)$/) {
 	$ENV{GIT_DIR} ||= ".git";
+	# catch the submodule case
+	if (-f $ENV{GIT_DIR}) {
+		open(my $fh, '<', $ENV{GIT_DIR}) or
+			die "failed to open $ENV{GIT_DIR}: $!\n";
+		$ENV{GIT_DIR} = $1 if <$fh> =~ /^gitdir: (.+)$/;
+	}
 } else {
 	my ($git_dir, $cdup);
 	git_cmd_try {
