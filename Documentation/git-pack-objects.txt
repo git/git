@@ -13,7 +13,7 @@ SYNOPSIS
 	[--no-reuse-delta] [--delta-base-offset] [--non-empty]
 	[--local] [--incremental] [--window=<n>] [--depth=<n>]
 	[--revs [--unpacked | --all]] [--stdout | base-name]
-	[--keep-true-parents] < object-list
+	[--shallow] [--keep-true-parents] < object-list
 
 
 DESCRIPTION
@@ -189,6 +189,11 @@ Note: A thin pack violates the packed archive format by omitting
 required objects and is thus unusable by Git without making it
 self-contained. Use `git index-pack --fix-thin`
 (see linkgit:git-index-pack[1]) to restore the self-contained property.
+
+--shallow::
+	Optimize a pack that will be provided to a client with a shallow
+	repository.  This option, combined with \--thin, can result in a
+	smaller pack at the cost of speed.
 
 --delta-base-offset::
 	A packed archive can express the base object of a delta as
