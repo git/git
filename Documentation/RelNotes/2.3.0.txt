@@ -74,6 +74,15 @@ UI, Workflows & Features
 
 Performance, Internal Implementation, Development Support etc.
 
+ * Earlier we made "rev-list --object-edge" more aggressively list the
+   objects at the edge commits, in order to reduce number of objects　
+   fetched into a shallow repository, but the change affected cases
+   other than "fetching into a shallow repository" and made it
+   unusably slow (e.g. fetching into a normal repository should not
+   have to suffer the overhead from extra processing).  Limit it to a
+   more specific case by introducing --objects-edge-aggressive, a new
+   option to rev-list.
+
  * Squelched useless compiler warnings on Mac OS X regarding the
    crypto API.
 
@@ -112,6 +121,14 @@ Fixes since v2.2
 Unless otherwise noted, all the fixes since v2.2 in the maintenance
 track are contained in this release (see the maintenance releases'
 notes for details).
+
+ * The logic in "git bisect bad HEAD" etc. to avoid forcing the test
+   of the common ancestor of bad and good commits was broken.
+   (merge 07913d5 cc/bisect-rev-parsing later to maint).
+
+ * "git checkout-index --temp=$target $path" did not work correctly
+   for paths outside the current subdirectory in the project.
+   (merge 74c4de5 es/checkout-index-temp later to maint).
 
  * The report from "git checkout" on a branch that builds on another
    local branch by setting its branch.*.merge to branch name (not a
