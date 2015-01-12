@@ -237,15 +237,18 @@ bisect_state() {
 		check_expected_revs "$rev" ;;
 	2,bad|*,good|*,skip)
 		shift
-		eval=''
+		hash_list=''
 		for rev in "$@"
 		do
 			sha=$(git rev-parse --verify "$rev^{commit}") ||
 				die "$(eval_gettext "Bad rev input: \$rev")"
-			eval="$eval bisect_write '$state' '$sha'; "
+			hash_list="$hash_list $sha"
 		done
-		eval "$eval"
-		check_expected_revs "$@" ;;
+		for rev in $hash_list
+		do
+			bisect_write "$state" "$rev"
+		done
+		check_expected_revs $hash_list ;;
 	*,bad)
 		die "$(gettext "'git bisect bad' can take only one argument.")" ;;
 	*)

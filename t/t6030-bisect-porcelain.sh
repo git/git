@@ -779,4 +779,13 @@ test_expect_success 'bisect log: only skip commits left' '
 	git bisect reset
 '
 
+test_expect_success '"git bisect bad HEAD" behaves as "git bisect bad"' '
+	git checkout parallel &&
+	git bisect start HEAD $HASH1 &&
+	git bisect good HEAD &&
+	git bisect bad HEAD &&
+	test "$HASH6" = $(git rev-parse --verify HEAD) &&
+	git bisect reset
+'
+
 test_done
