@@ -2334,7 +2334,7 @@ static struct ref_lock *lock_ref_sha1_basic(const char *refname,
 			struct strbuf err = STRBUF_INIT;
 			unable_to_lock_message(ref_file, errno, &err);
 			error("%s", err.buf);
-			strbuf_reset(&err);
+			strbuf_release(&err);
 			goto error_return;
 		}
 	}
