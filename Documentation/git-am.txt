@@ -83,7 +83,6 @@ default.   You can use `--no-utf8` to override this.
 	it is supposed to apply to and we have those blobs
 	available locally.
 
---ignore-date::
 --ignore-space-change::
 --ignore-whitespace::
 --whitespace=<option>::
