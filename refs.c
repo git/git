@@ -1068,8 +1068,10 @@ static const char PACKED_REFS_HEADER[] =
  * Return a pointer to the refname within the line (null-terminated),
  * or NULL if there was a problem.
  */
-static const char *parse_ref_line(char *line, unsigned char *sha1)
+static const char *parse_ref_line(struct strbuf *line, unsigned char *sha1)
 {
+	const char *ref;
+
 	/*
 	 * 42: the answer to everything.
 	 *
@@ -1078,22 +1080,23 @@ static const char *parse_ref_line(char *line, unsigned char *sha1)
 	 *  +1 (space in between hex and name)
 	 *  +1 (newline at the end of the line)
 	 */
-	int len = strlen(line) - 42;
+	if (line->len <= 42)
+		return NULL;
 
-	if (len <= 0)
+	if (get_sha1_hex(line->buf, sha1) < 0)
 		return NULL;
-	if (get_sha1_hex(line, sha1) < 0)
+	if (!isspace(line->buf[40]))
 		return NULL;
-	if (!isspace(line[40]))
-		return NULL;
-	line += 41;
-	if (isspace(*line))
-		return NULL;
-	if (line[len] != '\n')
-		return NULL;
-	line[len] = 0;
 
-	return line;
+	ref = line->buf + 41;
+	if (isspace(*ref))
+		return NULL;
+
+	if (line->buf[line->len - 1] != '\n')
+		return NULL;
+	line->buf[--line->len] = 0;
+
+	return ref;
 }
 
 /*
@@ -1126,16 +1129,15 @@ static const char *parse_ref_line(char *line, unsigned char *sha1)
 static void read_packed_refs(FILE *f, struct ref_dir *dir)
 {
 	struct ref_entry *last = NULL;
-	char refline[PATH_MAX];
+	struct strbuf line = STRBUF_INIT;
 	enum { PEELED_NONE, PEELED_TAGS, PEELED_FULLY } peeled = PEELED_NONE;
 
-	while (fgets(refline, sizeof(refline), f)) {
+	while (strbuf_getwholeline(&line, f, '\n') != EOF) {
 		unsigned char sha1[20];
 		const char *refname;
-		static const char header[] = "# pack-refs with:";
+		const char *traits;
 
-		if (!strncmp(refline, header, sizeof(header)-1)) {
-			const char *traits = refline + sizeof(header) - 1;
+		if (skip_prefix(line.buf, "# pack-refs with:", &traits)) {
 			if (strstr(traits, " fully-peeled "))
 				peeled = PEELED_FULLY;
 			else if (strstr(traits, " peeled "))
@@ -1144,7 +1146,7 @@ static void read_packed_refs(FILE *f, struct ref_dir *dir)
 			continue;
 		}
 
-		refname = parse_ref_line(refline, sha1);
+		refname = parse_ref_line(&line, sha1);
 		if (refname) {
 			int flag = REF_ISPACKED;
 
@@ -1160,10 +1162,10 @@ static void read_packed_refs(FILE *f, struct ref_dir *dir)
 			continue;
 		}
 		if (last &&
-		    refline[0] == '^' &&
-		    strlen(refline) == PEELED_LINE_LENGTH &&
-		    refline[PEELED_LINE_LENGTH - 1] == '\n' &&
-		    !get_sha1_hex(refline + 1, sha1)) {
+		    line.buf[0] == '^' &&
+		    line.len == PEELED_LINE_LENGTH &&
+		    line.buf[PEELED_LINE_LENGTH - 1] == '\n' &&
+		    !get_sha1_hex(line.buf + 1, sha1)) {
 			hashcpy(last->u.value.peeled, sha1);
 			/*
 			 * Regardless of what the file header said,
@@ -1173,6 +1175,8 @@ static void read_packed_refs(FILE *f, struct ref_dir *dir)
 			last->flag |= REF_KNOWS_PEELED;
 		}
 	}
+
+	strbuf_release(&line);
 }
 
 /*
