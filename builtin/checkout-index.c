@@ -18,7 +18,7 @@ static char topath[4][TEMPORARY_FILENAME_LENGTH + 1];
 
 static struct checkout state;
 
-static void write_tempfile_record(const char *name, int prefix_length)
+static void write_tempfile_record(const char *name, const char *prefix)
 {
 	int i;
 
@@ -35,14 +35,14 @@ static void write_tempfile_record(const char *name, int prefix_length)
 		fputs(topath[checkout_stage], stdout);
 
 	putchar('\t');
-	write_name_quoted(name + prefix_length, stdout, line_termination);
+	write_name_quoted_relative(name, prefix, stdout, line_termination);
 
 	for (i = 0; i < 4; i++) {
 		topath[i][0] = 0;
 	}
 }
 
-static int checkout_file(const char *name, int prefix_length)
+static int checkout_file(const char *name, const char *prefix)
 {
 	int namelen = strlen(name);
 	int pos = cache_name_pos(name, namelen);
@@ -71,7 +71,7 @@ static int checkout_file(const char *name, int prefix_length)
 
 	if (did_checkout) {
 		if (to_tempfile)
-			write_tempfile_record(name, prefix_length);
+			write_tempfile_record(name, prefix);
 		return errs > 0 ? -1 : 0;
 	}
 
@@ -106,7 +106,7 @@ static void checkout_all(const char *prefix, int prefix_length)
 		if (last_ce && to_tempfile) {
 			if (ce_namelen(last_ce) != ce_namelen(ce)
 			    || memcmp(last_ce->name, ce->name, ce_namelen(ce)))
-				write_tempfile_record(last_ce->name, prefix_length);
+				write_tempfile_record(last_ce->name, prefix);
 		}
 		if (checkout_entry(ce, &state,
 		    to_tempfile ? topath[ce_stage(ce)] : NULL) < 0)
@@ -114,7 +114,7 @@ static void checkout_all(const char *prefix, int prefix_length)
 		last_ce = ce;
 	}
 	if (last_ce && to_tempfile)
-		write_tempfile_record(last_ce->name, prefix_length);
+		write_tempfile_record(last_ce->name, prefix);
 	if (errs)
 		/* we have already done our error reporting.
 		 * exit with the same code as die().
@@ -248,7 +248,7 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 		if (read_from_stdin)
 			die("git checkout-index: don't mix '--stdin' and explicit filenames");
 		p = prefix_path(prefix, prefix_length, arg);
-		checkout_file(p, prefix_length);
+		checkout_file(p, prefix);
 		if (p < arg || p > arg + strlen(arg))
 			free((char *)p);
 	}
@@ -268,7 +268,7 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 				strbuf_swap(&buf, &nbuf);
 			}
 			p = prefix_path(prefix, prefix_length, buf.buf);
-			checkout_file(p, prefix_length);
+			checkout_file(p, prefix);
 			if (p < buf.buf || p > buf.buf + buf.len)
 				free((char *)p);
 		}
