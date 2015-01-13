@@ -1329,7 +1329,7 @@ static int configset_add_value(struct config_set *cs, const char *key, const cha
 		string_list_init(&e->value_list, 1);
 		hashmap_add(&cs->config_hash, e);
 	}
-	si = string_list_append_nodup(&e->value_list, value ? xstrdup(value) : NULL);
+	si = string_list_append_nodup(&e->value_list, xstrdup_or_null(value));
 
 	ALLOC_GROW(cs->list.items, cs->list.nr + 1, cs->list.alloc);
 	l_item = &cs->list.items[cs->list.nr++];
