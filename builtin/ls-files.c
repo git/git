@@ -398,7 +398,7 @@ int report_path_error(const char *ps_matched,
 }
 
 static const char * const ls_files_usage[] = {
-	N_("git ls-files [options] [<file>...]"),
+	N_("git ls-files [<options>] [<file>...]"),
 	NULL
 };
 

@@ -12,7 +12,7 @@
 #include "submodule.h"
 
 static const char * const builtin_mv_usage[] = {
-	N_("git mv [options] <source>... <destination>"),
+	N_("git mv [<options>] <source>... <destination>"),
 	NULL
 };
 

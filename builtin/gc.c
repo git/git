@@ -21,7 +21,7 @@
 #define FAILED_RUN "failed to run %s"
 
 static const char * const builtin_gc_usage[] = {
-	N_("git gc [options]"),
+	N_("git gc [<options>]"),
 	NULL
 };
 

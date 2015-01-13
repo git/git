@@ -14,7 +14,7 @@
 #include "gpg-interface.h"
 
 static const char * const verify_tag_usage[] = {
-		N_("git verify-tag [-v|--verbose] <tag>..."),
+		N_("git verify-tag [-v | --verbose] <tag>..."),
 		NULL
 };
 

@@ -4,7 +4,7 @@
 #include "parse-options.h"
 
 static const char * const prune_packed_usage[] = {
-	N_("git prune-packed [-n|--dry-run] [-q|--quiet]"),
+	N_("git prune-packed [-n | --dry-run] [-q | --quiet]"),
 	NULL
 };
 

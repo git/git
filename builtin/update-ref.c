@@ -6,9 +6,9 @@
 #include "argv-array.h"
 
 static const char * const git_update_ref_usage[] = {
-	N_("git update-ref [options] -d <refname> [<oldval>]"),
-	N_("git update-ref [options]    <refname> <newval> [<oldval>]"),
-	N_("git update-ref [options] --stdin [-z]"),
+	N_("git update-ref [<options>] -d <refname> [<old-val>]"),
+	N_("git update-ref [<options>]    <refname> <new-val> [<old-val>]"),
+	N_("git update-ref [<options>] --stdin [-z]"),
 	NULL
 };
 

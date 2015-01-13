@@ -441,6 +441,10 @@ Writing Documentation:
    --sort=<key>
    --abbrev[=<n>]
 
+ If a placeholder has multiple words, they are separated by dashes:
+   <new-branch-name>
+   --template=<template-directory>
+
  Possibility of multiple occurrences is indicated by three dots:
    <file>...
    (One or more of <file>.)
@@ -457,12 +461,12 @@ Writing Documentation:
    (Zero or more of <patch>.  Note that the dots are inside, not
    outside the brackets.)
 
- Multiple alternatives are indicated with vertical bar:
+ Multiple alternatives are indicated with vertical bars:
    [-q | --quiet]
    [--utf8 | --no-utf8]
 
  Parentheses are used for grouping:
-   [(<rev>|<range>)...]
+   [(<rev> | <range>)...]
    (Any number of either <rev> or <range>.  Parens are needed to make
    it clear that "..." pertains to both <rev> and <range>.)
 

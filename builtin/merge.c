@@ -42,8 +42,8 @@ struct strategy {
 };
 
 static const char * const builtin_merge_usage[] = {
-	N_("git merge [options] [<commit>...]"),
-	N_("git merge [options] <msg> HEAD <commit>"),
+	N_("git merge [<options>] [<commit>...]"),
+	N_("git merge [<options>] <msg> HEAD <commit>"),
 	N_("git merge --abort"),
 	NULL
 };

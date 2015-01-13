@@ -329,8 +329,8 @@ static int batch_objects(struct batch_options *opt)
 }
 
 static const char * const cat_file_usage[] = {
-	N_("git cat-file (-t|-s|-e|-p|<type>|--textconv) <object>"),
-	N_("git cat-file (--batch|--batch-check) < <list_of_objects>"),
+	N_("git cat-file (-t | -s | -e | -p | <type> | --textconv) <object>"),
+	N_("git cat-file (--batch | --batch-check) < <list-of-objects>"),
 	NULL
 };
 

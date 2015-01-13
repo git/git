@@ -123,7 +123,7 @@ static void checkout_all(const char *prefix, int prefix_length)
 }
 
 static const char * const builtin_checkout_index_usage[] = {
-	N_("git checkout-index [options] [--] [<file>...]"),
+	N_("git checkout-index [<options>] [--] [<file>...]"),
 	NULL
 };
 
