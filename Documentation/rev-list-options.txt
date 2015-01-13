@@ -66,6 +66,10 @@ if it is part of the log message.
 	Limit the commits output to ones that match all given `--grep`,
 	instead of ones that match at least one.
 
+--invert-grep::
+	Limit the commits output to ones with log message that do not
+	match the pattern specified with `--grep=<pattern>`.
+
 -i::
 --regexp-ignore-case::
 	Match the regular expression limiting patterns without regard to letter
