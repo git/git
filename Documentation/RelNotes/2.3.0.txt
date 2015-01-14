@@ -9,6 +9,10 @@ Ports
  * Recent gcc toolchain on Cygwin started throwing compilation warning,
    which has been squelched.
 
+ * A few updates to build on platforms that lack tv_nsec,
+   clock_gettime, CLOCK_MONOTONIC and HMAC_CTX_cleanup (e.g. older
+   RHEL) have been added.
+
 
 UI, Workflows & Features
 
@@ -66,10 +70,20 @@ UI, Workflows & Features
  * "git imap-send" learned to take "-v" (verbose) and "-q" (quiet)
    command line options.
 
+ * "git remote add $name $URL" is now allowed when "url.$URL.insteadOf"
+   is already defined.
+
  * "git imap-send" now can be built to use cURL library to talk to
    IMAP servers (if the library is recent enough, of course).
    This allows you to use authenticate method other than CRAM-MD5,
    among other things.
+
+ * "git imap-send" now allows GIT_CURL_VERBOSE environment variable to
+   control the verbosity when talking via the cURL library.
+
+ * The prompt script (in contrib/) learned to optionally hide prompt
+   when in an ignored directory by setting GIT_PS1_HIDE_IF_PWD_IGNORED
+   shell variable.
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -139,8 +153,7 @@ notes for details).
    the last command in the prompt, e.g.  PS1='$(__git_ps1) $? ', did
    not work well, because the helper function stomped on the exit
    status.
-   (merge eb443e3 tf/prompt-preserve-exit-status later to maint).
-
+   (merge 6babe76 tf/prompt-preserve-exit-status later to maint).
 
  * Recent update to "git commit" broke amending an existing commit
    with bogus author/committer lines without a valid e-mail address.
@@ -249,6 +262,10 @@ notes for details).
    configuration file .git/config with x-bit by mistake.
    (merge 1f32ecf mh/config-flip-xbit-back-after-checking later to maint).
 
+ * Recent update in Git 2.2 started creating objects/info/packs and
+   info/refs files with permission bits tighter than user's umask.
+   (merge d91175b jk/prune-packed-server-info later to maint).
+
  * Git 2.0 was supposed to make the "simple" mode for the default of
    "git push", but it didn't.
    (merge 00a6fa0 jk/push-simple later to maint).
@@ -262,3 +279,11 @@ notes for details).
  * The build procedure did not bother fixing perl and python scripts
    when NO_PERL and NO_PYTHON build-time configuration changed.
    (merge ca2051d jk/rebuild-perl-scripts-with-no-perl-seting-change later to maint).
+
+ * The usage string of "git log" command was marked incorrectly for
+   l10n.
+   (merge e66dc0c km/log-usage-string-i18n later to maint).
+
+ * "git for-each-ref" mishandled --format="%(upstream:track)" when a
+   branch is marked to have forked from a non-existing branch.
+   (merge b6160d9 rc/for-each-ref-tracking later to maint).
