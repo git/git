@@ -124,6 +124,7 @@ GITWEB_JSLIB_FILES += static/js/lib/cookies.js
 GITWEB_JSLIB_FILES += static/js/javascript-detection.js
 GITWEB_JSLIB_FILES += static/js/adjust-timezone.js
 GITWEB_JSLIB_FILES += static/js/blame_incremental.js
+GITWEB_JSLIB_FILES += static/js/context-lines.js
 
 
 GITWEB_REPLACE = \
