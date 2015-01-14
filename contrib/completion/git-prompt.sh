@@ -293,6 +293,7 @@ __git_eread ()
 # In this mode you can request colored hints using GIT_PS1_SHOWCOLORHINTS=true
 __git_ps1 ()
 {
+	# preserve exit status
 	local exit=$?
 	local pcmode=no
 	local detached=no
@@ -312,7 +313,7 @@ __git_ps1 ()
 		;;
 		0|1)	printf_format="${1:-$printf_format}"
 		;;
-		*)	return
+		*)	return $exit
 		;;
 	esac
 
@@ -360,7 +361,7 @@ __git_ps1 ()
 	rev_parse_exit_code="$?"
 
 	if [ -z "$repo_info" ]; then
-		return
+		return $exit
 	fi
 
 	local short_sha
@@ -380,7 +381,7 @@ __git_ps1 ()
 	   [ "$(git config --bool bash.hideIfPwdIgnored)" != "false" ] &&
 	   git check-ignore -q .
 	then
-		return
+		return $exit
 	fi
 
 	local r=""
@@ -426,7 +427,7 @@ __git_ps1 ()
 		else
 			local head=""
 			if ! __git_eread "$g/HEAD" head; then
-				return
+				return $exit
 			fi
 			# is it a symbolic ref?
 			b="${head#ref: }"
@@ -523,6 +524,5 @@ __git_ps1 ()
 		printf -- "$printf_format" "$gitstring"
 	fi
 
-	# preserve exit status
 	return $exit
 }
