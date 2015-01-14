@@ -1113,4 +1113,9 @@ test_extra_arg set-url origin newurl oldurl
 # prune takes any number of args
 # update takes any number of args
 
+test_expect_success 'add remote matching the "insteadOf" URL' '
+	git config url.xyz@example.com.insteadOf backup &&
+	git remote add backup xyz@example.com
+'
+
 test_done
