@@ -288,6 +288,7 @@ __git_eread ()
 # In this mode you can request colored hints using GIT_PS1_SHOWCOLORHINTS=true
 __git_ps1 ()
 {
+	# preserve exit status
 	local exit=$?
 	local pcmode=no
 	local detached=no
@@ -303,7 +304,7 @@ __git_ps1 ()
 		;;
 		0|1)	printf_format="${1:-$printf_format}"
 		;;
-		*)	return
+		*)	return $exit
 		;;
 	esac
 
@@ -355,7 +356,7 @@ __git_ps1 ()
 			#In PC mode PS1 always needs to be set
 			PS1="$ps1pc_start$ps1pc_end"
 		fi
-		return
+		return $exit
 	fi
 
 	local short_sha
@@ -416,7 +417,7 @@ __git_ps1 ()
 				if [ $pcmode = yes ]; then
 					PS1="$ps1pc_start$ps1pc_end"
 				fi
-				return
+				return $exit
 			fi
 			# is it a symbolic ref?
 			b="${head#ref: }"
@@ -513,6 +514,5 @@ __git_ps1 ()
 		printf -- "$printf_format" "$gitstring"
 	fi
 
-	# preserve exit status
 	return $exit
 }
