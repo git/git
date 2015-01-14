@@ -1693,6 +1693,7 @@ _git_rebase ()
 			--committer-date-is-author-date --ignore-date
 			--ignore-whitespace --whitespace=
 			--autosquash --fork-point --no-fork-point
+			--autostash
 			"
 
 		return
