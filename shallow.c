@@ -137,7 +137,7 @@ struct commit_list *get_shallow_commits(struct object_array *heads, int depth,
 	return result;
 }
 
-void check_shallow_file_for_update(void)
+static void check_shallow_file_for_update(void)
 {
 	if (is_shallow == -1)
 		die("BUG: shallow must be initialized by now");
