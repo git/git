@@ -298,18 +298,14 @@ extern int rewrite_parents(struct rev_info *revs, struct commit *commit,
 	rewrite_parent_fn_t rewrite_parent);
 
 /*
- * Save a copy of the parent list, and return the saved copy.  This is
- * used by the log machinery to retrieve the original parents when
- * commit->parents has been modified by history simpification.
- *
- * You may only call save_parents() once per commit (this is checked
- * for non-root commits).
+ * The log machinery saves the original parent list so that
+ * get_saved_parents() can later tell what the real parents of the
+ * commits are, when commit->parents has been modified by history
+ * simpification.
  *
  * get_saved_parents() will transparently return commit->parents if
  * history simplification is off.
  */
-extern void save_parents(struct rev_info *revs, struct commit *commit);
 extern struct commit_list *get_saved_parents(struct rev_info *revs, const struct commit *commit);
-extern void free_saved_parents(struct rev_info *revs);
 
 #endif
