@@ -218,6 +218,9 @@ extern char *gitbasename(char *);
 #include <openssl/err.h>
 #undef MAC_OS_X_VERSION_MIN_REQUIRED
 #undef __AVAILABILITY_MACROS_USES_AVAILABILITY
+#ifdef NO_HMAC_CTX_CLEANUP
+#define HMAC_CTX_cleanup HMAC_cleanup
+#endif
 #endif
 
 /* On most systems <netdb.h> would have given us this, but
