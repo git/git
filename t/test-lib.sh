@@ -184,16 +184,8 @@ export _x05 _x40 _z40 LF u200c
 # This test checks if command xyzzy does the right thing...
 # '
 # . ./test-lib.sh
-[ "x$ORIGINAL_TERM" != "xdumb" ] && (
-		TERM=$ORIGINAL_TERM &&
-		export TERM &&
-		[ -t 1 ] &&
-		tput bold >/dev/null 2>&1 &&
-		tput setaf 1 >/dev/null 2>&1 &&
-		tput sgr0 >/dev/null 2>&1
-	) &&
-	color=t
 
+unset color
 while test "$#" -ne 0
 do
 	case "$1" in
@@ -256,40 +248,6 @@ then
 elif test -n "$valgrind"
 then
 	verbose=t
-fi
-
-if test -n "$color"
-then
-	say_color () {
-		(
-		TERM=$ORIGINAL_TERM
-		export TERM
-		case "$1" in
-		error)
-			tput bold; tput setaf 1;; # bold red
-		skip)
-			tput setaf 4;; # blue
-		warn)
-			tput setaf 3;; # brown/yellow
-		pass)
-			tput setaf 2;; # green
-		info)
-			tput setaf 6;; # cyan
-		*)
-			test -n "$quiet" && return;;
-		esac
-		shift
-		printf "%s" "$*"
-		tput sgr0
-		echo
-		)
-	}
-else
-	say_color() {
-		test -z "$1" && test -n "$quiet" && return
-		shift
-		printf "%s\n" "$*"
-	}
 fi
 
 error () {
@@ -684,7 +642,7 @@ test_done () {
 		then
 			error "Can't use skip_all after running some tests"
 		fi
-		[ -z "$skip_all" ] || skip_all=" # SKIP $skip_all"
+		test -z "$skip_all" || skip_all=" # SKIP $skip_all"
 
 		if test $test_external_has_tap -eq 0
 		then
@@ -856,6 +814,52 @@ rm -fr "$TRASH_DIRECTORY" || {
 HOME="$TRASH_DIRECTORY"
 GNUPGHOME="$HOME/gnupg-home-not-used"
 export HOME GNUPGHOME
+
+# run the tput tests *after* changing HOME (in case ncurses needs
+# ~/.terminfo for $TERM)
+test -n "${color+set}" || test "x$ORIGINAL_TERM" != "xdumb" && (
+		TERM=$ORIGINAL_TERM &&
+		export TERM &&
+		test -t 1 &&
+		tput bold >/dev/null 2>&1 &&
+		tput setaf 1 >/dev/null 2>&1 &&
+		tput sgr0 >/dev/null 2>&1
+	) &&
+	color=t
+
+if test -n "$color"
+then
+	say_color () {
+		(
+		TERM=$ORIGINAL_TERM
+		export TERM
+		case "$1" in
+		error)
+			tput bold; tput setaf 1;; # bold red
+		skip)
+			tput setaf 4;; # blue
+		warn)
+			tput setaf 3;; # brown/yellow
+		pass)
+			tput setaf 2;; # green
+		info)
+			tput setaf 6;; # cyan
+		*)
+			test -n "$quiet" && return;;
+		esac
+		shift
+		printf "%s" "$*"
+		tput sgr0
+		echo
+		)
+	}
+else
+	say_color() {
+		test -z "$1" && test -n "$quiet" && return
+		shift
+		printf "%s\n" "$*"
+	}
+fi
 
 if test -z "$TEST_NO_CREATE_REPO"
 then
