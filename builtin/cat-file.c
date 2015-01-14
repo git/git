@@ -4,12 +4,8 @@
  * Copyright (C) Linus Torvalds, 2005
  */
 #include "cache.h"
-#include "exec_cmd.h"
-#include "tag.h"
-#include "tree.h"
 #include "builtin.h"
 #include "parse-options.h"
-#include "diff.h"
 #include "userdiff.h"
 #include "streaming.h"
 
