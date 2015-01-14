@@ -84,6 +84,11 @@
 # GIT_PS1_SHOWCOLORHINTS to a nonempty value. The colors are based on
 # the colored output of "git status -sb" and are available only when
 # using __git_ps1 for PROMPT_COMMAND or precmd.
+#
+# If you would like __git_ps1 to do nothing in the case when the current
+# directory is set up to be ignored by git, then set
+# GIT_PS1_HIDE_IF_PWD_IGNORED to a nonempty value. Override this on the
+# repository level by setting bash.hideIfPwdIgnored to "false".
 
 # check whether printf supports -v
 __git_printf_supports_v=
@@ -300,6 +305,10 @@ __git_ps1 ()
 			ps1pc_start="$1"
 			ps1pc_end="$2"
 			printf_format="${3:-$printf_format}"
+			# set PS1 to a plain prompt so that we can
+			# simply return early if the prompt should not
+			# be decorated
+			PS1="$ps1pc_start$ps1pc_end"
 		;;
 		0|1)	printf_format="${1:-$printf_format}"
 		;;
@@ -351,10 +360,6 @@ __git_ps1 ()
 	rev_parse_exit_code="$?"
 
 	if [ -z "$repo_info" ]; then
-		if [ $pcmode = yes ]; then
-			#In PC mode PS1 always needs to be set
-			PS1="$ps1pc_start$ps1pc_end"
-		fi
 		return
 	fi
 
@@ -369,6 +374,14 @@ __git_ps1 ()
 	repo_info="${repo_info%$'\n'*}"
 	local inside_gitdir="${repo_info##*$'\n'}"
 	local g="${repo_info%$'\n'*}"
+
+	if [ "true" = "$inside_worktree" ] &&
+	   [ -n "${GIT_PS1_HIDE_IF_PWD_IGNORED-}" ] &&
+	   [ "$(git config --bool bash.hideIfPwdIgnored)" != "false" ] &&
+	   git check-ignore -q .
+	then
+		return
+	fi
 
 	local r=""
 	local b=""
@@ -413,9 +426,6 @@ __git_ps1 ()
 		else
 			local head=""
 			if ! __git_eread "$g/HEAD" head; then
-				if [ $pcmode = yes ]; then
-					PS1="$ps1pc_start$ps1pc_end"
-				fi
 				return
 			fi
 			# is it a symbolic ref?

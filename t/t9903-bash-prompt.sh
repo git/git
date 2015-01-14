@@ -35,6 +35,8 @@ test_expect_success 'setup for prompt tests' '
 	git commit -m "another b2" file &&
 	echo 000 >file &&
 	git commit -m "yet another b2" file &&
+	mkdir ignored_dir &&
+	echo "ignored_dir/" >>.gitignore &&
 	git checkout master
 '
 
@@ -584,6 +586,110 @@ test_expect_success 'prompt - zsh color pc mode' '
 		GIT_PS1_SHOWCOLORHINTS=y &&
 		__git_ps1 "BEFORE:" ":AFTER" &&
 		printf "%s" "$PS1" >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success 'prompt - hide if pwd ignored - env var unset, config disabled' '
+	printf " (master)" >expected &&
+	test_config bash.hideIfPwdIgnored false &&
+	(
+		cd ignored_dir &&
+		__git_ps1 >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success 'prompt - hide if pwd ignored - env var unset, config disabled, pc mode' '
+	printf "BEFORE: (\${__git_ps1_branch_name}):AFTER" >expected &&
+	test_config bash.hideIfPwdIgnored false &&
+	(
+		cd ignored_dir &&
+		__git_ps1 "BEFORE:" ":AFTER" &&
+		printf "%s" "$PS1" >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success 'prompt - hide if pwd ignored - env var unset, config unset' '
+	printf " (master)" >expected &&
+	(
+		cd ignored_dir &&
+		__git_ps1 >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success 'prompt - hide if pwd ignored - env var unset, config unset, pc mode' '
+	printf "BEFORE: (\${__git_ps1_branch_name}):AFTER" >expected &&
+	(
+		cd ignored_dir &&
+		__git_ps1 "BEFORE:" ":AFTER" &&
+		printf "%s" "$PS1" >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success 'prompt - hide if pwd ignored - env var set, config disabled' '
+	printf " (master)" >expected &&
+	test_config bash.hideIfPwdIgnored false &&
+	(
+		cd ignored_dir &&
+		GIT_PS1_HIDE_IF_PWD_IGNORED=y &&
+		__git_ps1 >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success 'prompt - hide if pwd ignored - env var set, config disabled, pc mode' '
+	printf "BEFORE: (\${__git_ps1_branch_name}):AFTER" >expected &&
+	test_config bash.hideIfPwdIgnored false &&
+	(
+		cd ignored_dir &&
+		GIT_PS1_HIDE_IF_PWD_IGNORED=y &&
+		__git_ps1 "BEFORE:" ":AFTER" &&
+		printf "%s" "$PS1" >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success 'prompt - hide if pwd ignored - env var set, config unset' '
+	printf "" >expected &&
+	(
+		cd ignored_dir &&
+		GIT_PS1_HIDE_IF_PWD_IGNORED=y &&
+		__git_ps1 >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success 'prompt - hide if pwd ignored - env var set, config unset, pc mode' '
+	printf "BEFORE::AFTER" >expected &&
+	(
+		cd ignored_dir &&
+		GIT_PS1_HIDE_IF_PWD_IGNORED=y &&
+		__git_ps1 "BEFORE:" ":AFTER" &&
+		printf "%s" "$PS1" >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success 'prompt - hide if pwd ignored - inside gitdir (stdout)' '
+	printf " (GIT_DIR!)" >expected &&
+	(
+		GIT_PS1_HIDE_IF_PWD_IGNORED=y &&
+		cd .git &&
+		__git_ps1 >"$actual" 2>/dev/null
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success 'prompt - hide if pwd ignored - inside gitdir (stderr)' '
+	printf "" >expected &&
+	(
+		GIT_PS1_HIDE_IF_PWD_IGNORED=y &&
+		cd .git &&
+		__git_ps1 >/dev/null 2>"$actual"
 	) &&
 	test_cmp expected "$actual"
 '
