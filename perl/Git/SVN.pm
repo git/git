@@ -9,10 +9,8 @@ use vars qw/$_no_metadata
 	    $_use_log_author $_add_author_from $_localtime/;
 use Carp qw/croak/;
 use File::Path qw/mkpath/;
-use File::Copy qw/copy/;
 use IPC::Open3;
 use Memoize;  # core since 5.8.0, Jul 2002
-use Memoize::Storable;
 use POSIX qw(:signal_h);
 
 use Git qw(
@@ -32,11 +30,7 @@ use Git::SVN::Utils qw(
 	add_path_to_url
 );
 
-my $can_use_yaml;
-BEGIN {
-	$can_use_yaml = eval { require Git::SVN::Memoize::YAML; 1};
-}
-
+my $memo_backend;
 our $_follow_parent  = 1;
 our $_minimize_url   = 'unset';
 our $default_repo_id = 'svn';
@@ -1578,7 +1572,16 @@ sub tie_for_persistent_memoization {
 	my $hash = shift;
 	my $path = shift;
 
-	if ($can_use_yaml) {
+	unless ($memo_backend) {
+		if (eval { require Git::SVN::Memoize::YAML; 1}) {
+			$memo_backend = 1;
+		} else {
+			require Memoize::Storable;
+			$memo_backend = -1;
+		}
+	}
+
+	if ($memo_backend > 0) {
 		tie %$hash => 'Git::SVN::Memoize::YAML', "$path.yaml";
 	} else {
 		tie %$hash => 'Memoize::Storable', "$path.db", 'nstore';
@@ -2188,8 +2191,9 @@ sub rev_map_set {
 	# both of these options make our .rev_db file very, very important
 	# and we can't afford to lose it because rebuild() won't work
 	if ($self->use_svm_props || $self->no_metadata) {
+		require File::Copy;
 		$sync = 1;
-		copy($db, $db_lock) or die "rev_map_set(@_): ",
+		File::Copy::copy($db, $db_lock) or die "rev_map_set(@_): ",
 					   "Failed to copy: ",
 					   "$db => $db_lock ($!)\n";
 	} else {
