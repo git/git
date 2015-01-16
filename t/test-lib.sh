@@ -992,6 +992,11 @@ test_lazy_prereq USR_BIN_TIME '
 	test -x /usr/bin/time
 '
 
+test_lazy_prereq NOT_ROOT '
+	uid=$(id -u) &&
+	test "$uid" != 0
+'
+
 # When the tests are run as root, permission tests will report that
 # things are writable when they shouldn't be.
 test -w / || test_set_prereq SANITY
