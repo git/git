@@ -33,10 +33,9 @@
  *    NOTE: It is OK to "play" with the buffer directly if you work it this
  *    way:
  *
- *    ----
- *    strbuf_grow(sb, SOME_SIZE); <1>
- *    strbuf_setlen(sb, sb->len + SOME_OTHER_SIZE);
- *    ----
+ *        strbuf_grow(sb, SOME_SIZE); <1>
+ *        strbuf_setlen(sb, sb->len + SOME_OTHER_SIZE);
+ *
  *    <1> Here, the memory array starting at `sb->buf`, and of length
  *    `strbuf_avail(sb)` is all yours, and you can be sure that
  *    `strbuf_avail(sb)` is at least `SOME_SIZE`.
@@ -261,9 +260,7 @@ extern void strbuf_add(struct strbuf *, const void *, size_t);
  * NOTE: This function will *always* be implemented as an inline or a macro
  * using strlen, meaning that this is efficient to write things like:
  *
- * ----
- * strbuf_addstr(sb, "immediate string");
- * ----
+ *     strbuf_addstr(sb, "immediate string");
  *
  */
 static inline void strbuf_addstr(struct strbuf *sb, const char *s)
