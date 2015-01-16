@@ -4375,8 +4375,7 @@ sub git_print_page_nav {
 	print "<div class=\"page_nav\">\n" .
 		(join " | ",
 		 map { $_ eq $current ?
-+		       $_ : $cgi->a({-href => ($arg{$_}{_href} ? $arg{$_}{_href} : href(%{$arg{$_}}).($u{$_}||'')),
-				             -id => "$_-navbar-link"}, "$_")
+		       $_ : $cgi->a({-href => ($arg{$_}{_href} ? $arg{$_}{_href} : href(%{$arg{$_}}).($u{$_}||''))}, "$_")
 		 } @navs);
 	print "<br/>\n$extra<br/>\n" .
 	      "</div>\n";
@@ -7807,9 +7806,7 @@ sub diff_style_nav {
 		map { " | ".$_ }
 		map {
 			$_ eq $diff_style ? $styles{$_} :
-			$cgi->a({-href => href(-replay=>1, diff_style => $_),
-			         -id => "$_-navbar-link",
-			}, $styles{$_})
+			$cgi->a({-href => href(-replay=>1, diff_style => $_)}, $styles{$_})
 		} @styles;
 
 	my $context_lines_selectbox = '';
