@@ -441,36 +441,29 @@ static inline int strbuf_strip_suffix(struct strbuf *sb, const char *suffix)
  * substring containing everything following the (max-1)th terminator
  * character).
  *
+ * The most generic form is `strbuf_split_buf`, which takes an arbitrary
+ * pointer/len buffer. The `_str` variant takes a NUL-terminated string,
+ * the `_max` variant takes a strbuf, and just `strbuf_split` is a convenience
+ * wrapper to drop the `max` parameter.
+ *
  * For lighter-weight alternatives, see string_list_split() and
  * string_list_split_in_place().
  */
 extern struct strbuf **strbuf_split_buf(const char *, size_t,
 					int terminator, int max);
 
-/**
- * Split a NUL-terminated string at the specified terminator
- * character.  See strbuf_split_buf() for more information.
- */
 static inline struct strbuf **strbuf_split_str(const char *str,
 					       int terminator, int max)
 {
 	return strbuf_split_buf(str, strlen(str), terminator, max);
 }
 
-/**
- * Split a strbuf at the specified terminator character.  See
- * strbuf_split_buf() for more information.
- */
 static inline struct strbuf **strbuf_split_max(const struct strbuf *sb,
 						int terminator, int max)
 {
 	return strbuf_split_buf(sb->buf, sb->len, terminator, max);
 }
 
-/**
- * Split a strbuf at the specified terminator character.  See
- * strbuf_split_buf() for more information.
- */
 static inline struct strbuf **strbuf_split(const struct strbuf *sb,
 					   int terminator)
 {
