@@ -2326,7 +2326,7 @@ static int match_fragment(struct image *img,
 
 	/*
 	 * The hunk does not apply byte-by-byte, but the hash says
-	 * it might with whitespace fuzz. We haven't been asked to
+	 * it might with whitespace fuzz. We weren't asked to
 	 * ignore whitespace, we were asked to correct whitespace
 	 * errors, so let's try matching after whitespace correction.
 	 *
