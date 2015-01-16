@@ -164,19 +164,11 @@ static inline void strbuf_setlen(struct strbuf *sb, size_t len)
  */
 
 /**
- * Strip whitespace from the beginning and end of a string.
- * Equivalent to performing `strbuf_rtrim()` followed by `strbuf_ltrim()`.
+ * Strip whitespace from the beginning (`ltrim`), end (`rtrim`), or both side
+ * (`trim`) of a string.
  */
 extern void strbuf_trim(struct strbuf *);
-
-/**
- * Strip whitespace from the end of a string.
- */
 extern void strbuf_rtrim(struct strbuf *);
-
-/**
- * Strip whitespace from the beginning of a string.
- */
 extern void strbuf_ltrim(struct strbuf *);
 
 /**
