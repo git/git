@@ -1915,7 +1915,10 @@ class P4Sync(Command, P4UserMap):
                 optparse.make_option("--keep-path", dest="keepRepoPath", action='store_true',
                                      help="Keep entire BRANCH/DIR/SUBDIR prefix during import"),
                 optparse.make_option("--use-client-spec", dest="useClientSpec", action='store_true',
-                                     help="Only sync files that are included in the Perforce Client Spec")
+                                     help="Only sync files that are included in the Perforce Client Spec"),
+                optparse.make_option("-/", dest="cloneExclude",
+                                     action="append", type="string",
+                                     help="exclude depot path"),
         ]
         self.description = """Imports from Perforce into a git repository.\n
     example:
@@ -1949,6 +1952,12 @@ class P4Sync(Command, P4UserMap):
 
         if gitConfig("git-p4.syncFromOrigin") == "false":
             self.syncWithOrigin = False
+
+    # This is required for the "append" cloneExclude action
+    def ensure_value(self, attr, value):
+        if not hasattr(self, attr) or getattr(self, attr) is None:
+            setattr(self, attr, value)
+        return getattr(self, attr)
 
     # Force a checkpoint in fast-import and wait for it to finish
     def checkpoint(self):
@@ -3101,21 +3110,12 @@ class P4Clone(P4Sync):
             optparse.make_option("--destination", dest="cloneDestination",
                                  action='store', default=None,
                                  help="where to leave result of the clone"),
-            optparse.make_option("-/", dest="cloneExclude",
-                                 action="append", type="string",
-                                 help="exclude depot path"),
             optparse.make_option("--bare", dest="cloneBare",
                                  action="store_true", default=False),
         ]
         self.cloneDestination = None
         self.needsGit = False
         self.cloneBare = False
-
-    # This is required for the "append" cloneExclude action
-    def ensure_value(self, attr, value):
-        if not hasattr(self, attr) or getattr(self, attr) is None:
-            setattr(self, attr, value)
-        return getattr(self, attr)
 
     def defaultDestination(self, args):
         ## TODO: use common prefix of args?
