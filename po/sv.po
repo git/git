@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git 2.0.0\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2015-01-13 14:05+0800\n"
-"PO-Revision-Date: 2015-01-14 22:51+0100\n"
+"POT-Creation-Date: 2015-01-18 11:24+0800\n"
+"PO-Revision-Date: 2015-01-18 20:29+0100\n"
 "Last-Translator: Peter Krefting <peter@softwolves.pp.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
 "Language: sv\n"
@@ -1465,7 +1465,7 @@ msgstr "Kunde inte sätta core.worktree i %s"
 msgid "unknown value '%s' for key '%s'"
 msgstr "okänt värde \"%s\" för nyckeln \"%s\""
 
-#: trailer.c:552 trailer.c:557 builtin/remote.c:288
+#: trailer.c:552 trailer.c:557 builtin/remote.c:290
 #, c-format
 msgid "more than one %s"
 msgstr "mer än en %s"
@@ -2025,7 +2025,7 @@ msgid "The following paths are ignored by one of your .gitignore files:\n"
 msgstr "Följande sökvägar ignoreras av en av dina .gitignore-filer:\n"
 
 #: builtin/add.c:248 builtin/clean.c:875 builtin/fetch.c:108 builtin/mv.c:110
-#: builtin/prune-packed.c:55 builtin/push.c:499 builtin/remote.c:1370
+#: builtin/prune-packed.c:55 builtin/push.c:499 builtin/remote.c:1372
 #: builtin/rm.c:269
 msgid "dry run"
 msgstr "testkörning"
@@ -3171,43 +3171,43 @@ msgstr "Behöver ett arkiv för att skapa ett paket (bundle)."
 msgid "Need a repository to unbundle."
 msgstr "Behöver ett arkiv för att packa upp ett paket (bundle)."
 
-#: builtin/cat-file.c:332
+#: builtin/cat-file.c:328
 msgid "git cat-file (-t|-s|-e|-p|<type>|--textconv) <object>"
 msgstr "git cat-file (-t|-s|-e|-p|<typ>|--textconv) <objekt>"
 
-#: builtin/cat-file.c:333
+#: builtin/cat-file.c:329
 msgid "git cat-file (--batch|--batch-check) < <list_of_objects>"
 msgstr "git cat-file (--batch|--batch-check) < <objektlista>"
 
-#: builtin/cat-file.c:370
+#: builtin/cat-file.c:366
 msgid "<type> can be one of: blob, tree, commit, tag"
 msgstr "<typ> kan vara en av: blob, tree, commit, tag"
 
-#: builtin/cat-file.c:371
+#: builtin/cat-file.c:367
 msgid "show object type"
 msgstr "visa objekttyp"
 
-#: builtin/cat-file.c:372
+#: builtin/cat-file.c:368
 msgid "show object size"
 msgstr "visa objektstorlek"
 
-#: builtin/cat-file.c:374
+#: builtin/cat-file.c:370
 msgid "exit with zero when there's no error"
 msgstr "avsluta med noll när det inte uppstått något fel"
 
-#: builtin/cat-file.c:375
+#: builtin/cat-file.c:371
 msgid "pretty-print object's content"
 msgstr "visa objektets innehåll snyggt"
 
-#: builtin/cat-file.c:377
+#: builtin/cat-file.c:373
 msgid "for blob objects, run textconv on object's content"
 msgstr "för blob-objekt, kör textconv på objektets innehåll"
 
-#: builtin/cat-file.c:379
+#: builtin/cat-file.c:375
 msgid "show info and content of objects fed from the standard input"
 msgstr "visa information och innehåll för objekt som listas på standard in"
 
-#: builtin/cat-file.c:382
+#: builtin/cat-file.c:378
 msgid "show info about objects fed from the standard input"
 msgstr "visa information för objekt som listas på standard in"
 
@@ -5310,7 +5310,7 @@ msgstr "   (%s har blivit dinglande)"
 msgid "[deleted]"
 msgstr "[borttagen]"
 
-#: builtin/fetch.c:799 builtin/remote.c:1058
+#: builtin/fetch.c:799 builtin/remote.c:1060
 msgid "(none)"
 msgstr "(ingen)"
 
@@ -5388,7 +5388,7 @@ msgstr ""
 
 #: builtin/fmt-merge-msg.c:662 builtin/fmt-merge-msg.c:665 builtin/grep.c:698
 #: builtin/merge.c:198 builtin/repack.c:178 builtin/repack.c:182
-#: builtin/show-branch.c:654 builtin/show-ref.c:178 builtin/tag.c:590
+#: builtin/show-branch.c:657 builtin/show-ref.c:178 builtin/tag.c:590
 #: parse-options.h:132 parse-options.h:239
 msgid "n"
 msgstr "n"
@@ -5417,43 +5417,43 @@ msgstr "fil att läsa från"
 msgid "unable to parse format"
 msgstr "kan inte tolka formatet"
 
-#: builtin/for-each-ref.c:1057
+#: builtin/for-each-ref.c:1064
 msgid "git for-each-ref [options] [<pattern>]"
 msgstr "git for-each-ref [flaggor] [<mönster>]"
 
-#: builtin/for-each-ref.c:1072
+#: builtin/for-each-ref.c:1079
 msgid "quote placeholders suitably for shells"
 msgstr "citera platshållare passande för skal"
 
-#: builtin/for-each-ref.c:1074
+#: builtin/for-each-ref.c:1081
 msgid "quote placeholders suitably for perl"
 msgstr "citera platshållare passande för perl"
 
-#: builtin/for-each-ref.c:1076
+#: builtin/for-each-ref.c:1083
 msgid "quote placeholders suitably for python"
 msgstr "citera platshållare passande för python"
 
-#: builtin/for-each-ref.c:1078
+#: builtin/for-each-ref.c:1085
 msgid "quote placeholders suitably for Tcl"
 msgstr "citera platshållare passande för Tcl"
 
-#: builtin/for-each-ref.c:1081
+#: builtin/for-each-ref.c:1088
 msgid "show only <n> matched refs"
 msgstr "visa endast <n> träffade refs"
 
-#: builtin/for-each-ref.c:1082 builtin/replace.c:438
+#: builtin/for-each-ref.c:1089 builtin/replace.c:438
 msgid "format"
 msgstr "format"
 
-#: builtin/for-each-ref.c:1082
+#: builtin/for-each-ref.c:1089
 msgid "format to use for the output"
 msgstr "format att använda för utdata"
 
-#: builtin/for-each-ref.c:1083
+#: builtin/for-each-ref.c:1090
 msgid "key"
 msgstr "nyckel"
 
-#: builtin/for-each-ref.c:1084
+#: builtin/for-each-ref.c:1091
 msgid "field name to sort on"
 msgstr "fältnamn att sortera på"
 
@@ -6424,12 +6424,12 @@ msgid "trailer(s) to add"
 msgstr "släprad(er) att lägga till"
 
 #: builtin/log.c:41
-msgid "git log [<options>] [<revision range>] [[--] <path>...]\n"
-msgstr "git log [<flaggor>] [<versionsintervall>] [[--] <sökväg>...]\n"
+msgid "git log [<options>] [<revision range>] [[--] <path>...]"
+msgstr "git log [<flaggor>] [<versionsintervall>] [[--] <sökväg>...]"
 
 #: builtin/log.c:42
-msgid "   or: git show [options] <object>..."
-msgstr "     eller: git show [flaggor] <objekt>..."
+msgid "git show [options] <object>..."
+msgstr "git show [flaggor] <objekt>..."
 
 #: builtin/log.c:81
 #, c-format
@@ -7368,7 +7368,7 @@ msgstr "%s, källa=%s, mål=%s"
 msgid "Renaming %s to %s\n"
 msgstr "Byter namn på %s till %s\n"
 
-#: builtin/mv.c:256 builtin/remote.c:726 builtin/repack.c:355
+#: builtin/mv.c:256 builtin/remote.c:728 builtin/repack.c:355
 #, c-format
 msgid "renaming '%s' failed"
 msgstr "misslyckades byta namn på \"%s\""
@@ -7744,7 +7744,7 @@ msgstr "anteckningar-ref"
 msgid "use notes from <notes_ref>"
 msgstr "använd anteckningar från <anteckningsref>"
 
-#: builtin/notes.c:989 builtin/remote.c:1619
+#: builtin/notes.c:989 builtin/remote.c:1621
 #, c-format
 msgid "Unknown subcommand: %s"
 msgstr "Okänt underkommando: %s"
@@ -8516,55 +8516,55 @@ msgstr "att ange en master-gren ger ingen mening med --mirror"
 msgid "specifying branches to track makes sense only with fetch mirrors"
 msgstr "att ange grenar att spåra ger mening bara med hämtningsspeglar"
 
-#: builtin/remote.c:185 builtin/remote.c:641
+#: builtin/remote.c:187 builtin/remote.c:643
 #, c-format
 msgid "remote %s already exists."
 msgstr "fjärrarkivet %s finns redan."
 
-#: builtin/remote.c:189 builtin/remote.c:645
+#: builtin/remote.c:191 builtin/remote.c:647
 #, c-format
 msgid "'%s' is not a valid remote name"
 msgstr "\"%s\" är inte ett giltigt namn på fjärrarkiv"
 
-#: builtin/remote.c:233
+#: builtin/remote.c:235
 #, c-format
 msgid "Could not setup master '%s'"
 msgstr "Kunde inte skapa master \"%s\""
 
-#: builtin/remote.c:333
+#: builtin/remote.c:335
 #, c-format
 msgid "Could not get fetch map for refspec %s"
 msgstr "Kunde inte hämta mappning för referensspecifikation %s"
 
-#: builtin/remote.c:434 builtin/remote.c:442
+#: builtin/remote.c:436 builtin/remote.c:444
 msgid "(matching)"
 msgstr "(matchande)"
 
-#: builtin/remote.c:446
+#: builtin/remote.c:448
 msgid "(delete)"
 msgstr "(ta bort)"
 
-#: builtin/remote.c:590 builtin/remote.c:596 builtin/remote.c:602
+#: builtin/remote.c:592 builtin/remote.c:598 builtin/remote.c:604
 #, c-format
 msgid "Could not append '%s' to '%s'"
 msgstr "Kunde inte tillämpa \"%s\" på \"%s\""
 
-#: builtin/remote.c:634 builtin/remote.c:793 builtin/remote.c:893
+#: builtin/remote.c:636 builtin/remote.c:795 builtin/remote.c:895
 #, c-format
 msgid "No such remote: %s"
 msgstr "Inget sådant fjärrarkiv: %s"
 
-#: builtin/remote.c:651
+#: builtin/remote.c:653
 #, c-format
 msgid "Could not rename config section '%s' to '%s'"
 msgstr "Kunde inte byta namn på konfigurationssektionen \"%s\" till \"%s\""
 
-#: builtin/remote.c:657 builtin/remote.c:845
+#: builtin/remote.c:659 builtin/remote.c:847
 #, c-format
 msgid "Could not remove config section '%s'"
 msgstr "Kunde inte ta bort konfigurationssektionen \"%s\""
 
-#: builtin/remote.c:672
+#: builtin/remote.c:674
 #, c-format
 msgid ""
 "Not updating non-default fetch refspec\n"
@@ -8575,32 +8575,32 @@ msgstr ""
 "\t%s\n"
 "\tUppdatera konfigurationen manuellt om nödvändigt."
 
-#: builtin/remote.c:678
+#: builtin/remote.c:680
 #, c-format
 msgid "Could not append '%s'"
 msgstr "Kunde inte lägga till på \"%s\""
 
-#: builtin/remote.c:689
+#: builtin/remote.c:691
 #, c-format
 msgid "Could not set '%s'"
 msgstr "Kunde inte sätta \"%s\""
 
-#: builtin/remote.c:711
+#: builtin/remote.c:713
 #, c-format
 msgid "deleting '%s' failed"
 msgstr "misslyckades ta bort \"%s\""
 
-#: builtin/remote.c:745
+#: builtin/remote.c:747
 #, c-format
 msgid "creating '%s' failed"
 msgstr "misslyckades skapa \"%s\""
 
-#: builtin/remote.c:764
+#: builtin/remote.c:766
 #, c-format
 msgid "Could not remove branch %s"
 msgstr "Kunde inte ta bort grenen %s"
 
-#: builtin/remote.c:831
+#: builtin/remote.c:833
 msgid ""
 "Note: A branch outside the refs/remotes/ hierarchy was not removed;\n"
 "to delete it, use:"
@@ -8614,262 +8614,262 @@ msgstr[1] ""
 "Observera: Några grenar utanför hierarkin refs/remotes/ togs inte bort;\n"
 "för att ta bort dem, använd:"
 
-#: builtin/remote.c:946
+#: builtin/remote.c:948
 #, c-format
 msgid " new (next fetch will store in remotes/%s)"
 msgstr " ny (nästa hämtning sparar i remotes/%s)"
 
-#: builtin/remote.c:949
+#: builtin/remote.c:951
 msgid " tracked"
 msgstr " spårad"
 
-#: builtin/remote.c:951
+#: builtin/remote.c:953
 msgid " stale (use 'git remote prune' to remove)"
 msgstr " förlegad (använd \"git remote prune\" för att ta bort)"
 
-#: builtin/remote.c:953
+#: builtin/remote.c:955
 msgid " ???"
 msgstr " ???"
 
-#: builtin/remote.c:994
+#: builtin/remote.c:996
 #, c-format
 msgid "invalid branch.%s.merge; cannot rebase onto > 1 branch"
 msgstr "ogiltig branch.%s.merge; kan inte ombasera över > 1 gren"
 
-#: builtin/remote.c:1001
+#: builtin/remote.c:1003
 #, c-format
 msgid "rebases onto remote %s"
 msgstr "ombaseras på fjärren %s"
 
-#: builtin/remote.c:1004
+#: builtin/remote.c:1006
 #, c-format
 msgid " merges with remote %s"
 msgstr " sammanslås med fjärren %s"
 
-#: builtin/remote.c:1005
+#: builtin/remote.c:1007
 msgid "    and with remote"
 msgstr "    och med fjärren"
 
-#: builtin/remote.c:1007
+#: builtin/remote.c:1009
 #, c-format
 msgid "merges with remote %s"
 msgstr "sammanslås med fjärren %s"
 
-#: builtin/remote.c:1008
+#: builtin/remote.c:1010
 msgid "   and with remote"
 msgstr "   och med fjärren"
 
-#: builtin/remote.c:1054
+#: builtin/remote.c:1056
 msgid "create"
 msgstr "skapa"
 
-#: builtin/remote.c:1057
+#: builtin/remote.c:1059
 msgid "delete"
 msgstr "ta bort"
 
-#: builtin/remote.c:1061
+#: builtin/remote.c:1063
 msgid "up to date"
 msgstr "àjour"
 
-#: builtin/remote.c:1064
+#: builtin/remote.c:1066
 msgid "fast-forwardable"
 msgstr "kan snabbspolas"
 
-#: builtin/remote.c:1067
+#: builtin/remote.c:1069
 msgid "local out of date"
 msgstr "lokal föråldrad"
 
-#: builtin/remote.c:1074
+#: builtin/remote.c:1076
 #, c-format
 msgid "    %-*s forces to %-*s (%s)"
 msgstr "    %-*s tvingar till %-*s (%s)"
 
-#: builtin/remote.c:1077
+#: builtin/remote.c:1079
 #, c-format
 msgid "    %-*s pushes to %-*s (%s)"
 msgstr "    %-*s sänder till %-*s (%s)"
 
-#: builtin/remote.c:1081
+#: builtin/remote.c:1083
 #, c-format
 msgid "    %-*s forces to %s"
 msgstr "    %-*s tvingar till %s"
 
-#: builtin/remote.c:1084
+#: builtin/remote.c:1086
 #, c-format
 msgid "    %-*s pushes to %s"
 msgstr "    %-*s sänder till %s"
 
-#: builtin/remote.c:1152
+#: builtin/remote.c:1154
 msgid "do not query remotes"
 msgstr "fråga inte fjärrar"
 
-#: builtin/remote.c:1179
+#: builtin/remote.c:1181
 #, c-format
 msgid "* remote %s"
 msgstr "* fjärr %s"
 
-#: builtin/remote.c:1180
+#: builtin/remote.c:1182
 #, c-format
 msgid "  Fetch URL: %s"
 msgstr "  Hämt-URL: %s"
 
-#: builtin/remote.c:1181 builtin/remote.c:1332
+#: builtin/remote.c:1183 builtin/remote.c:1334
 msgid "(no URL)"
 msgstr "(ingen URL)"
 
-#: builtin/remote.c:1190 builtin/remote.c:1192
+#: builtin/remote.c:1192 builtin/remote.c:1194
 #, c-format
 msgid "  Push  URL: %s"
 msgstr "  Sänd-URL: %s"
 
-#: builtin/remote.c:1194 builtin/remote.c:1196 builtin/remote.c:1198
+#: builtin/remote.c:1196 builtin/remote.c:1198 builtin/remote.c:1200
 #, c-format
 msgid "  HEAD branch: %s"
 msgstr "  HEAD-gren: %s"
 
-#: builtin/remote.c:1200
+#: builtin/remote.c:1202
 #, c-format
 msgid ""
 "  HEAD branch (remote HEAD is ambiguous, may be one of the following):\n"
 msgstr "  HEAD-gren (HEAD på fjärr är tvetydig, kan vara en av följande):\n"
 
-#: builtin/remote.c:1212
+#: builtin/remote.c:1214
 #, c-format
 msgid "  Remote branch:%s"
 msgid_plural "  Remote branches:%s"
 msgstr[0] "  Fjärrgren:%s"
 msgstr[1] "  Fjärrgrenar:%s"
 
-#: builtin/remote.c:1215 builtin/remote.c:1242
+#: builtin/remote.c:1217 builtin/remote.c:1244
 msgid " (status not queried)"
 msgstr " (status inte förfrågad)"
 
-#: builtin/remote.c:1224
+#: builtin/remote.c:1226
 msgid "  Local branch configured for 'git pull':"
 msgid_plural "  Local branches configured for 'git pull':"
 msgstr[0] "  Lokal gren konfigurerad för \"git pull\":"
 msgstr[1] "  Lokala grenar konfigurerade för \"git pull\":"
 
-#: builtin/remote.c:1232
+#: builtin/remote.c:1234
 msgid "  Local refs will be mirrored by 'git push'"
 msgstr "  Lokala referenser speglas av \"git push\""
 
-#: builtin/remote.c:1239
+#: builtin/remote.c:1241
 #, c-format
 msgid "  Local ref configured for 'git push'%s:"
 msgid_plural "  Local refs configured for 'git push'%s:"
 msgstr[0] "  Lokal referens konfigurerad för \"git push\"%s:"
 msgstr[1] "  Lokala referenser konfigurerade för \"git push\"%s:"
 
-#: builtin/remote.c:1260
+#: builtin/remote.c:1262
 msgid "set refs/remotes/<name>/HEAD according to remote"
 msgstr "sätt refs/remotes/<namn>/HEAD enligt fjärren"
 
-#: builtin/remote.c:1262
+#: builtin/remote.c:1264
 msgid "delete refs/remotes/<name>/HEAD"
 msgstr "ta bort refs/remotes/<namn>/HEAD"
 
-#: builtin/remote.c:1277
+#: builtin/remote.c:1279
 msgid "Cannot determine remote HEAD"
 msgstr "Kan inte bestämma HEAD på fjärren"
 
-#: builtin/remote.c:1279
+#: builtin/remote.c:1281
 msgid "Multiple remote HEAD branches. Please choose one explicitly with:"
 msgstr "Flera HEAD-grenar på fjärren. Välj en explicit med:"
 
-#: builtin/remote.c:1289
+#: builtin/remote.c:1291
 #, c-format
 msgid "Could not delete %s"
 msgstr "Kunde inte ta bort %s"
 
-#: builtin/remote.c:1297
+#: builtin/remote.c:1299
 #, c-format
 msgid "Not a valid ref: %s"
 msgstr "Inte en giltig referens: %s"
 
-#: builtin/remote.c:1299
+#: builtin/remote.c:1301
 #, c-format
 msgid "Could not setup %s"
 msgstr "Kunde inte ställa in %s"
 
-#: builtin/remote.c:1317
+#: builtin/remote.c:1319
 #, c-format
 msgid " %s will become dangling!"
 msgstr " %s kommer bli dinglande!"
 
-#: builtin/remote.c:1318
+#: builtin/remote.c:1320
 #, c-format
 msgid " %s has become dangling!"
 msgstr " %s har blivit dinglande!"
 
-#: builtin/remote.c:1328
+#: builtin/remote.c:1330
 #, c-format
 msgid "Pruning %s"
 msgstr "Rensar %s"
 
-#: builtin/remote.c:1329
+#: builtin/remote.c:1331
 #, c-format
 msgid "URL: %s"
 msgstr "URL: %s"
 
-#: builtin/remote.c:1352
+#: builtin/remote.c:1354
 #, c-format
 msgid " * [would prune] %s"
 msgstr " * [skulle rensa] %s"
 
-#: builtin/remote.c:1355
+#: builtin/remote.c:1357
 #, c-format
 msgid " * [pruned] %s"
 msgstr " * [rensad] %s"
 
-#: builtin/remote.c:1400
+#: builtin/remote.c:1402
 msgid "prune remotes after fetching"
 msgstr "rensa fjärrar efter hämtning"
 
-#: builtin/remote.c:1466 builtin/remote.c:1540
+#: builtin/remote.c:1468 builtin/remote.c:1542
 #, c-format
 msgid "No such remote '%s'"
 msgstr "Ingen sådan fjärr \"%s\""
 
-#: builtin/remote.c:1486
+#: builtin/remote.c:1488
 msgid "add branch"
 msgstr "lägg till gren"
 
-#: builtin/remote.c:1493
+#: builtin/remote.c:1495
 msgid "no remote specified"
 msgstr "ingen fjärr angavs"
 
-#: builtin/remote.c:1515
+#: builtin/remote.c:1517
 msgid "manipulate push URLs"
 msgstr "manipulera URL:ar för sändning"
 
-#: builtin/remote.c:1517
+#: builtin/remote.c:1519
 msgid "add URL"
 msgstr "lägg till URL"
 
-#: builtin/remote.c:1519
+#: builtin/remote.c:1521
 msgid "delete URLs"
 msgstr "ta bort URL:ar"
 
-#: builtin/remote.c:1526
+#: builtin/remote.c:1528
 msgid "--add --delete doesn't make sense"
 msgstr "--add --delete ger ingen mening"
 
-#: builtin/remote.c:1566
+#: builtin/remote.c:1568
 #, c-format
 msgid "Invalid old URL pattern: %s"
 msgstr "Felaktig gammalt URL-mönster: %s"
 
-#: builtin/remote.c:1574
+#: builtin/remote.c:1576
 #, c-format
 msgid "No such URL found: %s"
 msgstr "Ingen sådan URL hittades: %s"
 
-#: builtin/remote.c:1576
+#: builtin/remote.c:1578
 msgid "Will not delete all non-push URLs"
 msgstr "Kommer inte ta bort alla icke-sänd-URL:er"
 
-#: builtin/remote.c:1590
+#: builtin/remote.c:1592
 msgid "be verbose; must be placed before a subcommand"
 msgstr "var pratsam; måste skrivas före ett underkommando"
 
@@ -9424,81 +9424,81 @@ msgstr "Radbryt utdata"
 
 #: builtin/show-branch.c:9
 msgid ""
-"git show-branch [-a|--all] [-r|--remotes] [--topo-order | --date-order] [--"
-"current] [--color[=<when>] | --no-color] [--sparse] [--more=<n> | --list | --"
-"independent | --merge-base] [--no-name | --sha1-name] [--topics] [(<rev> | "
-"<glob>)...]"
+"git show-branch [-a|--all] [-r|--remotes] [--topo-order | --date-order]\n"
+"\t\t       [--current] [--color[=<when>] | --no-color] [--sparse]\n"
+"\t\t       [--more=<n> | --list | --independent | --merge-base]\n"
+"\t       [--no-name | --sha1-name] [--topics] [(<rev> | <glob>)...]"
 msgstr ""
-"git show-branch [-a|--all] [-r|--remotes] [--topo-order | --date-order] [--"
-"current] [--color[=<när>] | --no-color] [--sparse] [--more=<n> | --list | --"
-"independent | --merge-base] [--no-name | --sha1-name] [--topics] [(<rev> | "
-"<mönster>)...]"
+"git show-branch [-a|--all] [-r|--remotes] [--topo-order | --date-order]\n"
+"\t\t       [--current] [--color[=<när>] | --no-color] [--sparse]\n"
+"\t\t       [--more=<n> | --list | --independent | --merge-base]\n"
+"\t       [--no-name | --sha1-name] [--topics] [(<rev> | <mönster>)...]"
 
-#: builtin/show-branch.c:10
+#: builtin/show-branch.c:13
 msgid "git show-branch (-g|--reflog)[=<n>[,<base>]] [--list] [<ref>]"
 msgstr "git show-branch (-g|--reflog)[=<n>[,<bas>]] [--list] [<ref>]"
 
-#: builtin/show-branch.c:649
+#: builtin/show-branch.c:652
 msgid "show remote-tracking and local branches"
 msgstr "visa fjärrspårande och lokala grenar"
 
-#: builtin/show-branch.c:651
+#: builtin/show-branch.c:654
 msgid "show remote-tracking branches"
 msgstr "visa fjärrspårande grenar"
 
-#: builtin/show-branch.c:653
+#: builtin/show-branch.c:656
 msgid "color '*!+-' corresponding to the branch"
 msgstr "färga \"*!+-\" enligt grenen"
 
-#: builtin/show-branch.c:655
+#: builtin/show-branch.c:658
 msgid "show <n> more commits after the common ancestor"
 msgstr "visa <n> ytterligare incheckningar efter gemensam anfader"
 
-#: builtin/show-branch.c:657
+#: builtin/show-branch.c:660
 msgid "synonym to more=-1"
 msgstr "synonym till more=-1"
 
-#: builtin/show-branch.c:658
+#: builtin/show-branch.c:661
 msgid "suppress naming strings"
 msgstr "undertyck namnsträngar"
 
-#: builtin/show-branch.c:660
+#: builtin/show-branch.c:663
 msgid "include the current branch"
 msgstr "inkludera aktuell gren"
 
-#: builtin/show-branch.c:662
+#: builtin/show-branch.c:665
 msgid "name commits with their object names"
 msgstr "namnge incheckningar med deras objektnamn"
 
-#: builtin/show-branch.c:664
+#: builtin/show-branch.c:667
 msgid "show possible merge bases"
 msgstr "visa möjliga sammanslagningsbaser"
 
-#: builtin/show-branch.c:666
+#: builtin/show-branch.c:669
 msgid "show refs unreachable from any other ref"
 msgstr "visa referenser som inte kan nås från någon annan referens"
 
-#: builtin/show-branch.c:668
+#: builtin/show-branch.c:671
 msgid "show commits in topological order"
 msgstr "visa incheckningar i topologisk ordning"
 
-#: builtin/show-branch.c:671
+#: builtin/show-branch.c:674
 msgid "show only commits not on the first branch"
 msgstr "visa endast incheckningar inte på den första grenen"
 
-#: builtin/show-branch.c:673
+#: builtin/show-branch.c:676
 msgid "show merges reachable from only one tip"
 msgstr "visa sammanslagningar som endast kan nås från en spets"
 
-#: builtin/show-branch.c:675
+#: builtin/show-branch.c:678
 msgid "topologically sort, maintaining date order where possible"
 msgstr "sortera topologiskt, behåll datumordning när möjligt"
 
-#: builtin/show-branch.c:678
+#: builtin/show-branch.c:681
 msgid "<n>[,<base>]"
 msgstr "<n>[,<bas>]"
 
-#: builtin/show-branch.c:679
+#: builtin/show-branch.c:682
 msgid "show <n> most recent ref-log entries starting at base"
 msgstr "visa <n> nyaste refloggposter med början på bas"
 
@@ -10001,7 +10001,7 @@ msgstr "endast användbart vid felsökning"
 msgid "print debugging messages to stderr"
 msgstr "skriv felsökningsmeddelanden på standard fel"
 
-#: git.c:17
+#: git.c:14
 msgid ""
 "'git help -a' and 'git help -g' list available subcommands and some\n"
 "concept guides. See 'git help <command>' or 'git help <concept>'\n"
