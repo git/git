@@ -12,8 +12,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2015-01-13 14:05+0800\n"
-"PO-Revision-Date: 2015-01-13 14:21+0800\n"
+"POT-Creation-Date: 2015-01-18 11:24+0800\n"
+"PO-Revision-Date: 2015-01-18 20:34+0800\n"
 "Last-Translator: Jiang Xin <worldhello.net@gmail.com>\n"
 "Language-Team: GitHub <https://github.com/gotgit/git/>\n"
 "Language: zh_CN\n"
@@ -32,7 +32,7 @@ msgid ""
 "Fix them up in the work tree, and then use 'git add/rm <file>'\n"
 "as appropriate to mark resolution and make a commit."
 msgstr ""
-"请在工作区改正文件，然后酌情使用 'git add/rm <file>' 命令标记\n"
+"请在工作区改正文件，然后酌情使用 'git add/rm <文件>' 命令标记\n"
 "解决方案并提交。"
 
 #: archive.c:11
@@ -1153,7 +1153,7 @@ msgid ""
 "after resolving the conflicts, mark the corrected paths\n"
 "with 'git add <paths>' or 'git rm <paths>'"
 msgstr ""
-"冲突解决完毕后，用 'git add <paths>' 或 'git rm <paths>'\n"
+"冲突解决完毕后，用 'git add <路径>' 或 'git rm <路径>'\n"
 "命令标记修正后的文件"
 
 #: sequencer.c:198
@@ -1162,7 +1162,7 @@ msgid ""
 "with 'git add <paths>' or 'git rm <paths>'\n"
 "and commit the result with 'git commit'"
 msgstr ""
-"冲突解决完毕后，用 'git add <paths>' 或 'git rm <paths>'\n"
+"冲突解决完毕后，用 'git add <路径>' 或 'git rm <路径>'\n"
 "对修正后的文件做标记，然后用 'git commit' 提交"
 
 #: sequencer.c:211 sequencer.c:856 sequencer.c:939
@@ -1461,7 +1461,7 @@ msgstr "不能在 %s 中设置 core.worktree"
 msgid "unknown value '%s' for key '%s'"
 msgstr "键 '%2$s' 的未知取值 '%1$s'"
 
-#: trailer.c:552 trailer.c:557 builtin/remote.c:288
+#: trailer.c:552 trailer.c:557 builtin/remote.c:290
 #, c-format
 msgid "more than one %s"
 msgstr "多于一个 %s"
@@ -1544,27 +1544,27 @@ msgstr "未合并的路径："
 #: wt-status.c:177 wt-status.c:204
 #, c-format
 msgid "  (use \"git reset %s <file>...\" to unstage)"
-msgstr "  （使用 \"git reset %s <file>...\" 撤出暂存区）"
+msgstr "  （使用 \"git reset %s <文件>...\" 撤出暂存区）"
 
 #  译者：注意保持前导空格
 #: wt-status.c:179 wt-status.c:206
 msgid "  (use \"git rm --cached <file>...\" to unstage)"
-msgstr "  （使用 \"git rm --cached <file>...\" 撤出暂存区）"
+msgstr "  （使用 \"git rm --cached <文件>...\" 撤出暂存区）"
 
 #  译者：注意保持前导空格
 #: wt-status.c:183
 msgid "  (use \"git add <file>...\" to mark resolution)"
-msgstr "  （使用 \"git add <file>...\" 标记解决方案）"
+msgstr "  （使用 \"git add <文件>...\" 标记解决方案）"
 
 #  译者：注意保持前导空格
 #: wt-status.c:185 wt-status.c:189
 msgid "  (use \"git add/rm <file>...\" as appropriate to mark resolution)"
-msgstr "  （酌情使用 \"git add/rm <file>...\" 标记解决方案）"
+msgstr "  （酌情使用 \"git add/rm <文件>...\" 标记解决方案）"
 
 #  译者：注意保持前导空格
 #: wt-status.c:187
 msgid "  (use \"git rm <file>...\" to mark resolution)"
-msgstr "  （使用 \"git rm <file>...\" 标记解决方案）"
+msgstr "  （使用 \"git rm <文件>...\" 标记解决方案）"
 
 #: wt-status.c:198
 msgid "Changes to be committed:"
@@ -1577,18 +1577,18 @@ msgstr "尚未暂存以备提交的变更："
 #  译者：注意保持前导空格
 #: wt-status.c:220
 msgid "  (use \"git add <file>...\" to update what will be committed)"
-msgstr "  （使用 \"git add <file>...\" 更新要提交的内容）"
+msgstr "  （使用 \"git add <文件>...\" 更新要提交的内容）"
 
 #  译者：注意保持前导空格
 #: wt-status.c:222
 msgid "  (use \"git add/rm <file>...\" to update what will be committed)"
-msgstr "  （使用 \"git add/rm <file>...\" 更新要提交的内容）"
+msgstr "  （使用 \"git add/rm <文件>...\" 更新要提交的内容）"
 
 #  译者：注意保持前导空格
 #: wt-status.c:223
 msgid ""
 "  (use \"git checkout -- <file>...\" to discard changes in working directory)"
-msgstr "  （使用 \"git checkout -- <file>...\" 丢弃工作区的改动）"
+msgstr "  （使用 \"git checkout -- <文件>...\" 丢弃工作区的改动）"
 
 #  译者：注意保持前导空格
 #: wt-status.c:225
@@ -1599,7 +1599,7 @@ msgstr "  （提交或丢弃子模组中未跟踪或修改的内容）"
 #: wt-status.c:237
 #, c-format
 msgid "  (use \"git %s <file>...\" to include in what will be committed)"
-msgstr "  （使用 \"git %s <file>...\" 以包含要提交的内容）"
+msgstr "  （使用 \"git %s <文件>...\" 以包含要提交的内容）"
 
 #: wt-status.c:252
 msgid "both deleted:"
@@ -2039,7 +2039,7 @@ msgid "The following paths are ignored by one of your .gitignore files:\n"
 msgstr "下列路径根据您的一个 .gitignore 文件而被忽略：\n"
 
 #: builtin/add.c:248 builtin/clean.c:875 builtin/fetch.c:108 builtin/mv.c:110
-#: builtin/prune-packed.c:55 builtin/push.c:499 builtin/remote.c:1370
+#: builtin/prune-packed.c:55 builtin/push.c:499 builtin/remote.c:1372
 #: builtin/rm.c:269
 msgid "dry run"
 msgstr "演习"
@@ -2717,11 +2717,11 @@ msgstr "花费额外的循环来找到更好的匹配"
 
 #: builtin/blame.c:2517
 msgid "Use revisions from <file> instead of calling git-rev-list"
-msgstr "使用来自 <file> 的修订集而不是调用 git-rev-list"
+msgstr "使用来自 <文件> 的修订集而不是调用 git-rev-list"
 
 #: builtin/blame.c:2518
 msgid "Use <file>'s contents as the final image"
-msgstr "使用 <file> 的内容作为最终的图片"
+msgstr "使用 <文件> 的内容作为最终的图片"
 
 #: builtin/blame.c:2519 builtin/blame.c:2520
 msgid "score"
@@ -3176,43 +3176,43 @@ msgstr "需要一个版本库来创建包。"
 msgid "Need a repository to unbundle."
 msgstr "需要一个版本库来解包。"
 
-#: builtin/cat-file.c:332
+#: builtin/cat-file.c:328
 msgid "git cat-file (-t|-s|-e|-p|<type>|--textconv) <object>"
 msgstr "git cat-file (-t|-s|-e|-p|<类型>|--textconv) <对象>"
 
-#: builtin/cat-file.c:333
+#: builtin/cat-file.c:329
 msgid "git cat-file (--batch|--batch-check) < <list_of_objects>"
 msgstr "git cat-file (--batch|--batch-check) < <对象列表>"
 
-#: builtin/cat-file.c:370
+#: builtin/cat-file.c:366
 msgid "<type> can be one of: blob, tree, commit, tag"
 msgstr "<类型> 可以是其中之一：blob、tree、commit、tag"
 
-#: builtin/cat-file.c:371
+#: builtin/cat-file.c:367
 msgid "show object type"
 msgstr "显示对象类型"
 
-#: builtin/cat-file.c:372
+#: builtin/cat-file.c:368
 msgid "show object size"
 msgstr "显示对象大小"
 
-#: builtin/cat-file.c:374
+#: builtin/cat-file.c:370
 msgid "exit with zero when there's no error"
 msgstr "当没有错误时退出并返回零"
 
-#: builtin/cat-file.c:375
+#: builtin/cat-file.c:371
 msgid "pretty-print object's content"
 msgstr "美观地打印对象的内容"
 
-#: builtin/cat-file.c:377
+#: builtin/cat-file.c:373
 msgid "for blob objects, run textconv on object's content"
 msgstr "对于数据（blob）对象，对其内容执行 textconv"
 
-#: builtin/cat-file.c:379
+#: builtin/cat-file.c:375
 msgid "show info and content of objects fed from the standard input"
 msgstr "显示从标准输入提供的对象的信息和内容"
 
-#: builtin/cat-file.c:382
+#: builtin/cat-file.c:378
 msgid "show info about objects fed from the standard input"
 msgstr "显示从标准输入提供的对象的信息"
 
@@ -5297,7 +5297,7 @@ msgstr "   （%s 已成为摇摆状态）"
 msgid "[deleted]"
 msgstr "[已删除]"
 
-#: builtin/fetch.c:799 builtin/remote.c:1058
+#: builtin/fetch.c:799 builtin/remote.c:1060
 msgid "(none)"
 msgstr "（无）"
 
@@ -5369,11 +5369,11 @@ msgstr "获取组并指定引用规则没有意义"
 #: builtin/fmt-merge-msg.c:13
 msgid "git fmt-merge-msg [-m <message>] [--log[=<n>]|--no-log] [--file <file>]"
 msgstr ""
-"git fmt-merge-msg [-m <message>] [--log[=<n>]|--no-log] [--file <file>]"
+"git fmt-merge-msg [-m <说明>] [--log[=<n>]|--no-log] [--file <文件>]"
 
 #: builtin/fmt-merge-msg.c:662 builtin/fmt-merge-msg.c:665 builtin/grep.c:698
 #: builtin/merge.c:198 builtin/repack.c:178 builtin/repack.c:182
-#: builtin/show-branch.c:654 builtin/show-ref.c:178 builtin/tag.c:590
+#: builtin/show-branch.c:657 builtin/show-ref.c:178 builtin/tag.c:590
 #: parse-options.h:132 parse-options.h:239
 msgid "n"
 msgstr "n"
@@ -5402,43 +5402,43 @@ msgstr "从文件中读取"
 msgid "unable to parse format"
 msgstr "不能解析格式"
 
-#: builtin/for-each-ref.c:1057
+#: builtin/for-each-ref.c:1064
 msgid "git for-each-ref [options] [<pattern>]"
 msgstr "git for-each-ref [选项] [<模式>]"
 
-#: builtin/for-each-ref.c:1072
+#: builtin/for-each-ref.c:1079
 msgid "quote placeholders suitably for shells"
 msgstr "引用占位符适用于 shells"
 
-#: builtin/for-each-ref.c:1074
+#: builtin/for-each-ref.c:1081
 msgid "quote placeholders suitably for perl"
 msgstr "引用占位符适用于 perl"
 
-#: builtin/for-each-ref.c:1076
+#: builtin/for-each-ref.c:1083
 msgid "quote placeholders suitably for python"
 msgstr "引用占位符适用于 python"
 
-#: builtin/for-each-ref.c:1078
+#: builtin/for-each-ref.c:1085
 msgid "quote placeholders suitably for Tcl"
 msgstr "引用占位符适用于 Tcl"
 
-#: builtin/for-each-ref.c:1081
+#: builtin/for-each-ref.c:1088
 msgid "show only <n> matched refs"
 msgstr "只显示 <n> 个匹配的引用"
 
-#: builtin/for-each-ref.c:1082 builtin/replace.c:438
+#: builtin/for-each-ref.c:1089 builtin/replace.c:438
 msgid "format"
 msgstr "格式"
 
-#: builtin/for-each-ref.c:1082
+#: builtin/for-each-ref.c:1089
 msgid "format to use for the output"
 msgstr "输出格式"
 
-#: builtin/for-each-ref.c:1083
+#: builtin/for-each-ref.c:1090
 msgid "key"
 msgstr "key"
 
-#: builtin/for-each-ref.c:1084
+#: builtin/for-each-ref.c:1091
 msgid "field name to sort on"
 msgstr "排序的字段名"
 
@@ -5557,7 +5557,7 @@ msgstr "有太多不可达的松散对象，运行 'git prune' 删除它们。"
 
 #: builtin/grep.c:23
 msgid "git grep [options] [-e] <pattern> [<rev>...] [[--] <path>...]"
-msgstr "git grep [选项] [-e] <模式> [<修订>...] [[--] <路径>...]"
+msgstr "git grep [选项] [-e] <模式> [<版本>...] [[--] <路径>...]"
 
 #: builtin/grep.c:218
 #, c-format
@@ -5876,7 +5876,7 @@ msgid ""
 "Please consider using 'man.<tool>.cmd' instead."
 msgstr ""
 "'%s'：不支持的 man 手册查看器的路径。\n"
-"请使用 'man.<tool>.cmd'。"
+"请使用 'man.<工具>.cmd'。"
 
 #: builtin/help.c:227
 #, c-format
@@ -5885,7 +5885,7 @@ msgid ""
 "Please consider using 'man.<tool>.path' instead."
 msgstr ""
 "'%s': 支持的 man 手册查看器命令。\n"
-"请使用 'man.<tool>.path'。"
+"请使用 'man.<工具>.path'。"
 
 #: builtin/help.c:354
 #, c-format
@@ -6376,8 +6376,7 @@ msgid ""
 "%s (or --work-tree=<directory>) not allowed without specifying %s (or --git-"
 "dir=<directory>)"
 msgstr ""
-"不允许 %s（或 --work-tree=<directory>）而没有指定 %s（或 --git-"
-"dir=<directory>）"
+"不允许 %s（或 --work-tree=<目录>）而没有指定 %s（或 --git-dir=<目录>）"
 
 #: builtin/init-db.c:591
 #, c-format
@@ -6405,12 +6404,12 @@ msgid "trailer(s) to add"
 msgstr "要添加的签名"
 
 #: builtin/log.c:41
-msgid "git log [<options>] [<revision range>] [[--] <path>...]\n"
-msgstr "git log [<选项>] [<版本范围>] [[--] <路径>...]\n"
+msgid "git log [<options>] [<revision range>] [[--] <path>...]"
+msgstr "git log [<选项>] [<版本范围>] [[--] <路径>...]"
 
 #: builtin/log.c:42
-msgid "   or: git show [options] <object>..."
-msgstr "   或者：git show [选项] <对象>..."
+msgid "git show [options] <object>..."
+msgstr "git show [选项] <对象>..."
 
 #: builtin/log.c:81
 #, c-format
@@ -6489,7 +6488,7 @@ msgstr "不正常的 in-reply-to：%s"
 
 #: builtin/log.c:1026
 msgid "git format-patch [options] [<since> | <revision range>]"
-msgstr "git format-patch [选项] [<从> | <修订集范围>]"
+msgstr "git format-patch [选项] [<从> | <版本范围>]"
 
 #: builtin/log.c:1071
 msgid "Two output directories?"
@@ -6537,7 +6536,7 @@ msgstr "使用 [<前缀>] 代替 [PATCH]"
 
 #: builtin/log.c:1208
 msgid "store resulting files in <dir>"
-msgstr "把结果文件存储在 <dir>"
+msgstr "把结果文件存储在 <目录>"
 
 #: builtin/log.c:1211
 msgid "don't strip/add [PATCH]"
@@ -6581,19 +6580,19 @@ msgstr "添加抄送"
 
 #: builtin/log.c:1227
 msgid "ident"
-msgstr "ident"
+msgstr "标识"
 
 #: builtin/log.c:1228
 msgid "set From address to <ident> (or committer ident if absent)"
-msgstr "设置 From 地址为 <ident>（如若不提供，用提交者ID做为地址）"
+msgstr "将 From 地址设置为 <标识>（如若不提供，则用提交者ID做为地址）"
 
 #: builtin/log.c:1230
 msgid "message-id"
-msgstr "message-id"
+msgstr "邮件标识"
 
 #: builtin/log.c:1231
 msgid "make first mail a reply to <message-id>"
-msgstr "使第一封邮件作为对 <message-id> 的回复"
+msgstr "使第一封邮件作为对 <邮件标识> 的回复"
 
 #: builtin/log.c:1232 builtin/log.c:1235
 msgid "boundary"
@@ -6678,7 +6677,7 @@ msgstr "git cherry [-v] [<上游> [<头> [<限制>]]]"
 #, c-format
 msgid ""
 "Could not find a tracked remote branch, please specify <upstream> manually.\n"
-msgstr "不能找到跟踪的远程分支，请手工指定 <upstream>。\n"
+msgstr "不能找到跟踪的远程分支，请手工指定 <上游>。\n"
 
 #: builtin/log.c:1651 builtin/log.c:1653 builtin/log.c:1665
 #, c-format
@@ -7176,7 +7175,7 @@ msgstr "git merge-base --is-ancestor <提交> <提交>"
 
 #: builtin/merge-base.c:33
 msgid "git merge-base --fork-point <ref> [<commit>]"
-msgstr "git merge-base --fork-point <提交> [<提交>]"
+msgstr "git merge-base --fork-point <引用> [<提交>]"
 
 #: builtin/merge-base.c:214
 msgid "output all common ancestors"
@@ -7196,7 +7195,7 @@ msgstr "第一个是其他的祖先提交么？"
 
 #: builtin/merge-base.c:222
 msgid "find where <commit> forked from reflog of <ref>"
-msgstr "查找 <commit> 从<引用>日志的何处分支的"
+msgstr "查找 <提交> 从<引用>日志的何处分支的"
 
 #: builtin/merge-file.c:8
 msgid ""
@@ -7340,7 +7339,7 @@ msgstr "%s，源=%s，目标=%s"
 msgid "Renaming %s to %s\n"
 msgstr "重命名 %s 至 %s\n"
 
-#: builtin/mv.c:256 builtin/remote.c:726 builtin/repack.c:355
+#: builtin/mv.c:256 builtin/remote.c:728 builtin/repack.c:355
 #, c-format
 msgid "renaming '%s' failed"
 msgstr "重命名 '%s' 失败"
@@ -7705,7 +7704,7 @@ msgstr "注解引用"
 msgid "use notes from <notes_ref>"
 msgstr "从 <注解引用> 使用注解"
 
-#: builtin/notes.c:989 builtin/remote.c:1619
+#: builtin/notes.c:989 builtin/remote.c:1621
 #, c-format
 msgid "Unknown subcommand: %s"
 msgstr "未知子命令：%s"
@@ -7825,7 +7824,7 @@ msgstr "不创建空的包输出"
 
 #: builtin/pack-objects.c:2657
 msgid "read revision arguments from standard input"
-msgstr "从标准输入读取修订号参数"
+msgstr "从标准输入读取版本号参数"
 
 #: builtin/pack-objects.c:2659
 msgid "limit the objects to those that are not yet packed"
@@ -7937,7 +7936,7 @@ msgstr "git push [<选项>] [<版本库> [<引用规则>...]]"
 
 #: builtin/push.c:85
 msgid "tag shorthand without <tag>"
-msgstr "tag 简写没有跟 <tag> 参数"
+msgstr "tag 后面未提供 <标签> 参数"
 
 #: builtin/push.c:95
 msgid "--delete only accepts plain target ref names"
@@ -7987,7 +7986,7 @@ msgstr ""
 "您当前不在一个分支上。\n"
 "现在为推送当前（分离头指针）的历史，使用\n"
 "\n"
-"    git push %s HEAD:<name-of-remote-branch>\n"
+"    git push %s HEAD:<远程分支名字>\n"
 
 #: builtin/push.c:171
 #, c-format
@@ -8144,11 +8143,11 @@ msgstr ""
 "没有配置推送目标。\n"
 "或通过命令行指定URL，或用下面命令配置一个远程版本库\n"
 "\n"
-"    git remote add <name> <url>\n"
+"    git remote add <名称> <地址>\n"
 "\n"
 "然后使用该远程版本库名执行推送\n"
 "\n"
-"    git push <name>\n"
+"    git push <名称>\n"
 
 #: builtin/push.c:410
 msgid "--all and --tags are incompatible"
@@ -8254,7 +8253,7 @@ msgstr ""
 
 #: builtin/read-tree.c:110
 msgid "write resulting index to <file>"
-msgstr "将索引结果写入 <file>"
+msgstr "将索引结果写入 <文件>"
 
 #: builtin/read-tree.c:113
 msgid "only empty the index"
@@ -8336,7 +8335,7 @@ msgid ""
 "mirror=<fetch|push>] <name> <url>"
 msgstr ""
 "git remote add [-t <分支>] [-m <master>] [-f] [--tags|--no-tags] [--"
-"mirror=<fetch|push>] <名称> <url>"
+"mirror=<fetch|push>] <名称> <地址>"
 
 #: builtin/remote.c:14 builtin/remote.c:33
 msgid "git remote rename <old> <new>"
@@ -8461,55 +8460,55 @@ msgstr "指定一个 master 分支并使用 --mirror 选项没有意义"
 msgid "specifying branches to track makes sense only with fetch mirrors"
 msgstr "指定要跟踪的分支只在与获取镜像同时使用才有意义"
 
-#: builtin/remote.c:185 builtin/remote.c:641
+#: builtin/remote.c:187 builtin/remote.c:643
 #, c-format
 msgid "remote %s already exists."
 msgstr "远程 %s 已经存在。"
 
-#: builtin/remote.c:189 builtin/remote.c:645
+#: builtin/remote.c:191 builtin/remote.c:647
 #, c-format
 msgid "'%s' is not a valid remote name"
 msgstr "'%s' 不是一个有效的远程名称"
 
-#: builtin/remote.c:233
+#: builtin/remote.c:235
 #, c-format
 msgid "Could not setup master '%s'"
 msgstr "无法设置 master '%s'"
 
-#: builtin/remote.c:333
+#: builtin/remote.c:335
 #, c-format
 msgid "Could not get fetch map for refspec %s"
 msgstr "无法得到引用规则 %s 的获取列表"
 
-#: builtin/remote.c:434 builtin/remote.c:442
+#: builtin/remote.c:436 builtin/remote.c:444
 msgid "(matching)"
 msgstr "（匹配）"
 
-#: builtin/remote.c:446
+#: builtin/remote.c:448
 msgid "(delete)"
 msgstr "（删除）"
 
-#: builtin/remote.c:590 builtin/remote.c:596 builtin/remote.c:602
+#: builtin/remote.c:592 builtin/remote.c:598 builtin/remote.c:604
 #, c-format
 msgid "Could not append '%s' to '%s'"
 msgstr "不能添加 '%s' 至 '%s'"
 
-#: builtin/remote.c:634 builtin/remote.c:793 builtin/remote.c:893
+#: builtin/remote.c:636 builtin/remote.c:795 builtin/remote.c:895
 #, c-format
 msgid "No such remote: %s"
 msgstr "没有这样的远程：%s"
 
-#: builtin/remote.c:651
+#: builtin/remote.c:653
 #, c-format
 msgid "Could not rename config section '%s' to '%s'"
 msgstr "不能重命名配置小节 '%s' 到 '%s'"
 
-#: builtin/remote.c:657 builtin/remote.c:845
+#: builtin/remote.c:659 builtin/remote.c:847
 #, c-format
 msgid "Could not remove config section '%s'"
 msgstr "不能移除配置小节 '%s'"
 
-#: builtin/remote.c:672
+#: builtin/remote.c:674
 #, c-format
 msgid ""
 "Not updating non-default fetch refspec\n"
@@ -8520,32 +8519,32 @@ msgstr ""
 "\t%s\n"
 "\t如果必要请手动更新配置。"
 
-#: builtin/remote.c:678
+#: builtin/remote.c:680
 #, c-format
 msgid "Could not append '%s'"
 msgstr "不能追加 '%s'"
 
-#: builtin/remote.c:689
+#: builtin/remote.c:691
 #, c-format
 msgid "Could not set '%s'"
 msgstr "不能设置 '%s'"
 
-#: builtin/remote.c:711
+#: builtin/remote.c:713
 #, c-format
 msgid "deleting '%s' failed"
 msgstr "删除 '%s' 失败"
 
-#: builtin/remote.c:745
+#: builtin/remote.c:747
 #, c-format
 msgid "creating '%s' failed"
 msgstr "创建 '%s' 失败"
 
-#: builtin/remote.c:764
+#: builtin/remote.c:766
 #, c-format
 msgid "Could not remove branch %s"
 msgstr "无法移除分支 %s"
 
-#: builtin/remote.c:831
+#: builtin/remote.c:833
 msgid ""
 "Note: A branch outside the refs/remotes/ hierarchy was not removed;\n"
 "to delete it, use:"
@@ -8555,126 +8554,126 @@ msgid_plural ""
 msgstr[0] "注意：ref/remotes 层级之外的一个分支未被移除。要删除它，使用："
 msgstr[1] "注意：ref/remotes 层级之外的一些分支未被移除。要删除它们，使用："
 
-#: builtin/remote.c:946
+#: builtin/remote.c:948
 #, c-format
 msgid " new (next fetch will store in remotes/%s)"
 msgstr " 新的（下一次获取将存储于 remotes/%s）"
 
-#: builtin/remote.c:949
+#: builtin/remote.c:951
 msgid " tracked"
 msgstr " 已跟踪"
 
-#: builtin/remote.c:951
+#: builtin/remote.c:953
 msgid " stale (use 'git remote prune' to remove)"
 msgstr " 过时（使用 'git remote prune' 来移除）"
 
-#: builtin/remote.c:953
+#: builtin/remote.c:955
 msgid " ???"
 msgstr " ???"
 
-#: builtin/remote.c:994
+#: builtin/remote.c:996
 #, c-format
 msgid "invalid branch.%s.merge; cannot rebase onto > 1 branch"
 msgstr "无效的 branch.%s.merge，不能变基到一个以上的分支"
 
-#: builtin/remote.c:1001
+#: builtin/remote.c:1003
 #, c-format
 msgid "rebases onto remote %s"
 msgstr "变基到远程 %s"
 
-#: builtin/remote.c:1004
+#: builtin/remote.c:1006
 #, c-format
 msgid " merges with remote %s"
 msgstr " 与远程 %s 合并"
 
-#: builtin/remote.c:1005
+#: builtin/remote.c:1007
 msgid "    and with remote"
 msgstr "    且有远程"
 
-#: builtin/remote.c:1007
+#: builtin/remote.c:1009
 #, c-format
 msgid "merges with remote %s"
 msgstr "与远程 %s 合并"
 
-#: builtin/remote.c:1008
+#: builtin/remote.c:1010
 msgid "   and with remote"
 msgstr "   且有远程"
 
-#: builtin/remote.c:1054
+#: builtin/remote.c:1056
 msgid "create"
 msgstr "创建"
 
-#: builtin/remote.c:1057
+#: builtin/remote.c:1059
 msgid "delete"
 msgstr "删除"
 
-#: builtin/remote.c:1061
+#: builtin/remote.c:1063
 msgid "up to date"
 msgstr "最新"
 
-#: builtin/remote.c:1064
+#: builtin/remote.c:1066
 msgid "fast-forwardable"
 msgstr "可快进"
 
-#: builtin/remote.c:1067
+#: builtin/remote.c:1069
 msgid "local out of date"
 msgstr "本地已过时"
 
-#: builtin/remote.c:1074
+#: builtin/remote.c:1076
 #, c-format
 msgid "    %-*s forces to %-*s (%s)"
 msgstr "    %-*s 强制推送至 %-*s (%s)"
 
-#: builtin/remote.c:1077
+#: builtin/remote.c:1079
 #, c-format
 msgid "    %-*s pushes to %-*s (%s)"
 msgstr "    %-*s 推送至 %-*s (%s)"
 
-#: builtin/remote.c:1081
+#: builtin/remote.c:1083
 #, c-format
 msgid "    %-*s forces to %s"
 msgstr "    %-*s 强制推送至 %s"
 
-#: builtin/remote.c:1084
+#: builtin/remote.c:1086
 #, c-format
 msgid "    %-*s pushes to %s"
 msgstr "    %-*s 推送至 %s"
 
-#: builtin/remote.c:1152
+#: builtin/remote.c:1154
 msgid "do not query remotes"
 msgstr "不查询远程"
 
-#: builtin/remote.c:1179
+#: builtin/remote.c:1181
 #, c-format
 msgid "* remote %s"
 msgstr "* 远程 %s"
 
-#: builtin/remote.c:1180
+#: builtin/remote.c:1182
 #, c-format
 msgid "  Fetch URL: %s"
 msgstr "  获取地址：%s"
 
-#: builtin/remote.c:1181 builtin/remote.c:1332
+#: builtin/remote.c:1183 builtin/remote.c:1334
 msgid "(no URL)"
 msgstr "(无 URL)"
 
-#: builtin/remote.c:1190 builtin/remote.c:1192
+#: builtin/remote.c:1192 builtin/remote.c:1194
 #, c-format
 msgid "  Push  URL: %s"
 msgstr "  推送地址：%s"
 
-#: builtin/remote.c:1194 builtin/remote.c:1196 builtin/remote.c:1198
+#: builtin/remote.c:1196 builtin/remote.c:1198 builtin/remote.c:1200
 #, c-format
 msgid "  HEAD branch: %s"
 msgstr "  HEAD分支：%s"
 
-#: builtin/remote.c:1200
+#: builtin/remote.c:1202
 #, c-format
 msgid ""
 "  HEAD branch (remote HEAD is ambiguous, may be one of the following):\n"
 msgstr "  HEAD 分支（远程 HEAD 模糊，可能是下列中的一个）：\n"
 
-#: builtin/remote.c:1212
+#: builtin/remote.c:1214
 #, c-format
 msgid "  Remote branch:%s"
 msgid_plural "  Remote branches:%s"
@@ -8682,138 +8681,138 @@ msgstr[0] "  远程分支：%s"
 msgstr[1] "  远程分支：%s"
 
 #  译者：中文字符串拼接，可删除前导空格
-#: builtin/remote.c:1215 builtin/remote.c:1242
+#: builtin/remote.c:1217 builtin/remote.c:1244
 msgid " (status not queried)"
 msgstr "（状态未查询）"
 
-#: builtin/remote.c:1224
+#: builtin/remote.c:1226
 msgid "  Local branch configured for 'git pull':"
 msgid_plural "  Local branches configured for 'git pull':"
 msgstr[0] "  为 'git pull' 配置的本地分支："
 msgstr[1] "  为 'git pull' 配置的本地分支："
 
-#: builtin/remote.c:1232
+#: builtin/remote.c:1234
 msgid "  Local refs will be mirrored by 'git push'"
 msgstr "  本地引用将在 'git push' 时被镜像"
 
-#: builtin/remote.c:1239
+#: builtin/remote.c:1241
 #, c-format
 msgid "  Local ref configured for 'git push'%s:"
 msgid_plural "  Local refs configured for 'git push'%s:"
 msgstr[0] "  为 'git push' 配置的本地引用%s："
 msgstr[1] "  为 'git push' 配置的本地引用%s："
 
-#: builtin/remote.c:1260
+#: builtin/remote.c:1262
 msgid "set refs/remotes/<name>/HEAD according to remote"
 msgstr "根据远程设置 refs/remotes/<名称>/HEAD"
 
-#: builtin/remote.c:1262
+#: builtin/remote.c:1264
 msgid "delete refs/remotes/<name>/HEAD"
 msgstr "删除 refs/remotes/<名称>/HEAD"
 
-#: builtin/remote.c:1277
+#: builtin/remote.c:1279
 msgid "Cannot determine remote HEAD"
 msgstr "无法确定远程 HEAD"
 
-#: builtin/remote.c:1279
+#: builtin/remote.c:1281
 msgid "Multiple remote HEAD branches. Please choose one explicitly with:"
 msgstr "多个远程 HEAD 分支。请明确地选择一个用命令："
 
-#: builtin/remote.c:1289
+#: builtin/remote.c:1291
 #, c-format
 msgid "Could not delete %s"
 msgstr "无法删除 %s"
 
-#: builtin/remote.c:1297
+#: builtin/remote.c:1299
 #, c-format
 msgid "Not a valid ref: %s"
 msgstr "不是一个有效引用：%s"
 
-#: builtin/remote.c:1299
+#: builtin/remote.c:1301
 #, c-format
 msgid "Could not setup %s"
 msgstr "不能设置 %s"
 
 #  译者：注意保持前导空格
-#: builtin/remote.c:1317
+#: builtin/remote.c:1319
 #, c-format
 msgid " %s will become dangling!"
 msgstr " %s 将成为摇摆状态！"
 
 #  译者：注意保持前导空格
-#: builtin/remote.c:1318
+#: builtin/remote.c:1320
 #, c-format
 msgid " %s has become dangling!"
 msgstr " %s 已成为摇摆状态！"
 
-#: builtin/remote.c:1328
+#: builtin/remote.c:1330
 #, c-format
 msgid "Pruning %s"
 msgstr "修剪 %s"
 
-#: builtin/remote.c:1329
+#: builtin/remote.c:1331
 #, c-format
 msgid "URL: %s"
 msgstr "URL：%s"
 
-#: builtin/remote.c:1352
+#: builtin/remote.c:1354
 #, c-format
 msgid " * [would prune] %s"
 msgstr " * [将删除] %s"
 
-#: builtin/remote.c:1355
+#: builtin/remote.c:1357
 #, c-format
 msgid " * [pruned] %s"
 msgstr " * [已删除] %s"
 
-#: builtin/remote.c:1400
+#: builtin/remote.c:1402
 msgid "prune remotes after fetching"
 msgstr "抓取后清除远程"
 
-#: builtin/remote.c:1466 builtin/remote.c:1540
+#: builtin/remote.c:1468 builtin/remote.c:1542
 #, c-format
 msgid "No such remote '%s'"
 msgstr "没有此远程 '%s'"
 
-#: builtin/remote.c:1486
+#: builtin/remote.c:1488
 msgid "add branch"
 msgstr "添加分支"
 
-#: builtin/remote.c:1493
+#: builtin/remote.c:1495
 msgid "no remote specified"
 msgstr "未指定远程"
 
-#: builtin/remote.c:1515
+#: builtin/remote.c:1517
 msgid "manipulate push URLs"
 msgstr "操作推送 URLS"
 
-#: builtin/remote.c:1517
+#: builtin/remote.c:1519
 msgid "add URL"
 msgstr "添加 URL"
 
-#: builtin/remote.c:1519
+#: builtin/remote.c:1521
 msgid "delete URLs"
 msgstr "删除 URLS"
 
-#: builtin/remote.c:1526
+#: builtin/remote.c:1528
 msgid "--add --delete doesn't make sense"
 msgstr "--add --delete 无意义"
 
-#: builtin/remote.c:1566
+#: builtin/remote.c:1568
 #, c-format
 msgid "Invalid old URL pattern: %s"
 msgstr "无效的旧URL匹配模版：%s"
 
-#: builtin/remote.c:1574
+#: builtin/remote.c:1576
 #, c-format
 msgid "No such URL found: %s"
 msgstr "未找到此URL：%s"
 
-#: builtin/remote.c:1576
+#: builtin/remote.c:1578
 msgid "Will not delete all non-push URLs"
 msgstr "将不会删除所有非推送URL地址"
 
-#: builtin/remote.c:1590
+#: builtin/remote.c:1592
 msgid "be verbose; must be placed before a subcommand"
 msgstr "冗长输出；必须置于子命令之前"
 
@@ -9084,7 +9083,7 @@ msgstr "--patch 与 --{hard、mixed、soft} 选项不兼容"
 
 #: builtin/reset.c:331
 msgid "--mixed with paths is deprecated; use 'git reset -- <paths>' instead."
-msgstr "--mixed 带路径已弃用，而是用 'git reset -- <paths>'。"
+msgstr "--mixed 带路径已弃用，而是用 'git reset -- <路径>'。"
 
 #  译者：汉字之间无空格，故删除%s前后空格
 #: builtin/reset.c:333
@@ -9359,81 +9358,81 @@ msgstr "折行输出"
 
 #: builtin/show-branch.c:9
 msgid ""
-"git show-branch [-a|--all] [-r|--remotes] [--topo-order | --date-order] [--"
-"current] [--color[=<when>] | --no-color] [--sparse] [--more=<n> | --list | --"
-"independent | --merge-base] [--no-name | --sha1-name] [--topics] [(<rev> | "
-"<glob>)...]"
+"git show-branch [-a|--all] [-r|--remotes] [--topo-order | --date-order]\n"
+"\t\t       [--current] [--color[=<when>] | --no-color] [--sparse]\n"
+"\t\t       [--more=<n> | --list | --independent | --merge-base]\n"
+"\t       [--no-name | --sha1-name] [--topics] [(<rev> | <glob>)...]"
 msgstr ""
-"git show-branch [-a|--all] [-r|--remotes] [--topo-order | --date-order] [--"
-"current] [--color[=<when>] | --no-color] [--sparse] [--more=<n> | --list | --"
-"independent | --merge-base] [--no-name | --sha1-name] [--topics] [(<rev> | "
-"<glob>)...]"
+"git show-branch [-a|--all] [-r|--remotes] [--topo-order | --date-order]\n"
+"\t\t       [--current] [--color[=<何时>] | --no-color] [--sparse]\n"
+"\t\t       [--more=<n> | --list | --independent | --merge-base]\n"
+"\t       [--no-name | --sha1-name] [--topics] [(<版本> | <通配符>)...]"
 
-#: builtin/show-branch.c:10
+#: builtin/show-branch.c:13
 msgid "git show-branch (-g|--reflog)[=<n>[,<base>]] [--list] [<ref>]"
-msgstr "git show-branch (-g|--reflog)[=<n>[,<base>]] [--list] [<ref>]"
+msgstr "git show-branch (-g|--reflog)[=<n>[,<base>]] [--list] [<引用>]"
 
-#: builtin/show-branch.c:649
+#: builtin/show-branch.c:652
 msgid "show remote-tracking and local branches"
 msgstr "显示远程跟踪的和本地的分支"
 
-#: builtin/show-branch.c:651
+#: builtin/show-branch.c:654
 msgid "show remote-tracking branches"
 msgstr "显示远程跟踪的分支"
 
-#: builtin/show-branch.c:653
+#: builtin/show-branch.c:656
 msgid "color '*!+-' corresponding to the branch"
 msgstr "着色 '*!+-' 到相应的分支"
 
-#: builtin/show-branch.c:655
+#: builtin/show-branch.c:658
 msgid "show <n> more commits after the common ancestor"
 msgstr "显示共同祖先后的 <n> 个提交"
 
-#: builtin/show-branch.c:657
+#: builtin/show-branch.c:660
 msgid "synonym to more=-1"
 msgstr "和 more=-1 同义"
 
-#: builtin/show-branch.c:658
+#: builtin/show-branch.c:661
 msgid "suppress naming strings"
 msgstr "不显示字符串命名"
 
-#: builtin/show-branch.c:660
+#: builtin/show-branch.c:663
 msgid "include the current branch"
 msgstr "包括当前分支"
 
-#: builtin/show-branch.c:662
+#: builtin/show-branch.c:665
 msgid "name commits with their object names"
 msgstr "以对象名字命名提交"
 
-#: builtin/show-branch.c:664
+#: builtin/show-branch.c:667
 msgid "show possible merge bases"
 msgstr "显示可能合并的基线"
 
-#: builtin/show-branch.c:666
+#: builtin/show-branch.c:669
 msgid "show refs unreachable from any other ref"
 msgstr "显示没有任何引用的的引用"
 
-#: builtin/show-branch.c:668
+#: builtin/show-branch.c:671
 msgid "show commits in topological order"
 msgstr "以拓扑顺序显示提交"
 
-#: builtin/show-branch.c:671
+#: builtin/show-branch.c:674
 msgid "show only commits not on the first branch"
 msgstr "只显示不在第一个分支上的提交"
 
-#: builtin/show-branch.c:673
+#: builtin/show-branch.c:676
 msgid "show merges reachable from only one tip"
 msgstr "显示仅一个分支可访问的合并提交"
 
-#: builtin/show-branch.c:675
+#: builtin/show-branch.c:678
 msgid "topologically sort, maintaining date order where possible"
 msgstr "拓扑方式排序，并尽可能地保持日期顺序"
 
-#: builtin/show-branch.c:678
+#: builtin/show-branch.c:681
 msgid "<n>[,<base>]"
 msgstr "<n>[,<base>]"
 
-#: builtin/show-branch.c:679
+#: builtin/show-branch.c:682
 msgid "show <n> most recent ref-log entries starting at base"
 msgstr "显示从 base 开始的 <n> 条最近的引用日志记录"
 
@@ -9523,7 +9522,7 @@ msgid ""
 "git tag -l [-n[<num>]] [--contains <commit>] [--points-at <object>] \n"
 "\t\t[<pattern>...]"
 msgstr ""
-"git tag -l [-n[<num>]] [--contains <提交>] [--points-at <对象>] \n"
+"git tag -l [-n[<数字>]] [--contains <提交>] [--points-at <对象>] \n"
 "\t\t[<模式>...]"
 
 #: builtin/tag.c:26
@@ -9771,7 +9770,7 @@ msgstr "类似于 --refresh，但是忽略 assume-unchanged 设置"
 
 #: builtin/update-index.c:779
 msgid "<mode>,<object>,<path>"
-msgstr "<mode>,<object>,<path>"
+msgstr "<存取模式>,<对象>,<路径>"
 
 #: builtin/update-index.c:780
 msgid "add the specified entry to the index"
@@ -9895,7 +9894,7 @@ msgstr "打印提交内容"
 
 #: builtin/verify-pack.c:54
 msgid "git verify-pack [-v|--verbose] [-s|--stat-only] <pack>..."
-msgstr "git verify-pack [-v|--verbose] [-s|--stat-only] <pack>..."
+msgstr "git verify-pack [-v|--verbose] [-s|--stat-only] <包>..."
 
 #: builtin/verify-pack.c:64
 msgid "verbose"
@@ -9907,7 +9906,7 @@ msgstr "只显示统计"
 
 #: builtin/verify-tag.c:17
 msgid "git verify-tag [-v|--verbose] <tag>..."
-msgstr "git verify-tag [-v|--verbose] <tag>..."
+msgstr "git verify-tag [-v|--verbose] <标签>..."
 
 #: builtin/verify-tag.c:73
 msgid "print tag contents"
@@ -9933,7 +9932,7 @@ msgstr "只对调试有用"
 msgid "print debugging messages to stderr"
 msgstr "调试信息输出到标准错误"
 
-#: git.c:17
+#: git.c:14
 msgid ""
 "'git help -a' and 'git help -g' list available subcommands and some\n"
 "concept guides. See 'git help <command>' or 'git help <concept>'\n"
@@ -10252,7 +10251,7 @@ msgstr "坏的 HEAD - 我需要一个 HEAD"
 #, sh-format
 msgid ""
 "Checking out '$start_head' failed. Try 'git bisect reset <validbranch>'."
-msgstr "检出 '$start_head' 失败。尝试 'git bisect reset <validbranch>'。"
+msgstr "检出 '$start_head' 失败。尝试 'git bisect reset <有效分支>'。"
 
 #: git-bisect.sh:140
 msgid "won't bisect on cg-seek'ed tree"
@@ -10384,7 +10383,7 @@ msgid ""
 "as appropriate to mark resolution and make a commit."
 msgstr ""
 "Pull 不可用，因为您尚有未合并的文件。请先在工作区改正文件，\n"
-"然后酌情使用 'git add/rm <file>' 标记解决方案，再做提交。"
+"然后酌情使用 'git add/rm <文件>' 标记解决方案，再做提交。"
 
 #: git-pull.sh:25
 msgid "Pull is not possible because you have unmerged files."
@@ -11265,7 +11264,7 @@ msgstr "为 '$displaypath' 同步子模组 url"
 #~ msgstr "git shortlog [-n] [-s] [-e] [-w] [版本选项] [--] [<提交号>... ]"
 
 #~ msgid "See 'git help <command>' for more information on a specific command."
-#~ msgstr "参见 'git help <command>' 以获得该特定命令的详细信息。"
+#~ msgstr "参见 'git help <命令>' 以获得该特定命令的详细信息。"
 
 #~ msgid "BUG: impossible combination of %d and %p"
 #~ msgstr "BUG: 无法组合 %d 和 %p"
