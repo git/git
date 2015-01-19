@@ -74,6 +74,7 @@ static int nr_threads;
 static int from_stdin;
 static int strict;
 static int do_fsck_object;
+static struct fsck_options fsck_options = FSCK_OPTIONS_STRICT;
 static int verbose;
 static int show_stat;
 static int check_self_contained_and_connected;
@@ -191,7 +192,7 @@ static void cleanup_thread(void)
 #endif
 
 
-static int mark_link(struct object *obj, int type, void *data)
+static int mark_link(struct object *obj, int type, void *data, struct fsck_options *options)
 {
 	if (!obj)
 		return -1;
@@ -782,10 +783,10 @@ static void sha1_object(const void *data, struct object_entry *obj_entry,
 			if (!obj)
 				die(_("invalid %s"), typename(type));
 			if (do_fsck_object &&
-			    fsck_object(obj, buf, size, 1,
-				    fsck_error_function))
+			    fsck_object(obj, buf, size, &fsck_options))
 				die(_("Error in object"));
-			if (fsck_walk(obj, mark_link, NULL))
+			fsck_options.walk = mark_link;
+			if (fsck_walk(obj, NULL, &fsck_options))
 				die(_("Not all child objects of %s are reachable"), sha1_to_hex(obj->sha1));
 
 			if (obj->type == OBJ_TREE) {
