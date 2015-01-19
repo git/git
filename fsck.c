@@ -63,14 +63,37 @@ enum fsck_msg_id {
 };
 #undef MSG_ID
 
-#define MSG_ID(id, severity) { FSCK_##severity },
+#define STR(x) #x
+#define MSG_ID(id, severity) { STR(id), FSCK_##severity },
 static struct {
+	const char *id_string;
 	int severity;
 } msg_id_info[FSCK_MSG_MAX + 1] = {
 	FOREACH_MSG_ID(MSG_ID)
-	{ -1 }
+	{ NULL, -1 }
 };
 #undef MSG_ID
+
+static int parse_msg_id(const char *text, int len)
+{
+	int i, j;
+
+	for (i = 0; i < FSCK_MSG_MAX; i++) {
+		const char *key = msg_id_info[i].id_string;
+		/* id_string is upper-case, with underscores */
+		for (j = 0; j < len; j++) {
+			char c = *(key++);
+			if (c == '_')
+				c = '-';
+			if (text[j] != tolower(c))
+				break;
+		}
+		if (j == len && !*key)
+			return i;
+	}
+
+	die("Unhandled message id: %.*s", len, text);
+}
 
 static int fsck_msg_severity(enum fsck_msg_id msg_id,
 	struct fsck_options *options)
