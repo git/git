@@ -1,7 +1,13 @@
 #!/bin/sh
 # Copyright (c) 2012 Felipe Contreras
 
-alias=$1
+# The first argument can be a url when the fetch/push command was a url
+# instead of a configured remote. In this case, use a generic alias.
+if test "$1" = "testgit::$2"; then
+	alias=_
+else
+	alias=$1
+fi
 url=$2
 
 dir="$GIT_DIR/testgit/$alias"
