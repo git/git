@@ -60,6 +60,10 @@ test_expect_success 'absurdly long color specification' '
 	  "[1;2;4;5;7;22;24;25;27;38;2;255;255;255;48;2;255;255;255m"
 '
 
+test_expect_success '0-7 are aliases for basic ANSI color names' '
+	color "0 7" "[30;47m"
+'
+
 test_expect_success '256 colors' '
 	color "254 bold 255" "[1;38;5;254;48;5;255m"
 '
