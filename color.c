@@ -112,6 +112,7 @@ static int parse_color(struct color *out, const char *name, int len)
 		} else if (val < 8) {
 			out->type = COLOR_ANSI;
 			out->value = val;
+			return 0;
 		} else if (val < 256) {
 			out->type = COLOR_256;
 			out->value = val;
