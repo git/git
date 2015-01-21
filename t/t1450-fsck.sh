@@ -231,8 +231,8 @@ test_expect_success 'tag with incorrect tag name & missing tagger' '
 	git fsck --tags 2>out &&
 
 	cat >expect <<-EOF &&
-	warning in tag $tag: invalid '\''tag'\'' name: wrong name format
-	warning in tag $tag: invalid format - expected '\''tagger'\'' line
+	warning in tag $tag: invalid-tag-name: invalid '\''tag'\'' name: wrong name format
+	warning in tag $tag: missing-tagger-entry: invalid format - expected '\''tagger'\'' line
 	EOF
 	test_cmp expect out
 '
