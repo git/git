@@ -8,6 +8,7 @@
 #include "fsck.h"
 #include "refs.h"
 #include "utf8.h"
+#include "sha1-array.h"
 
 #define FSCK_FATAL -1
 #define FSCK_INFO -2
@@ -117,6 +118,43 @@ static int fsck_msg_severity(enum fsck_msg_id msg_id,
 	return severity;
 }
 
+static void init_skiplist(struct fsck_options *options, const char *path)
+{
+	static struct sha1_array skiplist = SHA1_ARRAY_INIT;
+	int sorted, fd;
+	char buffer[41];
+	unsigned char sha1[20];
+
+	if (options->skiplist)
+		sorted = options->skiplist->sorted;
+	else {
+		sorted = 1;
+		options->skiplist = &skiplist;
+	}
+
+	fd = open(path, O_RDONLY);
+	if (fd < 0)
+		die("Could not open skip list: %s", path);
+	for (;;) {
+		int result = read_in_full(fd, buffer, sizeof(buffer));
+		if (result < 0)
+			die_errno("Could not read '%s'", path);
+		if (!result)
+			break;
+		if (get_sha1_hex(buffer, sha1) || buffer[40] != '\n')
+			die("Invalid SHA-1: %s", buffer);
+		sha1_array_append(&skiplist, sha1);
+		if (sorted && skiplist.nr > 1 &&
+				hashcmp(skiplist.sha1[skiplist.nr - 2],
+					sha1) > 0)
+			sorted = 0;
+	}
+	close(fd);
+
+	if (sorted)
+		skiplist.sorted = 1;
+}
+
 static inline int substrcmp(const char *string, int len, const char *match)
 {
 	int match_len = strlen(match);
@@ -156,6 +194,17 @@ void fsck_set_severity(struct fsck_options *options, const char *mode)
 				severity = FSCK_WARN;
 			else if (!substrcmp(mode, equal, "ignore"))
 				severity = FSCK_IGNORE;
+			else if (!substrcmp(mode, equal, "skiplist")) {
+				char *path = xstrndup(mode + equal + 1,
+					len - equal - 1);
+
+				if (equal == len)
+					die("skiplist requires a path");
+				init_skiplist(options, path);
+				free(path);
+				mode += len;
+				continue;
+			}
 			else
 				die("Unknown fsck message severity: '%.*s'",
 					equal, mode);
@@ -700,6 +749,10 @@ static int fsck_tag(struct tag *tag, const char *data,
 int fsck_object(struct object *obj, void *data, unsigned long size,
 	struct fsck_options *options)
 {
+	if (options->skiplist &&
+			sha1_array_lookup(options->skiplist, obj->sha1) >= 0)
+		return 0;
+
 	if (!obj)
 		return report(options, obj, FSCK_MSG_INVALID_OBJECT_SHA1, "no valid object to fsck");
 
