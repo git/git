@@ -12,8 +12,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2015-01-18 11:24+0800\n"
-"PO-Revision-Date: 2015-01-18 20:34+0800\n"
+"POT-Creation-Date: 2015-01-21 14:21+0800\n"
+"PO-Revision-Date: 2015-01-21 14:58+0800\n"
 "Last-Translator: Jiang Xin <worldhello.net@gmail.com>\n"
 "Language-Team: GitHub <https://github.com/gotgit/git/>\n"
 "Language: zh_CN\n"
@@ -320,7 +320,7 @@ msgstr "不能创建 '%s'"
 msgid "index-pack died"
 msgstr "index-pack 终止"
 
-#: color.c:259
+#: color.c:260
 #, c-format
 msgid "invalid color value: %.*s"
 msgstr "无效的颜色值：%.*s"
@@ -5368,8 +5368,7 @@ msgstr "获取组并指定引用规则没有意义"
 
 #: builtin/fmt-merge-msg.c:13
 msgid "git fmt-merge-msg [-m <message>] [--log[=<n>]|--no-log] [--file <file>]"
-msgstr ""
-"git fmt-merge-msg [-m <说明>] [--log[=<n>]|--no-log] [--file <文件>]"
+msgstr "git fmt-merge-msg [-m <说明>] [--log[=<n>]|--no-log] [--file <文件>]"
 
 #: builtin/fmt-merge-msg.c:662 builtin/fmt-merge-msg.c:665 builtin/grep.c:698
 #: builtin/merge.c:198 builtin/repack.c:178 builtin/repack.c:182
@@ -6375,8 +6374,7 @@ msgstr "不能切换目录到 %s"
 msgid ""
 "%s (or --work-tree=<directory>) not allowed without specifying %s (or --git-"
 "dir=<directory>)"
-msgstr ""
-"不允许 %s（或 --work-tree=<目录>）而没有指定 %s（或 --git-dir=<目录>）"
+msgstr "不允许 %s（或 --work-tree=<目录>）而没有指定 %s（或 --git-dir=<目录>）"
 
 #: builtin/init-db.c:591
 #, c-format
@@ -9359,14 +9357,14 @@ msgstr "折行输出"
 #: builtin/show-branch.c:9
 msgid ""
 "git show-branch [-a|--all] [-r|--remotes] [--topo-order | --date-order]\n"
-"\t\t       [--current] [--color[=<when>] | --no-color] [--sparse]\n"
-"\t\t       [--more=<n> | --list | --independent | --merge-base]\n"
-"\t       [--no-name | --sha1-name] [--topics] [(<rev> | <glob>)...]"
+"\t\t[--current] [--color[=<when>] | --no-color] [--sparse]\n"
+"\t\t[--more=<n> | --list | --independent | --merge-base]\n"
+"\t\t[--no-name | --sha1-name] [--topics] [(<rev> | <glob>)...]"
 msgstr ""
 "git show-branch [-a|--all] [-r|--remotes] [--topo-order | --date-order]\n"
-"\t\t       [--current] [--color[=<何时>] | --no-color] [--sparse]\n"
-"\t\t       [--more=<n> | --list | --independent | --merge-base]\n"
-"\t       [--no-name | --sha1-name] [--topics] [(<版本> | <通配符>)...]"
+"\t\t[--current] [--color[=<何时>] | --no-color] [--sparse]\n"
+"\t\t[--more=<n> | --list | --independent | --merge-base]\n"
+"\t\t[--no-name | --sha1-name] [--topics] [(<版本> | <通配符>)...]"
 
 #: builtin/show-branch.c:13
 msgid "git show-branch (-g|--reflog)[=<n>[,<base>]] [--list] [<ref>]"

@@ -7,8 +7,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git 2.0.0\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2015-01-18 11:24+0800\n"
-"PO-Revision-Date: 2015-01-18 20:29+0100\n"
+"POT-Creation-Date: 2015-01-21 14:21+0800\n"
+"PO-Revision-Date: 2015-01-21 14:57+0800\n"
 "Last-Translator: Peter Krefting <peter@softwolves.pp.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
 "Language: sv\n"
@@ -320,7 +320,7 @@ msgstr "kan inte skapa \"%s\""
 msgid "index-pack died"
 msgstr "index-pack dog"
 
-#: color.c:259
+#: color.c:260
 #, c-format
 msgid "invalid color value: %.*s"
 msgstr "felaktigt färgvärde: %.*s"
@@ -6361,11 +6361,11 @@ msgstr " delat"
 
 #: builtin/init-db.c:475
 msgid ""
-"git init [-q | --quiet] [--bare] [--template=<template-directory>] [--shared"
-"[=<permissions>]] [directory]"
+"git init [-q | --quiet] [--bare] [--template=<template-directory>] [--"
+"shared[=<permissions>]] [directory]"
 msgstr ""
-"git init [-q | --quiet] [--bare] [--template=<mallkatalog>] [--shared"
-"[=<behörigheter>]] [katalog]"
+"git init [-q | --quiet] [--bare] [--template=<mallkatalog>] [--"
+"shared[=<behörigheter>]] [katalog]"
 
 #: builtin/init-db.c:498
 msgid "permissions"
@@ -6408,8 +6408,8 @@ msgid ""
 "git interpret-trailers [--trim-empty] [(--trailer <token>[(=|:)<value>])...] "
 "[<file>...]"
 msgstr ""
-"git interpret-trailers [--trim-empty] [(--trailer <symbol>[(=|:)"
-"<värde>])...] [<fil>...]"
+"git interpret-trailers [--trim-empty] [(--trailer "
+"<symbol>[(=|:)<värde>])...] [<fil>...]"
 
 #: builtin/interpret-trailers.c:25
 msgid "trim empty trailers"
@@ -9425,14 +9425,14 @@ msgstr "Radbryt utdata"
 #: builtin/show-branch.c:9
 msgid ""
 "git show-branch [-a|--all] [-r|--remotes] [--topo-order | --date-order]\n"
-"\t\t       [--current] [--color[=<when>] | --no-color] [--sparse]\n"
-"\t\t       [--more=<n> | --list | --independent | --merge-base]\n"
-"\t       [--no-name | --sha1-name] [--topics] [(<rev> | <glob>)...]"
+"\t\t[--current] [--color[=<when>] | --no-color] [--sparse]\n"
+"\t\t[--more=<n> | --list | --independent | --merge-base]\n"
+"\t\t[--no-name | --sha1-name] [--topics] [(<rev> | <glob>)...]"
 msgstr ""
 "git show-branch [-a|--all] [-r|--remotes] [--topo-order | --date-order]\n"
-"\t\t       [--current] [--color[=<när>] | --no-color] [--sparse]\n"
-"\t\t       [--more=<n> | --list | --independent | --merge-base]\n"
-"\t       [--no-name | --sha1-name] [--topics] [(<rev> | <mönster>)...]"
+"\t\t[--current] [--color[=<när>] | --no-color] [--sparse]\n"
+"\t\t[--more=<n> | --list | --independent | --merge-base]\n"
+"\t\t[--no-name | --sha1-name] [--topics] [(<rev> | <mönster>)...]"
 
 #: builtin/show-branch.c:13
 msgid "git show-branch (-g|--reflog)[=<n>[,<base>]] [--list] [<ref>]"
@@ -9504,11 +9504,11 @@ msgstr "visa <n> nyaste refloggposter med början på bas"
 
 #: builtin/show-ref.c:10
 msgid ""
-"git show-ref [-q|--quiet] [--verify] [--head] [-d|--dereference] [-s|--hash"
-"[=<n>]] [--abbrev[=<n>]] [--tags] [--heads] [--] [pattern*] "
+"git show-ref [-q|--quiet] [--verify] [--head] [-d|--dereference] [-s|--"
+"hash[=<n>]] [--abbrev[=<n>]] [--tags] [--heads] [--] [pattern*] "
 msgstr ""
-"git show-ref [-q|--quiet] [--verify] [--head] [-d|--dereference] [-s|--hash"
-"[=<n>]] [--abbrev[=<n>]] [--tags] [--heads] [--] [mönster*] "
+"git show-ref [-q|--quiet] [--verify] [--head] [-d|--dereference] [-s|--"
+"hash[=<n>]] [--abbrev[=<n>]] [--tags] [--heads] [--] [mönster*] "
 
 #: builtin/show-ref.c:11
 msgid "git show-ref --exclude-existing[=pattern] < ref-list"

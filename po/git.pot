@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2015-01-18 11:24+0800\n"
+"POT-Creation-Date: 2015-01-21 14:21+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -305,7 +305,7 @@ msgstr ""
 msgid "index-pack died"
 msgstr ""
 
-#: color.c:259
+#: color.c:260
 #, c-format
 msgid "invalid color value: %.*s"
 msgstr ""
@@ -9015,9 +9015,9 @@ msgstr ""
 #: builtin/show-branch.c:9
 msgid ""
 "git show-branch [-a|--all] [-r|--remotes] [--topo-order | --date-order]\n"
-"\t\t       [--current] [--color[=<when>] | --no-color] [--sparse]\n"
-"\t\t       [--more=<n> | --list | --independent | --merge-base]\n"
-"\t       [--no-name | --sha1-name] [--topics] [(<rev> | <glob>)...]"
+"\t\t[--current] [--color[=<when>] | --no-color] [--sparse]\n"
+"\t\t[--more=<n> | --list | --independent | --merge-base]\n"
+"\t\t[--no-name | --sha1-name] [--topics] [(<rev> | <glob>)...]"
 msgstr ""
 
 #: builtin/show-branch.c:13
