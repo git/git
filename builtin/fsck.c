@@ -49,6 +49,16 @@ static int show_dangling = 1;
 
 static int fsck_config(const char *var, const char *value, void *cb)
 {
+	if (strcmp(var, "receive.fsck.skiplist") == 0) {
+		const char *path = is_absolute_path(value) ?
+			value : git_path("%s", value);
+		struct strbuf sb = STRBUF_INIT;
+		strbuf_addf(&sb, "skiplist=%s", path);
+		fsck_set_severity(&fsck_obj_options, sb.buf);
+		strbuf_release(&sb);
+		return 0;
+	}
+
 	if (skip_prefix(var, "fsck.", &var)) {
 		struct strbuf sb = STRBUF_INIT;
 		strbuf_addf(&sb, "%s=%s", var, value);
