@@ -100,11 +100,65 @@ static int fsck_msg_severity(enum fsck_msg_id msg_id,
 {
 	int severity;
 
-	severity = msg_id_info[msg_id].severity;
-	if (options->strict && severity == FSCK_WARN)
-		severity = FSCK_ERROR;
+	if (options->msg_severity && msg_id >= 0 && msg_id < FSCK_MSG_MAX)
+		severity = options->msg_severity[msg_id];
+	else {
+		severity = msg_id_info[msg_id].severity;
+		if (options->strict && severity == FSCK_WARN)
+			severity = FSCK_ERROR;
+	}
 
 	return severity;
+}
+
+static inline int substrcmp(const char *string, int len, const char *match)
+{
+	int match_len = strlen(match);
+	if (match_len != len)
+		return -1;
+	return memcmp(string, match, len);
+}
+
+void fsck_set_severity(struct fsck_options *options, const char *mode)
+{
+	int severity = FSCK_ERROR;
+
+	if (!options->msg_severity) {
+		int i;
+		int *msg_severity = xmalloc(sizeof(int) * FSCK_MSG_MAX);
+		for (i = 0; i < FSCK_MSG_MAX; i++)
+			msg_severity[i] = fsck_msg_severity(i, options);
+		options->msg_severity = msg_severity;
+	}
+
+	while (*mode) {
+		int len = strcspn(mode, " ,|"), equal, msg_id;
+
+		if (!len) {
+			mode++;
+			continue;
+		}
+
+		for (equal = 0; equal < len; equal++)
+			if (mode[equal] == '=')
+				break;
+
+		if (equal < len) {
+			if (!substrcmp(mode, equal, "error"))
+				severity = FSCK_ERROR;
+			else if (!substrcmp(mode, equal, "warn"))
+				severity = FSCK_WARN;
+			else
+				die("Unknown fsck message severity: '%.*s'",
+					equal, mode);
+			mode += equal + 1;
+			len -= equal + 1;
+		}
+
+		msg_id = parse_msg_id(mode, len);
+		options->msg_severity[msg_id] = severity;
+		mode += len;
+	}
 }
 
 __attribute__((format (printf, 4, 5)))
@@ -596,6 +650,10 @@ int fsck_object(struct object *obj, void *data, unsigned long size,
 
 int fsck_error_function(struct object *obj, int severity, const char *message)
 {
+	if (severity == FSCK_WARN) {
+		warning("object %s: %s", sha1_to_hex(obj->sha1), message);
+		return 0;
+	}
 	error("object %s: %s", sha1_to_hex(obj->sha1), message);
 	return 1;
 }
