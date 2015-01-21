@@ -136,6 +136,11 @@ Unless otherwise noted, all the fixes since v2.2 in the maintenance
 track are contained in this release (see the maintenance releases'
 notes for details).
 
+ * "git http-push" over WebDAV (aka dumb http-push) was broken in
+   v2.2.2 when parsing a symbolic ref, resulting in a bogus request
+   that gets rejected by recent versions of cURL library.
+   (merge f6786c8 jk/http-push-symref-fix later to maint).
+
  * The logic in "git bisect bad HEAD" etc. to avoid forcing the test
    of the common ancestor of bad and good commits was broken.
    (merge 07913d5 cc/bisect-rev-parsing later to maint).
