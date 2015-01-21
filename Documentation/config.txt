@@ -1208,6 +1208,21 @@ filter.<driver>.smudge::
 	object to a worktree file upon checkout.  See
 	linkgit:gitattributes[5] for details.
 
+fsck.error::
+fsck.warn::
+fsck.ignore::
+	The `fsck.error`, `fsck.warn` and `fsck.ignore` settings specify
+	comma-separated lists of fsck message IDs which should trigger
+	fsck to error out, to print the message and continue, or to ignore
+	said messages, respectively.
++
+For convenience, fsck prefixes the error/warning with the name of the option,
+e.g.  "missing-email: invalid author/committer line - missing email" means
+that setting `fsck.ignore = missing-email` will hide that issue.
++
+This feature is intended to support working with legacy repositories
+which cannot be repaired without disruptive changes.
+
 gc.aggressiveDepth::
 	The depth parameter used in the delta compression
 	algorithm used by 'git gc --aggressive'.  This defaults

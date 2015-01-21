@@ -46,6 +46,19 @@ static int show_dangling = 1;
 #define DIRENT_SORT_HINT(de) ((de)->d_ino)
 #endif
 
+static int fsck_config(const char *var, const char *value, void *cb)
+{
+	if (skip_prefix(var, "fsck.", &var)) {
+		struct strbuf sb = STRBUF_INIT;
+		strbuf_addf(&sb, "%s=%s", var, value);
+		fsck_set_severity(&fsck_obj_options, sb.buf);
+		strbuf_release(&sb);
+		return 0;
+	}
+
+	return git_default_config(var, value, cb);
+}
+
 static void objreport(struct object *obj, const char *severity,
 		      const char *err)
 {
@@ -637,6 +650,8 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 		check_full = 1;
 		include_reflogs = 0;
 	}
+
+	git_config(fsck_config, NULL);
 
 	fsck_head_link();
 	fsck_object_dir(get_object_directory());
