@@ -152,6 +152,8 @@ void fsck_set_severity(struct fsck_options *options, const char *mode)
 				severity = FSCK_ERROR;
 			else if (!substrcmp(mode, equal, "warn"))
 				severity = FSCK_WARN;
+			else if (!substrcmp(mode, equal, "ignore"))
+				severity = FSCK_IGNORE;
 			else
 				die("Unknown fsck message severity: '%.*s'",
 					equal, mode);
@@ -192,6 +194,9 @@ static int report(struct fsck_options *options, struct object *object,
 	va_list ap;
 	struct strbuf sb = STRBUF_INIT;
 	int msg_severity = fsck_msg_severity(id, options), result;
+
+	if (msg_severity == FSCK_IGNORE)
+		return 0;
 
 	if (msg_severity == FSCK_FATAL)
 		msg_severity = FSCK_ERROR;
