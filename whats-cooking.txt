@@ -1,20 +1,19 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jan 2015, #03; Wed, 14)
-X-master-at: 563d4e59bd167fe2eecc5480e3841d878b1c8c2b
-X-next-at: cfa011ed84d39e514c6604f2af14259d9ad5483a
+Subject: What's cooking in git.git (Jan 2015, #04; Wed, 21)
+X-master-at: 627736ca799edacf13881da7e671964a0afb94b8
+X-next-at: f40c73c9887141847a96136c6fdba64a4db3df37
 
-What's cooking in git.git (Jan 2015, #03; Wed, 14)
+What's cooking in git.git (Jan 2015, #04; Wed, 21)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-Many small low-impact topics have been merged to 'master' in
-preparation for 2.3-rc1 later in the week.  I see nothing pressing
-that remain in 'next' other than a few bugfixes I am hoping that we
-can merge and ship in the 2.3 final.
+First release candidate 2.3-rc1 has been tagged.  Please spend some
+time to find and fix regressions, instead of spending all time
+having fun with new and shiny toys ;-)
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -24,153 +23,114 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* ak/doc-add-v-n-options (2015-01-09) 1 commit
-  (merged to 'next' on 2015-01-12 at 0888edf)
- + Documentation: list long options for -v and -n
+* jk/http-push-symref-fix (2015-01-14) 1 commit
+ + http-push: trim trailing newline from remote symref
 
-
-* ak/fewer-includes (2015-01-09) 2 commits
-  (merged to 'next' on 2015-01-12 at d425e96)
- + cat-file: remove unused includes
- + git.c: remove unnecessary #includes
-
-
-* ak/show-branch-usage-string (2015-01-08) 1 commit
-  (merged to 'next' on 2015-01-12 at 3a0de03)
- + show-branch: line-wrap show-branch usage
-
-
-* aw/doc-smtp-ssl-cert-path (2015-01-07) 1 commit
-  (merged to 'next' on 2015-01-12 at 61d0b22)
- + correct smtp-ssl-cert-path description
-
- A long overdue documentation update to match an age-old code
- update.
-
-
-* jk/prune-packed-server-info (2015-01-06) 2 commits
-  (merged to 'next' on 2015-01-12 at 5e789e2)
- + update-server-info: create info/* with mode 0666
- + t1301: set umask in reflog sharedrepository=group test
-
- Fix recent breakage in Git 2.2 that started creating info/refs and
- objects/info/packs files with permission bits tighter than user's
- umask.
-
-
-* js/remote-add-with-insteadof (2014-12-23) 2 commits
-  (merged to 'next' on 2015-01-12 at ccff14f)
- + Add a regression test for 'git remote add <existing> <same-url>'
- + git remote: allow adding remotes agreeing with url.<...>.insteadOf
-
- "git remote add $name $URL" is now allowed when "url.$URL.insteadOf"
- is already defined.
-
-
-* km/imap-send-libcurl-options (2015-01-06) 2 commits
-  (merged to 'next' on 2015-01-12 at 5bb8802)
- + imap-send.c: set CURLOPT_USE_SSL to CURLUSESSL_TRY
- + imap-send.c: support GIT_CURL_VERBOSE
-
- Now imap-send learned to talk to the server using cURL library,
- allow the same GIT_CURL_VERBOSE environment variable to control the
- verbosity of the chattering.
-
-
-* km/log-usage-string-i18n (2015-01-06) 1 commit
-  (merged to 'next' on 2015-01-12 at 437bf8a)
- + log.c: fix translation markings
-
-
-* mm/complete-rebase-autostash (2015-01-07) 1 commit
-  (merged to 'next' on 2015-01-12 at edcdead)
- + git-completion: add --autostash for 'git rebase'
-
-
-* po/doc-core-ignorestat (2015-01-12) 2 commits
-  (merged to 'next' on 2015-01-12 at c660a71)
- + doc: core.ignoreStat update, and clarify the --assume-unchanged effect
-  (merged to 'next' on 2014-12-23 at d2b3e84)
- + doc: core.ignoreStat clarify the --assume-unchanged effect
-
-
-* rc/for-each-ref-tracking (2015-01-12) 1 commit
-  (merged to 'next' on 2015-01-12 at 94eef27)
- + for-each-ref: always check stat_tracking_info()'s return value
-
-
-* rh/autoconf-rhel3 (2015-01-09) 3 commits
-  (merged to 'next' on 2015-01-12 at 57f125c)
- + configure.ac: check for HMAC_CTX_cleanup
- + configure.ac: check for clock_gettime and CLOCK_MONOTONIC
- + configure.ac: check 'tv_nsec' field in 'struct stat'
-
- Build update for older RHEL.
-
-
-* rh/hide-prompt-in-ignored-directory (2015-01-07) 2 commits
-  (merged to 'next' on 2015-01-12 at 9aed017)
- + git-prompt.sh: allow to hide prompt for ignored pwd
- + git-prompt.sh: if pc mode, immediately set PS1 to a plain prompt
-
-
-* rh/test-color-avoid-terminfo-in-original-home (2015-01-07) 2 commits
-  (merged to 'next' on 2015-01-12 at eac0b93)
- + test-lib.sh: do tests for color support after changing HOME
- + test-lib: use 'test ...' instead of '[ ... ]'
-
- We try to see if "tput" gives a useful result before switching TERM
- to dumb and moving HOME to point to our fake location for stability
- of the tests, and then use the command when coloring the output
- from the tests, but there is no guarantee "tput" works after
- switching HOME.
-
-
-* sp/subtree-doc (2015-01-06) 1 commit
-  (merged to 'next' on 2015-01-12 at 7c488d6)
- + subtree: fix AsciiDoc list item continuation
+ Using newer libCURL (or old one with security fixes) exposes this
+ old breakage.
 
 --------------------------------------------------
 [New Topics]
 
-* ah/usage-strings (2015-01-14) 1 commit
- - standardize usage info string format
-
- Will merge to and cook in 'next'.
-
-
-* ak/cat-file-clean-up (2015-01-13) 1 commit
- - cat-file: use "type" and "size" from outer scope
+* ak/typofixes (2015-01-21) 2 commits
+ - t/lib-terminal.sh: fix typo
+ - pack-bitmap: fix typo
 
  Will merge to 'next'.
 
 
-* ak/stash-store-create-help (2015-01-13) 1 commit
- - stash: show "create" and "store" subcommands in usage-help
+* jc/apply-ws-fix-expands (2015-01-16) 4 commits
+ - apply: detect and mark whitespace errors in context lines when fixing
+ - apply: count the size of postimage correctly
+ - typofix
+ - apply: make update_pre_post_images() sanity check the given postlen
 
- Undecided.
-
-
-* jk/blame-commit-label (2015-01-13) 5 commits
- - blame.c: fix garbled error message
- - use xstrdup_or_null to replace ternary conditionals
- - builtin/commit.c: use xstrdup_or_null instead of envdup
- - builtin/apply.c: use xstrdup_or_null instead of null_strdup
- - git-compat-util: add xstrdup_or_null helper
-
- Will merge to 'next'.
+ Needs rerolling and adding tests from Kyle J. McKay.
 
 
-* jk/http-push-symref-fix (2015-01-14) 1 commit
- - http-push: trim trailing newline from remote symref
+* jc/coding-guidelines (2015-01-15) 1 commit
+ - CodingGuidelines: clarify C #include rules
 
  Will merge to 'next'.
 
 
-* js/t1050 (2015-01-14) 1 commit
- - t1050-large: generate large files without dd
+* jc/pretty-format-doc (2015-01-15) 1 commit
+ - "log --pretty" documentation: do not forget "tformat:"
 
  Will merge to 'next'.
+
+
+* jc/unused-symbols (2015-01-15) 8 commits
+ - shallow.c: make check_shallow_file_for_update() static
+ - remote.c: make clear_cas_option() static
+ - urlmatch.c: make match_urls() static
+ - revision.c: make save_parents() and free_saved_parents() static
+ - line-log.c: make line_log_data_init() static
+ - pack-bitmap.c: make pack_bitmap_filename() static
+ - prompt.c: remove git_getpass() nobody uses
+ - http.c: make finish_active_slot() and handle_curl_result() static
+
+ Will merge to 'next'.
+
+
+* jk/sanity (2015-01-16) 3 commits
+ - tests: SANITY requires POSIXPERM
+ - tests: correct misuses of POSIXPERM
+ - t/lib-httpd: switch SANITY check for NOT_ROOT
+
+ Saw Torsten's report on Cygwin, but I couldn't tell if it was about
+ existing breakages or new one introduced by this series.
+
+
+* js/fsck-opt (2015-01-21) 19 commits
+ - fsck: support ignoring objects in `git fsck` via fsck.skiplist
+ - fsck: git receive-pack: support excluding objects from fsck'ing
+ - fsck: introduce `git fsck --quick`
+ - fsck: support demoting errors to warnings
+ - fsck: document the new receive.fsck.* options
+ - fsck: allow upgrading fsck warnings to errors
+ - fsck: optionally ignore specific fsck issues completely
+ - fsck: disallow demoting grave fsck errors to warnings
+ - fsck: add a simple test for receive.fsck.*
+ - fsck: make fsck_tag() warn-friendly
+ - fsck: handle multiple authors in commits specially
+ - fsck: make fsck_commit() warn-friendly
+ - fsck: make fsck_ident() warn-friendly
+ - fsck: report the ID of the error/warning
+ - fsck: allow demoting errors to warnings via receive.fsck.warn = <key>
+ - fsck: offer a function to demote fsck errors to warnings
+ - fsck: provide a function to parse fsck message IDs
+ - fsck: introduce identifiers for fsck messages
+ - fsck: introduce fsck options
+
+ Need extra set of eyes to review this.
+
+
+* ld/p4-exclude-in-sync (2015-01-20) 1 commit
+ - git-p4: support excluding paths on sync
+
+ Will merge to 'next'.
+
+
+* tb/connect-ipv6-parse-fix (2015-01-20) 3 commits
+ - t5500: Show user name and host in diag-url
+ - t5601: Add more test cases for IPV6
+ - connect.c: Improve parsing of literal IPV6 addresses
+
+ Need extra set of eyes to review this.
+
+
+* sb/atomic-push-fix (2015-01-21) 5 commits
+ - refs.c: enable large transactions
+ - refs.c: have a write_sha1_to_lock_file wrapper
+ - refs.c: remove lock_fd from struct ref_lock
+ - t7004: rename ULIMIT test prerequisite to ULIMIT_STACK_SIZE
+ - update-ref: test handling large transactions properly
+ (this branch uses mh/reflog-expire and sb/atomic-push.)
+
+ I had to wiggle this in and am not confident I did it correctly.
+
+ Need extra set of eyes to review this.
 
 --------------------------------------------------
 [Stalled]
@@ -181,21 +141,10 @@ of the repositories listed at
  For discussion.
 
 
-* ye/http-accept-language (2014-12-22) 1 commit
- - http: Add Accept-Language header if possible
+* ye/http-accept-language (2015-01-21) 1 commit
+ . http: add Accept-Language header if possible
 
- Expecting a reroll ($gmane/261810).
-
-
-* jk/strbuf-doc-to-header (2014-12-12) 4 commits
- - strbuf.h: reorganize api function grouping headers
- - strbuf.h: format asciidoc code blocks as 4-space indent
- - strbuf.h: drop asciidoc list formatting from API docs
- - strbuf: migrate api-strbuf.txt documentation to strbuf.h
-
- Resolve the "doc vs header" to favor the latter.
-
- Expecting to be rerolled.
+ Not quite there yet.
 
 
 * pw/remote-set-url-fetch (2014-11-26) 1 commit
@@ -325,10 +274,53 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* lf/blame-commit-label (2015-01-12) 1 commit
- . blame.c: fix garbled error message
+* jk/strbuf-doc-to-header (2015-01-16) 7 commits
+ - strbuf.h: group documentation for trim functions
+ - strbuf.h: drop boilerplate descriptions of strbuf_split_*
+ - strbuf.h: reorganize api function grouping headers
+ - strbuf.h: format asciidoc code blocks as 4-space indent
+ - strbuf.h: drop asciidoc list formatting from API docs
+ - strbuf.h: unify documentation comments beginnings
+ - strbuf.h: integrate api-strbuf.txt documentation
 
- Needs fixing.
+ Resolve the "doc vs header" to favor the latter.
+
+
+* ah/usage-strings (2015-01-14) 1 commit
+ - standardize usage info string format
+
+ Will merge to and cook in 'next'.
+
+
+* ak/cat-file-clean-up (2015-01-13) 1 commit
+  (merged to 'next' on 2015-01-15 at bb1a4b3)
+ + cat-file: use "type" and "size" from outer scope
+
+ Will merge to 'master'.
+
+
+* ak/stash-store-create-help (2015-01-13) 1 commit
+ - stash: show "create" and "store" subcommands in usage-help
+
+ Undecided.
+
+
+* jk/blame-commit-label (2015-01-13) 5 commits
+  (merged to 'next' on 2015-01-15 at 1b32e21)
+ + blame.c: fix garbled error message
+ + use xstrdup_or_null to replace ternary conditionals
+ + builtin/commit.c: use xstrdup_or_null instead of envdup
+ + builtin/apply.c: use xstrdup_or_null instead of null_strdup
+ + git-compat-util: add xstrdup_or_null helper
+
+ Will cook in 'next'.
+
+
+* js/t1050 (2015-01-14) 1 commit
+  (merged to 'next' on 2015-01-15 at f010b00)
+ + t1050-large: generate large files without dd
+
+ Will merge to 'master'.
 
 
 * bc/http-fallback-to-password-after-krb-fails (2015-01-07) 1 commit
@@ -403,7 +395,7 @@ of the repositories listed at
  + receive-pack.c: move iterating over all commands outside execute_commands
  + receive-pack.c: die instead of error in case of possible future bug
  + receive-pack.c: shorten the execute_commands loop over all commands
- (this branch uses mh/reflog-expire.)
+ (this branch is used by sb/atomic-push-fix; uses mh/reflog-expire.)
 
  "git push" has been taught a "--atomic" option that makes push to
  update more than one ref an "all-or-none" affair.
@@ -437,7 +429,7 @@ of the repositories listed at
  + refs.c: add a function to append a reflog entry to a fd
  + refs.c: make ref_transaction_delete a wrapper for ref_transaction_update
  + refs.c: make ref_transaction_create a wrapper for ref_transaction_update
- (this branch is used by sb/atomic-push.)
+ (this branch is used by sb/atomic-push and sb/atomic-push-fix.)
 
  Restructure "reflog expire" to fit the reflogs better with the
  recently updated ref API.
@@ -531,8 +523,8 @@ of the repositories listed at
  by making the borrowee and borrowers aware of each other.
 
 
-* nd/untracked-cache (2015-01-06) 24 commits
- - fixup! untracked cache: load from UNTR index extension
+* nd/untracked-cache (2015-01-21) 24 commits
+ - git-status.txt: advertisement for untracked cache
  - untracked cache: guard and disable on system changes
  - mingw32: add uname()
  - t7063: tests for untracked cache
@@ -557,7 +549,7 @@ of the repositories listed at
  - untracked cache: record .gitignore information and dir hierarchy
  - dir.c: optionally compute sha-1 of a .gitignore file
 
- Comments?
+ Need extra set of eyes to review this.
 
 --------------------------------------------------
 [Discarded]
@@ -588,3 +580,9 @@ of the repositories listed at
  not marked as WIP.
 
  cj/log-invert-grep replaces this.
+
+
+* lf/blame-commit-label (2015-01-12) 1 commit
+ . blame.c: fix garbled error message
+
+ jk/blame-commit-label replaces this.
