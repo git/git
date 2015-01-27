@@ -33,7 +33,7 @@ EOF
 	! test -d .git/worktrees
 '
 
-test_expect_success POSIXPERM 'prune directories with unreadable gitdir' '
+test_expect_success SANITY 'prune directories with unreadable gitdir' '
 	mkdir -p .git/worktrees/def/abc &&
 	: >.git/worktrees/def/def &&
 	: >.git/worktrees/def/gitdir &&
