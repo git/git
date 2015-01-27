@@ -1,19 +1,20 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jan 2015, #04; Wed, 21)
-X-master-at: 627736ca799edacf13881da7e671964a0afb94b8
-X-next-at: f40c73c9887141847a96136c6fdba64a4db3df37
+Subject: What's cooking in git.git (Jan 2015, #05; Tue, 27)
+X-master-at: 15598cf41beed0d86cd2ac443e0f69c5a3b40321
+X-next-at: 4b64765b7657288d677cec107fb5295afb4e3a29
 
-What's cooking in git.git (Jan 2015, #04; Wed, 21)
+What's cooking in git.git (Jan 2015, #05; Tue, 27)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-First release candidate 2.3-rc1 has been tagged.  Please spend some
-time to find and fix regressions, instead of spending all time
-having fun with new and shiny toys ;-)
+Hopefully final release candidate 2.3-rc2 has been tagged.  Please
+spend some time to find and fix regressions, instead of spending all
+time having fun with new and shiny toys.  The final hopefully will
+happen sometime next week.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -23,114 +24,101 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* jk/http-push-symref-fix (2015-01-14) 1 commit
- + http-push: trim trailing newline from remote symref
+* ak/cat-file-clean-up (2015-01-13) 1 commit
+  (merged to 'next' on 2015-01-15 at bb1a4b3)
+ + cat-file: use "type" and "size" from outer scope
 
- Using newer libCURL (or old one with security fixes) exposes this
- old breakage.
+
+* js/t1050 (2015-01-14) 1 commit
+  (merged to 'next' on 2015-01-15 at f010b00)
+ + t1050-large: generate large files without dd
 
 --------------------------------------------------
 [New Topics]
 
-* ak/typofixes (2015-01-21) 2 commits
- - t/lib-terminal.sh: fix typo
- - pack-bitmap: fix typo
-
- Will merge to 'next'.
-
-
-* jc/apply-ws-fix-expands (2015-01-16) 4 commits
+* jc/apply-ws-fix-expands-report (2015-01-22) 1 commit
  - apply: detect and mark whitespace errors in context lines when fixing
- - apply: count the size of postimage correctly
- - typofix
- - apply: make update_pre_post_images() sanity check the given postlen
+ (this branch uses jc/apply-ws-fix-expands.)
 
- Needs rerolling and adding tests from Kyle J. McKay.
-
-
-* jc/coding-guidelines (2015-01-15) 1 commit
- - CodingGuidelines: clarify C #include rules
+ "git apply --whitespace=fix" fixed whitespace errors in the common
+ context lines but did so without reporting.
 
  Will merge to 'next'.
 
 
-* jc/pretty-format-doc (2015-01-15) 1 commit
- - "log --pretty" documentation: do not forget "tformat:"
+* ks/rebase-i-abbrev (2015-01-22) 1 commit
+ - rebase -i: use full object name internally throughout the script
+
+ The insn sheet "git rebase -i" creates did not fully honor
+ core.abbrev settings.
 
  Will merge to 'next'.
 
 
-* jc/unused-symbols (2015-01-15) 8 commits
- - shallow.c: make check_shallow_file_for_update() static
- - remote.c: make clear_cas_option() static
- - urlmatch.c: make match_urls() static
- - revision.c: make save_parents() and free_saved_parents() static
- - line-log.c: make line_log_data_init() static
- - pack-bitmap.c: make pack_bitmap_filename() static
- - prompt.c: remove git_getpass() nobody uses
- - http.c: make finish_active_slot() and handle_curl_result() static
+* mh/deref-symref-over-helper-transport (2015-01-21) 1 commit
+ - transport-helper: do not request symbolic refs to remote helpers
+
+ "git fetch" over a remote-helper that cannot respond to "list"
+ command could not fetch from a symbolic reference e.g. HEAD.
 
  Will merge to 'next'.
 
 
-* jk/sanity (2015-01-16) 3 commits
- - tests: SANITY requires POSIXPERM
- - tests: correct misuses of POSIXPERM
- - t/lib-httpd: switch SANITY check for NOT_ROOT
+* ak/add-i-empty-candidates (2015-01-22) 1 commit
+ - add -i: return from list_and_choose if there is no candidate
 
- Saw Torsten's report on Cygwin, but I couldn't tell if it was about
- existing breakages or new one introduced by this series.
-
-
-* js/fsck-opt (2015-01-21) 19 commits
- - fsck: support ignoring objects in `git fsck` via fsck.skiplist
- - fsck: git receive-pack: support excluding objects from fsck'ing
- - fsck: introduce `git fsck --quick`
- - fsck: support demoting errors to warnings
- - fsck: document the new receive.fsck.* options
- - fsck: allow upgrading fsck warnings to errors
- - fsck: optionally ignore specific fsck issues completely
- - fsck: disallow demoting grave fsck errors to warnings
- - fsck: add a simple test for receive.fsck.*
- - fsck: make fsck_tag() warn-friendly
- - fsck: handle multiple authors in commits specially
- - fsck: make fsck_commit() warn-friendly
- - fsck: make fsck_ident() warn-friendly
- - fsck: report the ID of the error/warning
- - fsck: allow demoting errors to warnings via receive.fsck.warn = <key>
- - fsck: offer a function to demote fsck errors to warnings
- - fsck: provide a function to parse fsck message IDs
- - fsck: introduce identifiers for fsck messages
- - fsck: introduce fsck options
-
- Need extra set of eyes to review this.
-
-
-* ld/p4-exclude-in-sync (2015-01-20) 1 commit
- - git-p4: support excluding paths on sync
+ The interactive "show a list and let the user choose from it"
+ interface "add -i" used showed and prompted to the user even when
+ the candidate list was empty, against which the only "choice" the
+ user could have made was to choose nothing.
 
  Will merge to 'next'.
 
 
-* tb/connect-ipv6-parse-fix (2015-01-20) 3 commits
- - t5500: Show user name and host in diag-url
- - t5601: Add more test cases for IPV6
- - connect.c: Improve parsing of literal IPV6 addresses
+* av/wincred-with-at-in-username-fix (2015-01-25) 1 commit
+ - wincred: fix get credential if username has "@"
 
- Need extra set of eyes to review this.
+ Will merge to 'next'.
 
 
-* sb/atomic-push-fix (2015-01-21) 5 commits
- - refs.c: enable large transactions
- - refs.c: have a write_sha1_to_lock_file wrapper
- - refs.c: remove lock_fd from struct ref_lock
- - t7004: rename ULIMIT test prerequisite to ULIMIT_STACK_SIZE
- - update-ref: test handling large transactions properly
- (this branch uses mh/reflog-expire and sb/atomic-push.)
+* jc/conf-var-doc (2015-01-27) 3 commits
+ - CodingGuidelines: describe naming rules for configuration variables
+ - config.txt: mark deprecated variables more prominently
+ - config.txt: clarify that add.ignore-errors as deprecated
 
- I had to wiggle this in and am not confident I did it correctly.
+ Need to send this out for review before doing anything to it.
 
- Need extra set of eyes to review this.
+
+* jc/doc-log-rev-list-options (2015-01-23) 1 commit
+ - Documentation: what does "git log --indexed-objects" even mean?
+
+ Will merge to 'next'.
+
+
+* jk/dumb-http-idx-fetch-fix (2015-01-27) 1 commit
+ - dumb-http: do not pass NULL path to parse_pack_index
+
+ Will merge to 'next'.
+
+
+* ld/p4-submit-hint (2015-01-23) 1 commit
+  (merged to 'next' on 2015-01-23 at ed972d3)
+ + git-p4: correct --prepare-p4-only instructions
+
+ Will merge to 'master' after 2.3 final.
+
+
+* mg/commit-author-no-match-malformed-message (2015-01-26) 1 commit
+ - commit: reword --author error message
+
+ Will merge to 'next'.
+
+
+* mg/push-repo-option-doc (2015-01-27) 1 commit
+ - git-push.txt: document the behavior of --repo
+
+ Will merge to 'next'.
+
 
 --------------------------------------------------
 [Stalled]
@@ -139,12 +127,6 @@ of the repositories listed at
  - doc: document error handling functions and conventions
 
  For discussion.
-
-
-* ye/http-accept-language (2015-01-21) 1 commit
- . http: add Accept-Language header if possible
-
- Not quite there yet.
 
 
 * pw/remote-set-url-fetch (2014-11-26) 1 commit
@@ -274,6 +256,129 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* ye/http-accept-language (2015-01-27) 2 commits
+ - SQUASH???
+ - http: Add Accept-Language header if possible
+
+ Using environment variable LANGUAGE and friends on the client side,
+ send Accept-Language when making HTTP requests.
+
+ Almost there, I would think.
+
+
+* ak/typofixes (2015-01-21) 2 commits
+  (merged to 'next' on 2015-01-22 at e36f25a)
+ + t/lib-terminal.sh: fix typo
+ + pack-bitmap: fix typo
+
+ Will merge to 'master'.
+
+
+* jc/apply-ws-fix-expands (2015-01-22) 3 commits
+ - apply: count the size of postimage correctly
+ - apply: make update_pre_post_images() sanity check the given postlen
+ - apply.c: typofix
+ (this branch is used by jc/apply-ws-fix-expands-report.)
+
+ "git apply --whitespace=fix" used to under-allocate the memory
+ when the fix resulted in a longer text than the original patch.
+
+ Will merge to 'next'.
+
+
+* jc/coding-guidelines (2015-01-15) 1 commit
+  (merged to 'next' on 2015-01-22 at 3c96639)
+ + CodingGuidelines: clarify C #include rules
+
+ Will merge to 'master'.
+
+
+* jc/pretty-format-doc (2015-01-15) 1 commit
+  (merged to 'next' on 2015-01-22 at 2a81ecc)
+ + "log --pretty" documentation: do not forget "tformat:"
+
+ Will cook in 'next'.
+
+
+* jc/unused-symbols (2015-01-15) 8 commits
+  (merged to 'next' on 2015-01-22 at 77fd5f0)
+ + shallow.c: make check_shallow_file_for_update() static
+ + remote.c: make clear_cas_option() static
+ + urlmatch.c: make match_urls() static
+ + revision.c: make save_parents() and free_saved_parents() static
+ + line-log.c: make line_log_data_init() static
+ + pack-bitmap.c: make pack_bitmap_filename() static
+ + prompt.c: remove git_getpass() nobody uses
+ + http.c: make finish_active_slot() and handle_curl_result() static
+
+ Mark file-local symbols as "static", and drop functions that nobody
+ uses.
+
+ Will cook in 'next'.
+
+
+* jk/sanity (2015-01-27) 3 commits
+ - test-lib.sh: set prerequisite SANITY by testing what we really need
+ - tests: correct misuses of POSIXPERM
+ - t/lib-httpd: switch SANITY check for NOT_ROOT
+
+ Waiting for ack or counter-proposal from Torsten.
+ Otherwise looking good.
+
+
+* js/fsck-opt (2015-01-21) 19 commits
+ - fsck: support ignoring objects in `git fsck` via fsck.skiplist
+ - fsck: git receive-pack: support excluding objects from fsck'ing
+ - fsck: introduce `git fsck --quick`
+ - fsck: support demoting errors to warnings
+ - fsck: document the new receive.fsck.* options
+ - fsck: allow upgrading fsck warnings to errors
+ - fsck: optionally ignore specific fsck issues completely
+ - fsck: disallow demoting grave fsck errors to warnings
+ - fsck: add a simple test for receive.fsck.*
+ - fsck: make fsck_tag() warn-friendly
+ - fsck: handle multiple authors in commits specially
+ - fsck: make fsck_commit() warn-friendly
+ - fsck: make fsck_ident() warn-friendly
+ - fsck: report the ID of the error/warning
+ - fsck: allow demoting errors to warnings via receive.fsck.warn = <key>
+ - fsck: offer a function to demote fsck errors to warnings
+ - fsck: provide a function to parse fsck message IDs
+ - fsck: introduce identifiers for fsck messages
+ - fsck: introduce fsck options
+
+ Need extra set of eyes to review this.
+
+
+* ld/p4-exclude-in-sync (2015-01-20) 1 commit
+  (merged to 'next' on 2015-01-22 at f6f1fc7)
+ + git-p4: support excluding paths on sync
+
+ Will merge to 'master' after 2.3 final.
+
+
+* tb/connect-ipv6-parse-fix (2015-01-22) 3 commits
+ - t5500: show user name and host in diag-url
+ - t5601: add more test cases for IPV6
+ - connect.c: improve parsing of literal IPV6 addresses
+
+ Need extra set of eyes to review this.
+
+
+* sb/atomic-push-fix (2015-01-23) 6 commits
+ - refs.c: enable large transactions
+ - refs.c: remove unlock_ref and commit_ref from write_ref_sha1
+ - refs.c: move static functions to close and commit refs
+ - refs.c: remove lock_fd from struct ref_lock
+ - t7004: rename ULIMIT test prerequisite to ULIMIT_STACK_SIZE
+ - update-ref: test handling large transactions properly
+ (this branch uses mh/reflog-expire and sb/atomic-push.)
+
+ I had to wiggle this in and am not confident I did it correctly.
+
+ Need extra set of eyes to review this.
+
+
 * jk/strbuf-doc-to-header (2015-01-16) 7 commits
  - strbuf.h: group documentation for trim functions
  - strbuf.h: drop boilerplate descriptions of strbuf_split_*
@@ -287,16 +392,10 @@ of the repositories listed at
 
 
 * ah/usage-strings (2015-01-14) 1 commit
- - standardize usage info string format
+  (merged to 'next' on 2015-01-22 at bfa5bab)
+ + standardize usage info string format
 
- Will merge to and cook in 'next'.
-
-
-* ak/cat-file-clean-up (2015-01-13) 1 commit
-  (merged to 'next' on 2015-01-15 at bb1a4b3)
- + cat-file: use "type" and "size" from outer scope
-
- Will merge to 'master'.
+ Will cook in 'next'.
 
 
 * ak/stash-store-create-help (2015-01-13) 1 commit
@@ -314,13 +413,6 @@ of the repositories listed at
  + git-compat-util: add xstrdup_or_null helper
 
  Will cook in 'next'.
-
-
-* js/t1050 (2015-01-14) 1 commit
-  (merged to 'next' on 2015-01-15 at f010b00)
- + t1050-large: generate large files without dd
-
- Will merge to 'master'.
 
 
 * bc/http-fallback-to-password-after-krb-fails (2015-01-07) 1 commit
@@ -452,10 +544,12 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* nd/list-files (2014-12-01) 19 commits
+* nd/list-files (2015-01-27) 22 commits
+ - t3080: tests for git-list-files
  - list-files: -M aka diff-cached
  - list-files -F: show submodules with the new indicator '&'
  - list-files: add -F/--classify
+ - SQUASH???
  - list-files: show directories as well as files
  - list-files: do not show duplicate cached entries
  - list-files: sort output and remove duplicates
@@ -463,6 +557,7 @@ of the repositories listed at
  - list-files: add -1 short for --no-column
  - list-files: add -R/--recursive short for --max-depth=-1
  - list-files: -u does not imply showing stages
+ - list-files: make alias 'ls' default to 'list-files'
  - list-files: a user friendly version of ls-files and more
  - ls-files: support --max-depth
  - ls-files: add --column
@@ -476,10 +571,11 @@ of the repositories listed at
  A new "git list-files" Porcelain command, "ls-files" with bells and
  whistles.
 
- Comments?
+ Some comments seen on the list; may be gaining some interests?
 
 
-* nd/multiple-work-trees (2015-01-07) 37 commits
+* nd/multiple-work-trees (2015-01-27) 38 commits
+ - t2026 needs procondition SANITY
  - git-checkout.txt: a note about multiple checkout support for submodules
  - checkout: add --ignore-other-wortrees
  - checkout: pass whole struct to parse_branchname_arg instead of individual flags
