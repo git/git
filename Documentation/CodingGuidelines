@@ -413,6 +413,29 @@ Error Messages
  - Say what the error is first ("cannot open %s", not "%s: cannot open")
 
 
+Externally Visible Names
+
+ - For configuration variable names, follow the existing convention:
+
+   . The section name indicates the affected subsystem.
+
+   . The subsection name, if any, indicates which of an unbounded set
+     of things to set the value for.
+
+   . The variable name describes the effect of tweaking this knob.
+
+   The section and variable names that consist of multiple words are
+   formed by concatenating the words without punctuations (e.g. `-`),
+   and are broken using bumpyCaps in documentation as a hint to the
+   reader.
+
+   When choosing the variable namespace, do not use variable name for
+   specifying possibly unbounded set of things, most notably anything
+   an end user can freely come up with (e.g. branch names).  Instead,
+   use subsection names or variable values, like the existing variable
+   branch.<name>.description does.
+
+
 Writing Documentation:
 
  Most (if not all) of the documentation pages are written in the
