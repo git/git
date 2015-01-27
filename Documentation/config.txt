@@ -664,14 +664,13 @@ core.abbrev::
 	for abbreviated object names to stay unique for sufficiently long
 	time.
 
-add.ignore-errors::
 add.ignoreErrors::
+add.ignore-errors::
 	Tells 'git add' to continue adding files when some files cannot be
 	added due to indexing errors. Equivalent to the '--ignore-errors'
-	option of linkgit:git-add[1].  Older versions of Git accept only
-	`add.ignore-errors`, which does not follow the usual naming
-	convention for configuration variables.  Newer versions of Git
-	honor `add.ignoreErrors` as well.
+	option of linkgit:git-add[1].  `add.ignore-errors` is deprecated,
+	as it does not follow the usual naming convention for configuration
+	variables.
 
 alias.*::
 	Command aliases for the linkgit:git[1] command wrapper - e.g.
