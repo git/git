@@ -665,7 +665,7 @@ core.abbrev::
 	time.
 
 add.ignoreErrors::
-add.ignore-errors::
+add.ignore-errors (deprecated)::
 	Tells 'git add' to continue adding files when some files cannot be
 	added due to indexing errors. Equivalent to the '--ignore-errors'
 	option of linkgit:git-add[1].  `add.ignore-errors` is deprecated,
@@ -1923,7 +1923,7 @@ pack.useBitmaps::
 	true. You should not generally need to turn this off unless
 	you are debugging pack bitmaps.
 
-pack.writebitmaps::
+pack.writebitmaps (deprecated)::
 	This is a deprecated synonym for `repack.writeBitmaps`.
 
 pack.writeBitmapHashCache::
@@ -2234,7 +2234,7 @@ sendemail.smtpencryption::
 	See linkgit:git-send-email[1] for description.  Note that this
 	setting is not subject to the 'identity' mechanism.
 
-sendemail.smtpssl::
+sendemail.smtpssl (deprecated)::
 	Deprecated alias for 'sendemail.smtpencryption = ssl'.
 
 sendemail.smtpsslcertpath::
@@ -2272,7 +2272,7 @@ sendemail.thread::
 sendemail.validate::
 	See linkgit:git-send-email[1] for description.
 
-sendemail.signedoffcc::
+sendemail.signedoffcc (deprecated)::
 	Deprecated alias for 'sendemail.signedoffbycc'.
 
 showbranch.default::
