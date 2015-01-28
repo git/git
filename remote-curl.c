@@ -514,7 +514,7 @@ static int fetch_git(struct discovery *heads,
 	argv[argc++] = url;
 	for (i = 0; i < nr_heads; i++) {
 		struct ref *ref = to_fetch[i];
-		if (!ref->name || !*ref->name)
+		if (!*ref->name)
 			die("cannot fetch by sha1 over smart http");
 		argv[argc++] = ref->name;
 	}
