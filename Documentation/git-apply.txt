@@ -16,7 +16,7 @@ SYNOPSIS
 	  [--ignore-space-change | --ignore-whitespace ]
 	  [--whitespace=(nowarn|warn|fix|error|error-all)]
 	  [--exclude=<path>] [--include=<path>] [--directory=<root>]
-	  [--verbose] [<patch>...]
+	  [--verbose] [--unsafe-paths] [<patch>...]
 
 DESCRIPTION
 -----------
@@ -228,6 +228,16 @@ behavior:
 For example, a patch that talks about updating `a/git-gui.sh` to `b/git-gui.sh`
 can be applied to the file in the working tree `modules/git-gui/git-gui.sh` by
 running `git apply --directory=modules/git-gui`.
+
+--unsafe-paths::
+	By default, a patch that affects outside the working area
+	(either a Git controlled working tree, or the current working
+	directory when "git apply" is used as a replacement of GNU
+	patch) is rejected as a mistake (or a mischief).
++
+When `git apply` is used as a "better GNU patch", the user can pass
+the `--unsafe-paths` option to override this safety check.  This option
+has no effect when `--index` or `--cached` is in use.
 
 Configuration
 -------------
