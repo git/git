@@ -23,6 +23,8 @@ else
 		# To write armored exported key to keyring:
 		#	gpg --homedir /tmp/gpghome --export-secret-keys \
 		#		--armor 0xDEADBEEF >> lib-gpg/keyring.gpg
+		#	gpg --homedir /tmp/gpghome --export \
+		#		--armor 0xDEADBEEF >> lib-gpg/keyring.gpg
 		# To export ownertrust:
 		#	gpg --homedir /tmp/gpghome --export-ownertrust \
 		#		> lib-gpg/ownertrust
