@@ -98,7 +98,7 @@ test_expect_success 'cannot delete file containing .. (index)' '
 	test_path_is_file ../foo
 '
 
-test_expect_failure SYMLINKS 'symlink escape via ..' '
+test_expect_success SYMLINKS 'symlink escape via ..' '
 	{
 		mkpatch_symlink tmp .. &&
 		mkpatch_add tmp/foo ../foo
@@ -108,7 +108,7 @@ test_expect_failure SYMLINKS 'symlink escape via ..' '
 	test_path_is_missing ../foo
 '
 
-test_expect_failure SYMLINKS 'symlink escape via .. (index)' '
+test_expect_success SYMLINKS 'symlink escape via .. (index)' '
 	{
 		mkpatch_symlink tmp .. &&
 		mkpatch_add tmp/foo ../foo
@@ -118,7 +118,7 @@ test_expect_failure SYMLINKS 'symlink escape via .. (index)' '
 	test_path_is_missing ../foo
 '
 
-test_expect_failure SYMLINKS 'symlink escape via absolute path' '
+test_expect_success SYMLINKS 'symlink escape via absolute path' '
 	{
 		mkpatch_symlink tmp "$(pwd)" &&
 		mkpatch_add tmp/foo ../foo
@@ -128,7 +128,7 @@ test_expect_failure SYMLINKS 'symlink escape via absolute path' '
 	test_path_is_missing ../foo
 '
 
-test_expect_failure SYMLINKS 'symlink escape via absolute path (index)' '
+test_expect_success SYMLINKS 'symlink escape via absolute path (index)' '
 	{
 		mkpatch_symlink tmp "$(pwd)" &&
 		mkpatch_add tmp/foo ../foo
