@@ -36,6 +36,8 @@ else
 			"$TEST_DIRECTORY"/lib-gpg/keyring.gpg &&
 		gpg --homedir "${GNUPGHOME}" 2>/dev/null --import-ownertrust \
 			"$TEST_DIRECTORY"/lib-gpg/ownertrust &&
+		gpg --homedir "${GNUPGHOME}" </dev/null >/dev/null 2>&1 \
+			--sign -u committer@example.com &&
 		test_set_prereq GPG
 		;;
 	esac
