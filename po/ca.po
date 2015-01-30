@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
 "POT-Creation-Date: 2015-01-18 11:24+0800\n"
-"PO-Revision-Date: 2015-01-26 10:12-0700\n"
+"PO-Revision-Date: 2015-01-30 15:01-0700\n"
 "Last-Translator: Alex Henrie <alexhenrie24@gmail.com>\n"
 "Language-Team: Catalan\n"
 "Language: ca\n"
@@ -1881,11 +1881,11 @@ msgstr "rebase en progrés; en "
 
 #: wt-status.c:1317
 msgid "HEAD detached at "
-msgstr "HEAD separat a"
+msgstr "HEAD separat a "
 
 #: wt-status.c:1319
 msgid "HEAD detached from "
-msgstr "HEAD separat de"
+msgstr "HEAD separat de "
 
 #: wt-status.c:1322
 msgid "Not currently on any branch."
@@ -3243,7 +3243,7 @@ msgstr "surt amb zero quan no hi ha error"
 
 #: builtin/cat-file.c:371
 msgid "pretty-print object's content"
-msgstr "imprimeix bellament el contingut de l'objecte "
+msgstr "imprimeix bellament el contingut de l'objecte"
 
 #: builtin/cat-file.c:373
 msgid "for blob objects, run textconv on object's content"
@@ -3764,7 +3764,7 @@ msgstr "Selecciona els ítems a suprimir"
 #: builtin/clean.c:757
 #, c-format
 msgid "remove %s? "
-msgstr "eliminar %s?"
+msgstr "eliminar %s? "
 
 #: builtin/clean.c:782
 msgid "Bye."
