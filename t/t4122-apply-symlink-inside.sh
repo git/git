@@ -52,4 +52,23 @@ test_expect_success 'check result' '
 
 '
 
+test_expect_success SYMLINKS 'do not read from beyond symbolic link' '
+	git reset --hard &&
+	mkdir -p arch/x86_64/dir &&
+	>arch/x86_64/dir/file &&
+	git add arch/x86_64/dir/file &&
+	echo line >arch/x86_64/dir/file &&
+	git diff >patch &&
+	git reset --hard &&
+
+	mkdir arch/i386/dir &&
+	>arch/i386/dir/file &&
+	ln -s ../i386/dir arch/x86_64/dir &&
+
+	test_must_fail git apply patch &&
+	test_must_fail git apply --cached patch &&
+	test_must_fail git apply --index patch
+
+'
+
 test_done
