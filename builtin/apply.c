@@ -3136,7 +3136,7 @@ static int load_patch_target(struct strbuf *buf,
 			     const char *name,
 			     unsigned expected_mode)
 {
-	if (cached) {
+	if (cached || check_index) {
 		if (read_file_or_gitlink(ce, buf))
 			return error(_("read of %s failed"), name);
 	} else if (name) {
