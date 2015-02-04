@@ -47,7 +47,8 @@ static inline uint32_t ewah_bit_popcount64(uint64_t x)
 	return (x * 0x0101010101010101ULL) >> 56;
 }
 
-#ifdef __GNUC__
+/* __builtin_ctzll was not available until 3.4.0 */
+#if defined(__GNUC__) && (__GNUC__ > 3 || (__GNUC__ == 3  && __GNUC_MINOR > 3))
 #define ewah_bit_ctz64(x) __builtin_ctzll(x)
 #else
 static inline int ewah_bit_ctz64(uint64_t x)
