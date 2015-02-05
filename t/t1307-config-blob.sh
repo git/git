@@ -67,4 +67,13 @@ test_expect_success 'parse errors in blobs are properly attributed' '
 	grep "HEAD:config" err
 '
 
+test_expect_success 'can parse blob ending with CR' '
+	printf "[some]key = value\\r" >config &&
+	git add config &&
+	git commit -m CR &&
+	echo value >expect &&
+	git config --blob=HEAD:config some.key >actual &&
+	test_cmp expect actual
+'
+
 test_done

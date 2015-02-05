@@ -228,7 +228,8 @@ static int get_next_char(void)
 		/* DOS like systems */
 		c = cf->do_fgetc(cf);
 		if (c != '\n') {
-			cf->do_ungetc(c, cf);
+			if (c != EOF)
+				cf->do_ungetc(c, cf);
 			c = '\r';
 		}
 	}
