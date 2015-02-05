@@ -1,6 +1,12 @@
 Git v2.3 Release Notes
 ======================
 
+This one ended up to be a release with lots of small corrections and
+improvements without big uncomfortably exciting features.  The recent
+security fix that went to 2.2.1 and older maintenance tracks is also
+contained in this update.
+
+
 Updates since v2.2
 ------------------
 
