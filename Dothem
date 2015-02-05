@@ -31,6 +31,7 @@ while	case "$1" in
 	--base=*) BUILDBASE=${1#*=} ;;
 	--branches=*) branches=${1#*=} ;;
 	-j*) jobs=$1 ;;
+	--) shift; break ;;
 	-*) echo >&2 "Unknown option: $1"; exit 1 ;;
 	*) break ;;
 	esac
@@ -195,7 +196,7 @@ do
 
 		save=$(git rev-parse HEAD) &&
 
-		Meta/Make $M ${test+"$test"} $jobs -- ${with_dash:+SHELL_PATH=/bin/dash} $dotest &&
+		Meta/Make $M ${test+"$test"} $jobs -- ${with_dash:+SHELL_PATH=/bin/dash} "$@" $dotest &&
 
 		{
 			test -n "$skip_doc" ||
@@ -212,7 +213,7 @@ do
 			test z$install = znoinstall ||
 			if test "$save" = "$(git rev-parse HEAD)"
 			then
-				Meta/Make $M -- ${with_dash:+SHELL_PATH=/bin/dash} install
+				Meta/Make $M -- ${with_dash:+SHELL_PATH=/bin/dash} "$@" install
 			else
 				echo >&2 "Head moved--not installing"
 			fi

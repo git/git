@@ -96,21 +96,20 @@ determine_long_version () {
 	sed -e 's/-/./g'
 }
 
+case "$NO_PEDANTIC" in
+?*)	;;
+'')
+	PEDANT="-Werror -Wold-style-definition -std=c99 $PEDANT"
+	PEDANT="-Wpointer-arith -Woverflow -Wunused $PEDANT"
+	PEDANT="-Wold-style-declaration -Wstrict-prototypes $PEDANT"
+	;;
+esac
+
 while case $# in 0) break ;; esac
 do 
 	case "$1" in
-	-pedantic | --pedantic)
-		case "$NO_PEDANTIC" in
-		?*)	;;
-		'')
-			O="-Werror -Wold-style-definition -std=c99 $O"
-			O="-Wno-pointer-to-int-cast $O"
-			O="-Wpointer-arith -Woverflow -Wunused $O"
-			O="-Wold-style-declaration -Wstrict-prototypes $O"
-			;;
-		esac
-		# -Wvla
-		# O="$O -fwrapv -fno-strict-overflow"
+	--pedantic)
+		echo >&2 "(no need to say --pedantic)"
 		;;
 	-j*)
 		case "$NO_JOBS" in
@@ -122,7 +121,7 @@ do
 		oldtest=t
 		;;
 	-loose | --loose)
-		Wall=
+		PEDANT= Wall=
 		;;
 	--locale=*)
 		LANG=${1#*=}
@@ -153,6 +152,7 @@ do
 	esac
 	shift
 done
+O="${PEDANT}${PEDANT:+ }$O"
 
 test -f /bin/dash || with_dash=
 
