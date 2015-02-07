@@ -1,6 +1,7 @@
 #include "git-compat-util.h"
 #include "strbuf.h"
 #include "utf8.h"
+#include "unicode_width.h"
 
 /* This code is originally from http://www.cl.cam.ac.uk/~mgk25/ucs/ */
 
@@ -44,6 +45,14 @@ static int bisearch(ucs_char_t ucs, const struct interval *table, int max)
 	return 0;
 }
 
+static int non_spacing_character(ucs_char_t ch){
+	return bisearch(ch, zero_width, sizeof(zero_width) / sizeof(struct interval) - 1);
+}
+
+static int double_width_character(ucs_char_t ch){
+	return bisearch(ch, double_width, sizeof(double_width) / sizeof(struct interval) - 1);
+}
+
 /* The following two functions define the column width of an ISO 10646
  * character as follows:
  *
@@ -78,25 +87,16 @@ static int bisearch(ucs_char_t ucs, const struct interval *table, int max)
 
 static int git_wcwidth(ucs_char_t ch)
 {
-	/*
-	 * Sorted list of non-overlapping intervals of non-spacing characters,
-	 */
-#include "unicode_width.h"
-
 	/* test for 8-bit control characters */
 	if (ch == 0)
 		return 0;
 	if (ch < 32 || (ch >= 0x7f && ch < 0xa0))
 		return -1;
 
-	/* binary search in table of non-spacing characters */
-	if (bisearch(ch, zero_width, sizeof(zero_width)
-				/ sizeof(struct interval) - 1))
+	if (non_spacing_character(ch))
 		return 0;
 
-	/* binary search in table of double width characters */
-	if (bisearch(ch, double_width, sizeof(double_width)
-				/ sizeof(struct interval) - 1))
+	if (double_width_character(ch))
 		return 2;
 
 	return 1;
