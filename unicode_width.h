@@ -1,3 +1,6 @@
+#ifndef UNICODE_WIDTH_H
+#define UNICODE_WIDTH_H
+
 static const struct interval zero_width[] = {
 { 0x0300, 0x036F },
 { 0x0483, 0x0489 },
@@ -267,6 +270,7 @@ static const struct interval zero_width[] = {
 { 0xE0020, 0xE007F },
 { 0xE0100, 0xE01EF }
 };
+
 static const struct interval double_width[] = {
 { /* plane */ 0x0, 0x1C },
 { /* plane */ 0x1C, 0x21 },
@@ -321,3 +325,5 @@ static const struct interval double_width[] = {
 { 0x20000, 0x2FFFD },
 { 0x30000, 0x3FFFD }
 };
+
+#endif
