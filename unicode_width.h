@@ -1,6 +1,8 @@
 #ifndef UNICODE_WIDTH_H
 #define UNICODE_WIDTH_H
-
+/*
+ * Sorted lists for non-overlapping intervals of non-spacing characters, and for double width characters.
+ */
 static const struct interval zero_width[] = {
 { 0x0300, 0x036F },
 { 0x0483, 0x0489 },
