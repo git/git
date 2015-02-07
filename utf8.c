@@ -45,11 +45,11 @@ static int bisearch(ucs_char_t ucs, const struct interval *table, int max)
 	return 0;
 }
 
-static int bisearch_in_non_spacing_character_table_succeeds(ucs_char_t ch){
+static int non_spacing_character(ucs_char_t ch){
 	return bisearch(ch, zero_width, sizeof(zero_width) / sizeof(struct interval) - 1);
 }
 
-static int bisearch_in_double_width_character_table_succeeds(ucs_char_t ch){
+static int double_width_character(ucs_char_t ch){
 	return bisearch(ch, double_width, sizeof(double_width) / sizeof(struct interval) - 1);
 }
 
@@ -93,10 +93,10 @@ static int git_wcwidth(ucs_char_t ch)
 	if (ch < 32 || (ch >= 0x7f && ch < 0xa0))
 		return -1;
 
-	if (bisearch_in_non_spacing_character_table_succeeds(ch))
+	if (non_spacing_character(ch))
 		return 0;
 
-	if (bisearch_in_double_width_character_table_succeeds(ch))
+	if (double_width_character(ch))
 		return 2;
 
 	return 1;
