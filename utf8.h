@@ -44,7 +44,7 @@ int mbs_chrlen(const char **text, size_t *remainder_p, const char *encoding);
 
 /*
  * Returns true if the the path would match ".git" after HFS case-folding.
- * The path should be NULL-terminated, but we will match variants of both ".git\0"
+ * The path should be NUL-terminated, but we will match variants of both ".git\0"
  * and ".git/..." (but _not_ ".../.git"). This makes it suitable for both fsck
  * and verify_path().
  */
