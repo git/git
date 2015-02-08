@@ -424,3 +424,69 @@ void parse_ls_color(void)
 		color_symlink_as_referent = 1;
 	git_config(ls_colors_config, NULL);
 }
+
+void color_filename(struct strbuf *sb, const char *name,
+		    const char *display_name, mode_t mode, int linkok)
+{
+	int type;
+	struct color_ext_type *ext;	/* Color extension */
+
+	if (S_ISREG(mode)) {
+		type = LS_FL;
+		if ((mode & S_ISUID) != 0)
+			type = LS_SU;
+		else if ((mode & S_ISGID) != 0)
+			type = LS_SG;
+		else if ((mode & (S_IXUSR | S_IXGRP | S_IXOTH)) != 0)
+			type = LS_EX;
+	} else if (S_ISDIR(mode)) {
+		if ((mode & S_ISVTX) && (mode & S_IWOTH))
+			type = LS_TW;
+		else if ((mode & S_IWOTH) != 0)
+			type = LS_OW;
+		else if ((mode & S_ISVTX) != 0)
+			type = LS_ST;
+		else
+			type = LS_DI;
+	} else if (S_ISLNK(mode))
+		type = (!linkok && *ls_colors[LS_OR]) ? LS_OR : LS_LN;
+	else if (S_ISFIFO(mode))
+		type = LS_PI;
+	else if (S_ISSOCK(mode))
+		type = LS_SO;
+	else if (S_ISBLK(mode))
+		type = LS_BD;
+	else if (S_ISCHR(mode))
+		type = LS_CD;
+#ifdef S_ISDOOR
+	else if (S_ISDOOR(mode))
+		type = LS_DO;
+#endif
+	else
+		/* Classify a file of some other type as C_ORPHAN.  */
+		type = LS_OR;
+
+	/* Check the file's suffix only if still classified as C_FILE.  */
+	ext = NULL;
+	if (type == LS_FL) {
+		/* Test if NAME has a recognized suffix.  */
+		size_t len = strlen(name);
+		const char *p = name + len;		/* Pointer to final \0.  */
+		for (ext = color_ext_list; ext != NULL; ext = ext->next) {
+			if (ext->ext.len <= len &&
+			    !strncmp(p - ext->ext.len, ext->ext.string, ext->ext.len))
+				break;
+		}
+	}
+
+	if (display_name)
+		name = display_name;
+	if (ext)
+		strbuf_addf(sb, "\033[%.*sm%s%s",
+			    (int)ext->seq.len, ext->seq.string,
+			    name, GIT_COLOR_RESET);
+	else if (*ls_colors[type])
+		strbuf_addf(sb, "%s%s%s", ls_colors[type], name, GIT_COLOR_RESET);
+	else
+		strbuf_addstr(sb, name);
+}

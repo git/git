@@ -94,5 +94,7 @@ void color_print_strbuf(FILE *fp, const char *color, const struct strbuf *sb);
 int color_is_nil(const char *color);
 
 void parse_ls_color(void);
+void color_filename(struct strbuf *sb, const char *name,
+		    const char *display_name, mode_t mode, int linkok);
 
 #endif /* COLOR_H */
