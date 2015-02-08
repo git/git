@@ -147,6 +147,13 @@ a space) at the start of each line:
 	possible for manual inspection; the exact format may change at
 	any time.
 
+--color[=<when>]::
+--no-color::
+	Color file names. The value must be `always`, `never`, or
+	`auto`. `--no-color` is equivalent to
+	`--color=never`. `--color` is equivalent to
+	`--color=auto`.
+
 \--::
 	Do not interpret any more arguments as options.
 

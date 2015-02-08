@@ -14,6 +14,7 @@
 #include "resolve-undo.h"
 #include "string-list.h"
 #include "pathspec.h"
+#include "color.h"
 
 static int abbrev;
 static int show_deleted;
@@ -27,6 +28,7 @@ static int show_killed;
 static int show_valid_bit;
 static int line_terminator = '\n';
 static int debug_mode;
+static int use_color;
 
 static const char *prefix;
 static int max_prefix_len;
@@ -60,12 +62,26 @@ static void write_name(struct strbuf *sb, const char *name)
 		strbuf_release(&sb2);
 	} else
 		quote_path_relative(name, real_prefix, sb);
-	strbuf_addch(sb, line_terminator);
 }
 
 static void strbuf_fputs(struct strbuf *sb, FILE *fp)
 {
 	fwrite(sb->buf, sb->len, 1, fp);
+}
+
+static void write_dir_entry(struct strbuf *sb, const struct dir_entry *ent)
+{
+	struct strbuf quoted = STRBUF_INIT;
+	struct stat st;
+	if (stat(ent->name, &st))
+		st.st_mode = 0;
+	write_name(&quoted, ent->name);
+	if (want_color(use_color))
+		color_filename(sb, ent->name, quoted.buf, st.st_mode, 1);
+	else
+		strbuf_addbuf(sb, &quoted);
+	strbuf_addch(sb, line_terminator);
+	strbuf_release(&quoted);
 }
 
 static void show_dir_entry(const char *tag, struct dir_entry *ent)
@@ -81,7 +97,7 @@ static void show_dir_entry(const char *tag, struct dir_entry *ent)
 
 	strbuf_reset(&sb);
 	strbuf_addstr(&sb, tag);
-	write_name(&sb, ent->name);
+	write_dir_entry(&sb, ent);
 	strbuf_fputs(&sb, stdout);
 }
 
@@ -146,6 +162,18 @@ static void show_killed_files(struct dir_struct *dir)
 	}
 }
 
+static void write_ce_name(struct strbuf *sb, const struct cache_entry *ce)
+{
+	struct strbuf quoted = STRBUF_INIT;
+	write_name(&quoted, ce->name);
+	if (want_color(use_color))
+		color_filename(sb, ce->name, quoted.buf, ce->ce_mode, 1);
+	else
+		strbuf_addbuf(sb, &quoted);
+	strbuf_addch(sb, line_terminator);
+	strbuf_release(&quoted);
+}
+
 static void show_ce_entry(const char *tag, const struct cache_entry *ce)
 {
 	static struct strbuf sb = STRBUF_INIT;
@@ -186,7 +214,7 @@ static void show_ce_entry(const char *tag, const struct cache_entry *ce)
 			    find_unique_abbrev(ce->sha1, abbrev),
 			    ce_stage(ce));
 	}
-	write_name(&sb, ce->name);
+	write_ce_name(&sb, ce);
 	strbuf_fputs(&sb, stdout);
 	if (debug_mode) {
 		const struct stat_data *sd = &ce->ce_stat_data;
@@ -523,6 +551,7 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 			N_("if any <file> is not in the index, treat this as an error")),
 		OPT_STRING(0, "with-tree", &with_tree, N_("tree-ish"),
 			N_("pretend that paths removed since <tree-ish> are still present")),
+		OPT__COLOR(&use_color, N_("show color")),
 		OPT__ABBREV(&abbrev),
 		OPT_BOOL(0, "debug", &debug_mode, N_("show debugging data")),
 		OPT_END()
@@ -569,6 +598,9 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 
 	if (require_work_tree && !is_inside_work_tree())
 		setup_work_tree();
+
+	if (want_color(use_color))
+		parse_ls_color();
 
 	parse_pathspec(&pathspec, 0,
 		       PATHSPEC_PREFER_CWD |
