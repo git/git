@@ -29,6 +29,7 @@ static int show_killed;
 static int show_valid_bit;
 static int show_tag;
 static int show_dirs;
+static int show_indicator;
 static int line_terminator = '\n';
 static int debug_mode;
 static int use_color;
@@ -77,6 +78,28 @@ static void write_name(struct strbuf *sb, const char *name)
 		quote_path_relative(name, real_prefix, sb);
 }
 
+static void append_indicator(struct strbuf *sb, mode_t mode)
+{
+	char c = 0;
+	if (S_ISREG(mode)) {
+		if (mode & (S_IXUSR | S_IXGRP | S_IXOTH))
+			c = '*';
+	} else if (S_ISDIR(mode))
+		c = '/';
+	else if (S_ISLNK(mode))
+		c = '@';
+	else if (S_ISFIFO(mode))
+		c = '|';
+	else if (S_ISSOCK(mode))
+		c = '=';
+#ifdef S_ISDOOR
+	else if (S_ISDOOR(mode))
+		c = '>';
+#endif
+	if (c)
+		strbuf_addch(sb, c);
+}
+
 static void strbuf_fputs(struct strbuf *sb, const char *full_name, FILE *fp)
 {
 	if (column_active(colopts) || porcelain) {
@@ -99,6 +122,8 @@ static void write_dir_entry(struct strbuf *sb, const struct dir_entry *ent)
 		color_filename(sb, ent->name, quoted.buf, st.st_mode, 1);
 	else
 		strbuf_addbuf(sb, &quoted);
+	if (show_indicator && st.st_mode)
+		append_indicator(sb, st.st_mode);
 	strbuf_addch(sb, line_terminator);
 	strbuf_release(&quoted);
 }
@@ -202,6 +227,8 @@ static int show_as_directory(const struct cache_entry *ce)
 		}
 		if (show_tag)
 			strbuf_insert(&sb2, 0, tag_cached, strlen(tag_cached));
+		if (show_indicator)
+			append_indicator(&sb2, S_IFDIR);
 		strbuf_fputs(&sb2, strbuf_detach(&sb, NULL), NULL);
 		strbuf_release(&sb2);
 		return 1;
@@ -218,6 +245,8 @@ static void write_ce_name(struct strbuf *sb, const struct cache_entry *ce)
 		color_filename(sb, ce->name, quoted.buf, ce->ce_mode, 1);
 	else
 		strbuf_addbuf(sb, &quoted);
+	if (show_indicator)
+		append_indicator(sb, ce->ce_mode);
 	strbuf_addch(sb, line_terminator);
 	strbuf_release(&quoted);
 }
@@ -714,6 +743,8 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 			DIR_SHOW_IGNORED),
 		OPT_BOOL('u', "unmerged", &show_unmerged,
 			N_("show unmerged files")),
+		OPT_BOOL('F', "classify", &show_indicator,
+			 N_("append indicator (one of */=>@|) to entries")),
 		OPT__COLOR(&use_color, N_("show color")),
 		OPT_COLUMN(0, "column", &colopts, N_("show files in columns")),
 		OPT_SET_INT('1', NULL, &colopts,

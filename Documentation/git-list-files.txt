@@ -52,6 +52,12 @@ OPTIONS
 	multiple file selections. See linkgit::git-ls-files[1] option
 	`-t` for more information.
 
+-F::
+--classify::
+	Append indicator (one of `*/=>@|`, which is executable,
+	directory, socket, Solaris door, symlink, or fifo
+	respectively) to entries.
+
 -R::
 --recursive::
 	Equivalent of `--max-depth=-1` (infinite recursion).
