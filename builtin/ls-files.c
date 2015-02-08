@@ -27,6 +27,8 @@ static int show_resolve_undo;
 static int show_modified;
 static int show_killed;
 static int show_valid_bit;
+static int show_tag;
+static int show_dirs;
 static int line_terminator = '\n';
 static int debug_mode;
 static int use_color;
@@ -179,6 +181,35 @@ static void show_killed_files(struct dir_struct *dir)
 	}
 }
 
+static int show_as_directory(const struct cache_entry *ce)
+{
+	struct strbuf sb = STRBUF_INIT;
+	const char *p;
+
+	strbuf_add(&sb, ce->name, ce_namelen(ce));
+	while (sb.len && (p = strrchr(sb.buf, '/')) != NULL) {
+		struct strbuf sb2 = STRBUF_INIT;
+		strbuf_setlen(&sb, p - sb.buf);
+		if (!match_pathspec(&pathspec, sb.buf, sb.len,
+				    max_prefix_len, NULL, 1))
+			continue;
+		write_name(&sb2, sb.buf);
+		if (want_color(use_color)) {
+			struct strbuf sb3 = STRBUF_INIT;
+			color_filename(&sb3, ce->name, sb2.buf, S_IFDIR, 1);
+			strbuf_swap(&sb2, &sb3);
+			strbuf_release(&sb3);
+		}
+		if (show_tag)
+			strbuf_insert(&sb2, 0, tag_cached, strlen(tag_cached));
+		strbuf_fputs(&sb2, strbuf_detach(&sb, NULL), NULL);
+		strbuf_release(&sb2);
+		return 1;
+	}
+	strbuf_release(&sb);
+	return 0;
+}
+
 static void write_ce_name(struct strbuf *sb, const struct cache_entry *ce)
 {
 	struct strbuf quoted = STRBUF_INIT;
@@ -191,17 +222,40 @@ static void write_ce_name(struct strbuf *sb, const struct cache_entry *ce)
 	strbuf_release(&quoted);
 }
 
+static int match_pathspec_with_depth(struct pathspec *ps,
+				     const char *name, int namelen,
+				     int prefix, char *seen, int is_dir,
+				     const int *custom_depth)
+{
+	int saved_depth = ps->max_depth;
+	int result;
+
+	if (custom_depth)
+		ps->max_depth = *custom_depth;
+	result = match_pathspec(ps, name, namelen, prefix, seen, is_dir);
+	if (custom_depth)
+		ps->max_depth = saved_depth;
+	return result;
+}
+
 static void show_ce_entry(const char *tag, const struct cache_entry *ce)
 {
 	static struct strbuf sb = STRBUF_INIT;
+	static const int infinite_depth = -1;
 	int len = max_prefix_len;
 
 	if (len >= ce_namelen(ce))
 		die("git ls-files: internal error - cache entry not superset of prefix");
 
-	if (!match_pathspec(&pathspec, ce->name, ce_namelen(ce),
-			    len, ps_matched,
-			    S_ISDIR(ce->ce_mode) || S_ISGITLINK(ce->ce_mode)))
+	if (!match_pathspec_with_depth(&pathspec, ce->name, ce_namelen(ce),
+				       len, ps_matched,
+				       S_ISDIR(ce->ce_mode) || S_ISGITLINK(ce->ce_mode),
+				       show_dirs ? &infinite_depth : NULL))
+		return;
+
+	if (show_dirs && strchr(ce->name, '/') &&
+	    !match_pathspec(&pathspec, ce->name, ce_namelen(ce), prefix_len, NULL, 1) &&
+	    show_as_directory(ce))
 		return;
 
 	if (tag && *tag && show_valid_bit &&
@@ -575,7 +629,7 @@ static int git_ls_config(const char *var, const char *value, void *cb)
 
 int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 {
-	int require_work_tree = 0, show_tag = 0, i;
+	int require_work_tree = 0, i;
 	int max_depth = -1;
 	const char *max_prefix;
 	struct dir_struct dir;
@@ -744,6 +798,8 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 		       prefix, argv);
 	pathspec.max_depth = max_depth;
 	pathspec.recursive = 1;
+	show_dirs = porcelain && max_depth != -1;
+
 
 	/* Find common prefix for all pathspec's */
 	max_prefix = common_prefix(&pathspec);
