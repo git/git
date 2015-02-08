@@ -14,7 +14,8 @@ DESCRIPTION
 -----------
 List files (by default in current working directory) that are in the
 index. Depending on the chosen options, maybe only modified files in
-working tree are shown, or untracked files...
+working tree are shown, or untracked files... The builtin alias "ls"
+is set to "list-files".
 
 OPTIONS
 -------
