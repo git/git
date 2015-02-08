@@ -46,6 +46,12 @@ OPTIONS
 --unmerged::
 	Show unmerged files
 
+-t::
+--[no-]tag::
+	Show a tag to indicate file type. Automatically turned on with
+	multiple file selections. See linkgit::git-ls-files[1] option
+	`-t` for more information.
+
 -R::
 --recursive::
 	Equivalent of `--max-depth=-1` (infinite recursion).

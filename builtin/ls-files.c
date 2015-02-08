@@ -596,6 +596,8 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 			N_("show untracked files")),
 		OPT_SET_INT('R', "recursive", &max_depth,
 			    N_("shortcut for --max-depth=-1"), -1),
+		OPT_BOOL('t', "tag", &show_tag,
+			N_("identify the file status with tags")),
 		OPT_BIT('i', "ignored", &dir.flags,
 			N_("show ignored files"),
 			DIR_SHOW_IGNORED),
@@ -636,6 +638,7 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 		setup_standard_excludes(&dir);
 		use_color = -1;
 		max_depth = 0;
+		show_tag = -1;
 		git_config(git_ls_config, NULL);
 	} else
 		git_config(git_default_config, NULL);
@@ -647,16 +650,6 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 	el = add_exclude_list(&dir, EXC_CMDL, "--exclude option");
 	for (i = 0; i < exclude_list.nr; i++) {
 		add_exclude(exclude_list.items[i].string, "", 0, el, --exclude_args);
-	}
-	if (show_tag || show_valid_bit) {
-		tag_cached = "H ";
-		tag_unmerged = "M ";
-		tag_removed = "R ";
-		tag_modified = "C ";
-		tag_other = "? ";
-		tag_killed = "K ";
-		tag_skip_worktree = "S ";
-		tag_resolve_undo = "U ";
 	}
 	if (show_modified || show_others || show_deleted || (dir.flags & DIR_SHOW_IGNORED) || show_killed)
 		require_work_tree = 1;
@@ -710,6 +703,20 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 	if (!(show_stage || show_deleted || show_others || show_unmerged ||
 	      show_killed || show_modified || show_resolve_undo))
 		show_cached = 1;
+
+	if (show_tag == -1)
+		show_tag = (show_cached + show_deleted + show_others +
+			    show_unmerged + show_killed + show_modified) > 1;
+	if (show_tag || show_valid_bit) {
+		tag_cached = porcelain ? "  " : "H ";
+		tag_unmerged = "M ";
+		tag_removed = "R ";
+		tag_modified = "C ";
+		tag_other = "? ";
+		tag_killed = "K ";
+		tag_skip_worktree = "S ";
+		tag_resolve_undo = "U ";
+	}
 
 	if (max_prefix)
 		prune_cache(max_prefix);
