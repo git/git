@@ -53,6 +53,13 @@ static const char *tag_modified = "";
 static const char *tag_skip_worktree = "";
 static const char *tag_resolve_undo = "";
 
+static int compare_output(const void *a_, const void *b_)
+{
+	const struct string_list_item *a = a_;
+	const struct string_list_item *b = b_;
+	return strcmp(a->util, b->util);
+}
+
 static void write_name(struct strbuf *sb, const char *name)
 {
 	/*
@@ -68,10 +75,12 @@ static void write_name(struct strbuf *sb, const char *name)
 		quote_path_relative(name, real_prefix, sb);
 }
 
-static void strbuf_fputs(struct strbuf *sb, FILE *fp)
+static void strbuf_fputs(struct strbuf *sb, const char *full_name, FILE *fp)
 {
-	if (column_active(colopts)) {
-		string_list_append(&output, strbuf_detach(sb, NULL));
+	if (column_active(colopts) || porcelain) {
+		struct string_list_item *it;
+		it = string_list_append(&output, strbuf_detach(sb, NULL));
+		it->util = (void *)full_name;
 		return;
 	}
 	fwrite(sb->buf, sb->len, 1, fp);
@@ -106,7 +115,7 @@ static void show_dir_entry(const char *tag, struct dir_entry *ent)
 	strbuf_reset(&sb);
 	strbuf_addstr(&sb, tag);
 	write_dir_entry(&sb, ent);
-	strbuf_fputs(&sb, stdout);
+	strbuf_fputs(&sb, ent->name, stdout);
 }
 
 static void show_other_files(struct dir_struct *dir)
@@ -223,7 +232,7 @@ static void show_ce_entry(const char *tag, const struct cache_entry *ce)
 			    ce_stage(ce));
 	}
 	write_ce_name(&sb, ce);
-	strbuf_fputs(&sb, stdout);
+	strbuf_fputs(&sb, ce->name, stdout);
 	if (debug_mode) {
 		const struct stat_data *sd = &ce->ce_stat_data;
 
@@ -524,6 +533,7 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 	const char *max_prefix;
 	struct dir_struct dir;
 	struct exclude_list *el;
+	struct column_options copts;
 	struct string_list exclude_list = STRING_LIST_INIT_NODUP;
 	struct option builtin_ls_files_options[] = {
 		{ OPTION_CALLBACK, 'z', NULL, NULL, NULL,
@@ -671,7 +681,7 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 		if (debug_mode)
 			die(_("--column and --debug are incompatible"));
 	}
-	if (column_active(colopts))
+	if (column_active(colopts) || porcelain)
 		line_terminator = 0;
 
 	if (require_work_tree && !is_inside_work_tree())
@@ -737,13 +747,15 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 	if (show_resolve_undo)
 		show_ru_info();
 
-	if (column_active(colopts)) {
-		struct column_options copts;
-		memset(&copts, 0, sizeof(copts));
-		copts.padding = 2;
-		print_columns(&output, colopts, &copts);
-		string_list_clear(&output, 0);
+	memset(&copts, 0, sizeof(copts));
+	copts.padding = 2;
+	if (porcelain) {
+		qsort(output.items, output.nr, sizeof(*output.items),
+		      compare_output);
+		string_list_remove_duplicates(&output, 0);
 	}
+	print_columns(&output, colopts, &copts);
+	string_list_clear(&output, 0);
 
 	if (ps_matched) {
 		int bad;
