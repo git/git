@@ -594,6 +594,8 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 			N_("show cached files that have modification on working directory")),
 		OPT_BOOL('o', "others", &show_others,
 			N_("show untracked files")),
+		OPT_SET_INT('R', "recursive", &max_depth,
+			    N_("shortcut for --max-depth=-1"), -1),
 		OPT_BIT('i', "ignored", &dir.flags,
 			N_("show ignored files"),
 			DIR_SHOW_IGNORED),

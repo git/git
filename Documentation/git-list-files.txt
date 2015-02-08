@@ -46,6 +46,10 @@ OPTIONS
 --unmerged::
 	Show unmerged files
 
+-R::
+--recursive::
+	Equivalent of `--max-depth=-1` (infinite recursion).
+
 --color[=<when>]::
 --no-color::
 	Color file names. The value must be `always`, `never`, or
