@@ -15,6 +15,7 @@
 #include "string-list.h"
 #include "pathspec.h"
 #include "color.h"
+#include "column.h"
 
 static int abbrev;
 static int show_deleted;
@@ -29,6 +30,7 @@ static int show_valid_bit;
 static int line_terminator = '\n';
 static int debug_mode;
 static int use_color;
+static unsigned int colopts;
 
 static const char *prefix;
 static int max_prefix_len;
@@ -39,6 +41,7 @@ static char *ps_matched;
 static const char *with_tree;
 static int exc_given;
 static int exclude_args;
+static struct string_list output = STRING_LIST_INIT_NODUP;
 
 static const char *tag_cached = "";
 static const char *tag_unmerged = "";
@@ -66,6 +69,10 @@ static void write_name(struct strbuf *sb, const char *name)
 
 static void strbuf_fputs(struct strbuf *sb, FILE *fp)
 {
+	if (column_active(colopts)) {
+		string_list_append(&output, strbuf_detach(sb, NULL));
+		return;
+	}
 	fwrite(sb->buf, sb->len, 1, fp);
 }
 
@@ -552,6 +559,7 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 		OPT_STRING(0, "with-tree", &with_tree, N_("tree-ish"),
 			N_("pretend that paths removed since <tree-ish> are still present")),
 		OPT__COLOR(&use_color, N_("show color")),
+		OPT_COLUMN(0, "column", &colopts, N_("show files in columns")),
 		OPT__ABBREV(&abbrev),
 		OPT_BOOL(0, "debug", &debug_mode, N_("show debugging data")),
 		OPT_END()
@@ -596,6 +604,18 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 	if (dir.exclude_per_dir)
 		exc_given = 1;
 
+	finalize_colopts(&colopts, -1);
+	if (explicitly_enable_column(colopts)) {
+		if (!line_terminator)
+			die(_("--column and -z are incompatible"));
+		if (show_resolve_undo)
+			die(_("--column and --resolve-undo are incompatible"));
+		if (debug_mode)
+			die(_("--column and --debug are incompatible"));
+	}
+	if (column_active(colopts))
+		line_terminator = 0;
+
 	if (require_work_tree && !is_inside_work_tree())
 		setup_work_tree();
 
@@ -637,6 +657,14 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 	show_files(&dir);
 	if (show_resolve_undo)
 		show_ru_info();
+
+	if (column_active(colopts)) {
+		struct column_options copts;
+		memset(&copts, 0, sizeof(copts));
+		copts.padding = 2;
+		print_columns(&output, colopts, &copts);
+		string_list_clear(&output, 0);
+	}
 
 	if (ps_matched) {
 		int bad;

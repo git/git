@@ -154,6 +154,12 @@ a space) at the start of each line:
 	`--color=never`. `--color` is equivalent to
 	`--color=auto`.
 
+--column[=<options>]::
+--no-column::
+	Display files in columns. See configuration variable column.ui
+	for option syntax. `--column` and `--no-column` without options
+	are equivalent to 'always' and 'never' respectively.
+
 \--::
 	Do not interpret any more arguments as options.
 
