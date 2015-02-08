@@ -50,6 +50,9 @@ OPTIONS
 --recursive::
 	Equivalent of `--max-depth=-1` (infinite recursion).
 
+-1::
+	Equivalent of --no-column.
+
 --color[=<when>]::
 --no-color::
 	Color file names. The value must be `always`, `never`, or
