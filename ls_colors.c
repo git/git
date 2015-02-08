@@ -68,6 +68,14 @@ static const char *const indicator_name[] = {
 	NULL
 };
 
+static const char * const config_name[] = {
+	"", "", "", "", "normal", "file", "directory", "symlink",
+	"fifo", "socket", "block", "char", "missing", "orphan", "executable",
+	"door", "setuid", "setgid", "sticky", "otherwritable",
+	"stickyotherwritable", "cap", "multihardlink", "",
+	NULL
+};
+
 struct bin_str {
 	size_t len;			/* Number of bytes */
 	const char *string;		/* Pointer to the same */
@@ -285,6 +293,23 @@ static int get_funky_string(char **dest, const char **src, int equals_end,
 	return state != ST_ERROR;
 }
 
+static int ls_colors_config(const char *var, const char *value, void *cb)
+{
+	int slot;
+	if (!starts_with(var, "color.ls."))
+		return 0;
+	var += 9;
+	for (slot = 0; config_name[slot]; slot++)
+		if (!strcasecmp(var, config_name[slot]))
+			break;
+	if (!config_name[slot])
+		return 0;
+	if (!value)
+		return config_error_nonbool(var);
+	color_parse(value, ls_colors[slot]);
+	return 0;
+}
+
 void parse_ls_color(void)
 {
 	const char *p;			/* Pointer to character being parsed */
@@ -297,8 +322,10 @@ void parse_ls_color(void)
 	char *start;
 	size_t len;
 
-	if ((p = getenv("LS_COLORS")) == NULL || *p == '\0')
+	if ((p = getenv("LS_COLORS")) == NULL || *p == '\0') {
+		git_config(ls_colors_config, NULL);
 		return;
+	}
 
 	ext = NULL;
 	strcpy(label, "??");
@@ -395,4 +422,5 @@ void parse_ls_color(void)
 
 	if (!strcmp(ls_colors[LS_LN], "target"))
 		color_symlink_as_referent = 1;
+	git_config(ls_colors_config, NULL);
 }
