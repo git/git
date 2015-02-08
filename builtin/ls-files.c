@@ -16,6 +16,9 @@
 #include "pathspec.h"
 #include "color.h"
 #include "column.h"
+#include "diff.h"
+#include "diffcore.h"
+#include "revision.h"
 
 static int abbrev;
 static int show_deleted;
@@ -25,6 +28,7 @@ static int show_stage;
 static int show_unmerged;
 static int show_resolve_undo;
 static int show_modified;
+static int show_diff_cached;
 static int show_killed;
 static int show_valid_bit;
 static int show_tag;
@@ -53,6 +57,7 @@ static const char *tag_removed = "";
 static const char *tag_other = "";
 static const char *tag_killed = "";
 static const char *tag_modified = "";
+static const char *tag_diff_cached = "";
 static const char *tag_skip_worktree = "";
 static const char *tag_resolve_undo = "";
 
@@ -412,7 +417,15 @@ static void show_files(struct dir_struct *dir)
 			err = lstat(ce->name, &st);
 			if (show_deleted && err)
 				show_ce_entry(tag_removed, ce);
-			if (show_modified && ce_modified(ce, &st, 0))
+			if (show_diff_cached && (ce->ce_flags & CE_MATCHED)) {
+				show_ce_entry(tag_diff_cached, ce);
+				/*
+				 * if we don't clear, it'll confuse write_ce_name()
+				 * when show_ce_entry(tag_modified, ce) is called
+				 */
+				active_cache[i]->ce_flags &= ~CE_MATCHED;
+			}
+			if (show_modified && (err || ce_modified(ce, &st, 0)))
 				show_ce_entry(tag_modified, ce);
 		}
 	}
@@ -432,7 +445,8 @@ static void show_files_compact(struct dir_struct *dir)
 		if (show_killed)
 			show_killed_files(dir);
 	}
-	if (!(show_cached || show_unmerged || show_deleted || show_modified))
+	if (!(show_cached || show_unmerged || show_deleted ||
+	      show_modified || show_diff_cached))
 		return;
 	for (i = 0; i < active_nr; i++) {
 		const struct cache_entry *ce = active_cache[i];
@@ -452,6 +466,15 @@ static void show_files_compact(struct dir_struct *dir)
 			show_ce_entry(tag_removed, ce);
 			shown = 1;
 		}
+		if (show_diff_cached && (ce->ce_flags & CE_MATCHED)) {
+			show_ce_entry(tag_diff_cached, ce);
+			shown = 1;
+			/*
+			 * if we don't clear, it'll confuse write_ce_name()
+			 * when show_ce_entry(tag_modified, ce) is called
+			 */
+			active_cache[i]->ce_flags &= ~CE_MATCHED;
+		}
 		if (show_modified && (err || ce_modified(ce, &st, 0))) {
 			show_ce_entry(tag_modified, ce);
 			shown = 1;
@@ -463,6 +486,38 @@ static void show_files_compact(struct dir_struct *dir)
 		if (!shown && show_cached)
 			show_ce_entry(tag_cached, ce);
 	}
+}
+
+static void mark_diff_cached(struct diff_queue_struct *q,
+			     struct diff_options *options,
+			     void *data)
+{
+	int i;
+
+	for (i = 0; i < q->nr; i++) {
+		struct diff_filepair *p = q->queue[i];
+		int pos = cache_name_pos(p->two->path, strlen(p->two->path));
+		if (pos < 0)
+			continue;
+		active_cache[pos]->ce_flags |= CE_MATCHED;
+	}
+}
+
+static void diff_cached(struct pathspec *pathspec)
+{
+	struct rev_info rev;
+	const char *argv[] = { "ls-files", "HEAD", NULL };
+
+	init_revisions(&rev, NULL);
+	setup_revisions(2, argv, &rev, NULL);
+
+	rev.diffopt.output_format |= DIFF_FORMAT_CALLBACK;
+	rev.diffopt.format_callback = mark_diff_cached;
+	rev.diffopt.detect_rename = 1;
+	rev.diffopt.rename_limit = 200;
+	rev.diffopt.break_opt = 0;
+	copy_pathspec(&rev.prune_data, pathspec);
+	run_diff_index(&rev, 1);
 }
 
 /*
@@ -734,6 +789,8 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 			N_("show cached files that are deleted on working directory")),
 		OPT_BOOL('m', "modified", &show_modified,
 			N_("show cached files that have modification on working directory")),
+		OPT_BOOL('M', "modified", &show_diff_cached,
+			N_("show modified files in the cache")),
 		OPT_BOOL('o', "others", &show_others,
 			N_("show untracked files")),
 		OPT_SET_INT('R', "recursive", &max_depth,
@@ -847,11 +904,12 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 
 	/* With no flags, we default to showing the cached files */
 	if (!(show_stage || show_deleted || show_others || show_unmerged ||
-	      show_killed || show_modified || show_resolve_undo))
+	      show_killed || show_modified || show_resolve_undo || show_diff_cached))
 		show_cached = 1;
 
 	if (show_tag == -1)
 		show_tag = (show_cached + show_deleted + show_others +
+			    show_diff_cached +
 			    show_unmerged + show_killed + show_modified) > 1;
 	if (show_tag || show_valid_bit) {
 		tag_cached = porcelain ? "  " : "H ";
@@ -859,6 +917,7 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 		tag_removed = "R ";
 		tag_modified = "C ";
 		tag_other = "? ";
+		tag_diff_cached = "X ";
 		tag_killed = "K ";
 		tag_skip_worktree = "S ";
 		tag_resolve_undo = "U ";
@@ -879,6 +938,8 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 		refresh_index(&the_index, REFRESH_QUIET | REFRESH_UNMERGED, &pathspec, NULL, NULL);
 		setup_pager();
 	}
+	if (show_diff_cached)
+		diff_cached(&pathspec);
 	if (porcelain)
 		show_files_compact(&dir);
 	else
