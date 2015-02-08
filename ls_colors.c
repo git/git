@@ -29,6 +29,8 @@ enum color_ls {
 	LS_MH,			/* multi hardlink */
 	LS_CL,			/* clear end of line */
 
+	LS_SUBMODULE,
+
 	MAX_LS
 };
 
@@ -58,7 +60,8 @@ static char ls_colors[MAX_LS][COLOR_MAXLEN] = {
 	GIT_COLOR_BLACK_ON_GREEN,
 	"",
 	"",
-	""
+	"",
+	GIT_COLOR_BOLD_BLUE
 };
 
 static const char *const indicator_name[] = {
@@ -73,6 +76,7 @@ static const char * const config_name[] = {
 	"fifo", "socket", "block", "char", "missing", "orphan", "executable",
 	"door", "setuid", "setgid", "sticky", "otherwritable",
 	"stickyotherwritable", "cap", "multihardlink", "",
+	"submodule",
 	NULL
 };
 
@@ -450,6 +454,8 @@ void color_filename(struct strbuf *sb, const char *name,
 			type = LS_DI;
 	} else if (S_ISLNK(mode))
 		type = (!linkok && *ls_colors[LS_OR]) ? LS_OR : LS_LN;
+	else if (S_ISGITLINK(mode))
+		type = LS_SUBMODULE;
 	else if (S_ISFIFO(mode))
 		type = LS_PI;
 	else if (S_ISSOCK(mode))
