@@ -31,6 +31,7 @@ static int line_terminator = '\n';
 static int debug_mode;
 static int use_color;
 static unsigned int colopts;
+static int porcelain;
 
 static const char *prefix;
 static int max_prefix_len;
@@ -459,6 +460,11 @@ static const char * const ls_files_usage[] = {
 	NULL
 };
 
+static const char * const ls_usage[] = {
+	N_("git list-files [options] [<file>...]"),
+	NULL
+};
+
 static int option_parse_z(const struct option *opt,
 			  const char *arg, int unset)
 {
@@ -498,6 +504,17 @@ static int option_parse_exclude_standard(const struct option *opt,
 	setup_standard_excludes(dir);
 
 	return 0;
+}
+
+static int git_ls_config(const char *var, const char *value, void *cb)
+{
+	if (starts_with(var, "column."))
+		return git_column_config(var, value, "listfiles", &colopts);
+	if (!strcmp(var, "color.listfiles")) {
+		use_color = git_config_colorbool(var, value);
+		return 0;
+	}
+	return git_color_default_config(var, value, cb);
 }
 
 int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
@@ -568,21 +585,61 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 		OPT_BOOL(0, "debug", &debug_mode, N_("show debugging data")),
 		OPT_END()
 	};
+	struct option builtin_ls_options[] = {
+		OPT_BOOL('c', "cached", &show_cached,
+			N_("show cached files (default)")),
+		OPT_BOOL('d', "deleted", &show_deleted,
+			N_("show cached files that are deleted on working directory")),
+		OPT_BOOL('m', "modified", &show_modified,
+			N_("show cached files that have modification on working directory")),
+		OPT_BOOL('o', "others", &show_others,
+			N_("show untracked files")),
+		OPT_BIT('i', "ignored", &dir.flags,
+			N_("show ignored files"),
+			DIR_SHOW_IGNORED),
+		OPT_BOOL('u', "unmerged", &show_unmerged,
+			N_("show unmerged files")),
+		OPT__COLOR(&use_color, N_("show color")),
+		OPT_COLUMN(0, "column", &colopts, N_("show files in columns")),
+		{ OPTION_INTEGER, 0, "max-depth", &max_depth, N_("depth"),
+			N_("descend at most <depth> levels"), PARSE_OPT_NONEG,
+			NULL, 1 },
+		OPT__ABBREV(&abbrev),
+		OPT_END()
+	};
+	struct option *options;
+	const char * const *help_usage;
 
+	if (!strcmp(argv[0], "list-files")) {
+		help_usage = ls_usage;
+		options = builtin_ls_options;
+		porcelain = 1;
+	} else {
+		help_usage = ls_files_usage;
+		options = builtin_ls_files_options;
+	}
 	if (argc == 2 && !strcmp(argv[1], "-h"))
-		usage_with_options(ls_files_usage, builtin_ls_files_options);
+		usage_with_options(help_usage, options);
 
 	memset(&dir, 0, sizeof(dir));
 	prefix = cmd_prefix;
 	if (prefix)
 		prefix_len = strlen(prefix);
-	git_config(git_default_config, NULL);
+
+	if (porcelain) {
+		setenv(GIT_GLOB_PATHSPECS_ENVIRONMENT, "1", 1);
+		exc_given = 1;
+		setup_standard_excludes(&dir);
+		use_color = -1;
+		max_depth = 0;
+		git_config(git_ls_config, NULL);
+	} else
+		git_config(git_default_config, NULL);
 
 	if (read_cache() < 0)
 		die("index file corrupt");
 
-	argc = parse_options(argc, argv, prefix, builtin_ls_files_options,
-			ls_files_usage, 0);
+	argc = parse_options(argc, argv, prefix, options, help_usage, 0);
 	el = add_exclude_list(&dir, EXC_CMDL, "--exclude option");
 	for (i = 0; i < exclude_list.nr; i++) {
 		add_exclude(exclude_list.items[i].string, "", 0, el, --exclude_args);
@@ -660,6 +717,10 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 		if (show_stage || show_unmerged)
 			die("ls-files --with-tree is incompatible with -s or -u");
 		overlay_tree_on_cache(with_tree, max_prefix);
+	}
+	if (porcelain) {
+		refresh_index(&the_index, REFRESH_QUIET | REFRESH_UNMERGED, &pathspec, NULL, NULL);
+		setup_pager();
 	}
 	show_files(&dir);
 	if (show_resolve_undo)
