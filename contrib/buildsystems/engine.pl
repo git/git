@@ -41,6 +41,7 @@ EOM
 # Parse command-line options
 while (@ARGV) {
     my $arg = shift @ARGV;
+	#print "Arg: $arg \n";
     if ("$arg" eq "-h" || "$arg" eq "--help" || "$arg" eq "-?") {
 	showUsage();
 	exit(0);
@@ -129,6 +130,7 @@ sub parseMakeOutput
     print "Parsing GNU Make output to figure out build structure...\n";
     my $line = 0;
     while (my $text = shift @makedry) {
+		#print "Make: $text\n"; # show the makedry line
         my $ate_next;
         do {
             $ate_next = 0;
@@ -263,6 +265,7 @@ sub handleCompileLine
         } elsif ($part =~ /\.(c|cc|cpp)$/) {
             $sourcefile = $part;
         } else {
+            print "full line: $line\n";
             die "Unhandled compiler option @ line $lineno: $part";
         }
     }
@@ -288,6 +291,7 @@ sub handleLibLine
             $libout = $part;
             $libout =~ s/\.a$//;
         } else {
+            print "full line: $line\n";
             die "Unhandled lib option @ line $lineno: $part";
         }
     }
