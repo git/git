@@ -13,7 +13,7 @@
 #include "sha1-array.h"
 
 static const char send_pack_usage[] =
-"git send-pack [--all | --mirror] [--dry-run] [--force] [--receive-pack=<git-receive-pack>] [--verbose] [--thin] [<host>:]<directory> [<ref>...]\n"
+"git send-pack [--all | --mirror] [--dry-run] [--force] [--receive-pack=<git-receive-pack>] [--verbose] [--thin] [--atomic] [<host>:]<directory> [<ref>...]\n"
 "  --all and explicit <ref> specification are mutually exclusive.";
 
 static struct send_pack_args args;
@@ -168,6 +168,10 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 			}
 			if (!strcmp(arg, "--thin")) {
 				args.use_thin_pack = 1;
+				continue;
+			}
+			if (!strcmp(arg, "--atomic")) {
+				args.atomic = 1;
 				continue;
 			}
 			if (!strcmp(arg, "--stateless-rpc")) {

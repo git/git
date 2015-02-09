@@ -487,6 +487,7 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 	int flags = 0;
 	int tags = 0;
 	int rc;
+	int atomic = 0;
 	const char *repo = NULL;	/* default repository */
 	struct option options[] = {
 		OPT__VERBOSITY(&verbosity),
@@ -518,6 +519,7 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 		OPT_BIT(0, "follow-tags", &flags, N_("push missing but relevant tags"),
 			TRANSPORT_PUSH_FOLLOW_TAGS),
 		OPT_BIT(0, "signed", &flags, N_("GPG sign the push"), TRANSPORT_PUSH_CERT),
+		OPT_BOOL(0, "atomic", &atomic, N_("request atomic transaction on remote side")),
 		OPT_END()
 	};
 
@@ -532,6 +534,9 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 
 	if (tags)
 		add_refspec("refs/tags/*");
+
+	if (atomic)
+		flags |= TRANSPORT_PUSH_ATOMIC;
 
 	if (argc > 0) {
 		repo = argv[0];
