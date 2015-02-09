@@ -1256,6 +1256,10 @@ extern int unpack_object_header(struct packed_git *, struct pack_window **, off_
  *
  * Any callback that is NULL will be ignored. Callbacks returning non-zero
  * will end the iteration.
+ *
+ * In the "buf" variant, "path" is a strbuf which will also be used as a
+ * scratch buffer, but restored to its original contents before
+ * the function returns.
  */
 typedef int each_loose_object_fn(const unsigned char *sha1,
 				 const char *path,
@@ -1271,6 +1275,11 @@ int for_each_loose_file_in_objdir(const char *path,
 				  each_loose_cruft_fn cruft_cb,
 				  each_loose_subdir_fn subdir_cb,
 				  void *data);
+int for_each_loose_file_in_objdir_buf(struct strbuf *path,
+				      each_loose_object_fn obj_cb,
+				      each_loose_cruft_fn cruft_cb,
+				      each_loose_subdir_fn subdir_cb,
+				      void *data);
 
 /*
  * Iterate over loose and packed objects in both the local
