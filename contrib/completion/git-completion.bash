@@ -412,7 +412,7 @@ __git_refs_remotes ()
 __git_remotes ()
 {
 	local i IFS=$'\n' d="$(__gitdir)"
-	test -d "$d/remotes" && ls -1 "$d/remotes"
+	test -d "$d/refs/remotes" && ls -1 "$d/refs/remotes"
 	for i in $(git --git-dir="$d" config --get-regexp 'remote\..*\.url' 2>/dev/null); do
 		i="${i#remote.}"
 		echo "${i/.url*/}"
