@@ -1,15 +1,6 @@
 #ifndef REFS_H
 #define REFS_H
 
-struct ref_lock {
-	char *ref_name;
-	char *orig_ref_name;
-	struct lock_file *lk;
-	unsigned char old_sha1[20];
-	int lock_fd;
-	int force_write;
-};
-
 /*
  * A ref_transaction represents a collection of ref updates
  * that should succeed or fail together.
@@ -189,8 +180,7 @@ extern int is_branch(const char *refname);
 extern int peel_ref(const char *refname, unsigned char *sha1);
 
 /*
- * Flags controlling lock_any_ref_for_update(), ref_transaction_update(),
- * ref_transaction_create(), etc.
+ * Flags controlling ref_transaction_update(), ref_transaction_create(), etc.
  * REF_NODEREF: act on the ref directly, instead of dereferencing
  *              symbolic references.
  * REF_DELETING: tolerate broken refs
@@ -199,21 +189,6 @@ extern int peel_ref(const char *refname, unsigned char *sha1);
  */
 #define REF_NODEREF	0x01
 #define REF_DELETING	0x02
-/*
- * This function sets errno to something meaningful on failure.
- */
-extern struct ref_lock *lock_any_ref_for_update(const char *refname,
-						const unsigned char *old_sha1,
-						int flags, int *type_p);
-
-/** Close the file descriptor owned by a lock and return the status */
-extern int close_ref(struct ref_lock *lock);
-
-/** Close and commit the ref locked by the lock */
-extern int commit_ref(struct ref_lock *lock);
-
-/** Release any lock taken but not written. **/
-extern void unlock_ref(struct ref_lock *lock);
 
 /*
  * Setup reflog before using. Set errno to something meaningful on failure.
@@ -291,7 +266,7 @@ struct ref_transaction *ref_transaction_begin(struct strbuf *err);
 
 /*
  * Add a reference update to transaction.  new_sha1 is the value that
- * the reference should have after the update, or zeros if it should
+ * the reference should have after the update, or null_sha1 if it should
  * be deleted.  If have_old is true, then old_sha1 holds the value
  * that the reference should have had before the update, or zeros if
  * it must not have existed beforehand.
@@ -360,5 +335,51 @@ int update_ref(const char *action, const char *refname,
 
 extern int parse_hide_refs_config(const char *var, const char *value, const char *);
 extern int ref_is_hidden(const char *);
+
+enum expire_reflog_flags {
+	EXPIRE_REFLOGS_DRY_RUN = 1 << 0,
+	EXPIRE_REFLOGS_UPDATE_REF = 1 << 1,
+	EXPIRE_REFLOGS_VERBOSE = 1 << 2,
+	EXPIRE_REFLOGS_REWRITE = 1 << 3
+};
+
+/*
+ * The following interface is used for reflog expiration. The caller
+ * calls reflog_expire(), supplying it with three callback functions,
+ * of the following types. The callback functions define the
+ * expiration policy that is desired.
+ *
+ * reflog_expiry_prepare_fn -- Called once after the reference is
+ *     locked.
+ *
+ * reflog_expiry_should_prune_fn -- Called once for each entry in the
+ *     existing reflog. It should return true iff that entry should be
+ *     pruned.
+ *
+ * reflog_expiry_cleanup_fn -- Called once before the reference is
+ *     unlocked again.
+ */
+typedef void reflog_expiry_prepare_fn(const char *refname,
+				      const unsigned char *sha1,
+				      void *cb_data);
+typedef int reflog_expiry_should_prune_fn(unsigned char *osha1,
+					  unsigned char *nsha1,
+					  const char *email,
+					  unsigned long timestamp, int tz,
+					  const char *message, void *cb_data);
+typedef void reflog_expiry_cleanup_fn(void *cb_data);
+
+/*
+ * Expire reflog entries for the specified reference. sha1 is the old
+ * value of the reference. flags is a combination of the constants in
+ * enum expire_reflog_flags. The three function pointers are described
+ * above. On success, return zero.
+ */
+extern int reflog_expire(const char *refname, const unsigned char *sha1,
+			 unsigned int flags,
+			 reflog_expiry_prepare_fn prepare_fn,
+			 reflog_expiry_should_prune_fn should_prune_fn,
+			 reflog_expiry_cleanup_fn cleanup_fn,
+			 void *policy_cb_data);
 
 #endif /* REFS_H */
