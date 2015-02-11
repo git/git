@@ -2156,7 +2156,7 @@ struct ref *get_stale_heads(struct refspec *refs, int ref_count, struct ref *fet
 /*
  * Compare-and-swap
  */
-void clear_cas_option(struct push_cas_option *cas)
+static void clear_cas_option(struct push_cas_option *cas)
 {
 	int i;
 

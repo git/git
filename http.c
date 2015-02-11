@@ -117,6 +117,37 @@ size_t fwrite_null(char *ptr, size_t eltsize, size_t nmemb, void *strbuf)
 	return eltsize * nmemb;
 }
 
+static void closedown_active_slot(struct active_request_slot *slot)
+{
+	active_requests--;
+	slot->in_use = 0;
+}
+
+static void finish_active_slot(struct active_request_slot *slot)
+{
+	closedown_active_slot(slot);
+	curl_easy_getinfo(slot->curl, CURLINFO_HTTP_CODE, &slot->http_code);
+
+	if (slot->finished != NULL)
+		(*slot->finished) = 1;
+
+	/* Store slot results so they can be read after the slot is reused */
+	if (slot->results != NULL) {
+		slot->results->curl_result = slot->curl_result;
+		slot->results->http_code = slot->http_code;
+#if LIBCURL_VERSION_NUM >= 0x070a08
+		curl_easy_getinfo(slot->curl, CURLINFO_HTTPAUTH_AVAIL,
+				  &slot->results->auth_avail);
+#else
+		slot->results->auth_avail = 0;
+#endif
+	}
+
+	/* Run callback if appropriate */
+	if (slot->callback_func != NULL)
+		slot->callback_func(slot->callback_data);
+}
+
 #ifdef USE_CURL_MULTI
 static void process_curl_messages(void)
 {
@@ -736,12 +767,6 @@ void run_active_slot(struct active_request_slot *slot)
 #endif
 }
 
-static void closedown_active_slot(struct active_request_slot *slot)
-{
-	active_requests--;
-	slot->in_use = 0;
-}
-
 static void release_active_slot(struct active_request_slot *slot)
 {
 	closedown_active_slot(slot);
@@ -756,31 +781,6 @@ static void release_active_slot(struct active_request_slot *slot)
 #ifdef USE_CURL_MULTI
 	fill_active_slots();
 #endif
-}
-
-void finish_active_slot(struct active_request_slot *slot)
-{
-	closedown_active_slot(slot);
-	curl_easy_getinfo(slot->curl, CURLINFO_HTTP_CODE, &slot->http_code);
-
-	if (slot->finished != NULL)
-		(*slot->finished) = 1;
-
-	/* Store slot results so they can be read after the slot is reused */
-	if (slot->results != NULL) {
-		slot->results->curl_result = slot->curl_result;
-		slot->results->http_code = slot->http_code;
-#if LIBCURL_VERSION_NUM >= 0x070a08
-		curl_easy_getinfo(slot->curl, CURLINFO_HTTPAUTH_AVAIL,
-				  &slot->results->auth_avail);
-#else
-		slot->results->auth_avail = 0;
-#endif
-	}
-
-	/* Run callback if appropriate */
-	if (slot->callback_func != NULL)
-		slot->callback_func(slot->callback_data);
 }
 
 void finish_all_active_slots(void)
@@ -845,7 +845,7 @@ char *get_remote_object_url(const char *url, const char *hex,
 	return strbuf_detach(&buf, NULL);
 }
 
-int handle_curl_result(struct slot_results *results)
+static int handle_curl_result(struct slot_results *results)
 {
 	/*
 	 * If we see a failing http code with CURLE_OK, we have turned off

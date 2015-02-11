@@ -237,7 +237,7 @@ static void diff_ranges_release(struct diff_ranges *diff)
 	range_set_release(&diff->target);
 }
 
-void line_log_data_init(struct line_log_data *r)
+static void line_log_data_init(struct line_log_data *r)
 {
 	memset(r, 0, sizeof(struct line_log_data));
 	range_set_init(&r->ranges, 0);
