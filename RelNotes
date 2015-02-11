@@ -1,1 +1,64 @@
-Documentation/RelNotes/2.3.0.txt
+Git ???? Release Notes
+======================
+
+Updates since v2.3
+------------------
+
+Ports
+
+
+UI, Workflows & Features
+
+ * The command usage info strings given by "git cmd -h" and in
+   documentation have been tweaked for consistency.
+
+ * The "sync" subcommand of "git p4" now allows users to exclude
+   subdirectories like its "clone" subcommand does.
+
+ * "git log --invert-grep --grep=WIP" will show only commits that do
+   not have the string "WIP" in their messages.
+
+ * "git push" has been taught a "--atomic" option that makes push to
+   update more than one ref an "all-or-none" affair.
+
+ * Extending the "push to deploy" added in 2.3, the behaviour of "git
+   push" when updating the branch that is checked out can now be
+   tweaked by push-to-checkout hook.
+
+
+Performance, Internal Implementation, Development Support etc.
+
+ * Implementation of N_() macro has been updated slightly to help us
+   detect mistakes.
+
+ * Implementation of "reflog expire" has been restructured to fit the
+   reflogs better with the recently updated ref API.
+
+
+Also contains various documentation updates and code clean-ups.
+
+
+Fixes since v2.3
+----------------
+
+Unless otherwise noted, all the fixes since v2.3 in the maintenance
+track are contained in this release (see the maintenance releases'
+notes for details).
+
+ * "git blame HEAD -- missing" failed to correctly say "HEAD" when it
+   tried to say "No such path 'missing' in HEAD".
+   (merge a46442f jk/blame-commit-label later to maint).
+
+ * "git rerere" (invoked internally from many mergy operations) did
+   not correctly signal errors when told to update the working tree
+   files and failed to do so for whatever reason.
+   (merge 89ea903 jn/rerere-fail-on-auto-update-failure later to maint).
+
+ * Setting diff.submodule to 'log' made "git format-patch" produce
+   broken patches.
+   (merge 339de50 dk/format-patch-ignore-diff-submodule later to maint).
+
+ * After attempting and failing a password-less authentication
+   (e.g. kerberos), libcURL refuses to fall back to password based
+   Basic authentication without a bit of help/encouragement.
+   (merge 4dbe664 bc/http-fallback-to-password-after-krb-fails later to maint).
