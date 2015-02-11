@@ -70,10 +70,17 @@ tag and the '$branch' branch that the tag points at:
 
 EOF
 
-RelNotes=$(git cat-file blob "${branch}:RelNotes") &&
+case "$(git ls-tree ${branch} RelNotes)" in
+120000' '*)
+	RelNotes=$(git cat-file blob "${branch}:RelNotes")
+	;;
+*)
+	RelNotes=RelNotes
+	;;
+esac &&
 git cat-file blob "${branch}:$RelNotes" |
 case "$relname" in
-*-rc[0-9]*)
+*-*)
 	sed -e 's/^Git .* Release Notes$/& (draft)/' \
 	    -e 's/^=============/&========/'
 	;;
