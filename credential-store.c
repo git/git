@@ -118,7 +118,7 @@ static int lookup_credential(const char *fn, struct credential *c)
 int main(int argc, char **argv)
 {
 	const char * const usage[] = {
-		"git credential-store [options] <action>",
+		"git credential-store [<options>] <action>",
 		NULL
 	};
 	const char *op;

@@ -400,7 +400,7 @@ static void read_index_info(int line_termination)
 }
 
 static const char * const update_index_usage[] = {
-	N_("git update-index [options] [--] [<file>...]"),
+	N_("git update-index [<options>] [--] [<file>...]"),
 	NULL
 };
 

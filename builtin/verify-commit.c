@@ -14,7 +14,7 @@
 #include "gpg-interface.h"
 
 static const char * const verify_commit_usage[] = {
-		N_("git verify-commit [-v|--verbose] <commit>..."),
+		N_("git verify-commit [-v | --verbose] <commit>..."),
 		NULL
 };
 

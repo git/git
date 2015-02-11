@@ -5,7 +5,7 @@
 
 static int use_stdin;
 static const char * const check_mailmap_usage[] = {
-N_("git check-mailmap [options] <contact>..."),
+N_("git check-mailmap [<options>] <contact>..."),
 NULL
 };
 

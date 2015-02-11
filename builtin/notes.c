@@ -21,18 +21,18 @@
 #include "notes-utils.h"
 
 static const char * const git_notes_usage[] = {
-	N_("git notes [--ref <notes_ref>] [list [<object>]]"),
-	N_("git notes [--ref <notes_ref>] add [-f] [--allow-empty] [-m <msg> | -F <file> | (-c | -C) <object>] [<object>]"),
-	N_("git notes [--ref <notes_ref>] copy [-f] <from-object> <to-object>"),
-	N_("git notes [--ref <notes_ref>] append [--allow-empty] [-m <msg> | -F <file> | (-c | -C) <object>] [<object>]"),
-	N_("git notes [--ref <notes_ref>] edit [--allow-empty] [<object>]"),
-	N_("git notes [--ref <notes_ref>] show [<object>]"),
-	N_("git notes [--ref <notes_ref>] merge [-v | -q] [-s <strategy> ] <notes_ref>"),
+	N_("git notes [--ref <notes-ref>] [list [<object>]]"),
+	N_("git notes [--ref <notes-ref>] add [-f] [--allow-empty] [-m <msg> | -F <file> | (-c | -C) <object>] [<object>]"),
+	N_("git notes [--ref <notes-ref>] copy [-f] <from-object> <to-object>"),
+	N_("git notes [--ref <notes-ref>] append [--allow-empty] [-m <msg> | -F <file> | (-c | -C) <object>] [<object>]"),
+	N_("git notes [--ref <notes-ref>] edit [--allow-empty] [<object>]"),
+	N_("git notes [--ref <notes-ref>] show [<object>]"),
+	N_("git notes [--ref <notes-ref>] merge [-v | -q] [-s <strategy>] <notes-ref>"),
 	N_("git notes merge --commit [-v | -q]"),
 	N_("git notes merge --abort [-v | -q]"),
-	N_("git notes [--ref <notes_ref>] remove [<object>...]"),
-	N_("git notes [--ref <notes_ref>] prune [-n | -v]"),
-	N_("git notes [--ref <notes_ref>] get-ref"),
+	N_("git notes [--ref <notes-ref>] remove [<object>...]"),
+	N_("git notes [--ref <notes-ref>] prune [-n | -v]"),
+	N_("git notes [--ref <notes-ref>] get-ref"),
 	NULL
 };
 
@@ -68,7 +68,7 @@ static const char * const git_notes_show_usage[] = {
 };
 
 static const char * const git_notes_merge_usage[] = {
-	N_("git notes merge [<options>] <notes_ref>"),
+	N_("git notes merge [<options>] <notes-ref>"),
 	N_("git notes merge --commit [<options>]"),
 	N_("git notes merge --abort [<options>]"),
 	NULL
@@ -951,7 +951,7 @@ int cmd_notes(int argc, const char **argv, const char *prefix)
 	const char *override_notes_ref = NULL;
 	struct option options[] = {
 		OPT_STRING(0, "ref", &override_notes_ref, N_("notes-ref"),
-			   N_("use notes from <notes_ref>")),
+			   N_("use notes from <notes-ref>")),
 		OPT_END()
 	};
 

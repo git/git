@@ -55,7 +55,7 @@ static const char *fake_ancestor;
 static int line_termination = '\n';
 static unsigned int p_context = UINT_MAX;
 static const char * const apply_usage[] = {
-	N_("git apply [options] [<patch>...]"),
+	N_("git apply [<options>] [<patch>...]"),
 	NULL
 };
 

@@ -14,8 +14,8 @@
 #define MAX_TAGS	(FLAG_BITS - 1)
 
 static const char * const describe_usage[] = {
-	N_("git describe [options] <commit-ish>*"),
-	N_("git describe [options] --dirty"),
+	N_("git describe [<options>] [<commit-ish>...]"),
+	N_("git describe [<options>] --dirty"),
 	NULL
 };
 

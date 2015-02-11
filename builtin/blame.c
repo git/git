@@ -27,12 +27,12 @@
 #include "line-range.h"
 #include "line-log.h"
 
-static char blame_usage[] = N_("git blame [options] [rev-opts] [rev] [--] file");
+static char blame_usage[] = N_("git blame [<options>] [<rev-opts>] [<rev>] [--] file");
 
 static const char *blame_opt_usage[] = {
 	blame_usage,
 	"",
-	N_("[rev-opts] are documented in git-rev-list(1)"),
+	N_("<rev-opts> are documented in git-rev-list(1)"),
 	NULL
 };
 

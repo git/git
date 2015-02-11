@@ -14,7 +14,7 @@ static int write_bitmaps;
 static char *packdir, *packtmp;
 
 static const char *const git_repack_usage[] = {
-	N_("git repack [options]"),
+	N_("git repack [<options>]"),
 	NULL
 };
 

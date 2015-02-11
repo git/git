@@ -14,7 +14,7 @@
 #include "pathspec.h"
 
 static const char * const builtin_rm_usage[] = {
-	N_("git rm [options] [--] <file>..."),
+	N_("git rm [<options>] [--] <file>..."),
 	NULL
 };
 
