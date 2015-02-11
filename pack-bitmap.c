@@ -60,7 +60,7 @@ static struct bitmap_index {
 	struct ewah_bitmap *blobs;
 	struct ewah_bitmap *tags;
 
-	/* Map from SHA1 -> `stored_bitmap` for all the bitmapped comits */
+	/* Map from SHA1 -> `stored_bitmap` for all the bitmapped commits */
 	khash_sha1 *bitmaps;
 
 	/* Number of bitmapped commits */
