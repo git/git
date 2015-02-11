@@ -328,9 +328,14 @@ For C programs:
 
  - When you come up with an API, document it.
 
- - The first #include in C files, except in platform specific
-   compat/ implementations, should be git-compat-util.h or another
-   header file that includes it, such as cache.h or builtin.h.
+ - The first #include in C files, except in platform specific compat/
+   implementations, must be either "git-compat-util.h", "cache.h" or
+   "builtin.h".  You do not have to include more than one of these.
+
+ - A C file must directly include the header files that declare the
+   functions and the types it uses, except for the functions and types
+   that are made available to it by including one of the header files
+   it must include by the previous rule.
 
  - If you are planning a new command, consider writing it in shell
    or perl first, so that changes in semantics can be easily
