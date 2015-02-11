@@ -22,18 +22,13 @@ static unsigned long default_reflog_expire_unreachable;
 
 struct cmd_reflog_expire_cb {
 	struct rev_info revs;
-	int dry_run;
 	int stalefix;
-	int rewrite;
-	int updateref;
-	int verbose;
 	unsigned long expire_total;
 	unsigned long expire_unreachable;
 	int recno;
 };
 
-struct expire_reflog_cb {
-	FILE *newlog;
+struct expire_reflog_policy_cb {
 	enum {
 		UE_NORMAL,
 		UE_ALWAYS,
@@ -41,14 +36,16 @@ struct expire_reflog_cb {
 	} unreachable_expire_kind;
 	struct commit_list *mark_list;
 	unsigned long mark_limit;
-	struct cmd_reflog_expire_cb *cmd;
-	unsigned char last_kept_sha1[20];
+	struct cmd_reflog_expire_cb cmd;
+	struct commit *tip_commit;
+	struct commit_list *tips;
 };
 
 struct collected_reflog {
 	unsigned char sha1[20];
 	char reflog[FLEX_ARRAY];
 };
+
 struct collect_reflog_cb {
 	struct collected_reflog **e;
 	int alloc;
@@ -220,7 +217,7 @@ static int keep_entry(struct commit **it, unsigned char *sha1)
  * the expire_limit and queue them back, so that the caller can call
  * us again to restart the traversal with longer expire_limit.
  */
-static void mark_reachable(struct expire_reflog_cb *cb)
+static void mark_reachable(struct expire_reflog_policy_cb *cb)
 {
 	struct commit *commit;
 	struct commit_list *pending;
@@ -259,7 +256,7 @@ static void mark_reachable(struct expire_reflog_cb *cb)
 	cb->mark_list = leftover;
 }
 
-static int unreachable(struct expire_reflog_cb *cb, struct commit *commit, unsigned char *sha1)
+static int unreachable(struct expire_reflog_policy_cb *cb, struct commit *commit, unsigned char *sha1)
 {
 	/*
 	 * We may or may not have the commit yet - if not, look it
@@ -288,55 +285,39 @@ static int unreachable(struct expire_reflog_cb *cb, struct commit *commit, unsig
 	return !(commit->object.flags & REACHABLE);
 }
 
-static int expire_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
-		const char *email, unsigned long timestamp, int tz,
-		const char *message, void *cb_data)
+/*
+ * Return true iff the specified reflog entry should be expired.
+ */
+static int should_expire_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
+				    const char *email, unsigned long timestamp, int tz,
+				    const char *message, void *cb_data)
 {
-	struct expire_reflog_cb *cb = cb_data;
+	struct expire_reflog_policy_cb *cb = cb_data;
 	struct commit *old, *new;
 
-	if (timestamp < cb->cmd->expire_total)
-		goto prune;
-
-	if (cb->cmd->rewrite)
-		osha1 = cb->last_kept_sha1;
+	if (timestamp < cb->cmd.expire_total)
+		return 1;
 
 	old = new = NULL;
-	if (cb->cmd->stalefix &&
+	if (cb->cmd.stalefix &&
 	    (!keep_entry(&old, osha1) || !keep_entry(&new, nsha1)))
-		goto prune;
+		return 1;
 
-	if (timestamp < cb->cmd->expire_unreachable) {
+	if (timestamp < cb->cmd.expire_unreachable) {
 		if (cb->unreachable_expire_kind == UE_ALWAYS)
-			goto prune;
+			return 1;
 		if (unreachable(cb, old, osha1) || unreachable(cb, new, nsha1))
-			goto prune;
+			return 1;
 	}
 
-	if (cb->cmd->recno && --(cb->cmd->recno) == 0)
-		goto prune;
+	if (cb->cmd.recno && --(cb->cmd.recno) == 0)
+		return 1;
 
-	if (cb->newlog) {
-		char sign = (tz < 0) ? '-' : '+';
-		int zone = (tz < 0) ? (-tz) : tz;
-		fprintf(cb->newlog, "%s %s %s %lu %c%04d\t%s",
-			sha1_to_hex(osha1), sha1_to_hex(nsha1),
-			email, timestamp, sign, zone,
-			message);
-		hashcpy(cb->last_kept_sha1, nsha1);
-	}
-	if (cb->cmd->verbose)
-		printf("keep %s", message);
-	return 0;
- prune:
-	if (!cb->newlog)
-		printf("would prune %s", message);
-	else if (cb->cmd->verbose)
-		printf("prune %s", message);
 	return 0;
 }
 
-static int push_tip_to_list(const char *refname, const unsigned char *sha1, int flags, void *cb_data)
+static int push_tip_to_list(const char *refname, const unsigned char *sha1,
+			    int flags, void *cb_data)
 {
 	struct commit_list **list = cb_data;
 	struct commit *tip_commit;
@@ -349,104 +330,56 @@ static int push_tip_to_list(const char *refname, const unsigned char *sha1, int 
 	return 0;
 }
 
-static int expire_reflog(const char *ref, const unsigned char *sha1, int unused, void *cb_data)
+static void reflog_expiry_prepare(const char *refname,
+				  const unsigned char *sha1,
+				  void *cb_data)
 {
-	struct cmd_reflog_expire_cb *cmd = cb_data;
-	struct expire_reflog_cb cb;
-	struct ref_lock *lock;
-	char *log_file, *newlog_path = NULL;
-	struct commit *tip_commit;
-	struct commit_list *tips;
-	int status = 0;
+	struct expire_reflog_policy_cb *cb = cb_data;
 
-	memset(&cb, 0, sizeof(cb));
-
-	/*
-	 * we take the lock for the ref itself to prevent it from
-	 * getting updated.
-	 */
-	lock = lock_any_ref_for_update(ref, sha1, 0, NULL);
-	if (!lock)
-		return error("cannot lock ref '%s'", ref);
-	log_file = git_pathdup("logs/%s", ref);
-	if (!reflog_exists(ref))
-		goto finish;
-	if (!cmd->dry_run) {
-		newlog_path = git_pathdup("logs/%s.lock", ref);
-		cb.newlog = fopen(newlog_path, "w");
-	}
-
-	cb.cmd = cmd;
-
-	if (!cmd->expire_unreachable || !strcmp(ref, "HEAD")) {
-		tip_commit = NULL;
-		cb.unreachable_expire_kind = UE_HEAD;
+	if (!cb->cmd.expire_unreachable || !strcmp(refname, "HEAD")) {
+		cb->tip_commit = NULL;
+		cb->unreachable_expire_kind = UE_HEAD;
 	} else {
-		tip_commit = lookup_commit_reference_gently(sha1, 1);
-		if (!tip_commit)
-			cb.unreachable_expire_kind = UE_ALWAYS;
+		cb->tip_commit = lookup_commit_reference_gently(sha1, 1);
+		if (!cb->tip_commit)
+			cb->unreachable_expire_kind = UE_ALWAYS;
 		else
-			cb.unreachable_expire_kind = UE_NORMAL;
+			cb->unreachable_expire_kind = UE_NORMAL;
 	}
 
-	if (cmd->expire_unreachable <= cmd->expire_total)
-		cb.unreachable_expire_kind = UE_ALWAYS;
+	if (cb->cmd.expire_unreachable <= cb->cmd.expire_total)
+		cb->unreachable_expire_kind = UE_ALWAYS;
 
-	cb.mark_list = NULL;
-	tips = NULL;
-	if (cb.unreachable_expire_kind != UE_ALWAYS) {
-		if (cb.unreachable_expire_kind == UE_HEAD) {
+	cb->mark_list = NULL;
+	cb->tips = NULL;
+	if (cb->unreachable_expire_kind != UE_ALWAYS) {
+		if (cb->unreachable_expire_kind == UE_HEAD) {
 			struct commit_list *elem;
-			for_each_ref(push_tip_to_list, &tips);
-			for (elem = tips; elem; elem = elem->next)
-				commit_list_insert(elem->item, &cb.mark_list);
+			for_each_ref(push_tip_to_list, &cb->tips);
+			for (elem = cb->tips; elem; elem = elem->next)
+				commit_list_insert(elem->item, &cb->mark_list);
 		} else {
-			commit_list_insert(tip_commit, &cb.mark_list);
+			commit_list_insert(cb->tip_commit, &cb->mark_list);
 		}
-		cb.mark_limit = cmd->expire_total;
-		mark_reachable(&cb);
+		cb->mark_limit = cb->cmd.expire_total;
+		mark_reachable(cb);
 	}
+}
 
-	for_each_reflog_ent(ref, expire_reflog_ent, &cb);
+static void reflog_expiry_cleanup(void *cb_data)
+{
+	struct expire_reflog_policy_cb *cb = cb_data;
 
-	if (cb.unreachable_expire_kind != UE_ALWAYS) {
-		if (cb.unreachable_expire_kind == UE_HEAD) {
+	if (cb->unreachable_expire_kind != UE_ALWAYS) {
+		if (cb->unreachable_expire_kind == UE_HEAD) {
 			struct commit_list *elem;
-			for (elem = tips; elem; elem = elem->next)
+			for (elem = cb->tips; elem; elem = elem->next)
 				clear_commit_marks(elem->item, REACHABLE);
-			free_commit_list(tips);
+			free_commit_list(cb->tips);
 		} else {
-			clear_commit_marks(tip_commit, REACHABLE);
+			clear_commit_marks(cb->tip_commit, REACHABLE);
 		}
 	}
- finish:
-	if (cb.newlog) {
-		if (fclose(cb.newlog)) {
-			status |= error("%s: %s", strerror(errno),
-					newlog_path);
-			unlink(newlog_path);
-		} else if (cmd->updateref &&
-			(write_in_full(lock->lock_fd,
-				sha1_to_hex(cb.last_kept_sha1), 40) != 40 ||
-			 write_str_in_full(lock->lock_fd, "\n") != 1 ||
-			 close_ref(lock) < 0)) {
-			status |= error("Couldn't write %s",
-					lock->lk->filename.buf);
-			unlink(newlog_path);
-		} else if (rename(newlog_path, log_file)) {
-			status |= error("cannot rename %s to %s",
-					newlog_path, log_file);
-			unlink(newlog_path);
-		} else if (cmd->updateref && commit_ref(lock)) {
-			status |= error("Couldn't set %s", lock->ref_name);
-		} else {
-			adjust_shared_perm(log_file);
-		}
-	}
-	free(newlog_path);
-	free(log_file);
-	unlock_ref(lock);
-	return status;
 }
 
 static int collect_reflog(const char *ref, const unsigned char *sha1, int unused, void *cb_data)
@@ -590,10 +523,11 @@ static void set_reflog_expiry_param(struct cmd_reflog_expire_cb *cb, int slot, c
 
 static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 {
-	struct cmd_reflog_expire_cb cb;
+	struct expire_reflog_policy_cb cb;
 	unsigned long now = time(NULL);
 	int i, status, do_all;
 	int explicit_expiry = 0;
+	unsigned int flags = 0;
 
 	default_reflog_expire_unreachable = now - 30 * 24 * 3600;
 	default_reflog_expire = now - 90 * 24 * 3600;
@@ -603,33 +537,33 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 	do_all = status = 0;
 	memset(&cb, 0, sizeof(cb));
 
-	cb.expire_total = default_reflog_expire;
-	cb.expire_unreachable = default_reflog_expire_unreachable;
+	cb.cmd.expire_total = default_reflog_expire;
+	cb.cmd.expire_unreachable = default_reflog_expire_unreachable;
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 		if (!strcmp(arg, "--dry-run") || !strcmp(arg, "-n"))
-			cb.dry_run = 1;
+			flags |= EXPIRE_REFLOGS_DRY_RUN;
 		else if (starts_with(arg, "--expire=")) {
-			if (parse_expiry_date(arg + 9, &cb.expire_total))
+			if (parse_expiry_date(arg + 9, &cb.cmd.expire_total))
 				die(_("'%s' is not a valid timestamp"), arg);
 			explicit_expiry |= EXPIRE_TOTAL;
 		}
 		else if (starts_with(arg, "--expire-unreachable=")) {
-			if (parse_expiry_date(arg + 21, &cb.expire_unreachable))
+			if (parse_expiry_date(arg + 21, &cb.cmd.expire_unreachable))
 				die(_("'%s' is not a valid timestamp"), arg);
 			explicit_expiry |= EXPIRE_UNREACH;
 		}
 		else if (!strcmp(arg, "--stale-fix"))
-			cb.stalefix = 1;
+			cb.cmd.stalefix = 1;
 		else if (!strcmp(arg, "--rewrite"))
-			cb.rewrite = 1;
+			flags |= EXPIRE_REFLOGS_REWRITE;
 		else if (!strcmp(arg, "--updateref"))
-			cb.updateref = 1;
+			flags |= EXPIRE_REFLOGS_UPDATE_REF;
 		else if (!strcmp(arg, "--all"))
 			do_all = 1;
 		else if (!strcmp(arg, "--verbose"))
-			cb.verbose = 1;
+			flags |= EXPIRE_REFLOGS_VERBOSE;
 		else if (!strcmp(arg, "--")) {
 			i++;
 			break;
@@ -645,12 +579,12 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 	 * even in older repository.  We cannot trust what's reachable
 	 * from reflog if the repository was pruned with older git.
 	 */
-	if (cb.stalefix) {
-		init_revisions(&cb.revs, prefix);
-		if (cb.verbose)
+	if (cb.cmd.stalefix) {
+		init_revisions(&cb.cmd.revs, prefix);
+		if (flags & EXPIRE_REFLOGS_VERBOSE)
 			printf("Marking reachable objects...");
-		mark_reachable_objects(&cb.revs, 0, 0, NULL);
-		if (cb.verbose)
+		mark_reachable_objects(&cb.cmd.revs, 0, 0, NULL);
+		if (flags & EXPIRE_REFLOGS_VERBOSE)
 			putchar('\n');
 	}
 
@@ -662,8 +596,12 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 		for_each_reflog(collect_reflog, &collected);
 		for (i = 0; i < collected.nr; i++) {
 			struct collected_reflog *e = collected.e[i];
-			set_reflog_expiry_param(&cb, explicit_expiry, e->reflog);
-			status |= expire_reflog(e->reflog, e->sha1, 0, &cb);
+			set_reflog_expiry_param(&cb.cmd, explicit_expiry, e->reflog);
+			status |= reflog_expire(e->reflog, e->sha1, flags,
+						reflog_expiry_prepare,
+						should_expire_reflog_ent,
+						reflog_expiry_cleanup,
+						&cb);
 			free(e);
 		}
 		free(collected.e);
@@ -676,8 +614,12 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 			status |= error("%s points nowhere!", argv[i]);
 			continue;
 		}
-		set_reflog_expiry_param(&cb, explicit_expiry, ref);
-		status |= expire_reflog(ref, sha1, 0, &cb);
+		set_reflog_expiry_param(&cb.cmd, explicit_expiry, ref);
+		status |= reflog_expire(ref, sha1, flags,
+					reflog_expiry_prepare,
+					should_expire_reflog_ent,
+					reflog_expiry_cleanup,
+					&cb);
 	}
 	return status;
 }
@@ -686,29 +628,30 @@ static int count_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
 		const char *email, unsigned long timestamp, int tz,
 		const char *message, void *cb_data)
 {
-	struct cmd_reflog_expire_cb *cb = cb_data;
-	if (!cb->expire_total || timestamp < cb->expire_total)
-		cb->recno++;
+	struct expire_reflog_policy_cb *cb = cb_data;
+	if (!cb->cmd.expire_total || timestamp < cb->cmd.expire_total)
+		cb->cmd.recno++;
 	return 0;
 }
 
 static int cmd_reflog_delete(int argc, const char **argv, const char *prefix)
 {
-	struct cmd_reflog_expire_cb cb;
+	struct expire_reflog_policy_cb cb;
 	int i, status = 0;
+	unsigned int flags = 0;
 
 	memset(&cb, 0, sizeof(cb));
 
 	for (i = 1; i < argc; i++) {
 		const char *arg = argv[i];
 		if (!strcmp(arg, "--dry-run") || !strcmp(arg, "-n"))
-			cb.dry_run = 1;
+			flags |= EXPIRE_REFLOGS_DRY_RUN;
 		else if (!strcmp(arg, "--rewrite"))
-			cb.rewrite = 1;
+			flags |= EXPIRE_REFLOGS_REWRITE;
 		else if (!strcmp(arg, "--updateref"))
-			cb.updateref = 1;
+			flags |= EXPIRE_REFLOGS_UPDATE_REF;
 		else if (!strcmp(arg, "--verbose"))
-			cb.verbose = 1;
+			flags |= EXPIRE_REFLOGS_VERBOSE;
 		else if (!strcmp(arg, "--")) {
 			i++;
 			break;
@@ -740,15 +683,19 @@ static int cmd_reflog_delete(int argc, const char **argv, const char *prefix)
 
 		recno = strtoul(spec + 2, &ep, 10);
 		if (*ep == '}') {
-			cb.recno = -recno;
+			cb.cmd.recno = -recno;
 			for_each_reflog_ent(ref, count_reflog_ent, &cb);
 		} else {
-			cb.expire_total = approxidate(spec + 2);
+			cb.cmd.expire_total = approxidate(spec + 2);
 			for_each_reflog_ent(ref, count_reflog_ent, &cb);
-			cb.expire_total = 0;
+			cb.cmd.expire_total = 0;
 		}
 
-		status |= expire_reflog(ref, sha1, 0, &cb);
+		status |= reflog_expire(ref, sha1, flags,
+					reflog_expiry_prepare,
+					should_expire_reflog_ent,
+					reflog_expiry_cleanup,
+					&cb);
 		free(ref);
 	}
 	return status;
