@@ -1442,7 +1442,7 @@ class P4Submit(Command, P4UserMap):
             print "  " + self.clientPath
             print
             print "To submit, use \"p4 submit\" to write a new description,"
-            print "or \"p4 submit -i %s\" to use the one prepared by" \
+            print "or \"p4 submit -i <%s\" to use the one prepared by" \
                   " \"git p4\"." % fileName
             print "You can delete the file \"%s\" when finished." % fileName
 
