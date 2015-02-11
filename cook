@@ -768,7 +768,7 @@ sub havedone {
 	my ($topic, $to_maint, %to_maint, %merged, $in_desc);
 	if (!@ARGV) {
 		open($fh, '-|',
-		     qw(git rev-list --first-parent -1 master Documentation/RelNotes))
+		     qw(git rev-list --first-parent -1 master Documentation/RelNotes RelNotes))
 		    or die "$!: open rev-list";
 		my ($rev) = <$fh>;
 		close($fh) or die "$!: close rev-list";
