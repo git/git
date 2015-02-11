@@ -678,6 +678,11 @@ extern char *xgetcwd(void);
 
 #define REALLOC_ARRAY(x, alloc) (x) = xrealloc((x), (alloc) * sizeof(*(x)))
 
+static inline char *xstrdup_or_null(const char *str)
+{
+	return str ? xstrdup(str) : NULL;
+}
+
 static inline size_t xsize_t(off_t len)
 {
 	if (len > (size_t) len)

@@ -559,20 +559,14 @@ static void set_ident_var(char **buf, char *val)
 	*buf = val;
 }
 
-static char *envdup(const char *var)
-{
-	const char *val = getenv(var);
-	return val ? xstrdup(val) : NULL;
-}
-
 static void determine_author_info(struct strbuf *author_ident)
 {
 	char *name, *email, *date;
 	struct ident_split author;
 
-	name = envdup("GIT_AUTHOR_NAME");
-	email = envdup("GIT_AUTHOR_EMAIL");
-	date = envdup("GIT_AUTHOR_DATE");
+	name = xstrdup_or_null(getenv("GIT_AUTHOR_NAME"));
+	email = xstrdup_or_null(getenv("GIT_AUTHOR_EMAIL"));
+	date = xstrdup_or_null(getenv("GIT_AUTHOR_DATE"));
 
 	if (author_message) {
 		struct ident_split ident;

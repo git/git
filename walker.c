@@ -232,7 +232,7 @@ int walker_targets_stdin(char ***target, const char ***write_ref)
 			REALLOC_ARRAY(*write_ref, targets_alloc);
 		}
 		(*target)[targets] = xstrdup(tg_one);
-		(*write_ref)[targets] = rf_one ? xstrdup(rf_one) : NULL;
+		(*write_ref)[targets] = xstrdup_or_null(rf_one);
 		targets++;
 	}
 	strbuf_release(&buf);
