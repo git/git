@@ -1,18 +1,19 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Feb 2015, #02; Thu, 5)
-X-master-at: 9874fca7122563e28d699a911404fc49d2a24f1c
-X-next-at: 4a23b1ac164e66f150700c4fdd659c98940bd4a5
+Subject: What's cooking in git.git (Feb 2015, #03; Wed, 11)
+X-master-at: 18d0fec24027ac226dc2c4df2b955eef2a16462a
+X-next-at: f4dfab7ad497860623d9e20dfd5586a410cf6ec6
 
-What's cooking in git.git (Feb 2015, #02; Thu, 5)
+What's cooking in git.git (Feb 2015, #03; Wed, 11)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-Git 2.3 is out.  I'll wait for some time for the dust to settle and
-then rewind and rebuild 'next'.
+Git 2.3 is out, and the first batch of topics that have been cooking
+in the 'next' branch are now in the 'master' branch.  The 'next'
+branch will be rewound shortly but not yet.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -20,39 +21,273 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
+[Graduated to "master"]
+
+* ah/usage-strings (2015-01-14) 1 commit
+  (merged to 'next' on 2015-01-22 at bfa5bab)
+ + standardize usage info string format
+
+
+* ak/typofixes (2015-01-21) 2 commits
+  (merged to 'next' on 2015-01-22 at e36f25a)
+ + t/lib-terminal.sh: fix typo
+ + pack-bitmap: fix typo
+
+
+* bc/http-fallback-to-password-after-krb-fails (2015-01-07) 1 commit
+  (merged to 'next' on 2015-01-12 at 4c67038)
+ + remote-curl: fall back to Basic auth if Negotiate fails
+
+ After attempting and failing a password-less authentication
+ (e.g. kerberos), libcURL refuses to fall back to password based
+ Basic authentication without a bit of help/encouragement.
+
+
+* cj/log-invert-grep (2015-01-13) 1 commit
+  (merged to 'next' on 2015-01-13 at c908e99)
+ + log: teach --invert-grep option
+
+
+* dk/format-patch-ignore-diff-submodule (2015-01-07) 2 commits
+  (merged to 'next' on 2015-01-12 at 6b4605b)
+ + format-patch: ignore diff.submodule setting
+ + t4255: test am submodule with diff.submodule
+
+ Setting diff.submodule to 'log' made "git format-patch" produce
+ broken patches.
+
+
+* jc/coding-guidelines (2015-01-15) 1 commit
+  (merged to 'next' on 2015-01-22 at 3c96639)
+ + CodingGuidelines: clarify C #include rules
+
+
+* jc/pretty-format-doc (2015-01-15) 1 commit
+  (merged to 'next' on 2015-01-22 at 2a81ecc)
+ + "log --pretty" documentation: do not forget "tformat:"
+
+
+* jc/push-to-checkout (2015-01-08) 2 commits
+  (merged to 'next' on 2015-01-12 at e64df63)
+ + receive-pack: support push-to-checkout hook
+ + receive-pack: refactor updateInstead codepath
+
+ Extending the js/push-to-deploy topic, the behaviour of "git push"
+ when updating the working tree and the index with an update to the
+ branch that is checked out can be tweaked by push-to-checkout hook.
+
+
+* jc/unused-symbols (2015-01-15) 8 commits
+  (merged to 'next' on 2015-01-22 at 77fd5f0)
+ + shallow.c: make check_shallow_file_for_update() static
+ + remote.c: make clear_cas_option() static
+ + urlmatch.c: make match_urls() static
+ + revision.c: make save_parents() and free_saved_parents() static
+ + line-log.c: make line_log_data_init() static
+ + pack-bitmap.c: make pack_bitmap_filename() static
+ + prompt.c: remove git_getpass() nobody uses
+ + http.c: make finish_active_slot() and handle_curl_result() static
+
+ Mark file-local symbols as "static", and drop functions that nobody
+ uses.
+
+
+* jk/blame-commit-label (2015-01-13) 5 commits
+  (merged to 'next' on 2015-01-15 at 1b32e21)
+ + blame.c: fix garbled error message
+ + use xstrdup_or_null to replace ternary conditionals
+ + builtin/commit.c: use xstrdup_or_null instead of envdup
+ + builtin/apply.c: use xstrdup_or_null instead of null_strdup
+ + git-compat-util: add xstrdup_or_null helper
+
+
+* jn/rerere-fail-on-auto-update-failure (2015-01-08) 1 commit
+  (merged to 'next' on 2015-01-12 at 313c449)
+ + rerere: error out on autoupdate failure
+
+ "git rerere" (invoked internally from many mergy operations) did
+ not correctly signal errors when told to update the working tree
+ files and failed to do so for whatever reason.
+
+
+* km/gettext-n (2015-01-12) 1 commit
+  (merged to 'next' on 2015-01-12 at 0cbbf4a)
+ + gettext.h: add parentheses around N_ expansion if supported
+
+
+* ld/p4-exclude-in-sync (2015-01-28) 1 commit
+  (merged to 'next' on 2015-02-05 at ab410a1)
+ + git-p4: support excluding paths on sync
+
+
+* ld/p4-submit-hint (2015-01-23) 1 commit
+  (merged to 'next' on 2015-01-23 at ed972d3)
+ + git-p4: correct --prepare-p4-only instructions
+
+
+* mh/reflog-expire (2014-12-22) 24 commits
+  (merged to 'next' on 2015-01-12 at 12a7dff)
+ + refs.c: let fprintf handle the formatting
+ + refs.c: don't expose the internal struct ref_lock in the header file
+ + lock_any_ref_for_update(): inline function
+ + refs.c: remove unlock_ref/close_ref/commit_ref from the refs api
+ + reflog_expire(): new function in the reference API
+ + expire_reflog(): treat the policy callback data as opaque
+ + Move newlog and last_kept_sha1 to "struct expire_reflog_cb"
+ + expire_reflog(): move rewrite to flags argument
+ + expire_reflog(): move verbose to flags argument
+ + expire_reflog(): pass flags through to expire_reflog_ent()
+ + struct expire_reflog_cb: a new callback data type
+ + Rename expire_reflog_cb to expire_reflog_policy_cb
+ + expire_reflog(): move updateref to flags argument
+ + expire_reflog(): move dry_run to flags argument
+ + expire_reflog(): add a "flags" argument
+ + expire_reflog(): extract two policy-related functions
+ + Extract function should_expire_reflog_ent()
+ + expire_reflog(): use a lock_file for rewriting the reflog file
+ + expire_reflog(): return early if the reference has no reflog
+ + expire_reflog(): rename "ref" parameter to "refname"
+ + expire_reflog(): it's not an each_ref_fn anymore
+ + refs.c: add a function to append a reflog entry to a fd
+ + refs.c: make ref_transaction_delete a wrapper for ref_transaction_update
+ + refs.c: make ref_transaction_create a wrapper for ref_transaction_update
+ (this branch is used by sb/atomic-push and sb/atomic-push-fix.)
+
+ Restructure "reflog expire" to fit the reflogs better with the
+ recently updated ref API.
+
+
+* sb/atomic-push (2015-01-14) 11 commits
+  (merged to 'next' on 2015-01-14 at 12c4e28)
+ + Document receive.advertiseatomic
+  (merged to 'next' on 2015-01-12 at 411c6a6)
+ + t5543-atomic-push.sh: add basic tests for atomic pushes
+ + push.c: add an --atomic argument
+ + send-pack.c: add --atomic command line argument
+ + send-pack: rename ref_update_to_be_sent to check_to_send_update
+ + receive-pack.c: negotiate atomic push support
+ + receive-pack.c: add execute_commands_atomic function
+ + receive-pack.c: move transaction handling in a central place
+ + receive-pack.c: move iterating over all commands outside execute_commands
+ + receive-pack.c: die instead of error in case of possible future bug
+ + receive-pack.c: shorten the execute_commands loop over all commands
+ (this branch is used by sb/atomic-push-fix; uses mh/reflog-expire.)
+
+ "git push" has been taught a "--atomic" option that makes push to
+ update more than one ref an "all-or-none" affair.
+
+--------------------------------------------------
 [New Topics]
 
-* jc/diff-files-ita (2015-02-04) 1 commit
- - run_diff_files(): clarify computation of sha1 validity
+* ab/merge-file-prefix (2015-02-11) 1 commit
+ - merge-file: correctly open files when in a subdir
+
+ "git merge-file" did not work correctly in a subdirectory.
 
  Will merge to 'next'.
 
 
-* jk/config-no-ungetc-eof (2015-02-05) 2 commits
- - config_buf_ungetc: warn when pushing back a random character
- - config: do not ungetc EOF
+* es/blame-commit-info-fix (2015-02-10) 1 commit
+ - builtin/blame: destroy initialized commit_info only
+
+ "git blame" died, trying to free an uninitialized piece of memory.
 
  Will merge to 'next'.
 
 
-* jk/decimal-width-for-uintmax (2015-02-05) 1 commit
- - decimal_width: avoid integer overflow
+* es/squelch-openssl-warnings-on-macosx (2015-02-09) 1 commit
+ - git-compat-util: do not step on MAC_OS_X_VERSION_MIN_REQUIRED
 
  Will merge to 'next'.
 
 
-* ss/check-builtins-on-windows (2015-02-05) 1 commit
- - check-builtins: strip executable suffix $X when enumerating builtins
+* jc/max-io-size-and-ssize-max (2015-02-11) 1 commit
+ - xread/xwrite: clip MAX_IO_SIZE to SSIZE_MAX
 
  Will merge to 'next'.
+
+
+* jk/fast-import-die-nicely-fix (2015-02-10) 1 commit
+ - fast-import: avoid running end_packfile recursively
+
+ "git fast-import" used to crash when it could not close and
+ conclude the resulting packfile cleanly.
+
+ Will merge to 'next'.
+
+
+* mh/expire-updateref-fixes (2015-02-09) 10 commits
+ - reflog_expire(): lock symbolic refs themselves, not their referent
+ - reflog_expire(): never update a reference to null_sha1
+ - reflog_expire(): ignore --updateref for symbolic references
+ - reflog: rearrange the manpage
+ - reflog: fix documentation
+ - lock_ref_sha1_basic(): do not set force_write for missing references
+ - write_ref_sha1(): Move write elision test to callers
+ - write_ref_sha1(): remove check for lock == NULL
+ - Merge branch 'sb/atomic-push' into mh/ref-trans-value-check
+ - Merge branch 'mh/reflog-expire' into mh/ref-trans-value-check
+ (this branch is tangled with mh/refs-have-new.)
+
+
+* mh/refs-have-new (2015-02-09) 13 commits
+ - update_ref(): improve documentation
+ - ref_transaction_verify(): new function to check a reference's value
+ - ref_transaction_delete(): check that old_sha1 is not null_sha1
+ - ref_transaction_create(): check that new_sha1 is valid
+ - commit: avoid race when creating orphan commits
+ - commit: add tests of commit races
+ - ref_transaction_delete(): remove "have_old" parameter
+ - ref_transaction_update(): remove "have_old" parameter
+ - struct ref_update: move "have_old" into "flags"
+ - refs: remove the gap in the REF_* constant values
+ - refs: move REF_DELETING to refs.c
+ - Merge branch 'sb/atomic-push' into mh/ref-trans-value-check
+ - Merge branch 'mh/reflog-expire' into mh/ref-trans-value-check
+ (this branch is tangled with mh/expire-updateref-fixes.)
+
+
+* nd/slim-index-pack-memory-usage (2015-02-10) 3 commits
+ - index-pack: kill union delta_base to save memory
+ - FIXUP
+ - index-pack: reduce memory footprint a bit
 
 --------------------------------------------------
 [Stalled]
+
+* jk/sanity (2015-01-27) 3 commits
+ - test-lib.sh: set prerequisite SANITY by testing what we really need
+ - tests: correct misuses of POSIXPERM
+ - t/lib-httpd: switch SANITY check for NOT_ROOT
+
+ Waiting for ack or counter-proposal from Torsten.
+ Otherwise looking good.
+
+
+* tc/t9001-noxmailer (2015-01-30) 1 commit
+ - t9001: use older Getopt::Long boolean prefix '--no' rather than '--no-'
+
+ Kyle's update to explicitly support --no-option with older
+ Getopt::Long ($gmane/263203) might be a better alternative
+ if we have to support them in the longer term.
+
+
+* jc/diff-b-m (2015-02-01) 1 commit
+ - diff: do not use creation-half of -B as a rename target candidate
+
+ "git diff -B -M" produced incorrect patch when the postimage of a
+ completely rewritten file is similar to the preimage of a removed
+ file; such a resulting file must not be expressed as a rename from
+ other place.
+
+ The fix in this patch is broken, unfortunately.
+
 
 * jn/doc-api-errors (2014-12-04) 1 commit
  - doc: document error handling functions and conventions
 
  For discussion.
+ What's the status of this one????
 
 
 * pw/remote-set-url-fetch (2014-11-26) 1 commit
@@ -182,6 +417,31 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* jc/diff-files-ita (2015-02-04) 1 commit
+ - run_diff_files(): clarify computation of sha1 validity
+
+ Will merge to 'next'.
+
+
+* jk/config-no-ungetc-eof (2015-02-05) 2 commits
+ - config_buf_ungetc: warn when pushing back a random character
+ - config: do not ungetc EOF
+
+ Will merge to 'next'.
+
+
+* jk/decimal-width-for-uintmax (2015-02-05) 1 commit
+ - decimal_width: avoid integer overflow
+
+ Will merge to 'next'.
+
+
+* ss/check-builtins-on-windows (2015-02-05) 1 commit
+ - check-builtins: strip executable suffix $X when enumerating builtins
+
+ Will merge to 'next'.
+
+
 * jc/diff-format-doc (2015-01-28) 1 commit
  - diff-format doc: a score can follow M for rewrite
 
@@ -217,7 +477,7 @@ of the repositories listed at
  Will merge to 'next'.
 
 
-* jc/apply-beyond-symlink (2015-02-03) 4 commits
+* jc/apply-beyond-symlink (2015-02-10) 4 commits
  - apply: do not touch a file beyond a symbolic link
  - apply: do not read from beyond a symbolic link
  - apply: do not read from the filesystem under --index
@@ -228,18 +488,7 @@ of the repositories listed at
  --index/--cached) or the current directory (when used as a
  replacement for GNU patch).
 
- May need to re-review the tests.
-
-
-* jc/diff-b-m (2015-02-01) 1 commit
- - diff: do not use creation-half of -B as a rename target candidate
-
- "git diff -B -M" produced incorrect patch when the postimage of a
- completely rewritten file is similar to the preimage of a removed
- file; such a resulting file must not be expressed as a rename from
- other place.
-
- The fix in this patch is broken, unfortunately.
+ Will merge to 'next'.
 
 
 * jc/remote-set-url-doc (2015-01-29) 1 commit
@@ -264,8 +513,9 @@ of the repositories listed at
  Will merge to 'next'.
 
 
-* jk/prune-mtime (2015-02-02) 1 commit
+* jk/prune-mtime (2015-02-09) 2 commits
  - sha1_file: fix iterating loose alternate objects
+ - for_each_loose_file_in_objdir: take an optional strbuf path
 
  In v2.2.0, we broke "git prune" that runs in a repository that
  borrows from an alternate object store.
@@ -292,14 +542,6 @@ of the repositories listed at
  - http: support curl < 7.10.7
 
  Will merge to 'next'.
-
-
-* tc/t9001-noxmailer (2015-01-30) 1 commit
- - t9001: use older Getopt::Long boolean prefix '--no' rather than '--no-'
-
- Kyle's update to explicitly support --no-option with older
- Getopt::Long ($gmane/263203) might be a better alternative
- if we have to support them in the longer term.
 
 
 * jc/apply-ws-fix-expands-report (2015-01-22) 1 commit
@@ -352,6 +594,8 @@ of the repositories listed at
  - config.txt: mark deprecated variables more prominently
  - config.txt: clarify that add.ignore-errors is deprecated
 
+ Will merge to 'next'.
+
 
 * jc/doc-log-rev-list-options (2015-01-23) 1 commit
  - Documentation: what does "git log --indexed-objects" even mean?
@@ -363,13 +607,6 @@ of the repositories listed at
  - dumb-http: do not pass NULL path to parse_pack_index
 
  Will merge to 'next'.
-
-
-* ld/p4-submit-hint (2015-01-23) 1 commit
-  (merged to 'next' on 2015-01-23 at ed972d3)
- + git-p4: correct --prepare-p4-only instructions
-
- Will merge to 'master'.
 
 
 * mg/commit-author-no-match-malformed-message (2015-01-26) 1 commit
@@ -393,14 +630,6 @@ of the repositories listed at
  Will merge to 'next'.
 
 
-* ak/typofixes (2015-01-21) 2 commits
-  (merged to 'next' on 2015-01-22 at e36f25a)
- + t/lib-terminal.sh: fix typo
- + pack-bitmap: fix typo
-
- Will merge to 'master'.
-
-
 * jc/apply-ws-fix-expands (2015-01-22) 3 commits
  - apply: count the size of postimage correctly
  - apply: make update_pre_post_images() sanity check the given postlen
@@ -411,46 +640,6 @@ of the repositories listed at
  when the fix resulted in a longer text than the original patch.
 
  Will merge to 'next'.
-
-
-* jc/coding-guidelines (2015-01-15) 1 commit
-  (merged to 'next' on 2015-01-22 at 3c96639)
- + CodingGuidelines: clarify C #include rules
-
- Will merge to 'master'.
-
-
-* jc/pretty-format-doc (2015-01-15) 1 commit
-  (merged to 'next' on 2015-01-22 at 2a81ecc)
- + "log --pretty" documentation: do not forget "tformat:"
-
- Will cook in 'next'.
-
-
-* jc/unused-symbols (2015-01-15) 8 commits
-  (merged to 'next' on 2015-01-22 at 77fd5f0)
- + shallow.c: make check_shallow_file_for_update() static
- + remote.c: make clear_cas_option() static
- + urlmatch.c: make match_urls() static
- + revision.c: make save_parents() and free_saved_parents() static
- + line-log.c: make line_log_data_init() static
- + pack-bitmap.c: make pack_bitmap_filename() static
- + prompt.c: remove git_getpass() nobody uses
- + http.c: make finish_active_slot() and handle_curl_result() static
-
- Mark file-local symbols as "static", and drop functions that nobody
- uses.
-
- Will cook in 'next'.
-
-
-* jk/sanity (2015-01-27) 3 commits
- - test-lib.sh: set prerequisite SANITY by testing what we really need
- - tests: correct misuses of POSIXPERM
- - t/lib-httpd: switch SANITY check for NOT_ROOT
-
- Waiting for ack or counter-proposal from Torsten.
- Otherwise looking good.
 
 
 * js/fsck-opt (2015-01-21) 19 commits
@@ -477,33 +666,10 @@ of the repositories listed at
  Need extra set of eyes to review this.
 
 
-* ld/p4-exclude-in-sync (2015-01-28) 2 commits
-  (merged to 'next' on 2015-02-05 at ab410a1)
- + git-p4: correct "exclude" change
-  (merged to 'next' on 2015-01-22 at f6f1fc7)
- + git-p4: support excluding paths on sync
-
- Will squash them into one and then merge to 'master'.
-
-
 * tb/connect-ipv6-parse-fix (2015-01-22) 3 commits
  - t5500: show user name and host in diag-url
  - t5601: add more test cases for IPV6
  - connect.c: improve parsing of literal IPV6 addresses
-
- Need extra set of eyes to review this.
-
-
-* sb/atomic-push-fix (2015-01-23) 6 commits
- - refs.c: enable large transactions
- - refs.c: remove unlock_ref and commit_ref from write_ref_sha1
- - refs.c: move static functions to close and commit refs
- - refs.c: remove lock_fd from struct ref_lock
- - t7004: rename ULIMIT test prerequisite to ULIMIT_STACK_SIZE
- - update-ref: test handling large transactions properly
- (this branch uses mh/reflog-expire and sb/atomic-push.)
-
- I had to wiggle this in and am not confident I did it correctly.
 
  Need extra set of eyes to review this.
 
@@ -519,12 +685,7 @@ of the repositories listed at
 
  Resolve the "doc vs header" to favor the latter.
 
-
-* ah/usage-strings (2015-01-14) 1 commit
-  (merged to 'next' on 2015-01-22 at bfa5bab)
- + standardize usage info string format
-
- Will cook in 'next'.
+ Will merge to 'next'.
 
 
 * ak/stash-store-create-help (2015-01-13) 1 commit
@@ -533,42 +694,9 @@ of the repositories listed at
  Undecided.
 
 
-* jk/blame-commit-label (2015-01-13) 5 commits
-  (merged to 'next' on 2015-01-15 at 1b32e21)
- + blame.c: fix garbled error message
- + use xstrdup_or_null to replace ternary conditionals
- + builtin/commit.c: use xstrdup_or_null instead of envdup
- + builtin/apply.c: use xstrdup_or_null instead of null_strdup
- + git-compat-util: add xstrdup_or_null helper
-
- Will cook in 'next'.
-
-
-* bc/http-fallback-to-password-after-krb-fails (2015-01-07) 1 commit
-  (merged to 'next' on 2015-01-12 at 4c67038)
- + remote-curl: fall back to Basic auth if Negotiate fails
-
- After attempting and failing a password-less authentication
- (e.g. kerberos), libcURL refuses to fall back to password based
- Basic authentication without a bit of help/encouragement.
-
- Will cook in 'next'.
-
-
 * bp/diff-relative-config (2015-01-07) 2 commits
  - diff: teach diff.relative to give default to --relative=<value>
  - diff: teach --no-relative to override earlier --relative
-
-
-* dk/format-patch-ignore-diff-submodule (2015-01-07) 2 commits
-  (merged to 'next' on 2015-01-12 at 6b4605b)
- + format-patch: ignore diff.submodule setting
- + t4255: test am submodule with diff.submodule
-
- Setting diff.submodule to 'log' made "git format-patch" produce
- broken patches.
-
- Will cook in 'next'.
 
 
 * nd/attr-optim (2014-12-29) 3 commits
@@ -577,108 +705,11 @@ of the repositories listed at
  - attr.c: rename arg name attr_nr to avoid shadowing the global one
 
 
-* cj/log-invert-grep (2015-01-13) 1 commit
-  (merged to 'next' on 2015-01-13 at c908e99)
- + log: teach --invert-grep option
-
- Will cook in 'next'.
-
-
-* km/gettext-n (2015-01-12) 1 commit
-  (merged to 'next' on 2015-01-12 at 0cbbf4a)
- + gettext.h: add parentheses around N_ expansion if supported
-
- Will cook in 'next'.
-
-
-* jn/rerere-fail-on-auto-update-failure (2015-01-08) 1 commit
-  (merged to 'next' on 2015-01-12 at 313c449)
- + rerere: error out on autoupdate failure
-
- "git rerere" (invoked internally from many mergy operations) did
- not correctly signal errors when told to update the working tree
- files and failed to do so for whatever reason.
-
- Will cook in 'next'.
-
-
-* sb/atomic-push (2015-01-14) 11 commits
-  (merged to 'next' on 2015-01-14 at 12c4e28)
- + Document receive.advertiseatomic
-  (merged to 'next' on 2015-01-12 at 411c6a6)
- + t5543-atomic-push.sh: add basic tests for atomic pushes
- + push.c: add an --atomic argument
- + send-pack.c: add --atomic command line argument
- + send-pack: rename ref_update_to_be_sent to check_to_send_update
- + receive-pack.c: negotiate atomic push support
- + receive-pack.c: add execute_commands_atomic function
- + receive-pack.c: move transaction handling in a central place
- + receive-pack.c: move iterating over all commands outside execute_commands
- + receive-pack.c: die instead of error in case of possible future bug
- + receive-pack.c: shorten the execute_commands loop over all commands
- (this branch is used by sb/atomic-push-fix; uses mh/reflog-expire.)
-
- "git push" has been taught a "--atomic" option that makes push to
- update more than one ref an "all-or-none" affair.
-
- Will cook in 'next'.
-
-
-* mh/reflog-expire (2014-12-22) 24 commits
-  (merged to 'next' on 2015-01-12 at 12a7dff)
- + refs.c: let fprintf handle the formatting
- + refs.c: don't expose the internal struct ref_lock in the header file
- + lock_any_ref_for_update(): inline function
- + refs.c: remove unlock_ref/close_ref/commit_ref from the refs api
- + reflog_expire(): new function in the reference API
- + expire_reflog(): treat the policy callback data as opaque
- + Move newlog and last_kept_sha1 to "struct expire_reflog_cb"
- + expire_reflog(): move rewrite to flags argument
- + expire_reflog(): move verbose to flags argument
- + expire_reflog(): pass flags through to expire_reflog_ent()
- + struct expire_reflog_cb: a new callback data type
- + Rename expire_reflog_cb to expire_reflog_policy_cb
- + expire_reflog(): move updateref to flags argument
- + expire_reflog(): move dry_run to flags argument
- + expire_reflog(): add a "flags" argument
- + expire_reflog(): extract two policy-related functions
- + Extract function should_expire_reflog_ent()
- + expire_reflog(): use a lock_file for rewriting the reflog file
- + expire_reflog(): return early if the reference has no reflog
- + expire_reflog(): rename "ref" parameter to "refname"
- + expire_reflog(): it's not an each_ref_fn anymore
- + refs.c: add a function to append a reflog entry to a fd
- + refs.c: make ref_transaction_delete a wrapper for ref_transaction_update
- + refs.c: make ref_transaction_create a wrapper for ref_transaction_update
- (this branch is used by sb/atomic-push and sb/atomic-push-fix.)
-
- Restructure "reflog expire" to fit the reflogs better with the
- recently updated ref API.
-
- Looked reasonable (except that some shortlog entries stood out like
- a sore thumb).
-
- Will cook in 'next'.
-
-
-* jc/push-to-checkout (2015-01-08) 2 commits
-  (merged to 'next' on 2015-01-12 at e64df63)
- + receive-pack: support push-to-checkout hook
- + receive-pack: refactor updateInstead codepath
-
- Extending the js/push-to-deploy topic, the behaviour of "git push"
- when updating the working tree and the index with an update to the
- branch that is checked out can be tweaked by push-to-checkout hook.
-
- Will cook in 'next'.
-
-
-* nd/list-files (2015-01-27) 22 commits
+* nd/list-files (2015-02-09) 21 commits
  . t3080: tests for git-list-files
  . list-files: -M aka diff-cached
  . list-files -F: show submodules with the new indicator '&'
  . list-files: add -F/--classify
- . SQUASH???
  . list-files: show directories as well as files
  . list-files: do not show duplicate cached entries
  . list-files: sort output and remove duplicates
@@ -699,8 +730,6 @@ of the repositories listed at
 
  A new "git list-files" Porcelain command, "ls-files" with bells and
  whistles.
-
- Seems unable to pass its self test (yet).
 
 
 * nd/multiple-work-trees (2015-01-27) 38 commits
@@ -748,7 +777,7 @@ of the repositories listed at
  by making the borrowee and borrowers aware of each other.
 
 
-* nd/untracked-cache (2015-01-21) 24 commits
+* nd/untracked-cache (2015-02-09) 24 commits
  - git-status.txt: advertisement for untracked cache
  - untracked cache: guard and disable on system changes
  - mingw32: add uname()
