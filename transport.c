@@ -728,6 +728,10 @@ static int print_one_push_status(struct ref *ref, const char *dest, int count, i
 						 ref->deletion ? NULL : ref->peer_ref,
 						 "remote failed to report status", porcelain);
 		break;
+	case REF_STATUS_ATOMIC_PUSH_FAILED:
+		print_ref_status('!', "[rejected]", ref, ref->peer_ref,
+						 "atomic push failed", porcelain);
+		break;
 	case REF_STATUS_OK:
 		print_ok_ref_status(ref, porcelain);
 		break;
@@ -826,6 +830,7 @@ static int git_transport_push(struct transport *transport, struct ref *remote_re
 	args.dry_run = !!(flags & TRANSPORT_PUSH_DRY_RUN);
 	args.porcelain = !!(flags & TRANSPORT_PUSH_PORCELAIN);
 	args.push_cert = !!(flags & TRANSPORT_PUSH_CERT);
+	args.atomic = !!(flags & TRANSPORT_PUSH_ATOMIC);
 	args.url = transport->url;
 
 	ret = send_pack(&args, data->fd, data->conn, remote_refs,

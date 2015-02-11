@@ -115,7 +115,8 @@ struct ref {
 		REF_STATUS_REJECT_SHALLOW,
 		REF_STATUS_UPTODATE,
 		REF_STATUS_REMOTE_REJECT,
-		REF_STATUS_EXPECTING_REPORT
+		REF_STATUS_EXPECTING_REPORT,
+		REF_STATUS_ATOMIC_PUSH_FAILED
 	} status;
 	char *remote_status;
 	struct ref *peer_ref; /* when renaming */
