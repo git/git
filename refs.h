@@ -183,12 +183,10 @@ extern int peel_ref(const char *refname, unsigned char *sha1);
  * Flags controlling ref_transaction_update(), ref_transaction_create(), etc.
  * REF_NODEREF: act on the ref directly, instead of dereferencing
  *              symbolic references.
- * REF_DELETING: tolerate broken refs
  *
- * Flags >= 0x100 are reserved for internal use.
+ * Other flags are reserved for internal use.
  */
 #define REF_NODEREF	0x01
-#define REF_DELETING	0x02
 
 /*
  * Setup reflog before using. Set errno to something meaningful on failure.

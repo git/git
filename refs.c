@@ -35,6 +35,12 @@ static unsigned char refname_disposition[256] = {
 };
 
 /*
+ * Flag passed to lock_ref_sha1_basic() telling it to tolerate broken
+ * refs (i.e., because the reference is about to be deleted anyway).
+ */
+#define REF_DELETING	0x02
+
+/*
  * Used as a flag to ref_transaction_delete when a loose ref is being
  * pruned.
  */
