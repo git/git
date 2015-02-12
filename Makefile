@@ -1746,6 +1746,9 @@ $(SCRIPT_PERL_GEN): perl/perl.mak
 
 perl/perl.mak: perl/PM.stamp
 
+# 'make -n' (dry-run) will not execute this target which creates/updates the PM.stamp file.
+# To avoid the error of failing to find the target PM.stamp, either use NO_PERL=1 (YesPlease),
+# or add a leading '+' to the recipe '+$(QUIET_GEN)$(FIND) perl ...' so that it is executed.
 perl/PM.stamp: FORCE
 	$(QUIET_GEN)$(FIND) perl -type f -name '*.pm' | sort >$@+ && \
 	{ cmp $@+ $@ >/dev/null 2>/dev/null || mv $@+ $@; } && \
