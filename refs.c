@@ -44,7 +44,8 @@ static unsigned char refname_disposition[256] = {
  * Used as a flag to ref_transaction_delete when a loose ref is being
  * pruned.
  */
-#define REF_ISPRUNING	0x0100
+#define REF_ISPRUNING	0x04
+
 /*
  * Try to read one refname component from the front of refname.
  * Return the length of the component found, or -1 if the component is
