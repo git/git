@@ -1,6 +1,5 @@
 #include "cache.h"
 #include "userdiff.h"
-#include "cache.h"
 #include "attr.h"
 
 static struct userdiff_driver *drivers;

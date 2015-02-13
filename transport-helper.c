@@ -5,7 +5,6 @@
 #include "commit.h"
 #include "diff.h"
 #include "revision.h"
-#include "quote.h"
 #include "remote.h"
 #include "string-list.h"
 #include "thread-utils.h"

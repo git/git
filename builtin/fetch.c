@@ -11,7 +11,6 @@
 #include "run-command.h"
 #include "parse-options.h"
 #include "sigchain.h"
-#include "transport.h"
 #include "submodule.h"
 #include "connected.h"
 #include "argv-array.h"

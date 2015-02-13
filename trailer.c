@@ -1,7 +1,6 @@
 #include "cache.h"
 #include "string-list.h"
 #include "run-command.h"
-#include "string-list.h"
 #include "commit.h"
 #include "trailer.h"
 /*
