@@ -51,7 +51,7 @@ int get_sha1_hex(const char *hex, unsigned char *sha1)
 char *sha1_to_hex(const unsigned char *sha1)
 {
 	static int bufno;
-	static char hexbuffer[4][50];
+	static char hexbuffer[4][41];
 	static const char hex[] = "0123456789abcdef";
 	char *buffer = hexbuffer[3 & ++bufno], *buf = buffer;
 	int i;
