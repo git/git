@@ -529,6 +529,19 @@ ifneq (,$(wildcard ../THIS_IS_MSYSGIT))
 else
 	NO_CURL = YesPlease
 endif
+ifeq (MINGW32,$(MSYSTEM))
+	CC = gcc
+	htmldir = share/doc/git/$(firstword $(subst -, ,$(GIT_VERSION)))/html
+	prefix = /mingw32/
+	INSTALL = /bin/install
+	NO_R_TO_GCC_LINKER = YesPlease
+	INTERNAL_QSORT = YesPlease
+	HAVE_LIBCHARSET_H = YesPlease
+	NO_GETTEXT = YesPlease
+	USE_LIBPCRE= YesPlease
+	NO_CURL =
+	USE_NED_ALLOCATOR =
+endif
 endif
 ifeq ($(uname_S),QNX)
 	COMPAT_CFLAGS += -DSA_RESTART=0
