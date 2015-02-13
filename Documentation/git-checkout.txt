@@ -42,7 +42,7 @@ You could omit <branch>, in which case the command degenerates to
 rather expensive side-effects to show only the tracking information,
 if exists, for the current branch.
 
-'git checkout' -b|-B <new_branch> [<start point>]::
+'git checkout' -b|-B <new_branch> [<start_point>]::
 
 	Specifying `-b` causes a new branch to be created as if
 	linkgit:git-branch[1] were called and then checked out.  In
@@ -55,7 +55,7 @@ If `-B` is given, <new_branch> is created if it doesn't exist; otherwise, it
 is reset. This is the transactional equivalent of
 +
 ------------
-$ git branch -f <branch> [<start point>]
+$ git branch -f <branch> [<start_point>]
 $ git checkout <branch>
 ------------
 +
