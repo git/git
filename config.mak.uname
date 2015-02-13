@@ -534,9 +534,23 @@ ifneq (,$(wildcard ../THIS_IS_MSYSGIT))
 	INTERNAL_QSORT = YesPlease
 	HAVE_LIBCHARSET_H = YesPlease
 	NO_GETTEXT = YesPlease
-	USE_LIBPCRE= YesPlease
 else
-	NO_CURL = YesPlease
+	ifeq ($(shell expr "$(uname_R)" : '2\.'),2)
+		# MSys2
+		CC = gcc
+		prefix = /mingw32
+		COMPAT_CFLAGS += -D__USE_MINGW_ANSI_STDIO=0
+		INSTALL = /bin/install
+		NO_R_TO_GCC_LINKER = YesPlease
+		INTERNAL_QSORT = YesPlease
+		HAVE_LIBCHARSET_H = YesPlease
+		NO_GETTEXT = YesPlease
+		USE_LIBPCRE= YesPlease
+		NO_CURL =
+		USE_NED_ALLOCATOR =
+	else
+		NO_CURL = YesPlease
+	endif
 endif
 endif
 ifeq ($(uname_S),QNX)
