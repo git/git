@@ -342,16 +342,6 @@ static int fetch_with_fetch(struct transport *transport,
 	int i;
 	struct strbuf buf = STRBUF_INIT;
 
-	if (data->check_connectivity &&
-	    data->transport_options.check_self_contained_and_connected)
-		set_helper_option(transport, "check-connectivity", "true");
-
-	if (transport->cloning)
-		set_helper_option(transport, "cloning", "true");
-
-	if (data->transport_options.update_shallow)
-		set_helper_option(transport, "update-shallow", "true");
-
 	for (i = 0; i < nr_heads; i++) {
 		const struct ref *posn = to_fetch[i];
 		if (posn->status & REF_STATUS_UPTODATE)
@@ -621,6 +611,16 @@ static int fetch(struct transport *transport,
 
 	if (!count)
 		return 0;
+
+	if (data->check_connectivity &&
+	    data->transport_options.check_self_contained_and_connected)
+		set_helper_option(transport, "check-connectivity", "true");
+
+	if (transport->cloning)
+		set_helper_option(transport, "cloning", "true");
+
+	if (data->transport_options.update_shallow)
+		set_helper_option(transport, "update-shallow", "true");
 
 	if (data->fetch)
 		return fetch_with_fetch(transport, nr_heads, to_fetch);
