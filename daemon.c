@@ -61,6 +61,22 @@ static char *canon_hostname;
 static char *ip_address;
 static char *tcp_port;
 
+static int hostname_lookup_done;
+
+static void lookup_hostname(void);
+
+static const char *get_canon_hostname(void)
+{
+	lookup_hostname();
+	return canon_hostname;
+}
+
+static const char *get_ip_address(void)
+{
+	lookup_hostname();
+	return ip_address;
+}
+
 static void logreport(int priority, const char *err, va_list params)
 {
 	if (log_syslog) {
@@ -147,8 +163,8 @@ static const char *path_ok(const char *directory)
 		struct strbuf_expand_dict_entry dict[6];
 
 		dict[0].placeholder = "H"; dict[0].value = hostname;
-		dict[1].placeholder = "CH"; dict[1].value = canon_hostname;
-		dict[2].placeholder = "IP"; dict[2].value = ip_address;
+		dict[1].placeholder = "CH"; dict[1].value = get_canon_hostname();
+		dict[2].placeholder = "IP"; dict[2].value = get_ip_address();
 		dict[3].placeholder = "P"; dict[3].value = tcp_port;
 		dict[4].placeholder = "D"; dict[4].value = directory;
 		dict[5].placeholder = NULL; dict[5].value = NULL;
@@ -271,8 +287,8 @@ static int run_access_hook(struct daemon_service *service, const char *dir, cons
 	*arg++ = service->name;
 	*arg++ = path;
 	*arg++ = STRARG(hostname);
-	*arg++ = STRARG(canon_hostname);
-	*arg++ = STRARG(ip_address);
+	*arg++ = STRARG(get_canon_hostname());
+	*arg++ = STRARG(get_ip_address());
 	*arg++ = STRARG(tcp_port);
 	*arg = NULL;
 #undef STRARG
@@ -529,6 +545,7 @@ static void parse_host_arg(char *extra_args, int buflen)
 				}
 				free(hostname);
 				hostname = xstrdup_tolower(host);
+				hostname_lookup_done = 0;
 			}
 
 			/* On to the next one */
@@ -537,11 +554,14 @@ static void parse_host_arg(char *extra_args, int buflen)
 		if (extra_args < end && *extra_args)
 			die("Invalid request");
 	}
+}
 
-	/*
-	 * Locate canonical hostname and its IP address.
-	 */
-	if (hostname) {
+/*
+ * Locate canonical hostname and its IP address.
+ */
+static void lookup_hostname(void)
+{
+	if (!hostname_lookup_done && hostname) {
 #ifndef NO_IPV6
 		struct addrinfo hints;
 		struct addrinfo *ai;
@@ -589,6 +609,7 @@ static void parse_host_arg(char *extra_args, int buflen)
 			ip_address = xstrdup(addrbuf);
 		}
 #endif
+		hostname_lookup_done = 1;
 	}
 }
 
