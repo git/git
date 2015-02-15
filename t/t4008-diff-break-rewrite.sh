@@ -10,14 +10,14 @@ We have two very different files, file0 and file1, registered in a tree.
 We update file1 so drastically that it is more similar to file0, and
 then remove file0.  With -B, changes to file1 should be broken into
 separate delete and create, resulting in removal of file0, removal of
-original file1 and creation of completely rewritten file1.
+original file1 and creation of completely rewritten file1.  The latter
+two are then merged back into a single "complete rewrite".
 
 Further, with -B and -M together, these three modifications should
 turn into rename-edit of file0 into file1.
 
 Starting from the same two files in the tree, we swap file0 and file1.
-With -B, this should be detected as two complete rewrites, resulting in
-four changes in total.
+With -B, this should be detected as two complete rewrites.
 
 Further, with -B and -M together, these should turn into two renames.
 '
