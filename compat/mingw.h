@@ -263,6 +263,10 @@ char *mingw_mktemp(char *template);
 char *mingw_getcwd(char *pointer, int len);
 #define getcwd mingw_getcwd
 
+#ifdef NO_UNSETENV
+#error "NO_UNSETENV is incompatible with the MinGW startup code!"
+#endif
+
 char *mingw_getenv(const char *name);
 #define getenv mingw_getenv
 int mingw_putenv(const char *namevalue);
