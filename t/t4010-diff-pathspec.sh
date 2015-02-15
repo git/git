@@ -56,7 +56,7 @@ test_expect_success \
      compare_diff_raw current expected'
 
 cat >expected <<\EOF
-:100644 100644 766498d93a4b06057a8e49d23f4068f1170ff38f 0a41e115ab61be0328a19b29f18cdcb49338d516 M	file0
+:100644 100644 8e4020bb5a8d8c873b25de15933e75cc0fc275df dca6b92303befc93086aa025d90a5facd7eb2812 M	file0
 EOF
 test_expect_success \
     'limit to file0 should show file0' \
