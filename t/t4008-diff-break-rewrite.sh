@@ -26,8 +26,8 @@ Further, with -B and -M together, these should turn into two renames.
 
 test_expect_success \
     setup \
-    'cat "$TEST_DIRECTORY"/../README >file0 &&
-     cat "$TEST_DIRECTORY"/../COPYING >file1 &&
+    'cat "$TEST_DIRECTORY"/diff-lib/README >file0 &&
+     cat "$TEST_DIRECTORY"/diff-lib/COPYING >file1 &&
     git update-index --add file0 file1 &&
     tree=$(git write-tree) &&
     echo "$tree"'
@@ -43,8 +43,8 @@ test_expect_success \
     'git diff-index -B --cached "$tree" >current'
 
 cat >expected <<\EOF
-:100644 000000 f5deac7be59e7eeab8657fd9ae706fd6a57daed2 0000000000000000000000000000000000000000 D	file0
-:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 11e331465a89c394dc25c780de230043750c1ec8 M100	file1
+:100644 000000 548142c327a6790ff8821d67c2ee1eff7a656b52 0000000000000000000000000000000000000000 D	file0
+:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 2fbedd0b5d4b8126e4750c3bee305e8ff79f80ec M100	file1
 EOF
 
 test_expect_success \
@@ -56,7 +56,7 @@ test_expect_success \
     'git diff-index -B -M "$tree" >current'
 
 cat >expected <<\EOF
-:100644 100644 f5deac7be59e7eeab8657fd9ae706fd6a57daed2 08bb2fb671deff4c03a4d4a0a1315dff98d5732c R100	file0	file1
+:100644 100644 548142c327a6790ff8821d67c2ee1eff7a656b52 2fbedd0b5d4b8126e4750c3bee305e8ff79f80ec R100	file0	file1
 EOF
 
 test_expect_success \
@@ -78,8 +78,8 @@ test_expect_success \
     'git diff-index -B "$tree" >current'
 
 cat >expected <<\EOF
-:100644 100644 f5deac7be59e7eeab8657fd9ae706fd6a57daed2 6ff87c4664981e4397625791c8ea3bbb5f2279a3 M100	file0
-:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 f5deac7be59e7eeab8657fd9ae706fd6a57daed2 M100	file1
+:100644 100644 548142c327a6790ff8821d67c2ee1eff7a656b52 6ff87c4664981e4397625791c8ea3bbb5f2279a3 M100	file0
+:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 548142c327a6790ff8821d67c2ee1eff7a656b52 M100	file1
 EOF
 
 test_expect_success \
@@ -92,7 +92,7 @@ test_expect_success \
 
 cat >expected <<\EOF
 :100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 6ff87c4664981e4397625791c8ea3bbb5f2279a3 R100	file1	file0
-:100644 100644 f5deac7be59e7eeab8657fd9ae706fd6a57daed2 f5deac7be59e7eeab8657fd9ae706fd6a57daed2 R100	file0	file1
+:100644 100644 548142c327a6790ff8821d67c2ee1eff7a656b52 548142c327a6790ff8821d67c2ee1eff7a656b52 R100	file0	file1
 EOF
 
 test_expect_success \
@@ -110,8 +110,8 @@ test_expect_success \
     'git diff-index -B "$tree" >current'
 
 cat >expected <<\EOF
-:100644 120000 f5deac7be59e7eeab8657fd9ae706fd6a57daed2 67be421f88824578857624f7b3dc75e99a8a1481 T	file0
-:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 f5deac7be59e7eeab8657fd9ae706fd6a57daed2 M100	file1
+:100644 120000 548142c327a6790ff8821d67c2ee1eff7a656b52 67be421f88824578857624f7b3dc75e99a8a1481 T	file0
+:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 548142c327a6790ff8821d67c2ee1eff7a656b52 M100	file1
 EOF
 
 test_expect_success \
@@ -125,8 +125,8 @@ test_expect_success \
 # file0 changed from regular to symlink.  file1 is very close to the preimage of file0.
 # the change does not make file0 disappear, so file1 is denoted as a copy of file0
 cat >expected <<\EOF
-:100644 120000 f5deac7be59e7eeab8657fd9ae706fd6a57daed2 67be421f88824578857624f7b3dc75e99a8a1481 T	file0
-:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 f5deac7be59e7eeab8657fd9ae706fd6a57daed2 C	file0	file1
+:100644 120000 548142c327a6790ff8821d67c2ee1eff7a656b52 67be421f88824578857624f7b3dc75e99a8a1481 T	file0
+:100644 100644 548142c327a6790ff8821d67c2ee1eff7a656b52 548142c327a6790ff8821d67c2ee1eff7a656b52 C	file0	file1
 EOF
 
 test_expect_success \
@@ -140,8 +140,8 @@ test_expect_success \
 # This should not mistake file0 as the copy source of new file1
 # due to type differences.
 cat >expected <<\EOF
-:100644 120000 f5deac7be59e7eeab8657fd9ae706fd6a57daed2 67be421f88824578857624f7b3dc75e99a8a1481 T	file0
-:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 f5deac7be59e7eeab8657fd9ae706fd6a57daed2 M	file1
+:100644 120000 548142c327a6790ff8821d67c2ee1eff7a656b52 67be421f88824578857624f7b3dc75e99a8a1481 T	file0
+:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 548142c327a6790ff8821d67c2ee1eff7a656b52 M	file1
 EOF
 
 test_expect_success \
@@ -163,9 +163,9 @@ test_expect_success \
     'git diff-index -B "$tree" >current'
 
 cat >expected <<\EOF
-:100644 000000 f5deac7be59e7eeab8657fd9ae706fd6a57daed2 0000000000000000000000000000000000000000 D	file0
-:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 08bb2fb671deff4c03a4d4a0a1315dff98d5732c M100	file1
-:000000 100644 0000000000000000000000000000000000000000 f5deac7be59e7eeab8657fd9ae706fd6a57daed2 A	file2
+:100644 000000 548142c327a6790ff8821d67c2ee1eff7a656b52 0000000000000000000000000000000000000000 D	file0
+:100644 100644 6ff87c4664981e4397625791c8ea3bbb5f2279a3 2fbedd0b5d4b8126e4750c3bee305e8ff79f80ec M100	file1
+:000000 100644 0000000000000000000000000000000000000000 69a939f651686f56322566e2fd76715947a24162 A	file2
 EOF
 
 test_expect_success \
@@ -177,8 +177,8 @@ test_expect_success \
     'git diff-index -B -C "$tree" >current'
 
 cat >expected <<\EOF
-:100644 100644 f5deac7be59e7eeab8657fd9ae706fd6a57daed2 08bb2fb671deff4c03a4d4a0a1315dff98d5732c C095	file0	file1
-:100644 100644 f5deac7be59e7eeab8657fd9ae706fd6a57daed2 59f832e5c8b3f7e486be15ad0cd3e95ba9af8998 R095	file0	file2
+:100644 100644 548142c327a6790ff8821d67c2ee1eff7a656b52 2fbedd0b5d4b8126e4750c3bee305e8ff79f80ec C095	file0	file1
+:100644 100644 548142c327a6790ff8821d67c2ee1eff7a656b52 69a939f651686f56322566e2fd76715947a24162 R095	file0	file2
 EOF
 
 test_expect_success \
