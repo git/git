@@ -642,9 +642,12 @@ void diffcore_rename(struct diff_options *options)
 	free(mx);
 
  cleanup:
-	/* At this point, we have found some renames and copies and they
+	/*
+	 * At this point, we have found some renames and copies and they
 	 * are recorded in rename_dst.  The original list is still in *q.
 	 */
+	diff_debug_queue("begin turning a/d into renames", q);
+
 	DIFF_QUEUE_CLEAR(&outq);
 	for (i = 0; i < q->nr; i++) {
 		struct diff_filepair *p = q->queue[i];
@@ -657,8 +660,9 @@ void diffcore_rename(struct diff_options *options)
 			/*
 			 * Creation
 			 *
-			 * We would output this create record if it has
-			 * not been turned into a rename/copy already.
+			 * Did the content come from somewhere else?
+			 * If so, show that as a rename.  Otherwise
+			 * show it as a creation (i.e. as-is).
 			 */
 			struct diff_rename_dst *dst =
 				locate_rename_dst(p->two, 0);
@@ -718,11 +722,10 @@ void diffcore_rename(struct diff_options *options)
 		if (pair_to_free)
 			diff_free_filepair(pair_to_free);
 	}
-	diff_debug_queue("done copying original", &outq);
 
 	free(q->queue);
 	*q = outq;
-	diff_debug_queue("done collapsing", q);
+	diff_debug_queue("end turning a/d into renames", q);
 
 	for (i = 0; i < rename_dst_nr; i++)
 		free_filespec(rename_dst[i].two);
