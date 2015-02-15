@@ -122,6 +122,46 @@ static void NORETURN daemon_die(const char *err, va_list params)
 	exit(1);
 }
 
+static void strbuf_addstr_or_null(struct strbuf *sb, const char *s)
+{
+	if (s)
+		strbuf_addstr(sb, s);
+}
+
+struct expand_path_context {
+	const char *directory;
+};
+
+static size_t expand_path(struct strbuf *sb, const char *placeholder, void *ctx)
+{
+	struct expand_path_context *context = ctx;
+
+	switch (placeholder[0]) {
+	case 'H':
+		strbuf_addstr_or_null(sb, hostname);
+		return 1;
+	case 'C':
+		if (placeholder[1] == 'H') {
+			strbuf_addstr_or_null(sb, get_canon_hostname());
+			return 2;
+		}
+		break;
+	case 'I':
+		if (placeholder[1] == 'P') {
+			strbuf_addstr_or_null(sb, get_ip_address());
+			return 2;
+		}
+		break;
+	case 'P':
+		strbuf_addstr_or_null(sb, tcp_port);
+		return 1;
+	case 'D':
+		strbuf_addstr(sb, context->directory);
+		return 1;
+	}
+	return 0;
+}
+
 static const char *path_ok(const char *directory)
 {
 	static char rpath[PATH_MAX];
@@ -160,14 +200,10 @@ static const char *path_ok(const char *directory)
 	}
 	else if (interpolated_path && saw_extended_args) {
 		struct strbuf expanded_path = STRBUF_INIT;
-		struct strbuf_expand_dict_entry dict[6];
+		struct expand_path_context context;
 
-		dict[0].placeholder = "H"; dict[0].value = hostname;
-		dict[1].placeholder = "CH"; dict[1].value = get_canon_hostname();
-		dict[2].placeholder = "IP"; dict[2].value = get_ip_address();
-		dict[3].placeholder = "P"; dict[3].value = tcp_port;
-		dict[4].placeholder = "D"; dict[4].value = directory;
-		dict[5].placeholder = NULL; dict[5].value = NULL;
+		context.directory = directory;
+
 		if (*dir != '/') {
 			/* Allow only absolute */
 			logerror("'%s': Non-absolute path denied (interpolated-path active)", dir);
@@ -175,7 +211,7 @@ static const char *path_ok(const char *directory)
 		}
 
 		strbuf_expand(&expanded_path, interpolated_path,
-				strbuf_expand_dict_cb, &dict);
+			      expand_path, &context);
 		strlcpy(interp_path, expanded_path.buf, PATH_MAX);
 		strbuf_release(&expanded_path);
 		loginfo("Interpolated dir '%s'", interp_path);
