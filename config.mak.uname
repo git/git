@@ -556,6 +556,7 @@ else
 		USE_LIBPCRE= YesPlease
 		NO_CURL =
 		USE_NED_ALLOCATOR =
+		NO_PYTHON =
 	else
 		NO_CURL = YesPlease
 	endif
