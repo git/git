@@ -2079,6 +2079,12 @@ new default).
 
 --
 
+push.followTags::
+	If set to true enable '--follow-tags' option by default.  You
+	may override this configuration at time of push by specifying
+	'--no-follow-tags'.
+
+
 rebase.stat::
 	Whether to show a diffstat of what changed upstream since the last
 	rebase. False by default.
