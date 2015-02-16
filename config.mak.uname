@@ -530,9 +530,11 @@ else
 endif
 ifeq (MINGW32,$(MSYSTEM))
 	prefix = /mingw32/
+	NO_PYTHON =
 endif
 ifeq (MINGW64,$(MSYSTEM))
 	prefix = /mingw64/
+	NO_PYTHON =
 else
 	COMPAT_CFLAGS += -D_USE_32BIT_TIME_T
 	BASIC_LDFLAGS += -Wl,--large-address-aware
