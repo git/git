@@ -62,3 +62,51 @@ notes for details).
    (e.g. kerberos), libcURL refuses to fall back to password based
    Basic authentication without a bit of help/encouragement.
    (merge 4dbe664 bc/http-fallback-to-password-after-krb-fails later to maint).
+
+ * The "git push" documentation made the "--repo=<there>" option
+   easily misunderstood.
+   (merge 57b92a7 mg/push-repo-option-doc later to maint).
+
+ * Code to read branch name from various files in .git/ directory
+   would have misbehaved if the code to write them left an empty file.
+   (merge 66ec904 jk/status-read-branch-name-fix later to maint).
+
+ * A misspelled conditional that is always true has been fixed.
+   (merge 94ee8e2 jk/remote-curl-an-array-in-struct-cannot-be-null later to maint).
+
+ * The documentation incorrectly said that C(opy) and R(ename) are the
+   only ones that can be followed by the score number in the output in
+   the --raw format.
+   (merge ac1c2d9 jc/diff-format-doc later to maint).
+
+ * A broken pack .idx file in the receiving repository prevented the
+   dumb http transport from fetching a good copy of it from the other
+   side.
+   (merge 8b9c2dd jk/dumb-http-idx-fetch-fix later to maint).
+
+ * The error message from "git commit", when a non-existing author
+   name was given as value to the "--author=" parameter, has been
+   reworded to avoid misunderstanding.
+   (merge 1044b1f mg/commit-author-no-match-malformed-message later to maint).
+
+ * "git log --help" used to show rev-list options that are irrelevant
+   to the "log" command.
+   (merge 3cab02d jc/doc-log-rev-list-options later to maint).
+
+ * "git apply --whitespace=fix" used to under-allocate the memory when
+   the fix resulted in a longer text than the original patch.
+   (merge 407a792 jc/apply-ws-fix-expands later to maint).
+
+ * The interactive "show a list and let the user choose from it"
+   interface "add -i" used showed and prompted to the user even when
+   the candidate list was empty, against which the only "choice" the
+   user could have made was to choose nothing.
+   (merge a9c4641 ak/add-i-empty-candidates later to maint).
+
+ * The insn sheet "git rebase -i" creates did not fully honor
+   core.abbrev settings.
+   (merge edb72d5 ks/rebase-i-abbrev later to maint).
+
+ * "git fetch" over a remote-helper that cannot respond to "list"
+   command could not fetch from a symbolic reference e.g. HEAD.
+   (merge 33cae54 mh/deref-symref-over-helper-transport later to maint).
