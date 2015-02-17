@@ -3,7 +3,7 @@
 test_description='git commit races'
 . ./test-lib.sh
 
-test_expect_failure 'race to create orphan commit' '
+test_expect_success 'race to create orphan commit' '
 	write_script hare-editor <<-\EOF &&
 	git commit --allow-empty -m hare
 	EOF
