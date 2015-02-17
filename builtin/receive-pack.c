@@ -971,7 +971,7 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 		if (ref_transaction_update(transaction,
 					   namespaced_name,
 					   new_sha1, old_sha1,
-					   0, 1, "push",
+					   0, "push",
 					   &err)) {
 			rp_error("%s", err.buf);
 			strbuf_release(&err);
