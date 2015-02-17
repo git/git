@@ -255,11 +255,31 @@ enum action_on_err {
 struct ref_transaction *ref_transaction_begin(struct strbuf *err);
 
 /*
- * The following functions add a reference check or update to a
- * ref_transaction.  In all of them, refname is the name of the
- * reference to be affected.  The functions make internal copies of
- * refname and msg, so the caller retains ownership of these parameters.
- * flags can be REF_NODEREF; it is passed to update_ref_lock().
+ * Reference transaction updates
+ *
+ * The following four functions add a reference check or update to a
+ * ref_transaction.  They have some common similar parameters:
+ *
+ *     transaction -- a pointer to an open ref_transaction, obtained
+ *         from ref_transaction_begin().
+ *
+ *     refname -- the name of the reference to be affected.
+ *
+ *     flags -- flags affecting the update, passed to
+ *         update_ref_lock(). Can be REF_NODEREF, which means that
+ *         symbolic references should not be followed.
+ *
+ *     msg -- a message describing the change (for the reflog).
+ *
+ *     err -- a strbuf for receiving a description of any error that
+ *         might have occured.
+ *
+ * The functions make internal copies of refname and msg, so the
+ * caller retains ownership of these parameters.
+ *
+ * The functions return 0 on success and non-zero on failure. A
+ * failure means that the transaction as a whole has failed and needs
+ * to be rolled back.
  */
 
 /*
@@ -273,9 +293,8 @@ struct ref_transaction *ref_transaction_begin(struct strbuf *err);
  * whole transaction fails. If old_sha1 is NULL, then the previous
  * value is not checked.
  *
- * Return 0 on success and non-zero on failure. Any failure in the
- * transaction means that the transaction as a whole has failed and
- * will need to be rolled back.
+ * See the above comment "Reference transaction updates" for more
+ * information.
  */
 int ref_transaction_update(struct ref_transaction *transaction,
 			   const char *refname,
@@ -285,13 +304,13 @@ int ref_transaction_update(struct ref_transaction *transaction,
 			   struct strbuf *err);
 
 /*
- * Add a reference creation to transaction.  new_sha1 is the value
- * that the reference should have after the update; it must not be the
- * null SHA-1.  It is verified that the reference does not exist
+ * Add a reference creation to transaction. new_sha1 is the value that
+ * the reference should have after the update; it must not be
+ * null_sha1. It is verified that the reference does not exist
  * already.
- * Function returns 0 on success and non-zero on failure. A failure to create
- * means that the transaction as a whole has failed and will need to be
- * rolled back.
+ *
+ * See the above comment "Reference transaction updates" for more
+ * information.
  */
 int ref_transaction_create(struct ref_transaction *transaction,
 			   const char *refname,
@@ -300,12 +319,12 @@ int ref_transaction_create(struct ref_transaction *transaction,
 			   struct strbuf *err);
 
 /*
- * Add a reference deletion to transaction.  If old_sha1 is non-NULL, then
- * it holds the value that the reference should have had before
- * the update (which must not be the null SHA-1).
- * Function returns 0 on success and non-zero on failure. A failure to delete
- * means that the transaction as a whole has failed and will need to be
- * rolled back.
+ * Add a reference deletion to transaction. If old_sha1 is non-NULL,
+ * then it holds the value that the reference should have had before
+ * the update (which must not be null_sha1).
+ *
+ * See the above comment "Reference transaction updates" for more
+ * information.
  */
 int ref_transaction_delete(struct ref_transaction *transaction,
 			   const char *refname,
@@ -316,9 +335,10 @@ int ref_transaction_delete(struct ref_transaction *transaction,
 /*
  * Verify, within a transaction, that refname has the value old_sha1,
  * or, if old_sha1 is null_sha1, then verify that the reference
- * doesn't exist. old_sha1 must be non-NULL. Function returns 0 on
- * success and non-zero on failure. A failure to verify means that the
- * transaction as a whole has failed and will need to be rolled back.
+ * doesn't exist. old_sha1 must be non-NULL.
+ *
+ * See the above comment "Reference transaction updates" for more
+ * information.
  */
 int ref_transaction_verify(struct ref_transaction *transaction,
 			   const char *refname,
