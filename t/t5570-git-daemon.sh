@@ -157,5 +157,16 @@ test_expect_success 'access repo via interpolated hostname' '
 		git clone --bare "$GIT_DAEMON_URL/interp.git" tmp.git
 '
 
+test_expect_success 'hostname cannot break out of directory' '
+	rm -rf tmp.git &&
+	repo="$GIT_DAEMON_DOCUMENT_ROOT_PATH/../escape.git" &&
+	git init --bare "$repo" &&
+	git push "$repo" HEAD &&
+	>"$repo"/git-daemon-export-ok &&
+	test_must_fail \
+		env GIT_OVERRIDE_VIRTUAL_HOST=.. \
+		git clone --bare "$GIT_DAEMON_URL/escape.git" tmp.git
+'
+
 stop_git_daemon
 test_done
