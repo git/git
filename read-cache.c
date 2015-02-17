@@ -701,7 +701,7 @@ struct cache_entry *make_cache_entry(unsigned int mode,
 		unsigned int refresh_options)
 {
 	int size, len;
-	struct cache_entry *ce;
+	struct cache_entry *ce, *ret;
 
 	if (!verify_path(path)) {
 		error("Invalid path '%s'", path);
@@ -718,7 +718,13 @@ struct cache_entry *make_cache_entry(unsigned int mode,
 	ce->ce_namelen = len;
 	ce->ce_mode = create_ce_mode(mode);
 
-	return refresh_cache_entry(ce, refresh_options);
+	ret = refresh_cache_entry(ce, refresh_options);
+	if (!ret) {
+		free(ce);
+		return NULL;
+	} else {
+		return ret;
+	}
 }
 
 int ce_same_name(const struct cache_entry *a, const struct cache_entry *b)
