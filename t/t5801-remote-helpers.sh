@@ -281,4 +281,28 @@ test_expect_success 'push messages' '
 	)
 '
 
+test_expect_success 'fetch HEAD' '
+	(cd server &&
+	git checkout master &&
+	echo more >>file &&
+	git commit -a -m more
+	) &&
+	(cd local &&
+	git fetch origin HEAD
+	) &&
+	compare_refs server HEAD local FETCH_HEAD
+'
+
+test_expect_success 'fetch url' '
+	(cd server &&
+	git checkout master &&
+	echo more >>file &&
+	git commit -a -m more
+	) &&
+	(cd local &&
+	git fetch "testgit::${PWD}/../server"
+	) &&
+	compare_refs server HEAD local FETCH_HEAD
+'
+
 test_done
