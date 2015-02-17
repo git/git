@@ -1140,7 +1140,7 @@ static char *read_and_strip_branch(const char *path)
 	if (strbuf_read_file(&sb, git_path("%s", path), 0) <= 0)
 		goto got_nothing;
 
-	while (&sb.len && sb.buf[sb.len - 1] == '\n')
+	while (sb.len && sb.buf[sb.len - 1] == '\n')
 		strbuf_setlen(&sb, sb.len - 1);
 	if (!sb.len)
 		goto got_nothing;
