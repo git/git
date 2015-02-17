@@ -263,14 +263,19 @@ struct ref_transaction *ref_transaction_begin(struct strbuf *err);
  */
 
 /*
- * Add a reference update to transaction.  new_sha1 is the value that
- * the reference should have after the update, or null_sha1 if it should
- * be deleted.  If old_sha1 is non-NULL, then it is the value
- * that the reference should have had before the update, or null_sha1 if
- * it must not have existed beforehand.
- * Function returns 0 on success and non-zero on failure. A failure to update
- * means that the transaction as a whole has failed and will need to be
- * rolled back.
+ * Add a reference update to transaction. new_sha1 is the value that
+ * the reference should have after the update, or null_sha1 if it
+ * should be deleted. If new_sha1 is NULL, then the reference is not
+ * changed at all. old_sha1 is the value that the reference must have
+ * before the update, or null_sha1 if it must not have existed
+ * beforehand. The old value is checked after the lock is taken to
+ * prevent races. If the old value doesn't agree with old_sha1, the
+ * whole transaction fails. If old_sha1 is NULL, then the previous
+ * value is not checked.
+ *
+ * Return 0 on success and non-zero on failure. Any failure in the
+ * transaction means that the transaction as a whole has failed and
+ * will need to be rolled back.
  */
 int ref_transaction_update(struct ref_transaction *transaction,
 			   const char *refname,
@@ -306,6 +311,19 @@ int ref_transaction_delete(struct ref_transaction *transaction,
 			   const char *refname,
 			   const unsigned char *old_sha1,
 			   unsigned int flags, const char *msg,
+			   struct strbuf *err);
+
+/*
+ * Verify, within a transaction, that refname has the value old_sha1,
+ * or, if old_sha1 is null_sha1, then verify that the reference
+ * doesn't exist. old_sha1 must be non-NULL. Function returns 0 on
+ * success and non-zero on failure. A failure to verify means that the
+ * transaction as a whole has failed and will need to be rolled back.
+ */
+int ref_transaction_verify(struct ref_transaction *transaction,
+			   const char *refname,
+			   const unsigned char *old_sha1,
+			   unsigned int flags,
 			   struct strbuf *err);
 
 /*

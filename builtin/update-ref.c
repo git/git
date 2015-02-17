@@ -282,7 +282,6 @@ static const char *parse_cmd_verify(struct ref_transaction *transaction,
 {
 	struct strbuf err = STRBUF_INIT;
 	char *refname;
-	unsigned char new_sha1[20];
 	unsigned char old_sha1[20];
 
 	refname = parse_refname(input, &next);
@@ -293,13 +292,11 @@ static const char *parse_cmd_verify(struct ref_transaction *transaction,
 			    PARSE_SHA1_OLD))
 		hashclr(old_sha1);
 
-	hashcpy(new_sha1, old_sha1);
-
 	if (*next != line_termination)
 		die("verify %s: extra input: %s", refname, next);
 
-	if (ref_transaction_update(transaction, refname, new_sha1, old_sha1,
-				   update_flags, msg, &err))
+	if (ref_transaction_verify(transaction, refname, old_sha1,
+				   update_flags, &err))
 		die("%s", err.buf);
 
 	update_flags = 0;
