@@ -961,14 +961,13 @@ else
 	revisions=$onto...$orig_head
 	shortrevisions=$shorthead
 fi
-git rev-list $merges_option --pretty=oneline --abbrev-commit \
-	--abbrev=7 --reverse --left-right --topo-order \
+git rev-list $merges_option --pretty=oneline --reverse --left-right --topo-order \
 	$revisions ${restrict_revision+^$restrict_revision} | \
 	sed -n "s/^>//p" |
-while read -r shortsha1 rest
+while read -r sha1 rest
 do
 
-	if test -z "$keep_empty" && is_empty_commit $shortsha1 && ! is_merge_commit $shortsha1
+	if test -z "$keep_empty" && is_empty_commit $sha1 && ! is_merge_commit $sha1
 	then
 		comment_out="$comment_char "
 	else
@@ -977,9 +976,8 @@ do
 
 	if test t != "$preserve_merges"
 	then
-		printf '%s\n' "${comment_out}pick $shortsha1 $rest" >>"$todo"
+		printf '%s\n' "${comment_out}pick $sha1 $rest" >>"$todo"
 	else
-		sha1=$(git rev-parse $shortsha1)
 		if test -z "$rebase_root"
 		then
 			preserve=t
@@ -996,7 +994,7 @@ do
 		if test f = "$preserve"
 		then
 			touch "$rewritten"/$sha1
-			printf '%s\n' "${comment_out}pick $shortsha1 $rest" >>"$todo"
+			printf '%s\n' "${comment_out}pick $sha1 $rest" >>"$todo"
 		fi
 	fi
 done
@@ -1020,8 +1018,8 @@ then
 			# just the history of its first-parent for others that will
 			# be rebasing on top of it
 			git rev-list --parents -1 $rev | cut -d' ' -s -f2 > "$dropped"/$rev
-			short=$(git rev-list -1 --abbrev-commit --abbrev=7 $rev)
-			sane_grep -v "^[a-z][a-z]* $short" <"$todo" > "${todo}2" ; mv "${todo}2" "$todo"
+			sha1=$(git rev-list -1 $rev)
+			sane_grep -v "^[a-z][a-z]* $sha1" <"$todo" > "${todo}2" ; mv "${todo}2" "$todo"
 			rm "$rewritten"/$rev
 		fi
 	done
@@ -1054,6 +1052,7 @@ has_action "$todo" ||
 	return 2
 
 cp "$todo" "$todo".backup
+collapse_todo_ids
 git_sequence_editor "$todo" ||
 	die_abort "Could not execute editor"
 
