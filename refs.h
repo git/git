@@ -295,8 +295,8 @@ int ref_transaction_create(struct ref_transaction *transaction,
 			   struct strbuf *err);
 
 /*
- * Add a reference deletion to transaction.  If have_old is true, then
- * old_sha1 holds the value that the reference should have had before
+ * Add a reference deletion to transaction.  If old_sha1 is non-NULL, then
+ * it holds the value that the reference should have had before
  * the update (which must not be the null SHA-1).
  * Function returns 0 on success and non-zero on failure. A failure to delete
  * means that the transaction as a whole has failed and will need to be
@@ -305,7 +305,7 @@ int ref_transaction_create(struct ref_transaction *transaction,
 int ref_transaction_delete(struct ref_transaction *transaction,
 			   const char *refname,
 			   const unsigned char *old_sha1,
-			   unsigned int flags, int have_old, const char *msg,
+			   unsigned int flags, const char *msg,
 			   struct strbuf *err);
 
 /*

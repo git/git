@@ -953,8 +953,7 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 		if (ref_transaction_delete(transaction,
 					   namespaced_name,
 					   old_sha1,
-					   0, old_sha1 != NULL,
-					   "push", &err)) {
+					   0, "push", &err)) {
 			rp_error("%s", err.buf);
 			strbuf_release(&err);
 			return "failed to delete";
