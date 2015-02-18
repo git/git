@@ -1498,7 +1498,7 @@ extern const char *pager_program;
 extern int pager_in_use(void);
 extern int pager_use_color;
 extern int term_columns(void);
-extern int decimal_width(int);
+extern int decimal_width(uintmax_t);
 extern int check_pager_config(const char *cmd);
 
 extern const char *editor_program;
