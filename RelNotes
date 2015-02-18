@@ -25,6 +25,9 @@ UI, Workflows & Features
    push" when updating the branch that is checked out can now be
    tweaked by push-to-checkout hook.
 
+ * Using environment variable LANGUAGE and friends on the client side,
+   HTTP-based transports now send Accept-Language when making requests.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -110,3 +113,31 @@ notes for details).
  * "git fetch" over a remote-helper that cannot respond to "list"
    command could not fetch from a symbolic reference e.g. HEAD.
    (merge 33cae54 mh/deref-symref-over-helper-transport later to maint).
+
+ * "git push --signed" gave an incorrectly worded error message when
+   the other side did not support the capability.
+   (merge 45917f0 jc/push-cert later to maint).
+
+ * We didn't format an integer that wouldn't fit in "int" but in
+   "uintmax_t" correctly.
+   (merge d306f3d jk/decimal-width-for-uintmax later to maint).
+
+ * Reading configuration from a blob object, when it ends with a lone
+   CR, use to confuse the configuration parser.
+   (merge 1d0655c jk/config-no-ungetc-eof later to maint).
+
+ * The pack bitmap support did not build with older versions of GCC.
+   (merge bd4e882 jk/pack-bitmap later to maint).
+
+ * The documentation wasn't clear that "remote.<nick>.pushURL" and
+   "remote.<nick>.URL" are there to name the same repository accessed
+   via different transports, not two separate repositories.
+   (merge 697f652 jc/remote-set-url-doc later to maint).
+
+ * Older GnuPG implementations may not correctly import the keyring
+   material we prepare for the tests to use.
+   (merge 1f985d6 ch/new-gpg-drops-rfc-1991 later to maint).
+
+ * The credential helper for Windows (in contrib/) used to mishandle
+   a user name with an at-sign in it.
+   (merge 13d261e av/wincred-with-at-in-username-fix later to maint).
