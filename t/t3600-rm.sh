@@ -14,7 +14,7 @@ test_expect_success \
      git add -- foo bar baz 'space embedded' -q &&
      git commit -m 'add normal files'"
 
-if touch -- 'tab	embedded' 'newline
+if test_have_prereq !MINGW && touch -- 'tab	embedded' 'newline
 embedded' 2>/dev/null
 then
 	test_set_prereq FUNNYNAMES
