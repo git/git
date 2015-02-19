@@ -15,6 +15,14 @@ This test checks the following functionality:
 
 . ./test-lib.sh
 
+if test_have_prereq MINGW
+then
+	# Avoid posix-to-windows path mangling
+	pwd () {
+		builtin pwd
+	}
+fi
+
 D=`pwd`
 
 mk_empty () {
