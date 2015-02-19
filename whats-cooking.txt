@@ -1,18 +1,18 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Feb 2015, #04; Tue, 17)
-X-master-at: 3188ab3af60df6ace996d3985e8f1ca1ed3cbda5
-X-next-at: 7185a7e9c0f380b366991f3563e613dcf68b776f
+Subject: What's cooking in git.git (Feb 2015, #05; Thu, 19)
+X-master-at: f3f407747c1cce420ae4b4857c4a6806efe38680
+X-next-at: b072d44c2c27039617e40171784569d7212f3148
 
-What's cooking in git.git (Feb 2015, #04; Tue, 17)
+What's cooking in git.git (Feb 2015, #05; Thu, 19)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-The second batch of topics have been merged to 'master'.  I am
-tempted to start discarding topics in the Stalled category that
+The second and third batch of topics have been merged to 'master'.
+I am tempted to start discarding topics in the Stalled category that
 haven't seen much reviews and discussions on for a long time.
 
 You can find the changes described here in the integration branches
@@ -23,107 +23,22 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* ak/add-i-empty-candidates (2015-01-22) 1 commit
-  (merged to 'next' on 2015-02-12 at 0d3cc64)
- + add -i: return from list_and_choose if there is no candidate
+* av/wincred-with-at-in-username-fix (2015-01-25) 1 commit
+  (merged to 'next' on 2015-02-16 at 69dd76d)
+ + wincred: fix get credential if username has "@"
 
- The interactive "show a list and let the user choose from it"
- interface "add -i" used showed and prompted to the user even when
- the candidate list was empty, against which the only "choice" the
- user could have made was to choose nothing.
+ The credential helper for Windows (in contrib/) used to mishandle
+ a user name with an at-sign in it.
 
 
-* jc/apply-ws-fix-expands (2015-01-22) 3 commits
-  (merged to 'next' on 2015-02-12 at 9a45b66)
- + apply: count the size of postimage correctly
- + apply: make update_pre_post_images() sanity check the given postlen
- + apply.c: typofix
- (this branch is used by jc/apply-ws-fix-expands-report.)
+* ch/new-gpg-drops-rfc-1991 (2015-01-29) 2 commits
+  (merged to 'next' on 2015-02-16 at e2daf10)
+ + t/lib-gpg: sanity-check that we can actually sign
+ + t/lib-gpg: include separate public keys in keyring.gpg
 
- "git apply --whitespace=fix" used to under-allocate the memory
- when the fix resulted in a longer text than the original patch.
+ Older GnuPG implementations may not correctly import the keyring
+ material we prepare for the tests to use.
 
-
-* jc/diff-format-doc (2015-01-28) 1 commit
-  (merged to 'next' on 2015-02-12 at 72a018a)
- + diff-format doc: a score can follow M for rewrite
-
- The documentation incorrectly said that C(opy) and R(ename) are the
- only ones that can be followed by the score number in the output in
- the --raw format.
-
-
-* jc/doc-log-rev-list-options (2015-01-23) 1 commit
-  (merged to 'next' on 2015-02-12 at 614331f)
- + Documentation: what does "git log --indexed-objects" even mean?
-
- "git log --help" used to show rev-list options that are irrelevant
- to the "log" command.
-
-
-* jc/t4122-use-test-write-lines (2015-01-28) 1 commit
-  (merged to 'next' on 2015-02-12 at 3ceaae3)
- + t4122: use test_write_lines from test-lib-functions
-
-
-* jk/dumb-http-idx-fetch-fix (2015-01-27) 1 commit
-  (merged to 'next' on 2015-02-12 at 6338345)
- + dumb-http: do not pass NULL path to parse_pack_index
-
- A broken pack .idx file in the receiving repository prevented the
- dumb http transport from fetching a good copy of it from the other
- side.
-
-
-* jk/remote-curl-an-array-in-struct-cannot-be-null (2015-01-28) 1 commit
-  (merged to 'next' on 2015-02-12 at 669040d)
- + do not check truth value of flex arrays
-
- Fix a misspelled conditional that is always true.
-
-
-* jk/status-read-branch-name-fix (2015-01-28) 1 commit
-  (merged to 'next' on 2015-02-12 at 1af96a9)
- + read_and_strip_branch: fix typo'd address-of operator
-
- Code to read branch name from various files in .git/ directory
- would have misbehaved if the code to write them left an empty file.
-
-
-* ks/rebase-i-abbrev (2015-01-22) 1 commit
-  (merged to 'next' on 2015-02-12 at 35c3739)
- + rebase -i: use full object name internally throughout the script
-
- The insn sheet "git rebase -i" creates did not fully honor
- core.abbrev settings.
-
-
-* mg/commit-author-no-match-malformed-message (2015-01-26) 1 commit
-  (merged to 'next' on 2015-02-12 at 200cd9c)
- + commit: reword --author error message
-
- The error message from "git commit", when a non-existing author
- name was given as value to the "--author=" parameter, has been
- reworded to avoid misunderstanding.
-
-
-* mg/push-repo-option-doc (2015-01-28) 1 commit
-  (merged to 'next' on 2015-02-12 at 021ec32)
- + git-push.txt: document the behavior of --repo
-
- The "git push" documentation made the "--repo=<there>" option
- easily misunderstood.
-
-
-* mh/deref-symref-over-helper-transport (2015-01-21) 1 commit
-  (merged to 'next' on 2015-02-12 at de36191)
- + transport-helper: do not request symbolic refs to remote helpers
-
- "git fetch" over a remote-helper that cannot respond to "list"
- command could not fetch from a symbolic reference e.g. HEAD.
-
---------------------------------------------------
-[New Topics]
 
 * jc/push-cert (2015-02-12) 1 commit
   (merged to 'next' on 2015-02-16 at f40b3c5)
@@ -132,103 +47,61 @@ of the repositories listed at
  "git push --signed" gave an incorrectly worded error message when
  the other side did not support the capability.
 
- Will merge to 'master'.
+
+* jc/remote-set-url-doc (2015-01-29) 1 commit
+  (merged to 'next' on 2015-02-16 at 1f9c342)
+ + Documentation/git-remote.txt: stress that set-url is not for triangular
+
+ Clarify in the documentation that "remote.<nick>.pushURL" and
+ "remote.<nick>.URL" are there to name the same repository accessed
+ via different transports, not two separate repositories.
 
 
-* dp/remove-duplicated-header-inclusion (2015-02-13) 1 commit
- - do not include the same header twice
+* jk/config-no-ungetc-eof (2015-02-05) 2 commits
+  (merged to 'next' on 2015-02-16 at b7fc890)
+ + config_buf_ungetc: warn when pushing back a random character
+ + config: do not ungetc EOF
 
- Code clean-up.
-
- Will merge to 'next'.
-
-
-* jc/diff-test-updates (2015-02-15) 6 commits
- - t4008: modernise style
- - t/diff-lib: check exact object names in compare_diff_raw
- - tests: do not borrow from COPYING and README from the real source
- - t4010: correct expected object names
- - t9300: correct expected object names
- - t4008: correct stale comments
- (this branch is used by jc/diff-b-m.)
-
- Test clean-up.
-
- Will merge to 'next'.
+ Reading configuration from a blob object, when it ends with a lone
+ CR, use to confuse the configuration parser.
 
 
-* jc/send-email-sensible-encoding (2015-02-13) 1 commit
- - send-email: ask confirmation if given encoding name is very short
+* jk/decimal-width-for-uintmax (2015-02-05) 1 commit
+  (merged to 'next' on 2015-02-16 at e608239)
+ + decimal_width: avoid integer overflow
 
- "git send-email" used to accept a mistaken "y" (or "yes") as an
- answer to "What encoding do you want to use [UTF-8]? " without
- questioning.  Now it asks for confirmation when the answer looks
- too short to be a valid encoding name.
-
- Will merge to 'next'.
+ We didn't format an integer that wouldn't fit in "int" but in
+ "uintmax_t" correctly.
 
 
-* jk/push-config (2015-02-17) 4 commits
- - [NEEDSACK] push: allow --follow-tags to be set by config push.followTags
- - cmd_push: pass "flags" pointer to config callback
- - cmd_push: set "atomic" bit directly
- - git_push_config: drop cargo-culted wt_status pointer
+* jk/pack-bitmap (2015-02-04) 1 commit
+  (merged to 'next' on 2015-02-16 at 2e30424)
+ + ewah: fix building with gcc < 3.4.0
 
- Waiting for Ack and/or update for the tip one from Dave Olszewski
- ($gmane/263880, $gmane/263991).
+ The pack bitmap support did not build with older versions of GCC.
 
 
-* km/send-email-getopt-long-workarounds (2015-02-16) 1 commit
- - git-send-email.perl: support no- prefix with older GetOptions
+* ye/http-accept-language (2015-01-28) 1 commit
+  (merged to 'next' on 2015-02-16 at 10ed819)
+ + http: add Accept-Language header if possible
 
- Even though we officially haven't dropped Perl 5.8 support, the
- Getopt::Long package that came with it does not support "--no-"
- prefix to negate a boolean option; manually add support to help
- people with older Getopt::Long package.
+ Using environment variable LANGUAGE and friends on the client side,
+ HTTP-based transports now send Accept-Language when making requests.
+
+--------------------------------------------------
+[New Topics]
+
+* ak/git-pm-typofix (2015-02-18) 1 commit
+ - Git.pm: two minor typo fixes
 
  Will merge to 'next'.
 
 
-* mh/transport-capabilities (2015-02-13) 2 commits
- - transport-helper: ask the helper to set the same options for import as for fetch
- - transport-helper: ask the helper to set progress and verbosity options after asking for its capabilities
+* jc/decorate-leaky-separator-color (2015-02-18) 1 commit
+ - log --decorate: do not leak "commit" color into the next item
 
- Will merge to 'next'.
-
-
-* sb/hex-object-name-is-at-most-41-bytes-long (2015-02-13) 1 commit
- - hex.c: reduce memory footprint of sha1_to_hex static buffers
-
- Will merge to 'next'.
-
-
-* jk/daemon-interpolate (2015-02-17) 3 commits
- - daemon: sanitize incoming virtual hostname
- - t5570: test git-daemon's --interpolated-path option
- - git_connect: let user override virtual-host we send to daemon
-
- The "interpolated-path" option of "git daemon" inserted any string
- client declared on the "host=" capability request without checking.
- Sanitize and limit %H and %CH to a saner and a valid DNS name.
-
- Will merge to 'next'.
-
-
-* rs/daemon-interpolate (2015-02-17) 2 commits
- - daemon: use callback to build interpolated path
- - daemon: look up client-supplied hostname lazily
-
- "git daemon" looked up the hostname even when "%CH" and "%IP"
- interpolations are not requested, which was unnecessary.
-
- Will merge to 'next'.
-
-
-* sb/plug-leak-in-make-cache-entry (2015-02-17) 1 commit
- - read-cache.c: free cache entry when refreshing fails
-
- "update-index --refresh" used to leak when an entry cannot be
- refreshed for whatever reason.
+ "git log --decorate" did not reset colors correctly around the
+ branch names.
 
  Will merge to 'next'.
 
@@ -298,7 +171,9 @@ of the repositories listed at
  - t5601: add more test cases for IPV6
  - connect.c: improve parsing of literal IPV6 addresses
 
- Need extra sets of eyes to review this.
+ Parsing of literal IPv6 addresses.
+
+ Will discard.
 
 
 * ak/stash-store-create-help (2015-01-13) 1 commit
@@ -315,7 +190,7 @@ of the repositories listed at
 
 
 * jc/diff-b-m (2015-02-17) 4 commits
- . WIP: diff-b-m
+ - WIP: diff-b-m
  - diffcore-rename: allow easier debugging
  - diffcore-rename.c: add locate_rename_src()
  - diffcore-break: allow debugging
@@ -341,12 +216,6 @@ of the repositories listed at
  - remote: add --fetch and --both options to set-url
 
  Expecting a reroll.
-
-
-* ms/submodule-update-config-doc (2014-11-03) 1 commit
- - submodule: clarify documentation for update subcommand
-
- Needs a reroll ($gmane/259037).
 
 
 * je/quiltimport-no-fuzz (2014-10-21) 2 commits
@@ -465,16 +334,144 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* jn/doc-api-errors (2014-12-04) 1 commit
- - doc: document error handling functions and conventions
+* ms/submodule-update-config-doc (2015-02-17) 2 commits
+ - SQUASH???
+ - submodule: clarify documentation for update subcommand
+
+ The interaction between "git submodule update" and the
+ submodule.*.update configuration was not clearly documented.
+
+ The SQUASH may be sufficient as a reroll ($gmane/259037).
+
+
+* dp/remove-duplicated-header-inclusion (2015-02-13) 1 commit
+  (merged to 'next' on 2015-02-18 at a1bf108)
+ + do not include the same header twice
+
+ Code clean-up.
+
+ Will merge to 'master'.
+
+
+* jc/diff-test-updates (2015-02-15) 6 commits
+  (merged to 'next' on 2015-02-18 at f152c9f)
+ + t4008: modernise style
+ + t/diff-lib: check exact object names in compare_diff_raw
+ + tests: do not borrow from COPYING and README from the real source
+ + t4010: correct expected object names
+ + t9300: correct expected object names
+ + t4008: correct stale comments
+ (this branch is used by jc/diff-b-m.)
+
+ Test clean-up.
+
+ Will merge to 'master'.
+
+
+* jc/send-email-sensible-encoding (2015-02-13) 1 commit
+  (merged to 'next' on 2015-02-18 at 7457655)
+ + send-email: ask confirmation if given encoding name is very short
+
+ "git send-email" used to accept a mistaken "y" (or "yes") as an
+ answer to "What encoding do you want to use [UTF-8]? " without
+ questioning.  Now it asks for confirmation when the answer looks
+ too short to be a valid encoding name.
+
+ Will merge to 'master'.
+
+
+* jk/push-config (2015-02-17) 4 commits
+ - [NEEDSACK] push: allow --follow-tags to be set by config push.followTags
+ - cmd_push: pass "flags" pointer to config callback
+ - cmd_push: set "atomic" bit directly
+ - git_push_config: drop cargo-culted wt_status pointer
+
+ Waiting for Ack and/or update for the tip one from Dave Olszewski
+ ($gmane/263880, $gmane/263991).
+
+
+* km/send-email-getopt-long-workarounds (2015-02-16) 1 commit
+  (merged to 'next' on 2015-02-18 at 84c1597)
+ + git-send-email.perl: support no- prefix with older GetOptions
+
+ Even though we officially haven't dropped Perl 5.8 support, the
+ Getopt::Long package that came with it does not support "--no-"
+ prefix to negate a boolean option; manually add support to help
+ people with older Getopt::Long package.
+
+ Will merge to 'master'.
+
+
+* mh/transport-capabilities (2015-02-13) 2 commits
+  (merged to 'next' on 2015-02-18 at 87e8fcc)
+ + transport-helper: ask the helper to set the same options for import as for fetch
+ + transport-helper: ask the helper to set progress and verbosity options after asking for its capabilities
+
+ The transport-helper did not give transport options such as
+ verbosity, progress, cloning, etc. to import and export based
+ helpers, like it did for fetch and push based helpers, robbing them
+ the chance to honor the wish of the end-users better.
+
+ Will merge to 'master'.
+
+
+* sb/hex-object-name-is-at-most-41-bytes-long (2015-02-13) 1 commit
+  (merged to 'next' on 2015-02-18 at 53d522b)
+ + hex.c: reduce memory footprint of sha1_to_hex static buffers
+
+ Code clean-up.
+
+ Will merge to 'master'.
+
+
+* jk/daemon-interpolate (2015-02-17) 3 commits
+ - daemon: sanitize incoming virtual hostname
+ - t5570: test git-daemon's --interpolated-path option
+ - git_connect: let user override virtual-host we send to daemon
+
+ The "interpolated-path" option of "git daemon" inserted any string
+ client declared on the "host=" capability request without checking.
+ Sanitize and limit %H and %CH to a saner and a valid DNS name.
 
  Will merge to 'next'.
 
 
+* rs/daemon-interpolate (2015-02-17) 2 commits
+  (merged to 'next' on 2015-02-18 at c0f5750)
+ + daemon: use callback to build interpolated path
+ + daemon: look up client-supplied hostname lazily
+
+ "git daemon" looked up the hostname even when "%CH" and "%IP"
+ interpolations are not requested, which was unnecessary.
+
+ Will merge to 'master'.
+
+
+* sb/plug-leak-in-make-cache-entry (2015-02-17) 1 commit
+  (merged to 'next' on 2015-02-18 at e637f65)
+ + read-cache.c: free cache entry when refreshing fails
+
+ "update-index --refresh" used to leak when an entry cannot be
+ refreshed for whatever reason.
+
+ Will merge to 'master'.
+
+
+* jn/doc-api-errors (2014-12-04) 1 commit
+  (merged to 'next' on 2015-02-18 at f60eda6)
+ + doc: document error handling functions and conventions
+
+ The error handling functions and conventions are now documented in
+ the API manual.
+
+ Will merge to 'master'.
+
+
 * jk/sanity (2015-02-15) 3 commits
- - test-lib.sh: set prerequisite SANITY by testing what we really need
- - tests: correct misuses of POSIXPERM
- - t/lib-httpd: switch SANITY check for NOT_ROOT
+  (merged to 'next' on 2015-02-18 at 5c54b53)
+ + test-lib.sh: set prerequisite SANITY by testing what we really need
+ + tests: correct misuses of POSIXPERM
+ + t/lib-httpd: switch SANITY check for NOT_ROOT
 
  The tests that wanted to see that file becomes unreadable after
  running "chmod a-r file", and the tests that wanted to make sure it
@@ -483,7 +480,7 @@ of the repositories listed at
  heuristics.  The tests and their prerequisites have been updated to
  check what they really require.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * ab/merge-file-prefix (2015-02-11) 1 commit
@@ -517,22 +514,24 @@ of the repositories listed at
 
 
 * jc/max-io-size-and-ssize-max (2015-02-12) 1 commit
- - xread/xwrite: clip MAX_IO_SIZE to SSIZE_MAX
+  (merged to 'next' on 2015-02-18 at 0c8a4da)
+ + xread/xwrite: clip MAX_IO_SIZE to SSIZE_MAX
 
  Our default I/O size (8 MiB) for large files was too large for some
  platforms with smaller SSIZE_MAX, leading to read(2)/write(2)
  failures.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jk/fast-import-die-nicely-fix (2015-02-10) 1 commit
- - fast-import: avoid running end_packfile recursively
+  (merged to 'next' on 2015-02-18 at e249425)
+ + fast-import: avoid running end_packfile recursively
 
  "git fast-import" used to crash when it could not close and
  conclude the resulting packfile cleanly.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * mh/expire-updateref-fixes (2015-02-09) 10 commits
@@ -581,27 +580,6 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* jk/config-no-ungetc-eof (2015-02-05) 2 commits
-  (merged to 'next' on 2015-02-16 at b7fc890)
- + config_buf_ungetc: warn when pushing back a random character
- + config: do not ungetc EOF
-
- Reading configuration from a blob object, when it ends with a lone
- CR, use to confuse the configuration parser.
-
- Will merge to 'master'.
-
-
-* jk/decimal-width-for-uintmax (2015-02-05) 1 commit
-  (merged to 'next' on 2015-02-16 at e608239)
- + decimal_width: avoid integer overflow
-
- We didn't format an integer that wouldn't fit in "int" but in
- "uintmax_t" correctly.
-
- Will merge to 'master'.
-
-
 * ss/check-builtins-on-windows (2015-02-05) 1 commit
   (merged to 'next' on 2015-02-16 at 2c10cc1)
  + check-builtins: strip executable suffix $X when enumerating builtins
@@ -609,47 +587,17 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* ch/new-gpg-drops-rfc-1991 (2015-01-29) 2 commits
-  (merged to 'next' on 2015-02-16 at e2daf10)
- + t/lib-gpg: sanity-check that we can actually sign
- + t/lib-gpg: include separate public keys in keyring.gpg
-
- Older GnuPG implementations may not correctly import the keyring
- material we prepare for the tests to use.
-
- Will merge to 'master'.
-
-
 * jc/apply-beyond-symlink (2015-02-10) 4 commits
- - apply: do not touch a file beyond a symbolic link
- - apply: do not read from beyond a symbolic link
- - apply: do not read from the filesystem under --index
- - apply: reject input that touches outside the working area
+  (merged to 'next' on 2015-02-18 at 4109de1)
+ + apply: do not touch a file beyond a symbolic link
+ + apply: do not read from beyond a symbolic link
+ + apply: do not read from the filesystem under --index
+ + apply: reject input that touches outside the working area
 
  "git apply" was not very careful about reading from, removing,
  updating and creating paths outside the working tree (under
  --index/--cached) or the current directory (when used as a
  replacement for GNU patch).
-
- Will merge to 'next'.
-
-
-* jc/remote-set-url-doc (2015-01-29) 1 commit
-  (merged to 'next' on 2015-02-16 at 1f9c342)
- + Documentation/git-remote.txt: stress that set-url is not for triangular
-
- Clarify in the documentation that "remote.<nick>.pushURL" and
- "remote.<nick>.URL" are there to name the same repository accessed
- via different transports, not two separate repositories.
-
- Will merge to 'master'.
-
-
-* jk/pack-bitmap (2015-02-04) 1 commit
-  (merged to 'next' on 2015-02-16 at 2e30424)
- + ewah: fix building with gcc < 3.4.0
-
- The pack bitmap support did not build with older versions of GCC.
 
  Will merge to 'master'.
 
@@ -686,29 +634,21 @@ of the repositories listed at
 
 
 * tc/missing-http-proxyauth (2015-02-03) 1 commit
- - http: support curl < 7.10.7
+  (merged to 'next' on 2015-02-18 at 8ff01ad)
+ + http: support curl < 7.10.7
 
  We did not check the curl library version before using
  CURLOPT_PROXYAUTH feature that may not exist.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jc/apply-ws-fix-expands-report (2015-01-22) 1 commit
- - apply: detect and mark whitespace errors in context lines when fixing
+  (merged to 'next' on 2015-02-18 at b571668)
+ + apply: detect and mark whitespace errors in context lines when fixing
 
  "git apply --whitespace=fix" fixed whitespace errors in the common
  context lines but did so without reporting.
-
- Will merge to 'next'.
-
-
-* av/wincred-with-at-in-username-fix (2015-01-25) 1 commit
-  (merged to 'next' on 2015-02-16 at 69dd76d)
- + wincred: fix get credential if username has "@"
-
- The credential helper for Windows (in contrib/) used to mishandle
- a user name with an at-sign in it.
 
  Will merge to 'master'.
 
@@ -721,16 +661,6 @@ of the repositories listed at
 
  Longstanding configuration variable naming rules has been added to
  the documentation.
-
- Will merge to 'master'.
-
-
-* ye/http-accept-language (2015-01-28) 1 commit
-  (merged to 'next' on 2015-02-16 at 10ed819)
- + http: add Accept-Language header if possible
-
- Using environment variable LANGUAGE and friends on the client side,
- HTTP-based transports now send Accept-Language when making requests.
 
  Will merge to 'master'.
 
@@ -763,78 +693,80 @@ of the repositories listed at
 
 
 * jk/strbuf-doc-to-header (2015-01-16) 7 commits
- - strbuf.h: group documentation for trim functions
- - strbuf.h: drop boilerplate descriptions of strbuf_split_*
- - strbuf.h: reorganize api function grouping headers
- - strbuf.h: format asciidoc code blocks as 4-space indent
- - strbuf.h: drop asciidoc list formatting from API docs
- - strbuf.h: unify documentation comments beginnings
- - strbuf.h: integrate api-strbuf.txt documentation
+  (merged to 'next' on 2015-02-18 at 0482c65)
+ + strbuf.h: group documentation for trim functions
+ + strbuf.h: drop boilerplate descriptions of strbuf_split_*
+ + strbuf.h: reorganize api function grouping headers
+ + strbuf.h: format asciidoc code blocks as 4-space indent
+ + strbuf.h: drop asciidoc list formatting from API docs
+ + strbuf.h: unify documentation comments beginnings
+ + strbuf.h: integrate api-strbuf.txt documentation
 
  Resolve the "doc vs header" to favor the latter.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * nd/attr-optim (2014-12-29) 3 commits
- - attr: avoid heavy work when we know the specified attr is not defined
- - attr: do not attempt to expand when we know it's not a macro
- - attr.c: rename arg name attr_nr to avoid shadowing the global one
+  (merged to 'next' on 2015-02-18 at 598e68a)
+ + attr: avoid heavy work when we know the specified attr is not defined
+ + attr: do not attempt to expand when we know it's not a macro
+ + attr.c: rename arg name attr_nr to avoid shadowing the global one
 
  Optimize attribute look-up, mostly useful in "git grep" on a
  project that does not use many attributes, by avoiding it when we
  (should) know that the attributes are not defined in the first
  place.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * nd/multiple-work-trees (2015-01-27) 38 commits
- - t2026 needs procondition SANITY
- - git-checkout.txt: a note about multiple checkout support for submodules
- - checkout: add --ignore-other-wortrees
- - checkout: pass whole struct to parse_branchname_arg instead of individual flags
- - git-common-dir: make "modules/" per-working-directory directory
- - checkout: do not fail if target is an empty directory
- - t2025: add a test to make sure grafts is working from a linked checkout
- - checkout: don't require a work tree when checking out into a new one
- - git_path(): keep "info/sparse-checkout" per work-tree
- - count-objects: report unused files in $GIT_DIR/worktrees/...
- - gc: support prune --worktrees
- - gc: factor out gc.pruneexpire parsing code
- - gc: style change -- no SP before closing parenthesis
- - checkout: clean up half-prepared directories in --to mode
- - checkout: reject if the branch is already checked out elsewhere
- - prune: strategies for linked checkouts
- - checkout: support checking out into a new working directory
- - use new wrapper write_file() for simple file writing
- - wrapper.c: wrapper to open a file, fprintf then close
- - setup.c: support multi-checkout repo setup
- - setup.c: detect $GIT_COMMON_DIR check_repository_format_gently()
- - setup.c: convert check_repository_format_gently to use strbuf
- - setup.c: detect $GIT_COMMON_DIR in is_git_directory()
- - setup.c: convert is_git_directory() to use strbuf
- - git-stash: avoid hardcoding $GIT_DIR/logs/....
- - *.sh: avoid hardcoding $GIT_DIR/hooks/...
- - git-sh-setup.sh: use rev-parse --git-path to get $GIT_DIR/objects
- - $GIT_COMMON_DIR: a new environment variable
- - commit: use SEQ_DIR instead of hardcoding "sequencer"
- - fast-import: use git_path() for accessing .git dir instead of get_git_dir()
- - reflog: avoid constructing .lock path with git_path
- - *.sh: respect $GIT_INDEX_FILE
- - git_path(): be aware of file relocation in $GIT_DIR
- - path.c: group git_path(), git_pathdup() and strbuf_git_path() together
- - path.c: rename vsnpath() to do_git_path()
- - git_snpath(): retire and replace with strbuf_git_path()
- - path.c: make get_pathname() call sites return const char *
- - path.c: make get_pathname() return strbuf instead of static buffer
+  (merged to 'next' on 2015-02-18 at b51f696)
+ + t2026 needs procondition SANITY
+ + git-checkout.txt: a note about multiple checkout support for submodules
+ + checkout: add --ignore-other-wortrees
+ + checkout: pass whole struct to parse_branchname_arg instead of individual flags
+ + git-common-dir: make "modules/" per-working-directory directory
+ + checkout: do not fail if target is an empty directory
+ + t2025: add a test to make sure grafts is working from a linked checkout
+ + checkout: don't require a work tree when checking out into a new one
+ + git_path(): keep "info/sparse-checkout" per work-tree
+ + count-objects: report unused files in $GIT_DIR/worktrees/...
+ + gc: support prune --worktrees
+ + gc: factor out gc.pruneexpire parsing code
+ + gc: style change -- no SP before closing parenthesis
+ + checkout: clean up half-prepared directories in --to mode
+ + checkout: reject if the branch is already checked out elsewhere
+ + prune: strategies for linked checkouts
+ + checkout: support checking out into a new working directory
+ + use new wrapper write_file() for simple file writing
+ + wrapper.c: wrapper to open a file, fprintf then close
+ + setup.c: support multi-checkout repo setup
+ + setup.c: detect $GIT_COMMON_DIR check_repository_format_gently()
+ + setup.c: convert check_repository_format_gently to use strbuf
+ + setup.c: detect $GIT_COMMON_DIR in is_git_directory()
+ + setup.c: convert is_git_directory() to use strbuf
+ + git-stash: avoid hardcoding $GIT_DIR/logs/....
+ + *.sh: avoid hardcoding $GIT_DIR/hooks/...
+ + git-sh-setup.sh: use rev-parse --git-path to get $GIT_DIR/objects
+ + $GIT_COMMON_DIR: a new environment variable
+ + commit: use SEQ_DIR instead of hardcoding "sequencer"
+ + fast-import: use git_path() for accessing .git dir instead of get_git_dir()
+ + reflog: avoid constructing .lock path with git_path
+ + *.sh: respect $GIT_INDEX_FILE
+ + git_path(): be aware of file relocation in $GIT_DIR
+ + path.c: group git_path(), git_pathdup() and strbuf_git_path() together
+ + path.c: rename vsnpath() to do_git_path()
+ + git_snpath(): retire and replace with strbuf_git_path()
+ + path.c: make get_pathname() call sites return const char *
+ + path.c: make get_pathname() return strbuf instead of static buffer
 
  A replacement for contrib/workdir/git-new-workdir that does not
  rely on symbolic links and make sharing of objects and refs safer
  by making the borrowee and borrowers aware of each other.
 
- Will merge to 'next'.
-
+ Will cook in 'next'.
 
 --------------------------------------------------
 [Discarded]
