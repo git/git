@@ -1137,6 +1137,16 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 			free(quoted);
 	}
 
+	if (getenv("GIT_STRACE_COMMANDS")) {
+		char **path = get_path_split();
+		cmd = path_lookup("strace.exe", path, 1);
+		if (!cmd)
+			return error("strace not found!");
+		if (xutftowcs_path(wcmd, cmd) < 0)
+			return -1;
+		strbuf_insert(&args, 0, "strace ", 7);
+	}
+
 	ALLOC_ARRAY(wargs, st_add(st_mult(2, args.len), 1));
 	xutftowcs(wargs, args.buf, 2 * args.len + 1);
 	strbuf_release(&args);
