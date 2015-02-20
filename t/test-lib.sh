@@ -648,7 +648,12 @@ test_eval_ () {
 	#     be _inside_ the block to avoid polluting the "set -x" output
 	#
 
-	test_eval_inner_ "$@" </dev/null >&3 2>&4
+	if test -n "$TEST_NO_REDIRECT"
+	then
+		test_eval_inner_ "$@"
+	else
+		test_eval_inner_ "$@" </dev/null >&3 2>&4
+	fi
 	{
 		test_eval_ret_=$?
 		if want_trace
