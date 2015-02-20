@@ -1699,6 +1699,13 @@ log.mailmap::
 	If true, makes linkgit:git-log[1], linkgit:git-show[1], and
 	linkgit:git-whatchanged[1] assume `--use-mailmap`.
 
+mailinfo.scissors::
+	If true, makes linkgit:git-mailinfo[1] (and therefore
+	linkgit:git-am[1]) act by default as if the --scissors option
+	was provided on the command-line. When active, this features
+	removes everything from the message body before a scissors
+	line (i.e. consisting mainly of ">8", "8<" and "-").
+
 mailmap.file::
 	The location of an augmenting mailmap file. The default
 	mailmap, located in the root of the repository, is loaded
