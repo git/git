@@ -326,7 +326,7 @@ test_expect_success !MINGW,!CYGWIN 'clone local path foo:bar' '
 
 test_expect_success 'bracketed hostnames are still ssh' '
 	git clone "[myhost:123]:src" ssh-bracket-clone &&
-	expect_ssh myhost:123 src
+	expect_ssh myhost '-p 123' src
 '
 
 counter=0

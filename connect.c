@@ -274,28 +274,44 @@ static enum protocol get_protocol(const char *name)
 	die("I don't handle protocol '%s'", name);
 }
 
+static char *host_end(char **hoststart, int removebrackets)
+{
+	char *host = *hoststart;
+	char *end;
+	char *start = strstr(host, "@[");
+	if (start)
+		start++; /* Jump over '@' */
+	else
+		start = host;
+	if (start[0] == '[') {
+		end = strchr(start + 1, ']');
+		if (end) {
+			if (removebrackets) {
+				*end = 0;
+				memmove(start, start + 1, end - start);
+				end++;
+			}
+		} else
+			end = host;
+	} else
+		end = host;
+	return end;
+}
+
 #define STR_(s)	# s
 #define STR(s)	STR_(s)
 
 static void get_host_and_port(char **host, const char **port)
 {
 	char *colon, *end;
-
-	if (*host[0] == '[') {
-		end = strchr(*host + 1, ']');
-		if (end) {
-			*end = 0;
-			end++;
-			(*host)++;
-		} else
-			end = *host;
-	} else
-		end = *host;
+	end = host_end(host, 1);
 	colon = strchr(end, ':');
-
 	if (colon) {
-		*colon = 0;
-		*port = colon + 1;
+		long portnr = strtol(colon + 1, &end, 10);
+		if (end != colon + 1 && *end == '\0' && 0 <= portnr && portnr < 65536) {
+			*colon = 0;
+			*port = colon + 1;
+		}
 	}
 }
 
@@ -547,13 +563,16 @@ static struct child_process *git_proxy_connect(int fd[2], char *host)
 	return proxy;
 }
 
-static const char *get_port_numeric(const char *p)
+static char *get_port(char *host)
 {
 	char *end;
+	char *p = strchr(host, ':');
+
 	if (p) {
 		long port = strtol(p + 1, &end, 10);
 		if (end != p + 1 && *end == '\0' && 0 <= port && port < 65536) {
-			return p;
+			*p = '\0';
+			return p+1;
 		}
 	}
 
@@ -595,14 +614,7 @@ static enum protocol parse_connect_url(const char *url_orig, char **ret_host,
 	 * Don't do destructive transforms as protocol code does
 	 * '[]' unwrapping in get_host_and_port()
 	 */
-	if (host[0] == '[') {
-		end = strchr(host + 1, ']');
-		if (end) {
-			end++;
-		} else
-			end = host;
-	} else
-		end = host;
+	end = host_end(&host, 0);
 
 	if (protocol == PROTO_LOCAL)
 		path = end;
@@ -705,7 +717,8 @@ struct child_process *git_connect(int fd[2], const char *url,
 			char *ssh_host = hostandport;
 			const char *port = NULL;
 			get_host_and_port(&ssh_host, &port);
-			port = get_port_numeric(port);
+			if (!port)
+				port = get_port(ssh_host);
 
 			if (!ssh) ssh = "ssh";
 
