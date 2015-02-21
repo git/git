@@ -1384,9 +1384,7 @@ static int get_sha1_with_context_1(const char *name,
 			namelen = strlen(cp);
 		}
 
-		strncpy(oc->path, cp,
-			sizeof(oc->path));
-		oc->path[sizeof(oc->path)-1] = '\0';
+		strlcpy(oc->path, cp, sizeof(oc->path));
 
 		if (!active_cache)
 			read_cache();
@@ -1436,9 +1434,7 @@ static int get_sha1_with_context_1(const char *name,
 							   name, len);
 			}
 			hashcpy(oc->tree, tree_sha1);
-			strncpy(oc->path, filename,
-				sizeof(oc->path));
-			oc->path[sizeof(oc->path)-1] = '\0';
+			strlcpy(oc->path, filename, sizeof(oc->path));
 
 			free(new_filename);
 			return ret;
