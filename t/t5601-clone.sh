@@ -301,11 +301,17 @@ expect_ssh () {
 		(cd "$TRASH_DIRECTORY" && rm -f ssh-expect && >ssh-output)
 	' &&
 	{
-		case "$1" in
-		none)
+		case "$#" in
+		1)
+			;;
+		2)
+			echo "ssh: $1 git-upload-pack '$2'"
+			;;
+		3)
+			echo "ssh: $1 $2 git-upload-pack '$3'"
 			;;
 		*)
-			echo "ssh: $1 git-upload-pack '$2'"
+			echo "ssh: $1 $2 git-upload-pack '$3' $4"
 		esac
 	} >"$TRASH_DIRECTORY/ssh-expect" &&
 	(cd "$TRASH_DIRECTORY" && test_cmp ssh-expect ssh-output)
@@ -336,7 +342,8 @@ counter=0
 test_clone_url () {
 	counter=$(($counter + 1))
 	test_might_fail git clone "$1" tmp$counter &&
-	expect_ssh "$2" "$3"
+	shift &&
+	expect_ssh "$@"
 }
 
 test_expect_success !MINGW 'clone c:temp is ssl' '
@@ -359,7 +366,7 @@ done
 for repo in rep rep/home/project 123
 do
 	test_expect_success "clone [::1]:$repo" '
-		test_clone_url [::1]:$repo ::1 $repo
+		test_clone_url [::1]:$repo ::1 "$repo"
 	'
 done
 #home directory
@@ -400,24 +407,40 @@ test_expect_success 'clone ssh://host.xz:22/~repo' '
 '
 
 #IPv6
-test_expect_success 'clone ssh://[::1]/home/user/repo' '
-	test_clone_url "ssh://[::1]/home/user/repo" "::1" "/home/user/repo"
-'
+for tuah in ::1 [::1] user@::1 user@[::1] [user@::1]
+do
+	ehost=$(echo $tuah | tr -d "[]")
+	test_expect_success "clone ssh://$tuah/home/user/repo" "
+	  test_clone_url ssh://$tuah/home/user/repo $ehost /home/user/repo
+	"
+done
 
 #IPv6 from home directory
-test_expect_success 'clone ssh://[::1]/~repo' '
-	test_clone_url "ssh://[::1]/~repo" "::1" "~repo"
-'
+for tuah in ::1 [::1] user@::1 user@[::1] [user@::1]
+do
+	euah=$(echo $tuah | tr -d "[]")
+	test_expect_success "clone ssh://$tuah/~repo" "
+	  test_clone_url ssh://$tuah/~repo $euah '~repo'
+	"
+done
 
 #IPv6 with port number
-test_expect_success 'clone ssh://[::1]:22/home/user/repo' '
-	test_clone_url "ssh://[::1]:22/home/user/repo" "-p 22 ::1" "/home/user/repo"
-'
+for tuah in [::1] user@[::1] [user@::1]
+do
+	euah=$(echo $tuah | tr -d "[]")
+	test_expect_success "clone ssh://$tuah:22/home/user/repo" "
+	  test_clone_url ssh://$tuah:22/home/user/repo '-p 22' $euah /home/user/repo
+	"
+done
 
 #IPv6 from home directory with port number
-test_expect_success 'clone ssh://[::1]:22/~repo' '
-	test_clone_url "ssh://[::1]:22/~repo" "-p 22 ::1" "~repo"
-'
+for tuah in [::1] user@[::1] [user@::1]
+do
+	euah=$(echo $tuah | tr -d "[]")
+	test_expect_success "clone ssh://$tuah:22/~repo" "
+	  test_clone_url ssh://$tuah:22/~repo '-p 22' $euah '~repo'
+	"
+done
 
 test_expect_success 'clone from a repository with two identical branches' '
 
