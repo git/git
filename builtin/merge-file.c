@@ -90,7 +90,8 @@ int cmd_merge_file(int argc, const char **argv, const char *prefix)
 
 	if (ret >= 0) {
 		const char *filename = argv[0];
-		FILE *f = to_stdout ? stdout : fopen(filename, "wb");
+		const char *fpath = prefix_filename(prefix, prefixlen, argv[0]);
+		FILE *f = to_stdout ? stdout : fopen(fpath, "wb");
 
 		if (!f)
 			ret = error("Could not open %s for writing", filename);
