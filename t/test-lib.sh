@@ -17,6 +17,7 @@
 
 # for git on windows so stdin will not be misdetected as attached to a
 # terminal
+test -z "$TEST_NO_REDIRECT" ||
 exec < /dev/null
 
 # Keep the original TERM for say_color
@@ -524,7 +525,12 @@ maybe_setup_valgrind () {
 test_eval_ () {
 	# This is a separate function because some tests use
 	# "return" to end a test_expect_success block early.
-	eval </dev/null >&3 2>&4 "$*"
+	if test -z "$TEST_NO_REDIRECT"
+	then
+		eval </dev/null >&3 2>&4 "$*"
+	else
+		eval "$*"
+	fi
 }
 
 test_run_ () {
@@ -942,7 +948,7 @@ test_i18ngrep () {
 test_lazy_prereq PIPE '
 	# test whether the filesystem supports FIFOs
 	case $(uname -s) in
-	CYGWIN*)
+	CYGWIN*|MINGW*)
 		false
 		;;
 	*)

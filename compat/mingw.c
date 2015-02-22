@@ -1071,6 +1071,16 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 			free(quoted);
 	}
 
+	if (getenv("GIT_STRACE_COMMANDS")) {
+		char **path = get_path_split();
+		cmd = path_lookup("strace.exe", path, 1);
+		if (!cmd)
+			return error("strace not found!");
+		if (xutftowcs_path(wcmd, cmd) < 0)
+			return -1;
+		strbuf_insert(&args, 0, "strace ", 7);
+	}
+
 	wargs = xmalloc((2 * args.len + 1) * sizeof(wchar_t));
 	xutftowcs(wargs, args.buf, 2 * args.len + 1);
 	strbuf_release(&args);
@@ -2216,8 +2226,26 @@ void mingw_startup()
 	__argv[0] = wcstoutfdup_startup(buffer, _wpgmptr, maxlen);
 	for (i = 1; i < argc; i++)
 		__argv[i] = wcstoutfdup_startup(buffer, wargv[i], maxlen);
-	for (i = 0; wenv[i]; i++)
+	for (i = 0; wenv[i]; i++) {
 		environ[i] = wcstoutfdup_startup(buffer, wenv[i], maxlen);
+		if (starts_with(environ[i], "MSYS2_TZ=")) {
+			char *to_free = environ[i];
+			environ[i] = xstrdup(to_free + 6);
+			free(to_free);
+		}
+		if (starts_with(environ[i], "TMP=")) {
+			/*
+			 * Convert all dir separators to forward slashes,
+			 * to help shell commands called from the Git
+			 * executable (by not mistaking the dir separators
+			 * for escape characters.
+			 */
+			char *p;
+			for (p = environ[i]; *p; p++)
+				if (*p == '\\')
+					*p = '/';
+		}
+	}
 	environ[i] = NULL;
 	free(buffer);
 
