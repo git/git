@@ -141,3 +141,31 @@ notes for details).
  * The credential helper for Windows (in contrib/) used to mishandle
    a user name with an at-sign in it.
    (merge 13d261e av/wincred-with-at-in-username-fix later to maint).
+
+ * Longstanding configuration variable naming rules has been added to
+   the documentation.
+   (merge 35840a3 jc/conf-var-doc later to maint).
+
+ * An earlier workaround to squelch unhelpful deprecation warnings
+   from the complier on Mac OSX unnecessarily set minimum required
+   version of the OS, which the user might want to raise (or lower)
+   for other reasons.
+   (merge 88c03eb es/squelch-openssl-warnings-on-macosx later to maint).
+
+ * Certain older vintages of cURL give irregular output from
+   "curl-config --vernum", which confused our build system.
+   (merge 3af6792 tc/curl-vernum-output-broken-in-7.11 later to maint).
+
+ * In v2.2.0, we broke "git prune" that runs in a repository that
+   borrows from an alternate object store.
+   (merge b0a4264 jk/prune-mtime later to maint).
+
+ * "git submodule add" failed to squash "path/to/././submodule" to
+   "path/to/submodule".
+   (merge 8196e72 ps/submodule-sanitize-path-upon-add later to maint).
+
+ * "git merge-file" did not work correctly in a subdirectory.
+   (merge 204a8ff ab/merge-file-prefix later to maint).
+
+ * "git blame" died, trying to free an uninitialized piece of memory.
+   (merge e600592 es/blame-commit-info-fix later to maint).
