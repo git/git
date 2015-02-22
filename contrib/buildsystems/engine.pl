@@ -77,6 +77,8 @@ EOM
 
 my $ErrsFile = "msvc-build-makedryerrors.txt";
 @makedry = `cd $git_dir && make -n MSVC=1 NO_PERL=1 V=1 2>$ErrsFile` if !@makedry;
+# test for an empty Errors file and remove it
+for ($ErrsFile) {unlink $_ if (-f $_) && (!-s $_);}
 
 # Parse the make output into usable info
 parseMakeOutput();
