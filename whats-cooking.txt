@@ -1,19 +1,18 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Feb 2015, #05; Thu, 19)
-X-master-at: f3f407747c1cce420ae4b4857c4a6806efe38680
-X-next-at: b072d44c2c27039617e40171784569d7212f3148
+Subject: What's cooking in git.git (Feb 2015, #06; Sun, 22)
+X-master-at: 355d4e1739d1e88561ac04d2a2423c2aa93693d9
+X-next-at: a0c6b3dbaae84fcad8b65e4ac8caa8982d3d24a8
 
-What's cooking in git.git (Feb 2015, #05; Thu, 19)
+What's cooking in git.git (Feb 2015, #06; Sun, 22)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-The second and third batch of topics have been merged to 'master'.
-I am tempted to start discarding topics in the Stalled category that
-haven't seen much reviews and discussions on for a long time.
+The 'master' front have merged many topics that can further merged
+to the maintainance tracks.  We may want to do a v2.3.1 soonish.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -23,85 +22,94 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* av/wincred-with-at-in-username-fix (2015-01-25) 1 commit
-  (merged to 'next' on 2015-02-16 at 69dd76d)
- + wincred: fix get credential if username has "@"
+* ab/merge-file-prefix (2015-02-11) 1 commit
+  (merged to 'next' on 2015-02-16 at 89e0252)
+ + merge-file: correctly open files when in a subdir
 
- The credential helper for Windows (in contrib/) used to mishandle
- a user name with an at-sign in it.
-
-
-* ch/new-gpg-drops-rfc-1991 (2015-01-29) 2 commits
-  (merged to 'next' on 2015-02-16 at e2daf10)
- + t/lib-gpg: sanity-check that we can actually sign
- + t/lib-gpg: include separate public keys in keyring.gpg
-
- Older GnuPG implementations may not correctly import the keyring
- material we prepare for the tests to use.
+ "git merge-file" did not work correctly in a subdirectory.
 
 
-* jc/push-cert (2015-02-12) 1 commit
-  (merged to 'next' on 2015-02-16 at f40b3c5)
- + transport-helper: fix typo in error message when --signed is not supported
+* es/blame-commit-info-fix (2015-02-10) 1 commit
+  (merged to 'next' on 2015-02-16 at f76ff44)
+ + builtin/blame: destroy initialized commit_info only
 
- "git push --signed" gave an incorrectly worded error message when
- the other side did not support the capability.
-
-
-* jc/remote-set-url-doc (2015-01-29) 1 commit
-  (merged to 'next' on 2015-02-16 at 1f9c342)
- + Documentation/git-remote.txt: stress that set-url is not for triangular
-
- Clarify in the documentation that "remote.<nick>.pushURL" and
- "remote.<nick>.URL" are there to name the same repository accessed
- via different transports, not two separate repositories.
+ "git blame" died, trying to free an uninitialized piece of memory.
 
 
-* jk/config-no-ungetc-eof (2015-02-05) 2 commits
-  (merged to 'next' on 2015-02-16 at b7fc890)
- + config_buf_ungetc: warn when pushing back a random character
- + config: do not ungetc EOF
+* es/squelch-openssl-warnings-on-macosx (2015-02-09) 1 commit
+  (merged to 'next' on 2015-02-16 at bbe2880)
+ + git-compat-util: do not step on MAC_OS_X_VERSION_MIN_REQUIRED
 
- Reading configuration from a blob object, when it ends with a lone
- CR, use to confuse the configuration parser.
-
-
-* jk/decimal-width-for-uintmax (2015-02-05) 1 commit
-  (merged to 'next' on 2015-02-16 at e608239)
- + decimal_width: avoid integer overflow
-
- We didn't format an integer that wouldn't fit in "int" but in
- "uintmax_t" correctly.
+ An earlier workaround to squelch unhelpful deprecation warnings
+ from the complier on Mac OSX unnecessarily set minimum required
+ version of the OS, which the user might want to raise (or lower)
+ for other reasons.
 
 
-* jk/pack-bitmap (2015-02-04) 1 commit
-  (merged to 'next' on 2015-02-16 at 2e30424)
- + ewah: fix building with gcc < 3.4.0
+* jc/conf-var-doc (2015-02-02) 3 commits
+  (merged to 'next' on 2015-02-16 at 97512a3)
+ + CodingGuidelines: describe naming rules for configuration variables
+ + config.txt: mark deprecated variables more prominently
+ + config.txt: clarify that add.ignore-errors is deprecated
 
- The pack bitmap support did not build with older versions of GCC.
+ Longstanding configuration variable naming rules has been added to
+ the documentation.
 
 
-* ye/http-accept-language (2015-01-28) 1 commit
-  (merged to 'next' on 2015-02-16 at 10ed819)
- + http: add Accept-Language header if possible
+* jc/diff-files-ita (2015-02-04) 1 commit
+  (merged to 'next' on 2015-02-16 at d7867a3)
+ + run_diff_files(): clarify computation of sha1 validity
 
- Using environment variable LANGUAGE and friends on the client side,
- HTTP-based transports now send Accept-Language when making requests.
+ Code cleanup.
+
+
+* jk/prune-mtime (2015-02-09) 2 commits
+  (merged to 'next' on 2015-02-16 at 3d46eae)
+ + sha1_file: fix iterating loose alternate objects
+ + for_each_loose_file_in_objdir: take an optional strbuf path
+
+ In v2.2.0, we broke "git prune" that runs in a repository that
+ borrows from an alternate object store.
+
+
+* ps/submodule-sanitize-path-upon-add (2015-02-02) 1 commit
+  (merged to 'next' on 2015-02-16 at 8253132)
+ + git-submodule.sh: fix '/././' path normalization
+
+ "git submodule add" failed to squash "path/to/././submodule" to
+ "path/to/submodule".
+
+
+* ss/check-builtins-on-windows (2015-02-05) 1 commit
+  (merged to 'next' on 2015-02-16 at 2c10cc1)
+ + check-builtins: strip executable suffix $X when enumerating builtins
+
+
+* tc/curl-vernum-output-broken-in-7.11 (2015-02-03) 1 commit
+  (merged to 'next' on 2015-02-16 at de90f95)
+ + Makefile: handle broken curl version number in version check
+
+ Certain older vintages of cURL give irregular output from
+ "curl-config --vernum", which confused our build system.
 
 --------------------------------------------------
 [New Topics]
 
-* ak/git-pm-typofix (2015-02-18) 1 commit
- - Git.pm: two minor typo fixes
+* mm/am-c-doc (2015-02-20) 2 commits
+ - Documentation/git-am.txt: mention mailinfo.scissors config variable
+ - Documentation/config.txt: document mailinfo.scissors
+
+ The configuration variable 'mailinfo.scissors' was hard to
+ discover in the documentation.
 
  Will merge to 'next'.
 
 
-* jc/decorate-leaky-separator-color (2015-02-18) 1 commit
- - log --decorate: do not leak "commit" color into the next item
-
- "git log --decorate" did not reset colors correctly around the
- branch names.
+* rs/simple-cleanups (2015-02-22) 4 commits
+ - sha1_name: use strlcpy() to copy strings
+ - pretty: use starts_with() to check for a prefix
+ - for-each-ref: use skip_prefix() to avoid duplicate string comparison
+ - connect: use strcmp() for string comparison
 
  Will merge to 'next'.
 
@@ -166,16 +174,6 @@ of the repositories listed at
  Need extra sets of eyes to review this.
 
 
-* tb/connect-ipv6-parse-fix (2015-01-22) 3 commits
- - t5500: show user name and host in diag-url
- - t5601: add more test cases for IPV6
- - connect.c: improve parsing of literal IPV6 addresses
-
- Parsing of literal IPv6 addresses.
-
- Will discard.
-
-
 * ak/stash-store-create-help (2015-01-13) 1 commit
  - stash: show "create" and "store" subcommands in usage-help
 
@@ -209,7 +207,7 @@ of the repositories listed at
  - FIXUP
  - index-pack: reduce memory footprint a bit
 
- Experimental?
+ Need to replace with the reroll ($gmane/264126).
 
 
 * pw/remote-set-url-fetch (2014-11-26) 1 commit
@@ -334,14 +332,39 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* ms/submodule-update-config-doc (2015-02-17) 2 commits
- - SQUASH???
- - submodule: clarify documentation for update subcommand
+* tb/connect-ipv6-parse-fix (2015-02-22) 3 commits
+ - t5500: show user name and host in diag-url
+ - t5601: add more test cases for IPV6
+ - connect.c: allow ssh://user@[2001:db8::1]/repo.git
+
+ Waiting for comments from Brian who had objections to the previous
+ round.
+
+
+* ak/git-pm-typofix (2015-02-18) 1 commit
+  (merged to 'next' on 2015-02-20 at 0fa233a)
+ + Git.pm: two minor typo fixes
+
+ Typofix in comments.
+
+ Will merge to 'master'.
+
+
+* jc/decorate-leaky-separator-color (2015-02-20) 2 commits
+ - config.txt: spell out how certain typed values are written
+ - log --decorate: do not leak "commit" color into the next item
+
+ "git log --decorate" did not reset colors correctly around the
+ branch names.
+
+ Waiting for discussion on the tip one.
+
+
+* ms/submodule-update-config-doc (2015-02-20) 1 commit
+ - submodule: Improve documentation of update subcommand
 
  The interaction between "git submodule update" and the
  submodule.*.update configuration was not clearly documented.
-
- The SQUASH may be sufficient as a reroll ($gmane/259037).
 
 
 * dp/remove-duplicated-header-inclusion (2015-02-13) 1 commit
@@ -425,15 +448,16 @@ of the repositories listed at
 
 
 * jk/daemon-interpolate (2015-02-17) 3 commits
- - daemon: sanitize incoming virtual hostname
- - t5570: test git-daemon's --interpolated-path option
- - git_connect: let user override virtual-host we send to daemon
+  (merged to 'next' on 2015-02-20 at 21118a7)
+ + daemon: sanitize incoming virtual hostname
+ + t5570: test git-daemon's --interpolated-path option
+ + git_connect: let user override virtual-host we send to daemon
 
  The "interpolated-path" option of "git daemon" inserted any string
  client declared on the "host=" capability request without checking.
  Sanitize and limit %H and %CH to a saner and a valid DNS name.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * rs/daemon-interpolate (2015-02-17) 2 commits
@@ -479,36 +503,6 @@ of the repositories listed at
  a cheap substitute, but on some platforms that is not a good
  heuristics.  The tests and their prerequisites have been updated to
  check what they really require.
-
- Will merge to 'master'.
-
-
-* ab/merge-file-prefix (2015-02-11) 1 commit
-  (merged to 'next' on 2015-02-16 at 89e0252)
- + merge-file: correctly open files when in a subdir
-
- "git merge-file" did not work correctly in a subdirectory.
-
- Will merge to 'master'.
-
-
-* es/blame-commit-info-fix (2015-02-10) 1 commit
-  (merged to 'next' on 2015-02-16 at f76ff44)
- + builtin/blame: destroy initialized commit_info only
-
- "git blame" died, trying to free an uninitialized piece of memory.
-
- Will merge to 'master'.
-
-
-* es/squelch-openssl-warnings-on-macosx (2015-02-09) 1 commit
-  (merged to 'next' on 2015-02-16 at bbe2880)
- + git-compat-util: do not step on MAC_OS_X_VERSION_MIN_REQUIRED
-
- An earlier workaround to squelch unhelpful deprecation warnings
- from the complier on Mac OSX unnecessarily set minimum required
- version of the OS, which the user might want to raise (or lower)
- for other reasons.
 
  Will merge to 'master'.
 
@@ -571,22 +565,6 @@ of the repositories listed at
  Will merge to 'next', unless there is an objection.
 
 
-* jc/diff-files-ita (2015-02-04) 1 commit
-  (merged to 'next' on 2015-02-16 at d7867a3)
- + run_diff_files(): clarify computation of sha1 validity
-
- Code cleanup.
-
- Will merge to 'master'.
-
-
-* ss/check-builtins-on-windows (2015-02-05) 1 commit
-  (merged to 'next' on 2015-02-16 at 2c10cc1)
- + check-builtins: strip executable suffix $X when enumerating builtins
-
- Will merge to 'master'.
-
-
 * jc/apply-beyond-symlink (2015-02-10) 4 commits
   (merged to 'next' on 2015-02-18 at 4109de1)
  + apply: do not touch a file beyond a symbolic link
@@ -598,37 +576,6 @@ of the repositories listed at
  updating and creating paths outside the working tree (under
  --index/--cached) or the current directory (when used as a
  replacement for GNU patch).
-
- Will merge to 'master'.
-
-
-* jk/prune-mtime (2015-02-09) 2 commits
-  (merged to 'next' on 2015-02-16 at 3d46eae)
- + sha1_file: fix iterating loose alternate objects
- + for_each_loose_file_in_objdir: take an optional strbuf path
-
- In v2.2.0, we broke "git prune" that runs in a repository that
- borrows from an alternate object store.
-
- Will merge to 'master'.
-
-
-* ps/submodule-sanitize-path-upon-add (2015-02-02) 1 commit
-  (merged to 'next' on 2015-02-16 at 8253132)
- + git-submodule.sh: fix '/././' path normalization
-
- "git submodule add" failed to squash "path/to/././submodule" to
- "path/to/submodule".
-
- Will merge to 'master'.
-
-
-* tc/curl-vernum-output-broken-in-7.11 (2015-02-03) 1 commit
-  (merged to 'next' on 2015-02-16 at de90f95)
- + Makefile: handle broken curl version number in version check
-
- Certain older vintages of cURL give irregular output from
- "curl-config --vernum", which confused our build system.
 
  Will merge to 'master'.
 
@@ -649,18 +596,6 @@ of the repositories listed at
 
  "git apply --whitespace=fix" fixed whitespace errors in the common
  context lines but did so without reporting.
-
- Will merge to 'master'.
-
-
-* jc/conf-var-doc (2015-02-02) 3 commits
-  (merged to 'next' on 2015-02-16 at 97512a3)
- + CodingGuidelines: describe naming rules for configuration variables
- + config.txt: mark deprecated variables more prominently
- + config.txt: clarify that add.ignore-errors is deprecated
-
- Longstanding configuration variable naming rules has been added to
- the documentation.
 
  Will merge to 'master'.
 
