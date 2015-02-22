@@ -1,5 +1,9 @@
 #include <stdint.h>
 #include <wchar.h>
+#include <sys/types.h>
+#ifndef _POSIX
+typedef _sigset_t sigset_t;
+#endif
 #include <winsock2.h>
 #include <ws2tcpip.h>
 /*
