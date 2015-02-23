@@ -144,7 +144,9 @@ do
 			do
 				if test "z$xtree" = "z$rtree" ||
 					git diff --quiet "$xtree" "$rtree" -- . \
-					':!GIT-VERSION-GEN' ':!Documentation/'
+					':!GIT-VERSION-GEN' \
+					':!RelNotes' \
+					':!Documentation/'
 				then
 					skip_test=1
 					break
