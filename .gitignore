@@ -177,6 +177,7 @@
 /gitweb/gitweb.cgi
 /gitweb/static/gitweb.js
 /gitweb/static/gitweb.min.*
+/libgit
 /test-chmtime
 /test-ctype
 /test-config
@@ -209,6 +210,8 @@
 /test-urlmatch-normalization
 /test-wildmatch
 /common-cmds.h
+/vcs-svn_lib
+/xdiff_lib
 *.tar.gz
 *.dsc
 *.deb
