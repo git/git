@@ -947,9 +947,12 @@ static void unkeep_all_packs(void)
 
 static void end_packfile(void)
 {
-	if (!pack_data)
+	static int running;
+
+	if (running || !pack_data)
 		return;
 
+	running = 1;
 	clear_delta_base_cache();
 	if (object_count) {
 		struct packed_git *new_p;
@@ -999,6 +1002,7 @@ static void end_packfile(void)
 	}
 	free(pack_data);
 	pack_data = NULL;
+	running = 0;
 
 	/* We can't carry a delta across packfiles. */
 	strbuf_release(&last_blob.data);
