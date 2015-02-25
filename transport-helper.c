@@ -97,6 +97,8 @@ static void do_take_over(struct transport *transport)
 	free(data);
 }
 
+static void standard_options(struct transport *t);
+
 static struct child_process *get_helper(struct transport *transport)
 {
 	struct helper_data *data = transport->data;
@@ -211,6 +213,7 @@ static struct child_process *get_helper(struct transport *transport)
 	strbuf_release(&buf);
 	if (debug)
 		fprintf(stderr, "Debug: Capabilities complete.\n");
+	standard_options(transport);
 	return data->helper;
 }
 
@@ -337,17 +340,6 @@ static int fetch_with_fetch(struct transport *transport,
 	struct helper_data *data = transport->data;
 	int i;
 	struct strbuf buf = STRBUF_INIT;
-
-	standard_options(transport);
-	if (data->check_connectivity &&
-	    data->transport_options.check_self_contained_and_connected)
-		set_helper_option(transport, "check-connectivity", "true");
-
-	if (transport->cloning)
-		set_helper_option(transport, "cloning", "true");
-
-	if (data->transport_options.update_shallow)
-		set_helper_option(transport, "update-shallow", "true");
 
 	for (i = 0; i < nr_heads; i++) {
 		const struct ref *posn = to_fetch[i];
@@ -622,6 +614,16 @@ static int fetch(struct transport *transport,
 	if (!count)
 		return 0;
 
+	if (data->check_connectivity &&
+	    data->transport_options.check_self_contained_and_connected)
+		set_helper_option(transport, "check-connectivity", "true");
+
+	if (transport->cloning)
+		set_helper_option(transport, "cloning", "true");
+
+	if (data->transport_options.update_shallow)
+		set_helper_option(transport, "update-shallow", "true");
+
 	if (data->fetch)
 		return fetch_with_fetch(transport, nr_heads, to_fetch);
 
@@ -826,7 +828,6 @@ static int push_refs_with_push(struct transport *transport,
 		return 0;
 	}
 
-	standard_options(transport);
 	for_each_string_list_item(cas_option, &cas_options)
 		set_helper_option(transport, "cas", cas_option->string);
 
