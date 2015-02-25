@@ -214,22 +214,8 @@ origin +master` to force a push to the `master` branch). See the
 `<refspec>...` section above for details.
 
 --repo=<repository>::
-	This option is only relevant if no <repository> argument is
-	passed in the invocation. In this case, 'git push' derives the
-	remote name from the current branch: If it tracks a remote
-	branch, then that remote repository is pushed to. Otherwise,
-	the name "origin" is used. For this latter case, this option
-	can be used to override the name "origin". In other words,
-	the difference between these two commands
-+
---------------------------
-git push public         #1
-git push --repo=public  #2
---------------------------
-+
-is that #1 always pushes to "public" whereas #2 pushes to "public"
-only if the current branch does not track a remote branch. This is
-useful if you write an alias or script around 'git push'.
+	This option is equivalent to the <repository> argument. If both
+	are specified, the command-line argument takes precedence.
 
 -u::
 --set-upstream::
