@@ -2230,6 +2230,12 @@ static void update_pre_post_images(struct image *preimage,
 		ctx++;
 	}
 
+	if (postlen
+	    ? postlen < new - postimage->buf
+	    : postimage->len < new - postimage->buf)
+		die("BUG: caller miscounted postlen: asked %d, orig = %d, used = %d",
+		    (int)postlen, (int) postimage->len, (int)(new - postimage->buf));
+
 	/* Fix the length of the whole thing */
 	postimage->len = new - postimage->buf;
 	postimage->nr -= reduced;
@@ -2385,10 +2391,27 @@ static int match_fragment(struct image *img,
 
 	/*
 	 * The hunk does not apply byte-by-byte, but the hash says
-	 * it might with whitespace fuzz. We haven't been asked to
+	 * it might with whitespace fuzz. We weren't asked to
 	 * ignore whitespace, we were asked to correct whitespace
 	 * errors, so let's try matching after whitespace correction.
 	 *
+	 * While checking the preimage against the target, whitespace
+	 * errors in both fixed, we count how large the corresponding
+	 * postimage needs to be.  The postimage prepared by
+	 * apply_one_fragment() has whitespace errors fixed on added
+	 * lines already, but the common lines were propagated as-is,
+	 * which may become longer when their whitespace errors are
+	 * fixed.
+	 */
+
+	/* First count added lines in postimage */
+	postlen = 0;
+	for (i = 0; i < postimage->nr; i++) {
+		if (!(postimage->line[i].flag & LINE_COMMON))
+			postlen += postimage->line[i].len;
+	}
+
+	/*
 	 * The preimage may extend beyond the end of the file,
 	 * but in this loop we will only handle the part of the
 	 * preimage that falls within the file.
@@ -2396,7 +2419,6 @@ static int match_fragment(struct image *img,
 	strbuf_init(&fixed, preimage->len + 1);
 	orig = preimage->buf;
 	target = img->buf + try;
-	postlen = 0;
 	for (i = 0; i < preimage_limit; i++) {
 		size_t oldlen = preimage->line[i].len;
 		size_t tgtlen = img->line[try_lno + i].len;
@@ -2424,7 +2446,10 @@ static int match_fragment(struct image *img,
 		match = (tgtfix.len == fixed.len - fixstart &&
 			 !memcmp(tgtfix.buf, fixed.buf + fixstart,
 					     fixed.len - fixstart));
-		postlen += tgtfix.len;
+
+		/* Add the length if this is common with the postimage */
+		if (preimage->line[i].flag & LINE_COMMON)
+			postlen += tgtfix.len;
 
 		strbuf_release(&tgtfix);
 		if (!match)
