@@ -165,6 +165,24 @@ test_expect_success 'fetch notices corrupt idx' '
 	)
 '
 
+test_expect_success 'fetch can handle previously-fetched .idx files' '
+	git checkout --orphan branch1 &&
+	echo base >file &&
+	git add file &&
+	git commit -m base &&
+	git --bare init "$HTTPD_DOCUMENT_ROOT_PATH"/repo_packed_branches.git &&
+	git push "$HTTPD_DOCUMENT_ROOT_PATH"/repo_packed_branches.git branch1 &&
+	git --git-dir="$HTTPD_DOCUMENT_ROOT_PATH"/repo_packed_branches.git repack -d &&
+	git checkout -b branch2 branch1 &&
+	echo b2 >>file &&
+	git commit -a -m b2 &&
+	git push "$HTTPD_DOCUMENT_ROOT_PATH"/repo_packed_branches.git branch2 &&
+	git --git-dir="$HTTPD_DOCUMENT_ROOT_PATH"/repo_packed_branches.git repack -d &&
+	git --bare init clone_packed_branches.git &&
+	git --git-dir=clone_packed_branches.git fetch "$HTTPD_URL"/dumb/repo_packed_branches.git branch1:branch1 &&
+	git --git-dir=clone_packed_branches.git fetch "$HTTPD_URL"/dumb/repo_packed_branches.git branch2:branch2
+'
+
 test_expect_success 'did not use upload-pack service' '
 	grep '/git-upload-pack' <"$HTTPD_ROOT_PATH"/access.log >act
 	: >exp
