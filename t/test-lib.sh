@@ -1031,9 +1031,33 @@ test_lazy_prereq USR_BIN_TIME '
 	test -x /usr/bin/time
 '
 
-# When the tests are run as root, permission tests will report that
-# things are writable when they shouldn't be.
-test -w / || test_set_prereq SANITY
+test_lazy_prereq NOT_ROOT '
+	uid=$(id -u) &&
+	test "$uid" != 0
+'
+
+# On a filesystem that lacks SANITY, a file can be deleted even if
+# the containing directory doesn't have write permissions, or a file
+# can be accessed even if the containing directory doesn't have read
+# or execute permissions, causing our tests that validate that Git
+# works sensibly in such situations.
+test_lazy_prereq SANITY '
+	mkdir SANETESTD.1 SANETESTD.2 &&
+
+	chmod +w SANETESTD.1 SANETESTD.2 &&
+	>SANETESTD.1/x 2>SANETESTD.2/x &&
+	chmod -w SANETESTD.1 &&
+	chmod -rx SANETESTD.2 ||
+	error "bug in test sript: cannot prepare SANETESTD"
+
+	! rm SANETESTD.1/x && ! test -f SANETESTD.2/x
+	status=$?
+
+	chmod +rwx SANETESTD.1 SANETESTD.2 &&
+	rm -rf SANETESTD.1 SANETESTD.2 ||
+	error "bug in test sript: cannot clean SANETESTD"
+	return $status
+'
 
 GIT_UNZIP=${GIT_UNZIP:-unzip}
 test_lazy_prereq UNZIP '
