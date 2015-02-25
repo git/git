@@ -657,11 +657,6 @@ static size_t diff_timestamp_len(const char *line, size_t len)
 	return line + len - end;
 }
 
-static char *null_strdup(const char *s)
-{
-	return s ? xstrdup(s) : NULL;
-}
-
 static char *find_name_common(const char *line, const char *def,
 			      int p_value, const char *end, int terminate)
 {
@@ -684,10 +679,10 @@ static char *find_name_common(const char *line, const char *def,
 			start = line;
 	}
 	if (!start)
-		return squash_slash(null_strdup(def));
+		return squash_slash(xstrdup_or_null(def));
 	len = line - start;
 	if (!len)
-		return squash_slash(null_strdup(def));
+		return squash_slash(xstrdup_or_null(def));
 
 	/*
 	 * Generally we prefer the shorter name, especially
@@ -909,7 +904,7 @@ static void parse_traditional_patch(const char *first, const char *second, struc
 			patch->old_name = name;
 		} else {
 			patch->old_name = name;
-			patch->new_name = null_strdup(name);
+			patch->new_name = xstrdup_or_null(name);
 		}
 	}
 	if (!name)
@@ -998,7 +993,7 @@ static int gitdiff_delete(const char *line, struct patch *patch)
 {
 	patch->is_delete = 1;
 	free(patch->old_name);
-	patch->old_name = null_strdup(patch->def_name);
+	patch->old_name = xstrdup_or_null(patch->def_name);
 	return gitdiff_oldmode(line, patch);
 }
 
@@ -1006,7 +1001,7 @@ static int gitdiff_newfile(const char *line, struct patch *patch)
 {
 	patch->is_new = 1;
 	free(patch->new_name);
-	patch->new_name = null_strdup(patch->def_name);
+	patch->new_name = xstrdup_or_null(patch->def_name);
 	return gitdiff_newmode(line, patch);
 }
 

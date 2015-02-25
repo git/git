@@ -22,7 +22,7 @@ void set_alternate_shallow_file(const char *path, int override)
 	if (alternate_shallow_file && !override)
 		return;
 	free(alternate_shallow_file);
-	alternate_shallow_file = path ? xstrdup(path) : NULL;
+	alternate_shallow_file = xstrdup_or_null(path);
 }
 
 int register_shallow(const unsigned char *sha1)
