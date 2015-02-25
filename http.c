@@ -62,6 +62,9 @@ static const char *user_agent;
 
 static struct credential cert_auth = CREDENTIAL_INIT;
 static int ssl_cert_password_required;
+#ifdef LIBCURL_CAN_HANDLE_AUTH_ANY
+static unsigned long http_auth_methods = CURLAUTH_ANY;
+#endif
 
 static struct curl_slist *pragma_header;
 static struct curl_slist *no_pragma_header;
@@ -580,6 +583,9 @@ struct active_request_slot *get_active_slot(void)
 	curl_easy_setopt(slot->curl, CURLOPT_UPLOAD, 0);
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPGET, 1);
 	curl_easy_setopt(slot->curl, CURLOPT_FAILONERROR, 1);
+#ifdef LIBCURL_CAN_HANDLE_AUTH_ANY
+	curl_easy_setopt(slot->curl, CURLOPT_HTTPAUTH, http_auth_methods);
+#endif
 	if (http_auth.password)
 		init_curl_http_auth(slot->curl);
 
@@ -870,6 +876,9 @@ int handle_curl_result(struct slot_results *results)
 			credential_reject(&http_auth);
 			return HTTP_NOAUTH;
 		} else {
+#ifdef LIBCURL_CAN_HANDLE_AUTH_ANY
+			http_auth_methods &= ~CURLAUTH_GSSNEGOTIATE;
+#endif
 			return HTTP_REAUTH;
 		}
 	} else {
@@ -985,6 +994,7 @@ static void extract_content_type(struct strbuf *raw, struct strbuf *type,
 	if (!charset->len && starts_with(type->buf, "text/"))
 		strbuf_addstr(charset, "ISO-8859-1");
 }
+
 
 /* http_request() targets */
 #define HTTP_REQUEST_STRBUF	0
