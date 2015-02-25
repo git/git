@@ -6,6 +6,13 @@ Updates since v2.3
 
 Ports
 
+ * Our default I/O size (8 MiB) for large files was too large for some
+   platforms with smaller SSIZE_MAX, leading to read(2)/write(2)
+   failures.
+
+ * We did not check the curl library version before using
+   CURLOPT_PROXYAUTH feature that may not exist.
+
 
 UI, Workflows & Features
 
@@ -28,6 +35,11 @@ UI, Workflows & Features
  * Using environment variable LANGUAGE and friends on the client side,
    HTTP-based transports now send Accept-Language when making requests.
 
+ * "git send-email" used to accept a mistaken "y" (or "yes") as an
+   answer to "What encoding do you want to use [UTF-8]? " without
+   questioning.  Now it asks for confirmation when the answer looks
+   too short to be a valid encoding name.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -36,6 +48,39 @@ Performance, Internal Implementation, Development Support etc.
 
  * Implementation of "reflog expire" has been restructured to fit the
    reflogs better with the recently updated ref API.
+
+ * The transport-helper did not give transport options such as
+   verbosity, progress, cloning, etc. to import and export based
+   helpers, like it did for fetch and push based helpers, robbing them
+   the chance to honor the wish of the end-users better.
+
+ * The tests that wanted to see that file becomes unreadable after
+   running "chmod a-r file", and the tests that wanted to make sure it
+   is not run as root, we used "can we write into the / directory?" as
+   a cheap substitute, but on some platforms that is not a good
+   heuristics.  The tests and their prerequisites have been updated to
+   check what they really require.
+   (merge f400e51 jk/sanity later to maint).
+
+ * The strbuf API was explained between the API documentation and in
+   the header file.  Move missing bits to strbuf.h so that programmers
+   can check only one place for all necessary information.
+
+ * The error handling functions and conventions are now documented in
+   the API manual.
+
+ * Optimize attribute look-up, mostly useful in "git grep" on a
+   project that does not use many attributes, by avoiding it when we
+   (should) know that the attributes are not defined in the first
+   place.
+
+ * Typofix in comments.
+   (merge ef2956a ak/git-pm-typofix later to maint).
+
+ * Code clean-up.
+   (merge 0b868f0 sb/hex-object-name-is-at-most-41-bytes-long later to maint).
+   (merge 5d30851 dp/remove-duplicated-header-inclusion later to maint).
+
 
 
 Also contains various documentation updates and code clean-ups.
@@ -169,3 +214,11 @@ notes for details).
 
  * "git blame" died, trying to free an uninitialized piece of memory.
    (merge e600592 es/blame-commit-info-fix later to maint).
+
+ * "git fast-import" used to crash when it could not close and
+   conclude the resulting packfile cleanly.
+   (merge 5e915f3 jk/fast-import-die-nicely-fix later to maint).
+
+ * "update-index --refresh" used to leak when an entry cannot be
+   refreshed for whatever reason.
+   (merge bc1c2ca sb/plug-leak-in-make-cache-entry later to maint).
