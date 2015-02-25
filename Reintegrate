@@ -36,28 +36,47 @@ annotate_merge () {
 			return 0;
 		}
 
-		my ($branch) = $ARGV[0];
-		my ($in_section, $in_desc);
-		my @msg = ();
-		while (<STDIN>) {
-			chomp;
-			if (/^\* $branch /) {
-				$in_section = 1;
-				next;
+		sub read_message {
+			my ($fh, $branch) = @_;
+			my ($in_section, $in_desc);
+			my @msg = ();
+			while (<$fh>) {
+				chomp;
+				if (/^\* $branch /) {
+					$in_section = 1;
+					next;
+				}
+				last if (/^[-*\[]/ && $in_section);
+				next unless $in_section;
+				s/^\s+//;
+				if (/^$/) {
+					$in_desc = 1;
+				}
+				next unless ($in_section && $in_desc);
+				next if (/Originally merged to '\''next'\'' on ([-0-9]+)/);
+				next if (wildo_match($_));
+				push @msg, "$_\n";
 			}
-			last if (/^[-*\[]/ && $in_section);
-			next unless $in_section;
-			s/^\s+//;
-			if (/^$/) {
-				$in_desc = 1;
-			}
-			next unless ($in_section && $in_desc);
-			next if (/Originally merged to '\''next'\'' on ([-0-9]+)/);
-			next if (wildo_match($_));
-			push @msg, "$_\n";
+			return ($in_section, @msg);
 		}
 
-		if ($in_section && @msg) {
+		my ($branch) = $ARGV[0];
+		my ($fh, $in_section, @msg);
+		if (open $fh, "<", "Meta/whats-cooking.txt") {
+			($in_section, @msg) = read_message($fh, $branch);
+		}
+		if (!@msg) {
+			open my $revs, "-|",
+				qw(git -C Meta rev-list -32 HEAD -- whats-cooking.txt);
+			while (my $rev = <$revs>) {
+				chomp($rev);
+				open $fh, "-|",
+				qw(git -C Meta cat-file blob), "$rev:whats-cooking.txt";
+				($in_section, @msg) = read_message($fh, $branch);
+				last if (@msg);
+			}
+		}
+		if (@msg) {
 			open(my $fh, "-|", qw(git cat-file commit HEAD));
 			my @original = (<$fh>);
 			close $fh;
@@ -86,7 +105,7 @@ annotate_merge () {
 			print $fh @final;
 			close $fh;
 		}
-	' <Meta/whats-cooking.txt "$1"
+	' "$1"
 }
 
 case "$generate" in
