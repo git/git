@@ -752,6 +752,7 @@ if (!defined $auto_8bit_encoding && scalar %broken_encoding) {
 		print "    $f\n";
 	}
 	$auto_8bit_encoding = ask("Which 8bit encoding should I declare [UTF-8]? ",
+				  valid_re => qr/.{4}/, confirm_only => 1,
 				  default => "UTF-8");
 }
 
