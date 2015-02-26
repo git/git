@@ -394,6 +394,9 @@ sub longest_common_path {
 sub gs_fetch_loop_common {
 	my ($self, $base, $head, $gsv, $globs) = @_;
 	return if ($base > $head);
+	# Make sure the cat_blob open2 FileHandle is created before calling
+	# SVN::Pool::new_default so that it does not incorrectly end up in the pool.
+	$::_repository->_open_cat_blob_if_needed;
 	my $gpool = SVN::Pool->new_default;
 	my $ra_url = $self->url;
 	my $reload_ra = sub {
