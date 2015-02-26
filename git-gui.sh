@@ -534,31 +534,10 @@ proc _lappend_nice {cmd_var} {
 }
 
 proc git {args} {
-	set opt [list]
-
-	while {1} {
-		switch -- [lindex $args 0] {
-		--nice {
-			_lappend_nice opt
-		}
-
-		default {
-			break
-		}
-
-		}
-
-		set args [lrange $args 1 end]
-	}
-
-	set cmdp [_git_cmd [lindex $args 0]]
-	set args [lrange $args 1 end]
-
-	_trace_exec [concat $opt $cmdp $args]
-	set result [eval exec $opt $cmdp $args]
-	if {[encoding system] != "utf-8"} {
-		set result [encoding convertfrom utf-8 [encoding convertto $result]]
-	}
+	set fd [eval [list git_read] $args]
+	fconfigure $fd -translation binary -encoding utf-8
+	set result [string trimright [read $fd] "\n"]
+	close $fd
 	if {$::_trace} {
 		puts stderr "< $result"
 	}
