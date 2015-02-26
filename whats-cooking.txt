@@ -1,18 +1,19 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Feb 2015, #06; Sun, 22)
-X-master-at: 355d4e1739d1e88561ac04d2a2423c2aa93693d9
-X-next-at: a0c6b3dbaae84fcad8b65e4ac8caa8982d3d24a8
+Subject: What's cooking in git.git (Feb 2015, #07; Thu, 26)
+X-master-at: 7f4ba4b6e3ba7075ca6b379ba23fd3088cbe69a8
+X-next-at: 993ae8bdc3df206f62a424eb695a49f1ba8fa118
 
-What's cooking in git.git (Feb 2015, #06; Sun, 22)
+What's cooking in git.git (Feb 2015, #07; Thu, 26)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-The 'master' front have merged many topics that can further merged
-to the maintainance tracks.  We may want to do a v2.3.1 soonish.
+Fifth batch of topics have been merged to 'master', including both
+fixes and enhancements. First maintenance release for v2.3 was cut
+with many fixes that have already been merged to 'master'.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -22,127 +23,172 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* ab/merge-file-prefix (2015-02-11) 1 commit
-  (merged to 'next' on 2015-02-16 at 89e0252)
- + merge-file: correctly open files when in a subdir
+* ak/git-pm-typofix (2015-02-18) 1 commit
+  (merged to 'next' on 2015-02-20 at 0fa233a)
+ + Git.pm: two minor typo fixes
 
- "git merge-file" did not work correctly in a subdirectory.
-
-
-* es/blame-commit-info-fix (2015-02-10) 1 commit
-  (merged to 'next' on 2015-02-16 at f76ff44)
- + builtin/blame: destroy initialized commit_info only
-
- "git blame" died, trying to free an uninitialized piece of memory.
+ Typofix in comments.
 
 
-* es/squelch-openssl-warnings-on-macosx (2015-02-09) 1 commit
-  (merged to 'next' on 2015-02-16 at bbe2880)
- + git-compat-util: do not step on MAC_OS_X_VERSION_MIN_REQUIRED
+* dp/remove-duplicated-header-inclusion (2015-02-13) 1 commit
+  (merged to 'next' on 2015-02-18 at a1bf108)
+ + do not include the same header twice
 
- An earlier workaround to squelch unhelpful deprecation warnings
- from the complier on Mac OSX unnecessarily set minimum required
- version of the OS, which the user might want to raise (or lower)
- for other reasons.
+ Code clean-up.
 
 
-* jc/conf-var-doc (2015-02-02) 3 commits
-  (merged to 'next' on 2015-02-16 at 97512a3)
- + CodingGuidelines: describe naming rules for configuration variables
- + config.txt: mark deprecated variables more prominently
- + config.txt: clarify that add.ignore-errors is deprecated
+* jc/max-io-size-and-ssize-max (2015-02-12) 1 commit
+  (merged to 'next' on 2015-02-18 at 0c8a4da)
+ + xread/xwrite: clip MAX_IO_SIZE to SSIZE_MAX
 
- Longstanding configuration variable naming rules has been added to
- the documentation.
-
-
-* jc/diff-files-ita (2015-02-04) 1 commit
-  (merged to 'next' on 2015-02-16 at d7867a3)
- + run_diff_files(): clarify computation of sha1 validity
-
- Code cleanup.
+ Our default I/O size (8 MiB) for large files was too large for some
+ platforms with smaller SSIZE_MAX, leading to read(2)/write(2)
+ failures.
 
 
-* jk/prune-mtime (2015-02-09) 2 commits
-  (merged to 'next' on 2015-02-16 at 3d46eae)
- + sha1_file: fix iterating loose alternate objects
- + for_each_loose_file_in_objdir: take an optional strbuf path
+* jc/send-email-sensible-encoding (2015-02-13) 1 commit
+  (merged to 'next' on 2015-02-18 at 7457655)
+ + send-email: ask confirmation if given encoding name is very short
 
- In v2.2.0, we broke "git prune" that runs in a repository that
- borrows from an alternate object store.
-
-
-* ps/submodule-sanitize-path-upon-add (2015-02-02) 1 commit
-  (merged to 'next' on 2015-02-16 at 8253132)
- + git-submodule.sh: fix '/././' path normalization
-
- "git submodule add" failed to squash "path/to/././submodule" to
- "path/to/submodule".
+ "git send-email" used to accept a mistaken "y" (or "yes") as an
+ answer to "What encoding do you want to use [UTF-8]? " without
+ questioning.  Now it asks for confirmation when the answer looks
+ too short to be a valid encoding name.
 
 
-* ss/check-builtins-on-windows (2015-02-05) 1 commit
-  (merged to 'next' on 2015-02-16 at 2c10cc1)
- + check-builtins: strip executable suffix $X when enumerating builtins
+* jk/fast-import-die-nicely-fix (2015-02-10) 1 commit
+  (merged to 'next' on 2015-02-18 at e249425)
+ + fast-import: avoid running end_packfile recursively
+
+ "git fast-import" used to crash when it could not close and
+ conclude the resulting packfile cleanly.
 
 
-* tc/curl-vernum-output-broken-in-7.11 (2015-02-03) 1 commit
-  (merged to 'next' on 2015-02-16 at de90f95)
- + Makefile: handle broken curl version number in version check
+* jk/sanity (2015-02-15) 3 commits
+  (merged to 'next' on 2015-02-18 at 5c54b53)
+ + test-lib.sh: set prerequisite SANITY by testing what we really need
+ + tests: correct misuses of POSIXPERM
+ + t/lib-httpd: switch SANITY check for NOT_ROOT
 
- Certain older vintages of cURL give irregular output from
- "curl-config --vernum", which confused our build system.
+ The tests that wanted to see that file becomes unreadable after
+ running "chmod a-r file", and the tests that wanted to make sure it
+ is not run as root, we used "can we write into the / directory?" as
+ a cheap substitute, but on some platforms that is not a good
+ heuristics.  The tests and their prerequisites have been updated to
+ check what they really require.
+
+
+* jk/strbuf-doc-to-header (2015-01-16) 7 commits
+  (merged to 'next' on 2015-02-18 at 0482c65)
+ + strbuf.h: group documentation for trim functions
+ + strbuf.h: drop boilerplate descriptions of strbuf_split_*
+ + strbuf.h: reorganize api function grouping headers
+ + strbuf.h: format asciidoc code blocks as 4-space indent
+ + strbuf.h: drop asciidoc list formatting from API docs
+ + strbuf.h: unify documentation comments beginnings
+ + strbuf.h: integrate api-strbuf.txt documentation
+
+ The strbuf API was explained between the API documentation and in
+ the header file.  Move missing bits to strbuf.h so that programmers
+ can check only one place for all necessary information.
+
+
+* jn/doc-api-errors (2014-12-04) 1 commit
+  (merged to 'next' on 2015-02-18 at f60eda6)
+ + doc: document error handling functions and conventions
+
+ The error handling functions and conventions are now documented in
+ the API manual.
+
+
+* mh/transport-capabilities (2015-02-13) 2 commits
+  (merged to 'next' on 2015-02-18 at 87e8fcc)
+ + transport-helper: ask the helper to set the same options for import as for fetch
+ + transport-helper: ask the helper to set progress and verbosity options after asking for its capabilities
+
+ The transport-helper did not give transport options such as
+ verbosity, progress, cloning, etc. to import and export based
+ helpers, like it did for fetch and push based helpers, robbing them
+ the chance to honor the wish of the end-users better.
+
+
+* nd/attr-optim (2014-12-29) 3 commits
+  (merged to 'next' on 2015-02-18 at 598e68a)
+ + attr: avoid heavy work when we know the specified attr is not defined
+ + attr: do not attempt to expand when we know it's not a macro
+ + attr.c: rename arg name attr_nr to avoid shadowing the global one
+
+ Optimize attribute look-up, mostly useful in "git grep" on a
+ project that does not use many attributes, by avoiding it when we
+ (should) know that the attributes are not defined in the first
+ place.
+
+
+* sb/hex-object-name-is-at-most-41-bytes-long (2015-02-13) 1 commit
+  (merged to 'next' on 2015-02-18 at 53d522b)
+ + hex.c: reduce memory footprint of sha1_to_hex static buffers
+
+ Code clean-up.
+
+
+* sb/plug-leak-in-make-cache-entry (2015-02-17) 1 commit
+  (merged to 'next' on 2015-02-18 at e637f65)
+ + read-cache.c: free cache entry when refreshing fails
+
+ "update-index --refresh" used to leak when an entry cannot be
+ refreshed for whatever reason.
+
+
+* tc/missing-http-proxyauth (2015-02-03) 1 commit
+  (merged to 'next' on 2015-02-18 at 8ff01ad)
+ + http: support curl < 7.10.7
+
+ We did not check the curl library version before using
+ CURLOPT_PROXYAUTH feature that may not exist.
 
 --------------------------------------------------
 [New Topics]
 
-* mm/am-c-doc (2015-02-20) 2 commits
- - Documentation/git-am.txt: mention mailinfo.scissors config variable
- - Documentation/config.txt: document mailinfo.scissors
+* mg/detached-head-report (2015-02-23) 1 commit
+ - branch: name detached HEAD analogous to status
 
- The configuration variable 'mailinfo.scissors' was hard to
- discover in the documentation.
+ "git branch" on a detached HEAD always said "(detached from xyz)",
+ even when "git status" would report "detached at xyz".  The HEAD is
+ actually at xyz and haven't been moved since it was detached in
+ such a case, but the user cannot read what the current value of
+ HEAD is when "detached from" is used.
 
- Will merge to 'next'.
+ The goal is sound.  May want to share code between branch and
+ status in a reroll?  Are there other commands that give the same
+ information that share the code, too?
 
 
-* rs/simple-cleanups (2015-02-22) 4 commits
- - sha1_name: use strlcpy() to copy strings
- - pretty: use starts_with() to check for a prefix
- - for-each-ref: use skip_prefix() to avoid duplicate string comparison
- - connect: use strcmp() for string comparison
+* mg/sequencer-commit-messages-always-verbatim (2015-02-23) 1 commit
+ - sequencer: preserve commit messages
 
- Will merge to 'next'.
+ Always replay the original commit message verbatim, regardless of
+ the commit.cleanup configuration settings by the user.
+
+ Is this a good idea?
+
+
+* rj/no-xopen-source-for-cygwin (2015-02-22) 1 commit
+  (merged to 'next' on 2015-02-23 at 323ac75)
+ + git-compat-util.h: remove redundant code
+
+ Will merge to 'master'.
 
 --------------------------------------------------
 [Stalled]
 
-* nd/list-files (2015-02-09) 21 commits
- . t3080: tests for git-list-files
- . list-files: -M aka diff-cached
- . list-files -F: show submodules with the new indicator '&'
- . list-files: add -F/--classify
- . list-files: show directories as well as files
- . list-files: do not show duplicate cached entries
- . list-files: sort output and remove duplicates
- . list-files: add -t back
- . list-files: add -1 short for --no-column
- . list-files: add -R/--recursive short for --max-depth=-1
- . list-files: -u does not imply showing stages
- . list-files: make alias 'ls' default to 'list-files'
- . list-files: a user friendly version of ls-files and more
- . ls-files: support --max-depth
- . ls-files: add --column
- . ls-files: add --color to highlight file names
- . ls-files: buffer full item in strbuf before printing
- . ls_colors.c: highlight submodules like directories
- . ls_colors.c: add a function to color a file name
- . ls_colors.c: parse color.ls.* from config file
- . ls_colors.c: add $LS_COLORS parsing code
+* jk/push-config (2015-02-17) 4 commits
+ - [NEEDSACK] push: allow --follow-tags to be set by config push.followTags
+ - cmd_push: pass "flags" pointer to config callback
+ - cmd_push: set "atomic" bit directly
+ - git_push_config: drop cargo-culted wt_status pointer
 
- A new "git list-files" Porcelain command, "ls-files" with bells and
- whistles.
-
- No comments?  No reviews?  No interests?
+ Waiting for Ack and/or update for the tip one from Dave Olszewski
+ ($gmane/263880, $gmane/263991).
 
 
 * nd/untracked-cache (2015-02-09) 24 commits
@@ -187,8 +233,9 @@ of the repositories listed at
  No comments?  No interests?
 
 
-* jc/diff-b-m (2015-02-17) 4 commits
- - WIP: diff-b-m
+* jc/diff-b-m (2015-02-23) 5 commits
+ . WIPWIP
+ . WIP: diff-b-m
  - diffcore-rename: allow easier debugging
  - diffcore-rename.c: add locate_rename_src()
  - diffcore-break: allow debugging
@@ -332,20 +379,63 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* nd/list-files (2015-02-09) 21 commits
+ - t3080: tests for git-list-files
+ - list-files: -M aka diff-cached
+ - list-files -F: show submodules with the new indicator '&'
+ - list-files: add -F/--classify
+ - list-files: show directories as well as files
+ - list-files: do not show duplicate cached entries
+ - list-files: sort output and remove duplicates
+ - list-files: add -t back
+ - list-files: add -1 short for --no-column
+ - list-files: add -R/--recursive short for --max-depth=-1
+ - list-files: -u does not imply showing stages
+ - list-files: make alias 'ls' default to 'list-files'
+ - list-files: a user friendly version of ls-files and more
+ - ls-files: support --max-depth
+ - ls-files: add --column
+ - ls-files: add --color to highlight file names
+ - ls-files: buffer full item in strbuf before printing
+ - ls_colors.c: highlight submodules like directories
+ - ls_colors.c: add a function to color a file name
+ - ls_colors.c: parse color.ls.* from config file
+ - ls_colors.c: add $LS_COLORS parsing code
+
+ A new "git list-files" Porcelain command, "ls-files" with bells and
+ whistles.
+
+
+* mm/am-c-doc (2015-02-20) 2 commits
+  (merged to 'next' on 2015-02-23 at 1cd9b0f)
+ + Documentation/git-am.txt: mention mailinfo.scissors config variable
+ + Documentation/config.txt: document mailinfo.scissors
+
+ The configuration variable 'mailinfo.scissors' was hard to
+ discover in the documentation.
+
+ Will merge to 'master'.
+
+
+* rs/simple-cleanups (2015-02-22) 4 commits
+  (merged to 'next' on 2015-02-23 at a89f034)
+ + sha1_name: use strlcpy() to copy strings
+ + pretty: use starts_with() to check for a prefix
+ + for-each-ref: use skip_prefix() to avoid duplicate string comparison
+ + connect: use strcmp() for string comparison
+
+ Will merge to 'master'.
+
+
 * tb/connect-ipv6-parse-fix (2015-02-22) 3 commits
- - t5500: show user name and host in diag-url
- - t5601: add more test cases for IPV6
- - connect.c: allow ssh://user@[2001:db8::1]/repo.git
+  (merged to 'next' on 2015-02-24 at 6658564)
+ + t5500: show user name and host in diag-url
+ + t5601: add more test cases for IPV6
+ + connect.c: allow ssh://user@[2001:db8::1]/repo.git
 
- Waiting for comments from Brian who had objections to the previous
- round.
-
-
-* ak/git-pm-typofix (2015-02-18) 1 commit
-  (merged to 'next' on 2015-02-20 at 0fa233a)
- + Git.pm: two minor typo fixes
-
- Typofix in comments.
+ We did not parse username followed by literal IPv6 address in SSH
+ transport URLs, e.g. ssh://user@[2001:db8::1]:22/repo.git
+ correctly.
 
  Will merge to 'master'.
 
@@ -360,23 +450,18 @@ of the repositories listed at
  Waiting for discussion on the tip one.
 
 
-* ms/submodule-update-config-doc (2015-02-20) 1 commit
- - submodule: Improve documentation of update subcommand
+* ms/submodule-update-config-doc (2015-02-23) 1 commit
+ - submodule: improve documentation of update subcommand
 
  The interaction between "git submodule update" and the
  submodule.*.update configuration was not clearly documented.
 
-
-* dp/remove-duplicated-header-inclusion (2015-02-13) 1 commit
-  (merged to 'next' on 2015-02-18 at a1bf108)
- + do not include the same header twice
-
- Code clean-up.
-
- Will merge to 'master'.
+ Waiting for a final reroll.
 
 
-* jc/diff-test-updates (2015-02-15) 6 commits
+* jc/diff-test-updates (2015-02-23) 7 commits
+  (merged to 'next' on 2015-02-23 at 9e863a7)
+ + test_ln_s_add: refresh stat info of fake symbolic links
   (merged to 'next' on 2015-02-18 at f152c9f)
  + t4008: modernise style
  + t/diff-lib: check exact object names in compare_diff_raw
@@ -391,28 +476,6 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* jc/send-email-sensible-encoding (2015-02-13) 1 commit
-  (merged to 'next' on 2015-02-18 at 7457655)
- + send-email: ask confirmation if given encoding name is very short
-
- "git send-email" used to accept a mistaken "y" (or "yes") as an
- answer to "What encoding do you want to use [UTF-8]? " without
- questioning.  Now it asks for confirmation when the answer looks
- too short to be a valid encoding name.
-
- Will merge to 'master'.
-
-
-* jk/push-config (2015-02-17) 4 commits
- - [NEEDSACK] push: allow --follow-tags to be set by config push.followTags
- - cmd_push: pass "flags" pointer to config callback
- - cmd_push: set "atomic" bit directly
- - git_push_config: drop cargo-culted wt_status pointer
-
- Waiting for Ack and/or update for the tip one from Dave Olszewski
- ($gmane/263880, $gmane/263991).
-
-
 * km/send-email-getopt-long-workarounds (2015-02-16) 1 commit
   (merged to 'next' on 2015-02-18 at 84c1597)
  + git-send-email.perl: support no- prefix with older GetOptions
@@ -421,28 +484,6 @@ of the repositories listed at
  Getopt::Long package that came with it does not support "--no-"
  prefix to negate a boolean option; manually add support to help
  people with older Getopt::Long package.
-
- Will merge to 'master'.
-
-
-* mh/transport-capabilities (2015-02-13) 2 commits
-  (merged to 'next' on 2015-02-18 at 87e8fcc)
- + transport-helper: ask the helper to set the same options for import as for fetch
- + transport-helper: ask the helper to set progress and verbosity options after asking for its capabilities
-
- The transport-helper did not give transport options such as
- verbosity, progress, cloning, etc. to import and export based
- helpers, like it did for fetch and push based helpers, robbing them
- the chance to honor the wish of the end-users better.
-
- Will merge to 'master'.
-
-
-* sb/hex-object-name-is-at-most-41-bytes-long (2015-02-13) 1 commit
-  (merged to 'next' on 2015-02-18 at 53d522b)
- + hex.c: reduce memory footprint of sha1_to_hex static buffers
-
- Code clean-up.
 
  Will merge to 'master'.
 
@@ -471,63 +512,6 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* sb/plug-leak-in-make-cache-entry (2015-02-17) 1 commit
-  (merged to 'next' on 2015-02-18 at e637f65)
- + read-cache.c: free cache entry when refreshing fails
-
- "update-index --refresh" used to leak when an entry cannot be
- refreshed for whatever reason.
-
- Will merge to 'master'.
-
-
-* jn/doc-api-errors (2014-12-04) 1 commit
-  (merged to 'next' on 2015-02-18 at f60eda6)
- + doc: document error handling functions and conventions
-
- The error handling functions and conventions are now documented in
- the API manual.
-
- Will merge to 'master'.
-
-
-* jk/sanity (2015-02-15) 3 commits
-  (merged to 'next' on 2015-02-18 at 5c54b53)
- + test-lib.sh: set prerequisite SANITY by testing what we really need
- + tests: correct misuses of POSIXPERM
- + t/lib-httpd: switch SANITY check for NOT_ROOT
-
- The tests that wanted to see that file becomes unreadable after
- running "chmod a-r file", and the tests that wanted to make sure it
- is not run as root, we used "can we write into the / directory?" as
- a cheap substitute, but on some platforms that is not a good
- heuristics.  The tests and their prerequisites have been updated to
- check what they really require.
-
- Will merge to 'master'.
-
-
-* jc/max-io-size-and-ssize-max (2015-02-12) 1 commit
-  (merged to 'next' on 2015-02-18 at 0c8a4da)
- + xread/xwrite: clip MAX_IO_SIZE to SSIZE_MAX
-
- Our default I/O size (8 MiB) for large files was too large for some
- platforms with smaller SSIZE_MAX, leading to read(2)/write(2)
- failures.
-
- Will merge to 'master'.
-
-
-* jk/fast-import-die-nicely-fix (2015-02-10) 1 commit
-  (merged to 'next' on 2015-02-18 at e249425)
- + fast-import: avoid running end_packfile recursively
-
- "git fast-import" used to crash when it could not close and
- conclude the resulting packfile cleanly.
-
- Will merge to 'master'.
-
-
 * mh/expire-updateref-fixes (2015-02-09) 10 commits
  - reflog_expire(): lock symbolic refs themselves, not their referent
  - reflog_expire(): never update a reference to null_sha1
@@ -544,25 +528,25 @@ of the repositories listed at
 
 
 * mh/refs-have-new (2015-02-17) 13 commits
- - refs.h: remove duplication in function docstrings
- - update_ref(): improve documentation
- - ref_transaction_verify(): new function to check a reference's value
- - ref_transaction_delete(): check that old_sha1 is not null_sha1
- - ref_transaction_create(): check that new_sha1 is valid
- - commit: avoid race when creating orphan commits
- - commit: add tests of commit races
- - ref_transaction_delete(): remove "have_old" parameter
- - ref_transaction_update(): remove "have_old" parameter
- - struct ref_update: move "have_old" into "flags"
- - refs.c: change some "flags" to "unsigned int"
- - refs: remove the gap in the REF_* constant values
- - refs: move REF_DELETING to refs.c
+  (merged to 'next' on 2015-02-23 at b8929db)
+ + refs.h: remove duplication in function docstrings
+ + update_ref(): improve documentation
+ + ref_transaction_verify(): new function to check a reference's value
+ + ref_transaction_delete(): check that old_sha1 is not null_sha1
+ + ref_transaction_create(): check that new_sha1 is valid
+ + commit: avoid race when creating orphan commits
+ + commit: add tests of commit races
+ + ref_transaction_delete(): remove "have_old" parameter
+ + ref_transaction_update(): remove "have_old" parameter
+ + struct ref_update: move "have_old" into "flags"
+ + refs.c: change some "flags" to "unsigned int"
+ + refs: remove the gap in the REF_* constant values
+ + refs: move REF_DELETING to refs.c
 
  Simplify the ref transaction API around how "the ref should be
  pointing at this object" is specified.
 
- Looked sensible.
- Will merge to 'next', unless there is an objection.
+ Will merge to 'master'.
 
 
 * jc/apply-beyond-symlink (2015-02-10) 4 commits
@@ -576,16 +560,6 @@ of the repositories listed at
  updating and creating paths outside the working tree (under
  --index/--cached) or the current directory (when used as a
  replacement for GNU patch).
-
- Will merge to 'master'.
-
-
-* tc/missing-http-proxyauth (2015-02-03) 1 commit
-  (merged to 'next' on 2015-02-18 at 8ff01ad)
- + http: support curl < 7.10.7
-
- We did not check the curl library version before using
- CURLOPT_PROXYAUTH feature that may not exist.
 
  Will merge to 'master'.
 
@@ -625,35 +599,6 @@ of the repositories listed at
  be an unpopular choice (sorry Dscho).
 
  Expecting a reroll.
-
-
-* jk/strbuf-doc-to-header (2015-01-16) 7 commits
-  (merged to 'next' on 2015-02-18 at 0482c65)
- + strbuf.h: group documentation for trim functions
- + strbuf.h: drop boilerplate descriptions of strbuf_split_*
- + strbuf.h: reorganize api function grouping headers
- + strbuf.h: format asciidoc code blocks as 4-space indent
- + strbuf.h: drop asciidoc list formatting from API docs
- + strbuf.h: unify documentation comments beginnings
- + strbuf.h: integrate api-strbuf.txt documentation
-
- Resolve the "doc vs header" to favor the latter.
-
- Will merge to 'master'.
-
-
-* nd/attr-optim (2014-12-29) 3 commits
-  (merged to 'next' on 2015-02-18 at 598e68a)
- + attr: avoid heavy work when we know the specified attr is not defined
- + attr: do not attempt to expand when we know it's not a macro
- + attr.c: rename arg name attr_nr to avoid shadowing the global one
-
- Optimize attribute look-up, mostly useful in "git grep" on a
- project that does not use many attributes, by avoiding it when we
- (should) know that the attributes are not defined in the first
- place.
-
- Will merge to 'master'.
 
 
 * nd/multiple-work-trees (2015-01-27) 38 commits
