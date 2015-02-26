@@ -18,9 +18,12 @@ static const char index_pack_usage[] =
 struct object_entry {
 	struct pack_idx_entry idx;
 	unsigned long size;
-	unsigned int hdr_size;
-	enum object_type type;
-	enum object_type real_type;
+	unsigned char hdr_size;
+	signed char type;
+	signed char real_type;
+};
+
+struct object_stat {
 	unsigned delta_depth;
 	int base_object_no;
 };
@@ -64,6 +67,7 @@ struct delta_entry {
 };
 
 static struct object_entry *objects;
+static struct object_stat *obj_stat;
 static struct delta_entry *deltas;
 static struct thread_local nothread_data;
 static int nr_objects;
@@ -873,13 +877,15 @@ static void resolve_delta(struct object_entry *delta_obj,
 	void *base_data, *delta_data;
 
 	if (show_stat) {
-		delta_obj->delta_depth = base->obj->delta_depth + 1;
+		int i = delta_obj - objects;
+		int j = base->obj - objects;
+		obj_stat[i].delta_depth = obj_stat[j].delta_depth + 1;
 		deepest_delta_lock();
-		if (deepest_delta < delta_obj->delta_depth)
-			deepest_delta = delta_obj->delta_depth;
+		if (deepest_delta < obj_stat[i].delta_depth)
+			deepest_delta = obj_stat[i].delta_depth;
 		deepest_delta_unlock();
+		obj_stat[i].base_object_no = j;
 	}
-	delta_obj->base_object_no = base->obj - objects;
 	delta_data = get_data_from_pack(delta_obj);
 	base_data = get_base_data(base);
 	result->obj = delta_obj;
@@ -902,7 +908,7 @@ static void resolve_delta(struct object_entry *delta_obj,
  * "want"; if so, swap in "set" and return true. Otherwise, leave it untouched
  * and return false.
  */
-static int compare_and_swap_type(enum object_type *type,
+static int compare_and_swap_type(signed char *type,
 				 enum object_type want,
 				 enum object_type set)
 {
@@ -1499,7 +1505,7 @@ static void show_pack_info(int stat_only)
 		struct object_entry *obj = &objects[i];
 
 		if (is_delta_type(obj->type))
-			chain_histogram[obj->delta_depth - 1]++;
+			chain_histogram[obj_stat[i].delta_depth - 1]++;
 		if (stat_only)
 			continue;
 		printf("%s %-6s %lu %lu %"PRIuMAX,
@@ -1508,8 +1514,8 @@ static void show_pack_info(int stat_only)
 		       (unsigned long)(obj[1].idx.offset - obj->idx.offset),
 		       (uintmax_t)obj->idx.offset);
 		if (is_delta_type(obj->type)) {
-			struct object_entry *bobj = &objects[obj->base_object_no];
-			printf(" %u %s", obj->delta_depth, sha1_to_hex(bobj->idx.sha1));
+			struct object_entry *bobj = &objects[obj_stat[i].base_object_no];
+			printf(" %u %s", obj_stat[i].delta_depth, sha1_to_hex(bobj->idx.sha1));
 		}
 		putchar('\n');
 	}
@@ -1672,6 +1678,8 @@ int cmd_index_pack(int argc, const char **argv, const char *prefix)
 	curr_pack = open_pack_file(pack_name);
 	parse_pack_header();
 	objects = xcalloc(nr_objects + 1, sizeof(struct object_entry));
+	if (show_stat)
+		obj_stat = xcalloc(nr_objects + 1, sizeof(struct object_stat));
 	deltas = xcalloc(nr_objects, sizeof(struct delta_entry));
 	parse_pack_objects(pack_sha1);
 	resolve_deltas();
