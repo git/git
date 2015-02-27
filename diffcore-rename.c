@@ -467,8 +467,12 @@ void diffcore_rename(struct diff_options *options)
 			else if (!DIFF_OPT_TST(options, RENAME_EMPTY) &&
 				 is_empty_blob_sha1(p->two->sha1))
 				continue;
-			else
-				add_rename_dst(p->two);
+			else if (add_rename_dst(p->two) < 0) {
+				warning("skipping rename detection, detected"
+					" duplicate destination '%s'",
+					p->two->path);
+				goto cleanup;
+			}
 		}
 		else if (!DIFF_OPT_TST(options, RENAME_EMPTY) &&
 			 is_empty_blob_sha1(p->one->sha1))
