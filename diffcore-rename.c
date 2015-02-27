@@ -15,8 +15,7 @@ static struct diff_rename_dst {
 } *rename_dst;
 static int rename_dst_nr, rename_dst_alloc;
 
-static struct diff_rename_dst *locate_rename_dst(struct diff_filespec *two,
-						 int insert_ok)
+static int find_rename_dst(struct diff_filespec *two)
 {
 	int first, last;
 
@@ -27,16 +26,33 @@ static struct diff_rename_dst *locate_rename_dst(struct diff_filespec *two,
 		struct diff_rename_dst *dst = &(rename_dst[next]);
 		int cmp = strcmp(two->path, dst->two->path);
 		if (!cmp)
-			return dst;
+			return next;
 		if (cmp < 0) {
 			last = next;
 			continue;
 		}
 		first = next+1;
 	}
-	/* not found */
-	if (!insert_ok)
-		return NULL;
+	return -first - 1;
+}
+
+static struct diff_rename_dst *locate_rename_dst(struct diff_filespec *two)
+{
+	int ofs = find_rename_dst(two);
+	return ofs < 0 ? NULL : &rename_dst[ofs];
+}
+
+/*
+ * Returns 0 on success, -1 if we found a duplicate.
+ */
+static int add_rename_dst(struct diff_filespec *two)
+{
+	int first = find_rename_dst(two);
+
+	if (first >= 0)
+		return -1;
+	first = -first - 1;
+
 	/* insert to make it at "first" */
 	ALLOC_GROW(rename_dst, rename_dst_nr + 1, rename_dst_alloc);
 	rename_dst_nr++;
@@ -46,7 +62,7 @@ static struct diff_rename_dst *locate_rename_dst(struct diff_filespec *two,
 	rename_dst[first].two = alloc_filespec(two->path);
 	fill_filespec(rename_dst[first].two, two->sha1, two->sha1_valid, two->mode);
 	rename_dst[first].pair = NULL;
-	return &(rename_dst[first]);
+	return 0;
 }
 
 /* Table of rename/copy src files */
@@ -452,7 +468,7 @@ void diffcore_rename(struct diff_options *options)
 				 is_empty_blob_sha1(p->two->sha1))
 				continue;
 			else
-				locate_rename_dst(p->two, 1);
+				add_rename_dst(p->two);
 		}
 		else if (!DIFF_OPT_TST(options, RENAME_EMPTY) &&
 			 is_empty_blob_sha1(p->one->sha1))
@@ -583,8 +599,7 @@ void diffcore_rename(struct diff_options *options)
 			 * We would output this create record if it has
 			 * not been turned into a rename/copy already.
 			 */
-			struct diff_rename_dst *dst =
-				locate_rename_dst(p->two, 0);
+			struct diff_rename_dst *dst = locate_rename_dst(p->two);
 			if (dst && dst->pair) {
 				diff_q(&outq, dst->pair);
 				pair_to_free = p;
@@ -614,8 +629,7 @@ void diffcore_rename(struct diff_options *options)
 			 */
 			if (DIFF_PAIR_BROKEN(p)) {
 				/* broken delete */
-				struct diff_rename_dst *dst =
-					locate_rename_dst(p->one, 0);
+				struct diff_rename_dst *dst = locate_rename_dst(p->one);
 				if (dst && dst->pair)
 					/* counterpart is now rename/copy */
 					pair_to_free = p;
