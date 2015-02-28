@@ -74,7 +74,7 @@ msgstr ""
 "Project-Id-Version: git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
 "POT-Creation-Date: 2015-01-21 14:21+0800\n"
-"PO-Revision-Date: 2015-01-21 14:57+0800\n"
+"PO-Revision-Date: 2015-02-28 16:11+0100\n"
 "Last-Translator: Jean-Noël Avila <jn.avila@free.fr>\n"
 "Language-Team: Jean-Noël Avila <jn.avila@free.fr>\n"
 "Language: fr\n"
@@ -3861,7 +3861,7 @@ msgstr "Sélectionner les éléments à supprimer"
 #: builtin/clean.c:757
 #, c-format
 msgid "remove %s? "
-msgstr "supprimer %s ? "
+msgstr "supprimer %s ? (y/n) "
 
 #: builtin/clean.c:782
 msgid "Bye."
