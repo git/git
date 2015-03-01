@@ -55,11 +55,17 @@ create_gitattributes () {
 	esac
 }
 
+# Some warnings depend on the native end-of-line marker
+
+test_have_prereq NATIVE_CRLF &&
+NATIVE_CRLF=t ||
+NATIVE_CRLF=
+
 check_warning () {
-	case "$1" in
-	LF_CRLF) grep "LF will be replaced by CRLF" $2;;
-	CRLF_LF) grep "CRLF will be replaced by LF" $2;;
-	'')
+	case "$1,$NATIVE_CRLF" in
+	LF_CRLF,*|MAYBE_CRLF,t|MIX,t) grep "LF will be replaced by CRLF" $2;;
+	CRLF_LF,*|MAYBE_LF,|MIX,) grep "CRLF will be replaced by LF" $2;;
+	,*|MAYBE_CRLF,|MAYBE_LF,t)
 		>expect
 		grep "will be replaced by" $2 >actual
 		test_cmp expect actual
@@ -175,16 +181,17 @@ test_expect_success 'add files empty attr' '
 	create_file_in_repo input ""     ""        "CRLF_LF" "CRLF_LF" ""        ""
 '
 
+
 test_expect_success 'add files attr=auto' '
-	create_file_in_repo false "auto" ""        "CRLF_LF" "CRLF_LF" ""        "" &&
-	create_file_in_repo true  "auto" "LF_CRLF" ""        "LF_CRLF" ""        "" &&
-	create_file_in_repo input "auto" ""        "CRLF_LF" "CRLF_LF" ""        ""
+	create_file_in_repo false "auto" "MAYBE_CRLF" "MAYBE_LF" "MIX"     ""        "" &&
+	create_file_in_repo true  "auto" "LF_CRLF"    ""         "LF_CRLF" ""        "" &&
+	create_file_in_repo input "auto" ""           "CRLF_LF"  "CRLF_LF" ""        ""
 '
 
 test_expect_success 'add files attr=text' '
-	create_file_in_repo false "text" ""        "CRLF_LF" "CRLF_LF" ""        "CRLF_LF" &&
-	create_file_in_repo true  "text" "LF_CRLF" ""        "LF_CRLF" "LF_CRLF" ""        &&
-	create_file_in_repo input "text" ""        "CRLF_LF" "CRLF_LF" ""        "CRLF_LF"
+	create_file_in_repo false "text" "MAYBE_CRLF" "MAYBE_LF" "MIX"    "MAYBE_CRLF" "MAYBE_LF" &&
+	create_file_in_repo true  "text" "LF_CRLF"    ""        "LF_CRLF" "LF_CRLF"    ""        &&
+	create_file_in_repo input "text" ""           "CRLF_LF" "CRLF_LF" ""           "CRLF_LF"
 '
 
 test_expect_success 'add files attr=-text' '
