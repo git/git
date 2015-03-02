@@ -38,18 +38,15 @@ submodule.<name>.url::
 In addition, there are a number of optional keys:
 
 submodule.<name>.update::
-	Defines what to do when the submodule is updated by the superproject.
-	If 'checkout' (the default), the new commit specified in the
-	superproject will be checked out in the submodule on a detached HEAD.
-	If 'rebase', the current branch of the submodule will be rebased onto
-	the commit specified in the superproject. If 'merge', the commit
-	specified in the superproject will be merged into the current branch
-	in the submodule.
-	If 'none', the submodule with name `$name` will not be updated
-	by default.
-
-	This config option is overridden if 'git submodule update' is given
-	the '--merge', '--rebase' or '--checkout' options.
+	Defines the default update procedure for the named submodule,
+	i.e. how the submodule is updated by "git submodule update"
+	command in the superproject. This is only used by `git
+	submodule init` to initialize the configuration variable of
+	the same name. Allowed values here are 'checkout', 'rebase',
+	'merge' or 'none'. See description of 'update' command in
+	linkgit:git-submodule[1] for their meaning. Note that the
+	'!command' form is intentionally ignored here for security
+	reasons.
 
 submodule.<name>.branch::
 	A remote branch name for tracking updates in the upstream submodule.
