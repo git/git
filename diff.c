@@ -4528,7 +4528,7 @@ void diff_flush(struct diff_options *options)
 			show_stats(&diffstat, options);
 		if (output_format & DIFF_FORMAT_SHORTSTAT)
 			show_shortstats(&diffstat, options);
-		if (output_format & DIFF_FORMAT_DIRSTAT)
+		if (output_format & DIFF_FORMAT_DIRSTAT && dirstat_by_line)
 			show_dirstat_by_line(&diffstat, options);
 		free_diffstat_info(&diffstat);
 		separator++;
