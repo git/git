@@ -80,13 +80,13 @@ struct kwset
   struct trie *next[NCHAR];	/* Table of children of the root. */
   char *target;			/* Target string if there's only one. */
   int mind2;			/* Used in Boyer-Moore search for one string. */
-  char const *trans;		/* Character translation table. */
+  unsigned char const *trans;  /* Character translation table. */
 };
 
 /* Allocate and initialize a keyword set object, returning an opaque
    pointer to it.  Return NULL if memory is not available. */
 kwset_t
-kwsalloc (char const *trans)
+kwsalloc (unsigned char const *trans)
 {
   struct kwset *kwset;
 
@@ -381,7 +381,7 @@ kwsprep (kwset_t kws)
   register struct kwset *kwset;
   register int i;
   register struct trie *curr;
-  register char const *trans;
+  register unsigned char const *trans;
   unsigned char delta[NCHAR];
 
   kwset = (struct kwset *) kws;
@@ -590,7 +590,7 @@ cwexec (kwset_t kws, char const *text, size_t len, struct kwsmatch *kwsmatch)
   register int d;
   register char const *end, *qlim;
   register struct tree const *tree;
-  register char const *trans;
+  register unsigned char const *trans;
 
   accept = NULL;
 
