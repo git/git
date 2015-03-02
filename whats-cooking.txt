@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Feb 2015, #07; Thu, 26)
+Subject: What's cooking in git.git (Mar 2015, #01; Mon, 2)
 X-master-at: 7f4ba4b6e3ba7075ca6b379ba23fd3088cbe69a8
 X-next-at: 993ae8bdc3df206f62a424eb695a49f1ba8fa118
 
-What's cooking in git.git (Feb 2015, #07; Thu, 26)
+What's cooking in git.git (Mar 2015, #01; Mon, 2)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -21,162 +21,78 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* ak/git-pm-typofix (2015-02-18) 1 commit
-  (merged to 'next' on 2015-02-20 at 0fa233a)
- + Git.pm: two minor typo fixes
-
- Typofix in comments.
-
-
-* dp/remove-duplicated-header-inclusion (2015-02-13) 1 commit
-  (merged to 'next' on 2015-02-18 at a1bf108)
- + do not include the same header twice
-
- Code clean-up.
-
-
-* jc/max-io-size-and-ssize-max (2015-02-12) 1 commit
-  (merged to 'next' on 2015-02-18 at 0c8a4da)
- + xread/xwrite: clip MAX_IO_SIZE to SSIZE_MAX
-
- Our default I/O size (8 MiB) for large files was too large for some
- platforms with smaller SSIZE_MAX, leading to read(2)/write(2)
- failures.
-
-
-* jc/send-email-sensible-encoding (2015-02-13) 1 commit
-  (merged to 'next' on 2015-02-18 at 7457655)
- + send-email: ask confirmation if given encoding name is very short
-
- "git send-email" used to accept a mistaken "y" (or "yes") as an
- answer to "What encoding do you want to use [UTF-8]? " without
- questioning.  Now it asks for confirmation when the answer looks
- too short to be a valid encoding name.
-
-
-* jk/fast-import-die-nicely-fix (2015-02-10) 1 commit
-  (merged to 'next' on 2015-02-18 at e249425)
- + fast-import: avoid running end_packfile recursively
-
- "git fast-import" used to crash when it could not close and
- conclude the resulting packfile cleanly.
-
-
-* jk/sanity (2015-02-15) 3 commits
-  (merged to 'next' on 2015-02-18 at 5c54b53)
- + test-lib.sh: set prerequisite SANITY by testing what we really need
- + tests: correct misuses of POSIXPERM
- + t/lib-httpd: switch SANITY check for NOT_ROOT
-
- The tests that wanted to see that file becomes unreadable after
- running "chmod a-r file", and the tests that wanted to make sure it
- is not run as root, we used "can we write into the / directory?" as
- a cheap substitute, but on some platforms that is not a good
- heuristics.  The tests and their prerequisites have been updated to
- check what they really require.
-
-
-* jk/strbuf-doc-to-header (2015-01-16) 7 commits
-  (merged to 'next' on 2015-02-18 at 0482c65)
- + strbuf.h: group documentation for trim functions
- + strbuf.h: drop boilerplate descriptions of strbuf_split_*
- + strbuf.h: reorganize api function grouping headers
- + strbuf.h: format asciidoc code blocks as 4-space indent
- + strbuf.h: drop asciidoc list formatting from API docs
- + strbuf.h: unify documentation comments beginnings
- + strbuf.h: integrate api-strbuf.txt documentation
-
- The strbuf API was explained between the API documentation and in
- the header file.  Move missing bits to strbuf.h so that programmers
- can check only one place for all necessary information.
-
-
-* jn/doc-api-errors (2014-12-04) 1 commit
-  (merged to 'next' on 2015-02-18 at f60eda6)
- + doc: document error handling functions and conventions
-
- The error handling functions and conventions are now documented in
- the API manual.
-
-
-* mh/transport-capabilities (2015-02-13) 2 commits
-  (merged to 'next' on 2015-02-18 at 87e8fcc)
- + transport-helper: ask the helper to set the same options for import as for fetch
- + transport-helper: ask the helper to set progress and verbosity options after asking for its capabilities
-
- The transport-helper did not give transport options such as
- verbosity, progress, cloning, etc. to import and export based
- helpers, like it did for fetch and push based helpers, robbing them
- the chance to honor the wish of the end-users better.
-
-
-* nd/attr-optim (2014-12-29) 3 commits
-  (merged to 'next' on 2015-02-18 at 598e68a)
- + attr: avoid heavy work when we know the specified attr is not defined
- + attr: do not attempt to expand when we know it's not a macro
- + attr.c: rename arg name attr_nr to avoid shadowing the global one
-
- Optimize attribute look-up, mostly useful in "git grep" on a
- project that does not use many attributes, by avoiding it when we
- (should) know that the attributes are not defined in the first
- place.
-
-
-* sb/hex-object-name-is-at-most-41-bytes-long (2015-02-13) 1 commit
-  (merged to 'next' on 2015-02-18 at 53d522b)
- + hex.c: reduce memory footprint of sha1_to_hex static buffers
-
- Code clean-up.
-
-
-* sb/plug-leak-in-make-cache-entry (2015-02-17) 1 commit
-  (merged to 'next' on 2015-02-18 at e637f65)
- + read-cache.c: free cache entry when refreshing fails
-
- "update-index --refresh" used to leak when an entry cannot be
- refreshed for whatever reason.
-
-
-* tc/missing-http-proxyauth (2015-02-03) 1 commit
-  (merged to 'next' on 2015-02-18 at 8ff01ad)
- + http: support curl < 7.10.7
-
- We did not check the curl library version before using
- CURLOPT_PROXYAUTH feature that may not exist.
-
---------------------------------------------------
 [New Topics]
 
-* mg/detached-head-report (2015-02-23) 1 commit
- - branch: name detached HEAD analogous to status
+* ew/svn-fixes (2015-02-26) 2 commits
+ - Merge branch 'svn-maint-fixes' into svn-fixes
+ - git-svn: lazy load some modules
+ (this branch uses ew/svn-maint-fixes.)
 
- "git branch" on a detached HEAD always said "(detached from xyz)",
- even when "git status" would report "detached at xyz".  The HEAD is
- actually at xyz and haven't been moved since it was detached in
- such a case, but the user cannot read what the current value of
- HEAD is when "detached from" is used.
-
- The goal is sound.  May want to share code between branch and
- status in a reroll?  Are there other commands that give the same
- information that share the code, too?
+ Will merge to 'next'.
 
 
-* mg/sequencer-commit-messages-always-verbatim (2015-02-23) 1 commit
- - sequencer: preserve commit messages
+* ew/svn-maint-fixes (2015-02-26) 2 commits
+ - Git::SVN::*: avoid premature FileHandle closure
+ - git-svn: fix localtime=true on non-glibc environments
+ (this branch is used by ew/svn-fixes.)
 
- Always replay the original commit message verbatim, regardless of
- the commit.cleanup configuration settings by the user.
-
- Is this a good idea?
+ Will merge to 'next' and soon to 'master'.
 
 
-* rj/no-xopen-source-for-cygwin (2015-02-22) 1 commit
-  (merged to 'next' on 2015-02-23 at 323ac75)
- + git-compat-util.h: remove redundant code
+* mr/doc-clean-f-f (2015-02-26) 1 commit
+ - Documentation/git-clean.txt: document that -f may need to be given twice
 
- Will merge to 'master'.
+ Will merge to 'next'.
+
+
+* ye/http-accept-language (2015-02-26) 1 commit
+ - gettext.c: move get_preferred_languages() from http.c
+
+ Compilation fix for a recent topic in 'master'.
+
+ Will merge to 'next'.
+
+
+* jk/diffcore-rename-duplicate (2015-02-27) 2 commits
+ - diffcore-rename: avoid processing duplicate destinations
+ - diffcore-rename: split locate_rename_dst into two functions
+
+ A corrupt input to "git diff -M" can cause us to segfault.
+
+ Will merge to 'next'.
+
+
+* nd/grep-exclude-standard-help-fix (2015-02-27) 1 commit
+ - grep: correct help string for --exclude-standard
+
+ Will merge to 'next'.
+
+
+* nd/versioncmp-prereleases (2015-02-27) 1 commit
+ - versionsort: support reorder prerelease suffixes
+
+ The versionsort.prerelease configuration variable can be used to
+ specify that v1.0-pre1 comes before v1.0.
+
+ Will merge to 'next'.
+
+
+* ja/clean-confirm-i18n (2015-03-02) 1 commit
+ - Add hint interactive cleaning
+
+ The prompt string "remove?" used when "git clean -i" asks the user
+ if a path should be removed was localizable, but the code always
+ expects a substring of "yes" to tell it to go ahead.  Always show
+ [y/N] as part of this prompt to hint that the answer is not (yet)
+ localized.
+
+ Will merge to 'next'.
+
+
+* mk/diff-shortstat-dirstat-fix (2015-03-02) 1 commit
+ - diff --shortstat --dirstat: remove duplicate output
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -247,14 +163,6 @@ of the repositories listed at
  other place.
 
  The fix in this patch is broken, unfortunately.
-
-
-* nd/slim-index-pack-memory-usage (2015-02-10) 3 commits
- - index-pack: kill union delta_base to save memory
- - FIXUP
- - index-pack: reduce memory footprint a bit
-
- Need to replace with the reroll ($gmane/264126).
 
 
 * pw/remote-set-url-fetch (2014-11-26) 1 commit
@@ -379,6 +287,44 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* nd/slim-index-pack-memory-usage (2015-02-27) 2 commits
+ - index-pack: kill union delta_base to save memory
+ - index-pack: reduce object_entry size to save memory
+
+ Memory usage of "git index-pack" has been trimmed by tens of
+ per-cent.
+
+
+* mg/detached-head-report (2015-02-23) 1 commit
+ - branch: name detached HEAD analogous to status
+
+ "git branch" on a detached HEAD always said "(detached from xyz)",
+ even when "git status" would report "detached at xyz".  The HEAD is
+ actually at xyz and haven't been moved since it was detached in
+ such a case, but the user cannot read what the current value of
+ HEAD is when "detached from" is used.
+
+ The goal is sound.  May want to share code between branch and
+ status in a reroll?  Are there other commands that give the same
+ information that share the code, too?
+
+
+* mg/sequencer-commit-messages-always-verbatim (2015-02-23) 1 commit
+ - sequencer: preserve commit messages
+
+ Always replay the original commit message verbatim, regardless of
+ the commit.cleanup configuration settings by the user.
+
+ Is this a good idea?
+
+
+* rj/no-xopen-source-for-cygwin (2015-02-22) 1 commit
+  (merged to 'next' on 2015-02-23 at 323ac75)
+ + git-compat-util.h: remove redundant code
+
+ Will merge to 'master'.
+
+
 * nd/list-files (2015-02-09) 21 commits
  - t3080: tests for git-list-files
  - list-files: -M aka diff-cached
@@ -450,13 +396,13 @@ of the repositories listed at
  Waiting for discussion on the tip one.
 
 
-* ms/submodule-update-config-doc (2015-02-23) 1 commit
+* ms/submodule-update-config-doc (2015-03-02) 1 commit
  - submodule: improve documentation of update subcommand
 
  The interaction between "git submodule update" and the
  submodule.*.update configuration was not clearly documented.
 
- Waiting for a final reroll.
+ Will merge to 'next'.
 
 
 * jc/diff-test-updates (2015-02-23) 7 commits
@@ -512,19 +458,19 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* mh/expire-updateref-fixes (2015-02-09) 10 commits
- - reflog_expire(): lock symbolic refs themselves, not their referent
+* mh/expire-updateref-fixes (2015-03-02) 9 commits
  - reflog_expire(): never update a reference to null_sha1
  - reflog_expire(): ignore --updateref for symbolic references
- - reflog: rearrange the manpage
- - reflog: fix documentation
+ - reflog: improve and update documentation
+ - struct ref_lock: delete the force_write member
  - lock_ref_sha1_basic(): do not set force_write for missing references
- - write_ref_sha1(): Move write elision test to callers
+ - write_ref_sha1(): move write elision test to callers
  - write_ref_sha1(): remove check for lock == NULL
  - Merge branch 'sb/atomic-push' into mh/ref-trans-value-check
  - Merge branch 'mh/reflog-expire' into mh/ref-trans-value-check
 
- Under discussion ($gmane/263552)
+ Will wait for a short while before merging to 'next'.
+ ($gmane/264586).
 
 
 * mh/refs-have-new (2015-02-17) 13 commits
@@ -647,12 +593,3 @@ of the repositories listed at
  by making the borrowee and borrowers aware of each other.
 
  Will cook in 'next'.
-
---------------------------------------------------
-[Discarded]
-
-* tc/t9001-noxmailer (2015-01-30) 1 commit
- . t9001: use older Getopt::Long boolean prefix '--no' rather than '--no-'
-
- Kyle's update to explicitly support --no-option with older
- Getopt::Long ($gmane/263203) makes this unnecessary.
