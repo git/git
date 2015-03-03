@@ -12,7 +12,6 @@ struct ref_lock {
 	struct lock_file *lk;
 	unsigned char old_sha1[20];
 	int lock_fd;
-	int force_write;
 };
 
 /*
@@ -2319,8 +2318,6 @@ static struct ref_lock *lock_ref_sha1_basic(const char *refname,
 	lock->ref_name = xstrdup(refname);
 	lock->orig_ref_name = xstrdup(orig_refname);
 	ref_file = git_path("%s", refname);
-	if ((flags & REF_NODEREF) && (type & REF_ISSYMREF))
-		lock->force_write = 1;
 
  retry:
 	switch (safe_create_leading_directories(ref_file)) {
@@ -3788,8 +3785,15 @@ int ref_transaction_commit(struct ref_transaction *transaction,
 		struct ref_update *update = updates[i];
 
 		if (!is_null_sha1(update->new_sha1)) {
-			if (!update->lock->force_write &&
-			    !hashcmp(update->lock->old_sha1, update->new_sha1)) {
+			int overwriting_symref = ((update->type & REF_ISSYMREF) &&
+						  (update->flags & REF_NODEREF));
+
+			if (!overwriting_symref
+			    && !hashcmp(update->lock->old_sha1, update->new_sha1)) {
+				/*
+				 * The reference already has the desired
+				 * value, so we don't need to write it.
+				 */
 				unlock_ref(update->lock);
 				update->lock = NULL;
 			} else if (write_ref_sha1(update->lock, update->new_sha1,
