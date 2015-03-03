@@ -88,7 +88,8 @@ Options for `expire`
 
 --updateref::
 	Update the reference to the value of the top reflog entry (i.e.
-	<ref>@\{0\}) if the previous top entry was pruned.
+	<ref>@\{0\}) if the previous top entry was pruned.  (This
+	option is ignored for symbolic references.)
 
 --rewrite::
 	If a reflog entry's predecessor is pruned, adjust its "old"
