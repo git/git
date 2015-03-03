@@ -1601,6 +1601,9 @@ static int parse_fragment(const char *line, unsigned long size,
 			if (!deleted && !added)
 				leading++;
 			trailing++;
+			if (!apply_in_reverse &&
+			    ws_error_action == correct_ws_error)
+				check_whitespace(line, len, patch->ws_rule);
 			break;
 		case '-':
 			if (apply_in_reverse &&
