@@ -142,4 +142,31 @@ test_expect_success 'read access denied' "test_remote_error -x 'no such reposito
 test_expect_success 'not exported'       "test_remote_error -n 'repository not exported' fetch repo.git       "
 
 stop_git_daemon
+start_git_daemon --interpolated-path="$GIT_DAEMON_DOCUMENT_ROOT_PATH/%H%D"
+
+test_expect_success 'access repo via interpolated hostname' '
+	repo="$GIT_DAEMON_DOCUMENT_ROOT_PATH/localhost/interp.git" &&
+	git init --bare "$repo" &&
+	git push "$repo" HEAD &&
+	>"$repo"/git-daemon-export-ok &&
+	rm -rf tmp.git &&
+	GIT_OVERRIDE_VIRTUAL_HOST=localhost \
+		git clone --bare "$GIT_DAEMON_URL/interp.git" tmp.git &&
+	rm -rf tmp.git &&
+	GIT_OVERRIDE_VIRTUAL_HOST=LOCALHOST \
+		git clone --bare "$GIT_DAEMON_URL/interp.git" tmp.git
+'
+
+test_expect_success 'hostname cannot break out of directory' '
+	rm -rf tmp.git &&
+	repo="$GIT_DAEMON_DOCUMENT_ROOT_PATH/../escape.git" &&
+	git init --bare "$repo" &&
+	git push "$repo" HEAD &&
+	>"$repo"/git-daemon-export-ok &&
+	test_must_fail \
+		env GIT_OVERRIDE_VIRTUAL_HOST=.. \
+		git clone --bare "$GIT_DAEMON_URL/escape.git" tmp.git
+'
+
+stop_git_daemon
 test_done
