@@ -40,6 +40,9 @@ UI, Workflows & Features
    questioning.  Now it asks for confirmation when the answer looks
    too short to be a valid encoding name.
 
+ * When "git apply --whitespace=fix" fixed whitespace errors in the
+   common context lines, the command reports that it did so.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -222,3 +225,24 @@ notes for details).
  * "update-index --refresh" used to leak when an entry cannot be
    refreshed for whatever reason.
    (merge bc1c2ca sb/plug-leak-in-make-cache-entry later to maint).
+
+ * The "interpolated-path" option of "git daemon" inserted any string
+   client declared on the "host=" capability request without checking.
+   Sanitize and limit %H and %CH to a saner and a valid DNS name.
+   (merge b485373 jk/daemon-interpolate later to maint).
+
+ * "git daemon" looked up the hostname even when "%CH" and "%IP"
+   interpolations are not requested, which was unnecessary.
+   (merge dc8edc8 rs/daemon-interpolate later to maint).
+
+ * Even though we officially haven't dropped Perl 5.8 support, the
+   Getopt::Long package that came with it does not support "--no-"
+   prefix to negate a boolean option; manually add support to help
+   people with older Getopt::Long package.
+   (merge f471494 km/send-email-getopt-long-workarounds later to maint).
+
+ * "git apply" was not very careful about reading from, removing,
+   updating and creating paths outside the working tree (under
+   --index/--cached) or the current directory (when used as a
+   replacement for GNU patch).
+   (merge e0d201b jc/apply-beyond-symlink later to maint).
