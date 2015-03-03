@@ -392,7 +392,7 @@ test_expect_success $PREREQ 'allow long lines with --no-validate' '
 		--from="Example <nobody@example.com>" \
 		--to=nobody@example.com \
 		--smtp-server="$(pwd)/fake.sendmail" \
-		--novalidate \
+		--no-validate \
 		$patches longline.patch \
 		2>errors
 '
@@ -426,7 +426,7 @@ test_expect_success $PREREQ 'In-Reply-To without --chain-reply-to' '
 	git send-email \
 		--from="Example <nobody@example.com>" \
 		--to=nobody@example.com \
-		--nochain-reply-to \
+		--no-chain-reply-to \
 		--in-reply-to="$(cat expect)" \
 		--smtp-server="$(pwd)/fake.sendmail" \
 		$patches $patches $patches \
@@ -1067,7 +1067,7 @@ test_expect_success $PREREQ 'in-reply-to but no threading' '
 		--from="Example <nobody@example.com>" \
 		--to=nobody@example.com \
 		--in-reply-to="<in-reply-id@example.com>" \
-		--nothread \
+		--no-thread \
 		$patches |
 	grep "In-Reply-To: <in-reply-id@example.com>"
 '
@@ -1077,7 +1077,7 @@ test_expect_success $PREREQ 'no in-reply-to and no threading' '
 		--dry-run \
 		--from="Example <nobody@example.com>" \
 		--to=nobody@example.com \
-		--nothread \
+		--no-thread \
 		$patches $patches >stdout &&
 	! grep "In-Reply-To: " stdout
 '
@@ -1088,7 +1088,7 @@ test_expect_success $PREREQ 'threading but no chain-reply-to' '
 		--from="Example <nobody@example.com>" \
 		--to=nobody@example.com \
 		--thread \
-		--nochain-reply-to \
+		--no-chain-reply-to \
 		$patches $patches >stdout &&
 	grep "In-Reply-To: " stdout
 '
