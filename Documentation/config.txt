@@ -155,6 +155,13 @@ color::
        `reverse`.  The first color given is the foreground; the
        second is the background.  The position of the attribute, if
        any, doesn't matter.
++
+The attributes are meant to be reset at the beginning of each item
+in the colored output, so setting color.decorate.branch to `black`
+will paint that branch name in a plain `black`, even if the previous
+thing on the same output line (e.g. opening parenthesis before the
+list of branch names in `log --decorate` output) is set to be
+painted with `bold` or some other attribute.
 
 
 Variables
