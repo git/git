@@ -59,8 +59,21 @@ is taken as 'name' and the variable is recognized as boolean "true".
 The variable names are case-insensitive, allow only alphanumeric characters
 and `-`, and must start with an alphabetic character.
 
-Leading and trailing whitespace in a variable value is discarded.
-Internal whitespace within a variable value is retained verbatim.
+A line that defines a value can be continued to the next line by
+ending it with a `\`; the backquote and the end-of-line are
+stripped.  Leading whitespaces after 'name =', the remainder of the
+line after the first comment character '#' or ';', and trailing
+whitespaces of the line are discarded unless they are enclosed in
+double quotes.  Internal whitespaces within the value are retained
+verbatim.
+
+Inside double quotes, double quote `"` and backslash `\` characters
+must be escaped: use `\"` for `"` and `\\` for `\`.
+
+The following escape sequences (beside `\"` and `\\`) are recognized:
+`\n` for newline character (NL), `\t` for horizontal tabulation (HT, TAB)
+and `\b` for backspace (BS).  No other char escape sequence, nor octal
+char sequences are valid.
 
 The values following the equals sign in variable assign are all either
 a string, an integer, or a boolean.  Boolean values may be given as yes/no,
@@ -68,22 +81,8 @@ a string, an integer, or a boolean.  Boolean values may be given as yes/no,
 converting value to the canonical form using '--bool' type specifier;
 'git config' will ensure that the output is "true" or "false".
 
-String values may be entirely or partially enclosed in double quotes.
-You need to enclose variable values in double quotes if you want to
-preserve leading or trailing whitespace, or if the variable value contains
-comment characters (i.e. it contains '#' or ';').
-Double quote `"` and backslash `\` characters in variable values must
-be escaped: use `\"` for `"` and `\\` for `\`.
-
-The following escape sequences (beside `\"` and `\\`) are recognized:
-`\n` for newline character (NL), `\t` for horizontal tabulation (HT, TAB)
-and `\b` for backspace (BS).  No other char escape sequence, nor octal
-char sequences are valid.
-
-Variable values ending in a `\` are continued on the next line in the
-customary UNIX fashion.
-
 Some variables may require a special value format.
+
 
 Includes
 ~~~~~~~~
