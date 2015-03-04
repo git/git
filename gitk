@@ -2818,7 +2818,7 @@ proc savestuff {w} {
 
     if {$stuffsaved} return
     if {![winfo viewable .]} return
-    catch {
+    if {[catch {
 	if {[file exists $config_file_tmp]} {
 	    file delete -force $config_file_tmp
 	}
@@ -2884,6 +2884,8 @@ proc savestuff {w} {
 	puts $f "}"
 	close $f
 	file rename -force $config_file_tmp $config_file
+    } err]} {
+        puts "Error saving config: $err"
     }
     set stuffsaved 1
 }
