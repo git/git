@@ -25,7 +25,7 @@ blank lines are ignored.
 
 The file consists of sections and variables.  A section begins with
 the name of the section in square brackets and continues until the next
-section begins.  Section names are not case sensitive.  Only alphanumeric
+section begins.  Section names are case-insensitive.  Only alphanumeric
 characters, `-` and `.` are allowed in section names.  Each variable
 must belong to some section, which means that there must be a section
 header before the first setting of a variable.
@@ -40,8 +40,8 @@ in the section header, like in the example below:
 --------
 
 Subsection names are case sensitive and can contain any characters except
-newline (doublequote `"` and backslash have to be escaped as `\"` and `\\`,
-respectively).  Section headers cannot span multiple
+newline (doublequote `"` and backslash can be included by escaping them
+as `\"` and `\\`, respectively).  Section headers cannot span multiple
 lines.  Variables may belong directly to a section or to a given subsection.
 You can have `[section]` if you have `[section "subsection"]`, but you
 don't need to.
