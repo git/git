@@ -1032,6 +1032,7 @@ test -n "$autosquash" && rearrange_squash "$todo"
 test -n "$cmd" && add_exec_commands "$todo"
 
 todocount=$(git stripspace --strip-comments <"$todo" | wc -l)
+todocount=${todocount##* }
 
 cat >>"$todo" <<EOF
 

@@ -1039,4 +1039,13 @@ test_expect_success 'short SHA-1 collide' '
 	)
 '
 
+test_expect_success 'todo count' '
+	write_script dump-raw.sh <<-\EOF &&
+		cat "$1"
+	EOF
+	test_set_editor "$(pwd)/dump-raw.sh" &&
+	git rebase -i HEAD~4 >actual &&
+	grep "^# Rebase ..* onto ..* ([0-9]" actual
+'
+
 test_done
