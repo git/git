@@ -146,6 +146,16 @@ integer::
        be suffixed with `k`, `M`,... to mean "scale the number by
        1024", "by 1024x1024", etc.
 
+color::
+       The value for a variables that takes a color is a list of
+       colors (at most two) and attributes (at most one), separated
+       by spaces.  The colors accepted are `normal`, `black`,
+       `red`, `green`, `yellow`, `blue`, `magenta`, `cyan` and
+       `white`; the attributes are `bold`, `dim`, `ul`, `blink` and
+       `reverse`.  The first color given is the foreground; the
+       second is the background.  The position of the attribute, if
+       any, doesn't matter.
+
 
 Variables
 ~~~~~~~~~
@@ -838,14 +848,6 @@ color.branch.<slot>::
 	`remote` (a remote-tracking branch in refs/remotes/),
 	`upstream` (upstream tracking branch), `plain` (other
 	refs).
-+
-The value for these configuration variables is a list of colors (at most
-two) and attributes (at most one), separated by spaces.  The colors
-accepted are `normal`, `black`, `red`, `green`, `yellow`, `blue`,
-`magenta`, `cyan` and `white`; the attributes are `bold`, `dim`, `ul`,
-`blink` and `reverse`.  The first color given is the foreground; the
-second is the background.  The position of the attribute, if any,
-doesn't matter.
 
 color.diff::
 	Whether to use ANSI escape sequences to add color to patches.
@@ -865,8 +867,7 @@ color.diff.<slot>::
 	of `plain` (context text), `meta` (metainformation), `frag`
 	(hunk header), 'func' (function in hunk header), `old` (removed lines),
 	`new` (added lines), `commit` (commit headers), or `whitespace`
-	(highlighting whitespace errors). The values of these variables may be
-	specified as in color.branch.<slot>.
+	(highlighting whitespace errors).
 
 color.decorate.<slot>::
 	Use customized color for 'git log --decorate' output.  `<slot>` is one
@@ -899,8 +900,6 @@ color.grep.<slot>::
 	separators between fields on a line (`:`, `-`, and `=`)
 	and between hunks (`--`)
 --
-+
-The values of these variables may be specified as in color.branch.<slot>.
 
 color.interactive::
 	When set to `always`, always use colors for interactive prompts
@@ -913,8 +912,7 @@ color.interactive.<slot>::
 	Use customized color for 'git add --interactive' and 'git clean
 	--interactive' output. `<slot>` may be `prompt`, `header`, `help`
 	or `error`, for four distinct types of normal output from
-	interactive commands.  The values of these variables may be
-	specified as in color.branch.<slot>.
+	interactive commands.
 
 color.pager::
 	A boolean to enable/disable colored output when the pager is in
@@ -940,8 +938,7 @@ color.status.<slot>::
 	`untracked` (files which are not tracked by Git),
 	`branch` (the current branch), or
 	`nobranch` (the color the 'no branch' warning is shown in, defaulting
-	to red). The values of these variables may be specified as in
-	color.branch.<slot>.
+	to red).
 
 color.ui::
 	This variable determines the default value for variables such
