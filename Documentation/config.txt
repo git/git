@@ -75,14 +75,6 @@ The following escape sequences (beside `\"` and `\\`) are recognized:
 and `\b` for backspace (BS).  No other char escape sequence, nor octal
 char sequences are valid.
 
-The values following the equals sign in variable assign are all either
-a string, an integer, or a boolean.  Boolean values may be given as yes/no,
-1/0, true/false or on/off.  Case is not significant in boolean values, when
-converting value to the canonical form using '--bool' type specifier;
-'git config' will ensure that the output is "true" or "false".
-
-Some variables may require a special value format.
-
 
 Includes
 ~~~~~~~~
@@ -123,6 +115,37 @@ Example
 		path = /path/to/foo.inc ; include by absolute path
 		path = foo ; expand "foo" relative to the current file
 		path = ~/foo ; expand "foo" in your $HOME directory
+
+
+Values
+~~~~~~
+
+Values of many variables are treated as a simple string, but there
+are variables that take values of specific types and there are rules
+as to how to spell them.
+
+boolean::
+
+       When a variable is said to take a boolean value, many
+       synonyms are accepted for 'true' and 'false'; these are all
+       case-insensitive.
+
+       true;; Boolean true can be spelled as `yes`, `on`, `true`,
+		or `1`.  Also, a variable defined without `= <value>`
+		is taken as true.
+
+       false;; Boolean false can be spelled as `no`, `off`,
+		`false`, or `0`.
++
+When converting value to the canonical form using '--bool' type
+specifier; 'git config' will ensure that the output is "true" or
+"false" (spelled in lowercase).
+
+integer::
+       The value for many variables that specify various sizes can
+       be suffixed with `k`, `M`,... to mean "scale the number by
+       1024", "by 1024x1024", etc.
+
 
 Variables
 ~~~~~~~~~
