@@ -2783,6 +2783,21 @@ proc doprogupdate {} {
     }
 }
 
+proc config_check_tmp_exists {tries_left} {
+    global config_file_tmp
+
+    if {[file exists $config_file_tmp]} {
+	incr tries_left -1
+	if {$tries_left > 0} {
+	    after 100 [list config_check_tmp_exists $tries_left]
+	} else {
+	    error_popup "There appears to be a stale $config_file_tmp\
+ file, which will prevent gitk from saving its configuration on exit.\
+ Please remove it if it is not being used by any existing gitk process."
+	}
+    }
+}
+
 proc config_init_trace {name} {
     global config_variable_changed config_variable_original
 
@@ -2818,11 +2833,16 @@ proc savestuff {w} {
 
     if {$stuffsaved} return
     if {![winfo viewable .]} return
+    set remove_tmp 0
     if {[catch {
-	if {[file exists $config_file_tmp]} {
-	    file delete -force $config_file_tmp
+	set try_count 0
+	while {[catch {set f [open $config_file_tmp {WRONLY CREAT EXCL}]}]} {
+	    if {[incr try_count] > 50} {
+		error "Unable to write config file: $config_file_tmp exists"
+	    }
+	    after 100
 	}
-	set f [open $config_file_tmp w]
+	set remove_tmp 1
 	if {$::tcl_platform(platform) eq {windows}} {
 	    file attributes $config_file_tmp -hidden true
 	}
@@ -2884,8 +2904,12 @@ proc savestuff {w} {
 	puts $f "}"
 	close $f
 	file rename -force $config_file_tmp $config_file
+	set remove_tmp 0
     } err]} {
         puts "Error saving config: $err"
+    }
+    if {$remove_tmp} {
+	file delete -force $config_file_tmp
     }
     set stuffsaved 1
 }
@@ -12177,6 +12201,7 @@ catch {
     }
     source $config_file
 }
+config_check_tmp_exists 50
 
 set config_variables {
     mainfont textfont uifont tabstop findmergefiles maxgraphpct maxwidth
