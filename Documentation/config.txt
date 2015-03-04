@@ -54,8 +54,8 @@ restrictions as section names.
 
 All the other lines (and the remainder of the line after the section
 header) are recognized as setting variables, in the form
-'name = value'.  If there is no equal sign on the line, the entire line
-is taken as 'name' and the variable is recognized as boolean "true".
+'name = value' (or just 'name', which is a short-hand to say that
+the variable is the boolean "true").
 The variable names are case-insensitive, allow only alphanumeric characters
 and `-`, and must start with an alphabetic character.
 
