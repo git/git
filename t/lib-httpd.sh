@@ -37,7 +37,7 @@ then
 	test_done
 fi
 
-if ! test_have_prereq SANITY; then
+if ! test_have_prereq NOT_ROOT; then
 	test_skip_or_die $GIT_TEST_HTTPD \
 		"Cannot run httpd tests as root"
 fi

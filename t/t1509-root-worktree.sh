@@ -98,8 +98,16 @@ test_foobar_foobar() {
 	'
 }
 
-if ! test_have_prereq POSIXPERM || ! [ -w / ]; then
-	skip_all="Dangerous test skipped. Read this test if you want to execute it"
+if ! test -w /
+then
+	skip_all="Test requiring writable / skipped. Read this test if you want to run it"
+	test_done
+fi
+
+if  test -e /refs || test -e /objects || test -e /info || test -e /hooks ||
+    test -e /.git || test -e /foo || test -e /me
+then
+	skip_all="Skip test that clobbers existing files in /"
 	test_done
 fi
 
@@ -108,8 +116,9 @@ if [ "$IKNOWWHATIAMDOING" != "YES" ]; then
 	test_done
 fi
 
-if [ "$UID" = 0 ]; then
-	skip_all="No you can't run this with root"
+if ! test_have_prereq NOT_ROOT
+then
+	skip_all="No you can't run this as root"
 	test_done
 fi
 
