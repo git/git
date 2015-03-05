@@ -84,6 +84,8 @@ Performance, Internal Implementation, Development Support etc.
    (merge 0b868f0 sb/hex-object-name-is-at-most-41-bytes-long later to maint).
    (merge 5d30851 dp/remove-duplicated-header-inclusion later to maint).
 
+ * Simplify the ref transaction API around how "the ref should be
+   pointing at this object" is specified.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -246,3 +248,21 @@ notes for details).
    --index/--cached) or the current directory (when used as a
    replacement for GNU patch).
    (merge e0d201b jc/apply-beyond-symlink later to maint).
+
+ * A breakage to git-svn around v2.2 era that triggers premature
+   closing of FileHandle has been corrected.
+   (merge e426311 ew/svn-maint-fixes later to maint).
+
+ * We did not parse username followed by literal IPv6 address in SSH
+   transport URLs, e.g. ssh://user@[2001:db8::1]:22/repo.git
+   correctly.
+   (merge 3f55cca tb/connect-ipv6-parse-fix later to maint).
+
+ * The configuration variable 'mailinfo.scissors' was hard to
+   discover in the documentation.
+   (merge afb5de7 mm/am-c-doc later to maint).
+
+ * Code cleanups.
+   (merge 2ce63e9 rs/simple-cleanups later to maint).
+   (merge 33baa69 rj/no-xopen-source-for-cygwin later to maint).
+   (merge 817d03e jc/diff-test-updates later to maint).
