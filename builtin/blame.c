@@ -2085,7 +2085,6 @@ static void find_alignment(struct scoreboard *sb, int *option)
 
 	for (e = sb->ent; e; e = e->next) {
 		struct origin *suspect = e->suspect;
-		struct commit_info ci;
 		int num;
 
 		if (compute_auto_abbrev)
@@ -2096,6 +2095,7 @@ static void find_alignment(struct scoreboard *sb, int *option)
 		if (longest_file < num)
 			longest_file = num;
 		if (!(suspect->commit->object.flags & METAINFO_SHOWN)) {
+			struct commit_info ci;
 			suspect->commit->object.flags |= METAINFO_SHOWN;
 			get_commit_info(suspect->commit, &ci, 1);
 			if (*option & OUTPUT_SHOW_EMAIL)
@@ -2104,6 +2104,7 @@ static void find_alignment(struct scoreboard *sb, int *option)
 				num = utf8_strwidth(ci.author.buf);
 			if (longest_author < num)
 				longest_author = num;
+			commit_info_destroy(&ci);
 		}
 		num = e->s_lno + e->num_lines;
 		if (longest_src_lines < num)
@@ -2113,8 +2114,6 @@ static void find_alignment(struct scoreboard *sb, int *option)
 			longest_dst_lines = num;
 		if (largest_score < ent_score(sb, e))
 			largest_score = ent_score(sb, e);
-
-		commit_info_destroy(&ci);
 	}
 	max_orig_digits = decimal_width(longest_src_lines);
 	max_digits = decimal_width(longest_dst_lines);
