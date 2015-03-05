@@ -2916,7 +2916,6 @@ static int write_loose_object(const unsigned char *sha1, char *hdr, int hdrlen,
 	}
 
 	/* Set it up */
-	memset(&stream, 0, sizeof(stream));
 	git_deflate_init(&stream, zlib_compression_level);
 	stream.next_out = compressed;
 	stream.avail_out = sizeof(compressed);

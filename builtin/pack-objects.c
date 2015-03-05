@@ -123,7 +123,6 @@ static unsigned long do_compress(void **pptr, unsigned long size)
 	void *in, *out;
 	unsigned long maxsize;
 
-	memset(&stream, 0, sizeof(stream));
 	git_deflate_init(&stream, pack_compression_level);
 	maxsize = git_deflate_bound(&stream, size);
 
@@ -151,7 +150,6 @@ static unsigned long write_large_blob_data(struct git_istream *st, struct sha1fi
 	unsigned char obuf[1024 * 16];
 	unsigned long olen = 0;
 
-	memset(&stream, 0, sizeof(stream));
 	git_deflate_init(&stream, pack_compression_level);
 
 	for (;;) {

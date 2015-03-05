@@ -120,7 +120,6 @@ static void *zlib_deflate_raw(void *data, unsigned long size,
 	void *buffer;
 	int result;
 
-	memset(&stream, 0, sizeof(stream));
 	git_deflate_init_raw(&stream, compression_level);
 	maxsize = git_deflate_bound(&stream, size);
 	buffer = xmalloc(maxsize);
@@ -349,7 +348,6 @@ static int write_zip_entry(struct archiver_args *args,
 		size_t out_len;
 		unsigned char compressed[STREAM_BUFFER_SIZE * 2];
 
-		memset(&zstream, 0, sizeof(zstream));
 		git_deflate_init_raw(&zstream, args->compression_level);
 
 		compressed_size = 0;

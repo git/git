@@ -1173,7 +1173,6 @@ static int write_compressed(struct sha1file *f, void *in, unsigned int size)
 	int status;
 	unsigned char outbuf[4096];
 
-	memset(&stream, 0, sizeof(stream));
 	git_deflate_init(&stream, zlib_compression_level);
 	stream.next_in = in;
 	stream.avail_in = size;

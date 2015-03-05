@@ -1053,7 +1053,6 @@ static int store_object(
 	} else
 		delta = NULL;
 
-	memset(&s, 0, sizeof(s));
 	git_deflate_init(&s, pack_compression_level);
 	if (delta) {
 		s.next_in = delta;
@@ -1081,7 +1080,6 @@ static int store_object(
 			free(delta);
 			delta = NULL;
 
-			memset(&s, 0, sizeof(s));
 			git_deflate_init(&s, pack_compression_level);
 			s.next_in = (void *)dat->buf;
 			s.avail_in = dat->len;
@@ -1181,7 +1179,6 @@ static void stream_blob(uintmax_t len, unsigned char *sha1out, uintmax_t mark)
 
 	crc32_begin(pack_file);
 
-	memset(&s, 0, sizeof(s));
 	git_deflate_init(&s, pack_compression_level);
 
 	hdrlen = encode_in_pack_object_header(OBJ_BLOB, len, out_buf);

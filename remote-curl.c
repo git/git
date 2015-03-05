@@ -555,7 +555,6 @@ retry:
 		git_zstream stream;
 		int ret;
 
-		memset(&stream, 0, sizeof(stream));
 		git_deflate_init_gzip(&stream, Z_BEST_COMPRESSION);
 		gzip_size = git_deflate_bound(&stream, rpc->len);
 		gzip_body = xmalloc(gzip_size);
