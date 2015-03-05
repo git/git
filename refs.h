@@ -183,12 +183,10 @@ extern int peel_ref(const char *refname, unsigned char *sha1);
  * Flags controlling ref_transaction_update(), ref_transaction_create(), etc.
  * REF_NODEREF: act on the ref directly, instead of dereferencing
  *              symbolic references.
- * REF_DELETING: tolerate broken refs
  *
- * Flags >= 0x100 are reserved for internal use.
+ * Other flags are reserved for internal use.
  */
 #define REF_NODEREF	0x01
-#define REF_DELETING	0x02
 
 /*
  * Setup reflog before using. Set errno to something meaningful on failure.
@@ -257,57 +255,95 @@ enum action_on_err {
 struct ref_transaction *ref_transaction_begin(struct strbuf *err);
 
 /*
- * The following functions add a reference check or update to a
- * ref_transaction.  In all of them, refname is the name of the
- * reference to be affected.  The functions make internal copies of
- * refname and msg, so the caller retains ownership of these parameters.
- * flags can be REF_NODEREF; it is passed to update_ref_lock().
+ * Reference transaction updates
+ *
+ * The following four functions add a reference check or update to a
+ * ref_transaction.  They have some common similar parameters:
+ *
+ *     transaction -- a pointer to an open ref_transaction, obtained
+ *         from ref_transaction_begin().
+ *
+ *     refname -- the name of the reference to be affected.
+ *
+ *     flags -- flags affecting the update, passed to
+ *         update_ref_lock(). Can be REF_NODEREF, which means that
+ *         symbolic references should not be followed.
+ *
+ *     msg -- a message describing the change (for the reflog).
+ *
+ *     err -- a strbuf for receiving a description of any error that
+ *         might have occured.
+ *
+ * The functions make internal copies of refname and msg, so the
+ * caller retains ownership of these parameters.
+ *
+ * The functions return 0 on success and non-zero on failure. A
+ * failure means that the transaction as a whole has failed and needs
+ * to be rolled back.
  */
 
 /*
- * Add a reference update to transaction.  new_sha1 is the value that
- * the reference should have after the update, or null_sha1 if it should
- * be deleted.  If have_old is true, then old_sha1 holds the value
- * that the reference should have had before the update, or zeros if
- * it must not have existed beforehand.
- * Function returns 0 on success and non-zero on failure. A failure to update
- * means that the transaction as a whole has failed and will need to be
- * rolled back.
+ * Add a reference update to transaction. new_sha1 is the value that
+ * the reference should have after the update, or null_sha1 if it
+ * should be deleted. If new_sha1 is NULL, then the reference is not
+ * changed at all. old_sha1 is the value that the reference must have
+ * before the update, or null_sha1 if it must not have existed
+ * beforehand. The old value is checked after the lock is taken to
+ * prevent races. If the old value doesn't agree with old_sha1, the
+ * whole transaction fails. If old_sha1 is NULL, then the previous
+ * value is not checked.
+ *
+ * See the above comment "Reference transaction updates" for more
+ * information.
  */
 int ref_transaction_update(struct ref_transaction *transaction,
 			   const char *refname,
 			   const unsigned char *new_sha1,
 			   const unsigned char *old_sha1,
-			   int flags, int have_old, const char *msg,
+			   unsigned int flags, const char *msg,
 			   struct strbuf *err);
 
 /*
- * Add a reference creation to transaction.  new_sha1 is the value
- * that the reference should have after the update; it must not be the
- * null SHA-1.  It is verified that the reference does not exist
+ * Add a reference creation to transaction. new_sha1 is the value that
+ * the reference should have after the update; it must not be
+ * null_sha1. It is verified that the reference does not exist
  * already.
- * Function returns 0 on success and non-zero on failure. A failure to create
- * means that the transaction as a whole has failed and will need to be
- * rolled back.
+ *
+ * See the above comment "Reference transaction updates" for more
+ * information.
  */
 int ref_transaction_create(struct ref_transaction *transaction,
 			   const char *refname,
 			   const unsigned char *new_sha1,
-			   int flags, const char *msg,
+			   unsigned int flags, const char *msg,
 			   struct strbuf *err);
 
 /*
- * Add a reference deletion to transaction.  If have_old is true, then
- * old_sha1 holds the value that the reference should have had before
- * the update (which must not be the null SHA-1).
- * Function returns 0 on success and non-zero on failure. A failure to delete
- * means that the transaction as a whole has failed and will need to be
- * rolled back.
+ * Add a reference deletion to transaction. If old_sha1 is non-NULL,
+ * then it holds the value that the reference should have had before
+ * the update (which must not be null_sha1).
+ *
+ * See the above comment "Reference transaction updates" for more
+ * information.
  */
 int ref_transaction_delete(struct ref_transaction *transaction,
 			   const char *refname,
 			   const unsigned char *old_sha1,
-			   int flags, int have_old, const char *msg,
+			   unsigned int flags, const char *msg,
+			   struct strbuf *err);
+
+/*
+ * Verify, within a transaction, that refname has the value old_sha1,
+ * or, if old_sha1 is null_sha1, then verify that the reference
+ * doesn't exist. old_sha1 must be non-NULL.
+ *
+ * See the above comment "Reference transaction updates" for more
+ * information.
+ */
+int ref_transaction_verify(struct ref_transaction *transaction,
+			   const char *refname,
+			   const unsigned char *old_sha1,
+			   unsigned int flags,
 			   struct strbuf *err);
 
 /*
@@ -328,10 +364,17 @@ int ref_transaction_commit(struct ref_transaction *transaction,
  */
 void ref_transaction_free(struct ref_transaction *transaction);
 
-/** Lock a ref and then write its file */
-int update_ref(const char *action, const char *refname,
-		const unsigned char *sha1, const unsigned char *oldval,
-		int flags, enum action_on_err onerr);
+/**
+ * Lock, update, and unlock a single reference. This function
+ * basically does a transaction containing a single call to
+ * ref_transaction_update(). The parameters to this function have the
+ * same meaning as the corresponding parameters to
+ * ref_transaction_update(). Handle errors as requested by the `onerr`
+ * argument.
+ */
+int update_ref(const char *msg, const char *refname,
+	       const unsigned char *new_sha1, const unsigned char *old_sha1,
+	       unsigned int flags, enum action_on_err onerr);
 
 extern int parse_hide_refs_config(const char *var, const char *value, const char *);
 extern int ref_is_hidden(const char *);

@@ -198,8 +198,9 @@ static const char *parse_cmd_update(struct ref_transaction *transaction,
 	if (*next != line_termination)
 		die("update %s: extra input: %s", refname, next);
 
-	if (ref_transaction_update(transaction, refname, new_sha1, old_sha1,
-				   update_flags, have_old, msg, &err))
+	if (ref_transaction_update(transaction, refname,
+				   new_sha1, have_old ? old_sha1 : NULL,
+				   update_flags, msg, &err))
 		die("%s", err.buf);
 
 	update_flags = 0;
@@ -264,8 +265,9 @@ static const char *parse_cmd_delete(struct ref_transaction *transaction,
 	if (*next != line_termination)
 		die("delete %s: extra input: %s", refname, next);
 
-	if (ref_transaction_delete(transaction, refname, old_sha1,
-				   update_flags, have_old, msg, &err))
+	if (ref_transaction_delete(transaction, refname,
+				   have_old ? old_sha1 : NULL,
+				   update_flags, msg, &err))
 		die("%s", err.buf);
 
 	update_flags = 0;
@@ -280,7 +282,6 @@ static const char *parse_cmd_verify(struct ref_transaction *transaction,
 {
 	struct strbuf err = STRBUF_INIT;
 	char *refname;
-	unsigned char new_sha1[20];
 	unsigned char old_sha1[20];
 
 	refname = parse_refname(input, &next);
@@ -291,13 +292,11 @@ static const char *parse_cmd_verify(struct ref_transaction *transaction,
 			    PARSE_SHA1_OLD))
 		hashclr(old_sha1);
 
-	hashcpy(new_sha1, old_sha1);
-
 	if (*next != line_termination)
 		die("verify %s: extra input: %s", refname, next);
 
-	if (ref_transaction_update(transaction, refname, new_sha1, old_sha1,
-				   update_flags, 1, msg, &err))
+	if (ref_transaction_verify(transaction, refname, old_sha1,
+				   update_flags, &err))
 		die("%s", err.buf);
 
 	update_flags = 0;
@@ -353,7 +352,8 @@ int cmd_update_ref(int argc, const char **argv, const char *prefix)
 {
 	const char *refname, *oldval;
 	unsigned char sha1[20], oldsha1[20];
-	int delete = 0, no_deref = 0, read_stdin = 0, end_null = 0, flags = 0;
+	int delete = 0, no_deref = 0, read_stdin = 0, end_null = 0;
+	unsigned int flags = 0;
 	struct option options[] = {
 		OPT_STRING( 'm', NULL, &msg, N_("reason"), N_("reason of the update")),
 		OPT_BOOL('d', NULL, &delete, N_("delete the reference")),
