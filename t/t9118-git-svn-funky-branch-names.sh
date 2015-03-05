@@ -23,8 +23,11 @@ test_expect_success 'setup svnrepo' '
 	              "$svnrepo/pr ject/branches/$scary_uri" &&
 	svn_cmd cp -m "leading dot" "$svnrepo/pr ject/trunk" \
 			"$svnrepo/pr ject/branches/.leading_dot" &&
-	svn_cmd cp -m "trailing dot" "$svnrepo/pr ject/trunk" \
-			"$svnrepo/pr ject/branches/trailing_dot." &&
+	{
+		test_have_prereq MINGW ||
+		svn_cmd cp -m "trailing dot" "$svnrepo/pr ject/trunk" \
+			"$svnrepo/pr ject/branches/trailing_dot."
+	} &&
 	svn_cmd cp -m "trailing .lock" "$svnrepo/pr ject/trunk" \
 			"$svnrepo/pr ject/branches/trailing_dotlock.lock" &&
 	svn_cmd cp -m "reflog" "$svnrepo/pr ject/trunk" \
@@ -45,7 +48,10 @@ test_expect_success 'test clone with funky branch names' '
 		git rev-parse "refs/remotes/origin/more%20fun%20plugin!" &&
 		git rev-parse "refs/remotes/origin/$scary_ref" &&
 		git rev-parse "refs/remotes/origin/%2Eleading_dot" &&
-		git rev-parse "refs/remotes/origin/trailing_dot%2E" &&
+		{
+			test_have_prereq MINGW ||
+			git rev-parse "refs/remotes/origin/trailing_dot%2E"
+		} &&
 		git rev-parse "refs/remotes/origin/trailing_dotlock%2Elock" &&
 		git rev-parse "refs/remotes/origin/$non_reflog"
 	)
