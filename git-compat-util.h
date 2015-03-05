@@ -666,7 +666,18 @@ extern ssize_t xread(int fd, void *buf, size_t len);
 extern ssize_t xwrite(int fd, const void *buf, size_t len);
 extern ssize_t xpread(int fd, void *buf, size_t len, off_t offset);
 extern int xdup(int fd);
+
+/*
+ * Like fdopen(), but if the first attempt fails with ENOMEM, try to
+ * free up some memory and try again.
+ */
+extern FILE *fdopen_with_retry(int fd, const char *mode);
+
+/*
+ * Like fdopen_with_retry(), but die on errors.
+ */
 extern FILE *xfdopen(int fd, const char *mode);
+
 extern int xmkstemp(char *template);
 extern int xmkstemp_mode(char *template, int mode);
 extern int odb_mkstemp(char *template, size_t limit, const char *pattern);
