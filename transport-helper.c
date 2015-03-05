@@ -355,7 +355,8 @@ static int fetch_with_fetch(struct transport *transport,
 			continue;
 
 		strbuf_addf(&buf, "fetch %s %s\n",
-			    sha1_to_hex(posn->old_sha1), posn->name);
+			    sha1_to_hex(posn->old_sha1),
+			    posn->symref ? posn->symref : posn->name);
 	}
 
 	strbuf_addch(&buf, '\n');
@@ -453,7 +454,8 @@ static int fetch_with_import(struct transport *transport,
 		if (posn->status & REF_STATUS_UPTODATE)
 			continue;
 
-		strbuf_addf(&buf, "import %s\n", posn->name);
+		strbuf_addf(&buf, "import %s\n",
+			    posn->symref ? posn->symref : posn->name);
 		sendline(data, &buf);
 		strbuf_reset(&buf);
 	}
@@ -486,14 +488,15 @@ static int fetch_with_import(struct transport *transport,
 	 * fast-forward or this is a forced update.
 	 */
 	for (i = 0; i < nr_heads; i++) {
-		char *private;
+		char *private, *name;
 		posn = to_fetch[i];
 		if (posn->status & REF_STATUS_UPTODATE)
 			continue;
+		name = posn->symref ? posn->symref : posn->name;
 		if (data->refspecs)
-			private = apply_refspecs(data->refspecs, data->refspec_nr, posn->name);
+			private = apply_refspecs(data->refspecs, data->refspec_nr, name);
 		else
-			private = xstrdup(posn->name);
+			private = xstrdup(name);
 		if (private) {
 			read_ref(private, posn->old_sha1);
 			free(private);
