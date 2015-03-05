@@ -35,7 +35,10 @@ test_expect_success 'enable auto-props config' '
 
 test_expect_success 'add files matching auto-props' '
 	echo "#!$SHELL_PATH" >exec1.sh &&
-	chmod +x exec1.sh &&
+	{
+		test_have_prereq !POSIXPERM ||
+		chmod +x exec1.sh
+	} &&
 	echo "hello" >hello.txt &&
 	echo bar >bar &&
 	git add exec1.sh hello.txt bar &&
@@ -49,7 +52,10 @@ test_expect_success 'disable auto-props config' '
 
 test_expect_success 'add files matching disabled auto-props' '
 	echo "#$SHELL_PATH" >exec2.sh &&
-	chmod +x exec2.sh &&
+	{
+		test_have_prereq !POSIXPERM ||
+		chmod +x exec2.sh
+	} &&
 	echo "world" >world.txt &&
 	echo zot >zot &&
 	git add exec2.sh world.txt zot &&
@@ -65,7 +71,10 @@ test_expect_success 'check resulting svn repository' '
 	cd svnrepo &&
 
 	# Check properties from first commit.
-	test "x$(svn_cmd propget svn:executable exec1.sh)" = "x*" &&
+	{
+		test_have_prereq !POSIXPERM ||
+		test "x$(svn_cmd propget svn:executable exec1.sh)" = "x*"
+	} &&
 	test "x$(svn_cmd propget svn:mime-type exec1.sh)" = \
 	     "xapplication/x-shellscript" &&
 	test "x$(svn_cmd propget svn:mime-type hello.txt)" = "xtext/plain" &&
@@ -73,7 +82,10 @@ test_expect_success 'check resulting svn repository' '
 	test "x$(svn_cmd propget svn:mime-type bar)" = "x" &&
 
 	# Check properties from second commit.
-	test "x$(svn_cmd propget svn:executable exec2.sh)" = "x*" &&
+	{
+		test_have_prereq !POSIXPERM ||
+		test "x$(svn_cmd propget svn:executable exec2.sh)" = "x*"
+	} &&
 	test "x$(svn_cmd propget svn:mime-type exec2.sh)" = "x" &&
 	test "x$(svn_cmd propget svn:mime-type world.txt)" = "x" &&
 	test "x$(svn_cmd propget svn:eol-style world.txt)" = "x" &&
