@@ -253,4 +253,12 @@ test_expect_success 'prune .git/shallow' '
 	test_path_is_missing .git/shallow
 '
 
+test_expect_success 'prune: handle alternate object database' '
+	test_create_repo A &&
+	git -C A commit --allow-empty -m "initial commit" &&
+	git clone --shared A B &&
+	git -C B commit --allow-empty -m "next commit" &&
+	git -C B prune
+'
+
 test_done
