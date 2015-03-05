@@ -171,6 +171,23 @@ test_expect_success 'submodule add with ./ in path' '
 	test_cmp empty untracked
 '
 
+test_expect_success 'submodule add with /././ in path' '
+	echo "refs/heads/master" >expect &&
+	>empty &&
+
+	(
+		cd addtest &&
+		git submodule add "$submodurl" dotslashdotsubmod/././frotz/./ &&
+		git submodule init
+	) &&
+
+	rm -f heads head untracked &&
+	inspect addtest/dotslashdotsubmod/frotz ../../.. &&
+	test_cmp expect heads &&
+	test_cmp expect head &&
+	test_cmp empty untracked
+'
+
 test_expect_success 'submodule add with // in path' '
 	echo "refs/heads/master" >expect &&
 	>empty &&
