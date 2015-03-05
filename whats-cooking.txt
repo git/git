@@ -1,19 +1,20 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Mar 2015, #01; Mon, 2)
-X-master-at: 7f4ba4b6e3ba7075ca6b379ba23fd3088cbe69a8
-X-next-at: 993ae8bdc3df206f62a424eb695a49f1ba8fa118
+Subject: What's cooking in git.git (Mar 2015, #02; Thu, 5)
+X-master-at: 83036f8541ad8999974863db9d2ac02a814e6395
+X-next-at: e3086922e7b3f8f159b5b6631ba0052d0b37bcfc
 
-What's cooking in git.git (Mar 2015, #01; Mon, 2)
+What's cooking in git.git (Mar 2015, #02; Thu, 5)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-Fifth batch of topics have been merged to 'master', including both
-fixes and enhancements. First maintenance release for v2.3 was cut
-with many fixes that have already been merged to 'master'.
+A few more batches of topics have been merged to 'master', including
+both fixes and enhancements. First maintenance release for v2.3 was
+cut with many fixes that have already been merged to 'master', and
+the v2.3.2 will also appear shortly.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -21,81 +22,214 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[New Topics]
+[Graduated to "master"]
 
 * ew/svn-fixes (2015-02-26) 2 commits
- - Merge branch 'svn-maint-fixes' into svn-fixes
- - git-svn: lazy load some modules
+  (merged to 'next' on 2015-03-03 at 18e4684)
+ + Merge branch 'svn-maint-fixes' into svn-fixes
+ + git-svn: lazy load some modules
  (this branch uses ew/svn-maint-fixes.)
-
- Will merge to 'next'.
 
 
 * ew/svn-maint-fixes (2015-02-26) 2 commits
- - Git::SVN::*: avoid premature FileHandle closure
- - git-svn: fix localtime=true on non-glibc environments
+  (merged to 'next' on 2015-03-03 at 776b563)
+ + Git::SVN::*: avoid premature FileHandle closure
+ + git-svn: fix localtime=true on non-glibc environments
  (this branch is used by ew/svn-fixes.)
 
- Will merge to 'next' and soon to 'master'.
+ Correct a breakage to git-svn around v2.2 era that triggers
+ premature closing of FileHandle.
 
 
-* mr/doc-clean-f-f (2015-02-26) 1 commit
- - Documentation/git-clean.txt: document that -f may need to be given twice
+* jc/apply-beyond-symlink (2015-02-10) 4 commits
+  (merged to 'next' on 2015-02-18 at 4109de1)
+ + apply: do not touch a file beyond a symbolic link
+ + apply: do not read from beyond a symbolic link
+ + apply: do not read from the filesystem under --index
+ + apply: reject input that touches outside the working area
 
- Will merge to 'next'.
-
-
-* ye/http-accept-language (2015-02-26) 1 commit
- - gettext.c: move get_preferred_languages() from http.c
-
- Compilation fix for a recent topic in 'master'.
-
- Will merge to 'next'.
-
-
-* jk/diffcore-rename-duplicate (2015-02-27) 2 commits
- - diffcore-rename: avoid processing duplicate destinations
- - diffcore-rename: split locate_rename_dst into two functions
-
- A corrupt input to "git diff -M" can cause us to segfault.
-
- Will merge to 'next'.
+ "git apply" was not very careful about reading from, removing,
+ updating and creating paths outside the working tree (under
+ --index/--cached) or the current directory (when used as a
+ replacement for GNU patch).
 
 
-* nd/grep-exclude-standard-help-fix (2015-02-27) 1 commit
- - grep: correct help string for --exclude-standard
+* jc/apply-ws-fix-expands-report (2015-01-22) 1 commit
+  (merged to 'next' on 2015-02-18 at b571668)
+ + apply: detect and mark whitespace errors in context lines when fixing
 
- Will merge to 'next'.
-
-
-* nd/versioncmp-prereleases (2015-02-27) 1 commit
- - versionsort: support reorder prerelease suffixes
-
- The versionsort.prerelease configuration variable can be used to
- specify that v1.0-pre1 comes before v1.0.
-
- Will merge to 'next'.
+ "git apply --whitespace=fix" fixed whitespace errors in the common
+ context lines but did so without reporting.
 
 
-* ja/clean-confirm-i18n (2015-03-02) 1 commit
- - Add hint interactive cleaning
+* jc/diff-test-updates (2015-02-23) 7 commits
+  (merged to 'next' on 2015-02-23 at 9e863a7)
+ + test_ln_s_add: refresh stat info of fake symbolic links
+  (merged to 'next' on 2015-02-18 at f152c9f)
+ + t4008: modernise style
+ + t/diff-lib: check exact object names in compare_diff_raw
+ + tests: do not borrow from COPYING and README from the real source
+ + t4010: correct expected object names
+ + t9300: correct expected object names
+ + t4008: correct stale comments
+ (this branch is used by jc/diff-b-m.)
 
- The prompt string "remove?" used when "git clean -i" asks the user
- if a path should be removed was localizable, but the code always
- expects a substring of "yes" to tell it to go ahead.  Always show
- [y/N] as part of this prompt to hint that the answer is not (yet)
- localized.
-
- Will merge to 'next'.
+ Test clean-up.
 
 
-* mk/diff-shortstat-dirstat-fix (2015-03-02) 1 commit
- - diff --shortstat --dirstat: remove duplicate output
+* jk/daemon-interpolate (2015-02-17) 3 commits
+  (merged to 'next' on 2015-02-20 at 21118a7)
+ + daemon: sanitize incoming virtual hostname
+ + t5570: test git-daemon's --interpolated-path option
+ + git_connect: let user override virtual-host we send to daemon
 
- Will merge to 'next'.
+ The "interpolated-path" option of "git daemon" inserted any string
+ client declared on the "host=" capability request without checking.
+ Sanitize and limit %H and %CH to a saner and a valid DNS name.
+
+
+* km/send-email-getopt-long-workarounds (2015-02-16) 1 commit
+  (merged to 'next' on 2015-02-18 at 84c1597)
+ + git-send-email.perl: support no- prefix with older GetOptions
+
+ Even though we officially haven't dropped Perl 5.8 support, the
+ Getopt::Long package that came with it does not support "--no-"
+ prefix to negate a boolean option; manually add support to help
+ people with older Getopt::Long package.
+
+
+* mh/refs-have-new (2015-02-17) 13 commits
+  (merged to 'next' on 2015-02-23 at b8929db)
+ + refs.h: remove duplication in function docstrings
+ + update_ref(): improve documentation
+ + ref_transaction_verify(): new function to check a reference's value
+ + ref_transaction_delete(): check that old_sha1 is not null_sha1
+ + ref_transaction_create(): check that new_sha1 is valid
+ + commit: avoid race when creating orphan commits
+ + commit: add tests of commit races
+ + ref_transaction_delete(): remove "have_old" parameter
+ + ref_transaction_update(): remove "have_old" parameter
+ + struct ref_update: move "have_old" into "flags"
+ + refs.c: change some "flags" to "unsigned int"
+ + refs: remove the gap in the REF_* constant values
+ + refs: move REF_DELETING to refs.c
+
+ Simplify the ref transaction API around how "the ref should be
+ pointing at this object" is specified.
+
+
+* mm/am-c-doc (2015-02-20) 2 commits
+  (merged to 'next' on 2015-02-23 at 1cd9b0f)
+ + Documentation/git-am.txt: mention mailinfo.scissors config variable
+ + Documentation/config.txt: document mailinfo.scissors
+
+ The configuration variable 'mailinfo.scissors' was hard to
+ discover in the documentation.
+
+
+* rj/no-xopen-source-for-cygwin (2015-02-22) 1 commit
+  (merged to 'next' on 2015-02-23 at 323ac75)
+ + git-compat-util.h: remove redundant code
+
+ Code cleanups.
+
+
+* rs/daemon-interpolate (2015-02-17) 2 commits
+  (merged to 'next' on 2015-02-18 at c0f5750)
+ + daemon: use callback to build interpolated path
+ + daemon: look up client-supplied hostname lazily
+
+ "git daemon" looked up the hostname even when "%CH" and "%IP"
+ interpolations are not requested, which was unnecessary.
+
+
+* rs/simple-cleanups (2015-02-22) 4 commits
+  (merged to 'next' on 2015-02-23 at a89f034)
+ + sha1_name: use strlcpy() to copy strings
+ + pretty: use starts_with() to check for a prefix
+ + for-each-ref: use skip_prefix() to avoid duplicate string comparison
+ + connect: use strcmp() for string comparison
+
+ Code cleanups.
+
+
+* tb/connect-ipv6-parse-fix (2015-02-22) 3 commits
+  (merged to 'next' on 2015-02-24 at 6658564)
+ + t5500: show user name and host in diag-url
+ + t5601: add more test cases for IPV6
+ + connect.c: allow ssh://user@[2001:db8::1]/repo.git
+
+ We did not parse username followed by literal IPv6 address in SSH
+ transport URLs, e.g. ssh://user@[2001:db8::1]:22/repo.git
+ correctly.
+
+--------------------------------------------------
+[New Topics]
+
+* ak/t5516-typofix (2015-03-03) 1 commit
+  (merged to 'next' on 2015-03-03 at c37a677)
+ + t5516: correct misspelled pushInsteadOf
+
+ Will merge to 'master'.
+
+
+* bw/kwset-use-unsigned (2015-03-02) 1 commit
+  (merged to 'next' on 2015-03-05 at fd124ba)
+ + kwset: use unsigned char to store values with high-bit set
+
+ The borrowed code in kwset API did not follow our usual convention
+ to use "unsigned char" to store values that range from 0-255.
+
+ Will merge to 'master'.
+
+
+* mg/doc-remote-tags-or-not (2015-03-02) 1 commit
+  (merged to 'next' on 2015-03-03 at 1630171)
+ + git-remote.txt: describe behavior without --tags and --no-tags
+
+ "git remote add" mentioned "--tags" and "--no-tags" and was not
+ clear that fetch from the remote in the future will use the default
+ behaviour when neither is given to override it.
+
+ Will merge to 'master'.
+
+
+* mg/status-v-v (2015-03-03) 2 commits
+ - commit/status: show the index-worktree diff with -v -v
+ - t7508: test git status -v
+
+ "git status" now allows the "-v" to be given twice to show the
+ differences that are left in the working tree not to be committed.
+
+ $gmane/264750
 
 --------------------------------------------------
 [Stalled]
+
+* mg/sequencer-commit-messages-always-verbatim (2015-02-23) 1 commit
+ - sequencer: preserve commit messages
+
+ Always replay the original commit message verbatim, regardless of
+ the commit.cleanup configuration settings by the user.
+
+ $gmane/264504
+
+
+* mg/detached-head-report (2015-02-23) 1 commit
+ - branch: name detached HEAD analogous to status
+
+ "git branch" on a detached HEAD always said "(detached from xyz)",
+ even when "git status" would report "detached at xyz".  The HEAD is
+ actually at xyz and haven't been moved since it was detached in
+ such a case, but the user cannot read what the current value of
+ HEAD is when "detached from" is used.
+
+ The goal is sound.  May want to share code between branch and
+ status in a reroll?  Are there other commands that give the same
+ information that share the code, too?
+
+ ($gmane/264251)
+
 
 * jk/push-config (2015-02-17) 4 commits
  - [NEEDSACK] push: allow --follow-tags to be set by config push.followTags
@@ -155,7 +289,6 @@ of the repositories listed at
  - diffcore-rename: allow easier debugging
  - diffcore-rename.c: add locate_rename_src()
  - diffcore-break: allow debugging
- (this branch uses jc/diff-test-updates.)
 
  "git diff -B -M" produced incorrect patch when the postimage of a
  completely rewritten file is similar to the preimage of a removed
@@ -287,42 +420,84 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* mr/doc-clean-f-f (2015-02-26) 1 commit
+  (merged to 'next' on 2015-03-03 at 67a77a2)
+ + Documentation/git-clean.txt: document that -f may need to be given twice
+
+ Documentation update.
+
+ Will merge to 'master'.
+
+
+* ye/http-accept-language (2015-02-26) 1 commit
+  (merged to 'next' on 2015-03-03 at 58d195e)
+ + gettext.c: move get_preferred_languages() from http.c
+
+ Compilation fix for a recent topic in 'master'.
+
+ Will merge to 'master'.
+
+
+* jk/diffcore-rename-duplicate (2015-02-27) 2 commits
+  (merged to 'next' on 2015-03-03 at 1d5a2d2)
+ + diffcore-rename: avoid processing duplicate destinations
+ + diffcore-rename: split locate_rename_dst into two functions
+
+ A corrupt input to "git diff -M" can cause us to segfault.
+
+ Will merge to 'master'.
+
+
+* nd/grep-exclude-standard-help-fix (2015-02-27) 1 commit
+  (merged to 'next' on 2015-03-03 at 61c9587)
+ + grep: correct help string for --exclude-standard
+
+ Description given by "grep -h" for its --exclude-standard option
+ was phrased poorly.
+
+ Will merge to 'master'.
+
+
+* nd/versioncmp-prereleases (2015-02-27) 1 commit
+  (merged to 'next' on 2015-03-03 at 6ab29cf)
+ + versionsort: support reorder prerelease suffixes
+
+ The versionsort.prerelease configuration variable can be used to
+ specify that v1.0-pre1 comes before v1.0.
+
+ Will merge to 'master'.
+
+
+* ja/clean-confirm-i18n (2015-03-02) 1 commit
+  (merged to 'next' on 2015-03-03 at 314c322)
+ + Add hint interactive cleaning
+
+ The prompt string "remove?" used when "git clean -i" asks the user
+ if a path should be removed was localizable, but the code always
+ expects a substring of "yes" to tell it to go ahead.  Always show
+ [y/N] as part of this prompt to hint that the answer is not (yet)
+ localized.
+
+ Will merge to 'master'.
+
+
+* mk/diff-shortstat-dirstat-fix (2015-03-02) 1 commit
+  (merged to 'next' on 2015-03-03 at 42c282e)
+ + diff --shortstat --dirstat: remove duplicate output
+
+ "git diff --shortstat --dirstat=changes" showed a dirstat based on
+ lines that was never asked by the end user in addition to the
+ dirstat that the user asked for.
+
+ Will merge to 'master'.
+
+
 * nd/slim-index-pack-memory-usage (2015-02-27) 2 commits
  - index-pack: kill union delta_base to save memory
  - index-pack: reduce object_entry size to save memory
 
  Memory usage of "git index-pack" has been trimmed by tens of
  per-cent.
-
-
-* mg/detached-head-report (2015-02-23) 1 commit
- - branch: name detached HEAD analogous to status
-
- "git branch" on a detached HEAD always said "(detached from xyz)",
- even when "git status" would report "detached at xyz".  The HEAD is
- actually at xyz and haven't been moved since it was detached in
- such a case, but the user cannot read what the current value of
- HEAD is when "detached from" is used.
-
- The goal is sound.  May want to share code between branch and
- status in a reroll?  Are there other commands that give the same
- information that share the code, too?
-
-
-* mg/sequencer-commit-messages-always-verbatim (2015-02-23) 1 commit
- - sequencer: preserve commit messages
-
- Always replay the original commit message verbatim, regardless of
- the commit.cleanup configuration settings by the user.
-
- Is this a good idea?
-
-
-* rj/no-xopen-source-for-cygwin (2015-02-22) 1 commit
-  (merged to 'next' on 2015-02-23 at 323ac75)
- + git-compat-util.h: remove redundant code
-
- Will merge to 'master'.
 
 
 * nd/list-files (2015-02-09) 21 commits
@@ -352,170 +527,46 @@ of the repositories listed at
  whistles.
 
 
-* mm/am-c-doc (2015-02-20) 2 commits
-  (merged to 'next' on 2015-02-23 at 1cd9b0f)
- + Documentation/git-am.txt: mention mailinfo.scissors config variable
- + Documentation/config.txt: document mailinfo.scissors
-
- The configuration variable 'mailinfo.scissors' was hard to
- discover in the documentation.
-
- Will merge to 'master'.
-
-
-* rs/simple-cleanups (2015-02-22) 4 commits
-  (merged to 'next' on 2015-02-23 at a89f034)
- + sha1_name: use strlcpy() to copy strings
- + pretty: use starts_with() to check for a prefix
- + for-each-ref: use skip_prefix() to avoid duplicate string comparison
- + connect: use strcmp() for string comparison
-
- Will merge to 'master'.
-
-
-* tb/connect-ipv6-parse-fix (2015-02-22) 3 commits
-  (merged to 'next' on 2015-02-24 at 6658564)
- + t5500: show user name and host in diag-url
- + t5601: add more test cases for IPV6
- + connect.c: allow ssh://user@[2001:db8::1]/repo.git
-
- We did not parse username followed by literal IPv6 address in SSH
- transport URLs, e.g. ssh://user@[2001:db8::1]:22/repo.git
- correctly.
-
- Will merge to 'master'.
-
-
-* jc/decorate-leaky-separator-color (2015-02-20) 2 commits
- - config.txt: spell out how certain typed values are written
+* jc/decorate-leaky-separator-color (2015-03-04) 7 commits
  - log --decorate: do not leak "commit" color into the next item
+ - Documentation/config.txt: simplify boolean description in the syntax section
+ - Documentation/config.txt: describe 'color' value type in the "Values" section
+ - Documentation/config.txt: have a separate "Values" section
+ - Documentation/config.txt: describe the structure first and then meaning
+ - Documentation/config.txt: explain multi-valued variables once
+ - Documentation/config.txt: avoid unnecessary negation
 
  "git log --decorate" did not reset colors correctly around the
  branch names.
 
- Waiting for discussion on the tip one.
+ Waiting for reviews.
 
 
 * ms/submodule-update-config-doc (2015-03-02) 1 commit
- - submodule: improve documentation of update subcommand
+  (merged to 'next' on 2015-03-03 at b94da4b)
+ + submodule: improve documentation of update subcommand
 
  The interaction between "git submodule update" and the
  submodule.*.update configuration was not clearly documented.
 
- Will merge to 'next'.
-
-
-* jc/diff-test-updates (2015-02-23) 7 commits
-  (merged to 'next' on 2015-02-23 at 9e863a7)
- + test_ln_s_add: refresh stat info of fake symbolic links
-  (merged to 'next' on 2015-02-18 at f152c9f)
- + t4008: modernise style
- + t/diff-lib: check exact object names in compare_diff_raw
- + tests: do not borrow from COPYING and README from the real source
- + t4010: correct expected object names
- + t9300: correct expected object names
- + t4008: correct stale comments
- (this branch is used by jc/diff-b-m.)
-
- Test clean-up.
-
  Will merge to 'master'.
 
 
-* km/send-email-getopt-long-workarounds (2015-02-16) 1 commit
-  (merged to 'next' on 2015-02-18 at 84c1597)
- + git-send-email.perl: support no- prefix with older GetOptions
+* mh/expire-updateref-fixes (2015-03-05) 9 commits
+  (merged to 'next' on 2015-03-05 at 1caf9a6)
+ + reflog_expire(): never update a reference to null_sha1
+ + reflog_expire(): ignore --updateref for symbolic references
+ + reflog: improve and update documentation
+ + struct ref_lock: delete the force_write member
+ + lock_ref_sha1_basic(): do not set force_write for missing references
+ + write_ref_sha1(): move write elision test to callers
+ + write_ref_sha1(): remove check for lock == NULL
+ + Merge branch 'sb/atomic-push' into mh/ref-trans-value-check
+ + Merge branch 'mh/reflog-expire' into mh/ref-trans-value-check
 
- Even though we officially haven't dropped Perl 5.8 support, the
- Getopt::Long package that came with it does not support "--no-"
- prefix to negate a boolean option; manually add support to help
- people with older Getopt::Long package.
-
- Will merge to 'master'.
-
-
-* jk/daemon-interpolate (2015-02-17) 3 commits
-  (merged to 'next' on 2015-02-20 at 21118a7)
- + daemon: sanitize incoming virtual hostname
- + t5570: test git-daemon's --interpolated-path option
- + git_connect: let user override virtual-host we send to daemon
-
- The "interpolated-path" option of "git daemon" inserted any string
- client declared on the "host=" capability request without checking.
- Sanitize and limit %H and %CH to a saner and a valid DNS name.
-
- Will merge to 'master'.
-
-
-* rs/daemon-interpolate (2015-02-17) 2 commits
-  (merged to 'next' on 2015-02-18 at c0f5750)
- + daemon: use callback to build interpolated path
- + daemon: look up client-supplied hostname lazily
-
- "git daemon" looked up the hostname even when "%CH" and "%IP"
- interpolations are not requested, which was unnecessary.
-
- Will merge to 'master'.
-
-
-* mh/expire-updateref-fixes (2015-03-02) 9 commits
- - reflog_expire(): never update a reference to null_sha1
- - reflog_expire(): ignore --updateref for symbolic references
- - reflog: improve and update documentation
- - struct ref_lock: delete the force_write member
- - lock_ref_sha1_basic(): do not set force_write for missing references
- - write_ref_sha1(): move write elision test to callers
- - write_ref_sha1(): remove check for lock == NULL
- - Merge branch 'sb/atomic-push' into mh/ref-trans-value-check
- - Merge branch 'mh/reflog-expire' into mh/ref-trans-value-check
-
- Will wait for a short while before merging to 'next'.
- ($gmane/264586).
-
-
-* mh/refs-have-new (2015-02-17) 13 commits
-  (merged to 'next' on 2015-02-23 at b8929db)
- + refs.h: remove duplication in function docstrings
- + update_ref(): improve documentation
- + ref_transaction_verify(): new function to check a reference's value
- + ref_transaction_delete(): check that old_sha1 is not null_sha1
- + ref_transaction_create(): check that new_sha1 is valid
- + commit: avoid race when creating orphan commits
- + commit: add tests of commit races
- + ref_transaction_delete(): remove "have_old" parameter
- + ref_transaction_update(): remove "have_old" parameter
- + struct ref_update: move "have_old" into "flags"
- + refs.c: change some "flags" to "unsigned int"
- + refs: remove the gap in the REF_* constant values
- + refs: move REF_DELETING to refs.c
-
- Simplify the ref transaction API around how "the ref should be
- pointing at this object" is specified.
-
- Will merge to 'master'.
-
-
-* jc/apply-beyond-symlink (2015-02-10) 4 commits
-  (merged to 'next' on 2015-02-18 at 4109de1)
- + apply: do not touch a file beyond a symbolic link
- + apply: do not read from beyond a symbolic link
- + apply: do not read from the filesystem under --index
- + apply: reject input that touches outside the working area
-
- "git apply" was not very careful about reading from, removing,
- updating and creating paths outside the working tree (under
- --index/--cached) or the current directory (when used as a
- replacement for GNU patch).
-
- Will merge to 'master'.
-
-
-* jc/apply-ws-fix-expands-report (2015-01-22) 1 commit
-  (merged to 'next' on 2015-02-18 at b571668)
- + apply: detect and mark whitespace errors in context lines when fixing
-
- "git apply --whitespace=fix" fixed whitespace errors in the common
- context lines but did so without reporting.
+ Various issues around "reflog expire", e.g. using --updateref when
+ expiring a reflog for a symbolic reference, have been corrected
+ and/or made saner.
 
  Will merge to 'master'.
 
