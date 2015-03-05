@@ -1039,4 +1039,11 @@ test_expect_success 'short SHA-1 collide' '
 	)
 '
 
+test_expect_success 'respect core.abbrev' '
+	git config core.abbrev 12 &&
+	set_cat_todo_editor &&
+	test_must_fail git rebase -i HEAD~4 >todo-list &&
+	test 4 = $(grep -c "pick [0-9a-f]\{12,\}" todo-list)
+'
+
 test_done
