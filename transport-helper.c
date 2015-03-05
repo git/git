@@ -862,7 +862,7 @@ static int push_refs_with_export(struct transport *transport,
 			die("helper %s does not support dry-run", data->name);
 	} else if (flags & TRANSPORT_PUSH_CERT) {
 		if (set_helper_option(transport, TRANS_OPT_PUSH_CERT, "true") != 0)
-			die("helper %s does not support dry-run", data->name);
+			die("helper %s does not support --signed", data->name);
 	}
 
 	if (flags & TRANSPORT_PUSH_FORCE) {
