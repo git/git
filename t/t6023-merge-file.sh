@@ -69,7 +69,8 @@ test_expect_success 'works in subdirectory' '
 	cp new1.txt dir/a.txt &&
 	cp orig.txt dir/o.txt &&
 	cp new2.txt dir/b.txt &&
-	( cd dir && git merge-file a.txt o.txt b.txt )
+	( cd dir && git merge-file a.txt o.txt b.txt ) &&
+	test_path_is_missing a.txt
 '
 
 cp new1.txt test.txt
