@@ -52,7 +52,8 @@ OPTIONS
 -c::
 --scissors::
 	Remove everything in body before a scissors line (see
-	linkgit:git-mailinfo[1]).
+	linkgit:git-mailinfo[1]). Can be activated by default using
+	the `mailinfo.scissors` configuration variable.
 
 --no-scissors::
 	Ignore scissors lines (see linkgit:git-mailinfo[1]).
