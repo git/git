@@ -91,7 +91,7 @@ test_expect_success 'fetch continues after authors-file is fixed' '
 	)
 	'
 
-test_expect_success 'fresh clone with svn.authors-file in config' '
+test_expect_success !MINGW 'fresh clone with svn.authors-file in config' '
 	(
 		rm -r "$GIT_DIR" &&
 		test x = x"$(git config svn.authorsfile)" &&
