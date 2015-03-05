@@ -3,7 +3,6 @@ use vars qw/@ISA $config_dir $_ignore_refs_regex $_log_window_size/;
 use strict;
 use warnings;
 use Memoize;
-use SVN::Client;
 use Git::SVN::Utils qw(
 	canonicalize_url
 	canonicalize_path
@@ -42,6 +41,7 @@ END {
 }
 
 sub _auth_providers () {
+	require SVN::Client;
 	my @rv = (
 	  SVN::Client::get_simple_provider(),
 	  SVN::Client::get_ssl_server_trust_file_provider(),
@@ -247,7 +247,10 @@ sub get_log {
 	$ret;
 }
 
+# uncommon, only for ancient SVN (<= 1.4.2)
 sub trees_match {
+	require IO::File;
+	require SVN::Client;
 	my ($self, $url1, $rev1, $url2, $rev2) = @_;
 	my $ctx = SVN::Client->new(auth => _auth_providers);
 	my $out = IO::File->new_tmpfile;

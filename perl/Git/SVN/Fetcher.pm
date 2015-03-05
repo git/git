@@ -7,7 +7,6 @@ use warnings;
 use SVN::Delta;
 use Carp qw/croak/;
 use File::Basename qw/dirname/;
-use IO::File qw//;
 use Git qw/command command_oneline command_noisy command_output_pipe
            command_input_pipe command_close_pipe
            command_bidi_pipe command_close_bidi_pipe/;
@@ -608,7 +607,7 @@ developing git-svn.
 =head1 DEPENDENCIES
 
 L<SVN::Delta> from the Subversion perl bindings,
-the core L<Carp>, L<File::Basename>, and L<IO::File> modules,
+the core L<Carp> and L<File::Basename> modules,
 and git's L<Git> helper module.
 
 C<Git::SVN::Fetcher> has not been tested using callers other than
