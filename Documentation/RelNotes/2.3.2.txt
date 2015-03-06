@@ -65,4 +65,15 @@ Fixes since v2.3.1
    heuristics.  The tests and their prerequisites have been updated to
    check what they really require.
 
+ * The configuration variable 'mailinfo.scissors' was hard to
+   discover in the documentation.
+
+ * Correct a breakage to git-svn around v2.2 era that triggers
+   premature closing of FileHandle.
+
+ * Even though we officially haven't dropped Perl 5.8 support, the
+   Getopt::Long package that came with it does not support "--no-"
+   prefix to negate a boolean option; manually add support to help
+   people with older Getopt::Long package.
+
 Also contains typofixes, documentation updates and trivial code clean-ups.
