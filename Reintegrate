@@ -116,7 +116,7 @@ no)
 			git rerere remaining
 			return 1
 		else
-			EDITOR=: git commit --no-verify
+			GIT_EDITOR=: git commit --no-verify
 			echo "Accepted previous resolution"
 			return 0
 		fi
@@ -170,7 +170,7 @@ no)
 
 			rebuild=$(git config "branch.$branch.rebuild" || :)
 
-			EDITOR=: git merge $rebuild $accept_rerere --edit "$branch" ||
+			GIT_EDITOR=: git merge $rebuild $accept_rerere --edit "$branch" ||
 			accept_rerere ||
 			exit
 
@@ -187,7 +187,7 @@ no)
 				echo >&2 "Fixing up the merge"
 				git cherry-pick --no-commit "refs/merge-fix/$branch" &&
 				git diff --stat HEAD &&
-				EDITOR=: git commit --amend -a || exit
+				GIT_EDITOR=: git commit --amend -a || exit
 			fi
 			;;
 		pick" "*)
