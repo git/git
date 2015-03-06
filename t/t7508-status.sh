@@ -137,6 +137,12 @@ test_expect_success 'status with status.displayCommentPrefix=false' '
 	test_i18ncmp expect output
 '
 
+test_expect_success 'status -v' '
+	(cat expect && git diff --cached) >expect-with-v &&
+	git status -v >output &&
+	test_i18ncmp expect-with-v output
+'
+
 test_expect_success 'setup fake editor' '
 	cat >.git/editor <<-\EOF &&
 	#! /bin/sh
@@ -201,7 +207,7 @@ test_expect_success 'status -s' '
 test_expect_success 'status with gitignore' '
 	{
 		echo ".gitignore" &&
-		echo "expect" &&
+		echo "expect*" &&
 		echo "output" &&
 		echo "untracked"
 	} >.gitignore &&
@@ -222,6 +228,7 @@ test_expect_success 'status with gitignore' '
 	!! dir1/untracked
 	!! dir2/untracked
 	!! expect
+	!! expect-with-v
 	!! output
 	!! untracked
 	EOF
@@ -253,6 +260,7 @@ Ignored files:
 	dir1/untracked
 	dir2/untracked
 	expect
+	expect-with-v
 	output
 	untracked
 
@@ -264,7 +272,7 @@ EOF
 test_expect_success 'status with gitignore (nothing untracked)' '
 	{
 		echo ".gitignore" &&
-		echo "expect" &&
+		echo "expect*" &&
 		echo "dir2/modified" &&
 		echo "output" &&
 		echo "untracked"
@@ -285,6 +293,7 @@ test_expect_success 'status with gitignore (nothing untracked)' '
 	!! dir2/modified
 	!! dir2/untracked
 	!! expect
+	!! expect-with-v
 	!! output
 	!! untracked
 	EOF
@@ -312,6 +321,7 @@ Ignored files:
 	dir2/modified
 	dir2/untracked
 	expect
+	expect-with-v
 	output
 	untracked
 
