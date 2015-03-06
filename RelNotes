@@ -262,7 +262,31 @@ notes for details).
    discover in the documentation.
    (merge afb5de7 mm/am-c-doc later to maint).
 
- * Code cleanups.
+ * The interaction between "git submodule update" and the
+   submodule.*.update configuration was not clearly documented.
+   (merge 5c31acf ms/submodule-update-config-doc later to maint).
+
+ * "git diff --shortstat --dirstat=changes" showed a dirstat based on
+   lines that was never asked by the end user in addition to the
+   dirstat that the user asked for.
+   (merge ab27389 mk/diff-shortstat-dirstat-fix later to maint).
+
+ * "git remote add" mentioned "--tags" and "--no-tags" and was not
+   clear that fetch from the remote in the future will use the default
+   behaviour when neither is given to override it.
+   (merge aaba0ab mg/doc-remote-tags-or-not later to maint).
+
+ * Description given by "grep -h" for its --exclude-standard option
+   was phrased poorly.
+   (merge 77fdb8a nd/grep-exclude-standard-help-fix later to maint).
+
+ * The borrowed code in kwset API did not follow our usual convention
+   to use "unsigned char" to store values that range from 0-255.
+   (merge 189c860 bw/kwset-use-unsigned later to maint).
+
+ * Code cleanups and documentaiton updates.
    (merge 2ce63e9 rs/simple-cleanups later to maint).
    (merge 33baa69 rj/no-xopen-source-for-cygwin later to maint).
    (merge 817d03e jc/diff-test-updates later to maint).
+   (merge eb32c66 ak/t5516-typofix later to maint).
+   (merge bcd57cb mr/doc-clean-f-f later to maint).
