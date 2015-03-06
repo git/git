@@ -154,27 +154,51 @@ If `--force` is specified, the submodule's work tree will be removed even if
 it contains local modifications.
 
 update::
-	Update the registered submodules, i.e. clone missing submodules and
-	checkout the commit specified in the index of the containing repository.
-	This will make the submodules HEAD be detached unless `--rebase` or
-	`--merge` is specified or the key `submodule.$name.update` is set to
-	`rebase`, `merge` or `none`. `none` can be overridden by specifying
-	`--checkout`. Setting the key `submodule.$name.update` to `!command`
-	will cause `command` to be run. `command` can be any arbitrary shell
-	command that takes a single argument, namely the sha1 to update to.
 +
+--
+Update the registered submodules to match what the superproject
+expects by cloning missing submodules and updating the working tree of
+the submodules. The "updating" can be done in several ways depending
+on command line options and the value of `submodule.<name>.update`
+configuration variable. Supported update procedures are:
+
+	checkout;; the commit recorded in the superproject will be
+	    checked out in the submodule on a detached HEAD. This is
+	    done when `--checkout` option is given, or no option is
+	    given, and `submodule.<name>.update` is unset, or if it is
+	    set to 'checkout'.
++
+If `--force` is specified, the submodule will be checked out (using
+`git checkout --force` if appropriate), even if the commit specified
+in the index of the containing repository already matches the commit
+checked out in the submodule.
+
+	rebase;; the current branch of the submodule will be rebased
+	    onto the commit recorded in the superproject. This is done
+	    when `--rebase` option is given, or no option is given, and
+	    `submodule.<name>.update` is set to 'rebase'.
+
+	merge;; the commit recorded in the superproject will be merged
+	    into the current branch in the submodule. This is done
+	    when `--merge` option is given, or no option is given, and
+	    `submodule.<name>.update` is set to 'merge'.
+
+	custom command;; arbitrary shell command that takes a single
+	    argument (the sha1 of the commit recorded in the
+	    superproject) is executed. This is done when no option is
+	    given, and `submodule.<name>.update` has the form of
+	    '!command'.
+
+When no option is given and `submodule.<name>.update` is set to 'none',
+the submodule is not updated.
+
 If the submodule is not yet initialized, and you just want to use the
 setting as stored in .gitmodules, you can automatically initialize the
 submodule with the `--init` option.
-+
+
 If `--recursive` is specified, this command will recurse into the
 registered submodules, and update any nested submodules within.
-+
-If `--force` is specified, the submodule will be checked out (using
-`git checkout --force` if appropriate), even if the commit specified in the
-index of the containing repository already matches the commit checked out in
-the submodule.
-
+--
 summary::
 	Show commit summary between the given commit (defaults to HEAD) and
 	working tree/index. For a submodule in question, a series of commits
@@ -238,10 +262,12 @@ OPTIONS
 	When running add, allow adding an otherwise ignored submodule path.
 	When running deinit the submodule work trees will be removed even if
 	they contain local changes.
-	When running update, throw away local changes in submodules when
-	switching to a different commit; and always run a checkout operation
-	in the submodule, even if the commit listed in the index of the
-	containing repository matches the commit checked out in the submodule.
+	When running update (only effective with the checkout procedure),
+	throw away local changes in submodules when switching to a
+	different commit; and always run a checkout operation in the
+	submodule, even if the commit listed in the index of the
+	containing repository matches the commit checked out in the
+	submodule.
 
 --cached::
 	This option is only valid for status and summary commands.  These
@@ -302,7 +328,7 @@ the submodule itself.
 	Checkout the commit recorded in the superproject on a detached HEAD
 	in the submodule. This is the default behavior, the main use of
 	this option is to override `submodule.$name.update` when set to
-	`merge`, `rebase` or `none`.
+	a value other than `checkout`.
 	If the key `submodule.$name.update` is either not explicitly set or
 	set to `checkout`, this option is implicit.
 
