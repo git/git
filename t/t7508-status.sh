@@ -66,6 +66,12 @@ strip_comments () {
 	rm "$1" && mv "$1".tmp "$1"
 }
 
+cat >.gitignore <<\EOF
+.gitignore
+expect*
+output*
+EOF
+
 test_expect_success 'status --column' '
 	cat >expect <<\EOF &&
 # On branch master
@@ -83,8 +89,8 @@ test_expect_success 'status --column' '
 # Untracked files:
 #   (use "git add <file>..." to include in what will be committed)
 #
-#	dir1/untracked dir2/untracked output
-#	dir2/modified  expect         untracked
+#	dir1/untracked dir2/untracked
+#	dir2/modified  untracked
 #
 EOF
 	COLUMNS=50 git -c status.displayCommentPrefix=true status --column="column dense" >output &&
@@ -116,8 +122,6 @@ cat >expect <<\EOF
 #	dir1/untracked
 #	dir2/modified
 #	dir2/untracked
-#	expect
-#	output
 #	untracked
 #
 EOF
@@ -167,8 +171,6 @@ Untracked files:
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
-	expect
-	output
 	untracked
 
 EOF
@@ -186,8 +188,6 @@ A  dir2/added
 ?? dir1/untracked
 ?? dir2/modified
 ?? dir2/untracked
-?? expect
-?? output
 ?? untracked
 EOF
 
@@ -320,7 +320,11 @@ EOF
 	test_i18ncmp expect output
 '
 
-rm -f .gitignore
+cat >.gitignore <<\EOF
+.gitignore
+expect*
+output*
+EOF
 
 cat >expect <<\EOF
 ## master
@@ -329,8 +333,6 @@ A  dir2/added
 ?? dir1/untracked
 ?? dir2/modified
 ?? dir2/untracked
-?? expect
-?? output
 ?? untracked
 EOF
 
@@ -434,8 +436,6 @@ Untracked files:
 	dir2/modified
 	dir2/untracked
 	dir3/
-	expect
-	output
 	untracked
 
 EOF
@@ -456,8 +456,6 @@ A  dir2/added
 ?? dir2/modified
 ?? dir2/untracked
 ?? dir3/
-?? expect
-?? output
 ?? untracked
 EOF
 test_expect_success 'status -s -unormal' '
@@ -493,8 +491,6 @@ Untracked files:
 	dir2/untracked
 	dir3/untracked1
 	dir3/untracked2
-	expect
-	output
 	untracked
 
 EOF
@@ -518,8 +514,6 @@ A  dir2/added
 ?? dir1/untracked
 ?? dir2/modified
 ?? dir2/untracked
-?? expect
-?? output
 ?? untracked
 EOF
 test_expect_success 'status -s -uall' '
@@ -554,8 +548,6 @@ Untracked files:
 	untracked
 	../dir2/modified
 	../dir2/untracked
-	../expect
-	../output
 	../untracked
 
 EOF
@@ -569,8 +561,6 @@ A  ../dir2/added
 ?? untracked
 ?? ../dir2/modified
 ?? ../dir2/untracked
-?? ../expect
-?? ../output
 ?? ../untracked
 EOF
 test_expect_success 'status -s with relative paths' '
@@ -586,8 +576,6 @@ A  dir2/added
 ?? dir1/untracked
 ?? dir2/modified
 ?? dir2/untracked
-?? expect
-?? output
 ?? untracked
 EOF
 
@@ -625,8 +613,6 @@ Untracked files:
 	<BLUE>dir1/untracked<RESET>
 	<BLUE>dir2/modified<RESET>
 	<BLUE>dir2/untracked<RESET>
-	<BLUE>expect<RESET>
-	<BLUE>output<RESET>
 	<BLUE>untracked<RESET>
 
 EOF
@@ -647,8 +633,6 @@ cat >expect <<\EOF
 <BLUE>??<RESET> dir1/untracked
 <BLUE>??<RESET> dir2/modified
 <BLUE>??<RESET> dir2/untracked
-<BLUE>??<RESET> expect
-<BLUE>??<RESET> output
 <BLUE>??<RESET> untracked
 EOF
 
@@ -676,8 +660,6 @@ cat >expect <<\EOF
 <BLUE>??<RESET> dir1/untracked
 <BLUE>??<RESET> dir2/modified
 <BLUE>??<RESET> dir2/untracked
-<BLUE>??<RESET> expect
-<BLUE>??<RESET> output
 <BLUE>??<RESET> untracked
 EOF
 
@@ -694,8 +676,6 @@ A  dir2/added
 ?? dir1/untracked
 ?? dir2/modified
 ?? dir2/untracked
-?? expect
-?? output
 ?? untracked
 EOF
 
@@ -755,8 +735,6 @@ Untracked files:
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
-	expect
-	output
 	untracked
 
 EOF
@@ -772,8 +750,6 @@ A  dir2/added
 ?? dir1/untracked
 ?? dir2/modified
 ?? dir2/untracked
-?? expect
-?? output
 ?? untracked
 EOF
 
@@ -798,8 +774,6 @@ Untracked files:
 
 	dir1/untracked
 	dir2/
-	expect
-	output
 	untracked
 
 EOF
@@ -848,8 +822,6 @@ Untracked files:
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
-	expect
-	output
 	untracked
 
 EOF
@@ -870,8 +842,6 @@ A  sm
 ?? dir1/untracked
 ?? dir2/modified
 ?? dir2/untracked
-?? expect
-?? output
 ?? untracked
 EOF
 test_expect_success 'status -s submodule summary is disabled by default' '
@@ -913,8 +883,6 @@ Untracked files:
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
-	expect
-	output
 	untracked
 
 EOF
@@ -940,8 +908,6 @@ A  sm
 ?? dir1/untracked
 ?? dir2/modified
 ?? dir2/untracked
-?? expect
-?? output
 ?? untracked
 EOF
 test_expect_success 'status -s submodule summary' '
@@ -964,8 +930,6 @@ Untracked files:
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
-	expect
-	output
 	untracked
 
 no changes added to commit (use "git add" and/or "git commit -a")
@@ -983,8 +947,6 @@ cat >expect <<EOF
 ?? dir1/untracked
 ?? dir2/modified
 ?? dir2/untracked
-?? expect
-?? output
 ?? untracked
 EOF
 test_expect_success 'status -s submodule summary (clean submodule)' '
@@ -1025,8 +987,6 @@ Untracked files:
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
-	expect
-	output
 	untracked
 
 EOF
@@ -1080,8 +1040,6 @@ Untracked files:
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
-	expect
-	output
 	untracked
 
 EOF
@@ -1192,8 +1150,6 @@ Untracked files:
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
-	expect
-	output
 	untracked
 
 EOF
@@ -1254,8 +1210,6 @@ Untracked files:
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
-	expect
-	output
 	untracked
 
 EOF
@@ -1336,8 +1290,6 @@ cat > expect << EOF
 ;	dir1/untracked
 ;	dir2/modified
 ;	dir2/untracked
-;	expect
-;	output
 ;	untracked
 ;
 EOF
@@ -1369,8 +1321,6 @@ Untracked files:
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
-	expect
-	output
 	untracked
 
 no changes added to commit (use "git add" and/or "git commit -a")
@@ -1400,8 +1350,6 @@ Untracked files:
 	dir1/untracked
 	dir2/modified
 	dir2/untracked
-	expect
-	output
 	untracked
 
 EOF
