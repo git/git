@@ -311,6 +311,12 @@ int xdup(int fd)
 	return ret;
 }
 
+#ifndef BUFSIZ
+#define ALLOC_BUFSIZ 4096
+#else
+#define ALLOC_BUFSIZ BUFSIZ
+#endif
+
 FILE *fdopen_with_retry(int fd, const char *mode)
 {
 	FILE *stream = fdopen(fd, mode);
@@ -322,7 +328,7 @@ FILE *fdopen_with_retry(int fd, const char *mode)
 		 * not guaranteed to be defined (e.g., FILE might be
 		 * an incomplete type).
 		 */
-		try_to_free_routine(1000);
+		try_to_free_routine(ALLOC_BUFSIZ);
 		stream = fdopen(fd, mode);
 	}
 
