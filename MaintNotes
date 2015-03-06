@@ -52,6 +52,11 @@ available at:
         http://colabti.org/irclogger/irclogger_log/git
         http://colabti.org/irclogger/irclogger_log/git-devel
 
+Git is a member project of software freedom conservancy, a non-profit
+organization (https://sfconservancy.org/).  To reach a committee of
+liaisons to the conservancy, contact them at <git@sfconservancy.org>.
+
+
 * Reporting bugs
 
 When you think git does not behave as you expect, please do not stop
@@ -77,6 +82,11 @@ Please remember to always state
 
 See http://www.chiark.greenend.org.uk/~sgtatham/bugs.html for further
 hints.
+
+If you think you found a security-sensitive issue and want to disclose
+it to us without announcing it to wider public, please contact us at
+our security mailing list <git-security@googlegroups.com>.
+
 
 * Repositories, branches and documentation.
 
@@ -129,8 +139,8 @@ are cut from it.  The maintenance releases used to be named with four
 dotted decimal, named after the feature release they are updates to
 (e.g. "1.8.5.1" was the first maintenance release for "1.8.5" feature
 release).  These days, maintenance releases are named by incrementing
-the last digit of three-dotted decimal name (e.g. "2.2.1" will be the
-first maintenance relaese for "2.2" series).
+the last digit of three-dotted decimal name (e.g. "2.3.2" is the
+second maintenance relaese for "2.3" series).
 
 New features never go to the 'maint' branch.  This branch is also
 merged into "master" to propagate the fixes forward as needed.
