@@ -973,4 +973,18 @@ test_expect_success 'diff.dirstat=future_param,0,lines should warn, but still wo
 	test_i18ngrep -q "diff\\.dirstat" actual_error
 '
 
+test_expect_success '--shortstat --dirstat should output only one dirstat' '
+	git diff --shortstat --dirstat=changes HEAD^..HEAD >out &&
+	grep " dst/copy/changed/$" out >actual_diff_shortstat_dirstat_changes &&
+	test_line_count = 1 actual_diff_shortstat_dirstat_changes &&
+
+	git diff --shortstat --dirstat=lines HEAD^..HEAD >out &&
+	grep " dst/copy/changed/$" out >actual_diff_shortstat_dirstat_lines &&
+	test_line_count = 1 actual_diff_shortstat_dirstat_lines &&
+
+	git diff --shortstat --dirstat=files HEAD^..HEAD >out &&
+	grep " dst/copy/changed/$" out >actual_diff_shortstat_dirstat_files &&
+	test_line_count = 1 actual_diff_shortstat_dirstat_files
+'
+
 test_done
