@@ -36,6 +36,20 @@ mesg_with_cherry_footer="$mesg_with_footer_sob
 (cherry picked from commit da39a3ee5e6b4b0d3255bfef95601890afd80709)
 Tested-by: C.U. Thor <cuthor@example.com>"
 
+mesg_unclean="$mesg_one_line
+
+
+leading empty lines
+
+
+consecutive empty lines
+
+# hash tag comment
+
+trailing empty lines
+
+
+"
 
 test_expect_success setup '
 	git config advice.detachedhead false &&
@@ -53,6 +67,10 @@ test_expect_success setup '
 	test_commit "$mesg_with_footer_sob" foo b mesg-with-footer-sob &&
 	git reset --hard initial &&
 	test_commit "$mesg_with_cherry_footer" foo b mesg-with-cherry-footer &&
+	git reset --hard initial &&
+	test_config commit.cleanup verbatim &&
+	test_commit "$mesg_unclean" foo b mesg-unclean &&
+	test_unconfig commit.cleanup &&
 	pristine_detach initial &&
 	test_commit conflicting unrelated
 '
@@ -212,6 +230,16 @@ test_expect_success 'cherry-pick -x -s treats "(cherry picked from..." line as p
 		(cherry picked from commit $sha1)
 		Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>
 	EOF
+	git log -1 --pretty=format:%B >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'cherry-pick preserves commit message' '
+	pristine_detach initial &&
+	printf "$mesg_unclean" >expect &&
+	git log -1 --pretty=format:%B mesg-unclean >actual &&
+	test_cmp expect actual &&
+	git cherry-pick mesg-unclean &&
 	git log -1 --pretty=format:%B >actual &&
 	test_cmp expect actual
 '
