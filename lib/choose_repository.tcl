@@ -338,7 +338,10 @@ method _git_init {} {
 	return 1
 }
 
-proc _is_git {path} {
+proc _is_git {path {outdir_var ""}} {
+	if {$outdir_var ne ""} {
+		upvar 1 $outdir_var outdir
+	}
 	if {[file isfile $path]} {
 		set fp [open $path r]
 		gets $fp line
@@ -352,12 +355,14 @@ proc _is_git {path} {
 	if {[file exists [file join $path HEAD]]
 	 && [file exists [file join $path objects]]
 	 && [file exists [file join $path config]]} {
+		set outdir $path
 		return 1
 	}
 	if {[is_Cygwin]} {
 		if {[file exists [file join $path HEAD]]
 		 && [file exists [file join $path objects.lnk]]
 		 && [file exists [file join $path config.lnk]]} {
+			set outdir $path
 			return 1
 		}
 	}
@@ -1103,7 +1108,7 @@ method _open_local_path {} {
 }
 
 method _do_open2 {} {
-	if {![_is_git [file join $local_path .git]]} {
+	if {![_is_git [file join $local_path .git] actualgit]} {
 		error_popup [mc "Not a Git repository: %s" [file tail $local_path]]
 		return
 	}
@@ -1116,7 +1121,7 @@ method _do_open2 {} {
 	}
 
 	_append_recentrepos [pwd]
-	set ::_gitdir .git
+	set ::_gitdir $actualgit
 	set ::_prefix {}
 	set done 1
 }
