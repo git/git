@@ -143,6 +143,17 @@ test_expect_success 'status -v' '
 	test_i18ncmp expect-with-v output
 '
 
+test_expect_success 'status -v -v' '
+	(cat expect &&
+	 echo "Changes to be committed:" &&
+	 git -c diff.mnemonicprefix=true diff --cached &&
+	 echo "--------------------------------------------------" &&
+	 echo "Changes not staged for commit:" &&
+	 git -c diff.mnemonicprefix=true diff) >expect-with-v &&
+	git status -v -v >output &&
+	test_i18ncmp expect-with-v output
+'
+
 test_expect_success 'setup fake editor' '
 	cat >.git/editor <<-\EOF &&
 	#! /bin/sh
