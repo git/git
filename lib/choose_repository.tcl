@@ -339,6 +339,16 @@ method _git_init {} {
 }
 
 proc _is_git {path} {
+	if {[file isfile $path]} {
+		set fp [open $path r]
+		gets $fp line
+		close $fp
+		if {[regexp "^gitdir: (.+)$" $line line link_target]} {
+			set path [file join [file dirname $path] $link_target]
+			set path [file normalize $path]
+		}
+	}
+
 	if {[file exists [file join $path HEAD]]
 	 && [file exists [file join $path objects]]
 	 && [file exists [file join $path config]]} {
