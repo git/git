@@ -73,6 +73,12 @@ struct exclude_list_group {
 	struct exclude_list *el;
 };
 
+struct sha1_stat {
+	struct stat_data stat;
+	unsigned char sha1[20];
+	int valid;
+};
+
 struct dir_struct {
 	int nr, alloc;
 	int ignored_nr, ignored_alloc;
