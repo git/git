@@ -170,6 +170,14 @@ may not support it yet.
 	the shared index file. This mode is designed for very large
 	indexes that take a significant amount of time to read or write.
 
+--untracked-cache::
+--no-untracked-cache::
+	Enable or disable untracked cache extension. This could speed
+	up for commands that involve determining untracked files such
+	as `git status`. The underlying operating system and file
+	system must change `st_mtime` field of a directory if files
+	are added or deleted in that directory.
+
 \--::
 	Do not interpret any more arguments as options.
 

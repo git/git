@@ -741,6 +741,7 @@ static int reupdate_callback(struct parse_opt_ctx_t *ctx,
 int cmd_update_index(int argc, const char **argv, const char *prefix)
 {
 	int newfd, entries, has_errors = 0, line_termination = '\n';
+	int untracked_cache = -1;
 	int read_from_stdin = 0;
 	int prefix_length = prefix ? strlen(prefix) : 0;
 	int preferred_index_format = 0;
@@ -832,6 +833,8 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 			N_("write index in this format")),
 		OPT_BOOL(0, "split-index", &split_index,
 			N_("enable or disable split index")),
+		OPT_BOOL(0, "untracked-cache", &untracked_cache,
+			N_("enable/disable untracked cache")),
 		OPT_END()
 	};
 
@@ -937,6 +940,19 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 		 */
 		the_index.split_index = NULL;
 		the_index.cache_changed |= SOMETHING_CHANGED;
+	}
+	if (untracked_cache > 0 && !the_index.untracked) {
+		struct untracked_cache *uc;
+
+		uc = xcalloc(1, sizeof(*uc));
+		uc->exclude_per_dir = ".gitignore";
+		/* should be the same flags used by git-status */
+		uc->dir_flags = DIR_SHOW_OTHER_DIRECTORIES | DIR_HIDE_EMPTY_DIRECTORIES;
+		the_index.untracked = uc;
+		the_index.cache_changed |= UNTRACKED_CHANGED;
+	} else if (!untracked_cache && the_index.untracked) {
+		the_index.untracked = NULL;
+		the_index.cache_changed |= UNTRACKED_CHANGED;
 	}
 
 	if (active_cache_changed) {
