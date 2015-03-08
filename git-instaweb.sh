@@ -20,6 +20,7 @@ start          start the web server
 restart        restart the web server
 "
 
+SUBDIRECTORY_OK=Yes
 . git-sh-setup
 
 fqgitdir="$GIT_DIR"
