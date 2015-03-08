@@ -134,6 +134,7 @@
 #elif defined(_MSC_VER)
 #include "compat/msvc.h"
 #else
+#include <sys/utsname.h>
 #include <sys/wait.h>
 #include <sys/resource.h>
 #include <sys/socket.h>

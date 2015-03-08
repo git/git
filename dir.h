@@ -127,6 +127,7 @@ struct untracked_cache {
 	struct sha1_stat ss_info_exclude;
 	struct sha1_stat ss_excludes_file;
 	const char *exclude_per_dir;
+	struct strbuf ident;
 	/*
 	 * dir_struct#flags must match dir_flags or the untracked
 	 * cache is ignored.
@@ -305,4 +306,5 @@ void untracked_cache_add_to_index(struct index_state *, const char *);
 void free_untracked_cache(struct untracked_cache *);
 struct untracked_cache *read_untracked_extension(const void *data, unsigned long sz);
 void write_untracked_extension(struct strbuf *out, struct untracked_cache *untracked);
+void add_untracked_ident(struct untracked_cache *);
 #endif

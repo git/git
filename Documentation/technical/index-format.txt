@@ -242,6 +242,10 @@ Git index format
 
   The extension starts with
 
+  - A sequence of NUL-terminated strings, preceded by the size of the
+    sequence in variable width encoding. Each string describes the
+    environment where the cache can be used.
+
   - Stat data of $GIT_DIR/info/exclude. See "Index entry" section from
     ctime field until "file size".
 

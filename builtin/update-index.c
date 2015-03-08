@@ -1104,7 +1104,7 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 		the_index.split_index = NULL;
 		the_index.cache_changed |= SOMETHING_CHANGED;
 	}
-	if (untracked_cache > 0 && !the_index.untracked) {
+	if (untracked_cache > 0) {
 		struct untracked_cache *uc;
 
 		if (untracked_cache < 2) {
@@ -1112,11 +1112,15 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 			if (!test_if_untracked_cache_is_supported())
 				return 1;
 		}
-		uc = xcalloc(1, sizeof(*uc));
-		uc->exclude_per_dir = ".gitignore";
-		/* should be the same flags used by git-status */
-		uc->dir_flags = DIR_SHOW_OTHER_DIRECTORIES | DIR_HIDE_EMPTY_DIRECTORIES;
-		the_index.untracked = uc;
+		if (!the_index.untracked) {
+			uc = xcalloc(1, sizeof(*uc));
+			strbuf_init(&uc->ident, 100);
+			uc->exclude_per_dir = ".gitignore";
+			/* should be the same flags used by git-status */
+			uc->dir_flags = DIR_SHOW_OTHER_DIRECTORIES | DIR_HIDE_EMPTY_DIRECTORIES;
+			the_index.untracked = uc;
+		}
+		add_untracked_ident(the_index.untracked);
 		the_index.cache_changed |= UNTRACKED_CHANGED;
 	} else if (!untracked_cache && the_index.untracked) {
 		the_index.untracked = NULL;
