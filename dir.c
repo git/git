@@ -32,7 +32,7 @@ enum path_treatment {
 };
 
 static enum path_treatment read_directory_recursive(struct dir_struct *dir,
-	const char *path, int len,
+	const char *path, int len, struct untracked_cache_dir *untracked,
 	int check_only, const struct path_simplify *simplify);
 static int get_dtype(struct dirent *de, const char *path, int len);
 
@@ -535,6 +535,54 @@ static void trim_trailing_spaces(char *buf)
 }
 
 /*
+ * Given a subdirectory name and "dir" of the current directory,
+ * search the subdir in "dir" and return it, or create a new one if it
+ * does not exist in "dir".
+ *
+ * If "name" has the trailing slash, it'll be excluded in the search.
+ */
+static struct untracked_cache_dir *lookup_untracked(struct untracked_cache *uc,
+						    struct untracked_cache_dir *dir,
+						    const char *name, int len)
+{
+	int first, last;
+	struct untracked_cache_dir *d;
+	if (!dir)
+		return NULL;
+	if (len && name[len - 1] == '/')
+		len--;
+	first = 0;
+	last = dir->dirs_nr;
+	while (last > first) {
+		int cmp, next = (last + first) >> 1;
+		d = dir->dirs[next];
+		cmp = strncmp(name, d->name, len);
+		if (!cmp && strlen(d->name) > len)
+			cmp = -1;
+		if (!cmp)
+			return d;
+		if (cmp < 0) {
+			last = next;
+			continue;
+		}
+		first = next+1;
+	}
+
+	uc->dir_created++;
+	d = xmalloc(sizeof(*d) + len + 1);
+	memset(d, 0, sizeof(*d));
+	memcpy(d->name, name, len);
+	d->name[len] = '\0';
+
+	ALLOC_GROW(dir->dirs, dir->dirs_nr + 1, dir->dirs_alloc);
+	memmove(dir->dirs + first + 1, dir->dirs + first,
+		(dir->dirs_nr - first) * sizeof(*dir->dirs));
+	dir->dirs_nr++;
+	dir->dirs[first] = d;
+	return d;
+}
+
+/*
  * Given a file with name "fname", read it (either from disk, or from
  * the index if "check_index" is non-zero), parse it and store the
  * exclude rules in "el".
@@ -646,12 +694,18 @@ struct exclude_list *add_exclude_list(struct dir_struct *dir,
 /*
  * Used to set up core.excludesfile and .git/info/exclude lists.
  */
-void add_excludes_from_file(struct dir_struct *dir, const char *fname)
+static void add_excludes_from_file_1(struct dir_struct *dir, const char *fname,
+				     struct sha1_stat *sha1_stat)
 {
 	struct exclude_list *el;
 	el = add_exclude_list(dir, EXC_FILE, fname);
-	if (add_excludes_from_file_to_list(fname, "", 0, el, 0) < 0)
+	if (add_excludes(fname, "", 0, el, 0, sha1_stat) < 0)
 		die("cannot use %s as an exclude file", fname);
+}
+
+void add_excludes_from_file(struct dir_struct *dir, const char *fname)
+{
+	add_excludes_from_file_1(dir, fname, NULL);
 }
 
 int match_basename(const char *basename, int basenamelen,
@@ -828,6 +882,7 @@ static void prep_exclude(struct dir_struct *dir, const char *base, int baselen)
 	struct exclude_list_group *group;
 	struct exclude_list *el;
 	struct exclude_stack *stk = NULL;
+	struct untracked_cache_dir *untracked;
 	int current;
 
 	group = &dir->exclude_list_group[EXC_DIRS];
@@ -865,8 +920,14 @@ static void prep_exclude(struct dir_struct *dir, const char *base, int baselen)
 	/* Read from the parent directories and push them down. */
 	current = stk ? stk->baselen : -1;
 	strbuf_setlen(&dir->basebuf, current < 0 ? 0 : current);
+	if (dir->untracked)
+		untracked = stk ? stk->ucd : dir->untracked->root;
+	else
+		untracked = NULL;
+
 	while (current < baselen) {
 		const char *cp;
+		struct sha1_stat sha1_stat;
 
 		stk = xcalloc(1, sizeof(*stk));
 		if (current < 0) {
@@ -877,10 +938,15 @@ static void prep_exclude(struct dir_struct *dir, const char *base, int baselen)
 			if (!cp)
 				die("oops in prep_exclude");
 			cp++;
+			untracked =
+				lookup_untracked(dir->untracked, untracked,
+						 base + current,
+						 cp - base - current);
 		}
 		stk->prev = dir->exclude_stack;
 		stk->baselen = cp - base;
 		stk->exclude_ix = group->nr;
+		stk->ucd = untracked;
 		el = add_exclude_list(dir, EXC_DIRS, NULL);
 		strbuf_add(&dir->basebuf, base + current, stk->baselen - current);
 		assert(stk->baselen == dir->basebuf.len);
@@ -903,6 +969,8 @@ static void prep_exclude(struct dir_struct *dir, const char *base, int baselen)
 		}
 
 		/* Try to read per-directory file */
+		hashclr(sha1_stat.sha1);
+		sha1_stat.valid = 0;
 		if (dir->exclude_per_dir) {
 			/*
 			 * dir->basebuf gets reused by the traversal, but we
@@ -916,8 +984,11 @@ static void prep_exclude(struct dir_struct *dir, const char *base, int baselen)
 			strbuf_addbuf(&sb, &dir->basebuf);
 			strbuf_addstr(&sb, dir->exclude_per_dir);
 			el->src = strbuf_detach(&sb, NULL);
-			add_excludes_from_file_to_list(el->src, el->src,
-						       stk->baselen, el, 1);
+			add_excludes(el->src, el->src, stk->baselen, el, 1,
+				     untracked ? &sha1_stat : NULL);
+		}
+		if (untracked) {
+			hashcpy(untracked->exclude_sha1, sha1_stat.sha1);
 		}
 		dir->exclude_stack = stk;
 		current = stk->baselen;
@@ -1098,6 +1169,7 @@ static enum exist_status directory_exists_in_index(const char *dirname, int len)
  *  (c) otherwise, we recurse into it.
  */
 static enum path_treatment treat_directory(struct dir_struct *dir,
+	struct untracked_cache_dir *untracked,
 	const char *dirname, int len, int exclude,
 	const struct path_simplify *simplify)
 {
@@ -1125,7 +1197,9 @@ static enum path_treatment treat_directory(struct dir_struct *dir,
 	if (!(dir->flags & DIR_HIDE_EMPTY_DIRECTORIES))
 		return exclude ? path_excluded : path_untracked;
 
-	return read_directory_recursive(dir, dirname, len, 1, simplify);
+	untracked = lookup_untracked(dir->untracked, untracked, dirname, len);
+	return read_directory_recursive(dir, dirname, len,
+					untracked, 1, simplify);
 }
 
 /*
@@ -1241,6 +1315,7 @@ static int get_dtype(struct dirent *de, const char *path, int len)
 }
 
 static enum path_treatment treat_one_path(struct dir_struct *dir,
+					  struct untracked_cache_dir *untracked,
 					  struct strbuf *path,
 					  const struct path_simplify *simplify,
 					  int dtype, struct dirent *de)
@@ -1293,7 +1368,7 @@ static enum path_treatment treat_one_path(struct dir_struct *dir,
 		return path_none;
 	case DT_DIR:
 		strbuf_addch(path, '/');
-		return treat_directory(dir, path->buf, path->len, exclude,
+		return treat_directory(dir, untracked, path->buf, path->len, exclude,
 			simplify);
 	case DT_REG:
 	case DT_LNK:
@@ -1302,6 +1377,7 @@ static enum path_treatment treat_one_path(struct dir_struct *dir,
 }
 
 static enum path_treatment treat_path(struct dir_struct *dir,
+				      struct untracked_cache_dir *untracked,
 				      struct dirent *de,
 				      struct strbuf *path,
 				      int baselen,
@@ -1317,7 +1393,16 @@ static enum path_treatment treat_path(struct dir_struct *dir,
 		return path_none;
 
 	dtype = DTYPE(de);
-	return treat_one_path(dir, path, simplify, dtype, de);
+	return treat_one_path(dir, untracked, path, simplify, dtype, de);
+}
+
+static void add_untracked(struct untracked_cache_dir *dir, const char *name)
+{
+	if (!dir)
+		return;
+	ALLOC_GROW(dir->untracked, dir->untracked_nr + 1,
+		   dir->untracked_alloc);
+	dir->untracked[dir->untracked_nr++] = xstrdup(name);
 }
 
 /*
@@ -1333,7 +1418,7 @@ static enum path_treatment treat_path(struct dir_struct *dir,
  */
 static enum path_treatment read_directory_recursive(struct dir_struct *dir,
 				    const char *base, int baselen,
-				    int check_only,
+				    struct untracked_cache_dir *untracked, int check_only,
 				    const struct path_simplify *simplify)
 {
 	DIR *fdir;
@@ -1347,24 +1432,36 @@ static enum path_treatment read_directory_recursive(struct dir_struct *dir,
 	if (!fdir)
 		goto out;
 
+	if (untracked)
+		untracked->check_only = !!check_only;
+
 	while ((de = readdir(fdir)) != NULL) {
 		/* check how the file or directory should be treated */
-		state = treat_path(dir, de, &path, baselen, simplify);
+		state = treat_path(dir, untracked, de, &path, baselen, simplify);
+
 		if (state > dir_state)
 			dir_state = state;
 
 		/* recurse into subdir if instructed by treat_path */
 		if (state == path_recurse) {
-			subdir_state = read_directory_recursive(dir, path.buf,
-				path.len, check_only, simplify);
+			struct untracked_cache_dir *ud;
+			ud = lookup_untracked(dir->untracked, untracked,
+					      path.buf + baselen,
+					      path.len - baselen);
+			subdir_state =
+				read_directory_recursive(dir, path.buf, path.len,
+							 ud, check_only, simplify);
 			if (subdir_state > dir_state)
 				dir_state = subdir_state;
 		}
 
 		if (check_only) {
 			/* abort early if maximum state has been reached */
-			if (dir_state == path_untracked)
+			if (dir_state == path_untracked) {
+				if (untracked)
+					add_untracked(untracked, path.buf + baselen);
 				break;
+			}
 			/* skip the dir_add_* part */
 			continue;
 		}
@@ -1382,8 +1479,11 @@ static enum path_treatment read_directory_recursive(struct dir_struct *dir,
 			break;
 
 		case path_untracked:
-			if (!(dir->flags & DIR_SHOW_IGNORED))
-				dir_add_name(dir, path.buf, path.len);
+			if (dir->flags & DIR_SHOW_IGNORED)
+				break;
+			dir_add_name(dir, path.buf, path.len);
+			if (untracked)
+				add_untracked(untracked, path.buf + baselen);
 			break;
 
 		default:
@@ -1460,7 +1560,7 @@ static int treat_leading_path(struct dir_struct *dir,
 			break;
 		if (simplify_away(sb.buf, sb.len, simplify))
 			break;
-		if (treat_one_path(dir, &sb, simplify,
+		if (treat_one_path(dir, NULL, &sb, simplify,
 				   DT_DIR, NULL) == path_none)
 			break; /* do not recurse into it */
 		if (len <= baselen) {
@@ -1500,7 +1600,9 @@ int read_directory(struct dir_struct *dir, const char *path, int len, const stru
 	 */
 	simplify = create_simplify(pathspec ? pathspec->_raw : NULL);
 	if (!len || treat_leading_path(dir, path, len, simplify))
-		read_directory_recursive(dir, path, len, 0, simplify);
+		read_directory_recursive(dir, path, len,
+					 dir->untracked ? dir->untracked->root : NULL,
+					 0, simplify);
 	free_simplify(simplify);
 	qsort(dir->entries, dir->nr, sizeof(struct dir_entry *), cmp_name);
 	qsort(dir->ignored, dir->ignored_nr, sizeof(struct dir_entry *), cmp_name);
@@ -1671,9 +1773,11 @@ void setup_standard_excludes(struct dir_struct *dir)
 		excludes_file = xdg_path;
 	}
 	if (!access_or_warn(path, R_OK, 0))
-		add_excludes_from_file(dir, path);
+		add_excludes_from_file_1(dir, path,
+					 dir->untracked ? &dir->ss_info_exclude : NULL);
 	if (excludes_file && !access_or_warn(excludes_file, R_OK, 0))
-		add_excludes_from_file(dir, excludes_file);
+		add_excludes_from_file_1(dir, excludes_file,
+					 dir->untracked ? &dir->ss_excludes_file : NULL);
 }
 
 int remove_path(const char *name)
