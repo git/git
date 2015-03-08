@@ -1801,7 +1801,7 @@ static struct untracked_cache_dir *validate_untracked_cache(struct dir_struct *d
 	struct untracked_cache_dir *root;
 	int i;
 
-	if (!dir->untracked)
+	if (!dir->untracked || getenv("GIT_DISABLE_UNTRACKED_CACHE"))
 		return NULL;
 
 	/*
