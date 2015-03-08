@@ -2283,3 +2283,222 @@ void write_untracked_extension(struct strbuf *out, struct untracked_cache *untra
 	strbuf_release(&wd.sb_stat);
 	strbuf_release(&wd.sb_sha1);
 }
+
+static void free_untracked(struct untracked_cache_dir *ucd)
+{
+	int i;
+	if (!ucd)
+		return;
+	for (i = 0; i < ucd->dirs_nr; i++)
+		free_untracked(ucd->dirs[i]);
+	for (i = 0; i < ucd->untracked_nr; i++)
+		free(ucd->untracked[i]);
+	free(ucd->untracked);
+	free(ucd->dirs);
+	free(ucd);
+}
+
+void free_untracked_cache(struct untracked_cache *uc)
+{
+	if (uc)
+		free_untracked(uc->root);
+	free(uc);
+}
+
+struct read_data {
+	int index;
+	struct untracked_cache_dir **ucd;
+	struct ewah_bitmap *check_only;
+	struct ewah_bitmap *valid;
+	struct ewah_bitmap *sha1_valid;
+	const unsigned char *data;
+	const unsigned char *end;
+};
+
+static void stat_data_from_disk(struct stat_data *to, const struct stat_data *from)
+{
+	to->sd_ctime.sec  = get_be32(&from->sd_ctime.sec);
+	to->sd_ctime.nsec = get_be32(&from->sd_ctime.nsec);
+	to->sd_mtime.sec  = get_be32(&from->sd_mtime.sec);
+	to->sd_mtime.nsec = get_be32(&from->sd_mtime.nsec);
+	to->sd_dev	  = get_be32(&from->sd_dev);
+	to->sd_ino	  = get_be32(&from->sd_ino);
+	to->sd_uid	  = get_be32(&from->sd_uid);
+	to->sd_gid	  = get_be32(&from->sd_gid);
+	to->sd_size	  = get_be32(&from->sd_size);
+}
+
+static int read_one_dir(struct untracked_cache_dir **untracked_,
+			struct read_data *rd)
+{
+	struct untracked_cache_dir ud, *untracked;
+	const unsigned char *next, *data = rd->data, *end = rd->end;
+	unsigned int value;
+	int i, len;
+
+	memset(&ud, 0, sizeof(ud));
+
+	next = data;
+	value = decode_varint(&next);
+	if (next > end)
+		return -1;
+	ud.recurse	   = 1;
+	ud.untracked_alloc = value;
+	ud.untracked_nr	   = value;
+	if (ud.untracked_nr)
+		ud.untracked = xmalloc(sizeof(*ud.untracked) * ud.untracked_nr);
+	data = next;
+
+	next = data;
+	ud.dirs_alloc = ud.dirs_nr = decode_varint(&next);
+	if (next > end)
+		return -1;
+	ud.dirs = xmalloc(sizeof(*ud.dirs) * ud.dirs_nr);
+	data = next;
+
+	len = strlen((const char *)data);
+	next = data + len + 1;
+	if (next > rd->end)
+		return -1;
+	*untracked_ = untracked = xmalloc(sizeof(*untracked) + len);
+	memcpy(untracked, &ud, sizeof(ud));
+	memcpy(untracked->name, data, len + 1);
+	data = next;
+
+	for (i = 0; i < untracked->untracked_nr; i++) {
+		len = strlen((const char *)data);
+		next = data + len + 1;
+		if (next > rd->end)
+			return -1;
+		untracked->untracked[i] = xstrdup((const char*)data);
+		data = next;
+	}
+
+	rd->ucd[rd->index++] = untracked;
+	rd->data = data;
+
+	for (i = 0; i < untracked->dirs_nr; i++) {
+		len = read_one_dir(untracked->dirs + i, rd);
+		if (len < 0)
+			return -1;
+	}
+	return 0;
+}
+
+static void set_check_only(size_t pos, void *cb)
+{
+	struct read_data *rd = cb;
+	struct untracked_cache_dir *ud = rd->ucd[pos];
+	ud->check_only = 1;
+}
+
+static void read_stat(size_t pos, void *cb)
+{
+	struct read_data *rd = cb;
+	struct untracked_cache_dir *ud = rd->ucd[pos];
+	if (rd->data + sizeof(struct stat_data) > rd->end) {
+		rd->data = rd->end + 1;
+		return;
+	}
+	stat_data_from_disk(&ud->stat_data, (struct stat_data *)rd->data);
+	rd->data += sizeof(struct stat_data);
+	ud->valid = 1;
+}
+
+static void read_sha1(size_t pos, void *cb)
+{
+	struct read_data *rd = cb;
+	struct untracked_cache_dir *ud = rd->ucd[pos];
+	if (rd->data + 20 > rd->end) {
+		rd->data = rd->end + 1;
+		return;
+	}
+	hashcpy(ud->exclude_sha1, rd->data);
+	rd->data += 20;
+}
+
+static void load_sha1_stat(struct sha1_stat *sha1_stat,
+			   const struct stat_data *stat,
+			   const unsigned char *sha1)
+{
+	stat_data_from_disk(&sha1_stat->stat, stat);
+	hashcpy(sha1_stat->sha1, sha1);
+	sha1_stat->valid = 1;
+}
+
+struct untracked_cache *read_untracked_extension(const void *data, unsigned long sz)
+{
+	const struct ondisk_untracked_cache *ouc;
+	struct untracked_cache *uc;
+	struct read_data rd;
+	const unsigned char *next = data, *end = (const unsigned char *)data + sz;
+	int len;
+
+	if (sz <= 1 || end[-1] != '\0')
+		return NULL;
+	end--;
+
+	ouc = (const struct ondisk_untracked_cache *)next;
+	if (next + ouc_size(0) > end)
+		return NULL;
+
+	uc = xcalloc(1, sizeof(*uc));
+	load_sha1_stat(&uc->ss_info_exclude, &ouc->info_exclude_stat,
+		       ouc->info_exclude_sha1);
+	load_sha1_stat(&uc->ss_excludes_file, &ouc->excludes_file_stat,
+		       ouc->excludes_file_sha1);
+	uc->dir_flags = get_be32(&ouc->dir_flags);
+	uc->exclude_per_dir = xstrdup(ouc->exclude_per_dir);
+	/* NUL after exclude_per_dir is covered by sizeof(*ouc) */
+	next += ouc_size(strlen(ouc->exclude_per_dir));
+	if (next >= end)
+		goto done2;
+
+	len = decode_varint(&next);
+	if (next > end || len == 0)
+		goto done2;
+
+	rd.valid      = ewah_new();
+	rd.check_only = ewah_new();
+	rd.sha1_valid = ewah_new();
+	rd.data	      = next;
+	rd.end	      = end;
+	rd.index      = 0;
+	rd.ucd        = xmalloc(sizeof(*rd.ucd) * len);
+
+	if (read_one_dir(&uc->root, &rd) || rd.index != len)
+		goto done;
+
+	next = rd.data;
+	len = ewah_read_mmap(rd.valid, next, end - next);
+	if (len < 0)
+		goto done;
+
+	next += len;
+	len = ewah_read_mmap(rd.check_only, next, end - next);
+	if (len < 0)
+		goto done;
+
+	next += len;
+	len = ewah_read_mmap(rd.sha1_valid, next, end - next);
+	if (len < 0)
+		goto done;
+
+	ewah_each_bit(rd.check_only, set_check_only, &rd);
+	rd.data = next + len;
+	ewah_each_bit(rd.valid, read_stat, &rd);
+	ewah_each_bit(rd.sha1_valid, read_sha1, &rd);
+	next = rd.data;
+
+done:
+	free(rd.ucd);
+	ewah_free(rd.valid);
+	ewah_free(rd.check_only);
+	ewah_free(rd.sha1_valid);
+done2:
+	if (next != end) {
+		free_untracked_cache(uc);
+		uc = NULL;
+	}
+	return uc;
+}
