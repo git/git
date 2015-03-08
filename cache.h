@@ -555,6 +555,8 @@ extern void fill_stat_data(struct stat_data *sd, struct stat *st);
  * INODE_CHANGED, and DATA_CHANGED.
  */
 extern int match_stat_data(const struct stat_data *sd, struct stat *st);
+extern int match_stat_data_racy(const struct index_state *istate,
+				const struct stat_data *sd, struct stat *st);
 
 extern void fill_stat_cache_info(struct cache_entry *ce, struct stat *st);
 

@@ -294,6 +294,14 @@ static int is_racy_timestamp(const struct index_state *istate,
 		is_racy_stat(istate, &ce->ce_stat_data));
 }
 
+int match_stat_data_racy(const struct index_state *istate,
+			 const struct stat_data *sd, struct stat *st)
+{
+	if (is_racy_stat(istate, sd))
+		return MTIME_CHANGED;
+	return match_stat_data(sd, st);
+}
+
 int ie_match_stat(const struct index_state *istate,
 		  const struct cache_entry *ce, struct stat *st,
 		  unsigned int options)
