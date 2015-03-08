@@ -4,10 +4,6 @@
 #include "sigchain.h"
 #include "argv-array.h"
 
-#ifndef SHELL_PATH
-# define SHELL_PATH "/bin/sh"
-#endif
-
 void child_process_init(struct child_process *child)
 {
 	memset(child, 0, sizeof(*child));
