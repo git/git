@@ -80,6 +80,7 @@ void rename_index_entry_at(struct index_state *istate, int nr, const char *new_n
 	memcpy(new->name, new_name, namelen + 1);
 
 	cache_tree_invalidate_path(istate, old->name);
+	untracked_cache_remove_from_index(istate, old->name);
 	remove_index_entry_at(istate, nr);
 	add_index_entry(istate, new, ADD_CACHE_OK_TO_ADD|ADD_CACHE_OK_TO_REPLACE);
 }
@@ -539,6 +540,7 @@ int remove_file_from_index(struct index_state *istate, const char *path)
 	if (pos < 0)
 		pos = -pos-1;
 	cache_tree_invalidate_path(istate, path);
+	untracked_cache_remove_from_index(istate, path);
 	while (pos < istate->cache_nr && !strcmp(istate->cache[pos]->name, path))
 		remove_index_entry_at(istate, pos);
 	return 0;
@@ -980,6 +982,8 @@ static int add_index_entry_with_check(struct index_state *istate, struct cache_e
 		return 0;
 	}
 	pos = -pos-1;
+
+	untracked_cache_add_to_index(istate, ce->name);
 
 	/*
 	 * Inserting a merged entry ("stage 0") into the index
