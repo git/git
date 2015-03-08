@@ -127,6 +127,9 @@
 #else
 #include <poll.h>
 #endif
+#ifdef HAVE_BSD_SYSCTL
+#include <sys/sysctl.h>
+#endif
 
 #if defined(__MINGW32__)
 /* pull in Windows compatibility stuff */

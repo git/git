@@ -348,6 +348,8 @@ all::
 #
 # Define NO_HMAC_CTX_CLEANUP if your OpenSSL is version 0.9.6b or earlier to
 # cleanup the HMAC context with the older HMAC_cleanup function.
+#
+# Define HAVE_BSD_SYSCTL if your platform has a BSD-compatible sysctl function.
 
 GIT-VERSION-FILE: FORCE
 	@$(SHELL_PATH) ./GIT-VERSION-GEN
@@ -1412,6 +1414,10 @@ endif
 
 ifdef HAVE_CLOCK_MONOTONIC
 	BASIC_CFLAGS += -DHAVE_CLOCK_MONOTONIC
+endif
+
+ifdef HAVE_BSD_SYSCTL
+	BASIC_CFLAGS += -DHAVE_BSD_SYSCTL
 endif
 
 ifeq ($(TCLTK_PATH),)
