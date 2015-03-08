@@ -298,4 +298,5 @@ static inline int dir_path_match(const struct dir_entry *ent,
 			      has_trailing_dir);
 }
 
+void write_untracked_extension(struct strbuf *out, struct untracked_cache *untracked);
 #endif

@@ -12,6 +12,8 @@
 #include "refs.h"
 #include "wildmatch.h"
 #include "pathspec.h"
+#include "varint.h"
+#include "ewah/ewok.h"
 
 struct path_simplify {
 	int len;
@@ -2143,4 +2145,141 @@ void clear_directory(struct dir_struct *dir)
 		stk = prev;
 	}
 	strbuf_release(&dir->basebuf);
+}
+
+struct ondisk_untracked_cache {
+	struct stat_data info_exclude_stat;
+	struct stat_data excludes_file_stat;
+	uint32_t dir_flags;
+	unsigned char info_exclude_sha1[20];
+	unsigned char excludes_file_sha1[20];
+	char exclude_per_dir[FLEX_ARRAY];
+};
+
+#define ouc_size(len) (offsetof(struct ondisk_untracked_cache, exclude_per_dir) + len + 1)
+
+struct write_data {
+	int index;	   /* number of written untracked_cache_dir */
+	struct ewah_bitmap *check_only; /* from untracked_cache_dir */
+	struct ewah_bitmap *valid;	/* from untracked_cache_dir */
+	struct ewah_bitmap *sha1_valid; /* set if exclude_sha1 is not null */
+	struct strbuf out;
+	struct strbuf sb_stat;
+	struct strbuf sb_sha1;
+};
+
+static void stat_data_to_disk(struct stat_data *to, const struct stat_data *from)
+{
+	to->sd_ctime.sec  = htonl(from->sd_ctime.sec);
+	to->sd_ctime.nsec = htonl(from->sd_ctime.nsec);
+	to->sd_mtime.sec  = htonl(from->sd_mtime.sec);
+	to->sd_mtime.nsec = htonl(from->sd_mtime.nsec);
+	to->sd_dev	  = htonl(from->sd_dev);
+	to->sd_ino	  = htonl(from->sd_ino);
+	to->sd_uid	  = htonl(from->sd_uid);
+	to->sd_gid	  = htonl(from->sd_gid);
+	to->sd_size	  = htonl(from->sd_size);
+}
+
+static void write_one_dir(struct untracked_cache_dir *untracked,
+			  struct write_data *wd)
+{
+	struct stat_data stat_data;
+	struct strbuf *out = &wd->out;
+	unsigned char intbuf[16];
+	unsigned int intlen, value;
+	int i = wd->index++;
+
+	/*
+	 * untracked_nr should be reset whenever valid is clear, but
+	 * for safety..
+	 */
+	if (!untracked->valid) {
+		untracked->untracked_nr = 0;
+		untracked->check_only = 0;
+	}
+
+	if (untracked->check_only)
+		ewah_set(wd->check_only, i);
+	if (untracked->valid) {
+		ewah_set(wd->valid, i);
+		stat_data_to_disk(&stat_data, &untracked->stat_data);
+		strbuf_add(&wd->sb_stat, &stat_data, sizeof(stat_data));
+	}
+	if (!is_null_sha1(untracked->exclude_sha1)) {
+		ewah_set(wd->sha1_valid, i);
+		strbuf_add(&wd->sb_sha1, untracked->exclude_sha1, 20);
+	}
+
+	intlen = encode_varint(untracked->untracked_nr, intbuf);
+	strbuf_add(out, intbuf, intlen);
+
+	/* skip non-recurse directories */
+	for (i = 0, value = 0; i < untracked->dirs_nr; i++)
+		if (untracked->dirs[i]->recurse)
+			value++;
+	intlen = encode_varint(value, intbuf);
+	strbuf_add(out, intbuf, intlen);
+
+	strbuf_add(out, untracked->name, strlen(untracked->name) + 1);
+
+	for (i = 0; i < untracked->untracked_nr; i++)
+		strbuf_add(out, untracked->untracked[i],
+			   strlen(untracked->untracked[i]) + 1);
+
+	for (i = 0; i < untracked->dirs_nr; i++)
+		if (untracked->dirs[i]->recurse)
+			write_one_dir(untracked->dirs[i], wd);
+}
+
+void write_untracked_extension(struct strbuf *out, struct untracked_cache *untracked)
+{
+	struct ondisk_untracked_cache *ouc;
+	struct write_data wd;
+	unsigned char varbuf[16];
+	int len = 0, varint_len;
+	if (untracked->exclude_per_dir)
+		len = strlen(untracked->exclude_per_dir);
+	ouc = xmalloc(sizeof(*ouc) + len + 1);
+	stat_data_to_disk(&ouc->info_exclude_stat, &untracked->ss_info_exclude.stat);
+	stat_data_to_disk(&ouc->excludes_file_stat, &untracked->ss_excludes_file.stat);
+	hashcpy(ouc->info_exclude_sha1, untracked->ss_info_exclude.sha1);
+	hashcpy(ouc->excludes_file_sha1, untracked->ss_excludes_file.sha1);
+	ouc->dir_flags = htonl(untracked->dir_flags);
+	memcpy(ouc->exclude_per_dir, untracked->exclude_per_dir, len + 1);
+	strbuf_add(out, ouc, ouc_size(len));
+	free(ouc);
+	ouc = NULL;
+
+	if (!untracked->root) {
+		varint_len = encode_varint(0, varbuf);
+		strbuf_add(out, varbuf, varint_len);
+		return;
+	}
+
+	wd.index      = 0;
+	wd.check_only = ewah_new();
+	wd.valid      = ewah_new();
+	wd.sha1_valid = ewah_new();
+	strbuf_init(&wd.out, 1024);
+	strbuf_init(&wd.sb_stat, 1024);
+	strbuf_init(&wd.sb_sha1, 1024);
+	write_one_dir(untracked->root, &wd);
+
+	varint_len = encode_varint(wd.index, varbuf);
+	strbuf_add(out, varbuf, varint_len);
+	strbuf_addbuf(out, &wd.out);
+	ewah_serialize_strbuf(wd.valid, out);
+	ewah_serialize_strbuf(wd.check_only, out);
+	ewah_serialize_strbuf(wd.sha1_valid, out);
+	strbuf_addbuf(out, &wd.sb_stat);
+	strbuf_addbuf(out, &wd.sb_sha1);
+	strbuf_addch(out, '\0'); /* safe guard for string lists */
+
+	ewah_free(wd.valid);
+	ewah_free(wd.check_only);
+	ewah_free(wd.sha1_valid);
+	strbuf_release(&wd.out);
+	strbuf_release(&wd.sb_stat);
+	strbuf_release(&wd.sb_sha1);
 }
