@@ -1934,6 +1934,15 @@ int read_directory(struct dir_struct *dir, const char *path, int len, const stru
 				 dir->untracked->gitignore_invalidated,
 				 dir->untracked->dir_invalidated,
 				 dir->untracked->dir_opened);
+		if (dir->untracked == the_index.untracked &&
+		    (dir->untracked->dir_opened ||
+		     dir->untracked->gitignore_invalidated ||
+		     dir->untracked->dir_invalidated))
+			the_index.cache_changed |= UNTRACKED_CHANGED;
+		if (dir->untracked != the_index.untracked) {
+			free(dir->untracked);
+			dir->untracked = NULL;
+		}
 	}
 	return dir->nr;
 }
