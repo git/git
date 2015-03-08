@@ -115,6 +115,8 @@ struct untracked_cache_dir {
 	unsigned int untracked_alloc, dirs_nr, dirs_alloc;
 	unsigned int untracked_nr;
 	unsigned int check_only : 1;
+	/* all data in this struct are good */
+	unsigned int valid : 1;
 	/* null SHA-1 means this directory does not have .gitignore */
 	unsigned char exclude_sha1[20];
 	char name[FLEX_ARRAY];
@@ -132,6 +134,7 @@ struct untracked_cache {
 	struct untracked_cache_dir *root;
 	/* Statistics */
 	int dir_created;
+	int gitignore_invalidated;
 };
 
 struct dir_struct {
@@ -186,6 +189,7 @@ struct dir_struct {
 	struct untracked_cache *untracked;
 	struct sha1_stat ss_info_exclude;
 	struct sha1_stat ss_excludes_file;
+	unsigned unmanaged_exclude_files;
 };
 
 /*
