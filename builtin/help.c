@@ -456,7 +456,7 @@ static void list_common_guides_help(void)
 int cmd_help(int argc, const char **argv, const char *prefix)
 {
 	int nongit;
-	const char *alias;
+	char *alias;
 	enum help_format parsed_help_format;
 
 	argc = parse_options(argc, argv, prefix, builtin_help_options,
@@ -499,6 +499,7 @@ int cmd_help(int argc, const char **argv, const char *prefix)
 	alias = alias_lookup(argv[0]);
 	if (alias && !is_git_command(argv[0])) {
 		printf_ln(_("`git %s' is aliased to `%s'"), argv[0], alias);
+		free(alias);
 		return 0;
 	}
 
