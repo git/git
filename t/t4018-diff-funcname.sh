@@ -40,6 +40,7 @@ diffpatterns="
 	php
 	python
 	ruby
+	sh
 	tex
 	custom1
 	custom2

@@ -1,0 +1,6 @@
+  RIGHT_foo() # echo 'foo'
+#bar()
+{
+	#bar()
+	ChangeMe;
+}
