@@ -749,7 +749,7 @@ static int get_describe_name(const char *name, int len, unsigned char *sha1)
 
 	for (cp = name + len - 1; name + 2 <= cp; cp--) {
 		char ch = *cp;
-		if (hexval(ch) & ~0377) {
+		if (!isxdigit(ch)) {
 			/* We must be looking at g in "SOMETHING-g"
 			 * for it to be describe output.
 			 */
