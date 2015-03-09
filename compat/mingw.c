@@ -6,6 +6,8 @@
 #include "../run-command.h"
 #include "../cache.h"
 
+#undef isatty
+
 static const int delay[] = { 0, 1, 10, 20, 40 };
 
 int err_win_to_posix(DWORD winerr)
@@ -2160,4 +2162,39 @@ void mingw_startup()
 
 	/* initialize Unicode console */
 	winansi_init();
+}
+
+int mingw_isatty(int fd) {
+	static DWORD id[] = {
+		STD_INPUT_HANDLE,
+		STD_OUTPUT_HANDLE,
+		STD_ERROR_HANDLE
+	};
+	static unsigned initialized;
+	static int is_tty[ARRAY_SIZE(id)];
+
+	if (fd < 0 || fd >= ARRAY_SIZE(is_tty))
+		return isatty(fd);
+
+	if (isatty(fd))
+		return 1;
+
+	if (!initialized) {
+		const char *env = getenv("MSYS_TTY_HANDLES");
+
+		if (env) {
+			int i;
+			char buffer[64];
+
+			for (i = 0; i < ARRAY_SIZE(is_tty); i++) {
+				sprintf(buffer, " %ld ", (unsigned long)
+					GetStdHandle(id[i]));
+				is_tty[i] = !!strstr(env, buffer);
+			}
+		}
+
+		initialized = 1;
+	}
+
+	return is_tty[fd];
 }

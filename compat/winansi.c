@@ -7,6 +7,8 @@
 #include <wingdi.h>
 #include <winreg.h>
 
+#undef isatty
+
 /*
  ANSI codes used by git: m, K
 
