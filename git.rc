@@ -20,3 +20,5 @@ BEGIN
     VALUE "Translation", 0x409, 1200
   END
 END
+
+1 RT_MANIFEST "compat/win32/git.manifest"
