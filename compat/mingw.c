@@ -6,8 +6,6 @@
 #include "../run-command.h"
 #include "../cache.h"
 
-#undef isatty
-
 #define HCAST(type, handle) ((type)(intptr_t)handle)
 
 static const int delay[] = { 0, 1, 10, 20, 40 };
@@ -2379,39 +2377,4 @@ void mingw_startup()
 
 	/* init length of current directory for handle_long_path */
 	current_directory_len = GetCurrentDirectoryW(0, NULL);
-}
-
-int mingw_isatty(int fd) {
-	static DWORD id[] = {
-		STD_INPUT_HANDLE,
-		STD_OUTPUT_HANDLE,
-		STD_ERROR_HANDLE
-	};
-	static unsigned initialized;
-	static int is_tty[ARRAY_SIZE(id)];
-
-	if (fd < 0 || fd >= ARRAY_SIZE(is_tty))
-		return isatty(fd);
-
-	if (isatty(fd))
-		return 1;
-
-	if (!initialized) {
-		const char *env = getenv("MSYS_TTY_HANDLES");
-
-		if (env) {
-			int i;
-			char buffer[64];
-
-			for (i = 0; i < ARRAY_SIZE(is_tty); i++) {
-				sprintf(buffer, " %" PRIuMAX " ",
-					HCAST(uintmax_t, GetStdHandle(id[i])));
-				is_tty[i] = !!strstr(env, buffer);
-			}
-		}
-
-		initialized = 1;
-	}
-
-	return is_tty[fd];
 }

@@ -367,9 +367,6 @@ sig_handler_t mingw_signal(int sig, sig_handler_t handler);
 int mingw_raise(int sig);
 #define raise mingw_raise
 
-int mingw_isatty(int fd);
-#define isatty mingw_isatty
-
 /*
  * ANSI emulation wrappers
  */
