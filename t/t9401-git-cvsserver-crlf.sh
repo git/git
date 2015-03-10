@@ -11,6 +11,14 @@ repository using cvs CLI client via git-cvsserver server'
 
 . ./test-lib.sh
 
+if test_have_prereq MINGW
+then
+	# Avoid posix-to-windows path mangling
+	pwd () {
+		builtin pwd
+	}
+fi
+
 marked_as () {
     foundEntry="$(grep "^/$2/" "$1/CVS/Entries")"
     if [ x"$foundEntry" = x"" ] ; then
