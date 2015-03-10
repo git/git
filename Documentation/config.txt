@@ -2527,8 +2527,13 @@ versionsort.prereleaseSuffix::
 	When version sort is used in linkgit:git-tag[1], prerelease
 	tags (e.g. "1.0-rc1") may appear after the main release
 	"1.0". By specifying the suffix "-rc" in this variable,
-	"1.0-rc1" will appear before "1.0". One variable assignment
-	per suffix.
+	"1.0-rc1" will appear before "1.0".
++
+This variable can be specified multiple times, once per suffix. The
+order of suffixes in the config file determines the sorting order
+(e.g. if "-pre" appears before "-rc" in the config file then 1.0-preXX
+is sorted before 1.0-rcXX). The sorting order between different
+suffixes is undefined if they are in multiple config files.
 
 web.browser::
 	Specify a web browser that may be used by some commands.
