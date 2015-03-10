@@ -65,6 +65,10 @@ Performance, Internal Implementation, Development Support etc.
    check what they really require.
    (merge f400e51 jk/sanity later to maint).
 
+ * Various issues around "reflog expire", e.g. using --updateref when
+   expiring a reflog for a symbolic reference, have been corrected
+   and/or made saner.
+
  * The strbuf API was explained between the API documentation and in
    the header file.  Move missing bits to strbuf.h so that programmers
    can check only one place for all necessary information.
@@ -283,6 +287,9 @@ notes for details).
  * The borrowed code in kwset API did not follow our usual convention
    to use "unsigned char" to store values that range from 0-255.
    (merge 189c860 bw/kwset-use-unsigned later to maint).
+
+ * A corrupt input to "git diff -M" used to cause it to segfault.
+   (merge 4d6be03 jk/diffcore-rename-duplicate later to maint).
 
  * Code cleanups and documentaiton updates.
    (merge 2ce63e9 rs/simple-cleanups later to maint).
