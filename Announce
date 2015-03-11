@@ -1,6 +1,8 @@
 #!/bin/sh
 # Announcement message skelton
 #
+tmpbase=/var/tmp/git-announce.$$
+trap 'rm -f $tmpbase.*' 0
 branch=${1?branch}
 previous=${2?previous}
 commit=${3-"$1"}
@@ -40,6 +42,15 @@ esac
 
 vername=$(echo "$vername" | tr "-" ".")
 
+git log --format='%aN,' "$previous" | sort -u >"$tmpbase.prev"
+git log --format='%aN,' "$previous..$commit" | sort -u >"$tmpbase.this"
+comm -12 "$tmpbase.prev" "$tmpbase.this" >"$tmpbase.old"
+comm -13 "$tmpbase.prev" "$tmpbase.this" >"$tmpbase.new"
+
+all=$(wc -l <"$tmpbase.this")
+new=$(wc -l <"$tmpbase.new")
+cnt=$(git rev-list --no-merges "$previous..$commit" | wc -l)
+
 cat <<EOF
 To: git@vger.kernel.org
 Cc: Linux Kernel <linux-kernel@vger.kernel.org>
@@ -50,6 +61,8 @@ EOF
 
 fmt -68 <<EOF
 $kind Git $relname is now available$for_testing at the usual places.
+It comprises of $cnt non-merge commits since $previous,
+contributed by $all people, $new of which are new faces.
 EOF
 
 cat <<EOF
@@ -67,6 +80,33 @@ tag and the '$branch' branch that the tag points at:
   url = git://git.sourceforge.jp/gitroot/git-core/git.git
   url = git://git-core.git.sourceforge.net/gitroot/git-core/git-core
   url = https://github.com/gitster/git
+EOF
+
+fmt_people () {
+	# Yes, I don't perform well without 2 or more people.
+	# Sue me. The heading says "are as follows" anyway ;-).
+	sed -e '${
+		s/^/and /
+		s/,$/./
+	}' "$1" |
+	fmt -66 |
+	sed -e 's/^/  /'
+
+}
+
+cat <<EOF
+
+New contributors who appeared first in this release are as follows.
+Welcome to the Git development community!
+
+$(fmt_people "$tmpbase.new")
+
+Returning contributors who helped this release are as follows.
+Thanks for your continued support.
+
+$(fmt_people "$tmpbase.old")
+
+----------------------------------------------------------------
 
 EOF
 
