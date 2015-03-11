@@ -161,7 +161,7 @@ it in the repository configuration as follows:
 
 -------------------------------------
 [user]
-    signingkey = <gpg-key-id>
+    signingKey = <gpg-key-id>
 -------------------------------------
 
 

@@ -117,7 +117,7 @@ locally created merge commits will not be flattened.
 +
 When false, merge the current branch into the upstream branch.
 +
-See `pull.rebase`, `branch.<name>.rebase` and `branch.autosetuprebase` in
+See `pull.rebase`, `branch.<name>.rebase` and `branch.autoSetupRebase` in
 linkgit:git-config[1] if you want to make `git pull` always use
 `--rebase` instead of merging.
 +

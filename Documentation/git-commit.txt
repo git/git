@@ -310,7 +310,7 @@ configuration variable documented in linkgit:git-config[1].
 	GPG-sign commit.
 
 --no-gpg-sign::
-	Countermand `commit.gpgsign` configuration variable that is
+	Countermand `commit.gpgSign` configuration variable that is
 	set to force each and every commit to be signed.
 
 \--::

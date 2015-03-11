@@ -26,7 +26,7 @@ By default, any tag that points into the histories being fetched is
 also fetched; the effect is to fetch tags that
 point at branches that you are interested in.  This default behavior
 can be changed by using the --tags or --no-tags options or by
-configuring remote.<name>.tagopt.  By using a refspec that fetches tags
+configuring remote.<name>.tagOpt.  By using a refspec that fetches tags
 explicitly, you can fetch tags that do not point into branches you
 are interested in as well.
 

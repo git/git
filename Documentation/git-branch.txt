@@ -51,7 +51,7 @@ When a local branch is started off a remote-tracking branch, Git sets up the
 branch (specifically the `branch.<name>.remote` and `branch.<name>.merge`
 configuration entries) so that 'git pull' will appropriately merge from
 the remote-tracking branch. This behavior may be changed via the global
-`branch.autosetupmerge` configuration flag. That setting can be
+`branch.autoSetupMerge` configuration flag. That setting can be
 overridden by using the `--track` and `--no-track` options, and
 changed later using `git branch --set-upstream-to`.
 
@@ -166,14 +166,14 @@ This option is only applicable in non-verbose mode.
 	upstream when the new branch is checked out.
 +
 This behavior is the default when the start point is a remote-tracking branch.
-Set the branch.autosetupmerge configuration variable to `false` if you
+Set the branch.autoSetupMerge configuration variable to `false` if you
 want `git checkout` and `git branch` to always behave as if '--no-track'
 were given. Set it to `always` if you want this behavior when the
 start-point is either a local or remote-tracking branch.
 
 --no-track::
 	Do not set up "upstream" configuration, even if the
-	branch.autosetupmerge configuration variable is true.
+	branch.autoSetupMerge configuration variable is true.
 
 --set-upstream::
 	If specified branch does not exist yet or if `--force` has been

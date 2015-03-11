@@ -1,4 +1,4 @@
-merge.conflictstyle::
+merge.conflictStyle::
 	Specify the style in which conflicted hunks are written out to
 	working tree files upon merge.  The default is "merge", which
 	shows a `<<<<<<<` conflict marker, changes made by one side,

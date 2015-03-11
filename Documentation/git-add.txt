@@ -173,7 +173,7 @@ for "git add --no-all <pathspec>...", i.e. ignored removed files.
 Configuration
 -------------
 
-The optional configuration variable `core.excludesfile` indicates a path to a
+The optional configuration variable `core.excludesFile` indicates a path to a
 file containing patterns of file names to exclude from git-add, similar to
 $GIT_DIR/info/exclude.  Patterns in the exclude file are used in addition to
 those in info/exclude.  See linkgit:gitignore[5].
@@ -317,7 +317,7 @@ After deciding the fate for all hunks, if there is any hunk
 that was chosen, the index is updated with the selected hunks.
 +
 You can omit having to type return here, by setting the configuration
-variable `interactive.singlekey` to `true`.
+variable `interactive.singleKey` to `true`.
 
 diff::
 

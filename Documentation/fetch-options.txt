@@ -68,7 +68,7 @@ endif::git-pull[]
 	By default, tags that point at objects that are downloaded
 	from the remote repository are fetched and stored locally.
 	This option disables this automatic tag following. The default
-	behavior for a remote may be specified with the remote.<name>.tagopt
+	behavior for a remote may be specified with the remote.<name>.tagOpt
 	setting. See linkgit:git-config[1].
 
 ifndef::git-pull[]

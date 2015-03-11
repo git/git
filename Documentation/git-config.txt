@@ -405,7 +405,7 @@ true
 % git config --bool --get-urlmatch http.sslverify https://weak.example.com
 false
 % git config --get-urlmatch http https://weak.example.com
-http.cookiefile /tmp/cookie.txt
+http.cookieFile /tmp/cookie.txt
 http.sslverify false
 ------------
 

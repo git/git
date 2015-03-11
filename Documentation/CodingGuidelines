@@ -526,7 +526,7 @@ Writing Documentation:
  `backticks around word phrases`, do so.
    `--pretty=oneline`
    `git rev-list`
-   `remote.pushdefault`
+   `remote.pushDefault`
 
  Word phrases enclosed in `backtick characters` are rendered literally
  and will not be further expanded. The use of `backticks` to achieve the
