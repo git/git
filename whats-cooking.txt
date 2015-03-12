@@ -1,20 +1,20 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Mar 2015, #03; Fri, 6)
-X-master-at: d67f9d5e8fd2c165304153a87fd96054d2b74981
-X-next-at: 9704172a1848f24ce72de64c49b043350d93b393
+Subject: What's cooking in git.git (Mar 2015, #04; Wed, 11)
+X-master-at: 7a9409cb0104466eba32162f5bc4e5ab46130f02
+X-next-at: 1f807f94f1528a9b78383ecd4a5f640fbc72426b
 
-What's cooking in git.git (Mar 2015, #03; Fri, 6)
+What's cooking in git.git (Mar 2015, #04; Wed, 11)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-A few more batches of topics have been merged to 'master', including
-both fixes and enhancements.  The second maintenance release for
-v2.3 has been cut with many fixes that have already been merged to
-'master'.
+It is becoming clear that the upcoming release will be a usual
+incremental improvements and not an earth shattering one. Let's
+decide to name it 2.4, move the top-level RelNotes down to its usual
+place in Documentation/RelNotes and make it a symbolic link.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -24,157 +24,118 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* ak/t5516-typofix (2015-03-03) 1 commit
-  (merged to 'next' on 2015-03-03 at c37a677)
- + t5516: correct misspelled pushInsteadOf
+* jk/diffcore-rename-duplicate (2015-02-27) 2 commits
+  (merged to 'next' on 2015-03-03 at 1d5a2d2)
+ + diffcore-rename: avoid processing duplicate destinations
+ + diffcore-rename: split locate_rename_dst into two functions
+
+ A corrupt input to "git diff -M" can cause us to segfault.
 
 
-* bw/kwset-use-unsigned (2015-03-02) 1 commit
-  (merged to 'next' on 2015-03-05 at fd124ba)
- + kwset: use unsigned char to store values with high-bit set
+* mh/expire-updateref-fixes (2015-03-05) 9 commits
+  (merged to 'next' on 2015-03-05 at 1caf9a6)
+ + reflog_expire(): never update a reference to null_sha1
+ + reflog_expire(): ignore --updateref for symbolic references
+ + reflog: improve and update documentation
+ + struct ref_lock: delete the force_write member
+ + lock_ref_sha1_basic(): do not set force_write for missing references
+ + write_ref_sha1(): move write elision test to callers
+ + write_ref_sha1(): remove check for lock == NULL
+ + Merge branch 'sb/atomic-push' into mh/ref-trans-value-check
+ + Merge branch 'mh/reflog-expire' into mh/ref-trans-value-check
 
- The borrowed code in kwset API did not follow our usual convention
- to use "unsigned char" to store values that range from 0-255.
-
-
-* ja/clean-confirm-i18n (2015-03-02) 1 commit
-  (merged to 'next' on 2015-03-03 at 314c322)
- + Add hint interactive cleaning
-
- The prompt string "remove?" used when "git clean -i" asks the user
- if a path should be removed was localizable, but the code always
- expects a substring of "yes" to tell it to go ahead.  Always show
- [y/N] as part of this prompt to hint that the answer is not (yet)
- localized.
-
-
-* mg/doc-remote-tags-or-not (2015-03-02) 1 commit
-  (merged to 'next' on 2015-03-03 at 1630171)
- + git-remote.txt: describe behavior without --tags and --no-tags
-
- "git remote add" mentioned "--tags" and "--no-tags" and was not
- clear that fetch from the remote in the future will use the default
- behaviour when neither is given to override it.
-
-
-* mk/diff-shortstat-dirstat-fix (2015-03-02) 1 commit
-  (merged to 'next' on 2015-03-03 at 42c282e)
- + diff --shortstat --dirstat: remove duplicate output
-
- "git diff --shortstat --dirstat=changes" showed a dirstat based on
- lines that was never asked by the end user in addition to the
- dirstat that the user asked for.
-
-
-* mr/doc-clean-f-f (2015-02-26) 1 commit
-  (merged to 'next' on 2015-03-03 at 67a77a2)
- + Documentation/git-clean.txt: document that -f may need to be given twice
-
- Documentation update.
-
-
-* ms/submodule-update-config-doc (2015-03-02) 1 commit
-  (merged to 'next' on 2015-03-03 at b94da4b)
- + submodule: improve documentation of update subcommand
-
- The interaction between "git submodule update" and the
- submodule.*.update configuration was not clearly documented.
-
-
-* nd/grep-exclude-standard-help-fix (2015-02-27) 1 commit
-  (merged to 'next' on 2015-03-03 at 61c9587)
- + grep: correct help string for --exclude-standard
-
- Description given by "grep -h" for its --exclude-standard option
- was phrased poorly.
-
-
-* ye/http-accept-language (2015-02-26) 1 commit
-  (merged to 'next' on 2015-03-03 at 58d195e)
- + gettext.c: move get_preferred_languages() from http.c
-
- Compilation fix for a recent topic in 'master'.
+ Various issues around "reflog expire", e.g. using --updateref when
+ expiring a reflog for a symbolic reference, have been corrected
+ and/or made saner.
 
 --------------------------------------------------
 [New Topics]
 
-* ak/git-done-help-cleanup (2015-03-06) 1 commit
- - git: make was_alias and done_help non-static
+* kn/git-cd-to-empty (2015-03-06) 1 commit
+ - git: treat "git -C '<path>'" as a no-op when <path> is empty
 
- Code simplification.
-
- Will merge to 'next'.
-
-
-* es/rebase-i-count-todo (2015-03-06) 2 commits
- - rebase-interactive: re-word "item count" comment
- - rebase-interactive: suppress whitespace preceding item count
-
- "git rebase -i" recently started to include the number of
- commits in the insn sheet to be processed, but on a platform
- that prepends leading whitespaces to "wc -l" output, the numbers
- are shown with extra whitespaces that aren't necessary.
+ "git -C '' subcmd" refused to work in the current directory, unlike
+ "cd ''" which silently behaves as a no-op.
 
  Will merge to 'next'.
 
 
-* mg/fdopen-with-retry (2015-03-06) 6 commits
- - buffer_fdinit(): use fdopen_with_retry()
- - update_info_file(): use fdopen_with_retry()
- - copy_to_log(): use fdopen_with_retry()
- - fdopen_lock_file(): use fdopen_with_retry()
- - SQUASH??? $gmane/264889
- - xfdopen(): if first attempt fails, free memory and try again
+* dj/log-graph-with-no-walk (2015-03-10) 1 commit
+ - revision: forbid combining --graph and --no-walk
 
- Various parts of the code where they call fdopen() can fail when
- they run out of memory; attempt to proceed by retrying the
- operation after freeing some resource.
+ "git log --graph --no-walk A B..." is a otcnflicting request that
+ asks nonsense; no-walk tells us show discrete points in the
+ history, while graph asks to draw connections between these
+ discrete points. Forbid the combination.
 
- Waiting for further comments.
+ Will replace with the version that does not special case "git show"
+ that implies "--no-walk" unless it is given a range.
 
 
-* mg/log-decorate-HEAD (2015-03-06) 1 commit
- - log: decorate non-detached HEAD differently
+* km/bsd-shells (2015-03-10) 5 commits
+ - t5528: do not fail with FreeBSD shell
+ - help.c: use SHELL_PATH instead of hard-coded "/bin/sh"
+ - git-compat-util.h: move SHELL_PATH default into header
+ - git-instaweb: use @SHELL_PATH@ instead of /bin/sh
+ - git-instaweb: allow running in a working tree subdirectory
 
- Output from "git log --decorate" mentions HEAD when it points at a
- tip of an branch differently from a detached HEAD.
-
- We probably want to de-dup the branch name in the output.
-
- Waiting for further comments.
-
-
-* rs/daemon-hostname-in-strbuf (2015-03-06) 1 commit
- - daemon: use strbuf for hostname info
-
- Code in "git daemon" to parse out and hold hostnames used in
- request interpolation has been simplified.
-
- Needs updating with a few s/_reset/_release/ ($gmane/264962)
-
-
-* rs/deflate-init-cleanup (2015-03-05) 1 commit
- - zlib: initialize git_zstream in git_deflate_init{,_gzip,_raw}
-
- Code simplification.
+ Portability fixes and workarounds for shell scripts have been added
+ to help BSD-derived systems.
 
  Will merge to 'next'.
 
 
-* rs/zip-text (2015-03-05) 1 commit
- - archive-zip: mark text files in archives
+* km/bsd-sysctl (2015-03-10) 2 commits
+ - thread-utils.c: detect CPU count on older BSD-like systems
+ - configure: support HAVE_BSD_SYSCTL option
 
- "git archive" can now be told to set the 'text' attribute in the
- resulting zip archive.
+ We now detect number of CPUs on older BSD-derived systems.
 
  Will merge to 'next'.
 
 
-* sg/completion-remote (2015-03-06) 2 commits
- - completion: simplify __git_remotes()
- - completion: add a test for __git_remotes() helper function
+* km/imap-send-libcurl-options (2015-03-10) 1 commit
+ - imap-send: use cURL automatically when NO_OPENSSL defined
 
- Code simplification.
+ "git imap-send" learned to optionally talk with an IMAP server via
+ libcURL; because there is no other option when Git is built with
+ NO_OPENSSL option, use that codepath by default under such
+ configuration.
+
+ Will merge to 'next'.
+
+
+* mg/doc-status-color-slot (2015-03-10) 1 commit
+ - config,completion: add color.status.unmerged
+
+ Documentation fixes.
+
+ Will merge to 'next'.
+
+
+* mg/verify-commit (2015-03-10) 1 commit
+ - t7510: do not fail when gpg warns about insecure memory
+
+ Workarounds for certain build of GPG that triggered false breakage
+ in a test..
+
+ Will merge to 'next'.
+
+
+* rs/use-isxdigit (2015-03-10) 1 commit
+ - use isxdigit() for checking if a character is a hexadecimal digit
+
+ Code cleanup.
+
+ Will merge to 'next'.
+
+
+* sb/leaks (2015-03-10) 3 commits
+ - builtin/help.c: fix memory leak
+ - bundle.c: fix memory leak
+ - connect.c: do not leak "conn" after showing diagnosis
+
+ Code cleanup.
 
  Will merge to 'next'.
 
@@ -370,14 +331,104 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* mh/fdopen-with-retry (2015-03-06) 6 commits
+ - buffer_fdinit(): use fdopen_with_retry()
+ - update_info_file(): use fdopen_with_retry()
+ - copy_to_log(): use fdopen_with_retry()
+ - fdopen_lock_file(): use fdopen_with_retry()
+ - SQUASH??? $gmane/264889
+ - xfdopen(): if first attempt fails, free memory and try again
+
+ Various parts of the code where they call fdopen() can fail when
+ they run out of memory; attempt to proceed by retrying the
+ operation after freeing some resource.
+
+ Waiting for further comments.
+
+
+* ak/git-done-help-cleanup (2015-03-06) 1 commit
+  (merged to 'next' on 2015-03-10 at 971382b)
+ + git: make was_alias and done_help non-static
+
+ Code simplification.
+
+ Will merge to 'master'.
+
+
+* es/rebase-i-count-todo (2015-03-06) 2 commits
+  (merged to 'next' on 2015-03-10 at fff95d5)
+ + rebase-interactive: re-word "item count" comment
+ + rebase-interactive: suppress whitespace preceding item count
+
+ "git rebase -i" recently started to include the number of
+ commits in the insn sheet to be processed, but on a platform
+ that prepends leading whitespaces to "wc -l" output, the numbers
+ are shown with extra whitespaces that aren't necessary.
+
+ Will merge to 'master'.
+
+
+* mg/log-decorate-HEAD (2015-03-10) 2 commits
+ - log: decorate HEAD with branch name
+ - Merge branch 'jc/decorate-leaky-separator-color' into HEAD
+ (this branch uses jc/decorate-leaky-separator-color.)
+
+ Output from "git log --decorate" mentions HEAD when it points at a
+ tip of an branch differently from a detached HEAD.
+
+ This is a potentially backward-incompatible change.
+
+ Will merge to 'next'.
+
+
+* rs/daemon-hostname-in-strbuf (2015-03-09) 2 commits
+ - daemon: deglobalize hostname information
+ - daemon: use strbuf for hostname info
+
+ Code in "git daemon" to parse out and hold hostnames used in
+ request interpolation has been simplified.
+
+ Will merge to 'next'.
+
+
+* rs/deflate-init-cleanup (2015-03-05) 1 commit
+  (merged to 'next' on 2015-03-10 at 053157f)
+ + zlib: initialize git_zstream in git_deflate_init{,_gzip,_raw}
+
+ Code simplification.
+
+ Will merge to 'master'.
+
+
+* rs/zip-text (2015-03-05) 1 commit
+  (merged to 'next' on 2015-03-10 at 2f3fa92)
+ + archive-zip: mark text files in archives
+
+ "git archive" can now be told to set the 'text' attribute in the
+ resulting zip archive.
+
+ Will merge to 'master'.
+
+
+* sg/completion-remote (2015-03-06) 2 commits
+  (merged to 'next' on 2015-03-10 at e1cd42b)
+ + completion: simplify __git_remotes()
+ + completion: add a test for __git_remotes() helper function
+
+ Code simplification.
+
+ Will merge to 'master'.
+
+
 * mg/sequencer-commit-messages-always-verbatim (2015-03-06) 1 commit
- - sequencer: preserve commit messages
+  (merged to 'next' on 2015-03-10 at 6a09295)
+ + sequencer: preserve commit messages
 
  "git cherry-pick" used to clean-up the log message even when it is
  merely replaying an existing commit.  It now replays the message
  verbatim unless you are editing the message of resulting commits.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * mg/detached-head-report (2015-03-06) 2 commits
@@ -394,27 +445,20 @@ of the repositories listed at
 
 
 * mg/status-v-v (2015-03-06) 3 commits
- - commit/status: show the index-worktree diff with -v -v
- - t7508: test git status -v
- - t7508: .gitignore 'expect' and 'output' files
+  (merged to 'next' on 2015-03-10 at 4fa5af0)
+ + commit/status: show the index-worktree diff with -v -v
+ + t7508: test git status -v
+ + t7508: .gitignore 'expect' and 'output' files
 
  "git status" now allows the "-v" to be given twice to show the
  differences that are left in the working tree not to be committed.
 
- Will merge to 'next'.
-
-
-* jk/diffcore-rename-duplicate (2015-02-27) 2 commits
-  (merged to 'next' on 2015-03-03 at 1d5a2d2)
- + diffcore-rename: avoid processing duplicate destinations
- + diffcore-rename: split locate_rename_dst into two functions
-
- A corrupt input to "git diff -M" can cause us to segfault.
-
  Will merge to 'master'.
 
 
-* nd/versioncmp-prereleases (2015-02-27) 1 commit
+* nd/versioncmp-prereleases (2015-03-10) 2 commits
+  (merged to 'next' on 2015-03-10 at 1df647c)
+ + config.txt: update versioncmp.prereleaseSuffix
   (merged to 'next' on 2015-03-03 at 6ab29cf)
  + versionsort: support reorder prerelease suffixes
 
@@ -474,30 +518,12 @@ of the repositories listed at
  - Documentation/config.txt: describe the structure first and then meaning
  - Documentation/config.txt: explain multi-valued variables once
  - Documentation/config.txt: avoid unnecessary negation
+ (this branch is used by mg/log-decorate-HEAD.)
 
  "git log --decorate" did not reset colors correctly around the
  branch names.
 
  Waiting for reviews.
-
-
-* mh/expire-updateref-fixes (2015-03-05) 9 commits
-  (merged to 'next' on 2015-03-05 at 1caf9a6)
- + reflog_expire(): never update a reference to null_sha1
- + reflog_expire(): ignore --updateref for symbolic references
- + reflog: improve and update documentation
- + struct ref_lock: delete the force_write member
- + lock_ref_sha1_basic(): do not set force_write for missing references
- + write_ref_sha1(): move write elision test to callers
- + write_ref_sha1(): remove check for lock == NULL
- + Merge branch 'sb/atomic-push' into mh/ref-trans-value-check
- + Merge branch 'mh/reflog-expire' into mh/ref-trans-value-check
-
- Various issues around "reflog expire", e.g. using --updateref when
- expiring a reflog for a symbolic reference, have been corrected
- and/or made saner.
-
- Will merge to 'master'.
 
 
 * js/fsck-opt (2015-01-21) 19 commits
