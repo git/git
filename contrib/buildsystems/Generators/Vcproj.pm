@@ -67,6 +67,15 @@ my @GUIDS = (
 
 sub generate {
     my ($git_dir, $out_dir, $rel_dir, %build_structure) = @_;
+    my $startup = "git.exe"
+
+    my @apps = @{$build_structure{"APPS"}};
+    foreach (@apps) {
+        if ($_ == $startup) {
+            createAppProject($_, $git_dir, $out_dir, $rel_dir, \%build_structure);
+        }
+    }
+
     my @libs = @{$build_structure{"LIBS"}};
     foreach (@libs) {
         createLibProject($_, $git_dir, $out_dir, $rel_dir, \%build_structure);
@@ -74,7 +83,9 @@ sub generate {
 
     my @apps = @{$build_structure{"APPS"}};
     foreach (@apps) {
-        createAppProject($_, $git_dir, $out_dir, $rel_dir, \%build_structure);
+        if ($_ != $startup) {
+            createAppProject($_, $git_dir, $out_dir, $rel_dir, \%build_structure);
+        }
     }
 
     createGlueProject($git_dir, $out_dir, $rel_dir, %build_structure);
