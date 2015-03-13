@@ -569,6 +569,14 @@ else
 		COMPAT_CFLAGS += -D__USE_MINGW_ANSI_STDIO
 		NO_CURL = YesPlease
 	endif
+	OTHER_PROGRAMS += git-wrapper$(X)
+
+git-wrapper$(X): compat/win32/git-wrapper.o git.res
+	$(QUIET_LINK)$(CC) -Wall -s -o $@ $^ -lshell32 -lshlwapi
+
+compat/win32/git-wrapper.o: %.o: %.c GIT-PREFIX
+	$(QUIET_CC)$(CC) -o $*.o -c -Wall -Wwrite-strings $<
+
 endif
 endif
 ifeq ($(uname_S),QNX)
