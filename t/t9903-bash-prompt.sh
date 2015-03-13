@@ -395,6 +395,17 @@ test_expect_success 'prompt - untracked files status indicator - untracked files
 	test_cmp expected "$actual"
 '
 
+test_expect_success 'prompt - untracked files status indicator - untracked files outside cwd' '
+	printf " (master %%)" >expected &&
+	(
+		mkdir -p ignored_dir &&
+		cd ignored_dir &&
+		GIT_PS1_SHOWUNTRACKEDFILES=y &&
+		__git_ps1 >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
 test_expect_success 'prompt - untracked files status indicator - shell variable unset with config disabled' '
 	printf " (master)" >expected &&
 	test_config bash.showUntrackedFiles false &&
