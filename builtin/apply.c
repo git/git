@@ -207,7 +207,7 @@ struct patch {
 	struct patch *next;
 
 	/* three-way fallback result */
-	unsigned char threeway_stage[3][20];
+	struct object_id threeway_stage[3];
 };
 
 static void free_fragment_list(struct fragment *list)
@@ -3418,11 +3418,11 @@ static int try_threeway(struct image *image, struct patch *patch,
 	if (status) {
 		patch->conflicted_threeway = 1;
 		if (patch->is_new)
-			hashclr(patch->threeway_stage[0]);
+			oidclr(&patch->threeway_stage[0]);
 		else
-			hashcpy(patch->threeway_stage[0], pre_sha1);
-		hashcpy(patch->threeway_stage[1], our_sha1);
-		hashcpy(patch->threeway_stage[2], post_sha1);
+			hashcpy(patch->threeway_stage[0].hash, pre_sha1);
+		hashcpy(patch->threeway_stage[1].hash, our_sha1);
+		hashcpy(patch->threeway_stage[2].hash, post_sha1);
 		fprintf(stderr, "Applied patch to '%s' with conflicts.\n", patch->new_name);
 	} else {
 		fprintf(stderr, "Applied patch to '%s' cleanly.\n", patch->new_name);
@@ -4046,14 +4046,14 @@ static void add_conflicted_stages_file(struct patch *patch)
 
 	remove_file_from_cache(patch->new_name);
 	for (stage = 1; stage < 4; stage++) {
-		if (is_null_sha1(patch->threeway_stage[stage - 1]))
+		if (is_null_oid(&patch->threeway_stage[stage - 1]))
 			continue;
 		ce = xcalloc(1, ce_size);
 		memcpy(ce->name, patch->new_name, namelen);
 		ce->ce_mode = create_ce_mode(mode);
 		ce->ce_flags = create_ce_flags(stage);
 		ce->ce_namelen = namelen;
-		hashcpy(ce->sha1, patch->threeway_stage[stage - 1]);
+		hashcpy(ce->sha1, patch->threeway_stage[stage - 1].hash);
 		if (add_cache_entry(ce, ADD_CACHE_OK_TO_ADD) < 0)
 			die(_("unable to add cache entry for %s"), patch->new_name);
 	}
