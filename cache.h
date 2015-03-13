@@ -718,13 +718,13 @@ extern char *sha1_pack_name(const unsigned char *sha1);
 extern char *sha1_pack_index_name(const unsigned char *sha1);
 
 extern const char *find_unique_abbrev(const unsigned char *sha1, int);
-extern const unsigned char null_sha1[20];
+extern const unsigned char null_sha1[GIT_SHA1_RAWSZ];
 
 static inline int hashcmp(const unsigned char *sha1, const unsigned char *sha2)
 {
 	int i;
 
-	for (i = 0; i < 20; i++, sha1++, sha2++) {
+	for (i = 0; i < GIT_SHA1_RAWSZ; i++, sha1++, sha2++) {
 		if (*sha1 != *sha2)
 			return *sha1 - *sha2;
 	}
@@ -732,19 +732,41 @@ static inline int hashcmp(const unsigned char *sha1, const unsigned char *sha2)
 	return 0;
 }
 
+static inline int oidcmp(const struct object_id *oid1, const struct object_id *oid2)
+{
+	return hashcmp(oid1->hash, oid2->hash);
+}
+
 static inline int is_null_sha1(const unsigned char *sha1)
 {
 	return !hashcmp(sha1, null_sha1);
 }
 
+static inline int is_null_oid(const struct object_id *oid)
+{
+	return !hashcmp(oid->hash, null_sha1);
+}
+
 static inline void hashcpy(unsigned char *sha_dst, const unsigned char *sha_src)
 {
-	memcpy(sha_dst, sha_src, 20);
+	memcpy(sha_dst, sha_src, GIT_SHA1_RAWSZ);
 }
+
+static inline void oidcpy(struct object_id *dst, const struct object_id *src)
+{
+	hashcpy(dst->hash, src->hash);
+}
+
 static inline void hashclr(unsigned char *hash)
 {
-	memset(hash, 0, 20);
+	memset(hash, 0, GIT_SHA1_RAWSZ);
 }
+
+static inline void oidclr(struct object_id *oid)
+{
+	hashclr(oid->hash);
+}
+
 
 #define EMPTY_TREE_SHA1_HEX \
 	"4b825dc642cb6eb9a060e54bf8d69288fbee4904"
@@ -952,8 +974,10 @@ extern int for_each_abbrev(const char *prefix, each_abbrev_fn, void *);
  * null-terminated string.
  */
 extern int get_sha1_hex(const char *hex, unsigned char *sha1);
+extern int get_oid_hex(const char *hex, struct object_id *sha1);
 
 extern char *sha1_to_hex(const unsigned char *sha1);	/* static buffer result! */
+extern char *oid_to_hex(const struct object_id *oid);	/* same static buffer as sha1_to_hex */
 extern int read_ref_full(const char *refname, int resolve_flags,
 			 unsigned char *sha1, int *flags);
 extern int read_ref(const char *refname, unsigned char *sha1);
