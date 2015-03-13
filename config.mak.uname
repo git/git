@@ -564,7 +564,7 @@ else
 		NO_CURL = YesPlease
 	endif
 
-git-wrapper$(X): compat/win32/git-wrapper.o
+git-wrapper$(X): compat/win32/git-wrapper.o git.res
 	$(QUIET_LINK)$(CC) -Wall -s -o $@ $^ -lshell32 -lshlwapi
 
 compat/win32/git-wrapper.o: %.o: %.c
