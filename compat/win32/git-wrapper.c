@@ -34,22 +34,10 @@ static void print_error(LPCWSTR prefix, DWORD error_number)
 	LocalFree((HLOCAL)buffer);
 }
 
-int main(void)
+static void setup_environment(LPWSTR exepath)
 {
-	int r = 1, wait = 1;
-	WCHAR exepath[MAX_PATH], exe[MAX_PATH];
-	LPWSTR cmd = NULL, path2 = NULL, exep = exe;
-	UINT codepage = 0;
 	int len;
-
-	/* get the installation location */
-	GetModuleFileName(NULL, exepath, MAX_PATH);
-	PathRemoveFileSpec(exepath);
-	PathRemoveFileSpec(exepath);
-
-	/* set the default exe module */
-	wcscpy(exe, exepath);
-	PathAppend(exe, L"bin\\git.exe");
+	LPWSTR path2 = NULL;
 
 	/* if not set, set TERM to msys */
 	if (!GetEnvironmentVariable(L"TERM", NULL, 0))
@@ -100,56 +88,76 @@ int main(void)
 	SetEnvironmentVariable(L"PATH", path2);
 	free(path2);
 
+}
 
-	/* fix up the command line to call git.exe
-	 * We have to be very careful about quoting here so we just
-	 * trim off the first argument and replace it leaving the rest
-	 * untouched.
-	 */
-	{
-		int wargc = 0, gui = 0;
-		LPWSTR cmdline = NULL;
-		LPWSTR *wargv = NULL, p = NULL;
-		cmdline = GetCommandLine();
-		wargv = CommandLineToArgvW(cmdline, &wargc);
-		cmd = (LPWSTR)malloc(sizeof(WCHAR) *
-			(wcslen(cmdline) + MAX_PATH));
-		if (wargc > 1 && wcsicmp(L"gui", wargv[1]) == 0) {
-			wait = 0;
-			if (wargc > 2 && wcsicmp(L"citool", wargv[2]) == 0) {
-				wait = 1;
-				wcscpy(cmd, L"git.exe");
-			}
-			else {
-				WCHAR script[MAX_PATH];
-				gui = 1;
-				wcscpy(script, exepath);
-				PathAppend(script,
-					L"libexec\\git-core\\git-gui");
-				PathQuoteSpaces(script);
-				wcscpy(cmd, L"wish.exe ");
-				wcscat(cmd, script);
-				wcscat(cmd, L" --");
-				/* find the module from the commandline */
-				exep = NULL;
-			}
-		}
-		else
+/*
+ * Fix up the command line to call git.exe
+ * We have to be very careful about quoting here so we just
+ * trim off the first argument and replace it leaving the rest
+ * untouched.
+ */
+static LPWSTR fixup_commandline(LPWSTR exepath, LPWSTR *exep, int *wait)
+{
+	int wargc = 0, gui = 0;
+	LPWSTR cmd = NULL, cmdline = NULL;
+	LPWSTR *wargv = NULL, p = NULL;
+
+	cmdline = GetCommandLine();
+	wargv = CommandLineToArgvW(cmdline, &wargc);
+	cmd = (LPWSTR)malloc(sizeof(WCHAR) *
+		(wcslen(cmdline) + MAX_PATH));
+	if (wargc > 1 && wcsicmp(L"gui", wargv[1]) == 0) {
+		*wait = 0;
+		if (wargc > 2 && wcsicmp(L"citool", wargv[2]) == 0) {
+			*wait = 1;
 			wcscpy(cmd, L"git.exe");
-
-		/* append all after first space after the initial parameter */
-		p = wcschr(&cmdline[wcslen(wargv[0])], L' ');
-		if (p && *p) {
-			/* for git gui subcommands, remove the 'gui' word */
-			if (gui) {
-				while (*p == L' ') ++p;
-				p = wcschr(p, L' ');
-			}
-			if (p && *p)
-				wcscat(cmd, p);
 		}
-		LocalFree(wargv);
+		else {
+			WCHAR script[MAX_PATH];
+			gui = 1;
+			wcscpy(script, exepath);
+			PathAppend(script,
+				L"libexec\\git-core\\git-gui");
+			PathQuoteSpaces(script);
+			wcscpy(cmd, L"wish.exe ");
+			wcscat(cmd, script);
+			wcscat(cmd, L" --");
+			/* find the module from the commandline */
+			*exep = NULL;
+		}
 	}
+	else
+		wcscpy(cmd, L"git.exe");
+
+	/* append all after first space after the initial parameter */
+	p = wcschr(&cmdline[wcslen(wargv[0])], L' ');
+	if (p && *p) {
+		/* for git gui subcommands, remove the 'gui' word */
+		if (gui) {
+			while (*p == L' ') ++p;
+			p = wcschr(p, L' ');
+		}
+		if (p && *p)
+			wcscat(cmd, p);
+	}
+	LocalFree(wargv);
+
+	return cmd;
+}
+
+int main(void)
+{
+	int r = 1, wait = 1;
+	WCHAR exepath[MAX_PATH], exe[MAX_PATH];
+	LPWSTR cmd = NULL, exep = exe, basename;
+	UINT codepage = 0;
+
+	/* get the installation location */
+	GetModuleFileName(NULL, exepath, MAX_PATH);
+	PathRemoveFileSpec(exepath);
+	PathRemoveFileSpec(exepath);
+	setup_environment(exepath);
+	cmd = fixup_commandline(exepath, &exep, &wait);
 
 	/* set the console to ANSI/GUI codepage */
 	codepage = GetConsoleCP();
