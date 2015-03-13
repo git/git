@@ -1,14 +1,14 @@
 #include "builtin.h"
 
-static void flush_current_id(int patchlen, unsigned char *id, unsigned char *result)
+static void flush_current_id(int patchlen, struct object_id *id, struct object_id *result)
 {
 	char name[50];
 
 	if (!patchlen)
 		return;
 
-	memcpy(name, sha1_to_hex(id), 41);
-	printf("%s %s\n", sha1_to_hex(result), name);
+	memcpy(name, oid_to_hex(id), GIT_SHA1_HEXSZ + 1);
+	printf("%s %s\n", oid_to_hex(result), name);
 }
 
 static int remove_space(char *line)
@@ -53,23 +53,23 @@ static int scan_hunk_header(const char *p, int *p_before, int *p_after)
 	return 1;
 }
 
-static void flush_one_hunk(unsigned char *result, git_SHA_CTX *ctx)
+static void flush_one_hunk(struct object_id *result, git_SHA_CTX *ctx)
 {
-	unsigned char hash[20];
+	unsigned char hash[GIT_SHA1_RAWSZ];
 	unsigned short carry = 0;
 	int i;
 
 	git_SHA1_Final(hash, ctx);
 	git_SHA1_Init(ctx);
 	/* 20-byte sum, with carry */
-	for (i = 0; i < 20; ++i) {
-		carry += result[i] + hash[i];
-		result[i] = carry;
+	for (i = 0; i < GIT_SHA1_RAWSZ; ++i) {
+		carry += result->hash[i] + hash[i];
+		result->hash[i] = carry;
 		carry >>= 8;
 	}
 }
 
-static int get_one_patchid(unsigned char *next_sha1, unsigned char *result,
+static int get_one_patchid(struct object_id *next_oid, struct object_id *result,
 			   struct strbuf *line_buf, int stable)
 {
 	int patchlen = 0, found_next = 0;
@@ -77,7 +77,7 @@ static int get_one_patchid(unsigned char *next_sha1, unsigned char *result,
 	git_SHA_CTX ctx;
 
 	git_SHA1_Init(&ctx);
-	hashclr(result);
+	oidclr(result);
 
 	while (strbuf_getwholeline(line_buf, stdin, '\n') != EOF) {
 		char *line = line_buf->buf;
@@ -93,7 +93,7 @@ static int get_one_patchid(unsigned char *next_sha1, unsigned char *result,
 		else if (!memcmp(line, "\\ ", 2) && 12 < strlen(line))
 			continue;
 
-		if (!get_sha1_hex(p, next_sha1)) {
+		if (!get_oid_hex(p, next_oid)) {
 			found_next = 1;
 			break;
 		}
@@ -143,7 +143,7 @@ static int get_one_patchid(unsigned char *next_sha1, unsigned char *result,
 	}
 
 	if (!found_next)
-		hashclr(next_sha1);
+		oidclr(next_oid);
 
 	flush_one_hunk(result, &ctx);
 
@@ -152,15 +152,15 @@ static int get_one_patchid(unsigned char *next_sha1, unsigned char *result,
 
 static void generate_id_list(int stable)
 {
-	unsigned char sha1[20], n[20], result[20];
+	struct object_id oid, n, result;
 	int patchlen;
 	struct strbuf line_buf = STRBUF_INIT;
 
-	hashclr(sha1);
+	oidclr(&oid);
 	while (!feof(stdin)) {
-		patchlen = get_one_patchid(n, result, &line_buf, stable);
-		flush_current_id(patchlen, sha1, result);
-		hashcpy(sha1, n);
+		patchlen = get_one_patchid(&n, &result, &line_buf, stable);
+		flush_current_id(patchlen, &oid, &result);
+		oidcpy(&oid, &n);
 	}
 	strbuf_release(&line_buf);
 }
