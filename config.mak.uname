@@ -574,6 +574,7 @@ else
 		NO_CURL = YesPlease
 	endif
 	OTHER_PROGRAMS += git-wrapper$(X)
+	BUILT_IN_WRAPPER = git-wrapper$(X)
 
 git-wrapper$(X): compat/win32/git-wrapper.o git.res
 	$(QUIET_LINK)$(CC) $(ALL_LDFLAGS) $(COMPAT_CFLAGS) \
