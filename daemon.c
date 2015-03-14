@@ -485,6 +485,45 @@ static void parse_host_and_port(char *hostport, char **host,
 }
 
 /*
+ * Sanitize a string from the client so that it's OK to be inserted into a
+ * filesystem path. Specifically, we disallow slashes, runs of "..", and
+ * trailing and leading dots, which means that the client cannot escape
+ * our base path via ".." traversal.
+ */
+static void sanitize_client_strbuf(struct strbuf *out, const char *in)
+{
+	for (; *in; in++) {
+		if (*in == '/')
+			continue;
+		if (*in == '.' && (!out->len || out->buf[out->len - 1] == '.'))
+			continue;
+		strbuf_addch(out, *in);
+	}
+
+	while (out->len && out->buf[out->len - 1] == '.')
+		strbuf_setlen(out, out->len - 1);
+}
+
+static char *sanitize_client(const char *in)
+{
+	struct strbuf out = STRBUF_INIT;
+	sanitize_client_strbuf(&out, in);
+	return strbuf_detach(&out, NULL);
+}
+
+/*
+ * Like sanitize_client, but we also perform any canonicalization
+ * to make life easier on the admin.
+ */
+static char *canonicalize_client(const char *in)
+{
+	struct strbuf out = STRBUF_INIT;
+	sanitize_client_strbuf(&out, in);
+	strbuf_tolower(&out);
+	return strbuf_detach(&out, NULL);
+}
+
+/*
  * Read the host as supplied by the client connection.
  */
 static void parse_host_arg(char *extra_args, int buflen)
@@ -505,10 +544,10 @@ static void parse_host_arg(char *extra_args, int buflen)
 				parse_host_and_port(val, &host, &port);
 				if (port) {
 					free(tcp_port);
-					tcp_port = xstrdup(port);
+					tcp_port = sanitize_client(port);
 				}
 				free(hostname);
-				hostname = xstrdup_tolower(host);
+				hostname = canonicalize_client(host);
 			}
 
 			/* On to the next one */
@@ -541,8 +580,9 @@ static void parse_host_arg(char *extra_args, int buflen)
 			ip_address = xstrdup(addrbuf);
 
 			free(canon_hostname);
-			canon_hostname = xstrdup(ai->ai_canonname ?
-						 ai->ai_canonname : ip_address);
+			canon_hostname = ai->ai_canonname ?
+				sanitize_client(ai->ai_canonname) :
+				xstrdup(ip_address);
 
 			freeaddrinfo(ai);
 		}
@@ -564,7 +604,7 @@ static void parse_host_arg(char *extra_args, int buflen)
 				  addrbuf, sizeof(addrbuf));
 
 			free(canon_hostname);
-			canon_hostname = xstrdup(hent->h_name);
+			canon_hostname = sanitize_client(hent->h_name);
 			free(ip_address);
 			ip_address = xstrdup(addrbuf);
 		}
