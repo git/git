@@ -1,20 +1,17 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Mar 2015, #04; Wed, 11)
-X-master-at: 7a9409cb0104466eba32162f5bc4e5ab46130f02
-X-next-at: 1f807f94f1528a9b78383ecd4a5f640fbc72426b
+Subject: What's cooking in git.git (Mar 2015, #05; Sat, 14)
+X-master-at: 52cae643c5d49b7fa18a7a4c60c284f9ae2e2c71
+X-next-at: dac11456999723012aeb1167e3d09a83b1e0f740
 
-What's cooking in git.git (Mar 2015, #04; Wed, 11)
+What's cooking in git.git (Mar 2015, #05; Sat, 14)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-It is becoming clear that the upcoming release will be a usual
-incremental improvements and not an earth shattering one. Let's
-decide to name it 2.4, move the top-level RelNotes down to its usual
-place in Documentation/RelNotes and make it a symbolic link.
+On the 'maint' front is the latest maintenance release v2.3.3.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -22,120 +19,63 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* jk/diffcore-rename-duplicate (2015-02-27) 2 commits
-  (merged to 'next' on 2015-03-03 at 1d5a2d2)
- + diffcore-rename: avoid processing duplicate destinations
- + diffcore-rename: split locate_rename_dst into two functions
-
- A corrupt input to "git diff -M" can cause us to segfault.
-
-
-* mh/expire-updateref-fixes (2015-03-05) 9 commits
-  (merged to 'next' on 2015-03-05 at 1caf9a6)
- + reflog_expire(): never update a reference to null_sha1
- + reflog_expire(): ignore --updateref for symbolic references
- + reflog: improve and update documentation
- + struct ref_lock: delete the force_write member
- + lock_ref_sha1_basic(): do not set force_write for missing references
- + write_ref_sha1(): move write elision test to callers
- + write_ref_sha1(): remove check for lock == NULL
- + Merge branch 'sb/atomic-push' into mh/ref-trans-value-check
- + Merge branch 'mh/reflog-expire' into mh/ref-trans-value-check
-
- Various issues around "reflog expire", e.g. using --updateref when
- expiring a reflog for a symbolic reference, have been corrected
- and/or made saner.
-
---------------------------------------------------
 [New Topics]
 
-* kn/git-cd-to-empty (2015-03-06) 1 commit
- - git: treat "git -C '<path>'" as a no-op when <path> is empty
+* jk/tag-h-column-is-a-listing-option (2015-03-12) 1 commit
+ - tag: fix some mis-organized options in "-h" listing
 
- "git -C '' subcmd" refused to work in the current directory, unlike
- "cd ''" which silently behaves as a no-op.
-
- Will merge to 'next'.
-
-
-* dj/log-graph-with-no-walk (2015-03-10) 1 commit
- - revision: forbid combining --graph and --no-walk
-
- "git log --graph --no-walk A B..." is a otcnflicting request that
- asks nonsense; no-walk tells us show discrete points in the
- history, while graph asks to draw connections between these
- discrete points. Forbid the combination.
-
- Will replace with the version that does not special case "git show"
- that implies "--no-walk" unless it is given a range.
-
-
-* km/bsd-shells (2015-03-10) 5 commits
- - t5528: do not fail with FreeBSD shell
- - help.c: use SHELL_PATH instead of hard-coded "/bin/sh"
- - git-compat-util.h: move SHELL_PATH default into header
- - git-instaweb: use @SHELL_PATH@ instead of /bin/sh
- - git-instaweb: allow running in a working tree subdirectory
-
- Portability fixes and workarounds for shell scripts have been added
- to help BSD-derived systems.
+ "git tag -h" used to show the "--column" and "--sort" options
+ that are about listing in a wrong section.
 
  Will merge to 'next'.
 
 
-* km/bsd-sysctl (2015-03-10) 2 commits
- - thread-utils.c: detect CPU count on older BSD-like systems
- - configure: support HAVE_BSD_SYSCTL option
-
- We now detect number of CPUs on older BSD-derived systems.
-
- Will merge to 'next'.
+* as/userdiff-sh (2015-03-13) 1 commit
+ - userdiff: funcname and word patterns for sh
 
 
-* km/imap-send-libcurl-options (2015-03-10) 1 commit
- - imap-send: use cURL automatically when NO_OPENSSL defined
-
- "git imap-send" learned to optionally talk with an IMAP server via
- libcURL; because there is no other option when Git is built with
- NO_OPENSSL option, use that codepath by default under such
- configuration.
-
- Will merge to 'next'.
-
-
-* mg/doc-status-color-slot (2015-03-10) 1 commit
- - config,completion: add color.status.unmerged
-
- Documentation fixes.
-
- Will merge to 'next'.
+* bc/object-id (2015-03-13) 10 commits
+ - apply: convert threeway_stage to object_id
+ - patch-id: convert to use struct object_id
+ - commit: convert parts to struct object_id
+ - diff: convert struct combine_diff_path to object_id
+ - bulk-checkin.c: convert to use struct object_id
+ - zip: use GIT_SHA1_HEXSZ for trailers
+ - archive.c: convert to use struct object_id
+ - bisect.c: convert leaf functions to use struct object_id
+ - define utility functions for object IDs
+ - define a structure for object IDs
 
 
-* mg/verify-commit (2015-03-10) 1 commit
- - t7510: do not fail when gpg warns about insecure memory
+* ct/prompt-untracked-fix (2015-03-13) 1 commit
+ - git prompt: use toplevel to find untracked files
 
- Workarounds for certain build of GPG that triggered false breakage
- in a test..
+ The prompt script (in contrib/) did not show the untracked sign
+ when working in a subdirectory without any untracked files.
+
+
+* jk/smart-http-hide-refs (2015-03-12) 2 commits
+ - upload-pack: do not check NULL return of lookup_unknown_object
+ - upload-pack: fix transfer.hiderefs over smart-http
+
+ The transfer.hiderefs support did not quite work for smart-http
+ transport.
 
  Will merge to 'next'.
 
 
-* rs/use-isxdigit (2015-03-10) 1 commit
- - use isxdigit() for checking if a character is a hexadecimal digit
-
- Code cleanup.
+* jk/test-annoyances (2015-03-12) 5 commits
+ - t5551: make EXPENSIVE test cheaper
+ - t5541: move run_with_cmdline_limit to test-lib.sh
+ - t: pass GIT_TRACE through Apache
+ - t: redirect stderr GIT_TRACE to descriptor 4
+ - t: translate SIGINT to an exit
 
  Will merge to 'next'.
 
 
-* sb/leaks (2015-03-10) 3 commits
- - builtin/help.c: fix memory leak
- - bundle.c: fix memory leak
- - connect.c: do not leak "conn" after showing diagnosis
-
- Code cleanup.
+* nd/config-doc-camelCase (2015-03-13) 1 commit
+ - *config.txt: stick to camelCase naming convention
 
  Will merge to 'next'.
 
@@ -152,7 +92,7 @@ of the repositories listed at
  ($gmane/263880, $gmane/263991).
 
 
-* nd/untracked-cache (2015-02-09) 24 commits
+* nd/untracked-cache (2015-03-12) 24 commits
  - git-status.txt: advertisement for untracked cache
  - untracked cache: guard and disable on system changes
  - mingw32: add uname()
@@ -331,6 +271,103 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* kn/git-cd-to-empty (2015-03-06) 1 commit
+  (merged to 'next' on 2015-03-12 at 54dea03)
+ + git: treat "git -C '<path>'" as a no-op when <path> is empty
+
+ "git -C '' subcmd" refused to work in the current directory, unlike
+ "cd ''" which silently behaves as a no-op.
+
+ Will merge to 'master'.
+
+
+* dj/log-graph-with-no-walk (2015-03-10) 1 commit
+ - revision: forbid combining --graph and --no-walk
+
+ "git log --graph --no-walk A B..." is a otcnflicting request that
+ asks nonsense; no-walk tells us show discrete points in the
+ history, while graph asks to draw connections between these
+ discrete points. Forbid the combination.
+
+ Will replace with the version that does not special case "git show"
+ that implies "--no-walk" unless it is given a range.
+
+
+* km/bsd-shells (2015-03-10) 5 commits
+  (merged to 'next' on 2015-03-13 at f839e4c)
+ + t5528: do not fail with FreeBSD shell
+ + help.c: use SHELL_PATH instead of hard-coded "/bin/sh"
+ + git-compat-util.h: move SHELL_PATH default into header
+ + git-instaweb: use @SHELL_PATH@ instead of /bin/sh
+ + git-instaweb: allow running in a working tree subdirectory
+
+ Portability fixes and workarounds for shell scripts have been added
+ to help BSD-derived systems.
+
+ Will merge to 'master'.
+
+
+* km/bsd-sysctl (2015-03-10) 2 commits
+  (merged to 'next' on 2015-03-13 at c4557c9)
+ + thread-utils.c: detect CPU count on older BSD-like systems
+ + configure: support HAVE_BSD_SYSCTL option
+
+ We now detect number of CPUs on older BSD-derived systems.
+
+ Will merge to 'master'.
+
+
+* km/imap-send-libcurl-options (2015-03-10) 1 commit
+  (merged to 'next' on 2015-03-13 at 569d0c4)
+ + imap-send: use cURL automatically when NO_OPENSSL defined
+
+ "git imap-send" learned to optionally talk with an IMAP server via
+ libcURL; because there is no other option when Git is built with
+ NO_OPENSSL option, use that codepath by default under such
+ configuration.
+
+ Will merge to 'master'.
+
+
+* mg/doc-status-color-slot (2015-03-10) 1 commit
+  (merged to 'next' on 2015-03-12 at e53910a)
+ + config,completion: add color.status.unmerged
+
+ Documentation fixes.
+
+ Will merge to 'master'.
+
+
+* mg/verify-commit (2015-03-10) 1 commit
+  (merged to 'next' on 2015-03-13 at 292197f)
+ + t7510: do not fail when gpg warns about insecure memory
+
+ Workarounds for certain build of GPG that triggered false breakage
+ in a test..
+
+ Will merge to 'master'.
+
+
+* rs/use-isxdigit (2015-03-10) 1 commit
+  (merged to 'next' on 2015-03-13 at 39e99dd)
+ + use isxdigit() for checking if a character is a hexadecimal digit
+
+ Code cleanup.
+
+ Will merge to 'master'.
+
+
+* sb/leaks (2015-03-10) 3 commits
+  (merged to 'next' on 2015-03-13 at 50317d6)
+ + builtin/help.c: fix memory leak
+ + bundle.c: fix memory leak
+ + connect.c: do not leak "conn" after showing diagnosis
+
+ Code cleanup.
+
+ Will merge to 'master'.
+
+
 * mh/fdopen-with-retry (2015-03-06) 6 commits
  - buffer_fdinit(): use fdopen_with_retry()
  - update_info_file(): use fdopen_with_retry()
@@ -369,8 +406,9 @@ of the repositories listed at
 
 
 * mg/log-decorate-HEAD (2015-03-10) 2 commits
- - log: decorate HEAD with branch name
- - Merge branch 'jc/decorate-leaky-separator-color' into HEAD
+  (merged to 'next' on 2015-03-13 at 96ce660)
+ + log: decorate HEAD with branch name
+ + Merge branch 'jc/decorate-leaky-separator-color' into HEAD
  (this branch uses jc/decorate-leaky-separator-color.)
 
  Output from "git log --decorate" mentions HEAD when it points at a
@@ -378,17 +416,18 @@ of the repositories listed at
 
  This is a potentially backward-incompatible change.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * rs/daemon-hostname-in-strbuf (2015-03-09) 2 commits
- - daemon: deglobalize hostname information
- - daemon: use strbuf for hostname info
+  (merged to 'next' on 2015-03-12 at 7f61f07)
+ + daemon: deglobalize hostname information
+ + daemon: use strbuf for hostname info
 
  Code in "git daemon" to parse out and hold hostnames used in
  request interpolation has been simplified.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * rs/deflate-init-cleanup (2015-03-05) 1 commit
@@ -432,8 +471,9 @@ of the repositories listed at
 
 
 * mg/detached-head-report (2015-03-06) 2 commits
- - branch: name detached HEAD analogous to status
- - wt-status: refactor detached HEAD analysis
+  (merged to 'next' on 2015-03-12 at 89443b5)
+ + branch: name detached HEAD analogous to status
+ + wt-status: refactor detached HEAD analysis
 
  "git branch" on a detached HEAD always said "(detached from xyz)",
  even when "git status" would report "detached at xyz".  The HEAD is
@@ -441,7 +481,7 @@ of the repositories listed at
  such a case, but the user cannot read what the current value of
  HEAD is when "detached from" is used.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * mg/status-v-v (2015-03-06) 3 commits
@@ -511,19 +551,20 @@ of the repositories listed at
 
 
 * jc/decorate-leaky-separator-color (2015-03-04) 7 commits
- - log --decorate: do not leak "commit" color into the next item
- - Documentation/config.txt: simplify boolean description in the syntax section
- - Documentation/config.txt: describe 'color' value type in the "Values" section
- - Documentation/config.txt: have a separate "Values" section
- - Documentation/config.txt: describe the structure first and then meaning
- - Documentation/config.txt: explain multi-valued variables once
- - Documentation/config.txt: avoid unnecessary negation
+  (merged to 'next' on 2015-03-13 at 38e7cd1)
+ + log --decorate: do not leak "commit" color into the next item
+ + Documentation/config.txt: simplify boolean description in the syntax section
+ + Documentation/config.txt: describe 'color' value type in the "Values" section
+ + Documentation/config.txt: have a separate "Values" section
+ + Documentation/config.txt: describe the structure first and then meaning
+ + Documentation/config.txt: explain multi-valued variables once
+ + Documentation/config.txt: avoid unnecessary negation
  (this branch is used by mg/log-decorate-HEAD.)
 
  "git log --decorate" did not reset colors correctly around the
  branch names.
 
- Waiting for reviews.
+ Will merge to 'master'
 
 
 * js/fsck-opt (2015-01-21) 19 commits
