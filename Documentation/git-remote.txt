@@ -58,6 +58,9 @@ remote repository.
 With `--no-tags` option, `git fetch <name>` does not import tags from
 the remote repository.
 +
+By default, only tags on fetched branches are imported
+(see linkgit:git-fetch[1]).
++
 With `-t <branch>` option, instead of the default glob
 refspec for the remote to track all branches under
 the `refs/remotes/<name>/` namespace, a refspec to track only `<branch>`
