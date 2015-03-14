@@ -61,7 +61,7 @@ EOF
 
 fmt -68 <<EOF
 $kind Git $relname is now available$for_testing at the usual places.
-It comprises of $cnt non-merge commits since $previous,
+It is comprised of $cnt non-merge commits since $previous,
 contributed by $all people, $new of which are new faces.
 EOF
 
@@ -96,7 +96,7 @@ fmt_people () {
 
 cat <<EOF
 
-New contributors who appeared first in this release are as follows.
+New contributors whose contributions weren't in $previous are as follows.
 Welcome to the Git development community!
 
 $(fmt_people "$tmpbase.new")
