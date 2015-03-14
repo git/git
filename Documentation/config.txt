@@ -2408,12 +2408,16 @@ status.submodulesummary::
 
 submodule.<name>.path::
 submodule.<name>.url::
+	The path within this project and URL for a submodule. These
+	variables are initially populated by 'git submodule init'. See
+	linkgit:git-submodule[1] and linkgit:gitmodules[5] for
+	details.
+
 submodule.<name>.update::
-	The path within this project, URL, and the updating strategy
-	for a submodule.  These variables are initially populated
-	by 'git submodule init'; edit them to override the
-	URL and other values found in the `.gitmodules` file.  See
-	linkgit:git-submodule[1] and linkgit:gitmodules[5] for details.
+	The default update procedure for a submodule. This variable
+	is populated by `git submodule init` from the
+	linkgit:gitmodules[5] file. See description of 'update'
+	command in linkgit:git-submodule[1].
 
 submodule.<name>.branch::
 	The remote branch name for a submodule, used by `git submodule
