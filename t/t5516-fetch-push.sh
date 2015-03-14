@@ -238,7 +238,7 @@ test_expect_success 'push with pushInsteadOf' '
 test_expect_success 'push with pushInsteadOf and explicit pushurl (pushInsteadOf should not rewrite)' '
 	mk_empty testrepo &&
 	test_config "url.trash2/.pushInsteadOf" testrepo/ &&
-	test_config "url.trash3/.pusnInsteadOf" trash/wrong &&
+	test_config "url.trash3/.pushInsteadOf" trash/wrong &&
 	test_config remote.r.url trash/wrong &&
 	test_config remote.r.pushurl "testrepo/" &&
 	git push r refs/heads/master:refs/remotes/origin/master &&
