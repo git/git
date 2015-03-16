@@ -2198,7 +2198,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 	read_from_stdin = 0;
 	for (left = i = 1; i < argc; i++) {
 		const char *arg = argv[i];
-		if (*arg == '-') {
+		if (arg[0] == '-' && arg[1] && !starts_with(arg + 1, "..")) {
 			int opts;
 
 			opts = handle_revision_pseudo_opt(submodule,
