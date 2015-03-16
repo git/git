@@ -1,0 +1,89 @@
+#!/bin/sh
+
+# This msvc-build command should be executed from the msysgit directory level
+# This is so that the 'cd/git' step works and the subequent operations have the right msysgit super directory.
+set -e # Exit immediately if a command exits with a nonzero exit status.
+
+gui=
+clean=
+while test $# -gt 0
+do
+	case "$1" in
+	--gui|--dev|--devenv|--vs|--visual-studio)
+		gui=t
+		;;
+	clean)
+		clean=t
+		;;
+	*)
+		echo "Usage: $0 [--vs] [clean]" >&2
+		exit 1
+		;;
+	esac
+	shift
+done
+
+cd /git
+
+case "$clean" in
+t)
+	case "$gui" in
+	t)
+		rm -rf git.sln libgit
+		# remove all the new VS2010 stuff as well
+		# rm -rf git.sdf
+		;;
+	'')
+		make clean
+		# surely needs "make clean MSVC=1"
+		# otherwise it could assume the wrong make products [MinGW vs Windows].
+		;;
+	esac
+	exit
+	;;
+esac
+
+to_ignore="$(git ls-files --other --exclude-standard msvcgit msvc-build.cmd)"
+test -z "$to_ignore" || {
+	mkdir -p .git/info &&
+	echo "$to_ignore" |
+	sed 's/^/\//' >> .git/info/exclude
+} || exit
+
+test -d msvcgit || git clone git://repo.or.cz/msvcgit.git
+
+vsvars=
+# assume cl.exe will populate its relevant environment variables
+# if cl.exe does not exist, populate vsvars with the most recent Visual Studio path
+type cl.exe 2> /dev/null ||
+vsvars="$(ls -t \
+	"$PROGRAMFILES/Microsoft Visual Studio"*/Common7/Tools/vsvars32.bat |
+	head -n 1)"
+
+
+config_mak=
+# if a config.mak file (dot, not underscore) exists, back it up,
+# remember the backup file name in config_mak.
+test -f config.mak &&
+config_mak=config.mak.bup.$$ &&
+mv config.mak $config_mak
+
+cat > config.mak << EOF
+CFLAGS += -Imsvcgit/32bits/include
+LDFLAGS += -Lmsvcgit/32bits/lib
+EOF
+
+echo "call \"$vsvars\"" > msvc-build.cmd
+if test -z "$gui"
+then
+	echo 'make MSVC=1' >> msvc-build.cmd
+else
+	echo 'perl contrib/buildsystems/generate -g Vcproj' >> msvc-build.cmd
+	echo 'start git.sln' >> msvc-build.cmd
+fi
+
+cmd /c msvc-build.cmd
+
+# if we made a backup file (name in config_mak), then restore it.
+test -z "$config_mak" ||
+mv $config_mak config.mak
