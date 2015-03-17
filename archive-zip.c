@@ -5,6 +5,8 @@
 #include "archive.h"
 #include "streaming.h"
 #include "utf8.h"
+#include "userdiff.h"
+#include "xdiff-interface.h"
 
 static int zip_date;
 static int zip_time;
@@ -188,6 +190,16 @@ static int has_only_ascii(const char *s)
 	}
 }
 
+static int entry_is_binary(const char *path, const void *buffer, size_t size)
+{
+	struct userdiff_driver *driver = userdiff_find_by_path(path);
+	if (!driver)
+		driver = userdiff_find_by_name("default");
+	if (driver->binary != -1)
+		return driver->binary;
+	return buffer_is_binary(buffer, size);
+}
+
 #define STREAM_BUFFER_SIZE (1024 * 16)
 
 static int write_zip_entry(struct archiver_args *args,
@@ -209,6 +221,8 @@ static int write_zip_entry(struct archiver_args *args,
 	struct git_istream *stream = NULL;
 	unsigned long flags = 0;
 	unsigned long size;
+	int is_binary = -1;
+	const char *path_without_prefix = path + args->baselen;
 
 	crc = crc32(0, NULL, 0);
 
@@ -255,6 +269,8 @@ static int write_zip_entry(struct archiver_args *args,
 				return error("cannot read %s",
 					     sha1_to_hex(sha1));
 			crc = crc32(crc, buffer, size);
+			is_binary = entry_is_binary(path_without_prefix,
+						    buffer, size);
 			out = buffer;
 		}
 		compressed_size = (method == 0) ? size : 0;
@@ -299,7 +315,6 @@ static int write_zip_entry(struct archiver_args *args,
 	copy_le16(dirent.extra_length, ZIP_EXTRA_MTIME_SIZE);
 	copy_le16(dirent.comment_length, 0);
 	copy_le16(dirent.disk, 0);
-	copy_le16(dirent.attr1, 0);
 	copy_le32(dirent.attr2, attr2);
 	copy_le32(dirent.offset, zip_offset);
 
@@ -327,6 +342,9 @@ static int write_zip_entry(struct archiver_args *args,
 			if (readlen <= 0)
 				break;
 			crc = crc32(crc, buf, readlen);
+			if (is_binary == -1)
+				is_binary = entry_is_binary(path_without_prefix,
+							    buf, readlen);
 			write_or_die(1, buf, readlen);
 		}
 		close_istream(stream);
@@ -359,6 +377,9 @@ static int write_zip_entry(struct archiver_args *args,
 			if (readlen <= 0)
 				break;
 			crc = crc32(crc, buf, readlen);
+			if (is_binary == -1)
+				is_binary = entry_is_binary(path_without_prefix,
+							    buf, readlen);
 
 			zstream.next_in = buf;
 			zstream.avail_in = readlen;
@@ -402,6 +423,8 @@ static int write_zip_entry(struct archiver_args *args,
 
 	free(deflated);
 	free(buffer);
+
+	copy_le16(dirent.attr1, !is_binary);
 
 	memcpy(zip_dir + zip_dir_offset, &dirent, ZIP_DIR_HEADER_SIZE);
 	zip_dir_offset += ZIP_DIR_HEADER_SIZE;
