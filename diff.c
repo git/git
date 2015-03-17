@@ -3365,16 +3365,10 @@ static int opt_arg(const char *arg, int arg_short, const char *arg_long, int *va
 	if (c == arg_short) {
 		c = *++arg;
 		if (!c)
-			return 1;
-		if (isdigit(c)) {
-			char *end;
-			int n = strtoul(arg, &end, 10);
-			if (*end)
-				return 0;
-			*val = n;
-			return 1;
-		}
-		return 0;
+			return 1; /* optional argument was missing */
+		if (convert_i(arg, 10, val))
+			return 0;
+		return 1;
 	}
 	if (c != '-')
 		return 0;
@@ -3383,16 +3377,10 @@ static int opt_arg(const char *arg, int arg_short, const char *arg_long, int *va
 	len = eq - arg;
 	if (!len || strncmp(arg, arg_long, len))
 		return 0;
-	if (*eq) {
-		int n;
-		char *end;
-		if (!isdigit(*++eq))
-			return 0;
-		n = strtoul(eq, &end, 10);
-		if (*end)
-			return 0;
-		*val = n;
-	}
+	if (!*eq)
+		return 1; /* '=' and optional argument were missing */
+	if (convert_i(eq + 1, 10, val))
+		return 0;
 	return 1;
 }
 
