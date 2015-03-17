@@ -2011,6 +2011,7 @@ _git_config ()
 		color.status.changed
 		color.status.header
 		color.status.nobranch
+		color.status.unmerged
 		color.status.untracked
 		color.status.updated
 		color.ui
