@@ -1403,7 +1403,7 @@ static int bsearchenv(char **env, const char *name, size_t size)
  */
 static int do_putenv(char **env, const char *name, int size, int free_old)
 {
-	int i = bsearchenv(env, name, size - 1);
+	int i = size <= 0 ? -1 : bsearchenv(env, name, size - 1);
 
 	/* optionally free removed / replaced entry */
 	if (i >= 0 && free_old)
@@ -1428,7 +1428,13 @@ static int do_putenv(char **env, const char *name, int size, int free_old)
 char *mingw_getenv(const char *name)
 {
 	char *value;
-	int pos = bsearchenv(environ, name, environ_size - 1);
+	int pos;
+
+	if (environ_size <= 0)
+		return NULL;
+
+	pos = bsearchenv(environ, name, environ_size - 1);
+
 	if (pos < 0)
 		return NULL;
 	value = strchr(environ[pos], '=');
