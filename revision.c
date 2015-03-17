@@ -1963,7 +1963,8 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 	} else if (!strcmp(arg, "--abbrev")) {
 		revs->abbrev = DEFAULT_ABBREV;
 	} else if (skip_prefix(arg, "--abbrev=", &arg)) {
-		revs->abbrev = strtoul(arg, NULL, 10);
+		if (convert_ui(arg, 10, &revs->abbrev))
+			die("--abbrev requires a non-negative integer argument");
 		if (revs->abbrev < MINIMUM_ABBREV)
 			revs->abbrev = MINIMUM_ABBREV;
 		else if (revs->abbrev > 40)
