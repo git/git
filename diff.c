@@ -3367,7 +3367,7 @@ static int opt_arg(const char *arg, int arg_short, const char *arg_long, int *va
 		if (!c)
 			return 1; /* optional argument was missing */
 		if (convert_i(arg, 10, val))
-			return 0;
+			die("The value for -%c must be a non-negative integer", arg_short);
 		return 1;
 	}
 	if (c != '-')
@@ -3380,7 +3380,7 @@ static int opt_arg(const char *arg, int arg_short, const char *arg_long, int *va
 	if (!*eq)
 		return 1; /* '=' and optional argument were missing */
 	if (convert_i(eq + 1, 10, val))
-		return 0;
+		die("The value for --%s must be a non-negative integer", arg_long);
 	return 1;
 }
 
