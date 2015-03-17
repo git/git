@@ -2,6 +2,7 @@
  * Copyright (C) 2005 Junio C Hamano
  */
 #include "cache.h"
+#include "numparse.h"
 #include "quote.h"
 #include "diff.h"
 #include "diffcore.h"
@@ -2392,12 +2393,12 @@ static void builtin_diff(const char *name_a,
 			xecfg.flags |= XDL_EMIT_FUNCCONTEXT;
 		if (pe)
 			xdiff_set_find_func(&xecfg, pe->pattern, pe->cflags);
-		if (!diffopts)
-			;
-		else if (skip_prefix(diffopts, "--unified=", &v))
-			xecfg.ctxlen = strtoul(v, NULL, 10);
-		else if (skip_prefix(diffopts, "-u", &v))
-			xecfg.ctxlen = strtoul(v, NULL, 10);
+		if (diffopts
+		    && (skip_prefix(diffopts, "--unified=", &v) ||
+			skip_prefix(diffopts, "-u", &v))) {
+			if (convert_l(v, 10, &xecfg.ctxlen))
+				die("--unified argument must be a non-negative integer");
+		}
 		if (o->word_diff)
 			init_diff_words_data(&ecbdata, o, one, two);
 		xdi_diff_outf(&mf1, &mf2, fn_out_consume, &ecbdata,
