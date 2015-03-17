@@ -3798,7 +3798,8 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 	else if (!strcmp(arg, "-z"))
 		options->line_termination = 0;
 	else if ((argcount = short_opt('l', av, &optarg))) {
-		options->rename_limit = strtoul(optarg, NULL, 10);
+		if (convert_i(optarg, 10, &options->rename_limit))
+			die("-l requires a non-negative integer argument");
 		return argcount;
 	}
 	else if ((argcount = short_opt('S', av, &optarg))) {
