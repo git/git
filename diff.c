@@ -3357,14 +3357,13 @@ static int opt_arg(const char *arg, int arg_short, const char *arg_long, int *va
 	char c, *eq;
 	int len;
 
-	if (*arg != '-')
+	if (*arg++ != '-')
 		return 0;
-	c = *++arg;
+	c = *arg++;
 	if (!c)
 		return 0;
 	if (c == arg_short) {
-		c = *++arg;
-		if (!c)
+		if (!*arg)
 			return 1; /* optional argument was missing */
 		if (convert_i(arg, 10, val))
 			die("The value for -%c must be a non-negative integer", arg_short);
@@ -3372,7 +3371,6 @@ static int opt_arg(const char *arg, int arg_short, const char *arg_long, int *va
 	}
 	if (c != '-')
 		return 0;
-	arg++;
 	eq = strchrnul(arg, '=');
 	len = eq - arg;
 	if (!len || strncmp(arg, arg_long, len))
