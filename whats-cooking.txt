@@ -1,17 +1,15 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Mar 2015, #05; Sat, 14)
-X-master-at: 52cae643c5d49b7fa18a7a4c60c284f9ae2e2c71
-X-next-at: dac11456999723012aeb1167e3d09a83b1e0f740
+Subject: What's cooking in git.git (Mar 2015, #06; Tue, 17)
+X-master-at: 9ab698f4000a736864c41f57fbae1e021ac27799
+X-next-at: 9c5cf4debae1a49f88979567369a5809977ff34b
 
-What's cooking in git.git (Mar 2015, #05; Sat, 14)
+What's cooking in git.git (Mar 2015, #06; Tue, 17)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
-
-On the 'maint' front is the latest maintenance release v2.3.3.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -19,78 +17,107 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
+[Graduated to "master"]
+
+* ak/git-done-help-cleanup (2015-03-06) 1 commit
+  (merged to 'next' on 2015-03-10 at 971382b)
+ + git: make was_alias and done_help non-static
+
+ Code simplification.
+
+
+* es/rebase-i-count-todo (2015-03-06) 2 commits
+  (merged to 'next' on 2015-03-10 at fff95d5)
+ + rebase-interactive: re-word "item count" comment
+ + rebase-interactive: suppress whitespace preceding item count
+
+ "git rebase -i" recently started to include the number of
+ commits in the insn sheet to be processed, but on a platform
+ that prepends leading whitespaces to "wc -l" output, the numbers
+ are shown with extra whitespaces that aren't necessary.
+
+
+* mg/doc-status-color-slot (2015-03-10) 1 commit
+  (merged to 'next' on 2015-03-12 at e53910a)
+ + config,completion: add color.status.unmerged
+
+ Documentation fixes.
+
+
+* mg/sequencer-commit-messages-always-verbatim (2015-03-06) 1 commit
+  (merged to 'next' on 2015-03-10 at 6a09295)
+ + sequencer: preserve commit messages
+
+ "git cherry-pick" used to clean-up the log message even when it is
+ merely replaying an existing commit.  It now replays the message
+ verbatim unless you are editing the message of resulting commits.
+
+
+* mg/status-v-v (2015-03-06) 3 commits
+  (merged to 'next' on 2015-03-10 at 4fa5af0)
+ + commit/status: show the index-worktree diff with -v -v
+ + t7508: test git status -v
+ + t7508: .gitignore 'expect' and 'output' files
+
+ "git status" now allows the "-v" to be given twice to show the
+ differences that are left in the working tree not to be committed.
+
+
+* rs/deflate-init-cleanup (2015-03-05) 1 commit
+  (merged to 'next' on 2015-03-10 at 053157f)
+ + zlib: initialize git_zstream in git_deflate_init{,_gzip,_raw}
+
+ Code simplification.
+
+
+* rs/zip-text (2015-03-05) 1 commit
+  (merged to 'next' on 2015-03-10 at 2f3fa92)
+ + archive-zip: mark text files in archives
+
+ "git archive" can now be told to set the 'text' attribute in the
+ resulting zip archive.
+
+
+* sg/completion-remote (2015-03-06) 2 commits
+  (merged to 'next' on 2015-03-10 at e1cd42b)
+ + completion: simplify __git_remotes()
+ + completion: add a test for __git_remotes() helper function
+
+ Code simplification.
+
+--------------------------------------------------
 [New Topics]
 
-* jk/tag-h-column-is-a-listing-option (2015-03-12) 1 commit
- - tag: fix some mis-organized options in "-h" listing
+* js/completion-ctags-pattern-substitution-fix (2015-03-14) 1 commit
+  (merged to 'next' on 2015-03-17 at 4a68861)
+ + contrib/completion: escape the forward slash in __git_match_ctag
 
- "git tag -h" used to show the "--column" and "--sort" options
- that are about listing in a wrong section.
+ The code that reads from the ctags file in the completion script
+ (in contrib/) did not spell ${param/pattern/string} substitution
+ correctly, which happened to work with bash but not with zsh.
 
- Will merge to 'next'.
-
-
-* as/userdiff-sh (2015-03-13) 1 commit
- - userdiff: funcname and word patterns for sh
+ Will merge to 'master'.
 
 
-* bc/object-id (2015-03-13) 10 commits
- - apply: convert threeway_stage to object_id
- - patch-id: convert to use struct object_id
- - commit: convert parts to struct object_id
- - diff: convert struct combine_diff_path to object_id
- - bulk-checkin.c: convert to use struct object_id
- - zip: use GIT_SHA1_HEXSZ for trailers
- - archive.c: convert to use struct object_id
- - bisect.c: convert leaf functions to use struct object_id
- - define utility functions for object IDs
- - define a structure for object IDs
+* jc/a-lone-dash-stands-for-previous-branch (2015-03-16) 1 commit
+ - "-" and "@{-1}" on various programs
+
+ Lose special case code to make a lone dash "-" mean the previous
+ branch aka "@{-1}" from a handful subcommands, and instead support
+ the notation throughout the system by reimplementing it at the
+ revisions layer.
+
+ Needs tests, documentation updates, etc.
 
 
-* ct/prompt-untracked-fix (2015-03-13) 1 commit
- - git prompt: use toplevel to find untracked files
+* jc/submitting-patches-mention-send-email (2015-03-15) 1 commit
+ - SubmittingPatches: encourage users to use format-patch and send-email
 
- The prompt script (in contrib/) did not show the untracked sign
- when working in a subdirectory without any untracked files.
-
-
-* jk/smart-http-hide-refs (2015-03-12) 2 commits
- - upload-pack: do not check NULL return of lookup_unknown_object
- - upload-pack: fix transfer.hiderefs over smart-http
-
- The transfer.hiderefs support did not quite work for smart-http
- transport.
-
- Will merge to 'next'.
-
-
-* jk/test-annoyances (2015-03-12) 5 commits
- - t5551: make EXPENSIVE test cheaper
- - t5541: move run_with_cmdline_limit to test-lib.sh
- - t: pass GIT_TRACE through Apache
- - t: redirect stderr GIT_TRACE to descriptor 4
- - t: translate SIGINT to an exit
-
- Will merge to 'next'.
-
-
-* nd/config-doc-camelCase (2015-03-13) 1 commit
- - *config.txt: stick to camelCase naming convention
-
- Will merge to 'next'.
+ Recommend format-patch and send-email for those who want to submit
+ patches to this project.
 
 --------------------------------------------------
 [Stalled]
-
-* jk/push-config (2015-02-17) 4 commits
- - [NEEDSACK] push: allow --follow-tags to be set by config push.followTags
- - cmd_push: pass "flags" pointer to config callback
- - cmd_push: set "atomic" bit directly
- - git_push_config: drop cargo-culted wt_status pointer
-
- Waiting for Ack and/or update for the tip one from Dave Olszewski
- ($gmane/263880, $gmane/263991).
-
 
 * nd/untracked-cache (2015-03-12) 24 commits
  - git-status.txt: advertisement for untracked cache
@@ -271,6 +298,92 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* jk/push-config (2015-03-14) 4 commits
+  (merged to 'next' on 2015-03-16 at 6452570)
+ + push: allow --follow-tags to be set by config push.followTags
+ + cmd_push: pass "flags" pointer to config callback
+ + cmd_push: set "atomic" bit directly
+ + git_push_config: drop cargo-culted wt_status pointer
+
+ Restructure "git push" codepath to make it easier to add new
+ configuration bits and then add push.followTags configuration that
+ turns --follow-tags option on by default.
+
+ Will merge to 'master'.
+
+
+* jk/tag-h-column-is-a-listing-option (2015-03-12) 1 commit
+  (merged to 'next' on 2015-03-16 at 42b04c6)
+ + tag: fix some mis-organized options in "-h" listing
+
+ "git tag -h" used to show the "--column" and "--sort" options
+ that are about listing in a wrong section.
+
+ Will merge to 'master'.
+
+
+* as/userdiff-sh (2015-03-13) 1 commit
+ - userdiff: funcname and word patterns for sh
+
+
+* bc/object-id (2015-03-13) 10 commits
+ - apply: convert threeway_stage to object_id
+ - patch-id: convert to use struct object_id
+ - commit: convert parts to struct object_id
+ - diff: convert struct combine_diff_path to object_id
+ - bulk-checkin.c: convert to use struct object_id
+ - zip: use GIT_SHA1_HEXSZ for trailers
+ - archive.c: convert to use struct object_id
+ - bisect.c: convert leaf functions to use struct object_id
+ - define utility functions for object IDs
+ - define a structure for object IDs
+
+ Identify parts of the code that knows that we use SHA-1 hash to
+ name our objects too much, and use (1) symbolic constants instead
+ of hardcoded 20 as byte count and/or (2) use struct object_id
+ instead of unsigned char [20] for object names.
+
+ Will cook in 'next'.
+
+
+* ct/prompt-untracked-fix (2015-03-15) 1 commit
+ - git prompt: use toplevel to find untracked files
+
+ The prompt script (in contrib/) did not show the untracked sign
+ when working in a subdirectory without any untracked files.
+
+ Will merge to 'next'
+
+
+* jk/smart-http-hide-refs (2015-03-12) 2 commits
+  (merged to 'next' on 2015-03-16 at 530df4c)
+ + upload-pack: do not check NULL return of lookup_unknown_object
+ + upload-pack: fix transfer.hiderefs over smart-http
+
+ The transfer.hiderefs support did not quite work for smart-http
+ transport.
+
+ Will merge to 'master'.
+
+
+* jk/test-annoyances (2015-03-12) 5 commits
+  (merged to 'next' on 2015-03-16 at 845b091)
+ + t5551: make EXPENSIVE test cheaper
+ + t5541: move run_with_cmdline_limit to test-lib.sh
+ + t: pass GIT_TRACE through Apache
+ + t: redirect stderr GIT_TRACE to descriptor 4
+ + t: translate SIGINT to an exit
+
+ Will merge to 'master'.
+
+
+* nd/config-doc-camelCase (2015-03-13) 1 commit
+  (merged to 'next' on 2015-03-16 at 0e3fedb)
+ + *config.txt: stick to camelCase naming convention
+
+ Will merge to 'master'.
+
+
 * kn/git-cd-to-empty (2015-03-06) 1 commit
   (merged to 'next' on 2015-03-12 at 54dea03)
  + git: treat "git -C '<path>'" as a no-op when <path> is empty
@@ -281,16 +394,14 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* dj/log-graph-with-no-walk (2015-03-10) 1 commit
+* dj/log-graph-with-no-walk (2015-03-17) 2 commits
+ - SQUASH: no test $a -a $b please
  - revision: forbid combining --graph and --no-walk
 
  "git log --graph --no-walk A B..." is a otcnflicting request that
  asks nonsense; no-walk tells us show discrete points in the
  history, while graph asks to draw connections between these
  discrete points. Forbid the combination.
-
- Will replace with the version that does not special case "git show"
- that implies "--no-walk" unless it is given a range.
 
 
 * km/bsd-shells (2015-03-10) 5 commits
@@ -325,15 +436,6 @@ of the repositories listed at
  libcURL; because there is no other option when Git is built with
  NO_OPENSSL option, use that codepath by default under such
  configuration.
-
- Will merge to 'master'.
-
-
-* mg/doc-status-color-slot (2015-03-10) 1 commit
-  (merged to 'next' on 2015-03-12 at e53910a)
- + config,completion: add color.status.unmerged
-
- Documentation fixes.
 
  Will merge to 'master'.
 
@@ -383,28 +485,6 @@ of the repositories listed at
  Waiting for further comments.
 
 
-* ak/git-done-help-cleanup (2015-03-06) 1 commit
-  (merged to 'next' on 2015-03-10 at 971382b)
- + git: make was_alias and done_help non-static
-
- Code simplification.
-
- Will merge to 'master'.
-
-
-* es/rebase-i-count-todo (2015-03-06) 2 commits
-  (merged to 'next' on 2015-03-10 at fff95d5)
- + rebase-interactive: re-word "item count" comment
- + rebase-interactive: suppress whitespace preceding item count
-
- "git rebase -i" recently started to include the number of
- commits in the insn sheet to be processed, but on a platform
- that prepends leading whitespaces to "wc -l" output, the numbers
- are shown with extra whitespaces that aren't necessary.
-
- Will merge to 'master'.
-
-
 * mg/log-decorate-HEAD (2015-03-10) 2 commits
   (merged to 'next' on 2015-03-13 at 96ce660)
  + log: decorate HEAD with branch name
@@ -430,46 +510,6 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* rs/deflate-init-cleanup (2015-03-05) 1 commit
-  (merged to 'next' on 2015-03-10 at 053157f)
- + zlib: initialize git_zstream in git_deflate_init{,_gzip,_raw}
-
- Code simplification.
-
- Will merge to 'master'.
-
-
-* rs/zip-text (2015-03-05) 1 commit
-  (merged to 'next' on 2015-03-10 at 2f3fa92)
- + archive-zip: mark text files in archives
-
- "git archive" can now be told to set the 'text' attribute in the
- resulting zip archive.
-
- Will merge to 'master'.
-
-
-* sg/completion-remote (2015-03-06) 2 commits
-  (merged to 'next' on 2015-03-10 at e1cd42b)
- + completion: simplify __git_remotes()
- + completion: add a test for __git_remotes() helper function
-
- Code simplification.
-
- Will merge to 'master'.
-
-
-* mg/sequencer-commit-messages-always-verbatim (2015-03-06) 1 commit
-  (merged to 'next' on 2015-03-10 at 6a09295)
- + sequencer: preserve commit messages
-
- "git cherry-pick" used to clean-up the log message even when it is
- merely replaying an existing commit.  It now replays the message
- verbatim unless you are editing the message of resulting commits.
-
- Will merge to 'master'.
-
-
 * mg/detached-head-report (2015-03-06) 2 commits
   (merged to 'next' on 2015-03-12 at 89443b5)
  + branch: name detached HEAD analogous to status
@@ -480,18 +520,6 @@ of the repositories listed at
  actually at xyz and haven't been moved since it was detached in
  such a case, but the user cannot read what the current value of
  HEAD is when "detached from" is used.
-
- Will merge to 'master'.
-
-
-* mg/status-v-v (2015-03-06) 3 commits
-  (merged to 'next' on 2015-03-10 at 4fa5af0)
- + commit/status: show the index-worktree diff with -v -v
- + t7508: test git status -v
- + t7508: .gitignore 'expect' and 'output' files
-
- "git status" now allows the "-v" to be given twice to show the
- differences that are left in the working tree not to be committed.
 
  Will merge to 'master'.
 
