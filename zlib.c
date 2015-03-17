@@ -159,6 +159,7 @@ void git_deflate_init(git_zstream *strm, int level)
 {
 	int status;
 
+	memset(strm, 0, sizeof(*strm));
 	zlib_pre_call(strm);
 	status = deflateInit(&strm->z, level);
 	zlib_post_call(strm);
@@ -172,6 +173,7 @@ static void do_git_deflate_init(git_zstream *strm, int level, int windowBits)
 {
 	int status;
 
+	memset(strm, 0, sizeof(*strm));
 	zlib_pre_call(strm);
 	status = deflateInit2(&strm->z, level,
 				  Z_DEFLATED, windowBits,

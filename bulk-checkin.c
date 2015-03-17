@@ -105,7 +105,6 @@ static int stream_to_pack(struct bulk_checkin_state *state,
 	int write_object = (flags & HASH_WRITE_OBJECT);
 	off_t offset = 0;
 
-	memset(&s, 0, sizeof(s));
 	git_deflate_init(&s, pack_compression_level);
 
 	hdrlen = encode_in_pack_object_header(type, size, obuf);

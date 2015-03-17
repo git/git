@@ -2093,7 +2093,6 @@ static unsigned char *deflate_it(char *data,
 	unsigned char *deflated;
 	git_zstream stream;
 
-	memset(&stream, 0, sizeof(stream));
 	git_deflate_init(&stream, zlib_compression_level);
 	bound = git_deflate_bound(&stream, size);
 	deflated = xmalloc(bound);
