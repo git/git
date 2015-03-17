@@ -3366,7 +3366,7 @@ static int opt_arg(const char *arg, int arg_short, const char *arg_long, int *va
 		c = *++arg;
 		if (!c)
 			return 1;
-		if (val && isdigit(c)) {
+		if (isdigit(c)) {
 			char *end;
 			int n = strtoul(arg, &end, 10);
 			if (*end)
