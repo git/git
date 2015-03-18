@@ -2245,7 +2245,7 @@ void mingw_startup()
 			 * Convert all dir separators to forward slashes,
 			 * to help shell commands called from the Git
 			 * executable (by not mistaking the dir separators
-			 * for escape characters.
+			 * for escape characters).
 			 */
 			char *p;
 			for (p = environ[i]; *p; p++)
