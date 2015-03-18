@@ -446,7 +446,7 @@ poll (struct pollfd *pfd, nfds_t nfd, int timeout)
   static HANDLE hEvent;
   WSANETWORKEVENTS ev;
   HANDLE h, handle_array[FD_SETSIZE + 2];
-  DWORD ret, wait_timeout, nhandles;
+  DWORD ret, wait_timeout, nhandles, start = 0, elapsed, orig_timeout = 0;
   fd_set rfds, wfds, xfds;
   BOOL poll_again;
   MSG msg;
@@ -457,6 +457,12 @@ poll (struct pollfd *pfd, nfds_t nfd, int timeout)
     {
       errno = EINVAL;
       return -1;
+    }
+
+  if (timeout != INFTIM)
+    {
+      orig_timeout = timeout;
+      start = GetTickCount();
     }
 
   if (!hEvent)
@@ -603,7 +609,13 @@ restart:
 	rc++;
     }
 
-  if (!rc && timeout == INFTIM)
+  if (!rc && orig_timeout && timeout != INFTIM)
+    {
+      elapsed = GetTickCount() - start;
+      timeout = elapsed >= orig_timeout ? 0 : orig_timeout - elapsed;
+    }
+
+  if (!rc && timeout)
     {
       SleepEx (1, TRUE);
       goto restart;
