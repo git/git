@@ -849,7 +849,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 			die_errno(_("could not create leading directories of '%s'"),
 				  work_tree);
 		if (!dest_exists && mkdir(work_tree, 0777))
-			die_errno(_("could not create work tree dir '%s'."),
+			die_errno(_("could not create work tree dir '%s'"),
 				  work_tree);
 		junk_work_tree = work_tree;
 		set_git_work_tree(work_tree);
