@@ -524,6 +524,8 @@ ifneq (,$(findstring MINGW,$(uname_S)))
 	NATIVE_CRLF = YesPlease
 	X = .exe
 	SPARSE_FLAGS = -Wno-one-bit-signed-bitfield
+	OTHER_PROGRAMS += git-wrapper$(X)
+	BUILT_IN_WRAPPER = git-wrapper$(X)
 ifneq (,$(wildcard ../THIS_IS_MSYSGIT))
 	htmldir = share/doc/git/$(firstword $(subst -, ,$(GIT_VERSION)))/html
 	prefix =
@@ -561,6 +563,13 @@ else
 	else
 		NO_CURL = YesPlease
 	endif
+
+git-wrapper$(X): compat/win32/git-wrapper.o git.res
+	$(QUIET_LINK)$(CC) -Wall -s -o $@ $^ -lshell32 -lshlwapi
+
+compat/win32/git-wrapper.o: %.o: %.c
+	$(QUIET_CC)$(CC) -o $*.o -c -Wall -Wwrite-strings $<
+
 endif
 endif
 ifeq ($(uname_S),QNX)
