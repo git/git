@@ -119,7 +119,8 @@ parents) and `--max-parents=-1` (negative numbers denote no upper limit).
 	because merges into a topic branch tend to be only about
 	adjusting to updated upstream from time to time, and
 	this option allows you to ignore the individual commits
-	brought in to your history by such a merge.
+	brought in to your history by such a merge. Cannot be
+	combined with --bisect.
 
 --not::
 	Reverses the meaning of the '{caret}' prefix (or lack thereof)
@@ -177,7 +178,7 @@ ifndef::git-rev-list[]
 	Pretend as if the bad bisection ref `refs/bisect/bad`
 	was listed and as if it was followed by `--not` and the good
 	bisection refs `refs/bisect/good-*` on the command
-	line.
+	line. Cannot be combined with --first-parent.
 endif::git-rev-list[]
 
 --stdin::
@@ -558,7 +559,7 @@ outputs 'midpoint', the output of the two commands
 would be of roughly the same length.  Finding the change which
 introduces a regression is thus reduced to a binary search: repeatedly
 generate and test new 'midpoint's until the commit chain is of length
-one.
+one. Cannot be combined with --first-parent.
 
 --bisect-vars::
 	This calculates the same as `--bisect`, except that refs in
