@@ -5834,8 +5834,18 @@ sub git_project_list_body {
 				if ($check_forks) {
 					print "<td></td>\n";
 				}
-				print "<td class=\"category\" colspan=\"5\">".esc_html($cat)."</td>\n";
-				print "</tr>\n";
+				print "<td class=\"category\" colspan=\"5\">";
+				if ($projects_list_directory_is_category) {
+					print $cgi->a({-href =>
+					    href(project => undef,
+					        project_filter => $cat,
+					        action => "project_list"),
+					    -class => "list"},
+					    esc_html($cat));
+				} else {
+					print esc_html($cat);
+				}
+				print "</td>\n</tr>\n";
 			}
 
 			git_project_list_rows($categories{$cat}, undef, undef, $check_forks);
