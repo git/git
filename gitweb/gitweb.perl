@@ -5545,10 +5545,13 @@ sub git_project_search_form {
 	      "</span>\n" .
 	      $cgi->submit(-name => 'btnS', -value => 'Search') .
 	      $cgi->end_form() . "\n" .
-	      $cgi->a({-href => href(project => undef, searchtext => undef,
-	                             project_filter => $project_filter)},
-	              esc_html("List all projects$limit")) . "<br />\n";
-	print "</div>\n";
+	      $cgi->a({-href => $my_uri}, esc_html("List all projects"));
+	print " / " .
+	      $cgi->a({-href => href(project => undef, action => "project_list",
+				     project_filter => $project_filter)},
+	              esc_html("List projects$limit"))
+	    if $project_filter;
+	print "<br />\n</div>\n";
 }
 
 # entry for given @keys needs filling if at least one of keys in list
