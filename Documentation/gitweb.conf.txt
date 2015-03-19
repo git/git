@@ -492,6 +492,12 @@ $projects_list_group_categories::
 	`$GIT_DIR/category` file or the `gitweb.category` variable in each
 	repository's configuration.  Disabled by default (set to 0).
 
+$projects_list_directory_is_category::
+	Whether to set a project's category to its parent directory, i.e. its
+	pathname excluding the `/repo.git` leaf name. This is only used if
+	the repo has no explicit setting, and if the pathname has more than
+	one component. Disabled by default (set to 0).
+
 $project_list_default_category::
 	Default category for projects for which none is specified.  If this is
 	set to the empty string, such projects will remain uncategorized and

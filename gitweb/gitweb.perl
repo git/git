@@ -129,6 +129,10 @@ our $projects_list_description_width = 25;
 # (enabled if this variable evaluates to true)
 our $projects_list_group_categories = 0;
 
+# project's category defaults to its parent directory
+# (enabled if this variable evaluates to true)
+our $projects_list_directory_is_category = 0;
+
 # default category if none specified
 # (leave the empty string for no category)
 our $project_list_default_category = "";
@@ -2904,7 +2908,11 @@ sub git_get_project_description {
 
 sub git_get_project_category {
 	my $path = shift;
-	return git_get_file_or_project_config($path, 'category');
+	my $cat = git_get_file_or_project_config($path, 'category');
+	return $cat if $cat;
+	return $1 if $projects_list_directory_is_category
+		  && $path =~ m,^(.*)/[^/]*$,;
+	return $project_list_default_category;
 }
 
 
@@ -5618,8 +5626,7 @@ sub fill_project_list_info {
 		}
 		if ($projects_list_group_categories &&
 		    project_info_needs_filling($pr, $filter_set->('category'))) {
-			my $cat = git_get_project_category($pr->{'path'}) ||
-			                                   $project_list_default_category;
+			my $cat = git_get_project_category($pr->{'path'});
 			$pr->{'category'} = to_utf8($cat);
 		}
 
