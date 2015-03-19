@@ -555,9 +555,8 @@ static void filter_refs(struct fetch_pack_args *args,
 				continue;
 
 			ref->matched = 1;
-			*newtail = ref;
-			ref->next = NULL;
-			newtail = &ref->next;
+			*newtail = copy_ref(ref);
+			newtail = &(*newtail)->next;
 		}
 	}
 	*refs = newlist;

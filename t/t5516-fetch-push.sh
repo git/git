@@ -1107,9 +1107,16 @@ test_expect_success 'fetch exact SHA1' '
 			git config uploadpack.allowtipsha1inwant true
 		) &&
 
-		git fetch -v ../testrepo $the_commit:refs/heads/copy &&
-		result=$(git rev-parse --verify refs/heads/copy) &&
-		test "$the_commit" = "$result"
+		git fetch -v ../testrepo $the_commit:refs/heads/copy master:refs/heads/extra &&
+		cat >expect <<-EOF &&
+		$the_commit
+		$the_first_commit
+		EOF
+		{
+			git rev-parse --verify refs/heads/copy &&
+			git rev-parse --verify refs/heads/extra
+		} >actual &&
+		test_cmp expect actual
 	)
 '
 
