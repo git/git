@@ -891,7 +891,17 @@ sub evaluate_path_info {
 	while ($project && !check_head_link("$projectroot/$project")) {
 		$project =~ s,/*[^/]*$,,;
 	}
-	return unless $project;
+	# If there is no project, use the PATH_INFO as a project filter if it
+	# is a directory in the projectroot. (It can't be a subdirectory of a
+	# repo because we just verified that isn't the case.)
+	unless ($project) {
+		if (-d "$projectroot/$path_info") {
+			$path_info =~ s,/+$,,;
+			$input_params{'project_filter'} = $path_info;
+			$path_info = "";
+		}
+		return;
+	}
 	$input_params{'project'} = $project;
 
 	# do not change any parameters if an action is given using the query string
@@ -1356,6 +1366,18 @@ sub href {
 	}
 
 	my $use_pathinfo = gitweb_check_feature('pathinfo');
+
+	# we have to check for a project_filter first because handling the full
+	# project-plus-parameters deletes some of the paramaters we check here
+	if (!defined $params{'project'} && $params{'project_filter'} &&
+	    $params{'action'} eq "project_list" &&
+	    (exists $params{-path_info} ? $params{-path_info} : $use_pathinfo)) {
+		$href =~ s,/$,,;
+		$href .= "/".esc_path_info($params{'project_filter'})."/";
+		delete $params{'project_filter'};
+		delete $params{'action'};
+	}
+
 	if (defined $params{'project'} &&
 	    (exists $params{-path_info} ? $params{-path_info} : $use_pathinfo)) {
 		# try to put as many parameters as possible in PATH_INFO:
