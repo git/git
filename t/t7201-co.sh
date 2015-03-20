@@ -591,7 +591,7 @@ test_expect_success 'checkout --conflict=merge, overriding config' '
 '
 
 test_expect_success 'checkout --conflict=diff3' '
-	git config --unset merge.conflictstyle
+	test_unconfig merge.conflictstyle &&
 	setup_conflicting_index &&
 	echo "none of the above" >sample &&
 	echo ourside >expect &&

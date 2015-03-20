@@ -538,7 +538,7 @@ A  dir2/added
 ?? untracked
 EOF
 test_expect_success 'status -s -uall' '
-	git config --unset status.showuntrackedfiles
+	test_unconfig status.showuntrackedfiles &&
 	git status -s -uall >output &&
 	test_cmp expect output
 '

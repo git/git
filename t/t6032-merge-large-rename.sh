@@ -28,10 +28,10 @@ make_text() {
 
 test_rename() {
 	test_expect_success "rename ($1, $2)" '
-	n='$1'
-	expect='$2'
+	n='$1' &&
+	expect='$2' &&
 	git checkout -f master &&
-	git branch -D test$n || true &&
+	test_might_fail git branch -D test$n &&
 	git reset --hard initial &&
 	for i in $(count $n); do
 		make_text $i initial initial >$i
