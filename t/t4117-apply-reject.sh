@@ -56,23 +56,13 @@ test_expect_success 'apply --reject is incompatible with --3way' '
 
 test_expect_success 'apply without --reject should fail' '
 
-	if git apply patch.1
-	then
-		echo "Eh? Why?"
-		exit 1
-	fi
-
+	test_must_fail git apply patch.1 &&
 	test_cmp file1 saved.file1
 '
 
 test_expect_success 'apply without --reject should fail' '
 
-	if git apply --verbose patch.1
-	then
-		echo "Eh? Why?"
-		exit 1
-	fi
-
+	test_must_fail git apply --verbose patch.1 &&
 	test_cmp file1 saved.file1
 '
 
@@ -81,21 +71,11 @@ test_expect_success 'apply with --reject should fail but update the file' '
 	cat saved.file1 >file1 &&
 	rm -f file1.rej file2.rej &&
 
-	if git apply --reject patch.1
-	then
-		echo "succeeds with --reject?"
-		exit 1
-	fi
-
+	test_must_fail git apply --reject patch.1 &&
 	test_cmp file1 expected &&
 
 	cat file1.rej &&
-
-	if test -f file2.rej
-	then
-		echo "file2 should not have been touched"
-		exit 1
-	fi
+	test_path_is_missing file2.rej
 '
 
 test_expect_success 'apply with --reject should fail but update the file' '
@@ -103,25 +83,12 @@ test_expect_success 'apply with --reject should fail but update the file' '
 	cat saved.file1 >file1 &&
 	rm -f file1.rej file2.rej file2 &&
 
-	if git apply --reject patch.2 >rejects
-	then
-		echo "succeeds with --reject?"
-		exit 1
-	fi
-
-	test -f file1 && {
-		echo "file1 still exists?"
-		exit 1
-	}
+	test_must_fail git apply --reject patch.2 >rejects &&
+	test_path_is_missing file1 &&
 	test_cmp file2 expected &&
 
 	cat file2.rej &&
-
-	if test -f file1.rej
-	then
-		echo "file2 should not have been touched"
-		exit 1
-	fi
+	test_path_is_missing file1.rej
 
 '
 
@@ -130,25 +97,12 @@ test_expect_success 'the same test with --verbose' '
 	cat saved.file1 >file1 &&
 	rm -f file1.rej file2.rej file2 &&
 
-	if git apply --reject --verbose patch.2 >rejects
-	then
-		echo "succeeds with --reject?"
-		exit 1
-	fi
-
-	test -f file1 && {
-		echo "file1 still exists?"
-		exit 1
-	}
+	test_must_fail git apply --reject --verbose patch.2 >rejects &&
+	test_path_is_missing file1 &&
 	test_cmp file2 expected &&
 
 	cat file2.rej &&
-
-	if test -f file1.rej
-	then
-		echo "file2 should not have been touched"
-		exit 1
-	fi
+	test_path_is_missing file1.rej
 
 '
 
