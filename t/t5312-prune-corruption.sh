@@ -105,7 +105,7 @@ test_expect_success 'pack-refs does not silently delete broken packed ref' '
 	test_cmp expect actual
 '
 
-test_expect_failure 'pack-refs does not drop broken refs during deletion' '
+test_expect_success 'pack-refs does not drop broken refs during deletion' '
 	git update-ref -d refs/heads/other &&
 	git rev-parse refs/heads/master >actual &&
 	test_cmp expect actual
