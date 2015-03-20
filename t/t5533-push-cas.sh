@@ -14,7 +14,7 @@ setup_srcdst_basic () {
 }
 
 test_expect_success setup '
-	: create template repository
+	# create template repository
 	test_commit A &&
 	test_commit B &&
 	test_commit C
