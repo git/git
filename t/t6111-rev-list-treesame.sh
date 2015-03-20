@@ -92,10 +92,7 @@ check_outcome () {
 		git log --format="$FMT" $param |
 		unnote >actual &&
 		sed -e "$munge_actual" <actual >check &&
-		test_cmp expect check || {
-			cat actual
-			false
-		}
+		test_cmp expect check
 	'
 }
 

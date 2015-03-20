@@ -95,10 +95,7 @@ check_outcome () {
 		git log --pretty="$FMT" --parents $param |
 		unnote >actual &&
 		sed -e "s/^.*	\([^ ]*\) .*/\1/" >check <actual &&
-		test_cmp expect check || {
-			cat actual
-			false
-		}
+		test_cmp expect check
 	'
 }
 
@@ -121,10 +118,7 @@ test_expect_success 'full history simplification without parent' '
 	git log --pretty="$FMT" --full-history E -- lost |
 	unnote >actual &&
 	sed -e "s/^.*	\([^ ]*\) .*/\1/" >check <actual &&
-	test_cmp expect check || {
-		cat actual
-		false
-	}
+	test_cmp expect check
 '
 
 test_expect_success '--full-diff is not affected by --parents' '
