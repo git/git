@@ -4384,6 +4384,9 @@ sub git_print_page_nav {
 sub generate_context_selectbox {
 	# the onchange handler is set up in contextLinesSelectboxSetup,
 	# just because that sets up stuff anyway.
+	if (! gitweb_check_feature('context-lines')){
+		return '';
+	}	
 	return q{
 	| context lines 
 	<select name="u" id="contextLinesSelector">
@@ -7795,7 +7798,7 @@ sub diff_style_nav {
 	my ($diff_style, $is_combined) = @_;
 	$diff_style ||= 'inline';
 
-	return "" if ($is_combined);
+	return generate_context_selectbox() if ($is_combined);
 
 	my @styles = (inline => 'inline', 'sidebyside' => 'side by side');
 	my %styles = @styles;
@@ -7809,12 +7812,7 @@ sub diff_style_nav {
 			$cgi->a({-href => href(-replay=>1, diff_style => $_)}, $styles{$_})
 		} @styles;
 
-	my $context_lines_selectbox = '';
-	if (gitweb_check_feature('context-lines')){
-		$context_lines_selectbox = generate_context_selectbox();
-	}
-
-	return join '', $html, $context_lines_selectbox;
+	return join '', $html, generate_context_selectbox();
 }
 
 sub git_commitdiff {
