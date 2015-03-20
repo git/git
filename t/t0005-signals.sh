@@ -10,8 +10,8 @@ one
 EOF
 
 test_expect_success 'sigchain works' '
-	test-sigchain >actual
-	case "$?" in
+	{ test-sigchain >actual; ret=$?; } &&
+	case "$ret" in
 	143) true ;; # POSIX w/ SIGTERM=15
 	271) true ;; # ksh w/ SIGTERM=15
 	  3) true ;; # Windows

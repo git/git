@@ -66,8 +66,10 @@ test_expect_success UNZIP 'zip archive of empty tree is empty' '
 	# handle the empty repo at all, making our later check of its exit code
 	# a no-op). But we cannot do anything reasonable except skip the test
 	# on such platforms anyway, and this is the moral equivalent.
-	"$GIT_UNZIP" "$TEST_DIRECTORY"/t5004/empty.zip
-	expect_code=$?
+	{
+		"$GIT_UNZIP" "$TEST_DIRECTORY"/t5004/empty.zip
+		expect_code=$?
+	} &&
 
 	git archive --format=zip HEAD >empty.zip &&
 	make_dir extract &&
