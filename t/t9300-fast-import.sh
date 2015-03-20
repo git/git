@@ -2853,8 +2853,8 @@ test_expect_success 'S: notemodify with garbage after mark commit-ish must fail'
 # from
 #
 test_expect_success 'S: from with garbage after mark must fail' '
-	# no &&
-	git fast-import --import-marks=marks --export-marks=marks <<-EOF 2>err
+	test_must_fail \
+	git fast-import --import-marks=marks --export-marks=marks <<-EOF 2>err &&
 	commit refs/heads/S2
 	mark :303
 	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
@@ -2865,9 +2865,6 @@ test_expect_success 'S: from with garbage after mark must fail' '
 	M 100644 :403 hello.c
 	EOF
 
-	ret=$? &&
-	echo returned $ret &&
-	test $ret -ne 0 && # failed, but it created the commit
 
 	# go create the commit, need it for merge test
 	git fast-import --import-marks=marks --export-marks=marks <<-EOF &&

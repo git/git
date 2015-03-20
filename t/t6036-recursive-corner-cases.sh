@@ -195,12 +195,7 @@ test_expect_success 'git detects differently handled merges conflict' '
 	git reset --hard &&
 	git checkout D^0 &&
 
-	git merge -s recursive E^0 && {
-		echo "BAD: should have conflicted"
-		test "Incorrectly merged content" = "$(cat new_a)" &&
-			echo "BAD: Silently accepted wrong content"
-		return 1
-	}
+	test_must_fail git merge -s recursive E^0 &&
 
 	test 3 = $(git ls-files -s | wc -l) &&
 	test 3 = $(git ls-files -u | wc -l) &&
