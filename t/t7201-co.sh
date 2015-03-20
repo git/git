@@ -88,14 +88,10 @@ test_expect_success "checkout with unrelated dirty tree without -m" '
 
 	git checkout -f master &&
 	fill 0 1 2 3 4 5 6 7 8 >same &&
-	cp same kept
+	cp same kept &&
 	git checkout side >messages &&
-	test_cmp same kept
-	(cat > messages.expect <<EOF
-M	same
-EOF
-) &&
-	touch messages.expect &&
+	test_cmp same kept &&
+	printf "M\t%s\n" same >messages.expect &&
 	test_cmp messages.expect messages
 '
 
@@ -109,10 +105,7 @@ test_expect_success "checkout -m with dirty tree" '
 
 	test "$(git symbolic-ref HEAD)" = "refs/heads/side" &&
 
-	(cat >expect.messages <<EOF
-M	one
-EOF
-) &&
+	printf "M\t%s\n" one >expect.messages &&
 	test_cmp expect.messages messages &&
 
 	fill "M	one" "A	three" "D	two" >expect.master &&
@@ -409,12 +402,12 @@ test_expect_success \
 
 test_expect_success \
     'checkout w/autosetupmerge=always sets up tracking' '
+    test_when_finished git config branch.autosetupmerge false &&
     git config branch.autosetupmerge always &&
     git checkout master &&
     git checkout -b track2 &&
     test "$(git config branch.track2.remote)" &&
-    test "$(git config branch.track2.merge)"
-    git config branch.autosetupmerge false'
+    test "$(git config branch.track2.merge)"'
 
 test_expect_success 'checkout w/--track from non-branch HEAD fails' '
     git checkout master^0 &&
