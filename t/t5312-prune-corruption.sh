@@ -25,7 +25,7 @@ test_expect_success 'create history reachable only from a bogus-named ref' '
 	git reset --hard HEAD^
 '
 
-test_expect_failure 'pruning does not drop bogus object' '
+test_expect_success 'pruning does not drop bogus object' '
 	test_when_finished "git hash-object -w -t commit saved" &&
 	test_might_fail git prune --expire=now &&
 	verbose git cat-file -e $bogus
@@ -72,7 +72,7 @@ test_expect_success 'create history with missing tip commit' '
 	test_must_fail git cat-file -e $missing
 '
 
-test_expect_failure 'pruning with a corrupted tip does not drop history' '
+test_expect_success 'pruning with a corrupted tip does not drop history' '
 	test_when_finished "git hash-object -w -t commit saved" &&
 	test_might_fail git prune --expire=now &&
 	verbose git cat-file -e $recoverable
