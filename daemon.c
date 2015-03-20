@@ -43,9 +43,6 @@ static const char *base_path;
 static const char *interpolated_path;
 static int base_path_relaxed;
 
-/* Flag indicating client sent extra args. */
-static int saw_extended_args;
-
 /* If defined, ~user notation is allowed and the string is inserted
  * after ~user/.  E.g. a request to git://host/~alice/frotz would
  * go to /home/alice/pub_git/frotz with --user-path=pub_git.
@@ -56,25 +53,27 @@ static const char *user_path;
 static unsigned int timeout;
 static unsigned int init_timeout;
 
-static char *hostname;
-static char *canon_hostname;
-static char *ip_address;
-static char *tcp_port;
+struct hostinfo {
+	struct strbuf hostname;
+	struct strbuf canon_hostname;
+	struct strbuf ip_address;
+	struct strbuf tcp_port;
+	unsigned int hostname_lookup_done:1;
+	unsigned int saw_extended_args:1;
+};
 
-static int hostname_lookup_done;
+static void lookup_hostname(struct hostinfo *hi);
 
-static void lookup_hostname(void);
-
-static const char *get_canon_hostname(void)
+static const char *get_canon_hostname(struct hostinfo *hi)
 {
-	lookup_hostname();
-	return canon_hostname;
+	lookup_hostname(hi);
+	return hi->canon_hostname.buf;
 }
 
-static const char *get_ip_address(void)
+static const char *get_ip_address(struct hostinfo *hi)
 {
-	lookup_hostname();
-	return ip_address;
+	lookup_hostname(hi);
+	return hi->ip_address.buf;
 }
 
 static void logreport(int priority, const char *err, va_list params)
@@ -122,38 +121,34 @@ static void NORETURN daemon_die(const char *err, va_list params)
 	exit(1);
 }
 
-static void strbuf_addstr_or_null(struct strbuf *sb, const char *s)
-{
-	if (s)
-		strbuf_addstr(sb, s);
-}
-
 struct expand_path_context {
 	const char *directory;
+	struct hostinfo *hostinfo;
 };
 
 static size_t expand_path(struct strbuf *sb, const char *placeholder, void *ctx)
 {
 	struct expand_path_context *context = ctx;
+	struct hostinfo *hi = context->hostinfo;
 
 	switch (placeholder[0]) {
 	case 'H':
-		strbuf_addstr_or_null(sb, hostname);
+		strbuf_addbuf(sb, &hi->hostname);
 		return 1;
 	case 'C':
 		if (placeholder[1] == 'H') {
-			strbuf_addstr_or_null(sb, get_canon_hostname());
+			strbuf_addstr(sb, get_canon_hostname(hi));
 			return 2;
 		}
 		break;
 	case 'I':
 		if (placeholder[1] == 'P') {
-			strbuf_addstr_or_null(sb, get_ip_address());
+			strbuf_addstr(sb, get_ip_address(hi));
 			return 2;
 		}
 		break;
 	case 'P':
-		strbuf_addstr_or_null(sb, tcp_port);
+		strbuf_addbuf(sb, &hi->tcp_port);
 		return 1;
 	case 'D':
 		strbuf_addstr(sb, context->directory);
@@ -162,7 +157,7 @@ static size_t expand_path(struct strbuf *sb, const char *placeholder, void *ctx)
 	return 0;
 }
 
-static const char *path_ok(const char *directory)
+static const char *path_ok(const char *directory, struct hostinfo *hi)
 {
 	static char rpath[PATH_MAX];
 	static char interp_path[PATH_MAX];
@@ -198,11 +193,12 @@ static const char *path_ok(const char *directory)
 			dir = rpath;
 		}
 	}
-	else if (interpolated_path && saw_extended_args) {
+	else if (interpolated_path && hi->saw_extended_args) {
 		struct strbuf expanded_path = STRBUF_INIT;
 		struct expand_path_context context;
 
 		context.directory = directory;
+		context.hostinfo = hi;
 
 		if (*dir != '/') {
 			/* Allow only absolute */
@@ -292,7 +288,8 @@ static int daemon_error(const char *dir, const char *msg)
 
 static const char *access_hook;
 
-static int run_access_hook(struct daemon_service *service, const char *dir, const char *path)
+static int run_access_hook(struct daemon_service *service, const char *dir,
+			   const char *path, struct hostinfo *hi)
 {
 	struct child_process child = CHILD_PROCESS_INIT;
 	struct strbuf buf = STRBUF_INIT;
@@ -301,16 +298,14 @@ static int run_access_hook(struct daemon_service *service, const char *dir, cons
 	char *eol;
 	int seen_errors = 0;
 
-#define STRARG(x) ((x) ? (x) : "")
 	*arg++ = access_hook;
 	*arg++ = service->name;
 	*arg++ = path;
-	*arg++ = STRARG(hostname);
-	*arg++ = STRARG(get_canon_hostname());
-	*arg++ = STRARG(get_ip_address());
-	*arg++ = STRARG(tcp_port);
+	*arg++ = hi->hostname.buf;
+	*arg++ = get_canon_hostname(hi);
+	*arg++ = get_ip_address(hi);
+	*arg++ = hi->tcp_port.buf;
 	*arg = NULL;
-#undef STRARG
 
 	child.use_shell = 1;
 	child.argv = argv;
@@ -354,7 +349,8 @@ error_return:
 	return -1;
 }
 
-static int run_service(const char *dir, struct daemon_service *service)
+static int run_service(const char *dir, struct daemon_service *service,
+		       struct hostinfo *hi)
 {
 	const char *path;
 	int enabled = service->enabled;
@@ -368,7 +364,7 @@ static int run_service(const char *dir, struct daemon_service *service)
 		return daemon_error(dir, "service not enabled");
 	}
 
-	if (!(path = path_ok(dir)))
+	if (!(path = path_ok(dir, hi)))
 		return daemon_error(dir, "no such repository");
 
 	/*
@@ -404,7 +400,7 @@ static int run_service(const char *dir, struct daemon_service *service)
 	 * Optionally, a hook can choose to deny access to the
 	 * repository depending on the phase of the moon.
 	 */
-	if (access_hook && run_access_hook(service, dir, path))
+	if (access_hook && run_access_hook(service, dir, path, hi))
 		return -1;
 
 	/*
@@ -542,7 +538,7 @@ static void parse_host_and_port(char *hostport, char **host,
  * trailing and leading dots, which means that the client cannot escape
  * our base path via ".." traversal.
  */
-static void sanitize_client_strbuf(struct strbuf *out, const char *in)
+static void sanitize_client(struct strbuf *out, const char *in)
 {
 	for (; *in; in++) {
 		if (*in == '/')
@@ -556,36 +552,27 @@ static void sanitize_client_strbuf(struct strbuf *out, const char *in)
 		strbuf_setlen(out, out->len - 1);
 }
 
-static char *sanitize_client(const char *in)
-{
-	struct strbuf out = STRBUF_INIT;
-	sanitize_client_strbuf(&out, in);
-	return strbuf_detach(&out, NULL);
-}
-
 /*
  * Like sanitize_client, but we also perform any canonicalization
  * to make life easier on the admin.
  */
-static char *canonicalize_client(const char *in)
+static void canonicalize_client(struct strbuf *out, const char *in)
 {
-	struct strbuf out = STRBUF_INIT;
-	sanitize_client_strbuf(&out, in);
-	strbuf_tolower(&out);
-	return strbuf_detach(&out, NULL);
+	sanitize_client(out, in);
+	strbuf_tolower(out);
 }
 
 /*
  * Read the host as supplied by the client connection.
  */
-static void parse_host_arg(char *extra_args, int buflen)
+static void parse_host_arg(struct hostinfo *hi, char *extra_args, int buflen)
 {
 	char *val;
 	int vallen;
 	char *end = extra_args + buflen;
 
 	if (extra_args < end && *extra_args) {
-		saw_extended_args = 1;
+		hi->saw_extended_args = 1;
 		if (strncasecmp("host=", extra_args, 5) == 0) {
 			val = extra_args + 5;
 			vallen = strlen(val) + 1;
@@ -594,13 +581,10 @@ static void parse_host_arg(char *extra_args, int buflen)
 				char *host;
 				char *port;
 				parse_host_and_port(val, &host, &port);
-				if (port) {
-					free(tcp_port);
-					tcp_port = sanitize_client(port);
-				}
-				free(hostname);
-				hostname = canonicalize_client(host);
-				hostname_lookup_done = 0;
+				if (port)
+					sanitize_client(&hi->tcp_port, port);
+				canonicalize_client(&hi->hostname, host);
+				hi->hostname_lookup_done = 0;
 			}
 
 			/* On to the next one */
@@ -614,9 +598,9 @@ static void parse_host_arg(char *extra_args, int buflen)
 /*
  * Locate canonical hostname and its IP address.
  */
-static void lookup_hostname(void)
+static void lookup_hostname(struct hostinfo *hi)
 {
-	if (!hostname_lookup_done && hostname) {
+	if (!hi->hostname_lookup_done && hi->hostname.len) {
 #ifndef NO_IPV6
 		struct addrinfo hints;
 		struct addrinfo *ai;
@@ -626,19 +610,20 @@ static void lookup_hostname(void)
 		memset(&hints, 0, sizeof(hints));
 		hints.ai_flags = AI_CANONNAME;
 
-		gai = getaddrinfo(hostname, NULL, &hints, &ai);
+		gai = getaddrinfo(hi->hostname.buf, NULL, &hints, &ai);
 		if (!gai) {
 			struct sockaddr_in *sin_addr = (void *)ai->ai_addr;
 
 			inet_ntop(AF_INET, &sin_addr->sin_addr,
 				  addrbuf, sizeof(addrbuf));
-			free(ip_address);
-			ip_address = xstrdup(addrbuf);
+			strbuf_addstr(&hi->ip_address, addrbuf);
 
-			free(canon_hostname);
-			canon_hostname = ai->ai_canonname ?
-				sanitize_client(ai->ai_canonname) :
-				xstrdup(ip_address);
+			if (ai->ai_canonname)
+				sanitize_client(&hi->canon_hostname,
+						ai->ai_canonname);
+			else
+				strbuf_addbuf(&hi->canon_hostname,
+					      &hi->ip_address);
 
 			freeaddrinfo(ai);
 		}
@@ -648,7 +633,7 @@ static void lookup_hostname(void)
 		char **ap;
 		static char addrbuf[HOST_NAME_MAX + 1];
 
-		hent = gethostbyname(hostname);
+		hent = gethostbyname(hostname.buf);
 		if (hent) {
 			ap = hent->h_addr_list;
 			memset(&sa, 0, sizeof sa);
@@ -659,22 +644,39 @@ static void lookup_hostname(void)
 			inet_ntop(hent->h_addrtype, &sa.sin_addr,
 				  addrbuf, sizeof(addrbuf));
 
-			free(canon_hostname);
-			canon_hostname = sanitize_client(hent->h_name);
-			free(ip_address);
-			ip_address = xstrdup(addrbuf);
+			sanitize_client(&hi->canon_hostname, hent->h_name);
+			strbuf_addstr(&hi->ip_address, addrbuf);
 		}
 #endif
-		hostname_lookup_done = 1;
+		hi->hostname_lookup_done = 1;
 	}
 }
 
+static void hostinfo_init(struct hostinfo *hi)
+{
+	memset(hi, 0, sizeof(*hi));
+	strbuf_init(&hi->hostname, 0);
+	strbuf_init(&hi->canon_hostname, 0);
+	strbuf_init(&hi->ip_address, 0);
+	strbuf_init(&hi->tcp_port, 0);
+}
+
+static void hostinfo_clear(struct hostinfo *hi)
+{
+	strbuf_release(&hi->hostname);
+	strbuf_release(&hi->canon_hostname);
+	strbuf_release(&hi->ip_address);
+	strbuf_release(&hi->tcp_port);
+}
 
 static int execute(void)
 {
 	char *line = packet_buffer;
 	int pktlen, len, i;
 	char *addr = getenv("REMOTE_ADDR"), *port = getenv("REMOTE_PORT");
+	struct hostinfo hi;
+
+	hostinfo_init(&hi);
 
 	if (addr)
 		loginfo("Connection from %s:%s", addr, port);
@@ -693,14 +695,8 @@ static int execute(void)
 		pktlen--;
 	}
 
-	free(hostname);
-	free(canon_hostname);
-	free(ip_address);
-	free(tcp_port);
-	hostname = canon_hostname = ip_address = tcp_port = NULL;
-
 	if (len != pktlen)
-		parse_host_arg(line + len + 1, pktlen - len - 1);
+		parse_host_arg(&hi, line + len + 1, pktlen - len - 1);
 
 	for (i = 0; i < ARRAY_SIZE(daemon_service); i++) {
 		struct daemon_service *s = &(daemon_service[i]);
@@ -713,10 +709,13 @@ static int execute(void)
 			 * Note: The directory here is probably context sensitive,
 			 * and might depend on the actual service being performed.
 			 */
-			return run_service(arg, s);
+			int rc = run_service(arg, s, &hi);
+			hostinfo_clear(&hi);
+			return rc;
 		}
 	}
 
+	hostinfo_clear(&hi);
 	logerror("Protocol error: '%s'", line);
 	return -1;
 }
