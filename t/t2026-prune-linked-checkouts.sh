@@ -65,7 +65,7 @@ test_expect_success 'prune directories with gitdir pointing to nowhere' '
 '
 
 test_expect_success 'not prune locked checkout' '
-	test_when_finished rm -r .git/worktrees
+	test_when_finished rm -r .git/worktrees &&
 	mkdir -p .git/worktrees/ghi &&
 	: >.git/worktrees/ghi/locked &&
 	git prune --worktrees &&
@@ -73,7 +73,7 @@ test_expect_success 'not prune locked checkout' '
 '
 
 test_expect_success 'not prune recent checkouts' '
-	test_when_finished rm -r .git/worktrees
+	test_when_finished rm -r .git/worktrees &&
 	mkdir zz &&
 	mkdir -p .git/worktrees/jlm &&
 	echo "$(pwd)"/zz >.git/worktrees/jlm/gitdir &&
