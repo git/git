@@ -358,10 +358,7 @@ test_expect_success 'empty email' '
 	test_tick &&
 	C=$(GIT_AUTHOR_EMAIL= git commit-tree HEAD^{tree} </dev/null) &&
 	A=$(git show --pretty=format:%an,%ae,%ad%n -s $C) &&
-	test "$A" = "A U Thor,,Thu Apr 7 15:14:13 2005 -0700" || {
-		echo "Eh? $A" >failure
-		false
-	}
+	verbose test "$A" = "A U Thor,,Thu Apr 7 15:14:13 2005 -0700"
 '
 
 test_expect_success 'del LF before empty (1)' '
