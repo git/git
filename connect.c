@@ -739,6 +739,7 @@ struct child_process *git_connect(int fd[2], const char *url,
 
 				free(hostandport);
 				free(path);
+				free(conn);
 				return NULL;
 			} else {
 				ssh = getenv("GIT_SSH_COMMAND");

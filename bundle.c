@@ -334,7 +334,7 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 		if (e->item->flags & UNINTERESTING)
 			continue;
 		if (dwim_ref(e->name, strlen(e->name), sha1, &ref) != 1)
-			continue;
+			goto skip_write_ref;
 		if (read_ref_full(e->name, RESOLVE_REF_READING, sha1, &flag))
 			flag = 0;
 		display_ref = (flag & REF_ISSYMREF) ? e->name : ref;
@@ -342,7 +342,7 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 		if (e->item->type == OBJ_TAG &&
 				!is_tag_in_date_range(e->item, revs)) {
 			e->item->flags |= UNINTERESTING;
-			continue;
+			goto skip_write_ref;
 		}
 
 		/*
@@ -357,8 +357,7 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 		if (!(e->item->flags & SHOWN) && e->item->type == OBJ_COMMIT) {
 			warning(_("ref '%s' is excluded by the rev-list options"),
 				e->name);
-			free(ref);
-			continue;
+			goto skip_write_ref;
 		}
 		/*
 		 * If you run "git bundle create bndl v1.0..v2.0", the
@@ -388,8 +387,7 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 				obj->flags |= SHOWN;
 				add_pending_object(revs, obj, e->name);
 			}
-			free(ref);
-			continue;
+			goto skip_write_ref;
 		}
 
 		ref_count++;
@@ -397,6 +395,7 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 		write_or_die(bundle_fd, " ", 1);
 		write_or_die(bundle_fd, display_ref, strlen(display_ref));
 		write_or_die(bundle_fd, "\n", 1);
+ skip_write_ref:
 		free(ref);
 	}
 
