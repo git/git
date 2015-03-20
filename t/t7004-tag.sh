@@ -1181,7 +1181,7 @@ test_expect_success \
 	'message in editor has initial comment: remainder' '
 	# remove commented lines from the remainder -- should be empty
 	>rest.expect &&
-	sed -e 1d -e '/^#/d' <actual >rest.actual &&
+	sed -e 1d -e "/^#/d" <actual >rest.actual &&
 	test_cmp rest.expect rest.actual
 '
 
