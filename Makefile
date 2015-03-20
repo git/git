@@ -357,6 +357,8 @@ all::
 # and define it to "no" if you need to remove the parentheses () around the
 # constant.  The default is "auto", which means to use parentheses if your
 # compiler is detected to support it.
+#
+# Define HAVE_BSD_SYSCTL if your platform has a BSD-compatible sysctl function.
 
 GIT-VERSION-FILE: FORCE
 	@$(SHELL_PATH) ./GIT-VERSION-GEN
@@ -1429,6 +1431,10 @@ endif
 
 ifdef HAVE_CLOCK_MONOTONIC
 	BASIC_CFLAGS += -DHAVE_CLOCK_MONOTONIC
+endif
+
+ifdef HAVE_BSD_SYSCTL
+	BASIC_CFLAGS += -DHAVE_BSD_SYSCTL
 endif
 
 ifeq ($(TCLTK_PATH),)

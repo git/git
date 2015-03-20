@@ -107,6 +107,7 @@ ifeq ($(uname_S),Darwin)
 	COMPAT_OBJS += compat/precompose_utf8.o
 	BASIC_CFLAGS += -DPRECOMPOSE_UNICODE
 	BASIC_CFLAGS += -DPROTECT_HFS_DEFAULT=1
+	HAVE_BSD_SYSCTL = YesPlease
 endif
 ifeq ($(uname_S),SunOS)
 	NEEDS_SOCKET = YesPlease
@@ -199,6 +200,7 @@ ifeq ($(uname_S),FreeBSD)
 	PYTHON_PATH = /usr/local/bin/python
 	HAVE_PATHS_H = YesPlease
 	GMTIME_UNRELIABLE_ERRORS = UnfortunatelyYes
+	HAVE_BSD_SYSCTL = YesPlease
 endif
 ifeq ($(uname_S),OpenBSD)
 	NO_STRCASESTR = YesPlease
@@ -208,6 +210,7 @@ ifeq ($(uname_S),OpenBSD)
 	BASIC_CFLAGS += -I/usr/local/include
 	BASIC_LDFLAGS += -L/usr/local/lib
 	HAVE_PATHS_H = YesPlease
+	HAVE_BSD_SYSCTL = YesPlease
 endif
 ifeq ($(uname_S),MirBSD)
 	NO_STRCASESTR = YesPlease
@@ -215,6 +218,7 @@ ifeq ($(uname_S),MirBSD)
 	USE_ST_TIMESPEC = YesPlease
 	NEEDS_LIBICONV = YesPlease
 	HAVE_PATHS_H = YesPlease
+	HAVE_BSD_SYSCTL = YesPlease
 endif
 ifeq ($(uname_S),NetBSD)
 	ifeq ($(shell expr "$(uname_R)" : '[01]\.'),2)
@@ -225,6 +229,7 @@ ifeq ($(uname_S),NetBSD)
 	USE_ST_TIMESPEC = YesPlease
 	NO_MKSTEMPS = YesPlease
 	HAVE_PATHS_H = YesPlease
+	HAVE_BSD_SYSCTL = YesPlease
 endif
 ifeq ($(uname_S),AIX)
 	DEFAULT_PAGER = more
