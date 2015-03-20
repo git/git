@@ -1459,6 +1459,34 @@ test_expect_success 'invalid sort parameter in configuratoin' '
 	test_cmp expect actual
 '
 
+test_expect_success 'version sort with prerelease reordering' '
+	git config --unset tag.sort &&
+	git config versionsort.prereleaseSuffix -rc &&
+	git tag foo1.6-rc1 &&
+	git tag foo1.6-rc2 &&
+	git tag -l --sort=version:refname "foo*" >actual &&
+	cat >expect <<-\EOF &&
+	foo1.3
+	foo1.6-rc1
+	foo1.6-rc2
+	foo1.6
+	foo1.10
+	EOF
+	test_cmp expect actual
+'
+
+test_expect_success 'reverse version sort with prerelease reordering' '
+	git tag -l --sort=-version:refname "foo*" >actual &&
+	cat >expect <<-\EOF &&
+	foo1.10
+	foo1.6
+	foo1.6-rc2
+	foo1.6-rc1
+	foo1.3
+	EOF
+	test_cmp expect actual
+'
+
 run_with_limited_stack () {
 	(ulimit -s 128 && "$@")
 }

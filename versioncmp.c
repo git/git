@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "string-list.h"
 
 /*
  * versioncmp(): copied from string/strverscmp.c in glibc commit
@@ -20,6 +21,48 @@
 #define  CMP    2
 #define  LEN    3
 
+static const struct string_list *prereleases;
+static int initialized;
+
+/*
+ * p1 and p2 point to the first different character in two strings. If
+ * either p1 or p2 starts with a prerelease suffix, it will be forced
+ * to be on top.
+ *
+ * If both p1 and p2 start with (different) suffix, the order is
+ * determined by config file.
+ *
+ * Note that we don't have to deal with the situation when both p1 and
+ * p2 start with the same suffix because the common part is already
+ * consumed by the caller.
+ *
+ * Return non-zero if *diff contains the return value for versioncmp()
+ */
+static int swap_prereleases(const void *p1_,
+			    const void *p2_,
+			    int *diff)
+{
+	const char *p1 = p1_;
+	const char *p2 = p2_;
+	int i, i1 = -1, i2 = -1;
+
+	for (i = 0; i < prereleases->nr; i++) {
+		const char *suffix = prereleases->items[i].string;
+		if (i1 == -1 && starts_with(p1, suffix))
+			i1 = i;
+		if (i2 == -1 && starts_with(p2, suffix))
+			i2 = i;
+	}
+	if (i1 == -1 && i2 == -1)
+		return 0;
+	if (i1 >= 0 && i2 >= 0)
+		*diff = i1 - i2;
+	else if (i1 >= 0)
+		*diff = -1;
+	else /* if (i2 >= 0) */
+		*diff = 1;
+	return 1;
+}
 
 /*
  * Compare S1 and S2 as strings holding indices/version numbers,
@@ -73,6 +116,13 @@ int versioncmp(const char *s1, const char *s2)
 		c2 = *p2++;
 		state += (c1 == '0') + (isdigit (c1) != 0);
 	}
+
+	if (!initialized) {
+		initialized = 1;
+		prereleases = git_config_get_value_multi("versionsort.prereleasesuffix");
+	}
+	if (prereleases && swap_prereleases(p1 - 1, p2 - 1, &diff))
+		return diff;
 
 	state = result_type[state * 3 + (((c2 == '0') + (isdigit (c2) != 0)))];
 
