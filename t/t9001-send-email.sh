@@ -1325,7 +1325,7 @@ test_expect_success $PREREQ 'sendemail.transferencoding=7bit fails on 8bit data'
 
 test_expect_success $PREREQ '--transfer-encoding overrides sendemail.transferEncoding' '
 	clean_fake_sendmail &&
-	git config sendemail.transferEncoding 8bit
+	git config sendemail.transferEncoding 8bit &&
 	test_must_fail git send-email \
 		--transfer-encoding=7bit \
 		--smtp-server="$(pwd)/fake.sendmail" \

@@ -15,7 +15,7 @@ test_expect_success 'setup repository' '
 	git config push.default matching &&
 	echo content1 >file &&
 	git add file &&
-	git commit -m one
+	git commit -m one &&
 	echo content2 >file &&
 	git add file &&
 	git commit -m two

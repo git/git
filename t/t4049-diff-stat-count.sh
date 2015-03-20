@@ -18,7 +18,7 @@ test_expect_success 'mode-only change show as a 0-line change' '
 	test_chmod +x b d &&
 	echo a >a &&
 	echo c >c &&
-	cat >expect <<-\EOF
+	cat >expect <<-\EOF &&
 	 a | 1 +
 	 b | 0
 	 ...
@@ -33,7 +33,7 @@ test_expect_success 'binary changes do not count in lines' '
 	echo a >a &&
 	echo c >c &&
 	cat "$TEST_DIRECTORY"/test-binary-1.png >d &&
-	cat >expect <<-\EOF
+	cat >expect <<-\EOF &&
 	 a | 1 +
 	 c | 1 +
 	 ...
@@ -55,7 +55,7 @@ test_expect_success 'exclude unmerged entries from total file count' '
 	done |
 	git update-index --index-info &&
 	echo d >d &&
-	cat >expect <<-\EOF
+	cat >expect <<-\EOF &&
 	 a | 1 +
 	 b | 1 +
 	 ...

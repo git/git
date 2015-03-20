@@ -216,7 +216,7 @@ test_expect_success "Recursion stops when no new submodule commits are fetched" 
 	head2=$(git rev-parse --short HEAD) &&
 	echo "Fetching submodule submodule" > expect.out.sub &&
 	echo "From $pwd/." > expect.err.sub &&
-	echo "   $head1..$head2  master     -> origin/master" >> expect.err.sub
+	echo "   $head1..$head2  master     -> origin/master" >>expect.err.sub &&
 	head -2 expect.err >> expect.err.sub &&
 	(
 		cd downstream &&
@@ -315,7 +315,7 @@ test_expect_success "'--recurse-submodules=on-demand' doesn't recurse when no ne
 		) &&
 		head1=$(git rev-parse --short HEAD^) &&
 		git add subdir/deepsubmodule &&
-		git commit -m "new deepsubmodule"
+		git commit -m "new deepsubmodule" &&
 		head2=$(git rev-parse --short HEAD) &&
 		echo "From $pwd/submodule" > ../expect.err.sub &&
 		echo "   $head1..$head2  master     -> origin/master" >> ../expect.err.sub
@@ -337,7 +337,7 @@ test_expect_success "'--recurse-submodules=on-demand' recurses as deep as necess
 	head2=$(git rev-parse --short HEAD) &&
 	tail -2 expect.err > expect.err.deepsub &&
 	echo "From $pwd/." > expect.err &&
-	echo "   $head1..$head2  master     -> origin/master" >> expect.err
+	echo "   $head1..$head2  master     -> origin/master" >>expect.err &&
 	cat expect.err.sub >> expect.err &&
 	cat expect.err.deepsub >> expect.err &&
 	(
@@ -387,7 +387,7 @@ test_expect_success "'fetch.recurseSubmodules=on-demand' overrides global config
 	git commit -m "new submodule" &&
 	head2=$(git rev-parse --short HEAD) &&
 	echo "From $pwd/." > expect.err.2 &&
-	echo "   $head1..$head2  master     -> origin/master" >> expect.err.2
+	echo "   $head1..$head2  master     -> origin/master" >>expect.err.2 &&
 	head -2 expect.err >> expect.err.2 &&
 	(
 		cd downstream &&
@@ -415,7 +415,7 @@ test_expect_success "'submodule.<sub>.fetchRecurseSubmodules=on-demand' override
 	git commit -m "new submodule" &&
 	head2=$(git rev-parse --short HEAD) &&
 	echo "From $pwd/." > expect.err.2 &&
-	echo "   $head1..$head2  master     -> origin/master" >> expect.err.2
+	echo "   $head1..$head2  master     -> origin/master" >>expect.err.2 &&
 	head -2 expect.err >> expect.err.2 &&
 	(
 		cd downstream &&

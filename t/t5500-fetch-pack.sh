@@ -414,7 +414,7 @@ test_expect_success 'setup tests for the --stdin parameter' '
 	do
 		git tag $head $head
 	done &&
-	cat >input <<-\EOF
+	cat >input <<-\EOF &&
 	refs/heads/C
 	refs/heads/A
 	refs/heads/D

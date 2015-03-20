@@ -396,7 +396,7 @@ test_expect_success TTY 'command-specific pager overrides core.pager' '
 	sane_unset PAGER GIT_PAGER &&
 	echo "foo:initial" >expect &&
 	>actual &&
-	test_config core.pager "exit 1"
+	test_config core.pager "exit 1" &&
 	test_config pager.log "sed s/^/foo:/ >actual" &&
 	test_terminal git log --format=%s -1 &&
 	test_cmp expect actual

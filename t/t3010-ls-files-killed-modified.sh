@@ -62,7 +62,7 @@ test_expect_success 'git update-index --add to add various paths.' '
 			cd submod$i && git commit --allow-empty -m "empty $i"
 		) || break
 	done &&
-	git update-index --add submod[12]
+	git update-index --add submod[12] &&
 	(
 		cd submod1 &&
 		git commit --allow-empty -m "empty 1 (updated)"

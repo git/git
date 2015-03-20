@@ -16,7 +16,7 @@ test_expect_success 'create bogus tree' '
 test_expect_success 'create tree with matching file' '
 	echo bar >foo &&
 	git add foo &&
-	good_tree=$(git write-tree)
+	good_tree=$(git write-tree) &&
 	blob=$(git rev-parse :foo)
 '
 

@@ -45,7 +45,7 @@ test_expect_success 'setup' '
 	head2=$(git rev-parse --verify HEAD) &&
 	head2_short=$(git rev-parse --verify --short $head2) &&
 	tree2=$(git rev-parse --verify HEAD:) &&
-	tree2_short=$(git rev-parse --verify --short $tree2)
+	tree2_short=$(git rev-parse --verify --short $tree2) &&
 	git config --unset i18n.commitEncoding
 '
 

@@ -297,7 +297,7 @@ test_expect_success 'setup incomplete lines' '
 	echo "Dominus regit me," >file &&
 	echo "incomplete line" | tr -d "\\012" >>file &&
 	git commit -a -m "Change incomplete line" &&
-	git tag incomplete_lines_chg
+	git tag incomplete_lines_chg &&
 	echo "Dominus regit me," >file &&
 	git commit -a -m "Remove incomplete line" &&
 	git tag incomplete_lines_rem

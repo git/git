@@ -766,7 +766,7 @@ test_expect_success 'moving the superproject does not break submodules' '
 	(
 		cd addtest &&
 		git submodule status >expect
-	)
+	) &&
 	mv addtest addtest2 &&
 	(
 		cd addtest2 &&
@@ -987,7 +987,7 @@ test_expect_success 'submodule with UTF-8 name' '
 
 test_expect_success 'submodule add clone shallow submodule' '
 	mkdir super &&
-	pwd=$(pwd)
+	pwd=$(pwd) &&
 	(
 		cd super &&
 		git init &&

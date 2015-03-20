@@ -1007,7 +1007,7 @@ test_expect_success 'rebase -i with --strategy and -X' '
 '
 
 test_expect_success 'rebase -i error on commits with \ in message' '
-	current_head=$(git rev-parse HEAD)
+	current_head=$(git rev-parse HEAD) &&
 	test_when_finished "git rebase --abort; git reset --hard $current_head; rm -f error" &&
 	test_commit TO-REMOVE will-conflict old-content &&
 	test_commit "\temp" will-conflict new-content dummy &&

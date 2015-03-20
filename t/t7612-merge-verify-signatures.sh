@@ -29,7 +29,7 @@ test_expect_success GPG 'create signed commits' '
 
 	git checkout -b side-untrusted &&
 	echo 3 >baz && git add baz &&
-	test_tick && git commit -SB7227189 -m "untrusted on side"
+	test_tick && git commit -SB7227189 -m "untrusted on side" &&
 
 	git checkout master
 '

@@ -596,7 +596,7 @@ test_configured_prune () {
 			test_unconfig remote.origin.prune &&
 			git fetch &&
 			git rev-parse --verify refs/remotes/origin/newbranch
-		)
+		) &&
 
 		# now remove it
 		git branch -d newbranch &&

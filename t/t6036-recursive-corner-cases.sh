@@ -86,7 +86,7 @@ test_expect_success 'setup criss-cross + rename merges with basic modification' 
 	rm -rf .git &&
 	git init &&
 
-	ten="0 1 2 3 4 5 6 7 8 9"
+	ten="0 1 2 3 4 5 6 7 8 9" &&
 	for i in $ten
 	do
 		echo line $i in a sample file

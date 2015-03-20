@@ -159,7 +159,7 @@ test_expect_success 'cover everything with default force-with-lease (protected)'
 	(
 		cd src &&
 		git branch naster master^
-	)
+	) &&
 	git ls-remote src refs/heads/\* >expect &&
 	(
 		cd dst &&
@@ -174,7 +174,7 @@ test_expect_success 'cover everything with default force-with-lease (allowed)' '
 	(
 		cd src &&
 		git branch naster master^
-	)
+	) &&
 	(
 		cd dst &&
 		git fetch &&

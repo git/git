@@ -58,7 +58,7 @@ test_expect_success setup '
 
 	git checkout master &&
 	test_tick && git merge --no-ff fiddler-branch &&
-	note K
+	note K &&
 
 	test_commit "file=Part 1" file "Part 1" L &&
 
