@@ -481,7 +481,7 @@ test_expect_success 'log.decorate configuration' '
 	git log --oneline --no-decorate >actual &&
 	test_cmp expect.none actual &&
 	git log --oneline --decorate >actual &&
-	test_cmp expect.short actual
+	test_cmp expect.short actual &&
 
 	test_unconfig log.decorate &&
 	git log --pretty=raw >expect.raw &&

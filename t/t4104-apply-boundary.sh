@@ -78,8 +78,8 @@ test_expect_success setup '
 		echo $i
 	done >victim &&
 	cat victim >del-z-expect &&
-	git diff victim >del-z-patch.with
-	git diff --unified=0 >del-z-patch.without &&
+	git diff victim >del-z-patch.with &&
+	git diff --unified=0 >del-z-patch.without
 
 	: done
 '

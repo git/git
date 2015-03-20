@@ -169,7 +169,7 @@ test_expect_success 'GIT_SMART_HTTP can disable smart http' '
 '
 
 test_expect_success 'invalid Content-Type rejected' '
-	test_must_fail git clone $HTTPD_URL/broken_smart/repo.git 2>actual
+	test_must_fail git clone $HTTPD_URL/broken_smart/repo.git 2>actual &&
 	grep "not valid:" actual
 '
 

@@ -182,7 +182,7 @@ test_expect_success 'unify index, two files remain' '
 100644 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 0	one
 100644 e69de29bb2d1d6434b8b29ae775ad8c2e48c5391 0	two
 EOF
-	test_cmp ls-files.expect ls-files.actual
+	test_cmp ls-files.expect ls-files.actual &&
 
 	test-dump-split-index .git/index | sed "/^own/d" >actual &&
 	cat >expect <<EOF &&

@@ -2228,7 +2228,7 @@ test_expect_success 'R: feature import-marks-if-exists' '
 	>expect &&
 
 	git fast-import --import-marks-if-exists=not_io.marks \
-			--export-marks=io.marks <<-\EOF
+			--export-marks=io.marks <<-\EOF &&
 	feature import-marks-if-exists=io.marks
 	EOF
 	test_cmp expect io.marks

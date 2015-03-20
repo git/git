@@ -533,7 +533,7 @@ test_expect_success 'merge of E2 & D fails but has appropriate contents' '
 
 	test $(git rev-parse :3:a) = $(git rev-parse B:a) &&
 	test $(git rev-parse :2:a/file) = $(git rev-parse E2:a/file) &&
-	test $(git rev-parse :1:a/file) = $(git rev-parse C:a/file)
+	test $(git rev-parse :1:a/file) = $(git rev-parse C:a/file) &&
 	test $(git rev-parse :0:ignore-me) = $(git rev-parse A:ignore-me) &&
 
 	test -f a~D^0
