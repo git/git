@@ -38,7 +38,7 @@ test_expect_success 'put bogus object into pack' '
 	verbose git cat-file -e $bogus
 '
 
-test_expect_failure 'destructive repack keeps packed object' '
+test_expect_success 'destructive repack keeps packed object' '
 	test_might_fail git repack -Ad --unpack-unreachable=now &&
 	verbose git cat-file -e $bogus &&
 	test_might_fail git repack -ad &&
