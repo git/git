@@ -96,12 +96,49 @@ test_expect_success 'git branch -v pattern does not show branch summaries' '
 
 test_expect_success 'git branch shows detached HEAD properly' '
 	cat >expect <<EOF &&
-* (detached from $(git rev-parse --short HEAD^0))
+* (HEAD detached at $(git rev-parse --short HEAD^0))
   branch-one
   branch-two
   master
 EOF
 	git checkout HEAD^0 &&
+	git branch >actual &&
+	test_i18ncmp expect actual
+'
+
+test_expect_success 'git branch shows detached HEAD properly after moving' '
+	cat >expect <<EOF &&
+* (HEAD detached from $(git rev-parse --short HEAD))
+  branch-one
+  branch-two
+  master
+EOF
+	git reset --hard HEAD^1 &&
+	git branch >actual &&
+	test_i18ncmp expect actual
+'
+
+test_expect_success 'git branch shows detached HEAD properly from tag' '
+	cat >expect <<EOF &&
+* (HEAD detached at fromtag)
+  branch-one
+  branch-two
+  master
+EOF
+	git tag fromtag master &&
+	git checkout fromtag &&
+	git branch >actual &&
+	test_i18ncmp expect actual
+'
+
+test_expect_success 'git branch shows detached HEAD properly after moving from tag' '
+	cat >expect <<EOF &&
+* (HEAD detached from fromtag)
+  branch-one
+  branch-two
+  master
+EOF
+	git reset --hard HEAD^1 &&
 	git branch >actual &&
 	test_i18ncmp expect actual
 '

@@ -1242,6 +1242,8 @@ static void wt_status_get_detached_from(struct wt_status_state *state)
 		state->detached_from =
 			xstrdup(find_unique_abbrev(cb.nsha1, DEFAULT_ABBREV));
 	hashcpy(state->detached_sha1, cb.nsha1);
+	state->detached_at = !get_sha1("HEAD", sha1) &&
+			     !hashcmp(sha1, state->detached_sha1);
 
 	free(ref);
 	strbuf_release(&cb.buf);
@@ -1330,10 +1332,8 @@ void wt_status_print(struct wt_status *s)
 				on_what = _("rebase in progress; onto ");
 				branch_name = state.onto;
 			} else if (state.detached_from) {
-				unsigned char sha1[20];
 				branch_name = state.detached_from;
-				if (!get_sha1("HEAD", sha1) &&
-				    !hashcmp(sha1, state.detached_sha1))
+				if (state.detached_at)
 					on_what = _("HEAD detached at ");
 				else
 					on_what = _("HEAD detached from ");
