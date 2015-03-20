@@ -876,4 +876,8 @@ struct tm *git_gmtime_r(const time_t *, struct tm *);
 #define USE_PARENS_AROUND_GETTEXT_N 1
 #endif
 
+#ifndef SHELL_PATH
+# define SHELL_PATH "/bin/sh"
+#endif
+
 #endif
