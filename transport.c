@@ -117,7 +117,7 @@ static void insert_packed_refs(const char *packed_refs, struct ref **list)
 			return;
 		}
 
-		if (hexval(buffer[0]) > 0xf)
+		if (!isxdigit(buffer[0]))
 			continue;
 		len = strlen(buffer);
 		if (len && buffer[len - 1] == '\n')
