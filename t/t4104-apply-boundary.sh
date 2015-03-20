@@ -95,10 +95,7 @@ do
 		test_expect_success "apply $kind-patch $with context" '
 			cat original >victim &&
 			git update-index victim &&
-			git apply --index '"$u$kind-patch.$with"' || {
-				cat '"$kind-patch.$with"'
-				(exit 1)
-			} &&
+			git apply --index '"$u$kind-patch.$with"' &&
 			test_cmp '"$kind"'-expect victim
 		'
 	done
@@ -113,10 +110,7 @@ do
 	test_expect_success "apply non-git $kind-patch without context" '
 		cat original >victim &&
 		git update-index victim &&
-		git apply --unidiff-zero --index '"$kind-ng.without"' || {
-			cat '"$kind-ng.without"'
-			(exit 1)
-		} &&
+		git apply --unidiff-zero --index '"$kind-ng.without"' &&
 		test_cmp '"$kind"'-expect victim
 	'
 done
