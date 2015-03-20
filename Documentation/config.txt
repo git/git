@@ -14,7 +14,8 @@ the fully qualified variable name of the variable itself is the last
 dot-separated segment and the section name is everything before the last
 dot. The variable names are case-insensitive, allow only alphanumeric
 characters and `-`, and must start with an alphabetic character.  Some
-variables may appear multiple times.
+variables may appear multiple times; we say then that the variable is
+multivalued.
 
 Syntax
 ~~~~~~
@@ -25,7 +26,7 @@ blank lines are ignored.
 
 The file consists of sections and variables.  A section begins with
 the name of the section in square brackets and continues until the next
-section begins.  Section names are not case sensitive.  Only alphanumeric
+section begins.  Section names are case-insensitive.  Only alphanumeric
 characters, `-` and `.` are allowed in section names.  Each variable
 must belong to some section, which means that there must be a section
 header before the first setting of a variable.
@@ -40,8 +41,8 @@ in the section header, like in the example below:
 --------
 
 Subsection names are case sensitive and can contain any characters except
-newline (doublequote `"` and backslash have to be escaped as `\"` and `\\`,
-respectively).  Section headers cannot span multiple
+newline (doublequote `"` and backslash can be included by escaping them
+as `\"` and `\\`, respectively).  Section headers cannot span multiple
 lines.  Variables may belong directly to a section or to a given subsection.
 You can have `[section]` if you have `[section "subsection"]`, but you
 don't need to.
@@ -53,38 +54,27 @@ restrictions as section names.
 
 All the other lines (and the remainder of the line after the section
 header) are recognized as setting variables, in the form
-'name = value'.  If there is no equal sign on the line, the entire line
-is taken as 'name' and the variable is recognized as boolean "true".
+'name = value' (or just 'name', which is a short-hand to say that
+the variable is the boolean "true").
 The variable names are case-insensitive, allow only alphanumeric characters
-and `-`, and must start with an alphabetic character.  There can be more
-than one value for a given variable; we say then that the variable is
-multivalued.
+and `-`, and must start with an alphabetic character.
 
-Leading and trailing whitespace in a variable value is discarded.
-Internal whitespace within a variable value is retained verbatim.
+A line that defines a value can be continued to the next line by
+ending it with a `\`; the backquote and the end-of-line are
+stripped.  Leading whitespaces after 'name =', the remainder of the
+line after the first comment character '#' or ';', and trailing
+whitespaces of the line are discarded unless they are enclosed in
+double quotes.  Internal whitespaces within the value are retained
+verbatim.
 
-The values following the equals sign in variable assign are all either
-a string, an integer, or a boolean.  Boolean values may be given as yes/no,
-1/0, true/false or on/off.  Case is not significant in boolean values, when
-converting value to the canonical form using '--bool' type specifier;
-'git config' will ensure that the output is "true" or "false".
-
-String values may be entirely or partially enclosed in double quotes.
-You need to enclose variable values in double quotes if you want to
-preserve leading or trailing whitespace, or if the variable value contains
-comment characters (i.e. it contains '#' or ';').
-Double quote `"` and backslash `\` characters in variable values must
-be escaped: use `\"` for `"` and `\\` for `\`.
+Inside double quotes, double quote `"` and backslash `\` characters
+must be escaped: use `\"` for `"` and `\\` for `\`.
 
 The following escape sequences (beside `\"` and `\\`) are recognized:
 `\n` for newline character (NL), `\t` for horizontal tabulation (HT, TAB)
 and `\b` for backspace (BS).  Other char escape sequences (including octal
 escape sequences) are invalid.
 
-Variable values ending in a `\` are continued on the next line in the
-customary UNIX fashion.
-
-Some variables may require a special value format.
 
 Includes
 ~~~~~~~~
@@ -125,6 +115,60 @@ Example
 		path = /path/to/foo.inc ; include by absolute path
 		path = foo ; expand "foo" relative to the current file
 		path = ~/foo ; expand "foo" in your $HOME directory
+
+
+Values
+~~~~~~
+
+Values of many variables are treated as a simple string, but there
+are variables that take values of specific types and there are rules
+as to how to spell them.
+
+boolean::
+
+       When a variable is said to take a boolean value, many
+       synonyms are accepted for 'true' and 'false'; these are all
+       case-insensitive.
+
+       true;; Boolean true can be spelled as `yes`, `on`, `true`,
+		or `1`.  Also, a variable defined without `= <value>`
+		is taken as true.
+
+       false;; Boolean false can be spelled as `no`, `off`,
+		`false`, or `0`.
++
+When converting value to the canonical form using '--bool' type
+specifier; 'git config' will ensure that the output is "true" or
+"false" (spelled in lowercase).
+
+integer::
+       The value for many variables that specify various sizes can
+       be suffixed with `k`, `M`,... to mean "scale the number by
+       1024", "by 1024x1024", etc.
+
+color::
+       The value for a variables that takes a color is a list of
+       colors (at most two) and attributes (at most one), separated
+       by spaces.  The colors accepted are `normal`, `black`,
+       `red`, `green`, `yellow`, `blue`, `magenta`, `cyan` and
+       `white`; the attributes are `bold`, `dim`, `ul`, `blink` and
+       `reverse`.  The first color given is the foreground; the
+       second is the background.  The position of the attribute, if
+       any, doesn't matter. Attributes may be turned off specifically
+       by prefixing them with `no` (e.g., `noreverse`, `noul`, etc).
++
+Colors (foreground and background) may also be given as numbers between
+0 and 255; these use ANSI 256-color mode (but note that not all
+terminals may support this).  If your terminal supports it, you may also
+specify 24-bit RGB values as hex, like `#ff0ab3`.
++
+The attributes are meant to be reset at the beginning of each item
+in the colored output, so setting color.decorate.branch to `black`
+will paint that branch name in a plain `black`, even if the previous
+thing on the same output line (e.g. opening parenthesis before the
+list of branch names in `log --decorate` output) is set to be
+painted with `bold` or some other attribute.
+
 
 Variables
 ~~~~~~~~~
@@ -846,20 +890,6 @@ color.branch.<slot>::
 	`remote` (a remote-tracking branch in refs/remotes/),
 	`upstream` (upstream tracking branch), `plain` (other
 	refs).
-+
-The value for these configuration variables is a list of colors (at most
-two) and attributes (at most one), separated by spaces.  The colors
-accepted are `normal`, `black`, `red`, `green`, `yellow`, `blue`,
-`magenta`, `cyan` and `white`; the attributes are `bold`, `dim`, `ul`,
-`blink` and `reverse`.  The first color given is the foreground; the
-second is the background.  The position of the attribute, if any,
-doesn't matter. Attributes may be turned off specifically by prefixing
-them with `no` (e.g., `noreverse`, `noul`, etc).
-+
-Colors (foreground and background) may also be given as numbers between
-0 and 255; these use ANSI 256-color mode (but note that not all
-terminals may support this).  If your terminal supports it, you may also
-specify 24-bit RGB values as hex, like `#ff0ab3`.
 
 color.diff::
 	Whether to use ANSI escape sequences to add color to patches.
@@ -879,8 +909,7 @@ color.diff.<slot>::
 	of `plain` (context text), `meta` (metainformation), `frag`
 	(hunk header), 'func' (function in hunk header), `old` (removed lines),
 	`new` (added lines), `commit` (commit headers), or `whitespace`
-	(highlighting whitespace errors). The values of these variables may be
-	specified as in color.branch.<slot>.
+	(highlighting whitespace errors).
 
 color.decorate.<slot>::
 	Use customized color for 'git log --decorate' output.  `<slot>` is one
@@ -917,8 +946,6 @@ color.grep.<slot>::
 	separators between fields on a line (`:`, `-`, and `=`)
 	and between hunks (`--`)
 --
-+
-The values of these variables may be specified as in color.branch.<slot>.
 
 color.interactive::
 	When set to `always`, always use colors for interactive prompts
@@ -931,8 +958,7 @@ color.interactive.<slot>::
 	Use customized color for 'git add --interactive' and 'git clean
 	--interactive' output. `<slot>` may be `prompt`, `header`, `help`
 	or `error`, for four distinct types of normal output from
-	interactive commands.  The values of these variables may be
-	specified as in color.branch.<slot>.
+	interactive commands.
 
 color.pager::
 	A boolean to enable/disable colored output when the pager is in
@@ -960,8 +986,6 @@ color.status.<slot>::
 	`nobranch` (the color the 'no branch' warning is shown in, defaulting
 	to red), or
 	`unmerged` (files which have unmerged changes).
-	The values of these variables may be specified as in
-	color.branch.<slot>.
 
 color.ui::
 	This variable determines the default value for variables such
