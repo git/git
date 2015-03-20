@@ -1,6 +1,29 @@
 Git 2.4 Release Notes
 =====================
 
+Backward compatibility warning(s)
+---------------------------------
+
+Output from "git log --decorate" (and "%d" format specifier used in
+the userformat "--format=<string>" parameter "git log" family of
+command takes) used to list "HEAD" just like other tips of branch
+names, separated with a comma in between.  E.g.
+
+    $ git log --decorate -1 master
+    commit bdb0f6788fa5e3cacc4315e9ff318a27b2676ff4 (HEAD, master)
+    ...
+
+This release updates the output slightly when HEAD refers to the tip
+of a branch whose name is also shown in the output.  The above is
+shown as:
+
+    $ git log --decorate -1 master
+    commit bdb0f6788fa5e3cacc4315e9ff318a27b2676ff4 (HEAD -> master)
+    ...
+
+
+
+
 Updates since v2.3
 ------------------
 
@@ -12,6 +35,11 @@ Ports
 
  * We did not check the curl library version before using
    CURLOPT_PROXYAUTH feature that may not exist.
+
+ * We now detect number of CPUs on older BSD-derived systems.
+
+ * Portability fixes and workarounds for shell scripts have been added
+   to help BSD-derived systems.
 
 
 UI, Workflows & Features
@@ -52,6 +80,25 @@ UI, Workflows & Features
 
  * "git archive" can now be told to set the 'text' attribute in the
    resulting zip archive.
+
+ * Output from "git log --decorate" mentions HEAD when it points at a
+   tip of an branch differently from a detached HEAD.
+
+   This is a potentially backward-incompatible change.
+
+ * "git branch" on a detached HEAD always said "(detached from xyz)",
+   even when "git status" would report "detached at xyz".  The HEAD is
+   actually at xyz and haven't been moved since it was detached in
+   such a case, but the user cannot read what the current value of
+   HEAD is when "detached from" is used.
+   (merge 4b06318 mg/detached-head-report later to maint).
+
+ * "git -C '' subcmd" refused to work in the current directory, unlike
+   "cd ''" which silently behaves as a no-op.
+   (merge 6a536e2 kn/git-cd-to-empty later to maint).
+
+ * The versionsort.prerelease configuration variable can be used to
+   specify that v1.0-pre1 comes before v1.0.
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -100,6 +147,9 @@ Performance, Internal Implementation, Development Support etc.
 
  * Simplify the ref transaction API around how "the ref should be
    pointing at this object" is specified.
+
+ * Code in "git daemon" to parse out and hold hostnames used in
+   request interpolation has been simplified.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -307,6 +357,19 @@ notes for details).
  * A corrupt input to "git diff -M" used to cause it to segfault.
    (merge 4d6be03 jk/diffcore-rename-duplicate later to maint).
 
+ * Certain builds of GPG triggered false breakages in a test.
+   (merge 3f88c1b mg/verify-commit later to maint).
+
+ * "git imap-send" learned to optionally talk with an IMAP server via
+   libcURL; because there is no other option when Git is built with
+   NO_OPENSSL option, use that codepath by default under such
+   configuration.
+   (merge dcd01ea km/imap-send-libcurl-options later to maint).
+
+ * "git log --decorate" did not reset colors correctly around the
+   branch names.
+   (merge 5ee8758 jc/decorate-leaky-separator-color later to maint).
+
  * Code cleanups and documentaiton updates.
    (merge 2ce63e9 rs/simple-cleanups later to maint).
    (merge 33baa69 rj/no-xopen-source-for-cygwin later to maint).
@@ -317,3 +380,4 @@ notes for details).
    (merge 53e53c7 sg/completion-remote later to maint).
    (merge 8fa7975 ak/git-done-help-cleanup later to maint).
    (merge 9a6f128 rs/deflate-init-cleanup later to maint).
+   (merge 6f75d45 rs/use-isxdigit later to maint).
