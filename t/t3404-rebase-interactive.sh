@@ -950,7 +950,7 @@ test_expect_success 'rebase --edit-todo can be used to modify todo' '
 	set_fake_editor &&
 	FAKE_LINES="edit 1 2 3" git rebase -i HEAD~3 &&
 	FAKE_LINES="2 1" git rebase --edit-todo &&
-	git rebase --continue
+	git rebase --continue &&
 	test M = $(git cat-file commit HEAD^ | sed -ne \$p) &&
 	test L = $(git cat-file commit HEAD | sed -ne \$p)
 '

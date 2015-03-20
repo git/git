@@ -52,7 +52,7 @@ test_expect_success 'eval_gettext: our eval_gettext() fallback can interpolate v
     cmdline="git am" &&
     export cmdline;
     printf "When you have resolved this problem, run git am --resolved." >expect &&
-    eval_gettext "When you have resolved this problem, run \$cmdline --resolved." >actual
+    eval_gettext "When you have resolved this problem, run \$cmdline --resolved." >actual &&
     test_i18ncmp expect actual
 '
 
@@ -60,7 +60,7 @@ test_expect_success 'eval_gettext: our eval_gettext() fallback can interpolate v
     cmdline="git am" &&
     export cmdline;
     printf "When you have resolved this problem, run \"git am --resolved\"." >expect &&
-    eval_gettext "When you have resolved this problem, run \"\$cmdline --resolved\"." >actual
+    eval_gettext "When you have resolved this problem, run \"\$cmdline --resolved\"." >actual &&
     test_i18ncmp expect actual
 '
 

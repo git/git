@@ -209,7 +209,7 @@ test_expect_success 'cookies stored in http.cookiefile when http.savecookies set
 	git config http.cookiefile cookies.txt &&
 	git config http.savecookies true &&
 	git ls-remote $HTTPD_URL/smart_cookies/repo.git master &&
-	tail -3 cookies.txt > cookies_tail.txt
+	tail -3 cookies.txt >cookies_tail.txt &&
 	test_cmp expect_cookies.txt cookies_tail.txt
 '
 

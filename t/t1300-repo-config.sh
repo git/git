@@ -1165,7 +1165,7 @@ test_expect_failure 'adding a key into an empty section reuses header' '
 	Qkey = value
 	EOF
 
-	git config section.key value
+	git config section.key value &&
 	test_cmp expect .git/config
 '
 

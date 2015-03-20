@@ -539,7 +539,7 @@ test_expect_success 'diff --submodule with objects referenced by alternates' '
 			git checkout origin/master
 		) &&
 		git diff --submodule > ../actual
-	)
+	) &&
 	test_cmp expected actual
 '
 

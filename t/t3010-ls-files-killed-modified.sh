@@ -99,12 +99,12 @@ test_expect_success 'git ls-files -k to show killed files.' '
 '
 
 test_expect_success 'git ls-files -k output (w/o icase)' '
-	git ls-files -k >.output
+	git ls-files -k >.output &&
 	test_cmp .expected .output
 '
 
 test_expect_success 'git ls-files -k output (w/ icase)' '
-	git -c core.ignorecase=true ls-files -k >.output
+	git -c core.ignorecase=true ls-files -k >.output &&
 	test_cmp .expected .output
 '
 
