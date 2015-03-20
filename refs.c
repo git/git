@@ -1907,6 +1907,11 @@ static int do_for_each_ref(struct ref_cache *refs, const char *base,
 	data.fn = fn;
 	data.cb_data = cb_data;
 
+	if (ref_paranoia < 0)
+		ref_paranoia = git_env_bool("GIT_REF_PARANOIA", 0);
+	if (ref_paranoia)
+		data.flags |= DO_FOR_EACH_INCLUDE_BROKEN;
+
 	return do_for_each_entry(refs, base, do_one_ref, &data);
 }
 

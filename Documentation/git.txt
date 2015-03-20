@@ -1026,6 +1026,17 @@ GIT_ICASE_PATHSPECS::
 	variable when it is invoked as the top level command by the
 	end user, to be recorded in the body of the reflog.
 
+`GIT_REF_PARANOIA`::
+	If set to `1`, include broken or badly named refs when iterating
+	over lists of refs. In a normal, non-corrupted repository, this
+	does nothing. However, enabling it may help git to detect and
+	abort some operations in the presence of broken refs. Git sets
+	this variable automatically when performing destructive
+	operations like linkgit:git-prune[1]. You should not need to set
+	it yourself unless you want to be paranoid about making sure
+	an operation has touched every ref (e.g., because you are
+	cloning a repository to make a backup).
+
 
 Discussion[[Discussion]]
 ------------------------
