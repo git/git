@@ -75,8 +75,8 @@ test_expect_success \
      echo yomin >yomin &&
      git update-index --add yomin &&
      read_tree_u_must_succeed -m -u $treeH $treeM &&
-     git ls-files --stage >4.out || return 1
-     git diff -U0 --no-index M.out 4.out >4diff.out
+     git ls-files --stage >4.out &&
+     test_might_fail git diff -U0 --no-index M.out 4.out >4diff.out &&
      compare_change 4diff.out expected &&
      check_cache_at yomin clean &&
      sum bozbar frotz nitfol >actual4.sum &&
@@ -94,8 +94,8 @@ test_expect_success \
      git update-index --add yomin &&
      echo yomin yomin >yomin &&
      read_tree_u_must_succeed -m -u $treeH $treeM &&
-     git ls-files --stage >5.out || return 1
-     git diff -U0 --no-index M.out 5.out >5diff.out
+     git ls-files --stage >5.out &&
+     test_might_fail git diff -U0 --no-index M.out 5.out >5diff.out &&
      compare_change 5diff.out expected &&
      check_cache_at yomin dirty &&
      sum bozbar frotz nitfol >actual5.sum &&
