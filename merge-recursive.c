@@ -1858,6 +1858,9 @@ int merge_trees(struct merge_options *o,
 		string_list_clear(re_head, 0);
 		string_list_clear(entries, 1);
 
+		free(re_merge);
+		free(re_head);
+		free(entries);
 	}
 	else
 		clean = 1;
