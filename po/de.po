@@ -616,7 +616,7 @@ msgstr ""
 #: help.c:373
 #, c-format
 msgid "in %0.1f seconds automatically..."
-msgstr "Automatische Ausführung in %0.1f Sekunden..."
+msgstr "Automatische Ausführung in %0.1f Sekunden ..."
 
 #: help.c:380
 #, c-format
@@ -2436,7 +2436,7 @@ msgstr "%s: Patch konnte nicht angewendet werden"
 #: builtin/apply.c:3653
 #, c-format
 msgid "Checking patch %s..."
-msgstr "Prüfe Patch %s..."
+msgstr "Prüfe Patch %s ..."
 
 #: builtin/apply.c:3746 builtin/checkout.c:231 builtin/reset.c:135
 #, c-format
@@ -4091,7 +4091,7 @@ msgstr "Konnte zu klonenden Remote-Branch %s nicht finden."
 #: builtin/clone.c:561
 #, c-format
 msgid "Checking connectivity... "
-msgstr "Prüfe Konnektivität... "
+msgstr "Prüfe Konnektivität ... "
 
 #: builtin/clone.c:564
 msgid "remote did not send all necessary objects"
@@ -4165,12 +4165,12 @@ msgstr "Konnte Arbeitsverzeichnis '%s' nicht erstellen."
 #: builtin/clone.c:870
 #, c-format
 msgid "Cloning into bare repository '%s'...\n"
-msgstr "Klone in Bare-Repository '%s'...\n"
+msgstr "Klone in Bare-Repository '%s' ...\n"
 
 #: builtin/clone.c:872
 #, c-format
 msgid "Cloning into '%s'...\n"
-msgstr "Klone nach '%s'...\n"
+msgstr "Klone nach '%s' ...\n"
 
 #: builtin/clone.c:897
 msgid "--dissociate given, but there is no --reference"
@@ -4600,7 +4600,7 @@ msgstr ""
 #: builtin/commit.c:1199
 msgid "Clever... amending the last one with dirty index."
 msgstr ""
-"Klug... den letzten Commit mit einer geänderten Staging-Area nachbessern."
+"Klug ... den letzten Commit mit einer geänderten Staging-Area nachbessern."
 
 #: builtin/commit.c:1201
 msgid "Explicit paths specified without -i or -o; assuming --only paths..."
@@ -7335,7 +7335,7 @@ msgstr "Aktualisiere %s..%s\n"
 #: builtin/merge.c:1388
 #, c-format
 msgid "Trying really trivial in-index merge...\n"
-msgstr "Probiere wirklich trivialen \"in-index\"-Merge...\n"
+msgstr "Probiere wirklich trivialen \"in-index\"-Merge ...\n"
 
 #: builtin/merge.c:1395
 #, c-format
@@ -7349,12 +7349,12 @@ msgstr "Vorspulen nicht möglich, breche ab."
 #: builtin/merge.c:1450 builtin/merge.c:1529
 #, c-format
 msgid "Rewinding the tree to pristine...\n"
-msgstr "Rücklauf des Verzeichnisses bis zum Ursprung...\n"
+msgstr "Rücklauf des Verzeichnisses bis zum Ursprung ...\n"
 
 #: builtin/merge.c:1454
 #, c-format
 msgid "Trying merge strategy %s...\n"
-msgstr "Probiere Merge-Strategie %s...\n"
+msgstr "Probiere Merge-Strategie %s ...\n"
 
 #: builtin/merge.c:1520
 #, c-format
@@ -10450,7 +10450,7 @@ msgstr ""
 
 #: git-am.sh:166
 msgid "Falling back to patching base and 3-way merge..."
-msgstr "Falle zurück zum Patchen der Basis und des 3-Wege-Merges..."
+msgstr "Falle zurück zum Patchen der Basis und des 3-Wege-Merges ..."
 
 #: git-am.sh:182
 msgid "Failed to merge in the changes."
@@ -10943,7 +10943,7 @@ msgstr "Änderungen von $mb zu $onto:"
 msgid "First, rewinding head to replay your work on top of it..."
 msgstr ""
 "Zunächst wird der Branch zurückgespult, um Ihre Änderungen\n"
-"darauf neu anzuwenden..."
+"darauf neu anzuwenden ..."
 
 #: git-rebase.sh:620
 #, sh-format
