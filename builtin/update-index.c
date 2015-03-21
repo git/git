@@ -584,6 +584,7 @@ static int do_reupdate(int ac, const char **av,
 		path = xstrdup(ce->name);
 		update_one(path);
 		free(path);
+		free(old);
 		if (save_nr != active_nr)
 			goto redo;
 	}
