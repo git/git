@@ -77,4 +77,16 @@ test_expect_success 'diff D F and diff F D' '
 	)
 '
 
+test_expect_success 'turning a file into a directory' '
+	(
+		cd non/git &&
+		mkdir d e e/sub &&
+		echo 1 >d/sub &&
+		echo 2 >e/sub/file &&
+		printf "D\td/sub\nA\te/sub/file\n" >expect &&
+		test_must_fail git diff --no-index --name-status d e >actual &&
+		test_cmp expect actual
+	)
+'
+
 test_done
