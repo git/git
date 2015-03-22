@@ -980,7 +980,7 @@ _git_branch ()
 
 	case "$cur" in
 	--set-upstream-to=*)
-		__gitcomp "$(__git_refs)" "" "${cur##--set-upstream-to=}"
+		__gitcomp_nl "$(__git_refs)" "" "${cur##--set-upstream-to=}"
 		;;
 	--*)
 		__gitcomp "
@@ -1048,7 +1048,7 @@ _git_checkout ()
 
 _git_cherry ()
 {
-	__gitcomp "$(__git_refs)"
+	__gitcomp_nl "$(__git_refs)"
 }
 
 _git_cherry_pick ()
