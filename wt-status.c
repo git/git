@@ -745,7 +745,6 @@ static void wt_status_print_submodule_summary(struct wt_status *s, int uncommitt
 
 	sm_summary.git_cmd = 1;
 	sm_summary.no_stdin = 1;
-	fflush(s->fp);
 	sm_summary.out = -1;
 
 	run_command(&sm_summary);
