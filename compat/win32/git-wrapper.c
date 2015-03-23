@@ -12,6 +12,9 @@
 #include <shlwapi.h>
 #include <shellapi.h>
 #include <stdio.h>
+#include <wchar.h>
+
+static WCHAR msystem_bin[64];
 
 static void print_error(LPCWSTR prefix, DWORD error_number)
 {
@@ -36,12 +39,18 @@ static void print_error(LPCWSTR prefix, DWORD error_number)
 
 static void setup_environment(LPWSTR exepath)
 {
-	int len;
+	WCHAR msystem[64];
 	LPWSTR path2 = NULL;
+	int len;
 
-	/* if not set, set TERM to msys */
+	/* Set MSYSTEM */
+	swprintf(msystem, sizeof(msystem),
+		L"MINGW%d", (int) sizeof(void *) * 8);
+	SetEnvironmentVariable(L"MSYSTEM", msystem);
+
+	/* if not set, set TERM to cygwin */
 	if (!GetEnvironmentVariable(L"TERM", NULL, 0))
-		SetEnvironmentVariable(L"TERM", L"msys");
+		SetEnvironmentVariable(L"TERM", L"cygwin");
 
 	/* if not set, set PLINK_PROTOCOL to ssh */
 	if (!GetEnvironmentVariable(L"PLINK_PROTOCOL", NULL, 0))
@@ -79,12 +88,22 @@ static void setup_environment(LPWSTR exepath)
 	len = sizeof(WCHAR) * (len + 2 * MAX_PATH);
 	path2 = (LPWSTR)malloc(len);
 	wcscpy(path2, exepath);
-	PathAppend(path2, L"bin;");
-	/* should do this only if it exists */
-	wcscat(path2, exepath);
-	PathAppend(path2, L"mingw\\bin;");
-	GetEnvironmentVariable(L"PATH", &path2[wcslen(path2)],
-			(len/sizeof(WCHAR))-wcslen(path2));
+	PathAppend(path2, msystem_bin);
+	if (_waccess(path2, 0) != -1) {
+		/* We are in an MSys2-based setup */
+		wcscat(path2, L";");
+		wcscat(path2, exepath);
+		PathAppend(path2, L"usr\\bin;");
+	}
+	else {
+		/* Fall back to MSys1 paths */
+		wcscpy(path2, exepath);
+		PathAppend(path2, L"bin;");
+		wcscat(path2, exepath);
+		PathAppend(path2, L"mingw\\bin;");
+	}
+	GetEnvironmentVariable(L"PATH", path2 + wcslen(path2),
+				(len / sizeof(WCHAR)) - wcslen(path2));
 	SetEnvironmentVariable(L"PATH", path2);
 	free(path2);
 
@@ -156,6 +175,10 @@ int main(void)
 	LPWSTR cmd = NULL, exep = exe, prefix_args = NULL, basename;
 	UINT codepage = 0;
 
+	/* Determine MSys2-based Git path. */
+	swprintf(msystem_bin, sizeof(msystem_bin),
+		L"mingw%d\\bin", (int) sizeof(void *) * 8);
+
 	/* get the installation location */
 	GetModuleFileName(NULL, exepath, MAX_PATH);
 	if (!PathRemoveFileSpec(exepath)) {
@@ -183,7 +206,12 @@ int main(void)
 
 		/* set the default exe module */
 		wcscpy(exe, exepath);
-		PathAppend(exe, L"bin\\git.exe");
+		PathAppend(exe, msystem_bin);
+		PathAppend(exe, L"git.exe");
+		if (_waccess(exe, 0) == -1) {
+			wcscpy(exe, exepath);
+			PathAppend(exe, L"bin\\git.exe");
+		}
 	}
 
 	if (!prefix_args)
