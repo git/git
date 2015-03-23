@@ -4,24 +4,36 @@ Git 2.4 Release Notes
 Backward compatibility warning(s)
 ---------------------------------
 
-Output from "git log --decorate" (and "%d" format specifier used in
-the userformat "--format=<string>" parameter "git log" family of
-command takes) used to list "HEAD" just like other tips of branch
-names, separated with a comma in between.  E.g.
+This release has a few changes in the user-visible output from
+Porcelain commands, which the users may want to be aware of.
 
-    $ git log --decorate -1 master
-    commit bdb0f6788fa5e3cacc4315e9ff318a27b2676ff4 (HEAD, master)
-    ...
+ * Output from "git log --decorate" (and "%d" format specifier used in
+   the userformat "--format=<string>" parameter "git log" family of
+   command takes) used to list "HEAD" just like other tips of branch
+   names, separated with a comma in between.  E.g.
 
-This release updates the output slightly when HEAD refers to the tip
-of a branch whose name is also shown in the output.  The above is
-shown as:
+     $ git log --decorate -1 master
+     commit bdb0f6788fa5e3cacc4315e9ff318a27b2676ff4 (HEAD, master)
+     ...
 
-    $ git log --decorate -1 master
-    commit bdb0f6788fa5e3cacc4315e9ff318a27b2676ff4 (HEAD -> master)
-    ...
+   This release updates the output slightly when HEAD refers to the tip
+   of a branch whose name is also shown in the output.  The above is
+   shown as:
 
+     $ git log --decorate -1 master
+     commit bdb0f6788fa5e3cacc4315e9ff318a27b2676ff4 (HEAD -> master)
+     ...
 
+ * The phrasing "git branch" uses to describe a detached HEAD has been
+   updated to match that of "git status":
+
+    - When the HEAD is at the same commit as it was originally
+      detached, they now both show "detached at <commit object name>".
+
+    - When the HEAD has moved since it was originally detached,
+      they now both show "detached from <commit object name>".
+
+    Earlier "git branch" always used "from"
 
 
 Updates since v2.3
@@ -91,7 +103,6 @@ UI, Workflows & Features
    actually at xyz and haven't been moved since it was detached in
    such a case, but the user cannot read what the current value of
    HEAD is when "detached from" is used.
-   (merge 4b06318 mg/detached-head-report later to maint).
 
  * "git -C '' subcmd" refused to work in the current directory, unlike
    "cd ''" which silently behaves as a no-op.
@@ -99,6 +110,9 @@ UI, Workflows & Features
 
  * The versionsort.prerelease configuration variable can be used to
    specify that v1.0-pre1 comes before v1.0.
+
+ * A new "push.followTags" configuration turns the "--follow-tags"
+   option on by default for the "git push" command.
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -150,6 +164,9 @@ Performance, Internal Implementation, Development Support etc.
 
  * Code in "git daemon" to parse out and hold hostnames used in
    request interpolation has been simplified.
+
+ * "git push" codepath has been restructured to make it easier to add
+   new configuration bits.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -370,7 +387,20 @@ notes for details).
    branch names.
    (merge 5ee8758 jc/decorate-leaky-separator-color later to maint).
 
- * Code cleanups and documentaiton updates.
+ * The code that reads from the ctags file in the completion script
+   (in contrib/) did not spell ${param/pattern/string} substitution
+   correctly, which happened to work with bash but not with zsh.
+   (merge db8d750 js/completion-ctags-pattern-substitution-fix later to maint).
+
+ * The transfer.hiderefs support did not quite work for smart-http
+   transport.
+   (merge 8ddf3ca jk/smart-http-hide-refs later to maint).
+
+ * "git tag -h" used to show the "--column" and "--sort" options
+   that are about listing in a wrong section.
+   (merge dd059c6 jk/tag-h-column-is-a-listing-option later to maint).
+
+ * Code cleanups and documentation updates.
    (merge 2ce63e9 rs/simple-cleanups later to maint).
    (merge 33baa69 rj/no-xopen-source-for-cygwin later to maint).
    (merge 817d03e jc/diff-test-updates later to maint).
@@ -381,3 +411,4 @@ notes for details).
    (merge 8fa7975 ak/git-done-help-cleanup later to maint).
    (merge 9a6f128 rs/deflate-init-cleanup later to maint).
    (merge 6f75d45 rs/use-isxdigit later to maint).
+   (merge 376e4b3 jk/test-annoyances later to maint).
