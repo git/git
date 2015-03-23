@@ -54,10 +54,10 @@ all loose objects are combined into a single pack using
 `git repack -d -l`.  Setting the value of `gc.auto` to 0
 disables automatic packing of loose objects.
 +
-If the number of packs exceeds the value of `gc.autopacklimit`,
+If the number of packs exceeds the value of `gc.autoPackLimit`,
 then existing packs (except those marked with a `.keep` file)
 are consolidated into a single pack by using the `-A` option of
-'git repack'. Setting `gc.autopacklimit` to 0 disables
+'git repack'. Setting `gc.autoPackLimit` to 0 disables
 automatic consolidation of packs.
 
 --prune=<date>::
@@ -101,18 +101,18 @@ branches:
 ------------
 [gc "refs/remotes/*"]
 	reflogExpire = never
-	reflogexpireUnreachable = 3 days
+	reflogExpireUnreachable = 3 days
 ------------
 
-The optional configuration variable 'gc.rerereresolved' indicates
+The optional configuration variable 'gc.rerereResolved' indicates
 how long records of conflicted merge you resolved earlier are
 kept.  This defaults to 60 days.
 
-The optional configuration variable 'gc.rerereunresolved' indicates
+The optional configuration variable 'gc.rerereUnresolved' indicates
 how long records of conflicted merge you have not resolved are
 kept.  This defaults to 15 days.
 
-The optional configuration variable 'gc.packrefs' determines if
+The optional configuration variable 'gc.packRefs' determines if
 'git gc' runs 'git pack-refs'. This can be set to "notbare" to enable
 it within all non-bare repos or it can be set to a boolean value.
 This defaults to true.

@@ -72,7 +72,7 @@ matching pattern, <source> is the pattern's source file, and <linenum>
 is the line number of the pattern within that source.  If the pattern
 contained a `!` prefix or `/` suffix, it will be preserved in the
 output.  <source> will be an absolute path when referring to the file
-configured by `core.excludesfile`, or relative to the repository root
+configured by `core.excludesFile`, or relative to the repository root
 when referring to `.git/info/exclude` or a per-directory exclude file.
 
 If `-z` is specified, the pathnames in the output are delimited by the

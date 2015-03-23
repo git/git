@@ -77,7 +77,7 @@ configuration variable documented in linkgit:git-config[1].
 	only changes to the commits stored in the superproject are shown (this was
 	the behavior before 1.7.0). Using "all" hides all changes to submodules
 	(and suppresses the output of submodule summaries when the config option
-	`status.submodulesummary` is set).
+	`status.submoduleSummary` is set).
 
 --ignored::
 	Show ignored files as well.
@@ -207,7 +207,7 @@ If the config variable `status.relativePaths` is set to false, then all
 paths shown are relative to the repository root, not to the current
 directory.
 
-If `status.submodulesummary` is set to a non zero number or true (identical
+If `status.submoduleSummary` is set to a non zero number or true (identical
 to -1 or an unlimited number), the submodule summary will be enabled for
 the long format and a summary of commits for modified submodules will be
 shown (see --summary-limit option of linkgit:git-submodule[1]). Please note

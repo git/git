@@ -273,13 +273,13 @@ attachments, and sign off patches with configuration variables.
 ------------
 [format]
 	headers = "Organization: git-foo\n"
-	subjectprefix = CHANGE
+	subjectPrefix = CHANGE
 	suffix = .txt
 	numbered = auto
 	to = <email>
 	cc = <email>
 	attach [ = mime-boundary-string ]
-	signoff = true
+	signOff = true
 	coverletter = auto
 ------------
 

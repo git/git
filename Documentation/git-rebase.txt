@@ -207,10 +207,10 @@ rebase.stat::
 	Whether to show a diffstat of what changed upstream since the last
 	rebase. False by default.
 
-rebase.autosquash::
+rebase.autoSquash::
 	If set to true enable '--autosquash' option by default.
 
-rebase.autostash::
+rebase.autoStash::
 	If set to true enable '--autostash' option by default.
 
 OPTIONS
@@ -414,7 +414,7 @@ squash/fixup series.
 This option is only valid when the '--interactive' option is used.
 +
 If the '--autosquash' option is enabled by default using the
-configuration variable `rebase.autosquash`, this option can be
+configuration variable `rebase.autoSquash`, this option can be
 used to override and disable this setting.
 
 --[no-]autostash::

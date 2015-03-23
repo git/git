@@ -100,7 +100,7 @@ the following environment variables:
 	starting time is different by this many seconds from the
 	current session.  Only meaningful when
 	`GIT_PUSH_CERT_NONCE_STATUS` says `SLOP`.
-	Also read about `receive.certnonceslop` variable in
+	Also read about `receive.certNonceSlop` variable in
 	linkgit:git-config[1].
 
 This hook is called before any refname is updated and before any

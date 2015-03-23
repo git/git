@@ -144,7 +144,7 @@ explicitly give a name with '-b' in such a case.
 
 --no-track::
 	Do not set up "upstream" configuration, even if the
-	branch.autosetupmerge configuration variable is true.
+	branch.autoSetupMerge configuration variable is true.
 
 -l::
 	Create the new branch's reflog; see linkgit:git-branch[1] for
@@ -210,7 +210,7 @@ the conflicted merge in the specified paths.
 --conflict=<style>::
 	The same as --merge option above, but changes the way the
 	conflicting hunks are presented, overriding the
-	merge.conflictstyle configuration variable.  Possible values are
+	merge.conflictStyle configuration variable.  Possible values are
 	"merge" (default) and "diff3" (in addition to what is shown by
 	"merge" style, shows the original contents).
 

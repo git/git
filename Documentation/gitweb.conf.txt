@@ -706,7 +706,7 @@ show-sizes::
 	I/O.  Enabled by default.
 +
 This feature can be configured on a per-repository basis via
-repository's `gitweb.showsizes` configuration variable (boolean).
+repository's `gitweb.showSizes` configuration variable (boolean).
 
 patches::
 	Enable and configure "patches" view, which displays list of commits in email
