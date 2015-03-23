@@ -748,12 +748,9 @@ struct cache_entry *make_cache_entry(unsigned int mode,
 	ce->ce_mode = create_ce_mode(mode);
 
 	ret = refresh_cache_entry(ce, refresh_options);
-	if (!ret) {
+	if (ret != ce)
 		free(ce);
-		return NULL;
-	} else {
-		return ret;
-	}
+	return ret;
 }
 
 int ce_same_name(const struct cache_entry *a, const struct cache_entry *b)
