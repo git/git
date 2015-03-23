@@ -128,7 +128,10 @@ already exists on the remote side.
 	Push all the refs that would be pushed without this option,
 	and also push annotated tags in `refs/tags` that are missing
 	from the remote but are pointing at commit-ish that are
-	reachable from the refs being pushed.
+	reachable from the refs being pushed.  This can also be specified
+	with configuration variable 'push.followTags'.  For more
+	information, see 'push.followTags' in linkgit:git-config[1].
+
 
 --signed::
 	GPG-sign the push request to update refs on the receiving

@@ -473,13 +473,22 @@ static int option_parse_recurse_submodules(const struct option *opt,
 
 static int git_push_config(const char *k, const char *v, void *cb)
 {
-	struct wt_status *s = cb;
+	int *flags = cb;
 	int status;
 
 	status = git_gpg_config(k, v, NULL);
 	if (status)
 		return status;
-	return git_default_config(k, v, s);
+
+	if (!strcmp(k, "push.followtags")) {
+		if (git_config_bool(k, v))
+			*flags |= TRANSPORT_PUSH_FOLLOW_TAGS;
+		else
+			*flags &= ~TRANSPORT_PUSH_FOLLOW_TAGS;
+		return 0;
+	}
+
+	return git_default_config(k, v, NULL);
 }
 
 int cmd_push(int argc, const char **argv, const char *prefix)
@@ -487,7 +496,6 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 	int flags = 0;
 	int tags = 0;
 	int rc;
-	int atomic = 0;
 	const char *repo = NULL;	/* default repository */
 	struct option options[] = {
 		OPT__VERBOSITY(&verbosity),
@@ -519,12 +527,12 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 		OPT_BIT(0, "follow-tags", &flags, N_("push missing but relevant tags"),
 			TRANSPORT_PUSH_FOLLOW_TAGS),
 		OPT_BIT(0, "signed", &flags, N_("GPG sign the push"), TRANSPORT_PUSH_CERT),
-		OPT_BOOL(0, "atomic", &atomic, N_("request atomic transaction on remote side")),
+		OPT_BIT(0, "atomic", &flags, N_("request atomic transaction on remote side"), TRANSPORT_PUSH_ATOMIC),
 		OPT_END()
 	};
 
 	packet_trace_identity("push");
-	git_config(git_push_config, NULL);
+	git_config(git_push_config, &flags);
 	argc = parse_options(argc, argv, prefix, options, push_usage, 0);
 
 	if (deleterefs && (tags || (flags & (TRANSPORT_PUSH_ALL | TRANSPORT_PUSH_MIRROR))))
@@ -534,9 +542,6 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 
 	if (tags)
 		add_refspec("refs/tags/*");
-
-	if (atomic)
-		flags |= TRANSPORT_PUSH_ATOMIC;
 
 	if (argc > 0) {
 		repo = argv[0];
