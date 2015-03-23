@@ -204,10 +204,12 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 				fprintf(stderr, "No directory given for -C.\n" );
 				usage(git_usage_string);
 			}
-			if (chdir((*argv)[1]))
-				die_errno("Cannot change to '%s'", (*argv)[1]);
-			if (envchanged)
-				*envchanged = 1;
+			if ((*argv)[1][0]) {
+				if (chdir((*argv)[1]))
+					die_errno("Cannot change to '%s'", (*argv)[1]);
+				if (envchanged)
+					*envchanged = 1;
+			}
 			(*argv)++;
 			(*argc)--;
 		} else {
