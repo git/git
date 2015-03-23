@@ -744,11 +744,8 @@ static void wt_status_print_submodule_summary(struct wt_status *s, int uncommitt
 
 	sm_summary.git_cmd = 1;
 	sm_summary.no_stdin = 1;
-	sm_summary.out = -1;
 
-	run_command(&sm_summary);
-
-	strbuf_read(&cmd_stdout, sm_summary.out, 1024);
+	capture_command(&sm_summary, &cmd_stdout, 1024);
 
 	/* prepend header, only if there's an actual output */
 	if (cmd_stdout.len) {
