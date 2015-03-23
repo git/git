@@ -52,6 +52,11 @@ available at:
         http://colabti.org/irclogger/irclogger_log/git
         http://colabti.org/irclogger/irclogger_log/git-devel
 
+We will soon have a volunteer-run newsletter to serve our community
+(http://thread.gmane.org/gmane.comp.version-control.git/266066).  If
+you want to help its publication, please contact Christian and/or
+Thomas.
+
 Git is a member project of software freedom conservancy, a non-profit
 organization (https://sfconservancy.org/).  To reach a committee of
 liaisons to the conservancy, contact them at <git@sfconservancy.org>.
@@ -139,8 +144,8 @@ are cut from it.  The maintenance releases used to be named with four
 dotted decimal, named after the feature release they are updates to
 (e.g. "1.8.5.1" was the first maintenance release for "1.8.5" feature
 release).  These days, maintenance releases are named by incrementing
-the last digit of three-dotted decimal name (e.g. "2.3.2" is the
-second maintenance relaese for "2.3" series).
+the last digit of three-dotted decimal name (e.g. "2.3.4" is the
+fourth maintenance relaese for "2.3" series).
 
 New features never go to the 'maint' branch.  This branch is also
 merged into "master" to propagate the fixes forward as needed.
