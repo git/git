@@ -1030,10 +1030,11 @@ test -n "$autosquash" && rearrange_squash "$todo"
 test -n "$cmd" && add_exec_commands "$todo"
 
 todocount=$(git stripspace --strip-comments <"$todo" | wc -l)
+todocount=${todocount##* }
 
 cat >>"$todo" <<EOF
 
-$comment_char Rebase $shortrevisions onto $shortonto ($todocount TODO item(s))
+$comment_char Rebase $shortrevisions onto $shortonto ($todocount command(s))
 EOF
 append_todo_help
 git stripspace --comment-lines >>"$todo" <<\EOF
