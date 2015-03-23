@@ -152,10 +152,7 @@ unset UNZIP
 
 case $(echo $GIT_TRACE |tr "[A-Z]" "[a-z]") in
 1|2|true)
-	echo "* warning: Some tests will not work if GIT_TRACE" \
-		"is set as to trace on STDERR ! *"
-	echo "* warning: Please set GIT_TRACE to something" \
-		"other than 1, 2 or true ! *"
+	GIT_TRACE=4
 	;;
 esac
 
@@ -299,6 +296,7 @@ die () {
 
 GIT_EXIT_OK=
 trap 'die' EXIT
+trap 'exit $?' INT
 
 # The user-facing functions are loaded from a separate file so that
 # test_perf subshells can have them too
@@ -1064,3 +1062,9 @@ test_lazy_prereq UNZIP '
 	"$GIT_UNZIP" -v
 	test $? -ne 127
 '
+
+run_with_limited_cmdline () {
+	(ulimit -s 128 && "$@")
+}
+
+test_lazy_prereq CMDLINE_LIMIT 'run_with_limited_cmdline true'
