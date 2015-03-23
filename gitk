@@ -12393,7 +12393,7 @@ catch {
 }
 # wait for the window to become visible
 tkwait visibility .
-wm title . "$appname: [reponame]"
+wm title . "[reponame] - $appname"
 update
 readrefs
 
