@@ -71,6 +71,19 @@ int run_command_v_opt(const char **argv, int opt);
  */
 int run_command_v_opt_cd_env(const char **argv, int opt, const char *dir, const char *const *env);
 
+/**
+ * Execute the given command, capturing its stdout in the given strbuf.
+ * Returns -1 if starting the command fails or reading fails, and otherwise
+ * returns the exit code of the command. The output collected in the
+ * buffer is kept even if the command returns a non-zero exit. The hint field
+ * gives a starting size for the strbuf allocation.
+ *
+ * The fields of "cmd" should be set up as they would for a normal run_command
+ * invocation. But note that there is no need to set cmd->out; the function
+ * sets it up for the caller.
+ */
+int capture_command(struct child_process *cmd, struct strbuf *buf, size_t hint);
+
 /*
  * The purpose of the following functions is to feed a pipe by running
  * a function asynchronously and providing output that the caller reads.
