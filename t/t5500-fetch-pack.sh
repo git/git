@@ -541,13 +541,30 @@ check_prot_path () {
 	test_cmp expected actual
 }
 
-check_prot_host_path () {
-	cat >expected <<-EOF &&
+check_prot_host_port_path () {
+	local diagport
+	case "$2" in
+		*ssh*)
+		pp=ssh
+		uah=userandhost
+		ehost=$(echo $3 | tr -d "[]")
+		diagport="Diag: port=$4"
+		;;
+		*)
+		pp=$p
+		uah=hostandport
+		ehost=$(echo $3$4 | sed -e "s/22$/:22/" -e "s/NONE//")
+		diagport=""
+		;;
+	esac
+	cat >exp <<-EOF &&
 	Diag: url=$1
-	Diag: protocol=$2
-	Diag: hostandport=$3
-	Diag: path=$4
+	Diag: protocol=$pp
+	Diag: $uah=$ehost
+	$diagport
+	Diag: path=$5
 	EOF
+	grep -v "^$" exp >expected
 	git fetch-pack --diag-url "$1" >actual &&
 	test_cmp expected actual
 }
@@ -557,22 +574,20 @@ do
 	# git or ssh with scheme
 	for p in "ssh+git" "git+ssh" git ssh
 	do
-		for h in host host:12 [::1] [::1]:23
+		for h in host user@host user@[::1] user@::1
 		do
-			case "$p" in
-			*ssh*)
-				pp=ssh
-				;;
-			*)
-				pp=$p
-			;;
-			esac
 			test_expect_success "fetch-pack --diag-url $p://$h/$r" '
-				check_prot_host_path $p://$h/$r $pp "$h" "/$r"
+				check_prot_host_port_path $p://$h/$r $p "$h" NONE "/$r"
 			'
 			# "/~" -> "~" conversion
 			test_expect_success "fetch-pack --diag-url $p://$h/~$r" '
-				check_prot_host_path $p://$h/~$r $pp "$h" "~$r"
+				check_prot_host_port_path $p://$h/~$r $p "$h" NONE "~$r"
+			'
+		done
+		for h in host User@host User@[::1]
+		do
+			test_expect_success "fetch-pack --diag-url $p://$h:22/$r" '
+				check_prot_host_port_path $p://$h:22/$r $p "$h" 22 "/$r"
 			'
 		done
 	done
@@ -603,11 +618,11 @@ do
 	for h in host [::1]
 	do
 		test_expect_success "fetch-pack --diag-url $h:$r" '
-			check_prot_path $h:$r $p "$r"
+			check_prot_host_port_path $h:$r $p "$h" NONE "$r"
 		'
 		# Do "/~" -> "~" conversion
 		test_expect_success "fetch-pack --diag-url $h:/~$r" '
-			check_prot_host_path $h:/~$r $p "$h" "~$r"
+			check_prot_host_port_path $h:/~$r $p "$h" NONE "~$r"
 		'
 	done
 done
