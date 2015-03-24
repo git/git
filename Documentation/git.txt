@@ -739,7 +739,8 @@ Git so take care if using Cogito etc.
 'GIT_INDEX_VERSION'::
 	This environment variable allows the specification of an index
 	version for new repositories.  It won't affect existing index
-	files.  By default index file version [23] is used.
+	files.  By default index file version 2 or 3 is used. See
+	linkgit:git-update-index[1] for more information.
 
 'GIT_OBJECT_DIRECTORY'::
 	If the object storage directory is specified via this
