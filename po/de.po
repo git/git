@@ -1271,12 +1271,12 @@ msgstr "Kann keine Commit-Beschreibung für %s bekommen"
 #: sequencer.c:611
 #, c-format
 msgid "could not revert %s... %s"
-msgstr "Konnte \"revert\" nicht auf %s ausführen... %s"
+msgstr "Konnte \"revert\" nicht auf %s... (%s) ausführen"
 
 #: sequencer.c:612
 #, c-format
 msgid "could not apply %s... %s"
-msgstr "Konnte %s nicht anwenden... %s"
+msgstr "Konnte %s... (%s) nicht anwenden"
 
 #: sequencer.c:648
 msgid "empty commit set passed"
