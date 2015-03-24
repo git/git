@@ -35,7 +35,6 @@ test_expect_success \
 			test_have_prereq !POSIXPERM ||
 			chmod +x exec.sh
 		} &&
-		echo "utf-8" >utf-8.file &&
 		svn_cmd import -m "import for git svn" . "$svnrepo" >/dev/null
 	) &&
 	rm -rf import &&
@@ -188,13 +187,11 @@ test_expect_success !MINGW "$name" '
 name="commit with UTF-8 message: locale: $GIT_SVN_LC_ALL"
 LC_ALL="$GIT_SVN_LC_ALL"
 export LC_ALL
-test_expect_success UTF8 "$name" '
-	rm -f "$GIT_DIR"/index &&
-	git checkout -f -b mybranch5 ${remotes_git_svn} &&
-	echo "# hello" >> utf-8.file &&
-	git update-index utf-8.file &&
-	git commit -m "éï∏" &&
-	git svn set-tree HEAD'
+test_expect_success !MINGW,UTF8 "$name" "
+	echo '# hello' >> exec-2.sh &&
+	git update-index exec-2.sh &&
+	git commit -m 'éï∏' &&
+	git svn set-tree HEAD"
 unset LC_ALL
 
 name='test fetch functionality (svn => git) with alternate GIT_SVN_ID'
