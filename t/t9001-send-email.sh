@@ -817,25 +817,20 @@ test_expect_success $PREREQ '--confirm=compose' '
 	test_confirm --confirm=compose --compose
 '
 
-save_confirm () {
-	CONFIRM=$(git config --get sendemail.confirm) &&
-	test_when_finished "git config sendemail.confirm ${CONFIRM:-never}"
-}
-
 test_expect_success $PREREQ 'confirm by default (due to cc)' '
-	save_confirm &&
+	test_when_finished git config sendemail.confirm never &&
 	git config --unset sendemail.confirm &&
 	test_confirm
 '
 
 test_expect_success $PREREQ 'confirm by default (due to --compose)' '
-	save_confirm &&
+	test_when_finished git config sendemail.confirm never &&
 	git config --unset sendemail.confirm &&
 	test_confirm --suppress-cc=all --compose
 '
 
 test_expect_success $PREREQ 'confirm detects EOF (inform assumes y)' '
-	save_confirm &&
+	test_when_finished git config sendemail.confirm never &&
 	git config --unset sendemail.confirm &&
 	rm -fr outdir &&
 	git format-patch -2 -o outdir &&
@@ -848,7 +843,7 @@ test_expect_success $PREREQ 'confirm detects EOF (inform assumes y)' '
 '
 
 test_expect_success $PREREQ 'confirm detects EOF (auto causes failure)' '
-	save_confirm &&
+	test_when_finished git config sendemail.confirm never &&
 	git config sendemail.confirm auto &&
 	GIT_SEND_EMAIL_NOTTY=1 &&
 	export GIT_SEND_EMAIL_NOTTY &&
@@ -860,7 +855,7 @@ test_expect_success $PREREQ 'confirm detects EOF (auto causes failure)' '
 '
 
 test_expect_success $PREREQ 'confirm does not loop forever' '
-	save_confirm &&
+	test_when_finished git config sendemail.confirm never &&
 	git config sendemail.confirm auto &&
 	GIT_SEND_EMAIL_NOTTY=1 &&
 	export GIT_SEND_EMAIL_NOTTY &&
