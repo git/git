@@ -139,7 +139,7 @@ test_expect_success setup '
 		( printf C; zs $n ) >file-c$n &&
 		( echo D; zs $n ) >file-d$n &&
 
-		expect_pattern $n || break
+		expect_pattern $n || return 1
 
 	done >expect
 '

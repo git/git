@@ -579,7 +579,7 @@ test_expect_success 'update with arguments' '
 		cd one &&
 		for b in $(git branch -r)
 		do
-		git branch -r -d $b || break
+		git branch -r -d $b || exit 1
 		done &&
 		git remote add manduca ../mirror &&
 		git remote add megaloprepus ../mirror &&
@@ -622,7 +622,7 @@ test_expect_success 'update default' '
 		cd one &&
 		for b in $(git branch -r)
 		do
-		git branch -r -d $b || break
+		git branch -r -d $b || exit 1
 		done &&
 		git config remote.drosophila.skipDefaultUpdate true &&
 		git remote update default &&
@@ -642,7 +642,7 @@ test_expect_success 'update default (overridden, with funny whitespace)' '
 		cd one &&
 		for b in $(git branch -r)
 		do
-		git branch -r -d $b || break
+		git branch -r -d $b || exit 1
 		done &&
 		git config remotes.default "$(printf "\t drosophila  \n")" &&
 		git remote update default &&
@@ -656,7 +656,7 @@ test_expect_success 'update (with remotes.default defined)' '
 		cd one &&
 		for b in $(git branch -r)
 		do
-		git branch -r -d $b || break
+		git branch -r -d $b || exit 1
 		done &&
 		git config remotes.default "drosophila" &&
 		git remote update &&

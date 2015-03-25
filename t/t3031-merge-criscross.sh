@@ -32,7 +32,7 @@ test_expect_success 'setup repo with criss-cross history' '
 	do
 		echo $n > data/$n &&
 		n=$(($n+1)) ||
-		break
+		return 1
 	done &&
 
 	# check them in
