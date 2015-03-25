@@ -175,6 +175,100 @@ static LPWSTR fixup_commandline(LPWSTR exepath, LPWSTR *exep, int *wait,
 
 #ifdef MAGIC_RESOURCE
 
+#include <stdint.h>
+
+#pragma pack(2)
+struct resource_directory
+{
+	int8_t width;
+	int8_t height;
+	int8_t color_count;
+	int8_t reserved;
+	int16_t planes;
+	int16_t bit_count;
+	int32_t bytes_in_resource;
+	int16_t id;
+};
+
+struct header
+{
+	int16_t reserved;
+	int16_t type;
+	int16_t count;
+};
+
+struct icon_header
+{
+	int8_t width;
+	int8_t height;
+	int8_t color_count;
+	int8_t reserved;
+	int16_t planes;
+	int16_t bit_count;
+	int32_t bytes_in_resource;
+	int32_t image_offset;
+};
+
+struct icon_image
+{
+	BITMAPINFOHEADER header;
+	RGBQUAD colors;
+	int8_t xors[1];
+	int8_t ands[1];
+};
+
+struct icon
+{
+	int count;
+	struct header *header;
+	struct resource_directory *items;
+	struct icon_image **images;
+};
+
+static int parse_ico_file(LPWSTR ico_path, struct icon *result)
+{
+	struct header file_header;
+	FILE *file = _wfopen(ico_path, L"rb");
+	int i;
+
+	if (!file) {
+		fwprintf(stderr, L"could not open icon file '%s'", ico_path);
+		return 1;
+	}
+
+	fread(&file_header, sizeof(struct header), 1, file);
+	result->count = file_header.count;
+
+	result->header = malloc(sizeof(struct header) + result->count
+			* sizeof(struct resource_directory));
+	result->header->reserved = 0;
+	result->header->type = 1;
+	result->header->count = result->count;
+	result->items = (struct resource_directory *)(result->header + 1);
+	struct icon_header *icon_headers = malloc(result->count
+			* sizeof(struct icon_header));
+	fread(icon_headers, result->count * sizeof(struct icon_header),
+			1, file);
+	result->images = malloc(result->count * sizeof(struct icon_image *));
+
+	for (i = 0; i < result->count; i++) {
+		struct icon_image** image = result->images + i;
+		struct icon_header* icon_header = icon_headers + i;
+		struct resource_directory *item = result->items + i;
+
+		*image = malloc(icon_header->bytes_in_resource);
+		fseek(file, icon_header->image_offset, SEEK_SET);
+		fread(*image, icon_header->bytes_in_resource, 1, file);
+
+		memcpy(item, icon_header, sizeof(struct resource_directory));
+		item->id = (int16_t)(i + 1);
+	}
+
+	fclose(file);
+
+	return 0;
+}
+
 static int wsuffixcmp(LPWSTR text, LPWSTR suffix)
 {
 	int text_len = wcslen(text), suffix_len = wcslen(suffix);
@@ -186,9 +280,10 @@ static int wsuffixcmp(LPWSTR text, LPWSTR suffix)
 }
 
 static int edit_resources(LPWSTR exe_path,
-	LPWSTR *commands, int command_count)
+	LPWSTR ico_path, LPWSTR *commands, int command_count)
 {
 	WORD language = MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT);
+	struct icon icon;
 	HANDLE handle;
 	int i;
 
@@ -206,11 +301,39 @@ static int edit_resources(LPWSTR exe_path,
 		return -1;
 	}
 
+	if (ico_path) {
+		if (wsuffixcmp(ico_path, L".ico")) {
+			fwprintf(stderr, L"Not an .ico file: '%s'", ico_path);
+			return -1;
+		}
+		if (_waccess(ico_path, 0) == -1) {
+			fwprintf(stderr, L"File not found: '%s'", ico_path);
+			return -1;
+		}
+
+		if (parse_ico_file(ico_path, &icon))
+			return -1;
+	}
+
 	handle = BeginUpdateResource(exe_path, FALSE);
 	if (!handle) {
 		fwprintf(stderr,
 			L"Could not update resources of '%s'", exe_path);
 		return -1;
+	}
+
+	if (ico_path) {
+		int id = 1;
+		UpdateResource(handle, RT_GROUP_ICON,
+				L"MAINICON", language,
+				icon.header, sizeof(struct header) + icon.count
+					* sizeof(struct resource_directory));
+		for (i = 0; i < icon.count; i++) {
+			UpdateResource(handle, RT_ICON,
+					MAKEINTRESOURCE(id++), language,
+					icon.images[i],
+					icon.items[i].bytes_in_resource);
+		}
 	}
 
 	if (command_count >= 0) {
@@ -262,12 +385,15 @@ static int configure_via_resource(LPWSTR basename, LPWSTR exepath, LPWSTR exep,
 		wargv = CommandLineToArgvW(cmdline, &wargc);
 
 		if (wargv[1]) {
+			if (wargc == 4 && !wcscmp(wargv[1], L"icon"))
+				exit(edit_resources(wargv[2], wargv[3],
+					NULL, -1));
 			if (wargc > 1 && !wcscmp(wargv[1], L"command"))
-				exit(edit_resources(wargv[2],
+				exit(edit_resources(wargv[2], NULL,
 					wargv + 3, wargc - 3));
 		}
 		fwprintf(stderr,
-			L"Usage: %s command <exe> <args>...\n",
+			L"Usage: %s (icon | command) <exe> <args>...\n",
 			basename);
 		exit(1);
 	}
