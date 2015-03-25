@@ -8,6 +8,13 @@ has_cr() {
 	tr '\015' Q <"$1" | grep Q >/dev/null
 }
 
+# add or remove CRs to disk file in-place
+# usage: munge_cr <append|remove> <file>
+munge_cr () {
+	"${1}_cr" <"$2" >tmp &&
+	mv tmp "$2"
+}
+
 test_expect_success setup '
 
 	git config core.autocrlf false &&
@@ -100,14 +107,9 @@ test_expect_success 'update with autocrlf=input' '
 	rm -f tmp one dir/two three &&
 	git read-tree --reset -u HEAD &&
 	git config core.autocrlf input &&
-
-	for f in one dir/two
-	do
-		append_cr <$f >tmp && mv -f tmp $f &&
-		git update-index -- $f ||
-		break
-	done &&
-
+	munge_cr append one &&
+	munge_cr append dir/two &&
+	git update-index -- one dir/two &&
 	differs=$(git diff-index --cached HEAD) &&
 	verbose test -z "$differs"
 
@@ -118,14 +120,9 @@ test_expect_success 'update with autocrlf=true' '
 	rm -f tmp one dir/two three &&
 	git read-tree --reset -u HEAD &&
 	git config core.autocrlf true &&
-
-	for f in one dir/two
-	do
-		append_cr <$f >tmp && mv -f tmp $f &&
-		git update-index -- $f ||
-		break
-	done &&
-
+	munge_cr append one &&
+	munge_cr append dir/two &&
+	git update-index -- one dir/two &&
 	differs=$(git diff-index --cached HEAD) &&
 	verbose test -z "$differs"
 
@@ -136,13 +133,9 @@ test_expect_success 'checkout with autocrlf=true' '
 	rm -f tmp one dir/two three &&
 	git config core.autocrlf true &&
 	git read-tree --reset -u HEAD &&
-
-	for f in one dir/two
-	do
-		remove_cr <"$f" >tmp && mv -f tmp $f &&
-		verbose git update-index -- $f ||
-		break
-	done &&
+	munge_cr remove one &&
+	munge_cr remove dir/two &&
+	git update-index -- one dir/two &&
 	test "$one" = $(git hash-object --stdin <one) &&
 	test "$two" = $(git hash-object --stdin <dir/two) &&
 	differs=$(git diff-index --cached HEAD) &&
@@ -154,18 +147,9 @@ test_expect_success 'checkout with autocrlf=input' '
 	rm -f tmp one dir/two three &&
 	git config core.autocrlf input &&
 	git read-tree --reset -u HEAD &&
-
-	for f in one dir/two
-	do
-		if has_cr "$f"
-		then
-			echo "Eh? $f"
-			false
-			break
-		else
-			git update-index -- $f
-		fi
-	done &&
+	test_must_fail has_cr one &&
+	test_must_fail has_cr two &&
+	git update-index -- one dir/two &&
 	test "$one" = $(git hash-object --stdin <one) &&
 	test "$two" = $(git hash-object --stdin <dir/two) &&
 	differs=$(git diff-index --cached HEAD) &&
