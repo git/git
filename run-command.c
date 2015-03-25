@@ -557,7 +557,12 @@ int finish_command(struct child_process *cmd)
 
 int run_command(struct child_process *cmd)
 {
-	int code = start_command(cmd);
+	int code;
+
+	if (cmd->out < 0 || cmd->err < 0)
+		die("BUG: run_command with a pipe can cause deadlock");
+
+	code = start_command(cmd);
 	if (code)
 		return code;
 	return finish_command(cmd);
@@ -828,4 +833,20 @@ int run_hook_le(const char *const *env, const char *name, ...)
 	va_end(args);
 
 	return ret;
+}
+
+int capture_command(struct child_process *cmd, struct strbuf *buf, size_t hint)
+{
+	cmd->out = -1;
+	if (start_command(cmd) < 0)
+		return -1;
+
+	if (strbuf_read(buf, cmd->out, hint) < 0) {
+		close(cmd->out);
+		finish_command(cmd); /* throw away exit code */
+		return -1;
+	}
+
+	close(cmd->out);
+	return finish_command(cmd);
 }
