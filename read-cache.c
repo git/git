@@ -1486,18 +1486,25 @@ static struct cache_entry *create_from_disk(struct ondisk_cache_entry *ondisk,
 	return ce;
 }
 
-static void check_ce_order(struct cache_entry *ce, struct cache_entry *next_ce)
+static void check_ce_order(struct index_state *istate)
 {
-	int name_compare = strcmp(ce->name, next_ce->name);
-	if (0 < name_compare)
-		die("unordered stage entries in index");
-	if (!name_compare) {
-		if (!ce_stage(ce))
-			die("multiple stage entries for merged file '%s'",
-				ce->name);
-		if (ce_stage(ce) > ce_stage(next_ce))
-			die("unordered stage entries for '%s'",
-				ce->name);
+	unsigned int i;
+
+	for (i = 1; i < istate->cache_nr; i++) {
+		struct cache_entry *ce = istate->cache[i - 1];
+		struct cache_entry *next_ce = istate->cache[i];
+		int name_compare = strcmp(ce->name, next_ce->name);
+
+		if (0 < name_compare)
+			die("unordered stage entries in index");
+		if (!name_compare) {
+			if (!ce_stage(ce))
+				die("multiple stage entries for merged file '%s'",
+				    ce->name);
+			if (ce_stage(ce) > ce_stage(next_ce))
+				die("unordered stage entries for '%s'",
+				    ce->name);
+		}
 	}
 }
 
@@ -1562,9 +1569,6 @@ int do_read_index(struct index_state *istate, const char *path, int must_exist)
 		ce = create_from_disk(disk_ce, &consumed, previous_name);
 		set_index_entry(istate, i, ce);
 
-		if (i > 0)
-			check_ce_order(istate->cache[i - 1], ce);
-
 		src_offset += consumed;
 	}
 	strbuf_release(&previous_name_buf);
@@ -1608,11 +1612,10 @@ int read_index_from(struct index_state *istate, const char *path)
 
 	ret = do_read_index(istate, path, 0);
 	split_index = istate->split_index;
-	if (!split_index)
+	if (!split_index || is_null_sha1(split_index->base_sha1)) {
+		check_ce_order(istate);
 		return ret;
-
-	if (is_null_sha1(split_index->base_sha1))
-		return ret;
+	}
 
 	if (split_index->base)
 		discard_index(split_index->base);
@@ -1628,6 +1631,7 @@ int read_index_from(struct index_state *istate, const char *path)
 				     sha1_to_hex(split_index->base_sha1)),
 		    sha1_to_hex(split_index->base->sha1));
 	merge_base_index(istate);
+	check_ce_order(istate);
 	return ret;
 }
 
