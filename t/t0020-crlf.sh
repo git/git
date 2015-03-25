@@ -35,9 +35,7 @@ test_expect_success setup '
 	for w in Some extra lines here; do echo $w; done >>one &&
 	git diff >patch.file &&
 	patched=$(git hash-object --stdin <one) &&
-	git read-tree --reset -u HEAD &&
-
-	echo happy.
+	git read-tree --reset -u HEAD
 '
 
 test_expect_success 'safecrlf: autocrlf=input, all CRLF' '
@@ -225,29 +223,9 @@ test_expect_success '.gitattributes says two is binary' '
 	git config core.autocrlf true &&
 	git read-tree --reset -u HEAD &&
 
-	if has_cr dir/two
-	then
-		echo "Huh?"
-		false
-	else
-		: happy
-	fi &&
-
-	if has_cr one
-	then
-		: happy
-	else
-		echo "Huh?"
-		false
-	fi &&
-
-	if has_cr three
-	then
-		echo "Huh?"
-		false
-	else
-		: happy
-	fi
+	test_must_fail has_cr dir/two &&
+	verbose has_cr one &&
+	test_must_fail has_cr three
 '
 
 test_expect_success '.gitattributes says two is input' '
@@ -256,13 +234,7 @@ test_expect_success '.gitattributes says two is input' '
 	echo "two crlf=input" >.gitattributes &&
 	git read-tree --reset -u HEAD &&
 
-	if has_cr dir/two
-	then
-		echo "Huh?"
-		false
-	else
-		: happy
-	fi
+	test_must_fail has_cr dir/two
 '
 
 test_expect_success '.gitattributes says two and three are text' '
