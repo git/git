@@ -9,7 +9,7 @@ test_description='i18n settings and format-patch | am pipe'
 
 check_encoding () {
 	# Make sure characters are not corrupted
-	cnt="$1" header="$2" i=1 j=0 bad=0
+	cnt="$1" header="$2" i=1 j=0
 	while test "$i" -le $cnt
 	do
 		git format-patch --encoding=UTF-8 --stdout HEAD~$i..HEAD~$j |
@@ -20,14 +20,10 @@ check_encoding () {
 			grep "^encoding ISO8859-1" ;;
 		*)
 			grep "^encoding ISO8859-1"; test "$?" != 0 ;;
-		esac || {
-			bad=1
-			break
-		}
+		esac || return 1
 		j=$i
 		i=$(($i+1))
 	done
-	(exit $bad)
 }
 
 test_expect_success setup '
