@@ -544,16 +544,19 @@ static void filter_refs(struct fetch_pack_args *args,
 	/* Append unmatched requests to the list */
 	if (allow_tip_sha1_in_want) {
 		for (i = 0; i < nr_sought; i++) {
+			unsigned char sha1[20];
+
 			ref = sought[i];
 			if (ref->matched)
 				continue;
-			if (get_sha1_hex(ref->name, ref->old_sha1))
+			if (get_sha1_hex(ref->name, sha1) ||
+			    ref->name[40] != '\0' ||
+			    hashcmp(sha1, ref->old_sha1))
 				continue;
 
 			ref->matched = 1;
-			*newtail = ref;
-			ref->next = NULL;
-			newtail = &ref->next;
+			*newtail = copy_ref(ref);
+			newtail = &(*newtail)->next;
 		}
 	}
 	*refs = newlist;
@@ -625,7 +628,6 @@ static int everything_local(struct fetch_pack_args *args,
 
 	for (retval = 1, ref = *refs; ref ; ref = ref->next) {
 		const unsigned char *remote = ref->old_sha1;
-		unsigned char local[20];
 		struct object *o;
 
 		o = lookup_object(remote);
@@ -638,8 +640,6 @@ static int everything_local(struct fetch_pack_args *args,
 				ref->name);
 			continue;
 		}
-
-		hashcpy(ref->new_sha1, local);
 		if (!args->verbose)
 			continue;
 		fprintf(stderr,
