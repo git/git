@@ -97,7 +97,7 @@ static void setup_environment(LPWSTR exepath)
  * untouched.
  */
 static LPWSTR fixup_commandline(LPWSTR exepath, LPWSTR *exep, int *wait,
-	LPWSTR builtin, int builtin_len)
+	LPWSTR prefix_args, int prefix_args_len)
 {
 	int wargc = 0, gui = 0;
 	LPWSTR cmd = NULL, cmdline = NULL;
@@ -106,7 +106,7 @@ static LPWSTR fixup_commandline(LPWSTR exepath, LPWSTR *exep, int *wait,
 	cmdline = GetCommandLine();
 	wargv = CommandLineToArgvW(cmdline, &wargc);
 	cmd = (LPWSTR)malloc(sizeof(WCHAR) *
-		(wcslen(cmdline) + builtin_len + 1 + MAX_PATH));
+		(wcslen(cmdline) + prefix_args_len + 1 + MAX_PATH));
 	if (wargc > 1 && wcsicmp(L"gui", wargv[1]) == 0) {
 		*wait = 0;
 		if (wargc > 2 && wcsicmp(L"citool", wargv[2]) == 0) {
@@ -127,9 +127,9 @@ static LPWSTR fixup_commandline(LPWSTR exepath, LPWSTR *exep, int *wait,
 			*exep = NULL;
 		}
 	}
-	else if (builtin)
+	else if (prefix_args)
 		_swprintf(cmd, L"%s\\%s %.*s",
-			exepath, L"git.exe", builtin_len, builtin);
+			exepath, L"git.exe", prefix_args_len, prefix_args);
 	else
 		wcscpy(cmd, L"git.exe");
 
@@ -151,9 +151,9 @@ static LPWSTR fixup_commandline(LPWSTR exepath, LPWSTR *exep, int *wait,
 
 int main(void)
 {
-	int r = 1, wait = 1, builtin_len = -1;
+	int r = 1, wait = 1, prefix_args_len = -1;
 	WCHAR exepath[MAX_PATH], exe[MAX_PATH];
-	LPWSTR cmd = NULL, exep = exe, builtin = NULL, basename;
+	LPWSTR cmd = NULL, exep = exe, prefix_args = NULL, basename;
 	UINT codepage = 0;
 
 	/* get the installation location */
@@ -165,10 +165,10 @@ int main(void)
 	basename = exepath + wcslen(exepath) + 1;
 	if (!wcsncmp(basename, L"git-", 4)) {
 		/* Call a builtin */
-		builtin = basename + 4;
-		builtin_len = wcslen(builtin);
-		if (!wcscmp(builtin + builtin_len - 4, L".exe"))
-			builtin_len -= 4;
+		prefix_args = basename + 4;
+		prefix_args_len = wcslen(prefix_args);
+		if (!wcscmp(prefix_args + prefix_args_len - 4, L".exe"))
+			prefix_args_len -= 4;
 
 		/* set the default exe module */
 		wcscpy(exe, exepath);
@@ -186,9 +186,10 @@ int main(void)
 		PathAppend(exe, L"bin\\git.exe");
 	}
 
-	if (!builtin)
+	if (!prefix_args)
 		setup_environment(exepath);
-	cmd = fixup_commandline(exepath, &exep, &wait, builtin, builtin_len);
+	cmd = fixup_commandline(exepath, &exep, &wait,
+		prefix_args, prefix_args_len);
 
 	/* set the console to ANSI/GUI codepage */
 	codepage = GetConsoleCP();
