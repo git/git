@@ -228,13 +228,17 @@ int cmd_repack(int argc, const char **argv, const char *prefix)
 		get_non_kept_pack_filenames(&existing_packs);
 
 		if (existing_packs.nr && delete_redundant) {
-			if (unpack_unreachable)
+			if (unpack_unreachable) {
 				argv_array_pushf(&cmd.args,
 						"--unpack-unreachable=%s",
 						unpack_unreachable);
-			else if (pack_everything & LOOSEN_UNREACHABLE)
+				argv_array_push(&cmd.env_array, "GIT_REF_PARANOIA=1");
+			} else if (pack_everything & LOOSEN_UNREACHABLE) {
 				argv_array_push(&cmd.args,
 						"--unpack-unreachable");
+			} else {
+				argv_array_push(&cmd.env_array, "GIT_REF_PARANOIA=1");
+			}
 		}
 	} else {
 		argv_array_push(&cmd.args, "--unpacked");

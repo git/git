@@ -614,6 +614,14 @@ extern int protect_hfs;
 extern int protect_ntfs;
 
 /*
+ * Include broken refs in all ref iterations, which will
+ * generally choke dangerous operations rather than letting
+ * them silently proceed without taking the broken ref into
+ * account.
+ */
+extern int ref_paranoia;
+
+/*
  * The character that begins a commented line in user-editable file
  * that is subject to stripspace.
  */
