@@ -55,4 +55,26 @@ test_expect_success 'git diff --no-index executed outside repo gives correct err
 	)
 '
 
+test_expect_success 'diff D F and diff F D' '
+	(
+		cd repo &&
+		echo in-repo >a &&
+		echo non-repo >../non/git/a &&
+		mkdir sub &&
+		echo sub-repo >sub/a &&
+
+		test_must_fail git diff --no-index sub/a ../non/git/a >expect &&
+		test_must_fail git diff --no-index sub/a ../non/git/ >actual &&
+		test_cmp expect actual &&
+
+		test_must_fail git diff --no-index a ../non/git/a >expect &&
+		test_must_fail git diff --no-index a ../non/git/ >actual &&
+		test_cmp expect actual &&
+
+		test_must_fail git diff --no-index ../non/git/a a >expect &&
+		test_must_fail git diff --no-index ../non/git a >actual &&
+		test_cmp expect actual
+	)
+'
+
 test_done
