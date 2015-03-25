@@ -114,6 +114,16 @@ UI, Workflows & Features
  * A new "push.followTags" configuration turns the "--follow-tags"
    option on by default for the "git push" command.
 
+ * "git log --graph --no-walk A B..." is a conflicting request that
+   asks nonsense; no-walk tells us show discrete points in the
+   history, while graph asks to draw connections between these
+   discrete points. Forbid the combination.
+
+ * "git rev-list --bisect --first-parent" does not work (yet) and can
+   even cause SEGV; forbid it.  "git log --bisect --first-parent"
+   would not be useful until "git bisect --first-parent" materializes,
+   so it is also forbidden for now.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -167,6 +177,14 @@ Performance, Internal Implementation, Development Support etc.
 
  * "git push" codepath has been restructured to make it easier to add
    new configuration bits.
+
+ * The run-command interface was easy to abuse and make a pipe for us
+   to read from the process, wait for the process to finish and then
+   attempt to read its output, which is a pattern that lead to a
+   deadlock.  Fix such uses by introducing a helper to do this
+   correctly (i.e. we need to read first and then wait the process to
+   finish) and also add code to prevent such abuse in the run-command
+   helper.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -400,6 +418,37 @@ notes for details).
    that are about listing in a wrong section.
    (merge dd059c6 jk/tag-h-column-is-a-listing-option later to maint).
 
+ * "git prune" used to largely ignore broken refs when deciding which
+   objects are still being used, which could spread an existing small
+   damage and make it a larger one.
+   (merge ea56c4e jk/prune-with-corrupt-refs later to maint).
+
+ * The split-index mode introduced at v2.3.0-rc0~41 was broken in the
+   codepath to protect us against a broken reimplementation of Git
+   that writes an invalid index with duplicated index entries, etc.
+   (merge 03f15a7 tg/fix-check-order-with-split-index later to maint).
+
+ * "git fetch" that fetches a commit using the allow-tip-sha1-in-want
+   extension could have failed to fetch all the requested refs.
+   (merge 32d0462 jk/fetch-pack later to maint).
+
+ * An failure early in the "git clone" that started creating the
+   working tree and repository could have resulted in some directories
+   and files left without getting cleaned up.
+   (merge 16eff6c jk/cleanup-failed-clone later to maint).
+
+ * Recommend format-patch and send-email for those who want to submit
+   patches to this project.
+   (merge b25c469 jc/submitting-patches-mention-send-email later to maint).
+
+ * Even though "git grep --quiet" is run merely to ask for the exit
+   status, we spawned the pager regardless.  Stop doing that.
+   (merge c2048f0 ws/grep-quiet-no-pager later to maint).
+
+ * The prompt script (in contrib/) did not show the untracked sign
+   when working in a subdirectory without any untracked files.
+   (merge 9bdc517 ct/prompt-untracked-fix later to maint).
+
  * Code cleanups and documentation updates.
    (merge 2ce63e9 rs/simple-cleanups later to maint).
    (merge 33baa69 rj/no-xopen-source-for-cygwin later to maint).
@@ -412,3 +461,6 @@ notes for details).
    (merge 9a6f128 rs/deflate-init-cleanup later to maint).
    (merge 6f75d45 rs/use-isxdigit later to maint).
    (merge 376e4b3 jk/test-annoyances later to maint).
+   (merge 7032054 nd/doc-git-index-version later to maint).
+   (merge e869c5e tg/test-index-v4 later to maint).
+   (merge 599d223 jk/simplify-csum-file-sha1fd-check later to maint).
