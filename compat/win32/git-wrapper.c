@@ -116,7 +116,7 @@ static void setup_environment(LPWSTR exepath)
  * untouched.
  */
 static LPWSTR fixup_commandline(LPWSTR exepath, LPWSTR *exep, int *wait,
-	LPWSTR prefix_args, int prefix_args_len)
+	LPWSTR prefix_args, int prefix_args_len, int is_git_command)
 {
 	int wargc = 0, gui = 0;
 	LPWSTR cmd = NULL, cmdline = NULL;
@@ -146,9 +146,14 @@ static LPWSTR fixup_commandline(LPWSTR exepath, LPWSTR *exep, int *wait,
 			*exep = NULL;
 		}
 	}
-	else if (prefix_args)
-		_swprintf(cmd, L"%s\\%s %.*s",
-			exepath, L"git.exe", prefix_args_len, prefix_args);
+	else if (prefix_args) {
+		if (is_git_command)
+			_swprintf(cmd, L"%s\\%s %.*s", exepath, L"git.exe",
+					prefix_args_len, prefix_args);
+		else
+			_swprintf(cmd, L"%.*s", prefix_args_len, prefix_args);
+
+	}
 	else
 		wcscpy(cmd, L"git.exe");
 
@@ -170,9 +175,10 @@ static LPWSTR fixup_commandline(LPWSTR exepath, LPWSTR *exep, int *wait,
 
 int main(void)
 {
-	int r = 1, wait = 1, prefix_args_len = -1;
+	int r = 1, wait = 1, prefix_args_len = -1, needs_env_setup = 1,
+		is_git_command = 1, start_in_home = 0;
 	WCHAR exepath[MAX_PATH], exe[MAX_PATH];
-	LPWSTR cmd = NULL, exep = exe, prefix_args = NULL, basename;
+	LPWSTR cmd = NULL, dir = NULL, exep = exe, prefix_args = NULL, basename;
 	UINT codepage = 0;
 
 	/* Determine MSys2-based Git path. */
@@ -187,6 +193,8 @@ int main(void)
 	}
 	basename = exepath + wcslen(exepath) + 1;
 	if (!wcsncmp(basename, L"git-", 4)) {
+		needs_env_setup = 0;
+
 		/* Call a builtin */
 		prefix_args = basename + 4;
 		prefix_args_len = wcslen(prefix_args);
@@ -214,10 +222,19 @@ int main(void)
 		}
 	}
 
-	if (!prefix_args)
+	if (needs_env_setup)
 		setup_environment(exepath);
 	cmd = fixup_commandline(exepath, &exep, &wait,
-		prefix_args, prefix_args_len);
+		prefix_args, prefix_args_len, is_git_command);
+
+	if (start_in_home) {
+		int len = GetEnvironmentVariable(L"HOME", NULL, 0);
+
+		if (len) {
+			dir = malloc(sizeof(WCHAR) * len);
+			GetEnvironmentVariable(L"HOME", dir, len);
+		}
+	}
 
 	/* set the console to ANSI/GUI codepage */
 	codepage = GetConsoleCP();
@@ -238,7 +255,7 @@ int main(void)
 				TRUE, /* handles inheritable? */
 				CREATE_UNICODE_ENVIRONMENT,
 				NULL, /* environment: use parent */
-				NULL, /* starting directory: use parent */
+				dir, /* starting directory: use parent */
 				&si, &pi);
 		if (br) {
 			if (wait)
