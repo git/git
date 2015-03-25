@@ -35,4 +35,8 @@ test_expect_success 'repack does not lose detached HEAD' '
 
 '
 
+test_expect_success 'rev-list --graph --no-walk is forbidden' '
+	test_must_fail git rev-list --graph --no-walk HEAD
+'
+
 test_done

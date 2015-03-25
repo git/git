@@ -99,7 +99,7 @@ do
 		test_cmp "$expect" actual
 	'
 
-	test "$cmd" != diff || continue
+	case "$cmd" in diff|show) continue;; esac
 
 	test_expect_success "$cmd --graph $verb COLUMNS (big change)" '
 		COLUMNS=200 git $cmd $args --graph >output
@@ -127,7 +127,7 @@ do
 		test_cmp "$expect" actual
 	'
 
-	test "$cmd" != diff || continue
+	case "$cmd" in diff|show) continue;; esac
 
 	test_expect_success "$cmd --graph $verb not enough COLUMNS (big change)" '
 		COLUMNS=40 git $cmd $args --graph >output
@@ -155,7 +155,7 @@ do
 		test_cmp "$expect" actual
 	'
 
-	test "$cmd" != diff || continue
+	case "$cmd" in diff|show) continue;; esac
 
 	test_expect_success "$cmd --graph $verb statGraphWidth config" '
 		git -c diff.statGraphWidth=26 $cmd $args --graph >output
@@ -196,7 +196,7 @@ do
 		test_cmp expect actual
 	'
 
-	test "$cmd" != diff || continue
+	case "$cmd" in diff|show) continue;; esac
 
 	test_expect_success "$cmd --stat-width=width --graph with big change" '
 		git $cmd $args --stat-width=40 --graph >output
@@ -236,7 +236,7 @@ do
 		test_cmp expect actual
 	'
 
-	test "$cmd" != diff || continue
+	case "$cmd" in diff|show) continue;; esac
 
 	test_expect_success "$cmd --stat=width --graph with big change is balanced" '
 		git $cmd $args --stat-width=60 --graph >output &&
@@ -270,7 +270,7 @@ do
 		test_cmp "$expect" actual
 	'
 
-	test "$cmd" != diff || continue
+	case "$cmd" in diff|show) continue;; esac
 
 	test_expect_success "$cmd --graph $verb COLUMNS (long filename)" '
 		COLUMNS=200 git $cmd $args --graph >output
@@ -299,7 +299,7 @@ do
 		test_cmp "$expect" actual
 	'
 
-	test "$cmd" != diff || continue
+	case "$cmd" in diff|show) continue;; esac
 
 	test_expect_success COLUMNS_CAN_BE_1 \
 		"$cmd --graph $verb prefix greater than COLUMNS (big change)" '

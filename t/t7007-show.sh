@@ -124,4 +124,8 @@ test_expect_success '--quiet suppresses diff' '
 	test_cmp expect actual
 '
 
+test_expect_success 'show --graph is forbidden' '
+  test_must_fail git show --graph HEAD
+'
+
 test_done
