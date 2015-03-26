@@ -334,7 +334,7 @@ true)
 	eval="git-merge $diffstat $no_commit $verify_signatures $edit $squash $no_ff $ff_only"
 	eval="$eval $log_arg $strategy_args $merge_args $verbosity $progress"
 	eval="$eval $gpg_sign_args"
-	eval="$eval \"\$merge_name\" HEAD $merge_head"
+	eval="$eval -m \"\$merge_name\" $merge_head"
 	;;
 esac
 eval "exec $eval"
