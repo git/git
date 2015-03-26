@@ -58,7 +58,7 @@ to `die` or `error` as-is.  For example:
 	if (ref_transaction_commit(transaction, &err))
 		die("%s", err.buf);
 
-The 'err' parameter will be untouched if no error occured, so multiple
+The 'err' parameter will be untouched if no error occurred, so multiple
 function calls can be chained:
 
 	t = ref_transaction_begin(&err);
