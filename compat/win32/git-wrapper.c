@@ -173,6 +173,102 @@ static LPWSTR fixup_commandline(LPWSTR exepath, LPWSTR *exep, int *wait,
 	return cmd;
 }
 
+static int configure_via_resource(LPWSTR basename, LPWSTR exepath, LPWSTR exep,
+	LPWSTR *prefix_args, int *prefix_args_len,
+	int *is_git_command, int *start_in_home)
+{
+	int id, wargc;
+	LPWSTR *wargv;
+
+#define BUFSIZE 65536
+	static WCHAR buf[BUFSIZE];
+	int len;
+
+	for (id = 0; ; id++) {
+		len = LoadString(NULL, id, buf, BUFSIZE);
+
+		if (!len) {
+			if (!id)
+				return 0; /* no resources found */
+
+			fwprintf(stderr, L"Need a valid command-line; "
+				L"Edit the string resources accordingly\n");
+			exit(1);
+		}
+
+		if (len >= BUFSIZE) {
+			fwprintf(stderr,
+				L"Could not read resource (too large)\n");
+			exit(1);
+		}
+
+		buf[len] = L'\0';
+
+		if (!id)
+			SetEnvironmentVariable(L"EXEPATH", exepath);
+
+		for (;;) {
+			LPWSTR atat = wcsstr(buf, L"@@"), atat2;
+			WCHAR save;
+			int env_len, delta;
+
+			if (!atat)
+				break;
+
+			atat2 = wcsstr(atat + 2, L"@@");
+			if (!atat2)
+				break;
+
+			*atat2 = L'\0';
+			env_len = GetEnvironmentVariable(atat + 2, NULL, 0);
+			delta = env_len - 1 - (atat2 + 2 - atat);
+			if (len + delta >= BUFSIZE) {
+				fwprintf(stderr,
+					L"Substituting '%s' results in too "
+					L"large a command-line\n", atat + 2);
+				exit(1);
+			}
+			if (delta)
+				memmove(atat2 + 2 + delta, atat2 + 2,
+					sizeof(WCHAR) * (len + 1
+						- (atat2 + 2 - buf)));
+			len += delta;
+			save = atat[env_len - 1];
+			GetEnvironmentVariable(atat + 2, atat, env_len);
+			atat[env_len - 1] = save;
+		}
+
+		/* parse first argument */
+		wargv = CommandLineToArgvW(buf, &wargc);
+		if (wargc < 1) {
+			fwprintf(stderr, L"Invalid command-line: '%s'\n", buf);
+			exit(1);
+		}
+		if (*wargv[0] == L'\\' ||
+				(isalpha(*wargv[0]) && wargv[0][1] == L':'))
+			wcscpy(exep, wargv[0]);
+		else {
+			wcscpy(exep, exepath);
+			PathAppend(exep, wargv[0]);
+		}
+		LocalFree(wargv);
+
+		if (_waccess(exep, 0) != -1)
+			break;
+		fwprintf(stderr,
+			L"Skipping command-line '%s'\n('%s' not found)\n",
+			buf, exep);
+	}
+
+	*prefix_args = buf;
+	*prefix_args_len = wcslen(buf);
+
+	*is_git_command = 0;
+	*start_in_home = 1;
+
+	return 1;
+}
+
 int main(void)
 {
 	int r = 1, wait = 1, prefix_args_len = -1, needs_env_setup = 1,
@@ -192,7 +288,12 @@ int main(void)
 		ExitProcess(1);
 	}
 	basename = exepath + wcslen(exepath) + 1;
-	if (!wcsncmp(basename, L"git-", 4)) {
+	if (configure_via_resource(basename, exepath, exep,
+			&prefix_args, &prefix_args_len,
+			&is_git_command, &start_in_home)) {
+		/* do nothing */
+	}
+	else if (!wcsncmp(basename, L"git-", 4)) {
 		needs_env_setup = 0;
 
 		/* Call a builtin */
