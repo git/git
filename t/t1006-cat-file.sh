@@ -274,7 +274,7 @@ test_expect_success 'setup blobs which are likely to delta' '
 '
 
 test_expect_success 'confirm that neither loose blob is a delta' '
-	cat >expect <<-EOF
+	cat >expect <<-EOF &&
 	$_z40
 	$_z40
 	EOF

@@ -147,7 +147,7 @@ test_expect_success '--single-branch with detached' '
 		git for-each-ref refs/remotes/origin |
 		sed -e "/HEAD$/d" \
 		    -e "s|/remotes/origin/|/heads/|" >../actual
-	)
+	) &&
 	# nothing
 	>expect &&
 	test_cmp expect actual

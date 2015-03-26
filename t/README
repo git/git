@@ -168,6 +168,16 @@ appropriately before running "make".
 	Using this option with a RAM-based filesystem (such as tmpfs)
 	can massively speed up the test suite.
 
+--chain-lint::
+--no-chain-lint::
+	If --chain-lint is enabled, the test harness will check each
+	test to make sure that it properly "&&-chains" all commands (so
+	that a failure in the middle does not go unnoticed by the final
+	exit code of the test). This check is performed in addition to
+	running the tests themselves. You may also enable or disable
+	this feature by setting the GIT_TEST_CHAIN_LINT environment
+	variable to "1" or "0", respectively.
+
 You can also set the GIT_TEST_INSTALLED environment variable to
 the bindir of an existing git installation to test that installation.
 You still need to have built this git sandbox, from which various

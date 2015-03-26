@@ -55,14 +55,11 @@ test_expect_success 'git update-index --add to add various paths.' '
 	: >path9 &&
 	date >path10 &&
 	git update-index --add -- path0 path?/file? pathx/ju path7 path8 path9 path10 &&
-	for i in 1 2
-	do
-		git init submod$i &&
-		(
-			cd submod$i && git commit --allow-empty -m "empty $i"
-		) || break
-	done &&
-	git update-index --add submod[12]
+	git init submod1 &&
+	git -C submod1 commit --allow-empty -m "empty 1" &&
+	git init submod2 &&
+	git -C submod2 commit --allow-empty -m "empty 2" &&
+	git update-index --add submod[12] &&
 	(
 		cd submod1 &&
 		git commit --allow-empty -m "empty 1 (updated)"
@@ -99,12 +96,12 @@ test_expect_success 'git ls-files -k to show killed files.' '
 '
 
 test_expect_success 'git ls-files -k output (w/o icase)' '
-	git ls-files -k >.output
+	git ls-files -k >.output &&
 	test_cmp .expected .output
 '
 
 test_expect_success 'git ls-files -k output (w/ icase)' '
-	git -c core.ignorecase=true ls-files -k >.output
+	git -c core.ignorecase=true ls-files -k >.output &&
 	test_cmp .expected .output
 '
 

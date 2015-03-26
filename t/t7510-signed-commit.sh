@@ -42,7 +42,7 @@ test_expect_success GPG 'create signed commits' '
 	git tag seventh-unsigned &&
 
 	test_tick && git rebase -f HEAD^^ && git tag sixth-signed HEAD^ &&
-	git tag seventh-signed
+	git tag seventh-signed &&
 
 	echo 8 >file && test_tick && git commit -a -m eighth -SB7227189 &&
 	git tag eighth-signed-alt

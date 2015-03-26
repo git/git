@@ -528,10 +528,12 @@ test_expect_success 'diff --submodule with objects referenced by alternates' '
 		sha1_before=$(git rev-parse --short HEAD)
 		echo b >b &&
 		git add b &&
-		git commit -m b
-		sha1_after=$(git rev-parse --short HEAD)
-		echo "Submodule sub $sha1_before..$sha1_after:
-  > b" >../expected
+		git commit -m b &&
+		sha1_after=$(git rev-parse --short HEAD) &&
+		{
+			echo "Submodule sub $sha1_before..$sha1_after:" &&
+			echo "  > b"
+		} >../expected
 	) &&
 	(cd super &&
 		(cd sub &&
@@ -539,7 +541,7 @@ test_expect_success 'diff --submodule with objects referenced by alternates' '
 			git checkout origin/master
 		) &&
 		git diff --submodule > ../actual
-	)
+	) &&
 	test_cmp expected actual
 '
 

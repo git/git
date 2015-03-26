@@ -229,6 +229,12 @@ do
 	--root=*)
 		root=$(expr "z$1" : 'z[^=]*=\(.*\)')
 		shift ;;
+	--chain-lint)
+		GIT_TEST_CHAIN_LINT=1
+		shift ;;
+	--no-chain-lint)
+		GIT_TEST_CHAIN_LINT=0
+		shift ;;
 	-x)
 		trace=t
 		verbose=t
@@ -522,6 +528,16 @@ test_eval_ () {
 test_run_ () {
 	test_cleanup=:
 	expecting_failure=$2
+
+	if test "${GIT_TEST_CHAIN_LINT:-0}" != 0; then
+		# 117 is magic because it is unlikely to match the exit
+		# code of other programs
+		test_eval_ "(exit 117) && $1"
+		if test "$?" != 117; then
+			error "bug in the test script: broken &&-chain: $1"
+		fi
+	fi
+
 	setup_malloc_check
 	test_eval_ "$1"
 	eval_ret=$?

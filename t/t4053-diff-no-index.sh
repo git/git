@@ -17,8 +17,8 @@ test_expect_success 'setup' '
 '
 
 test_expect_success 'git diff --no-index directories' '
-	git diff --no-index a b >cnt
-	test $? = 1 && test_line_count = 14 cnt
+	test_expect_code 1 git diff --no-index a b >cnt &&
+	test_line_count = 14 cnt
 '
 
 test_expect_success 'git diff --no-index relative path outside repo' '

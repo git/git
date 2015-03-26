@@ -119,10 +119,7 @@ test_expect_success C_LOCALE_OUTPUT 'git clean with relative prefix' '
 		git clean -n ../src |
 		sed -n -e "s|^Would remove ||p"
 	) &&
-	test "$would_clean" = ../src/part3.c || {
-		echo "OOps <$would_clean>"
-		false
-	}
+	verbose test "$would_clean" = ../src/part3.c
 '
 
 test_expect_success C_LOCALE_OUTPUT 'git clean with absolute path' '
@@ -134,10 +131,7 @@ test_expect_success C_LOCALE_OUTPUT 'git clean with absolute path' '
 		git clean -n "$(pwd)/../src" |
 		sed -n -e "s|^Would remove ||p"
 	) &&
-	test "$would_clean" = ../src/part3.c || {
-		echo "OOps <$would_clean>"
-		false
-	}
+	verbose test "$would_clean" = ../src/part3.c
 '
 
 test_expect_success 'git clean with out of work tree relative path' '

@@ -568,7 +568,7 @@ test_expect_success 'complete files' '
 	test_completion "git commit " "modified" &&
 
 	: TODO .gitignore should not be here &&
-	test_completion "git ls-files " <<-\EOF
+	test_completion "git ls-files " <<-\EOF &&
 	.gitignore
 	dir
 	modified

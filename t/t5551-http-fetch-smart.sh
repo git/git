@@ -83,7 +83,7 @@ test_expect_success 'clone http repository' '
 test_expect_success 'fetch changes via http' '
 	echo content >>file &&
 	git commit -a -m two &&
-	git push public
+	git push public &&
 	(cd clone && git pull) &&
 	test_cmp file clone/file
 '
@@ -169,7 +169,7 @@ test_expect_success 'GIT_SMART_HTTP can disable smart http' '
 '
 
 test_expect_success 'invalid Content-Type rejected' '
-	test_must_fail git clone $HTTPD_URL/broken_smart/repo.git 2>actual
+	test_must_fail git clone $HTTPD_URL/broken_smart/repo.git 2>actual &&
 	grep "not valid:" actual
 '
 
@@ -209,7 +209,7 @@ test_expect_success 'cookies stored in http.cookiefile when http.savecookies set
 	git config http.cookiefile cookies.txt &&
 	git config http.savecookies true &&
 	git ls-remote $HTTPD_URL/smart_cookies/repo.git master &&
-	tail -3 cookies.txt > cookies_tail.txt
+	tail -3 cookies.txt >cookies_tail.txt &&
 	test_cmp expect_cookies.txt cookies_tail.txt
 '
 

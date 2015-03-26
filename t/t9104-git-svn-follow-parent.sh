@@ -72,16 +72,18 @@ test_expect_success 'follow larger parent' '
         svn import -m "import a larger parent" import "$svnrepo"/larger-parent &&
         svn cp -m "hi" "$svnrepo"/larger-parent "$svnrepo"/another-larger &&
         git svn init --minimize-url -i larger \
-          "$svnrepo"/another-larger/trunk/thunk/bump/thud &&
+	  "$svnrepo"/larger-parent/trunk/thunk/bump/thud &&
         git svn fetch -i larger &&
+	git svn init --minimize-url -i larger-parent \
+	  "$svnrepo"/another-larger/trunk/thunk/bump/thud &&
+	git svn fetch -i larger-parent &&
         git rev-parse --verify refs/remotes/larger &&
         git rev-parse --verify \
-           refs/remotes/larger-parent/trunk/thunk/bump/thud &&
+	   refs/remotes/larger-parent &&
         test "`git merge-base \
-                 refs/remotes/larger-parent/trunk/thunk/bump/thud \
+		 refs/remotes/larger-parent \
                  refs/remotes/larger`" = \
              "`git rev-parse refs/remotes/larger`"
-        true
         '
 
 test_expect_success 'follow higher-level parent' '

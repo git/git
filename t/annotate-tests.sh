@@ -405,7 +405,7 @@ test_expect_success 'setup -L :regex' '
 	mv hello.c hello.orig &&
 	echo "#include <stdio.h>" >hello.c &&
 	cat hello.orig >>hello.c &&
-	tr Q "\\t" >>hello.c <<-\EOF
+	tr Q "\\t" >>hello.c <<-\EOF &&
 	void mail()
 	{
 	Qputs("mail");

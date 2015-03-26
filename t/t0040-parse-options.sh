@@ -172,12 +172,9 @@ test_expect_success 'long options' '
 '
 
 test_expect_success 'missing required value' '
-	test-parse-options -s;
-	test $? = 129 &&
-	test-parse-options --string;
-	test $? = 129 &&
-	test-parse-options --file;
-	test $? = 129
+	test_expect_code 129 test-parse-options -s &&
+	test_expect_code 129 test-parse-options --string &&
+	test_expect_code 129 test-parse-options --file
 '
 
 cat > expect << EOF
@@ -227,8 +224,7 @@ test_expect_success 'unambiguously abbreviated option with "="' '
 '
 
 test_expect_success 'ambiguously abbreviated option' '
-	test-parse-options --strin 123;
-	test $? = 129
+	test_expect_code 129 test-parse-options --strin 123
 '
 
 cat > expect << EOF

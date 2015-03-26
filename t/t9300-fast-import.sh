@@ -1132,7 +1132,7 @@ test_expect_success \
 	 compare_diff_raw expect actual'
 
 test_expect_success PIPE 'N: read and copy directory' '
-	cat >expect <<-\EOF
+	cat >expect <<-\EOF &&
 	:100755 100755 f1fb5da718392694d0076d677d6d0e364c79b0bc f1fb5da718392694d0076d677d6d0e364c79b0bc C100	file2/newf	file3/newf
 	:100644 100644 7123f7f44e39be127c5eb701e5968176ee9d78b1 7123f7f44e39be127c5eb701e5968176ee9d78b1 C100	file2/oldf	file3/oldf
 	EOF
@@ -2228,7 +2228,7 @@ test_expect_success 'R: feature import-marks-if-exists' '
 	>expect &&
 
 	git fast-import --import-marks-if-exists=not_io.marks \
-			--export-marks=io.marks <<-\EOF
+			--export-marks=io.marks <<-\EOF &&
 	feature import-marks-if-exists=io.marks
 	EOF
 	test_cmp expect io.marks
@@ -2853,8 +2853,8 @@ test_expect_success 'S: notemodify with garbage after mark commit-ish must fail'
 # from
 #
 test_expect_success 'S: from with garbage after mark must fail' '
-	# no &&
-	git fast-import --import-marks=marks --export-marks=marks <<-EOF 2>err
+	test_must_fail \
+	git fast-import --import-marks=marks --export-marks=marks <<-EOF 2>err &&
 	commit refs/heads/S2
 	mark :303
 	committer $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL> $GIT_COMMITTER_DATE
@@ -2865,9 +2865,6 @@ test_expect_success 'S: from with garbage after mark must fail' '
 	M 100644 :403 hello.c
 	EOF
 
-	ret=$? &&
-	echo returned $ret &&
-	test $ret -ne 0 && # failed, but it created the commit
 
 	# go create the commit, need it for merge test
 	git fast-import --import-marks=marks --export-marks=marks <<-EOF &&

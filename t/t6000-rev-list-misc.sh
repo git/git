@@ -42,7 +42,7 @@ test_expect_success 'rev-list --objects with pathspecs and copied files' '
 	test_tick &&
 	git commit -m that &&
 
-	ONE=$(git rev-parse HEAD:one)
+	ONE=$(git rev-parse HEAD:one) &&
 	git rev-list --objects HEAD two >output &&
 	grep "$ONE two/three" output &&
 	! grep one output
@@ -85,7 +85,7 @@ test_expect_success 'rev-list can show index objects' '
 	#   - we do not show the root tree; since we updated the index, it
 	#     does not have a valid cache tree
 	#
-	cat >expect <<-\EOF
+	cat >expect <<-\EOF &&
 	8e4020bb5a8d8c873b25de15933e75cc0fc275df one
 	d9d3a7417b9605cfd88ee6306b28dadc29e6ab08 only-in-index
 	9200b628cf9dc883a85a7abc8d6e6730baee589c two

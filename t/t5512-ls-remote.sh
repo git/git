@@ -103,8 +103,10 @@ test_expect_success 'confuses pattern as remote when no remote specified' '
 '
 
 test_expect_success 'die with non-2 for wrong repository even with --exit-code' '
-	git ls-remote --exit-code ./no-such-repository ;# not &&
-	status=$? &&
+	{
+		git ls-remote --exit-code ./no-such-repository
+		status=$?
+	} &&
 	test $status != 2 && test $status != 0
 '
 

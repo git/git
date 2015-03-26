@@ -802,7 +802,7 @@ test_expect_success '--no-signature suppresses format.signaturefile ' '
 '
 
 test_expect_success '--signature-file overrides format.signaturefile' '
-	cat >other-mail-signature <<-\EOF
+	cat >other-mail-signature <<-\EOF &&
 	Use this other signature instead of mail-signature.
 	EOF
 	test_config format.signaturefile mail-signature &&

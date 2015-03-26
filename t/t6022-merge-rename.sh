@@ -685,7 +685,7 @@ test_expect_success 'setup avoid unnecessary update, dir->(file,nothing)' '
 	git add -A &&
 	git commit -mA &&
 
-	git checkout -b side
+	git checkout -b side &&
 	git rm -rf df &&
 	git commit -mB &&
 
@@ -716,7 +716,7 @@ test_expect_success 'setup avoid unnecessary update, modify/delete' '
 	git add -A &&
 	git commit -mA &&
 
-	git checkout -b side
+	git checkout -b side &&
 	git rm -f file &&
 	git commit -m "Delete file" &&
 
@@ -745,7 +745,7 @@ test_expect_success 'setup avoid unnecessary update, rename/add-dest' '
 	git add -A &&
 	git commit -mA &&
 
-	git checkout -b side
+	git checkout -b side &&
 	cp file newfile &&
 	git add -A &&
 	git commit -m "Add file copy" &&

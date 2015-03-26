@@ -91,7 +91,7 @@ test_perf_create_repo_from () {
 				*/objects|*/hooks|*/config)
 					;;
 				*)
-					cp -R "$stuff" . || break
+					cp -R "$stuff" . || exit 1
 					;;
 			esac
 		done &&

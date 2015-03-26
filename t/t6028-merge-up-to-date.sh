@@ -83,7 +83,7 @@ test_expect_success 'merge fast-forward octopus' '
 
 	git reset --hard c0 &&
 	test_tick &&
-	git merge c1 c2
+	git merge c1 c2 &&
 	expect=$(git rev-parse c2) &&
 	current=$(git rev-parse HEAD) &&
 	test "$expect" = "$current"

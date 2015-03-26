@@ -124,7 +124,7 @@ test_expect_success 'fetch --prune handles overlapping refspecs' '
 	git rev-parse origin/master &&
 	git rev-parse origin/pr/42 &&
 
-	git config --unset-all remote.origin.fetch
+	git config --unset-all remote.origin.fetch &&
 	git config remote.origin.fetch refs/pull/*/head:refs/remotes/origin/pr/* &&
 	git config --add remote.origin.fetch refs/heads/*:refs/remotes/origin/* &&
 
@@ -596,7 +596,7 @@ test_configured_prune () {
 			test_unconfig remote.origin.prune &&
 			git fetch &&
 			git rev-parse --verify refs/remotes/origin/newbranch
-		)
+		) &&
 
 		# now remove it
 		git branch -d newbranch &&

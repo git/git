@@ -158,7 +158,7 @@ test_http_push_nonff "$HTTPD_DOCUMENT_ROOT_PATH"/test_repo.git \
 test_expect_success 'push fails for non-fast-forward refs unmatched by remote helper' '
 	# create a dissimilarly-named remote ref so that git is unable to match the
 	# two refs (viz. local, remote) unless an explicit refspec is provided.
-	git push origin master:retsam
+	git push origin master:retsam &&
 
 	echo "change changed" > path2 &&
 	git commit -a -m path2 --amend &&

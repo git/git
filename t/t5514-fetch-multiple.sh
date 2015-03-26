@@ -120,7 +120,7 @@ test_expect_success 'git fetch --all (skipFetchAll)' '
 	(cd test4 &&
 	 for b in $(git branch -r)
 	 do
-		git branch -r -d $b || break
+		git branch -r -d $b || exit 1
 	 done &&
 	 git remote add three ../three &&
 	 git config remote.three.skipFetchAll true &&
@@ -144,7 +144,7 @@ test_expect_success 'git fetch --multiple (ignoring skipFetchAll)' '
 	(cd test4 &&
 	 for b in $(git branch -r)
 	 do
-		git branch -r -d $b || break
+		git branch -r -d $b || exit 1
 	 done &&
 	 git fetch --multiple one two three &&
 	 git branch -r > output &&
