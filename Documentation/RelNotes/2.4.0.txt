@@ -186,6 +186,11 @@ Performance, Internal Implementation, Development Support etc.
    finish) and also add code to prevent such abuse in the run-command
    helper.
 
+ * People often forget to chain the commands in their test together
+   with &&, leaving a failure from an earlier command in the test go
+   unnoticed.  The new GIT_TEST_CHAIN_LINT mechanism allows you to
+   catch such a mistake more easily.
+
 
 Also contains various documentation updates and code clean-ups.
 
@@ -464,3 +469,5 @@ notes for details).
    (merge 7032054 nd/doc-git-index-version later to maint).
    (merge e869c5e tg/test-index-v4 later to maint).
    (merge 599d223 jk/simplify-csum-file-sha1fd-check later to maint).
+   (merge 260d585 sg/completion-gitcomp-nl-for-refs later to maint).
+   (merge 777c55a jc/report-path-error-to-dir later to maint).
