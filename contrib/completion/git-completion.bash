@@ -1302,7 +1302,7 @@ _git_gitk ()
 }
 
 __git_match_ctag() {
-	awk "/^${1////\\/}/ { print \$1 }" "$2"
+	awk "/^${1//\//\\/}/ { print \$1 }" "$2"
 }
 
 _git_grep ()
