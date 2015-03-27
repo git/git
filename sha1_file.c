@@ -3418,7 +3418,7 @@ static int loose_from_alt_odb(struct alternate_object_database *alt,
 	return r;
 }
 
-int for_each_loose_object(each_loose_object_fn cb, void *data)
+int for_each_loose_object(each_loose_object_fn cb, void *data, unsigned flags)
 {
 	struct loose_alt_odb_data alt;
 	int r;
@@ -3427,6 +3427,9 @@ int for_each_loose_object(each_loose_object_fn cb, void *data)
 					  cb, NULL, NULL, data);
 	if (r)
 		return r;
+
+	if (flags & FOR_EACH_OBJECT_LOCAL_ONLY)
+		return 0;
 
 	alt.cb = cb;
 	alt.data = data;
@@ -3452,13 +3455,15 @@ static int for_each_object_in_pack(struct packed_git *p, each_packed_object_fn c
 	return r;
 }
 
-int for_each_packed_object(each_packed_object_fn cb, void *data)
+int for_each_packed_object(each_packed_object_fn cb, void *data, unsigned flags)
 {
 	struct packed_git *p;
 	int r = 0;
 
 	prepare_packed_git();
 	for (p = packed_git; p; p = p->next) {
+		if ((flags & FOR_EACH_OBJECT_LOCAL_ONLY) && !p->pack_local)
+			continue;
 		r = for_each_object_in_pack(p, cb, data);
 		if (r)
 			break;

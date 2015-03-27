@@ -1283,14 +1283,16 @@ int for_each_loose_file_in_objdir_buf(struct strbuf *path,
 
 /*
  * Iterate over loose and packed objects in both the local
- * repository and any alternates repositories.
+ * repository and any alternates repositories (unless the
+ * LOCAL_ONLY flag is set).
  */
+#define FOR_EACH_OBJECT_LOCAL_ONLY 0x1
 typedef int each_packed_object_fn(const unsigned char *sha1,
 				  struct packed_git *pack,
 				  uint32_t pos,
 				  void *data);
-extern int for_each_loose_object(each_loose_object_fn, void *);
-extern int for_each_packed_object(each_packed_object_fn, void *);
+extern int for_each_loose_object(each_loose_object_fn, void *, unsigned flags);
+extern int for_each_packed_object(each_packed_object_fn, void *, unsigned flags);
 
 struct object_info {
 	/* Request */
