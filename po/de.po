@@ -4613,7 +4613,7 @@ msgstr "Ungültiger \"cleanup\" Modus %s"
 
 #: builtin/commit.c:1218
 msgid "Paths with -a does not make sense."
-msgstr "Die Option -a kann nur mit der Angabe von Pfaden verwendet werden."
+msgstr "Die Option -a kann nicht mit der Angabe von Pfaden verwendet werden."
 
 #: builtin/commit.c:1328 builtin/commit.c:1608
 msgid "show status concisely"
