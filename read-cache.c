@@ -681,15 +681,18 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 	alias = index_file_exists(istate, ce->name, ce_namelen(ce), ignore_case);
 	if (alias && !ce_stage(alias) && !ie_match_stat(istate, alias, st, ce_option)) {
 		/* Nothing changed, really */
-		free(ce);
 		if (!S_ISGITLINK(alias->ce_mode))
 			ce_mark_uptodate(alias);
 		alias->ce_flags |= CE_ADDED;
+
+		free(ce);
 		return 0;
 	}
 	if (!intent_only) {
-		if (index_path(ce->sha1, path, st, HASH_WRITE_OBJECT))
+		if (index_path(ce->sha1, path, st, HASH_WRITE_OBJECT)) {
+			free(ce);
 			return error("unable to index file %s", path);
+		}
 	} else
 		set_object_name_for_intent_to_add_entry(ce);
 
@@ -704,9 +707,11 @@ int add_to_index(struct index_state *istate, const char *path, struct stat *st, 
 		    ce->ce_mode == alias->ce_mode);
 
 	if (pretend)
-		;
-	else if (add_index_entry(istate, ce, add_option))
-		return error("unable to add %s to index",path);
+		free(ce);
+	else if (add_index_entry(istate, ce, add_option)) {
+		free(ce);
+		return error("unable to add %s to index", path);
+	}
 	if (verbose && !was_same)
 		printf("add '%s'\n", path);
 	return 0;
@@ -743,12 +748,9 @@ struct cache_entry *make_cache_entry(unsigned int mode,
 	ce->ce_mode = create_ce_mode(mode);
 
 	ret = refresh_cache_entry(ce, refresh_options);
-	if (!ret) {
+	if (ret != ce)
 		free(ce);
-		return NULL;
-	} else {
-		return ret;
-	}
+	return ret;
 }
 
 int ce_same_name(const struct cache_entry *a, const struct cache_entry *b)

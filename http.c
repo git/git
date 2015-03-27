@@ -1462,6 +1462,7 @@ void release_http_pack_request(struct http_pack_request *preq)
 	}
 	preq->slot = NULL;
 	free(preq->url);
+	free(preq);
 }
 
 int finish_http_pack_request(struct http_pack_request *preq)

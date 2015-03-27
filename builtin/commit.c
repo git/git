@@ -229,7 +229,7 @@ static int commit_index_files(void)
 static int list_paths(struct string_list *list, const char *with_tree,
 		      const char *prefix, const struct pathspec *pattern)
 {
-	int i;
+	int i, ret;
 	char *m;
 
 	if (!pattern->nr)
@@ -256,7 +256,9 @@ static int list_paths(struct string_list *list, const char *with_tree,
 			item->util = item; /* better a valid pointer than a fake one */
 	}
 
-	return report_path_error(m, pattern, prefix);
+	ret = report_path_error(m, pattern, prefix);
+	free(m);
+	return ret;
 }
 
 static void add_remove_files(struct string_list *list)
