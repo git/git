@@ -213,6 +213,17 @@ test_expect_success 'cookies stored in http.cookiefile when http.savecookies set
 	test_cmp expect_cookies.txt cookies_tail.txt
 '
 
+test_expect_success 'transfer.hiderefs works over smart-http' '
+	test_commit hidden &&
+	test_commit visible &&
+	git push public HEAD^:refs/heads/a HEAD:refs/heads/b &&
+	git --git-dir="$HTTPD_DOCUMENT_ROOT_PATH/repo.git" \
+		config transfer.hiderefs refs/heads/a &&
+	git clone --bare "$HTTPD_URL/smart/repo.git" hidden.git &&
+	test_must_fail git -C hidden.git rev-parse --verify a &&
+	git -C hidden.git rev-parse --verify b
+'
+
 test_expect_success EXPENSIVE 'create 50,000 tags in the repo' '
 	(
 	cd "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
