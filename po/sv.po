@@ -3,20 +3,22 @@
 # This file is distributed under the same license as the gitk package.
 #
 # Mikael Magnusson <mikachu@gmail.com>, 2008.
-# Peter Krefting <peter@softwolves.pp.se>, 2008, 2009, 2010, 2012, 2013.
+# Peter Krefting <peter@softwolves.pp.se>, 2008, 2009, 2010, 2012, 2013, 2015.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: sv\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-03-15 14:37+1100\n"
-"PO-Revision-Date: 2013-05-16 08:12+0100\n"
+"PO-Revision-Date: 2015-03-27 10:31+0100\n"
 "Last-Translator: Peter Krefting <peter@softwolves.pp.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
 "Language: sv\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Gtranslator 2.91.6\n"
 
 #: gitk:140
 msgid "Couldn't get list of unmerged files:"
@@ -352,7 +354,6 @@ msgid "Run git gui blame on this line"
 msgstr "Kör git gui blame på den här raden"
 
 #: gitk:3011
-#, fuzzy
 msgid ""
 "\n"
 "Gitk - a commit viewer for git\n"
@@ -364,7 +365,23 @@ msgstr ""
 "\n"
 "Gitk - en incheckningsvisare för git\n"
 "\n"
-"Copyright ©9 2005-2011 Paul Mackerras\n"
+"Copyright © 2005-2014 Paul Mackerras\n"
+"\n"
+"Använd och vidareförmedla enligt villkoren i GNU General Public License"
+
+#: gitk:3011
+msgid ""
+"\n"
+"Gitk - a commit viewer for git\n"
+"\n"
+"Copyright © 2005-2015 Paul Mackerras\n"
+"\n"
+"Use and redistribute under the terms of the GNU General Public License"
+msgstr ""
+"\n"
+"Gitk - en incheckningsvisare för git\n"
+"\n"
+"Copyright © 2005-2015 Paul Mackerras\n"
 "\n"
 "Använd och vidareförmedla enligt villkoren i GNU General Public License"
 
@@ -417,7 +434,7 @@ msgstr "<Höger>, x, l\tGå framåt i historiken"
 #: gitk:3053
 #, tcl-format
 msgid "<%s-n>\tGo to n-th parent of current commit in history list"
-msgstr ""
+msgstr "<%s-n>\tGå till aktuell inchecknings n:te förälder i historielistan"
 
 #: gitk:3054
 msgid "<PageUp>\tMove up one page in commit list"
@@ -653,9 +670,8 @@ msgid "Matches all Commit Info criteria"
 msgstr "Motsvarar alla kriterier för incheckningsinfo"
 
 #: gitk:4069
-#, fuzzy
 msgid "Matches none Commit Info criteria"
-msgstr "Motsvarar alla kriterier för incheckningsinfo"
+msgstr "Motsvarar inga kriterier för incheckningsinfo"
 
 #: gitk:4070
 msgid "Changes to Files:"
