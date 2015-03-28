@@ -116,7 +116,8 @@ static void setup_environment(LPWSTR exepath)
  * untouched.
  */
 static LPWSTR fixup_commandline(LPWSTR exepath, LPWSTR *exep, int *wait,
-	LPWSTR prefix_args, int prefix_args_len, int is_git_command)
+	LPWSTR prefix_args, int prefix_args_len, int is_git_command,
+	int skip_arguments)
 {
 	int wargc = 0;
 	LPWSTR cmd = NULL, cmdline = NULL;
@@ -137,10 +138,24 @@ static LPWSTR fixup_commandline(LPWSTR exepath, LPWSTR *exep, int *wait,
 	else
 		wcscpy(cmd, L"git.exe");
 
-	/* append all after first space after the initial parameter */
-	p = wcschr(&cmdline[wcslen(wargv[0])], L' ');
-	if (p && *p)
+	/* skip wargv[0], append the remaining arguments */
+	++skip_arguments;
+	if (skip_arguments < wargc) {
+		int i;
+		for (i = 0, p = cmdline; p && *p && i < skip_arguments; i++) {
+			if (i)
+				while (isspace(*p))
+					p++;
+			if (*p == L'"')
+				p++;
+			p += wcslen(wargv[i]);
+			if (*p == L'"')
+				p++;
+			while (*p && !isspace(*p))
+				p++;
+		}
 		wcscat(cmd, p);
+	}
 	LocalFree(wargv);
 
 	return cmd;
@@ -245,7 +260,7 @@ static int configure_via_resource(LPWSTR basename, LPWSTR exepath, LPWSTR exep,
 int main(void)
 {
 	int r = 1, wait = 1, prefix_args_len = -1, needs_env_setup = 1,
-		is_git_command = 1, start_in_home = 0;
+		is_git_command = 1, start_in_home = 0, skip_arguments = 0;
 	WCHAR exepath[MAX_PATH], exe[MAX_PATH];
 	LPWSTR cmd = NULL, dir = NULL, exep = exe, prefix_args = NULL, basename;
 	UINT codepage = 0;
@@ -323,7 +338,7 @@ int main(void)
 	if (needs_env_setup)
 		setup_environment(exepath);
 	cmd = fixup_commandline(exepath, &exep, &wait,
-		prefix_args, prefix_args_len, is_git_command);
+		prefix_args, prefix_args_len, is_git_command, skip_arguments);
 
 	if (start_in_home) {
 		int len = GetEnvironmentVariable(L"HOME", NULL, 0);
