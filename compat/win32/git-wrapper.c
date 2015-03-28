@@ -322,6 +322,30 @@ int main(void)
 			PathAppend(exe, L"bin\\git.exe");
 		}
 	}
+	else if (!wcscmp(basename, L"gitk.exe")) {
+		static WCHAR buffer[BUFSIZE];
+		if (!PathRemoveFileSpec(exepath)) {
+			fwprintf(stderr,
+				L"Invalid executable path: %s\n", exepath);
+			ExitProcess(1);
+		}
+
+		/* set the default exe module */
+		wcscpy(exe, exepath);
+		wcscpy(buffer, exepath);
+		PathAppend(exe, msystem_bin);
+		PathAppend(exe, L"wish.exe");
+		if (_waccess(exe, 0) != -1)
+			PathAppend(buffer, msystem_bin);
+		else {
+			wcscpy(exe, exepath);
+			PathAppend(exe, L"mingw\\bin\\wish.exe");
+			PathAppend(buffer, L"mingw\\bin");
+		}
+		PathAppend(buffer, L"gitk");
+		prefix_args = buffer;
+		prefix_args_len = wcslen(buffer);
+	}
 
 	if (needs_env_setup)
 		setup_environment(exepath);
