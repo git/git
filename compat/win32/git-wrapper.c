@@ -37,7 +37,7 @@ static void print_error(LPCWSTR prefix, DWORD error_number)
 	LocalFree((HLOCAL)buffer);
 }
 
-static void setup_environment(LPWSTR exepath)
+static void setup_environment(LPWSTR exepath, int full_path)
 {
 	WCHAR msystem[64];
 	LPWSTR path2 = NULL;
@@ -88,19 +88,23 @@ static void setup_environment(LPWSTR exepath)
 	len = sizeof(WCHAR) * (len + 2 * MAX_PATH);
 	path2 = (LPWSTR)malloc(len);
 	wcscpy(path2, exepath);
-	PathAppend(path2, msystem_bin);
-	if (_waccess(path2, 0) != -1) {
-		/* We are in an MSys2-based setup */
-		wcscat(path2, L";");
-		wcscat(path2, exepath);
-		PathAppend(path2, L"usr\\bin;");
-	}
+	if (!full_path)
+		PathAppend(path2, L"cmd;");
 	else {
-		/* Fall back to MSys1 paths */
-		wcscpy(path2, exepath);
-		PathAppend(path2, L"bin;");
-		wcscat(path2, exepath);
-		PathAppend(path2, L"mingw\\bin;");
+		PathAppend(path2, msystem_bin);
+		if (_waccess(path2, 0) != -1) {
+			/* We are in an MSys2-based setup */
+			wcscat(path2, L";");
+			wcscat(path2, exepath);
+			PathAppend(path2, L"usr\\bin;");
+		}
+		else {
+			/* Fall back to MSys1 paths */
+			wcscpy(path2, exepath);
+			PathAppend(path2, L"bin;");
+			wcscat(path2, exepath);
+			PathAppend(path2, L"mingw\\bin;");
+		}
 	}
 	GetEnvironmentVariable(L"PATH", path2 + wcslen(path2),
 				(len / sizeof(WCHAR)) - wcslen(path2));
@@ -163,9 +167,10 @@ static LPWSTR fixup_commandline(LPWSTR exepath, LPWSTR *exep, int *wait,
 
 static int configure_via_resource(LPWSTR basename, LPWSTR exepath, LPWSTR exep,
 	LPWSTR *prefix_args, int *prefix_args_len,
-	int *is_git_command, int *start_in_home, int *skip_arguments)
+	int *is_git_command, int *start_in_home, int *full_path,
+	int *skip_arguments)
 {
-	int id, wargc;
+	int id, minimal_search_path, wargc;
 	LPWSTR *wargv;
 
 #define BUFSIZE 65536
@@ -173,6 +178,7 @@ static int configure_via_resource(LPWSTR basename, LPWSTR exepath, LPWSTR exep,
 	int len;
 
 	for (id = 0; ; id++) {
+		minimal_search_path = 0;
 		len = LoadString(NULL, id, buf, BUFSIZE);
 
 		if (!len) {
@@ -188,6 +194,12 @@ static int configure_via_resource(LPWSTR basename, LPWSTR exepath, LPWSTR exep,
 			fwprintf(stderr,
 				L"Could not read resource (too large)\n");
 			exit(1);
+		}
+
+		if (!wcsncmp(L"MINIMAL_PATH=1 ", buf, 15)) {
+			minimal_search_path = 1;
+			memmove(buf, buf + 15,
+				sizeof(WCHAR) * (wcslen(buf + 15) + 1));
 		}
 
 		buf[len] = L'\0';
@@ -259,6 +271,8 @@ static int configure_via_resource(LPWSTR basename, LPWSTR exepath, LPWSTR exep,
 		*start_in_home = 0;
 		*skip_arguments = 1;
 	}
+	if (minimal_search_path)
+		*full_path = 0;
 	LocalFree(wargv);
 
 	return 1;
@@ -267,7 +281,8 @@ static int configure_via_resource(LPWSTR basename, LPWSTR exepath, LPWSTR exep,
 int main(void)
 {
 	int r = 1, wait = 1, prefix_args_len = -1, needs_env_setup = 1,
-		is_git_command = 1, start_in_home = 0, skip_arguments = 0;
+		is_git_command = 1, start_in_home = 0, full_path = 1,
+		skip_arguments = 0;
 	WCHAR exepath[MAX_PATH], exe[MAX_PATH];
 	LPWSTR cmd = NULL, dir = NULL, exep = exe, prefix_args = NULL, basename;
 	UINT codepage = 0;
@@ -285,7 +300,8 @@ int main(void)
 	basename = exepath + wcslen(exepath) + 1;
 	if (configure_via_resource(basename, exepath, exep,
 			&prefix_args, &prefix_args_len,
-			&is_git_command, &start_in_home, &skip_arguments)) {
+			&is_git_command, &start_in_home,
+			&full_path, &skip_arguments)) {
 		/* do nothing */
 	}
 	else if (!wcsncmp(basename, L"git-", 4)) {
@@ -343,7 +359,7 @@ int main(void)
 	}
 
 	if (needs_env_setup)
-		setup_environment(exepath);
+		setup_environment(exepath, full_path);
 	cmd = fixup_commandline(exepath, &exep, &wait,
 		prefix_args, prefix_args_len, is_git_command, skip_arguments);
 
