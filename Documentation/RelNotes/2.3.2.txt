@@ -24,7 +24,7 @@ Fixes since v2.3.1
    "curl-config --vernum", which confused our build system.
 
  * An earlier workaround to squelch unhelpful deprecation warnings
-   from the complier on Mac OSX unnecessarily set minimum required
+   from the compiler on Mac OSX unnecessarily set minimum required
    version of the OS, which the user might want to raise (or lower)
    for other reasons.
 
