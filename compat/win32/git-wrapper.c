@@ -163,7 +163,7 @@ static LPWSTR fixup_commandline(LPWSTR exepath, LPWSTR *exep, int *wait,
 
 static int configure_via_resource(LPWSTR basename, LPWSTR exepath, LPWSTR exep,
 	LPWSTR *prefix_args, int *prefix_args_len,
-	int *is_git_command, int *start_in_home)
+	int *is_git_command, int *start_in_home, int *skip_arguments)
 {
 	int id, wargc;
 	LPWSTR *wargv;
@@ -252,7 +252,14 @@ static int configure_via_resource(LPWSTR basename, LPWSTR exepath, LPWSTR exep,
 	*prefix_args_len = wcslen(buf);
 
 	*is_git_command = 0;
-	*start_in_home = 1;
+	wargv = CommandLineToArgvW(GetCommandLine(), &wargc);
+	if (wargc < 2 || wcscmp(L"--no-cd", wargv[1]))
+		*start_in_home = 1;
+	else {
+		*start_in_home = 0;
+		*skip_arguments = 1;
+	}
+	LocalFree(wargv);
 
 	return 1;
 }
@@ -278,7 +285,7 @@ int main(void)
 	basename = exepath + wcslen(exepath) + 1;
 	if (configure_via_resource(basename, exepath, exep,
 			&prefix_args, &prefix_args_len,
-			&is_git_command, &start_in_home)) {
+			&is_git_command, &start_in_home, &skip_arguments)) {
 		/* do nothing */
 	}
 	else if (!wcsncmp(basename, L"git-", 4)) {
