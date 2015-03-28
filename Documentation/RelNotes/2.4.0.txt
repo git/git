@@ -301,7 +301,7 @@ notes for details).
    (merge 35840a3 jc/conf-var-doc later to maint).
 
  * An earlier workaround to squelch unhelpful deprecation warnings
-   from the complier on Mac OSX unnecessarily set minimum required
+   from the compiler on Mac OSX unnecessarily set minimum required
    version of the OS, which the user might want to raise (or lower)
    for other reasons.
    (merge 88c03eb es/squelch-openssl-warnings-on-macosx later to maint).
@@ -471,3 +471,5 @@ notes for details).
    (merge 599d223 jk/simplify-csum-file-sha1fd-check later to maint).
    (merge 260d585 sg/completion-gitcomp-nl-for-refs later to maint).
    (merge 777c55a jc/report-path-error-to-dir later to maint).
+   (merge fddfaf8 ph/push-doc-cas later to maint).
+   (merge 129260c ss/pull-rebase-preserve later to maint).
