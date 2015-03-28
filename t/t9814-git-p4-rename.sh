@@ -180,7 +180,7 @@ test_expect_success 'detect copies' '
 		case "$src" in
 		file10 | file11) : ;; # happy
 		*) false ;; # not
-		&&
+		esac &&
 		git config git-p4.detectCopies $(($level + 2)) &&
 		git p4 submit &&
 		p4 filelog //depot/file12 &&
@@ -197,7 +197,7 @@ test_expect_success 'detect copies' '
 		case "$src" in
 		file10 | file11 | file12) : ;; # happy
 		*) false ;; # not
-		&&
+		esac &&
 		git config git-p4.detectCopies $(($level - 2)) &&
 		git p4 submit &&
 		p4 filelog //depot/file13 &&
