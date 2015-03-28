@@ -167,7 +167,7 @@ static LPWSTR fixup_commandline(LPWSTR exepath, LPWSTR *exep, int *wait,
 
 static int configure_via_resource(LPWSTR basename, LPWSTR exepath, LPWSTR exep,
 	LPWSTR *prefix_args, int *prefix_args_len,
-	int *is_git_command, int *start_in_home, int *full_path,
+	int *is_git_command, LPWSTR *working_directory, int *full_path,
 	int *skip_arguments)
 {
 	int id, minimal_search_path, wargc;
@@ -264,12 +264,17 @@ static int configure_via_resource(LPWSTR basename, LPWSTR exepath, LPWSTR exep,
 	*prefix_args_len = wcslen(buf);
 
 	*is_git_command = 0;
+	*working_directory = (LPWSTR) 1;
 	wargv = CommandLineToArgvW(GetCommandLine(), &wargc);
-	if (wargc < 2 || wcscmp(L"--no-cd", wargv[1]))
-		*start_in_home = 1;
-	else {
-		*start_in_home = 0;
-		*skip_arguments = 1;
+	if (wargc > 1) {
+		if (!wcscmp(L"--no-cd", wargv[1])) {
+			*working_directory = NULL;
+			*skip_arguments = 1;
+		}
+		else if (!wcsncmp(L"--cd=", wargv[1], 5)) {
+			*working_directory = wcsdup(wargv[1] + 5);
+			*skip_arguments = 1;
+		}
 	}
 	if (minimal_search_path)
 		*full_path = 0;
@@ -281,10 +286,10 @@ static int configure_via_resource(LPWSTR basename, LPWSTR exepath, LPWSTR exep,
 int main(void)
 {
 	int r = 1, wait = 1, prefix_args_len = -1, needs_env_setup = 1,
-		is_git_command = 1, start_in_home = 0, full_path = 1,
-		skip_arguments = 0;
+		is_git_command = 1, full_path = 1, skip_arguments = 0;
 	WCHAR exepath[MAX_PATH], exe[MAX_PATH];
-	LPWSTR cmd = NULL, dir = NULL, exep = exe, prefix_args = NULL, basename;
+	LPWSTR cmd = NULL, exep = exe, prefix_args = NULL, basename;
+	LPWSTR working_directory = NULL;
 	UINT codepage = 0;
 
 	/* Determine MSys2-based Git path. */
@@ -300,7 +305,7 @@ int main(void)
 	basename = exepath + wcslen(exepath) + 1;
 	if (configure_via_resource(basename, exepath, exep,
 			&prefix_args, &prefix_args_len,
-			&is_git_command, &start_in_home,
+			&is_git_command, &working_directory,
 			&full_path, &skip_arguments)) {
 		/* do nothing */
 	}
@@ -389,12 +394,12 @@ int main(void)
 	cmd = fixup_commandline(exepath, &exep, &wait,
 		prefix_args, prefix_args_len, is_git_command, skip_arguments);
 
-	if (start_in_home) {
+	if (working_directory == (LPWSTR)1) {
 		int len = GetEnvironmentVariable(L"HOME", NULL, 0);
 
 		if (len) {
-			dir = malloc(sizeof(WCHAR) * len);
-			GetEnvironmentVariable(L"HOME", dir, len);
+			working_directory = malloc(sizeof(WCHAR) * len);
+			GetEnvironmentVariable(L"HOME", working_directory, len);
 		}
 	}
 
@@ -433,7 +438,7 @@ int main(void)
 				TRUE, /* handles inheritable? */
 				creation_flags,
 				NULL, /* environment: use parent */
-				dir, /* starting directory: use parent */
+				working_directory, /* use parent's */
 				&si, &pi);
 		if (br) {
 			if (wait)
