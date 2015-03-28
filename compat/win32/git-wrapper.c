@@ -118,7 +118,7 @@ static void setup_environment(LPWSTR exepath)
 static LPWSTR fixup_commandline(LPWSTR exepath, LPWSTR *exep, int *wait,
 	LPWSTR prefix_args, int prefix_args_len, int is_git_command)
 {
-	int wargc = 0, gui = 0;
+	int wargc = 0;
 	LPWSTR cmd = NULL, cmdline = NULL;
 	LPWSTR *wargv = NULL, p = NULL;
 
@@ -126,27 +126,7 @@ static LPWSTR fixup_commandline(LPWSTR exepath, LPWSTR *exep, int *wait,
 	wargv = CommandLineToArgvW(cmdline, &wargc);
 	cmd = (LPWSTR)malloc(sizeof(WCHAR) *
 		(wcslen(cmdline) + prefix_args_len + 1 + MAX_PATH));
-	if (wargc > 1 && wcsicmp(L"gui", wargv[1]) == 0) {
-		*wait = 0;
-		if (wargc > 2 && wcsicmp(L"citool", wargv[2]) == 0) {
-			*wait = 1;
-			wcscpy(cmd, L"git.exe");
-		}
-		else {
-			WCHAR script[MAX_PATH];
-			gui = 1;
-			wcscpy(script, exepath);
-			PathAppend(script,
-				L"libexec\\git-core\\git-gui");
-			PathQuoteSpaces(script);
-			wcscpy(cmd, L"wish.exe ");
-			wcscat(cmd, script);
-			wcscat(cmd, L" --");
-			/* find the module from the commandline */
-			*exep = NULL;
-		}
-	}
-	else if (prefix_args) {
+	if (prefix_args) {
 		if (is_git_command)
 			_swprintf(cmd, L"%s\\%s %.*s", exepath, L"git.exe",
 					prefix_args_len, prefix_args);
@@ -159,15 +139,8 @@ static LPWSTR fixup_commandline(LPWSTR exepath, LPWSTR *exep, int *wait,
 
 	/* append all after first space after the initial parameter */
 	p = wcschr(&cmdline[wcslen(wargv[0])], L' ');
-	if (p && *p) {
-		/* for git gui subcommands, remove the 'gui' word */
-		if (gui) {
-			while (*p == L' ') ++p;
-			p = wcschr(p, L' ');
-		}
-		if (p && *p)
-			wcscat(cmd, p);
-	}
+	if (p && *p)
+		wcscat(cmd, p);
 	LocalFree(wargv);
 
 	return cmd;
