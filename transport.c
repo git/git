@@ -519,7 +519,7 @@ static int fetch_refs_via_pack(struct transport *transport,
 			       int nr_heads, struct ref **to_fetch)
 {
 	struct git_transport_data *data = transport->data;
-	const struct ref *refs;
+	struct ref *refs;
 	char *dest = xstrdup(transport->url);
 	struct fetch_pack_args args;
 	struct ref *refs_tmp = NULL;
@@ -552,15 +552,17 @@ static int fetch_refs_via_pack(struct transport *transport,
 			  &transport->pack_lockfile);
 	close(data->fd[0]);
 	close(data->fd[1]);
-	if (finish_connect(data->conn))
+	if (finish_connect(data->conn)) {
+		free_refs(refs);
 		refs = NULL;
+	}
 	data->conn = NULL;
 	data->got_remote_heads = 0;
 	data->options.self_contained_and_connected =
 		args.self_contained_and_connected;
 
 	free_refs(refs_tmp);
-
+	free_refs(refs);
 	free(dest);
 	return (refs ? 0 : -1);
 }
