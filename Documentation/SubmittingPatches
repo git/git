@@ -136,6 +136,11 @@ that is fine, but please mark it as such.
 
 (4) Sending your patches.
 
+Learn to use format-patch and send-email if possible.  These commands
+are optimized for the workflow of sending patches, avoiding many ways
+your existing e-mail client that is optimized for "multipart/*" mime
+type e-mails to corrupt and render your patches unusable.
+
 People on the Git mailing list need to be able to read and
 comment on the changes you are submitting.  It is important for
 a developer to be able to "quote" your changes, using standard
