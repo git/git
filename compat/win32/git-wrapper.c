@@ -243,17 +243,33 @@ int main(void)
 	{
 		STARTUPINFO si;
 		PROCESS_INFORMATION pi;
+		DWORD creation_flags = CREATE_UNICODE_ENVIRONMENT;
+		HANDLE console_handle;
 		BOOL br = FALSE;
 		ZeroMemory(&pi, sizeof(PROCESS_INFORMATION));
 		ZeroMemory(&si, sizeof(STARTUPINFO));
 		si.cb = sizeof(STARTUPINFO);
+
+		console_handle = CreateFile(L"CONOUT$", GENERIC_WRITE,
+				FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
+				FILE_ATTRIBUTE_NORMAL, NULL);
+		if (console_handle != INVALID_HANDLE_VALUE)
+			CloseHandle(console_handle);
+		else {
+			si.dwFlags = STARTF_USESTDHANDLES;
+			si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
+			si.hStdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
+			si.hStdError = GetStdHandle(STD_ERROR_HANDLE);
+
+			creation_flags |= CREATE_NO_WINDOW;
+		}
 		br = CreateProcess(/* module: null means use command line */
 				exep,
 				cmd,  /* modified command line */
 				NULL, /* process handle inheritance */
 				NULL, /* thread handle inheritance */
 				TRUE, /* handles inheritable? */
-				CREATE_UNICODE_ENVIRONMENT,
+				creation_flags,
 				NULL, /* environment: use parent */
 				dir, /* starting directory: use parent */
 				&si, &pi);
