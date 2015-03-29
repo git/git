@@ -710,7 +710,7 @@ msgstr "Fehler beim Öffnen von '%s'"
 #: merge-recursive.c:797
 #, c-format
 msgid "failed to symlink '%s'"
-msgstr "Fehler beim Erstellen eines symbolischen Verweises für '%s'"
+msgstr "Fehler beim Erstellen einer symbolischen Verknüpfung für '%s'"
 
 #: merge-recursive.c:800
 #, c-format
@@ -1025,7 +1025,7 @@ msgstr ""
 #: pathspec.c:432
 #, c-format
 msgid "pathspec '%s' is beyond a symbolic link"
-msgstr "Pfadspezifikation '%s' ist hinter einem symbolischen Verweis"
+msgstr "Pfadspezifikation '%s' ist hinter einer symbolischen Verknüpfung"
 
 #: pathspec.c:441
 msgid ""
@@ -2318,7 +2318,7 @@ msgstr "Patch mit nutzlosen Informationen bei Zeile %d"
 #: builtin/apply.c:2141
 #, c-format
 msgid "unable to read symlink %s"
-msgstr "konnte symbolischen Verweis %s nicht lesen"
+msgstr "konnte symbolische Verknüpfung %s nicht lesen"
 
 #: builtin/apply.c:2145
 #, c-format
@@ -2386,7 +2386,7 @@ msgstr "Konnte %s nicht lesen"
 #: builtin/apply.c:3238
 #, c-format
 msgid "reading from '%s' beyond a symbolic link"
-msgstr "'%s' ist hinter einem symbolischen Verweis"
+msgstr "'%s' ist hinter einer symbolischen Verknüpfung"
 
 #: builtin/apply.c:3266 builtin/apply.c:3488
 #, c-format
@@ -2450,7 +2450,7 @@ msgstr "neuer Modus (%o) von %s entspricht nicht dem alten Modus (%o) von %s"
 #: builtin/apply.c:3793
 #, c-format
 msgid "affected file '%s' is beyond a symbolic link"
-msgstr "betroffene Datei '%s' ist hinter einem symbolischen Verweis"
+msgstr "betroffene Datei '%s' ist hinter einer symbolischen Verknüpfung"
 
 #: builtin/apply.c:3797
 #, c-format
@@ -5212,7 +5212,7 @@ msgstr "Die Option --dirty kann nicht mit Commits verwendet werden."
 #: builtin/diff.c:86
 #, c-format
 msgid "'%s': not a regular file or symlink"
-msgstr "'%s': keine reguläre Datei oder symbolischer Verweis"
+msgstr "'%s': keine reguläre Datei oder symbolische Verknüpfung"
 
 #: builtin/diff.c:237
 #, c-format
@@ -6493,12 +6493,12 @@ msgstr "kann Verweis '%s' nicht lesen"
 #: builtin/init-db.c:99
 #, c-format
 msgid "insanely long symlink %s"
-msgstr "zu langer symbolischer Verweis %s"
+msgstr "zu lange symbolische Verknüpfung %s"
 
 #: builtin/init-db.c:102
 #, c-format
 msgid "cannot symlink '%s' '%s'"
-msgstr "kann symbolischen Verweis '%s' auf '%s' nicht erstellen"
+msgstr "kann symbolische Verknüpfung '%s' auf '%s' nicht erstellen"
 
 #: builtin/init-db.c:106
 #, c-format
@@ -10370,7 +10370,7 @@ msgstr "zwei oder mehr Entwicklungszweige zusammenführen"
 #: common-cmds.h:20
 msgid "Move or rename a file, a directory, or a symlink"
 msgstr ""
-"eine Datei, ein Verzeichnis, oder einen symbolischen Verweis verschieben "
+"eine Datei, ein Verzeichnis, oder eine symbolische Verknüpfung verschieben "
 "oder umbenennen"
 
 #: common-cmds.h:21
