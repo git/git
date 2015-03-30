@@ -358,7 +358,9 @@ unless the `--fork-point` option is specified.
 
 -p::
 --preserve-merges::
-	Instead of ignoring merges, try to recreate them.
+	Recreate merge commits instead of flattening the history by replaying
+	commits a merge commit introduces. Merge conflict resolutions or manual
+	amendments to merge commits are not preserved.
 +
 This uses the `--interactive` machinery internally, but combining it
 with the `--interactive` option explicitly is generally not a good
