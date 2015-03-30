@@ -133,7 +133,7 @@ static LPWSTR fixup_commandline(LPWSTR exepath, LPWSTR *exep, int *wait,
 		(wcslen(cmdline) + prefix_args_len + 1 + MAX_PATH));
 	if (prefix_args) {
 		if (is_git_command)
-			_swprintf(cmd, L"%s\\%s %.*s", exepath, L"git.exe",
+			_swprintf(cmd, L"\"%s\\%s\" %.*s", exepath, L"git.exe",
 					prefix_args_len, prefix_args);
 		else
 			_swprintf(cmd, L"%.*s", prefix_args_len, prefix_args);
@@ -343,7 +343,7 @@ int main(void)
 
 		/* set the default exe module */
 		wcscpy(exe, exepath);
-		wcscpy(buffer, exepath);
+		swprintf(buffer, BUFSIZE, L"\"%s\"", exepath);
 		PathAppend(exe, msystem_bin);
 		PathAppend(exe, L"wish.exe");
 		if (_waccess(exe, 0) != -1)
