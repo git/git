@@ -1099,6 +1099,7 @@ static int process_all_files(struct line_log_data **range_out,
 			rg->pair = diff_filepair_dup(queue->queue[i]);
 			memcpy(&rg->diff, pairdiff, sizeof(struct diff_ranges));
 		}
+		free(pairdiff);
 	}
 
 	return changed;
