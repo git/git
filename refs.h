@@ -191,7 +191,7 @@ extern int peel_ref(const char *refname, unsigned char *sha1);
 /*
  * Setup reflog before using. Set errno to something meaningful on failure.
  */
-int log_ref_setup(const char *refname, char *logfile, int bufsize);
+int log_ref_setup(const char *refname, struct strbuf *logfile);
 
 /** Reads log for the value of ref during at_time. **/
 extern int read_ref_at(const char *refname, unsigned int flags,

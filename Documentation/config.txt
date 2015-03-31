@@ -453,6 +453,8 @@ false), while all other repositories are assumed to be bare (bare
 
 core.worktree::
 	Set the path to the root of the working tree.
+	If GIT_COMMON_DIR environment variable is set, core.worktree
+	is ignored and not used for determining the root of working tree.
 	This can be overridden by the GIT_WORK_TREE environment
 	variable and the '--work-tree' command-line option.
 	The value can be an absolute path or relative to the path to
@@ -1273,6 +1275,13 @@ gc.pruneExpire::
 	Override the grace period with this config variable.  The value
 	"now" may be used to disable this  grace period and always prune
 	unreachable objects immediately.
+
+gc.pruneWorktreesExpire::
+	When 'git gc' is run, it will call
+	'prune --worktrees --expire 3.months.ago'.
+	Override the grace period with this config variable. The value
+	"now" may be used to disable the grace period and prune
+	$GIT_DIR/worktrees immediately.
 
 gc.reflogExpire::
 gc.<pattern>.reflogExpire::
