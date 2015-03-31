@@ -51,7 +51,6 @@ static int branches_alloc;
 static int branches_nr;
 
 static struct branch *current_branch;
-static const char *branch_pushremote_name;
 static const char *pushremote_name;
 
 static struct rewrites rewrites;
@@ -369,9 +368,7 @@ static int handle_config(const char *key, const char *value, void *cb)
 		if (!strcmp(subkey, ".remote")) {
 			return git_config_string(&branch->remote_name, key, value);
 		} else if (!strcmp(subkey, ".pushremote")) {
-			if (branch == current_branch)
-				if (git_config_string(&branch_pushremote_name, key, value))
-					return -1;
+			return git_config_string(&branch->pushremote_name, key, value);
 		} else if (!strcmp(subkey, ".merge")) {
 			if (!value)
 				return config_error_nonbool(key);
@@ -511,10 +508,6 @@ static void read_config(void)
 		current_branch = make_branch(head_ref, 0);
 	}
 	git_config(handle_config, NULL);
-	if (branch_pushremote_name) {
-		free((char *)pushremote_name);
-		pushremote_name = branch_pushremote_name;
-	}
 	alias_all_urls();
 }
 
@@ -705,20 +698,32 @@ const char *remote_for_branch(struct branch *branch, int *explicit)
 	return "origin";
 }
 
-static struct remote *remote_get_1(const char *name, const char *pushremote_name)
+const char *pushremote_for_branch(struct branch *branch, int *explicit)
+{
+	if (branch && branch->pushremote_name) {
+		if (explicit)
+			*explicit = 1;
+		return branch->pushremote_name;
+	}
+	if (pushremote_name) {
+		if (explicit)
+			*explicit = 1;
+		return pushremote_name;
+	}
+	return remote_for_branch(branch, explicit);
+}
+
+static struct remote *remote_get_1(const char *name, int for_push)
 {
 	struct remote *ret;
 	int name_given = 0;
 
 	if (name)
 		name_given = 1;
-	else {
-		if (pushremote_name) {
-			name = pushremote_name;
-			name_given = 1;
-		} else
-			name = remote_for_branch(current_branch, &name_given);
-	}
+	else
+		name = for_push ?
+		       pushremote_for_branch(current_branch, &name_given) :
+		       remote_for_branch(current_branch, &name_given);
 
 	ret = make_remote(name, 0);
 	if (valid_remote_nick(name)) {
@@ -739,13 +744,13 @@ static struct remote *remote_get_1(const char *name, const char *pushremote_name
 struct remote *remote_get(const char *name)
 {
 	read_config();
-	return remote_get_1(name, NULL);
+	return remote_get_1(name, 0);
 }
 
 struct remote *pushremote_get(const char *name)
 {
 	read_config();
-	return remote_get_1(name, pushremote_name);
+	return remote_get_1(name, 1);
 }
 
 int remote_is_configured(const char *name)
