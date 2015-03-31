@@ -203,7 +203,6 @@ struct branch {
 	const char *refname;
 
 	const char *remote_name;
-	struct remote *remote;
 
 	const char **merge_name;
 	struct refspec **merge;
