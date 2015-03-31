@@ -547,7 +547,6 @@ else
 			BASIC_LDFLAGS += -Wl,--large-address-aware
 		endif
 		CC = gcc
-		htmldir = share/doc/git/$(firstword $(subst -, ,$(GIT_VERSION)))/html
 		INSTALL = /bin/install
 		NO_R_TO_GCC_LINKER = YesPlease
 		INTERNAL_QSORT = YesPlease
