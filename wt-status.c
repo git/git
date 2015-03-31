@@ -1541,6 +1541,7 @@ static void wt_shortstatus_print_tracking(struct wt_status *s)
 	base = shorten_unambiguous_ref(base, 0);
 	color_fprintf(s->fp, header_color, "...");
 	color_fprintf(s->fp, branch_color_remote, "%s", base);
+	free((char *)base);
 
 	if (!upstream_is_gone && !num_ours && !num_theirs) {
 		fputc(s->null_termination ? '\0' : '\n', s->fp);
