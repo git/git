@@ -4,6 +4,10 @@ test_description='prune $GIT_DIR/worktrees'
 
 . ./test-lib.sh
 
+test_expect_success initialize '
+	git commit --allow-empty -m init
+'
+
 test_expect_success 'prune --worktrees on normal repo' '
 	git prune --worktrees &&
 	test_must_fail git prune --worktrees abc
@@ -77,8 +81,16 @@ test_expect_success 'not prune recent checkouts' '
 	mkdir zz &&
 	mkdir -p .git/worktrees/jlm &&
 	echo "$(pwd)"/zz >.git/worktrees/jlm/gitdir &&
+	rmdir zz &&
 	git prune --worktrees --verbose --expire=2.days.ago &&
 	test -d .git/worktrees/jlm
+'
+
+test_expect_success 'not prune proper checkouts' '
+	test_when_finished rm -r .git/worktrees &&
+	git checkout "--to=$PWD/nop" --detach master &&
+	git prune --worktrees &&
+	test -d .git/worktrees/nop
 '
 
 test_done
