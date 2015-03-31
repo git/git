@@ -58,7 +58,10 @@ When `-u` option is not used, untracked files and directories are
 shown (i.e. the same as specifying `normal`), to help you avoid
 forgetting to add newly created files.  Because it takes extra work
 to find untracked files in the filesystem, this mode may take some
-time in a large working tree.  You can use `no` to have `git status`
+time in a large working tree.
+Consider enabling untracked cache and split index if supported (see
+`git update-index --untracked-cache` and `git update-index
+--split-index`), Otherwise you can use `no` to have `git status`
 return more quickly without showing untracked files.
 +
 The default can be changed using the status.showUntrackedFiles
