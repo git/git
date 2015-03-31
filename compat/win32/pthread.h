@@ -18,7 +18,10 @@
  */
 #define pthread_mutex_t CRITICAL_SECTION
 
-#define pthread_mutex_init(a,b) (InitializeCriticalSection((a)), 0)
+static inline int return_0(int i) {
+	return 0;
+}
+#define pthread_mutex_init(a,b) return_0((InitializeCriticalSection((a)), 0))
 #define pthread_mutex_destroy(a) DeleteCriticalSection((a))
 #define pthread_mutex_lock EnterCriticalSection
 #define pthread_mutex_unlock LeaveCriticalSection
