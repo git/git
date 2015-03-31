@@ -502,12 +502,12 @@ def p4Cmd(cmd):
 def p4Where(depotPath):
     if not depotPath.endswith("/"):
         depotPath += "/"
-    depotPath = depotPath + "..."
-    outputList = p4CmdList(["where", depotPath])
+    depotPathLong = depotPath + "..."
+    outputList = p4CmdList(["where", depotPathLong])
     output = None
     for entry in outputList:
         if "depotFile" in entry:
-            if entry["depotFile"] == depotPath:
+            if entry["depotFile"].find(depotPath) >= 0:
                 output = entry
                 break
         elif "data" in entry:
@@ -1627,7 +1627,10 @@ class P4Submit(Command, P4UserMap):
         if self.useClientSpec:
             self.clientSpecDirs = getClientSpec()
 
-        if self.useClientSpec:
+        # Check for the existance of P4 branches
+        branchesDetected = (len(p4BranchesInGit().keys()) > 1)
+
+        if self.useClientSpec and not branchesDetected:
             # all files are relative to the client spec
             self.clientPath = getClientRoot()
         else:
