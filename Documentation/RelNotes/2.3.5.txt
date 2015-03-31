@@ -38,4 +38,7 @@ Fixes since v2.3.4
    (in contrib/) did not spell ${param/pattern/string} substitution
    correctly, which happened to work with bash but not with zsh.
 
+ * The explanation on "rebase --preserve-merges", "pull --rebase=preserve",
+   and "push --force-with-lease" in the documentation was unclear.
+
 Also contains typofixes, documentation updates and trivial code clean-ups.
