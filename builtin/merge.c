@@ -1181,6 +1181,7 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 
 	if (!have_message && head_commit &&
 	    is_old_style_invocation(argc, argv, head_commit->object.sha1)) {
+		warning("old-style 'git merge <msg> HEAD <commit>' is deprecated.");
 		strbuf_addstr(&merge_msg, argv[0]);
 		head_arg = argv[1];
 		argv += 2;
