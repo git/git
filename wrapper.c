@@ -311,12 +311,40 @@ int xdup(int fd)
 	return ret;
 }
 
-FILE *xfdopen(int fd, const char *mode)
+#ifndef BUFSIZ
+#define ALLOC_BUFSIZ 4096
+#else
+#define ALLOC_BUFSIZ BUFSIZ
+#endif
+
+FILE *fdopen_with_retry(int fd, const char *mode)
 {
 	FILE *stream = fdopen(fd, mode);
-	if (stream == NULL)
-		die_errno("Out of memory? fdopen failed");
+
+	if (!stream && errno == ENOMEM) {
+		/*
+		 * Try to free up some memory, then try again. We
+		 * would prefer to use sizeof(FILE) here, but that is
+		 * not guaranteed to be defined (e.g., FILE might be
+		 * an incomplete type).
+		 */
+		try_to_free_routine(ALLOC_BUFSIZ);
+		stream = fdopen(fd, mode);
+	}
+
 	return stream;
+}
+
+FILE *xfdopen(int fd, const char *mode)
+{
+	FILE *stream = fdopen_with_retry(fd, mode);
+
+	if (stream)
+		return stream;
+	else if (errno == ENOMEM)
+		die_errno("Out of memory? fdopen failed");
+	else
+		die_errno("fdopen failed");
 }
 
 int xmkstemp(char *template)

@@ -417,8 +417,8 @@ static void copy_to_log(int fd)
 	struct strbuf line = STRBUF_INIT;
 	FILE *fp;
 
-	fp = fdopen(fd, "r");
-	if (fp == NULL) {
+	fp = fdopen_with_retry(fd, "r");
+	if (!fp) {
 		logerror("fdopen of error channel failed");
 		close(fd);
 		return;
