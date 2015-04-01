@@ -1,27 +1,34 @@
+#include <stdint.h>
+#include <wchar.h>
+#include <sys/types.h>
+#ifndef _POSIX
+typedef _sigset_t sigset_t;
+#endif
 #include <winsock2.h>
 #include <ws2tcpip.h>
-
 /*
  * things that are not available in header files
  */
 
-typedef int pid_t;
 typedef int uid_t;
 typedef int socklen_t;
-#define hstrerror strerror
 
 #define S_IFLNK    0120000 /* Symbolic link */
 #define S_ISLNK(x) (((x) & S_IFMT) == S_IFLNK)
 #define S_ISSOCK(x) 0
 
+#ifndef S_IRWXG
 #define S_IRGRP 0
 #define S_IWGRP 0
 #define S_IXGRP 0
 #define S_IRWXG (S_IRGRP | S_IWGRP | S_IXGRP)
+#endif
+#ifndef S_IRWXO
 #define S_IROTH 0
 #define S_IWOTH 0
 #define S_IXOTH 0
 #define S_IRWXO (S_IROTH | S_IWOTH | S_IXOTH)
+#endif
 
 #define S_ISUID 0004000
 #define S_ISGID 0002000
@@ -92,8 +99,10 @@ static inline int symlink(const char *oldpath, const char *newpath)
 { errno = ENOSYS; return -1; }
 static inline int fchmod(int fildes, mode_t mode)
 { errno = ENOSYS; return -1; }
+#ifndef __MINGW64_VERSION_MAJOR
 static inline pid_t fork(void)
 { errno = ENOSYS; return -1; }
+#endif
 static inline unsigned int alarm(unsigned int seconds)
 { return 0; }
 static inline int fsync(int fd)
@@ -164,8 +173,10 @@ int pipe(int filedes[2]);
 unsigned int sleep (unsigned int seconds);
 int mkstemp(char *template);
 int gettimeofday(struct timeval *tv, void *tz);
+#ifndef __MINGW64_VERSION_MAJOR
 struct tm *gmtime_r(const time_t *timep, struct tm *result);
 struct tm *localtime_r(const time_t *timep, struct tm *result);
+#endif
 int getpagesize(void);	/* defined in MinGW's libgcc.a */
 struct passwd *getpwuid(uid_t uid);
 int setitimer(int type, struct itimerval *in, struct itimerval *out);
@@ -212,6 +223,10 @@ char *mingw_mktemp(char *template);
 
 char *mingw_getcwd(char *pointer, int len);
 #define getcwd mingw_getcwd
+
+#ifdef NO_UNSETENV
+#error "NO_UNSETENV is incompatible with the MinGW startup code!"
+#endif
 
 char *mingw_getenv(const char *name);
 #define getenv mingw_getenv
@@ -285,8 +300,10 @@ static inline int getrlimit(int resource, struct rlimit *rlp)
 /*
  * Use mingw specific stat()/lstat()/fstat() implementations on Windows.
  */
+#ifndef __MINGW64_VERSION_MAJOR
 #define off_t off64_t
 #define lseek _lseeki64
+#endif
 
 /* use struct stat with 64 bit st_size */
 #ifdef stat
@@ -334,6 +351,9 @@ sig_handler_t mingw_signal(int sig, sig_handler_t handler);
 int mingw_raise(int sig);
 #define raise mingw_raise
 
+int mingw_isatty(int fd);
+#define isatty mingw_isatty
+
 /*
  * ANSI emulation wrappers
  */
@@ -359,8 +379,12 @@ static inline char *mingw_find_last_dir_sep(const char *path)
 int mingw_offset_1st_component(const char *path);
 #define offset_1st_component mingw_offset_1st_component
 #define PATH_SEP ';'
+#ifndef __MINGW64_VERSION_MAJOR
 #define PRIuMAX "I64u"
 #define PRId64 "I64d"
+#else
+#include <inttypes.h>
+#endif
 
 void mingw_open_html(const char *path);
 #define open_html mingw_open_html

@@ -7,6 +7,8 @@
 #include <wingdi.h>
 #include <winreg.h>
 
+#undef isatty
+
 /*
  ANSI codes used by git: m, K
 
@@ -23,6 +25,7 @@ static HANDLE hthread, hread, hwrite;
 static HANDLE hconsole1, hconsole2;
 
 #ifdef __MINGW32__
+#if !defined(__MINGW64_VERSION_MAJOR) || __MINGW64_VERSION_MAJOR < 5
 typedef struct _CONSOLE_FONT_INFOEX {
 	ULONG cbSize;
 	DWORD nFont;
@@ -31,6 +34,7 @@ typedef struct _CONSOLE_FONT_INFOEX {
 	UINT FontWeight;
 	WCHAR FaceName[LF_FACESIZE];
 } CONSOLE_FONT_INFOEX, *PCONSOLE_FONT_INFOEX;
+#endif
 #endif
 
 typedef BOOL (WINAPI *PGETCURRENTCONSOLEFONTEX)(HANDLE, BOOL,
@@ -452,7 +456,8 @@ static HANDLE duplicate_handle(HANDLE hnd)
 	HANDLE hresult, hproc = GetCurrentProcess();
 	if (!DuplicateHandle(hproc, hnd, hproc, &hresult, 0, TRUE,
 			DUPLICATE_SAME_ACCESS))
-		die_lasterr("DuplicateHandle(%li) failed", (long) hnd);
+		die_lasterr("DuplicateHandle(%li) failed",
+			(long) (intptr_t) hnd);
 	return hresult;
 }
 
