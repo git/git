@@ -2374,6 +2374,7 @@ sub _new {
 	}
 
 	$_[3] = $path = '' unless (defined $path);
+	$dir =~ s/[\\\/:\*\?"><\|]/_/g;
 	mkpath([$dir]);
 	my $obj = bless {
 		ref_id => $ref_id, dir => $dir, index => "$dir/index",
