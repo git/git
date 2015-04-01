@@ -733,6 +733,22 @@ static int update_shallow_ref(struct command *cmd, struct shallow_info *si)
 	return 0;
 }
 
+/*
+ * NEEDSWORK: we should consolidate various implementions of "are we
+ * on an unborn branch?" test into one, and make the unified one more
+ * robust. !get_sha1() based check used here and elsewhere would not
+ * allow us to tell an unborn branch from corrupt ref, for example.
+ * For the purpose of fixing "deploy-to-update does not work when
+ * pushing into an empty repository" issue, this should suffice for
+ * now.
+ */
+static int head_has_history(void)
+{
+	unsigned char sha1[20];
+
+	return !get_sha1("HEAD", sha1);
+}
+
 static const char *push_to_deploy(unsigned char *sha1,
 				  struct argv_array *env,
 				  const char *work_tree)
@@ -745,7 +761,7 @@ static const char *push_to_deploy(unsigned char *sha1,
 	};
 	const char *diff_index[] = {
 		"diff-index", "--quiet", "--cached", "--ignore-submodules",
-		"HEAD", "--", NULL
+		NULL, "--", NULL
 	};
 	const char *read_tree[] = {
 		"read-tree", "-u", "-m", NULL, NULL
@@ -771,6 +787,9 @@ static const char *push_to_deploy(unsigned char *sha1,
 	child.git_cmd = 1;
 	if (run_command(&child))
 		return "Working directory has unstaged changes";
+
+	/* diff-index with either HEAD or an empty tree */
+	diff_index[4] = head_has_history() ? "HEAD" : EMPTY_TREE_SHA1_HEX;
 
 	child_process_init(&child);
 	child.argv = diff_index;
