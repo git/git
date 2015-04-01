@@ -1,4 +1,6 @@
+#include <inttypes.h>
 #include "git-compat-util.h"
+#include "run-command.h"
 #include "compat/terminal.h"
 #include "sigchain.h"
 #include "strbuf.h"
@@ -91,6 +93,53 @@ static int disable_echo(void)
 	return 0;
 }
 
+static char *xterm_prompt(const char *prompt, int echo)
+{
+	const char *env = getenv("MSYS_TTY_HANDLES");
+	const char *echo_off[] = { "sh", "-c", "stty -echo </dev/tty", NULL };
+	const char *echo_on[] = { "sh", "-c", "stty echo </dev/tty", NULL };
+	static char buffer[1024];
+	DWORD len, dummy;
+	size_t tty0, tty1, tty2;
+	HANDLE in_handle, out_handle;
+
+	if (!env || 3 != sscanf(env,
+	    " %" SCNuPTR " %" SCNuPTR " %" SCNuPTR " ",
+	    &tty0, &tty1, &tty2)) {
+		warning("Cannot read from xterm");
+		return NULL;
+	}
+
+	in_handle = (HANDLE)tty0;
+	out_handle = (HANDLE)tty1;
+
+	if (!echo && run_command_v_opt(echo_off, 0))
+		warning("Could not disable echo on xterm");
+
+	if (!WriteFile(out_handle, prompt, strlen(prompt), &dummy, NULL)) {
+		warning("Could not write to xterm");
+		return NULL;
+	}
+
+	if (!ReadFile(in_handle, buffer, 1024, &len, NULL)) {
+		warning("Could not read from xterm");
+		return NULL;
+	}
+
+	if (len && buffer[len - 1] == '\n')
+		buffer[--len] = '\0';
+	if (len && buffer[len - 1] == '\r')
+		buffer[--len] = '\0';
+
+	if (!echo) {
+		if(run_command_v_opt(echo_on, 0))
+			warning("Could not re-enable echo on xterm");
+		WriteFile(out_handle, "\n", 1, &dummy, NULL);
+	}
+
+	return len == 0 ? NULL : buffer;
+}
+
 #endif
 
 #ifndef FORCE_TEXT
@@ -102,6 +151,12 @@ char *git_terminal_prompt(const char *prompt, int echo)
 	static struct strbuf buf = STRBUF_INIT;
 	int r;
 	FILE *input_fh, *output_fh;
+#ifdef GIT_WINDOWS_NATIVE
+	const char *term = getenv("TERM");
+
+	if (term && starts_with(term, "xterm"))
+		return xterm_prompt(prompt, echo);
+#endif
 
 	input_fh = fopen(INPUT_PATH, "r" FORCE_TEXT);
 	if (!input_fh)
