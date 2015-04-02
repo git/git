@@ -336,7 +336,8 @@ int main(void)
 			PathAppend(exe, L"bin\\git.exe");
 		}
 	}
-	else if (!wcscmp(basename, L"gitk.exe")) {
+	else if (!wcscmp(basename, L"gitk.exe") ||
+			!wcscmp(basename, L"git-gui.exe")) {
 		static WCHAR buffer[BUFSIZE];
 		if (!PathRemoveFileSpec(exepath)) {
 			fwprintf(stderr,
@@ -356,7 +357,8 @@ int main(void)
 			PathAppend(exe, L"mingw\\bin\\wish.exe");
 			PathAppend(buffer, L"mingw\\bin");
 		}
-		PathAppend(buffer, L"gitk");
+		basename[wcslen(basename) - 4] = '\0';
+		PathAppend(buffer, basename);
 		prefix_args = buffer;
 		prefix_args_len = wcslen(buffer);
 	}
