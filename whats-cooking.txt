@@ -1,30 +1,20 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Mar 2015, #09; Thu, 26)
-X-master-at: 2dfb2e07cb0cb979f630643b57dca579a0359a9d
-X-next-at: 1e1e5fdfb345c0ff9265604de8d64ca01d55f26a
+Subject: What's cooking in git.git (Apr 2015, #01; Thu, 2)
+X-master-at: 6ae0d972664134b82a6dd164a01e8adbebeaffe3
+X-next-at: 85735d76ca4ac11dd4059dfd973b4df8b42f8776
 
-What's cooking in git.git (Mar 2015, #09; Thu, 26)
+What's cooking in git.git (Apr 2015, #01; Thu, 2)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-Good news is that a few GSoC Microprojects have been merged already
-to 'master'; from my vague recollection of past years, perhaps this
-year's batch of students are of better quality?  I dunno, but it
-that is the case, it is a welcome change.
-
-A preview release 2.4-rc0 has been tagged.  I do not expect no major
-topics to graduate to 'master' before the final; many topics in
-'next' touch important issues and crucial code paths and I'd prefer
-to see them cooked in 'next' for a few more weeks, rather than
-merging them early and having to make last-minute reverts for the
-upcoming release.
-
-I'll also start dropping stalled topics from 'pu' as part of spring
-cleaning.
+The first release candidate 2.4-rc1 has been tagged.  I'll still
+take small and trivial fixes and documentation updates but let's
+really shift our focus to find and fix (or revert) regressions
+that may have happened during this cycle.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -32,232 +22,180 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* ct/prompt-untracked-fix (2015-03-15) 1 commit
-  (merged to 'next' on 2015-03-20 at 0d57eaf)
- + git prompt: use toplevel to find untracked files
-
- The prompt script (in contrib/) did not show the untracked sign
- when working in a subdirectory without any untracked files.
-
-
-* dj/log-graph-with-no-walk (2015-03-19) 1 commit
-  (merged to 'next' on 2015-03-20 at cb636c0)
- + revision: forbid combining --graph and --no-walk
-
- "git log --graph --no-walk A B..." is a otcnflicting request that
- asks nonsense; no-walk tells us show discrete points in the
- history, while graph asks to draw connections between these
- discrete points. Forbid the combination.
-
-
-* jc/report-path-error-to-dir (2015-03-24) 1 commit
-  (merged to 'next' on 2015-03-24 at 6e97221)
- + report_path_error(): move to dir.c
-
- Code clean-up.
-
-
-* jc/submitting-patches-mention-send-email (2015-03-15) 1 commit
-  (merged to 'next' on 2015-03-23 at a9581fd)
- + SubmittingPatches: encourage users to use format-patch and send-email
-
- Recommend format-patch and send-email for those who want to submit
- patches to this project.
-
-
-* jk/cleanup-failed-clone (2015-03-19) 2 commits
-  (merged to 'next' on 2015-03-23 at 1f26d93)
- + clone: drop period from end of die_errno message
- + clone: initialize atexit cleanup handler earlier
-
- An failure early in the "git clone" that started creating the
- working tree and repository could have resulted in some directories
- and files left without getting cleaned up.
-
-
-* jk/fetch-pack (2015-03-19) 4 commits
-  (merged to 'next' on 2015-03-23 at 4357f3d)
- + fetch-pack: remove dead assignment to ref->new_sha1
- + fetch_refs_via_pack: free extra copy of refs
- + filter_ref: make a copy of extra "sought" entries
- + filter_ref: avoid overwriting ref->old_sha1 with garbage
-
- "git fetch" that fetches a commit using the allow-tip-sha1-in-want
- extension could have failed to fetch all the requested refs.
-
-
-* jk/prune-with-corrupt-refs (2015-03-20) 5 commits
-  (merged to 'next' on 2015-03-23 at 68af8a9)
- + refs.c: drop curate_packed_refs
- + repack: turn on "ref paranoia" when doing a destructive repack
- + prune: turn on ref_paranoia flag
- + refs: introduce a "ref paranoia" flag
- + t5312: test object deletion code paths in a corrupted repository
-
- "git prune" used to largely ignore broken refs when deciding which
- objects are still being used, which could spread an existing small
- damage and make it a larger one.
-
-
-* jk/run-command-capture (2015-03-22) 7 commits
-  (merged to 'next' on 2015-03-23 at f6db88b)
- + run-command: forbid using run_command with piped output
- + trailer: use capture_command
- + submodule: use capture_command
- + wt-status: use capture_command
- + run-command: introduce capture_command helper
- + wt_status: fix signedness mismatch in strbuf_read call
- + wt-status: don't flush before running "submodule status"
-
- The run-command interface was easy to abuse and make a pipe for us
- to read from the process, wait for the process to finish and then
- attempt to read its output, which is a pattern that lead to a
- deadlock.  Fix such uses by introducing a helper to do this
- correctly (i.e. we need to read first and then wait the process to
- finish) and also add code to prevent such abuse in the run-command
- helper.
-
-
-* jk/simplify-csum-file-sha1fd-check (2015-03-19) 1 commit
-  (merged to 'next' on 2015-03-20 at 6f6d1c2)
- + sha1fd_check: die when we cannot open the file
-
- Code simplification.
-
-
-* jk/test-chain-lint (2015-03-25) 36 commits
-  (merged to 'next' on 2015-03-25 at 011a687)
- + t9001: drop save_confirm helper
- + t0020: use test_* helpers instead of hand-rolled messages
- + t: simplify loop exit-code status variables
- + t: fix some trivial cases of ignored exit codes in loops
- + t7701: fix ignored exit code inside loop
- + t3305: fix ignored exit code inside loop
- + t0020: fix ignored exit code inside loops
- + perf-lib: fix ignored exit code inside loop
-  (merged to 'next' on 2015-03-24 at 31df637)
- + t6039: fix broken && chain
- + t9158, t9161: fix broken &&-chain in git-svn tests
- + t9104: fix test for following larger parents
- + t4104: drop hand-rolled error reporting
- + t0005: fix broken &&-chains
- + t7004: fix embedded single-quotes
- + t0050: appease --chain-lint
- + t9001: use test_when_finished
- + t4117: use modern test_* helpers
- + t6034: use modern test_* helpers
- + t1301: use modern test_* helpers
- + t0020: use modern test_* helpers
- + t6030: use modern test_* helpers
- + t9502: fix &&-chain breakage
- + t7201: fix &&-chain breakage
- + t3600: fix &&-chain breakage for setup commands
- + t: avoid using ":" for comments
- + t: wrap complicated expect_code users in a block
- + t: use test_expect_code instead of hand-rolled comparison
- + t: use test_might_fail for diff and grep
- + t: fix &&-chaining issues around setup which might fail
- + t: use test_must_fail instead of hand-rolled blocks
- + t: use verbose instead of hand-rolled errors
- + t: assume test_cmp produces verbose output
- + t: fix trivial &&-chain breakage
- + t: fix moderate &&-chain breakage
- + t: fix severe &&-chain breakage
- + t/test-lib: introduce --chain-lint option
-
- People often forget to chain the commands in their test together
- with &&, leaving a failure from an earlier command in the test go
- unnoticed.  The new GIT_TEST_CHAIN_LINT mechanism allows you to
- catch such a mistake more easily.
-
-
-* kd/rev-list-bisect-first-parent (2015-03-19) 1 commit
-  (merged to 'next' on 2015-03-20 at 5477bf5)
- + rev-list: refuse --first-parent combined with --bisect
-
- "git rev-list --bisect --first-parent" does not work (yet) and can
- even cause SEGV; forbid it.  "git log --bisect --first-parent"
- would not be useful until "git bisect --first-parent" materializes,
- so it is also forbidden for now.
-
-
-* nd/doc-git-index-version (2015-03-24) 1 commit
- + git.txt: list index versions in plain English
-
- Doc clean-up.
-
-
-* sg/completion-gitcomp-nl-for-refs (2015-03-22) 1 commit
-  (merged to 'next' on 2015-03-25 at b095b79)
- + completion: use __gitcomp_nl() for completing refs
-
- Code clean-up.
-
-
-* tg/fix-check-order-with-split-index (2015-03-20) 1 commit
-  (merged to 'next' on 2015-03-23 at c361f8e)
- + read-cache: fix reading of split index
-
- The split-index mode introduced at v2.3.0-rc0~41 was broken in the
- codepath to protect us against a broken reimplementation of Git
- that writes an invalid index with duplicated index entries, etc.
-
-
-* tg/test-index-v4 (2015-03-20) 1 commit
-  (merged to 'next' on 2015-03-23 at 6b2eb0a)
- + t1700: make test pass with index-v4
-
- A test fix.
-
-
-* ws/grep-quiet-no-pager (2015-03-19) 1 commit
-  (merged to 'next' on 2015-03-20 at b3f5fe6)
- + grep: fix "--quiet" overwriting current output
-
- Even though "git grep --quiet" is run merely to ask for the exit
- status, we spawned the pager regardless.  Stop doing that.
-
---------------------------------------------------
 [New Topics]
 
-* pt/credential-xdg (2015-03-25) 4 commits
-  (merged to 'next' on 2015-03-25 at 765128e)
- + t0302: "unreadable" test needs POSIXPERM
-  (merged to 'next' on 2015-03-24 at 9a3706e)
- + t0302: test credential-store support for XDG_CONFIG_HOME
- + git-credential-store: support XDG_CONFIG_HOME
- + git-credential-store: support multiple credential files
+* va/fix-git-p4-tests (2015-03-28) 2 commits
+ - git-p4: fix copy detection test
+ - t9814: fix broken shell syntax in git-p4 rename test
 
- Tweak the sample "store" backend of the credential helper to honor
- XDG configuration file locations when specified.
+ Test fixes for git-p4
 
- As this may see further updates, and also this is not an urgent
- issue anyway, I'll give it a bit more time for it to simmer.
-
- Will cook in 'next'.
+ Will merge to 'next'.
 
 
-* jc/merge-deprecate-old-syntax (2015-03-26) 2 commits
- - merge: drop 'git merge <message> HEAD <commit>' syntax
- - merge: deprecate 'git merge <message> HEAD <commit>' syntax
+* va/p4-client-path (2015-03-28) 2 commits
+ - git-p4: improve client path detection when branches are used
+ - t9801: check git-p4's branch detection and client view together
 
- An RFC to really start the process of removing the ancient syntax
- to invoke a two-way merge, which has been deprecated since October
- 2007.
+ Attempt to better handle branches in perforce by git p4
+ Reviews by git-p4 experts are very much appreciated.
 
+
+* iu/fix-parse-options-h-comment (2015-03-29) 1 commit
+  (merged to 'next' on 2015-04-02 at 7fd3cef)
+ + parse-options.h: OPTION_{BIT,SET_INT} do not store pointer to defval
+
+ Will merge to 'master'.
+
+
+* jk/at-push-sha1 (2015-03-31) 6 commits
+ - sha1_name: implement @{push} shorthand
+ - sha1_name: refactor upstream_mark
+ - remote.c: provide per-branch pushremote name
+ - remote.c: hoist branch.*.remote lookup out of remote_get_1
+ - remote.c: drop "remote" pointer from "struct branch"
+ - remote.c: drop default_remote_name variable
+
+
+* jk/cherry-pick-docfix (2015-03-30) 1 commit
+  (merged to 'next' on 2015-04-02 at 40da1d7)
+ + cherry-pick: fix docs describing handling of empty commits
+
+ Will merge to 'master'.
+
+
+* jk/sha1-file-reduce-useless-warnings (2015-03-30) 1 commit
+ - sha1_file: squelch "packfile cannot be accessed" warnings
+
+
+* jz/gitweb-conf-doc-fix (2015-03-31) 1 commit
+  (merged to 'next' on 2015-04-02 at 237d1bc)
+ + gitweb.conf.txt: say "build-time", not "built-time"
+
+ Will merge to 'master'.
+
+
+* mh/show-branch-topic (2015-03-31) 1 commit
+ - show-branch: show all local heads when only giving one rev along --topics
+
+ "git show-branch --topics HEAD" (with no other arguments) did not
+ do anything interesting.  Instead, contrast the given revision
+ against all the local branches by default.
+
+ Will merge to 'next'.
+
+
+* pt/enter-repo-comment-fix (2015-03-31) 1 commit
+  (merged to 'next' on 2015-04-02 at 276ad7e)
+ + enter_repo(): fix docs to match code
+
+ Will merge to 'master'.
+
+
+* sb/line-log-plug-pairdiff-leak (2015-03-30) 1 commit
+ - line-log.c: fix a memleak
+
+ Will merge to 'next'.
+
+
+* sb/plug-wt-shortstatus-tracking-leak (2015-03-30) 1 commit
+ - wt-status.c: fix a memleak
+
+ Will merge to 'next'.
+
+
+* jc/push-cert (2015-04-02) 1 commit
+ - push --signed: tighten what the receiving end can ask to sign
+
+ The "git push --signed" protocol extension did not limit what the
+ "nonce" that is a server-chosen string can contain or how long it
+ can be, which was unnecessarily lax.  Limit both the length and the
+ alphabet to a reasonably small space that can still have enough
+ entropy.
+
+ Will merge to 'next'.
+
+
+* jc/update-instead-into-void (2015-04-01) 1 commit
+ - push-to-deploy: allow pushing into an unborn branch and updating it
+
+ A push into an unborn branch, with "receive.denyCurrentBranch" set
+ to "updateInstead", did not check out the working tree as expected.
+
+ Will merge to 'next'.
+
+
+* jk/init-core-worktree-at-root (2015-04-02) 1 commit
+ - init: don't set core.worktree when initializing /.git
+
+ We avoid setting core.worktree when the repository location is the
+ ".git" directory directly at the top level of the working tree, but
+ the code misdetected the case in which the working tree is at the
+ root level of the filesystem (which arguably is a silly thing to
+ do, but still valid).
+
+ Will merge to 'next'.
+
+
+* jk/pack-corruption-post-mortem (2015-04-01) 1 commit
+ - howto: document more tools for recovery corruption
+
+ Documentation update.
+
+ Will merge to 'next'.
+
+
+* jn/doc-fast-import-no-16-octopus-limit (2015-03-31) 1 commit
+ - fast-import doc: remove suggested 16-parent limit
+
+ Documentation update.
+
+ Will merge to 'next'.
+
+
+* sb/plug-streaming-leak (2015-03-31) 1 commit
+ - streaming.c: fix a memleak
+
+ Will merge to 'next'.
+
+
+* ts/checkout-advice-plural (2015-04-01) 1 commit
+ - checkout: call a single commit “it” instead of “th
+
+ Will merge to 'next'.
+
+--------------------------------------------------
+[Graduated to "master"]
 
 * ph/push-doc-cas (2015-03-26) 1 commit
- - git-push.txt: clean up force-with-lease wording
+  (merged to 'next' on 2015-03-27 at 0737697)
+ + git-push.txt: clean up force-with-lease wording
 
- Will merge to 'next' and then to 'master'.
+ Documentation update.
 
 
-* ss/pull-rebase-preserve (2015-03-26) 1 commit
- - docs: clarify "preserve" option wording for git-pull
+* sb/leaks (2015-03-24) 10 commits
+  (merged to 'next' on 2015-03-24 at bdbc0c7)
+ + http: release the memory of a http pack request as well
+  (merged to 'next' on 2015-03-23 at 5397daf)
+ + read-cache: fix memleak
+ + add_to_index(): free unused cache-entry
+ + commit.c: fix a memory leak
+ + http-push: remove unneeded cleanup
+ + merge-recursive: fix memleaks
+ + merge-blobs.c: fix a memleak
+ + builtin/apply.c: fix a memleak
+ + update-index: fix a memleak
+ + read-cache: free cache entry in add_to_index in case of early return
 
- Will merge to 'next' and then to 'master'.
+ Plug minor memory leaks everywhere.
+
+
+* ss/pull-rebase-preserve (2015-03-30) 2 commits
+ + docs: clarify what git-rebase's "-p" / "--preserve-merges" does
+ + docs: clarify "preserve" option wording for git-pull
+
+ Documentation update.
 
 --------------------------------------------------
 [Stalled]
@@ -316,19 +254,6 @@ of the repositories listed at
  Need extra sets of eyes to review this.
 
 
-* ak/stash-store-create-help (2015-01-13) 1 commit
- - stash: show "create" and "store" subcommands in usage-help
-
- Will discard.
-
-
-* bp/diff-relative-config (2015-01-07) 2 commits
- - diff: teach diff.relative to give default to --relative=<value>
- - diff: teach --no-relative to override earlier --relative
-
- Will discard.
-
-
 * jc/diff-b-m (2015-02-23) 5 commits
  . WIPWIP
  . WIP: diff-b-m
@@ -348,20 +273,6 @@ of the repositories listed at
  - remote: add --fetch and --both options to set-url
 
  Expecting a reroll.
-
-
-* je/quiltimport-no-fuzz (2014-10-21) 2 commits
- - git-quiltimport: flip the default not to allow fuzz
- - git-quiltimport.sh: allow declining fuzz with --exact option
-
- "quiltimport" drove "git apply" always with -C1 option to reduce
- context of the patch in order to give more chance to somewhat stale
- patches to apply.  Add an "--exact" option to disable, and also
- "-C$n" option to customize this behaviour.  The top patch
- optionally flips the default to "--exact".
-
- Tired of waiting for an Ack
- Will discard.
 
 
 * tr/remerge-diff (2014-11-10) 9 commits
@@ -392,64 +303,6 @@ of the repositories listed at
  Kicked back to 'pu' per request ($gmane/255610).
 
 
-* ab/add-interactive-show-diff-func-name (2014-05-12) 2 commits
- - SQUASH??? git-add--interactive: Preserve diff heading when splitting hunks
- - git-add--interactive: Preserve diff heading when splitting hunks
-
- Tired of waiting for a reroll.
- Will discard.
-
-
-* jn/gitweb-utf8-in-links (2014-05-27) 1 commit
- - gitweb: Harden UTF-8 handling in generated links
-
- $gmane/250758?
- Will discard.
-
-
-* ss/userdiff-update-csharp-java (2014-06-02) 2 commits
- - userdiff: support Java try keyword
- - userdiff: support C# async methods and correct C# keywords
-
- Reviews sent; tired of waiting for a response.
- Will discard.
-
-
-* bg/rebase-off-of-previous-branch (2014-04-16) 1 commit
- - git-rebase: print name of rev when using shorthand
-
- Teach "git rebase -" to report the concrete name of the branch
- (i.e. the previous one).
-
- But it stops short and does not do the same for "git rebase @{-1}".
- Tired of waiting for a reroll.
- Will discard.
-
-
-* rb/merge-prepare-commit-msg-hook (2014-01-10) 4 commits
- - merge: drop unused arg from abort_commit method signature
- - merge: make prepare_to_commit responsible for write_merge_state
- - t7505: ensure cleanup after hook blocks merge
- - t7505: add missing &&
-
- Expose more merge states (e.g. $GIT_DIR/MERGE_MODE) to hooks that
- run during "git merge".  The log message stresses too much on one
- hook, prepare-commit-msg, but it would equally apply to other hooks
- like post-merge, I think.
-
- Tired of waiting for a reroll.
- Will discard.
-
-
-* jc/graph-post-root-gap (2013-12-30) 3 commits
- - WIP: document what we want at the end
- - graph: remove unused code a bit
- - graph: stuff the current commit into graph->columns[]
-
- This was primarily a RFH ($gmane/239580).
- Will discard.
-
-
 * tg/perf-lib-test-perf-cleanup (2013-09-19) 2 commits
  - perf-lib: add test_perf_cleanup target
  - perf-lib: split starting the test from the execution
@@ -472,30 +325,53 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* jc/diff-no-index-d-f (2015-03-25) 2 commits
- - diff: align D/F handling of "diff --no-index" with that of normal Git
- - diff-no-index: DWIM "diff D F" into "diff D/F F"
+* pt/credential-xdg (2015-03-25) 4 commits
+  (merged to 'next' on 2015-03-25 at 765128e)
+ + t0302: "unreadable" test needs POSIXPERM
+  (merged to 'next' on 2015-03-24 at 9a3706e)
+ + t0302: test credential-store support for XDG_CONFIG_HOME
+ + git-credential-store: support XDG_CONFIG_HOME
+ + git-credential-store: support multiple credential files
+
+ Tweak the sample "store" backend of the credential helper to honor
+ XDG configuration file locations when specified.
+
+ As this may see further updates, and also this is not an urgent
+ issue anyway, I'll give it a bit more time for it to simmer.
+
+ Will cook in 'next'.
+
+
+* jc/merge-deprecate-old-syntax (2015-03-26) 1 commit
+ - merge: deprecate 'git merge <message> HEAD <commit>' syntax
+ (this branch is used by jc/merge-drop-old-syntax.)
+
+ The first step to really start the process of removing the ancient
+ syntax to invoke a two-way merge, which has been deprecated since
+ October 2007.
+
+
+* jc/merge-drop-old-syntax (2015-03-26) 1 commit
+ - merge: drop 'git merge <message> HEAD <commit>' syntax
+ (this branch uses jc/merge-deprecate-old-syntax.)
+
+ Stop supporting "git merge <messsage> HEAD <commit>" syntax that
+ has been deprecated since October 2007.
+
+
+* jc/diff-no-index-d-f (2015-03-26) 2 commits
+  (merged to 'next' on 2015-03-27 at 1f270f9)
+ + diff-no-index: align D/F handling with that of normal Git
+ + diff-no-index: DWIM "diff D F" into "diff D/F F"
 
  The usual "git diff" when seeing a file turning into a directory
  showed a patchset to remove the file and create all files in the
- directory, but "git diff --no-index" simply refused to work.
+ directory, but "git diff --no-index" simply refused to work.  Also,
+ when asked to compare a file and a directory, imitate POSIX "diff"
+ and compare the file with the file with the same name in the
+ directory, instead of refusing to run.
 
- Will merge to and cook in 'next', after reading it over once again.
-
-
-* ts/man-pdf (2015-03-20) 1 commit
- - Documentation: make 'make pdf' format manpages to PDF as well
-
- For offline consumption of manual pages, a target to produce one
- pdf document per manual page was added to Documentation/Makefile.
-
- Its usefulness is unknown, given that this does not produce a
- single document with all the manual pages in it, which would be not
- much better than keeping a bunch of HTML manual pages we already
- produce and use them instead for offline consumption.
-
- Will discard, while leaving a single-document target as an open
- possibility.
+ Will cook in 'next'.
 
 
 * nd/diff-i-t-a (2015-03-23) 1 commit
@@ -515,23 +391,6 @@ of the repositories listed at
  files yet to be added to the index.
 
  Will cook in 'next', as this brings in a new world order.
-
-
-* sb/leaks (2015-03-24) 10 commits
-  (merged to 'next' on 2015-03-24 at bdbc0c7)
- + http: release the memory of a http pack request as well
-  (merged to 'next' on 2015-03-23 at 5397daf)
- + read-cache: fix memleak
- + add_to_index(): free unused cache-entry
- + commit.c: fix a memory leak
- + http-push: remove unneeded cleanup
- + merge-recursive: fix memleaks
- + merge-blobs.c: fix a memleak
- + builtin/apply.c: fix a memleak
- + update-index: fix a memleak
- + read-cache: free cache entry in add_to_index in case of early return
-
- Will merge to 'master'.
 
 
 * mh/numparse (2015-03-19) 14 commits
@@ -675,7 +534,9 @@ of the repositories listed at
  Expecting a reroll.
 
 
-* nd/multiple-work-trees (2015-03-24) 40 commits
+* nd/multiple-work-trees (2015-03-31) 41 commits
+  (merged to 'next' on 2015-04-02 at 7ea51b4)
+ + prune --worktrees: fix expire vs worktree existence condition
   (merged to 'next' on 2015-03-24 at 58b5a60)
  + t1501: fix test with split index
   (merged to 'next' on 2015-03-20 at cc98ed0)
@@ -725,3 +586,83 @@ of the repositories listed at
  by making the borrowee and borrowers aware of each other.
 
  Will cook in 'next'.
+
+--------------------------------------------------
+[Discarded]
+
+* ak/stash-store-create-help (2015-01-13) 1 commit
+ . stash: show "create" and "store" subcommands in usage-help
+
+
+* bp/diff-relative-config (2015-01-07) 2 commits
+ . diff: teach diff.relative to give default to --relative=<value>
+ . diff: teach --no-relative to override earlier --relative
+
+
+* je/quiltimport-no-fuzz (2014-10-21) 2 commits
+ . git-quiltimport: flip the default not to allow fuzz
+ . git-quiltimport.sh: allow declining fuzz with --exact option
+
+ "quiltimport" drove "git apply" always with -C1 option to reduce
+ context of the patch in order to give more chance to somewhat stale
+ patches to apply.  Add an "--exact" option to disable, and also
+ "-C$n" option to customize this behaviour.  The top patch
+ optionally flips the default to "--exact".
+
+
+* ab/add-interactive-show-diff-func-name (2014-05-12) 2 commits
+ . SQUASH??? git-add--interactive: Preserve diff heading when splitting hunks
+ . git-add--interactive: Preserve diff heading when splitting hunks
+
+
+* ss/userdiff-update-csharp-java (2014-06-02) 2 commits
+ . userdiff: support Java try keyword
+ . userdiff: support C# async methods and correct C# keywords
+
+
+* bg/rebase-off-of-previous-branch (2014-04-16) 1 commit
+ . git-rebase: print name of rev when using shorthand
+
+ Teach "git rebase -" to report the concrete name of the branch
+ (i.e. the previous one).
+
+ But it stops short and does not do the same for "git rebase @{-1}".
+
+
+* rb/merge-prepare-commit-msg-hook (2014-01-10) 4 commits
+ . merge: drop unused arg from abort_commit method signature
+ . merge: make prepare_to_commit responsible for write_merge_state
+ . t7505: ensure cleanup after hook blocks merge
+ . t7505: add missing &&
+
+ Expose more merge states (e.g. $GIT_DIR/MERGE_MODE) to hooks that
+ run during "git merge".  The log message stresses too much on one
+ hook, prepare-commit-msg, but it would equally apply to other hooks
+ like post-merge, I think.
+
+
+* jc/graph-post-root-gap (2013-12-30) 3 commits
+ . WIP: document what we want at the end
+ . graph: remove unused code a bit
+ . graph: stuff the current commit into graph->columns[]
+
+ This was primarily a RFH ($gmane/239580).
+
+
+* ts/man-pdf (2015-03-20) 1 commit
+ . Documentation: make 'make pdf' format manpages to PDF as well
+
+ For offline consumption of manual pages, a target to produce one
+ pdf document per manual page was added to Documentation/Makefile.
+
+ Its usefulness is unknown, given that this does not produce a
+ single document with all the manual pages in it, which would be not
+ much better than keeping a bunch of HTML manual pages we already
+ produce and use them instead for offline consumption.
+
+ Discarded, while leaving a single-document target as an open
+ possibility.
+
+
+* jn/gitweb-utf8-in-links (2014-05-27) 1 commit
+ . gitweb: Harden UTF-8 handling in generated links
