@@ -687,6 +687,10 @@ static int try_merge_strategy(const char *strategy, struct commit_list *common,
 			o.subtree_shift = "";
 
 		o.renormalize = option_renormalize;
+		if (verbosity < 0)
+			o.verbosity = verbosity;
+		else if (verbosity > 0)
+			o.verbosity += verbosity;
 		o.show_rename_progress =
 			show_progress == -1 ? isatty(2) : show_progress;
 
