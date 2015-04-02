@@ -304,6 +304,32 @@ int main(void)
 			&full_path, &skip_arguments)) {
 		/* do nothing */
 	}
+	else if (!wcscmp(basename, L"git-gui.exe")) {
+		static WCHAR buffer[BUFSIZE];
+		if (!PathRemoveFileSpec(exepath)) {
+			fwprintf(stderr,
+				L"Invalid executable path: %s\n", exepath);
+			ExitProcess(1);
+		}
+
+		/* set the default exe module */
+		wcscpy(exe, exepath);
+		PathAppend(exe, msystem_bin);
+		PathAppend(exe, L"wish.exe");
+		if (_waccess(exe, 0) != -1)
+			swprintf(buffer, BUFSIZE,
+				L"\"%s\\%.*s\\libexec\\git-core\"",
+				exepath, wcslen(msystem_bin) - 4, msystem_bin);
+		else {
+			wcscpy(exe, exepath);
+			PathAppend(exe, L"mingw\\bin\\wish.exe");
+			swprintf(buffer, BUFSIZE,
+				L"\"%s\\mingw\\libexec\\git-core\"", exepath);
+		}
+		PathAppend(buffer, L"git-gui");
+		prefix_args = buffer;
+		prefix_args_len = wcslen(buffer);
+	}
 	else if (!wcsncmp(basename, L"git-", 4)) {
 		needs_env_setup = 0;
 
