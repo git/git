@@ -177,6 +177,20 @@ static int git_init_db_config(const char *k, const char *v, void *cb)
 	return 0;
 }
 
+/*
+ * If the git_dir is not directly inside the working tree, then git will not
+ * find it by default, and we need to set the worktree explicitly.
+ */
+static int needs_work_tree_config(const char *git_dir, const char *work_tree)
+{
+	if (!strcmp(work_tree, "/") && !strcmp(git_dir, "/.git"))
+		return 0;
+	if (skip_prefix(git_dir, work_tree, &git_dir) &&
+	    !strcmp(git_dir, "/.git"))
+		return 0;
+	return 1;
+}
+
 static int create_default_files(const char *template_path)
 {
 	const char *git_dir = get_git_dir();
@@ -266,10 +280,8 @@ static int create_default_files(const char *template_path)
 		/* allow template config file to override the default */
 		if (log_all_ref_updates == -1)
 		    git_config_set("core.logallrefupdates", "true");
-		if (!starts_with(git_dir, work_tree) ||
-		    strcmp(git_dir + strlen(work_tree), "/.git")) {
+		if (needs_work_tree_config(git_dir, work_tree))
 			git_config_set("core.worktree", work_tree);
-		}
 	}
 
 	if (!reinit) {
