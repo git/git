@@ -52,6 +52,19 @@ struct rev_cmdline_info {
 #define REVISION_WALK_NO_WALK_SORTED 1
 #define REVISION_WALK_NO_WALK_UNSORTED 2
 
+enum merge_diff_mode {
+	/* default: do not show diffs for merge */
+	MERGE_DIFF_IGNORE = 0,
+	/* diff against each side (-m) */
+	MERGE_DIFF_EACH,
+	/* combined format (-c) */
+	MERGE_DIFF_COMBINED,
+	/* combined-condensed format (-cc) */
+	MERGE_DIFF_COMBINED_CONDENSED,
+	/* --remerge-diff */
+	MERGE_DIFF_REMERGE
+};
+
 struct rev_info {
 	/* Starting list */
 	struct commit_list *commits;
@@ -120,10 +133,9 @@ struct rev_info {
 			show_root_diff:1,
 			no_commit_id:1,
 			verbose_header:1,
-			ignore_merges:1,
-			combine_merges:1,
-			dense_combined_merges:1,
 			always_show_header:1;
+
+	enum merge_diff_mode merge_diff_mode;
 
 	/* Format info */
 	unsigned int	shown_one:1,
@@ -211,6 +223,12 @@ struct rev_info {
 	struct commit_list *previous_parents;
 	const char *break_bar;
 };
+
+static inline int merge_diff_mode_is_any_combined(struct rev_info *revs)
+{
+	return (revs->merge_diff_mode == MERGE_DIFF_COMBINED ||
+		revs->merge_diff_mode == MERGE_DIFF_COMBINED_CONDENSED);
+}
 
 extern int ref_excluded(struct string_list *, const char *path);
 void clear_ref_exclusion(struct string_list **);

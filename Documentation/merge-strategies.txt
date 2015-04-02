@@ -92,6 +92,15 @@ subtree[=<path>];;
 	is prefixed (or stripped from the beginning) to make the shape of
 	two trees to match.
 
+index-only;;
+	Write the merge result only to the index; do not touch the
+	worktree.
+
+conflicts-in-index;;
+	For conflicted files, write 3-way merged contents with
+	conflict hunks to the index, instead of leaving their entries
+	unresolved.
+
 octopus::
 	This resolves cases with more than two heads, but refuses to do
 	a complex merge that needs manual resolution.  It is
