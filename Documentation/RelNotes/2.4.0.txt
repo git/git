@@ -5,7 +5,8 @@ Backward compatibility warning(s)
 ---------------------------------
 
 This release has a few changes in the user-visible output from
-Porcelain commands, which the users may want to be aware of.
+Porcelain commands. These are not meant to be parsed by scripts, but
+the users still may want to be aware of the changes:
 
  * Output from "git log --decorate" (and "%d" format specifier used in
    the userformat "--format=<string>" parameter "git log" family of
@@ -216,7 +217,7 @@ notes for details).
    (merge 339de50 dk/format-patch-ignore-diff-submodule later to maint).
 
  * After attempting and failing a password-less authentication
-   (e.g. kerberos), libcURL refuses to fall back to password based
+   (e.g. Kerberos), libcURL refuses to fall back to password based
    Basic authentication without a bit of help/encouragement.
    (merge 4dbe664 bc/http-fallback-to-password-after-krb-fails later to maint).
 
