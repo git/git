@@ -123,6 +123,17 @@ tests, use
 		command2
 	'
 
+For performance tests that need cleaning up after them that should not
+be timed, use
+
+	test_perf_cleanup 'descriptive string' '
+		command1 &&
+		command2
+	' '
+		cleanupcommand1 &&
+		cleanupcommand2
+	'
+
 test_perf spawns a subshell, for lack of better options.  This means
 that
 
