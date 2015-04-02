@@ -1200,7 +1200,7 @@ for other users who clone your repository.
 If you wish the exclude patterns to affect only certain repositories
 (instead of every repository for a given project), you may instead put
 them in a file in your repository named `.git/info/exclude`, or in any
-file specified by the `core.excludesfile` configuration variable.
+file specified by the `core.excludesFile` configuration variable.
 Some Git commands can also take exclude patterns directly on the
 command line.  See linkgit:gitignore[5] for the details.
 

@@ -83,7 +83,7 @@ test_expect_success 'clone http repository' '
 test_expect_success 'fetch changes via http' '
 	echo content >>file &&
 	git commit -a -m two &&
-	git push public
+	git push public &&
 	(cd clone && git pull) &&
 	test_cmp file clone/file
 '
@@ -169,7 +169,7 @@ test_expect_success 'GIT_SMART_HTTP can disable smart http' '
 '
 
 test_expect_success 'invalid Content-Type rejected' '
-	test_must_fail git clone $HTTPD_URL/broken_smart/repo.git 2>actual
+	test_must_fail git clone $HTTPD_URL/broken_smart/repo.git 2>actual &&
 	grep "not valid:" actual
 '
 
@@ -209,7 +209,7 @@ test_expect_success 'cookies stored in http.cookiefile when http.savecookies set
 	git config http.cookiefile cookies.txt &&
 	git config http.savecookies true &&
 	git ls-remote $HTTPD_URL/smart_cookies/repo.git master &&
-	tail -3 cookies.txt > cookies_tail.txt
+	tail -3 cookies.txt >cookies_tail.txt &&
 	test_cmp expect_cookies.txt cookies_tail.txt
 '
 
@@ -224,10 +224,10 @@ test_expect_success 'transfer.hiderefs works over smart-http' '
 	git -C hidden.git rev-parse --verify b
 '
 
-test_expect_success EXPENSIVE 'create 50,000 tags in the repo' '
+test_expect_success 'create 2,000 tags in the repo' '
 	(
 	cd "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
-	for i in `test_seq 50000`
+	for i in $(test_seq 2000)
 	do
 		echo "commit refs/heads/too-many-refs"
 		echo "mark :$i"
@@ -248,12 +248,21 @@ test_expect_success EXPENSIVE 'create 50,000 tags in the repo' '
 	)
 '
 
-test_expect_success EXPENSIVE 'clone the 50,000 tag repo to check OS command line overflow' '
-	git clone $HTTPD_URL/smart/repo.git too-many-refs &&
+test_expect_success CMDLINE_LIMIT \
+	'clone the 2,000 tag repo to check OS command line overflow' '
+	run_with_limited_cmdline git clone $HTTPD_URL/smart/repo.git too-many-refs &&
 	(
 		cd too-many-refs &&
-		test $(git for-each-ref refs/tags | wc -l) = 50000
+		git for-each-ref refs/tags >actual &&
+		test_line_count = 2000 actual
 	)
+'
+
+test_expect_success 'large fetch-pack requests can be split across POSTs' '
+	GIT_CURL_VERBOSE=1 git -c http.postbuffer=65536 \
+		clone --bare "$HTTPD_URL/smart/repo.git" split.git 2>err &&
+	grep "^> POST" err >posts &&
+	test_line_count = 2 posts
 '
 
 stop_httpd

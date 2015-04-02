@@ -161,10 +161,7 @@ test_expect_success "Michael Cassar's test case" '
 	git mv papers/unsorted/Thesis.pdf papers/all-papers/moo-blah.pdf &&
 
 	T=`git write-tree` &&
-	git ls-tree -r $T | grep partA/outline.txt || {
-		git ls-tree -r $T
-		(exit 1)
-	}
+	git ls-tree -r $T | verbose grep partA/outline.txt
 '
 
 rm -fr papers partA path?

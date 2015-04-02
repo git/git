@@ -328,9 +328,14 @@ For C programs:
 
  - When you come up with an API, document it.
 
- - The first #include in C files, except in platform specific
-   compat/ implementations, should be git-compat-util.h or another
-   header file that includes it, such as cache.h or builtin.h.
+ - The first #include in C files, except in platform specific compat/
+   implementations, must be either "git-compat-util.h", "cache.h" or
+   "builtin.h".  You do not have to include more than one of these.
+
+ - A C file must directly include the header files that declare the
+   functions and the types it uses, except for the functions and types
+   that are made available to it by including one of the header files
+   it must include by the previous rule.
 
  - If you are planning a new command, consider writing it in shell
    or perl first, so that changes in semantics can be easily
@@ -464,6 +469,10 @@ Writing Documentation:
    --sort=<key>
    --abbrev[=<n>]
 
+ If a placeholder has multiple words, they are separated by dashes:
+   <new-branch-name>
+   --template=<template-directory>
+
  Possibility of multiple occurrences is indicated by three dots:
    <file>...
    (One or more of <file>.)
@@ -480,12 +489,12 @@ Writing Documentation:
    (Zero or more of <patch>.  Note that the dots are inside, not
    outside the brackets.)
 
- Multiple alternatives are indicated with vertical bar:
+ Multiple alternatives are indicated with vertical bars:
    [-q | --quiet]
    [--utf8 | --no-utf8]
 
  Parentheses are used for grouping:
-   [(<rev>|<range>)...]
+   [(<rev> | <range>)...]
    (Any number of either <rev> or <range>.  Parens are needed to make
    it clear that "..." pertains to both <rev> and <range>.)
 
@@ -517,7 +526,7 @@ Writing Documentation:
  `backticks around word phrases`, do so.
    `--pretty=oneline`
    `git rev-list`
-   `remote.pushdefault`
+   `remote.pushDefault`
 
  Word phrases enclosed in `backtick characters` are rendered literally
  and will not be further expanded. The use of `backticks` to achieve the

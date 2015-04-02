@@ -226,9 +226,9 @@ enum rev_sort_order {
 void sort_in_topological_order(struct commit_list **, enum rev_sort_order);
 
 struct commit_graft {
-	unsigned char sha1[20];
+	struct object_id oid;
 	int nr_parent; /* < 0 if shallow commit */
-	unsigned char parent[FLEX_ARRAY][20]; /* more */
+	struct object_id parent[FLEX_ARRAY]; /* more */
 };
 typedef int (*each_commit_graft_fn)(const struct commit_graft *, void *);
 
@@ -254,7 +254,6 @@ extern int for_each_commit_graft(each_commit_graft_fn, void *);
 extern int is_repository_shallow(void);
 extern struct commit_list *get_shallow_commits(struct object_array *heads,
 		int depth, int shallow_flag, int not_shallow_flag);
-extern void check_shallow_file_for_update(void);
 extern void set_alternate_shallow_file(const char *path, int override);
 extern int write_shallow_commits(struct strbuf *out, int use_pack_protocol,
 				 const struct sha1_array *extra);

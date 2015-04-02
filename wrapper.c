@@ -172,8 +172,22 @@ void *xcalloc(size_t nmemb, size_t size)
  * 64-bit is buggy, returning EINVAL if len >= INT_MAX; and even in
  * the absence of bugs, large chunks can result in bad latencies when
  * you decide to kill the process.
+ *
+ * We pick 8 MiB as our default, but if the platform defines SSIZE_MAX
+ * that is smaller than that, clip it to SSIZE_MAX, as a call to
+ * read(2) or write(2) larger than that is allowed to fail.  As the last
+ * resort, we allow a port to pass via CFLAGS e.g. "-DMAX_IO_SIZE=value"
+ * to override this, if the definition of SSIZE_MAX given by the platform
+ * is broken.
  */
-#define MAX_IO_SIZE (8*1024*1024)
+#ifndef MAX_IO_SIZE
+# define MAX_IO_SIZE_DEFAULT (8*1024*1024)
+# if defined(SSIZE_MAX) && (SSIZE_MAX < MAX_IO_SIZE_DEFAULT)
+#  define MAX_IO_SIZE SSIZE_MAX
+# else
+#  define MAX_IO_SIZE MAX_IO_SIZE_DEFAULT
+# endif
+#endif
 
 /*
  * xread() is the same a read(), but it automatically restarts read()
@@ -297,12 +311,40 @@ int xdup(int fd)
 	return ret;
 }
 
-FILE *xfdopen(int fd, const char *mode)
+#ifndef BUFSIZ
+#define ALLOC_BUFSIZ 4096
+#else
+#define ALLOC_BUFSIZ BUFSIZ
+#endif
+
+FILE *fdopen_with_retry(int fd, const char *mode)
 {
 	FILE *stream = fdopen(fd, mode);
-	if (stream == NULL)
-		die_errno("Out of memory? fdopen failed");
+
+	if (!stream && errno == ENOMEM) {
+		/*
+		 * Try to free up some memory, then try again. We
+		 * would prefer to use sizeof(FILE) here, but that is
+		 * not guaranteed to be defined (e.g., FILE might be
+		 * an incomplete type).
+		 */
+		try_to_free_routine(ALLOC_BUFSIZ);
+		stream = fdopen(fd, mode);
+	}
+
 	return stream;
+}
+
+FILE *xfdopen(int fd, const char *mode)
+{
+	FILE *stream = fdopen_with_retry(fd, mode);
+
+	if (stream)
+		return stream;
+	else if (errno == ENOMEM)
+		die_errno("Out of memory? fdopen failed");
+	else
+		die_errno("fdopen failed");
 }
 
 int xmkstemp(char *template)
@@ -549,4 +591,35 @@ char *xgetcwd(void)
 	if (strbuf_getcwd(&sb))
 		die_errno(_("unable to get current working directory"));
 	return strbuf_detach(&sb, NULL);
+}
+
+int write_file(const char *path, int fatal, const char *fmt, ...)
+{
+	struct strbuf sb = STRBUF_INIT;
+	va_list params;
+	int fd = open(path, O_RDWR | O_CREAT | O_TRUNC, 0666);
+	if (fd < 0) {
+		if (fatal)
+			die_errno(_("could not open %s for writing"), path);
+		return -1;
+	}
+	va_start(params, fmt);
+	strbuf_vaddf(&sb, fmt, params);
+	va_end(params);
+	if (write_in_full(fd, sb.buf, sb.len) != sb.len) {
+		int err = errno;
+		close(fd);
+		strbuf_release(&sb);
+		errno = err;
+		if (fatal)
+			die_errno(_("could not write to %s"), path);
+		return -1;
+	}
+	strbuf_release(&sb);
+	if (close(fd)) {
+		if (fatal)
+			die_errno(_("could not close %s"), path);
+		return -1;
+	}
+	return 0;
 }

@@ -507,8 +507,11 @@ int stream_blob_to_fd(int fd, unsigned const char *sha1, struct stream_filter *f
 	int result = -1;
 
 	st = open_istream(sha1, &type, &sz, filter);
-	if (!st)
+	if (!st) {
+		if (filter)
+			free_stream_filter(filter);
 		return result;
+	}
 	if (type != OBJ_BLOB)
 		goto close_and_exit;
 	for (;;) {

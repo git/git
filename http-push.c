@@ -316,7 +316,6 @@ static void start_fetch_packed(struct transfer_request *request)
 
 	preq = new_http_pack_request(target, repo->url);
 	if (preq == NULL) {
-		release_http_pack_request(preq);
 		repo->can_update_info_refs = 0;
 		return;
 	}

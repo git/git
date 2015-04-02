@@ -5,7 +5,6 @@ use warnings;
 use SVN::Core;
 use SVN::Delta;
 use Carp qw/croak/;
-use IO::File;
 use Git qw/command command_oneline command_noisy command_output_pipe
            command_input_pipe command_close_pipe
            command_bidi_pipe command_close_bidi_pipe/;
@@ -586,7 +585,7 @@ The interface will change as git-svn evolves.
 =head1 DEPENDENCIES
 
 Subversion perl bindings,
-the core L<Carp> and L<IO::File> modules,
+the core L<Carp> module,
 and git's L<Git> helper module.
 
 C<Git::SVN::Editor> has not been tested using callers other than

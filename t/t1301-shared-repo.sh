@@ -12,12 +12,11 @@ setfacl -k . 2>/dev/null
 
 # User must have read permissions to the repo -> failure on --shared=0400
 test_expect_success 'shared = 0400 (faulty permission u-w)' '
+	test_when_finished "rm -rf sub" &&
 	mkdir sub && (
-		cd sub && git init --shared=0400
+		cd sub &&
+		test_must_fail git init --shared=0400
 	)
-	ret="$?"
-	rm -rf sub
-	test $ret != "0"
 '
 
 modebits () {
@@ -33,7 +32,7 @@ do
 			git init --shared=1 &&
 			test 1 = "$(git config core.sharedrepository)"
 		) &&
-		actual=$(ls -l sub/.git/HEAD)
+		actual=$(ls -l sub/.git/HEAD) &&
 		case "$actual" in
 		-rw-rw-r--*)
 			: happy
@@ -90,10 +89,8 @@ do
 		rm -f .git/info/refs &&
 		git update-server-info &&
 		actual="$(modebits .git/info/refs)" &&
-		test "x$actual" = "x-$y" || {
-			ls -lt .git/info
-			false
-		}
+		verbose test "x$actual" = "x-$y"
+
 	'
 
 	umask 077 &&
@@ -102,10 +99,7 @@ do
 		rm -f .git/info/refs &&
 		git update-server-info &&
 		actual="$(modebits .git/info/refs)" &&
-		test "x$actual" = "x-$x" || {
-			ls -lt .git/info
-			false
-		}
+		verbose test "x$actual" = "x-$x"
 
 	'
 

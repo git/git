@@ -507,10 +507,6 @@ omitted when creating a new branch, the first `merge` commit will be
 the first ancestor of the current commit, and the branch will start
 out with no files.  An unlimited number of `merge` commands per
 commit are permitted by fast-import, thereby establishing an n-way merge.
-However Git's other tools never create commits with more than 15
-additional ancestors (forming a 16-way merge).  For this reason
-it is suggested that frontends do not use more than 15 `merge`
-commands per commit; 16, if starting a new, empty branch.
 
 Here `<commit-ish>` is any of the commit specification expressions
 also accepted by `from` (see above).

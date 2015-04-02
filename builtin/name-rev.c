@@ -252,9 +252,9 @@ static void show_name(const struct object *obj,
 }
 
 static char const * const name_rev_usage[] = {
-	N_("git name-rev [options] <commit>..."),
-	N_("git name-rev [options] --all"),
-	N_("git name-rev [options] --stdin"),
+	N_("git name-rev [<options>] <commit>..."),
+	N_("git name-rev [<options>] --all"),
+	N_("git name-rev [<options>] --stdin"),
 	NULL
 };
 

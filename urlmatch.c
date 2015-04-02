@@ -412,9 +412,9 @@ static size_t url_match_prefix(const char *url,
 	return 0;
 }
 
-int match_urls(const struct url_info *url,
-	       const struct url_info *url_prefix,
-	       int *exactusermatch)
+static int match_urls(const struct url_info *url,
+		      const struct url_info *url_prefix,
+		      int *exactusermatch)
 {
 	/*
 	 * url_prefix matches url if the scheme, host and port of url_prefix

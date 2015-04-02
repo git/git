@@ -133,6 +133,10 @@ our $projects_list_description_width = 25;
 # (enabled if this variable evaluates to true)
 our $projects_list_group_categories = 0;
 
+# project's category defaults to its parent directory
+# (enabled if this variable evaluates to true)
+our $projects_list_directory_is_category = 0;
+
 # default category if none specified
 # (leave the empty string for no category)
 our $project_list_default_category = "";
@@ -895,7 +899,17 @@ sub evaluate_path_info {
 	while ($project && !check_head_link("$projectroot/$project")) {
 		$project =~ s,/*[^/]*$,,;
 	}
-	return unless $project;
+	# If there is no project, use the PATH_INFO as a project filter if it
+	# is a directory in the projectroot. (It can't be a subdirectory of a
+	# repo because we just verified that isn't the case.)
+	unless ($project) {
+		if (-d "$projectroot/$path_info") {
+			$path_info =~ s,/+$,,;
+			$input_params{'project_filter'} = $path_info;
+			$path_info = "";
+		}
+		return;
+	}
 	$input_params{'project'} = $project;
 
 	# do not change any parameters if an action is given using the query string
@@ -1360,6 +1374,18 @@ sub href {
 	}
 
 	my $use_pathinfo = gitweb_check_feature('pathinfo');
+
+	# we have to check for a project_filter first because handling the full
+	# project-plus-parameters deletes some of the paramaters we check here
+	if (!defined $params{'project'} && $params{'project_filter'} &&
+	    $params{'action'} eq "project_list" &&
+	    (exists $params{-path_info} ? $params{-path_info} : $use_pathinfo)) {
+		$href =~ s,/$,,;
+		$href .= "/".esc_path_info($params{'project_filter'})."/";
+		delete $params{'project_filter'};
+		delete $params{'action'};
+	}
+
 	if (defined $params{'project'} &&
 	    (exists $params{-path_info} ? $params{-path_info} : $use_pathinfo)) {
 		# try to put as many parameters as possible in PATH_INFO:
@@ -2886,7 +2912,11 @@ sub git_get_project_description {
 
 sub git_get_project_category {
 	my $path = shift;
-	return git_get_file_or_project_config($path, 'category');
+	my $cat = git_get_file_or_project_config($path, 'category');
+	return $cat if $cat;
+	return $1 if $projects_list_directory_is_category
+		  && $path =~ m,^(.*)/[^/]*$,;
+	return $project_list_default_category;
 }
 
 
@@ -5527,10 +5557,13 @@ sub git_project_search_form {
 	      "</span>\n" .
 	      $cgi->submit(-name => 'btnS', -value => 'Search') .
 	      $cgi->end_form() . "\n" .
-	      $cgi->a({-href => href(project => undef, searchtext => undef,
-	                             project_filter => $project_filter)},
-	              esc_html("List all projects$limit")) . "<br />\n";
-	print "</div>\n";
+	      $cgi->a({-href => $my_uri}, esc_html("List all projects"));
+	print " / " .
+	      $cgi->a({-href => href(project => undef, action => "project_list",
+				     project_filter => $project_filter)},
+	              esc_html("List projects$limit"))
+	    if $project_filter;
+	print "<br />\n</div>\n";
 }
 
 # entry for given @keys needs filling if at least one of keys in list
@@ -5597,8 +5630,7 @@ sub fill_project_list_info {
 		}
 		if ($projects_list_group_categories &&
 		    project_info_needs_filling($pr, $filter_set->('category'))) {
-			my $cat = git_get_project_category($pr->{'path'}) ||
-			                                   $project_list_default_category;
+			my $cat = git_get_project_category($pr->{'path'});
 			$pr->{'category'} = to_utf8($cat);
 		}
 
@@ -5806,8 +5838,18 @@ sub git_project_list_body {
 				if ($check_forks) {
 					print "<td></td>\n";
 				}
-				print "<td class=\"category\" colspan=\"5\">".esc_html($cat)."</td>\n";
-				print "</tr>\n";
+				print "<td class=\"category\" colspan=\"5\">";
+				if ($projects_list_directory_is_category) {
+					print $cgi->a({-href =>
+					    href(project => undef,
+					        project_filter => $cat,
+					        action => "project_list"),
+					    -class => "list"},
+					    esc_html($cat));
+				} else {
+					print esc_html($cat);
+				}
+				print "</td>\n</tr>\n";
 			}
 
 			git_project_list_rows($categories{$cat}, undef, undef, $check_forks);

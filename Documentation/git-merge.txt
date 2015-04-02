@@ -12,7 +12,6 @@ SYNOPSIS
 'git merge' [-n] [--stat] [--no-commit] [--squash] [--[no-]edit]
 	[-s <strategy>] [-X <strategy-option>] [-S[<key-id>]]
 	[--[no-]rerere-autoupdate] [-m <msg>] [<commit>...]
-'git merge' <msg> HEAD <commit>...
 'git merge' --abort
 
 DESCRIPTION
@@ -44,11 +43,7 @@ a log message from the user describing the changes.
     D---E---F---G---H master
 ------------
 
-The second syntax (<msg> `HEAD` <commit>...) is supported for
-historical reasons.  Do not use it from the command line or in
-new scripts.  It is the same as `git merge -m <msg> <commit>...`.
-
-The third syntax ("`git merge --abort`") can only be run after the
+The second syntax ("`git merge --abort`") can only be run after the
 merge has resulted in conflicts. 'git merge --abort' will abort the
 merge process and try to reconstruct the pre-merge state. However,
 if there were uncommitted changes when the merge started (and
@@ -232,7 +227,7 @@ Barbie's remark on your side.  The only thing you can tell is that your
 side wants to say it is hard and you'd prefer to go shopping, while the
 other side wants to claim it is easy.
 
-An alternative style can be used by setting the "merge.conflictstyle"
+An alternative style can be used by setting the "merge.conflictStyle"
 configuration variable to "diff3".  In "diff3" style, the above conflict
 may look like this:
 
@@ -329,7 +324,7 @@ CONFIGURATION
 -------------
 include::merge-config.txt[]
 
-branch.<name>.mergeoptions::
+branch.<name>.mergeOptions::
 	Sets default options for merging into branch <name>. The syntax and
 	supported options are the same as those of 'git merge', but option
 	values containing whitespace characters are currently not supported.

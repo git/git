@@ -1046,6 +1046,29 @@ GIT_CONF_SUBST([NO_INITGROUPS])
 #
 # Define NO_ICONV if your libc does not properly support iconv.
 
+AC_DEFUN([BSD_SYSCTL_SRC], [
+AC_LANG_PROGRAM([[
+#include <stddef.h>
+#include <sys/types.h>
+#include <sys/sysctl.h>
+]],[[
+int val, mib[2];
+size_t len;
+mib[0] = CTL_HW;
+mib[1] = 1;
+len = sizeof(val);
+return sysctl(mib, 2, &val, &len, NULL, 0) ? 1 : 0;
+]])])
+
+#
+# Define HAVE_BSD_SYSCTL=YesPlease if a BSD-compatible sysctl function is available.
+AC_MSG_CHECKING([for BSD sysctl])
+AC_COMPILE_IFELSE([BSD_SYSCTL_SRC],
+	[AC_MSG_RESULT([yes])
+	HAVE_BSD_SYSCTL=YesPlease],
+	[AC_MSG_RESULT([no])
+	HAVE_BSD_SYSCTL=])
+GIT_CONF_SUBST([HAVE_BSD_SYSCTL])
 
 ## Other checks.
 # Define USE_PIC if you need the main git objects to be built with -fPIC

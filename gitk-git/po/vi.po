@@ -6,8 +6,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: gitk @@GIT_VERSION@@\n"
-"Report-Msgid-Bugs-To: Paul Mackerras <paulus@samba.org>\n"
-"POT-Creation-Date: 2013-12-14 09:24+0700\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2015-03-15 14:37+1100\n"
 "PO-Revision-Date: 2013-12-14 14:40+0700\n"
 "Last-Translator: Trần Ngọc Quân <vnwildman@gmail.com>\n"
 "Language-Team: Vietnamese <translation-team-vi@lists.sourceforge.net>\n"
@@ -21,28 +21,28 @@ msgstr ""
 msgid "Couldn't get list of unmerged files:"
 msgstr "Không thể lấy danh sách các tập-tin chưa được hòa trộn:"
 
-#: gitk:212 gitk:2353
+#: gitk:212 gitk:2381
 msgid "Color words"
 msgstr "Tô màu chữ"
 
-#: gitk:217 gitk:2353 gitk:8103 gitk:8136
+#: gitk:217 gitk:2381 gitk:8201 gitk:8234
 msgid "Markup words"
 msgstr "Đánh dấu chữ"
 
-#: gitk:322
+#: gitk:324
 msgid "Error parsing revisions:"
 msgstr "Gặp lỗi khi phân tích điểm xét duyệt:"
 
-#: gitk:378
+#: gitk:380
 msgid "Error executing --argscmd command:"
 msgstr "Gặp lỗi khi thực hiện lệnh --argscmd:"
 
-#: gitk:391
+#: gitk:393
 msgid "No files selected: --merge specified but no files are unmerged."
 msgstr ""
 "Chưa chọn tập tin: --merge đã chỉ định nhưng không có tập tin chưa hòa trộn."
 
-#: gitk:394
+#: gitk:396
 msgid ""
 "No files selected: --merge specified but no unmerged files are within file "
 "limit."
@@ -50,319 +50,312 @@ msgstr ""
 "Chưa chọn tập tin: --merge đã chỉ định nhưng không có tập tin chưa hòa trộn "
 "trong giới hạn tập tin."
 
-#: gitk:416 gitk:564
+#: gitk:418 gitk:566
 msgid "Error executing git log:"
 msgstr "Gặp lỗi khi thực hiện lệnh git log:"
 
-#: gitk:434 gitk:580
+#: gitk:436 gitk:582
 msgid "Reading"
 msgstr "Đang đọc"
 
-#: gitk:494 gitk:4429
+#: gitk:496 gitk:4508
 msgid "Reading commits..."
 msgstr "Đang đọc các lần chuyển giao..."
 
-#: gitk:497 gitk:1635 gitk:4432
+#: gitk:499 gitk:1637 gitk:4511
 msgid "No commits selected"
 msgstr "Chưa chọn các lần chuyển giao"
 
-#: gitk:1509
+#: gitk:1511
 msgid "Can't parse git log output:"
 msgstr "Không thể phân tích kết xuất từ lệnh git log:"
 
-#: gitk:1738
+#: gitk:1740
 msgid "No commit information available"
 msgstr "Không có thông tin về lần chuyển giao nào"
 
-#: gitk:1895
+#: gitk:1897
 msgid "mc"
 msgstr "mc"
 
-#: gitk:1930 gitk:4222 gitk:9552 gitk:11122 gitk:11401
+#: gitk:1932 gitk:4298 gitk:9650 gitk:11220 gitk:11500
 msgid "OK"
 msgstr "Đồng ý"
 
-#: gitk:1932 gitk:4224 gitk:9079 gitk:9158 gitk:9274 gitk:9323 gitk:9554
-#: gitk:11123 gitk:11402
+#: gitk:1934 gitk:4300 gitk:9177 gitk:9256 gitk:9372 gitk:9421 gitk:9652
+#: gitk:11221 gitk:11501
 msgid "Cancel"
 msgstr "Thôi"
 
-#: gitk:2067
+#: gitk:2069
 msgid "Update"
 msgstr "Cập nhật"
 
-#: gitk:2068
+#: gitk:2070
 msgid "Reload"
 msgstr "Tải lại"
 
-#: gitk:2069
+#: gitk:2071
 msgid "Reread references"
 msgstr "Đọc lại tham chiếu"
 
-#: gitk:2070
+#: gitk:2072
 msgid "List references"
 msgstr "Liệt kê các tham chiếu"
 
-#: gitk:2072
+#: gitk:2074
 msgid "Start git gui"
 msgstr "Khởi chạy git gui"
 
-#: gitk:2074
+#: gitk:2076
 msgid "Quit"
 msgstr "Thoát"
 
-#: gitk:2066
+#: gitk:2068
 msgid "File"
 msgstr "Chính"
 
-#: gitk:2078
+#: gitk:2080
 msgid "Preferences"
 msgstr "Cá nhân hóa"
 
-#: gitk:2077
+#: gitk:2079
 msgid "Edit"
 msgstr "Chỉnh sửa"
 
-#: gitk:2082
+#: gitk:2084
 msgid "New view..."
 msgstr "Thêm trình bày mới..."
 
-#: gitk:2083
+#: gitk:2085
 msgid "Edit view..."
 msgstr "Sửa cách trình bày..."
 
-#: gitk:2084
+#: gitk:2086
 msgid "Delete view"
 msgstr "Xóa cách trình bày"
 
-#: gitk:2086
+#: gitk:2088
 msgid "All files"
 msgstr "Mọi tập tin"
 
-#: gitk:2081 gitk:3975
+#: gitk:2083 gitk:4050
 msgid "View"
 msgstr "Trình bày"
 
-#: gitk:2091 gitk:2101 gitk:2945
+#: gitk:2093 gitk:2103 gitk:3009
 msgid "About gitk"
 msgstr "Giới thiệu về gitk"
 
-#: gitk:2092 gitk:2106
+#: gitk:2094 gitk:2108
 msgid "Key bindings"
 msgstr "Tổ hợp phím"
 
-#: gitk:2090 gitk:2105
+#: gitk:2092 gitk:2107
 msgid "Help"
 msgstr "Trợ giúp"
 
-#: gitk:2183 gitk:8535
+#: gitk:2185 gitk:8633
 msgid "SHA1 ID:"
 msgstr "SHA1 ID:"
 
-#: gitk:2227
+#: gitk:2229
 msgid "Row"
 msgstr "Hàng"
 
-#: gitk:2265
+#: gitk:2267
 msgid "Find"
 msgstr "Tìm"
 
-#: gitk:2266
-msgid "next"
-msgstr "tiếp"
-
-#: gitk:2267
-msgid "prev"
-msgstr "trước"
-
-#: gitk:2268
+#: gitk:2295
 msgid "commit"
 msgstr "lần chuyển giao"
 
-#: gitk:2271 gitk:2273 gitk:4590 gitk:4613 gitk:4637 gitk:6653 gitk:6725
-#: gitk:6810
+#: gitk:2299 gitk:2301 gitk:4669 gitk:4692 gitk:4716 gitk:6736 gitk:6808
+#: gitk:6893
 msgid "containing:"
 msgstr "có chứa:"
 
-#: gitk:2274 gitk:3457 gitk:3462 gitk:4666
+#: gitk:2302 gitk:3522 gitk:3527 gitk:4745
 msgid "touching paths:"
 msgstr "đang chạm đường dẫn:"
 
-#: gitk:2275 gitk:4680
+#: gitk:2303 gitk:4759
 msgid "adding/removing string:"
 msgstr "thêm/gỡ bỏ chuỗi:"
 
-#: gitk:2276 gitk:4682
+#: gitk:2304 gitk:4761
 msgid "changing lines matching:"
 msgstr "những dòng thay đổi khớp mẫu:"
 
-#: gitk:2285 gitk:2287 gitk:4669
+#: gitk:2313 gitk:2315 gitk:4748
 msgid "Exact"
 msgstr "Chính xác"
 
-#: gitk:2287 gitk:4757 gitk:6621
+#: gitk:2315 gitk:4836 gitk:6704
 msgid "IgnCase"
 msgstr "BquaHt"
 
-#: gitk:2287 gitk:4639 gitk:4755 gitk:6617
+#: gitk:2315 gitk:4718 gitk:4834 gitk:6700
 msgid "Regexp"
 msgstr "BTCQ"
 
-#: gitk:2289 gitk:2290 gitk:4777 gitk:4807 gitk:4814 gitk:6746 gitk:6814
+#: gitk:2317 gitk:2318 gitk:4856 gitk:4886 gitk:4893 gitk:6829 gitk:6897
 msgid "All fields"
 msgstr "Mọi trường"
 
-#: gitk:2290 gitk:4774 gitk:4807 gitk:6684
+#: gitk:2318 gitk:4853 gitk:4886 gitk:6767
 msgid "Headline"
 msgstr "Nội dung chính"
 
-#: gitk:2291 gitk:4774 gitk:6684 gitk:6814 gitk:7283
+#: gitk:2319 gitk:4853 gitk:6767 gitk:6897 gitk:7370
 msgid "Comments"
 msgstr "Ghi chú"
 
-#: gitk:2291 gitk:4774 gitk:4779 gitk:4814 gitk:6684 gitk:7218 gitk:8713
-#: gitk:8728
+#: gitk:2319 gitk:4853 gitk:4858 gitk:4893 gitk:6767 gitk:7305 gitk:8811
+#: gitk:8826
 msgid "Author"
 msgstr "Tác giả"
 
-#: gitk:2291 gitk:4774 gitk:6684 gitk:7220
+#: gitk:2319 gitk:4853 gitk:6767 gitk:7307
 msgid "Committer"
 msgstr "Người chuyển giao"
 
-#: gitk:2322
+#: gitk:2350
 msgid "Search"
 msgstr "Tìm kiếm"
 
-#: gitk:2330
+#: gitk:2358
 msgid "Diff"
 msgstr "So sánh"
 
-#: gitk:2332
+#: gitk:2360
 msgid "Old version"
 msgstr "Phiên bản cũ"
 
-#: gitk:2334
+#: gitk:2362
 msgid "New version"
 msgstr "Phiên bản mới"
 
-#: gitk:2336
+#: gitk:2364
 msgid "Lines of context"
 msgstr "Các dòng của nội dung"
 
-#: gitk:2346
+#: gitk:2374
 msgid "Ignore space change"
 msgstr "Không xét đến thay đổi do khoảng trắng"
 
-#: gitk:2350 gitk:2352 gitk:7842 gitk:8089
+#: gitk:2378 gitk:2380 gitk:7940 gitk:8187
 msgid "Line diff"
 msgstr "Khác biệt theo dòng"
 
-#: gitk:2417
+#: gitk:2445
 msgid "Patch"
 msgstr "Vá"
 
-#: gitk:2419
+#: gitk:2447
 msgid "Tree"
 msgstr "Cây"
 
-#: gitk:2577 gitk:2597
+#: gitk:2616 gitk:2636
 msgid "Diff this -> selected"
 msgstr "So sánh cái này -> cái đã chọn"
 
-#: gitk:2578 gitk:2598
+#: gitk:2617 gitk:2637
 msgid "Diff selected -> this"
 msgstr "So sánh cái đã chọn -> cái này"
 
-#: gitk:2579 gitk:2599
+#: gitk:2618 gitk:2638
 msgid "Make patch"
 msgstr "Tạo miếng vá"
 
-#: gitk:2580 gitk:9137
+#: gitk:2619 gitk:9235
 msgid "Create tag"
 msgstr "Tạo thẻ"
 
-#: gitk:2581 gitk:9254
+#: gitk:2620 gitk:9352
 msgid "Write commit to file"
 msgstr "Ghi lần chuyển giao ra tập tin"
 
-#: gitk:2582 gitk:9311
+#: gitk:2621 gitk:9409
 msgid "Create new branch"
 msgstr "Tạo nhánh mới"
 
-#: gitk:2583
+#: gitk:2622
 msgid "Cherry-pick this commit"
 msgstr "Cherry-pick lần chuyển giao này"
 
-#: gitk:2584
+#: gitk:2623
 msgid "Reset HEAD branch to here"
 msgstr "Đặt lại HEAD của nhánh vào đây"
 
-#: gitk:2585
+#: gitk:2624
 msgid "Mark this commit"
 msgstr "Đánh dấu lần chuyển giao này"
 
-#: gitk:2586
+#: gitk:2625
 msgid "Return to mark"
 msgstr "Quay lại vị trí dấu"
 
-#: gitk:2587
+#: gitk:2626
 msgid "Find descendant of this and mark"
 msgstr "Tìm con cháu của cái này và cái đã đánh dấu"
 
-#: gitk:2588
+#: gitk:2627
 msgid "Compare with marked commit"
 msgstr "So sánh với lần chuyển giao đã đánh dấu"
 
-#: gitk:2589 gitk:2600
+#: gitk:2628 gitk:2639
 msgid "Diff this -> marked commit"
 msgstr "So sánh cái này -> lần chuyển giao đã đánh dấu"
 
-#: gitk:2590 gitk:2601
+#: gitk:2629 gitk:2640
 msgid "Diff marked commit -> this"
 msgstr "So sánh lần chuyển giao đã đánh dấu -> cái này"
 
-#: gitk:2591
+#: gitk:2630
 msgid "Revert this commit"
 msgstr "Hoàn lại lần chuyển giao này"
 
-#: gitk:2607
+#: gitk:2646
 msgid "Check out this branch"
 msgstr "Checkout nhánh này"
 
-#: gitk:2608
+#: gitk:2647
 msgid "Remove this branch"
 msgstr "Gỡ bỏ nhánh này"
 
-#: gitk:2615
+#: gitk:2654
 msgid "Highlight this too"
 msgstr "Cũng tô sáng nó"
 
-#: gitk:2616
+#: gitk:2655
 msgid "Highlight this only"
 msgstr "Chỉ tô sáng cái này"
 
-#: gitk:2617
+#: gitk:2656
 msgid "External diff"
 msgstr "diff từ bên ngoài"
 
-#: gitk:2618
+#: gitk:2657
 msgid "Blame parent commit"
 msgstr "Xem công trạng lần chuyển giao cha mẹ"
 
-#: gitk:2625
+#: gitk:2664
 msgid "Show origin of this line"
 msgstr "Hiển thị nguyên gốc của dòng này"
 
-#: gitk:2626
+#: gitk:2665
 msgid "Run git gui blame on this line"
 msgstr "Chạy lệnh git gui blame cho dòng này"
 
-#: gitk:2947
+#: gitk:3011
+#, fuzzy
 msgid ""
 "\n"
 "Gitk - a commit viewer for git\n"
 "\n"
-"Copyright © 2005-2011 Paul Mackerras\n"
+"Copyright © 2005-2014 Paul Mackerras\n"
 "\n"
 "Use and redistribute under the terms of the GNU General Public License"
 msgstr ""
@@ -373,304 +366,314 @@ msgstr ""
 "\n"
 "Dùng và phân phối lại phần mềm này theo các điều khoản của Giấy Phép Công GNU"
 
-#: gitk:2955 gitk:3020 gitk:9738
+#: gitk:3019 gitk:3085 gitk:9836
 msgid "Close"
 msgstr "Đóng"
 
-#: gitk:2976
+#: gitk:3040
 msgid "Gitk key bindings"
 msgstr "Tổ hợp phím gitk"
 
-#: gitk:2979
+#: gitk:3043
 msgid "Gitk key bindings:"
 msgstr "Tổ hợp phím gitk:"
 
-#: gitk:2981
+#: gitk:3045
 #, tcl-format
 msgid "<%s-Q>\t\tQuit"
 msgstr "<%s-Q>\t\tThoát"
 
-#: gitk:2982
+#: gitk:3046
 #, tcl-format
 msgid "<%s-W>\t\tClose window"
 msgstr "<%s-W>\t\tĐóng cửa sổ"
 
-#: gitk:2983
+#: gitk:3047
 msgid "<Home>\t\tMove to first commit"
 msgstr "<Home>\t\tChuyển đến lần chuyển giao đầu tiên"
 
-#: gitk:2984
+#: gitk:3048
 msgid "<End>\t\tMove to last commit"
 msgstr "<End>\t\tChuyển đến lần chuyển giao cuối"
 
-#: gitk:2985
+#: gitk:3049
 msgid "<Up>, p, k\tMove up one commit"
 msgstr "<Up>, p, k\tDi chuyển lên một lần chuyển giao"
 
-#: gitk:2986
+#: gitk:3050
 msgid "<Down>, n, j\tMove down one commit"
 msgstr "<Down>, n, j\tDi chuyển xuống một lần chuyển giao"
 
-#: gitk:2987
+#: gitk:3051
 msgid "<Left>, z, h\tGo back in history list"
 msgstr "<Left>, z, h\tQuay trở lại danh sách lịch sử"
 
-#: gitk:2988
+#: gitk:3052
 msgid "<Right>, x, l\tGo forward in history list"
 msgstr "<Right>, x, l\tDi chuyển tiếp trong danh sách lịch sử"
 
-#: gitk:2989
+#: gitk:3053
+#, tcl-format
+msgid "<%s-n>\tGo to n-th parent of current commit in history list"
+msgstr ""
+
+#: gitk:3054
 msgid "<PageUp>\tMove up one page in commit list"
 msgstr "<PageUp>\tDi chuyển lên một trang trong danh sách lần chuyển giao"
 
-#: gitk:2990
+#: gitk:3055
 msgid "<PageDown>\tMove down one page in commit list"
 msgstr "<PageDown>\tDi chuyển xuống một trang trong danh sách lần chuyển giao"
 
-#: gitk:2991
+#: gitk:3056
 #, tcl-format
 msgid "<%s-Home>\tScroll to top of commit list"
 msgstr "<%s-Home>\tCuộn lên trên cùng của danh sách lần chuyển giao"
 
-#: gitk:2992
+#: gitk:3057
 #, tcl-format
 msgid "<%s-End>\tScroll to bottom of commit list"
 msgstr "<%s-End>\tCuộn xuống dưới cùng của danh sách lần chuyển giao"
 
-#: gitk:2993
+#: gitk:3058
 #, tcl-format
 msgid "<%s-Up>\tScroll commit list up one line"
 msgstr "<%s-Up>\tCuộn danh sách lần chuyển giao lên một dòng"
 
-#: gitk:2994
+#: gitk:3059
 #, tcl-format
 msgid "<%s-Down>\tScroll commit list down one line"
 msgstr "<%s-Down>\tCuộn danh sách lần chuyển giao xuống một dòng"
 
-#: gitk:2995
+#: gitk:3060
 #, tcl-format
 msgid "<%s-PageUp>\tScroll commit list up one page"
 msgstr "<%s-PageUp>\tCuộn danh sách lần chuyển giao lên một trang"
 
-#: gitk:2996
+#: gitk:3061
 #, tcl-format
 msgid "<%s-PageDown>\tScroll commit list down one page"
 msgstr "<%s-PageDown>\tCuộn danh sách lần chuyển giao xuống một trang"
 
-#: gitk:2997
+#: gitk:3062
 msgid "<Shift-Up>\tFind backwards (upwards, later commits)"
 msgstr "<Shift-Up>\tTìm về phía sau (hướng lên trên, lần chuyển giao sau này)"
 
-#: gitk:2998
+#: gitk:3063
 msgid "<Shift-Down>\tFind forwards (downwards, earlier commits)"
 msgstr ""
 "<Shift-Down>\tTìm về phía trước (hướng xuống dưới, lần chuyển giao trước đây)"
 
-#: gitk:2999
+#: gitk:3064
 msgid "<Delete>, b\tScroll diff view up one page"
 msgstr "<Delete>, b\tCuộn phần trình bày diff lên một trang"
 
-#: gitk:3000
+#: gitk:3065
 msgid "<Backspace>\tScroll diff view up one page"
 msgstr "<Backspace>\tCuộn phần trình bày diff lên một trang"
 
-#: gitk:3001
+#: gitk:3066
 msgid "<Space>\t\tScroll diff view down one page"
 msgstr "<Space>\t\tCuộn phần trình bày diff xuống một trang"
 
-#: gitk:3002
+#: gitk:3067
 msgid "u\t\tScroll diff view up 18 lines"
 msgstr "u\t\tCuộn phần trình bày diff lên 18 dòng"
 
-#: gitk:3003
+#: gitk:3068
 msgid "d\t\tScroll diff view down 18 lines"
 msgstr "d\t\tCuộn phần trình bày diff xuống 18 dòng"
 
-#: gitk:3004
+#: gitk:3069
 #, tcl-format
 msgid "<%s-F>\t\tFind"
 msgstr "<%s-F>\t\tTìm kiếm"
 
-#: gitk:3005
+#: gitk:3070
 #, tcl-format
 msgid "<%s-G>\t\tMove to next find hit"
 msgstr "<%s-G>\t\tDi chuyển đến chỗ gặp kế tiếp"
 
-#: gitk:3006
+#: gitk:3071
 msgid "<Return>\tMove to next find hit"
 msgstr "<Return>\t\tDi chuyển đến chỗ gặp kế tiếp"
 
-#: gitk:3007
+#: gitk:3072
 msgid "/\t\tFocus the search box"
 msgstr "/\t\tĐưa con trỏ chuột vào ô tìm kiếm"
 
-#: gitk:3008
+#: gitk:3073
 msgid "?\t\tMove to previous find hit"
 msgstr "?\t\tDi chuyển đến chỗ gặp kế trước"
 
-#: gitk:3009
+#: gitk:3074
 msgid "f\t\tScroll diff view to next file"
 msgstr "f\t\tCuộn phần trình bày diff sang tập-tin kế"
 
-#: gitk:3010
+#: gitk:3075
 #, tcl-format
 msgid "<%s-S>\t\tSearch for next hit in diff view"
 msgstr "<%s-S>\t\tTìm đến chỗ khác biệt kế tiếp"
 
-#: gitk:3011
+#: gitk:3076
 #, tcl-format
 msgid "<%s-R>\t\tSearch for previous hit in diff view"
 msgstr "<%s-R>\t\tTìm đến chỗ khác biệt kế trước"
 
-#: gitk:3012
+#: gitk:3077
 #, tcl-format
 msgid "<%s-KP+>\tIncrease font size"
 msgstr "<%s-KP+>\tTăng cỡ chữ"
 
-#: gitk:3013
+#: gitk:3078
 #, tcl-format
 msgid "<%s-plus>\tIncrease font size"
 msgstr "<%s-plus>\tTăng cỡ chữ"
 
-#: gitk:3014
+#: gitk:3079
 #, tcl-format
 msgid "<%s-KP->\tDecrease font size"
 msgstr "<%s-KP->\tGiảm cỡ chữ"
 
-#: gitk:3015
+#: gitk:3080
 #, tcl-format
 msgid "<%s-minus>\tDecrease font size"
 msgstr "<%s-minus>\tGiảm cỡ chữ"
 
-#: gitk:3016
+#: gitk:3081
 msgid "<F5>\t\tUpdate"
 msgstr "<F5>\t\tCập nhật"
 
-#: gitk:3471 gitk:3480
+#: gitk:3546 gitk:3555
 #, tcl-format
 msgid "Error creating temporary directory %s:"
 msgstr "Gặp lỗi khi tạo thư mục tạm %s:"
 
-#: gitk:3493
+#: gitk:3568
 #, tcl-format
 msgid "Error getting \"%s\" from %s:"
 msgstr "Lỗi chào hỏi \"%s\" từ %s:"
 
-#: gitk:3556
+#: gitk:3631
 msgid "command failed:"
 msgstr "lệnh gặp lỗi:"
 
-#: gitk:3705
+#: gitk:3780
 msgid "No such commit"
 msgstr "Không có lần chuyển giao như vậy"
 
-#: gitk:3719
+#: gitk:3794
 msgid "git gui blame: command failed:"
 msgstr "git gui blame: lệnh gặp lỗi:"
 
-#: gitk:3750
+#: gitk:3825
 #, tcl-format
 msgid "Couldn't read merge head: %s"
 msgstr "Không thể độc đầu của hòa trộn: %s"
 
 # tcl-format
-#: gitk:3758
+#: gitk:3833
 #, tcl-format
 msgid "Error reading index: %s"
 msgstr "Gặp lỗi khi đọc chỉ mục: %s"
 
-#: gitk:3783
+#: gitk:3858
 #, tcl-format
 msgid "Couldn't start git blame: %s"
 msgstr "Không thể khởi chạy git blame: %s"
 
-#: gitk:3786 gitk:6652
+#: gitk:3861 gitk:6735
 msgid "Searching"
 msgstr "Đang tìm kiếm"
 
-#: gitk:3818
+#: gitk:3893
 #, tcl-format
 msgid "Error running git blame: %s"
 msgstr "Gặp lỗi khi chạy git blame: %s"
 
-#: gitk:3846
+#: gitk:3921
 #, tcl-format
 msgid "That line comes from commit %s,  which is not in this view"
 msgstr "Dòng đến từ lần chuyển giao %s, cái mà không trong trình bày này"
 
-#: gitk:3860
+#: gitk:3935
 msgid "External diff viewer failed:"
 msgstr "Bộ trình bày diff từ bên ngoài gặp lỗi:"
 
-#: gitk:3978
+#: gitk:4053
 msgid "Gitk view definition"
 msgstr "Định nghĩa cách trình bày gitk"
 
-#: gitk:3982
+#: gitk:4057
 msgid "Remember this view"
 msgstr "Nhớ cách trình bày này"
 
-#: gitk:3983
+#: gitk:4058
 msgid "References (space separated list):"
 msgstr "Tham chiếu (danh sách ngăn cách bằng dấu cách):"
 
-#: gitk:3984
+#: gitk:4059
 msgid "Branches & tags:"
 msgstr "Nhánh & thẻ:"
 
-#: gitk:3985
+#: gitk:4060
 msgid "All refs"
 msgstr "Mọi tham chiếu"
 
-#: gitk:3986
+#: gitk:4061
 msgid "All (local) branches"
 msgstr "Mọi nhánh (nội bộ)"
 
-#: gitk:3987
+#: gitk:4062
 msgid "All tags"
 msgstr "Mọi thẻ"
 
-#: gitk:3988
+#: gitk:4063
 msgid "All remote-tracking branches"
 msgstr "Mọi nhánh remote-tracking"
 
-#: gitk:3989
+#: gitk:4064
 msgid "Commit Info (regular expressions):"
 msgstr "Thông tin chuyển giao (biểu thức chính quy):"
 
-#: gitk:3990
+#: gitk:4065
 msgid "Author:"
 msgstr "Tác giả:"
 
-#: gitk:3991
+#: gitk:4066
 msgid "Committer:"
 msgstr "Người chuyển giao:"
 
-#: gitk:3992
+#: gitk:4067
 msgid "Commit Message:"
 msgstr "Chú thích của lần chuyển giao:"
 
-#: gitk:3993
+#: gitk:4068
 msgid "Matches all Commit Info criteria"
 msgstr "Khớp mọi điều kiện Thông tin Chuyển giao"
 
-#: gitk:3994
+#: gitk:4069
+#, fuzzy
+msgid "Matches none Commit Info criteria"
+msgstr "Khớp mọi điều kiện Thông tin Chuyển giao"
+
+#: gitk:4070
 msgid "Changes to Files:"
 msgstr "Đổi thành Tập tin:"
 
-#: gitk:3995
+#: gitk:4071
 msgid "Fixed String"
 msgstr "Chuỗi cố định"
 
-#: gitk:3996
+#: gitk:4072
 msgid "Regular Expression"
 msgstr "Biểu thức chính quy"
 
-#: gitk:3997
+#: gitk:4073
 msgid "Search string:"
 msgstr "Chuỗi tìm kiếm:"
 
-#: gitk:3998
+#: gitk:4074
 msgid ""
 "Commit Dates (\"2 weeks ago\", \"2009-03-17 15:27:38\", \"March 17, 2009 "
 "15:27:38\"):"
@@ -678,203 +681,203 @@ msgstr ""
 "Ngày chuyển giao (\"2 weeks ago\", \"2009-03-17 15:27:38\", \"March 17, 2009 "
 "15:27:38\"):"
 
-#: gitk:3999
+#: gitk:4075
 msgid "Since:"
 msgstr "Kể từ:"
 
-#: gitk:4000
+#: gitk:4076
 msgid "Until:"
 msgstr "Đến:"
 
-#: gitk:4001
+#: gitk:4077
 msgid "Limit and/or skip a number of revisions (positive integer):"
 msgstr "Giới hạn và/hoặc bỏ số của điểm xét (số nguyên âm):"
 
-#: gitk:4002
+#: gitk:4078
 msgid "Number to show:"
 msgstr "Số lượng hiển thị:"
 
-#: gitk:4003
+#: gitk:4079
 msgid "Number to skip:"
 msgstr "Số lượng sẽ bỏ qua:"
 
-#: gitk:4004
+#: gitk:4080
 msgid "Miscellaneous options:"
 msgstr "Tuỳ chọn hỗn hợp:"
 
-#: gitk:4005
+#: gitk:4081
 msgid "Strictly sort by date"
 msgstr "Sắp xếp chặt chẽ theo ngày"
 
-#: gitk:4006
+#: gitk:4082
 msgid "Mark branch sides"
 msgstr "Đánh dấu các cạnh nhánh"
 
-#: gitk:4007
+#: gitk:4083
 msgid "Limit to first parent"
 msgstr "Giới hạn thành cha mẹ đầu tiên"
 
-#: gitk:4008
+#: gitk:4084
 msgid "Simple history"
 msgstr "Lịch sử dạng đơn giản"
 
-#: gitk:4009
+#: gitk:4085
 msgid "Additional arguments to git log:"
 msgstr "Đối số bổ xung cho lệnh git log:"
 
-#: gitk:4010
+#: gitk:4086
 msgid "Enter files and directories to include, one per line:"
 msgstr "Nhập vào các tập tin và thư mục bao gồm, mỗi dòng một cái:"
 
-#: gitk:4011
+#: gitk:4087
 msgid "Command to generate more commits to include:"
 msgstr "Lệnh tạo ra nhiều lần chuyển giao hơn bao gồm:"
 
-#: gitk:4135
+#: gitk:4211
 msgid "Gitk: edit view"
 msgstr "Gitk: sửa cách trình bày"
 
-#: gitk:4143
+#: gitk:4219
 msgid "-- criteria for selecting revisions"
 msgstr "-- tiêu chuẩn chọn điểm xét duyệt"
 
-#: gitk:4148
+#: gitk:4224
 msgid "View Name"
 msgstr "Tên cách trình bày"
 
-#: gitk:4223
+#: gitk:4299
 msgid "Apply (F5)"
 msgstr "Áp dụng (F5)"
 
-#: gitk:4261
+#: gitk:4337
 msgid "Error in commit selection arguments:"
 msgstr "Lỗi trong các đối số chọn chuyển giao:"
 
-#: gitk:4314 gitk:4366 gitk:4827 gitk:4841 gitk:6107 gitk:12184 gitk:12185
+#: gitk:4392 gitk:4445 gitk:4906 gitk:4920 gitk:6190 gitk:12346 gitk:12347
 msgid "None"
 msgstr "Không"
 
-#: gitk:4924 gitk:4929
+#: gitk:5003 gitk:5008
 msgid "Descendant"
 msgstr "Con cháu"
 
-#: gitk:4925
+#: gitk:5004
 msgid "Not descendant"
 msgstr "Không có con cháu"
 
-#: gitk:4932 gitk:4937
+#: gitk:5011 gitk:5016
 msgid "Ancestor"
 msgstr "Tổ tiên chung"
 
-#: gitk:4933
+#: gitk:5012
 msgid "Not ancestor"
 msgstr "Không có chung tổ tiên"
 
-#: gitk:5223
+#: gitk:5306
 msgid "Local changes checked in to index but not committed"
 msgstr ""
 "Có thay đổi nội bộ đã được đưa vào bảng mục lục, nhưng chưa được chuyển giao"
 
-#: gitk:5259
+#: gitk:5342
 msgid "Local uncommitted changes, not checked in to index"
 msgstr "Có thay đổi nội bộ, nhưng chưa được đưa vào bảng mục lục"
 
-#: gitk:7032
+#: gitk:7115
 msgid "and many more"
 msgstr "và nhiều nữa"
 
-#: gitk:7035
+#: gitk:7118
 msgid "many"
 msgstr "nhiều"
 
-#: gitk:7222
+#: gitk:7309
 msgid "Tags:"
 msgstr "Thẻ:"
 
-#: gitk:7239 gitk:7245 gitk:8708
+#: gitk:7326 gitk:7332 gitk:8806
 msgid "Parent"
 msgstr "Cha"
 
-#: gitk:7250
+#: gitk:7337
 msgid "Child"
 msgstr "Con"
 
-#: gitk:7259
+#: gitk:7346
 msgid "Branch"
 msgstr "Nhánh"
 
-#: gitk:7262
+#: gitk:7349
 msgid "Follows"
 msgstr "Đứng sau"
 
-#: gitk:7265
+#: gitk:7352
 msgid "Precedes"
 msgstr "Đứng trước"
 
 # tcl-format
-#: gitk:7849
+#: gitk:7947
 #, tcl-format
 msgid "Error getting diffs: %s"
 msgstr "Lỗi lấy diff: %s"
 
-#: gitk:8533
+#: gitk:8631
 msgid "Goto:"
 msgstr "Nhảy tới:"
 
-#: gitk:8554
+#: gitk:8652
 #, tcl-format
 msgid "Short SHA1 id %s is ambiguous"
 msgstr "Định danh SHA1 dạng ngắn %s là chưa đủ rõ ràng"
 
-#: gitk:8561
+#: gitk:8659
 #, tcl-format
 msgid "Revision %s is not known"
 msgstr "Không hiểu điểm xét duyệt %s"
 
-#: gitk:8571
+#: gitk:8669
 #, tcl-format
 msgid "SHA1 id %s is not known"
 msgstr "Không hiểu định danh SHA1 %s"
 
-#: gitk:8573
+#: gitk:8671
 #, tcl-format
 msgid "Revision %s is not in the current view"
 msgstr "Điểm %s không ở trong phần hiển thị hiện tại"
 
-#: gitk:8715 gitk:8730
+#: gitk:8813 gitk:8828
 msgid "Date"
 msgstr "Ngày"
 
-#: gitk:8718
+#: gitk:8816
 msgid "Children"
 msgstr "Con cháu"
 
-#: gitk:8781
+#: gitk:8879
 #, tcl-format
 msgid "Reset %s branch to here"
 msgstr "Đặt lại nhánh %s tại đây"
 
-#: gitk:8783
+#: gitk:8881
 msgid "Detached head: can't reset"
 msgstr "Head đã bị tách rời: không thể đặt lại"
 
-#: gitk:8888 gitk:8894
+#: gitk:8986 gitk:8992
 msgid "Skipping merge commit "
 msgstr "Bỏ qua lần chuyển giao hòa trộn "
 
-#: gitk:8903 gitk:8908
+#: gitk:9001 gitk:9006
 msgid "Error getting patch ID for "
 msgstr "Gặp lỗi khi lấy ID miếng vá cho "
 
-#: gitk:8904 gitk:8909
+#: gitk:9002 gitk:9007
 msgid " - stopping\n"
 msgstr " - dừng\n"
 
-#: gitk:8914 gitk:8917 gitk:8925 gitk:8939 gitk:8948
+#: gitk:9012 gitk:9015 gitk:9023 gitk:9037 gitk:9046
 msgid "Commit "
 msgstr "Commit "
 
-#: gitk:8918
+#: gitk:9016
 msgid ""
 " is the same patch as\n"
 "       "
@@ -882,7 +885,7 @@ msgstr ""
 " là cùng một miếng vá với\n"
 "       "
 
-#: gitk:8926
+#: gitk:9024
 msgid ""
 " differs from\n"
 "       "
@@ -890,7 +893,7 @@ msgstr ""
 " khác biệt từ\n"
 "       "
 
-#: gitk:8928
+#: gitk:9026
 msgid ""
 "Diff of commits:\n"
 "\n"
@@ -898,131 +901,131 @@ msgstr ""
 "Khác biệt của lần chuyển giao (commit):\n"
 "\n"
 
-#: gitk:8940 gitk:8949
+#: gitk:9038 gitk:9047
 #, tcl-format
 msgid " has %s children - stopping\n"
 msgstr " có %s con - dừng\n"
 
-#: gitk:8968
+#: gitk:9066
 #, tcl-format
 msgid "Error writing commit to file: %s"
 msgstr "Gặp lỗi trong quá trình ghi lần chuyển giao vào tập tin: %s"
 
-#: gitk:8974
+#: gitk:9072
 #, tcl-format
 msgid "Error diffing commits: %s"
 msgstr "Gặp lỗi khi so sánh sự khác biệt giữa các lần chuyển giao: %s"
 
-#: gitk:9020
+#: gitk:9118
 msgid "Top"
 msgstr "Đỉnh"
 
-#: gitk:9021
+#: gitk:9119
 msgid "From"
 msgstr "Từ"
 
-#: gitk:9026
+#: gitk:9124
 msgid "To"
 msgstr "Đến"
 
-#: gitk:9050
+#: gitk:9148
 msgid "Generate patch"
 msgstr "Tạo miếng vá"
 
-#: gitk:9052
+#: gitk:9150
 msgid "From:"
 msgstr "Từ:"
 
-#: gitk:9061
+#: gitk:9159
 msgid "To:"
 msgstr "Đến:"
 
-#: gitk:9070
+#: gitk:9168
 msgid "Reverse"
 msgstr "Đảo ngược"
 
-#: gitk:9072 gitk:9268
+#: gitk:9170 gitk:9366
 msgid "Output file:"
 msgstr "Tập tin kết xuất:"
 
-#: gitk:9078
+#: gitk:9176
 msgid "Generate"
 msgstr "Tạo"
 
-#: gitk:9116
+#: gitk:9214
 msgid "Error creating patch:"
 msgstr "Gặp lỗi khi tạo miếng vá:"
 
-#: gitk:9139 gitk:9256 gitk:9313
+#: gitk:9237 gitk:9354 gitk:9411
 msgid "ID:"
 msgstr "ID:"
 
-#: gitk:9148
+#: gitk:9246
 msgid "Tag name:"
 msgstr "Tên thẻ:"
 
-#: gitk:9151
+#: gitk:9249
 msgid "Tag message is optional"
 msgstr "Ghi chú thẻ chỉ là tùy chọn"
 
-#: gitk:9153
+#: gitk:9251
 msgid "Tag message:"
 msgstr "Ghi chú cho thẻ:"
 
-#: gitk:9157 gitk:9322
+#: gitk:9255 gitk:9420
 msgid "Create"
 msgstr "Tạo"
 
-#: gitk:9175
+#: gitk:9273
 msgid "No tag name specified"
 msgstr "Chưa chỉ ra tên của thẻ"
 
-#: gitk:9179
+#: gitk:9277
 #, tcl-format
 msgid "Tag \"%s\" already exists"
 msgstr "Thẻ “%s” đã có sẵn rồi"
 
-#: gitk:9189
+#: gitk:9287
 msgid "Error creating tag:"
 msgstr "Gặp lỗi khi tạo thẻ:"
 
-#: gitk:9265
+#: gitk:9363
 msgid "Command:"
 msgstr "Lệnh:"
 
-#: gitk:9273
+#: gitk:9371
 msgid "Write"
 msgstr "Ghi"
 
-#: gitk:9291
+#: gitk:9389
 msgid "Error writing commit:"
 msgstr "Gặp lỗi trong quá trình ghi chuyển giao:"
 
-#: gitk:9318
+#: gitk:9416
 msgid "Name:"
 msgstr "Tên:"
 
-#: gitk:9341
+#: gitk:9439
 msgid "Please specify a name for the new branch"
 msgstr "Vui lòng chỉ định tên cho nhánh mới"
 
-#: gitk:9346
+#: gitk:9444
 #, tcl-format
 msgid "Branch '%s' already exists. Overwrite?"
 msgstr "Nhánh “%s” đã có từ trước rồi. Ghi đè?"
 
-#: gitk:9413
+#: gitk:9511
 #, tcl-format
 msgid "Commit %s is already included in branch %s -- really re-apply it?"
 msgstr ""
 "Lần chuyển giao %s đã sẵn được bao gồm trong nhánh %s -- bạn có thực sự muốn "
 "áp dụng lại nó không?"
 
-#: gitk:9418
+#: gitk:9516
 msgid "Cherry-picking"
 msgstr "Đang cherry-pick"
 
-#: gitk:9427
+#: gitk:9525
 #, tcl-format
 msgid ""
 "Cherry-pick failed because of local changes to file '%s'.\n"
@@ -1031,7 +1034,7 @@ msgstr ""
 "Cherry-pick gặp lỗi bởi vì các thay đổi nội bộ tập tin “%s”.\n"
 "Xin hãy chuyển giao, reset hay stash các thay đổi của bạn sau đó thử lại."
 
-#: gitk:9433
+#: gitk:9531
 msgid ""
 "Cherry-pick failed because of merge conflict.\n"
 "Do you wish to run git citool to resolve it?"
@@ -1039,22 +1042,22 @@ msgstr ""
 "Cherry-pick gặp lỗi bởi vì xung đột trong hòa trộn.\n"
 "Bạn có muốn chạy lệnh “git citool” để giải quyết vấn đề này không?"
 
-#: gitk:9449 gitk:9507
+#: gitk:9547 gitk:9605
 msgid "No changes committed"
 msgstr "Không có thay đổi nào cần chuyển giao"
 
-#: gitk:9476
+#: gitk:9574
 #, tcl-format
 msgid "Commit %s is not included in branch %s -- really revert it?"
 msgstr ""
 "Lần chuyển giao %s không được bao gồm trong nhánh %s -- bạn có thực sự muốn "
 "“revert” nó không?"
 
-#: gitk:9481
+#: gitk:9579
 msgid "Reverting"
 msgstr "Đang hoàn tác"
 
-#: gitk:9489
+#: gitk:9587
 #, tcl-format
 msgid ""
 "Revert failed because of local changes to the following files:%s Please "
@@ -1063,7 +1066,7 @@ msgstr ""
 "Revert gặp lỗi bởi vì tập tin sau đã được thay đổi nội bộ:%s\n"
 "Xin hãy chạy lệnh “commit”, “reset” hoặc “stash” rồi thử lại."
 
-#: gitk:9493
+#: gitk:9591
 msgid ""
 "Revert failed because of merge conflict.\n"
 " Do you wish to run git citool to resolve it?"
@@ -1071,29 +1074,29 @@ msgstr ""
 "Revert gặp lỗi bởi vì xung đột hòa trộn.\n"
 " Bạn có muốn chạy lệnh “git citool” để phân giải nó không?"
 
-#: gitk:9536
+#: gitk:9634
 msgid "Confirm reset"
 msgstr "Xác nhật đặt lại"
 
-#: gitk:9538
+#: gitk:9636
 #, tcl-format
 msgid "Reset branch %s to %s?"
 msgstr "Đặt lại nhánh “%s” thành “%s”?"
 
-#: gitk:9540
+#: gitk:9638
 msgid "Reset type:"
 msgstr "Kiểu đặt lại:"
 
-#: gitk:9543
+#: gitk:9641
 msgid "Soft: Leave working tree and index untouched"
 msgstr "Mềm: Không động đến thư mục làm việc và bảng mục lục"
 
-#: gitk:9546
+#: gitk:9644
 msgid "Mixed: Leave working tree untouched, reset index"
 msgstr ""
 "Pha trộn: Không động chạm đến thư mục làm việc nhưng đặt lại bảng mục lục"
 
-#: gitk:9549
+#: gitk:9647
 msgid ""
 "Hard: Reset working tree and index\n"
 "(discard ALL local changes)"
@@ -1101,19 +1104,19 @@ msgstr ""
 "Hard: Đặt lại cây làm việc và mục lục\n"
 "(hủy bỏ MỌI thay đổi nội bộ)"
 
-#: gitk:9566
+#: gitk:9664
 msgid "Resetting"
 msgstr "Đang đặt lại"
 
-#: gitk:9626
+#: gitk:9724
 msgid "Checking out"
 msgstr "Đang checkout"
 
-#: gitk:9679
+#: gitk:9777
 msgid "Cannot delete the currently checked-out branch"
 msgstr "Không thể xóa nhánh hiện tại đang được lấy ra"
 
-#: gitk:9685
+#: gitk:9783
 #, tcl-format
 msgid ""
 "The commits on branch %s aren't on any other branch.\n"
@@ -1122,16 +1125,16 @@ msgstr ""
 "Các lần chuyển giao trên nhánh %s không ở trên nhánh khác.\n"
 "Thực sự muốn xóa nhánh %s?"
 
-#: gitk:9716
+#: gitk:9814
 #, tcl-format
 msgid "Tags and heads: %s"
 msgstr "Thẻ và Đầu: %s"
 
-#: gitk:9731
+#: gitk:9829
 msgid "Filter"
 msgstr "Bộ lọc"
 
-#: gitk:10027
+#: gitk:10125
 msgid ""
 "Error reading commit topology information; branch and preceding/following "
 "tag information will be incomplete."
@@ -1139,213 +1142,219 @@ msgstr ""
 "Gặp lỗi khi đọc thông tin hình học lần chuyển giao; thông tin nhánh và thẻ "
 "trước/sau sẽ không hoàn thiện."
 
-#: gitk:11004
+#: gitk:11102
 msgid "Tag"
 msgstr "Thẻ"
 
-#: gitk:11008
+#: gitk:11106
 msgid "Id"
 msgstr "Id"
 
-#: gitk:11091
+#: gitk:11189
 msgid "Gitk font chooser"
 msgstr "Hộp thoại chọn phông Gitk"
 
-#: gitk:11108
+#: gitk:11206
 msgid "B"
 msgstr "B"
 
-#: gitk:11111
+#: gitk:11209
 msgid "I"
 msgstr "I"
 
-#: gitk:11229
+#: gitk:11327
 msgid "Commit list display options"
 msgstr "Các tùy chọn về hiển thị danh sách lần chuyển giao"
 
-#: gitk:11232
+#: gitk:11330
 msgid "Maximum graph width (lines)"
 msgstr "Độ rộng biểu đồ tối đa (dòng)"
 
-#: gitk:11235
-#, tcl-format
+#: gitk:11334
+#, no-tcl-format
 msgid "Maximum graph width (% of pane)"
 msgstr "Độ rộng biểu đồ tối đa (% của bảng)"
 
-#: gitk:11238
+#: gitk:11337
 msgid "Show local changes"
 msgstr "Hiển thị các thay đổi nội bộ"
 
-#: gitk:11241
+#: gitk:11340
 msgid "Auto-select SHA1 (length)"
 msgstr "Tự chọn SHA1 (độ dài)"
 
-#: gitk:11245
+#: gitk:11344
 msgid "Hide remote refs"
 msgstr "Ẩn tham chiếu đến máy chủ"
 
-#: gitk:11249
+#: gitk:11348
 msgid "Diff display options"
 msgstr "Các tùy chọn trình bày các khác biệt"
 
-#: gitk:11251
+#: gitk:11350
 msgid "Tab spacing"
 msgstr "Khoảng cách tab"
 
-#: gitk:11254
+#: gitk:11353
 msgid "Display nearby tags/heads"
 msgstr "Hiển thị các thẻ/đầu xung quanh"
 
-#: gitk:11257
+#: gitk:11356
 msgid "Maximum # tags/heads to show"
 msgstr "Số lượng thẻ/đầu tối đa sẽ hiển thị"
 
-#: gitk:11260
+#: gitk:11359
 msgid "Limit diffs to listed paths"
 msgstr "Giới hạn các khác biệt cho đường dẫn đã liệt kê"
 
-#: gitk:11263
+#: gitk:11362
 msgid "Support per-file encodings"
 msgstr "Hỗ trợ mã hóa mỗi-dòng"
 
-#: gitk:11269 gitk:11416
+#: gitk:11368 gitk:11515
 msgid "External diff tool"
 msgstr "Công cụ so sánh từ bên ngoài"
 
-#: gitk:11270
+#: gitk:11369
 msgid "Choose..."
 msgstr "Chọn..."
 
-#: gitk:11275
+#: gitk:11374
 msgid "General options"
 msgstr "Các tùy chọn chung"
 
-#: gitk:11278
+#: gitk:11377
 msgid "Use themed widgets"
 msgstr "Dùng các widget chủ đề"
 
-#: gitk:11280
+#: gitk:11379
 msgid "(change requires restart)"
 msgstr "(để thay đổi cần khởi động lại)"
 
-#: gitk:11282
+#: gitk:11381
 msgid "(currently unavailable)"
 msgstr "(hiện tại không sẵn sàng)"
 
-#: gitk:11293
+#: gitk:11392
 msgid "Colors: press to choose"
 msgstr "Màu sắc: bấm vào nút phía dưới để chọn màu"
 
-#: gitk:11296
+#: gitk:11395
 msgid "Interface"
 msgstr "Giao diện"
 
-#: gitk:11297
+#: gitk:11396
 msgid "interface"
 msgstr "giao diện"
 
-#: gitk:11300
+#: gitk:11399
 msgid "Background"
 msgstr "Nền"
 
-#: gitk:11301 gitk:11331
+#: gitk:11400 gitk:11430
 msgid "background"
 msgstr "nền"
 
-#: gitk:11304
+#: gitk:11403
 msgid "Foreground"
 msgstr "Tiền cảnh"
 
-#: gitk:11305
+#: gitk:11404
 msgid "foreground"
 msgstr "tiền cảnh"
 
-#: gitk:11308
+#: gitk:11407
 msgid "Diff: old lines"
 msgstr "So sánh: dòng cũ"
 
-#: gitk:11309
+#: gitk:11408
 msgid "diff old lines"
 msgstr "diff dòng cũ"
 
-#: gitk:11313
+#: gitk:11412
 msgid "Diff: new lines"
 msgstr "So sánh: dòng mới"
 
-#: gitk:11314
+#: gitk:11413
 msgid "diff new lines"
 msgstr "màu dòng mới"
 
-#: gitk:11318
+#: gitk:11417
 msgid "Diff: hunk header"
 msgstr "So sánh: phần đầu của đoạn"
 
-#: gitk:11320
+#: gitk:11419
 msgid "diff hunk header"
 msgstr "màu của phần đầu của đoạn khi so sánh"
 
-#: gitk:11324
+#: gitk:11423
 msgid "Marked line bg"
 msgstr "Nền dòng đánh dấu"
 
-#: gitk:11326
+#: gitk:11425
 msgid "marked line background"
 msgstr "nền dòng được đánh dấu"
 
-#: gitk:11330
+#: gitk:11429
 msgid "Select bg"
 msgstr "Màu nền"
 
-#: gitk:11339
+#: gitk:11438
 msgid "Fonts: press to choose"
 msgstr "Phông chữ: bấm vào các nút ở dưới để chọn"
 
-#: gitk:11341
+#: gitk:11440
 msgid "Main font"
 msgstr "Phông chữ chính"
 
-#: gitk:11342
+#: gitk:11441
 msgid "Diff display font"
 msgstr "Phông chữ dùng khi so sánh"
 
-#: gitk:11343
+#: gitk:11442
 msgid "User interface font"
 msgstr "Phông chữ giao diện"
 
-#: gitk:11365
+#: gitk:11464
 msgid "Gitk preferences"
 msgstr "Cá nhân hóa các cài đặt cho Gitk"
 
-#: gitk:11374
+#: gitk:11473
 msgid "General"
 msgstr "Chung"
 
-#: gitk:11375
+#: gitk:11474
 msgid "Colors"
 msgstr "Màu sắc"
 
-#: gitk:11376
+#: gitk:11475
 msgid "Fonts"
 msgstr "Phông chữ"
 
-#: gitk:11426
+#: gitk:11525
 #, tcl-format
 msgid "Gitk: choose color for %s"
 msgstr "Gitk: chọn màu cho %s"
 
-#: gitk:12080
+#: gitk:12242
 msgid "Cannot find a git repository here."
 msgstr "Không thể tìm thấy kho git ở đây."
 
-#: gitk:12127
+#: gitk:12289
 #, tcl-format
 msgid "Ambiguous argument '%s': both revision and filename"
 msgstr "Đối số “%s” chưa rõ ràng: vừa là điểm xét duyệt vừa là tên tập tin"
 
-#: gitk:12139
+#: gitk:12301
 msgid "Bad arguments to gitk:"
 msgstr "Đối số không hợp lệ cho gitk:"
 
-#: gitk:12242
+#: gitk:12405
 msgid "Command line"
 msgstr "Dòng lệnh"
+
+#~ msgid "next"
+#~ msgstr "tiếp"
+
+#~ msgid "prev"
+#~ msgstr "trước"

@@ -11,14 +11,10 @@ $AUTHOR = 'Eric Wong <normalperson@yhbt.net>';
 $VERSION = '@@GIT_VERSION@@';
 
 use Carp qw/croak/;
-use Digest::MD5;
-use IO::File qw//;
 use File::Basename qw/dirname basename/;
 use File::Path qw/mkpath/;
 use File::Spec;
-use File::Find;
 use Getopt::Long qw/:config gnu_getopt no_ignore_case auto_abbrev/;
-use IPC::Open3;
 use Memoize;
 
 use Git::SVN;
@@ -298,7 +294,6 @@ my %cmd = (
 		{} ],
 );
 
-use Term::ReadLine;
 package FakeTerm;
 sub new {
 	my ($class, $reason) = @_;
@@ -313,6 +308,7 @@ package main;
 my $term;
 sub term_init {
 	$term = eval {
+		require Term::ReadLine;
 		$ENV{"GIT_SVN_NOTTY"}
 			? new Term::ReadLine 'git-svn', \*STDIN, \*STDOUT
 			: new Term::ReadLine 'git-svn';
@@ -1173,6 +1169,7 @@ sub cmd_branch {
 	}
 
 	::_req_svn();
+	require SVN::Client;
 
 	my $ctx = SVN::Client->new(
 		config => SVN::Core::config_get_config(
@@ -1693,11 +1690,13 @@ sub cmd_reset {
 }
 
 sub cmd_gc {
+	require File::Find;
 	if (!can_compress()) {
 		warn "Compress::Zlib could not be found; unhandled.log " .
 		     "files will not be compressed.\n";
 	}
-	find({ wanted => \&gc_directory, no_chdir => 1}, "$ENV{GIT_DIR}/svn");
+	File::Find::find({ wanted => \&gc_directory, no_chdir => 1},
+			 "$ENV{GIT_DIR}/svn");
 }
 
 ########################### utility functions #########################
@@ -2122,6 +2121,7 @@ sub find_file_type_and_diff_status {
 sub md5sum {
 	my $arg = shift;
 	my $ref = ref $arg;
+	require Digest::MD5;
 	my $md5 = Digest::MD5->new();
         if ($ref eq 'GLOB' || $ref eq 'IO::File' || $ref eq 'File::Temp') {
 		$md5->addfile($arg) or croak $!;
@@ -2148,6 +2148,7 @@ sub gc_directory {
 			$gz->gzwrite($str) or
 				die "Unable to write: ".$gz->gzerror()."!\n";
 		}
+		no warnings 'once'; # $File::Find::name would warn
 		unlink $_ or die "unlink $File::Find::name: $!\n";
 	} elsif (-f $_ && basename($_) eq "index") {
 		unlink $_ or die "unlink $_: $!\n";

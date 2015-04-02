@@ -30,7 +30,7 @@ test_expect_success 'exclude only should error out' '
 '
 
 test_expect_success 't_e_i() exclude sub' '
-	git log --oneline --format=%s -- . ":(exclude)sub" >actual
+	git log --oneline --format=%s -- . ":(exclude)sub" >actual &&
 	cat <<EOF >expect &&
 sub2/file
 file
@@ -39,7 +39,7 @@ EOF
 '
 
 test_expect_success 't_e_i() exclude sub/sub/file' '
-	git log --oneline --format=%s -- . ":(exclude)sub/sub/file" >actual
+	git log --oneline --format=%s -- . ":(exclude)sub/sub/file" >actual &&
 	cat <<EOF >expect &&
 sub2/file
 sub/sub/sub/file
@@ -51,7 +51,7 @@ EOF
 '
 
 test_expect_success 't_e_i() exclude sub using mnemonic' '
-	git log --oneline --format=%s -- . ":!sub" >actual
+	git log --oneline --format=%s -- . ":!sub" >actual &&
 	cat <<EOF >expect &&
 sub2/file
 file
@@ -60,7 +60,7 @@ EOF
 '
 
 test_expect_success 't_e_i() exclude :(icase)SUB' '
-	git log --oneline --format=%s -- . ":(exclude,icase)SUB" >actual
+	git log --oneline --format=%s -- . ":(exclude,icase)SUB" >actual &&
 	cat <<EOF >expect &&
 sub2/file
 file
@@ -71,7 +71,7 @@ EOF
 test_expect_success 't_e_i() exclude sub2 from sub' '
 	(
 	cd sub &&
-	git log --oneline --format=%s -- :/ ":/!sub2" >actual
+	git log --oneline --format=%s -- :/ ":/!sub2" >actual &&
 	cat <<EOF >expect &&
 sub/sub/sub/file
 sub/file2
@@ -84,7 +84,7 @@ EOF
 '
 
 test_expect_success 't_e_i() exclude sub/*file' '
-	git log --oneline --format=%s -- . ":(exclude)sub/*file" >actual
+	git log --oneline --format=%s -- . ":(exclude)sub/*file" >actual &&
 	cat <<EOF >expect &&
 sub2/file
 sub/file2
@@ -94,7 +94,7 @@ EOF
 '
 
 test_expect_success 't_e_i() exclude :(glob)sub/*/file' '
-	git log --oneline --format=%s -- . ":(exclude,glob)sub/*/file" >actual
+	git log --oneline --format=%s -- . ":(exclude,glob)sub/*/file" >actual &&
 	cat <<EOF >expect &&
 sub2/file
 sub/sub/sub/file
@@ -106,7 +106,7 @@ EOF
 '
 
 test_expect_success 'm_p_d() exclude sub' '
-	git ls-files -- . ":(exclude)sub" >actual
+	git ls-files -- . ":(exclude)sub" >actual &&
 	cat <<EOF >expect &&
 file
 sub2/file
@@ -115,7 +115,7 @@ EOF
 '
 
 test_expect_success 'm_p_d() exclude sub/sub/file' '
-	git ls-files -- . ":(exclude)sub/sub/file" >actual
+	git ls-files -- . ":(exclude)sub/sub/file" >actual &&
 	cat <<EOF >expect &&
 file
 sub/file
@@ -127,7 +127,7 @@ EOF
 '
 
 test_expect_success 'm_p_d() exclude sub using mnemonic' '
-	git ls-files -- . ":!sub" >actual
+	git ls-files -- . ":!sub" >actual &&
 	cat <<EOF >expect &&
 file
 sub2/file
@@ -136,7 +136,7 @@ EOF
 '
 
 test_expect_success 'm_p_d() exclude :(icase)SUB' '
-	git ls-files -- . ":(exclude,icase)SUB" >actual
+	git ls-files -- . ":(exclude,icase)SUB" >actual &&
 	cat <<EOF >expect &&
 file
 sub2/file
@@ -147,7 +147,7 @@ EOF
 test_expect_success 'm_p_d() exclude sub2 from sub' '
 	(
 	cd sub &&
-	git ls-files -- :/ ":/!sub2" >actual
+	git ls-files -- :/ ":/!sub2" >actual &&
 	cat <<EOF >expect &&
 ../file
 file
@@ -160,7 +160,7 @@ EOF
 '
 
 test_expect_success 'm_p_d() exclude sub/*file' '
-	git ls-files -- . ":(exclude)sub/*file" >actual
+	git ls-files -- . ":(exclude)sub/*file" >actual &&
 	cat <<EOF >expect &&
 file
 sub/file2
@@ -170,7 +170,7 @@ EOF
 '
 
 test_expect_success 'm_p_d() exclude :(glob)sub/*/file' '
-	git ls-files -- . ":(exclude,glob)sub/*/file" >actual
+	git ls-files -- . ":(exclude,glob)sub/*/file" >actual &&
 	cat <<EOF >expect &&
 file
 sub/file

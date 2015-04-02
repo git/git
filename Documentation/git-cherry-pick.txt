@@ -131,7 +131,8 @@ effect to your index in a row.
 --keep-redundant-commits::
 	If a commit being cherry picked duplicates a commit already in the
 	current history, it will become empty.  By default these
-	redundant commits are ignored.  This option overrides that behavior and
+	redundant commits cause `cherry-pick` to stop so the user can
+	examine the commit. This option overrides that behavior and
 	creates an empty commit object.  Implies `--allow-empty`.
 
 --strategy=<strategy>::

@@ -5,7 +5,7 @@ test_description='blame output in various formats on a simple case'
 
 test_expect_success 'setup' '
 	echo a >file &&
-	git add file
+	git add file &&
 	test_tick &&
 	git commit -m one &&
 	echo b >>file &&

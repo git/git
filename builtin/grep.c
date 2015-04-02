@@ -20,7 +20,7 @@
 #include "pathspec.h"
 
 static char const * const grep_usage[] = {
-	N_("git grep [options] [-e] <pattern> [<rev>...] [[--] <path>...]"),
+	N_("git grep [<options>] [-e] <pattern> [<rev>...] [[--] <path>...]"),
 	NULL
 };
 

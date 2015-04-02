@@ -415,18 +415,30 @@ static int ambiguous_path(const char *path, int len)
 	return slash;
 }
 
-static inline int upstream_mark(const char *string, int len)
+static inline int at_mark(const char *string, int len,
+			  const char **suffix, int nr)
 {
-	const char *suffix[] = { "@{upstream}", "@{u}" };
 	int i;
 
-	for (i = 0; i < ARRAY_SIZE(suffix); i++) {
+	for (i = 0; i < nr; i++) {
 		int suffix_len = strlen(suffix[i]);
 		if (suffix_len <= len
 		    && !memcmp(string, suffix[i], suffix_len))
 			return suffix_len;
 	}
 	return 0;
+}
+
+static inline int upstream_mark(const char *string, int len)
+{
+	const char *suffix[] = { "@{upstream}", "@{u}" };
+	return at_mark(string, len, suffix, ARRAY_SIZE(suffix));
+}
+
+static inline int push_mark(const char *string, int len)
+{
+	const char *suffix[] = { "@{push}" };
+	return at_mark(string, len, suffix, ARRAY_SIZE(suffix));
 }
 
 static int get_sha1_1(const char *name, int len, unsigned char *sha1, unsigned lookup_flags);
@@ -476,13 +488,16 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1,
 					nth_prior = 1;
 					continue;
 				}
-				if (!upstream_mark(str + at, len - at)) {
+				if (!upstream_mark(str + at, len - at) &&
+				    !push_mark(str + at, len - at)) {
 					reflog_len = (len-1) - (at+2);
 					len = at;
 				}
 				break;
 			}
 		}
+	} else if (len == 1 && str[0] == '-') {
+		nth_prior = 1;
 	}
 
 	/* Accept only unambiguous ref paths. */
@@ -491,13 +506,16 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1,
 
 	if (nth_prior) {
 		struct strbuf buf = STRBUF_INIT;
-		int detached;
+		int status;
 
 		if (interpret_nth_prior_checkout(str, len, &buf) > 0) {
-			detached = (buf.len == 40 && !get_sha1_hex(buf.buf, sha1));
+			if (get_sha1(buf.buf, sha1))
+				/* bad---the previous branch no longer exists? */
+				status = -1;
+			else
+				status = 0; /* detached */
 			strbuf_release(&buf);
-			if (detached)
-				return 0;
+			return status;
 		}
 	}
 
@@ -931,35 +949,43 @@ static int interpret_nth_prior_checkout(const char *name, int namelen,
 					struct strbuf *buf)
 {
 	long nth;
-	int retval;
+	int consumed;
 	struct grab_nth_branch_switch_cbdata cb;
-	const char *brace;
-	char *num_end;
 
-	if (namelen < 4)
-		return -1;
-	if (name[0] != '@' || name[1] != '{' || name[2] != '-')
-		return -1;
-	brace = memchr(name, '}', namelen);
-	if (!brace)
-		return -1;
-	nth = strtol(name + 3, &num_end, 10);
-	if (num_end != brace)
-		return -1;
-	if (nth <= 0)
-		return -1;
+	if (namelen == 1 && name[0] == '-') {
+		nth = 1;
+		consumed = 1;
+	} else {
+		const char *brace;
+		char *num_end;
+
+		if (namelen < 4)
+			return -1;
+		if (name[0] != '@' || name[1] != '{' || name[2] != '-')
+			return -1;
+		brace = memchr(name, '}', namelen);
+		if (!brace)
+			return -1;
+		nth = strtol(name + 3, &num_end, 10);
+		if (num_end != brace)
+			return -1;
+		if (nth <= 0)
+			return -1;
+		consumed = brace - name + 1;
+	}
+
 	cb.remaining = nth;
 	strbuf_init(&cb.buf, 20);
 
-	retval = 0;
 	if (0 < for_each_reflog_ent_reverse("HEAD", grab_nth_branch_switch, &cb)) {
 		strbuf_reset(buf);
 		strbuf_addbuf(buf, &cb.buf);
-		retval = brace - name + 1;
+	} else {
+		consumed = 0;
 	}
 
 	strbuf_release(&cb.buf);
-	return retval;
+	return consumed;
 }
 
 int get_sha1_mb(const char *name, unsigned char *sha1)
@@ -1098,6 +1124,95 @@ static int interpret_upstream_mark(const char *name, int namelen,
 	return len + at;
 }
 
+static char *tracking_ref_for(struct remote *remote, const char *refname)
+{
+	char *ret;
+
+	ret = apply_refspecs(remote->fetch, remote->fetch_refspec_nr, refname);
+	if (!ret)
+		die(_("@{push} has no local tracking branch for remote '%s'"),
+		    refname);
+	return ret;
+}
+
+static char *get_push_branch(const char *name, int len)
+{
+	char *branch_name;
+	struct branch *branch;
+	struct remote *remote;
+
+	branch_name = xmemdupz(name, len);
+	branch = branch_get(*branch_name ? branch_name : NULL);
+	if (!branch)
+		die(_("HEAD does not point to a branch"));
+	free(branch_name);
+
+	remote = remote_get(pushremote_for_branch(branch, NULL));
+	if (!remote)
+		die(_("branch '%s' has no remote for pushing"), branch->name);
+
+	if (remote->push_refspec_nr) {
+		char *dst, *ret;
+
+		dst = apply_refspecs(remote->push, remote->push_refspec_nr,
+				     branch->refname);
+		if (!dst)
+			die(_("push refspecs for '%s' do not include '%s'"),
+			    remote->name, branch->name);
+
+		ret = tracking_ref_for(remote, dst);
+		free(dst);
+		return ret;
+	}
+
+	if (remote->mirror)
+		return tracking_ref_for(remote, branch->refname);
+
+	switch (push_default) {
+	case PUSH_DEFAULT_NOTHING:
+		die(_("@{push} has no destination (push.default is 'nothing'"));
+
+	case PUSH_DEFAULT_MATCHING:
+	case PUSH_DEFAULT_CURRENT:
+		return tracking_ref_for(remote, branch->refname);
+
+	case PUSH_DEFAULT_UPSTREAM:
+		return xstrdup(get_upstream_branch(name, len));
+
+	case PUSH_DEFAULT_UNSPECIFIED:
+	case PUSH_DEFAULT_SIMPLE:
+		{
+			const char *up = get_upstream_branch(name, len);
+			char *cur = tracking_ref_for(remote, branch->refname);
+			if (strcmp(cur, up))
+				die("cannot resolve 'simple' @{push} to a single destination");
+			return cur;
+		}
+	}
+
+	die("BUG: unhandled @{push} situation");
+}
+
+static int interpret_push_mark(const char *name, int namelen,
+			       int at, struct strbuf *buf)
+{
+	int len;
+	char *result;
+
+	len = push_mark(name + at, namelen - at);
+	if (!len)
+		return -1;
+
+	if (memchr(name, ':', at))
+		return -1;
+
+	result = get_push_branch(name, at);
+	set_shortened_ref(buf, result);
+	free(result);
+
+	return len + at;
+}
+
 /*
  * This reads short-hand syntax that not only evaluates to a commit
  * object name, but also can act as if the end user spelled the name
@@ -1146,6 +1261,10 @@ int interpret_branch_name(const char *name, int namelen, struct strbuf *buf)
 			return reinterpret(name, namelen, len, buf);
 
 		len = interpret_upstream_mark(name, namelen, at - name, buf);
+		if (len > 0)
+			return len;
+
+		len = interpret_push_mark(name, namelen, at - name, buf);
 		if (len > 0)
 			return len;
 	}

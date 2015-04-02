@@ -66,6 +66,10 @@ if it is part of the log message.
 	Limit the commits output to ones that match all given `--grep`,
 	instead of ones that match at least one.
 
+--invert-grep::
+	Limit the commits output to ones with log message that do not
+	match the pattern specified with `--grep=<pattern>`.
+
 -i::
 --regexp-ignore-case::
 	Match the regular expression limiting patterns without regard to letter
@@ -119,7 +123,8 @@ parents) and `--max-parents=-1` (negative numbers denote no upper limit).
 	because merges into a topic branch tend to be only about
 	adjusting to updated upstream from time to time, and
 	this option allows you to ignore the individual commits
-	brought in to your history by such a merge.
+	brought in to your history by such a merge. Cannot be
+	combined with --bisect.
 
 --not::
 	Reverses the meaning of the '{caret}' prefix (or lack thereof)
@@ -181,7 +186,7 @@ ifndef::git-rev-list[]
 	Pretend as if the bad bisection ref `refs/bisect/bad`
 	was listed and as if it was followed by `--not` and the good
 	bisection refs `refs/bisect/good-*` on the command
-	line.
+	line. Cannot be combined with --first-parent.
 endif::git-rev-list[]
 
 --stdin::
@@ -562,7 +567,7 @@ outputs 'midpoint', the output of the two commands
 would be of roughly the same length.  Finding the change which
 introduces a regression is thus reduced to a binary search: repeatedly
 generate and test new 'midpoint's until the commit chain is of length
-one.
+one. Cannot be combined with --first-parent.
 
 --bisect-vars::
 	This calculates the same as `--bisect`, except that refs in
@@ -675,6 +680,7 @@ endif::git-rev-list[]
 	given on the command line. Otherwise (if `sorted` or no argument
 	was given), the commits are shown in reverse chronological order
 	by commit time.
+	Cannot be combined with `--graph`.
 
 --do-walk::
 	Overrides a previous `--no-walk`.
@@ -777,6 +783,7 @@ you would get an output like this:
 	on the left hand side of the output.  This may cause extra lines
 	to be printed in between commits, in order for the graph history
 	to be drawn properly.
+	Cannot be combined with `--no-walk`.
 +
 This enables parent rewriting, see 'History Simplification' below.
 +
@@ -829,6 +836,13 @@ options may be given. See linkgit:git-diff-files[1] for more options.
 	the first parent is shown when `--first-parent` option is given;
 	in that case, the output represents the changes the merge
 	brought _into_ the then-current branch.
+
+--remerge-diff::
+	Diff merge commits against a recursive merge of their parents,
+	with conflict hunks.  Intuitively speaking, this shows what
+	the author of the merge changed to resolve the merge.  It
+	assumes that all (or most) merges are recursive merges; other
+	strategies are not supported.
 
 -r::
 	Show recursive diffs.

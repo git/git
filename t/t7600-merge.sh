@@ -133,7 +133,7 @@ test_expect_success 'setup' '
 	test_tick &&
 	git commit -m "commit 3" &&
 	git tag c3 &&
-	c3=$(git rev-parse HEAD)
+	c3=$(git rev-parse HEAD) &&
 	git reset --hard "$c0" &&
 	create_merge_msgs
 '

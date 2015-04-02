@@ -19,7 +19,7 @@ test_expect_success 'setup' '
 		> file$i &&
 		git add file$i &&
 		test_tick &&
-		git commit -m branch$i || break
+		git commit -m branch$i || return 1
 	done
 
 '

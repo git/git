@@ -82,7 +82,7 @@ static int diff_tree_stdin(char *line)
 
 static const char diff_tree_usage[] =
 "git diff-tree [--stdin] [-m] [-c] [--cc] [-s] [-v] [--pretty] [-t] [-r] [--root] "
-"[<common diff options>] <tree-ish> [<tree-ish>] [<path>...]\n"
+"[<common-diff-options>] <tree-ish> [<tree-ish>] [<path>...]\n"
 "  -r            diff recursively\n"
 "  --root        include the initial commit as diff against /dev/null\n"
 COMMON_DIFF_OPTIONS_HELP;
@@ -90,7 +90,7 @@ COMMON_DIFF_OPTIONS_HELP;
 static void diff_tree_tweak_rev(struct rev_info *rev, struct setup_revision_opt *opt)
 {
 	if (!rev->diffopt.output_format) {
-		if (rev->dense_combined_merges)
+		if (rev->merge_diff_mode == MERGE_DIFF_COMBINED_CONDENSED)
 			rev->diffopt.output_format = DIFF_FORMAT_PATCH;
 		else
 			rev->diffopt.output_format = DIFF_FORMAT_RAW;

@@ -19,7 +19,7 @@ int buffer_init(struct line_buffer *buf, const char *filename)
 
 int buffer_fdinit(struct line_buffer *buf, int fd)
 {
-	buf->infile = fdopen(fd, "r");
+	buf->infile = fdopen_with_retry(fd, "r");
 	if (!buf->infile)
 		return -1;
 	return 0;

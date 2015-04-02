@@ -15,7 +15,7 @@ test_expect_success 'merge with case-changing rename' '
 	>TestCase &&
 	git add TestCase &&
 	git commit -m "add TestCase" &&
-	git tag baseline
+	git tag baseline &&
 	git checkout -b with-camel &&
 	>foo &&
 	git add foo &&

@@ -3,17 +3,10 @@
 test_description='apply to deeper directory without getting fooled with symlink'
 . ./test-lib.sh
 
-lecho () {
-	for l_
-	do
-		echo "$l_"
-	done
-}
-
 test_expect_success setup '
 
 	mkdir -p arch/i386/boot arch/x86_64 &&
-	lecho 1 2 3 4 5 >arch/i386/boot/Makefile &&
+	test_write_lines 1 2 3 4 5 >arch/i386/boot/Makefile &&
 	test_ln_s_add ../i386/boot arch/x86_64/boot &&
 	git add . &&
 	test_tick &&
@@ -22,7 +15,7 @@ test_expect_success setup '
 
 	rm arch/x86_64/boot &&
 	mkdir arch/x86_64/boot &&
-	lecho 2 3 4 5 6 >arch/x86_64/boot/Makefile &&
+	test_write_lines 2 3 4 5 6 >arch/x86_64/boot/Makefile &&
 	git add . &&
 	test_tick &&
 	git commit -a -m second &&

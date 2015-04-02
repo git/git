@@ -405,7 +405,7 @@ void add_to_alternates_file(const char *reference)
 {
 	struct lock_file *lock = xcalloc(1, sizeof(struct lock_file));
 	int fd = hold_lock_file_for_append(lock, git_path("objects/info/alternates"), LOCK_DIE_ON_ERROR);
-	char *alt = mkpath("%s\n", reference);
+	const char *alt = mkpath("%s\n", reference);
 	write_or_die(fd, alt, strlen(alt));
 	if (commit_lock_file(lock))
 		die("could not close alternates file");
@@ -2473,10 +2473,8 @@ static int fill_pack_entry(const unsigned char *sha1,
 	 * answer, as it may have been deleted since the index was
 	 * loaded!
 	 */
-	if (!is_pack_valid(p)) {
-		warning("packfile %s cannot be accessed", p->pack_name);
+	if (!is_pack_valid(p))
 		return 0;
-	}
 	e->offset = offset;
 	e->p = p;
 	hashcpy(e->sha1, sha1);

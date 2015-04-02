@@ -818,25 +818,19 @@ test_expect_success $PREREQ '--confirm=compose' '
 '
 
 test_expect_success $PREREQ 'confirm by default (due to cc)' '
-	CONFIRM=$(git config --get sendemail.confirm) &&
+	test_when_finished git config sendemail.confirm never &&
 	git config --unset sendemail.confirm &&
 	test_confirm
-	ret="$?"
-	git config sendemail.confirm ${CONFIRM:-never}
-	test $ret = "0"
 '
 
 test_expect_success $PREREQ 'confirm by default (due to --compose)' '
-	CONFIRM=$(git config --get sendemail.confirm) &&
+	test_when_finished git config sendemail.confirm never &&
 	git config --unset sendemail.confirm &&
 	test_confirm --suppress-cc=all --compose
-	ret="$?"
-	git config sendemail.confirm ${CONFIRM:-never}
-	test $ret = "0"
 '
 
 test_expect_success $PREREQ 'confirm detects EOF (inform assumes y)' '
-	CONFIRM=$(git config --get sendemail.confirm) &&
+	test_when_finished git config sendemail.confirm never &&
 	git config --unset sendemail.confirm &&
 	rm -fr outdir &&
 	git format-patch -2 -o outdir &&
@@ -846,13 +840,10 @@ test_expect_success $PREREQ 'confirm detects EOF (inform assumes y)' '
 			--to=nobody@example.com \
 			--smtp-server="$(pwd)/fake.sendmail" \
 			outdir/*.patch </dev/null
-	ret="$?"
-	git config sendemail.confirm ${CONFIRM:-never}
-	test $ret = "0"
 '
 
 test_expect_success $PREREQ 'confirm detects EOF (auto causes failure)' '
-	CONFIRM=$(git config --get sendemail.confirm) &&
+	test_when_finished git config sendemail.confirm never &&
 	git config sendemail.confirm auto &&
 	GIT_SEND_EMAIL_NOTTY=1 &&
 	export GIT_SEND_EMAIL_NOTTY &&
@@ -861,13 +852,10 @@ test_expect_success $PREREQ 'confirm detects EOF (auto causes failure)' '
 			--to=nobody@example.com \
 			--smtp-server="$(pwd)/fake.sendmail" \
 			$patches </dev/null
-	ret="$?"
-	git config sendemail.confirm ${CONFIRM:-never}
-	test $ret = "0"
 '
 
 test_expect_success $PREREQ 'confirm does not loop forever' '
-	CONFIRM=$(git config --get sendemail.confirm) &&
+	test_when_finished git config sendemail.confirm never &&
 	git config sendemail.confirm auto &&
 	GIT_SEND_EMAIL_NOTTY=1 &&
 	export GIT_SEND_EMAIL_NOTTY &&
@@ -876,9 +864,6 @@ test_expect_success $PREREQ 'confirm does not loop forever' '
 			--to=nobody@example.com \
 			--smtp-server="$(pwd)/fake.sendmail" \
 			$patches
-	ret="$?"
-	git config sendemail.confirm ${CONFIRM:-never}
-	test $ret = "0"
 '
 
 test_expect_success $PREREQ 'utf8 Cc is rfc2047 encoded' '
@@ -1325,7 +1310,7 @@ test_expect_success $PREREQ 'sendemail.transferencoding=7bit fails on 8bit data'
 
 test_expect_success $PREREQ '--transfer-encoding overrides sendemail.transferEncoding' '
 	clean_fake_sendmail &&
-	git config sendemail.transferEncoding 8bit
+	git config sendemail.transferEncoding 8bit &&
 	test_must_fail git send-email \
 		--transfer-encoding=7bit \
 		--smtp-server="$(pwd)/fake.sendmail" \

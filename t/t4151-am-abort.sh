@@ -20,7 +20,7 @@ test_expect_success setup '
 		echo $i >otherfile-$i &&
 		git add otherfile-$i &&
 		test_tick &&
-		git commit -a -m $i || break
+		git commit -a -m $i || return 1
 	done &&
 	git format-patch --no-numbered initial &&
 	git checkout -b side initial &&

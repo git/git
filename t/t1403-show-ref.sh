@@ -28,7 +28,7 @@ test_expect_success 'show-ref' '
 
 	>expect &&
 
-	test_must_fail git show-ref D >actual
+	test_must_fail git show-ref D >actual &&
 	test_cmp expect actual
 '
 
@@ -62,7 +62,7 @@ test_expect_success 'show-ref --verify' '
 	test_must_fail git show-ref --verify tags/A >actual &&
 	test_cmp expect actual &&
 
-	test_must_fail git show-ref --verify D >actual
+	test_must_fail git show-ref --verify D >actual &&
 	test_cmp expect actual
 '
 
@@ -78,7 +78,7 @@ test_expect_success 'show-ref --verify -q' '
 	test_must_fail git show-ref --verify -q tags/A >actual &&
 	test_cmp expect actual &&
 
-	test_must_fail git show-ref --verify -q D >actual
+	test_must_fail git show-ref --verify -q D >actual &&
 	test_cmp expect actual
 '
 
@@ -105,10 +105,10 @@ test_expect_success 'show-ref -d' '
 	test_cmp expect actual &&
 
 	git show-ref -d refs/heads/master >actual &&
-	test_cmp expect actual
+	test_cmp expect actual &&
 
 	git show-ref -d --verify refs/heads/master >actual &&
-	test_cmp expect actual
+	test_cmp expect actual &&
 
 	>expect &&
 

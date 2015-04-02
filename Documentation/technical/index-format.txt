@@ -233,3 +233,65 @@ Git index format
   The remaining index entries after replaced ones will be added to the
   final index. These added entries are also sorted by entry name then
   stage.
+
+== Untracked cache
+
+  Untracked cache saves the untracked file list and necessary data to
+  verify the cache. The signature for this extension is { 'U', 'N',
+  'T', 'R' }.
+
+  The extension starts with
+
+  - A sequence of NUL-terminated strings, preceded by the size of the
+    sequence in variable width encoding. Each string describes the
+    environment where the cache can be used.
+
+  - Stat data of $GIT_DIR/info/exclude. See "Index entry" section from
+    ctime field until "file size".
+
+  - Stat data of core.excludesfile
+
+  - 32-bit dir_flags (see struct dir_struct)
+
+  - 160-bit SHA-1 of $GIT_DIR/info/exclude. Null SHA-1 means the file
+    does not exist.
+
+  - 160-bit SHA-1 of core.excludesfile. Null SHA-1 means the file does
+    not exist.
+
+  - NUL-terminated string of per-dir exclude file name. This usually
+    is ".gitignore".
+
+  - The number of following directory blocks, variable width
+    encoding. If this number is zero, the extension ends here with a
+    following NUL.
+
+  - A number of directory blocks in depth-first-search order, each
+    consists of
+
+    - The number of untracked entries, variable width encoding.
+
+    - The number of sub-directory blocks, variable width encoding.
+
+    - The directory name terminated by NUL.
+
+    - A number of untrached file/dir names terminated by NUL.
+
+The remaining data of each directory block is grouped by type:
+
+  - An ewah bitmap, the n-th bit marks whether the n-th directory has
+    valid untracked cache entries.
+
+  - An ewah bitmap, the n-th bit records "check-only" bit of
+    read_directory_recursive() for the n-th directory.
+
+  - An ewah bitmap, the n-th bit indicates whether SHA-1 and stat data
+    is valid for the n-th directory and exists in the next data.
+
+  - An array of stat data. The n-th data corresponds with the n-th
+    "one" bit in the previous ewah bitmap.
+
+  - An array of SHA-1. The n-th SHA-1 corresponds with the n-th "one" bit
+    in the previous ewah bitmap.
+
+  - One NUL.

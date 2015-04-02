@@ -8,8 +8,264 @@
 #include "fsck.h"
 #include "refs.h"
 #include "utf8.h"
+#include "sha1-array.h"
 
-static int fsck_walk_tree(struct tree *tree, fsck_walk_func walk, void *data)
+#define FSCK_FATAL -1
+#define FSCK_INFO -2
+
+#define FOREACH_MSG_ID(FUNC) \
+	/* fatal errors */ \
+	FUNC(NUL_IN_HEADER, FATAL) \
+	FUNC(UNTERMINATED_HEADER, FATAL) \
+	/* errors */ \
+	FUNC(BAD_DATE, ERROR) \
+	FUNC(BAD_EMAIL, ERROR) \
+	FUNC(BAD_NAME, ERROR) \
+	FUNC(BAD_PARENT_SHA1, ERROR) \
+	FUNC(BAD_TIMEZONE, ERROR) \
+	FUNC(BAD_TREE_SHA1, ERROR) \
+	FUNC(DATE_OVERFLOW, ERROR) \
+	FUNC(DUPLICATE_ENTRIES, ERROR) \
+	FUNC(INVALID_OBJECT_SHA1, ERROR) \
+	FUNC(INVALID_TAG_OBJECT, ERROR) \
+	FUNC(INVALID_TREE, ERROR) \
+	FUNC(INVALID_TYPE, ERROR) \
+	FUNC(MISSING_AUTHOR, ERROR) \
+	FUNC(MISSING_COMMITTER, ERROR) \
+	FUNC(MISSING_EMAIL, ERROR) \
+	FUNC(MISSING_GRAFT, ERROR) \
+	FUNC(MISSING_NAME_BEFORE_EMAIL, ERROR) \
+	FUNC(MISSING_OBJECT, ERROR) \
+	FUNC(MISSING_PARENT, ERROR) \
+	FUNC(MISSING_SPACE_BEFORE_DATE, ERROR) \
+	FUNC(MISSING_SPACE_BEFORE_EMAIL, ERROR) \
+	FUNC(MISSING_TAG, ERROR) \
+	FUNC(MISSING_TAG_ENTRY, ERROR) \
+	FUNC(MISSING_TAG_OBJECT, ERROR) \
+	FUNC(MISSING_TREE, ERROR) \
+	FUNC(MISSING_TYPE, ERROR) \
+	FUNC(MISSING_TYPE_ENTRY, ERROR) \
+	FUNC(MULTIPLE_AUTHORS, ERROR) \
+	FUNC(NOT_SORTED, ERROR) \
+	FUNC(TAG_OBJECT_NOT_TAG, ERROR) \
+	FUNC(UNKNOWN_TYPE, ERROR) \
+	FUNC(ZERO_PADDED_DATE, ERROR) \
+	/* warnings */ \
+	FUNC(BAD_FILEMODE, WARN) \
+	FUNC(EMPTY_NAME, WARN) \
+	FUNC(FULL_PATHNAME, WARN) \
+	FUNC(HAS_DOT, WARN) \
+	FUNC(HAS_DOTDOT, WARN) \
+	FUNC(HAS_DOTGIT, WARN) \
+	FUNC(NULL_SHA1, WARN) \
+	FUNC(ZERO_PADDED_FILEMODE, WARN) \
+	/* infos (reported as warnings, but ignored by default) */ \
+	FUNC(INVALID_TAG_NAME, INFO) \
+	FUNC(MISSING_TAGGER_ENTRY, INFO)
+
+#define MSG_ID(id, severity) FSCK_MSG_##id,
+enum fsck_msg_id {
+	FOREACH_MSG_ID(MSG_ID)
+	FSCK_MSG_MAX
+};
+#undef MSG_ID
+
+#define STR(x) #x
+#define MSG_ID(id, severity) { STR(id), FSCK_##severity },
+static struct {
+	const char *id_string;
+	int severity;
+} msg_id_info[FSCK_MSG_MAX + 1] = {
+	FOREACH_MSG_ID(MSG_ID)
+	{ NULL, -1 }
+};
+#undef MSG_ID
+
+static int parse_msg_id(const char *text, int len)
+{
+	int i, j;
+
+	for (i = 0; i < FSCK_MSG_MAX; i++) {
+		const char *key = msg_id_info[i].id_string;
+		/* id_string is upper-case, with underscores */
+		for (j = 0; j < len; j++) {
+			char c = *(key++);
+			if (c == '_')
+				c = '-';
+			if (text[j] != tolower(c))
+				break;
+		}
+		if (j == len && !*key)
+			return i;
+	}
+
+	die("Unhandled message id: %.*s", len, text);
+}
+
+static int fsck_msg_severity(enum fsck_msg_id msg_id,
+	struct fsck_options *options)
+{
+	int severity;
+
+	if (options->msg_severity && msg_id >= 0 && msg_id < FSCK_MSG_MAX)
+		severity = options->msg_severity[msg_id];
+	else {
+		severity = msg_id_info[msg_id].severity;
+		if (options->strict && severity == FSCK_WARN)
+			severity = FSCK_ERROR;
+	}
+
+	return severity;
+}
+
+static void init_skiplist(struct fsck_options *options, const char *path)
+{
+	static struct sha1_array skiplist = SHA1_ARRAY_INIT;
+	int sorted, fd;
+	char buffer[41];
+	unsigned char sha1[20];
+
+	if (options->skiplist)
+		sorted = options->skiplist->sorted;
+	else {
+		sorted = 1;
+		options->skiplist = &skiplist;
+	}
+
+	fd = open(path, O_RDONLY);
+	if (fd < 0)
+		die("Could not open skip list: %s", path);
+	for (;;) {
+		int result = read_in_full(fd, buffer, sizeof(buffer));
+		if (result < 0)
+			die_errno("Could not read '%s'", path);
+		if (!result)
+			break;
+		if (get_sha1_hex(buffer, sha1) || buffer[40] != '\n')
+			die("Invalid SHA-1: %s", buffer);
+		sha1_array_append(&skiplist, sha1);
+		if (sorted && skiplist.nr > 1 &&
+				hashcmp(skiplist.sha1[skiplist.nr - 2],
+					sha1) > 0)
+			sorted = 0;
+	}
+	close(fd);
+
+	if (sorted)
+		skiplist.sorted = 1;
+}
+
+static inline int substrcmp(const char *string, int len, const char *match)
+{
+	int match_len = strlen(match);
+	if (match_len != len)
+		return -1;
+	return memcmp(string, match, len);
+}
+
+void fsck_set_severity(struct fsck_options *options, const char *mode)
+{
+	int severity = FSCK_ERROR;
+
+	if (!options->msg_severity) {
+		int i;
+		int *msg_severity = xmalloc(sizeof(int) * FSCK_MSG_MAX);
+		for (i = 0; i < FSCK_MSG_MAX; i++)
+			msg_severity[i] = fsck_msg_severity(i, options);
+		options->msg_severity = msg_severity;
+	}
+
+	while (*mode) {
+		int len = strcspn(mode, " ,|"), equal, msg_id;
+
+		if (!len) {
+			mode++;
+			continue;
+		}
+
+		for (equal = 0; equal < len; equal++)
+			if (mode[equal] == '=')
+				break;
+
+		if (equal < len) {
+			if (!substrcmp(mode, equal, "error"))
+				severity = FSCK_ERROR;
+			else if (!substrcmp(mode, equal, "warn"))
+				severity = FSCK_WARN;
+			else if (!substrcmp(mode, equal, "ignore"))
+				severity = FSCK_IGNORE;
+			else if (!substrcmp(mode, equal, "skiplist")) {
+				char *path = xstrndup(mode + equal + 1,
+					len - equal - 1);
+
+				if (equal == len)
+					die("skiplist requires a path");
+				init_skiplist(options, path);
+				free(path);
+				mode += len;
+				continue;
+			}
+			else
+				die("Unknown fsck message severity: '%.*s'",
+					equal, mode);
+			mode += equal + 1;
+			len -= equal + 1;
+		}
+
+		msg_id = parse_msg_id(mode, len);
+		if (severity != FSCK_ERROR &&
+				msg_id_info[msg_id].severity == FSCK_FATAL)
+			die("Cannot demote %.*s", len, mode);
+		options->msg_severity[msg_id] = severity;
+		mode += len;
+	}
+}
+
+static void append_msg_id(struct strbuf *sb, const char *msg_id)
+{
+	for (;;) {
+		char c = *(msg_id)++;
+
+		if (!c)
+			break;
+		if (c == '_')
+			c = '-';
+		else
+			c = tolower(c);
+		strbuf_addch(sb, c);
+	}
+
+	strbuf_addstr(sb, ": ");
+}
+
+__attribute__((format (printf, 4, 5)))
+static int report(struct fsck_options *options, struct object *object,
+	enum fsck_msg_id id, const char *fmt, ...)
+{
+	va_list ap;
+	struct strbuf sb = STRBUF_INIT;
+	int msg_severity = fsck_msg_severity(id, options), result;
+
+	if (msg_severity == FSCK_IGNORE)
+		return 0;
+
+	if (msg_severity == FSCK_FATAL)
+		msg_severity = FSCK_ERROR;
+	else if (msg_severity == FSCK_INFO)
+		msg_severity = FSCK_WARN;
+
+	append_msg_id(&sb, msg_id_info[id].id_string);
+
+	va_start(ap, fmt);
+	strbuf_vaddf(&sb, fmt, ap);
+	result = options->error_func(object, msg_severity, sb.buf);
+	strbuf_release(&sb);
+	va_end(ap);
+
+	return result;
+}
+
+static int fsck_walk_tree(struct tree *tree, void *data, struct fsck_options *options)
 {
 	struct tree_desc desc;
 	struct name_entry entry;
@@ -25,9 +281,9 @@ static int fsck_walk_tree(struct tree *tree, fsck_walk_func walk, void *data)
 		if (S_ISGITLINK(entry.mode))
 			continue;
 		if (S_ISDIR(entry.mode))
-			result = walk(&lookup_tree(entry.sha1)->object, OBJ_TREE, data);
+			result = options->walk(&lookup_tree(entry.sha1)->object, OBJ_TREE, data, options);
 		else if (S_ISREG(entry.mode) || S_ISLNK(entry.mode))
-			result = walk(&lookup_blob(entry.sha1)->object, OBJ_BLOB, data);
+			result = options->walk(&lookup_blob(entry.sha1)->object, OBJ_BLOB, data, options);
 		else {
 			result = error("in tree %s: entry %s has bad mode %.6o",
 					sha1_to_hex(tree->object.sha1), entry.path, entry.mode);
@@ -40,7 +296,7 @@ static int fsck_walk_tree(struct tree *tree, fsck_walk_func walk, void *data)
 	return res;
 }
 
-static int fsck_walk_commit(struct commit *commit, fsck_walk_func walk, void *data)
+static int fsck_walk_commit(struct commit *commit, void *data, struct fsck_options *options)
 {
 	struct commit_list *parents;
 	int res;
@@ -49,14 +305,14 @@ static int fsck_walk_commit(struct commit *commit, fsck_walk_func walk, void *da
 	if (parse_commit(commit))
 		return -1;
 
-	result = walk((struct object *)commit->tree, OBJ_TREE, data);
+	result = options->walk((struct object *)commit->tree, OBJ_TREE, data, options);
 	if (result < 0)
 		return result;
 	res = result;
 
 	parents = commit->parents;
 	while (parents) {
-		result = walk((struct object *)parents->item, OBJ_COMMIT, data);
+		result = options->walk((struct object *)parents->item, OBJ_COMMIT, data, options);
 		if (result < 0)
 			return result;
 		if (!res)
@@ -66,14 +322,14 @@ static int fsck_walk_commit(struct commit *commit, fsck_walk_func walk, void *da
 	return res;
 }
 
-static int fsck_walk_tag(struct tag *tag, fsck_walk_func walk, void *data)
+static int fsck_walk_tag(struct tag *tag, void *data, struct fsck_options *options)
 {
 	if (parse_tag(tag))
 		return -1;
-	return walk(tag->tagged, OBJ_ANY, data);
+	return options->walk(tag->tagged, OBJ_ANY, data, options);
 }
 
-int fsck_walk(struct object *obj, fsck_walk_func walk, void *data)
+int fsck_walk(struct object *obj, void *data, struct fsck_options *options)
 {
 	if (!obj)
 		return -1;
@@ -81,11 +337,11 @@ int fsck_walk(struct object *obj, fsck_walk_func walk, void *data)
 	case OBJ_BLOB:
 		return 0;
 	case OBJ_TREE:
-		return fsck_walk_tree((struct tree *)obj, walk, data);
+		return fsck_walk_tree((struct tree *)obj, data, options);
 	case OBJ_COMMIT:
-		return fsck_walk_commit((struct commit *)obj, walk, data);
+		return fsck_walk_commit((struct commit *)obj, data, options);
 	case OBJ_TAG:
-		return fsck_walk_tag((struct tag *)obj, walk, data);
+		return fsck_walk_tag((struct tag *)obj, data, options);
 	default:
 		error("Unknown object type for %s", sha1_to_hex(obj->sha1));
 		return -1;
@@ -138,7 +394,7 @@ static int verify_ordered(unsigned mode1, const char *name1, unsigned mode2, con
 	return c1 < c2 ? 0 : TREE_UNORDERED;
 }
 
-static int fsck_tree(struct tree *item, int strict, fsck_error error_func)
+static int fsck_tree(struct tree *item, struct fsck_options *options)
 {
 	int retval;
 	int has_null_sha1 = 0;
@@ -194,7 +450,7 @@ static int fsck_tree(struct tree *item, int strict, fsck_error error_func)
 		 * bits..
 		 */
 		case S_IFREG | 0664:
-			if (!strict)
+			if (!options->strict)
 				break;
 		default:
 			has_bad_modes = 1;
@@ -219,30 +475,30 @@ static int fsck_tree(struct tree *item, int strict, fsck_error error_func)
 
 	retval = 0;
 	if (has_null_sha1)
-		retval += error_func(&item->object, FSCK_WARN, "contains entries pointing to null sha1");
+		retval += report(options, &item->object, FSCK_MSG_NULL_SHA1, "contains entries pointing to null sha1");
 	if (has_full_path)
-		retval += error_func(&item->object, FSCK_WARN, "contains full pathnames");
+		retval += report(options, &item->object, FSCK_MSG_FULL_PATHNAME, "contains full pathnames");
 	if (has_empty_name)
-		retval += error_func(&item->object, FSCK_WARN, "contains empty pathname");
+		retval += report(options, &item->object, FSCK_MSG_EMPTY_NAME, "contains empty pathname");
 	if (has_dot)
-		retval += error_func(&item->object, FSCK_WARN, "contains '.'");
+		retval += report(options, &item->object, FSCK_MSG_HAS_DOT, "contains '.'");
 	if (has_dotdot)
-		retval += error_func(&item->object, FSCK_WARN, "contains '..'");
+		retval += report(options, &item->object, FSCK_MSG_HAS_DOTDOT, "contains '..'");
 	if (has_dotgit)
-		retval += error_func(&item->object, FSCK_WARN, "contains '.git'");
+		retval += report(options, &item->object, FSCK_MSG_HAS_DOTGIT, "contains '.git'");
 	if (has_zero_pad)
-		retval += error_func(&item->object, FSCK_WARN, "contains zero-padded file modes");
+		retval += report(options, &item->object, FSCK_MSG_ZERO_PADDED_FILEMODE, "contains zero-padded file modes");
 	if (has_bad_modes)
-		retval += error_func(&item->object, FSCK_WARN, "contains bad file modes");
+		retval += report(options, &item->object, FSCK_MSG_BAD_FILEMODE, "contains bad file modes");
 	if (has_dup_entries)
-		retval += error_func(&item->object, FSCK_ERROR, "contains duplicate file entries");
+		retval += report(options, &item->object, FSCK_MSG_DUPLICATE_ENTRIES, "contains duplicate file entries");
 	if (not_properly_sorted)
-		retval += error_func(&item->object, FSCK_ERROR, "not properly sorted");
+		retval += report(options, &item->object, FSCK_MSG_NOT_SORTED, "not properly sorted");
 	return retval;
 }
 
 static int require_end_of_header(const void *data, unsigned long size,
-	struct object *obj, fsck_error error_func)
+	struct object *obj, struct fsck_options *options)
 {
 	const char *buffer = (const char *)data;
 	unsigned long i;
@@ -250,75 +506,88 @@ static int require_end_of_header(const void *data, unsigned long size,
 	for (i = 0; i < size; i++) {
 		switch (buffer[i]) {
 		case '\0':
-			return error_func(obj, FSCK_ERROR,
-				"unterminated header: NUL at offset %d", i);
+			return report(options, obj,
+				FSCK_MSG_NUL_IN_HEADER,
+				"unterminated header: NUL at offset %ld", i);
 		case '\n':
 			if (i + 1 < size && buffer[i + 1] == '\n')
 				return 0;
 		}
 	}
 
-	return error_func(obj, FSCK_ERROR, "unterminated header");
+	return report(options, obj,
+		FSCK_MSG_UNTERMINATED_HEADER, "unterminated header");
 }
 
-static int fsck_ident(const char **ident, struct object *obj, fsck_error error_func)
+static int fsck_ident(const char **ident, struct object *obj, struct fsck_options *options)
 {
+	const char *p = *ident;
 	char *end;
 
-	if (**ident == '<')
-		return error_func(obj, FSCK_ERROR, "invalid author/committer line - missing space before email");
-	*ident += strcspn(*ident, "<>\n");
-	if (**ident == '>')
-		return error_func(obj, FSCK_ERROR, "invalid author/committer line - bad name");
-	if (**ident != '<')
-		return error_func(obj, FSCK_ERROR, "invalid author/committer line - missing email");
-	if ((*ident)[-1] != ' ')
-		return error_func(obj, FSCK_ERROR, "invalid author/committer line - missing space before email");
-	(*ident)++;
-	*ident += strcspn(*ident, "<>\n");
-	if (**ident != '>')
-		return error_func(obj, FSCK_ERROR, "invalid author/committer line - bad email");
-	(*ident)++;
-	if (**ident != ' ')
-		return error_func(obj, FSCK_ERROR, "invalid author/committer line - missing space before date");
-	(*ident)++;
-	if (**ident == '0' && (*ident)[1] != ' ')
-		return error_func(obj, FSCK_ERROR, "invalid author/committer line - zero-padded date");
-	if (date_overflows(strtoul(*ident, &end, 10)))
-		return error_func(obj, FSCK_ERROR, "invalid author/committer line - date causes integer overflow");
-	if (end == *ident || *end != ' ')
-		return error_func(obj, FSCK_ERROR, "invalid author/committer line - bad date");
-	*ident = end + 1;
-	if ((**ident != '+' && **ident != '-') ||
-	    !isdigit((*ident)[1]) ||
-	    !isdigit((*ident)[2]) ||
-	    !isdigit((*ident)[3]) ||
-	    !isdigit((*ident)[4]) ||
-	    ((*ident)[5] != '\n'))
-		return error_func(obj, FSCK_ERROR, "invalid author/committer line - bad time zone");
-	(*ident) += 6;
+	*ident = strchrnul(*ident, '\n');
+	if (**ident == '\n')
+		(*ident)++;
+
+	if (*p == '<')
+		return report(options, obj, FSCK_MSG_MISSING_NAME_BEFORE_EMAIL, "invalid author/committer line - missing space before email");
+	p += strcspn(p, "<>\n");
+	if (*p == '>')
+		return report(options, obj, FSCK_MSG_BAD_NAME, "invalid author/committer line - bad name");
+	if (*p != '<')
+		return report(options, obj, FSCK_MSG_MISSING_EMAIL, "invalid author/committer line - missing email");
+	if (p[-1] != ' ')
+		return report(options, obj, FSCK_MSG_MISSING_SPACE_BEFORE_EMAIL, "invalid author/committer line - missing space before email");
+	p++;
+	p += strcspn(p, "<>\n");
+	if (*p != '>')
+		return report(options, obj, FSCK_MSG_BAD_EMAIL, "invalid author/committer line - bad email");
+	p++;
+	if (*p != ' ')
+		return report(options, obj, FSCK_MSG_MISSING_SPACE_BEFORE_DATE, "invalid author/committer line - missing space before date");
+	p++;
+	if (*p == '0' && p[1] != ' ')
+		return report(options, obj, FSCK_MSG_ZERO_PADDED_DATE, "invalid author/committer line - zero-padded date");
+	if (date_overflows(strtoul(p, &end, 10)))
+		return report(options, obj, FSCK_MSG_DATE_OVERFLOW, "invalid author/committer line - date causes integer overflow");
+	if ((end == p || *end != ' '))
+		return report(options, obj, FSCK_MSG_BAD_DATE, "invalid author/committer line - bad date");
+	p = end + 1;
+	if ((*p != '+' && *p != '-') ||
+	    !isdigit(p[1]) ||
+	    !isdigit(p[2]) ||
+	    !isdigit(p[3]) ||
+	    !isdigit(p[4]) ||
+	    (p[5] != '\n'))
+		return report(options, obj, FSCK_MSG_BAD_TIMEZONE, "invalid author/committer line - bad time zone");
+	p += 6;
 	return 0;
 }
 
 static int fsck_commit_buffer(struct commit *commit, const char *buffer,
-	unsigned long size, fsck_error error_func)
+	unsigned long size, struct fsck_options *options)
 {
 	unsigned char tree_sha1[20], sha1[20];
 	struct commit_graft *graft;
 	unsigned parent_count, parent_line_count = 0;
 	int err;
 
-	if (require_end_of_header(buffer, size, &commit->object, error_func))
+	if (require_end_of_header(buffer, size, &commit->object, options))
 		return -1;
 
 	if (!skip_prefix(buffer, "tree ", &buffer))
-		return error_func(&commit->object, FSCK_ERROR, "invalid format - expected 'tree' line");
-	if (get_sha1_hex(buffer, tree_sha1) || buffer[40] != '\n')
-		return error_func(&commit->object, FSCK_ERROR, "invalid 'tree' line format - bad sha1");
+		return report(options, &commit->object, FSCK_MSG_MISSING_TREE, "invalid format - expected 'tree' line");
+	if (get_sha1_hex(buffer, tree_sha1) || buffer[40] != '\n') {
+		err = report(options, &commit->object, FSCK_MSG_BAD_TREE_SHA1, "invalid 'tree' line format - bad sha1");
+		if (err)
+			return err;
+	}
 	buffer += 41;
 	while (skip_prefix(buffer, "parent ", &buffer)) {
-		if (get_sha1_hex(buffer, sha1) || buffer[40] != '\n')
-			return error_func(&commit->object, FSCK_ERROR, "invalid 'parent' line format - bad sha1");
+		if (get_sha1_hex(buffer, sha1) || buffer[40] != '\n') {
+			err = report(options, &commit->object, FSCK_MSG_BAD_PARENT_SHA1, "invalid 'parent' line format - bad sha1");
+			if (err)
+				return err;
+		}
 		buffer += 41;
 		parent_line_count++;
 	}
@@ -327,40 +596,54 @@ static int fsck_commit_buffer(struct commit *commit, const char *buffer,
 	if (graft) {
 		if (graft->nr_parent == -1 && !parent_count)
 			; /* shallow commit */
-		else if (graft->nr_parent != parent_count)
-			return error_func(&commit->object, FSCK_ERROR, "graft objects missing");
+		else if (graft->nr_parent != parent_count) {
+			err = report(options, &commit->object, FSCK_MSG_MISSING_GRAFT, "graft objects missing");
+			if (err)
+				return err;
+		}
 	} else {
-		if (parent_count != parent_line_count)
-			return error_func(&commit->object, FSCK_ERROR, "parent objects missing");
+		if (parent_count != parent_line_count) {
+			err = report(options, &commit->object, FSCK_MSG_MISSING_PARENT, "parent objects missing");
+			if (err)
+				return err;
+		}
 	}
 	if (!skip_prefix(buffer, "author ", &buffer))
-		return error_func(&commit->object, FSCK_ERROR, "invalid format - expected 'author' line");
-	err = fsck_ident(&buffer, &commit->object, error_func);
+		return report(options, &commit->object, FSCK_MSG_MISSING_AUTHOR, "invalid format - expected 'author' line");
+	err = fsck_ident(&buffer, &commit->object, options);
 	if (err)
 		return err;
+	while (skip_prefix(buffer, "author ", &buffer)) {
+		err = report(options, &commit->object, FSCK_MSG_MULTIPLE_AUTHORS, "invalid format - multiple 'author' lines");
+		if (err)
+			return err;
+		err = fsck_ident(&buffer, &commit->object, options);
+		if (err)
+			return err;
+	}
 	if (!skip_prefix(buffer, "committer ", &buffer))
-		return error_func(&commit->object, FSCK_ERROR, "invalid format - expected 'committer' line");
-	err = fsck_ident(&buffer, &commit->object, error_func);
+		return report(options, &commit->object, FSCK_MSG_MISSING_COMMITTER, "invalid format - expected 'committer' line");
+	err = fsck_ident(&buffer, &commit->object, options);
 	if (err)
 		return err;
 	if (!commit->tree)
-		return error_func(&commit->object, FSCK_ERROR, "could not load commit's tree %s", sha1_to_hex(tree_sha1));
+		return report(options, &commit->object, FSCK_MSG_INVALID_TREE, "could not load commit's tree %s", sha1_to_hex(tree_sha1));
 
 	return 0;
 }
 
 static int fsck_commit(struct commit *commit, const char *data,
-	unsigned long size, fsck_error error_func)
+	unsigned long size, struct fsck_options *options)
 {
 	const char *buffer = data ?  data : get_commit_buffer(commit, &size);
-	int ret = fsck_commit_buffer(commit, buffer, size, error_func);
+	int ret = fsck_commit_buffer(commit, buffer, size, options);
 	if (!data)
 		unuse_commit_buffer(commit, buffer);
 	return ret;
 }
 
 static int fsck_tag_buffer(struct tag *tag, const char *data,
-	unsigned long size, fsck_error error_func)
+	unsigned long size, struct fsck_options *options)
 {
 	unsigned char sha1[20];
 	int ret = 0;
@@ -376,65 +659,75 @@ static int fsck_tag_buffer(struct tag *tag, const char *data,
 		buffer = to_free =
 			read_sha1_file(tag->object.sha1, &type, &size);
 		if (!buffer)
-			return error_func(&tag->object, FSCK_ERROR,
+			return report(options, &tag->object,
+				FSCK_MSG_MISSING_TAG_OBJECT,
 				"cannot read tag object");
 
 		if (type != OBJ_TAG) {
-			ret = error_func(&tag->object, FSCK_ERROR,
+			ret = report(options, &tag->object,
+				FSCK_MSG_TAG_OBJECT_NOT_TAG,
 				"expected tag got %s",
 			    typename(type));
 			goto done;
 		}
 	}
 
-	if (require_end_of_header(buffer, size, &tag->object, error_func))
+	if (require_end_of_header(buffer, size, &tag->object, options))
 		goto done;
 
 	if (!skip_prefix(buffer, "object ", &buffer)) {
-		ret = error_func(&tag->object, FSCK_ERROR, "invalid format - expected 'object' line");
+		ret = report(options, &tag->object, FSCK_MSG_MISSING_OBJECT, "invalid format - expected 'object' line");
 		goto done;
 	}
 	if (get_sha1_hex(buffer, sha1) || buffer[40] != '\n') {
-		ret = error_func(&tag->object, FSCK_ERROR, "invalid 'object' line format - bad sha1");
-		goto done;
+		ret = report(options, &tag->object, FSCK_MSG_INVALID_OBJECT_SHA1, "invalid 'object' line format - bad sha1");
+		if (ret)
+			goto done;
 	}
 	buffer += 41;
 
 	if (!skip_prefix(buffer, "type ", &buffer)) {
-		ret = error_func(&tag->object, FSCK_ERROR, "invalid format - expected 'type' line");
+		ret = report(options, &tag->object, FSCK_MSG_MISSING_TYPE_ENTRY, "invalid format - expected 'type' line");
 		goto done;
 	}
 	eol = strchr(buffer, '\n');
 	if (!eol) {
-		ret = error_func(&tag->object, FSCK_ERROR, "invalid format - unexpected end after 'type' line");
+		ret = report(options, &tag->object, FSCK_MSG_MISSING_TYPE, "invalid format - unexpected end after 'type' line");
 		goto done;
 	}
 	if (type_from_string_gently(buffer, eol - buffer, 1) < 0)
-		ret = error_func(&tag->object, FSCK_ERROR, "invalid 'type' value");
+		ret = report(options, &tag->object, FSCK_MSG_INVALID_TYPE, "invalid 'type' value");
 	if (ret)
 		goto done;
 	buffer = eol + 1;
 
 	if (!skip_prefix(buffer, "tag ", &buffer)) {
-		ret = error_func(&tag->object, FSCK_ERROR, "invalid format - expected 'tag' line");
+		ret = report(options, &tag->object, FSCK_MSG_MISSING_TAG_ENTRY, "invalid format - expected 'tag' line");
 		goto done;
 	}
 	eol = strchr(buffer, '\n');
 	if (!eol) {
-		ret = error_func(&tag->object, FSCK_ERROR, "invalid format - unexpected end after 'type' line");
+		ret = report(options, &tag->object, FSCK_MSG_MISSING_TAG, "invalid format - unexpected end after 'type' line");
 		goto done;
 	}
 	strbuf_addf(&sb, "refs/tags/%.*s", (int)(eol - buffer), buffer);
-	if (check_refname_format(sb.buf, 0))
-		error_func(&tag->object, FSCK_WARN, "invalid 'tag' name: %.*s",
+	if (check_refname_format(sb.buf, 0)) {
+		ret = report(options, &tag->object, FSCK_MSG_INVALID_TAG_NAME,
+			   "invalid 'tag' name: %.*s",
 			   (int)(eol - buffer), buffer);
+		if (ret)
+			goto done;
+	}
 	buffer = eol + 1;
 
-	if (!skip_prefix(buffer, "tagger ", &buffer))
+	if (!skip_prefix(buffer, "tagger ", &buffer)) {
 		/* early tags do not contain 'tagger' lines; warn only */
-		error_func(&tag->object, FSCK_WARN, "invalid format - expected 'tagger' line");
+		ret = report(options, &tag->object, FSCK_MSG_MISSING_TAGGER_ENTRY, "invalid format - expected 'tagger' line");
+		if (ret)
+			goto done;
+	}
 	else
-		ret = fsck_ident(&buffer, &tag->object, error_func);
+		ret = fsck_ident(&buffer, &tag->object, options);
 
 done:
 	strbuf_release(&sb);
@@ -443,49 +736,47 @@ done:
 }
 
 static int fsck_tag(struct tag *tag, const char *data,
-	unsigned long size, fsck_error error_func)
+	unsigned long size, struct fsck_options *options)
 {
 	struct object *tagged = tag->tagged;
 
 	if (!tagged)
-		return error_func(&tag->object, FSCK_ERROR, "could not load tagged object");
+		return report(options, &tag->object, FSCK_MSG_INVALID_TAG_OBJECT, "could not load tagged object");
 
-	return fsck_tag_buffer(tag, data, size, error_func);
+	return fsck_tag_buffer(tag, data, size, options);
 }
 
 int fsck_object(struct object *obj, void *data, unsigned long size,
-	int strict, fsck_error error_func)
+	struct fsck_options *options)
 {
+	if (options->skiplist &&
+			sha1_array_lookup(options->skiplist, obj->sha1) >= 0)
+		return 0;
+
 	if (!obj)
-		return error_func(obj, FSCK_ERROR, "no valid object to fsck");
+		return report(options, obj, FSCK_MSG_INVALID_OBJECT_SHA1, "no valid object to fsck");
 
 	if (obj->type == OBJ_BLOB)
 		return 0;
 	if (obj->type == OBJ_TREE)
-		return fsck_tree((struct tree *) obj, strict, error_func);
+		return fsck_tree((struct tree *) obj, options);
 	if (obj->type == OBJ_COMMIT)
 		return fsck_commit((struct commit *) obj, (const char *) data,
-			size, error_func);
+			size, options);
 	if (obj->type == OBJ_TAG)
 		return fsck_tag((struct tag *) obj, (const char *) data,
-			size, error_func);
+			size, options);
 
-	return error_func(obj, FSCK_ERROR, "unknown type '%d' (internal fsck error)",
+	return report(options, obj, FSCK_MSG_UNKNOWN_TYPE, "unknown type '%d' (internal fsck error)",
 			  obj->type);
 }
 
-int fsck_error_function(struct object *obj, int type, const char *fmt, ...)
+int fsck_error_function(struct object *obj, int severity, const char *message)
 {
-	va_list ap;
-	struct strbuf sb = STRBUF_INIT;
-
-	strbuf_addf(&sb, "object %s:", sha1_to_hex(obj->sha1));
-
-	va_start(ap, fmt);
-	strbuf_vaddf(&sb, fmt, ap);
-	va_end(ap);
-
-	error("%s", sb.buf);
-	strbuf_release(&sb);
+	if (severity == FSCK_WARN) {
+		warning("object %s: %s", sha1_to_hex(obj->sha1), message);
+		return 0;
+	}
+	error("object %s: %s", sha1_to_hex(obj->sha1), message);
 	return 1;
 }

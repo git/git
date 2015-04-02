@@ -1,4 +1,4 @@
-diff.autorefreshindex::
+diff.autoRefreshIndex::
 	When using 'git diff' to compare with work tree
 	files, do not consider stat-only change as changed.
 	Instead, silently run `git update-index --refresh` to
@@ -75,11 +75,11 @@ diff.ignoreSubmodules::
 	commands such as 'git diff-files'. 'git checkout' also honors
 	this setting when reporting uncommitted changes. Setting it to
 	'all' disables the submodule summary normally shown by 'git commit'
-	and 'git status' when 'status.submodulesummary' is set unless it is
+	and 'git status' when 'status.submoduleSummary' is set unless it is
 	overridden by using the --ignore-submodules command-line option.
 	The 'git submodule' commands are not affected by this setting.
 
-diff.mnemonicprefix::
+diff.mnemonicPrefix::
 	If set, 'git diff' uses a prefix pair that is different from the
 	standard "a/" and "b/" depending on what is being compared.  When
 	this configuration is in effect, reverse diff output also swaps
@@ -98,7 +98,7 @@ diff.mnemonicprefix::
 diff.noprefix::
 	If set, 'git diff' does not show any source or destination prefix.
 
-diff.orderfile::
+diff.orderFile::
 	File indicating how to order files within a diff, using
 	one shell glob pattern per line.
 	Can be overridden by the '-O' option to linkgit:git-diff[1].
@@ -148,7 +148,7 @@ diff.<driver>.textconv::
 	conversion is used to generate a human-readable diff.  See
 	linkgit:gitattributes[5] for details.
 
-diff.<driver>.wordregex::
+diff.<driver>.wordRegex::
 	The regular expression that the diff driver should use to
 	split words in a line.  See linkgit:gitattributes[5] for
 	details.

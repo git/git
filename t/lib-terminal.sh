@@ -1,7 +1,7 @@
 # Helpers for terminal output tests.
 
 # Catch tests which should depend on TTY but forgot to. There's no need
-# to aditionally check that the TTY prereq is set here.  If the test declared
+# to additionally check that the TTY prereq is set here.  If the test declared
 # it and we are running the test, then it must have been set.
 test_terminal () {
 	if ! test_declared_prereq TTY

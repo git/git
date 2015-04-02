@@ -11,6 +11,7 @@
 #include "run-command.h"
 #include "parse-options.h"
 #include "sigchain.h"
+#include "submodule-config.h"
 #include "submodule.h"
 #include "connected.h"
 #include "argv-array.h"
@@ -415,8 +416,10 @@ static int s_update_ref(const char *action,
 
 	transaction = ref_transaction_begin(&err);
 	if (!transaction ||
-	    ref_transaction_update(transaction, ref->name, ref->new_sha1,
-				   ref->old_sha1, 0, check_old, msg, &err))
+	    ref_transaction_update(transaction, ref->name,
+				   ref->new_sha1,
+				   check_old ? ref->old_sha1 : NULL,
+				   0, msg, &err))
 		goto fail;
 
 	ret = ref_transaction_commit(transaction, &err);
@@ -586,7 +589,8 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 	struct strbuf note = STRBUF_INIT;
 	const char *what, *kind;
 	struct ref *rm;
-	char *url, *filename = dry_run ? "/dev/null" : git_path("FETCH_HEAD");
+	char *url;
+	const char *filename = dry_run ? "/dev/null" : git_path("FETCH_HEAD");
 	int want_status;
 
 	fp = fopen(filename, "a");
@@ -820,7 +824,7 @@ static void check_not_current_branch(struct ref *ref_map)
 
 static int truncate_fetch_head(void)
 {
-	char *filename = git_path("FETCH_HEAD");
+	const char *filename = git_path("FETCH_HEAD");
 	FILE *fp = fopen(filename, "w");
 
 	if (!fp)

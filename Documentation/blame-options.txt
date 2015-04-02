@@ -4,7 +4,7 @@
 
 --root::
 	Do not treat root commits as boundaries.  This can also be
-	controlled via the `blame.showroot` config option.
+	controlled via the `blame.showRoot` config option.
 
 --show-stats::
 	Include additional statistics at the end of blame output.

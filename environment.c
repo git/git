@@ -92,8 +92,9 @@ static char *work_tree;
 static const char *namespace;
 static size_t namespace_len;
 
-static const char *git_dir;
+static const char *git_dir, *git_common_dir;
 static char *git_object_dir, *git_index_file, *git_graft_file;
+int git_db_env, git_index_env, git_graft_env, git_common_dir_env;
 
 /*
  * Repository-local GIT_* environment variables; see cache.h for details.
@@ -111,6 +112,7 @@ const char * const local_repo_env[] = {
 	NO_REPLACE_OBJECTS_ENVIRONMENT,
 	GIT_PREFIX_ENVIRONMENT,
 	GIT_SHALLOW_FILE_ENVIRONMENT,
+	GIT_COMMON_DIR_ENVIRONMENT,
 	NULL
 };
 
@@ -135,14 +137,23 @@ static char *expand_namespace(const char *raw_namespace)
 	return strbuf_detach(&buf, NULL);
 }
 
-static char *git_path_from_env(const char *envvar, const char *path)
+static char *git_path_from_env(const char *envvar, const char *git_dir,
+			       const char *path, int *fromenv)
 {
 	const char *value = getenv(envvar);
-	return value ? xstrdup(value) : git_pathdup("%s", path);
+	if (!value) {
+		char *buf = xmalloc(strlen(git_dir) + strlen(path) + 2);
+		sprintf(buf, "%s/%s", git_dir, path);
+		return buf;
+	}
+	if (fromenv)
+		*fromenv = 1;
+	return xstrdup(value);
 }
 
 static void setup_git_env(void)
 {
+	struct strbuf sb = STRBUF_INIT;
 	const char *gitfile;
 	const char *shallow_file;
 
@@ -151,9 +162,15 @@ static void setup_git_env(void)
 		git_dir = DEFAULT_GIT_DIR_ENVIRONMENT;
 	gitfile = read_gitfile(git_dir);
 	git_dir = xstrdup(gitfile ? gitfile : git_dir);
-	git_object_dir = git_path_from_env(DB_ENVIRONMENT, "objects");
-	git_index_file = git_path_from_env(INDEX_ENVIRONMENT, "index");
-	git_graft_file = git_path_from_env(GRAFT_ENVIRONMENT, "info/grafts");
+	if (get_common_dir(&sb, git_dir))
+		git_common_dir_env = 1;
+	git_common_dir = strbuf_detach(&sb, NULL);
+	git_object_dir = git_path_from_env(DB_ENVIRONMENT, git_common_dir,
+					   "objects", &git_db_env);
+	git_index_file = git_path_from_env(INDEX_ENVIRONMENT, git_dir,
+					   "index", &git_index_env);
+	git_graft_file = git_path_from_env(GRAFT_ENVIRONMENT, git_common_dir,
+					   "info/grafts", &git_graft_env);
 	if (getenv(NO_REPLACE_OBJECTS_ENVIRONMENT))
 		check_replace_refs = 0;
 	namespace = expand_namespace(getenv(GIT_NAMESPACE_ENVIRONMENT));
@@ -174,6 +191,11 @@ const char *get_git_dir(void)
 	if (!git_dir)
 		setup_git_env();
 	return git_dir;
+}
+
+const char *get_git_common_dir(void)
+{
+	return git_common_dir;
 }
 
 const char *get_git_namespace(void)

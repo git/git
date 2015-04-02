@@ -24,7 +24,7 @@ test_expect_success 'propagate merge information' '
 	'
 
 test_expect_success 'check svn:mergeinfo' '
-	mergeinfo=$(svn_cmd propget svn:mergeinfo "$svnrepo"/branches/svnb1)
+	mergeinfo=$(svn_cmd propget svn:mergeinfo "$svnrepo"/branches/svnb1) &&
 	test "$mergeinfo" = "/branches/svnb2:3,8"
 	'
 
@@ -34,7 +34,7 @@ test_expect_success 'merge another branch' '
 	'
 
 test_expect_success 'check primary parent mergeinfo respected' '
-	mergeinfo=$(svn_cmd propget svn:mergeinfo "$svnrepo"/branches/svnb1)
+	mergeinfo=$(svn_cmd propget svn:mergeinfo "$svnrepo"/branches/svnb1) &&
 	test "$mergeinfo" = "/branches/svnb2:3,8
 /branches/svnb3:4,9"
 	'
@@ -45,7 +45,7 @@ test_expect_success 'merge existing merge' '
 	'
 
 test_expect_success "check both parents' mergeinfo respected" '
-	mergeinfo=$(svn_cmd propget svn:mergeinfo "$svnrepo"/branches/svnb1)
+	mergeinfo=$(svn_cmd propget svn:mergeinfo "$svnrepo"/branches/svnb1) &&
 	test "$mergeinfo" = "/branches/svnb2:3,8
 /branches/svnb3:4,9
 /branches/svnb4:5-6,10-12
@@ -70,7 +70,7 @@ test_expect_success 'second forward merge' '
 	'
 
 test_expect_success 'check new mergeinfo added' '
-	mergeinfo=$(svn_cmd propget svn:mergeinfo "$svnrepo"/branches/svnb1)
+	mergeinfo=$(svn_cmd propget svn:mergeinfo "$svnrepo"/branches/svnb1) &&
 	test "$mergeinfo" = "/branches/svnb2:3,8,16-17
 /branches/svnb3:4,9
 /branches/svnb4:5-6,10-12
@@ -84,7 +84,7 @@ test_expect_success 'reintegration merge' '
 	'
 
 test_expect_success 'check reintegration mergeinfo' '
-	mergeinfo=$(svn_cmd propget svn:mergeinfo "$svnrepo"/branches/svnb4)
+	mergeinfo=$(svn_cmd propget svn:mergeinfo "$svnrepo"/branches/svnb4) &&
 	test "$mergeinfo" = "/branches/svnb1:2-4,7-9,13-18
 /branches/svnb2:3,8,16-17
 /branches/svnb3:4,9

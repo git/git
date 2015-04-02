@@ -284,6 +284,10 @@ configuration variable documented in linkgit:git-config[1].
 	would be committed at the bottom of the commit message
 	template.  Note that this diff output doesn't have its
 	lines prefixed with '#'.
++
+If specified twice, show in addition the unified diff between
+what would be committed and the worktree files, i.e. the unstaged
+changes to tracked files.
 
 -q::
 --quiet::
@@ -310,7 +314,7 @@ configuration variable documented in linkgit:git-config[1].
 	GPG-sign commit.
 
 --no-gpg-sign::
-	Countermand `commit.gpgsign` configuration variable that is
+	Countermand `commit.gpgSign` configuration variable that is
 	set to force each and every commit to be signed.
 
 \--::

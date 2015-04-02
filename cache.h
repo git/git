@@ -43,6 +43,14 @@ int git_deflate_end_gently(git_zstream *);
 int git_deflate(git_zstream *, int flush);
 unsigned long git_deflate_bound(git_zstream *, unsigned long);
 
+/* The length in bytes and in hex digits of an object name (SHA-1 value). */
+#define GIT_SHA1_RAWSZ 20
+#define GIT_SHA1_HEXSZ (2 * GIT_SHA1_RAWSZ)
+
+struct object_id {
+	unsigned char hash[GIT_SHA1_RAWSZ];
+};
+
 #if defined(DT_UNKNOWN) && !defined(NO_D_TYPE_IN_DIRENT)
 #define DTYPE(de)	((de)->d_type)
 #else
@@ -289,8 +297,11 @@ static inline unsigned int canon_mode(unsigned int mode)
 #define RESOLVE_UNDO_CHANGED	(1 << 4)
 #define CACHE_TREE_CHANGED	(1 << 5)
 #define SPLIT_INDEX_ORDERED	(1 << 6)
+#define UNTRACKED_CHANGED	(1 << 7)
 
 struct split_index;
+struct untracked_cache;
+
 struct index_state {
 	struct cache_entry **cache;
 	unsigned int version;
@@ -300,15 +311,18 @@ struct index_state {
 	struct split_index *split_index;
 	struct cache_time timestamp;
 	unsigned name_hash_initialized : 1,
+		 has_dir_hash : 1,
 		 initialized : 1;
 	struct hashmap name_hash;
 	struct hashmap dir_hash;
 	unsigned char sha1[20];
+	struct untracked_cache *untracked;
 };
 
 extern struct index_state the_index;
 
 /* Name hashing */
+extern void init_name_hash(struct index_state *istate, int force_dir_hash);
 extern void add_name_hash(struct index_state *istate, struct cache_entry *ce);
 extern void remove_name_hash(struct index_state *istate, struct cache_entry *ce);
 extern void free_name_hash(struct index_state *istate);
@@ -370,6 +384,7 @@ static inline enum object_type object_type(unsigned int mode)
 
 /* Double-check local_repo_env below if you add to this list. */
 #define GIT_DIR_ENVIRONMENT "GIT_DIR"
+#define GIT_COMMON_DIR_ENVIRONMENT "GIT_COMMON_DIR"
 #define GIT_NAMESPACE_ENVIRONMENT "GIT_NAMESPACE"
 #define GIT_WORK_TREE_ENVIRONMENT "GIT_WORK_TREE"
 #define GIT_PREFIX_ENVIRONMENT "GIT_PREFIX"
@@ -423,11 +438,13 @@ extern int is_inside_git_dir(void);
 extern char *git_work_tree_cfg;
 extern int is_inside_work_tree(void);
 extern const char *get_git_dir(void);
+extern const char *get_git_common_dir(void);
 extern int is_git_directory(const char *path);
 extern char *get_object_directory(void);
 extern char *get_index_file(void);
 extern char *get_graft_file(void);
 extern int set_git_dir(const char *path);
+extern int get_common_dir(struct strbuf *sb, const char *gitdir);
 extern const char *get_git_namespace(void);
 extern const char *strip_namespace(const char *namespaced_ref);
 extern const char *get_git_work_tree(void);
@@ -552,6 +569,8 @@ extern void fill_stat_data(struct stat_data *sd, struct stat *st);
  * INODE_CHANGED, and DATA_CHANGED.
  */
 extern int match_stat_data(const struct stat_data *sd, struct stat *st);
+extern int match_stat_data_racy(const struct index_state *istate,
+				const struct stat_data *sd, struct stat *st);
 
 extern void fill_stat_cache_info(struct cache_entry *ce, struct stat *st);
 
@@ -568,7 +587,7 @@ extern void update_index_if_able(struct index_state *, struct lock_file *);
 extern int hold_locked_index(struct lock_file *, int);
 extern void set_alternate_index_output(const char *);
 
-extern int delete_ref(const char *, const unsigned char *sha1, int delopt);
+extern int delete_ref(const char *, const unsigned char *sha1, unsigned int flags);
 
 /* Environment bits from configuration mechanism */
 extern int trust_executable_bit;
@@ -612,6 +631,7 @@ extern int core_apply_sparse_checkout;
 extern int precomposed_unicode;
 extern int protect_hfs;
 extern int protect_ntfs;
+extern int git_db_env, git_index_env, git_graft_env, git_common_dir_env;
 
 /*
  * Include broken refs in all ref iterations, which will
@@ -682,18 +702,19 @@ extern int check_repository_format(void);
 
 extern char *mksnpath(char *buf, size_t n, const char *fmt, ...)
 	__attribute__((format (printf, 3, 4)));
-extern char *git_snpath(char *buf, size_t n, const char *fmt, ...)
-	__attribute__((format (printf, 3, 4)));
+extern void strbuf_git_path(struct strbuf *sb, const char *fmt, ...)
+	__attribute__((format (printf, 2, 3)));
 extern char *git_pathdup(const char *fmt, ...)
 	__attribute__((format (printf, 1, 2)));
 extern char *mkpathdup(const char *fmt, ...)
 	__attribute__((format (printf, 1, 2)));
 
 /* Return a statically allocated filename matching the sha1 signature */
-extern char *mkpath(const char *fmt, ...) __attribute__((format (printf, 1, 2)));
-extern char *git_path(const char *fmt, ...) __attribute__((format (printf, 1, 2)));
-extern char *git_path_submodule(const char *path, const char *fmt, ...)
+extern const char *mkpath(const char *fmt, ...) __attribute__((format (printf, 1, 2)));
+extern const char *git_path(const char *fmt, ...) __attribute__((format (printf, 1, 2)));
+extern const char *git_path_submodule(const char *path, const char *fmt, ...)
 	__attribute__((format (printf, 2, 3)));
+extern void report_linked_checkout_garbage(void);
 
 /*
  * Return the name of the file in the local object database that would
@@ -718,13 +739,13 @@ extern char *sha1_pack_name(const unsigned char *sha1);
 extern char *sha1_pack_index_name(const unsigned char *sha1);
 
 extern const char *find_unique_abbrev(const unsigned char *sha1, int);
-extern const unsigned char null_sha1[20];
+extern const unsigned char null_sha1[GIT_SHA1_RAWSZ];
 
 static inline int hashcmp(const unsigned char *sha1, const unsigned char *sha2)
 {
 	int i;
 
-	for (i = 0; i < 20; i++, sha1++, sha2++) {
+	for (i = 0; i < GIT_SHA1_RAWSZ; i++, sha1++, sha2++) {
 		if (*sha1 != *sha2)
 			return *sha1 - *sha2;
 	}
@@ -732,19 +753,41 @@ static inline int hashcmp(const unsigned char *sha1, const unsigned char *sha2)
 	return 0;
 }
 
+static inline int oidcmp(const struct object_id *oid1, const struct object_id *oid2)
+{
+	return hashcmp(oid1->hash, oid2->hash);
+}
+
 static inline int is_null_sha1(const unsigned char *sha1)
 {
 	return !hashcmp(sha1, null_sha1);
 }
 
+static inline int is_null_oid(const struct object_id *oid)
+{
+	return !hashcmp(oid->hash, null_sha1);
+}
+
 static inline void hashcpy(unsigned char *sha_dst, const unsigned char *sha_src)
 {
-	memcpy(sha_dst, sha_src, 20);
+	memcpy(sha_dst, sha_src, GIT_SHA1_RAWSZ);
 }
+
+static inline void oidcpy(struct object_id *dst, const struct object_id *src)
+{
+	hashcpy(dst->hash, src->hash);
+}
+
 static inline void hashclr(unsigned char *hash)
 {
-	memset(hash, 0, 20);
+	memset(hash, 0, GIT_SHA1_RAWSZ);
 }
+
+static inline void oidclr(struct object_id *oid)
+{
+	hashclr(oid->hash);
+}
+
 
 #define EMPTY_TREE_SHA1_HEX \
 	"4b825dc642cb6eb9a060e54bf8d69288fbee4904"
@@ -952,8 +995,10 @@ extern int for_each_abbrev(const char *prefix, each_abbrev_fn, void *);
  * null-terminated string.
  */
 extern int get_sha1_hex(const char *hex, unsigned char *sha1);
+extern int get_oid_hex(const char *hex, struct object_id *sha1);
 
 extern char *sha1_to_hex(const unsigned char *sha1);	/* static buffer result! */
+extern char *oid_to_hex(const struct object_id *oid);	/* same static buffer as sha1_to_hex */
 extern int read_ref_full(const char *refname, int resolve_flags,
 			 unsigned char *sha1, int *flags);
 extern int read_ref(const char *refname, unsigned char *sha1);
@@ -1508,6 +1553,8 @@ static inline ssize_t write_str_in_full(int fd, const char *str)
 {
 	return write_in_full(fd, str, strlen(str));
 }
+__attribute__((format (printf, 3, 4)))
+extern int write_file(const char *path, int fatal, const char *fmt, ...);
 
 /* pager.c */
 extern void setup_pager(void);

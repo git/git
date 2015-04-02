@@ -1,0 +1,1354 @@
+# Translation of gitk
+# Copyright (C) 2005-2014 Paul Mackerras
+# This file is distributed under the same license as the gitk package.
+# Alex Henrie <alexhenrie24@gmail.com>, 2015.
+#
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: gitk\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2015-03-15 14:37+1100\n"
+"PO-Revision-Date: 2015-02-01 22:49-0700\n"
+"Last-Translator: Alex Henrie <alexhenrie24@gmail.com>\n"
+"Language-Team: Catalan\n"
+"Language: ca\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+"X-Generator: Poedit 1.7.3\n"
+
+#: gitk:140
+msgid "Couldn't get list of unmerged files:"
+msgstr "No s'ha pogut obtenir la llista de fitxers no fusionats:"
+
+#: gitk:212 gitk:2381
+msgid "Color words"
+msgstr "Colora les paraules"
+
+#: gitk:217 gitk:2381 gitk:8201 gitk:8234
+msgid "Markup words"
+msgstr "Marca les paraules"
+
+#: gitk:324
+msgid "Error parsing revisions:"
+msgstr "Error en analitzar les revisions:"
+
+#: gitk:380
+msgid "Error executing --argscmd command:"
+msgstr "Error en executar l'ordre --argscmd:"
+
+#: gitk:393
+msgid "No files selected: --merge specified but no files are unmerged."
+msgstr ""
+"No hi ha fitxers seleccionats: s'ha especificat --merge però cap fitxer està "
+"sense fusionar."
+
+#: gitk:396
+msgid ""
+"No files selected: --merge specified but no unmerged files are within file "
+"limit."
+msgstr ""
+"No hi ha fitxers seleccionats: s'ha especificat --merge però cap fitxer "
+"sense fusionar està dins del límit de fitxers."
+
+#: gitk:418 gitk:566
+msgid "Error executing git log:"
+msgstr "Error en executar git log:"
+
+#: gitk:436 gitk:582
+msgid "Reading"
+msgstr "Llegint"
+
+#: gitk:496 gitk:4508
+msgid "Reading commits..."
+msgstr "Llegint les revisions..."
+
+#: gitk:499 gitk:1637 gitk:4511
+msgid "No commits selected"
+msgstr "Cap comissió seleccionada"
+
+#: gitk:1511
+msgid "Can't parse git log output:"
+msgstr "No es pot analitzar la sortida del git log:"
+
+#: gitk:1740
+msgid "No commit information available"
+msgstr "Cap informació de comissió disponible"
+
+#: gitk:1897
+msgid "mc"
+msgstr "mc"
+
+#: gitk:1932 gitk:4298 gitk:9650 gitk:11220 gitk:11500
+msgid "OK"
+msgstr "D'acord"
+
+#: gitk:1934 gitk:4300 gitk:9177 gitk:9256 gitk:9372 gitk:9421 gitk:9652
+#: gitk:11221 gitk:11501
+msgid "Cancel"
+msgstr "Cancel·la"
+
+#: gitk:2069
+msgid "Update"
+msgstr "Actualitza"
+
+#: gitk:2070
+msgid "Reload"
+msgstr "Recarrega"
+
+#: gitk:2071
+msgid "Reread references"
+msgstr "Rellegeix les referències"
+
+#: gitk:2072
+msgid "List references"
+msgstr "Llista les referències"
+
+#: gitk:2074
+msgid "Start git gui"
+msgstr "Inicia el git gui"
+
+#: gitk:2076
+msgid "Quit"
+msgstr "Surt"
+
+#: gitk:2068
+msgid "File"
+msgstr "Fitxer"
+
+#: gitk:2080
+msgid "Preferences"
+msgstr "Preferències"
+
+#: gitk:2079
+msgid "Edit"
+msgstr "Edita"
+
+#: gitk:2084
+msgid "New view..."
+msgstr "Vista nova..."
+
+#: gitk:2085
+msgid "Edit view..."
+msgstr "Edita la vista..."
+
+#: gitk:2086
+msgid "Delete view"
+msgstr "Suprimeix vista"
+
+#: gitk:2088
+msgid "All files"
+msgstr "Tots els fitxers"
+
+#: gitk:2083 gitk:4050
+msgid "View"
+msgstr "Vista"
+
+#: gitk:2093 gitk:2103 gitk:3009
+msgid "About gitk"
+msgstr "Quant al gitk"
+
+#: gitk:2094 gitk:2108
+msgid "Key bindings"
+msgstr "Associacions de tecles"
+
+#: gitk:2092 gitk:2107
+msgid "Help"
+msgstr "Ajuda"
+
+#: gitk:2185 gitk:8633
+msgid "SHA1 ID:"
+msgstr "ID SHA1:"
+
+#: gitk:2229
+msgid "Row"
+msgstr "Fila"
+
+#: gitk:2267
+msgid "Find"
+msgstr "Cerca"
+
+#: gitk:2295
+msgid "commit"
+msgstr "comissió"
+
+#: gitk:2299 gitk:2301 gitk:4669 gitk:4692 gitk:4716 gitk:6736 gitk:6808
+#: gitk:6893
+msgid "containing:"
+msgstr "que contingui:"
+
+#: gitk:2302 gitk:3522 gitk:3527 gitk:4745
+msgid "touching paths:"
+msgstr "que toqui els camins:"
+
+#: gitk:2303 gitk:4759
+msgid "adding/removing string:"
+msgstr "que afegeixi/elimini la cadena:"
+
+#: gitk:2304 gitk:4761
+msgid "changing lines matching:"
+msgstr "que tingui línies canviades coincidents amb:"
+
+#: gitk:2313 gitk:2315 gitk:4748
+msgid "Exact"
+msgstr "Exacte"
+
+#: gitk:2315 gitk:4836 gitk:6704
+msgid "IgnCase"
+msgstr "Ignora majúscula i minúscula"
+
+#: gitk:2315 gitk:4718 gitk:4834 gitk:6700
+msgid "Regexp"
+msgstr "Regexp"
+
+#: gitk:2317 gitk:2318 gitk:4856 gitk:4886 gitk:4893 gitk:6829 gitk:6897
+msgid "All fields"
+msgstr "Tots els camps"
+
+#: gitk:2318 gitk:4853 gitk:4886 gitk:6767
+msgid "Headline"
+msgstr "Titular"
+
+#: gitk:2319 gitk:4853 gitk:6767 gitk:6897 gitk:7370
+msgid "Comments"
+msgstr "Comentaris"
+
+#: gitk:2319 gitk:4853 gitk:4858 gitk:4893 gitk:6767 gitk:7305 gitk:8811
+#: gitk:8826
+msgid "Author"
+msgstr "Autor"
+
+#: gitk:2319 gitk:4853 gitk:6767 gitk:7307
+msgid "Committer"
+msgstr "Comitent"
+
+#: gitk:2350
+msgid "Search"
+msgstr "Cerca"
+
+#: gitk:2358
+msgid "Diff"
+msgstr "Diferència"
+
+#: gitk:2360
+msgid "Old version"
+msgstr "Versió antiga"
+
+#: gitk:2362
+msgid "New version"
+msgstr "Versió nova"
+
+#: gitk:2364
+msgid "Lines of context"
+msgstr "Línies de context"
+
+#: gitk:2374
+msgid "Ignore space change"
+msgstr "Ignora canvis d'espai"
+
+#: gitk:2378 gitk:2380 gitk:7940 gitk:8187
+msgid "Line diff"
+msgstr "Diferència de línies"
+
+#: gitk:2445
+msgid "Patch"
+msgstr "Pedaç"
+
+#: gitk:2447
+msgid "Tree"
+msgstr "Arbre"
+
+#: gitk:2616 gitk:2636
+msgid "Diff this -> selected"
+msgstr "Diferencia aquesta -> la seleccionada"
+
+#: gitk:2617 gitk:2637
+msgid "Diff selected -> this"
+msgstr "Diferencia la seleccionada -> aquesta"
+
+#: gitk:2618 gitk:2638
+msgid "Make patch"
+msgstr "Fes pedaç"
+
+#: gitk:2619 gitk:9235
+msgid "Create tag"
+msgstr "Crea etiqueta"
+
+#: gitk:2620 gitk:9352
+msgid "Write commit to file"
+msgstr "Escriu la comissió a un fitxer"
+
+#: gitk:2621 gitk:9409
+msgid "Create new branch"
+msgstr "Crea una branca nova"
+
+#: gitk:2622
+msgid "Cherry-pick this commit"
+msgstr "Recull aquesta comissió com a cirera"
+
+#: gitk:2623
+msgid "Reset HEAD branch to here"
+msgstr "Restableix la branca HEAD aquí"
+
+#: gitk:2624
+msgid "Mark this commit"
+msgstr "Marca aquesta comissió"
+
+#: gitk:2625
+msgid "Return to mark"
+msgstr "Torna a la marca"
+
+#: gitk:2626
+msgid "Find descendant of this and mark"
+msgstr "Troba la descendent d'aquesta i marca-la"
+
+#: gitk:2627
+msgid "Compare with marked commit"
+msgstr "Compara amb la comissió marcada"
+
+#: gitk:2628 gitk:2639
+msgid "Diff this -> marked commit"
+msgstr "Diferencia aquesta -> la comissió marcada"
+
+#: gitk:2629 gitk:2640
+msgid "Diff marked commit -> this"
+msgstr "Diferencia la comissió seleccionada -> aquesta"
+
+#: gitk:2630
+msgid "Revert this commit"
+msgstr "Reverteix aquesta comissió"
+
+#: gitk:2646
+msgid "Check out this branch"
+msgstr "Agafa aquesta branca"
+
+#: gitk:2647
+msgid "Remove this branch"
+msgstr "Elimina aquesta branca"
+
+#: gitk:2654
+msgid "Highlight this too"
+msgstr "Ressalta aquest també"
+
+#: gitk:2655
+msgid "Highlight this only"
+msgstr "Ressalta només aquest"
+
+#: gitk:2656
+msgid "External diff"
+msgstr "Diferència externa"
+
+#: gitk:2657
+msgid "Blame parent commit"
+msgstr "Culpabilitat de la comissió mare"
+
+#: gitk:2664
+msgid "Show origin of this line"
+msgstr "Mostra l'origen d'aquesta línia"
+
+#: gitk:2665
+msgid "Run git gui blame on this line"
+msgstr "Executa git gui blame en aquesta línia"
+
+#: gitk:3011
+msgid ""
+"\n"
+"Gitk - a commit viewer for git\n"
+"\n"
+"Copyright © 2005-2014 Paul Mackerras\n"
+"\n"
+"Use and redistribute under the terms of the GNU General Public License"
+msgstr ""
+"\n"
+"Gitk - visualitzador de comissions per al git\n"
+"\n"
+"Copyright © 2005-2014 Paul Mackerras\n"
+"\n"
+"Useu-lo i redistribuïu-lo sota els termes de la Llicència Pública General GNU"
+
+#: gitk:3019 gitk:3085 gitk:9836
+msgid "Close"
+msgstr "Tanca"
+
+#: gitk:3040
+msgid "Gitk key bindings"
+msgstr "Associacions de tecles del Gitk"
+
+#: gitk:3043
+msgid "Gitk key bindings:"
+msgstr "Associacions de tecles del Gitk:"
+
+#: gitk:3045
+#, tcl-format
+msgid "<%s-Q>\t\tQuit"
+msgstr "<%s-Q>\t\tSurt"
+
+#: gitk:3046
+#, tcl-format
+msgid "<%s-W>\t\tClose window"
+msgstr "<%s-W>\t\tTanca la finestra"
+
+#: gitk:3047
+msgid "<Home>\t\tMove to first commit"
+msgstr "<Inici>\t\tVés a la primera comissió"
+
+#: gitk:3048
+msgid "<End>\t\tMove to last commit"
+msgstr "<Fi>\t\tVés a l'última comissió"
+
+#: gitk:3049
+msgid "<Up>, p, k\tMove up one commit"
+msgstr "<Amunt>, p, k\tMou-te una comissió amunt"
+
+#: gitk:3050
+msgid "<Down>, n, j\tMove down one commit"
+msgstr "<Avall>, n, j\tMou-te una comissió avall"
+
+#: gitk:3051
+msgid "<Left>, z, h\tGo back in history list"
+msgstr "<Esquerra>, z, h\tRetrocedeix en la llista d'història"
+
+#: gitk:3052
+msgid "<Right>, x, l\tGo forward in history list"
+msgstr "<Dreta>, x, l\tAvança en la llista d'història"
+
+#: gitk:3053
+#, tcl-format
+msgid "<%s-n>\tGo to n-th parent of current commit in history list"
+msgstr ""
+"<%s-n>\tVés a l'enèsima mare de la comissió actual en la llista d'història"
+
+#: gitk:3054
+msgid "<PageUp>\tMove up one page in commit list"
+msgstr "<RePàg>\tBaixa una pàgina en la llista de comissions"
+
+#: gitk:3055
+msgid "<PageDown>\tMove down one page in commit list"
+msgstr "<AvPàg>\tBaixa per una pàgina en la llista de comissions"
+
+#: gitk:3056
+#, tcl-format
+msgid "<%s-Home>\tScroll to top of commit list"
+msgstr "<%s-Inici>\tDesplaça't a la part superior de la llista de comissions"
+
+#: gitk:3057
+#, tcl-format
+msgid "<%s-End>\tScroll to bottom of commit list"
+msgstr "<%s-Fi>\tDesplaça't a la part inferior de la llista de comissions"
+
+#: gitk:3058
+#, tcl-format
+msgid "<%s-Up>\tScroll commit list up one line"
+msgstr "<%s-Amunt>\tDesplaça la llista de comissions una línia cap amunt"
+
+#: gitk:3059
+#, tcl-format
+msgid "<%s-Down>\tScroll commit list down one line"
+msgstr "<%s-Avall>\tDesplaça la llista de comissions una línia cap avall"
+
+#: gitk:3060
+#, tcl-format
+msgid "<%s-PageUp>\tScroll commit list up one page"
+msgstr "<%s-RePàg>\tDesplaça la llista de comissions amunt per una pàgina"
+
+#: gitk:3061
+#, tcl-format
+msgid "<%s-PageDown>\tScroll commit list down one page"
+msgstr "<%s-AvPàg>\tDesplaça la llista de comissions una pàgina cap avall"
+
+#: gitk:3062
+msgid "<Shift-Up>\tFind backwards (upwards, later commits)"
+msgstr "<Maj-Amunt>\tCerca cap enrere (amunt, les comissions més noves)"
+
+#: gitk:3063
+msgid "<Shift-Down>\tFind forwards (downwards, earlier commits)"
+msgstr "<Maj-Avall>\tCerca cap endavant (avall, les comissions més velles)"
+
+#: gitk:3064
+msgid "<Delete>, b\tScroll diff view up one page"
+msgstr "<Supr>, b\tDesplaça la vista de diferència una pàgina cap amunt"
+
+#: gitk:3065
+msgid "<Backspace>\tScroll diff view up one page"
+msgstr "<Retrocés>\tDesplaça la vista de diferència una pàgina cap amunt"
+
+#: gitk:3066
+msgid "<Space>\t\tScroll diff view down one page"
+msgstr "<Espai>\t\tDesplaça la vista de diferència una pàgina cap avall"
+
+#: gitk:3067
+msgid "u\t\tScroll diff view up 18 lines"
+msgstr "u\t\tDesplaça la vista de diferència 18 línies cap amunt"
+
+#: gitk:3068
+msgid "d\t\tScroll diff view down 18 lines"
+msgstr "d\t\tDesplaça la vista de diferència 18 línies cap avall "
+
+#: gitk:3069
+#, tcl-format
+msgid "<%s-F>\t\tFind"
+msgstr "<%s-F>\t\tCerca"
+
+#: gitk:3070
+#, tcl-format
+msgid "<%s-G>\t\tMove to next find hit"
+msgstr "<%s-G>\t\tMou-te a la propera coincidència de la cerca"
+
+#: gitk:3071
+msgid "<Return>\tMove to next find hit"
+msgstr "<Retorn>\tMou-te a la propera coincidència de la cerca"
+
+#: gitk:3072
+msgid "/\t\tFocus the search box"
+msgstr "/\t\tPosa el focus a la caixa de cerca"
+
+#: gitk:3073
+msgid "?\t\tMove to previous find hit"
+msgstr "?\t\tMou a la coincidència prèvia de la cerca"
+
+#: gitk:3074
+msgid "f\t\tScroll diff view to next file"
+msgstr "f\t\tDesplaça la vista de diferència al proper fitxer"
+
+#: gitk:3075
+#, tcl-format
+msgid "<%s-S>\t\tSearch for next hit in diff view"
+msgstr "<%s-S>\t\tCerca la propera coincidència en la vista de diferència"
+
+#: gitk:3076
+#, tcl-format
+msgid "<%s-R>\t\tSearch for previous hit in diff view"
+msgstr "<%s-R>\t\tCerca la coincidència prèvia en la vista de diferència"
+
+#: gitk:3077
+#, tcl-format
+msgid "<%s-KP+>\tIncrease font size"
+msgstr "<%s-KP+>\tAugmenta la mida de lletra"
+
+#: gitk:3078
+#, tcl-format
+msgid "<%s-plus>\tIncrease font size"
+msgstr "<%s-més>\tAugmenta la mida de lletra"
+
+#: gitk:3079
+#, tcl-format
+msgid "<%s-KP->\tDecrease font size"
+msgstr "<%s-KP->\tDisminueix la mida de lletra"
+
+#: gitk:3080
+#, tcl-format
+msgid "<%s-minus>\tDecrease font size"
+msgstr "<%s-menys>\tDisminueix la mida de lletra"
+
+#: gitk:3081
+msgid "<F5>\t\tUpdate"
+msgstr "<F5>\t\tActualitza"
+
+#: gitk:3546 gitk:3555
+#, tcl-format
+msgid "Error creating temporary directory %s:"
+msgstr "Error en crear el directori temporal %s:"
+
+#: gitk:3568
+#, tcl-format
+msgid "Error getting \"%s\" from %s:"
+msgstr "Error en obtenir \"%s\" de %s:"
+
+#: gitk:3631
+msgid "command failed:"
+msgstr "l'ordre ha fallat:"
+
+#: gitk:3780
+msgid "No such commit"
+msgstr "Cap comissió així"
+
+#: gitk:3794
+msgid "git gui blame: command failed:"
+msgstr "git gui blame: l'ordre ha fallat:"
+
+#: gitk:3825
+#, tcl-format
+msgid "Couldn't read merge head: %s"
+msgstr "No s'ha pogut llegir el cap de fusió: %s"
+
+#: gitk:3833
+#, tcl-format
+msgid "Error reading index: %s"
+msgstr "Error en llegir l'índex: %s"
+
+#: gitk:3858
+#, tcl-format
+msgid "Couldn't start git blame: %s"
+msgstr "No s'ha pogut iniciar el git blame: %s"
+
+#: gitk:3861 gitk:6735
+msgid "Searching"
+msgstr "Cercant"
+
+#: gitk:3893
+#, tcl-format
+msgid "Error running git blame: %s"
+msgstr "Error en executar el git blame: %s"
+
+#: gitk:3921
+#, tcl-format
+msgid "That line comes from commit %s,  which is not in this view"
+msgstr ""
+"Aquella línia ve de la comissió %s, la qual no és en aquesta visualització"
+
+#: gitk:3935
+msgid "External diff viewer failed:"
+msgstr "El visualitzador de diferència extern ha fallat:"
+
+#: gitk:4053
+msgid "Gitk view definition"
+msgstr "Definició de vista del Gitk"
+
+#: gitk:4057
+msgid "Remember this view"
+msgstr "Recorda aquesta vista"
+
+#: gitk:4058
+msgid "References (space separated list):"
+msgstr "Referències (llista separada per espais)"
+
+#: gitk:4059
+msgid "Branches & tags:"
+msgstr "Branques i etiquetes:"
+
+#: gitk:4060
+msgid "All refs"
+msgstr "Totes les referències"
+
+#: gitk:4061
+msgid "All (local) branches"
+msgstr "Totes les branques (locals)"
+
+#: gitk:4062
+msgid "All tags"
+msgstr "Totes les etiquetes"
+
+#: gitk:4063
+msgid "All remote-tracking branches"
+msgstr "Totes les branques amb seguiment remot"
+
+#: gitk:4064
+msgid "Commit Info (regular expressions):"
+msgstr "Informació de comissió (expressions regulars):"
+
+#: gitk:4065
+msgid "Author:"
+msgstr "Autor:"
+
+#: gitk:4066
+msgid "Committer:"
+msgstr "Comitent:"
+
+#: gitk:4067
+msgid "Commit Message:"
+msgstr "Missatge de comissió:"
+
+#: gitk:4068
+msgid "Matches all Commit Info criteria"
+msgstr "Coincideix amb tots els criteris d'informació de comissió"
+
+#: gitk:4069
+#, fuzzy
+msgid "Matches none Commit Info criteria"
+msgstr "Coincideix amb tots els criteris d'informació de comissió"
+
+#: gitk:4070
+msgid "Changes to Files:"
+msgstr "Canvis als fitxers:"
+
+#: gitk:4071
+msgid "Fixed String"
+msgstr "Cadena fixa"
+
+#: gitk:4072
+msgid "Regular Expression"
+msgstr "Expressió regular"
+
+#: gitk:4073
+msgid "Search string:"
+msgstr "Cadena de cerca:"
+
+#: gitk:4074
+msgid ""
+"Commit Dates (\"2 weeks ago\", \"2009-03-17 15:27:38\", \"March 17, 2009 "
+"15:27:38\"):"
+msgstr ""
+"Dates de comissió (\"fa 2 setmanes\", \"2009-03-17 15:27:38\", \"17 abr 2009 "
+"15:27:38\"):"
+
+#: gitk:4075
+msgid "Since:"
+msgstr "Des de:"
+
+#: gitk:4076
+msgid "Until:"
+msgstr "Fins:"
+
+#: gitk:4077
+msgid "Limit and/or skip a number of revisions (positive integer):"
+msgstr "Limita o salta un nombre de revisions (nombre enter positiu)"
+
+#: gitk:4078
+msgid "Number to show:"
+msgstr "Nombre a mostrar:"
+
+#: gitk:4079
+msgid "Number to skip:"
+msgstr "Nombre a saltar:"
+
+#: gitk:4080
+msgid "Miscellaneous options:"
+msgstr "Opcions miscel·lànies:"
+
+#: gitk:4081
+msgid "Strictly sort by date"
+msgstr "Ordena estrictament per data"
+
+#: gitk:4082
+msgid "Mark branch sides"
+msgstr "Marca els costats de les branques"
+
+#: gitk:4083
+msgid "Limit to first parent"
+msgstr "Limita a la primera mare"
+
+#: gitk:4084
+msgid "Simple history"
+msgstr "Història senzilla"
+
+#: gitk:4085
+msgid "Additional arguments to git log:"
+msgstr "Paràmetres addicionals al git log:"
+
+#: gitk:4086
+msgid "Enter files and directories to include, one per line:"
+msgstr "Introduïu els fitxers i directoris a incloure, un per línia:"
+
+#: gitk:4087
+msgid "Command to generate more commits to include:"
+msgstr "Ordre per a generar més comissions a incloure:"
+
+#: gitk:4211
+msgid "Gitk: edit view"
+msgstr "Gitk: vista d'edició"
+
+#: gitk:4219
+msgid "-- criteria for selecting revisions"
+msgstr "-- criteris per a seleccionar les revisions"
+
+#: gitk:4224
+msgid "View Name"
+msgstr "Nom de vista"
+
+#: gitk:4299
+msgid "Apply (F5)"
+msgstr "Aplica (F5)"
+
+#: gitk:4337
+msgid "Error in commit selection arguments:"
+msgstr "Error en els paràmetres de selecció de comissions:"
+
+#: gitk:4392 gitk:4445 gitk:4906 gitk:4920 gitk:6190 gitk:12346 gitk:12347
+msgid "None"
+msgstr "Cap"
+
+#: gitk:5003 gitk:5008
+msgid "Descendant"
+msgstr "Descendent"
+
+#: gitk:5004
+msgid "Not descendant"
+msgstr "No descendent"
+
+#: gitk:5011 gitk:5016
+msgid "Ancestor"
+msgstr "Avantpassat"
+
+#: gitk:5012
+msgid "Not ancestor"
+msgstr "No avantpassat"
+
+#: gitk:5306
+msgid "Local changes checked in to index but not committed"
+msgstr "Canvis locals registrats en l'índex però no comesos"
+
+#: gitk:5342
+msgid "Local uncommitted changes, not checked in to index"
+msgstr "Canvis locals sense cometre, no registrats en l'índex"
+
+#: gitk:7115
+msgid "and many more"
+msgstr "i moltes més"
+
+#: gitk:7118
+msgid "many"
+msgstr "moltes"
+
+#: gitk:7309
+msgid "Tags:"
+msgstr "Etiquetes:"
+
+#: gitk:7326 gitk:7332 gitk:8806
+msgid "Parent"
+msgstr "Mare"
+
+#: gitk:7337
+msgid "Child"
+msgstr "Filla"
+
+#: gitk:7346
+msgid "Branch"
+msgstr "Branca"
+
+#: gitk:7349
+msgid "Follows"
+msgstr "Segueix"
+
+#: gitk:7352
+msgid "Precedes"
+msgstr "Precedeix"
+
+#: gitk:7947
+#, tcl-format
+msgid "Error getting diffs: %s"
+msgstr "Error en obtenir les diferències: %s"
+
+#: gitk:8631
+msgid "Goto:"
+msgstr "Vés a:"
+
+#: gitk:8652
+#, tcl-format
+msgid "Short SHA1 id %s is ambiguous"
+msgstr "L'id SHA1 curta %s és ambigua"
+
+#: gitk:8659
+#, tcl-format
+msgid "Revision %s is not known"
+msgstr "La revisió %s és desconeguda"
+
+#: gitk:8669
+#, tcl-format
+msgid "SHA1 id %s is not known"
+msgstr "L'id SHA1 %s és desconeguda"
+
+#: gitk:8671
+#, tcl-format
+msgid "Revision %s is not in the current view"
+msgstr "La revisió %s no és en la vista actual"
+
+#: gitk:8813 gitk:8828
+msgid "Date"
+msgstr "Data"
+
+#: gitk:8816
+msgid "Children"
+msgstr "Filles"
+
+#: gitk:8879
+#, tcl-format
+msgid "Reset %s branch to here"
+msgstr "Restableix la branca %s aquí"
+
+#: gitk:8881
+msgid "Detached head: can't reset"
+msgstr "Cap separat: no es pot restablir"
+
+#: gitk:8986 gitk:8992
+msgid "Skipping merge commit "
+msgstr "Saltant la comissió de fusió "
+
+#: gitk:9001 gitk:9006
+msgid "Error getting patch ID for "
+msgstr "Error en obtenir l'ID de pedaç de "
+
+#: gitk:9002 gitk:9007
+msgid " - stopping\n"
+msgstr " - aturant\n"
+
+#: gitk:9012 gitk:9015 gitk:9023 gitk:9037 gitk:9046
+msgid "Commit "
+msgstr "Comissió "
+
+#: gitk:9016
+msgid ""
+" is the same patch as\n"
+"       "
+msgstr ""
+" és el mateix pedaç que\n"
+"       "
+
+#: gitk:9024
+msgid ""
+" differs from\n"
+"       "
+msgstr ""
+" difereix de\n"
+"       "
+
+#: gitk:9026
+msgid ""
+"Diff of commits:\n"
+"\n"
+msgstr ""
+"Diferència entre comissions:\n"
+"\n"
+
+#: gitk:9038 gitk:9047
+#, tcl-format
+msgid " has %s children - stopping\n"
+msgstr " té %s filles - aturant\n"
+
+#: gitk:9066
+#, tcl-format
+msgid "Error writing commit to file: %s"
+msgstr "Error en escriure la comissió al fitxer: %s"
+
+#: gitk:9072
+#, tcl-format
+msgid "Error diffing commits: %s"
+msgstr "Error en diferenciar les comissions: %s"
+
+#: gitk:9118
+msgid "Top"
+msgstr "Part superior"
+
+#: gitk:9119
+msgid "From"
+msgstr "De"
+
+#: gitk:9124
+msgid "To"
+msgstr "A"
+
+#: gitk:9148
+msgid "Generate patch"
+msgstr "Genera pedaç"
+
+#: gitk:9150
+msgid "From:"
+msgstr "De:"
+
+#: gitk:9159
+msgid "To:"
+msgstr "A:"
+
+#: gitk:9168
+msgid "Reverse"
+msgstr "Inverteix"
+
+#: gitk:9170 gitk:9366
+msgid "Output file:"
+msgstr "Fitxer de sortida:"
+
+#: gitk:9176
+msgid "Generate"
+msgstr "Genera"
+
+#: gitk:9214
+msgid "Error creating patch:"
+msgstr "Error en crear el pedaç:"
+
+#: gitk:9237 gitk:9354 gitk:9411
+msgid "ID:"
+msgstr "ID:"
+
+#: gitk:9246
+msgid "Tag name:"
+msgstr "Nom d'etiqueta:"
+
+#: gitk:9249
+msgid "Tag message is optional"
+msgstr "El missatge d'etiqueta és opcional"
+
+#: gitk:9251
+msgid "Tag message:"
+msgstr "Missatge d'etiqueta:"
+
+#: gitk:9255 gitk:9420
+msgid "Create"
+msgstr "Crea"
+
+#: gitk:9273
+msgid "No tag name specified"
+msgstr "No s'ha especificat cap nom d'etiqueta"
+
+#: gitk:9277
+#, tcl-format
+msgid "Tag \"%s\" already exists"
+msgstr "L'etiqueta \"%s\" ja existeix"
+
+#: gitk:9287
+msgid "Error creating tag:"
+msgstr "Error en crear l'etiqueta:"
+
+#: gitk:9363
+msgid "Command:"
+msgstr "Ordre:"
+
+#: gitk:9371
+msgid "Write"
+msgstr "Escriu"
+
+#: gitk:9389
+msgid "Error writing commit:"
+msgstr "Error en escriure la comissió:"
+
+#: gitk:9416
+msgid "Name:"
+msgstr "Nom:"
+
+#: gitk:9439
+msgid "Please specify a name for the new branch"
+msgstr "Si us plau, especifiqueu un nom per a la branca nova"
+
+#: gitk:9444
+#, tcl-format
+msgid "Branch '%s' already exists. Overwrite?"
+msgstr "La branca '%s' ja existeix. Voleu sobreescriure?"
+
+#: gitk:9511
+#, tcl-format
+msgid "Commit %s is already included in branch %s -- really re-apply it?"
+msgstr ""
+"La comissió %s ja està inclosa en la branca %s -- realment voleu tornar a "
+"aplicar-la?"
+
+#: gitk:9516
+msgid "Cherry-picking"
+msgstr "Recollint cireres"
+
+#: gitk:9525
+#, tcl-format
+msgid ""
+"Cherry-pick failed because of local changes to file '%s'.\n"
+"Please commit, reset or stash your changes and try again."
+msgstr ""
+"El recull de cireres ha fallat a causa de canvis locals al fitxer '%s'.\n"
+"Si us plau, cometeu, restabliu o emmagatzemeu els vostres canvis i torneu a "
+"intentar."
+
+#: gitk:9531
+msgid ""
+"Cherry-pick failed because of merge conflict.\n"
+"Do you wish to run git citool to resolve it?"
+msgstr ""
+"El recull de cireres ha fallat a causa d'un conflicte de fusió.\n"
+"Voleu executar el git citool per a resoldre'l?"
+
+#: gitk:9547 gitk:9605
+msgid "No changes committed"
+msgstr "Cap canvi comès"
+
+#: gitk:9574
+#, tcl-format
+msgid "Commit %s is not included in branch %s -- really revert it?"
+msgstr ""
+"La comissió %s no s'inclou en la branca %s -- realment voleu revertir-la?"
+
+#: gitk:9579
+msgid "Reverting"
+msgstr "Revertint"
+
+#: gitk:9587
+#, tcl-format
+msgid ""
+"Revert failed because of local changes to the following files:%s Please "
+"commit, reset or stash  your changes and try again."
+msgstr ""
+"La reversió ha fallat a causa de canvis locals als fitxers següents:%s Si us "
+"plau, cometeu, restabliu o emmagatzemeu els vostres canvis i torneu-ho a "
+"intentar."
+
+#: gitk:9591
+msgid ""
+"Revert failed because of merge conflict.\n"
+" Do you wish to run git citool to resolve it?"
+msgstr ""
+"La reversió ha fallat a causa d'un conflicte de fusió.\n"
+" Voleu executar el git citool per a resoldre'l?"
+
+#: gitk:9634
+msgid "Confirm reset"
+msgstr "Confirma el restabliment"
+
+#: gitk:9636
+#, tcl-format
+msgid "Reset branch %s to %s?"
+msgstr "Voleu restablir la branca %s a %s?"
+
+#: gitk:9638
+msgid "Reset type:"
+msgstr "Tipus de restabliment:"
+
+#: gitk:9641
+msgid "Soft: Leave working tree and index untouched"
+msgstr "Suau: Deixa l'arbre de treball i l'índex sense tocar"
+
+#: gitk:9644
+msgid "Mixed: Leave working tree untouched, reset index"
+msgstr "Mixt: Deixa l'arbre de treball sense tocar, restableix l'índex"
+
+#: gitk:9647
+msgid ""
+"Hard: Reset working tree and index\n"
+"(discard ALL local changes)"
+msgstr ""
+"Dur: Restableix l'arbre de treball i l'índex\n"
+"(descarta TOTS els canvis locals)"
+
+#: gitk:9664
+msgid "Resetting"
+msgstr "Restablint"
+
+#: gitk:9724
+msgid "Checking out"
+msgstr "Agafant"
+
+#: gitk:9777
+msgid "Cannot delete the currently checked-out branch"
+msgstr "No es pot suprimir la branca actualment agafada"
+
+#: gitk:9783
+#, tcl-format
+msgid ""
+"The commits on branch %s aren't on any other branch.\n"
+"Really delete branch %s?"
+msgstr ""
+"Les comissions en la branca %s no són en cap altra branca.\n"
+"Realment voleu suprimir la branca %s?"
+
+#: gitk:9814
+#, tcl-format
+msgid "Tags and heads: %s"
+msgstr "Etiquetes i caps: %s"
+
+#: gitk:9829
+msgid "Filter"
+msgstr "Filtre"
+
+#: gitk:10125
+msgid ""
+"Error reading commit topology information; branch and preceding/following "
+"tag information will be incomplete."
+msgstr ""
+"Error en llegir la informació de topologia de comissió; la informació sobre "
+"branques i etiquetes precedents/següents serà incompleta."
+
+#: gitk:11102
+msgid "Tag"
+msgstr "Etiqueta"
+
+#: gitk:11106
+msgid "Id"
+msgstr "Id"
+
+#: gitk:11189
+msgid "Gitk font chooser"
+msgstr "Selector de tipus de lletra del Gitk"
+
+#: gitk:11206
+msgid "B"
+msgstr "B"
+
+#: gitk:11209
+msgid "I"
+msgstr "I"
+
+#: gitk:11327
+msgid "Commit list display options"
+msgstr "Opcions de visualització de la llista de comissions"
+
+#: gitk:11330
+msgid "Maximum graph width (lines)"
+msgstr "Amplada màxima del gràfic (línies)"
+
+#: gitk:11334
+#, no-tcl-format
+msgid "Maximum graph width (% of pane)"
+msgstr "Amplada màxima del gràfic (% del panell)"
+
+#: gitk:11337
+msgid "Show local changes"
+msgstr "Mostra els canvis locals"
+
+#: gitk:11340
+msgid "Auto-select SHA1 (length)"
+msgstr "Selecciona automàticament l'SHA1 (longitud)"
+
+#: gitk:11344
+msgid "Hide remote refs"
+msgstr "Amaga les referències remotes"
+
+#: gitk:11348
+msgid "Diff display options"
+msgstr "Opcions de visualització de diferència"
+
+#: gitk:11350
+msgid "Tab spacing"
+msgstr "Espaiat de tabulació"
+
+#: gitk:11353
+msgid "Display nearby tags/heads"
+msgstr "Mostra etiquetes/caps propers"
+
+#: gitk:11356
+msgid "Maximum # tags/heads to show"
+msgstr "Nombre màxim d'etiquetes/caps a mostrar"
+
+#: gitk:11359
+msgid "Limit diffs to listed paths"
+msgstr "Limita les diferències als camins llistats"
+
+#: gitk:11362
+msgid "Support per-file encodings"
+msgstr "Admet codificacions específiques per a cada fitxer"
+
+#: gitk:11368 gitk:11515
+msgid "External diff tool"
+msgstr "Eina de diferència externa"
+
+#: gitk:11369
+msgid "Choose..."
+msgstr "Trieu..."
+
+#: gitk:11374
+msgid "General options"
+msgstr "Opcions generals"
+
+#: gitk:11377
+msgid "Use themed widgets"
+msgstr "Usa els ginys tematitzats"
+
+#: gitk:11379
+msgid "(change requires restart)"
+msgstr "(el canvi requereix reiniciar)"
+
+#: gitk:11381
+msgid "(currently unavailable)"
+msgstr "(actualment no disponible)"
+
+#: gitk:11392
+msgid "Colors: press to choose"
+msgstr "Colors: pressiona per a triar"
+
+#: gitk:11395
+msgid "Interface"
+msgstr "Interfície"
+
+#: gitk:11396
+msgid "interface"
+msgstr "interfície"
+
+#: gitk:11399
+msgid "Background"
+msgstr "Fons"
+
+#: gitk:11400 gitk:11430
+msgid "background"
+msgstr "fons"
+
+#: gitk:11403
+msgid "Foreground"
+msgstr "Primer pla"
+
+#: gitk:11404
+msgid "foreground"
+msgstr "primer pla"
+
+#: gitk:11407
+msgid "Diff: old lines"
+msgstr "Diferència: línies velles"
+
+#: gitk:11408
+msgid "diff old lines"
+msgstr "diferencia les línies velles"
+
+#: gitk:11412
+msgid "Diff: new lines"
+msgstr "Diferència: línies noves"
+
+#: gitk:11413
+msgid "diff new lines"
+msgstr "diferencia les línies noves"
+
+#: gitk:11417
+msgid "Diff: hunk header"
+msgstr "Diferència: capçalera de tros"
+
+#: gitk:11419
+msgid "diff hunk header"
+msgstr "diferencia la capçalera de tros"
+
+#: gitk:11423
+msgid "Marked line bg"
+msgstr "Fons de la línia marcada"
+
+#: gitk:11425
+msgid "marked line background"
+msgstr "fons de la línia marcada"
+
+#: gitk:11429
+msgid "Select bg"
+msgstr "fons de la selecció"
+
+#: gitk:11438
+msgid "Fonts: press to choose"
+msgstr "Tipus de lletra: pressiona per a triar"
+
+#: gitk:11440
+msgid "Main font"
+msgstr "Tipus de lletra principal"
+
+#: gitk:11441
+msgid "Diff display font"
+msgstr "Tipus de lletra de visualització de diferència"
+
+#: gitk:11442
+msgid "User interface font"
+msgstr "Tipus de lletra de la interfície d'usuari"
+
+#: gitk:11464
+msgid "Gitk preferences"
+msgstr "Preferències del Gitk"
+
+#: gitk:11473
+msgid "General"
+msgstr "General"
+
+#: gitk:11474
+msgid "Colors"
+msgstr "Colors"
+
+#: gitk:11475
+msgid "Fonts"
+msgstr "Tipus de lletra"
+
+#: gitk:11525
+#, tcl-format
+msgid "Gitk: choose color for %s"
+msgstr "Gitk: tria el color per a %s"
+
+#: gitk:12242
+msgid "Cannot find a git repository here."
+msgstr "No es pot trobar cap dipòsit de git aquí."
+
+#: gitk:12289
+#, tcl-format
+msgid "Ambiguous argument '%s': both revision and filename"
+msgstr "Paràmetre ambigu '%s': és tant revisió com nom de fitxer"
+
+#: gitk:12301
+msgid "Bad arguments to gitk:"
+msgstr "Paràmetres dolents al gitk:"
+
+#: gitk:12405
+msgid "Command line"
+msgstr "Línia d'ordres"

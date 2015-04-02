@@ -232,7 +232,7 @@ FILE *fdopen_lock_file(struct lock_file *lk, const char *mode)
 	if (lk->fp)
 		die("BUG: fdopen_lock_file() called twice for file '%s'", lk->filename.buf);
 
-	lk->fp = fdopen(lk->fd, mode);
+	lk->fp = fdopen_with_retry(lk->fd, mode);
 	return lk->fp;
 }
 

@@ -127,6 +127,9 @@
 #else
 #include <poll.h>
 #endif
+#ifdef HAVE_BSD_SYSCTL
+#include <sys/sysctl.h>
+#endif
 
 #if defined(__MINGW32__)
 /* pull in Windows compatibility stuff */
@@ -134,6 +137,7 @@
 #elif defined(_MSC_VER)
 #include "compat/msvc.h"
 #else
+#include <sys/utsname.h>
 #include <sys/wait.h>
 #include <sys/resource.h>
 #include <sys/socket.h>
@@ -666,7 +670,18 @@ extern ssize_t xread(int fd, void *buf, size_t len);
 extern ssize_t xwrite(int fd, const void *buf, size_t len);
 extern ssize_t xpread(int fd, void *buf, size_t len, off_t offset);
 extern int xdup(int fd);
+
+/*
+ * Like fdopen(), but if the first attempt fails with ENOMEM, try to
+ * free up some memory and try again.
+ */
+extern FILE *fdopen_with_retry(int fd, const char *mode);
+
+/*
+ * Like fdopen_with_retry(), but die on errors.
+ */
 extern FILE *xfdopen(int fd, const char *mode);
+
 extern int xmkstemp(char *template);
 extern int xmkstemp_mode(char *template, int mode);
 extern int odb_mkstemp(char *template, size_t limit, const char *pattern);
@@ -749,32 +764,6 @@ static inline int sane_iscase(int x, int is_lower)
 		return (x & 0x20) != 0;
 	else
 		return (x & 0x20) == 0;
-}
-
-static inline int strtoul_ui(char const *s, int base, unsigned int *result)
-{
-	unsigned long ul;
-	char *p;
-
-	errno = 0;
-	ul = strtoul(s, &p, base);
-	if (errno || *p || p == s || (unsigned int) ul != ul)
-		return -1;
-	*result = ul;
-	return 0;
-}
-
-static inline int strtol_i(char const *s, int base, int *result)
-{
-	long ul;
-	char *p;
-
-	errno = 0;
-	ul = strtol(s, &p, base);
-	if (errno || *p || p == s || (int) ul != ul)
-		return -1;
-	*result = ul;
-	return 0;
 }
 
 #ifdef INTERNAL_QSORT
@@ -870,6 +859,14 @@ struct tm *git_gmtime(const time_t *);
 struct tm *git_gmtime_r(const time_t *, struct tm *);
 #define gmtime git_gmtime
 #define gmtime_r git_gmtime_r
+#endif
+
+#if !defined(USE_PARENS_AROUND_GETTEXT_N) && defined(__GNUC__)
+#define USE_PARENS_AROUND_GETTEXT_N 1
+#endif
+
+#ifndef SHELL_PATH
+# define SHELL_PATH "/bin/sh"
 #endif
 
 #endif

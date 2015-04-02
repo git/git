@@ -5,7 +5,7 @@
 #include "urlmatch.h"
 
 static const char *const builtin_config_usage[] = {
-	N_("git config [options]"),
+	N_("git config [<options>]"),
 	NULL
 };
 

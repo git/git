@@ -3,9 +3,13 @@
 
 	Pretty-print the contents of the commit logs in a given format,
 	where '<format>' can be one of 'oneline', 'short', 'medium',
-	'full', 'fuller', 'email', 'raw' and 'format:<string>'.  See
-	the "PRETTY FORMATS" section for some additional details for each
-	format.  When omitted, the format defaults to 'medium'.
+	'full', 'fuller', 'email', 'raw', 'format:<string>'
+	and 'tformat:<string>'.  When '<format>' is none of the above,
+	and has '%placeholder' in it, it acts as if
+	'--pretty=tformat:<format>' were given.
++
+See the "PRETTY FORMATS" section for some additional details for each
+format.  When '=<format>' part is omitted, it defaults to 'medium'.
 +
 Note: you can specify the default pretty format in the repository
 configuration (see linkgit:git-config[1]).

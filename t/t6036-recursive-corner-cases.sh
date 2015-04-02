@@ -86,7 +86,7 @@ test_expect_success 'setup criss-cross + rename merges with basic modification' 
 	rm -rf .git &&
 	git init &&
 
-	ten="0 1 2 3 4 5 6 7 8 9"
+	ten="0 1 2 3 4 5 6 7 8 9" &&
 	for i in $ten
 	do
 		echo line $i in a sample file
@@ -195,12 +195,7 @@ test_expect_success 'git detects differently handled merges conflict' '
 	git reset --hard &&
 	git checkout D^0 &&
 
-	git merge -s recursive E^0 && {
-		echo "BAD: should have conflicted"
-		test "Incorrectly merged content" = "$(cat new_a)" &&
-			echo "BAD: Silently accepted wrong content"
-		return 1
-	}
+	test_must_fail git merge -s recursive E^0 &&
 
 	test 3 = $(git ls-files -s | wc -l) &&
 	test 3 = $(git ls-files -u | wc -l) &&
@@ -533,7 +528,7 @@ test_expect_success 'merge of E2 & D fails but has appropriate contents' '
 
 	test $(git rev-parse :3:a) = $(git rev-parse B:a) &&
 	test $(git rev-parse :2:a/file) = $(git rev-parse E2:a/file) &&
-	test $(git rev-parse :1:a/file) = $(git rev-parse C:a/file)
+	test $(git rev-parse :1:a/file) = $(git rev-parse C:a/file) &&
 	test $(git rev-parse :0:ignore-me) = $(git rev-parse A:ignore-me) &&
 
 	test -f a~D^0

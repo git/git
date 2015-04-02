@@ -42,8 +42,7 @@ struct strategy {
 };
 
 static const char * const builtin_merge_usage[] = {
-	N_("git merge [options] [<commit>...]"),
-	N_("git merge [options] <msg> HEAD <commit>"),
+	N_("git merge [<options>] [<commit>...]"),
 	N_("git merge --abort"),
 	NULL
 };
@@ -344,7 +343,6 @@ static void squash_message(struct commit *commit, struct commit_list *remotehead
 		die_errno(_("Could not write to '%s'"), filename);
 
 	init_revisions(&rev, NULL);
-	rev.ignore_merges = 1;
 	rev.commit_format = CMIT_FMT_MEDIUM;
 
 	commit->object.flags |= UNINTERESTING;
@@ -902,24 +900,6 @@ static int suggest_conflicts(void)
 	return 1;
 }
 
-static struct commit *is_old_style_invocation(int argc, const char **argv,
-					      const unsigned char *head)
-{
-	struct commit *second_token = NULL;
-	if (argc > 2) {
-		unsigned char second_sha1[20];
-
-		if (get_sha1(argv[1], second_sha1))
-			return NULL;
-		second_token = lookup_commit_reference_gently(second_sha1, 0);
-		if (!second_token)
-			die(_("'%s' is not a commit"), argv[1]);
-		if (hashcmp(second_token->object.sha1, head))
-			return NULL;
-	}
-	return second_token;
-}
-
 static int evaluate_result(void)
 {
 	int cnt = 0;
@@ -955,7 +935,7 @@ static int setup_with_upstream(const char ***argv)
 
 	if (!branch)
 		die(_("No current branch."));
-	if (!branch->remote)
+	if (!branch->remote_name)
 		die(_("No remote for the current branch."));
 	if (!branch->merge_nr)
 		die(_("No default upstream defined for the current branch."));
@@ -1164,30 +1144,13 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 				argc = setup_with_upstream(&argv);
 			else
 				die(_("No commit specified and merge.defaultToUpstream not set."));
-		} else if (argc == 1 && !strcmp(argv[0], "-"))
-			argv[0] = "@{-1}";
+		}
 	}
 	if (!argc)
 		usage_with_options(builtin_merge_usage,
 			builtin_merge_options);
 
-	/*
-	 * This could be traditional "merge <msg> HEAD <commit>..."  and
-	 * the way we can tell it is to see if the second token is HEAD,
-	 * but some people might have misused the interface and used a
-	 * commit-ish that is the same as HEAD there instead.
-	 * Traditional format never would have "-m" so it is an
-	 * additional safety measure to check for it.
-	 */
-
-	if (!have_message && head_commit &&
-	    is_old_style_invocation(argc, argv, head_commit->object.sha1)) {
-		strbuf_addstr(&merge_msg, argv[0]);
-		head_arg = argv[1];
-		argv += 2;
-		argc -= 2;
-		remoteheads = collect_parents(head_commit, &head_subsumed, argc, argv);
-	} else if (!head_commit) {
+	if (!head_commit) {
 		struct commit *remote_head;
 		/*
 		 * If the merged head is a valid one there is no reason

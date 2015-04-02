@@ -585,6 +585,8 @@ static void wt_status_collect_untracked(struct wt_status *s)
 			DIR_SHOW_OTHER_DIRECTORIES | DIR_HIDE_EMPTY_DIRECTORIES;
 	if (s->show_ignored_files)
 		dir.flags |= DIR_SHOW_IGNORED_TOO;
+	else
+		dir.untracked = the_index.untracked;
 	setup_standard_excludes(&dir);
 
 	fill_directory(&dir, &s->pathspec);
@@ -729,7 +731,6 @@ static void wt_status_print_submodule_summary(struct wt_status *s, int uncommitt
 	struct strbuf cmd_stdout = STRBUF_INIT;
 	struct strbuf summary = STRBUF_INIT;
 	char *summary_content;
-	size_t len;
 
 	argv_array_pushf(&sm_summary.env_array, "GIT_INDEX_FILE=%s",
 			 s->index_file);
@@ -745,15 +746,11 @@ static void wt_status_print_submodule_summary(struct wt_status *s, int uncommitt
 
 	sm_summary.git_cmd = 1;
 	sm_summary.no_stdin = 1;
-	fflush(s->fp);
-	sm_summary.out = -1;
 
-	run_command(&sm_summary);
-
-	len = strbuf_read(&cmd_stdout, sm_summary.out, 1024);
+	capture_command(&sm_summary, &cmd_stdout, 1024);
 
 	/* prepend header, only if there's an actual output */
-	if (len) {
+	if (cmd_stdout.len) {
 		if (uncommitted)
 			strbuf_addstr(&summary, _("Submodules changed but not updated:"));
 		else
@@ -764,6 +761,7 @@ static void wt_status_print_submodule_summary(struct wt_status *s, int uncommitt
 	strbuf_release(&cmd_stdout);
 
 	if (s->display_comment_prefix) {
+		size_t len;
 		summary_content = strbuf_detach(&summary, &len);
 		strbuf_add_commented_lines(&summary, summary_content, len);
 		free(summary_content);
@@ -849,6 +847,8 @@ static void wt_status_print_verbose(struct wt_status *s)
 {
 	struct rev_info rev;
 	struct setup_revision_opt opt;
+	int dirty_submodules;
+	const char *c = color(WT_STATUS_HEADER, s);
 
 	init_revisions(&rev, NULL);
 	DIFF_OPT_SET(&rev.diffopt, ALLOW_TEXTCONV);
@@ -873,7 +873,25 @@ static void wt_status_print_verbose(struct wt_status *s)
 		rev.diffopt.use_color = 0;
 		wt_status_add_cut_line(s->fp);
 	}
+	if (s->verbose > 1 && s->commitable) {
+		/* print_updated() printed a header, so do we */
+		if (s->fp != stdout)
+			wt_status_print_trailer(s);
+		status_printf_ln(s, c, _("Changes to be committed:"));
+		rev.diffopt.a_prefix = "c/";
+		rev.diffopt.b_prefix = "i/";
+	} /* else use prefix as per user config */
 	run_diff_index(&rev, 1);
+	if (s->verbose > 1 &&
+	    wt_status_check_worktree_changes(s, &dirty_submodules)) {
+		status_printf_ln(s, c,
+			"--------------------------------------------------");
+		status_printf_ln(s, c, _("Changes not staged for commit:"));
+		setup_work_tree();
+		rev.diffopt.a_prefix = "i/";
+		rev.diffopt.b_prefix = "w/";
+		run_diff_files(&rev, 0);
+	}
 }
 
 static void wt_status_print_tracking(struct wt_status *s)
@@ -1222,6 +1240,8 @@ static void wt_status_get_detached_from(struct wt_status_state *state)
 		state->detached_from =
 			xstrdup(find_unique_abbrev(cb.nsha1, DEFAULT_ABBREV));
 	hashcpy(state->detached_sha1, cb.nsha1);
+	state->detached_at = !get_sha1("HEAD", sha1) &&
+			     !hashcmp(sha1, state->detached_sha1);
 
 	free(ref);
 	strbuf_release(&cb.buf);
@@ -1310,10 +1330,8 @@ void wt_status_print(struct wt_status *s)
 				on_what = _("rebase in progress; onto ");
 				branch_name = state.onto;
 			} else if (state.detached_from) {
-				unsigned char sha1[20];
 				branch_name = state.detached_from;
-				if (!get_sha1("HEAD", sha1) &&
-				    !hashcmp(sha1, state.detached_sha1))
+				if (state.detached_at)
 					on_what = _("HEAD detached at ");
 				else
 					on_what = _("HEAD detached from ");
@@ -1534,6 +1552,7 @@ static void wt_shortstatus_print_tracking(struct wt_status *s)
 	base = shorten_unambiguous_ref(base, 0);
 	color_fprintf(s->fp, header_color, "...");
 	color_fprintf(s->fp, branch_color_remote, "%s", base);
+	free((char *)base);
 
 	if (!upstream_is_gone && !num_ours && !num_theirs) {
 		fputc(s->null_termination ? '\0' : '\n', s->fp);

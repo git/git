@@ -241,6 +241,9 @@ Git repository:
 	Use a client spec to find the list of interesting files in p4.
 	See the "CLIENT SPEC" section below.
 
+-/ <path>::
+	Exclude selected depot paths when cloning or syncing.
+
 Clone options
 ~~~~~~~~~~~~~
 These options can be used in an initial 'clone', along with the 'sync'
@@ -253,9 +256,6 @@ options described above.
 
 --bare::
 	Perform a bare clone.  See linkgit:git-clone[1].
-
--/ <path>::
-	Exclude selected depot paths when cloning.
 
 Submit options
 ~~~~~~~~~~~~~~

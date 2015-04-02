@@ -57,7 +57,7 @@ compare_mtimes ()
 {
 	read tref rest &&
 	while read t rest; do
-		test "$tref" = "$t" || break
+		test "$tref" = "$t" || return 1
 	done
 }
 

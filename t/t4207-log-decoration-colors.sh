@@ -44,10 +44,10 @@ test_expect_success setup '
 '
 
 cat >expected <<EOF
-${c_commit}COMMIT_ID${c_reset}${c_commit} (${c_reset}${c_HEAD}HEAD${c_reset}${c_commit},\
+${c_commit}COMMIT_ID${c_reset}${c_commit} (${c_reset}${c_HEAD}HEAD${c_reset}${c_commit} ->\
+ ${c_reset}${c_branch}master${c_reset}${c_commit},\
  ${c_reset}${c_tag}tag: v1.0${c_reset}${c_commit},\
- ${c_reset}${c_tag}tag: B${c_reset}${c_commit},\
- ${c_reset}${c_branch}master${c_reset}${c_commit})${c_reset} B
+ ${c_reset}${c_tag}tag: B${c_reset}${c_commit})${c_reset} B
 ${c_commit}COMMIT_ID${c_reset}${c_commit} (${c_reset}${c_tag}tag: A1${c_reset}${c_commit},\
  ${c_reset}${c_remoteBranch}other/master${c_reset}${c_commit})${c_reset} A1
 ${c_commit}COMMIT_ID${c_reset}${c_commit} (${c_reset}${c_stash}refs/stash${c_reset}${c_commit})${c_reset}\

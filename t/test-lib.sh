@@ -152,10 +152,7 @@ unset UNZIP
 
 case $(echo $GIT_TRACE |tr "[A-Z]" "[a-z]") in
 1|2|true)
-	echo "* warning: Some tests will not work if GIT_TRACE" \
-		"is set as to trace on STDERR ! *"
-	echo "* warning: Please set GIT_TRACE to something" \
-		"other than 1, 2 or true ! *"
+	GIT_TRACE=4
 	;;
 esac
 
@@ -232,6 +229,12 @@ do
 	--root=*)
 		root=$(expr "z$1" : 'z[^=]*=\(.*\)')
 		shift ;;
+	--chain-lint)
+		GIT_TEST_CHAIN_LINT=1
+		shift ;;
+	--no-chain-lint)
+		GIT_TEST_CHAIN_LINT=0
+		shift ;;
 	-x)
 		trace=t
 		verbose=t
@@ -299,6 +302,7 @@ die () {
 
 GIT_EXIT_OK=
 trap 'die' EXIT
+trap 'exit $?' INT
 
 # The user-facing functions are loaded from a separate file so that
 # test_perf subshells can have them too
@@ -524,6 +528,16 @@ test_eval_ () {
 test_run_ () {
 	test_cleanup=:
 	expecting_failure=$2
+
+	if test "${GIT_TEST_CHAIN_LINT:-0}" != 0; then
+		# 117 is magic because it is unlikely to match the exit
+		# code of other programs
+		test_eval_ "(exit 117) && $1"
+		if test "$?" != 117; then
+			error "bug in the test script: broken &&-chain: $1"
+		fi
+	fi
+
 	setup_malloc_check
 	test_eval_ "$1"
 	eval_ret=$?
@@ -1064,3 +1078,9 @@ test_lazy_prereq UNZIP '
 	"$GIT_UNZIP" -v
 	test $? -ne 127
 '
+
+run_with_limited_cmdline () {
+	(ulimit -s 128 && "$@")
+}
+
+test_lazy_prereq CMDLINE_LIMIT 'run_with_limited_cmdline true'

@@ -64,7 +64,7 @@ static int emit_diff_first_parent_only(struct diff_options *opt, struct combine_
 {
 	struct combine_diff_parent *p0 = &p->parent[0];
 	if (p->mode && p0->mode) {
-		opt->change(opt, p0->mode, p->mode, p0->sha1, p->sha1,
+		opt->change(opt, p0->mode, p->mode, p0->oid.hash, p->oid.hash,
 			1, 1, p->path, 0, 0);
 	}
 	else {
@@ -74,11 +74,11 @@ static int emit_diff_first_parent_only(struct diff_options *opt, struct combine_
 
 		if (p->mode) {
 			addremove = '+';
-			sha1 = p->sha1;
+			sha1 = p->oid.hash;
 			mode = p->mode;
 		} else {
 			addremove = '-';
-			sha1 = p0->sha1;
+			sha1 = p0->oid.hash;
 			mode = p0->mode;
 		}
 
@@ -151,7 +151,7 @@ static struct combine_diff_path *path_appendnew(struct combine_diff_path *last,
 	memcpy(p->path + base->len, path, pathlen);
 	p->path[len] = 0;
 	p->mode = mode;
-	hashcpy(p->sha1, sha1 ? sha1 : null_sha1);
+	hashcpy(p->oid.hash, sha1 ? sha1 : null_sha1);
 
 	return p;
 }
@@ -238,7 +238,7 @@ static struct combine_diff_path *emit_path(struct combine_diff_path *p,
 			}
 
 			p->parent[i].mode = mode_i;
-			hashcpy(p->parent[i].sha1, sha1_i ? sha1_i : null_sha1);
+			hashcpy(p->parent[i].oid.hash, sha1_i ? sha1_i : null_sha1);
 		}
 
 		keep = 1;

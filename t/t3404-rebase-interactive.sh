@@ -950,7 +950,7 @@ test_expect_success 'rebase --edit-todo can be used to modify todo' '
 	set_fake_editor &&
 	FAKE_LINES="edit 1 2 3" git rebase -i HEAD~3 &&
 	FAKE_LINES="2 1" git rebase --edit-todo &&
-	git rebase --continue
+	git rebase --continue &&
 	test M = $(git cat-file commit HEAD^ | sed -ne \$p) &&
 	test L = $(git cat-file commit HEAD | sed -ne \$p)
 '
@@ -1007,7 +1007,7 @@ test_expect_success 'rebase -i with --strategy and -X' '
 '
 
 test_expect_success 'rebase -i error on commits with \ in message' '
-	current_head=$(git rev-parse HEAD)
+	current_head=$(git rev-parse HEAD) &&
 	test_when_finished "git rebase --abort; git reset --hard $current_head; rm -f error" &&
 	test_commit TO-REMOVE will-conflict old-content &&
 	test_commit "\temp" will-conflict new-content dummy &&

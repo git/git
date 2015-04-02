@@ -47,7 +47,7 @@ Composing
 --annotate::
 	Review and edit each patch you're about to send. Default is the value
 	of 'sendemail.annotate'. See the CONFIGURATION section for
-	'sendemail.multiedit'.
+	'sendemail.multiEdit'.
 
 --bcc=<address>::
 	Specify a "Bcc:" value for each email. Default is the value of
@@ -73,7 +73,7 @@ and In-Reply-To headers will be used unless they are removed.
 +
 Missing From or In-Reply-To headers will be prompted for.
 +
-See the CONFIGURATION section for 'sendemail.multiedit'.
+See the CONFIGURATION section for 'sendemail.multiEdit'.
 
 --from=<address>::
 	Specify the sender of the emails.  If not specified on the command line,
@@ -156,31 +156,31 @@ Sending
 	subscribed to a list. In order to use the 'From' address, set the
 	value to "auto". If you use the sendmail binary, you must have
 	suitable privileges for the -f parameter.  Default is the value of the
-	'sendemail.envelopesender' configuration variable; if that is
+	'sendemail.envelopeSender' configuration variable; if that is
 	unspecified, choosing the envelope sender is left to your MTA.
 
 --smtp-encryption=<encryption>::
 	Specify the encryption to use, either 'ssl' or 'tls'.  Any other
 	value reverts to plain SMTP.  Default is the value of
-	'sendemail.smtpencryption'.
+	'sendemail.smtpEncryption'.
 
 --smtp-domain=<FQDN>::
 	Specifies the Fully Qualified Domain Name (FQDN) used in the
 	HELO/EHLO command to the SMTP server.  Some servers require the
 	FQDN to match your IP address.  If not set, git send-email attempts
 	to determine your FQDN automatically.  Default is the value of
-	'sendemail.smtpdomain'.
+	'sendemail.smtpDomain'.
 
 --smtp-pass[=<password>]::
 	Password for SMTP-AUTH. The argument is optional: If no
 	argument is specified, then the empty string is used as
-	the password. Default is the value of 'sendemail.smtppass',
+	the password. Default is the value of 'sendemail.smtpPass',
 	however '--smtp-pass' always overrides this value.
 +
 Furthermore, passwords need not be specified in configuration files
 or on the command line. If a username has been specified (with
-'--smtp-user' or a 'sendemail.smtpuser'), but no password has been
-specified (with '--smtp-pass' or 'sendemail.smtppass'), then
+'--smtp-user' or a 'sendemail.smtpUser'), but no password has been
+specified (with '--smtp-pass' or 'sendemail.smtpPass'), then
 a password is obtained using 'git-credential'.
 
 --smtp-server=<host>::
@@ -188,7 +188,7 @@ a password is obtained using 'git-credential'.
 	`smtp.example.com` or a raw IP address).  Alternatively it can
 	specify a full pathname of a sendmail-like program instead;
 	the program must support the `-i` option.  Default value can
-	be specified by the 'sendemail.smtpserver' configuration
+	be specified by the 'sendemail.smtpServer' configuration
 	option; the built-in default is `/usr/sbin/sendmail` or
 	`/usr/lib/sendmail` if such program is available, or
 	`localhost` otherwise.
@@ -199,11 +199,11 @@ a password is obtained using 'git-credential'.
 	submission port 587, or the common SSL smtp port 465);
 	symbolic port names (e.g. "submission" instead of 587)
 	are also accepted. The port can also be set with the
-	'sendemail.smtpserverport' configuration variable.
+	'sendemail.smtpServerPort' configuration variable.
 
 --smtp-server-option=<option>::
 	If set, specifies the outgoing SMTP server option to use.
-	Default value can be specified by the 'sendemail.smtpserveroption'
+	Default value can be specified by the 'sendemail.smtpServerOption'
 	configuration option.
 +
 The --smtp-server-option option must be repeated for each option you want
@@ -225,8 +225,8 @@ must be used for each option.
 	be the best choice on most platforms).
 
 --smtp-user=<user>::
-	Username for SMTP-AUTH. Default is the value of 'sendemail.smtpuser';
-	if a username is not specified (with '--smtp-user' or 'sendemail.smtpuser'),
+	Username for SMTP-AUTH. Default is the value of 'sendemail.smtpUser';
+	if a username is not specified (with '--smtp-user' or 'sendemail.smtpUser'),
 	then authentication is not attempted.
 
 --smtp-debug=0|1::
@@ -247,14 +247,14 @@ Automating
 	Specify a command to execute once per patch file which
 	should generate patch file specific "Cc:" entries.
 	Output of this command must be single email address per line.
-	Default is the value of 'sendemail.cccmd' configuration value.
+	Default is the value of 'sendemail.ccCmd' configuration value.
 
 --[no-]chain-reply-to::
 	If this is set, each email will be sent as a reply to the previous
 	email sent.  If disabled with "--no-chain-reply-to", all emails after
 	the first will be sent as replies to the first email sent.  When using
 	this, it is recommended that the first file given be an overview of the
-	entire patch series. Disabled by default, but the 'sendemail.chainreplyto'
+	entire patch series. Disabled by default, but the 'sendemail.chainReplyTo'
 	configuration variable can be used to enable it.
 
 --identity=<identity>::
@@ -304,7 +304,7 @@ specified, as well as 'body' if --no-signed-off-cc is specified.
 
 --[no-]suppress-from::
 	If this is set, do not add the From: address to the cc: list.
-	Default is the value of 'sendemail.suppressfrom' configuration
+	Default is the value of 'sendemail.suppressFrom' configuration
 	value; if that is unspecified, default to --no-suppress-from.
 
 --[no-]thread::
@@ -377,15 +377,15 @@ default to '--validate'.
 CONFIGURATION
 -------------
 
-sendemail.aliasesfile::
+sendemail.aliasesFile::
 	To avoid typing long email addresses, point this to one or more
-	email aliases files.  You must also supply 'sendemail.aliasfiletype'.
+	email aliases files.  You must also supply 'sendemail.aliasFileType'.
 
-sendemail.aliasfiletype::
-	Format of the file(s) specified in sendemail.aliasesfile. Must be
+sendemail.aliasFileType::
+	Format of the file(s) specified in sendemail.aliasesFile. Must be
 	one of 'mutt', 'mailrc', 'pine', 'elm', or 'gnus'.
 
-sendemail.multiedit::
+sendemail.multiEdit::
 	If true (default), a single editor instance will be spawned to edit
 	files you have to edit (patches when '--annotate' is used, and the
 	summary when '--compose' is used). If false, files will be edited one
@@ -404,10 +404,10 @@ To use 'git send-email' to send your patches through the GMail SMTP server,
 edit ~/.gitconfig to specify your account settings:
 
 	[sendemail]
-		smtpencryption = tls
-		smtpserver = smtp.gmail.com
-		smtpuser = yourname@gmail.com
-		smtpserverport = 587
+		smtpEncryption = tls
+		smtpServer = smtp.gmail.com
+		smtpUser = yourname@gmail.com
+		smtpServerPort = 587
 
 Once your commits are ready to be sent to the mailing list, run the
 following commands:

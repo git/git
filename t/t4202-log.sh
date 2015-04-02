@@ -113,11 +113,7 @@ test_expect_success 'diff-filter=M' '
 
 	actual=$(git log --pretty="format:%s" --diff-filter=M HEAD) &&
 	expect=$(echo second) &&
-	test "$actual" = "$expect" || {
-		echo Oops
-		echo "Actual: $actual"
-		false
-	}
+	verbose test "$actual" = "$expect"
 
 '
 
@@ -125,11 +121,7 @@ test_expect_success 'diff-filter=D' '
 
 	actual=$(git log --pretty="format:%s" --diff-filter=D HEAD) &&
 	expect=$(echo sixth ; echo third) &&
-	test "$actual" = "$expect" || {
-		echo Oops
-		echo "Actual: $actual"
-		false
-	}
+	verbose test "$actual" = "$expect"
 
 '
 
@@ -137,11 +129,7 @@ test_expect_success 'diff-filter=R' '
 
 	actual=$(git log -M --pretty="format:%s" --diff-filter=R HEAD) &&
 	expect=$(echo third) &&
-	test "$actual" = "$expect" || {
-		echo Oops
-		echo "Actual: $actual"
-		false
-	}
+	verbose test "$actual" = "$expect"
 
 '
 
@@ -149,11 +137,7 @@ test_expect_success 'diff-filter=C' '
 
 	actual=$(git log -C -C --pretty="format:%s" --diff-filter=C HEAD) &&
 	expect=$(echo fourth) &&
-	test "$actual" = "$expect" || {
-		echo Oops
-		echo "Actual: $actual"
-		false
-	}
+	verbose test "$actual" = "$expect"
 
 '
 
@@ -161,11 +145,7 @@ test_expect_success 'git log --follow' '
 
 	actual=$(git log --follow --pretty="format:%s" ichi) &&
 	expect=$(echo third ; echo second ; echo initial) &&
-	test "$actual" = "$expect" || {
-		echo Oops
-		echo "Actual: $actual"
-		false
-	}
+	verbose test "$actual" = "$expect"
 
 '
 
@@ -209,6 +189,21 @@ test_expect_success 'setup case sensitivity tests' '
 test_expect_success 'log --grep' '
 	echo second >expect &&
 	git log -1 --pretty="tformat:%s" --grep=sec >actual &&
+	test_cmp expect actual
+'
+
+cat > expect << EOF
+second
+initial
+EOF
+test_expect_success 'log --invert-grep --grep' '
+	git log --pretty="tformat:%s" --invert-grep --grep=th --grep=Sec >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'log --invert-grep --grep -i' '
+	echo initial >expect &&
+	git log --pretty="tformat:%s" --invert-grep -i --grep=th --grep=Sec >actual &&
 	test_cmp expect actual
 '
 
@@ -466,7 +461,7 @@ test_expect_success 'log.decorate configuration' '
 	git log --oneline --no-decorate >actual &&
 	test_cmp expect.none actual &&
 	git log --oneline --decorate >actual &&
-	test_cmp expect.short actual
+	test_cmp expect.short actual &&
 
 	test_unconfig log.decorate &&
 	git log --pretty=raw >expect.raw &&
@@ -870,6 +865,10 @@ test_expect_success GPG 'log --graph --show-signature for merged tag' '
 	grep "^|\\\  merged tag" actual &&
 	grep "^| | gpg: Signature made" actual &&
 	grep "^| | gpg: Good signature" actual
+'
+
+test_expect_success 'log --graph --no-walk is forbidden' '
+	test_must_fail git log --graph --no-walk
 '
 
 test_done

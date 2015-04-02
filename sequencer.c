@@ -252,7 +252,7 @@ static int fast_forward_to(const unsigned char *to, const unsigned char *from,
 	if (!transaction ||
 	    ref_transaction_update(transaction, "HEAD",
 				   to, unborn ? null_sha1 : from,
-				   0, 1, sb.buf, &err) ||
+				   0, sb.buf, &err) ||
 	    ref_transaction_commit(transaction, &err)) {
 		ref_transaction_free(transaction);
 		error("%s", err.buf);
@@ -373,6 +373,7 @@ static int run_git_commit(const char *defmsg, struct replay_opts *opts,
 {
 	struct argv_array array;
 	int rc;
+	const char *value;
 
 	argv_array_init(&array);
 	argv_array_push(&array, "commit");
@@ -385,6 +386,10 @@ static int run_git_commit(const char *defmsg, struct replay_opts *opts,
 	if (!opts->edit) {
 		argv_array_push(&array, "-F");
 		argv_array_push(&array, defmsg);
+		if (!opts->signoff &&
+		    !opts->record_origin &&
+		    git_config_get_value("commit.cleanup", &value))
+			argv_array_push(&array, "--cleanup=verbatim");
 	}
 
 	if (allow_empty)

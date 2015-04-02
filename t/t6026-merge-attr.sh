@@ -11,7 +11,7 @@ test_expect_success setup '
 
 	for f in text binary union
 	do
-		echo Initial >$f && git add $f || break
+		echo Initial >$f && git add $f || return 1
 	done &&
 	test_tick &&
 	git commit -m Initial &&
@@ -19,7 +19,7 @@ test_expect_success setup '
 	git branch side &&
 	for f in text binary union
 	do
-		echo Master >>$f && git add $f || break
+		echo Master >>$f && git add $f || return 1
 	done &&
 	test_tick &&
 	git commit -m Master &&
@@ -27,7 +27,7 @@ test_expect_success setup '
 	git checkout side &&
 	for f in text binary union
 	do
-		echo Side >>$f && git add $f || break
+		echo Side >>$f && git add $f || return 1
 	done &&
 	test_tick &&
 	git commit -m Side &&

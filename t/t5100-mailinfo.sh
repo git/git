@@ -34,7 +34,7 @@ do
 		if test -f "$TEST_DIRECTORY"/t5100/msg$mail--no-inbody-headers
 		then
 			check_mailinfo $mail --no-inbody-headers
-		fi
+		fi &&
 		if test -f "$TEST_DIRECTORY"/t5100/msg$mail--message-id
 		then
 			check_mailinfo $mail --message-id

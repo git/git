@@ -502,12 +502,12 @@ def p4Cmd(cmd):
 def p4Where(depotPath):
     if not depotPath.endswith("/"):
         depotPath += "/"
-    depotPath = depotPath + "..."
-    outputList = p4CmdList(["where", depotPath])
+    depotPathLong = depotPath + "..."
+    outputList = p4CmdList(["where", depotPathLong])
     output = None
     for entry in outputList:
         if "depotFile" in entry:
-            if entry["depotFile"] == depotPath:
+            if entry["depotFile"].find(depotPath) >= 0:
                 output = entry
                 break
         elif "data" in entry:
@@ -1442,7 +1442,7 @@ class P4Submit(Command, P4UserMap):
             print "  " + self.clientPath
             print
             print "To submit, use \"p4 submit\" to write a new description,"
-            print "or \"p4 submit -i %s\" to use the one prepared by" \
+            print "or \"p4 submit -i <%s\" to use the one prepared by" \
                   " \"git p4\"." % fileName
             print "You can delete the file \"%s\" when finished." % fileName
 
@@ -1627,7 +1627,10 @@ class P4Submit(Command, P4UserMap):
         if self.useClientSpec:
             self.clientSpecDirs = getClientSpec()
 
-        if self.useClientSpec:
+        # Check for the existance of P4 branches
+        branchesDetected = (len(p4BranchesInGit().keys()) > 1)
+
+        if self.useClientSpec and not branchesDetected:
             # all files are relative to the client spec
             self.clientPath = getClientRoot()
         else:
@@ -1915,7 +1918,10 @@ class P4Sync(Command, P4UserMap):
                 optparse.make_option("--keep-path", dest="keepRepoPath", action='store_true',
                                      help="Keep entire BRANCH/DIR/SUBDIR prefix during import"),
                 optparse.make_option("--use-client-spec", dest="useClientSpec", action='store_true',
-                                     help="Only sync files that are included in the Perforce Client Spec")
+                                     help="Only sync files that are included in the Perforce Client Spec"),
+                optparse.make_option("-/", dest="cloneExclude",
+                                     action="append", type="string",
+                                     help="exclude depot path"),
         ]
         self.description = """Imports from Perforce into a git repository.\n
     example:
@@ -1949,6 +1955,12 @@ class P4Sync(Command, P4UserMap):
 
         if gitConfig("git-p4.syncFromOrigin") == "false":
             self.syncWithOrigin = False
+
+    # This is required for the "append" cloneExclude action
+    def ensure_value(self, attr, value):
+        if not hasattr(self, attr) or getattr(self, attr) is None:
+            setattr(self, attr, value)
+        return getattr(self, attr)
 
     # Force a checkpoint in fast-import and wait for it to finish
     def checkpoint(self):
@@ -3101,21 +3113,12 @@ class P4Clone(P4Sync):
             optparse.make_option("--destination", dest="cloneDestination",
                                  action='store', default=None,
                                  help="where to leave result of the clone"),
-            optparse.make_option("-/", dest="cloneExclude",
-                                 action="append", type="string",
-                                 help="exclude depot path"),
             optparse.make_option("--bare", dest="cloneBare",
                                  action="store_true", default=False),
         ]
         self.cloneDestination = None
         self.needsGit = False
         self.cloneBare = False
-
-    # This is required for the "append" cloneExclude action
-    def ensure_value(self, attr, value):
-        if not hasattr(self, attr) or getattr(self, attr) is None:
-            setattr(self, attr, value)
-        return getattr(self, attr)
 
     def defaultDestination(self, args):
         ## TODO: use common prefix of args?

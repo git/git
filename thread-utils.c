@@ -35,7 +35,23 @@ int online_cpus(void)
 
 	if (!pstat_getdynamic(&psd, sizeof(psd), (size_t)1, 0))
 		return (int)psd.psd_proc_cnt;
-#endif
+#elif defined(HAVE_BSD_SYSCTL) && defined(HW_NCPU)
+	int mib[2];
+	size_t len;
+	int cpucount;
+
+	mib[0] = CTL_HW;
+#  ifdef HW_AVAILCPU
+	mib[1] = HW_AVAILCPU;
+	len = sizeof(cpucount);
+	if (!sysctl(mib, 2, &cpucount, &len, NULL, 0))
+		return cpucount;
+#  endif /* HW_AVAILCPU */
+	mib[1] = HW_NCPU;
+	len = sizeof(cpucount);
+	if (!sysctl(mib, 2, &cpucount, &len, NULL, 0))
+		return cpucount;
+#endif /* defined(HAVE_BSD_SYSCTL) && defined(HW_NCPU) */
 
 #ifdef _SC_NPROCESSORS_ONLN
 	if ((ncpus = (long)sysconf(_SC_NPROCESSORS_ONLN)) > 0)

@@ -39,7 +39,7 @@ static const char *fmt_pretty;
 
 static const char * const builtin_log_usage[] = {
 	N_("git log [<options>] [<revision range>] [[--] <path>...]"),
-	N_("git show [options] <object>..."),
+	N_("git show [<options>] <object>..."),
 	NULL
 };
 
@@ -498,13 +498,12 @@ static int show_tree_object(const unsigned char *sha1,
 
 static void show_rev_tweak_rev(struct rev_info *rev, struct setup_revision_opt *opt)
 {
-	if (rev->ignore_merges) {
+	if (!rev->merge_diff_mode) {
 		/* There was no "-m" on the command line */
-		rev->ignore_merges = 0;
-		if (!rev->first_parent_only && !rev->combine_merges) {
+		rev->merge_diff_mode = MERGE_DIFF_EACH;
+		if (!rev->first_parent_only) {
 			/* No "--first-parent", "-c", or "--cc" */
-			rev->combine_merges = 1;
-			rev->dense_combined_merges = 1;
+			rev->merge_diff_mode = MERGE_DIFF_COMBINED_CONDENSED;
 		}
 	}
 	if (!rev->diffopt.output_format)
@@ -1023,7 +1022,7 @@ static const char *set_outdir(const char *prefix, const char *output_directory)
 }
 
 static const char * const builtin_format_patch_usage[] = {
-	N_("git format-patch [options] [<since> | <revision range>]"),
+	N_("git format-patch [<options>] [<since> | <revision-range>]"),
 	NULL
 };
 

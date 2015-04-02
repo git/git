@@ -242,7 +242,7 @@ has no effect when `--index` or `--cached` is in use.
 Configuration
 -------------
 
-apply.ignorewhitespace::
+apply.ignoreWhitespace::
 	Set to 'change' if you want changes in whitespace to be ignored by default.
 	Set to one of: no, none, never, false if you want changes in
 	whitespace to be significant.

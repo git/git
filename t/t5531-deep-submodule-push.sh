@@ -104,7 +104,7 @@ test_expect_success 'push fails when commit on multiple branches if one branch h
 '
 
 test_expect_success 'push succeeds if submodule has no remote and is on the first superproject commit' '
-	git init --bare a
+	git init --bare a &&
 	git clone a a1 &&
 	(
 		cd a1 &&
