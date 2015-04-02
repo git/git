@@ -347,7 +347,7 @@ int main(void)
 
 		/* set the default exe module */
 		wcscpy(exe, exepath);
-		wcscpy(buffer, exepath);
+		swprintf(buffer, BUFSIZE, L"\"%s\"", exepath);
 		PathAppend(exe, msystem_bin);
 		PathAppend(exe, L"wish.exe");
 		if (_waccess(exe, 0) != -1)
