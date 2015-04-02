@@ -39,6 +39,8 @@ struct rewrites {
 	int rewrite_nr;
 };
 
+static int loaded_remotes_config;
+
 static struct remote **remotes;
 static int remotes_alloc;
 static int remotes_nr;
@@ -49,10 +51,7 @@ static int branches_alloc;
 static int branches_nr;
 
 static struct branch *current_branch;
-static const char *default_remote_name;
-static const char *branch_pushremote_name;
 static const char *pushremote_name;
-static int explicit_default_remote_name;
 
 static struct rewrites rewrites;
 static struct rewrites rewrites_push;
@@ -367,16 +366,9 @@ static int handle_config(const char *key, const char *value, void *cb)
 			return 0;
 		branch = make_branch(name, subkey - name);
 		if (!strcmp(subkey, ".remote")) {
-			if (git_config_string(&branch->remote_name, key, value))
-				return -1;
-			if (branch == current_branch) {
-				default_remote_name = branch->remote_name;
-				explicit_default_remote_name = 1;
-			}
+			return git_config_string(&branch->remote_name, key, value);
 		} else if (!strcmp(subkey, ".pushremote")) {
-			if (branch == current_branch)
-				if (git_config_string(&branch_pushremote_name, key, value))
-					return -1;
+			return git_config_string(&branch->pushremote_name, key, value);
 		} else if (!strcmp(subkey, ".merge")) {
 			if (!value)
 				return config_error_nonbool(key);
@@ -504,9 +496,11 @@ static void read_config(void)
 	unsigned char sha1[20];
 	const char *head_ref;
 	int flag;
-	if (default_remote_name) /* did this already */
+
+	if (loaded_remotes_config)
 		return;
-	default_remote_name = "origin";
+	loaded_remotes_config = 1;
+
 	current_branch = NULL;
 	head_ref = resolve_ref_unsafe("HEAD", 0, sha1, &flag);
 	if (head_ref && (flag & REF_ISSYMREF) &&
@@ -514,10 +508,6 @@ static void read_config(void)
 		current_branch = make_branch(head_ref, 0);
 	}
 	git_config(handle_config, NULL);
-	if (branch_pushremote_name) {
-		free((char *)pushremote_name);
-		pushremote_name = branch_pushremote_name;
-	}
 	alias_all_urls();
 }
 
@@ -696,22 +686,44 @@ static int valid_remote_nick(const char *name)
 	return !strchr(name, '/'); /* no slash */
 }
 
-static struct remote *remote_get_1(const char *name, const char *pushremote_name)
+const char *remote_for_branch(struct branch *branch, int *explicit)
+{
+	if (branch && branch->remote_name) {
+		if (explicit)
+			*explicit = 1;
+		return branch->remote_name;
+	}
+	if (explicit)
+		*explicit = 0;
+	return "origin";
+}
+
+const char *pushremote_for_branch(struct branch *branch, int *explicit)
+{
+	if (branch && branch->pushremote_name) {
+		if (explicit)
+			*explicit = 1;
+		return branch->pushremote_name;
+	}
+	if (pushremote_name) {
+		if (explicit)
+			*explicit = 1;
+		return pushremote_name;
+	}
+	return remote_for_branch(branch, explicit);
+}
+
+static struct remote *remote_get_1(const char *name, int for_push)
 {
 	struct remote *ret;
 	int name_given = 0;
 
 	if (name)
 		name_given = 1;
-	else {
-		if (pushremote_name) {
-			name = pushremote_name;
-			name_given = 1;
-		} else {
-			name = default_remote_name;
-			name_given = explicit_default_remote_name;
-		}
-	}
+	else
+		name = for_push ?
+		       pushremote_for_branch(current_branch, &name_given) :
+		       remote_for_branch(current_branch, &name_given);
 
 	ret = make_remote(name, 0);
 	if (valid_remote_nick(name)) {
@@ -732,13 +744,13 @@ static struct remote *remote_get_1(const char *name, const char *pushremote_name
 struct remote *remote_get(const char *name)
 {
 	read_config();
-	return remote_get_1(name, NULL);
+	return remote_get_1(name, 0);
 }
 
 struct remote *pushremote_get(const char *name)
 {
 	read_config();
-	return remote_get_1(name, pushremote_name);
+	return remote_get_1(name, 1);
 }
 
 int remote_is_configured(const char *name)
@@ -1633,15 +1645,20 @@ void set_ref_status_for_push(struct ref *remote_refs, int send_mirror,
 
 static void set_merge(struct branch *ret)
 {
+	struct remote *remote;
 	char *ref;
 	unsigned char sha1[20];
 	int i;
+
+	if (!ret->remote_name || !ret->merge_nr)
+		return;
+	remote = remote_get(ret->remote_name);
 
 	ret->merge = xcalloc(ret->merge_nr, sizeof(*ret->merge));
 	for (i = 0; i < ret->merge_nr; i++) {
 		ret->merge[i] = xcalloc(1, sizeof(**ret->merge));
 		ret->merge[i]->src = xstrdup(ret->merge_name[i]);
-		if (!remote_find_tracking(ret->remote, ret->merge[i]) ||
+		if (!remote_find_tracking(remote, ret->merge[i]) ||
 		    strcmp(ret->remote_name, "."))
 			continue;
 		if (dwim_ref(ret->merge_name[i], strlen(ret->merge_name[i]),
@@ -1661,11 +1678,8 @@ struct branch *branch_get(const char *name)
 		ret = current_branch;
 	else
 		ret = make_branch(name, 0);
-	if (ret && ret->remote_name) {
-		ret->remote = remote_get(ret->remote_name);
-		if (ret->merge_nr)
-			set_merge(ret);
-	}
+	if (ret)
+	       set_merge(ret);
 	return ret;
 }
 
