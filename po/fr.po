@@ -73,8 +73,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2015-03-27 13:33+0800\n"
-"PO-Revision-Date: 2015-03-30 10:53+0200\n"
+"POT-Creation-Date: 2015-04-03 08:13+0800\n"
+"PO-Revision-Date: 2015-04-04 18:03+0200\n"
 "Last-Translator: Jean-Noël Avila <jn.avila@free.fr>\n"
 "Language-Team: Jean-Noël Avila <jn.avila@free.fr>\n"
 "Language: fr\n"
@@ -108,7 +108,9 @@ msgstr "git archive --list"
 #: archive.c:13
 msgid ""
 "git archive --remote <repo> [--exec <cmd>] [<options>] <tree-ish> [<path>...]"
-msgstr "git archive --remote <dépôt> [--exec <commande>] [<options>] <arbre ou apparenté> [<chemin>...]"
+msgstr ""
+"git archive --remote <dépôt> [--exec <commande>] [<options>] <arbre ou "
+"apparenté> [<chemin>...]"
 
 #: archive.c:14
 msgid "git archive --remote <repo> [--exec <cmd>] --list"
@@ -323,7 +325,7 @@ msgstr "'%s' ne semble pas être un fichier bundle v2"
 msgid "unrecognized header: %s%s (%d)"
 msgstr "en-tête non reconnu : %s%s (%d)"
 
-#: bundle.c:87 builtin/commit.c:764
+#: bundle.c:87 builtin/commit.c:766
 #, c-format
 msgid "could not open '%s'"
 msgstr "impossible d'ouvrir '%s'"
@@ -333,7 +335,7 @@ msgid "Repository lacks these prerequisite commits:"
 msgstr "Le dépôt ne dispose pas des commits prérequis suivants :"
 
 #: bundle.c:163 sequencer.c:650 sequencer.c:1105 builtin/blame.c:2705
-#: builtin/branch.c:659 builtin/commit.c:1043 builtin/log.c:330
+#: builtin/branch.c:659 builtin/commit.c:1045 builtin/log.c:330
 #: builtin/log.c:823 builtin/log.c:1432 builtin/log.c:1669 builtin/merge.c:358
 #: builtin/shortlog.c:158
 msgid "revision walk setup failed"
@@ -956,27 +958,27 @@ msgstr "échec de fusion des arbres %s et %s"
 msgid "Unprocessed path??? %s"
 msgstr "Chemin non traité ??? %s"
 
-#: merge-recursive.c:1898
+#: merge-recursive.c:1901
 msgid "Merging:"
 msgstr "Fusion :"
 
-#: merge-recursive.c:1911
+#: merge-recursive.c:1914
 #, c-format
 msgid "found %u common ancestor:"
 msgid_plural "found %u common ancestors:"
 msgstr[0] "%u ancêtre commun trouvé :"
 msgstr[1] "%u ancêtres communs trouvés :"
 
-#: merge-recursive.c:1948
+#: merge-recursive.c:1951
 msgid "merge returned no commit"
 msgstr "la fusion n'a pas retourné de commit"
 
-#: merge-recursive.c:2005
+#: merge-recursive.c:2008
 #, c-format
 msgid "Could not parse object '%s'"
 msgstr "Impossible d'analyser l'objet '%s'"
 
-#: merge-recursive.c:2016 builtin/merge.c:667
+#: merge-recursive.c:2019 builtin/merge.c:667
 msgid "Unable to write index."
 msgstr "Impossible d'écrire l'index."
 
@@ -1107,7 +1109,7 @@ msgstr "impossible d'analyser le format --pretty"
 msgid "done"
 msgstr "fait"
 
-#: read-cache.c:1273
+#: read-cache.c:1275
 #, c-format
 msgid ""
 "index.version set, but the value is invalid.\n"
@@ -1116,7 +1118,7 @@ msgstr ""
 "version d'index renseignée, mais la valeur est invalide.\n"
 "Utilisation de la version %i"
 
-#: read-cache.c:1283
+#: read-cache.c:1285
 #, c-format
 msgid ""
 "GIT_INDEX_VERSION set, but the value is invalid.\n"
@@ -1227,8 +1229,8 @@ msgid "the receiving end does not support --signed push"
 msgstr "Le receveur ne gère pas les poussées avec --signed"
 
 #: send-pack.c:366
-msgid "server does not support --atomic push"
-msgstr "le serveur ne gère pas push --atomic"
+msgid "the receiving end does not support --atomic push"
+msgstr "Le receveur ne gère pas les poussées avec --atomic"
 
 #: sequencer.c:172 builtin/merge.c:782 builtin/merge.c:893 builtin/merge.c:995
 #: builtin/merge.c:1005
@@ -1437,7 +1439,7 @@ msgstr "impossible de résoudre HEAD"
 msgid "cannot abort from a branch yet to be born"
 msgstr "impossible d'abandonner depuis une branche non encore créée"
 
-#: sequencer.c:908 builtin/apply.c:4286
+#: sequencer.c:908 builtin/apply.c:4288
 #, c-format
 msgid "cannot open %s: %s"
 msgstr "impossible d'ouvrir %s : %s"
@@ -2092,7 +2094,7 @@ msgstr "git add [<options>] [--] <chemin>..."
 msgid "unexpected diff status %c"
 msgstr "status de diff inattendu %c"
 
-#: builtin/add.c:70 builtin/commit.c:275
+#: builtin/add.c:70 builtin/commit.c:277
 msgid "updating files failed"
 msgstr "échec de la mise à jour des fichiers"
 
@@ -2143,8 +2145,8 @@ msgstr ""
 msgid "dry run"
 msgstr "simuler l'action"
 
-#: builtin/add.c:249 builtin/apply.c:4575 builtin/check-ignore.c:19
-#: builtin/commit.c:1320 builtin/count-objects.c:63 builtin/fsck.c:608
+#: builtin/add.c:249 builtin/apply.c:4577 builtin/check-ignore.c:19
+#: builtin/commit.c:1322 builtin/count-objects.c:63 builtin/fsck.c:608
 #: builtin/log.c:1617 builtin/mv.c:109 builtin/read-tree.c:114
 msgid "be verbose"
 msgstr "mode verbeux"
@@ -2225,11 +2227,11 @@ msgid "Maybe you wanted to say 'git add .'?\n"
 msgstr "Vous vouliez sûrement dire 'git add .' ?\n"
 
 #: builtin/add.c:363 builtin/check-ignore.c:172 builtin/clean.c:920
-#: builtin/commit.c:333 builtin/mv.c:130 builtin/reset.c:235 builtin/rm.c:299
+#: builtin/commit.c:335 builtin/mv.c:130 builtin/reset.c:235 builtin/rm.c:299
 msgid "index file corrupt"
 msgstr "fichier d'index corrompu"
 
-#: builtin/add.c:446 builtin/apply.c:4673 builtin/mv.c:279 builtin/rm.c:431
+#: builtin/add.c:446 builtin/apply.c:4675 builtin/mv.c:279 builtin/rm.c:431
 msgid "Unable to write new index file"
 msgstr "Impossible d'écrire le nouveau fichier d'index"
 
@@ -2372,19 +2374,19 @@ msgstr "ouverture ou lecture de %s impossible"
 msgid "invalid start of line: '%c'"
 msgstr "début de ligne invalide : '%c'"
 
-#: builtin/apply.c:2896
+#: builtin/apply.c:2897
 #, c-format
 msgid "Hunk #%d succeeded at %d (offset %d line)."
 msgid_plural "Hunk #%d succeeded at %d (offset %d lines)."
 msgstr[0] "La section n°%d a réussi à la ligne %d (offset %d ligne)."
 msgstr[1] "La section n°%d a réussi à la ligne %d (offset %d lignes)."
 
-#: builtin/apply.c:2908
+#: builtin/apply.c:2909
 #, c-format
 msgid "Context reduced to (%ld/%ld) to apply fragment at %d"
 msgstr "Contexte réduit à (%ld/%ld) pour appliquer le fragment à la ligne %d"
 
-#: builtin/apply.c:2914
+#: builtin/apply.c:2915
 #, c-format
 msgid ""
 "while searching for:\n"
@@ -2393,347 +2395,347 @@ msgstr ""
 "pendant la recherche de :\n"
 "%.*s"
 
-#: builtin/apply.c:2933
+#: builtin/apply.c:2935
 #, c-format
 msgid "missing binary patch data for '%s'"
 msgstr "données de patch binaire manquantes pour '%s'"
 
-#: builtin/apply.c:3034
+#: builtin/apply.c:3036
 #, c-format
 msgid "binary patch does not apply to '%s'"
 msgstr "le patch binaire ne s'applique par correctement à '%s'"
 
-#: builtin/apply.c:3040
+#: builtin/apply.c:3042
 #, c-format
 msgid "binary patch to '%s' creates incorrect result (expecting %s, got %s)"
 msgstr ""
 "le patch binaire sur '%s' crée un résultat incorrect (%s attendu, mais %s "
 "trouvé)"
 
-#: builtin/apply.c:3061
+#: builtin/apply.c:3063
 #, c-format
 msgid "patch failed: %s:%ld"
 msgstr "le patch a échoué : %s:%ld"
 
-#: builtin/apply.c:3185
+#: builtin/apply.c:3187
 #, c-format
 msgid "cannot checkout %s"
 msgstr "extraction de %s impossible"
 
-#: builtin/apply.c:3230 builtin/apply.c:3241 builtin/apply.c:3286
+#: builtin/apply.c:3232 builtin/apply.c:3243 builtin/apply.c:3288
 #, c-format
 msgid "read of %s failed"
 msgstr "échec de la lecture de %s"
 
-#: builtin/apply.c:3238
+#: builtin/apply.c:3240
 #, c-format
 msgid "reading from '%s' beyond a symbolic link"
 msgstr "lecture depuis '%s' au-delà d'un lien symbolique"
 
-#: builtin/apply.c:3266 builtin/apply.c:3488
+#: builtin/apply.c:3268 builtin/apply.c:3490
 #, c-format
 msgid "path %s has been renamed/deleted"
 msgstr "le chemin %s a été renommé/supprimé"
 
-#: builtin/apply.c:3347 builtin/apply.c:3502
+#: builtin/apply.c:3349 builtin/apply.c:3504
 #, c-format
 msgid "%s: does not exist in index"
 msgstr "%s : n'existe pas dans l'index"
 
-#: builtin/apply.c:3351 builtin/apply.c:3494 builtin/apply.c:3516
+#: builtin/apply.c:3353 builtin/apply.c:3496 builtin/apply.c:3518
 #, c-format
 msgid "%s: %s"
 msgstr "%s : %s"
 
-#: builtin/apply.c:3356 builtin/apply.c:3510
+#: builtin/apply.c:3358 builtin/apply.c:3512
 #, c-format
 msgid "%s: does not match index"
 msgstr "%s : ne correspond pas à l'index"
 
-#: builtin/apply.c:3458
+#: builtin/apply.c:3460
 msgid "removal patch leaves file contents"
 msgstr "le patch de suppression laisse un contenu dans le fichier"
 
-#: builtin/apply.c:3527
+#: builtin/apply.c:3529
 #, c-format
 msgid "%s: wrong type"
 msgstr "%s : type erroné"
 
-#: builtin/apply.c:3529
+#: builtin/apply.c:3531
 #, c-format
 msgid "%s has type %o, expected %o"
 msgstr "%s est de type %o, mais %o attendu"
 
-#: builtin/apply.c:3688 builtin/apply.c:3690
+#: builtin/apply.c:3690 builtin/apply.c:3692
 #, c-format
 msgid "invalid path '%s'"
 msgstr "chemin invalide '%s'"
 
-#: builtin/apply.c:3745
+#: builtin/apply.c:3747
 #, c-format
 msgid "%s: already exists in index"
 msgstr "%s : existe déjà dans l'index"
 
-#: builtin/apply.c:3748
+#: builtin/apply.c:3750
 #, c-format
 msgid "%s: already exists in working directory"
 msgstr "%s : existe déjà dans la copie de travail"
 
-#: builtin/apply.c:3768
+#: builtin/apply.c:3770
 #, c-format
 msgid "new mode (%o) of %s does not match old mode (%o)"
 msgstr "le nouveau mode (%o) de %s ne correspond pas à l'ancien mode (%o)"
 
-#: builtin/apply.c:3773
+#: builtin/apply.c:3775
 #, c-format
 msgid "new mode (%o) of %s does not match old mode (%o) of %s"
 msgstr ""
 "le nouveau mode (%o) de %s ne correspond pas à l'ancien mode (%o) de %s"
 
-#: builtin/apply.c:3793
+#: builtin/apply.c:3795
 #, c-format
 msgid "affected file '%s' is beyond a symbolic link"
 msgstr "le fichier affecté '%s' est au-delà d'un lien symbolique"
 
-#: builtin/apply.c:3797
+#: builtin/apply.c:3799
 #, c-format
 msgid "%s: patch does not apply"
 msgstr "%s : le patch ne s'applique pas"
 
-#: builtin/apply.c:3811
+#: builtin/apply.c:3813
 #, c-format
 msgid "Checking patch %s..."
 msgstr "Vérification du patch %s..."
 
-#: builtin/apply.c:3904 builtin/checkout.c:231 builtin/reset.c:135
+#: builtin/apply.c:3906 builtin/checkout.c:231 builtin/reset.c:135
 #, c-format
 msgid "make_cache_entry failed for path '%s'"
 msgstr "échec de make_cache_entry pour le chemin '%s'"
 
-#: builtin/apply.c:4047
+#: builtin/apply.c:4049
 #, c-format
 msgid "unable to remove %s from index"
 msgstr "suppression de %s dans l'index impossible"
 
-#: builtin/apply.c:4076
+#: builtin/apply.c:4078
 #, c-format
 msgid "corrupt patch for submodule %s"
 msgstr "patch corrompu pour le sous-module %s"
 
-#: builtin/apply.c:4080
+#: builtin/apply.c:4082
 #, c-format
 msgid "unable to stat newly created file '%s'"
 msgstr "stat du fichier nouvellement créé '%s' impossible"
 
-#: builtin/apply.c:4085
+#: builtin/apply.c:4087
 #, c-format
 msgid "unable to create backing store for newly created file %s"
 msgstr ""
 "création du magasin de stockage pour le fichier nouvellement créé %s "
 "impossible"
 
-#: builtin/apply.c:4088 builtin/apply.c:4196
+#: builtin/apply.c:4090 builtin/apply.c:4198
 #, c-format
 msgid "unable to add cache entry for %s"
 msgstr "ajout de l'élément de cache %s impossible"
 
-#: builtin/apply.c:4121
+#: builtin/apply.c:4123
 #, c-format
 msgid "closing file '%s'"
 msgstr "fermeture du fichier '%s'"
 
-#: builtin/apply.c:4170
+#: builtin/apply.c:4172
 #, c-format
 msgid "unable to write file '%s' mode %o"
 msgstr "écriture du fichier '%s' mode %o impossible"
 
-#: builtin/apply.c:4257
+#: builtin/apply.c:4259
 #, c-format
 msgid "Applied patch %s cleanly."
 msgstr "Patch %s appliqué proprement."
 
-#: builtin/apply.c:4265
+#: builtin/apply.c:4267
 msgid "internal error"
 msgstr "erreur interne"
 
-#: builtin/apply.c:4268
+#: builtin/apply.c:4270
 #, c-format
 msgid "Applying patch %%s with %d reject..."
 msgid_plural "Applying patch %%s with %d rejects..."
 msgstr[0] "Application du patch %%s avec %d rejet..."
 msgstr[1] "Application du patch %%s avec %d rejets..."
 
-#: builtin/apply.c:4278
+#: builtin/apply.c:4280
 #, c-format
 msgid "truncating .rej filename to %.*s.rej"
 msgstr "troncature du nom de fichier .rej en %.*s.rej"
 
-#: builtin/apply.c:4299
+#: builtin/apply.c:4301
 #, c-format
 msgid "Hunk #%d applied cleanly."
 msgstr "Section n°%d appliquée proprement."
 
-#: builtin/apply.c:4302
+#: builtin/apply.c:4304
 #, c-format
 msgid "Rejected hunk #%d."
 msgstr "Section n°%d rejetée."
 
-#: builtin/apply.c:4392
+#: builtin/apply.c:4394
 msgid "unrecognized input"
 msgstr "entrée non reconnue"
 
-#: builtin/apply.c:4403
+#: builtin/apply.c:4405
 msgid "unable to read index file"
 msgstr "lecture du fichier d'index impossible"
 
-#: builtin/apply.c:4520 builtin/apply.c:4523 builtin/clone.c:92
+#: builtin/apply.c:4522 builtin/apply.c:4525 builtin/clone.c:92
 #: builtin/fetch.c:92
 msgid "path"
 msgstr "chemin"
 
-#: builtin/apply.c:4521
+#: builtin/apply.c:4523
 msgid "don't apply changes matching the given path"
 msgstr "ne pas appliquer les modifications qui correspondent au chemin donné"
 
-#: builtin/apply.c:4524
+#: builtin/apply.c:4526
 msgid "apply changes matching the given path"
 msgstr "appliquer les modifications qui correspondent au chemin donné"
 
-#: builtin/apply.c:4526
+#: builtin/apply.c:4528
 msgid "num"
 msgstr "num"
 
-#: builtin/apply.c:4527
+#: builtin/apply.c:4529
 msgid "remove <num> leading slashes from traditional diff paths"
 msgstr "supprimer <num> barres obliques des chemins traditionnels de diff"
 
-#: builtin/apply.c:4530
+#: builtin/apply.c:4532
 msgid "ignore additions made by the patch"
 msgstr "ignorer les additions réalisées par le patch"
 
-#: builtin/apply.c:4532
+#: builtin/apply.c:4534
 msgid "instead of applying the patch, output diffstat for the input"
 msgstr "au lieu d'appliquer le patch, afficher le diffstat de l'entrée"
 
-#: builtin/apply.c:4536
+#: builtin/apply.c:4538
 msgid "show number of added and deleted lines in decimal notation"
 msgstr ""
 "afficher le nombre de lignes ajoutées et supprimées en notation décimale"
 
-#: builtin/apply.c:4538
+#: builtin/apply.c:4540
 msgid "instead of applying the patch, output a summary for the input"
 msgstr "au lieu d'appliquer le patch, afficher un résumer de l'entrée"
 
-#: builtin/apply.c:4540
+#: builtin/apply.c:4542
 msgid "instead of applying the patch, see if the patch is applicable"
 msgstr "au lieu d'appliquer le patch, voir si le patch est applicable"
 
-#: builtin/apply.c:4542
+#: builtin/apply.c:4544
 msgid "make sure the patch is applicable to the current index"
 msgstr "s'assurer que le patch est applicable sur l'index actuel"
 
-#: builtin/apply.c:4544
+#: builtin/apply.c:4546
 msgid "apply a patch without touching the working tree"
 msgstr "appliquer les patch sans toucher à la copie de travail"
 
-#: builtin/apply.c:4546
+#: builtin/apply.c:4548
 msgid "accept a patch that touches outside the working area"
 msgstr "accepter un patch qui touche hors de la copie de travail"
 
-#: builtin/apply.c:4548
+#: builtin/apply.c:4550
 msgid "also apply the patch (use with --stat/--summary/--check)"
 msgstr "appliquer aussi le patch (à utiliser avec ---stat/--summary/--check)"
 
-#: builtin/apply.c:4550
+#: builtin/apply.c:4552
 msgid "attempt three-way merge if a patch does not apply"
 msgstr "tenter une fusion à 3 points si le patch ne s'applique pas proprement"
 
-#: builtin/apply.c:4552
+#: builtin/apply.c:4554
 msgid "build a temporary index based on embedded index information"
 msgstr ""
 "construire un index temporaire fondé sur l'information de l'index embarqué"
 
-#: builtin/apply.c:4554 builtin/checkout-index.c:198 builtin/ls-files.c:412
+#: builtin/apply.c:4556 builtin/checkout-index.c:198 builtin/ls-files.c:412
 msgid "paths are separated with NUL character"
 msgstr "les chemins sont séparés par un caractère NUL"
 
-#: builtin/apply.c:4557
+#: builtin/apply.c:4559
 msgid "ensure at least <n> lines of context match"
 msgstr "s'assurer d'au moins <n> lignes de correspondance de contexte"
 
-#: builtin/apply.c:4558
+#: builtin/apply.c:4560
 msgid "action"
 msgstr "action"
 
-#: builtin/apply.c:4559
+#: builtin/apply.c:4561
 msgid "detect new or modified lines that have whitespace errors"
 msgstr ""
 "détecter des lignes nouvelles ou modifiées qui contiennent des erreurs "
 "d'espace"
 
-#: builtin/apply.c:4562 builtin/apply.c:4565
+#: builtin/apply.c:4564 builtin/apply.c:4567
 msgid "ignore changes in whitespace when finding context"
 msgstr "ignorer des modifications d'espace lors de la recherche de contexte"
 
-#: builtin/apply.c:4568
+#: builtin/apply.c:4570
 msgid "apply the patch in reverse"
 msgstr "appliquer le patch en sens inverse"
 
-#: builtin/apply.c:4570
+#: builtin/apply.c:4572
 msgid "don't expect at least one line of context"
 msgstr "ne pas s'attendre à au moins une ligne de contexte"
 
-#: builtin/apply.c:4572
+#: builtin/apply.c:4574
 msgid "leave the rejected hunks in corresponding *.rej files"
 msgstr "laisser les sections rejetées dans les fichiers *.rej correspondants"
 
-#: builtin/apply.c:4574
+#: builtin/apply.c:4576
 msgid "allow overlapping hunks"
 msgstr "accepter les recouvrements de sections"
 
-#: builtin/apply.c:4577
+#: builtin/apply.c:4579
 msgid "tolerate incorrectly detected missing new-line at the end of file"
 msgstr ""
 "tolérer des erreurs de détection de retours chariot manquants en fin de "
 "fichier"
 
-#: builtin/apply.c:4580
+#: builtin/apply.c:4582
 msgid "do not trust the line counts in the hunk headers"
 msgstr "ne pas se fier au compte de lignes dans les en-têtes de section"
 
-#: builtin/apply.c:4582
+#: builtin/apply.c:4584
 msgid "root"
 msgstr "racine"
 
-#: builtin/apply.c:4583
+#: builtin/apply.c:4585
 msgid "prepend <root> to all filenames"
 msgstr "préfixer tous les noms de fichier avec <root>"
 
-#: builtin/apply.c:4605
+#: builtin/apply.c:4607
 msgid "--3way outside a repository"
 msgstr "--3way hors d'un dépôt"
 
-#: builtin/apply.c:4613
+#: builtin/apply.c:4615
 msgid "--index outside a repository"
 msgstr "--index hors d'un dépôt"
 
-#: builtin/apply.c:4616
+#: builtin/apply.c:4618
 msgid "--cached outside a repository"
 msgstr "--cached hors d'un dépôt"
 
-#: builtin/apply.c:4635
+#: builtin/apply.c:4637
 #, c-format
 msgid "can't open patch '%s'"
 msgstr "ouverture impossible du patch '%s'"
 
-#: builtin/apply.c:4649
+#: builtin/apply.c:4651
 #, c-format
 msgid "squelched %d whitespace error"
 msgid_plural "squelched %d whitespace errors"
 msgstr[0] "%d erreur d'espace ignorée"
 msgstr[1] "%d erreurs d'espace ignorées"
 
-#: builtin/apply.c:4655 builtin/apply.c:4665
+#: builtin/apply.c:4657 builtin/apply.c:4667
 #, c-format
 msgid "%d line adds whitespace errors."
 msgid_plural "%d lines add whitespace errors."
@@ -2917,7 +2919,8 @@ msgstr "git branch [<options>] [-r] (-d | -D) <nom-de-branche>..."
 
 #: builtin/branch.c:27
 msgid "git branch [<options>] (-m | -M) [<old-branch>] <new-branch>"
-msgstr "git branch [<options>] (-m | -M) [<ancienne-branche>] <nouvelle-branche>"
+msgstr ""
+"git branch [<options>] (-m | -M) [<ancienne-branche>] <nouvelle-branche>"
 
 #: builtin/branch.c:152
 #, c-format
@@ -3149,8 +3152,8 @@ msgid "act on remote-tracking branches"
 msgstr "agir sur les branches de suivi distantes"
 
 #: builtin/branch.c:834 builtin/branch.c:840 builtin/branch.c:861
-#: builtin/branch.c:867 builtin/commit.c:1580 builtin/commit.c:1581
-#: builtin/commit.c:1582 builtin/commit.c:1583 builtin/tag.c:616
+#: builtin/branch.c:867 builtin/commit.c:1582 builtin/commit.c:1583
+#: builtin/commit.c:1584 builtin/commit.c:1585 builtin/tag.c:616
 #: builtin/tag.c:622
 msgid "commit"
 msgstr "commit"
@@ -3385,7 +3388,8 @@ msgstr "git check-attr [-a | --all | <attr>...] [--] <chemin>..."
 
 #: builtin/check-attr.c:12
 msgid "git check-attr --stdin [-z] [-a | --all | <attr>...] < <list-of-paths>"
-msgstr "git check-attr --stdin [-z] [-a | --all | <attr>...] < <liste-de-chemins>"
+msgstr ""
+"git check-attr --stdin [-z] [-a | --all | <attr>...] < <liste-de-chemins>"
 
 #: builtin/check-attr.c:19
 msgid "report all attributes set on file"
@@ -3643,7 +3647,8 @@ msgid ""
 " git branch <new-branch-name> %s\n"
 "\n"
 msgstr ""
-"Si vous souhaitez les garder en créant une nouvelle branche, c'est le bon moment\n"
+"Si vous souhaitez les garder en créant une nouvelle branche, c'est le bon "
+"moment\n"
 "pour le faire avec :\n"
 "\n"
 "git branch <nouvelle-branche> %s\n"
@@ -4402,70 +4407,70 @@ msgstr ""
 "Puis \"git cherry-pick --continue\" continuera le picorage \n"
 "des commits restants.\n"
 
-#: builtin/commit.c:302
+#: builtin/commit.c:304
 msgid "failed to unpack HEAD tree object"
 msgstr "échec du dépaquetage de l'objet arbre HEAD"
 
-#: builtin/commit.c:342
+#: builtin/commit.c:344
 msgid "unable to create temporary index"
 msgstr "impossible de créer l'index temporaire"
 
-#: builtin/commit.c:348
+#: builtin/commit.c:350
 msgid "interactive add failed"
 msgstr "échec de l'ajout interactif"
 
-#: builtin/commit.c:359
+#: builtin/commit.c:361
 msgid "unable to write index file"
 msgstr "impossible d'écrire le fichier d'index"
 
-#: builtin/commit.c:361
+#: builtin/commit.c:363
 msgid "unable to update temporary index"
 msgstr "impossible de mettre à jour l'index temporaire"
 
-#: builtin/commit.c:363
+#: builtin/commit.c:365
 msgid "Failed to update main cache tree"
 msgstr "Impossible de mettre à jour l'arbre de cache principal"
 
-#: builtin/commit.c:387 builtin/commit.c:412 builtin/commit.c:461
+#: builtin/commit.c:389 builtin/commit.c:414 builtin/commit.c:463
 msgid "unable to write new_index file"
 msgstr "impossible d'écrire le fichier new_index"
 
-#: builtin/commit.c:443
+#: builtin/commit.c:445
 msgid "cannot do a partial commit during a merge."
 msgstr "impossible de faire une validation partielle pendant une fusion."
 
-#: builtin/commit.c:445
+#: builtin/commit.c:447
 msgid "cannot do a partial commit during a cherry-pick."
 msgstr "impossible de faire une validation partielle pendant un picorage."
 
-#: builtin/commit.c:454
+#: builtin/commit.c:456
 msgid "cannot read the index"
 msgstr "impossible de lire l'index"
 
-#: builtin/commit.c:473
+#: builtin/commit.c:475
 msgid "unable to write temporary index file"
 msgstr "impossible d'écrire le fichier d'index temporaire"
 
-#: builtin/commit.c:578
+#: builtin/commit.c:580
 #, c-format
 msgid "commit '%s' lacks author header"
 msgstr "entête d'auteur manquant dans le commit '%s'"
 
-#: builtin/commit.c:580
+#: builtin/commit.c:582
 #, c-format
 msgid "commit '%s' has malformed author line"
 msgstr "le commit '%s' a une ligne d'auteur malformée"
 
-#: builtin/commit.c:599
+#: builtin/commit.c:601
 msgid "malformed --author parameter"
 msgstr "paramètre --author mal formé"
 
-#: builtin/commit.c:607
+#: builtin/commit.c:609
 #, c-format
 msgid "invalid date format: %s"
 msgstr "format de date invalide : %s"
 
-#: builtin/commit.c:651
+#: builtin/commit.c:653
 msgid ""
 "unable to select a comment character that is not used\n"
 "in the current commit message"
@@ -4473,43 +4478,43 @@ msgstr ""
 "impossible de sélectionner un caractère de commentaire\n"
 "qui n'est pas utilisé dans le message de validation actuel"
 
-#: builtin/commit.c:688 builtin/commit.c:721 builtin/commit.c:1078
+#: builtin/commit.c:690 builtin/commit.c:723 builtin/commit.c:1080
 #, c-format
 msgid "could not lookup commit %s"
 msgstr "impossible de rechercher le commit %s"
 
-#: builtin/commit.c:700 builtin/shortlog.c:273
+#: builtin/commit.c:702 builtin/shortlog.c:273
 #, c-format
 msgid "(reading log message from standard input)\n"
 msgstr "(lecture du message de journal depuis l'entrée standard)\n"
 
-#: builtin/commit.c:702
+#: builtin/commit.c:704
 msgid "could not read log from standard input"
 msgstr "impossible de lire le journal depuis l'entrée standard"
 
-#: builtin/commit.c:706
+#: builtin/commit.c:708
 #, c-format
 msgid "could not read log file '%s'"
 msgstr "impossible de lire le fichier de journal '%s'"
 
-#: builtin/commit.c:728
+#: builtin/commit.c:730
 msgid "could not read MERGE_MSG"
 msgstr "impossible de lire MERGE_MSG"
 
-#: builtin/commit.c:732
+#: builtin/commit.c:734
 msgid "could not read SQUASH_MSG"
 msgstr "impossible de lire SQUASH_MSG"
 
-#: builtin/commit.c:736
+#: builtin/commit.c:738
 #, c-format
 msgid "could not read '%s'"
 msgstr "impossible de lire '%s'"
 
-#: builtin/commit.c:783
+#: builtin/commit.c:785
 msgid "could not write commit template"
 msgstr "impossible d'écrire le modèle de commit"
 
-#: builtin/commit.c:801
+#: builtin/commit.c:803
 #, c-format
 msgid ""
 "\n"
@@ -4524,7 +4529,7 @@ msgstr ""
 "\t%s\n"
 "et essayez à nouveau.\n"
 
-#: builtin/commit.c:806
+#: builtin/commit.c:808
 #, c-format
 msgid ""
 "\n"
@@ -4539,7 +4544,7 @@ msgstr ""
 "\t%s\n"
 "et essayez à nouveau.\n"
 
-#: builtin/commit.c:819
+#: builtin/commit.c:821
 #, c-format
 msgid ""
 "Please enter the commit message for your changes. Lines starting\n"
@@ -4549,7 +4554,7 @@ msgstr ""
 "commençant par '%c' seront ignorées, et un message vide abandonne la "
 "validation.\n"
 
-#: builtin/commit.c:826
+#: builtin/commit.c:828
 #, c-format
 msgid ""
 "Please enter the commit message for your changes. Lines starting\n"
@@ -4560,147 +4565,149 @@ msgstr ""
 "commençant par '%c' seront conservées ; vous pouvez les supprimer vous-même\n"
 "si vous le souhaitez. Un message vide abandonne la validation.\n"
 
-#: builtin/commit.c:846
+#: builtin/commit.c:848
 #, c-format
 msgid "%sAuthor:    %.*s <%.*s>"
 msgstr "%sAuteur :     %.*s <%.*s>"
 
-#: builtin/commit.c:854
+#: builtin/commit.c:856
 #, c-format
 msgid "%sDate:      %s"
 msgstr "%sDate :       %s"
 
-#: builtin/commit.c:861
+#: builtin/commit.c:863
 #, c-format
 msgid "%sCommitter: %.*s <%.*s>"
 msgstr "%sValidateur : %.*s <%.*s>"
 
-#: builtin/commit.c:879
+#: builtin/commit.c:881
 msgid "Cannot read index"
 msgstr "Impossible de lire l'index"
 
-#: builtin/commit.c:936
+#: builtin/commit.c:938
 msgid "Error building trees"
 msgstr "Erreur lors de la construction des arbres"
 
-#: builtin/commit.c:951 builtin/tag.c:495
+#: builtin/commit.c:953 builtin/tag.c:495
 #, c-format
 msgid "Please supply the message using either -m or -F option.\n"
 msgstr "Veuillez fournir le message en utilisant l'option -m ou -F.\n"
 
-#: builtin/commit.c:1053
+#: builtin/commit.c:1055
 #, c-format
 msgid "--author '%s' is not 'Name <email>' and matches no existing author"
-msgstr "--author '%s' n'est pas de la forme 'Nom <email>' ni ne correspond à aucun auteur existant"
+msgstr ""
+"--author '%s' n'est pas de la forme 'Nom <email>' ni ne correspond à aucun "
+"auteur existant"
 
-#: builtin/commit.c:1068 builtin/commit.c:1308
+#: builtin/commit.c:1070 builtin/commit.c:1310
 #, c-format
 msgid "Invalid untracked files mode '%s'"
 msgstr "Mode de fichier non suivi invalide '%s'"
 
-#: builtin/commit.c:1105
+#: builtin/commit.c:1107
 msgid "--long and -z are incompatible"
 msgstr "--long et -z sont incompatibles"
 
-#: builtin/commit.c:1135
+#: builtin/commit.c:1137
 msgid "Using both --reset-author and --author does not make sense"
 msgstr "L'utilisation simultanée de --reset-author et --author n'a pas de sens"
 
-#: builtin/commit.c:1144
+#: builtin/commit.c:1146
 msgid "You have nothing to amend."
 msgstr "Il n'y a rien à corriger."
 
-#: builtin/commit.c:1147
+#: builtin/commit.c:1149
 msgid "You are in the middle of a merge -- cannot amend."
 msgstr "Vous êtes en pleine fusion -- impossible de corriger (amend)."
 
-#: builtin/commit.c:1149
+#: builtin/commit.c:1151
 msgid "You are in the middle of a cherry-pick -- cannot amend."
 msgstr "Vous êtes en plein picorage -- impossible de corriger (amend)."
 
-#: builtin/commit.c:1152
+#: builtin/commit.c:1154
 msgid "Options --squash and --fixup cannot be used together"
 msgstr "Les options --squash et --fixup ne peuvent pas être utilisées ensemble"
 
-#: builtin/commit.c:1162
+#: builtin/commit.c:1164
 msgid "Only one of -c/-C/-F/--fixup can be used."
 msgstr "Une seule option parmi -c/-C/-F/--fixup peut être utilisée."
 
-#: builtin/commit.c:1164
+#: builtin/commit.c:1166
 msgid "Option -m cannot be combined with -c/-C/-F/--fixup."
 msgstr "L'option -m ne peut pas être combinée avec -c/-C/-F/--fixup."
 
-#: builtin/commit.c:1172
+#: builtin/commit.c:1174
 msgid "--reset-author can be used only with -C, -c or --amend."
 msgstr "--reset-author ne peut être utilisé qu'avec -C, -c ou --amend."
 
-#: builtin/commit.c:1189
+#: builtin/commit.c:1191
 msgid "Only one of --include/--only/--all/--interactive/--patch can be used."
 msgstr ""
 "Une seule option parmi --include/--only/--all/--interactive/--patch peut "
 "être utilisée."
 
-#: builtin/commit.c:1191
+#: builtin/commit.c:1193
 msgid "No paths with --include/--only does not make sense."
 msgstr "Aucun chemin avec les options --include/--only n'a pas de sens."
 
-#: builtin/commit.c:1193
+#: builtin/commit.c:1195
 msgid "Clever... amending the last one with dirty index."
 msgstr "Malin... correction du dernier avec un index sale."
 
-#: builtin/commit.c:1195
+#: builtin/commit.c:1197
 msgid "Explicit paths specified without -i or -o; assuming --only paths..."
 msgstr "Chemins explicites spécifiés sans -i ni -o ; --only supposé..."
 
-#: builtin/commit.c:1207 builtin/tag.c:728
+#: builtin/commit.c:1209 builtin/tag.c:728
 #, c-format
 msgid "Invalid cleanup mode %s"
 msgstr "Mode de nettoyage invalide %s"
 
-#: builtin/commit.c:1212
+#: builtin/commit.c:1214
 msgid "Paths with -a does not make sense."
 msgstr "Spécifier des chemins avec l'option -a n'a pas de sens."
 
-#: builtin/commit.c:1322 builtin/commit.c:1602
+#: builtin/commit.c:1324 builtin/commit.c:1604
 msgid "show status concisely"
 msgstr "afficher le statut avec concision"
 
-#: builtin/commit.c:1324 builtin/commit.c:1604
+#: builtin/commit.c:1326 builtin/commit.c:1606
 msgid "show branch information"
 msgstr "afficher l'information de branche"
 
-#: builtin/commit.c:1326 builtin/commit.c:1606 builtin/push.c:509
+#: builtin/commit.c:1328 builtin/commit.c:1608 builtin/push.c:509
 msgid "machine-readable output"
 msgstr "sortie pour traitement automatique"
 
-#: builtin/commit.c:1329 builtin/commit.c:1608
+#: builtin/commit.c:1331 builtin/commit.c:1610
 msgid "show status in long format (default)"
 msgstr "afficher le statut en format long (par défaut)"
 
-#: builtin/commit.c:1332 builtin/commit.c:1611
+#: builtin/commit.c:1334 builtin/commit.c:1613
 msgid "terminate entries with NUL"
 msgstr "terminer les éléments par NUL"
 
-#: builtin/commit.c:1334 builtin/commit.c:1614 builtin/fast-export.c:980
+#: builtin/commit.c:1336 builtin/commit.c:1616 builtin/fast-export.c:980
 #: builtin/fast-export.c:983 builtin/tag.c:603
 msgid "mode"
 msgstr "mode"
 
-#: builtin/commit.c:1335 builtin/commit.c:1614
+#: builtin/commit.c:1337 builtin/commit.c:1616
 msgid "show untracked files, optional modes: all, normal, no. (Default: all)"
 msgstr ""
 "afficher les fichiers non suivis, \"mode\" facultatif : all (tous), normal, "
 "no. (Défaut : all)"
 
-#: builtin/commit.c:1338
+#: builtin/commit.c:1340
 msgid "show ignored files"
 msgstr "afficher les fichiers ignorés"
 
-#: builtin/commit.c:1339 parse-options.h:153
+#: builtin/commit.c:1341 parse-options.h:153
 msgid "when"
 msgstr "quand"
 
-#: builtin/commit.c:1340
+#: builtin/commit.c:1342
 msgid ""
 "ignore changes to submodules, optional when: all, dirty, untracked. "
 "(Default: all)"
@@ -4708,209 +4715,209 @@ msgstr ""
 "ignorer les modifications dans les sous-modules, \"quand\" facultatif : all "
 "(tous), dirty (sale), untracked (non suivi). (Défaut : all)"
 
-#: builtin/commit.c:1342
+#: builtin/commit.c:1344
 msgid "list untracked files in columns"
 msgstr "afficher les fichiers non suivis en colonnes"
 
-#: builtin/commit.c:1429
+#: builtin/commit.c:1431
 msgid "couldn't look up newly created commit"
 msgstr "impossible de retrouver le commit nouvellement créé"
 
-#: builtin/commit.c:1431
+#: builtin/commit.c:1433
 msgid "could not parse newly created commit"
 msgstr "impossible d'analyser le commit nouvellement créé"
 
-#: builtin/commit.c:1476
+#: builtin/commit.c:1478
 msgid "detached HEAD"
 msgstr "HEAD détachée"
 
-#: builtin/commit.c:1479
+#: builtin/commit.c:1481
 msgid " (root-commit)"
 msgstr " (commit racine)"
 
-#: builtin/commit.c:1572
+#: builtin/commit.c:1574
 msgid "suppress summary after successful commit"
 msgstr "supprimer le résumé après une validation réussie"
 
-#: builtin/commit.c:1573
+#: builtin/commit.c:1575
 msgid "show diff in commit message template"
 msgstr "afficher les diff dans le modèle de message de validation"
 
-#: builtin/commit.c:1575
+#: builtin/commit.c:1577
 msgid "Commit message options"
 msgstr "Options du message de validation"
 
-#: builtin/commit.c:1576 builtin/tag.c:601
+#: builtin/commit.c:1578 builtin/tag.c:601
 msgid "read message from file"
 msgstr "lire le message depuis un fichier"
 
-#: builtin/commit.c:1577
+#: builtin/commit.c:1579
 msgid "author"
 msgstr "auteur"
 
-#: builtin/commit.c:1577
+#: builtin/commit.c:1579
 msgid "override author for commit"
 msgstr "remplacer l'auteur pour la validation"
 
-#: builtin/commit.c:1578 builtin/gc.c:275
+#: builtin/commit.c:1580 builtin/gc.c:275
 msgid "date"
 msgstr "date"
 
-#: builtin/commit.c:1578
+#: builtin/commit.c:1580
 msgid "override date for commit"
 msgstr "remplacer la date pour la validation"
 
-#: builtin/commit.c:1579 builtin/merge.c:218 builtin/notes.c:391
+#: builtin/commit.c:1581 builtin/merge.c:218 builtin/notes.c:391
 #: builtin/notes.c:554 builtin/tag.c:599
 msgid "message"
 msgstr "message"
 
-#: builtin/commit.c:1579
+#: builtin/commit.c:1581
 msgid "commit message"
 msgstr "message de validation"
 
-#: builtin/commit.c:1580
+#: builtin/commit.c:1582
 msgid "reuse and edit message from specified commit"
 msgstr "réutiliser et éditer le message du commit spécifié"
 
-#: builtin/commit.c:1581
+#: builtin/commit.c:1583
 msgid "reuse message from specified commit"
 msgstr "réutiliser le message du commit spécifié"
 
-#: builtin/commit.c:1582
+#: builtin/commit.c:1584
 msgid "use autosquash formatted message to fixup specified commit"
 msgstr ""
 "utiliser un message au format autosquash pour corriger le commit spécifié"
 
-#: builtin/commit.c:1583
+#: builtin/commit.c:1585
 msgid "use autosquash formatted message to squash specified commit"
 msgstr ""
 "utiliser un message au format autosquash pour compresser le commit spécifié"
 
-#: builtin/commit.c:1584
+#: builtin/commit.c:1586
 msgid "the commit is authored by me now (used with -C/-c/--amend)"
 msgstr ""
 "à présent je suis l'auteur de la validation (utilisé avec -C/-c/--amend)"
 
-#: builtin/commit.c:1585 builtin/log.c:1191 builtin/revert.c:86
+#: builtin/commit.c:1587 builtin/log.c:1191 builtin/revert.c:86
 msgid "add Signed-off-by:"
 msgstr "ajouter une entrée Signed-off-by :"
 
-#: builtin/commit.c:1586
+#: builtin/commit.c:1588
 msgid "use specified template file"
 msgstr "utiliser le fichier de modèle spécifié"
 
-#: builtin/commit.c:1587
+#: builtin/commit.c:1589
 msgid "force edit of commit"
 msgstr "forcer l'édition du commit"
 
-#: builtin/commit.c:1588
+#: builtin/commit.c:1590
 msgid "default"
 msgstr "défaut"
 
-#: builtin/commit.c:1588 builtin/tag.c:604
+#: builtin/commit.c:1590 builtin/tag.c:604
 msgid "how to strip spaces and #comments from message"
 msgstr "comment éliminer les espaces et les commentaires # du message"
 
-#: builtin/commit.c:1589
+#: builtin/commit.c:1591
 msgid "include status in commit message template"
 msgstr "inclure le statut dans le modèle de message de validation"
 
-#: builtin/commit.c:1590 builtin/merge.c:225 builtin/revert.c:92
+#: builtin/commit.c:1592 builtin/merge.c:225 builtin/revert.c:92
 #: builtin/tag.c:605
 msgid "key-id"
 msgstr "id de clé"
 
-#: builtin/commit.c:1591 builtin/merge.c:226 builtin/revert.c:93
+#: builtin/commit.c:1593 builtin/merge.c:226 builtin/revert.c:93
 msgid "GPG sign commit"
 msgstr "signer la validation avec GPG"
 
-#: builtin/commit.c:1594
+#: builtin/commit.c:1596
 msgid "Commit contents options"
 msgstr "Valider les options des contenus"
 
-#: builtin/commit.c:1595
+#: builtin/commit.c:1597
 msgid "commit all changed files"
 msgstr "valider tous les fichiers modifiés"
 
-#: builtin/commit.c:1596
+#: builtin/commit.c:1598
 msgid "add specified files to index for commit"
 msgstr "ajouter les fichiers spécifiés à l'index pour la validation"
 
-#: builtin/commit.c:1597
+#: builtin/commit.c:1599
 msgid "interactively add files"
 msgstr "ajouter des fichiers en mode interactif"
 
-#: builtin/commit.c:1598
+#: builtin/commit.c:1600
 msgid "interactively add changes"
 msgstr "ajouter les modifications en mode interactif"
 
-#: builtin/commit.c:1599
+#: builtin/commit.c:1601
 msgid "commit only specified files"
 msgstr "valider seulement les fichiers spécifiés"
 
-#: builtin/commit.c:1600
+#: builtin/commit.c:1602
 msgid "bypass pre-commit hook"
 msgstr "éviter d'utiliser le crochet pre-commit"
 
-#: builtin/commit.c:1601
+#: builtin/commit.c:1603
 msgid "show what would be committed"
 msgstr "afficher ce qui serait validé"
 
-#: builtin/commit.c:1612
+#: builtin/commit.c:1614
 msgid "amend previous commit"
 msgstr "corriger la validation précédente"
 
-#: builtin/commit.c:1613
+#: builtin/commit.c:1615
 msgid "bypass post-rewrite hook"
 msgstr "éviter d'utiliser le crochet post-rewrite"
 
-#: builtin/commit.c:1618
+#: builtin/commit.c:1620
 msgid "ok to record an empty change"
 msgstr "accepter d'enregistrer une modification vide"
 
-#: builtin/commit.c:1620
+#: builtin/commit.c:1622
 msgid "ok to record a change with an empty message"
 msgstr "accepter d'enregistrer une modification avec un message vide"
 
-#: builtin/commit.c:1649
+#: builtin/commit.c:1651
 msgid "could not parse HEAD commit"
 msgstr "impossible d'analyser le commit HEAD"
 
-#: builtin/commit.c:1688 builtin/merge.c:519
+#: builtin/commit.c:1690 builtin/merge.c:519
 #, c-format
 msgid "could not open '%s' for reading"
 msgstr "impossible d'ouvrir '%s' en lecture"
 
-#: builtin/commit.c:1695
+#: builtin/commit.c:1697
 #, c-format
 msgid "Corrupt MERGE_HEAD file (%s)"
 msgstr "Fichier MERGE_HEAD corrompu (%s)"
 
-#: builtin/commit.c:1702
+#: builtin/commit.c:1704
 msgid "could not read MERGE_MODE"
 msgstr "impossible de lire MERGE_MODE"
 
-#: builtin/commit.c:1721
+#: builtin/commit.c:1723
 #, c-format
 msgid "could not read commit message: %s"
 msgstr "impossible de lire le message de validation : %s"
 
-#: builtin/commit.c:1732
+#: builtin/commit.c:1734
 #, c-format
 msgid "Aborting commit; you did not edit the message.\n"
 msgstr "Abandon de la validation ; vous n'avez pas édité le message\n"
 
-#: builtin/commit.c:1737
+#: builtin/commit.c:1739
 #, c-format
 msgid "Aborting commit due to empty commit message.\n"
 msgstr "Abandon de la validation du à un message de validation vide\n"
 
-#: builtin/commit.c:1752 builtin/merge.c:851 builtin/merge.c:876
+#: builtin/commit.c:1754 builtin/merge.c:851 builtin/merge.c:876
 msgid "failed to write commit object"
 msgstr "échec de l'écriture de l'objet commit"
 
-#: builtin/commit.c:1785
+#: builtin/commit.c:1787
 msgid ""
 "Repository has been updated, but unable to write\n"
 "new_index file. Check that disk is not full and quota is\n"
@@ -5573,7 +5580,8 @@ msgstr ""
 #: builtin/fmt-merge-msg.c:13
 msgid ""
 "git fmt-merge-msg [-m <message>] [--log[=<n>] | --no-log] [--file <file>]"
-msgstr "git fmt-merge-msg [-m <message>] [--log[=<n>] | --no-log] [--file <fichier>]"
+msgstr ""
+"git fmt-merge-msg [-m <message>] [--log[=<n>] | --no-log] [--file <fichier>]"
 
 #: builtin/fmt-merge-msg.c:662 builtin/fmt-merge-msg.c:665 builtin/grep.c:698
 #: builtin/merge.c:198 builtin/repack.c:178 builtin/repack.c:182
@@ -6005,7 +6013,9 @@ msgstr "--cached et des arbres sont fournis en même temps."
 msgid ""
 "git hash-object [-t <type>] [-w] [--path=<file> | --no-filters] [--stdin] "
 "[--] <file>..."
-msgstr "git hash-object [-t <type>] [-w] [--path=<fichier> | --no-filters] [--stdin] [--] <fichier>..."
+msgstr ""
+"git hash-object [-t <type>] [-w] [--path=<fichier> | --no-filters] [--stdin] "
+"[--] <fichier>..."
 
 #: builtin/hash-object.c:83
 msgid "git hash-object  --stdin-paths < <list-of-paths>"
@@ -6566,7 +6576,9 @@ msgstr " partagé"
 msgid ""
 "git init [-q | --quiet] [--bare] [--template=<template-directory>] [--"
 "shared[=<permissions>]] [<directory>]"
-msgstr "git init [-q | --quiet] [--bare] [--template=<répertoire-modèle>] [--shared[=<permissions>]] [<répertoire>]"
+msgstr ""
+"git init [-q | --quiet] [--bare] [--template=<répertoire-modèle>] [--"
+"shared[=<permissions>]] [<répertoire>]"
 
 #: builtin/init-db.c:498
 msgid "permissions"
@@ -7446,7 +7458,9 @@ msgstr "trouver où <validation> a divergé du reflog de <référence>"
 msgid ""
 "git merge-file [<options>] [-L <name1> [-L <orig> [-L <name2>]]] <file1> "
 "<orig-file> <file2>"
-msgstr "git merge-file [<options>] [-L <nom1> [-L <orig> [-L <nom2>]]] <fichier1> <fichier-orig> <fichier2>"
+msgstr ""
+"git merge-file [<options>] [-L <nom1> [-L <orig> [-L <nom2>]]] <fichier1> "
+"<fichier-orig> <fichier2>"
 
 #: builtin/merge-file.c:33
 msgid "send results to standard output"
@@ -7639,17 +7653,22 @@ msgstr "git notes [--ref <références-notes>] [list [<object>]]"
 msgid ""
 "git notes [--ref <notes-ref>] add [-f] [--allow-empty] [-m <msg> | -F <file> "
 "| (-c | -C) <object>] [<object>]"
-msgstr "git notes [--ref <références-notes>] add [-f] [--allow-empty] [-m <message> | -F <fichier> | (-c | -C) <objet>] [<objet>]"
+msgstr ""
+"git notes [--ref <références-notes>] add [-f] [--allow-empty] [-m <message> "
+"| -F <fichier> | (-c | -C) <objet>] [<objet>]"
 
 #: builtin/notes.c:26
 msgid "git notes [--ref <notes-ref>] copy [-f] <from-object> <to-object>"
-msgstr "git notes [--ref <références-notes>] copy [-f] <depuis-objet> <vers-objet>"
+msgstr ""
+"git notes [--ref <références-notes>] copy [-f] <depuis-objet> <vers-objet>"
 
 #: builtin/notes.c:27
 msgid ""
 "git notes [--ref <notes-ref>] append [--allow-empty] [-m <msg> | -F <file> | "
 "(-c | -C) <object>] [<object>]"
-msgstr "git notes [--ref <références-notes>] append [--allow-empty] [-m <message> | -F <fichier> | (-c | -C) <objet>] [<objet>]"
+msgstr ""
+"git notes [--ref <références-notes>] append [--allow-empty] [-m <message> | -"
+"F <fichier> | (-c | -C) <objet>] [<objet>]"
 
 #: builtin/notes.c:28
 msgid "git notes [--ref <notes-ref>] edit [--allow-empty] [<object>]"
@@ -7662,7 +7681,9 @@ msgstr "git notes [--ref <références-notes>] show [<objet>]"
 #: builtin/notes.c:30
 msgid ""
 "git notes [--ref <notes-ref>] merge [-v | -q] [-s <strategy>] <notes-ref>"
-msgstr "git notes [--ref <références-notes>] merge [-v | -q] [-s <stratégie> ] <références-notes>"
+msgstr ""
+"git notes [--ref <références-notes>] merge [-v | -q] [-s <stratégie> ] "
+"<références-notes>"
 
 #: builtin/notes.c:31
 msgid "git notes merge --commit [-v | -q]"
@@ -8636,7 +8657,9 @@ msgstr "git remote [-v | --verbose]"
 msgid ""
 "git remote add [-t <branch>] [-m <master>] [-f] [--tags | --no-tags] [--"
 "mirror=<fetch|push>] <name> <url>"
-msgstr "git remote add [-t <branche>] [-m <master>] [-f] [--tags | --no-tags] [--mirror=<fetch|push>] <nom> <url>"
+msgstr ""
+"git remote add [-t <branche>] [-m <master>] [-f] [--tags | --no-tags] [--"
+"mirror=<fetch|push>] <nom> <url>"
 
 #: builtin/remote.c:14 builtin/remote.c:33
 msgid "git remote rename <old> <new>"
@@ -9289,7 +9312,8 @@ msgstr "utiliser ce format"
 
 #: builtin/rerere.c:12
 msgid "git rerere [clear | forget <path>... | status | remaining | diff | gc]"
-msgstr "git rerere [clear | forget <chemin>... | status | remaining | diff | gc]"
+msgstr ""
+"git rerere [clear | forget <chemin>... | status | remaining | diff | gc]"
 
 #: builtin/rerere.c:57
 msgid "register clean resolutions in index"
@@ -9458,7 +9482,8 @@ msgstr ""
 "   ou : git rev-parse --sq-quote [<argument>...]\n"
 "   ou : git rev-parse [options] [<argument>...]\n"
 "\n"
-"Lancez \"git rev-parse --parseopt -h\" pour plus d'information sur l'utilisation principale."
+"Lancez \"git rev-parse --parseopt -h\" pour plus d'information sur "
+"l'utilisation principale."
 
 #: builtin/revert.c:22
 msgid "git revert [<options>] <commit-ish>..."
@@ -9771,7 +9796,9 @@ msgstr ""
 msgid ""
 "git show-ref [-q | --quiet] [--verify] [--head] [-d | --dereference] [-s | --"
 "hash[=<n>]] [--abbrev[=<n>]] [--tags] [--heads] [--] [<pattern>...]"
-msgstr "git show-ref [-q | --quiet] [--verify] [--head] [-d | --dereference] [-s | --hash[=<n>]] [--abbrev[=<n>]] [--tags] [--heads] [--] [<motif>...]"
+msgstr ""
+"git show-ref [-q | --quiet] [--verify] [--head] [-d | --dereference] [-s | --"
+"hash[=<n>]] [--abbrev[=<n>]] [--tags] [--heads] [--] [<motif>...]"
 
 #: builtin/show-ref.c:11
 msgid "git show-ref --exclude-existing[=pattern] < ref-list"
@@ -9847,7 +9874,9 @@ msgstr "raison de la mise à jour"
 msgid ""
 "git tag [-a | -s | -u <key-id>] [-f] [-m <msg> | -F <file>] <tagname> "
 "[<head>]"
-msgstr "git tag [-a | -s | -u <id-clé>] [-f] [-m <message> | -F <file>] <nom-étiquette> [<head>]"
+msgstr ""
+"git tag [-a | -s | -u <id-clé>] [-f] [-m <message> | -F <file>] <nom-"
+"étiquette> [<head>]"
 
 #: builtin/tag.c:23
 msgid "git tag -d <tagname>..."
@@ -10073,119 +10102,119 @@ msgstr "Dépaquetage des objets"
 msgid "git update-index [<options>] [--] [<file>...]"
 msgstr "git update-index [<options>] [--] [<fichier>...]"
 
-#: builtin/update-index.c:756
+#: builtin/update-index.c:757
 msgid "continue refresh even when index needs update"
 msgstr "continuer de rafraîchir même si l'index a besoin d'une mise à jour"
 
-#: builtin/update-index.c:759
+#: builtin/update-index.c:760
 msgid "refresh: ignore submodules"
 msgstr "rafraîchir : ignorer les sous-modules"
 
-#: builtin/update-index.c:762
+#: builtin/update-index.c:763
 msgid "do not ignore new files"
 msgstr "ne pas ignorer les nouveaux fichiers"
 
-#: builtin/update-index.c:764
+#: builtin/update-index.c:765
 msgid "let files replace directories and vice-versa"
 msgstr "laisser les fichiers remplacer des répertoires et vice-versa"
 
-#: builtin/update-index.c:766
+#: builtin/update-index.c:767
 msgid "notice files missing from worktree"
 msgstr "aviser des fichiers manquants dans la copie de travail"
 
-#: builtin/update-index.c:768
+#: builtin/update-index.c:769
 msgid "refresh even if index contains unmerged entries"
 msgstr "rafraîchir même si l'index contient des éléments non fusionnés"
 
-#: builtin/update-index.c:771
+#: builtin/update-index.c:772
 msgid "refresh stat information"
 msgstr "rafraîchir l'information de stat"
 
-#: builtin/update-index.c:775
+#: builtin/update-index.c:776
 msgid "like --refresh, but ignore assume-unchanged setting"
 msgstr "comme --refresh, mais en ignorant l'option assume-unchanged"
 
-#: builtin/update-index.c:779
+#: builtin/update-index.c:780
 msgid "<mode>,<object>,<path>"
 msgstr "<mode>, <objet>, <chemin>"
 
-#: builtin/update-index.c:780
+#: builtin/update-index.c:781
 msgid "add the specified entry to the index"
 msgstr "ajouter l'élément spécifié dans l'index"
 
-#: builtin/update-index.c:784
+#: builtin/update-index.c:785
 msgid "(+/-)x"
 msgstr "(+/-)x"
 
-#: builtin/update-index.c:785
+#: builtin/update-index.c:786
 msgid "override the executable bit of the listed files"
 msgstr "outrepasser le bit exécutable pour les fichiers listés"
 
-#: builtin/update-index.c:789
+#: builtin/update-index.c:790
 msgid "mark files as \"not changing\""
 msgstr "marquer les fichiers comme \"non changeants\""
 
-#: builtin/update-index.c:792
+#: builtin/update-index.c:793
 msgid "clear assumed-unchanged bit"
 msgstr "mettre à zéro le bit supposé-non-modifié"
 
-#: builtin/update-index.c:795
+#: builtin/update-index.c:796
 msgid "mark files as \"index-only\""
 msgstr "marquer les fichiers comme \"index seulement\""
 
-#: builtin/update-index.c:798
+#: builtin/update-index.c:799
 msgid "clear skip-worktree bit"
 msgstr "mettre à zéro le bit sauter-la-copie-de travail"
 
-#: builtin/update-index.c:801
+#: builtin/update-index.c:802
 msgid "add to index only; do not add content to object database"
 msgstr ""
 "ajouter seulement à l'index ; ne pas ajouter le contenu dans la base de "
 "données des objets"
 
-#: builtin/update-index.c:803
+#: builtin/update-index.c:804
 msgid "remove named paths even if present in worktree"
 msgstr ""
 "supprimer les chemins nommés même s'ils sont présents dans la copie de "
 "travail"
 
-#: builtin/update-index.c:805
+#: builtin/update-index.c:806
 msgid "with --stdin: input lines are terminated by null bytes"
 msgstr "avec --stdin : les lignes en entrée sont terminées par des octets nuls"
 
-#: builtin/update-index.c:807
+#: builtin/update-index.c:808
 msgid "read list of paths to be updated from standard input"
 msgstr "lire la liste des chemins à mettre à jour depuis l'entrée standard"
 
-#: builtin/update-index.c:811
+#: builtin/update-index.c:812
 msgid "add entries from standard input to the index"
 msgstr "ajouter les éléments depuis l'entrée standard à l'index"
 
-#: builtin/update-index.c:815
+#: builtin/update-index.c:816
 msgid "repopulate stages #2 and #3 for the listed paths"
 msgstr "repeupler les étapes n°2 et n°3 pour les chemins listés"
 
-#: builtin/update-index.c:819
+#: builtin/update-index.c:820
 msgid "only update entries that differ from HEAD"
 msgstr "mettre à jour seulement les éléments qui diffèrent de HEAD"
 
-#: builtin/update-index.c:823
+#: builtin/update-index.c:824
 msgid "ignore files missing from worktree"
 msgstr "ignorer les fichiers manquants dans la copie de travail"
 
-#: builtin/update-index.c:826
+#: builtin/update-index.c:827
 msgid "report actions to standard output"
 msgstr "afficher les actions sur la sortie standard"
 
-#: builtin/update-index.c:828
+#: builtin/update-index.c:829
 msgid "(for porcelains) forget saved unresolved conflicts"
 msgstr "(pour porcelaines) oublier les conflits sauvés et non résolus"
 
-#: builtin/update-index.c:832
+#: builtin/update-index.c:833
 msgid "write index in this format"
 msgstr "écrire l'index dans ce format"
 
-#: builtin/update-index.c:834
+#: builtin/update-index.c:835
 msgid "enable or disable split index"
 msgstr "activer ou désactiver l'index divisé"
 
@@ -10195,7 +10224,9 @@ msgstr "git update-ref [<options>] -d <nom-référence> [<ancienne-valeur>]"
 
 #: builtin/update-ref.c:10
 msgid "git update-ref [<options>]    <refname> <new-val> [<old-val>]"
-msgstr "git update-ref [<options>]    <nom-référence> <nouvelle-valeur> [<ancienne-valeur>]"
+msgstr ""
+"git update-ref [<options>]    <nom-référence> <nouvelle-valeur> [<ancienne-"
+"valeur>]"
 
 #: builtin/update-ref.c:11
 msgid "git update-ref [<options>] --stdin [-z]"
@@ -10609,7 +10640,9 @@ msgstr "Mauvaise HEAD - j'ai besoin d'une HEAD"
 #, sh-format
 msgid ""
 "Checking out '$start_head' failed. Try 'git bisect reset <valid-branch>'."
-msgstr "L'extraction de '$start_head' a échoué. Essayez 'git bisect reset <branche-valide>'."
+msgstr ""
+"L'extraction de '$start_head' a échoué. Essayez 'git bisect reset <branche-"
+"valide>'."
 
 #: git-bisect.sh:140
 msgid "won't bisect on cg-seek'ed tree"
@@ -11386,6 +11419,9 @@ msgstr "Échec de parcours dans le chemin du sous-module '$sm_path'"
 #, sh-format
 msgid "Synchronizing submodule url for '$displaypath'"
 msgstr "Synchronisation de l'URL sous-module pour '$displaypath'"
+
+#~ msgid "server does not support --atomic push"
+#~ msgstr "le serveur ne gère pas push --atomic"
 
 #~ msgid "(detached from %s)"
 #~ msgstr "(détaché de %s)"
