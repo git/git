@@ -35,7 +35,7 @@ test_expect_success 'edit with lock not taken' '
 	)
 '
 
-test_expect_failure 'add with lock not taken' '
+test_expect_success 'add with lock not taken' '
 	test_when_finished cleanup_git &&
 	git p4 clone --dest="$git" //depot &&
 	(
@@ -107,7 +107,7 @@ test_expect_failure 'chmod with lock taken' '
 	)
 '
 
-test_expect_failure 'copy with lock taken' '
+test_expect_success 'copy with lock taken' '
 	lock_in_another_client &&
 	test_when_finished cleanup_git &&
 	test_when_finished "cd \"$cli\" && p4 revert file2 && rm -f file2" &&
