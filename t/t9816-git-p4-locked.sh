@@ -130,8 +130,8 @@ test_expect_failure 'move with lock taken' '
 	git p4 clone --dest="$git" //depot &&
 	(
 		cd "$git" &&
-		git mv file1 file2 &&
-		git commit -m "mv file1 to file2" &&
+		git mv file1 file3 &&
+		git commit -m "mv file1 to file3" &&
 		git config git-p4.skipSubmitEdit true &&
 		git config git-p4.detectRenames true &&
 		git p4 submit --verbose
