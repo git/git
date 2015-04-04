@@ -41,7 +41,7 @@ test_expect_failure 'add with lock not taken' '
 	(
 		cd "$git" &&
 		echo line1 >>add-lock-not-taken &&
-		git add file2 &&
+		git add add-lock-not-taken &&
 		git commit -m "add add-lock-not-taken" &&
 		git config git-p4.skipSubmitEdit true &&
 		git p4 submit --verbose
