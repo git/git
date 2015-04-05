@@ -132,6 +132,9 @@ test_expect_success 'detect copies' '
 		cd "$git" &&
 		git config git-p4.skipSubmitEdit true &&
 
+		echo "file8" >>file2 &&
+		git commit -a -m "Differentiate file2" &&
+		git p4 submit &&
 		cp file2 file8 &&
 		git add file8 &&
 		git commit -a -m "Copy file2 to file8" &&
@@ -139,6 +142,10 @@ test_expect_success 'detect copies' '
 		git p4 submit &&
 		p4 filelog //depot/file8 &&
 		p4 filelog //depot/file8 | test_must_fail grep -q "branch from" &&
+
+		echo "file9" >>file2 &&
+		git commit -a -m "Differentiate file2" &&
+		git p4 submit &&
 
 		cp file2 file9 &&
 		git add file9 &&
@@ -149,28 +156,39 @@ test_expect_success 'detect copies' '
 		p4 filelog //depot/file9 &&
 		p4 filelog //depot/file9 | test_must_fail grep -q "branch from" &&
 
+		echo "file10" >>file2 &&
+		git commit -a -m "Differentiate file2" &&
+		git p4 submit &&
+
 		echo "file2" >>file2 &&
 		cp file2 file10 &&
 		git add file2 file10 &&
 		git commit -a -m "Modify and copy file2 to file10" &&
 		git diff-tree -r -C HEAD &&
+		src=$(git diff-tree -r -C HEAD | sed 1d | sed 2d | cut -f2) &&
+		test "$src" = file2 &&
 		git p4 submit &&
 		p4 filelog //depot/file10 &&
-		p4 filelog //depot/file10 | grep -q "branch from //depot/file" &&
+		p4 filelog //depot/file10 | grep -q "branch from //depot/file2" &&
+
+		echo "file11" >>file2 &&
+		git commit -a -m "Differentiate file2" &&
+		git p4 submit &&
 
 		cp file2 file11 &&
 		git add file11 &&
 		git commit -a -m "Copy file2 to file11" &&
 		git diff-tree -r -C --find-copies-harder HEAD &&
 		src=$(git diff-tree -r -C --find-copies-harder HEAD | sed 1d | cut -f2) &&
-		case "$src" in
-		file2 | file10) : ;; # happy
-		*) false ;; # not
-		esac &&
+		test "$src" = file2 &&
 		git config git-p4.detectCopiesHarder true &&
 		git p4 submit &&
 		p4 filelog //depot/file11 &&
-		p4 filelog //depot/file11 | grep -q "branch from //depot/file" &&
+		p4 filelog //depot/file11 | grep -q "branch from //depot/file2" &&
+
+		echo "file12" >>file2 &&
+		git commit -a -m "Differentiate file2" &&
+		git p4 submit &&
 
 		cp file2 file12 &&
 		echo "some text" >>file12 &&
@@ -180,14 +198,15 @@ test_expect_success 'detect copies' '
 		level=$(git diff-tree -r -C --find-copies-harder HEAD | sed 1d | cut -f1 | cut -d" " -f5 | sed "s/C0*//") &&
 		test -n "$level" && test "$level" -gt 0 && test "$level" -lt 98 &&
 		src=$(git diff-tree -r -C --find-copies-harder HEAD | sed 1d | cut -f2) &&
-		case "$src" in
-		file10 | file11) : ;; # happy
-		*) false ;; # not
-		esac &&
+		test "$src" = file2 &&
 		git config git-p4.detectCopies $(($level + 2)) &&
 		git p4 submit &&
 		p4 filelog //depot/file12 &&
 		p4 filelog //depot/file12 | test_must_fail grep -q "branch from" &&
+
+		echo "file13" >>file2 &&
+		git commit -a -m "Differentiate file2" &&
+		git p4 submit &&
 
 		cp file2 file13 &&
 		echo "different text" >>file13 &&
@@ -197,14 +216,11 @@ test_expect_success 'detect copies' '
 		level=$(git diff-tree -r -C --find-copies-harder HEAD | sed 1d | cut -f1 | cut -d" " -f5 | sed "s/C0*//") &&
 		test -n "$level" && test "$level" -gt 2 && test "$level" -lt 100 &&
 		src=$(git diff-tree -r -C --find-copies-harder HEAD | sed 1d | cut -f2) &&
-		case "$src" in
-		file10 | file11 | file12) : ;; # happy
-		*) false ;; # not
-		esac &&
+		test "$src" = file2 &&
 		git config git-p4.detectCopies $(($level - 2)) &&
 		git p4 submit &&
 		p4 filelog //depot/file13 &&
-		p4 filelog //depot/file13 | grep -q "branch from //depot/file"
+		p4 filelog //depot/file13 | grep -q "branch from //depot/file2"
 	)
 '
 
