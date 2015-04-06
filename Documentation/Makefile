@@ -279,9 +279,9 @@ docdep_prereqs = \
 	cmd-list.made $(cmds_txt)
 
 doc.dep : $(docdep_prereqs) $(wildcard *.txt) build-docdep.perl
-	$(QUIET_GEN)$(RM) $@+ $@ && \
-	$(PERL_PATH) ./build-docdep.perl >$@+ $(QUIET_STDERR) && \
-	mv $@+ $@
+	$(QUIET_GEN)$(RM) $@.new $@ && \
+	$(PERL_PATH) ./build-docdep.perl >$@.new $(QUIET_STDERR) && \
+	mv $@.new $@
 
 -include doc.dep
 
@@ -317,8 +317,8 @@ mergetools-list.made: ../git-mergetool--lib.sh $(wildcard ../mergetools/*)
 	date >$@
 
 clean:
-	$(RM) *.xml *.xml+ *.html *.html+ *.1 *.5 *.7
-	$(RM) *.texi *.texi+ *.texi++ git.info gitman.info
+	$(RM) *.xml *.xml.new *.html *.html.new *.1 *.5 *.7
+	$(RM) *.texi *.texi.new *.texi.new.new git.info gitman.info
 	$(RM) *.pdf
 	$(RM) howto-index.txt howto/*.html doc.dep
 	$(RM) technical/*.html technical/api-index.txt
@@ -326,14 +326,14 @@ clean:
 	$(RM) manpage-base-url.xsl
 
 $(MAN_HTML): %.html : %.txt asciidoc.conf
-	$(QUIET_ASCIIDOC)$(RM) $@+ $@ && \
-	$(TXT_TO_HTML) -d manpage -o $@+ $< && \
-	mv $@+ $@
+	$(QUIET_ASCIIDOC)$(RM) $@.new $@ && \
+	$(TXT_TO_HTML) -d manpage -o $@.new $< && \
+	mv $@.new $@
 
 $(OBSOLETE_HTML): %.html : %.txto asciidoc.conf
-	$(QUIET_ASCIIDOC)$(RM) $@+ $@ && \
-	$(TXT_TO_HTML) -o $@+ $< && \
-	mv $@+ $@
+	$(QUIET_ASCIIDOC)$(RM) $@.new $@ && \
+	$(TXT_TO_HTML) -o $@.new $< && \
+	mv $@.new $@
 
 manpage-base-url.xsl: manpage-base-url.xsl.in
 	sed "s|@@MAN_BASE_URL@@|$(MAN_BASE_URL)|" $< > $@
@@ -343,14 +343,14 @@ manpage-base-url.xsl: manpage-base-url.xsl.in
 	$(XMLTO) -m $(MANPAGE_XSL) $(XMLTO_EXTRA) man $<
 
 %.xml : %.txt asciidoc.conf
-	$(QUIET_ASCIIDOC)$(RM) $@+ $@ && \
-	$(TXT_TO_XML) -d manpage -o $@+ $< && \
-	mv $@+ $@
+	$(QUIET_ASCIIDOC)$(RM) $@.new $@ && \
+	$(TXT_TO_XML) -d manpage -o $@.new $< && \
+	mv $@.new $@
 
 user-manual.xml: user-manual.txt user-manual.conf
-	$(QUIET_ASCIIDOC)$(RM) $@+ $@ && \
-	$(TXT_TO_XML) -d book -o $@+ $< && \
-	mv $@+ $@
+	$(QUIET_ASCIIDOC)$(RM) $@.new $@ && \
+	$(TXT_TO_XML) -d book -o $@.new $< && \
+	mv $@.new $@
 
 technical/api-index.txt: technical/api-index-skel.txt \
 	technical/api-index.sh $(patsubst %,%.txt,$(API_DOCS))
@@ -364,46 +364,46 @@ XSLT = docbook.xsl
 XSLTOPTS = --xinclude --stringparam html.stylesheet docbook-xsl.css
 
 user-manual.html: user-manual.xml $(XSLT)
-	$(QUIET_XSLTPROC)$(RM) $@+ $@ && \
-	xsltproc $(XSLTOPTS) -o $@+ $(XSLT) $< && \
-	mv $@+ $@
+	$(QUIET_XSLTPROC)$(RM) $@.new $@ && \
+	xsltproc $(XSLTOPTS) -o $@.new $(XSLT) $< && \
+	mv $@.new $@
 
 git.info: user-manual.texi
 	$(QUIET_MAKEINFO)$(MAKEINFO) --no-split -o $@ user-manual.texi
 
 user-manual.texi: user-manual.xml
-	$(QUIET_DB2TEXI)$(RM) $@+ $@ && \
-	$(DOCBOOK2X_TEXI) user-manual.xml --encoding=UTF-8 --to-stdout >$@++ && \
-	$(PERL_PATH) fix-texi.perl <$@++ >$@+ && \
-	rm $@++ && \
-	mv $@+ $@
+	$(QUIET_DB2TEXI)$(RM) $@.new $@ && \
+	$(DOCBOOK2X_TEXI) user-manual.xml --encoding=UTF-8 --to-stdout >$@.new.new && \
+	$(PERL_PATH) fix-texi.perl <$@.new.new >$@.new && \
+	rm $@.new.new && \
+	mv $@.new $@
 
 user-manual.pdf: user-manual.xml
-	$(QUIET_DBLATEX)$(RM) $@+ $@ && \
-	$(DBLATEX) -o $@+ $(DBLATEX_COMMON) $< && \
-	mv $@+ $@
+	$(QUIET_DBLATEX)$(RM) $@.new $@ && \
+	$(DBLATEX) -o $@.new $(DBLATEX_COMMON) $< && \
+	mv $@.new $@
 
 gitman.texi: $(MAN_XML) cat-texi.perl texi.xsl
-	$(QUIET_DB2TEXI)$(RM) $@+ $@ && \
-	($(foreach xml,$(sort $(MAN_XML)),xsltproc -o $(xml)+ texi.xsl $(xml) && \
-		$(DOCBOOK2X_TEXI) --encoding=UTF-8 --to-stdout $(xml)+ && \
-		rm $(xml)+ &&) true) > $@++ && \
-	$(PERL_PATH) cat-texi.perl $@ <$@++ >$@+ && \
-	rm $@++ && \
-	mv $@+ $@
+	$(QUIET_DB2TEXI)$(RM) $@.new $@ && \
+	($(foreach xml,$(sort $(MAN_XML)),xsltproc -o $(xml).new texi.xsl $(xml) && \
+		$(DOCBOOK2X_TEXI) --encoding=UTF-8 --to-stdout $(xml).new && \
+		rm $(xml).new &&) true) > $@.new.new && \
+	$(PERL_PATH) cat-texi.perl $@ <$@.new.new >$@.new && \
+	rm $@.new.new && \
+	mv $@.new $@
 
 gitman.info: gitman.texi
 	$(QUIET_MAKEINFO)$(MAKEINFO) --no-split --no-validate $*.texi
 
 $(patsubst %.txt,%.texi,$(MAN_TXT)): %.texi : %.xml
-	$(QUIET_DB2TEXI)$(RM) $@+ $@ && \
-	$(DOCBOOK2X_TEXI) --to-stdout $*.xml >$@+ && \
-	mv $@+ $@
+	$(QUIET_DB2TEXI)$(RM) $@.new $@ && \
+	$(DOCBOOK2X_TEXI) --to-stdout $*.xml >$@.new && \
+	mv $@.new $@
 
 howto-index.txt: howto-index.sh $(wildcard howto/*.txt)
-	$(QUIET_GEN)$(RM) $@+ $@ && \
-	'$(SHELL_PATH_SQ)' ./howto-index.sh $(sort $(wildcard howto/*.txt)) >$@+ && \
-	mv $@+ $@
+	$(QUIET_GEN)$(RM) $@.new $@ && \
+	'$(SHELL_PATH_SQ)' ./howto-index.sh $(sort $(wildcard howto/*.txt)) >$@.new && \
+	mv $@.new $@
 
 $(patsubst %,%.html,$(ARTICLES)) : %.html : %.txt
 	$(QUIET_ASCIIDOC)$(TXT_TO_HTML) $*.txt
@@ -412,10 +412,10 @@ WEBDOC_DEST = /pub/software/scm/git/docs
 
 howto/%.html: ASCIIDOC_EXTRA += -a git-relative-html-prefix=../
 $(patsubst %.txt,%.html,$(wildcard howto/*.txt)): %.html : %.txt
-	$(QUIET_ASCIIDOC)$(RM) $@+ $@ && \
+	$(QUIET_ASCIIDOC)$(RM) $@.new $@ && \
 	sed -e '1,/^$$/d' $< | \
-	$(TXT_TO_HTML) - >$@+ && \
-	mv $@+ $@
+	$(TXT_TO_HTML) - >$@.new && \
+	mv $@.new $@
 
 install-webdoc : html
 	'$(SHELL_PATH_SQ)' ./install-webdoc.sh $(WEBDOC_DEST)
