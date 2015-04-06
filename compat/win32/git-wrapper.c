@@ -48,10 +48,6 @@ static void setup_environment(LPWSTR exepath, int full_path)
 		L"MINGW%d", (int) sizeof(void *) * 8);
 	SetEnvironmentVariable(L"MSYSTEM", msystem);
 
-	/* if not set, set TERM to cygwin */
-	if (!GetEnvironmentVariable(L"TERM", NULL, 0))
-		SetEnvironmentVariable(L"TERM", L"cygwin");
-
 	/* if not set, set PLINK_PROTOCOL to ssh */
 	if (!GetEnvironmentVariable(L"PLINK_PROTOCOL", NULL, 0))
 		SetEnvironmentVariable(L"PLINK_PROTOCOL", L"ssh");
