@@ -2228,14 +2228,30 @@ int handle_long_path(wchar_t *path, int len, int max_path, int expand)
 
 static void setup_windows_environment()
 {
+	char *tmp;
+
 	/* on Windows it is TMP and TEMP */
 	if (!getenv("TMPDIR")) {
-		const char *tmp = getenv("TMP");
-		if (!tmp)
+		if (!(tmp = getenv("TMP")))
 			tmp = getenv("TEMP");
 		if (tmp)
 			setenv("TMPDIR", tmp, 1);
 	}
+
+	if ((tmp = getenv("TMPDIR"))) {
+		/*
+		 * Convert all dir separators to forward slashes,
+		 * to help shell commands called from the Git
+		 * executable (by not mistaking the dir separators
+		 * for escape characters).
+		 */
+		for (; *tmp; tmp++)
+			if (*tmp == '\\')
+				*tmp = '/';
+	}
+
+	if (!getenv("TZ") && (tmp = getenv("MSYS2_TZ")))
+		setenv("TZ", tmp, 1);
 
 	/* simulate TERM to enable auto-color (see color.c) */
 	if (!getenv("TERM"))
@@ -2311,26 +2327,8 @@ void mingw_startup()
 	__argv[0] = wcstoutfdup_startup(buffer, _wpgmptr, maxlen);
 	for (i = 1; i < argc; i++)
 		__argv[i] = wcstoutfdup_startup(buffer, wargv[i], maxlen);
-	for (i = 0; wenv[i]; i++) {
+	for (i = 0; wenv[i]; i++)
 		environ[i] = wcstoutfdup_startup(buffer, wenv[i], maxlen);
-		if (!strncasecmp(environ[i], "MSYS2_TZ=", 9)) {
-			char *to_free = environ[i];
-			environ[i] = xstrdup(to_free + 6);
-			free(to_free);
-		}
-		if (!strncasecmp(environ[i], "TMP=", 4)) {
-			/*
-			 * Convert all dir separators to forward slashes,
-			 * to help shell commands called from the Git
-			 * executable (by not mistaking the dir separators
-			 * for escape characters).
-			 */
-			char *p;
-			for (p = environ[i]; *p; p++)
-				if (*p == '\\')
-					*p = '/';
-		}
-	}
 	environ[i] = NULL;
 	free(buffer);
 
