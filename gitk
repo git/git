@@ -4036,6 +4036,19 @@ proc shellsplit {str} {
     return $l
 }
 
+proc set_window_title {} {
+    global appname curview viewname vrevs
+    set rev [mc "All files"]
+    if {$curview ne 0} {
+	if {$viewname($curview) eq [mc "Command line"]} {
+	    set rev [string map {"--gitk-symmetric-diff-marker" "--merge"} $vrevs($curview)]
+	} else {
+	    set rev $viewname($curview)
+	}
+    }
+    wm title . "[reponame]: $rev - $appname"
+}
+
 # Code to implement multiple views
 
 proc newview {ishighlight} {
@@ -4512,6 +4525,7 @@ proc showview {n} {
     } elseif {$numcommits == 0} {
 	show_status [mc "No commits selected"]
     }
+    set_window_title
 }
 
 # Stuff relating to the highlighting facility
@@ -6652,6 +6666,7 @@ proc show_status {msg} {
     global canv fgcolor
 
     clear_display
+    set_window_title
     $canv create text 3 3 -anchor nw -text $msg -font mainfont \
 	-tags text -fill $fgcolor
 }
@@ -12403,7 +12418,7 @@ catch {
 }
 # wait for the window to become visible
 tkwait visibility .
-wm title . "[reponame] - $appname"
+set_window_title
 update
 readrefs
 
