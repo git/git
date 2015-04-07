@@ -576,13 +576,16 @@ do
 	do
 		for h in host user@host user@[::1] user@::1
 		do
-			test_expect_success "fetch-pack --diag-url $p://$h/$r" '
-				check_prot_host_port_path $p://$h/$r $p "$h" NONE "/$r"
-			'
-			# "/~" -> "~" conversion
-			test_expect_success "fetch-pack --diag-url $p://$h/~$r" '
-				check_prot_host_port_path $p://$h/~$r $p "$h" NONE "~$r"
-			'
+			for c in "" :
+			do
+				test_expect_success "fetch-pack --diag-url $p://$h$c/$r" '
+					check_prot_host_port_path $p://$h/$r $p "$h" NONE "/$r"
+				'
+				# "/~" -> "~" conversion
+				test_expect_success "fetch-pack --diag-url $p://$h$c/~$r" '
+					check_prot_host_port_path $p://$h/~$r $p "$h" NONE "~$r"
+				'
+			done
 		done
 		for h in host User@host User@[::1]
 		do

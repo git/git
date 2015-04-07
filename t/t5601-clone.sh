@@ -387,14 +387,17 @@ do
 done
 
 #with ssh:// scheme
-test_expect_success 'clone ssh://host.xz/home/user/repo' '
-	test_clone_url "ssh://host.xz/home/user/repo" host.xz "/home/user/repo"
+#ignore trailing colon
+for tcol in "" :
+do
+	test_expect_success "clone ssh://host.xz$tcol/home/user/repo" '
+		test_clone_url "ssh://host.xz$tcol/home/user/repo" host.xz /home/user/repo
+	'
+	# from home directory
+	test_expect_success "clone ssh://host.xz$tcol/~repo" '
+	test_clone_url "ssh://host.xz$tcol/~repo" host.xz "~repo"
 '
-
-# from home directory
-test_expect_success 'clone ssh://host.xz/~repo' '
-	test_clone_url "ssh://host.xz/~repo" host.xz "~repo"
-'
+done
 
 # with port number
 test_expect_success 'clone ssh://host.xz:22/home/user/repo' '
@@ -407,9 +410,9 @@ test_expect_success 'clone ssh://host.xz:22/~repo' '
 '
 
 #IPv6
-for tuah in ::1 [::1] user@::1 user@[::1] [user@::1]
+for tuah in ::1 [::1] [::1]: user@::1 user@[::1] user@[::1]: [user@::1] [user@::1]:
 do
-	ehost=$(echo $tuah | tr -d "[]")
+	ehost=$(echo $tuah | sed -e "s/1]:/1]/ "| tr -d "[]")
 	test_expect_success "clone ssh://$tuah/home/user/repo" "
 	  test_clone_url ssh://$tuah/home/user/repo $ehost /home/user/repo
 	"
