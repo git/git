@@ -1,15 +1,15 @@
 # Bulgarian translation of gitk po-file.
-# Copyright (C) 2014 Alexander Shopov <ash@kambanaria.org>.
+# Copyright (C) 2014, 2015 Alexander Shopov <ash@kambanaria.org>.
 # This file is distributed under the same license as the git package.
-# Alexander Shopov <ash@kambanaria.org>, 2014.
+# Alexander Shopov <ash@kambanaria.org>, 2014, 2015.
 #
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: gitk master\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-03-15 14:37+1100\n"
-"PO-Revision-Date: 2014-07-28 07:32+0300\n"
+"POT-Creation-Date: 2015-04-07 07:49+0300\n"
+"PO-Revision-Date: 2015-04-07 07:54+0300\n"
 "Last-Translator: Alexander Shopov <ash@kambanaria.org>\n"
 "Language-Team: Bulgarian <dict@fsa-bg.org>\n"
 "Language: bg\n"
@@ -415,7 +415,7 @@ msgstr "<Right>, x, l\tНапред в историята"
 #: gitk:3053
 #, tcl-format
 msgid "<%s-n>\tGo to n-th parent of current commit in history list"
-msgstr ""
+msgstr "<%s-n>\tКъм n-тия родител на текущото подаване в историята"
 
 #: gitk:3054
 msgid "<PageUp>\tMove up one page in commit list"
@@ -593,7 +593,7 @@ msgstr "Грешка при изпълнението на „git blame“: %s"
 #: gitk:3921
 #, tcl-format
 msgid "That line comes from commit %s,  which is not in this view"
-msgstr "Този ред идва от подаването %s,  което не е в изгледа"
+msgstr "Този ред идва от подаването %s, което не е в изгледа"
 
 #: gitk:3935
 msgid "External diff viewer failed:"
@@ -649,12 +649,11 @@ msgstr "Съобщение при подаване:"
 
 #: gitk:4068
 msgid "Matches all Commit Info criteria"
-msgstr "Съвпадение по коя да е информация за подаването"
+msgstr "Съвпадение по всички характеристики на подаването"
 
 #: gitk:4069
-#, fuzzy
 msgid "Matches none Commit Info criteria"
-msgstr "Съвпадение по коя да е информация за подаването"
+msgstr "Съвпадение по никоя от характеристиките на подаването"
 
 #: gitk:4070
 msgid "Changes to Files:"
