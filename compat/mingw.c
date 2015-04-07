@@ -2350,6 +2350,17 @@ void mingw_startup(void)
 	/* fix Windows specific environment settings */
 	setup_windows_environment();
 
+	/*
+	 * Avoid a segmentation fault when cURL tries to set the CHARSET
+	 * variable and putenv() barfs at our nedmalloc'ed environment.
+	 */
+	if (!getenv("CHARSET")) {
+		struct strbuf buf = STRBUF_INIT;
+		strbuf_addf(&buf, "cp%u", GetACP());
+		setenv("CHARSET", buf.buf, 1);
+		strbuf_release(&buf);
+	}
+
 	/* initialize critical section for waitpid pinfo_t list */
 	InitializeCriticalSection(&pinfo_cs);
 
