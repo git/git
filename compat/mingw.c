@@ -2328,6 +2328,13 @@ void mingw_startup()
 	if (!getenv("TERM"))
 		setenv("TERM", "cygwin", 1);
 
+	/*
+	 * Avoid a segmentation fault when cURL tries to set the CHARSET
+	 * variable and putenv() barfs at our nedmalloc'ed environment.
+	 */
+	if (!getenv("CHARSET"))
+		setenv("CHARSET", "cp1252", 1);
+
 	/* initialize critical section for waitpid pinfo_t list */
 	InitializeCriticalSection(&pinfo_cs);
 
