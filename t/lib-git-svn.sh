@@ -87,8 +87,10 @@ prepare_httpd () {
 	fi
 	for d in \
 		"$SVN_HTTPD_MODULE_PATH" \
-		/usr/lib/apache2/modules \
 		/usr/libexec/apache2 \
+		/usr/lib/apache2/modules \
+		/usr/lib64/httpd/modules \
+		/usr/lib/httpd/modules \
 	; do
 		if test -d "$d"
 		then
