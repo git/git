@@ -12,6 +12,8 @@
 #	include <libintl.h>
 #	ifdef HAVE_LIBCHARSET_H
 #		include <libcharset.h>
+#	elif defined GIT_WINDOWS_NATIVE
+#		define locale_charset() "UTF-8"
 #	else
 #		include <langinfo.h>
 #		define locale_charset() nl_langinfo(CODESET)
