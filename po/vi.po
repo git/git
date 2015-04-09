@@ -6,10 +6,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: git v2.3.0\n"
+"Project-Id-Version: git v2.4.0\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2015-01-21 14:21+0800\n"
-"PO-Revision-Date: 2015-01-21 14:58+0800\n"
+"POT-Creation-Date: 2015-04-03 08:13+0800\n"
+"PO-Revision-Date: 2015-04-03 08:51+0700\n"
 "Last-Translator: Trần Ngọc Quân <vnwildman@gmail.com>\n"
 "Language-Team: Vietnamese <translation-team-vi@lists.sourceforge.net>\n"
 "Language: vi\n"
@@ -37,8 +37,8 @@ msgstr ""
 "dành riêng cho việc đánh dấu cần giải quyết và tạo lần chuyển giao."
 
 #: archive.c:11
-msgid "git archive [options] <tree-ish> [<path>...]"
-msgstr "git archive [các-tùy-chọn] <tree-ish> [<đường-dẫn>…]"
+msgid "git archive [<options>] <tree-ish> [<path>...]"
+msgstr "git archive [<các-tùy-chọn>] <tree-ish> [<đường-dẫn>…]"
 
 #: archive.c:12
 msgid "git archive --list"
@@ -46,10 +46,10 @@ msgstr "git archive --list"
 
 #: archive.c:13
 msgid ""
-"git archive --remote <repo> [--exec <cmd>] [options] <tree-ish> [<path>...]"
+"git archive --remote <repo> [--exec <cmd>] [<options>] <tree-ish> [<path>...]"
 msgstr ""
-"git archive --remote <kho> [--exec <lệnh>] [các-tùy-chọn] <tree-ish> [<đường-"
-"dẫn>…]"
+"git archive --remote <kho> [--exec <lệnh>] [<các-tùy-chọn>] <tree-ish> "
+"[<đường-dẫn>…]"
 
 #: archive.c:14
 msgid "git archive --remote <repo> [--exec <cmd>] --list"
@@ -76,10 +76,10 @@ msgstr "tiền_tố"
 msgid "prepend prefix to each pathname in the archive"
 msgstr "nối thêm tiền tố vào từng đường dẫn tập tin trong kho lưu"
 
-#: archive.c:430 builtin/archive.c:88 builtin/blame.c:2517
-#: builtin/blame.c:2518 builtin/config.c:57 builtin/fast-export.c:986
+#: archive.c:430 builtin/archive.c:88 builtin/blame.c:2516
+#: builtin/blame.c:2517 builtin/config.c:57 builtin/fast-export.c:986
 #: builtin/fast-export.c:988 builtin/grep.c:712 builtin/hash-object.c:101
-#: builtin/ls-files.c:489 builtin/ls-files.c:492 builtin/notes.c:394
+#: builtin/ls-files.c:446 builtin/ls-files.c:449 builtin/notes.c:394
 #: builtin/notes.c:557 builtin/read-tree.c:109 parse-options.h:151
 msgid "file"
 msgstr "tập_tin"
@@ -128,7 +128,7 @@ msgstr "lệnh"
 msgid "path to the remote git-upload-archive command"
 msgstr "đường dẫn đến lệnh git-upload-pack trên máy chủ"
 
-#: attr.c:258
+#: attr.c:264
 msgid ""
 "Negative patterns are ignored in git attributes\n"
 "Use '\\!' for literal leading exclamation."
@@ -258,7 +258,7 @@ msgstr "“%s” không giống như tập tin v2 bundle (định dạng dump c�
 msgid "unrecognized header: %s%s (%d)"
 msgstr "phần đầu không được thừa nhận: %s%s (%d)"
 
-#: bundle.c:87 builtin/commit.c:770
+#: bundle.c:87 builtin/commit.c:766
 #, c-format
 msgid "could not open '%s'"
 msgstr "không thể mở “%s”"
@@ -267,8 +267,8 @@ msgstr "không thể mở “%s”"
 msgid "Repository lacks these prerequisite commits:"
 msgstr "Kho chứa thiếu những lần chuyển giao tiên quyết này:"
 
-#: bundle.c:163 sequencer.c:645 sequencer.c:1100 builtin/blame.c:2706
-#: builtin/branch.c:652 builtin/commit.c:1049 builtin/log.c:330
+#: bundle.c:163 sequencer.c:650 sequencer.c:1105 builtin/blame.c:2705
+#: builtin/branch.c:659 builtin/commit.c:1045 builtin/log.c:330
 #: builtin/log.c:823 builtin/log.c:1432 builtin/log.c:1669 builtin/merge.c:358
 #: builtin/shortlog.c:158
 msgid "revision walk setup failed"
@@ -307,21 +307,21 @@ msgstr "rev-list đã chết"
 msgid "ref '%s' is excluded by the rev-list options"
 msgstr "th.chiếu “%s” bị loại trừ bởi các tùy chọn rev-list"
 
-#: bundle.c:438 builtin/log.c:153 builtin/log.c:1342 builtin/shortlog.c:261
+#: bundle.c:437 builtin/log.c:153 builtin/log.c:1342 builtin/shortlog.c:261
 #, c-format
 msgid "unrecognized argument: %s"
 msgstr "đối số không được thừa nhận: %s"
 
-#: bundle.c:444
+#: bundle.c:443
 msgid "Refusing to create empty bundle."
 msgstr "Từ chối tạo một bundle trống rỗng."
 
-#: bundle.c:454
+#: bundle.c:453
 #, c-format
 msgid "cannot create '%s'"
 msgstr "không thể tạo “%s”"
 
-#: bundle.c:475
+#: bundle.c:474
 msgid "index-pack died"
 msgstr "mục lục gói đã chết"
 
@@ -344,55 +344,55 @@ msgstr "%s %s không phải là một lần chuyển giao!"
 msgid "memory exhausted"
 msgstr "hết bộ nhớ"
 
-#: config.c:469 config.c:471
+#: config.c:474 config.c:476
 #, c-format
 msgid "bad config file line %d in %s"
 msgstr "tập tin cấu hình sai tại dòng %d trong %s"
 
-#: config.c:587
+#: config.c:592
 #, c-format
 msgid "bad numeric config value '%s' for '%s' in %s: %s"
 msgstr "sai giá trị bằng số của cấu hình “%s” cho “%s” trong %s: %s"
 
-#: config.c:589
+#: config.c:594
 #, c-format
 msgid "bad numeric config value '%s' for '%s': %s"
 msgstr "sai giá trị bằng số của cấu hình “%s” cho “%s”: %s"
 
-#: config.c:674
+#: config.c:679
 #, c-format
 msgid "failed to expand user dir in: '%s'"
 msgstr "gặp lỗi mở rộng thư mục người dùng trong: “%s”"
 
-#: config.c:752 config.c:763
+#: config.c:757 config.c:768
 #, c-format
 msgid "bad zlib compression level %d"
 msgstr "mức nén zlib %d là sai"
 
-#: config.c:885
+#: config.c:890
 #, c-format
 msgid "invalid mode for object creation: %s"
 msgstr "chế độ không hợp lệ đối với việc tạo đối tượng: %s"
 
-#: config.c:1211
+#: config.c:1216
 msgid "unable to parse command-line config"
 msgstr "không thể phân tích cấu hình dòng lệnh"
 
-#: config.c:1272
+#: config.c:1277
 msgid "unknown error occured while reading the configuration files"
 msgstr "đã có lỗi chưa biết xảy ra trong khi đọc các tập tin cấu hình"
 
-#: config.c:1596
+#: config.c:1601
 #, c-format
 msgid "unable to parse '%s' from command-line config"
 msgstr "không thể phân tích “%s” từ cấu hình dòng lệnh"
 
-#: config.c:1598
+#: config.c:1603
 #, c-format
 msgid "bad config variable '%s' in file '%s' at line %d"
 msgstr "sai biến cấu hình “%s” trong tập tin “%s” tại dòng %d"
 
-#: config.c:1657
+#: config.c:1662
 #, c-format
 msgid "%s has multiple values"
 msgstr "%s có đa giá trị"
@@ -475,7 +475,7 @@ msgstr[0] "%lu năm trước"
 msgid "failed to read orderfile '%s'"
 msgstr "gặp lỗi khi đọc tập-tin-thứ-tự “%s”"
 
-#: diffcore-rename.c:516
+#: diffcore-rename.c:536
 msgid "Performing inexact rename detection"
 msgstr "Đang thực hiện dò tìm đổi tên không chính xác"
 
@@ -503,16 +503,16 @@ msgstr ""
 "Tìm thấy các lỗi trong biến cấu hình “diff.dirstat”:\n"
 "%s"
 
-#: diff.c:2957
+#: diff.c:2956
 #, c-format
 msgid "external diff died, stopping at %s"
 msgstr "phần mềm diff ở bên ngoài đã chết, dừng tại %s"
 
-#: diff.c:3352
+#: diff.c:3351
 msgid "--follow requires exactly one pathspec"
 msgstr "--follow cần chính xác một đặc tả đường dẫn"
 
-#: diff.c:3515
+#: diff.c:3514
 #, c-format
 msgid ""
 "Failed to parse --dirstat/-X option parameter:\n"
@@ -521,7 +521,7 @@ msgstr ""
 "Gặp lỗi khi phân tích đối số tùy chọn --dirstat/-X:\n"
 "%s"
 
-#: diff.c:3529
+#: diff.c:3528
 #, c-format
 msgid "Failed to parse --submodule option parameter: '%s'"
 msgstr "Gặp lỗi khi phân tích đối số tùy chọn --submodule: “%s”"
@@ -871,26 +871,26 @@ msgstr "hòa trộn cây (tree) %s và %s gặp lỗi"
 msgid "Unprocessed path??? %s"
 msgstr "Đường dẫn chưa được xử lý??? %s"
 
-#: merge-recursive.c:1898
+#: merge-recursive.c:1901
 msgid "Merging:"
 msgstr "Đang trộn:"
 
-#: merge-recursive.c:1911
+#: merge-recursive.c:1914
 #, c-format
 msgid "found %u common ancestor:"
 msgid_plural "found %u common ancestors:"
 msgstr[0] "tìm thấy %u tổ tiên chung:"
 
-#: merge-recursive.c:1948
+#: merge-recursive.c:1951
 msgid "merge returned no commit"
 msgstr "hòa trộn không trả về lần chuyển giao nào"
 
-#: merge-recursive.c:2005
+#: merge-recursive.c:2008
 #, c-format
 msgid "Could not parse object '%s'"
 msgstr "Không thể phân tích đối tượng “%s”"
 
-#: merge-recursive.c:2016 builtin/merge.c:667
+#: merge-recursive.c:2019 builtin/merge.c:667
 msgid "Unable to write index."
 msgstr "Không thể ghi bảng mục lục"
 
@@ -1020,7 +1020,7 @@ msgstr "không thể phân tích định dạng --pretty"
 msgid "done"
 msgstr "xong"
 
-#: read-cache.c:1267
+#: read-cache.c:1275
 #, c-format
 msgid ""
 "index.version set, but the value is invalid.\n"
@@ -1029,7 +1029,7 @@ msgstr ""
 "index.version được đặt, nhưng giá trị của nó lại không hợp lệ.\n"
 "Dùng phiên bản %i"
 
-#: read-cache.c:1277
+#: read-cache.c:1285
 #, c-format
 msgid ""
 "GIT_INDEX_VERSION set, but the value is invalid.\n"
@@ -1088,7 +1088,7 @@ msgid "Your branch is behind '%s' by %d commit, and can be fast-forwarded.\n"
 msgid_plural ""
 "Your branch is behind '%s' by %d commits, and can be fast-forwarded.\n"
 msgstr[0] ""
-"Nhánh của bạn ở đằng sau “%s” %d lần chuyển giao, và có thể được fast-"
+"Nhánh của bạn đứng đằng sau “%s” %d lần chuyển giao, và có thể được fast-"
 "forward.\n"
 
 #: remote.c:2008
@@ -1114,22 +1114,30 @@ msgstr ""
 "  (dùng \"git pull\" để hòa trộn nhánh trên máy chủ vào trong nhánh của "
 "bạn)\n"
 
-#: run-command.c:87
+#: revision.c:2348
+msgid "--first-parent is incompatible with --bisect"
+msgstr "--first-parent xung khắc với --bisect"
+
+#: run-command.c:83
 msgid "open /dev/null failed"
 msgstr "gặp lỗi khi mở “/dev/null”"
 
-#: run-command.c:89
+#: run-command.c:85
 #, c-format
 msgid "dup2(%d,%d) failed"
 msgstr "dup2(%d,%d) gặp lỗi"
 
-#: send-pack.c:268
+#: send-pack.c:272
 msgid "failed to sign the push certificate"
 msgstr "gặp lỗi khi ký chứng thực đẩy"
 
-#: send-pack.c:325
+#: send-pack.c:356
 msgid "the receiving end does not support --signed push"
 msgstr "kết thúc nhận không hỗ trợ đẩy --signed"
+
+#: send-pack.c:366
+msgid "the receiving end does not support --atomic push"
+msgstr "kết thúc nhận không hỗ trợ đẩy --atomic"
 
 #: sequencer.c:172 builtin/merge.c:782 builtin/merge.c:893 builtin/merge.c:995
 #: builtin/merge.c:1005
@@ -1161,7 +1169,7 @@ msgstr ""
 "với lệnh “git add <đường_dẫn>” hoặc “git rm <đường_dẫn>”\n"
 "và chuyển giao kết quả bằng lệnh “git commit”"
 
-#: sequencer.c:211 sequencer.c:856 sequencer.c:939
+#: sequencer.c:211 sequencer.c:861 sequencer.c:944
 #, c-format
 msgid "Could not write to %s"
 msgstr "Không thể ghi vào %s"
@@ -1197,31 +1205,31 @@ msgstr "Không thể phân giải commit (lần chuyển giao) HEAD\n"
 msgid "Unable to update cache tree\n"
 msgstr "Không thể cập nhật cây bộ nhớ đệm\n"
 
-#: sequencer.c:406
+#: sequencer.c:411
 #, c-format
 msgid "Could not parse commit %s\n"
-msgstr "Không thể phân tích commit (lần chuyển giao) %s\n"
+msgstr "Không thể phân tích lần chuyển giao %s\n"
 
-#: sequencer.c:411
+#: sequencer.c:416
 #, c-format
 msgid "Could not parse parent commit %s\n"
 msgstr "Không thể phân tích lần chuyển giao cha mẹ “%s”\n"
 
-#: sequencer.c:477
+#: sequencer.c:482
 msgid "Your index file is unmerged."
 msgstr "Tập tin lưu mục lục của bạn không được hòa trộn."
 
-#: sequencer.c:496
+#: sequencer.c:501
 #, c-format
 msgid "Commit %s is a merge but no -m option was given."
 msgstr "Lần chuyển giao %s là một lần hòa trộn nhưng không đưa ra tùy chọn -m."
 
-#: sequencer.c:504
+#: sequencer.c:509
 #, c-format
 msgid "Commit %s does not have parent %d"
 msgstr "Lần chuyển giao %s không có cha mẹ %d"
 
-#: sequencer.c:508
+#: sequencer.c:513
 #, c-format
 msgid "Mainline was specified but commit %s is not a merge."
 msgstr ""
@@ -1230,153 +1238,153 @@ msgstr ""
 
 #. TRANSLATORS: The first %s will be "revert" or
 #. "cherry-pick", the second %s a SHA1
-#: sequencer.c:521
+#: sequencer.c:526
 #, c-format
 msgid "%s: cannot parse parent commit %s"
 msgstr "%s: không thể phân tích lần chuyển giao mẹ của %s"
 
-#: sequencer.c:525
+#: sequencer.c:530
 #, c-format
 msgid "Cannot get commit message for %s"
 msgstr "Không thể lấy ghi chú lần chuyển giao cho %s"
 
-#: sequencer.c:611
+#: sequencer.c:616
 #, c-format
 msgid "could not revert %s... %s"
 msgstr "không thể revert %s… %s"
 
-#: sequencer.c:612
+#: sequencer.c:617
 #, c-format
 msgid "could not apply %s... %s"
-msgstr "không thể apply (áp dụng miếng vá) %s… %s"
+msgstr "không thể áp dụng miếng vá %s… %s"
 
-#: sequencer.c:648
+#: sequencer.c:653
 msgid "empty commit set passed"
 msgstr "lần chuyển giao trống rỗng đặt là hợp quy cách"
 
-#: sequencer.c:656
+#: sequencer.c:661
 #, c-format
 msgid "git %s: failed to read the index"
 msgstr "git %s: gặp lỗi đọc bảng mục lục"
 
-#: sequencer.c:660
+#: sequencer.c:665
 #, c-format
 msgid "git %s: failed to refresh the index"
 msgstr "git %s: gặp lỗi khi làm tươi mới bảng mục lục"
 
-#: sequencer.c:720
+#: sequencer.c:725
 #, c-format
 msgid "Cannot %s during a %s"
 msgstr "Không thể %s trong khi %s"
 
-#: sequencer.c:742
+#: sequencer.c:747
 #, c-format
 msgid "Could not parse line %d."
 msgstr "Không phân tích được dòng %d."
 
-#: sequencer.c:747
+#: sequencer.c:752
 msgid "No commits parsed."
 msgstr "Không có lần chuyển giao nào được phân tích."
 
-#: sequencer.c:760
+#: sequencer.c:765
 #, c-format
 msgid "Could not open %s"
 msgstr "Không thể mở %s"
 
-#: sequencer.c:764
+#: sequencer.c:769
 #, c-format
 msgid "Could not read %s."
 msgstr "Không thể đọc %s."
 
-#: sequencer.c:771
+#: sequencer.c:776
 #, c-format
 msgid "Unusable instruction sheet: %s"
 msgstr "Bảng chỉ thị không thể dùng được: %s"
 
-#: sequencer.c:801
+#: sequencer.c:806
 #, c-format
 msgid "Invalid key: %s"
 msgstr "Khóa không đúng: %s"
 
-#: sequencer.c:804
+#: sequencer.c:809
 #, c-format
 msgid "Invalid value for %s: %s"
 msgstr "Giá trị không hợp lệ %s: %s"
 
-#: sequencer.c:816
+#: sequencer.c:821
 #, c-format
 msgid "Malformed options sheet: %s"
 msgstr "Bảng tùy chọn dị hình: %s"
 
-#: sequencer.c:837
+#: sequencer.c:842
 msgid "a cherry-pick or revert is already in progress"
 msgstr "có một thao tác “cherry-pick” hoặc “revert” đang được thực hiện"
 
-#: sequencer.c:838
+#: sequencer.c:843
 msgid "try \"git cherry-pick (--continue | --quit | --abort)\""
 msgstr "hãy thử \"git cherry-pick (--continue | --quit | --abort)\""
 
-#: sequencer.c:842
+#: sequencer.c:847
 #, c-format
 msgid "Could not create sequencer directory %s"
 msgstr "Không thể tạo thư mục xếp dãy %s"
 
-#: sequencer.c:858 sequencer.c:943
+#: sequencer.c:863 sequencer.c:948
 #, c-format
 msgid "Error wrapping up %s."
 msgstr "Lỗi bao bọc %s."
 
-#: sequencer.c:877 sequencer.c:1013
+#: sequencer.c:882 sequencer.c:1018
 msgid "no cherry-pick or revert in progress"
 msgstr "không cherry-pick hay revert trong tiến trình"
 
-#: sequencer.c:879
+#: sequencer.c:884
 msgid "cannot resolve HEAD"
 msgstr "không thể phân giải HEAD"
 
-#: sequencer.c:881
+#: sequencer.c:886
 msgid "cannot abort from a branch yet to be born"
 msgstr "không thể hủy bỏ từ một nhánh mà nó còn chưa được tạo ra"
 
-#: sequencer.c:903 builtin/apply.c:4128
+#: sequencer.c:908 builtin/apply.c:4288
 #, c-format
 msgid "cannot open %s: %s"
 msgstr "không thể mở %s: %s"
 
-#: sequencer.c:906
+#: sequencer.c:911
 #, c-format
 msgid "cannot read %s: %s"
 msgstr "không thể đọc %s: %s"
 
-#: sequencer.c:907
+#: sequencer.c:912
 msgid "unexpected end of file"
 msgstr "gặp kết thúc tập tin đột xuất"
 
-#: sequencer.c:913
+#: sequencer.c:918
 #, c-format
 msgid "stored pre-cherry-pick HEAD file '%s' is corrupt"
 msgstr "tập tin HEAD “pre-cherry-pick” đã lưu “%s” bị hỏng"
 
-#: sequencer.c:936
+#: sequencer.c:941
 #, c-format
 msgid "Could not format %s."
 msgstr "Không thể định dạng “%s”."
 
-#: sequencer.c:1081
+#: sequencer.c:1086
 #, c-format
 msgid "%s: can't cherry-pick a %s"
 msgstr "%s: không thể cherry-pick một %s"
 
-#: sequencer.c:1084
+#: sequencer.c:1089
 #, c-format
 msgid "%s: bad revision"
 msgstr "%s: điểm xét duyệt sai"
 
-#: sequencer.c:1118
+#: sequencer.c:1123
 msgid "Can't revert as initial commit"
 msgstr "Không thể revert một lần chuyển giao khởi tạo"
 
-#: sequencer.c:1119
+#: sequencer.c:1124
 msgid "Can't cherry-pick into empty head"
 msgstr "Không thể cherry-pick vào một đầu (head) trống rỗng"
 
@@ -1449,38 +1457,38 @@ msgstr "Không thể gỡ bỏ mục .gitmodules dành cho %s"
 msgid "staging updated .gitmodules failed"
 msgstr "gặp lỗi khi tổ chức .gitmodules đã cập nhật"
 
-#: submodule.c:1111 builtin/init-db.c:371
+#: submodule.c:1109 builtin/init-db.c:371
 #, c-format
 msgid "Could not create git link %s"
 msgstr "Không thể tạo liên kết git “%s”"
 
-#: submodule.c:1122
+#: submodule.c:1120
 #, c-format
 msgid "Could not set core.worktree in %s"
 msgstr "Không thể đặt “core.worktree” trong “%s”."
 
-#: trailer.c:500 trailer.c:504 trailer.c:508 trailer.c:562 trailer.c:566
-#: trailer.c:570
+#: trailer.c:491 trailer.c:495 trailer.c:499 trailer.c:553 trailer.c:557
+#: trailer.c:561
 #, c-format
 msgid "unknown value '%s' for key '%s'"
 msgstr "không hiểu giá trị “%s” cho khóa “%s”"
 
-#: trailer.c:552 trailer.c:557 builtin/remote.c:290
+#: trailer.c:543 trailer.c:548 builtin/remote.c:290
 #, c-format
 msgid "more than one %s"
 msgstr "nhiều hơn một %s"
 
-#: trailer.c:590
+#: trailer.c:581
 #, c-format
 msgid "empty trailer token in trailer '%.*s'"
 msgstr "thẻ thừa trống rỗng trong phần thừa “%.*s”"
 
-#: trailer.c:710
+#: trailer.c:701
 #, c-format
 msgid "could not read input file '%s'"
 msgstr "không đọc được tập tin đầu vào “%s”"
 
-#: trailer.c:713
+#: trailer.c:704
 msgid "could not read from stdin"
 msgstr "không thể đọc từ đầu vào tiêu chuẩn"
 
@@ -1517,26 +1525,26 @@ msgstr "tên cổng không hợp lệ"
 msgid "invalid '..' path segment"
 msgstr "đoạn đường dẫn “..” không hợp lệ"
 
-#: wrapper.c:509
+#: wrapper.c:523
 #, c-format
 msgid "unable to access '%s': %s"
 msgstr "không thể truy cập “%s”: %s"
 
-#: wrapper.c:530
+#: wrapper.c:544
 #, c-format
 msgid "unable to access '%s'"
 msgstr "không thể truy cập “%s”"
 
-#: wrapper.c:541
+#: wrapper.c:555
 #, c-format
 msgid "unable to look up current user in the passwd file: %s"
 msgstr "không tìm thấy người dùng hiện tại trong tập tin passwd: %s"
 
-#: wrapper.c:542
+#: wrapper.c:556
 msgid "no such user"
 msgstr "không có người dùng như vậy"
 
-#: wrapper.c:550
+#: wrapper.c:564
 msgid "unable to get current working directory"
 msgstr "Không thể lấy thư mục làm việc hiện hành"
 
@@ -1567,11 +1575,11 @@ msgstr ""
 msgid "  (use \"git rm <file>...\" to mark resolution)"
 msgstr "  (dùng \"git rm <tập-tin>…\" để đánh dấu là cần giải quyết)"
 
-#: wt-status.c:198
+#: wt-status.c:198 wt-status.c:878
 msgid "Changes to be committed:"
 msgstr "Những thay đổi sẽ được chuyển giao:"
 
-#: wt-status.c:216
+#: wt-status.c:216 wt-status.c:887
 msgid "Changes not staged for commit:"
 msgstr "Các thay đổi chưa được đặt lên bệ phóng để chuyển giao:"
 
@@ -1685,15 +1693,15 @@ msgstr "nội dung chưa được theo dõi, "
 msgid "bug: unhandled diff status %c"
 msgstr "lỗi: không thể tiếp nhận trạng thái lệnh diff %c"
 
-#: wt-status.c:758
+#: wt-status.c:753
 msgid "Submodules changed but not updated:"
 msgstr "Những mô-đun-con đã bị thay đổi nhưng chưa được cập nhật:"
 
-#: wt-status.c:760
+#: wt-status.c:755
 msgid "Submodule changes to be committed:"
 msgstr "Những mô-đun-con thay đổi đã được chuyển giao:"
 
-#: wt-status.c:839
+#: wt-status.c:835
 msgid ""
 "Do not touch the line above.\n"
 "Everything below will be removed."
@@ -1701,72 +1709,72 @@ msgstr ""
 "Không động đến đường ở trên.\n"
 "Mọi thứ phía dưới sẽ được xóa bỏ."
 
-#: wt-status.c:930
+#: wt-status.c:946
 msgid "You have unmerged paths."
 msgstr "Bạn có những đường dẫn chưa được hòa trộn."
 
-#: wt-status.c:933
+#: wt-status.c:949
 msgid "  (fix conflicts and run \"git commit\")"
 msgstr "  (sửa các xung đột rồi chạy \"git commit\")"
 
-#: wt-status.c:936
+#: wt-status.c:952
 msgid "All conflicts fixed but you are still merging."
 msgstr "Tất cả các xung đột đã được giải quyết nhưng bạn vẫn đang hòa trộn."
 
-#: wt-status.c:939
+#: wt-status.c:955
 msgid "  (use \"git commit\" to conclude merge)"
 msgstr "  (dùng \"git commit\" để hoàn tất việc hòa trộn)"
 
-#: wt-status.c:949
+#: wt-status.c:965
 msgid "You are in the middle of an am session."
 msgstr "Bạn đang ở giữa của một phiên “am”."
 
-#: wt-status.c:952
+#: wt-status.c:968
 msgid "The current patch is empty."
 msgstr "Miếng vá hiện tại bị trống rỗng."
 
-#: wt-status.c:956
+#: wt-status.c:972
 msgid "  (fix conflicts and then run \"git am --continue\")"
 msgstr "  (sửa các xung đột và sau đó chạy lệnh \"git am --continue\")"
 
-#: wt-status.c:958
+#: wt-status.c:974
 msgid "  (use \"git am --skip\" to skip this patch)"
 msgstr "  (dùng \"git am --skip\" để bỏ qua miếng vá này)"
 
-#: wt-status.c:960
+#: wt-status.c:976
 msgid "  (use \"git am --abort\" to restore the original branch)"
 msgstr "  (dùng \"git am --abort\" để phục hồi lại nhánh nguyên thủy)"
 
-#: wt-status.c:1020 wt-status.c:1037
+#: wt-status.c:1036 wt-status.c:1053
 #, c-format
 msgid "You are currently rebasing branch '%s' on '%s'."
 msgstr "Bạn hiện nay đang thực hiện việc “rebase” nhánh “%s” trên “%s”."
 
-#: wt-status.c:1025 wt-status.c:1042
+#: wt-status.c:1041 wt-status.c:1058
 msgid "You are currently rebasing."
 msgstr "Bạn hiện nay đang thực hiện việc “rebase” (“cải tổ”)."
 
-#: wt-status.c:1028
+#: wt-status.c:1044
 msgid "  (fix conflicts and then run \"git rebase --continue\")"
 msgstr ""
 "  (sửa các xung đột và sau đó chạy lệnh “cải tổ” \"git rebase --continue\")"
 
-#: wt-status.c:1030
+#: wt-status.c:1046
 msgid "  (use \"git rebase --skip\" to skip this patch)"
 msgstr "  (dùng lệnh “cải tổ” \"git rebase --skip\" để bỏ qua lần vá này)"
 
-#: wt-status.c:1032
+#: wt-status.c:1048
 msgid "  (use \"git rebase --abort\" to check out the original branch)"
 msgstr ""
 "  (dùng lệnh “cải tổ” \"git rebase --abort\" để check-out nhánh nguyên thủy)"
 
-#: wt-status.c:1045
+#: wt-status.c:1061
 msgid "  (all conflicts fixed: run \"git rebase --continue\")"
 msgstr ""
 "  (khi tất cả các xung đột đã sửa xong: chạy lệnh “cải tổ” \"git rebase --"
 "continue\")"
 
-#: wt-status.c:1049
+#: wt-status.c:1065
 #, c-format
 msgid ""
 "You are currently splitting a commit while rebasing branch '%s' on '%s'."
@@ -1774,126 +1782,126 @@ msgstr ""
 "Bạn hiện nay đang thực hiện việc chia tách một lần chuyển giao trong khi "
 "đang “rebase” nhánh “%s” trên “%s”."
 
-#: wt-status.c:1054
+#: wt-status.c:1070
 msgid "You are currently splitting a commit during a rebase."
 msgstr ""
 "Bạn hiện tại đang cắt đôi một lần chuyển giao trong khi đang thực hiện việc "
 "rebase."
 
-#: wt-status.c:1057
+#: wt-status.c:1073
 msgid "  (Once your working directory is clean, run \"git rebase --continue\")"
 msgstr ""
 "  (Một khi thư mục làm việc của bạn đã gọn gàng, chạy lệnh “cải tổ” \"git "
 "rebase --continue\")"
 
-#: wt-status.c:1061
+#: wt-status.c:1077
 #, c-format
 msgid "You are currently editing a commit while rebasing branch '%s' on '%s'."
 msgstr ""
 "Bạn hiện nay đang thực hiện việc sửa chữa một lần chuyển giao trong khi đang "
 "rebase nhánh “%s” trên “%s”."
 
-#: wt-status.c:1066
+#: wt-status.c:1082
 msgid "You are currently editing a commit during a rebase."
 msgstr "Bạn hiện đang sửa một lần chuyển giao trong khi bạn thực hiện rebase."
 
-#: wt-status.c:1069
+#: wt-status.c:1085
 msgid "  (use \"git commit --amend\" to amend the current commit)"
 msgstr "  (dùng \"git commit --amend\" để “tu bổ” lần chuyển giao hiện tại)"
 
-#: wt-status.c:1071
+#: wt-status.c:1087
 msgid ""
 "  (use \"git rebase --continue\" once you are satisfied with your changes)"
 msgstr ""
 "  (chạy lệnh “cải tổ” \"git rebase --continue\" một khi bạn cảm thấy hài "
 "lòng về những thay đổi của mình)"
 
-#: wt-status.c:1081
+#: wt-status.c:1097
 #, c-format
 msgid "You are currently cherry-picking commit %s."
 msgstr "Bạn hiện nay đang thực hiện việc cherry-pick lần chuyển giao %s."
 
-#: wt-status.c:1086
+#: wt-status.c:1102
 msgid "  (fix conflicts and run \"git cherry-pick --continue\")"
 msgstr ""
 "  (sửa các xung đột và sau đó chạy lệnh \"git cherry-pick --continue\")"
 
-#: wt-status.c:1089
+#: wt-status.c:1105
 msgid "  (all conflicts fixed: run \"git cherry-pick --continue\")"
 msgstr ""
 "  (khi tất cả các xung đột đã sửa xong: chạy lệnh \"git cherry-pick --"
 "continue\")"
 
-#: wt-status.c:1091
+#: wt-status.c:1107
 msgid "  (use \"git cherry-pick --abort\" to cancel the cherry-pick operation)"
 msgstr "  (dùng \"git cherry-pick --abort\" để hủy bỏ thao tác cherry-pick)"
 
-#: wt-status.c:1100
+#: wt-status.c:1116
 #, c-format
 msgid "You are currently reverting commit %s."
 msgstr "Bạn hiện nay đang thực hiện thao tác revert lần chuyển giao “%s”."
 
-#: wt-status.c:1105
+#: wt-status.c:1121
 msgid "  (fix conflicts and run \"git revert --continue\")"
 msgstr "  (sửa các xung đột và sau đó chạy lệnh \"git revert --continue\")"
 
-#: wt-status.c:1108
+#: wt-status.c:1124
 msgid "  (all conflicts fixed: run \"git revert --continue\")"
 msgstr ""
 "  (khi tất cả các xung đột đã sửa xong: chạy lệnh \"git revert --continue\")"
 
-#: wt-status.c:1110
+#: wt-status.c:1126
 msgid "  (use \"git revert --abort\" to cancel the revert operation)"
 msgstr "  (dùng \"git revert --abort\" để hủy bỏ thao tác revert)"
 
-#: wt-status.c:1121
+#: wt-status.c:1137
 #, c-format
 msgid "You are currently bisecting, started from branch '%s'."
 msgstr ""
 "Bạn hiện nay đang thực hiện thao tác di chuyển nửa bước (bisect), bắt đầu từ "
 "nhánh “%s”."
 
-#: wt-status.c:1125
+#: wt-status.c:1141
 msgid "You are currently bisecting."
 msgstr "Bạn hiện tại đang thực hiện việc bisect (di chuyển nửa bước)."
 
-#: wt-status.c:1128
+#: wt-status.c:1144
 msgid "  (use \"git bisect reset\" to get back to the original branch)"
 msgstr "  (dùng \"git bisect reset\" để quay trở lại nhánh nguyên thủy)"
 
-#: wt-status.c:1303
+#: wt-status.c:1321
 msgid "On branch "
 msgstr "Trên nhánh "
 
-#: wt-status.c:1310
+#: wt-status.c:1328
 msgid "rebase in progress; onto "
 msgstr "rebase đang được thực hiện: lên trên "
 
-#: wt-status.c:1317
+#: wt-status.c:1333
 msgid "HEAD detached at "
 msgstr "HEAD được tách rời tại "
 
-#: wt-status.c:1319
+#: wt-status.c:1335
 msgid "HEAD detached from "
 msgstr "HEAD được tách rời từ "
 
-#: wt-status.c:1322
+#: wt-status.c:1338
 msgid "Not currently on any branch."
 msgstr "Hiện tại chẳng ở nhánh nào cả."
 
-#: wt-status.c:1339
+#: wt-status.c:1355
 msgid "Initial commit"
 msgstr "Lần chuyển giao khởi tạo"
 
-#: wt-status.c:1353
+#: wt-status.c:1369
 msgid "Untracked files"
 msgstr "Những tập tin chưa được theo dõi"
 
-#: wt-status.c:1355
+#: wt-status.c:1371
 msgid "Ignored files"
 msgstr "Những tập tin bị lờ đi"
 
-#: wt-status.c:1359
+#: wt-status.c:1375
 #, c-format
 msgid ""
 "It took %.2f seconds to enumerate untracked files. 'status -uno'\n"
@@ -1905,32 +1913,32 @@ msgstr ""
 "có lẽ làm nó nhanh hơn, nhưng bạn phải cẩn thận đừng quên mình phải\n"
 "tự thêm các tập tin mới (xem “git help status”.."
 
-#: wt-status.c:1365
+#: wt-status.c:1381
 #, c-format
 msgid "Untracked files not listed%s"
 msgstr "Những tập tin chưa được theo dõi không được liệt kê ra %s"
 
-#: wt-status.c:1367
+#: wt-status.c:1383
 msgid " (use -u option to show untracked files)"
 msgstr " (dùng tùy chọn -u để hiển thị các tập tin chưa được theo dõi)"
 
-#: wt-status.c:1373
+#: wt-status.c:1389
 msgid "No changes"
 msgstr "Không có thay đổi nào"
 
-#: wt-status.c:1378
+#: wt-status.c:1394
 #, c-format
 msgid "no changes added to commit (use \"git add\" and/or \"git commit -a\")\n"
 msgstr ""
 "không có thay đổi nào được thêm vào để chuyển giao (dùng \"git add\" và/hoặc "
 "\"git commit -a\")\n"
 
-#: wt-status.c:1381
+#: wt-status.c:1397
 #, c-format
 msgid "no changes added to commit\n"
 msgstr "không có thay đổi nào được thêm vào để chuyển giao\n"
 
-#: wt-status.c:1384
+#: wt-status.c:1400
 #, c-format
 msgid ""
 "nothing added to commit but untracked files present (use \"git add\" to "
@@ -1939,49 +1947,49 @@ msgstr ""
 "không có gì được thêm vào lần chuyển giao nhưng có những tập tin chưa được "
 "theo dõi hiện diện (dùng \"git add\" để đưa vào theo dõi)\n"
 
-#: wt-status.c:1387
+#: wt-status.c:1403
 #, c-format
 msgid "nothing added to commit but untracked files present\n"
 msgstr ""
 "không có gì được thêm vào lần chuyển giao nhưng có những tập tin chưa được "
 "theo dõi hiện diện\n"
 
-#: wt-status.c:1390
+#: wt-status.c:1406
 #, c-format
 msgid "nothing to commit (create/copy files and use \"git add\" to track)\n"
 msgstr ""
 "không có gì để chuyển giao (tạo/sao-chép các tập tin và dùng \"git add\" để "
 "đưa vào theo dõi)\n"
 
-#: wt-status.c:1393 wt-status.c:1398
+#: wt-status.c:1409 wt-status.c:1414
 #, c-format
 msgid "nothing to commit\n"
 msgstr "không có gì để chuyển giao\n"
 
-#: wt-status.c:1396
+#: wt-status.c:1412
 #, c-format
 msgid "nothing to commit (use -u to show untracked files)\n"
 msgstr ""
 "không có gì để chuyển giao (dùng -u xem các tập tin chưa được theo dõi)\n"
 
-#: wt-status.c:1400
+#: wt-status.c:1416
 #, c-format
 msgid "nothing to commit, working directory clean\n"
 msgstr "không có gì để chuyển giao, thư mục làm việc sạch sẽ\n"
 
-#: wt-status.c:1509
+#: wt-status.c:1525
 msgid "HEAD (no branch)"
 msgstr "HEAD (không nhánh)"
 
-#: wt-status.c:1515
+#: wt-status.c:1531
 msgid "Initial commit on "
 msgstr "Lần chuyển giao khởi tạo trên "
 
-#: wt-status.c:1547
+#: wt-status.c:1563
 msgid "gone"
 msgstr "đã ra đi"
 
-#: wt-status.c:1549 wt-status.c:1557
+#: wt-status.c:1565 wt-status.c:1573
 msgid "behind "
 msgstr "đằng sau "
 
@@ -1991,15 +1999,15 @@ msgid "failed to unlink '%s'"
 msgstr "gặp lỗi khi bỏ liên kết (unlink) “%s”"
 
 #: builtin/add.c:22
-msgid "git add [options] [--] <pathspec>..."
-msgstr "git add [các-tùy-chọn] [--]  <pathspec>…"
+msgid "git add [<options>] [--] <pathspec>..."
+msgstr "git add [<các-tùy-chọn>] [--]  <pathspec>…"
 
 #: builtin/add.c:65
 #, c-format
 msgid "unexpected diff status %c"
 msgstr "trạng thái lệnh diff không như mong đợi %c"
 
-#: builtin/add.c:70 builtin/commit.c:275
+#: builtin/add.c:70 builtin/commit.c:277
 msgid "updating files failed"
 msgstr "Cập nhật tập tin gặp lỗi"
 
@@ -2046,14 +2054,14 @@ msgstr ""
 "Các đường dẫn theo sau đây sẽ bị lờ đi bởi một trong các tập tin .gitignore "
 "của bạn:\n"
 
-#: builtin/add.c:248 builtin/clean.c:875 builtin/fetch.c:108 builtin/mv.c:110
-#: builtin/prune-packed.c:55 builtin/push.c:499 builtin/remote.c:1372
+#: builtin/add.c:248 builtin/clean.c:876 builtin/fetch.c:107 builtin/mv.c:110
+#: builtin/prune-packed.c:55 builtin/push.c:508 builtin/remote.c:1372
 #: builtin/rm.c:269
 msgid "dry run"
 msgstr "chạy thử"
 
-#: builtin/add.c:249 builtin/apply.c:4415 builtin/check-ignore.c:19
-#: builtin/commit.c:1326 builtin/count-objects.c:63 builtin/fsck.c:608
+#: builtin/add.c:249 builtin/apply.c:4577 builtin/check-ignore.c:19
+#: builtin/commit.c:1322 builtin/count-objects.c:63 builtin/fsck.c:608
 #: builtin/log.c:1617 builtin/mv.c:109 builtin/read-tree.c:114
 msgid "be verbose"
 msgstr "chi tiết"
@@ -2133,78 +2141,78 @@ msgstr "Không có gì được chỉ ra, không có gì được thêm vào.\n"
 msgid "Maybe you wanted to say 'git add .'?\n"
 msgstr "Có lẽ ý bạn là “git add .” phải không?\n"
 
-#: builtin/add.c:363 builtin/check-ignore.c:172 builtin/clean.c:919
-#: builtin/commit.c:333 builtin/mv.c:130 builtin/reset.c:235 builtin/rm.c:299
+#: builtin/add.c:363 builtin/check-ignore.c:172 builtin/clean.c:920
+#: builtin/commit.c:335 builtin/mv.c:130 builtin/reset.c:235 builtin/rm.c:299
 msgid "index file corrupt"
 msgstr "tập tin ghi bảng mục lục bị hỏng"
 
-#: builtin/add.c:446 builtin/apply.c:4510 builtin/mv.c:279 builtin/rm.c:431
+#: builtin/add.c:446 builtin/apply.c:4675 builtin/mv.c:279 builtin/rm.c:431
 msgid "Unable to write new index file"
 msgstr "Không thể ghi tập tin lưu bảng mục lục mới"
 
-#: builtin/apply.c:58
-msgid "git apply [options] [<patch>...]"
-msgstr "git apply [các-tùy-chọn] [<miếng-vá>…]"
+#: builtin/apply.c:59
+msgid "git apply [<options>] [<patch>...]"
+msgstr "git apply [<các-tùy-chọn>] [<miếng-vá>…]"
 
-#: builtin/apply.c:111
+#: builtin/apply.c:112
 #, c-format
 msgid "unrecognized whitespace option '%s'"
 msgstr "không nhận ra tùy chọn về khoảng trắng “%s”"
 
-#: builtin/apply.c:126
+#: builtin/apply.c:127
 #, c-format
 msgid "unrecognized whitespace ignore option '%s'"
 msgstr "không nhận ra tùy chọn bỏ qua khoảng trắng “%s”"
 
-#: builtin/apply.c:826
+#: builtin/apply.c:822
 #, c-format
 msgid "Cannot prepare timestamp regexp %s"
 msgstr ""
 "Không thể chuẩn bị biểu thức chính qui dấu vết thời gian (timestamp regexp) "
 "%s"
 
-#: builtin/apply.c:835
+#: builtin/apply.c:831
 #, c-format
 msgid "regexec returned %d for input: %s"
 msgstr "thi hành biểu thức chính quy trả về %d cho đầu vào: %s"
 
-#: builtin/apply.c:916
+#: builtin/apply.c:912
 #, c-format
 msgid "unable to find filename in patch at line %d"
 msgstr "không thể tìm thấy tên tập tin trong miếng vá tại dòng %d"
 
-#: builtin/apply.c:948
+#: builtin/apply.c:944
 #, c-format
 msgid "git apply: bad git-diff - expected /dev/null, got %s on line %d"
 msgstr ""
 "git apply: git-diff sai - cần /dev/null, nhưng lại nhận được %s trên dòng %d"
 
-#: builtin/apply.c:952
+#: builtin/apply.c:948
 #, c-format
 msgid "git apply: bad git-diff - inconsistent new filename on line %d"
 msgstr "git apply: git-diff sai - tên tập tin mới không nhất quán trên dòng %d"
 
-#: builtin/apply.c:953
+#: builtin/apply.c:949
 #, c-format
 msgid "git apply: bad git-diff - inconsistent old filename on line %d"
 msgstr "git apply: git-diff sai - tên tập tin cũ không nhất quán trên dòng %d"
 
-#: builtin/apply.c:960
+#: builtin/apply.c:956
 #, c-format
 msgid "git apply: bad git-diff - expected /dev/null on line %d"
 msgstr "git apply: git-diff sai - cần “/dev/null” trên dòng %d"
 
-#: builtin/apply.c:1423
+#: builtin/apply.c:1419
 #, c-format
 msgid "recount: unexpected line: %.*s"
 msgstr "chi tiết: dòng không cần: %.*s"
 
-#: builtin/apply.c:1480
+#: builtin/apply.c:1476
 #, c-format
 msgid "patch fragment without header at line %d: %.*s"
 msgstr "miếng vá phân mảnh mà không có phần đầu tại dòng %d: %.*s"
 
-#: builtin/apply.c:1497
+#: builtin/apply.c:1493
 #, c-format
 msgid ""
 "git diff header lacks filename information when removing %d leading pathname "
@@ -2216,76 +2224,76 @@ msgstr[0] ""
 "phần đầu diff cho git  thiếu thông tin tên tập tin khi gỡ bỏ đi %d trong "
 "thành phần dẫn đầu tên của đường dẫn (dòng %d)"
 
-#: builtin/apply.c:1657
+#: builtin/apply.c:1656
 msgid "new file depends on old contents"
 msgstr "tập tin mới phụ thuộc vào nội dung cũ"
 
-#: builtin/apply.c:1659
+#: builtin/apply.c:1658
 msgid "deleted file still has contents"
 msgstr "tập tin đã xóa vẫn còn nội dung"
 
-#: builtin/apply.c:1685
+#: builtin/apply.c:1684
 #, c-format
 msgid "corrupt patch at line %d"
 msgstr "miếng vá hỏng tại dòng %d"
 
-#: builtin/apply.c:1721
+#: builtin/apply.c:1720
 #, c-format
 msgid "new file %s depends on old contents"
 msgstr "tập tin mới %s phụ thuộc vào nội dung cũ"
 
-#: builtin/apply.c:1723
+#: builtin/apply.c:1722
 #, c-format
 msgid "deleted file %s still has contents"
 msgstr "tập tin đã xóa %s vẫn còn nội dung"
 
-#: builtin/apply.c:1726
+#: builtin/apply.c:1725
 #, c-format
 msgid "** warning: file %s becomes empty but is not deleted"
 msgstr "** cảnh báo: tập tin %s trở nên trống rỗng nhưng không bị xóa"
 
-#: builtin/apply.c:1872
+#: builtin/apply.c:1871
 #, c-format
 msgid "corrupt binary patch at line %d: %.*s"
 msgstr "miếng vá định dạng nhị phân sai hỏng tại dòng %d: %.*s"
 
-#: builtin/apply.c:1901
+#: builtin/apply.c:1900
 #, c-format
 msgid "unrecognized binary patch at line %d"
 msgstr "miếng vá định dạng nhị phân không được nhận ra tại dòng %d"
 
-#: builtin/apply.c:2052
+#: builtin/apply.c:2051
 #, c-format
 msgid "patch with only garbage at line %d"
 msgstr "vá chỉ với “rác” tại dòng %d"
 
-#: builtin/apply.c:2142
+#: builtin/apply.c:2141
 #, c-format
 msgid "unable to read symlink %s"
 msgstr "không thể đọc liên kết mềm %s"
 
-#: builtin/apply.c:2146
+#: builtin/apply.c:2145
 #, c-format
 msgid "unable to open or read %s"
 msgstr "không thể mở hay đọc %s"
 
-#: builtin/apply.c:2754
+#: builtin/apply.c:2778
 #, c-format
 msgid "invalid start of line: '%c'"
 msgstr "sai khởi đầu dòng: “%c”"
 
-#: builtin/apply.c:2872
+#: builtin/apply.c:2897
 #, c-format
 msgid "Hunk #%d succeeded at %d (offset %d line)."
 msgid_plural "Hunk #%d succeeded at %d (offset %d lines)."
 msgstr[0] "Khối dữ liệu #%d thành công tại %d (offset %d dòng)."
 
-#: builtin/apply.c:2884
+#: builtin/apply.c:2909
 #, c-format
 msgid "Context reduced to (%ld/%ld) to apply fragment at %d"
 msgstr "Nội dung bị giảm xuống còn (%ld/%ld) để áp dụng mảnh dữ liệu tại %d"
 
-#: builtin/apply.c:2890
+#: builtin/apply.c:2915
 #, c-format
 msgid ""
 "while searching for:\n"
@@ -2294,322 +2302,341 @@ msgstr ""
 "trong khi đang tìm kiếm cho:\n"
 "%.*s"
 
-#: builtin/apply.c:2909
+#: builtin/apply.c:2935
 #, c-format
 msgid "missing binary patch data for '%s'"
 msgstr "thiếu dữ liệu của miếng vá định dạng nhị phân cho “%s”"
 
-#: builtin/apply.c:3010
+#: builtin/apply.c:3036
 #, c-format
 msgid "binary patch does not apply to '%s'"
 msgstr "miếng vá định dạng nhị phân không được áp dụng cho “%s”"
 
-#: builtin/apply.c:3016
+#: builtin/apply.c:3042
 #, c-format
 msgid "binary patch to '%s' creates incorrect result (expecting %s, got %s)"
 msgstr ""
 "vá nhị phân cho “%s” tạo ra kết quả không chính xác (mong chờ %s, lại nhận "
 "%s)"
 
-#: builtin/apply.c:3037
+#: builtin/apply.c:3063
 #, c-format
 msgid "patch failed: %s:%ld"
 msgstr "gặp lỗi khi vá: %s:%ld"
 
-#: builtin/apply.c:3161
+#: builtin/apply.c:3187
 #, c-format
 msgid "cannot checkout %s"
 msgstr "không thể lấy ra %s"
 
-#: builtin/apply.c:3206 builtin/apply.c:3215 builtin/apply.c:3260
+#: builtin/apply.c:3232 builtin/apply.c:3243 builtin/apply.c:3288
 #, c-format
 msgid "read of %s failed"
 msgstr "đọc %s gặp lỗi"
 
-#: builtin/apply.c:3240 builtin/apply.c:3462
+#: builtin/apply.c:3240
+#, c-format
+msgid "reading from '%s' beyond a symbolic link"
+msgstr "đọc từ “%s” vượt ra ngoài liên kết mềm"
+
+#: builtin/apply.c:3268 builtin/apply.c:3490
 #, c-format
 msgid "path %s has been renamed/deleted"
 msgstr "đường dẫn %s đã bị xóa hoặc đổi tên"
 
-#: builtin/apply.c:3321 builtin/apply.c:3476
+#: builtin/apply.c:3349 builtin/apply.c:3504
 #, c-format
 msgid "%s: does not exist in index"
 msgstr "%s: không tồn tại trong bảng mục lục"
 
-#: builtin/apply.c:3325 builtin/apply.c:3468 builtin/apply.c:3490
+#: builtin/apply.c:3353 builtin/apply.c:3496 builtin/apply.c:3518
 #, c-format
 msgid "%s: %s"
 msgstr "%s: %s"
 
-#: builtin/apply.c:3330 builtin/apply.c:3484
+#: builtin/apply.c:3358 builtin/apply.c:3512
 #, c-format
 msgid "%s: does not match index"
 msgstr "%s: không khớp trong mục lục"
 
-#: builtin/apply.c:3432
+#: builtin/apply.c:3460
 msgid "removal patch leaves file contents"
 msgstr "loại bỏ miếng vá để lại nội dung tập tin"
 
-#: builtin/apply.c:3501
+#: builtin/apply.c:3529
 #, c-format
 msgid "%s: wrong type"
 msgstr "%s: sai kiểu"
 
-#: builtin/apply.c:3503
+#: builtin/apply.c:3531
 #, c-format
 msgid "%s has type %o, expected %o"
 msgstr "%s có kiểu %o, cần %o"
 
-#: builtin/apply.c:3604
+#: builtin/apply.c:3690 builtin/apply.c:3692
+#, c-format
+msgid "invalid path '%s'"
+msgstr "đường dẫn không hợp lệ “%s”"
+
+#: builtin/apply.c:3747
 #, c-format
 msgid "%s: already exists in index"
 msgstr "%s: đã có từ trước trong bảng mục lục"
 
-#: builtin/apply.c:3607
+#: builtin/apply.c:3750
 #, c-format
 msgid "%s: already exists in working directory"
 msgstr "%s: đã sẵn có trong thư mục đang làm việc"
 
-#: builtin/apply.c:3627
+#: builtin/apply.c:3770
 #, c-format
 msgid "new mode (%o) of %s does not match old mode (%o)"
 msgstr "chế độ mới (%o) của %s không khớp với chế độ cũ (%o)"
 
-#: builtin/apply.c:3632
+#: builtin/apply.c:3775
 #, c-format
 msgid "new mode (%o) of %s does not match old mode (%o) of %s"
 msgstr "chế độ mới (%o) của %s không khớp với chế độ cũ (%o) của %s"
 
-#: builtin/apply.c:3640
+#: builtin/apply.c:3795
+#, c-format
+msgid "affected file '%s' is beyond a symbolic link"
+msgstr "tập tin chịu tác động “%s” vượt ra ngoài liên kết mềm"
+
+#: builtin/apply.c:3799
 #, c-format
 msgid "%s: patch does not apply"
 msgstr "%s: miếng vá không được áp dụng"
 
-#: builtin/apply.c:3653
+#: builtin/apply.c:3813
 #, c-format
 msgid "Checking patch %s..."
 msgstr "Đang kiểm tra miếng vá %s…"
 
-#: builtin/apply.c:3746 builtin/checkout.c:231 builtin/reset.c:135
+#: builtin/apply.c:3906 builtin/checkout.c:231 builtin/reset.c:135
 #, c-format
 msgid "make_cache_entry failed for path '%s'"
 msgstr "make_cache_entry gặp lỗi đối với đường dẫn “%s”"
 
-#: builtin/apply.c:3889
+#: builtin/apply.c:4049
 #, c-format
 msgid "unable to remove %s from index"
 msgstr "không thể gỡ bỏ %s từ mục lục"
 
-#: builtin/apply.c:3918
+#: builtin/apply.c:4078
 #, c-format
 msgid "corrupt patch for submodule %s"
 msgstr "miếng vá sai hỏng cho mô-đun-con %s"
 
-#: builtin/apply.c:3922
+#: builtin/apply.c:4082
 #, c-format
 msgid "unable to stat newly created file '%s'"
 msgstr "không thể lấy thống kề về tập tin %s mới hơn đã được tạo"
 
-#: builtin/apply.c:3927
+#: builtin/apply.c:4087
 #, c-format
 msgid "unable to create backing store for newly created file %s"
 msgstr "không thể tạo “kho lưu đằng sau” cho tập tin được tạo mới hơn %s"
 
-#: builtin/apply.c:3930 builtin/apply.c:4038
+#: builtin/apply.c:4090 builtin/apply.c:4198
 #, c-format
 msgid "unable to add cache entry for %s"
 msgstr "không thể thêm mục nhớ đệm cho %s"
 
-#: builtin/apply.c:3963
+#: builtin/apply.c:4123
 #, c-format
 msgid "closing file '%s'"
 msgstr "đang đóng tập tin “%s”"
 
-#: builtin/apply.c:4012
+#: builtin/apply.c:4172
 #, c-format
 msgid "unable to write file '%s' mode %o"
 msgstr "không thể ghi vào tập tin “%s” chế độ %o"
 
-#: builtin/apply.c:4099
+#: builtin/apply.c:4259
 #, c-format
 msgid "Applied patch %s cleanly."
 msgstr "Đã áp dụng miếng vá %s một cách sạch sẽ."
 
-#: builtin/apply.c:4107
+#: builtin/apply.c:4267
 msgid "internal error"
 msgstr "lỗi nội bộ"
 
-#: builtin/apply.c:4110
+#: builtin/apply.c:4270
 #, c-format
 msgid "Applying patch %%s with %d reject..."
 msgid_plural "Applying patch %%s with %d rejects..."
 msgstr[0] "Đang áp dụng miếng vá %%s với %d lần từ chối…"
 
-#: builtin/apply.c:4120
+#: builtin/apply.c:4280
 #, c-format
 msgid "truncating .rej filename to %.*s.rej"
 msgstr "đang cắt ngắn tên tập tin .rej thành %.*s.rej"
 
-#: builtin/apply.c:4141
+#: builtin/apply.c:4301
 #, c-format
 msgid "Hunk #%d applied cleanly."
 msgstr "Khối nhớ #%d được áp dụng gọn gàng."
 
-#: builtin/apply.c:4144
+#: builtin/apply.c:4304
 #, c-format
 msgid "Rejected hunk #%d."
 msgstr "đoạn dữ liệu #%d bị từ chối."
 
-#: builtin/apply.c:4234
+#: builtin/apply.c:4394
 msgid "unrecognized input"
 msgstr "không thừa nhận đầu vào"
 
-#: builtin/apply.c:4245
+#: builtin/apply.c:4405
 msgid "unable to read index file"
 msgstr "không thể đọc tập tin lưu bảng mục lục"
 
-#: builtin/apply.c:4362 builtin/apply.c:4365 builtin/clone.c:92
-#: builtin/fetch.c:93
+#: builtin/apply.c:4522 builtin/apply.c:4525 builtin/clone.c:92
+#: builtin/fetch.c:92
 msgid "path"
 msgstr "đường-dẫn"
 
-#: builtin/apply.c:4363
+#: builtin/apply.c:4523
 msgid "don't apply changes matching the given path"
 msgstr "không áp dụng các thay đổi khớp với đường dẫn đã cho"
 
-#: builtin/apply.c:4366
+#: builtin/apply.c:4526
 msgid "apply changes matching the given path"
 msgstr "áp dụng các thay đổi khớp với đường dẫn đã cho"
 
-#: builtin/apply.c:4368
+#: builtin/apply.c:4528
 msgid "num"
 msgstr "số"
 
-#: builtin/apply.c:4369
+#: builtin/apply.c:4529
 msgid "remove <num> leading slashes from traditional diff paths"
 msgstr "gỡ bỏ <số> dấu gạch chéo dẫn đầu từ đường dẫn diff cổ điển"
 
-#: builtin/apply.c:4372
+#: builtin/apply.c:4532
 msgid "ignore additions made by the patch"
 msgstr "lờ đi phần bổ xung được tạo ra bởi miếng vá"
 
-#: builtin/apply.c:4374
+#: builtin/apply.c:4534
 msgid "instead of applying the patch, output diffstat for the input"
 msgstr ""
 "thay vì áp dụng một miếng vá, kết xuất kết quả từ lệnh diffstat cho đầu ra"
 
-#: builtin/apply.c:4378
+#: builtin/apply.c:4538
 msgid "show number of added and deleted lines in decimal notation"
 msgstr ""
 "hiển thị số lượng các dòng được thêm vào và xóa đi theo ký hiệu thập phân"
 
-#: builtin/apply.c:4380
+#: builtin/apply.c:4540
 msgid "instead of applying the patch, output a summary for the input"
 msgstr "thay vì áp dụng một miếng vá, kết xuất kết quả cho đầu vào"
 
-#: builtin/apply.c:4382
+#: builtin/apply.c:4542
 msgid "instead of applying the patch, see if the patch is applicable"
 msgstr "thay vì áp dụng miếng vá, hãy xem xem miếng vá có thích hợp không"
 
-#: builtin/apply.c:4384
+#: builtin/apply.c:4544
 msgid "make sure the patch is applicable to the current index"
 msgstr "hãy chắc chắn là miếng vá thích hợp với bảng mục lục hiện hành"
 
-#: builtin/apply.c:4386
+#: builtin/apply.c:4546
 msgid "apply a patch without touching the working tree"
 msgstr "áp dụng một miếng vá mà không động chạm đến cây làm việc"
 
-#: builtin/apply.c:4388
+#: builtin/apply.c:4548
+msgid "accept a patch that touches outside the working area"
+msgstr "chấp nhận một miếng vá mà không động chạm đến cây làm việc"
+
+#: builtin/apply.c:4550
 msgid "also apply the patch (use with --stat/--summary/--check)"
 msgstr ""
 "đồng thời áp dụng miếng vá (dùng với tùy chọn --stat/--summary/--check)"
 
-#: builtin/apply.c:4390
+#: builtin/apply.c:4552
 msgid "attempt three-way merge if a patch does not apply"
 msgstr "thử hòa trộn kiểu three-way nếu việc vá không thể thực hiện được"
 
-#: builtin/apply.c:4392
+#: builtin/apply.c:4554
 msgid "build a temporary index based on embedded index information"
 msgstr ""
 "xây dựng bảng mục lục tạm thời trên cơ sở thông tin bảng mục lục được nhúng"
 
-#: builtin/apply.c:4394 builtin/checkout-index.c:198 builtin/ls-files.c:455
+#: builtin/apply.c:4556 builtin/checkout-index.c:198 builtin/ls-files.c:412
 msgid "paths are separated with NUL character"
 msgstr "các đường dẫn bị ngăn cách bởi ký tự NULL"
 
-#: builtin/apply.c:4397
+#: builtin/apply.c:4559
 msgid "ensure at least <n> lines of context match"
 msgstr "đảm bảo rằng có ít nhất <n> dòng nội dung khớp"
 
-#: builtin/apply.c:4398
+#: builtin/apply.c:4560
 msgid "action"
 msgstr "hành động"
 
-#: builtin/apply.c:4399
+#: builtin/apply.c:4561
 msgid "detect new or modified lines that have whitespace errors"
 msgstr "tìm thấy một dòng mới hoặc bị sửa đổi mà nó có lỗi do khoảng trắng"
 
-#: builtin/apply.c:4402 builtin/apply.c:4405
+#: builtin/apply.c:4564 builtin/apply.c:4567
 msgid "ignore changes in whitespace when finding context"
 msgstr "lờ đi sự thay đổi do khoảng trắng gây ra khi quét nội dung"
 
-#: builtin/apply.c:4408
+#: builtin/apply.c:4570
 msgid "apply the patch in reverse"
 msgstr "áp dụng miếng vá theo chiều ngược"
 
-#: builtin/apply.c:4410
+#: builtin/apply.c:4572
 msgid "don't expect at least one line of context"
 msgstr "đừng hy vọng có ít nhất một dòng nội dung"
 
-#: builtin/apply.c:4412
+#: builtin/apply.c:4574
 msgid "leave the rejected hunks in corresponding *.rej files"
 msgstr "để lại khối dữ liệu bị từ chối trong các tập tin *.rej tương ứng"
 
-#: builtin/apply.c:4414
+#: builtin/apply.c:4576
 msgid "allow overlapping hunks"
 msgstr "cho phép chồng khối nhớ"
 
-#: builtin/apply.c:4417
+#: builtin/apply.c:4579
 msgid "tolerate incorrectly detected missing new-line at the end of file"
 msgstr ""
 "đã dò tìm thấy dung sai không chính xác thiếu dòng mới tại cuối tập tin"
 
-#: builtin/apply.c:4420
+#: builtin/apply.c:4582
 msgid "do not trust the line counts in the hunk headers"
 msgstr "không tin số lượng dòng trong phần đầu khối dữ liệu"
 
-#: builtin/apply.c:4422
+#: builtin/apply.c:4584
 msgid "root"
 msgstr "root"
 
-#: builtin/apply.c:4423
+#: builtin/apply.c:4585
 msgid "prepend <root> to all filenames"
 msgstr "treo thêm <root> vào tất cả các tên tập tin"
 
-#: builtin/apply.c:4445
+#: builtin/apply.c:4607
 msgid "--3way outside a repository"
 msgstr "--3way ở ngoài một kho chứa"
 
-#: builtin/apply.c:4453
+#: builtin/apply.c:4615
 msgid "--index outside a repository"
 msgstr "--index ở ngoài một kho chứa"
 
-#: builtin/apply.c:4456
+#: builtin/apply.c:4618
 msgid "--cached outside a repository"
 msgstr "--cached ở ngoài một kho chứa"
 
-#: builtin/apply.c:4472
+#: builtin/apply.c:4637
 #, c-format
 msgid "can't open patch '%s'"
 msgstr "không thể mở miếng vá “%s”"
 
-#: builtin/apply.c:4486
+#: builtin/apply.c:4651
 #, c-format
 msgid "squelched %d whitespace error"
 msgid_plural "squelched %d whitespace errors"
 msgstr[0] "đã chấm dứt %d lỗi khoảng trắng"
 
-#: builtin/apply.c:4492 builtin/apply.c:4502
+#: builtin/apply.c:4657 builtin/apply.c:4667
 #, c-format
 msgid "%d line adds whitespace errors."
 msgid_plural "%d lines add whitespace errors."
@@ -2664,104 +2691,104 @@ msgstr ""
 "cập nhật BISECT_HEAD thay vì lấy ra (checking out) lần chuyển giao hiện hành"
 
 #: builtin/blame.c:30
-msgid "git blame [options] [rev-opts] [rev] [--] file"
-msgstr "git blame [các-tùy-chọn] [rev-opts] [rev] [--] tập-tin"
+msgid "git blame [<options>] [<rev-opts>] [<rev>] [--] file"
+msgstr "git blame [<các-tùy-chọn>] [rev-opts] [rev] [--] tập-tin"
 
 #: builtin/blame.c:35
-msgid "[rev-opts] are documented in git-rev-list(1)"
-msgstr "[rev-opts] được mô tả trong git-rev-list(1)"
+msgid "<rev-opts> are documented in git-rev-list(1)"
+msgstr "<rev-opts> được mô tả trong tài liệu git-rev-list(1)"
 
-#: builtin/blame.c:2501
+#: builtin/blame.c:2500
 msgid "Show blame entries as we find them, incrementally"
 msgstr "Hiển thị các mục “blame” như là chúng ta thấy chúng, tăng dần"
 
-#: builtin/blame.c:2502
+#: builtin/blame.c:2501
 msgid "Show blank SHA-1 for boundary commits (Default: off)"
 msgstr ""
 "Hiển thị SHA-1 trắng cho những lần chuyển giao biên giới (Mặc định: off)"
 
-#: builtin/blame.c:2503
+#: builtin/blame.c:2502
 msgid "Do not treat root commits as boundaries (Default: off)"
 msgstr "Không coi các lần chuyển giao gốc là giới hạn (Mặc định: off)"
 
-#: builtin/blame.c:2504
+#: builtin/blame.c:2503
 msgid "Show work cost statistics"
 msgstr "Hiển thị thống kê công sức làm việc"
 
-#: builtin/blame.c:2505
+#: builtin/blame.c:2504
 msgid "Show output score for blame entries"
 msgstr "Hiển thị kết xuất điểm số có các mục tin “blame”"
 
-#: builtin/blame.c:2506
+#: builtin/blame.c:2505
 msgid "Show original filename (Default: auto)"
 msgstr "Hiển thị tên tập tin gốc (Mặc định: auto)"
 
-#: builtin/blame.c:2507
+#: builtin/blame.c:2506
 msgid "Show original linenumber (Default: off)"
 msgstr "Hiển thị số dòng gốc (Mặc định: off)"
 
-#: builtin/blame.c:2508
+#: builtin/blame.c:2507
 msgid "Show in a format designed for machine consumption"
 msgstr "Hiển thị ở định dạng đã thiết kế cho sự tiêu dùng bằng máy"
 
-#: builtin/blame.c:2509
+#: builtin/blame.c:2508
 msgid "Show porcelain format with per-line commit information"
 msgstr "Hiển thị định dạng “porcelain” với thông tin chuyển giao mỗi dòng"
 
-#: builtin/blame.c:2510
+#: builtin/blame.c:2509
 msgid "Use the same output mode as git-annotate (Default: off)"
-msgstr "Dùng cùng chế độ xuất ra vóigit-annotate (Mặc định: off)"
+msgstr "Dùng cùng chế độ xuất ra với git-annotate (Mặc định: off)"
 
-#: builtin/blame.c:2511
+#: builtin/blame.c:2510
 msgid "Show raw timestamp (Default: off)"
 msgstr "Hiển thị dấu vết thời gian dạng thô (Mặc định: off)"
 
-#: builtin/blame.c:2512
+#: builtin/blame.c:2511
 msgid "Show long commit SHA1 (Default: off)"
 msgstr "Hiển thị SHA1 của lần chuyển giao dạng dài (Mặc định: off)"
 
-#: builtin/blame.c:2513
+#: builtin/blame.c:2512
 msgid "Suppress author name and timestamp (Default: off)"
 msgstr "Không hiển thị tên tác giả và dấu vết thời gian (Mặc định: off)"
 
-#: builtin/blame.c:2514
+#: builtin/blame.c:2513
 msgid "Show author email instead of name (Default: off)"
 msgstr "Hiển thị thư điện tử của tác giả thay vì tên (Mặc định: off)"
 
-#: builtin/blame.c:2515
+#: builtin/blame.c:2514
 msgid "Ignore whitespace differences"
 msgstr "Bỏ qua các khác biệt do khoảng trắng gây ra"
 
-#: builtin/blame.c:2516
+#: builtin/blame.c:2515
 msgid "Spend extra cycles to find better match"
 msgstr "Tiêu thụ thêm năng tài nguyên máy móc để tìm kiếm tốt hơn nữa"
 
-#: builtin/blame.c:2517
+#: builtin/blame.c:2516
 msgid "Use revisions from <file> instead of calling git-rev-list"
 msgstr ""
 "Sử dụng điểm xét duyệt (revision) từ <tập tin> thay vì gọi “git-rev-list”"
 
-#: builtin/blame.c:2518
+#: builtin/blame.c:2517
 msgid "Use <file>'s contents as the final image"
 msgstr "Sử dụng nội dung của <tập tin> như là ảnh cuối cùng"
 
-#: builtin/blame.c:2519 builtin/blame.c:2520
+#: builtin/blame.c:2518 builtin/blame.c:2519
 msgid "score"
 msgstr "điểm số"
 
-#: builtin/blame.c:2519
+#: builtin/blame.c:2518
 msgid "Find line copies within and across files"
 msgstr "Tìm các bản sao chép dòng trong và ngang qua tập tin"
 
-#: builtin/blame.c:2520
+#: builtin/blame.c:2519
 msgid "Find line movements within and across files"
 msgstr "Tìm các di chuyển dòng trong và ngang qua tập tin"
 
-#: builtin/blame.c:2521
+#: builtin/blame.c:2520
 msgid "n,m"
 msgstr "n,m"
 
-#: builtin/blame.c:2521
+#: builtin/blame.c:2520
 msgid "Process only line range n,m, counting from 1"
 msgstr "Xử lý chỉ dòng vùng n,m, tính từ 1"
 
@@ -2771,25 +2798,25 @@ msgstr "Xử lý chỉ dòng vùng n,m, tính từ 1"
 #. takes 22 places, is the longest among various forms of
 #. relative timestamps, but your language may need more or
 #. fewer display columns.
-#: builtin/blame.c:2602
+#: builtin/blame.c:2601
 msgid "4 years, 11 months ago"
 msgstr "4 năm, 11 tháng trước"
 
 #: builtin/branch.c:24
-msgid "git branch [options] [-r | -a] [--merged | --no-merged]"
-msgstr "git branch [các-tùy-chọn] [-r | -a] [--merged | --no-merged]"
+msgid "git branch [<options>] [-r | -a] [--merged | --no-merged]"
+msgstr "git branch [<các-tùy-chọn>] [-r | -a] [--merged | --no-merged]"
 
 #: builtin/branch.c:25
-msgid "git branch [options] [-l] [-f] <branchname> [<start-point>]"
-msgstr "git branch [các-tùy-chọn] [-l] [-f] <tên-nhánh> [<điểm-đầu>]"
+msgid "git branch [<options>] [-l] [-f] <branch-name> [<start-point>]"
+msgstr "git branch [<các-tùy-chọn>] [-l] [-f] <tên-nhánh> [<điểm-đầu>]"
 
 #: builtin/branch.c:26
-msgid "git branch [options] [-r] (-d | -D) <branchname>..."
-msgstr "git branch [các-tùy-chọn] [-r] (-d | -D) <tên-nhánh> …"
+msgid "git branch [<options>] [-r] (-d | -D) <branch-name>..."
+msgstr "git branch [<các-tùy-chọn>] [-r] (-d | -D) <tên-nhánh> …"
 
 #: builtin/branch.c:27
-msgid "git branch [options] (-m | -M) [<oldbranch>] <newbranch>"
-msgstr "git branch [các-tùy-chọn] (-m | -M) [<nhánh-cũ>] <nhánh-mới>"
+msgid "git branch [<options>] (-m | -M) [<old-branch>] <new-branch>"
+msgstr "git branch [<các-tùy-chọn>] (-m | -M) [<nhánh-cũ>] <nhánh-mới>"
 
 #: builtin/branch.c:152
 #, c-format
@@ -2888,7 +2915,7 @@ msgstr "[%s]"
 #: builtin/branch.c:469
 #, c-format
 msgid "[%s: behind %d]"
-msgstr "[%s: đằng sau %d]"
+msgstr "[%s: đứng sau %d]"
 
 #: builtin/branch.c:471
 #, c-format
@@ -2929,195 +2956,200 @@ msgstr "(không nhánh, đang cải tổ %s)"
 msgid "(no branch, bisect started on %s)"
 msgstr "(không nhánh, di chuyển nửa bước được bắt đầu tại %s)"
 
-#: builtin/branch.c:593
-#, c-format
-msgid "(detached from %s)"
-msgstr "(được tách rời từ %s)"
-
 #: builtin/branch.c:596
+#, c-format
+msgid "(HEAD detached at %s)"
+msgstr "(HEAD được tách rời tại %s)"
+
+#: builtin/branch.c:599
+#, c-format
+msgid "(HEAD detached from %s)"
+msgstr "(HEAD được tách rời từ %s)"
+
+#: builtin/branch.c:603
 msgid "(no branch)"
 msgstr "(không nhánh)"
 
-#: builtin/branch.c:643
+#: builtin/branch.c:650
 #, c-format
 msgid "object '%s' does not point to a commit"
 msgstr "đối tượng “%s” không chỉ đến một lần chuyển giao nào cả"
 
-#: builtin/branch.c:691
+#: builtin/branch.c:698
 msgid "some refs could not be read"
 msgstr "một số tham chiếu đã không thể đọc được"
 
-#: builtin/branch.c:704
+#: builtin/branch.c:711
 msgid "cannot rename the current branch while not on any."
 msgstr "không thể đổi tên nhánh hiện hành trong khi nó chẳng ở đâu cả."
 
-#: builtin/branch.c:714
+#: builtin/branch.c:721
 #, c-format
 msgid "Invalid branch name: '%s'"
 msgstr "Tên nhánh không hợp lệ: “%s”"
 
-#: builtin/branch.c:729
+#: builtin/branch.c:736
 msgid "Branch rename failed"
 msgstr "Gặp lỗi khi đổi tên nhánh"
 
-#: builtin/branch.c:733
+#: builtin/branch.c:740
 #, c-format
 msgid "Renamed a misnamed branch '%s' away"
 msgstr "Đã đổi tên nhánh khuyết danh “%s” đi"
 
-#: builtin/branch.c:737
+#: builtin/branch.c:744
 #, c-format
 msgid "Branch renamed to %s, but HEAD is not updated!"
 msgstr "Nhánh bị đổi tên thành %s, nhưng HEAD lại không được cập nhật!"
 
-#: builtin/branch.c:744
+#: builtin/branch.c:751
 msgid "Branch is renamed, but update of config-file failed"
 msgstr "Nhánh bị đổi tên, nhưng cập nhật tập tin cấu hình gặp lỗi"
 
-#: builtin/branch.c:759
+#: builtin/branch.c:766
 #, c-format
 msgid "malformed object name %s"
 msgstr "tên đối tượng dị hình %s"
 
-#: builtin/branch.c:783
+#: builtin/branch.c:790
 #, c-format
 msgid "could not write branch description template: %s"
 msgstr "không thể ghi vào mẫu mô tả nhánh: %s"
 
-#: builtin/branch.c:813
+#: builtin/branch.c:820
 msgid "Generic options"
 msgstr "Tùy chọn chung"
 
-#: builtin/branch.c:815
+#: builtin/branch.c:822
 msgid "show hash and subject, give twice for upstream branch"
 msgstr "hiển thị mã băm và chủ đề, đưa ra hai lần cho nhánh thượng nguồn"
 
-#: builtin/branch.c:816
+#: builtin/branch.c:823
 msgid "suppress informational messages"
 msgstr "không xuất các thông tin"
 
-#: builtin/branch.c:817
+#: builtin/branch.c:824
 msgid "set up tracking mode (see git-pull(1))"
 msgstr "cài đặt chế độ theo dõi (xem git-pull(1))"
 
-#: builtin/branch.c:819
+#: builtin/branch.c:826
 msgid "change upstream info"
 msgstr "thay đổi thông tin thượng nguồn"
 
-#: builtin/branch.c:823
+#: builtin/branch.c:830
 msgid "use colored output"
 msgstr "tô màu kết xuất"
 
-#: builtin/branch.c:824
+#: builtin/branch.c:831
 msgid "act on remote-tracking branches"
 msgstr "thao tác trên nhánh “remote-tracking”"
 
-#: builtin/branch.c:827 builtin/branch.c:833 builtin/branch.c:854
-#: builtin/branch.c:860 builtin/commit.c:1586 builtin/commit.c:1587
-#: builtin/commit.c:1588 builtin/commit.c:1589 builtin/tag.c:616
+#: builtin/branch.c:834 builtin/branch.c:840 builtin/branch.c:861
+#: builtin/branch.c:867 builtin/commit.c:1582 builtin/commit.c:1583
+#: builtin/commit.c:1584 builtin/commit.c:1585 builtin/tag.c:616
 #: builtin/tag.c:622
 msgid "commit"
 msgstr "lần_chuyển_giao"
 
-#: builtin/branch.c:828 builtin/branch.c:834
+#: builtin/branch.c:835 builtin/branch.c:841
 msgid "print only branches that contain the commit"
 msgstr "chỉ hiển thị những nhánh mà nó chứa lần chuyển giao"
 
-#: builtin/branch.c:840
+#: builtin/branch.c:847
 msgid "Specific git-branch actions:"
 msgstr "Hành động git-branch:"
 
-#: builtin/branch.c:841
+#: builtin/branch.c:848
 msgid "list both remote-tracking and local branches"
 msgstr "liệt kê cả nhánh “remote-tracking” và nội bộ"
 
-#: builtin/branch.c:843
+#: builtin/branch.c:850
 msgid "delete fully merged branch"
 msgstr "xóa một toàn bộ nhánh đã hòa trộn"
 
-#: builtin/branch.c:844
+#: builtin/branch.c:851
 msgid "delete branch (even if not merged)"
 msgstr "xóa nhánh (cho dù là chưa được hòa trộn)"
 
-#: builtin/branch.c:845
+#: builtin/branch.c:852
 msgid "move/rename a branch and its reflog"
 msgstr "di chuyển hay đổi tên một nhánh và reflog của nó"
 
-#: builtin/branch.c:846
+#: builtin/branch.c:853
 msgid "move/rename a branch, even if target exists"
 msgstr "di chuyển hoặc đổi tên một nhánh ngay cả khi đích đã có sẵn"
 
-#: builtin/branch.c:847
+#: builtin/branch.c:854
 msgid "list branch names"
 msgstr "liệt kê các tên nhánh"
 
-#: builtin/branch.c:848
+#: builtin/branch.c:855
 msgid "create the branch's reflog"
 msgstr "tạo reflog của nhánh"
 
-#: builtin/branch.c:850
+#: builtin/branch.c:857
 msgid "edit the description for the branch"
 msgstr "sửa mô tả cho nhánh"
 
-#: builtin/branch.c:851
+#: builtin/branch.c:858
 msgid "force creation, move/rename, deletion"
 msgstr "buộc tạo, di chuyển/đổi tên, xóa"
 
-#: builtin/branch.c:854
+#: builtin/branch.c:861
 msgid "print only not merged branches"
 msgstr "chỉ hiển thị các nhánh chưa được hòa trộn"
 
-#: builtin/branch.c:860
+#: builtin/branch.c:867
 msgid "print only merged branches"
 msgstr "chỉ hiển thị các nhánh đã hòa trộn"
 
-#: builtin/branch.c:864
+#: builtin/branch.c:871
 msgid "list branches in columns"
 msgstr "liệt kê các nhánh trong các cột"
 
-#: builtin/branch.c:877
+#: builtin/branch.c:884
 msgid "Failed to resolve HEAD as a valid ref."
 msgstr "Gặp lỗi khi phân giải HEAD như là một tham chiếu hợp lệ."
 
-#: builtin/branch.c:881 builtin/clone.c:637
+#: builtin/branch.c:888 builtin/clone.c:637
 msgid "HEAD not found below refs/heads!"
 msgstr "không tìm thấy HEAD ở dưới refs/heads!"
 
-#: builtin/branch.c:903
+#: builtin/branch.c:910
 msgid "--column and --verbose are incompatible"
 msgstr "tùy chọn --column và --verbose xung khắc nhau"
 
-#: builtin/branch.c:914 builtin/branch.c:953
+#: builtin/branch.c:921 builtin/branch.c:960
 msgid "branch name required"
 msgstr "cần chỉ ra tên nhánh"
 
-#: builtin/branch.c:929
+#: builtin/branch.c:936
 msgid "Cannot give description to detached HEAD"
 msgstr "Không thể đưa ra mô tả HEAD đã tách rời"
 
-#: builtin/branch.c:934
+#: builtin/branch.c:941
 msgid "cannot edit description of more than one branch"
 msgstr "không thể sửa mô tả cho nhiều hơn một nhánh"
 
-#: builtin/branch.c:941
+#: builtin/branch.c:948
 #, c-format
 msgid "No commit on branch '%s' yet."
 msgstr "Vẫn chưa chuyển giao trên nhánh “%s”."
 
-#: builtin/branch.c:944
+#: builtin/branch.c:951
 #, c-format
 msgid "No branch named '%s'."
 msgstr "Không có nhánh nào có tên “%s”."
 
-#: builtin/branch.c:959
+#: builtin/branch.c:966
 msgid "too many branches for a rename operation"
 msgstr "quá nhiều nhánh dành cho thao tác đổi tên"
 
-#: builtin/branch.c:964
+#: builtin/branch.c:971
 msgid "too many branches to set new upstream"
 msgstr "quá nhiều nhánh được đặt cho thượng nguồn mới"
 
-#: builtin/branch.c:968
+#: builtin/branch.c:975
 #, c-format
 msgid ""
 "could not set upstream of HEAD to %s when it does not point to any branch."
@@ -3125,40 +3157,40 @@ msgstr ""
 "không thể đặt thượng nguồn của HEAD thành %s khi mà nó chẳng chỉ đến nhánh "
 "nào cả."
 
-#: builtin/branch.c:971 builtin/branch.c:993 builtin/branch.c:1014
+#: builtin/branch.c:978 builtin/branch.c:1000 builtin/branch.c:1021
 #, c-format
 msgid "no such branch '%s'"
 msgstr "không có nhánh nào như thế “%s”"
 
-#: builtin/branch.c:975
+#: builtin/branch.c:982
 #, c-format
 msgid "branch '%s' does not exist"
 msgstr "chưa có nhánh “%s”"
 
-#: builtin/branch.c:987
+#: builtin/branch.c:994
 msgid "too many branches to unset upstream"
 msgstr "quá nhiều nhánh để bỏ đặt thượng nguồn"
 
-#: builtin/branch.c:991
+#: builtin/branch.c:998
 msgid "could not unset upstream of HEAD when it does not point to any branch."
 msgstr "không thể bỏ đặt thượng nguồn của HEAD không chỉ đến một nhánh nào cả."
 
-#: builtin/branch.c:997
+#: builtin/branch.c:1004
 #, c-format
 msgid "Branch '%s' has no upstream information"
 msgstr "Nhánh “%s” không có thông tin thượng nguồn"
 
-#: builtin/branch.c:1011
+#: builtin/branch.c:1018
 msgid "it does not make sense to create 'HEAD' manually"
 msgstr "không hợp lý khi tạo “HEAD” thủ công"
 
-#: builtin/branch.c:1017
+#: builtin/branch.c:1024
 msgid "-a and -r options to 'git branch' do not make sense with a branch name"
 msgstr ""
 "hai tùy chọn -a và -r áp dụng cho lệnh “git branch” không hợp lý đối với tên "
 "nhánh"
 
-#: builtin/branch.c:1020
+#: builtin/branch.c:1027
 #, c-format
 msgid ""
 "The --set-upstream flag is deprecated and will be removed. Consider using --"
@@ -3167,7 +3199,7 @@ msgstr ""
 "Cờ --set-upstream đã lạc hậu và sẽ bị xóa bỏ. Nên dùng --track hoặc --set-"
 "upstream-to\n"
 
-#: builtin/branch.c:1037
+#: builtin/branch.c:1044
 #, c-format
 msgid ""
 "\n"
@@ -3178,12 +3210,12 @@ msgstr ""
 "Nếu bạn muốn “%s” theo dõi “%s”, thực hiện lệnh sau:\n"
 "\n"
 
-#: builtin/branch.c:1038
+#: builtin/branch.c:1045
 #, c-format
 msgid "    git branch -d %s\n"
 msgstr "    git branch -d %s\n"
 
-#: builtin/branch.c:1039
+#: builtin/branch.c:1046
 #, c-format
 msgid "    git branch --set-upstream-to %s\n"
 msgstr "    git branch --set-upstream-to %s\n"
@@ -3201,55 +3233,55 @@ msgstr "Cần một kho chứa để có thể tạo một bundle."
 msgid "Need a repository to unbundle."
 msgstr "Cần một kho chứa để có thể giải nén một bundle."
 
-#: builtin/cat-file.c:328
-msgid "git cat-file (-t|-s|-e|-p|<type>|--textconv) <object>"
-msgstr "git cat-file (-t|-s|-e|-p|<kiểu>|--textconv) <đối_tượng>"
+#: builtin/cat-file.c:326
+msgid "git cat-file (-t | -s | -e | -p | <type> | --textconv) <object>"
+msgstr "git cat-file (-t | -s | -e | -p | <kiểu> | --textconv) <đối_tượng>"
 
-#: builtin/cat-file.c:329
-msgid "git cat-file (--batch|--batch-check) < <list_of_objects>"
-msgstr "git cat-file (--batch|--batch-check) < <danh-sách-đối-tượng>"
+#: builtin/cat-file.c:327
+msgid "git cat-file (--batch | --batch-check) < <list-of-objects>"
+msgstr "git cat-file (--batch | --batch-check) < <danh-sách-đối-tượng>"
 
-#: builtin/cat-file.c:366
+#: builtin/cat-file.c:364
 msgid "<type> can be one of: blob, tree, commit, tag"
 msgstr "<kiểu> là một trong số: blob, tree, commit hoặc tag"
 
-#: builtin/cat-file.c:367
+#: builtin/cat-file.c:365
 msgid "show object type"
 msgstr "hiển thị kiểu đối tượng"
 
-#: builtin/cat-file.c:368
+#: builtin/cat-file.c:366
 msgid "show object size"
 msgstr "hiển thị kích thước đối tượng"
 
-#: builtin/cat-file.c:370
+#: builtin/cat-file.c:368
 msgid "exit with zero when there's no error"
 msgstr "thoát với 0 khi không có lỗi"
 
-#: builtin/cat-file.c:371
+#: builtin/cat-file.c:369
 msgid "pretty-print object's content"
 msgstr "in nội dung đối tượng dạng dễ đọc"
 
-#: builtin/cat-file.c:373
+#: builtin/cat-file.c:371
 msgid "for blob objects, run textconv on object's content"
 msgstr "với đối tượng blob, chạy lệnh textconv trên nội dung của đối tượng"
 
-#: builtin/cat-file.c:375
+#: builtin/cat-file.c:373
 msgid "show info and content of objects fed from the standard input"
 msgstr ""
 "hiển thị thông tin và nội dung của các đối tượng lấy từ đầu vào tiêu chuẩn"
 
-#: builtin/cat-file.c:378
+#: builtin/cat-file.c:376
 msgid "show info about objects fed from the standard input"
 msgstr "hiển thị các thông tin về đối tượng fed  từ đầu vào tiêu chuẩn"
 
 #: builtin/check-attr.c:11
-msgid "git check-attr [-a | --all | attr...] [--] pathname..."
-msgstr "git check-attr [-a | --all | attr…] [--] tên-đường-dẫn…"
+msgid "git check-attr [-a | --all | <attr>...] [--] <pathname>..."
+msgstr "git check-attr [-a | --all | <attr>…] [--] tên-đường-dẫn…"
 
 #: builtin/check-attr.c:12
-msgid "git check-attr --stdin [-z] [-a | --all | attr...] < <list-of-paths>"
+msgid "git check-attr --stdin [-z] [-a | --all | <attr>...] < <list-of-paths>"
 msgstr ""
-"git check-attr --stdin [-z] [-a | --all | attr…] < <danh-sách-đường-dẫn>"
+"git check-attr --stdin [-z] [-a | --all | <attr>…] < <danh-sách-đường-dẫn>"
 
 #: builtin/check-attr.c:19
 msgid "report all attributes set on file"
@@ -3304,8 +3336,8 @@ msgid "--non-matching is only valid with --verbose"
 msgstr "tùy-chọn --non-matching chỉ hợp lệ khi dùng với --verbose"
 
 #: builtin/check-mailmap.c:8
-msgid "git check-mailmap [options] <contact>..."
-msgstr "git check-mailmap [các-tùy-chọn] <danh-bạ>…"
+msgid "git check-mailmap [<options>] <contact>..."
+msgstr "git check-mailmap [<các-tùy-chọn>] <danh-bạ>…"
 
 #: builtin/check-mailmap.c:13
 msgid "also read contacts from stdin"
@@ -3321,8 +3353,8 @@ msgid "no contacts specified"
 msgstr "chưa chỉ ra danh bạ"
 
 #: builtin/checkout-index.c:126
-msgid "git checkout-index [options] [--] [<file>...]"
-msgstr "git checkout-index [các-tùy-chọn] [--] [<tập-tin>…]"
+msgid "git checkout-index [<options>] [--] [<file>...]"
+msgstr "git checkout-index [<các-tùy-chọn>] [--] [<tập-tin>…]"
 
 #: builtin/checkout-index.c:188
 msgid "check out all files in the index"
@@ -3366,12 +3398,12 @@ msgid "copy out the files from named stage"
 msgstr "sao chép ra các tập tin từ bệ phóng có tên"
 
 #: builtin/checkout.c:25
-msgid "git checkout [options] <branch>"
-msgstr "git checkout [các-tùy-chọn] <nhánh>"
+msgid "git checkout [<options>] <branch>"
+msgstr "git checkout [<các-tùy-chọn>] <nhánh>"
 
 #: builtin/checkout.c:26
-msgid "git checkout [options] [<branch>] -- <file>..."
-msgstr "git checkout [các-tùy-chọn] [<nhánh>] -- <tập-tin>…"
+msgid "git checkout [<options>] [<branch>] -- <file>..."
+msgstr "git checkout [<các-tùy-chọn>] [<nhánh>] -- <tập-tin>…"
 
 #: builtin/checkout.c:132 builtin/checkout.c:165
 #, c-format
@@ -3497,14 +3529,13 @@ msgid ""
 "If you want to keep them by creating a new branch, this may be a good time\n"
 "to do so with:\n"
 "\n"
-" git branch new_branch_name %s\n"
+" git branch <new-branch-name> %s\n"
 "\n"
 msgstr ""
-"Nếu bạn muốn giữ chúng bằng cách tạo ra một nhánh mới, đây có lẽ là một thời "
-"điểm thích hợp\n"
-"để làm thế bằng lệnh:\n"
+"Nếu bạn muốn giữ chúng bằng cách tạo ra một nhánh mới, đây có lẽ là\n"
+"một thời điểm thích hợp để làm thế bằng lệnh:\n"
 "\n"
-" git branch tên_nhánh_mới %s\n"
+" git branch <tên_nhánh_mới> %s\n"
 "\n"
 
 #: builtin/checkout.c:777
@@ -3622,8 +3653,8 @@ msgid "do not limit pathspecs to sparse entries only"
 msgstr "không giới hạn đặc tả đường dẫn thành chỉ các mục thưa thớt"
 
 #: builtin/checkout.c:1130
-msgid "second guess 'git checkout no-such-branch'"
-msgstr "gợi ý thứ hai “git checkout không-nhánh-nào-như-vậy”"
+msgid "second guess 'git checkout <no-such-branch>'"
+msgstr "gợi ý thứ hai \"git checkout <không-nhánh-nào-như-vậy>\""
 
 #: builtin/checkout.c:1153
 msgid "-b, -B and --orphan are mutually exclusive"
@@ -3746,16 +3777,17 @@ msgstr "CẢNH BÁO: Không tìm thấy các mục được khớp bởi: %s"
 msgid "Select items to delete"
 msgstr "Chọn mục muốn xóa"
 
-#: builtin/clean.c:757
+#. TRANSLATORS: Make sure to keep [y/N] as is
+#: builtin/clean.c:758
 #, c-format
-msgid "remove %s? "
-msgstr "gỡ bỏ “%s”? "
+msgid "Remove %s [y/N]? "
+msgstr "Xóa bỏ “%s” [y/N]? "
 
-#: builtin/clean.c:782
+#: builtin/clean.c:783
 msgid "Bye."
 msgstr "Tạm biệt."
 
-#: builtin/clean.c:790
+#: builtin/clean.c:791
 msgid ""
 "clean               - start cleaning\n"
 "filter by pattern   - exclude items from deletion\n"
@@ -3773,61 +3805,61 @@ msgstr ""
 "help                - hiển thị chính trợ giúp này\n"
 "?                   - trợ giúp dành cho chọn bằng cách nhắc"
 
-#: builtin/clean.c:817
+#: builtin/clean.c:818
 msgid "*** Commands ***"
 msgstr "*** Lệnh ***"
 
-#: builtin/clean.c:818
+#: builtin/clean.c:819
 msgid "What now"
 msgstr "Giờ thì sao"
 
-#: builtin/clean.c:826
+#: builtin/clean.c:827
 msgid "Would remove the following item:"
 msgid_plural "Would remove the following items:"
 msgstr[0] "Có muốn gỡ bỏ (các) mục sau đây không:"
 
-#: builtin/clean.c:843
+#: builtin/clean.c:844
 msgid "No more files to clean, exiting."
 msgstr "Không còn tập-tin nào để dọn dẹp, đang thoát ra."
 
-#: builtin/clean.c:874
+#: builtin/clean.c:875
 msgid "do not print names of files removed"
 msgstr "không hiển thị tên của các tập tin đã gỡ bỏ"
 
-#: builtin/clean.c:876
+#: builtin/clean.c:877
 msgid "force"
 msgstr "ép buộc"
 
-#: builtin/clean.c:877
+#: builtin/clean.c:878
 msgid "interactive cleaning"
 msgstr "dọn bằng kiểu tương tác"
 
-#: builtin/clean.c:879
+#: builtin/clean.c:880
 msgid "remove whole directories"
 msgstr "gỡ bỏ toàn bộ thư mục"
 
-#: builtin/clean.c:880 builtin/describe.c:407 builtin/grep.c:714
-#: builtin/ls-files.c:486 builtin/name-rev.c:311 builtin/show-ref.c:185
+#: builtin/clean.c:881 builtin/describe.c:407 builtin/grep.c:714
+#: builtin/ls-files.c:443 builtin/name-rev.c:311 builtin/show-ref.c:185
 msgid "pattern"
 msgstr "mẫu"
 
-#: builtin/clean.c:881
+#: builtin/clean.c:882
 msgid "add <pattern> to ignore rules"
 msgstr "thêm <mẫu> vào trong qui tắc bỏ qua"
 
-#: builtin/clean.c:882
+#: builtin/clean.c:883
 msgid "remove ignored files, too"
 msgstr "đồng thời gỡ bỏ cả các tập tin bị bỏ qua"
 
-#: builtin/clean.c:884
+#: builtin/clean.c:885
 msgid "remove only ignored files"
 msgstr "chỉ gỡ bỏ những tập tin bị bỏ qua"
 
-#: builtin/clean.c:902
+#: builtin/clean.c:903
 msgid "-x and -X cannot be used together"
 msgstr "-x và -X không thể dùng cùng nhau"
 
-#: builtin/clean.c:906
+#: builtin/clean.c:907
 msgid ""
 "clean.requireForce set to true and neither -i, -n, nor -f given; refusing to "
 "clean"
@@ -3835,7 +3867,7 @@ msgstr ""
 "clean.requireForce được đặt thành true và không đưa ra tùy chọn -i, -n mà "
 "cũng không -f; từ chối lệnh dọn dẹp (clean)"
 
-#: builtin/clean.c:909
+#: builtin/clean.c:910
 msgid ""
 "clean.requireForce defaults to true and neither -i, -n, nor -f given; "
 "refusing to clean"
@@ -3844,11 +3876,11 @@ msgstr ""
 "mà cũng không -f; từ chối lệnh dọn dẹp (clean)"
 
 #: builtin/clone.c:37
-msgid "git clone [options] [--] <repo> [<dir>]"
-msgstr "git clone [các-tùy-chọn] [--] <kho> [<t.mục>]"
+msgid "git clone [<options>] [--] <repo> [<dir>]"
+msgstr "git clone [<các-tùy-chọn>] [--] <kho> [<t.mục>]"
 
-#: builtin/clone.c:66 builtin/fetch.c:112 builtin/merge.c:224
-#: builtin/push.c:514
+#: builtin/clone.c:66 builtin/fetch.c:111 builtin/merge.c:224
+#: builtin/push.c:523
 msgid "force progress reporting"
 msgstr "ép buộc báo cáo tiến triển công việc"
 
@@ -3908,7 +3940,7 @@ msgstr "lấy ra <nhánh> thay cho HEAD của máy chủ"
 msgid "path to git-upload-pack on the remote"
 msgstr "đường dẫn đến git-upload-pack trên máy chủ"
 
-#: builtin/clone.c:94 builtin/fetch.c:113 builtin/grep.c:659
+#: builtin/clone.c:94 builtin/fetch.c:112 builtin/grep.c:659
 msgid "depth"
 msgstr "độ-sâu"
 
@@ -4052,7 +4084,7 @@ msgstr "tùy chọn --bare và --separate-git-dir xung khắc nhau."
 msgid "repository '%s' does not exist"
 msgstr "kho chứa “%s” chưa tồn tại"
 
-#: builtin/clone.c:815 builtin/fetch.c:1155
+#: builtin/clone.c:815 builtin/fetch.c:1156
 #, c-format
 msgid "depth %s is not a positive number"
 msgstr "độ sâu %s không phải là một số nguyên dương"
@@ -4067,59 +4099,59 @@ msgstr "đường dẫn đích “%s” đã có từ trước và không phải
 msgid "working tree '%s' already exists."
 msgstr "cây làm việc “%s” đã sẵn tồn tại rồi."
 
-#: builtin/clone.c:848 builtin/clone.c:860
+#: builtin/clone.c:850 builtin/clone.c:861
 #, c-format
 msgid "could not create leading directories of '%s'"
 msgstr "không thể tạo các thư mục dẫn đầu của “%s”"
 
-#: builtin/clone.c:851
+#: builtin/clone.c:853
 #, c-format
-msgid "could not create work tree dir '%s'."
-msgstr "không thể tạo cây thư mục làm việc dir “%s”."
+msgid "could not create work tree dir '%s'"
+msgstr "không thể tạo cây thư mục làm việc dir “%s”"
 
-#: builtin/clone.c:870
+#: builtin/clone.c:871
 #, c-format
 msgid "Cloning into bare repository '%s'...\n"
 msgstr "Đang nhân bản thành kho chứa bare “%s”…\n"
 
-#: builtin/clone.c:872
+#: builtin/clone.c:873
 #, c-format
 msgid "Cloning into '%s'...\n"
 msgstr "Đang nhân bản thành “%s”…\n"
 
-#: builtin/clone.c:897
+#: builtin/clone.c:898
 msgid "--dissociate given, but there is no --reference"
 msgstr "đã đưa ra --dissociate, nhưng ở đây lại không có --reference"
 
-#: builtin/clone.c:912
+#: builtin/clone.c:913
 msgid "--depth is ignored in local clones; use file:// instead."
 msgstr "--depth bị lờ đi khi nhân bản nội bộ; hãy sử dụng file:// để thay thế."
 
-#: builtin/clone.c:915
+#: builtin/clone.c:916
 msgid "source repository is shallow, ignoring --local"
 msgstr "kho nguồn là nông, nên bỏ qua --local"
 
-#: builtin/clone.c:920
+#: builtin/clone.c:921
 msgid "--local is ignored"
 msgstr "--local bị lờ đi"
 
-#: builtin/clone.c:924
+#: builtin/clone.c:925
 #, c-format
 msgid "Don't know how to clone %s"
 msgstr "Không biết làm cách nào để nhân bản (clone) %s"
 
-#: builtin/clone.c:975 builtin/clone.c:983
+#: builtin/clone.c:976 builtin/clone.c:984
 #, c-format
 msgid "Remote branch %s not found in upstream %s"
 msgstr "Nhánh máy chủ %s không tìm thấy trong thượng nguồn %s"
 
-#: builtin/clone.c:986
+#: builtin/clone.c:987
 msgid "You appear to have cloned an empty repository."
 msgstr "Bạn hình như là đã nhân bản một kho trống rỗng."
 
 #: builtin/column.c:9
-msgid "git column [options]"
-msgstr "git column [các-tùy-chọn]"
+msgid "git column [<options>]"
+msgstr "git column [<các-tùy-chọn>]"
 
 #: builtin/column.c:26
 msgid "lookup config vars"
@@ -4150,12 +4182,12 @@ msgid "--command must be the first argument"
 msgstr "--command phải là đối số đầu tiên"
 
 #: builtin/commit.c:37
-msgid "git commit [options] [--] <pathspec>..."
-msgstr "git commit [các-tùy-chọn] [--] <pathspec>…"
+msgid "git commit [<options>] [--] <pathspec>..."
+msgstr "git commit [<các-tùy-chọn>] [--] <pathspec>…"
 
 #: builtin/commit.c:42
-msgid "git status [options] [--] <pathspec>..."
-msgstr "git status [các-tùy-chọn] [--] <pathspec>…"
+msgid "git status [<options>] [--] <pathspec>..."
+msgstr "git status [<các-tùy-chọn>] [--] <pathspec>…"
 
 #: builtin/commit.c:47
 msgid ""
@@ -4264,72 +4296,72 @@ msgstr ""
 "Thế thì \"git cherry-pick --continue\" sẽ phục hồi lại việc cherry-pick\n"
 "những lần chuyển giao còn lại.\n"
 
-#: builtin/commit.c:302
+#: builtin/commit.c:304
 msgid "failed to unpack HEAD tree object"
 msgstr "gặp lỗi khi tháo dỡ HEAD đối tượng cây"
 
-#: builtin/commit.c:342
+#: builtin/commit.c:344
 msgid "unable to create temporary index"
 msgstr "không thể tạo bảng mục lục tạm thời"
 
-#: builtin/commit.c:348
+#: builtin/commit.c:350
 msgid "interactive add failed"
 msgstr "gặp lỗi khi thêm bằng cách tương"
 
-#: builtin/commit.c:359
+#: builtin/commit.c:361
 msgid "unable to write index file"
 msgstr "không thể ghi tập tin lưu mục lục"
 
-#: builtin/commit.c:361
+#: builtin/commit.c:363
 msgid "unable to update temporary index"
 msgstr "không thể cập nhật bảng mục lục tạm thời"
 
-#: builtin/commit.c:363
+#: builtin/commit.c:365
 msgid "Failed to update main cache tree"
 msgstr "Gặp lỗi khi cập nhật cây bộ nhớ đệm"
 
-#: builtin/commit.c:387 builtin/commit.c:412 builtin/commit.c:461
+#: builtin/commit.c:389 builtin/commit.c:414 builtin/commit.c:463
 msgid "unable to write new_index file"
 msgstr "không thể ghi tập tin lưu bảng mục lục mới (new_index)"
 
-#: builtin/commit.c:443
+#: builtin/commit.c:445
 msgid "cannot do a partial commit during a merge."
 msgstr ""
 "không thể thực hiện việc chuyển giao cục bộ trong khi đang được hòa trộn."
 
-#: builtin/commit.c:445
+#: builtin/commit.c:447
 msgid "cannot do a partial commit during a cherry-pick."
 msgstr ""
 "không thể thực hiện việc chuyển giao bộ phận trong khi đang cherry-pick."
 
-#: builtin/commit.c:454
+#: builtin/commit.c:456
 msgid "cannot read the index"
 msgstr "không đọc được bảng mục lục"
 
-#: builtin/commit.c:473
+#: builtin/commit.c:475
 msgid "unable to write temporary index file"
 msgstr "không thể ghi tập tin lưu bảng mục lục tạm thời"
 
-#: builtin/commit.c:584
+#: builtin/commit.c:580
 #, c-format
 msgid "commit '%s' lacks author header"
 msgstr "lần chuyển giao “%s” thiếu phần tác giả ở đầu"
 
-#: builtin/commit.c:586
+#: builtin/commit.c:582
 #, c-format
 msgid "commit '%s' has malformed author line"
 msgstr "lần chuyển giao “%s” có phần tác giả ở đầu dị dạng"
 
-#: builtin/commit.c:605
+#: builtin/commit.c:601
 msgid "malformed --author parameter"
 msgstr "đối số cho --author bị dị hình"
 
-#: builtin/commit.c:613
+#: builtin/commit.c:609
 #, c-format
 msgid "invalid date format: %s"
 msgstr "ngày tháng không hợp lệ: %s"
 
-#: builtin/commit.c:657
+#: builtin/commit.c:653
 msgid ""
 "unable to select a comment character that is not used\n"
 "in the current commit message"
@@ -4337,43 +4369,43 @@ msgstr ""
 "không thể chọn một ký tự ghi chú cái mà không được dùng\n"
 "trong phần ghi chú hiện tại"
 
-#: builtin/commit.c:694 builtin/commit.c:727 builtin/commit.c:1084
+#: builtin/commit.c:690 builtin/commit.c:723 builtin/commit.c:1080
 #, c-format
 msgid "could not lookup commit %s"
 msgstr "không thể tìm kiếm commit (lần chuyển giao) %s"
 
-#: builtin/commit.c:706 builtin/shortlog.c:273
+#: builtin/commit.c:702 builtin/shortlog.c:273
 #, c-format
 msgid "(reading log message from standard input)\n"
 msgstr "(đang đọc thông điệp nhật ký từ đầu vào tiêu chuẩn)\n"
 
-#: builtin/commit.c:708
+#: builtin/commit.c:704
 msgid "could not read log from standard input"
 msgstr "không thể đọc nhật ký từ đầu vào tiêu chuẩn"
 
-#: builtin/commit.c:712
+#: builtin/commit.c:708
 #, c-format
 msgid "could not read log file '%s'"
 msgstr "không đọc được tệp nhật ký “%s”"
 
-#: builtin/commit.c:734
+#: builtin/commit.c:730
 msgid "could not read MERGE_MSG"
 msgstr "không thể đọc MERGE_MSG"
 
-#: builtin/commit.c:738
+#: builtin/commit.c:734
 msgid "could not read SQUASH_MSG"
 msgstr "không thể đọc SQUASH_MSG"
 
-#: builtin/commit.c:742
+#: builtin/commit.c:738
 #, c-format
 msgid "could not read '%s'"
 msgstr "Không thể đọc “%s”."
 
-#: builtin/commit.c:789
+#: builtin/commit.c:785
 msgid "could not write commit template"
 msgstr "không thể ghi mẫu chuyển giao"
 
-#: builtin/commit.c:807
+#: builtin/commit.c:803
 #, c-format
 msgid ""
 "\n"
@@ -4388,7 +4420,7 @@ msgstr ""
 "\t%s\n"
 "và thử lại.\n"
 
-#: builtin/commit.c:812
+#: builtin/commit.c:808
 #, c-format
 msgid ""
 "\n"
@@ -4403,7 +4435,7 @@ msgstr ""
 "\t%s\n"
 "và thử lại.\n"
 
-#: builtin/commit.c:825
+#: builtin/commit.c:821
 #, c-format
 msgid ""
 "Please enter the commit message for your changes. Lines starting\n"
@@ -4414,7 +4446,7 @@ msgstr ""
 "bắt đầu bằng “%c” sẽ được bỏ qua, nếu phần chú thích rỗng sẽ hủy bỏ lần "
 "chuyển giao.\n"
 
-#: builtin/commit.c:832
+#: builtin/commit.c:828
 #, c-format
 msgid ""
 "Please enter the commit message for your changes. Lines starting\n"
@@ -4426,154 +4458,156 @@ msgstr ""
 "bắt đầu bằng “%c” sẽ được bỏ qua; bạn có thể xóa chúng đi nếu muốn thế.\n"
 "Phần chú thích này nếu trống rỗng sẽ hủy bỏ lần chuyển giao.\n"
 
-#: builtin/commit.c:852
+#: builtin/commit.c:848
 #, c-format
 msgid "%sAuthor:    %.*s <%.*s>"
 msgstr "%sTác giả:           %.*s <%.*s>"
 
-#: builtin/commit.c:860
+#: builtin/commit.c:856
 #, c-format
 msgid "%sDate:      %s"
 msgstr "%sNgày tháng:        %s"
 
-#: builtin/commit.c:867
+#: builtin/commit.c:863
 #, c-format
 msgid "%sCommitter: %.*s <%.*s>"
 msgstr "%sNgười chuyển giao: %.*s <%.*s>"
 
-#: builtin/commit.c:885
+#: builtin/commit.c:881
 msgid "Cannot read index"
 msgstr "Không đọc được bảng mục lục"
 
-#: builtin/commit.c:942
+#: builtin/commit.c:938
 msgid "Error building trees"
 msgstr "Gặp lỗi khi xây dựng cây"
 
-#: builtin/commit.c:957 builtin/tag.c:495
+#: builtin/commit.c:953 builtin/tag.c:495
 #, c-format
 msgid "Please supply the message using either -m or -F option.\n"
 msgstr "Xin hãy cung cấp lời chú giải hoặc là dùng tùy chọn -m hoặc là -F.\n"
 
-#: builtin/commit.c:1059
+#: builtin/commit.c:1055
 #, c-format
-msgid "No existing author found with '%s'"
-msgstr "Không tìm thấy tác giả có sẵn với “%s”"
+msgid "--author '%s' is not 'Name <email>' and matches no existing author"
+msgstr ""
+"--author “%s” không phải là “Họ và tên <thư điện tửl>” và không khớp bất kỳ "
+"tác giả nào sẵn có"
 
-#: builtin/commit.c:1074 builtin/commit.c:1314
+#: builtin/commit.c:1070 builtin/commit.c:1310
 #, c-format
 msgid "Invalid untracked files mode '%s'"
 msgstr "Chế độ cho các tập tin chưa được theo dõi không hợp lệ “%s”"
 
-#: builtin/commit.c:1111
+#: builtin/commit.c:1107
 msgid "--long and -z are incompatible"
 msgstr "hai tùy chọn -long và -z không tương thích với nhau"
 
-#: builtin/commit.c:1141
+#: builtin/commit.c:1137
 msgid "Using both --reset-author and --author does not make sense"
 msgstr "Sử dụng cả hai tùy chọn --reset-author và --author không hợp lý"
 
-#: builtin/commit.c:1150
+#: builtin/commit.c:1146
 msgid "You have nothing to amend."
 msgstr "Không có gì để mà “tu bổ” cả."
 
-#: builtin/commit.c:1153
+#: builtin/commit.c:1149
 msgid "You are in the middle of a merge -- cannot amend."
 msgstr ""
 "Bạn đang ở giữa của quá trình hòa trộn -- không thể thực hiện việc “tu bổ”."
 
-#: builtin/commit.c:1155
+#: builtin/commit.c:1151
 msgid "You are in the middle of a cherry-pick -- cannot amend."
 msgstr ""
 "Bạn đang ở giữa của quá trình cherry-pick -- không thể thực hiện việc “tu "
 "bổ”."
 
-#: builtin/commit.c:1158
+#: builtin/commit.c:1154
 msgid "Options --squash and --fixup cannot be used together"
 msgstr "Các tùy chọn --squash và --fixup không thể sử dụng cùng với nhau"
 
-#: builtin/commit.c:1168
+#: builtin/commit.c:1164
 msgid "Only one of -c/-C/-F/--fixup can be used."
 msgstr ""
 "Chỉ được dùng một trong số tùy chọn trong số các tùy chọn -c/-C/-F/--fixup"
 
-#: builtin/commit.c:1170
+#: builtin/commit.c:1166
 msgid "Option -m cannot be combined with -c/-C/-F/--fixup."
 msgstr "Tùy chọn -m không thể được tổ hợp cùng với -c/-C/-F/--fixup."
 
-#: builtin/commit.c:1178
+#: builtin/commit.c:1174
 msgid "--reset-author can be used only with -C, -c or --amend."
 msgstr ""
 "--reset-author chỉ có thể được sử dụng với tùy chọn -C, -c hay --amend."
 
-#: builtin/commit.c:1195
+#: builtin/commit.c:1191
 msgid "Only one of --include/--only/--all/--interactive/--patch can be used."
 msgstr ""
 "Chỉ một trong các tùy chọn --include/--only/--all/--interactive/--patch được "
 "sử dụng."
 
-#: builtin/commit.c:1197
+#: builtin/commit.c:1193
 msgid "No paths with --include/--only does not make sense."
 msgstr "Không đường dẫn với các tùy chọn --include/--only không hợp lý."
 
-#: builtin/commit.c:1199
+#: builtin/commit.c:1195
 msgid "Clever... amending the last one with dirty index."
 msgstr "Giỏi…  “tu bổ” cái cuối với bảng mục lục bẩn."
 
-#: builtin/commit.c:1201
+#: builtin/commit.c:1197
 msgid "Explicit paths specified without -i or -o; assuming --only paths..."
 msgstr ""
 "Những đường dẫn rõ ràng được chỉ ra không có tùy chọn -i cũng không -o; coi "
 "là --only những đường dẫn"
 
-#: builtin/commit.c:1213 builtin/tag.c:728
+#: builtin/commit.c:1209 builtin/tag.c:728
 #, c-format
 msgid "Invalid cleanup mode %s"
 msgstr "Chế độ dọn dẹp không hợp lệ %s"
 
-#: builtin/commit.c:1218
+#: builtin/commit.c:1214
 msgid "Paths with -a does not make sense."
 msgstr "Các đường dẫn với tùy chọn -a không hợp lý."
 
-#: builtin/commit.c:1328 builtin/commit.c:1608
+#: builtin/commit.c:1324 builtin/commit.c:1604
 msgid "show status concisely"
 msgstr "hiển thị trạng thái ở dạng súc tích"
 
-#: builtin/commit.c:1330 builtin/commit.c:1610
+#: builtin/commit.c:1326 builtin/commit.c:1606
 msgid "show branch information"
 msgstr "hiển thị thông tin nhánh"
 
-#: builtin/commit.c:1332 builtin/commit.c:1612 builtin/push.c:500
+#: builtin/commit.c:1328 builtin/commit.c:1608 builtin/push.c:509
 msgid "machine-readable output"
 msgstr "kết xuất dạng máy-có-thể-đọc"
 
-#: builtin/commit.c:1335 builtin/commit.c:1614
+#: builtin/commit.c:1331 builtin/commit.c:1610
 msgid "show status in long format (default)"
 msgstr "hiển thị trạng thái ở định dạng dài (mặc định)"
 
-#: builtin/commit.c:1338 builtin/commit.c:1617
+#: builtin/commit.c:1334 builtin/commit.c:1613
 msgid "terminate entries with NUL"
 msgstr "chấm dứt các mục bằng NUL"
 
-#: builtin/commit.c:1340 builtin/commit.c:1620 builtin/fast-export.c:980
+#: builtin/commit.c:1336 builtin/commit.c:1616 builtin/fast-export.c:980
 #: builtin/fast-export.c:983 builtin/tag.c:603
 msgid "mode"
 msgstr "chế độ"
 
-#: builtin/commit.c:1341 builtin/commit.c:1620
+#: builtin/commit.c:1337 builtin/commit.c:1616
 msgid "show untracked files, optional modes: all, normal, no. (Default: all)"
 msgstr ""
 "hiển thị các tập tin chưa được theo dõi  dấu vết, các chế độ tùy chọn:  all, "
 "normal, no. (Mặc định: all)"
 
-#: builtin/commit.c:1344
+#: builtin/commit.c:1340
 msgid "show ignored files"
 msgstr "hiển thị các tập tin ẩn"
 
-#: builtin/commit.c:1345 parse-options.h:153
+#: builtin/commit.c:1341 parse-options.h:153
 msgid "when"
 msgstr "khi"
 
-#: builtin/commit.c:1346
+#: builtin/commit.c:1342
 msgid ""
 "ignore changes to submodules, optional when: all, dirty, untracked. "
 "(Default: all)"
@@ -4581,213 +4615,213 @@ msgstr ""
 "bỏ qua các thay đổi trong mô-đun-con, tùy chọn khi: all, dirty, untracked. "
 "(Mặc định: all)"
 
-#: builtin/commit.c:1348
+#: builtin/commit.c:1344
 msgid "list untracked files in columns"
 msgstr "hiển thị danh sách các tập-tin chưa được theo dõi trong các cột"
 
-#: builtin/commit.c:1435
+#: builtin/commit.c:1431
 msgid "couldn't look up newly created commit"
 msgstr "không thể tìm thấy lần chuyển giao mới hơn đã được tạo"
 
-#: builtin/commit.c:1437
+#: builtin/commit.c:1433
 msgid "could not parse newly created commit"
 msgstr ""
 "không thể phân tích cú pháp của đối tượng chuyển giao mới hơn đã được tạo"
 
-#: builtin/commit.c:1482
+#: builtin/commit.c:1478
 msgid "detached HEAD"
 msgstr "đã rời khỏi HEAD"
 
-#: builtin/commit.c:1485
+#: builtin/commit.c:1481
 msgid " (root-commit)"
 msgstr " (root-commit)"
 
-#: builtin/commit.c:1578
+#: builtin/commit.c:1574
 msgid "suppress summary after successful commit"
 msgstr "không hiển thị tổng kết sau khi chuyển giao thành công"
 
-#: builtin/commit.c:1579
+#: builtin/commit.c:1575
 msgid "show diff in commit message template"
 msgstr "hiển thị sự khác biệt trong mẫu tin nhắn chuyển giao"
 
-#: builtin/commit.c:1581
+#: builtin/commit.c:1577
 msgid "Commit message options"
 msgstr "Các tùy chọn ghi chú commit"
 
-#: builtin/commit.c:1582 builtin/tag.c:601
+#: builtin/commit.c:1578 builtin/tag.c:601
 msgid "read message from file"
 msgstr "đọc chú thích từ tập tin"
 
-#: builtin/commit.c:1583
+#: builtin/commit.c:1579
 msgid "author"
 msgstr "tác giả"
 
-#: builtin/commit.c:1583
+#: builtin/commit.c:1579
 msgid "override author for commit"
 msgstr "ghi đè tác giả cho commit"
 
-#: builtin/commit.c:1584 builtin/gc.c:275
+#: builtin/commit.c:1580 builtin/gc.c:275
 msgid "date"
 msgstr "ngày tháng"
 
-#: builtin/commit.c:1584
+#: builtin/commit.c:1580
 msgid "override date for commit"
 msgstr "ghi đè ngày tháng cho lần chuyển giao"
 
-#: builtin/commit.c:1585 builtin/merge.c:218 builtin/notes.c:391
+#: builtin/commit.c:1581 builtin/merge.c:218 builtin/notes.c:391
 #: builtin/notes.c:554 builtin/tag.c:599
 msgid "message"
 msgstr "chú thích"
 
-#: builtin/commit.c:1585
+#: builtin/commit.c:1581
 msgid "commit message"
 msgstr "chú thích của lần chuyển giao"
 
-#: builtin/commit.c:1586
+#: builtin/commit.c:1582
 msgid "reuse and edit message from specified commit"
 msgstr "dùng lại các ghi chú từ lần chuyển giao đã cho nhưng có cho sửa chữa"
 
-#: builtin/commit.c:1587
+#: builtin/commit.c:1583
 msgid "reuse message from specified commit"
 msgstr "dùng lại các ghi chú từ lần chuyển giao đã cho"
 
-#: builtin/commit.c:1588
+#: builtin/commit.c:1584
 msgid "use autosquash formatted message to fixup specified commit"
 msgstr ""
 "dùng ghi chú có định dạng autosquash để sửa chữa lần chuyển giao đã chỉ ra"
 
-#: builtin/commit.c:1589
+#: builtin/commit.c:1585
 msgid "use autosquash formatted message to squash specified commit"
 msgstr ""
 "dùng lời nhắn có định dạng tự động nén để nén lại các lần chuyển giao đã chỉ "
 "ra"
 
-#: builtin/commit.c:1590
+#: builtin/commit.c:1586
 msgid "the commit is authored by me now (used with -C/-c/--amend)"
 msgstr ""
 "lần chuyển giao nhận tôi là tác giả (được dùng với tùy chọn -C/-c/--amend)"
 
-#: builtin/commit.c:1591 builtin/log.c:1191 builtin/revert.c:86
+#: builtin/commit.c:1587 builtin/log.c:1191 builtin/revert.c:86
 msgid "add Signed-off-by:"
 msgstr "(nên dùng) thêm dòng Signed-off-by:"
 
-#: builtin/commit.c:1592
+#: builtin/commit.c:1588
 msgid "use specified template file"
 msgstr "sử dụng tập tin mẫu đã cho"
 
-#: builtin/commit.c:1593
+#: builtin/commit.c:1589
 msgid "force edit of commit"
 msgstr "ép buộc sửa lần commit"
 
-#: builtin/commit.c:1594
+#: builtin/commit.c:1590
 msgid "default"
 msgstr "mặc định"
 
-#: builtin/commit.c:1594 builtin/tag.c:604
+#: builtin/commit.c:1590 builtin/tag.c:604
 msgid "how to strip spaces and #comments from message"
 msgstr "làm thế nào để cắt bỏ khoảng trắng và #ghichú từ mẩu tin nhắn"
 
-#: builtin/commit.c:1595
+#: builtin/commit.c:1591
 msgid "include status in commit message template"
 msgstr "bao gồm các trạng thái trong mẫu ghi chú chuyển giao"
 
-#: builtin/commit.c:1596 builtin/merge.c:225 builtin/revert.c:92
+#: builtin/commit.c:1592 builtin/merge.c:225 builtin/revert.c:92
 #: builtin/tag.c:605
 msgid "key-id"
 msgstr "mã-số-khóa"
 
-#: builtin/commit.c:1597 builtin/merge.c:226 builtin/revert.c:93
+#: builtin/commit.c:1593 builtin/merge.c:226 builtin/revert.c:93
 msgid "GPG sign commit"
 msgstr "ký lần chuyển giao dùng GPG"
 
-#: builtin/commit.c:1600
+#: builtin/commit.c:1596
 msgid "Commit contents options"
 msgstr "Các tùy nội dung ghi chú commit"
 
-#: builtin/commit.c:1601
+#: builtin/commit.c:1597
 msgid "commit all changed files"
 msgstr "chuyển giao tất cả các tập tin có thay đổi"
 
-#: builtin/commit.c:1602
+#: builtin/commit.c:1598
 msgid "add specified files to index for commit"
 msgstr "thêm các tập tin đã chỉ ra vào bảng mục lục để chuyển giao"
 
-#: builtin/commit.c:1603
+#: builtin/commit.c:1599
 msgid "interactively add files"
 msgstr "thêm các tập-tin bằng tương tác"
 
-#: builtin/commit.c:1604
+#: builtin/commit.c:1600
 msgid "interactively add changes"
 msgstr "thêm các thay đổi bằng tương tác"
 
-#: builtin/commit.c:1605
+#: builtin/commit.c:1601
 msgid "commit only specified files"
 msgstr "chỉ chuyển giao các tập tin đã chỉ ra"
 
-#: builtin/commit.c:1606
+#: builtin/commit.c:1602
 msgid "bypass pre-commit hook"
 msgstr "vòng qua móc (hook) pre-commit"
 
-#: builtin/commit.c:1607
+#: builtin/commit.c:1603
 msgid "show what would be committed"
 msgstr "hiển thị xem cái gì có thể được chuyển giao"
 
-#: builtin/commit.c:1618
+#: builtin/commit.c:1614
 msgid "amend previous commit"
 msgstr "“tu bổ” (amend) lần commit trước"
 
-#: builtin/commit.c:1619
+#: builtin/commit.c:1615
 msgid "bypass post-rewrite hook"
 msgstr "vòng qua móc (hook) post-rewrite"
 
-#: builtin/commit.c:1624
+#: builtin/commit.c:1620
 msgid "ok to record an empty change"
 msgstr "ok để ghi lại một thay đổi trống rỗng"
 
-#: builtin/commit.c:1626
+#: builtin/commit.c:1622
 msgid "ok to record a change with an empty message"
 msgstr "ok để ghi các thay đổi với lời nhắn trống rỗng"
 
-#: builtin/commit.c:1655
+#: builtin/commit.c:1651
 msgid "could not parse HEAD commit"
 msgstr "không thể phân tích commit (lần chuyển giao) HEAD"
 
-#: builtin/commit.c:1694 builtin/merge.c:519
+#: builtin/commit.c:1690 builtin/merge.c:519
 #, c-format
 msgid "could not open '%s' for reading"
 msgstr "không thể mở “%s” để đọc"
 
-#: builtin/commit.c:1701
+#: builtin/commit.c:1697
 #, c-format
 msgid "Corrupt MERGE_HEAD file (%s)"
 msgstr "Tập tin MERGE_HEAD sai hỏng (%s)"
 
-#: builtin/commit.c:1708
+#: builtin/commit.c:1704
 msgid "could not read MERGE_MODE"
 msgstr "không thể đọc MERGE_MODE"
 
-#: builtin/commit.c:1727
+#: builtin/commit.c:1723
 #, c-format
 msgid "could not read commit message: %s"
 msgstr "không thể đọc phần chú thích (message) của llần chuyển giao: %s"
 
-#: builtin/commit.c:1738
+#: builtin/commit.c:1734
 #, c-format
 msgid "Aborting commit; you did not edit the message.\n"
 msgstr ""
 "Đang bỏ qua việc chuyển giao; bạn đã không biên soạn phần chú thích "
 "(message).\n"
 
-#: builtin/commit.c:1743
+#: builtin/commit.c:1739
 #, c-format
 msgid "Aborting commit due to empty commit message.\n"
 msgstr "Bãi bỏ việc chuyển giao bởi vì phần chú thích của nó trống rỗng.\n"
 
-#: builtin/commit.c:1758 builtin/merge.c:851 builtin/merge.c:876
+#: builtin/commit.c:1754 builtin/merge.c:851 builtin/merge.c:876
 msgid "failed to write commit object"
 msgstr "gặp lỗi khi ghi đối tượng chuyển giao"
 
-#: builtin/commit.c:1791
+#: builtin/commit.c:1787
 msgid ""
 "Repository has been updated, but unable to write\n"
 "new_index file. Check that disk is not full and quota is\n"
@@ -4799,8 +4833,8 @@ msgstr ""
 "và sau đó \"git reset HEAD\" để khắc phục."
 
 #: builtin/config.c:8
-msgid "git config [options]"
-msgstr "git config [các-tùy-chọn]"
+msgid "git config [<options>]"
+msgstr "git config [<các-tùy-chọn>]"
 
 #: builtin/config.c:53
 msgid "Config file location"
@@ -4955,12 +4989,12 @@ msgid "print sizes in human readable format"
 msgstr "hiển thị kích cỡ theo định dạng dành cho người đọc"
 
 #: builtin/describe.c:17
-msgid "git describe [options] <commit-ish>*"
-msgstr "git describe [các-tùy-chọn] <commit-ish>*"
+msgid "git describe [<options>] [<commit-ish>...]"
+msgstr "git describe [<các-tùy-chọn>] <commit-ish>*"
 
 #: builtin/describe.c:18
-msgid "git describe [options] --dirty"
-msgstr "git describe [các-tùy-chọn] --dirty"
+msgid "git describe [<options>] --dirty"
+msgstr "git describe [<các-tùy-chọn>] --dirty"
 
 #: builtin/describe.c:217
 #, c-format
@@ -5175,179 +5209,179 @@ msgstr "Áp dụng refspec cho refs đã xuất"
 msgid "anonymize output"
 msgstr "kết xuất anonymize"
 
-#: builtin/fetch.c:20
+#: builtin/fetch.c:19
 msgid "git fetch [<options>] [<repository> [<refspec>...]]"
 msgstr "git fetch [<các-tùy-chọn>] [<kho-chứa> [<refspec>…]]"
 
-#: builtin/fetch.c:21
+#: builtin/fetch.c:20
 msgid "git fetch [<options>] <group>"
 msgstr "git fetch [<các-tùy-chọn>] [<nhóm>"
 
-#: builtin/fetch.c:22
+#: builtin/fetch.c:21
 msgid "git fetch --multiple [<options>] [(<repository> | <group>)...]"
 msgstr "git fetch --multiple [<các-tùy-chọn>] [(<kho> | <nhóm>)…]"
 
-#: builtin/fetch.c:23
+#: builtin/fetch.c:22
 msgid "git fetch --all [<options>]"
 msgstr "git fetch --all [<các-tùy-chọn>]"
 
-#: builtin/fetch.c:90
+#: builtin/fetch.c:89
 msgid "fetch from all remotes"
 msgstr "lấy về từ tất cả các máy chủ"
 
-#: builtin/fetch.c:92
+#: builtin/fetch.c:91
 msgid "append to .git/FETCH_HEAD instead of overwriting"
 msgstr "nối thêm vào .git/FETCH_HEAD thay vì ghi đè lên nó"
 
-#: builtin/fetch.c:94
+#: builtin/fetch.c:93
 msgid "path to upload pack on remote end"
 msgstr "đường dẫn đến gói tải lên trên máy chủ cuối"
 
-#: builtin/fetch.c:95
+#: builtin/fetch.c:94
 msgid "force overwrite of local branch"
 msgstr "ép buộc ghi đè lên nhánh nội bộ"
 
-#: builtin/fetch.c:97
+#: builtin/fetch.c:96
 msgid "fetch from multiple remotes"
 msgstr "lấy từ nhiều máy chủ cùng lúc"
 
-#: builtin/fetch.c:99
+#: builtin/fetch.c:98
 msgid "fetch all tags and associated objects"
 msgstr "lấy tất cả các thẻ cùng với các đối tượng liên quan đến nó"
 
-#: builtin/fetch.c:101
+#: builtin/fetch.c:100
 msgid "do not fetch all tags (--no-tags)"
 msgstr "không lấy tất cả các thẻ (--no-tags)"
 
-#: builtin/fetch.c:103
+#: builtin/fetch.c:102
 msgid "prune remote-tracking branches no longer on remote"
 msgstr ""
 "cắt cụt (prune) các nhánh “remote-tracking” không còn tồn tại trên máy chủ "
 "nữa"
 
-#: builtin/fetch.c:104
+#: builtin/fetch.c:103
 msgid "on-demand"
 msgstr "khi-cần"
 
-#: builtin/fetch.c:105
+#: builtin/fetch.c:104
 msgid "control recursive fetching of submodules"
 msgstr "điều khiển việc lấy về đệ quy trong các mô-đun-con"
 
-#: builtin/fetch.c:109
+#: builtin/fetch.c:108
 msgid "keep downloaded pack"
 msgstr "giữ lại gói đã tải về"
 
-#: builtin/fetch.c:111
+#: builtin/fetch.c:110
 msgid "allow updating of HEAD ref"
 msgstr "cho phép cập nhật th.chiếu HEAD"
 
-#: builtin/fetch.c:114
+#: builtin/fetch.c:113
 msgid "deepen history of shallow clone"
 msgstr "làm sâu hơn lịch sử của bản sao"
 
-#: builtin/fetch.c:116
+#: builtin/fetch.c:115
 msgid "convert to a complete repository"
 msgstr "chuyển đổi hoàn toàn sang kho git"
 
-#: builtin/fetch.c:118 builtin/log.c:1208
+#: builtin/fetch.c:117 builtin/log.c:1208
 msgid "dir"
 msgstr "tmục"
 
-#: builtin/fetch.c:119
+#: builtin/fetch.c:118
 msgid "prepend this to submodule path output"
 msgstr "soạn sẵn cái này cho kết xuất đường dẫn mô-đun-con"
 
-#: builtin/fetch.c:122
+#: builtin/fetch.c:121
 msgid "default mode for recursion"
 msgstr "chế độ mặc định cho đệ qui"
 
-#: builtin/fetch.c:124
+#: builtin/fetch.c:123
 msgid "accept refs that update .git/shallow"
 msgstr "chấp nhận tham chiếu cập nhật .git/shallow"
 
-#: builtin/fetch.c:125
+#: builtin/fetch.c:124
 msgid "refmap"
 msgstr "refmap"
 
-#: builtin/fetch.c:126
+#: builtin/fetch.c:125
 msgid "specify fetch refmap"
 msgstr "chỉ ra refmap cần lấy về"
 
-#: builtin/fetch.c:376
+#: builtin/fetch.c:375
 msgid "Couldn't find remote ref HEAD"
 msgstr "Không thể tìm thấy máy chủ cho tham chiếu HEAD"
 
-#: builtin/fetch.c:454
+#: builtin/fetch.c:455
 #, c-format
 msgid "object %s not found"
 msgstr "Không tìm thấy đối tượng %s"
 
-#: builtin/fetch.c:459
+#: builtin/fetch.c:460
 msgid "[up to date]"
 msgstr "[đã cập nhật]"
 
-#: builtin/fetch.c:473
+#: builtin/fetch.c:474
 #, c-format
 msgid "! %-*s %-*s -> %s  (can't fetch in current branch)"
 msgstr "! %-*s %-*s -> %s  (không thể fetch (lấy) về nhánh hiện hành)"
 
-#: builtin/fetch.c:474 builtin/fetch.c:560
+#: builtin/fetch.c:475 builtin/fetch.c:561
 msgid "[rejected]"
 msgstr "[Bị từ chối]"
 
-#: builtin/fetch.c:485
+#: builtin/fetch.c:486
 msgid "[tag update]"
 msgstr "[cập nhật thẻ]"
 
-#: builtin/fetch.c:487 builtin/fetch.c:522 builtin/fetch.c:540
+#: builtin/fetch.c:488 builtin/fetch.c:523 builtin/fetch.c:541
 msgid "  (unable to update local ref)"
 msgstr "  (không thể cập nhật tham chiếu nội bộ)"
 
-#: builtin/fetch.c:505
+#: builtin/fetch.c:506
 msgid "[new tag]"
 msgstr "[thẻ mới]"
 
-#: builtin/fetch.c:508
+#: builtin/fetch.c:509
 msgid "[new branch]"
 msgstr "[nhánh mới]"
 
-#: builtin/fetch.c:511
+#: builtin/fetch.c:512
 msgid "[new ref]"
 msgstr "[ref (tham chiếu) mới]"
 
-#: builtin/fetch.c:556
+#: builtin/fetch.c:557
 msgid "unable to update local ref"
 msgstr "không thể cập nhật tham chiếu nội bộ"
 
-#: builtin/fetch.c:556
+#: builtin/fetch.c:557
 msgid "forced update"
 msgstr "cưỡng bức cập nhật"
 
-#: builtin/fetch.c:562
+#: builtin/fetch.c:563
 msgid "(non-fast-forward)"
 msgstr "(non-fast-forward)"
 
-#: builtin/fetch.c:595 builtin/fetch.c:828
+#: builtin/fetch.c:596 builtin/fetch.c:829
 #, c-format
 msgid "cannot open %s: %s\n"
 msgstr "không thể mở %s: %s\n"
 
-#: builtin/fetch.c:604
+#: builtin/fetch.c:605
 #, c-format
 msgid "%s did not send all necessary objects\n"
 msgstr "%s đã không gửi tất cả các đối tượng cần thiết\n"
 
-#: builtin/fetch.c:622
+#: builtin/fetch.c:623
 #, c-format
 msgid "reject %s because shallow roots are not allowed to be updated"
 msgstr "từ chối %s bởi vì các gốc nông thì không được phép cập nhật"
 
-#: builtin/fetch.c:710 builtin/fetch.c:793
+#: builtin/fetch.c:711 builtin/fetch.c:794
 #, c-format
 msgid "From %.*s\n"
 msgstr "Từ %.*s\n"
 
-#: builtin/fetch.c:721
+#: builtin/fetch.c:722
 #, c-format
 msgid ""
 "some local refs could not be updated; try running\n"
@@ -5356,57 +5390,57 @@ msgstr ""
 "một số tham chiếu nội bộ không thể được cập nhật; hãy thử chạy\n"
 " “git remote prune %s” để bỏ đi những nhánh cũ, hay bị xung đột"
 
-#: builtin/fetch.c:773
+#: builtin/fetch.c:774
 #, c-format
 msgid "   (%s will become dangling)"
 msgstr "   (%s sẽ trở thành không đầu (không được quản lý))"
 
-#: builtin/fetch.c:774
+#: builtin/fetch.c:775
 #, c-format
 msgid "   (%s has become dangling)"
 msgstr "   (%s đã trở thành không đầu (không được quản lý))"
 
-#: builtin/fetch.c:798
+#: builtin/fetch.c:799
 msgid "[deleted]"
 msgstr "[đã xóa]"
 
-#: builtin/fetch.c:799 builtin/remote.c:1060
+#: builtin/fetch.c:800 builtin/remote.c:1060
 msgid "(none)"
 msgstr "(không)"
 
-#: builtin/fetch.c:818
+#: builtin/fetch.c:819
 #, c-format
 msgid "Refusing to fetch into current branch %s of non-bare repository"
 msgstr ""
 "Từ chối việc lấy vào trong nhánh hiện tại %s của một kho chứa không phải kho "
 "trần (bare)"
 
-#: builtin/fetch.c:837
+#: builtin/fetch.c:838
 #, c-format
 msgid "Option \"%s\" value \"%s\" is not valid for %s"
 msgstr "Tùy chọn \"%s\" có giá trị \"%s\" là không hợp lệ cho %s"
 
-#: builtin/fetch.c:840
+#: builtin/fetch.c:841
 #, c-format
 msgid "Option \"%s\" is ignored for %s\n"
 msgstr "Tùy chọn \"%s\" bị bỏ qua với %s\n"
 
-#: builtin/fetch.c:896
+#: builtin/fetch.c:897
 #, c-format
 msgid "Don't know how to fetch from %s"
 msgstr "Không biết làm cách nào để lấy về từ %s"
 
-#: builtin/fetch.c:1058
+#: builtin/fetch.c:1059
 #, c-format
 msgid "Fetching %s\n"
 msgstr "Đang lấy “%s” về\n"
 
-#: builtin/fetch.c:1060 builtin/remote.c:90
+#: builtin/fetch.c:1061 builtin/remote.c:90
 #, c-format
 msgid "Could not fetch %s"
 msgstr "không thể “%s” về"
 
-#: builtin/fetch.c:1078
+#: builtin/fetch.c:1079
 msgid ""
 "No remote repository specified.  Please, specify either a URL or a\n"
 "remote name from which new revisions should be fetched."
@@ -5414,39 +5448,41 @@ msgstr ""
 "Chưa chỉ ra kho chứa máy chủ.  Xin hãy chỉ định hoặc là URL hoặc\n"
 "tên máy chủ từ cái mà những điểm xét duyệt mới có thể được fetch (lấy về)."
 
-#: builtin/fetch.c:1101
+#: builtin/fetch.c:1102
 msgid "You need to specify a tag name."
 msgstr "Bạn phải định rõ tên thẻ."
 
-#: builtin/fetch.c:1143
+#: builtin/fetch.c:1144
 msgid "--depth and --unshallow cannot be used together"
 msgstr "tùy chọn --depth và --unshallow không thể sử dụng cùng với nhau"
 
-#: builtin/fetch.c:1145
+#: builtin/fetch.c:1146
 msgid "--unshallow on a complete repository does not make sense"
 msgstr "--unshallow trên kho hoàn chỉnh là không hợp lý"
 
-#: builtin/fetch.c:1168
+#: builtin/fetch.c:1169
 msgid "fetch --all does not take a repository argument"
 msgstr "lệnh lấy về \"fetch --all\" không lấy đối số kho chứa"
 
-#: builtin/fetch.c:1170
+#: builtin/fetch.c:1171
 msgid "fetch --all does not make sense with refspecs"
 msgstr "lệnh lấy về \"fetch --all\" không hợp lý với refspecs"
 
-#: builtin/fetch.c:1181
+#: builtin/fetch.c:1182
 #, c-format
 msgid "No such remote or remote group: %s"
 msgstr "không có nhóm máy chủ hay máy chủ như thế: %s"
 
-#: builtin/fetch.c:1189
+#: builtin/fetch.c:1190
 msgid "Fetching a group and specifying refspecs does not make sense"
 msgstr "Việc lấy về cả một nhóm và chỉ định refspecs không hợp lý"
 
 #: builtin/fmt-merge-msg.c:13
-msgid "git fmt-merge-msg [-m <message>] [--log[=<n>]|--no-log] [--file <file>]"
+msgid ""
+"git fmt-merge-msg [-m <message>] [--log[=<n>] | --no-log] [--file <file>]"
 msgstr ""
-"git fmt-merge-msg [-m <chú_thích>] [--log[=<n>]|--no-log] [--file <tập-tin>]"
+"git fmt-merge-msg [-m <chú_thích>] [--log[=<n>] | --no-log] [--file <tập-"
+"tin>]"
 
 #: builtin/fmt-merge-msg.c:662 builtin/fmt-merge-msg.c:665 builtin/grep.c:698
 #: builtin/merge.c:198 builtin/repack.c:178 builtin/repack.c:182
@@ -5475,51 +5511,51 @@ msgstr "dùng <văn bản thường> để bắt đầu ghi chú"
 msgid "file to read from"
 msgstr "tập tin để đọc dữ liệu từ đó"
 
-#: builtin/for-each-ref.c:676
+#: builtin/for-each-ref.c:675
 msgid "unable to parse format"
 msgstr "không thể phân tích định dạng"
 
-#: builtin/for-each-ref.c:1064
-msgid "git for-each-ref [options] [<pattern>]"
-msgstr "git for-each-ref [các-tùy-chọn] [<mẫu>]"
+#: builtin/for-each-ref.c:1063
+msgid "git for-each-ref [<options>] [<pattern>]"
+msgstr "git for-each-ref [<các-tùy-chọn>] [<mẫu>]"
 
-#: builtin/for-each-ref.c:1079
+#: builtin/for-each-ref.c:1078
 msgid "quote placeholders suitably for shells"
 msgstr "trích dẫn để phù hợp cho hệ vỏ (shell)"
 
-#: builtin/for-each-ref.c:1081
+#: builtin/for-each-ref.c:1080
 msgid "quote placeholders suitably for perl"
 msgstr "trích dẫn để phù hợp cho perl"
 
-#: builtin/for-each-ref.c:1083
+#: builtin/for-each-ref.c:1082
 msgid "quote placeholders suitably for python"
 msgstr "trích dẫn để phù hợp cho python"
 
-#: builtin/for-each-ref.c:1085
+#: builtin/for-each-ref.c:1084
 msgid "quote placeholders suitably for Tcl"
 msgstr "trích dẫn để phù hợp cho Tcl"
 
-#: builtin/for-each-ref.c:1088
+#: builtin/for-each-ref.c:1087
 msgid "show only <n> matched refs"
 msgstr "hiển thị chỉ <n> tham chiếu khớp"
 
-#: builtin/for-each-ref.c:1089 builtin/replace.c:438
+#: builtin/for-each-ref.c:1088 builtin/replace.c:438
 msgid "format"
 msgstr "định dạng"
 
-#: builtin/for-each-ref.c:1089
+#: builtin/for-each-ref.c:1088
 msgid "format to use for the output"
 msgstr "định dạng sẽ dùng cho đầu ra"
 
-#: builtin/for-each-ref.c:1090
+#: builtin/for-each-ref.c:1089
 msgid "key"
 msgstr "khóa"
 
-#: builtin/for-each-ref.c:1091
+#: builtin/for-each-ref.c:1090
 msgid "field name to sort on"
 msgstr "tên trường cần sắp xếp"
 
-#: builtin/fsck.c:147 builtin/prune.c:136
+#: builtin/fsck.c:147 builtin/prune.c:137
 msgid "Checking connectivity"
 msgstr "Đang kiểm tra kết nối"
 
@@ -5528,8 +5564,8 @@ msgid "Checking object directories"
 msgstr "Đang kiểm tra các thư mục đối tượng"
 
 #: builtin/fsck.c:603
-msgid "git fsck [options] [<object>...]"
-msgstr "git fsck [các-tùy-chọn] [<đối-tượng>…]"
+msgid "git fsck [<options>] [<object>...]"
+msgstr "git fsck [<các-tùy-chọn>] [<đối-tượng>…]"
 
 #: builtin/fsck.c:609
 msgid "show unreachable objects"
@@ -5576,8 +5612,8 @@ msgid "Checking objects"
 msgstr "Đang kiểm tra các đối tượng"
 
 #: builtin/gc.c:24
-msgid "git gc [options]"
-msgstr "git gc [các-tùy-chọn]"
+msgid "git gc [<options>]"
+msgstr "git gc [<các-tùy-chọn>]"
 
 #: builtin/gc.c:79
 #, c-format
@@ -5638,8 +5674,8 @@ msgstr ""
 "để xóa bỏ chúng đi."
 
 #: builtin/grep.c:23
-msgid "git grep [options] [-e] <pattern> [<rev>...] [[--] <path>...]"
-msgstr "git grep [các-tùy-chọn] [-e] <mẫu> [<rev>…] [[--] <đường-dẫn>…]"
+msgid "git grep [<options>] [-e] <pattern> [<rev>...] [[--] <path>...]"
+msgstr "git grep [<các-tùy-chọn>] [-e] <mẫu> [<rev>…] [[--] <đường-dẫn>…]"
 
 #: builtin/grep.c:218
 #, c-format
@@ -5679,8 +5715,8 @@ msgid "search in both tracked and untracked files"
 msgstr "tìm kiếm các tập tin được và chưa được theo dõi dấu vết"
 
 #: builtin/grep.c:644
-msgid "search also in ignored files"
-msgstr "tìm cả trong các tập tin đã bị lờ đi"
+msgid "ignore files specified via '.gitignore'"
+msgstr "các tập tin bị bỏ qua được chỉ định thông qua “.gitignore”"
 
 #: builtin/grep.c:647
 msgid "show non-matching lines"
@@ -5867,17 +5903,17 @@ msgstr "cả hai --cached và các cây phải được chỉ ra."
 
 #: builtin/hash-object.c:82
 msgid ""
-"git hash-object [-t <type>] [-w] [--path=<file>|--no-filters] [--stdin] [--] "
-"<file>..."
+"git hash-object [-t <type>] [-w] [--path=<file> | --no-filters] [--stdin] "
+"[--] <file>..."
 msgstr ""
-"git hash-object [-t <kiểu>] [-w] [--path=<tập-tin>|--no-filters] [--stdin] "
+"git hash-object [-t <kiểu>] [-w] [--path=<tập-tin> | --no-filters] [--stdin] "
 "[--] <tập-tin>…"
 
 #: builtin/hash-object.c:83
 msgid "git hash-object  --stdin-paths < <list-of-paths>"
 msgstr "git hash-object  --stdin-paths < <danh-sách-đường-dẫn>"
 
-#: builtin/hash-object.c:94 builtin/tag.c:610
+#: builtin/hash-object.c:94 builtin/tag.c:612
 msgid "type"
 msgstr "kiểu"
 
@@ -5927,8 +5963,8 @@ msgid "show info page"
 msgstr "hiện trang info"
 
 #: builtin/help.c:52
-msgid "git help [--all] [--guides] [--man|--web|--info] [command]"
-msgstr "git help [--all] [--guides] [--man|--web|--info] [lệnh]"
+msgid "git help [--all] [--guides] [--man | --web | --info] [<command>]"
+msgstr "git help [--all] [--guides] [--man | --web | --info] [<lệnh>]"
 
 #: builtin/help.c:64
 #, c-format
@@ -6134,8 +6170,8 @@ msgstr "sự mâu thuẫn xả nén nghiêm trọng"
 msgid "SHA1 COLLISION FOUND WITH %s !"
 msgstr "SỰ VA CHẠM SHA1 ĐÃ XẢY RA VỚI %s!"
 
-#: builtin/index-pack.c:689 builtin/pack-objects.c:164
-#: builtin/pack-objects.c:256
+#: builtin/index-pack.c:689 builtin/pack-objects.c:162
+#: builtin/pack-objects.c:254
 #, c-format
 msgid "unable to read %s"
 msgstr "không thể đọc %s"
@@ -6221,95 +6257,95 @@ msgid "pack has %d unresolved delta"
 msgid_plural "pack has %d unresolved deltas"
 msgstr[0] "gói có %d delta chưa được giải quyết"
 
-#: builtin/index-pack.c:1220
+#: builtin/index-pack.c:1219
 #, c-format
 msgid "unable to deflate appended object (%d)"
 msgstr "không thể xả nén đối tượng nối thêm (%d)"
 
-#: builtin/index-pack.c:1299
+#: builtin/index-pack.c:1298
 #, c-format
 msgid "local object %s is corrupt"
 msgstr "đối tượng nội bộ %s bị hỏng"
 
-#: builtin/index-pack.c:1323
+#: builtin/index-pack.c:1322
 msgid "error while closing pack file"
 msgstr "gặp lỗi trong khi đóng tập tin gói"
 
-#: builtin/index-pack.c:1336
+#: builtin/index-pack.c:1335
 #, c-format
 msgid "cannot write keep file '%s'"
 msgstr "không thể ghi tập tin giữ lại “%s”"
 
-#: builtin/index-pack.c:1344
+#: builtin/index-pack.c:1343
 #, c-format
 msgid "cannot close written keep file '%s'"
 msgstr "không thể đóng tập tin giữ lại đã được ghi “%s”"
 
-#: builtin/index-pack.c:1357
+#: builtin/index-pack.c:1356
 msgid "cannot store pack file"
 msgstr "không thể lưu tập tin gói"
 
-#: builtin/index-pack.c:1368
+#: builtin/index-pack.c:1367
 msgid "cannot store index file"
 msgstr "không thể lưu trữ tập tin ghi mục lục"
 
-#: builtin/index-pack.c:1401
+#: builtin/index-pack.c:1400
 #, c-format
 msgid "bad pack.indexversion=%<PRIu32>"
 msgstr "sai pack.indexversion=%<PRIu32>"
 
-#: builtin/index-pack.c:1407
+#: builtin/index-pack.c:1406
 #, c-format
 msgid "invalid number of threads specified (%d)"
 msgstr "số tuyến chỉ ra không hợp lệ (%d)"
 
-#: builtin/index-pack.c:1411 builtin/index-pack.c:1590
+#: builtin/index-pack.c:1410 builtin/index-pack.c:1589
 #, c-format
 msgid "no threads support, ignoring %s"
 msgstr "không hỗ trợ đa tuyến, bỏ qua %s"
 
-#: builtin/index-pack.c:1469
+#: builtin/index-pack.c:1468
 #, c-format
 msgid "Cannot open existing pack file '%s'"
 msgstr "Không thể mở tập tin gói đã sẵn có “%s”"
 
-#: builtin/index-pack.c:1471
+#: builtin/index-pack.c:1470
 #, c-format
 msgid "Cannot open existing pack idx file for '%s'"
 msgstr "Không thể mở tập tin idx của gói cho “%s”"
 
-#: builtin/index-pack.c:1518
+#: builtin/index-pack.c:1517
 #, c-format
 msgid "non delta: %d object"
 msgid_plural "non delta: %d objects"
 msgstr[0] "không delta: %d đối tượng"
 
-#: builtin/index-pack.c:1525
+#: builtin/index-pack.c:1524
 #, c-format
 msgid "chain length = %d: %lu object"
 msgid_plural "chain length = %d: %lu objects"
 msgstr[0] "chiều dài xích = %d: %lu đối tượng"
 
-#: builtin/index-pack.c:1554
+#: builtin/index-pack.c:1553
 msgid "Cannot come back to cwd"
 msgstr "Không thể quay lại cwd"
 
-#: builtin/index-pack.c:1602 builtin/index-pack.c:1605
-#: builtin/index-pack.c:1617 builtin/index-pack.c:1621
+#: builtin/index-pack.c:1601 builtin/index-pack.c:1604
+#: builtin/index-pack.c:1616 builtin/index-pack.c:1620
 #, c-format
 msgid "bad %s"
 msgstr "%s sai"
 
-#: builtin/index-pack.c:1635
+#: builtin/index-pack.c:1634
 msgid "--fix-thin cannot be used without --stdin"
 msgstr "--fix-thin không thể được dùng mà không có --stdin"
 
-#: builtin/index-pack.c:1639 builtin/index-pack.c:1648
+#: builtin/index-pack.c:1638 builtin/index-pack.c:1647
 #, c-format
 msgid "packfile name '%s' does not end with '.pack'"
 msgstr "tên tập tin tập tin gói “%s” không được kết thúc bằng đuôi “.pack”"
 
-#: builtin/index-pack.c:1656
+#: builtin/index-pack.c:1655
 msgid "--verify with no packfile name given"
 msgstr "dùng tùy chọn --verify mà không đưa ra tên packfile"
 
@@ -6420,8 +6456,8 @@ msgstr " đã chia sẻ"
 
 #: builtin/init-db.c:475
 msgid ""
-"git init [-q | --quiet] [--bare] [--template=<template-directory>] [--"
-"shared[=<permissions>]] [directory]"
+"git init [-q | --quiet] [--bare] [--template=<template-directory>] [--shared"
+"[=<permissions>]] [<directory>]"
 msgstr ""
 "git init [-q | --quiet] [--bare] [--template=<thư-mục-tạm>] [--shared[=<các-"
 "quyền>]] [thư-mục]"
@@ -6487,8 +6523,8 @@ msgid "git log [<options>] [<revision range>] [[--] <path>...]"
 msgstr "git log [<các-tùy-chọn>] [<vùng xem xét>] [[--] <đường-dẫn>…]"
 
 #: builtin/log.c:42
-msgid "git show [options] <object>..."
-msgstr "git show [các-tùy-chọn] <đối-tượng>…"
+msgid "git show [<options>] <object>..."
+msgstr "git show [<các-tùy-chọn>] <đối-tượng>…"
 
 #: builtin/log.c:81
 #, c-format
@@ -6566,8 +6602,8 @@ msgid "insane in-reply-to: %s"
 msgstr "in-reply-to điên rồ: %s"
 
 #: builtin/log.c:1026
-msgid "git format-patch [options] [<since> | <revision range>]"
-msgstr "git format-patch [các-tùy-chọn] [<kể-từ> | <vùng-xem-xét>]"
+msgid "git format-patch [<options>] [<since> | <revision-range>]"
+msgstr "git format-patch [<các-tùy-chọn>] [<kể-từ> | <vùng-xem-xét>]"
 
 #: builtin/log.c:1071
 msgid "Two output directories?"
@@ -6766,98 +6802,98 @@ msgstr ""
 msgid "Unknown commit %s"
 msgstr "Không hiểu lần chuyển giao %s"
 
-#: builtin/ls-files.c:401
-msgid "git ls-files [options] [<file>...]"
-msgstr "git ls-files [các-tùy-chọn] [<tập-tin>…]"
+#: builtin/ls-files.c:358
+msgid "git ls-files [<options>] [<file>...]"
+msgstr "git ls-files [<các-tùy-chọn>] [<tập-tin>…]"
 
-#: builtin/ls-files.c:458
+#: builtin/ls-files.c:415
 msgid "identify the file status with tags"
 msgstr "nhận dạng các trạng thái tập tin với thẻ"
 
-#: builtin/ls-files.c:460
+#: builtin/ls-files.c:417
 msgid "use lowercase letters for 'assume unchanged' files"
 msgstr ""
 "dùng chữ cái viết thường cho các tập tin “assume unchanged” (giả định không "
 "thay đổi)"
 
-#: builtin/ls-files.c:462
+#: builtin/ls-files.c:419
 msgid "show cached files in the output (default)"
 msgstr "hiển thị các tập tin được nhớ tạm vào đầu ra (mặc định)"
 
-#: builtin/ls-files.c:464
+#: builtin/ls-files.c:421
 msgid "show deleted files in the output"
 msgstr "hiển thị các tập tin đã xóa trong kết xuất"
 
-#: builtin/ls-files.c:466
+#: builtin/ls-files.c:423
 msgid "show modified files in the output"
 msgstr "hiển thị các tập tin đã bị sửa đổi ra kết xuất"
 
-#: builtin/ls-files.c:468
+#: builtin/ls-files.c:425
 msgid "show other files in the output"
 msgstr "hiển thị các tập tin khác trong kết xuất"
 
-#: builtin/ls-files.c:470
+#: builtin/ls-files.c:427
 msgid "show ignored files in the output"
 msgstr "hiển thị các tập tin bị bỏ qua trong kết xuất"
 
-#: builtin/ls-files.c:473
+#: builtin/ls-files.c:430
 msgid "show staged contents' object name in the output"
 msgstr "hiển thị tên đối tượng của nội dung được đặt lên bệ phóng ra kết xuất"
 
-#: builtin/ls-files.c:475
+#: builtin/ls-files.c:432
 msgid "show files on the filesystem that need to be removed"
 msgstr "hiển thị các tập tin trên hệ thống tập tin mà nó cần được gỡ bỏ"
 
-#: builtin/ls-files.c:477
+#: builtin/ls-files.c:434
 msgid "show 'other' directories' names only"
 msgstr "chỉ hiển thị tên của các thư mục “khác”"
 
-#: builtin/ls-files.c:480
+#: builtin/ls-files.c:437
 msgid "don't show empty directories"
 msgstr "không hiển thị thư mục rỗng"
 
-#: builtin/ls-files.c:483
+#: builtin/ls-files.c:440
 msgid "show unmerged files in the output"
 msgstr "hiển thị các tập tin chưa hòa trộn trong kết xuất"
 
-#: builtin/ls-files.c:485
+#: builtin/ls-files.c:442
 msgid "show resolve-undo information"
 msgstr "hiển thị thông tin resolve-undo"
 
-#: builtin/ls-files.c:487
+#: builtin/ls-files.c:444
 msgid "skip files matching pattern"
 msgstr "bỏ qua những tập tin khớp với một mẫu"
 
-#: builtin/ls-files.c:490
+#: builtin/ls-files.c:447
 msgid "exclude patterns are read from <file>"
 msgstr "mẫu loại trừ được đọc từ <tập tin>"
 
-#: builtin/ls-files.c:493
+#: builtin/ls-files.c:450
 msgid "read additional per-directory exclude patterns in <file>"
 msgstr "đọc thêm các mẫu ngoại trừ mỗi thư mục trong <tập tin>"
 
-#: builtin/ls-files.c:495
+#: builtin/ls-files.c:452
 msgid "add the standard git exclusions"
 msgstr "thêm loại trừ tiêu chuẩn kiểu git"
 
-#: builtin/ls-files.c:498
+#: builtin/ls-files.c:455
 msgid "make the output relative to the project top directory"
 msgstr "làm cho kết xuất liên quan đến thư mục ở mức cao nhất (gốc) của dự án"
 
-#: builtin/ls-files.c:501
+#: builtin/ls-files.c:458
 msgid "if any <file> is not in the index, treat this as an error"
 msgstr "nếu <tập tin> bất kỳ không ở trong bảng mục lục, xử lý nó như một lỗi"
 
-#: builtin/ls-files.c:502
+#: builtin/ls-files.c:459
 msgid "tree-ish"
 msgstr "tree-ish"
 
-#: builtin/ls-files.c:503
+#: builtin/ls-files.c:460
 msgid "pretend that paths removed since <tree-ish> are still present"
 msgstr ""
 "giả định rằng các đường dẫn đã bị gỡ bỏ kể từ <tree-ish> nay vẫn hiện diện"
 
-#: builtin/ls-files.c:505
+#: builtin/ls-files.c:462
 msgid "show debugging data"
 msgstr "hiển thị dữ liệu gỡ lỗi"
 
@@ -6898,12 +6934,12 @@ msgid "list entire tree; not just current directory (implies --full-name)"
 msgstr "liệt kê cây mục tin; không chỉ thư mục hiện hành (ngụ ý --full-name)"
 
 #: builtin/merge.c:45
-msgid "git merge [options] [<commit>...]"
-msgstr "git merge [các-tùy-chọn] [<commit>…]"
+msgid "git merge [<options>] [<commit>...]"
+msgstr "git merge [<các-tùy-chọn>] [<commit>…]"
 
 #: builtin/merge.c:46
-msgid "git merge [options] <msg> HEAD <commit>"
-msgstr "git merge [các-tùy-chọn] <tin-nhắn> HEAD <commit>"
+msgid "git merge [<options>] <msg> HEAD <commit>"
+msgstr "git merge [<các-tùy-chọn>] <tin-nhắn> HEAD <commit>"
 
 #: builtin/merge.c:47
 msgid "git merge --abort"
@@ -7143,7 +7179,7 @@ msgstr ""
 
 #: builtin/merge.c:1141 git-pull.sh:34
 msgid "You have not concluded your merge (MERGE_HEAD exists)."
-msgstr "Bạn chưa kết thúc việc hòa trộng (MERGE_HEAD vẫn tồn tại)."
+msgstr "Bạn chưa kết thúc việc hòa trộn (MERGE_HEAD vẫn tồn tại)."
 
 #: builtin/merge.c:1145
 msgid ""
@@ -7257,12 +7293,12 @@ msgstr ""
 "cầu\n"
 
 #: builtin/merge-base.c:29
-msgid "git merge-base [-a|--all] <commit> <commit>..."
-msgstr "git merge-base [-a|--all] <commit> <lần_chuyển_giao>…"
+msgid "git merge-base [-a | --all] <commit> <commit>..."
+msgstr "git merge-base [-a | --all] <lần_chuyển_giao> <lần_chuyển_giao>…"
 
 #: builtin/merge-base.c:30
-msgid "git merge-base [-a|--all] --octopus <commit>..."
-msgstr "git merge-base [-a|--all] --octopus <lần_chuyển_giao>…"
+msgid "git merge-base [-a | --all] --octopus <commit>..."
+msgstr "git merge-base [-a | --all] --octopus <lần_chuyển_giao>…"
 
 #: builtin/merge-base.c:31
 msgid "git merge-base --independent <commit>..."
@@ -7298,11 +7334,11 @@ msgstr "tìm xem <commit> được rẽ nhánh ở đâu từ reflog của <th.c
 
 #: builtin/merge-file.c:8
 msgid ""
-"git merge-file [options] [-L name1 [-L orig [-L name2]]] file1 orig_file "
-"file2"
+"git merge-file [<options>] [-L <name1> [-L <orig> [-L <name2>]]] <file1> "
+"<orig-file> <file2>"
 msgstr ""
-"git merge-file [các-tùy-chọn] [-L tên1 [-L gốc [-L tên2]]] tập-tin1 tập-tin-"
-"gốc tập-tin2"
+"git merge-file [<các-tùy-chọn>] [-L <tên1> [-L <gốc> [-L <tên2>]]] <tập-"
+"tin1> <tập-tin-gốc> <tập-tin2>"
 
 #: builtin/merge-file.c:33
 msgid "send results to standard output"
@@ -7333,7 +7369,7 @@ msgid "do not warn about conflicts"
 msgstr "không cảnh báo về các xung đột xảy ra"
 
 #: builtin/merge-file.c:45
-msgid "set labels for file1/orig_file/file2"
+msgid "set labels for file1/orig-file/file2"
 msgstr "đặt nhãn cho tập-tin-1/tập-tin-gốc/tập-tin-2"
 
 #: builtin/mktree.c:64
@@ -7353,8 +7389,8 @@ msgid "allow creation of more than one tree"
 msgstr "cho phép tạo nhiều hơn một cây"
 
 #: builtin/mv.c:15
-msgid "git mv [options] <source>... <destination>"
-msgstr "git mv [các-tùy-chọn] <nguồn>… <đích>"
+msgid "git mv [<options>] <source>... <destination>"
+msgstr "git mv [<các-tùy-chọn>] <nguồn>… <đích>"
 
 #: builtin/mv.c:69
 #, c-format
@@ -7440,22 +7476,22 @@ msgstr "%s, nguồn=%s, đích=%s"
 msgid "Renaming %s to %s\n"
 msgstr "Đổi tên %s thành %s\n"
 
-#: builtin/mv.c:256 builtin/remote.c:728 builtin/repack.c:355
+#: builtin/mv.c:256 builtin/remote.c:728 builtin/repack.c:359
 #, c-format
 msgid "renaming '%s' failed"
 msgstr "gặp lỗi khi đổi tên “%s”"
 
 #: builtin/name-rev.c:255
-msgid "git name-rev [options] <commit>..."
-msgstr "git name-rev [các-tùy-chọn] <commit>…"
+msgid "git name-rev [<options>] <commit>..."
+msgstr "git name-rev [<các-tùy-chọn>] <commit>…"
 
 #: builtin/name-rev.c:256
-msgid "git name-rev [options] --all"
-msgstr "git name-rev [các-tùy-chọn] --all"
+msgid "git name-rev [<options>] --all"
+msgstr "git name-rev [<các-tùy-chọn>] --all"
 
 #: builtin/name-rev.c:257
-msgid "git name-rev [options] --stdin"
-msgstr "git name-rev [các-tùy-chọn] --stdin"
+msgid "git name-rev [<options>] --stdin"
+msgstr "git name-rev [<các-tùy-chọn>] --stdin"
 
 #: builtin/name-rev.c:309
 msgid "print only names (no SHA-1)"
@@ -7487,42 +7523,42 @@ msgid "dereference tags in the input (internal use)"
 msgstr "bãi bỏ tham chiếu các thẻ trong đầu vào (dùng nội bộ)"
 
 #: builtin/notes.c:24
-msgid "git notes [--ref <notes_ref>] [list [<object>]]"
-msgstr "git notes [--ref <notes_ref>] [list [<đối-tượng>]]"
+msgid "git notes [--ref <notes-ref>] [list [<object>]]"
+msgstr "git notes [--ref <notes-ref>] [list [<đối-tượng>]]"
 
 #: builtin/notes.c:25
 msgid ""
-"git notes [--ref <notes_ref>] add [-f] [--allow-empty] [-m <msg> | -F <file> "
+"git notes [--ref <notes-ref>] add [-f] [--allow-empty] [-m <msg> | -F <file> "
 "| (-c | -C) <object>] [<object>]"
 msgstr ""
-"git notes [--ref <notes_ref>] add [-f] [--allow-empty] [-m <lời-nhắn> | -F "
+"git notes [--ref <notes-ref>] add [-f] [--allow-empty] [-m <lời-nhắn> | -F "
 "<tập-tin> | (-c | -C) <đối-tượng>] [<đối-tượng>]"
 
 #: builtin/notes.c:26
-msgid "git notes [--ref <notes_ref>] copy [-f] <from-object> <to-object>"
-msgstr "git notes [--ref <notes_ref>] copy [-f] <từ-đối-tượng> <đến-đối-tượng>"
+msgid "git notes [--ref <notes-ref>] copy [-f] <from-object> <to-object>"
+msgstr "git notes [--ref <notes-ref>] copy [-f] <từ-đối-tượng> <đến-đối-tượng>"
 
 #: builtin/notes.c:27
 msgid ""
-"git notes [--ref <notes_ref>] append [--allow-empty] [-m <msg> | -F <file> | "
+"git notes [--ref <notes-ref>] append [--allow-empty] [-m <msg> | -F <file> | "
 "(-c | -C) <object>] [<object>]"
 msgstr ""
-"git notes [--ref <notes_ref>] append [--allow-empty] [-m <lời-nhắn> | -F "
+"git notes [--ref <notes-ref>] append [--allow-empty] [-m <lời-nhắn> | -F "
 "<tập-tin> | (-c | -C) <đối-tượng>] [<đối-tượng>]"
 
 #: builtin/notes.c:28
-msgid "git notes [--ref <notes_ref>] edit [--allow-empty] [<object>]"
-msgstr "git notes [--ref <notes_ref>] edit [--allow-empty] [<đối-tượng>]"
+msgid "git notes [--ref <notes-ref>] edit [--allow-empty] [<object>]"
+msgstr "git notes [--ref <notes-ref>] edit [--allow-empty] [<đối-tượng>]"
 
 #: builtin/notes.c:29
-msgid "git notes [--ref <notes_ref>] show [<object>]"
-msgstr "git notes [--ref <notes_ref>] show [<đối-tượng>]"
+msgid "git notes [--ref <notes-ref>] show [<object>]"
+msgstr "git notes [--ref <notes-ref>] show [<đối-tượng>]"
 
 #: builtin/notes.c:30
 msgid ""
-"git notes [--ref <notes_ref>] merge [-v | -q] [-s <strategy> ] <notes_ref>"
+"git notes [--ref <notes-ref>] merge [-v | -q] [-s <strategy>] <notes-ref>"
 msgstr ""
-"git notes [--ref <notes_ref>] merge [-v | -q] [-s <chiến-lược> ] <notes_ref>"
+"git notes [--ref <notes-ref>] merge [-v | -q] [-s <chiến-lược> ] <notes-ref>"
 
 #: builtin/notes.c:31
 msgid "git notes merge --commit [-v | -q]"
@@ -7533,16 +7569,16 @@ msgid "git notes merge --abort [-v | -q]"
 msgstr "git notes merge --abort [-v | -q]"
 
 #: builtin/notes.c:33
-msgid "git notes [--ref <notes_ref>] remove [<object>...]"
-msgstr "git notes [--ref <notes_ref>] remove [<đối-tượng>…]"
+msgid "git notes [--ref <notes-ref>] remove [<object>...]"
+msgstr "git notes [--ref <notes-ref>] remove [<đối-tượng>…]"
 
 #: builtin/notes.c:34
-msgid "git notes [--ref <notes_ref>] prune [-n | -v]"
-msgstr "git notes [--ref <notes_ref>] prune [-n | -v]"
+msgid "git notes [--ref <notes-ref>] prune [-n | -v]"
+msgstr "git notes [--ref <notes-ref>] prune [-n | -v]"
 
 #: builtin/notes.c:35
-msgid "git notes [--ref <notes_ref>] get-ref"
-msgstr "git notes [--ref <notes_ref>] get-ref"
+msgid "git notes [--ref <notes-ref>] get-ref"
+msgstr "git notes [--ref <notes-ref>] get-ref"
 
 #: builtin/notes.c:40
 msgid "git notes [list [<object>]]"
@@ -7573,8 +7609,8 @@ msgid "git notes show [<object>]"
 msgstr "git notes show [<đối tượng>]"
 
 #: builtin/notes.c:71
-msgid "git notes merge [<options>] <notes_ref>"
-msgstr "git notes merge [<các-tùy-chọn>] <notes_ref>"
+msgid "git notes merge [<options>] <notes-ref>"
+msgstr "git notes merge [<các-tùy-chọn>] <notes-ref>"
 
 #: builtin/notes.c:72
 msgid "git notes merge --commit [<options>]"
@@ -7813,8 +7849,8 @@ msgid "notes-ref"
 msgstr "notes-ref"
 
 #: builtin/notes.c:954
-msgid "use notes from <notes_ref>"
-msgstr "dùng “notes” từ <notes_ref>"
+msgid "use notes from <notes-ref>"
+msgstr "dùng “notes” từ <notes-ref>"
 
 #: builtin/notes.c:989 builtin/remote.c:1621
 #, c-format
@@ -7833,187 +7869,187 @@ msgstr ""
 "git pack-objects [các-tùy-chọn…] base-name [< danh-sách-ref | < danh-sách-"
 "đối-tượng]"
 
-#: builtin/pack-objects.c:177 builtin/pack-objects.c:180
+#: builtin/pack-objects.c:175 builtin/pack-objects.c:178
 #, c-format
 msgid "deflate error (%d)"
 msgstr "lỗi giải nén (%d)"
 
-#: builtin/pack-objects.c:773
+#: builtin/pack-objects.c:771
 msgid "Writing objects"
 msgstr "Đang ghi lại các đối tượng"
 
-#: builtin/pack-objects.c:1015
+#: builtin/pack-objects.c:1013
 msgid "disabling bitmap writing, as some objects are not being packed"
 msgstr "tắt ghi bitmap, như vậy một số đối tượng sẽ không được đóng gói"
 
-#: builtin/pack-objects.c:2175
+#: builtin/pack-objects.c:2173
 msgid "Compressing objects"
 msgstr "Đang nén các đối tượng"
 
-#: builtin/pack-objects.c:2572
+#: builtin/pack-objects.c:2570
 #, c-format
 msgid "unsupported index version %s"
 msgstr "phiên bản mục lục không được hỗ trợ %s"
 
-#: builtin/pack-objects.c:2576
+#: builtin/pack-objects.c:2574
 #, c-format
 msgid "bad index version '%s'"
 msgstr "phiên bản mục lục sai “%s”"
 
-#: builtin/pack-objects.c:2599
+#: builtin/pack-objects.c:2597
 #, c-format
 msgid "option %s does not accept negative form"
 msgstr "tùy chọn %s không chấp nhận dạng thức âm"
 
-#: builtin/pack-objects.c:2603
+#: builtin/pack-objects.c:2601
 #, c-format
 msgid "unable to parse value '%s' for option %s"
 msgstr "không thể phân tích giá trị “%s” cho tùy chọn %s"
 
-#: builtin/pack-objects.c:2623
+#: builtin/pack-objects.c:2621
 msgid "do not show progress meter"
 msgstr "không hiển thị bộ đo tiến trình"
 
-#: builtin/pack-objects.c:2625
+#: builtin/pack-objects.c:2623
 msgid "show progress meter"
 msgstr "hiển thị bộ đo tiến trình"
 
-#: builtin/pack-objects.c:2627
+#: builtin/pack-objects.c:2625
 msgid "show progress meter during object writing phase"
 msgstr "hiển thị bộ đo tiến triển trong suốt pha ghi đối tượng"
 
-#: builtin/pack-objects.c:2630
+#: builtin/pack-objects.c:2628
 msgid "similar to --all-progress when progress meter is shown"
 msgstr "tương tự --all-progress khi bộ đo tiến trình được xuất hiện"
 
-#: builtin/pack-objects.c:2631
+#: builtin/pack-objects.c:2629
 msgid "version[,offset]"
 msgstr "phiên bản[,offset]"
 
-#: builtin/pack-objects.c:2632
+#: builtin/pack-objects.c:2630
 msgid "write the pack index file in the specified idx format version"
 msgstr "ghi tập tin bảng mục lục gói (pack) ở phiên bản định dạng idx đã cho"
 
-#: builtin/pack-objects.c:2635
+#: builtin/pack-objects.c:2633
 msgid "maximum size of each output pack file"
 msgstr "kcíh thước tối đa cho tập tin gói được tạo"
 
-#: builtin/pack-objects.c:2637
+#: builtin/pack-objects.c:2635
 msgid "ignore borrowed objects from alternate object store"
 msgstr "bỏ qua các đối tượng vay mượn từ kho đối tượng thay thế"
 
-#: builtin/pack-objects.c:2639
+#: builtin/pack-objects.c:2637
 msgid "ignore packed objects"
 msgstr "bỏ qua các đối tượng đóng gói"
 
-#: builtin/pack-objects.c:2641
+#: builtin/pack-objects.c:2639
 msgid "limit pack window by objects"
 msgstr "giới hạn cửa sổ đóng gói theo đối tượng"
 
-#: builtin/pack-objects.c:2643
+#: builtin/pack-objects.c:2641
 msgid "limit pack window by memory in addition to object limit"
 msgstr "giới hạn cửa sổ đóng gói theo bộ nhớ cộng thêm với giới hạn đối tượng"
 
-#: builtin/pack-objects.c:2645
+#: builtin/pack-objects.c:2643
 msgid "maximum length of delta chain allowed in the resulting pack"
 msgstr "độ dài tối đa của chuỗi móc xích “delta” được phép trong gói kết quả"
 
-#: builtin/pack-objects.c:2647
+#: builtin/pack-objects.c:2645
 msgid "reuse existing deltas"
 msgstr "dùng lại các delta sẵn có"
 
-#: builtin/pack-objects.c:2649
+#: builtin/pack-objects.c:2647
 msgid "reuse existing objects"
 msgstr "dùng lại các đối tượng sẵn có"
 
-#: builtin/pack-objects.c:2651
+#: builtin/pack-objects.c:2649
 msgid "use OFS_DELTA objects"
 msgstr "dùng các đối tượng OFS_DELTA"
 
-#: builtin/pack-objects.c:2653
+#: builtin/pack-objects.c:2651
 msgid "use threads when searching for best delta matches"
 msgstr "sử dụng các tuyến trình khi tìm kiếm cho các mẫu khớp delta tốt nhất"
 
-#: builtin/pack-objects.c:2655
+#: builtin/pack-objects.c:2653
 msgid "do not create an empty pack output"
 msgstr "không thể tạo kết xuất gói trống rỗng"
 
-#: builtin/pack-objects.c:2657
+#: builtin/pack-objects.c:2655
 msgid "read revision arguments from standard input"
 msgstr " đọc tham số “revision” từ thiết bị nhập chuẩn"
 
-#: builtin/pack-objects.c:2659
+#: builtin/pack-objects.c:2657
 msgid "limit the objects to those that are not yet packed"
 msgstr "giới hạn các đối tượng thành những cái mà chúng vẫn chưa được đóng gói"
 
-#: builtin/pack-objects.c:2662
+#: builtin/pack-objects.c:2660
 msgid "include objects reachable from any reference"
 msgstr "bao gồm các đối tượng có thể đọc được từ bất kỳ tham chiếu nào"
 
-#: builtin/pack-objects.c:2665
+#: builtin/pack-objects.c:2663
 msgid "include objects referred by reflog entries"
 msgstr "bao gồm các đối tượng được tham chiếu bởi các mục reflog"
 
-#: builtin/pack-objects.c:2668
+#: builtin/pack-objects.c:2666
 msgid "include objects referred to by the index"
 msgstr "bao gồm các đối tượng được tham chiếu bởi mục lục"
 
-#: builtin/pack-objects.c:2671
+#: builtin/pack-objects.c:2669
 msgid "output pack to stdout"
 msgstr "xuất gói ra đầu ra tiêu chuẩn"
 
-#: builtin/pack-objects.c:2673
+#: builtin/pack-objects.c:2671
 msgid "include tag objects that refer to objects to be packed"
 msgstr "bao gồm các đối tượng tham chiếu đến các đối tượng được đóng gói"
 
-#: builtin/pack-objects.c:2675
+#: builtin/pack-objects.c:2673
 msgid "keep unreachable objects"
 msgstr "giữ lại các đối tượng không thể đọc được"
 
-#: builtin/pack-objects.c:2676 parse-options.h:140
+#: builtin/pack-objects.c:2674 parse-options.h:140
 msgid "time"
 msgstr "thời-gian"
 
-#: builtin/pack-objects.c:2677
+#: builtin/pack-objects.c:2675
 msgid "unpack unreachable objects newer than <time>"
 msgstr ""
 "xả nén (gỡ khỏi gói) các đối tượng không thể đọc được mới hơn <thời-gian>"
 
-#: builtin/pack-objects.c:2680
+#: builtin/pack-objects.c:2678
 msgid "create thin packs"
 msgstr "tạo gói nhẹ"
 
-#: builtin/pack-objects.c:2682
+#: builtin/pack-objects.c:2680
 msgid "create packs suitable for shallow fetches"
 msgstr "tạo gói để phù hợp cho lấy về nông (shallow)"
 
-#: builtin/pack-objects.c:2684
+#: builtin/pack-objects.c:2682
 msgid "ignore packs that have companion .keep file"
 msgstr "bỏ qua các gói mà nó có tập tin .keep đi kèm"
 
-#: builtin/pack-objects.c:2686
+#: builtin/pack-objects.c:2684
 msgid "pack compression level"
 msgstr "mức nén gói"
 
-#: builtin/pack-objects.c:2688
+#: builtin/pack-objects.c:2686
 msgid "do not hide commits by grafts"
 msgstr "không ẩn các lần chuyển giao bởi “grafts”"
 
-#: builtin/pack-objects.c:2690
+#: builtin/pack-objects.c:2688
 msgid "use a bitmap index if available to speed up counting objects"
 msgstr "dùng mục lục ánh xạ nếu có thể được để nâng cao tốc độ đếm đối tượng"
 
-#: builtin/pack-objects.c:2692
+#: builtin/pack-objects.c:2690
 msgid "write a bitmap index together with the pack index"
 msgstr "ghi một mục lục ánh xạ cùng với mục lục gói"
 
-#: builtin/pack-objects.c:2783
+#: builtin/pack-objects.c:2781
 msgid "Counting objects"
 msgstr "Đang đếm các đối tượng"
 
 #: builtin/pack-refs.c:6
-msgid "git pack-refs [options]"
-msgstr "git pack-refs [các-tùy-chọn]"
+msgid "git pack-refs [<options>]"
+msgstr "git pack-refs [<các-tùy-chọn>]"
 
 #: builtin/pack-refs.c:14
 msgid "pack everything"
@@ -8024,8 +8060,8 @@ msgid "prune loose refs (default)"
 msgstr "prune (cắt cụt) những tham chiếu bị mất (mặc định)"
 
 #: builtin/prune-packed.c:7
-msgid "git prune-packed [-n|--dry-run] [-q|--quiet]"
-msgstr "git prune-packed [-n|--dry-run] [-q|--quiet]"
+msgid "git prune-packed [-n | --dry-run] [-q | --quiet]"
+msgstr "git prune-packed [-n | --dry-run] [-q | --quiet]"
 
 #: builtin/prune-packed.c:40
 msgid "Removing duplicate objects"
@@ -8306,75 +8342,79 @@ msgstr "--mirror không thể được tổ hợp cùng với đặc tả đư�
 msgid "--all and --mirror are incompatible"
 msgstr "--all và --mirror xung khắc nhau"
 
-#: builtin/push.c:493
+#: builtin/push.c:502
 msgid "repository"
 msgstr "kho"
 
-#: builtin/push.c:494
+#: builtin/push.c:503
 msgid "push all refs"
 msgstr "đẩy tất cả các tham chiếu"
 
-#: builtin/push.c:495
+#: builtin/push.c:504
 msgid "mirror all refs"
 msgstr "mirror tất cả các tham chiếu"
 
-#: builtin/push.c:497
+#: builtin/push.c:506
 msgid "delete refs"
 msgstr "xóa các tham chiếu"
 
-#: builtin/push.c:498
+#: builtin/push.c:507
 msgid "push tags (can't be used with --all or --mirror)"
 msgstr "đẩy các thẻ (không dùng cùng với --all hay --mirror)"
 
-#: builtin/push.c:501
+#: builtin/push.c:510
 msgid "force updates"
 msgstr "ép buộc cập nhật"
 
-#: builtin/push.c:503
+#: builtin/push.c:512
 msgid "refname>:<expect"
 msgstr "tên-tham-chiếu>:<cần"
 
-#: builtin/push.c:504
+#: builtin/push.c:513
 msgid "require old value of ref to be at this value"
 msgstr "yêu cầu giá-trị cũ của tham chiếu thì là giá-trị này"
 
-#: builtin/push.c:507
+#: builtin/push.c:516
 msgid "control recursive pushing of submodules"
 msgstr "điều khiển việc đẩy lên (push) đệ qui của mô-đun-con"
 
-#: builtin/push.c:509
+#: builtin/push.c:518
 msgid "use thin pack"
 msgstr "tạo gói nhẹ"
 
-#: builtin/push.c:510 builtin/push.c:511
+#: builtin/push.c:519 builtin/push.c:520
 msgid "receive pack program"
 msgstr "chương trình nhận gói"
 
-#: builtin/push.c:512
+#: builtin/push.c:521
 msgid "set upstream for git pull/status"
 msgstr "đặt thượng nguồn cho git pull/status"
 
-#: builtin/push.c:515
+#: builtin/push.c:524
 msgid "prune locally removed refs"
 msgstr "xén tỉa những tham chiếu bị gỡ bỏ"
 
-#: builtin/push.c:517
+#: builtin/push.c:526
 msgid "bypass pre-push hook"
 msgstr "vòng qua móc tiền-đẩy (pre-push)"
 
-#: builtin/push.c:518
+#: builtin/push.c:527
 msgid "push missing but relevant tags"
 msgstr "push phần bị thiếu nhưng các thẻ lại thích hợp"
 
-#: builtin/push.c:520
+#: builtin/push.c:529
 msgid "GPG sign the push"
 msgstr "ký lần đẩy dùng GPG"
 
-#: builtin/push.c:529
+#: builtin/push.c:530
+msgid "request atomic transaction on remote side"
+msgstr "yêu cầu giao dịch hạt nhân bên phía máy chủ"
+
+#: builtin/push.c:539
 msgid "--delete is incompatible with --all, --mirror and --tags"
 msgstr "--delete là xung khắc với các tùy chọn --all, --mirror và --tags"
 
-#: builtin/push.c:531
+#: builtin/push.c:541
 msgid "--delete doesn't make sense without any refs"
 msgstr "--delete không hợp lý nếu không có bất kỳ tham chiếu nào"
 
@@ -8454,12 +8494,12 @@ msgstr "bỏ qua áp dụng bộ lọc lấy ra (checkout) thưa thớt"
 msgid "debug unpack-trees"
 msgstr "gỡ lỗi “unpack-trees”"
 
-#: builtin/reflog.c:499
+#: builtin/reflog.c:429
 #, c-format
 msgid "%s' for '%s' is not a valid timestamp"
 msgstr "giá trị %s dành cho “%s” không phải là dấu vết thời gian hợp lệ"
 
-#: builtin/reflog.c:615 builtin/reflog.c:620
+#: builtin/reflog.c:546 builtin/reflog.c:551
 #, c-format
 msgid "'%s' is not a valid timestamp"
 msgstr "“%s” không phải là dấu thời gian hợp lệ"
@@ -8470,7 +8510,7 @@ msgstr "git remote [-v | --verbose]"
 
 #: builtin/remote.c:13
 msgid ""
-"git remote add [-t <branch>] [-m <master>] [-f] [--tags|--no-tags] [--"
+"git remote add [-t <branch>] [-m <master>] [-f] [--tags | --no-tags] [--"
 "mirror=<fetch|push>] <name> <url>"
 msgstr ""
 "git remote add [-t <nhánh>] [-m <master>] [-f] [--tags|--no-tags] [--"
@@ -8484,8 +8524,8 @@ msgstr "git remote rename <tên-cũ> <tên-mới>"
 msgid "git remote remove <name>"
 msgstr "git remote remove <tên>"
 
-#: builtin/remote.c:16
-msgid "git remote set-head <name> (-a | --auto | -d | --delete |<branch>)"
+#: builtin/remote.c:16 builtin/remote.c:43
+msgid "git remote set-head <name> (-a | --auto | -d | --delete | <branch>)"
 msgstr "git remote set-head <tên> (-a | --auto | -d | --delete | <nhánh>)"
 
 #: builtin/remote.c:17
@@ -8521,10 +8561,6 @@ msgstr "git remote set-url --delete <tên> <url>"
 #: builtin/remote.c:28
 msgid "git remote add [<options>] <name> <url>"
 msgstr "git remote add [<các-tùy-chọn>] <tên> <url>"
-
-#: builtin/remote.c:43
-msgid "git remote set-head <name> (-a | --auto | -d | --delete | <branch>)"
-msgstr "git remote set-head <tên> (-a | --auto | -d | --delete | <nhánh>)"
 
 #: builtin/remote.c:48
 msgid "git remote set-branches <name> <branch>..."
@@ -8953,8 +8989,8 @@ msgid "be verbose; must be placed before a subcommand"
 msgstr "chi tiết; phải được đặt trước một lệnh-con"
 
 #: builtin/repack.c:17
-msgid "git repack [options]"
-msgstr "git repack [các-tùy-chọn]"
+msgid "git repack [<options>]"
+msgstr "git repack [<các-tùy-chọn>]"
 
 #: builtin/repack.c:159
 msgid "pack everything in a single pack"
@@ -9020,7 +9056,7 @@ msgstr "kcíh thước tối đa cho từng tập tin gói"
 msgid "repack objects in packs marked with .keep"
 msgstr "đóng gói lại các đối tượng trong các gói đã đánh dấu bằng .keep"
 
-#: builtin/repack.c:371
+#: builtin/repack.c:375
 #, c-format
 msgid "removing '%s' failed"
 msgstr "gặp lỗi khi xóa bỏ “%s”"
@@ -9112,8 +9148,9 @@ msgid "use this format"
 msgstr "dùng định dạng này"
 
 #: builtin/rerere.c:12
-msgid "git rerere [clear | forget path... | status | remaining | diff | gc]"
-msgstr "git rerere [clear | forget path… | status | remaining | diff | gc]"
+msgid "git rerere [clear | forget <path>... | status | remaining | diff | gc]"
+msgstr ""
+"git rerere [clear | forget <đường dẫn>… | status | remaining | diff | gc]"
 
 #: builtin/rerere.c:57
 msgid "register clean resolutions in index"
@@ -9253,8 +9290,8 @@ msgid "Could not write new index file."
 msgstr "Không thể ghi tập tin lưu bảng mục lục mới."
 
 #: builtin/rev-parse.c:361
-msgid "git rev-parse --parseopt [options] -- [<args>...]"
-msgstr "git rev-parse --parseopt [các-tùy-chọn] -- [<th.số>…]"
+msgid "git rev-parse --parseopt [<options>] -- [<args>...]"
+msgstr "git rev-parse --parseopt [<các-tùy-chọn>] -- [<các tham số>…]"
 
 #: builtin/rev-parse.c:366
 msgid "keep the `--` passed as an arg"
@@ -9270,29 +9307,29 @@ msgstr "kết xuất trong định dạng gậy dài"
 
 #: builtin/rev-parse.c:499
 msgid ""
-"git rev-parse --parseopt [options] -- [<args>...]\n"
+"git rev-parse --parseopt [<options>] -- [<args>...]\n"
 "   or: git rev-parse --sq-quote [<arg>...]\n"
-"   or: git rev-parse [options] [<arg>...]\n"
+"   or: git rev-parse [<options>] [<arg>...]\n"
 "\n"
 "Run \"git rev-parse --parseopt -h\" for more information on the first usage."
 msgstr ""
-"git rev-parse --parseopt [các-tùy-chọn] -- [<đ.số>…]\n"
+"git rev-parse --parseopt [<các-tùy-chọn>] -- [<các đối số>…]\n"
 "   hoặc: git rev-parse --sq-quote [<đ.số>…]\n"
-"   hoặc: git rev-parse [các-tùy-chọn] [<đ.số>…]\n"
+"   hoặc: git rev-parse [<các-tùy-chọn>] [<đ.số>…]\n"
 "\n"
 "Chạy lệnh \"git rev-parse --parseopt -h\" để có thêm thông tin về cách dùng."
 
 #: builtin/revert.c:22
-msgid "git revert [options] <commit-ish>..."
-msgstr "git revert [các-tùy-chọn] <commit-ish>…"
+msgid "git revert [<options>] <commit-ish>..."
+msgstr "git revert [<các-tùy-chọn>] <commit-ish>…"
 
 #: builtin/revert.c:23
 msgid "git revert <subcommand>"
 msgstr "git revert <lệnh-con>"
 
 #: builtin/revert.c:28
-msgid "git cherry-pick [options] <commit-ish>..."
-msgstr "git cherry-pick [các-tùy-chọn] <commit-ish>…"
+msgid "git cherry-pick [<options>] <commit-ish>..."
+msgstr "git cherry-pick [<các-tùy-chọn>] <commit-ish>…"
 
 #: builtin/revert.c:29
 msgid "git cherry-pick <subcommand>"
@@ -9372,8 +9409,8 @@ msgid "cherry-pick failed"
 msgstr "cherry-pick gặp lỗi"
 
 #: builtin/rm.c:17
-msgid "git rm [options] [--] <file>..."
-msgstr "git rm [các-tùy-chọn] [--] <tập-tin>…"
+msgid "git rm [<options>] [--] <file>..."
+msgstr "git rm [<các-tùy-chọn>] [--] <tập-tin>…"
 
 #: builtin/rm.c:65
 msgid ""
@@ -9469,8 +9506,8 @@ msgid "git rm: unable to remove %s"
 msgstr "git rm: không thể gỡ bỏ %s"
 
 #: builtin/shortlog.c:13
-msgid "git shortlog [<options>] [<revision range>] [[--] [<path>...]]"
-msgstr "git shortlog [các-tùy-chọn] [<vùng-xét-duyệt>] [[--] [<đường-dẫn>…]]"
+msgid "git shortlog [<options>] [<revision-range>] [[--] [<path>...]]"
+msgstr "git shortlog [<các-tùy-chọn>] [<vùng-xét-duyệt>] [[--] [<đường-dẫn>…]]"
 
 #: builtin/shortlog.c:131
 #, c-format
@@ -9499,19 +9536,19 @@ msgstr "Ngắt dòng khi quá dài"
 
 #: builtin/show-branch.c:9
 msgid ""
-"git show-branch [-a|--all] [-r|--remotes] [--topo-order | --date-order]\n"
+"git show-branch [-a | --all] [-r | --remotes] [--topo-order | --date-order]\n"
 "\t\t[--current] [--color[=<when>] | --no-color] [--sparse]\n"
 "\t\t[--more=<n> | --list | --independent | --merge-base]\n"
 "\t\t[--no-name | --sha1-name] [--topics] [(<rev> | <glob>)...]"
 msgstr ""
-"git show-branch [-a|--all] [-r|--remotes] [--topo-order | --date-order]\n"
+"git show-branch [-a | --all] [-r | --remotes] [--topo-order | --date-order]\n"
 "\t\t[--current] [--color[=<khi>] | --no-color] [--sparse]\n"
 "\t\t[--more=<n> | --list | --independent | --merge-base]\n"
 "\t\t[--no-name | --sha1-name] [--topics] [(<rev> | <glob>)…]"
 
 #: builtin/show-branch.c:13
-msgid "git show-branch (-g|--reflog)[=<n>[,<base>]] [--list] [<ref>]"
-msgstr "git show-branch (-g|--reflog)[=<n>[,<nền>]] [--list] [<ref>]"
+msgid "git show-branch (-g | --reflog)[=<n>[,<base>]] [--list] [<ref>]"
+msgstr "git show-branch (-g | --reflog)[=<n>[,<nền>]] [--list] [<ref>]"
 
 #: builtin/show-branch.c:652
 msgid "show remote-tracking and local branches"
@@ -9579,11 +9616,11 @@ msgstr "hiển thị <n> các mục “ref-log” gần nhất kể từ nền (
 
 #: builtin/show-ref.c:10
 msgid ""
-"git show-ref [-q|--quiet] [--verify] [--head] [-d|--dereference] [-s|--"
-"hash[=<n>]] [--abbrev[=<n>]] [--tags] [--heads] [--] [pattern*] "
+"git show-ref [-q | --quiet] [--verify] [--head] [-d | --dereference] [-s | --"
+"hash[=<n>]] [--abbrev[=<n>]] [--tags] [--heads] [--] [<pattern>...]"
 msgstr ""
-"git show-ref [-q|--quiet] [--verify] [--head] [-d|--dereference] [-s|--"
-"hash[=<n>]] [--abbrev[=<n>]] [--tags] [--heads] [--] [mẫu*] "
+"git show-ref [-q | --quiet] [--verify] [--head] [-d|--dereference] [-s|--hash"
+"[=<n>]] [--abbrev[=<n>]] [--tags] [--heads] [--] [<mẫu>…] "
 
 #: builtin/show-ref.c:11
 msgid "git show-ref --exclude-existing[=pattern] < ref-list"
@@ -9626,12 +9663,12 @@ msgstr ""
 "bộ"
 
 #: builtin/symbolic-ref.c:7
-msgid "git symbolic-ref [options] name [ref]"
-msgstr "git symbolic-ref [các-tùy-chọn] tên [t.chiếu]"
+msgid "git symbolic-ref [<options>] <name> [<ref>]"
+msgstr "git symbolic-ref [<các-tùy-chọn>] <tên> [<t.chiếu>]"
 
 #: builtin/symbolic-ref.c:8
-msgid "git symbolic-ref -d [-q] name"
-msgstr "git symbolic-ref -d [-q] tên"
+msgid "git symbolic-ref -d [-q] <name>"
+msgstr "git symbolic-ref -d [-q] <tên>"
 
 #: builtin/symbolic-ref.c:40
 msgid "suppress error message for non-symbolic (detached) refs"
@@ -9655,9 +9692,11 @@ msgstr "lý do cập nhật"
 
 #: builtin/tag.c:22
 msgid ""
-"git tag [-a|-s|-u <key-id>] [-f] [-m <msg>|-F <file>] <tagname> [<head>]"
+"git tag [-a | -s | -u <key-id>] [-f] [-m <msg> | -F <file>] <tagname> "
+"[<head>]"
 msgstr ""
-"git tag [-a|-s|-u <key-id>] [-f] [-m <msg>|-F <tập-tin>] <tên-thẻ> [<head>]"
+"git tag [-a | -s | -u <key-id>] [-f] [-m <msg>|-F <tập-tin>] <tên-thẻ> "
+"[<head>]"
 
 #: builtin/tag.c:23
 msgid "git tag -d <tagname>..."
@@ -9665,10 +9704,11 @@ msgstr "git tag -d <tên-thẻ>…"
 
 #: builtin/tag.c:24
 msgid ""
-"git tag -l [-n[<num>]] [--contains <commit>] [--points-at <object>] \n"
+"git tag -l [-n[<num>]] [--contains <commit>] [--points-at <object>]\n"
 "\t\t[<pattern>...]"
 msgstr ""
-"git tag -l [-n[<num>]] [--contains <commit>] [--points-at <đối-tượng>] \n"
+"git tag -l [-n[<số>]] [--contains <lần_chuyển_giao>] [--points-at <đối-"
+"tượng>]\n"
 "\t\t[<mẫu>…]"
 
 #: builtin/tag.c:26
@@ -9693,7 +9733,7 @@ msgstr "không tìm thấy tìm thấy thẻ “%s”."
 #: builtin/tag.c:321
 #, c-format
 msgid "Deleted tag '%s' (was %s)\n"
-msgstr "Thẻ đã bị xóa “%s” (trước là %s)\n"
+msgstr "Thẻ đã bị xóa “%s” (từng là %s)\n"
 
 #: builtin/tag.c:333
 #, c-format
@@ -9723,7 +9763,7 @@ msgid ""
 "want to.\n"
 msgstr ""
 "\n"
-"Viết các ghi chú cho (thẻ) tag\n"
+"Viết các ghi chú cho thẻ:\n"
 "  %s\n"
 "Những dòng được bắt đầu bằng “%c” sẽ được giữ lại; bạn có thể xóa chúng đi "
 "nếu muốn.\n"
@@ -9812,17 +9852,17 @@ msgstr "dùng kháo khác để ký thẻ"
 msgid "replace the tag if exists"
 msgstr "thay thế nếu tag đó đã có trước"
 
-#: builtin/tag.c:608
+#: builtin/tag.c:609
+msgid "Tag listing options"
+msgstr "Các tùy chọn liệt kê thẻ"
+
+#: builtin/tag.c:610
 msgid "show tag list in columns"
 msgstr "hiển thị danh sách thẻ trong các cột"
 
-#: builtin/tag.c:610
+#: builtin/tag.c:612
 msgid "sort tags"
 msgstr "sắp xếp các thẻ"
-
-#: builtin/tag.c:614
-msgid "Tag listing options"
-msgstr "Các tùy chọn liệt kê thẻ"
 
 #: builtin/tag.c:617 builtin/tag.c:623
 msgid "print only tags that contain the commit"
@@ -9880,136 +9920,136 @@ msgid "Unpacking objects"
 msgstr "Đang giải nén các đối tượng"
 
 #: builtin/update-index.c:403
-msgid "git update-index [options] [--] [<file>...]"
-msgstr "git update-index [các-tùy-chọn] [<tập-tin>…]"
+msgid "git update-index [<options>] [--] [<file>...]"
+msgstr "git update-index [<các-tùy-chọn>] [--] [<tập-tin>…]"
 
-#: builtin/update-index.c:756
+#: builtin/update-index.c:757
 msgid "continue refresh even when index needs update"
 msgstr "tiếp tục làm mới ngay cả khi bảng mục lục cần được cập nhật"
 
-#: builtin/update-index.c:759
+#: builtin/update-index.c:760
 msgid "refresh: ignore submodules"
 msgstr "refresh: lờ đi mô-đun-con"
 
-#: builtin/update-index.c:762
+#: builtin/update-index.c:763
 msgid "do not ignore new files"
 msgstr "không bỏ qua các tập tin mới tạo"
 
-#: builtin/update-index.c:764
+#: builtin/update-index.c:765
 msgid "let files replace directories and vice-versa"
 msgstr "để các tập tin thay thế các thư mục và “vice-versa”"
 
-#: builtin/update-index.c:766
+#: builtin/update-index.c:767
 msgid "notice files missing from worktree"
 msgstr "thông báo các tập-tin thiếu trong thư-mục làm việc"
 
-#: builtin/update-index.c:768
+#: builtin/update-index.c:769
 msgid "refresh even if index contains unmerged entries"
 msgstr ""
 "làm tươi mới thậm chí khi bảng mục lục chứa các mục tin chưa được hòa trộn"
 
-#: builtin/update-index.c:771
+#: builtin/update-index.c:772
 msgid "refresh stat information"
 msgstr "lấy lại thông tin thống kê"
 
-#: builtin/update-index.c:775
+#: builtin/update-index.c:776
 msgid "like --refresh, but ignore assume-unchanged setting"
 msgstr "giống --refresh, nhưng bỏ qua các cài đặt “assume-unchanged”"
 
-#: builtin/update-index.c:779
+#: builtin/update-index.c:780
 msgid "<mode>,<object>,<path>"
 msgstr "<chế_độ>,<đối_tượng>,<đường_dẫn>"
 
-#: builtin/update-index.c:780
+#: builtin/update-index.c:781
 msgid "add the specified entry to the index"
 msgstr "thêm các tập tin đã chỉ ra vào bảng mục lục"
 
-#: builtin/update-index.c:784
+#: builtin/update-index.c:785
 msgid "(+/-)x"
 msgstr "(+/-)x"
 
-#: builtin/update-index.c:785
+#: builtin/update-index.c:786
 msgid "override the executable bit of the listed files"
 msgstr "ghi đè lên bít thi hành của các tập tin được liệt kê"
 
-#: builtin/update-index.c:789
+#: builtin/update-index.c:790
 msgid "mark files as \"not changing\""
 msgstr "Đánh dấu các tập tin là \"không thay đổi\""
 
-#: builtin/update-index.c:792
+#: builtin/update-index.c:793
 msgid "clear assumed-unchanged bit"
 msgstr "xóa bít assumed-unchanged (giả định là không thay đổi)"
 
-#: builtin/update-index.c:795
+#: builtin/update-index.c:796
 msgid "mark files as \"index-only\""
 msgstr "đánh dấu các tập tin là “chỉ-đọc”"
 
-#: builtin/update-index.c:798
+#: builtin/update-index.c:799
 msgid "clear skip-worktree bit"
 msgstr "xóa bít skip-worktree"
 
-#: builtin/update-index.c:801
+#: builtin/update-index.c:802
 msgid "add to index only; do not add content to object database"
 msgstr ""
 "chỉ thêm vào bảng mục lục; không thêm nội dung vào cơ sở dữ liệu đối tượng"
 
-#: builtin/update-index.c:803
+#: builtin/update-index.c:804
 msgid "remove named paths even if present in worktree"
 msgstr ""
 "gỡ bỏ các đường dẫn được đặt tên thậm chí cả khi nó hiện diện trong thư mục "
 "làm việc"
 
-#: builtin/update-index.c:805
+#: builtin/update-index.c:806
 msgid "with --stdin: input lines are terminated by null bytes"
 msgstr "với tùy chọn --stdin: các dòng đầu vào được chấm dứt bởi ký tự null"
 
-#: builtin/update-index.c:807
+#: builtin/update-index.c:808
 msgid "read list of paths to be updated from standard input"
 msgstr "đọc danh sách đường dẫn cần cập nhật từ đầu vào tiêu chuẩn"
 
-#: builtin/update-index.c:811
+#: builtin/update-index.c:812
 msgid "add entries from standard input to the index"
 msgstr "không thể đọc các mục từ đầu vào tiêu chuẩn vào bảng mục lục"
 
-#: builtin/update-index.c:815
+#: builtin/update-index.c:816
 msgid "repopulate stages #2 and #3 for the listed paths"
 msgstr "phục hồi các trạng thái #2 và #3 cho các đường dẫn được liệt kê"
 
-#: builtin/update-index.c:819
+#: builtin/update-index.c:820
 msgid "only update entries that differ from HEAD"
 msgstr "chỉ cập nhật các mục tin mà nó khác biệt so với HEAD"
 
-#: builtin/update-index.c:823
+#: builtin/update-index.c:824
 msgid "ignore files missing from worktree"
 msgstr "bỏ qua các tập-tin thiếu trong thư-mục làm việc"
 
-#: builtin/update-index.c:826
+#: builtin/update-index.c:827
 msgid "report actions to standard output"
 msgstr "báo cáo các thao tác ra thiết bị xuất chuẩn"
 
-#: builtin/update-index.c:828
+#: builtin/update-index.c:829
 msgid "(for porcelains) forget saved unresolved conflicts"
 msgstr "(cho “porcelains”) quên các xung đột chưa được giải quyết đã ghi"
 
-#: builtin/update-index.c:832
+#: builtin/update-index.c:833
 msgid "write index in this format"
 msgstr "ghi mục lục ở định dạng này"
 
-#: builtin/update-index.c:834
+#: builtin/update-index.c:835
 msgid "enable or disable split index"
 msgstr "bật/tắt chia cắt bảng mục lục"
 
 #: builtin/update-ref.c:9
-msgid "git update-ref [options] -d <refname> [<oldval>]"
-msgstr "git update-ref [các-tùy-chọn] -d <refname> [<biến-cũ>]"
+msgid "git update-ref [<options>] -d <refname> [<old-val>]"
+msgstr "git update-ref [<các-tùy-chọn>] -d <refname> [<biến-cũ>]"
 
 #: builtin/update-ref.c:10
-msgid "git update-ref [options]    <refname> <newval> [<oldval>]"
-msgstr "git update-ref [các-tùy-chọn]    <refname> <biến-mới> [<biến-cũ>]"
+msgid "git update-ref [<options>]    <refname> <new-val> [<old-val>]"
+msgstr "git update-ref [<các-tùy-chọn>]    <refname> <biến-mới> [<biến-cũ>]"
 
 #: builtin/update-ref.c:11
-msgid "git update-ref [options] --stdin [-z]"
-msgstr "git update-ref [các-tùy-chọn] --stdin [-z]"
+msgid "git update-ref [<options>] --stdin [-z]"
+msgstr "git update-ref [<các-tùy-chọn>] --stdin [-z]"
 
 #: builtin/update-ref.c:359
 msgid "delete the reference"
@@ -10036,16 +10076,16 @@ msgid "update the info files from scratch"
 msgstr "cập nhật các tập tin thông tin từ điểm xuất phát"
 
 #: builtin/verify-commit.c:17
-msgid "git verify-commit [-v|--verbose] <commit>..."
-msgstr "git verify-commit [-v|--verbose] <lần_chuyển_giao>…"
+msgid "git verify-commit [-v | --verbose] <commit>..."
+msgstr "git verify-commit [-v | --verbose] <lần_chuyển_giao>…"
 
 #: builtin/verify-commit.c:75
 msgid "print commit contents"
 msgstr "hiển thị nội dung của lần chuyển giao"
 
 #: builtin/verify-pack.c:54
-msgid "git verify-pack [-v|--verbose] [-s|--stat-only] <pack>..."
-msgstr "git verify-pack [-v|--verbose] [-s|--stat-only] <gói>…"
+msgid "git verify-pack [-v | --verbose] [-s | --stat-only] <pack>..."
+msgstr "git verify-pack [-v | --verbose] [-s | --stat-only] <gói>…"
 
 #: builtin/verify-pack.c:64
 msgid "verbose"
@@ -10056,8 +10096,8 @@ msgid "show statistics only"
 msgstr "chỉ hiển thị thống kê"
 
 #: builtin/verify-tag.c:17
-msgid "git verify-tag [-v|--verbose] <tag>..."
-msgstr "git verify-tag [-v|--verbose] <thẻ>…"
+msgid "git verify-tag [-v | --verbose] <tag>..."
+msgstr "git verify-tag [-v | --verbose] <thẻ>…"
 
 #: builtin/verify-tag.c:73
 msgid "print tag contents"
@@ -10416,14 +10456,14 @@ msgstr "HEAD sai - Tôi cần một HEAD"
 #: git-bisect.sh:130
 #, sh-format
 msgid ""
-"Checking out '$start_head' failed. Try 'git bisect reset <validbranch>'."
+"Checking out '$start_head' failed. Try 'git bisect reset <valid-branch>'."
 msgstr ""
-"Việc checkout “$start_head” gặp lỗi. Hãy thử “git bisect reset "
-"<nhánh_hợp_lệ>”."
+"Việc lấy “$start_head” ra gặp lỗi. Hãy thử \"git bisect reset <nhánh_hợp_lệ>"
+"\"."
 
 #: git-bisect.sh:140
 msgid "won't bisect on cg-seek'ed tree"
-msgstr "sẽ không bisect trêm cây được cg-seek"
+msgstr "sẽ không di chuyển nửa bước trên cây được cg-seek"
 
 #: git-bisect.sh:144
 msgid "Bad HEAD - strange symbolic ref"
@@ -11193,6 +11233,21 @@ msgstr "Gặp lỗi khi đệ quy vào trong đường dẫn mô-đun-con “$sm
 #, sh-format
 msgid "Synchronizing submodule url for '$displaypath'"
 msgstr "Url Mô-đun-con đồng bộ hóa cho “$displaypath”"
+
+#~ msgid "server does not support --atomic push"
+#~ msgstr "máy phục vụ không hỗ trợ đẩy lên --atomic"
+
+#~ msgid "(detached from %s)"
+#~ msgstr "(được tách rời từ %s)"
+
+#~ msgid "No existing author found with '%s'"
+#~ msgstr "Không tìm thấy tác giả có sẵn với “%s”"
+
+#~ msgid "search also in ignored files"
+#~ msgstr "tìm cả trong các tập tin đã bị lờ đi"
+
+#~ msgid "git remote set-head <name> (-a | --auto | -d | --delete |<branch>)"
+#~ msgstr "git remote set-head <tên> (-a | --auto | -d | --delete | <nhánh>)"
 
 #~ msgid "no files added"
 #~ msgstr "chưa có tập tin nào được thêm vào"

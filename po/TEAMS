@@ -36,6 +36,11 @@ Language:	pt_PT (Portuguese - Portugal)
 Repository:	https://github.com/marcomsousa/git-l10n-pt_PT/
 Leader:		Marco Sousa <marcomsousa AT gmail.com>
 
+Language:	ru (Russian)
+Repository:	https://github.com/DJm00n/git-po-ru/
+Leader:		Dimitriy Ryazantcev <DJm00n AT mail.ru>
+Members:	insolor <insolor AT gmail.com>
+
 Language:	sv (Swedish)
 Repository:	https://github.com/nafmo/git-l10n-sv/
 Leader:		Peter Krefting <peter@softwolves.pp.se>
@@ -46,7 +51,7 @@ Leader:		Trần Ngọc Quân <vnwildman AT gmail.com>
 Members:	Nguyễn Thái Ngọc Duy <pclouds AT gmail.com>
 
 Language:	zh_CN (Simplified Chinese)
-Repository:	https://github.com/gotgit/git-po-zh_CN/
+Repository:	https://github.com/jiangxin/git/
 Leader:		Jiang Xin <worldhello.net@gmail.com>
 Members:	Riku <lu.riku AT gmail.com>
 		Zhuang Ya <zhuangya AT me.com>
