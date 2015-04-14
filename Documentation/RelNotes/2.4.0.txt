@@ -297,6 +297,16 @@ notes for details).
    a user name with an at-sign in it.
    (merge 13d261e av/wincred-with-at-in-username-fix later to maint).
 
+ * "diff-highlight" (in contrib/) used to show byte-by-byte
+   differences, which meant that multi-byte characters can be chopped
+   in the middle.  It learned to pay attention to character boundaries
+   (assuming the UTF-8 payload).
+   (merge 8d00662 jk/colors later to maint).
+
+ * "git merge --quiet" did not squelch messages from the underlying
+   merge-recursive strategy.
+   (merge 2bf15a3 jk/merge-quiet later to maint).
+
  * Longstanding configuration variable naming rules has been added to
    the documentation.
    (merge 35840a3 jc/conf-var-doc later to maint).
@@ -361,7 +371,7 @@ notes for details).
  * We did not parse username followed by literal IPv6 address in SSH
    transport URLs, e.g. ssh://user@[2001:db8::1]:22/repo.git
    correctly.
-   (merge 3f55cca tb/connect-ipv6-parse-fix later to maint).
+   (merge 6b6c5f7 tb/connect-ipv6-parse-fix later to maint).
 
  * The configuration variable 'mailinfo.scissors' was hard to
    discover in the documentation.
@@ -473,4 +483,11 @@ notes for details).
    (merge 260d585 sg/completion-gitcomp-nl-for-refs later to maint).
    (merge 777c55a jc/report-path-error-to-dir later to maint).
    (merge fddfaf8 ph/push-doc-cas later to maint).
-   (merge 129260c ss/pull-rebase-preserve later to maint).
+   (merge d50d31e ss/pull-rebase-preserve later to maint).
+   (merge c8c3f1d pt/enter-repo-comment-fix later to maint).
+   (merge d7bfb9e jz/gitweb-conf-doc-fix later to maint).
+   (merge f907282 jk/cherry-pick-docfix later to maint).
+   (merge d3c0811 iu/fix-parse-options-h-comment later to maint).
+   (merge 6c3b2af jg/cguide-we-cannot-count later to maint).
+   (merge 2b8bd44 jk/pack-corruption-post-mortem later to maint).
+   (merge 9585cb8 jn/doc-fast-import-no-16-octopus-limit later to maint).
