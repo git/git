@@ -54,6 +54,9 @@ sh -c 'asciidoc --version >/dev/null 2>&1' || nodoc=y
 GIT_TEST_OPTS="$TRASH${GIT_TEST_OPTS+" $GIT_TEST_OPTS"}"
 export GIT_TEST_OPTS
 
+GIT_TEST_CHAIN_LINT=1
+export GIT_TEST_CHAIN_LINT
+
 test -f /bin/dash || with_dash=
 if test -z "$BUILDBASE"
 then
