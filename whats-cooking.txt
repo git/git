@@ -1,20 +1,20 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Apr 2015, #01; Thu, 2)
-X-master-at: 6ae0d972664134b82a6dd164a01e8adbebeaffe3
-X-next-at: 85735d76ca4ac11dd4059dfd973b4df8b42f8776
+Subject: What's cooking in git.git (Apr 2015, #02; Tue, 14)
+X-master-at: e46fe3df01435bf523d2ab4f2755556c0e4e6f78
+X-next-at: 261bf90abd228250f9684d6ab3165ecae03d793a
 
-What's cooking in git.git (Apr 2015, #01; Thu, 2)
+What's cooking in git.git (Apr 2015, #02; Tue, 14)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-The first release candidate 2.4-rc1 has been tagged.  I'll still
-take small and trivial fixes and documentation updates but let's
-really shift our focus to find and fix (or revert) regressions
-that may have happened during this cycle.
+The second release candidate 2.4-rc2 has been tagged.  There were a
+few more topics I felt are safe to merge, but they had updates to
+translatable strings, which would add last-minute burden to our l10n
+teams, so they are held back for the remainder of the cycle.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -22,180 +22,210 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[New Topics]
-
-* va/fix-git-p4-tests (2015-03-28) 2 commits
- - git-p4: fix copy detection test
- - t9814: fix broken shell syntax in git-p4 rename test
-
- Test fixes for git-p4
-
- Will merge to 'next'.
-
-
-* va/p4-client-path (2015-03-28) 2 commits
- - git-p4: improve client path detection when branches are used
- - t9801: check git-p4's branch detection and client view together
-
- Attempt to better handle branches in perforce by git p4
- Reviews by git-p4 experts are very much appreciated.
-
+[Graduated to "master"]
 
 * iu/fix-parse-options-h-comment (2015-03-29) 1 commit
   (merged to 'next' on 2015-04-02 at 7fd3cef)
  + parse-options.h: OPTION_{BIT,SET_INT} do not store pointer to defval
 
- Will merge to 'master'.
 
+* jc/update-instead-into-void (2015-04-01) 1 commit
+  (merged to 'next' on 2015-04-08 at 8ef4e15)
+ + push-to-deploy: allow pushing into an unborn branch and updating it
 
-* jk/at-push-sha1 (2015-03-31) 6 commits
- - sha1_name: implement @{push} shorthand
- - sha1_name: refactor upstream_mark
- - remote.c: provide per-branch pushremote name
- - remote.c: hoist branch.*.remote lookup out of remote_get_1
- - remote.c: drop "remote" pointer from "struct branch"
- - remote.c: drop default_remote_name variable
+ A push into an unborn branch, with "receive.denyCurrentBranch" set
+ to "updateInstead", did not check out the working tree as expected.
 
 
 * jk/cherry-pick-docfix (2015-03-30) 1 commit
   (merged to 'next' on 2015-04-02 at 40da1d7)
  + cherry-pick: fix docs describing handling of empty commits
 
- Will merge to 'master'.
+
+* jk/colors (2015-04-04) 1 commit
+  (merged to 'next' on 2015-04-08 at 9b9e6f2)
+ + diff-highlight: do not split multibyte characters
+
+ "diff-highlight" (in contrib/) used to show byte-by-byte
+ differences, which meant that multi-byte characters can be chopped
+ in the middle.  It learned to pay attention to character boundaries
+ (assuming the UTF-8 payload).
 
 
-* jk/sha1-file-reduce-useless-warnings (2015-03-30) 1 commit
- - sha1_file: squelch "packfile cannot be accessed" warnings
+* jk/merge-quiet (2015-04-02) 1 commit
+  (merged to 'next' on 2015-04-08 at 6475433)
+ + merge: pass verbosity flag down to merge-recursive
+
+ "git merge --quiet" did not squelch messages from the underlying
+ merge-recursive strategy.
+
+
+* jk/pack-corruption-post-mortem (2015-04-01) 1 commit
+  (merged to 'next' on 2015-04-08 at 890c04e)
+ + howto: document more tools for recovery corruption
+
+ Documentation update.
+
+
+* jn/doc-fast-import-no-16-octopus-limit (2015-03-31) 1 commit
+  (merged to 'next' on 2015-04-08 at 341ca70)
+ + fast-import doc: remove suggested 16-parent limit
+
+ Documentation update.
 
 
 * jz/gitweb-conf-doc-fix (2015-03-31) 1 commit
   (merged to 'next' on 2015-04-02 at 237d1bc)
  + gitweb.conf.txt: say "build-time", not "built-time"
 
- Will merge to 'master'.
-
-
-* mh/show-branch-topic (2015-03-31) 1 commit
- - show-branch: show all local heads when only giving one rev along --topics
-
- "git show-branch --topics HEAD" (with no other arguments) did not
- do anything interesting.  Instead, contrast the given revision
- against all the local branches by default.
-
- Will merge to 'next'.
+ Documentation update.
 
 
 * pt/enter-repo-comment-fix (2015-03-31) 1 commit
   (merged to 'next' on 2015-04-02 at 276ad7e)
  + enter_repo(): fix docs to match code
 
- Will merge to 'master'.
-
-
-* sb/line-log-plug-pairdiff-leak (2015-03-30) 1 commit
- - line-log.c: fix a memleak
-
- Will merge to 'next'.
-
-
-* sb/plug-wt-shortstatus-tracking-leak (2015-03-30) 1 commit
- - wt-status.c: fix a memleak
-
- Will merge to 'next'.
-
-
-* jc/push-cert (2015-04-02) 1 commit
- - push --signed: tighten what the receiving end can ask to sign
-
- The "git push --signed" protocol extension did not limit what the
- "nonce" that is a server-chosen string can contain or how long it
- can be, which was unnecessarily lax.  Limit both the length and the
- alphabet to a reasonably small space that can still have enough
- entropy.
-
- Will merge to 'next'.
-
-
-* jc/update-instead-into-void (2015-04-01) 1 commit
- - push-to-deploy: allow pushing into an unborn branch and updating it
-
- A push into an unborn branch, with "receive.denyCurrentBranch" set
- to "updateInstead", did not check out the working tree as expected.
-
- Will merge to 'next'.
-
-
-* jk/init-core-worktree-at-root (2015-04-02) 1 commit
- - init: don't set core.worktree when initializing /.git
-
- We avoid setting core.worktree when the repository location is the
- ".git" directory directly at the top level of the working tree, but
- the code misdetected the case in which the working tree is at the
- root level of the filesystem (which arguably is a silly thing to
- do, but still valid).
-
- Will merge to 'next'.
-
-
-* jk/pack-corruption-post-mortem (2015-04-01) 1 commit
- - howto: document more tools for recovery corruption
-
  Documentation update.
-
- Will merge to 'next'.
-
-
-* jn/doc-fast-import-no-16-octopus-limit (2015-03-31) 1 commit
- - fast-import doc: remove suggested 16-parent limit
-
- Documentation update.
-
- Will merge to 'next'.
 
 
 * sb/plug-streaming-leak (2015-03-31) 1 commit
- - streaming.c: fix a memleak
+  (merged to 'next' on 2015-04-08 at 226bdd8)
+ + streaming.c: fix a memleak
 
- Will merge to 'next'.
 
-
-* ts/checkout-advice-plural (2015-04-01) 1 commit
- - checkout: call a single commit “it” instead of “th
-
- Will merge to 'next'.
+* sb/plug-wt-shortstatus-tracking-leak (2015-03-30) 1 commit
+  (merged to 'next' on 2015-04-08 at bd6291b)
+ + wt-status.c: fix a memleak
 
 --------------------------------------------------
-[Graduated to "master"]
+[New Topics]
 
-* ph/push-doc-cas (2015-03-26) 1 commit
-  (merged to 'next' on 2015-03-27 at 0737697)
- + git-push.txt: clean up force-with-lease wording
+* ah/usage-strings (2015-04-02) 2 commits
+ - branch: fix funny-sounding error message
+ - standardize usage strings that were missed the first time
 
- Documentation update.
+ A few usage string updates.
 
-
-* sb/leaks (2015-03-24) 10 commits
-  (merged to 'next' on 2015-03-24 at bdbc0c7)
- + http: release the memory of a http pack request as well
-  (merged to 'next' on 2015-03-23 at 5397daf)
- + read-cache: fix memleak
- + add_to_index(): free unused cache-entry
- + commit.c: fix a memory leak
- + http-push: remove unneeded cleanup
- + merge-recursive: fix memleaks
- + merge-blobs.c: fix a memleak
- + builtin/apply.c: fix a memleak
- + update-index: fix a memleak
- + read-cache: free cache entry in add_to_index in case of early return
-
- Plug minor memory leaks everywhere.
+ Will hold.
 
 
-* ss/pull-rebase-preserve (2015-03-30) 2 commits
- + docs: clarify what git-rebase's "-p" / "--preserve-merges" does
- + docs: clarify "preserve" option wording for git-pull
+* jk/reading-packed-refs (2015-04-05) 6 commits
+ - refname_is_safe: avoid expensive normalize_path_copy call
+ - t1430: add another refs-escape test
+ - strbuf: add an optimized 1-character strbuf_grow
+ - strbuf_getwholeline: use getc_unlocked
+ - git-compat-util: add fallbacks for unlocked stdio
+ - strbuf_getwholeline: use getc macro
 
- Documentation update.
+ An earlier rewrite to use strbuf_getwholeline() instead of fgets(3)
+ to read packed-refs file revealed that the former is unacceptably
+ inefficient.
+
+ There were further discussions on this topic to use getdelim(3).
+ $gmane/266932
+
+ Expecting a reroll.
+
+
+* kk/log-merges-config (2015-04-04) 5 commits
+ - bash-completion: add support for git-log --merges= and log.merges
+ - t4202-log: add tests for --merges=
+ - Documentation: add git-log --merges= option and log.merges config. var
+ - log: honor log.merges= option
+ - revision: add --merges={show|only|hide} option
+
+ "git log" (but not other commands in the "log" family) learned to
+ pay attention to the log.merges configuration variable that can be
+ set to "show" (the normal behaviour), "only" (hide non-merge
+ commits), or "hide" (hide merge commits).  --merges=(show|only|hide)
+ can be used to override the setting from the command line.
+
+ The documentation may need to be updated once more.
+
+
+* kn/cat-file-literally (2015-04-05) 5 commits
+ - SQUASH???
+ - t1006: add tests for git cat-file --literally
+ - cat-file: add documentation for '--literally' option.
+ - cat-file: teach cat-file a '--literally' option
+ - sha1_file.c: support reading from a loose object of unknown type
+
+ Add the "--literally" option to "cat-file" to allow inspecting
+ loose objects of an experimental or a broken type.
+
+ This is v7 $gmane/266761; getting closer to the final, I would say.
+
+
+* ld/p4-filetype-detection (2015-04-04) 3 commits
+  (merged to 'next' on 2015-04-08 at da735b4)
+ + git-p4: fix filetype detection on files opened exclusively
+ + git-p4: small fix for locked-file-move-test
+ + git-p4: fix small bug in locked test scripts
+
+ Will hold.
+
+
+* mg/httpd-tests-update-for-apache-2.4 (2015-04-08) 2 commits
+ - t/lib-git-svn: check same httpd module dirs as lib-httpd
+ - t/lib-httpd: load mod_unixd
+
+ This is the first two commits in a three-patch series $gmane/266962
+
+
+* tb/connect-ipv6-parse-fix (2015-04-08) 1 commit
+  (merged to 'next' on 2015-04-14 at e720918)
+ + connect.c: ignore extra colon after hostname
+
+ An earlier update to the parser that disects an address broke an
+ address, followed by a colon, followed by an empty string (instead
+ of the port number).
+
+ Will merge to 'master' in the first batch of post v2.4 cycle.
+
+
+* lm/squelch-bg-progress (2015-04-14) 1 commit
+ - progress: no progress in background
+
+ Many long-running operations show progress eye-candy, even when
+ they are later backgrounded.  Hide the eye-candy when the process
+ is sent to the background instead.
+
+ Needs a follow-up compat/ updates for platforms that lack POSIXy
+ process group support before this topic can move forward.
+
+
+* ma/bash-completion-leaking-x (2015-04-12) 1 commit
+  (merged to 'next' on 2015-04-14 at 3a52a6d)
+ + completion: fix global bash variable leak on __gitcompappend
+
+ Will merge to 'master' in the first batch of post v2.4 cycle.
+
+
+* ps/grep-help-all-callback-arg (2015-04-12) 1 commit
+  (merged to 'next' on 2015-04-14 at e0a8092)
+ + grep: correctly initialize help-all option
+
+ Code clean-up.
+
+ Will merge to 'master' in the first batch of post v2.4 cycle.
+
+
+* pt/xdg-config-path (2015-04-12) 7 commits
+ - path.c: remove home_config_paths()
+ - git-config: replace use of home_config_paths()
+ - git-commit: replace use of home_config_paths()
+ - credential-store.c: replace home_config_paths() with xdg_config_home()
+ - dir.c: replace home_config_paths() with xdg_config_home()
+ - attr.c: replace home_config_paths() with xdg_config_home()
+ - path.c: implement xdg_config_home()
+ (this branch uses pt/credential-xdg.)
+
+
+* sb/test-bitmap-free-at-end (2015-04-12) 1 commit
+  (merged to 'next' on 2015-04-14 at 0ae4759)
+ + pack-bitmap.c: fix a memleak
+
+ Will merge to 'master' in the first batch of post v2.4 cycle.
 
 --------------------------------------------------
 [Stalled]
@@ -320,10 +350,93 @@ of the repositories listed at
  - show-branch.c: lift all_mask/all_revs to a global static
  - show-branch.c: update comment style
 
- Waiting for the final step to lift the hard-limit before sending it out.
+ Waiting for the final step to lift the hard-limit.
 
 --------------------------------------------------
 [Cooking]
+
+* va/fix-git-p4-tests (2015-04-12) 3 commits
+  (merged to 'next' on 2015-04-14 at 261bf90)
+ + t9814: guarantee only one source exists in git-p4 copy tests
+ + git-p4: fix copy detection test
+ + t9814: fix broken shell syntax in git-p4 rename test
+
+ Test fixes for git-p4
+
+ Will merge to 'master' in the first batch of post v2.4 cycle.
+
+
+* va/p4-client-path (2015-03-28) 2 commits
+ - git-p4: improve client path detection when branches are used
+ - t9801: check git-p4's branch detection and client view together
+
+ Attempt to better handle branches in perforce by git p4
+ Reviews by git-p4 experts are very much appreciated.
+
+
+* jk/at-push-sha1 (2015-03-31) 6 commits
+ - sha1_name: implement @{push} shorthand
+ - sha1_name: refactor upstream_mark
+ - remote.c: provide per-branch pushremote name
+ - remote.c: hoist branch.*.remote lookup out of remote_get_1
+ - remote.c: drop "remote" pointer from "struct branch"
+ - remote.c: drop default_remote_name variable
+
+
+* jk/sha1-file-reduce-useless-warnings (2015-03-30) 1 commit
+ - sha1_file: squelch "packfile cannot be accessed" warnings
+
+
+* mh/show-branch-topic (2015-03-31) 1 commit
+  (merged to 'next' on 2015-04-08 at 628ada5)
+ + show-branch: show all local heads when only giving one rev along --topics
+
+ "git show-branch --topics HEAD" (with no other arguments) did not
+ do anything interesting.  Instead, contrast the given revision
+ against all the local branches by default.
+
+ Will merge to 'master' in the first batch of post v2.4 cycle.
+
+
+* sb/line-log-plug-pairdiff-leak (2015-03-30) 1 commit
+  (merged to 'next' on 2015-04-08 at 6ea8b71)
+ + line-log.c: fix a memleak
+
+ Will merge to 'master' in the first batch of post v2.4 cycle.
+
+
+* jc/push-cert (2015-04-02) 1 commit
+  (merged to 'next' on 2015-04-08 at aecdd43)
+ + push --signed: tighten what the receiving end can ask to sign
+
+ The "git push --signed" protocol extension did not limit what the
+ "nonce" that is a server-chosen string can contain or how long it
+ can be, which was unnecessarily lax.  Limit both the length and the
+ alphabet to a reasonably small space that can still have enough
+ entropy.
+
+ Will merge to 'master' in the first batch of post v2.4 cycle.
+
+
+* jk/init-core-worktree-at-root (2015-04-02) 1 commit
+  (merged to 'next' on 2015-04-08 at 92a942b)
+ + init: don't set core.worktree when initializing /.git
+
+ We avoid setting core.worktree when the repository location is the
+ ".git" directory directly at the top level of the working tree, but
+ the code misdetected the case in which the working tree is at the
+ root level of the filesystem (which arguably is a silly thing to
+ do, but still valid).
+
+ Will merge to 'master' in the first batch of post v2.4 cycle.
+
+
+* ts/checkout-advice-plural (2015-04-02) 1 commit
+  (merged to 'next' on 2015-04-08 at dd5c436)
+ + checkout: call a single commit "it" intead of "them"
+
+ Will merge to 'master' in the first batch of post v2.4 cycle.
+
 
 * pt/credential-xdg (2015-03-25) 4 commits
   (merged to 'next' on 2015-03-25 at 765128e)
@@ -332,6 +445,7 @@ of the repositories listed at
  + t0302: test credential-store support for XDG_CONFIG_HOME
  + git-credential-store: support XDG_CONFIG_HOME
  + git-credential-store: support multiple credential files
+ (this branch is used by pt/xdg-config-path.)
 
  Tweak the sample "store" backend of the credential helper to honor
  XDG configuration file locations when specified.
