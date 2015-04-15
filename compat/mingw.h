@@ -98,8 +98,6 @@ static inline unsigned int alarm(unsigned int seconds)
 { return 0; }
 static inline int fsync(int fd)
 { return _commit(fd); }
-static inline pid_t getppid(void)
-{ return 1; }
 static inline void sync(void)
 {}
 static inline uid_t getuid(void)
@@ -121,6 +119,12 @@ static inline int sigaddset(sigset_t *set, int signum)
 #define SIG_UNBLOCK 0
 static inline int sigprocmask(int how, const sigset_t *set, sigset_t *oldset)
 { return 0; }
+static inline pid_t getppid(void)
+{ return 1; }
+static inline pid_t getpgid(pid_t pid)
+{ return pid == 0 ? getpid() : pid; }
+static inline pid_t tcgetpgrp(int fd)
+{ return getpid(); }
 
 /*
  * simple adaptors
