@@ -309,7 +309,7 @@ int main(void)
 			&full_path, &skip_arguments)) {
 		/* do nothing */
 	}
-	else if (!wcscmp(basename, L"git-gui.exe")) {
+	else if (!wcsicmp(basename, L"git-gui.exe")) {
 		static WCHAR buffer[BUFSIZE];
 		if (!PathRemoveFileSpec(exepath)) {
 			fwprintf(stderr,
@@ -335,20 +335,20 @@ int main(void)
 		prefix_args = buffer;
 		prefix_args_len = wcslen(buffer);
 	}
-	else if (!wcsncmp(basename, L"git-", 4)) {
+	else if (!wcsnicmp(basename, L"git-", 4)) {
 		needs_env_setup = 0;
 
 		/* Call a builtin */
 		prefix_args = basename + 4;
 		prefix_args_len = wcslen(prefix_args);
-		if (!wcscmp(prefix_args + prefix_args_len - 4, L".exe"))
+		if (!wcsicmp(prefix_args + prefix_args_len - 4, L".exe"))
 			prefix_args_len -= 4;
 
 		/* set the default exe module */
 		wcscpy(exe, exepath);
 		PathAppend(exe, L"git.exe");
 	}
-	else if (!wcscmp(basename, L"git.exe")) {
+	else if (!wcsicmp(basename, L"git.exe")) {
 		if (!PathRemoveFileSpec(exepath)) {
 			fwprintf(stderr,
 				L"Invalid executable path: %s\n", exepath);
@@ -364,7 +364,7 @@ int main(void)
 			PathAppend(exe, L"bin\\git.exe");
 		}
 	}
-	else if (!wcscmp(basename, L"gitk.exe")) {
+	else if (!wcsicmp(basename, L"gitk.exe")) {
 		static WCHAR buffer[BUFSIZE];
 		if (!PathRemoveFileSpec(exepath)) {
 			fwprintf(stderr,
