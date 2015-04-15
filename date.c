@@ -694,13 +694,17 @@ int parse_date_basic(const char *date, unsigned long *timestamp, int *offset)
 		date += match;
 	}
 
-	/* mktime uses local timezone */
+	/* do not use mktime(), which uses local timezone, here */
 	*timestamp = tm_to_time_t(&tm);
 	if (*timestamp == -1)
 		return -1;
 
 	if (*offset == -1) {
-		time_t temp_time = mktime(&tm);
+		time_t temp_time;
+
+		/* gmtime_r() in match_digit() may have clobbered it */
+		tm.tm_isdst = -1;
+		temp_time = mktime(&tm);
 		if ((time_t)*timestamp > temp_time) {
 			*offset = ((time_t)*timestamp - temp_time) / 60;
 		} else {
