@@ -2,7 +2,7 @@ package Git::SVN::Prompt;
 use strict;
 use warnings;
 require SVN::Core;
-use vars qw/$_no_auth_cache $_username/;
+use vars qw/$_no_auth_cache $_username $_password/;
 
 sub simple {
 	my ($cred, $realm, $default_username, $may_save, $pool) = @_;
@@ -17,8 +17,13 @@ sub simple {
 	} else {
 		username($cred, $realm, $may_save, $pool);
 	}
-	$cred->password(_read_password("Password for '" .
-	                               $cred->username . "': ", $realm));
+	# XXX global variable use! avoids API change
+	if (defined $_password) {
+		$cred->password($_password);
+	} else {
+		$cred->password(_read_password("Password for '" .
+					       $cred->username . "': ", $realm));
+	}
 	$cred->may_save($may_save);
 	$SVN::_Core::SVN_NO_ERROR;
 }
