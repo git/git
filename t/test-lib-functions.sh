@@ -383,7 +383,7 @@ test_external_without_stderr () {
 test_path_is_file () {
 	if ! [ -f "$1" ]
 	then
-		echo "File $1 doesn't exist. $*"
+		echo "File $1 doesn't exist. $2"
 		false
 	fi
 }
@@ -391,7 +391,7 @@ test_path_is_file () {
 test_path_is_dir () {
 	if ! [ -d "$1" ]
 	then
-		echo "Directory $1 doesn't exist. $*"
+		echo "Directory $1 doesn't exist. $2"
 		false
 	fi
 }
