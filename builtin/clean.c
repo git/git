@@ -576,6 +576,7 @@ static int *list_and_choose(struct menu_opts *opts, struct menu_stuff *stuff)
 			       clean_get_color(CLEAN_COLOR_RESET));
 		}
 
+		fflush(stdout);
 		if (strbuf_getline(&choice, stdin, '\n') != EOF) {
 			strbuf_trim(&choice);
 		} else {
@@ -658,6 +659,7 @@ static int filter_by_patterns_cmd(void)
 		clean_print_color(CLEAN_COLOR_PROMPT);
 		printf(_("Input ignore patterns>> "));
 		clean_print_color(CLEAN_COLOR_RESET);
+		fflush(stdout);
 		if (strbuf_getline(&confirm, stdin, '\n') != EOF)
 			strbuf_trim(&confirm);
 		else
@@ -755,6 +757,7 @@ static int ask_each_cmd(void)
 		if (!eof) {
 			qname = quote_path_relative(item->string, NULL, &buf);
 			printf(_("remove %s? "), qname);
+			fflush(stdout);
 			if (strbuf_getline(&confirm, stdin, '\n') != EOF) {
 				strbuf_trim(&confirm);
 			} else {
