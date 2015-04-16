@@ -12,6 +12,7 @@
 #include "refs.h"
 #include "wildmatch.h"
 #include "pathspec.h"
+#include "utf8.h"
 
 struct path_simplify {
 	int len;
@@ -538,7 +539,6 @@ int add_excludes_from_file_to_list(const char *fname,
 	struct stat st;
 	int fd, i, lineno = 1;
 	size_t size = 0;
-	static const unsigned char *utf8_bom = (unsigned char *) "\xef\xbb\xbf";
 	char *buf, *entry;
 
 	fd = open(fname, O_RDONLY);
@@ -576,10 +576,9 @@ int add_excludes_from_file_to_list(const char *fname,
 
 	el->filebuf = buf;
 
-	if (size >= 3 && !memcmp(buf, utf8_bom, 3)) {
-		buf += 3;
-		size -= 3;
-	}
+	if (skip_utf8_bom(&buf, size))
+		size -= buf - el->filebuf;
+
 	entry = buf;
 
 	for (i = 0; i < size; i++) {

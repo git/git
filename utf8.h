@@ -13,6 +13,9 @@ int same_encoding(const char *, const char *);
 __attribute__((format (printf, 2, 3)))
 int utf8_fprintf(FILE *, const char *, ...);
 
+extern const char utf8_bom[];
+extern int skip_utf8_bom(char **, size_t);
+
 void strbuf_add_wrapped_text(struct strbuf *buf,
 		const char *text, int indent, int indent2, int width);
 void strbuf_add_wrapped_bytes(struct strbuf *buf, const char *data, int len,
