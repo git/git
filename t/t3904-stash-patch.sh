@@ -3,7 +3,13 @@
 test_description='stash -p'
 . ./lib-patch-mode.sh
 
-test_expect_success PERL 'setup' '
+if ! test_have_prereq PERL
+then
+	skip_all='skipping stash -p tests, perl not available'
+	test_done
+fi
+
+test_expect_success 'setup' '
 	mkdir dir &&
 	echo parent > dir/foo &&
 	echo dummy > bar &&
@@ -20,7 +26,7 @@ test_expect_success PERL 'setup' '
 
 # note: order of files with unstaged changes: HEAD bar dir/foo
 
-test_expect_success PERL 'saying "n" does nothing' '
+test_expect_success 'saying "n" does nothing' '
 	set_state HEAD HEADfile_work HEADfile_index &&
 	set_state dir/foo work index &&
 	(echo n; echo n; echo n) | test_must_fail git stash save -p &&
@@ -29,7 +35,7 @@ test_expect_success PERL 'saying "n" does nothing' '
 	verify_state dir/foo work index
 '
 
-test_expect_success PERL 'git stash -p' '
+test_expect_success 'git stash -p' '
 	(echo y; echo n; echo y) | git stash save -p &&
 	verify_state HEAD committed HEADfile_index &&
 	verify_saved_state bar &&
@@ -41,7 +47,7 @@ test_expect_success PERL 'git stash -p' '
 	verify_state dir/foo work head
 '
 
-test_expect_success PERL 'git stash -p --no-keep-index' '
+test_expect_success 'git stash -p --no-keep-index' '
 	set_state HEAD HEADfile_work HEADfile_index &&
 	set_state bar bar_work bar_index &&
 	set_state dir/foo work index &&
@@ -56,7 +62,7 @@ test_expect_success PERL 'git stash -p --no-keep-index' '
 	verify_state dir/foo work index
 '
 
-test_expect_success PERL 'git stash --no-keep-index -p' '
+test_expect_success 'git stash --no-keep-index -p' '
 	set_state HEAD HEADfile_work HEADfile_index &&
 	set_state bar bar_work bar_index &&
 	set_state dir/foo work index &&
@@ -71,7 +77,7 @@ test_expect_success PERL 'git stash --no-keep-index -p' '
 	verify_state dir/foo work index
 '
 
-test_expect_success PERL 'none of this moved HEAD' '
+test_expect_success 'none of this moved HEAD' '
 	verify_saved_head
 '
 
