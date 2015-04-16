@@ -443,7 +443,7 @@ int strbuf_getwholeline(struct strbuf *sb, FILE *fp, int term)
 		return EOF;
 
 	strbuf_reset(sb);
-	while ((ch = fgetc(fp)) != EOF) {
+	while ((ch = getc(fp)) != EOF) {
 		strbuf_grow(sb, 1);
 		sb->buf[sb->len++] = ch;
 		if (ch == term)
