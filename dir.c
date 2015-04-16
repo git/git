@@ -576,10 +576,11 @@ int add_excludes_from_file_to_list(const char *fname,
 
 	el->filebuf = buf;
 
-	if (size >= 3 && !memcmp(buf, utf8_bom, 3))
-		entry = buf + 3;
-	else
-		entry = buf;
+	if (size >= 3 && !memcmp(buf, utf8_bom, 3)) {
+		buf += 3;
+		size -= 3;
+	}
+	entry = buf;
 
 	for (i = 0; i < size; i++) {
 		if (buf[i] == '\n') {
