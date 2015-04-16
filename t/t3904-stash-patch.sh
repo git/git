@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='git checkout --patch'
+test_description='stash -p'
 . ./lib-patch-mode.sh
 
 test_expect_success PERL 'setup' '
