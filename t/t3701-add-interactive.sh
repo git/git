@@ -326,10 +326,7 @@ test_expect_success 'split hunk "add -p (edit)"' '
 	# 2. Correct version applies the (not)edited version, and asks
 	#    about the next hunk, against which we say q and program
 	#    exits.
-	for a in s e     q n q q
-	do
-		echo $a
-	done |
+	printf "%s\n" s e     q n q q |
 	EDITOR=: git add -p &&
 	git diff >actual &&
 	! grep "^+15" actual
