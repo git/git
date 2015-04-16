@@ -538,6 +538,7 @@ int add_excludes_from_file_to_list(const char *fname,
 	struct stat st;
 	int fd, i, lineno = 1;
 	size_t size = 0;
+	static const unsigned char *utf8_bom = (unsigned char *) "\xef\xbb\xbf";
 	char *buf, *entry;
 
 	fd = open(fname, O_RDONLY);
@@ -574,7 +575,12 @@ int add_excludes_from_file_to_list(const char *fname,
 	}
 
 	el->filebuf = buf;
-	entry = buf;
+
+	if (size >= 3 && !memcmp(buf, utf8_bom, 3))
+		entry = buf + 3;
+	else
+		entry = buf;
+
 	for (i = 0; i < size; i++) {
 		if (buf[i] == '\n') {
 			if (entry != buf + i && entry[0] != '#') {
