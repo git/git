@@ -445,7 +445,8 @@ int strbuf_getwholeline(struct strbuf *sb, FILE *fp, int term)
 	strbuf_reset(sb);
 	flockfile(fp);
 	while ((ch = getc_unlocked(fp)) != EOF) {
-		strbuf_grow(sb, 1);
+		if (!strbuf_avail(sb))
+			strbuf_grow(sb, 1);
 		sb->buf[sb->len++] = ch;
 		if (ch == term)
 			break;
