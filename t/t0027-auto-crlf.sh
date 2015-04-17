@@ -57,15 +57,13 @@ create_gitattributes () {
 
 check_warning () {
 	case "$1" in
-	LF_CRLF) grep "LF will be replaced by CRLF" $2;;
-	CRLF_LF) grep "CRLF will be replaced by LF" $2;;
-	'')
-		>expect
-		grep "will be replaced by" $2 >actual
-		test_cmp expect actual
-		;;
-	*) false ;;
+	LF_CRLF) echo "warning: LF will be replaced by CRLF" >"$2".expect ;;
+	CRLF_LF) echo "warning: CRLF will be replaced by LF" >"$2".expect ;;
+	'')	                                                 >"$2".expect ;;
+	*) echo >&2 "Illegal 1": "$1" ; return false ;;
 	esac
+	grep "will be replaced by" "$2" | sed -e "s/\(.*\) in [^ ]*$/\1/" >"$2".actual
+	test_cmp "$2".expect "$2".actual
 }
 
 commit_check_warn () {
@@ -169,6 +167,20 @@ test_expect_success 'setup master' '
 warn_LF_CRLF="LF will be replaced by CRLF"
 warn_CRLF_LF="CRLF will be replaced by LF"
 
+# WILC stands for "Warn if (this OS) converts LF into CRLF".
+# WICL: Warn if CRLF becomes LF
+# WAMIX: Mixed line endings: either CRLF->LF or LF->CRLF
+if test_have_prereq NATIVE_CRLF
+then
+	WILC=LF_CRLF
+	WICL=
+	WAMIX=LF_CRLF
+else
+	WILC=
+	WICL=CRLF_LF
+	WAMIX=CRLF_LF
+fi
+
 test_expect_success 'commit files empty attr' '
 	commit_check_warn false ""     ""        ""        ""        ""        "" &&
 	commit_check_warn true  ""     "LF_CRLF" ""        "LF_CRLF" ""        "" &&
@@ -176,13 +188,13 @@ test_expect_success 'commit files empty attr' '
 '
 
 test_expect_success 'commit files attr=auto' '
-	commit_check_warn false "auto" ""        "CRLF_LF" "CRLF_LF" ""        "" &&
+	commit_check_warn false "auto" "$WILC"  "$WICL"    "$WAMIX"  ""        "" &&
 	commit_check_warn true  "auto" "LF_CRLF" ""        "LF_CRLF" ""        "" &&
 	commit_check_warn input "auto" ""        "CRLF_LF" "CRLF_LF" ""        ""
 '
 
 test_expect_success 'commit files attr=text' '
-	commit_check_warn false "text" ""        "CRLF_LF" "CRLF_LF" ""        "CRLF_LF" &&
+	commit_check_warn false "text" "$WILC"  "$WICL"    "$WAMIX"  "$WILC"  "$WICL" &&
 	commit_check_warn true  "text" "LF_CRLF" ""        "LF_CRLF" "LF_CRLF" ""        &&
 	commit_check_warn input "text" ""        "CRLF_LF" "CRLF_LF" ""        "CRLF_LF"
 '
