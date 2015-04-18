@@ -262,7 +262,6 @@ static unsigned prefix_pathspec(struct pathspec_item *item,
 	} else
 		item->original = elt;
 	item->len = strlen(item->match);
-	item->prefix = prefixlen;
 
 	if ((flags & PATHSPEC_STRIP_SUBMODULE_SLASH_CHEAP) &&
 	    (item->len >= 1 && item->match[item->len - 1] == '/') &&
@@ -292,6 +291,15 @@ static unsigned prefix_pathspec(struct pathspec_item *item,
 				     elt, ce_len, ce->name);
 		}
 
+	/*
+	 * Adjust prefixlen if the above trailing slash stripping cuts
+	 * into the prefix part
+	 */
+	if ((flags & (PATHSPEC_STRIP_SUBMODULE_SLASH_CHEAP |
+		      PATHSPEC_STRIP_SUBMODULE_SLASH_EXPENSIVE)) &&
+	    prefixlen > item->len)
+		prefixlen = item->len;
+
 	if (magic & PATHSPEC_LITERAL)
 		item->nowildcard_len = item->len;
 	else {
@@ -299,6 +307,7 @@ static unsigned prefix_pathspec(struct pathspec_item *item,
 		if (item->nowildcard_len < prefixlen)
 			item->nowildcard_len = prefixlen;
 	}
+	item->prefix = prefixlen;
 	item->flags = 0;
 	if (magic & PATHSPEC_GLOB) {
 		/*
@@ -313,8 +322,11 @@ static unsigned prefix_pathspec(struct pathspec_item *item,
 	}
 
 	/* sanity checks, pathspec matchers assume these are sane */
-	assert(item->nowildcard_len <= item->len &&
-	       item->prefix         <= item->len);
+	if (!(item->nowildcard_len <= item->len &&
+	      item->prefix         <= item->len))
+		die("BUG: item->nowildcard_len (%d) or item->prefix (%d)"
+		    " is longer than item->len (%d)",
+		    item->nowildcard_len, item->prefix, item->len);
 	return magic;
 }
 
