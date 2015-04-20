@@ -225,9 +225,20 @@ Git repository:
 	they can find the p4 branches in refs/heads.
 
 --max-changes <n>::
-	Limit the number of imported changes to 'n'.  Useful to
-	limit the amount of history when using the '@all' p4 revision
-	specifier.
+	Import at most 'n' changes, rather than the entire range of
+	changes included in the given revision specifier. A typical
+	usage would be use '@all' as the revision specifier, but then
+	to use '--max-changes 1000' to import only the last 1000
+	revisions rather than the entire revision history.
+
+--changes-block-size <n>::
+	The internal block size to use when converting a revision
+	specifier such as '@all' into a list of specific change
+	numbers. Instead of using a single call to 'p4 changes' to
+	find the full list of changes for the conversion, there are a
+	sequence of calls to 'p4 changes -m', each of which requests
+	one block of changes of the given size. The default block size
+	is 500, which should usually be suitable.
 
 --keep-path::
 	The mapping of file names from the p4 depot path to Git, by
