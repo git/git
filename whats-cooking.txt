@@ -1,20 +1,15 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Apr 2015, #02; Tue, 14)
-X-master-at: e46fe3df01435bf523d2ab4f2755556c0e4e6f78
-X-next-at: 261bf90abd228250f9684d6ab3165ecae03d793a
+Subject: What's cooking in git.git (Apr 2015, #03; Mon, 20)
+X-master-at: 7c597ef345aed345576de616c51f27e6f4b342b3
+X-next-at: aa1ae690dee8648c2e1169b5e9a10dbc28109e56
 
-What's cooking in git.git (Apr 2015, #02; Tue, 14)
+What's cooking in git.git (Apr 2015, #03; Mon, 20)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
-
-The second release candidate 2.4-rc2 has been tagged.  There were a
-few more topics I felt are safe to merge, but they had updates to
-translatable strings, which would add last-minute burden to our l10n
-teams, so they are held back for the remainder of the cycle.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -24,181 +19,23 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* iu/fix-parse-options-h-comment (2015-03-29) 1 commit
-  (merged to 'next' on 2015-04-02 at 7fd3cef)
- + parse-options.h: OPTION_{BIT,SET_INT} do not store pointer to defval
+* jc/push-cert (2015-04-02) 1 commit
+  (merged to 'next' on 2015-04-08 at aecdd43)
+ + push --signed: tighten what the receiving end can ask to sign
 
-
-* jc/update-instead-into-void (2015-04-01) 1 commit
-  (merged to 'next' on 2015-04-08 at 8ef4e15)
- + push-to-deploy: allow pushing into an unborn branch and updating it
-
- A push into an unborn branch, with "receive.denyCurrentBranch" set
- to "updateInstead", did not check out the working tree as expected.
-
-
-* jk/cherry-pick-docfix (2015-03-30) 1 commit
-  (merged to 'next' on 2015-04-02 at 40da1d7)
- + cherry-pick: fix docs describing handling of empty commits
-
-
-* jk/colors (2015-04-04) 1 commit
-  (merged to 'next' on 2015-04-08 at 9b9e6f2)
- + diff-highlight: do not split multibyte characters
-
- "diff-highlight" (in contrib/) used to show byte-by-byte
- differences, which meant that multi-byte characters can be chopped
- in the middle.  It learned to pay attention to character boundaries
- (assuming the UTF-8 payload).
-
-
-* jk/merge-quiet (2015-04-02) 1 commit
-  (merged to 'next' on 2015-04-08 at 6475433)
- + merge: pass verbosity flag down to merge-recursive
-
- "git merge --quiet" did not squelch messages from the underlying
- merge-recursive strategy.
-
-
-* jk/pack-corruption-post-mortem (2015-04-01) 1 commit
-  (merged to 'next' on 2015-04-08 at 890c04e)
- + howto: document more tools for recovery corruption
-
- Documentation update.
-
-
-* jn/doc-fast-import-no-16-octopus-limit (2015-03-31) 1 commit
-  (merged to 'next' on 2015-04-08 at 341ca70)
- + fast-import doc: remove suggested 16-parent limit
-
- Documentation update.
-
-
-* jz/gitweb-conf-doc-fix (2015-03-31) 1 commit
-  (merged to 'next' on 2015-04-02 at 237d1bc)
- + gitweb.conf.txt: say "build-time", not "built-time"
-
- Documentation update.
-
-
-* pt/enter-repo-comment-fix (2015-03-31) 1 commit
-  (merged to 'next' on 2015-04-02 at 276ad7e)
- + enter_repo(): fix docs to match code
-
- Documentation update.
-
-
-* sb/plug-streaming-leak (2015-03-31) 1 commit
-  (merged to 'next' on 2015-04-08 at 226bdd8)
- + streaming.c: fix a memleak
-
-
-* sb/plug-wt-shortstatus-tracking-leak (2015-03-30) 1 commit
-  (merged to 'next' on 2015-04-08 at bd6291b)
- + wt-status.c: fix a memleak
-
---------------------------------------------------
-[New Topics]
-
-* ah/usage-strings (2015-04-02) 2 commits
- - branch: fix funny-sounding error message
- - standardize usage strings that were missed the first time
-
- A few usage string updates.
-
- Will hold.
-
-
-* jk/reading-packed-refs (2015-04-05) 6 commits
- - refname_is_safe: avoid expensive normalize_path_copy call
- - t1430: add another refs-escape test
- - strbuf: add an optimized 1-character strbuf_grow
- - strbuf_getwholeline: use getc_unlocked
- - git-compat-util: add fallbacks for unlocked stdio
- - strbuf_getwholeline: use getc macro
-
- An earlier rewrite to use strbuf_getwholeline() instead of fgets(3)
- to read packed-refs file revealed that the former is unacceptably
- inefficient.
-
- There were further discussions on this topic to use getdelim(3).
- $gmane/266932
-
- Expecting a reroll.
-
-
-* kk/log-merges-config (2015-04-04) 5 commits
- - bash-completion: add support for git-log --merges= and log.merges
- - t4202-log: add tests for --merges=
- - Documentation: add git-log --merges= option and log.merges config. var
- - log: honor log.merges= option
- - revision: add --merges={show|only|hide} option
-
- "git log" (but not other commands in the "log" family) learned to
- pay attention to the log.merges configuration variable that can be
- set to "show" (the normal behaviour), "only" (hide non-merge
- commits), or "hide" (hide merge commits).  --merges=(show|only|hide)
- can be used to override the setting from the command line.
-
- The documentation may need to be updated once more.
-
-
-* kn/cat-file-literally (2015-04-05) 5 commits
- - SQUASH???
- - t1006: add tests for git cat-file --literally
- - cat-file: add documentation for '--literally' option.
- - cat-file: teach cat-file a '--literally' option
- - sha1_file.c: support reading from a loose object of unknown type
-
- Add the "--literally" option to "cat-file" to allow inspecting
- loose objects of an experimental or a broken type.
-
- This is v7 $gmane/266761; getting closer to the final, I would say.
-
-
-* ld/p4-filetype-detection (2015-04-04) 3 commits
-  (merged to 'next' on 2015-04-08 at da735b4)
- + git-p4: fix filetype detection on files opened exclusively
- + git-p4: small fix for locked-file-move-test
- + git-p4: fix small bug in locked test scripts
-
- Will hold.
-
-
-* mg/httpd-tests-update-for-apache-2.4 (2015-04-08) 2 commits
- - t/lib-git-svn: check same httpd module dirs as lib-httpd
- - t/lib-httpd: load mod_unixd
-
- This is the first two commits in a three-patch series $gmane/266962
-
-
-* tb/connect-ipv6-parse-fix (2015-04-08) 1 commit
-  (merged to 'next' on 2015-04-14 at e720918)
- + connect.c: ignore extra colon after hostname
-
- An earlier update to the parser that disects an address broke an
- address, followed by a colon, followed by an empty string (instead
- of the port number).
-
- Will merge to 'master' in the first batch of post v2.4 cycle.
-
-
-* lm/squelch-bg-progress (2015-04-14) 1 commit
- - progress: no progress in background
-
- Many long-running operations show progress eye-candy, even when
- they are later backgrounded.  Hide the eye-candy when the process
- is sent to the background instead.
-
- Needs a follow-up compat/ updates for platforms that lack POSIXy
- process group support before this topic can move forward.
+ The "git push --signed" protocol extension did not limit what the
+ "nonce" that is a server-chosen string can contain or how long it
+ can be, which was unnecessarily lax.  Limit both the length and the
+ alphabet to a reasonably small space that can still have enough
+ entropy.
 
 
 * ma/bash-completion-leaking-x (2015-04-12) 1 commit
   (merged to 'next' on 2015-04-14 at 3a52a6d)
  + completion: fix global bash variable leak on __gitcompappend
 
- Will merge to 'master' in the first batch of post v2.4 cycle.
+ The completion script (in contrib/) contaminated global namespace
+ and clobbered on a shell variable $x.
 
 
 * ps/grep-help-all-callback-arg (2015-04-12) 1 commit
@@ -207,38 +44,176 @@ of the repositories listed at
 
  Code clean-up.
 
+
+* tb/connect-ipv6-parse-fix (2015-04-08) 1 commit
+  (merged to 'next' on 2015-04-14 at e720918)
+ + connect.c: ignore extra colon after hostname
+
+ An earlier update to the parser that disects a URL broke an
+ address, followed by a colon, followed by an empty string (instead
+ of the port number), e.g. ssh://example.com:/path/to/repo.
+
+
+* va/fix-git-p4-tests (2015-04-12) 3 commits
+  (merged to 'next' on 2015-04-14 at 261bf90)
+ + t9814: guarantee only one source exists in git-p4 copy tests
+ + git-p4: fix copy detection test
+ + t9814: fix broken shell syntax in git-p4 rename test
+
+ Test fixes for git-p4.
+
+--------------------------------------------------
+[New Topics]
+
+* jc/epochtime-wo-tz (2015-04-15) 2 commits
+ - parse_date_basic(): let the system handle DST conversion
+ - parse_date_basic(): return early when given a bogus timestamp
+
+ "git commit --date=now" or anything that relies on approxidate lost
+ the daylight-saving-time offset.
+
+ Will merge to 'next'.
+
+
+* jc/plug-fmt-merge-msg-leak (2015-04-20) 1 commit
+ - fmt-merge-msg: plug small leak of commit buffer
+
+ Will merge to 'next'.
+
+
+* cn/bom-in-gitignore (2015-04-16) 5 commits
+ - attr: skip UTF8 BOM at the beginning of the input file
+ - config: use utf8_bom[] from utf.[ch] in git_parse_source()
+ - utf8-bom: introduce skip_utf8_bom() helper
+ - add_excludes_from_file: clarify the bom skipping logic
+ - dir: allow a BOM at the beginning of exclude files
+
+ Teach the codepaths that read .gitignore and .gitattributes files
+ that these files encoded in UTF-8 may have UTF-8 BOM marker at the
+ beginning; this makes it in line with what we do for configuration
+ files already.
+
+ Will merge to 'next'.
+
+
+* ee/clean-remove-dirs (2015-04-18) 4 commits
+ - clean: improve performance when removing lots of directories
+ - p7300: add performance tests for clean
+ - t7300: add tests to document behavior of clean and nested git
+ - setup: add gentle version of read_gitfile
+
+ Still WIP.
+
+
+* ep/fix-test-lib-functions-report (2015-04-16) 1 commit
+ - test-lib-functions.sh: fix the second argument to some helper functions
+
+ Will merge to 'next'.
+
+
+* jk/still-interesting (2015-04-17) 1 commit
+ - limit_list: avoid quadratic behavior from still_interesting
+
+ "git rev-list --objects $old --not --all" to see if everything that
+ is reachable from $old is already connected to the existing refs
+ was very inefficient.
+
+ Will merge to 'next'.
+
+
+* jk/type-from-string-gently (2015-04-17) 1 commit
+  (merged to 'next' on 2015-04-20 at a97611f)
+ + type_from_string_gently: make sure length matches
+
+ "git cat-file bl $blob" failed to barf even though there is no
+ object type that is "bl".
+
+
+* ls/p4-changes-block-size (2015-04-20) 1 commit
+ - git-p4: use -m when running p4 changes
+
+ "git p4" learned "--changes-block-size <n>" to read the changes in
+ chunks from Perforce, instead of making one call to "p4 changes"
+ that may trigger "too many rows scanned" error from Perforce.
+
+ Will merge to 'next'.
+
+
+* mg/show-notes-doc (2015-04-17) 1 commit
+  (merged to 'next' on 2015-04-20 at 2e93969)
+ + rev-list-options.txt: complete sentence about notes matching
+
+ Documentation fix.
+
  Will merge to 'master' in the first batch of post v2.4 cycle.
 
 
-* pt/xdg-config-path (2015-04-12) 7 commits
- - path.c: remove home_config_paths()
- - git-config: replace use of home_config_paths()
- - git-commit: replace use of home_config_paths()
- - credential-store.c: replace home_config_paths() with xdg_config_home()
- - dir.c: replace home_config_paths() with xdg_config_home()
- - attr.c: replace home_config_paths() with xdg_config_home()
- - path.c: implement xdg_config_home()
- (this branch uses pt/credential-xdg.)
+* mm/add-p-split-error (2015-04-16) 5 commits
+ - stash -p: demonstrate failure of split with mixed y/n
+ - t3904-stash-patch: factor PERL prereq at the top of the file
+ - t3904-stash-patch: fix test description
+ - add -p: demonstrate failure when running 'edit' after a split
+ - t3701-add-interactive: simplify code
 
 
-* sb/test-bitmap-free-at-end (2015-04-12) 1 commit
-  (merged to 'next' on 2015-04-14 at 0ae4759)
- + pack-bitmap.c: fix a memleak
+* mm/usage-log-l-can-take-regex (2015-04-20) 2 commits
+ - log -L: improve error message on malformed argument
+ - Documentation: change -L:<regex> to -L:<funcname>
+
+ Will merge to 'next'.
+
+
+* nd/pathspec-strip-fix (2015-04-18) 1 commit
+ - pathspec: adjust prefixlen after striping trailing slash
+
+
+* nd/t1509-chroot-test (2015-04-18) 1 commit
+ - t1509: update prepare script to be able to run t1509 in chroot again
+
+ Correct test bitrot.
+
+ Will merge to 'next'.
+
+
+* oh/fix-config-default-user-name-section (2015-04-17) 1 commit
+  (merged to 'next' on 2015-04-20 at b74b914)
+ + config: fix settings in default_user_config template
+
+ The default $HOME/.gitconfig file created upon "git config --global"
+ that edits it had incorrectly spelled user.name and user.email
+ entries in it.
 
  Will merge to 'master' in the first batch of post v2.4 cycle.
+
+
+* tb/t0027-crlf (2015-04-18) 2 commits
+ - t0027: support NATIVE_CRLF platforms
+ - t0027: cleanup: rename functions; avoid non-leading TABs
+
+ Will merge to 'next'.
+
+
+* jk/prune-mtime (2015-04-20) 3 commits
+ - sha1_file: only freshen packs once per run
+ - sha1_file: freshen pack objects before loose
+ - reachable: only mark local objects as recent
+
+ Access to objects in repositories that borrow from another one on a
+ slow NFS server unnecessarily got more expensive due to recent code
+ becoming more cautious in a naive way not to lose objects to pruning.
+
+ Will merge to 'next'.
+
+
+* sb/remove-fd-from-ref-lock (2015-04-17) 5 commits
+ . refs.c: enable large transactions
+ . sha1_fiel.c: move get_max_fd_limit(void) to wrapper.c
+ . refs.c: remove lock_fd from struct ref_lock
+ . t7004: rename ULIMIT test prerequisite to ULIMIT_STACK_SIZE
+ . update-ref: test handling large transactions properly
 
 --------------------------------------------------
 [Stalled]
-
-* as/userdiff-sh (2015-03-13) 1 commit
- - userdiff: funcname and word patterns for sh
-
- Add a built-in "userdiff" patterns to word-split and identify
- notable lines in shell scripts to help presentation of diff and
- grep output.
-
- Will discard.
-
 
 * mh/fdopen-with-retry (2015-03-06) 6 commits
  - buffer_fdinit(): use fdopen_with_retry()
@@ -355,23 +330,114 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* va/fix-git-p4-tests (2015-04-12) 3 commits
-  (merged to 'next' on 2015-04-14 at 261bf90)
- + t9814: guarantee only one source exists in git-p4 copy tests
- + git-p4: fix copy detection test
- + t9814: fix broken shell syntax in git-p4 rename test
+* ah/usage-strings (2015-04-02) 2 commits
+ - branch: fix funny-sounding error message
+ - standardize usage strings that were missed the first time
 
- Test fixes for git-p4
+ A few usage string updates.
+
+ Will hold.
+
+
+* jk/reading-packed-refs (2015-04-16) 9 commits
+ - t1430: add another refs-escape test
+ - read_packed_refs: avoid double-checking sane refs
+ - strbuf_getwholeline: use getdelim if it is available
+ - strbuf_getwholeline: avoid calling strbuf_grow
+ - strbuf_addch: avoid calling strbuf_grow
+ - config: use getc_unlocked when reading from file
+ - strbuf_getwholeline: use getc_unlocked
+ - git-compat-util: add fallbacks for unlocked stdio
+ - strbuf_getwholeline: use getc macro
+
+ An earlier rewrite to use strbuf_getwholeline() instead of fgets(3)
+ to read packed-refs file revealed that the former is unacceptably
+ inefficient.
+
+ Will merge to 'next'.
+
+
+* kk/log-merges-config (2015-04-04) 5 commits
+ - bash-completion: add support for git-log --merges= and log.merges
+ - t4202-log: add tests for --merges=
+ - Documentation: add git-log --merges= option and log.merges config. var
+ - log: honor log.merges= option
+ - revision: add --merges={show|only|hide} option
+
+ "git log" (but not other commands in the "log" family) learned to
+ pay attention to the log.merges configuration variable that can be
+ set to "show" (the normal behaviour), "only" (hide non-merge
+ commits), or "hide" (hide merge commits).  --merges=(show|only|hide)
+ can be used to override the setting from the command line.
+
+ The documentation may need to be updated once more.
+
+
+* kn/cat-file-literally (2015-04-15) 5 commits
+ - SQUASH???
+ - t1006: add tests for git cat-file --literally
+ - cat-file: add documentation for '--literally' option.
+ - cat-file: teach cat-file a '--literally' option
+ - sha1_file.c: support reading from a loose object of unknown type
+
+ Add the "--literally" option to "cat-file" to allow inspecting
+ loose objects of an experimental or a broken type.
+
+ This is v8 $gmane/267213; getting closer to the final, I would say.
+
+
+* ld/p4-filetype-detection (2015-04-04) 3 commits
+  (merged to 'next' on 2015-04-08 at da735b4)
+ + git-p4: fix filetype detection on files opened exclusively
+ + git-p4: small fix for locked-file-move-test
+ + git-p4: fix small bug in locked test scripts
 
  Will merge to 'master' in the first batch of post v2.4 cycle.
 
 
-* va/p4-client-path (2015-03-28) 2 commits
+* mg/httpd-tests-update-for-apache-2.4 (2015-04-08) 2 commits
+ - t/lib-git-svn: check same httpd module dirs as lib-httpd
+ - t/lib-httpd: load mod_unixd
+
+ This is the first two commits in a three-patch series $gmane/266962
+
+
+* lm/squelch-bg-progress (2015-04-15) 2 commits
+ - compat/mingw: stubs for getpgid() and tcgetpgrp()
+ - progress: no progress in background
+
+ Many long-running operations show progress eye-candy, even when
+ they are later backgrounded.  Hide the eye-candy when the process
+ is sent to the background instead.
+
+ Will merge to 'next'.
+
+
+* pt/xdg-config-path (2015-04-12) 7 commits
+ - path.c: remove home_config_paths()
+ - git-config: replace use of home_config_paths()
+ - git-commit: replace use of home_config_paths()
+ - credential-store.c: replace home_config_paths() with xdg_config_home()
+ - dir.c: replace home_config_paths() with xdg_config_home()
+ - attr.c: replace home_config_paths() with xdg_config_home()
+ - path.c: implement xdg_config_home()
+ (this branch uses pt/credential-xdg.)
+
+
+* sb/test-bitmap-free-at-end (2015-04-12) 1 commit
+  (merged to 'next' on 2015-04-14 at 0ae4759)
+ + pack-bitmap.c: fix a memleak
+
+ Will merge to 'master' in the first batch of post v2.4 cycle.
+
+
+* va/p4-client-path (2015-04-19) 2 commits
  - git-p4: improve client path detection when branches are used
  - t9801: check git-p4's branch detection and client view together
 
- Attempt to better handle branches in perforce by git p4
- Reviews by git-p4 experts are very much appreciated.
+ git p4 attempts to better handle branches in Perforce.
+
+ Will merge to 'next'.
 
 
 * jk/at-push-sha1 (2015-03-31) 6 commits
@@ -382,9 +448,17 @@ of the repositories listed at
  - remote.c: drop "remote" pointer from "struct branch"
  - remote.c: drop default_remote_name variable
 
+ Introduce <branch>@{push} short-hand to denote the remote-tracking
+ branch that tracks the branch at the remote the <branch> would be
+ pushed to.
+
+ Waiting for a reroll ($gmane/266573).
+
 
 * jk/sha1-file-reduce-useless-warnings (2015-03-30) 1 commit
  - sha1_file: squelch "packfile cannot be accessed" warnings
+
+ Will merge to 'next'.
 
 
 * mh/show-branch-topic (2015-03-31) 1 commit
@@ -401,19 +475,6 @@ of the repositories listed at
 * sb/line-log-plug-pairdiff-leak (2015-03-30) 1 commit
   (merged to 'next' on 2015-04-08 at 6ea8b71)
  + line-log.c: fix a memleak
-
- Will merge to 'master' in the first batch of post v2.4 cycle.
-
-
-* jc/push-cert (2015-04-02) 1 commit
-  (merged to 'next' on 2015-04-08 at aecdd43)
- + push --signed: tighten what the receiving end can ask to sign
-
- The "git push --signed" protocol extension did not limit what the
- "nonce" that is a server-chosen string can contain or how long it
- can be, which was unnecessarily lax.  Limit both the length and the
- alphabet to a reasonably small space that can still have enough
- entropy.
 
  Will merge to 'master' in the first batch of post v2.4 cycle.
 
@@ -464,6 +525,8 @@ of the repositories listed at
  syntax to invoke a two-way merge, which has been deprecated since
  October 2007.
 
+ This regresses "git pull" in various ways; do not merge ($gmane/267432).
+
 
 * jc/merge-drop-old-syntax (2015-03-26) 1 commit
  - merge: drop 'git merge <message> HEAD <commit>' syntax
@@ -471,6 +534,8 @@ of the repositories listed at
 
  Stop supporting "git merge <messsage> HEAD <commit>" syntax that
  has been deprecated since October 2007.
+
+ This regresses "git pull" in various ways; do not merge ($gmane/267432).
 
 
 * jc/diff-no-index-d-f (2015-03-26) 2 commits
@@ -485,7 +550,7 @@ of the repositories listed at
  and compare the file with the file with the same name in the
  directory, instead of refusing to run.
 
- Will cook in 'next'.
+ Will merge to 'master' in the first batch of post v2.4 cycle.
 
 
 * nd/diff-i-t-a (2015-03-23) 1 commit
@@ -579,14 +644,14 @@ of the repositories listed at
  that seems to have seen no interest X-<.
 
 
-* nd/slim-index-pack-memory-usage (2015-02-27) 2 commits
+* nd/slim-index-pack-memory-usage (2015-04-18) 2 commits
  - index-pack: kill union delta_base to save memory
  - index-pack: reduce object_entry size to save memory
 
  Memory usage of "git index-pack" has been trimmed by tens of
  per-cent.
 
- Waiting for further comments and a final reroll ($gmane/264544).
+ Will merge to 'next'.
 
 
 * nd/list-files (2015-02-09) 21 commits
@@ -704,79 +769,9 @@ of the repositories listed at
 --------------------------------------------------
 [Discarded]
 
-* ak/stash-store-create-help (2015-01-13) 1 commit
- . stash: show "create" and "store" subcommands in usage-help
+* as/userdiff-sh (2015-03-13) 1 commit
+ . userdiff: funcname and word patterns for sh
 
-
-* bp/diff-relative-config (2015-01-07) 2 commits
- . diff: teach diff.relative to give default to --relative=<value>
- . diff: teach --no-relative to override earlier --relative
-
-
-* je/quiltimport-no-fuzz (2014-10-21) 2 commits
- . git-quiltimport: flip the default not to allow fuzz
- . git-quiltimport.sh: allow declining fuzz with --exact option
-
- "quiltimport" drove "git apply" always with -C1 option to reduce
- context of the patch in order to give more chance to somewhat stale
- patches to apply.  Add an "--exact" option to disable, and also
- "-C$n" option to customize this behaviour.  The top patch
- optionally flips the default to "--exact".
-
-
-* ab/add-interactive-show-diff-func-name (2014-05-12) 2 commits
- . SQUASH??? git-add--interactive: Preserve diff heading when splitting hunks
- . git-add--interactive: Preserve diff heading when splitting hunks
-
-
-* ss/userdiff-update-csharp-java (2014-06-02) 2 commits
- . userdiff: support Java try keyword
- . userdiff: support C# async methods and correct C# keywords
-
-
-* bg/rebase-off-of-previous-branch (2014-04-16) 1 commit
- . git-rebase: print name of rev when using shorthand
-
- Teach "git rebase -" to report the concrete name of the branch
- (i.e. the previous one).
-
- But it stops short and does not do the same for "git rebase @{-1}".
-
-
-* rb/merge-prepare-commit-msg-hook (2014-01-10) 4 commits
- . merge: drop unused arg from abort_commit method signature
- . merge: make prepare_to_commit responsible for write_merge_state
- . t7505: ensure cleanup after hook blocks merge
- . t7505: add missing &&
-
- Expose more merge states (e.g. $GIT_DIR/MERGE_MODE) to hooks that
- run during "git merge".  The log message stresses too much on one
- hook, prepare-commit-msg, but it would equally apply to other hooks
- like post-merge, I think.
-
-
-* jc/graph-post-root-gap (2013-12-30) 3 commits
- . WIP: document what we want at the end
- . graph: remove unused code a bit
- . graph: stuff the current commit into graph->columns[]
-
- This was primarily a RFH ($gmane/239580).
-
-
-* ts/man-pdf (2015-03-20) 1 commit
- . Documentation: make 'make pdf' format manpages to PDF as well
-
- For offline consumption of manual pages, a target to produce one
- pdf document per manual page was added to Documentation/Makefile.
-
- Its usefulness is unknown, given that this does not produce a
- single document with all the manual pages in it, which would be not
- much better than keeping a bunch of HTML manual pages we already
- produce and use them instead for offline consumption.
-
- Discarded, while leaving a single-document target as an open
- possibility.
-
-
-* jn/gitweb-utf8-in-links (2014-05-27) 1 commit
- . gitweb: Harden UTF-8 handling in generated links
+ Add a built-in "userdiff" patterns to word-split and identify
+ notable lines in shell scripts to help presentation of diff and
+ grep output.
