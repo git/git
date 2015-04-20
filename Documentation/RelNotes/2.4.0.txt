@@ -271,7 +271,17 @@ notes for details).
 
  * "git push --signed" gave an incorrectly worded error message when
    the other side did not support the capability.
-   (merge 45917f0 jc/push-cert later to maint).
+
+ * The "git push --signed" protocol extension did not limit what the
+   "nonce" that is a server-chosen string can contain or how long it
+   can be, which was unnecessarily lax.  Limit both the length and the
+   alphabet to a reasonably small space that can still have enough
+   entropy.
+   (merge afcb6ee jc/push-cert later to maint).
+
+ * The completion script (in contrib/) contaminated global namespace
+   and clobbered on a shell variable $x.
+   (merge 852ff1c ma/bash-completion-leaking-x later to maint).
 
  * We didn't format an integer that wouldn't fit in "int" but in
    "uintmax_t" correctly.
@@ -465,6 +475,11 @@ notes for details).
    when working in a subdirectory without any untracked files.
    (merge 9bdc517 ct/prompt-untracked-fix later to maint).
 
+ * An earlier update to the parser that disects a URL broke an
+   address, followed by a colon, followed by an empty string (instead
+   of the port number), e.g. ssh://example.com:/path/to/repo.
+   (merge 6b6c5f7 tb/connect-ipv6-parse-fix later to maint).
+
  * Code cleanups and documentation updates.
    (merge 2ce63e9 rs/simple-cleanups later to maint).
    (merge 33baa69 rj/no-xopen-source-for-cygwin later to maint).
@@ -491,3 +506,5 @@ notes for details).
    (merge 6c3b2af jg/cguide-we-cannot-count later to maint).
    (merge 2b8bd44 jk/pack-corruption-post-mortem later to maint).
    (merge 9585cb8 jn/doc-fast-import-no-16-octopus-limit later to maint).
+   (merge 5dcd1b1 ps/grep-help-all-callback-arg later to maint).
+   (merge f1f4c84 va/fix-git-p4-tests later to maint).
