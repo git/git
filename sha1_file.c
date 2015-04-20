@@ -2999,7 +2999,14 @@ static int freshen_loose_object(const unsigned char *sha1)
 static int freshen_packed_object(const unsigned char *sha1)
 {
 	struct pack_entry e;
-	return find_pack_entry(sha1, &e) && freshen_file(e.p->pack_name);
+	if (!find_pack_entry(sha1, &e))
+		return 0;
+	if (e.p->freshened)
+		return 1;
+	if (!freshen_file(e.p->pack_name))
+		return 0;
+	e.p->freshened = 1;
+	return 1;
 }
 
 int write_sha1_file(const void *buf, unsigned long len, const char *type, unsigned char *returnsha1)
