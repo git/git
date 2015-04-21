@@ -593,7 +593,7 @@ test_expect_success 'git p4 clone simple branches with base folder on server sid
 '
 
 # Now update a file in one of the branches in git and submit to P4
-test_expect_failure 'Update a file in git side and submit to P4 using client view' '
+test_expect_success 'Update a file in git side and submit to P4 using client view' '
 	test_when_finished cleanup_git &&
 	(
 		cd "$git" &&
