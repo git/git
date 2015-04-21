@@ -313,10 +313,6 @@ notes for details).
    (assuming the UTF-8 payload).
    (merge 8d00662 jk/colors later to maint).
 
- * "git merge --quiet" did not squelch messages from the underlying
-   merge-recursive strategy.
-   (merge 2bf15a3 jk/merge-quiet later to maint).
-
  * Longstanding configuration variable naming rules has been added to
    the documentation.
    (merge 35840a3 jc/conf-var-doc later to maint).
