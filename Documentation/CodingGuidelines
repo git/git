@@ -1,5 +1,5 @@
 Like other projects, we also have some guidelines to keep to the
-code.  For Git in general, three rough rules are:
+code.  For Git in general, a few rough rules are:
 
  - Most importantly, we never say "It's in POSIX; we'll happily
    ignore your needs should your system not conform to it."
