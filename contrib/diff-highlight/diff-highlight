@@ -1,5 +1,6 @@
 #!/usr/bin/perl
 
+use 5.008;
 use warnings FATAL => 'all';
 use strict;
 
@@ -164,8 +165,12 @@ sub highlight_pair {
 
 sub split_line {
 	local $_ = shift;
-	return map { /$COLOR/ ? $_ : (split //) }
-	       split /($COLOR*)/;
+	return utf8::decode($_) ?
+		map { utf8::encode($_); $_ }
+			map { /$COLOR/ ? $_ : (split //) }
+			split /($COLOR+)/ :
+		map { /$COLOR/ ? $_ : (split //) }
+		split /($COLOR+)/;
 }
 
 sub highlight_line {
