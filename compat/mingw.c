@@ -2378,3 +2378,12 @@ void mingw_startup()
 	/* init length of current directory for handle_long_path */
 	current_directory_len = GetCurrentDirectoryW(0, NULL);
 }
+
+const char *windows_wide_config(void)
+{
+	static struct strbuf windows_wide = STRBUF_INIT;
+	if (!windows_wide.len)
+		strbuf_addf(&windows_wide,
+			"%s\\Git\\config", getenv("PROGRAMDATA"));
+	return windows_wide.buf;
+}
