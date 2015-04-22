@@ -775,4 +775,14 @@ test_expect_success PIPE 'streaming support for --stdin' '
 	echo "$response" | grep "^::	two"
 '
 
+test_expect_success 'info/exclude trumps core.excludesfile' '
+	echo >>global-excludes usually-ignored &&
+	echo >>.git/info/exclude "!usually-ignored" &&
+	>usually-ignored &&
+	echo "?? usually-ignored" >expect &&
+
+	git status --porcelain usually-ignored >actual &&
+	test_cmp expect actual
+'
+
 test_done
