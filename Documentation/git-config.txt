@@ -253,6 +253,11 @@ $XDG_CONFIG_HOME/git/config::
 $GIT_DIR/config::
 	Repository specific configuration file.
 
+On Windows, as there is no central `/etc/` directory, there is yet another
+config file, intended to contain settings for *all* Git-related software
+running on the machine. Consequently, this config file takes an even lower
+precedence than the `$(prefix)/etc/gitconfig` file.
+
 If no further options are given, all reading options will read all of these
 files that are available. If the global or the system-wide configuration
 file are not available they will be ignored. If the repository configuration
