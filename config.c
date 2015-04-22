@@ -1221,9 +1221,12 @@ static int do_git_config_sequence(config_fn_t fn, void *data)
 	char *user_config = expand_user_path("~/.gitconfig");
 	char *repo_config = git_pathdup("config");
 
-	if (git_config_system())
+	if (git_config_system()) {
+		config_from_file_gently(fn, git_program_data_config(), data,
+				0, &ret, &found);
 		config_from_file_gently(fn, git_etc_gitconfig(), data, 0,
 				&ret, &found);
+	}
 
 	config_from_file_gently(fn, xdg_config, data, ACCESS_EACCES_OK,
 			&ret, &found);
