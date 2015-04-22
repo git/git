@@ -10,6 +10,8 @@ test_description='Test git stash'
 test_expect_success 'stash some dirty working directory' '
 	echo 1 > file &&
 	git add file &&
+	echo unrelated >other-file &&
+	git add other-file &&
 	test_tick &&
 	git commit -m initial &&
 	echo 2 > file &&
@@ -45,8 +47,6 @@ test_expect_success 'applying bogus stash does nothing' '
 
 test_expect_success 'apply does not need clean working directory' '
 	echo 4 >other-file &&
-	git add other-file &&
-	echo 5 >other-file &&
 	git stash apply &&
 	echo 3 >expect &&
 	test_cmp expect file
