@@ -2366,3 +2366,22 @@ void mingw_startup()
 	/* init length of current directory for handle_long_path */
 	current_directory_len = GetCurrentDirectoryW(0, NULL);
 }
+
+const char *program_data_config(void)
+{
+	static struct strbuf path = STRBUF_INIT;
+	static unsigned initialized;
+
+	if (!initialized) {
+		const char *env = mingw_getenv("PROGRAMDATA");
+		const char *extra = "";
+		if (!env) {
+			env = mingw_getenv("ALLUSERSPROFILE");
+			extra = "/Application Data";
+		}
+		if (env)
+			strbuf_addf(&path, "%s%s/Git/config", env, extra);
+		initialized = 1;
+	}
+	return *path.buf ? path.buf : NULL;
+}
