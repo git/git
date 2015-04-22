@@ -7,11 +7,6 @@
 #include <wingdi.h>
 #include <winreg.h>
 
-#ifdef USE_NTDLL
-#include <winternl.h>
-#include <ntstatus.h>
-#endif
-
 /*
  ANSI codes used by git: m, K
 
@@ -536,9 +531,12 @@ static HANDLE swap_osfhnd(int fd, HANDLE new_handle)
 	return old_handle;
 }
 
-#ifdef USE_NTDLL
+#ifdef DETECT_MSYS_TTY
 
-static void msystty_init(int fd)
+#include <winternl.h>
+#include <ntstatus.h>
+
+static void detect_msys_tty(int fd)
 {
 	ULONG result;
 	BYTE buffer[1024];
@@ -570,8 +568,6 @@ static void msystty_init(int fd)
 	_pioinfo(fd)->osflags |= FDEV;
 }
 
-#else
-#define msystty_init(fd) (void)0
 #endif
 
 void winansi_init(void)
@@ -583,10 +579,12 @@ void winansi_init(void)
 	con1 = is_console(1);
 	con2 = is_console(2);
 	if (!con1 && !con2) {
+#ifdef DETECT_MSYS_TTY
 		/* check if stdin / stdout / stderr are msys pty pipes */
-		msystty_init(0);
-		msystty_init(1);
-		msystty_init(2);
+		detect_msys_tty(0);
+		detect_msys_tty(1);
+		detect_msys_tty(2);
+#endif
 		return;
 	}
 
