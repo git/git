@@ -2128,3 +2128,12 @@ void mingw_startup()
 	/* initialize Unicode console */
 	winansi_init();
 }
+
+const char *windows_wide_config(void)
+{
+	static struct strbuf windows_wide = STRBUF_INIT;
+	if (!windows_wide.len)
+		strbuf_addf(&windows_wide,
+			"%s\\Git\\config", getenv("PROGRAMDATA"));
+	return windows_wide.buf;
+}
