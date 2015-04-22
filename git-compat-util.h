@@ -412,6 +412,10 @@ static inline char *git_find_last_dir_sep(const char *path)
 #endif
 #endif
 
+#ifndef git_program_data_config
+#define git_program_data_config() NULL
+#endif
+
 #if defined(__HP_cc) && (__HP_cc >= 61000)
 #define NORETURN __attribute__((noreturn))
 #define NORETURN_PTR
