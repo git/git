@@ -76,6 +76,15 @@ test_expect_success 'pulling into void does not remove new staged files' '
 	)
 '
 
+test_expect_success 'pulling into void must not create an octopus' '
+	git init cloned-octopus &&
+	(
+		cd cloned-octopus &&
+		test_must_fail git pull .. master master &&
+		! test -f file
+	)
+'
+
 test_expect_success 'test . as a remote' '
 
 	git branch copy master &&
