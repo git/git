@@ -109,8 +109,8 @@ UI, Workflows & Features
    "cd ''" which silently behaves as a no-op.
    (merge 6a536e2 kn/git-cd-to-empty later to maint).
 
- * The versionsort.prerelease configuration variable can be used to
-   specify that v1.0-pre1 comes before v1.0.
+ * The versionsort.prereleaseSuffix configuration variable can be used
+   to specify that v1.0-pre1 comes before v1.0.
 
  * A new "push.followTags" configuration turns the "--follow-tags"
    option on by default for the "git push" command.
