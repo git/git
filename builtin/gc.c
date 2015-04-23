@@ -222,7 +222,7 @@ static const char *lock_repo_for_gc(int force, pid_t* ret_pid)
 			 * running.
 			 */
 			time(NULL) - st.st_mtime <= 12 * 3600 &&
-			fscanf(fp, "%"PRIuMAX" %127c", &pid, locking_host) == 2 &&
+			fscanf(fp, "%"SCNuMAX" %127c", &pid, locking_host) == 2 &&
 			/* be gentle to concurrent "gc" on remote hosts */
 			(strcmp(locking_host, my_host) || !kill(pid, 0) || errno == EPERM);
 		if (fp != NULL)
