@@ -261,7 +261,7 @@ notes for details).
    user could have made was to choose nothing.
    (merge a9c4641 ak/add-i-empty-candidates later to maint).
 
- * The insn sheet "git rebase -i" creates did not fully honor
+ * The todo list "git rebase -i" creates did not fully honor
    core.abbrev settings.
    (merge edb72d5 ks/rebase-i-abbrev later to maint).
 
@@ -402,7 +402,7 @@ notes for details).
    (merge 77fdb8a nd/grep-exclude-standard-help-fix later to maint).
 
  * "git rebase -i" recently started to include the number of
-   commits in the insn sheet to be processed, but on a platform
+   commits in the todo list to be processed, but on a platform
    that prepends leading whitespaces to "wc -l" output, the numbers
    are shown with extra whitespaces that aren't necessary.
    (merge 2185d3b es/rebase-i-count-todo later to maint).
