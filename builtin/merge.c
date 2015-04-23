@@ -491,8 +491,7 @@ static void merge_name(const char *remote, struct strbuf *msg)
 	}
 	if (len) {
 		struct strbuf truname = STRBUF_INIT;
-		strbuf_addstr(&truname, "refs/heads/");
-		strbuf_addstr(&truname, remote);
+		strbuf_addf(&truname, "refs/heads/%s", remote);
 		strbuf_setlen(&truname, truname.len - len);
 		if (ref_exists(truname.buf)) {
 			strbuf_addf(msg,
@@ -503,6 +502,7 @@ static void merge_name(const char *remote, struct strbuf *msg)
 			strbuf_release(&truname);
 			goto cleanup;
 		}
+		strbuf_release(&truname);
 	}
 
 	if (!strcmp(remote, "FETCH_HEAD") &&
