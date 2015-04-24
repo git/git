@@ -3763,16 +3763,16 @@ int ref_transaction_commit(struct ref_transaction *transaction,
 	/* Acquire all locks while verifying old values */
 	for (i = 0; i < n; i++) {
 		struct ref_update *update = updates[i];
-		unsigned int flags = update->flags;
 
-		if ((flags & REF_HAVE_NEW) && is_null_sha1(update->new_sha1))
-			flags |= REF_DELETING;
+		if ((update->flags & REF_HAVE_NEW) &&
+		    is_null_sha1(update->new_sha1))
+			update->flags |= REF_DELETING;
 		update->lock = lock_ref_sha1_basic(
 				update->refname,
 				((update->flags & REF_HAVE_OLD) ?
 				 update->old_sha1 : NULL),
 				NULL,
-				flags,
+				update->flags,
 				&update->type);
 		if (!update->lock) {
 			ret = (errno == ENOTDIR)
@@ -3787,9 +3787,9 @@ int ref_transaction_commit(struct ref_transaction *transaction,
 	/* Perform updates first so live commits remain referenced */
 	for (i = 0; i < n; i++) {
 		struct ref_update *update = updates[i];
-		int flags = update->flags;
 
-		if ((flags & REF_HAVE_NEW) && !is_null_sha1(update->new_sha1)) {
+		if ((update->flags & REF_HAVE_NEW)
+		    && !is_null_sha1(update->new_sha1)) {
 			int overwriting_symref = ((update->type & REF_ISSYMREF) &&
 						  (update->flags & REF_NODEREF));
 
@@ -3822,15 +3822,15 @@ int ref_transaction_commit(struct ref_transaction *transaction,
 	/* Perform deletes now that updates are safely completed */
 	for (i = 0; i < n; i++) {
 		struct ref_update *update = updates[i];
-		int flags = update->flags;
 
-		if ((flags & REF_HAVE_NEW) && is_null_sha1(update->new_sha1)) {
+		if ((update->flags & REF_HAVE_NEW)
+		    && is_null_sha1(update->new_sha1)) {
 			if (delete_ref_loose(update->lock, update->type, err)) {
 				ret = TRANSACTION_GENERIC_ERROR;
 				goto cleanup;
 			}
 
-			if (!(flags & REF_ISPRUNING))
+			if (!(update->flags & REF_ISPRUNING))
 				string_list_append(&refs_to_delete,
 						   update->lock->ref_name);
 		}
