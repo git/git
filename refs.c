@@ -3022,11 +3022,11 @@ int is_branch(const char *refname)
 }
 
 /*
- * Write sha1 into the ref specified by the lock. Make sure that errno
- * is sane on error.
+ * Write sha1 into the open lockfile, then close the lockfile. On
+ * errors, rollback the lockfile and set errno to reflect the problem.
  */
-static int write_ref_sha1(struct ref_lock *lock,
-	const unsigned char *sha1, const char *logmsg)
+static int write_ref_to_lockfile(struct ref_lock *lock,
+				 const unsigned char *sha1)
 {
 	static char term = '\n';
 	struct object *o;
@@ -3055,6 +3055,19 @@ static int write_ref_sha1(struct ref_lock *lock,
 		errno = save_errno;
 		return -1;
 	}
+	return 0;
+}
+
+/*
+ * Write sha1 into the ref specified by the lock. Make sure that errno
+ * is sane on error.
+ */
+static int write_ref_sha1(struct ref_lock *lock,
+	const unsigned char *sha1, const char *logmsg)
+{
+	if (write_ref_to_lockfile(lock, sha1))
+		return -1;
+
 	clear_loose_ref_cache(&ref_cache);
 	if (log_ref_write(lock->ref_name, lock->old_sha1, sha1, logmsg) < 0 ||
 	    (strcmp(lock->ref_name, lock->orig_ref_name) &&
