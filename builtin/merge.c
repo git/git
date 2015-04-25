@@ -1236,8 +1236,6 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		argc -= 2;
 		remoteheads = collect_parents(head_commit, &head_subsumed, argc, argv);
 	} else {
-		struct strbuf merge_names = STRBUF_INIT;
-
 		/* We are invoked directly as the first-class UI. */
 		head_arg = "HEAD";
 
@@ -1247,11 +1245,14 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		 * to the given message.
 		 */
 		remoteheads = collect_parents(head_commit, &head_subsumed, argc, argv);
-		for (p = remoteheads; p; p = p->next)
-			merge_name(merge_remote_util(p->item)->name, &merge_names);
 
 		if (!have_message || shortlog_len) {
+			struct strbuf merge_names = STRBUF_INIT;
 			struct fmt_merge_msg_opts opts;
+
+			for (p = remoteheads; p; p = p->next)
+				merge_name(merge_remote_util(p->item)->name, &merge_names);
+
 			memset(&opts, 0, sizeof(opts));
 			opts.add_title = !have_message;
 			opts.shortlog_len = shortlog_len;
@@ -1260,6 +1261,8 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 			fmt_merge_msg(&merge_names, &merge_msg, &opts);
 			if (merge_msg.len)
 				strbuf_setlen(&merge_msg, merge_msg.len - 1);
+
+			strbuf_release(&merge_names);
 		}
 	}
 
