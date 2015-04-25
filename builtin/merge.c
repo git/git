@@ -1061,11 +1061,19 @@ static struct commit_list *collect_parents(struct commit *head_commit,
 					 "not something we can merge");
 		remotes = &commit_list_insert(commit, remotes)->next;
 	}
-	*remotes = NULL;
 
+	/*
+	 * Is the current HEAD reachable from another commit being
+	 * merged?  If so we do not want to record it as a parent of
+	 * the resulting merge, unless --no-ff is given.  We will flip
+	 * this variable to 0 when we find HEAD among the independent
+	 * tips being merged.
+	 */
+	*head_subsumed = 1;
+
+	/* Find what parents to record by checking independent ones. */
 	parents = reduce_heads(remoteheads);
 
-	*head_subsumed = 1; /* we will flip this to 0 when we find it */
 	for (remoteheads = NULL, remotes = &remoteheads;
 	     parents;
 	     parents = next) {
@@ -1075,6 +1083,7 @@ static struct commit_list *collect_parents(struct commit *head_commit,
 			*head_subsumed = 0;
 		else
 			remotes = &commit_list_insert(commit, remotes)->next;
+		free(parents);
 	}
 	return remoteheads;
 }
