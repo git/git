@@ -1076,6 +1076,20 @@ static struct commit_list *reduce_parents(struct commit *head_commit,
 	return remoteheads;
 }
 
+static void prepare_merge_message(struct strbuf *merge_names, struct strbuf *merge_msg)
+{
+	struct fmt_merge_msg_opts opts;
+
+	memset(&opts, 0, sizeof(opts));
+	opts.add_title = !have_message;
+	opts.shortlog_len = shortlog_len;
+	opts.credit_people = (0 < option_edit);
+
+	fmt_merge_msg(merge_names, merge_msg, &opts);
+	if (merge_msg->len)
+		strbuf_setlen(merge_msg, merge_msg->len - 1);
+}
+
 static struct commit_list *collect_parents(struct commit *head_commit,
 					   int *head_subsumed,
 					   int argc, const char **argv)
@@ -1248,20 +1262,10 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 
 		if (!have_message || shortlog_len) {
 			struct strbuf merge_names = STRBUF_INIT;
-			struct fmt_merge_msg_opts opts;
 
 			for (p = remoteheads; p; p = p->next)
 				merge_name(merge_remote_util(p->item)->name, &merge_names);
-
-			memset(&opts, 0, sizeof(opts));
-			opts.add_title = !have_message;
-			opts.shortlog_len = shortlog_len;
-			opts.credit_people = (0 < option_edit);
-
-			fmt_merge_msg(&merge_names, &merge_msg, &opts);
-			if (merge_msg.len)
-				strbuf_setlen(&merge_msg, merge_msg.len - 1);
-
+			prepare_merge_message(&merge_names, &merge_msg);
 			strbuf_release(&merge_names);
 		}
 	}
