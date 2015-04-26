@@ -1092,7 +1092,8 @@ static void prepare_merge_message(struct strbuf *merge_names, struct strbuf *mer
 
 static struct commit_list *collect_parents(struct commit *head_commit,
 					   int *head_subsumed,
-					   int argc, const char **argv)
+					   int argc, const char **argv,
+					   struct strbuf *merge_msg)
 {
 	int i;
 	struct commit_list *remoteheads = NULL;
@@ -1108,7 +1109,20 @@ static struct commit_list *collect_parents(struct commit *head_commit,
 		remotes = &commit_list_insert(commit, remotes)->next;
 	}
 
-	return reduce_parents(head_commit, head_subsumed, remoteheads);
+	remoteheads = reduce_parents(head_commit, head_subsumed, remoteheads);
+
+	if (merge_msg &&
+	    (!have_message || shortlog_len)) {
+		struct strbuf merge_names = STRBUF_INIT;
+		struct commit_list *p;
+
+		for (p = remoteheads; p; p = p->next)
+			merge_name(merge_remote_util(p->item)->name, &merge_names);
+		prepare_merge_message(&merge_names, merge_msg);
+		strbuf_release(&merge_names);
+	}
+
+	return remoteheads;
 }
 
 int cmd_merge(int argc, const char **argv, const char *prefix)
@@ -1222,7 +1236,8 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		if (fast_forward == FF_NO)
 			die(_("Non-fast-forward commit does not make sense into "
 			    "an empty head"));
-		remoteheads = collect_parents(head_commit, &head_subsumed, argc, argv);
+		remoteheads = collect_parents(head_commit, &head_subsumed,
+					      argc, argv, NULL);
 		remote_head = remoteheads->item;
 		if (!remote_head)
 			die(_("%s - not something we can merge"), argv[0]);
@@ -1248,7 +1263,8 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		head_arg = argv[1];
 		argv += 2;
 		argc -= 2;
-		remoteheads = collect_parents(head_commit, &head_subsumed, argc, argv);
+		remoteheads = collect_parents(head_commit, &head_subsumed,
+					      argc, argv, NULL);
 	} else {
 		/* We are invoked directly as the first-class UI. */
 		head_arg = "HEAD";
@@ -1258,16 +1274,8 @@ int cmd_merge(int argc, const char **argv, const char *prefix)
 		 * the standard merge summary message to be appended
 		 * to the given message.
 		 */
-		remoteheads = collect_parents(head_commit, &head_subsumed, argc, argv);
-
-		if (!have_message || shortlog_len) {
-			struct strbuf merge_names = STRBUF_INIT;
-
-			for (p = remoteheads; p; p = p->next)
-				merge_name(merge_remote_util(p->item)->name, &merge_names);
-			prepare_merge_message(&merge_names, &merge_msg);
-			strbuf_release(&merge_names);
-		}
+		remoteheads = collect_parents(head_commit, &head_subsumed,
+					      argc, argv, &merge_msg);
 	}
 
 	if (!head_commit || !argc)
