@@ -296,6 +296,12 @@ setup_ssh_wrapper () {
 	'
 }
 
+copy_ssh_wrapper_as () {
+	cp "$TRASH_DIRECTORY/ssh-wrapper" "$1" &&
+	GIT_SSH="$1" &&
+	export GIT_SSH
+}
+
 expect_ssh () {
 	test_when_finished '
 		(cd "$TRASH_DIRECTORY" && rm -f ssh-expect && >ssh-output)
@@ -334,6 +340,33 @@ test_expect_success 'bracketed hostnames are still ssh' '
 	git clone "[myhost:123]:src" ssh-bracket-clone &&
 	expect_ssh "-p 123" myhost src
 '
+
+test_expect_success 'uplink is not treated as putty' '
+	copy_ssh_wrapper_as "$TRASH_DIRECTORY/uplink" &&
+	git clone "[myhost:123]:src" ssh-bracket-clone-uplink &&
+	expect_ssh "-p 123" myhost src
+'
+
+test_expect_success 'plink is treated specially (as putty)' '
+	copy_ssh_wrapper_as "$TRASH_DIRECTORY/plink" &&
+	git clone "[myhost:123]:src" ssh-bracket-clone-plink-0 &&
+	expect_ssh "-P 123" myhost src
+'
+
+test_expect_success 'plink.exe is treated specially (as putty)' '
+	copy_ssh_wrapper_as "$TRASH_DIRECTORY/plink.exe" &&
+	git clone "[myhost:123]:src" ssh-bracket-clone-plink-1 &&
+	expect_ssh "-P 123" myhost src
+'
+
+test_expect_success 'tortoiseplink is like putty, with extra arguments' '
+	copy_ssh_wrapper_as "$TRASH_DIRECTORY/tortoiseplink" &&
+	git clone "[myhost:123]:src" ssh-bracket-clone-plink-2 &&
+	expect_ssh "-batch -P 123" myhost src
+'
+
+# Reset the GIT_SSH environment variable for clone tests.
+setup_ssh_wrapper
 
 counter=0
 # $1 url

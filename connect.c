@@ -722,7 +722,7 @@ struct child_process *git_connect(int fd[2], const char *url,
 		conn->in = conn->out = -1;
 		if (protocol == PROTO_SSH) {
 			const char *ssh;
-			int putty;
+			int putty, tortoiseplink = 0;
 			char *ssh_host = hostandport;
 			const char *port = NULL;
 			get_host_and_port(&ssh_host, &port);
@@ -747,14 +747,26 @@ struct child_process *git_connect(int fd[2], const char *url,
 				conn->use_shell = 1;
 				putty = 0;
 			} else {
+				const char *base;
+				char *ssh_dup;
+
 				ssh = getenv("GIT_SSH");
 				if (!ssh)
 					ssh = "ssh";
-				putty = !!strcasestr(ssh, "plink");
+
+				ssh_dup = xstrdup(ssh);
+				base = basename(ssh_dup);
+
+				tortoiseplink = !strcasecmp(base, "tortoiseplink") ||
+					!strcasecmp(base, "tortoiseplink.exe");
+				putty = !strcasecmp(base, "plink") ||
+					!strcasecmp(base, "plink.exe") || tortoiseplink;
+
+				free(ssh_dup);
 			}
 
 			argv_array_push(&conn->args, ssh);
-			if (putty && !strcasestr(ssh, "tortoiseplink"))
+			if (tortoiseplink)
 				argv_array_push(&conn->args, "-batch");
 			if (port) {
 				/* P is for PuTTY, p is for OpenSSH */
