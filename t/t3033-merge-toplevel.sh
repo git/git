@@ -77,7 +77,7 @@ test_expect_success 'merge octopus, non-fast-forward' '
 
 # The same set with FETCH_HEAD
 
-test_expect_failure 'merge FETCH_HEAD octopus into void' '
+test_expect_success 'merge FETCH_HEAD octopus into void' '
 	t3033_reset &&
 	git checkout --orphan test &&
 	git rm -fr . &&
@@ -88,7 +88,7 @@ test_expect_failure 'merge FETCH_HEAD octopus into void' '
 	test_must_fail git rev-parse HEAD
 '
 
-test_expect_failure 'merge FETCH_HEAD octopus fast-forward (ff)' '
+test_expect_success 'merge FETCH_HEAD octopus fast-forward (ff)' '
 	t3033_reset &&
 	git reset --hard one &&
 	git fetch . left right &&
@@ -100,7 +100,7 @@ test_expect_failure 'merge FETCH_HEAD octopus fast-forward (ff)' '
 	test_cmp expect actual
 '
 
-test_expect_failure 'merge FETCH_HEAD octopus non-fast-forward (ff)' '
+test_expect_success 'merge FETCH_HEAD octopus non-fast-forward (ff)' '
 	t3033_reset &&
 	git reset --hard one &&
 	git fetch . left right &&
@@ -112,7 +112,7 @@ test_expect_failure 'merge FETCH_HEAD octopus non-fast-forward (ff)' '
 	test_cmp expect actual
 '
 
-test_expect_failure 'merge FETCH_HEAD octopus fast-forward (does not ff)' '
+test_expect_success 'merge FETCH_HEAD octopus fast-forward (does not ff)' '
 	t3033_reset &&
 	git fetch . left right &&
 	git merge FETCH_HEAD &&
@@ -123,7 +123,7 @@ test_expect_failure 'merge FETCH_HEAD octopus fast-forward (does not ff)' '
 	test_cmp expect actual
 '
 
-test_expect_failure 'merge FETCH_HEAD octopus non-fast-forward' '
+test_expect_success 'merge FETCH_HEAD octopus non-fast-forward' '
 	t3033_reset &&
 	git fetch . left right &&
 	git merge --no-ff FETCH_HEAD &&
