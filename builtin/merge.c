@@ -1098,6 +1098,10 @@ static struct commit_list *collect_parents(struct commit *head_commit,
 	int i;
 	struct commit_list *remoteheads = NULL;
 	struct commit_list **remotes = &remoteheads;
+	struct strbuf merge_names = STRBUF_INIT, *autogen = NULL;
+
+	if (merge_msg && (!have_message || shortlog_len))
+		autogen = &merge_names;
 
 	if (head_commit)
 		remotes = &commit_list_insert(head_commit, remotes)->next;
@@ -1111,15 +1115,13 @@ static struct commit_list *collect_parents(struct commit *head_commit,
 
 	remoteheads = reduce_parents(head_commit, head_subsumed, remoteheads);
 
-	if (merge_msg &&
-	    (!have_message || shortlog_len)) {
-		struct strbuf merge_names = STRBUF_INIT;
+	if (autogen) {
 		struct commit_list *p;
-
 		for (p = remoteheads; p; p = p->next)
-			merge_name(merge_remote_util(p->item)->name, &merge_names);
-		prepare_merge_message(&merge_names, merge_msg);
-		strbuf_release(&merge_names);
+			merge_name(merge_remote_util(p->item)->name, autogen);
+
+		prepare_merge_message(autogen, merge_msg);
+		strbuf_release(autogen);
 	}
 
 	return remoteheads;
