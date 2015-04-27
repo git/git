@@ -2384,7 +2384,7 @@ const char *windows_wide_config(void)
 {
 	static struct strbuf windows_wide = STRBUF_INIT;
 	if (!windows_wide.len) {
-		char wbuffer[MAX_PATH];
+		wchar_t wbuffer[MAX_PATH];
 		if (SHGetFolderPathW(NULL, CSIDL_COMMON_APPDATA, NULL,
 				SHGFP_TYPE_CURRENT, wbuffer) != S_OK)
 			strbuf_addch(&windows_wide, '\0');
