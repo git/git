@@ -456,34 +456,35 @@ consider sharing them with the community!
 Getting involved
 ----------------
 
-git-multimail is an open-source project, built by volunteers.  We
-would welcome your help!
+git-multimail is an open-source project, built by volunteers. We would
+welcome your help!
 
-The current maintainer is Michael Haggerty <mhagger@alum.mit.edu>.
+The current maintainers are Michael Haggerty <mhagger@alum.mit.edu>
+and Matthieu Moy <matthieu.moy@grenoble-inp.fr>.
 
-General discussion of git-multimail takes place on the main Git
+Please note that although a copy of git-multimail is distributed in
+the "contrib" section of the main Git project, development takes place
+in a separate git-multimail repository on GitHub:
+
+    https://github.com/git-multimail/git-multimail
+
+Whenever enough changes to git-multimail have accumulated, a new
+code-drop of git-multimail will be submitted for inclusion in the Git
+project.
+
+We use the GitHub issue tracker to keep track of bugs and feature
+requests, and we use GitHub pull requests to exchange patches (though,
+if you prefer, you can send patches via the Git mailing list with CC
+to the maintainers). Please sign off your patches as per the Git
+project practice.
+
+General discussion of git-multimail can take place on the main Git
 mailing list,
 
     git@vger.kernel.org
 
-Please CC emails regarding git-multimail to me so that I don't
-overlook them.
-
-The git-multimail project itself is currently hosted on GitHub:
-
-    https://github.com/mhagger/git-multimail
-
-We use the GitHub issue tracker to keep track of bugs and feature
-requests, and GitHub pull requests to exchange patches (though, if you
-prefer, you can send patches via the Git mailing list with cc to me).
-Please sign off your patches as per the Git project practice.
-
-Please note that although a copy of git-multimail will probably be
-distributed in the "contrib" section of the main Git project,
-development takes place in the separate git-multimail repository on
-GitHub!  (Whenever enough changes to git-multimail have accumulated, a
-new code-drop of git-multimail will be submitted for inclusion in the
-Git project.)
+Please CC emails regarding git-multimail to the maintainers so that we
+don't overlook them.
 
 
 Footnotes
