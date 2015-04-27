@@ -310,6 +310,8 @@ static void get_host_and_port(char **host, const char **port)
 		if (end != colon + 1 && *end == '\0' && 0 <= portnr && portnr < 65536) {
 			*colon = 0;
 			*port = colon + 1;
+		} else if (!colon[1]) {
+			*colon = 0;
 		}
 	}
 }
