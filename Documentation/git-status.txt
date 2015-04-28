@@ -41,6 +41,14 @@ OPTIONS
 --long::
 	Give the output in the long-format. This is the default.
 
+-v::
+--verbose::
+	In addition to the names of files that have been changed, also
+	show the textual changes that are staged to be committed
+	(i.e., like the output of `git diff --cached`). If `-v` is specified
+	twice, then also show the changes in the working tree that
+	have not yet been staged (i.e., like the output of `git diff`).
+
 -u[<mode>]::
 --untracked-files[=<mode>]::
 	Show untracked files.
