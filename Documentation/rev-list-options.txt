@@ -59,8 +59,8 @@ endif::git-rev-list[]
 	matches any of the given patterns are chosen (but see
 	`--all-match`).
 +
-When `--show-notes` is in effect, the message from the notes as
-if it is part of the log message.
+When `--show-notes` is in effect, the message from the notes is
+matched as if it were part of the log message.
 
 --all-match::
 	Limit the commits output to ones that match all given `--grep`,
