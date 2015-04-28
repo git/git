@@ -581,7 +581,7 @@ then
 		# Lazily switch to the target branch if needed...
 		test -z "$switch_to" ||
 		GIT_REFLOG_ACTION="$GIT_REFLOG_ACTION: checkout $switch_to" \
-			git checkout "$switch_to" --
+			git checkout -q "$switch_to" --
 		say "$(eval_gettext "Current branch \$branch_name is up to date.")"
 		finish_rebase
 		exit 0
