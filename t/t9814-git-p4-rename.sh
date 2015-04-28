@@ -226,14 +226,9 @@ test_expect_success 'detect copies' '
 
 # See if configurables can be set, and in particular if the run.move.allow
 # variable exists, which allows admins to disable the "p4 move" command.
-test_expect_success 'p4 configure command and run.move.allow are available' '
-	p4 configure show run.move.allow >out ; retval=$? &&
-	test $retval = 0 &&
-	{
-		egrep ^run.move.allow: out &&
-		test_set_prereq P4D_HAVE_CONFIGURABLE_RUN_MOVE_ALLOW ||
-		true
-	} || true
+test_lazy_prereq P4D_HAVE_CONFIGURABLE_RUN_MOVE_ALLOW '
+	p4 configure show run.move.allow >out &&
+	egrep ^run.move.allow: out
 '
 
 # If move can be disabled, turn it off and test p4 move handling
