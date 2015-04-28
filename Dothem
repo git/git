@@ -184,7 +184,7 @@ do
 		'')
 			;;
 		y)
-			Meta/Make clean
+			Meta/Make distclean
 			;;
 		esac &&
 
