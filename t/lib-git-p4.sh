@@ -69,7 +69,7 @@ start_p4d() {
 	(
 		cd "$db" &&
 		{
-			p4d -q -p $P4DPORT &
+			p4d -q -p $P4DPORT "$@" &
 			echo $! >"$pidfile"
 		}
 	) &&
