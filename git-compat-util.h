@@ -307,8 +307,8 @@ static inline char *git_find_last_dir_sep(const char *path)
 #define find_last_dir_sep git_find_last_dir_sep
 #endif
 
-#ifndef git_super_gitconfig
-#define git_super_gitconfig NULL
+#ifndef git_super_config
+#define git_super_config() NULL
 #endif
 
 #if defined(__HP_cc) && (__HP_cc >= 61000)
