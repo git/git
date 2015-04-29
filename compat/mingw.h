@@ -392,6 +392,8 @@ static inline char *mingw_find_last_dir_sep(const char *path)
 int mingw_offset_1st_component(const char *path);
 #define offset_1st_component mingw_offset_1st_component
 #define PATH_SEP ';'
+extern const char *windows_wide_config(void);
+#define git_super_config windows_wide_config
 #ifndef __MINGW64_VERSION_MAJOR
 #define PRIuMAX "I64u"
 #define PRId64 "I64d"
