@@ -346,7 +346,15 @@ while read commit parents; do
 				die "parent filter failed: $filter_parent"
 	fi
 
-	sed -e '1,/^$/d' <../commit | \
+	{
+		while read -r header_line && test -n "$header_line"
+		do
+			# skip header lines...
+			:;
+		done
+		# and output the actual commit message
+		cat
+	} <../commit |
 		eval "$filter_msg" > ../message ||
 			die "msg filter failed: $filter_msg"
 	workdir=$workdir @SHELL_PATH@ -c "$filter_commit" "git commit-tree" \
