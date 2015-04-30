@@ -16,8 +16,15 @@ DESCRIPTION
 A dumb server that does not do on-the-fly pack generations must
 have some auxiliary information files in $GIT_DIR/info and
 $GIT_OBJECT_DIRECTORY/info directories to help clients discover
-what references and packs the server has.  This command
-generates such auxiliary files.
+what references and packs the server has.
+
+A future protocol update will allow a server to respond to a "git
+clone" request by first telling the client to fetch a pre-made
+bundle file and then fetch from it.  To prepare such a server,
+the pre-made bundle file `$GIT_DIR/clone.bundle` needs to be
+kept up to date.
+
+This command generates such auxiliary files.
 
 
 OPTIONS
@@ -38,6 +45,8 @@ what they are for:
 * objects/info/packs
 
 * info/refs
+
+* clone.bundle
 
 GIT
 ---

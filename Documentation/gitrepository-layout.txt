@@ -222,6 +222,11 @@ shallow::
 modules::
 	Contains the git-repositories of the submodules.
 
+clone.bundle::
+	A bundle file a newer server will tell "git clone" clients
+	to fetch, so that it does not have to pack the entire
+	repository data every time a "git clone" request is made.
+
 SEE ALSO
 --------
 linkgit:git-init[1],
