@@ -96,6 +96,12 @@ determine_long_version () {
 	sed -e 's/-/./g'
 }
 
+BUILTIN_CLEAN_FIX=8687f777
+if ! git merge-base --is-ancestor $BUILTIN_CLEAN_FIX HEAD
+then
+	NO_PEDANTIC=YesPlease
+fi
+
 case "$NO_PEDANTIC" in
 ?*)	;;
 '')
