@@ -49,10 +49,8 @@ static int branches_alloc;
 static int branches_nr;
 
 static struct branch *current_branch;
-static const char *default_remote_name;
 static const char *branch_pushremote_name;
 static const char *pushremote_name;
-static int explicit_default_remote_name;
 
 static struct rewrites rewrites;
 static struct rewrites rewrites_push;
@@ -367,12 +365,7 @@ static int handle_config(const char *key, const char *value, void *cb)
 			return 0;
 		branch = make_branch(name, subkey - name);
 		if (!strcmp(subkey, ".remote")) {
-			if (git_config_string(&branch->remote_name, key, value))
-				return -1;
-			if (branch == current_branch) {
-				default_remote_name = branch->remote_name;
-				explicit_default_remote_name = 1;
-			}
+			return git_config_string(&branch->remote_name, key, value);
 		} else if (!strcmp(subkey, ".pushremote")) {
 			if (branch == current_branch)
 				if (git_config_string(&branch_pushremote_name, key, value))
@@ -501,12 +494,15 @@ static void alias_all_urls(void)
 
 static void read_config(void)
 {
+	static int loaded;
 	unsigned char sha1[20];
 	const char *head_ref;
 	int flag;
-	if (default_remote_name) /* did this already */
+
+	if (loaded)
 		return;
-	default_remote_name = "origin";
+	loaded = 1;
+
 	current_branch = NULL;
 	head_ref = resolve_ref_unsafe("HEAD", 0, sha1, &flag);
 	if (head_ref && (flag & REF_ISSYMREF) &&
@@ -708,8 +704,11 @@ static struct remote *remote_get_1(const char *name, const char *pushremote_name
 			name = pushremote_name;
 			name_given = 1;
 		} else {
-			name = default_remote_name;
-			name_given = explicit_default_remote_name;
+			if (current_branch && current_branch->remote_name) {
+				name = current_branch->remote_name;
+				name_given = 1;
+			} else
+				name = "origin";
 		}
 	}
 
