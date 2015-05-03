@@ -9819,8 +9819,10 @@ proc showrefs {} {
 	-width 30 -height 20 -cursor $maincursor \
 	-spacing1 1 -spacing3 1 -state disabled
     $top.list tag configure highlight -background $selectbgcolor
-    lappend bglist $top.list
-    lappend fglist $top.list
+    if {![lsearch -exact $bglist $top.list]} {
+	lappend bglist $top.list
+	lappend fglist $top.list
+    }
     ${NS}::scrollbar $top.ysb -command "$top.list yview" -orient vertical
     ${NS}::scrollbar $top.xsb -command "$top.list xview" -orient horizontal
     grid $top.list $top.ysb -sticky nsew
@@ -11532,7 +11534,9 @@ proc choosecolor {v vi w x cmd} {
 proc setselbg {c} {
     global bglist cflist
     foreach w $bglist {
-	$w configure -selectbackground $c
+	if {[winfo exists $w]} {
+	    $w configure -selectbackground $c
+	}
     }
     $cflist tag configure highlight \
 	-background [$cflist cget -selectbackground]
@@ -11558,7 +11562,9 @@ proc setbg {c} {
     global bglist
 
     foreach w $bglist {
-	$w conf -background $c
+	if {[winfo exists $w]} {
+	    $w conf -background $c
+	}
     }
 }
 
@@ -11566,7 +11572,9 @@ proc setfg {c} {
     global fglist canv
 
     foreach w $fglist {
-	$w conf -foreground $c
+	if {[winfo exists $w]} {
+	    $w conf -foreground $c
+	}
     }
     allcanvs itemconf text -fill $c
     $canv itemconf circle -outline $c
