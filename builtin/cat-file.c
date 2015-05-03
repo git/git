@@ -362,12 +362,12 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 
 	const struct option options[] = {
 		OPT_GROUP(N_("<type> can be one of: blob, tree, commit, tag")),
-		OPT_SET_INT('t', NULL, &opt, N_("show object type"), 't'),
-		OPT_SET_INT('s', NULL, &opt, N_("show object size"), 's'),
-		OPT_SET_INT('e', NULL, &opt,
+		OPT_CMDMODE('t', NULL, &opt, N_("show object type"), 't'),
+		OPT_CMDMODE('s', NULL, &opt, N_("show object size"), 's'),
+		OPT_CMDMODE('e', NULL, &opt,
 			    N_("exit with zero when there's no error"), 'e'),
-		OPT_SET_INT('p', NULL, &opt, N_("pretty-print object's content"), 'p'),
-		OPT_SET_INT(0, "textconv", &opt,
+		OPT_CMDMODE('p', NULL, &opt, N_("pretty-print object's content"), 'p'),
+		OPT_CMDMODE(0, "textconv", &opt,
 			    N_("for blob objects, run textconv on object's content"), 'c'),
 		{ OPTION_CALLBACK, 0, "batch", &batch, "format",
 			N_("show info and content of objects fed from the standard input"),
@@ -379,9 +379,6 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 	};
 
 	git_config(git_cat_file_config, NULL);
-
-	if (argc != 3 && argc != 2)
-		usage_with_options(cat_file_usage, options);
 
 	argc = parse_options(argc, argv, prefix, options, cat_file_usage, 0);
 
