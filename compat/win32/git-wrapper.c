@@ -189,10 +189,7 @@ static int configure_via_resource(LPWSTR basename, LPWSTR exepath, LPWSTR exep,
 				return 0; /* no resources found */
 
 			fwprintf(stderr, L"Need a valid command-line; "
-				L"Copy %s to edit-res.exe and call\n"
-				L"\n\tedit-res.exe command %s "
-				L"\"<command-line>\"\n",
-				basename, basename);
+				L"Edit the string resources accordingly\n");
 			exit(1);
 		}
 
