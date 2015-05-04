@@ -187,9 +187,9 @@ static int strip_prefix(LPWSTR str, int *len, LPCWSTR prefix)
 static int configure_via_resource(LPWSTR basename, LPWSTR exepath, LPWSTR exep,
 	LPWSTR *prefix_args, int *prefix_args_len,
 	int *is_git_command, LPWSTR *working_directory, int *full_path,
-	int *skip_arguments)
+	int *skip_arguments, int *allocate_console)
 {
-	int id, minimal_search_path, wargc;
+	int id, minimal_search_path, needs_a_console, wargc;
 	LPWSTR *wargv;
 
 #define BUFSIZE 65536
@@ -198,6 +198,7 @@ static int configure_via_resource(LPWSTR basename, LPWSTR exepath, LPWSTR exep,
 
 	for (id = 0; ; id++) {
 		minimal_search_path = 0;
+		needs_a_console = 0;
 		len = LoadString(NULL, id, buf, BUFSIZE);
 
 		if (!len) {
@@ -218,6 +219,8 @@ static int configure_via_resource(LPWSTR basename, LPWSTR exepath, LPWSTR exep,
 		for (;;) {
 			if (strip_prefix(buf, &len, L"MINIMAL_PATH=1 "))
 				minimal_search_path = 1;
+			else if (strip_prefix(buf, &len, L"ALLOC_CONSOLE=1 "))
+				needs_a_console = 1;
 			else
 				break;
 		}
@@ -298,6 +301,8 @@ static int configure_via_resource(LPWSTR basename, LPWSTR exepath, LPWSTR exep,
 	}
 	if (minimal_search_path)
 		*full_path = 0;
+	if (needs_a_console)
+		*allocate_console = 1;
 	LocalFree(wargv);
 
 	return 1;
@@ -306,7 +311,8 @@ static int configure_via_resource(LPWSTR basename, LPWSTR exepath, LPWSTR exep,
 int main(void)
 {
 	int r = 1, wait = 1, prefix_args_len = -1, needs_env_setup = 1,
-		is_git_command = 1, full_path = 1, skip_arguments = 0;
+		is_git_command = 1, full_path = 1, skip_arguments = 0,
+		allocate_console = 0;
 	WCHAR exepath[MAX_PATH], exe[MAX_PATH];
 	LPWSTR cmd = NULL, exep = exe, prefix_args = NULL, basename;
 	LPWSTR working_directory = NULL;
@@ -326,11 +332,12 @@ int main(void)
 	if (configure_via_resource(basename, exepath, exep,
 			&prefix_args, &prefix_args_len,
 			&is_git_command, &working_directory,
-			&full_path, &skip_arguments)) {
+			&full_path, &skip_arguments, &allocate_console)) {
 		/* do nothing */
 	}
 	else if (!wcsicmp(basename, L"git-gui.exe")) {
 		static WCHAR buffer[BUFSIZE];
+		allocate_console = 1;
 		if (!PathRemoveFileSpec(exepath)) {
 			fwprintf(stderr,
 				L"Invalid executable path: %s\n", exepath);
@@ -386,6 +393,7 @@ int main(void)
 	}
 	else if (!wcsicmp(basename, L"gitk.exe")) {
 		static WCHAR buffer[BUFSIZE];
+		allocate_console = 1;
 		if (!PathRemoveFileSpec(exepath)) {
 			fwprintf(stderr,
 				L"Invalid executable path: %s\n", exepath);
@@ -437,16 +445,20 @@ int main(void)
 		ZeroMemory(&si, sizeof(STARTUPINFO));
 		si.cb = sizeof(STARTUPINFO);
 
-		console_handle = CreateFile(L"CONOUT$", GENERIC_WRITE,
+		if (allocate_console)
+			creation_flags |= CREATE_NEW_CONSOLE;
+		else if ((console_handle = CreateFile(L"CONOUT$", GENERIC_WRITE,
 				FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
-				FILE_ATTRIBUTE_NORMAL, NULL);
-		if (console_handle != INVALID_HANDLE_VALUE)
+				FILE_ATTRIBUTE_NORMAL, NULL)) !=
+				INVALID_HANDLE_VALUE)
 			CloseHandle(console_handle);
 		else {
+#define STD_HANDLE(field, id) si.hStd##field = GetStdHandle(STD_##id); if (!si.hStd##field) si.hStd##field = INVALID_HANDLE_VALUE
+			STD_HANDLE(Input, INPUT_HANDLE);
+			STD_HANDLE(Output, OUTPUT_HANDLE);
+			STD_HANDLE(Error, ERROR_HANDLE);
 			si.dwFlags = STARTF_USESTDHANDLES;
-			si.hStdInput = GetStdHandle(STD_INPUT_HANDLE);
-			si.hStdOutput = GetStdHandle(STD_OUTPUT_HANDLE);
-			si.hStdError = GetStdHandle(STD_ERROR_HANDLE);
+
 
 			creation_flags |= CREATE_NO_WINDOW;
 		}
@@ -455,7 +467,8 @@ int main(void)
 				cmd,  /* modified command line */
 				NULL, /* process handle inheritance */
 				NULL, /* thread handle inheritance */
-				TRUE, /* handles inheritable? */
+					/* handles inheritable? */
+				allocate_console ? FALSE : TRUE,
 				creation_flags,
 				NULL, /* environment: use parent */
 				working_directory, /* use parent's */
