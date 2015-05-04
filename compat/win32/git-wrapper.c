@@ -168,6 +168,22 @@ static LPWSTR fixup_commandline(LPWSTR exepath, LPWSTR *exep, int *wait,
 	return cmd;
 }
 
+static int strip_prefix(LPWSTR str, int *len, LPCWSTR prefix)
+{
+	LPWSTR start = str;
+	do {
+		if (str - start > *len)
+			return 0;
+		if (!*prefix) {
+			*len -= str - start;
+			memmove(start, str,
+				sizeof(WCHAR) * (wcslen(str) + 1));
+			return 1;
+		}
+	} while (*str++ == *prefix++);
+	return 0;
+}
+
 static int configure_via_resource(LPWSTR basename, LPWSTR exepath, LPWSTR exep,
 	LPWSTR *prefix_args, int *prefix_args_len,
 	int *is_git_command, LPWSTR *working_directory, int *full_path,
@@ -199,10 +215,11 @@ static int configure_via_resource(LPWSTR basename, LPWSTR exepath, LPWSTR exep,
 			exit(1);
 		}
 
-		if (!wcsncmp(L"MINIMAL_PATH=1 ", buf, 15)) {
-			minimal_search_path = 1;
-			memmove(buf, buf + 15,
-				sizeof(WCHAR) * (wcslen(buf + 15) + 1));
+		for (;;) {
+			if (strip_prefix(buf, &len, L"MINIMAL_PATH=1 "))
+				minimal_search_path = 1;
+			else
+				break;
 		}
 
 		buf[len] = L'\0';
