@@ -22,10 +22,8 @@ static int hash_literally(unsigned char *sha1, int fd, const char *type, unsigne
 
 	if (strbuf_read(&buf, fd, 4096) < 0)
 		ret = -1;
-	else if (flags & HASH_WRITE_OBJECT)
-		ret = write_sha1_file(buf.buf, buf.len, type, sha1);
 	else
-		ret = hash_sha1_file(buf.buf, buf.len, type, sha1);
+		ret = hash_sha1_file_literally(buf.buf, buf.len, type, sha1, flags);
 	strbuf_release(&buf);
 	return ret;
 }

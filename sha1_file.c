@@ -2962,6 +2962,27 @@ int write_sha1_file(const void *buf, unsigned long len, const char *type, unsign
 	return write_loose_object(sha1, hdr, hdrlen, buf, len, 0);
 }
 
+int hash_sha1_file_literally(const void *buf, unsigned long len, const char *type,
+			     unsigned char *sha1, unsigned flags)
+{
+	char *header;
+	int hdrlen, status = 0;
+
+	/* type string, SP, %lu of the length plus NUL must fit this */
+	header = xmalloc(strlen(type) + 32);
+	write_sha1_file_prepare(buf, len, type, sha1, header, &hdrlen);
+
+	if (!(flags & HASH_WRITE_OBJECT))
+		goto cleanup;
+	if (has_sha1_file(sha1))
+		goto cleanup;
+	status = write_loose_object(sha1, header, hdrlen, buf, len, 0);
+
+cleanup:
+	free(header);
+	return status;
+}
+
 int force_object_loose(const unsigned char *sha1, time_t mtime)
 {
 	void *buf;
