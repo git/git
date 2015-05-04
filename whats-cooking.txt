@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Apr 2015, #05; Thu, 30)
+Subject: What's cooking in git.git (May 2015, #01; Mon, 4)
 X-master-at: 3d4a3ffe64162b45ae7c991fc60623ecb4678cfd
 X-next-at: 7a0482398323b9bd8dbb64ab9010e63a95b81bce
 
-What's cooking in git.git (Apr 2015, #05; Thu, 30)
+What's cooking in git.git (May 2015, #01; Mon, 4)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -21,90 +21,101 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* mg/show-notes-doc (2015-04-17) 1 commit
-  (merged to 'next' on 2015-04-20 at 2e93969)
- + rev-list-options.txt: complete sentence about notes matching
-
- Documentation fix.
-
-
-* mg/status-v-v (2015-04-23) 1 commit
-  (merged to 'next' on 2015-04-25 at cbcaca4)
- + status: document the -v/--verbose option
-
- Documentation fix.
-
-
-* nd/versioncmp-prereleases (2015-04-23) 1 commit
-  (merged to 'next' on 2015-04-25 at f824d7f)
- + git tag: mention versionsort.prereleaseSuffix in manpage
-
- Documentation fix.
-
---------------------------------------------------
 [New Topics]
 
-* jk/rebase-quiet-noop (2015-04-28) 1 commit
- - rebase: silence "git checkout" for noop rebase
+* mh/ref-directory-file (2015-05-03) 18 commits
+ - reflog_expire(): integrate lock_ref_sha1_basic() errors into ours
+ - ref_transaction_commit(): delete extra "the" from error message
+ - ref_transaction_commit(): provide better error messages
+ - rename_ref(): integrate lock_ref_sha1_basic() errors into ours
+ - lock_ref_sha1_basic(): improve diagnostics for D/F conflicts
+ - lock_ref_sha1_basic(): report errors via a "struct strbuf *err"
+ - verify_refname_available(): report errors via a "struct strbuf *err"
+ - verify_refname_available(): rename function
+ - refs: check for D/F conflicts among refs processed in a transaction
+ - ref_transaction_commit(): use a string_list for detecting duplicates
+ - is_refname_available(): use dirname in first loop
+ - struct nonmatching_ref_data: store a refname instead of a ref_entry
+ - report_refname_conflict(): inline function
+ - entry_matches(): inline function
+ - is_refname_available(): convert local variable "dirname" to strbuf
+ - is_refname_available(): avoid shadowing "dir" variable
+ - is_refname_available(): explain the reason for an early exit
+ - t1404: new tests of D/F conflicts within ref transactions
+ (this branch uses mh/ref-lock-avoid-running-out-of-fds.)
 
- "git rebase --quiet" was not quite quiet when there is nothing to
- do.
+ Somehow this does not seem to pass its own test.
+
+
+* nd/dwim-wildcards-as-pathspecs (2015-05-03) 1 commit
+ - pathspec: avoid the need of "--" when wildcard is used
+
+ A heuristic to help the "git <cmd> <revs> <pathspec>" command line
+ convention to catch mistyped paths is to make sure all the non-rev
+ parameters in the later part of the command line are names of the
+ files in the working tree, but that means "git grep $str -- \*.c"
+ must always be disambiguated with "--", because nobody sane will
+ create a file whose name literally is asterisk-dot-see.  Loosen the
+ heuristic to declare that with a wildcard string the user likely
+ meant to give us a pathspec.
+
+ Will merge to 'next'.
+
+
+* pt/pull-tests (2015-05-03) 7 commits
+ - t5521: test --dry-run does not make any changes
+ - t5520: test --rebase failure on unborn branch with index
+ - t5520: test --rebase with multiple branches
+ - t5520: test work tree fast-forward when fetch updates head
+ - t5520: test for failure if index has unresolved entries
+ - t5520: implement tests for no merge candidates cases
+ - t5520: test pulling multiple branches into an empty repository
+
+ Add more test coverage to "git pull".  This conflicts slightly with
+ a new test jc/merge topic adds, but resolution is fairly trivial.
 
  Will merge to 'next'.
 
 
-* ld/p4-case-fold (2015-04-28) 1 commit
- - git-p4: add failing tests for case-folding p4d
+* sg/complete-decorate-full-not-long (2015-05-03) 1 commit
+ - completion: fix and update 'git log --decorate=' options
+
+ The completion for "log --decorate=" parameter value was incorrect.
 
  Will merge to 'next'.
 
 
-* va/fix-git-p4-tests (2015-04-28) 1 commit
- - git-p4: t9814: prevent --chain-lint failure
+* sg/completion-no-redundant-all-command-list (2015-05-03) 1 commit
+ - completion: remove redundant __git_compute_all_commands() call
 
  Will merge to 'next'.
 
 
-* jk/filter-branch-use-of-sed-on-incomplete-line (2015-04-29) 1 commit
- - filter-branch: avoid passing commit message through sed
+* jc/hash-object (2015-05-04) 4 commits
+ - write_sha1_file(): do not use a separate sha1[] array
+ - t1007: add hash-object --literally tests
+ - write_sha1_file_prepare: fix buffer overrun with extra-long object type
+ - git-hash-object.txt: document --literally option
 
- "filter-branch" was broken by some "sed" implementations that
- corrupt commit log message that ends with an incomplete line.
- Work it around by avoiding to use "sed".
-
- Will merge to 'next'.
-
-
-* ph/rebase-i-redo (2015-04-29) 1 commit
- - rebase -i: redo tasks that die during cherry-pick
-
- "git rebase -i" moved the "current" command from "todo" to "done" a
- bit too prematurely, losing a step when a "pick" did not even start.
+ "hash-object --literally" introduced in v2.2 days was not prepared
+ to take a really long object type name.
 
  Will merge to 'next'.
 
 
-* ep/do-not-feed-a-pointer-to-array-size (2015-04-30) 2 commits
- - SQUASH???
- - git-compat-util.h: implement a different ARRAY_SIZE macro for for safely deriving the size of array
+* jn/clean-use-error-not-fprintf-on-stderr (2015-05-04) 1 commit
+ - config: use error() instead of fprintf(stderr, ...)
 
- Catch programmer mistake to feed a pointer not an array to
- ARRAY_SIZE() macro, by using a couple of GCC extensions.
-
-
-* tb/blame-resurrect-convert-to-git (2015-04-30) 1 commit
- - blame: CRLF in the working tree and LF in the repo
-
- Some time ago, "git blame" (incorrectly) lost the convert_to_git()
- call when synthesizing a fake "tip" commit that represents the
- state in the working tree, which broke folks who record the history
- with LF line ending to make their project portabile across
- platforms while terminating lines in their working tree files with
- CRLF for their platform.
+ Some error messages in "git config" were emitted without calling
+ the usual error() facility.
 
  Will merge to 'next'.
+
+
+* jc/clone-bundle (2015-04-30) 1 commit
+ - repack: optionally create a clone.bundle
+
+ Still an early WIP
 
 --------------------------------------------------
 [Stalled]
@@ -148,21 +159,6 @@ of the repositories listed at
  This is the first two commits in a three-patch series $gmane/266962
  Will be rerolled.
  with updated log message ($gmane/268061).
-
-
-* jk/at-push-sha1 (2015-03-31) 6 commits
- - sha1_name: implement @{push} shorthand
- - sha1_name: refactor upstream_mark
- - remote.c: provide per-branch pushremote name
- - remote.c: hoist branch.*.remote lookup out of remote_get_1
- - remote.c: drop "remote" pointer from "struct branch"
- - remote.c: drop default_remote_name variable
-
- Introduce <branch>@{push} short-hand to denote the remote-tracking
- branch that tracks the branch at the remote the <branch> would be
- pushed to.
-
- Will be rerolled ($gmane/268040).
 
 
 * pt/xdg-config-path (2015-04-12) 7 commits
@@ -394,6 +390,90 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* jk/at-push-sha1 (2015-05-03) 12 commits
+ - for-each-ref: accept "%(push)" format
+ - for-each-ref: use skip_prefix instead of starts_with
+ - sha1_name: implement @{push} shorthand
+ - sha1_name: refactor interpret_upstream_mark
+ - sha1_name: refactor upstream_mark
+ - remote.c: add branch_get_push
+ - remote.c: report specific errors from branch_get_upstream
+ - remote.c: introduce branch_get_upstream helper
+ - remote.c: provide per-branch pushremote name
+ - remote.c: hoist branch.*.remote lookup out of remote_get_1
+ - remote.c: drop "remote" pointer from "struct branch"
+ - remote.c: drop default_remote_name variable
+
+ Introduce <branch>@{push} short-hand to denote the remote-tracking
+ branch that tracks the branch at the remote the <branch> would be
+ pushed to.
+
+ Rerolled (not reviewed yet).
+
+
+* jk/rebase-quiet-noop (2015-04-28) 1 commit
+ - rebase: silence "git checkout" for noop rebase
+
+ "git rebase --quiet" was not quite quiet when there is nothing to
+ do.
+
+ Will merge to 'next'.
+
+
+* ld/p4-case-fold (2015-04-28) 1 commit
+ - git-p4: add failing tests for case-folding p4d
+
+ Will merge to 'next'.
+
+
+* va/fix-git-p4-tests (2015-04-28) 1 commit
+ - git-p4: t9814: prevent --chain-lint failure
+
+ Will merge to 'next'.
+
+
+* jk/filter-branch-use-of-sed-on-incomplete-line (2015-04-29) 1 commit
+ - filter-branch: avoid passing commit message through sed
+
+ "filter-branch" was broken by some "sed" implementations that
+ corrupt commit log message that ends with an incomplete line.
+ Work it around by avoiding to use "sed".
+
+ Will merge to 'next'.
+
+
+* ph/rebase-i-redo (2015-04-29) 1 commit
+ - rebase -i: redo tasks that die during cherry-pick
+
+ "git rebase -i" moved the "current" command from "todo" to "done" a
+ bit too prematurely, losing a step when a "pick" did not even start.
+
+ Will merge to 'next'.
+
+
+* ep/do-not-feed-a-pointer-to-array-size (2015-04-30) 2 commits
+ - SQUASH???
+ - git-compat-util.h: implement a different ARRAY_SIZE macro for for safely deriving the size of array
+
+ Catch programmer mistake to feed a pointer not an array to
+ ARRAY_SIZE() macro, by using a couple of GCC extensions.
+
+ With the fix-up, will merge to 'next'.
+
+
+* tb/blame-resurrect-convert-to-git (2015-05-03) 1 commit
+ - blame: CRLF in the working tree and LF in the repo
+
+ Some time ago, "git blame" (incorrectly) lost the convert_to_git()
+ call when synthesizing a fake "tip" commit that represents the
+ state in the working tree, which broke folks who record the history
+ with LF line ending to make their project portabile across
+ platforms while terminating lines in their working tree files with
+ CRLF for their platform.
+
+ Will merge to 'next'.
+
+
 * jc/epochtime-wo-tz (2015-04-15) 2 commits
   (merged to 'next' on 2015-04-21 at b926f72)
  + parse_date_basic(): let the system handle DST conversion
@@ -618,6 +698,8 @@ of the repositories listed at
  implementation of "git pull" script; the old style syntax can now
  be deprecated.
 
+ Will merge to 'next'.
+
 
 * jc/merge-drop-old-syntax (2015-04-29) 1 commit
  - merge: drop 'git merge <message> HEAD <commit>' syntax
@@ -625,6 +707,8 @@ of the repositories listed at
 
  Stop supporting "git merge <messsage> HEAD <commit>" syntax that
  has been deprecated since October 2007.
+
+ Will merge to 'next'.
 
 
 * jk/test-chain-lint (2015-04-28) 2 commits
@@ -643,7 +727,7 @@ of the repositories listed at
  - refs.c: remove lock_fd from struct ref_lock
  - t7004: rename ULIMIT test prerequisite to ULIMIT_STACK_SIZE
  - update-ref: test handling large transactions properly
- (this branch is tangled with sb/ref-lock-avoid-running-out-of-fds.)
+ (this branch is used by mh/ref-directory-file.)
 
  "git update-ref --stdin" was converted to be "transactional" some
  time ago, but the ref transaction machinery was not prepared to
@@ -652,8 +736,10 @@ of the repositories listed at
  limit.  Fix the ref_transaction_commit() code not to keep the file
  descriptors open unnecessarily.
 
- We would probably want to apply the fix to older codebase, but this
- fix is unfortunately done to apply only on v2.4.x track.
+ We would want to apply the fix to older codebase, but this fix is
+ unfortunately done to apply only on v2.4.x track.
+
+ Expecting a rebase to older codebase.
 
 
 * bc/connect-plink (2015-04-28) 3 commits
@@ -685,13 +771,11 @@ of the repositories listed at
  Will merge to 'next'.
 
 
-* ah/usage-strings (2015-04-02) 2 commits
+* ah/usage-strings (2015-05-03) 2 commits
  - branch: fix funny-sounding error message
- - standardize usage strings that were missed the first time
+ - blame, log: format usage strings similarly to those in documentation
 
- A few usage string updates.
-
- Will merge to 'next'.
+ A few usage string updates.  The tip one still needs work.
 
 
 * jk/reading-packed-refs (2015-04-16) 9 commits
@@ -713,18 +797,21 @@ of the repositories listed at
  Will merge to 'master' in the second batch of post v2.4 cycle.
 
 
-* kn/cat-file-literally (2015-04-15) 5 commits
- - SQUASH???
- - t1006: add tests for git cat-file --literally
- - cat-file: add documentation for '--literally' option.
- - cat-file: teach cat-file a '--literally' option
- - sha1_file.c: support reading from a loose object of unknown type
+* kn/cat-file-literally (2015-05-04) 5 commits
+ - fixup! sha1_file: support reading from a loose object of unknown type
+ - t1006: add tests for git cat-file --allow-unknown-type
+ - cat-file: teach cat-file a '--allow-unknown-type' option
+ - cat-file: make the options mutually exclusive
+ - sha1_file: support reading from a loose object of unknown type
 
- Add the "--literally" option to "cat-file" to allow inspecting
- loose objects of an experimental or a broken type.
+ Add the "--allow-unknown-type" option to "cat-file" to allow
+ inspecting loose objects of an experimental or a broken type.
 
- This is v8 $gmane/267213; v9 was posted but it will still needs reroll.
- Waiting for reroll.
+ This is v10 $gmane/267960; I think with fixup! squashed in the
+ series is in a good shape (the test may fail without Eric's fix
+ to "hash-object --literally" elsewhere, though).
+
+ Will merge to 'next'.
 
 
 * ld/p4-filetype-detection (2015-04-04) 3 commits
@@ -964,7 +1051,6 @@ of the repositories listed at
  - refs.c: remove lock_fd from struct ref_lock
  - t7004: rename ULIMIT test prerequisite to ULIMIT_STACK_SIZE
  - update-ref: test handling large transactions properly
- (this branch is tangled with mh/ref-lock-avoid-running-out-of-fds.)
 
 
 * jc/merge-deprecate-old-syntax (2015-03-26) 1 commit
