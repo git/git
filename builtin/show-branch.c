@@ -718,7 +718,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 	}
 
 	/* If nothing is specified, show all branches by default */
-	if (ac + all_heads + all_remotes == 0)
+	if (ac <= topics && all_heads + all_remotes == 0)
 		all_heads = 1;
 
 	if (reflog) {
@@ -785,13 +785,13 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 		}
 		free(ref);
 	}
-	else if (all_heads + all_remotes)
-		snarf_refs(all_heads, all_remotes);
 	else {
 		while (0 < ac) {
 			append_one_rev(*av);
 			ac--; av++;
 		}
+		if (all_heads + all_remotes)
+			snarf_refs(all_heads, all_remotes);
 	}
 
 	head_p = resolve_ref_unsafe("HEAD", RESOLVE_REF_READING,
