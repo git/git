@@ -170,7 +170,7 @@ int main(int argc, char **argv)
 	} else {
 		if ((file = expand_user_path("~/.git-credentials")))
 			string_list_append_nodup(&fns, file);
-		home_config_paths(NULL, &file, "credentials");
+		file = xdg_config_home("credentials");
 		if (file)
 			string_list_append_nodup(&fns, file);
 	}
