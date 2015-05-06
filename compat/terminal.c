@@ -4,6 +4,7 @@
 #include "compat/terminal.h"
 #include "sigchain.h"
 #include "strbuf.h"
+#include "cache.h"
 
 #if defined(HAVE_DEV_TTY) || defined(GIT_WINDOWS_NATIVE)
 
@@ -95,49 +96,63 @@ static int disable_echo(void)
 
 static char *xterm_prompt(const char *prompt, int echo)
 {
-	const char *env = getenv("MSYS_TTY_HANDLES");
+	const char *read_password[] = {
+		"sh", "-c",
+		"cat >/dev/tty && read line </dev/tty && echo \"$line\"",
+		NULL
+	};
 	const char *echo_off[] = { "sh", "-c", "stty -echo </dev/tty", NULL };
 	const char *echo_on[] = { "sh", "-c", "stty echo </dev/tty", NULL };
-	static char buffer[1024];
-	DWORD len, dummy;
-	size_t tty0, tty1, tty2;
-	HANDLE in_handle, out_handle;
-
-	if (!env || 3 != sscanf(env,
-	    " %" SCNuPTR " %" SCNuPTR " %" SCNuPTR " ",
-	    &tty0, &tty1, &tty2)) {
-		warning("Cannot read from xterm");
-		return NULL;
-	}
-
-	in_handle = (HANDLE)tty0;
-	out_handle = (HANDLE)tty1;
+	const char *new_line[] = { "sh", "-c", "printf '\\n' >/dev/tty", NULL };
+	struct child_process child = CHILD_PROCESS_INIT;
+	static struct strbuf buffer = STRBUF_INIT;
+	int prompt_len = strlen(prompt), len = -1, code;
 
 	if (!echo && run_command_v_opt(echo_off, 0))
 		warning("Could not disable echo on xterm");
 
-	if (!WriteFile(out_handle, prompt, strlen(prompt), &dummy, NULL)) {
-		warning("Could not write to xterm");
-		return NULL;
+	child.argv = read_password;
+	child.in = -1;
+	child.out = -1;
+
+	code = start_command(&child);
+	if (code) {
+		error("Could not access xterm");
+		goto ret;
 	}
 
-	if (!ReadFile(in_handle, buffer, 1024, &len, NULL)) {
-		warning("Could not read from xterm");
-		return NULL;
+	if (write_in_full(child.in, prompt, prompt_len) != prompt_len) {
+		error("Could not write to xterm");
+		close(child.in);
+		close(child.out);
+		goto ret;
+	}
+	close(child.in);
+
+	strbuf_setlen(&buffer, 0);
+	len = strbuf_read(&buffer, child.out, 1024);
+	close(child.out);
+	if (len < 0) {
+		error("Could not read from xterm");
+		goto ret;
 	}
 
-	if (len && buffer[len - 1] == '\n')
-		buffer[--len] = '\0';
-	if (len && buffer[len - 1] == '\r')
-		buffer[--len] = '\0';
+	if (len && buffer.buf[len - 1] == '\n')
+		strbuf_setlen(&buffer, len - 1);
+	if (len && buffer.buf[len - 1] == '\r')
+		strbuf_setlen(&buffer, len - 1);
+
+ret:
+	if (!code)
+		finish_command(&child);
 
 	if (!echo) {
-		if(run_command_v_opt(echo_on, 0))
-			warning("Could not re-enable echo on xterm");
-		WriteFile(out_handle, "\n", 1, &dummy, NULL);
+		if (run_command_v_opt(echo_on, 0))
+			warning("Could not enable echo on xterm");
+		run_command_v_opt(new_line, 0);
 	}
 
-	return len == 0 ? NULL : buffer;
+	return len < 0 ? NULL : buffer.buf;
 }
 
 #endif
