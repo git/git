@@ -6,6 +6,7 @@
 
 #include "tree-walk.h"
 #include "pathspec.h"
+#include "object.h"
 
 struct rev_info;
 struct diff_options;
@@ -207,11 +208,11 @@ struct combine_diff_path {
 	struct combine_diff_path *next;
 	char *path;
 	unsigned int mode;
-	unsigned char sha1[20];
+	struct object_id oid;
 	struct combine_diff_parent {
 		char status;
 		unsigned int mode;
-		unsigned char sha1[20];
+		struct object_id oid;
 	} parent[FLEX_ARRAY];
 };
 #define combine_diff_path_size(n, l) \
