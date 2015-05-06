@@ -2999,7 +2999,14 @@ static int freshen_loose_object(const unsigned char *sha1)
 static int freshen_packed_object(const unsigned char *sha1)
 {
 	struct pack_entry e;
-	return find_pack_entry(sha1, &e) && freshen_file(e.p->pack_name);
+	if (!find_pack_entry(sha1, &e))
+		return 0;
+	if (e.p->freshened)
+		return 1;
+	if (!freshen_file(e.p->pack_name))
+		return 0;
+	e.p->freshened = 1;
+	return 1;
 }
 
 int write_sha1_file(const void *buf, unsigned long len, const char *type, unsigned char *returnsha1)
@@ -3014,7 +3021,7 @@ int write_sha1_file(const void *buf, unsigned long len, const char *type, unsign
 	write_sha1_file_prepare(buf, len, type, sha1, hdr, &hdrlen);
 	if (returnsha1)
 		hashcpy(returnsha1, sha1);
-	if (freshen_loose_object(sha1) || freshen_packed_object(sha1))
+	if (freshen_packed_object(sha1) || freshen_loose_object(sha1))
 		return 0;
 	return write_loose_object(sha1, hdr, hdrlen, buf, len, 0);
 }
@@ -3418,7 +3425,7 @@ static int loose_from_alt_odb(struct alternate_object_database *alt,
 	return r;
 }
 
-int for_each_loose_object(each_loose_object_fn cb, void *data)
+int for_each_loose_object(each_loose_object_fn cb, void *data, unsigned flags)
 {
 	struct loose_alt_odb_data alt;
 	int r;
@@ -3427,6 +3434,9 @@ int for_each_loose_object(each_loose_object_fn cb, void *data)
 					  cb, NULL, NULL, data);
 	if (r)
 		return r;
+
+	if (flags & FOR_EACH_OBJECT_LOCAL_ONLY)
+		return 0;
 
 	alt.cb = cb;
 	alt.data = data;
@@ -3452,13 +3462,15 @@ static int for_each_object_in_pack(struct packed_git *p, each_packed_object_fn c
 	return r;
 }
 
-int for_each_packed_object(each_packed_object_fn cb, void *data)
+int for_each_packed_object(each_packed_object_fn cb, void *data, unsigned flags)
 {
 	struct packed_git *p;
 	int r = 0;
 
 	prepare_packed_git();
 	for (p = packed_git; p; p = p->next) {
+		if ((flags & FOR_EACH_OBJECT_LOCAL_ONLY) && !p->pack_local)
+			continue;
 		r = for_each_object_in_pack(p, cb, data);
 		if (r)
 			break;

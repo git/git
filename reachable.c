@@ -142,10 +142,12 @@ int add_unseen_recent_objects_to_traversal(struct rev_info *revs,
 	data.revs = revs;
 	data.timestamp = timestamp;
 
-	r = for_each_loose_object(add_recent_loose, &data);
+	r = for_each_loose_object(add_recent_loose, &data,
+				  FOR_EACH_OBJECT_LOCAL_ONLY);
 	if (r)
 		return r;
-	return for_each_packed_object(add_recent_packed, &data);
+	return for_each_packed_object(add_recent_packed, &data,
+				      FOR_EACH_OBJECT_LOCAL_ONLY);
 }
 
 void mark_reachable_objects(struct rev_info *revs, int mark_reflog,
