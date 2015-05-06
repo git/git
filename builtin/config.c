@@ -193,7 +193,7 @@ static int get_value(const char *key_, const char *regex_)
 
 		key_regexp = (regex_t*)xmalloc(sizeof(regex_t));
 		if (regcomp(key_regexp, key, REG_EXTENDED)) {
-			fprintf(stderr, "Invalid key pattern: %s\n", key_);
+			error("invalid key pattern: %s", key_);
 			free(key_regexp);
 			key_regexp = NULL;
 			ret = CONFIG_INVALID_PATTERN;
@@ -214,7 +214,7 @@ static int get_value(const char *key_, const char *regex_)
 
 		regexp = (regex_t*)xmalloc(sizeof(regex_t));
 		if (regcomp(regexp, regex_, REG_EXTENDED)) {
-			fprintf(stderr, "Invalid pattern: %s\n", regex_);
+			error("invalid pattern: %s", regex_);
 			free(regexp);
 			regexp = NULL;
 			ret = CONFIG_INVALID_PATTERN;
