@@ -478,7 +478,6 @@ static int git_attr_system(void)
 static void bootstrap_attr_stack(void)
 {
 	struct attr_stack *elem;
-	char *xdg_attributes_file;
 
 	if (attr_stack)
 		return;
@@ -497,10 +496,8 @@ static void bootstrap_attr_stack(void)
 		}
 	}
 
-	if (!git_attributes_file) {
-		home_config_paths(NULL, &xdg_attributes_file, "attributes");
-		git_attributes_file = xdg_attributes_file;
-	}
+	if (!git_attributes_file)
+		git_attributes_file = xdg_config_home("attributes");
 	if (git_attributes_file) {
 		elem = read_attr_from_file(git_attributes_file, 1);
 		if (elem) {
