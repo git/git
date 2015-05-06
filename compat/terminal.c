@@ -96,7 +96,7 @@ static int disable_echo(void)
 
 static char *xterm_prompt(const char *prompt, int echo)
 {
-	const char *read_password[] = {
+	const char *read_input[] = {
 		"sh", "-c",
 		"cat >/dev/tty && read line </dev/tty && echo \"$line\"",
 		NULL
@@ -111,7 +111,7 @@ static char *xterm_prompt(const char *prompt, int echo)
 	if (!echo && run_command_v_opt(echo_off, 0))
 		warning("Could not disable echo on xterm");
 
-	child.argv = read_password;
+	child.argv = read_input;
 	child.in = -1;
 	child.out = -1;
 
