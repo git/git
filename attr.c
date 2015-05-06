@@ -12,6 +12,7 @@
 #include "exec_cmd.h"
 #include "attr.h"
 #include "dir.h"
+#include "utf8.h"
 
 const char git_attr__true[] = "(builtin)true";
 const char git_attr__false[] = "\0(builtin)false";
@@ -379,8 +380,12 @@ static struct attr_stack *read_attr_from_file(const char *path, int macro_ok)
 		return NULL;
 	}
 	res = xcalloc(1, sizeof(*res));
-	while (fgets(buf, sizeof(buf), fp))
-		handle_attr_line(res, buf, path, ++lineno, macro_ok);
+	while (fgets(buf, sizeof(buf), fp)) {
+		char *bufp = buf;
+		if (!lineno)
+			skip_utf8_bom(&bufp, strlen(bufp));
+		handle_attr_line(res, bufp, path, ++lineno, macro_ok);
+	}
 	fclose(fp);
 	return res;
 }
