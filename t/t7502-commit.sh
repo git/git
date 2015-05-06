@@ -370,7 +370,7 @@ exit 0
 EOF
 
 test_expect_success !AUTOIDENT 'do not fire editor when committer is bogus' '
-	>.git/result
+	>.git/result &&
 	>expect &&
 
 	echo >>negative &&
