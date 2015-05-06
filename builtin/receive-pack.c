@@ -1008,7 +1008,7 @@ static void run_update_post_hook(struct command *commands)
 	int argc;
 	const char **argv;
 	struct child_process proc = CHILD_PROCESS_INIT;
-	char *hook;
+	const char *hook;
 
 	hook = find_hook("post-update");
 	for (argc = 0, cmd = commands; cmd; cmd = cmd->next) {

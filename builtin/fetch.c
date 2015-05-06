@@ -588,7 +588,8 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 	struct strbuf note = STRBUF_INIT;
 	const char *what, *kind;
 	struct ref *rm;
-	char *url, *filename = dry_run ? "/dev/null" : git_path("FETCH_HEAD");
+	char *url;
+	const char *filename = dry_run ? "/dev/null" : git_path("FETCH_HEAD");
 	int want_status;
 
 	fp = fopen(filename, "a");
@@ -822,7 +823,7 @@ static void check_not_current_branch(struct ref *ref_map)
 
 static int truncate_fetch_head(void)
 {
-	char *filename = git_path("FETCH_HEAD");
+	const char *filename = git_path("FETCH_HEAD");
 	FILE *fp = fopen(filename, "w");
 
 	if (!fp)
