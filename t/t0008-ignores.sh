@@ -831,4 +831,14 @@ test_expect_success !MINGW,!CYGWIN 'correct handling of backslashes' '
 	test_cmp err.expect err
 '
 
+test_expect_success 'info/exclude trumps core.excludesfile' '
+	echo >>global-excludes usually-ignored &&
+	echo >>.git/info/exclude "!usually-ignored" &&
+	>usually-ignored &&
+	echo "?? usually-ignored" >expect &&
+
+	git status --porcelain usually-ignored >actual &&
+	test_cmp expect actual
+'
+
 test_done
