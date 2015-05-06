@@ -1,0 +1,86 @@
+Git 2.5 Release Notes
+=====================
+
+Updates since v2.4
+------------------
+
+Ports
+
+
+UI, Workflows & Features
+
+ * "git p4" now detects the filetype (e.g. binary) correctly even when
+   the files are opened exclusively.
+
+ * "git show-branch --topics HEAD" (with no other arguments) did not
+   do anything interesting.  Instead, contrast the given revision
+   against all the local branches by default.
+
+
+Performance, Internal Implementation, Development Support etc.
+
+ * "unsigned char [20]" used thoughout the code to represent object
+   names are being converted into a semi-opaque "struct object_id".
+   This effort is expected to interfere with other topics in flight,
+   but hopefully will give us one extra level of abstraction in the
+   end, when completed.
+
+
+Also contains various documentation updates and code clean-ups.
+
+
+Fixes since v2.4
+----------------
+
+Unless otherwise noted, all the fixes since v2.4 in the maintenance
+track are contained in this release (see the maintenance releases'
+notes for details).
+
+ * We avoid setting core.worktree when the repository location is the
+   ".git" directory directly at the top level of the working tree, but
+   the code misdetected the case in which the working tree is at the
+   root level of the filesystem (which arguably is a silly thing to
+   do, but still valid).
+   (merge 84ccad8 jk/init-core-worktree-at-root later to maint).
+
+ * "git commit --date=now" or anything that relies on approxidate lost
+   the daylight-saving-time offset.
+   (merge f6e6362 jc/epochtime-wo-tz later to maint).
+
+ * Access to objects in repositories that borrow from another one on a
+   slow NFS server unnecessarily got more expensive due to recent code
+   becoming more cautious in a naive way not to lose objects to pruning.
+   (merge ee1c6c3 jk/prune-mtime later to maint).
+
+ * The codepaths that read .gitignore and .gitattributes files have been
+   taught that these files encoded in UTF-8 may have UTF-8 BOM marker at
+   the beginning; this makes it in line with what we do for configuration
+   files already.
+   (merge 27547e5 cn/bom-in-gitignore later to maint).
+
+ * a few helper scripts in the test suite did not report errors
+   correcty.
+   (merge de248e9 ep/fix-test-lib-functions-report later to maint).
+
+ * The default $HOME/.gitconfig file created upon "git config --global"
+   that edits it had incorrectly spelled user.name and user.email
+   entries in it.
+   (merge 7e11052 oh/fix-config-default-user-name-section later to maint).
+
+ * "git cat-file bl $blob" failed to barf even though there is no
+   object type that is "bl".
+   (merge b7994af jk/type-from-string-gently later to maint).
+
+ * The usual "git diff" when seeing a file turning into a directory
+   showed a patchset to remove the file and create all files in the
+   directory, but "git diff --no-index" simply refused to work.  Also,
+   when asked to compare a file and a directory, imitate POSIX "diff"
+   and compare the file with the file with the same name in the
+   directory, instead of refusing to run.
+   (merge 0615173 jc/diff-no-index-d-f later to maint).
+
+ * Code cleanups and documentation updates.
+   (merge 0269f96 mm/usage-log-l-can-take-regex later to maint).
+   (merge 64f2589 nd/t1509-chroot-test later to maint).
+   (merge f86a374 sb/test-bitmap-free-at-end later to maint).
+   (merge 05bfc7d sb/line-log-plug-pairdiff-leak later to maint).
