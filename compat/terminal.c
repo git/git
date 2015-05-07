@@ -98,7 +98,7 @@ static char *xterm_prompt(const char *prompt, int echo)
 {
 	const char *read_input[] = {
 		"sh", "-c",
-		"cat >/dev/tty && read line </dev/tty && echo \"$line\"",
+		"cat >/dev/tty && read -r line </dev/tty && echo \"$line\"",
 		NULL
 	};
 	const char *echo_off[] = { "sh", "-c", "stty -echo </dev/tty", NULL };
