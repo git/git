@@ -146,7 +146,7 @@ OPTIONS
 OPTIONS FOR add, merge, push, pull
 ----------------------------------
 --squash::
-	This option is only valid for add, merge, push and pull
+	This option is only valid for add, merge, and pull
 	commands.
 +
 Instead of merging the entire history from the subtree project, produce
