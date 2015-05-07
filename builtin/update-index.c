@@ -532,10 +532,9 @@ static int do_unresolve(int ac, const char **av,
 
 	for (i = 1; i < ac; i++) {
 		const char *arg = av[i];
-		const char *p = prefix_path(prefix, prefix_length, arg);
+		char *p = prefix_path(prefix, prefix_length, arg);
 		err |= unresolve_one(p);
-		if (p < arg || p > arg + strlen(arg))
-			free((char *)p);
+		free(p);
 	}
 	return err;
 }
@@ -871,14 +870,14 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 		case PARSE_OPT_DONE:
 		{
 			const char *path = ctx.argv[0];
-			const char *p;
+			char *p;
 
 			setup_work_tree();
 			p = prefix_path(prefix, prefix_length, path);
 			update_one(p);
 			if (set_executable_bit)
 				chmod_path(set_executable_bit, p);
-			free((char *)p);
+			free(p);
 			ctx.argc--;
 			ctx.argv++;
 			break;
@@ -909,7 +908,7 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 
 		setup_work_tree();
 		while (strbuf_getline(&buf, stdin, line_termination) != EOF) {
-			const char *p;
+			char *p;
 			if (line_termination && buf.buf[0] == '"') {
 				strbuf_reset(&nbuf);
 				if (unquote_c_style(&nbuf, buf.buf, NULL))
@@ -920,7 +919,7 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 			update_one(p);
 			if (set_executable_bit)
 				chmod_path(set_executable_bit, p);
-			free((char *)p);
+			free(p);
 		}
 		strbuf_release(&nbuf);
 		strbuf_release(&buf);
