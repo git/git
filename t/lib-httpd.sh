@@ -36,6 +36,12 @@ then
 	test_done
 fi
 
+if test -n "$NO_EXPAT" && test -n "$LIB_HTTPD_DAV"
+then
+	skip_all='skipping test, git built without expat support'
+	test_done
+fi
+
 test_tristate GIT_TEST_HTTPD
 if test "$GIT_TEST_HTTPD" = false
 then
