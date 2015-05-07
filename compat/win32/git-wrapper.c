@@ -189,7 +189,7 @@ static int configure_via_resource(LPWSTR basename, LPWSTR exepath, LPWSTR exep,
 	int *is_git_command, LPWSTR *working_directory, int *full_path,
 	int *skip_arguments, int *allocate_console)
 {
-	int id = 0, minimal_search_path, needs_a_console, wargc;
+	int id, minimal_search_path, needs_a_console, wargc;
 	LPWSTR *wargv;
 
 #define BUFSIZE 65536
