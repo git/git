@@ -129,7 +129,7 @@ static char *xterm_prompt(const char *prompt, int echo)
 	}
 	close(child.in);
 
-	strbuf_setlen(&buffer, 0);
+	strbuf_reset(&buffer);
 	len = strbuf_read(&buffer, child.out, 1024);
 	close(child.out);
 	if (len < 0) {
