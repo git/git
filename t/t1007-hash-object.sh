@@ -209,4 +209,15 @@ test_expect_success 'hash-object complains about truncated type name' '
 	test_must_fail git hash-object -t bl --stdin </dev/null
 '
 
+test_expect_success '--literally' '
+	t=1234567890 &&
+	echo example | git hash-object -t $t --literally --stdin
+'
+
+test_expect_success '--literally with extra-long type' '
+	t=12345678901234567890123456789012345678901234567890 &&
+	t="$t$t$t$t$t$t$t$t$t$t$t$t$t$t$t$t$t$t$t$t$t$t$t$t$t$t$t$t$t$t" &&
+	echo example | git hash-object -t $t --literally --stdin
+'
+
 test_done
