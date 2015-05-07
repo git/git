@@ -451,7 +451,7 @@ int main(void)
 		ZeroMemory(&si, sizeof(STARTUPINFO));
 		si.cb = sizeof(STARTUPINFO);
 
-		if (allocate_console)
+		if (allocate_console | show_console)
 			creation_flags |= CREATE_NEW_CONSOLE;
 		else if ((console_handle = CreateFile(L"CONOUT$", GENERIC_WRITE,
 				FILE_SHARE_WRITE, NULL, OPEN_EXISTING,
