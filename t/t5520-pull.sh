@@ -9,36 +9,27 @@ modify () {
 	mv "$2.x" "$2"
 }
 
-D=`pwd`
-
 test_expect_success setup '
-
 	echo file >file &&
 	git add file &&
 	git commit -a -m original
-
 '
 
 test_expect_success 'pulling into void' '
-	mkdir cloned &&
-	cd cloned &&
-	git init &&
-	git pull ..
-'
-
-cd "$D"
-
-test_expect_success 'checking the results' '
+	git init cloned &&
+	(
+		cd cloned &&
+		git pull ..
+	) &&
 	test -f file &&
 	test -f cloned/file &&
 	test_cmp file cloned/file
 '
 
 test_expect_success 'pulling into void using master:master' '
-	mkdir cloned-uho &&
+	git init cloned-uho &&
 	(
 		cd cloned-uho &&
-		git init &&
 		git pull .. master:master
 	) &&
 	test -f file &&
@@ -71,7 +62,6 @@ test_expect_success 'pulling into void does not overwrite staged files' '
 	)
 '
 
-
 test_expect_success 'pulling into void does not remove new staged files' '
 	git init cloned-staged-new &&
 	(
@@ -83,6 +73,15 @@ test_expect_success 'pulling into void does not remove new staged files' '
 		test_cmp expect newfile &&
 		git cat-file blob :newfile >newfile.index &&
 		test_cmp expect newfile.index
+	)
+'
+
+test_expect_success 'pulling into void must not create an octopus' '
+	git init cloned-octopus &&
+	(
+		cd cloned-octopus &&
+		test_must_fail git pull .. master master &&
+		! test -f file
 	)
 '
 
