@@ -137,10 +137,8 @@ static char *xterm_prompt(const char *prompt, int echo)
 		goto ret;
 	}
 
-	if (len && buffer.buf[len - 1] == '\n')
-		strbuf_setlen(&buffer, len - 1);
-	if (len && buffer.buf[len - 1] == '\r')
-		strbuf_setlen(&buffer, len - 1);
+	strbuf_strip_suffix(&buffer, "\n");
+	strbuf_strip_suffix(&buffer, "\r");
 
 ret:
 	if (!code)
