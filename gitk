@@ -2645,6 +2645,7 @@ proc makewindow {} {
     makemenu $headctxmenu {
 	{mc "Check out this branch" command cobranch}
 	{mc "Remove this branch" command rmbranch}
+	{mc "Copy branch name" command {clipboard clear; clipboard append $headmenuhead}}
     }
     $headctxmenu configure -tearoff 0
 
@@ -2655,6 +2656,7 @@ proc makewindow {} {
 	{mc "Highlight this only" command {flist_hl 1}}
 	{mc "External diff" command {external_diff}}
 	{mc "Blame parent commit" command {external_blame 1}}
+	{mc "Copy path" command {clipboard clear; clipboard append $flist_menu_file}}
     }
     $flist_menu configure -tearoff 0
 
