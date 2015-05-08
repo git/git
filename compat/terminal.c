@@ -124,14 +124,12 @@ static char *xterm_prompt(const char *prompt, int echo)
 	if (write_in_full(child.in, prompt, prompt_len) != prompt_len) {
 		error("Could not write to xterm");
 		close(child.in);
-		close(child.out);
 		goto ret;
 	}
 	close(child.in);
 
 	strbuf_reset(&buffer);
 	len = strbuf_read(&buffer, child.out, 1024);
-	close(child.out);
 	if (len < 0) {
 		error("Could not read from xterm");
 		goto ret;
@@ -141,6 +139,7 @@ static char *xterm_prompt(const char *prompt, int echo)
 	strbuf_strip_suffix(&buffer, "\r");
 
 ret:
+	close(child.out);
 	if (!code)
 		finish_command(&child);
 
