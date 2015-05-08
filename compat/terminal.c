@@ -94,7 +94,7 @@ static int disable_echo(void)
 	return 0;
 }
 
-static char *xterm_prompt(const char *prompt, int echo)
+static char *shell_prompt(const char *prompt, int echo)
 {
 	const char *read_input[] = {
 		/* Note: call 'bash' explicitly, as 'read -s' is bash-specific */
@@ -111,14 +111,11 @@ static char *xterm_prompt(const char *prompt, int echo)
 	child.in = -1;
 	child.out = -1;
 
-	code = start_command(&child);
-	if (code) {
-		error("Could not access xterm");
-		goto ret;
-	}
+	if (start_command(&child))
+		return NULL;
 
 	if (write_in_full(child.in, prompt, prompt_len) != prompt_len) {
-		error("Could not write to xterm");
+		error("could not write to prompt script");
 		close(child.in);
 		goto ret;
 	}
@@ -127,7 +124,7 @@ static char *xterm_prompt(const char *prompt, int echo)
 	strbuf_reset(&buffer);
 	len = strbuf_read(&buffer, child.out, 1024);
 	if (len < 0) {
-		error("Could not read from xterm");
+		error("could not read from prompt script");
 		goto ret;
 	}
 
@@ -136,8 +133,11 @@ static char *xterm_prompt(const char *prompt, int echo)
 
 ret:
 	close(child.out);
-	if (!code)
-		finish_command(&child);
+	code = finish_command(&child);
+	if (code) {
+		error("failed to execute prompt script (exit code %d)", code);
+		return NULL;
+	}
 
 	return len < 0 ? NULL : buffer.buf;
 }
@@ -157,7 +157,7 @@ char *git_terminal_prompt(const char *prompt, int echo)
 	const char *term = getenv("TERM");
 
 	if (term && starts_with(term, "xterm"))
-		return xterm_prompt(prompt, echo);
+		return shell_prompt(prompt, echo);
 #endif
 
 	input_fh = fopen(INPUT_PATH, "r" FORCE_TEXT);
