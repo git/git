@@ -2123,6 +2123,7 @@ _git_config ()
 		http.noEPSV
 		http.postBuffer
 		http.proxy
+		http.sslCipherList
 		http.sslCAInfo
 		http.sslCAPath
 		http.sslCert
