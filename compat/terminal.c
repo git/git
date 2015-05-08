@@ -97,19 +97,15 @@ static int disable_echo(void)
 static char *xterm_prompt(const char *prompt, int echo)
 {
 	const char *read_input[] = {
-		"sh", "-c",
-		"cat >/dev/tty && read -r line </dev/tty && echo \"$line\"",
+		/* Note: call 'bash' explicitly, as 'read -s' is bash-specific */
+		"bash", "-c", echo ?
+		"cat >/dev/tty && read -r line </dev/tty && echo \"$line\"" :
+		"cat >/dev/tty && read -r -s line </dev/tty && echo \"$line\" && echo >/dev/tty",
 		NULL
 	};
-	const char *echo_off[] = { "sh", "-c", "stty -echo </dev/tty", NULL };
-	const char *echo_on[] = { "sh", "-c", "stty echo </dev/tty", NULL };
-	const char *new_line[] = { "sh", "-c", "printf '\\n' >/dev/tty", NULL };
 	struct child_process child = CHILD_PROCESS_INIT;
 	static struct strbuf buffer = STRBUF_INIT;
 	int prompt_len = strlen(prompt), len = -1, code;
-
-	if (!echo && run_command_v_opt(echo_off, 0))
-		warning("Could not disable echo on xterm");
 
 	child.argv = read_input;
 	child.in = -1;
@@ -142,12 +138,6 @@ ret:
 	close(child.out);
 	if (!code)
 		finish_command(&child);
-
-	if (!echo) {
-		if (run_command_v_opt(echo_on, 0))
-			warning("Could not enable echo on xterm");
-		run_command_v_opt(new_line, 0);
-	}
 
 	return len < 0 ? NULL : buffer.buf;
 }
