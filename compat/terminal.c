@@ -209,6 +209,7 @@ static char *shell_prompt(const char *prompt, int echo)
 	child.argv = read_input;
 	child.in = -1;
 	child.out = -1;
+	child.silent_exec_failure = 1;
 
 	if (start_command(&child))
 		return NULL;
@@ -252,11 +253,14 @@ char *git_terminal_prompt(const char *prompt, int echo)
 	static struct strbuf buf = STRBUF_INIT;
 	int r;
 	FILE *input_fh, *output_fh;
-#ifdef GIT_WINDOWS_NATIVE
-	const char *term = getenv("TERM");
 
-	if (term && starts_with(term, "xterm"))
-		return shell_prompt(prompt, echo);
+#ifdef GIT_WINDOWS_NATIVE
+
+	/* try shell_prompt first, fall back to CONIN/OUT if bash is missing */
+	char *result = shell_prompt(prompt, echo);
+	if (result || errno != ENOENT)
+		return result;
+
 #endif
 
 	input_fh = fopen(INPUT_PATH, "r" FORCE_TEXT);
