@@ -3108,21 +3108,6 @@ static int commit_ref_update(struct ref_lock *lock,
 	return 0;
 }
 
-/*
- * Write sha1 as the new value of the reference specified by the
- * (open) lock. On error, roll back the lockfile and set errno
- * appropriately.
- */
-static int write_ref_sha1(struct ref_lock *lock,
-			  const unsigned char *sha1, const char *logmsg)
-{
-	if (write_ref_to_lockfile(lock, sha1) ||
-	    commit_ref_update(lock, sha1, logmsg))
-		return -1;
-
-	return 0;
-}
-
 int create_symref(const char *ref_target, const char *refs_heads_master,
 		  const char *logmsg)
 {
@@ -3816,9 +3801,13 @@ int ref_transaction_commit(struct ref_transaction *transaction,
 				 */
 				unlock_ref(update->lock);
 				update->lock = NULL;
-			} else if (write_ref_sha1(update->lock, update->new_sha1,
-						  update->msg)) {
-				update->lock = NULL; /* freed by write_ref_sha1 */
+			} else if (write_ref_to_lockfile(update->lock,
+							 update->new_sha1) ||
+				   commit_ref_update(update->lock,
+						     update->new_sha1,
+						     update->msg)) {
+				/* freed by one of the above calls: */
+				update->lock = NULL;
 				strbuf_addf(err, "Cannot update the ref '%s'.",
 					    update->refname);
 				ret = TRANSACTION_GENERIC_ERROR;
