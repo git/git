@@ -2183,7 +2183,7 @@ msgstr "Nichts spezifiziert, nichts hinzugefügt.\n"
 #: builtin/add.c:358
 #, c-format
 msgid "Maybe you wanted to say 'git add .'?\n"
-msgstr "Wollten Sie vielleicht 'git add .' sagen?\n"
+msgstr "Meinten Sie vielleicht 'git add .'?\n"
 
 #: builtin/add.c:363 builtin/check-ignore.c:172 builtin/clean.c:920
 #: builtin/commit.c:335 builtin/mv.c:130 builtin/reset.c:235 builtin/rm.c:299
