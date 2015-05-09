@@ -94,62 +94,50 @@ static int disable_echo(void)
 	return 0;
 }
 
-static char *xterm_prompt(const char *prompt, int echo)
+static char *shell_prompt(const char *prompt, int echo)
 {
 	const char *read_input[] = {
-		"sh", "-c",
-		"cat >/dev/tty && read line </dev/tty && echo \"$line\"",
+		/* Note: call 'bash' explicitly, as 'read -s' is bash-specific */
+		"bash", "-c", echo ?
+		"cat >/dev/tty && read -r line </dev/tty && echo \"$line\"" :
+		"cat >/dev/tty && read -r -s line </dev/tty && echo \"$line\" && echo >/dev/tty",
 		NULL
 	};
-	const char *echo_off[] = { "sh", "-c", "stty -echo </dev/tty", NULL };
-	const char *echo_on[] = { "sh", "-c", "stty echo </dev/tty", NULL };
-	const char *new_line[] = { "sh", "-c", "printf '\\n' >/dev/tty", NULL };
 	struct child_process child = CHILD_PROCESS_INIT;
 	static struct strbuf buffer = STRBUF_INIT;
 	int prompt_len = strlen(prompt), len = -1, code;
 
-	if (!echo && run_command_v_opt(echo_off, 0))
-		warning("Could not disable echo on xterm");
-
 	child.argv = read_input;
 	child.in = -1;
 	child.out = -1;
+	child.silent_exec_failure = 1;
 
-	code = start_command(&child);
-	if (code) {
-		error("Could not access xterm");
-		goto ret;
-	}
+	if (start_command(&child))
+		return NULL;
 
 	if (write_in_full(child.in, prompt, prompt_len) != prompt_len) {
-		error("Could not write to xterm");
+		error("could not write to prompt script");
 		close(child.in);
-		close(child.out);
 		goto ret;
 	}
 	close(child.in);
 
-	strbuf_setlen(&buffer, 0);
+	strbuf_reset(&buffer);
 	len = strbuf_read(&buffer, child.out, 1024);
-	close(child.out);
 	if (len < 0) {
-		error("Could not read from xterm");
+		error("could not read from prompt script");
 		goto ret;
 	}
 
-	if (len && buffer.buf[len - 1] == '\n')
-		strbuf_setlen(&buffer, len - 1);
-	if (len && buffer.buf[len - 1] == '\r')
-		strbuf_setlen(&buffer, len - 1);
+	strbuf_strip_suffix(&buffer, "\n");
+	strbuf_strip_suffix(&buffer, "\r");
 
 ret:
-	if (!code)
-		finish_command(&child);
-
-	if (!echo) {
-		if (run_command_v_opt(echo_on, 0))
-			warning("Could not enable echo on xterm");
-		run_command_v_opt(new_line, 0);
+	close(child.out);
+	code = finish_command(&child);
+	if (code) {
+		error("failed to execute prompt script (exit code %d)", code);
+		return NULL;
 	}
 
 	return len < 0 ? NULL : buffer.buf;
@@ -166,11 +154,14 @@ char *git_terminal_prompt(const char *prompt, int echo)
 	static struct strbuf buf = STRBUF_INIT;
 	int r;
 	FILE *input_fh, *output_fh;
-#ifdef GIT_WINDOWS_NATIVE
-	const char *term = getenv("TERM");
 
-	if (term && starts_with(term, "xterm"))
-		return xterm_prompt(prompt, echo);
+#ifdef GIT_WINDOWS_NATIVE
+
+	/* try shell_prompt first, fall back to CONIN/OUT if bash is missing */
+	char *result = shell_prompt(prompt, echo);
+	if (result || errno != ENOENT)
+		return result;
+
 #endif
 
 	input_fh = fopen(INPUT_PATH, "r" FORCE_TEXT);
