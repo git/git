@@ -1,5 +1,9 @@
 # Platform specific Makefile tweaks based on uname detection
 
+# Define NO_SAFESEH if you need MSVC/Visual Studio to ignore the lack of
+# Microsoft's Safe Exception Handling in libraries (such as zlib).
+# Typically required for VS2013+/32-bit compilation on Vista+ versions.
+
 uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
 uname_M := $(shell sh -c 'uname -m 2>/dev/null || echo not')
 uname_O := $(shell sh -c 'uname -o 2>/dev/null || echo not')
@@ -382,6 +386,11 @@ ifeq ($(uname_S),Windows)
 	PTHREAD_LIBS =
 	lib =
 	BASIC_CFLAGS += -DPROTECT_NTFS_DEFAULT=1
+
+ifdef NO_SAFESEH
+	LDFLAGS += -SAFESEH:NO
+endif
+
 ifndef DEBUG
 	BASIC_CFLAGS += -GL -Os -MD
 	BASIC_LDFLAGS += -LTCG
