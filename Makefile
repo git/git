@@ -2267,7 +2267,7 @@ profile-install: profile
 profile-fast-install: profile-fast
 	$(MAKE) install
 
-ifneq (,$(filter msvc-deploy,$(MAKECMDGOALS)))
+ifneq (msvc-deploy,$(filter msvc-deploy,$(MAKECMDGOALS)))
 install:: all
 endif
 
