@@ -744,13 +744,9 @@ __git_compute_porcelain_commands ()
 __git_get_config_variables ()
 {
 	local section="$1" i IFS=$'\n'
-	for i in $(git --git-dir="$(__gitdir)" config --get-regexp "$section\..*" 2>/dev/null); do
-		case "$i" in
-		$section.*)
-			i="${i#$section.}"
-			echo "${i/ */}"
-			;;
-		esac
+	for i in $(git --git-dir="$(__gitdir)" config --get-regexp "^$section\..*" 2>/dev/null); do
+		i="${i#$section.}"
+		echo "${i/ */}"
 	done
 }
 

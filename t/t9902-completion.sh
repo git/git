@@ -370,6 +370,18 @@ test_expect_success '__git_remotes - list remotes from $GIT_DIR/remotes and from
 	test_cmp expect actual
 '
 
+test_expect_success '__git_get_config_variables' '
+	cat >expect <<-EOF &&
+	name-1
+	name-2
+	EOF
+	test_config interesting.name-1 good &&
+	test_config interesting.name-2 good &&
+	test_config subsection.interesting.name-3 bad &&
+	__git_get_config_variables interesting >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success '__git_pretty_aliases' '
 	cat >expect <<-EOF &&
 	author
