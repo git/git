@@ -36,7 +36,7 @@ test_expect_success 'existing loose ref is a simple prefix of new' '
 
 	prefix=refs/1l &&
 	test_update_rejected $prefix "a c e" false "b c/x d" \
-		"unable to resolve reference $prefix/c/x: Not a directory"
+		"$Q$prefix/c$Q exists; cannot create $Q$prefix/c/x$Q"
 
 '
 
@@ -52,7 +52,7 @@ test_expect_success 'existing loose ref is a deeper prefix of new' '
 
 	prefix=refs/2l &&
 	test_update_rejected $prefix "a c e" false "b c/x/y d" \
-		"unable to resolve reference $prefix/c/x/y: Not a directory"
+		"$Q$prefix/c$Q exists; cannot create $Q$prefix/c/x/y$Q"
 
 '
 
@@ -68,7 +68,7 @@ test_expect_success 'new ref is a simple prefix of existing loose' '
 
 	prefix=refs/3l &&
 	test_update_rejected $prefix "a c/x e" false "b c d" \
-		"there are still refs under $Q$prefix/c$Q"
+		"$Q$prefix/c/x$Q exists; cannot create $Q$prefix/c$Q"
 
 '
 
@@ -84,7 +84,7 @@ test_expect_success 'new ref is a deeper prefix of existing loose' '
 
 	prefix=refs/4l &&
 	test_update_rejected $prefix "a c/x/y e" false "b c d" \
-		"there are still refs under $Q$prefix/c$Q"
+		"$Q$prefix/c/x/y$Q exists; cannot create $Q$prefix/c$Q"
 
 '
 

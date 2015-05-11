@@ -2369,8 +2369,12 @@ static struct ref_lock *lock_ref_sha1_basic(const char *refname,
 		ref_file = git_path("%s", orig_refname);
 		if (remove_empty_directories(ref_file)) {
 			last_errno = errno;
-			strbuf_addf(err, "there are still refs under '%s'",
-				    orig_refname);
+
+			if (!verify_refname_available(orig_refname, extras, skip,
+						      get_loose_refs(&ref_cache), err))
+				strbuf_addf(err, "there are still refs under '%s'",
+					    orig_refname);
+
 			goto error_return;
 		}
 		refname = resolve_ref_unsafe(orig_refname, resolve_flags,
@@ -2380,8 +2384,12 @@ static struct ref_lock *lock_ref_sha1_basic(const char *refname,
 	    *type_p = type;
 	if (!refname) {
 		last_errno = errno;
-		strbuf_addf(err, "unable to resolve reference %s: %s",
-			    orig_refname, strerror(errno));
+		if (last_errno != ENOTDIR ||
+		    !verify_refname_available(orig_refname, extras, skip,
+					      get_loose_refs(&ref_cache), err))
+			strbuf_addf(err, "unable to resolve reference %s: %s",
+				    orig_refname, strerror(last_errno));
+
 		goto error_return;
 	}
 	/*
