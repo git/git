@@ -48,9 +48,10 @@ Documentation for older releases are available here:
 * release notes for
   link:RelNotes/2.4.0.txt[2.4].
 
-* link:v2.3.7/git.html[documentation for release 2.3.7]
+* link:v2.3.8/git.html[documentation for release 2.3.8]
 
 * release notes for
+  link:RelNotes/2.3.8.txt[2.3.8],
   link:RelNotes/2.3.7.txt[2.3.7],
   link:RelNotes/2.3.6.txt[2.3.6],
   link:RelNotes/2.3.5.txt[2.3.5],
