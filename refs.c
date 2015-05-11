@@ -887,9 +887,8 @@ static int is_refname_available(const char *refname,
 				struct ref_dir *dir)
 {
 	const char *slash;
-	size_t len;
 	int pos;
-	char *dirname;
+	struct strbuf dirname = STRBUF_INIT;
 
 	/*
 	 * For the sake of comments in this function, suppose that
@@ -955,11 +954,10 @@ static int is_refname_available(const char *refname,
 	 * names are in the "refs/foo/bar/" namespace, because they
 	 * *do* conflict.
 	 */
-	len = strlen(refname);
-	dirname = xmallocz(len + 1);
-	sprintf(dirname, "%s/", refname);
-	pos = search_ref_dir(dir, dirname, len + 1);
-	free(dirname);
+	strbuf_addstr(&dirname, refname);
+	strbuf_addch(&dirname, '/');
+	pos = search_ref_dir(dir, dirname.buf, dirname.len);
+	strbuf_release(&dirname);
 
 	if (pos >= 0) {
 		/*
