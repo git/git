@@ -157,6 +157,80 @@ static int lock_file(struct lock_file *lk, const char *path, int flags)
 	return lk->fd;
 }
 
+static int sleep_microseconds(long us)
+{
+	struct timeval tv;
+	tv.tv_sec = 0;
+	tv.tv_usec = us;
+	return select(0, NULL, NULL, NULL, &tv);
+}
+
+/*
+ * Constants defining the gaps between attempts to lock a file. The
+ * first backoff period is approximately INITIAL_BACKOFF_MS
+ * milliseconds. The longest backoff period is approximately
+ * (BACKOFF_MAX_MULTIPLIER * INITIAL_BACKOFF_MS) milliseconds.
+ */
+#define INITIAL_BACKOFF_MS 1L
+#define BACKOFF_MAX_MULTIPLIER 1000
+
+/*
+ * Try locking path, retrying with quadratic backoff for at least
+ * timeout_ms milliseconds. If timeout_ms is 0, try locking the file
+ * exactly once. If timeout_ms is -1, try indefinitely.
+ */
+static int lock_file_timeout(struct lock_file *lk, const char *path,
+			     int flags, long timeout_ms)
+{
+	int n = 1;
+	int multiplier = 1;
+	long remaining_us = 0;
+	static int random_initialized = 0;
+
+	if (timeout_ms == 0)
+		return lock_file(lk, path, flags);
+
+	if (!random_initialized) {
+		srandom((unsigned int)getpid());
+		random_initialized = 1;
+	}
+
+	if (timeout_ms > 0) {
+		/* avoid overflow */
+		if (timeout_ms <= LONG_MAX / 1000)
+			remaining_us = timeout_ms * 1000;
+		else
+			remaining_us = LONG_MAX;
+	}
+
+	while (1) {
+		long backoff_ms, wait_us;
+		int fd;
+
+		fd = lock_file(lk, path, flags);
+
+		if (fd >= 0)
+			return fd; /* success */
+		else if (errno != EEXIST)
+			return -1; /* failure other than lock held */
+		else if (timeout_ms > 0 && remaining_us <= 0)
+			return -1; /* failure due to timeout */
+
+		backoff_ms = multiplier * INITIAL_BACKOFF_MS;
+		/* back off for between 0.75*backoff_ms and 1.25*backoff_ms */
+		wait_us = (750 + random() % 500) * backoff_ms;
+		sleep_microseconds(wait_us);
+		remaining_us -= wait_us;
+
+		/* Recursion: (n+1)^2 = n^2 + 2n + 1 */
+		multiplier += 2*n + 1;
+		if (multiplier > BACKOFF_MAX_MULTIPLIER)
+			multiplier = BACKOFF_MAX_MULTIPLIER;
+		else
+			n++;
+	}
+}
+
 void unable_to_lock_message(const char *path, int err, struct strbuf *buf)
 {
 	if (err == EEXIST) {
@@ -179,9 +253,10 @@ NORETURN void unable_to_lock_die(const char *path, int err)
 }
 
 /* This should return a meaningful errno on failure */
-int hold_lock_file_for_update(struct lock_file *lk, const char *path, int flags)
+int hold_lock_file_for_update_timeout(struct lock_file *lk, const char *path,
+				      int flags, long timeout_ms)
 {
-	int fd = lock_file(lk, path, flags);
+	int fd = lock_file_timeout(lk, path, flags, timeout_ms);
 	if (fd < 0 && (flags & LOCK_DIE_ON_ERROR))
 		unable_to_lock_die(path, errno);
 	return fd;
