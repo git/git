@@ -408,8 +408,6 @@ ssize_t strbuf_write(struct strbuf *sb, FILE *f)
 }
 
 
-#define STRBUF_MAXLINK (2*PATH_MAX)
-
 int strbuf_readlink(struct strbuf *sb, const char *path, size_t hint)
 {
 	size_t oldalloc = sb->alloc;
@@ -417,7 +415,7 @@ int strbuf_readlink(struct strbuf *sb, const char *path, size_t hint)
 	if (hint < 32)
 		hint = 32;
 
-	while (hint < STRBUF_MAXLINK) {
+	for (;; hint *= 2) {
 		int len;
 
 		strbuf_grow(sb, hint + 1);
@@ -429,9 +427,6 @@ int strbuf_readlink(struct strbuf *sb, const char *path, size_t hint)
 			strbuf_setlen(sb, len);
 			return 0;
 		}
-
-		/* .. the buffer was too small - try again */
-		hint *= 2;
 	}
 	if (oldalloc == 0)
 		strbuf_release(sb);
