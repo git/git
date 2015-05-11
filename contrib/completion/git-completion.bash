@@ -735,7 +735,6 @@ __git_list_porcelain_commands ()
 __git_porcelain_commands=
 __git_compute_porcelain_commands ()
 {
-	__git_compute_all_commands
 	test -n "$__git_porcelain_commands" ||
 	__git_porcelain_commands=$(__git_list_porcelain_commands)
 }
