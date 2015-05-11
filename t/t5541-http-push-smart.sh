@@ -6,11 +6,6 @@
 test_description='test smart pushing over http via http-backend'
 . ./test-lib.sh
 
-if test -n "$NO_CURL"; then
-	skip_all='skipping test, git built without http support'
-	test_done
-fi
-
 ROOT_PATH="$PWD"
 . "$TEST_DIRECTORY"/lib-gpg.sh
 . "$TEST_DIRECTORY"/lib-httpd.sh
