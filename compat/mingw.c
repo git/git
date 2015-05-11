@@ -597,14 +597,7 @@ static int has_valid_directory_prefix(wchar_t *wfilename)
 	return 1;
 }
 
-/* We keep the do_lstat code in a separate function to avoid recursion.
- * When a path ends with a slash, the stat will fail with ENOENT. In
- * this case, we strip the trailing slashes and stat again.
- *
- * If follow is true then act like stat() and report on the link
- * target. Otherwise report on the link itself.
- */
-static int do_lstat(int follow, const char *file_name, struct stat *buf)
+int mingw_lstat(const char *file_name, struct stat *buf)
 {
 	WIN32_FILE_ATTRIBUTE_DATA fdata;
 	wchar_t wfilename[MAX_LONG_PATH];
@@ -638,13 +631,7 @@ static int do_lstat(int follow, const char *file_name, struct stat *buf)
 			if (handle != INVALID_HANDLE_VALUE) {
 				if ((findbuf.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) &&
 						(findbuf.dwReserved0 == IO_REPARSE_TAG_SYMLINK)) {
-					if (follow) {
-						char buffer[MAXIMUM_REPARSE_DATA_BUFFER_SIZE];
-						buf->st_size = readlink(file_name, buffer, MAXIMUM_REPARSE_DATA_BUFFER_SIZE);
-					} else {
-						buf->st_mode = S_IFLNK;
-					}
-					buf->st_mode |= S_IREAD;
+					buf->st_mode = S_IFLNK | S_IREAD;
 					if (!(findbuf.dwFileAttributes & FILE_ATTRIBUTE_READONLY))
 						buf->st_mode |= S_IWRITE;
 				}
@@ -680,11 +667,6 @@ static int do_lstat(int follow, const char *file_name, struct stat *buf)
 }
 
 int (*lstat)(const char *file_name, struct stat *buf) = mingw_lstat;
-
-int mingw_lstat(const char *file_name, struct stat *buf)
-{
-	return do_lstat(0, file_name, buf);
-}
 
 static int get_file_info_by_handle(HANDLE hnd, struct stat *buf)
 {
