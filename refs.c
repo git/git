@@ -263,7 +263,7 @@ struct ref_dir {
  * presence of an empty subdirectory does not block the creation of a
  * similarly-named reference.  (The fact that reference names with the
  * same leading components can conflict *with each other* is a
- * separate issue that is regulated by is_refname_available().)
+ * separate issue that is regulated by verify_refname_available().)
  *
  * Please note that the name field contains the fully-qualified
  * reference (or subdirectory) name.  Space could be saved by only
@@ -858,13 +858,14 @@ static int nonmatching_ref_fn(struct ref_entry *entry, void *vdata)
 }
 
 /*
- * Return true iff a reference named refname could be created without
- * conflicting with the name of an existing reference in dir. If
- * extras is non-NULL, it is a list of additional refnames with which
- * refname is not allowed to conflict. If skip is non-NULL, ignore
- * potential conflicts with refs in skip (e.g., because they are
- * scheduled for deletion in the same operation). Behavior is
- * undefined if the same name is listed in both extras and skip.
+ * Return 0 if a reference named refname could be created without
+ * conflicting with the name of an existing reference in dir.
+ * Otherwise, return a negative value. If extras is non-NULL, it is a
+ * list of additional refnames with which refname is not allowed to
+ * conflict. If skip is non-NULL, ignore potential conflicts with refs
+ * in skip (e.g., because they are scheduled for deletion in the same
+ * operation). Behavior is undefined if the same name is listed in
+ * both extras and skip.
  *
  * Two reference names conflict if one of them exactly matches the
  * leading components of the other; e.g., "refs/foo/bar" conflicts
@@ -873,15 +874,15 @@ static int nonmatching_ref_fn(struct ref_entry *entry, void *vdata)
  *
  * extras and skip must be sorted.
  */
-static int is_refname_available(const char *refname,
-				const struct string_list *extras,
-				const struct string_list *skip,
-				struct ref_dir *dir)
+static int verify_refname_available(const char *refname,
+				    const struct string_list *extras,
+				    const struct string_list *skip,
+				    struct ref_dir *dir)
 {
 	const char *slash;
 	int pos;
 	struct strbuf dirname = STRBUF_INIT;
-	int ret = 0;
+	int ret = -1;
 
 	/*
 	 * For the sake of comments in this function, suppose that
@@ -1007,7 +1008,7 @@ static int is_refname_available(const char *refname,
 	}
 
 	/* No conflicts were found */
-	ret = 1;
+	ret = 0;
 
 cleanup:
 	strbuf_release(&dirname);
@@ -2383,7 +2384,7 @@ static struct ref_lock *lock_ref_sha1_basic(const char *refname,
 	 * our refname.
 	 */
 	if (is_null_sha1(lock->old_sha1) &&
-	    !is_refname_available(refname, extras, skip, get_packed_refs(&ref_cache))) {
+	    verify_refname_available(refname, extras, skip, get_packed_refs(&ref_cache))) {
 		last_errno = ENOTDIR;
 		goto error_return;
 	}
@@ -2824,8 +2825,10 @@ static int rename_ref_available(const char *oldname, const char *newname)
 	int ret;
 
 	string_list_insert(&skip, oldname);
-	ret = is_refname_available(newname, NULL, &skip, get_packed_refs(&ref_cache))
-		&& is_refname_available(newname, NULL, &skip, get_loose_refs(&ref_cache));
+	ret = !verify_refname_available(newname, NULL, &skip,
+					get_packed_refs(&ref_cache))
+		&& !verify_refname_available(newname, NULL, &skip,
+					     get_loose_refs(&ref_cache));
 	string_list_clear(&skip, 0);
 	return ret;
 }
