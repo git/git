@@ -3007,9 +3007,8 @@ static int freshen_packed_object(const unsigned char *sha1)
 	return 1;
 }
 
-int write_sha1_file(const void *buf, unsigned long len, const char *type, unsigned char *returnsha1)
+int write_sha1_file(const void *buf, unsigned long len, const char *type, unsigned char *sha1)
 {
-	unsigned char sha1[20];
 	char hdr[32];
 	int hdrlen;
 
@@ -3017,11 +3016,30 @@ int write_sha1_file(const void *buf, unsigned long len, const char *type, unsign
 	 * it out into .git/objects/??/?{38} file.
 	 */
 	write_sha1_file_prepare(buf, len, type, sha1, hdr, &hdrlen);
-	if (returnsha1)
-		hashcpy(returnsha1, sha1);
 	if (freshen_packed_object(sha1) || freshen_loose_object(sha1))
 		return 0;
 	return write_loose_object(sha1, hdr, hdrlen, buf, len, 0);
+}
+
+int hash_sha1_file_literally(const void *buf, unsigned long len, const char *type,
+			     unsigned char *sha1, unsigned flags)
+{
+	char *header;
+	int hdrlen, status = 0;
+
+	/* type string, SP, %lu of the length plus NUL must fit this */
+	header = xmalloc(strlen(type) + 32);
+	write_sha1_file_prepare(buf, len, type, sha1, header, &hdrlen);
+
+	if (!(flags & HASH_WRITE_OBJECT))
+		goto cleanup;
+	if (freshen_packed_object(sha1) || freshen_loose_object(sha1))
+		goto cleanup;
+	status = write_loose_object(sha1, header, hdrlen, buf, len, 0);
+
+cleanup:
+	free(header);
+	return status;
 }
 
 int force_object_loose(const unsigned char *sha1, time_t mtime)
