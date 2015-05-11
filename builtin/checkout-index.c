@@ -241,7 +241,7 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 	/* Check out named files first */
 	for (i = 0; i < argc; i++) {
 		const char *arg = argv[i];
-		const char *p;
+		char *p;
 
 		if (all)
 			die("git checkout-index: don't mix '--all' and explicit filenames");
@@ -249,8 +249,7 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 			die("git checkout-index: don't mix '--stdin' and explicit filenames");
 		p = prefix_path(prefix, prefix_length, arg);
 		checkout_file(p, prefix);
-		if (p < arg || p > arg + strlen(arg))
-			free((char *)p);
+		free(p);
 	}
 
 	if (read_from_stdin) {
@@ -260,7 +259,7 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 			die("git checkout-index: don't mix '--all' and '--stdin'");
 
 		while (strbuf_getline(&buf, stdin, line_termination) != EOF) {
-			const char *p;
+			char *p;
 			if (line_termination && buf.buf[0] == '"') {
 				strbuf_reset(&nbuf);
 				if (unquote_c_style(&nbuf, buf.buf, NULL))
@@ -269,8 +268,7 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 			}
 			p = prefix_path(prefix, prefix_length, buf.buf);
 			checkout_file(p, prefix);
-			if (p < buf.buf || p > buf.buf + buf.len)
-				free((char *)p);
+			free(p);
 		}
 		strbuf_release(&nbuf);
 		strbuf_release(&buf);
