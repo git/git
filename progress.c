@@ -72,6 +72,11 @@ static void clear_progress_signal(void)
 	progress_update = 0;
 }
 
+static int is_foreground_fd(int fd)
+{
+	return getpgid(0) == tcgetpgrp(fd);
+}
+
 static int display(struct progress *progress, unsigned n, const char *done)
 {
 	const char *eol, *tp;
@@ -98,16 +103,21 @@ static int display(struct progress *progress, unsigned n, const char *done)
 		unsigned percent = n * 100 / progress->total;
 		if (percent != progress->last_percent || progress_update) {
 			progress->last_percent = percent;
-			fprintf(stderr, "%s: %3u%% (%u/%u)%s%s",
-				progress->title, percent, n,
-				progress->total, tp, eol);
-			fflush(stderr);
+			if (is_foreground_fd(fileno(stderr)) || done) {
+				fprintf(stderr, "%s: %3u%% (%u/%u)%s%s",
+					progress->title, percent, n,
+					progress->total, tp, eol);
+				fflush(stderr);
+			}
 			progress_update = 0;
 			return 1;
 		}
 	} else if (progress_update) {
-		fprintf(stderr, "%s: %u%s%s", progress->title, n, tp, eol);
-		fflush(stderr);
+		if (is_foreground_fd(fileno(stderr)) || done) {
+			fprintf(stderr, "%s: %u%s%s",
+				progress->title, n, tp, eol);
+			fflush(stderr);
+		}
 		progress_update = 0;
 		return 1;
 	}
