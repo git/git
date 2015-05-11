@@ -967,10 +967,10 @@ static int is_refname_available(const char *refname,
 		 * "refs/foo/bar/"). It is a problem iff it contains
 		 * any ref that is not in "skip".
 		 */
-		struct ref_entry *entry = dir->entries[pos];
-		struct ref_dir *dir = get_ref_dir(entry);
 		struct nonmatching_ref_data data;
+		struct ref_entry *entry = dir->entries[pos];
 
+		dir = get_ref_dir(entry);
 		data.skip = skip;
 		sort_ref_dir(dir);
 		if (!do_for_each_entry_in_dir(dir, 0, nonmatching_ref_fn, &data))
