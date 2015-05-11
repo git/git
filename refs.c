@@ -843,7 +843,7 @@ static void prime_ref_dir(struct ref_dir *dir)
 
 struct nonmatching_ref_data {
 	const struct string_list *skip;
-	struct ref_entry *found;
+	const char *conflicting_refname;
 };
 
 static int nonmatching_ref_fn(struct ref_entry *entry, void *vdata)
@@ -853,7 +853,7 @@ static int nonmatching_ref_fn(struct ref_entry *entry, void *vdata)
 	if (data->skip && string_list_has_string(data->skip, entry->name))
 		return 0;
 
-	data->found = entry;
+	data->conflicting_refname = entry->name;
 	return 1;
 }
 
@@ -963,7 +963,8 @@ static int is_refname_available(const char *refname,
 		if (!do_for_each_entry_in_dir(dir, 0, nonmatching_ref_fn, &data))
 			return 1;
 
-		error("'%s' exists; cannot create '%s'", data.found->name, refname);
+		error("'%s' exists; cannot create '%s'",
+		      data.conflicting_refname, refname);
 		return 0;
 	}
 
