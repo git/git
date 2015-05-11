@@ -876,9 +876,9 @@ static void report_refname_conflict(struct ref_entry *entry,
  * operation).
  *
  * Two reference names conflict if one of them exactly matches the
- * leading components of the other; e.g., "foo/bar" conflicts with
- * both "foo" and with "foo/bar/baz" but not with "foo/bar" or
- * "foo/barbados".
+ * leading components of the other; e.g., "refs/foo/bar" conflicts
+ * with both "refs/foo" and with "refs/foo/bar/baz" but not with
+ * "refs/foo/bar" or "refs/foo/barbados".
  *
  * skip must be sorted.
  */
@@ -891,19 +891,39 @@ static int is_refname_available(const char *refname,
 	int pos;
 	char *dirname;
 
+	/*
+	 * For the sake of comments in this function, suppose that
+	 * refname is "refs/foo/bar".
+	 */
+
 	for (slash = strchr(refname, '/'); slash; slash = strchr(slash + 1, '/')) {
 		/*
-		 * We are still at a leading dir of the refname; we are
-		 * looking for a conflict with a leaf entry.
-		 *
-		 * If we find one, we still must make sure it is
-		 * not in "skip".
+		 * We are still at a leading dir of the refname (e.g.,
+		 * "refs/foo"; if there is a reference with that name,
+		 * it is a conflict, *unless* it is in skip.
 		 */
 		pos = search_ref_dir(dir, refname, slash - refname);
 		if (pos >= 0) {
+			/*
+			 * We found a reference whose name is a proper
+			 * prefix of refname; e.g., "refs/foo".
+			 */
 			struct ref_entry *entry = dir->entries[pos];
-			if (entry_matches(entry, skip))
+			if (entry_matches(entry, skip)) {
+				/*
+				 * The reference we just found, e.g.,
+				 * "refs/foo", is also in skip, so it
+				 * is not considered a conflict.
+				 * Moreover, the fact that "refs/foo"
+				 * exists means that there cannot be
+				 * any references anywhere under the
+				 * "refs/foo/" namespace (because they
+				 * would have conflicted with
+				 * "refs/foo"). So we can stop looking
+				 * now and return true.
+				 */
 				return 1;
+			}
 			report_refname_conflict(entry, refname);
 			return 0;
 		}
@@ -911,19 +931,29 @@ static int is_refname_available(const char *refname,
 
 		/*
 		 * Otherwise, we can try to continue our search with
-		 * the next component; if we come up empty, we know
-		 * there is nothing under this whole prefix.
+		 * the next component. So try to look up the
+		 * directory, e.g., "refs/foo/".
 		 */
 		pos = search_ref_dir(dir, refname, slash + 1 - refname);
-		if (pos < 0)
+		if (pos < 0) {
+			/*
+			 * There was no directory "refs/foo/", so
+			 * there is nothing under this whole prefix,
+			 * and we are OK.
+			 */
 			return 1;
+		}
 
 		dir = get_ref_dir(dir->entries[pos]);
 	}
 
 	/*
-	 * We are at the leaf of our refname; we want to
-	 * make sure there are no directories which match it.
+	 * We are at the leaf of our refname (e.g., "refs/foo/bar").
+	 * There is no point in searching for a reference with that
+	 * name, because a refname isn't considered to conflict with
+	 * itself. But we still need to check for references whose
+	 * names are in the "refs/foo/bar/" namespace, because they
+	 * *do* conflict.
 	 */
 	len = strlen(refname);
 	dirname = xmallocz(len + 1);
@@ -933,9 +963,9 @@ static int is_refname_available(const char *refname,
 
 	if (pos >= 0) {
 		/*
-		 * We found a directory named "refname". It is a
-		 * problem iff it contains any ref that is not
-		 * in "skip".
+		 * We found a directory named "$refname/" (e.g.,
+		 * "refs/foo/bar/"). It is a problem iff it contains
+		 * any ref that is not in "skip".
 		 */
 		struct ref_entry *entry = dir->entries[pos];
 		struct ref_dir *dir = get_ref_dir(entry);
@@ -950,11 +980,6 @@ static int is_refname_available(const char *refname,
 		return 0;
 	}
 
-	/*
-	 * There is no point in searching for another leaf
-	 * node which matches it; such an entry would be the
-	 * ref we are looking for, not a conflict.
-	 */
 	return 1;
 }
 
