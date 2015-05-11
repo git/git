@@ -878,26 +878,30 @@ static int is_refname_available(const char *refname,
 	const char *slash;
 	int pos;
 	struct strbuf dirname = STRBUF_INIT;
+	int ret = 0;
 
 	/*
 	 * For the sake of comments in this function, suppose that
 	 * refname is "refs/foo/bar".
 	 */
 
+	strbuf_grow(&dirname, strlen(refname) + 1);
 	for (slash = strchr(refname, '/'); slash; slash = strchr(slash + 1, '/')) {
+		/* Expand dirname to the new prefix, not including the trailing slash: */
+		strbuf_add(&dirname, refname + dirname.len, slash - refname - dirname.len);
+
 		/*
 		 * We are still at a leading dir of the refname (e.g.,
 		 * "refs/foo"; if there is a reference with that name,
 		 * it is a conflict, *unless* it is in skip.
 		 */
-		pos = search_ref_dir(dir, refname, slash - refname);
+		pos = search_ref_dir(dir, dirname.buf, dirname.len);
 		if (pos >= 0) {
 			/*
 			 * We found a reference whose name is a proper
 			 * prefix of refname; e.g., "refs/foo".
 			 */
-			struct ref_entry *entry = dir->entries[pos];
-			if (skip && string_list_has_string(skip, entry->name)) {
+			if (skip && string_list_has_string(skip, dirname.buf)) {
 				/*
 				 * The reference we just found, e.g.,
 				 * "refs/foo", is also in skip, so it
@@ -910,10 +914,11 @@ static int is_refname_available(const char *refname,
 				 * "refs/foo"). So we can stop looking
 				 * now and return true.
 				 */
-				return 1;
+				ret = 1;
+				goto cleanup;
 			}
-			error("'%s' exists; cannot create '%s'", entry->name, refname);
-			return 0;
+			error("'%s' exists; cannot create '%s'", dirname.buf, refname);
+			goto cleanup;
 		}
 
 
@@ -922,14 +927,16 @@ static int is_refname_available(const char *refname,
 		 * the next component. So try to look up the
 		 * directory, e.g., "refs/foo/".
 		 */
-		pos = search_ref_dir(dir, refname, slash + 1 - refname);
+		strbuf_addch(&dirname, '/');
+		pos = search_ref_dir(dir, dirname.buf, dirname.len);
 		if (pos < 0) {
 			/*
 			 * There was no directory "refs/foo/", so
 			 * there is nothing under this whole prefix,
 			 * and we are OK.
 			 */
-			return 1;
+			ret = 1;
+			goto cleanup;
 		}
 
 		dir = get_ref_dir(dir->entries[pos]);
@@ -943,10 +950,9 @@ static int is_refname_available(const char *refname,
 	 * names are in the "refs/foo/bar/" namespace, because they
 	 * *do* conflict.
 	 */
-	strbuf_addstr(&dirname, refname);
+	strbuf_addstr(&dirname, refname + dirname.len);
 	strbuf_addch(&dirname, '/');
 	pos = search_ref_dir(dir, dirname.buf, dirname.len);
-	strbuf_release(&dirname);
 
 	if (pos >= 0) {
 		/*
@@ -960,15 +966,21 @@ static int is_refname_available(const char *refname,
 		dir = get_ref_dir(entry);
 		data.skip = skip;
 		sort_ref_dir(dir);
-		if (!do_for_each_entry_in_dir(dir, 0, nonmatching_ref_fn, &data))
-			return 1;
+		if (!do_for_each_entry_in_dir(dir, 0, nonmatching_ref_fn, &data)) {
+			ret = 1;
+			goto cleanup;
+		}
 
 		error("'%s' exists; cannot create '%s'",
 		      data.conflicting_refname, refname);
-		return 0;
+		goto cleanup;
 	}
 
-	return 1;
+	ret = 1;
+
+cleanup:
+	strbuf_release(&dirname);
+	return ret;
 }
 
 struct packed_ref_cache {
