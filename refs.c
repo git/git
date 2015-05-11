@@ -3720,25 +3720,18 @@ int update_ref(const char *msg, const char *refname,
 	return 0;
 }
 
-static int ref_update_compare(const void *r1, const void *r2)
-{
-	const struct ref_update * const *u1 = r1;
-	const struct ref_update * const *u2 = r2;
-	return strcmp((*u1)->refname, (*u2)->refname);
-}
-
-static int ref_update_reject_duplicates(struct ref_update **updates, int n,
+static int ref_update_reject_duplicates(struct string_list *refnames,
 					struct strbuf *err)
 {
-	int i;
+	int i, n = refnames->nr;
 
 	assert(err);
 
 	for (i = 1; i < n; i++)
-		if (!strcmp(updates[i - 1]->refname, updates[i]->refname)) {
+		if (!strcmp(refnames->items[i - 1].string, refnames->items[i].string)) {
 			strbuf_addf(err,
 				    "Multiple updates for ref '%s' not allowed.",
-				    updates[i]->refname);
+				    refnames->items[i].string);
 			return 1;
 		}
 	return 0;
@@ -3752,6 +3745,7 @@ int ref_transaction_commit(struct ref_transaction *transaction,
 	struct ref_update **updates = transaction->updates;
 	struct string_list refs_to_delete = STRING_LIST_INIT_NODUP;
 	struct string_list_item *ref_to_delete;
+	struct string_list affected_refnames = STRING_LIST_INIT_NODUP;
 
 	assert(err);
 
@@ -3763,9 +3757,11 @@ int ref_transaction_commit(struct ref_transaction *transaction,
 		return 0;
 	}
 
-	/* Copy, sort, and reject duplicate refs */
-	qsort(updates, n, sizeof(*updates), ref_update_compare);
-	if (ref_update_reject_duplicates(updates, n, err)) {
+	/* Fail if a refname appears more than once in the transaction: */
+	for (i = 0; i < n; i++)
+		string_list_append(&affected_refnames, updates[i]->refname);
+	string_list_sort(&affected_refnames);
+	if (ref_update_reject_duplicates(&affected_refnames, err)) {
 		ret = TRANSACTION_GENERIC_ERROR;
 		goto cleanup;
 	}
@@ -3857,6 +3853,7 @@ cleanup:
 		if (updates[i]->lock)
 			unlock_ref(updates[i]->lock);
 	string_list_clear(&refs_to_delete, 0);
+	string_list_clear(&affected_refnames, 0);
 	return ret;
 }
 
