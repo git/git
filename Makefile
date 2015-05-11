@@ -359,6 +359,8 @@ all::
 # compiler is detected to support it.
 #
 # Define HAVE_BSD_SYSCTL if your platform has a BSD-compatible sysctl function.
+#
+# Define HAVE_GETDELIM if your system has the getdelim() function.
 
 GIT-VERSION-FILE: FORCE
 	@$(SHELL_PATH) ./GIT-VERSION-GEN
@@ -1435,6 +1437,10 @@ endif
 
 ifdef HAVE_BSD_SYSCTL
 	BASIC_CFLAGS += -DHAVE_BSD_SYSCTL
+endif
+
+ifdef HAVE_GETDELIM
+	BASIC_CFLAGS += -DHAVE_GETDELIM
 endif
 
 ifeq ($(TCLTK_PATH),)

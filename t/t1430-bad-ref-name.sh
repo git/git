@@ -68,6 +68,14 @@ test_expect_success 'branch -D cannot delete non-ref in .git dir' '
 	test_cmp expect .git/my-private-file
 '
 
+test_expect_success 'branch -D cannot delete ref in .git dir' '
+	git rev-parse HEAD >.git/my-private-file &&
+	git rev-parse HEAD >expect &&
+	git branch foo/legit &&
+	test_must_fail git branch -D foo////./././../../../my-private-file &&
+	test_cmp expect .git/my-private-file
+'
+
 test_expect_success 'branch -D cannot delete absolute path' '
 	git branch -f extra &&
 	test_must_fail git branch -D "$(pwd)/.git/refs/heads/extra" &&

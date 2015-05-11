@@ -50,7 +50,7 @@ static struct config_set the_config_set;
 
 static int config_file_fgetc(struct config_source *conf)
 {
-	return fgetc(conf->u.file);
+	return getc_unlocked(conf->u.file);
 }
 
 static int config_file_ungetc(int c, struct config_source *conf)
@@ -1088,7 +1088,9 @@ int git_config_from_file(config_fn_t fn, const char *filename, void *data)
 
 	f = fopen(filename, "r");
 	if (f) {
+		flockfile(f);
 		ret = do_config_from_file(fn, filename, filename, f, data);
+		funlockfile(f);
 		fclose(f);
 	}
 	return ret;
