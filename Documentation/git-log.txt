@@ -62,9 +62,9 @@ produced by `--stat`, etc.
 	output by allowing them to allocate space in advance.
 
 -L <start>,<end>:<file>::
--L :<regex>:<file>::
+-L :<funcname>:<file>::
 	Trace the evolution of the line range given by "<start>,<end>"
-	(or the funcname regex <regex>) within the <file>.  You may
+	(or the function name regex <funcname>) within the <file>.  You may
 	not give any pathspec limiters.  This is currently limited to
 	a walk starting from a single revision, i.e., you may only
 	give zero or one positive revision arguments.

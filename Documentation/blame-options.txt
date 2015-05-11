@@ -10,7 +10,7 @@
 	Include additional statistics at the end of blame output.
 
 -L <start>,<end>::
--L :<regex>::
+-L :<funcname>::
 	Annotate only the given line range. May be specified multiple times.
 	Overlapping ranges are allowed.
 +
