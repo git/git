@@ -841,11 +841,6 @@ static void prime_ref_dir(struct ref_dir *dir)
 	}
 }
 
-static int entry_matches(struct ref_entry *entry, const struct string_list *list)
-{
-	return list && string_list_has_string(list, entry->name);
-}
-
 struct nonmatching_ref_data {
 	const struct string_list *skip;
 	struct ref_entry *found;
@@ -855,7 +850,7 @@ static int nonmatching_ref_fn(struct ref_entry *entry, void *vdata)
 {
 	struct nonmatching_ref_data *data = vdata;
 
-	if (entry_matches(entry, data->skip))
+	if (data->skip && string_list_has_string(data->skip, entry->name))
 		return 0;
 
 	data->found = entry;
@@ -908,7 +903,7 @@ static int is_refname_available(const char *refname,
 			 * prefix of refname; e.g., "refs/foo".
 			 */
 			struct ref_entry *entry = dir->entries[pos];
-			if (entry_matches(entry, skip)) {
+			if (skip && string_list_has_string(skip, entry->name)) {
 				/*
 				 * The reference we just found, e.g.,
 				 * "refs/foo", is also in skip, so it
