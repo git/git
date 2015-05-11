@@ -859,19 +859,22 @@ static int nonmatching_ref_fn(struct ref_entry *entry, void *vdata)
 
 /*
  * Return true iff a reference named refname could be created without
- * conflicting with the name of an existing reference in dir.  If
- * skip is non-NULL, ignore potential conflicts with refs in skip
- * (e.g., because they are scheduled for deletion in the same
- * operation).
+ * conflicting with the name of an existing reference in dir. If
+ * extras is non-NULL, it is a list of additional refnames with which
+ * refname is not allowed to conflict. If skip is non-NULL, ignore
+ * potential conflicts with refs in skip (e.g., because they are
+ * scheduled for deletion in the same operation). Behavior is
+ * undefined if the same name is listed in both extras and skip.
  *
  * Two reference names conflict if one of them exactly matches the
  * leading components of the other; e.g., "refs/foo/bar" conflicts
  * with both "refs/foo" and with "refs/foo/bar/baz" but not with
  * "refs/foo/bar" or "refs/foo/barbados".
  *
- * skip must be sorted.
+ * extras and skip must be sorted.
  */
 static int is_refname_available(const char *refname,
+				const struct string_list *extras,
 				const struct string_list *skip,
 				struct ref_dir *dir)
 {
@@ -895,51 +898,53 @@ static int is_refname_available(const char *refname,
 		 * "refs/foo"; if there is a reference with that name,
 		 * it is a conflict, *unless* it is in skip.
 		 */
-		pos = search_ref_dir(dir, dirname.buf, dirname.len);
-		if (pos >= 0) {
-			/*
-			 * We found a reference whose name is a proper
-			 * prefix of refname; e.g., "refs/foo".
-			 */
-			if (skip && string_list_has_string(skip, dirname.buf)) {
+		if (dir) {
+			pos = search_ref_dir(dir, dirname.buf, dirname.len);
+			if (pos >= 0 &&
+			    (!skip || !string_list_has_string(skip, dirname.buf))) {
 				/*
-				 * The reference we just found, e.g.,
-				 * "refs/foo", is also in skip, so it
-				 * is not considered a conflict.
-				 * Moreover, the fact that "refs/foo"
-				 * exists means that there cannot be
-				 * any references anywhere under the
-				 * "refs/foo/" namespace (because they
-				 * would have conflicted with
-				 * "refs/foo"). So we can stop looking
-				 * now and return true.
+				 * We found a reference whose name is
+				 * a proper prefix of refname; e.g.,
+				 * "refs/foo", and is not in skip.
 				 */
-				ret = 1;
+				error("'%s' exists; cannot create '%s'",
+				      dirname.buf, refname);
 				goto cleanup;
 			}
-			error("'%s' exists; cannot create '%s'", dirname.buf, refname);
-			goto cleanup;
 		}
 
+		if (extras && string_list_has_string(extras, dirname.buf) &&
+		    (!skip || !string_list_has_string(skip, dirname.buf))) {
+			error("cannot process '%s' and '%s' at the same time",
+			      refname, dirname.buf);
+			goto cleanup;
+		}
 
 		/*
 		 * Otherwise, we can try to continue our search with
 		 * the next component. So try to look up the
-		 * directory, e.g., "refs/foo/".
+		 * directory, e.g., "refs/foo/". If we come up empty,
+		 * we know there is nothing under this whole prefix,
+		 * but even in that case we still have to continue the
+		 * search for conflicts with extras.
 		 */
 		strbuf_addch(&dirname, '/');
-		pos = search_ref_dir(dir, dirname.buf, dirname.len);
-		if (pos < 0) {
-			/*
-			 * There was no directory "refs/foo/", so
-			 * there is nothing under this whole prefix,
-			 * and we are OK.
-			 */
-			ret = 1;
-			goto cleanup;
+		if (dir) {
+			pos = search_ref_dir(dir, dirname.buf, dirname.len);
+			if (pos < 0) {
+				/*
+				 * There was no directory "refs/foo/",
+				 * so there is nothing under this
+				 * whole prefix. So there is no need
+				 * to continue looking for conflicting
+				 * references. But we need to continue
+				 * looking for conflicting extras.
+				 */
+				dir = NULL;
+			} else {
+				dir = get_ref_dir(dir->entries[pos]);
+			}
 		}
-
-		dir = get_ref_dir(dir->entries[pos]);
 	}
 
 	/*
@@ -952,30 +957,56 @@ static int is_refname_available(const char *refname,
 	 */
 	strbuf_addstr(&dirname, refname + dirname.len);
 	strbuf_addch(&dirname, '/');
-	pos = search_ref_dir(dir, dirname.buf, dirname.len);
 
-	if (pos >= 0) {
-		/*
-		 * We found a directory named "$refname/" (e.g.,
-		 * "refs/foo/bar/"). It is a problem iff it contains
-		 * any ref that is not in "skip".
-		 */
-		struct nonmatching_ref_data data;
-		struct ref_entry *entry = dir->entries[pos];
+	if (dir) {
+		pos = search_ref_dir(dir, dirname.buf, dirname.len);
 
-		dir = get_ref_dir(entry);
-		data.skip = skip;
-		sort_ref_dir(dir);
-		if (!do_for_each_entry_in_dir(dir, 0, nonmatching_ref_fn, &data)) {
-			ret = 1;
-			goto cleanup;
+		if (pos >= 0) {
+			/*
+			 * We found a directory named "$refname/"
+			 * (e.g., "refs/foo/bar/"). It is a problem
+			 * iff it contains any ref that is not in
+			 * "skip".
+			 */
+			struct nonmatching_ref_data data;
+
+			data.skip = skip;
+			data.conflicting_refname = NULL;
+			dir = get_ref_dir(dir->entries[pos]);
+			sort_ref_dir(dir);
+			if (do_for_each_entry_in_dir(dir, 0, nonmatching_ref_fn, &data)) {
+				error("'%s' exists; cannot create '%s'",
+				      data.conflicting_refname, refname);
+				goto cleanup;
+			}
 		}
-
-		error("'%s' exists; cannot create '%s'",
-		      data.conflicting_refname, refname);
-		goto cleanup;
 	}
 
+	if (extras) {
+		/*
+		 * Check for entries in extras that start with
+		 * "$refname/". We do that by looking for the place
+		 * where "$refname/" would be inserted in extras. If
+		 * there is an entry at that position that starts with
+		 * "$refname/" and is not in skip, then we have a
+		 * conflict.
+		 */
+		for (pos = string_list_find_insert_index(extras, dirname.buf, 0);
+		     pos < extras->nr; pos++) {
+			const char *extra_refname = extras->items[pos].string;
+
+			if (!starts_with(extra_refname, dirname.buf))
+				break;
+
+			if (!skip || !string_list_has_string(skip, extra_refname)) {
+				error("cannot process '%s' and '%s' at the same time",
+				      refname, extra_refname);
+				goto cleanup;
+			}
+		}
+	}
+
+	/* No conflicts were found */
 	ret = 1;
 
 cleanup:
@@ -2296,6 +2327,7 @@ int dwim_log(const char *str, int len, unsigned char *sha1, char **log)
  */
 static struct ref_lock *lock_ref_sha1_basic(const char *refname,
 					    const unsigned char *old_sha1,
+					    const struct string_list *extras,
 					    const struct string_list *skip,
 					    unsigned int flags, int *type_p)
 {
@@ -2351,7 +2383,7 @@ static struct ref_lock *lock_ref_sha1_basic(const char *refname,
 	 * our refname.
 	 */
 	if (is_null_sha1(lock->old_sha1) &&
-	     !is_refname_available(refname, skip, get_packed_refs(&ref_cache))) {
+	    !is_refname_available(refname, extras, skip, get_packed_refs(&ref_cache))) {
 		last_errno = ENOTDIR;
 		goto error_return;
 	}
@@ -2792,8 +2824,8 @@ static int rename_ref_available(const char *oldname, const char *newname)
 	int ret;
 
 	string_list_insert(&skip, oldname);
-	ret = is_refname_available(newname, &skip, get_packed_refs(&ref_cache))
-	    && is_refname_available(newname, &skip, get_loose_refs(&ref_cache));
+	ret = is_refname_available(newname, NULL, &skip, get_packed_refs(&ref_cache))
+		&& is_refname_available(newname, NULL, &skip, get_loose_refs(&ref_cache));
 	string_list_clear(&skip, 0);
 	return ret;
 }
@@ -2851,7 +2883,7 @@ int rename_ref(const char *oldrefname, const char *newrefname, const char *logms
 
 	logmoved = log;
 
-	lock = lock_ref_sha1_basic(newrefname, NULL, NULL, 0, NULL);
+	lock = lock_ref_sha1_basic(newrefname, NULL, NULL, NULL, 0, NULL);
 	if (!lock) {
 		error("unable to lock %s for update", newrefname);
 		goto rollback;
@@ -2865,7 +2897,7 @@ int rename_ref(const char *oldrefname, const char *newrefname, const char *logms
 	return 0;
 
  rollback:
-	lock = lock_ref_sha1_basic(oldrefname, NULL, NULL, 0, NULL);
+	lock = lock_ref_sha1_basic(oldrefname, NULL, NULL, NULL, 0, NULL);
 	if (!lock) {
 		error("unable to lock %s for rollback", oldrefname);
 		goto rollbacklog;
@@ -3777,7 +3809,7 @@ int ref_transaction_commit(struct ref_transaction *transaction,
 				update->refname,
 				((update->flags & REF_HAVE_OLD) ?
 				 update->old_sha1 : NULL),
-				NULL,
+				&affected_refnames, NULL,
 				flags,
 				&update->type);
 		if (!update->lock) {
@@ -4054,7 +4086,7 @@ int reflog_expire(const char *refname, const unsigned char *sha1,
 	 * reference itself, plus we might need to update the
 	 * reference if --updateref was specified:
 	 */
-	lock = lock_ref_sha1_basic(refname, sha1, NULL, 0, &type);
+	lock = lock_ref_sha1_basic(refname, sha1, NULL, NULL, 0, &type);
 	if (!lock)
 		return error("cannot lock ref '%s'", refname);
 	if (!reflog_exists(refname)) {

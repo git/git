@@ -96,7 +96,7 @@ test_expect_success 'new ref is a deeper prefix of existing packed' '
 
 '
 
-test_expect_failure 'one new ref is a simple prefix of another' '
+test_expect_success 'one new ref is a simple prefix of another' '
 
 	prefix=refs/5 &&
 	test_update_rejected $prefix "a e" false "b c c/x d" \
