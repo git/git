@@ -12,9 +12,22 @@ UI, Workflows & Features
  * "git p4" now detects the filetype (e.g. binary) correctly even when
    the files are opened exclusively.
 
+ * git p4 attempts to better handle branches in Perforce.
+
+ * "git p4" learned "--changes-block-size <n>" to read the changes in
+   chunks from Perforce, instead of making one call to "p4 changes"
+   that may trigger "too many rows scanned" error from Perforce.
+
  * "git show-branch --topics HEAD" (with no other arguments) did not
    do anything interesting.  Instead, contrast the given revision
    against all the local branches by default.
+
+ * A replacement for contrib/workdir/git-new-workdir that does not
+   rely on symbolic links and make sharing of objects and refs safer
+   by making the borrowee and borrowers aware of each other.
+
+ * Tweak the sample "store" backend of the credential helper to honor
+   XDG configuration file locations when specified.
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -24,6 +37,33 @@ Performance, Internal Implementation, Development Support etc.
    This effort is expected to interfere with other topics in flight,
    but hopefully will give us one extra level of abstraction in the
    end, when completed.
+
+ * Catch a programmer mistake to feed a pointer not an array to
+   ARRAY_SIZE() macro, by using a couple of GCC extensions.
+   (merge 89c855e ep/do-not-feed-a-pointer-to-array-size later to maint).
+
+ * Some error messages in "git config" were emitted without calling
+   the usual error() facility.
+
+ * When "add--interactive" splits a hunk into two overlapping hunks
+   and then let the user choose only one, it sometimes feeds an
+   incorrect patch text to "git apply".  Add tests to demonstrate
+   this.
+
+   I have a slight suspicion that this may be $gmane/87202 coming back
+   and biting us (I seem to have said "let's run with this and see
+   what happens" back then).
+
+ * More line-ending tests.
+
+ * An earlier rewrite to use strbuf_getwholeline() instead of fgets(3)
+   to read packed-refs file revealed that the former is unacceptably
+   inefficient.
+
+ * Many long-running operations show progress eye-candy, even when
+   they are later backgrounded.  Hide the eye-candy when the process
+   is sent to the background instead.
+   (merge 9a9a41d lm/squelch-bg-progress later to maint).
 
 
 Also contains various documentation updates and code clean-ups.
@@ -35,6 +75,43 @@ Fixes since v2.4
 Unless otherwise noted, all the fixes since v2.4 in the maintenance
 track are contained in this release (see the maintenance releases'
 notes for details).
+
+ * Memory usage of "git index-pack" has been trimmed by tens of
+   per-cent.
+   (merge c6458e6 nd/slim-index-pack-memory-usage later to maint).
+
+ * "git rev-list --objects $old --not --all" to see if everything that
+   is reachable from $old is already connected to the existing refs
+   was very inefficient.
+   (merge b6e8a3b jk/still-interesting later to maint).
+
+ * "hash-object --literally" introduced in v2.2 was not prepared to
+   take a really long object type name.
+   (merge 1427a7f jc/hash-object later to maint).
+
+ * "git rebase --quiet" was not quite quiet when there is nothing to
+   do.
+   (merge 22946a9 jk/rebase-quiet-noop later to maint).
+
+ * The completion for "log --decorate=" parameter value was incorrect.
+   (merge af16bda sg/complete-decorate-full-not-long later to maint).
+
+ * "filter-branch" corrupted commit log message that ends with an
+   incomplete line on platforms with some "sed" implementations that
+   munge such a line.  Work it around by avoiding to use "sed".
+   (merge df06201 jk/filter-branch-use-of-sed-on-incomplete-line later to maint).
+
+ * "git daemon" fails to build from the source under NO_IPV6
+   configuration (regression in 2.4).
+   (merge d358f77 jc/daemon-no-ipv6-for-2.4.1 later to maint).
+
+ * Some time ago, "git blame" (incorrectly) lost the convert_to_git()
+   call when synthesizing a fake "tip" commit that represents the
+   state in the working tree, which broke folks who record the history
+   with LF line ending to make their project portabile across
+   platforms while terminating lines in their working tree files with
+   CRLF for their platform.
+   (merge 4bf256d tb/blame-resurrect-convert-to-git later to maint).
 
  * We avoid setting core.worktree when the repository location is the
    ".git" directory directly at the top level of the working tree, but
@@ -84,3 +161,6 @@ notes for details).
    (merge 64f2589 nd/t1509-chroot-test later to maint).
    (merge f86a374 sb/test-bitmap-free-at-end later to maint).
    (merge 05bfc7d sb/line-log-plug-pairdiff-leak later to maint).
+   (merge 846e5df pt/xdg-config-path later to maint).
+   (merge 1154aa4 jc/plug-fmt-merge-msg-leak later to maint).
+   (merge 319b678 jk/sha1-file-reduce-useless-warnings later to maint).
