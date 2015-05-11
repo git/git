@@ -860,12 +860,12 @@ static int nonmatching_ref_fn(struct ref_entry *entry, void *vdata)
 /*
  * Return 0 if a reference named refname could be created without
  * conflicting with the name of an existing reference in dir.
- * Otherwise, return a negative value. If extras is non-NULL, it is a
- * list of additional refnames with which refname is not allowed to
- * conflict. If skip is non-NULL, ignore potential conflicts with refs
- * in skip (e.g., because they are scheduled for deletion in the same
- * operation). Behavior is undefined if the same name is listed in
- * both extras and skip.
+ * Otherwise, return a negative value and write an explanation to err.
+ * If extras is non-NULL, it is a list of additional refnames with
+ * which refname is not allowed to conflict. If skip is non-NULL,
+ * ignore potential conflicts with refs in skip (e.g., because they
+ * are scheduled for deletion in the same operation). Behavior is
+ * undefined if the same name is listed in both extras and skip.
  *
  * Two reference names conflict if one of them exactly matches the
  * leading components of the other; e.g., "refs/foo/bar" conflicts
@@ -877,7 +877,8 @@ static int nonmatching_ref_fn(struct ref_entry *entry, void *vdata)
 static int verify_refname_available(const char *refname,
 				    const struct string_list *extras,
 				    const struct string_list *skip,
-				    struct ref_dir *dir)
+				    struct ref_dir *dir,
+				    struct strbuf *err)
 {
 	const char *slash;
 	int pos;
@@ -888,6 +889,8 @@ static int verify_refname_available(const char *refname,
 	 * For the sake of comments in this function, suppose that
 	 * refname is "refs/foo/bar".
 	 */
+
+	assert(err);
 
 	strbuf_grow(&dirname, strlen(refname) + 1);
 	for (slash = strchr(refname, '/'); slash; slash = strchr(slash + 1, '/')) {
@@ -908,16 +911,16 @@ static int verify_refname_available(const char *refname,
 				 * a proper prefix of refname; e.g.,
 				 * "refs/foo", and is not in skip.
 				 */
-				error("'%s' exists; cannot create '%s'",
-				      dirname.buf, refname);
+				strbuf_addf(err, "'%s' exists; cannot create '%s'",
+					    dirname.buf, refname);
 				goto cleanup;
 			}
 		}
 
 		if (extras && string_list_has_string(extras, dirname.buf) &&
 		    (!skip || !string_list_has_string(skip, dirname.buf))) {
-			error("cannot process '%s' and '%s' at the same time",
-			      refname, dirname.buf);
+			strbuf_addf(err, "cannot process '%s' and '%s' at the same time",
+				    refname, dirname.buf);
 			goto cleanup;
 		}
 
@@ -976,8 +979,8 @@ static int verify_refname_available(const char *refname,
 			dir = get_ref_dir(dir->entries[pos]);
 			sort_ref_dir(dir);
 			if (do_for_each_entry_in_dir(dir, 0, nonmatching_ref_fn, &data)) {
-				error("'%s' exists; cannot create '%s'",
-				      data.conflicting_refname, refname);
+				strbuf_addf(err, "'%s' exists; cannot create '%s'",
+					    data.conflicting_refname, refname);
 				goto cleanup;
 			}
 		}
@@ -1000,8 +1003,8 @@ static int verify_refname_available(const char *refname,
 				break;
 
 			if (!skip || !string_list_has_string(skip, extra_refname)) {
-				error("cannot process '%s' and '%s' at the same time",
-				      refname, extra_refname);
+				strbuf_addf(err, "cannot process '%s' and '%s' at the same time",
+					    refname, extra_refname);
 				goto cleanup;
 			}
 		}
@@ -2340,6 +2343,7 @@ static struct ref_lock *lock_ref_sha1_basic(const char *refname,
 	int mustexist = (old_sha1 && !is_null_sha1(old_sha1));
 	int resolve_flags = 0;
 	int attempts_remaining = 3;
+	struct strbuf err = STRBUF_INIT;
 
 	lock = xcalloc(1, sizeof(struct ref_lock));
 	lock->lock_fd = -1;
@@ -2384,7 +2388,9 @@ static struct ref_lock *lock_ref_sha1_basic(const char *refname,
 	 * our refname.
 	 */
 	if (is_null_sha1(lock->old_sha1) &&
-	    verify_refname_available(refname, extras, skip, get_packed_refs(&ref_cache))) {
+	    verify_refname_available(refname, extras, skip,
+				     get_packed_refs(&ref_cache), &err)) {
+		error("%s", err.buf);
 		last_errno = ENOTDIR;
 		goto error_return;
 	}
@@ -2425,10 +2431,8 @@ static struct ref_lock *lock_ref_sha1_basic(const char *refname,
 			 */
 			goto retry;
 		else {
-			struct strbuf err = STRBUF_INIT;
 			unable_to_lock_message(ref_file, errno, &err);
 			error("%s", err.buf);
-			strbuf_release(&err);
 			goto error_return;
 		}
 	}
@@ -2436,6 +2440,7 @@ static struct ref_lock *lock_ref_sha1_basic(const char *refname,
 
  error_return:
 	unlock_ref(lock);
+	strbuf_release(&err);
 	errno = last_errno;
 	return NULL;
 }
@@ -2822,14 +2827,19 @@ static int rename_tmp_log(const char *newrefname)
 static int rename_ref_available(const char *oldname, const char *newname)
 {
 	struct string_list skip = STRING_LIST_INIT_NODUP;
+	struct strbuf err = STRBUF_INIT;
 	int ret;
 
 	string_list_insert(&skip, oldname);
 	ret = !verify_refname_available(newname, NULL, &skip,
-					get_packed_refs(&ref_cache))
+					get_packed_refs(&ref_cache), &err)
 		&& !verify_refname_available(newname, NULL, &skip,
-					     get_loose_refs(&ref_cache));
+					     get_loose_refs(&ref_cache), &err);
+	if (!ret)
+		error("%s", err.buf);
+
 	string_list_clear(&skip, 0);
+	strbuf_release(&err);
 	return ret;
 }
 
