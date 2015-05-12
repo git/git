@@ -47,6 +47,18 @@ $content"
 	test_cmp expect actual
     '
 
+    test_expect_success "Type of $type is correct using --allow-unknown-type" '
+	echo $type >expect &&
+	git cat-file -t --allow-unknown-type $sha1 >actual &&
+	test_cmp expect actual
+    '
+
+    test_expect_success "Size of $type is correct using --allow-unknown-type" '
+	echo $size >expect &&
+	git cat-file -s --allow-unknown-type $sha1 >actual &&
+	test_cmp expect actual
+    '
+
     test -z "$content" ||
     test_expect_success "Content of $type is correct" '
 	maybe_remove_timestamp "$content" $no_ts >expect &&
@@ -294,6 +306,39 @@ test_expect_success '%(deltabase) reports packed delta bases' '
 		grep "$(git rev-parse HEAD:foo)" actual ||
 		grep "$(git rev-parse HEAD:foo-plus)" actual
 	}
+'
+
+bogus_type="bogus"
+bogus_content="bogus"
+bogus_size=$(strlen "$bogus_content")
+bogus_sha1=$(echo_without_newline "$bogus_content" | git hash-object -t $bogus_type --literally -w --stdin)
+
+test_expect_success "Type of broken object is correct" '
+	echo $bogus_type >expect &&
+	git cat-file -t --allow-unknown-type $bogus_sha1 >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success "Size of broken object is correct" '
+	echo $bogus_size >expect &&
+	git cat-file -s --allow-unknown-type $bogus_sha1 >actual &&
+	test_cmp expect actual
+'
+bogus_type="abcdefghijklmnopqrstuvwxyz1234679"
+bogus_content="bogus"
+bogus_size=$(strlen "$bogus_content")
+bogus_sha1=$(echo_without_newline "$bogus_content" | git hash-object -t $bogus_type --literally -w --stdin)
+
+test_expect_success "Type of broken object is correct when type is large" '
+	echo $bogus_type >expect &&
+	git cat-file -t --allow-unknown-type $bogus_sha1 >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success "Size of large broken object is correct when type is large" '
+	echo $bogus_size >expect &&
+	git cat-file -s --allow-unknown-type $bogus_sha1 >actual &&
+	test_cmp expect actual
 '
 
 test_done
