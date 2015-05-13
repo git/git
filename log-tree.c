@@ -94,6 +94,8 @@ static int add_ref_decoration(const char *refname, const unsigned char *sha1, in
 	struct object *obj;
 	enum decoration_type type = DECORATION_NONE;
 
+	assert(cb_data == NULL);
+
 	if (starts_with(refname, "refs/replace/")) {
 		unsigned char original_sha1[20];
 		if (!check_replace_refs)
@@ -123,8 +125,6 @@ static int add_ref_decoration(const char *refname, const unsigned char *sha1, in
 	else if (!strcmp(refname, "HEAD"))
 		type = DECORATION_REF_HEAD;
 
-	if (!cb_data || *(int *)cb_data == DECORATE_SHORT_REFS)
-		refname = prettify_refname(refname);
 	add_name_decoration(type, refname, obj);
 	while (obj->type == OBJ_TAG) {
 		obj = ((struct tag *)obj)->tagged;
@@ -151,8 +151,8 @@ void load_ref_decorations(int flags)
 	if (!decoration_loaded) {
 		decoration_loaded = 1;
 		decoration_flags = flags;
-		for_each_ref(add_ref_decoration, &flags);
-		head_ref(add_ref_decoration, &flags);
+		for_each_ref(add_ref_decoration, NULL);
+		head_ref(add_ref_decoration, NULL);
 		for_each_commit_graft(add_graft_decoration, NULL);
 	}
 }
@@ -199,18 +199,8 @@ static const struct name_decoration *current_pointed_by_HEAD(const struct name_d
 	if (!(rru_flags & REF_ISSYMREF))
 		return NULL;
 
-	if ((decoration_flags == DECORATE_SHORT_REFS)) {
-		if (!skip_prefix(branch_name, "refs/heads/", &branch_name))
-			return NULL;
-	} else {
-		/*
-		 * Each decoration has a refname in full; keep
-		 * branch_name also in full, but still make sure
-		 * HEAD is a reasonable ref.
-		 */
-		if (!starts_with(branch_name, "refs/"))
-			return NULL;
-	}
+	if (!starts_with(branch_name, "refs/"))
+		return NULL;
 
 	/* OK, do we have that ref in the list? */
 	for (list = decoration; list; list = list->next)
@@ -220,6 +210,14 @@ static const struct name_decoration *current_pointed_by_HEAD(const struct name_d
 		}
 
 	return NULL;
+}
+
+static void show_name(struct strbuf *sb, const struct name_decoration *decoration)
+{
+	if (decoration_flags == DECORATE_SHORT_REFS)
+		strbuf_addstr(sb, prettify_refname(decoration->name));
+	else
+		strbuf_addstr(sb, decoration->name);
 }
 
 /*
@@ -259,7 +257,7 @@ void format_decorations_extended(struct strbuf *sb,
 			if (decoration->type == DECORATION_REF_TAG)
 				strbuf_addstr(sb, "tag: ");
 
-			strbuf_addstr(sb, decoration->name);
+			show_name(sb, decoration);
 
 			if (current_and_HEAD &&
 			    decoration->type == DECORATION_REF_HEAD) {
@@ -268,7 +266,7 @@ void format_decorations_extended(struct strbuf *sb,
 				strbuf_addstr(sb, " -> ");
 				strbuf_addstr(sb, color_reset);
 				strbuf_addstr(sb, decorate_get_color(use_color, current_and_HEAD->type));
-				strbuf_addstr(sb, current_and_HEAD->name);
+				show_name(sb, current_and_HEAD);
 			}
 			strbuf_addstr(sb, color_reset);
 
