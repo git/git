@@ -408,14 +408,14 @@ set by Git if the remote helper has the 'option' capability.
 	of <n> correspond to the number of -v flags passed on the
 	command line.
 
-'option progress' \{'true'|'false'\}::
+'option progress' {'true'|'false'}::
 	Enables (or disables) progress messages displayed by the
 	transport helper during a command.
 
 'option depth' <depth>::
 	Deepens the history of a shallow repository.
 
-'option followtags' \{'true'|'false'\}::
+'option followtags' {'true'|'false'}::
 	If enabled the helper should automatically fetch annotated
 	tag objects if the object the tag points at was transferred
 	during the fetch command.  If the tag is not fetched by
@@ -423,7 +423,7 @@ set by Git if the remote helper has the 'option' capability.
 	ask for the tag specifically.  Some helpers may be able to
 	use this option to avoid a second network connection.
 
-'option dry-run' \{'true'|'false'\}:
+'option dry-run' {'true'|'false'}:
 	If true, pretend the operation completed successfully,
 	but don't actually change any repository data.	For most
 	helpers this only applies to the 'push', if supported.
@@ -434,18 +434,18 @@ set by Git if the remote helper has the 'option' capability.
 	must not rely on this option being set before
 	connect request occurs.
 
-'option check-connectivity' \{'true'|'false'\}::
+'option check-connectivity' {'true'|'false'}::
 	Request the helper to check connectivity of a clone.
 
-'option force' \{'true'|'false'\}::
+'option force' {'true'|'false'}::
 	Request the helper to perform a force update.  Defaults to
 	'false'.
 
-'option cloning \{'true'|'false'\}::
+'option cloning {'true'|'false'}::
 	Notify the helper this is a clone request (i.e. the current
 	repository is guaranteed empty).
 
-'option update-shallow \{'true'|'false'\}::
+'option update-shallow {'true'|'false'}::
 	Allow to extend .git/shallow if the new refs require it.
 
 SEE ALSO
