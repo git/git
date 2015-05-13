@@ -600,7 +600,7 @@ be removed from the branch.
 See `filemodify` above for a detailed description of `<path>`.
 
 `filecopy`
-^^^^^^^^^^^^
+^^^^^^^^^^
 Recursively copies an existing file or subdirectory to a different
 location within the branch.  The existing file or directory must
 exist.  If the destination exists it will be completely replaced
