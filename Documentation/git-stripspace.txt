@@ -48,7 +48,7 @@ EXAMPLES
 
 Given the following noisy input with '$' indicating the end of a line:
 
---------
+---------
 |A brief introduction   $
 |   $
 |$
@@ -64,7 +64,7 @@ Given the following noisy input with '$' indicating the end of a line:
 
 Use 'git stripspace' with no arguments to obtain:
 
---------
+---------
 |A brief introduction$
 |$
 |A new paragraph$
@@ -78,7 +78,7 @@ Use 'git stripspace' with no arguments to obtain:
 
 Use 'git stripspace --strip-comments' to obtain:
 
---------
+---------
 |A brief introduction$
 |$
 |A new paragraph$
