@@ -13,6 +13,8 @@
 #include "line-log.h"
 
 static struct decoration name_decoration = { "object names" };
+static int decoration_loaded;
+static int decoration_flags;
 
 static char decoration_colors[][COLOR_MAXLEN] = {
 	GIT_COLOR_RESET,
@@ -146,9 +148,9 @@ static int add_graft_decoration(const struct commit_graft *graft, void *cb_data)
 
 void load_ref_decorations(int flags)
 {
-	static int loaded;
-	if (!loaded) {
-		loaded = 1;
+	if (!decoration_loaded) {
+		decoration_loaded = 1;
+		decoration_flags = flags;
 		for_each_ref(add_ref_decoration, &flags);
 		head_ref(add_ref_decoration, &flags);
 		for_each_commit_graft(add_graft_decoration, NULL);
@@ -196,8 +198,19 @@ static const struct name_decoration *current_pointed_by_HEAD(const struct name_d
 	branch_name = resolve_ref_unsafe("HEAD", 0, unused, &rru_flags);
 	if (!(rru_flags & REF_ISSYMREF))
 		return NULL;
-	if (!skip_prefix(branch_name, "refs/heads/", &branch_name))
-		return NULL;
+
+	if ((decoration_flags == DECORATE_SHORT_REFS)) {
+		if (!skip_prefix(branch_name, "refs/heads/", &branch_name))
+			return NULL;
+	} else {
+		/*
+		 * Each decoration has a refname in full; keep
+		 * branch_name also in full, but still make sure
+		 * HEAD is a reasonable ref.
+		 */
+		if (!starts_with(branch_name, "refs/"))
+			return NULL;
+	}
 
 	/* OK, do we have that ref in the list? */
 	for (list = decoration; list; list = list->next)
