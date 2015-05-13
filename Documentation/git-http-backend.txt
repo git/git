@@ -65,8 +65,8 @@ automatically by the web server.
 
 EXAMPLES
 --------
-All of the following examples map 'http://$hostname/git/foo/bar.git'
-to '/var/www/git/foo/bar.git'.
+All of the following examples map `http://$hostname/git/foo/bar.git`
+to `/var/www/git/foo/bar.git`.
 
 Apache 2.x::
 	Ensure mod_cgi, mod_alias, and mod_env are enabled, set
