@@ -80,7 +80,7 @@ be in a separate packet, and the list must end with a flush packet.
 	the things up in .bash_profile).
 
 --exec=<git-upload-pack>::
-	Same as \--upload-pack=<git-upload-pack>.
+	Same as --upload-pack=<git-upload-pack>.
 
 --depth=<n>::
 	Limit fetching to ancestor-chains not longer than n.

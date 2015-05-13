@@ -147,7 +147,7 @@ can be used.
 	form as close to the original input as possible.
 
 --symbolic-full-name::
-	This is similar to \--symbolic, but it omits input that
+	This is similar to --symbolic, but it omits input that
 	are not refs (i.e. branch or tag names; or more
 	explicitly disambiguating "heads/master" form, when you
 	want to name the "master" branch when there is an

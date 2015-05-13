@@ -29,7 +29,7 @@ OPTIONS
 	a directory on the default $PATH.
 
 --exec=<git-receive-pack>::
-	Same as \--receive-pack=<git-receive-pack>.
+	Same as --receive-pack=<git-receive-pack>.
 
 --all::
 	Instead of explicitly specifying which refs to update,
