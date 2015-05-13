@@ -201,4 +201,12 @@ test_expect_success 'corrupt tag' '
 	test_must_fail git hash-object -t tag --stdin </dev/null
 '
 
+test_expect_success 'hash-object complains about bogus type name' '
+	test_must_fail git hash-object -t bogus --stdin </dev/null
+'
+
+test_expect_success 'hash-object complains about truncated type name' '
+	test_must_fail git hash-object -t bl --stdin </dev/null
+'
+
 test_done
