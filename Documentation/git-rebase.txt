@@ -80,7 +80,7 @@ remain the checked-out branch.
 If the upstream branch already contains a change you have made (e.g.,
 because you mailed a patch which was applied upstream), then that commit
 will be skipped. For example, running `git rebase master` on the
-following history (in which A' and A introduce the same set of changes,
+following history (in which `A'` and `A` introduce the same set of changes,
 but have different committer information):
 
 ------------
