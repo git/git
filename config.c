@@ -12,6 +12,7 @@
 #include "quote.h"
 #include "hashmap.h"
 #include "string-list.h"
+#include "utf8.h"
 
 struct config_source {
 	struct config_source *prev;
@@ -417,8 +418,7 @@ static int git_parse_source(config_fn_t fn, void *data)
 	struct strbuf *var = &cf->var;
 
 	/* U+FEFF Byte Order Mark in UTF8 */
-	static const unsigned char *utf8_bom = (unsigned char *) "\xef\xbb\xbf";
-	const unsigned char *bomptr = utf8_bom;
+	const char *bomptr = utf8_bom;
 
 	for (;;) {
 		int c = get_next_char();
@@ -426,7 +426,7 @@ static int git_parse_source(config_fn_t fn, void *data)
 			/* We are at the file beginning; skip UTF8-encoded BOM
 			 * if present. Sane editors won't put this in on their
 			 * own, but e.g. Windows Notepad will do it happily. */
-			if ((unsigned char) c == *bomptr) {
+			if (c == (*bomptr & 0377)) {
 				bomptr++;
 				continue;
 			} else {

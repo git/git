@@ -12,6 +12,7 @@
 #include "refs.h"
 #include "wildmatch.h"
 #include "pathspec.h"
+#include "utf8.h"
 
 struct path_simplify {
 	int len;
@@ -617,7 +618,12 @@ int add_excludes_from_file_to_list(const char *fname,
 	}
 
 	el->filebuf = buf;
+
+	if (skip_utf8_bom(&buf, size))
+		size -= buf - el->filebuf;
+
 	entry = buf;
+
 	for (i = 0; i < size; i++) {
 		if (buf[i] == '\n') {
 			if (entry != buf + i && entry[0] != '#') {
