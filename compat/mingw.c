@@ -1,6 +1,7 @@
 #include "../git-compat-util.h"
 #include "win32.h"
 #include <conio.h>
+#include <shlobj.h>
 #include <wchar.h>
 #include "../strbuf.h"
 #include "../run-command.h"
@@ -2377,4 +2378,21 @@ void mingw_startup()
 
 	/* init length of current directory for handle_long_path */
 	current_directory_len = GetCurrentDirectoryW(0, NULL);
+}
+
+const char *windows_wide_config(void)
+{
+	static struct strbuf windows_wide = STRBUF_INIT;
+	if (!windows_wide.len) {
+		wchar_t wbuffer[MAX_PATH];
+		if (SHGetFolderPathW(NULL, CSIDL_COMMON_APPDATA, NULL,
+				SHGFP_TYPE_CURRENT, wbuffer) != S_OK)
+			strbuf_addch(&windows_wide, '\0');
+		else {
+			char buffer[MAX_PATH];
+			xwcstoutf(buffer, wbuffer, sizeof(buffer));
+			strbuf_addf(&windows_wide, "%s\\Git\\config", buffer);
+		}
+	}
+	return *windows_wide.buf ? windows_wide.buf : NULL;
 }
