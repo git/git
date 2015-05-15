@@ -151,8 +151,8 @@ static struct fsentry *fseentry_create_entry(struct fsentry *list,
 
 	fse->st_mode = file_attr_to_st_mode(fdata->dwFileAttributes,
 			fdata->dwReserved0);
-	fse->u.s.st_size = (((off64_t) (fdata->nFileSizeHigh)) << 32)
-			| fdata->nFileSizeLow;
+	fse->u.s.st_size = S_ISLNK(fse->st_mode) ? MAX_LONG_PATH :
+			fdata->nFileSizeLow | (((off_t) fdata->nFileSizeHigh) << 32);
 	filetime_to_timespec(&(fdata->ftLastAccessTime), &(fse->u.s.st_atim));
 	filetime_to_timespec(&(fdata->ftLastWriteTime), &(fse->u.s.st_mtim));
 	filetime_to_timespec(&(fdata->ftCreationTime), &(fse->u.s.st_ctim));
