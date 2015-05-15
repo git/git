@@ -685,16 +685,60 @@ int mingw_lstat(const char *file_name, struct stat *buf)
 {
 	return do_lstat(0, file_name, buf);
 }
+
+static int get_file_info_by_handle(HANDLE hnd, struct stat *buf)
+{
+	BY_HANDLE_FILE_INFORMATION fdata;
+	if (!GetFileInformationByHandle(hnd, &fdata)) {
+		errno = err_win_to_posix(GetLastError());
+		return -1;
+	}
+	buf->st_ino = 0;
+	buf->st_dev = buf->st_rdev = 0; /* not used by Git */
+	buf->st_gid = buf->st_uid = 0;
+	buf->st_nlink = 1;
+	buf->st_mode = file_attr_to_st_mode(fdata.dwFileAttributes);
+	buf->st_size = fdata.nFileSizeLow | (((off_t) fdata.nFileSizeHigh) << 32);
+	buf->st_atime = filetime_to_time_t(&(fdata.ftLastAccessTime));
+	buf->st_mtime = filetime_to_time_t(&(fdata.ftLastWriteTime));
+	buf->st_ctime = filetime_to_time_t(&(fdata.ftCreationTime));
+	return 0;
+}
+
 int mingw_stat(const char *file_name, struct stat *buf)
 {
-	return do_lstat(1, file_name, buf);
+	wchar_t wfile_name[MAX_LONG_PATH];
+	HANDLE hnd;
+	int result;
+
+	/* if symlinks are disabled, use lstat() (without following links) */
+	if (!has_symlinks) {
+		result = lstat(file_name, buf);
+		if (!result && S_ISLNK(buf->st_mode)) {
+			errno = ELOOP;
+			return -1;
+		}
+		return result;
+	}
+
+	/* otherwise just open the file and let Windows resolve the links */
+	if (xutftowcs_long_path(wfile_name, file_name) < 0)
+		return -1;
+	hnd = CreateFileW(wfile_name, 0,
+			FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL,
+			OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
+	if (hnd == INVALID_HANDLE_VALUE) {
+		errno = err_win_to_posix(GetLastError());
+		return -1;
+	}
+	result = get_file_info_by_handle(hnd, buf);
+	CloseHandle(hnd);
+	return result;
 }
 
 int mingw_fstat(int fd, struct stat *buf)
 {
 	HANDLE fh = (HANDLE)_get_osfhandle(fd);
-	BY_HANDLE_FILE_INFORMATION fdata;
-
 	if (fh == INVALID_HANDLE_VALUE) {
 		errno = EBADF;
 		return -1;
@@ -703,20 +747,8 @@ int mingw_fstat(int fd, struct stat *buf)
 	if (GetFileType(fh) != FILE_TYPE_DISK)
 		return _fstati64(fd, buf);
 
-	if (GetFileInformationByHandle(fh, &fdata)) {
-		buf->st_ino = 0;
-		buf->st_gid = 0;
-		buf->st_uid = 0;
-		buf->st_nlink = 1;
-		buf->st_mode = file_attr_to_st_mode(fdata.dwFileAttributes);
-		buf->st_size = fdata.nFileSizeLow |
-			(((off_t)fdata.nFileSizeHigh)<<32);
-		buf->st_dev = buf->st_rdev = 0; /* not used by Git */
-		buf->st_atime = filetime_to_time_t(&(fdata.ftLastAccessTime));
-		buf->st_mtime = filetime_to_time_t(&(fdata.ftLastWriteTime));
-		buf->st_ctime = filetime_to_time_t(&(fdata.ftCreationTime));
+	if (!get_file_info_by_handle(fh, buf))
 		return 0;
-	}
 	errno = EBADF;
 	return -1;
 }
