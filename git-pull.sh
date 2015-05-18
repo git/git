@@ -56,6 +56,9 @@ fi
 # Setup default fast-forward options via `pull.ff`
 pull_ff=$(git config pull.ff)
 case "$pull_ff" in
+true)
+	no_ff=--ff
+	;;
 false)
 	no_ff=--no-ff
 	;;
