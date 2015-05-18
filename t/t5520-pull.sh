@@ -109,6 +109,61 @@ test_expect_success 'the default remote . should not break explicit pull' '
 	test "$(cat file)" = modified
 '
 
+test_expect_success 'fail if wildcard spec does not match any refs' '
+	git checkout -b test copy^ &&
+	test_when_finished "git checkout -f copy && git branch -D test" &&
+	test "$(cat file)" = file &&
+	test_must_fail git pull . "refs/nonexisting1/*:refs/nonexisting2/*" 2>err &&
+	test_i18ngrep "no candidates for merging" err &&
+	test "$(cat file)" = file
+'
+
+test_expect_success 'fail if no branches specified with non-default remote' '
+	git remote add test_remote . &&
+	test_when_finished "git remote remove test_remote" &&
+	git checkout -b test copy^ &&
+	test_when_finished "git checkout -f copy && git branch -D test" &&
+	test "$(cat file)" = file &&
+	test_config branch.test.remote origin &&
+	test_must_fail git pull test_remote 2>err &&
+	test_i18ngrep "specify a branch on the command line" err &&
+	test "$(cat file)" = file
+'
+
+test_expect_success 'fail if not on a branch' '
+	git remote add origin . &&
+	test_when_finished "git remote remove origin" &&
+	git checkout HEAD^ &&
+	test_when_finished "git checkout -f copy" &&
+	test "$(cat file)" = file &&
+	test_must_fail git pull 2>err &&
+	test_i18ngrep "not currently on a branch" err &&
+	test "$(cat file)" = file
+'
+
+test_expect_success 'fail if no configuration for current branch' '
+	git remote add test_remote . &&
+	test_when_finished "git remote remove test_remote" &&
+	git checkout -b test copy^ &&
+	test_when_finished "git checkout -f copy && git branch -D test" &&
+	test_config branch.test.remote test_remote &&
+	test "$(cat file)" = file &&
+	test_must_fail git pull 2>err &&
+	test_i18ngrep "no tracking information" err &&
+	test "$(cat file)" = file
+'
+
+test_expect_success 'fail if upstream branch does not exist' '
+	git checkout -b test copy^ &&
+	test_when_finished "git checkout -f copy && git branch -D test" &&
+	test_config branch.test.remote . &&
+	test_config branch.test.merge refs/heads/nonexisting &&
+	test "$(cat file)" = file &&
+	test_must_fail git pull 2>err &&
+	test_i18ngrep "no such ref was fetched" err &&
+	test "$(cat file)" = file
+'
+
 test_expect_success '--rebase' '
 	git branch to-rebase &&
 	echo modified again > file &&
