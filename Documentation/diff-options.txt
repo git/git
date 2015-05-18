@@ -41,8 +41,17 @@ endif::git-format-patch[]
 
 ifndef::git-format-patch[]
 --raw::
-	Generate the raw format.
+ifndef::git-log[]
+	Generate the diff in raw format.
 	{git-diff-core? This is the default.}
+endif::git-log[]
+ifdef::git-log[]
+	For each commit, show a summary of changes using the raw diff
+	format. See the "RAW OUTPUT FORMAT" section of
+	linkgit:git-diff[1]. This is different from showing the log
+	itself in raw format, which you can achieve with
+	`--format=raw`.
+endif::git-log[]
 endif::git-format-patch[]
 
 ifndef::git-format-patch[]
