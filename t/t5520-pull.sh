@@ -93,9 +93,9 @@ test_expect_success 'test . as a remote' '
 	echo updated >file &&
 	git commit -a -m updated &&
 	git checkout copy &&
-	test `cat file` = file &&
+	test "$(cat file)" = file &&
 	git pull &&
-	test `cat file` = updated
+	test "$(cat file)" = updated
 '
 
 test_expect_success 'the default remote . should not break explicit pull' '
@@ -104,9 +104,9 @@ test_expect_success 'the default remote . should not break explicit pull' '
 	git commit -a -m modified &&
 	git checkout copy &&
 	git reset --hard HEAD^ &&
-	test `cat file` = file &&
+	test "$(cat file)" = file &&
 	git pull . second &&
-	test `cat file` = modified
+	test "$(cat file)" = modified
 '
 
 test_expect_success '--rebase' '
@@ -119,23 +119,23 @@ test_expect_success '--rebase' '
 	git commit -m "new file" &&
 	git tag before-rebase &&
 	git pull --rebase . copy &&
-	test $(git rev-parse HEAD^) = $(git rev-parse copy) &&
-	test new = $(git show HEAD:file2)
+	test "$(git rev-parse HEAD^)" = "$(git rev-parse copy)" &&
+	test new = "$(git show HEAD:file2)"
 '
 test_expect_success 'pull.rebase' '
 	git reset --hard before-rebase &&
 	test_config pull.rebase true &&
 	git pull . copy &&
-	test $(git rev-parse HEAD^) = $(git rev-parse copy) &&
-	test new = $(git show HEAD:file2)
+	test "$(git rev-parse HEAD^)" = "$(git rev-parse copy)" &&
+	test new = "$(git show HEAD:file2)"
 '
 
 test_expect_success 'branch.to-rebase.rebase' '
 	git reset --hard before-rebase &&
 	test_config branch.to-rebase.rebase true &&
 	git pull . copy &&
-	test $(git rev-parse HEAD^) = $(git rev-parse copy) &&
-	test new = $(git show HEAD:file2)
+	test "$(git rev-parse HEAD^)" = "$(git rev-parse copy)" &&
+	test new = "$(git show HEAD:file2)"
 '
 
 test_expect_success 'branch.to-rebase.rebase should override pull.rebase' '
@@ -143,8 +143,8 @@ test_expect_success 'branch.to-rebase.rebase should override pull.rebase' '
 	test_config pull.rebase true &&
 	test_config branch.to-rebase.rebase false &&
 	git pull . copy &&
-	test $(git rev-parse HEAD^) != $(git rev-parse copy) &&
-	test new = $(git show HEAD:file2)
+	test "$(git rev-parse HEAD^)" != "$(git rev-parse copy)" &&
+	test new = "$(git show HEAD:file2)"
 '
 
 # add a feature branch, keep-merge, that is merged into master, so the
@@ -163,33 +163,33 @@ test_expect_success 'pull.rebase=false create a new merge commit' '
 	git reset --hard before-preserve-rebase &&
 	test_config pull.rebase false &&
 	git pull . copy &&
-	test $(git rev-parse HEAD^1) = $(git rev-parse before-preserve-rebase) &&
-	test $(git rev-parse HEAD^2) = $(git rev-parse copy) &&
-	test file3 = $(git show HEAD:file3.t)
+	test "$(git rev-parse HEAD^1)" = "$(git rev-parse before-preserve-rebase)" &&
+	test "$(git rev-parse HEAD^2)" = "$(git rev-parse copy)" &&
+	test file3 = "$(git show HEAD:file3.t)"
 '
 
 test_expect_success 'pull.rebase=true flattens keep-merge' '
 	git reset --hard before-preserve-rebase &&
 	test_config pull.rebase true &&
 	git pull . copy &&
-	test $(git rev-parse HEAD^^) = $(git rev-parse copy) &&
-	test file3 = $(git show HEAD:file3.t)
+	test "$(git rev-parse HEAD^^)" = "$(git rev-parse copy)" &&
+	test file3 = "$(git show HEAD:file3.t)"
 '
 
 test_expect_success 'pull.rebase=1 is treated as true and flattens keep-merge' '
 	git reset --hard before-preserve-rebase &&
 	test_config pull.rebase 1 &&
 	git pull . copy &&
-	test $(git rev-parse HEAD^^) = $(git rev-parse copy) &&
-	test file3 = $(git show HEAD:file3.t)
+	test "$(git rev-parse HEAD^^)" = "$(git rev-parse copy)" &&
+	test file3 = "$(git show HEAD:file3.t)"
 '
 
 test_expect_success 'pull.rebase=preserve rebases and merges keep-merge' '
 	git reset --hard before-preserve-rebase &&
 	test_config pull.rebase preserve &&
 	git pull . copy &&
-	test $(git rev-parse HEAD^^) = $(git rev-parse copy) &&
-	test $(git rev-parse HEAD^2) = $(git rev-parse keep-merge)
+	test "$(git rev-parse HEAD^^)" = "$(git rev-parse copy)" &&
+	test "$(git rev-parse HEAD^2)" = "$(git rev-parse keep-merge)"
 '
 
 test_expect_success 'pull.rebase=invalid fails' '
@@ -202,25 +202,25 @@ test_expect_success '--rebase=false create a new merge commit' '
 	git reset --hard before-preserve-rebase &&
 	test_config pull.rebase true &&
 	git pull --rebase=false . copy &&
-	test $(git rev-parse HEAD^1) = $(git rev-parse before-preserve-rebase) &&
-	test $(git rev-parse HEAD^2) = $(git rev-parse copy) &&
-	test file3 = $(git show HEAD:file3.t)
+	test "$(git rev-parse HEAD^1)" = "$(git rev-parse before-preserve-rebase)" &&
+	test "$(git rev-parse HEAD^2)" = "$(git rev-parse copy)" &&
+	test file3 = "$(git show HEAD:file3.t)"
 '
 
 test_expect_success '--rebase=true rebases and flattens keep-merge' '
 	git reset --hard before-preserve-rebase &&
 	test_config pull.rebase preserve &&
 	git pull --rebase=true . copy &&
-	test $(git rev-parse HEAD^^) = $(git rev-parse copy) &&
-	test file3 = $(git show HEAD:file3.t)
+	test "$(git rev-parse HEAD^^)" = "$(git rev-parse copy)" &&
+	test file3 = "$(git show HEAD:file3.t)"
 '
 
 test_expect_success '--rebase=preserve rebases and merges keep-merge' '
 	git reset --hard before-preserve-rebase &&
 	test_config pull.rebase true &&
 	git pull --rebase=preserve . copy &&
-	test $(git rev-parse HEAD^^) = $(git rev-parse copy) &&
-	test $(git rev-parse HEAD^2) = $(git rev-parse keep-merge)
+	test "$(git rev-parse HEAD^^)" = "$(git rev-parse copy)" &&
+	test "$(git rev-parse HEAD^2)" = "$(git rev-parse keep-merge)"
 '
 
 test_expect_success '--rebase=invalid fails' '
@@ -232,8 +232,8 @@ test_expect_success '--rebase overrides pull.rebase=preserve and flattens keep-m
 	git reset --hard before-preserve-rebase &&
 	test_config pull.rebase preserve &&
 	git pull --rebase . copy &&
-	test $(git rev-parse HEAD^^) = $(git rev-parse copy) &&
-	test file3 = $(git show HEAD:file3.t)
+	test "$(git rev-parse HEAD^^)" = "$(git rev-parse copy)" &&
+	test file3 = "$(git show HEAD:file3.t)"
 '
 
 test_expect_success '--rebase with rebased upstream' '
@@ -250,7 +250,7 @@ test_expect_success '--rebase with rebased upstream' '
 	git tag to-rebase-orig &&
 	git pull --rebase me copy &&
 	test "conflicting modification" = "$(cat file)" &&
-	test file = $(cat file2)
+	test file = "$(cat file2)"
 
 '
 
@@ -261,7 +261,7 @@ test_expect_success '--rebase with rebased default upstream' '
 	git reset --hard to-rebase-orig &&
 	git pull --rebase &&
 	test "conflicting modification" = "$(cat file)" &&
-	test file = $(cat file2)
+	test file = "$(cat file2)"
 
 '
 
@@ -282,7 +282,7 @@ test_expect_success 'pull --rebase dies early with dirty working directory' '
 
 	git checkout to-rebase &&
 	git update-ref refs/remotes/me/copy copy^ &&
-	COPY=$(git rev-parse --verify me/copy) &&
+	COPY="$(git rev-parse --verify me/copy)" &&
 	git rebase --onto $COPY copy &&
 	test_config branch.to-rebase.remote me &&
 	test_config branch.to-rebase.merge refs/heads/copy &&
@@ -290,10 +290,10 @@ test_expect_success 'pull --rebase dies early with dirty working directory' '
 	echo dirty >> file &&
 	git add file &&
 	test_must_fail git pull &&
-	test $COPY = $(git rev-parse --verify me/copy) &&
+	test "$COPY" = "$(git rev-parse --verify me/copy)" &&
 	git checkout HEAD -- file &&
 	git pull &&
-	test $COPY != $(git rev-parse --verify me/copy)
+	test "$COPY" != "$(git rev-parse --verify me/copy)"
 
 '
 
