@@ -209,14 +209,12 @@ static inline uint8_t read_u8(const unsigned char *buffer, size_t *pos)
 	return buffer[(*pos)++];
 }
 
+#define MAX_XOR_OFFSET 160
+
 static int load_bitmap_entries_v1(struct bitmap_index *index)
 {
-	static const size_t MAX_XOR_OFFSET = 160;
-
 	uint32_t i;
-	struct stored_bitmap **recent_bitmaps;
-
-	recent_bitmaps = xcalloc(MAX_XOR_OFFSET, sizeof(struct stored_bitmap));
+	struct stored_bitmap *recent_bitmaps[MAX_XOR_OFFSET] = { NULL };
 
 	for (i = 0; i < index->entry_count; ++i) {
 		int xor_offset, flags;
