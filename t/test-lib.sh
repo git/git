@@ -529,7 +529,7 @@ test_run_ () {
 	test_cleanup=:
 	expecting_failure=$2
 
-	if test "${GIT_TEST_CHAIN_LINT:-0}" != 0; then
+	if test "${GIT_TEST_CHAIN_LINT:-1}" != 0; then
 		# 117 is magic because it is unlikely to match the exit
 		# code of other programs
 		test_eval_ "(exit 117) && $1"
