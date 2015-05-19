@@ -314,7 +314,6 @@ static void print_highlight_menu_stuff(struct menu_stuff *stuff, int **chosen)
 {
 	struct string_list menu_list = STRING_LIST_INIT_DUP;
 	struct strbuf menu = STRBUF_INIT;
-	struct strbuf buf = STRBUF_INIT;
 	struct menu_item *menu_item;
 	struct string_list_item *string_list_item;
 	int i;
@@ -363,7 +362,6 @@ static void print_highlight_menu_stuff(struct menu_stuff *stuff, int **chosen)
 	pretty_print_menus(&menu_list);
 
 	strbuf_release(&menu);
-	strbuf_release(&buf);
 	string_list_clear(&menu_list, 0);
 }
 
