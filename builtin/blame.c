@@ -26,6 +26,7 @@
 #include "userdiff.h"
 #include "line-range.h"
 #include "line-log.h"
+#include "dir.h"
 
 static char blame_usage[] = N_("git blame [<options>] [<rev-opts>] [<rev>] [--] file");
 
@@ -2151,16 +2152,6 @@ static void sanity_check_refcnt(struct scoreboard *sb)
 	}
 }
 
-/*
- * Used for the command line parsing; check if the path exists
- * in the working tree.
- */
-static int has_string_in_work_tree(const char *path)
-{
-	struct stat st;
-	return !lstat(path, &st);
-}
-
 static unsigned parse_score(const char *arg)
 {
 	char *end;
@@ -2655,14 +2646,14 @@ parse_done:
 		if (argc < 2)
 			usage_with_options(blame_opt_usage, options);
 		path = add_prefix(prefix, argv[argc - 1]);
-		if (argc == 3 && !has_string_in_work_tree(path)) { /* (2b) */
+		if (argc == 3 && !file_exists(path)) { /* (2b) */
 			path = add_prefix(prefix, argv[1]);
 			argv[1] = argv[2];
 		}
 		argv[argc - 1] = "--";
 
 		setup_work_tree();
-		if (!has_string_in_work_tree(path))
+		if (!file_exists(path))
 			die_errno("cannot stat path '%s'", path);
 	}
 
