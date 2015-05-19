@@ -104,6 +104,10 @@ commit or stash your changes before running 'git merge'.
 If no commit is given from the command line, merge the remote-tracking
 branches that the current branch is configured to use as its upstream.
 See also the configuration section of this manual page.
++
+When `FETCH_HEAD` (and no other commit) is specified, the branches
+recorded in the `.git/FETCH_HEAD` file by the previous invocation
+of `git fetch` for merging are merged to the current branch.
 
 
 PRE-MERGE CHECKS
