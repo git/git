@@ -74,7 +74,8 @@ static void clear_progress_signal(void)
 
 static int is_foreground_fd(int fd)
 {
-	return getpgid(0) == tcgetpgrp(fd);
+	int tpgrp = tcgetpgrp(fd);
+	return tpgrp < 0 || tpgrp == getpgid(0);
 }
 
 static int display(struct progress *progress, unsigned n, const char *done)
