@@ -10478,7 +10478,7 @@ msgstr ""
 #: git-am.sh:142
 msgid "Using index info to reconstruct a base tree..."
 msgstr ""
-"Verwende Informationen aus der Staging-Area, um einen Basisverzeichnis "
+"Verwende Informationen aus der Staging-Area, um ein Basisverzeichnis "
 "nachzustellen"
 
 #: git-am.sh:157
