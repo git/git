@@ -2292,18 +2292,18 @@ remote.<name>.skipFetchAll::
 
 remote.<name>.receivepack::
 	The default program to execute on the remote side when pushing.  See
-	option \--receive-pack of linkgit:git-push[1].
+	option --receive-pack of linkgit:git-push[1].
 
 remote.<name>.uploadpack::
 	The default program to execute on the remote side when fetching.  See
-	option \--upload-pack of linkgit:git-fetch-pack[1].
+	option --upload-pack of linkgit:git-fetch-pack[1].
 
 remote.<name>.tagOpt::
-	Setting this value to \--no-tags disables automatic tag following when
-	fetching from remote <name>. Setting it to \--tags will fetch every
+	Setting this value to --no-tags disables automatic tag following when
+	fetching from remote <name>. Setting it to --tags will fetch every
 	tag from remote <name>, even if they are not reachable from remote
 	branch heads. Passing these flags directly to linkgit:git-fetch[1] can
-	override this setting. See options \--tags and \--no-tags of
+	override this setting. See options --tags and --no-tags of
 	linkgit:git-fetch[1].
 
 remote.<name>.vcs::

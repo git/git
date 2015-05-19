@@ -192,7 +192,7 @@ self-contained. Use `git index-pack --fix-thin`
 
 --shallow::
 	Optimize a pack that will be provided to a client with a shallow
-	repository.  This option, combined with \--thin, can result in a
+	repository.  This option, combined with --thin, can result in a
 	smaller pack at the cost of speed.
 
 --delta-base-offset::
