@@ -739,30 +739,25 @@ __git_compute_porcelain_commands ()
 	__git_porcelain_commands=$(__git_list_porcelain_commands)
 }
 
+# Lists all set config variables starting with the given section prefix,
+# with the prefix removed.
+__git_get_config_variables ()
+{
+	local section="$1" i IFS=$'\n'
+	for i in $(git --git-dir="$(__gitdir)" config --get-regexp "^$section\..*" 2>/dev/null); do
+		i="${i#$section.}"
+		echo "${i/ */}"
+	done
+}
+
 __git_pretty_aliases ()
 {
-	local i IFS=$'\n'
-	for i in $(git --git-dir="$(__gitdir)" config --get-regexp "pretty\..*" 2>/dev/null); do
-		case "$i" in
-		pretty.*)
-			i="${i#pretty.}"
-			echo "${i/ */}"
-			;;
-		esac
-	done
+	__git_get_config_variables "pretty"
 }
 
 __git_aliases ()
 {
-	local i IFS=$'\n'
-	for i in $(git --git-dir="$(__gitdir)" config --get-regexp "alias\..*" 2>/dev/null); do
-		case "$i" in
-		alias.*)
-			i="${i#alias.}"
-			echo "${i/ */}"
-			;;
-		esac
-	done
+	__git_get_config_variables "alias"
 }
 
 # __git_aliased_command requires 1 argument
@@ -2260,12 +2255,7 @@ _git_remote ()
 		__git_complete_remote_or_refspec
 		;;
 	update)
-		local i c='' IFS=$'\n'
-		for i in $(git --git-dir="$(__gitdir)" config --get-regexp "remotes\..*" 2>/dev/null); do
-			i="${i#remotes.}"
-			c="$c ${i/ */}"
-		done
-		__gitcomp "$c"
+		__gitcomp "$(__git_get_config_variables "remotes")"
 		;;
 	*)
 		;;
