@@ -10479,7 +10479,7 @@ msgstr ""
 msgid "Using index info to reconstruct a base tree..."
 msgstr ""
 "Verwende Informationen aus der Staging-Area, um ein Basisverzeichnis "
-"nachzustellen"
+"nachzustellen ..."
 
 #: git-am.sh:157
 msgid ""
@@ -10495,7 +10495,7 @@ msgstr "Falle zurück zum Patchen der Basis und des 3-Wege-Merges ..."
 
 #: git-am.sh:182
 msgid "Failed to merge in the changes."
-msgstr "Merge der Änderungen fehlgeschlagen"
+msgstr "Merge der Änderungen fehlgeschlagen."
 
 #: git-am.sh:277
 msgid "Only one StGIT patch series can be applied at once"
