@@ -180,8 +180,8 @@ OPTIONS
 +
 --
 strip::
-	Strip leading and trailing empty lines, trailing whitespace, and
-	#commentary and collapse consecutive empty lines.
+	Strip leading and trailing empty lines, trailing whitespace,
+	commentary and collapse consecutive empty lines.
 whitespace::
 	Same as `strip` except #commentary is not removed.
 verbatim::
@@ -282,8 +282,11 @@ configuration variable documented in linkgit:git-config[1].
 --verbose::
 	Show unified diff between the HEAD commit and what
 	would be committed at the bottom of the commit message
-	template.  Note that this diff output doesn't have its
-	lines prefixed with '#'.
+	template to help the user describe the commit by reminding
+	what changes the commit has.
+	Note that this diff output doesn't have its
+	lines prefixed with '#'. This diff will not be a part
+	of the commit message.
 +
 If specified twice, show in addition the unified diff between
 what would be committed and the worktree files, i.e. the unstaged
