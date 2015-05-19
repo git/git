@@ -19,7 +19,7 @@ test_expect_success 'init depot' '
 
 # Check that the P4EDITOR argument can be given command-line
 # options, which git-p4 will then pass through to the shell.
-test_expect_failure 'EDITOR with options' '
+test_expect_success 'EDITOR with options' '
 	git p4 clone --dest="$git" //depot &&
 	test_when_finished cleanup_git &&
 	(
