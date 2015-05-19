@@ -10491,7 +10491,7 @@ msgstr ""
 
 #: git-am.sh:166
 msgid "Falling back to patching base and 3-way merge..."
-msgstr "Falle zurück zum Patchen der Basis und des 3-Wege-Merges ..."
+msgstr "Falle zurück zum Patchen der Basis und zum 3-Wege-Merge ..."
 
 #: git-am.sh:182
 msgid "Failed to merge in the changes."
