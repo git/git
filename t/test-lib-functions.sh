@@ -348,11 +348,18 @@ test_declared_prereq () {
 	return 1
 }
 
+test_verify_prereq () {
+	test -z "$test_prereq" ||
+	expr >/dev/null "$test_prereq" : '[A-Z0-9_,!]*$' ||
+	error "bug in the test script: '$test_prereq' does not look like a prereq"
+}
+
 test_expect_failure () {
 	test_start_
 	test "$#" = 3 && { test_prereq=$1; shift; } || test_prereq=
 	test "$#" = 2 ||
 	error "bug in the test script: not 2 or 3 parameters to test-expect-failure"
+	test_verify_prereq
 	export test_prereq
 	if ! test_skip "$@"
 	then
@@ -372,6 +379,7 @@ test_expect_success () {
 	test "$#" = 3 && { test_prereq=$1; shift; } || test_prereq=
 	test "$#" = 2 ||
 	error "bug in the test script: not 2 or 3 parameters to test-expect-success"
+	test_verify_prereq
 	export test_prereq
 	if ! test_skip "$@"
 	then
@@ -400,6 +408,7 @@ test_external () {
 	error >&5 "bug in the test script: not 3 or 4 parameters to test_external"
 	descr="$1"
 	shift
+	test_verify_prereq
 	export test_prereq
 	if ! test_skip "$descr" "$@"
 	then
