@@ -10,6 +10,8 @@ test_description='Test git stash'
 test_expect_success 'stash some dirty working directory' '
 	echo 1 > file &&
 	git add file &&
+	echo unrelated >other-file &&
+	git add other-file &&
 	test_tick &&
 	git commit -m initial &&
 	echo 2 > file &&
@@ -43,10 +45,15 @@ test_expect_success 'applying bogus stash does nothing' '
 	test_cmp expect file
 '
 
+test_expect_success 'apply requires a clean index' '
+	test_when_finished "git reset --hard" &&
+	echo changed >other-file &&
+	git add other-file &&
+	test_must_fail git stash apply
+'
+
 test_expect_success 'apply does not need clean working directory' '
 	echo 4 >other-file &&
-	git add other-file &&
-	echo 5 >other-file &&
 	git stash apply &&
 	echo 3 >expect &&
 	test_cmp expect file
@@ -695,8 +702,8 @@ test_expect_success 'setup stash with index and worktree changes' '
 '
 
 test_expect_success 'stash list implies --first-parent -m' '
-	cat >expect <<-\EOF &&
-	stash@{0}: WIP on master: b27a2bc subdir
+	cat >expect <<-EOF &&
+	stash@{0}
 
 	diff --git a/file b/file
 	index 257cc56..d26b33d 100644
@@ -706,13 +713,13 @@ test_expect_success 'stash list implies --first-parent -m' '
 	-foo
 	+working
 	EOF
-	git stash list -p >actual &&
+	git stash list --format=%gd -p >actual &&
 	test_cmp expect actual
 '
 
 test_expect_success 'stash list --cc shows combined diff' '
 	cat >expect <<-\EOF &&
-	stash@{0}: WIP on master: b27a2bc subdir
+	stash@{0}
 
 	diff --cc file
 	index 257cc56,9015a7a..d26b33d
@@ -723,7 +730,7 @@ test_expect_success 'stash list --cc shows combined diff' '
 	 -index
 	++working
 	EOF
-	git stash list -p --cc >actual &&
+	git stash list --format=%gd -p --cc >actual &&
 	test_cmp expect actual
 '
 
