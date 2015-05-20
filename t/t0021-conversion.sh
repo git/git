@@ -204,6 +204,16 @@ test_expect_success 'filtering large input to small output should use little mem
 	GIT_MMAP_LIMIT=1m GIT_ALLOC_LIMIT=1m git add 30MB
 '
 
+test_expect_success 'filter that does not read is fine' '
+	test-genrandom foo $((128 * 1024 + 1)) >big &&
+	echo "big filter=epipe" >.gitattributes &&
+	git config filter.epipe.clean "echo xyzzy" &&
+	git add big &&
+	git cat-file blob :big >actual &&
+	echo xyzzy >expect &&
+	test_cmp expect actual
+'
+
 test_expect_success EXPENSIVE 'filter large file' '
 	git config filter.largefile.smudge cat &&
 	git config filter.largefile.clean cat &&

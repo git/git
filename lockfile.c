@@ -289,7 +289,7 @@ int hold_lock_file_for_append(struct lock_file *lk, const char *path, int flags)
 		int save_errno = errno;
 
 		if (flags & LOCK_DIE_ON_ERROR)
-			exit(128);
+			die("failed to prepare '%s' for appending", path);
 		close(orig_fd);
 		rollback_lock_file(lk);
 		errno = save_errno;
