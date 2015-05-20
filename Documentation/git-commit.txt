@@ -71,7 +71,7 @@ OPTIONS
 
 --reset-author::
 	When used with -C/-c/--amend options, declare that the
-	authorship of the resulting commit now belongs of the committer.
+	authorship of the resulting commit now belongs to the committer.
 	This also renews the author timestamp.
 
 -F <file>::
