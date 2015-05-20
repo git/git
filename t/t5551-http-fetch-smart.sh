@@ -213,27 +213,35 @@ test_expect_success 'cookies stored in http.cookiefile when http.savecookies set
 	test_cmp expect_cookies.txt cookies_tail.txt
 '
 
-test_expect_success EXPENSIVE 'create 50,000 tags in the repo' '
-	(
-	cd "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
-	for i in `test_seq 50000`
+# create an arbitrary number of tags, numbered from tag-$1 to tag-$2
+create_tags () {
+	rm -f marks &&
+	for i in $(test_seq "$1" "$2")
 	do
-		echo "commit refs/heads/too-many-refs"
-		echo "mark :$i"
-		echo "committer git <git@example.com> $i +0000"
-		echo "data 0"
-		echo "M 644 inline bla.txt"
-		echo "data 4"
-		echo "bla"
+		# don't use here-doc, because it requires a process
+		# per loop iteration
+		echo "commit refs/heads/too-many-refs-$1" &&
+		echo "mark :$i" &&
+		echo "committer git <git@example.com> $i +0000" &&
+		echo "data 0" &&
+		echo "M 644 inline bla.txt" &&
+		echo "data 4" &&
+		echo "bla" &&
 		# make every commit dangling by always
 		# rewinding the branch after each commit
-		echo "reset refs/heads/too-many-refs"
-		echo "from :1"
+		echo "reset refs/heads/too-many-refs-$1" &&
+		echo "from :$1"
 	done | git fast-import --export-marks=marks &&
 
 	# now assign tags to all the dangling commits we created above
 	tag=$(perl -e "print \"bla\" x 30") &&
 	sed -e "s|^:\([^ ]*\) \(.*\)$|\2 refs/tags/$tag-\1|" <marks >>packed-refs
+}
+
+test_expect_success 'create 50,000 tags in the repo' '
+	(
+		cd "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
+		create_tags 1 50000
 	)
 '
 
