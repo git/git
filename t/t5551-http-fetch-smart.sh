@@ -253,5 +253,16 @@ test_expect_success EXPENSIVE 'clone the 50,000 tag repo to check OS command lin
 	)
 '
 
+test_expect_success EXPENSIVE 'http can handle enormous ref negotiation' '
+	git -C too-many-refs fetch -q --tags &&
+	(
+		cd "$HTTPD_DOCUMENT_ROOT_PATH/repo.git" &&
+		create_tags 50001 100000
+	) &&
+	git -C too-many-refs fetch -q --tags &&
+	git -C too-many-refs for-each-ref refs/tags >tags &&
+	test_line_count = 100000 tags
+'
+
 stop_httpd
 test_done
