@@ -219,6 +219,9 @@ save_stash () {
 		-a|--all)
 			untracked=all
 			;;
+		--help)
+			show_help
+			;;
 		--)
 			shift
 			break
@@ -307,6 +310,11 @@ show_stash () {
 	git diff ${FLAGS:---stat} $b_commit $w_commit
 }
 
+show_help () {
+	exec git help stash
+	exit 1
+}
+
 #
 # Parses the remaining options looking for flags and
 # at most one revision defaulting to ${ref_stash}@{0}
@@ -372,6 +380,9 @@ parse_flags_and_rev()
 			;;
 			--index)
 				INDEX_OPTION=--index
+			;;
+			--help)
+				show_help
 			;;
 			-*)
 				test "$ALLOW_UNKNOWN_FLAGS" = t ||
