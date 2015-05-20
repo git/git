@@ -84,8 +84,8 @@ do
 		diffstat=--no-stat ;;
 	--stat|--summary)
 		diffstat=--stat ;;
-	--log|--no-log)
-		log_arg=$1 ;;
+	--log|--log=*|--no-log)
+		log_arg="$1" ;;
 	--no-c|--no-co|--no-com|--no-comm|--no-commi|--no-commit)
 		no_commit=--no-commit ;;
 	--c|--co|--com|--comm|--commi|--commit)
