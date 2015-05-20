@@ -187,4 +187,21 @@ test_expect_success 'notice d/f conflict with existing ref' '
 	test_must_fail git branch foo/bar/baz/lots/of/extra/components
 '
 
+test_expect_success 'timeout if packed-refs.lock exists' '
+	LOCK=.git/packed-refs.lock &&
+	>"$LOCK" &&
+	test_when_finished "rm -f $LOCK" &&
+	test_must_fail git pack-refs --all --prune
+'
+
+test_expect_success 'retry acquiring packed-refs.lock' '
+	LOCK=.git/packed-refs.lock &&
+	>"$LOCK" &&
+	test_when_finished "wait; rm -f $LOCK" &&
+	{
+		( sleep 1 ; rm -f $LOCK ) &
+	} &&
+	git -c core.packedrefstimeout=3000 pack-refs --all --prune
+'
+
 test_done
