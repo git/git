@@ -10,6 +10,14 @@ Testing basic diff tool invocation
 
 . ./test-lib.sh
 
+if test_have_prereq MINGW
+then
+	# Avoid posix-to-windows path mangling
+	pwd () {
+		builtin pwd
+	}
+fi
+
 difftool_test_setup ()
 {
 	test_config diff.tool test-tool &&
