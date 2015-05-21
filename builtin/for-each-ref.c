@@ -664,7 +664,7 @@ static void populate_value(struct refinfo *ref)
 				continue;
 			branch = branch_get(ref->refname + 11);
 
-			refname = branch_get_upstream(branch);
+			refname = branch_get_upstream(branch, NULL);
 			if (!refname)
 				continue;
 		} else if (starts_with(name, "color:")) {

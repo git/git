@@ -123,7 +123,7 @@ static int branch_merged(int kind, const char *name,
 
 	if (kind == REF_LOCAL_BRANCH) {
 		struct branch *branch = branch_get(name);
-		const char *upstream = branch_get_upstream(branch);
+		const char *upstream = branch_get_upstream(branch, NULL);
 		unsigned char sha1[20];
 
 		if (upstream &&
