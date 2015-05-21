@@ -37,6 +37,8 @@ static int use_thin_pack, use_ofs_delta, use_include_tag;
 static int no_progress, daemon_mode;
 /* Allow specifying sha1 if it is a ref tip. */
 #define ALLOW_TIP_SHA1	01
+/* Allow request of a sha1 if it is reachable from a ref (possibly hidden ref). */
+#define ALLOW_REACHABLE_SHA1	02
 static unsigned int allow_unadvertised_object_request;
 static int shallow_nr;
 static struct object_array have_obj;
@@ -444,7 +446,8 @@ static int get_common_commits(void)
 
 static int is_our_ref(struct object *o)
 {
-	int allow_hidden_ref = (allow_unadvertised_object_request & ALLOW_TIP_SHA1);
+	int allow_hidden_ref = (allow_unadvertised_object_request &
+			(ALLOW_TIP_SHA1 | ALLOW_REACHABLE_SHA1));
 	return o->flags & ((allow_hidden_ref ? HIDDEN_REF : 0) | OUR_REF);
 }
 
@@ -458,8 +461,12 @@ static void check_non_tip(void)
 	char namebuf[42]; /* ^ + SHA-1 + LF */
 	int i;
 
-	/* In the normal in-process case non-tip request can never happen */
-	if (!stateless_rpc)
+	/*
+	 * In the normal in-process case without
+	 * uploadpack.allowReachableSHA1InWant,
+	 * non-tip requests can never happen.
+	 */
+	if (!stateless_rpc && !(allow_unadvertised_object_request & ALLOW_REACHABLE_SHA1))
 		goto error;
 
 	cmd.argv = argv;
@@ -726,11 +733,13 @@ static int send_ref(const char *refname, const unsigned char *sha1, int flag, vo
 		struct strbuf symref_info = STRBUF_INIT;
 
 		format_symref_info(&symref_info, cb_data);
-		packet_write(1, "%s %s%c%s%s%s%s agent=%s\n",
+		packet_write(1, "%s %s%c%s%s%s%s%s agent=%s\n",
 			     sha1_to_hex(sha1), refname_nons,
 			     0, capabilities,
 			     (allow_unadvertised_object_request & ALLOW_TIP_SHA1) ?
 				     " allow-tip-sha1-in-want" : "",
+			     (allow_unadvertised_object_request & ALLOW_REACHABLE_SHA1) ?
+				     " allow-reachable-sha1-in-want" : "",
 			     stateless_rpc ? " no-done" : "",
 			     symref_info.buf,
 			     git_user_agent_sanitized());
@@ -795,6 +804,11 @@ static int upload_pack_config(const char *var, const char *value, void *unused)
 			allow_unadvertised_object_request |= ALLOW_TIP_SHA1;
 		else
 			allow_unadvertised_object_request &= ~ALLOW_TIP_SHA1;
+	} else if (!strcmp("uploadpack.allowreachablesha1inwant", var)) {
+		if (git_config_bool(var, value))
+			allow_unadvertised_object_request |= ALLOW_REACHABLE_SHA1;
+		else
+			allow_unadvertised_object_request &= ~ALLOW_REACHABLE_SHA1;
 	} else if (!strcmp("uploadpack.keepalive", var)) {
 		keepalive = git_config_int(var, value);
 		if (!keepalive)

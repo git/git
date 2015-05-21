@@ -2538,6 +2538,12 @@ uploadpack.allowTipSHA1InWant::
 	of a hidden ref (by default, such a request is rejected).
 	see also `uploadpack.hideRefs`.
 
+uploadpack.allowReachableSHA1InWant::
+	Allow `upload-pack` to accept a fetch request that asks for an
+	object that is reachable from any ref tip. However, note that
+	calculating object reachability is computationally expensive.
+	Defaults to `false`.
+
 uploadpack.keepAlive::
 	When `upload-pack` has started `pack-objects`, there may be a
 	quiet period while `pack-objects` prepares the pack. Normally
