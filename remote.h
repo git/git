@@ -209,6 +209,8 @@ struct branch {
 	struct refspec **merge;
 	int merge_nr;
 	int merge_alloc;
+
+	const char *push_tracking_ref;
 };
 
 struct branch *branch_get(const char *name);
@@ -228,6 +230,14 @@ int branch_merge_matches(struct branch *, int n, const char *);
  * `err` is not touched).
  */
 const char *branch_get_upstream(struct branch *branch, struct strbuf *err);
+
+/**
+ * Return the tracking branch that corresponds to the ref we would push to
+ * given a bare `git push` while `branch` is checked out.
+ *
+ * The return value and `err` conventions match those of `branch_get_upstream`.
+ */
+const char *branch_get_push(struct branch *branch, struct strbuf *err);
 
 /* Flags to match_refs. */
 enum match_refs_flags {
