@@ -692,6 +692,18 @@ static int valid_remote_nick(const char *name)
 	return !strchr(name, '/'); /* no slash */
 }
 
+const char *remote_for_branch(struct branch *branch, int *explicit)
+{
+	if (branch && branch->remote_name) {
+		if (explicit)
+			*explicit = 1;
+		return branch->remote_name;
+	}
+	if (explicit)
+		*explicit = 0;
+	return "origin";
+}
+
 static struct remote *remote_get_1(const char *name, const char *pushremote_name)
 {
 	struct remote *ret;
@@ -703,13 +715,8 @@ static struct remote *remote_get_1(const char *name, const char *pushremote_name
 		if (pushremote_name) {
 			name = pushremote_name;
 			name_given = 1;
-		} else {
-			if (current_branch && current_branch->remote_name) {
-				name = current_branch->remote_name;
-				name_given = 1;
-			} else
-				name = "origin";
-		}
+		} else
+			name = remote_for_branch(current_branch, &name_given);
 	}
 
 	ret = make_remote(name, 0);
