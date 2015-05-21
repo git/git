@@ -1636,6 +1636,19 @@ static void set_merge(struct branch *ret)
 	unsigned char sha1[20];
 	int i;
 
+	if (!ret)
+		return; /* no branch */
+	if (ret->merge)
+		return; /* already run */
+	if (!ret->remote_name || !ret->merge_nr) {
+		/*
+		 * no merge config; let's make sure we don't confuse callers
+		 * with a non-zero merge_nr but a NULL merge
+		 */
+		ret->merge_nr = 0;
+		return;
+	}
+
 	ret->merge = xcalloc(ret->merge_nr, sizeof(*ret->merge));
 	for (i = 0; i < ret->merge_nr; i++) {
 		ret->merge[i] = xcalloc(1, sizeof(**ret->merge));
@@ -1660,11 +1673,9 @@ struct branch *branch_get(const char *name)
 		ret = current_branch;
 	else
 		ret = make_branch(name, 0);
-	if (ret && ret->remote_name) {
+	if (ret && ret->remote_name)
 		ret->remote = remote_get(ret->remote_name);
-		if (ret->merge_nr)
-			set_merge(ret);
-	}
+	set_merge(ret);
 	return ret;
 }
 
