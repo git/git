@@ -718,6 +718,8 @@ static struct remote *remote_get_1(const char *name,
 	struct remote *ret;
 	int name_given = 0;
 
+	read_config();
+
 	if (name)
 		name_given = 1;
 	else
@@ -741,13 +743,11 @@ static struct remote *remote_get_1(const char *name,
 
 struct remote *remote_get(const char *name)
 {
-	read_config();
 	return remote_get_1(name, remote_for_branch);
 }
 
 struct remote *pushremote_get(const char *name)
 {
-	read_config();
 	return remote_get_1(name, pushremote_for_branch);
 }
 
