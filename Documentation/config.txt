@@ -2530,9 +2530,9 @@ uploadpack.hideRefs::
 	are under the hierarchies listed on the value of this
 	variable is excluded, and is hidden from `git ls-remote`,
 	`git fetch`, etc.  An attempt to fetch a hidden ref by `git
-	fetch` will fail.  See also `uploadpack.allowtipsha1inwant`.
+	fetch` will fail.  See also `uploadpack.allowTipSHA1InWant`.
 
-uploadpack.allowtipsha1inwant::
+uploadpack.allowTipSHA1InWant::
 	When `uploadpack.hideRefs` is in effect, allow `upload-pack`
 	to accept a fetch request that asks for an object at the tip
 	of a hidden ref (by default, such a request is rejected).
