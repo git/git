@@ -74,6 +74,7 @@ static struct {
 	{ "contents:body" },
 	{ "contents:signature" },
 	{ "upstream" },
+	{ "push" },
 	{ "symref" },
 	{ "flag" },
 	{ "HEAD" },
@@ -669,6 +670,16 @@ static void populate_value(struct refinfo *ref)
 			refname = branch_get_upstream(branch, NULL);
 			if (!refname)
 				continue;
+		} else if (starts_with(name, "push")) {
+			const char *branch_name;
+			if (!skip_prefix(ref->refname, "refs/heads/",
+					 &branch_name))
+				continue;
+			branch = branch_get(branch_name);
+
+			refname = branch_get_push(branch, NULL);
+			if (!refname)
+				continue;
 		} else if (starts_with(name, "color:")) {
 			char color[COLOR_MAXLEN] = "";
 
@@ -714,7 +725,8 @@ static void populate_value(struct refinfo *ref)
 				refname = shorten_unambiguous_ref(refname,
 						      warn_ambiguous_refs);
 			else if (!strcmp(formatp, "track") &&
-				 starts_with(name, "upstream")) {
+				 (starts_with(name, "upstream") ||
+				  starts_with(name, "push"))) {
 				char buf[40];
 
 				if (stat_tracking_info(branch, &num_ours,
@@ -736,7 +748,8 @@ static void populate_value(struct refinfo *ref)
 				}
 				continue;
 			} else if (!strcmp(formatp, "trackshort") &&
-				   starts_with(name, "upstream")) {
+				   (starts_with(name, "upstream") ||
+				    starts_with(name, "push"))) {
 				assert(branch);
 
 				if (stat_tracking_info(branch, &num_ours,
