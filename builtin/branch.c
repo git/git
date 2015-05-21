@@ -123,14 +123,12 @@ static int branch_merged(int kind, const char *name,
 
 	if (kind == REF_LOCAL_BRANCH) {
 		struct branch *branch = branch_get(name);
+		const char *upstream = branch_get_upstream(branch);
 		unsigned char sha1[20];
 
-		if (branch &&
-		    branch->merge &&
-		    branch->merge[0] &&
-		    branch->merge[0]->dst &&
+		if (upstream &&
 		    (reference_name = reference_name_to_free =
-		     resolve_refdup(branch->merge[0]->dst, RESOLVE_REF_READING,
+		     resolve_refdup(upstream, RESOLVE_REF_READING,
 				    sha1, NULL)) != NULL)
 			reference_rev = lookup_commit_reference(sha1);
 	}

@@ -1705,6 +1705,13 @@ int branch_merge_matches(struct branch *branch,
 	return refname_match(branch->merge[i]->src, refname);
 }
 
+const char *branch_get_upstream(struct branch *branch)
+{
+	if (!branch || !branch->merge || !branch->merge[0])
+		return NULL;
+	return branch->merge[0]->dst;
+}
+
 static int ignore_symref_update(const char *refname)
 {
 	unsigned char sha1[20];
@@ -1914,12 +1921,11 @@ int stat_tracking_info(struct branch *branch, int *num_ours, int *num_theirs)
 	int rev_argc;
 
 	/* Cannot stat unless we are marked to build on top of somebody else. */
-	if (!branch ||
-	    !branch->merge || !branch->merge[0] || !branch->merge[0]->dst)
+	base = branch_get_upstream(branch);
+	if (!base)
 		return 0;
 
 	/* Cannot stat if what we used to build on no longer exists */
-	base = branch->merge[0]->dst;
 	if (read_ref(base, sha1))
 		return -1;
 	theirs = lookup_commit_reference(sha1);
