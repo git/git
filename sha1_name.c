@@ -435,6 +435,12 @@ static inline int upstream_mark(const char *string, int len)
 	return at_mark(string, len, suffix, ARRAY_SIZE(suffix));
 }
 
+static inline int push_mark(const char *string, int len)
+{
+	const char *suffix[] = { "@{push}" };
+	return at_mark(string, len, suffix, ARRAY_SIZE(suffix));
+}
+
 static int get_sha1_1(const char *name, int len, unsigned char *sha1, unsigned lookup_flags);
 static int interpret_nth_prior_checkout(const char *name, int namelen, struct strbuf *buf);
 
@@ -482,7 +488,8 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1,
 					nth_prior = 1;
 					continue;
 				}
-				if (!upstream_mark(str + at, len - at)) {
+				if (!upstream_mark(str + at, len - at) &&
+				    !push_mark(str + at, len - at)) {
 					reflog_len = (len-1) - (at+2);
 					len = at;
 				}
@@ -1143,6 +1150,11 @@ int interpret_branch_name(const char *name, int namelen, struct strbuf *buf)
 
 		len = interpret_branch_mark(name, namelen, at - name, buf,
 					    upstream_mark, branch_get_upstream);
+		if (len > 0)
+			return len;
+
+		len = interpret_branch_mark(name, namelen, at - name, buf,
+					    push_mark, branch_get_push);
 		if (len > 0)
 			return len;
 	}

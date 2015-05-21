@@ -98,6 +98,31 @@ some output processing may assume ref names in UTF-8.
   `branch.<name>.merge`).  A missing branchname defaults to the
   current one.
 
+'<branchname>@\{push\}', e.g. 'master@\{push\}', '@\{push\}'::
+  The suffix '@\{push}' reports the branch "where we would push to" if
+  `git push` were run while `branchname` was checked out (or the current
+  'HEAD' if no branchname is specified). Since our push destination is
+  in a remote repository, of course, we report the local tracking branch
+  that corresponds to that branch (i.e., something in 'refs/remotes/').
++
+Here's an example to make it more clear:
++
+------------------------------
+$ git config push.default current
+$ git config remote.pushdefault myfork
+$ git checkout -b mybranch origin/master
+
+$ git rev-parse --symbolic-full-name @{upstream}
+refs/remotes/origin/master
+
+$ git rev-parse --symbolic-full-name @{push}
+refs/remotes/myfork/mybranch
+------------------------------
++
+Note in the example that we set up a triangular workflow, where we pull
+from one location and push to another. In a non-triangular workflow,
+'@\{push}' is the same as '@\{upstream}', and there is no need for it.
+
 '<rev>{caret}', e.g. 'HEAD{caret}, v1.5.1{caret}0'::
   A suffix '{caret}' to a revision parameter means the first parent of
   that commit object.  '{caret}<n>' means the <n>th parent (i.e.
