@@ -659,10 +659,12 @@ static void populate_value(struct refinfo *ref)
 		else if (starts_with(name, "symref"))
 			refname = ref->symref ? ref->symref : "";
 		else if (starts_with(name, "upstream")) {
+			const char *branch_name;
 			/* only local branches may have an upstream */
-			if (!starts_with(ref->refname, "refs/heads/"))
+			if (!skip_prefix(ref->refname, "refs/heads/",
+					 &branch_name))
 				continue;
-			branch = branch_get(ref->refname + 11);
+			branch = branch_get(branch_name);
 
 			refname = branch_get_upstream(branch, NULL);
 			if (!refname)
