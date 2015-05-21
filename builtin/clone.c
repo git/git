@@ -51,15 +51,6 @@ static struct string_list option_config;
 static struct string_list option_reference;
 static int option_dissociate;
 
-static int opt_parse_reference(const struct option *opt, const char *arg, int unset)
-{
-	struct string_list *option_reference = opt->value;
-	if (!arg)
-		return -1;
-	string_list_append(option_reference, arg);
-	return 0;
-}
-
 static struct option builtin_clone_options[] = {
 	OPT__VERBOSITY(&option_verbosity),
 	OPT_BOOL(0, "progress", &option_progress,
@@ -83,8 +74,8 @@ static struct option builtin_clone_options[] = {
 		    N_("initialize submodules in the clone")),
 	OPT_STRING(0, "template", &option_template, N_("template-directory"),
 		   N_("directory from which templates will be used")),
-	OPT_CALLBACK(0 , "reference", &option_reference, N_("repo"),
-		     N_("reference repository"), &opt_parse_reference),
+	OPT_STRING_LIST(0, "reference", &option_reference, N_("repo"),
+			N_("reference repository")),
 	OPT_STRING('o', "origin", &option_origin, N_("name"),
 		   N_("use <name> instead of 'origin' to track upstream")),
 	OPT_STRING('b', "branch", &option_branch, N_("branch"),
