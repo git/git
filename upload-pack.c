@@ -35,7 +35,9 @@ static int multi_ack;
 static int no_done;
 static int use_thin_pack, use_ofs_delta, use_include_tag;
 static int no_progress, daemon_mode;
-static int allow_tip_sha1_in_want;
+/* Allow specifying sha1 if it is a ref tip. */
+#define ALLOW_TIP_SHA1	01
+static unsigned int allow_unadvertised_object_request;
 static int shallow_nr;
 static struct object_array have_obj;
 static struct object_array want_obj;
@@ -442,8 +444,8 @@ static int get_common_commits(void)
 
 static int is_our_ref(struct object *o)
 {
-	return o->flags &
-		((allow_tip_sha1_in_want ? HIDDEN_REF : 0) | OUR_REF);
+	int allow_hidden_ref = (allow_unadvertised_object_request & ALLOW_TIP_SHA1);
+	return o->flags & ((allow_hidden_ref ? HIDDEN_REF : 0) | OUR_REF);
 }
 
 static void check_non_tip(void)
@@ -727,7 +729,8 @@ static int send_ref(const char *refname, const unsigned char *sha1, int flag, vo
 		packet_write(1, "%s %s%c%s%s%s%s agent=%s\n",
 			     sha1_to_hex(sha1), refname_nons,
 			     0, capabilities,
-			     allow_tip_sha1_in_want ? " allow-tip-sha1-in-want" : "",
+			     (allow_unadvertised_object_request & ALLOW_TIP_SHA1) ?
+				     " allow-tip-sha1-in-want" : "",
 			     stateless_rpc ? " no-done" : "",
 			     symref_info.buf,
 			     git_user_agent_sanitized());
@@ -787,9 +790,12 @@ static void upload_pack(void)
 
 static int upload_pack_config(const char *var, const char *value, void *unused)
 {
-	if (!strcmp("uploadpack.allowtipsha1inwant", var))
-		allow_tip_sha1_in_want = git_config_bool(var, value);
-	else if (!strcmp("uploadpack.keepalive", var)) {
+	if (!strcmp("uploadpack.allowtipsha1inwant", var)) {
+		if (git_config_bool(var, value))
+			allow_unadvertised_object_request |= ALLOW_TIP_SHA1;
+		else
+			allow_unadvertised_object_request &= ~ALLOW_TIP_SHA1;
+	} else if (!strcmp("uploadpack.keepalive", var)) {
 		keepalive = git_config_int(var, value);
 		if (!keepalive)
 			keepalive = -1;
