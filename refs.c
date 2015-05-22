@@ -2234,12 +2234,12 @@ static int verify_lock(struct ref_lock *lock,
 			  mustexist ? RESOLVE_REF_READING : 0,
 			  lock->old_sha1, NULL)) {
 		int save_errno = errno;
-		strbuf_addf(err, "Can't verify ref %s", lock->ref_name);
+		strbuf_addf(err, "can't verify ref %s", lock->ref_name);
 		errno = save_errno;
 		return -1;
 	}
 	if (hashcmp(lock->old_sha1, old_sha1)) {
-		strbuf_addf(err, "Ref %s is at %s but expected %s",
+		strbuf_addf(err, "ref %s is at %s but expected %s",
 			    lock->ref_name,
 			    sha1_to_hex(lock->old_sha1),
 			    sha1_to_hex(old_sha1));
