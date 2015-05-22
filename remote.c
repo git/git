@@ -1938,12 +1938,15 @@ int ref_newer(const unsigned char *new_sha1, const unsigned char *old_sha1)
 
 /*
  * Compare a branch with its upstream, and save their differences (number
- * of commits) in *num_ours and *num_theirs.
+ * of commits) in *num_ours and *num_theirs. The name of the upstream branch
+ * (or NULL if no upstream is defined) is returned via *upstream_name, if it
+ * is not itself NULL.
  *
- * Return 0 if branch has no upstream (no base), -1 if upstream is missing
- * (with "gone" base), otherwise 1 (with base).
+ * Returns -1 if num_ours and num_theirs could not be filled in (e.g., no
+ * upstream defined, or ref does not exist), 0 otherwise.
  */
-int stat_tracking_info(struct branch *branch, int *num_ours, int *num_theirs)
+int stat_tracking_info(struct branch *branch, int *num_ours, int *num_theirs,
+		       const char **upstream_name)
 {
 	unsigned char sha1[20];
 	struct commit *ours, *theirs;
@@ -1954,8 +1957,10 @@ int stat_tracking_info(struct branch *branch, int *num_ours, int *num_theirs)
 
 	/* Cannot stat unless we are marked to build on top of somebody else. */
 	base = branch_get_upstream(branch, NULL);
+	if (upstream_name)
+		*upstream_name = base;
 	if (!base)
-		return 0;
+		return -1;
 
 	/* Cannot stat if what we used to build on no longer exists */
 	if (read_ref(base, sha1))
@@ -1973,7 +1978,7 @@ int stat_tracking_info(struct branch *branch, int *num_ours, int *num_theirs)
 	/* are we the same? */
 	if (theirs == ours) {
 		*num_theirs = *num_ours = 0;
-		return 1;
+		return 0;
 	}
 
 	/* Run "rev-list --left-right ours...theirs" internally... */
@@ -2009,7 +2014,7 @@ int stat_tracking_info(struct branch *branch, int *num_ours, int *num_theirs)
 	/* clear object flags smudged by the above traversal */
 	clear_commit_marks(ours, ALL_REV_FLAGS);
 	clear_commit_marks(theirs, ALL_REV_FLAGS);
-	return 1;
+	return 0;
 }
 
 /*
@@ -2018,23 +2023,17 @@ int stat_tracking_info(struct branch *branch, int *num_ours, int *num_theirs)
 int format_tracking_info(struct branch *branch, struct strbuf *sb)
 {
 	int ours, theirs;
+	const char *full_base;
 	char *base;
 	int upstream_is_gone = 0;
 
-	switch (stat_tracking_info(branch, &ours, &theirs)) {
-	case 0:
-		/* no base */
-		return 0;
-	case -1:
-		/* with "gone" base */
+	if (stat_tracking_info(branch, &ours, &theirs, &full_base) < 0) {
+		if (!full_base)
+			return 0;
 		upstream_is_gone = 1;
-		break;
-	default:
-		/* with base */
-		break;
 	}
 
-	base = shorten_unambiguous_ref(branch->merge[0]->dst, 0);
+	base = shorten_unambiguous_ref(full_base, 0);
 	if (upstream_is_gone) {
 		strbuf_addf(sb,
 			_("Your branch is based on '%s', but the upstream is gone.\n"),

@@ -716,7 +716,7 @@ static void populate_value(struct refinfo *ref)
 				char buf[40];
 
 				if (stat_tracking_info(branch, &num_ours,
-						       &num_theirs) != 1)
+						       &num_theirs, NULL))
 					continue;
 
 				if (!num_ours && !num_theirs)
@@ -738,7 +738,7 @@ static void populate_value(struct refinfo *ref)
 				assert(branch);
 
 				if (stat_tracking_info(branch, &num_ours,
-							&num_theirs) != 1)
+							&num_theirs, NULL))
 					continue;
 
 				if (!num_ours && !num_theirs)

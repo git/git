@@ -425,25 +425,19 @@ static void fill_tracking_info(struct strbuf *stat, const char *branch_name,
 	int ours, theirs;
 	char *ref = NULL;
 	struct branch *branch = branch_get(branch_name);
+	const char *upstream;
 	struct strbuf fancy = STRBUF_INIT;
 	int upstream_is_gone = 0;
 	int added_decoration = 1;
 
-	switch (stat_tracking_info(branch, &ours, &theirs)) {
-	case 0:
-		/* no base */
-		return;
-	case -1:
-		/* with "gone" base */
+	if (stat_tracking_info(branch, &ours, &theirs, &upstream) < 0) {
+		if (!upstream)
+			return;
 		upstream_is_gone = 1;
-		break;
-	default:
-		/* with base */
-		break;
 	}
 
 	if (show_upstream_ref) {
-		ref = shorten_unambiguous_ref(branch->merge[0]->dst, 0);
+		ref = shorten_unambiguous_ref(upstream, 0);
 		if (want_color(branch_use_color))
 			strbuf_addf(&fancy, "%s%s%s",
 					branch_get_color(BRANCH_COLOR_UPSTREAM),

@@ -1532,21 +1532,15 @@ static void wt_shortstatus_print_tracking(struct wt_status *s)
 
 	color_fprintf(s->fp, branch_color_local, "%s", branch_name);
 
-	switch (stat_tracking_info(branch, &num_ours, &num_theirs)) {
-	case 0:
-		/* no base */
-		fputc(s->null_termination ? '\0' : '\n', s->fp);
-		return;
-	case -1:
-		/* with "gone" base */
+	if (stat_tracking_info(branch, &num_ours, &num_theirs, &base) < 0) {
+		if (!base) {
+			fputc(s->null_termination ? '\0' : '\n', s->fp);
+			return;
+		}
+
 		upstream_is_gone = 1;
-		break;
-	default:
-		/* with base */
-		break;
 	}
 
-	base = branch->merge[0]->dst;
 	base = shorten_unambiguous_ref(base, 0);
 	color_fprintf(s->fp, header_color, "...");
 	color_fprintf(s->fp, branch_color_remote, "%s", base);
