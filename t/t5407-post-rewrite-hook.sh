@@ -212,7 +212,7 @@ EOF
 	verify_hook_input
 '
 
-test_expect_failure 'git rebase -i (exec)' '
+test_expect_success 'git rebase -i (exec)' '
 	git reset --hard D &&
 	clear_hook_input &&
 	FAKE_LINES="edit 1 exec_false 2" git rebase -i B &&
