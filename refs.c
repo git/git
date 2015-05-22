@@ -3922,7 +3922,7 @@ int ref_transaction_commit(struct ref_transaction *transaction,
 				? TRANSACTION_NAME_CONFLICT
 				: TRANSACTION_GENERIC_ERROR;
 			reason = strbuf_detach(err, NULL);
-			strbuf_addf(err, "Cannot lock ref '%s': %s",
+			strbuf_addf(err, "cannot lock ref '%s': %s",
 				    update->refname, reason);
 			free(reason);
 			goto cleanup;
@@ -3945,7 +3945,7 @@ int ref_transaction_commit(struct ref_transaction *transaction,
 				 * write_ref_to_lockfile():
 				 */
 				update->lock = NULL;
-				strbuf_addf(err, "Cannot update the ref '%s'.",
+				strbuf_addf(err, "cannot update the ref '%s'.",
 					    update->refname);
 				ret = TRANSACTION_GENERIC_ERROR;
 				goto cleanup;
