@@ -987,7 +987,7 @@ void test_bitmap_walk(struct rev_info *revs)
 	else
 		fprintf(stderr, "Mismatch!\n");
 
-	free(result);
+	bitmap_free(result);
 }
 
 static int rebuild_bitmap(uint32_t *reposition,
