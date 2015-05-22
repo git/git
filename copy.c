@@ -7,13 +7,10 @@ int copy_fd(int ifd, int ofd)
 		ssize_t len = xread(ifd, buffer, sizeof(buffer));
 		if (!len)
 			break;
-		if (len < 0) {
-			return error("copy-fd: read returned %s",
-				     strerror(errno));
-		}
+		if (len < 0)
+			return COPY_READ_ERROR;
 		if (write_in_full(ofd, buffer, len) < 0)
-			return error("copy-fd: write returned %s",
-				     strerror(errno));
+			return COPY_WRITE_ERROR;
 	}
 	return 0;
 }
@@ -43,6 +40,14 @@ int copy_file(const char *dst, const char *src, int mode)
 		return fdo;
 	}
 	status = copy_fd(fdi, fdo);
+	switch (status) {
+	case COPY_READ_ERROR:
+		error("copy-fd: read returned %s", strerror(errno));
+		break;
+	case COPY_WRITE_ERROR:
+		error("copy-fd: write returned %s", strerror(errno));
+		break;
+	}
 	close(fdi);
 	if (close(fdo) != 0)
 		return error("%s: close error: %s", dst, strerror(errno));
