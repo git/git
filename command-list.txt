@@ -1,5 +1,5 @@
 # List of known git commands.
-# command name				category [deprecated] [common]
+# command name                          category [deprecated] [common]
 git-add                                 mainporcelain common
 git-am                                  mainporcelain
 git-annotate                            ancillaryinterrogators
@@ -40,21 +40,21 @@ git-diff-files                          plumbinginterrogators
 git-diff-index                          plumbinginterrogators
 git-diff-tree                           plumbinginterrogators
 git-difftool                            ancillaryinterrogators
-git-fast-export				ancillarymanipulators
-git-fast-import				ancillarymanipulators
+git-fast-export                         ancillarymanipulators
+git-fast-import                         ancillarymanipulators
 git-fetch                               mainporcelain common
 git-fetch-pack                          synchingrepositories
 git-filter-branch                       ancillarymanipulators
 git-fmt-merge-msg                       purehelpers
 git-for-each-ref                        plumbinginterrogators
 git-format-patch                        mainporcelain
-git-fsck	                        ancillaryinterrogators
+git-fsck                                ancillaryinterrogators
 git-gc                                  mainporcelain
 git-get-tar-commit-id                   ancillaryinterrogators
 git-grep                                mainporcelain common
 git-gui                                 mainporcelain
 git-hash-object                         plumbingmanipulators
-git-help				ancillaryinterrogators
+git-help                                ancillaryinterrogators
 git-http-backend                        synchingrepositories
 git-http-fetch                          synchelpers
 git-http-push                           synchelpers
