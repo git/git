@@ -1,15 +1,17 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (May 2015, #05; Tue, 19)
-X-master-at: 6c1249c503f39ca45ca5b183527b22192cdaf7a7
-X-next-at: 3179493ddf99afea85d647dbfa9ebe48a70b9cc0
+Subject: What's cooking in git.git (May 2015, #06; Fri, 22)
+X-master-at: 9532ead9875b7b92ff2007f9de61af5874e8839a
+X-next-at: b70f6470d4a42c2efce07be8bc1edac7c5743a77
 
-What's cooking in git.git (May 2015, #05; Tue, 19)
+What's cooking in git.git (May 2015, #06; Fri, 22)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
+
+The fourth batch of topics have been merged to 'master'.
 
 The "untracked cache" series is in 'next', to give it a wider
 exposure.  I do not use it personally, but it is meant to make life
@@ -25,169 +27,30 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* bc/connect-plink (2015-04-28) 3 commits
-  (merged to 'next' on 2015-05-05 at 9def2e1)
- + connect: improve check for plink to reduce false positives
- + t5601: fix quotation error leading to skipped tests
- + connect: simplify SSH connection code path
+* dl/branch-error-message (2015-05-06) 1 commit
+  (merged to 'next' on 2015-05-11 at ed947ab)
+ + branch: do not call a "remote-tracking branch" a "remote branch"
 
- The connection initiation code for "ssh" transport tried to absorb
- differences between the stock "ssh" and Putty-supplied "plink" and
- its derivatives, but the logic to tell that we are using "plink"
- variants were too loose and falsely triggered when "plink" appeared
- anywhere in the path (e.g. "/home/me/bin/uplink/ssh").
+ Error messages from "git branch" called remote-tracking branches as
+ "remote branches".
 
 
-* fg/document-commit-message-stripping (2015-04-27) 1 commit
-  (merged to 'next' on 2015-05-05 at 1892a99)
- + Documentation: clarify how "git commit" cleans up the edited log message
+* dl/subtree-avoid-tricky-echo (2015-05-08) 1 commit
+  (merged to 'next' on 2015-05-11 at 36d4f0e)
+ + contrib/subtree: portability fix for string printing
+
+ "git subtree" script (in contrib/) used "echo -n" to produce
+ progress messages in a non-portable way.
 
 
-* jc/gitignore-precedence (2015-04-22) 1 commit
-  (merged to 'next' on 2015-05-05 at 6ef85da)
- + ignore: info/exclude should trump core.excludesfile
+* dl/subtree-push-no-squash (2015-05-07) 1 commit
+  (merged to 'next' on 2015-05-11 at 74d07ca)
+ + contrib/subtree: there's no push --squash
 
- core.excludesfile (defaulting to $XDG_HOME/git/ignore) is supposed
- to be overridden by repository-specific .git/info/exclude file, but
- the order was swapped from the beginning. This belatedly fixes it.
+ "git subtree" script (in contrib/) does not have --squash option
+ when pushing, but the documentation and help text pretended as if
+ it did.
 
-
-* jc/merge (2015-04-29) 15 commits
-  (merged to 'next' on 2015-05-07 at 1c56512)
- + merge: deprecate 'git merge <message> HEAD <commit>' syntax
- + merge: handle FETCH_HEAD internally
- + merge: decide if we auto-generate the message early in collect_parents()
- + merge: make collect_parents() auto-generate the merge message
- + merge: extract prepare_merge_message() logic out
- + merge: narrow scope of merge_names
- + merge: split reduce_parents() out of collect_parents()
- + merge: clarify collect_parents() logic
- + merge: small leakfix and code simplification
- + merge: do not check argc to determine number of remote heads
- + merge: clarify "pulling into void" special case
- + t5520: test pulling an octopus into an unborn branch
- + t5520: style fixes
- + merge: simplify code flow
- + merge: test the top-level merge driver
- (this branch is used by jc/merge-drop-old-syntax and pt/pull-tests.)
-
- "git merge FETCH_HEAD" learned that the previous "git fetch" could
- be to create an Octopus merge, i.e. recording multiple branches
- that are not marked as "not-for-merge"; this allows us to lose an
- old style invocation "git merge <msg> HEAD $commits..." in the
- implementation of "git pull" script; the old style syntax can now
- be deprecated.
-
-
-* jc/test-prereq-validate (2015-04-28) 1 commit
-  (merged to 'next' on 2015-05-05 at a30464c)
- + test: validate prerequistes syntax
-
- Help us to find broken test script that splits the body part of the
- test by mistaken use of wrong kind of quotes.
-
-
-* jk/git-no-more-argv0-path-munging (2015-04-22) 1 commit
-  (merged to 'next' on 2015-05-05 at b3f9a45)
- + stop putting argv[0] dirname at front of PATH
-
- We have prepended $GIT_EXEC_PATH and the path "git" is installed in
- (typically "/usr/bin") to $PATH when invoking subprograms and hooks
- for almost eternity, but the original use case the latter tried to
- support was semi-bogus (i.e. install git to /opt/foo/git and run it
- without having /opt/foo on $PATH), and more importantly it has
- become less and less relevant as Git grew more mainstream (i.e. the
- users would _want_ to have it on their $PATH).  Stop prepending the
- path in which "git" is installed to users' $PATH, as that would
- interfere the command search order people depend on (e.g. they may
- not like versions of programs that are unrelated to Git in /usr/bin
- and want to override them by having different ones in /usr/local/bin
- and have the latter directory earlier in their $PATH).
-
-
-* jk/stash-require-clean-index (2015-04-22) 3 commits
-  (merged to 'next' on 2015-05-05 at b5f6c32)
- + stash: require a clean index to apply
- + t3903: avoid applying onto dirty index
- + t3903: stop hard-coding commit sha1s
-
- "git stash pop/apply" forgot to make sure that not just the working
- tree is clean but also the index is clean. The latter is important
- as a stash application can conflict and the index will be used for
- conflict resolution.
-
-
-* jk/test-chain-lint (2015-04-28) 2 commits
-  (merged to 'next' on 2015-05-05 at e6f0290)
- + test-lib: turn on GIT_TEST_CHAIN_LINT by default
- + t7502-commit.sh: fix a broken and-chain
-
- Developer support to automatically detect broken &&-chain in the
- test scripts is now turned on by default.
-
-
-* kn/cat-file-literally (2015-05-06) 4 commits
-  (merged to 'next' on 2015-05-12 at 04b29b5)
- + t1006: add tests for git cat-file --allow-unknown-type
- + cat-file: teach cat-file a '--allow-unknown-type' option
- + cat-file: make the options mutually exclusive
- + sha1_file: support reading from a loose object of unknown type
-
- Add the "--allow-unknown-type" option to "cat-file" to allow
- inspecting loose objects of an experimental or a broken type.
-
-
-* nd/diff-i-t-a (2015-03-23) 1 commit
-  (merged to 'next' on 2015-05-05 at cba9cd9)
- + diff-lib.c: adjust position of i-t-a entries in diff
-
- Originally merged to 'next' on 2015-03-24
-
- After "git add -N", the path appeared in output of "git diff HEAD"
- and "git diff --cached HEAD", leading "git status" to classify it
- as "Changes to be committed".  Such a path, however, is not yet to
- be scheduled to be committed.  "git diff" showed the change to the
- path as modification, not as a "new file", in the header of its
- output.
-
- Treat such paths as "yet to be added to the index but Git already
- know about them"; "git diff HEAD" and "git diff --cached HEAD"
- should not talk about them, and "git diff" should show them as new
- files yet to be added to the index.
-
-
-* nd/dwim-wildcards-as-pathspecs (2015-05-03) 1 commit
-  (merged to 'next' on 2015-05-07 at 8176de7)
- + pathspec: avoid the need of "--" when wildcard is used
-
- A heuristic to help the "git <cmd> <revs> <pathspec>" command line
- convention to catch mistyped paths is to make sure all the non-rev
- parameters in the later part of the command line are names of the
- files in the working tree, but that means "git grep $str -- \*.c"
- must always be disambiguated with "--", because nobody sane will
- create a file whose name literally is asterisk-dot-see.  Loosen the
- heuristic to declare that with a wildcard string the user likely
- meant to give us a pathspec.
-
-
-* ph/rebase-i-redo (2015-04-29) 1 commit
-  (merged to 'next' on 2015-05-07 at 8fc1f52)
- + rebase -i: redo tasks that die during cherry-pick
-
- "git rebase -i" moved the "current" command from "todo" to "done" a
- bit too prematurely, losing a step when a "pick" did not even start.
-
-
-* sb/ref-lock-lose-lock-fd (2015-05-10) 1 commit
-  (merged to 'next' on 2015-05-12 at dde9be1)
- + refs.c: remove lock_fd from struct ref_lock
-
- The refs API uses ref_lock struct which had its own "int fd", even
- though the same file descriptor was in the lock struct it contains.
- Clean-up the code to lose this redundant field.
-
---------------------------------------------------
-[New Topics]
 
 * ja/tutorial-asciidoctor-fix (2015-05-12) 1 commit
   (merged to 'next' on 2015-05-19 at f15d940)
@@ -197,33 +60,21 @@ of the repositories listed at
  delimit it from the rest of the document, which choke GitHub's
  AsciiDoc renderer.
 
- Will merge to 'master'.
 
+* jc/ignore-epipe-in-filter (2015-05-20) 2 commits
+  (merged to 'next' on 2015-05-20 at 2b14ed7)
+ + filter_buffer_or_fd(): ignore EPIPE
+ + copy.c: make copy_fd() report its status silently
 
-* jk/stripspace-asciidoctor-fix (2015-05-12) 1 commit
-  (merged to 'next' on 2015-05-19 at 12f9059)
- + doc: fix unmatched code fences in git-stripspace
+ Filter scripts were run with SIGPIPE disabled on the Git side,
+ expecting that they may not read what Git feeds them to filter.
+ We however treated a filter that does not read its input fully
+ before exiting as an error.
 
- A literal block in the tutorial had lines with unequal lengths to
- delimit it from the rest of the document, which choke GitHub's
- AsciiDoc renderer.
-
- Will merge to 'master'.
-
-
-* dt/cat-file-follow-symlinks (2015-05-14) 3 commits
- - cat-file: add --follow-symlinks to --batch
- - sha1_name: get_sha1_with_context learns to follow symlinks
- - tree-walk: learn get_tree_entry_follow_symlinks
-
- "git cat-file --batch(-check)" learned the "--follow-symlinks"
- option that follows an in-tree symblic links when asked about an
- object via extended SHA-1 syntax, e.g. HEAD:RelNotes that points at
- Documentation/RelNotes/2.5.0.txt.  With the new option, the command
- behaves as if HEAD:Documentation/RelNotes/2.5.0.txt was given as
- input instead.
-
- Will merge to 'next'.
+ This changes semantics, but arguably in a good way.  If a filter
+ can produce its output without consuming its input using whatever
+ magic, we now let it do so, instead of diagnosing it as a
+ programming error.
 
 
 * jk/add-e-kill-editor (2015-05-12) 1 commit
@@ -232,8 +83,6 @@ of the repositories listed at
 
  "git add -e" did not allow the user to abort the operation by
  killing the editor.
-
- Will merge to 'master'.
 
 
 * jk/asciidoc-markup-fix (2015-05-14) 9 commits
@@ -252,7 +101,68 @@ of the repositories listed at
  consistent in general and also make AsciiDoctor (an alternative
  formatter) happier.
 
- Will merge to 'master'.
+
+* jk/skip-http-tests-under-no-curl (2015-05-07) 2 commits
+  (merged to 'next' on 2015-05-11 at a52b711)
+ + tests: skip dav http-push tests under NO_EXPAT=NoThanks
+ + t/lib-httpd.sh: skip tests if NO_CURL is defined
+
+ Test clean-up.
+
+
+* jk/stripspace-asciidoctor-fix (2015-05-12) 1 commit
+  (merged to 'next' on 2015-05-19 at 12f9059)
+ + doc: fix unmatched code fences in git-stripspace
+
+ A literal block in the tutorial had lines with unequal lengths to
+ delimit it from the rest of the document, which choke GitHub's
+ AsciiDoc renderer.
+
+
+* lm/squelch-bg-progress (2015-05-19) 1 commit
+  (merged to 'next' on 2015-05-20 at 60916e6)
+ + progress: treat "no terminal" as being in the foreground
+
+ The controlling tty-based heuristics to squelch progress output did
+ not consider that the process may not be talking to a tty at all
+ (e.g. sending the progress to sideband #2).  This is a finishing
+ touch to a topic that is already in 'master'.
+
+
+* ls/http-ssl-cipher-list (2015-05-08) 1 commit
+  (merged to 'next' on 2015-05-11 at 55764ce)
+ + http: add support for specifying an SSL cipher list
+
+ Introduce http.<url>.SSLCipherList configuration variable to tweak
+ the list of cipher suite to be used with libcURL when talking with
+ https:// sites.
+
+
+* mg/log-decorate-HEAD (2015-05-13) 2 commits
+  (merged to 'next' on 2015-05-19 at 009342b)
+ + log: do not shorten decoration names too early
+ + log: decorate HEAD with branch name under --decorate=full, too
+
+ The "log --decorate" enhancement in Git 2.4 that shows the commit
+ at the tip of the current branch e.g. "HEAD -> master", did not
+ work with --decorate=full.
+
+
+* mh/clone-verbosity-fix (2015-05-19) 1 commit
+  (merged to 'next' on 2015-05-20 at f613575)
+ + clone: call transport_set_verbosity before anything else on the newly created transport
+
+ Git 2.4 broke setting verbosity and progress levels on "git clone"
+ with native transports.
+
+
+* mh/lockfile-retry (2015-05-14) 2 commits
+  (merged to 'next' on 2015-05-20 at 7ad2e9d)
+ + lock_packed_refs(): allow retries when acquiring the packed-refs lock
+ + lockfile: allow file locking to be retried with a timeout
+
+ Instead of dying immediately upon failing to obtain a lock, retry
+ after a short while with backoff.
 
 
 * mh/ref-directory-file (2015-05-11) 18 commits
@@ -280,159 +190,83 @@ of the repositories listed at
  removed at the same time as 'refs/heads/xyzzy' is added (or vice
  versa) very well.
 
- Will merge to 'master'.
+
+* mh/write-refs-sooner-2.2 (2015-05-12) 8 commits
+ + ref_transaction_commit(): fix atomicity and avoid fd exhaustion
+ + ref_transaction_commit(): remove the local flags variable
+ + ref_transaction_commit(): inline call to write_ref_sha1()
+ + rename_ref(): inline calls to write_ref_sha1() from this function
+ + commit_ref_update(): new function, extracted from write_ref_sha1()
+ + write_ref_to_lockfile(): new function, extracted from write_ref_sha1()
+ + t7004: rename ULIMIT test prerequisite to ULIMIT_STACK_SIZE
+ + update-ref: test handling large transactions properly
+ (this branch is used by mh/write-refs-sooner-2.3 and mh/write-refs-sooner-2.4.)
+
+ Multi-ref transaction support we merged a few releases ago
+ unnecessarily kept many file descriptors open, risking to fail with
+ resource exhaustion.
 
 
-* dt/clean-pathspec-filter-then-lstat (2015-05-18) 1 commit
- - clean: only lstat files in pathspec
+* mh/write-refs-sooner-2.3 (2015-05-12) 1 commit
+ + Merge branch 'mh/write-refs-sooner-2.2' into mh/write-refs-sooner-2.3
+ (this branch is used by mh/write-refs-sooner-2.4; uses mh/write-refs-sooner-2.2.)
 
- "git clean pathspec..." tried to lstat(2) and complain even for
- paths outside the given pathspec.
-
- Will merge to 'next'.
-
-
-* jh/filter-empty-contents (2015-05-18) 1 commit
- - sha1_file: pass empty buffer to index empty file
-
- The clean/smudge interface did not work well when filtering an
- empty contents (failed and then passed the empty input through).
- It can be argued that a filter that produces anything but empty for
- an empty input is nonsense, but if the user wants to do strange
- things, then why not?
-
- Will merge to 'next'.
+ Multi-ref transaction support we merged a few releases ago
+ unnecessarily kept many file descriptors open, risking to fail with
+ resource exhaustion.  This is for 2.3.x track.
 
 
-* jk/http-backend-deadlock (2015-05-15) 2 commits
- - http-backend: spool ref negotiation requests to buffer
- - http-backend: fix die recursion with custom handler
+* mh/write-refs-sooner-2.4 (2015-05-12) 9 commits
+  (merged to 'next' on 2015-05-19 at f7be074)
+ + Merge branch 'mh/write-refs-sooner-2.3' into mh/write-refs-sooner-2.4
+ + ref_transaction_commit(): fix atomicity and avoid fd exhaustion
+ + ref_transaction_commit(): remove the local flags variable
+ + ref_transaction_commit(): inline call to write_ref_sha1()
+ + rename_ref(): inline calls to write_ref_sha1() from this function
+ + commit_ref_update(): new function, extracted from write_ref_sha1()
+ + write_ref_to_lockfile(): new function, extracted from write_ref_sha1()
+ + t7004: rename ULIMIT test prerequisite to ULIMIT_STACK_SIZE
+ + update-ref: test handling large transactions properly
+ (this branch uses mh/write-refs-sooner-2.2 and mh/write-refs-sooner-2.3.)
 
- Communication between the HTTP server and http_backend process can
- lead to a dead-lock when relaying a large ref negotiation request.
- Diagnose the situation better, and mitigate it by reading such a
- request first into core (to a reasonable limit).
-
- Will merge to 'next'.
-
-
-* jk/rerere-forget-check-enabled (2015-05-14) 1 commit
-  (merged to 'next' on 2015-05-19 at bfe67dc)
- + rerere: exit silently on "forget" when rerere is disabled
-
- "git rerere forget" in a repository without rerere enabled gave a
- cryptic error message; it should be a silent no-op instead.
-
- Will merge to 'master'.
+ Multi-ref transaction support we merged a few releases ago
+ unnecessarily kept many file descriptors open, risking to fail with
+ resource exhaustion.  This is for 2.4.x track.
 
 
-* lm/squelch-bg-progress (2015-05-19) 1 commit
- - progress: treat "no terminal" as being in the foreground
+* ps/bundle-verify-arg (2015-05-08) 1 commit
+  (merged to 'next' on 2015-05-11 at 9f1b1ae)
+ + bundle: verify arguments more strictly
 
- The controlling tty-based heuristics to squelch progress output did
- not consider that the process may not be talking to a tty at all
- (e.g. sending the progress to sideband #2).  This is a finishing
- touch to a topic that is already in 'master'.
-
- Will merge to 'next'.
-
-
-* mg/log-decorate-HEAD (2015-05-13) 2 commits
-  (merged to 'next' on 2015-05-19 at 009342b)
- + log: do not shorten decoration names too early
- + log: decorate HEAD with branch name under --decorate=full, too
-
- The "log --decorate" enhancement in Git 2.4 that shows the commit
- at the tip of the current branch e.g. "HEAD -> master", did not
- work with --decorate=full.
-
- Will merge to 'master'.
-
-
-* mh/clone-verbosity-fix (2015-05-19) 1 commit
- - clone: call transport_set_verbosity before anything else on the newly created transport
-
- Git 2.4 broke setting verbosity and progress levels on "git clone"
- with native transports.
-
- Will merge to 'next'.
-
-
-* mh/lockfile-retry (2015-05-14) 2 commits
- - lock_packed_refs(): allow retries when acquiring the packed-refs lock
- - lockfile: allow file locking to be retried with a timeout
-
- Instead of dying immediately upon failing to obtain a lock, retry
- after a short while with backoff.
-
- Will merge to 'next'.
-
-
-* mm/log-format-raw-doc (2015-05-18) 3 commits
- - SQUASH
- - Documentation/log: clarify sha1 non-abbreviation in log --raw
- - Documentation/log: clarify what --raw means
-
- Clarify that "log --raw" and "log --format=raw" are unrelated
- concepts.
-
- Will merge to 'next' after squashing the fixup.
+ "git bundle verify" did not diagnose extra parameters on the
+ command line.
 
 
 * ps/doc-packfile-vs-pack-file (2015-05-17) 3 commits
- - pack-protocol.txt: fix insconsistent spelling of "packfile"
- - git-unpack-objects.txt: fix inconsistent spelling of "packfile"
- - git-verify-pack.txt: fix inconsistent spelling of "packfile"
+  (merged to 'next' on 2015-05-20 at 7302174)
+ + pack-protocol.txt: fix insconsistent spelling of "packfile"
+ + git-unpack-objects.txt: fix inconsistent spelling of "packfile"
+ + git-verify-pack.txt: fix inconsistent spelling of "packfile"
 
- Doc consistency updates.  I am not sure if this is unifying in the
- right direction, though.
-
-
-* pt/pull-ff-vs-merge-ff (2015-05-18) 2 commits
- - pull: parse pull.ff as a bool or string
- - pull: make pull.ff=true override merge.ff
-
- The pull.ff configuration was supposed to override the merge.ff
- configuration, but it didn't.
-
- Will merge to 'next'.
-
-
-* pt/pull-log-n (2015-05-18) 1 commit
- - pull: handle --log=<n>
-
- "git pull --log" and "git pull --no-log" worked as expected, but
- "git pull --log=20" did not.
-
- Will merge to 'next'.
+ Doc consistency updates.
 
 
 * pt/pull-tags-error-diag (2015-05-14) 1 commit
- - pull: remove --tags error in no merge candidates case
+  (merged to 'next' on 2015-05-20 at 6e1a5f1)
+ + pull: remove --tags error in no merge candidates case
 
  There was a dead code that used to handle "git pull --tags" and
  show special-cased error message, which was made irrelevant when
  the semantics of the option changed back in Git 1.9 days.
 
- Will merge to 'next'.
-
-
-* rs/plug-leak-in-pack-bitmaps (2015-05-19) 1 commit
- - pack-bitmaps: plug memory leak, fix allocation size for recent_bitmaps
-
- The code to memoise recently used pack bitmaps were totally broken.
-
- Will merge to 'next'.
-
 
 * sb/t1020-cleanup (2015-05-18) 1 commit
- - subdirectory tests: code cleanup, uncomment test
+  (merged to 'next' on 2015-05-20 at fa74b14)
+ + subdirectory tests: code cleanup, uncomment test
 
  There was a commented-out (instead of being marked to expect
  failure) test that documented a breakage that was fixed since the
  test was written; turn it into a proper test.
-
- Will merge to 'next'.
 
 
 * sg/completion-config (2015-05-12) 2 commits
@@ -442,34 +276,132 @@ of the repositories listed at
 
  Code clean-up for completion script (in contrib/).
 
- Will merge to 'master'.
+
+* sg/completion-omit-credential-helpers (2015-05-06) 1 commit
+  (merged to 'next' on 2015-05-11 at aa7e554)
+ + completion: remove credential helpers from porcelain commands
+
+ The Git subcommand completion (in contrib/) listed credential
+ helpers among candidates, which is not something the end user would
+ invoke interatively.
 
 
-* sg/help-group (2015-05-18) 5 commits
- - help: respect new common command grouping
- - command-list.txt: drop the "common" tag
- - generate-cmdlist: parse common group commands
- - command-list.txt: add the common groups block
- - command-list: prepare machinery for upcoming "common groups" section
- (this branch uses sg/help-subcommands.)
+* sg/help-subcommands (2015-05-08) 1 commit
+  (merged to 'next' on 2015-05-11 at 91e4f9e)
+ + command-list.txt: fix whitespace inconsistency
+ (this branch is used by sg/help-group.)
 
- Group list of commands shown by "git help" along the workflow
- elements to help early learners.
+ A preparatory clean-up step.
+
+--------------------------------------------------
+[New Topics]
+
+* da/mergetool-winmerge (2015-05-20) 2 commits
+ - mergetools: add winmerge as a builtin tool
+ - mergetool--lib: set IFS for difftool and mergetool
+
+ "git mergetool" learned to drive WinMerge as a backend.
+
+ Will merge to 'next'.
 
 
-* jc/ignore-epipe-in-filter (2015-05-19) 2 commits
- - filter_buffer_or_fd(): ignore EPIPE
- - copy.c: make copy_fd() report its status silently
+* jk/http-backend-deadlock-2.2 (2015-05-20) 3 commits
+ - http-backend: spool ref negotiation requests to buffer
+ - t5551: factor out tag creation
+ - http-backend: fix die recursion with custom handler
+ (this branch is used by jk/http-backend-deadlock and jk/http-backend-deadlock-2.3.)
 
- Filter scripts were run with SIGPIPE disabled on the Git side,
- expecting that they may not read what Git feeds them to filter.
- We however treated a filter that does not read its input fully
- before exiting as an error.
+ Communication between the HTTP server and http_backend process can
+ lead to a dead-lock when relaying a large ref negotiation request.
+ Diagnose the situation better, and mitigate it by reading such a
+ request first into core (to a reasonable limit).
 
- This changes semantics, but arguably in a good way.  If a filter
- can produce its output without consuming its input using whatever
- magic, we now let it do so, instead of diagnosing it as a
- programming error.
+ This was wiggled back to apply to the 2.2 maintenance track
+ (original was for 2.4).
+
+ Will merge to 'next'.
+
+
+* jk/http-backend-deadlock-2.3 (2015-05-20) 1 commit
+ - Merge branch 'jk/http-backend-deadlock-2.2' into jk/http-backend-deadlock-2.3
+ (this branch is used by jk/http-backend-deadlock; uses jk/http-backend-deadlock-2.2.)
+
+ Same for 2.3 maintenance track.
+
+ Will merge to 'next'.
+
+
+* jk/stash-options (2015-05-20) 2 commits
+ - stash: recognize "--help" for subcommands
+ - stash: complain about unknown flags
+
+ Make "git stash something --help" error out, so that users can
+ safely say "git stash drop --help".
+
+ Will merge to 'next'.
+
+
+* mc/commit-doc-grammofix (2015-05-19) 1 commit
+ - Documentation/git-commit: grammofix
+
+ Will merge to 'next'.
+
+
+* rs/janitorial (2015-05-20) 3 commits
+ - dir: remove unused variable sb
+ - clean: remove unused variable buf
+ - use file_exists() to check if a file exists in the worktree
+
+ Will merge to 'next'.
+
+
+* ah/send-email-postfix-alias (2015-05-21) 1 commit
+ - git-send-email.perl: Add sendmail aliases support
+
+
+* fm/fetch-raw-sha1 (2015-05-21) 5 commits
+ - SQUASH
+ - upload-pack: optionally allow fetching reachable sha1
+ - SQUASH
+ - upload-pack: prepare to extend allow-tip-sha1-in-want
+ - config.txt: clarify allowTipSHA1InWant with camelCase
+
+ "git upload-pack" that serves "git fetch" can be told to serve
+ commits that are not at the tip of any ref as long as they are
+ reachable from a ref with uploadpack.allowReachableSHA1InWant
+ configuration variable.
+
+ Will squash the fixes in and then merge to 'next'.
+
+
+* jc/commit-slab (2015-05-22) 1 commit
+ - commit-slab: introduce slabname##_peek() function
+
+ Memory use reduction when commit-slab facility is used to annotate
+ sparsely (which is not recommended in the first place).
+
+
+* mm/rebase-i-post-rewrite-exec (2015-05-22) 3 commits
+ - t5407: use <<- to align the expected output
+ - rebase -i: fix post-rewrite hook with failed exec command
+ - rebase -i: demonstrate incorrect behavior of post-rewrite
+
+ "git rebase -i" fired post-rewrite hook when it shouldn't (namely,
+ when it was told to stop sequencing with 'exec' insn).
+
+ Will merge to 'next'.
+
+
+* sb/submodule-doc-intro (2015-05-22) 1 commit
+ - submodule documentation: reorder introductory paragraphs
+
+ Will merge to 'next'.
+
+
+* sb/test-bitmap-free-at-end (2015-05-22) 1 commit
+ - test_bitmap_walk: free bitmap with bitmap_free
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -687,6 +619,120 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* dt/cat-file-follow-symlinks (2015-05-20) 3 commits
+ - cat-file: add --follow-symlinks to --batch
+ - sha1_name: get_sha1_with_context learns to follow symlinks
+ - tree-walk: learn get_tree_entry_follow_symlinks
+
+ "git cat-file --batch(-check)" learned the "--follow-symlinks"
+ option that follows an in-tree symblic links when asked about an
+ object via extended SHA-1 syntax, e.g. HEAD:RelNotes that points at
+ Documentation/RelNotes/2.5.0.txt.  With the new option, the command
+ behaves as if HEAD:Documentation/RelNotes/2.5.0.txt was given as
+ input instead.
+
+ Will merge to 'next'.
+
+
+* dt/clean-pathspec-filter-then-lstat (2015-05-18) 1 commit
+ - clean: only lstat files in pathspec
+
+ "git clean pathspec..." tried to lstat(2) and complain even for
+ paths outside the given pathspec.
+
+ Will merge to 'next'.
+
+
+* jh/filter-empty-contents (2015-05-18) 1 commit
+ - sha1_file: pass empty buffer to index empty file
+
+ The clean/smudge interface did not work well when filtering an
+ empty contents (failed and then passed the empty input through).
+ It can be argued that a filter that produces anything but empty for
+ an empty input is nonsense, but if the user wants to do strange
+ things, then why not?
+
+ Will merge to 'next'.
+
+
+* jk/http-backend-deadlock (2015-05-20) 1 commit
+ - Merge branch 'jk/http-backend-deadlock-2.3' into jk/http-backend-deadlock
+ (this branch uses jk/http-backend-deadlock-2.2 and jk/http-backend-deadlock-2.3.)
+
+ Communication between the HTTP server and http_backend process can
+ lead to a dead-lock when relaying a large ref negotiation request.
+ Diagnose the situation better, and mitigate it by reading such a
+ request first into core (to a reasonable limit).
+
+ Will merge to 'next'.
+
+
+* jk/rerere-forget-check-enabled (2015-05-14) 1 commit
+  (merged to 'next' on 2015-05-19 at bfe67dc)
+ + rerere: exit silently on "forget" when rerere is disabled
+
+ "git rerere forget" in a repository without rerere enabled gave a
+ cryptic error message; it should be a silent no-op instead.
+
+ Will merge to 'master'.
+
+
+* mm/log-format-raw-doc (2015-05-20) 2 commits
+ - Documentation/log: clarify sha1 non-abbreviation in log --raw
+ - Documentation/log: clarify what --raw means
+
+ Clarify that "log --raw" and "log --format=raw" are unrelated
+ concepts.
+
+ Will merge to 'next'.
+
+
+* pt/pull-ff-vs-merge-ff (2015-05-18) 2 commits
+  (merged to 'next' on 2015-05-20 at 064a082)
+ + pull: parse pull.ff as a bool or string
+ + pull: make pull.ff=true override merge.ff
+
+ The pull.ff configuration was supposed to override the merge.ff
+ configuration, but it didn't.
+
+ Will merge to 'master'.
+
+
+* pt/pull-log-n (2015-05-18) 1 commit
+  (merged to 'next' on 2015-05-20 at db6ce78)
+ + pull: handle --log=<n>
+
+ "git pull --log" and "git pull --no-log" worked as expected, but
+ "git pull --log=20" did not.
+
+ Will merge to 'master'.
+
+
+* rs/plug-leak-in-pack-bitmaps (2015-05-19) 1 commit
+  (merged to 'next' on 2015-05-20 at b70f647)
+ + pack-bitmaps: plug memory leak, fix allocation size for recent_bitmaps
+
+ The code to read pack-bitmap wanted to allocate a few hundred
+ pointers to a structure, but by mistake allocated and leaked memory
+ enough to hold that many actual structures.  Correct the allocation
+ size and also have it on stack, as it is small enough.
+
+ Will merge to 'master'.
+
+
+* sg/help-group (2015-05-21) 5 commits
+ - help: respect new common command grouping
+ - command-list.txt: drop the "common" tag
+ - generate-cmdlist: parse common group commands
+ - command-list.txt: add the common groups block
+ - command-list: prepare machinery for upcoming "common groups" section
+
+ Group list of commands shown by "git help" along the workflow
+ elements to help early learners.
+
+ Will merge to 'next'.
+
+
 * nd/untracked-cache (2015-03-12) 24 commits
   (merged to 'next' on 2015-05-19 at 26e619b)
  + git-status.txt: advertisement for untracked cache
@@ -720,30 +766,12 @@ of the repositories listed at
  Will cook in 'next'.
 
 
-* dl/branch-error-message (2015-05-06) 1 commit
-  (merged to 'next' on 2015-05-11 at ed947ab)
- + branch: do not call a "remote-tracking branch" a "remote branch"
-
- Error messages from "git branch" called remote-tracking branches as
- "remote branches".
-
- Will merge to 'master' in the fourth batch.
-
-
-* dl/subtree-push-no-squash (2015-05-07) 1 commit
-  (merged to 'next' on 2015-05-11 at 74d07ca)
- + contrib/subtree: there's no push --squash
-
- "git subtree" script (in contrib/) does not have --squash option
- when pushing, but the documentation and help text pretended as if
- it did.
-
- Will merge to 'master' in the fourth batch.
-
-
-* ld/p4-editor-multi-words (2015-05-19) 3 commits
+* ld/p4-editor-multi-words (2015-05-20) 6 commits
+ - SQUASH
+ - git-p4: tests: use test-chmtime in place of touch
+ - SQUASH
  - git-p4: fix handling of multi-word P4EDITOR
- - SQUASH???
+ - SQUASH
  - git-p4: add failing test for P4EDITOR handling
 
  Unlike "$EDITOR" and "$GIT_EDITOR" that can hold the path to the
@@ -751,111 +779,6 @@ of the repositories listed at
  did not let the shell interpolate the contents of the environment
  variable that name the editor "$P4EDITOR" (and "$EDITOR", too).
  Make it in line with the rest of Git, as well as with Perforce.
-
-
-* dl/subtree-avoid-tricky-echo (2015-05-08) 1 commit
-  (merged to 'next' on 2015-05-11 at 36d4f0e)
- + contrib/subtree: portability fix for string printing
-
- "git subtree" script (in contrib/) used "echo -n" to produce
- progress messages in a non-portable way.
-
- Will merge to 'master' in the fourth batch.
-
-
-* ls/http-ssl-cipher-list (2015-05-08) 1 commit
-  (merged to 'next' on 2015-05-11 at 55764ce)
- + http: add support for specifying an SSL cipher list
-
- Introduce http.<url>.SSLCipherList configuration variable to tweak
- the list of cipher suite to be used with libcURL when talking with
- https:// sites.
-
- Will merge to 'master' in the fourth batch.
-
-
-* ps/bundle-verify-arg (2015-05-08) 1 commit
-  (merged to 'next' on 2015-05-11 at 9f1b1ae)
- + bundle: verify arguments more strictly
-
- "git bundle verify" did not diagnose extra parameters on the
- command line.
-
- Will merge to 'master' in the fourth batch.
-
-
-* sg/help-subcommands (2015-05-08) 1 commit
-  (merged to 'next' on 2015-05-11 at 91e4f9e)
- + command-list.txt: fix whitespace inconsistency
- (this branch is used by sg/help-group.)
-
- A preparatory clean-up step.
-
- Will merge to 'master' in the fourth batch.
-
-
-* mh/write-refs-sooner-2.2 (2015-05-12) 8 commits
- + ref_transaction_commit(): fix atomicity and avoid fd exhaustion
- + ref_transaction_commit(): remove the local flags variable
- + ref_transaction_commit(): inline call to write_ref_sha1()
- + rename_ref(): inline calls to write_ref_sha1() from this function
- + commit_ref_update(): new function, extracted from write_ref_sha1()
- + write_ref_to_lockfile(): new function, extracted from write_ref_sha1()
- + t7004: rename ULIMIT test prerequisite to ULIMIT_STACK_SIZE
- + update-ref: test handling large transactions properly
- (this branch is used by mh/write-refs-sooner-2.3 and mh/write-refs-sooner-2.4.)
-
- Multi-ref transaction support we merged a few releases ago
- unnecessarily kept many file descriptors open, risking to fail with
- resource exhaustion.
-
-
-* mh/write-refs-sooner-2.3 (2015-05-12) 1 commit
- + Merge branch 'mh/write-refs-sooner-2.2' into mh/write-refs-sooner-2.3
- (this branch is used by mh/write-refs-sooner-2.4; uses mh/write-refs-sooner-2.2.)
-
- Multi-ref transaction support we merged a few releases ago
- unnecessarily kept many file descriptors open, risking to fail with
- resource exhaustion.  This is for 2.3.x track.
-
-
-* mh/write-refs-sooner-2.4 (2015-05-12) 9 commits
-  (merged to 'next' on 2015-05-19 at f7be074)
- + Merge branch 'mh/write-refs-sooner-2.3' into mh/write-refs-sooner-2.4
- + ref_transaction_commit(): fix atomicity and avoid fd exhaustion
- + ref_transaction_commit(): remove the local flags variable
- + ref_transaction_commit(): inline call to write_ref_sha1()
- + rename_ref(): inline calls to write_ref_sha1() from this function
- + commit_ref_update(): new function, extracted from write_ref_sha1()
- + write_ref_to_lockfile(): new function, extracted from write_ref_sha1()
- + t7004: rename ULIMIT test prerequisite to ULIMIT_STACK_SIZE
- + update-ref: test handling large transactions properly
- (this branch uses mh/write-refs-sooner-2.2 and mh/write-refs-sooner-2.3.)
-
- Multi-ref transaction support we merged a few releases ago
- unnecessarily kept many file descriptors open, risking to fail with
- resource exhaustion.  This is for 2.4.x track.
-
-
-* sg/completion-omit-credential-helpers (2015-05-06) 1 commit
-  (merged to 'next' on 2015-05-11 at aa7e554)
- + completion: remove credential helpers from porcelain commands
-
- The Git subcommand completion (in contrib/) listed credential
- helpers among candidates, which is not something the end user would
- invoke interatively.
-
- Will merge to 'master' in the fourth batch.
-
-
-* jk/skip-http-tests-under-no-curl (2015-05-07) 2 commits
-  (merged to 'next' on 2015-05-11 at a52b711)
- + tests: skip dav http-push tests under NO_EXPAT=NoThanks
- + t/lib-httpd.sh: skip tests if NO_CURL is defined
-
- Test clean-up.
-
- Will merge to 'master' in the fourth batch.
 
 
 * pt/pull-tests (2015-05-18) 8 commits
@@ -877,25 +800,29 @@ of the repositories listed at
  Still an early WIP
 
 
-* jk/at-push-sha1 (2015-05-03) 12 commits
+* jk/at-push-sha1 (2015-05-22) 16 commits
  - for-each-ref: accept "%(push)" format
  - for-each-ref: use skip_prefix instead of starts_with
  - sha1_name: implement @{push} shorthand
  - sha1_name: refactor interpret_upstream_mark
  - sha1_name: refactor upstream_mark
  - remote.c: add branch_get_push
+ - remote.c: return upstream name from stat_tracking_info
+ - remote.c: untangle error logic in branch_get_upstream
  - remote.c: report specific errors from branch_get_upstream
  - remote.c: introduce branch_get_upstream helper
+ - remote.c: hoist read_config into remote_get_1
  - remote.c: provide per-branch pushremote name
  - remote.c: hoist branch.*.remote lookup out of remote_get_1
  - remote.c: drop "remote" pointer from "struct branch"
+ - remote.c: refactor setup of branch->merge list
  - remote.c: drop default_remote_name variable
 
  Introduce <branch>@{push} short-hand to denote the remote-tracking
  branch that tracks the branch at the remote the <branch> would be
  pushed to.
 
- Expecting a reroll ($gmane/268419, etc.).
+ Will merge to 'next'.
 
 
 * ee/clean-remove-dirs (2015-04-26) 5 commits
