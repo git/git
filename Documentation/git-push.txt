@@ -265,8 +265,8 @@ origin +master` to force a push to the `master` branch). See the
 
 --[no-]verify::
 	Toggle the pre-push hook (see linkgit:githooks[5]).  The
-	default is \--verify, giving the hook a chance to prevent the
-	push.  With \--no-verify, the hook is bypassed completely.
+	default is --verify, giving the hook a chance to prevent the
+	push.  With --no-verify, the hook is bypassed completely.
 
 
 include::urls-remotes.txt[]

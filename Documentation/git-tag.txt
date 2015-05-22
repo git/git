@@ -158,7 +158,7 @@ This option is only applicable when listing tags without annotation lines.
 CONFIGURATION
 -------------
 By default, 'git tag' in sign-with-default mode (-s) will use your
-committer identity (of the form "Your Name <\your@email.address>") to
+committer identity (of the form `Your Name <your@email.address>`) to
 find a key.  If you want to use a different default key, you can specify
 it in the repository configuration as follows:
 
