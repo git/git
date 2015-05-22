@@ -624,6 +624,12 @@ core.commentChar::
 If set to "auto", `git-commit` would select a character that is not
 the beginning character of any line in existing commit messages.
 
+core.packedRefsTimeout::
+	The length of time, in milliseconds, to retry when trying to
+	lock the `packed-refs` file. Value 0 means not to retry at
+	all; -1 means to try indefinitely. Default is 1000 (i.e.,
+	retry for 1 second).
+
 sequence.editor::
 	Text editor used by `git rebase -i` for editing the rebase instruction file.
 	The value is meant to be interpreted by the shell when it is used.

@@ -2505,9 +2505,19 @@ static int write_packed_entry_fn(struct ref_entry *entry, void *cb_data)
 /* This should return a meaningful errno on failure */
 int lock_packed_refs(int flags)
 {
+	static int timeout_configured = 0;
+	static int timeout_value = 1000;
+
 	struct packed_ref_cache *packed_ref_cache;
 
-	if (hold_lock_file_for_update(&packlock, git_path("packed-refs"), flags) < 0)
+	if (!timeout_configured) {
+		git_config_get_int("core.packedrefstimeout", &timeout_value);
+		timeout_configured = 1;
+	}
+
+	if (hold_lock_file_for_update_timeout(
+			    &packlock, git_path("packed-refs"),
+			    flags, timeout_value) < 0)
 		return -1;
 	/*
 	 * Get the current packed-refs while holding the lock.  If the
