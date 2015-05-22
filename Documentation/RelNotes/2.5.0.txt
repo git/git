@@ -53,6 +53,34 @@ UI, Workflows & Features
    test scripts is now turned on by default.
    (merge 92b269f jk/test-chain-lint later to maint).
 
+ * Filter scripts were run with SIGPIPE disabled on the Git side,
+   expecting that they may not read what Git feeds them to filter.
+   We however treated a filter that does not read its input fully
+   before exiting as an error.
+
+   This changes semantics, but arguably in a good way.  If a filter
+   can produce its output without consuming its input using whatever
+   magic, we now let it do so, instead of diagnosing it as a
+   programming error.
+
+ * Instead of dying immediately upon failing to obtain a lock, the
+   locking (of refs etc) retries after a short while with backoff.
+
+ * Introduce http.<url>.SSLCipherList configuration variable to tweak
+   the list of cipher suite to be used with libcURL when talking with
+   https:// sites.
+
+ * "git subtree" script (in contrib/) used "echo -n" to produce
+   progress messages in a non-portable way.
+
+ * "git subtree" script (in contrib/) does not have --squash option
+   when pushing, but the documentation and help text pretended as if
+   it did.
+
+ * The Git subcommand completion (in contrib/) listed credential
+   helpers among candidates, which is not something the end user would
+   invoke interatively.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -96,6 +124,11 @@ Performance, Internal Implementation, Development Support etc.
    is sent to the background instead.
    (merge 9a9a41d lm/squelch-bg-progress later to maint).
 
+ * There was a dead code that used to handle "git pull --tags" and
+   show special-cased error message, which was made irrelevant when
+   the semantics of the option changed back in Git 1.9 days.
+   (merge 19d122b pt/pull-tags-error-diag later to maint).
+
 
 Also contains various documentation updates and code clean-ups.
 
@@ -106,6 +139,14 @@ Fixes since v2.4
 Unless otherwise noted, all the fixes since v2.4 in the maintenance
 track are contained in this release (see the maintenance releases'
 notes for details).
+
+ * Git 2.4 broke setting verbosity and progress levels on "git clone"
+   with native transports.
+   (merge 822f0c4 mh/clone-verbosity-fix later to maint).
+
+ * "git add -e" did not allow the user to abort the operation by
+   killing the editor.
+   (merge cb64800 jk/add-e-kill-editor later to maint).
 
  * Memory usage of "git index-pack" has been trimmed by tens of
    per-cent.
@@ -236,6 +277,37 @@ notes for details).
    files yet to be added to the index.
    (merge d95d728 nd/diff-i-t-a later to maint).
 
+ * There was a commented-out (instead of being marked to expect
+   failure) test that documented a breakage that was fixed since the
+   test was written; turn it into a proper test.
+   (merge 66d2e04 sb/t1020-cleanup later to maint).
+
+ * The "log --decorate" enhancement in Git 2.4 that shows the commit
+   at the tip of the current branch e.g. "HEAD -> master", did not
+   work with --decorate=full.
+   (merge 429ad20 mg/log-decorate-HEAD later to maint).
+
+ * The ref API did not handle cases where 'refs/heads/xyzzy/frotz' is
+   removed at the same time as 'refs/heads/xyzzy' is added (or vice
+   versa) very well.
+   (merge c628edf mh/ref-directory-file later to maint).
+
+ * Multi-ref transaction support we merged a few releases ago
+   unnecessarily kept many file descriptors open, risking to fail with
+   resource exhaustion.  This is for 2.4.x track.
+   (merge 185ce3a mh/write-refs-sooner-2.4 later to maint).
+
+ * "git bundle verify" did not diagnose extra parameters on the
+   command line.
+   (merge 7886cfa ps/bundle-verify-arg later to maint).
+
+ * Various documentation mark-up fixes to make the output more
+   consistent in general and also make AsciiDoctor (an alternative
+   formatter) happier.
+   (merge d0258b9 jk/asciidoc-markup-fix later to maint).
+   (merge ad3967a jk/stripspace-asciidoctor-fix later to maint).
+   (merge 975e382 ja/tutorial-asciidoctor-fix later to maint).
+
  * Code cleanups and documentation updates.
    (merge 0269f96 mm/usage-log-l-can-take-regex later to maint).
    (merge 64f2589 nd/t1509-chroot-test later to maint).
@@ -245,3 +317,6 @@ notes for details).
    (merge 1154aa4 jc/plug-fmt-merge-msg-leak later to maint).
    (merge 319b678 jk/sha1-file-reduce-useless-warnings later to maint).
    (merge 9a35c14 fg/document-commit-message-stripping later to maint).
+   (merge bbf431c ps/doc-packfile-vs-pack-file later to maint).
+   (merge 309a9e3 jk/skip-http-tests-under-no-curl later to maint).
+   (merge ccd593c dl/branch-error-message later to maint).
