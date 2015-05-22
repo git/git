@@ -162,16 +162,20 @@ test_expect_success 'no file/rev ambiguity check inside .git' '
 	)
 '
 
-test_expect_success 'no file/rev ambiguity check inside a bare repo' '
+test_expect_success 'no file/rev ambiguity check inside a bare repo (explicit GIT_DIR)' '
+	test_when_finished "rm -fr foo.git" &&
 	git clone -s --bare .git foo.git &&
 	(
 		cd foo.git &&
+		# older Git needed help by exporting GIT_DIR=.
+		# to realize that it is inside a bare repository.
+		# We keep this test around for regression testing.
 		GIT_DIR=. git show -s HEAD
 	)
 '
 
-# This still does not work as it should...
-: test_expect_success 'no file/rev ambiguity check inside a bare repo' '
+test_expect_success 'no file/rev ambiguity check inside a bare repo' '
+	test_when_finished "rm -fr foo.git" &&
 	git clone -s --bare .git foo.git &&
 	(
 		cd foo.git &&
@@ -180,7 +184,6 @@ test_expect_success 'no file/rev ambiguity check inside a bare repo' '
 '
 
 test_expect_success SYMLINKS 'detection should not be fooled by a symlink' '
-	rm -fr foo.git &&
 	git clone -s .git another &&
 	ln -s another yetanother &&
 	(
