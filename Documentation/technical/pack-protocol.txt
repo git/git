@@ -465,7 +465,7 @@ contain all the objects that the server will need to complete the new
 references.
 
 ----
-  update-request    =  *shallow ( command-list | push-cert ) [pack-file]
+  update-request    =  *shallow ( command-list | push-cert ) [packfile]
 
   shallow           =  PKT-LINE("shallow" SP obj-id LF)
 
@@ -491,7 +491,7 @@ references.
 		      *PKT-LINE(gpg-signature-lines LF)
 		      PKT-LINE("push-cert-end" LF)
 
-  pack-file         = "PACK" 28*(OCTET)
+  packfile          = "PACK" 28*(OCTET)
 ----
 
 If the receiving end does not support delete-refs, the sending end MUST
