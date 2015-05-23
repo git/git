@@ -338,6 +338,13 @@ int mingw_unlink(const char *pathname)
 			return 0;
 		if (!is_file_in_use_error(GetLastError()))
 			break;
+		/*
+		 * _wunlink() / DeleteFileW() for directory symlinks fails with
+		 * ERROR_ACCESS_DENIED (EACCES), so try _wrmdir() as well. This is the
+		 * same error we get if a file is in use (already checked above).
+		 */
+		if (!_wrmdir(wpathname))
+			return 0;
 	} while (retry_ask_yes_no(&tries, "Unlink of file '%s' failed. "
 			"Should I try again?", pathname));
 	return -1;
