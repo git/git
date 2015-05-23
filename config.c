@@ -1203,32 +1203,31 @@ int git_config_system(void)
 	return !git_env_bool("GIT_CONFIG_NOSYSTEM", 0);
 }
 
+static inline void config_from_file_gently(config_fn_t fn, const char *filename,
+		void *data, unsigned access_flags, int *ret, int *found) {
+	if (!filename || access_or_die(filename, R_OK, access_flags))
+		return;
+
+	*ret += git_config_from_file(fn, filename, data);
+	(*found)++;
+}
+
 int git_config_early(config_fn_t fn, void *data, const char *repo_config)
 {
 	int ret = 0, found = 0;
 	char *xdg_config = xdg_config_home("config");
 	char *user_config = expand_user_path("~/.gitconfig");
 
-	if (git_config_system() && !access_or_die(git_etc_gitconfig(), R_OK, 0)) {
-		ret += git_config_from_file(fn, git_etc_gitconfig(),
-					    data);
-		found += 1;
-	}
+	if (git_config_system())
+		config_from_file_gently(fn, git_etc_gitconfig(), data, 0,
+				&ret, &found);
 
-	if (xdg_config && !access_or_die(xdg_config, R_OK, ACCESS_EACCES_OK)) {
-		ret += git_config_from_file(fn, xdg_config, data);
-		found += 1;
-	}
+	config_from_file_gently(fn, xdg_config, data, ACCESS_EACCES_OK,
+			&ret, &found);
+	config_from_file_gently(fn, user_config, data, ACCESS_EACCES_OK,
+			&ret, &found);
 
-	if (user_config && !access_or_die(user_config, R_OK, ACCESS_EACCES_OK)) {
-		ret += git_config_from_file(fn, user_config, data);
-		found += 1;
-	}
-
-	if (repo_config && !access_or_die(repo_config, R_OK, 0)) {
-		ret += git_config_from_file(fn, repo_config, data);
-		found += 1;
-	}
+	config_from_file_gently(fn, repo_config, data, 0, &ret, &found);
 
 	switch (git_config_from_parameters(fn, data)) {
 	case -1: /* error */
