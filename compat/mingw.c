@@ -726,7 +726,24 @@ int mingw_chdir(const char *dirname)
 	wchar_t wdirname[MAX_LONG_PATH];
 	if (xutftowcs_long_path(wdirname, dirname) < 0)
 		return -1;
-	result = _wchdir(wdirname);
+
+	if (has_symlinks) {
+		HANDLE hnd = CreateFileW(wdirname, 0,
+				FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL,
+				OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
+		if (hnd == INVALID_HANDLE_VALUE) {
+			errno = err_win_to_posix(GetLastError());
+			return -1;
+		}
+		if (!GetFinalPathNameByHandleW(hnd, wdirname, ARRAY_SIZE(wdirname), 0)) {
+			errno = err_win_to_posix(GetLastError());
+			CloseHandle(hnd);
+			return -1;
+		}
+		CloseHandle(hnd);
+	}
+
+	result = _wchdir(normalize_ntpath(wdirname));
 	current_directory_len = GetCurrentDirectoryW(0, NULL);
 	return result;
 }
