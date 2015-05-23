@@ -2667,6 +2667,34 @@ int link(const char *oldpath, const char *newpath)
 	return 0;
 }
 
+int symlink(const char *target, const char *link)
+{
+	wchar_t wtarget[MAX_LONG_PATH], wlink[MAX_LONG_PATH];
+	int len;
+
+	/* fail if symlinks are disabled or API is not supported (WinXP) */
+	if (!has_symlinks) {
+		errno = ENOSYS;
+		return -1;
+	}
+
+	if ((len = xutftowcs_long_path(wtarget, target)) < 0
+			|| xutftowcs_long_path(wlink, link) < 0)
+		return -1;
+
+	/* convert target dir separators to backslashes */
+	while (len--)
+		if (wtarget[len] == '/')
+			wtarget[len] = '\\';
+
+	/* create file symlink */
+	if (!CreateSymbolicLinkW(wlink, wtarget, 0)) {
+		errno = err_win_to_posix(GetLastError());
+		return -1;
+	}
+	return 0;
+}
+
 #ifndef _WINNT_H
 /*
  * The REPARSE_DATA_BUFFER structure is defined in the Windows DDK (in
