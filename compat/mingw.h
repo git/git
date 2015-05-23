@@ -125,8 +125,6 @@ struct utsname {
  * trivial stubs
  */
 
-static inline int symlink(const char *oldpath UNUSED, const char *newpath UNUSED)
-{ errno = ENOSYS; return -1; }
 static inline int fchmod(int fildes UNUSED, mode_t mode UNUSED)
 { errno = ENOSYS; return -1; }
 #ifndef __MINGW64_VERSION_MAJOR
@@ -220,6 +218,7 @@ int setitimer(int type, struct itimerval *in, struct itimerval *out);
 int sigaction(int sig, struct sigaction *in, struct sigaction *out);
 int link(const char *oldpath, const char *newpath);
 int uname(struct utsname *buf);
+int symlink(const char *target, const char *link);
 int readlink(const char *path, char *buf, size_t bufsiz);
 
 /*
