@@ -1537,7 +1537,7 @@ test_expect_success $PREREQ 'sendemail.aliasfiletype=mailrc' '
 
 test_expect_success $PREREQ 'sendemail.aliasfile=~/.mailrc' '
 	clean_fake_sendmail &&
-	echo "alias sbd  someone@example.org" >~/.mailrc &&
+	echo "alias sbd  someone@example.org" >"$HOME/.mailrc" &&
 	git config --replace-all sendemail.aliasesfile "~/.mailrc" &&
 	git config sendemail.aliasfiletype mailrc &&
 	git send-email \
