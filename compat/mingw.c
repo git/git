@@ -297,6 +297,131 @@ int mingw_core_config(const char *var, const char *value, void *cb)
 	return 0;
 }
 
+enum phantom_symlink_result {
+	PHANTOM_SYMLINK_RETRY,
+	PHANTOM_SYMLINK_DONE,
+	PHANTOM_SYMLINK_DIRECTORY
+};
+
+static inline int is_wdir_sep(wchar_t wchar)
+{
+	return wchar == L'/' || wchar == L'\\';
+}
+
+static const wchar_t *make_relative_to(const wchar_t *path,
+				       const wchar_t *relative_to, wchar_t *out,
+				       size_t size)
+{
+	size_t i = wcslen(relative_to), len;
+
+	/* Is `path` already absolute? */
+	if (is_wdir_sep(path[0]) ||
+	    (iswalpha(path[0]) && path[1] == L':' && is_wdir_sep(path[2])))
+		return path;
+
+	while (i > 0 && !is_wdir_sep(relative_to[i - 1]))
+		i--;
+
+	/* Is `relative_to` in the current directory? */
+	if (!i)
+		return path;
+
+	len = wcslen(path);
+	if (i + len + 1 > size) {
+		error("Could not make '%S' relative to '%S' (too large)",
+		      path, relative_to);
+		return NULL;
+	}
+
+	memcpy(out, relative_to, i * sizeof(wchar_t));
+	wcscpy(out + i, path);
+	return out;
+}
+
+/*
+ * Changes a file symlink to a directory symlink if the target exists and is a
+ * directory.
+ */
+static enum phantom_symlink_result
+process_phantom_symlink(const wchar_t *wtarget, const wchar_t *wlink)
+{
+	HANDLE hnd;
+	BY_HANDLE_FILE_INFORMATION fdata;
+	wchar_t relative[MAX_LONG_PATH];
+	const wchar_t *rel;
+
+	/* check that wlink is still a file symlink */
+	if ((GetFileAttributesW(wlink)
+			& (FILE_ATTRIBUTE_REPARSE_POINT | FILE_ATTRIBUTE_DIRECTORY))
+			!= FILE_ATTRIBUTE_REPARSE_POINT)
+		return PHANTOM_SYMLINK_DONE;
+
+	/* make it relative, if necessary */
+	rel = make_relative_to(wtarget, wlink, relative, ARRAY_SIZE(relative));
+	if (!rel)
+		return PHANTOM_SYMLINK_DONE;
+
+	/* let Windows resolve the link by opening it */
+	hnd = CreateFileW(rel, 0,
+			FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL,
+			OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS, NULL);
+	if (hnd == INVALID_HANDLE_VALUE) {
+		errno = err_win_to_posix(GetLastError());
+		return PHANTOM_SYMLINK_RETRY;
+	}
+
+	if (!GetFileInformationByHandle(hnd, &fdata)) {
+		errno = err_win_to_posix(GetLastError());
+		CloseHandle(hnd);
+		return PHANTOM_SYMLINK_RETRY;
+	}
+	CloseHandle(hnd);
+
+	/* if target exists and is a file, we're done */
+	if (!(fdata.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY))
+		return PHANTOM_SYMLINK_DONE;
+
+	/* otherwise recreate the symlink with directory flag */
+	if (DeleteFileW(wlink) && CreateSymbolicLinkW(wlink, wtarget, 1))
+		return PHANTOM_SYMLINK_DIRECTORY;
+
+	errno = err_win_to_posix(GetLastError());
+	return PHANTOM_SYMLINK_RETRY;
+}
+
+/* keep track of newly created symlinks to non-existing targets */
+struct phantom_symlink_info {
+	struct phantom_symlink_info *next;
+	wchar_t *wlink;
+	wchar_t *wtarget;
+};
+
+static struct phantom_symlink_info *phantom_symlinks = NULL;
+static CRITICAL_SECTION phantom_symlinks_cs;
+
+static void process_phantom_symlinks(void)
+{
+	struct phantom_symlink_info *current, **psi;
+	EnterCriticalSection(&phantom_symlinks_cs);
+	/* process phantom symlinks list */
+	psi = &phantom_symlinks;
+	while ((current = *psi)) {
+		enum phantom_symlink_result result = process_phantom_symlink(
+				current->wtarget, current->wlink);
+		if (result == PHANTOM_SYMLINK_RETRY) {
+			psi = &current->next;
+		} else {
+			/* symlink was processed, remove from list */
+			*psi = current->next;
+			free(current);
+			/* if symlink was a directory, start over */
+			if (result == PHANTOM_SYMLINK_DIRECTORY)
+				psi = &phantom_symlinks;
+		}
+	}
+	LeaveCriticalSection(&phantom_symlinks_cs);
+}
+
 /* Normalizes NT paths as returned by some low-level APIs. */
 static wchar_t *normalize_ntpath(wchar_t *wbuf)
 {
@@ -457,6 +582,8 @@ int mingw_mkdir(const char *path, int mode)
 		return -1;
 
 	ret = _wmkdir(wpath);
+	if (!ret)
+		process_phantom_symlinks();
 	if (!ret && needs_hiding(path))
 		return set_hidden_flag(wpath, 1);
 	return ret;
@@ -2607,6 +2734,42 @@ int symlink(const char *target, const char *link)
 		errno = err_win_to_posix(GetLastError());
 		return -1;
 	}
+
+	/* convert to directory symlink if target exists */
+	switch (process_phantom_symlink(wtarget, wlink)) {
+	case PHANTOM_SYMLINK_RETRY:	{
+		/* if target doesn't exist, add to phantom symlinks list */
+		wchar_t wfullpath[MAX_LONG_PATH];
+		struct phantom_symlink_info *psi;
+
+		/* convert to absolute path to be independent of cwd */
+		len = GetFullPathNameW(wlink, MAX_LONG_PATH, wfullpath, NULL);
+		if (!len || len >= MAX_LONG_PATH) {
+			errno = err_win_to_posix(GetLastError());
+			return -1;
+		}
+
+		/* over-allocate and fill phantom_symlink_info structure */
+		psi = xmalloc(sizeof(struct phantom_symlink_info)
+			+ sizeof(wchar_t) * (len + wcslen(wtarget) + 2));
+		psi->wlink = (wchar_t *)(psi + 1);
+		wcscpy(psi->wlink, wfullpath);
+		psi->wtarget = psi->wlink + len + 1;
+		wcscpy(psi->wtarget, wtarget);
+
+		EnterCriticalSection(&phantom_symlinks_cs);
+		psi->next = phantom_symlinks;
+		phantom_symlinks = psi;
+		LeaveCriticalSection(&phantom_symlinks_cs);
+		break;
+	}
+	case PHANTOM_SYMLINK_DIRECTORY:
+		/* if we created a dir symlink, process other phantom symlinks */
+		process_phantom_symlinks();
+		break;
+	default:
+		break;
+	}
 	return 0;
 }
 
@@ -3336,6 +3499,7 @@ int wmain(int argc, const wchar_t **wargv)
 
 	/* initialize critical section for waitpid pinfo_t list */
 	InitializeCriticalSection(&pinfo_cs);
+	InitializeCriticalSection(&phantom_symlinks_cs);
 
 	/* initialize critical section for fscache */
 	InitializeCriticalSection(&fscache_cs);
