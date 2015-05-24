@@ -79,7 +79,7 @@ UI, Workflows & Features
 
  * The Git subcommand completion (in contrib/) listed credential
    helpers among candidates, which is not something the end user would
-   invoke interatively.
+   invoke interactively.
 
 
 Performance, Internal Implementation, Development Support etc.
