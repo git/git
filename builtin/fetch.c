@@ -179,13 +179,15 @@ static void add_merge_config(struct ref **head,
 	}
 }
 
-static int add_existing(const char *refname, const unsigned char *sha1,
+static int add_existing(const char *refname, const struct object_id *oid,
 			int flag, void *cbdata)
 {
 	struct string_list *list = (struct string_list *)cbdata;
 	struct string_list_item *item = string_list_insert(list, refname);
-	item->util = xmalloc(20);
-	hashcpy(item->util, sha1);
+	struct object_id *old_oid = xmalloc(sizeof(*old_oid));
+
+	oidcpy(old_oid, oid);
+	item->util = old_oid;
 	return 0;
 }
 
@@ -208,10 +210,8 @@ static void find_non_local_tags(struct transport *transport,
 	struct string_list remote_refs = STRING_LIST_INIT_NODUP;
 	const struct ref *ref;
 	struct string_list_item *item = NULL;
-	struct each_ref_fn_sha1_adapter wrapped_add_existing =
-		{add_existing, &existing_refs};
 
-	for_each_ref(each_ref_fn_adapter, &wrapped_add_existing);
+	for_each_ref(add_existing, &existing_refs);
 	for (ref = transport_get_remote_refs(transport); ref; ref = ref->next) {
 		if (!starts_with(ref->name, "refs/tags/"))
 			continue;
@@ -886,10 +886,8 @@ static int do_fetch(struct transport *transport,
 	struct ref *rm;
 	int autotags = (transport->remote->fetch_tags == 1);
 	int retcode = 0;
-	struct each_ref_fn_sha1_adapter wrapped_add_existing =
-		{add_existing, &existing_refs};
 
-	for_each_ref(each_ref_fn_adapter, &wrapped_add_existing);
+	for_each_ref(add_existing, &existing_refs);
 
 	if (tags == TAGS_DEFAULT) {
 		if (transport->remote->fetch_tags == 2)
@@ -917,9 +915,10 @@ static int do_fetch(struct transport *transport,
 			struct string_list_item *peer_item =
 				string_list_lookup(&existing_refs,
 						   rm->peer_ref->name);
-			if (peer_item)
-				hashcpy(rm->peer_ref->old_sha1,
-					peer_item->util);
+			if (peer_item) {
+				struct object_id *old_oid = peer_item->util;
+				hashcpy(rm->peer_ref->old_sha1, old_oid->hash);
+			}
 		}
 	}
 
