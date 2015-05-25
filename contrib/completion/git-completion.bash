@@ -2292,6 +2292,11 @@ _git_reset ()
 
 _git_revert ()
 {
+	local dir="$(__gitdir)"
+	if [ -f "$dir"/REVERT_HEAD ]; then
+		__gitcomp "--continue --quit --abort"
+		return
+	fi
 	case "$cur" in
 	--*)
 		__gitcomp "--edit --mainline --no-edit --no-commit --signoff"
