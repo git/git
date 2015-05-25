@@ -70,6 +70,12 @@ static int rev_list_insert_ref(const char *refname, const unsigned char *sha1, i
 	return 0;
 }
 
+static int rev_list_insert_ref_oid(const char *refname, const struct object_id *oid,
+				   int flag, void *cb_data)
+{
+	return rev_list_insert_ref(refname, oid->hash, flag, cb_data);
+}
+
 static int clear_marks(const char *refname, const struct object_id *oid,
 		       int flag, void *cb_data)
 {
@@ -257,8 +263,6 @@ static int find_common(struct fetch_pack_args *args,
 	int got_ready = 0;
 	struct strbuf req_buf = STRBUF_INIT;
 	size_t state_len = 0;
-	struct each_ref_fn_sha1_adapter wrapped_rev_list_insert_ref =
-		{rev_list_insert_ref, NULL};
 
 	if (args->stateless_rpc && multi_ack == 1)
 		die("--stateless-rpc requires multi_ack_detailed");
@@ -266,7 +270,7 @@ static int find_common(struct fetch_pack_args *args,
 		for_each_ref(clear_marks, NULL);
 	marked = 1;
 
-	for_each_ref(each_ref_fn_adapter, &wrapped_rev_list_insert_ref);
+	for_each_ref(rev_list_insert_ref_oid, NULL);
 	for_each_alternate_ref(insert_one_alternate_ref, NULL);
 
 	fetching = 0;
