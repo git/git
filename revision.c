@@ -1218,7 +1218,8 @@ int ref_excluded(struct string_list *ref_excludes, const char *path)
 	return 0;
 }
 
-static int handle_one_ref(const char *path, const unsigned char *sha1, int flag, void *cb_data)
+static int handle_one_ref(const char *path, const struct object_id *oid,
+			  int flag, void *cb_data)
 {
 	struct all_refs_cb *cb = cb_data;
 	struct object *object;
@@ -1226,9 +1227,9 @@ static int handle_one_ref(const char *path, const unsigned char *sha1, int flag,
 	if (ref_excluded(cb->all_revs->ref_excludes, path))
 	    return 0;
 
-	object = get_reference(cb->all_revs, path, sha1, cb->all_flags);
+	object = get_reference(cb->all_revs, path, oid->hash, cb->all_flags);
 	add_rev_cmdline(cb->all_revs, object, path, REV_CMD_REF, cb->all_flags);
-	add_pending_sha1(cb->all_revs, path, sha1, cb->all_flags);
+	add_pending_sha1(cb->all_revs, path, oid->hash, cb->all_flags);
 	return 0;
 }
 
@@ -1261,11 +1262,8 @@ static void handle_refs(const char *submodule, struct rev_info *revs, unsigned f
 		int (*for_each)(const char *, each_ref_fn, void *))
 {
 	struct all_refs_cb cb;
-	struct each_ref_fn_sha1_adapter wrapped_handle_one_ref =
-		{handle_one_ref, &cb};
-
 	init_all_refs_cb(&cb, revs, flags);
-	for_each(submodule, each_ref_fn_adapter, &wrapped_handle_one_ref);
+	for_each(submodule, handle_one_ref, &cb);
 }
 
 static void handle_one_reflog_commit(unsigned char *sha1, void *cb_data)
@@ -2126,11 +2124,8 @@ static int handle_revision_pseudo_opt(const char *submodule,
 		clear_ref_exclusion(&revs->ref_excludes);
 	} else if ((argcount = parse_long_opt("glob", argv, &optarg))) {
 		struct all_refs_cb cb;
-		struct each_ref_fn_sha1_adapter wrapped_handle_one_ref =
-			{handle_one_ref, &cb};
-
 		init_all_refs_cb(&cb, revs, *flags);
-		for_each_glob_ref(each_ref_fn_adapter, optarg, &wrapped_handle_one_ref);
+		for_each_glob_ref(handle_one_ref, optarg, &cb);
 		clear_ref_exclusion(&revs->ref_excludes);
 		return argcount;
 	} else if ((argcount = parse_long_opt("exclude", argv, &optarg))) {
@@ -2138,30 +2133,18 @@ static int handle_revision_pseudo_opt(const char *submodule,
 		return argcount;
 	} else if (starts_with(arg, "--branches=")) {
 		struct all_refs_cb cb;
-		struct each_ref_fn_sha1_adapter wrapped_handle_one_ref =
-			{handle_one_ref, &cb};
-
 		init_all_refs_cb(&cb, revs, *flags);
-		for_each_glob_ref_in(each_ref_fn_adapter, arg + 11, "refs/heads/",
-				     &wrapped_handle_one_ref);
+		for_each_glob_ref_in(handle_one_ref, arg + 11, "refs/heads/", &cb);
 		clear_ref_exclusion(&revs->ref_excludes);
 	} else if (starts_with(arg, "--tags=")) {
 		struct all_refs_cb cb;
-		struct each_ref_fn_sha1_adapter wrapped_handle_one_ref =
-			{handle_one_ref, &cb};
-
 		init_all_refs_cb(&cb, revs, *flags);
-		for_each_glob_ref_in(each_ref_fn_adapter, arg + 7, "refs/tags/",
-				     &wrapped_handle_one_ref);
+		for_each_glob_ref_in(handle_one_ref, arg + 7, "refs/tags/", &cb);
 		clear_ref_exclusion(&revs->ref_excludes);
 	} else if (starts_with(arg, "--remotes=")) {
 		struct all_refs_cb cb;
-		struct each_ref_fn_sha1_adapter wrapped_handle_one_ref =
-			{handle_one_ref, &cb};
-
 		init_all_refs_cb(&cb, revs, *flags);
-		for_each_glob_ref_in(each_ref_fn_adapter, arg + 10, "refs/remotes/",
-				     &wrapped_handle_one_ref);
+		for_each_glob_ref_in(handle_one_ref, arg + 10, "refs/remotes/", &cb);
 		clear_ref_exclusion(&revs->ref_excludes);
 	} else if (!strcmp(arg, "--reflog")) {
 		add_reflogs_to_pending(revs, *flags);
