@@ -2259,9 +2259,9 @@ LN_OR_CP_BUILT_IN_BINDIR = \
 	cp "$$bindir/git$X" "$$bindir/$$p" || exit;
 LN_OR_CP_BUILT_IN_EXECDIR = \
 	test -z "$(NO_INSTALL_HARDLINKS)" && \
-	ln "$$exectir/git$X" "$$exectir/$$p" 2>/dev/null || \
-	ln -s "git$X" "$$exectir/$$p" 2>/dev/null || \
-	cp "$$exectir/git$X" "$$exectir/$$p" || exit;
+	ln "$$execdir/git$X" "$$execdir/$$p" 2>/dev/null || \
+	ln -s "git$X" "$$execdir/$$p" 2>/dev/null || \
+	cp "$$execdir/git$X" "$$execdir/$$p" || exit;
 else
 LN_OR_CP_BUILT_IN_BINDIR = \
 	cp "$(BUILT_IN_WRAPPER)" "$$bindir/$$p" || exit;
