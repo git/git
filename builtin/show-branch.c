@@ -440,7 +440,8 @@ static int count_slash(const char *s)
 	return cnt;
 }
 
-static int append_matching_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
+static int append_matching_ref(const char *refname, const struct object_id *oid,
+			       int flag, void *cb_data)
 {
 	/* we want to allow pattern hold/<asterisk> to show all
 	 * branches under refs/heads/hold/, and v0.99.9? to show
@@ -456,10 +457,10 @@ static int append_matching_ref(const char *refname, const unsigned char *sha1, i
 	if (wildmatch(match_ref_pattern, tail, 0, NULL))
 		return 0;
 	if (starts_with(refname, "refs/heads/"))
-		return append_head_ref(refname, sha1, flag, cb_data);
+		return append_head_ref(refname, oid->hash, flag, cb_data);
 	if (starts_with(refname, "refs/tags/"))
-		return append_tag_ref(refname, sha1, flag, cb_data);
-	return append_ref(refname, sha1, 0);
+		return append_tag_ref(refname, oid->hash, flag, cb_data);
+	return append_ref(refname, oid->hash, 0);
 }
 
 static void snarf_refs(int head, int remotes)
@@ -544,12 +545,10 @@ static void append_one_rev(const char *av)
 	if (strchr(av, '*') || strchr(av, '?') || strchr(av, '[')) {
 		/* glob style match */
 		int saved_matches = ref_name_cnt;
-		struct each_ref_fn_sha1_adapter wrapped_append_matching_ref =
-			{append_matching_ref, NULL};
 
 		match_ref_pattern = av;
 		match_ref_slash = count_slash(av);
-		for_each_ref(each_ref_fn_adapter, &wrapped_append_matching_ref);
+		for_each_ref(append_matching_ref, NULL);
 		if (saved_matches == ref_name_cnt &&
 		    ref_name_cnt < MAX_REVS)
 			error("no matching refs with %s", av);
