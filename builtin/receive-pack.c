@@ -197,7 +197,7 @@ static void show_ref(const char *path, const unsigned char *sha1)
 	}
 }
 
-static int show_ref_cb(const char *path, const unsigned char *sha1, int flag, void *unused)
+static int show_ref_cb(const char *path, const struct object_id *oid, int flag, void *unused)
 {
 	path = strip_namespace(path);
 	/*
@@ -210,7 +210,7 @@ static int show_ref_cb(const char *path, const unsigned char *sha1, int flag, vo
 	 */
 	if (!path)
 		path = ".have";
-	show_ref(path, sha1);
+	show_ref(path, oid->hash);
 	return 0;
 }
 
@@ -228,13 +228,11 @@ static void collect_one_alternate_ref(const struct ref *ref, void *data)
 static void write_head_info(void)
 {
 	struct sha1_array sa = SHA1_ARRAY_INIT;
-	struct each_ref_fn_sha1_adapter wrapped_show_ref_cb =
-		{show_ref_cb, NULL};
 
 	for_each_alternate_ref(collect_one_alternate_ref, &sa);
 	sha1_array_for_each_unique(&sa, show_one_alternate_sha1, NULL);
 	sha1_array_clear(&sa);
-	for_each_ref(each_ref_fn_adapter, &wrapped_show_ref_cb);
+	for_each_ref(show_ref_cb, NULL);
 	if (!sent_capabilities)
 		show_ref("capabilities^{}", null_sha1);
 
