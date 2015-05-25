@@ -846,7 +846,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 		commit = lookup_commit_reference(revkey.hash);
 		if (!commit)
 			die("cannot find commit %s (%s)",
-			    ref_name[num_rev], revkey.hash);
+			    ref_name[num_rev], oid_to_hex(&revkey));
 		parse_commit(commit);
 		mark_seen(commit, &seen);
 
