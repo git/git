@@ -469,7 +469,7 @@ done:
 
 static struct commit_list *complete;
 
-static int mark_complete(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
+static int mark_complete(const unsigned char *sha1)
 {
 	struct object *o = parse_object(sha1);
 
@@ -493,7 +493,7 @@ static int mark_complete(const char *refname, const unsigned char *sha1, int fla
 static int mark_complete_oid(const char *refname, const struct object_id *oid,
 			     int flag, void *cb_data)
 {
-	return mark_complete(refname, oid->hash, flag, cb_data);
+	return mark_complete(oid->hash);
 }
 
 static void mark_recent_complete_commits(struct fetch_pack_args *args,
@@ -573,7 +573,7 @@ static void filter_refs(struct fetch_pack_args *args,
 
 static void mark_alternate_complete(const struct ref *ref, void *unused)
 {
-	mark_complete(NULL, ref->old_sha1, 0, NULL);
+	mark_complete(ref->old_sha1);
 }
 
 static int everything_local(struct fetch_pack_args *args,
