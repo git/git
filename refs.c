@@ -2176,14 +2176,6 @@ int for_each_rawref(each_ref_fn fn, void *cb_data)
 			       DO_FOR_EACH_INCLUDE_BROKEN, cb_data);
 }
 
-int each_ref_fn_adapter(const char *refname,
-			const struct object_id *oid, int flags, void *cb_data)
-{
-	struct each_ref_fn_sha1_adapter *cb = cb_data;
-
-	return cb->original_fn(refname, oid->hash, flags, cb->original_cb_data);
-}
-
 const char *prettify_refname(const char *name)
 {
 	return name + (
