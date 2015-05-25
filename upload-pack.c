@@ -681,9 +681,9 @@ static void receive_needs(void)
 }
 
 /* return non-zero if the ref is hidden, otherwise 0 */
-static int mark_our_ref(const char *refname, const unsigned char *sha1)
+static int mark_our_ref(const char *refname, const struct object_id *oid)
 {
-	struct object *o = lookup_unknown_object(sha1);
+	struct object *o = lookup_unknown_object(oid->hash);
 
 	if (ref_is_hidden(refname)) {
 		o->flags |= HIDDEN_REF;
@@ -693,9 +693,10 @@ static int mark_our_ref(const char *refname, const unsigned char *sha1)
 	return 0;
 }
 
-static int check_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
+static int check_ref(const char *refname, const struct object_id *oid,
+		     int flag, void *cb_data)
 {
-	mark_our_ref(refname, sha1);
+	mark_our_ref(refname, oid);
 	return 0;
 }
 
@@ -709,7 +710,8 @@ static void format_symref_info(struct strbuf *buf, struct string_list *symref)
 		strbuf_addf(buf, " symref=%s:%s", item->string, (char *)item->util);
 }
 
-static int send_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
+static int send_ref(const char *refname, const struct object_id *oid,
+		    int flag, void *cb_data)
 {
 	static const char *capabilities = "multi_ack thin-pack side-band"
 		" side-band-64k ofs-delta shallow no-progress"
@@ -717,7 +719,7 @@ static int send_ref(const char *refname, const unsigned char *sha1, int flag, vo
 	const char *refname_nons = strip_namespace(refname);
 	unsigned char peeled[20];
 
-	if (mark_our_ref(refname, sha1))
+	if (mark_our_ref(refname, oid))
 		return 0;
 
 	if (capabilities) {
@@ -725,7 +727,7 @@ static int send_ref(const char *refname, const unsigned char *sha1, int flag, vo
 
 		format_symref_info(&symref_info, cb_data);
 		packet_write(1, "%s %s%c%s%s%s%s agent=%s\n",
-			     sha1_to_hex(sha1), refname_nons,
+			     oid_to_hex(oid), refname_nons,
 			     0, capabilities,
 			     allow_tip_sha1_in_want ? " allow-tip-sha1-in-want" : "",
 			     stateless_rpc ? " no-done" : "",
@@ -733,7 +735,7 @@ static int send_ref(const char *refname, const unsigned char *sha1, int flag, vo
 			     git_user_agent_sanitized());
 		strbuf_release(&symref_info);
 	} else {
-		packet_write(1, "%s %s\n", sha1_to_hex(sha1), refname_nons);
+		packet_write(1, "%s %s\n", oid_to_hex(oid), refname_nons);
 	}
 	capabilities = NULL;
 	if (!peel_ref(refname, peeled))
@@ -765,20 +767,14 @@ static void upload_pack(void)
 	head_ref_namespaced(find_symref, &symref);
 
 	if (advertise_refs || !stateless_rpc) {
-		struct each_ref_fn_sha1_adapter wrapped_send_ref =
-			{send_ref, &symref};
-
 		reset_timeout();
-		head_ref_namespaced(each_ref_fn_adapter, &wrapped_send_ref);
-		for_each_namespaced_ref(each_ref_fn_adapter, &wrapped_send_ref);
+		head_ref_namespaced(send_ref, &symref);
+		for_each_namespaced_ref(send_ref, &symref);
 		advertise_shallow_grafts(1);
 		packet_flush(1);
 	} else {
-		struct each_ref_fn_sha1_adapter wrapped_check_ref =
-			{check_ref, NULL};
-
-		head_ref_namespaced(each_ref_fn_adapter, &wrapped_check_ref);
-		for_each_namespaced_ref(each_ref_fn_adapter, &wrapped_check_ref);
+		head_ref_namespaced(check_ref, NULL);
+		for_each_namespaced_ref(check_ref, NULL);
 	}
 	string_list_clear(&symref, 1);
 	if (advertise_refs)
