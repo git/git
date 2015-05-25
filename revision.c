@@ -1293,7 +1293,8 @@ static int handle_one_reflog_ent(unsigned char *osha1, unsigned char *nsha1,
 	return 0;
 }
 
-static int handle_one_reflog(const char *path, const unsigned char *sha1, int flag, void *cb_data)
+static int handle_one_reflog(const char *path, const struct object_id *oid,
+			     int flag, void *cb_data)
 {
 	struct all_refs_cb *cb = cb_data;
 	cb->warned_bad_reflog = 0;
@@ -1305,12 +1306,10 @@ static int handle_one_reflog(const char *path, const unsigned char *sha1, int fl
 void add_reflogs_to_pending(struct rev_info *revs, unsigned flags)
 {
 	struct all_refs_cb cb;
-	struct each_ref_fn_sha1_adapter wrapped_handle_one_reflog =
-		{handle_one_reflog, &cb};
 
 	cb.all_revs = revs;
 	cb.all_flags = flags;
-	for_each_reflog(each_ref_fn_adapter, &wrapped_handle_one_reflog);
+	for_each_reflog(handle_one_reflog, &cb);
 }
 
 static void add_cache_tree(struct cache_tree *it, struct rev_info *revs,
