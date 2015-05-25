@@ -490,6 +490,12 @@ static int mark_complete(const char *refname, const unsigned char *sha1, int fla
 	return 0;
 }
 
+static int mark_complete_oid(const char *refname, const struct object_id *oid,
+			     int flag, void *cb_data)
+{
+	return mark_complete(refname, oid->hash, flag, cb_data);
+}
+
 static void mark_recent_complete_commits(struct fetch_pack_args *args,
 					 unsigned long cutoff)
 {
@@ -602,10 +608,7 @@ static int everything_local(struct fetch_pack_args *args,
 	}
 
 	if (!args->depth) {
-		struct each_ref_fn_sha1_adapter wrapped_mark_complete =
-			{mark_complete, NULL};
-
-		for_each_ref(each_ref_fn_adapter, &wrapped_mark_complete);
+		for_each_ref(mark_complete_oid, NULL);
 		for_each_alternate_ref(mark_alternate_complete, NULL);
 		commit_list_sort_by_date(&complete);
 		if (cutoff)
