@@ -260,6 +260,8 @@ static int list_tags(const char **patterns, int lines,
 		     struct commit_list *with_commit, int sort)
 {
 	struct tag_filter filter;
+	struct each_ref_fn_sha1_adapter wrapped_show_reference =
+		{show_reference, (void *)&filter};
 
 	filter.patterns = patterns;
 	filter.lines = lines;
@@ -268,7 +270,7 @@ static int list_tags(const char **patterns, int lines,
 	memset(&filter.tags, 0, sizeof(filter.tags));
 	filter.tags.strdup_strings = 1;
 
-	for_each_tag_ref(show_reference, (void *) &filter);
+	for_each_tag_ref(each_ref_fn_adapter, &wrapped_show_reference);
 	if (sort) {
 		int i;
 		if ((sort & SORT_MASK) == VERCMP_SORT)

@@ -1072,6 +1072,8 @@ int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 	int maxcount = 0, quote_style = 0;
 	struct refinfo **refs;
 	struct grab_ref_cbdata cbdata;
+	struct each_ref_fn_sha1_adapter wrapped_grab_single_ref =
+		{grab_single_ref, &cbdata};
 
 	struct option opts[] = {
 		OPT_BIT('s', "shell", &quote_style,
@@ -1111,7 +1113,7 @@ int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 
 	memset(&cbdata, 0, sizeof(cbdata));
 	cbdata.grab_pattern = argv;
-	for_each_rawref(grab_single_ref, &cbdata);
+	for_each_rawref(each_ref_fn_adapter, &wrapped_grab_single_ref);
 	refs = cbdata.grab_array;
 	num_refs = cbdata.grab_cnt;
 

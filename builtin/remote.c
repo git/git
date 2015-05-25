@@ -623,6 +623,8 @@ static int mv(int argc, const char **argv)
 	struct string_list remote_branches = STRING_LIST_INIT_NODUP;
 	struct rename_info rename;
 	int i, refspec_updated = 0;
+	struct each_ref_fn_sha1_adapter wrapped_read_remote_branches =
+		{read_remote_branches, &rename};
 
 	if (argc != 3)
 		usage_with_options(builtin_remote_rename_usage, options);
@@ -700,7 +702,7 @@ static int mv(int argc, const char **argv)
 	 * First remove symrefs, then rename the rest, finally create
 	 * the new symrefs.
 	 */
-	for_each_ref(read_remote_branches, &rename);
+	for_each_ref(each_ref_fn_adapter, &wrapped_read_remote_branches);
 	for (i = 0; i < remote_branches.nr; i++) {
 		struct string_list_item *item = remote_branches.items + i;
 		int flag = 0;
@@ -781,6 +783,8 @@ static int rm(int argc, const char **argv)
 	struct string_list skipped = STRING_LIST_INIT_DUP;
 	struct branches_for_remote cb_data;
 	int i, result;
+	struct each_ref_fn_sha1_adapter wrapped_add_branch_for_removal =
+		{add_branch_for_removal, &cb_data};
 
 	memset(&cb_data, 0, sizeof(cb_data));
 	cb_data.branches = &branches;
@@ -821,7 +825,7 @@ static int rm(int argc, const char **argv)
 	 * refs, which are invalidated when deleting a branch.
 	 */
 	cb_data.remote = remote;
-	result = for_each_ref(add_branch_for_removal, &cb_data);
+	result = for_each_ref(each_ref_fn_adapter, &wrapped_add_branch_for_removal);
 	strbuf_release(&buf);
 
 	if (!result)
@@ -910,7 +914,10 @@ static int get_remote_ref_states(const char *name,
 		if (query & GET_PUSH_REF_STATES)
 			get_push_ref_states(remote_refs, states);
 	} else {
-		for_each_ref(append_ref_to_tracked_list, states);
+		struct each_ref_fn_sha1_adapter wrapped_append_ref_to_tracked_list =
+			{append_ref_to_tracked_list, states};
+
+		for_each_ref(each_ref_fn_adapter, &wrapped_append_ref_to_tracked_list);
 		string_list_sort(&states->tracked);
 		get_push_ref_states_noquery(states);
 	}

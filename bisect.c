@@ -417,7 +417,10 @@ static int register_ref(const char *refname, const unsigned char *sha1,
 
 static int read_bisect_refs(void)
 {
-	return for_each_ref_in("refs/bisect/", register_ref, NULL);
+	struct each_ref_fn_sha1_adapter wrapped_register_ref =
+		{register_ref, NULL};
+
+	return for_each_ref_in("refs/bisect/", each_ref_fn_adapter, &wrapped_register_ref);
 }
 
 static void read_bisect_paths(struct argv_array *array)

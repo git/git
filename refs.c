@@ -722,7 +722,7 @@ static int do_one_ref(struct ref_entry *entry, void *cb_data)
 	/* Store the old value, in case this is a recursive call: */
 	old_current_ref = current_ref;
 	current_ref = entry;
-	retval = data->fn(entry->name + data->trim, entry->u.value.oid.hash,
+	retval = data->fn(entry->name + data->trim, &entry->u.value.oid,
 			  entry->flag, data->cb_data);
 	current_ref = old_current_ref;
 	return retval;
@@ -1756,13 +1756,14 @@ int ref_exists(const char *refname)
 	return !!resolve_ref_unsafe(refname, RESOLVE_REF_READING, sha1, NULL);
 }
 
-static int filter_refs(const char *refname, const unsigned char *sha1, int flags,
-		       void *data)
+static int filter_refs(const char *refname, const struct object_id *oid,
+		       int flags, void *data)
 {
 	struct ref_filter *filter = (struct ref_filter *)data;
+
 	if (wildmatch(filter->pattern, refname, 0, NULL))
 		return 0;
-	return filter->fn(refname, sha1, flags, filter->cb_data);
+	return filter->fn(refname, oid, flags, filter->cb_data);
 }
 
 enum peel_status {
@@ -1897,7 +1898,7 @@ struct warn_if_dangling_data {
 	const char *msg_fmt;
 };
 
-static int warn_if_dangling_symref(const char *refname, const unsigned char *sha1,
+static int warn_if_dangling_symref(const char *refname, const struct object_id *oid,
 				   int flags, void *cb_data)
 {
 	struct warn_if_dangling_data *d = cb_data;
@@ -2027,18 +2028,18 @@ static int do_for_each_ref(struct ref_cache *refs, const char *base,
 
 static int do_head_ref(const char *submodule, each_ref_fn fn, void *cb_data)
 {
-	unsigned char sha1[20];
+	struct object_id oid;
 	int flag;
 
 	if (submodule) {
-		if (resolve_gitlink_ref(submodule, "HEAD", sha1) == 0)
-			return fn("HEAD", sha1, 0, cb_data);
+		if (resolve_gitlink_ref(submodule, "HEAD", oid.hash) == 0)
+			return fn("HEAD", &oid, 0, cb_data);
 
 		return 0;
 	}
 
-	if (!read_ref_full("HEAD", RESOLVE_REF_READING, sha1, &flag))
-		return fn("HEAD", sha1, flag, cb_data);
+	if (!read_ref_full("HEAD", RESOLVE_REF_READING, oid.hash, &flag))
+		return fn("HEAD", &oid, flag, cb_data);
 
 	return 0;
 }
@@ -2113,12 +2114,12 @@ int head_ref_namespaced(each_ref_fn fn, void *cb_data)
 {
 	struct strbuf buf = STRBUF_INIT;
 	int ret = 0;
-	unsigned char sha1[20];
+	struct object_id oid;
 	int flag;
 
 	strbuf_addf(&buf, "%sHEAD", get_git_namespace());
-	if (!read_ref_full(buf.buf, RESOLVE_REF_READING, sha1, &flag))
-		ret = fn(buf.buf, sha1, flag, cb_data);
+	if (!read_ref_full(buf.buf, RESOLVE_REF_READING, oid.hash, &flag))
+		ret = fn(buf.buf, &oid, flag, cb_data);
 	strbuf_release(&buf);
 
 	return ret;
@@ -2173,6 +2174,14 @@ int for_each_rawref(each_ref_fn fn, void *cb_data)
 {
 	return do_for_each_ref(&ref_cache, "", fn, 0,
 			       DO_FOR_EACH_INCLUDE_BROKEN, cb_data);
+}
+
+int each_ref_fn_adapter(const char *refname,
+			const struct object_id *oid, int flags, void *cb_data)
+{
+	struct each_ref_fn_sha1_adapter *cb = cb_data;
+
+	return cb->original_fn(refname, oid->hash, flags, cb->original_cb_data);
 }
 
 const char *prettify_refname(const char *name)
@@ -3616,11 +3625,12 @@ static int do_for_each_reflog(struct strbuf *name, each_ref_fn fn, void *cb_data
 				strbuf_addch(name, '/');
 				retval = do_for_each_reflog(name, fn, cb_data);
 			} else {
-				unsigned char sha1[20];
-				if (read_ref_full(name->buf, 0, sha1, NULL))
+				struct object_id oid;
+
+				if (read_ref_full(name->buf, 0, oid.hash, NULL))
 					retval = error("bad ref for %s", name->buf);
 				else
-					retval = fn(name->buf, sha1, 0, cb_data);
+					retval = fn(name->buf, &oid, 0, cb_data);
 			}
 			if (retval)
 				break;

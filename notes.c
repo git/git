@@ -932,9 +932,12 @@ static int string_list_add_one_ref(const char *refname, const unsigned char *sha
  */
 void string_list_add_refs_by_glob(struct string_list *list, const char *glob)
 {
+	struct each_ref_fn_sha1_adapter wrapped_string_list_add_one_ref =
+		{string_list_add_one_ref, list};
+
 	assert(list->strdup_strings);
 	if (has_glob_specials(glob)) {
-		for_each_glob_ref(string_list_add_one_ref, glob, list);
+		for_each_glob_ref(each_ref_fn_adapter, glob, &wrapped_string_list_add_one_ref);
 	} else {
 		unsigned char sha1[20];
 		if (get_sha1(glob, sha1))

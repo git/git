@@ -1371,7 +1371,10 @@ static int get_sha1_with_context_1(const char *name,
 		int pos;
 		if (!only_to_die && namelen > 2 && name[1] == '/') {
 			struct commit_list *list = NULL;
-			for_each_ref(handle_one_ref, &list);
+			struct each_ref_fn_sha1_adapter wrapped_handle_one_ref =
+				{handle_one_ref, &list};
+
+			for_each_ref(each_ref_fn_adapter, &wrapped_handle_one_ref);
 			commit_list_sort_by_date(&list);
 			return get_sha1_oneline(name + 2, sha1, list);
 		}

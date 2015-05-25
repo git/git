@@ -466,12 +466,18 @@ static void snarf_refs(int head, int remotes)
 {
 	if (head) {
 		int orig_cnt = ref_name_cnt;
-		for_each_ref(append_head_ref, NULL);
+		struct each_ref_fn_sha1_adapter wrapped_append_head_ref =
+			{append_head_ref, NULL};
+
+		for_each_ref(each_ref_fn_adapter, &wrapped_append_head_ref);
 		sort_ref_range(orig_cnt, ref_name_cnt);
 	}
 	if (remotes) {
 		int orig_cnt = ref_name_cnt;
-		for_each_ref(append_remote_ref, NULL);
+		struct each_ref_fn_sha1_adapter wrapped_append_remote_ref =
+			{append_remote_ref, NULL};
+
+		for_each_ref(each_ref_fn_adapter, &wrapped_append_remote_ref);
 		sort_ref_range(orig_cnt, ref_name_cnt);
 	}
 }
@@ -538,9 +544,12 @@ static void append_one_rev(const char *av)
 	if (strchr(av, '*') || strchr(av, '?') || strchr(av, '[')) {
 		/* glob style match */
 		int saved_matches = ref_name_cnt;
+		struct each_ref_fn_sha1_adapter wrapped_append_matching_ref =
+			{append_matching_ref, NULL};
+
 		match_ref_pattern = av;
 		match_ref_slash = count_slash(av);
-		for_each_ref(append_matching_ref, NULL);
+		for_each_ref(each_ref_fn_adapter, &wrapped_append_matching_ref);
 		if (saved_matches == ref_name_cnt &&
 		    ref_name_cnt < MAX_REVS)
 			error("no matching refs with %s", av);

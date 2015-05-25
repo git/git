@@ -67,7 +67,18 @@ struct ref_transaction;
  * single callback invocation.
  */
 typedef int each_ref_fn(const char *refname,
-			const unsigned char *sha1, int flags, void *cb_data);
+			const struct object_id *oid, int flags, void *cb_data);
+
+typedef int each_ref_sha1_fn(const char *refname,
+			     const unsigned char *sha1, int flags, void *cb_data);
+
+struct each_ref_fn_sha1_adapter {
+	each_ref_sha1_fn *original_fn;
+	void *original_cb_data;
+};
+
+extern int each_ref_fn_adapter(const char *refname,
+			       const struct object_id *oid, int flags, void *cb_data);
 
 /*
  * The following functions invoke the specified callback function for

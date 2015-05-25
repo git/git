@@ -256,14 +256,20 @@ static int find_common(struct fetch_pack_args *args,
 	int got_ready = 0;
 	struct strbuf req_buf = STRBUF_INIT;
 	size_t state_len = 0;
+	struct each_ref_fn_sha1_adapter wrapped_rev_list_insert_ref =
+		{rev_list_insert_ref, NULL};
 
 	if (args->stateless_rpc && multi_ack == 1)
 		die("--stateless-rpc requires multi_ack_detailed");
-	if (marked)
-		for_each_ref(clear_marks, NULL);
+	if (marked) {
+		struct each_ref_fn_sha1_adapter wrapped_clear_marks =
+			{clear_marks, NULL};
+
+		for_each_ref(each_ref_fn_adapter, &wrapped_clear_marks);
+	}
 	marked = 1;
 
-	for_each_ref(rev_list_insert_ref, NULL);
+	for_each_ref(each_ref_fn_adapter, &wrapped_rev_list_insert_ref);
 	for_each_alternate_ref(insert_one_alternate_ref, NULL);
 
 	fetching = 0;
@@ -599,7 +605,10 @@ static int everything_local(struct fetch_pack_args *args,
 	}
 
 	if (!args->depth) {
-		for_each_ref(mark_complete, NULL);
+		struct each_ref_fn_sha1_adapter wrapped_mark_complete =
+			{mark_complete, NULL};
+
+		for_each_ref(each_ref_fn_adapter, &wrapped_mark_complete);
 		for_each_alternate_ref(mark_alternate_complete, NULL);
 		commit_list_sort_by_date(&complete);
 		if (cutoff)

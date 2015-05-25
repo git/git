@@ -208,8 +208,10 @@ static void find_non_local_tags(struct transport *transport,
 	struct string_list remote_refs = STRING_LIST_INIT_NODUP;
 	const struct ref *ref;
 	struct string_list_item *item = NULL;
+	struct each_ref_fn_sha1_adapter wrapped_add_existing =
+		{add_existing, &existing_refs};
 
-	for_each_ref(add_existing, &existing_refs);
+	for_each_ref(each_ref_fn_adapter, &wrapped_add_existing);
 	for (ref = transport_get_remote_refs(transport); ref; ref = ref->next) {
 		if (!starts_with(ref->name, "refs/tags/"))
 			continue;
@@ -884,8 +886,10 @@ static int do_fetch(struct transport *transport,
 	struct ref *rm;
 	int autotags = (transport->remote->fetch_tags == 1);
 	int retcode = 0;
+	struct each_ref_fn_sha1_adapter wrapped_add_existing =
+		{add_existing, &existing_refs};
 
-	for_each_ref(add_existing, &existing_refs);
+	for_each_ref(each_ref_fn_adapter, &wrapped_add_existing);
 
 	if (tags == TAGS_DEFAULT) {
 		if (transport->remote->fetch_tags == 2)

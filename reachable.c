@@ -155,6 +155,8 @@ void mark_reachable_objects(struct rev_info *revs, int mark_reflog,
 			    struct progress *progress)
 {
 	struct connectivity_progress cp;
+	struct each_ref_fn_sha1_adapter wrapped_add_one_ref =
+		{add_one_ref, revs};
 
 	/*
 	 * Set up revision parsing, and mark us as being interested
@@ -168,10 +170,10 @@ void mark_reachable_objects(struct rev_info *revs, int mark_reflog,
 	add_index_objects_to_pending(revs, 0);
 
 	/* Add all external refs */
-	for_each_ref(add_one_ref, revs);
+	for_each_ref(each_ref_fn_adapter, &wrapped_add_one_ref);
 
 	/* detached HEAD is not included in the list above */
-	head_ref(add_one_ref, revs);
+	head_ref(each_ref_fn_adapter, &wrapped_add_one_ref);
 
 	/* Add all reflog info */
 	if (mark_reflog)

@@ -395,8 +395,11 @@ static void get_info_refs(char *arg)
 		run_service(argv);
 
 	} else {
+		struct each_ref_fn_sha1_adapter wrapped_show_text_ref =
+			{show_text_ref, &buf};
+
 		select_getanyfile();
-		for_each_namespaced_ref(show_text_ref, &buf);
+		for_each_namespaced_ref(each_ref_fn_adapter, &wrapped_show_text_ref);
 		send_strbuf("text/plain", &buf);
 	}
 	strbuf_release(&buf);
@@ -425,9 +428,11 @@ static int show_head_ref(const char *refname, const unsigned char *sha1,
 static void get_head(char *arg)
 {
 	struct strbuf buf = STRBUF_INIT;
+	struct each_ref_fn_sha1_adapter wrapped_show_head_ref =
+		{show_head_ref, &buf};
 
 	select_getanyfile();
-	head_ref_namespaced(show_head_ref, &buf);
+	head_ref_namespaced(each_ref_fn_adapter, &wrapped_show_head_ref);
 	send_strbuf("text/plain", &buf);
 	strbuf_release(&buf);
 }

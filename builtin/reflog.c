@@ -352,7 +352,10 @@ static void reflog_expiry_prepare(const char *refname,
 	if (cb->unreachable_expire_kind != UE_ALWAYS) {
 		if (cb->unreachable_expire_kind == UE_HEAD) {
 			struct commit_list *elem;
-			for_each_ref(push_tip_to_list, &cb->tips);
+			struct each_ref_fn_sha1_adapter wrapped_push_tip_to_list =
+				{push_tip_to_list, &cb->tips};
+
+			for_each_ref(each_ref_fn_adapter, &wrapped_push_tip_to_list);
 			for (elem = cb->tips; elem; elem = elem->next)
 				commit_list_insert(elem->item, &cb->mark_list);
 		} else {
@@ -588,9 +591,11 @@ static int cmd_reflog_expire(int argc, const char **argv, const char *prefix)
 	if (do_all) {
 		struct collect_reflog_cb collected;
 		int i;
+		struct each_ref_fn_sha1_adapter wrapped_collect_reflog =
+			{collect_reflog, &collected};
 
 		memset(&collected, 0, sizeof(collected));
-		for_each_reflog(collect_reflog, &collected);
+		for_each_reflog(each_ref_fn_adapter, &wrapped_collect_reflog);
 		for (i = 0; i < collected.nr; i++) {
 			struct collected_reflog *e = collected.e[i];
 			set_reflog_expiry_param(&cb.cmd, explicit_expiry, e->reflog);

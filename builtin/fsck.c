@@ -504,11 +504,16 @@ static int fsck_handle_ref(const char *refname, const unsigned char *sha1, int f
 
 static void get_default_heads(void)
 {
+	struct each_ref_fn_sha1_adapter wrapped_fsck_handle_ref =
+		{fsck_handle_ref, NULL};
+	struct each_ref_fn_sha1_adapter wrapped_fsck_handle_reflog =
+		{fsck_handle_reflog, NULL};
+
 	if (head_points_at && !is_null_sha1(head_sha1))
 		fsck_handle_ref("HEAD", head_sha1, 0, NULL);
-	for_each_rawref(fsck_handle_ref, NULL);
+	for_each_rawref(each_ref_fn_adapter, &wrapped_fsck_handle_ref);
 	if (include_reflogs)
-		for_each_reflog(fsck_handle_reflog, NULL);
+		for_each_reflog(each_ref_fn_adapter, &wrapped_fsck_handle_reflog);
 
 	/*
 	 * Not having any default heads isn't really fatal, but

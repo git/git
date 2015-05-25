@@ -761,18 +761,26 @@ static int find_symref(const char *refname, const unsigned char *sha1, int flag,
 static void upload_pack(void)
 {
 	struct string_list symref = STRING_LIST_INIT_DUP;
+	struct each_ref_fn_sha1_adapter wrapped_find_symref =
+		{find_symref, &symref};
 
-	head_ref_namespaced(find_symref, &symref);
+	head_ref_namespaced(each_ref_fn_adapter, &wrapped_find_symref);
 
 	if (advertise_refs || !stateless_rpc) {
+		struct each_ref_fn_sha1_adapter wrapped_send_ref =
+			{send_ref, &symref};
+
 		reset_timeout();
-		head_ref_namespaced(send_ref, &symref);
-		for_each_namespaced_ref(send_ref, &symref);
+		head_ref_namespaced(each_ref_fn_adapter, &wrapped_send_ref);
+		for_each_namespaced_ref(each_ref_fn_adapter, &wrapped_send_ref);
 		advertise_shallow_grafts(1);
 		packet_flush(1);
 	} else {
-		head_ref_namespaced(check_ref, NULL);
-		for_each_namespaced_ref(check_ref, NULL);
+		struct each_ref_fn_sha1_adapter wrapped_check_ref =
+			{check_ref, NULL};
+
+		head_ref_namespaced(each_ref_fn_adapter, &wrapped_check_ref);
+		for_each_namespaced_ref(each_ref_fn_adapter, &wrapped_check_ref);
 	}
 	string_list_clear(&symref, 1);
 	if (advertise_refs)

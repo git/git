@@ -413,6 +413,8 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 			PARSE_OPT_OPTARG, NULL, (intptr_t) "-dirty"},
 		OPT_END(),
 	};
+	struct each_ref_fn_sha1_adapter wrapped_get_name =
+		{get_name, NULL};
 
 	git_config(git_default_config, NULL);
 	argc = parse_options(argc, argv, prefix, options, describe_usage, 0);
@@ -451,7 +453,7 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 	}
 
 	hashmap_init(&names, (hashmap_cmp_fn) commit_name_cmp, 0);
-	for_each_rawref(get_name, NULL);
+	for_each_rawref(each_ref_fn_adapter, &wrapped_get_name);
 	if (!names.size && !always)
 		die(_("No names found, cannot describe anything."));
 

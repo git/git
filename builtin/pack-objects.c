@@ -626,6 +626,8 @@ static struct object_entry **compute_write_order(void)
 
 	struct object_entry **wo = xmalloc(to_pack.nr_objects * sizeof(*wo));
 	struct object_entry *objects = to_pack.objects;
+	struct each_ref_fn_sha1_adapter wrapped_mark_tagged =
+		{mark_tagged, NULL};
 
 	for (i = 0; i < to_pack.nr_objects; i++) {
 		objects[i].tagged = 0;
@@ -651,7 +653,7 @@ static struct object_entry **compute_write_order(void)
 	/*
 	 * Mark objects that are at the tip of tags.
 	 */
-	for_each_tag_ref(mark_tagged, NULL);
+	for_each_tag_ref(each_ref_fn_adapter, &wrapped_mark_tagged);
 
 	/*
 	 * Give the objects in the original recency order until
@@ -2784,8 +2786,12 @@ int cmd_pack_objects(int argc, const char **argv, const char *prefix)
 		argv_array_clear(&rp);
 	}
 	cleanup_preferred_base();
-	if (include_tag && nr_result)
-		for_each_ref(add_ref_tag, NULL);
+	if (include_tag && nr_result) {
+		struct each_ref_fn_sha1_adapter wrapped_add_ref_tag =
+			{add_ref_tag, NULL};
+
+		for_each_ref(each_ref_fn_adapter, &wrapped_add_ref_tag);
+	}
 	stop_progress(&progress_state);
 
 	if (non_empty && !nr_result)

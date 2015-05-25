@@ -784,6 +784,8 @@ static void orphaned_commit_warning(struct commit *old, struct commit *new)
 	struct rev_info revs;
 	struct object *object = &old->object;
 	struct object_array refs;
+	struct each_ref_fn_sha1_adapter wrapped_add_pending_uninteresting_ref =
+		{add_pending_uninteresting_ref, &revs};
 
 	init_revisions(&revs, NULL);
 	setup_revisions(0, NULL, &revs, NULL);
@@ -791,7 +793,7 @@ static void orphaned_commit_warning(struct commit *old, struct commit *new)
 	object->flags &= ~UNINTERESTING;
 	add_pending_object(&revs, object, sha1_to_hex(object->sha1));
 
-	for_each_ref(add_pending_uninteresting_ref, &revs);
+	for_each_ref(each_ref_fn_adapter, &wrapped_add_pending_uninteresting_ref);
 	add_pending_sha1(&revs, "HEAD", new->object.sha1, UNINTERESTING);
 
 	refs = revs.pending;

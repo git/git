@@ -2046,7 +2046,10 @@ static int one_local_ref(const char *refname, const unsigned char *sha1, int fla
 struct ref *get_local_heads(void)
 {
 	struct ref *local_refs = NULL, **local_tail = &local_refs;
-	for_each_ref(one_local_ref, &local_tail);
+	struct each_ref_fn_sha1_adapter wrapped_one_local_ref =
+		{one_local_ref, &local_tail};
+
+	for_each_ref(each_ref_fn_adapter, &wrapped_one_local_ref);
 	return local_refs;
 }
 
@@ -2141,6 +2144,9 @@ struct ref *get_stale_heads(struct refspec *refs, int ref_count, struct ref *fet
 	struct ref *ref, *stale_refs = NULL;
 	struct string_list ref_names = STRING_LIST_INIT_NODUP;
 	struct stale_heads_info info;
+	struct each_ref_fn_sha1_adapter wrapped_get_stale_heads_cb =
+		{get_stale_heads_cb, &info};
+
 	info.ref_names = &ref_names;
 	info.stale_refs_tail = &stale_refs;
 	info.refs = refs;
@@ -2148,7 +2154,7 @@ struct ref *get_stale_heads(struct refspec *refs, int ref_count, struct ref *fet
 	for (ref = fetch_map; ref; ref = ref->next)
 		string_list_append(&ref_names, ref->name);
 	string_list_sort(&ref_names);
-	for_each_ref(get_stale_heads_cb, &info);
+	for_each_ref(each_ref_fn_adapter, &wrapped_get_stale_heads_cb);
 	string_list_clear(&ref_names, 0);
 	return stale_refs;
 }

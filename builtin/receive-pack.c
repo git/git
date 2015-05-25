@@ -228,10 +228,13 @@ static void collect_one_alternate_ref(const struct ref *ref, void *data)
 static void write_head_info(void)
 {
 	struct sha1_array sa = SHA1_ARRAY_INIT;
+	struct each_ref_fn_sha1_adapter wrapped_show_ref_cb =
+		{show_ref_cb, NULL};
+
 	for_each_alternate_ref(collect_one_alternate_ref, &sa);
 	sha1_array_for_each_unique(&sa, show_one_alternate_sha1, NULL);
 	sha1_array_clear(&sa);
-	for_each_ref(show_ref_cb, NULL);
+	for_each_ref(each_ref_fn_adapter, &wrapped_show_ref_cb);
 	if (!sent_capabilities)
 		show_ref("capabilities^{}", null_sha1);
 

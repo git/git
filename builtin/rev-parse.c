@@ -511,6 +511,10 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 	unsigned int flags = 0;
 	const char *name = NULL;
 	struct object_context unused;
+	struct each_ref_fn_sha1_adapter wrapped_show_reference =
+		{show_reference, NULL};
+	struct each_ref_fn_sha1_adapter wrapped_anti_reference =
+		{anti_reference, NULL};
 
 	if (argc > 1 && !strcmp("--parseopt", argv[1]))
 		return cmd_parseopt(argc - 1, argv + 1, prefix);
@@ -652,7 +656,7 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				continue;
 			}
 			if (!strcmp(arg, "--all")) {
-				for_each_ref(show_reference, NULL);
+				for_each_ref(each_ref_fn_adapter, &wrapped_show_reference);
 				continue;
 			}
 			if (starts_with(arg, "--disambiguate=")) {
@@ -660,45 +664,48 @@ int cmd_rev_parse(int argc, const char **argv, const char *prefix)
 				continue;
 			}
 			if (!strcmp(arg, "--bisect")) {
-				for_each_ref_in("refs/bisect/bad", show_reference, NULL);
-				for_each_ref_in("refs/bisect/good", anti_reference, NULL);
+				for_each_ref_in("refs/bisect/bad",
+						each_ref_fn_adapter, &wrapped_show_reference);
+				for_each_ref_in("refs/bisect/good",
+						each_ref_fn_adapter, &wrapped_anti_reference);
 				continue;
 			}
 			if (starts_with(arg, "--branches=")) {
-				for_each_glob_ref_in(show_reference, arg + 11,
-					"refs/heads/", NULL);
+				for_each_glob_ref_in(each_ref_fn_adapter, arg + 11,
+					"refs/heads/", &wrapped_show_reference);
 				clear_ref_exclusion(&ref_excludes);
 				continue;
 			}
 			if (!strcmp(arg, "--branches")) {
-				for_each_branch_ref(show_reference, NULL);
+				for_each_branch_ref(each_ref_fn_adapter, &wrapped_show_reference);
 				clear_ref_exclusion(&ref_excludes);
 				continue;
 			}
 			if (starts_with(arg, "--tags=")) {
-				for_each_glob_ref_in(show_reference, arg + 7,
-					"refs/tags/", NULL);
+				for_each_glob_ref_in(each_ref_fn_adapter, arg + 7,
+					"refs/tags/", &wrapped_show_reference);
 				clear_ref_exclusion(&ref_excludes);
 				continue;
 			}
 			if (!strcmp(arg, "--tags")) {
-				for_each_tag_ref(show_reference, NULL);
+				for_each_tag_ref(each_ref_fn_adapter, &wrapped_show_reference);
 				clear_ref_exclusion(&ref_excludes);
 				continue;
 			}
 			if (starts_with(arg, "--glob=")) {
-				for_each_glob_ref(show_reference, arg + 7, NULL);
+				for_each_glob_ref(each_ref_fn_adapter, arg + 7,
+						  &wrapped_show_reference);
 				clear_ref_exclusion(&ref_excludes);
 				continue;
 			}
 			if (starts_with(arg, "--remotes=")) {
-				for_each_glob_ref_in(show_reference, arg + 10,
-					"refs/remotes/", NULL);
+				for_each_glob_ref_in(each_ref_fn_adapter, arg + 10,
+					"refs/remotes/", &wrapped_show_reference);
 				clear_ref_exclusion(&ref_excludes);
 				continue;
 			}
 			if (!strcmp(arg, "--remotes")) {
-				for_each_remote_ref(show_reference, NULL);
+				for_each_remote_ref(each_ref_fn_adapter, &wrapped_show_reference);
 				clear_ref_exclusion(&ref_excludes);
 				continue;
 			}

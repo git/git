@@ -363,7 +363,10 @@ static int rsync_transport_push(struct transport *transport,
 	strbuf_addch(&temp_dir, '/');
 
 	if (flags & TRANSPORT_PUSH_ALL) {
-		if (for_each_ref(write_one_ref, &temp_dir))
+		struct each_ref_fn_sha1_adapter wrapped_write_one_ref =
+			{write_one_ref, &temp_dir};
+
+		if (for_each_ref(each_ref_fn_adapter, &wrapped_write_one_ref))
 			return -1;
 	} else if (write_refs_to_temp_dir(&temp_dir, refspec_nr, refspec))
 		return -1;

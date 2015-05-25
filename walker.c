@@ -269,7 +269,10 @@ int walker_fetch(struct walker *walker, int targets, char **target,
 	}
 
 	if (!walker->get_recover) {
-		for_each_ref(mark_complete, NULL);
+		struct each_ref_fn_sha1_adapter wrapped_mark_complete =
+			{mark_complete, NULL};
+
+		for_each_ref(each_ref_fn_adapter, &wrapped_mark_complete);
 		commit_list_sort_by_date(&complete);
 	}
 

@@ -66,6 +66,8 @@ static int show_reference(const char *refname, const unsigned char *sha1,
 static int list_replace_refs(const char *pattern, const char *format)
 {
 	struct show_data data;
+	struct each_ref_fn_sha1_adapter wrapped_show_reference =
+		{show_reference, (void *) &data};
 
 	if (pattern == NULL)
 		pattern = "*";
@@ -82,7 +84,7 @@ static int list_replace_refs(const char *pattern, const char *format)
 		    "valid formats are 'short', 'medium' and 'long'\n",
 		    format);
 
-	for_each_replace_ref(show_reference, (void *) &data);
+	for_each_replace_ref(each_ref_fn_adapter, &wrapped_show_reference);
 
 	return 0;
 }

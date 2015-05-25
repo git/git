@@ -69,7 +69,10 @@ static int add_info_ref(const char *path, const unsigned char *sha1, int flag, v
 
 static int generate_info_refs(FILE *fp)
 {
-	return for_each_ref(add_info_ref, fp);
+	struct each_ref_fn_sha1_adapter wrapped_add_info_ref =
+		{add_info_ref, fp};
+
+	return for_each_ref(each_ref_fn_adapter, &wrapped_add_info_ref);
 }
 
 static int update_info_refs(int force)

@@ -1261,8 +1261,11 @@ static void handle_refs(const char *submodule, struct rev_info *revs, unsigned f
 		int (*for_each)(const char *, each_ref_fn, void *))
 {
 	struct all_refs_cb cb;
+	struct each_ref_fn_sha1_adapter wrapped_handle_one_ref =
+		{handle_one_ref, &cb};
+
 	init_all_refs_cb(&cb, revs, flags);
-	for_each(submodule, handle_one_ref, &cb);
+	for_each(submodule, each_ref_fn_adapter, &wrapped_handle_one_ref);
 }
 
 static void handle_one_reflog_commit(unsigned char *sha1, void *cb_data)
@@ -1304,9 +1307,12 @@ static int handle_one_reflog(const char *path, const unsigned char *sha1, int fl
 void add_reflogs_to_pending(struct rev_info *revs, unsigned flags)
 {
 	struct all_refs_cb cb;
+	struct each_ref_fn_sha1_adapter wrapped_handle_one_reflog =
+		{handle_one_reflog, &cb};
+
 	cb.all_revs = revs;
 	cb.all_flags = flags;
-	for_each_reflog(handle_one_reflog, &cb);
+	for_each_reflog(each_ref_fn_adapter, &wrapped_handle_one_reflog);
 }
 
 static void add_cache_tree(struct cache_tree *it, struct rev_info *revs,
@@ -2120,8 +2126,11 @@ static int handle_revision_pseudo_opt(const char *submodule,
 		clear_ref_exclusion(&revs->ref_excludes);
 	} else if ((argcount = parse_long_opt("glob", argv, &optarg))) {
 		struct all_refs_cb cb;
+		struct each_ref_fn_sha1_adapter wrapped_handle_one_ref =
+			{handle_one_ref, &cb};
+
 		init_all_refs_cb(&cb, revs, *flags);
-		for_each_glob_ref(handle_one_ref, optarg, &cb);
+		for_each_glob_ref(each_ref_fn_adapter, optarg, &wrapped_handle_one_ref);
 		clear_ref_exclusion(&revs->ref_excludes);
 		return argcount;
 	} else if ((argcount = parse_long_opt("exclude", argv, &optarg))) {
@@ -2129,18 +2138,30 @@ static int handle_revision_pseudo_opt(const char *submodule,
 		return argcount;
 	} else if (starts_with(arg, "--branches=")) {
 		struct all_refs_cb cb;
+		struct each_ref_fn_sha1_adapter wrapped_handle_one_ref =
+			{handle_one_ref, &cb};
+
 		init_all_refs_cb(&cb, revs, *flags);
-		for_each_glob_ref_in(handle_one_ref, arg + 11, "refs/heads/", &cb);
+		for_each_glob_ref_in(each_ref_fn_adapter, arg + 11, "refs/heads/",
+				     &wrapped_handle_one_ref);
 		clear_ref_exclusion(&revs->ref_excludes);
 	} else if (starts_with(arg, "--tags=")) {
 		struct all_refs_cb cb;
+		struct each_ref_fn_sha1_adapter wrapped_handle_one_ref =
+			{handle_one_ref, &cb};
+
 		init_all_refs_cb(&cb, revs, *flags);
-		for_each_glob_ref_in(handle_one_ref, arg + 7, "refs/tags/", &cb);
+		for_each_glob_ref_in(each_ref_fn_adapter, arg + 7, "refs/tags/",
+				     &wrapped_handle_one_ref);
 		clear_ref_exclusion(&revs->ref_excludes);
 	} else if (starts_with(arg, "--remotes=")) {
 		struct all_refs_cb cb;
+		struct each_ref_fn_sha1_adapter wrapped_handle_one_ref =
+			{handle_one_ref, &cb};
+
 		init_all_refs_cb(&cb, revs, *flags);
-		for_each_glob_ref_in(handle_one_ref, arg + 10, "refs/remotes/", &cb);
+		for_each_glob_ref_in(each_ref_fn_adapter, arg + 10, "refs/remotes/",
+				     &wrapped_handle_one_ref);
 		clear_ref_exclusion(&revs->ref_excludes);
 	} else if (!strcmp(arg, "--reflog")) {
 		add_reflogs_to_pending(revs, *flags);
