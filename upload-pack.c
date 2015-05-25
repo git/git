@@ -741,8 +741,8 @@ static int send_ref(const char *refname, const unsigned char *sha1, int flag, vo
 	return 0;
 }
 
-static int find_symref(const char *refname, const unsigned char *sha1, int flag,
-		       void *cb_data)
+static int find_symref(const char *refname, const struct object_id *oid,
+		       int flag, void *cb_data)
 {
 	const char *symref_target;
 	struct string_list_item *item;
@@ -761,10 +761,8 @@ static int find_symref(const char *refname, const unsigned char *sha1, int flag,
 static void upload_pack(void)
 {
 	struct string_list symref = STRING_LIST_INIT_DUP;
-	struct each_ref_fn_sha1_adapter wrapped_find_symref =
-		{find_symref, &symref};
 
-	head_ref_namespaced(each_ref_fn_adapter, &wrapped_find_symref);
+	head_ref_namespaced(find_symref, &symref);
 
 	if (advertise_refs || !stateless_rpc) {
 		struct each_ref_fn_sha1_adapter wrapped_send_ref =
