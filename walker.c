@@ -200,9 +200,11 @@ static int interpret_target(struct walker *walker, char *target, unsigned char *
 	return -1;
 }
 
-static int mark_complete(const char *path, const unsigned char *sha1, int flag, void *cb_data)
+static int mark_complete(const char *path, const struct object_id *oid,
+			 int flag, void *cb_data)
 {
-	struct commit *commit = lookup_commit_reference_gently(sha1, 1);
+	struct commit *commit = lookup_commit_reference_gently(oid->hash, 1);
+
 	if (commit) {
 		commit->object.flags |= COMPLETE;
 		commit_list_insert(commit, &complete);
@@ -269,10 +271,7 @@ int walker_fetch(struct walker *walker, int targets, char **target,
 	}
 
 	if (!walker->get_recover) {
-		struct each_ref_fn_sha1_adapter wrapped_mark_complete =
-			{mark_complete, NULL};
-
-		for_each_ref(each_ref_fn_adapter, &wrapped_mark_complete);
+		for_each_ref(mark_complete, NULL);
 		commit_list_sort_by_date(&complete);
 	}
 
