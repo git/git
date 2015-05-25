@@ -1757,7 +1757,7 @@ int ref_exists(const char *refname)
 }
 
 static int filter_refs(const char *refname, const struct object_id *oid,
-		       int flags, void *data)
+			   int flags, void *data)
 {
 	struct ref_filter *filter = (struct ref_filter *)data;
 
@@ -1903,12 +1903,12 @@ static int warn_if_dangling_symref(const char *refname, const struct object_id *
 {
 	struct warn_if_dangling_data *d = cb_data;
 	const char *resolves_to;
-	unsigned char junk[20];
+	struct object_id junk;
 
 	if (!(flags & REF_ISSYMREF))
 		return 0;
 
-	resolves_to = resolve_ref_unsafe(refname, 0, junk, NULL);
+	resolves_to = resolve_ref_unsafe(refname, 0, junk.hash, NULL);
 	if (!resolves_to
 	    || (d->refname
 		? strcmp(resolves_to, d->refname)
