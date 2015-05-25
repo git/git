@@ -509,7 +509,7 @@ struct branches_for_remote {
 };
 
 static int add_branch_for_removal(const char *refname,
-	const unsigned char *sha1, int flags, void *cb_data)
+	const struct object_id *oid, int flags, void *cb_data)
 {
 	struct branches_for_remote *branches = cb_data;
 	struct refspec refspec;
@@ -545,7 +545,7 @@ static int add_branch_for_removal(const char *refname,
 
 	item = string_list_append(branches->branches, refname);
 	item->util = xmalloc(20);
-	hashcpy(item->util, sha1);
+	hashcpy(item->util, oid->hash);
 
 	return 0;
 }
@@ -783,8 +783,6 @@ static int rm(int argc, const char **argv)
 	struct string_list skipped = STRING_LIST_INIT_DUP;
 	struct branches_for_remote cb_data;
 	int i, result;
-	struct each_ref_fn_sha1_adapter wrapped_add_branch_for_removal =
-		{add_branch_for_removal, &cb_data};
 
 	memset(&cb_data, 0, sizeof(cb_data));
 	cb_data.branches = &branches;
@@ -825,7 +823,7 @@ static int rm(int argc, const char **argv)
 	 * refs, which are invalidated when deleting a branch.
 	 */
 	cb_data.remote = remote;
-	result = for_each_ref(each_ref_fn_adapter, &wrapped_add_branch_for_removal);
+	result = for_each_ref(add_branch_for_removal, &cb_data);
 	strbuf_release(&buf);
 
 	if (!result)
