@@ -513,7 +513,6 @@ static int add_branch_for_removal(const char *refname,
 {
 	struct branches_for_remote *branches = cb_data;
 	struct refspec refspec;
-	struct string_list_item *item;
 	struct known_remote *kr;
 
 	memset(&refspec, 0, sizeof(refspec));
@@ -543,9 +542,7 @@ static int add_branch_for_removal(const char *refname,
 	if (flags & REF_ISSYMREF)
 		return unlink(git_path("%s", refname));
 
-	item = string_list_append(branches->branches, refname);
-	item->util = xmalloc(20);
-	hashcpy(item->util, oid->hash);
+	string_list_append(branches->branches, refname);
 
 	return 0;
 }
@@ -828,7 +825,7 @@ static int rm(int argc, const char **argv)
 
 	if (!result)
 		result = remove_branches(&branches);
-	string_list_clear(&branches, 1);
+	string_list_clear(&branches, 0);
 
 	if (skipped.nr) {
 		fprintf_ln(stderr,
