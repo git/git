@@ -278,8 +278,8 @@ static int fetch_objs_via_rsync(struct transport *transport,
 	return run_command(&rsync);
 }
 
-static int write_one_ref(const char *name, const unsigned char *sha1,
-		int flags, void *data)
+static int write_one_ref(const char *name, const struct object_id *oid,
+			 int flags, void *data)
 {
 	struct strbuf *buf = data;
 	int len = buf->len;
@@ -291,7 +291,7 @@ static int write_one_ref(const char *name, const unsigned char *sha1,
 
 	strbuf_addstr(buf, name);
 	if (safe_create_leading_directories(buf->buf) ||
-	    write_file(buf->buf, 0, "%s\n", sha1_to_hex(sha1)))
+	    write_file(buf->buf, 0, "%s\n", oid_to_hex(oid)))
 		return error("problems writing temporary file %s: %s",
 			     buf->buf, strerror(errno));
 	strbuf_setlen(buf, len);
@@ -310,7 +310,7 @@ static int write_refs_to_temp_dir(struct strbuf *temp_dir,
 		if (dwim_ref(refspec[i], strlen(refspec[i]), oid.hash, &ref) != 1)
 			return error("Could not get ref %s", refspec[i]);
 
-		if (write_one_ref(ref, oid.hash, 0, temp_dir)) {
+		if (write_one_ref(ref, &oid, 0, temp_dir)) {
 			free(ref);
 			return -1;
 		}
@@ -363,10 +363,7 @@ static int rsync_transport_push(struct transport *transport,
 	strbuf_addch(&temp_dir, '/');
 
 	if (flags & TRANSPORT_PUSH_ALL) {
-		struct each_ref_fn_sha1_adapter wrapped_write_one_ref =
-			{write_one_ref, &temp_dir};
-
-		if (for_each_ref(each_ref_fn_adapter, &wrapped_write_one_ref))
+		if (for_each_ref(write_one_ref, &temp_dir))
 			return -1;
 	} else if (write_refs_to_temp_dir(&temp_dir, refspec_nr, refspec))
 		return -1;
