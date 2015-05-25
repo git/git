@@ -53,7 +53,7 @@ static int register_replace_object(struct replace_object *replace,
 }
 
 static int register_replace_ref(const char *refname,
-				const unsigned char *sha1,
+				const struct object_id *oid,
 				int flag, void *cb_data)
 {
 	/* Get sha1 from refname */
@@ -68,7 +68,7 @@ static int register_replace_ref(const char *refname,
 	}
 
 	/* Copy sha1 from the read ref */
-	hashcpy(repl_obj->replacement, sha1);
+	hashcpy(repl_obj->replacement, oid->hash);
 
 	/* Register new object */
 	if (register_replace_object(repl_obj, 1))
@@ -80,13 +80,11 @@ static int register_replace_ref(const char *refname,
 static void prepare_replace_object(void)
 {
 	static int replace_object_prepared;
-	struct each_ref_fn_sha1_adapter wrapped_register_replace_ref =
-		{register_replace_ref, NULL};
 
 	if (replace_object_prepared)
 		return;
 
-	for_each_replace_ref(each_ref_fn_adapter, &wrapped_register_replace_ref);
+	for_each_replace_ref(register_replace_ref, NULL);
 	replace_object_prepared = 1;
 	if (!replace_object_nr)
 		check_replace_refs = 0;
