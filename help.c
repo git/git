@@ -407,7 +407,7 @@ struct similar_ref_cb {
 	struct string_list *similar_refs;
 };
 
-static int append_similar_ref(const char *refname, const unsigned char *sha1,
+static int append_similar_ref(const char *refname, const struct object_id *oid,
 			      int flags, void *cb_data)
 {
 	struct similar_ref_cb *cb = (struct similar_ref_cb *)(cb_data);
@@ -425,12 +425,10 @@ static struct string_list guess_refs(const char *ref)
 {
 	struct similar_ref_cb ref_cb;
 	struct string_list similar_refs = STRING_LIST_INIT_NODUP;
-	struct each_ref_fn_sha1_adapter wrapped_append_similar_ref =
-		{append_similar_ref, &ref_cb};
 
 	ref_cb.base_ref = ref;
 	ref_cb.similar_refs = &similar_refs;
-	for_each_ref(each_ref_fn_adapter, &wrapped_append_similar_ref);
+	for_each_ref(append_similar_ref, &ref_cb);
 	return similar_refs;
 }
 
