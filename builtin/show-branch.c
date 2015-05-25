@@ -394,39 +394,42 @@ static int append_ref(const char *refname, const unsigned char *sha1,
 	return 0;
 }
 
-static int append_head_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
+static int append_head_ref(const char *refname, const struct object_id *oid,
+			   int flag, void *cb_data)
 {
-	unsigned char tmp[20];
+	struct object_id tmp;
 	int ofs = 11;
 	if (!starts_with(refname, "refs/heads/"))
 		return 0;
 	/* If both heads/foo and tags/foo exists, get_sha1 would
 	 * get confused.
 	 */
-	if (get_sha1(refname + ofs, tmp) || hashcmp(tmp, sha1))
+	if (get_sha1(refname + ofs, tmp.hash) || oidcmp(&tmp, oid))
 		ofs = 5;
-	return append_ref(refname + ofs, sha1, 0);
+	return append_ref(refname + ofs, oid->hash, 0);
 }
 
-static int append_remote_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
+static int append_remote_ref(const char *refname, const struct object_id *oid,
+			     int flag, void *cb_data)
 {
-	unsigned char tmp[20];
+	struct object_id tmp;
 	int ofs = 13;
 	if (!starts_with(refname, "refs/remotes/"))
 		return 0;
 	/* If both heads/foo and tags/foo exists, get_sha1 would
 	 * get confused.
 	 */
-	if (get_sha1(refname + ofs, tmp) || hashcmp(tmp, sha1))
+	if (get_sha1(refname + ofs, tmp.hash) || oidcmp(&tmp, oid))
 		ofs = 5;
-	return append_ref(refname + ofs, sha1, 0);
+	return append_ref(refname + ofs, oid->hash, 0);
 }
 
-static int append_tag_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
+static int append_tag_ref(const char *refname, const struct object_id *oid,
+			  int flag, void *cb_data)
 {
 	if (!starts_with(refname, "refs/tags/"))
 		return 0;
-	return append_ref(refname + 5, sha1, 0);
+	return append_ref(refname + 5, oid->hash, 0);
 }
 
 static const char *match_ref_pattern = NULL;
@@ -457,9 +460,9 @@ static int append_matching_ref(const char *refname, const struct object_id *oid,
 	if (wildmatch(match_ref_pattern, tail, 0, NULL))
 		return 0;
 	if (starts_with(refname, "refs/heads/"))
-		return append_head_ref(refname, oid->hash, flag, cb_data);
+		return append_head_ref(refname, oid, flag, cb_data);
 	if (starts_with(refname, "refs/tags/"))
-		return append_tag_ref(refname, oid->hash, flag, cb_data);
+		return append_tag_ref(refname, oid, flag, cb_data);
 	return append_ref(refname, oid->hash, 0);
 }
 
@@ -467,18 +470,14 @@ static void snarf_refs(int head, int remotes)
 {
 	if (head) {
 		int orig_cnt = ref_name_cnt;
-		struct each_ref_fn_sha1_adapter wrapped_append_head_ref =
-			{append_head_ref, NULL};
 
-		for_each_ref(each_ref_fn_adapter, &wrapped_append_head_ref);
+		for_each_ref(append_head_ref, NULL);
 		sort_ref_range(orig_cnt, ref_name_cnt);
 	}
 	if (remotes) {
 		int orig_cnt = ref_name_cnt;
-		struct each_ref_fn_sha1_adapter wrapped_append_remote_ref =
-			{append_remote_ref, NULL};
 
-		for_each_ref(each_ref_fn_adapter, &wrapped_append_remote_ref);
+		for_each_ref(append_remote_ref, NULL);
 		sort_ref_range(orig_cnt, ref_name_cnt);
 	}
 }
