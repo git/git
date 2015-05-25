@@ -89,7 +89,8 @@ const struct name_decoration *get_name_decoration(const struct object *obj)
 	return lookup_decoration(&name_decoration, obj);
 }
 
-static int add_ref_decoration(const char *refname, const unsigned char *sha1, int flags, void *cb_data)
+static int add_ref_decoration(const char *refname, const struct object_id *oid,
+			      int flags, void *cb_data)
 {
 	struct object *obj;
 	enum decoration_type type = DECORATION_NONE;
@@ -110,7 +111,7 @@ static int add_ref_decoration(const char *refname, const unsigned char *sha1, in
 		return 0;
 	}
 
-	obj = parse_object(sha1);
+	obj = parse_object(oid->hash);
 	if (!obj)
 		return 0;
 
@@ -149,13 +150,11 @@ static int add_graft_decoration(const struct commit_graft *graft, void *cb_data)
 void load_ref_decorations(int flags)
 {
 	if (!decoration_loaded) {
-		struct each_ref_fn_sha1_adapter wrapped_add_ref_decoration =
-			{add_ref_decoration, NULL};
 
 		decoration_loaded = 1;
 		decoration_flags = flags;
-		for_each_ref(each_ref_fn_adapter, &wrapped_add_ref_decoration);
-		head_ref(each_ref_fn_adapter, &wrapped_add_ref_decoration);
+		for_each_ref(add_ref_decoration, NULL);
+		head_ref(add_ref_decoration, NULL);
 		for_each_commit_graft(add_graft_decoration, NULL);
 	}
 }
