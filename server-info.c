@@ -47,14 +47,15 @@ out:
 	return ret;
 }
 
-static int add_info_ref(const char *path, const unsigned char *sha1, int flag, void *cb_data)
+static int add_info_ref(const char *path, const struct object_id *oid,
+			int flag, void *cb_data)
 {
 	FILE *fp = cb_data;
-	struct object *o = parse_object(sha1);
+	struct object *o = parse_object(oid->hash);
 	if (!o)
 		return -1;
 
-	if (fprintf(fp, "%s	%s\n", sha1_to_hex(sha1), path) < 0)
+	if (fprintf(fp, "%s	%s\n", oid_to_hex(oid), path) < 0)
 		return -1;
 
 	if (o->type == OBJ_TAG) {
@@ -69,10 +70,7 @@ static int add_info_ref(const char *path, const unsigned char *sha1, int flag, v
 
 static int generate_info_refs(FILE *fp)
 {
-	struct each_ref_fn_sha1_adapter wrapped_add_info_ref =
-		{add_info_ref, fp};
-
-	return for_each_ref(each_ref_fn_adapter, &wrapped_add_info_ref);
+	return for_each_ref(add_info_ref, fp);
 }
 
 static int update_info_refs(int force)
