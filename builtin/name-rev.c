@@ -138,9 +138,9 @@ static int tipcmp(const void *a_, const void *b_)
 	return hashcmp(a->sha1, b->sha1);
 }
 
-static int name_ref(const char *path, const unsigned char *sha1, int flags, void *cb_data)
+static int name_ref(const char *path, const struct object_id *oid, int flags, void *cb_data)
 {
-	struct object *o = parse_object(sha1);
+	struct object *o = parse_object(oid->hash);
 	struct name_ref_data *data = cb_data;
 	int can_abbreviate_output = data->tags_only && data->name_only;
 	int deref = 0;
@@ -160,7 +160,7 @@ static int name_ref(const char *path, const unsigned char *sha1, int flags, void
 		}
 	}
 
-	add_to_tip_table(sha1, path, can_abbreviate_output);
+	add_to_tip_table(oid->hash, path, can_abbreviate_output);
 
 	while (o && o->type == OBJ_TAG) {
 		struct tag *t = (struct tag *) o;
@@ -305,8 +305,6 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 	struct object_array revs = OBJECT_ARRAY_INIT;
 	int all = 0, transform_stdin = 0, allow_undefined = 1, always = 0, peel_tag = 0;
 	struct name_ref_data data = { 0, 0, NULL };
-	struct each_ref_fn_sha1_adapter wrapped_name_ref =
-		{name_ref, &data};
 	struct option opts[] = {
 		OPT_BOOL(0, "name-only", &data.name_only, N_("print only names (no SHA-1)")),
 		OPT_BOOL(0, "tags", &data.tags_only, N_("only use tags to name the commits")),
@@ -379,7 +377,7 @@ int cmd_name_rev(int argc, const char **argv, const char *prefix)
 
 	if (cutoff)
 		cutoff = cutoff - CUTOFF_DATE_SLOP;
-	for_each_ref(each_ref_fn_adapter, &wrapped_name_ref);
+	for_each_ref(name_ref, &data);
 
 	if (transform_stdin) {
 		char buffer[2048];
