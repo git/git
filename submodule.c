@@ -422,20 +422,18 @@ void set_config_fetch_recurse_submodules(int value)
 	config_fetch_recurse_submodules = value;
 }
 
-static int has_remote(const char *refname, const unsigned char *sha1, int flags, void *cb_data)
+static int has_remote(const char *refname, const struct object_id *oid,
+		      int flags, void *cb_data)
 {
 	return 1;
 }
 
 static int submodule_needs_pushing(const char *path, const unsigned char sha1[20])
 {
-	struct each_ref_fn_sha1_adapter wrapped_has_remote =
-		{has_remote, NULL};
-
 	if (add_submodule_odb(path) || !lookup_commit_reference(sha1))
 		return 0;
 
-	if (for_each_remote_ref_submodule(path, each_ref_fn_adapter, &wrapped_has_remote) > 0) {
+	if (for_each_remote_ref_submodule(path, has_remote, NULL) > 0) {
 		struct child_process cp = CHILD_PROCESS_INIT;
 		const char *argv[] = {"rev-list", NULL, "--not", "--remotes", "-n", "1" , NULL};
 		struct strbuf buf = STRBUF_INIT;
@@ -522,13 +520,10 @@ int find_unpushed_submodules(unsigned char new_sha1[20],
 
 static int push_submodule(const char *path)
 {
-	struct each_ref_fn_sha1_adapter wrapped_has_remote =
-		{has_remote, NULL};
-
 	if (add_submodule_odb(path))
 		return 1;
 
-	if (for_each_remote_ref_submodule(path, each_ref_fn_adapter, &wrapped_has_remote) > 0) {
+	if (for_each_remote_ref_submodule(path, has_remote, NULL) > 0) {
 		struct child_process cp = CHILD_PROCESS_INIT;
 		const char *argv[] = {"push", NULL};
 
@@ -622,20 +617,17 @@ static void submodule_collect_changed_cb(struct diff_queue_struct *q,
 	}
 }
 
-static int add_sha1_to_array(const char *ref, const unsigned char *sha1,
+static int add_sha1_to_array(const char *ref, const struct object_id *oid,
 			     int flags, void *data)
 {
-	sha1_array_append(data, sha1);
+	sha1_array_append(data, oid->hash);
 	return 0;
 }
 
 void check_for_new_submodule_commits(unsigned char new_sha1[20])
 {
 	if (!initialized_fetch_ref_tips) {
-		struct each_ref_fn_sha1_adapter wrapped_add_sha1_to_array =
-			{add_sha1_to_array, &ref_tips_before_fetch};
-
-		for_each_ref(each_ref_fn_adapter, &wrapped_add_sha1_to_array);
+		for_each_ref(add_sha1_to_array, &ref_tips_before_fetch);
 		initialized_fetch_ref_tips = 1;
 	}
 
