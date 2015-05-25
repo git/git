@@ -70,9 +70,10 @@ static int rev_list_insert_ref(const char *refname, const unsigned char *sha1, i
 	return 0;
 }
 
-static int clear_marks(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
+static int clear_marks(const char *refname, const struct object_id *oid,
+		       int flag, void *cb_data)
 {
-	struct object *o = deref_tag(parse_object(sha1), refname, 0);
+	struct object *o = deref_tag(parse_object(oid->hash), refname, 0);
 
 	if (o && o->type == OBJ_COMMIT)
 		clear_commit_marks((struct commit *)o,
@@ -261,12 +262,8 @@ static int find_common(struct fetch_pack_args *args,
 
 	if (args->stateless_rpc && multi_ack == 1)
 		die("--stateless-rpc requires multi_ack_detailed");
-	if (marked) {
-		struct each_ref_fn_sha1_adapter wrapped_clear_marks =
-			{clear_marks, NULL};
-
-		for_each_ref(each_ref_fn_adapter, &wrapped_clear_marks);
-	}
+	if (marked)
+		for_each_ref(clear_marks, NULL);
 	marked = 1;
 
 	for_each_ref(each_ref_fn_adapter, &wrapped_rev_list_insert_ref);
