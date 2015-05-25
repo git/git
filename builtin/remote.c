@@ -554,20 +554,20 @@ struct rename_info {
 };
 
 static int read_remote_branches(const char *refname,
-	const unsigned char *sha1, int flags, void *cb_data)
+	const struct object_id *oid, int flags, void *cb_data)
 {
 	struct rename_info *rename = cb_data;
 	struct strbuf buf = STRBUF_INIT;
 	struct string_list_item *item;
 	int flag;
-	unsigned char orig_sha1[20];
+	struct object_id orig_oid;
 	const char *symref;
 
 	strbuf_addf(&buf, "refs/remotes/%s/", rename->old);
 	if (starts_with(refname, buf.buf)) {
 		item = string_list_append(rename->remote_branches, xstrdup(refname));
 		symref = resolve_ref_unsafe(refname, RESOLVE_REF_READING,
-					    orig_sha1, &flag);
+					    orig_oid.hash, &flag);
 		if (flag & REF_ISSYMREF)
 			item->util = xstrdup(symref);
 		else
@@ -620,8 +620,6 @@ static int mv(int argc, const char **argv)
 	struct string_list remote_branches = STRING_LIST_INIT_NODUP;
 	struct rename_info rename;
 	int i, refspec_updated = 0;
-	struct each_ref_fn_sha1_adapter wrapped_read_remote_branches =
-		{read_remote_branches, &rename};
 
 	if (argc != 3)
 		usage_with_options(builtin_remote_rename_usage, options);
@@ -699,13 +697,13 @@ static int mv(int argc, const char **argv)
 	 * First remove symrefs, then rename the rest, finally create
 	 * the new symrefs.
 	 */
-	for_each_ref(each_ref_fn_adapter, &wrapped_read_remote_branches);
+	for_each_ref(read_remote_branches, &rename);
 	for (i = 0; i < remote_branches.nr; i++) {
 		struct string_list_item *item = remote_branches.items + i;
 		int flag = 0;
-		unsigned char sha1[20];
+		struct object_id oid;
 
-		read_ref_full(item->string, RESOLVE_REF_READING, sha1, &flag);
+		read_ref_full(item->string, RESOLVE_REF_READING, oid.hash, &flag);
 		if (!(flag & REF_ISSYMREF))
 			continue;
 		if (delete_ref(item->string, NULL, REF_NODEREF))
@@ -866,7 +864,7 @@ static void free_remote_ref_states(struct ref_states *states)
 }
 
 static int append_ref_to_tracked_list(const char *refname,
-	const unsigned char *sha1, int flags, void *cb_data)
+	const struct object_id *oid, int flags, void *cb_data)
 {
 	struct ref_states *states = cb_data;
 	struct refspec refspec;
@@ -909,10 +907,7 @@ static int get_remote_ref_states(const char *name,
 		if (query & GET_PUSH_REF_STATES)
 			get_push_ref_states(remote_refs, states);
 	} else {
-		struct each_ref_fn_sha1_adapter wrapped_append_ref_to_tracked_list =
-			{append_ref_to_tracked_list, states};
-
-		for_each_ref(each_ref_fn_adapter, &wrapped_append_ref_to_tracked_list);
+		for_each_ref(append_ref_to_tracked_list, states);
 		string_list_sort(&states->tracked);
 		get_push_ref_states_noquery(states);
 	}
