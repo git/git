@@ -60,7 +60,7 @@ static void rev_list_push(struct commit *commit, int mark)
 	}
 }
 
-static int rev_list_insert_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
+static int rev_list_insert_ref(const char *refname, const unsigned char *sha1)
 {
 	struct object *o = deref_tag(parse_object(sha1), refname, 0);
 
@@ -73,7 +73,7 @@ static int rev_list_insert_ref(const char *refname, const unsigned char *sha1, i
 static int rev_list_insert_ref_oid(const char *refname, const struct object_id *oid,
 				   int flag, void *cb_data)
 {
-	return rev_list_insert_ref(refname, oid->hash, flag, cb_data);
+	return rev_list_insert_ref(refname, oid->hash);
 }
 
 static int clear_marks(const char *refname, const struct object_id *oid,
@@ -233,7 +233,7 @@ static void send_request(struct fetch_pack_args *args,
 
 static void insert_one_alternate_ref(const struct ref *ref, void *unused)
 {
-	rev_list_insert_ref(NULL, ref->old_sha1, 0, NULL);
+	rev_list_insert_ref(NULL, ref->old_sha1);
 }
 
 #define INITIAL_FLUSH 16
