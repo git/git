@@ -840,7 +840,8 @@ struct grab_ref_cbdata {
  * A call-back given to for_each_ref().  Filter refs and keep them for
  * later object processing.
  */
-static int grab_single_ref(const char *refname, const unsigned char *sha1, int flag, void *cb_data)
+static int grab_single_ref(const char *refname, const struct object_id *oid,
+			   int flag, void *cb_data)
 {
 	struct grab_ref_cbdata *cb = cb_data;
 	struct refinfo *ref;
@@ -878,7 +879,7 @@ static int grab_single_ref(const char *refname, const unsigned char *sha1, int f
 	 */
 	ref = xcalloc(1, sizeof(*ref));
 	ref->refname = xstrdup(refname);
-	hashcpy(ref->objectname, sha1);
+	hashcpy(ref->objectname, oid->hash);
 	ref->flag = flag;
 
 	cnt = cb->grab_cnt;
@@ -1072,8 +1073,6 @@ int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 	int maxcount = 0, quote_style = 0;
 	struct refinfo **refs;
 	struct grab_ref_cbdata cbdata;
-	struct each_ref_fn_sha1_adapter wrapped_grab_single_ref =
-		{grab_single_ref, &cbdata};
 
 	struct option opts[] = {
 		OPT_BIT('s', "shell", &quote_style,
@@ -1113,7 +1112,7 @@ int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 
 	memset(&cbdata, 0, sizeof(cbdata));
 	cbdata.grab_pattern = argv;
-	for_each_rawref(each_ref_fn_adapter, &wrapped_grab_single_ref);
+	for_each_rawref(grab_single_ref, &cbdata);
 	refs = cbdata.grab_array;
 	num_refs = cbdata.grab_cnt;
 
