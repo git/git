@@ -536,9 +536,9 @@ static int show_independent(struct commit **rev,
 
 static void append_one_rev(const char *av)
 {
-	unsigned char revkey[20];
-	if (!get_sha1(av, revkey)) {
-		append_ref(av, revkey, 0);
+	struct object_id revkey;
+	if (!get_sha1(av, revkey.hash)) {
+		append_ref(av, revkey.hash, 0);
 		return;
 	}
 	if (strchr(av, '*') || strchr(av, '?') || strchr(av, '[')) {
