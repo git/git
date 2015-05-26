@@ -633,7 +633,7 @@ static void lookup_hostname(struct hostinfo *hi)
 		char **ap;
 		static char addrbuf[HOST_NAME_MAX + 1];
 
-		hent = gethostbyname(hostname.buf);
+		hent = gethostbyname(hi->hostname.buf);
 		if (hent) {
 			ap = hent->h_addr_list;
 			memset(&sa, 0, sizeof sa);
