@@ -810,21 +810,9 @@ test_expect_success 'setup diff colors' '
 	git config color.diff.old red &&
 	git config color.diff.new green &&
 	git config color.diff.commit yellow &&
-	git config color.diff.whitespace "normal red" &&
+	git config color.diff.whitespace blue &&
 
-	git config core.autocrlf false &&
-
-	cat >expected <<-\EOF
-	<BOLD>diff --git a/x b/x<RESET>
-	<BOLD>index 9daeafb..2874b91 100644<RESET>
-	<BOLD>--- a/x<RESET>
-	<BOLD>+++ b/x<RESET>
-	<CYAN>@@ -1 +1,4 @@<RESET>
-	 test<RESET>
-	<GREEN>+<RESET><GREEN>{<RESET>
-	<GREEN>+<RESET><BRED>	<RESET>
-	<GREEN>+<RESET><GREEN>}<RESET>
-	EOF
+	git config core.autocrlf false
 '
 
 test_expect_success 'diff that introduces a line with only tabs' '
@@ -834,6 +822,19 @@ test_expect_success 'diff that introduces a line with only tabs' '
 	git commit -m "initial" x &&
 	echo "{NTN}" | tr "NT" "\n\t" >>x &&
 	git -c color.diff=always diff | test_decode_color >current &&
+
+	cat >expected <<-\EOF &&
+	<BOLD>diff --git a/x b/x<RESET>
+	<BOLD>index 9daeafb..2874b91 100644<RESET>
+	<BOLD>--- a/x<RESET>
+	<BOLD>+++ b/x<RESET>
+	<CYAN>@@ -1 +1,4 @@<RESET>
+	 test<RESET>
+	<GREEN>+<RESET><GREEN>{<RESET>
+	<GREEN>+<RESET><BLUE>	<RESET>
+	<GREEN>+<RESET><GREEN>}<RESET>
+	EOF
+
 	test_cmp expected current
 '
 
