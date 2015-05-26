@@ -208,8 +208,11 @@ static void extract_first_arg(LPWSTR command_line, LPWSTR exepath, LPWSTR buf)
 	LocalFree(wargv);
 }
 
-static LPWSTR expand_variables(LPWSTR buf, size_t alloc)
+#define alloc_nr(x) (((x)+16)*3/2)
+
+static LPWSTR expand_variables(LPWSTR buffer, size_t alloc)
 {
+	LPWSTR buf = buffer;
 	size_t len = wcslen(buf);
 
 	for (;;) {
@@ -228,10 +231,27 @@ static LPWSTR expand_variables(LPWSTR buf, size_t alloc)
 		env_len = GetEnvironmentVariable(atat + 2, NULL, 0);
 		delta = env_len - 1 - (atat2 + 2 - atat);
 		if (len + delta >= alloc) {
-			fwprintf(stderr,
-				L"Substituting '%s' results in too "
-				L"large a command-line\n", atat + 2);
-			exit(1);
+			LPWSTR buf2;
+			alloc = alloc_nr(alloc);
+			if (alloc <= len + delta)
+				alloc = len + delta + 1;
+			if (buf != buffer)
+				buf2 = realloc(buf, sizeof(WCHAR) * alloc);
+			else {
+				buf2 = malloc(sizeof(WCHAR) * alloc);
+				if (buf2)
+					memcpy(buf2, buf, sizeof(WCHAR)
+							* (len + 1));
+			}
+			if (!buf2) {
+				fwprintf(stderr,
+					L"Substituting '%s' results in too "
+					L"large a command-line\n", atat + 2);
+				exit(1);
+			}
+			atat += buf2 - buf;
+			atat2 += buf2 - buf;
+			buf = buf2;
 		}
 		if (delta)
 			memmove(atat2 + 2 + delta, atat2 + 2,
