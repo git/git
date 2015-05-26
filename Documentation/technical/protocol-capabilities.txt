@@ -260,6 +260,13 @@ If the upload-pack server advertises this capability, fetch-pack may
 send "want" lines with SHA-1s that exist at the server but are not
 advertised by upload-pack.
 
+allow-reachable-sha1-in-want
+----------------------------
+
+If the upload-pack server advertises this capability, fetch-pack may
+send "want" lines with SHA-1s that exist at the server but are not
+advertised by upload-pack.
+
 push-cert=<nonce>
 -----------------
 
