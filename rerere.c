@@ -659,6 +659,8 @@ int rerere_forget(struct pathspec *pathspec)
 		return error("Could not read index");
 
 	fd = setup_rerere(&merge_rr, RERERE_NOAUTOUPDATE);
+	if (fd < 0)
+		return 0;
 
 	unmerge_cache(pathspec);
 	find_conflict(&conflict);
