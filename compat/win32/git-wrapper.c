@@ -208,6 +208,44 @@ static void extract_first_arg(LPWSTR command_line, LPWSTR exepath, LPWSTR buf)
 	LocalFree(wargv);
 }
 
+static LPWSTR expand_variables(LPWSTR buf, size_t alloc)
+{
+	size_t len = wcslen(buf);
+
+	for (;;) {
+		LPWSTR atat = wcsstr(buf, L"@@"), atat2;
+		WCHAR save;
+		int env_len, delta;
+
+		if (!atat)
+			break;
+
+		atat2 = wcsstr(atat + 2, L"@@");
+		if (!atat2)
+			break;
+
+		*atat2 = L'\0';
+		env_len = GetEnvironmentVariable(atat + 2, NULL, 0);
+		delta = env_len - 1 - (atat2 + 2 - atat);
+		if (len + delta >= alloc) {
+			fwprintf(stderr,
+				L"Substituting '%s' results in too "
+				L"large a command-line\n", atat + 2);
+			exit(1);
+		}
+		if (delta)
+			memmove(atat2 + 2 + delta, atat2 + 2,
+				sizeof(WCHAR) * (len + 1
+					- (atat2 + 2 - buf)));
+		len += delta;
+		save = atat[env_len - 1];
+		GetEnvironmentVariable(atat + 2, atat, env_len);
+		atat[env_len - 1] = save;
+	}
+
+	return buf;
+}
+
 static int configure_via_resource(LPWSTR basename, LPWSTR exepath, LPWSTR exep,
 	LPWSTR *prefix_args, int *prefix_args_len,
 	int *is_git_command, LPWSTR *working_directory, int *full_path,
@@ -218,6 +256,7 @@ static int configure_via_resource(LPWSTR basename, LPWSTR exepath, LPWSTR exep,
 
 #define BUFSIZE 65536
 	static WCHAR buf[BUFSIZE];
+	LPWSTR buf2 = buf;
 	int len;
 
 	for (id = 0; ; id++) {
@@ -257,48 +296,19 @@ static int configure_via_resource(LPWSTR basename, LPWSTR exepath, LPWSTR exep,
 		if (!id)
 			SetEnvironmentVariable(L"EXEPATH", exepath);
 
-		for (;;) {
-			LPWSTR atat = wcsstr(buf, L"@@"), atat2;
-			WCHAR save;
-			int env_len, delta;
+		buf2 = expand_variables(buf, BUFSIZE);
 
-			if (!atat)
-				break;
-
-			atat2 = wcsstr(atat + 2, L"@@");
-			if (!atat2)
-				break;
-
-			*atat2 = L'\0';
-			env_len = GetEnvironmentVariable(atat + 2, NULL, 0);
-			delta = env_len - 1 - (atat2 + 2 - atat);
-			if (len + delta >= BUFSIZE) {
-				fwprintf(stderr,
-					L"Substituting '%s' results in too "
-					L"large a command-line\n", atat + 2);
-				exit(1);
-			}
-			if (delta)
-				memmove(atat2 + 2 + delta, atat2 + 2,
-					sizeof(WCHAR) * (len + 1
-						- (atat2 + 2 - buf)));
-			len += delta;
-			save = atat[env_len - 1];
-			GetEnvironmentVariable(atat + 2, atat, env_len);
-			atat[env_len - 1] = save;
-		}
-
-		extract_first_arg(buf, exepath, exep);
+		extract_first_arg(buf2, exepath, exep);
 
 		if (_waccess(exep, 0) != -1)
 			break;
 		fwprintf(stderr,
 			L"Skipping command-line '%s'\n('%s' not found)\n",
-			buf, exep);
+			buf2, exep);
 	}
 
-	*prefix_args = buf;
-	*prefix_args_len = wcslen(buf);
+	*prefix_args = buf2;
+	*prefix_args_len = wcslen(buf2);
 
 	*is_git_command = 0;
 	*working_directory = (LPWSTR) 1;
