@@ -278,6 +278,16 @@ ifndef::git-format-patch[]
 	initial indent of the line are considered whitespace errors.
 	Exits with non-zero status if problems are found. Not compatible
 	with --exit-code.
+
+--ws-error-highlight=<kind>::
+	Highlight whitespace errors on lines specified by <kind>
+	in the color specified by `color.diff.whitespace`.  <kind>
+	is a comma separated list of `old`, `new`, `context`.  When
+	this option is not given, only whitespace errors in `new`
+	lines are highlighted.  E.g. `--ws-error-highlight=new,old`
+	highlights whitespace errors on both deleted and added lines.
+	`all` can be used as a short-hand for `old,new,context`.
+
 endif::git-format-patch[]
 
 --full-index::
