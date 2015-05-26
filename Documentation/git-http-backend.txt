@@ -255,6 +255,15 @@ The GIT_HTTP_EXPORT_ALL environmental variable may be passed to
 'git-http-backend' to bypass the check for the "git-daemon-export-ok"
 file in each repository before allowing export of that repository.
 
+The `GIT_HTTP_MAX_REQUEST_BUFFER` environment variable (or the
+`http.maxRequestBuffer` config variable) may be set to change the
+largest ref negotiation request that git will handle during a fetch; any
+fetch requiring a larger buffer will not succeed.  This value should not
+normally need to be changed, but may be helpful if you are fetching from
+a repository with an extremely large number of refs.  The value can be
+specified with a unit (e.g., `100M` for 100 megabytes). The default is
+10 megabytes.
+
 The backend process sets GIT_COMMITTER_NAME to '$REMOTE_USER' and
 GIT_COMMITTER_EMAIL to '$\{REMOTE_USER}@http.$\{REMOTE_ADDR\}',
 ensuring that any reflogs created by 'git-receive-pack' contain some
