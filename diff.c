@@ -498,6 +498,24 @@ static void emit_add_line(const char *reset,
 	}
 }
 
+static void emit_del_line(const char *reset,
+			  struct emit_callback *ecbdata,
+			  const char *line, int len)
+{
+	const char *set = diff_get_color(ecbdata->color_diff, DIFF_FILE_OLD);
+
+	emit_line_0(ecbdata->opt, set, reset, '-', line, len);
+}
+
+static void emit_context_line(const char *reset,
+			      struct emit_callback *ecbdata,
+			      const char *line, int len)
+{
+	const char *set = diff_get_color(ecbdata->color_diff, DIFF_PLAIN);
+
+	emit_line_0(ecbdata->opt, set, reset, ' ', line, len);
+}
+
 static void emit_hunk_header(struct emit_callback *ecbdata,
 			     const char *line, int len)
 {
@@ -603,7 +621,6 @@ static void emit_rewrite_lines(struct emit_callback *ecb,
 {
 	const char *endp = NULL;
 	static const char *nneof = " No newline at end of file\n";
-	const char *old = diff_get_color(ecb->color_diff, DIFF_FILE_OLD);
 	const char *reset = diff_get_color(ecb->color_diff, DIFF_RESET);
 
 	while (0 < size) {
@@ -613,8 +630,7 @@ static void emit_rewrite_lines(struct emit_callback *ecb,
 		len = endp ? (endp - data + 1) : size;
 		if (prefix != '+') {
 			ecb->lno_in_preimage++;
-			emit_line_0(ecb->opt, old, reset, '-',
-				    data, len);
+			emit_del_line(reset, ecb, data, len);
 		} else {
 			ecb->lno_in_postimage++;
 			emit_add_line(reset, ecb, data, len);
@@ -1250,17 +1266,27 @@ static void fn_out_consume(void *priv, char *line, unsigned long len)
 		return;
 	}
 
-	if (line[0] != '+') {
-		const char *color =
-			diff_get_color(ecbdata->color_diff,
-				       line[0] == '-' ? DIFF_FILE_OLD : DIFF_PLAIN);
-		ecbdata->lno_in_preimage++;
-		if (line[0] == ' ')
-			ecbdata->lno_in_postimage++;
-		emit_line(ecbdata->opt, color, reset, line, len);
-	} else {
+	switch (line[0]) {
+	case '+':
 		ecbdata->lno_in_postimage++;
 		emit_add_line(reset, ecbdata, line + 1, len - 1);
+		break;
+	case '-':
+		ecbdata->lno_in_preimage++;
+		emit_del_line(reset, ecbdata, line + 1, len - 1);
+		break;
+	case ' ':
+		ecbdata->lno_in_postimage++;
+		ecbdata->lno_in_preimage++;
+		emit_context_line(reset, ecbdata, line + 1, len - 1);
+		break;
+	default:
+		/* incomplete line at the end */
+		ecbdata->lno_in_preimage++;
+		emit_line(ecbdata->opt,
+			  diff_get_color(ecbdata->color_diff, DIFF_PLAIN),
+			  reset, line, len);
+		break;
 	}
 }
 
