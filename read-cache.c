@@ -39,11 +39,12 @@ static struct cache_entry *refresh_cache_entry(struct cache_entry *ce,
 #define CACHE_EXT_TREE 0x54524545	/* "TREE" */
 #define CACHE_EXT_RESOLVE_UNDO 0x52455543 /* "REUC" */
 #define CACHE_EXT_LINK 0x6c696e6b	  /* "link" */
+#define CACHE_EXT_UNTRACKED 0x554E5452	  /* "UNTR" */
 
 /* changes that can be kept in $GIT_DIR/index (basically all extensions) */
 #define EXTMASK (RESOLVE_UNDO_CHANGED | CACHE_TREE_CHANGED | \
 		 CE_ENTRY_ADDED | CE_ENTRY_REMOVED | CE_ENTRY_CHANGED | \
-		 SPLIT_INDEX_ORDERED)
+		 SPLIT_INDEX_ORDERED | UNTRACKED_CHANGED)
 
 struct index_state the_index;
 static const char *alternate_index_output;
@@ -79,6 +80,7 @@ void rename_index_entry_at(struct index_state *istate, int nr, const char *new_n
 	memcpy(new->name, new_name, namelen + 1);
 
 	cache_tree_invalidate_path(istate, old->name);
+	untracked_cache_remove_from_index(istate, old->name);
 	remove_index_entry_at(istate, nr);
 	add_index_entry(istate, new, ADD_CACHE_OK_TO_ADD|ADD_CACHE_OK_TO_REPLACE);
 }
@@ -270,20 +272,34 @@ static int ce_match_stat_basic(const struct cache_entry *ce, struct stat *st)
 	return changed;
 }
 
+static int is_racy_stat(const struct index_state *istate,
+			const struct stat_data *sd)
+{
+	return (istate->timestamp.sec &&
+#ifdef USE_NSEC
+		 /* nanosecond timestamped files can also be racy! */
+		(istate->timestamp.sec < sd->sd_mtime.sec ||
+		 (istate->timestamp.sec == sd->sd_mtime.sec &&
+		  istate->timestamp.nsec <= sd->sd_mtime.nsec))
+#else
+		istate->timestamp.sec <= sd->sd_mtime.sec
+#endif
+		);
+}
+
 static int is_racy_timestamp(const struct index_state *istate,
 			     const struct cache_entry *ce)
 {
 	return (!S_ISGITLINK(ce->ce_mode) &&
-		istate->timestamp.sec &&
-#ifdef USE_NSEC
-		 /* nanosecond timestamped files can also be racy! */
-		(istate->timestamp.sec < ce->ce_stat_data.sd_mtime.sec ||
-		 (istate->timestamp.sec == ce->ce_stat_data.sd_mtime.sec &&
-		  istate->timestamp.nsec <= ce->ce_stat_data.sd_mtime.nsec))
-#else
-		istate->timestamp.sec <= ce->ce_stat_data.sd_mtime.sec
-#endif
-		 );
+		is_racy_stat(istate, &ce->ce_stat_data));
+}
+
+int match_stat_data_racy(const struct index_state *istate,
+			 const struct stat_data *sd, struct stat *st)
+{
+	if (is_racy_stat(istate, sd))
+		return MTIME_CHANGED;
+	return match_stat_data(sd, st);
 }
 
 int ie_match_stat(const struct index_state *istate,
@@ -538,6 +554,7 @@ int remove_file_from_index(struct index_state *istate, const char *path)
 	if (pos < 0)
 		pos = -pos-1;
 	cache_tree_invalidate_path(istate, path);
+	untracked_cache_remove_from_index(istate, path);
 	while (pos < istate->cache_nr && !strcmp(istate->cache[pos]->name, path))
 		remove_index_entry_at(istate, pos);
 	return 0;
@@ -982,6 +999,8 @@ static int add_index_entry_with_check(struct index_state *istate, struct cache_e
 	}
 	pos = -pos-1;
 
+	untracked_cache_add_to_index(istate, ce->name);
+
 	/*
 	 * Inserting a merged entry ("stage 0") into the index
 	 * will always replace all non-merged entries..
@@ -1372,6 +1391,9 @@ static int read_index_extension(struct index_state *istate,
 		if (read_link_extension(istate, data, sz))
 			return -1;
 		break;
+	case CACHE_EXT_UNTRACKED:
+		istate->untracked = read_untracked_extension(data, sz);
+		break;
 	default:
 		if (*ext < 'A' || 'Z' < *ext)
 			return error("index uses %.4s extension, which we do not understand",
@@ -1667,6 +1689,8 @@ int discard_index(struct index_state *istate)
 	istate->cache = NULL;
 	istate->cache_alloc = 0;
 	discard_split_index(istate);
+	free_untracked_cache(istate->untracked);
+	istate->untracked = NULL;
 	return 0;
 }
 
@@ -2049,6 +2073,17 @@ static int do_write_index(struct index_state *istate, int newfd,
 		err = write_index_ext_header(&c, newfd, CACHE_EXT_RESOLVE_UNDO,
 					     sb.len) < 0
 			|| ce_write(&c, newfd, sb.buf, sb.len) < 0;
+		strbuf_release(&sb);
+		if (err)
+			return -1;
+	}
+	if (!strip_extensions && istate->untracked) {
+		struct strbuf sb = STRBUF_INIT;
+
+		write_untracked_extension(&sb, istate->untracked);
+		err = write_index_ext_header(&c, newfd, CACHE_EXT_UNTRACKED,
+					     sb.len) < 0 ||
+			ce_write(&c, newfd, sb.buf, sb.len) < 0;
 		strbuf_release(&sb);
 		if (err)
 			return -1;
