@@ -10,7 +10,7 @@ struct ref_lock {
 	char *ref_name;
 	char *orig_ref_name;
 	struct lock_file *lk;
-	unsigned char old_sha1[20];
+	struct object_id old_oid;
 };
 
 /*
@@ -161,7 +161,7 @@ struct ref_value {
 	 * null.  If REF_ISSYMREF, then this is the name of the object
 	 * referred to by the last reference in the symlink chain.
 	 */
-	unsigned char sha1[20];
+	struct object_id oid;
 
 	/*
 	 * If REF_KNOWS_PEELED, then this field holds the peeled value
@@ -169,7 +169,7 @@ struct ref_value {
 	 * be peelable.  See the documentation for peel_ref() for an
 	 * exact definition of "peelable".
 	 */
-	unsigned char peeled[20];
+	struct object_id peeled;
 };
 
 struct ref_cache;
@@ -351,8 +351,8 @@ static struct ref_entry *create_ref_entry(const char *refname,
 		die("Reference has invalid format: '%s'", refname);
 	len = strlen(refname) + 1;
 	ref = xmalloc(sizeof(struct ref_entry) + len);
-	hashcpy(ref->u.value.sha1, sha1);
-	hashclr(ref->u.value.peeled);
+	hashcpy(ref->u.value.oid.hash, sha1);
+	oidclr(&ref->u.value.peeled);
 	memcpy(ref->name, refname, len);
 	ref->flag = flag;
 	return ref;
@@ -626,7 +626,7 @@ static int is_dup_ref(const struct ref_entry *ref1, const struct ref_entry *ref2
 		/* This is impossible by construction */
 		die("Reference directory conflict: %s", ref1->name);
 
-	if (hashcmp(ref1->u.value.sha1, ref2->u.value.sha1))
+	if (oidcmp(&ref1->u.value.oid, &ref2->u.value.oid))
 		die("Duplicated ref, and SHA1s don't match: %s", ref1->name);
 
 	warning("Duplicated ref: %s", ref1->name);
@@ -674,7 +674,7 @@ static int ref_resolves_to_object(struct ref_entry *entry)
 {
 	if (entry->flag & REF_ISBROKEN)
 		return 0;
-	if (!has_sha1_file(entry->u.value.sha1)) {
+	if (!has_sha1_file(entry->u.value.oid.hash)) {
 		error("%s does not point to a valid object!", entry->name);
 		return 0;
 	}
@@ -722,7 +722,7 @@ static int do_one_ref(struct ref_entry *entry, void *cb_data)
 	/* Store the old value, in case this is a recursive call: */
 	old_current_ref = current_ref;
 	current_ref = entry;
-	retval = data->fn(entry->name + data->trim, entry->u.value.sha1,
+	retval = data->fn(entry->name + data->trim, &entry->u.value.oid,
 			  entry->flag, data->cb_data);
 	current_ref = old_current_ref;
 	return retval;
@@ -1258,7 +1258,7 @@ static void read_packed_refs(FILE *f, struct ref_dir *dir)
 		    line.len == PEELED_LINE_LENGTH &&
 		    line.buf[PEELED_LINE_LENGTH - 1] == '\n' &&
 		    !get_sha1_hex(line.buf + 1, sha1)) {
-			hashcpy(last->u.value.peeled, sha1);
+			hashcpy(last->u.value.peeled.hash, sha1);
 			/*
 			 * Regardless of what the file header said,
 			 * we definitely know the value of *this*
@@ -1439,7 +1439,7 @@ static int resolve_gitlink_packed_ref(struct ref_cache *refs,
 	if (ref == NULL)
 		return -1;
 
-	hashcpy(sha1, ref->u.value.sha1);
+	hashcpy(sha1, ref->u.value.oid.hash);
 	return 0;
 }
 
@@ -1526,7 +1526,7 @@ static int resolve_missing_loose_ref(const char *refname,
 	 */
 	entry = get_packed_ref(refname);
 	if (entry) {
-		hashcpy(sha1, entry->u.value.sha1);
+		hashcpy(sha1, entry->u.value.oid.hash);
 		if (flags)
 			*flags |= REF_ISPACKED;
 		return 0;
@@ -1756,13 +1756,14 @@ int ref_exists(const char *refname)
 	return !!resolve_ref_unsafe(refname, RESOLVE_REF_READING, sha1, NULL);
 }
 
-static int filter_refs(const char *refname, const unsigned char *sha1, int flags,
-		       void *data)
+static int filter_refs(const char *refname, const struct object_id *oid,
+			   int flags, void *data)
 {
 	struct ref_filter *filter = (struct ref_filter *)data;
+
 	if (wildmatch(filter->pattern, refname, 0, NULL))
 		return 0;
-	return filter->fn(refname, sha1, flags, filter->cb_data);
+	return filter->fn(refname, oid, flags, filter->cb_data);
 }
 
 enum peel_status {
@@ -1836,9 +1837,9 @@ static enum peel_status peel_entry(struct ref_entry *entry, int repeel)
 	if (entry->flag & REF_KNOWS_PEELED) {
 		if (repeel) {
 			entry->flag &= ~REF_KNOWS_PEELED;
-			hashclr(entry->u.value.peeled);
+			oidclr(&entry->u.value.peeled);
 		} else {
-			return is_null_sha1(entry->u.value.peeled) ?
+			return is_null_oid(&entry->u.value.peeled) ?
 				PEEL_NON_TAG : PEEL_PEELED;
 		}
 	}
@@ -1847,7 +1848,7 @@ static enum peel_status peel_entry(struct ref_entry *entry, int repeel)
 	if (entry->flag & REF_ISSYMREF)
 		return PEEL_IS_SYMREF;
 
-	status = peel_object(entry->u.value.sha1, entry->u.value.peeled);
+	status = peel_object(entry->u.value.oid.hash, entry->u.value.peeled.hash);
 	if (status == PEEL_PEELED || status == PEEL_NON_TAG)
 		entry->flag |= REF_KNOWS_PEELED;
 	return status;
@@ -1862,7 +1863,7 @@ int peel_ref(const char *refname, unsigned char *sha1)
 			    || !strcmp(current_ref->name, refname))) {
 		if (peel_entry(current_ref, 0))
 			return -1;
-		hashcpy(sha1, current_ref->u.value.peeled);
+		hashcpy(sha1, current_ref->u.value.peeled.hash);
 		return 0;
 	}
 
@@ -1882,7 +1883,7 @@ int peel_ref(const char *refname, unsigned char *sha1)
 		if (r) {
 			if (peel_entry(r, 0))
 				return -1;
-			hashcpy(sha1, r->u.value.peeled);
+			hashcpy(sha1, r->u.value.peeled.hash);
 			return 0;
 		}
 	}
@@ -1897,17 +1898,17 @@ struct warn_if_dangling_data {
 	const char *msg_fmt;
 };
 
-static int warn_if_dangling_symref(const char *refname, const unsigned char *sha1,
+static int warn_if_dangling_symref(const char *refname, const struct object_id *oid,
 				   int flags, void *cb_data)
 {
 	struct warn_if_dangling_data *d = cb_data;
 	const char *resolves_to;
-	unsigned char junk[20];
+	struct object_id junk;
 
 	if (!(flags & REF_ISSYMREF))
 		return 0;
 
-	resolves_to = resolve_ref_unsafe(refname, 0, junk, NULL);
+	resolves_to = resolve_ref_unsafe(refname, 0, junk.hash, NULL);
 	if (!resolves_to
 	    || (d->refname
 		? strcmp(resolves_to, d->refname)
@@ -2027,18 +2028,18 @@ static int do_for_each_ref(struct ref_cache *refs, const char *base,
 
 static int do_head_ref(const char *submodule, each_ref_fn fn, void *cb_data)
 {
-	unsigned char sha1[20];
+	struct object_id oid;
 	int flag;
 
 	if (submodule) {
-		if (resolve_gitlink_ref(submodule, "HEAD", sha1) == 0)
-			return fn("HEAD", sha1, 0, cb_data);
+		if (resolve_gitlink_ref(submodule, "HEAD", oid.hash) == 0)
+			return fn("HEAD", &oid, 0, cb_data);
 
 		return 0;
 	}
 
-	if (!read_ref_full("HEAD", RESOLVE_REF_READING, sha1, &flag))
-		return fn("HEAD", sha1, flag, cb_data);
+	if (!read_ref_full("HEAD", RESOLVE_REF_READING, oid.hash, &flag))
+		return fn("HEAD", &oid, flag, cb_data);
 
 	return 0;
 }
@@ -2113,12 +2114,12 @@ int head_ref_namespaced(each_ref_fn fn, void *cb_data)
 {
 	struct strbuf buf = STRBUF_INIT;
 	int ret = 0;
-	unsigned char sha1[20];
+	struct object_id oid;
 	int flag;
 
 	strbuf_addf(&buf, "%sHEAD", get_git_namespace());
-	if (!read_ref_full(buf.buf, RESOLVE_REF_READING, sha1, &flag))
-		ret = fn(buf.buf, sha1, flag, cb_data);
+	if (!read_ref_full(buf.buf, RESOLVE_REF_READING, oid.hash, &flag))
+		ret = fn(buf.buf, &oid, flag, cb_data);
 	strbuf_release(&buf);
 
 	return ret;
@@ -2224,16 +2225,16 @@ static struct ref_lock *verify_lock(struct ref_lock *lock,
 {
 	if (read_ref_full(lock->ref_name,
 			  mustexist ? RESOLVE_REF_READING : 0,
-			  lock->old_sha1, NULL)) {
+			  lock->old_oid.hash, NULL)) {
 		int save_errno = errno;
 		error("Can't verify ref %s", lock->ref_name);
 		unlock_ref(lock);
 		errno = save_errno;
 		return NULL;
 	}
-	if (hashcmp(lock->old_sha1, old_sha1)) {
+	if (hashcmp(lock->old_oid.hash, old_sha1)) {
 		error("Ref %s is at %s but expected %s", lock->ref_name,
-			sha1_to_hex(lock->old_sha1), sha1_to_hex(old_sha1));
+			oid_to_hex(&lock->old_oid), sha1_to_hex(old_sha1));
 		unlock_ref(lock);
 		errno = EBUSY;
 		return NULL;
@@ -2381,7 +2382,7 @@ static struct ref_lock *lock_ref_sha1_basic(const char *refname,
 	}
 
 	refname = resolve_ref_unsafe(refname, resolve_flags,
-				     lock->old_sha1, &type);
+				     lock->old_oid.hash, &type);
 	if (!refname && errno == EISDIR) {
 		/* we are trying to lock foo but we used to
 		 * have foo/bar which now does not exist;
@@ -2400,7 +2401,7 @@ static struct ref_lock *lock_ref_sha1_basic(const char *refname,
 			goto error_return;
 		}
 		refname = resolve_ref_unsafe(orig_refname, resolve_flags,
-					     lock->old_sha1, &type);
+					     lock->old_oid.hash, &type);
 	}
 	if (type_p)
 	    *type_p = type;
@@ -2420,7 +2421,7 @@ static struct ref_lock *lock_ref_sha1_basic(const char *refname,
 	 * refname, nor a packed ref whose name is a proper prefix of
 	 * our refname.
 	 */
-	if (is_null_sha1(lock->old_sha1) &&
+	if (is_null_oid(&lock->old_oid) &&
 	    verify_refname_available(refname, extras, skip,
 				     get_packed_refs(&ref_cache), err)) {
 		last_errno = ENOTDIR;
@@ -2496,9 +2497,9 @@ static int write_packed_entry_fn(struct ref_entry *entry, void *cb_data)
 	if (peel_status != PEEL_PEELED && peel_status != PEEL_NON_TAG)
 		error("internal error: %s is not a valid packed reference!",
 		      entry->name);
-	write_packed_entry(cb_data, entry->name, entry->u.value.sha1,
+	write_packed_entry(cb_data, entry->name, entry->u.value.oid.hash,
 			   peel_status == PEEL_PEELED ?
-			   entry->u.value.peeled : NULL);
+			   entry->u.value.peeled.hash : NULL);
 	return 0;
 }
 
@@ -2615,24 +2616,24 @@ static int pack_if_possible_fn(struct ref_entry *entry, void *cb_data)
 	peel_status = peel_entry(entry, 1);
 	if (peel_status != PEEL_PEELED && peel_status != PEEL_NON_TAG)
 		die("internal error peeling reference %s (%s)",
-		    entry->name, sha1_to_hex(entry->u.value.sha1));
+		    entry->name, oid_to_hex(&entry->u.value.oid));
 	packed_entry = find_ref(cb->packed_refs, entry->name);
 	if (packed_entry) {
 		/* Overwrite existing packed entry with info from loose entry */
 		packed_entry->flag = REF_ISPACKED | REF_KNOWS_PEELED;
-		hashcpy(packed_entry->u.value.sha1, entry->u.value.sha1);
+		oidcpy(&packed_entry->u.value.oid, &entry->u.value.oid);
 	} else {
-		packed_entry = create_ref_entry(entry->name, entry->u.value.sha1,
+		packed_entry = create_ref_entry(entry->name, entry->u.value.oid.hash,
 						REF_ISPACKED | REF_KNOWS_PEELED, 0);
 		add_ref(cb->packed_refs, packed_entry);
 	}
-	hashcpy(packed_entry->u.value.peeled, entry->u.value.peeled);
+	oidcpy(&packed_entry->u.value.peeled, &entry->u.value.peeled);
 
 	/* Schedule the loose reference for pruning if requested. */
 	if ((cb->flags & PACK_REFS_PRUNE)) {
 		int namelen = strlen(entry->name) + 1;
 		struct ref_to_prune *n = xcalloc(1, sizeof(*n) + namelen);
-		hashcpy(n->sha1, entry->u.value.sha1);
+		hashcpy(n->sha1, entry->u.value.oid.hash);
 		strcpy(n->name, entry->name);
 		n->next = cb->ref_to_prune;
 		cb->ref_to_prune = n;
@@ -2943,7 +2944,7 @@ int rename_ref(const char *oldrefname, const char *newrefname, const char *logms
 		strbuf_release(&err);
 		goto rollback;
 	}
-	hashcpy(lock->old_sha1, orig_sha1);
+	hashcpy(lock->old_oid.hash, orig_sha1);
 
 	if (write_ref_to_lockfile(lock, orig_sha1) ||
 	    commit_ref_update(lock, orig_sha1, logmsg)) {
@@ -3198,9 +3199,9 @@ static int commit_ref_update(struct ref_lock *lock,
 			     const unsigned char *sha1, const char *logmsg)
 {
 	clear_loose_ref_cache(&ref_cache);
-	if (log_ref_write(lock->ref_name, lock->old_sha1, sha1, logmsg) < 0 ||
+	if (log_ref_write(lock->ref_name, lock->old_oid.hash, sha1, logmsg) < 0 ||
 	    (strcmp(lock->ref_name, lock->orig_ref_name) &&
-	     log_ref_write(lock->orig_ref_name, lock->old_sha1, sha1, logmsg) < 0)) {
+	     log_ref_write(lock->orig_ref_name, lock->old_oid.hash, sha1, logmsg) < 0)) {
 		unlock_ref(lock);
 		return -1;
 	}
@@ -3224,7 +3225,7 @@ static int commit_ref_update(struct ref_lock *lock,
 					      head_sha1, &head_flag);
 		if (head_ref && (head_flag & REF_ISSYMREF) &&
 		    !strcmp(head_ref, lock->ref_name))
-			log_ref_write("HEAD", lock->old_sha1, sha1, logmsg);
+			log_ref_write("HEAD", lock->old_oid.hash, sha1, logmsg);
 	}
 	if (commit_ref(lock)) {
 		error("Couldn't set %s", lock->ref_name);
@@ -3616,11 +3617,12 @@ static int do_for_each_reflog(struct strbuf *name, each_ref_fn fn, void *cb_data
 				strbuf_addch(name, '/');
 				retval = do_for_each_reflog(name, fn, cb_data);
 			} else {
-				unsigned char sha1[20];
-				if (read_ref_full(name->buf, 0, sha1, NULL))
+				struct object_id oid;
+
+				if (read_ref_full(name->buf, 0, oid.hash, NULL))
 					retval = error("bad ref for %s", name->buf);
 				else
-					retval = fn(name->buf, sha1, 0, cb_data);
+					retval = fn(name->buf, &oid, 0, cb_data);
 			}
 			if (retval)
 				break;
@@ -3921,7 +3923,7 @@ int ref_transaction_commit(struct ref_transaction *transaction,
 						  (update->flags & REF_NODEREF));
 
 			if (!overwriting_symref &&
-			    !hashcmp(update->lock->old_sha1, update->new_sha1)) {
+			    !hashcmp(update->lock->old_oid.hash, update->new_sha1)) {
 				/*
 				 * The reference already has the desired
 				 * value, so we don't need to write it.

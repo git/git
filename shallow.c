@@ -475,11 +475,10 @@ static void paint_down(struct paint_info *info, const unsigned char *sha1,
 	free(tmp);
 }
 
-static int mark_uninteresting(const char *refname,
-			      const unsigned char *sha1,
+static int mark_uninteresting(const char *refname, const struct object_id *oid,
 			      int flags, void *cb_data)
 {
-	struct commit *commit = lookup_commit_reference_gently(sha1, 1);
+	struct commit *commit = lookup_commit_reference_gently(oid->hash, 1);
 	if (!commit)
 		return 0;
 	commit->object.flags |= UNINTERESTING;
@@ -584,12 +583,12 @@ struct commit_array {
 	int nr, alloc;
 };
 
-static int add_ref(const char *refname,
-		   const unsigned char *sha1, int flags, void *cb_data)
+static int add_ref(const char *refname, const struct object_id *oid,
+		   int flags, void *cb_data)
 {
 	struct commit_array *ca = cb_data;
 	ALLOC_GROW(ca->commits, ca->nr + 1, ca->alloc);
-	ca->commits[ca->nr] = lookup_commit_reference_gently(sha1, 1);
+	ca->commits[ca->nr] = lookup_commit_reference_gently(oid->hash, 1);
 	if (ca->commits[ca->nr])
 		ca->nr++;
 	return 0;
@@ -674,6 +673,7 @@ int delayed_reachability_test(struct shallow_info *si, int c)
 
 		if (!si->commits) {
 			struct commit_array ca;
+
 			memset(&ca, 0, sizeof(ca));
 			head_ref(add_ref, &ca);
 			for_each_ref(add_ref, &ca);
