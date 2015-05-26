@@ -79,12 +79,16 @@ UI, Workflows & Features
 
  * The Git subcommand completion (in contrib/) listed credential
    helpers among candidates, which is not something the end user would
-   invoke interatively.
+   invoke interactively.
+
+ * The index file can be taught with "update-index --untracked-cache"
+   to optionally remember already seen untracked files, in order to
+   speed up "git status" in a working tree with tons of cruft.
 
 
 Performance, Internal Implementation, Development Support etc.
 
- * "unsigned char [20]" used thoughout the code to represent object
+ * "unsigned char [20]" used throughout the code to represent object
    names are being converted into a semi-opaque "struct object_id".
    This effort is expected to interfere with other topics in flight,
    but hopefully will give us one extra level of abstraction in the
@@ -180,9 +184,9 @@ notes for details).
  * Some time ago, "git blame" (incorrectly) lost the convert_to_git()
    call when synthesizing a fake "tip" commit that represents the
    state in the working tree, which broke folks who record the history
-   with LF line ending to make their project portabile across
-   platforms while terminating lines in their working tree files with
-   CRLF for their platform.
+   with LF line ending to make their project portable across platforms
+   while terminating lines in their working tree files with CRLF for
+   their platform.
    (merge 4bf256d tb/blame-resurrect-convert-to-git later to maint).
 
  * We avoid setting core.worktree when the repository location is the
@@ -208,7 +212,7 @@ notes for details).
    (merge 27547e5 cn/bom-in-gitignore later to maint).
 
  * a few helper scripts in the test suite did not report errors
-   correcty.
+   correctly.
    (merge de248e9 ep/fix-test-lib-functions-report later to maint).
 
  * The default $HOME/.gitconfig file created upon "git config --global"
@@ -307,6 +311,24 @@ notes for details).
    (merge d0258b9 jk/asciidoc-markup-fix later to maint).
    (merge ad3967a jk/stripspace-asciidoctor-fix later to maint).
    (merge 975e382 ja/tutorial-asciidoctor-fix later to maint).
+
+ * The code to read pack-bitmap wanted to allocate a few hundred
+   pointers to a structure, but by mistake allocated and leaked memory
+   enough to hold that many actual structures.  Correct the allocation
+   size and also have it on stack, as it is small enough.
+   (merge 599dc76 rs/plug-leak-in-pack-bitmaps later to maint).
+
+ * The pull.ff configuration was supposed to override the merge.ff
+   configuration, but it didn't.
+   (merge db9bb28 pt/pull-ff-vs-merge-ff later to maint).
+
+ * "git pull --log" and "git pull --no-log" worked as expected, but
+   "git pull --log=20" did not.
+   (merge 5061a44 pt/pull-log-n later to maint).
+
+ * "git rerere forget" in a repository without rerere enabled gave a
+   cryptic error message; it should be a silent no-op instead.
+   (merge 0544574 jk/rerere-forget-check-enabled later to maint).
 
  * Code cleanups and documentation updates.
    (merge 0269f96 mm/usage-log-l-can-take-regex later to maint).
