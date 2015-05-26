@@ -96,7 +96,6 @@ void setup_path(void)
 	struct strbuf new_path = STRBUF_INIT;
 
 	add_path(&new_path, git_exec_path());
-	add_path(&new_path, argv0_path);
 
 	if (old_path)
 		strbuf_addstr(&new_path, old_path);
