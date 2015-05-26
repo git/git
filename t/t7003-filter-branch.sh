@@ -394,4 +394,14 @@ test_expect_success 'replace submodule revision' '
 	test $orig_head != `git show-ref --hash --head HEAD`
 '
 
+test_expect_success 'filter commit message without trailing newline' '
+	git reset --hard original &&
+	commit=$(printf "no newline" | git commit-tree HEAD^{tree}) &&
+	git update-ref refs/heads/no-newline $commit &&
+	git filter-branch -f refs/heads/no-newline &&
+	echo $commit >expect &&
+	git rev-parse refs/heads/no-newline >actual &&
+	test_cmp expect actual
+'
+
 test_done
