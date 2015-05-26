@@ -271,7 +271,7 @@ static int configure_via_resource(LPWSTR basename, LPWSTR exepath, LPWSTR exep,
 	int *is_git_command, LPWSTR *working_directory, int *full_path,
 	int *skip_arguments, int *allocate_console, int *show_console)
 {
-	int id, minimal_search_path, needs_a_console, no_hide, wargc;
+	int i, id, minimal_search_path, needs_a_console, no_hide, wargc;
 	LPWSTR *wargv;
 
 #define BUFSIZE 65536
@@ -333,15 +333,41 @@ static int configure_via_resource(LPWSTR basename, LPWSTR exepath, LPWSTR exep,
 	*is_git_command = 0;
 	*working_directory = (LPWSTR) 1;
 	wargv = CommandLineToArgvW(GetCommandLine(), &wargc);
-	if (wargc > 1) {
-		if (!wcscmp(L"--no-cd", wargv[1])) {
+	for (i = 1; i < wargc; i++) {
+		if (!wcscmp(L"--no-cd", wargv[i]))
 			*working_directory = NULL;
-			*skip_arguments = 1;
+		else if (!wcsncmp(L"--cd=", wargv[i], 5))
+			*working_directory = wcsdup(wargv[i] + 5);
+		else if (!wcscmp(L"--minimal-search-path", wargv[i]))
+			minimal_search_path = 1;
+		else if (!wcscmp(L"--no-minimal-search-path", wargv[i]))
+			minimal_search_path = 0;
+		else if (!wcscmp(L"--needs-console", wargv[i]))
+			needs_a_console = 1;
+		else if (!wcscmp(L"--no-needs-console", wargv[i]))
+			needs_a_console = 0;
+		else if (!wcscmp(L"--hide", wargv[i]))
+			no_hide = 0;
+		else if (!wcscmp(L"--no-hide", wargv[i]))
+			no_hide = 1;
+		else if (!wcsncmp(L"--command=", wargv[i], 10)) {
+			LPWSTR expanded;
+
+			wargv[i] += 10;
+			expanded = expand_variables(wargv[i], wcslen(wargv[i]));
+			if (expanded == wargv[i])
+				expanded = wcsdup(expanded);
+
+			extract_first_arg(expanded, exepath, exep);
+
+			*prefix_args = expanded;
+			*prefix_args_len = wcslen(*prefix_args);
+			*skip_arguments = i;
+			break;
 		}
-		else if (!wcsncmp(L"--cd=", wargv[1], 5)) {
-			*working_directory = wcsdup(wargv[1] + 5);
-			*skip_arguments = 1;
-		}
+		else
+			break;
+		*skip_arguments = i;
 	}
 	if (minimal_search_path)
 		*full_path = 0;
