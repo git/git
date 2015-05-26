@@ -188,6 +188,26 @@ static int strip_prefix(LPWSTR str, int *len, LPCWSTR prefix)
 	return 0;
 }
 
+static void extract_first_arg(LPWSTR command_line, LPWSTR exepath, LPWSTR buf)
+{
+	LPWSTR *wargv;
+	int wargc;
+
+	wargv = CommandLineToArgvW(command_line, &wargc);
+	if (wargc < 1) {
+		fwprintf(stderr, L"Invalid command-line: '%s'\n", command_line);
+		exit(1);
+	}
+	if (*wargv[0] == L'\\' ||
+			(isalpha(*wargv[0]) && wargv[0][1] == L':'))
+		wcscpy(buf, wargv[0]);
+	else {
+		wcscpy(buf, exepath);
+		PathAppend(buf, wargv[0]);
+	}
+	LocalFree(wargv);
+}
+
 static int configure_via_resource(LPWSTR basename, LPWSTR exepath, LPWSTR exep,
 	LPWSTR *prefix_args, int *prefix_args_len,
 	int *is_git_command, LPWSTR *working_directory, int *full_path,
@@ -268,20 +288,7 @@ static int configure_via_resource(LPWSTR basename, LPWSTR exepath, LPWSTR exep,
 			atat[env_len - 1] = save;
 		}
 
-		/* parse first argument */
-		wargv = CommandLineToArgvW(buf, &wargc);
-		if (wargc < 1) {
-			fwprintf(stderr, L"Invalid command-line: '%s'\n", buf);
-			exit(1);
-		}
-		if (*wargv[0] == L'\\' ||
-				(isalpha(*wargv[0]) && wargv[0][1] == L':'))
-			wcscpy(exep, wargv[0]);
-		else {
-			wcscpy(exep, exepath);
-			PathAppend(exep, wargv[0]);
-		}
-		LocalFree(wargv);
+		extract_first_arg(buf, exepath, exep);
 
 		if (_waccess(exep, 0) != -1)
 			break;
