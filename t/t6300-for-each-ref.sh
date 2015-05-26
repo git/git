@@ -28,7 +28,10 @@ test_expect_success setup '
 	git update-ref refs/remotes/origin/master master &&
 	git remote add origin nowhere &&
 	git config branch.master.remote origin &&
-	git config branch.master.merge refs/heads/master
+	git config branch.master.merge refs/heads/master &&
+	git remote add myfork elsewhere &&
+	git config remote.pushdefault myfork &&
+	git config push.default current
 '
 
 test_atom() {
@@ -47,6 +50,7 @@ test_atom() {
 
 test_atom head refname refs/heads/master
 test_atom head upstream refs/remotes/origin/master
+test_atom head push refs/remotes/myfork/master
 test_atom head objecttype commit
 test_atom head objectsize 171
 test_atom head objectname $(git rev-parse refs/heads/master)
@@ -83,6 +87,7 @@ test_atom head HEAD '*'
 
 test_atom tag refname refs/tags/testtag
 test_atom tag upstream ''
+test_atom tag push ''
 test_atom tag objecttype tag
 test_atom tag objectsize 154
 test_atom tag objectname $(git rev-parse refs/tags/testtag)
@@ -344,6 +349,12 @@ test_expect_success 'Check that :track[short] works when upstream is invalid' '
 	git for-each-ref \
 		--format="%(upstream:track)$LF%(upstream:trackshort)" \
 		refs/heads >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success '%(push) supports tracking specifiers, too' '
+	echo "[ahead 1]" >expected &&
+	git for-each-ref --format="%(push:track)" refs/heads >actual &&
 	test_cmp expected actual
 '
 

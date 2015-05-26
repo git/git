@@ -97,10 +97,6 @@ It contains:
 
 	The name of the remote listed in the configuration.
 
-`remote`::
-
-	The struct remote for that remote.
-
 `merge_name`::
 
 	An array of the "merge" lines in the configuration.

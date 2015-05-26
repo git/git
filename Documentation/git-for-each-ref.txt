@@ -97,6 +97,12 @@ upstream::
 	or "=" (in sync).  Has no effect if the ref does not have
 	tracking information associated with it.
 
+push::
+	The name of a local ref which represents the `@{push}` location
+	for the displayed ref. Respects `:short`, `:track`, and
+	`:trackshort` options as `upstream` does. Produces an empty
+	string if no `@{push}` ref is configured.
+
 HEAD::
 	'*' if HEAD matches current ref (the checked out branch), ' '
 	otherwise.
