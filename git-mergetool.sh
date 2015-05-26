@@ -451,8 +451,6 @@ fi
 printf "Merging:\n"
 printf "%s\n" "$files"
 
-IFS='
-'
 rc=0
 for i in $files
 do

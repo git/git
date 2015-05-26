@@ -2,6 +2,9 @@
 
 : ${MERGE_TOOLS_DIR=$(git --exec-path)/mergetools}
 
+IFS='
+'
+
 mode_ok () {
 	if diff_mode
 	then
