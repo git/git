@@ -8,10 +8,14 @@ avoid_racy() {
 	sleep 1
 }
 
-git update-index --untracked-cache
 # It's fine if git update-index returns an error code other than one,
 # it'll be caught in the first test.
-if test $? -eq 1; then
+test_lazy_prereq UNTRACKED_CACHE '
+	{ git update-index --untracked-cache; ret=$?; } &&
+	test $ret -ne 1
+'
+
+if ! test_have_prereq UNTRACKED_CACHE; then
 	skip_all='This system does not support untracked cache'
 	test_done
 fi
