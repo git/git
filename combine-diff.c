@@ -730,7 +730,7 @@ static void dump_sline(struct sline *sline, const char *line_prefix,
 	const char *c_func = diff_get_color(use_color, DIFF_FUNCINFO);
 	const char *c_new = diff_get_color(use_color, DIFF_FILE_NEW);
 	const char *c_old = diff_get_color(use_color, DIFF_FILE_OLD);
-	const char *c_plain = diff_get_color(use_color, DIFF_PLAIN);
+	const char *c_context = diff_get_color(use_color, DIFF_CONTEXT);
 	const char *c_reset = diff_get_color(use_color, DIFF_RESET);
 
 	if (result_deleted)
@@ -793,7 +793,7 @@ static void dump_sline(struct sline *sline, const char *line_prefix,
 			}
 			if (comment_end)
 				printf("%s%s %s%s", c_reset,
-						    c_plain, c_reset,
+						    c_context, c_reset,
 						    c_func);
 			for (i = 0; i < comment_end; i++)
 				putchar(hunk_comment[i]);
@@ -828,7 +828,7 @@ static void dump_sline(struct sline *sline, const char *line_prefix,
 				 */
 				if (!context)
 					continue;
-				fputs(c_plain, stdout);
+				fputs(c_context, stdout);
 			}
 			else
 				fputs(c_new, stdout);
