@@ -54,7 +54,7 @@ static char diff_colors[][COLOR_MAXLEN] = {
 
 static int parse_diff_color_slot(const char *var)
 {
-	if (!strcasecmp(var, "plain"))
+	if (!strcasecmp(var, "context") || !strcasecmp(var, "plain"))
 		return DIFF_PLAIN;
 	if (!strcasecmp(var, "meta"))
 		return DIFF_METAINFO;
