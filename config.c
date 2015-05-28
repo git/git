@@ -2051,6 +2051,8 @@ int git_config_set_multivar_in_file(const char *config_filename,
 		contents = xmmap_gently(NULL, contents_sz, PROT_READ,
 					MAP_PRIVATE, in_fd, 0);
 		if (contents == MAP_FAILED) {
+			if (errno == ENODEV && S_ISDIR(st.st_mode))
+				errno = EISDIR;
 			error("unable to mmap '%s': %s",
 			      config_filename, strerror(errno));
 			ret = CONFIG_INVALID_FILE;
