@@ -353,12 +353,34 @@ test_expect_success '--list without repo produces empty output' '
 '
 
 cat > expect << EOF
+beta.noindent
+nextsection.nonewline
+123456.a123
+version.1.2.3eX.alpha
+EOF
+
+test_expect_success 'working --list-names' '
+	git config --list-names >output &&
+	test_cmp expect output
+'
+
+cat > expect << EOF
 beta.noindent sillyValue
 nextsection.nonewline wow2 for me
 EOF
 
 test_expect_success '--get-regexp' '
 	git config --get-regexp in >output &&
+	test_cmp expect output
+'
+
+cat > expect << EOF
+beta.noindent
+nextsection.nonewline
+EOF
+
+test_expect_success '--get-name-regexp' '
+	git config --get-name-regexp in >output &&
 	test_cmp expect output
 '
 

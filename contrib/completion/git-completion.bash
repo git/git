@@ -1883,8 +1883,8 @@ _git_config ()
 	--*)
 		__gitcomp "
 			--system --global --local --file=
-			--list --replace-all
-			--get --get-all --get-regexp
+			--list --list-names --replace-all
+			--get --get-all --get-regexp --get-name-regexp
 			--add --unset --unset-all
 			--remove-section --rename-section
 			"
