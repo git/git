@@ -1934,6 +1934,8 @@ int git_config_set_multivar_in_file(const char *config_filename,
 	int ret;
 	struct lock_file *lock = NULL;
 	char *filename_buf = NULL;
+	char *contents = NULL;
+	size_t contents_sz;
 
 	/* parse-key returns negative; flip the sign to feed exit(3) */
 	ret = 0 - git_config_parse_key(key, &store.key, &store.baselen);
@@ -1983,8 +1985,7 @@ int git_config_set_multivar_in_file(const char *config_filename,
 			goto write_err_out;
 	} else {
 		struct stat st;
-		char *contents;
-		size_t contents_sz, copy_begin, copy_end;
+		size_t copy_begin, copy_end;
 		int i, new_line = 0;
 
 		if (value_regex == NULL)
@@ -2103,8 +2104,6 @@ int git_config_set_multivar_in_file(const char *config_filename,
 					  contents_sz - copy_begin) <
 			    contents_sz - copy_begin)
 				goto write_err_out;
-
-		munmap(contents, contents_sz);
 	}
 
 	if (commit_lock_file(lock) < 0) {
@@ -2130,6 +2129,8 @@ out_free:
 	if (lock)
 		rollback_lock_file(lock);
 	free(filename_buf);
+	if (contents)
+		munmap(contents, contents_sz);
 	return ret;
 
 write_err_out:
