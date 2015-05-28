@@ -2162,9 +2162,11 @@ int symlink(const char *target, const char *link)
 	return 0;
 }
 
+#ifndef _WINNT_H
 /*
- * The REPARSE_DATA_BUFFER structure is only defined in the Windows DDK (in
- * Ntifs.h), so we have to define it ourselves.
+ * The REPARSE_DATA_BUFFER structure is defined in the Windows DDK (in
+ * ntifs.h) and in MSYS1's winnt.h (which defines _WINNT_H). So define
+ * it ourselves if we are on MSYS2 (whose winnt.h defines _WINNT_).
  */
 typedef struct _REPARSE_DATA_BUFFER {
 	DWORD  ReparseTag;
@@ -2191,6 +2193,7 @@ typedef struct _REPARSE_DATA_BUFFER {
 		} GenericReparseBuffer;
 	} DUMMYUNIONNAME;
 } REPARSE_DATA_BUFFER, *PREPARSE_DATA_BUFFER;
+#endif
 
 int readlink(const char *path, char *buf, size_t bufsiz)
 {
