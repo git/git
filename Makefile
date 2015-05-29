@@ -1685,7 +1685,7 @@ $(SCRIPT_PERL_GEN): perl/perl.mak
 perl/perl.mak: perl/PM.stamp
 
 perl/PM.stamp: FORCE
-	$(QUIET_GEN)$(FIND) perl -type f -name '*.pm' | sort >$@+ && \
+	@$(FIND) perl -type f -name '*.pm' | sort >$@+ && \
 	{ cmp $@+ $@ >/dev/null 2>/dev/null || mv $@+ $@; } && \
 	$(RM) $@+
 
