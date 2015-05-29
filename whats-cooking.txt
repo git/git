@@ -1,20 +1,15 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (May 2015, #07; Tue, 26)
-X-master-at: fae46aa0ae5318bbb20f0ef871721bf49e292cea
-X-next-at: 37f085bb52bb507d786c36ae50951e460f4f15c7
+Subject: What's cooking in git.git (May 2015, #08; Fri, 29)
+X-master-at: 77bd3ea9f54f1584147b594abc04c26ca516d987
+X-next-at: 5f4350e90f9ad5b056aa42fe83b9262c702a5306
 
-What's cooking in git.git (May 2015, #07; Tue, 26)
+What's cooking in git.git (May 2015, #08; Fri, 29)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
-
-The "untracked cache" series is in 'master' now.  I do not use it
-personally, but it is meant to make life easier for those with large
-amount of untracked cruft in their working trees.  Please try it out
-and report successes (and of course breakages, too).
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -22,159 +17,101 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* jk/rerere-forget-check-enabled (2015-05-14) 1 commit
-  (merged to 'next' on 2015-05-19 at bfe67dc)
- + rerere: exit silently on "forget" when rerere is disabled
-
- "git rerere forget" in a repository without rerere enabled gave a
- cryptic error message; it should be a silent no-op instead.
-
-
-* nd/untracked-cache (2015-03-12) 24 commits
-  (merged to 'next' on 2015-05-19 at 26e619b)
- + git-status.txt: advertisement for untracked cache
- + untracked cache: guard and disable on system changes
- + mingw32: add uname()
- + t7063: tests for untracked cache
- + update-index: test the system before enabling untracked cache
- + update-index: manually enable or disable untracked cache
- + status: enable untracked cache
- + untracked-cache: temporarily disable with $GIT_DISABLE_UNTRACKED_CACHE
- + untracked cache: mark index dirty if untracked cache is updated
- + untracked cache: print stats with $GIT_TRACE_UNTRACKED_STATS
- + untracked cache: avoid racy timestamps
- + read-cache.c: split racy stat test to a separate function
- + untracked cache: invalidate at index addition or removal
- + untracked cache: load from UNTR index extension
- + untracked cache: save to an index extension
- + ewah: add convenient wrapper ewah_serialize_strbuf()
- + untracked cache: don't open non-existent .gitignore
- + untracked cache: mark what dirs should be recursed/saved
- + untracked cache: record/validate dir mtime and reuse cached output
- + untracked cache: make a wrapper around {open,read,close}dir()
- + untracked cache: invalidate dirs recursively if .gitignore changes
- + untracked cache: initial untracked cache validation
- + untracked cache: record .gitignore information and dir hierarchy
- + dir.c: optionally compute sha-1 of a .gitignore file
-
- Teach the index to optionally remember already seen untracked files
- to speed up "git status" in a working tree with tons of cruft.
-
-
-* pt/pull-ff-vs-merge-ff (2015-05-18) 2 commits
-  (merged to 'next' on 2015-05-20 at 064a082)
- + pull: parse pull.ff as a bool or string
- + pull: make pull.ff=true override merge.ff
-
- The pull.ff configuration was supposed to override the merge.ff
- configuration, but it didn't.
-
-
-* pt/pull-log-n (2015-05-18) 1 commit
-  (merged to 'next' on 2015-05-20 at db6ce78)
- + pull: handle --log=<n>
-
- "git pull --log" and "git pull --no-log" worked as expected, but
- "git pull --log=20" did not.
-
-
-* rs/plug-leak-in-pack-bitmaps (2015-05-19) 1 commit
-  (merged to 'next' on 2015-05-20 at b70f647)
- + pack-bitmaps: plug memory leak, fix allocation size for recent_bitmaps
-
- The code to read pack-bitmap wanted to allocate a few hundred
- pointers to a structure, but by mistake allocated and leaked memory
- enough to hold that many actual structures.  Correct the allocation
- size and also have it on stack, as it is small enough.
-
---------------------------------------------------
 [New Topics]
 
-* ah/send-email-sendmail-alias (2015-05-25) 2 commits
- - t9001: write $HOME/, not ~/, to help shells without tilde expansion
- - send-email: add sendmail email aliases format
-
- "git send-email" learned the alias file format used by the sendmail
- program (in an abbreviated form).
-
- Reroll coming?  What's queued is good enough?
-
-
-* bc/object-id (2015-05-25) 56 commits
-  (merged to 'next' on 2015-05-26 at 8d9f645)
- + struct ref_lock: convert old_sha1 member to object_id
- + warn_if_dangling_symref(): convert local variable "junk" to object_id
- + each_ref_fn_adapter(): remove adapter
- + rev_list_insert_ref(): remove unneeded arguments
- + rev_list_insert_ref_oid(): new function, taking an object_oid
- + mark_complete(): remove unneeded arguments
- + mark_complete_oid(): new function, taking an object_oid
- + clear_marks(): rewrite to take an object_id argument
- + mark_complete(): rewrite to take an object_id argument
- + send_ref(): convert local variable "peeled" to object_id
- + upload-pack: rewrite functions to take object_id arguments
- + find_symref(): convert local variable "unused" to object_id
- + find_symref(): rewrite to take an object_id argument
- + write_one_ref(): rewrite to take an object_id argument
- + write_refs_to_temp_dir(): convert local variable sha1 to object_id
- + submodule: rewrite to take an object_id argument
- + shallow: rewrite functions to take object_id arguments
- + handle_one_ref(): rewrite to take an object_id argument
- + add_info_ref(): rewrite to take an object_id argument
- + handle_one_reflog(): rewrite to take an object_id argument
- + register_replace_ref(): rewrite to take an object_id argument
- + remote: rewrite functions to take object_id arguments
- + add_one_ref(): rewrite to take an object_id argument
- + string_list_add_one_ref(): rewrite to take an object_id argument
- + add_ref_decoration(): convert local variable original_sha1 to object_id
- + add_ref_decoration(): rewrite to take an object_id argument
- + show_head_ref(): convert local variable "unused" to object_id
- + http-backend: rewrite to take an object_id argument
- + append_similar_ref(): rewrite to take an object_id argument
- + builtin/show-ref: rewrite to take an object_id argument
- + show_ref(): convert local variable peeled to object_id
- + builtin/show-ref: rewrite to use object_id
- + fsck: change functions to use object_id
- + cmd_show_branch(): fix error message
- + builtin/show-branch: rewrite functions to work with object_id
- + append_one_rev(): rewrite to work with object_id
- + builtin/show-branch: rewrite functions to take object_id arguments
- + append_matching_ref(): rewrite to take an object_id argument
- + show_reference(): rewrite to take an object_id argument
- + builtin/remote: rewrite functions to take object_id arguments
- + add_branch_for_removal(): don't set "util" field of string_list entries
- + add_branch_for_removal(): rewrite to take an object_id argument
- + builtin/reflog: rewrite ref functions to take an object_id argument
- + show_ref_cb(): rewrite to take an object_id argument
- + builtin/pack-objects: rewrite to take an object_id argument
- + name_ref(): rewrite to take an object_id argument
- + grab_single_ref(): rewrite to take an object_id argument
- + builtin/fetch: rewrite to take an object_id argument
- + get_name(): rewrite to take an object_id argument
- + add_pending_uninteresting_ref(): rewrite to take an object_id argument
- + append_ref(): rewrite to take an object_id argument
- + register_ref(): rewrite to take an object_id argument
- + handle_one_ref(): rewrite to take an object_id argument
- + builtin/rev-parse: rewrite to take an object_id argument
- + each_ref_fn: change to take an object_id parameter
- + refs: convert struct ref_entry to use struct object_id
-
- for_each_ref() callback functions were taught to name the objects
- not with "unsigned char sha1[20]" but with "struct object_id".
-
- Will merge to 'master'.
-
-
-* jc/diff-ws-check-deleted (2015-05-26) 4 commits
- - diff.c: --ws-check-deleted option
- - diff.c: add emit_del_line() and update callers of emit_line_0()
+* jc/diff-ws-error-highlight (2015-05-26) 4 commits
+ - diff.c: --ws-error-highlight=<kind> option
+ - diff.c: add emit_del_line() and emit_context_line()
  - t4015: separate common setup and per-test expectation
  - t4015: modernise style
 
- Allow whitespace breakages in 'deleted' lines to be also painted
- in the output.
+ Allow whitespace breakages in deleted and context lines to be also
+ painted in the output.
+
+ Will merge to 'next'.
+
+
+* jk/clone-dissociate (2015-05-27) 2 commits
+ - clone: reorder --dissociate and --reference options
+ - clone: use OPT_STRING_LIST for --reference
+
+ Code clean-up.
+
+ Will merge to 'next'.
+
+
+* jk/color-diff-plain-is-context (2015-05-27) 2 commits
+ - diff.h: rename DIFF_PLAIN color slot to DIFF_CONTEXT
+ - diff: accept color.diff.context as a synonym for "plain"
+
+ "color.diff.plain" was a misnomer; give it 'color.diff.context' as
+ a more logical synonym.
+
+ Will merge to 'next'.
+
+
+* jk/diagnose-config-mmap-failure (2015-05-28) 5 commits
+ - xmmap(): drop "Out of memory?"
+ - config.c: rewrite ENODEV into EISDIR when mmap fails
+ - config.c: avoid xmmap error messages
+ - config.c: fix mmap leak when writing config
+ - read-cache.c: drop PROT_WRITE from mmap of index
+
+ The configuration reader/writer uses mmap(2) interface to access
+ the files; when we find a directory, it barfed with "Out of memory?".
+
+ Will merge to 'next'.
+
+
+* mh/verify-lock-error-report (2015-05-27) 5 commits
+ - ref_transaction_commit(): do not capitalize error messages
+ - verify_lock(): do not capitalize error messages
+ - verify_lock(): report errors via a strbuf
+ - verify_lock(): on errors, let the caller unlock the lock
+ - verify_lock(): return 0/-1 rather than struct ref_lock *
+
+ Bring consistency to error reporting mechanism used in "refs" API.
+
+ Will merge to 'next'.
+
+
+* mt/p4-depotFile-at-version (2015-05-27) 1 commit
+ - p4: retrieve the right revision of the file in UTF-16 codepath
+
+ Will merge to 'next'.
+
+
+* sb/glossary-submodule (2015-05-29) 1 commit
+ - glossary: add "remote", "submodule", "superproject"
+
+ Will merge to 'next'.
+
+
+* sg/config-name-only (2015-05-28) 3 commits
+ - completion: use new 'git config' options to reliably list variable names
+ - SQUASH
+ - config: add options to list only variable names
+
+ "git config --list" output was hard to parse when values consist of
+ multiple lines.  Introduce a way to show only the keys.
+
+
+* sg/merge-summary-config (2015-05-28) 1 commit
+ - Documentation: include 'merge.branchdesc' for merge and config as well
+
+
+* jc/push-tags-also (2015-05-29) 1 commit
+ - push --tags: push tags *in addition to* other stuff
+
+
+* jk/die-on-bogus-worktree-late (2015-05-29) 1 commit
+ - setup_git_directory: delay core.bare/core.worktree errors
+
+
+* jk/make-fix-dependencies (2015-05-29) 3 commits
+ - Makefile: silence perl/PM.stamp recipe
+ - Makefile: avoid timestamp updates to GIT-BUILD-OPTIONS
+ - Makefile: drop dependency between git-instaweb and gitweb
 
 --------------------------------------------------
 [Stalled]
@@ -392,6 +329,81 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* ah/send-email-sendmail-alias (2015-05-27) 2 commits
+ - t9001: write $HOME/, not ~/, to help shells without tilde expansion
+ - send-email: add sendmail email aliases format
+
+ "git send-email" learned the alias file format used by the sendmail
+ program (in an abbreviated form).
+
+ Will merge to 'next'.
+
+
+* bc/object-id (2015-05-25) 56 commits
+  (merged to 'next' on 2015-05-26 at 8d9f645)
+ + struct ref_lock: convert old_sha1 member to object_id
+ + warn_if_dangling_symref(): convert local variable "junk" to object_id
+ + each_ref_fn_adapter(): remove adapter
+ + rev_list_insert_ref(): remove unneeded arguments
+ + rev_list_insert_ref_oid(): new function, taking an object_oid
+ + mark_complete(): remove unneeded arguments
+ + mark_complete_oid(): new function, taking an object_oid
+ + clear_marks(): rewrite to take an object_id argument
+ + mark_complete(): rewrite to take an object_id argument
+ + send_ref(): convert local variable "peeled" to object_id
+ + upload-pack: rewrite functions to take object_id arguments
+ + find_symref(): convert local variable "unused" to object_id
+ + find_symref(): rewrite to take an object_id argument
+ + write_one_ref(): rewrite to take an object_id argument
+ + write_refs_to_temp_dir(): convert local variable sha1 to object_id
+ + submodule: rewrite to take an object_id argument
+ + shallow: rewrite functions to take object_id arguments
+ + handle_one_ref(): rewrite to take an object_id argument
+ + add_info_ref(): rewrite to take an object_id argument
+ + handle_one_reflog(): rewrite to take an object_id argument
+ + register_replace_ref(): rewrite to take an object_id argument
+ + remote: rewrite functions to take object_id arguments
+ + add_one_ref(): rewrite to take an object_id argument
+ + string_list_add_one_ref(): rewrite to take an object_id argument
+ + add_ref_decoration(): convert local variable original_sha1 to object_id
+ + add_ref_decoration(): rewrite to take an object_id argument
+ + show_head_ref(): convert local variable "unused" to object_id
+ + http-backend: rewrite to take an object_id argument
+ + append_similar_ref(): rewrite to take an object_id argument
+ + builtin/show-ref: rewrite to take an object_id argument
+ + show_ref(): convert local variable peeled to object_id
+ + builtin/show-ref: rewrite to use object_id
+ + fsck: change functions to use object_id
+ + cmd_show_branch(): fix error message
+ + builtin/show-branch: rewrite functions to work with object_id
+ + append_one_rev(): rewrite to work with object_id
+ + builtin/show-branch: rewrite functions to take object_id arguments
+ + append_matching_ref(): rewrite to take an object_id argument
+ + show_reference(): rewrite to take an object_id argument
+ + builtin/remote: rewrite functions to take object_id arguments
+ + add_branch_for_removal(): don't set "util" field of string_list entries
+ + add_branch_for_removal(): rewrite to take an object_id argument
+ + builtin/reflog: rewrite ref functions to take an object_id argument
+ + show_ref_cb(): rewrite to take an object_id argument
+ + builtin/pack-objects: rewrite to take an object_id argument
+ + name_ref(): rewrite to take an object_id argument
+ + grab_single_ref(): rewrite to take an object_id argument
+ + builtin/fetch: rewrite to take an object_id argument
+ + get_name(): rewrite to take an object_id argument
+ + add_pending_uninteresting_ref(): rewrite to take an object_id argument
+ + append_ref(): rewrite to take an object_id argument
+ + register_ref(): rewrite to take an object_id argument
+ + handle_one_ref(): rewrite to take an object_id argument
+ + builtin/rev-parse: rewrite to take an object_id argument
+ + each_ref_fn: change to take an object_id parameter
+ + refs: convert struct ref_entry to use struct object_id
+
+ for_each_ref() callback functions were taught to name the objects
+ not with "unsigned char sha1[20]" but with "struct object_id".
+
+ Will merge to 'master'.
+
+
 * da/mergetool-winmerge (2015-05-20) 2 commits
   (merged to 'next' on 2015-05-26 at d6333e9)
  + mergetools: add winmerge as a builtin tool
@@ -488,10 +500,10 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* sb/submodule-doc-intro (2015-05-22) 1 commit
- - submodule documentation: reorder introductory paragraphs
+* sb/submodule-doc-intro (2015-05-28) 1 commit
+ - submodule doc: reorder introductory paragraphs
 
- What's the doneness of this one???
+ Will merge to 'next'.
 
 
 * sb/test-bitmap-free-at-end (2015-05-22) 1 commit
@@ -579,9 +591,10 @@ of the repositories listed at
 
 
 * ld/p4-editor-multi-words (2015-05-26) 3 commits
- - git-p4: tests: use test-chmtime in place of touch
- - git-p4: fix handling of multi-word P4EDITOR
- - git-p4: add failing test for P4EDITOR handling
+  (merged to 'next' on 2015-05-28 at a368a47)
+ + git-p4: tests: use test-chmtime in place of touch
+ + git-p4: fix handling of multi-word P4EDITOR
+ + git-p4: add failing test for P4EDITOR handling
 
  Unlike "$EDITOR" and "$GIT_EDITOR" that can hold the path to the
  command and initial options (e.g. "/path/to/emacs -nw"), 'git p4'
@@ -589,10 +602,10 @@ of the repositories listed at
  variable that name the editor "$P4EDITOR" (and "$EDITOR", too).
  Make it in line with the rest of Git, as well as with Perforce.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* pt/pull-tests (2015-05-18) 8 commits
+* pt/pull-tests (2015-05-29) 8 commits
  - t5520: check reflog action in fast-forward merge
  - t5521: test --dry-run does not make any changes
  - t5520: test --rebase failure on unborn branch with index
@@ -603,6 +616,8 @@ of the repositories listed at
  - t5520: prevent field splitting in content comparisons
 
  Add more test coverage to "git pull".
+
+ Will merge to 'next'.
 
 
 * jc/clone-bundle (2015-04-30) 1 commit
@@ -652,16 +667,19 @@ of the repositories listed at
 
 
 * jc/merge-drop-old-syntax (2015-04-29) 1 commit
- - merge: drop 'git merge <message> HEAD <commit>' syntax
+  (merged to 'next' on 2015-05-28 at 6bfd8b9)
+ + merge: drop 'git merge <message> HEAD <commit>' syntax
 
  Stop supporting "git merge <message> HEAD <commit>" syntax that
  has been deprecated since October 2007.
 
- Will merge to 'next' and keep there during the 2.5 cycle.
+ Will keep in 'next' during the 2.5 cycle.
 
 
-* ah/usage-strings (2015-05-03) 2 commits
- - branch: fix funny-sounding error message
- - blame, log: format usage strings similarly to those in documentation
+* ah/usage-strings (2015-05-03) 1 commit
+  (merged to 'next' on 2015-05-28 at 5f4350e)
+ + blame, log: format usage strings similarly to those in documentation
 
- A few usage string updates.  The tip one still needs work.
+ A few usage string updates.
+
+ Will merge to 'master'.
