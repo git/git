@@ -4,6 +4,7 @@
 
 static int inside_git_dir = -1;
 static int inside_work_tree = -1;
+static int work_tree_config_is_bogus;
 
 /*
  * The input parameter must contain an absolute path, and it must already be
@@ -286,6 +287,10 @@ void setup_work_tree(void)
 
 	if (initialized)
 		return;
+
+	if (work_tree_config_is_bogus)
+		die("unable to set up work tree using invalid config");
+
 	work_tree = get_git_work_tree();
 	git_dir = get_git_dir();
 	if (!is_absolute_path(git_dir))
@@ -422,8 +427,11 @@ static const char *setup_explicit_git_dir(const char *gitdirenv,
 	if (work_tree_env)
 		set_git_work_tree(work_tree_env);
 	else if (is_bare_repository_cfg > 0) {
-		if (git_work_tree_cfg) /* #22.2, #30 */
-			die("core.bare and core.worktree do not make sense");
+		if (git_work_tree_cfg) {
+			/* #22.2, #30 */
+			warning("core.bare and core.worktree do not make sense");
+			work_tree_config_is_bogus = 1;
+		}
 
 		/* #18, #26 */
 		set_git_dir(gitdirenv);
