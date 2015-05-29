@@ -183,6 +183,27 @@ test_expect_success 'fail if the index has unresolved entries' '
 	test_cmp expected file
 '
 
+test_expect_success 'fast-forwards working tree if branch head is updated' '
+	git checkout -b third second^ &&
+	test_when_finished "git checkout -f copy && git branch -D third" &&
+	test "$(cat file)" = file &&
+	git pull . second:third 2>err &&
+	test_i18ngrep "fetch updated the current branch head" err &&
+	test "$(cat file)" = modified &&
+	test "$(git rev-parse third)" = "$(git rev-parse second)"
+'
+
+test_expect_success 'fast-forward fails with conflicting work tree' '
+	git checkout -b third second^ &&
+	test_when_finished "git checkout -f copy && git branch -D third" &&
+	test "$(cat file)" = file &&
+	echo conflict >file &&
+	test_must_fail git pull . second:third 2>err &&
+	test_i18ngrep "Cannot fast-forward your working tree" err &&
+	test "$(cat file)" = conflict &&
+	test "$(git rev-parse third)" = "$(git rev-parse second)"
+'
+
 test_expect_success '--rebase' '
 	git branch to-rebase &&
 	echo modified again > file &&
