@@ -86,7 +86,6 @@ test_expect_success 'pulling into void must not create an octopus' '
 '
 
 test_expect_success 'test . as a remote' '
-
 	git branch copy master &&
 	git config branch.copy.remote . &&
 	git config branch.copy.merge refs/heads/master &&
@@ -95,7 +94,11 @@ test_expect_success 'test . as a remote' '
 	git checkout copy &&
 	test "$(cat file)" = file &&
 	git pull &&
-	test "$(cat file)" = updated
+	test "$(cat file)" = updated &&
+	git reflog -1 >reflog.actual &&
+	sed "s/^[0-9a-f][0-9a-f]*/OBJID/" reflog.actual >reflog.fuzzy &&
+	echo "OBJID HEAD@{0}: pull: Fast-forward" >reflog.expected &&
+	test_cmp reflog.expected reflog.fuzzy
 '
 
 test_expect_success 'the default remote . should not break explicit pull' '
@@ -106,7 +109,11 @@ test_expect_success 'the default remote . should not break explicit pull' '
 	git reset --hard HEAD^ &&
 	test "$(cat file)" = file &&
 	git pull . second &&
-	test "$(cat file)" = modified
+	test "$(cat file)" = modified &&
+	git reflog -1 >reflog.actual &&
+	sed "s/^[0-9a-f][0-9a-f]*/OBJID/" reflog.actual >reflog.fuzzy &&
+	echo "OBJID HEAD@{0}: pull . second: Fast-forward" >reflog.expected &&
+	test_cmp reflog.expected reflog.fuzzy
 '
 
 test_expect_success 'fail if wildcard spec does not match any refs' '
