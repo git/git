@@ -163,6 +163,10 @@ static LPWSTR fixup_commandline(LPWSTR exepath, LPWSTR *exep, int *wait,
 		}
 		wcscat(cmd, p);
 	}
+
+	if (wargc > 1 && !wcscmp(wargv[1], L"gui"))
+		*wait = 0;
+
 	LocalFree(wargv);
 
 	return cmd;
@@ -342,6 +346,7 @@ int main(void)
 	}
 	else if (!wcsicmp(basename, L"git-gui.exe")) {
 		static WCHAR buffer[BUFSIZE];
+		wait = 0;
 		allocate_console = 1;
 		if (!PathRemoveFileSpec(exepath)) {
 			fwprintf(stderr,
