@@ -505,7 +505,7 @@ sub parse_sendmail_alias {
 sub parse_sendmail_aliases {
 	my $fh = shift;
 	while (<$fh>) {
-		if (/^\s*(?:#.*)?$/) { next; }
+		next if /^\s*$/ || /^\s*#/;
 		parse_sendmail_alias($_);
 	}
 }
