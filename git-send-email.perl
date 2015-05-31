@@ -517,22 +517,15 @@ my %parse_alias = (
 		      } },
 
 	sendmail => sub { my $fh = shift; while (<$fh>) {
-		if (/^\s*(?:#.*)?$/) { }
-
-		elsif (/"/) {
+		if (/^\s*(?:#.*)?$/) {
+		} elsif (/"/) {
 			print STDERR "warning: sendmail alias with quotes is not supported: $_\n";
-		}
-
-		elsif (/^\s|\\$/) {
+		} elsif (/^\s|\\$/) {
 			print STDERR "warning: sendmail continuation line is not supported: $_\n";
-		}
-
-		elsif (/^(\S+?)\s*:\s*(.+)$/) {
+		} elsif (/^(\S+?)\s*:\s*(.+)$/) {
 			my ($alias, $addr) = ($1, $2);
 			$aliases{$alias} = [ split_addrs($addr) ];
-		}
-
-		else {
+		} else {
 			print STDERR "warning: sendmail line is not recognized: $_\n";
 		}}},
 
