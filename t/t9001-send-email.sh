@@ -1587,6 +1587,40 @@ test_sendmail_aliases 'sendemail.aliasfiletype=sendmail' \
 	bcgrp: bob, chloe, Other <o@example.com>
 	EOF
 
+test_sendmail_aliases 'sendmail aliases line folding' \
+	alice1 \
+	bob1 bob2 \
+	chuck1 chuck2 \
+	darla1 darla2 darla3 \
+	elton1 elton2 elton3 \
+	fred1 fred2 \
+	greg1 <<-\EOF
+	alice: alice1
+	bob: bob1,\
+	bob2
+	chuck: chuck1,
+	    chuck2
+	darla: darla1,\
+	darla2,
+	    darla3
+	elton: elton1,
+	    elton2,\
+	elton3
+	fred: fred1,\
+	    fred2
+	greg: greg1
+	bcgrp: bob, chuck, darla, elton, fred, greg
+	EOF
+
+test_sendmail_aliases 'sendmail aliases tolerate bogus line folding' \
+	alice1 bob1 <<-\EOF
+	    alice: alice1
+	bcgrp: bob1\
+	EOF
+
+test_sendmail_aliases 'sendmail aliases empty' alice bcgrp <<-\EOF
+	EOF
+
 do_xmailer_test () {
 	expected=$1 params=$2 &&
 	git format-patch -1 &&
