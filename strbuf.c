@@ -348,19 +348,19 @@ ssize_t strbuf_read(struct strbuf *sb, int fd, size_t hint)
 
 	strbuf_grow(sb, hint ? hint : 8192);
 	for (;;) {
-		ssize_t cnt;
+		ssize_t want = sb->alloc - sb->len - 1;
+		ssize_t got = read_in_full(fd, sb->buf + sb->len, want);
 
-		cnt = xread(fd, sb->buf + sb->len, sb->alloc - sb->len - 1);
-		if (cnt < 0) {
+		if (got < 0) {
 			if (oldalloc == 0)
 				strbuf_release(sb);
 			else
 				strbuf_setlen(sb, oldlen);
 			return -1;
 		}
-		if (!cnt)
+		sb->len += got;
+		if (got < want)
 			break;
-		sb->len += cnt;
 		strbuf_grow(sb, 8192);
 	}
 
