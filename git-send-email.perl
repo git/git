@@ -492,8 +492,6 @@ sub parse_sendmail_alias {
 	local $_ = shift;
 	if (/"/) {
 		print STDERR "warning: sendmail alias with quotes is not supported: $_\n";
-	} elsif (/^\s|\\$/) {
-		print STDERR "warning: sendmail continuation line is not supported: $_\n";
 	} elsif (/^(\S+?)\s*:\s*(.+)$/) {
 		my ($alias, $addr) = ($1, $2);
 		$aliases{$alias} = [ split_addrs($addr) ];
@@ -504,10 +502,16 @@ sub parse_sendmail_alias {
 
 sub parse_sendmail_aliases {
 	my $fh = shift;
+	my $s = '';
 	while (<$fh>) {
+		chomp;
 		next if /^\s*$/ || /^\s*#/;
-		parse_sendmail_alias($_);
+		$s .= $_, next if $s =~ s/\\$// || s/^\s+//;
+		parse_sendmail_alias($s) if $s;
+		$s = $_;
 	}
+	$s =~ s/\\$//; # silently tolerate stray '\' on last line
+	parse_sendmail_alias($s) if $s;
 }
 
 my %parse_alias = (
