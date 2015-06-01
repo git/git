@@ -226,4 +226,30 @@ test_expect_success EXPENSIVE 'filter large file' '
 	! test -s err
 '
 
+test_expect_success "filter: clean empty file" '
+	git config filter.in-repo-header.clean  "echo cleaned && cat" &&
+	git config filter.in-repo-header.smudge "sed 1d" &&
+
+	echo "empty-in-worktree    filter=in-repo-header" >>.gitattributes &&
+	>empty-in-worktree &&
+
+	echo cleaned >expected &&
+	git add empty-in-worktree &&
+	git show :empty-in-worktree >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success "filter: smudge empty file" '
+	git config filter.empty-in-repo.clean "cat >/dev/null" &&
+	git config filter.empty-in-repo.smudge "echo smudged && cat" &&
+
+	echo "empty-in-repo filter=empty-in-repo" >>.gitattributes &&
+	echo dead data walking >empty-in-repo &&
+	git add empty-in-repo &&
+
+	echo smudged >expected &&
+	git checkout-index --prefix=filtered- empty-in-repo &&
+	test_cmp expected filtered-empty-in-repo
+'
+
 test_done
