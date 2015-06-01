@@ -152,6 +152,7 @@ Commands:
  s, squash = use commit, but meld into previous commit
  f, fixup = like "squash", but discard this commit's log message
  x, exec = run command (the rest of the line) using shell
+ d, drop = remove commit
 
 These lines can be re-ordered; they are executed from top to bottom.
 
@@ -505,7 +506,7 @@ do_next () {
 	rm -f "$msg" "$author_script" "$amend" || exit
 	read -r command sha1 rest < "$todo"
 	case "$command" in
-	"$comment_char"*|''|noop)
+	"$comment_char"*|''|noop|drop|d)
 		mark_action_done
 		;;
 	pick|p)
