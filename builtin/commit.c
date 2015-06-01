@@ -878,7 +878,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		const char *parent = "HEAD";
 
 		if (!active_nr && read_cache() < 0)
-			die(_("Cannot read index"));
+			die(_("unable to read index file"));
 
 		if (amend)
 			parent = "HEAD^1";
