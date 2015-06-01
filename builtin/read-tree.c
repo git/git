@@ -244,6 +244,6 @@ int cmd_read_tree(int argc, const char **argv, const char *unused_prefix)
 		prime_cache_tree(&the_index, trees[0]);
 
 	if (write_locked_index(&the_index, &lock_file, COMMIT_LOCK))
-		die("unable to write new index file");
+		die("unable to write index file");
 	return 0;
 }

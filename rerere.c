@@ -491,7 +491,7 @@ static void update_paths(struct string_list *update)
 
 	if (active_cache_changed) {
 		if (write_locked_index(&the_index, &index_lock, COMMIT_LOCK))
-			die("Unable to write new index file");
+			die("unable to write index file");
 	} else
 		rollback_lock_file(&index_lock);
 }
