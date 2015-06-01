@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git cat-file' (-t [--allow-unknown-type]| -s [--allow-unknown-type]| -e | -p | <type> | --textconv ) <object>
-'git cat-file' (--batch | --batch-check) < <list-of-objects>
+'git cat-file' (--batch | --batch-check) [--follow-symlinks] < <list-of-objects>
 
 DESCRIPTION
 -----------
@@ -71,6 +71,62 @@ OPTIONS
 
 --allow-unknown-type::
 	Allow -s or -t to query broken/corrupt objects of unknown type.
+
+--follow-symlinks::
+	With --batch or --batch-check, follow symlinks inside the
+	repository when requesting objects with extended SHA-1
+	expressions of the form tree-ish:path-in-tree.  Instead of
+	providing output about the link itself, provide output about
+	the linked-to object.  If a symlink points outside the
+	tree-ish (e.g. a link to /foo or a root-level link to ../foo),
+	the portion of the link which is outside the tree will be
+	printed.
++
+This option does not (currently) work correctly when an object in the
+index is specified (e.g. `:link` instead of `HEAD:link`) rather than
+one in the tree.
++
+This option cannot (currently) be used unless `--batch` or
+`--batch-check` is used.
++
+For example, consider a git repository containing:
++
+--
+	f: a file containing "hello\n"
+	link: a symlink to f
+	dir/link: a symlink to ../f
+	plink: a symlink to ../f
+	alink: a symlink to /etc/passwd
+--
++
+For a regular file `f`, `echo HEAD:f | git cat-file --batch` would print
++
+--
+	ce013625030ba8dba906f756967f9e9ca394464a blob 6
+--
++
+And `echo HEAD:link | git cat-file --batch --follow-symlinks` would
+print the same thing, as would `HEAD:dir/link`, as they both point at
+`HEAD:f`.
++
+Without `--follow-symlinks`, these would print data about the symlink
+itself.  In the case of `HEAD:link`, you would see
++
+--
+	4d1ae35ba2c8ec712fa2a379db44ad639ca277bd blob 1
+--
++
+Both `plink` and `alink` point outside the tree, so they would
+respectively print:
++
+--
+	symlink 4
+	../f
+
+	symlink 11
+	/etc/passwd
+--
+
 
 OUTPUT
 ------
@@ -151,6 +207,47 @@ the repository, then `cat-file` will ignore any custom format and print:
 <object> SP missing LF
 ------------
 
+If --follow-symlinks is used, and a symlink in the repository points
+outside the repository, then `cat-file` will ignore any custom format
+and print:
+
+------------
+symlink SP <size> LF
+<symlink> LF
+------------
+
+The symlink will either be absolute (beginning with a /), or relative
+to the tree root.  For instance, if dir/link points to ../../foo, then
+<symlink> will be ../foo.  <size> is the size of the symlink in bytes.
+
+If --follow-symlinks is used, the following error messages will be
+displayed:
+
+------------
+<object> SP missing LF
+------------
+is printed when the initial symlink requested does not exist.
+
+------------
+dangling SP <size> LF
+<object> LF
+------------
+is printed when the initial symlink exists, but something that
+it (transitive-of) points to does not.
+
+------------
+loop SP <size> LF
+<object> LF
+------------
+is printed for symlink loops (or any symlinks that
+require more than 40 link resolutions to resolve).
+
+------------
+notdir SP <size> LF
+<object> LF
+------------
+is printed when, during symlink resolution, a file is used as a
+directory name.
 
 CAVEATS
 -------
