@@ -9,6 +9,9 @@ Ports
 
 UI, Workflows & Features
 
+ * List of commands shown by "git help" are grouped along the workflow
+   elements to help early learners.
+
  * "git p4" now detects the filetype (e.g. binary) correctly even when
    the files are opened exclusively.
 
@@ -84,6 +87,20 @@ UI, Workflows & Features
  * The index file can be taught with "update-index --untracked-cache"
    to optionally remember already seen untracked files, in order to
    speed up "git status" in a working tree with tons of cruft.
+
+ * "git mergetool" learned to drive WinMerge as a backend.
+
+ * "git upload-pack" that serves "git fetch" can be told to serve
+   commits that are not at the tip of any ref, as long as they are
+   reachable from a ref, with uploadpack.allowReachableSHA1InWant
+   configuration variable.
+
+ * "git cat-file --batch(-check)" learned the "--follow-symlinks"
+   option that follows an in-tree symbolic link when asked about an
+   object via extended SHA-1 syntax, e.g. HEAD:RelNotes that points at
+   Documentation/RelNotes/2.5.0.txt.  With the new option, the command
+   behaves as if HEAD:Documentation/RelNotes/2.5.0.txt was given as
+   input instead.
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -330,10 +347,39 @@ notes for details).
    cryptic error message; it should be a silent no-op instead.
    (merge 0544574 jk/rerere-forget-check-enabled later to maint).
 
+ * "git rebase -i" fired post-rewrite hook when it shouldn't (namely,
+   when it was told to stop sequencing with 'exec' insn).
+   (merge 141ff8f mm/rebase-i-post-rewrite-exec later to maint).
+
+ * Clarify that "log --raw" and "log --format=raw" are unrelated
+   concepts.
+   (merge 92de921 mm/log-format-raw-doc later to maint).
+
+ * Make "git stash something --help" error out, so that users can
+   safely say "git stash drop --help".
+   (merge 5ba2831 jk/stash-options later to maint).
+
+ * The clean/smudge interface did not work well when filtering an
+   empty contents (failed and then passed the empty input through).
+   It can be argued that a filter that produces anything but empty for
+   an empty input is nonsense, but if the user wants to do strange
+   things, then why not?
+   (merge f6a1e1e jh/filter-empty-contents later to maint).
+
+ * Communication between the HTTP server and http_backend process can
+   lead to a dead-lock when relaying a large ref negotiation request.
+   Diagnose the situation better, and mitigate it by reading such a
+   request first into core (to a reasonable limit).
+   (merge 636614f jk/http-backend-deadlock later to maint).
+
+ * "git clean pathspec..." tried to lstat(2) and complain even for
+   paths outside the given pathspec.
+   (merge 838d6a9 dt/clean-pathspec-filter-then-lstat later to maint).
+
  * Code cleanups and documentation updates.
    (merge 0269f96 mm/usage-log-l-can-take-regex later to maint).
    (merge 64f2589 nd/t1509-chroot-test later to maint).
-   (merge f86a374 sb/test-bitmap-free-at-end later to maint).
+   (merge d201a1e sb/test-bitmap-free-at-end later to maint).
    (merge 05bfc7d sb/line-log-plug-pairdiff-leak later to maint).
    (merge 846e5df pt/xdg-config-path later to maint).
    (merge 1154aa4 jc/plug-fmt-merge-msg-leak later to maint).
@@ -342,3 +388,6 @@ notes for details).
    (merge bbf431c ps/doc-packfile-vs-pack-file later to maint).
    (merge 309a9e3 jk/skip-http-tests-under-no-curl later to maint).
    (merge ccd593c dl/branch-error-message later to maint).
+   (merge 22570b6 rs/janitorial later to maint).
+   (merge 5c2a581 mc/commit-doc-grammofix later to maint).
+   (merge ce41720 ah/usage-strings later to maint).
