@@ -834,7 +834,7 @@ static int add_parents_to_list(struct rev_info *revs, struct commit *commit,
 	for (parent = commit->parents; parent; parent = parent->next) {
 		struct commit *p = parent->item;
 
-		if (parse_commit(p) < 0)
+		if (parse_commit_gently(p, revs->ignore_missing_links) < 0)
 			return -1;
 		if (revs->show_source && !p->util)
 			p->util = commit->util;
