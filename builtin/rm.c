@@ -84,7 +84,6 @@ static int check_submodules_use_gitfiles(void)
 		const char *name = list.entry[i].name;
 		int pos;
 		const struct cache_entry *ce;
-		struct stat st;
 
 		pos = cache_name_pos(name, strlen(name));
 		if (pos < 0) {
@@ -95,7 +94,7 @@ static int check_submodules_use_gitfiles(void)
 		ce = active_cache[pos];
 
 		if (!S_ISGITLINK(ce->ce_mode) ||
-		    (lstat(ce->name, &st) < 0) ||
+		    !file_exists(ce->name) ||
 		    is_empty_dir(name))
 			continue;
 
