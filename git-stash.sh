@@ -219,6 +219,9 @@ save_stash () {
 		-a|--all)
 			untracked=all
 			;;
+		--help)
+			show_help
+			;;
 		--)
 			shift
 			break
@@ -301,9 +304,15 @@ list_stash () {
 }
 
 show_stash () {
+	ALLOW_UNKNOWN_FLAGS=t
 	assert_stash_like "$@"
 
 	git diff ${FLAGS:---stat} $b_commit $w_commit
+}
+
+show_help () {
+	exec git help stash
+	exit 1
 }
 
 #
@@ -332,13 +341,14 @@ show_stash () {
 #
 #   GIT_QUIET is set to t if -q is specified
 #   INDEX_OPTION is set to --index if --index is specified.
-#   FLAGS is set to the remaining flags
+#   FLAGS is set to the remaining flags (if allowed)
 #
 # dies if:
 #   * too many revisions specified
 #   * no revision is specified and there is no stash stack
 #   * a revision is specified which cannot be resolve to a SHA1
 #   * a non-existent stash reference is specified
+#   * unknown flags were set and ALLOW_UNKNOWN_FLAGS is not "t"
 #
 
 parse_flags_and_rev()
@@ -371,7 +381,12 @@ parse_flags_and_rev()
 			--index)
 				INDEX_OPTION=--index
 			;;
+			--help)
+				show_help
+			;;
 			-*)
+				test "$ALLOW_UNKNOWN_FLAGS" = t ||
+					die "$(eval_gettext "unknown option: \$opt")"
 				FLAGS="${FLAGS}${FLAGS:+ }$opt"
 			;;
 		esac

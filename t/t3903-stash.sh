@@ -100,6 +100,10 @@ test_expect_success 'unstashing in a subdirectory' '
 	)
 '
 
+test_expect_success 'stash drop complains of extra options' '
+	test_must_fail git stash drop --foo
+'
+
 test_expect_success 'drop top stash' '
 	git reset --hard &&
 	git stash list > stashlist1 &&
