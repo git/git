@@ -492,6 +492,10 @@ sub parse_sendmail_alias {
 	local $_ = shift;
 	if (/"/) {
 		print STDERR "warning: sendmail alias with quotes is not supported: $_\n";
+	} elsif (/:include:/) {
+		print STDERR "warning: `:include:` not supported: $_\n";
+	} elsif (/[\/|]/) {
+		print STDERR "warning: `/file` or `|pipe` redirection not supported: $_\n";
 	} elsif (/^(\S+?)\s*:\s*(.+)$/) {
 		my ($alias, $addr) = ($1, $2);
 		$aliases{$alias} = [ split_addrs($addr) ];
