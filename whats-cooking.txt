@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (May 2015, #08; Fri, 29)
-X-master-at: 77bd3ea9f54f1584147b594abc04c26ca516d987
-X-next-at: 5f4350e90f9ad5b056aa42fe83b9262c702a5306
+Subject: What's cooking in git.git (Jun 2015, #01; Tue, 2)
+X-master-at: f86f31ab33c3406adebbb9f9f61be550dcc5a472
+X-next-at: b4379f4514b71bf690061de15eb494cafb09b9b1
 
-What's cooking in git.git (May 2015, #08; Fri, 29)
+What's cooking in git.git (Jun 2015, #01; Tue, 2)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -17,101 +17,319 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[New Topics]
+[Graduated to "master"]
 
-* jc/diff-ws-error-highlight (2015-05-26) 4 commits
- - diff.c: --ws-error-highlight=<kind> option
- - diff.c: add emit_del_line() and emit_context_line()
- - t4015: separate common setup and per-test expectation
- - t4015: modernise style
+* ah/usage-strings (2015-05-03) 1 commit
+  (merged to 'next' on 2015-05-28 at 5f4350e)
+ + blame, log: format usage strings similarly to those in documentation
 
- Allow whitespace breakages in deleted and context lines to be also
- painted in the output.
-
- Will merge to 'next'.
+ A few usage string updates.
 
 
-* jk/clone-dissociate (2015-05-27) 2 commits
- - clone: reorder --dissociate and --reference options
- - clone: use OPT_STRING_LIST for --reference
+* da/mergetool-winmerge (2015-05-20) 2 commits
+  (merged to 'next' on 2015-05-26 at d6333e9)
+ + mergetools: add winmerge as a builtin tool
+ + mergetool--lib: set IFS for difftool and mergetool
+
+ "git mergetool" learned to drive WinMerge as a backend.
+
+
+* dt/cat-file-follow-symlinks (2015-05-20) 3 commits
+  (merged to 'next' on 2015-05-26 at 7ae52d4)
+ + cat-file: add --follow-symlinks to --batch
+ + sha1_name: get_sha1_with_context learns to follow symlinks
+ + tree-walk: learn get_tree_entry_follow_symlinks
+
+ "git cat-file --batch(-check)" learned the "--follow-symlinks"
+ option that follows an in-tree symbolic link when asked about an
+ object via extended SHA-1 syntax, e.g. HEAD:RelNotes that points at
+ Documentation/RelNotes/2.5.0.txt.  With the new option, the command
+ behaves as if HEAD:Documentation/RelNotes/2.5.0.txt was given as
+ input instead.
+
+
+* dt/clean-pathspec-filter-then-lstat (2015-05-18) 1 commit
+  (merged to 'next' on 2015-05-26 at 9b24d71)
+ + clean: only lstat files in pathspec
+
+ "git clean pathspec..." tried to lstat(2) and complain even for
+ paths outside the given pathspec.
+
+
+* fm/fetch-raw-sha1 (2015-05-22) 3 commits
+  (merged to 'next' on 2015-05-26 at dc3f1b3)
+ + upload-pack: optionally allow fetching reachable sha1
+ + upload-pack: prepare to extend allow-tip-sha1-in-want
+ + config.txt: clarify allowTipSHA1InWant with camelCase
+
+ "git upload-pack" that serves "git fetch" can be told to serve
+ commits that are not at the tip of any ref, as long as they are
+ reachable from a ref, with uploadpack.allowReachableSHA1InWant
+ configuration variable.
+
+
+* jh/filter-empty-contents (2015-05-18) 1 commit
+  (merged to 'next' on 2015-05-26 at 9cad398)
+ + sha1_file: pass empty buffer to index empty file
+
+ The clean/smudge interface did not work well when filtering an
+ empty contents (failed and then passed the empty input through).
+ It can be argued that a filter that produces anything but empty for
+ an empty input is nonsense, but if the user wants to do strange
+ things, then why not?
+
+
+* jk/http-backend-deadlock (2015-05-25) 1 commit
+  (merged to 'next' on 2015-05-26 at 9f3bd8a)
+ + Merge branch 'jk/http-backend-deadlock-2.3' into jk/http-backend-deadlock
+ (this branch uses jk/http-backend-deadlock-2.2 and jk/http-backend-deadlock-2.3.)
+
+ Communication between the HTTP server and http_backend process can
+ lead to a dead-lock when relaying a large ref negotiation request.
+ Diagnose the situation better, and mitigate it by reading such a
+ request first into core (to a reasonable limit).
+
+
+* jk/http-backend-deadlock-2.2 (2015-05-25) 3 commits
+ + http-backend: spool ref negotiation requests to buffer
+ + t5551: factor out tag creation
+ + http-backend: fix die recursion with custom handler
+ (this branch is used by jk/http-backend-deadlock and jk/http-backend-deadlock-2.3.)
+
+ Communication between the HTTP server and http_backend process can
+ lead to a dead-lock when relaying a large ref negotiation request.
+ Diagnose the situation better, and mitigate it by reading such a
+ request first into core (to a reasonable limit).
+
+ This was wiggled back to apply to the 2.2 maintenance track
+ (original was for 2.4).
+
+
+* jk/http-backend-deadlock-2.3 (2015-05-25) 1 commit
+ + Merge branch 'jk/http-backend-deadlock-2.2' into jk/http-backend-deadlock-2.3
+ (this branch is used by jk/http-backend-deadlock; uses jk/http-backend-deadlock-2.2.)
+
+ Same for 2.3 maintenance track.
+
+
+* jk/stash-options (2015-05-20) 2 commits
+  (merged to 'next' on 2015-05-26 at 5dcb026)
+ + stash: recognize "--help" for subcommands
+ + stash: complain about unknown flags
+
+ Make "git stash something --help" error out, so that users can
+ safely say "git stash drop --help".
+
+
+* mc/commit-doc-grammofix (2015-05-19) 1 commit
+  (merged to 'next' on 2015-05-26 at 9d76e3b)
+ + Documentation/git-commit: grammofix
+
+ Doc grammar fix.
+
+
+* mm/log-format-raw-doc (2015-05-20) 2 commits
+  (merged to 'next' on 2015-05-26 at 97e2c9d)
+ + Documentation/log: clarify sha1 non-abbreviation in log --raw
+ + Documentation/log: clarify what --raw means
+
+ Clarify that "log --raw" and "log --format=raw" are unrelated
+ concepts.
+
+
+* mm/rebase-i-post-rewrite-exec (2015-05-22) 3 commits
+  (merged to 'next' on 2015-05-26 at 8ddaab1)
+ + t5407: use <<- to align the expected output
+ + rebase -i: fix post-rewrite hook with failed exec command
+ + rebase -i: demonstrate incorrect behavior of post-rewrite
+
+ "git rebase -i" fired post-rewrite hook when it shouldn't (namely,
+ when it was told to stop sequencing with 'exec' insn).
+
+
+* rs/janitorial (2015-05-20) 3 commits
+  (merged to 'next' on 2015-05-26 at 9d5aee4)
+ + dir: remove unused variable sb
+ + clean: remove unused variable buf
+ + use file_exists() to check if a file exists in the worktree
 
  Code clean-up.
 
+
+* sb/test-bitmap-free-at-end (2015-05-22) 1 commit
+  (merged to 'next' on 2015-05-26 at 1014ebf)
+ + test_bitmap_walk: free bitmap with bitmap_free
+
+ An earlier leakfix to bitmap testing code was incomplete.
+
+
+* sg/help-group (2015-05-21) 5 commits
+  (merged to 'next' on 2015-05-26 at 2749912)
+ + help: respect new common command grouping
+ + command-list.txt: drop the "common" tag
+ + generate-cmdlist: parse common group commands
+ + command-list.txt: add the common groups block
+ + command-list: prepare machinery for upcoming "common groups" section
+
+ Group list of commands shown by "git help" along the workflow
+ elements to help early learners.
+
+--------------------------------------------------
+[New Topics]
+
+* gr/rebase-i-drop-warn (2015-06-01) 2 commits
+ - git rebase -i: warn about removed commits
+ - git-rebase -i: add command "drop" to remove a commit
+
+ Add "drop commit-object-name subject" command as another way to
+ skip replaying of a commit in "rebase -i", and then punish those
+ who do not use it (and instead just remove the lines) by throwing
+ a warning.
+
+ Expecting a reroll.
+
+
+* jh/strbuf-read-use-read-in-full (2015-06-01) 1 commit
+ - strbuf_read(): skip unnecessary strbuf_grow() at eof
+
+ Avoid one extra iteration and strbuf_grow() of 8kB in
+ strbuf_read().
+
+ Looked reasonable; perhaps a log message clarification is coming?
+
+
+* jk/squelch-missing-link-warning-for-unreachable (2015-06-01) 3 commits
+  (merged to 'next' on 2015-06-01 at 9ddc5d1)
+ + suppress errors on missing UNINTERESTING links
+ + silence broken link warnings with revs->ignore_missing_links
+ + add quieter versions of parse_{tree,commit}
+
+ Recent "git prune" traverses young unreachable objects to safekeep
+ old objects in the reachability chain from them, which causes
+ error messages that are unnecessarily alarming.
+
+ Will merge to 'master'.
+
+
+* mh/reporting-broken-refs-from-for-each-ref (2015-06-02) 3 commits
+ - read_loose_refs(): treat NULL_SHA1 loose references as broken
+ - for-each-ref: report broken references correctly
+ - t6301: new tests of for-each-ref error handling
+
+ "git for-each-ref" reported "missing object" for 0{40} when it
+ encounters a broken ref.  The lack of object whose name is 0{40} is
+ not the problem; the ref being broken is.
+
+ A reroll for the tip one coming to pick final minor nits?
+ Otherwise looked ready for 'next'.
+
+
+* tb/complete-sequencing (2015-06-01) 1 commit
+  (merged to 'next' on 2015-06-01 at b7604e8)
+ + completion: suggest sequencer commands for revert
+
+ The bash completion script (in contrib/) learned a few options that
+ "git revert" takes.
+
+ Will merge to 'master'.
+
+
+* jc/apply-reject-noop-hunk (2015-06-01) 1 commit
+ - apply: reject a hunk that does not do anything
+
+ "git apply" cannot diagnose a patch corruption when the breakage is
+ to mark the length of the hunk shorter than it really is on the
+ hunk header line "@@ -l,k +m,n @@"; one special case it could is
+ when the hunk becomes no-op (e.g. k == n == 2 for two-line context
+ patch output), and it learned how to do so.
+
+ Will merge to 'next'.
+ 
+
+* es/configure-getdelim (2015-06-02) 2 commits
+ - configure: add getdelim() check
+ - config.mak.uname: Darwin: define HAVE_GETDELIM for modern OS X releases
+
+ Auto-detect availability of getdelim() that helps optimized version
+ of strbuf_getwholeline().
+
  Will merge to 'next'.
 
 
-* jk/color-diff-plain-is-context (2015-05-27) 2 commits
- - diff.h: rename DIFF_PLAIN color slot to DIFF_CONTEXT
- - diff: accept color.diff.context as a synonym for "plain"
-
- "color.diff.plain" was a misnomer; give it 'color.diff.context' as
- a more logical synonym.
+* es/osx-header-pollutes-mask-macro (2015-06-02) 1 commit
+ - ewah/bitmap: silence warning about MASK macro redefinition
 
  Will merge to 'next'.
 
 
-* jk/diagnose-config-mmap-failure (2015-05-28) 5 commits
- - xmmap(): drop "Out of memory?"
- - config.c: rewrite ENODEV into EISDIR when mmap fails
- - config.c: avoid xmmap error messages
- - config.c: fix mmap leak when writing config
- - read-cache.c: drop PROT_WRITE from mmap of index
+* es/send-email-sendmail-alias (2015-06-01) 10 commits
+ - send-email: further warn about unsupported sendmail aliases features
+ - t9001: add sendmail aliases line continuation tests
+ - t9001: refactor sendmail aliases test infrastructure
+ - send-email: implement sendmail aliases line continuation support
+ - send-email: simplify sendmail aliases comment and blank line recognizer
+ - send-email: refactor sendmail aliases parser
+ - send-email: fix style: cuddle 'elsif' and 'else' with closing brace
+ - send-email: drop noise comments which merely repeat what code says
+ - send-email: visually distinguish sendmail aliases parser warnings
+ - send-email: further document missing sendmail aliases functionality
+ (this branch uses ah/send-email-sendmail-alias.)
 
- The configuration reader/writer uses mmap(2) interface to access
- the files; when we find a directory, it barfed with "Out of memory?".
-
- Will merge to 'next'.
-
-
-* mh/verify-lock-error-report (2015-05-27) 5 commits
- - ref_transaction_commit(): do not capitalize error messages
- - verify_lock(): do not capitalize error messages
- - verify_lock(): report errors via a strbuf
- - verify_lock(): on errors, let the caller unlock the lock
- - verify_lock(): return 0/-1 rather than struct ref_lock *
-
- Bring consistency to error reporting mechanism used in "refs" API.
+ "git send-email" learned to handle more forms of sendmail style
+ aliases file.
 
  Will merge to 'next'.
 
 
-* mt/p4-depotFile-at-version (2015-05-27) 1 commit
- - p4: retrieve the right revision of the file in UTF-16 codepath
+* jc/do-not-feed-tags-to-clear-commit-marks (2015-06-01) 1 commit
+ - format-patch: do not feed tags to clear_commit_marks()
+
+ "git format-patch --ignore-if-upstream A..B" did not like to be fed
+ tags as boundary commits.
+
+
+* mg/index-read-error-messages (2015-06-01) 2 commits
+ - messages: uniform error messages for index write
+ - show-index: uniform error messages for index read
+
+ The tip was RFC.
+
+
+* pt/pull-optparse (2015-06-02) 3 commits
+ - pull: use git-rev-parse --parseopt for option parsing
+ - pull: handle git-fetch's options as well
+ - Merge branch 'pt/pull-tests' into pt/pull-optparse
+ (this branch uses pt/pull-tests.)
+
+ "git pull" has become more aware of the options meant for
+ underlying "git fetch" and then learned to use parse-options
+ parser.
 
  Will merge to 'next'.
 
 
-* sb/glossary-submodule (2015-05-29) 1 commit
- - glossary: add "remote", "submodule", "superproject"
+* qn/blame-show-email (2015-06-01) 1 commit
+ - blame: add blame.showEmail configuration
+
+ "git blame" learned blame.showEmail configuration variable.
 
  Will merge to 'next'.
 
 
-* sg/config-name-only (2015-05-28) 3 commits
- - completion: use new 'git config' options to reliably list variable names
- - SQUASH
- - config: add options to list only variable names
+* rl/am-3way-config (2015-06-02) 3 commits
+ - t4150-am: refactor am -3 tests
+ - git-am.txt: add configuration section in git am documentation
+ - git-am.sh: fix initialization of the threeway variable
 
- "git config --list" output was hard to parse when values consist of
- multiple lines.  Introduce a way to show only the keys.
-
-
-* sg/merge-summary-config (2015-05-28) 1 commit
- - Documentation: include 'merge.branchdesc' for merge and config as well
+ "git am" learned am.threeWay configuration variable.
 
 
-* jc/push-tags-also (2015-05-29) 1 commit
- - push --tags: push tags *in addition to* other stuff
+* sb/pack-protocol-mention-smart-http (2015-06-02) 1 commit
+ - Documentation/technical/pack-protocol: mention http as possible protocol
 
+ Doc updates.
 
-* jk/die-on-bogus-worktree-late (2015-05-29) 1 commit
- - setup_git_directory: delay core.bare/core.worktree errors
-
-
-* jk/make-fix-dependencies (2015-05-29) 3 commits
- - Makefile: silence perl/PM.stamp recipe
- - Makefile: avoid timestamp updates to GIT-BUILD-OPTIONS
- - Makefile: drop dependency between git-instaweb and gitweb
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -298,15 +516,6 @@ of the repositories listed at
  Waiting for a reroll ($gmane/256591).
 
 
-* hv/submodule-config (2014-11-11) 4 commits
- - do not die on error of parsing fetchrecursesubmodules option
- - use new config API for worktree configurations of submodules
- - extract functions for submodule config set and lookup
- - implement submodule config cache for lookup of submodule names
-
- Kicked back to 'pu' per request ($gmane/255610).
-
-
 * tg/perf-lib-test-perf-cleanup (2013-09-19) 2 commits
  - perf-lib: add test_perf_cleanup target
  - perf-lib: split starting the test from the execution
@@ -329,9 +538,143 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* hv/submodule-config (2015-06-02) 4 commits
+ - do not die on error of parsing fetchrecursesubmodules option
+ - use new config API for worktree configurations of submodules
+ - extract functions for submodule config set and lookup
+ - implement submodule config cache for lookup of submodule names
+
+ The gitmodules API accessed from the C code learned to cache stuff
+ lazily.
+
+
+* jc/diff-ws-error-highlight (2015-05-26) 4 commits
+  (merged to 'next' on 2015-06-01 at 6046560)
+ + diff.c: --ws-error-highlight=<kind> option
+ + diff.c: add emit_del_line() and emit_context_line()
+ + t4015: separate common setup and per-test expectation
+ + t4015: modernise style
+
+ Allow whitespace breakages in deleted and context lines to be also
+ painted in the output.
+
+ Will merge to 'master'.
+
+
+* jk/clone-dissociate (2015-05-27) 2 commits
+  (merged to 'next' on 2015-06-01 at 19e3ec3)
+ + clone: reorder --dissociate and --reference options
+ + clone: use OPT_STRING_LIST for --reference
+
+ Code clean-up.
+
+ Will merge to 'master'.
+
+
+* jk/color-diff-plain-is-context (2015-05-27) 2 commits
+  (merged to 'next' on 2015-06-01 at bcd8f1d)
+ + diff.h: rename DIFF_PLAIN color slot to DIFF_CONTEXT
+ + diff: accept color.diff.context as a synonym for "plain"
+
+ "color.diff.plain" was a misnomer; give it 'color.diff.context' as
+ a more logical synonym.
+
+ Will merge to 'master'.
+
+
+* jk/diagnose-config-mmap-failure (2015-05-28) 5 commits
+  (merged to 'next' on 2015-06-01 at ca750d5)
+ + xmmap(): drop "Out of memory?"
+ + config.c: rewrite ENODEV into EISDIR when mmap fails
+ + config.c: avoid xmmap error messages
+ + config.c: fix mmap leak when writing config
+ + read-cache.c: drop PROT_WRITE from mmap of index
+
+ The configuration reader/writer uses mmap(2) interface to access
+ the files; when we find a directory, it barfed with "Out of memory?".
+
+ Will merge to 'master'.
+
+
+* mh/verify-lock-error-report (2015-05-27) 5 commits
+  (merged to 'next' on 2015-06-01 at 7b450a7)
+ + ref_transaction_commit(): do not capitalize error messages
+ + verify_lock(): do not capitalize error messages
+ + verify_lock(): report errors via a strbuf
+ + verify_lock(): on errors, let the caller unlock the lock
+ + verify_lock(): return 0/-1 rather than struct ref_lock *
+
+ Bring consistency to error reporting mechanism used in "refs" API.
+
+ Will merge to 'master'.
+
+
+* mt/p4-depotFile-at-version (2015-05-27) 1 commit
+  (merged to 'next' on 2015-06-01 at 33e8622)
+ + p4: retrieve the right revision of the file in UTF-16 codepath
+
+ Will merge to 'master'.
+
+
+* sb/glossary-submodule (2015-05-29) 1 commit
+  (merged to 'next' on 2015-06-01 at 84de87b)
+ + glossary: add "remote", "submodule", "superproject"
+
+ Will merge to 'master'.
+
+
+* sg/config-name-only (2015-05-28) 3 commits
+ - completion: use new 'git config' options to reliably list variable names
+ - SQUASH
+ - config: add options to list only variable names
+
+ "git config --list" output was hard to parse when values consist of
+ multiple lines.  Introduce a way to show only the keys.
+
+ Adding a single --name-only option may be a better way to go than
+ adding two new options.
+
+ Expecting reroll.
+
+
+* sg/merge-summary-config (2015-05-28) 1 commit
+ - Documentation: include 'merge.branchdesc' for merge and config as well
+
+ Doc updates.
+
+ Will merge to 'next'.
+
+
+* jc/push-tags-also (2015-05-29) 1 commit
+ - push --tags: push tags *in addition to* other stuff
+
+ "git fetch --tags" learned to fetch tags in addition to other stuff
+ a few years ago, but "git push --tags" didn't.  Now it does.
+
+
+* jk/die-on-bogus-worktree-late (2015-05-29) 1 commit
+ - setup_git_directory: delay core.bare/core.worktree errors
+
+ The setup code used to die when core.bare and core.worktree are set
+ inconsistently, even for commands that do not need working tree.
+
+ Will merge to 'next'.
+
+
+* jk/make-fix-dependencies (2015-05-29) 3 commits
+ - Makefile: silence perl/PM.stamp recipe
+ - Makefile: avoid timestamp updates to GIT-BUILD-OPTIONS
+ - Makefile: drop dependency between git-instaweb and gitweb
+
+ Build clean-up.
+
+ Will merge to 'next'.
+
+
 * ah/send-email-sendmail-alias (2015-05-27) 2 commits
  - t9001: write $HOME/, not ~/, to help shells without tilde expansion
  - send-email: add sendmail email aliases format
+ (this branch is used by es/send-email-sendmail-alias.)
 
  "git send-email" learned the alias file format used by the sendmail
  program (in an abbreviated form).
@@ -404,83 +747,6 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* da/mergetool-winmerge (2015-05-20) 2 commits
-  (merged to 'next' on 2015-05-26 at d6333e9)
- + mergetools: add winmerge as a builtin tool
- + mergetool--lib: set IFS for difftool and mergetool
-
- "git mergetool" learned to drive WinMerge as a backend.
-
- Will merge to 'master'.
-
-
-* jk/http-backend-deadlock-2.2 (2015-05-25) 3 commits
- + http-backend: spool ref negotiation requests to buffer
- + t5551: factor out tag creation
- + http-backend: fix die recursion with custom handler
- (this branch is used by jk/http-backend-deadlock and jk/http-backend-deadlock-2.3.)
-
- Communication between the HTTP server and http_backend process can
- lead to a dead-lock when relaying a large ref negotiation request.
- Diagnose the situation better, and mitigate it by reading such a
- request first into core (to a reasonable limit).
-
- This was wiggled back to apply to the 2.2 maintenance track
- (original was for 2.4).
-
- Will merge to 'master'.
-
-
-* jk/http-backend-deadlock-2.3 (2015-05-25) 1 commit
- + Merge branch 'jk/http-backend-deadlock-2.2' into jk/http-backend-deadlock-2.3
- (this branch is used by jk/http-backend-deadlock; uses jk/http-backend-deadlock-2.2.)
-
- Same for 2.3 maintenance track.
-
- Will merge to 'master'.
-
-
-* jk/stash-options (2015-05-20) 2 commits
-  (merged to 'next' on 2015-05-26 at 5dcb026)
- + stash: recognize "--help" for subcommands
- + stash: complain about unknown flags
-
- Make "git stash something --help" error out, so that users can
- safely say "git stash drop --help".
-
- Will merge to 'master'.
-
-
-* mc/commit-doc-grammofix (2015-05-19) 1 commit
-  (merged to 'next' on 2015-05-26 at 9d76e3b)
- + Documentation/git-commit: grammofix
-
- Will merge to 'master'.
-
-
-* rs/janitorial (2015-05-20) 3 commits
-  (merged to 'next' on 2015-05-26 at 9d5aee4)
- + dir: remove unused variable sb
- + clean: remove unused variable buf
- + use file_exists() to check if a file exists in the worktree
-
- Will merge to 'master'.
-
-
-* fm/fetch-raw-sha1 (2015-05-22) 3 commits
-  (merged to 'next' on 2015-05-26 at dc3f1b3)
- + upload-pack: optionally allow fetching reachable sha1
- + upload-pack: prepare to extend allow-tip-sha1-in-want
- + config.txt: clarify allowTipSHA1InWant with camelCase
-
- "git upload-pack" that serves "git fetch" can be told to serve
- commits that are not at the tip of any ref as long as they are
- reachable from a ref with uploadpack.allowReachableSHA1InWant
- configuration variable.
-
- Will merge to 'master'.
-
-
 * jc/commit-slab (2015-05-22) 1 commit
  - commit-slab: introduce slabname##_peek() function
 
@@ -488,104 +754,9 @@ of the repositories listed at
  sparsely (which is not recommended in the first place).
 
 
-* mm/rebase-i-post-rewrite-exec (2015-05-22) 3 commits
-  (merged to 'next' on 2015-05-26 at 8ddaab1)
- + t5407: use <<- to align the expected output
- + rebase -i: fix post-rewrite hook with failed exec command
- + rebase -i: demonstrate incorrect behavior of post-rewrite
-
- "git rebase -i" fired post-rewrite hook when it shouldn't (namely,
- when it was told to stop sequencing with 'exec' insn).
-
- Will merge to 'master'.
-
-
 * sb/submodule-doc-intro (2015-05-28) 1 commit
- - submodule doc: reorder introductory paragraphs
-
- Will merge to 'next'.
-
-
-* sb/test-bitmap-free-at-end (2015-05-22) 1 commit
-  (merged to 'next' on 2015-05-26 at 1014ebf)
- + test_bitmap_walk: free bitmap with bitmap_free
-
- Will merge to 'master'.
-
-
-* dt/cat-file-follow-symlinks (2015-05-20) 3 commits
-  (merged to 'next' on 2015-05-26 at 7ae52d4)
- + cat-file: add --follow-symlinks to --batch
- + sha1_name: get_sha1_with_context learns to follow symlinks
- + tree-walk: learn get_tree_entry_follow_symlinks
-
- "git cat-file --batch(-check)" learned the "--follow-symlinks"
- option that follows an in-tree symbolic links when asked about an
- object via extended SHA-1 syntax, e.g. HEAD:RelNotes that points at
- Documentation/RelNotes/2.5.0.txt.  With the new option, the command
- behaves as if HEAD:Documentation/RelNotes/2.5.0.txt was given as
- input instead.
-
- Will merge to 'master'.
-
-
-* dt/clean-pathspec-filter-then-lstat (2015-05-18) 1 commit
-  (merged to 'next' on 2015-05-26 at 9b24d71)
- + clean: only lstat files in pathspec
-
- "git clean pathspec..." tried to lstat(2) and complain even for
- paths outside the given pathspec.
-
- Will merge to 'master'.
-
-
-* jh/filter-empty-contents (2015-05-18) 1 commit
-  (merged to 'next' on 2015-05-26 at 9cad398)
- + sha1_file: pass empty buffer to index empty file
-
- The clean/smudge interface did not work well when filtering an
- empty contents (failed and then passed the empty input through).
- It can be argued that a filter that produces anything but empty for
- an empty input is nonsense, but if the user wants to do strange
- things, then why not?
-
- Will merge to 'master'.
-
-
-* jk/http-backend-deadlock (2015-05-25) 1 commit
-  (merged to 'next' on 2015-05-26 at 9f3bd8a)
- + Merge branch 'jk/http-backend-deadlock-2.3' into jk/http-backend-deadlock
- (this branch uses jk/http-backend-deadlock-2.2 and jk/http-backend-deadlock-2.3.)
-
- Communication between the HTTP server and http_backend process can
- lead to a dead-lock when relaying a large ref negotiation request.
- Diagnose the situation better, and mitigate it by reading such a
- request first into core (to a reasonable limit).
-
- Will merge to 'master'.
-
-
-* mm/log-format-raw-doc (2015-05-20) 2 commits
-  (merged to 'next' on 2015-05-26 at 97e2c9d)
- + Documentation/log: clarify sha1 non-abbreviation in log --raw
- + Documentation/log: clarify what --raw means
-
- Clarify that "log --raw" and "log --format=raw" are unrelated
- concepts.
-
- Will merge to 'master'.
-
-
-* sg/help-group (2015-05-21) 5 commits
-  (merged to 'next' on 2015-05-26 at 2749912)
- + help: respect new common command grouping
- + command-list.txt: drop the "common" tag
- + generate-cmdlist: parse common group commands
- + command-list.txt: add the common groups block
- + command-list: prepare machinery for upcoming "common groups" section
-
- Group list of commands shown by "git help" along the workflow
- elements to help early learners.
+  (merged to 'next' on 2015-06-01 at b6798de)
+ + submodule doc: reorder introductory paragraphs
 
  Will merge to 'master'.
 
@@ -606,18 +777,20 @@ of the repositories listed at
 
 
 * pt/pull-tests (2015-05-29) 8 commits
- - t5520: check reflog action in fast-forward merge
- - t5521: test --dry-run does not make any changes
- - t5520: test --rebase failure on unborn branch with index
- - t5520: test --rebase with multiple branches
- - t5520: test work tree fast-forward when fetch updates head
- - t5520: test for failure if index has unresolved entries
- - t5520: test no merge candidates cases
- - t5520: prevent field splitting in content comparisons
+  (merged to 'next' on 2015-06-01 at c98370b)
+ + t5520: check reflog action in fast-forward merge
+ + t5521: test --dry-run does not make any changes
+ + t5520: test --rebase failure on unborn branch with index
+ + t5520: test --rebase with multiple branches
+ + t5520: test work tree fast-forward when fetch updates head
+ + t5520: test for failure if index has unresolved entries
+ + t5520: test no merge candidates cases
+ + t5520: prevent field splitting in content comparisons
+ (this branch is used by pt/pull-optparse.)
 
  Add more test coverage to "git pull".
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jc/clone-bundle (2015-04-30) 1 commit
@@ -674,12 +847,3 @@ of the repositories listed at
  has been deprecated since October 2007.
 
  Will keep in 'next' during the 2.5 cycle.
-
-
-* ah/usage-strings (2015-05-03) 1 commit
-  (merged to 'next' on 2015-05-28 at 5f4350e)
- + blame, log: format usage strings similarly to those in documentation
-
- A few usage string updates.
-
- Will merge to 'master'.
