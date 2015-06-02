@@ -14,7 +14,7 @@ test_expect_success setup '
 	git for-each-ref --format="%(objectname) %(refname)" >brief-list
 '
 
-test_expect_failure 'Broken refs are reported correctly' '
+test_expect_success 'Broken refs are reported correctly' '
 	r=refs/heads/bogus &&
 	: >.git/$r &&
 	test_when_finished "rm -f .git/$r" &&
