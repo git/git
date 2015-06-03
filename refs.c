@@ -1281,19 +1281,24 @@ static void read_loose_refs(const char *dirname, struct ref_dir *dir)
 					 create_dir_entry(refs, refname.buf,
 							  refname.len, 1));
 		} else {
+			int read_ok;
+
 			if (*refs->name) {
 				hashclr(sha1);
 				flag = 0;
-				if (resolve_gitlink_ref(refs->name, refname.buf, sha1) < 0) {
-					hashclr(sha1);
-					flag |= REF_ISBROKEN;
-				}
-			} else if (read_ref_full(refname.buf,
-						 RESOLVE_REF_READING,
-						 sha1, &flag)) {
+				read_ok = !resolve_gitlink_ref(refs->name,
+							       refname.buf, sha1);
+			} else {
+				read_ok = !read_ref_full(refname.buf,
+							 RESOLVE_REF_READING,
+							 sha1, &flag);
+			}
+
+			if (!read_ok) {
 				hashclr(sha1);
 				flag |= REF_ISBROKEN;
 			}
+
 			if (check_refname_format(refname.buf,
 						 REFNAME_ALLOW_ONELEVEL)) {
 				hashclr(sha1);
