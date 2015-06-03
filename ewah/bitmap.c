@@ -20,8 +20,8 @@
 #include "git-compat-util.h"
 #include "ewok.h"
 
-#define EWAH_MASK(x) ((eword_t)1 << (x % BITS_IN_WORD))
-#define EWAH_BLOCK(x) (x / BITS_IN_WORD)
+#define EWAH_MASK(x) ((eword_t)1 << (x % BITS_IN_EWORD))
+#define EWAH_BLOCK(x) (x / BITS_IN_EWORD)
 
 struct bitmap *bitmap_new(void)
 {
@@ -127,7 +127,7 @@ void bitmap_and_not(struct bitmap *self, struct bitmap *other)
 void bitmap_or_ewah(struct bitmap *self, struct ewah_bitmap *other)
 {
 	size_t original_size = self->word_alloc;
-	size_t other_final = (other->bit_size / BITS_IN_WORD) + 1;
+	size_t other_final = (other->bit_size / BITS_IN_EWORD) + 1;
 	size_t i = 0;
 	struct ewah_iterator it;
 	eword_t word;
@@ -155,17 +155,17 @@ void bitmap_each_bit(struct bitmap *self, ewah_callback callback, void *data)
 		uint32_t offset;
 
 		if (word == (eword_t)~0) {
-			for (offset = 0; offset < BITS_IN_WORD; ++offset)
+			for (offset = 0; offset < BITS_IN_EWORD; ++offset)
 				callback(pos++, data);
 		} else {
-			for (offset = 0; offset < BITS_IN_WORD; ++offset) {
+			for (offset = 0; offset < BITS_IN_EWORD; ++offset) {
 				if ((word >> offset) == 0)
 					break;
 
 				offset += ewah_bit_ctz64(word >> offset);
 				callback(pos + offset, data);
 			}
-			pos += BITS_IN_WORD;
+			pos += BITS_IN_EWORD;
 		}
 	}
 }
