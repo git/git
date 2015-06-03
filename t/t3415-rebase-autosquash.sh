@@ -250,4 +250,37 @@ test_expect_success 'squash! fixup!' '
 	test_auto_fixup_fixup squash fixup
 '
 
+test_expect_success 'autosquash with custom inst format matching on sha1' '
+	git reset --hard base &&
+	git config --add rebase.instructionFormat "[%an @ %ar] %s"  &&
+	echo 1 >file1 &&
+	git add -u &&
+	test_tick &&
+	git commit -m "squash! $(git rev-parse --short HEAD^)" &&
+	git tag final-shasquash-instFmt &&
+	test_tick &&
+	git rebase --autosquash -i HEAD^^^ &&
+	git log --oneline >actual &&
+	test_line_count = 3 actual &&
+	git diff --exit-code final-shasquash-instFmt &&
+	test 1 = "$(git cat-file blob HEAD^:file1)" &&
+	test 1 = $(git cat-file commit HEAD^ | grep squash | wc -l)
+'
+
+test_expect_success 'autosquash with custom inst format matching on comment' '
+	git reset --hard base &&
+	git config --add rebase.instructionFormat "[%an @ %ar] %s"  &&
+	echo 1 >file1 &&
+	git add -u &&
+	test_tick &&
+	git commit -m "squash! $(git log -n 1 --format=%s HEAD^)" &&
+	git tag final-comment-squash-instFmt &&
+	test_tick &&
+	git rebase --autosquash -i HEAD^^^ &&
+	git log --oneline >actual &&
+	test_line_count = 3 actual &&
+	git diff --exit-code final-comment-squash-instFmt &&
+	test 1 = "$(git cat-file blob HEAD^:file1)" &&
+	test 1 = $(git cat-file commit HEAD^ | grep squash | wc -l)
+'
 test_done
