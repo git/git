@@ -20,8 +20,8 @@
 #include "git-compat-util.h"
 #include "ewok.h"
 
-#define MASK(x) ((eword_t)1 << (x % BITS_IN_WORD))
-#define BLOCK(x) (x / BITS_IN_WORD)
+#define EWAH_MASK(x) ((eword_t)1 << (x % BITS_IN_WORD))
+#define EWAH_BLOCK(x) (x / BITS_IN_WORD)
 
 struct bitmap *bitmap_new(void)
 {
@@ -33,7 +33,7 @@ struct bitmap *bitmap_new(void)
 
 void bitmap_set(struct bitmap *self, size_t pos)
 {
-	size_t block = BLOCK(pos);
+	size_t block = EWAH_BLOCK(pos);
 
 	if (block >= self->word_alloc) {
 		size_t old_size = self->word_alloc;
@@ -45,22 +45,22 @@ void bitmap_set(struct bitmap *self, size_t pos)
 			(self->word_alloc - old_size) * sizeof(eword_t));
 	}
 
-	self->words[block] |= MASK(pos);
+	self->words[block] |= EWAH_MASK(pos);
 }
 
 void bitmap_clear(struct bitmap *self, size_t pos)
 {
-	size_t block = BLOCK(pos);
+	size_t block = EWAH_BLOCK(pos);
 
 	if (block < self->word_alloc)
-		self->words[block] &= ~MASK(pos);
+		self->words[block] &= ~EWAH_MASK(pos);
 }
 
 int bitmap_get(struct bitmap *self, size_t pos)
 {
-	size_t block = BLOCK(pos);
+	size_t block = EWAH_BLOCK(pos);
 	return block < self->word_alloc &&
-		(self->words[block] & MASK(pos)) != 0;
+		(self->words[block] & EWAH_MASK(pos)) != 0;
 }
 
 struct ewah_bitmap *bitmap_to_ewah(struct bitmap *bitmap)
