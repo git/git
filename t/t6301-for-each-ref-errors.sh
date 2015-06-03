@@ -24,7 +24,7 @@ test_expect_success 'Broken refs are reported correctly' '
 	test_cmp broken-err err
 '
 
-test_expect_failure 'NULL_SHA1 refs are reported correctly' '
+test_expect_success 'NULL_SHA1 refs are reported correctly' '
 	r=refs/heads/zeros &&
 	echo $ZEROS >.git/$r &&
 	test_when_finished "rm -f .git/$r" &&
