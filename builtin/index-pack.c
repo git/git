@@ -616,7 +616,9 @@ static int compare_ofs_delta_bases(off_t offset1, off_t offset2,
 	int cmp = type1 - type2;
 	if (cmp)
 		return cmp;
-	return offset1 - offset2;
+	return offset1 < offset2 ? -1 :
+	       offset1 > offset2 ?  1 :
+	       0;
 }
 
 static int find_ofs_delta(const off_t offset, enum object_type type)
@@ -1051,7 +1053,9 @@ static int compare_ofs_delta_entry(const void *a, const void *b)
 	const struct ofs_delta_entry *delta_a = a;
 	const struct ofs_delta_entry *delta_b = b;
 
-	return delta_a->offset - delta_b->offset;
+	return delta_a->offset < delta_b->offset ? -1 :
+	       delta_a->offset > delta_b->offset ?  1 :
+	       0;
 }
 
 static int compare_ref_delta_entry(const void *a, const void *b)
