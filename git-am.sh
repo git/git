@@ -378,6 +378,7 @@ committer_date_is_author_date=
 ignore_date=
 allow_rerere_autoupdate=
 gpg_sign_opt=
+threeway=
 
 if test "$(git config --bool --get am.messageid)" = true
 then
