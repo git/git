@@ -191,7 +191,7 @@ static int lock_file_timeout(struct lock_file *lk, const char *path,
 		return lock_file(lk, path, flags);
 
 	if (!random_initialized) {
-		srandom((unsigned int)getpid());
+		srand((unsigned int)getpid());
 		random_initialized = 1;
 	}
 
@@ -218,7 +218,7 @@ static int lock_file_timeout(struct lock_file *lk, const char *path,
 
 		backoff_ms = multiplier * INITIAL_BACKOFF_MS;
 		/* back off for between 0.75*backoff_ms and 1.25*backoff_ms */
-		wait_us = (750 + random() % 500) * backoff_ms;
+		wait_us = (750 + rand() % 500) * backoff_ms;
 		sleep_microseconds(wait_us);
 		remaining_us -= wait_us;
 
