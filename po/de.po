@@ -5679,11 +5679,11 @@ msgstr "Hauptwurzeln melden"
 
 #: builtin/fsck.c:613
 msgid "make index objects head nodes"
-msgstr "Objekte in der Staging-Area prüfen"
+msgstr "Staging-Area-Objekte in Erreichbarkeitsprüfung einbeziehen"
 
 #: builtin/fsck.c:614
 msgid "make reflogs head nodes (default)"
-msgstr "die Reflogs prüfen (Standard)"
+msgstr "Reflogs in Erreichbarkeitsprüfung einbeziehen (Standard)"
 
 #: builtin/fsck.c:615
 msgid "also consider packs and alternate objects"
