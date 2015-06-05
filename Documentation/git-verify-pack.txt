@@ -40,7 +40,7 @@ OUTPUT FORMAT
 -------------
 When specifying the -v option the format used is:
 
-	SHA-1 type size size-in-pack-file offset-in-packfile
+	SHA-1 type size size-in-packfile offset-in-packfile
 
 for objects that are not deltified in the pack, and
 
