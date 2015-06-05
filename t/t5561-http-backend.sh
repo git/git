@@ -2,12 +2,6 @@
 
 test_description='test git-http-backend'
 . ./test-lib.sh
-
-if test -n "$NO_CURL"; then
-	skip_all='skipping test, git built without http support'
-	test_done
-fi
-
 . "$TEST_DIRECTORY"/lib-httpd.sh
 start_httpd
 
