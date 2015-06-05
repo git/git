@@ -23,7 +23,9 @@ ifndef::git-format-patch[]
 -u::
 --patch::
 	Generate patch (see section on generating patches).
-	{git-diff? This is the default.}
+ifdef::git-diff[]
+	This is the default.
+endif::git-diff[]
 endif::git-format-patch[]
 
 -s::
@@ -42,7 +44,9 @@ endif::git-format-patch[]
 ifndef::git-format-patch[]
 --raw::
 	Generate the raw format.
-	{git-diff-core? This is the default.}
+ifdef::git-diff-core[]
+	This is the default.
+endif::git-diff-core[]
 endif::git-format-patch[]
 
 ifndef::git-format-patch[]

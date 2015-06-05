@@ -70,8 +70,8 @@ COMMANDS
 --username=<user>;;
 	For transports that SVN handles authentication for (http,
 	https, and plain svn), specify the username.  For other
-	transports (e.g. svn+ssh://), you must include the username in
-	the URL, e.g. svn+ssh://foo@svn.bar.com/project
+	transports (e.g. `svn+ssh://`), you must include the username in
+	the URL, e.g. `svn+ssh://foo@svn.bar.com/project`
 --prefix=<prefix>;;
 	This allows one to specify a prefix which is prepended
 	to the names of remotes if trunk/branches/tags are
@@ -279,9 +279,9 @@ first have already been pushed into SVN.
 	Ask the user to confirm that a patch set should actually be sent to SVN.
 	For each patch, one may answer "yes" (accept this patch), "no" (discard this
 	patch), "all" (accept all patches), or "quit".
-	+
-	'git svn dcommit' returns immediately if answer is "no" or "quit", without
-	committing anything to SVN.
++
+'git svn dcommit' returns immediately if answer is "no" or "quit", without
+committing anything to SVN.
 
 'branch'::
 	Create a branch in the SVN repository.
