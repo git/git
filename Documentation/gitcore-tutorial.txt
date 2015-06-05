@@ -259,7 +259,7 @@ index 557db03..263414f 100644
 @@ -1 +1,2 @@
  Hello World
 +It's a new day for git
-----
+------------
 
 i.e. the diff of the change we caused by adding another line to `hello`.
 
