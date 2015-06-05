@@ -21,6 +21,17 @@ UI, Workflows & Features
    chunks from Perforce, instead of making one call to "p4 changes"
    that may trigger "too many rows scanned" error from Perforce.
 
+ * Unlike "$EDITOR" and "$GIT_EDITOR" that can hold the path to the
+   command and initial options (e.g. "/path/to/emacs -nw"), 'git p4'
+   did not let the shell interpolate the contents of the environment
+   variable that name the editor "$P4EDITOR" (and "$EDITOR", too).
+   This release makes it in line with the rest of Git, as well as with
+   Perforce.
+
+ * A new short-hand <branch>@{push} denotes the remote-tracking branch
+   that tracks the branch at the remote the <branch> would be pushed
+   to.
+
  * "git show-branch --topics HEAD" (with no other arguments) did not
    do anything interesting.  Instead, contrast the given revision
    against all the local branches by default.
@@ -149,6 +160,9 @@ Performance, Internal Implementation, Development Support etc.
    show special-cased error message, which was made irrelevant when
    the semantics of the option changed back in Git 1.9 days.
    (merge 19d122b pt/pull-tags-error-diag later to maint).
+
+ * for_each_ref() callback functions were taught to name the objects
+   not with "unsigned char sha1[20]" but with "struct object_id".
 
 
 Also contains various documentation updates and code clean-ups.
