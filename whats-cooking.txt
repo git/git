@@ -1,15 +1,21 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jun 2015, #01; Tue, 2)
-X-master-at: f86f31ab33c3406adebbb9f9f61be550dcc5a472
-X-next-at: b4379f4514b71bf690061de15eb494cafb09b9b1
+Subject: What's cooking in git.git (Jun 2015, #02; Fri, 5)
+X-master-at: 7974889a053574e449b55ca543a486e38e74864f
+X-next-at: 1a18470cb8c6fbcf40b535cf669aa165844706d5
 
-What's cooking in git.git (Jun 2015, #01; Tue, 2)
+What's cooking in git.git (Jun 2015, #02; Fri, 5)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
+
+A handful of topics that graduated to 'master' a few weeks ago are
+now in 'maint', the tip of which has been tagged as v2.4.3.
+
+On the 'master' front, another huge batch of "struct object_id"
+thing is now in.  So is Peff's 'master@{push}' series.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -19,317 +25,134 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* ah/usage-strings (2015-05-03) 1 commit
-  (merged to 'next' on 2015-05-28 at 5f4350e)
- + blame, log: format usage strings similarly to those in documentation
+* bc/object-id (2015-05-25) 56 commits
+  (merged to 'next' on 2015-05-26 at 8d9f645)
+ + struct ref_lock: convert old_sha1 member to object_id
+ + warn_if_dangling_symref(): convert local variable "junk" to object_id
+ + each_ref_fn_adapter(): remove adapter
+ + rev_list_insert_ref(): remove unneeded arguments
+ + rev_list_insert_ref_oid(): new function, taking an object_oid
+ + mark_complete(): remove unneeded arguments
+ + mark_complete_oid(): new function, taking an object_oid
+ + clear_marks(): rewrite to take an object_id argument
+ + mark_complete(): rewrite to take an object_id argument
+ + send_ref(): convert local variable "peeled" to object_id
+ + upload-pack: rewrite functions to take object_id arguments
+ + find_symref(): convert local variable "unused" to object_id
+ + find_symref(): rewrite to take an object_id argument
+ + write_one_ref(): rewrite to take an object_id argument
+ + write_refs_to_temp_dir(): convert local variable sha1 to object_id
+ + submodule: rewrite to take an object_id argument
+ + shallow: rewrite functions to take object_id arguments
+ + handle_one_ref(): rewrite to take an object_id argument
+ + add_info_ref(): rewrite to take an object_id argument
+ + handle_one_reflog(): rewrite to take an object_id argument
+ + register_replace_ref(): rewrite to take an object_id argument
+ + remote: rewrite functions to take object_id arguments
+ + add_one_ref(): rewrite to take an object_id argument
+ + string_list_add_one_ref(): rewrite to take an object_id argument
+ + add_ref_decoration(): convert local variable original_sha1 to object_id
+ + add_ref_decoration(): rewrite to take an object_id argument
+ + show_head_ref(): convert local variable "unused" to object_id
+ + http-backend: rewrite to take an object_id argument
+ + append_similar_ref(): rewrite to take an object_id argument
+ + builtin/show-ref: rewrite to take an object_id argument
+ + show_ref(): convert local variable peeled to object_id
+ + builtin/show-ref: rewrite to use object_id
+ + fsck: change functions to use object_id
+ + cmd_show_branch(): fix error message
+ + builtin/show-branch: rewrite functions to work with object_id
+ + append_one_rev(): rewrite to work with object_id
+ + builtin/show-branch: rewrite functions to take object_id arguments
+ + append_matching_ref(): rewrite to take an object_id argument
+ + show_reference(): rewrite to take an object_id argument
+ + builtin/remote: rewrite functions to take object_id arguments
+ + add_branch_for_removal(): don't set "util" field of string_list entries
+ + add_branch_for_removal(): rewrite to take an object_id argument
+ + builtin/reflog: rewrite ref functions to take an object_id argument
+ + show_ref_cb(): rewrite to take an object_id argument
+ + builtin/pack-objects: rewrite to take an object_id argument
+ + name_ref(): rewrite to take an object_id argument
+ + grab_single_ref(): rewrite to take an object_id argument
+ + builtin/fetch: rewrite to take an object_id argument
+ + get_name(): rewrite to take an object_id argument
+ + add_pending_uninteresting_ref(): rewrite to take an object_id argument
+ + append_ref(): rewrite to take an object_id argument
+ + register_ref(): rewrite to take an object_id argument
+ + handle_one_ref(): rewrite to take an object_id argument
+ + builtin/rev-parse: rewrite to take an object_id argument
+ + each_ref_fn: change to take an object_id parameter
+ + refs: convert struct ref_entry to use struct object_id
 
- A few usage string updates.
-
-
-* da/mergetool-winmerge (2015-05-20) 2 commits
-  (merged to 'next' on 2015-05-26 at d6333e9)
- + mergetools: add winmerge as a builtin tool
- + mergetool--lib: set IFS for difftool and mergetool
-
- "git mergetool" learned to drive WinMerge as a backend.
-
-
-* dt/cat-file-follow-symlinks (2015-05-20) 3 commits
-  (merged to 'next' on 2015-05-26 at 7ae52d4)
- + cat-file: add --follow-symlinks to --batch
- + sha1_name: get_sha1_with_context learns to follow symlinks
- + tree-walk: learn get_tree_entry_follow_symlinks
-
- "git cat-file --batch(-check)" learned the "--follow-symlinks"
- option that follows an in-tree symbolic link when asked about an
- object via extended SHA-1 syntax, e.g. HEAD:RelNotes that points at
- Documentation/RelNotes/2.5.0.txt.  With the new option, the command
- behaves as if HEAD:Documentation/RelNotes/2.5.0.txt was given as
- input instead.
-
-
-* dt/clean-pathspec-filter-then-lstat (2015-05-18) 1 commit
-  (merged to 'next' on 2015-05-26 at 9b24d71)
- + clean: only lstat files in pathspec
-
- "git clean pathspec..." tried to lstat(2) and complain even for
- paths outside the given pathspec.
-
-
-* fm/fetch-raw-sha1 (2015-05-22) 3 commits
-  (merged to 'next' on 2015-05-26 at dc3f1b3)
- + upload-pack: optionally allow fetching reachable sha1
- + upload-pack: prepare to extend allow-tip-sha1-in-want
- + config.txt: clarify allowTipSHA1InWant with camelCase
-
- "git upload-pack" that serves "git fetch" can be told to serve
- commits that are not at the tip of any ref, as long as they are
- reachable from a ref, with uploadpack.allowReachableSHA1InWant
- configuration variable.
-
-
-* jh/filter-empty-contents (2015-05-18) 1 commit
-  (merged to 'next' on 2015-05-26 at 9cad398)
- + sha1_file: pass empty buffer to index empty file
-
- The clean/smudge interface did not work well when filtering an
- empty contents (failed and then passed the empty input through).
- It can be argued that a filter that produces anything but empty for
- an empty input is nonsense, but if the user wants to do strange
- things, then why not?
-
-
-* jk/http-backend-deadlock (2015-05-25) 1 commit
-  (merged to 'next' on 2015-05-26 at 9f3bd8a)
- + Merge branch 'jk/http-backend-deadlock-2.3' into jk/http-backend-deadlock
- (this branch uses jk/http-backend-deadlock-2.2 and jk/http-backend-deadlock-2.3.)
-
- Communication between the HTTP server and http_backend process can
- lead to a dead-lock when relaying a large ref negotiation request.
- Diagnose the situation better, and mitigate it by reading such a
- request first into core (to a reasonable limit).
+ for_each_ref() callback functions were taught to name the objects
+ not with "unsigned char sha1[20]" but with "struct object_id".
 
 
-* jk/http-backend-deadlock-2.2 (2015-05-25) 3 commits
- + http-backend: spool ref negotiation requests to buffer
- + t5551: factor out tag creation
- + http-backend: fix die recursion with custom handler
- (this branch is used by jk/http-backend-deadlock and jk/http-backend-deadlock-2.3.)
+* jk/at-push-sha1 (2015-05-22) 16 commits
+  (merged to 'next' on 2015-05-26 at d9d342f)
+ + for-each-ref: accept "%(push)" format
+ + for-each-ref: use skip_prefix instead of starts_with
+ + sha1_name: implement @{push} shorthand
+ + sha1_name: refactor interpret_upstream_mark
+ + sha1_name: refactor upstream_mark
+ + remote.c: add branch_get_push
+ + remote.c: return upstream name from stat_tracking_info
+ + remote.c: untangle error logic in branch_get_upstream
+ + remote.c: report specific errors from branch_get_upstream
+ + remote.c: introduce branch_get_upstream helper
+ + remote.c: hoist read_config into remote_get_1
+ + remote.c: provide per-branch pushremote name
+ + remote.c: hoist branch.*.remote lookup out of remote_get_1
+ + remote.c: drop "remote" pointer from "struct branch"
+ + remote.c: refactor setup of branch->merge list
+ + remote.c: drop default_remote_name variable
 
- Communication between the HTTP server and http_backend process can
- lead to a dead-lock when relaying a large ref negotiation request.
- Diagnose the situation better, and mitigate it by reading such a
- request first into core (to a reasonable limit).
-
- This was wiggled back to apply to the 2.2 maintenance track
- (original was for 2.4).
-
-
-* jk/http-backend-deadlock-2.3 (2015-05-25) 1 commit
- + Merge branch 'jk/http-backend-deadlock-2.2' into jk/http-backend-deadlock-2.3
- (this branch is used by jk/http-backend-deadlock; uses jk/http-backend-deadlock-2.2.)
-
- Same for 2.3 maintenance track.
-
-
-* jk/stash-options (2015-05-20) 2 commits
-  (merged to 'next' on 2015-05-26 at 5dcb026)
- + stash: recognize "--help" for subcommands
- + stash: complain about unknown flags
-
- Make "git stash something --help" error out, so that users can
- safely say "git stash drop --help".
+ Introduce <branch>@{push} short-hand to denote the remote-tracking
+ branch that tracks the branch at the remote the <branch> would be
+ pushed to.
 
 
-* mc/commit-doc-grammofix (2015-05-19) 1 commit
-  (merged to 'next' on 2015-05-26 at 9d76e3b)
- + Documentation/git-commit: grammofix
+* ld/p4-editor-multi-words (2015-05-26) 3 commits
+  (merged to 'next' on 2015-05-28 at a368a47)
+ + git-p4: tests: use test-chmtime in place of touch
+ + git-p4: fix handling of multi-word P4EDITOR
+ + git-p4: add failing test for P4EDITOR handling
 
- Doc grammar fix.
-
-
-* mm/log-format-raw-doc (2015-05-20) 2 commits
-  (merged to 'next' on 2015-05-26 at 97e2c9d)
- + Documentation/log: clarify sha1 non-abbreviation in log --raw
- + Documentation/log: clarify what --raw means
-
- Clarify that "log --raw" and "log --format=raw" are unrelated
- concepts.
-
-
-* mm/rebase-i-post-rewrite-exec (2015-05-22) 3 commits
-  (merged to 'next' on 2015-05-26 at 8ddaab1)
- + t5407: use <<- to align the expected output
- + rebase -i: fix post-rewrite hook with failed exec command
- + rebase -i: demonstrate incorrect behavior of post-rewrite
-
- "git rebase -i" fired post-rewrite hook when it shouldn't (namely,
- when it was told to stop sequencing with 'exec' insn).
-
-
-* rs/janitorial (2015-05-20) 3 commits
-  (merged to 'next' on 2015-05-26 at 9d5aee4)
- + dir: remove unused variable sb
- + clean: remove unused variable buf
- + use file_exists() to check if a file exists in the worktree
-
- Code clean-up.
-
-
-* sb/test-bitmap-free-at-end (2015-05-22) 1 commit
-  (merged to 'next' on 2015-05-26 at 1014ebf)
- + test_bitmap_walk: free bitmap with bitmap_free
-
- An earlier leakfix to bitmap testing code was incomplete.
-
-
-* sg/help-group (2015-05-21) 5 commits
-  (merged to 'next' on 2015-05-26 at 2749912)
- + help: respect new common command grouping
- + command-list.txt: drop the "common" tag
- + generate-cmdlist: parse common group commands
- + command-list.txt: add the common groups block
- + command-list: prepare machinery for upcoming "common groups" section
-
- Group list of commands shown by "git help" along the workflow
- elements to help early learners.
+ Unlike "$EDITOR" and "$GIT_EDITOR" that can hold the path to the
+ command and initial options (e.g. "/path/to/emacs -nw"), 'git p4'
+ did not let the shell interpolate the contents of the environment
+ variable that name the editor "$P4EDITOR" (and "$EDITOR", too).
+ Make it in line with the rest of Git, as well as with Perforce.
 
 --------------------------------------------------
 [New Topics]
 
-* gr/rebase-i-drop-warn (2015-06-01) 2 commits
- - git rebase -i: warn about removed commits
- - git-rebase -i: add command "drop" to remove a commit
+* jc/ll-merge-expose-path (2015-06-04) 1 commit
+ - ll-merge: pass the original path to external drivers
 
- Add "drop commit-object-name subject" command as another way to
- skip replaying of a commit in "rebase -i", and then punish those
- who do not use it (and instead just remove the lines) by throwing
- a warning.
-
- Expecting a reroll.
+ Traditionally, external low-level 3-way merge drivers are expected
+ to produce their results based solely on the contents of the three
+ variants given in temporary files named by %O, %A and %B on their
+ command line.  Additionally allow them to look at the final path
+ (given by %P).
 
 
-* jh/strbuf-read-use-read-in-full (2015-06-01) 1 commit
- - strbuf_read(): skip unnecessary strbuf_grow() at eof
+* jk/log-missing-default-HEAD (2015-06-03) 1 commit
+ - log: diagnose empty HEAD more clearly
 
- Avoid one extra iteration and strbuf_grow() of 8kB in
- strbuf_read().
-
- Looked reasonable; perhaps a log message clarification is coming?
+ "git init empty && git -C empty log" said "bad default revision 'HEAD'",
+ which was found to be a bit confusing to new users.
 
 
-* jk/squelch-missing-link-warning-for-unreachable (2015-06-01) 3 commits
-  (merged to 'next' on 2015-06-01 at 9ddc5d1)
- + suppress errors on missing UNINTERESTING links
- + silence broken link warnings with revs->ignore_missing_links
- + add quieter versions of parse_{tree,commit}
+* nd/slim-index-pack-memory-usage (2015-06-04) 1 commit
+  (merged to 'next' on 2015-06-04 at 328fd50)
+ + index-pack: fix truncation of off_t in comparison
 
- Recent "git prune" traverses young unreachable objects to safekeep
- old objects in the reachability chain from them, which causes
- error messages that are unnecessarily alarming.
+ An earlier optimization broke index-pack for a large object
+ transfer; this fixes it before the breakage hits any released
+ version.
 
  Will merge to 'master'.
-
-
-* mh/reporting-broken-refs-from-for-each-ref (2015-06-02) 3 commits
- - read_loose_refs(): treat NULL_SHA1 loose references as broken
- - for-each-ref: report broken references correctly
- - t6301: new tests of for-each-ref error handling
-
- "git for-each-ref" reported "missing object" for 0{40} when it
- encounters a broken ref.  The lack of object whose name is 0{40} is
- not the problem; the ref being broken is.
-
- A reroll for the tip one coming to pick final minor nits?
- Otherwise looked ready for 'next'.
-
-
-* tb/complete-sequencing (2015-06-01) 1 commit
-  (merged to 'next' on 2015-06-01 at b7604e8)
- + completion: suggest sequencer commands for revert
-
- The bash completion script (in contrib/) learned a few options that
- "git revert" takes.
-
- Will merge to 'master'.
-
-
-* jc/apply-reject-noop-hunk (2015-06-01) 1 commit
- - apply: reject a hunk that does not do anything
-
- "git apply" cannot diagnose a patch corruption when the breakage is
- to mark the length of the hunk shorter than it really is on the
- hunk header line "@@ -l,k +m,n @@"; one special case it could is
- when the hunk becomes no-op (e.g. k == n == 2 for two-line context
- patch output), and it learned how to do so.
-
- Will merge to 'next'.
- 
-
-* es/configure-getdelim (2015-06-02) 2 commits
- - configure: add getdelim() check
- - config.mak.uname: Darwin: define HAVE_GETDELIM for modern OS X releases
-
- Auto-detect availability of getdelim() that helps optimized version
- of strbuf_getwholeline().
-
- Will merge to 'next'.
-
-
-* es/osx-header-pollutes-mask-macro (2015-06-02) 1 commit
- - ewah/bitmap: silence warning about MASK macro redefinition
-
- Will merge to 'next'.
-
-
-* es/send-email-sendmail-alias (2015-06-01) 10 commits
- - send-email: further warn about unsupported sendmail aliases features
- - t9001: add sendmail aliases line continuation tests
- - t9001: refactor sendmail aliases test infrastructure
- - send-email: implement sendmail aliases line continuation support
- - send-email: simplify sendmail aliases comment and blank line recognizer
- - send-email: refactor sendmail aliases parser
- - send-email: fix style: cuddle 'elsif' and 'else' with closing brace
- - send-email: drop noise comments which merely repeat what code says
- - send-email: visually distinguish sendmail aliases parser warnings
- - send-email: further document missing sendmail aliases functionality
- (this branch uses ah/send-email-sendmail-alias.)
-
- "git send-email" learned to handle more forms of sendmail style
- aliases file.
-
- Will merge to 'next'.
-
-
-* jc/do-not-feed-tags-to-clear-commit-marks (2015-06-01) 1 commit
- - format-patch: do not feed tags to clear_commit_marks()
-
- "git format-patch --ignore-if-upstream A..B" did not like to be fed
- tags as boundary commits.
-
-
-* mg/index-read-error-messages (2015-06-01) 2 commits
- - messages: uniform error messages for index write
- - show-index: uniform error messages for index read
-
- The tip was RFC.
-
-
-* pt/pull-optparse (2015-06-02) 3 commits
- - pull: use git-rev-parse --parseopt for option parsing
- - pull: handle git-fetch's options as well
- - Merge branch 'pt/pull-tests' into pt/pull-optparse
- (this branch uses pt/pull-tests.)
-
- "git pull" has become more aware of the options meant for
- underlying "git fetch" and then learned to use parse-options
- parser.
-
- Will merge to 'next'.
-
-
-* qn/blame-show-email (2015-06-01) 1 commit
- - blame: add blame.showEmail configuration
-
- "git blame" learned blame.showEmail configuration variable.
-
- Will merge to 'next'.
-
-
-* rl/am-3way-config (2015-06-02) 3 commits
- - t4150-am: refactor am -3 tests
- - git-am.txt: add configuration section in git am documentation
- - git-am.sh: fix initialization of the threeway variable
-
- "git am" learned am.threeWay configuration variable.
-
-
-* sb/pack-protocol-mention-smart-http (2015-06-02) 1 commit
- - Documentation/technical/pack-protocol: mention http as possible protocol
-
- Doc updates.
-
- Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -538,6 +361,163 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* gr/rebase-i-drop-warn (2015-06-01) 2 commits
+ - git rebase -i: warn about removed commits
+ - git-rebase -i: add command "drop" to remove a commit
+
+ Add "drop commit-object-name subject" command as another way to
+ skip replaying of a commit in "rebase -i", and then punish those
+ who do not use it (and instead just remove the lines) by throwing
+ a warning.
+
+ Expecting a reroll.
+
+
+* jh/strbuf-read-use-read-in-full (2015-06-01) 1 commit
+ - strbuf_read(): skip unnecessary strbuf_grow() at eof
+
+ Avoid one extra iteration and strbuf_grow() of 8kB in
+ strbuf_read().
+
+ Looked reasonable; perhaps a log message clarification is coming?
+
+
+* jk/squelch-missing-link-warning-for-unreachable (2015-06-01) 3 commits
+  (merged to 'next' on 2015-06-01 at 9ddc5d1)
+ + suppress errors on missing UNINTERESTING links
+ + silence broken link warnings with revs->ignore_missing_links
+ + add quieter versions of parse_{tree,commit}
+
+ Recent "git prune" traverses young unreachable objects to safekeep
+ old objects in the reachability chain from them, which causes
+ error messages that are unnecessarily alarming.
+
+ Will merge to 'master'.
+
+
+* mh/reporting-broken-refs-from-for-each-ref (2015-06-03) 4 commits
+ - read_loose_refs(): treat NULL_SHA1 loose references as broken
+ - read_loose_refs(): simplify function logic
+ - for-each-ref: report broken references correctly
+ - t6301: new tests of for-each-ref error handling
+
+ "git for-each-ref" reported "missing object" for 0{40} when it
+ encounters a broken ref.  The lack of object whose name is 0{40} is
+ not the problem; the ref being broken is.
+
+ Will merge to 'next'.
+
+
+* tb/complete-sequencing (2015-06-01) 1 commit
+  (merged to 'next' on 2015-06-01 at b7604e8)
+ + completion: suggest sequencer commands for revert
+
+ The bash completion script (in contrib/) learned a few options that
+ "git revert" takes.
+
+ Will merge to 'master'.
+
+
+* jc/apply-reject-noop-hunk (2015-06-01) 1 commit
+ - apply: reject a hunk that does not do anything
+
+ "git apply" cannot diagnose a patch corruption when the breakage is
+ to mark the length of the hunk shorter than it really is on the
+ hunk header line "@@ -l,k +m,n @@"; one special case it could is
+ when the hunk becomes no-op (e.g. k == n == 2 for two-line context
+ patch output), and it learned how to do so.
+
+ Will merge to 'next'.
+
+
+* es/configure-getdelim (2015-06-03) 2 commits
+ - configure: add getdelim() check
+ - config.mak.uname: Darwin: define HAVE_GETDELIM for modern OS X releases
+
+ Auto-detect availability of getdelim() that helps optimized version
+ of strbuf_getwholeline().
+
+ Will merge to 'next'.
+
+
+* es/osx-header-pollutes-mask-macro (2015-06-03) 2 commits
+ - ewah: use less generic macro name
+ - ewah/bitmap: silence warning about MASK macro redefinition
+
+ Will merge to 'next'.
+
+
+* es/send-email-sendmail-alias (2015-06-01) 10 commits
+ - send-email: further warn about unsupported sendmail aliases features
+ - t9001: add sendmail aliases line continuation tests
+ - t9001: refactor sendmail aliases test infrastructure
+ - send-email: implement sendmail aliases line continuation support
+ - send-email: simplify sendmail aliases comment and blank line recognizer
+ - send-email: refactor sendmail aliases parser
+ - send-email: fix style: cuddle 'elsif' and 'else' with closing brace
+ - send-email: drop noise comments which merely repeat what code says
+ - send-email: visually distinguish sendmail aliases parser warnings
+ - send-email: further document missing sendmail aliases functionality
+ (this branch uses ah/send-email-sendmail-alias.)
+
+ "git send-email" learned to handle more forms of sendmail style
+ aliases file.
+
+ Will merge to 'next'.
+
+
+* jc/do-not-feed-tags-to-clear-commit-marks (2015-06-01) 1 commit
+ - format-patch: do not feed tags to clear_commit_marks()
+
+ "git format-patch --ignore-if-upstream A..B" did not like to be fed
+ tags as boundary commits.
+
+
+* mg/index-read-error-messages (2015-06-01) 2 commits
+ - messages: uniform error messages for index write
+ - show-index: uniform error messages for index read
+
+ The tip was RFC.
+
+
+* pt/pull-optparse (2015-06-02) 3 commits
+ - pull: use git-rev-parse --parseopt for option parsing
+ - pull: handle git-fetch's options as well
+ - Merge branch 'pt/pull-tests' into pt/pull-optparse
+ (this branch uses pt/pull-tests.)
+
+ "git pull" has become more aware of the options meant for
+ underlying "git fetch" and then learned to use parse-options
+ parser.
+
+ Will merge to 'next'.
+
+
+* qn/blame-show-email (2015-06-01) 1 commit
+ - blame: add blame.showEmail configuration
+
+ "git blame" learned blame.showEmail configuration variable.
+
+ Will merge to 'next'.
+
+
+* rl/am-3way-config (2015-06-04) 3 commits
+ - git-am: add am.threeWay config variable
+ - t4150-am: refactor am -3 tests
+ - git-am.sh: fix initialization of the threeway variable
+
+ "git am" learned am.threeWay configuration variable.
+
+
+* sb/pack-protocol-mention-smart-http (2015-06-02) 1 commit
+  (merged to 'next' on 2015-06-04 at 8041cf6)
+ + Documentation/technical/pack-protocol: mention http as possible protocol
+
+ Doc updates.
+
+ Will merge to 'master'.
+
+
 * hv/submodule-config (2015-06-02) 4 commits
  - do not die on error of parsing fetchrecursesubmodules option
  - use new config API for worktree configurations of submodules
@@ -638,11 +618,12 @@ of the repositories listed at
 
 
 * sg/merge-summary-config (2015-05-28) 1 commit
- - Documentation: include 'merge.branchdesc' for merge and config as well
+  (merged to 'next' on 2015-06-04 at 8c0946c)
+ + Documentation: include 'merge.branchdesc' for merge and config as well
 
  Doc updates.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jc/push-tags-also (2015-05-29) 1 commit
@@ -653,96 +634,34 @@ of the repositories listed at
 
 
 * jk/die-on-bogus-worktree-late (2015-05-29) 1 commit
- - setup_git_directory: delay core.bare/core.worktree errors
+  (merged to 'next' on 2015-06-04 at fac7a83)
+ + setup_git_directory: delay core.bare/core.worktree errors
 
  The setup code used to die when core.bare and core.worktree are set
  inconsistently, even for commands that do not need working tree.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jk/make-fix-dependencies (2015-05-29) 3 commits
- - Makefile: silence perl/PM.stamp recipe
- - Makefile: avoid timestamp updates to GIT-BUILD-OPTIONS
- - Makefile: drop dependency between git-instaweb and gitweb
+  (merged to 'next' on 2015-06-04 at 28daf19)
+ + Makefile: silence perl/PM.stamp recipe
+ + Makefile: avoid timestamp updates to GIT-BUILD-OPTIONS
+ + Makefile: drop dependency between git-instaweb and gitweb
 
  Build clean-up.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * ah/send-email-sendmail-alias (2015-05-27) 2 commits
- - t9001: write $HOME/, not ~/, to help shells without tilde expansion
- - send-email: add sendmail email aliases format
+  (merged to 'next' on 2015-06-04 at 9d9bd68)
+ + t9001: write $HOME/, not ~/, to help shells without tilde expansion
+ + send-email: add sendmail email aliases format
  (this branch is used by es/send-email-sendmail-alias.)
 
  "git send-email" learned the alias file format used by the sendmail
  program (in an abbreviated form).
-
- Will merge to 'next'.
-
-
-* bc/object-id (2015-05-25) 56 commits
-  (merged to 'next' on 2015-05-26 at 8d9f645)
- + struct ref_lock: convert old_sha1 member to object_id
- + warn_if_dangling_symref(): convert local variable "junk" to object_id
- + each_ref_fn_adapter(): remove adapter
- + rev_list_insert_ref(): remove unneeded arguments
- + rev_list_insert_ref_oid(): new function, taking an object_oid
- + mark_complete(): remove unneeded arguments
- + mark_complete_oid(): new function, taking an object_oid
- + clear_marks(): rewrite to take an object_id argument
- + mark_complete(): rewrite to take an object_id argument
- + send_ref(): convert local variable "peeled" to object_id
- + upload-pack: rewrite functions to take object_id arguments
- + find_symref(): convert local variable "unused" to object_id
- + find_symref(): rewrite to take an object_id argument
- + write_one_ref(): rewrite to take an object_id argument
- + write_refs_to_temp_dir(): convert local variable sha1 to object_id
- + submodule: rewrite to take an object_id argument
- + shallow: rewrite functions to take object_id arguments
- + handle_one_ref(): rewrite to take an object_id argument
- + add_info_ref(): rewrite to take an object_id argument
- + handle_one_reflog(): rewrite to take an object_id argument
- + register_replace_ref(): rewrite to take an object_id argument
- + remote: rewrite functions to take object_id arguments
- + add_one_ref(): rewrite to take an object_id argument
- + string_list_add_one_ref(): rewrite to take an object_id argument
- + add_ref_decoration(): convert local variable original_sha1 to object_id
- + add_ref_decoration(): rewrite to take an object_id argument
- + show_head_ref(): convert local variable "unused" to object_id
- + http-backend: rewrite to take an object_id argument
- + append_similar_ref(): rewrite to take an object_id argument
- + builtin/show-ref: rewrite to take an object_id argument
- + show_ref(): convert local variable peeled to object_id
- + builtin/show-ref: rewrite to use object_id
- + fsck: change functions to use object_id
- + cmd_show_branch(): fix error message
- + builtin/show-branch: rewrite functions to work with object_id
- + append_one_rev(): rewrite to work with object_id
- + builtin/show-branch: rewrite functions to take object_id arguments
- + append_matching_ref(): rewrite to take an object_id argument
- + show_reference(): rewrite to take an object_id argument
- + builtin/remote: rewrite functions to take object_id arguments
- + add_branch_for_removal(): don't set "util" field of string_list entries
- + add_branch_for_removal(): rewrite to take an object_id argument
- + builtin/reflog: rewrite ref functions to take an object_id argument
- + show_ref_cb(): rewrite to take an object_id argument
- + builtin/pack-objects: rewrite to take an object_id argument
- + name_ref(): rewrite to take an object_id argument
- + grab_single_ref(): rewrite to take an object_id argument
- + builtin/fetch: rewrite to take an object_id argument
- + get_name(): rewrite to take an object_id argument
- + add_pending_uninteresting_ref(): rewrite to take an object_id argument
- + append_ref(): rewrite to take an object_id argument
- + register_ref(): rewrite to take an object_id argument
- + handle_one_ref(): rewrite to take an object_id argument
- + builtin/rev-parse: rewrite to take an object_id argument
- + each_ref_fn: change to take an object_id parameter
- + refs: convert struct ref_entry to use struct object_id
-
- for_each_ref() callback functions were taught to name the objects
- not with "unsigned char sha1[20]" but with "struct object_id".
 
  Will merge to 'master'.
 
@@ -757,21 +676,6 @@ of the repositories listed at
 * sb/submodule-doc-intro (2015-05-28) 1 commit
   (merged to 'next' on 2015-06-01 at b6798de)
  + submodule doc: reorder introductory paragraphs
-
- Will merge to 'master'.
-
-
-* ld/p4-editor-multi-words (2015-05-26) 3 commits
-  (merged to 'next' on 2015-05-28 at a368a47)
- + git-p4: tests: use test-chmtime in place of touch
- + git-p4: fix handling of multi-word P4EDITOR
- + git-p4: add failing test for P4EDITOR handling
-
- Unlike "$EDITOR" and "$GIT_EDITOR" that can hold the path to the
- command and initial options (e.g. "/path/to/emacs -nw"), 'git p4'
- did not let the shell interpolate the contents of the environment
- variable that name the editor "$P4EDITOR" (and "$EDITOR", too).
- Make it in line with the rest of Git, as well as with Perforce.
 
  Will merge to 'master'.
 
@@ -797,32 +701,6 @@ of the repositories listed at
  - repack: optionally create a clone.bundle
 
  Still an early WIP
-
-
-* jk/at-push-sha1 (2015-05-22) 16 commits
-  (merged to 'next' on 2015-05-26 at d9d342f)
- + for-each-ref: accept "%(push)" format
- + for-each-ref: use skip_prefix instead of starts_with
- + sha1_name: implement @{push} shorthand
- + sha1_name: refactor interpret_upstream_mark
- + sha1_name: refactor upstream_mark
- + remote.c: add branch_get_push
- + remote.c: return upstream name from stat_tracking_info
- + remote.c: untangle error logic in branch_get_upstream
- + remote.c: report specific errors from branch_get_upstream
- + remote.c: introduce branch_get_upstream helper
- + remote.c: hoist read_config into remote_get_1
- + remote.c: provide per-branch pushremote name
- + remote.c: hoist branch.*.remote lookup out of remote_get_1
- + remote.c: drop "remote" pointer from "struct branch"
- + remote.c: refactor setup of branch->merge list
- + remote.c: drop default_remote_name variable
-
- Introduce <branch>@{push} short-hand to denote the remote-tracking
- branch that tracks the branch at the remote the <branch> would be
- pushed to.
-
- Will merge to 'master'.
 
 
 * ee/clean-remove-dirs (2015-04-26) 5 commits
