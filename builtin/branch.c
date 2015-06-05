@@ -242,7 +242,7 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 					    sha1, &flags);
 		if (!target) {
 			error(remote_branch
-			      ? _("remote branch '%s' not found.")
+			      ? _("remote-tracking branch '%s' not found.")
 			      : _("branch '%s' not found."), bname.buf);
 			ret = 1;
 			continue;
@@ -257,7 +257,7 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 
 		if (delete_ref(name, sha1, REF_NODEREF)) {
 			error(remote_branch
-			      ? _("Error deleting remote branch '%s'")
+			      ? _("Error deleting remote-tracking branch '%s'")
 			      : _("Error deleting branch '%s'"),
 			      bname.buf);
 			ret = 1;
@@ -265,7 +265,7 @@ static int delete_branches(int argc, const char **argv, int force, int kinds,
 		}
 		if (!quiet) {
 			printf(remote_branch
-			       ? _("Deleted remote branch %s (was %s).\n")
+			       ? _("Deleted remote-tracking branch %s (was %s).\n")
 			       : _("Deleted branch %s (was %s).\n"),
 			       bname.buf,
 			       (flags & REF_ISBROKEN) ? "broken"
