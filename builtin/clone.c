@@ -906,6 +906,8 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 
 	remote = remote_get(option_origin);
 	transport = transport_get(remote, remote->url[0]);
+	transport_set_verbosity(transport, option_verbosity, option_progress);
+
 	path = get_repo_path(remote->url[0], &is_bundle);
 	is_local = option_local != 0 && path && !is_bundle;
 	if (is_local) {
@@ -931,8 +933,6 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 				     option_depth);
 	if (option_single_branch)
 		transport_set_option(transport, TRANS_OPT_FOLLOWTAGS, "1");
-
-	transport_set_verbosity(transport, option_verbosity, option_progress);
 
 	if (option_upload_pack)
 		transport_set_option(transport, TRANS_OPT_UPLOADPACK,
