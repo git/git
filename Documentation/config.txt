@@ -2033,7 +2033,7 @@ pull.ff::
 	a case (equivalent to giving the `--no-ff` option from the command
 	line). When set to `only`, only such fast-forward merges are
 	allowed (equivalent to giving the `--ff-only` option from the
-	command line).
+	command line). This setting overrides `merge.ff` when pulling.
 
 pull.rebase::
 	When true, rebase branches on top of the fetched branch, instead
