@@ -845,11 +845,11 @@ static int get_sha1_1(const char *name, int len, unsigned char *sha1, unsigned l
 /* Remember to update object flag allocation in object.h */
 #define ONELINE_SEEN (1u<<20)
 
-static int handle_one_ref(const char *path,
-		const unsigned char *sha1, int flag, void *cb_data)
+static int handle_one_ref(const char *path, const struct object_id *oid,
+			  int flag, void *cb_data)
 {
 	struct commit_list **list = cb_data;
-	struct object *object = parse_object(sha1);
+	struct object *object = parse_object(oid->hash);
 	if (!object)
 		return 0;
 	if (object->type == OBJ_TAG) {
@@ -1379,6 +1379,7 @@ static int get_sha1_with_context_1(const char *name,
 		int pos;
 		if (!only_to_die && namelen > 2 && name[1] == '/') {
 			struct commit_list *list = NULL;
+
 			for_each_ref(handle_one_ref, &list);
 			commit_list_sort_by_date(&list);
 			return get_sha1_oneline(name + 2, sha1, list);

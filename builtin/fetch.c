@@ -179,13 +179,15 @@ static void add_merge_config(struct ref **head,
 	}
 }
 
-static int add_existing(const char *refname, const unsigned char *sha1,
+static int add_existing(const char *refname, const struct object_id *oid,
 			int flag, void *cbdata)
 {
 	struct string_list *list = (struct string_list *)cbdata;
 	struct string_list_item *item = string_list_insert(list, refname);
-	item->util = xmalloc(20);
-	hashcpy(item->util, sha1);
+	struct object_id *old_oid = xmalloc(sizeof(*old_oid));
+
+	oidcpy(old_oid, oid);
+	item->util = old_oid;
 	return 0;
 }
 
@@ -913,9 +915,10 @@ static int do_fetch(struct transport *transport,
 			struct string_list_item *peer_item =
 				string_list_lookup(&existing_refs,
 						   rm->peer_ref->name);
-			if (peer_item)
-				hashcpy(rm->peer_ref->old_sha1,
-					peer_item->util);
+			if (peer_item) {
+				struct object_id *old_oid = peer_item->util;
+				hashcpy(rm->peer_ref->old_sha1, old_oid->hash);
+			}
 		}
 	}
 

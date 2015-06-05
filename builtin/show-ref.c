@@ -17,19 +17,20 @@ static int deref_tags, show_head, tags_only, heads_only, found_match, verify,
 static const char **pattern;
 static const char *exclude_existing_arg;
 
-static void show_one(const char *refname, const unsigned char *sha1)
+static void show_one(const char *refname, const struct object_id *oid)
 {
-	const char *hex = find_unique_abbrev(sha1, abbrev);
+	const char *hex = find_unique_abbrev(oid->hash, abbrev);
 	if (hash_only)
 		printf("%s\n", hex);
 	else
 		printf("%s %s\n", hex, refname);
 }
 
-static int show_ref(const char *refname, const unsigned char *sha1, int flag, void *cbdata)
+static int show_ref(const char *refname, const struct object_id *oid,
+		    int flag, void *cbdata)
 {
 	const char *hex;
-	unsigned char peeled[20];
+	struct object_id peeled;
 
 	if (show_head && !strcmp(refname, "HEAD"))
 		goto match;
@@ -69,26 +70,27 @@ match:
 	 * detect and return error if the repository is corrupt and
 	 * ref points at a nonexistent object.
 	 */
-	if (!has_sha1_file(sha1))
+	if (!has_sha1_file(oid->hash))
 		die("git show-ref: bad ref %s (%s)", refname,
-		    sha1_to_hex(sha1));
+		    oid_to_hex(oid));
 
 	if (quiet)
 		return 0;
 
-	show_one(refname, sha1);
+	show_one(refname, oid);
 
 	if (!deref_tags)
 		return 0;
 
-	if (!peel_ref(refname, peeled)) {
-		hex = find_unique_abbrev(peeled, abbrev);
+	if (!peel_ref(refname, peeled.hash)) {
+		hex = find_unique_abbrev(peeled.hash, abbrev);
 		printf("%s %s^{}\n", hex, refname);
 	}
 	return 0;
 }
 
-static int add_existing(const char *refname, const unsigned char *sha1, int flag, void *cbdata)
+static int add_existing(const char *refname, const struct object_id *oid,
+			int flag, void *cbdata)
 {
 	struct string_list *list = (struct string_list *)cbdata;
 	string_list_insert(list, refname);
@@ -208,12 +210,12 @@ int cmd_show_ref(int argc, const char **argv, const char *prefix)
 		if (!pattern)
 			die("--verify requires a reference");
 		while (*pattern) {
-			unsigned char sha1[20];
+			struct object_id oid;
 
 			if (starts_with(*pattern, "refs/") &&
-			    !read_ref(*pattern, sha1)) {
+			    !read_ref(*pattern, oid.hash)) {
 				if (!quiet)
-					show_one(*pattern, sha1);
+					show_one(*pattern, &oid);
 			}
 			else if (!quiet)
 				die("'%s' - not a valid ref", *pattern);
