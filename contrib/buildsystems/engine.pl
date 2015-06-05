@@ -14,6 +14,8 @@ use Cwd;
 use Generators;
 use Text::ParseWords;
 
+use warnings;
+
 my (%build_structure, %compile_options, @makedry);
 my $out_dir = getcwd();
 my $git_dir = $out_dir;
@@ -80,7 +82,7 @@ my $ErrsFile = "msvc-build-makedryerrors.txt";
 @makedry = `cd $git_dir && make -n MSVC=1 NO_PERL=1 V=1 1>makedry.txt 2>$ErrsFile`; # capture the dry run as a text file
 #@makedry = `cd $git_dir && make -n MSVC=1 NO_PERL=1 V=1 2>$ErrsFile` if !@makedry;
 # test for an empty Errors file and remove it
-for ($ErrsFile) {unlink $_ if (-f $_) && (!-s $_);}
+# for ($ErrsFile) {unlink $_ if (-f $_) && (!-s $_);}
 
 # Parse the make output into usable info
 parseMakeOutput();
