@@ -58,6 +58,12 @@ static unsigned char refname_disposition[256] = {
 #define REF_HAVE_OLD	0x10
 
 /*
+ * Used as a flag in ref_update::flags when the lockfile needs to be
+ * committed.
+ */
+#define REF_NEEDS_COMMIT 0x20
+
+/*
  * Try to read one refname component from the front of refname.
  * Return the length of the component found, or -1 if the component is
  * not legal.  It is legal if it is something reasonable to have under
@@ -2851,8 +2857,9 @@ static int rename_ref_available(const char *oldname, const char *newname)
 	return ret;
 }
 
-static int write_ref_sha1(struct ref_lock *lock, const unsigned char *sha1,
-			  const char *logmsg);
+static int write_ref_to_lockfile(struct ref_lock *lock, const unsigned char *sha1);
+static int commit_ref_update(struct ref_lock *lock,
+			     const unsigned char *sha1, const char *logmsg);
 
 int rename_ref(const char *oldrefname, const char *newrefname, const char *logmsg)
 {
@@ -2912,7 +2919,9 @@ int rename_ref(const char *oldrefname, const char *newrefname, const char *logms
 		goto rollback;
 	}
 	hashcpy(lock->old_sha1, orig_sha1);
-	if (write_ref_sha1(lock, orig_sha1, logmsg)) {
+
+	if (write_ref_to_lockfile(lock, orig_sha1) ||
+	    commit_ref_update(lock, orig_sha1, logmsg)) {
 		error("unable to write current sha1 into %s", newrefname);
 		goto rollback;
 	}
@@ -2929,7 +2938,8 @@ int rename_ref(const char *oldrefname, const char *newrefname, const char *logms
 
 	flag = log_all_ref_updates;
 	log_all_ref_updates = 0;
-	if (write_ref_sha1(lock, orig_sha1, NULL))
+	if (write_ref_to_lockfile(lock, orig_sha1) ||
+	    commit_ref_update(lock, orig_sha1, NULL))
 		error("unable to write current sha1 into %s", oldrefname);
 	log_all_ref_updates = flag;
 
@@ -3103,11 +3113,11 @@ int is_branch(const char *refname)
 }
 
 /*
- * Write sha1 into the ref specified by the lock. Make sure that errno
- * is sane on error.
+ * Write sha1 into the open lockfile, then close the lockfile. On
+ * errors, rollback the lockfile and set errno to reflect the problem.
  */
-static int write_ref_sha1(struct ref_lock *lock,
-	const unsigned char *sha1, const char *logmsg)
+static int write_ref_to_lockfile(struct ref_lock *lock,
+				 const unsigned char *sha1)
 {
 	static char term = '\n';
 	struct object *o;
@@ -3136,6 +3146,17 @@ static int write_ref_sha1(struct ref_lock *lock,
 		errno = save_errno;
 		return -1;
 	}
+	return 0;
+}
+
+/*
+ * Commit a change to a loose reference that has already been written
+ * to the loose reference lockfile. Also update the reflogs if
+ * necessary, using the specified lockmsg (which can be NULL).
+ */
+static int commit_ref_update(struct ref_lock *lock,
+			     const unsigned char *sha1, const char *logmsg)
+{
 	clear_loose_ref_cache(&ref_cache);
 	if (log_ref_write(lock->ref_name, lock->old_sha1, sha1, logmsg) < 0 ||
 	    (strcmp(lock->ref_name, lock->orig_ref_name) &&
@@ -3822,19 +3843,24 @@ int ref_transaction_commit(struct ref_transaction *transaction,
 		goto cleanup;
 	}
 
-	/* Acquire all locks while verifying old values */
+	/*
+	 * Acquire all locks, verify old values if provided, check
+	 * that new values are valid, and write new values to the
+	 * lockfiles, ready to be activated. Only keep one lockfile
+	 * open at a time to avoid running out of file descriptors.
+	 */
 	for (i = 0; i < n; i++) {
 		struct ref_update *update = updates[i];
-		unsigned int flags = update->flags;
 
-		if ((flags & REF_HAVE_NEW) && is_null_sha1(update->new_sha1))
-			flags |= REF_DELETING;
+		if ((update->flags & REF_HAVE_NEW) &&
+		    is_null_sha1(update->new_sha1))
+			update->flags |= REF_DELETING;
 		update->lock = lock_ref_sha1_basic(
 				update->refname,
 				((update->flags & REF_HAVE_OLD) ?
 				 update->old_sha1 : NULL),
 				&affected_refnames, NULL,
-				flags,
+				update->flags,
 				&update->type,
 				err);
 		if (!update->lock) {
@@ -3849,34 +3875,60 @@ int ref_transaction_commit(struct ref_transaction *transaction,
 			free(reason);
 			goto cleanup;
 		}
-	}
-
-	/* Perform updates first so live commits remain referenced */
-	for (i = 0; i < n; i++) {
-		struct ref_update *update = updates[i];
-		int flags = update->flags;
-
-		if ((flags & REF_HAVE_NEW) && !is_null_sha1(update->new_sha1)) {
+		if ((update->flags & REF_HAVE_NEW) &&
+		    !(update->flags & REF_DELETING)) {
 			int overwriting_symref = ((update->type & REF_ISSYMREF) &&
 						  (update->flags & REF_NODEREF));
 
-			if (!overwriting_symref
-			    && !hashcmp(update->lock->old_sha1, update->new_sha1)) {
+			if (!overwriting_symref &&
+			    !hashcmp(update->lock->old_sha1, update->new_sha1)) {
 				/*
 				 * The reference already has the desired
 				 * value, so we don't need to write it.
 				 */
-				unlock_ref(update->lock);
+			} else if (write_ref_to_lockfile(update->lock,
+							 update->new_sha1)) {
+				/*
+				 * The lock was freed upon failure of
+				 * write_ref_to_lockfile():
+				 */
 				update->lock = NULL;
-			} else if (write_ref_sha1(update->lock, update->new_sha1,
-						  update->msg)) {
-				update->lock = NULL; /* freed by write_ref_sha1 */
 				strbuf_addf(err, "Cannot update the ref '%s'.",
 					    update->refname);
 				ret = TRANSACTION_GENERIC_ERROR;
 				goto cleanup;
 			} else {
-				/* freed by write_ref_sha1(): */
+				update->flags |= REF_NEEDS_COMMIT;
+			}
+		}
+		if (!(update->flags & REF_NEEDS_COMMIT)) {
+			/*
+			 * We didn't have to write anything to the lockfile.
+			 * Close it to free up the file descriptor:
+			 */
+			if (close_ref(update->lock)) {
+				strbuf_addf(err, "Couldn't close %s.lock",
+					    update->refname);
+				goto cleanup;
+			}
+		}
+	}
+
+	/* Perform updates first so live commits remain referenced */
+	for (i = 0; i < n; i++) {
+		struct ref_update *update = updates[i];
+
+		if (update->flags & REF_NEEDS_COMMIT) {
+			if (commit_ref_update(update->lock,
+					      update->new_sha1, update->msg)) {
+				/* freed by commit_ref_update(): */
+				update->lock = NULL;
+				strbuf_addf(err, "Cannot update the ref '%s'.",
+					    update->refname);
+				ret = TRANSACTION_GENERIC_ERROR;
+				goto cleanup;
+			} else {
+				/* freed by commit_ref_update(): */
 				update->lock = NULL;
 			}
 		}
@@ -3885,15 +3937,14 @@ int ref_transaction_commit(struct ref_transaction *transaction,
 	/* Perform deletes now that updates are safely completed */
 	for (i = 0; i < n; i++) {
 		struct ref_update *update = updates[i];
-		int flags = update->flags;
 
-		if ((flags & REF_HAVE_NEW) && is_null_sha1(update->new_sha1)) {
+		if (update->flags & REF_DELETING) {
 			if (delete_ref_loose(update->lock, update->type, err)) {
 				ret = TRANSACTION_GENERIC_ERROR;
 				goto cleanup;
 			}
 
-			if (!(flags & REF_ISPRUNING))
+			if (!(update->flags & REF_ISPRUNING))
 				string_list_append(&refs_to_delete,
 						   update->lock->ref_name);
 		}
