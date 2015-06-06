@@ -79,8 +79,8 @@ EOM
 # Capture the make dry stderr to file for review (will be empty for a release build).
 
 my $ErrsFile = "msvc-build-makedryerrors.txt";
-@makedry = `cd $git_dir && make -n MSVC=1 NO_PERL=1 V=1 1>makedry.txt 2>$ErrsFile`; # capture the dry run as a text file
-#@makedry = `cd $git_dir && make -n MSVC=1 NO_PERL=1 V=1 2>$ErrsFile` if !@makedry;
+my @debugmakedry = `cd $git_dir && make -n MSVC=1 NO_PERL=1 V=1 1>makedry.txt 2>$ErrsFile`; # capture the dry run as a text file
+@makedry = `cd $git_dir && make -n MSVC=1 NO_PERL=1 V=1 2>$ErrsFile` if !@makedry;
 # test for an empty Errors file and remove it
 # for ($ErrsFile) {unlink $_ if (-f $_) && (!-s $_);}
 
@@ -325,9 +325,11 @@ sub handleLinkLine
 {
     my ($line, $lineno) = @_;
     my (@objfiles, @lflags, @libs, $appout, $part);
+	#print "link line *$line*\n";
     my @parts = shellwords($line);
     shift(@parts); # ignore cmd
     while ($part = shift @parts) {
+        #print "processing link *$part*\n";
         if ($part =~ /^-IGNORE/) {
             push(@lflags, $part);
         } elsif ($part =~ /^-[GRIMDO]/) {
@@ -336,7 +338,7 @@ sub handleLinkLine
             $appout = shift @parts;
         } elsif ("$part" eq "-lz") {
             push(@libs, "zlib.lib");
-	} elsif ("$part" eq "-lcrypto") {
+        } elsif ("$part" eq "-lcrypto") {
             push(@libs, "libeay32.lib");
         } elsif ("$part" eq "-lssl") {
             push(@libs, "ssleay32.lib");
@@ -352,7 +354,7 @@ sub handleLinkLine
         } elsif ($part =~ /\.obj$/) {
             # do nothing, 'make' should not be producing .obj, only .o files
         } else {
-            die "Unhandled lib option @ line $lineno: $part";
+            die "Unhandled link option @ line $lineno: *$part*";
         }
     }
 #    print "AppOut: '$appout'\nLFlags: @lflags\nLibs  : @libs\nOfiles: @objfiles\n";
