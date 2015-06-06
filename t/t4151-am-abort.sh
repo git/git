@@ -142,4 +142,15 @@ test_expect_success 'am -3 --abort on unborn branch removes applied commits' '
 	test refs/heads/orphan = "$(git symbolic-ref HEAD)"
 '
 
+test_expect_success 'am --abort on unborn branch will keep local commits intact' '
+	git checkout -f --orphan orphan &&
+	git reset &&
+	test_must_fail git am 0004-*.patch &&
+	test_commit unrelated2 &&
+	git rev-parse HEAD >expect &&
+	git am --abort &&
+	git rev-parse HEAD >actual &&
+	test_cmp expect actual
+'
+
 test_done

@@ -86,7 +86,7 @@ safe_to_abort () {
 		return 1
 	fi
 
-	if ! test -s "$dotest/abort-safety"
+	if ! test -f "$dotest/abort-safety"
 	then
 		return 0
 	fi
