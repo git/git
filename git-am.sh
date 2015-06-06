@@ -509,7 +509,11 @@ then
 		git rerere clear
 		if safe_to_abort
 		then
-			git read-tree --reset -u HEAD ORIG_HEAD
+			head_tree=$(git rev-parse --verify -q HEAD || echo $empty_tree) &&
+			git read-tree --reset -u $head_tree $head_tree &&
+			index_tree=$(git write-tree) &&
+			orig_head=$(git rev-parse --verify -q ORIG_HEAD || echo $empty_tree) &&
+			git read-tree -m -u $index_tree $orig_head
 			git reset ORIG_HEAD
 		fi
 		rm -fr "$dotest"

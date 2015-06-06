@@ -70,6 +70,17 @@ test_expect_success 'am -3 --skip removes otherfile-4' '
 	test 4 = "$(cat otherfile-4)" &&
 	git am --skip &&
 	test_cmp_rev initial HEAD &&
+	test -z "$(git ls-files -u)" &&
+	test_path_is_missing otherfile-4
+'
+
+test_expect_success 'am -3 --abort removes otherfile-4' '
+	git reset --hard initial &&
+	test_must_fail git am -3 0003-*.patch &&
+	test 3 -eq $(git ls-files -u | wc -l) &&
+	test 4 = "$(cat otherfile-4)" &&
+	git am --abort &&
+	test_cmp_rev initial HEAD &&
 	test -z $(git ls-files -u) &&
 	test_path_is_missing otherfile-4
 '
@@ -100,6 +111,18 @@ test_expect_success 'am -3 --skip clears index on unborn branch' '
 	test -z "$(git ls-files)" &&
 	test_path_is_missing otherfile-4 &&
 	test_path_is_missing tmpfile
+'
+
+test_expect_success 'am -3 --abort removes otherfile-4 on unborn branch' '
+	git checkout -f --orphan orphan &&
+	git reset &&
+	rm -f otherfile-4 file-1 &&
+	test_must_fail git am -3 0003-*.patch &&
+	test 2 -eq $(git ls-files -u | wc -l) &&
+	test 4 = "$(cat otherfile-4)" &&
+	git am --abort &&
+	test -z "$(git ls-files -u)" &&
+	test_path_is_missing otherfile-4
 '
 
 test_done
