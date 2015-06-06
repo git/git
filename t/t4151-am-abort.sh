@@ -83,4 +83,13 @@ test_expect_success 'am --abort will keep the local commits intact' '
 	test_cmp expect actual
 '
 
+test_expect_success 'am -3 stops on conflict on unborn branch' '
+	git checkout -f --orphan orphan &&
+	git reset &&
+	rm -f otherfile-4 &&
+	test_must_fail git am -3 0003-*.patch &&
+	test 2 -eq $(git ls-files -u | wc -l) &&
+	test 4 = "$(cat otherfile-4)"
+'
+
 test_done
