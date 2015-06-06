@@ -499,9 +499,7 @@ then
 		git read-tree --reset -u $head_tree $head_tree &&
 		index_tree=$(git write-tree) &&
 		git read-tree -m -u $index_tree $head_tree
-		orig_head=$(cat "$GIT_DIR/ORIG_HEAD")
-		git reset HEAD
-		git update-ref ORIG_HEAD $orig_head
+		git read-tree $head_tree
 		;;
 	,t)
 		if test -f "$dotest/rebasing"

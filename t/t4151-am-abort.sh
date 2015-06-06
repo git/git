@@ -92,4 +92,14 @@ test_expect_success 'am -3 stops on conflict on unborn branch' '
 	test 4 = "$(cat otherfile-4)"
 '
 
+test_expect_success 'am -3 --skip clears index on unborn branch' '
+	test_path_is_dir .git/rebase-apply &&
+	echo tmpfile >tmpfile &&
+	git add tmpfile &&
+	git am --skip &&
+	test -z "$(git ls-files)" &&
+	test_path_is_missing otherfile-4 &&
+	test_path_is_missing tmpfile
+'
+
 test_done
