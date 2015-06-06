@@ -521,6 +521,19 @@ char *reencode_string_len(const char *in, int insz,
 	iconv_close(conv);
 	return out;
 }
+#else
+static int noiconv_warning_shown = 0;
+
+char *reencode_string_len(const char *in, int insz,
+			  const char *out_encoding, const char *in_encoding,
+			  int *outsz)
+{
+	if (!same_encoding(in_encoding, out_encoding) && !noiconv_warning_shown) {
+		warning("Iconv support is disabled at compile time. It is likely that\nincorrect data will be printed or stored in repository.\nConsider using other build for this task.");
+		noiconv_warning_shown = 1;
+	}
+	return NULL;
+}
 #endif
 
 /*
