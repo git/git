@@ -514,7 +514,14 @@ then
 			index_tree=$(git write-tree) &&
 			orig_head=$(git rev-parse --verify -q ORIG_HEAD || echo $empty_tree) &&
 			git read-tree -m -u $index_tree $orig_head
-			git reset ORIG_HEAD
+			if git rev-parse --verify -q ORIG_HEAD >/dev/null 2>&1
+			then
+				git reset ORIG_HEAD
+			else
+				git read-tree $empty_tree
+				curr_branch=$(git symbolic-ref HEAD 2>/dev/null) &&
+				git update-ref -d $curr_branch
+			fi
 		fi
 		rm -fr "$dotest"
 		exit ;;

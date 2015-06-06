@@ -14,6 +14,7 @@ test_expect_success setup '
 	git add file-1 file-2 &&
 	git commit -m initial &&
 	git tag initial &&
+	git format-patch --stdout --root initial >initial.patch &&
 	for i in 2 3 4 5 6
 	do
 		echo $i >>file-1 &&
@@ -123,6 +124,22 @@ test_expect_success 'am -3 --abort removes otherfile-4 on unborn branch' '
 	git am --abort &&
 	test -z "$(git ls-files -u)" &&
 	test_path_is_missing otherfile-4
+'
+
+test_expect_success 'am -3 --abort on unborn branch removes applied commits' '
+	git checkout -f --orphan orphan &&
+	git reset &&
+	rm -f otherfile-4 otherfile-2 file-1 file-2 &&
+	test_must_fail git am -3 initial.patch 0003-*.patch &&
+	test 3 -eq $(git ls-files -u | wc -l) &&
+	test 4 = "$(cat otherfile-4)" &&
+	git am --abort &&
+	test -z "$(git ls-files -u)" &&
+	test_path_is_missing otherfile-4 &&
+	test_path_is_missing file-1 &&
+	test_path_is_missing file-2 &&
+	test 0 -eq $(git log --oneline 2>/dev/null | wc -l) &&
+	test refs/heads/orphan = "$(git symbolic-ref HEAD)"
 '
 
 test_done
