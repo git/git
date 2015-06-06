@@ -68,6 +68,8 @@ then
 	cmdline="$cmdline -3"
 fi
 
+empty_tree=4b825dc642cb6eb9a060e54bf8d69288fbee4904
+
 sq () {
 	git rev-parse --sq-quote "$@"
 }
@@ -492,7 +494,10 @@ then
 		;;
 	t,)
 		git rerere clear
-		git read-tree --reset -u HEAD HEAD
+		head_tree=$(git rev-parse --verify -q HEAD || echo $empty_tree) &&
+		git read-tree --reset -u $head_tree $head_tree &&
+		index_tree=$(git write-tree) &&
+		git read-tree -m -u $index_tree $head_tree
 		orig_head=$(cat "$GIT_DIR/ORIG_HEAD")
 		git reset HEAD
 		git update-ref ORIG_HEAD $orig_head

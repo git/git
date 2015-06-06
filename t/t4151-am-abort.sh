@@ -63,6 +63,17 @@ do
 
 done
 
+test_expect_success 'am -3 --skip removes otherfile-4' '
+	git reset --hard initial &&
+	test_must_fail git am -3 0003-*.patch &&
+	test 3 -eq $(git ls-files -u | wc -l) &&
+	test 4 = "$(cat otherfile-4)" &&
+	git am --skip &&
+	test_cmp_rev initial HEAD &&
+	test -z $(git ls-files -u) &&
+	test_path_is_missing otherfile-4
+'
+
 test_expect_success 'am --abort will keep the local commits intact' '
 	test_must_fail git am 0004-*.patch &&
 	test_commit unrelated &&
