@@ -19,13 +19,17 @@ test_expect_success 'setup' '
 	echo modified >>a-blob &&
 	git add -u &&
 	git commit -m Modified &&
+	git branch modref &&
 	echo changed! >>a-blob &&
 	git add -u &&
 	git commit -m !Exp &&
 	git branch expref &&
 	echo changed >>a-blob &&
 	git add -u &&
-	git commit -m Changed
+	git commit -m Changed &&
+	echo changed-again >>a-blob &&
+	git add -u &&
+	git commit -m Changed-again
 '
 
 test_expect_success 'ref^{non-existent}' '
@@ -95,6 +99,32 @@ test_expect_success 'ref^{/!}' '
 test_expect_success 'ref^{/!!Exp}' '
 	git rev-parse expref >expected &&
 	git rev-parse master^{/!!Exp} >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'ref^{/!-}' '
+	test_must_fail git rev-parse master^{/!-}
+'
+
+test_expect_success 'ref^{/!-.}' '
+	test_must_fail git rev-parse master^{/!-.}
+'
+
+test_expect_success 'ref^{/!-non-existent}' '
+	git rev-parse master >expected &&
+	git rev-parse master^{/!-non-existent} >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'ref^{/!-Changed}' '
+	git rev-parse expref >expected &&
+	git rev-parse master^{/!-Changed} >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'ref^{/!-!Exp}' '
+	git rev-parse modref >expected &&
+	git rev-parse expref^{/!-!Exp} >actual &&
 	test_cmp expected actual
 '
 
