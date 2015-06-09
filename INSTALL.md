@@ -1,5 +1,6 @@
 
-		Git installation
+###Git installation
+===
 
 Normally you can just do "make" followed by "make install", and that
 will install the git programs in your own ~/bin/ directory.  If you want
@@ -49,6 +50,7 @@ your home directory, you could run:
 	$ make profile-install
 
 or
+	
 	$ make profile-fast-install
 
 As a caveat: a profile-optimized build takes a *lot* longer since the
@@ -82,10 +84,10 @@ Issues of note:
    the build directory is far simpler.  As a historical reference, the
    old way went like this:
 
-	GIT_EXEC_PATH=`pwd`
-	PATH=`pwd`:$PATH
-	GITPERLLIB=`pwd`/perl/blib/lib
-	export GIT_EXEC_PATH PATH GITPERLLIB
+		$ GIT_EXEC_PATH=`pwd`
+		$ PATH=`pwd`:$PATH
+		$ GITPERLLIB=`pwd`/perl/blib/lib
+		$ export GIT_EXEC_PATH PATH GITPERLLIB
 
  - Git is reasonably self-sufficient, but does depend on a few external
    programs and libraries.  Git can be used without most of them by adding
@@ -192,32 +194,32 @@ Issues of note:
    Users attempting to build the documentation on Cygwin may need to ensure
    that the /etc/xml/catalog file looks something like this:
 
-   <?xml version="1.0"?>
-   <!DOCTYPE catalog PUBLIC
-      "-//OASIS//DTD Entity Resolution XML Catalog V1.0//EN"
-      "http://www.oasis-open.org/committees/entity/release/1.0/catalog.dtd"
-   >
-   <catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog">
-     <rewriteURI
-       uriStartString = "http://docbook.sourceforge.net/release/xsl/current"
-       rewritePrefix = "/usr/share/sgml/docbook/xsl-stylesheets"
-     />
-     <rewriteURI
-       uriStartString="http://www.oasis-open.org/docbook/xml/4.5"
-       rewritePrefix="/usr/share/sgml/docbook/xml-dtd-4.5"
-     />
-  </catalog>
+	   <?xml version="1.0"?>
+	   <!DOCTYPE catalog PUBLIC
+	      "-//OASIS//DTD Entity Resolution XML Catalog V1.0//EN"
+	      "http://www.oasis-open.org/committees/entity/release/1.0/catalog.dtd"
+	   >
+	   <catalog xmlns="urn:oasis:names:tc:entity:xmlns:xml:catalog">
+	     <rewriteURI
+	       uriStartString = "http://docbook.sourceforge.net/release/xsl/current"
+	       rewritePrefix = "/usr/share/sgml/docbook/xsl-stylesheets"
+	     />
+	     <rewriteURI
+	       uriStartString="http://www.oasis-open.org/docbook/xml/4.5"
+	       rewritePrefix="/usr/share/sgml/docbook/xml-dtd-4.5"
+	     />
+	   </catalog>
 
   This can be achieved with the following two xmlcatalog commands:
 
-  xmlcatalog --noout \
-     --add rewriteURI \
-        http://docbook.sourceforge.net/release/xsl/current \
-        /usr/share/sgml/docbook/xsl-stylesheets \
-     /etc/xml/catalog
-
-  xmlcatalog --noout \
-     --add rewriteURI \
-         http://www.oasis-open.org/docbook/xml/4.5/xsl/current \
-         /usr/share/sgml/docbook/xml-dtd-4.5 \
-     /etc/xml/catalog
+	 $ xmlcatalog --noout \
+	     --add rewriteURI \
+	        http://docbook.sourceforge.net/release/xsl/current \
+	        /usr/share/sgml/docbook/xsl-stylesheets \
+	     /etc/xml/catalog
+	
+	 $ xmlcatalog --noout \
+	     --add rewriteURI \
+	         http://www.oasis-open.org/docbook/xml/4.5/xsl/current \
+	         /usr/share/sgml/docbook/xml-dtd-4.5 \
+	     /etc/xml/catalog
