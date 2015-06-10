@@ -21,7 +21,7 @@ static int pack_revindex_hashsz;
 
 static int pack_revindex_ix(struct packed_git *p)
 {
-	unsigned long ui = (unsigned long)p;
+	unsigned long ui = (unsigned long)(intptr_t)p;
 	int i;
 
 	ui = ui ^ (ui >> 16); /* defeat structure alignment */
