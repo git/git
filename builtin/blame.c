@@ -2176,6 +2176,14 @@ static int git_blame_config(const char *var, const char *value, void *cb)
 		blank_boundary = git_config_bool(var, value);
 		return 0;
 	}
+	if (!strcmp(var, "blame.showemail")) {
+		int *output_option = cb;
+		if (git_config_bool(var, value))
+			*output_option |= OUTPUT_SHOW_EMAIL;
+		else
+			*output_option &= ~OUTPUT_SHOW_EMAIL;
+		return 0;
+	}
 	if (!strcmp(var, "blame.date")) {
 		if (!value)
 			return config_error_nonbool(var);
@@ -2520,7 +2528,7 @@ int cmd_blame(int argc, const char **argv, const char *prefix)
 	unsigned int range_i;
 	long anchor;
 
-	git_config(git_blame_config, NULL);
+	git_config(git_blame_config, &output_option);
 	init_revisions(&revs, NULL);
 	revs.date_mode = blame_date_mode;
 	DIFF_OPT_SET(&revs.diffopt, ALLOW_TEXTCONV);
