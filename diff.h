@@ -138,6 +138,11 @@ struct diff_options {
 	int dirstat_permille;
 	int setup;
 	int abbrev;
+/* white-space error highlighting */
+#define WSEH_NEW 1
+#define WSEH_CONTEXT 2
+#define WSEH_OLD 4
+	unsigned ws_error_highlight;
 	const char *prefix;
 	int prefix_length;
 	const char *stat_sep;
