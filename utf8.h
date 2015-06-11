@@ -31,7 +31,9 @@ char *reencode_string_len(const char *in, int insz,
 			  const char *in_encoding,
 			  int *outsz);
 #else
-#define reencode_string_len(a,b,c,d,e) NULL
+static inline char *reencode_string_len(const char *a, int b,
+					const char *c, const char *d, int *e)
+{ if (e) *e = 0; return NULL; }
 #endif
 
 static inline char *reencode_string(const char *in,
