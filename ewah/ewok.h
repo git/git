@@ -32,7 +32,7 @@
 
 struct strbuf;
 typedef uint64_t eword_t;
-#define BITS_IN_WORD (sizeof(eword_t) * 8)
+#define BITS_IN_EWORD (sizeof(eword_t) * 8)
 
 /**
  * Do not use __builtin_popcountll. The GCC implementation

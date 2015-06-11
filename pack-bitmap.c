@@ -622,7 +622,7 @@ static void show_objects_for_type(
 	while (i < objects->word_alloc && ewah_iterator_next(&filter, &it)) {
 		eword_t word = objects->words[i] & filter;
 
-		for (offset = 0; offset < BITS_IN_WORD; ++offset) {
+		for (offset = 0; offset < BITS_IN_EWORD; ++offset) {
 			const unsigned char *sha1;
 			struct revindex_entry *entry;
 			uint32_t hash = 0;
@@ -644,7 +644,7 @@ static void show_objects_for_type(
 			show_reach(sha1, object_type, 0, hash, bitmap_git.pack, entry->offset);
 		}
 
-		pos += BITS_IN_WORD;
+		pos += BITS_IN_EWORD;
 		i++;
 	}
 }
@@ -776,7 +776,7 @@ int reuse_partial_packfile_from_bitmap(struct packed_git **packfile,
 			break;
 		}
 
-		reuse_objects += BITS_IN_WORD;
+		reuse_objects += BITS_IN_EWORD;
 	}
 
 #ifdef GIT_BITMAP_DEBUG
@@ -1001,7 +1001,7 @@ static int rebuild_bitmap(uint32_t *reposition,
 	while (ewah_iterator_next(&word, &it)) {
 		uint32_t offset, bit_pos;
 
-		for (offset = 0; offset < BITS_IN_WORD; ++offset) {
+		for (offset = 0; offset < BITS_IN_EWORD; ++offset) {
 			if ((word >> offset) == 0)
 				break;
 
@@ -1014,7 +1014,7 @@ static int rebuild_bitmap(uint32_t *reposition,
 				return -1;
 		}
 
-		pos += BITS_IN_WORD;
+		pos += BITS_IN_EWORD;
 	}
 	return 0;
 }
