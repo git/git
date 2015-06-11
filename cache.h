@@ -1698,5 +1698,6 @@ int stat_validity_check(struct stat_validity *sv, const char *path);
 void stat_validity_update(struct stat_validity *sv, int fd);
 
 int versioncmp(const char *s1, const char *s2);
+void sleep_millisec(int millisec);
 
 #endif /* CACHE_H */
