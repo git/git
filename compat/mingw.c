@@ -486,6 +486,39 @@ int mingw_chmod(const char *filename, int mode)
 	return _wchmod(wfilename, mode);
 }
 
+/**
+ * Verifies that safe_create_leading_directories() would succeed.
+ */
+static int has_valid_directory_prefix(wchar_t *wfilename)
+{
+	int n = wcslen(wfilename);
+
+	while (n > 0) {
+		wchar_t c = wfilename[--n];
+		DWORD attributes;
+
+		if (!is_dir_sep(c))
+			continue;
+
+		wfilename[n] = L'\0';
+		attributes = GetFileAttributesW(wfilename);
+		wfilename[n] = c;
+		if (attributes == FILE_ATTRIBUTE_DIRECTORY ||
+				attributes == FILE_ATTRIBUTE_DEVICE)
+			return 1;
+		if (attributes == INVALID_FILE_ATTRIBUTES)
+			switch (GetLastError()) {
+			case ERROR_PATH_NOT_FOUND:
+				continue;
+			case ERROR_FILE_NOT_FOUND:
+				/* This implies parent directory exists. */
+				return 1;
+			}
+		return 0;
+	}
+	return 1;
+}
+
 /* We keep the do_lstat code in a separate function to avoid recursion.
  * When a path ends with a slash, the stat will fail with ENOENT. In
  * this case, we strip the trailing slashes and stat again.
@@ -546,6 +579,12 @@ static int do_lstat(int follow, const char *file_name, struct stat *buf)
 	case ERROR_NOT_ENOUGH_MEMORY:
 		errno = ENOMEM;
 		break;
+	case ERROR_PATH_NOT_FOUND:
+		if (!has_valid_directory_prefix(wfilename)) {
+			errno = ENOTDIR;
+			break;
+		}
+		/* fallthru */
 	default:
 		errno = ENOENT;
 		break;
