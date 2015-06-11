@@ -33,7 +33,7 @@ elif grep -q "AC Power \+: 1" /proc/pmu/info 2>/dev/null
 then
 	exit 0
 elif test -x /usr/bin/pmset && /usr/bin/pmset -g batt |
-	grep -q "Currently drawing from 'AC Power'"
+	grep -q "drawing from 'AC Power'"
 then
 	exit 0
 fi
