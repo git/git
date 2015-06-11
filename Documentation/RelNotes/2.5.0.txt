@@ -9,6 +9,13 @@ Ports
 
 UI, Workflows & Features
 
+ * The bash completion script (in contrib/) learned a few options that
+   "git revert" takes.
+
+ * Whitespace breakages in deleted and context lines can also be
+   painted in the output of "git diff" and friends with the new
+   --ws-error-highlight option.
+
  * List of commands shown by "git help" are grouped along the workflow
    elements to help early learners.
 
@@ -163,6 +170,11 @@ Performance, Internal Implementation, Development Support etc.
 
  * for_each_ref() callback functions were taught to name the objects
    not with "unsigned char sha1[20]" but with "struct object_id".
+
+ * Error reporting mechanism used in "refs" API has been made more
+   consistent.
+
+ * "git pull" has more test coverage now.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -390,6 +402,19 @@ notes for details).
    paths outside the given pathspec.
    (merge 838d6a9 dt/clean-pathspec-filter-then-lstat later to maint).
 
+ * Recent "git prune" traverses young unreachable objects to safekeep
+   old objects in the reachability chain from them, which sometimes
+   caused error messages that are unnecessarily alarming.
+   (merge ce4e7b2 jk/squelch-missing-link-warning-for-unreachable later to maint).
+
+ * The configuration reader/writer uses mmap(2) interface to access
+   the files; when we find a directory, it barfed with "Out of memory?".
+   (merge 9ca0aaf jk/diagnose-config-mmap-failure later to maint).
+
+ * "color.diff.plain" was a misnomer; give it 'color.diff.context' as
+   a more logical synonym.
+   (merge 8dbf3eb jk/color-diff-plain-is-context later to maint).
+
  * Code cleanups and documentation updates.
    (merge 0269f96 mm/usage-log-l-can-take-regex later to maint).
    (merge 64f2589 nd/t1509-chroot-test later to maint).
@@ -405,3 +430,6 @@ notes for details).
    (merge 22570b6 rs/janitorial later to maint).
    (merge 5c2a581 mc/commit-doc-grammofix later to maint).
    (merge ce41720 ah/usage-strings later to maint).
+   (merge e6a268c sb/glossary-submodule later to maint).
+   (merge ec48a76 sb/submodule-doc-intro later to maint).
+   (merge 14f8b9b jk/clone-dissociate later to maint).
