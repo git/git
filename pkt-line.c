@@ -24,8 +24,7 @@ static void packet_trace(const char *buf, unsigned int len, int write)
 	strbuf_addf(&out, "packet: %12s%c ",
 		    packet_trace_prefix, write ? '>' : '<');
 
-	if ((len >= 4 && starts_with(buf, "PACK")) ||
-	    (len >= 5 && starts_with(buf+1, "PACK"))) {
+	if (starts_with(buf, "PACK") || starts_with(buf + 1, "PACK")) {
 		strbuf_addstr(&out, "PACK ...");
 		trace_disable(&trace_packet);
 	}
