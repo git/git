@@ -13,6 +13,9 @@
 #define QUOTE_PYTHON 4
 #define QUOTE_TCL 8
 
+#define FILTER_REFS_INCLUDE_BROKEN 0x1
+#define FILTER_REFS_ALL 0x2
+
 struct atom_value {
 	const char *s;
 	unsigned long ul; /* used for sorting when not FIELD_STR */
@@ -42,12 +45,17 @@ struct ref_filter {
 };
 
 struct ref_filter_cbdata {
-	struct ref_array array;
-	struct ref_filter filter;
+	struct ref_array *array;
+	struct ref_filter *filter;
 };
 
-/*  Callback function for for_each_*ref(). This filters the refs based on the filters set */
-int ref_filter_handler(const char *refname, const struct object_id *oid, int flag, void *cb_data);
+/*
+ * API for filtering a set of refs. Based on the type of refs the user
+ * has requested, we iterate through those refs and apply filters
+ * as per the given ref_filter structure and finally store the
+ * filtered refs in the ref_array structure.
+ */
+int filter_refs(struct ref_array *array, struct ref_filter *filter, unsigned int type);
 /*  Clear all memory allocated to ref_array */
 void ref_array_clear(struct ref_array *array);
 /*  Parse format string and sort specifiers */
