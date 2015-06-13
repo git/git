@@ -847,8 +847,10 @@ static struct ref_array_item *new_ref_array_item(const char *refname,
 						 const unsigned char *objectname,
 						 int flag)
 {
-	struct ref_array_item *ref = xcalloc(1, sizeof(struct ref_array_item));
-	ref->refname = xstrdup(refname);
+	size_t len = strlen(refname);
+	struct ref_array_item *ref = xcalloc(1, sizeof(struct ref_array_item) + len + 1);
+	memcpy(ref->refname, refname, len);
+	ref->refname[len] = '\0';
 	hashcpy(ref->objectname, objectname);
 	ref->flag = flag;
 
@@ -889,7 +891,6 @@ static int ref_filter_handler(const char *refname, const struct object_id *oid, 
 static void free_array_item(struct ref_array_item *item)
 {
 	free((char *)item->symref);
-	free(item->refname);
 	free(item);
 }
 

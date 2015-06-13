@@ -32,7 +32,7 @@ struct ref_array_item {
 	int flag;
 	const char *symref;
 	struct atom_value *value;
-	char *refname;
+	char refname[FLEX_ARRAY];
 };
 
 struct ref_array {
