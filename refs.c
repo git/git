@@ -2801,7 +2801,8 @@ static int delete_ref_loose(struct ref_lock *lock, int flag, struct strbuf *err)
 	return 0;
 }
 
-int delete_ref(const char *refname, const unsigned char *sha1, unsigned int flags)
+int delete_ref(const char *refname, const unsigned char *old_sha1,
+	       unsigned int flags)
 {
 	struct ref_transaction *transaction;
 	struct strbuf err = STRBUF_INIT;
@@ -2809,7 +2810,7 @@ int delete_ref(const char *refname, const unsigned char *sha1, unsigned int flag
 	transaction = ref_transaction_begin(&err);
 	if (!transaction ||
 	    ref_transaction_delete(transaction, refname,
-				   (sha1 && !is_null_sha1(sha1)) ? sha1 : NULL,
+				   (old_sha1 && !is_null_sha1(old_sha1)) ? old_sha1 : NULL,
 				   flags, NULL, &err) ||
 	    ref_transaction_commit(transaction, &err)) {
 		error("%s", err.buf);
