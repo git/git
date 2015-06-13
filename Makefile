@@ -217,10 +217,11 @@ all::
 # as the compiler can crash (http://gcc.gnu.org/bugzilla/show_bug.cgi?id=49299)
 #
 # Define USE_NSEC below if you want git to care about sub-second file mtimes
-# and ctimes. Note that you need recent glibc (at least 2.2.4) for this, and
-# it will BREAK YOUR LOCAL DIFFS! show-diff and anything using it will likely
-# randomly break unless your underlying filesystem supports those sub-second
-# times (my ext3 doesn't).
+# and ctimes. Note that you need recent glibc (at least 2.2.4) for this. On
+# Linux, kernel 2.6.11 or newer is required for reliable sub-second file times
+# on file systems with exactly 1 ns or 1 s resolution. If you intend to use Git
+# on other file systems (e.g. CEPH, CIFS, NTFS, UDF), don't enable USE_NSEC. See
+# Documentation/technical/racy-git.txt for details.
 #
 # Define USE_ST_TIMESPEC if your "struct stat" uses "st_ctimespec" instead of
 # "st_ctim"
