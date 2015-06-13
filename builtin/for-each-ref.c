@@ -985,9 +985,9 @@ static int compare_refs(const void *a_, const void *b_)
 	return 0;
 }
 
-void ref_array_sort(struct ref_sorting *sort, struct ref_array *array)
+void ref_array_sort(struct ref_sorting *sorting, struct ref_array *array)
 {
-	ref_sorting = sort;
+	ref_sorting = sorting;
 	qsort(array->items, array->nr, sizeof(struct ref_array_item *), compare_refs);
 }
 
@@ -1089,16 +1089,16 @@ struct ref_sorting *ref_default_sorting(void)
 {
 	static const char cstr_name[] = "refname";
 
-	struct ref_sorting *sort = xcalloc(1, sizeof(*sort));
+	struct ref_sorting *sorting = xcalloc(1, sizeof(*sorting));
 
-	sort->next = NULL;
-	sort->atom = parse_ref_filter_atom(cstr_name, cstr_name + strlen(cstr_name));
-	return sort;
+	sorting->next = NULL;
+	sorting->atom = parse_ref_filter_atom(cstr_name, cstr_name + strlen(cstr_name));
+	return sorting;
 }
 
 int parse_opt_ref_sorting(const struct option *opt, const char *arg, int unset)
 {
-	struct ref_sorting **sort_tail = opt->value;
+	struct ref_sorting **sorting_tail = opt->value;
 	struct ref_sorting *s;
 	int len;
 
@@ -1106,8 +1106,8 @@ int parse_opt_ref_sorting(const struct option *opt, const char *arg, int unset)
 		return -1;
 
 	s = xcalloc(1, sizeof(*s));
-	s->next = *sort_tail;
-	*sort_tail = s;
+	s->next = *sorting_tail;
+	*sorting_tail = s;
 
 	if (*arg == '-') {
 		s->reverse = 1;
@@ -1127,7 +1127,7 @@ int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 {
 	int i;
 	const char *format = "%(objectname) %(objecttype)\t%(refname)";
-	struct ref_sorting *sort = NULL, **sort_tail = &sort;
+	struct ref_sorting *sorting = NULL, **sorting_tail = &sorting;
 	int maxcount = 0, quote_style = 0;
 	struct ref_filter_cbdata ref_cbdata;
 
@@ -1144,7 +1144,7 @@ int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 		OPT_GROUP(""),
 		OPT_INTEGER( 0 , "count", &maxcount, N_("show only <n> matched refs")),
 		OPT_STRING(  0 , "format", &format, N_("format"), N_("format to use for the output")),
-		OPT_CALLBACK(0 , "sort", sort_tail, N_("key"),
+		OPT_CALLBACK(0 , "sort", sorting_tail, N_("key"),
 			    N_("field name to sort on"), &parse_opt_ref_sorting),
 		OPT_END(),
 	};
@@ -1161,8 +1161,8 @@ int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 	if (verify_ref_format(format))
 		usage_with_options(for_each_ref_usage, opts);
 
-	if (!sort)
-		sort = ref_default_sorting();
+	if (!sorting)
+		sorting = ref_default_sorting();
 
 	/* for warn_ambiguous_refs */
 	git_config(git_default_config, NULL);
@@ -1171,7 +1171,7 @@ int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 	ref_cbdata.filter.name_patterns = argv;
 	for_each_rawref(ref_filter_handler, &ref_cbdata);
 
-	ref_array_sort(sort, &ref_cbdata.array);
+	ref_array_sort(sorting, &ref_cbdata.array);
 
 	if (!maxcount || ref_cbdata.array.nr < maxcount)
 		maxcount = ref_cbdata.array.nr;
