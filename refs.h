@@ -366,6 +366,20 @@ int ref_transaction_commit(struct ref_transaction *transaction,
 			   struct strbuf *err);
 
 /*
+ * Like ref_transaction_commit(), but optimized for creating
+ * references when originally initializing a repository (e.g., by "git
+ * clone"). It writes the new references directly to packed-refs
+ * without locking the individual references.
+ *
+ * It is a bug to call this function when there might be other
+ * processes accessing the repository or if there are existing
+ * references that might conflict with the ones being created. All
+ * old_sha1 values must either be absent or NULL_SHA1.
+ */
+int initial_ref_transaction_commit(struct ref_transaction *transaction,
+				   struct strbuf *err);
+
+/*
  * Free an existing transaction and all associated data.
  */
 void ref_transaction_free(struct ref_transaction *transaction);
