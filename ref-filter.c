@@ -859,10 +859,10 @@ static struct ref_array_item *new_ref_array_item(const char *refname,
  * A call-back given to for_each_ref().  Filter refs and keep them for
  * later object processing.
  */
-int ref_filter_handler(const char *refname, const struct object_id *oid, int flag, void *cb_data)
+static int ref_filter_handler(const char *refname, const struct object_id *oid, int flag, void *cb_data)
 {
 	struct ref_filter_cbdata *ref_cbdata = cb_data;
-	struct ref_filter *filter = &ref_cbdata->filter;
+	struct ref_filter *filter = ref_cbdata->filter;
 	struct ref_array_item *ref;
 
 	if (flag & REF_BAD_NAME) {
@@ -880,8 +880,8 @@ int ref_filter_handler(const char *refname, const struct object_id *oid, int fla
 	 */
 	ref = new_ref_array_item(refname, oid->hash, flag);
 
-	REALLOC_ARRAY(ref_cbdata->array.items, ref_cbdata->array.nr + 1);
-	ref_cbdata->array.items[ref_cbdata->array.nr++] = ref;
+	REALLOC_ARRAY(ref_cbdata->array->items, ref_cbdata->array->nr + 1);
+	ref_cbdata->array->items[ref_cbdata->array->nr++] = ref;
 	return 0;
 }
 
@@ -903,6 +903,28 @@ void ref_array_clear(struct ref_array *array)
 	free(array->items);
 	array->items = NULL;
 	array->nr = array->alloc = 0;
+}
+
+/*
+ * API for filtering a set of refs. Based on the type of refs the user
+ * has requested, we iterate through those refs and apply filters
+ * as per the given ref_filter structure and finally store the
+ * filtered refs in the ref_array structure.
+ */
+int filter_refs(struct ref_array *array, struct ref_filter *filter, unsigned int type)
+{
+	struct ref_filter_cbdata ref_cbdata;
+
+	ref_cbdata.array = array;
+	ref_cbdata.filter = filter;
+
+	if (type & (FILTER_REFS_ALL | FILTER_REFS_INCLUDE_BROKEN))
+		return for_each_rawref(ref_filter_handler, &ref_cbdata);
+	else if (type & FILTER_REFS_ALL)
+		return for_each_ref(ref_filter_handler, &ref_cbdata);
+	else
+		die("filter_refs: invalid type");
+	return 0;
 }
 
 static int cmp_ref_sorting(struct ref_sorting *s, struct ref_array_item *a, struct ref_array_item *b)

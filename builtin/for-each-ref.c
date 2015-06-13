@@ -16,7 +16,8 @@ int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 	const char *format = "%(objectname) %(objecttype)\t%(refname)";
 	struct ref_sorting *sorting = NULL, **sorting_tail = &sorting;
 	int maxcount = 0, quote_style = 0;
-	struct ref_filter_cbdata ref_cbdata;
+	struct ref_array array;
+	struct ref_filter filter;
 
 	struct option opts[] = {
 		OPT_BIT('s', "shell", &quote_style,
@@ -54,16 +55,16 @@ int cmd_for_each_ref(int argc, const char **argv, const char *prefix)
 	/* for warn_ambiguous_refs */
 	git_config(git_default_config, NULL);
 
-	memset(&ref_cbdata, 0, sizeof(ref_cbdata));
-	ref_cbdata.filter.name_patterns = argv;
-	for_each_rawref(ref_filter_handler, &ref_cbdata);
+	memset(&array, 0, sizeof(array));
+	memset(&filter, 0, sizeof(filter));
+	filter.name_patterns = argv;
+	filter_refs(&array, &filter, FILTER_REFS_ALL | FILTER_REFS_INCLUDE_BROKEN);
+	ref_array_sort(sorting, &array);
 
-	ref_array_sort(sorting, &ref_cbdata.array);
-
-	if (!maxcount || ref_cbdata.array.nr < maxcount)
-		maxcount = ref_cbdata.array.nr;
+	if (!maxcount || array.nr < maxcount)
+		maxcount = array.nr;
 	for (i = 0; i < maxcount; i++)
-		show_ref_array_item(ref_cbdata.array.items[i], format, quote_style);
-	ref_array_clear(&ref_cbdata.array);
+		show_ref_array_item(array.items[i], format, quote_style);
+	ref_array_clear(&array);
 	return 0;
 }
