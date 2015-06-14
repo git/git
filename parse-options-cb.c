@@ -134,3 +134,52 @@ int parse_opt_noop_cb(const struct option *opt, const char *arg, int unset)
 {
 	return 0;
 }
+
+/**
+ * Recreates the command-line option in the strbuf.
+ */
+static int recreate_opt(struct strbuf *sb, const struct option *opt,
+		const char *arg, int unset)
+{
+	strbuf_reset(sb);
+
+	if (opt->long_name) {
+		strbuf_addstr(sb, unset ? "--no-" : "--");
+		strbuf_addstr(sb, opt->long_name);
+		if (arg) {
+			strbuf_addch(sb, '=');
+			strbuf_addstr(sb, arg);
+		}
+	} else if (opt->short_name && !unset) {
+		strbuf_addch(sb, '-');
+		strbuf_addch(sb, opt->short_name);
+		if (arg)
+			strbuf_addstr(sb, arg);
+	} else
+		return -1;
+
+	return 0;
+}
+
+/**
+ * For an option opt, recreates the command-line option in opt->value which
+ * must be an char* initialized to NULL. This is useful when we need to pass
+ * the command-line option to another command. Since any previous value will be
+ * overwritten, this callback should only be used for options where the last
+ * one wins.
+ */
+int parse_opt_passthru(const struct option *opt, const char *arg, int unset)
+{
+	static struct strbuf sb = STRBUF_INIT;
+	char **opt_value = opt->value;
+
+	if (recreate_opt(&sb, opt, arg, unset) < 0)
+		return -1;
+
+	if (*opt_value)
+		free(*opt_value);
+
+	*opt_value = strbuf_detach(&sb, NULL);
+
+	return 0;
+}
