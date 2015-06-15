@@ -45,13 +45,6 @@ test_expect_success 'applying bogus stash does nothing' '
 	test_cmp expect file
 '
 
-test_expect_success 'apply requires a clean index' '
-	test_when_finished "git reset --hard" &&
-	echo changed >other-file &&
-	git add other-file &&
-	test_must_fail git stash apply
-'
-
 test_expect_success 'apply does not need clean working directory' '
 	echo 4 >other-file &&
 	git stash apply &&
