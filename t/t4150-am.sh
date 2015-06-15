@@ -116,6 +116,13 @@ test_expect_success setup '
 		echo "---" &&
 		git diff-tree --no-commit-id --stat -p second
 	} >patch1-stgit.eml &&
+	mkdir stgit-series &&
+	cp patch1-stgit.eml stgit-series/patch &&
+	{
+		echo "# This series applies on GIT commit $(git rev-parse first)" &&
+		echo "patch"
+	} >stgit-series/series &&
+
 
 	sed -n -e "3,\$p" msg >file &&
 	git add file &&
@@ -213,6 +220,16 @@ test_expect_success 'am --patch-format=stgit applies stgit patch' '
 	rm -fr .git/rebase-apply &&
 	git checkout -f first &&
 	git am --patch-format=stgit <patch1-stgit.eml &&
+	test_path_is_missing .git/rebase-apply &&
+	git diff --exit-code second &&
+	test_cmp_rev second HEAD &&
+	test_cmp_rev second^ HEAD^
+'
+
+test_expect_success 'am applies stgit series' '
+	rm -fr .git/rebase-apply &&
+	git checkout -f first &&
+	git am stgit-series/series &&
 	test_path_is_missing .git/rebase-apply &&
 	git diff --exit-code second &&
 	test_cmp_rev second HEAD &&
