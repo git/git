@@ -5,8 +5,8 @@
 
 test_description='Test submodules config cache infrastructure
 
-This test verifies that parsing .gitmodules configuration directly
-from the database works.
+This test verifies that parsing .gitmodules configurations directly
+from the database and from the worktree works.
 '
 
 TEST_NO_CREATE_REPO=1
@@ -79,6 +79,39 @@ test_expect_success 'error in one submodule config lets continue' '
 			HEAD submodule \
 				>actual &&
 		test_cmp expect_error actual
+	)
+'
+
+cat >super/expect_url <<EOF
+Submodule url: 'git@somewhere.else.net:a.git' for path 'b'
+Submodule url: 'git@somewhere.else.net:submodule.git' for path 'submodule'
+EOF
+
+cat >super/expect_local_path <<EOF
+Submodule name: 'a' for path 'c'
+Submodule name: 'submodule' for path 'submodule'
+EOF
+
+test_expect_success 'reading of local configuration' '
+	(cd super &&
+		old_a=$(git config submodule.a.url) &&
+		old_submodule=$(git config submodule.submodule.url) &&
+		git config submodule.a.url git@somewhere.else.net:a.git &&
+		git config submodule.submodule.url git@somewhere.else.net:submodule.git &&
+		test-submodule-config --url \
+			"" b \
+			"" submodule \
+				>actual &&
+		test_cmp expect_url actual &&
+		git config submodule.a.path c &&
+		test-submodule-config \
+			"" c \
+			"" submodule \
+				>actual &&
+		test_cmp expect_local_path actual &&
+		git config submodule.a.url $old_a &&
+		git config submodule.submodule.url $old_submodule &&
+		git config --unset submodule.a.path c
 	)
 '
 
