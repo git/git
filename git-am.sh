@@ -297,6 +297,7 @@ split_patches () {
 		;;
 	stgit)
 		this=0
+		test 0 -eq "$#" && set -- -
 		for stgit in "$@"
 		do
 			this=$(expr "$this" + 1)
@@ -318,7 +319,7 @@ split_patches () {
 					print "Subject: ", $_ ;
 					$subject = 1;
 				}
-			' < "$stgit" > "$dotest/$msgnum" || clean_abort
+			' -- "$stgit" >"$dotest/$msgnum" || clean_abort
 		done
 		echo "$this" > "$dotest/last"
 		this=
