@@ -259,6 +259,16 @@ test_expect_success 'am applies hg patch' '
 	test_cmp_rev second^ HEAD^
 '
 
+test_expect_success 'am --patch-format=hg applies hg patch' '
+	rm -fr .git/rebase-apply &&
+	git checkout -f first &&
+	git am --patch-format=hg <patch1-hg.eml &&
+	test_path_is_missing .git/rebase-apply &&
+	git diff --exit-code second &&
+	test_cmp_rev second HEAD &&
+	test_cmp_rev second^ HEAD^
+'
+
 test_expect_success 'setup: new author and committer' '
 	GIT_AUTHOR_NAME="Another Thor" &&
 	GIT_AUTHOR_EMAIL="a.thor@example.com" &&

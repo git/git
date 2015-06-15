@@ -327,6 +327,7 @@ split_patches () {
 		;;
 	hg)
 		this=0
+		test 0 -eq "$#" && set -- -
 		for hg in "$@"
 		do
 			this=$(( $this + 1 ))
@@ -353,7 +354,7 @@ split_patches () {
 					print "\n", $_ ;
 					$subject = 1;
 				}
-			' <"$hg" >"$dotest/$msgnum" || clean_abort
+			' -- "$hg" >"$dotest/$msgnum" || clean_abort
 		done
 		echo "$this" >"$dotest/last"
 		this=
