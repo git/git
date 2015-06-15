@@ -414,6 +414,7 @@ static void update_linked_gitdir(const char *gitfile, const char *gitdir)
  */
 const char *read_gitfile_gently(const char *path, int *return_error_code)
 {
+	const int max_file_size = 1 << 20;  /* 1MB */
 	int error_code = 0;
 	char *buf = NULL;
 	char *dir = NULL;
@@ -428,6 +429,10 @@ const char *read_gitfile_gently(const char *path, int *return_error_code)
 	}
 	if (!S_ISREG(st.st_mode)) {
 		error_code = READ_GITFILE_ERR_NOT_A_FILE;
+		goto cleanup_return;
+	}
+	if (st.st_size > max_file_size) {
+		error_code = READ_GITFILE_ERR_TOO_LARGE;
 		goto cleanup_return;
 	}
 	fd = open(path, O_RDONLY);
@@ -489,6 +494,8 @@ cleanup_return:
 			return NULL;
 		case READ_GITFILE_ERR_OPEN_FAILED:
 			die_errno("Error opening '%s'", path);
+		case READ_GITFILE_ERR_TOO_LARGE:
+			die("Too large to be a .git file: '%s'", path);
 		case READ_GITFILE_ERR_READ_FAILED:
 			die("Error reading %s", path);
 		case READ_GITFILE_ERR_INVALID_FORMAT:
