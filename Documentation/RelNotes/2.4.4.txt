@@ -1,0 +1,35 @@
+Git v2.4.4 Release Notes
+========================
+
+Fixes since v2.4.3
+------------------
+
+ * l10n updates for German.
+
+ * An earlier leakfix to bitmap testing code was incomplete.
+
+ * "git clean pathspec..." tried to lstat(2) and complain even for
+   paths outside the given pathspec.
+
+ * Communication between the HTTP server and http_backend process can
+   lead to a dead-lock when relaying a large ref negotiation request.
+   Diagnose the situation better, and mitigate it by reading such a
+   request first into core (to a reasonable limit).
+
+ * The clean/smudge interface did not work well when filtering an
+   empty contents (failed and then passed the empty input through).
+   It can be argued that a filter that produces anything but empty for
+   an empty input is nonsense, but if the user wants to do strange
+   things, then why not?
+
+ * Make "git stash something --help" error out, so that users can
+   safely say "git stash drop --help".
+
+ * Clarify that "log --raw" and "log --format=raw" are unrelated
+   concepts.
+
+ * Catch a programmer mistake to feed a pointer not an array to
+   ARRAY_SIZE() macro, by using a couple of GCC extensions.
+
+Also contains typofixes, documentation updates and trivial code
+clean-ups.
