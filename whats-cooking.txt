@@ -1,28 +1,20 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jun 2015, #03; Wed, 10)
-X-master-at: 7974889a053574e449b55ca543a486e38e74864f
-X-next-at: 1a18470cb8c6fbcf40b535cf669aa165844706d5
+Subject: What's cooking in git.git (Jun 2015, #04; Tue, 16)
+X-master-at: 16da57c7c6c1fe92b32645202dd19657a89dd67d
+X-next-at: d7bed1d571a3164716149e236b028e1e8ae2619b
 
-What's cooking in git.git (Jun 2015, #03; Wed, 10)
+What's cooking in git.git (Jun 2015, #04; Tue, 16)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-Somehow we are getting quite a many new topics in the past few
-weeks.  All the new contributors we acquired recently, including but
-not limited to the GSoC and Matthieu's students, are making good
-progress, throwing patches and responding to reviews in a reasonable
-way, proving themselves to be real assets to the community.
-
-Which, I am very happy about, even though I am a bit behind catching
-up with them.  "Let's skip commute to gain an extra productive hour"
-I tried yesterday did not help enough X-<.  I am sure I've either
-missed or postponed more than a few topics.  I'll try to get to them
-but some of them may fall in the cracks; please help by reviewing on
-uncommented patches.
+Hopefully the pre-release freeze can start late next week, and the
+next cycle would reopen mid next month.  In the meantime, let's
+shift the focus on making sure that what has already been merged to
+'master' are good (i.e. regression hunting and fixes).
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -32,221 +24,260 @@ of the repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* af/tcsh-completion-noclobber (2015-06-09) 1 commit
- - git-completion.tcsh: fix redirect with noclobber
+* jk/pkt-log-pack (2015-06-16) 3 commits
+ - pkt-line: support tracing verbatim pack contents
+ - pkt-line: tighten sideband PACK check when tracing
+ - pkt-line: simplify starts_with checks in packet tracing
 
- The tcsh completion writes a bash scriptlet but that would have
- failed for users with noclobber set.
-
- Will merge to 'next'.
-
-
-* es/utf8-stupid-compiler-workaround (2015-06-05) 1 commit
- - utf8: NO_ICONV: silence uninitialized variable warning
-
- A compilation workaround.
-
- Will merge to 'next'.
+ Enhance packet tracing machinery to allow capturing an incoming
+ pack data to a file for debugging.
 
 
-* fk/doc-format-patch-vn (2015-06-10) 1 commit
- - doc: format-patch: fix typo
+* jk/stash-require-clean-index (2015-06-15) 1 commit
+  (merged to 'next' on 2015-06-16 at beb4883)
+ + Revert "stash: require a clean index to apply"
 
- Docfix.
+ A hotfix for the topic already in 'master'.
 
- Will merge to 'next'.
-
-
-* gp/status-rebase-i-info (2015-06-09) 5 commits
- - SQUASH??? fix misindent
- - status: add new tests for status during rebase -i
- - status: give more information during rebase -i
- - status: differentiate interactive from non-interactive rebases
- - status: factor two rebase-related messages together
-
- Teach "git status" to show a more detailed information regarding
- the "rebase -i" session in progress.
-
- Expecting a reroll.
+ Will merge to 'master'.
 
 
-* jc/prompt-document-ps1-state-separator (2015-06-10) 1 commit
- - git-prompt.sh: document GIT_PS1_STATESEPARATOR
+* kb/i18n-doc (2015-06-15) 1 commit
+ - Documentation/i18n.txt: clarify character encoding support
 
- Docfix.
-
- Will merge to 'next'.
+ Comments?
 
 
-* jk/index-pack-reduce-recheck (2015-06-09) 1 commit
- - index-pack: avoid excessive re-reading of pack directory
+* kb/use-nsec-doc (2015-06-15) 1 commit
+ - Makefile / racy-git.txt: clarify USE_NSEC prerequisites
 
- Disable "have we lost a race with competing repack?" check while
- receiving a huge object transfer that runs index-pack.
+ Comments?
+
+
+* kn/for-each-ref (2015-06-15) 11 commits
+ - ref-filter: make 'ref_array_item' use a FLEX_ARRAY for refname
+ - for-each-ref: introduce filter_refs()
+ - ref-filter: move code from 'for-each-ref'
+ - ref-filter: add 'ref-filter.h'
+ - for-each-ref: rename variables called sort to sorting
+ - for-each-ref: rename some functions and make them public
+ - for-each-ref: introduce 'ref_array_clear()'
+ - for-each-ref: introduce new structures for better organisation
+ - for-each-ref: rename 'refinfo' to 'ref_array_item'
+ - for-each-ref: clean up code
+ - for-each-ref: extract helper functions out of grab_single_ref()
+
+ GSoC project to rebuild ref listing by branch and tag based on the
+ for-each-ref machinery.
 
  Will merge to 'next'.
 
 
-* js/sleep-without-select (2015-06-05) 4 commits
- - lockfile: wait using sleep_millisec() instead of select()
- - lockfile: convert retry timeout computations to millisecond
- - help.c: wrap wait-only poll() invocation in sleep_millisec()
- - lockfile: replace random() by rand()
+* mh/init-delete-refs-api (2015-06-15) 13 commits
+ - SQUASH avoid die(variable)
+ - refs: move the remaining ref module declarations to refs.h
+ - initial_ref_transaction_commit(): check for ref D/F conflicts
+ - initial_ref_transaction_commit(): check for duplicate refs
+ - refs: remove some functions from the module's public interface
+ - initial_ref_transaction_commit(): function for initial ref creation
+ - repack_without_refs(): make function private
+ - prune_remote(): use delete_refs()
+ - delete_refs(): improve error message
+ - delete_refs(): new function for the refs API
+ - delete_ref(): handle special case more explicitly
+ - remove_branches(): remove temporary
+ - delete_ref(): move declaration to refs.h
 
- Portability fix.
+ Clean up refs API and make "git clone" less intimate with the
+ implementation detail.
 
- Will merge to 'next'.
-
-
-* ld/p4-changes-block-size (2015-06-10) 4 commits
- - git-p4: fixing --changes-block-size handling
- - git-p4: add tests for non-numeric revision range
- - git-p4: test with limited p4 server results
- - git-p4: additional testing of --changes-block-size
-
- More Perforce row number limit workaround for "git p4".
-
- Will merge to 'next'.
-
-
-* mh/fsck-reflog-entries (2015-06-08) 2 commits
- - fsck: report errors if reflog entries point at invalid objects
- - fsck_handle_reflog_sha1(): new function
-
- "git fsck" used to ignore missing or invalid objects recorded in reflog.
-
- Will merge to 'next'.
+ Needs reroll.
 
 
-* mk/utf8-no-iconv-warn (2015-06-08) 1 commit
- - utf8.c: print warning about disabled iconv
+* mh/replace-refs (2015-06-12) 1 commit
+ - Allow to control where the replace refs are looked for
 
- Warn when a reencoding is requested in a build without iconv
- support, as the end user is likely to get an unexpected result.  I
- think the same level of safety should be added to a build with
- iconv support when the specified encoding is not available, but the
- patch does not go there.
-
- Expecting a reroll.
+ Add an environment variable to tell Git to look into refs hierarchy
+ other than refs/replace/ for the object replacement data.
 
 
-* mr/rebase-i-customize-insn-sheet (2015-06-08) 1 commit
- - git-rebase--interactive.sh: add config option for custom instruction format
+* nd/multiple-work-trees (2015-06-12) 1 commit
+ - checkout: don't check worktrees when not necessary
 
- Breaks tests.
-
- Expecting a reroll.
-
-
-* nd/untracked-cache (2015-06-08) 1 commit
- - read-cache: fix untracked cache invalidation when split-index is used
-
- Hotfix for a topic already in 'master'.
+ "git checkout [<tree-ish>] <paths>" spent unnecessary cycles
+ checking if the current branch was checked out elsewhere, when we
+ know we are not switching the branches ourselves.
 
  Will merge to 'next'.
 
 
-* pt/am-abort-fix (2015-06-08) 6 commits
- - am --abort: keep unrelated commits on unborn branch
- - am --abort: support aborting to unborn branch
- - am --abort: revert changes introduced by failed 3way merge
- - am --skip: support skipping while on unborn branch
- - am -3: support 3way merge on unborn branch
- - am --skip: revert changes introduced by failed 3way merge
+* pa/auto-gc-mac-osx (2015-06-12) 1 commit
+  (merged to 'next' on 2015-06-16 at 151ec95)
+ + hooks/pre-auto-gc: adjust power checking for newer OS X
 
- Various fixes around "git am" that applies a patch to a history
- that is not there yet.
+ Recent Mac OS X updates breaks the logic to detect that the machine
+ is on the AC power in the sample pre-auto-gc script.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* pt/am-foreign (2015-06-08) 6 commits
- - SQUASH??? do not cat a single file into a pipe
- - am: teach mercurial patch parser how to read from stdin
- - am: use gmtime() to parse mercurial patch date
- - t4150: test applying StGit series
- - am: teach StGit patch parser how to read from stdin
- - t4150: test applying StGit patch
+* pt/t0302-needs-sanity (2015-06-12) 1 commit
+  (merged to 'next' on 2015-06-16 at f0d8e17)
+ + t0302: "unreadable" test needs SANITY prereq
 
- Various enhancements around "git am" reading patches generated by
- foreign SCM.
+ Will merge to 'master'.
 
- Expecting a reroll.
+--------------------------------------------------
+[Graduated to "master"]
 
+* ah/send-email-sendmail-alias (2015-05-27) 2 commits
+  (merged to 'next' on 2015-06-04 at 9d9bd68)
+ + t9001: write $HOME/, not ~/, to help shells without tilde expansion
+ + send-email: add sendmail email aliases format
+ (this branch is used by es/send-email-sendmail-alias.)
 
-* pt/pull-builtin (2015-06-09) 20 commits
- . SQUASH??? adjust to new world order after 9e3751d4 (remote.c: drop "remote" pointer from "struct branch", 2015-05-21)
- . pull: remove redirection to git-pull.sh
- . pull --rebase: error on no merge candidate cases
- . pull --rebase: exit early when the working directory is dirty
- . pull: configure --rebase via branch.<name>.rebase or pull.rebase
- . pull: teach git pull about --rebase
- . pull: set reflog message
- . pull: implement pulling into an unborn branch
- . pull: fast-forward working tree if head is updated
- . pull: check if in unresolved merge state
- - pull: support pull.ff config
- - pull: error on no merge candidates
- - pull: pass git-fetch's options to git-fetch
- - pull: pass git-merge's options to git-merge
- - pull: pass verbosity, --progress flags to fetch and merge
- - pull: implement fetch + merge
- - pull: implement skeletal builtin pull
- - argv-array: implement argv_array_pushv()
- - parse-options-cb: implement parse_opt_pass_argv_array()
- - parse-options-cb: implement parse_opt_pass_strbuf()
-
- Expecting a reroll.
+ "git send-email" learned the alias file format used by the sendmail
+ program (in an abbreviated form).
 
 
-* rl/send-email-aliases (2015-06-08) 5 commits
- - send-email: refactor address list process
- - send-email: allow multiple emails using --cc, --to and --bcc
- - t9001-send-email: refactor header variable fields replacement
- - send-email: allow aliases in patch header and command script outputs
- - t9001-send-email: move script creation in a setup test
+* jc/diff-ws-error-highlight (2015-05-26) 4 commits
+  (merged to 'next' on 2015-06-01 at 6046560)
+ + diff.c: --ws-error-highlight=<kind> option
+ + diff.c: add emit_del_line() and emit_context_line()
+ + t4015: separate common setup and per-test expectation
+ + t4015: modernise style
 
- "git send-email" now performs alias-expansion on names that are
- given via --cccmd, etc.
-
- Expecting a reroll.
+ Allow whitespace breakages in deleted and context lines to be also
+ painted in the output.
 
 
-* sg/commit-cleanup-scissors (2015-06-09) 1 commit
- - commit: cope with scissors lines in commit message
+* jk/clone-dissociate (2015-05-27) 2 commits
+  (merged to 'next' on 2015-06-01 at 19e3ec3)
+ + clone: reorder --dissociate and --reference options
+ + clone: use OPT_STRING_LIST for --reference
 
- "git commit --cleanup=scissors" was not careful enough to protect
- against getting fooled by a line that looked like scissors.
-
- Will merge to 'next'.
-
-
-* sg/completion-commit-cleanup (2015-06-08) 1 commit
- - completion: teach 'scissors' mode to 'git commit --cleanup='
-
- Will merge to 'next'.
+ Code clean-up.
 
 
-* wp/sha1-name-negative-match (2015-06-08) 2 commits
- - sha1_name.c: introduce '^{/!-<negative pattern>}' notation
- - test for '!' handling in rev-parse's named commits
+* jk/color-diff-plain-is-context (2015-05-27) 2 commits
+  (merged to 'next' on 2015-06-01 at bcd8f1d)
+ + diff.h: rename DIFF_PLAIN color slot to DIFF_CONTEXT
+ + diff: accept color.diff.context as a synonym for "plain"
 
- Introduce "branch^{/!-<pattern>}" notation to name a commit
- reachable from branch that does not match the given pattern.
-
- Expecting a reroll.
+ "color.diff.plain" was a misnomer; give it 'color.diff.context' as
+ a more logical synonym.
 
 
-* bc/object-id (2015-06-10) 7 commits
- - ref_newer: convert to use struct object_id
- - parse_fetch: convert to use struct object_id
- - add_sought_entry_mem: convert to struct object_id
- - Add a utility function to make parsing hex values easier.
- - Convert struct ref to use object_id.
- - sha1_file: introduce has_object_file helper.
- - refs: convert some internal functions to use object_id
+* jk/diagnose-config-mmap-failure (2015-05-28) 5 commits
+  (merged to 'next' on 2015-06-01 at ca750d5)
+ + xmmap(): drop "Out of memory?"
+ + config.c: rewrite ENODEV into EISDIR when mmap fails
+ + config.c: avoid xmmap error messages
+ + config.c: fix mmap leak when writing config
+ + read-cache.c: drop PROT_WRITE from mmap of index
 
- (incomplete)
+ The configuration reader/writer uses mmap(2) interface to access
+ the files; when we find a directory, it barfed with "Out of memory?".
+
+
+* jk/die-on-bogus-worktree-late (2015-05-29) 1 commit
+  (merged to 'next' on 2015-06-04 at fac7a83)
+ + setup_git_directory: delay core.bare/core.worktree errors
+
+ The setup code used to die when core.bare and core.worktree are set
+ inconsistently, even for commands that do not need working tree.
+
+
+* jk/make-fix-dependencies (2015-05-29) 3 commits
+  (merged to 'next' on 2015-06-04 at 28daf19)
+ + Makefile: silence perl/PM.stamp recipe
+ + Makefile: avoid timestamp updates to GIT-BUILD-OPTIONS
+ + Makefile: drop dependency between git-instaweb and gitweb
+
+ Build clean-up.
+
+
+* jk/squelch-missing-link-warning-for-unreachable (2015-06-01) 3 commits
+  (merged to 'next' on 2015-06-01 at 9ddc5d1)
+ + suppress errors on missing UNINTERESTING links
+ + silence broken link warnings with revs->ignore_missing_links
+ + add quieter versions of parse_{tree,commit}
+
+ Recent "git prune" traverses young unreachable objects to safekeep
+ old objects in the reachability chain from them, which sometimes
+ caused error messages that are unnecessarily alarming.
+
+
+* mh/verify-lock-error-report (2015-05-27) 5 commits
+  (merged to 'next' on 2015-06-01 at 7b450a7)
+ + ref_transaction_commit(): do not capitalize error messages
+ + verify_lock(): do not capitalize error messages
+ + verify_lock(): report errors via a strbuf
+ + verify_lock(): on errors, let the caller unlock the lock
+ + verify_lock(): return 0/-1 rather than struct ref_lock *
+
+ Bring consistency to error reporting mechanism used in "refs" API.
+
+
+* mt/p4-depotFile-at-version (2015-05-27) 1 commit
+  (merged to 'next' on 2015-06-01 at 33e8622)
+ + p4: retrieve the right revision of the file in UTF-16 codepath
+
+
+* nd/slim-index-pack-memory-usage (2015-06-04) 1 commit
+  (merged to 'next' on 2015-06-04 at 328fd50)
+ + index-pack: fix truncation of off_t in comparison
+
+ An earlier optimization broke index-pack for a large object
+ transfer; this fixes it before the breakage hits any released
+ version.
+
+
+* pt/pull-tests (2015-05-29) 8 commits
+  (merged to 'next' on 2015-06-01 at c98370b)
+ + t5520: check reflog action in fast-forward merge
+ + t5521: test --dry-run does not make any changes
+ + t5520: test --rebase failure on unborn branch with index
+ + t5520: test --rebase with multiple branches
+ + t5520: test work tree fast-forward when fetch updates head
+ + t5520: test for failure if index has unresolved entries
+ + t5520: test no merge candidates cases
+ + t5520: prevent field splitting in content comparisons
+ (this branch is used by pt/pull-optparse.)
+
+ Add more test coverage to "git pull".
+
+
+* sb/glossary-submodule (2015-05-29) 1 commit
+  (merged to 'next' on 2015-06-01 at 84de87b)
+ + glossary: add "remote", "submodule", "superproject"
+
+
+* sb/pack-protocol-mention-smart-http (2015-06-02) 1 commit
+  (merged to 'next' on 2015-06-04 at 8041cf6)
+ + Documentation/technical/pack-protocol: mention http as possible protocol
+
+ Doc updates.
+
+
+* sb/submodule-doc-intro (2015-05-28) 1 commit
+  (merged to 'next' on 2015-06-01 at b6798de)
+ + submodule doc: reorder introductory paragraphs
+
+
+* sg/merge-summary-config (2015-05-28) 1 commit
+  (merged to 'next' on 2015-06-04 at 8c0946c)
+ + Documentation: include 'merge.branchdesc' for merge and config as well
+
+ Doc updates.
+
+
+* tb/complete-sequencing (2015-06-01) 1 commit
+  (merged to 'next' on 2015-06-01 at b7604e8)
+ + completion: suggest sequencer commands for revert
+
+ The bash completion script (in contrib/) learned a few options that
+ "git revert" takes.
 
 --------------------------------------------------
 [Stalled]
@@ -455,8 +486,236 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* af/tcsh-completion-noclobber (2015-06-09) 1 commit
+  (merged to 'next' on 2015-06-16 at 621f205)
+ + git-completion.tcsh: fix redirect with noclobber
+
+ The tcsh completion writes a bash scriptlet but that would have
+ failed for users with noclobber set.
+
+ Will merge to 'master'.
+
+
+* es/utf8-stupid-compiler-workaround (2015-06-05) 1 commit
+  (merged to 'next' on 2015-06-11 at dc0f2d2)
+ + utf8: NO_ICONV: silence uninitialized variable warning
+
+ A compilation workaround.
+
+ Will merge to 'master'.
+
+
+* fk/doc-format-patch-vn (2015-06-10) 1 commit
+  (merged to 'next' on 2015-06-16 at 9be3516)
+ + doc: format-patch: fix typo
+
+ Docfix.
+
+ Will merge to 'master'.
+
+
+* gp/status-rebase-i-info (2015-06-09) 5 commits
+ - SQUASH??? fix misindent
+ - status: add new tests for status during rebase -i
+ - status: give more information during rebase -i
+ - status: differentiate interactive from non-interactive rebases
+ - status: factor two rebase-related messages together
+
+ Teach "git status" to show a more detailed information regarding
+ the "rebase -i" session in progress.
+
+ Expecting a reroll.
+
+
+* jc/prompt-document-ps1-state-separator (2015-06-10) 1 commit
+ - git-prompt.sh: document GIT_PS1_STATESEPARATOR
+
+ Docfix.
+
+ Will merge to 'next'.
+
+
+* jk/index-pack-reduce-recheck (2015-06-09) 1 commit
+  (merged to 'next' on 2015-06-16 at ff83705)
+ + index-pack: avoid excessive re-reading of pack directory
+
+ Disable "have we lost a race with competing repack?" check while
+ receiving a huge object transfer that runs index-pack.
+
+ Will merge to 'master'.
+
+
+* js/sleep-without-select (2015-06-05) 4 commits
+  (merged to 'next' on 2015-06-11 at 278edb1)
+ + lockfile: wait using sleep_millisec() instead of select()
+ + lockfile: convert retry timeout computations to millisecond
+ + help.c: wrap wait-only poll() invocation in sleep_millisec()
+ + lockfile: replace random() by rand()
+
+ Portability fix.
+
+ Will merge to 'master'.
+
+
+* ld/p4-changes-block-size (2015-06-10) 4 commits
+  (merged to 'next' on 2015-06-16 at 09b7daa)
+ + git-p4: fixing --changes-block-size handling
+ + git-p4: add tests for non-numeric revision range
+ + git-p4: test with limited p4 server results
+ + git-p4: additional testing of --changes-block-size
+
+ More Perforce row number limit workaround for "git p4".
+
+ Will merge to 'master'.
+
+
+* mh/fsck-reflog-entries (2015-06-08) 2 commits
+  (merged to 'next' on 2015-06-16 at 44e3202)
+ + fsck: report errors if reflog entries point at invalid objects
+ + fsck_handle_reflog_sha1(): new function
+
+ "git fsck" used to ignore missing or invalid objects recorded in reflog.
+
+ Will merge to 'master'.
+
+
+* mk/utf8-no-iconv-warn (2015-06-08) 1 commit
+ - utf8.c: print warning about disabled iconv
+
+ Warn when a reencoding is requested in a build without iconv
+ support, as the end user is likely to get an unexpected result.  I
+ think the same level of safety should be added to a build with
+ iconv support when the specified encoding is not available, but the
+ patch does not go there.
+
+ Expecting a reroll.
+
+
+* mr/rebase-i-customize-insn-sheet (2015-06-15) 1 commit
+ - git-rebase--interactive.sh: add config option for custom instruction format
+
+ "git rebase -i"'s list of todo is made configurable.
+
+ Will merge to 'next'.
+
+
+* nd/untracked-cache (2015-06-08) 1 commit
+  (merged to 'next' on 2015-06-16 at 5e7df1d)
+ + read-cache: fix untracked cache invalidation when split-index is used
+
+ Hotfix for the 'untracked-cache' topic that is already in 'master'.
+
+ Will merge to 'master'.
+
+
+* pt/am-abort-fix (2015-06-08) 6 commits
+  (merged to 'next' on 2015-06-16 at 9cac1de)
+ + am --abort: keep unrelated commits on unborn branch
+ + am --abort: support aborting to unborn branch
+ + am --abort: revert changes introduced by failed 3way merge
+ + am --skip: support skipping while on unborn branch
+ + am -3: support 3way merge on unborn branch
+ + am --skip: revert changes introduced by failed 3way merge
+
+ Various fixes around "git am" that applies a patch to a history
+ that is not there yet.
+
+ Will merge to 'master'.
+
+
+* pt/am-foreign (2015-06-15) 5 commits
+ - am: teach mercurial patch parser how to read from stdin
+ - am: use gmtime() to parse mercurial patch date
+ - t4150: test applying StGit series
+ - am: teach StGit patch parser how to read from stdin
+ - t4150: test applying StGit patch
+
+ Various enhancements around "git am" reading patches generated by
+ foreign SCM.
+
+ Will merge to 'next'.
+
+
+* pt/pull-builtin (2015-06-15) 19 commits
+ - pull: remove redirection to git-pull.sh
+ - pull --rebase: error on no merge candidate cases
+ - pull --rebase: exit early when the working directory is dirty
+ - pull: configure --rebase via branch.<name>.rebase or pull.rebase
+ - pull: teach git pull about --rebase
+ - pull: set reflog message
+ - pull: implement pulling into an unborn branch
+ - pull: fast-forward working tree if head is updated
+ - pull: check if in unresolved merge state
+ - pull: support pull.ff config
+ - pull: error on no merge candidates
+ - pull: pass git-fetch's options to git-fetch
+ - pull: pass git-merge's options to git-merge
+ - pull: pass verbosity, --progress flags to fetch and merge
+ - pull: implement fetch + merge
+ - pull: implement skeletal builtin pull
+ - argv-array: implement argv_array_pushv()
+ - parse-options-cb: implement parse_opt_passthru_argv()
+ - parse-options-cb: implement parse_opt_passthru()
+
+ Reimplement 'git pull' in C.
+
+
+* rl/send-email-aliases (2015-06-08) 5 commits
+ - send-email: refactor address list process
+ - send-email: allow multiple emails using --cc, --to and --bcc
+ - t9001-send-email: refactor header variable fields replacement
+ - send-email: allow aliases in patch header and command script outputs
+ - t9001-send-email: move script creation in a setup test
+
+ "git send-email" now performs alias-expansion on names that are
+ given via --cccmd, etc.
+
+ What's the doneness of this one?
+
+
+* sg/commit-cleanup-scissors (2015-06-09) 1 commit
+  (merged to 'next' on 2015-06-16 at 988e23d)
+ + commit: cope with scissors lines in commit message
+
+ "git commit --cleanup=scissors" was not careful enough to protect
+ against getting fooled by a line that looked like scissors.
+
+ Will merge to 'master'.
+
+
+* sg/completion-commit-cleanup (2015-06-08) 1 commit
+  (merged to 'next' on 2015-06-16 at a9d1c77)
+ + completion: teach 'scissors' mode to 'git commit --cleanup='
+
+ Will merge to 'master'.
+
+
+* wp/sha1-name-negative-match (2015-06-08) 2 commits
+ - sha1_name.c: introduce '^{/!-<negative pattern>}' notation
+ - test for '!' handling in rev-parse's named commits
+
+ Introduce "branch^{/!-<pattern>}" notation to name a commit
+ reachable from branch that does not match the given pattern.
+
+ Expecting a reroll.
+
+
+* bc/object-id (2015-06-15) 8 commits
+ - remote.c: use struct object_id in ref_newer()
+ - transport-helper.c: use struct object_id in push_refs_with_export()
+ - connect.c: use struct object_id in get_remote_heads()
+ - remote-curl: use struct object_id in parse_fetch()
+ - fetch-pack: use struct object_id in add_sought_entry_mem()
+ - object_id: convert struct ref to use object_id.
+ - sha1_file: introduce has_object_file() helper
+ - refs: convert some internal functions to use object_id
+
+ (incomplete - the last two not queued yet)
+
+
 * jc/ll-merge-expose-path (2015-06-04) 1 commit
- - ll-merge: pass the original path to external drivers
+  (merged to 'next' on 2015-06-11 at 5c5fe41)
+ + ll-merge: pass the original path to external drivers
 
  Traditionally, external low-level 3-way merge drivers are expected
  to produce their results based solely on the contents of the three
@@ -464,7 +723,7 @@ of the repositories listed at
  command line.  Additionally allow them to look at the final path
  (given by %P).
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jk/log-missing-default-HEAD (2015-06-03) 1 commit
@@ -476,17 +735,6 @@ of the repositories listed at
  What's the status of this one?
 
 
-* nd/slim-index-pack-memory-usage (2015-06-04) 1 commit
-  (merged to 'next' on 2015-06-04 at 328fd50)
- + index-pack: fix truncation of off_t in comparison
-
- An earlier optimization broke index-pack for a large object
- transfer; this fixes it before the breakage hits any released
- version.
-
- Will merge to 'master'.
-
-
 * gr/rebase-i-drop-warn (2015-06-01) 2 commits
  - git rebase -i: warn about removed commits
  - git-rebase -i: add command "drop" to remove a commit
@@ -496,7 +744,7 @@ of the repositories listed at
  who do not use it (and instead just remove the lines) by throwing
  a warning.
 
- Expecting a reroll.
+ What's the status of this one?
 
 
 * jh/strbuf-read-use-read-in-full (2015-06-01) 1 commit
@@ -510,44 +758,23 @@ of the repositories listed at
  Expecting a reroll.
 
 
-* jk/squelch-missing-link-warning-for-unreachable (2015-06-01) 3 commits
-  (merged to 'next' on 2015-06-01 at 9ddc5d1)
- + suppress errors on missing UNINTERESTING links
- + silence broken link warnings with revs->ignore_missing_links
- + add quieter versions of parse_{tree,commit}
-
- Recent "git prune" traverses young unreachable objects to safekeep
- old objects in the reachability chain from them, which causes
- error messages that are unnecessarily alarming.
-
- Will merge to 'master'.
-
-
 * mh/reporting-broken-refs-from-for-each-ref (2015-06-08) 4 commits
- - read_loose_refs(): treat NULL_SHA1 loose references as broken
- - read_loose_refs(): simplify function logic
- - for-each-ref: report broken references correctly
- - t6301: new tests of for-each-ref error handling
+  (merged to 'next' on 2015-06-16 at 31af2b8)
+ + read_loose_refs(): treat NULL_SHA1 loose references as broken
+ + read_loose_refs(): simplify function logic
+ + for-each-ref: report broken references correctly
+ + t6301: new tests of for-each-ref error handling
 
  "git for-each-ref" reported "missing object" for 0{40} when it
  encounters a broken ref.  The lack of object whose name is 0{40} is
  not the problem; the ref being broken is.
 
- Will merge to 'next'.
-
-
-* tb/complete-sequencing (2015-06-01) 1 commit
-  (merged to 'next' on 2015-06-01 at b7604e8)
- + completion: suggest sequencer commands for revert
-
- The bash completion script (in contrib/) learned a few options that
- "git revert" takes.
-
  Will merge to 'master'.
 
 
 * jc/apply-reject-noop-hunk (2015-06-01) 1 commit
- - apply: reject a hunk that does not do anything
+  (merged to 'next' on 2015-06-11 at 8063665)
+ + apply: reject a hunk that does not do anything
 
  "git apply" cannot diagnose a patch corruption when the breakage is
  to mark the length of the hunk shorter than it really is on the
@@ -555,52 +782,55 @@ of the repositories listed at
  when the hunk becomes no-op (e.g. k == n == 2 for two-line context
  patch output), and it learned how to do so.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * es/configure-getdelim (2015-06-03) 2 commits
- - configure: add getdelim() check
- - config.mak.uname: Darwin: define HAVE_GETDELIM for modern OS X releases
+  (merged to 'next' on 2015-06-11 at cdead14)
+ + configure: add getdelim() check
+ + config.mak.uname: Darwin: define HAVE_GETDELIM for modern OS X releases
 
  Auto-detect availability of getdelim() that helps optimized version
  of strbuf_getwholeline().
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * es/osx-header-pollutes-mask-macro (2015-06-03) 2 commits
- - ewah: use less generic macro name
- - ewah/bitmap: silence warning about MASK macro redefinition
+  (merged to 'next' on 2015-06-11 at cd8c39e)
+ + ewah: use less generic macro name
+ + ewah/bitmap: silence warning about MASK macro redefinition
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * es/send-email-sendmail-alias (2015-06-01) 10 commits
- - send-email: further warn about unsupported sendmail aliases features
- - t9001: add sendmail aliases line continuation tests
- - t9001: refactor sendmail aliases test infrastructure
- - send-email: implement sendmail aliases line continuation support
- - send-email: simplify sendmail aliases comment and blank line recognizer
- - send-email: refactor sendmail aliases parser
- - send-email: fix style: cuddle 'elsif' and 'else' with closing brace
- - send-email: drop noise comments which merely repeat what code says
- - send-email: visually distinguish sendmail aliases parser warnings
- - send-email: further document missing sendmail aliases functionality
- (this branch uses ah/send-email-sendmail-alias.)
+  (merged to 'next' on 2015-06-11 at b5e310e)
+ + send-email: further warn about unsupported sendmail aliases features
+ + t9001: add sendmail aliases line continuation tests
+ + t9001: refactor sendmail aliases test infrastructure
+ + send-email: implement sendmail aliases line continuation support
+ + send-email: simplify sendmail aliases comment and blank line recognizer
+ + send-email: refactor sendmail aliases parser
+ + send-email: fix style: cuddle 'elsif' and 'else' with closing brace
+ + send-email: drop noise comments which merely repeat what code says
+ + send-email: visually distinguish sendmail aliases parser warnings
+ + send-email: further document missing sendmail aliases functionality
 
  "git send-email" learned to handle more forms of sendmail style
  aliases file.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jc/do-not-feed-tags-to-clear-commit-marks (2015-06-01) 1 commit
- - format-patch: do not feed tags to clear_commit_marks()
+  (merged to 'next' on 2015-06-11 at 65b4308)
+ + format-patch: do not feed tags to clear_commit_marks()
 
  "git format-patch --ignore-if-upstream A..B" did not like to be fed
  tags as boundary commits.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * mg/index-read-error-messages (2015-06-01) 2 commits
@@ -612,130 +842,48 @@ of the repositories listed at
 
 
 * pt/pull-optparse (2015-06-02) 3 commits
- - pull: use git-rev-parse --parseopt for option parsing
- - pull: handle git-fetch's options as well
- - Merge branch 'pt/pull-tests' into pt/pull-optparse
- (this branch uses pt/pull-tests.)
+  (merged to 'next' on 2015-06-11 at e252b4c)
+ + pull: use git-rev-parse --parseopt for option parsing
+ + pull: handle git-fetch's options as well
+ + Merge branch 'pt/pull-tests' into pt/pull-optparse
 
  "git pull" has become more aware of the options meant for
  underlying "git fetch" and then learned to use parse-options
  parser.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * qn/blame-show-email (2015-06-01) 1 commit
- - blame: add blame.showEmail configuration
+  (merged to 'next' on 2015-06-11 at b4998e2)
+ + blame: add blame.showEmail configuration
 
  "git blame" learned blame.showEmail configuration variable.
-
- Will merge to 'next'.
-
-
-* rl/am-3way-config (2015-06-04) 3 commits
- - git-am: add am.threeWay config variable
- - t4150-am: refactor am -3 tests
- - git-am.sh: fix initialization of the threeway variable
-
- "git am" learned am.threeWay configuration variable.
-
- Will merge to 'next'.
-
-
-* sb/pack-protocol-mention-smart-http (2015-06-02) 1 commit
-  (merged to 'next' on 2015-06-04 at 8041cf6)
- + Documentation/technical/pack-protocol: mention http as possible protocol
-
- Doc updates.
 
  Will merge to 'master'.
 
 
-* hv/submodule-config (2015-06-02) 4 commits
+* rl/am-3way-config (2015-06-04) 3 commits
+  (merged to 'next' on 2015-06-11 at 9b9910d)
+ + git-am: add am.threeWay config variable
+ + t4150-am: refactor am -3 tests
+ + git-am.sh: fix initialization of the threeway variable
+
+ "git am" learned am.threeWay configuration variable.
+
+ Will merge to 'master'.
+
+
+* hv/submodule-config (2015-06-15) 4 commits
  - do not die on error of parsing fetchrecursesubmodules option
  - use new config API for worktree configurations of submodules
  - extract functions for submodule config set and lookup
- - implement submodule config cache for lookup of submodule names
+ - implement submodule config API for lookup of .gitmodules values
 
  The gitmodules API accessed from the C code learned to cache stuff
  lazily.
 
- What's the doneness of this one?
-
-
-* jc/diff-ws-error-highlight (2015-05-26) 4 commits
-  (merged to 'next' on 2015-06-01 at 6046560)
- + diff.c: --ws-error-highlight=<kind> option
- + diff.c: add emit_del_line() and emit_context_line()
- + t4015: separate common setup and per-test expectation
- + t4015: modernise style
-
- Allow whitespace breakages in deleted and context lines to be also
- painted in the output.
-
- Will merge to 'master'.
-
-
-* jk/clone-dissociate (2015-05-27) 2 commits
-  (merged to 'next' on 2015-06-01 at 19e3ec3)
- + clone: reorder --dissociate and --reference options
- + clone: use OPT_STRING_LIST for --reference
-
- Code clean-up.
-
- Will merge to 'master'.
-
-
-* jk/color-diff-plain-is-context (2015-05-27) 2 commits
-  (merged to 'next' on 2015-06-01 at bcd8f1d)
- + diff.h: rename DIFF_PLAIN color slot to DIFF_CONTEXT
- + diff: accept color.diff.context as a synonym for "plain"
-
- "color.diff.plain" was a misnomer; give it 'color.diff.context' as
- a more logical synonym.
-
- Will merge to 'master'.
-
-
-* jk/diagnose-config-mmap-failure (2015-05-28) 5 commits
-  (merged to 'next' on 2015-06-01 at ca750d5)
- + xmmap(): drop "Out of memory?"
- + config.c: rewrite ENODEV into EISDIR when mmap fails
- + config.c: avoid xmmap error messages
- + config.c: fix mmap leak when writing config
- + read-cache.c: drop PROT_WRITE from mmap of index
-
- The configuration reader/writer uses mmap(2) interface to access
- the files; when we find a directory, it barfed with "Out of memory?".
-
- Will merge to 'master'.
-
-
-* mh/verify-lock-error-report (2015-05-27) 5 commits
-  (merged to 'next' on 2015-06-01 at 7b450a7)
- + ref_transaction_commit(): do not capitalize error messages
- + verify_lock(): do not capitalize error messages
- + verify_lock(): report errors via a strbuf
- + verify_lock(): on errors, let the caller unlock the lock
- + verify_lock(): return 0/-1 rather than struct ref_lock *
-
- Bring consistency to error reporting mechanism used in "refs" API.
-
- Will merge to 'master'.
-
-
-* mt/p4-depotFile-at-version (2015-05-27) 1 commit
-  (merged to 'next' on 2015-06-01 at 33e8622)
- + p4: retrieve the right revision of the file in UTF-16 codepath
-
- Will merge to 'master'.
-
-
-* sb/glossary-submodule (2015-05-29) 1 commit
-  (merged to 'next' on 2015-06-01 at 84de87b)
- + glossary: add "remote", "submodule", "superproject"
-
- Will merge to 'master'.
+ Looked reasonable from a cursory read.
 
 
 * sg/config-name-only (2015-05-28) 3 commits
@@ -752,53 +900,11 @@ of the repositories listed at
  Expecting reroll.
 
 
-* sg/merge-summary-config (2015-05-28) 1 commit
-  (merged to 'next' on 2015-06-04 at 8c0946c)
- + Documentation: include 'merge.branchdesc' for merge and config as well
-
- Doc updates.
-
- Will merge to 'master'.
-
-
 * jc/push-tags-also (2015-05-29) 1 commit
  - push --tags: push tags *in addition to* other stuff
 
  "git fetch --tags" learned to fetch tags in addition to other stuff
  a few years ago, but "git push --tags" didn't.  Now it does.
-
-
-* jk/die-on-bogus-worktree-late (2015-05-29) 1 commit
-  (merged to 'next' on 2015-06-04 at fac7a83)
- + setup_git_directory: delay core.bare/core.worktree errors
-
- The setup code used to die when core.bare and core.worktree are set
- inconsistently, even for commands that do not need working tree.
-
- Will merge to 'master'.
-
-
-* jk/make-fix-dependencies (2015-05-29) 3 commits
-  (merged to 'next' on 2015-06-04 at 28daf19)
- + Makefile: silence perl/PM.stamp recipe
- + Makefile: avoid timestamp updates to GIT-BUILD-OPTIONS
- + Makefile: drop dependency between git-instaweb and gitweb
-
- Build clean-up.
-
- Will merge to 'master'.
-
-
-* ah/send-email-sendmail-alias (2015-05-27) 2 commits
-  (merged to 'next' on 2015-06-04 at 9d9bd68)
- + t9001: write $HOME/, not ~/, to help shells without tilde expansion
- + send-email: add sendmail email aliases format
- (this branch is used by es/send-email-sendmail-alias.)
-
- "git send-email" learned the alias file format used by the sendmail
- program (in an abbreviated form).
-
- Will merge to 'master'.
 
 
 * jc/commit-slab (2015-05-22) 1 commit
@@ -808,37 +914,13 @@ of the repositories listed at
  sparsely (which is not recommended in the first place).
 
 
-* sb/submodule-doc-intro (2015-05-28) 1 commit
-  (merged to 'next' on 2015-06-01 at b6798de)
- + submodule doc: reorder introductory paragraphs
-
- Will merge to 'master'.
-
-
-* pt/pull-tests (2015-05-29) 8 commits
-  (merged to 'next' on 2015-06-01 at c98370b)
- + t5520: check reflog action in fast-forward merge
- + t5521: test --dry-run does not make any changes
- + t5520: test --rebase failure on unborn branch with index
- + t5520: test --rebase with multiple branches
- + t5520: test work tree fast-forward when fetch updates head
- + t5520: test for failure if index has unresolved entries
- + t5520: test no merge candidates cases
- + t5520: prevent field splitting in content comparisons
- (this branch is used by pt/pull-optparse.)
-
- Add more test coverage to "git pull".
-
- Will merge to 'master'.
-
-
 * jc/clone-bundle (2015-04-30) 1 commit
  - repack: optionally create a clone.bundle
 
  Still an early WIP
 
 
-* ee/clean-remove-dirs (2015-06-09) 5 commits
+* ee/clean-remove-dirs (2015-06-15) 5 commits
  - clean: improve performance when removing lots of directories
  - p7300: add performance tests for clean
  - t7300: add tests to document behavior of clean and nested git
@@ -849,7 +931,7 @@ of the repositories listed at
  be touched?" check "git clean" does by checking if it has .git/HEAD
  using the submodule-related code with a more optimized check.
 
- Haven't seen reviews on this updated round, and I haven't read it myself.
+ Looked reasonable from a cursory read.
 
 
 * jc/merge-drop-old-syntax (2015-04-29) 1 commit
