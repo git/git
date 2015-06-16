@@ -385,7 +385,6 @@ int report_path_error(const char *ps_matched,
 	/*
 	 * Make sure all pathspec matched; otherwise it is an error.
 	 */
-	struct strbuf sb = STRBUF_INIT;
 	int num, errors = 0;
 	for (num = 0; num < pathspec->nr; num++) {
 		int other, found_dup;
@@ -417,7 +416,6 @@ int report_path_error(const char *ps_matched,
 		      pathspec->items[num].original);
 		errors++;
 	}
-	strbuf_release(&sb);
 	return errors;
 }
 
