@@ -2183,7 +2183,7 @@ msgstr "Nichts spezifiziert, nichts hinzugefügt.\n"
 #: builtin/add.c:358
 #, c-format
 msgid "Maybe you wanted to say 'git add .'?\n"
-msgstr "Wollten Sie vielleicht 'git add .' sagen?\n"
+msgstr "Meinten Sie vielleicht 'git add .'?\n"
 
 #: builtin/add.c:363 builtin/check-ignore.c:172 builtin/clean.c:920
 #: builtin/commit.c:335 builtin/mv.c:130 builtin/reset.c:235 builtin/rm.c:299
@@ -10478,8 +10478,8 @@ msgstr ""
 #: git-am.sh:142
 msgid "Using index info to reconstruct a base tree..."
 msgstr ""
-"Verwende Informationen aus der Staging-Area, um einen Basisverzeichnis "
-"nachzustellen"
+"Verwende Informationen aus der Staging-Area, um ein Basisverzeichnis "
+"nachzustellen ..."
 
 #: git-am.sh:157
 msgid ""
@@ -10491,11 +10491,11 @@ msgstr ""
 
 #: git-am.sh:166
 msgid "Falling back to patching base and 3-way merge..."
-msgstr "Falle zurück zum Patchen der Basis und des 3-Wege-Merges ..."
+msgstr "Falle zurück zum Patchen der Basis und zum 3-Wege-Merge ..."
 
 #: git-am.sh:182
 msgid "Failed to merge in the changes."
-msgstr "Merge der Änderungen fehlgeschlagen"
+msgstr "Merge der Änderungen fehlgeschlagen."
 
 #: git-am.sh:277
 msgid "Only one StGIT patch series can be applied at once"

@@ -120,6 +120,9 @@ UI, Workflows & Features
    behaves as if HEAD:Documentation/RelNotes/2.5.0.txt was given as
    input instead.
 
+ * "git send-email" learned the alias file format used by the sendmail
+   program (in an abbreviated form).
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -197,7 +200,7 @@ notes for details).
 
  * Memory usage of "git index-pack" has been trimmed by tens of
    per-cent.
-   (merge c6458e6 nd/slim-index-pack-memory-usage later to maint).
+   (merge a78c5b3 nd/slim-index-pack-memory-usage later to maint).
 
  * "git rev-list --objects $old --not --all" to see if everything that
    is reachable from $old is already connected to the existing refs
@@ -415,6 +418,10 @@ notes for details).
    a more logical synonym.
    (merge 8dbf3eb jk/color-diff-plain-is-context later to maint).
 
+ * The setup code used to die when core.bare and core.worktree are set
+   inconsistently, even for commands that do not need working tree.
+   (merge fada767 jk/die-on-bogus-worktree-late later to maint).
+
  * Code cleanups and documentation updates.
    (merge 0269f96 mm/usage-log-l-can-take-regex later to maint).
    (merge 64f2589 nd/t1509-chroot-test later to maint).
@@ -433,3 +440,6 @@ notes for details).
    (merge e6a268c sb/glossary-submodule later to maint).
    (merge ec48a76 sb/submodule-doc-intro later to maint).
    (merge 14f8b9b jk/clone-dissociate later to maint).
+   (merge 055c7e9 sb/pack-protocol-mention-smart-http later to maint).
+   (merge 7c37a5d jk/make-fix-dependencies later to maint).
+   (merge fc0aa39 sg/merge-summary-config later to maint).
