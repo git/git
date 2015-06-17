@@ -7,6 +7,15 @@ test_description="Gettext reencoding of our *.po/*.mo files works"
 
 . ./lib-gettext.sh
 
+if test_have_prereq MINGW
+then
+	# There is no MinGW 'locale', but an MSys2 one that interferes
+	# with this test (the MinGW and MSys2 locales are in fundamentally
+	# different realms).
+	skip_all='No native locale.exe available'
+	test_done
+fi
+
 # The constants used in a tricky observation for undefined behaviour
 RUNES="TILRAUN: ᚻᛖ ᚳᚹᚫᚦ ᚦᚫᛏ ᚻᛖ ᛒᚢᛞᛖ ᚩᚾ ᚦᚫᛗ ᛚᚪᚾᛞᛖ ᚾᚩᚱᚦᚹᛖᚪᚱᛞᚢᛗ ᚹᛁᚦ ᚦᚪ ᚹᛖᛥᚫ"
 PUNTS="TILRAUN: ?? ???? ??? ?? ???? ?? ??? ????? ??????????? ??? ?? ????"
