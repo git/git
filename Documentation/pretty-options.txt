@@ -33,7 +33,10 @@ people using 80-column terminals.
 	in their encoding header; this option can be used to tell the
 	command to re-code the commit log message in the encoding
 	preferred by the user.  For non plumbing commands this
-	defaults to UTF-8.
+	defaults to UTF-8. Note that if an object claims to be encoded
+	in `X` and we are outputting in `X`, we will output the object
+	verbatim; this means that invalid sequences in the original
+	commit may be copied to the output.
 
 --notes[=<ref>]::
 	Show the notes (see linkgit:git-notes[1]) that annotate the
