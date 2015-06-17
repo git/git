@@ -477,9 +477,59 @@ foreach my $entry (@bcclist) {
 sub parse_address_line {
 	if ($have_mail_address) {
 		return map { $_->format } Mail::Address->parse($_[0]);
-	} else {
-		return split_addrs($_[0]);
 	}
+
+	my $commentrgx=qr/\((?:[^)]*)\)/;
+	my $quotergx=qr/"(?:[^\"\\]|\\.)*"/;
+	my $wordrgx=qr/(?:[^]["\s()<>:;@\\,.]|\\.)+/;
+	my $tokenrgx = qr/(?:$quotergx|$wordrgx|$commentrgx|\S)/;
+
+	my @tokens = map { $_ =~ /\s*($tokenrgx)\s*/g } @_;
+	push @tokens, ",";
+
+	my (@addr_list, @phrase, @address, @comment, @buffer) = ();
+	foreach my $token (@tokens) {
+	    if ($token =~ /^[,;]$/) {
+		if (@address) {
+		    push @address, @buffer;
+		} else {
+		    push @phrase, @buffer;
+		}
+
+		my $str_phrase = join ' ', @phrase;
+		my $str_address = join '', @address;
+		my $str_comment = join ' ', @comment;
+
+		if ($str_phrase =~ /[][()<>:;@\\,.\000-\037\177]/) {
+		    $str_phrase =~ s/(^|[^\\])"/$1/g;
+		    $str_phrase = qq["$str_phrase"];
+		}
+
+		if ($str_address ne "" && $str_phrase ne "") {
+		    $str_address = qq[<$str_address>];
+		}
+
+		my $str_mailbox = "$str_phrase $str_address $str_comment";
+		$str_mailbox =~ s/^\s*|\s*$//g;
+		push @addr_list, $str_mailbox if ($str_mailbox);
+
+		@phrase = @address = @comment = @buffer = ();
+	    } elsif ($token =~ /^\(/) {
+		push @comment, $token;
+	    } elsif ($token eq "<") {
+		push @phrase, (splice @address), (splice @buffer);
+	    } elsif ($token eq ">") {
+		push @address, (splice @buffer);
+	    } elsif ($token eq "@") {
+		push @address, (splice @buffer), "@";
+	    } elsif ($token eq ".") {
+		push @address, (splice @buffer), ".";
+	    } else {
+		push @buffer, $token;
+	    }
+	}
+
+	return @addr_list;
 }
 
 sub split_addrs {
