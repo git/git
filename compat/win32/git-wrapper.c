@@ -642,8 +642,16 @@ int main(void)
 				working_directory, /* use parent's */
 				&si, &pi);
 		if (br) {
-			if (wait)
+			if (wait) {
+				/*
+				 * Ignore Ctrl+C: the called process needs
+				 * to handle this event correctly, then we
+				 * quit, too.
+				 */
+				SetConsoleCtrlHandler(NULL, TRUE);
 				WaitForSingleObject(pi.hProcess, INFINITE);
+				SetConsoleCtrlHandler(NULL, FALSE);
+			}
 			if (!GetExitCodeProcess(pi.hProcess, (DWORD *)&r))
 				print_error(L"error reading exit code",
 					GetLastError());
