@@ -1535,7 +1535,9 @@ foreach my $t (@files) {
 		($confirm =~ /^(?:auto|compose)$/ && $compose && $message_num == 1));
 	$needs_confirm = "inform" if ($needs_confirm && $confirm_unconfigured && @cc);
 
+	@to = expand_aliases(@to);
 	@to = validate_address_list(sanitize_address_list(@to));
+	@cc = expand_aliases(@cc);
 	@cc = validate_address_list(sanitize_address_list(@cc));
 
 	@to = (@initial_to, @to);
