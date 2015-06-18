@@ -1039,4 +1039,25 @@ test_expect_success 'short SHA-1 collide' '
 	)
 '
 
+test_expect_failure 'rebase --continue removes CHERRY_PICK_HEAD' '
+	git checkout -b commit-to-skip &&
+	for double in X 3 1
+	do
+		test_seq 5 | sed "s/$double/&&/" >seq &&
+		git add seq &&
+		test_tick &&
+		git commit -m seq-$double
+	done &&
+	git tag seq-onto &&
+	git reset --hard HEAD~2 &&
+	git cherry-pick seq-onto &&
+	set_fake_editor &&
+	test_must_fail env FAKE_LINES= git rebase -i seq-onto &&
+	test -d .git/rebase-merge &&
+	git rebase --continue &&
+	git diff --exit-code seq-onto &&
+	test ! -d .git/rebase-merge &&
+	test ! -f .git/CHERRY_PICK_HEAD
+'
+
 test_done
