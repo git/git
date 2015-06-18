@@ -45,6 +45,12 @@ struct strbuf;
 #define GIT_COLOR_BG_MAGENTA	"\033[45m"
 #define GIT_COLOR_BG_CYAN	"\033[46m"
 
+#define GIT_COLOR_WHITE_ON_RED    "\033[37;41m"
+#define GIT_COLOR_WHITE_ON_BLUE   "\033[37;44m"
+#define GIT_COLOR_BLACK_ON_YELLOW "\033[30;43m"
+#define GIT_COLOR_BLUE_ON_GREEN   "\033[34;42m"
+#define GIT_COLOR_BLACK_ON_GREEN  "\033[30;42m"
+
 /* A special value meaning "no color selected" */
 #define GIT_COLOR_NIL "NIL"
 
@@ -86,5 +92,9 @@ int color_fprintf_ln(FILE *fp, const char *color, const char *fmt, ...);
 void color_print_strbuf(FILE *fp, const char *color, const struct strbuf *sb);
 
 int color_is_nil(const char *color);
+
+void parse_ls_color(void);
+void color_filename(struct strbuf *sb, const char *name,
+		    const char *display_name, mode_t mode, int linkok);
 
 #endif /* COLOR_H */

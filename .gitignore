@@ -76,6 +76,7 @@
 /git-init-db
 /git-interpret-trailers
 /git-instaweb
+/git-list-files
 /git-log
 /git-ls-files
 /git-ls-remote
