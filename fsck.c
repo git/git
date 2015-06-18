@@ -9,7 +9,12 @@
 #include "refs.h"
 #include "utf8.h"
 
+#define FSCK_FATAL -1
+
 #define FOREACH_MSG_ID(FUNC) \
+	/* fatal errors */ \
+	FUNC(NUL_IN_HEADER, FATAL) \
+	FUNC(UNTERMINATED_HEADER, FATAL) \
 	/* errors */ \
 	FUNC(BAD_DATE, ERROR) \
 	FUNC(BAD_EMAIL, ERROR) \
@@ -40,10 +45,8 @@
 	FUNC(MISSING_TYPE_ENTRY, ERROR) \
 	FUNC(MULTIPLE_AUTHORS, ERROR) \
 	FUNC(NOT_SORTED, ERROR) \
-	FUNC(NUL_IN_HEADER, ERROR) \
 	FUNC(TAG_OBJECT_NOT_TAG, ERROR) \
 	FUNC(UNKNOWN_TYPE, ERROR) \
-	FUNC(UNTERMINATED_HEADER, ERROR) \
 	FUNC(ZERO_PADDED_DATE, ERROR) \
 	/* warnings */ \
 	FUNC(BAD_FILEMODE, WARN) \
@@ -157,6 +160,10 @@ void fsck_set_msg_type(struct fsck_options *options,
 		die("Unhandled message id: %.*s", msg_id_len, msg_id);
 	type = parse_msg_type(msg_type, msg_type_len);
 
+	if (type != FSCK_ERROR && msg_id_info[id].msg_type == FSCK_FATAL)
+		die("Cannot demote %.*s to %.*s", msg_id_len, msg_id,
+				msg_type_len, msg_type);
+
 	if (!options->msg_type) {
 		int i;
 		int *msg_type = xmalloc(sizeof(int) * FSCK_MSG_MAX);
@@ -212,6 +219,9 @@ static int report(struct fsck_options *options, struct object *object,
 	va_list ap;
 	struct strbuf sb = STRBUF_INIT;
 	int msg_type = fsck_msg_type(id, options), result;
+
+	if (msg_type == FSCK_FATAL)
+		msg_type = FSCK_ERROR;
 
 	append_msg_id(&sb, msg_id_info[id].id_string);
 
