@@ -169,6 +169,25 @@ static void argv_push_force(struct argv_array *arr)
 }
 
 /**
+ * Sets the GIT_REFLOG_ACTION environment variable to the concatenation of argv
+ */
+static void set_reflog_message(int argc, const char **argv)
+{
+	int i;
+	struct strbuf msg = STRBUF_INIT;
+
+	for (i = 0; i < argc; i++) {
+		if (i)
+			strbuf_addch(&msg, ' ');
+		strbuf_addstr(&msg, argv[i]);
+	}
+
+	setenv("GIT_REFLOG_ACTION", msg.buf, 0);
+
+	strbuf_release(&msg);
+}
+
+/**
  * If pull.ff is unset, returns NULL. If pull.ff is "true", returns "--ff". If
  * pull.ff is "false", returns "--no-ff". If pull.ff is "only", returns
  * "--ff-only". Otherwise, if pull.ff is set to an invalid value, die with an
@@ -442,6 +461,9 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 		if (sane_execvp(path, (char **)argv) < 0)
 			die_errno("could not exec %s", path);
 	}
+
+	if (!getenv("GIT_REFLOG_ACTION"))
+		set_reflog_message(argc, argv);
 
 	argc = parse_options(argc, argv, prefix, pull_options, pull_usage, 0);
 
