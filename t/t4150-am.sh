@@ -104,6 +104,38 @@ test_expect_success setup '
 		echo "X-Fake-Field: Line Three" &&
 		git format-patch --stdout first | sed -e "1d"
 	} > patch1-ws.eml &&
+	{
+		sed -ne "1p" msg &&
+		echo &&
+		echo "From: $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>" &&
+		echo "Date: $GIT_AUTHOR_DATE" &&
+		echo &&
+		sed -e "1,2d" msg &&
+		echo &&
+		echo "Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>" &&
+		echo "---" &&
+		git diff-tree --no-commit-id --stat -p second
+	} >patch1-stgit.eml &&
+	mkdir stgit-series &&
+	cp patch1-stgit.eml stgit-series/patch &&
+	{
+		echo "# This series applies on GIT commit $(git rev-parse first)" &&
+		echo "patch"
+	} >stgit-series/series &&
+	{
+		echo "# HG changeset patch" &&
+		echo "# User $GIT_AUTHOR_NAME <$GIT_AUTHOR_EMAIL>" &&
+		echo "# Date $test_tick 25200" &&
+		echo "#      $(git show --pretty="%aD" -s second)" &&
+		echo "# Node ID $_z40" &&
+		echo "# Parent  $_z40" &&
+		cat msg &&
+		echo &&
+		echo "Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>" &&
+		echo &&
+		git diff-tree --no-commit-id -p second
+	} >patch1-hg.eml &&
+
 
 	sed -n -e "3,\$p" msg >file &&
 	git add file &&
@@ -185,6 +217,56 @@ test_expect_success 'am applies patch e-mail with preceding whitespace' '
 	git diff --exit-code second &&
 	test "$(git rev-parse second)" = "$(git rev-parse HEAD)" &&
 	test "$(git rev-parse second^)" = "$(git rev-parse HEAD^)"
+'
+
+test_expect_success 'am applies stgit patch' '
+	rm -fr .git/rebase-apply &&
+	git checkout -f first &&
+	git am patch1-stgit.eml &&
+	test_path_is_missing .git/rebase-apply &&
+	git diff --exit-code second &&
+	test_cmp_rev second HEAD &&
+	test_cmp_rev second^ HEAD^
+'
+
+test_expect_success 'am --patch-format=stgit applies stgit patch' '
+	rm -fr .git/rebase-apply &&
+	git checkout -f first &&
+	git am --patch-format=stgit <patch1-stgit.eml &&
+	test_path_is_missing .git/rebase-apply &&
+	git diff --exit-code second &&
+	test_cmp_rev second HEAD &&
+	test_cmp_rev second^ HEAD^
+'
+
+test_expect_success 'am applies stgit series' '
+	rm -fr .git/rebase-apply &&
+	git checkout -f first &&
+	git am stgit-series/series &&
+	test_path_is_missing .git/rebase-apply &&
+	git diff --exit-code second &&
+	test_cmp_rev second HEAD &&
+	test_cmp_rev second^ HEAD^
+'
+
+test_expect_success 'am applies hg patch' '
+	rm -fr .git/rebase-apply &&
+	git checkout -f first &&
+	git am patch1-hg.eml &&
+	test_path_is_missing .git/rebase-apply &&
+	git diff --exit-code second &&
+	test_cmp_rev second HEAD &&
+	test_cmp_rev second^ HEAD^
+'
+
+test_expect_success 'am --patch-format=hg applies hg patch' '
+	rm -fr .git/rebase-apply &&
+	git checkout -f first &&
+	git am --patch-format=hg <patch1-hg.eml &&
+	test_path_is_missing .git/rebase-apply &&
+	git diff --exit-code second &&
+	test_cmp_rev second HEAD &&
+	test_cmp_rev second^ HEAD^
 '
 
 test_expect_success 'setup: new author and committer' '
