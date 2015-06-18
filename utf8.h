@@ -26,15 +26,12 @@ void strbuf_utf8_replace(struct strbuf *sb, int pos, int width,
 #ifndef NO_ICONV
 char *reencode_string_iconv(const char *in, size_t insz,
 			    iconv_t conv, int *outsz);
+#endif
+
 char *reencode_string_len(const char *in, int insz,
 			  const char *out_encoding,
 			  const char *in_encoding,
 			  int *outsz);
-#else
-static inline char *reencode_string_len(const char *a, int b,
-					const char *c, const char *d, int *e)
-{ if (e) *e = 0; return NULL; }
-#endif
 
 static inline char *reencode_string(const char *in,
 				    const char *out_encoding,
