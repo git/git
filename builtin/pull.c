@@ -431,7 +431,10 @@ static void NORETURN die_no_merge_candidates(const char *repo, const char **refs
 	const char *remote = curr_branch ? curr_branch->remote_name : NULL;
 
 	if (*refspecs) {
-		fprintf_ln(stderr, _("There are no candidates for merging among the refs that you just fetched."));
+		if (opt_rebase)
+			fprintf_ln(stderr, _("There is no candidate for rebasing against among the refs that you just fetched."));
+		else
+			fprintf_ln(stderr, _("There are no candidates for merging among the refs that you just fetched."));
 		fprintf_ln(stderr, _("Generally this means that you provided a wildcard refspec which had no\n"
 					"matches on the remote end."));
 	} else if (repo && curr_branch && (!remote || strcmp(repo, remote))) {
@@ -441,7 +444,10 @@ static void NORETURN die_no_merge_candidates(const char *repo, const char **refs
 			repo);
 	} else if (!curr_branch) {
 		fprintf_ln(stderr, _("You are not currently on a branch."));
-		fprintf_ln(stderr, _("Please specify which branch you want to merge with."));
+		if (opt_rebase)
+			fprintf_ln(stderr, _("Please specify which branch you want to rebase against."));
+		else
+			fprintf_ln(stderr, _("Please specify which branch you want to merge with."));
 		fprintf_ln(stderr, _("See git-pull(1) for details."));
 		fprintf(stderr, "\n");
 		fprintf_ln(stderr, "    git pull <remote> <branch>");
@@ -453,7 +459,10 @@ static void NORETURN die_no_merge_candidates(const char *repo, const char **refs
 			remote_name = "<remote>";
 
 		fprintf_ln(stderr, _("There is no tracking information for the current branch."));
-		fprintf_ln(stderr, _("Please specify which branch you want to merge with."));
+		if (opt_rebase)
+			fprintf_ln(stderr, _("Please specify which branch you want to rebase against."));
+		else
+			fprintf_ln(stderr, _("Please specify which branch you want to merge with."));
 		fprintf_ln(stderr, _("See git-pull(1) for details."));
 		fprintf(stderr, "\n");
 		fprintf_ln(stderr, "    git pull <remote> <branch>");
