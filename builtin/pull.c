@@ -12,6 +12,7 @@
 #include "run-command.h"
 #include "sha1-array.h"
 #include "remote.h"
+#include "dir.h"
 
 static const char * const pull_usage[] = {
 	N_("git pull [options] [<repository> [<refspec>...]]"),
@@ -425,6 +426,14 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 
 	if (!opt_ff)
 		opt_ff = xstrdup_or_null(config_get_ff());
+
+	git_config(git_default_config, NULL);
+
+	if (read_cache_unmerged())
+		die_resolve_conflict("Pull");
+
+	if (file_exists(git_path("MERGE_HEAD")))
+		die_conclude_merge();
 
 	if (run_fetch(repo, refspecs))
 		return 1;
