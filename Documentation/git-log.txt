@@ -190,6 +190,9 @@ log.showRoot::
 	`git log -p` output would be shown without a diff attached.
 	The default is `true`.
 
+log.merges::
+    Default for `--merges=` option. Defaults to `show`.
+
 mailmap.*::
 	See linkgit:git-shortlog[1].
 

@@ -1696,6 +1696,23 @@ static void add_message_grep(struct rev_info *revs, const char *pattern)
 	add_grep(revs, pattern, GREP_PATTERN_BODY);
 }
 
+int parse_merges_opt(struct rev_info *revs, const char *param)
+{
+	if (!strcmp(param, "show")) {
+		revs->min_parents = 0;
+		revs->max_parents = -1;
+	} else if (!strcmp(param, "only")) {
+		revs->min_parents = 2;
+		revs->max_parents = -1;
+	} else if (!strcmp(param, "hide")) {
+		revs->min_parents = 0;
+		revs->max_parents = 1;
+	} else {
+		return -1;
+	}
+	return 0;
+}
+
 static int handle_revision_opt(struct rev_info *revs, int argc, const char **argv,
 			       int *unkc, const char **unkv)
 {
@@ -1818,6 +1835,9 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->show_all = 1;
 	} else if (!strcmp(arg, "--remove-empty")) {
 		revs->remove_empty_trees = 1;
+	} else if (starts_with(arg, "--merges=")) {
+		if (parse_merges_opt(revs, arg + 9))
+			die("unknown option: %s", arg);
 	} else if (!strcmp(arg, "--merges")) {
 		revs->min_parents = 2;
 	} else if (!strcmp(arg, "--no-merges")) {

@@ -96,12 +96,24 @@ matched as if it were part of the log message.
 --remove-empty::
 	Stop when a given path disappears from the tree.
 
+--merges={show|hide|only}::
++
+--
+`show`: show both merge and non-merge commits
+
+`hide`: only show non-merge commits; same as `--max-parents=1`
+
+`only`: only show merge commits; same as `--min-parents=2`
+
+If `--merges=` is not specified, default value is `show`.
+--
++
+
 --merges::
-	Print only merge commits. This is exactly the same as `--min-parents=2`.
+	Shorthand for `--merges=only`.
 
 --no-merges::
-	Do not print commits with more than one parent. This is
-	exactly the same as `--max-parents=1`.
+	Shorthand for `--merges=hide`.
 
 --min-parents=<number>::
 --max-parents=<number>::
