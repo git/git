@@ -6,10 +6,10 @@ website:
     https://github.com/git-multimail/git-multimail
 
 The version in this directory was obtained from the upstream project
-on 2015-04-27 and consists of the "git-multimail" subdirectory from
+on Jun 18 2015 and consists of the "git-multimail" subdirectory from
 revision
 
-    8c3aaafa873bf10de8dddf1d202c449b3eff3b42 refs/tags/1.0.2
+    1f0dbb3b60035767889b913df16d9231ecdb8709 refs/tags/1.1.0
 
 Please see the README file in this directory for information about how
 to report bugs or contribute to git-multimail.
