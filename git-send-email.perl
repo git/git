@@ -460,26 +460,62 @@ my ($repoauthor, $repocommitter);
 ($repoauthor) = Git::ident_person(@repo, 'author');
 ($repocommitter) = Git::ident_person(@repo, 'committer');
 
-# Verify the user input
-
-foreach my $entry (@initial_to) {
-	die "Comma in --to entry: $entry'\n" unless $entry !~ m/,/;
-}
-
-foreach my $entry (@initial_cc) {
-	die "Comma in --cc entry: $entry'\n" unless $entry !~ m/,/;
-}
-
-foreach my $entry (@bcclist) {
-	die "Comma in --bcclist entry: $entry'\n" unless $entry !~ m/,/;
-}
-
 sub parse_address_line {
 	if ($have_mail_address) {
 		return map { $_->format } Mail::Address->parse($_[0]);
-	} else {
-		return split_addrs($_[0]);
 	}
+
+	my $commentrgx=qr/\((?:[^)]*)\)/;
+	my $quotergx=qr/"(?:[^\"\\]|\\.)*"/;
+	my $wordrgx=qr/(?:[^]["\s()<>:;@\\,.]|\\.)+/;
+	my $tokenrgx = qr/(?:$quotergx|$wordrgx|$commentrgx|\S)/;
+
+	my @tokens = map { $_ =~ /\s*($tokenrgx)\s*/g } @_;
+	push @tokens, ",";
+
+	my (@addr_list, @phrase, @address, @comment, @buffer) = ();
+	foreach my $token (@tokens) {
+	    if ($token =~ /^[,;]$/) {
+		if (@address) {
+		    push @address, @buffer;
+		} else {
+		    push @phrase, @buffer;
+		}
+
+		my $str_phrase = join ' ', @phrase;
+		my $str_address = join '', @address;
+		my $str_comment = join ' ', @comment;
+
+		if ($str_phrase =~ /[][()<>:;@\\,.\000-\037\177]/) {
+		    $str_phrase =~ s/(^|[^\\])"/$1/g;
+		    $str_phrase = qq["$str_phrase"];
+		}
+
+		if ($str_address ne "" && $str_phrase ne "") {
+		    $str_address = qq[<$str_address>];
+		}
+
+		my $str_mailbox = "$str_phrase $str_address $str_comment";
+		$str_mailbox =~ s/^\s*|\s*$//g;
+		push @addr_list, $str_mailbox if ($str_mailbox);
+
+		@phrase = @address = @comment = @buffer = ();
+	    } elsif ($token =~ /^\(/) {
+		push @comment, $token;
+	    } elsif ($token eq "<") {
+		push @phrase, (splice @address), (splice @buffer);
+	    } elsif ($token eq ">") {
+		push @address, (splice @buffer);
+	    } elsif ($token eq "@") {
+		push @address, (splice @buffer), "@";
+	    } elsif ($token eq ".") {
+		push @address, (splice @buffer), ".";
+	    } else {
+		push @buffer, $token;
+	    }
+	}
+
+	return @addr_list;
 }
 
 sub split_addrs {
@@ -560,8 +596,6 @@ if (@alias_files and $aliasfiletype and defined $parse_alias{$aliasfiletype}) {
 		close $fh;
 	}
 }
-
-($sender) = expand_aliases($sender) if defined $sender;
 
 # is_format_patch_arg($f) returns 0 if $f names a patch, or 1 if
 # $f is a revision list specification to be passed to format-patch.
@@ -807,7 +841,10 @@ if (!$force) {
 	}
 }
 
-if (!defined $sender) {
+if (defined $sender) {
+	$sender =~ s/^\s+|\s+$//g;
+	($sender) = expand_aliases($sender);
+} else {
 	$sender = $repoauthor || $repocommitter || '';
 }
 
@@ -839,12 +876,9 @@ sub expand_one_alias {
 	return $aliases{$alias} ? expand_aliases(@{$aliases{$alias}}) : $alias;
 }
 
-@initial_to = expand_aliases(@initial_to);
-@initial_to = validate_address_list(sanitize_address_list(@initial_to));
-@initial_cc = expand_aliases(@initial_cc);
-@initial_cc = validate_address_list(sanitize_address_list(@initial_cc));
-@bcclist = expand_aliases(@bcclist);
-@bcclist = validate_address_list(sanitize_address_list(@bcclist));
+@initial_to = process_address_list(@initial_to);
+@initial_cc = process_address_list(@initial_cc);
+@bcclist = process_address_list(@bcclist);
 
 if ($thread && !defined $initial_reply_to && $prompting) {
 	$initial_reply_to = ask(
@@ -1037,15 +1071,17 @@ sub sanitize_address {
 		return $recipient;
 	}
 
+	# remove non-escaped quotes
+	$recipient_name =~ s/(^|[^\\])"/$1/g;
+
 	# rfc2047 is needed if a non-ascii char is included
 	if ($recipient_name =~ /[^[:ascii:]]/) {
-		$recipient_name =~ s/^"(.*)"$/$1/;
 		$recipient_name = quote_rfc2047($recipient_name);
 	}
 
 	# double quotes are needed if specials or CTLs are included
 	elsif ($recipient_name =~ /[][()<>@,;:\\".\000-\037\177]/) {
-		$recipient_name =~ s/(["\\\r])/\\$1/g;
+		$recipient_name =~ s/([\\\r])/\\$1/g;
 		$recipient_name = qq["$recipient_name"];
 	}
 
@@ -1055,6 +1091,14 @@ sub sanitize_address {
 
 sub sanitize_address_list {
 	return (map { sanitize_address($_) } @_);
+}
+
+sub process_address_list {
+	my @addr_list = map { parse_address_line($_) } @_;
+	@addr_list = expand_aliases(@addr_list);
+	@addr_list = sanitize_address_list(@addr_list);
+	@addr_list = validate_address_list(@addr_list);
+	return @addr_list;
 }
 
 # Returns the local Fully Qualified Domain Name (FQDN) if available.
@@ -1566,8 +1610,8 @@ foreach my $t (@files) {
 		($confirm =~ /^(?:auto|compose)$/ && $compose && $message_num == 1));
 	$needs_confirm = "inform" if ($needs_confirm && $confirm_unconfigured && @cc);
 
-	@to = validate_address_list(sanitize_address_list(@to));
-	@cc = validate_address_list(sanitize_address_list(@cc));
+	@to = process_address_list(@to);
+	@cc = process_address_list(@cc);
 
 	@to = (@initial_to, @to);
 	@cc = (@initial_cc, @cc);
