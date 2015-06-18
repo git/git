@@ -10,6 +10,7 @@ void fsck_set_msg_type(struct fsck_options *options,
 		const char *msg_id, int msg_id_len,
 		const char *msg_type, int msg_type_len);
 void fsck_set_msg_types(struct fsck_options *options, const char *values);
+int is_valid_msg_type(const char *msg_id, const char *msg_type);
 
 /*
  * callback function for fsck_walk

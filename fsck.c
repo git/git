@@ -138,6 +138,14 @@ static int parse_msg_type(const char *str, int len)
 				len, str);
 }
 
+int is_valid_msg_type(const char *msg_id, const char *msg_type)
+{
+	if (parse_msg_id(msg_id, -1) < 0)
+		return 0;
+	parse_msg_type(msg_type, -1);
+	return 1;
+}
+
 void fsck_set_msg_type(struct fsck_options *options,
 		const char *msg_id, int msg_id_len,
 		const char *msg_type, int msg_type_len)
