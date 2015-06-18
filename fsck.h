@@ -17,10 +17,9 @@ struct fsck_options;
 typedef int (*fsck_walk_func)(struct object *obj, int type, void *data, struct fsck_options *options);
 
 /* callback for fsck_object, type is FSCK_ERROR or FSCK_WARN */
-typedef int (*fsck_error)(struct object *obj, int type, const char *err, ...);
+typedef int (*fsck_error)(struct object *obj, int type, const char *message);
 
-__attribute__((format (printf, 3, 4)))
-int fsck_error_function(struct object *obj, int type, const char *fmt, ...);
+int fsck_error_function(struct object *obj, int type, const char *message);
 
 struct fsck_options {
 	fsck_walk_func walk;
