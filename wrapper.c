@@ -595,3 +595,8 @@ int write_file(const char *path, int fatal, const char *fmt, ...)
 	}
 	return 0;
 }
+
+void sleep_millisec(int millisec)
+{
+	poll(NULL, 0, millisec);
+}
