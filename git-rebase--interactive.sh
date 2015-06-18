@@ -152,6 +152,7 @@ Commands:
  s, squash = use commit, but meld into previous commit
  f, fixup = like "squash", but discard this commit's log message
  x, exec = run command (the rest of the line) using shell
+ d, drop = remove commit
 
 These lines can be re-ordered; they are executed from top to bottom.
 
@@ -505,7 +506,7 @@ do_next () {
 	rm -f "$msg" "$author_script" "$amend" "$state_dir"/stopped-sha || exit
 	read -r command sha1 rest < "$todo"
 	case "$command" in
-	"$comment_char"*|''|noop)
+	"$comment_char"*|''|noop|drop|d)
 		mark_action_done
 		;;
 	pick|p)
@@ -833,6 +834,109 @@ add_exec_commands () {
 	mv "$1.new" "$1"
 }
 
+# Print the list of the SHA-1 of the commits
+# from a todo list in a file.
+# $1: todo-file, $2: outfile
+todo_list_to_sha_list () {
+	todo_list=$(git stripspace --strip-comments <"$1")
+	temp_file=$(mktemp)
+	echo "$todo_list" >$temp_file
+	while read -r command sha1 rest
+	do
+		case $command in
+		x|"exec")
+			;;
+		*)
+			printf "%s\n" "$sha1"
+			;;
+		esac
+	done <$temp_file >"$2"
+	rm $temp_file
+}
+
+# Transforms SHA-1 list in argument
+# to a list of commits (in place)
+# Doesn't check if the SHA-1 are commits.
+# $1: file with long SHA-1 list
+long_sha_to_commit_list () {
+	short_missing=""
+	git_command="git show --oneline"
+	get_line_command="head -n 1"
+	temp_file=$(mktemp)
+	while read -r sha
+	do
+		if test -n "$sha"
+		then
+			commit=$($git_command $sha | $get_line_command)
+			if test -n "$commit"
+			then
+				printf "%s\n" "$commit"
+			fi
+		fi
+	done <"$1" >$temp_file
+	mv $temp_file "$1"
+}
+
+# Use warn for each line of a file
+# $1: file to warn
+warn_file () {
+	while read -r line
+	do
+		warn " - $line"
+	done <"$1"
+}
+
+# Check if the user dropped some commits by mistake
+# Behaviour determined by .gitconfig.
+check_commits () {
+	checkLevel=$(git config --get rebase.checkLevel)
+	checkLevel=${checkLevel:-ignore}
+	# To lowercase
+	checkLevel=$(echo "$checkLevel" | tr 'A-Z' 'a-z')
+
+	case "$checkLevel" in
+	warn|error)
+		# Get the SHA-1 of the commits
+		todo_list_to_sha_list "$todo".backup "$todo".oldsha1
+		todo_list_to_sha_list "$todo" "$todo".newsha1
+
+		# Sort the SHA-1 and compare them
+		echo "$(sort -u "$todo".oldsha1)" >"$todo".oldsha1
+		echo "$(sort -u "$todo".newsha1)" >"$todo".newsha1
+		echo "$(comm -2 -3 "$todo".oldsha1 "$todo".newsha1)" >"$todo".miss
+
+		# Make the list user-friendly
+		long_sha_to_commit_list "$todo".miss
+
+		# Check missing commits
+		if test -s "$todo".miss
+		then
+			warn "Warning : some commits may have been dropped" \
+				"accidentally."
+			warn "Dropped commits (in no relevent order):"
+			warn_file "$todo".miss
+			warn ""
+			warn "To avoid this message, use \"drop\" to" \
+				"explicitly remove a commit."
+			warn "Use git --config rebase.checkLevel to change" \
+				"the level of warnings (ignore,warn,error)."
+			warn ""
+
+			if test "$checkLevel" = error
+			then
+				die_abort "Rebase aborted due to dropped commits."
+			fi
+		fi
+		;;
+	ignore)
+		;;
+	*)
+		warn "Unrecognized setting $checkLevel for option" \
+			"rebase.checkLevel in git rebase -i."
+		;;
+	esac
+}
+
 # The whole contents of this file is run by dot-sourcing it from
 # inside a shell function.  It used to be that "return"s we see
 # below were not inside any function, and expected to return
@@ -1077,6 +1181,8 @@ has_action "$todo" ||
 	return 2
 
 expand_todo_ids
+
+check_commits
 
 test -d "$rewritten" || test -n "$force_rebase" || skip_unnecessary_picks
 

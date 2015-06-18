@@ -1102,4 +1102,23 @@ test_expect_success 'rebase -i commits that overwrite untracked files (no ff)' '
 	test $(git cat-file commit HEAD | sed -ne \$p) = I
 '
 
+test_expect_success 'drop' '
+	test_when_finished "git checkout master" &&
+	git checkout -b dropBranchTest master &&
+	set_fake_editor &&
+	FAKE_LINES="1 drop 2 3 drop 4 5" git rebase -i --root &&
+	test E = $(git cat-file commit HEAD | sed -ne \$p) &&
+	test C = $(git cat-file commit HEAD^ | sed -ne \$p) &&
+	test A = $(git cat-file commit HEAD^^ | sed -ne \$p)
+'
+
+test_expect_success 'rebase -i respects rebase.checkLevel' '
+	test_config rebase.checkLevel error &&
+	test_when_finished "git checkout master" &&
+	git checkout -b tmp2 master &&
+	set_fake_editor &&
+	test_must_fail env FAKE_LINES="1 2 3 4" git rebase -i --root &&
+	test E = $(git cat-file commit HEAD | sed -ne \$p)
+'
+
 test_done
