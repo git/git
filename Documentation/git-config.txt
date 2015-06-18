@@ -15,12 +15,13 @@ SYNOPSIS
 'git config' [<file-option>] [type] [-z|--null] --get name [value_regex]
 'git config' [<file-option>] [type] [-z|--null] --get-all name [value_regex]
 'git config' [<file-option>] [type] [-z|--null] --get-regexp name_regex [value_regex]
+'git config' [<file-option>] [type] [-z|--null] --get-name-regexp name_regex [value_regex]
 'git config' [<file-option>] [type] [-z|--null] --get-urlmatch name URL
 'git config' [<file-option>] --unset name [value_regex]
 'git config' [<file-option>] --unset-all name [value_regex]
 'git config' [<file-option>] --rename-section old_name new_name
 'git config' [<file-option>] --remove-section name
-'git config' [<file-option>] [-z|--null] -l | --list
+'git config' [<file-option>] [-z|--null] -l | --list | --list-names
 'git config' [<file-option>] --get-color name [default]
 'git config' [<file-option>] --get-colorbool name [stdout-is-tty]
 'git config' [<file-option>] -e | --edit
@@ -96,6 +97,10 @@ OPTIONS
 	in which section and variable names are lowercased, but subsection
 	names are not.
 
+--get-name-regexp::
+	Like --get-regexp, but shows only matching variable names, not its
+	values.
+
 --get-urlmatch name URL::
 	When given a two-part name section.key, the value for
 	section.<url>.key whose <url> part matches the best to the
@@ -159,7 +164,10 @@ See also <<FILES>>.
 
 -l::
 --list::
-	List all variables set in config file.
+	List all variables set in config file, along with their values.
+
+--list-names::
+	List the names of all variables set in config file.
 
 --bool::
 	'git config' will ensure that the output is "true" or "false"

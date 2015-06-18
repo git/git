@@ -744,9 +744,8 @@ __git_compute_porcelain_commands ()
 __git_get_config_variables ()
 {
 	local section="$1" i IFS=$'\n'
-	for i in $(git --git-dir="$(__gitdir)" config --get-regexp "^$section\..*" 2>/dev/null); do
-		i="${i#$section.}"
-		echo "${i/ */}"
+	for i in $(git --git-dir="$(__gitdir)" config --get-name-regexp "^$section\..*" 2>/dev/null); do
+		echo "${i#$section.}"
 	done
 }
 
@@ -1778,15 +1777,7 @@ __git_config_get_set_variables ()
 		c=$((--c))
 	done
 
-	git --git-dir="$(__gitdir)" config $config_file --list 2>/dev/null |
-	while read -r line
-	do
-		case "$line" in
-		*.*=*)
-			echo "${line/=*/}"
-			;;
-		esac
-	done
+	git --git-dir="$(__gitdir)" config $config_file --list-names 2>/dev/null
 }
 
 _git_config ()
@@ -1891,8 +1882,8 @@ _git_config ()
 	--*)
 		__gitcomp "
 			--system --global --local --file=
-			--list --replace-all
-			--get --get-all --get-regexp
+			--list --list-names --replace-all
+			--get --get-all --get-regexp --get-name-regexp
 			--add --unset --unset-all
 			--remove-section --rename-section
 			"
