@@ -15,6 +15,53 @@
 #include "dir.h"
 #include "refs.h"
 
+enum rebase_type {
+	REBASE_INVALID = -1,
+	REBASE_FALSE = 0,
+	REBASE_TRUE,
+	REBASE_PRESERVE
+};
+
+/**
+ * Parses the value of --rebase. If value is a false value, returns
+ * REBASE_FALSE. If value is a true value, returns REBASE_TRUE. If value is
+ * "preserve", returns REBASE_PRESERVE. If value is a invalid value, dies with
+ * a fatal error if fatal is true, otherwise returns REBASE_INVALID.
+ */
+static enum rebase_type parse_config_rebase(const char *key, const char *value,
+		int fatal)
+{
+	int v = git_config_maybe_bool("pull.rebase", value);
+
+	if (!v)
+		return REBASE_FALSE;
+	else if (v > 0)
+		return REBASE_TRUE;
+	else if (!strcmp(value, "preserve"))
+		return REBASE_PRESERVE;
+
+	if (fatal)
+		die(_("Invalid value for %s: %s"), key, value);
+	else
+		error(_("Invalid value for %s: %s"), key, value);
+
+	return REBASE_INVALID;
+}
+
+/**
+ * Callback for --rebase, which parses arg with parse_config_rebase().
+ */
+static int parse_opt_rebase(const struct option *opt, const char *arg, int unset)
+{
+	enum rebase_type *value = opt->value;
+
+	if (arg)
+		*value = parse_config_rebase("--rebase", arg, 0);
+	else
+		*value = unset ? REBASE_FALSE : REBASE_TRUE;
+	return *value == REBASE_INVALID ? -1 : 0;
+}
+
 static const char * const pull_usage[] = {
 	N_("git pull [options] [<repository> [<refspec>...]]"),
 	NULL
@@ -24,7 +71,8 @@ static const char * const pull_usage[] = {
 static int opt_verbosity;
 static char *opt_progress;
 
-/* Options passed to git-merge */
+/* Options passed to git-merge or git-rebase */
+static enum rebase_type opt_rebase;
 static char *opt_diffstat;
 static char *opt_log;
 static char *opt_squash;
@@ -58,8 +106,12 @@ static struct option pull_options[] = {
 		N_("force progress reporting"),
 		PARSE_OPT_NOARG),
 
-	/* Options passed to git-merge */
+	/* Options passed to git-merge or git-rebase */
 	OPT_GROUP(N_("Options related to merging")),
+	{ OPTION_CALLBACK, 'r', "rebase", &opt_rebase,
+	  N_("false|true|preserve"),
+	  N_("incorporate changes by rebasing rather than merging"),
+	  PARSE_OPT_OPTARG, parse_opt_rebase },
 	OPT_PASSTHRU('n', NULL, &opt_diffstat, NULL,
 		N_("do not show a diffstat at the end of the merge"),
 		PARSE_OPT_NOARG | PARSE_OPT_NONEG),
@@ -449,11 +501,194 @@ static int run_merge(void)
 	return ret;
 }
 
+/**
+ * Returns remote's upstream branch for the current branch. If remote is NULL,
+ * the current branch's configured default remote is used. Returns NULL if
+ * `remote` does not name a valid remote, HEAD does not point to a branch,
+ * remote is not the branch's configured remote or the branch does not have any
+ * configured upstream branch.
+ */
+static const char *get_upstream_branch(const char *remote)
+{
+	struct remote *rm;
+	struct branch *curr_branch;
+	const char *curr_branch_remote;
+
+	rm = remote_get(remote);
+	if (!rm)
+		return NULL;
+
+	curr_branch = branch_get("HEAD");
+	if (!curr_branch)
+		return NULL;
+
+	curr_branch_remote = remote_for_branch(curr_branch, NULL);
+	assert(curr_branch_remote);
+
+	if (strcmp(curr_branch_remote, rm->name))
+		return NULL;
+
+	return branch_get_upstream(curr_branch, NULL);
+}
+
+/**
+ * Derives the remote tracking branch from the remote and refspec.
+ *
+ * FIXME: The current implementation assumes the default mapping of
+ * refs/heads/<branch_name> to refs/remotes/<remote_name>/<branch_name>.
+ */
+static const char *get_tracking_branch(const char *remote, const char *refspec)
+{
+	struct refspec *spec;
+	const char *spec_src;
+	const char *merge_branch;
+
+	spec = parse_fetch_refspec(1, &refspec);
+	spec_src = spec->src;
+	if (!*spec_src || !strcmp(spec_src, "HEAD"))
+		spec_src = "HEAD";
+	else if (skip_prefix(spec_src, "heads/", &spec_src))
+		;
+	else if (skip_prefix(spec_src, "refs/heads/", &spec_src))
+		;
+	else if (starts_with(spec_src, "refs/") ||
+		starts_with(spec_src, "tags/") ||
+		starts_with(spec_src, "remotes/"))
+		spec_src = "";
+
+	if (*spec_src) {
+		if (!strcmp(remote, "."))
+			merge_branch = mkpath("refs/heads/%s", spec_src);
+		else
+			merge_branch = mkpath("refs/remotes/%s/%s", remote, spec_src);
+	} else
+		merge_branch = NULL;
+
+	free_refspec(1, spec);
+	return merge_branch;
+}
+
+/**
+ * Given the repo and refspecs, sets fork_point to the point at which the
+ * current branch forked from its remote tracking branch. Returns 0 on success,
+ * -1 on failure.
+ */
+static int get_rebase_fork_point(unsigned char *fork_point, const char *repo,
+		const char *refspec)
+{
+	int ret;
+	struct branch *curr_branch;
+	const char *remote_branch;
+	struct child_process cp = CHILD_PROCESS_INIT;
+	struct strbuf sb = STRBUF_INIT;
+
+	curr_branch = branch_get("HEAD");
+	if (!curr_branch)
+		return -1;
+
+	if (refspec)
+		remote_branch = get_tracking_branch(repo, refspec);
+	else
+		remote_branch = get_upstream_branch(repo);
+
+	if (!remote_branch)
+		return -1;
+
+	argv_array_pushl(&cp.args, "merge-base", "--fork-point",
+			remote_branch, curr_branch->name, NULL);
+	cp.no_stdin = 1;
+	cp.no_stderr = 1;
+	cp.git_cmd = 1;
+
+	ret = capture_command(&cp, &sb, GIT_SHA1_HEXSZ);
+	if (ret)
+		goto cleanup;
+
+	ret = get_sha1_hex(sb.buf, fork_point);
+	if (ret)
+		goto cleanup;
+
+cleanup:
+	strbuf_release(&sb);
+	return ret ? -1 : 0;
+}
+
+/**
+ * Sets merge_base to the octopus merge base of curr_head, merge_head and
+ * fork_point. Returns 0 if a merge base is found, 1 otherwise.
+ */
+static int get_octopus_merge_base(unsigned char *merge_base,
+		const unsigned char *curr_head,
+		const unsigned char *merge_head,
+		const unsigned char *fork_point)
+{
+	struct commit_list *revs = NULL, *result;
+
+	commit_list_insert(lookup_commit_reference(curr_head), &revs);
+	commit_list_insert(lookup_commit_reference(merge_head), &revs);
+	if (!is_null_sha1(fork_point))
+		commit_list_insert(lookup_commit_reference(fork_point), &revs);
+
+	result = reduce_heads(get_octopus_merge_bases(revs));
+	free_commit_list(revs);
+	if (!result)
+		return 1;
+
+	hashcpy(merge_base, result->item->object.sha1);
+	return 0;
+}
+
+/**
+ * Given the current HEAD SHA1, the merge head returned from git-fetch and the
+ * fork point calculated by get_rebase_fork_point(), runs git-rebase with the
+ * appropriate arguments and returns its exit status.
+ */
+static int run_rebase(const unsigned char *curr_head,
+		const unsigned char *merge_head,
+		const unsigned char *fork_point)
+{
+	int ret;
+	unsigned char oct_merge_base[GIT_SHA1_RAWSZ];
+	struct argv_array args = ARGV_ARRAY_INIT;
+
+	if (!get_octopus_merge_base(oct_merge_base, curr_head, merge_head, fork_point))
+		if (!is_null_sha1(fork_point) && !hashcmp(oct_merge_base, fork_point))
+			fork_point = NULL;
+
+	argv_array_push(&args, "rebase");
+
+	/* Shared options */
+	argv_push_verbosity(&args);
+
+	/* Options passed to git-rebase */
+	if (opt_rebase == REBASE_PRESERVE)
+		argv_array_push(&args, "--preserve-merges");
+	if (opt_diffstat)
+		argv_array_push(&args, opt_diffstat);
+	argv_array_pushv(&args, opt_strategies.argv);
+	argv_array_pushv(&args, opt_strategy_opts.argv);
+	if (opt_gpg_sign)
+		argv_array_push(&args, opt_gpg_sign);
+
+	argv_array_push(&args, "--onto");
+	argv_array_push(&args, sha1_to_hex(merge_head));
+
+	if (fork_point && !is_null_sha1(fork_point))
+		argv_array_push(&args, sha1_to_hex(fork_point));
+	else
+		argv_array_push(&args, sha1_to_hex(merge_head));
+
+	ret = run_command_v_opt(args.argv, RUN_GIT_CMD);
+	argv_array_clear(&args);
+	return ret;
+}
+
 int cmd_pull(int argc, const char **argv, const char *prefix)
 {
 	const char *repo, **refspecs;
 	struct sha1_array merge_heads = SHA1_ARRAY_INIT;
 	unsigned char orig_head[GIT_SHA1_RAWSZ], curr_head[GIT_SHA1_RAWSZ];
+	unsigned char rebase_fork_point[GIT_SHA1_RAWSZ];
 
 	if (!getenv("_GIT_USE_BUILTIN_PULL")) {
 		const char *path = mkpath("%s/git-pull", git_exec_path());
@@ -482,6 +717,10 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 
 	if (get_sha1("HEAD", orig_head))
 		hashclr(orig_head);
+
+	if (opt_rebase)
+		if (get_rebase_fork_point(rebase_fork_point, repo, *refspecs))
+			hashclr(rebase_fork_point);
 
 	if (run_fetch(repo, refspecs))
 		return 1;
@@ -524,6 +763,10 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 		if (merge_heads.nr > 1)
 			die(_("Cannot merge multiple branches into empty head."));
 		return pull_into_void(*merge_heads.sha1, curr_head);
+	} else if (opt_rebase) {
+		if (merge_heads.nr > 1)
+			die(_("Cannot rebase onto multiple branches."));
+		return run_rebase(curr_head, *merge_heads.sha1, rebase_fork_point);
 	} else
 		return run_merge();
 }
