@@ -72,7 +72,7 @@ static int opt_verbosity;
 static char *opt_progress;
 
 /* Options passed to git-merge or git-rebase */
-static enum rebase_type opt_rebase;
+static enum rebase_type opt_rebase = -1;
 static char *opt_diffstat;
 static char *opt_log;
 static char *opt_squash;
@@ -263,6 +263,36 @@ static const char *config_get_ff(void)
 		return "--ff-only";
 
 	die(_("Invalid value for pull.ff: %s"), value);
+}
+
+/**
+ * Returns the default configured value for --rebase. It first looks for the
+ * value of "branch.$curr_branch.rebase", where $curr_branch is the current
+ * branch, and if HEAD is detached or the configuration key does not exist,
+ * looks for the value of "pull.rebase". If both configuration keys do not
+ * exist, returns REBASE_FALSE.
+ */
+static enum rebase_type config_get_rebase(void)
+{
+	struct branch *curr_branch = branch_get("HEAD");
+	const char *value;
+
+	if (curr_branch) {
+		char *key = xstrfmt("branch.%s.rebase", curr_branch->name);
+
+		if (!git_config_get_value(key, &value)) {
+			enum rebase_type ret = parse_config_rebase(key, value, 1);
+			free(key);
+			return ret;
+		}
+
+		free(key);
+	}
+
+	if (!git_config_get_value("pull.rebase", &value))
+		return parse_config_rebase("pull.rebase", value, 1);
+
+	return REBASE_FALSE;
 }
 
 /**
@@ -706,6 +736,9 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 
 	if (!opt_ff)
 		opt_ff = xstrdup_or_null(config_get_ff());
+
+	if (opt_rebase < 0)
+		opt_rebase = config_get_rebase();
 
 	git_config(git_default_config, NULL);
 
