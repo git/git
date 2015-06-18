@@ -13,6 +13,7 @@
 #include "sha1-array.h"
 #include "remote.h"
 #include "dir.h"
+#include "refs.h"
 
 static const char * const pull_usage[] = {
 	N_("git pull [options] [<repository> [<refspec>...]]"),
@@ -368,6 +369,27 @@ static int run_fetch(const char *repo, const char **refspecs)
 }
 
 /**
+ * "Pulls into void" by branching off merge_head.
+ */
+static int pull_into_void(const unsigned char *merge_head,
+		const unsigned char *curr_head)
+{
+	/*
+	 * Two-way merge: we treat the index as based on an empty tree,
+	 * and try to fast-forward to HEAD. This ensures we will not lose
+	 * index/worktree changes that the user already made on the unborn
+	 * branch.
+	 */
+	if (checkout_fast_forward(EMPTY_TREE_SHA1_BIN, merge_head, 0))
+		return 1;
+
+	if (update_ref("initial pull", "HEAD", merge_head, curr_head, 0, UPDATE_REFS_DIE_ON_ERR))
+		return 1;
+
+	return 0;
+}
+
+/**
  * Runs git-merge, returning its exit status.
  */
 static int run_merge(void)
@@ -476,5 +498,10 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 	if (!merge_heads.nr)
 		die_no_merge_candidates(repo, refspecs);
 
-	return run_merge();
+	if (is_null_sha1(orig_head)) {
+		if (merge_heads.nr > 1)
+			die(_("Cannot merge multiple branches into empty head."));
+		return pull_into_void(*merge_heads.sha1, curr_head);
+	} else
+		return run_merge();
 }
