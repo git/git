@@ -457,8 +457,6 @@ apply_stash () {
 	assert_stash_like "$@"
 
 	git update-index -q --refresh || die "$(gettext "unable to refresh index")"
-	git diff-index --cached --quiet --ignore-submodules HEAD -- ||
-		die "$(gettext "Cannot apply stash: Your index contains uncommitted changes.")"
 
 	# current index state
 	c_tree=$(git write-tree) ||
