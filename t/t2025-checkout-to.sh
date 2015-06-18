@@ -28,6 +28,14 @@ test_expect_success 'checkout --to refuses to checkout locked branch' '
 	! test -d .git/worktrees/zere
 '
 
+test_expect_success 'checking out paths not complaining about linked checkouts' '
+	(
+	cd existing_empty &&
+	echo dirty >>init.t &&
+	git checkout master -- init.t
+	)
+'
+
 test_expect_success 'checkout --to a new worktree' '
 	git rev-parse HEAD >expect &&
 	git checkout --detach --to here master &&
