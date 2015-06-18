@@ -2,16 +2,18 @@
 
 """Example post-receive hook based on git-multimail.
 
-This script is a simple example of a post-receive hook implemented
-using git_multimail.py as a Python module.  It is intended to be
-customized before use; see the comments in the script to help you get
-started.
+The simplest way to use git-multimail is to use the script
+git_multimail.py directly as a post-receive hook, and to configure it
+using Git's configuration files and command-line parameters.  You can
+also write your own Python wrapper for more advanced configurability,
+using git_multimail.py as a Python module.
 
-It is possible to use git_multimail.py itself as a post-receive or
-update hook, configured via git config settings and/or command-line
-parameters.  But for more flexibility, it can also be imported as a
-Python module by a custom post-receive script as done here.  The
-latter has the following advantages:
+This script is a simple example of such a post-receive hook.  It is
+intended to be customized before use; see the comments in the script
+to help you get started.
+
+Using git-multimail as a Python module as done here provides more
+flexibility.  It has the following advantages:
 
 * The tool's behavior can be customized using arbitrary Python code,
   without having to edit git_multimail.py.
@@ -56,8 +58,11 @@ config = git_multimail.Config('multimailhook')
 
 
 # Select the type of environment:
-environment = git_multimail.GenericEnvironment(config=config)
-#environment = git_multimail.GitoliteEnvironment(config=config)
+try:
+    environment = git_multimail.GenericEnvironment(config=config)
+    #environment = git_multimail.GitoliteEnvironment(config=config)
+except git_multimail.ConfigurationException, e:
+    sys.exit(str(e))
 
 
 # Choose the method of sending emails based on the git config:

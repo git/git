@@ -1,3 +1,51 @@
+Release 1.1.0
+=============
+
+* When a single commit is pushed, omit the reference changed email.
+  Set multimailhook.combineWhenSingleCommit to false to disable this
+  new feature.
+
+* In gitolite environments, the pusher's email address can be used as
+  the From address by creating a specially formatted comment block in
+  gitolite.conf (see multimailhook.from in README).
+
+* Support for SMTP authentication and SSL/TLS encryption was added,
+  see smtpUser, smtpPass, smtpEncryption in README.
+
+* A new option scanCommitForCc was added to allow git-multimail to
+  search the commit message for 'Cc: ...' lines, and add the
+  corresponding emails in Cc.
+
+* If $USER is not set, use the variable $USERNAME. This is needed on
+  Windows platform to recognize the pusher.
+
+* The emailPrefix variable can now be set to an empty string to remove
+  the prefix.
+
+* A short tutorial was added in doc/gitolite.rst to set up
+  git-multimail with gitolite.
+
+* The post-receive file was renamed to post-receive.example. It has
+  always been an example (the standard way to call git-multimail is to
+  call git_multimail.py), but it was unclear to many users.
+
+* A new refchangeShowGraph option was added to make it possible to
+  include both a graph and a log in the summary emails.  The options
+  to control the graph formatting can be set via the new graphOpts
+  option.
+
+* New option --force-send was added to disable new commit detection
+  for update hook. One use-case is to run git_multimail.py after
+  running "git fetch" to send emails about commits that have just been
+  fetched (the detection of new commits was unreliable in this mode).
+
+* The testing infrastructure was considerably improved (continuous
+  integration with travis-ci, automatic check of PEP8 and RST syntax,
+  many improvements to the test scripts).
+
+This version has been tested with Python 2.4 to 2.7, and Git 1.7.1 to
+2.4.
+
 Release 1.0.0
 =============
 

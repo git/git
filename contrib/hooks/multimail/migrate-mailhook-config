@@ -22,6 +22,7 @@ OLD_NAMES = [
     'showrev',
     'emailmaxlines',
     'diffopts',
+    'scancommitforcc',
     ]
 
 NEW_NAMES = [
@@ -38,6 +39,7 @@ NEW_NAMES = [
     'emailmaxlines',
     'diffopts',
     'emaildomain',
+    'scancommitforcc',
     ]
 
 
@@ -61,7 +63,7 @@ def _check_old_config_exists(old):
     """Check that at least one old configuration value is set."""
 
     for name in OLD_NAMES:
-        if old.has_key(name):
+        if name in old:
             return True
 
     return False
@@ -72,7 +74,7 @@ def _check_new_config_clear(new):
 
     retval = True
     for name in NEW_NAMES:
-        if new.has_key(name):
+        if name in new:
             if retval:
                 sys.stderr.write('INFO: The following configuration values already exist:\n\n')
             sys.stderr.write('    "%s.%s"\n' % (new.section, name))
@@ -83,7 +85,7 @@ def _check_new_config_clear(new):
 
 def erase_values(config, names):
     for name in names:
-        if config.has_key(name):
+        if name in config:
             try:
                 sys.stderr.write('...unsetting "%s.%s"\n' % (config.section, name))
                 config.unset_all(name)
@@ -170,7 +172,7 @@ def migrate_config(strict=False, retain=False, overwrite=False):
                 )
 
     name = 'showrev'
-    if old.has_key(name):
+    if name in old:
         msg = 'git-multimail does not support "%s.%s"' % (old.section, name,)
         if strict:
             sys.exit(
@@ -182,7 +184,7 @@ def migrate_config(strict=False, retain=False, overwrite=False):
             sys.stderr.write('\nWARNING: %s (ignoring).\n\n' % (msg,))
 
     for name in ['mailinglist', 'announcelist']:
-        if old.has_key(name):
+        if name in old:
             sys.stderr.write(
                 '...copying "%s.%s" to "%s.%s"\n' % (old.section, name, new.section, name)
                 )
@@ -198,15 +200,15 @@ def migrate_config(strict=False, retain=False, overwrite=False):
             )
         new.set('announceshortlog', 'true')
 
-    for name in ['envelopesender', 'emailmaxlines', 'diffopts']:
-        if old.has_key(name):
+    for name in ['envelopesender', 'emailmaxlines', 'diffopts', 'scancommitforcc']:
+        if name in old:
             sys.stderr.write(
                 '...copying "%s.%s" to "%s.%s"\n' % (old.section, name, new.section, name)
                 )
             new.set(name, old.get(name))
 
     name = 'emailprefix'
-    if old.has_key(name):
+    if name in old:
         sys.stderr.write(
             '...copying "%s.%s" to "%s.%s"\n' % (old.section, name, new.section, name)
             )
