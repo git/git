@@ -2020,7 +2020,7 @@ int merge_recursive_generic(struct merge_options *o,
 			result);
 	if (active_cache_changed &&
 	    write_locked_index(&the_index, lock, COMMIT_LOCK))
-		return error(_("Unable to write index."));
+		return error(_("unable to write index file"));
 
 	return clean ? 0 : 1;
 }

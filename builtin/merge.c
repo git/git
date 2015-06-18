@@ -641,7 +641,7 @@ static int try_merge_strategy(const char *strategy, struct commit_list *common,
 	refresh_cache(REFRESH_QUIET);
 	if (active_cache_changed &&
 	    write_locked_index(&the_index, &lock, COMMIT_LOCK))
-		return error(_("Unable to write index."));
+		return error(_("unable to write index file"));
 	rollback_lock_file(&lock);
 
 	if (!strcmp(strategy, "recursive") || !strcmp(strategy, "subtree")) {

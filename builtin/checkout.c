@@ -381,7 +381,7 @@ static int checkout_paths(const struct checkout_opts *opts,
 	}
 
 	if (write_locked_index(&the_index, lock_file, COMMIT_LOCK))
-		die(_("unable to write new index file"));
+		die(_("unable to write index file"));
 
 	read_ref_full("HEAD", 0, rev, &flag);
 	head = lookup_commit_reference_gently(rev, 1);
@@ -592,7 +592,7 @@ static int merge_working_tree(const struct checkout_opts *opts,
 		cache_tree_update(&the_index, WRITE_TREE_SILENT | WRITE_TREE_REPAIR);
 
 	if (write_locked_index(&the_index, lock_file, COMMIT_LOCK))
-		die(_("unable to write new index file"));
+		die(_("unable to write index file"));
 
 	if (!opts->force && !opts->quiet)
 		show_local_changes(&new->commit->object, &opts->diff_options);
