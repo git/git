@@ -55,4 +55,12 @@ test_expect_success COLON_DIR 'a file with the same (short) magic name exists' '
 	git add -n "./:/bar"
 '
 
+test_expect_success 'prefix is updated after trailing slash is stripped' '
+	git init submodule &&
+	( cd submodule && test_commit test ) &&
+	git add submodule &&
+	mv submodule/.git submodule/dotgit &&
+	( cd submodule && git add . )
+'
+
 test_done
