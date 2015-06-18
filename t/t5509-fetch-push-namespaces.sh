@@ -30,7 +30,7 @@ test_expect_success 'pushing into a repository using a ref namespace' '
 		git ls-remote pushee-namespaced >actual &&
 		printf "$commit1\trefs/heads/master\n" >expected &&
 		test_cmp expected actual &&
-		git push pushee-namespaced --tags &&
+		git push pushee-namespaced "refs/tags/*" &&
 		git ls-remote pushee-namespaced >actual &&
 		printf "$commit0\trefs/tags/0\n" >>expected &&
 		printf "$commit1\trefs/tags/1\n" >>expected &&

@@ -382,7 +382,7 @@ static int push_with_options(struct transport *transport, int flags)
 	return 1;
 }
 
-static int do_push(const char *repo, int flags)
+static int do_push(const char *repo, int flags, int tags_too)
 {
 	int i, errs;
 	struct remote *remote = pushremote_get(repo);
@@ -429,6 +429,10 @@ static int do_push(const char *repo, int flags)
 		} else if (!(flags & TRANSPORT_PUSH_MIRROR))
 			setup_default_push_refspecs(remote);
 	}
+
+	if (tags_too)
+		add_refspec("refs/tags/*");
+
 	errs = 0;
 	url_nr = push_url_of_remote(remote, &url);
 	if (url_nr) {
@@ -494,7 +498,7 @@ static int git_push_config(const char *k, const char *v, void *cb)
 int cmd_push(int argc, const char **argv, const char *prefix)
 {
 	int flags = 0;
-	int tags = 0;
+	int tags_too = 0;
 	int rc;
 	const char *repo = NULL;	/* default repository */
 	struct option options[] = {
@@ -504,7 +508,7 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 		OPT_BIT( 0 , "mirror", &flags, N_("mirror all refs"),
 			    (TRANSPORT_PUSH_MIRROR|TRANSPORT_PUSH_FORCE)),
 		OPT_BOOL( 0, "delete", &deleterefs, N_("delete refs")),
-		OPT_BOOL( 0 , "tags", &tags, N_("push tags (can't be used with --all or --mirror)")),
+		OPT_BOOL( 0 , "tags", &tags_too, N_("push tags (can't be used with --all or --mirror)")),
 		OPT_BIT('n' , "dry-run", &flags, N_("dry run"), TRANSPORT_PUSH_DRY_RUN),
 		OPT_BIT( 0,  "porcelain", &flags, N_("machine-readable output"), TRANSPORT_PUSH_PORCELAIN),
 		OPT_BIT('f', "force", &flags, N_("force updates"), TRANSPORT_PUSH_FORCE),
@@ -535,20 +539,18 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 	git_config(git_push_config, &flags);
 	argc = parse_options(argc, argv, prefix, options, push_usage, 0);
 
-	if (deleterefs && (tags || (flags & (TRANSPORT_PUSH_ALL | TRANSPORT_PUSH_MIRROR))))
+	if (deleterefs &&
+	    (tags_too || (flags & (TRANSPORT_PUSH_ALL | TRANSPORT_PUSH_MIRROR))))
 		die(_("--delete is incompatible with --all, --mirror and --tags"));
 	if (deleterefs && argc < 2)
 		die(_("--delete doesn't make sense without any refs"));
-
-	if (tags)
-		add_refspec("refs/tags/*");
 
 	if (argc > 0) {
 		repo = argv[0];
 		set_refspecs(argv + 1, argc - 1, repo);
 	}
 
-	rc = do_push(repo, flags);
+	rc = do_push(repo, flags, tags_too);
 	if (rc == -1)
 		usage_with_options(push_usage, options);
 	else
