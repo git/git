@@ -394,8 +394,9 @@ described below:
 sendmail;;
 *	Quoted aliases and quoted addresses are not supported: lines that
 	contain a `"` symbol are ignored.
-*	Line continuations are not supported: lines that start with
-	whitespace characters, or end with a `\` symbol are ignored.
+*	Redirection to a file (`/path/name`) or pipe (`|command`) is not
+	supported.
+*	File inclusion (`:include: /path/name`) is not supported.
 *	Warnings are printed on the standard error output for any
 	explicitly unsupported constructs, and any other lines that are not
 	recognized by the parser.
