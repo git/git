@@ -20,8 +20,8 @@
 #include "git-compat-util.h"
 #include "ewok.h"
 
-#define MASK(x) ((eword_t)1 << (x % BITS_IN_WORD))
-#define BLOCK(x) (x / BITS_IN_WORD)
+#define EWAH_MASK(x) ((eword_t)1 << (x % BITS_IN_EWORD))
+#define EWAH_BLOCK(x) (x / BITS_IN_EWORD)
 
 struct bitmap *bitmap_new(void)
 {
@@ -33,7 +33,7 @@ struct bitmap *bitmap_new(void)
 
 void bitmap_set(struct bitmap *self, size_t pos)
 {
-	size_t block = BLOCK(pos);
+	size_t block = EWAH_BLOCK(pos);
 
 	if (block >= self->word_alloc) {
 		size_t old_size = self->word_alloc;
@@ -45,22 +45,22 @@ void bitmap_set(struct bitmap *self, size_t pos)
 			(self->word_alloc - old_size) * sizeof(eword_t));
 	}
 
-	self->words[block] |= MASK(pos);
+	self->words[block] |= EWAH_MASK(pos);
 }
 
 void bitmap_clear(struct bitmap *self, size_t pos)
 {
-	size_t block = BLOCK(pos);
+	size_t block = EWAH_BLOCK(pos);
 
 	if (block < self->word_alloc)
-		self->words[block] &= ~MASK(pos);
+		self->words[block] &= ~EWAH_MASK(pos);
 }
 
 int bitmap_get(struct bitmap *self, size_t pos)
 {
-	size_t block = BLOCK(pos);
+	size_t block = EWAH_BLOCK(pos);
 	return block < self->word_alloc &&
-		(self->words[block] & MASK(pos)) != 0;
+		(self->words[block] & EWAH_MASK(pos)) != 0;
 }
 
 struct ewah_bitmap *bitmap_to_ewah(struct bitmap *bitmap)
@@ -127,7 +127,7 @@ void bitmap_and_not(struct bitmap *self, struct bitmap *other)
 void bitmap_or_ewah(struct bitmap *self, struct ewah_bitmap *other)
 {
 	size_t original_size = self->word_alloc;
-	size_t other_final = (other->bit_size / BITS_IN_WORD) + 1;
+	size_t other_final = (other->bit_size / BITS_IN_EWORD) + 1;
 	size_t i = 0;
 	struct ewah_iterator it;
 	eword_t word;
@@ -155,17 +155,17 @@ void bitmap_each_bit(struct bitmap *self, ewah_callback callback, void *data)
 		uint32_t offset;
 
 		if (word == (eword_t)~0) {
-			for (offset = 0; offset < BITS_IN_WORD; ++offset)
+			for (offset = 0; offset < BITS_IN_EWORD; ++offset)
 				callback(pos++, data);
 		} else {
-			for (offset = 0; offset < BITS_IN_WORD; ++offset) {
+			for (offset = 0; offset < BITS_IN_EWORD; ++offset) {
 				if ((word >> offset) == 0)
 					break;
 
 				offset += ewah_bit_ctz64(word >> offset);
 				callback(pos + offset, data);
 			}
-			pos += BITS_IN_WORD;
+			pos += BITS_IN_EWORD;
 		}
 	}
 }
