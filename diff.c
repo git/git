@@ -2,6 +2,7 @@
  * Copyright (C) 2005 Junio C Hamano
  */
 #include "cache.h"
+#include "numparse.h"
 #include "quote.h"
 #include "diff.h"
 #include "diffcore.h"
@@ -2434,12 +2435,12 @@ static void builtin_diff(const char *name_a,
 			xecfg.flags |= XDL_EMIT_FUNCCONTEXT;
 		if (pe)
 			xdiff_set_find_func(&xecfg, pe->pattern, pe->cflags);
-		if (!diffopts)
-			;
-		else if (skip_prefix(diffopts, "--unified=", &v))
-			xecfg.ctxlen = strtoul(v, NULL, 10);
-		else if (skip_prefix(diffopts, "-u", &v))
-			xecfg.ctxlen = strtoul(v, NULL, 10);
+		if (diffopts
+		    && (skip_prefix(diffopts, "--unified=", &v) ||
+			skip_prefix(diffopts, "-u", &v))) {
+			if (convert_l(v, 10, &xecfg.ctxlen))
+				die("--unified argument must be a non-negative integer");
+		}
 		if (o->word_diff)
 			init_diff_words_data(&ecbdata, o, one, two);
 		xdi_diff_outf(&mf1, &mf2, fn_out_consume, &ecbdata,
@@ -3399,42 +3400,28 @@ static int opt_arg(const char *arg, int arg_short, const char *arg_long, int *va
 	char c, *eq;
 	int len;
 
-	if (*arg != '-')
+	if (*arg++ != '-')
 		return 0;
-	c = *++arg;
+	c = *arg++;
 	if (!c)
 		return 0;
 	if (c == arg_short) {
-		c = *++arg;
-		if (!c)
-			return 1;
-		if (val && isdigit(c)) {
-			char *end;
-			int n = strtoul(arg, &end, 10);
-			if (*end)
-				return 0;
-			*val = n;
-			return 1;
-		}
-		return 0;
+		if (!*arg)
+			return 1; /* optional argument was missing */
+		if (convert_i(arg, 10, val))
+			die("The value for -%c must be a non-negative integer", arg_short);
+		return 1;
 	}
 	if (c != '-')
 		return 0;
-	arg++;
 	eq = strchrnul(arg, '=');
 	len = eq - arg;
 	if (!len || strncmp(arg, arg_long, len))
 		return 0;
-	if (*eq) {
-		int n;
-		char *end;
-		if (!isdigit(*++eq))
-			return 0;
-		n = strtoul(eq, &end, 10);
-		if (*end)
-			return 0;
-		*val = n;
-	}
+	if (!*eq)
+		return 1; /* '=' and optional argument were missing */
+	if (convert_i(eq + 1, 10, val))
+		die("The value for --%s must be a non-negative integer", arg_long);
 	return 1;
 }
 
@@ -3890,7 +3877,8 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 	else if (!strcmp(arg, "-z"))
 		options->line_termination = 0;
 	else if ((argcount = short_opt('l', av, &optarg))) {
-		options->rename_limit = strtoul(optarg, NULL, 10);
+		if (convert_i(optarg, 10, &options->rename_limit))
+			die("-l requires a non-negative integer argument");
 		return argcount;
 	}
 	else if ((argcount = short_opt('S', av, &optarg))) {
@@ -3920,7 +3908,8 @@ int diff_opt_parse(struct diff_options *options, const char **av, int ac)
 	else if (!strcmp(arg, "--abbrev"))
 		options->abbrev = DEFAULT_ABBREV;
 	else if (skip_prefix(arg, "--abbrev=", &arg)) {
-		options->abbrev = strtoul(arg, NULL, 10);
+		if (convert_i(arg, 10, &options->abbrev))
+			die("--abbrev requires an integer argument");
 		if (options->abbrev < MINIMUM_ABBREV)
 			options->abbrev = MINIMUM_ABBREV;
 		else if (40 < options->abbrev)
