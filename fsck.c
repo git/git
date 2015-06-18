@@ -8,6 +8,7 @@
 #include "fsck.h"
 #include "refs.h"
 #include "utf8.h"
+#include "sha1-array.h"
 
 #define FSCK_FATAL -1
 #define FSCK_INFO -2
@@ -122,6 +123,43 @@ static int fsck_msg_type(enum fsck_msg_id msg_id,
 	return msg_type;
 }
 
+static void init_skiplist(struct fsck_options *options, const char *path)
+{
+	static struct sha1_array skiplist = SHA1_ARRAY_INIT;
+	int sorted, fd;
+	char buffer[41];
+	unsigned char sha1[20];
+
+	if (options->skiplist)
+		sorted = options->skiplist->sorted;
+	else {
+		sorted = 1;
+		options->skiplist = &skiplist;
+	}
+
+	fd = open(path, O_RDONLY);
+	if (fd < 0)
+		die("Could not open skip list: %s", path);
+	for (;;) {
+		int result = read_in_full(fd, buffer, sizeof(buffer));
+		if (result < 0)
+			die_errno("Could not read '%s'", path);
+		if (!result)
+			break;
+		if (get_sha1_hex(buffer, sha1) || buffer[40] != '\n')
+			die("Invalid SHA-1: %s", buffer);
+		sha1_array_append(&skiplist, sha1);
+		if (sorted && skiplist.nr > 1 &&
+				hashcmp(skiplist.sha1[skiplist.nr - 2],
+					sha1) > 0)
+			sorted = 0;
+	}
+	close(fd);
+
+	if (sorted)
+		skiplist.sorted = 1;
+}
+
 static inline int substrcmp(const char *string, int len, const char *match)
 {
 	int match_len = strlen(match);
@@ -193,6 +231,18 @@ void fsck_set_msg_types(struct fsck_options *options, const char *values)
 			if (values[equal] == '=' || values[equal] == ':')
 				break;
 
+		if (!substrcmp(values, equal, "skiplist")) {
+			char *path = xstrndup(values + equal + 1,
+				len - equal - 1);
+
+			if (equal == len)
+				die("skiplist requires a path");
+			init_skiplist(options, path);
+			free(path);
+			values += len;
+			continue;
+		}
+
 		if (equal == len)
 			die("Missing '=': '%.*s'", len, values);
 
@@ -225,6 +275,10 @@ static int report(struct fsck_options *options, struct object *object,
 	int msg_type = fsck_msg_type(id, options), result;
 
 	if (msg_type == FSCK_IGNORE)
+		return 0;
+
+	if (options->skiplist && object &&
+			sha1_array_lookup(options->skiplist, object->sha1) >= 0)
 		return 0;
 
 	if (msg_type == FSCK_FATAL)
