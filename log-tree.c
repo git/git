@@ -97,11 +97,12 @@ static int add_ref_decoration(const char *refname, const struct object_id *oid,
 
 	assert(cb_data == NULL);
 
-	if (starts_with(refname, "refs/replace/")) {
+	if (starts_with(refname, git_replace_ref_base)) {
 		struct object_id original_oid;
 		if (!check_replace_refs)
 			return 0;
-		if (get_oid_hex(refname + 13, &original_oid)) {
+		if (get_oid_hex(refname + strlen(git_replace_ref_base),
+				&original_oid)) {
 			warning("invalid replace ref %s", refname);
 			return 0;
 		}
