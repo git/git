@@ -11,6 +11,8 @@
 #include "gpg-interface.h"
 #include "sequencer.h"
 #include "line-log.h"
+#include "cache-tree.h"
+#include "merge-recursive.h"
 
 static struct decoration name_decoration = { "object names" };
 static int decoration_loaded;
@@ -783,7 +785,300 @@ int log_tree_diff_flush(struct rev_info *opt)
 
 static int do_diff_combined(struct rev_info *opt, struct commit *commit)
 {
-	diff_tree_combined_merge(commit, opt->dense_combined_merges, opt);
+	diff_tree_combined_merge(commit, opt);
+	return !opt->loginfo;
+}
+
+/*
+ * Helpers for make_asymmetric_conflict_entries() below.
+ */
+static char *load_cache_entry_blob(struct cache_entry *entry,
+				   unsigned long *size)
+{
+	enum object_type type;
+	void *data;
+
+	if (!entry)
+		return NULL;
+
+	data = read_sha1_file(entry->sha1, &type, size);
+	if (type != OBJ_BLOB)
+		die("BUG: load_cache_entry_blob for non-blob");
+
+	return data;
+}
+
+static void strbuf_append_cache_entry_blob(struct strbuf *sb,
+					   struct cache_entry *entry)
+{
+	unsigned long size;
+	char *data = load_cache_entry_blob(entry, &size);;
+
+	if (!data)
+		return;
+
+	strbuf_add(sb, data, size);
+	free(data);
+}
+
+static void assemble_conflict_entry(struct strbuf *sb,
+				    const char *branch1,
+				    const char *branch2,
+				    struct cache_entry *entry1,
+				    struct cache_entry *entry2)
+{
+	strbuf_addf(sb, "<<<<<<< %s\n", branch1);
+	strbuf_append_cache_entry_blob(sb, entry1);
+	strbuf_addstr(sb, "=======\n");
+	strbuf_append_cache_entry_blob(sb, entry2);
+	strbuf_addf(sb, ">>>>>>> %s\n", branch2);
+}
+
+/*
+ * For --remerge-diff, we need conflicted (<<<<<<< ... >>>>>>>)
+ * representations of as many conflicts as possible.  Default conflict
+ * generation only applies to files that have all three stages.
+ *
+ * This function generates conflict hunk representations for files
+ * that have only one of stage 2 or 3.  The corresponding side in the
+ * conflict hunk format will be empty.  A stage 1, if any, will be
+ * dropped in the process.
+ */
+static void make_asymmetric_conflict_entries(const char *branch1,
+					     const char *branch2)
+{
+	int o = 0, i = 0;
+
+	/*
+	 * NEEDSWORK: we trample all over the cache below, so we need
+	 * to set up the name hash early, before modifying it.  And
+	 * after that we cannot free any cache entries, because they
+	 * remain hashed even if deleted.  Sigh.
+	 */
+	init_name_hash(&the_index, 1);
+
+	/*
+	 * The loop always starts with 'i' pointing at the first entry
+	 * for a pathname.
+	 */
+	while (i < active_nr) {
+		struct cache_entry *ce;
+		struct cache_entry *stage1 = NULL;
+		struct cache_entry *stage2 = NULL;
+		struct cache_entry *stage3 = NULL;
+		struct cache_entry *new_ce = NULL;
+		struct strbuf content = STRBUF_INIT;
+		unsigned char sha1[20];
+
+		assert(o <= i);
+
+		ce = active_cache[i];
+
+		/*
+		 * Pass through stage 0 and submodules unchanged, we
+		 * don't know how to handle them.
+		 */
+		if (ce_stage(ce) == 0
+		    || S_ISGITLINK(ce->ce_mode)) {
+			active_cache[o++] = ce;
+			i++;
+			continue;
+		}
+
+		/*
+		 * Collect the stages we have.  Point 'i' past the
+		 * entry.
+		 */
+		if (/* i < active_nr && */
+		    !strcmp(ce->name, active_cache[i]->name) &&
+		    ce_stage(active_cache[i]) == 1)
+			stage1 = active_cache[i++];
+
+		if (i < active_nr &&
+		    !strcmp(ce->name, active_cache[i]->name) &&
+		    ce_stage(active_cache[i]) == 2)
+			stage2 = active_cache[i++];
+
+		if (i < active_nr &&
+		    !strcmp(ce->name, active_cache[i]->name) &&
+		    ce_stage(active_cache[i]) == 3)
+			stage3 = active_cache[i++];
+
+		if (!stage2 && !stage3)
+			die("BUG: merging resulted in conflict with neither "
+			    "stage 2 nor 3");
+
+		if (cache_dir_exists(ce->name, ce->ce_namelen)) {
+			/*
+			 * If a conflicting directory for this entry exists,
+			 * we can drop it:
+			 *
+			 * In the face of a file/directory conflict,
+			 * merge-recursive
+			 * - puts the file at stage >0 as usual
+			 * - also attempts to check out the file as
+			 *   'file~side' where side is the sha1 of the commit
+			 *   the file came from, to avoid colliding with the
+			 *   directory
+			 *
+			 * But we have requested that files go to the index
+			 * instead of the worktree, so by the time we get
+			 * here, we have both stage>0 'file' from ordinary
+			 * merging and a stage=0 'file~side' from the "write
+			 * all files to index".
+			 *
+			 * We need to remove one of them.  Currently we ditch
+			 * the 'file' entry because it's easier to detect.
+			 * This amounts to always renaming the file to make
+			 * room for the directory.
+			 *
+			 * NEEDSWORK: Two options:
+			 *
+			 * - If the merge result kept the file, it would be
+			 *   better to rename the _directory_ to make room for
+			 *   the file, so that filenames match between the
+			 *   result and the re-merge.
+			 *
+			 * - Or we could avoid going through a tree, since the
+			 *   index can represent (though it's not "legal") a
+			 *   file/directory collision just fine.
+			 */
+		} else {
+			/*
+			 * Otherwise, there is room for a file entry
+			 * at stage 0.  It has fake-conflict content,
+			 * but its mode is the same.
+			 */
+
+			assemble_conflict_entry(&content,
+						branch1, branch2,
+						stage2, stage3);
+			if (write_sha1_file(content.buf, content.len,
+					    typename(OBJ_BLOB), sha1))
+				die("write_sha1_file failed");
+			strbuf_release(&content);
+
+			new_ce = xcalloc(1, cache_entry_size(ce->ce_namelen));
+			new_ce->ce_mode = ce->ce_mode;
+			new_ce->ce_flags = ce->ce_flags & ~CE_STAGEMASK;
+			new_ce->ce_namelen = ce->ce_namelen;
+			hashcpy(new_ce->sha1, sha1);
+			memcpy(new_ce->name, ce->name, ce->ce_namelen+1);
+			active_cache[o++] = new_ce;
+			add_name_hash(&the_index, new_ce);
+		}
+
+		if (stage1)
+			remove_name_hash(&the_index, stage1);
+		if (stage2)
+			remove_name_hash(&the_index, stage2);
+		if (stage3)
+			remove_name_hash(&the_index, stage3);
+		free(stage1);
+		free(stage2);
+		free(stage3);
+	}
+
+	active_nr = o;
+}
+
+/*
+ * --remerge-diff doesn't currently handle entries that cannot be
+ * turned into a stage0 conflicted-file format blob.  So this routine
+ * clears the corresponding entries from the index.  This is
+ * suboptimal; we should eventually handle them _somehow_.
+*/
+static void drop_non_stage0(void)
+{
+	int o = 0, i = 0;
+
+	while (i < active_nr) {
+		struct cache_entry *ce = active_cache[i];
+		const char *name;
+
+		if (!ce_stage(ce)) {
+			active_cache[o++] = active_cache[i++];
+			continue;
+		}
+
+		name = ce->name;
+
+		printf("Cannot handle stage %d entry '%s', skipping\n",
+		       ce_stage(ce), name);
+		i++;
+
+		while (i < active_nr && !strcmp(name, active_cache[i]->name))
+			free(active_cache[i++]);
+
+		free(ce);
+	}
+
+	active_nr = o;
+}
+
+static int do_diff_remerge(struct rev_info *opt, struct commit *commit)
+{
+	struct commit_list *merge_bases;
+	struct commit *result, *parent1, *parent2;
+	struct merge_options o;
+	char *branch1, *branch2;
+	struct cache_tree *orig_cache_tree;
+
+	/*
+	 * We show the log message early to avoid headaches later.  In
+	 * general we need to run this before printing anything in
+	 * this routine.
+	 */
+	if (opt->loginfo && !opt->no_commit_id) {
+		show_log(opt);
+
+		if (opt->verbose_header && opt->diffopt.output_format)
+			printf("%s%c", diff_line_prefix(&opt->diffopt),
+			       opt->diffopt.line_termination);
+	}
+
+	if (commit->parents->next->next) {
+		printf("--remerge-diff not supported for octopus merges.\n");
+		return !opt->loginfo;
+	}
+
+	parent1 = commit->parents->item;
+	parent2 = commit->parents->next->item;
+	parse_commit(parent1);
+	parse_commit(parent2);
+	branch1 = xstrdup(sha1_to_hex(parent1->object.sha1));
+	branch2 = xstrdup(sha1_to_hex(parent2->object.sha1));
+
+	merge_bases = get_octopus_merge_bases(commit->parents);
+	init_merge_options(&o);
+	o.verbosity = -1;
+	o.no_worktree = 1;
+	o.conflicts_in_index = 1;
+	o.use_ondisk_index = 0;
+	o.branch1 = branch1;
+	o.branch2 = branch2;
+	merge_recursive(&o, parent1, parent2, merge_bases, &result);
+
+	make_asymmetric_conflict_entries(branch1, branch2);
+	drop_non_stage0();
+
+	free(branch1);
+	free(branch2);
+
+	orig_cache_tree = the_index.cache_tree;
+	the_index.cache_tree = cache_tree();
+	if (cache_tree_update(&the_index, WRITE_TREE_SILENT) < 0) {
+		printf("BUG: merge conflicts not fully folded, cannot diff.\n");
+		return !opt->loginfo;
+	}
+
+	diff_tree_sha1(the_index.cache_tree->sha1, commit->tree->object.sha1,
+		       "", &opt->diffopt);
+	log_tree_diff_flush(opt);
+
+	cache_tree_free(&the_index.cache_tree);
+	the_index.cache_tree = orig_cache_tree;
+
 	return !opt->loginfo;
 }
 
@@ -816,10 +1111,12 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 
 	/* More than one parent? */
 	if (parents && parents->next) {
-		if (opt->ignore_merges)
+		if (opt->merge_diff_mode == MERGE_DIFF_IGNORE)
 			return 0;
-		else if (opt->combine_merges)
+		else if (merge_diff_mode_is_any_combined(opt))
 			return do_diff_combined(opt, commit);
+		else if (opt->merge_diff_mode == MERGE_DIFF_REMERGE)
+			return do_diff_remerge(opt, commit);
 		else if (opt->first_parent_only) {
 			/*
 			 * Generate merge log entry only for the first
