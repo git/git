@@ -1052,7 +1052,7 @@ test_expect_failure 'rebase --continue removes CHERRY_PICK_HEAD' '
 	git reset --hard HEAD~2 &&
 	git cherry-pick seq-onto &&
 	set_fake_editor &&
-	FAKE_LINES= test_must_fail git rebase -i seq-onto &&
+	test_must_fail env FAKE_LINES= git rebase -i seq-onto &&
 	test -d .git/rebase-merge &&
 	git rebase --continue &&
 	git diff --exit-code seq-onto &&
