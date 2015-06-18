@@ -871,4 +871,15 @@ test_expect_success 'log --graph --no-walk is forbidden' '
 	test_must_fail git log --graph --no-walk
 '
 
+test_expect_success 'log diagnoses bogus HEAD' '
+	git init empty &&
+	test_must_fail git -C empty log 2>stderr &&
+	test_i18ngrep unborn stderr &&
+	echo 1234abcd >empty/.git/refs/heads/master &&
+	test_must_fail git -C empty log 2>stderr &&
+	test_i18ngrep broken stderr &&
+	test_must_fail git -C empty log --default totally-bogus 2>stderr &&
+	test_i18ngrep bad.default.revision stderr
+'
+
 test_done

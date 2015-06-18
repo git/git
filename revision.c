@@ -2173,6 +2173,23 @@ static int handle_revision_pseudo_opt(const char *submodule,
 	return 1;
 }
 
+static void NORETURN diagnose_missing_default(const char *def)
+{
+	unsigned char sha1[20];
+	int flags;
+	const char *refname;
+
+	refname = resolve_ref_unsafe(def, 0, sha1, &flags);
+	if (!(flags & REF_ISSYMREF))
+		die(_("bad default revision '%s'"), def);
+	if (flags & REF_ISBROKEN)
+		die(_("default revision '%s' points to a broken branch"), def);
+
+	skip_prefix(refname, "refs/heads/", &refname);
+	die(_("default revision '%s' points to an unborn branch '%s'"),
+	    def, refname);
+}
+
 /*
  * Parse revision information, filling in the "rev_info" structure,
  * and removing the used arguments from the argument list.
@@ -2302,7 +2319,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 		struct object *object;
 		struct object_context oc;
 		if (get_sha1_with_context(revs->def, 0, sha1, &oc))
-			die("bad default revision '%s'", revs->def);
+			diagnose_missing_default(revs->def);
 		object = get_reference(revs, revs->def, sha1, 0);
 		add_pending_object_with_mode(revs, object, revs->def, oc.mode);
 	}
