@@ -1027,21 +1027,91 @@ static int split_commit_in_progress(struct wt_status *s)
 	return split_in_progress;
 }
 
+static void show_rebase_information(struct wt_status *s,
+					struct wt_status_state *state,
+					const char *color)
+{
+	if (state->rebase_interactive_in_progress) {
+		int i;
+		int nr_lines_to_show = 2;
+
+		struct strbuf buf = STRBUF_INIT;
+		struct string_list have_done = STRING_LIST_INIT_DUP;
+		struct string_list yet_to_do = STRING_LIST_INIT_DUP;
+
+		strbuf_read_file(&buf, git_path("rebase-merge/done"), 0);
+		stripspace(&buf, 1);
+		string_list_split(&have_done, buf.buf, '\n', -1);
+		string_list_remove_empty_items(&have_done, 1);
+		strbuf_release(&buf);
+
+		strbuf_read_file(&buf, git_path("rebase-merge/git-rebase-todo"), 0);
+		stripspace(&buf, 1);
+		string_list_split(&yet_to_do, buf.buf, '\n', -1);
+		string_list_remove_empty_items(&yet_to_do, 1);
+		strbuf_release(&buf);
+
+		if (have_done.nr == 0)
+			status_printf_ln(s, color, _("No commands done."));
+		else {
+			status_printf_ln(s, color,
+				Q_("Last command done (%d command done):",
+					"Last commands done (%d commands done):",
+					have_done.nr),
+				have_done.nr);
+			for (i = (have_done.nr > nr_lines_to_show)
+				? have_done.nr - nr_lines_to_show : 0;
+				i < have_done.nr;
+				i++)
+				status_printf_ln(s, color, "   %s", have_done.items[i].string);
+			if (have_done.nr > nr_lines_to_show && s->hints)
+				status_printf_ln(s, color,
+					_("  (see more in file %s)"), git_path("rebase-merge/done"));
+		}
+
+		if (yet_to_do.nr == 0)
+			status_printf_ln(s, color,
+					 _("No commands remaining."));
+		else {
+			status_printf_ln(s, color,
+				Q_("Next command to do (%d remaining command):",
+					"Next commands to do (%d remaining commands):",
+					yet_to_do.nr),
+				yet_to_do.nr);
+			for (i = 0; i < nr_lines_to_show && i < yet_to_do.nr; i++)
+				status_printf_ln(s, color, "   %s", yet_to_do.items[i].string);
+			if (s->hints)
+				status_printf_ln(s, color,
+					_("  (use \"git rebase --edit-todo\" to view and edit)"));
+		}
+		string_list_clear(&yet_to_do, 0);
+		string_list_clear(&have_done, 0);
+	}
+}
+
+static void print_rebase_state(struct wt_status *s,
+				struct wt_status_state *state,
+				const char *color)
+{
+	if (state->branch)
+		status_printf_ln(s, color,
+				 _("You are currently rebasing branch '%s' on '%s'."),
+				 state->branch,
+				 state->onto);
+	else
+		status_printf_ln(s, color,
+				 _("You are currently rebasing."));
+}
+
 static void show_rebase_in_progress(struct wt_status *s,
 				struct wt_status_state *state,
 				const char *color)
 {
 	struct stat st;
 
+	show_rebase_information(s, state, color);
 	if (has_unmerged(s)) {
-		if (state->branch)
-			status_printf_ln(s, color,
-					 _("You are currently rebasing branch '%s' on '%s'."),
-					 state->branch,
-					 state->onto);
-		else
-			status_printf_ln(s, color,
-					 _("You are currently rebasing."));
+		print_rebase_state(s, state, color);
 		if (s->hints) {
 			status_printf_ln(s, color,
 				_("  (fix conflicts and then run \"git rebase --continue\")"));
@@ -1051,14 +1121,7 @@ static void show_rebase_in_progress(struct wt_status *s,
 				_("  (use \"git rebase --abort\" to check out the original branch)"));
 		}
 	} else if (state->rebase_in_progress || !stat(git_path("MERGE_MSG"), &st)) {
-		if (state->branch)
-			status_printf_ln(s, color,
-					 _("You are currently rebasing branch '%s' on '%s'."),
-					 state->branch,
-					 state->onto);
-		else
-			status_printf_ln(s, color,
-					 _("You are currently rebasing."));
+		print_rebase_state(s, state, color);
 		if (s->hints)
 			status_printf_ln(s, color,
 				_("  (all conflicts fixed: run \"git rebase --continue\")"));
@@ -1328,7 +1391,10 @@ void wt_status_print(struct wt_status *s)
 		else if (!strcmp(branch_name, "HEAD")) {
 			branch_status_color = color(WT_STATUS_NOBRANCH, s);
 			if (state.rebase_in_progress || state.rebase_interactive_in_progress) {
-				on_what = _("rebase in progress; onto ");
+				if (state.rebase_interactive_in_progress)
+					on_what = _("interactive rebase in progress; onto ");
+				else
+					on_what = _("rebase in progress; onto ");
 				branch_name = state.onto;
 			} else if (state.detached_from) {
 				branch_name = state.detached_from;
