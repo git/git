@@ -657,7 +657,7 @@ msgstr "Lesen des Zwischenspeichers fehlgeschlagen"
 #: merge.c:94 builtin/checkout.c:374 builtin/checkout.c:580
 #: builtin/clone.c:662
 msgid "unable to write new index file"
-msgstr "Konnte neue Staging-Area-Datei nicht schreiben."
+msgstr "Konnte neue Index-Datei nicht schreiben."
 
 #: merge-recursive.c:189
 #, c-format
@@ -913,7 +913,7 @@ msgstr "Konnte Objekt '%s' nicht parsen."
 
 #: merge-recursive.c:2019 builtin/merge.c:667
 msgid "Unable to write index."
-msgstr "Konnte Staging-Area nicht schreiben."
+msgstr "Konnte Index nicht schreiben."
 
 #: notes-utils.c:41
 msgid "Cannot commit uninitialized/unreferenced notes tree"
@@ -1226,7 +1226,7 @@ msgstr ""
 #: sequencer.c:321
 #, c-format
 msgid "%s: Unable to write new index file"
-msgstr "%s: Konnte neue Staging-Area-Datei nicht schreiben"
+msgstr "%s: Konnte neue Index-Datei nicht schreiben"
 
 #: sequencer.c:339
 msgid "Could not resolve HEAD commit\n"
@@ -1248,7 +1248,7 @@ msgstr "Konnte Eltern-Commit %s nicht parsen\n"
 
 #: sequencer.c:482
 msgid "Your index file is unmerged."
-msgstr "Ihre Staging-Area-Datei ist nicht zusammengeführt."
+msgstr "Ihre Index-Datei ist nicht zusammengeführt."
 
 #: sequencer.c:501
 #, c-format
@@ -1294,12 +1294,12 @@ msgstr "leere Menge von Commits übergeben"
 #: sequencer.c:661
 #, c-format
 msgid "git %s: failed to read the index"
-msgstr "git %s: Fehler beim Lesen der Staging-Area"
+msgstr "git %s: Fehler beim Lesen des Index"
 
 #: sequencer.c:665
 #, c-format
 msgid "git %s: failed to refresh the index"
-msgstr "git %s: Fehler beim Aktualisieren der Staging-Area"
+msgstr "git %s: Fehler beim Aktualisieren des Index"
 
 #: sequencer.c:725
 #, c-format
@@ -2067,7 +2067,7 @@ msgstr ""
 
 #: builtin/add.c:194 builtin/rev-parse.c:785
 msgid "Could not read the index"
-msgstr "Konnte die Staging-Area nicht lesen"
+msgstr "Konnte den Index nicht lesen"
 
 #: builtin/add.c:205
 #, c-format
@@ -2145,7 +2145,7 @@ msgstr "gelöschte Pfade im Arbeitsverzeichnis ignorieren (genau wie --no-all)"
 
 #: builtin/add.c:262
 msgid "don't add, only refresh the index"
-msgstr "nichts hinzufügen, nur die Staging-Area aktualisieren"
+msgstr "nichts hinzufügen, nur den Index aktualisieren"
 
 #: builtin/add.c:263
 msgid "just skip files which cannot be added because of errors"
@@ -2188,11 +2188,11 @@ msgstr "Meinten Sie vielleicht 'git add .'?\n"
 #: builtin/add.c:363 builtin/check-ignore.c:172 builtin/clean.c:920
 #: builtin/commit.c:335 builtin/mv.c:130 builtin/reset.c:235 builtin/rm.c:299
 msgid "index file corrupt"
-msgstr "Staging-Area-Datei beschädigt"
+msgstr "Index-Datei beschädigt"
 
 #: builtin/add.c:446 builtin/apply.c:4675 builtin/mv.c:279 builtin/rm.c:431
 msgid "Unable to write new index file"
-msgstr "Konnte neue Staging-Area-Datei nicht schreiben."
+msgstr "Konnte neue Index-Datei nicht schreiben."
 
 #: builtin/apply.c:59
 msgid "git apply [<options>] [<patch>...]"
@@ -2396,7 +2396,7 @@ msgstr "Pfad %s wurde umbenannt/gelöscht"
 #: builtin/apply.c:3349 builtin/apply.c:3504
 #, c-format
 msgid "%s: does not exist in index"
-msgstr "%s ist nicht in der Staging-Area"
+msgstr "%s ist nicht im Index"
 
 #: builtin/apply.c:3353 builtin/apply.c:3496 builtin/apply.c:3518
 #, c-format
@@ -2406,7 +2406,7 @@ msgstr "%s: %s"
 #: builtin/apply.c:3358 builtin/apply.c:3512
 #, c-format
 msgid "%s: does not match index"
-msgstr "%s entspricht nicht der Version in der Staging-Area"
+msgstr "%s entspricht nicht der Version im Index"
 
 #: builtin/apply.c:3460
 msgid "removal patch leaves file contents"
@@ -2470,7 +2470,7 @@ msgstr "make_cache_entry für Pfad '%s' fehlgeschlagen"
 #: builtin/apply.c:4049
 #, c-format
 msgid "unable to remove %s from index"
-msgstr "konnte %s nicht aus der Staging-Area entfernen"
+msgstr "konnte %s nicht aus dem Index entfernen"
 
 #: builtin/apply.c:4078
 #, c-format
@@ -2539,7 +2539,7 @@ msgstr "nicht erkannte Eingabe"
 
 #: builtin/apply.c:4405
 msgid "unable to read index file"
-msgstr "Konnte Staging-Area-Datei nicht lesen"
+msgstr "Konnte Index-Datei nicht lesen"
 
 #: builtin/apply.c:4522 builtin/apply.c:4525 builtin/clone.c:92
 #: builtin/fetch.c:92
@@ -2593,8 +2593,7 @@ msgstr ""
 #: builtin/apply.c:4544
 msgid "make sure the patch is applicable to the current index"
 msgstr ""
-"sicherstellen, dass der Patch in der aktuellen Staging-Area angewendet "
-"werden kann"
+"sicherstellen, dass der Patch mit dem aktuellen Index angewendet werden kann"
 
 #: builtin/apply.c:4546
 msgid "apply a patch without touching the working tree"
@@ -2616,8 +2615,8 @@ msgstr "versuche 3-Wege-Merge, wenn der Patch nicht angewendet werden konnte"
 #: builtin/apply.c:4554
 msgid "build a temporary index based on embedded index information"
 msgstr ""
-"eine temporäre Staging-Area, basierend auf den integrierten Staging-Area-"
-"Informationen, erstellen"
+"einen temporären Index, basierend auf den integrierten Index-Informationen, "
+"erstellen"
 
 #: builtin/apply.c:4556 builtin/checkout-index.c:198 builtin/ls-files.c:412
 msgid "paths are separated with NUL character"
@@ -3365,7 +3364,7 @@ msgstr "alle Attribute einer Datei ausgeben"
 
 #: builtin/check-attr.c:20
 msgid "use .gitattributes only from the index"
-msgstr ".gitattributes nur von der Staging-Area verwenden"
+msgstr "nur .gitattributes vom Index verwenden"
 
 #: builtin/check-attr.c:21 builtin/check-ignore.c:22 builtin/hash-object.c:98
 msgid "read file names from stdin"
@@ -3385,7 +3384,7 @@ msgstr "Eingabe-Pfade ohne Übereinstimmungen anzeigen"
 
 #: builtin/check-ignore.c:28
 msgid "ignore index when checking"
-msgstr "Staging-Area bei der Prüfung ignorieren"
+msgstr "Index bei der Prüfung ignorieren"
 
 #: builtin/check-ignore.c:154
 msgid "cannot specify pathnames with --stdin"
@@ -3435,7 +3434,7 @@ msgstr "git checkout-index [<Optionen>] [--] [<Datei>...]"
 
 #: builtin/checkout-index.c:188
 msgid "check out all files in the index"
-msgstr "alle Dateien in der Staging-Area auschecken"
+msgstr "alle Dateien im Index auschecken"
 
 #: builtin/checkout-index.c:189
 msgid "force overwrite of existing files"
@@ -3444,8 +3443,8 @@ msgstr "das Überschreiben bereits existierender Dateien erzwingen"
 #: builtin/checkout-index.c:191
 msgid "no warning for existing files and files not in index"
 msgstr ""
-"keine Warnung für existierende Dateien, und Dateien, die sich nicht in der "
-"Staging-Area befinden"
+"keine Warnung für existierende Dateien, und Dateien, die sich nicht im Index "
+"befinden"
 
 #: builtin/checkout-index.c:193
 msgid "don't checkout new files"
@@ -3453,7 +3452,7 @@ msgstr "keine neuen Dateien auschecken"
 
 #: builtin/checkout-index.c:195
 msgid "update stat information in the index file"
-msgstr "Dateiinformationen in der Staging-Area-Datei aktualisieren"
+msgstr "Dateiinformationen in der Index-Datei aktualisieren"
 
 #: builtin/checkout-index.c:201
 msgid "read list of paths from the standard input"
@@ -3533,7 +3532,7 @@ msgstr ""
 
 #: builtin/checkout.c:278 builtin/checkout.c:467
 msgid "corrupt index file"
-msgstr "beschädigte Staging-Area-Datei"
+msgstr "beschädigte Index-Datei"
 
 #: builtin/checkout.c:338 builtin/checkout.c:345
 #, c-format
@@ -3542,7 +3541,7 @@ msgstr "Pfad '%s' ist nicht zusammengeführt."
 
 #: builtin/checkout.c:489
 msgid "you need to resolve your current index first"
-msgstr "Sie müssen zuerst Ihre aktuelle Staging-Area auflösen."
+msgstr "Sie müssen zuerst die Konflikte in Ihrem aktuellen Index auflösen."
 
 #: builtin/checkout.c:615
 #, c-format
@@ -3774,7 +3773,7 @@ msgid ""
 "checking out of the index."
 msgstr ""
 "git checkout: --ours/--theirs, --force und --merge sind inkompatibel wenn\n"
-"Sie aus der Staging-Area auschecken."
+"Sie aus dem Index auschecken."
 
 #: builtin/clean.c:26
 msgid ""
@@ -4386,7 +4385,7 @@ msgstr "Fehler beim Entpacken des \"Tree\"-Objektes von HEAD."
 
 #: builtin/commit.c:344
 msgid "unable to create temporary index"
-msgstr "Konnte temporäre Staging-Area nicht erstellen."
+msgstr "Konnte temporären Index nicht erstellen."
 
 #: builtin/commit.c:350
 msgid "interactive add failed"
@@ -4394,11 +4393,11 @@ msgstr "interaktives Hinzufügen fehlgeschlagen"
 
 #: builtin/commit.c:361
 msgid "unable to write index file"
-msgstr "Konnte Staging-Area-Datei nicht schreiben."
+msgstr "Konnte Index-Datei nicht schreiben."
 
 #: builtin/commit.c:363
 msgid "unable to update temporary index"
-msgstr "Konnte temporäre Staging-Area nicht aktualisieren."
+msgstr "Konnte temporären Index nicht aktualisieren."
 
 #: builtin/commit.c:365
 msgid "Failed to update main cache tree"
@@ -4419,11 +4418,11 @@ msgstr ""
 
 #: builtin/commit.c:456
 msgid "cannot read the index"
-msgstr "Kann Staging-Area nicht lesen"
+msgstr "Kann Index nicht lesen"
 
 #: builtin/commit.c:475
 msgid "unable to write temporary index file"
-msgstr "Konnte temporäre Staging-Area-Datei nicht schreiben."
+msgstr "Konnte temporäre Index-Datei nicht schreiben."
 
 #: builtin/commit.c:580
 #, c-format
@@ -4558,7 +4557,7 @@ msgstr "%sCommit-Ersteller: %.*s <%.*s>"
 
 #: builtin/commit.c:881
 msgid "Cannot read index"
-msgstr "Kann Staging-Area nicht lesen"
+msgstr "Kann Index nicht lesen"
 
 #: builtin/commit.c:938
 msgid "Error building trees"
@@ -4637,7 +4636,7 @@ msgstr ""
 #: builtin/commit.c:1195
 msgid "Clever... amending the last one with dirty index."
 msgstr ""
-"Klug ... den letzten Commit mit einer geänderten Staging-Area nachbessern."
+"Klug ... den letzten Commit mit einem geänderten Index nachbessern."
 
 #: builtin/commit.c:1197
 msgid "Explicit paths specified without -i or -o; assuming --only paths..."
@@ -5679,7 +5678,7 @@ msgstr "Hauptwurzeln melden"
 
 #: builtin/fsck.c:613
 msgid "make index objects head nodes"
-msgstr "Staging-Area-Objekte in Erreichbarkeitsprüfung einbeziehen"
+msgstr "Index-Objekte in Erreichbarkeitsprüfung einbeziehen"
 
 #: builtin/fsck.c:614
 msgid "make reflogs head nodes (default)"
@@ -5802,7 +5801,7 @@ msgstr "kann '%s' nicht öffnen"
 
 #: builtin/grep.c:638
 msgid "search in index instead of in the work tree"
-msgstr "in der Staging-Area anstatt im Arbeitsverzeichnis suchen"
+msgstr "im Index anstatt im Arbeitsverzeichnis suchen"
 
 #: builtin/grep.c:640
 msgid "find in contents not managed by git"
@@ -7001,8 +7000,7 @@ msgstr "Ausgabe relativ zum Projektverzeichnis"
 #: builtin/ls-files.c:458
 msgid "if any <file> is not in the index, treat this as an error"
 msgstr ""
-"als Fehler behandeln, wenn sich eine <Datei> nicht in der Staging-Area "
-"befindet"
+"als Fehler behandeln, wenn sich eine <Datei> nicht im Index befindet"
 
 #: builtin/ls-files.c:459
 msgid "tree-ish"
@@ -8018,12 +8016,12 @@ msgstr "Komprimiere Objekte"
 #: builtin/pack-objects.c:2570
 #, c-format
 msgid "unsupported index version %s"
-msgstr "Nicht unterstützte Staging-Area-Version %s"
+msgstr "Nicht unterstützte Index-Version %s"
 
 #: builtin/pack-objects.c:2574
 #, c-format
 msgid "bad index version '%s'"
-msgstr "Ungültige Staging-Area-Version '%s'"
+msgstr "Ungültige Index-Version '%s'"
 
 #: builtin/pack-objects.c:2597
 #, c-format
@@ -8128,7 +8126,7 @@ msgstr ""
 
 #: builtin/pack-objects.c:2666
 msgid "include objects referred to by the index"
-msgstr "Objekte einschließen, die von der Staging-Area referenziert werden"
+msgstr "Objekte einschließen, die vom Index referenziert werden"
 
 #: builtin/pack-objects.c:2669
 msgid "output pack to stdout"
@@ -8580,11 +8578,11 @@ msgstr ""
 
 #: builtin/read-tree.c:110
 msgid "write resulting index to <file>"
-msgstr "resultierende Staging-Area nach <Datei> schreiben"
+msgstr "resultierenden Index nach <Datei> schreiben"
 
 #: builtin/read-tree.c:113
 msgid "only empty the index"
-msgstr "die Staging-Area leeren"
+msgstr "nur den Index leeren"
 
 #: builtin/read-tree.c:115
 msgid "Merging"
@@ -8612,7 +8610,7 @@ msgstr "<Unterverzeichnis>/"
 
 #: builtin/read-tree.c:125
 msgid "read the tree into the index under <subdirectory>/"
-msgstr "das Verzeichnis in die Staging-Area unter <Unterverzeichnis>/ lesen"
+msgstr "das Verzeichnis in den Index unter <Unterverzeichnis>/ lesen"
 
 #: builtin/read-tree.c:128
 msgid "update working tree with merge result"
@@ -8632,7 +8630,7 @@ msgstr "das Arbeitsverzeichnis nach dem Merge nicht prüfen"
 
 #: builtin/read-tree.c:135
 msgid "don't update the index or the work tree"
-msgstr "weder die Staging-Area, noch das Arbeitsverzeichnis aktualisieren"
+msgstr "weder den Index, noch das Arbeitsverzeichnis aktualisieren"
 
 #: builtin/read-tree.c:137
 msgid "skip applying sparse checkout filter"
@@ -9322,7 +9320,7 @@ msgstr "git rerere [clean | forget <Pfad>... | status | remaining | diff | gc]"
 
 #: builtin/rerere.c:57
 msgid "register clean resolutions in index"
-msgstr "saubere Auflösungen in der Staging-Area registrieren"
+msgstr "saubere Auflösungen im Index registrieren"
 
 #: builtin/reset.c:26
 msgid ""
@@ -9387,7 +9385,7 @@ msgstr "weniger Ausgaben, meldet nur Fehler"
 
 #: builtin/reset.c:278
 msgid "reset HEAD and index"
-msgstr "HEAD und Staging-Area umsetzen"
+msgstr "HEAD und Index umsetzen"
 
 #: builtin/reset.c:279
 msgid "reset only HEAD"
@@ -9395,7 +9393,7 @@ msgstr "nur HEAD umsetzen"
 
 #: builtin/reset.c:281 builtin/reset.c:283
 msgid "reset HEAD, index and working tree"
-msgstr "HEAD, Staging-Area und Arbeitsverzeichnis umsetzen"
+msgstr "HEAD, Index und Arbeitsverzeichnis umsetzen"
 
 #: builtin/reset.c:285
 msgid "reset HEAD but keep local changes"
@@ -9451,11 +9449,11 @@ msgstr "Nicht zum Commit vorgemerkte Änderungen nach Zurücksetzung:"
 #: builtin/reset.c:370
 #, c-format
 msgid "Could not reset index file to revision '%s'."
-msgstr "Konnte Staging-Area-Datei nicht zu Commit '%s' setzen."
+msgstr "Konnte Index-Datei nicht zu Commit '%s' setzen."
 
 #: builtin/reset.c:374
 msgid "Could not write new index file."
-msgstr "Konnte neue Staging-Area-Datei nicht schreiben."
+msgstr "Konnte neue Index-Datei nicht schreiben."
 
 #: builtin/rev-parse.c:361
 msgid "git rev-parse --parseopt [<options>] -- [<args>...]"
@@ -9655,7 +9653,7 @@ msgstr "keine gelöschten Dateien auflisten"
 
 #: builtin/rm.c:271
 msgid "only remove from the index"
-msgstr "nur aus der Staging-Area entfernen"
+msgstr "nur aus dem Index entfernen"
 
 #: builtin/rm.c:272
 msgid "override the up-to-date check"
@@ -10108,8 +10106,7 @@ msgstr "git update-index [<Optionen>] [--] [<Datei>...]"
 #: builtin/update-index.c:757
 msgid "continue refresh even when index needs update"
 msgstr ""
-"Aktualisierung fortsetzen, auch wenn die Staging-Area aktualisiert werden "
-"muss"
+"Aktualisierung fortsetzen, auch wenn der Index aktualisiert werden muss"
 
 #: builtin/update-index.c:760
 msgid "refresh: ignore submodules"
@@ -10130,7 +10127,7 @@ msgstr "fehlende Dateien im Arbeitsverzeichnis beachten"
 #: builtin/update-index.c:769
 msgid "refresh even if index contains unmerged entries"
 msgstr ""
-"aktualisieren, auch wenn die Staging-Area nicht zusammengeführte Einträge "
+"aktualisieren, auch wenn der Index nicht zusammengeführte Einträge "
 "beinhaltet"
 
 #: builtin/update-index.c:772
@@ -10219,11 +10216,11 @@ msgstr "(für Fremdprogramme) keine gespeicherten, nicht aufgelöste Konflikte"
 
 #: builtin/update-index.c:833
 msgid "write index in this format"
-msgstr "Staging-Area-Datei in diesem Format schreiben"
+msgstr "Index-Datei in diesem Format schreiben"
 
 #: builtin/update-index.c:835
 msgid "enable or disable split index"
-msgstr "Aktivierung oder Deaktivierung des Splittings der Staging-Area"
+msgstr "Splitting des Index aktivieren oder deaktivieren"
 
 #: builtin/update-ref.c:9
 msgid "git update-ref [<options>] -d <refname> [<old-val>]"
@@ -10398,7 +10395,7 @@ msgstr "aktuellen HEAD zu einem spezifizierten Zustand setzen"
 
 #: common-cmds.h:25
 msgid "Remove files from the working tree and from the index"
-msgstr "Dateien im Arbeitsverzeichnis und von der Staging-Area löschen"
+msgstr "Dateien im Arbeitsverzeichnis und vom Index löschen"
 
 #: common-cmds.h:26
 msgid "Show various types of objects"
@@ -10437,8 +10434,7 @@ msgstr "benutze <n> Ziffern zur Anzeige von SHA-1s"
 #: rerere.h:27
 msgid "update the index with reused conflict resolution if possible"
 msgstr ""
-"Staging-Area, wenn möglich, mit wiederverwendeter Konfliktauflösung "
-"aktualisieren"
+"Index, wenn möglich, mit wiederverwendeter Konfliktauflösung aktualisieren"
 
 #: git-am.sh:53
 msgid "You need to set your committer info first"
@@ -10544,7 +10540,7 @@ msgstr "Es ist keine Auflösung im Gange, es wird nicht fortgesetzt."
 #: git-am.sh:612
 #, sh-format
 msgid "Dirty index: cannot apply patches (dirty: $files)"
-msgstr "Geänderte Staging-Area: kann Patches nicht anwenden (geändert: $files)"
+msgstr "Geänderter Index: kann Patches nicht anwenden (geändert: $files)"
 
 #: git-am.sh:722
 #, sh-format
@@ -10602,7 +10598,7 @@ msgid ""
 "You still have unmerged paths in your index\n"
 "did you forget to use 'git add'?"
 msgstr ""
-"Sie haben immer noch nicht zusammengeführte Pfade in der Staging-Area.\n"
+"Sie haben immer noch nicht zusammengeführte Pfade im Index.\n"
 "Haben Sie vergessen 'git add' zu benutzen?"
 
 #: git-am.sh:888
@@ -11001,7 +10997,7 @@ msgstr "Sie haben bisher noch keinen initialen Commit"
 
 #: git-stash.sh:89
 msgid "Cannot save the current index state"
-msgstr "Kann den aktuellen Zustand der Staging-Area nicht speichern"
+msgstr "Kann den aktuellen Zustand des Index nicht speichern"
 
 #: git-stash.sh:124 git-stash.sh:137
 msgid "Cannot save the current worktree state"
@@ -11013,7 +11009,7 @@ msgstr "Keine Änderungen ausgewählt"
 
 #: git-stash.sh:144
 msgid "Cannot remove temporary index (can't happen)"
-msgstr "Kann temporäre Staging-Area nicht löschen (kann nicht passieren)"
+msgstr "Kann temporären Index nicht löschen (kann nicht passieren)"
 
 #: git-stash.sh:157
 msgid "Cannot record working tree state"
@@ -11086,7 +11082,7 @@ msgstr "'$args' ist keine \"stash\"-Referenz"
 
 #: git-stash.sh:444
 msgid "unable to refresh index"
-msgstr "unfähig die Staging-Area zu aktualisieren"
+msgstr "unfähig den Index zu aktualisieren"
 
 #: git-stash.sh:448
 msgid "Cannot apply a stash in the middle of a merge"
@@ -11094,19 +11090,19 @@ msgstr "Kann \"stash\" nicht anwenden, solang ein Merge im Gange ist"
 
 #: git-stash.sh:456
 msgid "Conflicts in index. Try without --index."
-msgstr "Konflikte in der Staging-Area. Versuchen Sie es ohne --index."
+msgstr "Konflikte im Index. Versuchen Sie es ohne --index."
 
 #: git-stash.sh:458
 msgid "Could not save index tree"
-msgstr "Konnte Staging-Area-Verzeichnis nicht speichern"
+msgstr "Konnte Index-Verzeichnis nicht speichern"
 
 #: git-stash.sh:492
 msgid "Cannot unstage modified files"
-msgstr "Kann geänderte Dateien nicht aus der Staging-Area entfernen"
+msgstr "Kann geänderte Dateien nicht aus dem Index entfernen"
 
 #: git-stash.sh:507
 msgid "Index was not unstashed."
-msgstr "Staging-Area wurde nicht aus dem Stash zurückgeladen."
+msgstr "Index wurde nicht aus dem Stash zurückgeladen."
 
 #: git-stash.sh:530
 #, sh-format
@@ -11176,7 +11172,7 @@ msgstr ""
 #: git-submodule.sh:455
 #, sh-format
 msgid "Adding existing repo at '$sm_path' to the index"
-msgstr "Füge existierendes Repository in '$sm_path' der Staging-Area hinzu."
+msgstr "Füge existierendes Repository in '$sm_path' dem Index hinzu."
 
 #: git-submodule.sh:457
 #, sh-format
