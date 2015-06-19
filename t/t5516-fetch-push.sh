@@ -802,7 +802,7 @@ test_expect_success 'allow deleting a ref using --delete' '
 test_expect_success 'allow deleting a tag using --delete' '
 	mk_test testrepo heads/master &&
 	git tag -a -m dummy_message deltag heads/master &&
-	git push testrepo --tags &&
+	git push testrepo "refs/tags/*" &&
 	(cd testrepo && git rev-parse --verify -q refs/tags/deltag) &&
 	git push testrepo --delete tag deltag &&
 	(cd testrepo && test_must_fail git rev-parse --verify refs/tags/deltag)

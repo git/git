@@ -270,6 +270,90 @@ cat > expect <<\EOF
 * initial
 EOF
 
+test_expect_success 'setup --merges=' '
+	git log --min-parents=2 --pretty=tformat:%s >expect_only &&
+	git log --max-parents=1 --pretty=tformat:%s >expect_hide &&
+	git log --min-parents=-1 --pretty=tformat:%s >expect_show
+'
+
+test_expect_success 'log with config log.merges=show' '
+	test_config log.merges show &&
+	git log --pretty=tformat:%s >actual &&
+	test_cmp expect_show actual
+'
+
+test_expect_success 'log with config log.merges=only' '
+	test_config log.merges only &&
+	git log --pretty=tformat:%s >actual &&
+	test_cmp expect_only actual
+'
+
+test_expect_success 'log with config log.merges=hide' '
+	test_config log.merges hide &&
+	git log --pretty=tformat:%s >actual &&
+	test_cmp expect_hide actual
+'
+
+test_expect_success 'log with config log.merges=show with git log --no-merges' '
+	test_config log.merges show &&
+	git log --no-merges --pretty=tformat:%s >actual &&
+	test_cmp expect_hide actual
+'
+
+test_expect_success 'log with config log.merges=hide with git log ---merges' '
+	test_config log.merges hide &&
+	git log --merges --pretty=tformat:%s >actual &&
+	test ! -s actual
+'
+
+test_expect_success 'log --merges=show' '
+	test_unconfig log.merges &&
+	git log --merges=show --pretty=tformat:%s >actual &&
+	test_cmp expect_show actual
+'
+
+test_expect_success 'log --merges=only' '
+	test_unconfig log.merges &&
+	git log --merges=only --pretty=tformat:%s >actual &&
+	test_cmp expect_only actual
+'
+
+test_expect_success 'log --merges=hide' '
+	test_unconfig log.merges &&
+	git log --merges=hide --pretty=tformat:%s >actual &&
+	test_cmp expect_hide actual
+'
+
+test_log_merges() {
+	test_config log.merges $2 &&
+	git log --merges=$1 --pretty=tformat:%s >actual &&
+	test_cmp $3 actual
+}
+
+test_expect_success 'log --merges=show with config log.merges=hide' '
+	test_log_merges show hide expect_show
+'
+
+test_expect_success 'log --merges=show with config log.merges=only' '
+	test_log_merges show only expect_show
+'
+
+test_expect_success 'log --merges=only with config log.merges=show' '
+	test_log_merges only show expect_only
+'
+
+test_expect_success 'log --merges=only with config log.merges=hide' '
+	test_log_merges only hide expect_only
+'
+
+test_expect_success 'log --merges=hide with config log.merges=show' '
+	test_log_merges hide show expect_hide
+'
+
+test_expect_success 'log --merges=hide with config log.merges=only' '
+	test_log_merges hide only expect_hide
+'
+
 test_expect_success 'log --graph with merge' '
 	git log --graph --date-order --pretty=tformat:%s |
 		sed "s/ *\$//" >actual &&
@@ -869,6 +953,17 @@ test_expect_success GPG 'log --graph --show-signature for merged tag' '
 
 test_expect_success 'log --graph --no-walk is forbidden' '
 	test_must_fail git log --graph --no-walk
+'
+
+test_expect_success 'log diagnoses bogus HEAD' '
+	git init empty &&
+	test_must_fail git -C empty log 2>stderr &&
+	test_i18ngrep unborn stderr &&
+	echo 1234abcd >empty/.git/refs/heads/master &&
+	test_must_fail git -C empty log 2>stderr &&
+	test_i18ngrep broken stderr &&
+	test_must_fail git -C empty log --default totally-bogus 2>stderr &&
+	test_i18ngrep bad.default.revision stderr
 '
 
 test_done

@@ -497,6 +497,8 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1,
 				break;
 			}
 		}
+	} else if (len == 1 && str[0] == '-') {
+		nth_prior = 1;
 	}
 
 	/* Accept only unambiguous ref paths. */
@@ -505,13 +507,16 @@ static int get_sha1_basic(const char *str, int len, unsigned char *sha1,
 
 	if (nth_prior) {
 		struct strbuf buf = STRBUF_INIT;
-		int detached;
+		int status;
 
 		if (interpret_nth_prior_checkout(str, len, &buf) > 0) {
-			detached = (buf.len == 40 && !get_sha1_hex(buf.buf, sha1));
+			if (get_sha1(buf.buf, sha1))
+				/* bad---the previous branch no longer exists? */
+				status = -1;
+			else
+				status = 0; /* detached */
 			strbuf_release(&buf);
-			if (detached)
-				return 0;
+			return status;
 		}
 	}
 
@@ -838,8 +843,12 @@ static int get_sha1_1(const char *name, int len, unsigned char *sha1, unsigned l
  * through history and returning the first commit whose message starts
  * the given regular expression.
  *
- * For future extension, ':/!' is reserved. If you want to match a message
- * beginning with a '!', you have to repeat the exclamation mark.
+ * For negative-matching, prefix the pattern-part with '!-', like: ':/!-WIP'.
+ *
+ * For a literal '!' character at the beginning of a pattern, you have to repeat
+ * that, like: ':/!!foo'
+ *
+ * For future extension, all other sequences beginning with ':/!' are reserved.
  */
 
 /* Remember to update object flag allocation in object.h */
@@ -868,12 +877,18 @@ static int get_sha1_oneline(const char *prefix, unsigned char *sha1,
 {
 	struct commit_list *backup = NULL, *l;
 	int found = 0;
+	int negative = 0;
 	regex_t regex;
 
 	if (prefix[0] == '!') {
-		if (prefix[1] != '!')
-			die ("Invalid search pattern: %s", prefix);
 		prefix++;
+
+		if (prefix[0] == '-') {
+			prefix++;
+			negative = 1;
+		} else if (prefix[0] != '!') {
+			die ("Invalid search pattern: %s", prefix);
+		}
 	}
 
 	if (regcomp(&regex, prefix, REG_EXTENDED))
@@ -893,7 +908,7 @@ static int get_sha1_oneline(const char *prefix, unsigned char *sha1,
 			continue;
 		buf = get_commit_buffer(commit, NULL);
 		p = strstr(buf, "\n\n");
-		matches = p && !regexec(&regex, p + 2, 0, NULL, 0);
+		matches = p && (negative ^ !regexec(&regex, p + 2, 0, NULL, 0));
 		unuse_commit_buffer(commit, buf);
 
 		if (matches) {
@@ -945,35 +960,43 @@ static int interpret_nth_prior_checkout(const char *name, int namelen,
 					struct strbuf *buf)
 {
 	long nth;
-	int retval;
+	int consumed;
 	struct grab_nth_branch_switch_cbdata cb;
-	const char *brace;
-	char *num_end;
 
-	if (namelen < 4)
-		return -1;
-	if (name[0] != '@' || name[1] != '{' || name[2] != '-')
-		return -1;
-	brace = memchr(name, '}', namelen);
-	if (!brace)
-		return -1;
-	nth = strtol(name + 3, &num_end, 10);
-	if (num_end != brace)
-		return -1;
-	if (nth <= 0)
-		return -1;
+	if (namelen == 1 && name[0] == '-') {
+		nth = 1;
+		consumed = 1;
+	} else {
+		const char *brace;
+		char *num_end;
+
+		if (namelen < 4)
+			return -1;
+		if (name[0] != '@' || name[1] != '{' || name[2] != '-')
+			return -1;
+		brace = memchr(name, '}', namelen);
+		if (!brace)
+			return -1;
+		nth = strtol(name + 3, &num_end, 10);
+		if (num_end != brace)
+			return -1;
+		if (nth <= 0)
+			return -1;
+		consumed = brace - name + 1;
+	}
+
 	cb.remaining = nth;
 	strbuf_init(&cb.buf, 20);
 
-	retval = 0;
 	if (0 < for_each_reflog_ent_reverse("HEAD", grab_nth_branch_switch, &cb)) {
 		strbuf_reset(buf);
 		strbuf_addbuf(buf, &cb.buf);
-		retval = brace - name + 1;
+	} else {
+		consumed = 0;
 	}
 
 	strbuf_release(&cb.buf);
-	return retval;
+	return consumed;
 }
 
 int get_sha1_mb(const char *name, unsigned char *sha1)

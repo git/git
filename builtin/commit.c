@@ -341,7 +341,8 @@ static const char *prepare_index(int argc, const char **argv, const char *prefix
 		refresh_cache_or_die(refresh_flags);
 
 		if (write_locked_index(&the_index, &index_lock, CLOSE_LOCK))
-			die(_("unable to create temporary index"));
+			/* TRANSLATORS: match with "unable to write index file" */
+			die(_("unable to write temporary index file"));
 
 		old_index_env = getenv(INDEX_ENVIRONMENT);
 		setenv(INDEX_ENVIRONMENT, index_lock.filename.buf, 1);
@@ -360,7 +361,7 @@ static const char *prepare_index(int argc, const char **argv, const char *prefix
 			if (reopen_lock_file(&index_lock) < 0)
 				die(_("unable to write index file"));
 			if (write_locked_index(&the_index, &index_lock, CLOSE_LOCK))
-				die(_("unable to update temporary index"));
+				die(_("unable to write temporary index file"));
 		} else
 			warning(_("Failed to update main cache tree"));
 
@@ -386,7 +387,7 @@ static const char *prepare_index(int argc, const char **argv, const char *prefix
 		refresh_cache_or_die(refresh_flags);
 		update_main_cache_tree(WRITE_TREE_SILENT);
 		if (write_locked_index(&the_index, &index_lock, CLOSE_LOCK))
-			die(_("unable to write new_index file"));
+			die(_("unable to write index file"));
 		commit_style = COMMIT_NORMAL;
 		return index_lock.filename.buf;
 	}
@@ -411,7 +412,7 @@ static const char *prepare_index(int argc, const char **argv, const char *prefix
 		if (active_cache_changed) {
 			if (write_locked_index(&the_index, &index_lock,
 					       COMMIT_LOCK))
-				die(_("unable to write new_index file"));
+				die(_("unable to write index file"));
 		} else {
 			rollback_lock_file(&index_lock);
 		}
@@ -460,7 +461,7 @@ static const char *prepare_index(int argc, const char **argv, const char *prefix
 	refresh_cache(REFRESH_QUIET);
 	update_main_cache_tree(WRITE_TREE_SILENT);
 	if (write_locked_index(&the_index, &index_lock, CLOSE_LOCK))
-		die(_("unable to write new_index file"));
+		die(_("unable to write index file"));
 
 	hold_lock_file_for_update(&false_lock,
 				  git_path("next-index-%"PRIuMAX,
@@ -472,6 +473,7 @@ static const char *prepare_index(int argc, const char **argv, const char *prefix
 	refresh_cache(REFRESH_QUIET);
 
 	if (write_locked_index(&the_index, &false_lock, CLOSE_LOCK))
+		/* TRANSLATORS: match with "unable to write index file" */
 		die(_("unable to write temporary index file"));
 
 	discard_cache();
@@ -878,7 +880,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 		const char *parent = "HEAD";
 
 		if (!active_nr && read_cache() < 0)
-			die(_("Cannot read index"));
+			die(_("unable to read index file"));
 
 		if (amend)
 			parent = "HEAD^1";
@@ -1783,8 +1785,9 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 	unlink(git_path("SQUASH_MSG"));
 
 	if (commit_index_files())
+		/* TRANSLATORS: match with "unable to write index file" */
 		die (_("Repository has been updated, but unable to write\n"
-		     "new_index file. Check that disk is not full and quota is\n"
+		     "index file. Check that disk is not full and quota is\n"
 		     "not exceeded, and then \"git reset HEAD\" to recover."));
 
 	rerere(0);

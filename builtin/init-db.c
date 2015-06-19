@@ -4,6 +4,7 @@
  * Copyright (C) Linus Torvalds, 2005
  */
 #include "cache.h"
+#include "refs.h"
 #include "builtin.h"
 #include "exec_cmd.h"
 #include "parse-options.h"

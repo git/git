@@ -744,9 +744,8 @@ __git_compute_porcelain_commands ()
 __git_get_config_variables ()
 {
 	local section="$1" i IFS=$'\n'
-	for i in $(git --git-dir="$(__gitdir)" config --get-regexp "^$section\..*" 2>/dev/null); do
-		i="${i#$section.}"
-		echo "${i/ */}"
+	for i in $(git --git-dir="$(__gitdir)" config --get-name-regexp "^$section\..*" 2>/dev/null); do
+		echo "${i#$section.}"
 	done
 }
 
@@ -1108,7 +1107,7 @@ _git_commit ()
 
 	case "$cur" in
 	--cleanup=*)
-		__gitcomp "default strip verbatim whitespace
+		__gitcomp "default scissors strip verbatim whitespace
 			" "" "${cur##--cleanup=}"
 		return
 		;;
@@ -1400,7 +1399,7 @@ _git_ls_tree ()
 __git_log_common_options="
 	--not --all
 	--branches --tags --remotes
-	--first-parent --merges --no-merges
+	--first-parent --merges --merges= --no-merges
 	--max-count=
 	--max-age= --since= --after=
 	--min-age= --until= --before=
@@ -1443,6 +1442,10 @@ _git_log ()
 		;;
 	--decorate=*)
 		__gitcomp "full short no" "" "${cur##--decorate=}"
+		return
+		;;
+	--merges=*)
+		__gitcomp "show hide only" "" "${cur##--merges=}"
 		return
 		;;
 	--*)
@@ -1774,15 +1777,7 @@ __git_config_get_set_variables ()
 		c=$((--c))
 	done
 
-	git --git-dir="$(__gitdir)" config $config_file --list 2>/dev/null |
-	while read -r line
-	do
-		case "$line" in
-		*.*=*)
-			echo "${line/=*/}"
-			;;
-		esac
-	done
+	git --git-dir="$(__gitdir)" config $config_file --list-names 2>/dev/null
 }
 
 _git_config ()
@@ -1855,6 +1850,10 @@ _git_config ()
 		__gitcomp "$__git_log_date_formats"
 		return
 		;;
+	log.merges)
+		__gitcomp "show hide only"
+		return
+		;;
 	sendemail.aliasesfiletype)
 		__gitcomp "mutt mailrc pine elm gnus"
 		return
@@ -1883,8 +1882,8 @@ _git_config ()
 	--*)
 		__gitcomp "
 			--system --global --local --file=
-			--list --replace-all
-			--get --get-all --get-regexp
+			--list --list-names --replace-all
+			--get --get-all --get-regexp --get-name-regexp
 			--add --unset --unset-all
 			--remove-section --rename-section
 			"
@@ -2145,6 +2144,7 @@ _git_config ()
 		interactive.singlekey
 		log.date
 		log.decorate
+		log.merges
 		log.showroot
 		mailmap.file
 		man.

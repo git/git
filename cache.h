@@ -311,6 +311,7 @@ struct index_state {
 	struct split_index *split_index;
 	struct cache_time timestamp;
 	unsigned name_hash_initialized : 1,
+		 has_dir_hash : 1,
 		 initialized : 1;
 	struct hashmap name_hash;
 	struct hashmap dir_hash;
@@ -321,6 +322,7 @@ struct index_state {
 extern struct index_state the_index;
 
 /* Name hashing */
+extern void init_name_hash(struct index_state *istate, int force_dir_hash);
 extern void add_name_hash(struct index_state *istate, struct cache_entry *ce);
 extern void remove_name_hash(struct index_state *istate, struct cache_entry *ce);
 extern void free_name_hash(struct index_state *istate);
@@ -397,6 +399,7 @@ static inline enum object_type object_type(unsigned int mode)
 #define EXEC_PATH_ENVIRONMENT "GIT_EXEC_PATH"
 #define CEILING_DIRECTORIES_ENVIRONMENT "GIT_CEILING_DIRECTORIES"
 #define NO_REPLACE_OBJECTS_ENVIRONMENT "GIT_NO_REPLACE_OBJECTS"
+#define GIT_REPLACE_REF_BASE_ENVIRONMENT "GIT_REPLACE_REF_BASE"
 #define GITATTRIBUTES_FILE ".gitattributes"
 #define INFOATTRIBUTES_FILE "info/attributes"
 #define ATTRIBUTE_MACRO_PREFIX "[attr]"
@@ -446,7 +449,17 @@ extern int get_common_dir(struct strbuf *sb, const char *gitdir);
 extern const char *get_git_namespace(void);
 extern const char *strip_namespace(const char *namespaced_ref);
 extern const char *get_git_work_tree(void);
-extern const char *read_gitfile(const char *path);
+
+#define READ_GITFILE_ERR_STAT_FAILED 1
+#define READ_GITFILE_ERR_NOT_A_FILE 2
+#define READ_GITFILE_ERR_OPEN_FAILED 3
+#define READ_GITFILE_ERR_READ_FAILED 4
+#define READ_GITFILE_ERR_INVALID_FORMAT 5
+#define READ_GITFILE_ERR_NO_PATH 6
+#define READ_GITFILE_ERR_NOT_A_REPO 7
+#define READ_GITFILE_ERR_TOO_LARGE 8
+extern const char *read_gitfile_gently(const char *path, int *return_error_code);
+#define read_gitfile(path) read_gitfile_gently((path), NULL)
 extern const char *resolve_gitdir(const char *suspect);
 extern void set_git_work_tree(const char *tree);
 
@@ -585,8 +598,6 @@ extern void update_index_if_able(struct index_state *, struct lock_file *);
 extern int hold_locked_index(struct lock_file *, int);
 extern void set_alternate_index_output(const char *);
 
-extern int delete_ref(const char *, const unsigned char *sha1, unsigned int flags);
-
 /* Environment bits from configuration mechanism */
 extern int trust_executable_bit;
 extern int trust_ctime;
@@ -622,6 +633,7 @@ extern unsigned long pack_size_limit_cfg;
  * been sought but there were none.
  */
 extern int check_replace_refs;
+extern char *git_replace_ref_base;
 
 extern int fsync_object_files;
 extern int core_preload_index;
@@ -943,8 +955,17 @@ extern int has_sha1_pack(const unsigned char *sha1);
  * Return true iff we have an object named sha1, whether local or in
  * an alternate object database, and whether packed or loose.  This
  * function does not respect replace references.
+ *
+ * If the QUICK flag is set, do not re-check the pack directory
+ * when we cannot find the object (this means we may give a false
+ * negative answer if another process is simultaneously repacking).
  */
-extern int has_sha1_file(const unsigned char *sha1);
+#define HAS_SHA1_QUICK 0x1
+extern int has_sha1_file_with_flags(const unsigned char *sha1, int flags);
+static inline int has_sha1_file(const unsigned char *sha1)
+{
+	return has_sha1_file_with_flags(sha1, 0);
+}
 
 /*
  * Return true iff an alternate object database has a loose object
@@ -1011,76 +1032,10 @@ extern int get_oid_hex(const char *hex, struct object_id *sha1);
 
 extern char *sha1_to_hex(const unsigned char *sha1);	/* static buffer result! */
 extern char *oid_to_hex(const struct object_id *oid);	/* same static buffer as sha1_to_hex */
-extern int read_ref_full(const char *refname, int resolve_flags,
-			 unsigned char *sha1, int *flags);
-extern int read_ref(const char *refname, unsigned char *sha1);
 
-/*
- * Resolve a reference, recursively following symbolic refererences.
- *
- * Store the referred-to object's name in sha1 and return the name of
- * the non-symbolic reference that ultimately pointed at it.  The
- * return value, if not NULL, is a pointer into either a static buffer
- * or the input ref.
- *
- * If the reference cannot be resolved to an object, the behavior
- * depends on the RESOLVE_REF_READING flag:
- *
- * - If RESOLVE_REF_READING is set, return NULL.
- *
- * - If RESOLVE_REF_READING is not set, clear sha1 and return the name of
- *   the last reference name in the chain, which will either be a non-symbolic
- *   reference or an undefined reference.  If this is a prelude to
- *   "writing" to the ref, the return value is the name of the ref
- *   that will actually be created or changed.
- *
- * If the RESOLVE_REF_NO_RECURSE flag is passed, only resolves one
- * level of symbolic reference.  The value stored in sha1 for a symbolic
- * reference will always be null_sha1 in this case, and the return
- * value is the reference that the symref refers to directly.
- *
- * If flags is non-NULL, set the value that it points to the
- * combination of REF_ISPACKED (if the reference was found among the
- * packed references), REF_ISSYMREF (if the initial reference was a
- * symbolic reference), REF_BAD_NAME (if the reference name is ill
- * formed --- see RESOLVE_REF_ALLOW_BAD_NAME below), and REF_ISBROKEN
- * (if the ref is malformed or has a bad name). See refs.h for more detail
- * on each flag.
- *
- * If ref is not a properly-formatted, normalized reference, return
- * NULL.  If more than MAXDEPTH recursive symbolic lookups are needed,
- * give up and return NULL.
- *
- * RESOLVE_REF_ALLOW_BAD_NAME allows resolving refs even when their
- * name is invalid according to git-check-ref-format(1).  If the name
- * is bad then the value stored in sha1 will be null_sha1 and the two
- * flags REF_ISBROKEN and REF_BAD_NAME will be set.
- *
- * Even with RESOLVE_REF_ALLOW_BAD_NAME, names that escape the refs/
- * directory and do not consist of all caps and underscores cannot be
- * resolved. The function returns NULL for such ref names.
- * Caps and underscores refers to the special refs, such as HEAD,
- * FETCH_HEAD and friends, that all live outside of the refs/ directory.
- */
-#define RESOLVE_REF_READING 0x01
-#define RESOLVE_REF_NO_RECURSE 0x02
-#define RESOLVE_REF_ALLOW_BAD_NAME 0x04
-extern const char *resolve_ref_unsafe(const char *ref, int resolve_flags, unsigned char *sha1, int *flags);
-extern char *resolve_refdup(const char *ref, int resolve_flags, unsigned char *sha1, int *flags);
-
-extern int dwim_ref(const char *str, int len, unsigned char *sha1, char **ref);
-extern int dwim_log(const char *str, int len, unsigned char *sha1, char **ref);
 extern int interpret_branch_name(const char *str, int len, struct strbuf *);
 extern int get_sha1_mb(const char *str, unsigned char *sha1);
 
-/*
- * Return true iff abbrev_name is a possible abbreviation for
- * full_name according to the rules defined by ref_rev_parse_rules in
- * refs.c.
- */
-extern int refname_match(const char *abbrev_name, const char *full_name);
-
-extern int create_symref(const char *ref, const char *refs_heads_master, const char *logmsg);
 extern int validate_headref(const char *ref);
 
 extern int base_name_compare(const char *name1, int len1, int mode1, const char *name2, int len2, int mode2);
@@ -1698,5 +1653,6 @@ int stat_validity_check(struct stat_validity *sv, const char *path);
 void stat_validity_update(struct stat_validity *sv, int fd);
 
 int versioncmp(const char *s1, const char *s2);
+void sleep_millisec(int millisec);
 
 #endif /* CACHE_H */

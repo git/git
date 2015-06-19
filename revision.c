@@ -1,4 +1,5 @@
 #include "cache.h"
+#include "numparse.h"
 #include "tag.h"
 #include "blob.h"
 #include "tree.h"
@@ -1400,7 +1401,6 @@ void init_revisions(struct rev_info *revs, const char *prefix)
 	memset(revs, 0, sizeof(*revs));
 
 	revs->abbrev = DEFAULT_ABBREV;
-	revs->ignore_merges = 1;
 	revs->simplify_history = 1;
 	DIFF_OPT_SET(&revs->pruning, RECURSIVE);
 	DIFF_OPT_SET(&revs->pruning, QUICK);
@@ -1696,6 +1696,23 @@ static void add_message_grep(struct rev_info *revs, const char *pattern)
 	add_grep(revs, pattern, GREP_PATTERN_BODY);
 }
 
+int parse_merges_opt(struct rev_info *revs, const char *param)
+{
+	if (!strcmp(param, "show")) {
+		revs->min_parents = 0;
+		revs->max_parents = -1;
+	} else if (!strcmp(param, "only")) {
+		revs->min_parents = 2;
+		revs->max_parents = -1;
+	} else if (!strcmp(param, "hide")) {
+		revs->min_parents = 0;
+		revs->max_parents = 1;
+	} else {
+		return -1;
+	}
+	return 0;
+}
+
 static int handle_revision_opt(struct rev_info *revs, int argc, const char **argv,
 			       int *unkc, const char **unkv)
 {
@@ -1727,8 +1744,7 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		return argcount;
 	} else if ((*arg == '-') && isdigit(arg[1])) {
 		/* accept -<digit>, like traditional "head" */
-		if (strtol_i(arg + 1, 10, &revs->max_count) < 0 ||
-		    revs->max_count < 0)
+		if (convert_i(arg + 1, 10, &revs->max_count))
 			die("'%s': not a non-negative integer", arg + 1);
 		revs->no_walk = 0;
 	} else if (!strcmp(arg, "-n")) {
@@ -1737,8 +1753,8 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->max_count = atoi(argv[1]);
 		revs->no_walk = 0;
 		return 2;
-	} else if (starts_with(arg, "-n")) {
-		revs->max_count = atoi(arg + 2);
+	} else if (skip_prefix(arg, "-n", &arg)) {
+		revs->max_count = atoi(arg);
 		revs->no_walk = 0;
 	} else if ((argcount = parse_long_opt("max-age", argv, &optarg))) {
 		revs->max_age = atoi(optarg);
@@ -1797,15 +1813,15 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 	} else if (!strcmp(arg, "--author-date-order")) {
 		revs->sort_order = REV_SORT_BY_AUTHOR_DATE;
 		revs->topo_order = 1;
-	} else if (starts_with(arg, "--early-output")) {
+	} else if (skip_prefix(arg, "--early-output", &arg)) {
 		int count = 100;
-		switch (arg[14]) {
+		switch (*arg++) {
 		case '=':
-			count = atoi(arg+15);
+			count = atoi(arg);
 			/* Fallthrough */
 		case 0:
 			revs->topo_order = 1;
-		       revs->early_output = count;
+			revs->early_output = count;
 		}
 	} else if (!strcmp(arg, "--parents")) {
 		revs->rewrite_parents = 1;
@@ -1818,16 +1834,19 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->show_all = 1;
 	} else if (!strcmp(arg, "--remove-empty")) {
 		revs->remove_empty_trees = 1;
+	} else if (starts_with(arg, "--merges=")) {
+		if (parse_merges_opt(revs, arg + 9))
+			die("unknown option: %s", arg);
 	} else if (!strcmp(arg, "--merges")) {
 		revs->min_parents = 2;
 	} else if (!strcmp(arg, "--no-merges")) {
 		revs->max_parents = 1;
-	} else if (starts_with(arg, "--min-parents=")) {
-		revs->min_parents = atoi(arg+14);
+	} else if (skip_prefix(arg, "--min-parents=", &arg)) {
+		revs->min_parents = atoi(arg);
 	} else if (starts_with(arg, "--no-min-parents")) {
 		revs->min_parents = 0;
-	} else if (starts_with(arg, "--max-parents=")) {
-		revs->max_parents = atoi(arg+14);
+	} else if (skip_prefix(arg, "--max-parents=", &arg)) {
+		revs->max_parents = atoi(arg);
 	} else if (starts_with(arg, "--no-max-parents")) {
 		revs->max_parents = -1;
 	} else if (!strcmp(arg, "--boundary")) {
@@ -1894,41 +1913,40 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		DIFF_OPT_SET(&revs->diffopt, RECURSIVE);
 		DIFF_OPT_SET(&revs->diffopt, TREE_IN_RECURSIVE);
 	} else if (!strcmp(arg, "-m")) {
-		revs->ignore_merges = 0;
+		revs->merge_diff_mode = MERGE_DIFF_EACH;
 	} else if (!strcmp(arg, "-c")) {
-		revs->diff = 1;
-		revs->dense_combined_merges = 0;
-		revs->combine_merges = 1;
+		revs->merge_diff_mode = MERGE_DIFF_COMBINED;
 	} else if (!strcmp(arg, "--cc")) {
-		revs->diff = 1;
-		revs->dense_combined_merges = 1;
-		revs->combine_merges = 1;
+		revs->merge_diff_mode = MERGE_DIFF_COMBINED_CONDENSED;
+	} else if (!strcmp(arg, "--remerge-diff")) {
+		revs->merge_diff_mode = MERGE_DIFF_REMERGE;
 	} else if (!strcmp(arg, "-v")) {
 		revs->verbose_header = 1;
 	} else if (!strcmp(arg, "--pretty")) {
 		revs->verbose_header = 1;
 		revs->pretty_given = 1;
 		get_commit_format(NULL, revs);
-	} else if (starts_with(arg, "--pretty=") || starts_with(arg, "--format=")) {
+	} else if (skip_prefix(arg, "--pretty=", &arg) ||
+		   skip_prefix(arg, "--format=", &arg)) {
 		/*
 		 * Detached form ("--pretty X" as opposed to "--pretty=X")
 		 * not allowed, since the argument is optional.
 		 */
 		revs->verbose_header = 1;
 		revs->pretty_given = 1;
-		get_commit_format(arg+9, revs);
+		get_commit_format(arg, revs);
 	} else if (!strcmp(arg, "--show-notes") || !strcmp(arg, "--notes")) {
 		revs->show_notes = 1;
 		revs->show_notes_given = 1;
 		revs->notes_opt.use_default_notes = 1;
 	} else if (!strcmp(arg, "--show-signature")) {
 		revs->show_signature = 1;
-	} else if (!strcmp(arg, "--show-linear-break") ||
-		   starts_with(arg, "--show-linear-break=")) {
-		if (starts_with(arg, "--show-linear-break="))
-			revs->break_bar = xstrdup(arg + 20);
-		else
-			revs->break_bar = "                    ..........";
+	} else if (!strcmp(arg, "--show-linear-break")) {
+		revs->break_bar = "                    ..........";
+		revs->track_linear = 1;
+		revs->track_first_time = 1;
+	} else if (skip_prefix(arg, "--show-linear-break=", &arg)) {
+		revs->break_bar = xstrdup(arg);
 		revs->track_linear = 1;
 		revs->track_first_time = 1;
 	} else if (starts_with(arg, "--show-notes=") ||
@@ -1979,8 +1997,9 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 		revs->abbrev = 0;
 	} else if (!strcmp(arg, "--abbrev")) {
 		revs->abbrev = DEFAULT_ABBREV;
-	} else if (starts_with(arg, "--abbrev=")) {
-		revs->abbrev = strtoul(arg + 9, NULL, 10);
+	} else if (skip_prefix(arg, "--abbrev=", &arg)) {
+		if (convert_ui(arg, 10, &revs->abbrev))
+			die("--abbrev requires a non-negative integer argument");
 		if (revs->abbrev < MINIMUM_ABBREV)
 			revs->abbrev = MINIMUM_ABBREV;
 		else if (revs->abbrev > 40)
@@ -2130,20 +2149,20 @@ static int handle_revision_pseudo_opt(const char *submodule,
 	} else if ((argcount = parse_long_opt("exclude", argv, &optarg))) {
 		add_ref_exclusion(&revs->ref_excludes, optarg);
 		return argcount;
-	} else if (starts_with(arg, "--branches=")) {
+	} else if (skip_prefix(arg, "--branches=", &arg)) {
 		struct all_refs_cb cb;
 		init_all_refs_cb(&cb, revs, *flags);
-		for_each_glob_ref_in(handle_one_ref, arg + 11, "refs/heads/", &cb);
+		for_each_glob_ref_in(handle_one_ref, arg, "refs/heads/", &cb);
 		clear_ref_exclusion(&revs->ref_excludes);
-	} else if (starts_with(arg, "--tags=")) {
+	} else if (skip_prefix(arg, "--tags=", &arg)) {
 		struct all_refs_cb cb;
 		init_all_refs_cb(&cb, revs, *flags);
-		for_each_glob_ref_in(handle_one_ref, arg + 7, "refs/tags/", &cb);
+		for_each_glob_ref_in(handle_one_ref, arg, "refs/tags/", &cb);
 		clear_ref_exclusion(&revs->ref_excludes);
-	} else if (starts_with(arg, "--remotes=")) {
+	} else if (skip_prefix(arg, "--remotes=", &arg)) {
 		struct all_refs_cb cb;
 		init_all_refs_cb(&cb, revs, *flags);
-		for_each_glob_ref_in(handle_one_ref, arg + 10, "refs/remotes/", &cb);
+		for_each_glob_ref_in(handle_one_ref, arg, "refs/remotes/", &cb);
 		clear_ref_exclusion(&revs->ref_excludes);
 	} else if (!strcmp(arg, "--reflog")) {
 		add_reflogs_to_pending(revs, *flags);
@@ -2153,14 +2172,14 @@ static int handle_revision_pseudo_opt(const char *submodule,
 		*flags ^= UNINTERESTING | BOTTOM;
 	} else if (!strcmp(arg, "--no-walk")) {
 		revs->no_walk = REVISION_WALK_NO_WALK_SORTED;
-	} else if (starts_with(arg, "--no-walk=")) {
+	} else if (skip_prefix(arg, "--no-walk=", &arg)) {
 		/*
 		 * Detached form ("--no-walk X" as opposed to "--no-walk=X")
 		 * not allowed, since the argument is optional.
 		 */
-		if (!strcmp(arg + 10, "sorted"))
+		if (!strcmp(arg, "sorted"))
 			revs->no_walk = REVISION_WALK_NO_WALK_SORTED;
-		else if (!strcmp(arg + 10, "unsorted"))
+		else if (!strcmp(arg, "unsorted"))
 			revs->no_walk = REVISION_WALK_NO_WALK_UNSORTED;
 		else
 			return error("invalid argument to --no-walk");
@@ -2171,6 +2190,23 @@ static int handle_revision_pseudo_opt(const char *submodule,
 	}
 
 	return 1;
+}
+
+static void NORETURN diagnose_missing_default(const char *def)
+{
+	unsigned char sha1[20];
+	int flags;
+	const char *refname;
+
+	refname = resolve_ref_unsafe(def, 0, sha1, &flags);
+	if (!(flags & REF_ISSYMREF))
+		die(_("bad default revision '%s'"), def);
+	if (flags & REF_ISBROKEN)
+		die(_("default revision '%s' points to a broken branch"), def);
+
+	skip_prefix(refname, "refs/heads/", &refname);
+	die(_("default revision '%s' points to an unborn branch '%s'"),
+	    def, refname);
 }
 
 /*
@@ -2216,7 +2252,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 	read_from_stdin = 0;
 	for (left = i = 1; i < argc; i++) {
 		const char *arg = argv[i];
-		if (*arg == '-') {
+		if (arg[0] == '-' && arg[1] && !starts_with(arg + 1, "..")) {
 			int opts;
 
 			opts = handle_revision_pseudo_opt(submodule,
@@ -2302,7 +2338,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 		struct object *object;
 		struct object_context oc;
 		if (get_sha1_with_context(revs->def, 0, sha1, &oc))
-			die("bad default revision '%s'", revs->def);
+			diagnose_missing_default(revs->def);
 		object = get_reference(revs, revs->def, sha1, 0);
 		add_pending_object_with_mode(revs, object, revs->def, oc.mode);
 	}
@@ -2329,8 +2365,6 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 			copy_pathspec(&revs->diffopt.pathspec,
 				      &revs->prune_data);
 	}
-	if (revs->combine_merges)
-		revs->ignore_merges = 0;
 	revs->diffopt.abbrev = revs->abbrev;
 
 	if (revs->line_level_traverse) {

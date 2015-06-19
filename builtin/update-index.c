@@ -4,6 +4,7 @@
  * Copyright (C) Linus Torvalds, 2005
  */
 #include "cache.h"
+#include "numparse.h"
 #include "lockfile.h"
 #include "quote.h"
 #include "cache-tree.h"
@@ -833,7 +834,7 @@ static int cacheinfo_callback(struct parse_opt_ctx_t *ctx,
 	}
 	if (ctx->argc <= 3)
 		return error("option 'cacheinfo' expects <mode>,<sha1>,<path>");
-	if (strtoul_ui(*++ctx->argv, 8, &mode) ||
+	if (convert_ui(*++ctx->argv, 8, &mode) ||
 	    get_sha1_hex(*++ctx->argv, sha1) ||
 	    add_cacheinfo(mode, sha1, *++ctx->argv, 0))
 		die("git update-index: --cacheinfo cannot add %s", *ctx->argv);
@@ -1134,7 +1135,7 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 			unable_to_lock_die(get_index_file(), lock_error);
 		}
 		if (write_locked_index(&the_index, lock_file, COMMIT_LOCK))
-			die("Unable to write new index file");
+			die("unable to write index file");
 	}
 
 	rollback_lock_file(lock_file);

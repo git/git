@@ -769,6 +769,14 @@ am.keepcr::
 	by giving '--no-keep-cr' from the command line.
 	See linkgit:git-am[1], linkgit:git-mailsplit[1].
 
+am.threeWay::
+	By default, `git am` will fail if the patch does not apply cleanly. When
+	set to true, this setting tells `git am` to fall back on 3-way merge if
+	the patch records the identity of blobs it is supposed to apply to and
+	we have those blobs available locally (equivalent to giving the `--3way`
+	option from the command line). Defaults to `false`.
+	See linkgit:git-am[1].
+
 apply.ignoreWhitespace::
 	When set to 'change', tells 'git apply' to ignore changes in
 	whitespace, in the same way as the '--ignore-space-change'
@@ -996,6 +1004,24 @@ color.status.<slot>::
 	to red), or
 	`unmerged` (files which have unmerged changes).
 
+color.listFiles::
+	A boolean to enable/disable color in the output of
+	linkgit:git-list-files[1]. May be set to `always`, `false` (or
+	`never`) or `auto` (or `true`), in which case colors are used
+	only when the output is to a terminal. Defaults to false.
+
+color.ls.<slot>::
+	Use customized color for file name colorization. If not set
+	and the environment variable LS_COLORS is set, color settings
+	from $LS_COLORS are used. `<slot>` can be `normal`, `file`,
+	`directory`, `submodule`,
+	`symlink`, `fifo`, `socket`, `block`, `char`,
+	`missing`, `orphan`, `executable`, `door`, `setuid`, `setgid`,
+	`sticky`, `otherwritable`, `stickyotherwritable`, `cap`,
+	`multihardlink`. The values of these variables may be
+	specified as in color.branch.<slot>.
+
+
 color.ui::
 	This variable determines the default value for variables such
 	as `color.diff` and `color.grep` that control the use of color
@@ -1055,6 +1081,10 @@ column.branch::
 column.clean::
 	Specify the layout when list items in `git clean -i`, which always
 	shows files and directories in columns. See `column.ui` for details.
+
+column.listFiles::
+	Specify whether to output tag listing in `git list-files` in columns.
+	See `column.ui` for details.
 
 column.status::
 	Specify whether to output untracked files in `git status` in columns.
@@ -1241,6 +1271,24 @@ filter.<driver>.smudge::
 	The command which is used to convert the content of a blob
 	object to a worktree file upon checkout.  See
 	linkgit:gitattributes[5] for details.
+
+fsck.<msg-id>::
+	Allows overriding the message type (error, warn or ignore) of a
+	specific message ID such as `missingemail`.
++
+For convenience, fsck prefixes the error/warning with the message ID,
+e.g.  "missingemail: invalid author/committer line - missing email" means
+that setting `fsck.missingemail = ignore` will hide that issue.
++
+This feature is intended to support working with legacy repositories
+which cannot be repaired without disruptive changes.
+
+fsck.skipList::
+	The path to a sorted list of object names (i.e. one SHA-1 per
+	line) that are known to be broken in a non-fatal way and should
+	be ignored. This feature is useful when an established project
+	should be accepted despite early commits containing errors that
+	can be safely ignored such as invalid committer email addresses.
 
 gc.aggressiveDepth::
 	The depth parameter used in the delta compression
@@ -2161,6 +2209,20 @@ rebase.autoStash::
 	successful rebase might result in non-trivial conflicts.
 	Defaults to false.
 
+rebase.checkLevel::
+	If set to "warn", git rebase -i will print a warning if some
+	commits are removed (i.e. a line was deleted) or if some
+	commits appear more than one time (e.g. the same commit is
+	picked twice), however the rebase will still proceed. If set
+	to "error", it will print the previous warnings and abort the
+	rebase. If set to "ignore", no checking is done.  Defaults to
+	"ignore".
+
+rebase.instructionFormat
+	A format string, as specified in linkgit:git-log[1], to be used for
+	the instruction list during an interactive rebase.  The format will automatically
+	have the long commit hash prepended to the format.
+
 receive.advertiseAtomic::
 	By default, git-receive-pack will advertise the atomic push
 	capability to its clients. If you don't want to this capability
@@ -2196,6 +2258,27 @@ receive.fsckObjects::
 	broken link. The result of an abort are only dangling objects.
 	Defaults to false. If not set, the value of `transfer.fsckObjects`
 	is used instead.
+
+receive.fsck.<msg-id>::
+	When `receive.fsckObjects` is set to true, errors can be switched
+	to warnings and vice versa by configuring the `receive.fsck.<msg-id>`
+	setting where the `<msg-id>` is the fsck message ID and the value
+	is one of `error`, `warn` or `ignore`. For convenience, fsck prefixes
+	the error/warning with the message ID, e.g. "missingemail: invalid
+	author/committer line - missing email" means that setting
+	`receive.fsck.missingemail = ignore` will hide that issue.
++
+This feature is intended to support working with legacy repositories
+which would not pass pushing when `receive.fsckObjects = true`, allowing
+the host to accept repositories with certain known issues but still catch
+other issues.
+
+receive.fsck.skipList::
+	The path to a sorted list of object names (i.e. one SHA-1 per
+	line) that are known to be broken in a non-fatal way and should
+	be ignored. This feature is useful when an established project
+	should be accepted despite early commits containing errors that
+	can be safely ignored such as invalid committer email addresses.
 
 receive.unpackLimit::
 	If the number of objects received in a push is below this
@@ -2326,6 +2409,12 @@ remote.<name>.prune::
 remotes.<group>::
 	The list of remotes which are fetched by "git remote update
 	<group>".  See linkgit:git-remote[1].
+
+repack.bundle::
+	A newer server can prepare the `$GIT_DIR/clone.bundle` file,
+	which will help it respond to `git clone` requests more
+	efficiently, when the repository is repacked.  Setting this
+	variable to `true` enables this feature.
 
 repack.useDeltaBaseOffset::
 	By default, linkgit:git-repack[1] creates packs that use

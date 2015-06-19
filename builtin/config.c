@@ -13,6 +13,7 @@ static char *key;
 static regex_t *key_regexp;
 static regex_t *regexp;
 static int show_keys;
+static int omit_values;
 static int use_key_regexp;
 static int do_all;
 static int do_not_match;
@@ -43,6 +44,8 @@ static int respect_includes = -1;
 #define ACTION_GET_COLOR (1<<13)
 #define ACTION_GET_COLORBOOL (1<<14)
 #define ACTION_GET_URLMATCH (1<<15)
+#define ACTION_LIST_NAMES (1<<16)
+#define ACTION_GET_NAME_REGEXP (1<<17)
 
 #define TYPE_BOOL (1<<0)
 #define TYPE_INT (1<<1)
@@ -60,6 +63,7 @@ static struct option builtin_config_options[] = {
 	OPT_BIT(0, "get", &actions, N_("get value: name [value-regex]"), ACTION_GET),
 	OPT_BIT(0, "get-all", &actions, N_("get all values: key [value-regex]"), ACTION_GET_ALL),
 	OPT_BIT(0, "get-regexp", &actions, N_("get values for regexp: name-regex [value-regex]"), ACTION_GET_REGEXP),
+	OPT_BIT(0, "get-name-regexp", &actions, N_("get names for regexp: name-regex"), ACTION_GET_NAME_REGEXP),
 	OPT_BIT(0, "get-urlmatch", &actions, N_("get value specific for the URL: section[.var] URL"), ACTION_GET_URLMATCH),
 	OPT_BIT(0, "replace-all", &actions, N_("replace all matching variables: name value [value_regex]"), ACTION_REPLACE_ALL),
 	OPT_BIT(0, "add", &actions, N_("add a new variable: name value"), ACTION_ADD),
@@ -68,6 +72,7 @@ static struct option builtin_config_options[] = {
 	OPT_BIT(0, "rename-section", &actions, N_("rename section: old-name new-name"), ACTION_RENAME_SECTION),
 	OPT_BIT(0, "remove-section", &actions, N_("remove a section: name"), ACTION_REMOVE_SECTION),
 	OPT_BIT('l', "list", &actions, N_("list all"), ACTION_LIST),
+	OPT_BIT(0, "list-names", &actions, N_("list all variable names"), ACTION_LIST_NAMES),
 	OPT_BIT('e', "edit", &actions, N_("open an editor"), ACTION_EDIT),
 	OPT_BIT(0, "get-color", &actions, N_("find the color configured: slot [default]"), ACTION_GET_COLOR),
 	OPT_BIT(0, "get-colorbool", &actions, N_("find the color setting: slot [stdout-is-tty]"), ACTION_GET_COLORBOOL),
@@ -91,7 +96,7 @@ static void check_argc(int argc, int min, int max) {
 
 static int show_all_config(const char *key_, const char *value_, void *cb)
 {
-	if (value_)
+	if (!omit_values && value_)
 		printf("%s%c%s%c", key_, delim, value_, term);
 	else
 		printf("%s%c", key_, term);
@@ -116,6 +121,10 @@ static int format_config(struct strbuf *buf, const char *key_, const char *value
 	if (show_keys) {
 		strbuf_addstr(buf, key_);
 		must_print_delim = 1;
+	}
+	if (omit_values) {
+		strbuf_addch(buf, term);
+		return 0;
 	}
 	if (types == TYPE_INT)
 		sprintf(value, "%"PRId64,
@@ -550,7 +559,8 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 			usage_with_options(builtin_config_usage, builtin_config_options);
 		}
 
-	if (actions == ACTION_LIST) {
+	if (actions == ACTION_LIST || actions == ACTION_LIST_NAMES) {
+		omit_values = (actions == ACTION_LIST_NAMES);
 		check_argc(argc, 0, 0);
 		if (git_config_with_options(show_all_config, NULL,
 					    &given_config_source,
@@ -631,8 +641,9 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		check_argc(argc, 1, 2);
 		return get_value(argv[0], argv[1]);
 	}
-	else if (actions == ACTION_GET_REGEXP) {
+	else if (actions == ACTION_GET_REGEXP || actions == ACTION_GET_NAME_REGEXP) {
 		show_keys = 1;
+		omit_values = (actions == ACTION_GET_NAME_REGEXP);
 		use_key_regexp = 1;
 		do_all = 1;
 		check_argc(argc, 1, 2);

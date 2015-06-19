@@ -79,7 +79,8 @@ other objects in that pack they already have locally.
 	'git update-server-info'.  This option skips
 	updating local catalog files needed to publish
 	this repository (or a direct copy of it)
-	over HTTP or FTP.  See linkgit:git-update-server-info[1].
+	over HTTP or FTP, and generation of the
+	clone.bundle file.  See linkgit:git-update-server-info[1].
 
 --window=<n>::
 --depth=<n>::
@@ -138,6 +139,12 @@ need to set the configuration variable `repack.UseDeltaBaseOffset` to
 "false" and repack. Access from old Git versions over the native protocol
 is unaffected by this option as the conversion is performed on the fly
 as needed in that case.
+
+To keep the `$GIT_DIR/clone.bundle` file up to date for a newer
+server automatically when `git repack` repacks the repository, the
+`repack.bundle` configuration variable must be set to `true` on the
+server side.
+
 
 SEE ALSO
 --------

@@ -1,0 +1,100 @@
+git-list-files(1)
+===============
+
+NAME
+----
+git-list-files - List files
+
+SYNOPSIS
+--------
+[verse]
+'git list-files [options] [<pathspec>...]
+
+DESCRIPTION
+-----------
+List files (by default in current working directory) that are in the
+index. Depending on the chosen options, maybe only modified files in
+working tree are shown, or untracked files... The builtin alias "ls"
+is set to "list-files".
+
+OPTIONS
+-------
+-c::
+--cached::
+	Show cached files (default)
+
+-d::
+--deleted::
+	Show cached files that are deleted on working directory
+
+-m::
+--modified::
+	Show cached files that have modification on working directory
+
+-o::
+--others::
+	Show untracked files (and only unignored ones unless -i is
+	specified)
+
+-i::
+--ignored::
+	Show only ignored files. When showing files in the index,
+	print only those matched by an exclude pattern. When showing
+	"other" files, show only those matched by an exclude pattern.
+
+-u::
+--unmerged::
+	Show unmerged files
+
+-t::
+--[no-]tag::
+	Show a tag to indicate file type. Automatically turned on with
+	multiple file selections. See linkgit::git-ls-files[1] option
+	`-t` for more information.
+
+-F::
+--classify::
+	Append indicator (one of `*/=>@|&`, which is executable,
+	directory, socket, Solaris door, symlink, fifo, or submodule
+	respectively) to entries.
+
+-R::
+--recursive::
+	Equivalent of `--max-depth=-1` (infinite recursion).
+
+-1::
+	Equivalent of --no-column.
+
+--color[=<when>]::
+--no-color::
+	Color file names. The value must be `always`, `never`, or
+	`auto`. `--no-color` is equivalent to
+	`--color=never`. `--color` is equivalent to
+	`--color=auto`. See configuration variable `color.list-files`
+	for the default settings.
+
+--column[=<options>]::
+--no-column::
+	Display files in columns. See configuration variable column.ui
+	for option syntax. `--column` and `--no-column` without options
+	are equivalent to 'always' and 'never' respectively.
+
+--max-depth=<depth>::
+	For each <pathspec> given on command line, descend at most <depth>
+	levels of directories. A negative value means no limit.
+	This option is ignored if <pathspec> contains active wildcards.
+	In other words if "a*" matches a directory named "a*",
+	"*" is matched literally so --max-depth is still effective.
+	The default is `--max-depth=0`.
+
+<pathspec>::
+	Files to show. :(glob) magic is enabled and recursion disabled
+	by default.
+
+SEE ALSO
+--------
+linkgit:git-ls-files[1]
+
+GIT
+---
+Part of the linkgit:git[1] suite

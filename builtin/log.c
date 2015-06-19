@@ -5,6 +5,7 @@
  *		 2006 Junio Hamano
  */
 #include "cache.h"
+#include "refs.h"
 #include "color.h"
 #include "commit.h"
 #include "diff.h"
@@ -36,6 +37,7 @@ static int decoration_given;
 static int use_mailmap_config;
 static const char *fmt_patch_subject_prefix = "PATCH";
 static const char *fmt_pretty;
+static const char *log_merges;
 
 static const char * const builtin_log_usage[] = {
 	N_("git log [<options>] [<revision-range>] [[--] <path>...]"),
@@ -386,6 +388,9 @@ static int git_log_config(const char *var, const char *value, void *cb)
 			decoration_style = 0; /* maybe warn? */
 		return 0;
 	}
+	if (!strcmp(var, "log.merges")) {
+		return git_config_string(&log_merges, var, value);
+	}
 	if (!strcmp(var, "log.showroot")) {
 		default_show_root = git_config_bool(var, value);
 		return 0;
@@ -498,13 +503,12 @@ static int show_tree_object(const unsigned char *sha1,
 
 static void show_rev_tweak_rev(struct rev_info *rev, struct setup_revision_opt *opt)
 {
-	if (rev->ignore_merges) {
+	if (!rev->merge_diff_mode) {
 		/* There was no "-m" on the command line */
-		rev->ignore_merges = 0;
-		if (!rev->first_parent_only && !rev->combine_merges) {
+		rev->merge_diff_mode = MERGE_DIFF_EACH;
+		if (!rev->first_parent_only) {
 			/* No "--first-parent", "-c", or "--cc" */
-			rev->combine_merges = 1;
-			rev->dense_combined_merges = 1;
+			rev->merge_diff_mode = MERGE_DIFF_COMBINED_CONDENSED;
 		}
 	}
 	if (!rev->diffopt.output_format)
@@ -628,6 +632,8 @@ int cmd_log(int argc, const char **argv, const char *prefix)
 
 	init_revisions(&rev, prefix);
 	rev.always_show_header = 1;
+	if (log_merges && parse_merges_opt(&rev, log_merges))
+		die("unknown config value for log.merges: %s", log_merges);
 	memset(&opt, 0, sizeof(opt));
 	opt.def = "HEAD";
 	opt.revarg_opt = REVARG_COMMITTISH;
@@ -795,7 +801,7 @@ static int reopen_stdout(struct commit *commit, const char *subject,
 static void get_patch_ids(struct rev_info *rev, struct patch_ids *ids)
 {
 	struct rev_info check_rev;
-	struct commit *commit;
+	struct commit *commit, *c1, *c2;
 	struct object *o1, *o2;
 	unsigned flags1, flags2;
 
@@ -803,9 +809,11 @@ static void get_patch_ids(struct rev_info *rev, struct patch_ids *ids)
 		die(_("Need exactly one range."));
 
 	o1 = rev->pending.objects[0].item;
-	flags1 = o1->flags;
 	o2 = rev->pending.objects[1].item;
+	flags1 = o1->flags;
 	flags2 = o2->flags;
+	c1 = lookup_commit_reference(o1->sha1);
+	c2 = lookup_commit_reference(o2->sha1);
 
 	if ((flags1 & UNINTERESTING) == (flags2 & UNINTERESTING))
 		die(_("Not a range."));
@@ -827,10 +835,8 @@ static void get_patch_ids(struct rev_info *rev, struct patch_ids *ids)
 	}
 
 	/* reset for next revision walk */
-	clear_commit_marks((struct commit *)o1,
-			SEEN | UNINTERESTING | SHOWN | ADDED);
-	clear_commit_marks((struct commit *)o2,
-			SEEN | UNINTERESTING | SHOWN | ADDED);
+	clear_commit_marks(c1, SEEN | UNINTERESTING | SHOWN | ADDED);
+	clear_commit_marks(c2, SEEN | UNINTERESTING | SHOWN | ADDED);
 	o1->flags = flags1;
 	o2->flags = flags2;
 }

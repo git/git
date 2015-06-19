@@ -14,6 +14,11 @@
 #include "resolve-undo.h"
 #include "string-list.h"
 #include "pathspec.h"
+#include "color.h"
+#include "column.h"
+#include "diff.h"
+#include "diffcore.h"
+#include "revision.h"
 
 static int abbrev;
 static int show_deleted;
@@ -23,10 +28,17 @@ static int show_stage;
 static int show_unmerged;
 static int show_resolve_undo;
 static int show_modified;
+static int show_diff_cached;
 static int show_killed;
 static int show_valid_bit;
+static int show_tag;
+static int show_dirs;
+static int show_indicator;
 static int line_terminator = '\n';
 static int debug_mode;
+static int use_color;
+static unsigned int colopts;
+static int porcelain;
 
 static const char *prefix;
 static int max_prefix_len;
@@ -37,6 +49,7 @@ static char *ps_matched;
 static const char *with_tree;
 static int exc_given;
 static int exclude_args;
+static struct string_list output = STRING_LIST_INIT_NODUP;
 
 static const char *tag_cached = "";
 static const char *tag_unmerged = "";
@@ -44,21 +57,87 @@ static const char *tag_removed = "";
 static const char *tag_other = "";
 static const char *tag_killed = "";
 static const char *tag_modified = "";
+static const char *tag_diff_cached = "";
 static const char *tag_skip_worktree = "";
 static const char *tag_resolve_undo = "";
 
-static void write_name(const char *name)
+static int compare_output(const void *a_, const void *b_)
+{
+	const struct string_list_item *a = a_;
+	const struct string_list_item *b = b_;
+	return strcmp(a->util, b->util);
+}
+
+static void write_name(struct strbuf *sb, const char *name)
 {
 	/*
 	 * With "--full-name", prefix_len=0; this caller needs to pass
 	 * an empty string in that case (a NULL is good for "").
 	 */
-	write_name_quoted_relative(name, prefix_len ? prefix : NULL,
-				   stdout, line_terminator);
+	const char *real_prefix = prefix_len ? prefix : NULL;
+	if (!line_terminator) {
+		struct strbuf sb2 = STRBUF_INIT;
+		strbuf_addstr(sb, relative_path(name, real_prefix, &sb2));
+		strbuf_release(&sb2);
+	} else
+		quote_path_relative(name, real_prefix, sb);
+}
+
+static void append_indicator(struct strbuf *sb, mode_t mode)
+{
+	char c = 0;
+	if (S_ISREG(mode)) {
+		if (mode & (S_IXUSR | S_IXGRP | S_IXOTH))
+			c = '*';
+	} else if (S_ISDIR(mode))
+		c = '/';
+	else if (S_ISLNK(mode))
+		c = '@';
+	else if (S_ISFIFO(mode))
+		c = '|';
+	else if (S_ISSOCK(mode))
+		c = '=';
+	else if (S_ISGITLINK(mode))
+		c = '&';
+#ifdef S_ISDOOR
+	else if (S_ISDOOR(mode))
+		c = '>';
+#endif
+	if (c)
+		strbuf_addch(sb, c);
+}
+
+static void strbuf_fputs(struct strbuf *sb, const char *full_name, FILE *fp)
+{
+	if (column_active(colopts) || porcelain) {
+		struct string_list_item *it;
+		it = string_list_append(&output, strbuf_detach(sb, NULL));
+		it->util = (void *)full_name;
+		return;
+	}
+	fwrite(sb->buf, sb->len, 1, fp);
+}
+
+static void write_dir_entry(struct strbuf *sb, const struct dir_entry *ent)
+{
+	struct strbuf quoted = STRBUF_INIT;
+	struct stat st;
+	if (stat(ent->name, &st))
+		st.st_mode = 0;
+	write_name(&quoted, ent->name);
+	if (want_color(use_color))
+		color_filename(sb, ent->name, quoted.buf, st.st_mode, 1);
+	else
+		strbuf_addbuf(sb, &quoted);
+	if (show_indicator && st.st_mode)
+		append_indicator(sb, st.st_mode);
+	strbuf_addch(sb, line_terminator);
+	strbuf_release(&quoted);
 }
 
 static void show_dir_entry(const char *tag, struct dir_entry *ent)
 {
+	static struct strbuf sb = STRBUF_INIT;
 	int len = max_prefix_len;
 
 	if (len >= ent->len)
@@ -67,8 +146,10 @@ static void show_dir_entry(const char *tag, struct dir_entry *ent)
 	if (!dir_path_match(ent, &pathspec, len, ps_matched))
 		return;
 
-	fputs(tag, stdout);
-	write_name(ent->name);
+	strbuf_reset(&sb);
+	strbuf_addstr(&sb, tag);
+	write_dir_entry(&sb, ent);
+	strbuf_fputs(&sb, ent->name, stdout);
 }
 
 static void show_other_files(struct dir_struct *dir)
@@ -132,16 +213,85 @@ static void show_killed_files(struct dir_struct *dir)
 	}
 }
 
+static int show_as_directory(const struct cache_entry *ce)
+{
+	struct strbuf sb = STRBUF_INIT;
+	const char *p;
+
+	strbuf_add(&sb, ce->name, ce_namelen(ce));
+	while (sb.len && (p = strrchr(sb.buf, '/')) != NULL) {
+		struct strbuf sb2 = STRBUF_INIT;
+		strbuf_setlen(&sb, p - sb.buf);
+		if (!match_pathspec(&pathspec, sb.buf, sb.len,
+				    max_prefix_len, NULL, 1))
+			continue;
+		write_name(&sb2, sb.buf);
+		if (want_color(use_color)) {
+			struct strbuf sb3 = STRBUF_INIT;
+			color_filename(&sb3, ce->name, sb2.buf, S_IFDIR, 1);
+			strbuf_swap(&sb2, &sb3);
+			strbuf_release(&sb3);
+		}
+		if (show_tag)
+			strbuf_insert(&sb2, 0, tag_cached, strlen(tag_cached));
+		if (show_indicator)
+			append_indicator(&sb2, S_IFDIR);
+		strbuf_fputs(&sb2, strbuf_detach(&sb, NULL), NULL);
+		strbuf_release(&sb2);
+		return 1;
+	}
+	strbuf_release(&sb);
+	return 0;
+}
+
+static void write_ce_name(struct strbuf *sb, const struct cache_entry *ce)
+{
+	struct strbuf quoted = STRBUF_INIT;
+	write_name(&quoted, ce->name);
+	if (want_color(use_color))
+		color_filename(sb, ce->name, quoted.buf, ce->ce_mode, 1);
+	else
+		strbuf_addbuf(sb, &quoted);
+	if (show_indicator)
+		append_indicator(sb, ce->ce_mode);
+	strbuf_addch(sb, line_terminator);
+	strbuf_release(&quoted);
+}
+
+static int match_pathspec_with_depth(struct pathspec *ps,
+				     const char *name, int namelen,
+				     int prefix, char *seen, int is_dir,
+				     const int *custom_depth)
+{
+	int saved_depth = ps->max_depth;
+	int result;
+
+	if (custom_depth)
+		ps->max_depth = *custom_depth;
+	result = match_pathspec(ps, name, namelen, prefix, seen, is_dir);
+	if (custom_depth)
+		ps->max_depth = saved_depth;
+	return result;
+}
+
 static void show_ce_entry(const char *tag, const struct cache_entry *ce)
 {
+	static struct strbuf sb = STRBUF_INIT;
+	static const int infinite_depth = -1;
 	int len = max_prefix_len;
 
 	if (len >= ce_namelen(ce))
 		die("git ls-files: internal error - cache entry not superset of prefix");
 
-	if (!match_pathspec(&pathspec, ce->name, ce_namelen(ce),
-			    len, ps_matched,
-			    S_ISDIR(ce->ce_mode) || S_ISGITLINK(ce->ce_mode)))
+	if (!match_pathspec_with_depth(&pathspec, ce->name, ce_namelen(ce),
+				       len, ps_matched,
+				       S_ISDIR(ce->ce_mode) || S_ISGITLINK(ce->ce_mode),
+				       show_dirs ? &infinite_depth : NULL))
+		return;
+
+	if (show_dirs && strchr(ce->name, '/') &&
+	    !match_pathspec(&pathspec, ce->name, ce_namelen(ce), prefix_len, NULL, 1) &&
+	    show_as_directory(ce))
 		return;
 
 	if (tag && *tag && show_valid_bit &&
@@ -161,16 +311,18 @@ static void show_ce_entry(const char *tag, const struct cache_entry *ce)
 		tag = alttag;
 	}
 
+	strbuf_reset(&sb);
 	if (!show_stage) {
-		fputs(tag, stdout);
+		strbuf_addstr(&sb, tag);
 	} else {
-		printf("%s%06o %s %d\t",
-		       tag,
-		       ce->ce_mode,
-		       find_unique_abbrev(ce->sha1,abbrev),
-		       ce_stage(ce));
+		strbuf_addf(&sb, "%s%06o %s %d\t",
+			    tag,
+			    ce->ce_mode,
+			    find_unique_abbrev(ce->sha1, abbrev),
+			    ce_stage(ce));
 	}
-	write_name(ce->name);
+	write_ce_name(&sb, ce);
+	strbuf_fputs(&sb, ce->name, stdout);
 	if (debug_mode) {
 		const struct stat_data *sd = &ce->ce_stat_data;
 
@@ -206,7 +358,12 @@ static void show_ru_info(void)
 			printf("%s%06o %s %d\t", tag_resolve_undo, ui->mode[i],
 			       find_unique_abbrev(ui->sha1[i], abbrev),
 			       i + 1);
-			write_name(path);
+			/*
+			 * With "--full-name", prefix_len=0; this caller needs to pass
+			 * an empty string in that case (a NULL is good for "").
+			 */
+			write_name_quoted_relative(path, prefix_len ? prefix : NULL,
+						   stdout, line_terminator);
 		}
 	}
 }
@@ -260,10 +417,107 @@ static void show_files(struct dir_struct *dir)
 			err = lstat(ce->name, &st);
 			if (show_deleted && err)
 				show_ce_entry(tag_removed, ce);
-			if (show_modified && ce_modified(ce, &st, 0))
+			if (show_diff_cached && (ce->ce_flags & CE_MATCHED)) {
+				show_ce_entry(tag_diff_cached, ce);
+				/*
+				 * if we don't clear, it'll confuse write_ce_name()
+				 * when show_ce_entry(tag_modified, ce) is called
+				 */
+				active_cache[i]->ce_flags &= ~CE_MATCHED;
+			}
+			if (show_modified && (err || ce_modified(ce, &st, 0)))
 				show_ce_entry(tag_modified, ce);
 		}
 	}
+}
+
+static void show_files_compact(struct dir_struct *dir)
+{
+	int i;
+
+	/* For cached/deleted files we don't need to even do the readdir */
+	if (show_others || show_killed) {
+		if (!show_others)
+			dir->flags |= DIR_COLLECT_KILLED_ONLY;
+		fill_directory(dir, &pathspec);
+		if (show_others)
+			show_other_files(dir);
+		if (show_killed)
+			show_killed_files(dir);
+	}
+	if (!(show_cached || show_unmerged || show_deleted ||
+	      show_modified || show_diff_cached))
+		return;
+	for (i = 0; i < active_nr; i++) {
+		const struct cache_entry *ce = active_cache[i];
+		struct stat st;
+		int err, shown = 0;
+		if ((dir->flags & DIR_SHOW_IGNORED) &&
+		    !ce_excluded(dir, ce))
+			continue;
+		if (show_unmerged && !ce_stage(ce))
+			continue;
+		if (ce->ce_flags & CE_UPDATE)
+			continue;
+		if (ce_skip_worktree(ce))
+			continue;
+		err = lstat(ce->name, &st);
+		if (show_deleted && err) {
+			show_ce_entry(tag_removed, ce);
+			shown = 1;
+		}
+		if (show_diff_cached && (ce->ce_flags & CE_MATCHED)) {
+			show_ce_entry(tag_diff_cached, ce);
+			shown = 1;
+			/*
+			 * if we don't clear, it'll confuse write_ce_name()
+			 * when show_ce_entry(tag_modified, ce) is called
+			 */
+			active_cache[i]->ce_flags &= ~CE_MATCHED;
+		}
+		if (show_modified && (err || ce_modified(ce, &st, 0))) {
+			show_ce_entry(tag_modified, ce);
+			shown = 1;
+		}
+		if (ce_stage(ce)) {
+			show_ce_entry(tag_unmerged, ce);
+			shown = 1;
+		}
+		if (!shown && show_cached)
+			show_ce_entry(tag_cached, ce);
+	}
+}
+
+static void mark_diff_cached(struct diff_queue_struct *q,
+			     struct diff_options *options,
+			     void *data)
+{
+	int i;
+
+	for (i = 0; i < q->nr; i++) {
+		struct diff_filepair *p = q->queue[i];
+		int pos = cache_name_pos(p->two->path, strlen(p->two->path));
+		if (pos < 0)
+			continue;
+		active_cache[pos]->ce_flags |= CE_MATCHED;
+	}
+}
+
+static void diff_cached(struct pathspec *pathspec)
+{
+	struct rev_info rev;
+	const char *argv[] = { "ls-files", "HEAD", NULL };
+
+	init_revisions(&rev, NULL);
+	setup_revisions(2, argv, &rev, NULL);
+
+	rev.diffopt.output_format |= DIFF_FORMAT_CALLBACK;
+	rev.diffopt.format_callback = mark_diff_cached;
+	rev.diffopt.detect_rename = 1;
+	rev.diffopt.rename_limit = 200;
+	rev.diffopt.break_opt = 0;
+	copy_pathspec(&rev.prune_data, pathspec);
+	run_diff_index(&rev, 1);
 }
 
 /*
@@ -359,6 +613,11 @@ static const char * const ls_files_usage[] = {
 	NULL
 };
 
+static const char * const ls_usage[] = {
+	N_("git list-files [options] [<file>...]"),
+	NULL
+};
+
 static int option_parse_z(const struct option *opt,
 			  const char *arg, int unset)
 {
@@ -400,12 +659,25 @@ static int option_parse_exclude_standard(const struct option *opt,
 	return 0;
 }
 
+static int git_ls_config(const char *var, const char *value, void *cb)
+{
+	if (starts_with(var, "column."))
+		return git_column_config(var, value, "listfiles", &colopts);
+	if (!strcmp(var, "color.listfiles")) {
+		use_color = git_config_colorbool(var, value);
+		return 0;
+	}
+	return git_color_default_config(var, value, cb);
+}
+
 int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 {
-	int require_work_tree = 0, show_tag = 0, i;
+	int require_work_tree = 0, i;
+	int max_depth = -1;
 	const char *max_prefix;
 	struct dir_struct dir;
 	struct exclude_list *el;
+	struct column_options copts;
 	struct string_list exclude_list = STRING_LIST_INIT_NODUP;
 	struct option builtin_ls_files_options[] = {
 		{ OPTION_CALLBACK, 'z', NULL, NULL, NULL,
@@ -458,42 +730,88 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 			N_("if any <file> is not in the index, treat this as an error")),
 		OPT_STRING(0, "with-tree", &with_tree, N_("tree-ish"),
 			N_("pretend that paths removed since <tree-ish> are still present")),
+		OPT__COLOR(&use_color, N_("show color")),
+		OPT_COLUMN(0, "column", &colopts, N_("show files in columns")),
+		{ OPTION_INTEGER, 0, "max-depth", &max_depth, N_("depth"),
+			N_("descend at most <depth> levels"), PARSE_OPT_NONEG,
+			NULL, 1 },
 		OPT__ABBREV(&abbrev),
 		OPT_BOOL(0, "debug", &debug_mode, N_("show debugging data")),
 		OPT_END()
 	};
+	struct option builtin_ls_options[] = {
+		OPT_BOOL('c', "cached", &show_cached,
+			N_("show cached files (default)")),
+		OPT_BOOL('d', "deleted", &show_deleted,
+			N_("show cached files that are deleted on working directory")),
+		OPT_BOOL('m', "modified", &show_modified,
+			N_("show cached files that have modification on working directory")),
+		OPT_BOOL('M', "modified", &show_diff_cached,
+			N_("show modified files in the cache")),
+		OPT_BOOL('o', "others", &show_others,
+			N_("show untracked files")),
+		OPT_SET_INT('R', "recursive", &max_depth,
+			    N_("shortcut for --max-depth=-1"), -1),
+		OPT_BOOL('t', "tag", &show_tag,
+			N_("identify the file status with tags")),
+		OPT_BIT('i', "ignored", &dir.flags,
+			N_("show ignored files"),
+			DIR_SHOW_IGNORED),
+		OPT_BOOL('u', "unmerged", &show_unmerged,
+			N_("show unmerged files")),
+		OPT_BOOL('F', "classify", &show_indicator,
+			 N_("append indicator (one of */=>@|) to entries")),
+		OPT__COLOR(&use_color, N_("show color")),
+		OPT_COLUMN(0, "column", &colopts, N_("show files in columns")),
+		OPT_SET_INT('1', NULL, &colopts,
+			    N_("shortcut for --no-column"), COL_PARSEOPT),
+		{ OPTION_INTEGER, 0, "max-depth", &max_depth, N_("depth"),
+			N_("descend at most <depth> levels"), PARSE_OPT_NONEG,
+			NULL, 1 },
+		OPT__ABBREV(&abbrev),
+		OPT_END()
+	};
+	struct option *options;
+	const char * const *help_usage;
 
+	if (!strcmp(argv[0], "list-files")) {
+		help_usage = ls_usage;
+		options = builtin_ls_options;
+		porcelain = 1;
+	} else {
+		help_usage = ls_files_usage;
+		options = builtin_ls_files_options;
+	}
 	if (argc == 2 && !strcmp(argv[1], "-h"))
-		usage_with_options(ls_files_usage, builtin_ls_files_options);
+		usage_with_options(help_usage, options);
 
 	memset(&dir, 0, sizeof(dir));
 	prefix = cmd_prefix;
 	if (prefix)
 		prefix_len = strlen(prefix);
-	git_config(git_default_config, NULL);
+
+	if (porcelain) {
+		setenv(GIT_GLOB_PATHSPECS_ENVIRONMENT, "1", 1);
+		exc_given = 1;
+		setup_standard_excludes(&dir);
+		use_color = -1;
+		max_depth = 0;
+		show_tag = -1;
+		git_config(git_ls_config, NULL);
+	} else
+		git_config(git_default_config, NULL);
 
 	if (read_cache() < 0)
 		die("index file corrupt");
 
-	argc = parse_options(argc, argv, prefix, builtin_ls_files_options,
-			ls_files_usage, 0);
+	argc = parse_options(argc, argv, prefix, options, help_usage, 0);
 	el = add_exclude_list(&dir, EXC_CMDL, "--exclude option");
 	for (i = 0; i < exclude_list.nr; i++) {
 		add_exclude(exclude_list.items[i].string, "", 0, el, --exclude_args);
 	}
-	if (show_tag || show_valid_bit) {
-		tag_cached = "H ";
-		tag_unmerged = "M ";
-		tag_removed = "R ";
-		tag_modified = "C ";
-		tag_other = "? ";
-		tag_killed = "K ";
-		tag_skip_worktree = "S ";
-		tag_resolve_undo = "U ";
-	}
 	if (show_modified || show_others || show_deleted || (dir.flags & DIR_SHOW_IGNORED) || show_killed)
 		require_work_tree = 1;
-	if (show_unmerged)
+	if (show_unmerged && !porcelain)
 		/*
 		 * There's no point in showing unmerged unless
 		 * you also show the stage information.
@@ -502,13 +820,33 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 	if (dir.exclude_per_dir)
 		exc_given = 1;
 
+	finalize_colopts(&colopts, -1);
+	if (explicitly_enable_column(colopts)) {
+		if (!line_terminator)
+			die(_("--column and -z are incompatible"));
+		if (show_resolve_undo)
+			die(_("--column and --resolve-undo are incompatible"));
+		if (debug_mode)
+			die(_("--column and --debug are incompatible"));
+	}
+	if (column_active(colopts) || porcelain)
+		line_terminator = 0;
+
 	if (require_work_tree && !is_inside_work_tree())
 		setup_work_tree();
 
+	if (want_color(use_color))
+		parse_ls_color();
+
 	parse_pathspec(&pathspec, 0,
 		       PATHSPEC_PREFER_CWD |
+		       (max_depth != -1 ? PATHSPEC_MAXDEPTH_VALID : 0) |
 		       PATHSPEC_STRIP_SUBMODULE_SLASH_CHEAP,
 		       prefix, argv);
+	pathspec.max_depth = max_depth;
+	pathspec.recursive = 1;
+	show_dirs = porcelain && max_depth != -1;
+
 
 	/* Find common prefix for all pathspec's */
 	max_prefix = common_prefix(&pathspec);
@@ -523,8 +861,24 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 
 	/* With no flags, we default to showing the cached files */
 	if (!(show_stage || show_deleted || show_others || show_unmerged ||
-	      show_killed || show_modified || show_resolve_undo))
+	      show_killed || show_modified || show_resolve_undo || show_diff_cached))
 		show_cached = 1;
+
+	if (show_tag == -1)
+		show_tag = (show_cached + show_deleted + show_others +
+			    show_diff_cached +
+			    show_unmerged + show_killed + show_modified) > 1;
+	if (show_tag || show_valid_bit) {
+		tag_cached = porcelain ? "  " : "H ";
+		tag_unmerged = "M ";
+		tag_removed = "R ";
+		tag_modified = "C ";
+		tag_other = "? ";
+		tag_diff_cached = "X ";
+		tag_killed = "K ";
+		tag_skip_worktree = "S ";
+		tag_resolve_undo = "U ";
+	}
 
 	if (max_prefix)
 		prune_cache(max_prefix);
@@ -537,9 +891,28 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 			die("ls-files --with-tree is incompatible with -s or -u");
 		overlay_tree_on_cache(with_tree, max_prefix);
 	}
-	show_files(&dir);
+	if (porcelain) {
+		refresh_index(&the_index, REFRESH_QUIET | REFRESH_UNMERGED, &pathspec, NULL, NULL);
+		setup_pager();
+	}
+	if (show_diff_cached)
+		diff_cached(&pathspec);
+	if (porcelain)
+		show_files_compact(&dir);
+	else
+		show_files(&dir);
 	if (show_resolve_undo)
 		show_ru_info();
+
+	memset(&copts, 0, sizeof(copts));
+	copts.padding = 2;
+	if (porcelain) {
+		qsort(output.items, output.nr, sizeof(*output.items),
+		      compare_output);
+		string_list_remove_duplicates(&output, 0);
+	}
+	print_columns(&output, colopts, &copts);
+	string_list_clear(&output, 0);
 
 	if (ps_matched) {
 		int bad;

@@ -279,6 +279,6 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 
 	if (0 <= newfd &&
 	    write_locked_index(&the_index, &lock_file, COMMIT_LOCK))
-		die("Unable to write new index file");
+		die("unable to write index file");
 	return 0;
 }

@@ -22,11 +22,11 @@ int main(int argc, char **argv)
 		if (version < 2 || version > 2)
 			die("unknown index version");
 		if (fread(top_index, 256 * 4, 1, stdin) != 1)
-			die("unable to read index");
+			die("unable to read index file");
 	} else {
 		version = 1;
 		if (fread(&top_index[2], 254 * 4, 1, stdin) != 1)
-			die("unable to read index");
+			die("unable to read index file");
 	}
 	nr = 0;
 	for (i = 0; i < 256; i++) {

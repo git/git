@@ -18,6 +18,7 @@
 #include "xdiff-interface.h"
 #include "ll-merge.h"
 #include "resolve-undo.h"
+#include "submodule-config.h"
 #include "submodule.h"
 #include "argv-array.h"
 #include "sigchain.h"
@@ -380,7 +381,7 @@ static int checkout_paths(const struct checkout_opts *opts,
 	}
 
 	if (write_locked_index(&the_index, lock_file, COMMIT_LOCK))
-		die(_("unable to write new index file"));
+		die(_("unable to write index file"));
 
 	read_ref_full("HEAD", 0, rev, &flag);
 	head = lookup_commit_reference_gently(rev, 1);
@@ -591,7 +592,7 @@ static int merge_working_tree(const struct checkout_opts *opts,
 		cache_tree_update(&the_index, WRITE_TREE_SILENT | WRITE_TREE_REPAIR);
 
 	if (write_locked_index(&the_index, lock_file, COMMIT_LOCK))
-		die(_("unable to write new index file"));
+		die(_("unable to write index file"));
 
 	if (!opts->force && !opts->quiet)
 		show_local_changes(&new->commit->object, &opts->diff_options);
@@ -1110,7 +1111,6 @@ static int parse_branchname_arg(int argc, const char **argv,
 {
 	struct tree **source_tree = &opts->source_tree;
 	const char **new_branch = &opts->new_branch;
-	int force_detach = opts->force_detach;
 	int argcount = 0;
 	unsigned char branch_rev[20];
 	const char *arg;
@@ -1175,9 +1175,6 @@ static int parse_branchname_arg(int argc, const char **argv,
 	else if (dash_dash_pos >= 2)
 		die(_("only one reference expected, %d given."), dash_dash_pos);
 
-	if (!strcmp(arg, "-"))
-		arg = "@{-1}";
-
 	if (get_sha1_mb(arg, rev)) {
 		/*
 		 * Either case (3) or (4), with <something> not being
@@ -1230,17 +1227,6 @@ static int parse_branchname_arg(int argc, const char **argv,
 		hashcpy(rev, branch_rev);
 	else
 		new->path = NULL; /* not an existing branch */
-
-	if (new->path && !force_detach && !*new_branch) {
-		unsigned char sha1[20];
-		int flag;
-		char *head_ref = resolve_refdup("HEAD", 0, sha1, &flag);
-		if (head_ref &&
-		    (!(flag & REF_ISSYMREF) || strcmp(head_ref, new->path)) &&
-		    !opts->ignore_other_worktrees)
-			check_linked_checkouts(new);
-		free(head_ref);
-	}
 
 	new->commit = lookup_commit_reference_gently(rev, 1);
 	if (!new->commit) {
@@ -1320,6 +1306,17 @@ static int checkout_branch(struct checkout_opts *opts,
 	if (new->name && !new->commit)
 		die(_("Cannot switch branch to a non-commit '%s'"),
 		    new->name);
+
+	if (new->path && !opts->force_detach && !opts->new_branch) {
+		unsigned char sha1[20];
+		int flag;
+		char *head_ref = resolve_refdup("HEAD", 0, sha1, &flag);
+		if (head_ref &&
+		    (!(flag & REF_ISSYMREF) || strcmp(head_ref, new->path)) &&
+		    !opts->ignore_other_worktrees)
+			check_linked_checkouts(new);
+		free(head_ref);
+	}
 
 	if (opts->new_worktree)
 		return prepare_linked_checkout(opts, new);

@@ -3,6 +3,7 @@
 #include "object.h"
 #include "commit.h"
 #include "tag.h"
+#include "run-command.h"
 
 /*
  * Create the file "path" by writing to a temporary file and renaming
@@ -266,6 +267,27 @@ static int update_info_packs(int force)
 	return ret;
 }
 
+static int update_clone_bundle(int force)
+{
+	int create_clone_bundle = 0, status;
+	struct child_process bundle = CHILD_PROCESS_INIT;
+	char *bundlefile;
+
+	if (git_config_get_bool("repack.bundle", &create_clone_bundle) &&
+	    force)
+		create_clone_bundle = 1;
+	if (!create_clone_bundle)
+		return 0;
+
+	bundle.git_cmd = 1;
+	bundlefile = git_pathdup("clone.bundle");
+	argv_array_pushl(&bundle.args, "bundle", "create",
+			 bundlefile, "--all", NULL);
+	status = run_command(&bundle);
+	free(bundlefile);
+	return status;
+}
+
 /* public */
 int update_server_info(int force)
 {
@@ -277,6 +299,7 @@ int update_server_info(int force)
 
 	errs = errs | update_info_refs(force);
 	errs = errs | update_info_packs(force);
+	errs = errs | update_clone_bundle(force);
 
 	/* remove leftover rev-cache file if there is any */
 	unlink_or_warn(git_path("info/rev-cache"));

@@ -317,8 +317,9 @@ static int do_recursive_merge(struct commit *base, struct commit *next,
 
 	if (active_cache_changed &&
 	    write_locked_index(&the_index, &index_lock, COMMIT_LOCK))
-		/* TRANSLATORS: %s will be "revert" or "cherry-pick" */
-		die(_("%s: Unable to write new index file"), action_name(opts));
+		/* TRANSLATORS: %s will be "revert" or "cherry-pick"
+		   match this with "unable to write index file" */
+		die(_("%s: unable to write index file"), action_name(opts));
 	rollback_lock_file(&index_lock);
 
 	if (opts->signoff)
