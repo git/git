@@ -316,7 +316,7 @@ static void process_phantom_symlinks(void)
 }
 
 /* Normalizes NT paths as returned by some low-level APIs. */
-static wchar_t *normalize_ntpath(wchar_t *wbuf)
+static wchar_t *normalize_ntpath(wchar_t *wbuf, int strip_trailing_slashes)
 {
 	int i;
 	/* fix absolute path prefixes */
@@ -338,8 +338,9 @@ static wchar_t *normalize_ntpath(wchar_t *wbuf)
 		if (wbuf[i] == '\\')
 			wbuf[i] = '/';
 	/* remove potential trailing slashes */
-	while (i && wbuf[i - 1] == '/')
-		wbuf[--i] = 0;
+	if (strip_trailing_slashes)
+		while (i && wbuf[i - 1] == '/')
+			wbuf[--i] = 0;
 	return wbuf;
 }
 
@@ -621,7 +622,7 @@ int mingw_chdir(const char *dirname)
 		CloseHandle(hnd);
 	}
 
-	result = _wchdir(normalize_ntpath(wdirname));
+	result = _wchdir(normalize_ntpath(wdirname, 0));
 	current_directory_len = GetCurrentDirectoryW(0, NULL);
 	return result;
 }
@@ -2290,7 +2291,7 @@ int readlink(const char *path, char *buf, size_t bufsiz)
 	 * so convert to a (hopefully large enough) temporary buffer, then memcpy
 	 * the requested number of bytes (including '\0' for robustness).
 	 */
-	if ((len = xwcstoutf(tmpbuf, normalize_ntpath(wbuf), MAX_LONG_PATH)) < 0)
+	if ((len = xwcstoutf(tmpbuf, normalize_ntpath(wbuf, 1), MAX_LONG_PATH)) < 0)
 		return -1;
 	memcpy(buf, tmpbuf, min(bufsiz, len + 1));
 	return min(bufsiz, len);
