@@ -76,7 +76,7 @@ static int abspath_part_inside_repo(char *path)
  * remains in the path. For example, prefix = sub1/sub2/ and path is
  *
  *  foo          -> sub1/sub2/foo  (full prefix)
- *  ../foo       -> sub1/foo       (remaining prefix is sub1/)
+ *  ../foo/me    -> sub1/foo/me    (remaining prefix is sub1/)
  *  ../../bar    -> bar            (no remaining prefix)
  *  ../../sub1/sub2/foo -> sub1/sub2/foo (but no remaining prefix)
  *  `pwd`/../bar -> sub1/bar       (no remaining prefix)
