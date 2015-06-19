@@ -305,6 +305,7 @@ guess_merge_tool () {
 	EOF
 
 	# Loop over each candidate and stop when a valid merge tool is found.
+	IFS=' '
 	for tool in $tools
 	do
 		is_available "$tool" && echo "$tool" && return 0
