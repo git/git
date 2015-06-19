@@ -331,11 +331,12 @@ static int configure_via_resource(LPWSTR basename, LPWSTR exepath, LPWSTR exep,
 	*prefix_args_len = wcslen(buf2);
 
 	*is_git_command = 0;
-	*working_directory = (LPWSTR) 1;
 	wargv = CommandLineToArgvW(GetCommandLine(), &wargc);
 	for (i = 1; i < wargc; i++) {
 		if (!wcscmp(L"--no-cd", wargv[i]))
 			*working_directory = NULL;
+		else if (!wcscmp(L"--cd-to-home", wargv[i]))
+			*working_directory = (LPWSTR) 1;
 		else if (!wcsncmp(L"--cd=", wargv[i], 5))
 			*working_directory = wcsdup(wargv[i] + 5);
 		else if (!wcscmp(L"--minimal-search-path", wargv[i]))
