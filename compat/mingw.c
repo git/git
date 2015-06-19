@@ -375,9 +375,6 @@ static wchar_t *normalize_ntpath(wchar_t *wbuf)
 	for (i = 0; wbuf[i]; i++)
 		if (wbuf[i] == '\\')
 			wbuf[i] = '/';
-	/* remove potential trailing slashes */
-	while (i && wbuf[i - 1] == '/')
-		wbuf[--i] = 0;
 	return wbuf;
 }
 
