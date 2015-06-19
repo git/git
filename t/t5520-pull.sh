@@ -160,6 +160,18 @@ test_expect_success 'fail if no configuration for current branch' '
 	test "$(cat file)" = file
 '
 
+test_expect_success 'pull --all: fail if no configuration for current branch' '
+	git remote add test_remote . &&
+	test_when_finished "git remote remove test_remote" &&
+	git checkout -b test copy^ &&
+	test_when_finished "git checkout -f copy && git branch -D test" &&
+	test_config branch.test.remote test_remote &&
+	test "$(cat file)" = file &&
+	test_must_fail git pull --all 2>err &&
+	test_i18ngrep "There is no tracking information" err &&
+	test "$(cat file)" = file
+'
+
 test_expect_success 'fail if upstream branch does not exist' '
 	git checkout -b test copy^ &&
 	test_when_finished "git checkout -f copy && git branch -D test" &&
@@ -363,6 +375,14 @@ test_expect_success '--rebase with rebased upstream' '
 	test "conflicting modification" = "$(cat file)" &&
 	test file = "$(cat file2)"
 
+'
+
+test_expect_success '--rebase -f with rebased upstream' '
+	test_when_finished "test_might_fail git rebase --abort" &&
+	git reset --hard to-rebase-orig &&
+	git pull --rebase -f me copy &&
+	test "conflicting modification" = "$(cat file)" &&
+	test file = "$(cat file2)"
 '
 
 test_expect_success '--rebase with rebased default upstream' '

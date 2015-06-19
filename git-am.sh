@@ -69,6 +69,8 @@ then
 	cmdline="$cmdline -3"
 fi
 
+empty_tree=4b825dc642cb6eb9a060e54bf8d69288fbee4904
+
 sq () {
 	git rev-parse --sq-quote "$@"
 }
@@ -85,7 +87,7 @@ safe_to_abort () {
 		return 1
 	fi
 
-	if ! test -s "$dotest/abort-safety"
+	if ! test -f "$dotest/abort-safety"
 	then
 		return 0
 	fi
@@ -177,7 +179,8 @@ It does not apply to blobs recorded in its index.")"
     then
 	    GIT_MERGE_VERBOSITY=0 && export GIT_MERGE_VERBOSITY
     fi
-    git-merge-recursive $orig_tree -- HEAD $his_tree || {
+    our_tree=$(git rev-parse --verify -q HEAD || echo $empty_tree)
+    git-merge-recursive $orig_tree -- $our_tree $his_tree || {
 	    git rerere $allow_rerere_autoupdate
 	    die "$(gettext "Failed to merge in the changes.")"
     }
@@ -378,6 +381,7 @@ committer_date_is_author_date=
 ignore_date=
 allow_rerere_autoupdate=
 gpg_sign_opt=
+threeway=
 
 if test "$(git config --bool --get am.messageid)" = true
 then
@@ -387,6 +391,11 @@ fi
 if test "$(git config --bool --get am.keepcr)" = true
 then
     keepcr=t
+fi
+
+if test "$(git config --bool --get am.threeWay)" = true
+then
+    threeway=t
 fi
 
 while test $# != 0
@@ -400,6 +409,8 @@ it will be removed. Please do not use it anymore."
 		;;
 	-3|--3way)
 		threeway=t ;;
+	--no-3way)
+		threeway=f ;;
 	-s|--signoff)
 		sign=t ;;
 	-u|--utf8)
@@ -502,10 +513,11 @@ then
 		;;
 	t,)
 		git rerere clear
-		git read-tree --reset -u HEAD HEAD
-		orig_head=$(cat "$GIT_DIR/ORIG_HEAD")
-		git reset HEAD
-		git update-ref ORIG_HEAD $orig_head
+		head_tree=$(git rev-parse --verify -q HEAD || echo $empty_tree) &&
+		git read-tree --reset -u $head_tree $head_tree &&
+		index_tree=$(git write-tree) &&
+		git read-tree -m -u $index_tree $head_tree
+		git read-tree $head_tree
 		;;
 	,t)
 		if test -f "$dotest/rebasing"
@@ -515,8 +527,19 @@ then
 		git rerere clear
 		if safe_to_abort
 		then
-			git read-tree --reset -u HEAD ORIG_HEAD
-			git reset ORIG_HEAD
+			head_tree=$(git rev-parse --verify -q HEAD || echo $empty_tree) &&
+			git read-tree --reset -u $head_tree $head_tree &&
+			index_tree=$(git write-tree) &&
+			orig_head=$(git rev-parse --verify -q ORIG_HEAD || echo $empty_tree) &&
+			git read-tree -m -u $index_tree $orig_head
+			if git rev-parse --verify -q ORIG_HEAD >/dev/null 2>&1
+			then
+				git reset ORIG_HEAD
+			else
+				git read-tree $empty_tree
+				curr_branch=$(git symbolic-ref HEAD 2>/dev/null) &&
+				git update-ref -d $curr_branch
+			fi
 		fi
 		rm -fr "$dotest"
 		exit ;;
@@ -657,6 +680,8 @@ fi
 if test "$(cat "$dotest/threeway")" = t
 then
 	threeway=t
+else
+	threeway=f
 fi
 git_apply_opt=$(cat "$dotest/apply-opt")
 if test "$(cat "$dotest/sign")" = t

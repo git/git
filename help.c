@@ -394,7 +394,7 @@ const char *help_unknown_cmd(const char *cmd)
 		if (autocorrect > 0) {
 			fprintf_ln(stderr, _("in %0.1f seconds automatically..."),
 				(float)autocorrect/10.0);
-			poll(NULL, 0, autocorrect * 100);
+			sleep_millisec(autocorrect * 100);
 		}
 		return assumed;
 	}

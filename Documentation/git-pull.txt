@@ -74,9 +74,6 @@ pulling or stash them away with linkgit:git-stash[1].
 OPTIONS
 -------
 
-Options meant for 'git pull' itself and the underlying 'git merge'
-must be given before the options meant for 'git fetch'.
-
 -q::
 --quiet::
 	This is passed to both underlying git-fetch to squelch reporting of
