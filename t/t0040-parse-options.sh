@@ -132,6 +132,8 @@ test_expect_success 'OPT_BOOL() no negation #2' 'check_unknown_i18n --no-no-fear
 
 test_expect_success 'OPT_BOOL() positivation' 'check boolean: 0 -D --doubt'
 
+test_expect_success 'OPT_INT() negative' 'check integer: -2345 -i -2345'
+
 cat > expect << EOF
 boolean: 2
 integer: 1729
