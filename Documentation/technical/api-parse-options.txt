@@ -168,6 +168,12 @@ There are some macros to easily define options:
 	Introduce an option with integer argument.
 	The integer is put into `int_var`.
 
+`OPT_MAGNITUDE(short, long, &unsigned_long_var, description)`::
+	Introduce an option with a size argument. The argument must be a
+	non-negative integer and may include a suffix of 'k', 'm' or 'g' to
+	scale the provided value by 1024, 1024^2 or 1024^3 respectively.
+	The scaled value is put into `unsigned_long_var`.
+
 `OPT_DATE(short, long, &int_var, description)`::
 	Introduce an option with date argument, see `approxidate()`.
 	The timestamp is put into `int_var`.
