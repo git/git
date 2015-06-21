@@ -18,7 +18,7 @@ static const char * const verify_commit_usage[] = {
 		NULL
 };
 
-static int run_gpg_verify(const unsigned char *sha1, const char *buf, unsigned long size, int verbose)
+static int run_gpg_verify(const unsigned char *sha1, const char *buf, unsigned long size, unsigned flags)
 {
 	struct signature_check signature_check;
 	int ret;
@@ -26,13 +26,13 @@ static int run_gpg_verify(const unsigned char *sha1, const char *buf, unsigned l
 	memset(&signature_check, 0, sizeof(signature_check));
 
 	ret = check_commit_signature(lookup_commit(sha1), &signature_check);
-	print_signature_buffer(&signature_check, verbose ? GPG_VERIFY_VERBOSE : 0);
+	print_signature_buffer(&signature_check, flags);
 
 	signature_check_clear(&signature_check);
 	return ret;
 }
 
-static int verify_commit(const char *name, int verbose)
+static int verify_commit(const char *name, unsigned flags)
 {
 	enum object_type type;
 	unsigned char sha1[20];
@@ -50,7 +50,7 @@ static int verify_commit(const char *name, int verbose)
 		return error("%s: cannot verify a non-commit object of type %s.",
 				name, typename(type));
 
-	ret = run_gpg_verify(sha1, buf, size, verbose);
+	ret = run_gpg_verify(sha1, buf, size, flags);
 
 	free(buf);
 	return ret;
@@ -67,8 +67,10 @@ static int git_verify_commit_config(const char *var, const char *value, void *cb
 int cmd_verify_commit(int argc, const char **argv, const char *prefix)
 {
 	int i = 1, verbose = 0, had_error = 0;
+	unsigned flags = 0;
 	const struct option verify_commit_options[] = {
 		OPT__VERBOSE(&verbose, N_("print commit contents")),
+		OPT_BIT(0, "raw", &flags, N_("print raw gpg status output"), GPG_VERIFY_RAW),
 		OPT_END()
 	};
 
@@ -79,11 +81,14 @@ int cmd_verify_commit(int argc, const char **argv, const char *prefix)
 	if (argc <= i)
 		usage_with_options(verify_commit_usage, verify_commit_options);
 
+	if (verbose)
+		flags |= GPG_VERIFY_VERBOSE;
+
 	/* sometimes the program was terminated because this signal
 	 * was received in the process of writing the gpg input: */
 	signal(SIGPIPE, SIG_IGN);
 	while (i < argc)
-		if (verify_commit(argv[i++], verbose))
+		if (verify_commit(argv[i++], flags))
 			had_error = 1;
 	return had_error;
 }

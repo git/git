@@ -88,6 +88,37 @@ test_expect_success GPG 'verify-commit exits success on untrusted signature' '
 	grep "not certified" actual
 '
 
+test_expect_success GPG 'verify signatures with --raw' '
+	(
+		for commit in initial second merge fourth-signed fifth-signed sixth-signed seventh-signed
+		do
+			git verify-commit --raw $commit 2>actual &&
+			grep "GOODSIG" actual &&
+			! grep "BADSIG" actual &&
+			echo $commit OK || exit 1
+		done
+	) &&
+	(
+		for commit in merge^2 fourth-unsigned sixth-unsigned seventh-unsigned
+		do
+			test_must_fail git verify-commit --raw $commit 2>actual &&
+			! grep "GOODSIG" actual &&
+			! grep "BADSIG" actual &&
+			echo $commit OK || exit 1
+		done
+	) &&
+	(
+		for commit in eighth-signed-alt
+		do
+			git verify-commit --raw $commit 2>actual &&
+			grep "GOODSIG" actual &&
+			! grep "BADSIG" actual &&
+			grep "TRUST_UNDEFINED" actual &&
+			echo $commit OK || exit 1
+		done
+	)
+'
+
 test_expect_success GPG 'show signed commit with signature' '
 	git show -s initial >commit &&
 	git show -s --show-signature initial >show &&
