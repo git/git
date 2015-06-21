@@ -27,7 +27,7 @@ extern int verify_signed_buffer(const char *payload, size_t payload_size, const 
 extern int git_gpg_config(const char *, const char *, void *);
 extern void set_signing_key(const char *);
 extern const char *get_signing_key(void);
-extern void check_signature(const char *payload, size_t plen,
+extern int check_signature(const char *payload, size_t plen,
 	const char *signature, size_t slen, struct signature_check *sigc);
 
 #endif

@@ -81,7 +81,7 @@ test_expect_success GPG 'verify and show signatures' '
 	)
 '
 
-test_expect_failure GPG 'verify-commit exits success on untrusted signature' '
+test_expect_success GPG 'verify-commit exits success on untrusted signature' '
 	git verify-commit eighth-signed-alt 2>actual &&
 	grep "Good signature from" actual &&
 	! grep "BAD signature from" actual &&

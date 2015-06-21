@@ -22,6 +22,7 @@ static int run_gpg_verify(const char *buf, unsigned long size, int verbose)
 {
 	struct signature_check sigc;
 	int len;
+	int ret;
 
 	memset(&sigc, 0, sizeof(sigc));
 
@@ -32,11 +33,11 @@ static int run_gpg_verify(const char *buf, unsigned long size, int verbose)
 	if (size == len)
 		return error("no signature found");
 
-	check_signature(buf, len, buf + len, size - len, &sigc);
+	ret = check_signature(buf, len, buf + len, size - len, &sigc);
 	fputs(sigc.gpg_output, stderr);
 
 	signature_check_clear(&sigc);
-	return sigc.result != 'G' && sigc.result != 'U';
+	return ret;
 }
 
 static int verify_tag(const char *name, int verbose)

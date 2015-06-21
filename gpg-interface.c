@@ -60,7 +60,7 @@ void parse_gpg_output(struct signature_check *sigc)
 	}
 }
 
-void check_signature(const char *payload, size_t plen, const char *signature,
+int check_signature(const char *payload, size_t plen, const char *signature,
 	size_t slen, struct signature_check *sigc)
 {
 	struct strbuf gpg_output = STRBUF_INIT;
@@ -81,6 +81,8 @@ void check_signature(const char *payload, size_t plen, const char *signature,
  out:
 	strbuf_release(&gpg_status);
 	strbuf_release(&gpg_output);
+
+	return sigc->result != 'G' && sigc->result != 'U';
 }
 
 /*
