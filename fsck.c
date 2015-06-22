@@ -131,6 +131,8 @@ static int parse_msg_type(const char *str)
 		return FSCK_ERROR;
 	else if (!strcmp(str, "warn"))
 		return FSCK_WARN;
+	else if (!strcmp(str, "ignore"))
+		return FSCK_IGNORE;
 	else
 		die("Unknown fsck message type: '%s'", str);
 }
@@ -221,6 +223,9 @@ static int report(struct fsck_options *options, struct object *object,
 	va_list ap;
 	struct strbuf sb = STRBUF_INIT;
 	int msg_type = fsck_msg_type(id, options), result;
+
+	if (msg_type == FSCK_IGNORE)
+		return 0;
 
 	if (msg_type == FSCK_FATAL)
 		msg_type = FSCK_ERROR;
