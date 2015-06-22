@@ -221,9 +221,7 @@ test_expect_success 'check hash of split' '
 	spl1=$(git subtree split --prefix subdir) &&
 	git subtree split --prefix subdir --branch splitbr1test &&
 	check_equal ''"$(git rev-parse splitbr1test)"'' "$spl1" &&
-	git checkout splitbr1test &&
-	new_hash=$(git rev-parse HEAD~2) &&
-	git checkout mainline &&
+	new_hash=$(git rev-parse splitbr1test~2) &&
 	check_equal ''"$new_hash"'' "$subdir_hash"
 '
 
