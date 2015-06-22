@@ -14,6 +14,7 @@ struct batch_options {
 	int enabled;
 	int follow_symlinks;
 	int print_contents;
+	int buffer_output;
 	const char *format;
 };
 
@@ -211,14 +212,25 @@ static size_t expand_format(struct strbuf *sb, const char *start, void *data)
 	return end - start + 1;
 }
 
-static void print_object_or_die(int fd, struct expand_data *data)
+static void batch_write(struct batch_options *opt, const void *data, int len)
+{
+	if (opt->buffer_output) {
+		if (fwrite(data, 1, len, stdout) != len)
+			die_errno("unable to write to stdout");
+	} else
+		write_or_die(1, data, len);
+}
+
+static void print_object_or_die(struct batch_options *opt, struct expand_data *data)
 {
 	const unsigned char *sha1 = data->sha1;
 
 	assert(data->info.typep);
 
 	if (data->type == OBJ_BLOB) {
-		if (stream_blob_to_fd(fd, sha1, NULL, 0) < 0)
+		if (opt->buffer_output)
+			fflush(stdout);
+		if (stream_blob_to_fd(1, sha1, NULL, 0) < 0)
 			die("unable to stream %s to stdout", sha1_to_hex(sha1));
 	}
 	else {
@@ -234,11 +246,10 @@ static void print_object_or_die(int fd, struct expand_data *data)
 		if (data->info.sizep && size != data->size)
 			die("object %s changed size!?", sha1_to_hex(sha1));
 
-		write_or_die(fd, contents, size);
+		batch_write(opt, contents, size);
 		free(contents);
 	}
 }
-
 
 static int batch_one_object(const char *obj_name, struct batch_options *opt,
 			    struct expand_data *data)
@@ -294,12 +305,12 @@ static int batch_one_object(const char *obj_name, struct batch_options *opt,
 
 	strbuf_expand(&buf, opt->format, expand_format, data);
 	strbuf_addch(&buf, '\n');
-	write_or_die(1, buf.buf, buf.len);
+	batch_write(opt, buf.buf, buf.len);
 	strbuf_release(&buf);
 
 	if (opt->print_contents) {
-		print_object_or_die(1, data);
-		write_or_die(1, "\n", 1);
+		print_object_or_die(opt, data);
+		batch_write(opt, "\n", 1);
 	}
 	return 0;
 }
@@ -415,6 +426,7 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 			    N_("for blob objects, run textconv on object's content"), 'c'),
 		OPT_BOOL(0, "allow-unknown-type", &unknown_type,
 			  N_("allow -s and -t to work with broken/corrupt objects")),
+		OPT_BOOL(0, "buffer", &batch.buffer_output, N_("buffer --batch output")),
 		{ OPTION_CALLBACK, 0, "batch", &batch, "format",
 			N_("show info and content of objects fed from the standard input"),
 			PARSE_OPT_OPTARG, batch_option_callback },

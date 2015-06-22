@@ -69,6 +69,13 @@ OPTIONS
 	not be combined with any other options or arguments.  See the
 	section `BATCH OUTPUT` below for details.
 
+--buffer::
+	Normally batch output is flushed after each object is output, so
+	that a process can interactively read and write from
+	`cat-file`. With this option, the output uses normal stdio
+	buffering; this is much more efficient when invoking
+	`--batch-check` on a large number of objects.
+
 --allow-unknown-type::
 	Allow -s or -t to query broken/corrupt objects of unknown type.
 
