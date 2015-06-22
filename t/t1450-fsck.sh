@@ -287,6 +287,17 @@ test_expect_success 'rev-list --verify-objects with bad sha1' '
 	grep -q "error: sha1 mismatch 63ffffffffffffffffffffffffffffffffffffff" out
 '
 
+test_expect_success 'force fsck to ignore double author' '
+	git cat-file commit HEAD >basis &&
+	sed "s/^author .*/&,&/" <basis | tr , \\n >multiple-authors &&
+	new=$(git hash-object -t commit -w --stdin <multiple-authors) &&
+	test_when_finished "remove_object $new" &&
+	git update-ref refs/heads/bogus "$new" &&
+	test_when_finished "git update-ref -d refs/heads/bogus" &&
+	test_must_fail git fsck &&
+	git -c fsck.multipleAuthors=ignore fsck
+'
+
 _bz='\0'
 _bz5="$_bz$_bz$_bz$_bz$_bz"
 _bz20="$_bz5$_bz5$_bz5$_bz5"
