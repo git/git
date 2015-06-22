@@ -63,14 +63,45 @@ enum fsck_msg_id {
 };
 #undef MSG_ID
 
-#define MSG_ID(id, msg_type) { FSCK_##msg_type },
+#define STR(x) #x
+#define MSG_ID(id, msg_type) { STR(id), NULL, FSCK_##msg_type },
 static struct {
+	const char *id_string;
+	const char *downcased;
 	int msg_type;
 } msg_id_info[FSCK_MSG_MAX + 1] = {
 	FOREACH_MSG_ID(MSG_ID)
-	{ -1 }
+	{ NULL, NULL, -1 }
 };
 #undef MSG_ID
+
+static int parse_msg_id(const char *text)
+{
+	int i;
+
+	if (!msg_id_info[0].downcased) {
+		/* convert id_string to lower case, without underscores. */
+		for (i = 0; i < FSCK_MSG_MAX; i++) {
+			const char *p = msg_id_info[i].id_string;
+			int len = strlen(p);
+			char *q = xmalloc(len);
+
+			msg_id_info[i].downcased = q;
+			while (*p)
+				if (*p == '_')
+					p++;
+				else
+					*(q)++ = tolower(*(p)++);
+			*q = '\0';
+		}
+	}
+
+	for (i = 0; i < FSCK_MSG_MAX; i++)
+		if (!strcmp(text, msg_id_info[i].downcased))
+			return i;
+
+	return -1;
+}
 
 static int fsck_msg_type(enum fsck_msg_id msg_id,
 	struct fsck_options *options)
