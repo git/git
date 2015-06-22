@@ -833,17 +833,7 @@ int mingw_stat(const char *file_name, struct stat *buf)
 	HANDLE hnd;
 	int result;
 
-	/* if symlinks are disabled, use lstat() (without following links) */
-	if (!has_symlinks) {
-		result = lstat(file_name, buf);
-		if (!result && S_ISLNK(buf->st_mode)) {
-			errno = ELOOP;
-			return -1;
-		}
-		return result;
-	}
-
-	/* otherwise just open the file and let Windows resolve the links */
+	/* open the file and let Windows resolve the links */
 	if (xutftowcs_long_path(wfile_name, file_name) < 0)
 		return -1;
 	hnd = CreateFileW(wfile_name, 0,
