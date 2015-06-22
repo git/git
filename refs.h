@@ -62,7 +62,7 @@ extern int read_ref_full(const char *refname, int resolve_flags,
 			 unsigned char *sha1, int *flags);
 extern int read_ref(const char *refname, unsigned char *sha1);
 
-extern int ref_exists(const char *);
+extern int ref_exists(const char *refname);
 
 extern int is_branch(const char *refname);
 
@@ -170,15 +170,15 @@ typedef int each_ref_fn(const char *refname,
  * modifies the reference also returns a nonzero value to immediately
  * stop the iteration.
  */
-extern int head_ref(each_ref_fn, void *);
-extern int for_each_ref(each_ref_fn, void *);
-extern int for_each_ref_in(const char *, each_ref_fn, void *);
-extern int for_each_tag_ref(each_ref_fn, void *);
-extern int for_each_branch_ref(each_ref_fn, void *);
-extern int for_each_remote_ref(each_ref_fn, void *);
-extern int for_each_replace_ref(each_ref_fn, void *);
-extern int for_each_glob_ref(each_ref_fn, const char *pattern, void *);
-extern int for_each_glob_ref_in(each_ref_fn, const char *pattern, const char* prefix, void *);
+extern int head_ref(each_ref_fn fn, void *cb_data);
+extern int for_each_ref(each_ref_fn fn, void *cb_data);
+extern int for_each_ref_in(const char *prefix, each_ref_fn fn, void *cb_data);
+extern int for_each_tag_ref(each_ref_fn fn, void *cb_data);
+extern int for_each_branch_ref(each_ref_fn fn, void *cb_data);
+extern int for_each_remote_ref(each_ref_fn fn, void *cb_data);
+extern int for_each_replace_ref(each_ref_fn fn, void *cb_data);
+extern int for_each_glob_ref(each_ref_fn fn, const char *pattern, void *cb_data);
+extern int for_each_glob_ref_in(each_ref_fn fn, const char *pattern, const char *prefix, void *cb_data);
 
 extern int head_ref_submodule(const char *submodule, each_ref_fn fn, void *cb_data);
 extern int for_each_ref_submodule(const char *submodule, each_ref_fn fn, void *cb_data);
@@ -192,7 +192,7 @@ extern int head_ref_namespaced(each_ref_fn fn, void *cb_data);
 extern int for_each_namespaced_ref(each_ref_fn fn, void *cb_data);
 
 /* can be used to learn about broken ref and symref */
-extern int for_each_rawref(each_ref_fn, void *);
+extern int for_each_rawref(each_ref_fn fn, void *cb_data);
 
 static inline const char *has_glob_specials(const char *pattern)
 {
