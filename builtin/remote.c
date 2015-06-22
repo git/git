@@ -756,8 +756,7 @@ static int remove_branches(struct string_list *branches)
 	strbuf_release(&err);
 
 	for (i = 0; i < branches->nr; i++) {
-		struct string_list_item *item = branches->items + i;
-		const char *refname = item->string;
+		const char *refname = branches->items[i].string;
 
 		if (delete_ref(refname, NULL, 0))
 			result |= error(_("Could not remove branch %s"), refname);
