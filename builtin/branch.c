@@ -160,7 +160,7 @@ static int branch_merged(int kind, const char *name,
 }
 
 static int check_branch_commit(const char *branchname, const char *refname,
-			       unsigned char *sha1, struct commit *head_rev,
+			       const unsigned char *sha1, struct commit *head_rev,
 			       int kinds, int force)
 {
 	struct commit *rev = lookup_commit_reference(sha1);
