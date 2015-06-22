@@ -251,16 +251,13 @@ static void print_object_or_die(struct batch_options *opt, struct expand_data *d
 	}
 }
 
-static int batch_one_object(const char *obj_name, struct batch_options *opt,
-			    struct expand_data *data)
+static void batch_one_object(const char *obj_name, struct batch_options *opt,
+			     struct expand_data *data)
 {
 	struct strbuf buf = STRBUF_INIT;
 	struct object_context ctx;
 	int flags = opt->follow_symlinks ? GET_SHA1_FOLLOW_SYMLINKS : 0;
 	enum follow_symlinks_result result;
-
-	if (!obj_name)
-	   return 1;
 
 	result = get_sha1_with_context(obj_name, flags, data->sha1, &ctx);
 	if (result != FOUND) {
@@ -286,7 +283,7 @@ static int batch_one_object(const char *obj_name, struct batch_options *opt,
 			break;
 		}
 		fflush(stdout);
-		return 0;
+		return;
 	}
 
 	if (ctx.mode == 0) {
@@ -294,13 +291,13 @@ static int batch_one_object(const char *obj_name, struct batch_options *opt,
 		       (uintmax_t)ctx.symlink_path.len,
 		       ctx.symlink_path.buf);
 		fflush(stdout);
-		return 0;
+		return;
 	}
 
 	if (sha1_object_info_extended(data->sha1, &data->info, LOOKUP_REPLACE_OBJECT) < 0) {
 		printf("%s missing\n", obj_name);
 		fflush(stdout);
-		return 0;
+		return;
 	}
 
 	strbuf_expand(&buf, opt->format, expand_format, data);
@@ -312,7 +309,6 @@ static int batch_one_object(const char *obj_name, struct batch_options *opt,
 		print_object_or_die(opt, data);
 		batch_write(opt, "\n", 1);
 	}
-	return 0;
 }
 
 static int batch_objects(struct batch_options *opt)
@@ -367,9 +363,7 @@ static int batch_objects(struct batch_options *opt)
 			data.rest = p;
 		}
 
-		retval = batch_one_object(buf.buf, opt, &data);
-		if (retval)
-			break;
+		batch_one_object(buf.buf, opt, &data);
 	}
 
 	strbuf_release(&buf);
