@@ -38,6 +38,7 @@
 	FUNC(MISSING_TREE, ERROR) \
 	FUNC(MISSING_TYPE, ERROR) \
 	FUNC(MISSING_TYPE_ENTRY, ERROR) \
+	FUNC(MULTIPLE_AUTHORS, ERROR) \
 	FUNC(NUL_IN_HEADER, ERROR) \
 	FUNC(TAG_OBJECT_NOT_TAG, ERROR) \
 	FUNC(TREE_NOT_SORTED, ERROR) \
@@ -529,7 +530,7 @@ static int fsck_commit_buffer(struct commit *commit, const char *buffer,
 {
 	unsigned char tree_sha1[20], sha1[20];
 	struct commit_graft *graft;
-	unsigned parent_count, parent_line_count = 0;
+	unsigned parent_count, parent_line_count = 0, author_count;
 	int err;
 
 	if (require_end_of_header(buffer, size, &commit->object, options))
@@ -569,9 +570,17 @@ static int fsck_commit_buffer(struct commit *commit, const char *buffer,
 				return err;
 		}
 	}
-	if (!skip_prefix(buffer, "author ", &buffer))
-		return report(options, &commit->object, FSCK_MSG_MISSING_AUTHOR, "invalid format - expected 'author' line");
-	err = fsck_ident(&buffer, &commit->object, options);
+	author_count = 0;
+	while (skip_prefix(buffer, "author ", &buffer)) {
+		author_count++;
+		err = fsck_ident(&buffer, &commit->object, options);
+		if (err)
+			return err;
+	}
+	if (author_count < 1)
+		err = report(options, &commit->object, FSCK_MSG_MISSING_AUTHOR, "invalid format - expected 'author' line");
+	else if (author_count > 1)
+		err = report(options, &commit->object, FSCK_MSG_MULTIPLE_AUTHORS, "invalid format - multiple 'author' lines");
 	if (err)
 		return err;
 	if (!skip_prefix(buffer, "committer ", &buffer))
