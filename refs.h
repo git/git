@@ -154,17 +154,6 @@ extern void rollback_packed_refs(void);
  */
 int pack_refs(unsigned int flags);
 
-/*
- * Rewrite the packed-refs file, omitting any refs listed in
- * 'refnames'. On error, packed-refs will be unchanged, the return
- * value is nonzero, and a message about the error is written to the
- * 'err' strbuf.
- *
- * The refs in 'refnames' needn't be sorted. `err` must not be NULL.
- */
-extern int repack_without_refs(struct string_list *refnames,
-			       struct strbuf *err);
-
 extern int ref_exists(const char *);
 
 extern int is_branch(const char *refname);
