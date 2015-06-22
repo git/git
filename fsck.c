@@ -189,6 +189,24 @@ void fsck_set_msg_types(struct fsck_options *options, const char *values)
 	free(to_free);
 }
 
+static void append_msg_id(struct strbuf *sb, const char *msg_id)
+{
+	for (;;) {
+		char c = *(msg_id)++;
+
+		if (!c)
+			break;
+		if (c != '_')
+			strbuf_addch(sb, tolower(c));
+		else {
+			assert(*msg_id);
+			strbuf_addch(sb, *(msg_id)++);
+		}
+	}
+
+	strbuf_addstr(sb, ": ");
+}
+
 __attribute__((format (printf, 4, 5)))
 static int report(struct fsck_options *options, struct object *object,
 	enum fsck_msg_id id, const char *fmt, ...)
@@ -196,6 +214,8 @@ static int report(struct fsck_options *options, struct object *object,
 	va_list ap;
 	struct strbuf sb = STRBUF_INIT;
 	int msg_type = fsck_msg_type(id, options), result;
+
+	append_msg_id(&sb, msg_id_info[id].id_string);
 
 	va_start(ap, fmt);
 	strbuf_vaddf(&sb, fmt, ap);
