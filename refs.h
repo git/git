@@ -2,6 +2,98 @@
 #define REFS_H
 
 /*
+ * Resolve a reference, recursively following symbolic refererences.
+ *
+ * Store the referred-to object's name in sha1 and return the name of
+ * the non-symbolic reference that ultimately pointed at it.  The
+ * return value, if not NULL, is a pointer into either a static buffer
+ * or the input ref.
+ *
+ * If the reference cannot be resolved to an object, the behavior
+ * depends on the RESOLVE_REF_READING flag:
+ *
+ * - If RESOLVE_REF_READING is set, return NULL.
+ *
+ * - If RESOLVE_REF_READING is not set, clear sha1 and return the name of
+ *   the last reference name in the chain, which will either be a non-symbolic
+ *   reference or an undefined reference.  If this is a prelude to
+ *   "writing" to the ref, the return value is the name of the ref
+ *   that will actually be created or changed.
+ *
+ * If the RESOLVE_REF_NO_RECURSE flag is passed, only resolves one
+ * level of symbolic reference.  The value stored in sha1 for a symbolic
+ * reference will always be null_sha1 in this case, and the return
+ * value is the reference that the symref refers to directly.
+ *
+ * If flags is non-NULL, set the value that it points to the
+ * combination of REF_ISPACKED (if the reference was found among the
+ * packed references), REF_ISSYMREF (if the initial reference was a
+ * symbolic reference), REF_BAD_NAME (if the reference name is ill
+ * formed --- see RESOLVE_REF_ALLOW_BAD_NAME below), and REF_ISBROKEN
+ * (if the ref is malformed or has a bad name). See refs.h for more detail
+ * on each flag.
+ *
+ * If ref is not a properly-formatted, normalized reference, return
+ * NULL.  If more than MAXDEPTH recursive symbolic lookups are needed,
+ * give up and return NULL.
+ *
+ * RESOLVE_REF_ALLOW_BAD_NAME allows resolving refs even when their
+ * name is invalid according to git-check-ref-format(1).  If the name
+ * is bad then the value stored in sha1 will be null_sha1 and the two
+ * flags REF_ISBROKEN and REF_BAD_NAME will be set.
+ *
+ * Even with RESOLVE_REF_ALLOW_BAD_NAME, names that escape the refs/
+ * directory and do not consist of all caps and underscores cannot be
+ * resolved. The function returns NULL for such ref names.
+ * Caps and underscores refers to the special refs, such as HEAD,
+ * FETCH_HEAD and friends, that all live outside of the refs/ directory.
+ */
+#define RESOLVE_REF_READING 0x01
+#define RESOLVE_REF_NO_RECURSE 0x02
+#define RESOLVE_REF_ALLOW_BAD_NAME 0x04
+
+extern const char *resolve_ref_unsafe(const char *refname, int resolve_flags,
+				      unsigned char *sha1, int *flags);
+
+extern char *resolve_refdup(const char *refname, int resolve_flags,
+			    unsigned char *sha1, int *flags);
+
+extern int read_ref_full(const char *refname, int resolve_flags,
+			 unsigned char *sha1, int *flags);
+extern int read_ref(const char *refname, unsigned char *sha1);
+
+extern int ref_exists(const char *);
+
+extern int is_branch(const char *refname);
+
+/*
+ * If refname is a non-symbolic reference that refers to a tag object,
+ * and the tag can be (recursively) dereferenced to a non-tag object,
+ * store the SHA1 of the referred-to object to sha1 and return 0.  If
+ * any of these conditions are not met, return a non-zero value.
+ * Symbolic references are considered unpeelable, even if they
+ * ultimately resolve to a peelable tag.
+ */
+extern int peel_ref(const char *refname, unsigned char *sha1);
+
+/**
+ * Resolve refname in the nested "gitlink" repository that is located
+ * at path.  If the resolution is successful, return 0 and set sha1 to
+ * the name of the object; otherwise, return a non-zero value.
+ */
+extern int resolve_gitlink_ref(const char *path, const char *refname, unsigned char *sha1);
+
+/*
+ * Return true iff abbrev_name is a possible abbreviation for
+ * full_name according to the rules defined by ref_rev_parse_rules in
+ * refs.c.
+ */
+extern int refname_match(const char *abbrev_name, const char *full_name);
+
+extern int dwim_ref(const char *str, int len, unsigned char *sha1, char **ref);
+extern int dwim_log(const char *str, int len, unsigned char *sha1, char **ref);
+
+/*
  * A ref_transaction represents a collection of ref updates
  * that should succeed or fail together.
  *
@@ -99,13 +191,13 @@ extern int for_each_remote_ref_submodule(const char *submodule, each_ref_fn fn, 
 extern int head_ref_namespaced(each_ref_fn fn, void *cb_data);
 extern int for_each_namespaced_ref(each_ref_fn fn, void *cb_data);
 
+/* can be used to learn about broken ref and symref */
+extern int for_each_rawref(each_ref_fn, void *);
+
 static inline const char *has_glob_specials(const char *pattern)
 {
 	return strpbrk(pattern, "?*[");
 }
-
-/* can be used to learn about broken ref and symref */
-extern int for_each_rawref(each_ref_fn, void *);
 
 extern void warn_dangling_symref(FILE *fp, const char *msg_fmt, const char *refname);
 extern void warn_dangling_symrefs(FILE *fp, const char *msg_fmt, const struct string_list *refnames);
@@ -123,20 +215,6 @@ extern void warn_dangling_symrefs(FILE *fp, const char *msg_fmt, const struct st
  * flags: Combination of the above PACK_REFS_* flags.
  */
 int pack_refs(unsigned int flags);
-
-extern int ref_exists(const char *);
-
-extern int is_branch(const char *refname);
-
-/*
- * If refname is a non-symbolic reference that refers to a tag object,
- * and the tag can be (recursively) dereferenced to a non-tag object,
- * store the SHA1 of the referred-to object to sha1 and return 0.  If
- * any of these conditions are not met, return a non-zero value.
- * Symbolic references are considered unpeelable, even if they
- * ultimately resolve to a peelable tag.
- */
-extern int peel_ref(const char *refname, unsigned char *sha1);
 
 /*
  * Flags controlling ref_transaction_update(), ref_transaction_create(), etc.
@@ -206,17 +284,13 @@ extern int for_each_reflog(each_ref_fn, void *);
 extern int check_refname_format(const char *refname, int flags);
 
 extern const char *prettify_refname(const char *refname);
+
 extern char *shorten_unambiguous_ref(const char *refname, int strict);
 
 /** rename ref, return 0 on success **/
 extern int rename_ref(const char *oldref, const char *newref, const char *logmsg);
 
-/**
- * Resolve refname in the nested "gitlink" repository that is located
- * at path.  If the resolution is successful, return 0 and set sha1 to
- * the name of the object; otherwise, return a non-zero value.
- */
-extern int resolve_gitlink_ref(const char *path, const char *refname, unsigned char *sha1);
+extern int create_symref(const char *ref, const char *refs_heads_master, const char *logmsg);
 
 enum action_on_err {
 	UPDATE_REFS_MSG_ON_ERR,
@@ -367,6 +441,7 @@ int update_ref(const char *msg, const char *refname,
 	       unsigned int flags, enum action_on_err onerr);
 
 extern int parse_hide_refs_config(const char *var, const char *value, const char *);
+
 extern int ref_is_hidden(const char *);
 
 enum expire_reflog_flags {
