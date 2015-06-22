@@ -9,6 +9,7 @@
 #include "userdiff.h"
 #include "streaming.h"
 #include "tree-walk.h"
+#include "sha1-array.h"
 
 struct batch_options {
 	int enabled;
@@ -324,19 +325,19 @@ struct object_cb_data {
 	struct expand_data *expand;
 };
 
-static int batch_object_cb(const unsigned char *sha1,
-			   struct object_cb_data *data)
+static void batch_object_cb(const unsigned char sha1[20], void *vdata)
 {
+	struct object_cb_data *data = vdata;
 	hashcpy(data->expand->sha1, sha1);
 	batch_object_write(NULL, data->opt, data->expand);
-	return 0;
 }
 
 static int batch_loose_object(const unsigned char *sha1,
 			      const char *path,
 			      void *data)
 {
-	return batch_object_cb(sha1, data);
+	sha1_array_append(data, sha1);
+	return 0;
 }
 
 static int batch_packed_object(const unsigned char *sha1,
@@ -344,7 +345,8 @@ static int batch_packed_object(const unsigned char *sha1,
 			       uint32_t pos,
 			       void *data)
 {
-	return batch_object_cb(sha1, data);
+	sha1_array_append(data, sha1);
+	return 0;
 }
 
 static int batch_objects(struct batch_options *opt)
@@ -375,11 +377,17 @@ static int batch_objects(struct batch_options *opt)
 		data.info.typep = &data.type;
 
 	if (opt->all_objects) {
+		struct sha1_array sa = SHA1_ARRAY_INIT;
 		struct object_cb_data cb;
+
+		for_each_loose_object(batch_loose_object, &sa, 0);
+		for_each_packed_object(batch_packed_object, &sa, 0);
+
 		cb.opt = opt;
 		cb.expand = &data;
-		for_each_loose_object(batch_loose_object, &cb, 0);
-		for_each_packed_object(batch_packed_object, &cb, 0);
+		sha1_array_for_each_unique(&sa, batch_object_cb, &cb);
+
+		sha1_array_clear(&sa);
 		return 0;
 	}
 

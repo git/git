@@ -74,8 +74,7 @@ OPTIONS
 	requested batch operation on all objects in the repository and
 	any alternate object stores (not just reachable objects).
 	Requires `--batch` or `--batch-check` be specified. Note that
-	the order of the objects is unspecified, and there may be
-	duplicate entries.
+	the objects are visited in order sorted by their hashes.
 
 --buffer::
 	Normally batch output is flushed after each object is output, so

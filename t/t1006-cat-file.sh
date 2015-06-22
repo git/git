@@ -548,7 +548,7 @@ test_expect_success 'git cat-file --batch --follow-symlink returns correct sha a
 '
 
 test_expect_success 'cat-file --batch-all-objects shows all objects' '
-	# make new repos so we now the full set of objects; we will
+	# make new repos so we know the full set of objects; we will
 	# also make sure that there are some packed and some loose
 	# objects, some referenced and some not, and that there are
 	# some available only via alternates.
@@ -569,8 +569,7 @@ test_expect_success 'cat-file --batch-all-objects shows all objects' '
 	) >>expect.unsorted &&
 	sort <expect.unsorted >expect &&
 	git -C all-two cat-file --batch-all-objects \
-				--batch-check="%(objectname)" >actual.unsorted &&
-	sort <actual.unsorted >actual &&
+				--batch-check="%(objectname)" >actual &&
 	test_cmp expect actual
 '
 
