@@ -2807,10 +2807,17 @@ int delete_ref(const char *refname, const unsigned char *old_sha1,
 	struct ref_transaction *transaction;
 	struct strbuf err = STRBUF_INIT;
 
+	/*
+	 * Treat NULL_SHA1 and NULL alike, to mean "we don't care what
+	 * the old value of the reference was (or even if it didn't
+	 * exist)":
+	 */
+	if (old_sha1 && is_null_sha1(old_sha1))
+		old_sha1 = NULL;
+
 	transaction = ref_transaction_begin(&err);
 	if (!transaction ||
-	    ref_transaction_delete(transaction, refname,
-				   (old_sha1 && !is_null_sha1(old_sha1)) ? old_sha1 : NULL,
+	    ref_transaction_delete(transaction, refname, old_sha1,
 				   flags, NULL, &err) ||
 	    ref_transaction_commit(transaction, &err)) {
 		error("%s", err.buf);
