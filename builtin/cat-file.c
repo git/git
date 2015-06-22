@@ -15,6 +15,7 @@ struct batch_options {
 	int follow_symlinks;
 	int print_contents;
 	int buffer_output;
+	int all_objects;
 	const char *format;
 };
 
@@ -257,7 +258,7 @@ static void batch_object_write(const char *obj_name, struct batch_options *opt,
 	struct strbuf buf = STRBUF_INIT;
 
 	if (sha1_object_info_extended(data->sha1, &data->info, LOOKUP_REPLACE_OBJECT) < 0) {
-		printf("%s missing\n", obj_name);
+		printf("%s missing\n", obj_name ? obj_name : sha1_to_hex(data->sha1));
 		fflush(stdout);
 		return;
 	}
@@ -318,6 +319,34 @@ static void batch_one_object(const char *obj_name, struct batch_options *opt,
 	batch_object_write(obj_name, opt, data);
 }
 
+struct object_cb_data {
+	struct batch_options *opt;
+	struct expand_data *expand;
+};
+
+static int batch_object_cb(const unsigned char *sha1,
+			   struct object_cb_data *data)
+{
+	hashcpy(data->expand->sha1, sha1);
+	batch_object_write(NULL, data->opt, data->expand);
+	return 0;
+}
+
+static int batch_loose_object(const unsigned char *sha1,
+			      const char *path,
+			      void *data)
+{
+	return batch_object_cb(sha1, data);
+}
+
+static int batch_packed_object(const unsigned char *sha1,
+			       struct packed_git *pack,
+			       uint32_t pos,
+			       void *data)
+{
+	return batch_object_cb(sha1, data);
+}
+
 static int batch_objects(struct batch_options *opt)
 {
 	struct strbuf buf = STRBUF_INIT;
@@ -344,6 +373,15 @@ static int batch_objects(struct batch_options *opt)
 	 */
 	if (opt->print_contents)
 		data.info.typep = &data.type;
+
+	if (opt->all_objects) {
+		struct object_cb_data cb;
+		cb.opt = opt;
+		cb.expand = &data;
+		for_each_loose_object(batch_loose_object, &cb, 0);
+		for_each_packed_object(batch_packed_object, &cb, 0);
+		return 0;
+	}
 
 	/*
 	 * We are going to call get_sha1 on a potentially very large number of
@@ -436,6 +474,8 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 			PARSE_OPT_OPTARG, batch_option_callback },
 		OPT_BOOL(0, "follow-symlinks", &batch.follow_symlinks,
 			 N_("follow in-tree symlinks (used with --batch or --batch-check)")),
+		OPT_BOOL(0, "batch-all-objects", &batch.all_objects,
+			 N_("show all objects with --batch or --batch-check")),
 		OPT_END()
 	};
 
@@ -460,7 +500,7 @@ int cmd_cat_file(int argc, const char **argv, const char *prefix)
 		usage_with_options(cat_file_usage, options);
 	}
 
-	if (batch.follow_symlinks && !batch.enabled) {
+	if ((batch.follow_symlinks || batch.all_objects) && !batch.enabled) {
 		usage_with_options(cat_file_usage, options);
 	}
 

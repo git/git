@@ -69,6 +69,14 @@ OPTIONS
 	not be combined with any other options or arguments.  See the
 	section `BATCH OUTPUT` below for details.
 
+--batch-all-objects::
+	Instead of reading a list of objects on stdin, perform the
+	requested batch operation on all objects in the repository and
+	any alternate object stores (not just reachable objects).
+	Requires `--batch` or `--batch-check` be specified. Note that
+	the order of the objects is unspecified, and there may be
+	duplicate entries.
+
 --buffer::
 	Normally batch output is flushed after each object is output, so
 	that a process can interactively read and write from
