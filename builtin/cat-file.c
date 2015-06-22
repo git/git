@@ -10,6 +10,13 @@
 #include "streaming.h"
 #include "tree-walk.h"
 
+struct batch_options {
+	int enabled;
+	int follow_symlinks;
+	int print_contents;
+	const char *format;
+};
+
 static int cat_one_file(int opt, const char *exp_type, const char *obj_name,
 			int unknown_type)
 {
@@ -232,12 +239,6 @@ static void print_object_or_die(int fd, struct expand_data *data)
 	}
 }
 
-struct batch_options {
-	int enabled;
-	int follow_symlinks;
-	int print_contents;
-	const char *format;
-};
 
 static int batch_one_object(const char *obj_name, struct batch_options *opt,
 			    struct expand_data *data)
