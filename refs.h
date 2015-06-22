@@ -212,6 +212,13 @@ extern int reflog_exists(const char *refname);
 extern int delete_ref(const char *refname, const unsigned char *old_sha1,
 		      unsigned int flags);
 
+/*
+ * Delete the specified references. If there are any problems, emit
+ * errors but attempt to keep going (i.e., the deletes are not done in
+ * an all-or-nothing transaction).
+ */
+extern int delete_refs(struct string_list *refnames);
+
 /** Delete a reflog */
 extern int delete_reflog(const char *refname);
 
