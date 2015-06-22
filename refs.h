@@ -240,11 +240,11 @@ extern int read_ref_at(const char *refname, unsigned int flags,
 extern int reflog_exists(const char *refname);
 
 /*
- * Delete the specified reference. If old_sha1 is non-NULL and not
- * NULL_SHA1, then verify that the current value of the reference is
- * old_sha1 before deleting it. If old_sha1 is NULL or NULL_SHA1,
- * delete the reference if it exists, regardless of its old value.
- * flags is passed through to ref_transaction_delete().
+ * Delete the specified reference. If old_sha1 is non-NULL, then
+ * verify that the current value of the reference is old_sha1 before
+ * deleting it. If old_sha1 is NULL, delete the reference if it
+ * exists, regardless of its old value. It is an error for old_sha1 to
+ * be NULL_SHA1. flags is passed through to ref_transaction_delete().
  */
 extern int delete_ref(const char *refname, const unsigned char *old_sha1,
 		      unsigned int flags);
