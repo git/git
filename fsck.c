@@ -643,7 +643,8 @@ static int fsck_tag_buffer(struct tag *tag, const char *data,
 	}
 	if (get_sha1_hex(buffer, sha1) || buffer[40] != '\n') {
 		ret = report(options, &tag->object, FSCK_MSG_BAD_OBJECT_SHA1, "invalid 'object' line format - bad sha1");
-		goto done;
+		if (ret)
+			goto done;
 	}
 	buffer += 41;
 
