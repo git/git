@@ -218,6 +218,7 @@ test_expect_success 'gc: prune old objects after local clone' '
 '
 
 test_expect_success 'garbage report in count-objects -v' '
+	test_when_finished "rm -f .git/objects/pack/fake*" &&
 	: >.git/objects/pack/foo &&
 	: >.git/objects/pack/foo.bar &&
 	: >.git/objects/pack/foo.keep &&
