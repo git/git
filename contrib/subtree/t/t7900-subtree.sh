@@ -177,7 +177,8 @@ test_expect_success 'check if --message for merge works with squash too' '
 test_expect_success 'merge new subproj history into subdir' '
 	git subtree merge --prefix=subdir FETCH_HEAD &&
 	git branch pre-split &&
-	check_equal ''"$(last_commit_message)"'' "Merge commit '"'"'"$(git rev-parse sub2)"'"'"' into mainline"
+	check_equal ''"$(last_commit_message)"'' "Merge commit '"'"'"$(git rev-parse sub2)"'"'"' into mainline" &&
+	undo
 '
 
 test_expect_success 'Check that prefix argument is required for split' '
@@ -218,9 +219,8 @@ test_expect_success 'check split with --branch' '
 
 test_expect_success 'check hash of split' '
 	spl1=$(git subtree split --prefix subdir) &&
-	undo &&
 	git subtree split --prefix subdir --branch splitbr1test &&
-	check_equal ''"$(git rev-parse splitbr1test)"'' "$spl1"
+	check_equal ''"$(git rev-parse splitbr1test)"'' "$spl1" &&
 	git checkout splitbr1test &&
 	new_hash=$(git rev-parse HEAD~2) &&
 	git checkout mainline &&
@@ -269,7 +269,7 @@ test_expect_success 'add sub9' '
 cd ..
 
 test_expect_success 'split for sub8' '
-	split2=''"$(git subtree split --annotate='"'*'"' --prefix subdir/ --rejoin)"''
+	split2=''"$(git subtree split --annotate='"'*'"' --prefix subdir/ --rejoin)"'' &&
 	git branch split2 "$split2"
 '
 
