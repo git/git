@@ -1,17 +1,22 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jun 2015, #04; Tue, 16)
-X-master-at: 16da57c7c6c1fe92b32645202dd19657a89dd67d
-X-next-at: d7bed1d571a3164716149e236b028e1e8ae2619b
+Subject: What's cooking in git.git (Jun 2015, #05; Mon, 22)
+X-master-at: 5b1d901c0173b41010856e30776c92d02987ea25
+X-next-at: 6397abdce8831f34ac73793bdc73f48511c6d798
 
-What's cooking in git.git (Jun 2015, #04; Tue, 16)
+What's cooking in git.git (Jun 2015, #05; Mon, 22)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-Hopefully the pre-release freeze can start late next week, and the
+Some of the topics in flight have overlaps with each other and have
+been excluded from 'pu'; most notably, I think the remainder of
+bc/object-id needs to wait until the for-each-ref topic from Karthik
+settles and then rebased on it, or something.
+
+Hopefully the pre-release freeze can start late this week, and the
 next cycle would reopen mid next month.  In the meantime, let's
 shift the focus on making sure that what has already been merged to
 'master' are good (i.e. regression hunting and fixes).
@@ -24,260 +29,134 @@ of the repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* jk/pkt-log-pack (2015-06-16) 3 commits
- - pkt-line: support tracing verbatim pack contents
- - pkt-line: tighten sideband PACK check when tracing
- - pkt-line: simplify starts_with checks in packet tracing
+* js/rebase-i-clean-up-upon-continue-to-skip (2015-06-18) 3 commits
+ - rebase -i: do not leave a CHERRY_PICK_HEAD file behind
+ - SQUASH: test_must_fail is a shell function
+ - t3404: demonstrate CHERRY_PICK_HEAD bug
 
- Enhance packet tracing machinery to allow capturing an incoming
- pack data to a file for debugging.
+ Abandoning an already applied change in "git rebase -i" with
+ "--continue" left CHERRY_PICK_HEAD and confused later steps.
 
-
-* jk/stash-require-clean-index (2015-06-15) 1 commit
-  (merged to 'next' on 2015-06-16 at beb4883)
- + Revert "stash: require a clean index to apply"
-
- A hotfix for the topic already in 'master'.
-
- Will merge to 'master'.
+ Expecting a reroll.
+ ($gmane/271856)
 
 
-* kb/i18n-doc (2015-06-15) 1 commit
- - Documentation/i18n.txt: clarify character encoding support
+* me/fetch-into-shallow-safety (2015-06-17) 1 commit
+ - fetch-pack: check for shallow if depth given
 
- Comments?
-
-
-* kb/use-nsec-doc (2015-06-15) 1 commit
- - Makefile / racy-git.txt: clarify USE_NSEC prerequisites
-
- Comments?
-
-
-* kn/for-each-ref (2015-06-15) 11 commits
- - ref-filter: make 'ref_array_item' use a FLEX_ARRAY for refname
- - for-each-ref: introduce filter_refs()
- - ref-filter: move code from 'for-each-ref'
- - ref-filter: add 'ref-filter.h'
- - for-each-ref: rename variables called sort to sorting
- - for-each-ref: rename some functions and make them public
- - for-each-ref: introduce 'ref_array_clear()'
- - for-each-ref: introduce new structures for better organisation
- - for-each-ref: rename 'refinfo' to 'ref_array_item'
- - for-each-ref: clean up code
- - for-each-ref: extract helper functions out of grab_single_ref()
-
- GSoC project to rebuild ref listing by branch and tag based on the
- for-each-ref machinery.
+ "git fetch --depth=<depth>" and "git clone --depth=<depth>" issued
+ a shallow transfer request even to an upload-pack that does not
+ support the capability.
 
  Will merge to 'next'.
 
 
-* mh/init-delete-refs-api (2015-06-15) 13 commits
- - SQUASH avoid die(variable)
- - refs: move the remaining ref module declarations to refs.h
- - initial_ref_transaction_commit(): check for ref D/F conflicts
- - initial_ref_transaction_commit(): check for duplicate refs
- - refs: remove some functions from the module's public interface
- - initial_ref_transaction_commit(): function for initial ref creation
- - repack_without_refs(): make function private
- - prune_remote(): use delete_refs()
- - delete_refs(): improve error message
- - delete_refs(): new function for the refs API
- - delete_ref(): handle special case more explicitly
- - remove_branches(): remove temporary
- - delete_ref(): move declaration to refs.h
-
- Clean up refs API and make "git clone" less intimate with the
- implementation detail.
-
- Needs reroll.
-
-
-* mh/replace-refs (2015-06-12) 1 commit
- - Allow to control where the replace refs are looked for
-
- Add an environment variable to tell Git to look into refs hierarchy
- other than refs/replace/ for the object replacement data.
-
-
-* nd/multiple-work-trees (2015-06-12) 1 commit
- - checkout: don't check worktrees when not necessary
-
- "git checkout [<tree-ish>] <paths>" spent unnecessary cycles
- checking if the current branch was checked out elsewhere, when we
- know we are not switching the branches ourselves.
+* mm/describe-doc (2015-06-16) 1 commit
+ - Documentation/describe: improve one-line summary
 
  Will merge to 'next'.
 
 
-* pa/auto-gc-mac-osx (2015-06-12) 1 commit
-  (merged to 'next' on 2015-06-16 at 151ec95)
- + hooks/pre-auto-gc: adjust power checking for newer OS X
+* rh/test-color-avoid-terminfo-in-original-home (2015-06-17) 2 commits
+ - test-lib.sh: fix color support when tput needs ~/.terminfo
+ - Revert "test-lib.sh: do tests for color support after changing HOME"
 
- Recent Mac OS X updates breaks the logic to detect that the machine
- is on the AC power in the sample pre-auto-gc script.
+ An ancient test framework enhancement to allow color was not
+ entirely correct; this makes it work even when tput needs to read
+ from the ~/.terminfo under the user's real HOME directory.
 
- Will merge to 'master'.
-
-
-* pt/t0302-needs-sanity (2015-06-12) 1 commit
-  (merged to 'next' on 2015-06-16 at f0d8e17)
- + t0302: "unreadable" test needs SANITY prereq
-
- Will merge to 'master'.
-
---------------------------------------------------
-[Graduated to "master"]
-
-* ah/send-email-sendmail-alias (2015-05-27) 2 commits
-  (merged to 'next' on 2015-06-04 at 9d9bd68)
- + t9001: write $HOME/, not ~/, to help shells without tilde expansion
- + send-email: add sendmail email aliases format
- (this branch is used by es/send-email-sendmail-alias.)
-
- "git send-email" learned the alias file format used by the sendmail
- program (in an abbreviated form).
+ Will merge to 'next'.
 
 
-* jc/diff-ws-error-highlight (2015-05-26) 4 commits
-  (merged to 'next' on 2015-06-01 at 6046560)
- + diff.c: --ws-error-highlight=<kind> option
- + diff.c: add emit_del_line() and emit_context_line()
- + t4015: separate common setup and per-test expectation
- + t4015: modernise style
+* tb/checkout-doc (2015-06-17) 1 commit
+ - git-checkout.txt: document "git checkout <pathspec>" better
 
- Allow whitespace breakages in deleted and context lines to be also
- painted in the output.
+ $gmane/271812
 
 
-* jk/clone-dissociate (2015-05-27) 2 commits
-  (merged to 'next' on 2015-06-01 at 19e3ec3)
- + clone: reorder --dissociate and --reference options
- + clone: use OPT_STRING_LIST for --reference
+* jk/pretty-encoding-doc (2015-06-17) 1 commit
+ - docs: clarify that --encoding can produce invalid sequences
 
- Code clean-up.
+ $gmane/271879
 
 
-* jk/color-diff-plain-is-context (2015-05-27) 2 commits
-  (merged to 'next' on 2015-06-01 at bcd8f1d)
- + diff.h: rename DIFF_PLAIN color slot to DIFF_CONTEXT
- + diff: accept color.diff.context as a synonym for "plain"
+* ak/format-patch-odir-config (2015-06-19) 1 commit
+ - format-patch: introduce format.outputDirectory configuration
 
- "color.diff.plain" was a misnomer; give it 'color.diff.context' as
- a more logical synonym.
+ Reroll exists but didn't pick it up as it seems to be still
+ collecting review comments.
 
 
-* jk/diagnose-config-mmap-failure (2015-05-28) 5 commits
-  (merged to 'next' on 2015-06-01 at ca750d5)
- + xmmap(): drop "Out of memory?"
- + config.c: rewrite ENODEV into EISDIR when mmap fails
- + config.c: avoid xmmap error messages
- + config.c: fix mmap leak when writing config
- + read-cache.c: drop PROT_WRITE from mmap of index
+* bc/gpg-verify-raw (2015-06-22) 7 commits
+ - verify-tag: add option to print raw gpg status information
+ - verify-commit: add option to print raw gpg status information
+ - gpg: centralize printing signature buffers
+ - gpg: centralize signature check
+ - verify-commit: add test for exit status on untrusted signature
+ - verify-tag: share code with verify-commit
+ - verify-tag: add tests
 
- The configuration reader/writer uses mmap(2) interface to access
- the files; when we find a directory, it barfed with "Out of memory?".
+ "git verify-tag" and "git verify-commit" have been taught to share
+ more code, and then learned to optionally show the verification
+ message from the underlying GPG implementation.
 
-
-* jk/die-on-bogus-worktree-late (2015-05-29) 1 commit
-  (merged to 'next' on 2015-06-04 at fac7a83)
- + setup_git_directory: delay core.bare/core.worktree errors
-
- The setup code used to die when core.bare and core.worktree are set
- inconsistently, even for commands that do not need working tree.
+ Will merge to 'next'.
 
 
-* jk/make-fix-dependencies (2015-05-29) 3 commits
-  (merged to 'next' on 2015-06-04 at 28daf19)
- + Makefile: silence perl/PM.stamp recipe
- + Makefile: avoid timestamp updates to GIT-BUILD-OPTIONS
- + Makefile: drop dependency between git-instaweb and gitweb
+* cb/parse-magnitude (2015-06-22) 2 commits
+ - parse-options: move unsigned long option parsing out of pack-objects.c
+ - test-parse-options: update to handle negative ints
 
- Build clean-up.
+ Move machinery to parse human-readable scaled numbers like 1k, 4M,
+ and 2G as an option parameter's value from pack-objects to
+ parse-options API, to make it available to other codepaths.
 
-
-* jk/squelch-missing-link-warning-for-unreachable (2015-06-01) 3 commits
-  (merged to 'next' on 2015-06-01 at 9ddc5d1)
- + suppress errors on missing UNINTERESTING links
- + silence broken link warnings with revs->ignore_missing_links
- + add quieter versions of parse_{tree,commit}
-
- Recent "git prune" traverses young unreachable objects to safekeep
- old objects in the reachability chain from them, which sometimes
- caused error messages that are unnecessarily alarming.
+ Will merge to 'next'.
 
 
-* mh/verify-lock-error-report (2015-05-27) 5 commits
-  (merged to 'next' on 2015-06-01 at 7b450a7)
- + ref_transaction_commit(): do not capitalize error messages
- + verify_lock(): do not capitalize error messages
- + verify_lock(): report errors via a strbuf
- + verify_lock(): on errors, let the caller unlock the lock
- + verify_lock(): return 0/-1 rather than struct ref_lock *
+* cb/subtree-tests-update (2015-06-22) 3 commits
+ - contrib/subtree: small tidy-up to test
+ - contrib/subtree: fix broken &&-chains and revealed test error
+ - contrib/subtree: use tabs consitently for indentation in tests
 
- Bring consistency to error reporting mechanism used in "refs" API.
+ Will merge to 'next'.
 
 
-* mt/p4-depotFile-at-version (2015-05-27) 1 commit
-  (merged to 'next' on 2015-06-01 at 33e8622)
- + p4: retrieve the right revision of the file in UTF-16 codepath
+* da/mergetool-winmerge (2015-06-19) 1 commit
+ - mergetool-lib: fix default tool selection
+
+ An earlier change already in 'master' broke the default tool
+ selection for mergetool.
+
+ Will merge to 'next'.
 
 
-* nd/slim-index-pack-memory-usage (2015-06-04) 1 commit
-  (merged to 'next' on 2015-06-04 at 328fd50)
- + index-pack: fix truncation of off_t in comparison
+* jk/cat-file-batch-all (2015-06-22) 8 commits
+ - cat-file: sort and de-dup output of --batch-all-objects
+ - cat-file: add --batch-all-objects option
+ - cat-file: split batch_one_object into two stages
+ - cat-file: stop returning value from batch_one_object
+ - cat-file: add --buffer option
+ - cat-file: move batch_options definition to top of file
+ - cat-file: minor style fix in options list
+ - Merge branch 'jk/maint-for-each-packed-object' into jk/cat-file-batch-all
+ (this branch uses jk/maint-for-each-packed-object.)
 
- An earlier optimization broke index-pack for a large object
- transfer; this fixes it before the breakage hits any released
- version.
-
-
-* pt/pull-tests (2015-05-29) 8 commits
-  (merged to 'next' on 2015-06-01 at c98370b)
- + t5520: check reflog action in fast-forward merge
- + t5521: test --dry-run does not make any changes
- + t5520: test --rebase failure on unborn branch with index
- + t5520: test --rebase with multiple branches
- + t5520: test work tree fast-forward when fetch updates head
- + t5520: test for failure if index has unresolved entries
- + t5520: test no merge candidates cases
- + t5520: prevent field splitting in content comparisons
- (this branch is used by pt/pull-optparse.)
-
- Add more test coverage to "git pull".
+ "cat-file" learned "--batch-all-objects" option to enumerate all
+ available objects in the repository more quickly than "rev-list
+ --all --objects" (the output includes unreachable objects, though).
 
 
-* sb/glossary-submodule (2015-05-29) 1 commit
-  (merged to 'next' on 2015-06-01 at 84de87b)
- + glossary: add "remote", "submodule", "superproject"
 
+* jk/maint-for-each-packed-object (2015-06-22) 1 commit
+ - for_each_packed_object: automatically open pack index
+ (this branch is used by jk/cat-file-batch-all.)
 
-* sb/pack-protocol-mention-smart-http (2015-06-02) 1 commit
-  (merged to 'next' on 2015-06-04 at 8041cf6)
- + Documentation/technical/pack-protocol: mention http as possible protocol
+ The for_each_packed_object() API function did not iterate over
+ objects in a packfile that hasn't been used yet.
 
- Doc updates.
+ Will merge to 'next'.
 
-
-* sb/submodule-doc-intro (2015-05-28) 1 commit
-  (merged to 'next' on 2015-06-01 at b6798de)
- + submodule doc: reorder introductory paragraphs
-
-
-* sg/merge-summary-config (2015-05-28) 1 commit
-  (merged to 'next' on 2015-06-04 at 8c0946c)
- + Documentation: include 'merge.branchdesc' for merge and config as well
-
- Doc updates.
-
-
-* tb/complete-sequencing (2015-06-01) 1 commit
-  (merged to 'next' on 2015-06-01 at b7604e8)
- + completion: suggest sequencer commands for revert
-
- The bash completion script (in contrib/) learned a few options that
- "git revert" takes.
 
 --------------------------------------------------
 [Stalled]
@@ -390,31 +269,28 @@ of the repositories listed at
  Waiting for a further polished reroll ($gmane/265534).
 
 
-* js/fsck-opt (2015-01-21) 19 commits
+* js/fsck-opt (2015-06-22) 19 commits
  - fsck: support ignoring objects in `git fsck` via fsck.skiplist
  - fsck: git receive-pack: support excluding objects from fsck'ing
- - fsck: introduce `git fsck --quick`
+ - fsck: introduce `git fsck --connectivity-only`
  - fsck: support demoting errors to warnings
- - fsck: document the new receive.fsck.* options
+ - fsck: document the new receive.fsck.<msg-id> options
  - fsck: allow upgrading fsck warnings to errors
  - fsck: optionally ignore specific fsck issues completely
  - fsck: disallow demoting grave fsck errors to warnings
- - fsck: add a simple test for receive.fsck.*
+ - fsck: add a simple test for receive.fsck.<msg-id>
  - fsck: make fsck_tag() warn-friendly
  - fsck: handle multiple authors in commits specially
  - fsck: make fsck_commit() warn-friendly
  - fsck: make fsck_ident() warn-friendly
  - fsck: report the ID of the error/warning
- - fsck: allow demoting errors to warnings via receive.fsck.warn = <key>
+ - fsck (receive-pack): allow demoting errors to warnings
  - fsck: offer a function to demote fsck errors to warnings
  - fsck: provide a function to parse fsck message IDs
  - fsck: introduce identifiers for fsck messages
  - fsck: introduce fsck options
 
- "fsck.warnings = <list of error tokens>" I suggested turned out to
- be an unpopular choice (sorry Dscho).
-
- Expecting a reroll.
+ Rerolled (at v7) and seems more or less ready for 'next'.
 
 
 * nd/pathspec-strip-fix (2015-04-18) 1 commit
@@ -461,7 +337,8 @@ of the repositories listed at
  with conflicts the person who recorded the merge would have seen
  and the final conflict resolution that was recorded in the merge.
 
- Waiting for a reroll ($gmane/256591).
+ Waiting for a reroll.
+ ($gmane/256591).
 
 
 * tg/perf-lib-test-perf-cleanup (2013-09-19) 2 commits
@@ -485,6 +362,116 @@ of the repositories listed at
 
 --------------------------------------------------
 [Cooking]
+
+* jk/pkt-log-pack (2015-06-16) 3 commits
+ - pkt-line: support tracing verbatim pack contents
+ - pkt-line: tighten sideband PACK check when tracing
+ - pkt-line: simplify starts_with checks in packet tracing
+
+ Enhance packet tracing machinery to allow capturing an incoming
+ pack data to a file for debugging.
+
+
+* jk/stash-require-clean-index (2015-06-15) 1 commit
+  (merged to 'next' on 2015-06-16 at beb4883)
+ + Revert "stash: require a clean index to apply"
+
+ A hotfix for the topic already in 'master'.
+
+ Will merge to 'master'.
+
+
+* kb/i18n-doc (2015-06-15) 1 commit
+ - Documentation/i18n.txt: clarify character encoding support
+
+ Comments (other than $gmane/271657)?
+
+
+* kb/use-nsec-doc (2015-06-15) 1 commit
+ - Makefile / racy-git.txt: clarify USE_NSEC prerequisites
+
+ Comments (other than $gmane/271656)?
+
+
+* kn/for-each-ref (2015-06-15) 11 commits
+ - ref-filter: make 'ref_array_item' use a FLEX_ARRAY for refname
+ - for-each-ref: introduce filter_refs()
+ - ref-filter: move code from 'for-each-ref'
+ - ref-filter: add 'ref-filter.h'
+ - for-each-ref: rename variables called sort to sorting
+ - for-each-ref: rename some functions and make them public
+ - for-each-ref: introduce 'ref_array_clear()'
+ - for-each-ref: introduce new structures for better organisation
+ - for-each-ref: rename 'refinfo' to 'ref_array_item'
+ - for-each-ref: clean up code
+ - for-each-ref: extract helper functions out of grab_single_ref()
+
+ GSoC project to rebuild ref listing by branch and tag based on the
+ for-each-ref machinery.
+
+ Will merge to 'next'.
+
+
+* mh/init-delete-refs-api (2015-06-22) 19 commits
+ - delete_ref(): use the usual convention for old_sha1
+ - cmd_update_ref(): make logic more straightforward
+ - update_ref(): don't read old reference value before delete
+ - check_branch_commit(): make first parameter const
+ - refs.h: add some parameter names to function declarations
+ - refs: move the remaining ref module declarations to refs.h
+ - initial_ref_transaction_commit(): check for ref D/F conflicts
+ - initial_ref_transaction_commit(): check for duplicate refs
+ - refs: remove some functions from the module's public interface
+ - initial_ref_transaction_commit(): function for initial ref creation
+ - repack_without_refs(): make function private
+ - prune_refs(): use delete_refs()
+ - prune_remote(): use delete_refs()
+ - delete_refs(): bail early if the packed-refs file cannot be rewritten
+ - delete_refs(): make error message more generic
+ - delete_refs(): new function for the refs API
+ - delete_ref(): handle special case more explicitly
+ - remove_branches(): remove temporary
+ - delete_ref(): move declaration to refs.h
+
+ Clean up refs API and make "git clone" less intimate with the
+ implementation detail.
+
+ Will merge to 'next'.
+
+
+* mh/replace-refs (2015-06-12) 1 commit
+ - Allow to control where the replace refs are looked for
+
+ Add an environment variable to tell Git to look into refs hierarchy
+ other than refs/replace/ for the object replacement data.
+
+
+* nd/multiple-work-trees (2015-06-12) 1 commit
+ - checkout: don't check worktrees when not necessary
+
+ "git checkout [<tree-ish>] <paths>" spent unnecessary cycles
+ checking if the current branch was checked out elsewhere, when we
+ know we are not switching the branches ourselves.
+
+ Will merge to 'next'.
+
+
+* pa/auto-gc-mac-osx (2015-06-12) 1 commit
+  (merged to 'next' on 2015-06-16 at 151ec95)
+ + hooks/pre-auto-gc: adjust power checking for newer OS X
+
+ Recent Mac OS X updates breaks the logic to detect that the machine
+ is on the AC power in the sample pre-auto-gc script.
+
+ Will merge to 'master'.
+
+
+* pt/t0302-needs-sanity (2015-06-12) 1 commit
+  (merged to 'next' on 2015-06-16 at f0d8e17)
+ + t0302: "unreadable" test needs SANITY prereq
+
+ Will merge to 'master'.
+
 
 * af/tcsh-completion-noclobber (2015-06-09) 1 commit
   (merged to 'next' on 2015-06-16 at 621f205)
@@ -636,7 +623,7 @@ of the repositories listed at
  Will merge to 'next'.
 
 
-* pt/pull-builtin (2015-06-15) 19 commits
+* pt/pull-builtin (2015-06-18) 19 commits
  - pull: remove redirection to git-pull.sh
  - pull --rebase: error on no merge candidate cases
  - pull --rebase: exit early when the working directory is dirty
@@ -660,9 +647,14 @@ of the repositories listed at
  Reimplement 'git pull' in C.
 
 
-* rl/send-email-aliases (2015-06-08) 5 commits
- - send-email: refactor address list process
+* rl/send-email-aliases (2015-06-17) 10 commits
+ - send-email: suppress meaningless whitespaces in from field
  - send-email: allow multiple emails using --cc, --to and --bcc
+ - send-email: consider quote as delimiter instead of character
+ - send-email: reduce dependancies impact on parse_address_line
+ - send-email: minor code refactoring
+ - send-email: allow use of aliases in the From field of --compose mode
+ - send-email: refactor address list process
  - t9001-send-email: refactor header variable fields replacement
  - send-email: allow aliases in patch header and command script outputs
  - t9001-send-email: move script creation in a setup test
@@ -670,7 +662,11 @@ of the repositories listed at
  "git send-email" now performs alias-expansion on names that are
  given via --cccmd, etc.
 
- What's the doneness of this one?
+ This round comes with a lot more enhanced e-mail address parser,
+ which makes it a bit scary, but as long as it works as designed, it
+ makes it wonderful ;-).
+
+ Still RFC?
 
 
 * sg/commit-cleanup-scissors (2015-06-09) 1 commit
@@ -700,17 +696,22 @@ of the repositories listed at
  Expecting a reroll.
 
 
-* bc/object-id (2015-06-15) 8 commits
- - remote.c: use struct object_id in ref_newer()
- - transport-helper.c: use struct object_id in push_refs_with_export()
- - connect.c: use struct object_id in get_remote_heads()
- - remote-curl: use struct object_id in parse_fetch()
- - fetch-pack: use struct object_id in add_sought_entry_mem()
- - object_id: convert struct ref to use object_id.
- - sha1_file: introduce has_object_file() helper
- - refs: convert some internal functions to use object_id
+* bc/object-id (2015-06-17) 10 commits
+ . remote.c: use struct object_id in many functions
+ . object-id: use struct object_id in struct object
+ . remote.c: use struct object_id in ref_newer()
+ . transport-helper.c: use struct object_id in push_refs_with_export()
+ . connect.c: use struct object_id in get_remote_heads()
+ . remote-curl: use struct object_id in parse_fetch()
+ . fetch-pack: use struct object_id in add_sought_entry_mem()
+ . object_id: convert struct ref to use object_id.
+ . sha1_file: introduce has_object_file() helper
+ . refs: convert some internal functions to use object_id
 
- (incomplete - the last two not queued yet)
+ More transition from "unsigned char[40]" to "struct object_id".
+
+ While GSoC and other topics are actively moving existing code
+ around, this cannot go in; ejected from 'pu'.
 
 
 * jc/ll-merge-expose-path (2015-06-04) 1 commit
@@ -744,7 +745,7 @@ of the repositories listed at
  who do not use it (and instead just remove the lines) by throwing
  a warning.
 
- What's the status of this one?
+ Expecting a reroll ($gmane/271831).
 
 
 * jh/strbuf-read-use-read-in-full (2015-06-01) 1 commit
