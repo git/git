@@ -686,7 +686,13 @@ extern char *notes_ref_name;
 
 extern int grafts_replace_parents;
 
+/*
+ * GIT_REPO_VERSION is the version we write by default. The
+ * _READ variant is the highest number we know how to
+ * handle.
+ */
 #define GIT_REPO_VERSION 0
+#define GIT_REPO_VERSION_READ 1
 extern int repository_format_version;
 extern int check_repository_format(void);
 
