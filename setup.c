@@ -367,6 +367,8 @@ static int check_repo_format(const char *var, const char *value, void *cb)
 		 */
 		if (!strcmp(ext, "noop"))
 			;
+		else if (!strcmp(ext, "preciousobjects"))
+			repository_format_precious_objects = git_config_bool(var, value);
 		else
 			string_list_append(&unknown_extensions, ext);
 	}

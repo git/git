@@ -105,4 +105,26 @@ abort 1 no-such-extension
 allow 0 no-such-extension
 EOF
 
+test_expect_success 'precious-objects allowed' '
+	mkconfig 1 preciousObjects >.git/config &&
+	check_allow
+'
+
+test_expect_success 'precious-objects blocks destructive repack' '
+	test_must_fail git repack -ad
+'
+
+test_expect_success 'other repacks are OK' '
+	test_commit foo &&
+	git repack
+'
+
+test_expect_success 'precious-objects blocks prune' '
+	test_must_fail git prune
+'
+
+test_expect_success 'gc runs without complaint' '
+	git gc
+'
+
 test_done

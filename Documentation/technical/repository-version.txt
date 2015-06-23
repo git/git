@@ -79,3 +79,10 @@ The defined extensions are:
 
 This extension does not change git's behavior at all. It is useful only
 for testing format-1 compatibility.
+
+`preciousObjects`
+~~~~~~~~~~~~~~~~~
+
+When the config key `extensions.preciousObjects` is set to `true`,
+objects in the repository MUST NOT be deleted (e.g., by `git-prune` or
+`git repack -d`).
