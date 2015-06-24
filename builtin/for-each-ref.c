@@ -866,6 +866,11 @@ static int grab_single_ref(const char *refname, const struct object_id *oid,
 		  return 0;
 	}
 
+	if (flag & REF_ISBROKEN) {
+		  warning("ignoring broken ref %s", refname);
+		  return 0;
+	}
+
 	if (*cb->grab_pattern) {
 		const char **pattern;
 		int namelen = strlen(refname);
