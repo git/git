@@ -9,6 +9,7 @@
 #include "xdiff-interface.h"
 #include "run-command.h"
 #include "ll-merge.h"
+#include "quote.h"
 
 struct ll_merge_driver;
 
@@ -166,17 +167,20 @@ static int ll_ext_merge(const struct ll_merge_driver *fn,
 {
 	char temp[4][50];
 	struct strbuf cmd = STRBUF_INIT;
-	struct strbuf_expand_dict_entry dict[5];
+	struct strbuf_expand_dict_entry dict[6];
+	struct strbuf path_sq = STRBUF_INIT;
 	const char *args[] = { NULL, NULL };
 	int status, fd, i;
 	struct stat st;
 	assert(opts);
 
+	sq_quote_buf(&path_sq, path);
 	dict[0].placeholder = "O"; dict[0].value = temp[0];
 	dict[1].placeholder = "A"; dict[1].value = temp[1];
 	dict[2].placeholder = "B"; dict[2].value = temp[2];
 	dict[3].placeholder = "L"; dict[3].value = temp[3];
-	dict[4].placeholder = NULL; dict[4].value = NULL;
+	dict[4].placeholder = "P"; dict[4].value = path_sq.buf;
+	dict[5].placeholder = NULL; dict[5].value = NULL;
 
 	if (fn->cmdline == NULL)
 		die("custom merge driver %s lacks command line.", fn->name);
@@ -210,6 +214,7 @@ static int ll_ext_merge(const struct ll_merge_driver *fn,
 	for (i = 0; i < 3; i++)
 		unlink_or_warn(temp[i]);
 	strbuf_release(&cmd);
+	strbuf_release(&path_sq);
 	return status;
 }
 
@@ -269,6 +274,7 @@ static int read_merge_config(const char *var, const char *value, void *cb)
 		 *    %A - temporary file name for our version.
 		 *    %B - temporary file name for the other branches' version.
 		 *    %L - conflict marker length
+		 *    %P - the original path (safely quoted for the shell)
 		 *
 		 * The external merge driver should write the results in the
 		 * file named by %A, and signal that it has done with zero exit

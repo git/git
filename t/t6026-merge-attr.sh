@@ -85,11 +85,12 @@ test_expect_success 'retry the merge with longer context' '
 cat >./custom-merge <<\EOF
 #!/bin/sh
 
-orig="$1" ours="$2" theirs="$3" exit="$4"
+orig="$1" ours="$2" theirs="$3" exit="$4" path=$5
 (
 	echo "orig is $orig"
 	echo "ours is $ours"
 	echo "theirs is $theirs"
+	echo "path is $path"
 	echo "=== orig ==="
 	cat "$orig"
 	echo "=== ours ==="
@@ -110,7 +111,7 @@ test_expect_success 'custom merge backend' '
 
 	git reset --hard anchor &&
 	git config --replace-all \
-	merge.custom.driver "./custom-merge %O %A %B 0" &&
+	merge.custom.driver "./custom-merge %O %A %B 0 %P" &&
 	git config --replace-all \
 	merge.custom.name "custom merge driver for testing" &&
 
@@ -121,7 +122,7 @@ test_expect_success 'custom merge backend' '
 	o=$(git unpack-file master^:text) &&
 	a=$(git unpack-file side^:text) &&
 	b=$(git unpack-file master:text) &&
-	sh -c "./custom-merge $o $a $b 0" &&
+	sh -c "./custom-merge $o $a $b 0 'text'" &&
 	sed -e 1,3d $a >check-2 &&
 	cmp check-1 check-2 &&
 	rm -f $o $a $b
@@ -131,7 +132,7 @@ test_expect_success 'custom merge backend' '
 
 	git reset --hard anchor &&
 	git config --replace-all \
-	merge.custom.driver "./custom-merge %O %A %B 1" &&
+	merge.custom.driver "./custom-merge %O %A %B 1 %P" &&
 	git config --replace-all \
 	merge.custom.name "custom merge driver for testing" &&
 
@@ -148,9 +149,12 @@ test_expect_success 'custom merge backend' '
 	o=$(git unpack-file master^:text) &&
 	a=$(git unpack-file anchor:text) &&
 	b=$(git unpack-file master:text) &&
-	sh -c "./custom-merge $o $a $b 0" &&
+	sh -c "./custom-merge $o $a $b 0 'text'" &&
 	sed -e 1,3d $a >check-2 &&
 	cmp check-1 check-2 &&
+	sed -e 1,3d -e 4q $a >check-3 &&
+	echo "path is text" >expect &&
+	cmp expect check-3 &&
 	rm -f $o $a $b
 '
 

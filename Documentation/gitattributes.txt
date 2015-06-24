@@ -774,7 +774,7 @@ To define a custom merge driver `filfre`, add a section to your
 ----------------------------------------------------------------
 [merge "filfre"]
 	name = feel-free merge driver
-	driver = filfre %O %A %B
+	driver = filfre %O %A %B %L %P
 	recursive = binary
 ----------------------------------------------------------------
 
@@ -799,6 +799,9 @@ driver to use when the merge driver is called for an internal
 merge between common ancestors, when there are more than one.
 When left unspecified, the driver itself is used for both
 internal merge and the final merge.
+
+The merge driver can learn the pathname in which the merged result
+will be stored via placeholder `%P`.
 
 
 `conflict-marker-size`
