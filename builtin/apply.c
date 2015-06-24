@@ -1638,6 +1638,9 @@ static int parse_fragment(const char *line, unsigned long size,
 	}
 	if (oldlines || newlines)
 		return -1;
+	if (!deleted && !added)
+		return -1;
+
 	fragment->leading = leading;
 	fragment->trailing = trailing;
 
