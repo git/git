@@ -76,6 +76,8 @@ include::blame-options.txt[]
 -e::
 --show-email::
 	Show the author email instead of author name (Default: off).
+	This can also be controlled via the `blame.showEmail` config
+	option.
 
 -w::
 	Ignore whitespace when comparing the parent's version and
