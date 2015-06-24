@@ -130,4 +130,18 @@ test_expect_success 'git pull --dry-run' '
 	)
 '
 
+test_expect_success 'git pull --all --dry-run' '
+	test_when_finished "rm -rf cloneddry" &&
+	git init clonedry &&
+	(
+		cd clonedry &&
+		git remote add origin ../parent &&
+		git pull --all --dry-run &&
+		test_path_is_missing .git/FETCH_HEAD &&
+		test_path_is_missing .git/refs/remotes/origin/master &&
+		test_path_is_missing .git/index &&
+		test_path_is_missing file
+	)
+'
+
 test_done
