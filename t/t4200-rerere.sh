@@ -406,4 +406,78 @@ test_expect_success 'rerere -h' '
 	test_i18ngrep [Uu]sage help
 '
 
+concat_insert () {
+	last=$1
+	shift
+	cat early && printf "%s\n" "$@" && cat late "$last"
+}
+
+test_expect_failure 'multiple identical conflicts' '
+	git reset --hard &&
+
+	test_seq 1 6 >early &&
+	>late &&
+	test_seq 11 15 >short &&
+	test_seq 111 120 >long &&
+	concat_insert short >file1 &&
+	concat_insert long >file2 &&
+	git add file1 file2 &&
+	git commit -m base &&
+	git tag base &&
+	git checkout -b six.1 &&
+	concat_insert short 6.1 >file1 &&
+	concat_insert long 6.1 >file2 &&
+	git add file1 file2 &&
+	git commit -m 6.1 &&
+	git checkout -b six.2 HEAD^ &&
+	concat_insert short 6.2 >file1 &&
+	concat_insert long 6.2 >file2 &&
+	git add file1 file2 &&
+	git commit -m 6.2 &&
+
+	# At this point, six.1 and six.2
+	# - derive from common ancestor that has two files
+	#   1...6 7 11..15 (file1) and 1...6 7 111..120 (file2)
+	# - six.1 replaces these 7s with 6.1
+	# - six.2 replaces these 7s with 6.2
+
+	test_must_fail git merge six.1 &&
+
+	# Check that rerere knows that file1 and file2 have conflicts
+
+	printf "%s\n" file1 file2 >expect &&
+	git ls-files -u | sed -e "s/^.*	//" | sort -u >actual &&
+	test_cmp expect actual &&
+
+	git rerere status | sort >actual &&
+	test_cmp expect actual &&
+
+	# Resolution is to replace 7 with 6.1 and 6.2 (i.e. take both)
+	concat_insert short 6.1 6.2 >file1 &&
+	concat_insert long 6.1 6.2 >file2 &&
+
+	git rerere remaining >actual &&
+	test_cmp expect actual &&
+
+	# We resolved file1 and file2
+	git rerere &&
+	>expect &&
+	git rerere remaining >actual &&
+	test_cmp expect actual &&
+
+	# Now we should be able to resolve them both
+	git reset --hard &&
+	test_must_fail git merge six.1 &&
+	git rerere &&
+
+	>expect &&
+	git rerere remaining >actual &&
+	test_cmp expect actual &&
+
+	concat_insert short 6.1 6.2 >file1.expect &&
+	concat_insert long 6.1 6.2 >file2.expect &&
+	test_cmp file1.expect file1 &&
+	test_cmp file2.expect file2
+'
+
 test_done
