@@ -274,15 +274,21 @@ test_expect_success 'am --keep-non-patch really keeps the non-patch part' '
 	grep "^\[foo\] third" actual
 '
 
-test_expect_success 'am -3 falls back to 3-way merge' '
+test_expect_success 'setup am -3' '
 	rm -fr .git/rebase-apply &&
 	git reset --hard &&
-	git checkout -b lorem2 master2 &&
+	git checkout -b base3way master2 &&
 	sed -n -e "3,\$p" msg >file &&
 	head -n 9 msg >>file &&
 	git add file &&
 	test_tick &&
-	git commit -m "copied stuff" &&
+	git commit -m "copied stuff"
+'
+
+test_expect_success 'am -3 falls back to 3-way merge' '
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
+	git checkout -b lorem2 base3way &&
 	git am -3 lorem-move.patch &&
 	test_path_is_missing .git/rebase-apply &&
 	git diff --exit-code lorem
@@ -291,15 +297,29 @@ test_expect_success 'am -3 falls back to 3-way merge' '
 test_expect_success 'am -3 -p0 can read --no-prefix patch' '
 	rm -fr .git/rebase-apply &&
 	git reset --hard &&
-	git checkout -b lorem3 master2 &&
-	sed -n -e "3,\$p" msg >file &&
-	head -n 9 msg >>file &&
-	git add file &&
-	test_tick &&
-	git commit -m "copied stuff" &&
+	git checkout -b lorem3 base3way &&
 	git am -3 -p0 lorem-zero.patch &&
 	test_path_is_missing .git/rebase-apply &&
 	git diff --exit-code lorem
+'
+
+test_expect_success 'am with config am.threeWay falls back to 3-way merge' '
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
+	git checkout -b lorem4 base3way &&
+	test_config am.threeWay 1 &&
+	git am lorem-move.patch &&
+	test_path_is_missing .git/rebase-apply &&
+	git diff --exit-code lorem
+'
+
+test_expect_success 'am with config am.threeWay overridden by --no-3way' '
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
+	git checkout -b lorem5 base3way &&
+	test_config am.threeWay 1 &&
+	test_must_fail git am --no-3way lorem-move.patch &&
+	test_path_is_dir .git/rebase-apply
 '
 
 test_expect_success 'am can rename a file' '
@@ -338,12 +358,7 @@ test_expect_success 'am -3 can rename a file after falling back to 3-way merge' 
 test_expect_success 'am -3 -q is quiet' '
 	rm -fr .git/rebase-apply &&
 	git checkout -f lorem2 &&
-	git reset master2 --hard &&
-	sed -n -e "3,\$p" msg >file &&
-	head -n 9 msg >>file &&
-	git add file &&
-	test_tick &&
-	git commit -m "copied stuff" &&
+	git reset base3way --hard &&
 	git am -3 -q lorem-move.patch >output.out 2>&1 &&
 	! test -s output.out
 '
