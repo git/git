@@ -42,8 +42,8 @@ esac
 
 vername=$(echo "$vername" | tr "-" ".")
 
-git log --format='%aN,' "$previous" | sort -u >"$tmpbase.prev"
-git log --format='%aN,' "$previous..$commit" | sort -u >"$tmpbase.this"
+git log --use-mailmap --format='%aN,' "$previous" | sort -u >"$tmpbase.prev"
+git log --use-mailmap --format='%aN,' "$previous..$commit" | sort -u >"$tmpbase.this"
 comm -12 "$tmpbase.prev" "$tmpbase.this" >"$tmpbase.old"
 comm -13 "$tmpbase.prev" "$tmpbase.this" >"$tmpbase.new"
 
@@ -59,11 +59,16 @@ Subject: [ANNOUNCE] Git $relname
 
 EOF
 
-fmt -68 <<EOF
-$kind Git $relname is now available$for_testing at the usual places.
-It is comprised of $cnt non-merge commits since $previous,
-contributed by $all people, $new of which are new faces.
-EOF
+(
+	echo "$kind Git $relname is now available$for_testing at the usual places."
+	if test "$branch" = master
+	then
+		cat <<-EOF
+		It is comprised of $cnt non-merge commits since $previous,
+		contributed by $all people, $new of which are new faces.
+		EOF
+	fi
+) | fmt -68
 
 cat <<EOF
 
@@ -71,8 +76,22 @@ The tarballs are found at:
 
     https://www.kernel.org/pub/software/scm/git/${for_testing:+testing/}
 
-The following public repositories all have a copy of the '$relname'
-tag and the '$branch' branch that the tag points at:
+EOF
+
+(
+	cat <<-EOF
+	The following public repositories all have a copy of
+	the '$relname' tag and
+	EOF
+	case "$branch" in
+	maint-* | mainto/*)
+		echo "some of them have"
+		;;
+	esac
+	echo "the '$branch' branch that the tag points at:"
+) | fmt -68
+
+cat <<\EOF
 
   url = https://kernel.googlesource.com/pub/scm/git/git
   url = git://repo.or.cz/alt-git.git
@@ -94,17 +113,23 @@ fmt_people () {
 
 }
 
+if test "$branch" = master
+then
+	cat <<-EOF
+
+	New contributors whose contributions weren't in $previous are as follows.
+	Welcome to the Git development community!
+
+	$(fmt_people "$tmpbase.new")
+
+	Returning contributors who helped this release are as follows.
+	Thanks for your continued support.
+
+	$(fmt_people "$tmpbase.old")
+	EOF
+fi
+
 cat <<EOF
-
-New contributors whose contributions weren't in $previous are as follows.
-Welcome to the Git development community!
-
-$(fmt_people "$tmpbase.new")
-
-Returning contributors who helped this release are as follows.
-Thanks for your continued support.
-
-$(fmt_people "$tmpbase.old")
 
 ----------------------------------------------------------------
 
