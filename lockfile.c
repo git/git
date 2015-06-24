@@ -157,14 +157,6 @@ static int lock_file(struct lock_file *lk, const char *path, int flags)
 	return lk->fd;
 }
 
-static int sleep_microseconds(long us)
-{
-	struct timeval tv;
-	tv.tv_sec = 0;
-	tv.tv_usec = us;
-	return select(0, NULL, NULL, NULL, &tv);
-}
-
 /*
  * Constants defining the gaps between attempts to lock a file. The
  * first backoff period is approximately INITIAL_BACKOFF_MS
@@ -184,27 +176,22 @@ static int lock_file_timeout(struct lock_file *lk, const char *path,
 {
 	int n = 1;
 	int multiplier = 1;
-	long remaining_us = 0;
+	long remaining_ms = 0;
 	static int random_initialized = 0;
 
 	if (timeout_ms == 0)
 		return lock_file(lk, path, flags);
 
 	if (!random_initialized) {
-		srandom((unsigned int)getpid());
+		srand((unsigned int)getpid());
 		random_initialized = 1;
 	}
 
-	if (timeout_ms > 0) {
-		/* avoid overflow */
-		if (timeout_ms <= LONG_MAX / 1000)
-			remaining_us = timeout_ms * 1000;
-		else
-			remaining_us = LONG_MAX;
-	}
+	if (timeout_ms > 0)
+		remaining_ms = timeout_ms;
 
 	while (1) {
-		long backoff_ms, wait_us;
+		long backoff_ms, wait_ms;
 		int fd;
 
 		fd = lock_file(lk, path, flags);
@@ -213,14 +200,14 @@ static int lock_file_timeout(struct lock_file *lk, const char *path,
 			return fd; /* success */
 		else if (errno != EEXIST)
 			return -1; /* failure other than lock held */
-		else if (timeout_ms > 0 && remaining_us <= 0)
+		else if (timeout_ms > 0 && remaining_ms <= 0)
 			return -1; /* failure due to timeout */
 
 		backoff_ms = multiplier * INITIAL_BACKOFF_MS;
 		/* back off for between 0.75*backoff_ms and 1.25*backoff_ms */
-		wait_us = (750 + random() % 500) * backoff_ms;
-		sleep_microseconds(wait_us);
-		remaining_us -= wait_us;
+		wait_ms = (750 + rand() % 500) * backoff_ms / 1000;
+		sleep_millisec(wait_ms);
+		remaining_ms -= wait_ms;
 
 		/* Recursion: (n+1)^2 = n^2 + 2n + 1 */
 		multiplier += 2*n + 1;
