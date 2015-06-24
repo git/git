@@ -487,6 +487,37 @@ sub split_addrs {
 }
 
 my %aliases;
+
+sub parse_sendmail_alias {
+	local $_ = shift;
+	if (/"/) {
+		print STDERR "warning: sendmail alias with quotes is not supported: $_\n";
+	} elsif (/:include:/) {
+		print STDERR "warning: `:include:` not supported: $_\n";
+	} elsif (/[\/|]/) {
+		print STDERR "warning: `/file` or `|pipe` redirection not supported: $_\n";
+	} elsif (/^(\S+?)\s*:\s*(.+)$/) {
+		my ($alias, $addr) = ($1, $2);
+		$aliases{$alias} = [ split_addrs($addr) ];
+	} else {
+		print STDERR "warning: sendmail line is not recognized: $_\n";
+	}
+}
+
+sub parse_sendmail_aliases {
+	my $fh = shift;
+	my $s = '';
+	while (<$fh>) {
+		chomp;
+		next if /^\s*$/ || /^\s*#/;
+		$s .= $_, next if $s =~ s/\\$// || s/^\s+//;
+		parse_sendmail_alias($s) if $s;
+		$s = $_;
+	}
+	$s =~ s/\\$//; # silently tolerate stray '\' on last line
+	parse_sendmail_alias($s) if $s;
+}
+
 my %parse_alias = (
 	# multiline formats can be supported in the future
 	mutt => sub { my $fh = shift; while (<$fh>) {
@@ -515,32 +546,7 @@ my %parse_alias = (
 			       $aliases{$alias} = [ split_addrs($addr) ];
 			  }
 		      } },
-
-	sendmail => sub { my $fh = shift; while (<$fh>) {
-		# ignore blank lines and comment lines
-		if (/^\s*(?:#.*)?$/) { }
-
-		# warn on lines that contain quotes
-		elsif (/"/) {
-			print STDERR "sendmail alias with quotes is not supported: $_\n";
-		}
-
-		# warn on lines that continue
-		elsif (/^\s|\\$/) {
-			print STDERR "sendmail continuation line is not supported: $_\n";
-		}
-
-		# recognize lines that look like an alias
-		elsif (/^(\S+?)\s*:\s*(.+)$/) {
-			my ($alias, $addr) = ($1, $2);
-			$aliases{$alias} = [ split_addrs($addr) ];
-		}
-
-		# warn on lines that are not recognized
-		else {
-			print STDERR "sendmail line is not recognized: $_\n";
-		}}},
-
+	sendmail => \&parse_sendmail_aliases,
 	gnus => sub { my $fh = shift; while (<$fh>) {
 		if (/\(define-mail-alias\s+"(\S+?)"\s+"(\S+?)"\)/) {
 			$aliases{$1} = [ $2 ];

@@ -1549,10 +1549,35 @@ test_expect_success $PREREQ 'sendemail.aliasfile=~/.mailrc' '
 	grep "^!someone@example\.org!$" commandline1
 '
 
-test_expect_success $PREREQ 'sendemail.aliasfiletype=sendmail' '
-	clean_fake_sendmail && rm -fr outdir &&
-	git format-patch -1 -o outdir &&
-	cat >>.tmp-email-aliases <<-\EOF &&
+test_sendmail_aliases () {
+	msg="$1" && shift &&
+	expect="$@" &&
+	cat >.tmp-email-aliases &&
+
+	test_expect_success $PREREQ "$msg" '
+		clean_fake_sendmail && rm -fr outdir &&
+		git format-patch -1 -o outdir &&
+		git config --replace-all sendemail.aliasesfile \
+			"$(pwd)/.tmp-email-aliases" &&
+		git config sendemail.aliasfiletype sendmail &&
+		git send-email \
+			--from="Example <nobody@example.com>" \
+			--to=alice --to=bcgrp \
+			--smtp-server="$(pwd)/fake.sendmail" \
+			outdir/0001-*.patch \
+			2>errors >out &&
+		for i in $expect
+		do
+			grep "^!$i!$" commandline1 || return 1
+		done
+	'
+}
+
+test_sendmail_aliases 'sendemail.aliasfiletype=sendmail' \
+	'awol@example\.com' \
+	'bob@example\.com' \
+	'chloe@example\.com' \
+	'o@example\.com' <<-\EOF
 	alice: Alice W Land <awol@example.com>
 	bob: Robert Bobbyton <bob@example.com>
 	# this is a comment
@@ -1561,20 +1586,40 @@ test_expect_success $PREREQ 'sendemail.aliasfiletype=sendmail' '
 	abgroup: alice, bob
 	bcgrp: bob, chloe, Other <o@example.com>
 	EOF
-	git config --replace-all sendemail.aliasesfile \
-		"$(pwd)/.tmp-email-aliases" &&
-	git config sendemail.aliasfiletype sendmail &&
-	git send-email \
-		--from="Example <nobody@example.com>" \
-		--to=alice --to=bcgrp \
-		--smtp-server="$(pwd)/fake.sendmail" \
-		outdir/0001-*.patch \
-		2>errors >out &&
-	grep "^!awol@example\.com!$" commandline1 &&
-	grep "^!bob@example\.com!$" commandline1 &&
-	grep "^!chloe@example\.com!$" commandline1 &&
-	grep "^!o@example\.com!$" commandline1
-'
+
+test_sendmail_aliases 'sendmail aliases line folding' \
+	alice1 \
+	bob1 bob2 \
+	chuck1 chuck2 \
+	darla1 darla2 darla3 \
+	elton1 elton2 elton3 \
+	fred1 fred2 \
+	greg1 <<-\EOF
+	alice: alice1
+	bob: bob1,\
+	bob2
+	chuck: chuck1,
+	    chuck2
+	darla: darla1,\
+	darla2,
+	    darla3
+	elton: elton1,
+	    elton2,\
+	elton3
+	fred: fred1,\
+	    fred2
+	greg: greg1
+	bcgrp: bob, chuck, darla, elton, fred, greg
+	EOF
+
+test_sendmail_aliases 'sendmail aliases tolerate bogus line folding' \
+	alice1 bob1 <<-\EOF
+	    alice: alice1
+	bcgrp: bob1\
+	EOF
+
+test_sendmail_aliases 'sendmail aliases empty' alice bcgrp <<-\EOF
+	EOF
 
 do_xmailer_test () {
 	expected=$1 params=$2 &&
