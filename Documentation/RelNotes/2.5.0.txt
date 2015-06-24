@@ -4,9 +4,6 @@ Git 2.5 Release Notes
 Updates since v2.4
 ------------------
 
-Ports
-
-
 UI, Workflows & Features
 
  * The bash completion script (in contrib/) learned a few options that
@@ -28,6 +25,8 @@ UI, Workflows & Features
    chunks from Perforce, instead of making one call to "p4 changes"
    that may trigger "too many rows scanned" error from Perforce.
 
+ * More workaround for Perforce's row number limit in "git p4".
+
  * Unlike "$EDITOR" and "$GIT_EDITOR" that can hold the path to the
    command and initial options (e.g. "/path/to/emacs -nw"), 'git p4'
    did not let the shell interpolate the contents of the environment
@@ -47,11 +46,14 @@ UI, Workflows & Features
    rely on symbolic links and make sharing of objects and refs safer
    by making the borrowee and borrowers aware of each other.
 
+   Consider this as still an experimental feature; the UI will likely
+   to change.
+
  * Tweak the sample "store" backend of the credential helper to honor
    XDG configuration file locations when specified.
 
- * A heuristic to help the "git <cmd> <revs> <pathspec>" command line
-   convention to catch mistyped paths is to make sure all the non-rev
+ * A heuristic we use to catch mistyped paths on the command line
+   "git <cmd> <revs> <pathspec>" is to make sure that all the non-rev
    parameters in the later part of the command line are names of the
    files in the working tree, but that means "git grep $str -- \*.c"
    must always be disambiguated with "--", because nobody sane will
@@ -64,25 +66,18 @@ UI, Workflows & Features
    that are not marked as "not-for-merge"; this allows us to lose an
    old style invocation "git merge <msg> HEAD $commits..." in the
    implementation of "git pull" script; the old style syntax can now
-   be deprecated.
-
- * Help us to find broken test script that splits the body part of the
-   test by mistaken use of wrong kind of quotes.
-   (merge d93d5d5 jc/test-prereq-validate later to maint).
-
- * Developer support to automatically detect broken &&-chain in the
-   test scripts is now turned on by default.
-   (merge 92b269f jk/test-chain-lint later to maint).
+   be deprecated (but not removed yet).
 
  * Filter scripts were run with SIGPIPE disabled on the Git side,
    expecting that they may not read what Git feeds them to filter.
    We however treated a filter that does not read its input fully
-   before exiting as an error.
+   before exiting as an error.  We no longer do and ignore EPIPE
+   when writing to feed the filter scripts.
 
    This changes semantics, but arguably in a good way.  If a filter
-   can produce its output without consuming its input using whatever
-   magic, we now let it do so, instead of diagnosing it as a
-   programming error.
+   can produce its output without fully consuming its input using
+   whatever magic, we now let it do so, instead of diagnosing it
+   as a programming error.
 
  * Instead of dying immediately upon failing to obtain a lock, the
    locking (of refs etc) retries after a short while with backoff.
@@ -98,8 +93,8 @@ UI, Workflows & Features
    when pushing, but the documentation and help text pretended as if
    it did.
 
- * The Git subcommand completion (in contrib/) listed credential
-   helpers among candidates, which is not something the end user would
+ * The Git subcommand completion (in contrib/) no longer lists credential
+   helpers among candidates; they are not something the end user would
    invoke interactively.
 
  * The index file can be taught with "update-index --untracked-cache"
@@ -120,8 +115,41 @@ UI, Workflows & Features
    behaves as if HEAD:Documentation/RelNotes/2.5.0.txt was given as
    input instead.
 
+   Consider this as still an experimental and incomplete feature:
+
+    - We may want to do the same for in-index objects, e.g.
+      asking for :RelNotes with this option should give
+      :Documentation/RelNotes/2.5.0.txt, too
+
+    - "git cat-file --follow-symlinks blob HEAD:RelNotes"
+      may also be something we want to allow in the future.
+
  * "git send-email" learned the alias file format used by the sendmail
-   program (in an abbreviated form).
+   program (in a simplified form; we obviously do not feed pipes).
+
+ * "git am" learned am.threeWay configuration variable.
+
+ * Traditionally, external low-level 3-way merge drivers are expected
+   to produce their results based solely on the contents of the three
+   variants given in temporary files named by %O, %A and %B on their
+   command line.  Additionally allow them to look at the final path
+   (given by %P).
+
+ * "git blame" learned blame.showEmail configuration variable.
+
+ * "git apply" cannot diagnose a patch corruption when the breakage is
+   to mark the length of the hunk shorter than it really is on the
+   hunk header line "@@ -l,k +m,n @@"; one special case it could is
+   when the hunk becomes no-op (e.g. k == n == 2 for two-line context
+   patch output), and it learned to do so in this special case.
+
+ * Add the "--allow-unknown-type" option to "cat-file" to allow
+   inspecting loose objects of an experimental or a broken type.
+
+ * Many long-running operations show progress eye-candy, even when
+   they are later backgrounded.  Hide the eye-candy when the process
+   is sent to the background instead.
+   (merge 9a9a41d lm/squelch-bg-progress later to maint).
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -132,9 +160,11 @@ Performance, Internal Implementation, Development Support etc.
    but hopefully will give us one extra level of abstraction in the
    end, when completed.
 
+ * for_each_ref() callback functions were taught to name the objects
+   not with "unsigned char sha1[20]" but with "struct object_id".
+
  * Catch a programmer mistake to feed a pointer not an array to
    ARRAY_SIZE() macro, by using a couple of GCC extensions.
-   (merge 89c855e ep/do-not-feed-a-pointer-to-array-size later to maint).
 
  * Some error messages in "git config" were emitted without calling
    the usual error() facility.
@@ -152,33 +182,34 @@ Performance, Internal Implementation, Development Support etc.
 
  * An earlier rewrite to use strbuf_getwholeline() instead of fgets(3)
    to read packed-refs file revealed that the former is unacceptably
-   inefficient.
+   inefficient.  It has been optimized by using getdelim(3) when
+   available.
 
  * The refs API uses ref_lock struct which had its own "int fd", even
    though the same file descriptor was in the lock struct it contains.
    Clean-up the code to lose this redundant field.
-
- * Add the "--allow-unknown-type" option to "cat-file" to allow
-   inspecting loose objects of an experimental or a broken type.
-
- * Many long-running operations show progress eye-candy, even when
-   they are later backgrounded.  Hide the eye-candy when the process
-   is sent to the background instead.
-   (merge 9a9a41d lm/squelch-bg-progress later to maint).
 
  * There was a dead code that used to handle "git pull --tags" and
    show special-cased error message, which was made irrelevant when
    the semantics of the option changed back in Git 1.9 days.
    (merge 19d122b pt/pull-tags-error-diag later to maint).
 
- * for_each_ref() callback functions were taught to name the objects
-   not with "unsigned char sha1[20]" but with "struct object_id".
+ * Help us to find broken test script that splits the body part of the
+   test by mistaken use of wrong kind of quotes.
+   (merge d93d5d5 jc/test-prereq-validate later to maint).
+
+ * Developer support to automatically detect broken &&-chain in the
+   test scripts is now turned on by default.
+   (merge 92b269f jk/test-chain-lint later to maint).
 
  * Error reporting mechanism used in "refs" API has been made more
    consistent.
 
  * "git pull" has more test coverage now.
 
+ * "git pull" has become more aware of the options meant for
+   underlying "git fetch" and then learned to use parse-options
+   parser.
 
 Also contains various documentation updates and code clean-ups.
 
@@ -288,12 +319,6 @@ notes for details).
    variants were too loose and falsely triggered when "plink" appeared
    anywhere in the path (e.g. "/home/me/bin/uplink/ssh").
    (merge baaf233 bc/connect-plink later to maint).
-
- * "git stash pop/apply" forgot to make sure that not just the working
-   tree is clean but also the index is clean. The latter is important
-   as a stash application can conflict and the index will be used for
-   conflict resolution.
-   (merge ed178ef jk/stash-require-clean-index later to maint).
 
  * We have prepended $GIT_EXEC_PATH and the path "git" is installed in
    (typically "/usr/bin") to $PATH when invoking subprograms and hooks
@@ -422,6 +447,39 @@ notes for details).
    inconsistently, even for commands that do not need working tree.
    (merge fada767 jk/die-on-bogus-worktree-late later to maint).
 
+ * Recent Mac OS X updates breaks the logic to detect that the machine
+   is on the AC power in the sample pre-auto-gc script.
+   (merge c54c7b3 pa/auto-gc-mac-osx later to maint).
+
+ * "git commit --cleanup=scissors" was not careful enough to protect
+   against getting fooled by a line that looked like scissors.
+   (merge fbfa097 sg/commit-cleanup-scissors later to maint).
+
+ * "Have we lost a race with competing repack?" check was too
+   expensive, especially while receiving a huge object transfer
+   that runs index-pack (e.g. "clone" or "fetch").
+   (merge 0eeb077 jk/index-pack-reduce-recheck later to maint).
+
+ * The tcsh completion writes a bash scriptlet but that would have
+   failed for users with noclobber set.
+   (merge 0b1f688 af/tcsh-completion-noclobber later to maint).
+
+ * "git for-each-ref" reported "missing object" for 0{40} when it
+   encounters a broken ref.  The lack of object whose name is 0{40} is
+   not the problem; the ref being broken is.
+   (merge 501cf47 mh/reporting-broken-refs-from-for-each-ref later to maint).
+
+ * Various fixes around "git am" that applies a patch to a history
+   that is not there yet.
+   (merge 6ea3b67 pt/am-abort-fix later to maint).
+
+ * "git fsck" used to ignore missing or invalid objects recorded in reflog.
+   (merge 19bf6c9 mh/fsck-reflog-entries later to maint).
+
+ * "git format-patch --ignore-if-upstream A..B" did not like to be fed
+   tags as boundary commits.
+   (merge 9b7a61d jc/do-not-feed-tags-to-clear-commit-marks later to maint).
+
  * Code cleanups and documentation updates.
    (merge 0269f96 mm/usage-log-l-can-take-regex later to maint).
    (merge 64f2589 nd/t1509-chroot-test later to maint).
@@ -443,3 +501,8 @@ notes for details).
    (merge 055c7e9 sb/pack-protocol-mention-smart-http later to maint).
    (merge 7c37a5d jk/make-fix-dependencies later to maint).
    (merge fc0aa39 sg/merge-summary-config later to maint).
+   (merge 329af6c pt/t0302-needs-sanity later to maint).
+   (merge d614f07 fk/doc-format-patch-vn later to maint).
+   (merge 72dbb36 sg/completion-commit-cleanup later to maint).
+   (merge e654eb2 es/utf8-stupid-compiler-workaround later to maint).
+   (merge 34b935c es/osx-header-pollutes-mask-macro later to maint).
