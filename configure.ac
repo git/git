@@ -1041,6 +1041,12 @@ GIT_CHECK_FUNC(initgroups,
 [NO_INITGROUPS=YesPlease])
 GIT_CONF_SUBST([NO_INITGROUPS])
 #
+# Define HAVE_GETDELIM if you have getdelim in the C library.
+GIT_CHECK_FUNC(getdelim,
+[HAVE_GETDELIM=YesPlease],
+[HAVE_GETDELIM=])
+GIT_CONF_SUBST([HAVE_GETDELIM])
+#
 #
 # Define NO_MMAP if you want to avoid mmap.
 #
