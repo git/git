@@ -999,7 +999,8 @@ static int add_index_entry_with_check(struct index_state *istate, struct cache_e
 	}
 	pos = -pos-1;
 
-	untracked_cache_add_to_index(istate, ce->name);
+	if (!(option & ADD_CACHE_KEEP_CACHE_TREE))
+		untracked_cache_add_to_index(istate, ce->name);
 
 	/*
 	 * Inserting a merged entry ("stage 0") into the index
