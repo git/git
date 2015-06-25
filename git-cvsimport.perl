@@ -921,7 +921,7 @@ sub commit {
 		# (See check_refname_component in refs.c.)
 		1 while $xtag =~ s/
 			(?: \.\.        # Tag cannot contain '..'.
-			|   \@{         # Tag cannot contain '@{'.
+			|   \@\{        # Tag cannot contain '@{'.
 			| ^ -           # Tag cannot begin with '-'.
 			|   \.lock $    # Tag cannot end with '.lock'.
 			| ^ \.          # Tag cannot begin...
