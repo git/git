@@ -58,15 +58,13 @@
 #define BUILD_ASSERT_OR_ZERO(cond) \
 	(sizeof(char [1 - 2*!(cond)]) - 1)
 
-#if defined(__GNUC__) && (__GNUC__ >= 3)
-# if GIT_GNUC_PREREQ(3, 1)
+#if GIT_GNUC_PREREQ(3, 1)
  /* &arr[0] degrades to a pointer: a different type from an array */
 # define BARF_UNLESS_AN_ARRAY(arr)						\
 	BUILD_ASSERT_OR_ZERO(!__builtin_types_compatible_p(__typeof__(arr), \
 							   __typeof__(&(arr)[0])))
-# else
-#  define BARF_UNLESS_AN_ARRAY(arr) 0
-# endif
+#else
+# define BARF_UNLESS_AN_ARRAY(arr) 0
 #endif
 /*
  * ARRAY_SIZE - get the number of elements in a visible array
