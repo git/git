@@ -204,7 +204,7 @@ test_expect_success 'filtering large input to small output should use little mem
 	GIT_MMAP_LIMIT=1m GIT_ALLOC_LIMIT=1m git add 30MB
 '
 
-test_expect_success EXPENSIVE 'filter large file' '
+test_expect_success EXPENSIVE,!MINGW 'filter large file' '
 	git config filter.largefile.smudge cat &&
 	git config filter.largefile.clean cat &&
 	for i in $(test_seq 1 2048); do printf "%1048576d" 1; done >2GB &&
