@@ -5,24 +5,10 @@ test_description='Intent to add'
 . ./test-lib.sh
 
 test_expect_success 'intent to add' '
-	test_commit 1 &&
-	git rm 1.t &&
-	echo hello >1.t &&
 	echo hello >file &&
 	echo hello >elif &&
 	git add -N file &&
-	git add elif &&
-	git add -N 1.t
-'
-
-test_expect_success 'git status' '
-	git status --porcelain | grep -v actual >actual &&
-	cat >expect <<-\EOF &&
-	DA 1.t
-	A  elif
-	 A file
-	EOF
-	test_cmp expect actual
+	git add elif
 '
 
 test_expect_success 'check result of "add -N"' '
@@ -57,8 +43,7 @@ test_expect_success 'i-t-a entry is simply ignored' '
 	git add -N nitfol &&
 	git commit -m second &&
 	test $(git ls-tree HEAD -- nitfol | wc -l) = 0 &&
-	test $(git diff --name-only HEAD -- nitfol | wc -l) = 0 &&
-	test $(git diff --name-only -- nitfol | wc -l) = 1
+	test $(git diff --name-only HEAD -- nitfol | wc -l) = 1
 '
 
 test_expect_success 'can commit with an unrelated i-t-a entry in index' '
@@ -87,13 +72,13 @@ test_expect_success 'cache-tree invalidates i-t-a paths' '
 	: >dir/bar &&
 	git add -N dir/bar &&
 	git diff --cached --name-only >actual &&
-	>expect &&
+	echo dir/bar >expect &&
 	test_cmp expect actual &&
 
 	git write-tree >/dev/null &&
 
 	git diff --cached --name-only >actual &&
-	>expect &&
+	echo dir/bar >expect &&
 	test_cmp expect actual
 '
 
