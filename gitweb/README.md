@@ -1,4 +1,4 @@
-GIT web Interface
+GIT web Interface 
 =================
 
 From the git version 1.4.0 gitweb is bundled with git.
