@@ -353,7 +353,7 @@ int parse_commit_buffer(struct commit *item, const void *buffer, unsigned long s
 	return 0;
 }
 
-int parse_commit(struct commit *item)
+int parse_commit_gently(struct commit *item, int quiet_on_missing)
 {
 	enum object_type type;
 	void *buffer;
@@ -366,7 +366,8 @@ int parse_commit(struct commit *item)
 		return 0;
 	buffer = read_sha1_file(item->object.sha1, &type, &size);
 	if (!buffer)
-		return error("Could not read %s",
+		return quiet_on_missing ? -1 :
+			error("Could not read %s",
 			     sha1_to_hex(item->object.sha1));
 	if (type != OBJ_COMMIT) {
 		free(buffer);

@@ -16,7 +16,11 @@ struct tree *lookup_tree(const unsigned char *sha1);
 
 int parse_tree_buffer(struct tree *item, void *buffer, unsigned long size);
 
-int parse_tree(struct tree *tree);
+int parse_tree_gently(struct tree *tree, int quiet_on_missing);
+static inline int parse_tree(struct tree *tree)
+{
+	return parse_tree_gently(tree, 0);
+}
 void free_tree_buffer(struct tree *tree);
 
 /* Parses and returns the tree in the given ent, chasing tags and commits. */
