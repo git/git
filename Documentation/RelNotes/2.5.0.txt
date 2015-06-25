@@ -149,7 +149,7 @@ UI, Workflows & Features
  * Many long-running operations show progress eye-candy, even when
    they are later backgrounded.  Hide the eye-candy when the process
    is sent to the background instead.
-   (merge 9a9a41d lm/squelch-bg-progress later to maint).
+   (merge a4fb76c lm/squelch-bg-progress later to maint).
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -231,7 +231,7 @@ notes for details).
 
  * Memory usage of "git index-pack" has been trimmed by tens of
    per-cent.
-   (merge a78c5b3 nd/slim-index-pack-memory-usage later to maint).
+   (merge f0e7f11 nd/slim-index-pack-memory-usage later to maint).
 
  * "git rev-list --objects $old --not --all" to see if everything that
    is reachable from $old is already connected to the existing refs
@@ -338,19 +338,6 @@ notes for details).
    to be overridden by repository-specific .git/info/exclude file, but
    the order was swapped from the beginning. This belatedly fixes it.
    (merge 099d2d8 jc/gitignore-precedence later to maint).
-
- * After "git add -N", the path appeared in output of "git diff HEAD"
-   and "git diff --cached HEAD", leading "git status" to classify it
-   as "Changes to be committed".  Such a path, however, is not yet to
-   be scheduled to be committed.  "git diff" showed the change to the
-   path as modification, not as a "new file", in the header of its
-   output.
-
-   Treat such paths as "yet to be added to the index but Git already
-   know about them"; "git diff HEAD" and "git diff --cached HEAD"
-   should not talk about them, and "git diff" should show them as new
-   files yet to be added to the index.
-   (merge d95d728 nd/diff-i-t-a later to maint).
 
  * There was a commented-out (instead of being marked to expect
    failure) test that documented a breakage that was fixed since the
