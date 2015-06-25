@@ -1,27 +1,34 @@
+#include <stdint.h>
+#include <wchar.h>
+#include <sys/types.h>
+#ifndef _POSIX
+typedef _sigset_t sigset_t;
+#endif
 #include <winsock2.h>
 #include <ws2tcpip.h>
-
 /*
  * things that are not available in header files
  */
 
-typedef int pid_t;
 typedef int uid_t;
 typedef int socklen_t;
-#define hstrerror strerror
 
 #define S_IFLNK    0120000 /* Symbolic link */
 #define S_ISLNK(x) (((x) & S_IFMT) == S_IFLNK)
 #define S_ISSOCK(x) 0
 
+#ifndef S_IRWXG
 #define S_IRGRP 0
 #define S_IWGRP 0
 #define S_IXGRP 0
 #define S_IRWXG (S_IRGRP | S_IWGRP | S_IXGRP)
+#endif
+#ifndef S_IRWXO
 #define S_IROTH 0
 #define S_IWOTH 0
 #define S_IXOTH 0
 #define S_IRWXO (S_IROTH | S_IWOTH | S_IXOTH)
+#endif
 
 #define S_ISUID 0004000
 #define S_ISGID 0002000
@@ -92,8 +99,10 @@ static inline int symlink(const char *oldpath, const char *newpath)
 { errno = ENOSYS; return -1; }
 static inline int fchmod(int fildes, mode_t mode)
 { errno = ENOSYS; return -1; }
+#ifndef __MINGW64_VERSION_MAJOR
 static inline pid_t fork(void)
 { errno = ENOSYS; return -1; }
+#endif
 static inline unsigned int alarm(unsigned int seconds)
 { return 0; }
 static inline int fsync(int fd)
@@ -164,8 +173,10 @@ int pipe(int filedes[2]);
 unsigned int sleep (unsigned int seconds);
 int mkstemp(char *template);
 int gettimeofday(struct timeval *tv, void *tz);
+#ifndef __MINGW64_VERSION_MAJOR
 struct tm *gmtime_r(const time_t *timep, struct tm *result);
 struct tm *localtime_r(const time_t *timep, struct tm *result);
+#endif
 int getpagesize(void);	/* defined in MinGW's libgcc.a */
 struct passwd *getpwuid(uid_t uid);
 int setitimer(int type, struct itimerval *in, struct itimerval *out);
@@ -212,6 +223,10 @@ char *mingw_mktemp(char *template);
 
 char *mingw_getcwd(char *pointer, int len);
 #define getcwd mingw_getcwd
+
+#ifdef NO_UNSETENV
+#error "NO_UNSETENV is incompatible with the MinGW startup code!"
+#endif
 
 char *mingw_getenv(const char *name);
 #define getenv mingw_getenv
@@ -283,10 +298,28 @@ static inline int getrlimit(int resource, struct rlimit *rlp)
 }
 
 /*
+ * The unit of FILETIME is 100-nanoseconds since January 1, 1601, UTC.
+ * Returns the 100-nanoseconds ("hekto nanoseconds") since the epoch.
+ */
+static inline long long filetime_to_hnsec(const FILETIME *ft)
+{
+	long long winTime = ((long long)ft->dwHighDateTime << 32) + ft->dwLowDateTime;
+	/* Windows to Unix Epoch conversion */
+	return winTime - 116444736000000000LL;
+}
+
+static inline time_t filetime_to_time_t(const FILETIME *ft)
+{
+	return (time_t)(filetime_to_hnsec(ft) / 10000000);
+}
+
+/*
  * Use mingw specific stat()/lstat()/fstat() implementations on Windows.
  */
+#ifndef __MINGW64_VERSION_MAJOR
 #define off_t off64_t
 #define lseek _lseeki64
+#endif
 
 /* use struct stat with 64 bit st_size */
 #ifdef stat
@@ -303,7 +336,7 @@ int mingw_fstat(int fd, struct stat *buf);
 #ifdef lstat
 #undef lstat
 #endif
-#define lstat mingw_lstat
+extern int (*lstat)(const char *file_name, struct stat *buf);
 
 #ifndef _stati64
 # define _stati64(x,y) mingw_stat(x,y)
@@ -359,14 +392,54 @@ static inline char *mingw_find_last_dir_sep(const char *path)
 int mingw_offset_1st_component(const char *path);
 #define offset_1st_component mingw_offset_1st_component
 #define PATH_SEP ';'
+#ifndef __MINGW64_VERSION_MAJOR
 #define PRIuMAX "I64u"
 #define PRId64 "I64d"
+#else
+#include <inttypes.h>
+#endif
 
 void mingw_open_html(const char *path);
 #define open_html mingw_open_html
 
 void mingw_mark_as_git_dir(const char *dir);
 #define mark_as_git_dir mingw_mark_as_git_dir
+
+/**
+ * Max length of long paths (exceeding MAX_PATH). The actual maximum supported
+ * by NTFS is 32,767 (* sizeof(wchar_t)), but we choose an arbitrary smaller
+ * value to limit required stack memory.
+ */
+#define MAX_LONG_PATH 4096
+
+/**
+ * Handles paths that would exceed the MAX_PATH limit of Windows Unicode APIs.
+ *
+ * With expand == false, the function checks for over-long paths and fails
+ * with ENAMETOOLONG. The path parameter is not modified, except if cwd + path
+ * exceeds max_path, but the resulting absolute path doesn't (e.g. due to
+ * eliminating '..' components). The path parameter must point to a buffer
+ * of max_path wide characters.
+ *
+ * With expand == true, an over-long path is automatically converted in place
+ * to an absolute path prefixed with '\\?\', and the new length is returned.
+ * The path parameter must point to a buffer of MAX_LONG_PATH wide characters.
+ *
+ * Parameters:
+ * path: path to check and / or convert
+ * len: size of path on input (number of wide chars without \0)
+ * max_path: max short path length to check (usually MAX_PATH = 260, but just
+ * 248 for CreateDirectoryW)
+ * expand: false to only check the length, true to expand the path to a
+ * '\\?\'-prefixed absolute path
+ *
+ * Return:
+ * length of the resulting path, or -1 on failure
+ *
+ * Errors:
+ * ENAMETOOLONG if path is too long
+ */
+int handle_long_path(wchar_t *path, int len, int max_path, int expand);
 
 /**
  * Converts UTF-8 encoded string to UTF-16LE.
@@ -426,16 +499,47 @@ static inline int xutftowcs(wchar_t *wcs, const char *utf, size_t wcslen)
 }
 
 /**
+ * Simplified file system specific wrapper of xutftowcsn and handle_long_path.
+ * Converts ERANGE to ENAMETOOLONG. If expand is true, wcs must be at least
+ * MAX_LONG_PATH wide chars (see handle_long_path).
+ */
+static inline int xutftowcs_path_ex(wchar_t *wcs, const char *utf,
+		size_t wcslen, int utflen, int max_path, int expand)
+{
+	int result = xutftowcsn(wcs, utf, wcslen, utflen);
+	if (result < 0 && errno == ERANGE)
+		errno = ENAMETOOLONG;
+	if (result >= 0)
+		result = handle_long_path(wcs, result, max_path, expand);
+	return result;
+}
+
+/**
  * Simplified file system specific variant of xutftowcsn, assumes output
  * buffer size is MAX_PATH wide chars and input string is \0-terminated,
- * fails with ENAMETOOLONG if input string is too long.
+ * fails with ENAMETOOLONG if input string is too long. Typically used for
+ * Windows APIs that don't support long paths, e.g. SetCurrentDirectory,
+ * LoadLibrary, CreateProcess...
  */
 static inline int xutftowcs_path(wchar_t *wcs, const char *utf)
 {
-	int result = xutftowcsn(wcs, utf, MAX_PATH, -1);
-	if (result < 0 && errno == ERANGE)
-		errno = ENAMETOOLONG;
-	return result;
+	return xutftowcs_path_ex(wcs, utf, MAX_PATH, -1, MAX_PATH, 0);
+}
+
+/* need to re-declare that here as mingw.h is included before cache.h */
+extern int core_long_paths;
+
+/**
+ * Simplified file system specific variant of xutftowcsn for Windows APIs
+ * that support long paths via '\\?\'-prefix, assumes output buffer size is
+ * MAX_LONG_PATH wide chars, fails with ENAMETOOLONG if input string is too
+ * long. The 'core.longpaths' git-config option controls whether the path
+ * is only checked or expanded to a long path.
+ */
+static inline int xutftowcs_long_path(wchar_t *wcs, const char *utf)
+{
+	return xutftowcs_path_ex(wcs, utf, MAX_LONG_PATH, -1, MAX_PATH,
+			core_long_paths);
 }
 
 /**

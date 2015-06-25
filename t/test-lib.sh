@@ -510,6 +510,20 @@ test_eval_ () {
 	#
 	# The test itself is run with stderr put back to &4 (so either to
 	# /dev/null, or to the original stderr if --verbose was used).
+	if test -n "$TEST_NO_REDIRECT"
+	then
+		test_eval_inner_ "$@"
+		test_eval_ret_=$?
+		if test "$trace" = t
+		then
+			set +x
+			if test "$test_eval_ret_" != 0
+			then
+				say_color error >&4 "error: last command exited with \$?=$test_eval_ret_"
+			fi
+		fi
+		return $test_eval_ret_
+	fi
 	{
 		test_eval_inner_ "$@" </dev/null >&3 2>&4
 		test_eval_ret_=$?
@@ -994,7 +1008,7 @@ test_i18ngrep () {
 test_lazy_prereq PIPE '
 	# test whether the filesystem supports FIFOs
 	case $(uname -s) in
-	CYGWIN*)
+	CYGWIN*|MINGW*)
 		false
 		;;
 	*)
