@@ -26,11 +26,7 @@ merge.ff::
 	allowed (equivalent to giving the `--ff-only` option from the
 	command line).
 
-merge.log::
-	In addition to branch names, populate the log message with at
-	most the specified number of one-line descriptions from the
-	actual commits that are being merged.  Defaults to false, and
-	true is a synonym for 20.
+include::fmt-merge-msg-config.txt[]
 
 merge.renameLimit::
 	The number of files to consider when performing rename detection
