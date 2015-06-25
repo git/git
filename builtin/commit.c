@@ -856,7 +856,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 				_("%s"
 				"Date:      %s"),
 				ident_shown++ ? "" : "\n",
-				show_ident_date(&ai, DATE_NORMAL));
+				show_ident_date(&ai, DATE_MODE(NORMAL)));
 
 		if (!committer_ident_sufficiently_given())
 			status_printf_ln(s, GIT_COLOR_NORMAL,
@@ -1046,7 +1046,7 @@ static const char *find_author_by_nickname(const char *name)
 	commit = get_revision(&revs);
 	if (commit) {
 		struct pretty_print_context ctx = {0};
-		ctx.date_mode = DATE_NORMAL;
+		ctx.date_mode.type = DATE_NORMAL;
 		strbuf_release(&buf);
 		format_commit_message(commit, "%aN <%aE>", &buf, &ctx);
 		clear_mailmap(&mailmap);

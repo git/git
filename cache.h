@@ -1105,18 +1105,28 @@ extern void *read_object_with_reference(const unsigned char *sha1,
 extern struct object *peel_to_type(const char *name, int namelen,
 				   struct object *o, enum object_type);
 
-enum date_mode {
-	DATE_NORMAL = 0,
-	DATE_RELATIVE,
-	DATE_SHORT,
-	DATE_LOCAL,
-	DATE_ISO8601,
-	DATE_ISO8601_STRICT,
-	DATE_RFC2822,
-	DATE_RAW
+struct date_mode {
+	enum date_mode_type {
+		DATE_NORMAL = 0,
+		DATE_RELATIVE,
+		DATE_SHORT,
+		DATE_LOCAL,
+		DATE_ISO8601,
+		DATE_ISO8601_STRICT,
+		DATE_RFC2822,
+		DATE_RAW
+	} type;
 };
 
-const char *show_date(unsigned long time, int timezone, enum date_mode mode);
+/*
+ * Convenience helper for passing a constant type, like:
+ *
+ *   show_date(t, tz, DATE_MODE(NORMAL));
+ */
+#define DATE_MODE(t) date_mode_from_type(DATE_##t)
+struct date_mode *date_mode_from_type(enum date_mode_type type);
+
+const char *show_date(unsigned long time, int timezone, const struct date_mode *mode);
 void show_date_relative(unsigned long time, int tz, const struct timeval *now,
 			struct strbuf *timebuf);
 int parse_date(const char *date, struct strbuf *out);
@@ -1126,7 +1136,7 @@ void datestamp(struct strbuf *out);
 #define approxidate(s) approxidate_careful((s), NULL)
 unsigned long approxidate_careful(const char *, int *);
 unsigned long approxidate_relative(const char *date, const struct timeval *now);
-enum date_mode parse_date_format(const char *format);
+void parse_date_format(const char *format, struct date_mode *mode);
 int date_overflows(unsigned long date);
 
 #define IDENT_STRICT	       1
@@ -1163,7 +1173,8 @@ extern int split_ident_line(struct ident_split *, const char *, int);
  * the ident_split. It will also sanity-check the values and produce
  * a well-known sentinel date if they appear bogus.
  */
-const char *show_ident_date(const struct ident_split *id, enum date_mode mode);
+const char *show_ident_date(const struct ident_split *id,
+			    const struct date_mode *mode);
 
 /*
  * Compare split idents for equality or strict ordering. Note that we

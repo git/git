@@ -1996,10 +1996,10 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 	} else if (!strcmp(arg, "--full-history")) {
 		revs->simplify_history = 0;
 	} else if (!strcmp(arg, "--relative-date")) {
-		revs->date_mode = DATE_RELATIVE;
+		revs->date_mode.type = DATE_RELATIVE;
 		revs->date_mode_explicit = 1;
 	} else if ((argcount = parse_long_opt("date", argv, &optarg))) {
-		revs->date_mode = parse_date_format(optarg);
+		parse_date_format(optarg, &revs->date_mode);
 		revs->date_mode_explicit = 1;
 		return argcount;
 	} else if (!strcmp(arg, "--log-size")) {

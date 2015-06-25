@@ -160,18 +160,25 @@ void show_date_relative(unsigned long time, int tz,
 		 (diff + 183) / 365);
 }
 
-const char *show_date(unsigned long time, int tz, enum date_mode mode)
+struct date_mode *date_mode_from_type(enum date_mode_type type)
+{
+	static struct date_mode mode;
+	mode.type = type;
+	return &mode;
+}
+
+const char *show_date(unsigned long time, int tz, const struct date_mode *mode)
 {
 	struct tm *tm;
 	static struct strbuf timebuf = STRBUF_INIT;
 
-	if (mode == DATE_RAW) {
+	if (mode->type == DATE_RAW) {
 		strbuf_reset(&timebuf);
 		strbuf_addf(&timebuf, "%lu %+05d", time, tz);
 		return timebuf.buf;
 	}
 
-	if (mode == DATE_RELATIVE) {
+	if (mode->type == DATE_RELATIVE) {
 		struct timeval now;
 
 		strbuf_reset(&timebuf);
@@ -180,7 +187,7 @@ const char *show_date(unsigned long time, int tz, enum date_mode mode)
 		return timebuf.buf;
 	}
 
-	if (mode == DATE_LOCAL)
+	if (mode->type == DATE_LOCAL)
 		tz = local_tzoffset(time);
 
 	tm = time_to_tm(time, tz);
@@ -190,17 +197,17 @@ const char *show_date(unsigned long time, int tz, enum date_mode mode)
 	}
 
 	strbuf_reset(&timebuf);
-	if (mode == DATE_SHORT)
+	if (mode->type == DATE_SHORT)
 		strbuf_addf(&timebuf, "%04d-%02d-%02d", tm->tm_year + 1900,
 				tm->tm_mon + 1, tm->tm_mday);
-	else if (mode == DATE_ISO8601)
+	else if (mode->type == DATE_ISO8601)
 		strbuf_addf(&timebuf, "%04d-%02d-%02d %02d:%02d:%02d %+05d",
 				tm->tm_year + 1900,
 				tm->tm_mon + 1,
 				tm->tm_mday,
 				tm->tm_hour, tm->tm_min, tm->tm_sec,
 				tz);
-	else if (mode == DATE_ISO8601_STRICT) {
+	else if (mode->type == DATE_ISO8601_STRICT) {
 		char sign = (tz >= 0) ? '+' : '-';
 		tz = abs(tz);
 		strbuf_addf(&timebuf, "%04d-%02d-%02dT%02d:%02d:%02d%c%02d:%02d",
@@ -209,7 +216,7 @@ const char *show_date(unsigned long time, int tz, enum date_mode mode)
 				tm->tm_mday,
 				tm->tm_hour, tm->tm_min, tm->tm_sec,
 				sign, tz / 100, tz % 100);
-	} else if (mode == DATE_RFC2822)
+	} else if (mode->type == DATE_RFC2822)
 		strbuf_addf(&timebuf, "%.3s, %d %.3s %d %02d:%02d:%02d %+05d",
 			weekday_names[tm->tm_wday], tm->tm_mday,
 			month_names[tm->tm_mon], tm->tm_year + 1900,
@@ -221,7 +228,7 @@ const char *show_date(unsigned long time, int tz, enum date_mode mode)
 				tm->tm_mday,
 				tm->tm_hour, tm->tm_min, tm->tm_sec,
 				tm->tm_year + 1900,
-				(mode == DATE_LOCAL) ? 0 : ' ',
+				(mode->type == DATE_LOCAL) ? 0 : ' ',
 				tz);
 	return timebuf.buf;
 }
@@ -759,27 +766,27 @@ int parse_date(const char *date, struct strbuf *result)
 	return 0;
 }
 
-enum date_mode parse_date_format(const char *format)
+void parse_date_format(const char *format, struct date_mode *mode)
 {
 	if (!strcmp(format, "relative"))
-		return DATE_RELATIVE;
+		mode->type = DATE_RELATIVE;
 	else if (!strcmp(format, "iso8601") ||
 		 !strcmp(format, "iso"))
-		return DATE_ISO8601;
+		mode->type = DATE_ISO8601;
 	else if (!strcmp(format, "iso8601-strict") ||
 		 !strcmp(format, "iso-strict"))
-		return DATE_ISO8601_STRICT;
+		mode->type = DATE_ISO8601_STRICT;
 	else if (!strcmp(format, "rfc2822") ||
 		 !strcmp(format, "rfc"))
-		return DATE_RFC2822;
+		mode->type = DATE_RFC2822;
 	else if (!strcmp(format, "short"))
-		return DATE_SHORT;
+		mode->type = DATE_SHORT;
 	else if (!strcmp(format, "local"))
-		return DATE_LOCAL;
+		mode->type = DATE_LOCAL;
 	else if (!strcmp(format, "default"))
-		return DATE_NORMAL;
+		mode->type = DATE_NORMAL;
 	else if (!strcmp(format, "raw"))
-		return DATE_RAW;
+		mode->type = DATE_RAW;
 	else
 		die("unknown date format %s", format);
 }

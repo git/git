@@ -146,7 +146,7 @@ struct rev_info {
 			track_first_time:1,
 			linear:1;
 
-	enum date_mode date_mode;
+	struct date_mode date_mode;
 
 	unsigned int	abbrev;
 	enum cmit_fmt	commit_format;

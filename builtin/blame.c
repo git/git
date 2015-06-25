@@ -50,7 +50,7 @@ static int xdl_opts;
 static int abbrev = -1;
 static int no_whole_file_rename;
 
-static enum date_mode blame_date_mode = DATE_ISO8601;
+static struct date_mode blame_date_mode = { DATE_ISO8601 };
 static size_t blame_date_width;
 
 static struct string_list mailmap;
@@ -1827,7 +1827,7 @@ static const char *format_time(unsigned long time, const char *tz_str,
 		size_t time_width;
 		int tz;
 		tz = atoi(tz_str);
-		time_str = show_date(time, tz, blame_date_mode);
+		time_str = show_date(time, tz, &blame_date_mode);
 		strbuf_addstr(&time_buf, time_str);
 		/*
 		 * Add space paddings to time_buf to display a fixed width
@@ -2187,7 +2187,7 @@ static int git_blame_config(const char *var, const char *value, void *cb)
 	if (!strcmp(var, "blame.date")) {
 		if (!value)
 			return config_error_nonbool(var);
-		blame_date_mode = parse_date_format(value);
+		parse_date_format(value, &blame_date_mode);
 		return 0;
 	}
 
@@ -2569,13 +2569,13 @@ parse_done:
 
 	if (cmd_is_annotate) {
 		output_option |= OUTPUT_ANNOTATE_COMPAT;
-		blame_date_mode = DATE_ISO8601;
+		blame_date_mode.type = DATE_ISO8601;
 	} else {
 		blame_date_mode = revs.date_mode;
 	}
 
 	/* The maximum width used to show the dates */
-	switch (blame_date_mode) {
+	switch (blame_date_mode.type) {
 	case DATE_RFC2822:
 		blame_date_width = sizeof("Thu, 19 Oct 2006 16:00:04 -0700");
 		break;

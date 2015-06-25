@@ -145,7 +145,7 @@ struct pretty_print_context {
 	const char *subject;
 	const char *after_subject;
 	int preserve_subject;
-	enum date_mode date_mode;
+	struct date_mode date_mode;
 	unsigned date_mode_explicit:1;
 	int need_8bit_cte;
 	char *notes_message;
