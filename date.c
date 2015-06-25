@@ -163,6 +163,8 @@ void show_date_relative(unsigned long time, int tz,
 struct date_mode *date_mode_from_type(enum date_mode_type type)
 {
 	static struct date_mode mode;
+	if (type == DATE_STRFTIME)
+		die("BUG: cannot create anonymous strftime date_mode struct");
 	mode.type = type;
 	return &mode;
 }
@@ -221,6 +223,8 @@ const char *show_date(unsigned long time, int tz, const struct date_mode *mode)
 			weekday_names[tm->tm_wday], tm->tm_mday,
 			month_names[tm->tm_mon], tm->tm_year + 1900,
 			tm->tm_hour, tm->tm_min, tm->tm_sec, tz);
+	else if (mode->type == DATE_STRFTIME)
+		strbuf_addftime(&timebuf, mode->strftime_fmt, tm);
 	else
 		strbuf_addf(&timebuf, "%.3s %.3s %d %02d:%02d:%02d %d%c%+05d",
 				weekday_names[tm->tm_wday],
@@ -787,7 +791,10 @@ void parse_date_format(const char *format, struct date_mode *mode)
 		mode->type = DATE_NORMAL;
 	else if (!strcmp(format, "raw"))
 		mode->type = DATE_RAW;
-	else
+	else if (skip_prefix(format, "format:", &format)) {
+		mode->type = DATE_STRFTIME;
+		mode->strftime_fmt = xstrdup(format);
+	} else
 		die("unknown date format %s", format);
 }
 

@@ -2604,6 +2604,9 @@ parse_done:
 	case DATE_NORMAL:
 		blame_date_width = sizeof("Thu Oct 19 16:00:04 2006 -0700");
 		break;
+	case DATE_STRFTIME:
+		blame_date_width = strlen(show_date(0, 0, &blame_date_mode)) + 1; /* add the null */
+		break;
 	}
 	blame_date_width -= 1; /* strip the null */
 

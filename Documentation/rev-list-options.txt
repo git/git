@@ -727,6 +727,11 @@ format, often found in email messages.
 +
 `--date=raw` shows the date in the internal raw Git format `%s %z` format.
 +
+`--date=format:...` feeds the format `...` to your system `strftime`.
+Use `--date=format:%c` to show the date in your system locale's
+preferred format.  See the `strftime` manual for a complete list of
+format placeholders.
++
 `--date=default` shows timestamps in the original time zone
 (either committer's or author's).
 

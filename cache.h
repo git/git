@@ -1114,8 +1114,10 @@ struct date_mode {
 		DATE_ISO8601,
 		DATE_ISO8601_STRICT,
 		DATE_RFC2822,
+		DATE_STRFTIME,
 		DATE_RAW
 	} type;
+	const char *strftime_fmt;
 };
 
 /*

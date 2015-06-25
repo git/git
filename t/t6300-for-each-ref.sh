@@ -227,6 +227,14 @@ test_expect_success 'Check format "rfc2822" date fields output' '
 	test_cmp expected actual
 '
 
+test_expect_success 'Check format of strftime date fields' '
+	echo "my date is 2006-07-03" >expected &&
+	git for-each-ref \
+	  --format="%(authordate:format:my date is %Y-%m-%d)" \
+	  refs/heads >actual &&
+	test_cmp expected actual
+'
+
 cat >expected <<\EOF
 refs/heads/master
 refs/remotes/origin/master

@@ -709,3 +709,32 @@ char *xstrfmt(const char *fmt, ...)
 
 	return ret;
 }
+
+void strbuf_addftime(struct strbuf *sb, const char *fmt, const struct tm *tm)
+{
+	size_t len;
+
+	/*
+	 * strftime reports "0" if it could not fit the result in the buffer.
+	 * Unfortunately, it also reports "0" if the requested time string
+	 * takes 0 bytes. So if we were to probe and grow, we have to choose
+	 * some arbitrary cap beyond which we guess that the format probably
+	 * just results in a 0-length output. Since we have to choose some
+	 * reasonable cap anyway, and since it is not that big, we may
+	 * as well just grow to their in the first place.
+	 */
+	strbuf_grow(sb, 128);
+	len = strftime(sb->buf + sb->len, sb->alloc - sb->len, fmt, tm);
+
+	if (!len) {
+		/*
+		 * Either we failed, or the format actually produces a 0-length
+		 * output. There's not much we can do, so we leave it blank.
+		 * However, the output array is left in an undefined state, so
+		 * we must re-assert our NUL terminator.
+		 */
+		sb->buf[sb->len] = '\0';
+	} else {
+		sb->len += len;
+	}
+}
