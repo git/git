@@ -175,7 +175,7 @@ struct diff_options {
 
 enum color_diff {
 	DIFF_RESET = 0,
-	DIFF_PLAIN = 1,
+	DIFF_CONTEXT = 1,
 	DIFF_METAINFO = 2,
 	DIFF_FRAGINFO = 3,
 	DIFF_FILE_OLD = 4,

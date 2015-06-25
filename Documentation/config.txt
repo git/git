@@ -906,7 +906,8 @@ command line with the `--color[=<when>]` option.
 color.diff.<slot>::
 	Use customized color for diff colorization.  `<slot>` specifies
 	which part of the patch to use the specified color, and is one
-	of `plain` (context text), `meta` (metainformation), `frag`
+	of `context` (context text - `plain` is a historical synonym),
+	`meta` (metainformation), `frag`
 	(hunk header), 'func' (function in hunk header), `old` (removed lines),
 	`new` (added lines), `commit` (commit headers), or `whitespace`
 	(highlighting whitespace errors).

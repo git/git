@@ -893,7 +893,7 @@ static void dump_diff_hacky_one(struct rev_info *rev, struct line_log_data *rang
 	const char *c_meta = diff_get_color(opt->use_color, DIFF_METAINFO);
 	const char *c_old = diff_get_color(opt->use_color, DIFF_FILE_OLD);
 	const char *c_new = diff_get_color(opt->use_color, DIFF_FILE_NEW);
-	const char *c_plain = diff_get_color(opt->use_color, DIFF_PLAIN);
+	const char *c_context = diff_get_color(opt->use_color, DIFF_CONTEXT);
 
 	if (!pair || !diff)
 		return;
@@ -957,7 +957,7 @@ static void dump_diff_hacky_one(struct rev_info *rev, struct line_log_data *rang
 			int k;
 			for (; t_cur < diff->target.ranges[j].start; t_cur++)
 				print_line(prefix, ' ', t_cur, t_ends, pair->two->data,
-					   c_plain, c_reset);
+					   c_context, c_reset);
 			for (k = diff->parent.ranges[j].start; k < diff->parent.ranges[j].end; k++)
 				print_line(prefix, '-', k, p_ends, pair->one->data,
 					   c_old, c_reset);
@@ -968,7 +968,7 @@ static void dump_diff_hacky_one(struct rev_info *rev, struct line_log_data *rang
 		}
 		for (; t_cur < t_end; t_cur++)
 			print_line(prefix, ' ', t_cur, t_ends, pair->two->data,
-				   c_plain, c_reset);
+				   c_context, c_reset);
 	}
 
 	free(p_ends);
