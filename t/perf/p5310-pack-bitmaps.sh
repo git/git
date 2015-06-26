@@ -39,14 +39,14 @@ test_expect_success 'create partial bitmap state' '
 
 	# now kill off all of the refs and pretend we had
 	# just the one tip
-	rm -rf .git/logs .git/refs/* .git/packed-refs
-	git update-ref HEAD $cutoff
+	rm -rf .git/logs .git/refs/* .git/packed-refs &&
+	git update-ref HEAD $cutoff &&
 
 	# and then repack, which will leave us with a nice
 	# big bitmap pack of the "old" history, and all of
 	# the new history will be loose, as if it had been pushed
 	# up incrementally and exploded via unpack-objects
-	git repack -Ad
+	git repack -Ad &&
 
 	# and now restore our original tip, as if the pushes
 	# had happened
