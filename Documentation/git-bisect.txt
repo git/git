@@ -31,12 +31,6 @@ This command uses 'git rev-list --bisect' to help drive the
 binary search process to find which change introduced a bug, given an
 old "good" commit object name and a later "bad" commit object name.
 
-Getting help
-~~~~~~~~~~~~
-
-Use "git bisect" to get a short usage description, and "git bisect
-help" or "git bisect -h" to get a long usage description.
-
 Basic bisect commands: start, bad, good
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -379,6 +373,11 @@ In this case, when 'git bisect run' finishes, bisect/bad will refer to a commit 
 has at least one parent whose reachable graph is fully traversable in the sense
 required by 'git pack objects'.
 
+Getting help
+~~~~~~~~~~~~
+
+Use `git bisect` to get a short usage description, and `git bisect
+help` or `git bisect -h` to get a long usage description.
 
 SEE ALSO
 --------
