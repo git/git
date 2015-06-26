@@ -350,8 +350,8 @@ static int everybody_uninteresting(struct commit_list *orig,
 		list = list->next;
 		if (commit->object.flags & UNINTERESTING)
 			continue;
-		if (interesting_cache)
-			*interesting_cache = commit;
+
+		*interesting_cache = commit;
 		return 0;
 	}
 	return 1;
