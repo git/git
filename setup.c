@@ -479,19 +479,14 @@ const char *read_gitfile_gently(const char *path, int *return_error_code)
 	path = real_path(dir);
 
 cleanup_return:
-	free(buf);
-
 	if (return_error_code)
 		*return_error_code = error_code;
-
-	if (error_code) {
-		if (return_error_code)
-			return NULL;
-
+	else if (error_code) {
 		switch (error_code) {
 		case READ_GITFILE_ERR_STAT_FAILED:
 		case READ_GITFILE_ERR_NOT_A_FILE:
-			return NULL;
+			/* non-fatal; follow return path */
+			break;
 		case READ_GITFILE_ERR_OPEN_FAILED:
 			die_errno("Error opening '%s'", path);
 		case READ_GITFILE_ERR_TOO_LARGE:
@@ -509,7 +504,8 @@ cleanup_return:
 		}
 	}
 
-	return path;
+	free(buf);
+	return error_code ? NULL : path;
 }
 
 static const char *setup_explicit_git_dir(const char *gitdirenv,
