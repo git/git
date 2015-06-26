@@ -406,10 +406,10 @@ static CURL *get_curl_handle(void)
 
 	if (curl_http_proxy) {
 		curl_easy_setopt(result, CURLOPT_PROXY, curl_http_proxy);
-#if LIBCURL_VERSION_NUM >= 0x070a07
-		curl_easy_setopt(result, CURLOPT_PROXYAUTH, CURLAUTH_ANY);
-#endif
 	}
+#if LIBCURL_VERSION_NUM >= 0x070a07
+	curl_easy_setopt(result, CURLOPT_PROXYAUTH, CURLAUTH_ANY);
+#endif
 
 	set_curl_keepalive(result);
 
