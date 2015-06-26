@@ -99,4 +99,21 @@ test_expect_success 'check rev-list' '
 	test "$SHA" = "$(git rev-list HEAD)"
 '
 
+test_expect_success 'setup_git_dir twice in subdir' '
+	git init sgd &&
+	(
+		cd sgd &&
+		git config alias.lsfi ls-files &&
+		mv .git .realgit &&
+		echo "gitdir: .realgit" >.git &&
+		mkdir subdir &&
+		cd subdir &&
+		>foo &&
+		git add foo &&
+		git lsfi >actual &&
+		echo foo >expected &&
+		test_cmp expected actual
+	)
+'
+
 test_done
