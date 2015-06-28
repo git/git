@@ -8,8 +8,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: gitk master\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-05-17 14:32+1000\n"
-"PO-Revision-Date: 2015-04-07 07:54+0300\n"
+"POT-Creation-Date: 2015-06-27 20:44+0300\n"
+"PO-Revision-Date: 2015-06-27 20:46+0300\n"
 "Last-Translator: Alexander Shopov <ash@kambanaria.org>\n"
 "Language-Team: Bulgarian <dict@fsa-bg.org>\n"
 "Language: bg\n"
@@ -328,7 +328,7 @@ msgstr "Изтриване на този клон"
 
 #: gitk:2649
 msgid "Copy branch name"
-msgstr ""
+msgstr "Копиране на името на клона"
 
 #: gitk:2656
 msgid "Highlight this too"
@@ -348,7 +348,7 @@ msgstr "Анотиране на родителското подаване"
 
 #: gitk:2660
 msgid "Copy path"
-msgstr ""
+msgstr "Копиране на пътя"
 
 #: gitk:2667
 msgid "Show origin of this line"
@@ -507,9 +507,8 @@ msgid "<Return>\tMove to next find hit"
 msgstr "<Return>\tКъм следващата поява"
 
 #: gitk:3075
-#, fuzzy
 msgid "g\t\tGo to commit"
-msgstr "<End>\t\tКъм последното подаване"
+msgstr "g\t\tКъм последното подаване"
 
 #: gitk:3076
 msgid "/\t\tFocus the search box"
@@ -665,9 +664,8 @@ msgid "Matches all Commit Info criteria"
 msgstr "Съвпадение по всички характеристики на подаването"
 
 #: gitk:4086
-#, fuzzy
 msgid "Matches no Commit Info criteria"
-msgstr "Съвпадение по никоя от характеристиките на подаването"
+msgstr "Не съвпада по никоя от характеристиките на подаването"
 
 #: gitk:4087
 msgid "Changes to Files:"
@@ -1350,6 +1348,8 @@ msgid ""
 "Sorry, gitk cannot run with this version of Tcl/Tk.\n"
 " Gitk requires at least Tcl/Tk 8.4."
 msgstr ""
+"Тази версия на Tcl/Tk не се поддържа от Gitk.\n"
+" Необходима ви е поне Tcl/Tk 8.4."
 
 #: gitk:12269
 msgid "Cannot find a git repository here."
@@ -1363,6 +1363,3 @@ msgstr "Нееднозначен аргумент „%s“: има и такав
 #: gitk:12328
 msgid "Bad arguments to gitk:"
 msgstr "Неправилни аргументи на gitk:"
-
-#~ msgid "mc"
-#~ msgstr "mc"
