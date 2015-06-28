@@ -369,10 +369,8 @@ static int check_one_conflict(int i, int *type)
 	}
 
 	*type = PUNTED;
-	if (ce_stage(e) == 1) {
-		if (active_nr <= ++i)
-			return i + 1;
-	}
+	if (ce_stage(e) == 1)
+		i++;
 
 	/* Only handle regular files with both stages #2 and #3 */
 	if (i + 1 < active_nr) {
