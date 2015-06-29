@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jun 2015, #06; Wed, 24)
-X-master-at: df97e5dfeaea093e50afc15e44a23dfd3fa02502
-X-next-at: 3f8b1d03318d3e5eff389ac0d3568f45053ae1fd
+Subject: What's cooking in git.git (Jun 2015, #07; Mon, 29)
+X-master-at: 912bd497e93f0235a5999a77f8d54f5ff80a3a03
+X-next-at: d595659997efd86e238e50f97b9c8c811b229c4b
 
-What's cooking in git.git (Jun 2015, #06; Wed, 24)
+What's cooking in git.git (Jun 2015, #07; Mon, 29)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -16,10 +16,11 @@ been excluded from 'pu'; most notably, I think the remainder of
 bc/object-id needs to wait until the for-each-ref topic from Karthik
 settles and then rebased on it, or something.
 
-We will be in the pre-release freeze soonish, and the next cycle
-would reopen mid next month.  In the meantime, let's shift the focus
-on making sure that what has already been merged to 'master' are
-good (i.e. regression hunting and fixes).
+A couple of "hotfix" topics that just went into 'next' should be
+part of -rc1 early next month, but other than that there aren't
+anything ultra-urgent cooking right now.  Read those "Will merge to
+'master'" as if they were suffixed with "soon after the upcoming
+release".
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -29,273 +30,107 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* af/tcsh-completion-noclobber (2015-06-09) 1 commit
-  (merged to 'next' on 2015-06-16 at 621f205)
- + git-completion.tcsh: fix redirect with noclobber
-
- The tcsh completion writes a bash scriptlet but that would have
- failed for users with noclobber set.
-
-
-* es/configure-getdelim (2015-06-03) 2 commits
-  (merged to 'next' on 2015-06-11 at cdead14)
- + configure: add getdelim() check
- + config.mak.uname: Darwin: define HAVE_GETDELIM for modern OS X releases
-
- Auto-detect availability of getdelim() that helps optimized version
- of strbuf_getwholeline().
-
-
-* es/osx-header-pollutes-mask-macro (2015-06-03) 2 commits
-  (merged to 'next' on 2015-06-11 at cd8c39e)
- + ewah: use less generic macro name
- + ewah/bitmap: silence warning about MASK macro redefinition
-
-
-* es/send-email-sendmail-alias (2015-06-01) 10 commits
-  (merged to 'next' on 2015-06-11 at b5e310e)
- + send-email: further warn about unsupported sendmail aliases features
- + t9001: add sendmail aliases line continuation tests
- + t9001: refactor sendmail aliases test infrastructure
- + send-email: implement sendmail aliases line continuation support
- + send-email: simplify sendmail aliases comment and blank line recognizer
- + send-email: refactor sendmail aliases parser
- + send-email: fix style: cuddle 'elsif' and 'else' with closing brace
- + send-email: drop noise comments which merely repeat what code says
- + send-email: visually distinguish sendmail aliases parser warnings
- + send-email: further document missing sendmail aliases functionality
-
- "git send-email" learned to handle more forms of sendmail style
- aliases file.
-
-
-* es/utf8-stupid-compiler-workaround (2015-06-05) 1 commit
-  (merged to 'next' on 2015-06-11 at dc0f2d2)
- + utf8: NO_ICONV: silence uninitialized variable warning
-
- A compilation workaround.
-
-
-* fk/doc-format-patch-vn (2015-06-10) 1 commit
-  (merged to 'next' on 2015-06-16 at 9be3516)
- + doc: format-patch: fix typo
-
- Docfix.
-
-
-* jc/apply-reject-noop-hunk (2015-06-01) 1 commit
-  (merged to 'next' on 2015-06-11 at 8063665)
- + apply: reject a hunk that does not do anything
-
- "git apply" cannot diagnose a patch corruption when the breakage is
- to mark the length of the hunk shorter than it really is on the
- hunk header line "@@ -l,k +m,n @@"; one special case it could is
- when the hunk becomes no-op (e.g. k == n == 2 for two-line context
- patch output), and it learned to do so for this special case.
-
-
-* jc/do-not-feed-tags-to-clear-commit-marks (2015-06-01) 1 commit
-  (merged to 'next' on 2015-06-11 at 65b4308)
- + format-patch: do not feed tags to clear_commit_marks()
-
- "git format-patch --ignore-if-upstream A..B" did not like to be fed
- tags as boundary commits.
-
-
-* jc/ll-merge-expose-path (2015-06-04) 1 commit
-  (merged to 'next' on 2015-06-11 at 5c5fe41)
- + ll-merge: pass the original path to external drivers
-
- Traditionally, external low-level 3-way merge drivers are expected
- to produce their results based solely on the contents of the three
- variants given in temporary files named by %O, %A and %B on their
- command line.  Additionally allow them to look at the final path
- (given by %P).
-
-
-* jk/index-pack-reduce-recheck (2015-06-09) 1 commit
-  (merged to 'next' on 2015-06-16 at ff83705)
- + index-pack: avoid excessive re-reading of pack directory
-
- Disable "have we lost a race with competing repack?" check while
- receiving a huge object transfer that runs index-pack.
-
-
-* jk/stash-require-clean-index (2015-06-15) 1 commit
-  (merged to 'next' on 2015-06-16 at beb4883)
- + Revert "stash: require a clean index to apply"
-
- A hotfix for the topic already in 'master'.
-
-
-* js/sleep-without-select (2015-06-05) 4 commits
-  (merged to 'next' on 2015-06-11 at 278edb1)
- + lockfile: wait using sleep_millisec() instead of select()
- + lockfile: convert retry timeout computations to millisecond
- + help.c: wrap wait-only poll() invocation in sleep_millisec()
- + lockfile: replace random() by rand()
-
- Portability fix.
-
-
-* ld/p4-changes-block-size (2015-06-10) 4 commits
-  (merged to 'next' on 2015-06-16 at 09b7daa)
- + git-p4: fixing --changes-block-size handling
- + git-p4: add tests for non-numeric revision range
- + git-p4: test with limited p4 server results
- + git-p4: additional testing of --changes-block-size
-
- More workaround for Perforce's row number limit in "git p4".
-
-
-* mh/fsck-reflog-entries (2015-06-08) 2 commits
-  (merged to 'next' on 2015-06-16 at 44e3202)
- + fsck: report errors if reflog entries point at invalid objects
- + fsck_handle_reflog_sha1(): new function
-
- "git fsck" used to ignore missing or invalid objects recorded in reflog.
-
-
-* mh/reporting-broken-refs-from-for-each-ref (2015-06-08) 4 commits
-  (merged to 'next' on 2015-06-16 at 31af2b8)
- + read_loose_refs(): treat NULL_SHA1 loose references as broken
- + read_loose_refs(): simplify function logic
- + for-each-ref: report broken references correctly
- + t6301: new tests of for-each-ref error handling
-
- "git for-each-ref" reported "missing object" for 0{40} when it
- encounters a broken ref.  The lack of object whose name is 0{40} is
- not the problem; the ref being broken is.
-
-
-* nd/untracked-cache (2015-06-08) 1 commit
-  (merged to 'next' on 2015-06-16 at 5e7df1d)
- + read-cache: fix untracked cache invalidation when split-index is used
-
- Hotfix for the 'untracked-cache' topic that is already in 'master'.
-
-
-* pa/auto-gc-mac-osx (2015-06-12) 1 commit
-  (merged to 'next' on 2015-06-16 at 151ec95)
- + hooks/pre-auto-gc: adjust power checking for newer OS X
-
- Recent Mac OS X updates breaks the logic to detect that the machine
- is on the AC power in the sample pre-auto-gc script.
-
-
-* pt/am-abort-fix (2015-06-08) 6 commits
-  (merged to 'next' on 2015-06-16 at 9cac1de)
- + am --abort: keep unrelated commits on unborn branch
- + am --abort: support aborting to unborn branch
- + am --abort: revert changes introduced by failed 3way merge
- + am --skip: support skipping while on unborn branch
- + am -3: support 3way merge on unborn branch
- + am --skip: revert changes introduced by failed 3way merge
-
- Various fixes around "git am" that applies a patch to a history
- that is not there yet.
-
-
-* pt/pull-optparse (2015-06-02) 3 commits
-  (merged to 'next' on 2015-06-11 at e252b4c)
- + pull: use git-rev-parse --parseopt for option parsing
- + pull: handle git-fetch's options as well
- + Merge branch 'pt/pull-tests' into pt/pull-optparse
-
- "git pull" has become more aware of the options meant for
- underlying "git fetch" and then learned to use parse-options
- parser.
-
-
-* pt/t0302-needs-sanity (2015-06-12) 1 commit
-  (merged to 'next' on 2015-06-16 at f0d8e17)
- + t0302: "unreadable" test needs SANITY prereq
-
-
-* qn/blame-show-email (2015-06-01) 1 commit
-  (merged to 'next' on 2015-06-11 at b4998e2)
- + blame: add blame.showEmail configuration
-
- "git blame" learned blame.showEmail configuration variable.
-
-
-* rl/am-3way-config (2015-06-04) 3 commits
-  (merged to 'next' on 2015-06-11 at 9b9910d)
- + git-am: add am.threeWay config variable
- + t4150-am: refactor am -3 tests
- + git-am.sh: fix initialization of the threeway variable
-
- "git am" learned am.threeWay configuration variable.
-
-
-* sg/commit-cleanup-scissors (2015-06-09) 1 commit
-  (merged to 'next' on 2015-06-16 at 988e23d)
- + commit: cope with scissors lines in commit message
-
- "git commit --cleanup=scissors" was not careful enough to protect
- against getting fooled by a line that looked like scissors.
-
-
-* sg/completion-commit-cleanup (2015-06-08) 1 commit
-  (merged to 'next' on 2015-06-16 at a9d1c77)
- + completion: teach 'scissors' mode to 'git commit --cleanup='
-
---------------------------------------------------
-[New Topics]
-
-* ad/bisect-terms (2015-06-24) 5 commits
- - bisect: allow any terms set by user
- - bisect: add the terms old/new
- - bisect: simplify the addition of new bisect terms
- - bisect: replace hardcoded "bad|good" by variables
- - bisect: correction of typo
-
- The use of 'good/bad' in "git bisect" made it confusing to use when
- hunting for a state change that is not a regression (e.g. bugfix).
- The command learned 'old/new' and then also allows the end user to
- choose the words via a new subcommand "git bisect terms $new $old".
-
- The last one is still iffy ($gmane/272554); perhaps split this
- at patch 4 and leave the last one as a separate topic.
-
-
-* mh/tempfile (2015-06-10) 14 commits
- - credential-cache--daemon: use tempfile module
- - credential-cache--daemon: delete socket from main()
- - gc: use tempfile module to handle gc.pid file
- - lock_repo_for_gc(): compute the path to "gc.pid" only once
- - diff: use tempfile module
- - setup_temporary_shallow(): use tempfile module
- - write_shared_index(): use tempfile module
- - register_tempfile(): new function to handle an existing temporary file
- - tempfile: add several functions for creating temporary files
- - register_tempfile_object(): new function, extracted from create_tempfile()
- - commit_lock_file(): use get_locked_file_path()
- - lockfile: remove some redundant functions
- - tempfile: a new module for handling temporary files
- - Move lockfile API documentation to lockfile.h
-
- Rebuild "lockfile" API on top of a new "tempfile" API.
- This needs rerolling, to include "tempfile.h" in "lockfile.h", at
- least.
-
- Expecting a reroll.
- ($gmane/271353)
-
-
 * nd/diff-i-t-a (2015-06-23) 1 commit
- - Revert "diff-lib.c: adjust position of i-t-a entries in diff"
+ + Revert "diff-lib.c: adjust position of i-t-a entries in diff"
 
  The "let's show paths added with -N as 'new' in status output"
  change was done without enough consideration on potential fallouts
  on the codepaths that do not have anything to do with "status" and
  caused regression to at least one widely used "wsadd" alias.
 
- We do not know how widespread the fallouts would be; while we
- determine if it is feasible to squash all the fallouts and move
- things forward until the upcoming release or it would take more
- time and better be postponed til the next cycle, I prepared this
- just in case we need to revert it.
+--------------------------------------------------
+[New Topics]
+
+None of these is particularly urgent.
+
+* dt/refs-backend-preamble (2015-06-29) 7 commits
+ - git-stash: use git-reflog instead of creating files
+ - git-reflog: add create and exists functions
+ - refs: new public ref function: safe_create_reflog
+ - refs: break out check for reflog autocreation
+ - bisect: treat BISECT_HEAD as a ref
+ - cherry-pick: treat CHERRY_PICK_HEAD and REVERT_HEAD as refs
+ - refs.c: add err arguments to reflog functions
+
+ In preparation for allowing different "backends" to store the refs
+ in a way different from the traditional "one ref per file in $GIT_DIR
+ or in a $GIT_DIR/packed-refs file" filesystem storage, reduce
+ direct filesystem access to ref-like things like CHERRY_PICK_HEAD
+ from scripts and programs.
+
+ Will merge to 'next'.
+
+
+* et/http-proxyauth (2015-06-29) 1 commit
+ - http: always use any proxy auth method available
+
+ We used to ask libCURL to use the most secure authentication method
+ available when talking to an HTTP proxy only when we were told to
+ talk to one via configuration variables.  We now ask libCURL to
+ always use the most secure authentication method, because the user
+ can tell libCURL to use an HTTP proxy via an environment variable
+ without using configuration variables.
+
+ Looked sensible.  An extra set of eyes appreciated, but I think
+ this is ready.
+
+ Will merge to 'next'.
+
+
+* jc/fsck-retire-require-eoh (2015-06-28) 1 commit
+ - fsck: it is OK for a tag and a commit to lack the body
+
+ A fix to a minor regression to "git fsck" in v2.2 era that started
+ complaining about a body-less tag object when it lacks a separator
+ empty line after its header to separate it with a non-existent body.
+
+ Will merge to 'next'.
+
+
+* jk/date-mode-format (2015-06-29) 3 commits
+ - introduce "format" date-mode
+ - convert "enum date_mode" into a struct
+ - show-branch: use DATE_RELATIVE instead of magic number
+
+ Teach "git log" and friends a new "--date=format:..." option to
+ format timestamps using system's strftime(3).
+
+ Will merge to 'next'.
+
+
+* jk/still-interesting (2015-06-29) 1 commit
+ - revision.c: remove unneeded check for NULL
+
+ Code clean-up.
+
+ Will merge to 'next'.
+
+
+* nd/export-worktree (2015-06-26) 1 commit
+ - setup: set env $GIT_WORK_TREE when work tree is set, like $GIT_DIR
+
+ Running an aliased command from a subdirectory when the .git thing
+ in the working tree is a gitfile pointing elsewhere did not work.
+
+ Will merge to 'next'.
+
+
+* sb/p5310-and-chain (2015-06-26) 1 commit
+ - p5310: Fix broken && chain in performance test
+
+ Code clean-up.
+
+ Will merge to 'next'.
+
+
+* jc/rerere (2015-06-28) 5 commits
+ - rerere: report autoupdated paths only after actually updating them
+ - rerere: write out each record of MERGE_RR in one go
+ - rerere: lift PATH_MAX limitation
+ - t4200: rerere a merge with two identical conflicts
+ - rerere: fix an off-by-one non-bug
+
+ Code clean-up (so far).
 
 --------------------------------------------------
 [Stalled]
@@ -504,6 +339,49 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* ad/bisect-terms (2015-06-29) 10 commits
+ - bisect: allow setting any user-specified in 'git bisect start'
+ - bisect: add 'git bisect terms' to view the current terms
+ - bisect: add the terms old/new
+ - bisect: sanity check on terms
+ - bisect: don't mix option parsing and non-trivial code
+ - bisect: simplify the addition of new bisect terms
+ - bisect: replace hardcoded "bad|good" by variables
+ - Documentation/bisect: revise overall content
+ - Documentation/bisect: move getting help section to the end
+ - bisect: correction of typo
+
+ The use of 'good/bad' in "git bisect" made it confusing to use when
+ hunting for a state change that is not a regression (e.g. bugfix).
+ The command learned 'old/new' and then allows the end user to
+ say e.g. "bisect start --term-old=fast --term=new=slow" to find a
+ performance regression.
+
+
+* mh/tempfile (2015-06-10) 14 commits
+ - credential-cache--daemon: use tempfile module
+ - credential-cache--daemon: delete socket from main()
+ - gc: use tempfile module to handle gc.pid file
+ - lock_repo_for_gc(): compute the path to "gc.pid" only once
+ - diff: use tempfile module
+ - setup_temporary_shallow(): use tempfile module
+ - write_shared_index(): use tempfile module
+ - register_tempfile(): new function to handle an existing temporary file
+ - tempfile: add several functions for creating temporary files
+ - register_tempfile_object(): new function, extracted from create_tempfile()
+ - commit_lock_file(): use get_locked_file_path()
+ - lockfile: remove some redundant functions
+ - tempfile: a new module for handling temporary files
+ - Move lockfile API documentation to lockfile.h
+
+ Rebuild "lockfile" API on top of a new "tempfile" API.
+ This needs rerolling, to include "tempfile.h" in "lockfile.h", at
+ least.
+
+ Expecting a reroll.
+ ($gmane/271353)
+
+
 * js/fsck-opt (2015-06-23) 19 commits
  - fsck: support ignoring objects in `git fsck` via fsck.skiplist
  - fsck: git receive-pack: support excluding objects from fsck'ing
@@ -532,7 +410,7 @@ of the repositories listed at
  Will merge to 'next'.
 
 
-* js/rebase-i-clean-up-upon-continue-to-skip (2015-06-23) 2 commits
+* js/rebase-i-clean-up-upon-continue-to-skip (2015-06-29) 2 commits
  - rebase -i: do not leave a CHERRY_PICK_HEAD file behind
  - t3404: demonstrate CHERRY_PICK_HEAD bug
 
@@ -650,7 +528,7 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* jk/cat-file-batch-all (2015-06-22) 8 commits
+* jk/cat-file-batch-all (2015-06-26) 8 commits
  - cat-file: sort and de-dup output of --batch-all-objects
  - cat-file: add --batch-all-objects option
  - cat-file: split batch_one_object into two stages
@@ -703,6 +581,7 @@ of the repositories listed at
  + for-each-ref: rename 'refinfo' to 'ref_array_item'
  + for-each-ref: clean up code
  + for-each-ref: extract helper functions out of grab_single_ref()
+ (this branch is used by kn/for-each-tag-branch.)
 
  GSoC project to rebuild ref listing by branch and tag based on the
  for-each-ref machinery.  This is its first part.
@@ -743,7 +622,9 @@ of the repositories listed at
  other than refs/replace/ for the object replacement data.
 
 
-* nd/multiple-work-trees (2015-06-12) 1 commit
+* nd/multiple-work-trees (2015-06-29) 2 commits
+  (merged to 'next' on 2015-06-29 at fd4eb60)
+ + worktree: new place for "git prune --worktrees"
   (merged to 'next' on 2015-06-24 at 7c3f918)
  + checkout: don't check worktrees when not necessary
 
@@ -832,7 +713,7 @@ of the repositories listed at
  Reimplement 'git pull' in C.
 
  This is v4 ($gmane/271943).
- Comments from mentors and others?
+ Will merge to 'next'.
 
 
 * rl/send-email-aliases (2015-06-17) 10 commits
@@ -896,7 +777,8 @@ of the repositories listed at
  What's the status of this one?
 
 
-* gr/rebase-i-drop-warn (2015-06-01) 2 commits
+* gr/rebase-i-drop-warn (2015-06-24) 3 commits
+ - git rebase -i: add static check for commands and SHA-1
  - git rebase -i: warn about removed commits
  - git-rebase -i: add command "drop" to remove a commit
 
@@ -905,9 +787,7 @@ of the repositories listed at
  who do not use it (and instead just remove the lines) by throwing
  a warning.
 
- This is a lot older version than the latest round ($gmane/272420)
- Expecting a reroll.
- ($gmane/272506).
+ Need to pick up the latest reroll ($gmane/273009).
 
 
 * jh/strbuf-read-use-read-in-full (2015-06-01) 1 commit
@@ -963,7 +843,9 @@ of the repositories listed at
  Still an early WIP
 
 
-* ee/clean-remove-dirs (2015-06-15) 5 commits
+* ee/clean-remove-dirs (2015-06-26) 6 commits
+  (merged to 'next' on 2015-06-29 at d595659)
+ + read_gitfile_gently: fix use-after-free
   (merged to 'next' on 2015-06-24 at 7c27821)
  + clean: improve performance when removing lots of directories
  + p7300: add performance tests for clean
