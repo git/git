@@ -1,0 +1,48 @@
+git-worktree(1)
+===============
+
+NAME
+----
+git-worktree - Manage multiple worktrees
+
+
+SYNOPSIS
+--------
+[verse]
+'git worktree prune' [-n] [-v] [--expire <expire>]
+
+DESCRIPTION
+-----------
+
+Manage multiple worktrees attached to the same repository. These are
+created by the command `git checkout --to`.
+
+COMMANDS
+--------
+prune::
+
+Prune working tree information in $GIT_DIR/worktrees.
+
+OPTIONS
+-------
+
+-n::
+--dry-run::
+	Do not remove anything; just report what it would
+	remove.
+
+-v::
+--verbose::
+	Report all removals.
+
+--expire <time>::
+	Only expire unused worktrees older than <time>.
+
+SEE ALSO
+--------
+
+linkgit:git-checkout[1]
+
+GIT
+---
+Part of the linkgit:git[1] suite

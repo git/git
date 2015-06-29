@@ -138,4 +138,5 @@ git-verify-pack                         plumbinginterrogators
 git-verify-tag                          ancillaryinterrogators
 gitweb                                  ancillaryinterrogators
 git-whatchanged                         ancillaryinterrogators
+git-worktree                            mainporcelain
 git-write-tree                          plumbingmanipulators
