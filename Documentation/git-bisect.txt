@@ -19,6 +19,7 @@ on the subcommand:
  git bisect start [--no-checkout] [<bad> [<good>...]] [--] [<paths>...]
  git bisect (bad|new) [<rev>]
  git bisect (good|old) [<rev>...]
+ git bisect terms [--term-good | --term-bad]
  git bisect skip [(<rev>|<range>)...]
  git bisect reset [<commit>]
  git bisect visualize
@@ -156,6 +157,15 @@ git bisect new [<rev>...]
 ------------------------------------------------
 
 to indicate that it was after.
+
+To get a reminder of the currently used terms, use
+
+------------------------------------------------
+git bisect terms
+------------------------------------------------
+
+You can get just the old (respectively new) term with `git bisect term
+--term-old` or `git bisect term --term-good`.
 
 Bisect visualize
 ~~~~~~~~~~~~~~~~

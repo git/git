@@ -797,4 +797,24 @@ test_expect_success 'bisect cannot mix old/new and good/bad' '
 	test_must_fail git bisect old $HASH1
 '
 
+test_expect_success 'bisect terms needs 0 or 1 argument' '
+	git bisect reset &&
+	test_must_fail git bisect terms only-one &&
+	test_must_fail git bisect terms 1 2 &&
+	test_must_fail git bisect terms 2>actual &&
+	echo "no terms defined" >expected &&
+	test_cmp expected actual
+'
+
+test_expect_success 'bisect terms shows good/bad after start' '
+	git bisect reset &&
+	git bisect start HEAD $HASH1 &&
+	git bisect terms --term-good >actual &&
+	echo good >expected &&
+	test_cmp expected actual &&
+	git bisect terms --term-bad >actual &&
+	echo bad >expected &&
+	test_cmp expected actual
+'
+
 test_done

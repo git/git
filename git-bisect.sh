@@ -1,6 +1,6 @@
 #!/bin/sh
 
-USAGE='[help|start|bad|good|new|old|skip|next|reset|visualize|replay|log|run]'
+USAGE='[help|start|bad|good|new|old|terms|skip|next|reset|visualize|replay|log|run]'
 LONG_USAGE='git bisect help
 	print this long help message.
 git bisect start [--no-checkout] [<bad> [<good>...]] [--] [<pathspec>...]
@@ -11,6 +11,8 @@ git bisect (bad|new) [<rev>]
 git bisect (good|old) [<rev>...]
 	mark <rev>... known-good revisions/
 		revisions before change in a given property.
+git bisect terms [--term-good | --term-bad]
+	show the terms used for old and new commits (default: bad, good)
 git bisect skip [(<rev>|<range>)...]
 	mark <rev>... untestable revisions.
 git bisect next
@@ -453,6 +455,8 @@ bisect_replay () {
 			eval "$cmd" ;;
 		"$TERM_GOOD"|"$TERM_BAD"|skip)
 			bisect_write "$command" "$rev" ;;
+		terms)
+			bisect_terms $rev ;;
 		*)
 			die "$(gettext "?? what are you talking about?")" ;;
 		esac
@@ -606,6 +610,37 @@ bisect_voc () {
 	esac
 }
 
+bisect_terms () {
+	get_terms
+	if ! test -s "$GIT_DIR/BISECT_TERMS"
+	then
+		die "$(gettext "no terms defined")"
+	fi
+	case "$#" in
+	0)
+		gettextln "Your current terms are $TERM_GOOD for the old state
+and $TERM_BAD for the new state."
+		;;
+	1)
+		arg=$1
+		case "$arg" in
+			--term-good|--term-old)
+				printf '%s\n' "$TERM_GOOD"
+				;;
+			--term-bad|--term-new)
+				printf '%s\n' "$TERM_BAD"
+				;;
+			*)
+				die "$(eval_gettext "invalid argument \$arg for 'git bisect terms'.
+Supported options are: --term-good|--term-old and --term-bad|--term-new.")"
+				;;
+		esac
+		;;
+	*)
+		usage ;;
+	esac
+}
+
 case "$#" in
 0)
 	usage ;;
@@ -635,6 +670,8 @@ case "$#" in
 		bisect_log ;;
 	run)
 		bisect_run "$@" ;;
+	terms)
+		bisect_terms "$@" ;;
 	*)
 		usage ;;
 	esac
