@@ -148,8 +148,25 @@ static int rerere_file_getline(struct strbuf *sb, struct rerere_io *io_)
 	return strbuf_getwholeline(sb, io->input, '\n');
 }
 
-static int is_cmarker(char *buf, int marker_char, int marker_size, int want_sp)
+/*
+ * Require the exact number of conflict marker letters, no more, no
+ * less, followed by SP or any whitespace
+ * (including LF).
+ */
+static int is_cmarker(char *buf, int marker_char, int marker_size)
 {
+	int want_sp;
+
+	/*
+	 * The beginning of our version and the end of their version
+	 * always are labeled like "<<<<< ours" or ">>>>> theirs",
+	 * hence we set want_sp for them.  Note that the version from
+	 * the common ancestor in diff3-style output is not always
+	 * labelled (e.g. "||||| common" is often seen but "|||||"
+	 * alone is also valid), so we do not set want_sp.
+	 */
+	want_sp = (marker_char == '<') || (marker_char == '>');
+
 	while (marker_size--)
 		if (*buf++ != marker_char)
 			return 0;
@@ -172,19 +189,19 @@ static int handle_path(unsigned char *sha1, struct rerere_io *io, int marker_siz
 		git_SHA1_Init(&ctx);
 
 	while (!io->getline(&buf, io)) {
-		if (is_cmarker(buf.buf, '<', marker_size, 1)) {
+		if (is_cmarker(buf.buf, '<', marker_size)) {
 			if (hunk != RR_CONTEXT)
 				goto bad;
 			hunk = RR_SIDE_1;
-		} else if (is_cmarker(buf.buf, '|', marker_size, 0)) {
+		} else if (is_cmarker(buf.buf, '|', marker_size)) {
 			if (hunk != RR_SIDE_1)
 				goto bad;
 			hunk = RR_ORIGINAL;
-		} else if (is_cmarker(buf.buf, '=', marker_size, 0)) {
+		} else if (is_cmarker(buf.buf, '=', marker_size)) {
 			if (hunk != RR_SIDE_1 && hunk != RR_ORIGINAL)
 				goto bad;
 			hunk = RR_SIDE_2;
-		} else if (is_cmarker(buf.buf, '>', marker_size, 1)) {
+		} else if (is_cmarker(buf.buf, '>', marker_size)) {
 			if (hunk != RR_SIDE_2)
 				goto bad;
 			if (strbuf_cmp(&one, &two) > 0)
