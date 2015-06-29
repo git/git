@@ -817,4 +817,81 @@ test_expect_success 'bisect terms shows good/bad after start' '
 	test_cmp expected actual
 '
 
+test_expect_success 'bisect start with one term1 and term2' '
+	git bisect reset &&
+	git bisect start --term-old term2 --term-new term1 &&
+	git bisect term2 $HASH1 &&
+	git bisect term1 $HASH4 &&
+	git bisect term1 &&
+	git bisect term1 >bisect_result &&
+	grep "$HASH2 is the first term1 commit" bisect_result &&
+	git bisect log >log_to_replay.txt &&
+	git bisect reset
+'
+
+test_expect_success 'bisect replay with term1 and term2' '
+	git bisect replay log_to_replay.txt >bisect_result &&
+	grep "$HASH2 is the first term1 commit" bisect_result &&
+	git bisect reset
+'
+
+test_expect_success 'bisect start term1 term2' '
+	git bisect reset &&
+	git bisect start --term-new term1 --term-old term2 $HASH4 $HASH1 &&
+	git bisect term1 &&
+	git bisect term1 >bisect_result &&
+	grep "$HASH2 is the first term1 commit" bisect_result &&
+	git bisect log >log_to_replay.txt &&
+	git bisect reset
+'
+
+test_expect_success 'bisect cannot mix terms' '
+	git bisect reset &&
+	git bisect start --term-good term1 --term-bad term2 $HASH4 $HASH1 &&
+	test_must_fail git bisect a &&
+	test_must_fail git bisect b &&
+	test_must_fail git bisect bad &&
+	test_must_fail git bisect good &&
+	test_must_fail git bisect new &&
+	test_must_fail git bisect old
+'
+
+test_expect_success 'bisect terms rejects invalid terms' '
+	git bisect reset &&
+	test_must_fail git bisect start --term-good invalid..term &&
+	test_must_fail git bisect terms --term-bad invalid..term &&
+	test_must_fail git bisect terms --term-good bad &&
+	test_must_fail git bisect terms --term-good old &&
+	test_must_fail git bisect terms --term-good skip &&
+	test_must_fail git bisect terms --term-good reset &&
+	test_path_is_missing .git/BISECT_TERMS
+'
+
+test_expect_success 'bisect start --term-* does store terms' '
+	git bisect reset &&
+	git bisect start --term-bad=one --term-good=two &&
+	git bisect terms >actual &&
+	cat <<-EOF >expected &&
+	Your current terms are two for the old state
+	and one for the new state.
+	EOF
+	test_cmp expected actual &&
+	git bisect terms --term-bad >actual &&
+	echo one >expected &&
+	test_cmp expected actual &&
+	git bisect terms --term-good >actual &&
+	echo two >expected &&
+	test_cmp expected actual
+'
+
+test_expect_success 'bisect start takes options and revs in any order' '
+	git bisect reset &&
+	git bisect start --term-good one $HASH4 \
+		--term-good two --term-bad bad-term \
+		$HASH1 --term-good three -- &&
+	(git bisect terms --term-bad && git bisect terms --term-good) >actual &&
+	printf "%s\n%s\n" bad-term three >expected &&
+	test_cmp expected actual
+'
+
 test_done

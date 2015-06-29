@@ -16,7 +16,8 @@ DESCRIPTION
 The command takes various subcommands, and different options depending
 on the subcommand:
 
- git bisect start [--no-checkout] [<bad> [<good>...]] [--] [<paths>...]
+ git bisect start [--term-{old,good}=<term> --term-{new,bad}=<term>]
+		  [--no-checkout] [<bad> [<good>...]] [--] [<paths>...]
  git bisect (bad|new) [<rev>]
  git bisect (good|old) [<rev>...]
  git bisect terms [--term-good | --term-bad]
@@ -41,7 +42,7 @@ In fact, `git bisect` can be used to find the commit that changed
 *any* property of your project; e.g., the commit that fixed a bug, or
 the commit that caused a benchmark's performance to improve. To
 support this more general usage, the terms "old" and "new" can be used
-in place of "good" and "bad". See
+in place of "good" and "bad", or you can choose your own terms. See
 section "Alternate terms" below for more information.
 
 Basic bisect commands: start, bad, good
@@ -166,6 +167,31 @@ git bisect terms
 
 You can get just the old (respectively new) term with `git bisect term
 --term-old` or `git bisect term --term-good`.
+
+If you would like to use your own terms instead of "bad"/"good" or
+"new"/"old", you can choose any names you like (except existing bisect
+subcommands like `reset`, `start`, ...) by starting the
+bisection using
+
+------------------------------------------------
+git bisect start --term-old <term-old> --term-new <term-new>
+------------------------------------------------
+
+For example, if you are looking for a commit that introduced a
+performance regression, you might use
+
+------------------------------------------------
+git bisect start --term-old fast --term-new slow
+------------------------------------------------
+
+Or if you are looking for the commit that fixed a bug, you might use
+
+------------------------------------------------
+git bisect start --term-new fixed --term-old broken
+------------------------------------------------
+
+Then, use `git bisect <term-old>` and `git bisect <term-new>` instead
+of `git bisect good` and `git bisect bad` to mark commits.
 
 Bisect visualize
 ~~~~~~~~~~~~~~~~
@@ -449,6 +475,13 @@ required by 'git pack objects'.
 $ git bisect start
 $ git bisect new HEAD    # current commit is marked as new
 $ git bisect old HEAD~10 # the tenth commit from now is marked as old
+------------
++
+or:
+------------
+$ git bisect start --term-old broken --term-new fixed
+$ git bisect fixed
+$ git bisect broken HEAD~10
 ------------
 
 Getting help

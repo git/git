@@ -3,7 +3,8 @@
 USAGE='[help|start|bad|good|new|old|terms|skip|next|reset|visualize|replay|log|run]'
 LONG_USAGE='git bisect help
 	print this long help message.
-git bisect start [--no-checkout] [<bad> [<good>...]] [--] [<pathspec>...]
+git bisect start [--term-{old,good}=<term> --term-{new,bad}=<term>]
+		 [--no-checkout] [<bad> [<good>...]] [--] [<pathspec>...]
 	reset bisect state and start bisection.
 git bisect (bad|new) [<rev>]
 	mark <rev> a known-bad revision/
@@ -98,6 +99,24 @@ bisect_start() {
 		;;
 		--no-checkout)
 			mode=--no-checkout
+			shift ;;
+		--term-good|--term-old)
+			shift
+			must_write_terms=1
+			TERM_GOOD=$1
+			shift ;;
+		--term-good=*|--term-old=*)
+			must_write_terms=1
+			TERM_GOOD=${1#*=}
+			shift ;;
+		--term-bad|--term-new)
+			shift
+			must_write_terms=1
+			TERM_BAD=$1
+			shift ;;
+		--term-bad=*|--term-new=*)
+			must_write_terms=1
+			TERM_BAD=${1#*=}
 			shift ;;
 		--*)
 			die "$(eval_gettext "unrecognised option: '\$arg'")" ;;
