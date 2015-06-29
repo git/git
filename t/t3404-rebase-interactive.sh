@@ -1102,4 +1102,22 @@ test_expect_success 'rebase -i commits that overwrite untracked files (no ff)' '
 	test $(git cat-file commit HEAD | sed -ne \$p) = I
 '
 
+rebase_setup_and_clean () {
+	test_when_finished "
+		git checkout master &&
+		test_might_fail git branch -D $1 &&
+		test_might_fail git rebase --abort
+	" &&
+	git checkout -b $1 master
+}
+
+test_expect_success 'drop' '
+	rebase_setup_and_clean drop-test &&
+	set_fake_editor &&
+	FAKE_LINES="1 drop 2 3 drop 4 5" git rebase -i --root &&
+	test E = $(git cat-file commit HEAD | sed -ne \$p) &&
+	test C = $(git cat-file commit HEAD^ | sed -ne \$p) &&
+	test A = $(git cat-file commit HEAD^^ | sed -ne \$p)
+'
+
 test_done
