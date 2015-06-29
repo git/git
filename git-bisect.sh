@@ -535,7 +535,40 @@ get_terms () {
 write_terms () {
 	TERM_BAD=$1
 	TERM_GOOD=$2
+	if test "$TERM_BAD" = "$TERM_GOOD"
+	then
+		die "$(gettext "please use two different terms")"
+	fi
+	check_term_format "$TERM_BAD" bad
+	check_term_format "$TERM_GOOD" good
 	printf '%s\n%s\n' "$TERM_BAD" "$TERM_GOOD" >"$GIT_DIR/BISECT_TERMS"
+}
+
+check_term_format () {
+	term=$1
+	git check-ref-format refs/bisect/"$term" ||
+	die "$(eval_gettext "'\$term' is not a valid term")"
+	case "$term" in
+	help|start|terms|skip|next|reset|visualize|replay|log|run)
+		die "$(eval_gettext "can't use the builtin command '\$term' as a term")"
+		;;
+	bad|new)
+		if test "$2" != bad
+		then
+			# In theory, nothing prevents swapping
+			# completely good and bad, but this situation
+			# could be confusing and hasn't been tested
+			# enough. Forbid it for now.
+			die "$(eval_gettext "can't change the meaning of term '\$term'")"
+		fi
+		;;
+	good|old)
+		if test "$2" != good
+		then
+			die "$(eval_gettext "can't change the meaning of term '\$term'")"
+		fi
+		;;
+	esac
 }
 
 check_and_set_terms () {
