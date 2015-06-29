@@ -39,20 +39,7 @@ do
 	shift
 done
 
-for TRASH in /dev/shm /tmp ""
-do
-	if test -n "$TRASH" &&
-	   mkdir -p "$TRASH/testpen" 2>/dev/null &&
-	   test -w "$TRASH/testpen"
-	then
-		TRASH="--root=$(cd "$TRASH/testpen" && /bin/pwd)"
-		break
-	fi
-done
-
 sh -c 'asciidoc --version >/dev/null 2>&1' || nodoc=y
-GIT_TEST_OPTS="$TRASH${GIT_TEST_OPTS+" $GIT_TEST_OPTS"}"
-export GIT_TEST_OPTS
 
 GIT_TEST_CHAIN_LINT=1
 export GIT_TEST_CHAIN_LINT
@@ -201,7 +188,8 @@ do
 
 		save=$(git rev-parse HEAD) &&
 
-		Meta/Make $M ${test+"$test"} $jobs -- ${with_dash:+SHELL_PATH=/bin/dash} "$@" $dotest &&
+		Meta/Make $M ${test+"$test"} $jobs --memtrash \
+		    -- ${with_dash:+SHELL_PATH=/bin/dash} "$@" $dotest &&
 
 		{
 			test -n "$skip_doc" ||
