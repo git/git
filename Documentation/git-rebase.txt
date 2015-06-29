@@ -213,6 +213,12 @@ rebase.autoSquash::
 rebase.autoStash::
 	If set to true enable '--autostash' option by default.
 
+rebase.missingCommitsCheck::
+	If set to "warn", print warnings about removed commits in
+	interactive mode. If set to "error", print the warnings and
+	stop the rebase. If set to "ignore", no checking is
+	done. "ignore" by default.
+
 OPTIONS
 -------
 --onto <newbase>::

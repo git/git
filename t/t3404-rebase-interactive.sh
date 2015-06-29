@@ -1120,4 +1120,70 @@ test_expect_success 'drop' '
 	test A = $(git cat-file commit HEAD^^ | sed -ne \$p)
 '
 
+cat >expect <<EOF
+Successfully rebased and updated refs/heads/missing-commit.
+EOF
+
+test_expect_success 'rebase -i respects rebase.missingCommitsCheck = ignore' '
+	test_config rebase.missingCommitsCheck ignore &&
+	rebase_setup_and_clean missing-commit &&
+	set_fake_editor &&
+	FAKE_LINES="1 2 3 4" \
+		git rebase -i --root 2>actual &&
+	test D = $(git cat-file commit HEAD | sed -ne \$p) &&
+	test_cmp expect actual
+'
+
+cat >expect <<EOF
+Warning: some commits may have been dropped accidentally.
+Dropped commits (newer to older):
+ - $(git rev-list --pretty=oneline --abbrev-commit -1 master)
+To avoid this message, use "drop" to explicitly remove a commit.
+
+Use 'git config rebase.missingCommitsCheck' to change the level of warnings.
+The possible behaviours are: ignore, warn, error.
+
+Successfully rebased and updated refs/heads/missing-commit.
+EOF
+
+test_expect_success 'rebase -i respects rebase.missingCommitsCheck = warn' '
+	test_config rebase.missingCommitsCheck warn &&
+	rebase_setup_and_clean missing-commit &&
+	set_fake_editor &&
+	FAKE_LINES="1 2 3 4" \
+		git rebase -i --root 2>actual &&
+	test_cmp expect actual &&
+	test D = $(git cat-file commit HEAD | sed -ne \$p)
+'
+
+cat >expect <<EOF
+Warning: some commits may have been dropped accidentally.
+Dropped commits (newer to older):
+ - $(git rev-list --pretty=oneline --abbrev-commit -1 master)
+ - $(git rev-list --pretty=oneline --abbrev-commit -1 master~2)
+To avoid this message, use "drop" to explicitly remove a commit.
+
+Use 'git config rebase.missingCommitsCheck' to change the level of warnings.
+The possible behaviours are: ignore, warn, error.
+
+You can fix this with 'git rebase --edit-todo'.
+Or you can abort the rebase with 'git rebase --abort'.
+EOF
+
+test_expect_success 'rebase -i respects rebase.missingCommitsCheck = error' '
+	test_config rebase.missingCommitsCheck error &&
+	rebase_setup_and_clean missing-commit &&
+	set_fake_editor &&
+	test_must_fail env FAKE_LINES="1 2 4" \
+		git rebase -i --root 2>actual &&
+	test_cmp expect actual &&
+	cp .git/rebase-merge/git-rebase-todo.backup \
+		.git/rebase-merge/git-rebase-todo &&
+	FAKE_LINES="1 2 drop 3 4 drop 5" \
+		git rebase --edit-todo &&
+	git rebase --continue &&
+	test D = $(git cat-file commit HEAD | sed -ne \$p) &&
+	test B = $(git cat-file commit HEAD^ | sed -ne \$p)
+'
+
 test_done
