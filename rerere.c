@@ -482,6 +482,8 @@ static void update_paths(struct string_list *update)
 		struct string_list_item *item = &update->items[i];
 		if (add_file_to_cache(item->string, 0))
 			exit(128);
+		fprintf(stderr, "Staged '%s' using previous resolution.\n",
+			item->string);
 	}
 
 	if (active_cache_changed) {
@@ -536,16 +538,16 @@ static int do_plain_rerere(struct string_list *rr, int fd)
 		const char *name = (const char *)rr->items[i].util;
 
 		if (has_rerere_resolution(name)) {
-			if (!merge(name, path)) {
-				const char *msg;
-				if (rerere_autoupdate) {
-					string_list_insert(&update, path);
-					msg = "Staged '%s' using previous resolution.\n";
-				} else
-					msg = "Resolved '%s' using previous resolution.\n";
-				fprintf(stderr, msg, path);
-				goto mark_resolved;
-			}
+			if (merge(name, path))
+				continue;
+
+			if (rerere_autoupdate)
+				string_list_insert(&update, path);
+			else
+				fprintf(stderr,
+					"Resolved '%s' using previous resolution.\n",
+					path);
+			goto mark_resolved;
 		}
 
 		/* Let's see if we have resolved it. */
