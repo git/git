@@ -32,6 +32,8 @@ OPTIONS_SPEC=
 
 _x40='[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]'
 _x40="$_x40$_x40$_x40$_x40$_x40$_x40$_x40$_x40"
+TERM_BAD=bad
+TERM_GOOD=good
 
 bisect_head()
 {
@@ -100,8 +102,8 @@ bisect_start() {
 				break
 			}
 			case $bad_seen in
-			0) state='bad' ; bad_seen=1 ;;
-			*) state='good' ;;
+			0) state=$TERM_BAD ; bad_seen=1 ;;
+			*) state=$TERM_GOOD ;;
 			esac
 			eval="$eval bisect_write '$state' '$rev' 'nolog' &&"
 			shift
@@ -184,9 +186,12 @@ bisect_write() {
 	rev="$2"
 	nolog="$3"
 	case "$state" in
-		bad)		tag="$state" ;;
-		good|skip)	tag="$state"-"$rev" ;;
-		*)		die "$(eval_gettext "Bad bisect_write argument: \$state")" ;;
+		"$TERM_BAD")
+			tag="$state" ;;
+		"$TERM_GOOD"|skip)
+			tag="$state"-"$rev" ;;
+		*)
+			die "$(eval_gettext "Bad bisect_write argument: \$state")" ;;
 	esac
 	git update-ref "refs/bisect/$tag" "$rev" || exit
 	echo "# $state: $(git show-branch $rev)" >>"$GIT_DIR/BISECT_LOG"
@@ -230,12 +235,12 @@ bisect_state() {
 	case "$#,$state" in
 	0,*)
 		die "$(gettext "Please call 'bisect_state' with at least one argument.")" ;;
-	1,bad|1,good|1,skip)
+	1,"$TERM_BAD"|1,"$TERM_GOOD"|1,skip)
 		rev=$(git rev-parse --verify $(bisect_head)) ||
 			die "$(gettext "Bad rev input: $(bisect_head)")"
 		bisect_write "$state" "$rev"
 		check_expected_revs "$rev" ;;
-	2,bad|*,good|*,skip)
+	2,"$TERM_BAD"|*,"$TERM_GOOD"|*,skip)
 		shift
 		hash_list=''
 		for rev in "$@"
@@ -249,8 +254,8 @@ bisect_state() {
 			bisect_write "$state" "$rev"
 		done
 		check_expected_revs $hash_list ;;
-	*,bad)
-		die "$(gettext "'git bisect bad' can take only one argument.")" ;;
+	*,"$TERM_BAD")
+		die "$(eval_gettext "'git bisect \$TERM_BAD' can take only one argument.")" ;;
 	*)
 		usage ;;
 	esac
@@ -259,21 +264,21 @@ bisect_state() {
 
 bisect_next_check() {
 	missing_good= missing_bad=
-	git show-ref -q --verify refs/bisect/bad || missing_bad=t
-	test -n "$(git for-each-ref "refs/bisect/good-*")" || missing_good=t
+	git show-ref -q --verify refs/bisect/$TERM_BAD || missing_bad=t
+	test -n "$(git for-each-ref "refs/bisect/$TERM_GOOD-*")" || missing_good=t
 
 	case "$missing_good,$missing_bad,$1" in
 	,,*)
-		: have both good and bad - ok
+		: have both $TERM_GOOD and $TERM_BAD - ok
 		;;
 	*,)
 		# do not have both but not asked to fail - just report.
 		false
 		;;
-	t,,good)
+	t,,"$TERM_GOOD")
 		# have bad but not good.  we could bisect although
 		# this is less optimum.
-		gettextln "Warning: bisecting only with a bad commit." >&2
+		eval_gettextln "Warning: bisecting only with a \$TERM_BAD commit." >&2
 		if test -t 0
 		then
 			# TRANSLATORS: Make sure to include [Y] and [n] in your
@@ -283,7 +288,7 @@ bisect_next_check() {
 			read yesno
 			case "$yesno" in [Nn]*) exit 1 ;; esac
 		fi
-		: bisect without good...
+		: bisect without $TERM_GOOD...
 		;;
 	*)
 
@@ -307,7 +312,7 @@ bisect_auto_next() {
 bisect_next() {
 	case "$#" in 0) ;; *) usage ;; esac
 	bisect_autostart
-	bisect_next_check good
+	bisect_next_check $TERM_GOOD
 
 	# Perform all bisection computation, display and checkout
 	git bisect--helper --next-all $(test -f "$GIT_DIR/BISECT_HEAD" && echo --no-checkout)
@@ -316,18 +321,18 @@ bisect_next() {
 	# Check if we should exit because bisection is finished
 	if test $res -eq 10
 	then
-		bad_rev=$(git show-ref --hash --verify refs/bisect/bad)
+		bad_rev=$(git show-ref --hash --verify refs/bisect/$TERM_BAD)
 		bad_commit=$(git show-branch $bad_rev)
-		echo "# first bad commit: $bad_commit" >>"$GIT_DIR/BISECT_LOG"
+		echo "# first $TERM_BAD commit: $bad_commit" >>"$GIT_DIR/BISECT_LOG"
 		exit 0
 	elif test $res -eq 2
 	then
 		echo "# only skipped commits left to test" >>"$GIT_DIR/BISECT_LOG"
-		good_revs=$(git for-each-ref --format="%(objectname)" "refs/bisect/good-*")
-		for skipped in $(git rev-list refs/bisect/bad --not $good_revs)
+		good_revs=$(git for-each-ref --format="%(objectname)" "refs/bisect/$TERM_GOOD-*")
+		for skipped in $(git rev-list refs/bisect/$TERM_BAD --not $good_revs)
 		do
 			skipped_commit=$(git show-branch $skipped)
-			echo "# possible first bad commit: $skipped_commit" >>"$GIT_DIR/BISECT_LOG"
+			echo "# possible first $TERM_BAD commit: $skipped_commit" >>"$GIT_DIR/BISECT_LOG"
 		done
 		exit $res
 	fi
@@ -421,7 +426,7 @@ bisect_replay () {
 		start)
 			cmd="bisect_start $rev"
 			eval "$cmd" ;;
-		good|bad|skip)
+		$TERM_GOOD|$TERM_BAD|skip)
 			bisect_write "$command" "$rev" ;;
 		*)
 			die "$(gettext "?? what are you talking about?")" ;;
@@ -455,9 +460,9 @@ exit code \$res from '\$command' is < 0 or >= 128" >&2
 			state='skip'
 		elif [ $res -gt 0 ]
 		then
-			state='bad'
+			state="$TERM_BAD"
 		else
-			state='good'
+			state="$TERM_GOOD"
 		fi
 
 		# We have to use a subshell because "bisect_state" can exit.
@@ -466,7 +471,7 @@ exit code \$res from '\$command' is < 0 or >= 128" >&2
 
 		cat "$GIT_DIR/BISECT_RUN"
 
-		if sane_grep "first bad commit could be any of" "$GIT_DIR/BISECT_RUN" \
+		if sane_grep "first $TERM_BAD commit could be any of" "$GIT_DIR/BISECT_RUN" \
 			>/dev/null
 		then
 			gettextln "bisect run cannot continue any more" >&2
@@ -480,7 +485,7 @@ exit code \$res from '\$command' is < 0 or >= 128" >&2
 			exit $res
 		fi
 
-		if sane_grep "is the first bad commit" "$GIT_DIR/BISECT_RUN" >/dev/null
+		if sane_grep "is the first $TERM_BAD commit" "$GIT_DIR/BISECT_RUN" >/dev/null
 		then
 			gettextln "bisect run success"
 			exit 0;
