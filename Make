@@ -111,6 +111,7 @@ case "$NO_PEDANTIC" in
 	;;
 esac
 
+testpen=
 while case $# in 0) break ;; esac
 do 
 	case "$1" in
@@ -128,6 +129,12 @@ do
 		;;
 	-loose | --loose)
 		PEDANT= Wall=
+		;;
+	--memtrash)
+		testpen=testpen.$$
+		;;
+	--memtrash=*)
+		testpen=testpen.${1#--memtrash=}
 		;;
 	--locale=*)
 		LANG=${1#*=}
@@ -158,6 +165,23 @@ do
 	esac
 	shift
 done
+
+if test -n "$testpen"
+then
+	for TRASH in /dev/shm /tmp ""
+	do
+		if test -n "$TRASH" &&
+		   mkdir -p "$TRASH/$testpen" 2>/dev/null &&
+		   test -w "$TRASH/$testpen"
+		then
+			TRASH="--root=$(cd "$TRASH/$testpen" && /bin/pwd)"
+			break
+		fi
+	done
+	GIT_TEST_OPTS="$TRASH${GIT_TEST_OPTS+" $GIT_TEST_OPTS"}"
+	export GIT_TEST_OPTS
+fi
+
 O="${PEDANT}${PEDANT:+ }$O"
 
 test -f /bin/dash || with_dash=
