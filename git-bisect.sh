@@ -78,6 +78,7 @@ bisect_start() {
 	bad_seen=0
 	eval=''
 	must_write_terms=0
+	revs=''
 	if test "z$(git rev-parse --is-bare-repository)" != zfalse
 	then
 		mode=--no-checkout
@@ -102,24 +103,27 @@ bisect_start() {
 				die "$(eval_gettext "'\$arg' does not appear to be a valid revision")"
 				break
 			}
-
-			# The user ran "git bisect start <sha1>
-			# <sha1>", hence did not explicitly specify
-			# the terms, but we are already starting to
-			# set references named with the default terms,
-			# and won't be able to change afterwards.
-			must_write_terms=1
-
-			case $bad_seen in
-			0) state=$TERM_BAD ; bad_seen=1 ;;
-			*) state=$TERM_GOOD ;;
-			esac
-			eval="$eval bisect_write '$state' '$rev' 'nolog' &&"
+			revs="$revs $rev"
 			shift
 			;;
 		esac
 	done
 
+	for rev in $revs
+	do
+		# The user ran "git bisect start <sha1>
+		# <sha1>", hence did not explicitly specify
+		# the terms, but we are already starting to
+		# set references named with the default terms,
+		# and won't be able to change afterwards.
+		must_write_terms=1
+
+		case $bad_seen in
+		0) state=$TERM_BAD ; bad_seen=1 ;;
+		*) state=$TERM_GOOD ;;
+		esac
+		eval="$eval bisect_write '$state' '$rev' 'nolog' &&"
+	done
 	#
 	# Verify HEAD.
 	#
