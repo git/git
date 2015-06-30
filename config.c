@@ -2116,6 +2116,9 @@ int git_config_set_multivar_in_file(const char *config_filename,
 					  contents_sz - copy_begin) <
 			    contents_sz - copy_begin)
 				goto write_err_out;
+
+		munmap(contents, contents_sz);
+		contents = NULL;
 	}
 
 	if (commit_lock_file(lock) < 0) {
