@@ -49,17 +49,17 @@ Composing
 	of 'sendemail.annotate'. See the CONFIGURATION section for
 	'sendemail.multiEdit'.
 
---bcc=<address>::
+--bcc=<address>,...::
 	Specify a "Bcc:" value for each email. Default is the value of
 	'sendemail.bcc'.
 +
-The --bcc option must be repeated for each user you want on the bcc list.
+This option may be specified multiple times.
 
---cc=<address>::
+--cc=<address>,...::
 	Specify a starting "Cc:" value for each email.
 	Default is the value of 'sendemail.cc'.
 +
-The --cc option must be repeated for each user you want on the cc list.
+This option may be specified multiple times.
 
 --compose::
 	Invoke a text editor (see GIT_EDITOR in linkgit:git-var[1])
@@ -110,13 +110,13 @@ is not set, this will be prompted for.
 	Only necessary if --compose is also set.  If --compose
 	is not set, this will be prompted for.
 
---to=<address>::
+--to=<address>,...::
 	Specify the primary recipient of the emails generated. Generally, this
 	will be the upstream maintainer of the project involved. Default is the
 	value of the 'sendemail.to' configuration value; if that is unspecified,
 	and --to-cmd is not specified, this will be prompted for.
 +
-The --to option must be repeated for each user you want on the to list.
+This option may be specified multiple times.
 
 --8bit-encoding=<encoding>::
 	When encountering a non-ASCII message or subject that does not
