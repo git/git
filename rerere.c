@@ -329,24 +329,21 @@ static int handle_cache(const char *path, unsigned char *sha1, const char *outpu
 		return -1;
 	pos = -pos - 1;
 
-	for (i = 0; i < 3; i++) {
+	while (pos < active_nr) {
 		enum object_type type;
 		unsigned long size;
-		int j;
 
-		if (active_nr <= pos)
-			break;
 		ce = active_cache[pos++];
 		if (ce_namelen(ce) != len || memcmp(ce->name, path, len))
-			continue;
-		j = ce_stage(ce) - 1;
-		mmfile[j].ptr = read_sha1_file(ce->sha1, &type, &size);
-		mmfile[j].size = size;
+			break;
+		i = ce_stage(ce) - 1;
+		mmfile[i].ptr = read_sha1_file(ce->sha1, &type, &size);
+		mmfile[i].size = size;
 	}
-	for (i = 0; i < 3; i++) {
+	for (i = 0; i < 3; i++)
 		if (!mmfile[i].ptr && !mmfile[i].size)
 			mmfile[i].ptr = xstrdup("");
-	}
+
 	/*
 	 * NEEDSWORK: handle conflicts from merges with
 	 * merge.renormalize set, too
