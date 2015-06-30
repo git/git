@@ -1552,6 +1552,66 @@ test_expect_success $PREREQ 'sendemail.aliasfile=~/.mailrc' '
 	grep "^!someone@example\.org!$" commandline1
 '
 
+test_expect_success $PREREQ 'alias support in To header' '
+	clean_fake_sendmail &&
+	echo "alias sbd  someone@example.org" >.mailrc &&
+	test_config sendemail.aliasesfile ".mailrc" &&
+	test_config sendemail.aliasfiletype mailrc &&
+	git format-patch --stdout -1 --to=sbd >aliased.patch &&
+	git send-email \
+		--from="Example <nobody@example.com>" \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		aliased.patch \
+		2>errors >out &&
+	grep "^!someone@example\.org!$" commandline1
+'
+
+test_expect_success $PREREQ 'alias support in Cc header' '
+	clean_fake_sendmail &&
+	echo "alias sbd  someone@example.org" >.mailrc &&
+	test_config sendemail.aliasesfile ".mailrc" &&
+	test_config sendemail.aliasfiletype mailrc &&
+	git format-patch --stdout -1 --cc=sbd >aliased.patch &&
+	git send-email \
+		--from="Example <nobody@example.com>" \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		aliased.patch \
+		2>errors >out &&
+	grep "^!someone@example\.org!$" commandline1
+'
+
+test_expect_success $PREREQ 'tocmd works with aliases' '
+	clean_fake_sendmail &&
+	echo "alias sbd  someone@example.org" >.mailrc &&
+	test_config sendemail.aliasesfile ".mailrc" &&
+	test_config sendemail.aliasfiletype mailrc &&
+	git format-patch --stdout -1 >tocmd.patch &&
+	echo tocmd--sbd >>tocmd.patch &&
+	git send-email \
+		--from="Example <nobody@example.com>" \
+		--to-cmd=./tocmd-sed \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		tocmd.patch \
+		2>errors >out &&
+	grep "^!someone@example\.org!$" commandline1
+'
+
+test_expect_success $PREREQ 'cccmd works with aliases' '
+	clean_fake_sendmail &&
+	echo "alias sbd  someone@example.org" >.mailrc &&
+	test_config sendemail.aliasesfile ".mailrc" &&
+	test_config sendemail.aliasfiletype mailrc &&
+	git format-patch --stdout -1 >cccmd.patch &&
+	echo cccmd--sbd >>cccmd.patch &&
+	git send-email \
+		--from="Example <nobody@example.com>" \
+		--cc-cmd=./cccmd-sed \
+		--smtp-server="$(pwd)/fake.sendmail" \
+		cccmd.patch \
+		2>errors >out &&
+	grep "^!someone@example\.org!$" commandline1
+'
+
 do_xmailer_test () {
 	expected=$1 params=$2 &&
 	git format-patch -1 &&
