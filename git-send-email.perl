@@ -761,6 +761,7 @@ if (!$force) {
 }
 
 if (defined $sender) {
+	$sender =~ s/^\s+|\s+$//g;
 	($sender) = expand_aliases($sender);
 } else {
 	$sender = $repoauthor || $repocommitter || '';
