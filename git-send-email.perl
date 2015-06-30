@@ -774,9 +774,9 @@ if (!$force) {
 	}
 }
 
-($sender) = expand_aliases($sender) if defined $sender;
-
-if (!defined $sender) {
+if (defined $sender) {
+	($sender) = expand_aliases($sender);
+} else {
 	$sender = $repoauthor || $repocommitter || '';
 }
 
