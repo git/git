@@ -530,8 +530,6 @@ if (@alias_files and $aliasfiletype and defined $parse_alias{$aliasfiletype}) {
 	}
 }
 
-($sender) = expand_aliases($sender) if defined $sender;
-
 # is_format_patch_arg($f) returns 0 if $f names a patch, or 1 if
 # $f is a revision list specification to be passed to format-patch.
 sub is_format_patch_arg {
@@ -775,6 +773,8 @@ if (!$force) {
 		}
 	}
 }
+
+($sender) = expand_aliases($sender) if defined $sender;
 
 if (!defined $sender) {
 	$sender = $repoauthor || $repocommitter || '';
