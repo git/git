@@ -559,6 +559,7 @@ static int do_plain_rerere(struct string_list *rr, int fd)
 		fprintf(stderr, "Recorded resolution for '%s'.\n", path);
 		copy_file(rerere_path(name, "postimage"), path, 0666);
 	mark_resolved:
+		free(rr->items[i].util);
 		rr->items[i].util = NULL;
 	}
 
@@ -627,6 +628,7 @@ static int rerere_forget_one_path(const char *path, struct string_list *rr)
 	char *hex;
 	unsigned char sha1[20];
 	int ret;
+	struct string_list_item *item;
 
 	ret = handle_cache(path, sha1, NULL);
 	if (ret < 1)
@@ -641,8 +643,9 @@ static int rerere_forget_one_path(const char *path, struct string_list *rr)
 	handle_cache(path, sha1, rerere_path(hex, "preimage"));
 	fprintf(stderr, "Updated preimage for '%s'\n", path);
 
-
-	string_list_insert(rr, path)->util = hex;
+	item = string_list_insert(rr, path);
+	free(item->util);
+	item->util = hex;
 	fprintf(stderr, "Forgot resolution for %s\n", path);
 	return 0;
 }
