@@ -712,29 +712,33 @@ char *xstrfmt(const char *fmt, ...)
 
 void strbuf_addftime(struct strbuf *sb, const char *fmt, const struct tm *tm)
 {
+	size_t hint = 128;
 	size_t len;
 
-	/*
-	 * strftime reports "0" if it could not fit the result in the buffer.
-	 * Unfortunately, it also reports "0" if the requested time string
-	 * takes 0 bytes. So if we were to probe and grow, we have to choose
-	 * some arbitrary cap beyond which we guess that the format probably
-	 * just results in a 0-length output. Since we have to choose some
-	 * reasonable cap anyway, and since it is not that big, we may
-	 * as well just grow to their in the first place.
-	 */
-	strbuf_grow(sb, 128);
+	if (!*fmt)
+		return;
+
+	strbuf_grow(sb, hint);
 	len = strftime(sb->buf + sb->len, sb->alloc - sb->len, fmt, tm);
 
 	if (!len) {
 		/*
-		 * Either we failed, or the format actually produces a 0-length
-		 * output. There's not much we can do, so we leave it blank.
-		 * However, the output array is left in an undefined state, so
-		 * we must re-assert our NUL terminator.
+		 * strftime reports "0" if it could not fit the result in the buffer.
+		 * Unfortunately, it also reports "0" if the requested time string
+		 * takes 0 bytes. So our strategy is to munge the format so that the
+		 * output contains at least one character, and then drop the extra
+		 * character before returning.
 		 */
-		sb->buf[sb->len] = '\0';
-	} else {
-		sb->len += len;
+		struct strbuf munged_fmt = STRBUF_INIT;
+		strbuf_addf(&munged_fmt, "%s ", fmt);
+		while (!len) {
+			hint *= 2;
+			strbuf_grow(sb, hint);
+			len = strftime(sb->buf + sb->len, sb->alloc - sb->len,
+				       munged_fmt.buf, tm);
+		}
+		strbuf_release(&munged_fmt);
+		len--; /* drop munged space */
 	}
+	strbuf_setlen(sb, sb->len + len);
 }

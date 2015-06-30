@@ -235,6 +235,16 @@ test_expect_success 'Check format of strftime date fields' '
 	test_cmp expected actual
 '
 
+test_expect_success 'exercise strftime with odd fields' '
+	echo >expected &&
+	git for-each-ref --format="%(authordate:format:)" refs/heads >actual &&
+	test_cmp expected actual &&
+	long="long format -- $_z40$_z40$_z40$_z40$_z40$_z40$_z40" &&
+	echo $long >expected &&
+	git for-each-ref --format="%(authordate:format:$long)" refs/heads >actual &&
+	test_cmp expected actual
+'
+
 cat >expected <<\EOF
 refs/heads/master
 refs/remotes/origin/master
