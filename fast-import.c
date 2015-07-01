@@ -134,16 +134,17 @@ Format of STDIN stream:
   ts    ::= # time since the epoch in seconds, ascii base10 notation;
   tz    ::= # GIT style timezone;
 
-     # note: comments, ls and cat requests may appear anywhere
-     # in the input, except within a data command.  Any form
-     # of the data command always escapes the related input
-     # from comment processing.
+     # note: comments, get-mark, ls-tree, and cat-blob requests may
+     # appear anywhere in the input, except within a data command. Any
+     # form of the data command always escapes the related input from
+     # comment processing.
      #
      # In case it is not clear, the '#' that starts the comment
      # must be the first character on that line (an lf
      # preceded it).
      #
 
+  get_mark ::= 'get-mark' sp idnum lf;
   cat_blob ::= 'cat-blob' sp (hexsha1 | idnum) lf;
   ls_tree  ::= 'ls' sp (hexsha1 | idnum) sp path_str lf;
 
@@ -372,6 +373,7 @@ static volatile sig_atomic_t checkpoint_requested;
 static int cat_blob_fd = STDOUT_FILENO;
 
 static void parse_argv(void);
+static void parse_get_mark(const char *p);
 static void parse_cat_blob(const char *p);
 static void parse_ls(const char *p, struct branch *b);
 
@@ -1907,6 +1909,10 @@ static int read_next_command(void)
 			rc->prev->next = rc;
 			cmd_tail = rc;
 		}
+		if (skip_prefix(command_buf.buf, "get-mark ", &p)) {
+			parse_get_mark(p);
+			continue;
+		}
 		if (skip_prefix(command_buf.buf, "cat-blob ", &p)) {
 			parse_cat_blob(p);
 			continue;
@@ -2919,6 +2925,23 @@ static void cat_blob(struct object_entry *oe, unsigned char sha1[20])
 		free(buf);
 }
 
+static void parse_get_mark(const char *p)
+{
+	struct object_entry *oe = oe;
+	char output[42];
+
+	/* get-mark SP <object> LF */
+	if (*p != ':')
+		die("Not a mark: %s", p);
+
+	oe = find_mark(parse_mark_ref_eol(p));
+	if (!oe)
+		die("Unknown mark: %s", command_buf.buf);
+
+	snprintf(output, sizeof(output), "%s\n", sha1_to_hex(oe->idx.sha1));
+	cat_blob_write(output, 41);
+}
+
 static void parse_cat_blob(const char *p)
 {
 	struct object_entry *oe = oe;
@@ -3243,6 +3266,8 @@ static int parse_one_feature(const char *feature, int from_stream)
 		option_import_marks(arg, from_stream, 1);
 	} else if (skip_prefix(feature, "export-marks=", &arg)) {
 		option_export_marks(arg);
+	} else if (!strcmp(feature, "get-mark")) {
+		; /* Don't die - this feature is supported */
 	} else if (!strcmp(feature, "cat-blob")) {
 		; /* Don't die - this feature is supported */
 	} else if (!strcmp(feature, "relative-marks")) {
