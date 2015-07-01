@@ -53,6 +53,12 @@ rev_list_tests() {
 		test_cmp expect actual
 	'
 
+	test_expect_success "counting commits with limiting ($state)" '
+		git rev-list --count HEAD -- 1.t >expect &&
+		git rev-list --use-bitmap-index --count HEAD -- 1.t >actual &&
+		test_cmp expect actual
+	'
+
 	test_expect_success "enumerate --objects ($state)" '
 		git rev-list --objects --use-bitmap-index HEAD >tmp &&
 		cut -d" " -f1 <tmp >tmp2 &&
