@@ -467,6 +467,11 @@ notes for details).
    tags as boundary commits.
    (merge 9b7a61d jc/do-not-feed-tags-to-clear-commit-marks later to maint).
 
+ * "git fetch --depth=<depth>" and "git clone --depth=<depth>" issued
+   a shallow transfer request even to an upload-pack that does not
+   support the capability.
+   (merge eb86a50 me/fetch-into-shallow-safety later to maint).
+
  * Code cleanups and documentation updates.
    (merge 0269f96 mm/usage-log-l-can-take-regex later to maint).
    (merge 64f2589 nd/t1509-chroot-test later to maint).
@@ -493,3 +498,5 @@ notes for details).
    (merge 72dbb36 sg/completion-commit-cleanup later to maint).
    (merge e654eb2 es/utf8-stupid-compiler-workaround later to maint).
    (merge 34b935c es/osx-header-pollutes-mask-macro later to maint).
+   (merge ab7fade jc/prompt-document-ps1-state-separator later to maint).
+   (merge 25f600e mm/describe-doc later to maint).
