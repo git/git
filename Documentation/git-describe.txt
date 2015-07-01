@@ -3,7 +3,7 @@ git-describe(1)
 
 NAME
 ----
-git-describe - Show the most recent tag that is reachable from a commit
+git-describe - Describe a commit using the most recent tag reachable from it
 
 
 SYNOPSIS
