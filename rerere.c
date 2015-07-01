@@ -83,6 +83,21 @@ static int write_rr(struct string_list *rr, int out_fd)
 	return 0;
 }
 
+/*
+ * "rerere" interacts with conflicted file contents using this I/O
+ * abstraction.  It reads a conflicted contents from one place via
+ * "getline()" method, and optionally can write it out after
+ * normalizing the conflicted hunks to the "output".  Subclasses of
+ * rerere_io embed this structure at the beginning of their own
+ * rerere_io object.
+ */
+struct rerere_io {
+	int (*getline)(struct strbuf *, struct rerere_io *);
+	FILE *output;
+	int wrerror;
+	/* some more stuff */
+};
+
 static void ferr_write(const void *p, size_t count, FILE *fp, int *err)
 {
 	if (!count || *err)
@@ -96,19 +111,15 @@ static inline void ferr_puts(const char *s, FILE *fp, int *err)
 	ferr_write(s, strlen(s), fp, err);
 }
 
-struct rerere_io {
-	int (*getline)(struct strbuf *, struct rerere_io *);
-	FILE *output;
-	int wrerror;
-	/* some more stuff */
-};
-
 static void rerere_io_putstr(const char *str, struct rerere_io *io)
 {
 	if (io->output)
 		ferr_puts(str, io->output, &io->wrerror);
 }
 
+/*
+ * Write a conflict marker to io->output (if defined).
+ */
 static void rerere_io_putconflict(int ch, int size, struct rerere_io *io)
 {
 	char buf[64];
@@ -137,11 +148,17 @@ static void rerere_io_putmem(const char *mem, size_t sz, struct rerere_io *io)
 		ferr_write(mem, sz, io->output, &io->wrerror);
 }
 
+/*
+ * Subclass of rerere_io that reads from an on-disk file
+ */
 struct rerere_io_file {
 	struct rerere_io io;
 	FILE *input;
 };
 
+/*
+ * ... and its getline() method implementation
+ */
 static int rerere_file_getline(struct strbuf *sb, struct rerere_io *io_)
 {
 	struct rerere_io_file *io = (struct rerere_io_file *)io_;
@@ -286,11 +303,18 @@ static int handle_file(const char *path, unsigned char *sha1, const char *output
 	return hunk_no;
 }
 
+/*
+ * Subclass of rerere_io that reads from an in-core buffer that is a
+ * strbuf
+ */
 struct rerere_io_mem {
 	struct rerere_io io;
 	struct strbuf input;
 };
 
+/*
+ * ... and its getline() method implementation
+ */
 static int rerere_mem_getline(struct strbuf *sb, struct rerere_io *io_)
 {
 	struct rerere_io_mem *io = (struct rerere_io_mem *)io_;
