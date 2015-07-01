@@ -1,26 +1,15 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jun 2015, #07; Mon, 29)
-X-master-at: 912bd497e93f0235a5999a77f8d54f5ff80a3a03
-X-next-at: d595659997efd86e238e50f97b9c8c811b229c4b
+Subject: What's cooking in git.git (Jul 2015, #01; Wed, 1)
+X-master-at: cbed29f37b690e0a497bd2b6ca9a5bdd7e6ea5aa
+X-next-at: 417e6682ab1b640df833193fd7f33c19661721b2
 
-What's cooking in git.git (Jun 2015, #07; Mon, 29)
+What's cooking in git.git (Jul 2015, #01; Wed, 1)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
-
-Some of the topics in flight have overlaps with each other and have
-been excluded from 'pu'; most notably, I think the remainder of
-bc/object-id needs to wait until the for-each-ref topic from Karthik
-settles and then rebased on it, or something.
-
-A couple of "hotfix" topics that just went into 'next' should be
-part of -rc1 early next month, but other than that there aren't
-anything ultra-urgent cooking right now.  Read those "Will merge to
-'master'" as if they were suffixed with "soon after the upcoming
-release".
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -30,107 +19,69 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* nd/diff-i-t-a (2015-06-23) 1 commit
- + Revert "diff-lib.c: adjust position of i-t-a entries in diff"
+* da/mergetool-winmerge (2015-06-19) 1 commit
+  (merged to 'next' on 2015-06-24 at 2fb10c4)
+ + mergetool-lib: fix default tool selection
 
- The "let's show paths added with -N as 'new' in status output"
- change was done without enough consideration on potential fallouts
- on the codepaths that do not have anything to do with "status" and
- caused regression to at least one widely used "wsadd" alias.
+ Hotfix for an earlier change already in 'master' that broke the
+ default tool selection for mergetool.
+
+
+* jc/prompt-document-ps1-state-separator (2015-06-10) 1 commit
+  (merged to 'next' on 2015-06-24 at e4d1bad)
+ + git-prompt.sh: document GIT_PS1_STATESEPARATOR
+
+ Docfix.
+
+
+* me/fetch-into-shallow-safety (2015-06-17) 1 commit
+  (merged to 'next' on 2015-06-24 at 8ecc19a)
+ + fetch-pack: check for shallow if depth given
+
+ "git fetch --depth=<depth>" and "git clone --depth=<depth>" issued
+ a shallow transfer request even to an upload-pack that does not
+ support the capability.
+
+
+* mm/describe-doc (2015-06-16) 1 commit
+  (merged to 'next' on 2015-06-24 at 75e34cc)
+ + Documentation/describe: improve one-line summary
+
+ Docfix.
 
 --------------------------------------------------
 [New Topics]
 
-None of these is particularly urgent.
+* jk/rev-list-no-bitmap-while-pruning (2015-07-01) 1 commit
+ - rev-list: disable --use-bitmap-index when pruning commits
 
-* dt/refs-backend-preamble (2015-06-29) 7 commits
- - git-stash: use git-reflog instead of creating files
- - git-reflog: add create and exists functions
- - refs: new public ref function: safe_create_reflog
- - refs: break out check for reflog autocreation
- - bisect: treat BISECT_HEAD as a ref
- - cherry-pick: treat CHERRY_PICK_HEAD and REVERT_HEAD as refs
- - refs.c: add err arguments to reflog functions
-
- In preparation for allowing different "backends" to store the refs
- in a way different from the traditional "one ref per file in $GIT_DIR
- or in a $GIT_DIR/packed-refs file" filesystem storage, reduce
- direct filesystem access to ref-like things like CHERRY_PICK_HEAD
- from scripts and programs.
+ A minor bugfix when pack bitmap was brought in.
 
  Will merge to 'next'.
 
 
-* et/http-proxyauth (2015-06-29) 1 commit
- - http: always use any proxy auth method available
-
- We used to ask libCURL to use the most secure authentication method
- available when talking to an HTTP proxy only when we were told to
- talk to one via configuration variables.  We now ask libCURL to
- always use the most secure authentication method, because the user
- can tell libCURL to use an HTTP proxy via an environment variable
- without using configuration variables.
-
- Looked sensible.  An extra set of eyes appreciated, but I think
- this is ready.
+* kb/config-unmap-before-renaming (2015-06-30) 1 commit
+ - config.c: fix writing config files on Windows network shares
 
  Will merge to 'next'.
 
 
-* jc/fsck-retire-require-eoh (2015-06-28) 1 commit
- - fsck: it is OK for a tag and a commit to lack the body
-
- A fix to a minor regression to "git fsck" in v2.2 era that started
- complaining about a body-less tag object when it lacks a separator
- empty line after its header to separate it with a non-existent body.
+* ls/hint-rev-list-count (2015-07-01) 1 commit
+ - rev-list: add --count to usage guide
 
  Will merge to 'next'.
 
 
-* jk/date-mode-format (2015-06-29) 3 commits
- - introduce "format" date-mode
- - convert "enum date_mode" into a struct
- - show-branch: use DATE_RELATIVE instead of magic number
-
- Teach "git log" and friends a new "--date=format:..." option to
- format timestamps using system's strftime(3).
+* mh/fast-import-get-mark (2015-07-01) 1 commit
+ - fast-import: add a get-mark command
 
  Will merge to 'next'.
 
 
-* jk/still-interesting (2015-06-29) 1 commit
- - revision.c: remove unneeded check for NULL
+* nd/dwim-wildcards-as-pathspecs (2015-07-01) 1 commit
+ - Add tests for wildcard "path vs ref" disambiguation
 
- Code clean-up.
-
- Will merge to 'next'.
-
-
-* nd/export-worktree (2015-06-26) 1 commit
- - setup: set env $GIT_WORK_TREE when work tree is set, like $GIT_DIR
-
- Running an aliased command from a subdirectory when the .git thing
- in the working tree is a gitfile pointing elsewhere did not work.
-
- Will merge to 'next'.
-
-
-* sb/p5310-and-chain (2015-06-26) 1 commit
- - p5310: Fix broken && chain in performance test
-
- Code clean-up.
-
- Will merge to 'next'.
-
-
-* jc/rerere (2015-06-28) 5 commits
- - rerere: report autoupdated paths only after actually updating them
- - rerere: write out each record of MERGE_RR in one go
- - rerere: lift PATH_MAX limitation
- - t4200: rerere a merge with two identical conflicts
- - rerere: fix an off-by-one non-bug
-
- Code clean-up (so far).
+ Will merge to 'next' and then to 'master'.
 
 --------------------------------------------------
 [Stalled]
@@ -147,18 +98,6 @@ None of these is particularly urgent.
  adding two new options.
 
  Expecting a reroll.
-
-
-* kb/i18n-doc (2015-06-15) 1 commit
- - Documentation/i18n.txt: clarify character encoding support
-
- Comments (other than $gmane/271657)?
-
-
-* kb/use-nsec-doc (2015-06-15) 1 commit
- - Makefile / racy-git.txt: clarify USE_NSEC prerequisites
-
- Comments (other than $gmane/271656)?
 
 
 * kk/log-merges-config (2015-04-21) 5 commits
@@ -339,6 +278,117 @@ None of these is particularly urgent.
 --------------------------------------------------
 [Cooking]
 
+* kb/i18n-doc (2015-07-01) 1 commit
+ - Documentation/i18n.txt: clarify character encoding support
+
+ Will merge to 'next'.
+
+
+* kb/use-nsec-doc (2015-07-01) 1 commit
+ - Makefile / racy-git.txt: clarify USE_NSEC prerequisites
+
+ Will merge to 'next'.
+
+
+* dt/refs-backend-preamble (2015-06-30) 8 commits
+ - git-stash: use git-reflog instead of creating files
+ - SQUASH???
+ - git-reflog: add create and exists functions
+ - refs: new public ref function: safe_create_reflog
+ - refs: break out check for reflog autocreation
+ - bisect: treat BISECT_HEAD as a ref
+ - cherry-pick: treat CHERRY_PICK_HEAD and REVERT_HEAD as refs
+ - refs.c: add err arguments to reflog functions
+
+ In preparation for allowing different "backends" to store the refs
+ in a way different from the traditional "one ref per file in $GIT_DIR
+ or in a $GIT_DIR/packed-refs file" filesystem storage, reduce
+ direct filesystem access to ref-like things like CHERRY_PICK_HEAD
+ from scripts and programs.
+
+ Will merge to 'next' after squashing the fix in.
+
+
+* et/http-proxyauth (2015-06-29) 1 commit
+ - http: always use any proxy auth method available
+
+ We used to ask libCURL to use the most secure authentication method
+ available when talking to an HTTP proxy only when we were told to
+ talk to one via configuration variables.  We now ask libCURL to
+ always use the most secure authentication method, because the user
+ can tell libCURL to use an HTTP proxy via an environment variable
+ without using configuration variables.
+
+ Looked sensible.  An extra set of eyes appreciated, but I think
+ this is ready.
+
+ Will merge to 'next'.
+
+
+* jc/fsck-retire-require-eoh (2015-06-28) 1 commit
+ - fsck: it is OK for a tag and a commit to lack the body
+
+ A fix to a minor regression to "git fsck" in v2.2 era that started
+ complaining about a body-less tag object when it lacks a separator
+ empty line after its header to separate it with a non-existent body.
+
+ Will merge to 'next'.
+
+
+* jk/date-mode-format (2015-06-29) 3 commits
+ - introduce "format" date-mode
+ - convert "enum date_mode" into a struct
+ - show-branch: use DATE_RELATIVE instead of magic number
+
+ Teach "git log" and friends a new "--date=format:..." option to
+ format timestamps using system's strftime(3).
+
+ Will merge to 'next'.
+
+
+* jk/still-interesting (2015-06-29) 1 commit
+ - revision.c: remove unneeded check for NULL
+
+ Code clean-up.
+
+ Will merge to 'next'.
+
+
+* nd/export-worktree (2015-06-26) 1 commit
+ - setup: set env $GIT_WORK_TREE when work tree is set, like $GIT_DIR
+
+ Running an aliased command from a subdirectory when the .git thing
+ in the working tree is a gitfile pointing elsewhere did not work.
+
+ Will merge to 'next'.
+
+
+* sb/p5310-and-chain (2015-06-26) 1 commit
+ - p5310: Fix broken && chain in performance test
+
+ Code clean-up.
+
+ Will merge to 'next'.
+
+
+* jc/rerere (2015-06-30) 13 commits
+ - rerere: refactor "replay" part of do_plain_rerere()
+ - rerere: explain the remainder
+ - rerere: explain "rerere forget" codepath
+ - rerere: explain the primary codepath
+ - rerere: explain MERGE_RR management helpers
+ - rerere: explain the rerere I/O abstraction
+ - rerere: stop looping unnecessarily
+ - rerere: drop want_sp parameter from is_cmarker()
+ - rerere: report autoupdated paths only after actually updating them
+ - rerere: write out each record of MERGE_RR in one go
+ - rerere: lift PATH_MAX limitation
+ - rerere: plug conflict ID leaks
+ - rerere: fix an off-by-one non-bug
+
+ Code clean-up and minor fixes.
+
+
 * ad/bisect-terms (2015-06-29) 10 commits
  - bisect: allow setting any user-specified in 'git bisect start'
  - bisect: add 'git bisect terms' to view the current terms
@@ -356,6 +406,11 @@ None of these is particularly urgent.
  The command learned 'old/new' and then allows the end user to
  say e.g. "bisect start --term-old=fast --term=new=slow" to find a
  performance regression.
+
+ The bottom part has been quite well cooked.  Perhaps split it into
+ two topisc and merge the earlier ones to 'next' before the rest
+ settles.  Michael's idea to make 'good/bad' more intelligent does
+ have certain attractiveness ($gname/272867).
 
 
 * mh/tempfile (2015-06-10) 14 commits
@@ -418,26 +473,6 @@ None of these is particularly urgent.
  "--continue" left CHERRY_PICK_HEAD and confused later steps.
 
  Will merge to 'next'.
-
-
-* me/fetch-into-shallow-safety (2015-06-17) 1 commit
-  (merged to 'next' on 2015-06-24 at 8ecc19a)
- + fetch-pack: check for shallow if depth given
-
- "git fetch --depth=<depth>" and "git clone --depth=<depth>" issued
- a shallow transfer request even to an upload-pack that does not
- support the capability.
-
- Will merge to 'master'.
-
-
-* mm/describe-doc (2015-06-16) 1 commit
-  (merged to 'next' on 2015-06-24 at 75e34cc)
- + Documentation/describe: improve one-line summary
-
- Docfix.
-
- Will merge to 'master'.
 
 
 * rh/test-color-avoid-terminfo-in-original-home (2015-06-17) 2 commits
@@ -514,16 +549,6 @@ None of these is particularly urgent.
  + contrib/subtree: use tabs consitently for indentation in tests
 
  Tests update in contrib/subtree.
-
- Will merge to 'master'.
-
-
-* da/mergetool-winmerge (2015-06-19) 1 commit
-  (merged to 'next' on 2015-06-24 at 2fb10c4)
- + mergetool-lib: fix default tool selection
-
- Hotfix for an earlier change already in 'master' that broke the
- default tool selection for mergetool.
 
  Will merge to 'master'.
 
@@ -622,7 +647,8 @@ None of these is particularly urgent.
  other than refs/replace/ for the object replacement data.
 
 
-* nd/multiple-work-trees (2015-06-29) 2 commits
+* nd/multiple-work-trees (2015-07-01) 3 commits
+ - worktree: replace "checkout --to" with "worktree add"
   (merged to 'next' on 2015-06-29 at fd4eb60)
  + worktree: new place for "git prune --worktrees"
   (merged to 'next' on 2015-06-24 at 7c3f918)
@@ -632,12 +658,12 @@ None of these is particularly urgent.
  checking if the current branch was checked out elsewhere, when we
  know we are not switching the branches ourselves.
 
- Will merge to 'master'.
+ Waiting for a reroll to transition to "worktree add".
 
 
-* gp/status-rebase-i-info (2015-06-09) 5 commits
- - SQUASH??? fix misindent
+* gp/status-rebase-i-info (2015-07-01) 5 commits
  - status: add new tests for status during rebase -i
+ - SQUASH???
  - status: give more information during rebase -i
  - status: differentiate interactive from non-interactive rebases
  - status: factor two rebase-related messages together
@@ -645,16 +671,7 @@ None of these is particularly urgent.
  Teach "git status" to show a more detailed information regarding
  the "rebase -i" session in progress.
 
- Expecting a reroll.
-
-
-* jc/prompt-document-ps1-state-separator (2015-06-10) 1 commit
-  (merged to 'next' on 2015-06-24 at e4d1bad)
- + git-prompt.sh: document GIT_PS1_STATESEPARATOR
-
- Docfix.
-
- Will merge to 'master'.
+ Reroll exists; not picked up yet.
 
 
 * mk/utf8-no-iconv-warn (2015-06-08) 1 commit
@@ -716,11 +733,11 @@ None of these is particularly urgent.
  Will merge to 'next'.
 
 
-* rl/send-email-aliases (2015-06-17) 10 commits
+* rl/send-email-aliases (2015-07-01) 10 commits
  - send-email: suppress meaningless whitespaces in from field
  - send-email: allow multiple emails using --cc, --to and --bcc
  - send-email: consider quote as delimiter instead of character
- - send-email: reduce dependancies impact on parse_address_line
+ - send-email: reduce dependencies impact on parse_address_line
  - send-email: minor code refactoring
  - send-email: allow use of aliases in the From field of --compose mode
  - send-email: refactor address list process
@@ -735,9 +752,7 @@ None of these is particularly urgent.
  which makes it a bit scary, but as long as it works as designed, it
  makes it wonderful ;-).
 
- This is a lot older version than the latest round ($gmane/272499).
- Expecting a reroll.
- ($gmane/272517).
+ Will merge to 'next'.
 
 
 * wp/sha1-name-negative-match (2015-06-08) 2 commits
@@ -777,7 +792,7 @@ None of these is particularly urgent.
  What's the status of this one?
 
 
-* gr/rebase-i-drop-warn (2015-06-24) 3 commits
+* gr/rebase-i-drop-warn (2015-06-30) 3 commits
  - git rebase -i: add static check for commands and SHA-1
  - git rebase -i: warn about removed commits
  - git-rebase -i: add command "drop" to remove a commit
@@ -787,7 +802,7 @@ None of these is particularly urgent.
  who do not use it (and instead just remove the lines) by throwing
  a warning.
 
- Need to pick up the latest reroll ($gmane/273009).
+ Will merge to 'next'.
 
 
 * jh/strbuf-read-use-read-in-full (2015-06-01) 1 commit
@@ -829,6 +844,11 @@ None of these is particularly urgent.
  "git fetch --tags" learned to fetch tags in addition to other stuff
  a few years ago, but "git push --tags" didn't.  Now it does.
 
+ A change to push out more than before always invites "what if the
+ user makes a mistake" worries.
+
+ Will discard.
+
 
 * jc/commit-slab (2015-05-22) 1 commit
  - commit-slab: introduce slabname##_peek() function
@@ -836,11 +856,14 @@ None of these is particularly urgent.
  Memory use reduction when commit-slab facility is used to annotate
  sparsely (which is not recommended in the first place).
 
+ Will merge to 'next'.
+
 
 * jc/clone-bundle (2015-04-30) 1 commit
  - repack: optionally create a clone.bundle
 
- Still an early WIP
+ Waiting for further work.
+ Still an early WIP.
 
 
 * ee/clean-remove-dirs (2015-06-26) 6 commits
