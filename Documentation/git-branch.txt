@@ -81,7 +81,7 @@ OPTIONS
 	`--track` or `--set-upstream`.
 
 -D::
-	Delete a branch irrespective of its merged status.
+	Shortcut for `--delete --force`.
 
 -l::
 --create-reflog::
@@ -105,7 +105,7 @@ OPTIONS
 	Move/rename a branch and the corresponding reflog.
 
 -M::
-	Move/rename a branch even if the new branch name already exists.
+	Shortcut for `--move --force`.
 
 --color[=<when>]::
 	Color branches to highlight current, local, and
