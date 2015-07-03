@@ -481,9 +481,10 @@ int strbuf_getwholeline_fd(struct strbuf *sb, int fd, int term)
 	return 0;
 }
 
-int strbuf_read_file(struct strbuf *sb, const char *path, size_t hint)
+ssize_t strbuf_read_file(struct strbuf *sb, const char *path, size_t hint)
 {
-	int fd, len;
+	int fd;
+	ssize_t len;
 
 	fd = open(path, O_RDONLY);
 	if (fd < 0)
