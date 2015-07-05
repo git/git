@@ -1,3 +1,8 @@
+Release 1.1.1 (bugfix-only release)
+===================================
+
+* The SMTP mailer was not working with Python 2.4.
+
 Release 1.1.0
 =============
 

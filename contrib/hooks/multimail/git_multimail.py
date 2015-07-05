@@ -1745,14 +1745,20 @@ class SMTPMailer(Mailer):
         self.username = smtpuser
         self.password = smtppass
         try:
+            def call(klass, server, timeout):
+                try:
+                    return klass(server, timeout=timeout)
+                except TypeError:
+                    # Old Python versions do not have timeout= argument.
+                    return klass(server)
             if self.security == 'none':
-                self.smtp = smtplib.SMTP(self.smtpserver, timeout=self.smtpservertimeout)
+                self.smtp = call(smtplib.SMTP, self.smtpserver, timeout=self.smtpservertimeout)
             elif self.security == 'ssl':
-                self.smtp = smtplib.SMTP_SSL(self.smtpserver, timeout=self.smtpservertimeout)
+                self.smtp = call(smtplib.SMTP_SSL, self.smtpserver, timeout=self.smtpservertimeout)
             elif self.security == 'tls':
                 if ':' not in self.smtpserver:
                     self.smtpserver += ':587'  # default port for TLS
-                self.smtp = smtplib.SMTP(self.smtpserver, timeout=self.smtpservertimeout)
+                self.smtp = call(smtplib.SMTP, self.smtpserver, timeout=self.smtpservertimeout)
                 self.smtp.ehlo()
                 self.smtp.starttls()
                 self.smtp.ehlo()
