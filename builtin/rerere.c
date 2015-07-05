@@ -103,7 +103,7 @@ int cmd_rerere(int argc, const char **argv, const char *prefix)
 	} else if (!strcmp(argv[0], "diff"))
 		for (i = 0; i < merge_rr.nr; i++) {
 			const char *path = merge_rr.items[i].string;
-			const char *id = (const char *)merge_rr.items[i].util;
+			const struct rerere_id *id = merge_rr.items[i].util;
 			diff_two(rerere_path(id, "preimage"), path, path, path);
 		}
 	else

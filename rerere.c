@@ -22,15 +22,41 @@ static int rerere_autoupdate;
 
 static char *merge_rr_path;
 
-const char *rerere_path(const char *id, const char *file)
+static void free_rerere_id(struct string_list_item *item)
 {
-	return git_path("rr-cache/%s/%s", id, file);
+	free(item->util);
 }
 
-static int has_rerere_resolution(const char *id)
+static const char *rerere_id_hex(const struct rerere_id *id)
+{
+	return id->hex;
+}
+
+const char *rerere_path(const struct rerere_id *id, const char *file)
+{
+	if (!file)
+		return git_path("rr-cache/%s", rerere_id_hex(id));
+
+	return git_path("rr-cache/%s/%s", rerere_id_hex(id), file);
+}
+
+static int has_rerere_resolution(const struct rerere_id *id)
 {
 	struct stat st;
+
 	return !stat(rerere_path(id, "postimage"), &st);
+}
+
+static struct rerere_id *new_rerere_id_hex(char *hex)
+{
+	struct rerere_id *id = xmalloc(sizeof(*id));
+	strcpy(id->hex, hex);
+	return id;
+}
+
+static struct rerere_id *new_rerere_id(unsigned char *sha1)
+{
+	return new_rerere_id_hex(sha1_to_hex(sha1));
 }
 
 /*
@@ -50,6 +76,7 @@ static void read_rr(struct string_list *rr)
 	while (!strbuf_getwholeline(&buf, in, '\0')) {
 		char *path;
 		unsigned char sha1[20];
+		struct rerere_id *id;
 
 		/* There has to be the hash, tab, path and then NUL */
 		if (buf.len < 42 || get_sha1_hex(buf.buf, sha1))
@@ -59,8 +86,8 @@ static void read_rr(struct string_list *rr)
 			die("corrupt MERGE_RR");
 		buf.buf[40] = '\0';
 		path = buf.buf + 41;
-
-		string_list_insert(rr, path)->util = xstrdup(buf.buf);
+		id = new_rerere_id_hex(buf.buf);
+		string_list_insert(rr, path)->util = id;
 	}
 	strbuf_release(&buf);
 	fclose(in);
@@ -73,12 +100,15 @@ static int write_rr(struct string_list *rr, int out_fd)
 	int i;
 	for (i = 0; i < rr->nr; i++) {
 		struct strbuf buf = STRBUF_INIT;
+		struct rerere_id *id;
 
 		assert(rr->items[i].util != RERERE_RESOLVED);
-		if (!rr->items[i].util)
+
+		id = rr->items[i].util;
+		if (!id)
 			continue;
 		strbuf_addf(&buf, "%s\t%s%c",
-			    (char *)rr->items[i].util,
+			    rerere_id_hex(id),
 			    rr->items[i].string, 0);
 		if (write_in_full(out_fd, buf.buf, buf.len) != buf.len)
 			die("unable to write rerere record");
@@ -530,7 +560,7 @@ int rerere_remaining(struct string_list *merge_rr)
 			struct string_list_item *it;
 			it = string_list_lookup(merge_rr, (const char *)e->name);
 			if (it != NULL) {
-				free(it->util);
+				free_rerere_id(it);
 				it->util = RERERE_RESOLVED;
 			}
 		}
@@ -548,7 +578,7 @@ int rerere_remaining(struct string_list *merge_rr)
  * Returns 0 for successful replay of recorded resolution, or non-zero
  * for failure.
  */
-static int merge(const char *id, const char *path)
+static int merge(const struct rerere_id *id, const char *path)
 {
 	int ret;
 	mmfile_t cur = {NULL, 0}, base = {NULL, 0}, other = {NULL, 0};
@@ -582,8 +612,8 @@ static int merge(const char *id, const char *path)
 		 */
 		if (utime(rerere_path(id, "postimage"), NULL) < 0)
 			warning("failed utime() on %s: %s",
-					rerere_path(id, "postimage"),
-					strerror(errno));
+				rerere_path(id, "postimage"),
+				strerror(errno));
 
 		/* Update "path" with the resolution */
 		f = fopen(path, "w");
@@ -640,7 +670,7 @@ static void do_rerere_one_path(struct string_list_item *rr_item,
 			       struct string_list *update)
 {
 	const char *path = rr_item->string;
-	const char *id = (const char *)rr_item->util;
+	const struct rerere_id *id = rr_item->util;
 
 	/* Is there a recorded resolution we could attempt to apply? */
 	if (has_rerere_resolution(id)) {
@@ -660,7 +690,7 @@ static void do_rerere_one_path(struct string_list_item *rr_item,
 	} else {
 		return;
 	}
-	free(rr_item->util);
+	free_rerere_id(rr_item);
 	rr_item->util = NULL;
 }
 
@@ -679,10 +709,10 @@ static int do_plain_rerere(struct string_list *rr, int fd)
 	 * initial run would catch all and register their preimages.
 	 */
 	for (i = 0; i < conflict.nr; i++) {
+		struct rerere_id *id;
 		unsigned char sha1[20];
-		char *id;
-		int ret;
 		const char *path = conflict.items[i].string;
+		int ret;
 
 		if (string_list_has_string(rr, path))
 			continue;
@@ -695,7 +725,8 @@ static int do_plain_rerere(struct string_list *rr, int fd)
 		ret = handle_file(path, sha1, NULL);
 		if (ret < 1)
 			continue;
-		id = xstrdup(sha1_to_hex(sha1));
+
+		id = new_rerere_id(sha1);
 		string_list_insert(rr, path)->util = id;
 
 		/*
@@ -706,7 +737,7 @@ static int do_plain_rerere(struct string_list *rr, int fd)
 		 * NEEDSWORK: make sure "gc" does not remove
 		 * preimage without removing the directory.
 		 */
-		if (mkdir_in_gitdir(git_path("rr-cache/%s", id)))
+		if (mkdir_in_gitdir(rerere_path(id, NULL)))
 			continue;
 
 		/*
@@ -788,7 +819,7 @@ int rerere(int flags)
 static int rerere_forget_one_path(const char *path, struct string_list *rr)
 {
 	const char *filename;
-	char *id;
+	struct rerere_id *id;
 	unsigned char sha1[20];
 	int ret;
 	struct string_list_item *item;
@@ -802,7 +833,7 @@ static int rerere_forget_one_path(const char *path, struct string_list *rr)
 		return error("Could not parse conflict hunks in '%s'", path);
 
 	/* Nuke the recorded resolution for the conflict */
-	id = xstrdup(sha1_to_hex(sha1));
+	id = new_rerere_id(sha1);
 	filename = rerere_path(id, "postimage");
 	if (unlink(filename))
 		return (errno == ENOENT
@@ -822,7 +853,7 @@ static int rerere_forget_one_path(const char *path, struct string_list *rr)
 	 * conflict when the user is done.
 	 */
 	item = string_list_insert(rr, path);
-	free(item->util);
+	free_rerere_id(item);
 	item->util = id;
 	fprintf(stderr, "Forgot resolution for %s\n", path);
 	return 0;
@@ -859,22 +890,38 @@ int rerere_forget(struct pathspec *pathspec)
 /*
  * Garbage collection support
  */
-static time_t rerere_created_at(const char *id)
+
+/*
+ * Note that this is not reentrant but is used only one-at-a-time
+ * so it does not matter right now.
+ */
+static struct rerere_id *dirname_to_id(const char *name)
+{
+	static struct rerere_id id;
+	strcpy(id.hex, name);
+	return &id;
+}
+
+static time_t rerere_created_at(const char *dir_name)
 {
 	struct stat st;
+	struct rerere_id *id = dirname_to_id(dir_name);
+
 	return stat(rerere_path(id, "preimage"), &st) ? (time_t) 0 : st.st_mtime;
 }
 
-static time_t rerere_last_used_at(const char *id)
+static time_t rerere_last_used_at(const char *dir_name)
 {
 	struct stat st;
+	struct rerere_id *id = dirname_to_id(dir_name);
+
 	return stat(rerere_path(id, "postimage"), &st) ? (time_t) 0 : st.st_mtime;
 }
 
 /*
  * Remove the recorded resolution for a given conflict ID
  */
-static void unlink_rr_item(const char *id)
+static void unlink_rr_item(struct rerere_id *id)
 {
 	unlink(rerere_path(id, "thisimage"));
 	unlink(rerere_path(id, "preimage"));
@@ -884,7 +931,7 @@ static void unlink_rr_item(const char *id)
 	 * assume that we already have preimage recorded in
 	 * do_plain_rerere()?
 	 */
-	rmdir(git_path("rr-cache/%s", id));
+	rmdir(rerere_path(id, NULL));
 }
 
 void rerere_gc(struct string_list *rr)
@@ -923,7 +970,7 @@ void rerere_gc(struct string_list *rr)
 	closedir(dir);
 	/* ... and then remove them one-by-one */
 	for (i = 0; i < to_remove.nr; i++)
-		unlink_rr_item(to_remove.items[i].string);
+		unlink_rr_item(dirname_to_id(to_remove.items[i].string));
 	string_list_clear(&to_remove, 0);
 }
 
@@ -939,7 +986,7 @@ void rerere_clear(struct string_list *merge_rr)
 	int i;
 
 	for (i = 0; i < merge_rr->nr; i++) {
-		const char *id = (const char *)merge_rr->items[i].util;
+		struct rerere_id *id = merge_rr->items[i].util;
 		if (!has_rerere_resolution(id))
 			unlink_rr_item(id);
 	}
