@@ -134,9 +134,13 @@ test_expect_success 'prepare for rebase_i_conflicts' '
 test_expect_success 'status during rebase -i when conflicts unresolved' '
 	test_when_finished "git rebase --abort" &&
 	ONTO=$(git rev-parse --short rebase_i_conflicts) &&
+	LAST_COMMIT=$(git rev-parse --short rebase_i_conflicts_second) &&
 	test_must_fail git rebase -i rebase_i_conflicts &&
 	cat >expected <<EOF &&
 interactive rebase in progress; onto $ONTO
+Last command done (1 command done):
+   pick $LAST_COMMIT one_second
+No commands remaining.
 You are currently rebasing branch '\''rebase_i_conflicts_second'\'' on '\''$ONTO'\''.
   (fix conflicts and then run "git rebase --continue")
   (use "git rebase --skip" to skip this patch)
@@ -159,10 +163,14 @@ test_expect_success 'status during rebase -i after resolving conflicts' '
 	git reset --hard rebase_i_conflicts_second &&
 	test_when_finished "git rebase --abort" &&
 	ONTO=$(git rev-parse --short rebase_i_conflicts) &&
+	LAST_COMMIT=$(git rev-parse --short rebase_i_conflicts_second) &&
 	test_must_fail git rebase -i rebase_i_conflicts &&
 	git add main.txt &&
 	cat >expected <<EOF &&
 interactive rebase in progress; onto $ONTO
+Last command done (1 command done):
+   pick $LAST_COMMIT one_second
+No commands remaining.
 You are currently rebasing branch '\''rebase_i_conflicts_second'\'' on '\''$ONTO'\''.
   (all conflicts fixed: run "git rebase --continue")
 
@@ -183,7 +191,9 @@ test_expect_success 'status when rebasing -i in edit mode' '
 	git checkout -b rebase_i_edit &&
 	test_commit one_rebase_i main.txt one &&
 	test_commit two_rebase_i main.txt two &&
+	COMMIT2=$(git rev-parse --short rebase_i_edit) &&
 	test_commit three_rebase_i main.txt three &&
+	COMMIT3=$(git rev-parse --short rebase_i_edit) &&
 	FAKE_LINES="1 edit 2" &&
 	export FAKE_LINES &&
 	test_when_finished "git rebase --abort" &&
@@ -191,6 +201,10 @@ test_expect_success 'status when rebasing -i in edit mode' '
 	git rebase -i HEAD~2 &&
 	cat >expected <<EOF &&
 interactive rebase in progress; onto $ONTO
+Last commands done (2 commands done):
+   pick $COMMIT2 two_rebase_i
+   edit $COMMIT3 three_rebase_i
+No commands remaining.
 You are currently editing a commit while rebasing branch '\''rebase_i_edit'\'' on '\''$ONTO'\''.
   (use "git commit --amend" to amend the current commit)
   (use "git rebase --continue" once you are satisfied with your changes)
@@ -207,8 +221,11 @@ test_expect_success 'status when splitting a commit' '
 	git checkout -b split_commit &&
 	test_commit one_split main.txt one &&
 	test_commit two_split main.txt two &&
+	COMMIT2=$(git rev-parse --short split_commit) &&
 	test_commit three_split main.txt three &&
+	COMMIT3=$(git rev-parse --short split_commit) &&
 	test_commit four_split main.txt four &&
+	COMMIT4=$(git rev-parse --short split_commit) &&
 	FAKE_LINES="1 edit 2 3" &&
 	export FAKE_LINES &&
 	test_when_finished "git rebase --abort" &&
@@ -217,6 +234,12 @@ test_expect_success 'status when splitting a commit' '
 	git reset HEAD^ &&
 	cat >expected <<EOF &&
 interactive rebase in progress; onto $ONTO
+Last commands done (2 commands done):
+   pick $COMMIT2 two_split
+   edit $COMMIT3 three_split
+Next command to do (1 remaining command):
+   pick $COMMIT4 four_split
+  (use "git rebase --edit-todo" to view and edit)
 You are currently splitting a commit while rebasing branch '\''split_commit'\'' on '\''$ONTO'\''.
   (Once your working directory is clean, run "git rebase --continue")
 
@@ -239,7 +262,9 @@ test_expect_success 'status after editing the last commit with --amend during a 
 	test_commit one_amend main.txt one &&
 	test_commit two_amend main.txt two &&
 	test_commit three_amend main.txt three &&
+	COMMIT3=$(git rev-parse --short amend_last) &&
 	test_commit four_amend main.txt four &&
+	COMMIT4=$(git rev-parse --short amend_last) &&
 	FAKE_LINES="1 2 edit 3" &&
 	export FAKE_LINES &&
 	test_when_finished "git rebase --abort" &&
@@ -248,6 +273,11 @@ test_expect_success 'status after editing the last commit with --amend during a 
 	git commit --amend -m "foo" &&
 	cat >expected <<EOF &&
 interactive rebase in progress; onto $ONTO
+Last commands done (3 commands done):
+   pick $COMMIT3 three_amend
+   edit $COMMIT4 four_amend
+  (see more in file .git/rebase-merge/done)
+No commands remaining.
 You are currently editing a commit while rebasing branch '\''amend_last'\'' on '\''$ONTO'\''.
   (use "git commit --amend" to amend the current commit)
   (use "git rebase --continue" once you are satisfied with your changes)
@@ -273,11 +303,20 @@ test_expect_success 'status: (continue first edit) second edit' '
 	FAKE_LINES="edit 1 edit 2 3" &&
 	export FAKE_LINES &&
 	test_when_finished "git rebase --abort" &&
+	COMMIT2=$(git rev-parse --short several_edits^^) &&
+	COMMIT3=$(git rev-parse --short several_edits^) &&
+	COMMIT4=$(git rev-parse --short several_edits) &&
 	ONTO=$(git rev-parse --short HEAD~3) &&
 	git rebase -i HEAD~3 &&
 	git rebase --continue &&
 	cat >expected <<EOF &&
 interactive rebase in progress; onto $ONTO
+Last commands done (2 commands done):
+   edit $COMMIT2 two_edits
+   edit $COMMIT3 three_edits
+Next command to do (1 remaining command):
+   pick $COMMIT4 four_edits
+  (use "git rebase --edit-todo" to view and edit)
 You are currently editing a commit while rebasing branch '\''several_edits'\'' on '\''$ONTO'\''.
   (use "git commit --amend" to amend the current commit)
   (use "git rebase --continue" once you are satisfied with your changes)
@@ -294,12 +333,21 @@ test_expect_success 'status: (continue first edit) second edit and split' '
 	FAKE_LINES="edit 1 edit 2 3" &&
 	export FAKE_LINES &&
 	test_when_finished "git rebase --abort" &&
+	COMMIT2=$(git rev-parse --short several_edits^^) &&
+	COMMIT3=$(git rev-parse --short several_edits^) &&
+	COMMIT4=$(git rev-parse --short several_edits) &&
 	ONTO=$(git rev-parse --short HEAD~3) &&
 	git rebase -i HEAD~3 &&
 	git rebase --continue &&
 	git reset HEAD^ &&
 	cat >expected <<EOF &&
 interactive rebase in progress; onto $ONTO
+Last commands done (2 commands done):
+   edit $COMMIT2 two_edits
+   edit $COMMIT3 three_edits
+Next command to do (1 remaining command):
+   pick $COMMIT4 four_edits
+  (use "git rebase --edit-todo" to view and edit)
 You are currently splitting a commit while rebasing branch '\''several_edits'\'' on '\''$ONTO'\''.
   (Once your working directory is clean, run "git rebase --continue")
 
@@ -321,12 +369,21 @@ test_expect_success 'status: (continue first edit) second edit and amend' '
 	FAKE_LINES="edit 1 edit 2 3" &&
 	export FAKE_LINES &&
 	test_when_finished "git rebase --abort" &&
+	COMMIT2=$(git rev-parse --short several_edits^^) &&
+	COMMIT3=$(git rev-parse --short several_edits^) &&
+	COMMIT4=$(git rev-parse --short several_edits) &&
 	ONTO=$(git rev-parse --short HEAD~3) &&
 	git rebase -i HEAD~3 &&
 	git rebase --continue &&
 	git commit --amend -m "foo" &&
 	cat >expected <<EOF &&
 interactive rebase in progress; onto $ONTO
+Last commands done (2 commands done):
+   edit $COMMIT2 two_edits
+   edit $COMMIT3 three_edits
+Next command to do (1 remaining command):
+   pick $COMMIT4 four_edits
+  (use "git rebase --edit-todo" to view and edit)
 You are currently editing a commit while rebasing branch '\''several_edits'\'' on '\''$ONTO'\''.
   (use "git commit --amend" to amend the current commit)
   (use "git rebase --continue" once you are satisfied with your changes)
@@ -343,12 +400,21 @@ test_expect_success 'status: (amend first edit) second edit' '
 	FAKE_LINES="edit 1 edit 2 3" &&
 	export FAKE_LINES &&
 	test_when_finished "git rebase --abort" &&
+	COMMIT2=$(git rev-parse --short several_edits^^) &&
+	COMMIT3=$(git rev-parse --short several_edits^) &&
+	COMMIT4=$(git rev-parse --short several_edits) &&
 	ONTO=$(git rev-parse --short HEAD~3) &&
 	git rebase -i HEAD~3 &&
 	git commit --amend -m "a" &&
 	git rebase --continue &&
 	cat >expected <<EOF &&
 interactive rebase in progress; onto $ONTO
+Last commands done (2 commands done):
+   edit $COMMIT2 two_edits
+   edit $COMMIT3 three_edits
+Next command to do (1 remaining command):
+   pick $COMMIT4 four_edits
+  (use "git rebase --edit-todo" to view and edit)
 You are currently editing a commit while rebasing branch '\''several_edits'\'' on '\''$ONTO'\''.
   (use "git commit --amend" to amend the current commit)
   (use "git rebase --continue" once you are satisfied with your changes)
@@ -366,12 +432,21 @@ test_expect_success 'status: (amend first edit) second edit and split' '
 	export FAKE_LINES &&
 	test_when_finished "git rebase --abort" &&
 	ONTO=$(git rev-parse --short HEAD~3) &&
+	COMMIT2=$(git rev-parse --short several_edits^^) &&
+	COMMIT3=$(git rev-parse --short several_edits^) &&
+	COMMIT4=$(git rev-parse --short several_edits) &&
 	git rebase -i HEAD~3 &&
 	git commit --amend -m "b" &&
 	git rebase --continue &&
 	git reset HEAD^ &&
 	cat >expected <<EOF &&
 interactive rebase in progress; onto $ONTO
+Last commands done (2 commands done):
+   edit $COMMIT2 two_edits
+   edit $COMMIT3 three_edits
+Next command to do (1 remaining command):
+   pick $COMMIT4 four_edits
+  (use "git rebase --edit-todo" to view and edit)
 You are currently splitting a commit while rebasing branch '\''several_edits'\'' on '\''$ONTO'\''.
   (Once your working directory is clean, run "git rebase --continue")
 
@@ -393,6 +468,9 @@ test_expect_success 'status: (amend first edit) second edit and amend' '
 	FAKE_LINES="edit 1 edit 2 3" &&
 	export FAKE_LINES &&
 	test_when_finished "git rebase --abort" &&
+	COMMIT2=$(git rev-parse --short several_edits^^) &&
+	COMMIT3=$(git rev-parse --short several_edits^) &&
+	COMMIT4=$(git rev-parse --short several_edits) &&
 	ONTO=$(git rev-parse --short HEAD~3) &&
 	git rebase -i HEAD~3 &&
 	git commit --amend -m "c" &&
@@ -400,6 +478,12 @@ test_expect_success 'status: (amend first edit) second edit and amend' '
 	git commit --amend -m "d" &&
 	cat >expected <<EOF &&
 interactive rebase in progress; onto $ONTO
+Last commands done (2 commands done):
+   edit $COMMIT2 two_edits
+   edit $COMMIT3 three_edits
+Next command to do (1 remaining command):
+   pick $COMMIT4 four_edits
+  (use "git rebase --edit-todo" to view and edit)
 You are currently editing a commit while rebasing branch '\''several_edits'\'' on '\''$ONTO'\''.
   (use "git commit --amend" to amend the current commit)
   (use "git rebase --continue" once you are satisfied with your changes)
@@ -416,6 +500,9 @@ test_expect_success 'status: (split first edit) second edit' '
 	FAKE_LINES="edit 1 edit 2 3" &&
 	export FAKE_LINES &&
 	test_when_finished "git rebase --abort" &&
+	COMMIT2=$(git rev-parse --short several_edits^^) &&
+	COMMIT3=$(git rev-parse --short several_edits^) &&
+	COMMIT4=$(git rev-parse --short several_edits) &&
 	ONTO=$(git rev-parse --short HEAD~3) &&
 	git rebase -i HEAD~3 &&
 	git reset HEAD^ &&
@@ -424,6 +511,12 @@ test_expect_success 'status: (split first edit) second edit' '
 	git rebase --continue &&
 	cat >expected <<EOF &&
 interactive rebase in progress; onto $ONTO
+Last commands done (2 commands done):
+   edit $COMMIT2 two_edits
+   edit $COMMIT3 three_edits
+Next command to do (1 remaining command):
+   pick $COMMIT4 four_edits
+  (use "git rebase --edit-todo" to view and edit)
 You are currently editing a commit while rebasing branch '\''several_edits'\'' on '\''$ONTO'\''.
   (use "git commit --amend" to amend the current commit)
   (use "git rebase --continue" once you are satisfied with your changes)
@@ -440,6 +533,9 @@ test_expect_success 'status: (split first edit) second edit and split' '
 	FAKE_LINES="edit 1 edit 2 3" &&
 	export FAKE_LINES &&
 	test_when_finished "git rebase --abort" &&
+	COMMIT2=$(git rev-parse --short several_edits^^) &&
+	COMMIT3=$(git rev-parse --short several_edits^) &&
+	COMMIT4=$(git rev-parse --short several_edits) &&
 	ONTO=$(git rev-parse --short HEAD~3) &&
 	git rebase -i HEAD~3 &&
 	git reset HEAD^ &&
@@ -449,6 +545,12 @@ test_expect_success 'status: (split first edit) second edit and split' '
 	git reset HEAD^ &&
 	cat >expected <<EOF &&
 interactive rebase in progress; onto $ONTO
+Last commands done (2 commands done):
+   edit $COMMIT2 two_edits
+   edit $COMMIT3 three_edits
+Next command to do (1 remaining command):
+   pick $COMMIT4 four_edits
+  (use "git rebase --edit-todo" to view and edit)
 You are currently splitting a commit while rebasing branch '\''several_edits'\'' on '\''$ONTO'\''.
   (Once your working directory is clean, run "git rebase --continue")
 
@@ -470,6 +572,9 @@ test_expect_success 'status: (split first edit) second edit and amend' '
 	FAKE_LINES="edit 1 edit 2 3" &&
 	export FAKE_LINES &&
 	test_when_finished "git rebase --abort" &&
+	COMMIT2=$(git rev-parse --short several_edits^^) &&
+	COMMIT3=$(git rev-parse --short several_edits^) &&
+	COMMIT4=$(git rev-parse --short several_edits) &&
 	ONTO=$(git rev-parse --short HEAD~3) &&
 	git rebase -i HEAD~3 &&
 	git reset HEAD^ &&
@@ -479,6 +584,12 @@ test_expect_success 'status: (split first edit) second edit and amend' '
 	git commit --amend -m "h" &&
 	cat >expected <<EOF &&
 interactive rebase in progress; onto $ONTO
+Last commands done (2 commands done):
+   edit $COMMIT2 two_edits
+   edit $COMMIT3 three_edits
+Next command to do (1 remaining command):
+   pick $COMMIT4 four_edits
+  (use "git rebase --edit-todo" to view and edit)
 You are currently editing a commit while rebasing branch '\''several_edits'\'' on '\''$ONTO'\''.
   (use "git commit --amend" to amend the current commit)
   (use "git rebase --continue" once you are satisfied with your changes)
