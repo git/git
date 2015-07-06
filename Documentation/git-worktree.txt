@@ -9,7 +9,7 @@ git-worktree - Manage multiple worktrees
 SYNOPSIS
 --------
 [verse]
-'git worktree add' [-f] [--detach] <path> <branch>
+'git worktree add' [-f] [--detach] [-b <new-branch>] <path> <branch>
 'git worktree prune' [-n] [-v] [--expire <expire>]
 
 DESCRIPTION
@@ -63,6 +63,14 @@ OPTIONS
 	By default, `add` refuses to create a new worktree when	`<branch>`
 	is already checked out by another worktree. This option overrides
 	that safeguard.
+
+-b <new-branch>::
+-B <new-branch>::
+	With `add`, create a new branch named `<new-branch>` starting at
+	`<branch>`, and check out `<new-branch>` into the new worktree.
+	By default, `-b` refuses to create a new branch if it already
+	exists. `-B` overrides this safeguard, resetting `<new-branch>` to
+	`<branch>`.
 
 --detach::
 	With `add`, detach HEAD in the new worktree. See "DETACHED HEAD" in
@@ -133,8 +141,7 @@ make the emergency fix, remove it when done, and then resume your earlier
 refactoring session.
 
 ------------
-$ git branch emergency-fix master
-$ git worktree add ../temp emergency-fix
+$ git worktree add -b emergency-fix ../temp master
 $ pushd ../temp
 # ... hack hack hack ...
 $ git commit -a -m 'emergency fix for boss'
