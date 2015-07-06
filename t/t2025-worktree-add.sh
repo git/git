@@ -1,6 +1,6 @@
 #!/bin/sh
 
-test_description='test git checkout --to'
+test_description='test git worktree add'
 
 . ./test-lib.sh
 
@@ -8,22 +8,18 @@ test_expect_success 'setup' '
 	test_commit init
 '
 
-test_expect_success 'checkout --to not updating paths' '
-	test_must_fail git checkout --to -- init.t
-'
-
-test_expect_success 'checkout --to an existing worktree' '
+test_expect_success '"add" an existing worktree' '
 	mkdir -p existing/subtree &&
-	test_must_fail git checkout --detach --to existing master
+	test_must_fail git worktree add --detach existing master
 '
 
-test_expect_success 'checkout --to an existing empty worktree' '
+test_expect_success '"add" an existing empty worktree' '
 	mkdir existing_empty &&
-	git checkout --detach --to existing_empty master
+	git worktree add --detach existing_empty master
 '
 
-test_expect_success 'checkout --to refuses to checkout locked branch' '
-	test_must_fail git checkout --to zere master &&
+test_expect_success '"add" refuses to checkout locked branch' '
+	test_must_fail git worktree add zere master &&
 	! test -d zere &&
 	! test -d .git/worktrees/zere
 '
@@ -36,9 +32,9 @@ test_expect_success 'checking out paths not complaining about linked checkouts' 
 	)
 '
 
-test_expect_success 'checkout --to a new worktree' '
+test_expect_success '"add" worktree' '
 	git rev-parse HEAD >expect &&
-	git checkout --detach --to here master &&
+	git worktree add --detach here master &&
 	(
 		cd here &&
 		test_cmp ../init.t init.t &&
@@ -49,27 +45,27 @@ test_expect_success 'checkout --to a new worktree' '
 	)
 '
 
-test_expect_success 'checkout --to a new worktree from a subdir' '
+test_expect_success '"add" worktree from a subdir' '
 	(
 		mkdir sub &&
 		cd sub &&
-		git checkout --detach --to here master &&
+		git worktree add --detach here master &&
 		cd here &&
 		test_cmp ../../init.t init.t
 	)
 '
 
-test_expect_success 'checkout --to from a linked checkout' '
+test_expect_success '"add" from a linked checkout' '
 	(
 		cd here &&
-		git checkout --detach --to nested-here master &&
+		git worktree add --detach nested-here master &&
 		cd nested-here &&
 		git fsck
 	)
 '
 
-test_expect_success 'checkout --to a new worktree creating new branch' '
-	git checkout --to there -b newmaster master &&
+test_expect_success '"add" worktree creating new branch' '
+	git worktree add -b newmaster there master &&
 	(
 		cd there &&
 		test_cmp ../init.t init.t &&
@@ -90,7 +86,7 @@ test_expect_success 'die the same branch is already checked out' '
 test_expect_success 'not die the same branch is already checked out' '
 	(
 		cd here &&
-		git checkout --ignore-other-worktrees --to anothernewmaster newmaster
+		git worktree add --force anothernewmaster newmaster
 	)
 '
 
@@ -101,15 +97,15 @@ test_expect_success 'not die on re-checking out current branch' '
 	)
 '
 
-test_expect_success 'checkout --to from a bare repo' '
+test_expect_success '"add" from a bare repo' '
 	(
 		git clone --bare . bare &&
 		cd bare &&
-		git checkout --to ../there2 -b bare-master master
+		git worktree add -b bare-master ../there2 master
 	)
 '
 
-test_expect_success 'checkout from a bare repo without --to' '
+test_expect_success 'checkout from a bare repo without "add"' '
 	(
 		cd bare &&
 		test_must_fail git checkout master
@@ -129,17 +125,17 @@ test_expect_success 'checkout with grafts' '
 	EOF
 	git log --format=%s -2 >actual &&
 	test_cmp expected actual &&
-	git checkout --detach --to grafted master &&
+	git worktree add --detach grafted master &&
 	git --git-dir=grafted/.git log --format=%s -2 >actual &&
 	test_cmp expected actual
 '
 
-test_expect_success 'checkout --to from relative HEAD' '
+test_expect_success '"add" from relative HEAD' '
 	test_commit a &&
 	test_commit b &&
 	test_commit c &&
 	git rev-parse HEAD~1 >expected &&
-	git checkout --to relhead HEAD~1 &&
+	git worktree add relhead HEAD~1 &&
 	git -C relhead rev-parse HEAD >actual &&
 	test_cmp expected actual
 '
