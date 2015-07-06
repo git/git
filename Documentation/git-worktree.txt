@@ -9,7 +9,7 @@ git-worktree - Manage multiple worktrees
 SYNOPSIS
 --------
 [verse]
-'git worktree add' [-f] [--detach] [-b <new-branch>] <path> <branch>
+'git worktree add' [-f] [--detach] [-b <new-branch>] <path> [<branch>]
 'git worktree prune' [-n] [-v] [--expire <expire>]
 
 DESCRIPTION
@@ -45,11 +45,15 @@ pruning should be suppressed. See section "DETAILS" for more information.
 
 COMMANDS
 --------
-add <path> <branch>::
+add <path> [<branch>]::
 
 Create `<path>` and checkout `<branch>` into it. The new working directory
 is linked to the current repository, sharing everything except working
 directory specific files such as HEAD, index, etc.
++
+If `<branch>` is omitted and neither `-b` nor `-B` is used, then, as a
+convenience, a new branch based at HEAD is created automatically, as if
+`-b $(basename <path>)` was specified.
 
 prune::
 

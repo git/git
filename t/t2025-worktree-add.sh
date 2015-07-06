@@ -145,4 +145,18 @@ test_expect_success '"add -b" with <branch> omitted' '
 	test_cmp_rev HEAD burble
 '
 
+test_expect_success '"add" with <branch> omitted' '
+	git worktree add wiffle/bat &&
+	test_cmp_rev HEAD bat
+'
+
+test_expect_success '"add" auto-vivify does not clobber existing branch' '
+	test_commit c1 &&
+	test_commit c2 &&
+	git branch precious HEAD~1 &&
+	test_must_fail git worktree add precious &&
+	test_cmp_rev HEAD~1 precious &&
+	test_path_is_missing precious
+'
+
 test_done

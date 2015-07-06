@@ -291,11 +291,15 @@ static int add(int ac, const char **av, const char *prefix)
 		die(_("-b and -B are mutually exclusive"));
 	if (ac < 1 || ac > 2)
 		usage_with_options(worktree_usage, options);
-	if (ac < 2 && !new_branch && !new_branch_force)
-		usage_with_options(worktree_usage, options);
 
 	path = prefix ? prefix_filename(prefix, strlen(prefix), av[0]) : av[0];
 	branch = ac < 2 ? "HEAD" : av[1];
+
+	if (ac < 2 && !new_branch && !new_branch_force) {
+		int n;
+		const char *s = worktree_basename(path, &n);
+		new_branch = xstrndup(s, n);
+	}
 
 	argv_array_push(&cmd, "checkout");
 	if (force)
