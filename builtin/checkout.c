@@ -854,8 +854,7 @@ static void remove_junk_on_signal(int signo)
 	raise(signo);
 }
 
-static int prepare_linked_checkout(const struct checkout_opts *opts,
-				   struct branch_info *new)
+static int prepare_linked_checkout(const struct checkout_opts *opts)
 {
 	struct strbuf sb_git = STRBUF_INIT, sb_repo = STRBUF_INIT;
 	struct strbuf sb = STRBUF_INIT;
@@ -1304,7 +1303,7 @@ static int checkout_branch(struct checkout_opts *opts,
 	if (opts->new_worktree) {
 		if (!new->commit)
 			die(_("no branch specified"));
-		return prepare_linked_checkout(opts, new);
+		return prepare_linked_checkout(opts);
 	}
 
 	if (!new->commit && opts->new_branch) {
