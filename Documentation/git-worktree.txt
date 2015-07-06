@@ -9,7 +9,7 @@ git-worktree - Manage multiple worktrees
 SYNOPSIS
 --------
 [verse]
-'git worktree add' [-f] <path> <branch>
+'git worktree add' [-f] [--detach] <path> <branch>
 'git worktree prune' [-n] [-v] [--expire <expire>]
 
 DESCRIPTION
@@ -63,6 +63,10 @@ OPTIONS
 	By default, `add` refuses to create a new worktree when	`<branch>`
 	is already checked out by another worktree. This option overrides
 	that safeguard.
+
+--detach::
+	With `add`, detach HEAD in the new worktree. See "DETACHED HEAD" in
+	linkgit:git-checkout[1].
 
 -n::
 --dry-run::
