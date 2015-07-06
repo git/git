@@ -225,13 +225,6 @@ This means that you can use `git checkout -p` to selectively discard
 edits from your current working tree. See the ``Interactive Mode''
 section of linkgit:git-add[1] to learn how to operate the `--patch` mode.
 
---to=<path>::
-	Check out a branch in a separate working directory at
-	`<path>`. A new working directory is linked to the current
-	repository, sharing everything except working directory
-	specific files such as HEAD, index, etc. See
-	linkgit:git-worktree[1] for a description of linked worktrees.
-
 --ignore-other-worktrees::
 	`git checkout` refuses when the wanted ref is already checked
 	out by another worktree. This option makes it check the ref

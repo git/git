@@ -19,8 +19,6 @@
 #include "ll-merge.h"
 #include "resolve-undo.h"
 #include "submodule.h"
-#include "argv-array.h"
-#include "sigchain.h"
 
 static const char * const checkout_usage[] = {
 	N_("git checkout [options] <branch>"),
@@ -51,8 +49,6 @@ struct checkout_opts {
 	struct pathspec pathspec;
 	struct tree *source_tree;
 
-	const char *new_worktree;
-	const char **saved_argv;
 	int new_worktree_mode;
 };
 
@@ -254,9 +250,6 @@ static int checkout_paths(const struct checkout_opts *opts,
 	if (opts->new_branch)
 		die(_("Cannot update paths and switch to branch '%s' at the same time."),
 		    opts->new_branch);
-
-	if (opts->new_worktree)
-		die(_("'%s' cannot be used with updating paths"), "--to");
 
 	if (opts->patch_mode)
 		return run_add_interactive(revision, "--patch=checkout",
@@ -825,142 +818,6 @@ static int switch_branches(const struct checkout_opts *opts,
 	return ret || writeout_error;
 }
 
-static char *junk_work_tree;
-static char *junk_git_dir;
-static int is_junk;
-static pid_t junk_pid;
-
-static void remove_junk(void)
-{
-	struct strbuf sb = STRBUF_INIT;
-	if (!is_junk || getpid() != junk_pid)
-		return;
-	if (junk_git_dir) {
-		strbuf_addstr(&sb, junk_git_dir);
-		remove_dir_recursively(&sb, 0);
-		strbuf_reset(&sb);
-	}
-	if (junk_work_tree) {
-		strbuf_addstr(&sb, junk_work_tree);
-		remove_dir_recursively(&sb, 0);
-	}
-	strbuf_release(&sb);
-}
-
-static void remove_junk_on_signal(int signo)
-{
-	remove_junk();
-	sigchain_pop(signo);
-	raise(signo);
-}
-
-static int prepare_linked_checkout(const char *path, const char **child_argv)
-{
-	struct strbuf sb_git = STRBUF_INIT, sb_repo = STRBUF_INIT;
-	struct strbuf sb = STRBUF_INIT;
-	const char *name;
-	struct stat st;
-	struct child_process cp;
-	int counter = 0, len, ret;
-	unsigned char rev[20];
-
-	if (file_exists(path) && !is_empty_dir(path))
-		die(_("'%s' already exists"), path);
-
-	len = strlen(path);
-	while (len && is_dir_sep(path[len - 1]))
-		len--;
-
-	for (name = path + len - 1; name > path; name--)
-		if (is_dir_sep(*name)) {
-			name++;
-			break;
-		}
-	strbuf_addstr(&sb_repo,
-		      git_path("worktrees/%.*s", (int)(path + len - name), name));
-	len = sb_repo.len;
-	if (safe_create_leading_directories_const(sb_repo.buf))
-		die_errno(_("could not create leading directories of '%s'"),
-			  sb_repo.buf);
-	while (!stat(sb_repo.buf, &st)) {
-		counter++;
-		strbuf_setlen(&sb_repo, len);
-		strbuf_addf(&sb_repo, "%d", counter);
-	}
-	name = strrchr(sb_repo.buf, '/') + 1;
-
-	junk_pid = getpid();
-	atexit(remove_junk);
-	sigchain_push_common(remove_junk_on_signal);
-
-	if (mkdir(sb_repo.buf, 0777))
-		die_errno(_("could not create directory of '%s'"), sb_repo.buf);
-	junk_git_dir = xstrdup(sb_repo.buf);
-	is_junk = 1;
-
-	/*
-	 * lock the incomplete repo so prune won't delete it, unlock
-	 * after the preparation is over.
-	 */
-	strbuf_addf(&sb, "%s/locked", sb_repo.buf);
-	write_file(sb.buf, 1, "initializing\n");
-
-	strbuf_addf(&sb_git, "%s/.git", path);
-	if (safe_create_leading_directories_const(sb_git.buf))
-		die_errno(_("could not create leading directories of '%s'"),
-			  sb_git.buf);
-	junk_work_tree = xstrdup(path);
-
-	strbuf_reset(&sb);
-	strbuf_addf(&sb, "%s/gitdir", sb_repo.buf);
-	write_file(sb.buf, 1, "%s\n", real_path(sb_git.buf));
-	write_file(sb_git.buf, 1, "gitdir: %s/worktrees/%s\n",
-		   real_path(get_git_common_dir()), name);
-	/*
-	 * This is to keep resolve_ref() happy. We need a valid HEAD
-	 * or is_git_directory() will reject the directory. Moreover, HEAD
-	 * in the new worktree must resolve to the same value as HEAD in
-	 * the current tree since the command invoked to populate the new
-	 * worktree will be handed the branch/ref specified by the user.
-	 * For instance, if the user asks for the new worktree to be based
-	 * at HEAD~5, then the resolved HEAD~5 in the new worktree must
-	 * match the resolved HEAD~5 in the current tree in order to match
-	 * the user's expectation.
-	 */
-	if (!resolve_ref_unsafe("HEAD", 0, rev, NULL))
-		die(_("unable to resolve HEAD"));
-	strbuf_reset(&sb);
-	strbuf_addf(&sb, "%s/HEAD", sb_repo.buf);
-	write_file(sb.buf, 1, "%s\n", sha1_to_hex(rev));
-	strbuf_reset(&sb);
-	strbuf_addf(&sb, "%s/commondir", sb_repo.buf);
-	write_file(sb.buf, 1, "../..\n");
-
-	fprintf_ln(stderr, _("Enter %s (identifier %s)"), path, name);
-
-	setenv("GIT_CHECKOUT_NEW_WORKTREE", "1", 1);
-	setenv(GIT_DIR_ENVIRONMENT, sb_git.buf, 1);
-	setenv(GIT_WORK_TREE_ENVIRONMENT, path, 1);
-	memset(&cp, 0, sizeof(cp));
-	cp.git_cmd = 1;
-	cp.argv = child_argv;
-	ret = run_command(&cp);
-	if (!ret) {
-		is_junk = 0;
-		free(junk_work_tree);
-		free(junk_git_dir);
-		junk_work_tree = NULL;
-		junk_git_dir = NULL;
-	}
-	strbuf_reset(&sb);
-	strbuf_addf(&sb, "%s/locked", sb_repo.buf);
-	unlink_or_warn(sb.buf);
-	strbuf_release(&sb);
-	strbuf_release(&sb_repo);
-	strbuf_release(&sb_git);
-	return ret;
-}
-
 static int git_checkout_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "diff.ignoresubmodules")) {
@@ -1299,13 +1156,6 @@ static int checkout_branch(struct checkout_opts *opts,
 		free(head_ref);
 	}
 
-	if (opts->new_worktree) {
-		if (!new->commit)
-			die(_("no branch specified"));
-		return prepare_linked_checkout(opts->new_worktree,
-					       opts->saved_argv);
-	}
-
 	if (!new->commit && opts->new_branch) {
 		unsigned char rev[20];
 		int flag;
@@ -1348,8 +1198,6 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 			 N_("do not limit pathspecs to sparse entries only")),
 		OPT_HIDDEN_BOOL(0, "guess", &dwim_new_local_branch,
 				N_("second guess 'git checkout no-such-branch'")),
-		OPT_FILENAME(0, "to", &opts.new_worktree,
-			   N_("check a branch out in a separate working directory")),
 		OPT_BOOL(0, "ignore-other-worktrees", &opts.ignore_other_worktrees,
 			 N_("do not check if another worktree is holding the given ref")),
 		OPT_END(),
@@ -1360,9 +1208,6 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 	opts.overwrite_ignore = 1;
 	opts.prefix = prefix;
 
-	opts.saved_argv = xmalloc(sizeof(const char *) * (argc + 2));
-	memcpy(opts.saved_argv, argv, sizeof(const char *) * (argc + 1));
-
 	gitmodules_config();
 	git_config(git_checkout_config, &opts);
 
@@ -1371,13 +1216,9 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, prefix, options, checkout_usage,
 			     PARSE_OPT_KEEP_DASHDASH);
 
-	/* recursive execution from checkout_new_worktree() */
 	opts.new_worktree_mode = getenv("GIT_CHECKOUT_NEW_WORKTREE") != NULL;
-	if (opts.new_worktree_mode)
-		opts.new_worktree = NULL;
 
-	if (!opts.new_worktree)
-		setup_work_tree();
+	setup_work_tree();
 
 	if (conflict_style) {
 		opts.merge = 1; /* implied */
