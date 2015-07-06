@@ -444,7 +444,7 @@ When you are done with a linked working tree you can simply delete it.
 The working tree's entry in the repository's $GIT_DIR/worktrees
 directory will eventually be removed automatically (see
 `gc.pruneworktreesexpire` in linkgit::git-config[1]), or you can run
-`git prune --worktrees` in the main or any linked working tree to
+`git worktree prune` in the main or any linked working tree to
 clean up any stale entries in $GIT_DIR/worktrees.
 
 If you move a linked working directory to another file system, or
