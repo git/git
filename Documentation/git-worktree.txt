@@ -76,9 +76,6 @@ to `/path/main/.git/worktrees/test-next` then a file named
 `test-next` entry from being pruned.  See
 linkgit:gitrepository-layout[5] for details.
 
-Multiple checkout support for submodules is incomplete. It is NOT
-recommended to make multiple checkouts of a superproject.
-
 COMMANDS
 --------
 prune::
@@ -99,6 +96,22 @@ OPTIONS
 
 --expire <time>::
 	With `prune`, only expire unused worktrees older than <time>.
+
+BUGS
+----
+Multiple checkout support for submodules is incomplete. It is NOT
+recommended to make multiple checkouts of a superproject.
+
+git-worktree could provide more automation for tasks currently
+performed manually or via other commands, such as:
+
+- `add` to create a new linked worktree
+- `remove` to remove a linked worktree and its administrative files (and
+  warn if the worktree is dirty)
+- `mv` to move or rename a worktree and update its administrative files
+- `list` to list linked worktrees
+- `lock` to prevent automatic pruning of administrative files (for instance,
+  for a worktree on a portable device)
 
 SEE ALSO
 --------
