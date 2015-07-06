@@ -303,7 +303,7 @@ static int add(int ac, const char **av, const char *prefix)
 
 	argv_array_push(&cmd, "checkout");
 	if (force)
-		argv_array_push(&cmd, "--ignore-other-worktrees");
+		argv_array_push(&cmd, "--force");
 	if (new_branch)
 		argv_array_pushl(&cmd, "-b", new_branch, NULL);
 	if (new_branch_force)

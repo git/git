@@ -35,7 +35,6 @@ struct checkout_opts {
 	int writeout_stage;
 	int overwrite_ignore;
 	int ignore_skipworktree;
-	int ignore_other_worktrees;
 
 	const char *new_branch;
 	const char *new_branch_force;
@@ -903,7 +902,8 @@ static void check_linked_checkout(struct branch_info *new, const char *id)
 		strbuf_rtrim(&gitdir);
 	} else
 		strbuf_addstr(&gitdir, get_git_common_dir());
-	die(_("'%s' is already checked out at '%s'"), new->name, gitdir.buf);
+	die(_("'%s' is already checked out at '%s'; use --force to override"),
+	    new->name, gitdir.buf);
 done:
 	strbuf_release(&path);
 	strbuf_release(&sb);
@@ -1151,7 +1151,7 @@ static int checkout_branch(struct checkout_opts *opts,
 		char *head_ref = resolve_refdup("HEAD", 0, sha1, &flag);
 		if (head_ref &&
 		    (!(flag & REF_ISSYMREF) || strcmp(head_ref, new->path)) &&
-		    !opts->ignore_other_worktrees)
+		    !opts->force)
 			check_linked_checkouts(new);
 		free(head_ref);
 	}
@@ -1198,8 +1198,6 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 			 N_("do not limit pathspecs to sparse entries only")),
 		OPT_HIDDEN_BOOL(0, "guess", &dwim_new_local_branch,
 				N_("second guess 'git checkout no-such-branch'")),
-		OPT_BOOL(0, "ignore-other-worktrees", &opts.ignore_other_worktrees,
-			 N_("do not check if another worktree is holding the given ref")),
 		OPT_END(),
 	};
 
