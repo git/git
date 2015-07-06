@@ -28,15 +28,15 @@ OPTIONS
 
 -n::
 --dry-run::
-	Do not remove anything; just report what it would
+	With `prune`, do not remove anything; just report what it would
 	remove.
 
 -v::
 --verbose::
-	Report all removals.
+	With `prune`, report all removals.
 
 --expire <time>::
-	Only expire unused worktrees older than <time>.
+	With `prune`, only expire unused worktrees older than <time>.
 
 SEE ALSO
 --------
