@@ -152,6 +152,25 @@ static void remove_junk_on_signal(int signo)
 	raise(signo);
 }
 
+static const char *worktree_basename(const char *path, int *olen)
+{
+	const char *name;
+	int len;
+
+	len = strlen(path);
+	while (len && is_dir_sep(path[len - 1]))
+		len--;
+
+	for (name = path + len - 1; name > path; name--)
+		if (is_dir_sep(*name)) {
+			name++;
+			break;
+		}
+
+	*olen = len;
+	return name;
+}
+
 static int add_worktree(const char *path, const char **child_argv)
 {
 	struct strbuf sb_git = STRBUF_INIT, sb_repo = STRBUF_INIT;
@@ -165,15 +184,7 @@ static int add_worktree(const char *path, const char **child_argv)
 	if (file_exists(path) && !is_empty_dir(path))
 		die(_("'%s' already exists"), path);
 
-	len = strlen(path);
-	while (len && is_dir_sep(path[len - 1]))
-		len--;
-
-	for (name = path + len - 1; name > path; name--)
-		if (is_dir_sep(*name)) {
-			name++;
-			break;
-		}
+	name = worktree_basename(path, &len);
 	strbuf_addstr(&sb_repo,
 		      git_path("worktrees/%.*s", (int)(path + len - name), name));
 	len = sb_repo.len;
