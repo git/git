@@ -1218,8 +1218,6 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 
 	opts.new_worktree_mode = getenv("GIT_CHECKOUT_NEW_WORKTREE") != NULL;
 
-	setup_work_tree();
-
 	if (conflict_style) {
 		opts.merge = 1; /* implied */
 		git_xmerge_config("merge.conflictstyle", conflict_style, NULL);
