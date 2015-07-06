@@ -854,11 +854,11 @@ static void remove_junk_on_signal(int signo)
 	raise(signo);
 }
 
-static int prepare_linked_checkout(const struct checkout_opts *opts)
+static int prepare_linked_checkout(const char *path, const char **child_argv)
 {
 	struct strbuf sb_git = STRBUF_INIT, sb_repo = STRBUF_INIT;
 	struct strbuf sb = STRBUF_INIT;
-	const char *path = opts->new_worktree, *name;
+	const char *name;
 	struct stat st;
 	struct child_process cp;
 	int counter = 0, len, ret;
@@ -943,7 +943,7 @@ static int prepare_linked_checkout(const struct checkout_opts *opts)
 	setenv(GIT_WORK_TREE_ENVIRONMENT, path, 1);
 	memset(&cp, 0, sizeof(cp));
 	cp.git_cmd = 1;
-	cp.argv = opts->saved_argv;
+	cp.argv = child_argv;
 	ret = run_command(&cp);
 	if (!ret) {
 		is_junk = 0;
@@ -1302,7 +1302,8 @@ static int checkout_branch(struct checkout_opts *opts,
 	if (opts->new_worktree) {
 		if (!new->commit)
 			die(_("no branch specified"));
-		return prepare_linked_checkout(opts);
+		return prepare_linked_checkout(opts->new_worktree,
+					       opts->saved_argv);
 	}
 
 	if (!new->commit && opts->new_branch) {
