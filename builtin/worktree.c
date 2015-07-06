@@ -6,7 +6,7 @@
 #include "run-command.h"
 
 static const char * const worktree_usage[] = {
-	N_("git worktree add <path> <branch>"),
+	N_("git worktree add [<options>] <path> <branch>"),
 	N_("git worktree prune [<options>]"),
 	NULL
 };
@@ -125,9 +125,11 @@ static int prune(int ac, const char **av, const char *prefix)
 static int add(int ac, const char **av, const char *prefix)
 {
 	struct child_process c;
+	int force = 0;
 	const char *path, *branch;
 	struct argv_array cmd = ARGV_ARRAY_INIT;
 	struct option options[] = {
+		OPT__FORCE(&force, N_("checkout <branch> even if already checked out in other worktree")),
 		OPT_END()
 	};
 
@@ -140,6 +142,8 @@ static int add(int ac, const char **av, const char *prefix)
 
 	argv_array_push(&cmd, "checkout");
 	argv_array_pushl(&cmd, "--to", path, NULL);
+	if (force)
+		argv_array_push(&cmd, "--ignore-other-worktrees");
 	argv_array_push(&cmd, branch);
 
 	memset(&c, 0, sizeof(c));
