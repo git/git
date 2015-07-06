@@ -68,6 +68,7 @@ OPTIONS
 -B <new-branch>::
 	With `add`, create a new branch named `<new-branch>` starting at
 	`<branch>`, and check out `<new-branch>` into the new worktree.
+	If `<branch>` is omitted, it defaults to HEAD.
 	By default, `-b` refuses to create a new branch if it already
 	exists. `-B` overrides this safeguard, resetting `<new-branch>` to
 	`<branch>`.

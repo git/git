@@ -140,4 +140,9 @@ test_expect_success '"add" from relative HEAD' '
 	test_cmp expected actual
 '
 
+test_expect_success '"add -b" with <branch> omitted' '
+	git worktree add -b burble flornk &&
+	test_cmp_rev HEAD burble
+'
+
 test_done

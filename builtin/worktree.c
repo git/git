@@ -289,11 +289,13 @@ static int add(int ac, const char **av, const char *prefix)
 	ac = parse_options(ac, av, prefix, options, worktree_usage, 0);
 	if (new_branch && new_branch_force)
 		die(_("-b and -B are mutually exclusive"));
-	if (ac != 2)
+	if (ac < 1 || ac > 2)
+		usage_with_options(worktree_usage, options);
+	if (ac < 2 && !new_branch && !new_branch_force)
 		usage_with_options(worktree_usage, options);
 
 	path = prefix ? prefix_filename(prefix, strlen(prefix), av[0]) : av[0];
-	branch = av[1];
+	branch = ac < 2 ? "HEAD" : av[1];
 
 	argv_array_push(&cmd, "checkout");
 	if (force)
