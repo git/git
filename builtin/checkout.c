@@ -865,8 +865,6 @@ static int prepare_linked_checkout(const struct checkout_opts *opts,
 	int counter = 0, len, ret;
 	unsigned char rev[20];
 
-	if (!new->commit)
-		die(_("no branch specified"));
 	if (file_exists(path) && !is_empty_dir(path))
 		die(_("'%s' already exists"), path);
 
@@ -1303,8 +1301,11 @@ static int checkout_branch(struct checkout_opts *opts,
 		free(head_ref);
 	}
 
-	if (opts->new_worktree)
+	if (opts->new_worktree) {
+		if (!new->commit)
+			die(_("no branch specified"));
 		return prepare_linked_checkout(opts, new);
+	}
 
 	if (!new->commit && opts->new_branch) {
 		unsigned char rev[20];
