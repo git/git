@@ -22,15 +22,15 @@ static int rerere_autoupdate;
 
 static char *merge_rr_path;
 
-const char *rerere_path(const char *hex, const char *file)
+const char *rerere_path(const char *id, const char *file)
 {
-	return git_path("rr-cache/%s/%s", hex, file);
+	return git_path("rr-cache/%s/%s", id, file);
 }
 
-static int has_rerere_resolution(const char *hex)
+static int has_rerere_resolution(const char *id)
 {
 	struct stat st;
-	return !stat(rerere_path(hex, "postimage"), &st);
+	return !stat(rerere_path(id, "postimage"), &st);
 }
 
 /*
@@ -539,7 +539,7 @@ int rerere_remaining(struct string_list *merge_rr)
 }
 
 /*
- * Find the conflict identified by "name"; the change between its
+ * Find the conflict identified by "id"; the change between its
  * "preimage" (i.e. a previous contents with conflict markers) and its
  * "postimage" (i.e. the corresponding contents with conflicts
  * resolved) may apply cleanly to the contents stored in "path", i.e.
@@ -548,7 +548,7 @@ int rerere_remaining(struct string_list *merge_rr)
  * Returns 0 for successful replay of recorded resolution, or non-zero
  * for failure.
  */
-static int merge(const char *name, const char *path)
+static int merge(const char *id, const char *path)
 {
 	int ret;
 	mmfile_t cur = {NULL, 0}, base = {NULL, 0}, other = {NULL, 0};
@@ -558,12 +558,12 @@ static int merge(const char *name, const char *path)
 	 * Normalize the conflicts in path and write it out to
 	 * "thisimage" temporary file.
 	 */
-	if (handle_file(path, NULL, rerere_path(name, "thisimage")) < 0)
+	if (handle_file(path, NULL, rerere_path(id, "thisimage")) < 0)
 		return 1;
 
-	if (read_mmfile(&cur, rerere_path(name, "thisimage")) ||
-	    read_mmfile(&base, rerere_path(name, "preimage")) ||
-	    read_mmfile(&other, rerere_path(name, "postimage"))) {
+	if (read_mmfile(&cur, rerere_path(id, "thisimage")) ||
+	    read_mmfile(&base, rerere_path(id, "preimage")) ||
+	    read_mmfile(&other, rerere_path(id, "postimage"))) {
 		ret = 1;
 		goto out;
 	}
@@ -580,9 +580,9 @@ static int merge(const char *name, const char *path)
 		 * A successful replay of recorded resolution.
 		 * Mark that "postimage" was used to help gc.
 		 */
-		if (utime(rerere_path(name, "postimage"), NULL) < 0)
+		if (utime(rerere_path(id, "postimage"), NULL) < 0)
 			warning("failed utime() on %s: %s",
-					rerere_path(name, "postimage"),
+					rerere_path(id, "postimage"),
 					strerror(errno));
 
 		/* Update "path" with the resolution */
@@ -640,11 +640,11 @@ static void do_rerere_one_path(struct string_list_item *rr_item,
 			       struct string_list *update)
 {
 	const char *path = rr_item->string;
-	const char *name = (const char *)rr_item->util;
+	const char *id = (const char *)rr_item->util;
 
 	/* Is there a recorded resolution we could attempt to apply? */
-	if (has_rerere_resolution(name)) {
-		if (merge(name, path))
+	if (has_rerere_resolution(id)) {
+		if (merge(id, path))
 			return; /* failed to replay */
 
 		if (rerere_autoupdate)
@@ -655,7 +655,7 @@ static void do_rerere_one_path(struct string_list_item *rr_item,
 				path);
 	} else if (!handle_file(path, NULL, NULL)) {
 		/* The user has resolved it. */
-		copy_file(rerere_path(name, "postimage"), path, 0666);
+		copy_file(rerere_path(id, "postimage"), path, 0666);
 		fprintf(stderr, "Recorded resolution for '%s'.\n", path);
 	} else {
 		return;
@@ -680,7 +680,7 @@ static int do_plain_rerere(struct string_list *rr, int fd)
 	 */
 	for (i = 0; i < conflict.nr; i++) {
 		unsigned char sha1[20];
-		char *hex;
+		char *id;
 		int ret;
 		const char *path = conflict.items[i].string;
 
@@ -695,8 +695,8 @@ static int do_plain_rerere(struct string_list *rr, int fd)
 		ret = handle_file(path, sha1, NULL);
 		if (ret < 1)
 			continue;
-		hex = xstrdup(sha1_to_hex(sha1));
-		string_list_insert(rr, path)->util = hex;
+		id = xstrdup(sha1_to_hex(sha1));
+		string_list_insert(rr, path)->util = id;
 
 		/*
 		 * If the directory does not exist, create
@@ -706,7 +706,7 @@ static int do_plain_rerere(struct string_list *rr, int fd)
 		 * NEEDSWORK: make sure "gc" does not remove
 		 * preimage without removing the directory.
 		 */
-		if (mkdir_in_gitdir(git_path("rr-cache/%s", hex)))
+		if (mkdir_in_gitdir(git_path("rr-cache/%s", id)))
 			continue;
 
 		/*
@@ -714,7 +714,7 @@ static int do_plain_rerere(struct string_list *rr, int fd)
 		 * conflict.  Ask handle_file() to write the
 		 * normalized contents to the "preimage" file.
 		 */
-		handle_file(path, NULL, rerere_path(hex, "preimage"));
+		handle_file(path, NULL, rerere_path(id, "preimage"));
 		fprintf(stderr, "Recorded preimage for '%s'\n", path);
 	}
 
@@ -788,7 +788,7 @@ int rerere(int flags)
 static int rerere_forget_one_path(const char *path, struct string_list *rr)
 {
 	const char *filename;
-	char *hex;
+	char *id;
 	unsigned char sha1[20];
 	int ret;
 	struct string_list_item *item;
@@ -802,8 +802,8 @@ static int rerere_forget_one_path(const char *path, struct string_list *rr)
 		return error("Could not parse conflict hunks in '%s'", path);
 
 	/* Nuke the recorded resolution for the conflict */
-	hex = xstrdup(sha1_to_hex(sha1));
-	filename = rerere_path(hex, "postimage");
+	id = xstrdup(sha1_to_hex(sha1));
+	filename = rerere_path(id, "postimage");
 	if (unlink(filename))
 		return (errno == ENOENT
 			? error("no remembered resolution for %s", path)
@@ -814,7 +814,7 @@ static int rerere_forget_one_path(const char *path, struct string_list *rr)
 	 * conflict in the working tree, run us again to record
 	 * the postimage.
 	 */
-	handle_cache(path, sha1, rerere_path(hex, "preimage"));
+	handle_cache(path, sha1, rerere_path(id, "preimage"));
 	fprintf(stderr, "Updated preimage for '%s'\n", path);
 
 	/*
@@ -823,7 +823,7 @@ static int rerere_forget_one_path(const char *path, struct string_list *rr)
 	 */
 	item = string_list_insert(rr, path);
 	free(item->util);
-	item->util = hex;
+	item->util = id;
 	fprintf(stderr, "Forgot resolution for %s\n", path);
 	return 0;
 }
@@ -859,32 +859,32 @@ int rerere_forget(struct pathspec *pathspec)
 /*
  * Garbage collection support
  */
-static time_t rerere_created_at(const char *name)
+static time_t rerere_created_at(const char *id)
 {
 	struct stat st;
-	return stat(rerere_path(name, "preimage"), &st) ? (time_t) 0 : st.st_mtime;
+	return stat(rerere_path(id, "preimage"), &st) ? (time_t) 0 : st.st_mtime;
 }
 
-static time_t rerere_last_used_at(const char *name)
+static time_t rerere_last_used_at(const char *id)
 {
 	struct stat st;
-	return stat(rerere_path(name, "postimage"), &st) ? (time_t) 0 : st.st_mtime;
+	return stat(rerere_path(id, "postimage"), &st) ? (time_t) 0 : st.st_mtime;
 }
 
 /*
  * Remove the recorded resolution for a given conflict ID
  */
-static void unlink_rr_item(const char *name)
+static void unlink_rr_item(const char *id)
 {
-	unlink(rerere_path(name, "thisimage"));
-	unlink(rerere_path(name, "preimage"));
-	unlink(rerere_path(name, "postimage"));
+	unlink(rerere_path(id, "thisimage"));
+	unlink(rerere_path(id, "preimage"));
+	unlink(rerere_path(id, "postimage"));
 	/*
 	 * NEEDSWORK: what if this rmdir() fails?  Wouldn't we then
 	 * assume that we already have preimage recorded in
 	 * do_plain_rerere()?
 	 */
-	rmdir(git_path("rr-cache/%s", name));
+	rmdir(git_path("rr-cache/%s", id));
 }
 
 void rerere_gc(struct string_list *rr)
@@ -939,9 +939,9 @@ void rerere_clear(struct string_list *merge_rr)
 	int i;
 
 	for (i = 0; i < merge_rr->nr; i++) {
-		const char *name = (const char *)merge_rr->items[i].util;
-		if (!has_rerere_resolution(name))
-			unlink_rr_item(name);
+		const char *id = (const char *)merge_rr->items[i].util;
+		if (!has_rerere_resolution(id))
+			unlink_rr_item(id);
 	}
 	unlink_or_warn(git_path("MERGE_RR"));
 }
