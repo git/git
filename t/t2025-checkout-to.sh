@@ -134,4 +134,14 @@ test_expect_success 'checkout with grafts' '
 	test_cmp expected actual
 '
 
+test_expect_success 'checkout --to from relative HEAD' '
+	test_commit a &&
+	test_commit b &&
+	test_commit c &&
+	git rev-parse HEAD~1 >expected &&
+	git checkout --to relhead HEAD~1 &&
+	git -C relhead rev-parse HEAD >actual &&
+	test_cmp expected actual
+'
+
 test_done
