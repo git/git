@@ -2,8 +2,11 @@
 #include "builtin.h"
 #include "dir.h"
 #include "parse-options.h"
+#include "argv-array.h"
+#include "run-command.h"
 
 static const char * const worktree_usage[] = {
+	N_("git worktree add <path> <branch>"),
 	N_("git worktree prune [<options>]"),
 	NULL
 };
@@ -119,6 +122,32 @@ static int prune(int ac, const char **av, const char *prefix)
 	return 0;
 }
 
+static int add(int ac, const char **av, const char *prefix)
+{
+	struct child_process c;
+	const char *path, *branch;
+	struct argv_array cmd = ARGV_ARRAY_INIT;
+	struct option options[] = {
+		OPT_END()
+	};
+
+	ac = parse_options(ac, av, prefix, options, worktree_usage, 0);
+	if (ac != 2)
+		usage_with_options(worktree_usage, options);
+
+	path = prefix ? prefix_filename(prefix, strlen(prefix), av[0]) : av[0];
+	branch = av[1];
+
+	argv_array_push(&cmd, "checkout");
+	argv_array_pushl(&cmd, "--to", path, NULL);
+	argv_array_push(&cmd, branch);
+
+	memset(&c, 0, sizeof(c));
+	c.git_cmd = 1;
+	c.argv = cmd.argv;
+	return run_command(&c);
+}
+
 int cmd_worktree(int ac, const char **av, const char *prefix)
 {
 	struct option options[] = {
@@ -127,6 +156,8 @@ int cmd_worktree(int ac, const char **av, const char *prefix)
 
 	if (ac < 2)
 		usage_with_options(worktree_usage, options);
+	if (!strcmp(av[1], "add"))
+		return add(ac - 1, av + 1, prefix);
 	if (!strcmp(av[1], "prune"))
 		return prune(ac - 1, av + 1, prefix);
 	usage_with_options(worktree_usage, options);

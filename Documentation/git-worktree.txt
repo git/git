@@ -9,13 +9,13 @@ git-worktree - Manage multiple worktrees
 SYNOPSIS
 --------
 [verse]
+'git worktree add' <path> <branch>
 'git worktree prune' [-n] [-v] [--expire <expire>]
 
 DESCRIPTION
 -----------
 
-Manage multiple worktrees attached to the same repository. These are
-created by the command `git checkout --to`.
+Manage multiple worktrees attached to the same repository.
 
 A git repository can support multiple working trees, allowing you to check
 out more than one branch at a time.  With `git checkout --to` a new working
@@ -45,6 +45,12 @@ pruning should be suppressed. See section "DETAILS" for more information.
 
 COMMANDS
 --------
+add <path> <branch>::
+
+Create `<path>` and checkout `<branch>` into it. The new working directory
+is linked to the current repository, sharing everything except working
+directory specific files such as HEAD, index, etc.
+
 prune::
 
 Prune working tree information in $GIT_DIR/worktrees.
@@ -118,7 +124,7 @@ refactoring session.
 
 ------------
 $ git branch emergency-fix master
-$ git checkout --to ../temp emergency-fix
+$ git worktree add ../temp emergency-fix
 $ pushd ../temp
 # ... hack hack hack ...
 $ git commit -a -m 'emergency fix for boss'
@@ -133,20 +139,14 @@ Multiple checkout support for submodules is incomplete. It is NOT
 recommended to make multiple checkouts of a superproject.
 
 git-worktree could provide more automation for tasks currently
-performed manually or via other commands, such as:
+performed manually, such as:
 
-- `add` to create a new linked worktree
 - `remove` to remove a linked worktree and its administrative files (and
   warn if the worktree is dirty)
 - `mv` to move or rename a worktree and update its administrative files
 - `list` to list linked worktrees
 - `lock` to prevent automatic pruning of administrative files (for instance,
   for a worktree on a portable device)
-
-SEE ALSO
---------
-
-linkgit:git-checkout[1]
 
 GIT
 ---
