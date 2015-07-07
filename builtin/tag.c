@@ -86,6 +86,11 @@ static int in_commit_list(const struct commit_list *want, struct commit *c)
 	return 0;
 }
 
+/*
+ * The entire code segment for supporting the --contains option has been
+ * copied over to ref-filter.{c,h}. This will be deleted evetually when
+ * we port tag.c to use ref-filter APIs.
+ */
 enum contains_result {
 	CONTAINS_UNKNOWN = -1,
 	CONTAINS_NO = 0,
