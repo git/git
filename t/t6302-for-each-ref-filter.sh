@@ -23,4 +23,24 @@ test_expect_success 'setup some history and refs' '
 	git update-ref refs/odd/spot master
 '
 
+test_expect_success 'filtering with --points-at' '
+	cat >expect <<-\EOF &&
+	refs/heads/master
+	refs/odd/spot
+	refs/tags/three
+	EOF
+	git for-each-ref --format="%(refname)" --points-at=master >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'check signed tags with --points-at' '
+	sed -e "s/Z$//" >expect <<-\EOF &&
+	refs/heads/side Z
+	refs/tags/four Z
+	refs/tags/signed-tag four
+	EOF
+	git for-each-ref --format="%(refname) %(*subject)" --points-at=side >actual &&
+	test_cmp expect actual
+'
+
 test_done
