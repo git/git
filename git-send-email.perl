@@ -478,7 +478,7 @@ sub parse_address_line {
 	if ($have_mail_address) {
 		return map { $_->format } Mail::Address->parse($_[0]);
 	} else {
-		return split_addrs($_[0]);
+		return Git::parse_mailboxes($_[0]);
 	}
 }
 
