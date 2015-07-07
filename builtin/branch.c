@@ -828,18 +828,8 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 		OPT__COLOR(&branch_use_color, N_("use colored output")),
 		OPT_SET_INT('r', "remotes",     &kinds, N_("act on remote-tracking branches"),
 			REF_REMOTE_BRANCH),
-		{
-			OPTION_CALLBACK, 0, "contains", &with_commit, N_("commit"),
-			N_("print only branches that contain the commit"),
-			PARSE_OPT_LASTARG_DEFAULT,
-			parse_opt_commits, (intptr_t)"HEAD",
-		},
-		{
-			OPTION_CALLBACK, 0, "with", &with_commit, N_("commit"),
-			N_("print only branches that contain the commit"),
-			PARSE_OPT_HIDDEN | PARSE_OPT_LASTARG_DEFAULT,
-			parse_opt_commits, (intptr_t) "HEAD",
-		},
+		OPT_CONTAINS(&with_commit, N_("print only branches that contain the commit")),
+		OPT_WITH(&with_commit, N_("print only branches that contain the commit")),
 		OPT__ABBREV(&abbrev),
 
 		OPT_GROUP(N_("Specific git-branch actions:")),
