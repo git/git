@@ -1,15 +1,23 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jul 2015, #01; Wed, 1)
-X-master-at: cbed29f37b690e0a497bd2b6ca9a5bdd7e6ea5aa
-X-next-at: 417e6682ab1b640df833193fd7f33c19661721b2
+Subject: What's cooking in git.git (Jul 2015, #02; Tue, 7)
+X-master-at: 5bdb7a78adf2a2656a1915e6fa656aecb45c1fc3
+X-next-at: a12d9f81e25048c9843da262f526bf229e6bb487
 
-What's cooking in git.git (Jul 2015, #01; Wed, 1)
+What's cooking in git.git (Jul 2015, #02; Tue, 7)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
+
+As there is at least one new topic in 2.5-rc that has a real and
+severe breakage (I haven't merged the fix for it to 'master' yet),
+we may probably need to delay the final by at least a few weeks.
+
+Projects from GSoC students and Ensimag students have also been a
+pleasure to work with.  I'd have to say that this year is much
+better than some previous years.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -17,71 +25,184 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* da/mergetool-winmerge (2015-06-19) 1 commit
-  (merged to 'next' on 2015-06-24 at 2fb10c4)
- + mergetool-lib: fix default tool selection
-
- Hotfix for an earlier change already in 'master' that broke the
- default tool selection for mergetool.
-
-
-* jc/prompt-document-ps1-state-separator (2015-06-10) 1 commit
-  (merged to 'next' on 2015-06-24 at e4d1bad)
- + git-prompt.sh: document GIT_PS1_STATESEPARATOR
-
- Docfix.
-
-
-* me/fetch-into-shallow-safety (2015-06-17) 1 commit
-  (merged to 'next' on 2015-06-24 at 8ecc19a)
- + fetch-pack: check for shallow if depth given
-
- "git fetch --depth=<depth>" and "git clone --depth=<depth>" issued
- a shallow transfer request even to an upload-pack that does not
- support the capability.
-
-
-* mm/describe-doc (2015-06-16) 1 commit
-  (merged to 'next' on 2015-06-24 at 75e34cc)
- + Documentation/describe: improve one-line summary
-
- Docfix.
-
---------------------------------------------------
 [New Topics]
 
-* jk/rev-list-no-bitmap-while-pruning (2015-07-01) 1 commit
- - rev-list: disable --use-bitmap-index when pruning commits
+* es/worktree-add (2015-07-07) 23 commits
+ - checkout: retire --ignore-other-worktrees in favor of --force
+ - worktree: add: auto-vivify new branch when <branch> is omitted
+ - worktree: add: make -b/-B default to HEAD when <branch> is omitted
+ - worktree: extract basename computation to new function
+ - checkout: require worktree unconditionally
+ - checkout: retire --to option
+ - tests: worktree: retrofit "checkout --to" tests for "worktree add"
+ - worktree: add -b/-B options
+ - worktree: add --detach option
+ - worktree: add --force option
+ - worktree: introduce "add" command
+ - checkout: drop 'checkout_opts' dependency from prepare_linked_checkout
+ - checkout: make --to unconditionally verbose
+ - checkout: prepare_linked_checkout: drop now-unused 'new' argument
+ - checkout: relocate --to's "no branch specified" check
+ - checkout: fix bug with --to and relative HEAD
+ - Documentation/git-worktree: add EXAMPLES section
+ - Documentation/git-worktree: add high-level 'lock' overview
+ - Documentation/git-worktree: split technical info from general description
+ - Documentation/git-worktree: add BUGS section
+ - Documentation: move linked worktree description from checkout to worktree
+ - Documentation/git-worktree: associate options with commands
+ - Documentation/git-checkout: fix incorrect worktree prune command
+ (this branch uses nd/multiple-work-trees.)
 
- A minor bugfix when pack bitmap was brought in.
+ Update to the "linked checkout" in 2.5.0-rc1; while I very much
+ like what I see in this series, I think it does not work well with
+ the date-based release schedule for v2.5, and as we've been
+ labelling the feature with "experimental, UI will change" warning,
+ I am tempted to cook this (or a reroll of it) in 'next' and shoot
+ for a refined version of it in 2.6, rather than delaying 2.5 final.
+
+ An alternative obviously is to slip 2.5 final for a few weeks,
+ waiting for this and possibly other hotfix topics to mature.
+
+ Undecided.
+
+
+* jc/fix-alloc-sortbuf-in-index-pack (2015-07-04) 1 commit
+  (merged to 'next' on 2015-07-06 at c05da06)
+ + index-pack: fix allocation of sorted_by_pos array
+
+ Another hotfix for what is in 2.5-rc but not in 2.4
+
+ The alternative to slip 2.5 final for a few weeks starting to
+ become more and more attractive...
+
+
+* jc/unexport-git-pager-in-use-in-pager (2015-07-03) 1 commit
+ - pager: do not leak "GIT_PAGER_IN_USE" to the pager
+
+ When you say "!<ENTER>" while running say "git log", you'd confuse
+ yourself in the resulting shell, that may look as if you took
+ control back to the original shell you spawned "git log" from but
+ that isn't what is happening.  To that new shell, we leaked
+ GIT_PAGER_IN_USE environment variable that was meant as a local
+ communication between the original "Git" and subprocesses that was
+ spawned by it after we launched the pager, which caused many
+ "interesting" things to happen, e.g. "git diff | cat" still paints
+ its output in color by default.
+
+ Stop leaking that environment variable to the pager's half of the
+ fork; we only need it on "Git" side when we spawn the pager.
 
  Will merge to 'next'.
 
 
-* kb/config-unmap-before-renaming (2015-06-30) 1 commit
- - config.c: fix writing config files on Windows network shares
+* mh/strbuf-read-file-returns-ssize-t (2015-07-03) 1 commit
+ - strbuf: strbuf_read_file() should return ssize_t
 
  Will merge to 'next'.
 
 
-* ls/hint-rev-list-count (2015-07-01) 1 commit
- - rev-list: add --count to usage guide
+* mm/branch-doc-updates (2015-07-06) 2 commits
+ - Documentation/branch: document -M and -D in terms of --force
+ - Documentation/branch: document -d --force and -m --force
 
  Will merge to 'next'.
 
 
-* mh/fast-import-get-mark (2015-07-01) 1 commit
- - fast-import: add a get-mark command
+* pt/am-tests (2015-07-07) 12 commits
+ - t3901: test git-am encoding conversion
+ - t3418: non-interactive rebase --continue with rerere enabled
+ - t4150: tests for am --[no-]scissors
+ - t4150: am with post-applypatch hook
+ - t4150: am with pre-applypatch hook
+ - t4150: am with applypatch-msg hook
+ - t4150: am --resolved fails if index has unmerged entries
+ - t4150: am --resolved fails if index has no changes
+ - t4150: am refuses patches when paused
+ - t4151: am --abort will keep dirty index intact
+ - t4150: am fails if index is dirty
+ - t4150: am.messageid really adds the message id
 
  Will merge to 'next'.
 
 
-* nd/dwim-wildcards-as-pathspecs (2015-07-01) 1 commit
- - Add tests for wildcard "path vs ref" disambiguation
+* kn/for-each-tag-branch (2015-07-07) 11 commits
+ - for-each-ref: add '--contains' option
+ - ref-filter: implement '--contains' option
+ - parse-options.h: add macros for '--contains' option
+ - parse-option: rename parse_opt_with_commit()
+ - for-each-ref: add '--merged' and '--no-merged' options
+ - ref-filter: implement '--merged' and '--no-merged' options
+ - ref-filter: add parse_opt_merge_filter()
+ - for-each-ref: add '--points-at' option
+ - ref-filter: implement '--points-at' option
+ - tag: libify parse_opt_points_at()
+ - t6302: for-each-ref tests for ref-filter APIs
+ (this branch uses kn/for-each-ref.)
 
- Will merge to 'next' and then to 'master'.
+
+* pt/am-builtin (2015-07-07) 45 commits
+ - builtin-am: remove redirection to git-am.sh
+ - builtin-am: check for valid committer ident
+ - builtin-am: implement legacy -b/--binary option
+ - builtin-am: implement -i/--interactive
+ - builtin-am: support and auto-detect mercurial patches
+ - builtin-am: support and auto-detect StGit series files
+ - builtin-am: support and auto-detect StGit patches
+ - builtin-am: rerere support
+ - builtin-am: invoke post-applypatch hook
+ - builtin-am: invoke pre-applypatch hook
+ - builtin-am: invoke applypatch-msg hook
+ - builtin-am: support automatic notes copying
+ - builtin-am: invoke post-rewrite hook
+ - builtin-am: implement -S/--gpg-sign, commit.gpgsign
+ - builtin-am: implement --committer-date-is-author-date
+ - builtin-am: implement --ignore-date
+ - builtin-am: pass git-apply's options to git-apply
+ - builtin-am: implement --[no-]scissors
+ - builtin-am: support --keep-cr, am.keepcr
+ - builtin-am: implement --[no-]message-id, am.messageid
+ - builtin-am: implement -k/--keep, --keep-non-patch
+ - builtin-am: implement -u/--utf8
+ - builtin-am: handle stray state directory
+ - builtin-am: bypass git-mailinfo when --rebasing
+ - builtin-am: implement --rebasing mode
+ - builtin-am: implement --3way, am.threeWay
+ - cache-tree: introduce write_index_as_tree()
+ - builtin-am: implement -s/--signoff
+ - builtin-am: exit with user friendly message on failure
+ - builtin-am: implement -q/--quiet
+ - builtin-am: reject patches when there's a session in progress
+ - builtin-am: implement --abort
+ - builtin-am: implement --skip
+ - builtin-am: implement --resolved/--continue
+ - builtin-am: refuse to apply patches if index is dirty
+ - builtin-am: implement committing applied patch
+ - builtin-am: apply patch with git-apply
+ - builtin-am: extract patch and commit info with git-mailinfo
+ - builtin-am: auto-detect mbox patches
+ - builtin-am: split out mbox/maildir patches with git-mailsplit
+ - builtin-am: implement patch queue mechanism
+ - builtin-am: implement skeletal builtin am
+ - wrapper: implement xfopen()
+ - wrapper: implement xopen()
+ - Merge branch 'pt/pull-builtin' into pt/am-builtin
+ (this branch uses pt/pull-builtin.)
+
+ Will merge to 'next'.
+
+
+* ad/bisect-cleanup (2015-06-29) 6 commits
+ - bisect: don't mix option parsing and non-trivial code
+ - bisect: simplify the addition of new bisect terms
+ - bisect: replace hardcoded "bad|good" by variables
+ - Documentation/bisect: revise overall content
+ - Documentation/bisect: move getting help section to the end
+ - bisect: correction of typo
+ (this branch is used by ad/bisect-terms.)
+
+ Code and documentation clean-up to "git bisect".
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -278,6 +399,38 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* jk/rev-list-no-bitmap-while-pruning (2015-07-01) 1 commit
+ - rev-list: disable --use-bitmap-index when pruning commits
+
+ A minor bugfix when pack bitmap was brought in.
+
+ Will merge to 'next'.
+
+
+* kb/config-unmap-before-renaming (2015-06-30) 1 commit
+ - config.c: fix writing config files on Windows network shares
+
+ Will merge to 'next'.
+
+
+* ls/hint-rev-list-count (2015-07-01) 1 commit
+ - rev-list: add --count to usage guide
+
+ Will merge to 'next'.
+
+
+* mh/fast-import-get-mark (2015-07-01) 1 commit
+ - fast-import: add a get-mark command
+
+ Will merge to 'next'.
+
+
+* nd/dwim-wildcards-as-pathspecs (2015-07-01) 1 commit
+ - Add tests for wildcard "path vs ref" disambiguation
+
+ Will merge to 'next' and then to 'master'.
+
+
 * kb/i18n-doc (2015-07-01) 1 commit
  - Documentation/i18n.txt: clarify character encoding support
 
@@ -371,7 +524,13 @@ of the repositories listed at
  Will merge to 'next'.
 
 
-* jc/rerere (2015-06-30) 13 commits
+* jc/rerere (2015-07-06) 19 commits
+ . t4200: rerere a merge with two identical conflicts
+ . rerere: un-nest merge() further
+ . rerere: use "struct rerere_id" instead of "char *" for conflict ID
+ - rerere: call conflict-ids IDs
+ - rerere: further clarify do_rerere_one_path()
+ - rerere: further de-dent do_plain_rerere()
  - rerere: refactor "replay" part of do_plain_rerere()
  - rerere: explain the remainder
  - rerere: explain "rerere forget" codepath
@@ -386,20 +545,15 @@ of the repositories listed at
  - rerere: plug conflict ID leaks
  - rerere: fix an off-by-one non-bug
 
- Code clean-up and minor fixes.
+ Code clean-up and minor fixes (so far).
 
 
-* ad/bisect-terms (2015-06-29) 10 commits
+* ad/bisect-terms (2015-06-29) 4 commits
  - bisect: allow setting any user-specified in 'git bisect start'
  - bisect: add 'git bisect terms' to view the current terms
  - bisect: add the terms old/new
  - bisect: sanity check on terms
- - bisect: don't mix option parsing and non-trivial code
- - bisect: simplify the addition of new bisect terms
- - bisect: replace hardcoded "bad|good" by variables
- - Documentation/bisect: revise overall content
- - Documentation/bisect: move getting help section to the end
- - bisect: correction of typo
+ (this branch uses ad/bisect-cleanup.)
 
  The use of 'good/bad' in "git bisect" made it confusing to use when
  hunting for a state change that is not a regression (e.g. bugfix).
@@ -407,10 +561,9 @@ of the repositories listed at
  say e.g. "bisect start --term-old=fast --term=new=slow" to find a
  performance regression.
 
- The bottom part has been quite well cooked.  Perhaps split it into
- two topisc and merge the earlier ones to 'next' before the rest
- settles.  Michael's idea to make 'good/bad' more intelligent does
- have certain attractiveness ($gname/272867).
+ Michael's idea to make 'good/bad' more intelligent does have
+ certain attractiveness ($gname/272867), and makes some of the work
+ on this topic a moot point.
 
 
 * mh/tempfile (2015-06-10) 14 commits
@@ -647,23 +800,20 @@ of the repositories listed at
  other than refs/replace/ for the object replacement data.
 
 
-* nd/multiple-work-trees (2015-07-01) 3 commits
- - worktree: replace "checkout --to" with "worktree add"
+* nd/multiple-work-trees (2015-06-29) 2 commits
   (merged to 'next' on 2015-06-29 at fd4eb60)
  + worktree: new place for "git prune --worktrees"
   (merged to 'next' on 2015-06-24 at 7c3f918)
  + checkout: don't check worktrees when not necessary
+ (this branch is used by es/worktree-add.)
 
  "git checkout [<tree-ish>] <paths>" spent unnecessary cycles
  checking if the current branch was checked out elsewhere, when we
  know we are not switching the branches ourselves.
 
- Waiting for a reroll to transition to "worktree add".
 
-
-* gp/status-rebase-i-info (2015-07-01) 5 commits
+* gp/status-rebase-i-info (2015-07-06) 4 commits
  - status: add new tests for status during rebase -i
- - SQUASH???
  - status: give more information during rebase -i
  - status: differentiate interactive from non-interactive rebases
  - status: factor two rebase-related messages together
@@ -671,7 +821,9 @@ of the repositories listed at
  Teach "git status" to show a more detailed information regarding
  the "rebase -i" session in progress.
 
- Reroll exists; not picked up yet.
+ Looks ready for 'next'.  I however wonder if there is a negative
+ interaction with 16cf51c7 (git-rebase--interactive.sh: add config
+ option for custom instruction format, 2015-06-13)?
 
 
 * mk/utf8-no-iconv-warn (2015-06-08) 1 commit
@@ -726,14 +878,14 @@ of the repositories listed at
  - argv-array: implement argv_array_pushv()
  - parse-options-cb: implement parse_opt_passthru_argv()
  - parse-options-cb: implement parse_opt_passthru()
+ (this branch is used by pt/am-builtin.)
 
  Reimplement 'git pull' in C.
 
- This is v4 ($gmane/271943).
  Will merge to 'next'.
 
 
-* rl/send-email-aliases (2015-07-01) 10 commits
+* rl/send-email-aliases (2015-07-07) 10 commits
  - send-email: suppress meaningless whitespaces in from field
  - send-email: allow multiple emails using --cc, --to and --bcc
  - send-email: consider quote as delimiter instead of character
