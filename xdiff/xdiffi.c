@@ -155,7 +155,7 @@ static long xdl_split(unsigned long const *ha1, long off1, long lim1,
 		/*
 		 * If the edit cost is above the heuristic trigger and if
 		 * we got a good snake, we sample current diagonals to see
-		 * if some of the, have reached an "interesting" path. Our
+		 * if some of them have reached an "interesting" path. Our
 		 * measure is a function of the distance from the diagonal
 		 * corner (i1 + i2) penalized with the distance from the
 		 * mid diagonal itself. If this value is above the current
