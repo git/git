@@ -10,7 +10,7 @@ SYNOPSIS
 [verse]
 'git for-each-ref' [--count=<count>] [--shell|--perl|--python|--tcl]
 		   [(--sort=<key>)...] [--format=<format>] [<pattern>...]
-		   [--points-at <object>]
+		   [--points-at <object>] [(--merged | --no-merged) [<object>]]
 
 DESCRIPTION
 -----------
@@ -65,6 +65,14 @@ OPTIONS
 
 --points-at <object>::
 	Only list refs which points at the given object.
+
+--merged [<object>]::
+	Only list refs whose tips are reachable from the
+	specified commit (HEAD if not specified).
+
+--no-merged [<object>]::
+	Only list refs whose tips are not reachable from the
+	specified commit (HEAD if not specified).
 
 FIELD NAMES
 -----------
