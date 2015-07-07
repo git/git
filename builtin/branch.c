@@ -635,6 +635,10 @@ static int print_ref_list(int kinds, int detached, int verbose, int abbrev, stru
 	cb.pattern = pattern;
 	cb.ret = 0;
 	for_each_rawref(append_ref, &cb);
+	/*
+	 * The following implementation is currently duplicated in ref-filter. It
+	 * will eventually be removed when we port branch.c to use ref-filter APIs.
+	 */
 	if (merge_filter != NO_FILTER) {
 		struct commit *filter;
 		filter = lookup_commit_reference_gently(merge_filter_ref, 0);
