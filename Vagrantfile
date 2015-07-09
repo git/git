@@ -50,7 +50,6 @@ EOF
 PROVISION
 
 Vagrant.configure(VAGRANTFILE_API_VERSION) do |config|
-  # Start with a 64-bit Ubuntu 12.04 "Precise Penguin" box
   config.vm.box = "ubuntu/trusty64"
   config.vm.box_url = "https://atlas.hashicorp.com/ubuntu/boxes/trusty64"
 
