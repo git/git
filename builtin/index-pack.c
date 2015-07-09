@@ -1227,7 +1227,7 @@ static void resolve_deltas(void)
  * - append objects to convert thin pack to full pack if required
  * - write the final 20-byte SHA-1
  */
-static void fix_unresolved_deltas(struct sha1file *f, int nr_unresolved);
+static void fix_unresolved_deltas(struct sha1file *f);
 static void conclude_pack(int fix_thin_pack, const char *curr_pack, unsigned char *pack_sha1)
 {
 	if (nr_ref_deltas + nr_ofs_deltas == nr_resolved_deltas) {
@@ -1249,7 +1249,7 @@ static void conclude_pack(int fix_thin_pack, const char *curr_pack, unsigned cha
 		memset(objects + nr_objects + 1, 0,
 		       nr_unresolved * sizeof(*objects));
 		f = sha1fd(output_fd, curr_pack);
-		fix_unresolved_deltas(f, nr_unresolved);
+		fix_unresolved_deltas(f);
 		strbuf_addf(&msg, _("completed with %d local objects"),
 			    nr_objects - nr_objects_initial);
 		stop_progress_msg(&progress, msg.buf);
@@ -1331,10 +1331,10 @@ static int delta_pos_compare(const void *_a, const void *_b)
 	return a->obj_no - b->obj_no;
 }
 
-static void fix_unresolved_deltas(struct sha1file *f, int nr_unresolved)
+static void fix_unresolved_deltas(struct sha1file *f)
 {
 	struct ref_delta_entry **sorted_by_pos;
-	int i, n = 0;
+	int i;
 
 	/*
 	 * Since many unresolved deltas may well be themselves base objects
@@ -1346,12 +1346,12 @@ static void fix_unresolved_deltas(struct sha1file *f, int nr_unresolved)
 	 * before deltas depending on them, a good heuristic is to start
 	 * resolving deltas in the same order as their position in the pack.
 	 */
-	sorted_by_pos = xmalloc(nr_unresolved * sizeof(*sorted_by_pos));
+	sorted_by_pos = xmalloc(nr_ref_deltas * sizeof(*sorted_by_pos));
 	for (i = 0; i < nr_ref_deltas; i++)
-		sorted_by_pos[n++] = &ref_deltas[i];
-	qsort(sorted_by_pos, n, sizeof(*sorted_by_pos), delta_pos_compare);
+		sorted_by_pos[i] = &ref_deltas[i];
+	qsort(sorted_by_pos, nr_ref_deltas, sizeof(*sorted_by_pos), delta_pos_compare);
 
-	for (i = 0; i < n; i++) {
+	for (i = 0; i < nr_ref_deltas; i++) {
 		struct ref_delta_entry *d = sorted_by_pos[i];
 		enum object_type type;
 		struct base_data *base_obj = alloc_base_data();
