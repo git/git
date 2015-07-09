@@ -14,7 +14,6 @@ SYNOPSIS
 'git tag' -d <tagname>...
 'git tag' [-n[<num>]] -l [--contains <commit>] [--points-at <object>]
 	[--column[=<options>] | --no-column] [<pattern>...]
-	[<pattern>...]
 'git tag' -v <tagname>...
 
 DESCRIPTION
