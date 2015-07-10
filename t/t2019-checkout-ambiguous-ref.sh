@@ -56,4 +56,30 @@ test_expect_success VAGUENESS_SUCCESS 'checkout reports switch to branch' '
 	test_i18ngrep ! "^HEAD is now at" stderr
 '
 
+test_expect_success 'wildcard ambiguation, paths win' '
+	git init ambi &&
+	(
+		cd ambi &&
+		echo a >a.c &&
+		git add a.c &&
+		echo b >a.c &&
+		git checkout "*.c" &&
+		echo a >expect &&
+		test_cmp expect a.c
+	)
+'
+
+test_expect_success 'wildcard ambiguation, refs lose' '
+	git init ambi2 &&
+	(
+		cd ambi2 &&
+		echo a >"*.c" &&
+		git add . &&
+		test_must_fail git show :"*.c" &&
+		git show :"*.c" -- >actual &&
+		echo a >expect &&
+		test_cmp expect actual
+	)
+'
+
 test_done
