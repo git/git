@@ -56,7 +56,8 @@ do
 done
 
 Wall="-Wall -Wvla -Wdeclaration-after-statement -Wno-format-zero-length${Wall+ $Wall}"
-tests= jobs= skip= oldtest= with_dash=
+tests= jobs= skip= oldtest= with_dash= testpen=
+clean=:
 
 case `uname` in
 OpenBSD)
@@ -111,7 +112,6 @@ case "$NO_PEDANTIC" in
 	;;
 esac
 
-testpen=
 while case $# in 0) break ;; esac
 do 
 	case "$1" in
@@ -174,7 +174,9 @@ then
 		   mkdir -p "$TRASH/$testpen" 2>/dev/null &&
 		   test -w "$TRASH/$testpen"
 		then
-			TRASH="--root=$(cd "$TRASH/$testpen" && /bin/pwd)"
+			testpen=$(cd "$TRASH/$testpen" && /bin/pwd)
+			TRASH="--root=$testpen"
+			clean="$clean; rmdir '$testpen'"
 			break
 		fi
 	done
@@ -216,6 +218,7 @@ snap)
 	prefix="$inst_prefix/git-test" ;;
 esac
 
+clean="$clean; rm -f version"
 determine_long_version >version
 
 set "prefix=$prefix" "$@"
@@ -267,5 +270,5 @@ ${make-make} \
      ${tests:+"T=$tests"} \
      "$@"
 status=$?
-rm -f version
+eval "$clean"
 exit $status
