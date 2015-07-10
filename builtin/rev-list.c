@@ -42,6 +42,7 @@ static const char rev_list_usage[] =
 "    --abbrev=<n> | --no-abbrev\n"
 "    --abbrev-commit\n"
 "    --left-right\n"
+"    --count\n"
 "  special purpose:\n"
 "    --bisect\n"
 "    --bisect-vars\n"
