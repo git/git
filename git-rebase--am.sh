@@ -78,7 +78,7 @@ else
 
 		As a result, git cannot rebase them.
 		EOF
-		return $?
+		return $ret
 	fi
 
 	git am $git_am_opt --rebasing --resolvemsg="$resolvemsg" \
