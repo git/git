@@ -472,6 +472,21 @@ notes for details).
    support the capability.
    (merge eb86a50 me/fetch-into-shallow-safety later to maint).
 
+ * "git rebase" did not exit with failure when format-patch it invoked
+   failed for whatever reason.
+   (merge 60d708b cb/rebase-am-exit-code later to maint).
+
+ * Fix a small bug in our use of umask() return value.
+   (merge 3096b2e jk/fix-refresh-utime later to maint).
+
+ * An ancient test framework enhancement to allow color was not
+   entirely correct; this makes it work even when tput needs to read
+   from the ~/.terminfo under the user's real HOME directory.
+   (merge d5c1b7c rh/test-color-avoid-terminfo-in-original-home later to maint).
+
+ * A minor bugfix when pack bitmap is used with "rev-list --count".
+   (merge c8a70d3 jk/rev-list-no-bitmap-while-pruning later to maint).
+
  * Code cleanups and documentation updates.
    (merge 0269f96 mm/usage-log-l-can-take-regex later to maint).
    (merge 64f2589 nd/t1509-chroot-test later to maint).
@@ -500,3 +515,9 @@ notes for details).
    (merge 34b935c es/osx-header-pollutes-mask-macro later to maint).
    (merge ab7fade jc/prompt-document-ps1-state-separator later to maint).
    (merge 25f600e mm/describe-doc later to maint).
+   (merge 83fe167 mm/branch-doc-updates later to maint).
+   (merge 75d2e5a ls/hint-rev-list-count later to maint).
+   (merge edc8f71 cb/subtree-tests-update later to maint).
+   (merge 5330e6e sb/p5310-and-chain later to maint).
+   (merge c4ac525 tb/checkout-doc later to maint).
+   (merge e479c5f jk/pretty-encoding-doc later to maint).
