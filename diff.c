@@ -3654,7 +3654,12 @@ static void enable_patch_output(int *fmt) {
 
 static int parse_one_token(const char **arg, const char *token)
 {
-	return skip_prefix(*arg, token, arg) && (!**arg || **arg == ',');
+	const char *rest;
+	if (skip_prefix(*arg, token, &rest) && (!*rest || *rest == ',')) {
+		*arg = rest;
+		return 1;
+	}
+	return 0;
 }
 
 static int parse_ws_error_highlight(struct diff_options *opt, const char *arg)
