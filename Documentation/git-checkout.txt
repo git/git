@@ -111,9 +111,6 @@ OPTIONS
 +
 When checking out paths from the index, do not fail upon unmerged
 entries; instead, unmerged entries are ignored.
-+
-By default, checking out a branch already checked out in another worktree
-is disallowed. This overrides that safeguard.
 
 --ours::
 --theirs::
@@ -227,6 +224,12 @@ the conflicted merge in the specified paths.
 This means that you can use `git checkout -p` to selectively discard
 edits from your current working tree. See the ``Interactive Mode''
 section of linkgit:git-add[1] to learn how to operate the `--patch` mode.
+
+--ignore-other-worktrees::
+	`git checkout` refuses when the wanted ref is already checked
+	out by another worktree. This option makes it check the ref
+	out anyway. In other words, the ref can be held by more than one
+	worktree.
 
 <branch>::
 	Branch to checkout; if it refers to a branch (i.e., a name that,
