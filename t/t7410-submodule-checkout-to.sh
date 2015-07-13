@@ -33,7 +33,7 @@ rev1_hash_sub=$(git --git-dir=origin/sub/.git show --pretty=format:%h -q "HEAD~1
 test_expect_success 'checkout main' \
     'mkdir default_checkout &&
     (cd clone/main &&
-	git checkout --to "$base_path/default_checkout/main" "$rev1_hash_main")'
+	git worktree add "$base_path/default_checkout/main" "$rev1_hash_main")'
 
 test_expect_failure 'can see submodule diffs just after checkout' \
     '(cd default_checkout/main && git diff --submodule master"^!" | grep "file1 updated")'
@@ -41,7 +41,7 @@ test_expect_failure 'can see submodule diffs just after checkout' \
 test_expect_success 'checkout main and initialize independed clones' \
     'mkdir fully_cloned_submodule &&
     (cd clone/main &&
-	git checkout --to "$base_path/fully_cloned_submodule/main" "$rev1_hash_main") &&
+	git worktree add "$base_path/fully_cloned_submodule/main" "$rev1_hash_main") &&
     (cd fully_cloned_submodule/main && git submodule update)'
 
 test_expect_success 'can see submodule diffs after independed cloning' \
