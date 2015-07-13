@@ -41,13 +41,17 @@ With a `USE_STDEV` compile-time option, `st_dev` is also
 compared, but this is not enabled by default because this member
 is not stable on network filesystems.  With `USE_NSEC`
 compile-time option, `st_mtim.tv_nsec` and `st_ctim.tv_nsec`
-members are also compared, but this is not enabled by default
+members are also compared. On Linux, this is not enabled by default
 because in-core timestamps can have finer granularity than
 on-disk timestamps, resulting in meaningless changes when an
 inode is evicted from the inode cache.  See commit 8ce13b0
 of git://git.kernel.org/pub/scm/linux/kernel/git/tglx/history.git
 ([PATCH] Sync in core time granularity with filesystems,
-2005-01-04).
+2005-01-04). This patch is included in kernel 2.6.11 and newer, but
+only fixes the issue for file systems with exactly 1 ns or 1 s
+resolution. Other file systems are still broken in current Linux
+kernels (e.g. CEPH, CIFS, NTFS, UDF), see
+https://lkml.org/lkml/2015/6/9/714
 
 Racy Git
 --------
