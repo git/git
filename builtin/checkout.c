@@ -1110,7 +1110,6 @@ static int parse_branchname_arg(int argc, const char **argv,
 {
 	struct tree **source_tree = &opts->source_tree;
 	const char **new_branch = &opts->new_branch;
-	int force_detach = opts->force_detach;
 	int argcount = 0;
 	unsigned char branch_rev[20];
 	const char *arg;
@@ -1231,17 +1230,6 @@ static int parse_branchname_arg(int argc, const char **argv,
 	else
 		new->path = NULL; /* not an existing branch */
 
-	if (new->path && !force_detach && !*new_branch) {
-		unsigned char sha1[20];
-		int flag;
-		char *head_ref = resolve_refdup("HEAD", 0, sha1, &flag);
-		if (head_ref &&
-		    (!(flag & REF_ISSYMREF) || strcmp(head_ref, new->path)) &&
-		    !opts->ignore_other_worktrees)
-			check_linked_checkouts(new);
-		free(head_ref);
-	}
-
 	new->commit = lookup_commit_reference_gently(rev, 1);
 	if (!new->commit) {
 		/* not a commit */
@@ -1320,6 +1308,17 @@ static int checkout_branch(struct checkout_opts *opts,
 	if (new->name && !new->commit)
 		die(_("Cannot switch branch to a non-commit '%s'"),
 		    new->name);
+
+	if (new->path && !opts->force_detach && !opts->new_branch) {
+		unsigned char sha1[20];
+		int flag;
+		char *head_ref = resolve_refdup("HEAD", 0, sha1, &flag);
+		if (head_ref &&
+		    (!(flag & REF_ISSYMREF) || strcmp(head_ref, new->path)) &&
+		    !opts->ignore_other_worktrees)
+			check_linked_checkouts(new);
+		free(head_ref);
+	}
 
 	if (opts->new_worktree)
 		return prepare_linked_checkout(opts, new);

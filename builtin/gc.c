@@ -293,7 +293,7 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 	argv_array_pushl(&reflog, "reflog", "expire", "--all", NULL);
 	argv_array_pushl(&repack, "repack", "-d", "-l", NULL);
 	argv_array_pushl(&prune, "prune", "--expire", NULL);
-	argv_array_pushl(&prune_worktrees, "prune", "--worktrees", "--expire", NULL);
+	argv_array_pushl(&prune_worktrees, "worktree", "prune", "--expire", NULL);
 	argv_array_pushl(&rerere, "rerere", "gc", NULL);
 
 	gc_config();

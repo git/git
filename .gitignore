@@ -171,6 +171,7 @@
 /git-verify-tag
 /git-web--browse
 /git-whatchanged
+/git-worktree
 /git-write-tree
 /git-core-*/?*
 /gitweb/GITWEB-BUILD-OPTIONS
