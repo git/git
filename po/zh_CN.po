@@ -12,8 +12,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2015-06-27 19:17+0800\n"
-"PO-Revision-Date: 2015-07-05 23:12+0800\n"
+"POT-Creation-Date: 2015-07-14 07:19+0800\n"
+"PO-Revision-Date: 2015-07-14 07:32+0800\n"
 "Last-Translator: Jiang Xin <worldhello.net@gmail.com>\n"
 "Language-Team: GitHub <https://github.com/jiangxin/git/>\n"
 "Language: zh_CN\n"
@@ -653,8 +653,8 @@ msgstr "BUG: 重新打开一个已提交的锁文件"
 msgid "failed to read the cache"
 msgstr "无法读取缓存"
 
-#: merge.c:94 builtin/checkout.c:383 builtin/checkout.c:594
-#: builtin/clone.c:654
+#: merge.c:94 builtin/checkout.c:376 builtin/checkout.c:587
+#: builtin/clone.c:647
 msgid "unable to write new index file"
 msgstr "无法写新的索引文件"
 
@@ -701,7 +701,7 @@ msgstr "不能读取对象 %s '%s'"
 msgid "blob expected for %s '%s'"
 msgstr "%s '%s' 应为数据（blob）对象"
 
-#: merge-recursive.c:788 builtin/clone.c:313
+#: merge-recursive.c:788 builtin/clone.c:306
 #, c-format
 msgid "failed to open '%s'"
 msgstr "无法打开 '%s'"
@@ -2034,7 +2034,7 @@ msgstr "丢失"
 msgid "behind "
 msgstr "落后 "
 
-#: compat/precompose_utf8.c:55 builtin/clone.c:352
+#: compat/precompose_utf8.c:55 builtin/clone.c:345
 #, c-format
 msgid "failed to unlink '%s'"
 msgstr "无法删除 '%s'"
@@ -2112,7 +2112,7 @@ msgstr "冗长输出"
 msgid "interactive picking"
 msgstr "交互式拣选"
 
-#: builtin/add.c:253 builtin/checkout.c:1364 builtin/reset.c:286
+#: builtin/add.c:253 builtin/checkout.c:1221 builtin/reset.c:286
 msgid "select hunks interactively"
 msgstr "交互式挑选数据块"
 
@@ -2446,7 +2446,7 @@ msgstr "%s：补丁未应用"
 msgid "Checking patch %s..."
 msgstr "检查补丁 %s..."
 
-#: builtin/apply.c:3909 builtin/checkout.c:237 builtin/reset.c:135
+#: builtin/apply.c:3909 builtin/checkout.c:233 builtin/reset.c:135
 #, c-format
 msgid "make_cache_entry failed for path '%s'"
 msgstr "对路径 '%s' 的 make_cache_entry 操作失败"
@@ -3141,7 +3141,7 @@ msgstr "以列的方式显示分支"
 msgid "Failed to resolve HEAD as a valid ref."
 msgstr "无法将 HEAD 解析为有效引用。"
 
-#: builtin/branch.c:878 builtin/clone.c:629
+#: builtin/branch.c:878 builtin/clone.c:622
 msgid "HEAD not found below refs/heads!"
 msgstr "HEAD 没有位于 /refs/heads 之下！"
 
@@ -3337,7 +3337,7 @@ msgstr "从标准输入读出文件名"
 msgid "terminate input and output records by a NUL character"
 msgstr "输入和输出的记录使用 NUL 字符终结"
 
-#: builtin/check-ignore.c:18 builtin/checkout.c:1345 builtin/gc.c:279
+#: builtin/check-ignore.c:18 builtin/checkout.c:1202 builtin/gc.c:279
 msgid "suppress progress reporting"
 msgstr "不显示进度报告"
 
@@ -3434,114 +3434,114 @@ msgstr "在创建文件时，在前面加上<字符串>"
 msgid "copy out the files from named stage"
 msgstr "从指定暂存区中拷出文件"
 
-#: builtin/checkout.c:26
+#: builtin/checkout.c:24
 msgid "git checkout [<options>] <branch>"
 msgstr "git checkout [<选项>] <分支>"
 
-#: builtin/checkout.c:27
+#: builtin/checkout.c:25
 msgid "git checkout [<options>] [<branch>] -- <file>..."
 msgstr "git checkout [<选项>] [<分支>] -- <文件>..."
 
-#: builtin/checkout.c:138 builtin/checkout.c:171
+#: builtin/checkout.c:134 builtin/checkout.c:167
 #, c-format
 msgid "path '%s' does not have our version"
 msgstr "路径 '%s' 没有我们的版本"
 
-#: builtin/checkout.c:140 builtin/checkout.c:173
+#: builtin/checkout.c:136 builtin/checkout.c:169
 #, c-format
 msgid "path '%s' does not have their version"
 msgstr "路径 '%s' 没有他们的版本"
 
-#: builtin/checkout.c:156
+#: builtin/checkout.c:152
 #, c-format
 msgid "path '%s' does not have all necessary versions"
 msgstr "路径 '%s' 没有全部必须的版本"
 
-#: builtin/checkout.c:200
+#: builtin/checkout.c:196
 #, c-format
 msgid "path '%s' does not have necessary versions"
 msgstr "路径 '%s' 没有必须的版本"
 
-#: builtin/checkout.c:217
+#: builtin/checkout.c:213
 #, c-format
 msgid "path '%s': cannot merge"
 msgstr "path '%s'：无法合并"
 
-#: builtin/checkout.c:234
+#: builtin/checkout.c:230
 #, c-format
 msgid "Unable to add merge result for '%s'"
 msgstr "无法为 '%s' 添加合并结果"
 
-#: builtin/checkout.c:255 builtin/checkout.c:258 builtin/checkout.c:261
-#: builtin/checkout.c:264 builtin/checkout.c:277
+#: builtin/checkout.c:251 builtin/checkout.c:254 builtin/checkout.c:257
+#: builtin/checkout.c:260
 #, c-format
 msgid "'%s' cannot be used with updating paths"
 msgstr "'%s' 不能在更新路径时使用"
 
-#: builtin/checkout.c:267 builtin/checkout.c:270
+#: builtin/checkout.c:263 builtin/checkout.c:266
 #, c-format
 msgid "'%s' cannot be used with %s"
 msgstr "'%s' 不能和 %s 同时使用"
 
-#: builtin/checkout.c:273
+#: builtin/checkout.c:269
 #, c-format
 msgid "Cannot update paths and switch to branch '%s' at the same time."
 msgstr "不能同时更新路径并切换到分支'%s'。"
 
-#: builtin/checkout.c:287 builtin/checkout.c:481
+#: builtin/checkout.c:280 builtin/checkout.c:474
 msgid "corrupt index file"
 msgstr "损坏的索引文件"
 
-#: builtin/checkout.c:347 builtin/checkout.c:354
+#: builtin/checkout.c:340 builtin/checkout.c:347
 #, c-format
 msgid "path '%s' is unmerged"
 msgstr "路径 '%s' 未合并"
 
-#: builtin/checkout.c:503
+#: builtin/checkout.c:496
 msgid "you need to resolve your current index first"
 msgstr "您需要先解决当前索引的冲突"
 
-#: builtin/checkout.c:634
+#: builtin/checkout.c:627
 #, c-format
 msgid "Can not do reflog for '%s'\n"
 msgstr "不能对 '%s' 执行 reflog 操作\n"
 
-#: builtin/checkout.c:670
+#: builtin/checkout.c:663
 msgid "HEAD is now at"
 msgstr "HEAD 目前位于"
 
-#: builtin/checkout.c:677
+#: builtin/checkout.c:670
 #, c-format
 msgid "Reset branch '%s'\n"
 msgstr "重置分支 '%s'\n"
 
-#: builtin/checkout.c:680
+#: builtin/checkout.c:673
 #, c-format
 msgid "Already on '%s'\n"
 msgstr "已经位于 '%s'\n"
 
-#: builtin/checkout.c:684
+#: builtin/checkout.c:677
 #, c-format
 msgid "Switched to and reset branch '%s'\n"
 msgstr "切换并重置分支 '%s'\n"
 
-#: builtin/checkout.c:686 builtin/checkout.c:1285
+#: builtin/checkout.c:679 builtin/checkout.c:1134
 #, c-format
 msgid "Switched to a new branch '%s'\n"
 msgstr "切换到一个新分支 '%s'\n"
 
-#: builtin/checkout.c:688
+#: builtin/checkout.c:681
 #, c-format
 msgid "Switched to branch '%s'\n"
 msgstr "切换到分支 '%s'\n"
 
 #  译者：注意保持前导空格
-#: builtin/checkout.c:740
+#: builtin/checkout.c:733
 #, c-format
 msgid " ... and %d more.\n"
 msgstr " ... 及其它 %d 个。\n"
 
-#: builtin/checkout.c:746
+#: builtin/checkout.c:739
 #, c-format
 msgid ""
 "Warning: you are leaving %d commit behind, not connected to\n"
@@ -3562,7 +3562,7 @@ msgstr[1] ""
 "\n"
 "%s\n"
 
-#: builtin/checkout.c:765
+#: builtin/checkout.c:758
 #, c-format
 msgid ""
 "If you want to keep it by creating a new branch, this may be a good time\n"
@@ -3589,177 +3589,149 @@ msgstr[1] ""
 " git branch <新分支名> %s\n"
 "\n"
 
-#: builtin/checkout.c:801
+#: builtin/checkout.c:794
 msgid "internal error in revision walk"
 msgstr "在版本遍历时遇到内部错误"
 
-#: builtin/checkout.c:805
+#: builtin/checkout.c:798
 msgid "Previous HEAD position was"
 msgstr "之前的 HEAD 位置是"
 
-#: builtin/checkout.c:832 builtin/checkout.c:1280
+#: builtin/checkout.c:825 builtin/checkout.c:1129
 msgid "You are on a branch yet to be born"
 msgstr "您位于一个尚未初始化的分支"
 
-#: builtin/checkout.c:893
-msgid "no branch specified"
-msgstr "未指定分支名"
-
-#: builtin/checkout.c:895
-#, c-format
-msgid "'%s' already exists"
-msgstr "'%s' 已经存在"
-
-#: builtin/checkout.c:910 builtin/checkout.c:937 builtin/clone.c:842
-#: builtin/clone.c:853
-#, c-format
-msgid "could not create leading directories of '%s'"
-msgstr "不能为 '%s' 创建先导目录"
-
-#: builtin/checkout.c:924
-#, c-format
-msgid "could not create directory of '%s'"
-msgstr "不能创建目录 '%s'"
-
-#: builtin/checkout.c:960
-#, c-format
-msgid "Enter %s (identifier %s)"
-msgstr "输入 %s （标识符 %s）"
-
-#: builtin/checkout.c:1070
+#: builtin/checkout.c:931
 #, c-format
 msgid "'%s' is already checked out at '%s'"
 msgstr "'%s' 已经检出到 '%s'"
 
-#: builtin/checkout.c:1176
+#: builtin/checkout.c:1036
 #, c-format
 msgid "only one reference expected, %d given."
 msgstr "只要一个引用，却给出了 %d 个"
 
-#: builtin/checkout.c:1215
+#: builtin/checkout.c:1075
 #, c-format
 msgid "invalid reference: %s"
 msgstr "无效引用：%s"
 
-#: builtin/checkout.c:1255
+#: builtin/checkout.c:1104
 #, c-format
 msgid "reference is not a tree: %s"
 msgstr "引用不是一个树：%s"
 
-#: builtin/checkout.c:1294
+#: builtin/checkout.c:1143
 msgid "paths cannot be used with switching branches"
 msgstr "路径不能和切换分支同时使用"
 
-#: builtin/checkout.c:1297 builtin/checkout.c:1301
+#: builtin/checkout.c:1146 builtin/checkout.c:1150
 #, c-format
 msgid "'%s' cannot be used with switching branches"
 msgstr "'%s' 不能和切换分支同时使用"
 
-#: builtin/checkout.c:1305 builtin/checkout.c:1308 builtin/checkout.c:1313
-#: builtin/checkout.c:1316
+#: builtin/checkout.c:1154 builtin/checkout.c:1157 builtin/checkout.c:1162
+#: builtin/checkout.c:1165
 #, c-format
 msgid "'%s' cannot be used with '%s'"
 msgstr "'%s' 不能和 '%s' 同时使用"
 
-#: builtin/checkout.c:1321
+#: builtin/checkout.c:1170
 #, c-format
 msgid "Cannot switch branch to a non-commit '%s'"
 msgstr "不能切换分支到一个非提交 '%s'"
 
-#: builtin/checkout.c:1346 builtin/checkout.c:1348 builtin/clone.c:83
-#: builtin/remote.c:159 builtin/remote.c:161
+#: builtin/checkout.c:1203 builtin/checkout.c:1205 builtin/clone.c:83
+#: builtin/remote.c:159 builtin/remote.c:161 builtin/worktree.c:282
+#: builtin/worktree.c:284
 msgid "branch"
 msgstr "分支"
 
-#: builtin/checkout.c:1347
+#: builtin/checkout.c:1204
 msgid "create and checkout a new branch"
 msgstr "创建并检出一个新的分支"
 
-#: builtin/checkout.c:1349
+#: builtin/checkout.c:1206
 msgid "create/reset and checkout a branch"
 msgstr "创建/重置并检出一个分支"
 
-#: builtin/checkout.c:1350
+#: builtin/checkout.c:1207
 msgid "create reflog for new branch"
 msgstr "为新的分支创建引用日志"
 
-#: builtin/checkout.c:1351
+#: builtin/checkout.c:1208
 msgid "detach the HEAD at named commit"
 msgstr "成为指向该提交的分离头指针"
 
-#: builtin/checkout.c:1352
+#: builtin/checkout.c:1209
 msgid "set upstream info for new branch"
 msgstr "为新的分支设置上游信息"
 
-#: builtin/checkout.c:1354
+#: builtin/checkout.c:1211
 msgid "new-branch"
 msgstr "新分支"
 
-#: builtin/checkout.c:1354
+#: builtin/checkout.c:1211
 msgid "new unparented branch"
 msgstr "新的没有父提交的分支"
 
-#: builtin/checkout.c:1355
+#: builtin/checkout.c:1212
 msgid "checkout our version for unmerged files"
 msgstr "对尚未合并的文件检出我们的版本"
 
-#: builtin/checkout.c:1357
+#: builtin/checkout.c:1214
 msgid "checkout their version for unmerged files"
 msgstr "对尚未合并的文件检出他们的版本"
 
-#: builtin/checkout.c:1359
+#: builtin/checkout.c:1216
 msgid "force checkout (throw away local modifications)"
 msgstr "强制检出（丢弃本地修改）"
 
-#: builtin/checkout.c:1360
+#: builtin/checkout.c:1217
 msgid "perform a 3-way merge with the new branch"
 msgstr "和新的分支执行三路合并"
 
-#: builtin/checkout.c:1361 builtin/merge.c:227
+#: builtin/checkout.c:1218 builtin/merge.c:227
 msgid "update ignored files (default)"
 msgstr "更新忽略的文件（默认）"
 
-#: builtin/checkout.c:1362 builtin/log.c:1239 parse-options.h:244
+#: builtin/checkout.c:1219 builtin/log.c:1239 parse-options.h:244
 msgid "style"
 msgstr "风格"
 
-#: builtin/checkout.c:1363
+#: builtin/checkout.c:1220
 msgid "conflict style (merge or diff3)"
 msgstr "冲突输出风格（merge 或 diff3）"
 
-#: builtin/checkout.c:1366
+#: builtin/checkout.c:1223
 msgid "do not limit pathspecs to sparse entries only"
 msgstr "对路径不做稀疏检出的限制"
 
-#: builtin/checkout.c:1368
+#: builtin/checkout.c:1225
 msgid "second guess 'git checkout <no-such-branch>'"
 msgstr "二次猜测'git checkout <无此分支>'"
 
-#: builtin/checkout.c:1370
-msgid "check a branch out in a separate working directory"
-msgstr "检出一个分支到单独的工作目录"
-
-#: builtin/checkout.c:1372
+#: builtin/checkout.c:1227
 msgid "do not check if another worktree is holding the given ref"
 msgstr "不检查指定的引用是否被其他工作区所占用"
 
-#: builtin/checkout.c:1406
+#: builtin/checkout.c:1252
 msgid "-b, -B and --orphan are mutually exclusive"
 msgstr "-b、-B 和 --orphan 是互斥的"
 
-#: builtin/checkout.c:1423
+#: builtin/checkout.c:1269
 msgid "--track needs a branch name"
 msgstr "--track 需要一个分支名"
 
-#: builtin/checkout.c:1428
+#: builtin/checkout.c:1274
 msgid "Missing branch name; try -b"
 msgstr "缺少分支名；尝试 -b"
 
-#: builtin/checkout.c:1464
+#: builtin/checkout.c:1310
 msgid "invalid path specification"
 msgstr "无效的路径规格"
 
-#: builtin/checkout.c:1471
+#: builtin/checkout.c:1317
 #, c-format
 msgid ""
 "Cannot update paths and switch to branch '%s' at the same time.\n"
@@ -3768,12 +3740,12 @@ msgstr ""
 "不能同时更新路径并切换到分支'%s'。\n"
 "您是想要检出 '%s' 但其未能解析为提交么？"
 
-#: builtin/checkout.c:1476
+#: builtin/checkout.c:1322
 #, c-format
 msgid "git checkout: --detach does not take a path argument '%s'"
 msgstr "git checkout：--detach 不能接收路径参数 '%s'"
 
-#: builtin/checkout.c:1480
+#: builtin/checkout.c:1326
 msgid ""
 "git checkout: --ours/--theirs, --force and --merge are incompatible when\n"
 "checking out of the index."
@@ -4056,57 +4028,57 @@ msgstr "key=value"
 msgid "set config inside the new repository"
 msgstr "在新版本库中设置配置信息"
 
-#: builtin/clone.c:247
+#: builtin/clone.c:240
 #, c-format
 msgid "reference repository '%s' is not a local repository."
 msgstr "参考版本库 '%s' 不是一个本地版本库。"
 
-#: builtin/clone.c:251
+#: builtin/clone.c:244
 #, c-format
 msgid "reference repository '%s' is shallow"
 msgstr "参考版本库 '%s' 是一个浅克隆"
 
-#: builtin/clone.c:254
+#: builtin/clone.c:247
 #, c-format
 msgid "reference repository '%s' is grafted"
 msgstr "参考版本库 '%s' 已被嫁接"
 
-#: builtin/clone.c:317
+#: builtin/clone.c:310
 #, c-format
 msgid "failed to create directory '%s'"
 msgstr "无法创建目录 '%s'"
 
-#: builtin/clone.c:319 builtin/diff.c:84
+#: builtin/clone.c:312 builtin/diff.c:84
 #, c-format
 msgid "failed to stat '%s'"
 msgstr "无法枚举 '%s' 状态"
 
-#: builtin/clone.c:321
+#: builtin/clone.c:314
 #, c-format
 msgid "%s exists and is not a directory"
 msgstr "%s 存在且不是一个目录"
 
-#: builtin/clone.c:335
+#: builtin/clone.c:328
 #, c-format
 msgid "failed to stat %s\n"
 msgstr "无法枚举 %s 状态\n"
 
-#: builtin/clone.c:357
+#: builtin/clone.c:350
 #, c-format
 msgid "failed to create link '%s'"
 msgstr "无法创建链接 '%s'"
 
-#: builtin/clone.c:361
+#: builtin/clone.c:354
 #, c-format
 msgid "failed to copy file to '%s'"
 msgstr "无法拷贝文件至 '%s'"
 
-#: builtin/clone.c:384 builtin/clone.c:558
+#: builtin/clone.c:377 builtin/clone.c:551
 #, c-format
 msgid "done.\n"
 msgstr "完成。\n"
 
-#: builtin/clone.c:396
+#: builtin/clone.c:389
 msgid ""
 "Clone succeeded, but checkout failed.\n"
 "You can inspect what was checked out with 'git status'\n"
@@ -4116,115 +4088,121 @@ msgstr ""
 "您可以通过 'git status' 检查哪些已被检出，然后使用命令\n"
 "'git checkout -f HEAD' 重试\n"
 
-#: builtin/clone.c:473
+#: builtin/clone.c:466
 #, c-format
 msgid "Could not find remote branch %s to clone."
 msgstr "不能发现要克隆的远程分支 %s。"
 
-#: builtin/clone.c:553
+#: builtin/clone.c:546
 #, c-format
 msgid "Checking connectivity... "
 msgstr "检查连接... "
 
-#: builtin/clone.c:556
+#: builtin/clone.c:549
 msgid "remote did not send all necessary objects"
 msgstr "远程没有发送所有必须的对象"
 
-#: builtin/clone.c:620
+#: builtin/clone.c:613
 msgid "remote HEAD refers to nonexistent ref, unable to checkout.\n"
 msgstr "远程 HEAD 指向一个不存在的引用，无法检出。\n"
 
-#: builtin/clone.c:651
+#: builtin/clone.c:644
 msgid "unable to checkout working tree"
 msgstr "不能检出工作区"
 
-#: builtin/clone.c:738
+#: builtin/clone.c:731
 msgid "cannot repack to clean up"
 msgstr "无法执行 repack 来清理"
 
-#: builtin/clone.c:740
+#: builtin/clone.c:733
 msgid "cannot unlink temporary alternates file"
 msgstr "无法删除临时的 alternates 文件"
 
-#: builtin/clone.c:770
+#: builtin/clone.c:763
 msgid "Too many arguments."
 msgstr "太多参数。"
 
-#: builtin/clone.c:774
+#: builtin/clone.c:767
 msgid "You must specify a repository to clone."
 msgstr "您必须指定一个版本库来克隆。"
 
-#: builtin/clone.c:785
+#: builtin/clone.c:778
 #, c-format
 msgid "--bare and --origin %s options are incompatible."
 msgstr "--bare 和 --origin %s 选项不兼容。"
 
-#: builtin/clone.c:788
+#: builtin/clone.c:781
 msgid "--bare and --separate-git-dir are incompatible."
 msgstr "--bare 和 --separate-git-dir 选项不兼容。"
 
-#: builtin/clone.c:801
+#: builtin/clone.c:794
 #, c-format
 msgid "repository '%s' does not exist"
 msgstr "版本库 '%s' 不存在"
 
-#: builtin/clone.c:807 builtin/fetch.c:1160
+#: builtin/clone.c:800 builtin/fetch.c:1160
 #, c-format
 msgid "depth %s is not a positive number"
 msgstr "深度 %s 不是一个正数"
 
-#: builtin/clone.c:817
+#: builtin/clone.c:810
 #, c-format
 msgid "destination path '%s' already exists and is not an empty directory."
 msgstr "目标路径 '%s' 已经存在，并且不是一个空目录。"
 
-#: builtin/clone.c:827
+#: builtin/clone.c:820
 #, c-format
 msgid "working tree '%s' already exists."
 msgstr "工作区 '%s' 已经存在。"
 
-#: builtin/clone.c:845
+#: builtin/clone.c:835 builtin/clone.c:846 builtin/worktree.c:193
+#: builtin/worktree.c:220
+#, c-format
+msgid "could not create leading directories of '%s'"
+msgstr "不能为 '%s' 创建先导目录"
+
+#: builtin/clone.c:838
 #, c-format
 msgid "could not create work tree dir '%s'"
 msgstr "不能创建工作区目录 '%s'"
 
-#: builtin/clone.c:863
+#: builtin/clone.c:856
 #, c-format
 msgid "Cloning into bare repository '%s'...\n"
 msgstr "克隆到纯版本库 '%s'...\n"
 
-#: builtin/clone.c:865
+#: builtin/clone.c:858
 #, c-format
 msgid "Cloning into '%s'...\n"
 msgstr "正克隆到 '%s'...\n"
 
-#: builtin/clone.c:890
+#: builtin/clone.c:883
 msgid "--dissociate given, but there is no --reference"
 msgstr "提供了参数 --dissociate，但未提供 --reference"
 
-#: builtin/clone.c:907
+#: builtin/clone.c:900
 msgid "--depth is ignored in local clones; use file:// instead."
 msgstr "--depth 在本地克隆被忽略，改为 file:// 协议试试。"
 
-#: builtin/clone.c:910
+#: builtin/clone.c:903
 msgid "source repository is shallow, ignoring --local"
 msgstr "源版本库是浅克隆，忽略 --local"
 
-#: builtin/clone.c:915
+#: builtin/clone.c:908
 msgid "--local is ignored"
 msgstr "--local 被忽略"
 
-#: builtin/clone.c:919
+#: builtin/clone.c:912
 #, c-format
 msgid "Don't know how to clone %s"
 msgstr "不知道如何克隆 %s"
 
-#: builtin/clone.c:968 builtin/clone.c:976
+#: builtin/clone.c:961 builtin/clone.c:969
 #, c-format
 msgid "Remote branch %s not found in upstream %s"
 msgstr "远程分支 %s 在上游 %s 未发现"
 
-#: builtin/clone.c:979
+#: builtin/clone.c:972
 msgid "You appear to have cloned an empty repository."
 msgstr "您似乎克隆了一个空版本库。"
 
@@ -5585,7 +5563,7 @@ msgstr "key"
 msgid "field name to sort on"
 msgstr "排序的字段名"
 
-#: builtin/fsck.c:147 builtin/prune.c:236
+#: builtin/fsck.c:147 builtin/prune.c:137
 msgid "Checking connectivity"
 msgstr "检查连接中"
 
@@ -5633,7 +5611,7 @@ msgstr "启用更严格的检查"
 msgid "write dangling objects in .git/lost-found"
 msgstr "将摇摆对象写入 .git/lost-found 中"
 
-#: builtin/fsck.c:627 builtin/prune.c:198
+#: builtin/fsck.c:627 builtin/prune.c:107
 msgid "show progress"
 msgstr "显示进度"
 
@@ -8062,59 +8040,21 @@ msgstr "git prune-packed [-n | --dry-run] [-q | --quiet]"
 msgid "Removing duplicate objects"
 msgstr "正在删除重复对象"
 
-#: builtin/prune.c:12
+#: builtin/prune.c:11
 msgid "git prune [-n] [-v] [--expire <time>] [--] [<head>...]"
 msgstr "git prune [-n] [-v] [--expire <时间>] [--] [<头>...]"
 
-#: builtin/prune.c:86
-#, c-format
-msgid "Removing worktrees/%s: not a valid directory"
-msgstr "删除工作区/%s：不是一个有效的目录"
-
-#: builtin/prune.c:92
-#, c-format
-msgid "Removing worktrees/%s: gitdir file does not exist"
-msgstr "删除 worktrees/%s：gitdir 文件不存在"
-
-#: builtin/prune.c:97
-#, c-format
-msgid "Removing worktrees/%s: unable to read gitdir file (%s)"
-msgstr "删除 worktrees/%s：无法读取 gitdir 文件 (%s)"
-
-#: builtin/prune.c:108
-#, c-format
-msgid "Removing worktrees/%s: invalid gitdir file"
-msgstr "删除 worktrees/%s：无效的 gitdir 文件"
-
-#: builtin/prune.c:124
-#, c-format
-msgid "Removing worktrees/%s: gitdir file points to non-existent location"
-msgstr "删除 worktrees/%s：gitdir 文件的指向不存在"
-
-#: builtin/prune.c:159
-#, c-format
-msgid "failed to remove: %s"
-msgstr "无法删除：%s"
-
-#: builtin/prune.c:196
+#: builtin/prune.c:105 builtin/worktree.c:112
 msgid "do not remove, show only"
 msgstr "不删除，只显示"
 
-#: builtin/prune.c:197
+#: builtin/prune.c:106 builtin/worktree.c:113
 msgid "report pruned objects"
 msgstr "报告清除的对象"
 
-#: builtin/prune.c:199
-msgid "prune .git/worktrees"
-msgstr "清理 .git/worktrees"
-
-#: builtin/prune.c:201
+#: builtin/prune.c:109 builtin/worktree.c:115
 msgid "expire objects older than <time>"
 msgstr "使早于给定时间的对象过期"
-
-#: builtin/prune.c:216
-msgid "--worktrees does not take extra arguments"
-msgstr "--worktrees 没有附加参数"
 
 #: builtin/push.c:14
 msgid "git push [<options>] [<repository> [<refspec>...]]"
@@ -10165,6 +10105,83 @@ msgstr "git verify-tag [-v | --verbose] <标签>..."
 msgid "print tag contents"
 msgstr "打印 tag 内容"
 
+#: builtin/worktree.c:11
+msgid "git worktree add [<options>] <path> <branch>"
+msgstr "git worktree add [<选项>] <路径> <分支>"
+
+#: builtin/worktree.c:12
+msgid "git worktree prune [<options>]"
+msgstr "git worktree prune [<选项>]"
+
+#: builtin/worktree.c:27
+#, c-format
+msgid "Removing worktrees/%s: not a valid directory"
+msgstr "删除工作区/%s：不是一个有效的目录"
+
+#: builtin/worktree.c:33
+#, c-format
+msgid "Removing worktrees/%s: gitdir file does not exist"
+msgstr "删除 worktrees/%s：gitdir 文件不存在"
+
+#: builtin/worktree.c:38
+#, c-format
+msgid "Removing worktrees/%s: unable to read gitdir file (%s)"
+msgstr "删除 worktrees/%s：无法读取 gitdir 文件 (%s)"
+
+#: builtin/worktree.c:49
+#, c-format
+msgid "Removing worktrees/%s: invalid gitdir file"
+msgstr "删除 worktrees/%s：无效的 gitdir 文件"
+
+#: builtin/worktree.c:65
+#, c-format
+msgid "Removing worktrees/%s: gitdir file points to non-existent location"
+msgstr "删除 worktrees/%s：gitdir 文件的指向不存在"
+
+#: builtin/worktree.c:100
+#, c-format
+msgid "failed to remove: %s"
+msgstr "无法删除：%s"
+
+#: builtin/worktree.c:186
+#, c-format
+msgid "'%s' already exists"
+msgstr "'%s' 已经存在"
+
+#: builtin/worktree.c:207
+#, c-format
+msgid "could not create directory of '%s'"
+msgstr "不能创建目录 '%s'"
+
+#: builtin/worktree.c:241
+msgid "unable to resolve HEAD"
+msgstr "不能解析 HEAD"
+
+#: builtin/worktree.c:249
+#, c-format
+msgid "Enter %s (identifier %s)"
+msgstr "输入 %s （标识符 %s）"
+
+#: builtin/worktree.c:281
+msgid "checkout <branch> even if already checked out in other worktree"
+msgstr "检出分支 <branch> 即使已经被检出到其它工作区"
+
+#: builtin/worktree.c:283
+msgid "create a new branch"
+msgstr "创建一个新分支"
+
+#: builtin/worktree.c:285
+msgid "create or reset a branch"
+msgstr "创建或重置一个分支"
+
+#: builtin/worktree.c:286
+msgid "detach HEAD at named commit"
+msgstr "HEAD 从指定的提交分离"
+
+#: builtin/worktree.c:292
+msgid "-b and -B are mutually exclusive"
+msgstr "-b 和 -B 互斥"
+
 #: builtin/write-tree.c:13
 msgid "git write-tree [--missing-ok] [--prefix=<prefix>/]"
 msgstr "git write-tree [--missing-ok] [--prefix=<前缀>/]"
@@ -10228,8 +10245,8 @@ msgid "List, create, or delete branches"
 msgstr "列出、创建或删除分支"
 
 #: common-cmds.h:21
-msgid "Checkout a branch or paths to the working tree"
-msgstr "检出一个分支或路径到工作区"
+msgid "Switch branches or restore working tree files"
+msgstr "切换分支或恢复工作区文件"
 
 #: common-cmds.h:22
 msgid "Clone a repository into a new directory"
@@ -11261,18 +11278,3 @@ msgstr "无法递归进子模组路径 '$sm_path'"
 #, sh-format
 msgid "Synchronizing submodule url for '$displaypath'"
 msgstr "为 '$displaypath' 同步子模组 url"
-
-#~ msgid "Cannot apply stash: Your index contains uncommitted changes."
-#~ msgstr "无法应用 stash：您的索引中包含未提交的变更。"
-
-#~ msgid "The most commonly used git commands are:"
-#~ msgstr "最常用的 git 命令有："
-
-#~ msgid "No such branch: '%s'"
-#~ msgstr "没有此分支：'%s'"
-
-#~ msgid "Could not create git link %s"
-#~ msgstr "不能创建 git link %s"
-
-#~ msgid "Invalid gc.pruneexpire: '%s'"
-#~ msgstr "无效的 gc.pruneexpire：'%s'"
