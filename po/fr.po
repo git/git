@@ -73,8 +73,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2015-06-27 19:17+0800\n"
-"PO-Revision-Date: 2015-06-30 21:30+0200\n"
+"POT-Creation-Date: 2015-07-14 07:19+0800\n"
+"PO-Revision-Date: 2015-07-14 23:02+0200\n"
 "Last-Translator: Jean-Noël Avila <jn.avila@free.fr>\n"
 "Language-Team: Jean-Noël Avila <jn.avila@free.fr>\n"
 "Language: fr\n"
@@ -730,8 +730,8 @@ msgstr "BUG: réouverture d'un fichier verrou validé"
 msgid "failed to read the cache"
 msgstr "impossible de lire le cache"
 
-#: merge.c:94 builtin/checkout.c:383 builtin/checkout.c:594
-#: builtin/clone.c:654
+#: merge.c:94 builtin/checkout.c:376 builtin/checkout.c:587
+#: builtin/clone.c:647
 msgid "unable to write new index file"
 msgstr "impossible d'écrire le nouveau fichier d'index"
 
@@ -778,7 +778,7 @@ msgstr "impossible de lire l'objet %s '%s'"
 msgid "blob expected for %s '%s'"
 msgstr "blob attendu pour %s '%s'"
 
-#: merge-recursive.c:788 builtin/clone.c:313
+#: merge-recursive.c:788 builtin/clone.c:306
 #, c-format
 msgid "failed to open '%s'"
 msgstr "échec à l'ouverture de '%s'"
@@ -1175,7 +1175,9 @@ msgstr "la branche amont '%s' n'est pas stockée comme branche de suivi"
 #: remote.c:1756
 #, c-format
 msgid "push destination '%s' on remote '%s' has no local tracking branch"
-msgstr "la destination de poussée '%s' sur le serveur distant '%s' n'a pas de branche locale de suivi"
+msgstr ""
+"la destination de poussée '%s' sur le serveur distant '%s' n'a pas de "
+"branche locale de suivi"
 
 #: remote.c:1771
 #, c-format
@@ -1193,7 +1195,8 @@ msgstr "la poussée n'a pas de destination (push.default vaut 'nothing')"
 
 #: remote.c:1817
 msgid "cannot resolve 'simple' push to a single destination"
-msgstr "impossible de résoudre une poussée 'simple' pour une destination unique"
+msgstr ""
+"impossible de résoudre une poussée 'simple' pour une destination unique"
 
 #: remote.c:2124
 #, c-format
@@ -2125,7 +2128,7 @@ msgstr "disparue"
 msgid "behind "
 msgstr "derrière "
 
-#: compat/precompose_utf8.c:55 builtin/clone.c:352
+#: compat/precompose_utf8.c:55 builtin/clone.c:345
 #, c-format
 msgid "failed to unlink '%s'"
 msgstr "échec lors de l'unlink de '%s'"
@@ -2204,7 +2207,7 @@ msgstr "mode verbeux"
 msgid "interactive picking"
 msgstr "sélection interactive"
 
-#: builtin/add.c:253 builtin/checkout.c:1364 builtin/reset.c:286
+#: builtin/add.c:253 builtin/checkout.c:1221 builtin/reset.c:286
 msgid "select hunks interactively"
 msgstr "sélection interactive des sections"
 
@@ -2556,7 +2559,7 @@ msgstr "%s : le patch ne s'applique pas"
 msgid "Checking patch %s..."
 msgstr "Vérification du patch %s..."
 
-#: builtin/apply.c:3909 builtin/checkout.c:237 builtin/reset.c:135
+#: builtin/apply.c:3909 builtin/checkout.c:233 builtin/reset.c:135
 #, c-format
 msgid "make_cache_entry failed for path '%s'"
 msgstr "échec de make_cache_entry pour le chemin '%s'"
@@ -3267,7 +3270,7 @@ msgstr "afficher les branches en colonnes"
 msgid "Failed to resolve HEAD as a valid ref."
 msgstr "Échec de résolution de HEAD comme référence valide."
 
-#: builtin/branch.c:878 builtin/clone.c:629
+#: builtin/branch.c:878 builtin/clone.c:622
 msgid "HEAD not found below refs/heads!"
 msgstr "HEAD non trouvée sous refs/heads !"
 
@@ -3394,13 +3397,16 @@ msgstr "Le dépaquetage d'un colis requiert un dépôt."
 msgid ""
 "git cat-file (-t [--allow-unknown-type]|-s [--allow-unknown-type]|-e|-p|"
 "<type>|--textconv) <object>"
-msgstr "git cat-file (-t [--allow-unknow-type] | -s [--allow-unknow-type] | -e | -p | <type> | --textconv) <objet>"
+msgstr ""
+"git cat-file (-t [--allow-unknow-type] | -s [--allow-unknow-type] | -e | -p "
+"| <type> | --textconv) <objet>"
 
 #: builtin/cat-file.c:370
 msgid ""
 "git cat-file (--batch | --batch-check) [--follow-symlinks] < <list-of-"
 "objects>"
-msgstr "git cat-file (--batch | --batch-check) [--follow-symlinks] < <liste-d-objets>"
+msgstr ""
+"git cat-file (--batch | --batch-check) [--follow-symlinks] < <liste-d-objets>"
 
 #: builtin/cat-file.c:407
 msgid "<type> can be one of: blob, tree, commit, tag"
@@ -3441,7 +3447,9 @@ msgstr "afficher l'information des objets passés en entrée standard"
 
 #: builtin/cat-file.c:424
 msgid "follow in-tree symlinks (used with --batch or --batch-check)"
-msgstr "suivre les liens symbolique internes à la copie de travail (utilisé avec --batch ou --batch-check)"
+msgstr ""
+"suivre les liens symbolique internes à la copie de travail (utilisé avec --"
+"batch ou --batch-check)"
 
 #: builtin/check-attr.c:11
 msgid "git check-attr [-a | --all | <attr>...] [--] <pathname>..."
@@ -3469,7 +3477,7 @@ msgid "terminate input and output records by a NUL character"
 msgstr ""
 "terminer les enregistrements en entrée et en sortie par un caractère NUL"
 
-#: builtin/check-ignore.c:18 builtin/checkout.c:1345 builtin/gc.c:279
+#: builtin/check-ignore.c:18 builtin/checkout.c:1202 builtin/gc.c:279
 msgid "suppress progress reporting"
 msgstr "supprimer l'état d'avancement"
 
@@ -3568,115 +3576,115 @@ msgstr "lors de la création de fichiers, préfixer par <chaîne>"
 msgid "copy out the files from named stage"
 msgstr "copier les fichiers depuis l'index nommé"
 
-#: builtin/checkout.c:26
+#: builtin/checkout.c:24
 msgid "git checkout [<options>] <branch>"
 msgstr "git checkout [<options>] <branche>"
 
-#: builtin/checkout.c:27
+#: builtin/checkout.c:25
 msgid "git checkout [<options>] [<branch>] -- <file>..."
 msgstr "git checkout [<options>] [<branche>] -- <fichier>..."
 
-#: builtin/checkout.c:138 builtin/checkout.c:171
+#: builtin/checkout.c:134 builtin/checkout.c:167
 #, c-format
 msgid "path '%s' does not have our version"
 msgstr "le chemin '%s' n'a pas notre version"
 
-#: builtin/checkout.c:140 builtin/checkout.c:173
+#: builtin/checkout.c:136 builtin/checkout.c:169
 #, c-format
 msgid "path '%s' does not have their version"
 msgstr "le chemin '%s' n'a pas leur version"
 
-#: builtin/checkout.c:156
+#: builtin/checkout.c:152
 #, c-format
 msgid "path '%s' does not have all necessary versions"
 msgstr "le chemin '%s' n'a aucune des versions nécessaires"
 
-#: builtin/checkout.c:200
+#: builtin/checkout.c:196
 #, c-format
 msgid "path '%s' does not have necessary versions"
 msgstr "le chemin '%s' n'a pas les versions nécessaires"
 
-#: builtin/checkout.c:217
+#: builtin/checkout.c:213
 #, c-format
 msgid "path '%s': cannot merge"
 msgstr "chemin '%s' : impossible de fusionner"
 
-#: builtin/checkout.c:234
+#: builtin/checkout.c:230
 #, c-format
 msgid "Unable to add merge result for '%s'"
 msgstr "Impossible d'ajouter le résultat de fusion pour '%s'"
 
-#: builtin/checkout.c:255 builtin/checkout.c:258 builtin/checkout.c:261
-#: builtin/checkout.c:264 builtin/checkout.c:277
+#: builtin/checkout.c:251 builtin/checkout.c:254 builtin/checkout.c:257
+#: builtin/checkout.c:260
 #, c-format
 msgid "'%s' cannot be used with updating paths"
 msgstr "'%s' ne peut pas être utilisé avec des mises à jour de chemins"
 
-#: builtin/checkout.c:267 builtin/checkout.c:270
+#: builtin/checkout.c:263 builtin/checkout.c:266
 #, c-format
 msgid "'%s' cannot be used with %s"
 msgstr "'%s' ne peut pas être utilisé avec %s"
 
-#: builtin/checkout.c:273
+#: builtin/checkout.c:269
 #, c-format
 msgid "Cannot update paths and switch to branch '%s' at the same time."
 msgstr ""
 "Impossible de mettre à jour les chemins et basculer sur la branche '%s' en "
 "même temps."
 
-#: builtin/checkout.c:287 builtin/checkout.c:481
+#: builtin/checkout.c:280 builtin/checkout.c:474
 msgid "corrupt index file"
 msgstr "fichier d'index corrompu"
 
-#: builtin/checkout.c:347 builtin/checkout.c:354
+#: builtin/checkout.c:340 builtin/checkout.c:347
 #, c-format
 msgid "path '%s' is unmerged"
 msgstr "le chemin '%s' n'est pas fusionné"
 
-#: builtin/checkout.c:503
+#: builtin/checkout.c:496
 msgid "you need to resolve your current index first"
 msgstr "vous devez d'abord résoudre votre index courant"
 
-#: builtin/checkout.c:634
+#: builtin/checkout.c:627
 #, c-format
 msgid "Can not do reflog for '%s'\n"
 msgstr "Impossible de faire un reflog pour '%s'\n"
 
-#: builtin/checkout.c:670
+#: builtin/checkout.c:663
 msgid "HEAD is now at"
 msgstr "HEAD est maintenant sur"
 
-#: builtin/checkout.c:677
+#: builtin/checkout.c:670
 #, c-format
 msgid "Reset branch '%s'\n"
 msgstr "Remise à zéro de la branche '%s'\n"
 
-#: builtin/checkout.c:680
+#: builtin/checkout.c:673
 #, c-format
 msgid "Already on '%s'\n"
 msgstr "Déjà sur '%s'\n"
 
-#: builtin/checkout.c:684
+#: builtin/checkout.c:677
 #, c-format
 msgid "Switched to and reset branch '%s'\n"
 msgstr "Basculement et remise à zéro de la branche '%s'\n"
 
-#: builtin/checkout.c:686 builtin/checkout.c:1285
+#: builtin/checkout.c:679 builtin/checkout.c:1134
 #, c-format
 msgid "Switched to a new branch '%s'\n"
 msgstr "Basculement sur la nouvelle branche '%s'\n"
 
-#: builtin/checkout.c:688
+#: builtin/checkout.c:681
 #, c-format
 msgid "Switched to branch '%s'\n"
 msgstr "Basculement sur la branche '%s'\n"
 
-#: builtin/checkout.c:740
+#: builtin/checkout.c:733
 #, c-format
 msgid " ... and %d more.\n"
 msgstr " ... et %d en plus.\n"
 
-#: builtin/checkout.c:746
+#: builtin/checkout.c:739
 #, c-format
 msgid ""
 "Warning: you are leaving %d commit behind, not connected to\n"
@@ -3699,7 +3707,7 @@ msgstr[1] ""
 "\n"
 "%s\n"
 
-#: builtin/checkout.c:765
+#: builtin/checkout.c:758
 #, c-format
 msgid ""
 "If you want to keep it by creating a new branch, this may be a good time\n"
@@ -3714,189 +3722,164 @@ msgid_plural ""
 " git branch <new-branch-name> %s\n"
 "\n"
 msgstr[0] ""
-"Si vous souhaitez le garder en créant une nouvelle branche, c'est le bon moment\n"
+"Si vous souhaitez le garder en créant une nouvelle branche, c'est le bon "
+"moment\n"
 "pour le faire avec :\n"
 "\n"
 "git branch <nouvelle-branche> %s\n"
 "\n"
 msgstr[1] ""
-"Si vous souhaitez les garder en créant une nouvelle branche, c'est le bon moment\n"
+"Si vous souhaitez les garder en créant une nouvelle branche, c'est le bon "
+"moment\n"
 "pour le faire avec :\n"
 "\n"
 "git branch <nouvelle-branche> %s\n"
 "\n"
 
-#: builtin/checkout.c:801
+#: builtin/checkout.c:794
 msgid "internal error in revision walk"
 msgstr "erreur interne lors du parcours des révisions"
 
-#: builtin/checkout.c:805
+#: builtin/checkout.c:798
 msgid "Previous HEAD position was"
 msgstr "La position précédente de HEAD était sur"
 
-#: builtin/checkout.c:832 builtin/checkout.c:1280
+#: builtin/checkout.c:825 builtin/checkout.c:1129
 msgid "You are on a branch yet to be born"
 msgstr "Vous êtes sur une branche qui doit encore naître"
 
-#: builtin/checkout.c:893
-msgid "no branch specified"
-msgstr "aucune branche spécifiée"
-
-#: builtin/checkout.c:895
-#, c-format
-msgid "'%s' already exists"
-msgstr "'%s' existe déjà"
-
-#: builtin/checkout.c:910 builtin/checkout.c:937 builtin/clone.c:842
-#: builtin/clone.c:853
-#, c-format
-msgid "could not create leading directories of '%s'"
-msgstr "impossible de créer les répertoires de premier niveau dans '%s'"
-
-#: builtin/checkout.c:924
-#, c-format
-msgid "could not create directory of '%s'"
-msgstr "impossible de créer le répertoire de '%s'"
-
-#: builtin/checkout.c:960
-#, c-format
-msgid "Enter %s (identifier %s)"
-msgstr "Saisir %s (identifiant %s)"
-
-#: builtin/checkout.c:1070
+#: builtin/checkout.c:931
 #, c-format
 msgid "'%s' is already checked out at '%s'"
 msgstr "'%s' est déjà extrait dans '%s'"
 
-#: builtin/checkout.c:1176
+#: builtin/checkout.c:1036
 #, c-format
 msgid "only one reference expected, %d given."
 msgstr "une seule référence attendue, %d fournies."
 
-#: builtin/checkout.c:1215
+#: builtin/checkout.c:1075
 #, c-format
 msgid "invalid reference: %s"
 msgstr "référence invalide : %s"
 
-#: builtin/checkout.c:1255
+#: builtin/checkout.c:1104
 #, c-format
 msgid "reference is not a tree: %s"
 msgstr "la référence n'est pas un arbre : %s"
 
-#: builtin/checkout.c:1294
+#: builtin/checkout.c:1143
 msgid "paths cannot be used with switching branches"
 msgstr "impossible d'utiliser des chemins avec un basculement de branches"
 
-#: builtin/checkout.c:1297 builtin/checkout.c:1301
+#: builtin/checkout.c:1146 builtin/checkout.c:1150
 #, c-format
 msgid "'%s' cannot be used with switching branches"
 msgstr "'%s' ne peut pas être utilisé avec un basculement de branches"
 
-#: builtin/checkout.c:1305 builtin/checkout.c:1308 builtin/checkout.c:1313
-#: builtin/checkout.c:1316
+#: builtin/checkout.c:1154 builtin/checkout.c:1157 builtin/checkout.c:1162
+#: builtin/checkout.c:1165
 #, c-format
 msgid "'%s' cannot be used with '%s'"
 msgstr "'%s' ne peut pas être utilisé avec '%s'"
 
-#: builtin/checkout.c:1321
+#: builtin/checkout.c:1170
 #, c-format
 msgid "Cannot switch branch to a non-commit '%s'"
 msgstr "Impossible de basculer de branche vers '%s' qui n'est pas un commit"
 
-#: builtin/checkout.c:1346 builtin/checkout.c:1348 builtin/clone.c:83
-#: builtin/remote.c:159 builtin/remote.c:161
+#: builtin/checkout.c:1203 builtin/checkout.c:1205 builtin/clone.c:83
+#: builtin/remote.c:159 builtin/remote.c:161 builtin/worktree.c:282
+#: builtin/worktree.c:284
 msgid "branch"
 msgstr "branche"
 
-#: builtin/checkout.c:1347
+#: builtin/checkout.c:1204
 msgid "create and checkout a new branch"
 msgstr "créer et extraire une nouvelle branche"
 
-#: builtin/checkout.c:1349
+#: builtin/checkout.c:1206
 msgid "create/reset and checkout a branch"
 msgstr "créer/réinitialiser et extraire une branche"
 
-#: builtin/checkout.c:1350
+#: builtin/checkout.c:1207
 msgid "create reflog for new branch"
 msgstr "créer un reflog pour une nouvelle branche"
 
-#: builtin/checkout.c:1351
+#: builtin/checkout.c:1208
 msgid "detach the HEAD at named commit"
 msgstr "détacher la HEAD à la validation nommée"
 
-#: builtin/checkout.c:1352
+#: builtin/checkout.c:1209
 msgid "set upstream info for new branch"
 msgstr "paramétrer les coordonnées de branche amont pour une nouvelle branche"
 
-#: builtin/checkout.c:1354
+#: builtin/checkout.c:1211
 msgid "new-branch"
 msgstr "nouvelle branche"
 
-#: builtin/checkout.c:1354
+#: builtin/checkout.c:1211
 msgid "new unparented branch"
 msgstr "nouvelle branche sans parent"
 
-#: builtin/checkout.c:1355
+#: builtin/checkout.c:1212
 msgid "checkout our version for unmerged files"
 msgstr "extraire notre version pour les fichiers non fusionnés"
 
-#: builtin/checkout.c:1357
+#: builtin/checkout.c:1214
 msgid "checkout their version for unmerged files"
 msgstr "extraire leur version pour les fichiers non fusionnés"
 
-#: builtin/checkout.c:1359
+#: builtin/checkout.c:1216
 msgid "force checkout (throw away local modifications)"
 msgstr "forcer l'extraction (laisser tomber les modifications locales)"
 
-#: builtin/checkout.c:1360
+#: builtin/checkout.c:1217
 msgid "perform a 3-way merge with the new branch"
 msgstr "effectuer une fusion à 3 points avec la nouvelle branche"
 
-#: builtin/checkout.c:1361 builtin/merge.c:227
+#: builtin/checkout.c:1218 builtin/merge.c:227
 msgid "update ignored files (default)"
 msgstr "mettre à jour les fichiers ignorés (par défaut)"
 
-#: builtin/checkout.c:1362 builtin/log.c:1239 parse-options.h:244
+#: builtin/checkout.c:1219 builtin/log.c:1239 parse-options.h:244
 msgid "style"
 msgstr "style"
 
-#: builtin/checkout.c:1363
+#: builtin/checkout.c:1220
 msgid "conflict style (merge or diff3)"
 msgstr "style de conflit (fusion ou diff3)"
 
-#: builtin/checkout.c:1366
+#: builtin/checkout.c:1223
 msgid "do not limit pathspecs to sparse entries only"
 msgstr "ne pas limiter les spécificateurs de chemins aux seuls éléments creux"
 
-#: builtin/checkout.c:1368
+#: builtin/checkout.c:1225
 msgid "second guess 'git checkout <no-such-branch>'"
 msgstr "réessayer d'interpréter 'git checkout <branche-inexistante>'"
 
-#: builtin/checkout.c:1370
-msgid "check a branch out in a separate working directory"
-msgstr "extraire une branche dans un répertoire de travail séparé"
-
-#: builtin/checkout.c:1372
+#: builtin/checkout.c:1227
 msgid "do not check if another worktree is holding the given ref"
-msgstr "ne pas vérifier si une autre copie de travail contient le référence fournie"
+msgstr ""
+"ne pas vérifier si une autre copie de travail contient le référence fournie"
 
-#: builtin/checkout.c:1406
+#: builtin/checkout.c:1252
 msgid "-b, -B and --orphan are mutually exclusive"
 msgstr "-b, -B et --orphan sont mutuellement exclusifs"
 
-#: builtin/checkout.c:1423
+#: builtin/checkout.c:1269
 msgid "--track needs a branch name"
 msgstr "--track requiert un nom de branche"
 
-#: builtin/checkout.c:1428
+#: builtin/checkout.c:1274
 msgid "Missing branch name; try -b"
 msgstr "Nom de branche manquant ; essayez -b"
 
-#: builtin/checkout.c:1464
+#: builtin/checkout.c:1310
 msgid "invalid path specification"
 msgstr "spécification de chemin invalide"
 
-#: builtin/checkout.c:1471
+#: builtin/checkout.c:1317
 #, c-format
 msgid ""
 "Cannot update paths and switch to branch '%s' at the same time.\n"
@@ -3906,12 +3889,12 @@ msgstr ""
 "en même temps.\n"
 "Souhaitiez-vous extraire '%s' qui ne peut être résolu comme commit ?"
 
-#: builtin/checkout.c:1476
+#: builtin/checkout.c:1322
 #, c-format
 msgid "git checkout: --detach does not take a path argument '%s'"
 msgstr "git checkout: --detach n'accepte pas un argument de chemin '%s'"
 
-#: builtin/checkout.c:1480
+#: builtin/checkout.c:1326
 msgid ""
 "git checkout: --ours/--theirs, --force and --merge are incompatible when\n"
 "checking out of the index."
@@ -4197,57 +4180,57 @@ msgstr "clé=valeur"
 msgid "set config inside the new repository"
 msgstr "régler la configuration dans le nouveau dépôt"
 
-#: builtin/clone.c:247
+#: builtin/clone.c:240
 #, c-format
 msgid "reference repository '%s' is not a local repository."
 msgstr "le dépôt de référence '%s' n'est pas un dépôt local."
 
-#: builtin/clone.c:251
+#: builtin/clone.c:244
 #, c-format
 msgid "reference repository '%s' is shallow"
 msgstr "le dépôt de référence '%s' est superficiel"
 
-#: builtin/clone.c:254
+#: builtin/clone.c:247
 #, c-format
 msgid "reference repository '%s' is grafted"
 msgstr "le dépôt de référence '%s' est greffé"
 
-#: builtin/clone.c:317
+#: builtin/clone.c:310
 #, c-format
 msgid "failed to create directory '%s'"
 msgstr "échec de la création du répertoire '%s'"
 
-#: builtin/clone.c:319 builtin/diff.c:84
+#: builtin/clone.c:312 builtin/diff.c:84
 #, c-format
 msgid "failed to stat '%s'"
 msgstr "échec du stat de '%s'"
 
-#: builtin/clone.c:321
+#: builtin/clone.c:314
 #, c-format
 msgid "%s exists and is not a directory"
 msgstr "%s existe et n'est pas un répertoire"
 
-#: builtin/clone.c:335
+#: builtin/clone.c:328
 #, c-format
 msgid "failed to stat %s\n"
 msgstr "échec du stat de %s\n"
 
-#: builtin/clone.c:357
+#: builtin/clone.c:350
 #, c-format
 msgid "failed to create link '%s'"
 msgstr "échec de la création du lien '%s'"
 
-#: builtin/clone.c:361
+#: builtin/clone.c:354
 #, c-format
 msgid "failed to copy file to '%s'"
 msgstr "échec de la copie vers '%s'"
 
-#: builtin/clone.c:384 builtin/clone.c:558
+#: builtin/clone.c:377 builtin/clone.c:551
 #, c-format
 msgid "done.\n"
 msgstr "fait.\n"
 
-#: builtin/clone.c:396
+#: builtin/clone.c:389
 msgid ""
 "Clone succeeded, but checkout failed.\n"
 "You can inspect what was checked out with 'git status'\n"
@@ -4257,119 +4240,125 @@ msgstr ""
 "Vous pouvez inspecter ce qui a été extrait avec 'git status'\n"
 "et réessayer l'extraction avec 'git checkout -f HEAD'\n"
 
-#: builtin/clone.c:473
+#: builtin/clone.c:466
 #, c-format
 msgid "Could not find remote branch %s to clone."
 msgstr "Impossible de trouver la branche distante '%s' à cloner."
 
-#: builtin/clone.c:553
+#: builtin/clone.c:546
 #, c-format
 msgid "Checking connectivity... "
 msgstr "Vérification de la connectivité... "
 
-#: builtin/clone.c:556
+#: builtin/clone.c:549
 msgid "remote did not send all necessary objects"
 msgstr "le serveur distant n'a pas envoyé tous les objets nécessaires"
 
-#: builtin/clone.c:620
+#: builtin/clone.c:613
 msgid "remote HEAD refers to nonexistent ref, unable to checkout.\n"
 msgstr ""
 "la HEAD distante réfère à une référence non existante, impossible de "
 "l'extraire.\n"
 
-#: builtin/clone.c:651
+#: builtin/clone.c:644
 msgid "unable to checkout working tree"
 msgstr "impossible d'extraire la copie de travail"
 
-#: builtin/clone.c:738
+#: builtin/clone.c:731
 msgid "cannot repack to clean up"
 msgstr "impossible de remballer pour nettoyer"
 
-#: builtin/clone.c:740
+#: builtin/clone.c:733
 msgid "cannot unlink temporary alternates file"
 msgstr "impossible de unlinker le fichier temporaire alternates"
 
-#: builtin/clone.c:770
+#: builtin/clone.c:763
 msgid "Too many arguments."
 msgstr "Trop d'arguments."
 
-#: builtin/clone.c:774
+#: builtin/clone.c:767
 msgid "You must specify a repository to clone."
 msgstr "Vous devez spécifier un dépôt à cloner."
 
-#: builtin/clone.c:785
+#: builtin/clone.c:778
 #, c-format
 msgid "--bare and --origin %s options are incompatible."
 msgstr "les options --bare et --origin %s sont incompatibles."
 
-#: builtin/clone.c:788
+#: builtin/clone.c:781
 msgid "--bare and --separate-git-dir are incompatible."
 msgstr "--bare et --separate-git-dir sont incompatibles."
 
-#: builtin/clone.c:801
+#: builtin/clone.c:794
 #, c-format
 msgid "repository '%s' does not exist"
 msgstr "le dépôt '%s' n'existe pas"
 
-#: builtin/clone.c:807 builtin/fetch.c:1160
+#: builtin/clone.c:800 builtin/fetch.c:1160
 #, c-format
 msgid "depth %s is not a positive number"
 msgstr "la profondeur %s n'est pas un entier positif"
 
-#: builtin/clone.c:817
+#: builtin/clone.c:810
 #, c-format
 msgid "destination path '%s' already exists and is not an empty directory."
 msgstr ""
 "le chemin de destination '%s' existe déjà et n'est pas un répertoire vide."
 
-#: builtin/clone.c:827
+#: builtin/clone.c:820
 #, c-format
 msgid "working tree '%s' already exists."
 msgstr "la copie de travail '%s' existe déjà."
 
-#: builtin/clone.c:845
+#: builtin/clone.c:835 builtin/clone.c:846 builtin/worktree.c:193
+#: builtin/worktree.c:220
+#, c-format
+msgid "could not create leading directories of '%s'"
+msgstr "impossible de créer les répertoires de premier niveau dans '%s'"
+
+#: builtin/clone.c:838
 #, c-format
 msgid "could not create work tree dir '%s'"
 msgstr "impossible de créer le répertoire de la copie de travail '%s'"
 
-#: builtin/clone.c:863
+#: builtin/clone.c:856
 #, c-format
 msgid "Cloning into bare repository '%s'...\n"
 msgstr "Clonage dans le dépôt nu '%s'\n"
 
-#: builtin/clone.c:865
+#: builtin/clone.c:858
 #, c-format
 msgid "Cloning into '%s'...\n"
 msgstr "Clonage dans '%s'...\n"
 
-#: builtin/clone.c:890
+#: builtin/clone.c:883
 msgid "--dissociate given, but there is no --reference"
 msgstr "--dissociate est spécifié, mais --reference est absent"
 
-#: builtin/clone.c:907
+#: builtin/clone.c:900
 msgid "--depth is ignored in local clones; use file:// instead."
 msgstr ""
 "--depth est ignoré dans les clones locaux : utilisez plutôt \"file://\"."
 
-#: builtin/clone.c:910
+#: builtin/clone.c:903
 msgid "source repository is shallow, ignoring --local"
 msgstr "le dépôt source est superficiel, option --local ignorée"
 
-#: builtin/clone.c:915
+#: builtin/clone.c:908
 msgid "--local is ignored"
 msgstr "--local est ignoré"
 
-#: builtin/clone.c:919
+#: builtin/clone.c:912
 #, c-format
 msgid "Don't know how to clone %s"
 msgstr "Je ne sais pas cloner %s"
 
-#: builtin/clone.c:968 builtin/clone.c:976
+#: builtin/clone.c:961 builtin/clone.c:969
 #, c-format
 msgid "Remote branch %s not found in upstream %s"
 msgstr "La branche distante %s n'a pas été trouvée dans le dépôt amont %s"
 
-#: builtin/clone.c:979
+#: builtin/clone.c:972
 msgid "You appear to have cloned an empty repository."
 msgstr "Vous semblez avoir cloné un dépôt vide."
 
@@ -5759,7 +5748,7 @@ msgstr "clé"
 msgid "field name to sort on"
 msgstr "nom du champ servant à trier"
 
-#: builtin/fsck.c:147 builtin/prune.c:236
+#: builtin/fsck.c:147 builtin/prune.c:137
 msgid "Checking connectivity"
 msgstr "Vérification de la connectivité"
 
@@ -5808,7 +5797,7 @@ msgstr "activer une vérification plus strict"
 msgid "write dangling objects in .git/lost-found"
 msgstr "écrire les objets en suspens dans .git/lost-found"
 
-#: builtin/fsck.c:627 builtin/prune.c:198
+#: builtin/fsck.c:627 builtin/prune.c:107
 msgid "show progress"
 msgstr "afficher la progression"
 
@@ -8308,59 +8297,21 @@ msgstr "git prune-packed [-n | --dry-run] [-q | --quiet]"
 msgid "Removing duplicate objects"
 msgstr "Suppression des objets dupliqués"
 
-#: builtin/prune.c:12
+#: builtin/prune.c:11
 msgid "git prune [-n] [-v] [--expire <time>] [--] [<head>...]"
 msgstr "git prune [-n] [-v] [--expire <heure>] [--] [<head>...]"
 
-#: builtin/prune.c:86
-#, c-format
-msgid "Removing worktrees/%s: not a valid directory"
-msgstr "Suppression de worktrees/%s : répertoire invalide"
-
-#: builtin/prune.c:92
-#, c-format
-msgid "Removing worktrees/%s: gitdir file does not exist"
-msgstr "Suppression de worktrees/%s : le fichier gitdir n'existe pas"
-
-#: builtin/prune.c:97
-#, c-format
-msgid "Removing worktrees/%s: unable to read gitdir file (%s)"
-msgstr "Suppression de worktrees/%s : echec de la lecture du fichier gitdir (%s)"
-
-#: builtin/prune.c:108
-#, c-format
-msgid "Removing worktrees/%s: invalid gitdir file"
-msgstr "Suppression de worktrees/%s : fichier gitdir invalide"
-
-#: builtin/prune.c:124
-#, c-format
-msgid "Removing worktrees/%s: gitdir file points to non-existent location"
-msgstr "Suppression de worktrees/%s : le fichier gitdir point sur un endroit inexistant"
-
-#: builtin/prune.c:159
-#, c-format
-msgid "failed to remove: %s"
-msgstr "échec de la suppression de %s"
-
-#: builtin/prune.c:196
+#: builtin/prune.c:105 builtin/worktree.c:112
 msgid "do not remove, show only"
 msgstr "ne pas supprimer, afficher seulement"
 
-#: builtin/prune.c:197
+#: builtin/prune.c:106 builtin/worktree.c:113
 msgid "report pruned objects"
 msgstr "afficher les objets éliminés"
 
-#: builtin/prune.c:199
-msgid "prune .git/worktrees"
-msgstr "éliminer .git/worktrees"
-
-#: builtin/prune.c:201
+#: builtin/prune.c:109 builtin/worktree.c:115
 msgid "expire objects older than <time>"
 msgstr "faire expirer les objets plus vieux que <heure>"
-
-#: builtin/prune.c:216
-msgid "--worktrees does not take extra arguments"
-msgstr "--worktrees n'accepte pas d'argument supplémentaire"
 
 #: builtin/push.c:14
 msgid "git push [<options>] [<repository> [<refspec>...]]"
@@ -10278,27 +10229,36 @@ msgstr "Test en cours "
 
 #: builtin/update-index.c:136
 msgid "directory stat info does not change after adding a new file"
-msgstr "l'information de stat du répertoire ne change pas après ajout d'un fichier"
+msgstr ""
+"l'information de stat du répertoire ne change pas après ajout d'un fichier"
 
 #: builtin/update-index.c:149
 msgid "directory stat info does not change after adding a new directory"
-msgstr "l'information de stat du répertoire ne change pas après ajout d'un répertoire"
+msgstr ""
+"l'information de stat du répertoire ne change pas après ajout d'un répertoire"
 
 #: builtin/update-index.c:162
 msgid "directory stat info changes after updating a file"
-msgstr "l'information de stat du répertoire change après mise à jour d'un fichier"
+msgstr ""
+"l'information de stat du répertoire change après mise à jour d'un fichier"
 
 #: builtin/update-index.c:173
 msgid "directory stat info changes after adding a file inside subdirectory"
-msgstr "l'information de stat du répertoire change après l'ajout d'un fichier dans un sous-répertoire"
+msgstr ""
+"l'information de stat du répertoire change après l'ajout d'un fichier dans "
+"un sous-répertoire"
 
 #: builtin/update-index.c:184
 msgid "directory stat info does not change after deleting a file"
-msgstr "l'information de stat du répertoire ne change pas après la suppression d'un fichier<"
+msgstr ""
+"l'information de stat du répertoire ne change pas après la suppression d'un "
+"fichier<"
 
 #: builtin/update-index.c:197
 msgid "directory stat info does not change after deleting a directory"
-msgstr "l'information de stat du répertoire ne change pas après la suppression d'un répertoire"
+msgstr ""
+"l'information de stat du répertoire ne change pas après la suppression d'un "
+"répertoire"
 
 #: builtin/update-index.c:204
 msgid " OK"
@@ -10498,6 +10458,86 @@ msgstr "git verify-tag [-v | --verbose] <étiquette>..."
 msgid "print tag contents"
 msgstr "afficher le contenu de l'étiquette"
 
+#: builtin/worktree.c:11
+msgid "git worktree add [<options>] <path> <branch>"
+msgstr "git worktree add [<options>] <chemin> <branche>"
+
+#: builtin/worktree.c:12
+msgid "git worktree prune [<options>]"
+msgstr "git worktree prune [<options>]"
+
+#: builtin/worktree.c:27
+#, c-format
+msgid "Removing worktrees/%s: not a valid directory"
+msgstr "Suppression de worktrees/%s : répertoire invalide"
+
+#: builtin/worktree.c:33
+#, c-format
+msgid "Removing worktrees/%s: gitdir file does not exist"
+msgstr "Suppression de worktrees/%s : le fichier gitdir n'existe pas"
+
+#: builtin/worktree.c:38
+#, c-format
+msgid "Removing worktrees/%s: unable to read gitdir file (%s)"
+msgstr ""
+"Suppression de worktrees/%s : echec de la lecture du fichier gitdir (%s)"
+
+#: builtin/worktree.c:49
+#, c-format
+msgid "Removing worktrees/%s: invalid gitdir file"
+msgstr "Suppression de worktrees/%s : fichier gitdir invalide"
+
+#: builtin/worktree.c:65
+#, c-format
+msgid "Removing worktrees/%s: gitdir file points to non-existent location"
+msgstr ""
+"Suppression de worktrees/%s : le fichier gitdir point sur un endroit "
+"inexistant"
+
+#: builtin/worktree.c:100
+#, c-format
+msgid "failed to remove: %s"
+msgstr "échec de la suppression de %s"
+
+#: builtin/worktree.c:186
+#, c-format
+msgid "'%s' already exists"
+msgstr "'%s' existe déjà"
+
+#: builtin/worktree.c:207
+#, c-format
+msgid "could not create directory of '%s'"
+msgstr "impossible de créer le répertoire de '%s'"
+
+#: builtin/worktree.c:241
+msgid "unable to resolve HEAD"
+msgstr "impossible de résoudre HEAD"
+
+#: builtin/worktree.c:249
+#, c-format
+msgid "Enter %s (identifier %s)"
+msgstr "Saisir %s (identifiant %s)"
+
+#: builtin/worktree.c:281
+msgid "checkout <branch> even if already checked out in other worktree"
+msgstr "extraire la <branche> même si elle est déjà extraite dans une autre copie de travail"
+
+#: builtin/worktree.c:283
+msgid "create a new branch"
+msgstr "créer une nouvelle branche"
+
+#: builtin/worktree.c:285
+msgid "create or reset a branch"
+msgstr "créer ou réinitialiser une branche"
+
+#: builtin/worktree.c:286
+msgid "detach HEAD at named commit"
+msgstr "détacher la HEAD au commit nommé"
+
+#: builtin/worktree.c:292
+msgid "-b and -B are mutually exclusive"
+msgstr "-b et -B sont mutuellement exclusifs"
+
 #: builtin/write-tree.c:13
 msgid "git write-tree [--missing-ok] [--prefix=<prefix>/]"
 msgstr "git write-tree [--missing-ok] [--prefix=<préfixe>/]"
@@ -10534,7 +10574,8 @@ msgstr "démarrer une zone de travail (voir aussi : git help tutorial)"
 
 #: common-cmds.h:11
 msgid "work on the current change (see also: git help everyday)"
-msgstr "travailler sur la modification actuelle (voir aussi : git help revisions)"
+msgstr ""
+"travailler sur la modification actuelle (voir aussi : git help revisions)"
 
 #: common-cmds.h:12
 msgid "examine the history and state (see also: git help revisions)"
@@ -10561,8 +10602,8 @@ msgid "List, create, or delete branches"
 msgstr "Lister, créer ou supprimer des branches"
 
 #: common-cmds.h:21
-msgid "Checkout a branch or paths to the working tree"
-msgstr "Extraire une branche ou des chemins dans la copie de travail"
+msgid "Switch branches or restore working tree files"
+msgstr "Basculer de branche ou restaurer la copie de travail"
 
 #: common-cmds.h:22
 msgid "Clone a repository into a new directory"
@@ -11658,6 +11699,18 @@ msgstr "Échec de parcours dans le chemin du sous-module '$sm_path'"
 #, sh-format
 msgid "Synchronizing submodule url for '$displaypath'"
 msgstr "Synchronisation de l'URL sous-module pour '$displaypath'"
+
+#~ msgid "no branch specified"
+#~ msgstr "aucune branche spécifiée"
+
+#~ msgid "check a branch out in a separate working directory"
+#~ msgstr "extraire une branche dans un répertoire de travail séparé"
+
+#~ msgid "prune .git/worktrees"
+#~ msgstr "éliminer .git/worktrees"
+
+#~ msgid "--worktrees does not take extra arguments"
+#~ msgstr "--worktrees n'accepte pas d'argument supplémentaire"
 
 #~ msgid "The most commonly used git commands are:"
 #~ msgstr "Les commandes git les plus utilisées sont :"
