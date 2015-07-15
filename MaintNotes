@@ -161,7 +161,9 @@ general, the "next" branch always contains the tip of "master".  It might
 not be quite rock-solid, but is expected to work more or less without major
 breakage. The "next" branch is where new and exciting things take place. A
 topic that is in "next" is expected to be polished to perfection before it
-is merged to "master".
+is merged to "master".  Please help this process by building, using the
+"next" branch for your daily work, and reporting any new bugs you find to
+the mailing list, before the breakage is merged down to the "master".
 
 The "pu" (proposed updates) branch bundles all the remaining topic
 branches the maintainer happens to have.  There is no guarantee that
