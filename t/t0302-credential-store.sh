@@ -75,7 +75,7 @@ test_expect_success 'get: use xdg file if home file has no matches' '
 	EOF
 '
 
-test_expect_success POSIXPERM 'get: use xdg file if home file is unreadable' '
+test_expect_success POSIXPERM,SANITY 'get: use xdg file if home file is unreadable' '
 	echo "https://home-user:home-pass@example.com" >"$HOME/.git-credentials" &&
 	chmod -r "$HOME/.git-credentials" &&
 	mkdir -p "$HOME/.config/git" &&
