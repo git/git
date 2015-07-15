@@ -57,6 +57,14 @@ test_expect_success "format-patch --ignore-if-in-upstream" '
 
 '
 
+test_expect_success "format-patch --ignore-if-in-upstream handles tags" '
+	git tag -a v1 -m tag side &&
+	git tag -a v2 -m tag master &&
+	git format-patch --stdout --ignore-if-in-upstream v2..v1 >patch1 &&
+	cnt=$(grep "^From " patch1 | wc -l) &&
+	test $cnt = 2
+'
+
 test_expect_success "format-patch doesn't consider merge commits" '
 
 	git checkout -b slave master &&
