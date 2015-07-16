@@ -32,6 +32,7 @@ generate usage:
   -g <GENERATOR>  --gen <GENERATOR> Specify the buildsystem generator    (default: $gen)
                                     Available: $genlist
   -o <PATH>       --out <PATH>      Specify output directory generation  (default: .)
+                  --make-out <PATH> Write the output of GNU Make into a file
   -i <FILE>       --in <FILE>       Specify input file, instead of running GNU Make
   -h,-?           --help            This help
 EOM
@@ -39,6 +40,7 @@ EOM
 }
 
 # Parse command-line options
+my $make_out;
 while (@ARGV) {
     my $arg = shift @ARGV;
     if ("$arg" eq "-h" || "$arg" eq "--help" || "$arg" eq "-?") {
@@ -46,6 +48,8 @@ while (@ARGV) {
 	exit(0);
     } elsif("$arg" eq "--out" || "$arg" eq "-o") {
 	$out_dir = shift @ARGV;
+    } elsif("$arg" eq "--make-out") {
+	$make_out = shift @ARGV;
     } elsif("$arg" eq "--gen" || "$arg" eq "-g") {
 	$gen = shift @ARGV;
     } elsif("$arg" eq "--in" || "$arg" eq "-i") {
@@ -79,6 +83,12 @@ my $ErrsFile = "msvc-build-makedryerrors.txt";
 @makedry = `cd $git_dir && make -n MSVC=1 V=1 2>$ErrsFile` if !@makedry;
 # test for an empty Errors file and remove it
 unlink $ErrsFile if -f -z $ErrsFile;
+
+if (defined $make_out) {
+    open OUT, ">" . $make_out;
+    print OUT @makedry;
+    close OUT;
+}
 
 # Parse the make output into usable info
 parseMakeOutput();
