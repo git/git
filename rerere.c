@@ -8,6 +8,7 @@
 #include "ll-merge.h"
 #include "attr.h"
 #include "pathspec.h"
+#include "sha1-lookup.h"
 
 #define RESOLVED 0
 #define PUNTED 1
@@ -22,6 +23,23 @@ static int rerere_autoupdate;
 
 static char *merge_rr_path;
 
+static int rerere_dir_nr;
+static int rerere_dir_alloc;
+
+static struct rerere_dir {
+	unsigned char sha1[20];
+} **rerere_dir;
+
+static void free_rerere_dirs(void)
+{
+	int i;
+	for (i = 0; i < rerere_dir_nr; i++)
+		free(rerere_dir[i]);
+	free(rerere_dir);
+	rerere_dir_nr = rerere_dir_alloc = 0;
+	rerere_dir = NULL;
+}
+
 static void free_rerere_id(struct string_list_item *item)
 {
 	free(item->util);
@@ -29,7 +47,7 @@ static void free_rerere_id(struct string_list_item *item)
 
 static const char *rerere_id_hex(const struct rerere_id *id)
 {
-	return id->hex;
+	return sha1_to_hex(id->collection->sha1);
 }
 
 const char *rerere_path(const struct rerere_id *id, const char *file)
@@ -38,6 +56,37 @@ const char *rerere_path(const struct rerere_id *id, const char *file)
 		return git_path("rr-cache/%s", rerere_id_hex(id));
 
 	return git_path("rr-cache/%s/%s", rerere_id_hex(id), file);
+}
+
+static const unsigned char *rerere_dir_sha1(size_t i, void *table)
+{
+	struct rerere_dir **rr_dir = table;
+	return rr_dir[i]->sha1;
+}
+
+static struct rerere_dir *find_rerere_dir(const char *hex)
+{
+	unsigned char sha1[20];
+	struct rerere_dir *rr_dir;
+	int pos;
+
+	if (get_sha1_hex(hex, sha1))
+		return NULL; /* BUG */
+	pos = sha1_pos(sha1, rerere_dir, rerere_dir_nr, rerere_dir_sha1);
+	if (pos < 0) {
+		rr_dir = xmalloc(sizeof(*rr_dir));
+		hashcpy(rr_dir->sha1, sha1);
+		pos = -1 - pos;
+
+		/* Make sure the array is big enough ... */
+		ALLOC_GROW(rerere_dir, rerere_dir_nr + 1, rerere_dir_alloc);
+		/* ... and add it in. */
+		rerere_dir_nr++;
+		memmove(rerere_dir + pos + 1, rerere_dir + pos,
+			(rerere_dir_nr - pos - 1) * sizeof(*rerere_dir));
+		rerere_dir[pos] = rr_dir;
+	}
+	return rerere_dir[pos];
 }
 
 static int has_rerere_resolution(const struct rerere_id *id)
@@ -50,7 +99,7 @@ static int has_rerere_resolution(const struct rerere_id *id)
 static struct rerere_id *new_rerere_id_hex(char *hex)
 {
 	struct rerere_id *id = xmalloc(sizeof(*id));
-	xsnprintf(id->hex, sizeof(id->hex), "%s", hex);
+	id->collection = find_rerere_dir(hex);
 	return id;
 }
 
@@ -810,12 +859,14 @@ int setup_rerere(struct string_list *merge_rr, int flags)
 int rerere(int flags)
 {
 	struct string_list merge_rr = STRING_LIST_INIT_DUP;
-	int fd;
+	int fd, status;
 
 	fd = setup_rerere(&merge_rr, flags);
 	if (fd < 0)
 		return 0;
-	return do_plain_rerere(&merge_rr, fd);
+	status = do_plain_rerere(&merge_rr, fd);
+	free_rerere_dirs();
+	return status;
 }
 
 static int rerere_forget_one_path(const char *path, struct string_list *rr)
@@ -900,7 +951,7 @@ int rerere_forget(struct pathspec *pathspec)
 static struct rerere_id *dirname_to_id(const char *name)
 {
 	static struct rerere_id id;
-	xsnprintf(id.hex, sizeof(id.hex), "%s", name);
+	id.collection = find_rerere_dir(name);
 	return &id;
 }
 
