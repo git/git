@@ -157,8 +157,9 @@ $ git worktree prune
 
 BUGS
 ----
-Multiple checkout support for submodules is incomplete. It is NOT
-recommended to make multiple checkouts of a superproject.
+Multiple checkout in general is still experimental, and the support
+for submodules is incomplete. It is NOT recommended to make multiple
+checkouts of a superproject.
 
 git-worktree could provide more automation for tasks currently
 performed manually, such as:
