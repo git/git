@@ -26,8 +26,11 @@ static char *merge_rr_path;
 static int rerere_dir_nr;
 static int rerere_dir_alloc;
 
+#define RR_HAS_POSTIMAGE 1
+#define RR_HAS_PREIMAGE 2
 static struct rerere_dir {
 	unsigned char sha1[20];
+	unsigned char status;
 } **rerere_dir;
 
 static void free_rerere_dirs(void)
@@ -58,6 +61,27 @@ const char *rerere_path(const struct rerere_id *id, const char *file)
 	return git_path("rr-cache/%s/%s", rerere_id_hex(id), file);
 }
 
+static int is_rr_file(const char *name, const char *filename)
+{
+	return !strcmp(name, filename);
+}
+
+static void scan_rerere_dir(struct rerere_dir *rr_dir)
+{
+	struct dirent *de;
+	DIR *dir = opendir(git_path("rr-cache/%s", sha1_to_hex(rr_dir->sha1)));
+
+	if (!dir)
+		return;
+	while ((de = readdir(dir)) != NULL) {
+		if (is_rr_file(de->d_name, "postimage"))
+			rr_dir->status |= RR_HAS_POSTIMAGE;
+		else if (is_rr_file(de->d_name, "preimage"))
+			rr_dir->status |= RR_HAS_PREIMAGE;
+	}
+	closedir(dir);
+}
+
 static const unsigned char *rerere_dir_sha1(size_t i, void *table)
 {
 	struct rerere_dir **rr_dir = table;
@@ -76,6 +100,7 @@ static struct rerere_dir *find_rerere_dir(const char *hex)
 	if (pos < 0) {
 		rr_dir = xmalloc(sizeof(*rr_dir));
 		hashcpy(rr_dir->sha1, sha1);
+		rr_dir->status = 0;
 		pos = -1 - pos;
 
 		/* Make sure the array is big enough ... */
@@ -85,15 +110,14 @@ static struct rerere_dir *find_rerere_dir(const char *hex)
 		memmove(rerere_dir + pos + 1, rerere_dir + pos,
 			(rerere_dir_nr - pos - 1) * sizeof(*rerere_dir));
 		rerere_dir[pos] = rr_dir;
+		scan_rerere_dir(rr_dir);
 	}
 	return rerere_dir[pos];
 }
 
 static int has_rerere_resolution(const struct rerere_id *id)
 {
-	struct stat st;
-
-	return !stat(rerere_path(id, "postimage"), &st);
+	return (id->collection->status & RR_HAS_POSTIMAGE);
 }
 
 static struct rerere_id *new_rerere_id_hex(char *hex)
@@ -737,6 +761,7 @@ static void do_rerere_one_path(struct string_list_item *rr_item,
 	} else if (!handle_file(path, NULL, NULL)) {
 		/* The user has resolved it. */
 		copy_file(rerere_path(id, "postimage"), path, 0666);
+		id->collection->status |= RR_HAS_POSTIMAGE;
 		fprintf(stderr, "Recorded resolution for '%s'.\n", path);
 	} else {
 		return;
@@ -797,6 +822,7 @@ static int do_plain_rerere(struct string_list *rr, int fd)
 		 * normalized contents to the "preimage" file.
 		 */
 		handle_file(path, NULL, rerere_path(id, "preimage"));
+		id->collection->status |= RR_HAS_PREIMAGE;
 		fprintf(stderr, "Recorded preimage for '%s'\n", path);
 	}
 
