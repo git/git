@@ -878,7 +878,6 @@ static void check_linked_checkout(const char *branch, const char *id)
 	struct strbuf sb = STRBUF_INIT;
 	struct strbuf path = STRBUF_INIT;
 	struct strbuf gitdir = STRBUF_INIT;
-	const char *start, *end;
 
 	/*
 	 * $GIT_COMMON_DIR/HEAD is practically outside
@@ -890,15 +889,13 @@ static void check_linked_checkout(const char *branch, const char *id)
 	else
 		strbuf_addf(&path, "%s/HEAD", get_git_common_dir());
 
-	if (strbuf_read_file(&sb, path.buf, 0) < 0 ||
-	    !skip_prefix(sb.buf, "ref:", &start))
+	if (strbuf_read_file(&sb, path.buf, 0) >= 0 &&
+	    starts_with(sb.buf, "ref:")) {
+		strbuf_remove(&sb, 0, strlen("ref:"));
+		strbuf_trim(&sb);
+	} else
 		goto done;
-	while (isspace(*start))
-		start++;
-	end = start;
-	while (*end && !isspace(*end))
-		end++;
-	if (strncmp(start, branch, end - start) || branch[end - start] != '\0')
+	if (strcmp(sb.buf, branch))
 		goto done;
 	if (id) {
 		strbuf_reset(&path);
