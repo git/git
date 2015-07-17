@@ -314,12 +314,23 @@ static int add(int ac, const char **av, const char *prefix)
 		opts.new_branch = xstrndup(s, n);
 	}
 
+	if (opts.new_branch) {
+		struct child_process cp;
+		memset(&cp, 0, sizeof(cp));
+		cp.git_cmd = 1;
+		argv_array_push(&cp.args, "branch");
+		if (opts.force_new_branch)
+			argv_array_push(&cp.args, "--force");
+		argv_array_push(&cp.args, opts.new_branch);
+		argv_array_push(&cp.args, branch);
+		if (run_command(&cp))
+			return -1;
+		branch = opts.new_branch;
+	}
+
 	argv_array_push(&cmd, "checkout");
 	if (opts.force)
 		argv_array_push(&cmd, "--ignore-other-worktrees");
-	if (opts.new_branch)
-		argv_array_pushl(&cmd, opts.force_new_branch ? "-B" : "-b",
-				 opts.new_branch, NULL);
 	if (opts.detach)
 		argv_array_push(&cmd, "--detach");
 	argv_array_push(&cmd, branch);
