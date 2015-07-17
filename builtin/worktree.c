@@ -12,6 +12,13 @@ static const char * const worktree_usage[] = {
 	NULL
 };
 
+struct add_opts {
+	int force;
+	int detach;
+	const char *new_branch;
+	int force_new_branch;
+};
+
 static int show_only;
 static int verbose;
 static unsigned long expire;
@@ -171,7 +178,8 @@ static const char *worktree_basename(const char *path, int *olen)
 	return name;
 }
 
-static int add_worktree(const char *path, const char **child_argv)
+static int add_worktree(const char *path, const char **child_argv,
+			const struct add_opts *opts)
 {
 	struct strbuf sb_git = STRBUF_INIT, sb_repo = STRBUF_INIT;
 	struct strbuf sb = STRBUF_INIT;
@@ -272,22 +280,23 @@ static int add_worktree(const char *path, const char **child_argv)
 
 static int add(int ac, const char **av, const char *prefix)
 {
-	int force = 0, detach = 0, force_new_branch;
-	const char *new_branch = NULL, *new_branch_force = NULL;
+	struct add_opts opts;
+	const char *new_branch_force = NULL;
 	const char *path, *branch;
 	struct argv_array cmd = ARGV_ARRAY_INIT;
 	struct option options[] = {
-		OPT__FORCE(&force, N_("checkout <branch> even if already checked out in other worktree")),
-		OPT_STRING('b', NULL, &new_branch, N_("branch"),
+		OPT__FORCE(&opts.force, N_("checkout <branch> even if already checked out in other worktree")),
+		OPT_STRING('b', NULL, &opts.new_branch, N_("branch"),
 			   N_("create a new branch")),
 		OPT_STRING('B', NULL, &new_branch_force, N_("branch"),
 			   N_("create or reset a branch")),
-		OPT_BOOL(0, "detach", &detach, N_("detach HEAD at named commit")),
+		OPT_BOOL(0, "detach", &opts.detach, N_("detach HEAD at named commit")),
 		OPT_END()
 	};
 
+	memset(&opts, 0, sizeof(opts));
 	ac = parse_options(ac, av, prefix, options, worktree_usage, 0);
-	if (new_branch && new_branch_force)
+	if (opts.new_branch && new_branch_force)
 		die(_("-b and -B are mutually exclusive"));
 	if (ac < 1 || ac > 2)
 		usage_with_options(worktree_usage, options);
@@ -295,27 +304,27 @@ static int add(int ac, const char **av, const char *prefix)
 	path = prefix ? prefix_filename(prefix, strlen(prefix), av[0]) : av[0];
 	branch = ac < 2 ? "HEAD" : av[1];
 
-	force_new_branch = !!new_branch_force;
-	if (force_new_branch)
-		new_branch = new_branch_force;
+	opts.force_new_branch = !!new_branch_force;
+	if (opts.force_new_branch)
+		opts.new_branch = new_branch_force;
 
-	if (ac < 2 && !new_branch) {
+	if (ac < 2 && !opts.new_branch) {
 		int n;
 		const char *s = worktree_basename(path, &n);
-		new_branch = xstrndup(s, n);
+		opts.new_branch = xstrndup(s, n);
 	}
 
 	argv_array_push(&cmd, "checkout");
-	if (force)
+	if (opts.force)
 		argv_array_push(&cmd, "--ignore-other-worktrees");
-	if (new_branch)
-		argv_array_pushl(&cmd, force_new_branch ? "-B" : "-b",
-				 new_branch, NULL);
-	if (detach)
+	if (opts.new_branch)
+		argv_array_pushl(&cmd, opts.force_new_branch ? "-B" : "-b",
+				 opts.new_branch, NULL);
+	if (opts.detach)
 		argv_array_push(&cmd, "--detach");
 	argv_array_push(&cmd, branch);
 
-	return add_worktree(path, cmd.argv);
+	return add_worktree(path, cmd.argv, &opts);
 }
 
 int cmd_worktree(int ac, const char **av, const char *prefix)
