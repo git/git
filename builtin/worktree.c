@@ -178,7 +178,7 @@ static const char *worktree_basename(const char *path, int *olen)
 	return name;
 }
 
-static int add_worktree(const char *path, const char **child_argv,
+static int add_worktree(const char *path, const char *refname,
 			const struct add_opts *opts)
 {
 	struct strbuf sb_git = STRBUF_INIT, sb_repo = STRBUF_INIT;
@@ -261,7 +261,12 @@ static int add_worktree(const char *path, const char **child_argv,
 	argv_array_pushf(&child_env, "%s=%s", GIT_WORK_TREE_ENVIRONMENT, path);
 	memset(&cp, 0, sizeof(cp));
 	cp.git_cmd = 1;
-	cp.argv = child_argv;
+	argv_array_push(&cp.args, "checkout");
+	if (opts->force)
+		argv_array_push(&cp.args, "--ignore-other-worktrees");
+	if (opts->detach)
+		argv_array_push(&cp.args, "--detach");
+	argv_array_push(&cp.args, refname);
 	cp.env = child_env.argv;
 	ret = run_command(&cp);
 	if (!ret) {
@@ -286,7 +291,6 @@ static int add(int ac, const char **av, const char *prefix)
 	struct add_opts opts;
 	const char *new_branch_force = NULL;
 	const char *path, *branch;
-	struct argv_array cmd = ARGV_ARRAY_INIT;
 	struct option options[] = {
 		OPT__FORCE(&opts.force, N_("checkout <branch> even if already checked out in other worktree")),
 		OPT_STRING('b', NULL, &opts.new_branch, N_("branch"),
@@ -331,14 +335,7 @@ static int add(int ac, const char **av, const char *prefix)
 		branch = opts.new_branch;
 	}
 
-	argv_array_push(&cmd, "checkout");
-	if (opts.force)
-		argv_array_push(&cmd, "--ignore-other-worktrees");
-	if (opts.detach)
-		argv_array_push(&cmd, "--detach");
-	argv_array_push(&cmd, branch);
-
-	return add_worktree(path, cmd.argv, &opts);
+	return add_worktree(path, branch, &opts);
 }
 
 int cmd_worktree(int ac, const char **av, const char *prefix)
