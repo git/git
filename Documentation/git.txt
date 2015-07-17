@@ -845,7 +845,7 @@ Git so take care if using Cogito etc.
 	normally in $GIT_DIR will be taken from this path
 	instead. Worktree-specific files such as HEAD or index are
 	taken from $GIT_DIR. See linkgit:gitrepository-layout[5] and
-	the section 'MULTIPLE CHECKOUT MODE' in linkgit:checkout[1]
+	linkgit:git-worktree[1] for
 	details. This variable has lower precedence than other path
 	variables such as GIT_INDEX_FILE, GIT_OBJECT_DIRECTORY...
 

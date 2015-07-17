@@ -18,7 +18,7 @@ DESCRIPTION
 Manage multiple worktrees attached to the same repository.
 
 A git repository can support multiple working trees, allowing you to check
-out more than one branch at a time.  With `git checkout --to` a new working
+out more than one branch at a time.  With `git worktree add` a new working
 tree is associated with the repository.  This new working tree is called a
 "linked working tree" as opposed to the "main working tree" prepared by "git
 init" or "git clone".  A repository has one main working tree (if it's not a
@@ -99,7 +99,7 @@ Each linked working tree has a private sub-directory in the repository's
 $GIT_DIR/worktrees directory.  The private sub-directory's name is usually
 the base name of the linked working tree's path, possibly appended with a
 number to make it unique.  For example, when `$GIT_DIR=/path/main/.git` the
-command `git checkout --to /path/other/test-next next` creates the linked
+command `git worktree add /path/other/test-next next` creates the linked
 working tree in `/path/other/test-next` and also creates a
 `$GIT_DIR/worktrees/test-next` directory (or `$GIT_DIR/worktrees/test-next1`
 if `test-next` is already taken).
@@ -157,8 +157,9 @@ $ git worktree prune
 
 BUGS
 ----
-Multiple checkout support for submodules is incomplete. It is NOT
-recommended to make multiple checkouts of a superproject.
+Multiple checkout in general is still experimental, and the support
+for submodules is incomplete. It is NOT recommended to make multiple
+checkouts of a superproject.
 
 git-worktree could provide more automation for tasks currently
 performed manually, such as:
