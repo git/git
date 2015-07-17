@@ -153,6 +153,14 @@ test_expect_success '"add -b" with <branch> omitted' '
 	test_cmp_rev HEAD burble
 '
 
+test_expect_success '"add --detach" with <branch> omitted' '
+	git worktree add --detach fishhook &&
+	git rev-parse HEAD >expected &&
+	git -C fishhook rev-parse HEAD >actual &&
+	test_cmp expected actual &&
+	test_must_fail git -C fishhook symbolic-ref HEAD
+'
+
 test_expect_success '"add" with <branch> omitted' '
 	git worktree add wiffle/bat &&
 	test_cmp_rev HEAD bat
@@ -165,6 +173,12 @@ test_expect_success '"add" auto-vivify does not clobber existing branch' '
 	test_must_fail git worktree add precious &&
 	test_cmp_rev HEAD~1 precious &&
 	test_path_is_missing precious
+'
+
+test_expect_success '"add" no auto-vivify with --detach and <branch> omitted' '
+	git worktree add --detach mish/mash &&
+	test_must_fail git rev-parse mash -- &&
+	test_must_fail git -C mish/mash symbolic-ref HEAD
 '
 
 test_expect_success '"add" -b/-B mutually exclusive' '

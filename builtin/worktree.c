@@ -308,7 +308,7 @@ static int add(int ac, const char **av, const char *prefix)
 	if (opts.force_new_branch)
 		opts.new_branch = new_branch_force;
 
-	if (ac < 2 && !opts.new_branch) {
+	if (ac < 2 && !opts.new_branch && !opts.detach) {
 		int n;
 		const char *s = worktree_basename(path, &n);
 		opts.new_branch = xstrndup(s, n);
