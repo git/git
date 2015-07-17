@@ -266,7 +266,6 @@ static int add_worktree(const char *path, const char *refname,
 
 	fprintf_ln(stderr, _("Preparing %s (identifier %s)"), path, name);
 
-	setenv("GIT_CHECKOUT_NEW_WORKTREE", "1", 1);
 	argv_array_pushf(&child_env, "%s=%s", GIT_DIR_ENVIRONMENT, sb_git.buf);
 	argv_array_pushf(&child_env, "%s=%s", GIT_WORK_TREE_ENVIRONMENT, path);
 	memset(&cp, 0, sizeof(cp));
@@ -285,7 +284,7 @@ static int add_worktree(const char *path, const char *refname,
 
 	cp.argv = NULL;
 	argv_array_clear(&cp.args);
-	argv_array_push(&cp.args, "checkout");
+	argv_array_pushl(&cp.args, "reset", "--hard", NULL);
 	cp.env = child_env.argv;
 	ret = run_command(&cp);
 	if (!ret) {
