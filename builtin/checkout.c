@@ -873,7 +873,7 @@ static const char *unique_tracking_name(const char *name, unsigned char *sha1)
 	return NULL;
 }
 
-static void check_linked_checkout(struct branch_info *new, const char *id)
+static void check_linked_checkout(const char *branch, const char *id)
 {
 	struct strbuf sb = STRBUF_INIT;
 	struct strbuf path = STRBUF_INIT;
@@ -898,7 +898,7 @@ static void check_linked_checkout(struct branch_info *new, const char *id)
 	end = start;
 	while (*end && !isspace(*end))
 		end++;
-	if (strncmp(start, new->path, end - start) || new->path[end - start] != '\0')
+	if (strncmp(start, branch, end - start) || branch[end - start] != '\0')
 		goto done;
 	if (id) {
 		strbuf_reset(&path);
@@ -908,20 +908,21 @@ static void check_linked_checkout(struct branch_info *new, const char *id)
 		strbuf_rtrim(&gitdir);
 	} else
 		strbuf_addstr(&gitdir, get_git_common_dir());
-	die(_("'%s' is already checked out at '%s'"), new->name, gitdir.buf);
+	skip_prefix(branch, "refs/heads/", &branch);
+	die(_("'%s' is already checked out at '%s'"), branch, gitdir.buf);
 done:
 	strbuf_release(&path);
 	strbuf_release(&sb);
 	strbuf_release(&gitdir);
 }
 
-static void die_if_checked_out(struct branch_info *new)
+static void die_if_checked_out(const char *branch)
 {
 	struct strbuf path = STRBUF_INIT;
 	DIR *dir;
 	struct dirent *d;
 
-	check_linked_checkout(new, NULL);
+	check_linked_checkout(branch, NULL);
 
 	strbuf_addf(&path, "%s/worktrees", get_git_common_dir());
 	dir = opendir(path.buf);
@@ -932,7 +933,7 @@ static void die_if_checked_out(struct branch_info *new)
 	while ((d = readdir(dir)) != NULL) {
 		if (!strcmp(d->d_name, ".") || !strcmp(d->d_name, ".."))
 			continue;
-		check_linked_checkout(new, d->d_name);
+		check_linked_checkout(branch, d->d_name);
 	}
 	closedir(dir);
 }
@@ -1151,7 +1152,7 @@ static int checkout_branch(struct checkout_opts *opts,
 		char *head_ref = resolve_refdup("HEAD", 0, sha1, &flag);
 		if (head_ref &&
 		    (!(flag & REF_ISSYMREF) || strcmp(head_ref, new->path)))
-			die_if_checked_out(new);
+			die_if_checked_out(new->path);
 		free(head_ref);
 	}
 
