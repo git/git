@@ -184,10 +184,25 @@ test_expect_success 'rerere updates postimage timestamp' '
 '
 
 test_expect_success 'rerere clear' '
-	rm $rr/postimage &&
+	mv $rr/postimage .git/post-saved &&
 	echo "$sha1	a1" | perl -pe "y/\012/\000/" >.git/MERGE_RR &&
 	git rerere clear &&
 	! test -d $rr
+'
+
+test_expect_success 'leftover directory' '
+	git reset --hard &&
+	mkdir -p $rr &&
+	test_must_fail git merge first &&
+	test -f $rr/preimage
+'
+
+test_expect_success 'missing preimage' '
+	git reset --hard &&
+	mkdir -p $rr &&
+	cp .git/post-saved $rr/postimage &&
+	test_must_fail git merge first &&
+	test -f $rr/preimage
 '
 
 test_expect_success 'set up for garbage collection tests' '
