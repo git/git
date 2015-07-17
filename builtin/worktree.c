@@ -186,6 +186,7 @@ static int add_worktree(const char *path, const char **child_argv,
 	const char *name;
 	struct stat st;
 	struct child_process cp;
+	struct argv_array child_env = ARGV_ARRAY_INIT;
 	int counter = 0, len, ret;
 	unsigned char rev[20];
 
@@ -256,11 +257,12 @@ static int add_worktree(const char *path, const char **child_argv,
 	fprintf_ln(stderr, _("Preparing %s (identifier %s)"), path, name);
 
 	setenv("GIT_CHECKOUT_NEW_WORKTREE", "1", 1);
-	setenv(GIT_DIR_ENVIRONMENT, sb_git.buf, 1);
-	setenv(GIT_WORK_TREE_ENVIRONMENT, path, 1);
+	argv_array_pushf(&child_env, "%s=%s", GIT_DIR_ENVIRONMENT, sb_git.buf);
+	argv_array_pushf(&child_env, "%s=%s", GIT_WORK_TREE_ENVIRONMENT, path);
 	memset(&cp, 0, sizeof(cp));
 	cp.git_cmd = 1;
 	cp.argv = child_argv;
+	cp.env = child_env.argv;
 	ret = run_command(&cp);
 	if (!ret) {
 		is_junk = 0;
@@ -272,6 +274,7 @@ static int add_worktree(const char *path, const char **child_argv,
 	strbuf_reset(&sb);
 	strbuf_addf(&sb, "%s/locked", sb_repo.buf);
 	unlink_or_warn(sb.buf);
+	argv_array_clear(&child_env);
 	strbuf_release(&sb);
 	strbuf_release(&sb_repo);
 	strbuf_release(&sb_git);
