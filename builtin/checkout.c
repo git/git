@@ -910,7 +910,7 @@ done:
 	strbuf_release(&gitdir);
 }
 
-static void check_linked_checkouts(struct branch_info *new)
+static void die_if_checked_out(struct branch_info *new)
 {
 	struct strbuf path = STRBUF_INIT;
 	DIR *dir;
@@ -1152,7 +1152,7 @@ static int checkout_branch(struct checkout_opts *opts,
 		char *head_ref = resolve_refdup("HEAD", 0, sha1, &flag);
 		if (head_ref &&
 		    (!(flag & REF_ISSYMREF) || strcmp(head_ref, new->path)))
-			check_linked_checkouts(new);
+			die_if_checked_out(new);
 		free(head_ref);
 	}
 
