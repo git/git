@@ -167,4 +167,16 @@ test_expect_success '"add" auto-vivify does not clobber existing branch' '
 	test_path_is_missing precious
 '
 
+test_expect_success '"add" -b/-B mutually exclusive' '
+	test_must_fail git worktree add -b poodle -B poodle bamboo master
+'
+
+test_expect_success '"add" -b/--detach mutually exclusive' '
+	test_must_fail git worktree add -b poodle --detach bamboo master
+'
+
+test_expect_success '"add" -B/--detach mutually exclusive' '
+	test_must_fail git worktree add -B poodle --detach bamboo master
+'
+
 test_done
