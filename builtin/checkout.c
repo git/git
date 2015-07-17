@@ -924,17 +924,16 @@ static void die_if_checked_out(struct branch_info *new)
 	check_linked_checkout(new, NULL);
 
 	strbuf_addf(&path, "%s/worktrees", get_git_common_dir());
-	if ((dir = opendir(path.buf)) == NULL) {
-		strbuf_release(&path);
+	dir = opendir(path.buf);
+	strbuf_release(&path);
+	if (!dir)
 		return;
-	}
 
 	while ((d = readdir(dir)) != NULL) {
 		if (!strcmp(d->d_name, ".") || !strcmp(d->d_name, ".."))
 			continue;
 		check_linked_checkout(new, d->d_name);
 	}
-	strbuf_release(&path);
 	closedir(dir);
 }
 
