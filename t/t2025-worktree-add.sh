@@ -83,6 +83,14 @@ test_expect_success 'die the same branch is already checked out' '
 	)
 '
 
+test_expect_success SYMLINKS 'die the same branch is already checked out (symlink)' '
+	head=$(git -C there rev-parse --git-path HEAD) &&
+	ref=$(git -C there symbolic-ref HEAD) &&
+	rm "$head" &&
+	ln -s "$ref" "$head" &&
+	test_must_fail git -C here checkout newmaster
+'
+
 test_expect_success 'not die the same branch is already checked out' '
 	(
 		cd here &&
