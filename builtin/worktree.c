@@ -272,7 +272,7 @@ static int add_worktree(const char *path, const char **child_argv)
 
 static int add(int ac, const char **av, const char *prefix)
 {
-	int force = 0, detach = 0;
+	int force = 0, detach = 0, force_new_branch;
 	const char *new_branch = NULL, *new_branch_force = NULL;
 	const char *path, *branch;
 	struct argv_array cmd = ARGV_ARRAY_INIT;
@@ -295,7 +295,11 @@ static int add(int ac, const char **av, const char *prefix)
 	path = prefix ? prefix_filename(prefix, strlen(prefix), av[0]) : av[0];
 	branch = ac < 2 ? "HEAD" : av[1];
 
-	if (ac < 2 && !new_branch && !new_branch_force) {
+	force_new_branch = !!new_branch_force;
+	if (force_new_branch)
+		new_branch = new_branch_force;
+
+	if (ac < 2 && !new_branch) {
 		int n;
 		const char *s = worktree_basename(path, &n);
 		new_branch = xstrndup(s, n);
@@ -305,9 +309,8 @@ static int add(int ac, const char **av, const char *prefix)
 	if (force)
 		argv_array_push(&cmd, "--ignore-other-worktrees");
 	if (new_branch)
-		argv_array_pushl(&cmd, "-b", new_branch, NULL);
-	if (new_branch_force)
-		argv_array_pushl(&cmd, "-B", new_branch_force, NULL);
+		argv_array_pushl(&cmd, force_new_branch ? "-B" : "-b",
+				 new_branch, NULL);
 	if (detach)
 		argv_array_push(&cmd, "--detach");
 	argv_array_push(&cmd, branch);
