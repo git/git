@@ -909,6 +909,7 @@ static void check_linked_checkout(const char *branch, const char *id)
 	} else
 		strbuf_addstr(&gitdir, get_git_common_dir());
 	skip_prefix(branch, "refs/heads/", &branch);
+	strbuf_strip_suffix(&gitdir, ".git");
 	die(_("'%s' is already checked out at '%s'"), branch, gitdir.buf);
 done:
 	strbuf_release(&path);
