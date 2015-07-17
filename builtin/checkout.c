@@ -48,8 +48,6 @@ struct checkout_opts {
 	const char *prefix;
 	struct pathspec pathspec;
 	struct tree *source_tree;
-
-	int new_worktree_mode;
 };
 
 static int post_checkout_hook(struct commit *old, struct commit *new,
@@ -491,7 +489,7 @@ static int merge_working_tree(const struct checkout_opts *opts,
 			topts.dir->flags |= DIR_SHOW_IGNORED;
 			setup_standard_excludes(topts.dir);
 		}
-		tree = parse_tree_indirect(old->commit && !opts->new_worktree_mode ?
+		tree = parse_tree_indirect(old->commit ?
 					   old->commit->object.sha1 :
 					   EMPTY_TREE_SHA1_BIN);
 		init_tree_desc(&trees[0], tree->buffer, tree->size);
@@ -807,8 +805,7 @@ static int switch_branches(const struct checkout_opts *opts,
 		return ret;
 	}
 
-	if (!opts->quiet && !old.path && old.commit &&
-	    new->commit != old.commit && !opts->new_worktree_mode)
+	if (!opts->quiet && !old.path && old.commit && new->commit != old.commit)
 		orphaned_commit_warning(old.commit, new->commit);
 
 	update_refs_for_switch(opts, &old, new);
@@ -1150,8 +1147,6 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 
 	argc = parse_options(argc, argv, prefix, options, checkout_usage,
 			     PARSE_OPT_KEEP_DASHDASH);
-
-	opts.new_worktree_mode = getenv("GIT_CHECKOUT_NEW_WORKTREE") != NULL;
 
 	if (conflict_style) {
 		opts.merge = 1; /* implied */
