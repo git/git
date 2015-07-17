@@ -880,6 +880,11 @@ static void check_linked_checkout(struct branch_info *new, const char *id)
 	struct strbuf gitdir = STRBUF_INIT;
 	const char *start, *end;
 
+	/*
+	 * $GIT_COMMON_DIR/HEAD is practically outside
+	 * $GIT_DIR so resolve_ref_unsafe() won't work (it
+	 * uses git_path). Parse the ref ourselves.
+	 */
 	if (id)
 		strbuf_addf(&path, "%s/worktrees/%s/HEAD", get_git_common_dir(), id);
 	else
@@ -916,18 +921,13 @@ static void die_if_checked_out(struct branch_info *new)
 	DIR *dir;
 	struct dirent *d;
 
+	check_linked_checkout(new, NULL);
+
 	strbuf_addf(&path, "%s/worktrees", get_git_common_dir());
 	if ((dir = opendir(path.buf)) == NULL) {
 		strbuf_release(&path);
 		return;
 	}
-
-	/*
-	 * $GIT_COMMON_DIR/HEAD is practically outside
-	 * $GIT_DIR so resolve_ref_unsafe() won't work (it
-	 * uses git_path). Parse the ref ourselves.
-	 */
-	check_linked_checkout(new, NULL);
 
 	while ((d = readdir(dir)) != NULL) {
 		if (!strcmp(d->d_name, ".") || !strcmp(d->d_name, ".."))
