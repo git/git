@@ -278,12 +278,21 @@ static int add_worktree(const char *path, const char *refname,
 	argv_array_pushf(&child_env, "%s=%s", GIT_WORK_TREE_ENVIRONMENT, path);
 	memset(&cp, 0, sizeof(cp));
 	cp.git_cmd = 1;
+
+	if (commit)
+		argv_array_pushl(&cp.args, "update-ref", "HEAD",
+				 sha1_to_hex(commit->object.sha1), NULL);
+	else
+		argv_array_pushl(&cp.args, "symbolic-ref", "HEAD",
+				 symref.buf, NULL);
+	cp.env = child_env.argv;
+	ret = run_command(&cp);
+	if (ret)
+		goto done;
+
+	cp.argv = NULL;
+	argv_array_clear(&cp.args);
 	argv_array_push(&cp.args, "checkout");
-	if (opts->force)
-		argv_array_push(&cp.args, "--ignore-other-worktrees");
-	if (opts->detach)
-		argv_array_push(&cp.args, "--detach");
-	argv_array_push(&cp.args, refname);
 	cp.env = child_env.argv;
 	ret = run_command(&cp);
 	if (!ret) {
@@ -293,6 +302,7 @@ static int add_worktree(const char *path, const char *refname,
 		junk_work_tree = NULL;
 		junk_git_dir = NULL;
 	}
+done:
 	strbuf_reset(&sb);
 	strbuf_addf(&sb, "%s/locked", sb_repo.buf);
 	unlink_or_warn(sb.buf);
