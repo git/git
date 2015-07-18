@@ -2618,6 +2618,7 @@ proc makewindow {} {
 	{mc "Diff selected -> this" command {diffvssel 1}}
 	{mc "Make patch" command mkpatch}
 	{mc "Create tag" command mktag}
+	{mc "Copy commit summary" command copysummary}
 	{mc "Write commit to file" command writecommit}
 	{mc "Create new branch" command mkbranch}
 	{mc "Cherry-pick this commit" command cherrypick}
@@ -9358,6 +9359,20 @@ proc mktagcan {} {
 proc mktaggo {} {
     if {![domktag]} return
     mktagcan
+}
+
+proc copysummary {} {
+    global rowmenuid autosellen
+
+    set format "%h (\"%s\", %ad)"
+    set cmd [list git show -s --pretty=format:$format --date=short]
+    if {$autosellen < 40} {
+        lappend cmd --abbrev=$autosellen
+    }
+    set summary [eval exec $cmd $rowmenuid]
+
+    clipboard clear
+    clipboard append $summary
 }
 
 proc writecommit {} {
