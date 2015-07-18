@@ -934,4 +934,8 @@ struct tm *git_gmtime_r(const time_t *, struct tm *);
 # define SHELL_PATH "/bin/sh"
 #endif
 
+#ifndef mark_as_git_dir
+#define mark_as_git_dir(x) /* noop */
+#endif
+
 #endif
