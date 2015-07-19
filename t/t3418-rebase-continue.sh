@@ -40,6 +40,25 @@ test_expect_success 'non-interactive rebase --continue works with touched file' 
 	git rebase --continue
 '
 
+test_expect_success 'non-interactive rebase --continue with rerere enabled' '
+	test_config rerere.enabled true &&
+	test_when_finished "test_might_fail git rebase --abort" &&
+	git reset --hard commit-new-file-F2-on-topic-branch &&
+	git checkout master &&
+	rm -fr .git/rebase-* &&
+
+	test_must_fail git rebase --onto master master topic &&
+	echo "Resolved" >F2 &&
+	git add F2 &&
+	cp F2 F2.expected &&
+	git rebase --continue &&
+
+	git reset --hard commit-new-file-F2-on-topic-branch &&
+	git checkout master &&
+	test_must_fail git rebase --onto master master topic &&
+	test_cmp F2.expected F2
+'
+
 test_expect_success 'rebase --continue can not be used with other options' '
 	test_must_fail git rebase -v --continue &&
 	test_must_fail git rebase --continue -v
