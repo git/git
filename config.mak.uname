@@ -1,5 +1,9 @@
 # Platform specific Makefile tweaks based on uname detection
 
+# Define NO_SAFESEH if you need MSVC/Visual Studio to ignore the lack of
+# Microsoft's Safe Exception Handling in libraries (such as zlib).
+# Typically required for VS2013+/32-bit compilation on Vista+ versions.
+
 uname_S := $(shell sh -c 'uname -s 2>/dev/null || echo not')
 uname_M := $(shell sh -c 'uname -m 2>/dev/null || echo not')
 uname_O := $(shell sh -c 'uname -o 2>/dev/null || echo not')
@@ -418,6 +422,11 @@ ifeq ($(uname_S),Windows)
 	# release mode) to force a PDB to be generated (like RelWithDebInfo).
 	BASIC_CFLAGS += -Zi
 	BASIC_LDFLAGS += -debug
+
+ifdef NO_SAFESEH
+	LDFLAGS += -SAFESEH:NO
+endif
+
 ifndef DEBUG
 	BASIC_CFLAGS += -GL -Gy -O2 -Oy- -MD -DNDEBUG
 	BASIC_LDFLAGS += -release -LTCG /OPT:REF /OPT:ICF /INCREMENTAL:NO /DEBUGTYPE:CV,FIXUP
