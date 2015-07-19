@@ -67,6 +67,19 @@ test_expect_success 'setup: messages' '
 
 	EOF
 
+	cat >scissors-msg <<-\EOF &&
+	Test git-am with scissors line
+
+	This line should be included in the commit message.
+	EOF
+
+	cat - scissors-msg >no-scissors-msg <<-\EOF &&
+	This line should not be included in the commit message with --scissors enabled.
+
+	 - - >8 - - remove everything above this line - - >8 - -
+
+	EOF
+
 	signoff="Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>"
 '
 
@@ -104,6 +117,20 @@ test_expect_success setup '
 		echo "X-Fake-Field: Line Three" &&
 		git format-patch --stdout first | sed -e "1d"
 	} > patch1-ws.eml &&
+
+	echo scissors-file >scissors-file &&
+	git add scissors-file &&
+	git commit -F scissors-msg &&
+	git tag scissors &&
+	git format-patch --stdout scissors^ >scissors-patch.eml &&
+	git reset --hard HEAD^ &&
+
+	echo no-scissors-file >no-scissors-file &&
+	git add no-scissors-file &&
+	git commit -F no-scissors-msg &&
+	git tag no-scissors &&
+	git format-patch --stdout no-scissors^ >no-scissors-patch.eml &&
+	git reset --hard HEAD^ &&
 
 	sed -n -e "3,\$p" msg >file &&
 	git add file &&
@@ -303,6 +330,27 @@ test_expect_success 'am with failing post-applypatch hook' '
 	test_cmp_rev second HEAD &&
 	git rev-parse second >head.expected &&
 	test_cmp head.expected head.actual
+'
+
+test_expect_success 'am --scissors cuts the message at the scissors line' '
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
+	git checkout second &&
+	git am --scissors scissors-patch.eml &&
+	test_path_is_missing .git/rebase-apply &&
+	git diff --exit-code scissors &&
+	test_cmp_rev scissors HEAD
+'
+
+test_expect_success 'am --no-scissors overrides mailinfo.scissors' '
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
+	git checkout second &&
+	test_config mailinfo.scissors true &&
+	git am --no-scissors no-scissors-patch.eml &&
+	test_path_is_missing .git/rebase-apply &&
+	git diff --exit-code no-scissors &&
+	test_cmp_rev no-scissors HEAD
 '
 
 test_expect_success 'setup: new author and committer' '
