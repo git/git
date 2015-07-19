@@ -329,7 +329,7 @@ sub handleLinkLine
         } elsif ($part =~ /\.(o|obj)$/) {
             push(@objfiles, $part);
         } else {
-            die "Unhandled lib option @ line $lineno: $part";
+            die "Unhandled link option @ line $lineno: $part";
         }
     }
 #    print "AppOut: '$appout'\nLFlags: @lflags\nLibs  : @libs\nOfiles: @objfiles\n";
