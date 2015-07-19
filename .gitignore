@@ -232,5 +232,6 @@
 *.ipdb
 *.dll
 .vs/
-/Debug/
-/Release/
+*.manifest
+Debug/
+Release/
