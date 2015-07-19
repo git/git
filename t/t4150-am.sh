@@ -267,6 +267,44 @@ test_expect_success 'am with failing pre-applypatch hook' '
 	test_cmp_rev first HEAD
 '
 
+test_expect_success 'am with post-applypatch hook' '
+	test_when_finished "rm -f .git/hooks/post-applypatch" &&
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
+	git checkout first &&
+	mkdir -p .git/hooks &&
+	write_script .git/hooks/post-applypatch <<-\EOF &&
+	git rev-parse HEAD >head.actual
+	git diff second >diff.actual
+	exit 0
+	EOF
+	git am patch1 &&
+	test_path_is_missing .git/rebase-apply &&
+	test_cmp_rev second HEAD &&
+	git rev-parse second >head.expected &&
+	test_cmp head.expected head.actual &&
+	git diff second >diff.expected &&
+	test_cmp diff.expected diff.actual
+'
+
+test_expect_success 'am with failing post-applypatch hook' '
+	test_when_finished "rm -f .git/hooks/post-applypatch" &&
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
+	git checkout first &&
+	mkdir -p .git/hooks &&
+	write_script .git/hooks/post-applypatch <<-\EOF &&
+	git rev-parse HEAD >head.actual
+	exit 1
+	EOF
+	git am patch1 &&
+	test_path_is_missing .git/rebase-apply &&
+	git diff --exit-code second &&
+	test_cmp_rev second HEAD &&
+	git rev-parse second >head.expected &&
+	test_cmp head.expected head.actual
+'
+
 test_expect_success 'setup: new author and committer' '
 	GIT_AUTHOR_NAME="Another Thor" &&
 	GIT_AUTHOR_EMAIL="a.thor@example.com" &&
