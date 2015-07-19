@@ -154,6 +154,18 @@ test_expect_success 'am applies patch correctly' '
 	test "$(git rev-parse second^)" = "$(git rev-parse HEAD^)"
 '
 
+test_expect_success 'am fails if index is dirty' '
+	test_when_finished "rm -f dirtyfile" &&
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
+	git checkout first &&
+	echo dirtyfile >dirtyfile &&
+	git add dirtyfile &&
+	test_must_fail git am patch1 &&
+	test_path_is_dir .git/rebase-apply &&
+	test_cmp_rev first HEAD
+'
+
 test_expect_success 'am applies patch e-mail not in a mbox' '
 	rm -fr .git/rebase-apply &&
 	git reset --hard &&
