@@ -219,5 +219,6 @@
 *.pdb
 *.ilk
 .vs/
-/Debug/
-/Release/
+*.manifest
+Debug/
+Release/
