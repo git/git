@@ -560,20 +560,18 @@ sub createGlueProject {
     foreach (@apps) {
         $_ =~ s/\//_/g;
         $_ =~ s/\.exe//;
-        push(@tmp, $_);
+        if ($_ eq "git" ) {
+            unshift(@tmp, $_);
+        } else {
+            push(@tmp, $_);
+        }
     }
     @apps = @tmp;
 
     open F, ">git.sln" || die "Could not open git.sln for writing!\n";
     binmode F, ":crlf";
     print F "$SLN_HEAD";
-    foreach (@libs) {
-        my $libname = $_;
-        my $uuid = $build_structure{"LIBS_${libname}_GUID"};
-        print F "$SLN_PRE";
-        print F "\"${libname}\", \"${libname}\\${libname}.vcproj\", \"${uuid}\"";
-        print F "$SLN_POST";
-    }
+
     my $uuid_libgit = $build_structure{"LIBS_libgit_GUID"};
     my $uuid_xdiff_lib = $build_structure{"LIBS_xdiff_lib_GUID"};
     foreach (@apps) {
@@ -587,6 +585,13 @@ sub createGlueProject {
         print F "	EndProjectSection";
         print F "$SLN_POST";
     }
+    foreach (@libs) {
+        my $libname = $_;
+        my $uuid = $build_structure{"LIBS_${libname}_GUID"};
+        print F "$SLN_PRE";
+        print F "\"${libname}\", \"${libname}\\${libname}.vcproj\", \"${uuid}\"";
+        print F "$SLN_POST";
+    }
 
     print F << "EOM";
 Global
@@ -598,17 +603,17 @@ EOM
     print F << "EOM";
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 EOM
-    foreach (@libs) {
-        my $libname = $_;
-        my $uuid = $build_structure{"LIBS_${libname}_GUID"};
+    foreach (@apps) {
+        my $appname = $_;
+        my $uuid = $build_structure{"APPS_${appname}_GUID"};
         print F "\t\t${uuid}.Debug|Win32.ActiveCfg = Debug|Win32\n";
         print F "\t\t${uuid}.Debug|Win32.Build.0 = Debug|Win32\n";
         print F "\t\t${uuid}.Release|Win32.ActiveCfg = Release|Win32\n";
         print F "\t\t${uuid}.Release|Win32.Build.0 = Release|Win32\n";
     }
-    foreach (@apps) {
-        my $appname = $_;
-        my $uuid = $build_structure{"APPS_${appname}_GUID"};
+    foreach (@libs) {
+        my $libname = $_;
+        my $uuid = $build_structure{"LIBS_${libname}_GUID"};
         print F "\t\t${uuid}.Debug|Win32.ActiveCfg = Debug|Win32\n";
         print F "\t\t${uuid}.Debug|Win32.Build.0 = Debug|Win32\n";
         print F "\t\t${uuid}.Release|Win32.ActiveCfg = Release|Win32\n";
