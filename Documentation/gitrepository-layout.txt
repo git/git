@@ -251,9 +251,9 @@ modules::
 	Contains the git-repositories of the submodules.
 
 worktrees::
-	Contains worktree specific information of linked
-	checkouts. Each subdirectory contains the worktree-related
-	part of a linked checkout. This directory is ignored if
+	Contains working tree specific information of linked
+	working trees. Each subdirectory contains the working tree-related
+	part of a linked working tree. This directory is ignored if
 	$GIT_COMMON_DIR is set and "$GIT_COMMON_DIR/worktrees" will be
 	used instead.
 
@@ -265,9 +265,9 @@ worktrees/<id>/gitdir::
 	updated every time the linked repository is accessed.
 
 worktrees/<id>/locked::
-	If this file exists, the linked repository may be on a
+	If this file exists, the linked working tree may be on a
 	portable device and not available. It does not mean that the
-	linked repository is gone and `worktrees/<id>` could be
+	linked working tree is gone and `worktrees/<id>` could be
 	removed. The file's content contains a reason string on why
 	the repository is locked.
 
