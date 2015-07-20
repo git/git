@@ -122,6 +122,11 @@ static int has_rerere_resolution(const struct rerere_id *id)
 	return ((id->collection->status & both) == both);
 }
 
+static int has_rerere_preimage(const struct rerere_id *id)
+{
+	return (id->collection->status & RR_HAS_PREIMAGE);
+}
+
 static struct rerere_id *new_rerere_id_hex(char *hex)
 {
 	struct rerere_id *id = xmalloc(sizeof(*id));
@@ -749,8 +754,24 @@ static void do_rerere_one_path(struct string_list_item *rr_item,
 	const char *path = rr_item->string;
 	const struct rerere_id *id = rr_item->util;
 
-	/* Is there a recorded resolution we could attempt to apply? */
-	if (has_rerere_resolution(id)) {
+	if (!has_rerere_preimage(id)) {
+		/*
+		 * We are the first to encounter this conflict.  Ask
+		 * handle_file() to write the normalized contents to
+		 * the "preimage" file.
+		 */
+		handle_file(path, NULL, rerere_path(id, "preimage"));
+		if (id->collection->status & RR_HAS_POSTIMAGE) {
+			const char *path = rerere_path(id, "postimage");
+			if (unlink(path))
+				die_errno("cannot unlink stray '%s'", path);
+			id->collection->status &= ~RR_HAS_POSTIMAGE;
+		}
+		id->collection->status |= RR_HAS_PREIMAGE;
+		fprintf(stderr, "Recorded preimage for '%s'\n", path);
+		return;
+	} else if (has_rerere_resolution(id)) {
+		/* Is there a recorded resolution we could attempt to apply? */
 		if (merge(id, path))
 			return; /* failed to replay */
 
@@ -807,31 +828,8 @@ static int do_plain_rerere(struct string_list *rr, int fd)
 		id = new_rerere_id(sha1);
 		string_list_insert(rr, path)->util = id;
 
-		/*
-		 * Ensure that the directory exists.
-		 * mkdir_in_gitdir() will fail with EEXIST if there
-		 * already is one.
-		 */
-		if (mkdir_in_gitdir(rerere_path(id, NULL)) &&
-		    errno != EEXIST)
-			continue; /* NEEDSWORK: perhaps we should die? */
-
-		if (id->collection->status & RR_HAS_PREIMAGE) {
-			;
-		} else {
-			/*
-			 * We are the first to encounter this
-			 * conflict.  Ask handle_file() to write the
-			 * normalized contents to the "preimage" file.
-			 *
-			 * NEEDSWORK: what should happen if we had a
-			 * leftover postimage that is totally
-			 * unrelated?  Perhaps we should unlink it?
-			 */
-			handle_file(path, NULL, rerere_path(id, "preimage"));
-			id->collection->status |= RR_HAS_PREIMAGE;
-			fprintf(stderr, "Recorded preimage for '%s'\n", path);
-		}
+		/* Ensure that the directory exists. */
+		mkdir_in_gitdir(rerere_path(id, NULL));
 	}
 
 	for (i = 0; i < rr->nr; i++)
