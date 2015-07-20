@@ -1,18 +1,15 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jul 2015, #04; Mon, 13)
-X-master-at: 01977f46cb48e2894e335667eaabce274174ac5e
-X-next-at: 96fd69be6df34ee40ec1cf02764f3ddd6e3f6a83
+Subject: What's cooking in git.git (Jul 2015, #05; Mon, 20)
+X-master-at: fbdeabf1f0992e41237caee8fc357849e0038a82
+X-next-at: 76e840bed084a99e9de166e429c25bc0b2d6a698
 
-What's cooking in git.git (Jul 2015, #04; Mon, 13)
+What's cooking in git.git (Jul 2015, #05; Mon, 20)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
-
-2.5.0-rc2 today, 2.5.0-rc3 next week today.  We'll judge when to end
-the cycle, reviewing what we have, at that point.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -20,139 +17,71 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
+[New Topics]
 
-* es/worktree-add (2015-07-12) 24 commits
-  (merged to 'next' on 2015-07-12 at 4926868)
- + Revert "checkout: retire --ignore-other-worktrees in favor of --force"
-  (merged to 'next' on 2015-07-10 at 304e329)
- + checkout: retire --ignore-other-worktrees in favor of --force
- + worktree: add: auto-vivify new branch when <branch> is omitted
- + worktree: add: make -b/-B default to HEAD when <branch> is omitted
- + worktree: extract basename computation to new function
- + checkout: require worktree unconditionally
- + checkout: retire --to option
- + tests: worktree: retrofit "checkout --to" tests for "worktree add"
- + worktree: add -b/-B options
- + worktree: add --detach option
- + worktree: add --force option
- + worktree: introduce "add" command
- + checkout: drop 'checkout_opts' dependency from prepare_linked_checkout
- + checkout: make --to unconditionally verbose
- + checkout: prepare_linked_checkout: drop now-unused 'new' argument
- + checkout: relocate --to's "no branch specified" check
- + checkout: fix bug with --to and relative HEAD
- + Documentation/git-worktree: add EXAMPLES section
- + Documentation/git-worktree: add high-level 'lock' overview
- + Documentation/git-worktree: split technical info from general description
- + Documentation/git-worktree: add BUGS section
- + Documentation: move linked worktree description from checkout to worktree
- + Documentation/git-worktree: associate options with commands
- + Documentation/git-checkout: fix incorrect worktree prune command
- (this branch is used by es/worktree-add-cleanup; uses nd/multiple-work-trees.)
+* zb/userdiff-fountain (2015-07-17) 1 commit
+ - userdiff: add support for Fountain documents
 
- Update to the "linked checkout" in 2.5.0-rc1.
+ New userdiff pattern definition for fountain screenwriting markup
+ format.
 
- Instead of "checkout --to" that does not do what "checkout"
- normally does, move the functionality to "git worktree add".
-
- As this makes the end-user experience of the "worktree add" more or
- less complete, I am tempted to say we should cook the other topic
- that removes the internal "new-worktree-mode" hack from "checkout"
- a bit longer in 'next', and release 2.5 final without that one.
+ Needs another reroll? ($gmane/274354)
 
 
-* et/http-proxyauth (2015-06-29) 1 commit
-  (merged to 'next' on 2015-07-09 at cf80874)
- + http: always use any proxy auth method available
+* as/sparse-checkout-removal (2015-07-17) 1 commit
+ - unpack-trees: don't update files with CE_WT_REMOVE set
 
- We used to ask libCURL to use the most secure authentication method
- available when talking to an HTTP proxy only when we were told to
- talk to one via configuration variables.  We now ask libCURL to
- always use the most secure authentication method, because the user
- can tell libCURL to use an HTTP proxy via an environment variable
- without using configuration variables.
+ Duy's replacement needs to be applied ($gmane/274158).
 
 
-* jc/fsck-retire-require-eoh (2015-06-28) 1 commit
-  (merged to 'next' on 2015-07-09 at dbc292b)
- + fsck: it is OK for a tag and a commit to lack the body
+* cb/uname-in-untracked (2015-07-17) 1 commit
+ - untracked: fix detection of uname(2) failure
 
- A fix to a minor regression to "git fsck" in v2.2 era that started
- complaining about a body-less tag object when it lacks a separator
- empty line after its header to separate it with a non-existent body.
+ An experimental "untracked cache" feature used to use uname(2) in a
+ slightly unportable way.
 
-
-* jc/unexport-git-pager-in-use-in-pager (2015-07-03) 1 commit
-  (merged to 'next' on 2015-07-09 at bff19cd)
- + pager: do not leak "GIT_PAGER_IN_USE" to the pager
-
- When you say "!<ENTER>" while running say "git log", you'd confuse
- yourself in the resulting shell, that may look as if you took
- control back to the original shell you spawned "git log" from but
- that isn't what is happening.  To that new shell, we leaked
- GIT_PAGER_IN_USE environment variable that was meant as a local
- communication between the original "Git" and subprocesses that was
- spawned by it after we launched the pager, which caused many
- "interesting" things to happen, e.g. "git diff | cat" still paints
- its output in color by default.
-
- Stop leaking that environment variable to the pager's half of the
- fork; we only need it on "Git" side when we spawn the pager.
+ Will merge to 'next'.
 
 
-* js/rebase-i-clean-up-upon-continue-to-skip (2015-06-29) 2 commits
-  (merged to 'next' on 2015-07-09 at b844d9a)
- + rebase -i: do not leave a CHERRY_PICK_HEAD file behind
- + t3404: demonstrate CHERRY_PICK_HEAD bug
+* jc/rerere-multi (2015-07-20) 5 commits
+ - t4200: rerere a merge with two identical conflicts
+ - rerere: delay the recording of preimage for the first time
+ - rerere: handle leftover rr-cache/$ID directory and postimage files
+ - rerere: scan $GIT_DIR/rr-cache/$ID when instantiating a rerere_id
+ - rerere: split conflict ID further
+ (this branch uses jc/rerere.)
 
- Abandoning an already applied change in "git rebase -i" with
- "--continue" left CHERRY_PICK_HEAD and confused later steps.
-
-
-* kb/config-unmap-before-renaming (2015-06-30) 1 commit
-  (merged to 'next' on 2015-07-10 at 6b89478)
- + config.c: fix writing config files on Windows network shares
-
- "git config" failed to update the configuration file when the
- underlying filesystem is incapable of renaming a file that is still
- open.
+ This is a contination of jc/rerere topic.
 
 
-* kb/use-nsec-doc (2015-07-01) 1 commit
-  (merged to 'next' on 2015-07-09 at e7e5a05)
- + Makefile / racy-git.txt: clarify USE_NSEC prerequisites
+* bw/portability-solaris (2015-07-20) 3 commits
+ - tests: fix sed usage in tests to work around broken xpg4/sed on Solaris
+ - tests: fix sed usage in tests to work around broken xpg4/sed on Solaris
+ - tests: modify tr expressions so that xpg4/tr handles it on Solaris
 
- Clarify in the Makefile a guideline to decide use of USE_NSEC.
-
-
-* mh/strbuf-read-file-returns-ssize-t (2015-07-03) 1 commit
-  (merged to 'next' on 2015-07-09 at 0d8544e)
- + strbuf: strbuf_read_file() should return ssize_t
-
- Avoid possible ssize_t to int truncation.
+ Needs another reroll? ($gmane/274296)
 
 
-* nd/multiple-work-trees (2015-06-29) 2 commits
-  (merged to 'next' on 2015-06-29 at fd4eb60)
- + worktree: new place for "git prune --worktrees"
-  (merged to 'next' on 2015-06-24 at 7c3f918)
- + checkout: don't check worktrees when not necessary
- (this branch is used by es/worktree-add and es/worktree-add-cleanup.)
+* es/worktree-add (2015-07-20) 5 commits
+  (merged to 'next' on 2015-07-20 at 76e840b)
+ + config: rename "gc.pruneWorktreesExpire" to "gc.worktreePruneExpire"
+ + Documentation/git-worktree: wordsmith worktree-related manpages
+ + Documentation/config: fix stale "git prune --worktree" reference
+ + Documentation/git-worktree: fix incorrect reference to file "locked"
+ + Documentation/git-worktree: consistently use term "linked working tree"
+ (this branch is used by es/worktree-add-cleanup.)
 
- "git checkout [<tree-ish>] <paths>" spent unnecessary cycles
- checking if the current branch was checked out elsewhere, when we
- know we are not switching the branches ourselves.
+ Will merge to 'master'.
 
 
-* ss/clone-guess-dir-name-simplify (2015-07-09) 1 commit
-  (merged to 'next' on 2015-07-10 at 8a62f4d)
- + clone: simplify string handling in guess_dir_name()
+* sg/bash-prompt-untracked-optim (2015-07-20) 2 commits
+ - bash prompt: faster untracked status indicator with untracked directories
+ - bash prompt: test untracked files status indicator with untracked dirs
 
- Code simplification.
+ Will merge to 'next'.
 
 --------------------------------------------------
-[New Topics]
+[Graduated to "master"]
 
 * jc/diff-ws-error-highlight (2015-07-12) 1 commit
   (merged to 'next' on 2015-07-12 at 15b60ce)
@@ -161,72 +90,13 @@ of the repositories listed at
  A hotfix to a new feature in 2.5.0-rc.
 
 
-* es/worktree-add-cleanup (2015-07-13) 17 commits
- - checkout: drop intimate knowledge of new worktree initial population
- - worktree: populate via "git reset --hard" rather than "git checkout"
- - worktree: avoid resolving HEAD unnecessarily
- - worktree: make setup of new HEAD distinct from worktree population
- - fixup! worktree: detect branch symref/detach and error conditions locally
- - worktree: detect branch symref/detach and error conditions locally
- - worktree: add_worktree: construct worktree-population command locally
- - worktree: make branch creation distinct from worktree population
- - worktree: make --detach mutually exclusive with -b/-B
- - worktree: introduce options container
- - worktree: simplify new branch (-b/-B) option checking
- - branch: publish die_if_checked_out()
- - checkout: generalize die_if_checked_out() branch name argument
- - checkout: die_if_checked_out: simplify strbuf management
- - checkout: improve die_if_checked_out() robustness
- - checkout: name check_linked_checkouts() more meaningfully
- - checkout: avoid resolving HEAD unnecessarily
+* jk/still-interesting (2015-06-29) 1 commit
+  (merged to 'next' on 2015-07-09 at e19fc0e)
+ + revision.c: remove unneeded check for NULL
 
- Remove the "new-worktree-mode" hack in "checkout" that was added in
- nd/multiple-work-trees topic by updating the implementation of new
- "worktree add".
+ Code clean-up.
 
- Need to look at the fixup! more and then amend it.  After that
- will think if this should be part of 2.5 final.  My current
- thinking is we should ship 2.5 with es/worktree-add but not this
- one, as the end-user experience would not change.
-
-
-* ib/scripted-parse-opt-better-hint-string (2015-07-13) 1 commit
- - rev-parse --parseopt: allow [*=?!] in argument hints
-
- The "rev-parse --parseopt" mode parsed the option specification
- and the argument hint in a strange way to allow '=' and other
- special characters in the option name while forbidding them from
- the argument hint.  This made it impossible to define an option
- like "--pair <key>=<value>" with "pair=key=value" specification,
- which instead would have defined a "--pair=key <value>" option.
-
- Will merge to 'next'.
-
-
-* mh/fast-import-optimize-current-from (2015-07-13) 1 commit
- - fast-import: do less work when given "from" matches current branch head
-
- Often a fast-import stream builds a new commit on top of the
- previous commit it built, and it often unconditionally emits a
- "from" command to specify the first parent, which can be omitted in
- such a case.  This caused fast-import to forget the tree of the
- previous commit and then re-read it from scratch, which was
- inefficient.  Optimize for this common case.
-
- Will merge to 'next'.
-
-
-* mh/notes-allow-reading-treeish (2015-07-13) 1 commit
- - notes: allow treeish expressions as notes ref
-
- Some "git notes" operations, e.g. "git log --notes=<note>", should
- be able to read notes from any tree-ish that is shaped like a notes
- tree, but the notes infrastructure required that the argument must
- be a ref under refs/notes/.  Loosen it to require a valid ref only
- when the operation would update the notes (in which case we must
- have a place to store the updated notes tree, iow, a ref).
-
- Needs update to docs.
+ Will merge to 'master'.
 
 --------------------------------------------------
 [Stalled]
@@ -423,6 +293,79 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* es/worktree-add-cleanup (2015-07-20) 22 commits
+ - checkout: drop intimate knowledge of newly created worktree
+ - worktree: populate via "git reset --hard" rather than "git checkout"
+ - worktree: avoid resolving HEAD unnecessarily
+ - worktree: make setup of new HEAD distinct from worktree population
+ - worktree: detect branch-name/detached and error conditions locally
+ - worktree: add_worktree: construct worktree-population command locally
+ - worktree: elucidate environment variables intended for child processes
+ - worktree: make branch creation distinct from worktree population
+ - worktree: add: suppress auto-vivication with --detach and no <branch>
+ - worktree: make --detach mutually exclusive with -b/-B
+ - worktree: introduce options container
+ - worktree: simplify new branch (-b/-B) option checking
+ - worktree: improve worktree setup message
+ - branch: publish die_if_checked_out()
+ - checkout: teach check_linked_checkout() about symbolic link HEAD
+ - checkout: check_linked_checkout: simplify symref parsing
+ - checkout: check_linked_checkout: improve "already checked out" aesthetic
+ - checkout: generalize die_if_checked_out() branch name argument
+ - checkout: die_if_checked_out: simplify strbuf management
+ - checkout: improve die_if_checked_out() robustness
+ - checkout: name check_linked_checkouts() more meaningfully
+ - checkout: avoid resolving HEAD unnecessarily
+ (this branch uses es/worktree-add.)
+
+ Remove the "new-worktree-mode" hack in "checkout" that was added in
+ nd/multiple-work-trees topic by updating the implementation of new
+ "worktree add".
+
+ Will merge to 'next'.
+
+
+* ib/scripted-parse-opt-better-hint-string (2015-07-15) 1 commit
+  (merged to 'next' on 2015-07-17 at 7bb1674)
+ + rev-parse --parseopt: allow [*=?!] in argument hints
+
+ The "rev-parse --parseopt" mode parsed the option specification
+ and the argument hint in a strange way to allow '=' and other
+ special characters in the option name while forbidding them from
+ the argument hint.  This made it impossible to define an option
+ like "--pair <key>=<value>" with "pair=key=value" specification,
+ which instead would have defined a "--pair=key <value>" option.
+
+ Will merge to 'master'.
+
+
+* mh/fast-import-optimize-current-from (2015-07-13) 1 commit
+  (merged to 'next' on 2015-07-15 at 2be8b1f)
+ + fast-import: do less work when given "from" matches current branch head
+
+ Often a fast-import stream builds a new commit on top of the
+ previous commit it built, and it often unconditionally emits a
+ "from" command to specify the first parent, which can be omitted in
+ such a case.  This caused fast-import to forget the tree of the
+ previous commit and then re-read it from scratch, which was
+ inefficient.  Optimize for this common case.
+
+ Will merge to 'master'.
+
+
+* mh/notes-allow-reading-treeish (2015-07-13) 1 commit
+ - notes: allow treeish expressions as notes ref
+
+ Some "git notes" operations, e.g. "git log --notes=<note>", should
+ be able to read notes from any tree-ish that is shaped like a notes
+ tree, but the notes infrastructure required that the argument must
+ be a ref under refs/notes/.  Loosen it to require a valid ref only
+ when the operation would update the notes (in which case we must
+ have a place to store the updated notes tree, iow, a ref).
+
+ Needs update to docs.
+
+
 * dt/log-follow-config (2015-07-09) 1 commit
   (merged to 'next' on 2015-07-10 at b8fbb43)
  + log: add "log.follow" configuration variable
@@ -434,9 +377,10 @@ of the repositories listed at
 
 
 * kn/tag-doc-fix (2015-07-10) 1 commit
- - Documentation/tag: remove double occurance of "<pattern>"
+  (merged to 'next' on 2015-07-15 at 7bd6038)
+ + Documentation/tag: remove double occurance of "<pattern>"
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * se/doc-checkout-ours-theirs (2015-07-12) 1 commit
@@ -449,7 +393,7 @@ of the repositories listed at
  the "checkout --ours/--theirs".
 
 
-* pt/am-tests (2015-07-07) 12 commits
+* pt/am-tests (2015-07-20) 12 commits
  - t3901: test git-am encoding conversion
  - t3418: non-interactive rebase --continue with rerere enabled
  - t4150: tests for am --[no-]scissors
@@ -463,29 +407,33 @@ of the repositories listed at
  - t4150: am fails if index is dirty
  - t4150: am.messageid really adds the message id
 
- Sprinkle a few test prereqs ($gmane/273709)?
-
- Needs a reroll.
+ Will merge to 'next'.
 
 
 * kn/for-each-tag-branch (2015-07-13) 11 commits
- - for-each-ref: add '--contains' option
- - ref-filter: implement '--contains' option
- - parse-options.h: add macros for '--contains' option
- - parse-option: rename parse_opt_with_commit()
- - for-each-ref: add '--merged' and '--no-merged' options
- - ref-filter: implement '--merged' and '--no-merged' options
- - ref-filter: add parse_opt_merge_filter()
- - for-each-ref: add '--points-at' option
- - ref-filter: implement '--points-at' option
- - tag: libify parse_opt_points_at()
- - t6302: for-each-ref tests for ref-filter APIs
+  (merged to 'next' on 2015-07-15 at bf5418f)
+ + for-each-ref: add '--contains' option
+ + ref-filter: implement '--contains' option
+ + parse-options.h: add macros for '--contains' option
+ + parse-option: rename parse_opt_with_commit()
+ + for-each-ref: add '--merged' and '--no-merged' options
+ + ref-filter: implement '--merged' and '--no-merged' options
+ + ref-filter: add parse_opt_merge_filter()
+ + for-each-ref: add '--points-at' option
+ + ref-filter: implement '--points-at' option
+ + tag: libify parse_opt_points_at()
+ + t6302: for-each-ref tests for ref-filter APIs
  (this branch uses kn/for-each-ref.)
 
- Was the GPG prereq the only thing that needed fixing?
+ Port features over from tag -l and branch -l to for-each-ref
+ so that eventually the unified implementation can be used to
+ reimplement tag -l and branch -l, shared across all three, in
+ a follow-up series or two.
+
+ Will merge to 'master'.
 
 
-* pt/am-builtin (2015-07-08) 47 commits
+* pt/am-builtin (2015-07-20) 46 commits
  - builtin-am: remove redirection to git-am.sh
  - builtin-am: check for valid committer ident
  - builtin-am: implement legacy -b/--binary option
@@ -509,7 +457,6 @@ of the repositories listed at
  - builtin-am: implement -k/--keep, --keep-non-patch
  - builtin-am: implement -u/--utf8
  - builtin-am: handle stray state directory
- - fixup! builtin-am: bypass git-mailinfo when --rebasing
  - builtin-am: bypass git-mailinfo when --rebasing
  - builtin-am: implement --rebasing mode
  - builtin-am: implement --3way, am.threeWay
@@ -520,11 +467,11 @@ of the repositories listed at
  - builtin-am: reject patches when there's a session in progress
  - builtin-am: implement --abort
  - builtin-am: implement --skip
+ - builtin-am: don't parse mail when resuming
  - builtin-am: implement --resolved/--continue
  - builtin-am: refuse to apply patches if index is dirty
  - builtin-am: implement committing applied patch
  - builtin-am: apply patch with git-apply
- - fixup! builtin-am: extract patch and commit info with git-mailinfo
  - builtin-am: extract patch and commit info with git-mailinfo
  - builtin-am: auto-detect mbox patches
  - builtin-am: split out mbox/maildir patches with git-mailsplit
@@ -536,9 +483,6 @@ of the repositories listed at
  (this branch uses pt/pull-builtin.)
 
  Rewrite "am" in "C".
-
- Looks more-or-less ready.  Any reroll needed other than squashing
- these fixup! in?
 
 
 * ad/bisect-cleanup (2015-06-29) 6 commits
@@ -557,9 +501,10 @@ of the repositories listed at
 
 
 * mh/fast-import-get-mark (2015-07-01) 1 commit
- - fast-import: add a get-mark command
+  (merged to 'next' on 2015-07-15 at 5e034b9)
+ + fast-import: add a get-mark command
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * kb/i18n-doc (2015-07-01) 1 commit
@@ -569,14 +514,13 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* dt/refs-backend-preamble (2015-07-08) 8 commits
+* dt/refs-backend-preamble (2015-07-13) 7 commits
  - git-stash: use update-ref --create-reflog instead of creating files
  - update-ref and tag: add --create-reflog arg
+ - refs: add REF_FORCE_CREATE_REFLOG flag
  - git-reflog: add exists command
  - refs: new public ref function: safe_create_reflog
  - refs: Break out check for reflog autocreation
- - bisect: treat BISECT_HEAD as a ref
- - cherry-pick: treat CHERRY_PICK_HEAD and REVERT_HEAD as refs
  - refs.c: add err arguments to reflog functions
 
  In preparation for allowing different "backends" to store the refs
@@ -602,15 +546,6 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* jk/still-interesting (2015-06-29) 1 commit
-  (merged to 'next' on 2015-07-09 at e19fc0e)
- + revision.c: remove unneeded check for NULL
-
- Code clean-up.
-
- Will merge to 'master'.
-
-
 * nd/export-worktree (2015-06-26) 1 commit
   (merged to 'next' on 2015-07-09 at 1581a9b)
  + setup: set env $GIT_WORK_TREE when work tree is set, like $GIT_DIR
@@ -621,10 +556,9 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* jc/rerere (2015-07-06) 19 commits
- . t4200: rerere a merge with two identical conflicts
- . rerere: un-nest merge() further
- . rerere: use "struct rerere_id" instead of "char *" for conflict ID
+* jc/rerere (2015-07-18) 18 commits
+ - rerere: un-nest merge() further
+ - rerere: use "struct rerere_id" instead of "char *" for conflict ID
  - rerere: call conflict-ids IDs
  - rerere: further clarify do_rerere_one_path()
  - rerere: further de-dent do_plain_rerere()
@@ -641,6 +575,7 @@ of the repositories listed at
  - rerere: lift PATH_MAX limitation
  - rerere: plug conflict ID leaks
  - rerere: fix an off-by-one non-bug
+ (this branch is used by jc/rerere-multi.)
 
  Code clean-up and minor fixes (so far).
 
@@ -843,6 +778,8 @@ of the repositories listed at
  Add an environment variable to tell Git to look into refs hierarchy
  other than refs/replace/ for the object replacement data.
 
+ Will merge to 'master'.
+
 
 * gp/status-rebase-i-info (2015-07-06) 4 commits
   (merged to 'next' on 2015-07-10 at b121298)
@@ -888,6 +825,8 @@ of the repositories listed at
 
  Various enhancements around "git am" reading patches generated by
  foreign SCM.
+
+ Will merge to 'master'.
 
 
 * pt/pull-builtin (2015-06-18) 19 commits
@@ -979,16 +918,17 @@ of the repositories listed at
 
 
 * gr/rebase-i-drop-warn (2015-06-30) 3 commits
- - git rebase -i: add static check for commands and SHA-1
- - git rebase -i: warn about removed commits
- - git-rebase -i: add command "drop" to remove a commit
+  (merged to 'next' on 2015-07-15 at 6f4f2c8)
+ + git rebase -i: add static check for commands and SHA-1
+ + git rebase -i: warn about removed commits
+ + git-rebase -i: add command "drop" to remove a commit
 
  Add "drop commit-object-name subject" command as another way to
  skip replaying of a commit in "rebase -i", and then punish those
  who do not use it (and instead just remove the lines) by throwing
  a warning.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jh/strbuf-read-use-read-in-full (2015-06-01) 1 commit
@@ -1035,12 +975,13 @@ of the repositories listed at
 
 
 * jc/commit-slab (2015-05-22) 1 commit
- - commit-slab: introduce slabname##_peek() function
+  (merged to 'next' on 2015-07-15 at 4c83475)
+ + commit-slab: introduce slabname##_peek() function
 
  Memory use reduction when commit-slab facility is used to annotate
  sparsely (which is not recommended in the first place).
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jc/clone-bundle (2015-04-30) 1 commit
