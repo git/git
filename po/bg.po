@@ -22,7 +22,7 @@
 # bisect двоично търсене
 # am прилагам поредица от кръпки
 # working directory/tree — винаги работно дърво, git следи цялото дърво, а не директории, работна директория за cwd
-# switch to branch прехвърлям се/преминавам към клон
+# switch to branch преминавам към клон
 # sparse entry частично изтеглена директория/път
 # revision range диапазон на версиите
 # cover letter придружаващо писмо
@@ -59,6 +59,7 @@
 # cwd текуща работна директория
 # untracked cache кеш за неследените файлове
 # broken/corrupt повреден
+# restore възстановявам
 # ----
 # FAILED to parse неуспешен анализ на... -> неразпозната стойност на
 # blob обект BLOB
@@ -107,8 +108,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: git master\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2015-06-27 19:17+0800\n"
-"PO-Revision-Date: 2015-06-28 22:46+0300\n"
+"POT-Creation-Date: 2015-07-14 07:19+0800\n"
+"PO-Revision-Date: 2015-07-14 19:05+0300\n"
 "Last-Translator: Alexander Shopov <ash@kambanaria.org>\n"
 "Language-Team: Bulgarian <dict@fsa-bg.org>\n"
 "Language: bg\n"
@@ -764,8 +765,8 @@ msgstr "ГРЕШКА В GIT: преотваряне на файл-ключалк
 msgid "failed to read the cache"
 msgstr "кешът не може да бъде прочетен"
 
-#: merge.c:94 builtin/checkout.c:383 builtin/checkout.c:594
-#: builtin/clone.c:654
+#: merge.c:94 builtin/checkout.c:376 builtin/checkout.c:587
+#: builtin/clone.c:647
 msgid "unable to write new index file"
 msgstr "неуспешно записване на новия индекс"
 
@@ -814,7 +815,7 @@ msgstr "обектът „%s“ (%s) не може да бъде прочете�
 msgid "blob expected for %s '%s'"
 msgstr "обектът „%s“ (%s) се очакваше да е BLOB, а не е"
 
-#: merge-recursive.c:788 builtin/clone.c:313
+#: merge-recursive.c:788 builtin/clone.c:306
 #, c-format
 msgid "failed to open '%s'"
 msgstr "директорията „%s“ не може да бъде отворена"
@@ -2176,7 +2177,7 @@ msgstr "изтрит"
 msgid "behind "
 msgstr "назад с "
 
-#: compat/precompose_utf8.c:55 builtin/clone.c:352
+#: compat/precompose_utf8.c:55 builtin/clone.c:345
 #, c-format
 msgid "failed to unlink '%s'"
 msgstr "неуспешно изтриване на „%s“"
@@ -2255,7 +2256,7 @@ msgstr "повече подробности"
 msgid "interactive picking"
 msgstr "интерактивно отбиране на промени"
 
-#: builtin/add.c:253 builtin/checkout.c:1364 builtin/reset.c:286
+#: builtin/add.c:253 builtin/checkout.c:1221 builtin/reset.c:286
 msgid "select hunks interactively"
 msgstr "интерактивен избор на парчета код"
 
@@ -2613,7 +2614,7 @@ msgstr "Кръпката „%s“ не може да бъде приложена
 msgid "Checking patch %s..."
 msgstr "Проверяване на кръпката „%s“…"
 
-#: builtin/apply.c:3909 builtin/checkout.c:237 builtin/reset.c:135
+#: builtin/apply.c:3909 builtin/checkout.c:233 builtin/reset.c:135
 #, c-format
 msgid "make_cache_entry failed for path '%s'"
 msgstr "неуспешно създаване на запис в кеша чрез „make_cache_entry“ за „%s“"
@@ -3336,7 +3337,7 @@ msgstr "извеждане по колони"
 msgid "Failed to resolve HEAD as a valid ref."
 msgstr "Не може да се открие към какво сочи указателят „HEAD“"
 
-#: builtin/branch.c:878 builtin/clone.c:629
+#: builtin/branch.c:878 builtin/clone.c:622
 msgid "HEAD not found below refs/heads!"
 msgstr "В директорията „refs/heads“ липсва файл „HEAD“"
 
@@ -3543,7 +3544,7 @@ msgstr "изчитане на имената на файловете от ста
 msgid "terminate input and output records by a NUL character"
 msgstr "разделяне на входните и изходните записи с нулевия знак „NUL“"
 
-#: builtin/check-ignore.c:18 builtin/checkout.c:1345 builtin/gc.c:279
+#: builtin/check-ignore.c:18 builtin/checkout.c:1202 builtin/gc.c:279
 msgid "suppress progress reporting"
 msgstr "без показване на напредъка"
 
@@ -3643,117 +3644,116 @@ msgstr "при създаването на нови файлове да се д�
 msgid "copy out the files from named stage"
 msgstr "копиране на файловете от това състояние на сливане"
 
-#: builtin/checkout.c:26
+#: builtin/checkout.c:24
 msgid "git checkout [<options>] <branch>"
 msgstr "git checkout [ОПЦИЯ…] КЛОН"
 
-#: builtin/checkout.c:27
+#: builtin/checkout.c:25
 msgid "git checkout [<options>] [<branch>] -- <file>..."
 msgstr "git checkout [ОПЦИЯ…] [КЛОН] -- ФАЙЛ…"
 
-#: builtin/checkout.c:138 builtin/checkout.c:171
+#: builtin/checkout.c:134 builtin/checkout.c:167
 #, c-format
 msgid "path '%s' does not have our version"
 msgstr "вашата версия липсва в пътя „%s“"
 
-#: builtin/checkout.c:140 builtin/checkout.c:173
+#: builtin/checkout.c:136 builtin/checkout.c:169
 #, c-format
 msgid "path '%s' does not have their version"
 msgstr "чуждата версия липсва в пътя „%s“"
 
 # FIXME SAME AS [1]
-#: builtin/checkout.c:156
+#: builtin/checkout.c:152
 #, c-format
 msgid "path '%s' does not have all necessary versions"
 msgstr "някоя от необходимите версии липсва в пътя „%s“"
 
 # FIXME SAME AS [1]
-#: builtin/checkout.c:200
+#: builtin/checkout.c:196
 #, c-format
 msgid "path '%s' does not have necessary versions"
 msgstr "някоя от необходимите версии липсва в пътя „%s“"
 
-#: builtin/checkout.c:217
+#: builtin/checkout.c:213
 #, c-format
 msgid "path '%s': cannot merge"
 msgstr "пътят „%s“ не може да бъде слян"
 
-#: builtin/checkout.c:234
+#: builtin/checkout.c:230
 #, c-format
 msgid "Unable to add merge result for '%s'"
 msgstr "Резултатът за „%s“ не може да бъде слян"
 
-#: builtin/checkout.c:255 builtin/checkout.c:258 builtin/checkout.c:261
-#: builtin/checkout.c:264 builtin/checkout.c:277
+#: builtin/checkout.c:251 builtin/checkout.c:254 builtin/checkout.c:257
+#: builtin/checkout.c:260
 #, c-format
 msgid "'%s' cannot be used with updating paths"
 msgstr "Опцията „%s“ е несъвместима с обновяването на пътища"
 
-#: builtin/checkout.c:267 builtin/checkout.c:270
+#: builtin/checkout.c:263 builtin/checkout.c:266
 #, c-format
 msgid "'%s' cannot be used with %s"
 msgstr "Опцията „%s“ е несъвместима с „%s“"
 
-#: builtin/checkout.c:273
+#: builtin/checkout.c:269
 #, c-format
 msgid "Cannot update paths and switch to branch '%s' at the same time."
 msgstr ""
-"Невъзможно е едновременно да обновявате пътища и да се прехвърлите към клона "
-"„%s“."
+"Невъзможно е едновременно да обновявате пътища и да преминете към клона „%s“."
 
-#: builtin/checkout.c:287 builtin/checkout.c:481
+#: builtin/checkout.c:280 builtin/checkout.c:474
 msgid "corrupt index file"
 msgstr "повреден файл на индекса"
 
-#: builtin/checkout.c:347 builtin/checkout.c:354
+#: builtin/checkout.c:340 builtin/checkout.c:347
 #, c-format
 msgid "path '%s' is unmerged"
 msgstr "пътят „%s“ не е слят"
 
-#: builtin/checkout.c:503
+#: builtin/checkout.c:496
 msgid "you need to resolve your current index first"
 msgstr "първо трябва да коригирате индекса си"
 
-#: builtin/checkout.c:634
+#: builtin/checkout.c:627
 #, c-format
 msgid "Can not do reflog for '%s'\n"
 msgstr "Журналът на указателите за „%s“ не може да бъде създаден\n"
 
-#: builtin/checkout.c:670
+#: builtin/checkout.c:663
 msgid "HEAD is now at"
 msgstr "Указателят „HEAD“ в момента сочи към"
 
-#: builtin/checkout.c:677
+#: builtin/checkout.c:670
 #, c-format
 msgid "Reset branch '%s'\n"
 msgstr "Зануляване на клона „%s“\n"
 
-#: builtin/checkout.c:680
+#: builtin/checkout.c:673
 #, c-format
 msgid "Already on '%s'\n"
 msgstr "Вече сте на „%s“\n"
 
-#: builtin/checkout.c:684
+#: builtin/checkout.c:677
 #, c-format
 msgid "Switched to and reset branch '%s'\n"
 msgstr "Преминаване към клона „%s“ и зануляване на промените\n"
 
-#: builtin/checkout.c:686 builtin/checkout.c:1285
+#: builtin/checkout.c:679 builtin/checkout.c:1134
 #, c-format
 msgid "Switched to a new branch '%s'\n"
 msgstr "Преминахте към новия клон „%s“\n"
 
-#: builtin/checkout.c:688
+#: builtin/checkout.c:681
 #, c-format
 msgid "Switched to branch '%s'\n"
 msgstr "Преминахте към клона „%s“\n"
 
-#: builtin/checkout.c:740
+#: builtin/checkout.c:733
 #, c-format
 msgid " ... and %d more.\n"
 msgstr "… и още %d.\n"
 
-#: builtin/checkout.c:746
+#: builtin/checkout.c:739
 #, c-format
 msgid ""
 "Warning: you are leaving %d commit behind, not connected to\n"
@@ -3775,7 +3775,7 @@ msgstr[1] ""
 "\n"
 "%s\n"
 
-#: builtin/checkout.c:765
+#: builtin/checkout.c:758
 #, c-format
 msgid ""
 "If you want to keep it by creating a new branch, this may be a good time\n"
@@ -3802,181 +3802,153 @@ msgstr[1] ""
 " git branch ИМЕ_НА_НОВИЯ_КЛОН %s\n"
 "\n"
 
-#: builtin/checkout.c:801
+#: builtin/checkout.c:794
 msgid "internal error in revision walk"
 msgstr "вътрешна грешка при обхождането на версиите"
 
-#: builtin/checkout.c:805
+#: builtin/checkout.c:798
 msgid "Previous HEAD position was"
 msgstr "Преди това „HEAD“ сочеше към"
 
-#: builtin/checkout.c:832 builtin/checkout.c:1280
+#: builtin/checkout.c:825 builtin/checkout.c:1129
 msgid "You are on a branch yet to be born"
 msgstr "В момента сте на клон, който предстои да бъде създаден"
 
-#: builtin/checkout.c:893
-msgid "no branch specified"
-msgstr "не е указано име на клон"
-
-#: builtin/checkout.c:895
-#, c-format
-msgid "'%s' already exists"
-msgstr "„%s“ вече съществува"
-
-#: builtin/checkout.c:910 builtin/checkout.c:937 builtin/clone.c:842
-#: builtin/clone.c:853
-#, c-format
-msgid "could not create leading directories of '%s'"
-msgstr "родителските директории на „%s“ не могат да бъдат създадени"
-
-#: builtin/checkout.c:924
-#, c-format
-msgid "could not create directory of '%s'"
-msgstr "директорията „%s“ не може да бъде създадена"
-
-#: builtin/checkout.c:960
-#, c-format
-msgid "Enter %s (identifier %s)"
-msgstr "Въведете %s (идентификатор %s)"
-
-#: builtin/checkout.c:1070
+#: builtin/checkout.c:931
 #, c-format
 msgid "'%s' is already checked out at '%s'"
 msgstr "„%s“ вече е изтеглен в „%s“"
 
-#: builtin/checkout.c:1176
+#: builtin/checkout.c:1036
 #, c-format
 msgid "only one reference expected, %d given."
 msgstr "очакваше се един указател, а сте подали %d."
 
-#: builtin/checkout.c:1215
+#: builtin/checkout.c:1075
 #, c-format
 msgid "invalid reference: %s"
 msgstr "неправилен указател: %s"
 
-#: builtin/checkout.c:1255
+#: builtin/checkout.c:1104
 #, c-format
 msgid "reference is not a tree: %s"
 msgstr "указателят не сочи към обект-дърво: %s"
 
-#: builtin/checkout.c:1294
+#: builtin/checkout.c:1143
 msgid "paths cannot be used with switching branches"
 msgstr "задаването на път е несъвместимо с преминаването от един клон към друг"
 
-#: builtin/checkout.c:1297 builtin/checkout.c:1301
+#: builtin/checkout.c:1146 builtin/checkout.c:1150
 #, c-format
 msgid "'%s' cannot be used with switching branches"
 msgstr "опцията „%s“ е несъвместима с преминаването от един клон към друг"
 
-#: builtin/checkout.c:1305 builtin/checkout.c:1308 builtin/checkout.c:1313
-#: builtin/checkout.c:1316
+#: builtin/checkout.c:1154 builtin/checkout.c:1157 builtin/checkout.c:1162
+#: builtin/checkout.c:1165
 #, c-format
 msgid "'%s' cannot be used with '%s'"
 msgstr "опцията „%s“ е несъвместима с „%s“"
 
-#: builtin/checkout.c:1321
+#: builtin/checkout.c:1170
 #, c-format
 msgid "Cannot switch branch to a non-commit '%s'"
 msgstr ""
 "За да преминете към клон, подайте указател, който сочи към подаване. „%s“ не "
 "е такъв"
 
-#: builtin/checkout.c:1346 builtin/checkout.c:1348 builtin/clone.c:83
-#: builtin/remote.c:159 builtin/remote.c:161
+#: builtin/checkout.c:1203 builtin/checkout.c:1205 builtin/clone.c:83
+#: builtin/remote.c:159 builtin/remote.c:161 builtin/worktree.c:282
+#: builtin/worktree.c:284
 msgid "branch"
 msgstr "клон"
 
-#: builtin/checkout.c:1347
+#: builtin/checkout.c:1204
 msgid "create and checkout a new branch"
 msgstr "създаване и преминаване към нов клон"
 
-#: builtin/checkout.c:1349
+#: builtin/checkout.c:1206
 msgid "create/reset and checkout a branch"
 msgstr "създаване/зануляване на клон и преминаване към него"
 
-#: builtin/checkout.c:1350
+#: builtin/checkout.c:1207
 msgid "create reflog for new branch"
 msgstr "създаване на журнал на указателите за нов клон"
 
-#: builtin/checkout.c:1351
+#: builtin/checkout.c:1208
 msgid "detach the HEAD at named commit"
 msgstr "отделяне на указателя „HEAD“ към указаното подаване"
 
-#: builtin/checkout.c:1352
+#: builtin/checkout.c:1209
 msgid "set upstream info for new branch"
 msgstr "задаване на кой клон бива следен при създаването на новия клон"
 
-#: builtin/checkout.c:1354
+#: builtin/checkout.c:1211
 msgid "new-branch"
 msgstr "НОВ_КЛОН"
 
-#: builtin/checkout.c:1354
+#: builtin/checkout.c:1211
 msgid "new unparented branch"
 msgstr "нов клон без родител"
 
-#: builtin/checkout.c:1355
+#: builtin/checkout.c:1212
 msgid "checkout our version for unmerged files"
 msgstr "изтегляне на вашата версия на неслетите файлове"
 
-#: builtin/checkout.c:1357
+#: builtin/checkout.c:1214
 msgid "checkout their version for unmerged files"
 msgstr "изтегляне на чуждата версия на неслетите файлове"
 
-#: builtin/checkout.c:1359
+#: builtin/checkout.c:1216
 msgid "force checkout (throw away local modifications)"
 msgstr "принудително изтегляне (вашите промени ще бъдат занулени)"
 
-#: builtin/checkout.c:1360
+#: builtin/checkout.c:1217
 msgid "perform a 3-way merge with the new branch"
 msgstr "извършване на тройно сливане с новия клон"
 
-#: builtin/checkout.c:1361 builtin/merge.c:227
+#: builtin/checkout.c:1218 builtin/merge.c:227
 msgid "update ignored files (default)"
 msgstr "обновяване на игнорираните файлове (стандартно)"
 
-#: builtin/checkout.c:1362 builtin/log.c:1239 parse-options.h:244
+#: builtin/checkout.c:1219 builtin/log.c:1239 parse-options.h:244
 msgid "style"
 msgstr "стил"
 
-#: builtin/checkout.c:1363
+#: builtin/checkout.c:1220
 msgid "conflict style (merge or diff3)"
 msgstr "действие при конфликт (сливане или тройна разлика)"
 
-#: builtin/checkout.c:1366
+#: builtin/checkout.c:1223
 msgid "do not limit pathspecs to sparse entries only"
 msgstr "без ограничаване на изброените пътища само до частично изтеглените"
 
-#: builtin/checkout.c:1368
+#: builtin/checkout.c:1225
 msgid "second guess 'git checkout <no-such-branch>'"
 msgstr ""
 "опит за отгатване на име на клон след неуспешен опит с „git checkout "
 "НЕСЪЩЕСТВУВАЩ_КЛОН“"
 
-#: builtin/checkout.c:1370
-msgid "check a branch out in a separate working directory"
-msgstr "изтегляне на клон в отделно работно дърво"
-
-#: builtin/checkout.c:1372
+#: builtin/checkout.c:1227
 msgid "do not check if another worktree is holding the given ref"
 msgstr "без проверка дали друго работно дърво държи указателя"
 
-#: builtin/checkout.c:1406
+#: builtin/checkout.c:1252
 msgid "-b, -B and --orphan are mutually exclusive"
 msgstr "Опциите „-b“, „-B“ и „--orphan“ са несъвместими една с друга"
 
-#: builtin/checkout.c:1423
+#: builtin/checkout.c:1269
 msgid "--track needs a branch name"
 msgstr "опцията „--track“ изисква име на клон"
 
-#: builtin/checkout.c:1428
+#: builtin/checkout.c:1274
 msgid "Missing branch name; try -b"
 msgstr "Липсва име на клон, използвайте опцията „-b“"
 
-#: builtin/checkout.c:1464
+#: builtin/checkout.c:1310
 msgid "invalid path specification"
 msgstr "указан е неправилен път"
 
-#: builtin/checkout.c:1471
+#: builtin/checkout.c:1317
 #, c-format
 msgid ""
 "Cannot update paths and switch to branch '%s' at the same time.\n"
@@ -3985,12 +3957,12 @@ msgstr ""
 "Не можете едновременно да обновявате пътища и да преминете към клона „%s“.\n"
 "Дали не искате да изтеглите „%s“, който не сочи към подаване?"
 
-#: builtin/checkout.c:1476
+#: builtin/checkout.c:1322
 #, c-format
 msgid "git checkout: --detach does not take a path argument '%s'"
 msgstr "git checkout: опцията „--detach“ не приема аргумент-път „%s“"
 
-#: builtin/checkout.c:1480
+#: builtin/checkout.c:1326
 msgid ""
 "git checkout: --ours/--theirs, --force and --merge are incompatible when\n"
 "checking out of the index."
@@ -4284,57 +4256,57 @@ msgstr "КЛЮЧ=СТОЙНОСТ"
 msgid "set config inside the new repository"
 msgstr "задаване на настройките на новото хранилище"
 
-#: builtin/clone.c:247
+#: builtin/clone.c:240
 #, c-format
 msgid "reference repository '%s' is not a local repository."
 msgstr "еталонното хранилище „%s“ не е локално"
 
-#: builtin/clone.c:251
+#: builtin/clone.c:244
 #, c-format
 msgid "reference repository '%s' is shallow"
 msgstr "еталонното хранилище „%s“ е плитко"
 
-#: builtin/clone.c:254
+#: builtin/clone.c:247
 #, c-format
 msgid "reference repository '%s' is grafted"
 msgstr "еталонното хранилище „%s“ е с присаждане"
 
-#: builtin/clone.c:317
+#: builtin/clone.c:310
 #, c-format
 msgid "failed to create directory '%s'"
 msgstr "директорията „%s“ не може да бъде създадена"
 
-#: builtin/clone.c:319 builtin/diff.c:84
+#: builtin/clone.c:312 builtin/diff.c:84
 #, c-format
 msgid "failed to stat '%s'"
 msgstr "не може да бъде получена информация чрез „stat“ за „%s“"
 
-#: builtin/clone.c:321
+#: builtin/clone.c:314
 #, c-format
 msgid "%s exists and is not a directory"
 msgstr "„%s“ съществува и не е директория"
 
-#: builtin/clone.c:335
+#: builtin/clone.c:328
 #, c-format
 msgid "failed to stat %s\n"
 msgstr "не може да бъде получена информация чрез „stat“ за „%s“\n"
 
-#: builtin/clone.c:357
+#: builtin/clone.c:350
 #, c-format
 msgid "failed to create link '%s'"
 msgstr "връзката „%s“ не може да бъде създадена"
 
-#: builtin/clone.c:361
+#: builtin/clone.c:354
 #, c-format
 msgid "failed to copy file to '%s'"
 msgstr "файлът не може да бъде копиран като „%s“"
 
-#: builtin/clone.c:384 builtin/clone.c:558
+#: builtin/clone.c:377 builtin/clone.c:551
 #, c-format
 msgid "done.\n"
 msgstr "действието завърши.\n"
 
-#: builtin/clone.c:396
+#: builtin/clone.c:389
 msgid ""
 "Clone succeeded, but checkout failed.\n"
 "You can inspect what was checked out with 'git status'\n"
@@ -4345,7 +4317,7 @@ msgstr ""
 "клон в момента са изтеглени с командата „git status“. Можете да\n"
 "завършите изтеглянето на клона с командата „git checkout -f HEAD“.\n"
 
-#: builtin/clone.c:473
+#: builtin/clone.c:466
 #, c-format
 msgid "Could not find remote branch %s to clone."
 msgstr ""
@@ -4353,114 +4325,120 @@ msgstr ""
 "и който следва да бъде изтеглен, не съществува."
 
 # FIXME translator note that the space at end is necesssary
-#: builtin/clone.c:553
+#: builtin/clone.c:546
 #, c-format
 msgid "Checking connectivity... "
 msgstr "Проверка на връзката… "
 
-#: builtin/clone.c:556
+#: builtin/clone.c:549
 msgid "remote did not send all necessary objects"
 msgstr "отдалеченото хранилище не изпрати всички необходими обекти."
 
-#: builtin/clone.c:620
+#: builtin/clone.c:613
 msgid "remote HEAD refers to nonexistent ref, unable to checkout.\n"
 msgstr ""
 "указателят „HEAD“ от отдалеченото хранилище сочи към нещо,\n"
 "което не съществува. Не може да се изтегли определен клон.\n"
 
-#: builtin/clone.c:651
+#: builtin/clone.c:644
 msgid "unable to checkout working tree"
 msgstr "работното дърво не може да бъде подготвено"
 
-#: builtin/clone.c:738
+#: builtin/clone.c:731
 msgid "cannot repack to clean up"
 msgstr "не може да се извърши пакетиране за изчистване на файловете"
 
-#: builtin/clone.c:740
+#: builtin/clone.c:733
 msgid "cannot unlink temporary alternates file"
 msgstr "временният файл за алтернативни обекти не може да бъде изтрит"
 
-#: builtin/clone.c:770
+#: builtin/clone.c:763
 msgid "Too many arguments."
 msgstr "Прекалено много аргументи."
 
-#: builtin/clone.c:774
+#: builtin/clone.c:767
 msgid "You must specify a repository to clone."
 msgstr "Трябва да укажете кое хранилище искате да клонирате."
 
-#: builtin/clone.c:785
+#: builtin/clone.c:778
 #, c-format
 msgid "--bare and --origin %s options are incompatible."
 msgstr "опциите „--bare“ и „--origin %s“ са несъвместими."
 
-#: builtin/clone.c:788
+#: builtin/clone.c:781
 msgid "--bare and --separate-git-dir are incompatible."
 msgstr "опциите „--bare“ и „--separate-git-dir“ са несъвместими."
 
-#: builtin/clone.c:801
+#: builtin/clone.c:794
 #, c-format
 msgid "repository '%s' does not exist"
 msgstr "не съществува хранилище „%s“"
 
-#: builtin/clone.c:807 builtin/fetch.c:1160
+#: builtin/clone.c:800 builtin/fetch.c:1160
 #, c-format
 msgid "depth %s is not a positive number"
 msgstr "дълбочината трябва да е положително цяло число, а не „%s“"
 
-#: builtin/clone.c:817
+#: builtin/clone.c:810
 #, c-format
 msgid "destination path '%s' already exists and is not an empty directory."
 msgstr "целевият път „%s“ съществува и не е празна директория."
 
-#: builtin/clone.c:827
+#: builtin/clone.c:820
 #, c-format
 msgid "working tree '%s' already exists."
 msgstr "в „%s“ вече съществува работно дърво."
 
-#: builtin/clone.c:845
+#: builtin/clone.c:835 builtin/clone.c:846 builtin/worktree.c:193
+#: builtin/worktree.c:220
+#, c-format
+msgid "could not create leading directories of '%s'"
+msgstr "родителските директории на „%s“ не могат да бъдат създадени"
+
+#: builtin/clone.c:838
 #, c-format
 msgid "could not create work tree dir '%s'"
 msgstr "работното дърво в „%s“ не може да бъде създадено."
 
-#: builtin/clone.c:863
+#: builtin/clone.c:856
 #, c-format
 msgid "Cloning into bare repository '%s'...\n"
 msgstr "Клониране и създаване на голо хранилище в „%s“…\n"
 
-#: builtin/clone.c:865
+#: builtin/clone.c:858
 #, c-format
 msgid "Cloning into '%s'...\n"
 msgstr "Клониране и създаване на хранилище в „%s“…\n"
 
-#: builtin/clone.c:890
+#: builtin/clone.c:883
 msgid "--dissociate given, but there is no --reference"
 msgstr "Опцията „--dissociate“ е несъвместима с „--reference“"
 
-#: builtin/clone.c:907
+#: builtin/clone.c:900
 msgid "--depth is ignored in local clones; use file:// instead."
 msgstr ""
 "При локално клониране опцията „--depth“ се игнорира. Ползвайте схемата "
 "„file://“."
 
-#: builtin/clone.c:910
+#: builtin/clone.c:903
 msgid "source repository is shallow, ignoring --local"
 msgstr "клонираното хранилище е плитко, затова опцията „--local“ се игнорира"
 
-#: builtin/clone.c:915
+#: builtin/clone.c:908
 msgid "--local is ignored"
 msgstr "опцията „--local“ се игнорира"
 
-#: builtin/clone.c:919
+#: builtin/clone.c:912
 #, c-format
 msgid "Don't know how to clone %s"
 msgstr "Не се поддържа клониране на връзки от вида „%s“ "
 
-#: builtin/clone.c:968 builtin/clone.c:976
+#: builtin/clone.c:961 builtin/clone.c:969
 #, c-format
 msgid "Remote branch %s not found in upstream %s"
 msgstr "Отдалеченият клон „%s“ липсва в клонираното хранилище „%s“"
 
-#: builtin/clone.c:979
+#: builtin/clone.c:972
 msgid "You appear to have cloned an empty repository."
 msgstr "Изглежда клонирахте празно хранилище."
 
@@ -5877,7 +5855,7 @@ msgstr "ключ"
 msgid "field name to sort on"
 msgstr "име на полето, по което да е подредбата"
 
-#: builtin/fsck.c:147 builtin/prune.c:236
+#: builtin/fsck.c:147 builtin/prune.c:137
 msgid "Checking connectivity"
 msgstr "Проверка на връзката"
 
@@ -5926,7 +5904,7 @@ msgstr "по-строги проверки"
 msgid "write dangling objects in .git/lost-found"
 msgstr "запазване на обектите извън клоните в директорията „.git/lost-found“"
 
-#: builtin/fsck.c:627 builtin/prune.c:198
+#: builtin/fsck.c:627 builtin/prune.c:107
 msgid "show progress"
 msgstr "показване на напредъка"
 
@@ -8501,62 +8479,21 @@ msgstr "git prune-packed [-n | --dry-run] [-q | --quiet]"
 msgid "Removing duplicate objects"
 msgstr "Изтриване на повтарящите се обекти"
 
-#: builtin/prune.c:12
+#: builtin/prune.c:11
 msgid "git prune [-n] [-v] [--expire <time>] [--] [<head>...]"
 msgstr "git prune [-n] [-v] [--expire ВРЕМЕ] [--] [ВРЪХ…]"
 
-#: builtin/prune.c:86
-#, c-format
-msgid "Removing worktrees/%s: not a valid directory"
-msgstr "Изтриване на „worktrees/%s“: не е правилна поддиректория"
-
-#: builtin/prune.c:92
-#, c-format
-msgid "Removing worktrees/%s: gitdir file does not exist"
-msgstr "Изтриване на „worktrees/%s“: файлът „gitdir“ не съществува"
-
-#: builtin/prune.c:97
-#, c-format
-msgid "Removing worktrees/%s: unable to read gitdir file (%s)"
-msgstr ""
-"Изтриване на „worktrees/%s“: файлът „gitdir“ (%s) не може да бъде прочетен"
-
-#: builtin/prune.c:108
-#, c-format
-msgid "Removing worktrees/%s: invalid gitdir file"
-msgstr "Изтриване на „worktrees/%s“: неправилен файл „gitdir“"
-
-#: builtin/prune.c:124
-#, c-format
-msgid "Removing worktrees/%s: gitdir file points to non-existent location"
-msgstr ""
-"Изтриване на „worktrees/%s“: файлът „gitdir“ сочи несъществуващо "
-"местоположение"
-
-#: builtin/prune.c:159
-#, c-format
-msgid "failed to remove: %s"
-msgstr "„%s“ не може да се изтрие"
-
-#: builtin/prune.c:196
+#: builtin/prune.c:105 builtin/worktree.c:112
 msgid "do not remove, show only"
 msgstr "само извеждане без действително окастряне"
 
-#: builtin/prune.c:197
+#: builtin/prune.c:106 builtin/worktree.c:113
 msgid "report pruned objects"
 msgstr "информация за окастрените обекти"
 
-#: builtin/prune.c:199
-msgid "prune .git/worktrees"
-msgstr "окастряне на „.git/worktrees“"
-
-#: builtin/prune.c:201
+#: builtin/prune.c:109 builtin/worktree.c:115
 msgid "expire objects older than <time>"
 msgstr "окастряне на обектите по-стари от това ВРЕМЕ"
-
-#: builtin/prune.c:216
-msgid "--worktrees does not take extra arguments"
-msgstr "опцията „--worktrees“ не приема допълнителни аргументи"
 
 #: builtin/push.c:14
 msgid "git push [<options>] [<repository> [<refspec>...]]"
@@ -10743,6 +10680,86 @@ msgstr "git verify-tag [-v | --verbose] ЕТИКЕТ…"
 msgid "print tag contents"
 msgstr "извеждане на съдържанието на ЕТИКЕТи"
 
+#: builtin/worktree.c:11
+msgid "git worktree add [<options>] <path> <branch>"
+msgstr "git worktree add [ОПЦИЯ…] ПЪТ КЛОН"
+
+#: builtin/worktree.c:12
+msgid "git worktree prune [<options>]"
+msgstr "git worktree prune [ОПЦИЯ…]"
+
+#: builtin/worktree.c:27
+#, c-format
+msgid "Removing worktrees/%s: not a valid directory"
+msgstr "Изтриване на „worktrees/%s“: не е правилна поддиректория"
+
+#: builtin/worktree.c:33
+#, c-format
+msgid "Removing worktrees/%s: gitdir file does not exist"
+msgstr "Изтриване на „worktrees/%s“: файлът „gitdir“ не съществува"
+
+#: builtin/worktree.c:38
+#, c-format
+msgid "Removing worktrees/%s: unable to read gitdir file (%s)"
+msgstr ""
+"Изтриване на „worktrees/%s“: файлът „gitdir“ (%s) не може да бъде прочетен"
+
+#: builtin/worktree.c:49
+#, c-format
+msgid "Removing worktrees/%s: invalid gitdir file"
+msgstr "Изтриване на „worktrees/%s“: неправилен файл „gitdir“"
+
+#: builtin/worktree.c:65
+#, c-format
+msgid "Removing worktrees/%s: gitdir file points to non-existent location"
+msgstr ""
+"Изтриване на „worktrees/%s“: файлът „gitdir“ сочи несъществуващо "
+"местоположение"
+
+#: builtin/worktree.c:100
+#, c-format
+msgid "failed to remove: %s"
+msgstr "„%s“ не може да се изтрие"
+
+#: builtin/worktree.c:186
+#, c-format
+msgid "'%s' already exists"
+msgstr "„%s“ вече съществува"
+
+#: builtin/worktree.c:207
+#, c-format
+msgid "could not create directory of '%s'"
+msgstr "директорията „%s“ не може да бъде създадена"
+
+#: builtin/worktree.c:241
+msgid "unable to resolve HEAD"
+msgstr "соченото от указателя „HEAD“ не може да бъде открито"
+
+#: builtin/worktree.c:249
+#, c-format
+msgid "Enter %s (identifier %s)"
+msgstr "Въведете %s (идентификатор %s)"
+
+#: builtin/worktree.c:281
+msgid "checkout <branch> even if already checked out in other worktree"
+msgstr "Изтегляне КЛОНа, дори и да е изтеглен в друго работно дърво"
+
+#: builtin/worktree.c:283
+msgid "create a new branch"
+msgstr "създаване на нов клон"
+
+#: builtin/worktree.c:285
+msgid "create or reset a branch"
+msgstr "създаване или зануляване на клони"
+
+#: builtin/worktree.c:286
+msgid "detach HEAD at named commit"
+msgstr "отделяне на указателя „HEAD“ към указаното подаване"
+
+#: builtin/worktree.c:292
+msgid "-b and -B are mutually exclusive"
+msgstr "опциите „-b“ и „-B“ са несъвместими"
+
 #: builtin/write-tree.c:13
 msgid "git write-tree [--missing-ok] [--prefix=<prefix>/]"
 msgstr "git write-tree [--missing-ok] [--prefix=ПРЕФИКС/]"
@@ -10809,8 +10826,9 @@ msgid "List, create, or delete branches"
 msgstr "Извеждане, създаване, изтриване на клони"
 
 #: common-cmds.h:21
-msgid "Checkout a branch or paths to the working tree"
-msgstr "Изтегляне на цял клон или файлове/директории в работното дърво"
+msgid "Switch branches or restore working tree files"
+msgstr ""
+"Преминаване към друг клон или възстановяване на файловете в работното дърво"
 
 #: common-cmds.h:22
 msgid "Clone a repository into a new directory"
