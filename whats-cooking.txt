@@ -1,15 +1,20 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jul 2015, #05; Mon, 20)
-X-master-at: fbdeabf1f0992e41237caee8fc357849e0038a82
-X-next-at: 76e840bed084a99e9de166e429c25bc0b2d6a698
+Subject: What's cooking in git.git (Jul 2015, #06; Tue, 21)
+X-master-at: f99a38c0121456822f8a9dfb7928eefceaa98201
+X-next-at: 68aafd0cff0775f143dd13a8f2d95a3e65155388
 
-What's cooking in git.git (Jul 2015, #05; Mon, 20)
+What's cooking in git.git (Jul 2015, #06; Tue, 21)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
+
+Tagged v2.5-rc3 today; hopefully we can have an uneventful 2.5 next
+week and then start the next cycle.  I'll eject/drop the stalled
+topics and ask people to reroll/rebase if their topics are still
+viable.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -17,89 +22,161 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[New Topics]
-
-* zb/userdiff-fountain (2015-07-17) 1 commit
- - userdiff: add support for Fountain documents
-
- New userdiff pattern definition for fountain screenwriting markup
- format.
-
- Needs another reroll? ($gmane/274354)
-
-
-* as/sparse-checkout-removal (2015-07-17) 1 commit
- - unpack-trees: don't update files with CE_WT_REMOVE set
-
- Duy's replacement needs to be applied ($gmane/274158).
-
-
-* cb/uname-in-untracked (2015-07-17) 1 commit
- - untracked: fix detection of uname(2) failure
-
- An experimental "untracked cache" feature used to use uname(2) in a
- slightly unportable way.
-
- Will merge to 'next'.
-
-
-* jc/rerere-multi (2015-07-20) 5 commits
- - t4200: rerere a merge with two identical conflicts
- - rerere: delay the recording of preimage for the first time
- - rerere: handle leftover rr-cache/$ID directory and postimage files
- - rerere: scan $GIT_DIR/rr-cache/$ID when instantiating a rerere_id
- - rerere: split conflict ID further
- (this branch uses jc/rerere.)
-
- This is a contination of jc/rerere topic.
-
-
-* bw/portability-solaris (2015-07-20) 3 commits
- - tests: fix sed usage in tests to work around broken xpg4/sed on Solaris
- - tests: fix sed usage in tests to work around broken xpg4/sed on Solaris
- - tests: modify tr expressions so that xpg4/tr handles it on Solaris
-
- Needs another reroll? ($gmane/274296)
-
-
-* es/worktree-add (2015-07-20) 5 commits
-  (merged to 'next' on 2015-07-20 at 76e840b)
- + config: rename "gc.pruneWorktreesExpire" to "gc.worktreePruneExpire"
- + Documentation/git-worktree: wordsmith worktree-related manpages
- + Documentation/config: fix stale "git prune --worktree" reference
- + Documentation/git-worktree: fix incorrect reference to file "locked"
- + Documentation/git-worktree: consistently use term "linked working tree"
- (this branch is used by es/worktree-add-cleanup.)
-
- Will merge to 'master'.
-
-
-* sg/bash-prompt-untracked-optim (2015-07-20) 2 commits
- - bash prompt: faster untracked status indicator with untracked directories
- - bash prompt: test untracked files status indicator with untracked dirs
-
- Will merge to 'next'.
-
---------------------------------------------------
-[Graduated to "master"]
-
-* jc/diff-ws-error-highlight (2015-07-12) 1 commit
-  (merged to 'next' on 2015-07-12 at 15b60ce)
- + diff: parse ws-error-highlight option more strictly
-
- A hotfix to a new feature in 2.5.0-rc.
-
-
-* jk/still-interesting (2015-06-29) 1 commit
-  (merged to 'next' on 2015-07-09 at e19fc0e)
- + revision.c: remove unneeded check for NULL
-
- Code clean-up.
-
- Will merge to 'master'.
-
---------------------------------------------------
 [Stalled]
+
+* jc/clone-bundle (2015-04-30) 1 commit
+ - repack: optionally create a clone.bundle
+
+ Waiting for further work.
+ Still an early WIP.
+
+
+* jh/strbuf-read-use-read-in-full (2015-06-01) 1 commit
+ - strbuf_read(): skip unnecessary strbuf_grow() at eof
+
+ Avoid one extra iteration and strbuf_grow() of 8kB in
+ strbuf_read().
+
+ Looked reasonable; perhaps a log message clarification is needed.
+
+ Expecting a reroll.
+
+
+* mg/index-read-error-messages (2015-06-01) 2 commits
+ - messages: uniform error messages for index write
+ - show-index: uniform error messages for index read
+
+ The tip was RFC.
+ Expecting a reroll.
+
+
+* hv/submodule-config (2015-06-15) 4 commits
+ - do not die on error of parsing fetchrecursesubmodules option
+ - use new config API for worktree configurations of submodules
+ - extract functions for submodule config set and lookup
+ - implement submodule config API for lookup of .gitmodules values
+
+ The gitmodules API accessed from the C code learned to cache stuff
+ lazily.
+
+ Needs another reroll? ($gmane/273743).
+
+
+* jk/log-missing-default-HEAD (2015-06-03) 1 commit
+ - log: diagnose empty HEAD more clearly
+
+ "git init empty && git -C empty log" said "bad default revision 'HEAD'",
+ which was found to be a bit confusing to new users.
+
+ What's the status of this one?
+
+
+* bc/object-id (2015-06-17) 10 commits
+ . remote.c: use struct object_id in many functions
+ . object-id: use struct object_id in struct object
+ . remote.c: use struct object_id in ref_newer()
+ . transport-helper.c: use struct object_id in push_refs_with_export()
+ . connect.c: use struct object_id in get_remote_heads()
+ . remote-curl: use struct object_id in parse_fetch()
+ . fetch-pack: use struct object_id in add_sought_entry_mem()
+ . object_id: convert struct ref to use object_id.
+ . sha1_file: introduce has_object_file() helper
+ . refs: convert some internal functions to use object_id
+
+ More transition from "unsigned char[40]" to "struct object_id".
+
+ While GSoC and other topics are actively moving existing code
+ around, this cannot go in; ejected from 'pu'.
+
+
+* wp/sha1-name-negative-match (2015-06-08) 2 commits
+ - sha1_name.c: introduce '^{/!-<negative pattern>}' notation
+ - test for '!' handling in rev-parse's named commits
+
+ Introduce "branch^{/!-<pattern>}" notation to name a commit
+ reachable from branch that does not match the given pattern.
+
+ Expecting a reroll.
+
+
+* mk/utf8-no-iconv-warn (2015-06-08) 1 commit
+ - utf8.c: print warning about disabled iconv
+
+ Warn when a reencoding is requested in a build without iconv
+ support, as the end user is likely to get an unexpected result.  I
+ think the same level of safety should be added to a build with
+ iconv support when the specified encoding is not available, but the
+ patch does not go there.
+
+ Expecting a reroll.
+
+
+* ak/format-patch-odir-config (2015-06-19) 1 commit
+ - format-patch: introduce format.outputDirectory configuration
+
+ Reroll exists but didn't pick it up as it seemed to be still
+ collecting review comments.
+
+ Expecting a reroll.
+ ($gmane/272180).
+
+
+* mh/tempfile (2015-06-10) 14 commits
+ - credential-cache--daemon: use tempfile module
+ - credential-cache--daemon: delete socket from main()
+ - gc: use tempfile module to handle gc.pid file
+ - lock_repo_for_gc(): compute the path to "gc.pid" only once
+ - diff: use tempfile module
+ - setup_temporary_shallow(): use tempfile module
+ - write_shared_index(): use tempfile module
+ - register_tempfile(): new function to handle an existing temporary file
+ - tempfile: add several functions for creating temporary files
+ - register_tempfile_object(): new function, extracted from create_tempfile()
+ - commit_lock_file(): use get_locked_file_path()
+ - lockfile: remove some redundant functions
+ - tempfile: a new module for handling temporary files
+ - Move lockfile API documentation to lockfile.h
+
+ Rebuild "lockfile" API on top of a new "tempfile" API.
+ This needs rerolling, to include "tempfile.h" in "lockfile.h", at
+ least.
+
+ Expecting a reroll.
+ ($gmane/271353)
+
+
+* ad/bisect-terms (2015-06-29) 4 commits
+ - bisect: allow setting any user-specified in 'git bisect start'
+ - bisect: add 'git bisect terms' to view the current terms
+ - bisect: add the terms old/new
+ - bisect: sanity check on terms
+ (this branch uses ad/bisect-cleanup.)
+
+ The use of 'good/bad' in "git bisect" made it confusing to use when
+ hunting for a state change that is not a regression (e.g. bugfix).
+ The command learned 'old/new' and then allows the end user to
+ say e.g. "bisect start --term-old=fast --term=new=slow" to find a
+ performance regression.
+
+ Michael's idea to make 'good/bad' more intelligent does have
+ certain attractiveness ($gname/272867), and makes some of the work
+ on this topic a moot point.
+
+ Will hold.
+
+
+* mh/notes-allow-reading-treeish (2015-07-13) 1 commit
+ - notes: allow treeish expressions as notes ref
+
+ Some "git notes" operations, e.g. "git log --notes=<note>", should
+ be able to read notes from any tree-ish that is shaped like a notes
+ tree, but the notes infrastructure required that the argument must
+ be a ref under refs/notes/.  Loosen it to require a valid ref only
+ when the operation would update the notes (in which case we must
+ have a place to store the updated notes tree, iow, a ref).
+
+ Needs update to docs.
+
 
 * sg/config-name-only (2015-05-28) 3 commits
  - completion: use new 'git config' options to reliably list variable names
@@ -163,19 +240,6 @@ of the repositories listed at
 
  Expecting a reroll.
  ($gmane/268058).
-
-
-* tf/gitweb-project-listing (2015-03-19) 5 commits
- - gitweb: make category headings into links when they are directories
- - gitweb: optionally set project category from its pathname
- - gitweb: add a link under the search box to clear a project filter
- - gitweb: if the PATH_INFO is incomplete, use it as a project_filter
- - gitweb: fix typo in man page
-
- Update gitweb to make it more pleasant to deal with a hierarchical
- forest of repositories.
-
- Any comments from those who use or have their own code in Gitweb?
 
 
 * jc/a-lone-dash-stands-for-previous-branch (2015-03-16) 1 commit
@@ -293,6 +357,64 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* zb/userdiff-fountain (2015-07-21) 2 commits
+ - SQUASH???
+ - userdiff: add support for Fountain documents
+
+ New userdiff pattern definition for fountain screenwriting markup
+ format.
+
+ Waiting for a response ($gmane/274403).
+
+
+* as/sparse-checkout-removal (2015-07-21) 1 commit
+  (merged to 'next' on 2015-07-21 at ab94680)
+ + unpack-trees: don't update files with CE_WT_REMOVE set
+
+ "sparse checkout" misbehaved for a path that is excluded from the
+ checkout when switching between branches that differ at the path.
+
+ Will merge to 'master'.
+
+
+* cb/uname-in-untracked (2015-07-17) 1 commit
+  (merged to 'next' on 2015-07-21 at d867af0)
+ + untracked: fix detection of uname(2) failure
+
+ An experimental "untracked cache" feature used uname(2) in a
+ slightly unportable way.
+
+ Will merge to 'master'.
+
+
+* bw/portability-solaris (2015-07-20) 3 commits
+ - tests: fix sed usage in tests to work around broken xpg4/sed on Solaris
+ - tests: fix sed usage in tests to work around broken xpg4/sed on Solaris
+ - tests: modify tr expressions so that xpg4/tr handles it on Solaris
+
+ Needs another reroll? ($gmane/274296)
+
+
+* es/worktree-add (2015-07-20) 5 commits
+  (merged to 'next' on 2015-07-20 at 76e840b)
+ + config: rename "gc.pruneWorktreesExpire" to "gc.worktreePruneExpire"
+ + Documentation/git-worktree: wordsmith worktree-related manpages
+ + Documentation/config: fix stale "git prune --worktree" reference
+ + Documentation/git-worktree: fix incorrect reference to file "locked"
+ + Documentation/git-worktree: consistently use term "linked working tree"
+ (this branch is used by es/worktree-add-cleanup.)
+
+ Will merge to 'master'.
+
+
+* sg/bash-prompt-untracked-optim (2015-07-20) 2 commits
+  (merged to 'next' on 2015-07-21 at e151fb7)
+ + bash prompt: faster untracked status indicator with untracked directories
+ + bash prompt: test untracked files status indicator with untracked dirs
+
+ Will merge to 'master'.
+
+
 * es/worktree-add-cleanup (2015-07-20) 22 commits
  - checkout: drop intimate knowledge of newly created worktree
  - worktree: populate via "git reset --hard" rather than "git checkout"
@@ -353,19 +475,6 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* mh/notes-allow-reading-treeish (2015-07-13) 1 commit
- - notes: allow treeish expressions as notes ref
-
- Some "git notes" operations, e.g. "git log --notes=<note>", should
- be able to read notes from any tree-ish that is shaped like a notes
- tree, but the notes infrastructure required that the argument must
- be a ref under refs/notes/.  Loosen it to require a valid ref only
- when the operation would update the notes (in which case we must
- have a place to store the updated notes tree, iow, a ref).
-
- Needs update to docs.
-
-
 * dt/log-follow-config (2015-07-09) 1 commit
   (merged to 'next' on 2015-07-10 at b8fbb43)
  + log: add "log.follow" configuration variable
@@ -384,7 +493,8 @@ of the repositories listed at
 
 
 * se/doc-checkout-ours-theirs (2015-07-12) 1 commit
- - checkout: document subtlety around --ours/--theirs
+  (merged to 'next' on 2015-07-21 at 5275f04)
+ + checkout: document subtlety around --ours/--theirs
 
  A "rebase" replays changes of the local branch on top of something
  else, as such they are placed in stage #3 and referred to as
@@ -392,22 +502,25 @@ of the repositories listed at
  work, are placed in stage #2 and referred to as "ours".  Clarify
  the "checkout --ours/--theirs".
 
+ Will merge to 'master'.
+
 
 * pt/am-tests (2015-07-20) 12 commits
- - t3901: test git-am encoding conversion
- - t3418: non-interactive rebase --continue with rerere enabled
- - t4150: tests for am --[no-]scissors
- - t4150: am with post-applypatch hook
- - t4150: am with pre-applypatch hook
- - t4150: am with applypatch-msg hook
- - t4150: am --resolved fails if index has unmerged entries
- - t4150: am --resolved fails if index has no changes
- - t4150: am refuses patches when paused
- - t4151: am --abort will keep dirty index intact
- - t4150: am fails if index is dirty
- - t4150: am.messageid really adds the message id
+  (merged to 'next' on 2015-07-21 at 8d3d5f4)
+ + t3901: test git-am encoding conversion
+ + t3418: non-interactive rebase --continue with rerere enabled
+ + t4150: tests for am --[no-]scissors
+ + t4150: am with post-applypatch hook
+ + t4150: am with pre-applypatch hook
+ + t4150: am with applypatch-msg hook
+ + t4150: am --resolved fails if index has unmerged entries
+ + t4150: am --resolved fails if index has no changes
+ + t4150: am refuses patches when paused
+ + t4151: am --abort will keep dirty index intact
+ + t4150: am fails if index is dirty
+ + t4150: am.messageid really adds the message id
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * kn/for-each-tag-branch (2015-07-13) 11 commits
@@ -484,6 +597,8 @@ of the repositories listed at
 
  Rewrite "am" in "C".
 
+ Will merge to 'next'.
+
 
 * ad/bisect-cleanup (2015-06-29) 6 commits
   (merged to 'next' on 2015-07-09 at 75e2a06)
@@ -514,13 +629,13 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* dt/refs-backend-preamble (2015-07-13) 7 commits
+* dt/refs-backend-preamble (2015-07-21) 7 commits
  - git-stash: use update-ref --create-reflog instead of creating files
  - update-ref and tag: add --create-reflog arg
  - refs: add REF_FORCE_CREATE_REFLOG flag
  - git-reflog: add exists command
  - refs: new public ref function: safe_create_reflog
- - refs: Break out check for reflog autocreation
+ - refs: break out check for reflog autocreation
  - refs.c: add err arguments to reflog functions
 
  In preparation for allowing different "backends" to store the refs
@@ -529,12 +644,12 @@ of the repositories listed at
  direct filesystem access to ref-like things like CHERRY_PICK_HEAD
  from scripts and programs.
 
- Still under discussion.
-
- Will hold.
+ Will merge to 'next'.
 
 
-* jk/date-mode-format (2015-06-29) 3 commits
+* jk/date-mode-format (2015-07-20) 4 commits
+  (merged to 'next' on 2015-07-21 at 69f66be)
+ + strbuf: make strbuf_addftime more robust
   (merged to 'next' on 2015-07-09 at a01bfc3)
  + introduce "format" date-mode
  + convert "enum date_mode" into a struct
@@ -580,48 +695,15 @@ of the repositories listed at
  Code clean-up and minor fixes (so far).
 
 
-* ad/bisect-terms (2015-06-29) 4 commits
- - bisect: allow setting any user-specified in 'git bisect start'
- - bisect: add 'git bisect terms' to view the current terms
- - bisect: add the terms old/new
- - bisect: sanity check on terms
- (this branch uses ad/bisect-cleanup.)
+* jc/rerere-multi (2015-07-20) 5 commits
+ - t4200: rerere a merge with two identical conflicts
+ - rerere: delay the recording of preimage for the first time
+ - rerere: handle leftover rr-cache/$ID directory and postimage files
+ - rerere: scan $GIT_DIR/rr-cache/$ID when instantiating a rerere_id
+ - rerere: split conflict ID further
+ (this branch uses jc/rerere.)
 
- The use of 'good/bad' in "git bisect" made it confusing to use when
- hunting for a state change that is not a regression (e.g. bugfix).
- The command learned 'old/new' and then allows the end user to
- say e.g. "bisect start --term-old=fast --term=new=slow" to find a
- performance regression.
-
- Michael's idea to make 'good/bad' more intelligent does have
- certain attractiveness ($gname/272867), and makes some of the work
- on this topic a moot point.
-
- Will hold.
-
-
-* mh/tempfile (2015-06-10) 14 commits
- - credential-cache--daemon: use tempfile module
- - credential-cache--daemon: delete socket from main()
- - gc: use tempfile module to handle gc.pid file
- - lock_repo_for_gc(): compute the path to "gc.pid" only once
- - diff: use tempfile module
- - setup_temporary_shallow(): use tempfile module
- - write_shared_index(): use tempfile module
- - register_tempfile(): new function to handle an existing temporary file
- - tempfile: add several functions for creating temporary files
- - register_tempfile_object(): new function, extracted from create_tempfile()
- - commit_lock_file(): use get_locked_file_path()
- - lockfile: remove some redundant functions
- - tempfile: a new module for handling temporary files
- - Move lockfile API documentation to lockfile.h
-
- Rebuild "lockfile" API on top of a new "tempfile" API.
- This needs rerolling, to include "tempfile.h" in "lockfile.h", at
- least.
-
- Expecting a reroll.
- ($gmane/271353)
+ This is a contination of jc/rerere topic.
 
 
 * js/fsck-opt (2015-06-23) 19 commits
@@ -651,16 +733,6 @@ of the repositories listed at
  critical breakages reported.
 
  Will merge to 'master'.
-
-
-* ak/format-patch-odir-config (2015-06-19) 1 commit
- - format-patch: introduce format.outputDirectory configuration
-
- Reroll exists but didn't pick it up as it seems to be still
- collecting review comments.
-
- Expecting a reroll.
- ($gmane/272180).
 
 
 * bc/gpg-verify-raw (2015-06-22) 7 commits
@@ -794,18 +866,6 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* mk/utf8-no-iconv-warn (2015-06-08) 1 commit
- - utf8.c: print warning about disabled iconv
-
- Warn when a reencoding is requested in a build without iconv
- support, as the end user is likely to get an unexpected result.  I
- think the same level of safety should be added to a build with
- iconv support when the specified encoding is not available, but the
- patch does not go there.
-
- Expecting a reroll.
-
-
 * mr/rebase-i-customize-insn-sheet (2015-06-15) 1 commit
   (merged to 'next' on 2015-07-10 at ec383cd)
  + git-rebase--interactive.sh: add config option for custom instruction format
@@ -880,43 +940,6 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* wp/sha1-name-negative-match (2015-06-08) 2 commits
- - sha1_name.c: introduce '^{/!-<negative pattern>}' notation
- - test for '!' handling in rev-parse's named commits
-
- Introduce "branch^{/!-<pattern>}" notation to name a commit
- reachable from branch that does not match the given pattern.
-
- Expecting a reroll.
-
-
-* bc/object-id (2015-06-17) 10 commits
- . remote.c: use struct object_id in many functions
- . object-id: use struct object_id in struct object
- . remote.c: use struct object_id in ref_newer()
- . transport-helper.c: use struct object_id in push_refs_with_export()
- . connect.c: use struct object_id in get_remote_heads()
- . remote-curl: use struct object_id in parse_fetch()
- . fetch-pack: use struct object_id in add_sought_entry_mem()
- . object_id: convert struct ref to use object_id.
- . sha1_file: introduce has_object_file() helper
- . refs: convert some internal functions to use object_id
-
- More transition from "unsigned char[40]" to "struct object_id".
-
- While GSoC and other topics are actively moving existing code
- around, this cannot go in; ejected from 'pu'.
-
-
-* jk/log-missing-default-HEAD (2015-06-03) 1 commit
- - log: diagnose empty HEAD more clearly
-
- "git init empty && git -C empty log" said "bad default revision 'HEAD'",
- which was found to be a bit confusing to new users.
-
- What's the status of this one?
-
-
 * gr/rebase-i-drop-warn (2015-06-30) 3 commits
   (merged to 'next' on 2015-07-15 at 6f4f2c8)
  + git rebase -i: add static check for commands and SHA-1
@@ -929,37 +952,6 @@ of the repositories listed at
  a warning.
 
  Will merge to 'master'.
-
-
-* jh/strbuf-read-use-read-in-full (2015-06-01) 1 commit
- - strbuf_read(): skip unnecessary strbuf_grow() at eof
-
- Avoid one extra iteration and strbuf_grow() of 8kB in
- strbuf_read().
-
- Looked reasonable; perhaps a log message clarification is needed.
-
- Expecting a reroll.
-
-
-* mg/index-read-error-messages (2015-06-01) 2 commits
- - messages: uniform error messages for index write
- - show-index: uniform error messages for index read
-
- The tip was RFC.
- Expecting a reroll.
-
-
-* hv/submodule-config (2015-06-15) 4 commits
- - do not die on error of parsing fetchrecursesubmodules option
- - use new config API for worktree configurations of submodules
- - extract functions for submodule config set and lookup
- - implement submodule config API for lookup of .gitmodules values
-
- The gitmodules API accessed from the C code learned to cache stuff
- lazily.
-
- Needs another reroll? ($gmane/273743).
 
 
 * jc/push-tags-also (2015-05-29) 1 commit
@@ -982,13 +974,6 @@ of the repositories listed at
  sparsely (which is not recommended in the first place).
 
  Will merge to 'master'.
-
-
-* jc/clone-bundle (2015-04-30) 1 commit
- - repack: optionally create a clone.bundle
-
- Waiting for further work.
- Still an early WIP.
 
 
 * ee/clean-remove-dirs (2015-06-26) 6 commits
@@ -1016,3 +1001,18 @@ of the repositories listed at
  has been deprecated since October 2007.
 
  Will keep in 'next' during the 2.5 cycle.
+
+--------------------------------------------------
+[Discarded]
+
+* tf/gitweb-project-listing (2015-03-19) 4 commits
+ - gitweb: make category headings into links when they are directories
+ - gitweb: optionally set project category from its pathname
+ - gitweb: add a link under the search box to clear a project filter
+ - gitweb: if the PATH_INFO is incomplete, use it as a project_filter
+
+ Update gitweb to make it more pleasant to deal with a hierarchical
+ forest of repositories.
+
+ A fresh restart will not be rejected, but ejected from my tree for
+ now.
