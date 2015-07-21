@@ -390,7 +390,21 @@ int author_ident_sufficiently_given(void)
 
 int git_ident_config(const char *var, const char *value, void *data)
 {
-	if (!strcmp(var, "user.name")) {
+	/* the caller has already checked that var starts with "user." */
+
+	const char *first_period = strchr(var, '.');
+	const char *last_period = strrchr(var, '.');
+
+	if (first_period < last_period) {
+		++first_period;
+		char *pattern = xstrndup(first_period, last_period - first_period);
+		const char *match = strcasestr(get_git_work_tree(), pattern);
+		free(pattern);
+		if (!match)
+			return 0;
+	}
+
+	if (ends_with(var, ".name")) {
 		if (!value)
 			return config_error_nonbool(var);
 		strbuf_reset(&git_default_name);
@@ -400,7 +414,7 @@ int git_ident_config(const char *var, const char *value, void *data)
 		return 0;
 	}
 
-	if (!strcmp(var, "user.email")) {
+	if (ends_with(var, ".email")) {
 		if (!value)
 			return config_error_nonbool(var);
 		strbuf_reset(&git_default_email);
