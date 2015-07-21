@@ -3063,8 +3063,13 @@ static int should_autocreate_reflog(const char *refname)
 		!strcmp(refname, "HEAD");
 }
 
-/* This function will fill in *err and return -1 on failure */
-int log_ref_setup(const char *refname, struct strbuf *sb_logfile, struct strbuf *err)
+/*
+ * Create a reflog for a ref.  If force_create = 0, the reflog will
+ * only be created for certain refs (those for which
+ * should_autocreate_reflog returns non-zero.  Otherwise, create it
+ * regardless of the ref name.  Fill in *err and return -1 on failure.
+ */
+static int log_ref_setup(const char *refname, struct strbuf *sb_logfile, struct strbuf *err, int force_create)
 {
 	int logfd, oflags = O_APPEND | O_WRONLY;
 	char *logfile;
@@ -3073,7 +3078,7 @@ int log_ref_setup(const char *refname, struct strbuf *sb_logfile, struct strbuf 
 	logfile = sb_logfile->buf;
 	/* make sure the rest of the function can't change "logfile" */
 	sb_logfile = NULL;
-	if (should_autocreate_reflog(refname)) {
+	if (force_create || should_autocreate_reflog(refname)) {
 		if (safe_create_leading_directories(logfile) < 0) {
 			strbuf_addf(err, "unable to create directory for %s: "
 				    "%s", logfile, strerror(errno));
@@ -3106,6 +3111,17 @@ int log_ref_setup(const char *refname, struct strbuf *sb_logfile, struct strbuf 
 	adjust_shared_perm(logfile);
 	close(logfd);
 	return 0;
+}
+
+
+int safe_create_reflog(const char *refname, int force_create, struct strbuf *err)
+{
+	int ret;
+	struct strbuf sb = STRBUF_INIT;
+
+	ret = log_ref_setup(refname, &sb, err, force_create);
+	strbuf_release(&sb);
+	return ret;
 }
 
 static int log_ref_write_fd(int fd, const unsigned char *old_sha1,
@@ -3144,7 +3160,7 @@ static int log_ref_write_1(const char *refname, const unsigned char *old_sha1,
 	if (log_all_ref_updates < 0)
 		log_all_ref_updates = !is_bare_repository();
 
-	result = log_ref_setup(refname, sb_log_file, err);
+	result = log_ref_setup(refname, sb_log_file, err, 0);
 
 	if (result)
 		return result;
