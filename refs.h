@@ -187,6 +187,7 @@ extern int peel_ref(const char *refname, unsigned char *sha1);
  * Other flags are reserved for internal use.
  */
 #define REF_NODEREF	0x01
+#define REF_FORCE_CREATE_REFLOG 0x40
 
 /*
  * Setup reflog before using. Fill in err and return -1 on failure.
