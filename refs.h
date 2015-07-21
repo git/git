@@ -189,9 +189,9 @@ extern int peel_ref(const char *refname, unsigned char *sha1);
 #define REF_NODEREF	0x01
 
 /*
- * Setup reflog before using. Set errno to something meaningful on failure.
+ * Setup reflog before using. Fill in err and return -1 on failure.
  */
-int log_ref_setup(const char *refname, struct strbuf *logfile);
+int log_ref_setup(const char *refname, struct strbuf *logfile, struct strbuf *err);
 
 /** Reads log for the value of ref during at_time. **/
 extern int read_ref_at(const char *refname, unsigned int flags,
