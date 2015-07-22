@@ -514,7 +514,7 @@ static const char *update(struct command *cmd, struct shallow_info *si)
 			return "deletion prohibited";
 		}
 
-		if (!strcmp(namespaced_name, head_name)) {
+		if (head_name && !strcmp(namespaced_name, head_name)) {
 			switch (deny_delete_current) {
 			case DENY_IGNORE:
 				break;
