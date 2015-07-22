@@ -20,7 +20,8 @@ struct ref_lock {
  * 1: End-of-component
  * 2: ., look for a preceding . to reject .. in refs
  * 3: {, look for a preceding @ to reject @{ in refs
- * 4: A bad character: ASCII control characters, "~", "^", ":" or SP
+ * 4: A bad character: ASCII control characters, and
+ *    "*", ":", "?", "[", "\", "^", "~", SP, or TAB
  */
 static unsigned char refname_disposition[256] = {
 	1, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4,
@@ -71,10 +72,11 @@ static unsigned char refname_disposition[256] = {
  *
  * - any path component of it begins with ".", or
  * - it has double dots "..", or
- * - it has ASCII control character, "~", "^", ":" or SP, anywhere, or
- * - it ends with a "/".
- * - it ends with ".lock"
- * - it contains a "\" (backslash)
+ * - it has ASCII control characters, or
+ * - it has "*", ":", "?", "[", "\", "^", "~", SP, or TAB anywhere, or
+ * - it ends with a "/", or
+ * - it ends with ".lock", or
+ * - it contains a "@{" portion
  */
 static int check_refname_component(const char *refname, int flags)
 {
