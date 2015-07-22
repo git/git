@@ -40,11 +40,10 @@ test_expect_success 'git diff-tree HEAD^ HEAD -- b' '
 	test_expect_code 1 git diff-tree --quiet HEAD^ HEAD -- b >cnt &&
 	test_line_count = 0 cnt
 '
-# this diff outputs one line: sha1 of the given head
 test_expect_success 'echo HEAD | git diff-tree --stdin' '
 	echo $(git rev-parse HEAD) |
 	test_expect_code 1 git diff-tree --quiet --stdin >cnt &&
-	test_line_count = 1 cnt
+	test_line_count = 0 cnt
 '
 test_expect_success 'git diff-tree HEAD HEAD' '
 	test_expect_code 0 git diff-tree --quiet HEAD HEAD >cnt &&
