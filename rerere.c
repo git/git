@@ -30,14 +30,17 @@ static int rerere_dir_alloc;
 #define RR_HAS_PREIMAGE 2
 static struct rerere_dir {
 	unsigned char sha1[20];
-	unsigned char status;
+	int status_alloc, status_nr;
+	unsigned char *status;
 } **rerere_dir;
 
 static void free_rerere_dirs(void)
 {
 	int i;
-	for (i = 0; i < rerere_dir_nr; i++)
+	for (i = 0; i < rerere_dir_nr; i++) {
+		free(rerere_dir[i]->status);
 		free(rerere_dir[i]);
+	}
 	free(rerere_dir);
 	rerere_dir_nr = rerere_dir_alloc = 0;
 	rerere_dir = NULL;
@@ -53,17 +56,59 @@ static const char *rerere_id_hex(const struct rerere_id *id)
 	return sha1_to_hex(id->collection->sha1);
 }
 
+static void fit_variant(struct rerere_dir *rr_dir, int variant)
+{
+	variant++;
+	ALLOC_GROW(rr_dir->status, variant, rr_dir->status_alloc);
+	if (rr_dir->status_nr < variant) {
+		memset(rr_dir->status + rr_dir->status_nr,
+		       '\0', variant - rr_dir->status_nr);
+		rr_dir->status_nr = variant;
+	}
+}
+
+static void assign_variant(struct rerere_id *id)
+{
+	int variant;
+	struct rerere_dir *rr_dir = id->collection;
+
+	variant = id->variant;
+	if (variant < 0) {
+		variant = 0; /* for now */
+	}
+	fit_variant(rr_dir, variant);
+	id->variant = variant;
+}
+
 const char *rerere_path(const struct rerere_id *id, const char *file)
 {
 	if (!file)
 		return git_path("rr-cache/%s", rerere_id_hex(id));
 
-	return git_path("rr-cache/%s/%s", rerere_id_hex(id), file);
+	if (id->variant <= 0)
+		return git_path("rr-cache/%s/%s", rerere_id_hex(id), file);
+
+	return git_path("rr-cache/%s/%s.%d",
+			rerere_id_hex(id), file, id->variant);
 }
 
-static int is_rr_file(const char *name, const char *filename)
+static int is_rr_file(const char *name, const char *filename, int *variant)
 {
-	return !strcmp(name, filename);
+	const char *suffix;
+	char *ep;
+
+	if (!strcmp(name, filename)) {
+		*variant = 0;
+		return 1;
+	}
+	if (!skip_prefix(name, filename, &suffix) || *suffix != '.')
+		return 0;
+
+	errno = 0;
+	*variant = strtol(suffix + 1, &ep, 10);
+	if (errno || *ep)
+		return 0;
+	return 1;
 }
 
 static void scan_rerere_dir(struct rerere_dir *rr_dir)
@@ -74,10 +119,15 @@ static void scan_rerere_dir(struct rerere_dir *rr_dir)
 	if (!dir)
 		return;
 	while ((de = readdir(dir)) != NULL) {
-		if (is_rr_file(de->d_name, "postimage"))
-			rr_dir->status |= RR_HAS_POSTIMAGE;
-		else if (is_rr_file(de->d_name, "preimage"))
-			rr_dir->status |= RR_HAS_PREIMAGE;
+		int variant;
+
+		if (is_rr_file(de->d_name, "postimage", &variant)) {
+			fit_variant(rr_dir, variant);
+			rr_dir->status[variant] |= RR_HAS_POSTIMAGE;
+		} else if (is_rr_file(de->d_name, "preimage", &variant)) {
+			fit_variant(rr_dir, variant);
+			rr_dir->status[variant] |= RR_HAS_PREIMAGE;
+		}
 	}
 	closedir(dir);
 }
@@ -100,7 +150,9 @@ static struct rerere_dir *find_rerere_dir(const char *hex)
 	if (pos < 0) {
 		rr_dir = xmalloc(sizeof(*rr_dir));
 		hashcpy(rr_dir->sha1, sha1);
-		rr_dir->status = 0;
+		rr_dir->status = NULL;
+		rr_dir->status_nr = 0;
+		rr_dir->status_alloc = 0;
 		pos = -1 - pos;
 
 		/* Make sure the array is big enough ... */
@@ -118,19 +170,27 @@ static struct rerere_dir *find_rerere_dir(const char *hex)
 static int has_rerere_resolution(const struct rerere_id *id)
 {
 	const int both = RR_HAS_POSTIMAGE|RR_HAS_PREIMAGE;
+	int variant = id->variant;
 
-	return ((id->collection->status & both) == both);
+	if (variant < 0)
+		return 0;
+	return ((id->collection->status[variant] & both) == both);
 }
 
 static int has_rerere_preimage(const struct rerere_id *id)
 {
-	return (id->collection->status & RR_HAS_PREIMAGE);
+	int variant = id->variant;
+
+	if (variant < 0)
+		return 0;
+	return (id->collection->status[variant] & RR_HAS_PREIMAGE);
 }
 
 static struct rerere_id *new_rerere_id_hex(char *hex)
 {
 	struct rerere_id *id = xmalloc(sizeof(*id));
 	id->collection = find_rerere_dir(hex);
+	id->variant = -1; /* not known yet */
 	return id;
 }
 
@@ -157,16 +217,26 @@ static void read_rr(struct string_list *rr)
 		char *path;
 		unsigned char sha1[20];
 		struct rerere_id *id;
+		int variant;
 
 		/* There has to be the hash, tab, path and then NUL */
 		if (buf.len < 42 || get_sha1_hex(buf.buf, sha1))
 			die("corrupt MERGE_RR");
 
-		if (buf.buf[40] != '\t')
+		if (buf.buf[40] != '.') {
+			variant = 0;
+			path = buf.buf + 40;
+		} else {
+			errno = 0;
+			variant = strtol(buf.buf + 41, &path, 10);
+			if (errno)
+				die("corrupt MERGE_RR");
+		}
+		if (*(path++) != '\t')
 			die("corrupt MERGE_RR");
 		buf.buf[40] = '\0';
-		path = buf.buf + 41;
 		id = new_rerere_id_hex(buf.buf);
+		id->variant = variant;
 		string_list_insert(rr, path)->util = id;
 	}
 	strbuf_release(&buf);
@@ -187,9 +257,16 @@ static int write_rr(struct string_list *rr, int out_fd)
 		id = rr->items[i].util;
 		if (!id)
 			continue;
-		strbuf_addf(&buf, "%s\t%s%c",
-			    rerere_id_hex(id),
-			    rr->items[i].string, 0);
+		assert(id->variant >= 0);
+		if (0 < id->variant)
+			strbuf_addf(&buf, "%s.%d\t%s%c",
+				    rerere_id_hex(id), id->variant,
+				    rr->items[i].string, 0);
+		else
+			strbuf_addf(&buf, "%s\t%s%c",
+				    rerere_id_hex(id),
+				    rr->items[i].string, 0);
+
 		if (write_in_full(out_fd, buf.buf, buf.len) != buf.len)
 			die("unable to write rerere record");
 
@@ -752,7 +829,12 @@ static void do_rerere_one_path(struct string_list_item *rr_item,
 			       struct string_list *update)
 {
 	const char *path = rr_item->string;
-	const struct rerere_id *id = rr_item->util;
+	struct rerere_id *id = rr_item->util;
+	int variant;
+
+	if (id->variant < 0)
+		assign_variant(id);
+	variant = id->variant;
 
 	if (!has_rerere_preimage(id)) {
 		/*
@@ -761,13 +843,13 @@ static void do_rerere_one_path(struct string_list_item *rr_item,
 		 * the "preimage" file.
 		 */
 		handle_file(path, NULL, rerere_path(id, "preimage"));
-		if (id->collection->status & RR_HAS_POSTIMAGE) {
+		if (id->collection->status[variant] & RR_HAS_POSTIMAGE) {
 			const char *path = rerere_path(id, "postimage");
 			if (unlink(path))
 				die_errno("cannot unlink stray '%s'", path);
-			id->collection->status &= ~RR_HAS_POSTIMAGE;
+			id->collection->status[variant] &= ~RR_HAS_POSTIMAGE;
 		}
-		id->collection->status |= RR_HAS_PREIMAGE;
+		id->collection->status[variant] |= RR_HAS_PREIMAGE;
 		fprintf(stderr, "Recorded preimage for '%s'\n", path);
 		return;
 	} else if (has_rerere_resolution(id)) {
@@ -784,7 +866,7 @@ static void do_rerere_one_path(struct string_list_item *rr_item,
 	} else if (!handle_file(path, NULL, NULL)) {
 		/* The user has resolved it. */
 		copy_file(rerere_path(id, "postimage"), path, 0666);
-		id->collection->status |= RR_HAS_POSTIMAGE;
+		id->collection->status[variant] |= RR_HAS_POSTIMAGE;
 		fprintf(stderr, "Recorded resolution for '%s'.\n", path);
 	} else {
 		return;
@@ -919,6 +1001,7 @@ static int rerere_forget_one_path(const char *path, struct string_list *rr)
 
 	/* Nuke the recorded resolution for the conflict */
 	id = new_rerere_id(sha1);
+	id->variant = 0; /* for now */
 	filename = rerere_path(id, "postimage");
 	if (unlink(filename))
 		return (errno == ENOENT
