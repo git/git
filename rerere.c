@@ -369,7 +369,7 @@ static int check_one_conflict(int i, int *type)
 	}
 
 	*type = PUNTED;
-	if (ce_stage(e) == 1)
+	while (ce_stage(active_cache[i]) == 1)
 		i++;
 
 	/* Only handle regular files with both stages #2 and #3 */
