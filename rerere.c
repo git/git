@@ -337,8 +337,10 @@ static int handle_cache(const char *path, unsigned char *sha1, const char *outpu
 		if (ce_namelen(ce) != len || memcmp(ce->name, path, len))
 			break;
 		i = ce_stage(ce) - 1;
-		mmfile[i].ptr = read_sha1_file(ce->sha1, &type, &size);
-		mmfile[i].size = size;
+		if (!mmfile[i].ptr) {
+			mmfile[i].ptr = read_sha1_file(ce->sha1, &type, &size);
+			mmfile[i].size = size;
+		}
 	}
 	for (i = 0; i < 3; i++)
 		if (!mmfile[i].ptr && !mmfile[i].size)
