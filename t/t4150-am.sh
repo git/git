@@ -303,25 +303,6 @@ test_expect_success 'am -3 -p0 can read --no-prefix patch' '
 	git diff --exit-code lorem
 '
 
-test_expect_success 'am with config am.threeWay falls back to 3-way merge' '
-	rm -fr .git/rebase-apply &&
-	git reset --hard &&
-	git checkout -b lorem4 base3way &&
-	test_config am.threeWay 1 &&
-	git am lorem-move.patch &&
-	test_path_is_missing .git/rebase-apply &&
-	git diff --exit-code lorem
-'
-
-test_expect_success 'am with config am.threeWay overridden by --no-3way' '
-	rm -fr .git/rebase-apply &&
-	git reset --hard &&
-	git checkout -b lorem5 base3way &&
-	test_config am.threeWay 1 &&
-	test_must_fail git am --no-3way lorem-move.patch &&
-	test_path_is_dir .git/rebase-apply
-'
-
 test_expect_success 'am can rename a file' '
 	grep "^rename from" rename.patch &&
 	rm -fr .git/rebase-apply &&

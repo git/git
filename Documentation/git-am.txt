@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git am' [--signoff] [--keep] [--[no-]keep-cr] [--[no-]utf8]
-	 [--[no-]3way] [--interactive] [--committer-date-is-author-date]
+	 [--3way] [--interactive] [--committer-date-is-author-date]
 	 [--ignore-date] [--ignore-space-change | --ignore-whitespace]
 	 [--whitespace=<option>] [-C<n>] [-p<n>] [--directory=<dir>]
 	 [--exclude=<path>] [--include=<path>] [--reject] [-q | --quiet]
@@ -90,13 +90,10 @@ default.   You can use `--no-utf8` to override this.
 
 -3::
 --3way::
---no-3way::
 	When the patch does not apply cleanly, fall back on
 	3-way merge if the patch records the identity of blobs
 	it is supposed to apply to and we have those blobs
-	available locally. `--no-3way` can be used to override
-	am.threeWay configuration variable. For more information,
-	see am.threeWay in linkgit:git-config[1].
+	available locally.
 
 --ignore-space-change::
 --ignore-whitespace::
