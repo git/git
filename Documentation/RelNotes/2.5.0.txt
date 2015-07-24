@@ -127,8 +127,6 @@ UI, Workflows & Features
  * "git send-email" learned the alias file format used by the sendmail
    program (in a simplified form; we obviously do not feed pipes).
 
- * "git am" learned am.threeWay configuration variable.
-
  * Traditionally, external low-level 3-way merge drivers are expected
    to produce their results based solely on the contents of the three
    variants given in temporary files named by %O, %A and %B on their
