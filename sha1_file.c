@@ -3084,7 +3084,7 @@ int has_sha1_pack(const unsigned char *sha1)
 	return find_pack_entry(sha1, &e);
 }
 
-int has_sha1_file(const unsigned char *sha1)
+int has_sha1_file_with_flags(const unsigned char *sha1, int flags)
 {
 	struct pack_entry e;
 
@@ -3092,6 +3092,8 @@ int has_sha1_file(const unsigned char *sha1)
 		return 1;
 	if (has_loose_object(sha1))
 		return 1;
+	if (flags & HAS_SHA1_QUICK)
+		return 0;
 	reprepare_packed_git();
 	return find_pack_entry(sha1, &e);
 }

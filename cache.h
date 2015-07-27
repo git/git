@@ -901,8 +901,17 @@ extern int has_sha1_pack(const unsigned char *sha1);
  * Return true iff we have an object named sha1, whether local or in
  * an alternate object database, and whether packed or loose.  This
  * function does not respect replace references.
+ *
+ * If the QUICK flag is set, do not re-check the pack directory
+ * when we cannot find the object (this means we may give a false
+ * negative answer if another process is simultaneously repacking).
  */
-extern int has_sha1_file(const unsigned char *sha1);
+#define HAS_SHA1_QUICK 0x1
+extern int has_sha1_file_with_flags(const unsigned char *sha1, int flags);
+static inline int has_sha1_file(const unsigned char *sha1)
+{
+	return has_sha1_file_with_flags(sha1, 0);
+}
 
 /*
  * Return true iff an alternate object database has a loose object
