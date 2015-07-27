@@ -3,7 +3,7 @@ git-checkout(1)
 
 NAME
 ----
-git-checkout - Checkout a branch or paths to the working tree
+git-checkout - Switch branches or restore working tree files
 
 SYNOPSIS
 --------
@@ -88,6 +88,10 @@ Omitting <branch> detaches HEAD at the tip of the current branch.
 	<tree-ish> argument can be used to specify a specific tree-ish
 	(i.e.  commit, tag or tree) to update the index for the given
 	paths before updating the working tree.
++
+'git checkout' with <paths> or `--patch` is used to restore modified or
+deleted paths to their original contents from the index or replace paths
+with the contents from a named <tree-ish> (most often a commit-ish).
 +
 The index may contain unmerged entries because of a previous failed merge.
 By default, if you try to check out such an entry from the index, the
