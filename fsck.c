@@ -241,8 +241,8 @@ static int fsck_tree(struct tree *item, int strict, fsck_error error_func)
 	return retval;
 }
 
-static int require_end_of_header(const void *data, unsigned long size,
-	struct object *obj, fsck_error error_func)
+static int verify_headers(const void *data, unsigned long size,
+			  struct object *obj, fsck_error error_func)
 {
 	const char *buffer = (const char *)data;
 	unsigned long i;
@@ -257,6 +257,15 @@ static int require_end_of_header(const void *data, unsigned long size,
 				return 0;
 		}
 	}
+
+	/*
+	 * We did not find double-LF that separates the header
+	 * and the body.  Not having a body is not a crime but
+	 * we do want to see the terminating LF for the last header
+	 * line.
+	 */
+	if (size && buffer[size - 1] == '\n')
+		return 0;
 
 	return error_func(obj, FSCK_ERROR, "unterminated header");
 }
@@ -308,7 +317,7 @@ static int fsck_commit_buffer(struct commit *commit, const char *buffer,
 	unsigned parent_count, parent_line_count = 0;
 	int err;
 
-	if (require_end_of_header(buffer, size, &commit->object, error_func))
+	if (verify_headers(buffer, size, &commit->object, error_func))
 		return -1;
 
 	if (!skip_prefix(buffer, "tree ", &buffer))
@@ -387,7 +396,7 @@ static int fsck_tag_buffer(struct tag *tag, const char *data,
 		}
 	}
 
-	if (require_end_of_header(buffer, size, &tag->object, error_func))
+	if (verify_headers(buffer, size, &tag->object, error_func))
 		goto done;
 
 	if (!skip_prefix(buffer, "object ", &buffer)) {
