@@ -1,25 +1,81 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jul 2015, #06; Tue, 21)
-X-master-at: f99a38c0121456822f8a9dfb7928eefceaa98201
-X-next-at: 68aafd0cff0775f143dd13a8f2d95a3e65155388
+Subject: What's cooking in git.git (Jul 2015, #07; Mon, 27)
+X-master-at: a17c56c056d5fea0843b429132904c429a900229
+X-next-at: 0029c496ce1b91f10b75ade16604b8e9f5d8d20b
 
-What's cooking in git.git (Jul 2015, #06; Tue, 21)
+What's cooking in git.git (Jul 2015, #07; Mon, 27)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-Tagged v2.5-rc3 today; hopefully we can have an uneventful 2.5 next
-week and then start the next cycle.  I'll eject/drop the stalled
-topics and ask people to reroll/rebase if their topics are still
-viable.
+Git 2.5 final was tagged and tarballs were pushed out.  Accumulated
+fixes also went to a new maintenance release 2.4.7.  Let's wait and
+see for a few days for any regressions before opening the 'master'
+branch for topics that have been waiting in 'next', as usual.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
 
     http://git-blame.blogspot.com/p/git-public-repositories.html
+
+--------------------------------------------------
+[New Topics]
+
+* da/subtree-date-confusion (2015-07-23) 1 commit
+ - contrib/subtree: ignore log.date configuration
+
+ "git subtree" (in contrib/) depended on "git log" output to be
+ stable, which was a no-no.  Apply a workaround to force a
+ particular date format.
+
+ Will merge to 'next'.
+
+
+* db/send-pack-user-signingkey (2015-07-21) 1 commit
+ - builtin/send-pack.c: respect user.signingkey
+
+ The low-level "git send-pack" did not honor 'user.signingkey'
+ configuration variable when sending a signed-push.
+
+ Will merge to 'next'.
+
+
+* jk/refspec-parse-wildcard (2015-07-27) 2 commits
+ - refs: loosen restriction on wildcard "*" refspecs
+ - refs: cleanup comments regarding check_refname_component()
+
+ Allow an asterisk as a substring (as opposed to the entirety) of
+ a path component for both side of a refspec, e.g.
+ "refs/heads/o*:refs/remotes/heads/i*".
+
+ Will merge to 'next'.
+
+
+* jx/do-not-crash-receive-pack-wo-head (2015-07-22) 1 commit
+ - receive-pack: crash when checking with non-exist HEAD
+
+ Will merge to 'next'.
+
+
+* kd/pull-rebase-autostash (2015-07-22) 1 commit
+ - pull: allow dirty tree when rebase.autostash enabled
+ (this branch uses pt/pull-builtin; is tangled with pt/am-builtin.)
+
+ Teach "git pull --rebase" to pay attention to rebase.autostash
+ configuration.
+
+
+* es/doc-clean-outdated-tools (2015-07-25) 5 commits
+ - Documentation/git-tools: drop references to defunct tools
+ - Documentation/git-tools: drop references to defunct tools
+ - Documentation/git-tools: fix item text formatting
+ - Documentation/git-tools: improve discoverability of Git wiki
+ - Documentation/git: drop outdated Cogito reference
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -357,14 +413,14 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* zb/userdiff-fountain (2015-07-21) 2 commits
- - SQUASH???
- - userdiff: add support for Fountain documents
+* zb/userdiff-fountain (2015-07-23) 1 commit
+  (merged to 'next' on 2015-07-23 at e177995)
+ + userdiff: add support for Fountain documents
 
  New userdiff pattern definition for fountain screenwriting markup
  format.
 
- Waiting for a response ($gmane/274403).
+ Will merge to 'master'.
 
 
 * as/sparse-checkout-removal (2015-07-21) 1 commit
@@ -415,36 +471,40 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* es/worktree-add-cleanup (2015-07-20) 22 commits
- - checkout: drop intimate knowledge of newly created worktree
- - worktree: populate via "git reset --hard" rather than "git checkout"
- - worktree: avoid resolving HEAD unnecessarily
- - worktree: make setup of new HEAD distinct from worktree population
- - worktree: detect branch-name/detached and error conditions locally
- - worktree: add_worktree: construct worktree-population command locally
- - worktree: elucidate environment variables intended for child processes
- - worktree: make branch creation distinct from worktree population
- - worktree: add: suppress auto-vivication with --detach and no <branch>
- - worktree: make --detach mutually exclusive with -b/-B
- - worktree: introduce options container
- - worktree: simplify new branch (-b/-B) option checking
- - worktree: improve worktree setup message
- - branch: publish die_if_checked_out()
- - checkout: teach check_linked_checkout() about symbolic link HEAD
- - checkout: check_linked_checkout: simplify symref parsing
- - checkout: check_linked_checkout: improve "already checked out" aesthetic
- - checkout: generalize die_if_checked_out() branch name argument
- - checkout: die_if_checked_out: simplify strbuf management
- - checkout: improve die_if_checked_out() robustness
- - checkout: name check_linked_checkouts() more meaningfully
- - checkout: avoid resolving HEAD unnecessarily
+* es/worktree-add-cleanup (2015-07-24) 24 commits
+ - Documentation/config: mention "now" and "never" for 'expire' settings
+  (merged to 'next' on 2015-07-27 at 25f086d)
+ + Documentation/git-worktree: fix broken 'linkgit' invocation
+  (merged to 'next' on 2015-07-23 at ecb1e1a)
+ + checkout: drop intimate knowledge of newly created worktree
+ + worktree: populate via "git reset --hard" rather than "git checkout"
+ + worktree: avoid resolving HEAD unnecessarily
+ + worktree: make setup of new HEAD distinct from worktree population
+ + worktree: detect branch-name/detached and error conditions locally
+ + worktree: add_worktree: construct worktree-population command locally
+ + worktree: elucidate environment variables intended for child processes
+ + worktree: make branch creation distinct from worktree population
+ + worktree: add: suppress auto-vivication with --detach and no <branch>
+ + worktree: make --detach mutually exclusive with -b/-B
+ + worktree: introduce options container
+ + worktree: simplify new branch (-b/-B) option checking
+ + worktree: improve worktree setup message
+ + branch: publish die_if_checked_out()
+ + checkout: teach check_linked_checkout() about symbolic link HEAD
+ + checkout: check_linked_checkout: simplify symref parsing
+ + checkout: check_linked_checkout: improve "already checked out" aesthetic
+ + checkout: generalize die_if_checked_out() branch name argument
+ + checkout: die_if_checked_out: simplify strbuf management
+ + checkout: improve die_if_checked_out() robustness
+ + checkout: name check_linked_checkouts() more meaningfully
+ + checkout: avoid resolving HEAD unnecessarily
  (this branch uses es/worktree-add.)
 
  Remove the "new-worktree-mode" hack in "checkout" that was added in
  nd/multiple-work-trees topic by updating the implementation of new
  "worktree add".
 
- Will merge to 'next'.
+ $gmane/274647
 
 
 * ib/scripted-parse-opt-better-hint-string (2015-07-15) 1 commit
@@ -547,57 +607,58 @@ of the repositories listed at
 
 
 * pt/am-builtin (2015-07-20) 46 commits
- - builtin-am: remove redirection to git-am.sh
- - builtin-am: check for valid committer ident
- - builtin-am: implement legacy -b/--binary option
- - builtin-am: implement -i/--interactive
- - builtin-am: support and auto-detect mercurial patches
- - builtin-am: support and auto-detect StGit series files
- - builtin-am: support and auto-detect StGit patches
- - builtin-am: rerere support
- - builtin-am: invoke post-applypatch hook
- - builtin-am: invoke pre-applypatch hook
- - builtin-am: invoke applypatch-msg hook
- - builtin-am: support automatic notes copying
- - builtin-am: invoke post-rewrite hook
- - builtin-am: implement -S/--gpg-sign, commit.gpgsign
- - builtin-am: implement --committer-date-is-author-date
- - builtin-am: implement --ignore-date
- - builtin-am: pass git-apply's options to git-apply
- - builtin-am: implement --[no-]scissors
- - builtin-am: support --keep-cr, am.keepcr
- - builtin-am: implement --[no-]message-id, am.messageid
- - builtin-am: implement -k/--keep, --keep-non-patch
- - builtin-am: implement -u/--utf8
- - builtin-am: handle stray state directory
- - builtin-am: bypass git-mailinfo when --rebasing
- - builtin-am: implement --rebasing mode
- - builtin-am: implement --3way, am.threeWay
- - cache-tree: introduce write_index_as_tree()
- - builtin-am: implement -s/--signoff
- - builtin-am: exit with user friendly message on failure
- - builtin-am: implement -q/--quiet
- - builtin-am: reject patches when there's a session in progress
- - builtin-am: implement --abort
- - builtin-am: implement --skip
- - builtin-am: don't parse mail when resuming
- - builtin-am: implement --resolved/--continue
- - builtin-am: refuse to apply patches if index is dirty
- - builtin-am: implement committing applied patch
- - builtin-am: apply patch with git-apply
- - builtin-am: extract patch and commit info with git-mailinfo
- - builtin-am: auto-detect mbox patches
- - builtin-am: split out mbox/maildir patches with git-mailsplit
- - builtin-am: implement patch queue mechanism
- - builtin-am: implement skeletal builtin am
- - wrapper: implement xfopen()
- - wrapper: implement xopen()
- - Merge branch 'pt/pull-builtin' into pt/am-builtin
- (this branch uses pt/pull-builtin.)
+  (merged to 'next' on 2015-07-23 at d5075f0)
+ + builtin-am: remove redirection to git-am.sh
+ + builtin-am: check for valid committer ident
+ + builtin-am: implement legacy -b/--binary option
+ + builtin-am: implement -i/--interactive
+ + builtin-am: support and auto-detect mercurial patches
+ + builtin-am: support and auto-detect StGit series files
+ + builtin-am: support and auto-detect StGit patches
+ + builtin-am: rerere support
+ + builtin-am: invoke post-applypatch hook
+ + builtin-am: invoke pre-applypatch hook
+ + builtin-am: invoke applypatch-msg hook
+ + builtin-am: support automatic notes copying
+ + builtin-am: invoke post-rewrite hook
+ + builtin-am: implement -S/--gpg-sign, commit.gpgsign
+ + builtin-am: implement --committer-date-is-author-date
+ + builtin-am: implement --ignore-date
+ + builtin-am: pass git-apply's options to git-apply
+ + builtin-am: implement --[no-]scissors
+ + builtin-am: support --keep-cr, am.keepcr
+ + builtin-am: implement --[no-]message-id, am.messageid
+ + builtin-am: implement -k/--keep, --keep-non-patch
+ + builtin-am: implement -u/--utf8
+ + builtin-am: handle stray state directory
+ + builtin-am: bypass git-mailinfo when --rebasing
+ + builtin-am: implement --rebasing mode
+ + builtin-am: implement --3way, am.threeWay
+ + cache-tree: introduce write_index_as_tree()
+ + builtin-am: implement -s/--signoff
+ + builtin-am: exit with user friendly message on failure
+ + builtin-am: implement -q/--quiet
+ + builtin-am: reject patches when there's a session in progress
+ + builtin-am: implement --abort
+ + builtin-am: implement --skip
+ + builtin-am: don't parse mail when resuming
+ + builtin-am: implement --resolved/--continue
+ + builtin-am: refuse to apply patches if index is dirty
+ + builtin-am: implement committing applied patch
+ + builtin-am: apply patch with git-apply
+ + builtin-am: extract patch and commit info with git-mailinfo
+ + builtin-am: auto-detect mbox patches
+ + builtin-am: split out mbox/maildir patches with git-mailsplit
+ + builtin-am: implement patch queue mechanism
+ + builtin-am: implement skeletal builtin am
+ + wrapper: implement xfopen()
+ + wrapper: implement xopen()
+ + Merge branch 'pt/pull-builtin' into pt/am-builtin
+ (this branch uses pt/pull-builtin; is tangled with kd/pull-rebase-autostash.)
 
  Rewrite "am" in "C".
 
- Will merge to 'next'.
+ Still buggy around "am" and then "am -3" workflow.
 
 
 * ad/bisect-cleanup (2015-06-29) 6 commits
@@ -630,13 +691,14 @@ of the repositories listed at
 
 
 * dt/refs-backend-preamble (2015-07-21) 7 commits
- - git-stash: use update-ref --create-reflog instead of creating files
- - update-ref and tag: add --create-reflog arg
- - refs: add REF_FORCE_CREATE_REFLOG flag
- - git-reflog: add exists command
- - refs: new public ref function: safe_create_reflog
- - refs: break out check for reflog autocreation
- - refs.c: add err arguments to reflog functions
+  (merged to 'next' on 2015-07-23 at 9dac423)
+ + git-stash: use update-ref --create-reflog instead of creating files
+ + update-ref and tag: add --create-reflog arg
+ + refs: add REF_FORCE_CREATE_REFLOG flag
+ + git-reflog: add exists command
+ + refs: new public ref function: safe_create_reflog
+ + refs: break out check for reflog autocreation
+ + refs.c: add err arguments to reflog functions
 
  In preparation for allowing different "backends" to store the refs
  in a way different from the traditional "one ref per file in $GIT_DIR
@@ -644,7 +706,7 @@ of the repositories listed at
  direct filesystem access to ref-like things like CHERRY_PICK_HEAD
  from scripts and programs.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jk/date-mode-format (2015-07-20) 4 commits
@@ -671,7 +733,7 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* jc/rerere (2015-07-18) 18 commits
+* jc/rerere (2015-07-24) 21 commits
  - rerere: un-nest merge() further
  - rerere: use "struct rerere_id" instead of "char *" for conflict ID
  - rerere: call conflict-ids IDs
@@ -682,22 +744,26 @@ of the repositories listed at
  - rerere: explain "rerere forget" codepath
  - rerere: explain the primary codepath
  - rerere: explain MERGE_RR management helpers
+ - rerere: fix benign off-by-one non-bug and clarify code
  - rerere: explain the rerere I/O abstraction
+ - rerere: do not leak mmfile[] for a path with multiple stage #1 entries
  - rerere: stop looping unnecessarily
  - rerere: drop want_sp parameter from is_cmarker()
  - rerere: report autoupdated paths only after actually updating them
  - rerere: write out each record of MERGE_RR in one go
  - rerere: lift PATH_MAX limitation
  - rerere: plug conflict ID leaks
+ - rerere: handle conflicts with multiple stage #1 entries
  - rerere: fix an off-by-one non-bug
  (this branch is used by jc/rerere-multi.)
 
  Code clean-up and minor fixes (so far).
 
 
-* jc/rerere-multi (2015-07-20) 5 commits
- - t4200: rerere a merge with two identical conflicts
- - rerere: delay the recording of preimage for the first time
+* jc/rerere-multi (2015-07-24) 6 commits
+ . t4200: rerere a merge with two identical conflicts
+ . WIP
+ - rerere: delay the recording of preimage
  - rerere: handle leftover rr-cache/$ID directory and postimage files
  - rerere: scan $GIT_DIR/rr-cache/$ID when instantiating a rerere_id
  - rerere: split conflict ID further
@@ -910,7 +976,7 @@ of the repositories listed at
  + argv-array: implement argv_array_pushv()
  + parse-options-cb: implement parse_opt_passthru_argv()
  + parse-options-cb: implement parse_opt_passthru()
- (this branch is used by pt/am-builtin.)
+ (this branch is used by kd/pull-rebase-autostash and pt/am-builtin.)
 
  Reimplement 'git pull' in C.
 
