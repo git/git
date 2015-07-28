@@ -274,6 +274,7 @@ integration_tests = [
   't2026-checkout-pathspec-file.sh',
   't2027-checkout-track.sh',
   't2030-unresolve-info.sh',
+  't2031-checkout-long-paths.sh',
   't2050-git-dir-relative.sh',
   't2060-switch.sh',
   't2070-restore.sh',
