@@ -166,23 +166,24 @@ static struct fsentry *fseentry_create_entry(struct fsentry *list,
  */
 static struct fsentry *fsentry_create_list(const struct fsentry *dir)
 {
-	wchar_t pattern[MAX_PATH + 2]; /* + 2 for '/' '*' */
+	wchar_t pattern[MAX_LONG_PATH + 2]; /* + 2 for "\*" */
 	WIN32_FIND_DATAW fdata;
 	HANDLE h;
 	int wlen;
 	struct fsentry *list, **phead;
 	DWORD err;
 
-	/* convert name to UTF-16 and check length < MAX_PATH */
-	if ((wlen = xutftowcsn(pattern, dir->name, MAX_PATH, dir->len)) < 0) {
-		if (errno == ERANGE)
-			errno = ENAMETOOLONG;
+	/* convert name to UTF-16 and check length */
+	if ((wlen = xutftowcs_path_ex(pattern, dir->name, MAX_LONG_PATH,
+			dir->len, MAX_PATH - 2, core_long_paths)) < 0)
 		return NULL;
-	}
 
-	/* append optional '/' and wildcard '*' */
+	/*
+	 * append optional '\' and wildcard '*'. Note: we need to use '\' as
+	 * Windows doesn't translate '/' to '\' for "\\?\"-prefixed paths.
+	 */
 	if (wlen)
-		pattern[wlen++] = '/';
+		pattern[wlen++] = '\\';
 	pattern[wlen++] = '*';
 	pattern[wlen] = 0;
 
