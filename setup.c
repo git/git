@@ -958,11 +958,11 @@ static int ensure_valid_ownership(const char *gitfile,
 
 static int is_invalid_dotgit_path(const char *gitfile, const char *potential_gitdir)
 {
-	WCHAR wpath[MAX_PATH];
+	WCHAR wpath[MAX_LONG_PATH];
 	struct strbuf dir = STRBUF_INIT;
 	int ret;
 
-	if (xutftowcs_path(wpath, potential_gitdir) < 0)
+	if (xutftowcs_long_path(wpath, potential_gitdir) < 0)
 		return 1;
 
 	/* Do not leak NTLM hashes, UNC paths etc. are generally problematic */

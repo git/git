@@ -85,7 +85,7 @@ struct fsentry {
 struct heap_fsentry {
 	union {
 		struct fsentry ent;
-		char dummy[sizeof(struct fsentry) + MAX_PATH];
+		char dummy[sizeof(struct fsentry) + MAX_LONG_PATH];
 	} u;
 };
 #pragma GCC diagnostic pop
@@ -129,7 +129,7 @@ static void fsentry_init(struct fsentry *fse, struct fsentry *list,
 			 const char *name, size_t len)
 {
 	fse->list = list;
-	if (len > MAX_PATH)
+	if (len > MAX_LONG_PATH)
 		BUG("Trying to allocate fsentry for long path '%.*s'",
 		    (int)len, name);
 	memcpy(fse->dirent.d_name, name, len);
@@ -234,7 +234,7 @@ static struct fsentry *fseentry_create_entry(struct fscache *cache,
 					    fdata->EaSize, buf);
 	fse->dirent.d_type = S_ISREG(fse->st_mode) ? DT_REG :
 			S_ISDIR(fse->st_mode) ? DT_DIR : DT_LNK;
-	fse->u.s.st_size = S_ISLNK(fse->st_mode) ? MAX_PATH :
+	fse->u.s.st_size = S_ISLNK(fse->st_mode) ? MAX_LONG_PATH :
 			fdata->EndOfFile.LowPart |
 			(((off_t)fdata->EndOfFile.HighPart) << 32);
 	filetime_to_timespec((FILETIME *)&(fdata->LastAccessTime),
@@ -270,7 +270,7 @@ static struct fsentry *fseentry_create_entry(struct fscache *cache,
 static struct fsentry *fsentry_create_list(struct fscache *cache, const struct fsentry *dir,
 					   int *dir_not_found)
 {
-	wchar_t pattern[MAX_PATH];
+	wchar_t pattern[MAX_LONG_PATH];
 	NTSTATUS status;
 	IO_STATUS_BLOCK iosb;
 	PFILE_FULL_DIR_INFORMATION di;
@@ -281,13 +281,11 @@ static struct fsentry *fsentry_create_list(struct fscache *cache, const struct f
 
 	*dir_not_found = 0;
 
-	/* convert name to UTF-16 and check length < MAX_PATH */
-	if ((wlen = xutftowcsn(pattern, dir->dirent.d_name, MAX_PATH,
-			       dir->len)) < 0) {
-		if (errno == ERANGE)
-			errno = ENAMETOOLONG;
+	/* convert name to UTF-16 and check length */
+	if ((wlen = xutftowcs_path_ex(pattern, dir->dirent.d_name,
+				      MAX_LONG_PATH, dir->len, MAX_PATH - 2,
+				      are_long_paths_enabled())) < 0)
 		return NULL;
-	}
 
 	/* handle CWD */
 	if (!wlen) {
@@ -638,8 +636,8 @@ int fscache_lstat(const char *filename, struct stat *st)
 	 * Special case symbolic links: FindFirstFile()/FindNextFile() did not
 	 * provide us with the length of the target path.
 	 */
-	if (fse->u.s.st_size == MAX_PATH && S_ISLNK(fse->st_mode)) {
-		char buf[MAX_PATH];
+	if (fse->u.s.st_size == MAX_LONG_PATH && S_ISLNK(fse->st_mode)) {
+		char buf[MAX_LONG_PATH];
 		int len = readlink(filename, buf, sizeof(buf) - 1);
 
 		if (len > 0)
