@@ -6,10 +6,11 @@ Introduction
 ------------
 
 Apart from Git contrib/ area there are some others third-party tools
-you may want to look.
-
+you may want to look at.
 This document presents a brief summary of each tool and the corresponding
 link.
+For a more comprehensive list, see:
+http://git.or.cz/gitwiki/InterfacesFrontendsAndTools
 
 
 Alternative/Augmentative Porcelains
@@ -112,7 +113,3 @@ Others
    This is an Emacs interface for Git. The user interface is modelled on
    pcl-cvs. It has been developed on Emacs 21 and will probably need some
    tweaking to work on XEmacs.
-
-
-http://git.or.cz/gitwiki/InterfacesFrontendsAndTools has more
-comprehensive list.
