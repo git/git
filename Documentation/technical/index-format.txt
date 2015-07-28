@@ -271,7 +271,7 @@ Git index format
 
     - The directory name terminated by NUL.
 
-    - A number of untrached file/dir names terminated by NUL.
+    - A number of untracked file/dir names terminated by NUL.
 
 The remaining data of each directory block is grouped by type:
 
