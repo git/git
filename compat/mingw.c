@@ -277,6 +277,27 @@ static enum hide_dotfiles_type hide_dotfiles = HIDE_DOTFILES_DOTGITONLY;
 static char *unset_environment_variables;
 int core_fscache;
 
+int are_long_paths_enabled(void)
+{
+	/* default to `false` during initialization */
+	static const int fallback = 0;
+
+	static int enabled = -1;
+
+	if (enabled < 0) {
+		/* avoid infinite recursion */
+		if (!the_repository)
+			return fallback;
+
+		if (the_repository->config &&
+		    the_repository->config->hash_initialized &&
+		    repo_config_get_bool(the_repository, "core.longpaths", &enabled) < 0)
+			enabled = 0;
+	}
+
+	return enabled < 0 ? fallback : enabled;
+}
+
 int mingw_core_config(const char *var, const char *value,
 		      const struct config_context *ctx UNUSED,
 		      void *cb UNUSED)
@@ -357,7 +378,7 @@ process_phantom_symlink(const wchar_t *wtarget, const wchar_t *wlink)
 {
 	HANDLE hnd;
 	BY_HANDLE_FILE_INFORMATION fdata;
-	wchar_t relative[MAX_PATH];
+	wchar_t relative[MAX_LONG_PATH];
 	const wchar_t *rel;
 
 	/* check that wlink is still a file symlink */
@@ -461,8 +482,8 @@ static wchar_t *normalize_ntpath(wchar_t *wbuf)
 int mingw_unlink(const char *pathname, int handle_in_use_error)
 {
 	int tries = 0;
-	wchar_t wpathname[MAX_PATH];
-	if (xutftowcs_path(wpathname, pathname) < 0)
+	wchar_t wpathname[MAX_LONG_PATH];
+	if (xutftowcs_long_path(wpathname, pathname) < 0)
 		return -1;
 
 	if (DeleteFileW(wpathname))
@@ -494,7 +515,7 @@ static int is_dir_empty(const wchar_t *wpath)
 {
 	WIN32_FIND_DATAW findbuf;
 	HANDLE handle;
-	wchar_t wbuf[MAX_PATH + 2];
+	wchar_t wbuf[MAX_LONG_PATH + 2];
 	wcscpy(wbuf, wpath);
 	wcscat(wbuf, L"\\*");
 	handle = FindFirstFileW(wbuf, &findbuf);
@@ -515,7 +536,7 @@ static int is_dir_empty(const wchar_t *wpath)
 int mingw_rmdir(const char *pathname)
 {
 	int tries = 0;
-	wchar_t wpathname[MAX_PATH];
+	wchar_t wpathname[MAX_LONG_PATH];
 	struct stat st;
 
 	/*
@@ -537,7 +558,7 @@ int mingw_rmdir(const char *pathname)
 		return -1;
 	}
 
-	if (xutftowcs_path(wpathname, pathname) < 0)
+	if (xutftowcs_long_path(wpathname, pathname) < 0)
 		return -1;
 
 	do {
@@ -606,15 +627,18 @@ static int set_hidden_flag(const wchar_t *path, int set)
 int mingw_mkdir(const char *path, int mode UNUSED)
 {
 	int ret;
-	wchar_t wpath[MAX_PATH];
+	wchar_t wpath[MAX_LONG_PATH];
 
 	if (!is_valid_win32_path(path, 0)) {
 		errno = EINVAL;
 		return -1;
 	}
 
-	if (xutftowcs_path(wpath, path) < 0)
+	/* CreateDirectoryW path limit is 248 (MAX_PATH - 8.3 file name) */
+	if (xutftowcs_path_ex(wpath, path, MAX_LONG_PATH, -1, 248,
+			      are_long_paths_enabled()) < 0)
 		return -1;
+
 	ret = _wmkdir(wpath);
 	if (!ret)
 		process_phantom_symlinks();
@@ -780,7 +804,7 @@ int mingw_open (const char *filename, int oflags, ...)
 	va_list args;
 	unsigned mode;
 	int fd, create = (oflags & (O_CREAT | O_EXCL)) == (O_CREAT | O_EXCL);
-	wchar_t wfilename[MAX_PATH];
+	wchar_t wfilename[MAX_LONG_PATH];
 	open_fn_t open_fn;
 	WIN32_FILE_ATTRIBUTE_DATA fdata;
 
@@ -813,7 +837,7 @@ int mingw_open (const char *filename, int oflags, ...)
 
 	if (filename && !strcmp(filename, "/dev/null"))
 		wcscpy(wfilename, L"nul");
-	else if (xutftowcs_path(wfilename, filename) < 0)
+	else if (xutftowcs_long_path(wfilename, filename) < 0)
 		return -1;
 
 	/*
@@ -899,14 +923,14 @@ FILE *mingw_fopen (const char *filename, const char *otype)
 {
 	int hide = needs_hiding(filename);
 	FILE *file;
-	wchar_t wfilename[MAX_PATH], wotype[4];
+	wchar_t wfilename[MAX_LONG_PATH], wotype[4];
 	if (filename && !strcmp(filename, "/dev/null"))
 		wcscpy(wfilename, L"nul");
 	else if (!is_valid_win32_path(filename, 1)) {
 		int create = otype && strchr(otype, 'w');
 		errno = create ? EINVAL : ENOENT;
 		return NULL;
-	} else if (xutftowcs_path(wfilename, filename) < 0)
+	} else if (xutftowcs_long_path(wfilename, filename) < 0)
 		return NULL;
 
 	if (xutftowcs(wotype, otype, ARRAY_SIZE(wotype)) < 0)
@@ -928,14 +952,14 @@ FILE *mingw_freopen (const char *filename, const char *otype, FILE *stream)
 {
 	int hide = needs_hiding(filename);
 	FILE *file;
-	wchar_t wfilename[MAX_PATH], wotype[4];
+	wchar_t wfilename[MAX_LONG_PATH], wotype[4];
 	if (filename && !strcmp(filename, "/dev/null"))
 		wcscpy(wfilename, L"nul");
 	else if (!is_valid_win32_path(filename, 1)) {
 		int create = otype && strchr(otype, 'w');
 		errno = create ? EINVAL : ENOENT;
 		return NULL;
-	} else if (xutftowcs_path(wfilename, filename) < 0)
+	} else if (xutftowcs_long_path(wfilename, filename) < 0)
 		return NULL;
 
 	if (xutftowcs(wotype, otype, ARRAY_SIZE(wotype)) < 0)
@@ -985,7 +1009,7 @@ ssize_t mingw_write(int fd, const void *buf, size_t len)
 		HANDLE h = (HANDLE) _get_osfhandle(fd);
 		if (GetFileType(h) != FILE_TYPE_PIPE) {
 			if (orig == EINVAL) {
-				wchar_t path[MAX_PATH];
+				wchar_t path[MAX_LONG_PATH];
 				DWORD ret = GetFinalPathNameByHandleW(h, path,
 								ARRAY_SIZE(path), 0);
 				UINT drive_type = ret > 0 && ret < ARRAY_SIZE(path) ?
@@ -1022,20 +1046,23 @@ ssize_t mingw_write(int fd, const void *buf, size_t len)
 
 int mingw_access(const char *filename, int mode)
 {
-	wchar_t wfilename[MAX_PATH];
+	wchar_t wfilename[MAX_LONG_PATH];
 	if (!strcmp("nul", filename) || !strcmp("/dev/null", filename))
 		return 0;
-	if (xutftowcs_path(wfilename, filename) < 0)
+	if (xutftowcs_long_path(wfilename, filename) < 0)
 		return -1;
 	/* X_OK is not supported by the MSVCRT version */
 	return _waccess(wfilename, mode & ~X_OK);
 }
 
+/* cached length of current directory for handle_long_path */
+static int current_directory_len = 0;
+
 int mingw_chdir(const char *dirname)
 {
-	wchar_t wdirname[MAX_PATH];
-
-	if (xutftowcs_path(wdirname, dirname) < 0)
+	int result;
+	wchar_t wdirname[MAX_LONG_PATH];
+	if (xutftowcs_long_path(wdirname, dirname) < 0)
 		return -1;
 
 	if (has_symlinks) {
@@ -1054,13 +1081,15 @@ int mingw_chdir(const char *dirname)
 		CloseHandle(hnd);
 	}
 
-	return _wchdir(normalize_ntpath(wdirname));
+	result = _wchdir(normalize_ntpath(wdirname));
+	current_directory_len = GetCurrentDirectoryW(0, NULL);
+	return result;
 }
 
 int mingw_chmod(const char *filename, int mode)
 {
-	wchar_t wfilename[MAX_PATH];
-	if (xutftowcs_path(wfilename, filename) < 0)
+	wchar_t wfilename[MAX_LONG_PATH];
+	if (xutftowcs_long_path(wfilename, filename) < 0)
 		return -1;
 	return _wchmod(wfilename, mode);
 }
@@ -1194,8 +1223,8 @@ int mingw_lstat(const char *file_name, struct stat *buf)
 	WIN32_FILE_ATTRIBUTE_DATA fdata;
 	DWORD reparse_tag = 0;
 	int link_len = 0;
-	wchar_t wfilename[MAX_PATH];
-	int wlen = xutftowcs_path(wfilename, file_name);
+	wchar_t wfilename[MAX_LONG_PATH];
+	int wlen = xutftowcs_long_path(wfilename, file_name);
 	if (wlen < 0)
 		return -1;
 
@@ -1210,7 +1239,7 @@ int mingw_lstat(const char *file_name, struct stat *buf)
 	if (GetFileAttributesExW(wfilename, GetFileExInfoStandard, &fdata)) {
 		/* for reparse points, get the link tag and length */
 		if (fdata.dwFileAttributes & FILE_ATTRIBUTE_REPARSE_POINT) {
-			char tmpbuf[MAX_PATH];
+			char tmpbuf[MAX_LONG_PATH];
 
 			if (read_reparse_point(wfilename, FALSE, tmpbuf,
 					       &link_len, &reparse_tag) < 0)
@@ -1284,12 +1313,12 @@ static int get_file_info_by_handle(HANDLE hnd, struct stat *buf)
 
 int mingw_stat(const char *file_name, struct stat *buf)
 {
-	wchar_t wfile_name[MAX_PATH];
+	wchar_t wfile_name[MAX_LONG_PATH];
 	HANDLE hnd;
 	int result;
 
 	/* open the file and let Windows resolve the links */
-	if (xutftowcs_path(wfile_name, file_name) < 0)
+	if (xutftowcs_long_path(wfile_name, file_name) < 0)
 		return -1;
 	hnd = CreateFileW(wfile_name, 0,
 			FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, NULL,
@@ -1357,10 +1386,10 @@ int mingw_utime (const char *file_name, const struct utimbuf *times)
 	FILETIME mft, aft;
 	int rc;
 	DWORD attrs;
-	wchar_t wfilename[MAX_PATH];
+	wchar_t wfilename[MAX_LONG_PATH];
 	HANDLE osfilehandle;
 
-	if (xutftowcs_path(wfilename, file_name) < 0)
+	if (xutftowcs_long_path(wfilename, file_name) < 0)
 		return -1;
 
 	/* must have write permission */
@@ -2064,6 +2093,10 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 
 	if (*argv && !strcmp(cmd, *argv))
 		wcmd[0] = L'\0';
+	/*
+	 * Paths to executables and to the current directory do not support
+	 * long paths, therefore we cannot use xutftowcs_long_path() here.
+	 */
 	else if (xutftowcs_path(wcmd, cmd) < 0)
 		return -1;
 	if (dir && xutftowcs_path(wdir, dir) < 0)
@@ -2753,12 +2786,12 @@ int mingw_rename(const char *pold, const char *pnew)
 	static int supports_file_rename_info_ex = 1;
 	DWORD attrs = INVALID_FILE_ATTRIBUTES, gle;
 	int tries = 0;
-	wchar_t wpold[MAX_PATH], wpnew[MAX_PATH];
+	wchar_t wpold[MAX_LONG_PATH], wpnew[MAX_LONG_PATH];
 	int wpnew_len;
 
-	if (xutftowcs_path(wpold, pold) < 0)
+	if (xutftowcs_long_path(wpold, pold) < 0)
 		return -1;
-	wpnew_len = xutftowcs_path(wpnew, pnew);
+	wpnew_len = xutftowcs_long_path(wpnew, pnew);
 	if (wpnew_len < 0)
 		return -1;
 
@@ -2788,9 +2821,9 @@ repeat:
 			 * flex array so that the structure has to be allocated on
 			 * the heap. As we declare this structure ourselves though
 			 * we can avoid the allocation and define FileName to have
-			 * MAX_PATH bytes.
+			 * MAX_LONG_PATH bytes.
 			 */
-			WCHAR FileName[MAX_PATH];
+			WCHAR FileName[MAX_LONG_PATH];
 		} rename_info = { 0 };
 		HANDLE old_handle = INVALID_HANDLE_VALUE;
 		BOOL success;
@@ -3144,9 +3177,9 @@ int mingw_raise(int sig)
 
 int link(const char *oldpath, const char *newpath)
 {
-	wchar_t woldpath[MAX_PATH], wnewpath[MAX_PATH];
-	if (xutftowcs_path(woldpath, oldpath) < 0 ||
-		xutftowcs_path(wnewpath, newpath) < 0)
+	wchar_t woldpath[MAX_LONG_PATH], wnewpath[MAX_LONG_PATH];
+	if (xutftowcs_long_path(woldpath, oldpath) < 0 ||
+	    xutftowcs_long_path(wnewpath, newpath) < 0)
 		return -1;
 
 	if (!CreateHardLinkW(wnewpath, woldpath, NULL)) {
@@ -3158,7 +3191,7 @@ int link(const char *oldpath, const char *newpath)
 
 int symlink(const char *target, const char *link)
 {
-	wchar_t wtarget[MAX_PATH], wlink[MAX_PATH];
+	wchar_t wtarget[MAX_LONG_PATH], wlink[MAX_LONG_PATH];
 	int len;
 
 	/* fail if symlinks are disabled or API is not supported (WinXP) */
@@ -3167,8 +3200,8 @@ int symlink(const char *target, const char *link)
 		return -1;
 	}
 
-	if ((len = xutftowcs_path(wtarget, target)) < 0
-			|| xutftowcs_path(wlink, link) < 0)
+	if ((len = xutftowcs_long_path(wtarget, target)) < 0
+			|| xutftowcs_long_path(wlink, link) < 0)
 		return -1;
 
 	/* convert target dir separators to backslashes */
@@ -3222,12 +3255,12 @@ int symlink(const char *target, const char *link)
 
 int readlink(const char *path, char *buf, size_t bufsiz)
 {
-	WCHAR wpath[MAX_PATH];
-	char tmpbuf[MAX_PATH];
+	WCHAR wpath[MAX_LONG_PATH];
+	char tmpbuf[MAX_LONG_PATH];
 	int len;
 	DWORD tag;
 
-	if (xutftowcs_path(wpath, path) < 0)
+	if (xutftowcs_long_path(wpath, path) < 0)
 		return -1;
 
 	if (read_reparse_point(wpath, TRUE, tmpbuf, &len, &tag) < 0)
@@ -3302,8 +3335,8 @@ int mingw_is_mount_point(struct strbuf *path)
 {
 	WIN32_FIND_DATAW findbuf = { 0 };
 	HANDLE handle;
-	wchar_t wfilename[MAX_PATH];
-	int wlen = xutftowcs_path(wfilename, path->buf);
+	wchar_t wfilename[MAX_LONG_PATH];
+	int wlen = xutftowcs_long_path(wfilename, path->buf);
 	if (wlen < 0)
 		die(_("could not get long path for '%s'"), path->buf);
 
@@ -3446,9 +3479,9 @@ static size_t append_system_bin_dirs(char *path, size_t size)
 
 static int is_system32_path(const char *path)
 {
-	WCHAR system32[MAX_PATH], wpath[MAX_PATH];
+	WCHAR system32[MAX_LONG_PATH], wpath[MAX_LONG_PATH];
 
-	if (xutftowcs_path(wpath, path) < 0 ||
+	if (xutftowcs_long_path(wpath, path) < 0 ||
 	    !GetSystemDirectoryW(system32, ARRAY_SIZE(system32)) ||
 	    _wcsicmp(system32, wpath))
 		return 0;
@@ -3884,6 +3917,68 @@ not_a_reserved_name:
 	}
 }
 
+int handle_long_path(wchar_t *path, int len, int max_path, int expand)
+{
+	int result;
+	wchar_t buf[MAX_LONG_PATH];
+
+	/*
+	 * we don't need special handling if path is relative to the current
+	 * directory, and current directory + path don't exceed the desired
+	 * max_path limit. This should cover > 99 % of cases with minimal
+	 * performance impact (git almost always uses relative paths).
+	 */
+	if ((len < 2 || (!is_dir_sep(path[0]) && path[1] != ':')) &&
+	    (current_directory_len + len < max_path))
+		return len;
+
+	/*
+	 * handle everything else:
+	 * - absolute paths: "C:\dir\file"
+	 * - absolute UNC paths: "\\server\share\dir\file"
+	 * - absolute paths on current drive: "\dir\file"
+	 * - relative paths on other drive: "X:file"
+	 * - prefixed paths: "\\?\...", "\\.\..."
+	 */
+
+	/* convert to absolute path using GetFullPathNameW */
+	result = GetFullPathNameW(path, MAX_LONG_PATH, buf, NULL);
+	if (!result) {
+		errno = err_win_to_posix(GetLastError());
+		return -1;
+	}
+
+	/*
+	 * return absolute path if it fits within max_path (even if
+	 * "cwd + path" doesn't due to '..' components)
+	 */
+	if (result < max_path) {
+		wcscpy(path, buf);
+		return result;
+	}
+
+	/* error out if we shouldn't expand the path or buf is too small */
+	if (!expand || result >= MAX_LONG_PATH - 6) {
+		errno = ENAMETOOLONG;
+		return -1;
+	}
+
+	/* prefix full path with "\\?\" or "\\?\UNC\" */
+	if (buf[0] == '\\') {
+		/* ...unless already prefixed */
+		if (buf[1] == '\\' && (buf[2] == '?' || buf[2] == '.'))
+			return len;
+
+		wcscpy(path, L"\\\\?\\UNC\\");
+		wcscpy(path + 8, buf + 2);
+		return result + 6;
+	} else {
+		wcscpy(path, L"\\\\?\\");
+		wcscpy(path + 4, buf);
+		return result + 4;
+	}
+}
+
 #if !defined(_MSC_VER)
 /*
  * Disable MSVCRT command line wildcard expansion (__getmainargs called from
@@ -4065,6 +4160,9 @@ int wmain(int argc, const wchar_t **wargv)
 
 	/* initialize Unicode console */
 	winansi_init();
+
+	/* init length of current directory for handle_long_path */
+	current_directory_len = GetCurrentDirectoryW(0, NULL);
 
 	/* invoke the real main() using our utf8 version of argv. */
 	exit_status = main(argc, argv);
