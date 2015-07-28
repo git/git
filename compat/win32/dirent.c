@@ -62,19 +62,23 @@ static int dirent_closedir(dirent_DIR *dir)
 
 DIR *dirent_opendir(const char *name)
 {
-	wchar_t pattern[MAX_PATH + 2]; /* + 2 for '/' '*' */
+	wchar_t pattern[MAX_LONG_PATH + 2]; /* + 2 for "\*" */
 	WIN32_FIND_DATAW fdata;
 	HANDLE h;
 	int len;
 	dirent_DIR *dir;
 
-	/* convert name to UTF-16 and check length < MAX_PATH */
-	if ((len = xutftowcs_path(pattern, name)) < 0)
+	/* convert name to UTF-16 and check length */
+	if ((len = xutftowcs_path_ex(pattern, name, MAX_LONG_PATH, -1,
+			MAX_PATH - 2, core_long_paths)) < 0)
 		return NULL;
 
-	/* append optional '/' and wildcard '*' */
+	/*
+	 * append optional '\' and wildcard '*'. Note: we need to use '\' as
+	 * Windows doesn't translate '/' to '\' for "\\?\"-prefixed paths.
+	 */
 	if (len && !is_dir_sep(pattern[len - 1]))
-		pattern[len++] = '/';
+		pattern[len++] = '\\';
 	pattern[len++] = '*';
 	pattern[len] = 0;
 
