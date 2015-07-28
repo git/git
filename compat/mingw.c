@@ -206,8 +206,8 @@ static int ask_yes_no_if_possible(const char *format, ...)
 int mingw_unlink(const char *pathname)
 {
 	int ret, tries = 0;
-	wchar_t wpathname[MAX_PATH];
-	if (xutftowcs_path(wpathname, pathname) < 0)
+	wchar_t wpathname[MAX_LONG_PATH];
+	if (xutftowcs_long_path(wpathname, pathname) < 0)
 		return -1;
 
 	/* read-only files cannot be removed */
@@ -236,7 +236,7 @@ static int is_dir_empty(const wchar_t *wpath)
 {
 	WIN32_FIND_DATAW findbuf;
 	HANDLE handle;
-	wchar_t wbuf[MAX_PATH + 2];
+	wchar_t wbuf[MAX_LONG_PATH + 2];
 	wcscpy(wbuf, wpath);
 	wcscat(wbuf, L"\\*");
 	handle = FindFirstFileW(wbuf, &findbuf);
@@ -257,8 +257,8 @@ static int is_dir_empty(const wchar_t *wpath)
 int mingw_rmdir(const char *pathname)
 {
 	int ret, tries = 0;
-	wchar_t wpathname[MAX_PATH];
-	if (xutftowcs_path(wpathname, pathname) < 0)
+	wchar_t wpathname[MAX_LONG_PATH];
+	if (xutftowcs_long_path(wpathname, pathname) < 0)
 		return -1;
 
 	while ((ret = _wrmdir(wpathname)) == -1 && tries < ARRAY_SIZE(delay)) {
@@ -298,9 +298,9 @@ static int make_hidden(const wchar_t *path)
 
 void mingw_mark_as_git_dir(const char *dir)
 {
-	wchar_t wdir[MAX_PATH];
+	wchar_t wdir[MAX_LONG_PATH];
 	if (hide_dotfiles != HIDE_DOTFILES_FALSE && !is_bare_repository())
-		if (xutftowcs_path(wdir, dir) < 0 || make_hidden(wdir))
+		if (xutftowcs_long_path(wdir, dir) < 0 || make_hidden(wdir))
 			warning("Failed to make '%s' hidden", dir);
 	git_config_set("core.hideDotFiles",
 		hide_dotfiles == HIDE_DOTFILES_FALSE ? "false" :
@@ -311,9 +311,12 @@ void mingw_mark_as_git_dir(const char *dir)
 int mingw_mkdir(const char *path, int mode)
 {
 	int ret;
-	wchar_t wpath[MAX_PATH];
-	if (xutftowcs_path(wpath, path) < 0)
+	wchar_t wpath[MAX_LONG_PATH];
+	/* CreateDirectoryW path limit is 248 (MAX_PATH - 8.3 file name) */
+	if (xutftowcs_path_ex(wpath, path, MAX_LONG_PATH, -1, 248,
+			core_long_paths) < 0)
 		return -1;
+
 	ret = _wmkdir(wpath);
 	if (!ret && hide_dotfiles == HIDE_DOTFILES_TRUE) {
 		/*
@@ -333,7 +336,7 @@ int mingw_open (const char *filename, int oflags, ...)
 	va_list args;
 	unsigned mode;
 	int fd;
-	wchar_t wfilename[MAX_PATH];
+	wchar_t wfilename[MAX_LONG_PATH];
 
 	va_start(args, oflags);
 	mode = va_arg(args, int);
@@ -342,7 +345,7 @@ int mingw_open (const char *filename, int oflags, ...)
 	if (filename && !strcmp(filename, "/dev/null"))
 		filename = "nul";
 
-	if (xutftowcs_path(wfilename, filename) < 0)
+	if (xutftowcs_long_path(wfilename, filename) < 0)
 		return -1;
 	fd = _wopen(wfilename, oflags, mode);
 
@@ -395,13 +398,13 @@ FILE *mingw_fopen (const char *filename, const char *otype)
 {
 	int hide = 0;
 	FILE *file;
-	wchar_t wfilename[MAX_PATH], wotype[4];
+	wchar_t wfilename[MAX_LONG_PATH], wotype[4];
 	if (hide_dotfiles == HIDE_DOTFILES_TRUE &&
 	    basename((char*)filename)[0] == '.')
 		hide = access(filename, F_OK);
 	if (filename && !strcmp(filename, "/dev/null"))
 		filename = "nul";
-	if (xutftowcs_path(wfilename, filename) < 0 ||
+	if (xutftowcs_long_path(wfilename, filename) < 0 ||
 		xutftowcs(wotype, otype, ARRAY_SIZE(wotype)) < 0)
 		return NULL;
 	file = _wfopen(wfilename, wotype);
@@ -414,13 +417,13 @@ FILE *mingw_freopen (const char *filename, const char *otype, FILE *stream)
 {
 	int hide = 0;
 	FILE *file;
-	wchar_t wfilename[MAX_PATH], wotype[4];
+	wchar_t wfilename[MAX_LONG_PATH], wotype[4];
 	if (hide_dotfiles == HIDE_DOTFILES_TRUE &&
 	    basename((char*)filename)[0] == '.')
 		hide = access(filename, F_OK);
 	if (filename && !strcmp(filename, "/dev/null"))
 		filename = "nul";
-	if (xutftowcs_path(wfilename, filename) < 0 ||
+	if (xutftowcs_long_path(wfilename, filename) < 0 ||
 		xutftowcs(wotype, otype, ARRAY_SIZE(wotype)) < 0)
 		return NULL;
 	file = _wfreopen(wfilename, wotype, stream);
@@ -470,25 +473,32 @@ ssize_t mingw_write(int fd, const void *buf, size_t len)
 
 int mingw_access(const char *filename, int mode)
 {
-	wchar_t wfilename[MAX_PATH];
-	if (xutftowcs_path(wfilename, filename) < 0)
+	wchar_t wfilename[MAX_LONG_PATH];
+	if (xutftowcs_long_path(wfilename, filename) < 0)
 		return -1;
 	/* X_OK is not supported by the MSVCRT version */
 	return _waccess(wfilename, mode & ~X_OK);
 }
 
+/* cached length of current directory for handle_long_path */
+static int current_directory_len = 0;
+
 int mingw_chdir(const char *dirname)
 {
+	int result;
 	wchar_t wdirname[MAX_PATH];
+	/* SetCurrentDirectoryW doesn't support long paths */
 	if (xutftowcs_path(wdirname, dirname) < 0)
 		return -1;
-	return _wchdir(wdirname);
+	result = _wchdir(wdirname);
+	current_directory_len = GetCurrentDirectoryW(0, NULL);
+	return result;
 }
 
 int mingw_chmod(const char *filename, int mode)
 {
-	wchar_t wfilename[MAX_PATH];
-	if (xutftowcs_path(wfilename, filename) < 0)
+	wchar_t wfilename[MAX_LONG_PATH];
+	if (xutftowcs_long_path(wfilename, filename) < 0)
 		return -1;
 	return _wchmod(wfilename, mode);
 }
@@ -536,8 +546,8 @@ static int has_valid_directory_prefix(wchar_t *wfilename)
 static int do_lstat(int follow, const char *file_name, struct stat *buf)
 {
 	WIN32_FILE_ATTRIBUTE_DATA fdata;
-	wchar_t wfilename[MAX_PATH];
-	if (xutftowcs_path(wfilename, file_name) < 0)
+	wchar_t wfilename[MAX_LONG_PATH];
+	if (xutftowcs_long_path(wfilename, file_name) < 0)
 		return -1;
 
 	if (GetFileAttributesExW(wfilename, GetFileExInfoStandard, &fdata)) {
@@ -686,8 +696,8 @@ int mingw_utime (const char *file_name, const struct utimbuf *times)
 	FILETIME mft, aft;
 	int fh, rc;
 	DWORD attrs;
-	wchar_t wfilename[MAX_PATH];
-	if (xutftowcs_path(wfilename, file_name) < 0)
+	wchar_t wfilename[MAX_LONG_PATH];
+	if (xutftowcs_long_path(wfilename, file_name) < 0)
 		return -1;
 
 	/* must have write permission */
@@ -735,6 +745,7 @@ unsigned int sleep (unsigned int seconds)
 char *mingw_mktemp(char *template)
 {
 	wchar_t wtemplate[MAX_PATH];
+	/* we need to return the path, thus no long paths here! */
 	if (xutftowcs_path(wtemplate, template) < 0)
 		return NULL;
 	if (!_wmktemp(wtemplate))
@@ -1088,6 +1099,7 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 	si.hStdOutput = winansi_get_osfhandle(fhout);
 	si.hStdError = winansi_get_osfhandle(fherr);
 
+	/* executables and the current directory don't support long paths */
 	if (xutftowcs_path(wcmd, cmd) < 0)
 		return -1;
 	if (dir && xutftowcs_path(wdir, dir) < 0)
@@ -1663,8 +1675,9 @@ int mingw_rename(const char *pold, const char *pnew)
 {
 	DWORD attrs, gle;
 	int tries = 0;
-	wchar_t wpold[MAX_PATH], wpnew[MAX_PATH];
-	if (xutftowcs_path(wpold, pold) < 0 || xutftowcs_path(wpnew, pnew) < 0)
+	wchar_t wpold[MAX_LONG_PATH], wpnew[MAX_LONG_PATH];
+	if (xutftowcs_long_path(wpold, pold) < 0 ||
+	    xutftowcs_long_path(wpnew, pnew) < 0)
 		return -1;
 
 	/*
@@ -1946,9 +1959,9 @@ int link(const char *oldpath, const char *newpath)
 {
 	typedef BOOL (WINAPI *T)(LPCWSTR, LPCWSTR, LPSECURITY_ATTRIBUTES);
 	static T create_hard_link = NULL;
-	wchar_t woldpath[MAX_PATH], wnewpath[MAX_PATH];
-	if (xutftowcs_path(woldpath, oldpath) < 0 ||
-		xutftowcs_path(wnewpath, newpath) < 0)
+	wchar_t woldpath[MAX_LONG_PATH], wnewpath[MAX_LONG_PATH];
+	if (xutftowcs_long_path(woldpath, oldpath) < 0 ||
+	    xutftowcs_long_path(wnewpath, newpath) < 0)
 		return -1;
 
 	if (!create_hard_link) {
@@ -2163,6 +2176,68 @@ static void setup_windows_environment()
 		setenv("TERM", "cygwin", 1);
 }
 
+int handle_long_path(wchar_t *path, int len, int max_path, int expand)
+{
+	int result;
+	wchar_t buf[MAX_LONG_PATH];
+
+	/*
+	 * we don't need special handling if path is relative to the current
+	 * directory, and current directory + path don't exceed the desired
+	 * max_path limit. This should cover > 99 % of cases with minimal
+	 * performance impact (git almost always uses relative paths).
+	 */
+	if ((len < 2 || (!is_dir_sep(path[0]) && path[1] != ':')) &&
+	    (current_directory_len + len < max_path))
+		return len;
+
+	/*
+	 * handle everything else:
+	 * - absolute paths: "C:\dir\file"
+	 * - absolute UNC paths: "\\server\share\dir\file"
+	 * - absolute paths on current drive: "\dir\file"
+	 * - relative paths on other drive: "X:file"
+	 * - prefixed paths: "\\?\...", "\\.\..."
+	 */
+
+	/* convert to absolute path using GetFullPathNameW */
+	result = GetFullPathNameW(path, MAX_LONG_PATH, buf, NULL);
+	if (!result) {
+		errno = err_win_to_posix(GetLastError());
+		return -1;
+	}
+
+	/*
+	 * return absolute path if it fits within max_path (even if
+	 * "cwd + path" doesn't due to '..' components)
+	 */
+	if (result < max_path) {
+		wcscpy(path, buf);
+		return result;
+	}
+
+	/* error out if we shouldn't expand the path or buf is too small */
+	if (!expand || result >= MAX_LONG_PATH - 6) {
+		errno = ENAMETOOLONG;
+		return -1;
+	}
+
+	/* prefix full path with "\\?\" or "\\?\UNC\" */
+	if (buf[0] == '\\') {
+		/* ...unless already prefixed */
+		if (buf[1] == '\\' && (buf[2] == '?' || buf[2] == '.'))
+			return len;
+
+		wcscpy(path, L"\\\\?\\UNC\\");
+		wcscpy(path + 8, buf + 2);
+		return result + 6;
+	} else {
+		wcscpy(path, L"\\\\?\\");
+		wcscpy(path + 4, buf);
+		return result + 4;
+	}
+}
+
 /*
  * Disable MSVCRT command line wildcard expansion (__getmainargs called from
  * mingw startup code, see init.c in mingw runtime).
@@ -2254,6 +2329,9 @@ void mingw_startup()
 
 	/* initialize Unicode console */
 	winansi_init();
+
+	/* init length of current directory for handle_long_path */
+	current_directory_len = GetCurrentDirectoryW(0, NULL);
 }
 
 int uname(struct utsname *buf)
