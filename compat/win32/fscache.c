@@ -202,7 +202,7 @@ static struct fsentry *fseentry_create_entry(struct fscache *cache, struct fsent
 static struct fsentry *fsentry_create_list(struct fscache *cache, const struct fsentry *dir,
 					   int *dir_not_found)
 {
-	wchar_t pattern[MAX_PATH];
+	wchar_t pattern[MAX_LONG_PATH];
 	NTSTATUS status;
 	IO_STATUS_BLOCK iosb;
 	PFILE_FULL_DIR_INFORMATION di;
@@ -213,12 +213,10 @@ static struct fsentry *fsentry_create_list(struct fscache *cache, const struct f
 
 	*dir_not_found = 0;
 
-	/* convert name to UTF-16 and check length < MAX_PATH */
-	if ((wlen = xutftowcsn(pattern, dir->name, MAX_PATH, dir->len)) < 0) {
-		if (errno == ERANGE)
-			errno = ENAMETOOLONG;
+	/* convert name to UTF-16 and check length */
+	if ((wlen = xutftowcs_path_ex(pattern, dir->name, MAX_LONG_PATH,
+			dir->len, MAX_PATH - 2, core_long_paths)) < 0)
 		return NULL;
-	}
 
 	/* handle CWD */
 	if (!wlen) {
