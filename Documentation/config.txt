@@ -1226,20 +1226,24 @@ gc.packrefs::
 gc.pruneexpire::
 	When 'git gc' is run, it will call 'prune --expire 2.weeks.ago'.
 	Override the grace period with this config variable.  The value
-	"now" may be used to disable this  grace period and always prune
-	unreachable objects immediately.
+	"now" may be used to disable this grace period and always prune
+	unreachable objects immediately, or "never" may be used to
+	suppress pruning.
 
 gc.worktreePruneExpire::
 	When 'git gc' is run, it calls
 	'git worktree prune --expire 3.months.ago'.
 	This config variable can be used to set a different grace
 	period. The value "now" may be used to disable the grace
-	period and prune $GIT_DIR/worktrees immediately.
+	period and prune $GIT_DIR/worktrees immediately, or "never"
+	may be used to suppress pruning.
 
 gc.reflogexpire::
 gc.<pattern>.reflogexpire::
 	'git reflog expire' removes reflog entries older than
-	this time; defaults to 90 days.  With "<pattern>" (e.g.
+	this time; defaults to 90 days. The value "now" expires all
+	entries immediately, and "never" suppresses expiration
+	altogether. With "<pattern>" (e.g.
 	"refs/stash") in the middle the setting applies only to
 	the refs that match the <pattern>.
 
@@ -1247,7 +1251,9 @@ gc.reflogexpireunreachable::
 gc.<ref>.reflogexpireunreachable::
 	'git reflog expire' removes reflog entries older than
 	this time and are not reachable from the current tip;
-	defaults to 30 days.  With "<pattern>" (e.g. "refs/stash")
+	defaults to 30 days. The value "now" expires all entries
+	immediately, and "never" suppresses expiration altogether.
+	With "<pattern>" (e.g. "refs/stash")
 	in the middle, the setting applies only to the refs that
 	match the <pattern>.
 
