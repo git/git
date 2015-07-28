@@ -4159,17 +4159,25 @@ int parse_hide_refs_config(const char *var, const char *value, const char *secti
 
 int ref_is_hidden(const char *refname)
 {
-	struct string_list_item *item;
+	int i;
 
 	if (!hide_refs)
 		return 0;
-	for_each_string_list_item(item, hide_refs) {
+	for (i = hide_refs->nr - 1; i >= 0; i--) {
+		const char *match = hide_refs->items[i].string;
+		int neg = 0;
 		int len;
-		if (!starts_with(refname, item->string))
+
+		if (*match == '!') {
+			neg = 1;
+			match++;
+		}
+
+		if (!starts_with(refname, match))
 			continue;
-		len = strlen(item->string);
+		len = strlen(match);
 		if (!refname[len] || refname[len] == '/')
-			return 1;
+			return !neg;
 	}
 	return 0;
 }

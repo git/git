@@ -2540,6 +2540,11 @@ transfer.hideRefs::
 	excluded, and is hidden when responding to `git push` or `git
 	fetch`.  See `receive.hideRefs` and `uploadpack.hideRefs` for
 	program-specific versions of this config.
++
+You may also include a `!` in front of the ref name to negate the entry,
+explicitly exposing it, even if an earlier entry marked it as hidden.
+If you have multiple hideRefs values, later entries override earlier ones
+(and entries in more-specific config files override less-specific ones).
 
 transfer.unpackLimit::
 	When `fetch.unpackLimit` or `receive.unpackLimit` are
