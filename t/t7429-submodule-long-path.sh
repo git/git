@@ -11,15 +11,20 @@ This test verifies that "git submodule" initialization, update and clones work, 
 TEST_NO_CREATE_REPO=1
 . ./test-lib.sh
 
-longpath=""
-for (( i=0; i<4; i++ )); do
-	longpath="0123456789abcdefghijklmnopqrstuvwxyz$longpath"
-done
-# Pick a substring maximum of 90 characters
-# This should be good, since we'll add on a lot for temp directories
-longpath=${longpath:0:90}; export longpath
+# cloning a submodule calls is_git_directory("$path/../.git/modules/$path"),
+# which effectively limits the maximum length to PATH_MAX / 2 minus some
+# overhead; start with 3 * 36 = 108 chars (test 2 fails if >= 110)
+longpath36=0123456789abcdefghijklmnopqrstuvwxyz
+longpath180=$longpath36$longpath36$longpath36$longpath36$longpath36
 
-test_expect_failure 'submodule with a long path' '
+# the git database must fit within PATH_MAX, which limits the submodule name
+# to PATH_MAX - len(pwd) - ~90 (= len("/objects//") + 40-byte sha1 + some
+# overhead from the test case)
+pwd=$(pwd)
+pwdlen=$(echo "$pwd" | wc -c)
+longpath=$(echo $longpath180 | cut -c 1-$((170-$pwdlen)))
+
+test_expect_success 'submodule with a long path' '
 	git config --global protocol.file.allow always &&
 	GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME= \
 	git -c init.defaultBranch=long init --bare remote &&
@@ -59,7 +64,7 @@ test_expect_failure 'submodule with a long path' '
 	)
 '
 
-test_expect_failure 'recursive submodule with a long path' '
+test_expect_success 'recursive submodule with a long path' '
 	GIT_TEST_DEFAULT_INITIAL_BRANCH_NAME= \
 	git -c init.defaultBranch=long init --bare super &&
 	test_create_repo child &&
@@ -101,6 +106,5 @@ test_expect_failure 'recursive submodule with a long path' '
 		)
 	)
 '
-unset longpath
 
 test_done
