@@ -13,7 +13,7 @@ msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
 "POT-Creation-Date: 2015-07-14 07:19+0800\n"
-"PO-Revision-Date: 2015-07-27 23:37+0800\n"
+"PO-Revision-Date: 2015-07-30 23:41+0800\n"
 "Last-Translator: Jiang Xin <worldhello.net@gmail.com>\n"
 "Language-Team: GitHub <https://github.com/jiangxin/git/>\n"
 "Language: zh_CN\n"
@@ -5011,17 +5011,17 @@ msgstr "git describe [<选项>] --dirty"
 #: builtin/describe.c:217
 #, c-format
 msgid "annotated tag %s not available"
-msgstr "注释 tag %s 无效"
+msgstr "附注标签 %s 无效"
 
 #: builtin/describe.c:221
 #, c-format
 msgid "annotated tag %s has no embedded name"
-msgstr "注释 tag %s 没有嵌入名称"
+msgstr "附注标签 %s 没有嵌入名称"
 
 #: builtin/describe.c:223
 #, c-format
 msgid "tag '%s' is really '%s' here"
-msgstr "tag '%s' 的确是在 '%s'"
+msgstr "标签 '%s' 的确是在 '%s'"
 
 #: builtin/describe.c:250 builtin/log.c:452
 #, c-format
@@ -5036,7 +5036,7 @@ msgstr "%s 不是一个有效的 '%s' 对象"
 #: builtin/describe.c:270
 #, c-format
 msgid "no tag exactly matches '%s'"
-msgstr "没有 tag 准确匹配 '%s'"
+msgstr "没有标签准确匹配 '%s'"
 
 #: builtin/describe.c:272
 #, c-format
@@ -5054,8 +5054,8 @@ msgid ""
 "No annotated tags can describe '%s'.\n"
 "However, there were unannotated tags: try --tags."
 msgstr ""
-"没有注释 tag 能描述 '%s'。\n"
-"然而，有非注释 tag：尝试 --tags。"
+"没有附注标签能描述 '%s'。\n"
+"然而，存在未附注标签：尝试 --tags。"
 
 #: builtin/describe.c:350
 #, c-format
@@ -5063,8 +5063,8 @@ msgid ""
 "No tags can describe '%s'.\n"
 "Try --always, or create some tags."
 msgstr ""
-"没有注释 tag 能描述 '%s'。\n"
-"尝试 --always，或者创建一些 tag。"
+"没有标签能描述 '%s'。\n"
+"尝试 --always，或者创建一些标签。"
 
 #: builtin/describe.c:371
 #, c-format
@@ -5077,12 +5077,12 @@ msgid ""
 "more than %i tags found; listed %i most recent\n"
 "gave up search at %s\n"
 msgstr ""
-"发现多于 %i 个 tag，列出最近的 %i 个\n"
+"发现多于 %i 个标签，列出最近的 %i 个\n"
 "在 %s 放弃搜索\n"
 
 #: builtin/describe.c:396
 msgid "find the tag that comes after the commit"
-msgstr "寻找提交之后的 tag（用于描述提交）"
+msgstr "寻找该提交之后的标签"
 
 #: builtin/describe.c:397
 msgid "debug search strategy on stderr"
@@ -5094,7 +5094,7 @@ msgstr "使用任意引用"
 
 #: builtin/describe.c:399
 msgid "use any tag, even unannotated"
-msgstr "使用任意 tag，即使未带注解"
+msgstr "使用任意标签，即使未附带注释"
 
 #: builtin/describe.c:400
 msgid "always use long format"
@@ -5110,11 +5110,11 @@ msgstr "只输出精确匹配"
 
 #: builtin/describe.c:406
 msgid "consider <n> most recent tags (default: 10)"
-msgstr "考虑最近 <n> 个 tags（默认：10）"
+msgstr "考虑最近 <n> 个标签（默认：10）"
 
 #: builtin/describe.c:408
 msgid "only consider tags matching <pattern>"
-msgstr "只考虑匹配 <模式> 的 tags"
+msgstr "只考虑匹配 <模式> 的标签"
 
 #: builtin/describe.c:410 builtin/name-rev.c:318
 msgid "show abbreviated commit object as fallback"
@@ -5179,11 +5179,11 @@ msgstr "在 <n> 个对象之后显示进度"
 
 #: builtin/fast-export.c:981
 msgid "select handling of signed tags"
-msgstr "选择如何处理签名 tags"
+msgstr "选择如何处理签名标签"
 
 #: builtin/fast-export.c:984
 msgid "select handling of tags that tag filtered objects"
-msgstr "选择当 tag 指向被过滤时 tags 的处理方式"
+msgstr "选择当标签指向被过滤对象时该标签的处理方式"
 
 #: builtin/fast-export.c:987
 msgid "Dump marks to this file"
@@ -5195,7 +5195,7 @@ msgstr "从这个文件导入标记"
 
 #: builtin/fast-export.c:991
 msgid "Fake a tagger when tags lack one"
-msgstr "当 tags 缺少标记者字段时，假装提供一个"
+msgstr "当标签缺少标记者字段时，假装提供一个"
 
 #: builtin/fast-export.c:993
 msgid "Output full tree for each commit"
@@ -5259,11 +5259,11 @@ msgstr "从多个远程抓取"
 
 #: builtin/fetch.c:98
 msgid "fetch all tags and associated objects"
-msgstr "抓取所有的 tags 和关联对象"
+msgstr "抓取所有的标签和关联对象"
 
 #: builtin/fetch.c:100
 msgid "do not fetch all tags (--no-tags)"
-msgstr "不抓取任何 tags (--no-tags)"
+msgstr "不抓取任何标签(--no-tags)"
 
 #: builtin/fetch.c:102
 msgid "prune remote-tracking branches no longer on remote"
@@ -5342,7 +5342,7 @@ msgstr "[已拒绝]"
 
 #: builtin/fetch.c:488
 msgid "[tag update]"
-msgstr "[tag更新]"
+msgstr "[标签更新]"
 
 #  译者：注意保持前导空格
 #: builtin/fetch.c:490 builtin/fetch.c:525 builtin/fetch.c:543
@@ -5351,7 +5351,7 @@ msgstr "  （不能更新本地引用）"
 
 #: builtin/fetch.c:508
 msgid "[new tag]"
-msgstr "[新tag]"
+msgstr "[新标签]"
 
 #: builtin/fetch.c:511
 msgid "[new branch]"
@@ -5460,7 +5460,7 @@ msgstr "未指定远程版本库。请通过一个URL或远程版本库名指定
 
 #: builtin/fetch.c:1106
 msgid "You need to specify a tag name."
-msgstr "您需要指定一个 tag 名称。"
+msgstr "您需要指定一个标签名称。"
 
 #: builtin/fetch.c:1148
 msgid "--depth and --unshallow cannot be used together"
@@ -5585,7 +5585,7 @@ msgstr "显示摇摆的对象"
 
 #: builtin/fsck.c:619
 msgid "report tags"
-msgstr "报告 tags"
+msgstr "报告标签"
 
 #: builtin/fsck.c:620
 msgid "report root nodes"
@@ -7488,7 +7488,7 @@ msgstr "只打印名称（无 SHA-1）"
 
 #: builtin/name-rev.c:310
 msgid "only use tags to name the commits"
-msgstr "只使用 tags 来命名提交"
+msgstr "只使用标签来命名提交"
 
 #: builtin/name-rev.c:312
 msgid "only use refs matching <pattern>"
@@ -7508,7 +7508,7 @@ msgstr "允许打印 `未定义` 的名称（默认）"
 
 #: builtin/name-rev.c:322
 msgid "dereference tags in the input (internal use)"
-msgstr "反向解析输入中的 tags（内部使用）"
+msgstr "反向解析输入中的标签（内部使用）"
 
 #: builtin/notes.c:24
 msgid "git notes [--ref <notes-ref>] [list [<object>]]"
@@ -8062,7 +8062,7 @@ msgstr "git push [<选项>] [<版本库> [<引用规则>...]]"
 
 #: builtin/push.c:85
 msgid "tag shorthand without <tag>"
-msgstr "tag 后面未提供 <标签> 参数"
+msgstr "标签后面未提供 <标签> 参数"
 
 #: builtin/push.c:95
 msgid "--delete only accepts plain target ref names"
@@ -8228,7 +8228,7 @@ msgstr ""
 
 #: builtin/push.c:298
 msgid "Updates were rejected because the tag already exists in the remote."
-msgstr "更新被拒绝因为 tag 在远程已经存在。"
+msgstr "更新被拒绝，因为该标签在远程已经存在。"
 
 #: builtin/push.c:301
 msgid ""
@@ -8313,7 +8313,7 @@ msgstr "删除引用"
 
 #: builtin/push.c:507
 msgid "push tags (can't be used with --all or --mirror)"
-msgstr "推送 tags（不能使用 --all or --mirror）"
+msgstr "推送标签（不能使用 --all or --mirror）"
 
 #: builtin/push.c:510
 msgid "force updates"
@@ -8353,7 +8353,7 @@ msgstr "绕过 pre-push 钩子"
 
 #: builtin/push.c:527
 msgid "push missing but relevant tags"
-msgstr "推送缺失的有关的 tags"
+msgstr "推送缺失但有关的标签"
 
 #: builtin/push.c:529
 msgid "GPG sign the push"
@@ -8556,11 +8556,11 @@ msgstr "抓取远程的分支"
 
 #: builtin/remote.c:155
 msgid "import all tags and associated objects when fetching"
-msgstr "抓取时导入所有的 tags 和关联对象"
+msgstr "抓取时导入所有的标签和关联对象"
 
 #: builtin/remote.c:158
 msgid "or do not fetch any tag at all (--no-tags)"
-msgstr "或不抓取任何 tag（--no-tags）"
+msgstr "或不抓取任何标签（--no-tags）"
 
 #: builtin/remote.c:160
 msgid "branch(es) to track"
@@ -9043,19 +9043,19 @@ msgstr "不是一个有效的对象名：'%s'"
 #: builtin/replace.c:355
 #, c-format
 msgid "bad mergetag in commit '%s'"
-msgstr "提交 '%s' 中损坏的 mergetag"
+msgstr "提交 '%s' 中含有损坏的合并标签"
 
 #: builtin/replace.c:357
 #, c-format
 msgid "malformed mergetag in commit '%s'"
-msgstr "提交 '%s' 中非法的 mergetag"
+msgstr "提交 '%s' 中含有非法的合并标签"
 
 #: builtin/replace.c:368
 #, c-format
 msgid ""
 "original commit '%s' contains mergetag '%s' that is discarded; use --edit "
 "instead of --graft"
-msgstr "原始提交 '%s' 包含已经丢弃的 mergetag '%s'，使用 --edit 代替 --graft"
+msgstr "原始提交 '%s' 包含已经丢弃的合并标签 '%s'，使用 --edit 代替 --graft"
 
 #: builtin/replace.c:401
 #, c-format
@@ -9576,11 +9576,11 @@ msgstr "git show-ref --exclude-existing[=模式] < 引用列表"
 
 #: builtin/show-ref.c:170
 msgid "only show tags (can be combined with heads)"
-msgstr "只显示 tags（可以和头共用）"
+msgstr "只显示标签（可以和头共用）"
 
 #: builtin/show-ref.c:171
 msgid "only show heads (can be combined with tags)"
-msgstr "只显示头（可以和 tags 共用）"
+msgstr "只显示头（可以和标签共用）"
 
 #: builtin/show-ref.c:172
 msgid "stricter reference checking, requires exact ref path"
@@ -9592,7 +9592,7 @@ msgstr "显示 HEAD 引用，即使被过滤掉"
 
 #: builtin/show-ref.c:179
 msgid "dereference tags into object IDs"
-msgstr "转换 tags 到对象ID"
+msgstr "转换标签到对象ID"
 
 #: builtin/show-ref.c:181
 msgid "only show SHA1 hash using <n> digits"
@@ -9664,22 +9664,22 @@ msgstr "非法的对象于 '%s'"
 #: builtin/tag.c:301
 #, c-format
 msgid "tag name too long: %.*s..."
-msgstr "tag 名字太长：%.*s..."
+msgstr "标签名称太长：%.*s..."
 
 #: builtin/tag.c:306
 #, c-format
 msgid "tag '%s' not found."
-msgstr "tag '%s' 未发现。"
+msgstr "未发现标签 '%s'。"
 
 #: builtin/tag.c:321
 #, c-format
 msgid "Deleted tag '%s' (was %s)\n"
-msgstr "已删除 tag '%s'（曾为 %s）\n"
+msgstr "已删除标签 '%s'（曾为 %s）\n"
 
 #: builtin/tag.c:333
 #, c-format
 msgid "could not verify the tag '%s'"
-msgstr "不能校验 tag '%s'"
+msgstr "不能校验该标签 '%s'"
 
 #: builtin/tag.c:343
 #, c-format
@@ -9690,7 +9690,7 @@ msgid ""
 "Lines starting with '%c' will be ignored.\n"
 msgstr ""
 "\n"
-"输入一个 tag 说明：\n"
+"输入一个标签说明：\n"
 "  %s\n"
 "以 '%c' 开头的行将被忽略。\n"
 
@@ -9704,7 +9704,7 @@ msgid ""
 "want to.\n"
 msgstr ""
 "\n"
-"输入一个 tag 说明：\n"
+"输入一个标签说明：\n"
 "  %s\n"
 "以 '%c' 开头的行将被保留，如果您愿意也可以删除它们。\n"
 
@@ -9720,11 +9720,11 @@ msgstr "不支持变量 '%2$s' 的排序规格 '%1$s'"
 
 #: builtin/tag.c:428
 msgid "unable to sign the tag"
-msgstr "无法签署 tag"
+msgstr "无法签署标签"
 
 #: builtin/tag.c:430
 msgid "unable to write tag file"
-msgstr "无法写 tag 文件"
+msgstr "无法写标签文件"
 
 #: builtin/tag.c:455
 msgid "bad object type."
@@ -9732,16 +9732,16 @@ msgstr "坏的对象类型。"
 
 #: builtin/tag.c:468
 msgid "tag header too big."
-msgstr "tag 头信息太大。"
+msgstr "标签头信息太大。"
 
 #: builtin/tag.c:504
 msgid "no tag message?"
-msgstr "无 tag 说明？"
+msgstr "无标签说明？"
 
 #: builtin/tag.c:510
 #, c-format
 msgid "The tag message has been left in %s\n"
-msgstr "tag 说明被保留在 %s\n"
+msgstr "标签说明被保留在 %s\n"
 
 #: builtin/tag.c:559
 msgid "switch 'points-at' requires an object"
@@ -9754,63 +9754,63 @@ msgstr "非法的对象名 '%s'"
 
 #: builtin/tag.c:589
 msgid "list tag names"
-msgstr "列出tag名称"
+msgstr "列出标签名称"
 
 #: builtin/tag.c:591
 msgid "print <n> lines of each tag message"
-msgstr "每个 tag 信息打印 <n> 行"
+msgstr "每个标签信息打印 <n> 行"
 
 #: builtin/tag.c:593
 msgid "delete tags"
-msgstr "删除 tags"
+msgstr "删除标签"
 
 #: builtin/tag.c:594
 msgid "verify tags"
-msgstr "验证 tags"
+msgstr "验证标签"
 
 #: builtin/tag.c:596
 msgid "Tag creation options"
-msgstr "Tag 创建选项"
+msgstr "标签创建选项"
 
 #: builtin/tag.c:598
 msgid "annotated tag, needs a message"
-msgstr "注解 tag，需要一个说明"
+msgstr "附注标签，需要一个说明"
 
 #: builtin/tag.c:600
 msgid "tag message"
-msgstr "tag 说明"
+msgstr "标签说明"
 
 #: builtin/tag.c:602
 msgid "annotated and GPG-signed tag"
-msgstr "注解并 GPG 签名的 tag"
+msgstr "附注并附加 GPG 签名的标签"
 
 #: builtin/tag.c:606
 msgid "use another key to sign the tag"
-msgstr "使用另外的私钥签名 tag"
+msgstr "使用另外的私钥签名该标签"
 
 #: builtin/tag.c:607
 msgid "replace the tag if exists"
-msgstr "如果存在，替换现有的 tag"
+msgstr "如果存在，替换现有的标签"
 
 #: builtin/tag.c:609
 msgid "Tag listing options"
-msgstr "Tag 列表选项"
+msgstr "标签列表选项"
 
 #: builtin/tag.c:610
 msgid "show tag list in columns"
-msgstr "以列的方式显示 tag"
+msgstr "以列的方式显示标签列表"
 
 #: builtin/tag.c:612
 msgid "sort tags"
-msgstr "排序 tags"
+msgstr "排序标签"
 
 #: builtin/tag.c:617 builtin/tag.c:623
 msgid "print only tags that contain the commit"
-msgstr "只打印包含提交的tags"
+msgstr "只打印包含提交的标签"
 
 #: builtin/tag.c:629
 msgid "print only tags of the object"
-msgstr "只打印tags对象"
+msgstr "只打印对象的标签"
 
 #: builtin/tag.c:655
 msgid "--column and -n are incompatible"
@@ -9843,17 +9843,17 @@ msgstr "太多参数"
 #: builtin/tag.c:712
 #, c-format
 msgid "'%s' is not a valid tag name."
-msgstr "'%s' 不是一个有效的tag名称。"
+msgstr "'%s' 不是一个有效的标签名称。"
 
 #: builtin/tag.c:717
 #, c-format
 msgid "tag '%s' already exists"
-msgstr "tag '%s' 已存在"
+msgstr "标签 '%s' 已存在"
 
 #: builtin/tag.c:741
 #, c-format
 msgid "Updated tag '%s' (was %s)\n"
-msgstr "已更新tag '%s'（曾为 %s）\n"
+msgstr "已更新标签 '%s'（曾为 %s）\n"
 
 #: builtin/unpack-objects.c:489
 msgid "Unpacking objects"
@@ -10103,7 +10103,7 @@ msgstr "git verify-tag [-v | --verbose] <标签>..."
 
 #: builtin/verify-tag.c:73
 msgid "print tag contents"
-msgstr "打印 tag 内容"
+msgstr "打印标签内容"
 
 #: builtin/worktree.c:11
 msgid "git worktree add [<options>] <path> <branch>"
