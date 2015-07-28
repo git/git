@@ -598,6 +598,13 @@ core.fscache::
 Git for Windows uses this to bulk-read and cache lstat data of entire
 directories (instead of doing lstat file by file).
 
+core.longpaths::
+	Enable long path (> 260) support for builtin commands in Git for
+	Windows. This is disabled by default, as long paths are not supported
+	by Windows Explorer, cmd.exe and the Git for Windows tool chain
+	(msys, bash, tcl, perl...). Only enable this if you know what you're
+	doing and are prepared to live with a few quirks.
+
 core.unsetenvvars::
 	Windows-only: comma-separated list of environment variables'
 	names that need to be unset before spawning any other process.
