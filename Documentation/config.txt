@@ -2242,13 +2242,10 @@ receive.denyNonFastForwards::
 	set when initializing a shared repository.
 
 receive.hideRefs::
-	String(s) `receive-pack` uses to decide which refs to omit
-	from its initial advertisement.  Use more than one
-	definitions to specify multiple prefix strings. A ref that
-	are under the hierarchies listed on the value of this
-	variable is excluded, and is hidden when responding to `git
-	push`, and an attempt to update or delete a hidden ref by
-	`git push` is rejected.
+	This variable is the same as `transfer.hideRefs`, but applies
+	only to `receive-pack` (and so affects pushes, but not fetches).
+	An attempt to update or delete a hidden ref by `git push` is
+	rejected.
 
 receive.updateServerInfo::
 	If set to true, git-receive-pack will run git-update-server-info
@@ -2536,9 +2533,13 @@ transfer.fsckObjects::
 	Defaults to false.
 
 transfer.hideRefs::
-	This variable can be used to set both `receive.hideRefs`
-	and `uploadpack.hideRefs` at the same time to the same
-	values.  See entries for these other variables.
+	String(s) `receive-pack` and `upload-pack` use to decide which
+	refs to omit from their initial advertisements.  Use more than
+	one definition to specify multiple prefix strings. A ref that is
+	under the hierarchies listed in the value of this variable is
+	excluded, and is hidden when responding to `git push` or `git
+	fetch`.  See `receive.hideRefs` and `uploadpack.hideRefs` for
+	program-specific versions of this config.
 
 transfer.unpackLimit::
 	When `fetch.unpackLimit` or `receive.unpackLimit` are
@@ -2553,13 +2554,10 @@ uploadarchive.allowUnreachable::
 	`false`.
 
 uploadpack.hideRefs::
-	String(s) `upload-pack` uses to decide which refs to omit
-	from its initial advertisement.  Use more than one
-	definitions to specify multiple prefix strings. A ref that
-	are under the hierarchies listed on the value of this
-	variable is excluded, and is hidden from `git ls-remote`,
-	`git fetch`, etc.  An attempt to fetch a hidden ref by `git
-	fetch` will fail.  See also `uploadpack.allowTipSHA1InWant`.
+	This variable is the same as `transfer.hideRefs`, but applies
+	only to `upload-pack` (and so affects only fetches, not pushes).
+	An attempt to fetch a hidden ref by `git fetch` will fail.  See
+	also `uploadpack.allowTipSHA1InWant`.
 
 uploadpack.allowTipSHA1InWant::
 	When `uploadpack.hideRefs` is in effect, allow `upload-pack`
