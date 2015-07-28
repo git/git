@@ -976,13 +976,13 @@ static int get_remote_group(const char *key, const char *value, void *priv)
 	if (starts_with(key, "remotes.") &&
 			!strcmp(key + 8, g->name)) {
 		/* split list by white space */
-		size_t wordlen = strcspn(value, " \t\n");
 		while (*value) {
+			size_t wordlen = strcspn(value, " \t\n");
+
 			if (wordlen >= 1)
 				string_list_append(g->list,
 						   xstrndup(value, wordlen));
 			value += wordlen + (value[wordlen] != '\0');
-			wordlen = strcspn(value, " \t\n");
 		}
 	}
 
