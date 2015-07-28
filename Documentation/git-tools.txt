@@ -16,24 +16,6 @@ http://git.or.cz/gitwiki/InterfacesFrontendsAndTools
 Alternative/Augmentative Porcelains
 -----------------------------------
 
-- *Cogito* (http://www.kernel.org/pub/software/scm/cogito/)
-+
-Cogito is a version control system layered on top of the Git tree history
-storage system. It aims at seamless user interface and ease of use,
-providing generally smoother user experience than the "raw" Core Git
-itself and indeed many other version control systems.
-+
-Cogito is no longer maintained as most of its functionality
-is now in core Git.
-
-
-- *pg* (http://www.spearce.org/category/projects/scm/pg/)
-+
-pg is a shell script wrapper around Git to help the user manage a set of
-patches to files. pg is somewhat like quilt or StGit, but it does have a
-slightly different feature set.
-
-
 - *StGit* (http://www.procode.org/stgit/)
 +
 Stacked Git provides a quilt-like patch management functionality in the
@@ -84,12 +66,6 @@ git-svn is a simple conduit for changesets between a single Subversion
 branch and Git.
 
 
-- *quilt2git / git2quilt* (http://home-tj.org/wiki/index.php/Misc)
-+
-These utilities convert patch series in a quilt repository and commit
-series in Git back and forth.
-
-
 - *hg-to-git* (contrib/)
 +
 hg-to-git converts a Mercurial repository into a Git one, and
@@ -100,13 +76,6 @@ in sync with the master Mercurial repository.
 
 Others
 ------
-
-- *(h)gct* (http://www.cyd.liu.se/users/~freku045/gct/)
-+
-Commit Tool or (h)gct is a GUI enabled commit tool for Git and
-Mercurial (hg). It allows the user to view diffs, select which files
-to committed (or ignored / reverted) write commit messages and
-perform the commit itself.
 
 - *git.el* (contrib/)
 +
