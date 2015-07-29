@@ -6,6 +6,12 @@ typedef _sigset_t sigset_t;
 #endif
 #include <winsock2.h>
 #include <ws2tcpip.h>
+
+/* MinGW-w64 reports to have flockfile, but it does not actually have it. */
+#ifdef __MINGW64_VERSION_MAJOR
+#undef _POSIX_THREAD_SAFE_FUNCTIONS
+#endif
+
 /*
  * things that are not available in header files
  */
