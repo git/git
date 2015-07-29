@@ -357,7 +357,7 @@ test_expect_success MINGW 'plain hidden' '
 '
 
 test_expect_success MINGW 'plain bare not hidden' '
-	rm -rf newdir
+	rm -rf newdir &&
 	(
 		unset GIT_DIR GIT_WORK_TREE GIT_CONFIG
 		mkdir newdir &&
