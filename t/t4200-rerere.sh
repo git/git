@@ -412,7 +412,7 @@ concat_insert () {
 	cat early && printf "%s\n" "$@" && cat late "$last"
 }
 
-test_expect_failure 'multiple identical conflicts' '
+test_expect_success 'multiple identical conflicts' '
 	git reset --hard &&
 
 	test_seq 1 6 >early &&
