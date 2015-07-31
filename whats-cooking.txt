@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jul 2015, #07; Mon, 27)
+Subject: What's cooking in git.git (Jul 2015, #08; Fri, 31)
 X-master-at: a17c56c056d5fea0843b429132904c429a900229
-X-next-at: 0029c496ce1b91f10b75ade16604b8e9f5d8d20b
+X-next-at: d2dd00455917b2356208ce67ac57c55cac7c4abd
 
-What's cooking in git.git (Jul 2015, #07; Mon, 27)
+What's cooking in git.git (Jul 2015, #08; Fri, 31)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -24,56 +24,123 @@ of the repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* da/subtree-date-confusion (2015-07-23) 1 commit
- - contrib/subtree: ignore log.date configuration
+* dt/reflog-tests (2015-07-28) 2 commits
+ - tests: remove some direct access to .git/logs
+ - t/t7509: remove unnecessary manipulation of reflog
 
- "git subtree" (in contrib/) depended on "git log" output to be
- stable, which was a no-no.  Apply a workaround to force a
- particular date format.
-
- Will merge to 'next'.
-
-
-* db/send-pack-user-signingkey (2015-07-21) 1 commit
- - builtin/send-pack.c: respect user.signingkey
-
- The low-level "git send-pack" did not honor 'user.signingkey'
- configuration variable when sending a signed-push.
+ Update tests not to assume how reflogs are represented on the
+ filesystem too much.
 
  Will merge to 'next'.
 
 
-* jk/refspec-parse-wildcard (2015-07-27) 2 commits
- - refs: loosen restriction on wildcard "*" refspecs
- - refs: cleanup comments regarding check_refname_component()
+* dt/unpack-trees-cache-tree-revalidate (2015-07-28) 1 commit
+ - unpack-trees: populate cache-tree on successful merge
 
- Allow an asterisk as a substring (as opposed to the entirety) of
- a path component for both side of a refspec, e.g.
- "refs/heads/o*:refs/remotes/heads/i*".
+ Upon a successful merge into the index, repopulate the cache-tree,
+ so that subsequent "diff-index --cached" (hence "status") and
+ "write-tree" (hence "commit") will go faster.
 
- Will merge to 'next'.
-
-
-* jx/do-not-crash-receive-pack-wo-head (2015-07-22) 1 commit
- - receive-pack: crash when checking with non-exist HEAD
+ The same logic in "git checkout" may now be removed, but that is a
+ separate issue.
 
  Will merge to 'next'.
 
 
-* kd/pull-rebase-autostash (2015-07-22) 1 commit
- - pull: allow dirty tree when rebase.autostash enabled
- (this branch uses pt/pull-builtin; is tangled with pt/am-builtin.)
+* jk/negative-hiderefs (2015-07-28) 2 commits
+ - refs: support negative transfer.hideRefs
+ - docs/config.txt: reorder hideRefs config
 
- Teach "git pull --rebase" to pay attention to rebase.autostash
- configuration.
+ Allow negative !ref entry in multi-value transfer.hideRefs
+ configuration to say "don't hide this one".
+
+ An update to test coming?
 
 
-* es/doc-clean-outdated-tools (2015-07-25) 5 commits
- - Documentation/git-tools: drop references to defunct tools
- - Documentation/git-tools: drop references to defunct tools
- - Documentation/git-tools: fix item text formatting
- - Documentation/git-tools: improve discoverability of Git wiki
- - Documentation/git: drop outdated Cogito reference
+* mh/get-remote-group-fix (2015-07-28) 4 commits
+ - get_remote_group(): use skip_prefix()
+ - get_remote_group(): eliminate superfluous call to strcspn()
+ - get_remote_group(): rename local variable "space" to "wordlen"
+ - get_remote_group(): handle remotes with single-character names
+
+ An off-by-one error made "git remote" to mishandle a remote with a
+ single letter nickname.
+
+ Will merge to 'next'.
+
+
+* ta/docfix-index-format-tech (2015-07-28) 1 commit
+ - typofix for index-format.txt
+
+ Will merge to 'next'.
+
+
+* dt/notes-multiple (2015-07-31) 2 commits
+ - notes: handle multiple worktrees
+ - worktrees: add die_if_shared_symref
+ (this branch uses es/worktree-add and es/worktree-add-cleanup.)
+
+ Forbid simultaneous "notes merge" to happen for the same ref in
+ refs/notes/* when linked worktree is used.
+
+
+* dt/refs-pseudo (2015-07-31) 5 commits
+ - sequencer: replace write_cherry_pick_head with update_ref
+ - bisect: use update_ref
+ - pseudorefs: create and use pseudoref update and delete functions
+ - refs: add ref_type function
+ - refs: introduce pseudoref and per-worktree ref concepts
+ (this branch uses dt/refs-backend-preamble.)
+
+ To prepare for allowing a different "ref" backend to be plugged in
+ to the system, teach update_ref()/delete_ref() about ref-like
+ things like MERGE_HEAD that are per-worktree (they will always be
+ written to the filesystem inside $GIT_DIR).
+
+ Will merge to 'next'.
+
+
+* dt/untracked-sparse (2015-07-31) 1 commit
+ - untracked-cache: support sparse checkout
+
+ Allow untracked cache (experimental) to be used when sparse
+ checkout (experimental) is also in use.
+
+
+* mm/for-each-ref-fixup (2015-07-29) 1 commit
+  (merged to 'next' on 2015-07-29 at 32760e8)
+ + fixup 39c528f0 ref-filter: fix indentation
+ (this branch uses kn/for-each-ref; is tangled with kn/for-each-tag-branch.)
+
+ Will squash into kn/for-each-tag-branch and rebuild 'next'.
+
+
+* pt/am-builtin-fix (2015-07-28) 1 commit
+ - am: let command-line options override saved options
+ (this branch uses pt/am-builtin and pt/pull-builtin; is tangled with kd/pull-rebase-autostash.)
+
+ With "git am --options" followed by "git am --other-options", the
+ options given in a later invocation should override the initial
+ options for a single invocation, but the rewritten "git am" didn't.
+
+ Expecting a reroll.
+
+
+* rj/bisect-terms-fixup (2015-07-30) 1 commit
+ - bisect: add read_bisect_terms() to the public interface
+ (this branch uses ad/bisect-cleanup and ad/bisect-terms.)
+
+ Will squash into ad/bisect-cleanup.
+
+
+* sb/parse-options-codeformat (2015-07-29) 1 commit
+ - parse-options: align curly braces for all options
+
+ Will merge to 'next'.
+
+
+* sb/remove-unused-var-from-builtin-add (2015-07-31) 1 commit
+ - add: remove dead code
 
  Will merge to 'next'.
 
@@ -125,24 +192,6 @@ of the repositories listed at
  which was found to be a bit confusing to new users.
 
  What's the status of this one?
-
-
-* bc/object-id (2015-06-17) 10 commits
- . remote.c: use struct object_id in many functions
- . object-id: use struct object_id in struct object
- . remote.c: use struct object_id in ref_newer()
- . transport-helper.c: use struct object_id in push_refs_with_export()
- . connect.c: use struct object_id in get_remote_heads()
- . remote-curl: use struct object_id in parse_fetch()
- . fetch-pack: use struct object_id in add_sought_entry_mem()
- . object_id: convert struct ref to use object_id.
- . sha1_file: introduce has_object_file() helper
- . refs: convert some internal functions to use object_id
-
- More transition from "unsigned char[40]" to "struct object_id".
-
- While GSoC and other topics are actively moving existing code
- around, this cannot go in; ejected from 'pu'.
 
 
 * wp/sha1-name-negative-match (2015-06-08) 2 commits
@@ -206,7 +255,7 @@ of the repositories listed at
  - bisect: add 'git bisect terms' to view the current terms
  - bisect: add the terms old/new
  - bisect: sanity check on terms
- (this branch uses ad/bisect-cleanup.)
+ (this branch is used by rj/bisect-terms-fixup; uses ad/bisect-cleanup.)
 
  The use of 'good/bad' in "git bisect" made it confusing to use when
  hunting for a state change that is not a regression (e.g. bugfix).
@@ -275,20 +324,20 @@ of the repositories listed at
 
 
 * mh/numparse (2015-03-19) 14 commits
- - diff_opt_parse(): use convert_i() when handling --abbrev=<num>
- - diff_opt_parse(): use convert_i() when handling "-l<num>"
- - opt_arg(): simplify pointer handling
- - opt_arg(): report errors parsing option values
- - opt_arg(): use convert_i() in implementation
- - opt_arg(): val is always non-NULL
- - builtin_diff(): detect errors when parsing --unified argument
- - handle_revision_opt(): use convert_ui() when handling "--abbrev="
- - strtoul_ui(), strtol_i(): remove functions
- - handle_revision_opt(): use convert_i() when handling "-<digit>"
- - handle_revision_opt(): use skip_prefix() in many places
- - write_subdirectory(): use convert_ui() for parsing mode
- - cacheinfo_callback(): use convert_ui() when handling "--cacheinfo"
- - numparse: new module for parsing integral numbers
+ . diff_opt_parse(): use convert_i() when handling --abbrev=<num>
+ . diff_opt_parse(): use convert_i() when handling "-l<num>"
+ . opt_arg(): simplify pointer handling
+ . opt_arg(): report errors parsing option values
+ . opt_arg(): use convert_i() in implementation
+ . opt_arg(): val is always non-NULL
+ . builtin_diff(): detect errors when parsing --unified argument
+ . handle_revision_opt(): use convert_ui() when handling "--abbrev="
+ . strtoul_ui(), strtol_i(): remove functions
+ . handle_revision_opt(): use convert_i() when handling "-<digit>"
+ . handle_revision_opt(): use skip_prefix() in many places
+ . write_subdirectory(): use convert_ui() for parsing mode
+ . cacheinfo_callback(): use convert_ui() when handling "--cacheinfo"
+ . numparse: new module for parsing integral numbers
 
  Many codepaths use unchecked use of strtol() and friends (or even
  worse, atoi()).  Introduce a set of wrappers that try to be more
@@ -296,19 +345,6 @@ of the repositories listed at
 
  Expecting a reroll.
  ($gmane/268058).
-
-
-* jc/a-lone-dash-stands-for-previous-branch (2015-03-16) 1 commit
- - "-" and "@{-1}" on various programs
-
- Lose special case code to make a lone dash "-" mean the previous
- branch aka "@{-1}" from a handful subcommands, and instead support
- the notation throughout the system by reimplementing it at the
- revisions layer.
-
- Needs tests, documentation updates, etc.  Also does only a half-way
- job dealing with range notation, which needs to be fixed before the
- series goes anywhere.
 
 
 * nd/list-files (2015-02-09) 21 commits
@@ -341,13 +377,6 @@ of the repositories listed at
  positive discussions.
 
  Waiting for a further polished reroll ($gmane/265534).
-
-
-* nd/pathspec-strip-fix (2015-04-18) 1 commit
- - pathspec: adjust prefixlen after striping trailing slash
-
- Does not quite fix ($gmane/267614).
- Will discard.
 
 
 * jc/diff-b-m (2015-02-23) 5 commits
@@ -413,6 +442,68 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* da/subtree-date-confusion (2015-07-23) 1 commit
+  (merged to 'next' on 2015-07-29 at 01016b1)
+ + contrib/subtree: ignore log.date configuration
+
+ "git subtree" (in contrib/) depended on "git log" output to be
+ stable, which was a no-no.  Apply a workaround to force a
+ particular date format.
+
+ Will merge to 'master'.
+
+
+* db/send-pack-user-signingkey (2015-07-21) 1 commit
+  (merged to 'next' on 2015-07-29 at b0d62e9)
+ + builtin/send-pack.c: respect user.signingkey
+
+ The low-level "git send-pack" did not honor 'user.signingkey'
+ configuration variable when sending a signed-push.
+
+ Will merge to 'master'.
+
+
+* jk/refspec-parse-wildcard (2015-07-27) 2 commits
+  (merged to 'next' on 2015-07-29 at eb48d2f)
+ + refs: loosen restriction on wildcard "*" refspecs
+ + refs: cleanup comments regarding check_refname_component()
+
+ Allow an asterisk as a substring (as opposed to the entirety) of
+ a path component for both side of a refspec, e.g.
+ "refs/heads/o*:refs/remotes/heads/i*".
+
+ Will merge to 'master'.
+
+
+* jx/do-not-crash-receive-pack-wo-head (2015-07-22) 1 commit
+  (merged to 'next' on 2015-07-29 at 227d0d9)
+ + receive-pack: crash when checking with non-exist HEAD
+
+ Will merge to 'master'.
+
+
+* kd/pull-rebase-autostash (2015-07-22) 1 commit
+ - pull: allow dirty tree when rebase.autostash enabled
+ (this branch uses pt/pull-builtin; is tangled with pt/am-builtin and pt/am-builtin-fix.)
+
+ Teach "git pull --rebase" to pay attention to rebase.autostash
+ configuration.
+
+ Will hold until the dependant topics graduates and then rebase to
+ 'master' after that.
+
+
+* es/doc-clean-outdated-tools (2015-07-28) 5 commits
+  (merged to 'next' on 2015-07-29 at 6d80251)
+ + Documentation/git-tools: retire manually-maintained list
+ + Documentation/git-tools: drop references to defunct tools
+ + Documentation/git-tools: fix item text formatting
+ + Documentation/git-tools: improve discoverability of Git wiki
+ + Documentation/git: drop outdated Cogito reference
+
+ Will merge to 'master'.
+
+
 * zb/userdiff-fountain (2015-07-23) 1 commit
   (merged to 'next' on 2015-07-23 at e177995)
  + userdiff: add support for Fountain documents
@@ -458,7 +549,7 @@ of the repositories listed at
  + Documentation/config: fix stale "git prune --worktree" reference
  + Documentation/git-worktree: fix incorrect reference to file "locked"
  + Documentation/git-worktree: consistently use term "linked working tree"
- (this branch is used by es/worktree-add-cleanup.)
+ (this branch is used by dt/notes-multiple and es/worktree-add-cleanup.)
 
  Will merge to 'master'.
 
@@ -471,8 +562,9 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* es/worktree-add-cleanup (2015-07-24) 24 commits
- - Documentation/config: mention "now" and "never" for 'expire' settings
+* es/worktree-add-cleanup (2015-07-28) 24 commits
+  (merged to 'next' on 2015-07-29 at d2dd004)
+ + Documentation/config: mention "now" and "never" for 'expire' settings
   (merged to 'next' on 2015-07-27 at 25f086d)
  + Documentation/git-worktree: fix broken 'linkgit' invocation
   (merged to 'next' on 2015-07-23 at ecb1e1a)
@@ -498,13 +590,13 @@ of the repositories listed at
  + checkout: improve die_if_checked_out() robustness
  + checkout: name check_linked_checkouts() more meaningfully
  + checkout: avoid resolving HEAD unnecessarily
- (this branch uses es/worktree-add.)
+ (this branch is used by dt/notes-multiple; uses es/worktree-add.)
 
  Remove the "new-worktree-mode" hack in "checkout" that was added in
  nd/multiple-work-trees topic by updating the implementation of new
  "worktree add".
 
- $gmane/274647
+ Will merge to 'master'.
 
 
 * ib/scripted-parse-opt-better-hint-string (2015-07-15) 1 commit
@@ -596,14 +688,15 @@ of the repositories listed at
  + ref-filter: implement '--points-at' option
  + tag: libify parse_opt_points_at()
  + t6302: for-each-ref tests for ref-filter APIs
- (this branch uses kn/for-each-ref.)
+ (this branch uses kn/for-each-ref; is tangled with mm/for-each-ref-fixup.)
 
  Port features over from tag -l and branch -l to for-each-ref
  so that eventually the unified implementation can be used to
  reimplement tag -l and branch -l, shared across all three, in
  a follow-up series or two.
 
- Will merge to 'master'.
+ Squash mm/for-each-ref-fixup into "move code from 'for-each-ref',
+ and then keep in 'next'.
 
 
 * pt/am-builtin (2015-07-20) 46 commits
@@ -654,11 +747,11 @@ of the repositories listed at
  + wrapper: implement xfopen()
  + wrapper: implement xopen()
  + Merge branch 'pt/pull-builtin' into pt/am-builtin
- (this branch uses pt/pull-builtin; is tangled with kd/pull-rebase-autostash.)
+ (this branch is used by pt/am-builtin-fix; uses pt/pull-builtin; is tangled with kd/pull-rebase-autostash.)
 
  Rewrite "am" in "C".
 
- Still buggy around "am" and then "am -3" workflow.
+ Almost there.
 
 
 * ad/bisect-cleanup (2015-06-29) 6 commits
@@ -669,11 +762,11 @@ of the repositories listed at
  + Documentation/bisect: revise overall content
  + Documentation/bisect: move getting help section to the end
  + bisect: correction of typo
- (this branch is used by ad/bisect-terms.)
+ (this branch is used by ad/bisect-terms and rj/bisect-terms-fixup.)
 
  Code and documentation clean-up to "git bisect".
 
- Will merge to 'master'.
+ Will squash rj/bisect-terms-fixup in and rebuild 'next'.
 
 
 * mh/fast-import-get-mark (2015-07-01) 1 commit
@@ -699,6 +792,7 @@ of the repositories listed at
  + refs: new public ref function: safe_create_reflog
  + refs: break out check for reflog autocreation
  + refs.c: add err arguments to reflog functions
+ (this branch is used by dt/refs-pseudo.)
 
  In preparation for allowing different "backends" to store the refs
  in a way different from the traditional "one ref per file in $GIT_DIR
@@ -733,7 +827,7 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* jc/rerere (2015-07-24) 21 commits
+* jc/rerere (2015-07-30) 21 commits
  - rerere: un-nest merge() further
  - rerere: use "struct rerere_id" instead of "char *" for conflict ID
  - rerere: call conflict-ids IDs
@@ -760,9 +854,11 @@ of the repositories listed at
  Code clean-up and minor fixes (so far).
 
 
-* jc/rerere-multi (2015-07-24) 6 commits
- . t4200: rerere a merge with two identical conflicts
+* jc/rerere-multi (2015-07-31) 8 commits
  . WIP
+ . t4200: rerere a merge with two identical conflicts
+ . fixup! rerere: allow multiple variants to exist
+ . rerere: allow multiple variants to exist
  - rerere: delay the recording of preimage
  - rerere: handle leftover rr-cache/$ID directory and postimage files
  - rerere: scan $GIT_DIR/rr-cache/$ID when instantiating a rerere_id
@@ -873,7 +969,7 @@ of the repositories listed at
  + for-each-ref: rename 'refinfo' to 'ref_array_item'
  + for-each-ref: clean up code
  + for-each-ref: extract helper functions out of grab_single_ref()
- (this branch is used by kn/for-each-tag-branch.)
+ (this branch is used by kn/for-each-tag-branch and mm/for-each-ref-fixup.)
 
  GSoC project to rebuild ref listing by branch and tag based on the
  for-each-ref machinery.  This is its first part.
@@ -976,7 +1072,7 @@ of the repositories listed at
  + argv-array: implement argv_array_pushv()
  + parse-options-cb: implement parse_opt_passthru_argv()
  + parse-options-cb: implement parse_opt_passthru()
- (this branch is used by kd/pull-rebase-autostash and pt/am-builtin.)
+ (this branch is used by kd/pull-rebase-autostash, pt/am-builtin and pt/am-builtin-fix.)
 
  Reimplement 'git pull' in C.
 
@@ -1018,18 +1114,6 @@ of the repositories listed at
  a warning.
 
  Will merge to 'master'.
-
-
-* jc/push-tags-also (2015-05-29) 1 commit
- - push --tags: push tags *in addition to* other stuff
-
- "git fetch --tags" learned to fetch tags in addition to other stuff
- a few years ago, but "git push --tags" didn't.  Now it does.
-
- A change to push out more than before always invites "what if the
- user makes a mistake" worries.
-
- Will discard.
 
 
 * jc/commit-slab (2015-05-22) 1 commit
@@ -1082,3 +1166,35 @@ of the repositories listed at
 
  A fresh restart will not be rejected, but ejected from my tree for
  now.
+
+
+* jc/a-lone-dash-stands-for-previous-branch (2015-03-16) 1 commit
+ - "-" and "@{-1}" on various programs
+
+ Lose special case code to make a lone dash "-" mean the previous
+ branch aka "@{-1}" from a handful subcommands, and instead support
+ the notation throughout the system by reimplementing it at the
+ revisions layer.
+
+ Needs tests, documentation updates, etc.  Also does only a half-way
+ job dealing with range notation, which needs to be fixed before the
+ series goes anywhere.
+
+
+* jc/push-tags-also (2015-05-29) 1 commit
+ - push --tags: push tags *in addition to* other stuff
+
+ "git fetch --tags" learned to fetch tags in addition to other stuff
+ a few years ago, but "git push --tags" didn't.  Now it does.
+
+ A change to push out more than before always invites "what if the
+ user makes a mistake" worries.
+
+ Will discard.
+
+
+* nd/pathspec-strip-fix (2015-04-18) 1 commit
+ - pathspec: adjust prefixlen after striping trailing slash
+
+ Does not quite fix ($gmane/267614).
+ Will discard.
