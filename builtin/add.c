@@ -419,7 +419,6 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 
 	if (add_new_files) {
 		int baselen;
-		struct pathspec empty_pathspec;
 
 		/* Set up the default git porcelain excludes */
 		memset(&dir, 0, sizeof(dir));
@@ -428,7 +427,6 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 			setup_standard_excludes(&dir);
 		}
 
-		memset(&empty_pathspec, 0, sizeof(empty_pathspec));
 		/* This picks up the paths that are not tracked */
 		baselen = fill_directory(&dir, &pathspec);
 		if (pathspec.nr)
