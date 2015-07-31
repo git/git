@@ -354,4 +354,123 @@ EOF
 	test_cmp ../expect ../actual
 '
 
+test_expect_success 'set up for sparse checkout testing' '
+	echo two >done/.gitignore &&
+	echo three >>done/.gitignore &&
+	echo two >done/two &&
+	git add -f done/two done/.gitignore &&
+	git commit -m "first commit"
+'
+
+test_expect_success 'status after commit' '
+	: >../trace &&
+	GIT_TRACE_UNTRACKED_STATS="$TRASH_DIRECTORY/trace" \
+	git status --porcelain >../actual &&
+	cat >../status.expect <<EOF &&
+?? .gitignore
+?? dtwo/
+EOF
+	test_cmp ../status.expect ../actual &&
+	cat >../trace.expect <<EOF &&
+node creation: 0
+gitignore invalidation: 0
+directory invalidation: 0
+opendir: 1
+EOF
+	test_cmp ../trace.expect ../trace
+'
+
+test_expect_success 'untracked cache correct after commit' '
+	test-dump-untracked-cache >../actual &&
+	cat >../expect <<EOF &&
+info/exclude 13263c0978fb9fad16b2d580fb800b6d811c3ff0
+core.excludesfile 0000000000000000000000000000000000000000
+exclude_per_dir .gitignore
+flags 00000006
+/ e6fcc8f2ee31bae321d66afd183fcb7237afae6e recurse valid
+.gitignore
+dtwo/
+/done/ 0000000000000000000000000000000000000000 recurse valid
+/dthree/ 0000000000000000000000000000000000000000 recurse check_only valid
+/dtwo/ 0000000000000000000000000000000000000000 recurse check_only valid
+two
+EOF
+	test_cmp ../expect ../actual
+'
+
+test_expect_success 'set up sparse checkout' '
+	echo "done/[a-z]*" >.git/info/sparse-checkout &&
+	test_config core.sparsecheckout true &&
+	git checkout master &&
+	git update-index --untracked-cache &&
+	git status --porcelain >/dev/null && # prime the cache
+	test_path_is_missing done/.gitignore &&
+	test_path_is_file done/one
+'
+
+test_expect_success 'create files, some of which are gitignored' '
+	echo three >done/three && # three is gitignored
+	echo four >done/four && # four is gitignored at a higher level
+	echo five >done/five # five is not gitignored
+'
+
+test_expect_success 'test sparse status with untracked cache' '
+	: >../trace &&
+	avoid_racy &&
+	GIT_TRACE_UNTRACKED_STATS="$TRASH_DIRECTORY/trace" \
+	git status --porcelain >../status.actual &&
+	cat >../status.expect <<EOF &&
+?? .gitignore
+?? done/five
+?? dtwo/
+EOF
+	test_cmp ../status.expect ../status.actual &&
+	cat >../trace.expect <<EOF &&
+node creation: 0
+gitignore invalidation: 1
+directory invalidation: 2
+opendir: 2
+EOF
+	test_cmp ../trace.expect ../trace
+'
+
+test_expect_success 'untracked cache correct after status' '
+	test-dump-untracked-cache >../actual &&
+	cat >../expect <<EOF &&
+info/exclude 13263c0978fb9fad16b2d580fb800b6d811c3ff0
+core.excludesfile 0000000000000000000000000000000000000000
+exclude_per_dir .gitignore
+flags 00000006
+/ e6fcc8f2ee31bae321d66afd183fcb7237afae6e recurse valid
+.gitignore
+dtwo/
+/done/ 1946f0437f90c5005533cbe1736a6451ca301714 recurse valid
+five
+/dthree/ 0000000000000000000000000000000000000000 recurse check_only valid
+/dtwo/ 0000000000000000000000000000000000000000 recurse check_only valid
+two
+EOF
+	test_cmp ../expect ../actual
+'
+
+test_expect_success 'test sparse status again with untracked cache' '
+	avoid_racy &&
+	: >../trace &&
+	GIT_TRACE_UNTRACKED_STATS="$TRASH_DIRECTORY/trace" \
+	git status --porcelain >../status.actual &&
+	cat >../status.expect <<EOF &&
+?? .gitignore
+?? done/five
+?? dtwo/
+EOF
+	test_cmp ../status.expect ../status.actual &&
+	cat >../trace.expect <<EOF &&
+node creation: 0
+gitignore invalidation: 0
+directory invalidation: 0
+opendir: 0
+EOF
+	test_cmp ../trace.expect ../trace
+'
+
 test_done
