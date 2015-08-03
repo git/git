@@ -4,16 +4,51 @@
 char packet_buffer[LARGE_PACKET_MAX];
 static const char *packet_trace_prefix = "git";
 static struct trace_key trace_packet = TRACE_KEY_INIT(PACKET);
+static struct trace_key trace_pack = TRACE_KEY_INIT(PACKFILE);
 
 void packet_trace_identity(const char *prog)
 {
 	packet_trace_prefix = xstrdup(prog);
 }
 
+static int packet_trace_pack(const char *buf, unsigned int len, int sideband)
+{
+	if (!sideband) {
+		trace_verbatim(&trace_pack, buf, len);
+		return 1;
+	} else if (len && *buf == '\1') {
+		trace_verbatim(&trace_pack, buf + 1, len - 1);
+		return 1;
+	} else {
+		/* it's another non-pack sideband */
+		return 0;
+	}
+}
+
 static void packet_trace(const char *buf, unsigned int len, int write)
 {
 	int i;
 	struct strbuf out;
+	static int in_pack, sideband;
+
+	if (!trace_want(&trace_packet) && !trace_want(&trace_pack))
+		return;
+
+	if (in_pack) {
+		if (packet_trace_pack(buf, len, sideband))
+			return;
+	} else if (starts_with(buf, "PACK") || starts_with(buf, "\1PACK")) {
+		in_pack = 1;
+		sideband = *buf == '\1';
+		packet_trace_pack(buf, len, sideband);
+
+		/*
+		 * Make a note in the human-readable trace that the pack data
+		 * started.
+		 */
+		buf = "PACK ...";
+		len = strlen(buf);
+	}
 
 	if (!trace_want(&trace_packet))
 		return;
@@ -24,22 +59,15 @@ static void packet_trace(const char *buf, unsigned int len, int write)
 	strbuf_addf(&out, "packet: %12s%c ",
 		    packet_trace_prefix, write ? '>' : '<');
 
-	if ((len >= 4 && starts_with(buf, "PACK")) ||
-	    (len >= 5 && starts_with(buf+1, "PACK"))) {
-		strbuf_addstr(&out, "PACK ...");
-		trace_disable(&trace_packet);
-	}
-	else {
-		/* XXX we should really handle printable utf8 */
-		for (i = 0; i < len; i++) {
-			/* suppress newlines */
-			if (buf[i] == '\n')
-				continue;
-			if (buf[i] >= 0x20 && buf[i] <= 0x7e)
-				strbuf_addch(&out, buf[i]);
-			else
-				strbuf_addf(&out, "\\%o", buf[i]);
-		}
+	/* XXX we should really handle printable utf8 */
+	for (i = 0; i < len; i++) {
+		/* suppress newlines */
+		if (buf[i] == '\n')
+			continue;
+		if (buf[i] >= 0x20 && buf[i] <= 0x7e)
+			strbuf_addch(&out, buf[i]);
+		else
+			strbuf_addf(&out, "\\%o", buf[i]);
 	}
 
 	strbuf_addch(&out, '\n');

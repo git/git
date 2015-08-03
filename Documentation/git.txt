@@ -1009,8 +1009,19 @@ Unsetting the variable, or setting it to empty, "0" or
 	Enables trace messages for all packets coming in or out of a
 	given program. This can help with debugging object negotiation
 	or other protocol issues. Tracing is turned off at a packet
-	starting with "PACK".
+	starting with "PACK" (but see 'GIT_TRACE_PACKFILE' below).
 	See 'GIT_TRACE' for available trace output options.
+
+'GIT_TRACE_PACKFILE'::
+	Enables tracing of packfiles sent or received by a
+	given program. Unlike other trace output, this trace is
+	verbatim: no headers, and no quoting of binary data. You almost
+	certainly want to direct into a file (e.g.,
+	`GIT_TRACE_PACKFILE=/tmp/my.pack`) rather than displaying it on
+	the terminal or mixing it with other trace output.
++
+Note that this is currently only implemented for the client side
+of clones and fetches.
 
 'GIT_TRACE_PERFORMANCE'::
 	Enables performance related trace messages, e.g. total execution
