@@ -445,6 +445,14 @@ extern int parse_hide_refs_config(const char *var, const char *value, const char
 
 extern int ref_is_hidden(const char *);
 
+enum ref_type {
+	REF_TYPE_PER_WORKTREE,
+	REF_TYPE_PSEUDOREF,
+	REF_TYPE_NORMAL,
+};
+
+enum ref_type ref_type(const char *refname);
+
 enum expire_reflog_flags {
 	EXPIRE_REFLOGS_DRY_RUN = 1 << 0,
 	EXPIRE_REFLOGS_UPDATE_REF = 1 << 1,
