@@ -345,6 +345,11 @@ __attribute__((format (printf,2,0)))
 extern void strbuf_vaddf(struct strbuf *sb, const char *fmt, va_list ap);
 
 /**
+ * Add the time specified by `tm`, as formatted by `strftime`.
+ */
+extern void strbuf_addftime(struct strbuf *sb, const char *fmt, const struct tm *tm);
+
+/**
  * Read a given size of data from a FILE* pointer to the buffer.
  *
  * NOTE: The buffer is rewound if the read fails. If -1 is returned,

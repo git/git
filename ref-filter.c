@@ -362,7 +362,7 @@ static void grab_date(const char *buf, struct atom_value *v, const char *atomnam
 	char *zone;
 	unsigned long timestamp;
 	long tz;
-	enum date_mode date_mode = DATE_NORMAL;
+	struct date_mode date_mode = { DATE_NORMAL };
 	const char *formatp;
 
 	/*
@@ -374,7 +374,7 @@ static void grab_date(const char *buf, struct atom_value *v, const char *atomnam
 	formatp = strchr(atomname, ':');
 	if (formatp != NULL) {
 		formatp++;
-		date_mode = parse_date_format(formatp);
+		parse_date_format(formatp, &date_mode);
 	}
 
 	if (!eoemail)
@@ -385,7 +385,7 @@ static void grab_date(const char *buf, struct atom_value *v, const char *atomnam
 	tz = strtol(zone, NULL, 10);
 	if ((tz == LONG_MIN || tz == LONG_MAX) && errno == ERANGE)
 		goto bad;
-	v->s = xstrdup(show_date(timestamp, tz, date_mode));
+	v->s = xstrdup(show_date(timestamp, tz, &date_mode));
 	v->ul = timestamp;
 	return;
  bad:

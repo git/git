@@ -116,7 +116,7 @@ static void cmd_log_init_defaults(struct rev_info *rev)
 	DIFF_OPT_SET(&rev->diffopt, ALLOW_TEXTCONV);
 
 	if (default_date_mode)
-		rev->date_mode = parse_date_format(default_date_mode);
+		parse_date_format(default_date_mode, &rev->date_mode);
 	rev->diffopt.touched_flags = 0;
 }
 
@@ -956,7 +956,7 @@ static void make_cover_letter(struct rev_info *rev, int use_stdout,
 
 	msg = body;
 	pp.fmt = CMIT_FMT_EMAIL;
-	pp.date_mode = DATE_RFC2822;
+	pp.date_mode.type = DATE_RFC2822;
 	pp_user_info(&pp, NULL, &sb, committer, encoding);
 	pp_title_line(&pp, &msg, &sb, encoding, need_8bit_cte);
 	pp_remainder(&pp, &msg, &sb, 0);
