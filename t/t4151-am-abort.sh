@@ -95,6 +95,21 @@ test_expect_success 'am --abort will keep the local commits intact' '
 	test_cmp expect actual
 '
 
+test_expect_success 'am --abort will keep dirty index intact' '
+	git reset --hard initial &&
+	echo dirtyfile >dirtyfile &&
+	cp dirtyfile dirtyfile.expected &&
+	git add dirtyfile &&
+	test_must_fail git am 0001-*.patch &&
+	test_cmp_rev initial HEAD &&
+	test_path_is_file dirtyfile &&
+	test_cmp dirtyfile.expected dirtyfile &&
+	git am --abort &&
+	test_cmp_rev initial HEAD &&
+	test_path_is_file dirtyfile &&
+	test_cmp dirtyfile.expected dirtyfile
+'
+
 test_expect_success 'am -3 stops on conflict on unborn branch' '
 	git checkout -f --orphan orphan &&
 	git reset &&

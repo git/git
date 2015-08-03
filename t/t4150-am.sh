@@ -67,6 +67,19 @@ test_expect_success 'setup: messages' '
 
 	EOF
 
+	cat >scissors-msg <<-\EOF &&
+	Test git-am with scissors line
+
+	This line should be included in the commit message.
+	EOF
+
+	cat - scissors-msg >no-scissors-msg <<-\EOF &&
+	This line should not be included in the commit message with --scissors enabled.
+
+	 - - >8 - - remove everything above this line - - >8 - -
+
+	EOF
+
 	signoff="Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>"
 '
 
@@ -137,6 +150,20 @@ test_expect_success setup '
 	} >patch1-hg.eml &&
 
 
+	echo scissors-file >scissors-file &&
+	git add scissors-file &&
+	git commit -F scissors-msg &&
+	git tag scissors &&
+	git format-patch --stdout scissors^ >scissors-patch.eml &&
+	git reset --hard HEAD^ &&
+
+	echo no-scissors-file >no-scissors-file &&
+	git add no-scissors-file &&
+	git commit -F no-scissors-msg &&
+	git tag no-scissors &&
+	git format-patch --stdout no-scissors^ >no-scissors-patch.eml &&
+	git reset --hard HEAD^ &&
+
 	sed -n -e "3,\$p" msg >file &&
 	git add file &&
 	test_tick &&
@@ -184,6 +211,18 @@ test_expect_success 'am applies patch correctly' '
 	git diff --exit-code second &&
 	test "$(git rev-parse second)" = "$(git rev-parse HEAD)" &&
 	test "$(git rev-parse second^)" = "$(git rev-parse HEAD^)"
+'
+
+test_expect_success 'am fails if index is dirty' '
+	test_when_finished "rm -f dirtyfile" &&
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
+	git checkout first &&
+	echo dirtyfile >dirtyfile &&
+	git add dirtyfile &&
+	test_must_fail git am patch1 &&
+	test_path_is_dir .git/rebase-apply &&
+	test_cmp_rev first HEAD
 '
 
 test_expect_success 'am applies patch e-mail not in a mbox' '
@@ -267,6 +306,133 @@ test_expect_success 'am --patch-format=hg applies hg patch' '
 	git diff --exit-code second &&
 	test_cmp_rev second HEAD &&
 	test_cmp_rev second^ HEAD^
+'
+
+test_expect_success 'am with applypatch-msg hook' '
+	test_when_finished "rm -f .git/hooks/applypatch-msg" &&
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
+	git checkout first &&
+	mkdir -p .git/hooks &&
+	write_script .git/hooks/applypatch-msg <<-\EOF &&
+	cat "$1" >actual-msg &&
+	echo hook-message >"$1"
+	EOF
+	git am patch1 &&
+	test_path_is_missing .git/rebase-apply &&
+	git diff --exit-code second &&
+	echo hook-message >expected &&
+	git log -1 --format=format:%B >actual &&
+	test_cmp expected actual &&
+	git log -1 --format=format:%B second >expected &&
+	test_cmp expected actual-msg
+'
+
+test_expect_success 'am with failing applypatch-msg hook' '
+	test_when_finished "rm -f .git/hooks/applypatch-msg" &&
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
+	git checkout first &&
+	mkdir -p .git/hooks &&
+	write_script .git/hooks/applypatch-msg <<-\EOF &&
+	exit 1
+	EOF
+	test_must_fail git am patch1 &&
+	test_path_is_dir .git/rebase-apply &&
+	git diff --exit-code first &&
+	test_cmp_rev first HEAD
+'
+
+test_expect_success 'am with pre-applypatch hook' '
+	test_when_finished "rm -f .git/hooks/pre-applypatch" &&
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
+	git checkout first &&
+	mkdir -p .git/hooks &&
+	write_script .git/hooks/pre-applypatch <<-\EOF &&
+	git diff first >diff.actual
+	exit 0
+	EOF
+	git am patch1 &&
+	test_path_is_missing .git/rebase-apply &&
+	git diff --exit-code second &&
+	test_cmp_rev second HEAD &&
+	git diff first..second >diff.expected &&
+	test_cmp diff.expected diff.actual
+'
+
+test_expect_success 'am with failing pre-applypatch hook' '
+	test_when_finished "rm -f .git/hooks/pre-applypatch" &&
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
+	git checkout first &&
+	mkdir -p .git/hooks &&
+	write_script .git/hooks/pre-applypatch <<-\EOF &&
+	exit 1
+	EOF
+	test_must_fail git am patch1 &&
+	test_path_is_dir .git/rebase-apply &&
+	git diff --exit-code second &&
+	test_cmp_rev first HEAD
+'
+
+test_expect_success 'am with post-applypatch hook' '
+	test_when_finished "rm -f .git/hooks/post-applypatch" &&
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
+	git checkout first &&
+	mkdir -p .git/hooks &&
+	write_script .git/hooks/post-applypatch <<-\EOF &&
+	git rev-parse HEAD >head.actual
+	git diff second >diff.actual
+	exit 0
+	EOF
+	git am patch1 &&
+	test_path_is_missing .git/rebase-apply &&
+	test_cmp_rev second HEAD &&
+	git rev-parse second >head.expected &&
+	test_cmp head.expected head.actual &&
+	git diff second >diff.expected &&
+	test_cmp diff.expected diff.actual
+'
+
+test_expect_success 'am with failing post-applypatch hook' '
+	test_when_finished "rm -f .git/hooks/post-applypatch" &&
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
+	git checkout first &&
+	mkdir -p .git/hooks &&
+	write_script .git/hooks/post-applypatch <<-\EOF &&
+	git rev-parse HEAD >head.actual
+	exit 1
+	EOF
+	git am patch1 &&
+	test_path_is_missing .git/rebase-apply &&
+	git diff --exit-code second &&
+	test_cmp_rev second HEAD &&
+	git rev-parse second >head.expected &&
+	test_cmp head.expected head.actual
+'
+
+test_expect_success 'am --scissors cuts the message at the scissors line' '
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
+	git checkout second &&
+	git am --scissors scissors-patch.eml &&
+	test_path_is_missing .git/rebase-apply &&
+	git diff --exit-code scissors &&
+	test_cmp_rev scissors HEAD
+'
+
+test_expect_success 'am --no-scissors overrides mailinfo.scissors' '
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
+	git checkout second &&
+	test_config mailinfo.scissors true &&
+	git am --no-scissors no-scissors-patch.eml &&
+	test_path_is_missing .git/rebase-apply &&
+	git diff --exit-code no-scissors &&
+	test_cmp_rev no-scissors HEAD
 '
 
 test_expect_success 'setup: new author and committer' '
@@ -448,6 +614,20 @@ test_expect_success 'am --abort removes a stray directory' '
 	test_path_is_missing .git/rebase-apply
 '
 
+test_expect_success 'am refuses patches when paused' '
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
+	git checkout lorem2^^ &&
+
+	test_must_fail git am lorem-move.patch &&
+	test_path_is_dir .git/rebase-apply &&
+	test_cmp_rev lorem2^^ HEAD &&
+
+	test_must_fail git am <lorem-move.patch &&
+	test_path_is_dir .git/rebase-apply &&
+	test_cmp_rev lorem2^^ HEAD
+'
+
 test_expect_success 'am --resolved works' '
 	echo goodbye >expected &&
 	rm -fr .git/rebase-apply &&
@@ -460,6 +640,31 @@ test_expect_success 'am --resolved works' '
 	git am --resolved &&
 	test_path_is_missing .git/rebase-apply &&
 	test_cmp expected another
+'
+
+test_expect_success 'am --resolved fails if index has no changes' '
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
+	git checkout lorem2^^ &&
+	test_must_fail git am lorem-move.patch &&
+	test_path_is_dir .git/rebase-apply &&
+	test_cmp_rev lorem2^^ HEAD &&
+	test_must_fail git am --resolved &&
+	test_path_is_dir .git/rebase-apply &&
+	test_cmp_rev lorem2^^ HEAD
+'
+
+test_expect_success 'am --resolved fails if index has unmerged entries' '
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
+	git checkout second &&
+	test_must_fail git am -3 lorem-move.patch &&
+	test_path_is_dir .git/rebase-apply &&
+	test_cmp_rev second HEAD &&
+	test_must_fail git am --resolved >err &&
+	test_path_is_dir .git/rebase-apply &&
+	test_cmp_rev second HEAD &&
+	test_i18ngrep "still have unmerged paths" err
 '
 
 test_expect_success 'am takes patches from a Pine mailbox' '
@@ -620,6 +825,18 @@ test_expect_success 'am --message-id really adds the message id' '
 	git reset --hard &&
 	git checkout HEAD^ &&
 	git am --message-id patch1.eml &&
+	test_path_is_missing .git/rebase-apply &&
+	git cat-file commit HEAD | tail -n1 >actual &&
+	grep Message-Id patch1.eml >expected &&
+	test_cmp expected actual
+'
+
+test_expect_success 'am.messageid really adds the message id' '
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
+	git checkout HEAD^ &&
+	test_config am.messageid true &&
+	git am patch1.eml &&
 	test_path_is_missing .git/rebase-apply &&
 	git cat-file commit HEAD | tail -n1 >actual &&
 	grep Message-Id patch1.eml >expected &&
