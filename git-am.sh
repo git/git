@@ -300,6 +300,7 @@ split_patches () {
 		;;
 	stgit)
 		this=0
+		test 0 -eq "$#" && set -- -
 		for stgit in "$@"
 		do
 			this=$(expr "$this" + 1)
@@ -321,7 +322,7 @@ split_patches () {
 					print "Subject: ", $_ ;
 					$subject = 1;
 				}
-			' < "$stgit" > "$dotest/$msgnum" || clean_abort
+			' -- "$stgit" >"$dotest/$msgnum" || clean_abort
 		done
 		echo "$this" > "$dotest/last"
 		this=
@@ -329,6 +330,7 @@ split_patches () {
 		;;
 	hg)
 		this=0
+		test 0 -eq "$#" && set -- -
 		for hg in "$@"
 		do
 			this=$(( $this + 1 ))
@@ -345,17 +347,17 @@ split_patches () {
 				elsif (/^\# User /) { s/\# User/From:/ ; print ; }
 				elsif (/^\# Date /) {
 					my ($hashsign, $str, $time, $tz) = split ;
-					$tz = sprintf "%+05d", (0-$tz)/36;
+					$tz_str = sprintf "%+05d", (0-$tz)/36;
 					print "Date: " .
 					      strftime("%a, %d %b %Y %H:%M:%S ",
-						       localtime($time))
-					      . "$tz\n";
+						       gmtime($time-$tz))
+					      . "$tz_str\n";
 				} elsif (/^\# /) { next ; }
 				else {
 					print "\n", $_ ;
 					$subject = 1;
 				}
-			' <"$hg" >"$dotest/$msgnum" || clean_abort
+			' -- "$hg" >"$dotest/$msgnum" || clean_abort
 		done
 		echo "$this" >"$dotest/last"
 		this=
