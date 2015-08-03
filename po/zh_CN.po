@@ -4,16 +4,21 @@
 # This file is distributed under the same license as the Git package.
 # Contributors:
 #   - Jiang Xin <worldhello.net AT gmail.com>
-#   - Riku <lu.riku AT gmail.com>
-#   - Zhuang Ya <zhuangya AT me.com>
 #   - Lian Cheng <rhythm.mail AT gmail.com>
+#   - Ray Chen <oldsharp AT gmail.com>
+#   - Riku <lu.riku AT gmail.com>
+#   - Thynson <lanxingcan AT gmail.com>
+#   - ws3389 <willsmith3389 AT gmail.com>
+#   - Wang Sheng <wangsheng2008love AT 163.com>
+#   - Yichao Yu <yyc1992 AT gmail.com>
+#   - Zhuang Ya <zhuangya AT me.com>
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
 "POT-Creation-Date: 2015-07-14 07:19+0800\n"
-"PO-Revision-Date: 2015-07-30 23:41+0800\n"
+"PO-Revision-Date: 2015-08-04 00:42+0800\n"
 "Last-Translator: Jiang Xin <worldhello.net@gmail.com>\n"
 "Language-Team: GitHub <https://github.com/jiangxin/git/>\n"
 "Language: zh_CN\n"
