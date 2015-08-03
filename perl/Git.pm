@@ -864,6 +864,73 @@ sub ident_person {
 	return "$ident[0] <$ident[1]>";
 }
 
+=item parse_mailboxes
+
+Return an array of mailboxes extracted from a string.
+
+=cut
+
+sub parse_mailboxes {
+	my $re_comment = qr/\((?:[^)]*)\)/;
+	my $re_quote = qr/"(?:[^\"\\]|\\.)*"/;
+	my $re_word = qr/(?:[^]["\s()<>:;@\\,.]|\\.)+/;
+
+	# divide the string in tokens of the above form
+	my $re_token = qr/(?:$re_quote|$re_word|$re_comment|\S)/;
+	my @tokens = map { $_ =~ /\s*($re_token)\s*/g } @_;
+
+	# add a delimiter to simplify treatment for the last mailbox
+	push @tokens, ",";
+
+	my (@addr_list, @phrase, @address, @comment, @buffer) = ();
+	foreach my $token (@tokens) {
+		if ($token =~ /^[,;]$/) {
+			# if buffer still contains undeterminated strings
+			# append it at the end of @address or @phrase
+			if (@address) {
+				push @address, @buffer;
+			} else {
+				push @phrase, @buffer;
+			}
+
+			my $str_phrase = join ' ', @phrase;
+			my $str_address = join '', @address;
+			my $str_comment = join ' ', @comment;
+
+			# quote are necessary if phrase contains
+			# special characters
+			if ($str_phrase =~ /[][()<>:;@\\,.\000-\037\177]/) {
+				$str_phrase =~ s/(^|[^\\])"/$1/g;
+				$str_phrase = qq["$str_phrase"];
+			}
+
+			# add "<>" around the address if necessary
+			if ($str_address ne "" && $str_phrase ne "") {
+				$str_address = qq[<$str_address>];
+			}
+
+			my $str_mailbox = "$str_phrase $str_address $str_comment";
+			$str_mailbox =~ s/^\s*|\s*$//g;
+			push @addr_list, $str_mailbox if ($str_mailbox);
+
+			@phrase = @address = @comment = @buffer = ();
+		} elsif ($token =~ /^\(/) {
+			push @comment, $token;
+		} elsif ($token eq "<") {
+			push @phrase, (splice @address), (splice @buffer);
+		} elsif ($token eq ">") {
+			push @address, (splice @buffer);
+		} elsif ($token eq "@") {
+			push @address, (splice @buffer), "@";
+		} elsif ($token eq ".") {
+			push @address, (splice @buffer), ".";
+		} else {
+			push @buffer, $token;
+		}
+	}
+
+	return @addr_list;
+}
 
 =item hash_object ( TYPE, FILENAME )
 
