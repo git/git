@@ -397,6 +397,7 @@ static inline enum object_type object_type(unsigned int mode)
 #define EXEC_PATH_ENVIRONMENT "GIT_EXEC_PATH"
 #define CEILING_DIRECTORIES_ENVIRONMENT "GIT_CEILING_DIRECTORIES"
 #define NO_REPLACE_OBJECTS_ENVIRONMENT "GIT_NO_REPLACE_OBJECTS"
+#define GIT_REPLACE_REF_BASE_ENVIRONMENT "GIT_REPLACE_REF_BASE"
 #define GITATTRIBUTES_FILE ".gitattributes"
 #define INFOATTRIBUTES_FILE "info/attributes"
 #define ATTRIBUTE_MACRO_PREFIX "[attr]"
@@ -622,6 +623,7 @@ extern unsigned long pack_size_limit_cfg;
  * been sought but there were none.
  */
 extern int check_replace_refs;
+extern char *git_replace_ref_base;
 
 extern int fsync_object_files;
 extern int core_preload_index;

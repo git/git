@@ -104,9 +104,9 @@ static int for_each_replace_name(const char **argv, each_replace_name_fn fn)
 			continue;
 		}
 		full_hex = sha1_to_hex(sha1);
-		snprintf(ref, sizeof(ref), "refs/replace/%s", full_hex);
+		snprintf(ref, sizeof(ref), "%s%s", git_replace_ref_base, full_hex);
 		/* read_ref() may reuse the buffer */
-		full_hex = ref + strlen("refs/replace/");
+		full_hex = ref + strlen(git_replace_ref_base);
 		if (read_ref(ref, sha1)) {
 			error("replace ref '%s' not found.", full_hex);
 			had_error = 1;
@@ -134,7 +134,7 @@ static void check_ref_valid(unsigned char object[20],
 			    int force)
 {
 	if (snprintf(ref, ref_size,
-		     "refs/replace/%s",
+		     "%s%s", git_replace_ref_base,
 		     sha1_to_hex(object)) > ref_size - 1)
 		die("replace ref name too long: %.*s...", 50, ref);
 	if (check_refname_format(ref, 0))
