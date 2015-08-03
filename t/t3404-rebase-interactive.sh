@@ -961,13 +961,13 @@ test_expect_success 'rebase -i produces readable reflog' '
 	set_fake_editor &&
 	git rebase -i --onto I F branch-reflog-test &&
 	cat >expect <<-\EOF &&
-	rebase -i (start): checkout I
-	rebase -i (pick): G
-	rebase -i (pick): H
 	rebase -i (finish): returning to refs/heads/branch-reflog-test
+	rebase -i (pick): H
+	rebase -i (pick): G
+	rebase -i (start): checkout I
 	EOF
-	tail -n 4 .git/logs/HEAD |
-	sed -e "s/.*	//" >actual &&
+	git reflog -n4 HEAD |
+	sed "s/[^:]*: //" >actual &&
 	test_cmp expect actual
 '
 
