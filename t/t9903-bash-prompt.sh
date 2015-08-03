@@ -397,6 +397,31 @@ test_expect_success 'prompt - untracked files status indicator - untracked files
 	test_cmp expected "$actual"
 '
 
+test_expect_success 'prompt - untracked files status indicator - empty untracked dir' '
+	printf " (master)" >expected &&
+	mkdir otherrepo/untracked-dir &&
+	test_when_finished "rm -rf otherrepo/untracked-dir" &&
+	(
+		GIT_PS1_SHOWUNTRACKEDFILES=y &&
+		cd otherrepo &&
+		__git_ps1 >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success 'prompt - untracked files status indicator - non-empty untracked dir' '
+	printf " (master %%)" >expected &&
+	mkdir otherrepo/untracked-dir &&
+	test_when_finished "rm -rf otherrepo/untracked-dir" &&
+	>otherrepo/untracked-dir/untracked-file &&
+	(
+		GIT_PS1_SHOWUNTRACKEDFILES=y &&
+		cd otherrepo &&
+		__git_ps1 >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
 test_expect_success 'prompt - untracked files status indicator - untracked files outside cwd' '
 	printf " (master %%)" >expected &&
 	(
