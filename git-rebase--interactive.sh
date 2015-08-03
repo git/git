@@ -152,11 +152,21 @@ Commands:
  s, squash = use commit, but meld into previous commit
  f, fixup = like "squash", but discard this commit's log message
  x, exec = run command (the rest of the line) using shell
+ d, drop = remove commit
 
 These lines can be re-ordered; they are executed from top to bottom.
 
+EOF
+	if test $(get_missing_commit_check_level) = error
+	then
+		git stripspace --comment-lines >>"$todo" <<\EOF
+Do not remove any line. Use 'drop' explicitly to remove a commit.
+EOF
+	else
+		git stripspace --comment-lines >>"$todo" <<\EOF
 If you remove a line here THAT COMMIT WILL BE LOST.
 EOF
+	fi
 }
 
 make_patch () {
@@ -505,7 +515,7 @@ do_next () {
 	rm -f "$msg" "$author_script" "$amend" "$state_dir"/stopped-sha || exit
 	read -r command sha1 rest < "$todo"
 	case "$command" in
-	"$comment_char"*|''|noop)
+	"$comment_char"*|''|noop|drop|d)
 		mark_action_done
 		;;
 	pick|p)
@@ -844,6 +854,180 @@ add_exec_commands () {
 	mv "$1.new" "$1"
 }
 
+# Check if the SHA-1 passed as an argument is a
+# correct one, if not then print $2 in "$todo".badsha
+# $1: the SHA-1 to test
+# $2: the line to display if incorrect SHA-1
+check_commit_sha () {
+	badsha=0
+	if test -z $1
+	then
+		badsha=1
+	else
+		sha1_verif="$(git rev-parse --verify --quiet $1^{commit})"
+		if test -z $sha1_verif
+		then
+			badsha=1
+		fi
+	fi
+
+	if test $badsha -ne 0
+	then
+		warn "Warning: the SHA-1 is missing or isn't" \
+			"a commit in the following line:"
+		warn " - $2"
+		warn
+	fi
+
+	return $badsha
+}
+
+# prints the bad commits and bad commands
+# from the todolist in stdin
+check_bad_cmd_and_sha () {
+	retval=0
+	git stripspace --strip-comments |
+	(
+		while read -r line
+		do
+			IFS=' '
+			set -- $line
+			command=$1
+			sha1=$2
+
+			case $command in
+			''|noop|x|"exec")
+				# Doesn't expect a SHA-1
+				;;
+			pick|p|drop|d|reword|r|edit|e|squash|s|fixup|f)
+				if ! check_commit_sha $sha1 "$line"
+				then
+					retval=1
+				fi
+				;;
+			*)
+				warn "Warning: the command isn't recognized" \
+					"in the following line:"
+				warn " - $line"
+				warn
+				retval=1
+				;;
+			esac
+		done
+
+		return $retval
+	)
+}
+
+# Print the list of the SHA-1 of the commits
+# from stdin to stdout
+todo_list_to_sha_list () {
+	git stripspace --strip-comments |
+	while read -r command sha1 rest
+	do
+		case $command in
+		"$comment_char"*|''|noop|x|"exec")
+			;;
+		*)
+			long_sha=$(git rev-list --no-walk "$sha1" 2>/dev/null)
+			printf "%s\n" "$long_sha"
+			;;
+		esac
+	done
+}
+
+# Use warn for each line in stdin
+warn_lines () {
+	while read -r line
+	do
+		warn " - $line"
+	done
+}
+
+# Switch to the branch in $into and notify it in the reflog
+checkout_onto () {
+	GIT_REFLOG_ACTION="$GIT_REFLOG_ACTION: checkout $onto_name"
+	output git checkout $onto || die_abort "could not detach HEAD"
+	git update-ref ORIG_HEAD $orig_head
+}
+
+get_missing_commit_check_level () {
+	check_level=$(git config --get rebase.missingCommitsCheck)
+	check_level=${check_level:-ignore}
+	# Don't be case sensitive
+	printf '%s' "$check_level" | tr 'A-Z' 'a-z'
+}
+
+# Check if the user dropped some commits by mistake
+# Behaviour determined by rebase.missingCommitsCheck.
+# Check if there is an unrecognized command or a
+# bad SHA-1 in a command.
+check_todo_list () {
+	raise_error=f
+
+	check_level=$(get_missing_commit_check_level)
+
+	case "$check_level" in
+	warn|error)
+		# Get the SHA-1 of the commits
+		todo_list_to_sha_list <"$todo".backup >"$todo".oldsha1
+		todo_list_to_sha_list <"$todo" >"$todo".newsha1
+
+		# Sort the SHA-1 and compare them
+		sort -u "$todo".oldsha1 >"$todo".oldsha1+
+		mv "$todo".oldsha1+ "$todo".oldsha1
+		sort -u "$todo".newsha1 >"$todo".newsha1+
+		mv "$todo".newsha1+ "$todo".newsha1
+		comm -2 -3 "$todo".oldsha1 "$todo".newsha1 >"$todo".miss
+
+		# Warn about missing commits
+		if test -s "$todo".miss
+		then
+			test "$check_level" = error && raise_error=t
+
+			warn "Warning: some commits may have been dropped" \
+				"accidentally."
+			warn "Dropped commits (newer to older):"
+
+			# Make the list user-friendly and display
+			opt="--no-walk=sorted --format=oneline --abbrev-commit --stdin"
+			git rev-list $opt <"$todo".miss | warn_lines
+
+			warn "To avoid this message, use \"drop\" to" \
+				"explicitly remove a commit."
+			warn
+			warn "Use 'git config rebase.missingCommitsCheck' to change" \
+				"the level of warnings."
+			warn "The possible behaviours are: ignore, warn, error."
+			warn
+		fi
+		;;
+	ignore)
+		;;
+	*)
+		warn "Unrecognized setting $check_level for option" \
+			"rebase.missingCommitsCheck. Ignoring."
+		;;
+	esac
+
+	if ! check_bad_cmd_and_sha <"$todo"
+	then
+		raise_error=t
+	fi
+
+	if test $raise_error = t
+	then
+		# Checkout before the first commit of the
+		# rebase: this way git rebase --continue
+		# will work correctly as it expects HEAD to be
+		# placed before the commit of the next action
+		checkout_onto
+
+		warn "You can fix this with 'git rebase --edit-todo'."
+		die "Or you can abort the rebase with 'git rebase --abort'."
+	fi
+}
+
 # The whole contents of this file is run by dot-sourcing it from
 # inside a shell function.  It used to be that "return"s we see
 # below were not inside any function, and expected to return
@@ -1094,13 +1278,13 @@ git_sequence_editor "$todo" ||
 has_action "$todo" ||
 	return 2
 
+check_todo_list
+
 expand_todo_ids
 
 test -d "$rewritten" || test -n "$force_rebase" || skip_unnecessary_picks
 
-GIT_REFLOG_ACTION="$GIT_REFLOG_ACTION: checkout $onto_name"
-output git checkout $onto || die_abort "could not detach HEAD"
-git update-ref ORIG_HEAD $orig_head
+checkout_onto
 do_rest
 
 }

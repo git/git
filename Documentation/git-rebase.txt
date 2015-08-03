@@ -213,6 +213,12 @@ rebase.autoSquash::
 rebase.autoStash::
 	If set to true enable '--autostash' option by default.
 
+rebase.missingCommitsCheck::
+	If set to "warn", print warnings about removed commits in
+	interactive mode. If set to "error", print the warnings and
+	stop the rebase. If set to "ignore", no checking is
+	done. "ignore" by default.
+
 rebase.instructionFormat::
 	Custom commit list format to use during an '--interactive' rebase.
 
@@ -520,6 +526,9 @@ rebasing.
 
 If you just want to edit the commit message for a commit, replace the
 command "pick" with the command "reword".
+
+To drop a commit, replace the command "pick" with "drop", or just
+delete the matching line.
 
 If you want to fold two or more commits into one, replace the command
 "pick" for the second and subsequent commits with "squash" or "fixup".
