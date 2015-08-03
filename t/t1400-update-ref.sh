@@ -23,6 +23,7 @@ test_expect_success setup '
 m=refs/heads/master
 n_dir=refs/heads/gu
 n=$n_dir/fixes
+outside=foo
 
 test_expect_success \
 	"create $m" \
@@ -73,6 +74,24 @@ test_expect_success "delete $m (by HEAD)" '
 	! test -f .git/$m
 '
 rm -f .git/$m
+
+test_expect_success 'update-ref does not create reflogs by default' '
+	test_when_finished "git update-ref -d $outside" &&
+	git update-ref $outside $A &&
+	git rev-parse $A >expect &&
+	git rev-parse $outside >actual &&
+	test_cmp expect actual &&
+	test_must_fail git reflog exists $outside
+'
+
+test_expect_success 'update-ref creates reflogs with --create-reflog' '
+	test_when_finished "git update-ref -d $outside" &&
+	git update-ref --create-reflog $outside $A &&
+	git rev-parse $A >expect &&
+	git rev-parse $outside >actual &&
+	test_cmp expect actual &&
+	git reflog exists $outside
+'
 
 test_expect_success \
 	"create $m (by HEAD)" \
@@ -470,6 +489,25 @@ test_expect_success 'stdin create ref works' '
 	git rev-parse $m >expect &&
 	git rev-parse $a >actual &&
 	test_cmp expect actual
+'
+
+test_expect_success 'stdin does not create reflogs by default' '
+	test_when_finished "git update-ref -d $outside" &&
+	echo "create $outside $m" >stdin &&
+	git update-ref --stdin <stdin &&
+	git rev-parse $m >expect &&
+	git rev-parse $outside >actual &&
+	test_cmp expect actual &&
+	test_must_fail git reflog exists $outside
+'
+
+test_expect_success 'stdin creates reflogs with --create-reflog' '
+	echo "create $outside $m" >stdin &&
+	git update-ref --create-reflog --stdin <stdin &&
+	git rev-parse $m >expect &&
+	git rev-parse $outside >actual &&
+	test_cmp expect actual &&
+	git reflog exists $outside
 '
 
 test_expect_success 'stdin succeeds with quoted argument' '

@@ -13,7 +13,7 @@ SYNOPSIS
 	<tagname> [<commit> | <object>]
 'git tag' -d <tagname>...
 'git tag' [-n[<num>]] -l [--contains <commit>] [--points-at <object>]
-	[--column[=<options>] | --no-column] [<pattern>...]
+	[--column[=<options>] | --no-column] [--create-reflog] [<pattern>...]
 'git tag' -v <tagname>...
 
 DESCRIPTION
@@ -141,6 +141,9 @@ This option is only applicable when listing tags without annotation lines.
 	'strip' mode is default. The 'verbatim' mode does not change message at
 	all, 'whitespace' removes just leading/trailing whitespace lines and
 	'strip' removes both whitespace and commentary.
+
+--create-reflog::
+	Create a reflog for the tag.
 
 <tagname>::
 	The name of the tag to create, delete, or describe.

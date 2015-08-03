@@ -224,11 +224,12 @@ int pack_refs(unsigned int flags);
  * Other flags are reserved for internal use.
  */
 #define REF_NODEREF	0x01
+#define REF_FORCE_CREATE_REFLOG 0x40
 
 /*
- * Setup reflog before using. Set errno to something meaningful on failure.
+ * Setup reflog before using. Fill in err and return -1 on failure.
  */
-int log_ref_setup(const char *refname, struct strbuf *logfile);
+int safe_create_reflog(const char *refname, int force_create, struct strbuf *err);
 
 /** Reads log for the value of ref during at_time. **/
 extern int read_ref_at(const char *refname, unsigned int flags,

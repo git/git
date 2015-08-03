@@ -14,6 +14,7 @@ static const char * const git_update_ref_usage[] = {
 
 static char line_termination = '\n';
 static int update_flags;
+static unsigned create_reflog_flag;
 static const char *msg;
 
 /*
@@ -200,7 +201,8 @@ static const char *parse_cmd_update(struct ref_transaction *transaction,
 
 	if (ref_transaction_update(transaction, refname,
 				   new_sha1, have_old ? old_sha1 : NULL,
-				   update_flags, msg, &err))
+				   update_flags | create_reflog_flag,
+				   msg, &err))
 		die("%s", err.buf);
 
 	update_flags = 0;
@@ -231,7 +233,8 @@ static const char *parse_cmd_create(struct ref_transaction *transaction,
 		die("create %s: extra input: %s", refname, next);
 
 	if (ref_transaction_create(transaction, refname, new_sha1,
-				   update_flags, msg, &err))
+				   update_flags | create_reflog_flag,
+				   msg, &err))
 		die("%s", err.buf);
 
 	update_flags = 0;
@@ -354,6 +357,7 @@ int cmd_update_ref(int argc, const char **argv, const char *prefix)
 	unsigned char sha1[20], oldsha1[20];
 	int delete = 0, no_deref = 0, read_stdin = 0, end_null = 0;
 	unsigned int flags = 0;
+	int create_reflog = 0;
 	struct option options[] = {
 		OPT_STRING( 'm', NULL, &msg, N_("reason"), N_("reason of the update")),
 		OPT_BOOL('d', NULL, &delete, N_("delete the reference")),
@@ -361,6 +365,7 @@ int cmd_update_ref(int argc, const char **argv, const char *prefix)
 					N_("update <refname> not the one it points to")),
 		OPT_BOOL('z', NULL, &end_null, N_("stdin has NUL-terminated arguments")),
 		OPT_BOOL( 0 , "stdin", &read_stdin, N_("read updates from stdin")),
+		OPT_BOOL( 0 , "create-reflog", &create_reflog, N_("create_reflog")),
 		OPT_END(),
 	};
 
@@ -369,6 +374,8 @@ int cmd_update_ref(int argc, const char **argv, const char *prefix)
 			     0);
 	if (msg && !*msg)
 		die("Refusing to perform update with empty message.");
+
+	create_reflog_flag = create_reflog ? REF_FORCE_CREATE_REFLOG : 0;
 
 	if (read_stdin) {
 		struct strbuf err = STRBUF_INIT;
@@ -431,5 +438,6 @@ int cmd_update_ref(int argc, const char **argv, const char *prefix)
 				  flags);
 	else
 		return update_ref(msg, refname, sha1, oldval ? oldsha1 : NULL,
-				  flags, UPDATE_REFS_DIE_ON_ERR);
+				  flags | create_reflog_flag,
+				  UPDATE_REFS_DIE_ON_ERR);
 }
