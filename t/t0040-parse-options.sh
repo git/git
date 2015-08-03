@@ -19,6 +19,7 @@ usage: test-parse-options <options>
 
     -i, --integer <n>     get a integer
     -j <n>                get a integer, too
+    -m, --magnitude <n>   get a magnitude
     --set23               set integer to 23
     -t <time>             get timestamp of <time>
     -L, --length <str>    get length of <str>
@@ -58,6 +59,7 @@ mv expect expect.err
 cat >expect.template <<EOF
 boolean: 0
 integer: 0
+magnitude: 0
 timestamp: 0
 string: (not set)
 abbrev: 7
@@ -132,9 +134,32 @@ test_expect_success 'OPT_BOOL() no negation #2' 'check_unknown_i18n --no-no-fear
 
 test_expect_success 'OPT_BOOL() positivation' 'check boolean: 0 -D --doubt'
 
+test_expect_success 'OPT_INT() negative' 'check integer: -2345 -i -2345'
+
+test_expect_success 'OPT_MAGNITUDE() simple' '
+	check magnitude: 2345678 -m 2345678
+'
+
+test_expect_success 'OPT_MAGNITUDE() kilo' '
+	check magnitude: 239616 -m 234k
+'
+
+test_expect_success 'OPT_MAGNITUDE() mega' '
+	check magnitude: 104857600 -m 100m
+'
+
+test_expect_success 'OPT_MAGNITUDE() giga' '
+	check magnitude: 1073741824 -m 1g
+'
+
+test_expect_success 'OPT_MAGNITUDE() 3giga' '
+	check magnitude: 3221225472 -m 3g
+'
+
 cat > expect << EOF
 boolean: 2
 integer: 1729
+magnitude: 16384
 timestamp: 0
 string: 123
 abbrev: 7
@@ -145,8 +170,8 @@ file: prefix/my.file
 EOF
 
 test_expect_success 'short options' '
-	test-parse-options -s123 -b -i 1729 -b -vv -n -F my.file \
-	> output 2> output.err &&
+	test-parse-options -s123 -b -i 1729 -m 16k -b -vv -n -F my.file \
+	>output 2>output.err &&
 	test_cmp expect output &&
 	test_must_be_empty output.err
 '
@@ -154,6 +179,7 @@ test_expect_success 'short options' '
 cat > expect << EOF
 boolean: 2
 integer: 1729
+magnitude: 16384
 timestamp: 0
 string: 321
 abbrev: 10
@@ -164,9 +190,10 @@ file: prefix/fi.le
 EOF
 
 test_expect_success 'long options' '
-	test-parse-options --boolean --integer 1729 --boolean --string2=321 \
-		--verbose --verbose --no-dry-run --abbrev=10 --file fi.le\
-		--obsolete > output 2> output.err &&
+	test-parse-options --boolean --integer 1729 --magnitude 16k \
+		--boolean --string2=321 --verbose --verbose --no-dry-run \
+		--abbrev=10 --file fi.le --obsolete \
+		>output 2>output.err &&
 	test_must_be_empty output.err &&
 	test_cmp expect output
 '
@@ -180,6 +207,7 @@ test_expect_success 'missing required value' '
 cat > expect << EOF
 boolean: 1
 integer: 13
+magnitude: 0
 timestamp: 0
 string: 123
 abbrev: 7
@@ -202,6 +230,7 @@ test_expect_success 'intermingled arguments' '
 cat > expect << EOF
 boolean: 0
 integer: 2
+magnitude: 0
 timestamp: 0
 string: (not set)
 abbrev: 7
@@ -230,6 +259,7 @@ test_expect_success 'ambiguously abbreviated option' '
 cat > expect << EOF
 boolean: 0
 integer: 0
+magnitude: 0
 timestamp: 0
 string: 123
 abbrev: 7
@@ -268,6 +298,7 @@ test_expect_success 'detect possible typos' '
 cat > expect <<EOF
 boolean: 0
 integer: 0
+magnitude: 0
 timestamp: 0
 string: (not set)
 abbrev: 7
@@ -287,6 +318,7 @@ test_expect_success 'keep some options as arguments' '
 cat > expect <<EOF
 boolean: 0
 integer: 0
+magnitude: 0
 timestamp: 1
 string: (not set)
 abbrev: 7
@@ -308,6 +340,7 @@ cat > expect <<EOF
 Callback: "four", 0
 boolean: 5
 integer: 4
+magnitude: 0
 timestamp: 0
 string: (not set)
 abbrev: 7
@@ -336,6 +369,7 @@ test_expect_success 'OPT_CALLBACK() and callback errors work' '
 cat > expect <<EOF
 boolean: 1
 integer: 23
+magnitude: 0
 timestamp: 0
 string: (not set)
 abbrev: 7
@@ -360,6 +394,7 @@ test_expect_success 'OPT_NEGBIT() and OPT_SET_INT() work' '
 cat > expect <<EOF
 boolean: 6
 integer: 0
+magnitude: 0
 timestamp: 0
 string: (not set)
 abbrev: 7
@@ -390,6 +425,7 @@ test_expect_success 'OPT_COUNTUP() with PARSE_OPT_NODASH works' '
 cat > expect <<EOF
 boolean: 0
 integer: 12345
+magnitude: 0
 timestamp: 0
 string: (not set)
 abbrev: 7
@@ -408,6 +444,7 @@ test_expect_success 'OPT_NUMBER_CALLBACK() works' '
 cat >expect <<EOF
 boolean: 0
 integer: 0
+magnitude: 0
 timestamp: 0
 string: (not set)
 abbrev: 7
