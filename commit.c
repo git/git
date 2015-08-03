@@ -245,7 +245,12 @@ void set_commit_buffer(struct commit *commit, void *buffer, unsigned long size)
 
 const void *get_cached_commit_buffer(const struct commit *commit, unsigned long *sizep)
 {
-	struct commit_buffer *v = buffer_slab_at(&buffer_slab, commit);
+	struct commit_buffer *v = buffer_slab_peek(&buffer_slab, commit);
+	if (!v) {
+		if (sizep)
+			*sizep = 0;
+		return NULL;
+	}
 	if (sizep)
 		*sizep = v->size;
 	return v->buffer;
@@ -272,24 +277,31 @@ const void *get_commit_buffer(const struct commit *commit, unsigned long *sizep)
 
 void unuse_commit_buffer(const struct commit *commit, const void *buffer)
 {
-	struct commit_buffer *v = buffer_slab_at(&buffer_slab, commit);
-	if (v->buffer != buffer)
+	struct commit_buffer *v = buffer_slab_peek(&buffer_slab, commit);
+	if (!(v && v->buffer == buffer))
 		free((void *)buffer);
 }
 
 void free_commit_buffer(struct commit *commit)
 {
-	struct commit_buffer *v = buffer_slab_at(&buffer_slab, commit);
-	free(v->buffer);
-	v->buffer = NULL;
-	v->size = 0;
+	struct commit_buffer *v = buffer_slab_peek(&buffer_slab, commit);
+	if (v) {
+		free(v->buffer);
+		v->buffer = NULL;
+		v->size = 0;
+	}
 }
 
 const void *detach_commit_buffer(struct commit *commit, unsigned long *sizep)
 {
-	struct commit_buffer *v = buffer_slab_at(&buffer_slab, commit);
+	struct commit_buffer *v = buffer_slab_peek(&buffer_slab, commit);
 	void *ret;
 
+	if (!v) {
+		if (sizep)
+			*sizep = 0;
+		return NULL;
+	}
 	ret = v->buffer;
 	if (sizep)
 		*sizep = v->size;

@@ -15,7 +15,13 @@
  * - int *indegree_at(struct indegree *, struct commit *);
  *
  *   This function locates the data associated with the given commit in
- *   the indegree slab, and returns the pointer to it.
+ *   the indegree slab, and returns the pointer to it.  The location to
+ *   store the data is allocated as necessary.
+ *
+ * - int *indegree_peek(struct indegree *, struct commit *);
+ *
+ *   This function is similar to indegree_at(), but it will return NULL
+ *   until a call to indegree_at() was made for the commit.
  *
  * - void init_indegree(struct indegree *);
  *   void init_indegree_with_stride(struct indegree *, int);
@@ -80,8 +86,9 @@ static MAYBE_UNUSED void clear_ ##slabname(struct slabname *s)		\
 	s->slab = NULL;							\
 }									\
 									\
-static MAYBE_UNUSED elemtype *slabname## _at(struct slabname *s,	\
-				       const struct commit *c)		\
+static MAYBE_UNUSED elemtype *slabname## _at_peek(struct slabname *s,	\
+						  const struct commit *c, \
+						  int add_if_missing)   \
 {									\
 	int nth_slab, nth_slot;						\
 									\
@@ -90,16 +97,33 @@ static MAYBE_UNUSED elemtype *slabname## _at(struct slabname *s,	\
 									\
 	if (s->slab_count <= nth_slab) {				\
 		int i;							\
+		if (!add_if_missing)					\
+			return NULL;					\
 		REALLOC_ARRAY(s->slab, nth_slab + 1);			\
 		stat_ ##slabname## realloc++;				\
 		for (i = s->slab_count; i <= nth_slab; i++)		\
 			s->slab[i] = NULL;				\
 		s->slab_count = nth_slab + 1;				\
 	}								\
-	if (!s->slab[nth_slab])						\
+	if (!s->slab[nth_slab]) {					\
+		if (!add_if_missing)					\
+			return NULL;					\
 		s->slab[nth_slab] = xcalloc(s->slab_size,		\
 					    sizeof(**s->slab) * s->stride);		\
-	return &s->slab[nth_slab][nth_slot * s->stride];				\
+	}								\
+	return &s->slab[nth_slab][nth_slot * s->stride];		\
+}									\
+									\
+static MAYBE_UNUSED elemtype *slabname## _at(struct slabname *s,	\
+					     const struct commit *c)	\
+{									\
+	return slabname##_at_peek(s, c, 1);				\
+}									\
+									\
+static MAYBE_UNUSED elemtype *slabname## _peek(struct slabname *s,	\
+					     const struct commit *c)	\
+{									\
+	return slabname##_at_peek(s, c, 0);				\
 }									\
 									\
 static int stat_ ##slabname## realloc
