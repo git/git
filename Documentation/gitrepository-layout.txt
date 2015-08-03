@@ -251,25 +251,25 @@ modules::
 	Contains the git-repositories of the submodules.
 
 worktrees::
-	Contains worktree specific information of linked
-	checkouts. Each subdirectory contains the worktree-related
-	part of a linked checkout. This directory is ignored if
-	$GIT_COMMON_DIR is set and "$GIT_COMMON_DIR/worktrees" will be
-	used instead.
+	Contains administrative data for linked
+	working trees. Each subdirectory contains the working tree-related
+	part of a linked working tree. This directory is ignored if
+	$GIT_COMMON_DIR is set, in which case
+	"$GIT_COMMON_DIR/worktrees" will be used instead.
 
 worktrees/<id>/gitdir::
 	A text file containing the absolute path back to the .git file
 	that points to here. This is used to check if the linked
 	repository has been manually removed and there is no need to
-	keep this directory any more. mtime of this file should be
+	keep this directory any more. The mtime of this file should be
 	updated every time the linked repository is accessed.
 
 worktrees/<id>/locked::
-	If this file exists, the linked repository may be on a
-	portable device and not available. It does not mean that the
-	linked repository is gone and `worktrees/<id>` could be
-	removed. The file's content contains a reason string on why
-	the repository is locked.
+	If this file exists, the linked working tree may be on a
+	portable device and not available. The presence of this file
+	prevents `worktrees/<id>` from being pruned either automatically
+	or manually by `git worktree prune`. The file may contain a string
+	explaining why the repository is locked.
 
 worktrees/<id>/link::
 	If this file exists, it is a hard link to the linked .git
