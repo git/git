@@ -740,10 +740,15 @@ collapse_todo_ids() {
 # "pick sha1 fixup!/squash! msg" appears in it so that the latter
 # comes immediately after the former, and change "pick" to
 # "fixup"/"squash".
+#
+# Note that if the config has specified a custom instruction format
+# each log message will be re-retrieved in order to normalize the
+# autosquash arrangement
 rearrange_squash () {
 	# extract fixup!/squash! lines and resolve any referenced sha1's
 	while read -r pick sha1 message
 	do
+		test -z "${format}" || message=$(git log -n 1 --format="%s" ${sha1})
 		case "$message" in
 		"squash! "*|"fixup! "*)
 			action="${message%%!*}"
@@ -785,6 +790,7 @@ rearrange_squash () {
 		*" $sha1 "*) continue ;;
 		esac
 		printf '%s\n' "$pick $sha1 $message"
+		test -z "${format}" || message=$(git log -n 1 --format="%s" ${sha1})
 		used="$used$sha1 "
 		while read -r squash action msg_prefix msg_content
 		do
@@ -802,8 +808,13 @@ rearrange_squash () {
 				case "$message" in "$msg_content"*) emit=1;; esac ;;
 			esac
 			if test $emit = 1; then
-				real_prefix=$(echo "$msg_prefix" | sed "s/,/! /g")
-				printf '%s\n' "$action $squash ${real_prefix}$msg_content"
+				if test -n "${format}"
+				then
+					msg_content=$(git log -n 1 --format="${format}" ${squash})
+				else
+					msg_content="$(echo "$msg_prefix" | sed "s/,/! /g")$msg_content"
+				fi
+				printf '%s\n' "$action $squash $msg_content"
 				used="$used$squash "
 			fi
 		done <"$1.sq"
@@ -981,7 +992,10 @@ else
 	revisions=$onto...$orig_head
 	shortrevisions=$shorthead
 fi
-git rev-list $merges_option --pretty=oneline --reverse --left-right --topo-order \
+format=$(git config --get rebase.instructionFormat)
+# the 'rev-list .. | sed' requires %m to parse; the instruction requires %H to parse
+git rev-list $merges_option --format="%m%H ${format:-%s}" \
+	--reverse --left-right --topo-order \
 	$revisions ${restrict_revision+^$restrict_revision} | \
 	sed -n "s/^>//p" |
 while read -r sha1 rest
