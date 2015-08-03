@@ -2339,6 +2339,19 @@ test_expect_success !MINGW 'R: in-stream cat-blob-fd not respected' '
 	test_cmp expect actual.1
 '
 
+test_expect_success !MINGW 'R: print mark for new blob' '
+	echo "effluentish" | git hash-object --stdin >expect &&
+	git fast-import --cat-blob-fd=6 6>actual <<-\EOF &&
+	blob
+	mark :1
+	data <<BLOB_END
+	effluentish
+	BLOB_END
+	get-mark :1
+	EOF
+	test_cmp expect actual
+'
+
 test_expect_success !MINGW 'R: print new blob' '
 	blob=$(echo "yep yep yep" | git hash-object --stdin) &&
 	cat >expect <<-EOF &&
