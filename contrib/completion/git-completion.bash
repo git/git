@@ -1114,7 +1114,7 @@ _git_commit ()
 
 	case "$cur" in
 	--cleanup=*)
-		__gitcomp "default strip verbatim whitespace
+		__gitcomp "default scissors strip verbatim whitespace
 			" "" "${cur##--cleanup=}"
 		return
 		;;
