@@ -547,4 +547,30 @@ test_expect_success 'git cat-file --batch --follow-symlink returns correct sha a
 	test_cmp expect actual
 '
 
+test_expect_success 'cat-file --batch-all-objects shows all objects' '
+	# make new repos so we know the full set of objects; we will
+	# also make sure that there are some packed and some loose
+	# objects, some referenced and some not, and that there are
+	# some available only via alternates.
+	git init all-one &&
+	(
+		cd all-one &&
+		echo content >file &&
+		git add file &&
+		git commit -qm base &&
+		git rev-parse HEAD HEAD^{tree} HEAD:file &&
+		git repack -ad &&
+		echo not-cloned | git hash-object -w --stdin
+	) >expect.unsorted &&
+	git clone -s all-one all-two &&
+	(
+		cd all-two &&
+		echo local-unref | git hash-object -w --stdin
+	) >>expect.unsorted &&
+	sort <expect.unsorted >expect &&
+	git -C all-two cat-file --batch-all-objects \
+				--batch-check="%(objectname)" >actual &&
+	test_cmp expect actual
+'
+
 test_done
