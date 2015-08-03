@@ -746,26 +746,6 @@ static int mv(int argc, const char **argv)
 	return 0;
 }
 
-static int remove_branches(struct string_list *branches)
-{
-	struct strbuf err = STRBUF_INIT;
-	int i, result = 0;
-
-	if (repack_without_refs(branches, &err))
-		result |= error("%s", err.buf);
-	strbuf_release(&err);
-
-	for (i = 0; i < branches->nr; i++) {
-		struct string_list_item *item = branches->items + i;
-		const char *refname = item->string;
-
-		if (delete_ref(refname, NULL, 0))
-			result |= error(_("Could not remove branch %s"), refname);
-	}
-
-	return result;
-}
-
 static int rm(int argc, const char **argv)
 {
 	struct option options[] = {
@@ -822,7 +802,7 @@ static int rm(int argc, const char **argv)
 	strbuf_release(&buf);
 
 	if (!result)
-		result = remove_branches(&branches);
+		result = delete_refs(&branches);
 	string_list_clear(&branches, 0);
 
 	if (skipped.nr) {
@@ -1334,18 +1314,11 @@ static int prune_remote(const char *remote, int dry_run)
 		string_list_append(&refs_to_prune, item->util);
 	string_list_sort(&refs_to_prune);
 
-	if (!dry_run) {
-		struct strbuf err = STRBUF_INIT;
-		if (repack_without_refs(&refs_to_prune, &err))
-			result |= error("%s", err.buf);
-		strbuf_release(&err);
-	}
+	if (!dry_run)
+		result |= delete_refs(&refs_to_prune);
 
 	for_each_string_list_item(item, &states.stale) {
 		const char *refname = item->util;
-
-		if (!dry_run)
-			result |= delete_ref(refname, NULL, 0);
 
 		if (dry_run)
 			printf_ln(_(" * [would prune] %s"),
