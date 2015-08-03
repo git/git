@@ -218,6 +218,19 @@ There are some macros to easily define options:
 	Use it to hide deprecated options that are still to be recognized
 	and ignored silently.
 
+`OPT_PASSTHRU(short, long, &char_var, arg_str, description, flags)`::
+	Introduce an option that will be reconstructed into a char* string,
+	which must be initialized to NULL. This is useful when you need to
+	pass the command-line option to another command. Any previous value
+	will be overwritten, so this should only be used for options where
+	the last one specified on the command line wins.
+
+`OPT_PASSTHRU_ARGV(short, long, &argv_array_var, arg_str, description, flags)`::
+	Introduce an option where all instances of it on the command-line will
+	be reconstructed into an argv_array. This is useful when you need to
+	pass the command-line option, which can be specified multiple times,
+	to another command.
+
 
 The last element of the array must be `OPT_END()`.
 
