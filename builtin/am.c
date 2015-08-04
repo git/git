@@ -81,7 +81,8 @@ enum patch_format {
 	PATCH_FORMAT_UNKNOWN = 0,
 	PATCH_FORMAT_MBOX,
 	PATCH_FORMAT_STGIT,
-	PATCH_FORMAT_STGIT_SERIES
+	PATCH_FORMAT_STGIT_SERIES,
+	PATCH_FORMAT_HG
 };
 
 enum keep_type {
@@ -656,6 +657,11 @@ static int detect_patch_format(const char **paths)
 		goto done;
 	}
 
+	if (!strcmp(l1.buf, "# HG changeset patch")) {
+		ret = PATCH_FORMAT_HG;
+		goto done;
+	}
+
 	strbuf_reset(&l2);
 	strbuf_getline_crlf(&l2, fp);
 	strbuf_reset(&l3);
@@ -854,6 +860,68 @@ static int split_mail_stgit_series(struct am_state *state, const char **paths,
 }
 
 /**
+ * A split_patches_conv() callback that converts a mercurial patch to a RFC2822
+ * message suitable for parsing with git-mailinfo.
+ */
+static int hg_patch_to_mail(FILE *out, FILE *in, int keep_cr)
+{
+	struct strbuf sb = STRBUF_INIT;
+
+	while (!strbuf_getline(&sb, in, '\n')) {
+		const char *str;
+
+		if (skip_prefix(sb.buf, "# User ", &str))
+			fprintf(out, "From: %s\n", str);
+		else if (skip_prefix(sb.buf, "# Date ", &str)) {
+			unsigned long timestamp;
+			long tz, tz2;
+			char *end;
+
+			errno = 0;
+			timestamp = strtoul(str, &end, 10);
+			if (errno)
+				return error(_("invalid timestamp"));
+
+			if (!skip_prefix(end, " ", &str))
+				return error(_("invalid Date line"));
+
+			errno = 0;
+			tz = strtol(str, &end, 10);
+			if (errno)
+				return error(_("invalid timezone offset"));
+
+			if (*end)
+				return error(_("invalid Date line"));
+
+			/*
+			 * mercurial's timezone is in seconds west of UTC,
+			 * however git's timezone is in hours + minutes east of
+			 * UTC. Convert it.
+			 */
+			tz2 = labs(tz) / 3600 * 100 + labs(tz) % 3600 / 60;
+			if (tz > 0)
+				tz2 = -tz2;
+
+			fprintf(out, "Date: %s\n", show_date(timestamp, tz2, DATE_MODE(RFC2822)));
+		} else if (starts_with(sb.buf, "# ")) {
+			continue;
+		} else {
+			fprintf(out, "\n%s\n", sb.buf);
+			break;
+		}
+	}
+
+	strbuf_reset(&sb);
+	while (strbuf_fread(&sb, 8192, in) > 0) {
+		fwrite(sb.buf, 1, sb.len, out);
+		strbuf_reset(&sb);
+	}
+
+	strbuf_release(&sb);
+	return 0;
+}
+
+/**
  * Splits a list of files/directories into individual email patches. Each path
  * in `paths` must be a file/directory that is formatted according to
  * `patch_format`.
@@ -885,6 +953,8 @@ static int split_mail(struct am_state *state, enum patch_format patch_format,
 		return split_mail_conv(stgit_patch_to_mail, state, paths, keep_cr);
 	case PATCH_FORMAT_STGIT_SERIES:
 		return split_mail_stgit_series(state, paths, keep_cr);
+	case PATCH_FORMAT_HG:
+		return split_mail_conv(hg_patch_to_mail, state, paths, keep_cr);
 	default:
 		die("BUG: invalid patch_format");
 	}
@@ -1937,6 +2007,8 @@ static int parse_opt_patchformat(const struct option *opt, const char *arg, int 
 		*opt_value = PATCH_FORMAT_STGIT;
 	else if (!strcmp(arg, "stgit-series"))
 		*opt_value = PATCH_FORMAT_STGIT_SERIES;
+	else if (!strcmp(arg, "hg"))
+		*opt_value = PATCH_FORMAT_HG;
 	else
 		return error(_("Invalid value for --patch-format: %s"), arg);
 	return 0;
