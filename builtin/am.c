@@ -152,6 +152,8 @@ static void am_state_init(struct am_state *state, const char *dir)
 
 	state->prec = 4;
 
+	git_config_get_bool("am.threeway", &state->threeway);
+
 	state->utf8 = 1;
 
 	git_config_get_bool("am.messageid", &state->message_id);
