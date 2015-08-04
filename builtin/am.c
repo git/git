@@ -89,6 +89,7 @@ struct am_state {
 	int quiet;
 	int signoff;
 	const char *resolvemsg;
+	int rebasing;
 };
 
 /**
@@ -364,6 +365,8 @@ static void am_load(struct am_state *state)
 	read_state_file(&sb, state, "sign", 1);
 	state->signoff = !strcmp(sb.buf, "t");
 
+	state->rebasing = !!file_exists(am_path(state, "rebasing"));
+
 	strbuf_release(&sb);
 }
 
@@ -542,18 +545,29 @@ static void am_setup(struct am_state *state, enum patch_format patch_format,
 		die(_("Failed to split patches."));
 	}
 
+	if (state->rebasing)
+		state->threeway = 1;
+
 	write_file(am_path(state, "threeway"), 1, state->threeway ? "t" : "f");
 
 	write_file(am_path(state, "quiet"), 1, state->quiet ? "t" : "f");
 
 	write_file(am_path(state, "sign"), 1, state->signoff ? "t" : "f");
 
+	if (state->rebasing)
+		write_file(am_path(state, "rebasing"), 1, "%s", "");
+	else
+		write_file(am_path(state, "applying"), 1, "%s", "");
+
 	if (!get_sha1("HEAD", curr_head)) {
 		write_file(am_path(state, "abort-safety"), 1, "%s", sha1_to_hex(curr_head));
-		update_ref("am", "ORIG_HEAD", curr_head, NULL, 0, UPDATE_REFS_DIE_ON_ERR);
+		if (!state->rebasing)
+			update_ref("am", "ORIG_HEAD", curr_head, NULL, 0,
+					UPDATE_REFS_DIE_ON_ERR);
 	} else {
 		write_file(am_path(state, "abort-safety"), 1, "%s", "");
-		delete_ref("ORIG_HEAD", NULL, 0);
+		if (!state->rebasing)
+			delete_ref("ORIG_HEAD", NULL, 0);
 	}
 
 	/*
@@ -1054,8 +1068,14 @@ next:
 		am_next(state);
 	}
 
-	am_destroy(state);
-	run_command_v_opt(argv_gc_auto, RUN_GIT_CMD);
+	/*
+	 * In rebasing mode, it's up to the caller to take care of
+	 * housekeeping.
+	 */
+	if (!state->rebasing) {
+		am_destroy(state);
+		run_command_v_opt(argv_gc_auto, RUN_GIT_CMD);
+	}
 }
 
 /**
@@ -1325,6 +1345,8 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 		OPT_CMDMODE(0, "abort", &resume,
 			N_("restore the original branch and abort the patching operation."),
 			RESUME_ABORT),
+		OPT_HIDDEN_BOOL(0, "rebasing", &state.rebasing,
+			N_("(internal use for git-rebase)")),
 		OPT_END()
 	};
 
