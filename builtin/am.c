@@ -1334,6 +1334,9 @@ static void do_commit(const struct am_state *state)
 	const char *reflog_msg, *author;
 	struct strbuf sb = STRBUF_INIT;
 
+	if (run_hook_le(NULL, "pre-applypatch", NULL))
+		exit(1);
+
 	if (write_cache_as_tree(tree, 0, NULL))
 		die(_("git write-tree failed to write a tree"));
 
