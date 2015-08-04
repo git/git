@@ -98,6 +98,7 @@ struct am_state {
 	int signoff;
 	int utf8;
 	int keep; /* enum keep_type */
+	int message_id;
 	const char *resolvemsg;
 	int rebasing;
 };
@@ -116,6 +117,8 @@ static void am_state_init(struct am_state *state, const char *dir)
 	state->prec = 4;
 
 	state->utf8 = 1;
+
+	git_config_get_bool("am.messageid", &state->message_id);
 }
 
 /**
@@ -388,6 +391,9 @@ static void am_load(struct am_state *state)
 	else
 		state->keep = KEEP_FALSE;
 
+	read_state_file(&sb, state, "messageid", 1);
+	state->message_id = !strcmp(sb.buf, "t");
+
 	state->rebasing = !!file_exists(am_path(state, "rebasing"));
 
 	strbuf_release(&sb);
@@ -596,6 +602,8 @@ static void am_setup(struct am_state *state, enum patch_format patch_format,
 
 	write_file(am_path(state, "keep"), 1, "%s", str);
 
+	write_file(am_path(state, "messageid"), 1, state->message_id ? "t" : "f");
+
 	if (state->rebasing)
 		write_file(am_path(state, "rebasing"), 1, "%s", "");
 	else
@@ -776,6 +784,9 @@ static int parse_mail(struct am_state *state, const char *mail)
 	default:
 		die("BUG: invalid value for state->keep");
 	}
+
+	if (state->message_id)
+		argv_array_push(&cp.args, "-m");
 
 	argv_array_push(&cp.args, am_path(state, "msg"));
 	argv_array_push(&cp.args, am_path(state, "patch"));
@@ -1521,6 +1532,8 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 			N_("pass -k flag to git-mailinfo"), KEEP_TRUE),
 		OPT_SET_INT(0, "keep-non-patch", &state.keep,
 			N_("pass -b flag to git-mailinfo"), KEEP_NON_PATCH),
+		OPT_BOOL('m', "message-id", &state.message_id,
+			N_("pass -m flag to git-mailinfo")),
 		OPT_CALLBACK(0, "patch-format", &patch_format, N_("format"),
 			N_("format the patch(es) are in"),
 			parse_opt_patchformat),
