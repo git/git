@@ -108,6 +108,7 @@ struct am_state {
 	int scissors; /* enum scissors_type */
 	struct argv_array git_apply_opts;
 	const char *resolvemsg;
+	int committer_date_is_author_date;
 	int ignore_date;
 	int rebasing;
 };
@@ -1221,6 +1222,10 @@ static void do_commit(const struct am_state *state)
 			state->ignore_date ? NULL : state->author_date,
 			IDENT_STRICT);
 
+	if (state->committer_date_is_author_date)
+		setenv("GIT_COMMITTER_DATE",
+			state->ignore_date ? "" : state->author_date, 1);
+
 	if (commit_tree(state->msg, state->msg_len, tree, parents, commit,
 				author, NULL))
 		die(_("failed to write commit object"));
@@ -1663,6 +1668,9 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 		OPT_CMDMODE(0, "abort", &resume,
 			N_("restore the original branch and abort the patching operation."),
 			RESUME_ABORT),
+		OPT_BOOL(0, "committer-date-is-author-date",
+			&state.committer_date_is_author_date,
+			N_("lie about committer date")),
 		OPT_BOOL(0, "ignore-date", &state.ignore_date,
 			N_("use current timestamp for author date")),
 		OPT_HIDDEN_BOOL(0, "rebasing", &state.rebasing,
