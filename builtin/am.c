@@ -83,6 +83,7 @@ struct am_state {
 
 	/* various operating modes and command line options */
 	int quiet;
+	const char *resolvemsg;
 };
 
 /**
@@ -647,6 +648,25 @@ static int index_has_changes(struct strbuf *sb)
 }
 
 /**
+ * Dies with a user-friendly message on how to proceed after resolving the
+ * problem. This message can be overridden with state->resolvemsg.
+ */
+static void NORETURN die_user_resolve(const struct am_state *state)
+{
+	if (state->resolvemsg) {
+		printf_ln("%s", state->resolvemsg);
+	} else {
+		const char *cmdline = "git am";
+
+		printf_ln(_("When you have resolved this problem, run \"%s --continue\"."), cmdline);
+		printf_ln(_("If you prefer to skip this patch, run \"%s --skip\" instead."), cmdline);
+		printf_ln(_("To restore the original branch and stop patching, run \"%s --abort\"."), cmdline);
+	}
+
+	exit(128);
+}
+
+/**
  * Parses `mail` using git-mailinfo, extracting its patch and authorship info.
  * state->msg will be set to the patch message. state->author_name,
  * state->author_email and state->author_date will be set to the patch author's
@@ -706,7 +726,7 @@ static int parse_mail(struct am_state *state, const char *mail)
 
 	if (is_empty_file(am_path(state, "patch"))) {
 		printf_ln(_("Patch is empty. Was it split wrong?"));
-		exit(128);
+		die_user_resolve(state);
 	}
 
 	strbuf_addstr(&msg, "\n\n");
@@ -871,7 +891,7 @@ static void am_run(struct am_state *state, int resume)
 				printf_ln(_("The copy of the patch that failed is found in: %s"),
 						am_path(state, "patch"));
 
-			exit(128);
+			die_user_resolve(state);
 		}
 
 		do_commit(state);
@@ -899,13 +919,13 @@ static void am_resolve(struct am_state *state)
 		printf_ln(_("No changes - did you forget to use 'git add'?\n"
 			"If there is nothing left to stage, chances are that something else\n"
 			"already introduced the same changes; you might want to skip this patch."));
-		exit(128);
+		die_user_resolve(state);
 	}
 
 	if (unmerged_cache()) {
 		printf_ln(_("You still have unmerged paths in your index.\n"
 			"Did you forget to use 'git add'?"));
-		exit(128);
+		die_user_resolve(state);
 	}
 
 	do_commit(state);
@@ -1133,6 +1153,8 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 		OPT_CALLBACK(0, "patch-format", &patch_format, N_("format"),
 			N_("format the patch(es) are in"),
 			parse_opt_patchformat),
+		OPT_STRING(0, "resolvemsg", &state.resolvemsg, NULL,
+			N_("override error message when patch failure occurs")),
 		OPT_CMDMODE(0, "continue", &resume,
 			N_("continue applying patches after resolving a conflict"),
 			RESUME_RESOLVED),
