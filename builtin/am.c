@@ -68,6 +68,12 @@ enum patch_format {
 	PATCH_FORMAT_MBOX
 };
 
+enum keep_type {
+	KEEP_FALSE = 0,
+	KEEP_TRUE,      /* pass -k flag to git-mailinfo */
+	KEEP_NON_PATCH  /* pass -b flag to git-mailinfo */
+};
+
 struct am_state {
 	/* state directory path */
 	char *dir;
@@ -91,6 +97,7 @@ struct am_state {
 	int quiet;
 	int signoff;
 	int utf8;
+	int keep; /* enum keep_type */
 	const char *resolvemsg;
 	int rebasing;
 };
@@ -373,6 +380,14 @@ static void am_load(struct am_state *state)
 	read_state_file(&sb, state, "utf8", 1);
 	state->utf8 = !strcmp(sb.buf, "t");
 
+	read_state_file(&sb, state, "keep", 1);
+	if (!strcmp(sb.buf, "t"))
+		state->keep = KEEP_TRUE;
+	else if (!strcmp(sb.buf, "b"))
+		state->keep = KEEP_NON_PATCH;
+	else
+		state->keep = KEEP_FALSE;
+
 	state->rebasing = !!file_exists(am_path(state, "rebasing"));
 
 	strbuf_release(&sb);
@@ -536,6 +551,7 @@ static void am_setup(struct am_state *state, enum patch_format patch_format,
 			const char **paths)
 {
 	unsigned char curr_head[GIT_SHA1_RAWSZ];
+	const char *str;
 
 	if (!patch_format)
 		patch_format = detect_patch_format(paths);
@@ -563,6 +579,22 @@ static void am_setup(struct am_state *state, enum patch_format patch_format,
 	write_file(am_path(state, "sign"), 1, state->signoff ? "t" : "f");
 
 	write_file(am_path(state, "utf8"), 1, state->utf8 ? "t" : "f");
+
+	switch (state->keep) {
+	case KEEP_FALSE:
+		str = "f";
+		break;
+	case KEEP_TRUE:
+		str = "t";
+		break;
+	case KEEP_NON_PATCH:
+		str = "b";
+		break;
+	default:
+		die("BUG: invalid value for state->keep");
+	}
+
+	write_file(am_path(state, "keep"), 1, "%s", str);
 
 	if (state->rebasing)
 		write_file(am_path(state, "rebasing"), 1, "%s", "");
@@ -731,6 +763,20 @@ static int parse_mail(struct am_state *state, const char *mail)
 
 	argv_array_push(&cp.args, "mailinfo");
 	argv_array_push(&cp.args, state->utf8 ? "-u" : "-n");
+
+	switch (state->keep) {
+	case KEEP_FALSE:
+		break;
+	case KEEP_TRUE:
+		argv_array_push(&cp.args, "-k");
+		break;
+	case KEEP_NON_PATCH:
+		argv_array_push(&cp.args, "-b");
+		break;
+	default:
+		die("BUG: invalid value for state->keep");
+	}
+
 	argv_array_push(&cp.args, am_path(state, "msg"));
 	argv_array_push(&cp.args, am_path(state, "patch"));
 
@@ -1471,6 +1517,10 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 			N_("add a Signed-off-by line to the commit message")),
 		OPT_BOOL('u', "utf8", &state.utf8,
 			N_("recode into utf8 (default)")),
+		OPT_SET_INT('k', "keep", &state.keep,
+			N_("pass -k flag to git-mailinfo"), KEEP_TRUE),
+		OPT_SET_INT(0, "keep-non-patch", &state.keep,
+			N_("pass -b flag to git-mailinfo"), KEEP_NON_PATCH),
 		OPT_CALLBACK(0, "patch-format", &patch_format, N_("format"),
 			N_("format the patch(es) are in"),
 			parse_opt_patchformat),
