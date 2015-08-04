@@ -110,6 +110,7 @@ struct am_state {
 	const char *resolvemsg;
 	int committer_date_is_author_date;
 	int ignore_date;
+	const char *sign_commit;
 	int rebasing;
 };
 
@@ -119,6 +120,8 @@ struct am_state {
  */
 static void am_state_init(struct am_state *state, const char *dir)
 {
+	int gpgsign;
+
 	memset(state, 0, sizeof(*state));
 
 	assert(dir);
@@ -133,6 +136,9 @@ static void am_state_init(struct am_state *state, const char *dir)
 	state->scissors = SCISSORS_UNSET;
 
 	argv_array_init(&state->git_apply_opts);
+
+	if (!git_config_get_bool("commit.gpgsign", &gpgsign))
+		state->sign_commit = gpgsign ? "" : NULL;
 }
 
 /**
@@ -1227,7 +1233,7 @@ static void do_commit(const struct am_state *state)
 			state->ignore_date ? "" : state->author_date, 1);
 
 	if (commit_tree(state->msg, state->msg_len, tree, parents, commit,
-				author, NULL))
+				author, state->sign_commit))
 		die(_("failed to write commit object"));
 
 	reflog_msg = getenv("GIT_REFLOG_ACTION");
@@ -1673,6 +1679,9 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 			N_("lie about committer date")),
 		OPT_BOOL(0, "ignore-date", &state.ignore_date,
 			N_("use current timestamp for author date")),
+		{ OPTION_STRING, 'S', "gpg-sign", &state.sign_commit, N_("key-id"),
+		  N_("GPG-sign commits"),
+		  PARSE_OPT_OPTARG, NULL, (intptr_t) "" },
 		OPT_HIDDEN_BOOL(0, "rebasing", &state.rebasing,
 			N_("(internal use for git-rebase)")),
 		OPT_END()
