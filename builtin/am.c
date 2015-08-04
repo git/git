@@ -776,8 +776,12 @@ static void validate_resume_state(const struct am_state *state)
 
 /**
  * Applies all queued mail.
+ *
+ * If `resume` is true, we are "resuming". The "msg" and authorship fields, as
+ * well as the state directory's "patch" file is used as-is for applying the
+ * patch and committing it.
  */
-static void am_run(struct am_state *state)
+static void am_run(struct am_state *state, int resume)
 {
 	const char *argv_gc_auto[] = {"gc", "--auto", NULL};
 	struct strbuf sb = STRBUF_INIT;
@@ -795,11 +799,16 @@ static void am_run(struct am_state *state)
 		if (!file_exists(mail))
 			goto next;
 
-		if (parse_mail(state, mail))
-			goto next; /* mail should be skipped */
+		if (resume) {
+			validate_resume_state(state);
+			resume = 0;
+		} else {
+			if (parse_mail(state, mail))
+				goto next; /* mail should be skipped */
 
-		write_author_script(state);
-		write_commit_msg(state);
+			write_author_script(state);
+			write_commit_msg(state);
+		}
 
 		printf_ln(_("Applying: %.*s"), linelen(state->msg), state->msg);
 
@@ -855,7 +864,7 @@ static void am_resolve(struct am_state *state)
 	do_commit(state);
 
 	am_next(state);
-	am_run(state);
+	am_run(state, 0);
 }
 
 /**
@@ -875,6 +884,7 @@ static int parse_opt_patchformat(const struct option *opt, const char *arg, int 
 
 enum resume_mode {
 	RESUME_FALSE = 0,
+	RESUME_APPLY,
 	RESUME_RESOLVED
 };
 
@@ -927,9 +937,12 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 	if (read_index_preload(&the_index, NULL) < 0)
 		die(_("failed to read the index"));
 
-	if (am_in_progress(&state))
+	if (am_in_progress(&state)) {
+		if (resume == RESUME_FALSE)
+			resume = RESUME_APPLY;
+
 		am_load(&state);
-	else {
+	} else {
 		struct argv_array paths = ARGV_ARRAY_INIT;
 		int i;
 
@@ -950,7 +963,10 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 
 	switch (resume) {
 	case RESUME_FALSE:
-		am_run(&state);
+		am_run(&state, 0);
+		break;
+	case RESUME_APPLY:
+		am_run(&state, 1);
 		break;
 	case RESUME_RESOLVED:
 		am_resolve(&state);
