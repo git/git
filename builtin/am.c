@@ -2126,6 +2126,7 @@ enum resume_mode {
 int cmd_am(int argc, const char **argv, const char *prefix)
 {
 	struct am_state state;
+	int binary = -1;
 	int keep_cr = -1;
 	int patch_format = PATCH_FORMAT_UNKNOWN;
 	enum resume_mode resume = RESUME_FALSE;
@@ -2139,6 +2140,8 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 	struct option options[] = {
 		OPT_BOOL('i', "interactive", &state.interactive,
 			N_("run interactively")),
+		OPT_HIDDEN_BOOL('b', "binary", &binary,
+			N_("(historical option -- no-op")),
 		OPT_BOOL('3', "3way", &state.threeway,
 			N_("allow fall back on 3way merging if needed")),
 		OPT__QUIET(&state.quiet, N_("be quiet")),
@@ -2238,6 +2241,10 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 	am_state_init(&state, git_path("rebase-apply"));
 
 	argc = parse_options(argc, argv, prefix, options, usage, 0);
+
+	if (binary >= 0)
+		fprintf_ln(stderr, _("The -b/--binary option has been a no-op for long time, and\n"
+				"it will be removed. Please do not use it anymore."));
 
 	if (read_index_preload(&the_index, NULL) < 0)
 		die(_("failed to read the index"));
