@@ -98,6 +98,12 @@ enum scissors_type {
 	SCISSORS_TRUE        /* pass --scissors to git-mailinfo */
 };
 
+enum signoff_type {
+	SIGNOFF_FALSE = 0,
+	SIGNOFF_TRUE = 1,
+	SIGNOFF_EXPLICIT /* --signoff was set on the command-line */
+};
+
 struct am_state {
 	/* state directory path */
 	char *dir;
@@ -123,7 +129,7 @@ struct am_state {
 	int interactive;
 	int threeway;
 	int quiet;
-	int signoff;
+	int signoff; /* enum signoff_type */
 	int utf8;
 	int keep; /* enum keep_type */
 	int message_id;
@@ -1186,6 +1192,18 @@ static void NORETURN die_user_resolve(const struct am_state *state)
 }
 
 /**
+ * Appends signoff to the "msg" field of the am_state.
+ */
+static void am_append_signoff(struct am_state *state)
+{
+	struct strbuf sb = STRBUF_INIT;
+
+	strbuf_attach(&sb, state->msg, state->msg_len, state->msg_len);
+	append_signoff(&sb, 0, 0);
+	state->msg = strbuf_detach(&sb, &state->msg_len);
+}
+
+/**
  * Parses `mail` using git-mailinfo, extracting its patch and authorship info.
  * state->msg will be set to the patch message. state->author_name,
  * state->author_email and state->author_date will be set to the patch author's
@@ -2153,8 +2171,9 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 		OPT_BOOL('3', "3way", &state.threeway,
 			N_("allow fall back on 3way merging if needed")),
 		OPT__QUIET(&state.quiet, N_("be quiet")),
-		OPT_BOOL('s', "signoff", &state.signoff,
-			N_("add a Signed-off-by line to the commit message")),
+		OPT_SET_INT('s', "signoff", &state.signoff,
+			N_("add a Signed-off-by line to the commit message"),
+			SIGNOFF_EXPLICIT),
 		OPT_BOOL('u', "utf8", &state.utf8,
 			N_("recode into utf8 (default)")),
 		OPT_SET_INT('k', "keep", &state.keep,
@@ -2267,6 +2286,9 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 
 		if (resume == RESUME_FALSE)
 			resume = RESUME_APPLY;
+
+		if (state.signoff == SIGNOFF_EXPLICIT)
+			am_append_signoff(&state);
 	} else {
 		struct argv_array paths = ARGV_ARRAY_INIT;
 		int i;

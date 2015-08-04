@@ -64,6 +64,26 @@ test_expect_success '--no-quiet overrides --quiet' '
 	test_i18ncmp expected out
 '
 
+test_expect_success '--signoff overrides --no-signoff' '
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
+	git checkout first &&
+
+	test_must_fail git am --no-signoff side[12].eml &&
+	test_path_is_dir .git/rebase-apply &&
+	echo side1 >file &&
+	git add file &&
+	git am --signoff --continue &&
+
+	# Applied side1 will be signed off
+	echo "Signed-off-by: $GIT_COMMITTER_NAME <$GIT_COMMITTER_EMAIL>" >expected &&
+	git cat-file commit HEAD^ | grep "Signed-off-by:" >actual &&
+	test_cmp expected actual &&
+
+	# Applied side2 will not be signed off
+	test $(git cat-file commit HEAD | grep -c "Signed-off-by:") -eq 0
+'
+
 test_expect_success TTY '--reject overrides --no-reject' '
 	rm -fr .git/rebase-apply &&
 	git reset --hard &&
