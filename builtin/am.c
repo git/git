@@ -760,6 +760,21 @@ static void do_commit(const struct am_state *state)
 }
 
 /**
+ * Validates the am_state for resuming -- the "msg" and authorship fields must
+ * be filled up.
+ */
+static void validate_resume_state(const struct am_state *state)
+{
+	if (!state->msg)
+		die(_("cannot resume: %s does not exist."),
+			am_path(state, "final-commit"));
+
+	if (!state->author_name || !state->author_email || !state->author_date)
+		die(_("cannot resume: %s does not exist."),
+			am_path(state, "author-script"));
+}
+
+/**
  * Applies all queued mail.
  */
 static void am_run(struct am_state *state)
@@ -814,6 +829,36 @@ next:
 }
 
 /**
+ * Resume the current am session after patch application failure. The user did
+ * all the hard work, and we do not have to do any patch application. Just
+ * trust and commit what the user has in the index and working tree.
+ */
+static void am_resolve(struct am_state *state)
+{
+	validate_resume_state(state);
+
+	printf_ln(_("Applying: %.*s"), linelen(state->msg), state->msg);
+
+	if (!index_has_changes(NULL)) {
+		printf_ln(_("No changes - did you forget to use 'git add'?\n"
+			"If there is nothing left to stage, chances are that something else\n"
+			"already introduced the same changes; you might want to skip this patch."));
+		exit(128);
+	}
+
+	if (unmerged_cache()) {
+		printf_ln(_("You still have unmerged paths in your index.\n"
+			"Did you forget to use 'git add'?"));
+		exit(128);
+	}
+
+	do_commit(state);
+
+	am_next(state);
+	am_run(state);
+}
+
+/**
  * parse_options() callback that validates and sets opt->value to the
  * PATCH_FORMAT_* enum value corresponding to `arg`.
  */
@@ -828,13 +873,20 @@ static int parse_opt_patchformat(const struct option *opt, const char *arg, int 
 	return 0;
 }
 
+enum resume_mode {
+	RESUME_FALSE = 0,
+	RESUME_RESOLVED
+};
+
 int cmd_am(int argc, const char **argv, const char *prefix)
 {
 	struct am_state state;
 	int patch_format = PATCH_FORMAT_UNKNOWN;
+	enum resume_mode resume = RESUME_FALSE;
 
 	const char * const usage[] = {
 		N_("git am [options] [(<mbox>|<Maildir>)...]"),
+		N_("git am [options] --continue"),
 		NULL
 	};
 
@@ -842,6 +894,12 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 		OPT_CALLBACK(0, "patch-format", &patch_format, N_("format"),
 			N_("format the patch(es) are in"),
 			parse_opt_patchformat),
+		OPT_CMDMODE(0, "continue", &resume,
+			N_("continue applying patches after resolving a conflict"),
+			RESUME_RESOLVED),
+		OPT_CMDMODE('r', "resolved", &resume,
+			N_("synonyms for --continue"),
+			RESUME_RESOLVED),
 		OPT_END()
 	};
 
@@ -875,6 +933,9 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 		struct argv_array paths = ARGV_ARRAY_INIT;
 		int i;
 
+		if (resume)
+			die(_("Resolve operation not in progress, we are not resuming."));
+
 		for (i = 0; i < argc; i++) {
 			if (is_absolute_path(argv[i]) || !prefix)
 				argv_array_push(&paths, argv[i]);
@@ -887,7 +948,16 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 		argv_array_clear(&paths);
 	}
 
-	am_run(&state);
+	switch (resume) {
+	case RESUME_FALSE:
+		am_run(&state);
+		break;
+	case RESUME_RESOLVED:
+		am_resolve(&state);
+		break;
+	default:
+		die("BUG: invalid resume value");
+	}
 
 	am_state_release(&state);
 
