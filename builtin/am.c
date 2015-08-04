@@ -10,6 +10,7 @@
 #include "dir.h"
 #include "run-command.h"
 #include "quote.h"
+#include "lockfile.h"
 
 /**
  * Returns 1 if the file is empty or does not exist, 0 otherwise.
@@ -40,6 +41,14 @@ static int strbuf_getline_crlf(struct strbuf *sb, FILE *fp)
 			strbuf_setlen(sb, sb->len - 1);
 	}
 	return 0;
+}
+
+/**
+ * Returns the length of the first line of msg.
+ */
+static int linelen(const char *msg)
+{
+	return strchrnul(msg, '\n') - msg;
 }
 
 enum patch_format {
@@ -540,6 +549,19 @@ static const char *msgnum(const struct am_state *state)
 }
 
 /**
+ * Refresh and write index.
+ */
+static void refresh_and_write_cache(void)
+{
+	struct lock_file *lock_file = xcalloc(1, sizeof(struct lock_file));
+
+	hold_locked_index(lock_file, 1);
+	refresh_cache(REFRESH_QUIET);
+	if (write_locked_index(&the_index, lock_file, COMMIT_LOCK))
+		die(_("unable to write index file"));
+}
+
+/**
  * Parses `mail` using git-mailinfo, extracting its patch and authorship info.
  * state->msg will be set to the patch message. state->author_name,
  * state->author_email and state->author_date will be set to the patch author's
@@ -629,10 +651,35 @@ finish:
 }
 
 /**
+ * Applies current patch with git-apply. Returns 0 on success, -1 otherwise.
+ */
+static int run_apply(const struct am_state *state)
+{
+	struct child_process cp = CHILD_PROCESS_INIT;
+
+	cp.git_cmd = 1;
+
+	argv_array_push(&cp.args, "apply");
+	argv_array_push(&cp.args, "--index");
+	argv_array_push(&cp.args, am_path(state, "patch"));
+
+	if (run_command(&cp))
+		return -1;
+
+	/* Reload index as git-apply will have modified it. */
+	discard_cache();
+	read_cache();
+
+	return 0;
+}
+
+/**
  * Applies all queued mail.
  */
 static void am_run(struct am_state *state)
 {
+	refresh_and_write_cache();
+
 	while (state->cur <= state->last) {
 		const char *mail = am_path(state, msgnum(state));
 
@@ -645,7 +692,27 @@ static void am_run(struct am_state *state)
 		write_author_script(state);
 		write_commit_msg(state);
 
-		/* NEEDSWORK: Patch application not implemented yet */
+		printf_ln(_("Applying: %.*s"), linelen(state->msg), state->msg);
+
+		if (run_apply(state) < 0) {
+			int advice_amworkdir = 1;
+
+			printf_ln(_("Patch failed at %s %.*s"), msgnum(state),
+				linelen(state->msg), state->msg);
+
+			git_config_get_bool("advice.amworkdir", &advice_amworkdir);
+
+			if (advice_amworkdir)
+				printf_ln(_("The copy of the patch that failed is found in: %s"),
+						am_path(state, "patch"));
+
+			exit(128);
+		}
+
+		/*
+		 * NEEDSWORK: After the patch has been applied to the index
+		 * with git-apply, we need to make commit as well.
+		 */
 
 next:
 		am_next(state);
@@ -706,6 +773,9 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 	am_state_init(&state, git_path("rebase-apply"));
 
 	argc = parse_options(argc, argv, prefix, options, usage, 0);
+
+	if (read_index_preload(&the_index, NULL) < 0)
+		die(_("failed to read the index"));
 
 	if (am_in_progress(&state))
 		am_load(&state);
