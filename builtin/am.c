@@ -80,6 +80,9 @@ struct am_state {
 
 	/* number of digits in patch filename */
 	int prec;
+
+	/* various operating modes and command line options */
+	int quiet;
 };
 
 /**
@@ -114,6 +117,22 @@ static void am_state_release(struct am_state *state)
 static inline const char *am_path(const struct am_state *state, const char *path)
 {
 	return mkpath("%s/%s", state->dir, path);
+}
+
+/**
+ * If state->quiet is false, calls fprintf(fp, fmt, ...), and appends a newline
+ * at the end.
+ */
+static void say(const struct am_state *state, FILE *fp, const char *fmt, ...)
+{
+	va_list ap;
+
+	va_start(ap, fmt);
+	if (!state->quiet) {
+		vfprintf(fp, fmt, ap);
+		putc('\n', fp);
+	}
+	va_end(ap);
 }
 
 /**
@@ -330,6 +349,9 @@ static void am_load(struct am_state *state)
 
 	read_commit_msg(state);
 
+	read_state_file(&sb, state, "quiet", 1);
+	state->quiet = !strcmp(sb.buf, "t");
+
 	strbuf_release(&sb);
 }
 
@@ -507,6 +529,8 @@ static void am_setup(struct am_state *state, enum patch_format patch_format,
 		am_destroy(state);
 		die(_("Failed to split patches."));
 	}
+
+	write_file(am_path(state, "quiet"), 1, state->quiet ? "t" : "f");
 
 	if (!get_sha1("HEAD", curr_head)) {
 		write_file(am_path(state, "abort-safety"), 1, "%s", sha1_to_hex(curr_head));
@@ -756,7 +780,7 @@ static void do_commit(const struct am_state *state)
 		commit_list_insert(lookup_commit(parent), &parents);
 	} else {
 		ptr = NULL;
-		fprintf_ln(stderr, _("applying to an empty history"));
+		say(state, stderr, _("applying to an empty history"));
 	}
 
 	author = fmt_ident(state->author_name, state->author_email,
@@ -833,7 +857,7 @@ static void am_run(struct am_state *state, int resume)
 			write_commit_msg(state);
 		}
 
-		printf_ln(_("Applying: %.*s"), linelen(state->msg), state->msg);
+		say(state, stdout, _("Applying: %.*s"), linelen(state->msg), state->msg);
 
 		if (run_apply(state) < 0) {
 			int advice_amworkdir = 1;
@@ -869,7 +893,7 @@ static void am_resolve(struct am_state *state)
 {
 	validate_resume_state(state);
 
-	printf_ln(_("Applying: %.*s"), linelen(state->msg), state->msg);
+	say(state, stdout, _("Applying: %.*s"), linelen(state->msg), state->msg);
 
 	if (!index_has_changes(NULL)) {
 		printf_ln(_("No changes - did you forget to use 'git add'?\n"
@@ -1105,6 +1129,7 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 	};
 
 	struct option options[] = {
+		OPT__QUIET(&state.quiet, N_("be quiet")),
 		OPT_CALLBACK(0, "patch-format", &patch_format, N_("format"),
 			N_("format the patch(es) are in"),
 			parse_opt_patchformat),
