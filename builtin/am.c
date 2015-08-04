@@ -24,6 +24,7 @@
 #include "revision.h"
 #include "log-tree.h"
 #include "notes-utils.h"
+#include "rerere.h"
 
 /**
  * Returns 1 if the file is empty or does not exist, 0 otherwise.
@@ -114,6 +115,7 @@ struct am_state {
 	const char *resolvemsg;
 	int committer_date_is_author_date;
 	int ignore_date;
+	int allow_rerere_autoupdate;
 	const char *sign_commit;
 	int rebasing;
 };
@@ -1312,6 +1314,7 @@ static int fall_back_threeway(const struct am_state *state, const char *index_pa
 		o.verbosity = 0;
 
 	if (merge_recursive_generic(&o, our_tree, his_tree, 1, bases, &result)) {
+		rerere(state->allow_rerere_autoupdate);
 		free(his_tree_name);
 		return error(_("Failed to merge in the changes."));
 	}
@@ -1531,6 +1534,8 @@ static void am_resolve(struct am_state *state)
 		die_user_resolve(state);
 	}
 
+	rerere(0);
+
 	do_commit(state);
 
 	am_next(state);
@@ -1631,11 +1636,28 @@ static int clean_index(const unsigned char *head, const unsigned char *remote)
 }
 
 /**
+ * Resets rerere's merge resolution metadata.
+ */
+static void am_rerere_clear(void)
+{
+	struct string_list merge_rr = STRING_LIST_INIT_DUP;
+	int fd = setup_rerere(&merge_rr, 0);
+
+	if (fd < 0)
+		return;
+
+	rerere_clear(&merge_rr);
+	string_list_clear(&merge_rr, 1);
+}
+
+/**
  * Resume the current am session by skipping the current patch.
  */
 static void am_skip(struct am_state *state)
 {
 	unsigned char head[GIT_SHA1_RAWSZ];
+
+	am_rerere_clear();
 
 	if (get_sha1("HEAD", head))
 		hashcpy(head, EMPTY_TREE_SHA1_BIN);
@@ -1693,6 +1715,8 @@ static void am_abort(struct am_state *state)
 		am_destroy(state);
 		return;
 	}
+
+	am_rerere_clear();
 
 	curr_branch = resolve_refdup("HEAD", 0, curr_head, NULL);
 	has_curr_head = !is_null_sha1(curr_head);
@@ -1823,6 +1847,7 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 			N_("lie about committer date")),
 		OPT_BOOL(0, "ignore-date", &state.ignore_date,
 			N_("use current timestamp for author date")),
+		OPT_RERERE_AUTOUPDATE(&state.allow_rerere_autoupdate),
 		{ OPTION_STRING, 'S', "gpg-sign", &state.sign_commit, N_("key-id"),
 		  N_("GPG-sign commits"),
 		  PARSE_OPT_OPTARG, NULL, (intptr_t) "" },
