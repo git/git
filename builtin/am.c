@@ -25,6 +25,7 @@
 #include "log-tree.h"
 #include "notes-utils.h"
 #include "rerere.h"
+#include "prompt.h"
 
 /**
  * Returns 1 if the file is empty or does not exist, 0 otherwise.
@@ -119,6 +120,7 @@ struct am_state {
 	int prec;
 
 	/* various operating modes and command line options */
+	int interactive;
 	int threeway;
 	int quiet;
 	int signoff;
@@ -1171,7 +1173,7 @@ static void NORETURN die_user_resolve(const struct am_state *state)
 	if (state->resolvemsg) {
 		printf_ln("%s", state->resolvemsg);
 	} else {
-		const char *cmdline = "git am";
+		const char *cmdline = state->interactive ? "git am -i" : "git am";
 
 		printf_ln(_("When you have resolved this problem, run \"%s --continue\"."), cmdline);
 		printf_ln(_("If you prefer to skip this patch, run \"%s --skip\" instead."), cmdline);
@@ -1401,6 +1403,36 @@ static void write_commit_patch(const struct am_state *state, struct commit *comm
 	add_pending_object(&rev_info, &commit->object, "");
 	diff_setup_done(&rev_info.diffopt);
 	log_tree_commit(&rev_info, commit);
+}
+
+/**
+ * Writes the diff of the index against HEAD as a patch to the state
+ * directory's "patch" file.
+ */
+static void write_index_patch(const struct am_state *state)
+{
+	struct tree *tree;
+	unsigned char head[GIT_SHA1_RAWSZ];
+	struct rev_info rev_info;
+	FILE *fp;
+
+	if (!get_sha1_tree("HEAD", head))
+		tree = lookup_tree(head);
+	else
+		tree = lookup_tree(EMPTY_TREE_SHA1_BIN);
+
+	fp = xfopen(am_path(state, "patch"), "w");
+	init_revisions(&rev_info, NULL);
+	rev_info.diff = 1;
+	rev_info.disable_stdin = 1;
+	rev_info.no_commit_id = 1;
+	rev_info.diffopt.output_format = DIFF_FORMAT_PATCH;
+	rev_info.diffopt.use_color = 0;
+	rev_info.diffopt.file = fp;
+	rev_info.diffopt.close_file = 1;
+	add_pending_object(&rev_info, &tree->object, "");
+	diff_setup_done(&rev_info.diffopt);
+	run_diff_index(&rev_info, 1);
 }
 
 /**
@@ -1655,6 +1687,65 @@ static void validate_resume_state(const struct am_state *state)
 }
 
 /**
+ * Interactively prompt the user on whether the current patch should be
+ * applied.
+ *
+ * Returns 0 if the user chooses to apply the patch, 1 if the user chooses to
+ * skip it.
+ */
+static int do_interactive(struct am_state *state)
+{
+	assert(state->msg);
+
+	if (!isatty(0))
+		die(_("cannot be interactive without stdin connected to a terminal."));
+
+	for (;;) {
+		const char *reply;
+
+		puts(_("Commit Body is:"));
+		puts("--------------------------");
+		printf("%s", state->msg);
+		puts("--------------------------");
+
+		/*
+		 * TRANSLATORS: Make sure to include [y], [n], [e], [v] and [a]
+		 * in your translation. The program will only accept English
+		 * input at this point.
+		 */
+		reply = git_prompt(_("Apply? [y]es/[n]o/[e]dit/[v]iew patch/[a]ccept all: "), PROMPT_ECHO);
+
+		if (!reply) {
+			continue;
+		} else if (*reply == 'y' || *reply == 'Y') {
+			return 0;
+		} else if (*reply == 'a' || *reply == 'A') {
+			state->interactive = 0;
+			return 0;
+		} else if (*reply == 'n' || *reply == 'N') {
+			return 1;
+		} else if (*reply == 'e' || *reply == 'E') {
+			struct strbuf msg = STRBUF_INIT;
+
+			if (!launch_editor(am_path(state, "final-commit"), &msg, NULL)) {
+				free(state->msg);
+				state->msg = strbuf_detach(&msg, &state->msg_len);
+			}
+			strbuf_release(&msg);
+		} else if (*reply == 'v' || *reply == 'V') {
+			const char *pager = git_pager(1);
+			struct child_process cp = CHILD_PROCESS_INIT;
+
+			if (!pager)
+				pager = "cat";
+			argv_array_push(&cp.args, pager);
+			argv_array_push(&cp.args, am_path(state, "patch"));
+			run_command(&cp);
+		}
+	}
+}
+
+/**
  * Applies all queued mail.
  *
  * If `resume` is true, we are "resuming". The "msg" and authorship fields, as
@@ -1701,6 +1792,9 @@ static void am_run(struct am_state *state, int resume)
 			write_author_script(state);
 			write_commit_msg(state);
 		}
+
+		if (state->interactive && do_interactive(state))
+			goto next;
 
 		if (run_applypatch_msg_hook(state))
 			exit(1);
@@ -1787,10 +1881,17 @@ static void am_resolve(struct am_state *state)
 		die_user_resolve(state);
 	}
 
+	if (state->interactive) {
+		write_index_patch(state);
+		if (do_interactive(state))
+			goto next;
+	}
+
 	rerere(0);
 
 	do_commit(state);
 
+next:
 	am_next(state);
 	am_run(state, 0);
 }
@@ -2036,6 +2137,8 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 	};
 
 	struct option options[] = {
+		OPT_BOOL('i', "interactive", &state.interactive,
+			N_("run interactively")),
 		OPT_BOOL('3', "3way", &state.threeway,
 			N_("allow fall back on 3way merging if needed")),
 		OPT__QUIET(&state.quiet, N_("be quiet")),
