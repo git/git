@@ -95,6 +95,9 @@ struct am_state {
 	char *msg;
 	size_t msg_len;
 
+	/* when --rebasing, records the original commit the patch came from */
+	unsigned char orig_commit[GIT_SHA1_RAWSZ];
+
 	/* number of digits in patch filename */
 	int prec;
 
@@ -392,6 +395,11 @@ static void am_load(struct am_state *state)
 
 	read_commit_msg(state);
 
+	if (read_state_file(&sb, state, "original-commit", 1) < 0)
+		hashclr(state->orig_commit);
+	else if (get_sha1_hex(sb.buf, state->orig_commit) < 0)
+		die(_("could not parse %s"), am_path(state, "original-commit"));
+
 	read_state_file(&sb, state, "threeway", 1);
 	state->threeway = !strcmp(sb.buf, "t");
 
@@ -444,6 +452,30 @@ static void am_destroy(const struct am_state *state)
 	strbuf_addstr(&sb, state->dir);
 	remove_dir_recursively(&sb, 0);
 	strbuf_release(&sb);
+}
+
+/**
+ * Runs post-rewrite hook. Returns it exit code.
+ */
+static int run_post_rewrite_hook(const struct am_state *state)
+{
+	struct child_process cp = CHILD_PROCESS_INIT;
+	const char *hook = find_hook("post-rewrite");
+	int ret;
+
+	if (!hook)
+		return 0;
+
+	argv_array_push(&cp.args, hook);
+	argv_array_push(&cp.args, "rebase");
+
+	cp.in = xopen(am_path(state, "rewritten"), O_RDONLY);
+	cp.stdout_to_stderr = 1;
+
+	ret = run_command(&cp);
+
+	close(cp.in);
+	return ret;
 }
 
 /**
@@ -719,6 +751,9 @@ static void am_next(struct am_state *state)
 
 	unlink(am_path(state, "author-script"));
 	unlink(am_path(state, "final-commit"));
+
+	hashclr(state->orig_commit);
+	unlink(am_path(state, "original-commit"));
 
 	if (!get_sha1("HEAD", head))
 		write_file(am_path(state, "abort-safety"), 1, "%s", sha1_to_hex(head));
@@ -1038,6 +1073,8 @@ static void write_commit_patch(const struct am_state *state, struct commit *comm
  * directly. This is used in --rebasing mode to bypass git-mailinfo's munging
  * of patches.
  *
+ * state->orig_commit will be set to the original commit ID.
+ *
  * Will always return 0 as the patch should never be skipped.
  */
 static int parse_mail_rebase(struct am_state *state, const char *mail)
@@ -1053,6 +1090,10 @@ static int parse_mail_rebase(struct am_state *state, const char *mail)
 	get_commit_info(state, commit);
 
 	write_commit_patch(state, commit);
+
+	hashcpy(state->orig_commit, commit_sha1);
+	write_file(am_path(state, "original-commit"), 1, "%s",
+			sha1_to_hex(commit_sha1));
 
 	return 0;
 }
@@ -1245,6 +1286,15 @@ static void do_commit(const struct am_state *state)
 
 	update_ref(sb.buf, "HEAD", commit, ptr, 0, UPDATE_REFS_DIE_ON_ERR);
 
+	if (state->rebasing) {
+		FILE *fp = xfopen(am_path(state, "rewritten"), "a");
+
+		assert(!is_null_sha1(state->orig_commit));
+		fprintf(fp, "%s ", sha1_to_hex(state->orig_commit));
+		fprintf(fp, "%s\n", sha1_to_hex(commit));
+		fclose(fp);
+	}
+
 	strbuf_release(&sb);
 }
 
@@ -1351,6 +1401,11 @@ static void am_run(struct am_state *state, int resume)
 
 next:
 		am_next(state);
+	}
+
+	if (!is_empty_file(am_path(state, "rewritten"))) {
+		assert(state->rebasing);
+		run_post_rewrite_hook(state);
 	}
 
 	/*
