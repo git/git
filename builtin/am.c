@@ -90,6 +90,7 @@ struct am_state {
 	int threeway;
 	int quiet;
 	int signoff;
+	int utf8;
 	const char *resolvemsg;
 	int rebasing;
 };
@@ -106,6 +107,8 @@ static void am_state_init(struct am_state *state, const char *dir)
 	state->dir = xstrdup(dir);
 
 	state->prec = 4;
+
+	state->utf8 = 1;
 }
 
 /**
@@ -367,6 +370,9 @@ static void am_load(struct am_state *state)
 	read_state_file(&sb, state, "sign", 1);
 	state->signoff = !strcmp(sb.buf, "t");
 
+	read_state_file(&sb, state, "utf8", 1);
+	state->utf8 = !strcmp(sb.buf, "t");
+
 	state->rebasing = !!file_exists(am_path(state, "rebasing"));
 
 	strbuf_release(&sb);
@@ -556,6 +562,8 @@ static void am_setup(struct am_state *state, enum patch_format patch_format,
 
 	write_file(am_path(state, "sign"), 1, state->signoff ? "t" : "f");
 
+	write_file(am_path(state, "utf8"), 1, state->utf8 ? "t" : "f");
+
 	if (state->rebasing)
 		write_file(am_path(state, "rebasing"), 1, "%s", "");
 	else
@@ -722,6 +730,7 @@ static int parse_mail(struct am_state *state, const char *mail)
 	cp.out = xopen(am_path(state, "info"), O_WRONLY | O_CREAT, 0777);
 
 	argv_array_push(&cp.args, "mailinfo");
+	argv_array_push(&cp.args, state->utf8 ? "-u" : "-n");
 	argv_array_push(&cp.args, am_path(state, "msg"));
 	argv_array_push(&cp.args, am_path(state, "patch"));
 
@@ -1460,6 +1469,8 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 		OPT__QUIET(&state.quiet, N_("be quiet")),
 		OPT_BOOL('s', "signoff", &state.signoff,
 			N_("add a Signed-off-by line to the commit message")),
+		OPT_BOOL('u', "utf8", &state.utf8,
+			N_("recode into utf8 (default)")),
 		OPT_CALLBACK(0, "patch-format", &patch_format, N_("format"),
 			N_("format the patch(es) are in"),
 			parse_opt_patchformat),
