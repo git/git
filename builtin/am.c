@@ -456,6 +456,27 @@ static void am_destroy(const struct am_state *state)
 }
 
 /**
+ * Runs applypatch-msg hook. Returns its exit code.
+ */
+static int run_applypatch_msg_hook(struct am_state *state)
+{
+	int ret;
+
+	assert(state->msg);
+	ret = run_hook_le(NULL, "applypatch-msg", am_path(state, "final-commit"), NULL);
+
+	if (!ret) {
+		free(state->msg);
+		state->msg = NULL;
+		if (read_commit_msg(state) < 0)
+			die(_("'%s' was deleted by the applypatch-msg hook"),
+				am_path(state, "final-commit"));
+	}
+
+	return ret;
+}
+
+/**
  * Runs post-rewrite hook. Returns it exit code.
  */
 static int run_post_rewrite_hook(const struct am_state *state)
@@ -1419,6 +1440,9 @@ static void am_run(struct am_state *state, int resume)
 			write_author_script(state);
 			write_commit_msg(state);
 		}
+
+		if (run_applypatch_msg_hook(state))
+			exit(1);
 
 		say(state, stdout, _("Applying: %.*s"), linelen(state->msg), state->msg);
 
