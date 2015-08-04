@@ -1378,6 +1378,8 @@ static void do_commit(const struct am_state *state)
 		fclose(fp);
 	}
 
+	run_hook_le(NULL, "post-applypatch", NULL);
+
 	strbuf_release(&sb);
 }
 
