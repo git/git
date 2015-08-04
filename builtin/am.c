@@ -18,6 +18,7 @@
 #include "diffcore.h"
 #include "unpack-trees.h"
 #include "branch.h"
+#include "sequencer.h"
 
 /**
  * Returns 1 if the file is empty or does not exist, 0 otherwise.
@@ -83,6 +84,7 @@ struct am_state {
 
 	/* various operating modes and command line options */
 	int quiet;
+	int signoff;
 	const char *resolvemsg;
 };
 
@@ -353,6 +355,9 @@ static void am_load(struct am_state *state)
 	read_state_file(&sb, state, "quiet", 1);
 	state->quiet = !strcmp(sb.buf, "t");
 
+	read_state_file(&sb, state, "sign", 1);
+	state->signoff = !strcmp(sb.buf, "t");
+
 	strbuf_release(&sb);
 }
 
@@ -532,6 +537,8 @@ static void am_setup(struct am_state *state, enum patch_format patch_format,
 	}
 
 	write_file(am_path(state, "quiet"), 1, state->quiet ? "t" : "f");
+
+	write_file(am_path(state, "sign"), 1, state->signoff ? "t" : "f");
 
 	if (!get_sha1("HEAD", curr_head)) {
 		write_file(am_path(state, "abort-safety"), 1, "%s", sha1_to_hex(curr_head));
@@ -733,6 +740,9 @@ static int parse_mail(struct am_state *state, const char *mail)
 	if (strbuf_read_file(&msg, am_path(state, "msg"), 0) < 0)
 		die_errno(_("could not read '%s'"), am_path(state, "msg"));
 	stripspace(&msg, 0);
+
+	if (state->signoff)
+		append_signoff(&msg, 0, 0);
 
 	assert(!state->author_name);
 	state->author_name = strbuf_detach(&author_name, NULL);
@@ -1150,6 +1160,8 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 
 	struct option options[] = {
 		OPT__QUIET(&state.quiet, N_("be quiet")),
+		OPT_BOOL('s', "signoff", &state.signoff,
+			N_("add a Signed-off-by line to the commit message")),
 		OPT_CALLBACK(0, "patch-format", &patch_format, N_("format"),
 			N_("format the patch(es) are in"),
 			parse_opt_patchformat),
