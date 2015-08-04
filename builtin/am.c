@@ -502,7 +502,7 @@ done:
  * Splits out individual email patches from `paths`, where each path is either
  * a mbox file or a Maildir. Returns 0 on success, -1 on failure.
  */
-static int split_mail_mbox(struct am_state *state, const char **paths)
+static int split_mail_mbox(struct am_state *state, const char **paths, int keep_cr)
 {
 	struct child_process cp = CHILD_PROCESS_INIT;
 	struct strbuf last = STRBUF_INIT;
@@ -512,6 +512,8 @@ static int split_mail_mbox(struct am_state *state, const char **paths)
 	argv_array_pushf(&cp.args, "-d%d", state->prec);
 	argv_array_pushf(&cp.args, "-o%s", state->dir);
 	argv_array_push(&cp.args, "-b");
+	if (keep_cr)
+		argv_array_push(&cp.args, "--keep-cr");
 	argv_array_push(&cp.args, "--");
 	argv_array_pushv(&cp.args, paths);
 
@@ -536,14 +538,22 @@ static int split_mail_mbox(struct am_state *state, const char **paths)
  * state->cur will be set to the index of the first mail, and state->last will
  * be set to the index of the last mail.
  *
+ * Set keep_cr to 0 to convert all lines ending with \r\n to end with \n, 1
+ * to disable this behavior, -1 to use the default configured setting.
+ *
  * Returns 0 on success, -1 on failure.
  */
 static int split_mail(struct am_state *state, enum patch_format patch_format,
-			const char **paths)
+			const char **paths, int keep_cr)
 {
+	if (keep_cr < 0) {
+		keep_cr = 0;
+		git_config_get_bool("am.keepcr", &keep_cr);
+	}
+
 	switch (patch_format) {
 	case PATCH_FORMAT_MBOX:
-		return split_mail_mbox(state, paths);
+		return split_mail_mbox(state, paths, keep_cr);
 	default:
 		die("BUG: invalid patch_format");
 	}
@@ -554,7 +564,7 @@ static int split_mail(struct am_state *state, enum patch_format patch_format,
  * Setup a new am session for applying patches
  */
 static void am_setup(struct am_state *state, enum patch_format patch_format,
-			const char **paths)
+			const char **paths, int keep_cr)
 {
 	unsigned char curr_head[GIT_SHA1_RAWSZ];
 	const char *str;
@@ -570,7 +580,7 @@ static void am_setup(struct am_state *state, enum patch_format patch_format,
 	if (mkdir(state->dir, 0777) < 0 && errno != EEXIST)
 		die_errno(_("failed to create directory '%s'"), state->dir);
 
-	if (split_mail(state, patch_format, paths) < 0) {
+	if (split_mail(state, patch_format, paths, keep_cr) < 0) {
 		am_destroy(state);
 		die(_("Failed to split patches."));
 	}
@@ -1511,6 +1521,7 @@ enum resume_mode {
 int cmd_am(int argc, const char **argv, const char *prefix)
 {
 	struct am_state state;
+	int keep_cr = -1;
 	int patch_format = PATCH_FORMAT_UNKNOWN;
 	enum resume_mode resume = RESUME_FALSE;
 
@@ -1534,6 +1545,12 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 			N_("pass -b flag to git-mailinfo"), KEEP_NON_PATCH),
 		OPT_BOOL('m', "message-id", &state.message_id,
 			N_("pass -m flag to git-mailinfo")),
+		{ OPTION_SET_INT, 0, "keep-cr", &keep_cr, NULL,
+		  N_("pass --keep-cr flag to git-mailsplit for mbox format"),
+		  PARSE_OPT_NOARG | PARSE_OPT_NONEG, NULL, 1},
+		{ OPTION_SET_INT, 0, "no-keep-cr", &keep_cr, NULL,
+		  N_("do not pass --keep-cr flag to git-mailsplit independent of am.keepcr"),
+		  PARSE_OPT_NOARG | PARSE_OPT_NONEG, NULL, 0},
 		OPT_CALLBACK(0, "patch-format", &patch_format, N_("format"),
 			N_("format the patch(es) are in"),
 			parse_opt_patchformat),
@@ -1631,7 +1648,7 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 				argv_array_push(&paths, mkpath("%s/%s", prefix, argv[i]));
 		}
 
-		am_setup(&state, patch_format, paths.argv);
+		am_setup(&state, patch_format, paths.argv, keep_cr);
 
 		argv_array_clear(&paths);
 	}
