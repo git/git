@@ -492,6 +492,10 @@ maybe_setup_valgrind () {
 	fi
 }
 
+want_trace () {
+	test "$trace" = t && test "$verbose" = t
+}
+
 # This is a separate function because some tests use
 # "return" to end a test_expect_success block early
 # (and we want to make sure we run any cleanup like
@@ -499,7 +503,7 @@ maybe_setup_valgrind () {
 test_eval_inner_ () {
 	# Do not add anything extra (including LF) after '$*'
 	eval "
-		test \"$trace\" = t && set -x
+		want_trace && set -x
 		$*"
 }
 
@@ -515,7 +519,7 @@ test_eval_ () {
 	{
 		test_eval_inner_ "$@" </dev/null >&3 2>&4
 		test_eval_ret_=$?
-		if test "$trace" = t
+		if want_trace
 		then
 			set +x
 			if test "$test_eval_ret_" != 0
