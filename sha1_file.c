@@ -2784,11 +2784,8 @@ static void write_sha1_file_prepare(const void *buf, unsigned long len,
 
 /*
  * Move the just written object into its final resting place.
- * NEEDSWORK: this should be renamed to finalize_temp_file() as
- * "moving" is only a part of what it does, when no patch between
- * master to pu changes the call sites of this function.
  */
-int move_temp_to_file(const char *tmpfile, const char *filename)
+int finalize_object_file(const char *tmpfile, const char *filename)
 {
 	int ret = 0;
 
@@ -2962,7 +2959,7 @@ static int write_loose_object(const unsigned char *sha1, char *hdr, int hdrlen,
 				tmp_file, strerror(errno));
 	}
 
-	return move_temp_to_file(tmp_file, filename);
+	return finalize_object_file(tmp_file, filename);
 }
 
 int write_sha1_file(const void *buf, unsigned long len, const char *type, unsigned char *returnsha1)
