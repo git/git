@@ -171,6 +171,7 @@ ifeq ($(uname_O),Cygwin)
 	X = .exe
 	UNRELIABLE_FSTAT = UnfortunatelyYes
 	SPARSE_FLAGS = -isystem /usr/include/w32api -Wno-one-bit-signed-bitfield
+	OBJECT_CREATION_USES_RENAMES = UnfortunatelyNeedsTo
 endif
 ifeq ($(uname_S),FreeBSD)
 	NEEDS_LIBICONV = YesPlease
