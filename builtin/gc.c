@@ -11,6 +11,7 @@
  */
 
 #include "builtin.h"
+#include "tempfile.h"
 #include "lockfile.h"
 #include "parse-options.h"
 #include "run-command.h"
@@ -42,20 +43,7 @@ static struct argv_array prune = ARGV_ARRAY_INIT;
 static struct argv_array prune_worktrees = ARGV_ARRAY_INIT;
 static struct argv_array rerere = ARGV_ARRAY_INIT;
 
-static char *pidfile;
-
-static void remove_pidfile(void)
-{
-	if (pidfile)
-		unlink(pidfile);
-}
-
-static void remove_pidfile_on_signal(int signo)
-{
-	remove_pidfile();
-	sigchain_pop(signo);
-	raise(signo);
-}
+static struct tempfile pidfile;
 
 static void git_config_date_string(const char *key, const char **output)
 {
@@ -201,7 +189,7 @@ static const char *lock_repo_for_gc(int force, pid_t* ret_pid)
 	int fd;
 	char *pidfile_path;
 
-	if (pidfile)
+	if (is_tempfile_active(&pidfile))
 		/* already locked */
 		return NULL;
 
@@ -248,11 +236,8 @@ static const char *lock_repo_for_gc(int force, pid_t* ret_pid)
 	write_in_full(fd, sb.buf, sb.len);
 	strbuf_release(&sb);
 	commit_lock_file(&lock);
-
-	pidfile = pidfile_path;
-	sigchain_push_common(remove_pidfile_on_signal);
-	atexit(remove_pidfile);
-
+	register_tempfile(&pidfile, pidfile_path);
+	free(pidfile_path);
 	return NULL;
 }
 
