@@ -1655,7 +1655,7 @@ msgstr "无效的 %XX 转义序列"
 
 #: urlmatch.c:172
 msgid "missing host and scheme is not 'file:'"
-msgstr "缺失主机名且URL方案不是 'file:'"
+msgstr "缺失主机名且 URL 方案不是 'file:'"
 
 #: urlmatch.c:189
 msgid "a 'file:' URL may not have a port number"
@@ -2805,11 +2805,11 @@ msgstr "不能重定向输出"
 
 #: builtin/archive.c:37
 msgid "git archive: Remote with no URL"
-msgstr "git archive：未提供远程URL"
+msgstr "git archive：未提供远程 URL"
 
 #: builtin/archive.c:58
 msgid "git archive: expected ACK/NAK, got EOF"
-msgstr "git archive：应为ACK/NACK，却得到EOF"
+msgstr "git archive：应为 ACK/NACK，却得到 EOF"
 
 #: builtin/archive.c:61
 #, c-format
@@ -2895,7 +2895,7 @@ msgstr "显示原始时间戳（默认：关闭）"
 
 #: builtin/blame.c:2511
 msgid "Show long commit SHA1 (Default: off)"
-msgstr "显示长的SHA1提交号（默认：关闭）"
+msgstr "显示长的 SHA1 提交号（默认：关闭）"
 
 #: builtin/blame.c:2512
 msgid "Suppress author name and timestamp (Default: off)"
@@ -3549,7 +3549,7 @@ msgstr "字符串"
 
 #: builtin/checkout-index.c:205
 msgid "when creating files, prepend <string>"
-msgstr "在创建文件时，在前面加上<字符串>"
+msgstr "在创建文件时，在前面加上 <字符串>"
 
 #: builtin/checkout-index.c:208
 msgid "copy out the files from named stage"
@@ -4024,7 +4024,7 @@ msgstr "模式"
 
 #: builtin/clean.c:880
 msgid "add <pattern> to ignore rules"
-msgstr "添加<模式>到忽略规则"
+msgstr "添加 <模式> 到忽略规则"
 
 #: builtin/clean.c:881
 msgid "remove ignored files, too"
@@ -4111,11 +4111,11 @@ msgstr "名称"
 
 #: builtin/clone.c:82
 msgid "use <name> instead of 'origin' to track upstream"
-msgstr "使用<名称>而不是 'origin' 去跟踪上游"
+msgstr "使用 <名称> 而不是 'origin' 去跟踪上游"
 
 #: builtin/clone.c:84
 msgid "checkout <branch> instead of the remote's HEAD"
-msgstr "检出<分支>而不是远程HEAD"
+msgstr "检出 <分支> 而不是远程 HEAD"
 
 #: builtin/clone.c:86
 msgid "path to git-upload-pack on the remote"
@@ -4729,7 +4729,7 @@ msgstr "以长格式显示状态（默认）"
 
 #: builtin/commit.c:1334 builtin/commit.c:1612
 msgid "terminate entries with NUL"
-msgstr "条目以NUL字符结尾"
+msgstr "条目以 NUL 字符结尾"
 
 #: builtin/commit.c:1336 builtin/commit.c:1615 builtin/fast-export.c:980
 #: builtin/fast-export.c:983 builtin/tag.c:603
@@ -4991,7 +4991,7 @@ msgstr "使用指定的配置文件"
 
 #: builtin/config.c:58
 msgid "blob-id"
-msgstr "数据对象ID"
+msgstr "数据对象 ID"
 
 #: builtin/config.c:58
 msgid "read config from given blob object"
@@ -5083,7 +5083,7 @@ msgstr "其它"
 
 #: builtin/config.c:80
 msgid "terminate values with NUL byte"
-msgstr "终止值是NUL字节"
+msgstr "终止值是 NUL 字节"
 
 #: builtin/config.c:81
 msgid "respect include directives on lookup"
@@ -5577,7 +5577,7 @@ msgstr "不能获取 %s"
 msgid ""
 "No remote repository specified.  Please, specify either a URL or a\n"
 "remote name from which new revisions should be fetched."
-msgstr "未指定远程仓库。请通过一个URL或远程仓库名指定，用以获取新提交。"
+msgstr "未指定远程仓库。请通过一个 URL 或远程仓库名指定，用以获取新提交。"
 
 #: builtin/fetch.c:1106
 msgid "You need to specify a tag name."
@@ -6825,7 +6825,7 @@ msgstr "标识"
 
 #: builtin/log.c:1228
 msgid "set From address to <ident> (or committer ident if absent)"
-msgstr "将 From 地址设置为 <标识>（如若不提供，则用提交者ID做为地址）"
+msgstr "将 From 地址设置为 <标识>（如若不提供，则用提交者 ID 做为地址）"
 
 #: builtin/log.c:1230
 msgid "message-id"
@@ -7035,7 +7035,7 @@ msgstr "当递归时显示树"
 
 #: builtin/ls-tree.c:134
 msgid "terminate entries with NUL byte"
-msgstr "条目以NUL字符终止"
+msgstr "条目以 NUL 字符终止"
 
 #: builtin/ls-tree.c:135
 msgid "include object size"
@@ -8388,7 +8388,7 @@ msgid ""
 "    git push <name>\n"
 msgstr ""
 "没有配置推送目标。\n"
-"或通过命令行指定URL，或用下面命令配置一个远程仓库\n"
+"或通过命令行指定 URL，或用下面命令配置一个远程仓库\n"
 "\n"
 "    git remote add <名称> <地址>\n"
 "\n"
@@ -8912,7 +8912,7 @@ msgstr "  推送地址：%s"
 #: builtin/remote.c:1193 builtin/remote.c:1195 builtin/remote.c:1197
 #, c-format
 msgid "  HEAD branch: %s"
-msgstr "  HEAD分支：%s"
+msgstr "  HEAD 分支：%s"
 
 #: builtin/remote.c:1199
 #, c-format
@@ -9048,16 +9048,16 @@ msgstr "--add --delete 无意义"
 #: builtin/remote.c:1565
 #, c-format
 msgid "Invalid old URL pattern: %s"
-msgstr "无效的旧URL匹配模版：%s"
+msgstr "无效的旧 URL 匹配模版：%s"
 
 #: builtin/remote.c:1573
 #, c-format
 msgid "No such URL found: %s"
-msgstr "未找到此URL：%s"
+msgstr "未找到此 URL：%s"
 
 #: builtin/remote.c:1575
 msgid "Will not delete all non-push URLs"
-msgstr "将不会删除所有非推送URL地址"
+msgstr "将不会删除所有非推送 URL 地址"
 
 #: builtin/remote.c:1589
 msgid "be verbose; must be placed before a subcommand"
@@ -9713,7 +9713,7 @@ msgstr "显示 HEAD 引用，即使被过滤掉"
 
 #: builtin/show-ref.c:179
 msgid "dereference tags into object IDs"
-msgstr "转换标签到对象ID"
+msgstr "转换标签到对象 ID"
 
 #: builtin/show-ref.c:181
 msgid "only show SHA1 hash using <n> digits"
@@ -10419,7 +10419,7 @@ msgstr "本地提交转移至更新后的上游分支中"
 
 #: common-cmds.h:34
 msgid "Reset current HEAD to the specified state"
-msgstr "重置当前HEAD到指定状态"
+msgstr "重置当前 HEAD 到指定状态"
 
 #: common-cmds.h:35
 msgid "Remove files from the working tree and from the index"
@@ -10435,7 +10435,7 @@ msgstr "显示工作区状态"
 
 #: common-cmds.h:38
 msgid "Create, list, delete or verify a tag object signed with GPG"
-msgstr "创建、列出、删除或校验一个GPG签名的标签对象"
+msgstr "创建、列出、删除或校验一个 GPG 签名的标签对象"
 
 #: parse-options.h:142
 msgid "expiry-date"
@@ -11144,7 +11144,7 @@ msgstr "只能在工作区的顶级目录中使用相对路径"
 #: git-submodule.sh:416
 #, sh-format
 msgid "repo URL: '$repo' must be absolute or begin with ./|../"
-msgstr "仓库URL：'$repo' 必须是绝对路径或以 ./|../ 起始"
+msgstr "仓库 URL：'$repo' 必须是绝对路径或以 ./|../ 起始"
 
 #: git-submodule.sh:433
 #, sh-format
