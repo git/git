@@ -245,16 +245,6 @@ static void do_submodule_path(struct strbuf *buf, const char *path,
 	strbuf_cleanup_path(buf);
 }
 
-const char *git_path_submodule(const char *path, const char *fmt, ...)
-{
-	va_list args;
-	struct strbuf *buf = get_pathname();
-	va_start(args, fmt);
-	do_submodule_path(buf, path, fmt, args);
-	va_end(args);
-	return buf->buf;
-}
-
 char *git_pathdup_submodule(const char *path, const char *fmt, ...)
 {
 	va_list args;

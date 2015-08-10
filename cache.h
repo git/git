@@ -713,12 +713,11 @@ extern int check_repository_format(void);
  * the repository directory (git_path), or in a submodule's repository
  * directory (git_path_submodule). In all cases, note that the result
  * may be overwritten by another call to _any_ of the functions. Consider
- * using the safer "dup" or "strbuf" formats below.
+ * using the safer "dup" or "strbuf" formats below (in some cases, the
+ * unsafe versions have already been removed).
  */
 extern const char *mkpath(const char *fmt, ...) __attribute__((format (printf, 1, 2)));
 extern const char *git_path(const char *fmt, ...) __attribute__((format (printf, 1, 2)));
-extern const char *git_path_submodule(const char *path, const char *fmt, ...)
-	__attribute__((format (printf, 2, 3)));
 
 extern char *mksnpath(char *buf, size_t n, const char *fmt, ...)
 	__attribute__((format (printf, 3, 4)));
