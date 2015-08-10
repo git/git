@@ -47,7 +47,7 @@ test_clone_dir host:foo foo.git bare
 test_clone_dir host:foo.git foo
 test_clone_dir host:foo.git foo.git bare
 test_clone_dir host:foo/.git foo
-test_clone_dir host:foo/.git foo.git bare fail
+test_clone_dir host:foo/.git foo.git bare
 
 # similar, but using ssh URL rather than host:path syntax
 test_clone_dir ssh://host/foo foo
@@ -55,22 +55,22 @@ test_clone_dir ssh://host/foo foo.git bare
 test_clone_dir ssh://host/foo.git foo
 test_clone_dir ssh://host/foo.git foo.git bare
 test_clone_dir ssh://host/foo/.git foo
-test_clone_dir ssh://host/foo/.git foo.git bare fail
+test_clone_dir ssh://host/foo/.git foo.git bare
 
 # we should remove trailing slashes and .git suffixes
 test_clone_dir ssh://host/foo/ foo
 test_clone_dir ssh://host/foo/// foo
 test_clone_dir ssh://host/foo/.git/ foo
-test_clone_dir ssh://host/foo.git/ foo fail
-test_clone_dir ssh://host/foo.git/// foo fail
+test_clone_dir ssh://host/foo.git/ foo
+test_clone_dir ssh://host/foo.git/// foo
 test_clone_dir ssh://host/foo///.git/ foo
 test_clone_dir ssh://host/foo/.git/// foo
 
 test_clone_dir host:foo/ foo
 test_clone_dir host:foo/// foo
-test_clone_dir host:foo.git/ foo fail
+test_clone_dir host:foo.git/ foo
 test_clone_dir host:foo/.git/ foo
-test_clone_dir host:foo.git/// foo fail
+test_clone_dir host:foo.git/// foo
 test_clone_dir host:foo///.git/ foo
 test_clone_dir host:foo/.git/// foo
 
