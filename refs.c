@@ -3380,7 +3380,7 @@ static int commit_ref_update(struct ref_lock *lock,
 int create_symref(const char *ref_target, const char *refs_heads_master,
 		  const char *logmsg)
 {
-	const char *lockpath;
+	char *lockpath = NULL;
 	char ref[1000];
 	int fd, len, written;
 	char *git_HEAD = git_pathdup("%s", ref_target);
@@ -3407,7 +3407,7 @@ int create_symref(const char *ref_target, const char *refs_heads_master,
 		error("refname too long: %s", refs_heads_master);
 		goto error_free_return;
 	}
-	lockpath = mkpath("%s.lock", git_HEAD);
+	lockpath = mkpathdup("%s.lock", git_HEAD);
 	fd = open(lockpath, O_CREAT | O_EXCL | O_WRONLY, 0666);
 	if (fd < 0) {
 		error("Unable to open %s for writing", lockpath);
@@ -3427,9 +3427,11 @@ int create_symref(const char *ref_target, const char *refs_heads_master,
 	error_unlink_return:
 		unlink_or_warn(lockpath);
 	error_free_return:
+		free(lockpath);
 		free(git_HEAD);
 		return -1;
 	}
+	free(lockpath);
 
 #ifndef NO_SYMLINK_HEAD
 	done:
