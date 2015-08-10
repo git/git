@@ -182,6 +182,23 @@ static char *guess_dir_name(const char *repo, int is_bundle, int is_bare)
 	}
 
 	/*
+	 * Strip trailing port number if we've got only a
+	 * hostname (that is, there is no dir separator but a
+	 * colon). This check is required such that we do not
+	 * strip URI's like '/foo/bar:2222.git', which should
+	 * result in a dir '2222' being guessed due to backwards
+	 * compatibility.
+	 */
+	if (memchr(start, '/', end - start) == NULL
+	    && memchr(start, ':', end - start) != NULL) {
+		ptr = end;
+		while (start < ptr && isdigit(ptr[-1]) && ptr[-1] != ':')
+			ptr--;
+		if (start < ptr && ptr[-1] == ':')
+			end = ptr - 1;
+	}
+
+	/*
 	 * Find last component. To remain backwards compatible we
 	 * also regard colons as path separators, such that
 	 * cloning a repository 'foo:bar.git' would result in a
