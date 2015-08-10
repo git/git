@@ -1352,19 +1352,23 @@ static void read_loose_refs(const char *dirname, struct ref_dir *dir)
 {
 	struct ref_cache *refs = dir->ref_cache;
 	DIR *d;
-	const char *path;
 	struct dirent *de;
 	int dirnamelen = strlen(dirname);
 	struct strbuf refname;
+	struct strbuf path = STRBUF_INIT;
+	size_t path_baselen;
 
 	if (*refs->name)
-		path = git_path_submodule(refs->name, "%s", dirname);
+		strbuf_git_path_submodule(&path, refs->name, "%s", dirname);
 	else
-		path = git_path("%s", dirname);
+		strbuf_git_path(&path, "%s", dirname);
+	path_baselen = path.len;
 
-	d = opendir(path);
-	if (!d)
+	d = opendir(path.buf);
+	if (!d) {
+		strbuf_release(&path);
 		return;
+	}
 
 	strbuf_init(&refname, dirnamelen + 257);
 	strbuf_add(&refname, dirname, dirnamelen);
@@ -1373,17 +1377,14 @@ static void read_loose_refs(const char *dirname, struct ref_dir *dir)
 		unsigned char sha1[20];
 		struct stat st;
 		int flag;
-		const char *refdir;
 
 		if (de->d_name[0] == '.')
 			continue;
 		if (ends_with(de->d_name, ".lock"))
 			continue;
 		strbuf_addstr(&refname, de->d_name);
-		refdir = *refs->name
-			? git_path_submodule(refs->name, "%s", refname.buf)
-			: git_path("%s", refname.buf);
-		if (stat(refdir, &st) < 0) {
+		strbuf_addstr(&path, de->d_name);
+		if (stat(path.buf, &st) < 0) {
 			; /* silently ignore */
 		} else if (S_ISDIR(st.st_mode)) {
 			strbuf_addch(&refname, '/');
@@ -1430,8 +1431,10 @@ static void read_loose_refs(const char *dirname, struct ref_dir *dir)
 					 create_ref_entry(refname.buf, sha1, flag, 0));
 		}
 		strbuf_setlen(&refname, dirnamelen);
+		strbuf_setlen(&path, path_baselen);
 	}
 	strbuf_release(&refname);
+	strbuf_release(&path);
 	closedir(d);
 }
 
