@@ -2930,9 +2930,13 @@ out:
 static int rename_tmp_log(const char *newrefname)
 {
 	int attempts_remaining = 4;
+	struct strbuf path = STRBUF_INIT;
+	int ret = -1;
 
  retry:
-	switch (safe_create_leading_directories_const(git_path("logs/%s", newrefname))) {
+	strbuf_reset(&path);
+	strbuf_git_path(&path, "logs/%s", newrefname);
+	switch (safe_create_leading_directories_const(path.buf)) {
 	case SCLD_OK:
 		break; /* success */
 	case SCLD_VANISHED:
@@ -2941,19 +2945,19 @@ static int rename_tmp_log(const char *newrefname)
 		/* fall through */
 	default:
 		error("unable to create directory for %s", newrefname);
-		return -1;
+		goto out;
 	}
 
-	if (rename(git_path(TMP_RENAMED_LOG), git_path("logs/%s", newrefname))) {
+	if (rename(git_path(TMP_RENAMED_LOG), path.buf)) {
 		if ((errno==EISDIR || errno==ENOTDIR) && --attempts_remaining > 0) {
 			/*
 			 * rename(a, b) when b is an existing
 			 * directory ought to result in ISDIR, but
 			 * Solaris 5.8 gives ENOTDIR.  Sheesh.
 			 */
-			if (remove_empty_directories(git_path("logs/%s", newrefname))) {
+			if (remove_empty_directories(path.buf)) {
 				error("Directory not empty: logs/%s", newrefname);
-				return -1;
+				goto out;
 			}
 			goto retry;
 		} else if (errno == ENOENT && --attempts_remaining > 0) {
@@ -2966,10 +2970,13 @@ static int rename_tmp_log(const char *newrefname)
 		} else {
 			error("unable to move logfile "TMP_RENAMED_LOG" to logs/%s: %s",
 				newrefname, strerror(errno));
-			return -1;
+			goto out;
 		}
 	}
-	return 0;
+	ret = 0;
+out:
+	strbuf_release(&path);
+	return ret;
 }
 
 static int rename_ref_available(const char *oldname, const char *newname)
