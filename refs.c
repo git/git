@@ -1288,12 +1288,12 @@ static void read_packed_refs(FILE *f, struct ref_dir *dir)
  */
 static struct packed_ref_cache *get_packed_ref_cache(struct ref_cache *refs)
 {
-	const char *packed_refs_file;
+	char *packed_refs_file;
 
 	if (*refs->name)
-		packed_refs_file = git_path_submodule(refs->name, "packed-refs");
+		packed_refs_file = git_pathdup_submodule(refs->name, "packed-refs");
 	else
-		packed_refs_file = git_path("packed-refs");
+		packed_refs_file = git_pathdup("packed-refs");
 
 	if (refs->packed &&
 	    !stat_validity_check(&refs->packed->validity, packed_refs_file))
@@ -1312,6 +1312,7 @@ static struct packed_ref_cache *get_packed_ref_cache(struct ref_cache *refs)
 			fclose(f);
 		}
 	}
+	free(packed_refs_file);
 	return refs->packed;
 }
 
@@ -1481,14 +1482,15 @@ static int resolve_gitlink_ref_recursive(struct ref_cache *refs,
 {
 	int fd, len;
 	char buffer[128], *p;
-	const char *path;
+	char *path;
 
 	if (recursion > MAXDEPTH || strlen(refname) > MAXREFLEN)
 		return -1;
 	path = *refs->name
-		? git_path_submodule(refs->name, "%s", refname)
-		: git_path("%s", refname);
+		? git_pathdup_submodule(refs->name, "%s", refname)
+		: git_pathdup("%s", refname);
 	fd = open(path, O_RDONLY);
+	free(path);
 	if (fd < 0)
 		return resolve_gitlink_packed_ref(refs, refname, sha1);
 

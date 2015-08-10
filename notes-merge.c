@@ -295,7 +295,7 @@ static void write_buf_to_worktree(const unsigned char *obj,
 				  const char *buf, unsigned long size)
 {
 	int fd;
-	const char *path = git_path(NOTES_MERGE_WORKTREE "/%s", sha1_to_hex(obj));
+	char *path = git_pathdup(NOTES_MERGE_WORKTREE "/%s", sha1_to_hex(obj));
 	if (safe_create_leading_directories_const(path))
 		die_errno("unable to create directory for '%s'", path);
 	if (file_exists(path))
@@ -320,6 +320,7 @@ static void write_buf_to_worktree(const unsigned char *obj,
 	}
 
 	close(fd);
+	free(path);
 }
 
 static void write_note_to_worktree(const unsigned char *obj,
