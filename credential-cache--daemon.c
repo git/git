@@ -221,7 +221,6 @@ static void serve_cache(const char *socket_path, int debug)
 		; /* nothing */
 
 	close(fd);
-	unlink(socket_path);
 }
 
 static const char permissions_advice[] =
@@ -279,6 +278,8 @@ int main(int argc, const char **argv)
 	sigchain_push_common(cleanup_socket_on_signal);
 
 	serve_cache(socket_path, debug);
+
+	unlink(socket_path);
 
 	return 0;
 }
