@@ -199,6 +199,7 @@ static const char *lock_repo_for_gc(int force, pid_t* ret_pid)
 	uintmax_t pid;
 	FILE *fp;
 	int fd;
+	char *pidfile_path;
 
 	if (pidfile)
 		/* already locked */
@@ -207,12 +208,13 @@ static const char *lock_repo_for_gc(int force, pid_t* ret_pid)
 	if (gethostname(my_host, sizeof(my_host)))
 		strcpy(my_host, "unknown");
 
-	fd = hold_lock_file_for_update(&lock, git_path("gc.pid"),
+	pidfile_path = git_pathdup("gc.pid");
+	fd = hold_lock_file_for_update(&lock, pidfile_path,
 				       LOCK_DIE_ON_ERROR);
 	if (!force) {
 		static char locking_host[128];
 		int should_exit;
-		fp = fopen(git_path("gc.pid"), "r");
+		fp = fopen(pidfile_path, "r");
 		memset(locking_host, 0, sizeof(locking_host));
 		should_exit =
 			fp != NULL &&
@@ -236,6 +238,7 @@ static const char *lock_repo_for_gc(int force, pid_t* ret_pid)
 			if (fd >= 0)
 				rollback_lock_file(&lock);
 			*ret_pid = pid;
+			free(pidfile_path);
 			return locking_host;
 		}
 	}
@@ -246,7 +249,7 @@ static const char *lock_repo_for_gc(int force, pid_t* ret_pid)
 	strbuf_release(&sb);
 	commit_lock_file(&lock);
 
-	pidfile = git_pathdup("gc.pid");
+	pidfile = pidfile_path;
 	sigchain_push_common(remove_pidfile_on_signal);
 	atexit(remove_pidfile);
 
