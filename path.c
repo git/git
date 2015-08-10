@@ -224,11 +224,10 @@ const char *mkpath(const char *fmt, ...)
 	return cleanup_path(pathname->buf);
 }
 
-const char *git_path_submodule(const char *path, const char *fmt, ...)
+static void do_submodule_path(struct strbuf *buf, const char *path,
+			      const char *fmt, va_list args)
 {
-	struct strbuf *buf = get_pathname();
 	const char *git_dir;
-	va_list args;
 
 	strbuf_addstr(buf, path);
 	if (buf->len && buf->buf[buf->len - 1] != '/')
@@ -242,11 +241,37 @@ const char *git_path_submodule(const char *path, const char *fmt, ...)
 	}
 	strbuf_addch(buf, '/');
 
-	va_start(args, fmt);
 	strbuf_vaddf(buf, fmt, args);
-	va_end(args);
 	strbuf_cleanup_path(buf);
+}
+
+const char *git_path_submodule(const char *path, const char *fmt, ...)
+{
+	va_list args;
+	struct strbuf *buf = get_pathname();
+	va_start(args, fmt);
+	do_submodule_path(buf, path, fmt, args);
+	va_end(args);
 	return buf->buf;
+}
+
+char *git_pathdup_submodule(const char *path, const char *fmt, ...)
+{
+	va_list args;
+	struct strbuf buf = STRBUF_INIT;
+	va_start(args, fmt);
+	do_submodule_path(&buf, path, fmt, args);
+	va_end(args);
+	return strbuf_detach(&buf, NULL);
+}
+
+void strbuf_git_path_submodule(struct strbuf *buf, const char *path,
+			       const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	do_submodule_path(buf, path, fmt, args);
+	va_end(args);
 }
 
 int validate_headref(const char *path)
