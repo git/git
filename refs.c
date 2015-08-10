@@ -2290,25 +2290,14 @@ static int verify_lock(struct ref_lock *lock,
 	return 0;
 }
 
-static int remove_empty_directories(const char *file)
+static int remove_empty_directories(struct strbuf *path)
 {
-	/* we want to create a file but there is a directory there;
+	/*
+	 * we want to create a file but there is a directory there;
 	 * if that is an empty directory (or a directory that contains
 	 * only empty directories), remove them.
 	 */
-	struct strbuf path;
-	int result, save_errno;
-
-	strbuf_init(&path, 20);
-	strbuf_addstr(&path, file);
-
-	result = remove_dir_recursively(&path, REMOVE_DIR_EMPTY_ONLY);
-	save_errno = errno;
-
-	strbuf_release(&path);
-	errno = save_errno;
-
-	return result;
+	return remove_dir_recursively(path, REMOVE_DIR_EMPTY_ONLY);
 }
 
 /*
@@ -2440,7 +2429,7 @@ static struct ref_lock *lock_ref_sha1_basic(const char *refname,
 		 * to remain.
 		 */
 		strbuf_git_path(&orig_ref_file, "%s", orig_refname);
-		if (remove_empty_directories(orig_ref_file.buf)) {
+		if (remove_empty_directories(&orig_ref_file)) {
 			last_errno = errno;
 			if (!verify_refname_available(orig_refname, extras, skip,
 						      get_loose_refs(&ref_cache), err))
@@ -2961,7 +2950,7 @@ static int rename_tmp_log(const char *newrefname)
 			 * directory ought to result in ISDIR, but
 			 * Solaris 5.8 gives ENOTDIR.  Sheesh.
 			 */
-			if (remove_empty_directories(path.buf)) {
+			if (remove_empty_directories(&path)) {
 				error("Directory not empty: logs/%s", newrefname);
 				goto out;
 			}
@@ -3046,7 +3035,14 @@ int rename_ref(const char *oldrefname, const char *newrefname, const char *logms
 	if (!read_ref_full(newrefname, RESOLVE_REF_READING, sha1, NULL) &&
 	    delete_ref(newrefname, sha1, REF_NODEREF)) {
 		if (errno==EISDIR) {
-			if (remove_empty_directories(git_path("%s", newrefname))) {
+			struct strbuf path = STRBUF_INIT;
+			int result;
+
+			strbuf_git_path(&path, "%s", newrefname);
+			result = remove_empty_directories(&path);
+			strbuf_release(&path);
+
+			if (result) {
 				error("Directory not empty: %s", newrefname);
 				goto rollback;
 			}
@@ -3183,7 +3179,7 @@ static int log_ref_setup(const char *refname, struct strbuf *logfile, struct str
 			return 0;
 
 		if (errno == EISDIR) {
-			if (remove_empty_directories(logfile->buf)) {
+			if (remove_empty_directories(logfile)) {
 				strbuf_addf(err, "There are still logs under "
 					    "'%s'", logfile->buf);
 				return -1;
