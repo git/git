@@ -120,6 +120,11 @@ test_expect_success 'cloning with reference being subset of source (-l -s)' '
 	git clone -l -s --reference A B E
 '
 
+test_expect_success 'cloning with multiple references drops duplicates' '
+	git clone -s --reference B --reference A --reference B A dups &&
+	test_line_count = 2 dups/.git/objects/info/alternates
+'
+
 test_expect_success 'clone with reference from a tagged repository' '
 	(
 		cd A && git tag -a -m tagged HEAD
