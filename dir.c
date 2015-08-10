@@ -2185,6 +2185,8 @@ int remove_dir_recursively(struct strbuf *path, int flag)
 	return remove_dir_recurse(path, flag, NULL);
 }
 
+static GIT_PATH_FUNC(git_path_info_exclude, "info/exclude")
+
 void setup_standard_excludes(struct dir_struct *dir)
 {
 	const char *path;
@@ -2199,7 +2201,7 @@ void setup_standard_excludes(struct dir_struct *dir)
 					 dir->untracked ? &dir->ss_excludes_file : NULL);
 
 	/* per repository user preference */
-	path = git_path("info/exclude");
+	path = git_path_info_exclude();
 	if (!access_or_warn(path, R_OK, 0))
 		add_excludes_from_file_1(dir, path,
 					 dir->untracked ? &dir->ss_info_exclude : NULL);

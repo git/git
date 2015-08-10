@@ -933,3 +933,13 @@ char *xdg_config_home(const char *filename)
 		return mkpathdup("%s/.config/git/%s", home, filename);
 	return NULL;
 }
+
+GIT_PATH_FUNC(git_path_cherry_pick_head, "CHERRY_PICK_HEAD")
+GIT_PATH_FUNC(git_path_revert_head, "REVERT_HEAD")
+GIT_PATH_FUNC(git_path_squash_msg, "SQUASH_MSG")
+GIT_PATH_FUNC(git_path_merge_msg, "MERGE_MSG")
+GIT_PATH_FUNC(git_path_merge_rr, "MERGE_RR")
+GIT_PATH_FUNC(git_path_merge_mode, "MERGE_MODE")
+GIT_PATH_FUNC(git_path_merge_head, "MERGE_HEAD")
+GIT_PATH_FUNC(git_path_fetch_head, "FETCH_HEAD")
+GIT_PATH_FUNC(git_path_shallow, "shallow")

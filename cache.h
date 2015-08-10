@@ -736,6 +736,32 @@ extern char *git_pathdup_submodule(const char *path, const char *fmt, ...)
 extern void report_linked_checkout_garbage(void);
 
 /*
+ * You can define a static memoized git path like:
+ *
+ *    static GIT_PATH_FUNC(git_path_foo, "FOO");
+ *
+ * or use one of the global ones below.
+ */
+#define GIT_PATH_FUNC(func, filename) \
+	const char *func(void) \
+	{ \
+		static char *ret; \
+		if (!ret) \
+			ret = git_pathdup(filename); \
+		return ret; \
+	}
+
+const char *git_path_cherry_pick_head(void);
+const char *git_path_revert_head(void);
+const char *git_path_squash_msg(void);
+const char *git_path_merge_msg(void);
+const char *git_path_merge_rr(void);
+const char *git_path_merge_mode(void);
+const char *git_path_merge_head(void);
+const char *git_path_fetch_head(void);
+const char *git_path_shallow(void);
+
+/*
  * Return the name of the file in the local object database that would
  * be used to store a loose object with the specified sha1.  The
  * return value is a pointer to a statically allocated buffer that is
