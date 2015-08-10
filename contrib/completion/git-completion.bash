@@ -1887,6 +1887,7 @@ _git_config ()
 			--get --get-all --get-regexp
 			--add --unset --unset-all
 			--remove-section --rename-section
+			--name-only
 			"
 		return
 		;;
