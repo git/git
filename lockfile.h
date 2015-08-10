@@ -203,6 +203,12 @@ extern NORETURN void unable_to_lock_die(const char *path, int err);
  */
 extern FILE *fdopen_lock_file(struct lock_file *lk, const char *mode);
 
+/*
+ * Return the path of the lockfile. The return value is a pointer to a
+ * field within the lock_file object and should not be freed.
+ */
+extern const char *get_lock_file_path(struct lock_file *lk);
+
 extern int get_lock_file_fd(struct lock_file *lk);
 extern FILE *get_lock_file_fp(struct lock_file *lk);
 

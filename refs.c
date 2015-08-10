@@ -3184,7 +3184,7 @@ static int write_ref_to_lockfile(struct ref_lock *lock,
 	    write_in_full(fd, &term, 1) != 1 ||
 	    close_ref(lock) < 0) {
 		int save_errno = errno;
-		error("Couldn't write %s", lock->lk->filename.buf);
+		error("Couldn't write %s", get_lock_file_path(lock->lk));
 		unlock_ref(lock);
 		errno = save_errno;
 		return -1;
@@ -4241,7 +4241,7 @@ int reflog_expire(const char *refname, const unsigned char *sha1,
 		cb.newlog = fdopen_lock_file(&reflog_lock, "w");
 		if (!cb.newlog) {
 			error("cannot fdopen %s (%s)",
-			      reflog_lock.filename.buf, strerror(errno));
+			      get_lock_file_path(&reflog_lock), strerror(errno));
 			goto failure;
 		}
 	}
@@ -4271,7 +4271,7 @@ int reflog_expire(const char *refname, const unsigned char *sha1,
 			    write_str_in_full(get_lock_file_fd(lock->lk), "\n") != 1 ||
 			    close_ref(lock) < 0)) {
 			status |= error("couldn't write %s",
-					lock->lk->filename.buf);
+					get_lock_file_path(lock->lk));
 			rollback_lock_file(&reflog_lock);
 		} else if (commit_lock_file(&reflog_lock)) {
 			status |= error("unable to commit reflog '%s' (%s)",
