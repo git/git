@@ -2,90 +2,8 @@
  * Copyright (c) 2005, Junio C Hamano
  */
 
-/*
- * State diagram and cleanup
- * -------------------------
- *
- * This module keeps track of all locked files in `lock_file_list` for
- * use at cleanup. This list and the `lock_file` objects that comprise
- * it must be kept in self-consistent states at all time, because the
- * program can be interrupted any time by a signal, in which case the
- * signal handler will walk through the list attempting to clean up
- * any open lock files.
- *
- * The possible states of a `lock_file` object are as follows:
- *
- * - Uninitialized. In this state the object's `on_list` field must be
- *   zero but the rest of its contents need not be initialized. As
- *   soon as the object is used in any way, it is irrevocably
- *   registered in `lock_file_list`, and `on_list` is set.
- *
- * - Locked, lockfile open (after `hold_lock_file_for_update()`,
- *   `hold_lock_file_for_append()`, or `reopen_lock_file()`). In this
- *   state:
- *
- *   - the lockfile exists
- *   - `active` is set
- *   - `filename` holds the filename of the lockfile
- *   - `fd` holds a file descriptor open for writing to the lockfile
- *   - `fp` holds a pointer to an open `FILE` object if and only if
- *     `fdopen_lock_file()` has been called on the object
- *   - `owner` holds the PID of the process that locked the file
- *
- * - Locked, lockfile closed (after successful `close_lock_file()`).
- *   Same as the previous state, except that the lockfile is closed
- *   and `fd` is -1.
- *
- * - Unlocked (after `commit_lock_file()`, `commit_lock_file_to()`,
- *   `rollback_lock_file()`, a failed attempt to lock, or a failed
- *   `close_lock_file()`).  In this state:
- *
- *   - `active` is unset
- *   - `filename` is empty (usually, though there are transitory
- *     states in which this condition doesn't hold). Client code should
- *     *not* rely on the filename being empty in this state.
- *   - `fd` is -1
- *   - the object is left registered in the `lock_file_list`, and
- *     `on_list` is set.
- *
- * A lockfile is owned by the process that created it. The `lock_file`
- * has an `owner` field that records the owner's PID. This field is
- * used to prevent a forked process from closing a lockfile created by
- * its parent.
- */
-
 #include "cache.h"
 #include "lockfile.h"
-#include "sigchain.h"
-
-static struct lock_file *volatile lock_file_list;
-
-static void remove_lock_files(int skip_fclose)
-{
-	pid_t me = getpid();
-
-	while (lock_file_list) {
-		if (lock_file_list->owner == me) {
-			/* fclose() is not safe to call in a signal handler */
-			if (skip_fclose)
-				lock_file_list->fp = NULL;
-			rollback_lock_file(lock_file_list);
-		}
-		lock_file_list = lock_file_list->next;
-	}
-}
-
-static void remove_lock_files_on_exit(void)
-{
-	remove_lock_files(0);
-}
-
-static void remove_lock_files_on_signal(int signo)
-{
-	remove_lock_files(1);
-	sigchain_pop(signo);
-	raise(signo);
-}
 
 /*
  * path = absolute or relative path name
@@ -154,60 +72,17 @@ static void resolve_symlink(struct strbuf *path)
 /* Make sure errno contains a meaningful value on error */
 static int lock_file(struct lock_file *lk, const char *path, int flags)
 {
-	size_t pathlen = strlen(path);
+	int fd;
+	struct strbuf filename = STRBUF_INIT;
 
-	if (!lock_file_list) {
-		/* One-time initialization */
-		sigchain_push_common(remove_lock_files_on_signal);
-		atexit(remove_lock_files_on_exit);
-	}
+	strbuf_addstr(&filename, path);
+	if (!(flags & LOCK_NO_DEREF))
+		resolve_symlink(&filename);
 
-	if (lk->active)
-		die("BUG: cannot lock_file(\"%s\") using active struct lock_file",
-		    path);
-	if (!lk->on_list) {
-		/* Initialize *lk and add it to lock_file_list: */
-		lk->fd = -1;
-		lk->fp = NULL;
-		lk->active = 0;
-		lk->owner = 0;
-		strbuf_init(&lk->filename, pathlen + LOCK_SUFFIX_LEN);
-		lk->next = lock_file_list;
-		lock_file_list = lk;
-		lk->on_list = 1;
-	} else if (lk->filename.len) {
-		/* This shouldn't happen, but better safe than sorry. */
-		die("BUG: lock_file(\"%s\") called with improperly-reset lock_file object",
-		    path);
-	}
-
-	if (flags & LOCK_NO_DEREF) {
-		strbuf_add_absolute_path(&lk->filename, path);
-	} else {
-		struct strbuf resolved_path = STRBUF_INIT;
-
-		strbuf_add(&resolved_path, path, pathlen);
-		resolve_symlink(&resolved_path);
-		strbuf_add_absolute_path(&lk->filename, resolved_path.buf);
-		strbuf_release(&resolved_path);
-	}
-
-	strbuf_addstr(&lk->filename, LOCK_SUFFIX);
-	lk->fd = open(lk->filename.buf, O_RDWR | O_CREAT | O_EXCL, 0666);
-	if (lk->fd < 0) {
-		strbuf_reset(&lk->filename);
-		return -1;
-	}
-	lk->owner = getpid();
-	lk->active = 1;
-	if (adjust_shared_perm(lk->filename.buf)) {
-		int save_errno = errno;
-		error("cannot fix permission bits on %s", lk->filename.buf);
-		rollback_lock_file(lk);
-		errno = save_errno;
-		return -1;
-	}
-	return lk->fd;
+	strbuf_addstr(&filename, LOCK_SUFFIX);
+	fd = create_tempfile(&lk->tempfile, filename.buf);
+	strbuf_release(&filename);
+	return fd;
 }
 
 static int sleep_microseconds(long us)
@@ -353,109 +228,17 @@ int hold_lock_file_for_append(struct lock_file *lk, const char *path, int flags)
 	return fd;
 }
 
-FILE *fdopen_lock_file(struct lock_file *lk, const char *mode)
-{
-	if (!lk->active)
-		die("BUG: fdopen_lock_file() called for unlocked object");
-	if (lk->fp)
-		die("BUG: fdopen_lock_file() called twice for file '%s'", lk->filename.buf);
-
-	lk->fp = fdopen(lk->fd, mode);
-	return lk->fp;
-}
-
-const char *get_lock_file_path(struct lock_file *lk)
-{
-	if (!lk->active)
-		die("BUG: get_lock_file_path() called for unlocked object");
-	return lk->filename.buf;
-}
-
-int get_lock_file_fd(struct lock_file *lk)
-{
-	if (!lk->active)
-		die("BUG: get_lock_file_fd() called for unlocked object");
-	return lk->fd;
-}
-
-FILE *get_lock_file_fp(struct lock_file *lk)
-{
-	if (!lk->active)
-		die("BUG: get_lock_file_fp() called for unlocked object");
-	return lk->fp;
-}
-
 char *get_locked_file_path(struct lock_file *lk)
 {
-	if (!lk->active)
-		die("BUG: get_locked_file_path() called for unlocked object");
-	if (lk->filename.len <= LOCK_SUFFIX_LEN ||
-	    strcmp(lk->filename.buf + lk->filename.len - LOCK_SUFFIX_LEN, LOCK_SUFFIX))
+	struct strbuf ret = STRBUF_INIT;
+
+	strbuf_addstr(&ret, get_tempfile_path(&lk->tempfile));
+	if (ret.len <= LOCK_SUFFIX_LEN ||
+	    strcmp(ret.buf + ret.len - LOCK_SUFFIX_LEN, LOCK_SUFFIX))
 		die("BUG: get_locked_file_path() called for malformed lock object");
 	/* remove ".lock": */
-	return xmemdupz(lk->filename.buf, lk->filename.len - LOCK_SUFFIX_LEN);
-}
-
-int close_lock_file(struct lock_file *lk)
-{
-	int fd = lk->fd;
-	FILE *fp = lk->fp;
-	int err;
-
-	if (fd < 0)
-		return 0;
-
-	lk->fd = -1;
-	if (fp) {
-		lk->fp = NULL;
-
-		/*
-		 * Note: no short-circuiting here; we want to fclose()
-		 * in any case!
-		 */
-		err = ferror(fp) | fclose(fp);
-	} else {
-		err = close(fd);
-	}
-
-	if (err) {
-		int save_errno = errno;
-		rollback_lock_file(lk);
-		errno = save_errno;
-		return -1;
-	}
-
-	return 0;
-}
-
-int reopen_lock_file(struct lock_file *lk)
-{
-	if (0 <= lk->fd)
-		die(_("BUG: reopen a lockfile that is still open"));
-	if (!lk->active)
-		die(_("BUG: reopen a lockfile that has been committed"));
-	lk->fd = open(lk->filename.buf, O_WRONLY);
-	return lk->fd;
-}
-
-int commit_lock_file_to(struct lock_file *lk, const char *path)
-{
-	if (!lk->active)
-		die("BUG: attempt to commit unlocked object to \"%s\"", path);
-
-	if (close_lock_file(lk))
-		return -1;
-
-	if (rename(lk->filename.buf, path)) {
-		int save_errno = errno;
-		rollback_lock_file(lk);
-		errno = save_errno;
-		return -1;
-	}
-
-	lk->active = 0;
-	strbuf_reset(&lk->filename);
-	return 0;
+	strbuf_setlen(&ret, ret.len - LOCK_SUFFIX_LEN);
+	return strbuf_detach(&ret, NULL);
 }
 
 int commit_lock_file(struct lock_file *lk)
@@ -470,16 +253,4 @@ int commit_lock_file(struct lock_file *lk)
 	}
 	free(result_path);
 	return 0;
-}
-
-void rollback_lock_file(struct lock_file *lk)
-{
-	if (!lk->active)
-		return;
-
-	if (!close_lock_file(lk)) {
-		unlink_or_warn(lk->filename.buf);
-		lk->active = 0;
-		strbuf_reset(&lk->filename);
-	}
 }

@@ -29,6 +29,8 @@
  * the file or the new contents of the file (assuming that the
  * filesystem implements `rename(2)` atomically).
  *
+ * Most of the heavy lifting is done by the tempfile module (see
+ * "tempfile.h").
  *
  * Calling sequence
  * ----------------
@@ -74,19 +76,19 @@
  * `hold_lock_file_for_update()` or `hold_lock_file_for_append()`.
  *
  * If the program exits before `commit_lock_file()`,
- * `commit_lock_file_to()`, or `rollback_lock_file()` is called, an
- * `atexit(3)` handler will close and remove the lockfile, thereby
- * rolling back any uncommitted changes.
+ * `commit_lock_file_to()`, or `rollback_lock_file()` is called, the
+ * tempfile module will close and remove the lockfile, thereby rolling
+ * back any uncommitted changes.
  *
  * If you need to close the file descriptor you obtained from a
  * `hold_lock_file_for_*()` function yourself, do so by calling
- * `close_lock_file()`. You should never call `close(2)` or
- * `fclose(3)` yourself, otherwise the `struct lock_file` structure
- * would still think that the file descriptor needs to be closed, and
- * a commit or rollback would result in duplicate calls to `close(2)`.
- * Worse yet, if you close and then later open another file descriptor
- * for a completely different purpose, then a commit or rollback might
- * close that unrelated file descriptor.
+ * `close_lock_file()`. See "tempfile.h" for more information.
+ *
+ *
+ * Under the covers, a lockfile is just a tempfile with a few helper
+ * functions. In particular, the state diagram and the cleanup
+ * machinery are all implemented in the tempfile module.
+ *
  *
  * Error handling
  * --------------
@@ -103,14 +105,10 @@
  * -1.
  */
 
+#include "tempfile.h"
+
 struct lock_file {
-	struct lock_file *volatile next;
-	volatile sig_atomic_t active;
-	volatile int fd;
-	FILE *volatile fp;
-	volatile pid_t owner;
-	char on_list;
-	struct strbuf filename;
+	struct tempfile tempfile;
 };
 
 /* String appended to a filename to derive the lockfile name: */
@@ -201,16 +199,29 @@ extern NORETURN void unable_to_lock_die(const char *path, int err);
  * error. The stream is closed automatically when `close_lock_file()`
  * is called or when the file is committed or rolled back.
  */
-extern FILE *fdopen_lock_file(struct lock_file *lk, const char *mode);
+static inline FILE *fdopen_lock_file(struct lock_file *lk, const char *mode)
+{
+	return fdopen_tempfile(&lk->tempfile, mode);
+}
 
 /*
  * Return the path of the lockfile. The return value is a pointer to a
  * field within the lock_file object and should not be freed.
  */
-extern const char *get_lock_file_path(struct lock_file *lk);
+static inline const char *get_lock_file_path(struct lock_file *lk)
+{
+	return get_tempfile_path(&lk->tempfile);
+}
 
-extern int get_lock_file_fd(struct lock_file *lk);
-extern FILE *get_lock_file_fp(struct lock_file *lk);
+static inline int get_lock_file_fd(struct lock_file *lk)
+{
+	return get_tempfile_fd(&lk->tempfile);
+}
+
+static inline FILE *get_lock_file_fp(struct lock_file *lk)
+{
+	return get_tempfile_fp(&lk->tempfile);
+}
 
 /*
  * Return the path of the file that is locked by the specified
@@ -227,7 +238,10 @@ extern char *get_locked_file_path(struct lock_file *lk);
  * or `rollback_lock_file()` should eventually be called if
  * `close_lock_file()` succeeds.
  */
-extern int close_lock_file(struct lock_file *lk);
+static inline int close_lock_file(struct lock_file *lk)
+{
+	return close_tempfile(&lk->tempfile);
+}
 
 /*
  * Re-open a lockfile that has been closed using `close_lock_file()`
@@ -248,7 +262,10 @@ extern int close_lock_file(struct lock_file *lk);
  *
  * * `commit_lock_file()` to make the final version permanent.
  */
-extern int reopen_lock_file(struct lock_file *lk);
+static inline int reopen_lock_file(struct lock_file *lk)
+{
+	return reopen_tempfile(&lk->tempfile);
+}
 
 /*
  * Commit the change represented by `lk`: close the file descriptor
@@ -265,7 +282,10 @@ extern int commit_lock_file(struct lock_file *lk);
  * Like `commit_lock_file()`, but rename the lockfile to the provided
  * `path`. `path` must be on the same filesystem as the lock file.
  */
-extern int commit_lock_file_to(struct lock_file *lk, const char *path);
+static inline int commit_lock_file_to(struct lock_file *lk, const char *path)
+{
+	return rename_tempfile(&lk->tempfile, path);
+}
 
 /*
  * Roll back `lk`: close the file descriptor and/or file pointer and
@@ -273,6 +293,9 @@ extern int commit_lock_file_to(struct lock_file *lk, const char *path);
  * for a `lock_file` object that has already been committed or rolled
  * back.
  */
-extern void rollback_lock_file(struct lock_file *lk);
+static inline void rollback_lock_file(struct lock_file *lk)
+{
+	delete_tempfile(&lk->tempfile);
+}
 
 #endif /* LOCKFILE_H */
