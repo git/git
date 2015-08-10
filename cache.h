@@ -708,6 +708,18 @@ extern int check_repository_format(void);
 #define DATA_CHANGED    0x0020
 #define TYPE_CHANGED    0x0040
 
+/*
+ * Return a statically allocated filename, either generically (mkpath), in
+ * the repository directory (git_path), or in a submodule's repository
+ * directory (git_path_submodule). In all cases, note that the result
+ * may be overwritten by another call to _any_ of the functions. Consider
+ * using the safer "dup" or "strbuf" formats below.
+ */
+extern const char *mkpath(const char *fmt, ...) __attribute__((format (printf, 1, 2)));
+extern const char *git_path(const char *fmt, ...) __attribute__((format (printf, 1, 2)));
+extern const char *git_path_submodule(const char *path, const char *fmt, ...)
+	__attribute__((format (printf, 2, 3)));
+
 extern char *mksnpath(char *buf, size_t n, const char *fmt, ...)
 	__attribute__((format (printf, 3, 4)));
 extern void strbuf_git_path(struct strbuf *sb, const char *fmt, ...)
@@ -717,11 +729,6 @@ extern char *git_pathdup(const char *fmt, ...)
 extern char *mkpathdup(const char *fmt, ...)
 	__attribute__((format (printf, 1, 2)));
 
-/* Return a statically allocated filename matching the sha1 signature */
-extern const char *mkpath(const char *fmt, ...) __attribute__((format (printf, 1, 2)));
-extern const char *git_path(const char *fmt, ...) __attribute__((format (printf, 1, 2)));
-extern const char *git_path_submodule(const char *path, const char *fmt, ...)
-	__attribute__((format (printf, 2, 3)));
 extern void report_linked_checkout_garbage(void);
 
 /*
