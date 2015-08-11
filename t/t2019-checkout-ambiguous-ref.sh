@@ -69,7 +69,7 @@ test_expect_success 'wildcard ambiguation, paths win' '
 	)
 '
 
-test_expect_success 'wildcard ambiguation, refs lose' '
+test_expect_success !MINGW 'wildcard ambiguation, refs lose' '
 	git init ambi2 &&
 	(
 		cd ambi2 &&
