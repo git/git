@@ -923,12 +923,12 @@ static char *keep_pack(const char *curr_index_name)
 
 	snprintf(name, sizeof(name), "%s/pack/pack-%s.pack",
 		 get_object_directory(), sha1_to_hex(pack_data->sha1));
-	if (move_temp_to_file(pack_data->pack_name, name))
+	if (finalize_object_file(pack_data->pack_name, name))
 		die("cannot store pack file");
 
 	snprintf(name, sizeof(name), "%s/pack/pack-%s.idx",
 		 get_object_directory(), sha1_to_hex(pack_data->sha1));
-	if (move_temp_to_file(curr_index_name, name))
+	if (finalize_object_file(curr_index_name, name))
 		die("cannot store index file");
 	free((void *)curr_index_name);
 	return name;
