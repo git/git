@@ -99,49 +99,64 @@ static const char *argv_submodule[] = {
 	"submodule", "update", "--init", "--recursive", NULL
 };
 
-static char *get_repo_path(const char *repo, int *is_bundle)
+static const char *get_repo_path_1(struct strbuf *path, int *is_bundle)
 {
 	static char *suffix[] = { "/.git", "", ".git/.git", ".git" };
 	static char *bundle_suffix[] = { ".bundle", "" };
+	size_t baselen = path->len;
 	struct stat st;
 	int i;
 
 	for (i = 0; i < ARRAY_SIZE(suffix); i++) {
-		const char *path;
-		path = mkpath("%s%s", repo, suffix[i]);
-		if (stat(path, &st))
+		strbuf_setlen(path, baselen);
+		strbuf_addstr(path, suffix[i]);
+		if (stat(path->buf, &st))
 			continue;
-		if (S_ISDIR(st.st_mode) && is_git_directory(path)) {
+		if (S_ISDIR(st.st_mode) && is_git_directory(path->buf)) {
 			*is_bundle = 0;
-			return xstrdup(absolute_path(path));
+			return path->buf;
 		} else if (S_ISREG(st.st_mode) && st.st_size > 8) {
 			/* Is it a "gitfile"? */
 			char signature[8];
-			int len, fd = open(path, O_RDONLY);
+			const char *dst;
+			int len, fd = open(path->buf, O_RDONLY);
 			if (fd < 0)
 				continue;
 			len = read_in_full(fd, signature, 8);
 			close(fd);
 			if (len != 8 || strncmp(signature, "gitdir: ", 8))
 				continue;
-			path = read_gitfile(path);
-			if (path) {
+			dst = read_gitfile(path->buf);
+			if (dst) {
 				*is_bundle = 0;
-				return xstrdup(absolute_path(path));
+				return dst;
 			}
 		}
 	}
 
 	for (i = 0; i < ARRAY_SIZE(bundle_suffix); i++) {
-		const char *path;
-		path = mkpath("%s%s", repo, bundle_suffix[i]);
-		if (!stat(path, &st) && S_ISREG(st.st_mode)) {
+		strbuf_setlen(path, baselen);
+		strbuf_addstr(path, bundle_suffix[i]);
+		if (!stat(path->buf, &st) && S_ISREG(st.st_mode)) {
 			*is_bundle = 1;
-			return xstrdup(absolute_path(path));
+			return path->buf;
 		}
 	}
 
 	return NULL;
+}
+
+static char *get_repo_path(const char *repo, int *is_bundle)
+{
+	struct strbuf path = STRBUF_INIT;
+	const char *raw;
+	char *canon;
+
+	strbuf_addstr(&path, repo);
+	raw = get_repo_path_1(&path, is_bundle);
+	canon = raw ? xstrdup(absolute_path(raw)) : NULL;
+	strbuf_release(&path);
+	return canon;
 }
 
 static char *guess_dir_name(const char *repo, int is_bundle, int is_bare)

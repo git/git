@@ -948,7 +948,7 @@ static void update_shallow(struct fetch_pack_args *args,
 
 	if (args->depth > 0 && alternate_shallow_file) {
 		if (*alternate_shallow_file == '\0') { /* --unshallow */
-			unlink_or_warn(git_path("shallow"));
+			unlink_or_warn(git_path_shallow());
 			rollback_lock_file(&shallow_lock);
 		} else
 			commit_lock_file(&shallow_lock);

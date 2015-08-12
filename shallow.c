@@ -48,7 +48,7 @@ int is_repository_shallow(void)
 		return is_shallow;
 
 	if (!path)
-		path = git_path("shallow");
+		path = git_path_shallow();
 	/*
 	 * fetch-pack sets '--shallow-file ""' as an indicator that no
 	 * shallow file should be used. We could just open it and it
@@ -142,7 +142,7 @@ static void check_shallow_file_for_update(void)
 	if (is_shallow == -1)
 		die("BUG: shallow must be initialized by now");
 
-	if (!stat_validity_check(&shallow_stat, git_path("shallow")))
+	if (!stat_validity_check(&shallow_stat, git_path_shallow()))
 		die("shallow file has changed since we read it");
 }
 
@@ -261,7 +261,7 @@ void setup_alternate_shallow(struct lock_file *shallow_lock,
 	struct strbuf sb = STRBUF_INIT;
 	int fd;
 
-	fd = hold_lock_file_for_update(shallow_lock, git_path("shallow"),
+	fd = hold_lock_file_for_update(shallow_lock, git_path_shallow(),
 				       LOCK_DIE_ON_ERROR);
 	check_shallow_file_for_update();
 	if (write_shallow_commits(&sb, 0, extra)) {
@@ -308,7 +308,7 @@ void prune_shallow(int show_only)
 		strbuf_release(&sb);
 		return;
 	}
-	fd = hold_lock_file_for_update(&shallow_lock, git_path("shallow"),
+	fd = hold_lock_file_for_update(&shallow_lock, git_path_shallow(),
 				       LOCK_DIE_ON_ERROR);
 	check_shallow_file_for_update();
 	if (write_shallow_commits_1(&sb, 0, NULL, SEEN_ONLY)) {
@@ -317,7 +317,7 @@ void prune_shallow(int show_only)
 				  shallow_lock.filename.buf);
 		commit_lock_file(&shallow_lock);
 	} else {
-		unlink(git_path("shallow"));
+		unlink(git_path_shallow());
 		rollback_lock_file(&shallow_lock);
 	}
 	strbuf_release(&sb);

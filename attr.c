@@ -490,6 +490,8 @@ static int git_attr_system(void)
 	return !git_env_bool("GIT_ATTR_NOSYSTEM", 0);
 }
 
+static GIT_PATH_FUNC(git_path_info_attributes, INFOATTRIBUTES_FILE)
+
 static void bootstrap_attr_stack(void)
 {
 	struct attr_stack *elem;
@@ -531,7 +533,7 @@ static void bootstrap_attr_stack(void)
 		debug_push(elem);
 	}
 
-	elem = read_attr_from_file(git_path(INFOATTRIBUTES_FILE), 1);
+	elem = read_attr_from_file(git_path_info_attributes(), 1);
 	if (!elem)
 		elem = xcalloc(1, sizeof(*elem));
 	elem->origin = NULL;
