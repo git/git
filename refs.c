@@ -3401,6 +3401,7 @@ static int write_ref_to_lockfile(struct ref_lock *lock,
 {
 	static char term = '\n';
 	struct object *o;
+	int fd;
 
 	o = parse_object(sha1);
 	if (!o) {
@@ -3417,11 +3418,12 @@ static int write_ref_to_lockfile(struct ref_lock *lock,
 		unlock_ref(lock);
 		return -1;
 	}
-	if (write_in_full(lock->lk->fd, sha1_to_hex(sha1), 40) != 40 ||
-	    write_in_full(lock->lk->fd, &term, 1) != 1 ||
+	fd = get_lock_file_fd(lock->lk);
+	if (write_in_full(fd, sha1_to_hex(sha1), 40) != 40 ||
+	    write_in_full(fd, &term, 1) != 1 ||
 	    close_ref(lock) < 0) {
 		strbuf_addf(err,
-			    "Couldn't write %s", lock->lk->filename.buf);
+			    "Couldn't write %s", get_lock_file_path(lock->lk));
 		unlock_ref(lock);
 		return -1;
 	}
@@ -4608,7 +4610,7 @@ int reflog_expire(const char *refname, const unsigned char *sha1,
 		cb.newlog = fdopen_lock_file(&reflog_lock, "w");
 		if (!cb.newlog) {
 			error("cannot fdopen %s (%s)",
-			      reflog_lock.filename.buf, strerror(errno));
+			      get_lock_file_path(&reflog_lock), strerror(errno));
 			goto failure;
 		}
 	}
@@ -4633,12 +4635,12 @@ int reflog_expire(const char *refname, const unsigned char *sha1,
 			status |= error("couldn't write %s: %s", log_file,
 					strerror(errno));
 		} else if (update &&
-			   (write_in_full(lock->lk->fd,
+			   (write_in_full(get_lock_file_fd(lock->lk),
 				sha1_to_hex(cb.last_kept_sha1), 40) != 40 ||
-			 write_str_in_full(lock->lk->fd, "\n") != 1 ||
-			 close_ref(lock) < 0)) {
+			    write_str_in_full(get_lock_file_fd(lock->lk), "\n") != 1 ||
+			    close_ref(lock) < 0)) {
 			status |= error("couldn't write %s",
-					lock->lk->filename.buf);
+					get_lock_file_path(lock->lk));
 			rollback_lock_file(&reflog_lock);
 		} else if (commit_lock_file(&reflog_lock)) {
 			status |= error("unable to commit reflog '%s' (%s)",

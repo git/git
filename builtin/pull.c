@@ -15,6 +15,7 @@
 #include "dir.h"
 #include "refs.h"
 #include "revision.h"
+#include "tempfile.h"
 #include "lockfile.h"
 
 enum rebase_type {
