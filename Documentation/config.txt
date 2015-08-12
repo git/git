@@ -1434,7 +1434,7 @@ gui.diffContext::
 	made by the linkgit:git-gui[1]. The default is "5".
 
 gui.displayUntracked::
-	Determines if linkgit::git-gui[1] shows untracked files
+	Determines if linkgit:git-gui[1] shows untracked files
 	in the file list. The default is "true".
 
 gui.encoding::
