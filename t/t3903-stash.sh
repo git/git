@@ -672,7 +672,7 @@ test_expect_success 'store updates stash ref and reflog' '
 	! grep quux bazzy &&
 	git stash store -m quuxery $STASH_ID &&
 	test $(cat .git/refs/stash) = $STASH_ID &&
-	grep $STASH_ID .git/logs/refs/stash &&
+	git reflog --format=%H stash| grep $STASH_ID &&
 	git stash pop &&
 	grep quux bazzy
 '

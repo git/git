@@ -169,7 +169,7 @@ test_expect_success 'create packed foo/bar/baz branch' '
 	git branch foo/bar/baz &&
 	git pack-refs --all --prune &&
 	test_path_is_missing .git/refs/heads/foo/bar/baz &&
-	test_path_is_missing .git/logs/refs/heads/foo/bar/baz
+	test_must_fail git reflog exists refs/heads/foo/bar/baz
 '
 
 test_expect_success 'notice d/f conflict with existing directory' '
