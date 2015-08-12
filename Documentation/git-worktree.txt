@@ -3,7 +3,7 @@ git-worktree(1)
 
 NAME
 ----
-git-worktree - Manage multiple worktrees
+git-worktree - Manage multiple working trees
 
 
 SYNOPSIS
@@ -15,7 +15,7 @@ SYNOPSIS
 DESCRIPTION
 -----------
 
-Manage multiple worktrees attached to the same repository.
+Manage multiple working trees attached to the same repository.
 
 A git repository can support multiple working trees, allowing you to check
 out more than one branch at a time.  With `git worktree add` a new working
@@ -27,19 +27,19 @@ bare repository) and zero or more linked working trees.
 When you are done with a linked working tree you can simply delete it.
 The working tree's administrative files in the repository (see
 "DETAILS" below) will eventually be removed automatically (see
-`gc.pruneworktreesexpire` in linkgit::git-config[1]), or you can run
+`gc.worktreePruneExpire` in linkgit::git-config[1]), or you can run
 `git worktree prune` in the main or any linked working tree to
 clean up any stale administrative files.
 
-If you move a linked working directory to another file system, or
+If you move a linked working tree to another file system, or
 within a file system that does not support hard links, you need to run
-at least one git command inside the linked working directory
+at least one git command inside the linked working tree
 (e.g. `git status`) in order to update its administrative files in the
 repository so that they do not get automatically pruned.
 
 If a linked working tree is stored on a portable device or network share
 which is not always mounted, you can prevent its administrative files from
-being pruned by creating a file named 'lock' alongside the other
+being pruned by creating a file named 'locked' alongside the other
 administrative files, optionally containing a plain text reason that
 pruning should be suppressed. See section "DETAILS" for more information.
 
@@ -64,22 +64,22 @@ OPTIONS
 
 -f::
 --force::
-	By default, `add` refuses to create a new worktree when	`<branch>`
-	is already checked out by another worktree. This option overrides
+	By default, `add` refuses to create a new working tree when `<branch>`
+	is already checked out by another working tree. This option overrides
 	that safeguard.
 
 -b <new-branch>::
 -B <new-branch>::
 	With `add`, create a new branch named `<new-branch>` starting at
-	`<branch>`, and check out `<new-branch>` into the new worktree.
+	`<branch>`, and check out `<new-branch>` into the new working tree.
 	If `<branch>` is omitted, it defaults to HEAD.
 	By default, `-b` refuses to create a new branch if it already
 	exists. `-B` overrides this safeguard, resetting `<new-branch>` to
 	`<branch>`.
 
 --detach::
-	With `add`, detach HEAD in the new worktree. See "DETACHED HEAD" in
-	linkgit:git-checkout[1].
+	With `add`, detach HEAD in the new working tree. See "DETACHED HEAD"
+	in linkgit:git-checkout[1].
 
 -n::
 --dry-run::
@@ -91,7 +91,7 @@ OPTIONS
 	With `prune`, report all removals.
 
 --expire <time>::
-	With `prune`, only expire unused worktrees older than <time>.
+	With `prune`, only expire unused working trees older than <time>.
 
 DETAILS
 -------
@@ -139,9 +139,9 @@ EXAMPLES
 You are in the middle of a refactoring session and your boss comes in and
 demands that you fix something immediately. You might typically use
 linkgit:git-stash[1] to store your changes away temporarily, however, your
-worktree is in such a state of disarray (with new, moved, and removed files,
-and other bits and pieces strewn around) that you don't want to risk
-disturbing any of it. Instead, you create a temporary linked worktree to
+working tree is in such a state of disarray (with new, moved, and removed
+files, and other bits and pieces strewn around) that you don't want to risk
+disturbing any of it. Instead, you create a temporary linked working tree to
 make the emergency fix, remove it when done, and then resume your earlier
 refactoring session.
 
@@ -164,12 +164,12 @@ checkouts of a superproject.
 git-worktree could provide more automation for tasks currently
 performed manually, such as:
 
-- `remove` to remove a linked worktree and its administrative files (and
-  warn if the worktree is dirty)
-- `mv` to move or rename a worktree and update its administrative files
-- `list` to list linked worktrees
+- `remove` to remove a linked working tree and its administrative files (and
+  warn if the working tree is dirty)
+- `mv` to move or rename a working tree and update its administrative files
+- `list` to list linked working trees
 - `lock` to prevent automatic pruning of administrative files (for instance,
-  for a worktree on a portable device)
+  for a working tree on a portable device)
 
 GIT
 ---
