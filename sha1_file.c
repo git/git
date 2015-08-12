@@ -3356,12 +3356,12 @@ static int for_each_file_in_obj_subdir(int subdir_nr,
 				break;
 		}
 	}
-	strbuf_setlen(path, baselen);
+	closedir(dir);
 
+	strbuf_setlen(path, baselen);
 	if (!r && subdir_cb)
 		r = subdir_cb(subdir_nr, path->buf, data);
 
-	closedir(dir);
 	return r;
 }
 
