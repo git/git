@@ -27,7 +27,7 @@ bare repository) and zero or more linked working trees.
 When you are done with a linked working tree you can simply delete it.
 The working tree's administrative files in the repository (see
 "DETAILS" below) will eventually be removed automatically (see
-`gc.worktreePruneExpire` in linkgit::git-config[1]), or you can run
+`gc.worktreePruneExpire` in linkgit:git-config[1]), or you can run
 `git worktree prune` in the main or any linked working tree to
 clean up any stale administrative files.
 
@@ -51,9 +51,9 @@ Create `<path>` and checkout `<branch>` into it. The new working directory
 is linked to the current repository, sharing everything except working
 directory specific files such as HEAD, index, etc.
 +
-If `<branch>` is omitted and neither `-b` nor `-B` is used, then, as a
-convenience, a new branch based at HEAD is created automatically, as if
-`-b $(basename <path>)` was specified.
+If `<branch>` is omitted and neither `-b` nor `-B` nor `--detached` used,
+then, as a convenience, a new branch based at HEAD is created automatically,
+as if `-b $(basename <path>)` was specified.
 
 prune::
 
@@ -124,7 +124,7 @@ thumb is do not make any assumption about whether a path belongs to
 $GIT_DIR or $GIT_COMMON_DIR when you need to directly access something
 inside $GIT_DIR. Use `git rev-parse --git-path` to get the final path.
 
-To prevent a $GIT_DIR/worktrees entry from from being pruned (which
+To prevent a $GIT_DIR/worktrees entry from being pruned (which
 can be useful in some situations, such as when the
 entry's working tree is stored on a portable device), add a file named
 'locked' to the entry's directory. The file contains the reason in

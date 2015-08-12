@@ -48,8 +48,6 @@ struct checkout_opts {
 	const char *prefix;
 	struct pathspec pathspec;
 	struct tree *source_tree;
-
-	int new_worktree_mode;
 };
 
 static int post_checkout_hook(struct commit *old, struct commit *new,
@@ -509,7 +507,7 @@ static int merge_working_tree(const struct checkout_opts *opts,
 			topts.dir->flags |= DIR_SHOW_IGNORED;
 			setup_standard_excludes(topts.dir);
 		}
-		tree = parse_tree_indirect(old->commit && !opts->new_worktree_mode ?
+		tree = parse_tree_indirect(old->commit ?
 					   old->commit->object.sha1 :
 					   EMPTY_TREE_SHA1_BIN);
 		init_tree_desc(&trees[0], tree->buffer, tree->size);
@@ -830,8 +828,7 @@ static int switch_branches(const struct checkout_opts *opts,
 		return ret;
 	}
 
-	if (!opts->quiet && !old.path && old.commit &&
-	    new->commit != old.commit && !opts->new_worktree_mode)
+	if (!opts->quiet && !old.path && old.commit && new->commit != old.commit)
 		orphaned_commit_warning(old.commit, new->commit);
 
 	update_refs_for_switch(opts, &old, new);
@@ -894,71 +891,6 @@ static const char *unique_tracking_name(const char *name, unsigned char *sha1)
 		return cb_data.dst_ref;
 	free(cb_data.dst_ref);
 	return NULL;
-}
-
-static void check_linked_checkout(struct branch_info *new, const char *id)
-{
-	struct strbuf sb = STRBUF_INIT;
-	struct strbuf path = STRBUF_INIT;
-	struct strbuf gitdir = STRBUF_INIT;
-	const char *start, *end;
-
-	if (id)
-		strbuf_addf(&path, "%s/worktrees/%s/HEAD", get_git_common_dir(), id);
-	else
-		strbuf_addf(&path, "%s/HEAD", get_git_common_dir());
-
-	if (strbuf_read_file(&sb, path.buf, 0) < 0 ||
-	    !skip_prefix(sb.buf, "ref:", &start))
-		goto done;
-	while (isspace(*start))
-		start++;
-	end = start;
-	while (*end && !isspace(*end))
-		end++;
-	if (strncmp(start, new->path, end - start) || new->path[end - start] != '\0')
-		goto done;
-	if (id) {
-		strbuf_reset(&path);
-		strbuf_addf(&path, "%s/worktrees/%s/gitdir", get_git_common_dir(), id);
-		if (strbuf_read_file(&gitdir, path.buf, 0) <= 0)
-			goto done;
-		strbuf_rtrim(&gitdir);
-	} else
-		strbuf_addstr(&gitdir, get_git_common_dir());
-	die(_("'%s' is already checked out at '%s'"), new->name, gitdir.buf);
-done:
-	strbuf_release(&path);
-	strbuf_release(&sb);
-	strbuf_release(&gitdir);
-}
-
-static void check_linked_checkouts(struct branch_info *new)
-{
-	struct strbuf path = STRBUF_INIT;
-	DIR *dir;
-	struct dirent *d;
-
-	strbuf_addf(&path, "%s/worktrees", get_git_common_dir());
-	if ((dir = opendir(path.buf)) == NULL) {
-		strbuf_release(&path);
-		return;
-	}
-
-	/*
-	 * $GIT_COMMON_DIR/HEAD is practically outside
-	 * $GIT_DIR so resolve_ref_unsafe() won't work (it
-	 * uses git_path). Parse the ref ourselves.
-	 */
-	check_linked_checkout(new, NULL);
-
-	while ((d = readdir(dir)) != NULL) {
-		if (!strcmp(d->d_name, ".") || !strcmp(d->d_name, ".."))
-			continue;
-		check_linked_checkout(new, d->d_name);
-	}
-	strbuf_release(&path);
-	closedir(dir);
 }
 
 static int parse_branchname_arg(int argc, const char **argv,
@@ -1168,14 +1100,14 @@ static int checkout_branch(struct checkout_opts *opts,
 		die(_("Cannot switch branch to a non-commit '%s'"),
 		    new->name);
 
-	if (new->path && !opts->force_detach && !opts->new_branch) {
+	if (new->path && !opts->force_detach && !opts->new_branch &&
+	    !opts->ignore_other_worktrees) {
 		unsigned char sha1[20];
 		int flag;
 		char *head_ref = resolve_refdup("HEAD", 0, sha1, &flag);
 		if (head_ref &&
-		    (!(flag & REF_ISSYMREF) || strcmp(head_ref, new->path)) &&
-		    !opts->ignore_other_worktrees)
-			check_linked_checkouts(new);
+		    (!(flag & REF_ISSYMREF) || strcmp(head_ref, new->path)))
+			die_if_checked_out(new->path);
 		free(head_ref);
 	}
 
@@ -1238,8 +1170,6 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 
 	argc = parse_options(argc, argv, prefix, options, checkout_usage,
 			     PARSE_OPT_KEEP_DASHDASH);
-
-	opts.new_worktree_mode = getenv("GIT_CHECKOUT_NEW_WORKTREE") != NULL;
 
 	if (conflict_style) {
 		opts.merge = 1; /* implied */

@@ -83,6 +83,14 @@ test_expect_success 'die the same branch is already checked out' '
 	)
 '
 
+test_expect_success SYMLINKS 'die the same branch is already checked out (symlink)' '
+	head=$(git -C there rev-parse --git-path HEAD) &&
+	ref=$(git -C there symbolic-ref HEAD) &&
+	rm "$head" &&
+	ln -s "$ref" "$head" &&
+	test_must_fail git -C here checkout newmaster
+'
+
 test_expect_success 'not die the same branch is already checked out' '
 	(
 		cd here &&
@@ -145,6 +153,14 @@ test_expect_success '"add -b" with <branch> omitted' '
 	test_cmp_rev HEAD burble
 '
 
+test_expect_success '"add --detach" with <branch> omitted' '
+	git worktree add --detach fishhook &&
+	git rev-parse HEAD >expected &&
+	git -C fishhook rev-parse HEAD >actual &&
+	test_cmp expected actual &&
+	test_must_fail git -C fishhook symbolic-ref HEAD
+'
+
 test_expect_success '"add" with <branch> omitted' '
 	git worktree add wiffle/bat &&
 	test_cmp_rev HEAD bat
@@ -157,6 +173,24 @@ test_expect_success '"add" auto-vivify does not clobber existing branch' '
 	test_must_fail git worktree add precious &&
 	test_cmp_rev HEAD~1 precious &&
 	test_path_is_missing precious
+'
+
+test_expect_success '"add" no auto-vivify with --detach and <branch> omitted' '
+	git worktree add --detach mish/mash &&
+	test_must_fail git rev-parse mash -- &&
+	test_must_fail git -C mish/mash symbolic-ref HEAD
+'
+
+test_expect_success '"add" -b/-B mutually exclusive' '
+	test_must_fail git worktree add -b poodle -B poodle bamboo master
+'
+
+test_expect_success '"add" -b/--detach mutually exclusive' '
+	test_must_fail git worktree add -b poodle --detach bamboo master
+'
+
+test_expect_success '"add" -B/--detach mutually exclusive' '
+	test_must_fail git worktree add -B poodle --detach bamboo master
 '
 
 test_done
