@@ -82,6 +82,19 @@ Performance, Internal Implementation, Development Support etc.
  * Ref listing by "git branch -l" and "git tag -l" commands has
    started to be rebuilt, based on the for-each-ref machinery.
 
+ * The code to perform multi-tree merges has been taught to repopulate
+   the cache-tree upon a successful merge into the index, so that
+   subsequent "diff-index --cached" (hence "status") and "write-tree"
+   (hence "commit") will go faster.
+
+   The same logic in "git checkout" may now be removed, but that is a
+   separate issue.
+
+ * Tests that assume how reflogs are represented on the filesystem too
+   much have been corrected.
+
+ * "git am" has been rewritten in "C".
+
 
 Also contains various documentation updates and code clean-ups.
 
@@ -148,7 +161,19 @@ notes for details).
    with a more optimized check.
    (merge 38ae878 ee/clean-remove-dirs later to maint).
 
+ * The "new-worktree-mode" hack in "checkout" that was added in
+   nd/multiple-work-trees topic has been removed by updating the
+   implementation of new "worktree add".
+   (merge 65f9b75 es/worktree-add-cleanup later to maint).
+
+ * Remove remaining cruft from  "git checkout --to", which
+   transitioned to "git worktree add".
+   (merge 114ff88 es/worktree-add later to maint).
+
  * Code cleanups and documentation updates.
    (merge 1c601af es/doc-clean-outdated-tools later to maint).
    (merge 3581304 kn/tag-doc-fix later to maint).
    (merge 3a59e59 kb/i18n-doc later to maint).
+   (merge 45abdee sb/remove-unused-var-from-builtin-add later to maint).
+   (merge 14691e3 sb/parse-options-codeformat later to maint).
+   (merge 4a6ada3 ad/bisect-cleanup later to maint).
