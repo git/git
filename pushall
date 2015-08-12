@@ -1,7 +1,7 @@
 #!/bin/sh
 
-sites='ko repo github2 sfjp sf.net gob-private gph '
-nexts='ko repo github2 gob-private gph'
+sites='ko repo github2 sfjp sf.net gob-private '
+nexts='ko repo github2 '
 
 push_retry () {
 	sites=$1
