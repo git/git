@@ -13,6 +13,7 @@ static char *key;
 static regex_t *key_regexp;
 static regex_t *regexp;
 static int show_keys;
+static int omit_values;
 static int use_key_regexp;
 static int do_all;
 static int do_not_match;
@@ -78,6 +79,7 @@ static struct option builtin_config_options[] = {
 	OPT_BIT(0, "path", &types, N_("value is a path (file or directory name)"), TYPE_PATH),
 	OPT_GROUP(N_("Other")),
 	OPT_BOOL('z', "null", &end_null, N_("terminate values with NUL byte")),
+	OPT_BOOL(0, "name-only", &omit_values, N_("show variable names only")),
 	OPT_BOOL(0, "includes", &respect_includes, N_("respect include directives on lookup")),
 	OPT_END(),
 };
@@ -91,7 +93,7 @@ static void check_argc(int argc, int min, int max) {
 
 static int show_all_config(const char *key_, const char *value_, void *cb)
 {
-	if (value_)
+	if (!omit_values && value_)
 		printf("%s%c%s%c", key_, delim, value_, term);
 	else
 		printf("%s%c", key_, term);
@@ -116,6 +118,10 @@ static int format_config(struct strbuf *buf, const char *key_, const char *value
 	if (show_keys) {
 		strbuf_addstr(buf, key_);
 		must_print_delim = 1;
+	}
+	if (omit_values) {
+		strbuf_addch(buf, term);
+		return 0;
 	}
 	if (types == TYPE_INT)
 		sprintf(value, "%"PRId64,
@@ -549,7 +555,11 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		default:
 			usage_with_options(builtin_config_usage, builtin_config_options);
 		}
-
+	if (omit_values &&
+	    !(actions == ACTION_LIST || actions == ACTION_GET_REGEXP)) {
+		error("--name-only is only applicable to --list or --get-regexp");
+		usage_with_options(builtin_config_usage, builtin_config_options);
+	}
 	if (actions == ACTION_LIST) {
 		check_argc(argc, 0, 0);
 		if (git_config_with_options(show_all_config, NULL,
