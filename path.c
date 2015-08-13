@@ -143,7 +143,7 @@ void report_linked_checkout_garbage(void)
 		strbuf_setlen(&sb, len);
 		strbuf_addstr(&sb, path);
 		if (file_exists(sb.buf))
-			report_garbage("unused in linked checkout", sb.buf);
+			report_garbage(PACKDIR_FILE_GARBAGE, sb.buf);
 	}
 	strbuf_release(&sb);
 }
