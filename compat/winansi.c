@@ -562,8 +562,12 @@ static void detect_msys_tty(int fd)
 	name = nameinfo->Name.Buffer;
 	name[nameinfo->Name.Length] = 0;
 
-	/* check if this could be a MSYS2 pty pipe ('msys-XXXX-ptyN-XX') */
-	if (!wcsstr(name, L"msys-") || !wcsstr(name, L"-pty"))
+	/*
+	 * Check if this could be a MSYS2 pty pipe ('msys-XXXX-ptyN-XX')
+	 * or a cygwin pty pipe ('cygwin-XXXX-ptyN-XX')
+	 */
+	if ((!wcsstr(name, L"msys-") && !wcsstr(name, L"cygwin-")) ||
+			!wcsstr(name, L"-pty"))
 		return;
 
 	/* init ioinfo size if we haven't done so */
