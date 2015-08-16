@@ -266,6 +266,22 @@ static LPWSTR expand_variables(LPWSTR buffer, size_t alloc)
 	return buf;
 }
 
+static void set_app_id(LPWSTR app_id)
+{
+	HMODULE shell32;
+	HRESULT (*set_app_id)(LPWSTR app_id);
+
+	shell32 = LoadLibrary(L"shell32.dll");
+	if (!shell32)
+		return;
+	set_app_id = (void *) GetProcAddress(shell32,
+			"SetCurrentProcessExplicitAppUserModelID");
+	if (!set_app_id)
+		return;
+	if (!SUCCEEDED(set_app_id(app_id)))
+		print_error(L"warning: could not set app ID", GetLastError());
+}
+
 static int configure_via_resource(LPWSTR basename, LPWSTR exepath, LPWSTR exep,
 	LPWSTR *prefix_args, int *prefix_args_len,
 	int *is_git_command, LPWSTR *working_directory, int *full_path,
@@ -273,6 +289,7 @@ static int configure_via_resource(LPWSTR basename, LPWSTR exepath, LPWSTR exep,
 {
 	int i, id, minimal_search_path, needs_a_console, no_hide, wargc;
 	LPWSTR *wargv;
+	WCHAR *app_id;
 
 #define BUFSIZE 65536
 	static WCHAR buf[BUFSIZE];
@@ -283,6 +300,7 @@ static int configure_via_resource(LPWSTR basename, LPWSTR exepath, LPWSTR exep,
 		minimal_search_path = 0;
 		needs_a_console = 0;
 		no_hide = 0;
+		app_id = NULL;
 		len = LoadString(NULL, id, buf, BUFSIZE);
 
 		if (!len) {
@@ -307,6 +325,21 @@ static int configure_via_resource(LPWSTR basename, LPWSTR exepath, LPWSTR exep,
 				needs_a_console = 1;
 			else if (strip_prefix(buf, &len, L"SHOW_CONSOLE=1 "))
 				no_hide = 1;
+			else if (strip_prefix(buf, &len, L"APP_ID=")) {
+				LPWSTR space = wcschr(buf, L' ');
+				size_t app_id_len = space - buf;
+				if (!space) {
+					len -= 7;
+					memmove(buf, buf + 7,
+							len * sizeof(WCHAR));
+					break;
+				}
+				app_id = wcsdup(buf);
+				app_id[app_id_len] = L'\0';
+				len -= app_id_len + 1;
+				memmove(buf, buf + app_id_len + 1,
+						len * sizeof(WCHAR));
+			}
 			else
 				break;
 		}
@@ -325,6 +358,8 @@ static int configure_via_resource(LPWSTR basename, LPWSTR exepath, LPWSTR exep,
 		fwprintf(stderr,
 			L"Skipping command-line '%s'\n('%s' not found)\n",
 			buf2, exep);
+		if (app_id)
+			free(app_id);
 	}
 
 	*prefix_args = buf2;
@@ -366,6 +401,10 @@ static int configure_via_resource(LPWSTR basename, LPWSTR exepath, LPWSTR exep,
 			*skip_arguments = i;
 			break;
 		}
+		else if (!wcsncmp(L"--app-id=", wargv[i], 9)) {
+			free(app_id);
+			app_id = wcsdup(wargv[i] + 9);
+		}
 		else
 			break;
 		*skip_arguments = i;
@@ -376,6 +415,8 @@ static int configure_via_resource(LPWSTR basename, LPWSTR exepath, LPWSTR exep,
 		*allocate_console = 1;
 	if (no_hide)
 		*show_console = 1;
+	if (app_id)
+		set_app_id(app_id);
 	LocalFree(wargv);
 
 	return 1;
