@@ -19,6 +19,14 @@ void create_notes_commit(struct notes_tree *t, struct commit_list *parents,
 
 void commit_notes(struct notes_tree *t, const char *msg);
 
+enum notes_merge_strategy {
+		NOTES_MERGE_RESOLVE_MANUAL = 0,
+		NOTES_MERGE_RESOLVE_OURS,
+		NOTES_MERGE_RESOLVE_THEIRS,
+		NOTES_MERGE_RESOLVE_UNION,
+		NOTES_MERGE_RESOLVE_CAT_SORT_UNIQ
+};
+
 struct notes_rewrite_cfg {
 	struct notes_tree **trees;
 	const char *cmd;
