@@ -1892,6 +1892,12 @@ notes.mergeStrategy::
 	`cat_sort_uniq`.  Defaults to `manual`.  See "NOTES MERGE STRATEGIES"
 	section of linkgit:git-notes[1] for more information on each strategy.
 
+notes.<name>.mergeStrategy::
+	Which merge strategy to choose when doing a notes merge into
+	refs/notes/<name>.  This overrides the more general
+	"notes.mergeStrategy".  See the "NOTES MERGE STRATEGIES" section in
+	linkgit:git-notes[1] for more information on the available strategies.
+
 notes.displayRef::
 	The (fully qualified) refname from which to show notes when
 	showing commit messages.  The value of this variable can be set

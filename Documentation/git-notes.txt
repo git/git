@@ -322,6 +322,12 @@ notes.mergeStrategy::
 +
 This setting can be overridden by passing the `--strategy` option.
 
+notes.<name>.mergeStrategy::
+	Which merge strategy to choose when doing a notes merge into
+	refs/notes/<name>.  This overrides the more general
+	"notes.mergeStrategy".  See the "NOTES MERGE STRATEGIES" section above
+	for more information on each available strategy.
+
 notes.displayRef::
 	Which ref (or refs, if a glob or specified more than once), in
 	addition to the default set by `core.notesRef` or
