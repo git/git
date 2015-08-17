@@ -737,6 +737,19 @@ static int merge_commit(struct notes_merge_options *o)
 	return ret;
 }
 
+static int git_config_get_notes_strategy(const char *key,
+					 enum notes_merge_strategy *strategy)
+{
+	const char *value;
+
+	if (git_config_get_string_const(key, &value))
+		return 1;
+	if (parse_notes_merge_strategy(value, strategy))
+		git_die_config(key, "unknown notes merge strategy %s", value);
+
+	return 0;
+}
+
 static int merge(int argc, const char **argv, const char *prefix)
 {
 	struct strbuf remote_ref = STRBUF_INIT, msg = STRBUF_INIT;
@@ -795,14 +808,16 @@ static int merge(int argc, const char **argv, const char *prefix)
 	expand_notes_ref(&remote_ref);
 	o.remote_ref = remote_ref.buf;
 
+	t = init_notes_check("merge");
+
 	if (strategy) {
 		if (parse_notes_merge_strategy(strategy, &o.strategy)) {
 			error("Unknown -s/--strategy: %s", strategy);
 			usage_with_options(git_notes_merge_usage, options);
 		}
+	} else {
+		git_config_get_notes_strategy("notes.mergeStrategy", &o.strategy);
 	}
-
-	t = init_notes_check("merge");
 
 	strbuf_addf(&msg, "notes: Merged notes from %s into %s",
 		    remote_ref.buf, default_notes_ref());

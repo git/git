@@ -101,7 +101,7 @@ merge::
 	any) into the current notes ref (called "local").
 +
 If conflicts arise and a strategy for automatically resolving
-conflicting notes (see the -s/--strategy option) is not given,
+conflicting notes (see the "NOTES MERGE STRATEGIES" section) is not given,
 the "manual" resolver is used. This resolver checks out the
 conflicting notes in a special worktree (`.git/NOTES_MERGE_WORKTREE`),
 and instructs the user to manually resolve the conflicts there.
@@ -183,6 +183,7 @@ OPTIONS
 	When merging notes, resolve notes conflicts using the given
 	strategy. The following strategies are recognized: "manual"
 	(default), "ours", "theirs", "union" and "cat_sort_uniq".
+	This option overrides the "notes.mergeStrategy" configuration setting.
 	See the "NOTES MERGE STRATEGIES" section below for more
 	information on each notes merge strategy.
 
@@ -247,6 +248,9 @@ When done, the user can either finalize the merge with
 'git notes merge --commit', or abort the merge with
 'git notes merge --abort'.
 
+Users may select an automated merge strategy from among the following using
+either -s/--strategy option or configuring notes.mergeStrategy accordingly:
+
 "ours" automatically resolves conflicting notes in favor of the local
 version (i.e. the current notes ref).
 
@@ -309,6 +313,14 @@ core.notesRef::
 	`refs/notes/commits`.  Must be an unabbreviated ref name.
 	This setting can be overridden through the environment and
 	command line.
+
+notes.mergeStrategy::
+	Which merge strategy to choose by default when resolving notes
+	conflicts.  Must be one of `manual`, `ours`, `theirs`, `union`, or
+	`cat_sort_uniq`.  Defaults to `manual`.  See "NOTES MERGE STRATEGIES"
+	section above for more information on each strategy.
++
+This setting can be overridden by passing the `--strategy` option.
 
 notes.displayRef::
 	Which ref (or refs, if a glob or specified more than once), in
