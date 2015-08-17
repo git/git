@@ -331,7 +331,8 @@ environment variable.
 notes.rewriteMode::
 	When copying notes during a rewrite, what to do if the target
 	commit already has a note.  Must be one of `overwrite`,
-	`concatenate`, and `ignore`.  Defaults to `concatenate`.
+	`concatenate`, `cat_sort_uniq`, or `ignore`.  Defaults to
+	`concatenate`.
 +
 This setting can be overridden with the `GIT_NOTES_REWRITE_MODE`
 environment variable.
@@ -368,7 +369,7 @@ does not match any refs is silently ignored.
 'GIT_NOTES_REWRITE_MODE'::
 	When copying notes during a rewrite, what to do if the target
 	commit already has a note.
-	Must be one of `overwrite`, `concatenate`, and `ignore`.
+	Must be one of `overwrite`, `concatenate`, `cat_sort_uniq`, or `ignore`.
 	This overrides the `core.rewriteMode` setting.
 
 'GIT_NOTES_REWRITE_REF'::
