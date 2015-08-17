@@ -45,6 +45,12 @@ UI, Workflows & Features
    refs hierarchy other than refs/replace/ for the object replacement
    data.
 
+ * Allow untracked cache (experimental) to be used when sparse
+   checkout (experimental) is also in use.
+
+ * "git pull --rebase" has been taught to pay attention to
+   rebase.autostash configuration.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -170,6 +176,10 @@ notes for details).
    transitioned to "git worktree add".
    (merge 114ff88 es/worktree-add later to maint).
 
+ * An off-by-one error made "git remote" to mishandle a remote with a
+   single letter nickname.
+   (merge bc598c3 mh/get-remote-group-fix later to maint).
+
  * Code cleanups and documentation updates.
    (merge 1c601af es/doc-clean-outdated-tools later to maint).
    (merge 3581304 kn/tag-doc-fix later to maint).
@@ -177,3 +187,4 @@ notes for details).
    (merge 45abdee sb/remove-unused-var-from-builtin-add later to maint).
    (merge 14691e3 sb/parse-options-codeformat later to maint).
    (merge 4a6ada3 ad/bisect-cleanup later to maint).
+   (merge da4c5ad ta/docfix-index-format-tech later to maint).
