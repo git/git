@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Aug 2015, #02; Wed, 12)
-X-master-at: 130be8eeb8b9b7c89751c3cab3bc54dc6f2d43e6
-X-next-at: dc45ae627aaa61b73b573b0f51469393f122b5f6
+Subject: What's cooking in git.git (Aug 2015, #03; Mon, 17)
+X-master-at: 44e02239f41177b6a7567e86db2cd18f7949d941
+X-next-at: ab17608326e73d8e92eba73c51dac99aa92984ba
 
-What's cooking in git.git (Aug 2015, #02; Wed, 12)
+What's cooking in git.git (Aug 2015, #03; Mon, 17)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -23,401 +23,107 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* ad/bisect-cleanup (2015-08-03) 6 commits
-  (merged to 'next' on 2015-08-03 at 13b9314)
- + bisect: don't mix option parsing and non-trivial code
- + bisect: simplify the addition of new bisect terms
- + bisect: replace hardcoded "bad|good" by variables
- + Documentation/bisect: revise overall content
- + Documentation/bisect: move getting help section to the end
- + bisect: correction of typo
- (this branch is used by ad/bisect-terms.)
+* dt/untracked-sparse (2015-07-31) 1 commit
+  (merged to 'next' on 2015-08-12 at 234434d)
+ + untracked-cache: support sparse checkout
+ (this branch is used by dt/untracked-subdir.)
 
- Originally merged to 'next' on 2015-07-09
-
- Code and documentation clean-up to "git bisect".
+ Allow untracked cache (experimental) to be used when sparse
+ checkout (experimental) is also in use.
 
 
-* dt/reflog-tests (2015-07-28) 2 commits
-  (merged to 'next' on 2015-08-03 at 9d2fa1a)
- + tests: remove some direct access to .git/logs
- + t/t7509: remove unnecessary manipulation of reflog
+* kd/pull-rebase-autostash (2015-07-22) 1 commit
+  (merged to 'next' on 2015-08-12 at de88e8e)
+ + pull: allow dirty tree when rebase.autostash enabled
 
- Tests that assume how reflogs are represented on the filesystem too
- much have been corrected.
-
-
-* dt/unpack-trees-cache-tree-revalidate (2015-07-28) 1 commit
-  (merged to 'next' on 2015-08-03 at 5b0d620)
- + unpack-trees: populate cache-tree on successful merge
-
- The code to perform multi-tree merges has been taught to repopulate
- the cache-tree upon a successful merge into the index, so that
- subsequent "diff-index --cached" (hence "status") and "write-tree"
- (hence "commit") will go faster.
-
- The same logic in "git checkout" may now be removed, but that is a
- separate issue.
+ "git pull --rebase" has been taught to pay attention to
+ rebase.autostash configuration.
 
 
-* es/worktree-add (2015-07-20) 5 commits
-  (merged to 'next' on 2015-08-03 at 9771a44)
- + config: rename "gc.pruneWorktreesExpire" to "gc.worktreePruneExpire"
- + Documentation/git-worktree: wordsmith worktree-related manpages
- + Documentation/config: fix stale "git prune --worktree" reference
- + Documentation/git-worktree: fix incorrect reference to file "locked"
- + Documentation/git-worktree: consistently use term "linked working tree"
- (this branch is used by dt/notes-multiple and es/worktree-add-cleanup.)
+* mh/get-remote-group-fix (2015-07-28) 4 commits
+  (merged to 'next' on 2015-08-12 at b77820e)
+ + get_remote_group(): use skip_prefix()
+ + get_remote_group(): eliminate superfluous call to strcspn()
+ + get_remote_group(): rename local variable "space" to "wordlen"
+ + get_remote_group(): handle remotes with single-character names
 
- Originally merged to 'next' on 2015-07-20
-
- Remove remaining cruft from  "git checkout --to", which
- transitioned to "git worktree add".
+ An off-by-one error made "git remote" to mishandle a remote with a
+ single letter nickname.
 
 
-* es/worktree-add-cleanup (2015-08-05) 25 commits
-  (merged to 'next' on 2015-08-12 at 9168b42)
- + Documentation/git-worktree: fix duplicated 'from'
- + Documentation/config: mention "now" and "never" for 'expire' settings
- + Documentation/git-worktree: fix broken 'linkgit' invocation
- + checkout: drop intimate knowledge of newly created worktree
- + worktree: populate via "git reset --hard" rather than "git checkout"
- + worktree: avoid resolving HEAD unnecessarily
- + worktree: make setup of new HEAD distinct from worktree population
- + worktree: detect branch-name/detached and error conditions locally
- + worktree: add_worktree: construct worktree-population command locally
- + worktree: elucidate environment variables intended for child processes
- + worktree: make branch creation distinct from worktree population
- + worktree: add: suppress auto-vivication with --detach and no <branch>
- + worktree: make --detach mutually exclusive with -b/-B
- + worktree: introduce options container
- + worktree: simplify new branch (-b/-B) option checking
- + worktree: improve worktree setup message
- + branch: publish die_if_checked_out()
- + checkout: teach check_linked_checkout() about symbolic link HEAD
- + checkout: check_linked_checkout: simplify symref parsing
- + checkout: check_linked_checkout: improve "already checked out" aesthetic
- + checkout: generalize die_if_checked_out() branch name argument
- + checkout: die_if_checked_out: simplify strbuf management
- + checkout: improve die_if_checked_out() robustness
- + checkout: name check_linked_checkouts() more meaningfully
- + checkout: avoid resolving HEAD unnecessarily
- (this branch is used by dt/notes-multiple; uses es/worktree-add.)
-
- Originally merged to 'next' on 2015-07-29
-
- The "new-worktree-mode" hack in "checkout" that was added in
- nd/multiple-work-trees topic has been removed by updating the
- implementation of new "worktree add".
-
-
-* pt/am-builtin (2015-08-04) 46 commits
-  (merged to 'next' on 2015-08-12 at 10d0c56)
- + git-am: add am.threeWay config variable
- + builtin-am: remove redirection to git-am.sh
- + builtin-am: check for valid committer ident
- + builtin-am: implement legacy -b/--binary option
- + builtin-am: implement -i/--interactive
- + builtin-am: support and auto-detect mercurial patches
- + builtin-am: support and auto-detect StGit series files
- + builtin-am: support and auto-detect StGit patches
- + builtin-am: rerere support
- + builtin-am: invoke post-applypatch hook
- + builtin-am: invoke pre-applypatch hook
- + builtin-am: invoke applypatch-msg hook
- + builtin-am: support automatic notes copying
- + builtin-am: invoke post-rewrite hook
- + builtin-am: implement -S/--gpg-sign, commit.gpgsign
- + builtin-am: implement --committer-date-is-author-date
- + builtin-am: implement --ignore-date
- + builtin-am: pass git-apply's options to git-apply
- + builtin-am: implement --[no-]scissors
- + builtin-am: support --keep-cr, am.keepcr
- + builtin-am: implement --[no-]message-id, am.messageid
- + builtin-am: implement -k/--keep, --keep-non-patch
- + builtin-am: implement -u/--utf8
- + builtin-am: handle stray state directory
- + builtin-am: bypass git-mailinfo when --rebasing
- + builtin-am: implement --rebasing mode
- + builtin-am: implement --3way
- + cache-tree: introduce write_index_as_tree()
- + builtin-am: implement -s/--signoff
- + builtin-am: exit with user friendly message on failure
- + builtin-am: implement -q/--quiet
- + builtin-am: reject patches when there's a session in progress
- + builtin-am: implement --abort
- + builtin-am: implement --skip
- + builtin-am: don't parse mail when resuming
- + builtin-am: implement --resolved/--continue
- + builtin-am: refuse to apply patches if index is dirty
- + builtin-am: implement committing applied patch
- + builtin-am: apply patch with git-apply
- + builtin-am: extract patch and commit info with git-mailinfo
- + builtin-am: auto-detect mbox patches
- + builtin-am: split out mbox/maildir patches with git-mailsplit
- + builtin-am: implement patch queue mechanism
- + builtin-am: implement skeletal builtin am
- + wrapper: implement xfopen()
- + wrapper: implement xopen()
- (this branch is used by pt/am-builtin-options.)
-
- Originally merged to 'next' on 2015-07-23
-
- Rewrite "am" in "C".
-
-
-* sb/parse-options-codeformat (2015-07-29) 1 commit
-  (merged to 'next' on 2015-08-03 at f81993b)
- + parse-options: align curly braces for all options
-
-
-* sb/remove-unused-var-from-builtin-add (2015-07-31) 1 commit
-  (merged to 'next' on 2015-08-03 at f5e568e)
- + add: remove dead code
+* ta/docfix-index-format-tech (2015-07-28) 1 commit
+  (merged to 'next' on 2015-08-12 at 662d88a)
+ + typofix for index-format.txt
 
 --------------------------------------------------
 [New Topics]
 
-* bb/remote-get-url (2015-08-05) 1 commit
- - remote: add get-url subcommand
+* db/push-sign-if-asked (2015-08-17) 7 commits
+ - DONTMERGE: dropped bits to add config; needs tests
+ - push: support signed pushes iff the server supports it
+ - transport: remove git_transport_options.push_cert
+ - gitremote-helpers.txt: document pushcert option
+ - Documentation/git-send-pack.txt: document --signed
+ - Documentation/git-send-pack.txt: wrap long synopsis line
+ - Documentation/git-push.txt: document when --signed may fail
 
- "git remote" learned "get-url" subcommand to show the URL for a
- given remote name used for fetching and pushing.
+ The client side codepaths in "git push" have been cleaned up
+ and the user can request to perform an optional "signed push",
+ i.e. sign only when the other end accepts signed push.
 
- Waiting for a reroll.
- ($gmane/275401)
+ Expecting a reroll.
 
 
-* cb/open-noatime-clear-errno (2015-08-12) 1 commit
- - git_open_noatime: return with errno=0 on success
+* dk/gc-idx-wo-pack (2015-08-17) 3 commits
+ - DONTMERGE: log message, grace-period and tests $gmane/276058
+ - gc: remove stale .idx files without corresponding .pack file
+ - prepare_packed_git(): refactor garbage reporting in pack directory
 
- When trying to see that an object does not exist, a state errno
- leaked from our "first try to open a packfile with O_NOATIME and
- then if it fails retry without it" logic on a system that refuses
- O_NOATIME.  This confused us and caused us to die, saying that the
- packfile is unreadable, when we should have just reported that the
- object does not exist in that packfile to the caller.
+ Having a leftover .idx file without correspoinding .pack file in
+ the repository hurts performance; "git gc" learned to prune them.
+
+ Expecting a reroll.
+
+
+* ep/http-configure-ssl-version (2015-08-17) 1 commit
+ - http: add support for specifying the SSL version
+
+ A new configuration variable http.sslVersion can be used to specify
+ what specific version of SSL/TLS to use to make a connection.
 
  Will merge to 'next'.
 
 
-* jk/guess-repo-name-regression-fix (2015-08-10) 2 commits
-  (merged to 'next' on 2015-08-12 at 4cba33c)
- + clone: use computed length in guess_dir_name
- + clone: add tests for output directory
- (this branch is used by ps/guess-repo-name-at-root.)
+* jv/send-email-selective-smtp-auth (2015-08-17) 1 commit
+ - send-email: provide whitelist of SMTP AUTH mechanisms
 
- "git clone $URL" in recent releases of Git contains a regression in
- the code that invents a new repository name incorrectly based on
- the $URL.  This has been corrected.
+ "git send-email" learned a new option --smtp-auth to limit the SMTP
+ AUTH mechanisms to be used to a subset of what the system library
+ supports.
 
- Will merge to 'master'.
+ Will merge to 'next'.
 
 
-* ps/guess-repo-name-at-root (2015-08-10) 3 commits
-  (merged to 'next' on 2015-08-12 at 088860f)
- + clone: abort if no dir name could be guessed
- + clone: do not use port number as dir name
- + clone: do not include authentication data in guessed dir
- (this branch uses jk/guess-repo-name-regression-fix.)
+* po/po-readme (2015-08-17) 1 commit
+ - po/README: Update directions for l10n contributors
 
- "git clone $URL", when cloning from a site whose sole purpose is to
- host a single repository (hence, no path after <scheme>://<site>/),
- tried to use the site name as the new repository name, but did not
- remove username or password when <site> part was of the form
- <user>@<pass>:<host>.  The code is taught to redact these.
+ Will merge to 'next'.
 
- Will merge to 'master'.
 
+* pt/am-builtin-abort-fix (2015-08-17) 1 commit
+ - am --abort: merge ORIG_HEAD tree into index
 
-* jk/notes-merge-config (2015-08-05) 4 commits
- - SQUASH???
- - notes: add notes.merge option to select default strategy
- - notes: add tests for --commit/--abort/--strategy exclusivity
- - notes: document cat_sort_uniq rewriteMode
+ "git am" that has recently reimplemented in C had a performance
+ regression in "git am --abort" that goes back to the version before
+ an attempted (and failed) patch application.
 
- "git notes merge" can be told with "--strategy=<how>" option how to
- automatically handle conflicts; this can now be configured by
- setting notes.merge configuration variable.
+ Will merge to 'next'.
 
- The last step to add more specific notes.$ref.merge looked
- questionable.  What is queued is v3, v4 exists, but needs an
- update.
 
- Waiting for a reroll.
- ($gmane/275749)
+* ss/fix-config-fd-leak (2015-08-14) 1 commit
+ - config: close config file handle in case of error
 
-
-* mk/submodule-gitdir-path (2015-08-05) 2 commits
- - path: implement common_dir handling in git_path_submodule()
- - submodule refactor: use git_path_submodule() in add_submodule_odb()
-
- The submodule code has been taught to work better with separate
- work trees created via "git worktree add".
-
- Waiting for a review.
- ($gmane/275340).
-
-
-* mm/pull-upload-pack (2015-07-30) 1 commit
-  (merged to 'next' on 2015-08-12 at 14d2a52)
- + pull.sh: quote $upload_pack when passing it to git-fetch
-
- "git pull" in recent releases of Git has a regression in the code
- that allows custom path to the --upload-pack=<program>.  This has
- been corrected.
-
- Will merge to 'maint'.
-
- Note that this is irrelevant for 'master' with "git pull" rewritten
- in C.
-
-
-* ps/t1509-chroot-test-fixup (2015-08-05) 2 commits
-  (merged to 'next' on 2015-08-12 at 6d10ea5)
- + tests: fix cleanup after tests in t1509-root-worktree
- + tests: fix broken && chains in t1509-root-worktree
-
- t1509 test that requires a dedicated VM environment had some
- bitrot, which has been corrected.
-
- Will merge to 'master'.
-
-
-* pt/am-builtin-options (2015-08-12) 3 commits
-  (merged to 'next' on 2015-08-12 at e57f754)
- + am: let --signoff override --no-signoff
- + am: let command-line options override saved options
- + test_terminal: redirect child process' stdin to a pty
-
- After "git am --opt1" stops, running "git am --opt2" pays attention
- to "--opt2" only for the patch that caused the original invocation
- to stop.
-
- Will merge to 'master'.
-
-
-* sb/remove-get-pathspec (2015-08-03) 1 commit
- - builtin/mv: remove get_pathspec()
-
- Expecting a reroll.
- ($gmane/275224)
-
-
-* sb/submodule-helper (2015-08-07) 1 commit
- - submodule: implement `module_list` as a builtin helper
-
- The beginning of "git submodule" rewritten in C.
-
-
-* tb/complete-rebase-i-edit-todo (2015-08-05) 1 commit
-  (merged to 'next' on 2015-08-12 at 9606c21)
- + completion: offer '--edit-todo' during interactive rebase
-
- The command-line completion script (in contrib/) has been updated.
-
- Will merge to 'master'.
-
-
-* dt/untracked-subdir (2015-08-07) 2 commits
- - DONTMERGE: wait for Duy to Ack or comment
- - untracked-cache: fix subdirectory handling
- (this branch uses dt/untracked-sparse.)
-
- Waiting for a review.
-
-
-* jk/test-with-x (2015-08-07) 2 commits
-  (merged to 'next' on 2015-08-12 at 06576a1)
- + test-lib: disable trace when test is not verbose
- + test-lib: turn off "-x" tracing during chain-lint check
-
- Running tests with the "-x" option to make them verbose had some
- unpleasant interactions with other features of the test suite.
-
- Will merge to 'master'.
-
-
-* ad/cygwin-wants-rename (2015-08-07) 1 commit
- - config.mak.uname: Cygwin needs OBJECT_CREATION_USES_RENAMES
-
- Will hold.
- ($gmane/275680).
-
-
-* bc/connect-plink (2015-08-11) 1 commit
- - t5601-clone: remove broken and pointless check for plink.exe
-
- Test updates for Windows.
-
- Seems controversial.
- Will hold.
- for now ($gmane/275758).
-
-
-* ee/clean-remove-dirs (2015-08-11) 1 commit
-  (merged to 'next' on 2015-08-12 at fc41b09)
- + t7300-clean: require POSIXPERM for chmod 0 test
-
- Test updates for Windows.
-
- Will merge to 'master'.
-
-
-* jc/finalize-temp-file (2015-08-10) 1 commit
-  (merged to 'next' on 2015-08-12 at 6fe62fe)
- + sha1_file.c: rename move_temp_to_file() to finalize_object_file()
-
- Long overdue micro clean-up.
-
- Will merge to 'master'.
-
-
-* jk/git-path (2015-08-10) 16 commits
-  (merged to 'next' on 2015-08-12 at 7ebe864)
- + memoize common git-path "constant" files
- + get_repo_path: refactor path-allocation
- + find_hook: keep our own static buffer
- + refs.c: remove_empty_directories can take a strbuf
- + refs.c: avoid git_path assignment in lock_ref_sha1_basic
- + refs.c: avoid repeated git_path calls in rename_tmp_log
- + refs.c: simplify strbufs in reflog setup and writing
- + path.c: drop git_path_submodule
- + refs.c: remove extra git_path calls from read_loose_refs
- + remote.c: drop extraneous local variable from migrate_file
- + prefer mkpathdup to mkpath in assignments
- + prefer git_pathdup to git_path in some possibly-dangerous cases
- + add_to_alternates_file: don't add duplicate entries
- + t5700: modernize style
- + cache.h: complete set of git_path_submodule helpers
- + cache.h: clarify documentation for git_path, et al
-
- git_path() and mkpath() are handy helper functions but it is easy
- to misuse, as the callers need to be careful to keep the number of
- active results below 4.  Their uses have been reduced.
-
- Will merge to 'master'.
-
-
-* jk/long-error-messages (2015-08-11) 2 commits
-  (merged to 'next' on 2015-08-12 at 36303cd)
- + vreportf: avoid intermediate buffer
- + vreportf: report to arbitrary filehandles
-
- The codepath to produce error messages had a hard-coded limit to
- the size of the message, primarily to avoid memory allocation while
- calling die().
-
- Will merge to 'master'.
-
-
-* nd/dwim-wildcards-as-pathspecs (2015-08-11) 1 commit
-  (merged to 'next' on 2015-08-12 at bb73f4d)
- + t2019: skip test requiring '*' in a file name non Windows
-
- Test updates for Windows.
-
- Will merge to 'master'.
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -679,6 +385,236 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* bb/remote-get-url (2015-08-05) 1 commit
+ - remote: add get-url subcommand
+
+ "git remote" learned "get-url" subcommand to show the URL for a
+ given remote name used for fetching and pushing.
+
+ Waiting for a reroll.
+ ($gmane/275401)
+
+
+* cb/open-noatime-clear-errno (2015-08-12) 1 commit
+  (merged to 'next' on 2015-08-17 at 6aa43a1)
+ + git_open_noatime: return with errno=0 on success
+
+ When trying to see that an object does not exist, a state errno
+ leaked from our "first try to open a packfile with O_NOATIME and
+ then if it fails retry without it" logic on a system that refuses
+ O_NOATIME.  This confused us and caused us to die, saying that the
+ packfile is unreadable, when we should have just reported that the
+ object does not exist in that packfile to the caller.
+
+ Will merge to 'master'.
+
+
+* jk/guess-repo-name-regression-fix (2015-08-10) 2 commits
+  (merged to 'next' on 2015-08-12 at 4cba33c)
+ + clone: use computed length in guess_dir_name
+ + clone: add tests for output directory
+ (this branch is used by ps/guess-repo-name-at-root.)
+
+ "git clone $URL" in recent releases of Git contains a regression in
+ the code that invents a new repository name incorrectly based on
+ the $URL.  This has been corrected.
+
+ Will merge to 'master'.
+
+
+* ps/guess-repo-name-at-root (2015-08-10) 3 commits
+  (merged to 'next' on 2015-08-12 at 088860f)
+ + clone: abort if no dir name could be guessed
+ + clone: do not use port number as dir name
+ + clone: do not include authentication data in guessed dir
+ (this branch uses jk/guess-repo-name-regression-fix.)
+
+ "git clone $URL", when cloning from a site whose sole purpose is to
+ host a single repository (hence, no path after <scheme>://<site>/),
+ tried to use the site name as the new repository name, but did not
+ remove username or password when <site> part was of the form
+ <user>@<pass>:<host>.  The code is taught to redact these.
+
+ Will merge to 'master'.
+
+
+* jk/notes-merge-config (2015-08-14) 4 commits
+ - notes: teach git-notes about notes.<ref>.mergestrategy option
+ - notes: add notes.mergestrategy option to select default strategy
+ - notes: add tests for --commit/--abort/--strategy exclusivity
+ - notes: document cat_sort_uniq rewriteMode
+
+ "git notes merge" can be told with "--strategy=<how>" option how to
+ automatically handle conflicts; this can now be configured by
+ setting notes.merge configuration variable.
+
+ The latest reroll (v8) hasn't been picked up.
+ Expecting a reroll.
+ ($gmane/276068)
+
+
+* mk/submodule-gitdir-path (2015-08-05) 2 commits
+ - path: implement common_dir handling in git_path_submodule()
+ - submodule refactor: use git_path_submodule() in add_submodule_odb()
+
+ The submodule code has been taught to work better with separate
+ work trees created via "git worktree add".
+
+ Waiting for a review.
+ ($gmane/275340).
+
+
+* mm/pull-upload-pack (2015-07-30) 1 commit
+  (merged to 'next' on 2015-08-12 at 14d2a52)
+ + pull.sh: quote $upload_pack when passing it to git-fetch
+
+ "git pull" in recent releases of Git has a regression in the code
+ that allows custom path to the --upload-pack=<program>.  This has
+ been corrected.
+
+ Will merge to 'maint'.
+
+ Note that this is irrelevant for 'master' with "git pull" rewritten
+ in C.
+
+
+* ps/t1509-chroot-test-fixup (2015-08-05) 2 commits
+  (merged to 'next' on 2015-08-12 at 6d10ea5)
+ + tests: fix cleanup after tests in t1509-root-worktree
+ + tests: fix broken && chains in t1509-root-worktree
+
+ t1509 test that requires a dedicated VM environment had some
+ bitrot, which has been corrected.
+
+ Will merge to 'master'.
+
+
+* pt/am-builtin-options (2015-08-12) 3 commits
+  (merged to 'next' on 2015-08-12 at e57f754)
+ + am: let --signoff override --no-signoff
+ + am: let command-line options override saved options
+ + test_terminal: redirect child process' stdin to a pty
+
+ After "git am --opt1" stops, running "git am --opt2" pays attention
+ to "--opt2" only for the patch that caused the original invocation
+ to stop.
+
+ Will merge to 'master'.
+
+
+* sb/remove-get-pathspec (2015-08-03) 1 commit
+ - builtin/mv: remove get_pathspec()
+
+ Expecting a reroll.
+ ($gmane/275224)
+
+
+* sb/submodule-helper (2015-08-07) 1 commit
+ - submodule: implement `module_list` as a builtin helper
+
+ The beginning of "git submodule" rewritten in C.
+
+
+* tb/complete-rebase-i-edit-todo (2015-08-05) 1 commit
+  (merged to 'next' on 2015-08-12 at 9606c21)
+ + completion: offer '--edit-todo' during interactive rebase
+
+ The command-line completion script (in contrib/) has been updated.
+
+ Will merge to 'master'.
+
+
+* dt/untracked-subdir (2015-08-07) 2 commits
+ - DONTMERGE: wait for Duy to Ack or comment
+ - untracked-cache: fix subdirectory handling
+
+ Waiting for a review cycle to conclude.
+ ($gmane/276019).
+
+
+* jk/test-with-x (2015-08-07) 2 commits
+  (merged to 'next' on 2015-08-12 at 06576a1)
+ + test-lib: disable trace when test is not verbose
+ + test-lib: turn off "-x" tracing during chain-lint check
+
+ Running tests with the "-x" option to make them verbose had some
+ unpleasant interactions with other features of the test suite.
+
+ Will merge to 'master'.
+
+
+* ad/cygwin-wants-rename (2015-08-07) 1 commit
+ - config.mak.uname: Cygwin needs OBJECT_CREATION_USES_RENAMES
+
+ Will hold.
+ ($gmane/275680).
+
+
+* ee/clean-remove-dirs (2015-08-11) 1 commit
+  (merged to 'next' on 2015-08-12 at fc41b09)
+ + t7300-clean: require POSIXPERM for chmod 0 test
+
+ Test updates for Windows.
+
+ Will merge to 'master'.
+
+
+* jc/finalize-temp-file (2015-08-10) 1 commit
+  (merged to 'next' on 2015-08-12 at 6fe62fe)
+ + sha1_file.c: rename move_temp_to_file() to finalize_object_file()
+
+ Long overdue micro clean-up.
+
+ Will merge to 'master'.
+
+
+* jk/git-path (2015-08-10) 16 commits
+  (merged to 'next' on 2015-08-12 at 7ebe864)
+ + memoize common git-path "constant" files
+ + get_repo_path: refactor path-allocation
+ + find_hook: keep our own static buffer
+ + refs.c: remove_empty_directories can take a strbuf
+ + refs.c: avoid git_path assignment in lock_ref_sha1_basic
+ + refs.c: avoid repeated git_path calls in rename_tmp_log
+ + refs.c: simplify strbufs in reflog setup and writing
+ + path.c: drop git_path_submodule
+ + refs.c: remove extra git_path calls from read_loose_refs
+ + remote.c: drop extraneous local variable from migrate_file
+ + prefer mkpathdup to mkpath in assignments
+ + prefer git_pathdup to git_path in some possibly-dangerous cases
+ + add_to_alternates_file: don't add duplicate entries
+ + t5700: modernize style
+ + cache.h: complete set of git_path_submodule helpers
+ + cache.h: clarify documentation for git_path, et al
+
+ git_path() and mkpath() are handy helper functions but it is easy
+ to misuse, as the callers need to be careful to keep the number of
+ active results below 4.  Their uses have been reduced.
+
+ Will merge to 'master'.
+
+
+* jk/long-error-messages (2015-08-11) 2 commits
+  (merged to 'next' on 2015-08-12 at 36303cd)
+ + vreportf: avoid intermediate buffer
+ + vreportf: report to arbitrary filehandles
+
+ The codepath to produce error messages had a hard-coded limit to
+ the size of the message, primarily to avoid memory allocation while
+ calling die().
+
+ Will merge to 'master'.
+
+
+* nd/dwim-wildcards-as-pathspecs (2015-08-11) 1 commit
+  (merged to 'next' on 2015-08-12 at bb73f4d)
+ + t2019: skip test requiring '*' in a file name non Windows
+
+ Test updates for Windows.
+
+ Will merge to 'master'.
+
+
 * sg/config-name-only (2015-08-10) 2 commits
   (merged to 'next' on 2015-08-12 at c658fe4)
  + completion: list variable names reliably with 'git config --name-only'
@@ -742,26 +678,6 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* mh/get-remote-group-fix (2015-07-28) 4 commits
-  (merged to 'next' on 2015-08-12 at b77820e)
- + get_remote_group(): use skip_prefix()
- + get_remote_group(): eliminate superfluous call to strcspn()
- + get_remote_group(): rename local variable "space" to "wordlen"
- + get_remote_group(): handle remotes with single-character names
-
- An off-by-one error made "git remote" to mishandle a remote with a
- single letter nickname.
-
- Will merge to 'master'.
-
-
-* ta/docfix-index-format-tech (2015-07-28) 1 commit
-  (merged to 'next' on 2015-08-12 at 662d88a)
- + typofix for index-format.txt
-
- Will merge to 'master'.
-
-
 * dt/notes-multiple (2015-08-11) 2 commits
   (merged to 'next' on 2015-08-12 at 0052055)
  + notes: handle multiple worktrees
@@ -792,27 +708,6 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* dt/untracked-sparse (2015-07-31) 1 commit
-  (merged to 'next' on 2015-08-12 at 234434d)
- + untracked-cache: support sparse checkout
- (this branch is used by dt/untracked-subdir.)
-
- Allow untracked cache (experimental) to be used when sparse
- checkout (experimental) is also in use.
-
- Will merge to 'master'.
-
-
-* kd/pull-rebase-autostash (2015-07-22) 1 commit
-  (merged to 'next' on 2015-08-12 at de88e8e)
- + pull: allow dirty tree when rebase.autostash enabled
-
- "git pull --rebase" has been taught to pay attention to
- rebase.autostash configuration.
-
- Will merge to 'master'.
-
-
 * kn/for-each-tag-branch (2015-08-03) 11 commits
   (merged to 'next' on 2015-08-03 at d9e94b9)
  + for-each-ref: add '--contains' option
@@ -835,7 +730,7 @@ of the repositories listed at
  series or two.
 
 
-* jc/rerere (2015-07-30) 21 commits
+* jc/rerere (2015-07-24) 21 commits
  - rerere: un-nest merge() further
  - rerere: use "struct rerere_id" instead of "char *" for conflict ID
  - rerere: call conflict-ids IDs
@@ -862,7 +757,7 @@ of the repositories listed at
  Code clean-up and minor fixes (so far).
 
 
-* jc/rerere-multi (2015-07-31) 7 commits
+* jc/rerere-multi (2015-07-30) 7 commits
  . t4200: rerere a merge with two identical conflicts
  . WIP
  . rerere: allow multiple variants to exist
@@ -885,50 +780,3 @@ of the repositories listed at
  has been deprecated since October 2007.
 
  Will keep in 'next' during the 2.6 cycle.
-
---------------------------------------------------
-[Discarded]
-
-* tf/gitweb-project-listing (2015-03-19) 4 commits
- - gitweb: make category headings into links when they are directories
- - gitweb: optionally set project category from its pathname
- - gitweb: add a link under the search box to clear a project filter
- - gitweb: if the PATH_INFO is incomplete, use it as a project_filter
-
- Update gitweb to make it more pleasant to deal with a hierarchical
- forest of repositories.
-
- A fresh restart will not be rejected, but ejected from my tree for
- now.
-
-
-* jc/a-lone-dash-stands-for-previous-branch (2015-03-16) 1 commit
- - "-" and "@{-1}" on various programs
-
- Lose special case code to make a lone dash "-" mean the previous
- branch aka "@{-1}" from a handful subcommands, and instead support
- the notation throughout the system by reimplementing it at the
- revisions layer.
-
- Needs tests, documentation updates, etc.  Also does only a half-way
- job dealing with range notation, which needs to be fixed before the
- series goes anywhere.
-
-
-* jc/push-tags-also (2015-05-29) 1 commit
- - push --tags: push tags *in addition to* other stuff
-
- "git fetch --tags" learned to fetch tags in addition to other stuff
- a few years ago, but "git push --tags" didn't.  Now it does.
-
- A change to push out more than before always invites "what if the
- user makes a mistake" worries.
-
- Will discard.
-
-
-* nd/pathspec-strip-fix (2015-04-18) 1 commit
- - pathspec: adjust prefixlen after striping trailing slash
-
- Does not quite fix ($gmane/267614).
- Will discard.
