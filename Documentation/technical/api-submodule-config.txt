@@ -1,0 +1,45 @@
+submodule config cache API
+==========================
+
+The submodule config cache API allows to read submodule
+configurations/information from specified revisions. Internally
+information is lazily read into a cache that is used to avoid
+unnecessary parsing of the same .gitmodule files. Lookups can be done by
+submodule path or name.
+
+Usage
+-----
+
+The caller can look up information about submodules by using the
+`submodule_from_path()` or `submodule_from_name()` functions. They return
+a `struct submodule` which contains the values. The API automatically
+initializes and allocates the needed infrastructure on-demand.
+
+If the internal cache might grow too big or when the caller is done with
+the API, all internally cached values can be freed with submodule_free().
+
+Data Structures
+---------------
+
+`struct submodule`::
+
+	This structure is used to return the information about one
+	submodule for a certain revision. It is returned by the lookup
+	functions.
+
+Functions
+---------
+
+`void submodule_free()`::
+
+	Use these to free the internally cached values.
+
+`const struct submodule *submodule_from_path(const unsigned char *commit_sha1, const char *path)`::
+
+	Lookup values for one submodule by its commit_sha1 and path.
+
+`const struct submodule *submodule_from_name(const unsigned char *commit_sha1, const char *name)`::
+
+	The same as above but lookup by name.
+
+For an example usage see test-submodule-config.c.

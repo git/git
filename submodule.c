@@ -355,6 +355,7 @@ int parse_fetch_recurse_submodules_arg(const char *opt, const char *arg)
 	default:
 		if (!strcmp(arg, "on-demand"))
 			return RECURSE_SUBMODULES_ON_DEMAND;
+		/* TODO: remove the die for history parsing here */
 		die("bad %s argument: %s", opt, arg);
 	}
 }

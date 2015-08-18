@@ -204,6 +204,7 @@
 /test-sha1-array
 /test-sigchain
 /test-string-list
+/test-submodule-config
 /test-subprocess
 /test-svn-fe
 /test-urlmatch-normalization
