@@ -204,6 +204,30 @@ static struct submodule *lookup_or_create_by_name(struct submodule_cache *cache,
 	return submodule;
 }
 
+static int parse_fetch_recurse(const char *opt, const char *arg,
+			       int die_on_error)
+{
+	switch (git_config_maybe_bool(opt, arg)) {
+	case 1:
+		return RECURSE_SUBMODULES_ON;
+	case 0:
+		return RECURSE_SUBMODULES_OFF;
+	default:
+		if (!strcmp(arg, "on-demand"))
+			return RECURSE_SUBMODULES_ON_DEMAND;
+
+		if (die_on_error)
+			die("bad %s argument: %s", opt, arg);
+		else
+			return RECURSE_SUBMODULES_ERROR;
+	}
+}
+
+int parse_fetch_recurse_submodules_arg(const char *opt, const char *arg)
+{
+	return parse_fetch_recurse(opt, arg, 1);
+}
+
 static void warn_multiple_config(const unsigned char *commit_sha1,
 				 const char *name, const char *option)
 {
@@ -255,6 +279,8 @@ static int parse_config(const char *var, const char *value, void *data)
 		submodule->path = strbuf_detach(&path, NULL);
 		cache_put_path(me->cache, submodule);
 	} else if (!strcmp(item.buf, "fetchrecursesubmodules")) {
+		/* when parsing worktree configurations we can die early */
+		int die_on_error = is_null_sha1(me->gitmodules_sha1);
 		if (!me->overwrite &&
 		    submodule->fetch_recurse != RECURSE_SUBMODULES_NONE) {
 			warn_multiple_config(me->commit_sha1, submodule->name,
@@ -262,7 +288,8 @@ static int parse_config(const char *var, const char *value, void *data)
 			goto release_return;
 		}
 
-		submodule->fetch_recurse = parse_fetch_recurse_submodules_arg(var, value);
+		submodule->fetch_recurse = parse_fetch_recurse(var, value,
+								die_on_error);
 	} else if (!strcmp(item.buf, "ignore")) {
 		struct strbuf ignore = STRBUF_INIT;
 		if (!me->overwrite && submodule->ignore != NULL) {

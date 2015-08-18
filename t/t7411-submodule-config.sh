@@ -115,4 +115,39 @@ test_expect_success 'reading of local configuration' '
 	)
 '
 
+cat >super/expect_fetchrecurse_die.err <<EOF
+fatal: bad submodule.submodule.fetchrecursesubmodules argument: blabla
+EOF
+
+test_expect_success 'local error in fetchrecursesubmodule dies early' '
+	(cd super &&
+		git config submodule.submodule.fetchrecursesubmodules blabla &&
+		test_must_fail test-submodule-config \
+			"" b \
+			"" submodule \
+				>actual.out 2>actual.err &&
+		touch expect_fetchrecurse_die.out &&
+		test_cmp expect_fetchrecurse_die.out actual.out  &&
+		test_cmp expect_fetchrecurse_die.err actual.err  &&
+		git config --unset submodule.submodule.fetchrecursesubmodules
+	)
+'
+
+test_expect_success 'error in history in fetchrecursesubmodule lets continue' '
+	(cd super &&
+		git config -f .gitmodules \
+			submodule.submodule.fetchrecursesubmodules blabla &&
+		git add .gitmodules &&
+		git config --unset -f .gitmodules \
+			submodule.submodule.fetchrecursesubmodules &&
+		git commit -m "add error in fetchrecursesubmodules" &&
+		test-submodule-config \
+			HEAD b \
+			HEAD submodule \
+				>actual &&
+		test_cmp expect_error actual  &&
+		git reset --hard HEAD^
+	)
+'
+
 test_done
