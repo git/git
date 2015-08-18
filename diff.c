@@ -13,6 +13,7 @@
 #include "utf8.h"
 #include "userdiff.h"
 #include "sigchain.h"
+#include "submodule-config.h"
 #include "submodule.h"
 #include "ll-merge.h"
 #include "string-list.h"

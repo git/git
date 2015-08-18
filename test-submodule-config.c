@@ -1,11 +1,17 @@
 #include "cache.h"
 #include "submodule-config.h"
+#include "submodule.h"
 
 static void die_usage(int argc, char **argv, const char *msg)
 {
 	fprintf(stderr, "%s\n", msg);
 	fprintf(stderr, "Usage: %s [<commit> <submodulepath>] ...\n", argv[0]);
 	exit(1);
+}
+
+static int git_test_config(const char *var, const char *value, void *cb)
+{
+	return parse_submodule_config_option(var, value);
 }
 
 int main(int argc, char **argv)
@@ -28,6 +34,10 @@ int main(int argc, char **argv)
 
 	if (my_argc % 2 != 0)
 		die_usage(argc, argv, "Wrong number of arguments.");
+
+	setup_git_directory();
+	gitmodules_config();
+	git_config(git_test_config, NULL);
 
 	while (*arg) {
 		unsigned char commit_sha1[20];
