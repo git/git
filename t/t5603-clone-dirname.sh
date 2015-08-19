@@ -76,17 +76,17 @@ test_clone_dir host:foo/.git/// foo
 
 # omitting the path should default to the hostname
 test_clone_dir ssh://host/ host
-test_clone_dir ssh://host:1234/ host fail
-test_clone_dir ssh://user@host/ host fail
-test_clone_dir host:/ host fail
+test_clone_dir ssh://host:1234/ host
+test_clone_dir ssh://user@host/ host
+test_clone_dir host:/ host
 
 # auth materials should be redacted
-test_clone_dir ssh://user:password@host/ host fail
-test_clone_dir ssh://user:password@host:1234/ host fail
-test_clone_dir ssh://user:passw@rd@host:1234/ host fail
-test_clone_dir user@host:/ host fail
-test_clone_dir user:password@host:/ host fail
-test_clone_dir user:passw@rd@host:/ host fail
+test_clone_dir ssh://user:password@host/ host
+test_clone_dir ssh://user:password@host:1234/ host
+test_clone_dir ssh://user:passw@rd@host:1234/ host
+test_clone_dir user@host:/ host
+test_clone_dir user:password@host:/ host
+test_clone_dir user:passw@rd@host:/ host
 
 # auth-like material should not be dropped
 test_clone_dir ssh://host/foo@bar foo@bar
