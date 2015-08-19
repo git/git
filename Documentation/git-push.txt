@@ -137,7 +137,9 @@ already exists on the remote side.
 	GPG-sign the push request to update refs on the receiving
 	side, to allow it to be checked by the hooks and/or be
 	logged.  See linkgit:git-receive-pack[1] for the details
-	on the receiving end.
+	on the receiving end.  If the attempt to sign with `gpg` fails,
+	or if the server does not support signed pushes, the push will
+	fail.
 
 --[no-]atomic::
 	Use an atomic transaction on the remote side if available.
