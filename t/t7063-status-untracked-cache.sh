@@ -375,7 +375,7 @@ EOF
 node creation: 0
 gitignore invalidation: 0
 directory invalidation: 0
-opendir: 1
+opendir: 2
 EOF
 	test_cmp ../trace.expect ../trace
 '
@@ -541,6 +541,32 @@ directory invalidation: 0
 opendir: 0
 EOF
 	test_cmp ../trace.expect ../trace
+'
+
+test_expect_success 'move entry in subdir from untracked to cached' '
+	git add dtwo/two &&
+	git status --porcelain >../status.actual &&
+	cat >../status.expect <<EOF &&
+ M done/two
+A  dtwo/two
+?? .gitignore
+?? done/five
+?? done/sub/
+EOF
+	test_cmp ../status.expect ../status.actual
+'
+
+test_expect_success 'move entry in subdir from cached to untracked' '
+	git rm --cached dtwo/two &&
+	git status --porcelain >../status.actual &&
+	cat >../status.expect <<EOF &&
+ M done/two
+?? .gitignore
+?? done/five
+?? done/sub/
+?? dtwo/
+EOF
+	test_cmp ../status.expect ../status.actual
 '
 
 test_done
