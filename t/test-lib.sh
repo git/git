@@ -531,6 +531,10 @@ maybe_setup_valgrind () {
 	fi
 }
 
+want_trace () {
+	test "$trace" = t && test "$verbose" = t
+}
+
 # This is a separate function because some tests use
 # "return" to end a test_expect_success block early
 # (and we want to make sure we run any cleanup like
@@ -538,7 +542,7 @@ maybe_setup_valgrind () {
 test_eval_inner_ () {
 	# Do not add anything extra (including LF) after '$*'
 	eval "
-		test \"$trace\" = t && set -x
+		want_trace && set -x
 		$*"
 }
 
@@ -554,7 +558,7 @@ test_eval_ () {
 	{
 		test_eval_inner_ "$@" </dev/null >&3 2>&4
 		test_eval_ret_=$?
-		if test "$trace" = t
+		if want_trace
 		then
 			set +x
 			if test "$test_eval_ret_" != 0
@@ -571,12 +575,17 @@ test_run_ () {
 	expecting_failure=$2
 
 	if test "${GIT_TEST_CHAIN_LINT:-1}" != 0; then
+		# turn off tracing for this test-eval, as it simply creates
+		# confusing noise in the "-x" output
+		trace_tmp=$trace
+		trace=
 		# 117 is magic because it is unlikely to match the exit
 		# code of other programs
 		test_eval_ "(exit 117) && $1"
 		if test "$?" != 117; then
 			error "bug in the test script: broken &&-chain: $1"
 		fi
+		trace=$trace_tmp
 	fi
 
 	setup_malloc_check
