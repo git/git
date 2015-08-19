@@ -448,6 +448,9 @@ set by Git if the remote helper has the 'option' capability.
 'option update-shallow {'true'|'false'}::
 	Allow to extend .git/shallow if the new refs require it.
 
+'option pushcert {'true'|'false'}::
+	GPG sign pushes.
+
 SEE ALSO
 --------
 linkgit:git-remote[1]
