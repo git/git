@@ -1318,7 +1318,7 @@ static int http_get_file(const char *url, const char *filename,
 	ret = http_request_reauth(url, result, HTTP_REQUEST_FILE, options);
 	fclose(result);
 
-	if (ret == HTTP_OK && move_temp_to_file(tmpfile.buf, filename))
+	if (ret == HTTP_OK && finalize_object_file(tmpfile.buf, filename))
 		ret = HTTP_ERROR;
 cleanup:
 	strbuf_release(&tmpfile);
@@ -1405,7 +1405,7 @@ static int fetch_and_setup_pack_index(struct packed_git **packs_head,
 	ret = verify_pack_index(new_pack);
 	if (!ret) {
 		close_pack_index(new_pack);
-		ret = move_temp_to_file(tmp_idx, sha1_pack_index_name(sha1));
+		ret = finalize_object_file(tmp_idx, sha1_pack_index_name(sha1));
 	}
 	free(tmp_idx);
 	if (ret)
@@ -1517,8 +1517,8 @@ int finish_http_pack_request(struct http_pack_request *preq)
 
 	unlink(sha1_pack_index_name(p->sha1));
 
-	if (move_temp_to_file(preq->tmpfile, sha1_pack_name(p->sha1))
-	 || move_temp_to_file(tmp_idx, sha1_pack_index_name(p->sha1))) {
+	if (finalize_object_file(preq->tmpfile, sha1_pack_name(p->sha1))
+	 || finalize_object_file(tmp_idx, sha1_pack_index_name(p->sha1))) {
 		free(tmp_idx);
 		return -1;
 	}
@@ -1782,7 +1782,7 @@ int finish_http_object_request(struct http_object_request *freq)
 		return -1;
 	}
 	freq->rename =
-		move_temp_to_file(freq->tmpfile, sha1_file_name(freq->sha1));
+		finalize_object_file(freq->tmpfile, sha1_file_name(freq->sha1));
 
 	return freq->rename;
 }
