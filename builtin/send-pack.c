@@ -12,10 +12,15 @@
 #include "version.h"
 #include "sha1-array.h"
 #include "gpg-interface.h"
+#include "gettext.h"
 
-static const char send_pack_usage[] =
-"git send-pack [--all | --mirror] [--dry-run] [--force] [--receive-pack=<git-receive-pack>] [--verbose] [--thin] [--atomic] [<host>:]<directory> [<ref>...]\n"
-"  --all and explicit <ref> specification are mutually exclusive.";
+static const char * const send_pack_usage[] = {
+	N_("git send-pack [--all | --mirror] [--dry-run] [--force] "
+	  "[--receive-pack=<git-receive-pack>] [--verbose] [--thin] [--atomic] "
+	  "[<host>:]<directory> [<ref>...]\n"
+	  "  --all and explicit <ref> specification are mutually exclusive."),
+	NULL,
+};
 
 static struct send_pack_args args;
 
@@ -107,116 +112,66 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 	int ret;
 	int helper_status = 0;
 	int send_all = 0;
+	int verbose = 0;
 	const char *receivepack = "git-receive-pack";
+	unsigned dry_run = 0;
+	unsigned send_mirror = 0;
+	unsigned force_update = 0;
+	unsigned quiet = 0;
+	unsigned push_cert = 0;
+	unsigned use_thin_pack = 0;
+	unsigned atomic = 0;
+	unsigned stateless_rpc = 0;
 	int flags;
 	unsigned int reject_reasons;
 	int progress = -1;
 	int from_stdin = 0;
 	struct push_cas_option cas = {0};
 
+	struct option options[] = {
+		OPT__VERBOSITY(&verbose),
+		OPT_STRING(0, "receive-pack", &receivepack, "receive-pack", N_("receive pack program")),
+		OPT_STRING(0, "exec", &receivepack, "receive-pack", N_("receive pack program")),
+		OPT_STRING(0, "remote", &remote_name, "remote", N_("remote name")),
+		OPT_BOOL(0, "all", &send_all, N_("push all refs")),
+		OPT_BOOL('n' , "dry-run", &dry_run, N_("dry run")),
+		OPT_BOOL(0, "mirror", &send_mirror, N_("mirror all refs")),
+		OPT_BOOL('f', "force", &force_update, N_("force updates")),
+		OPT_BOOL(0, "signed", &push_cert, N_("GPG sign the push")),
+		OPT_BOOL(0, "progress", &progress, N_("force progress reporting")),
+		OPT_BOOL(0, "thin", &use_thin_pack, N_("use thin pack")),
+		OPT_BOOL(0, "atomic", &atomic, N_("request atomic transaction on remote side")),
+		OPT_BOOL(0, "stateless-rpc", &stateless_rpc, N_("use stateless RPC protocol")),
+		OPT_BOOL(0, "stdin", &from_stdin, N_("read refs from stdin")),
+		OPT_BOOL(0, "helper-status", &helper_status, N_("print status from remote helper")),
+		{ OPTION_CALLBACK,
+		  0, CAS_OPT_NAME, &cas, N_("refname>:<expect"),
+		  N_("require old value of ref to be at this value"),
+		  PARSE_OPT_OPTARG, parseopt_push_cas_option },
+		OPT_END()
+	};
+
 	git_config(git_gpg_config, NULL);
-
-	argv++;
-	for (i = 1; i < argc; i++, argv++) {
-		const char *arg = *argv;
-
-		if (*arg == '-') {
-			if (starts_with(arg, "--receive-pack=")) {
-				receivepack = arg + 15;
-				continue;
-			}
-			if (starts_with(arg, "--exec=")) {
-				receivepack = arg + 7;
-				continue;
-			}
-			if (starts_with(arg, "--remote=")) {
-				remote_name = arg + 9;
-				continue;
-			}
-			if (!strcmp(arg, "--all")) {
-				send_all = 1;
-				continue;
-			}
-			if (!strcmp(arg, "--dry-run")) {
-				args.dry_run = 1;
-				continue;
-			}
-			if (!strcmp(arg, "--mirror")) {
-				args.send_mirror = 1;
-				continue;
-			}
-			if (!strcmp(arg, "--force")) {
-				args.force_update = 1;
-				continue;
-			}
-			if (!strcmp(arg, "--quiet")) {
-				args.quiet = 1;
-				continue;
-			}
-			if (!strcmp(arg, "--verbose")) {
-				args.verbose = 1;
-				continue;
-			}
-			if (!strcmp(arg, "--signed")) {
-				args.push_cert = 1;
-				continue;
-			}
-			if (!strcmp(arg, "--progress")) {
-				progress = 1;
-				continue;
-			}
-			if (!strcmp(arg, "--no-progress")) {
-				progress = 0;
-				continue;
-			}
-			if (!strcmp(arg, "--thin")) {
-				args.use_thin_pack = 1;
-				continue;
-			}
-			if (!strcmp(arg, "--atomic")) {
-				args.atomic = 1;
-				continue;
-			}
-			if (!strcmp(arg, "--stateless-rpc")) {
-				args.stateless_rpc = 1;
-				continue;
-			}
-			if (!strcmp(arg, "--stdin")) {
-				from_stdin = 1;
-				continue;
-			}
-			if (!strcmp(arg, "--helper-status")) {
-				helper_status = 1;
-				continue;
-			}
-			if (!strcmp(arg, "--" CAS_OPT_NAME)) {
-				if (parse_push_cas_option(&cas, NULL, 0) < 0)
-					exit(1);
-				continue;
-			}
-			if (!strcmp(arg, "--no-" CAS_OPT_NAME)) {
-				if (parse_push_cas_option(&cas, NULL, 1) < 0)
-					exit(1);
-				continue;
-			}
-			if (starts_with(arg, "--" CAS_OPT_NAME "=")) {
-				if (parse_push_cas_option(&cas,
-							  strchr(arg, '=') + 1, 0) < 0)
-					exit(1);
-				continue;
-			}
-			usage(send_pack_usage);
-		}
-		if (!dest) {
-			dest = arg;
-			continue;
-		}
-		refspecs = (const char **) argv;
-		nr_refspecs = argc - i;
-		break;
+	argc = parse_options(argc, argv, prefix, options, send_pack_usage, 0);
+	if (argc > 0) {
+		dest = argv[0];
+		refspecs = (const char **)(argv + 1);
+		nr_refspecs = argc - 1;
 	}
+
 	if (!dest)
-		usage(send_pack_usage);
+		usage_with_options(send_pack_usage, options);
+
+	args.verbose = verbose;
+	args.dry_run = dry_run;
+	args.send_mirror = send_mirror;
+	args.force_update = force_update;
+	args.quiet = quiet;
+	args.push_cert = push_cert;
+	args.progress = progress;
+	args.use_thin_pack = use_thin_pack;
+	args.atomic = atomic;
+	args.stateless_rpc = stateless_rpc;
 
 	if (from_stdin) {
 		struct argv_array all_refspecs = ARGV_ARRAY_INIT;
@@ -245,7 +200,7 @@ int cmd_send_pack(int argc, const char **argv, const char *prefix)
 	 */
 	if ((refspecs && (send_all || args.send_mirror)) ||
 	    (send_all && args.send_mirror))
-		usage(send_pack_usage);
+		usage_with_options(send_pack_usage, options);
 
 	if (remote_name) {
 		remote = remote_get(remote_name);
