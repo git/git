@@ -472,6 +472,24 @@ static int option_parse_recurse_submodules(const struct option *opt,
 	return 0;
 }
 
+static void set_push_cert_flags(int *flags, int v)
+{
+	switch (v) {
+	case SEND_PACK_PUSH_CERT_NEVER:
+		*flags &= ~(TRANSPORT_PUSH_CERT_ALWAYS | TRANSPORT_PUSH_CERT_IF_ASKED);
+		break;
+	case SEND_PACK_PUSH_CERT_ALWAYS:
+		*flags |= TRANSPORT_PUSH_CERT_ALWAYS;
+		*flags &= ~TRANSPORT_PUSH_CERT_IF_ASKED;
+		break;
+	case SEND_PACK_PUSH_CERT_IF_ASKED:
+		*flags |= TRANSPORT_PUSH_CERT_IF_ASKED;
+		*flags &= ~TRANSPORT_PUSH_CERT_ALWAYS;
+		break;
+	}
+}
+
+
 static int git_push_config(const char *k, const char *v, void *cb)
 {
 	int *flags = cb;
@@ -487,6 +505,23 @@ static int git_push_config(const char *k, const char *v, void *cb)
 		else
 			*flags &= ~TRANSPORT_PUSH_FOLLOW_TAGS;
 		return 0;
+	} else if (!strcmp(k, "push.gpgsign")) {
+		const char *value;
+		if (!git_config_get_value("push.gpgsign", &value)) {
+			switch (git_config_maybe_bool("push.gpgsign", value)) {
+			case 0:
+				set_push_cert_flags(flags, SEND_PACK_PUSH_CERT_NEVER);
+				break;
+			case 1:
+				set_push_cert_flags(flags, SEND_PACK_PUSH_CERT_ALWAYS);
+				break;
+			default:
+				if (value && !strcasecmp(value, "if-asked"))
+					set_push_cert_flags(flags, SEND_PACK_PUSH_CERT_IF_ASKED);
+				else
+					return error("Invalid value for '%s'", k);
+			}
+		}
 	}
 
 	return git_default_config(k, v, NULL);
@@ -538,6 +573,7 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 	packet_trace_identity("push");
 	git_config(git_push_config, &flags);
 	argc = parse_options(argc, argv, prefix, options, push_usage, 0);
+	set_push_cert_flags(&flags, push_cert);
 
 	if (deleterefs && (tags || (flags & (TRANSPORT_PUSH_ALL | TRANSPORT_PUSH_MIRROR))))
 		die(_("--delete is incompatible with --all, --mirror and --tags"));
@@ -550,20 +586,6 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 	if (argc > 0) {
 		repo = argv[0];
 		set_refspecs(argv + 1, argc - 1, repo);
-	}
-
-	switch (push_cert) {
-	case SEND_PACK_PUSH_CERT_NEVER:
-		flags &= ~(TRANSPORT_PUSH_CERT_ALWAYS | TRANSPORT_PUSH_CERT_IF_ASKED);
-		break;
-	case SEND_PACK_PUSH_CERT_ALWAYS:
-		flags |= TRANSPORT_PUSH_CERT_ALWAYS;
-		flags &= ~TRANSPORT_PUSH_CERT_IF_ASKED;
-		break;
-	case SEND_PACK_PUSH_CERT_IF_ASKED:
-		flags |= TRANSPORT_PUSH_CERT_IF_ASKED;
-		flags &= ~TRANSPORT_PUSH_CERT_ALWAYS;
-		break;
 	}
 
 	rc = do_push(repo, flags);

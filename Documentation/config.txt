@@ -2117,6 +2117,14 @@ push.followTags::
 	may override this configuration at time of push by specifying
 	'--no-follow-tags'.
 
+push.gpgSign::
+	May be set to a boolean value, or the string 'if-asked'. A true
+	value causes all pushes to be GPG signed, as if '--signed' is
+	passed to linkgit:git-push[1]. The string 'if-asked' causes
+	pushes to be signed if the server supports it, as if
+	'--signed=if-asked' is passed to 'git push'. A false value may
+	override a value from a lower-priority config file. An explicit
+	command-line flag always overrides this config option.
 
 rebase.stat::
 	Whether to show a diffstat of what changed upstream since the last
