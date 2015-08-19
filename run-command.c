@@ -797,11 +797,13 @@ int finish_async(struct async *async)
 
 const char *find_hook(const char *name)
 {
-	const char *path = git_path("hooks/%s", name);
-	if (access(path, X_OK) < 0)
-		path = NULL;
+	static struct strbuf path = STRBUF_INIT;
 
-	return path;
+	strbuf_reset(&path);
+	strbuf_git_path(&path, "hooks/%s", name);
+	if (access(path.buf, X_OK) < 0)
+		return NULL;
+	return path.buf;
 }
 
 int run_hook_ve(const char *const *env, const char *name, va_list args)

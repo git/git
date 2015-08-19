@@ -224,11 +224,10 @@ const char *mkpath(const char *fmt, ...)
 	return cleanup_path(pathname->buf);
 }
 
-const char *git_path_submodule(const char *path, const char *fmt, ...)
+static void do_submodule_path(struct strbuf *buf, const char *path,
+			      const char *fmt, va_list args)
 {
-	struct strbuf *buf = get_pathname();
 	const char *git_dir;
-	va_list args;
 
 	strbuf_addstr(buf, path);
 	if (buf->len && buf->buf[buf->len - 1] != '/')
@@ -242,11 +241,27 @@ const char *git_path_submodule(const char *path, const char *fmt, ...)
 	}
 	strbuf_addch(buf, '/');
 
-	va_start(args, fmt);
 	strbuf_vaddf(buf, fmt, args);
-	va_end(args);
 	strbuf_cleanup_path(buf);
-	return buf->buf;
+}
+
+char *git_pathdup_submodule(const char *path, const char *fmt, ...)
+{
+	va_list args;
+	struct strbuf buf = STRBUF_INIT;
+	va_start(args, fmt);
+	do_submodule_path(&buf, path, fmt, args);
+	va_end(args);
+	return strbuf_detach(&buf, NULL);
+}
+
+void strbuf_git_path_submodule(struct strbuf *buf, const char *path,
+			       const char *fmt, ...)
+{
+	va_list args;
+	va_start(args, fmt);
+	do_submodule_path(buf, path, fmt, args);
+	va_end(args);
 }
 
 int validate_headref(const char *path)
@@ -918,3 +933,13 @@ char *xdg_config_home(const char *filename)
 		return mkpathdup("%s/.config/git/%s", home, filename);
 	return NULL;
 }
+
+GIT_PATH_FUNC(git_path_cherry_pick_head, "CHERRY_PICK_HEAD")
+GIT_PATH_FUNC(git_path_revert_head, "REVERT_HEAD")
+GIT_PATH_FUNC(git_path_squash_msg, "SQUASH_MSG")
+GIT_PATH_FUNC(git_path_merge_msg, "MERGE_MSG")
+GIT_PATH_FUNC(git_path_merge_rr, "MERGE_RR")
+GIT_PATH_FUNC(git_path_merge_mode, "MERGE_MODE")
+GIT_PATH_FUNC(git_path_merge_head, "MERGE_HEAD")
+GIT_PATH_FUNC(git_path_fetch_head, "FETCH_HEAD")
+GIT_PATH_FUNC(git_path_shallow, "shallow")
