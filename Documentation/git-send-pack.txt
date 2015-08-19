@@ -10,7 +10,8 @@ SYNOPSIS
 --------
 [verse]
 'git send-pack' [--all] [--dry-run] [--force] [--receive-pack=<git-receive-pack>]
-		[--verbose] [--thin] [--atomic] [--signed]
+		[--verbose] [--thin] [--atomic]
+		[--[no-]signed|--sign=(true|false|if-asked)]
 		[<host>:]<directory> [<ref>...]
 
 DESCRIPTION
@@ -69,13 +70,16 @@ be in a separate packet, and the list must end with a flush packet.
 	fails to update then the entire push will fail without changing any
 	refs.
 
---signed::
+--[no-]signed::
+--sign=(true|false|if-asked)::
 	GPG-sign the push request to update refs on the receiving
 	side, to allow it to be checked by the hooks and/or be
-	logged.  See linkgit:git-receive-pack[1] for the details
-	on the receiving end.  If the attempt to sign with `gpg` fails,
-	or if the server does not support signed pushes, the push will
-	fail.
+	logged.  If `false` or `--no-signed`, no signing will be
+	attempted.  If `true` or `--signed`, the push will fail if the
+	server does not support signed pushes.  If set to `if-asked`,
+	sign if and only if the server supports signed pushes.  The push
+	will also fail if the actual call to `gpg --sign` fails.  See
+	linkgit:git-receive-pack[1] for the details on the receiving end.
 
 <host>::
 	A remote host to house the repository.  When this

@@ -9,6 +9,7 @@
 #include "transport.h"
 #include "parse-options.h"
 #include "submodule.h"
+#include "send-pack.h"
 
 static const char * const push_usage[] = {
 	N_("git push [<options>] [<repository> [<refspec>...]]"),
@@ -495,6 +496,7 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 {
 	int flags = 0;
 	int tags = 0;
+	int push_cert = -1;
 	int rc;
 	const char *repo = NULL;	/* default repository */
 	struct option options[] = {
@@ -526,7 +528,9 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 		OPT_BIT(0, "no-verify", &flags, N_("bypass pre-push hook"), TRANSPORT_PUSH_NO_HOOK),
 		OPT_BIT(0, "follow-tags", &flags, N_("push missing but relevant tags"),
 			TRANSPORT_PUSH_FOLLOW_TAGS),
-		OPT_BIT(0, "signed", &flags, N_("GPG sign the push"), TRANSPORT_PUSH_CERT),
+		{ OPTION_CALLBACK,
+		  0, "signed", &push_cert, "yes|no|if-asked", N_("GPG sign the push"),
+		  PARSE_OPT_OPTARG, option_parse_push_signed },
 		OPT_BIT(0, "atomic", &flags, N_("request atomic transaction on remote side"), TRANSPORT_PUSH_ATOMIC),
 		OPT_END()
 	};
@@ -546,6 +550,20 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 	if (argc > 0) {
 		repo = argv[0];
 		set_refspecs(argv + 1, argc - 1, repo);
+	}
+
+	switch (push_cert) {
+	case SEND_PACK_PUSH_CERT_NEVER:
+		flags &= ~(TRANSPORT_PUSH_CERT_ALWAYS | TRANSPORT_PUSH_CERT_IF_ASKED);
+		break;
+	case SEND_PACK_PUSH_CERT_ALWAYS:
+		flags |= TRANSPORT_PUSH_CERT_ALWAYS;
+		flags &= ~TRANSPORT_PUSH_CERT_IF_ASKED;
+		break;
+	case SEND_PACK_PUSH_CERT_IF_ASKED:
+		flags |= TRANSPORT_PUSH_CERT_IF_ASKED;
+		flags &= ~TRANSPORT_PUSH_CERT_ALWAYS;
+		break;
 	}
 
 	rc = do_push(repo, flags);
