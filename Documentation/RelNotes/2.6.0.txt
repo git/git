@@ -51,6 +51,11 @@ UI, Workflows & Features
  * "git pull --rebase" has been taught to pay attention to
    rebase.autostash configuration.
 
+ * The command-line completion script (in contrib/) has been updated.
+
+ * A negative !ref entry in multi-value transfer.hideRefs
+   configuration can be used to say "don't hide this one".
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -101,6 +106,10 @@ Performance, Internal Implementation, Development Support etc.
 
  * "git am" has been rewritten in "C".
 
+ * git_path() and mkpath() are handy helper functions but it is easy
+   to misuse, as the callers need to be careful to keep the number of
+   active results below 4.  Their uses have been reduced.
+
 
 Also contains various documentation updates and code clean-ups.
 
@@ -117,7 +126,7 @@ notes for details).
    particular date format.
    (merge e7aac44 da/subtree-date-confusion later to maint).
 
- * An attempt to delete a ref by pushing into a repositorywhose HEAD
+ * An attempt to delete a ref by pushing into a repository whose HEAD
    symbolic reference points at an unborn branch that cannot be
    created due to ref D/F conflict (e.g. refs/heads/a/b exists, HEAD
    points at refs/heads/a) failed.
@@ -180,6 +189,29 @@ notes for details).
    single letter nickname.
    (merge bc598c3 mh/get-remote-group-fix later to maint).
 
+ * "git clone $URL", when cloning from a site whose sole purpose is to
+   host a single repository (hence, no path after <scheme>://<site>/),
+   tried to use the site name as the new repository name, but did not
+   remove username or password when <site> part was of the form
+   <user>@<pass>:<host>.  The code is taught to redact these.
+   (merge adef956 ps/guess-repo-name-at-root later to maint).
+
+ * Running tests with the "-x" option to make them verbose had some
+   unpleasant interactions with other features of the test suite.
+   (merge 9b5fe78 jk/test-with-x later to maint).
+
+ * t1509 test that requires a dedicated VM environment had some
+   bitrot, which has been corrected.
+   (merge faacc5a ps/t1509-chroot-test-fixup later to maint).
+
+ * "git pull" in recent releases of Git has a regression in the code
+   that allows custom path to the --upload-pack=<program>.  This has
+   been corrected.
+
+   Note that this is irrelevant for 'master' with "git pull" rewritten
+   in C.
+   (merge 22d6857 mm/pull-upload-pack later to maint).
+
  * Code cleanups and documentation updates.
    (merge 1c601af es/doc-clean-outdated-tools later to maint).
    (merge 3581304 kn/tag-doc-fix later to maint).
@@ -188,3 +220,4 @@ notes for details).
    (merge 14691e3 sb/parse-options-codeformat later to maint).
    (merge 4a6ada3 ad/bisect-cleanup later to maint).
    (merge da4c5ad ta/docfix-index-format-tech later to maint).
+   (merge ae25fd3 sb/check-return-from-read-ref later to maint).
