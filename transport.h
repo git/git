@@ -12,7 +12,6 @@ struct git_transport_options {
 	unsigned check_self_contained_and_connected : 1;
 	unsigned self_contained_and_connected : 1;
 	unsigned update_shallow : 1;
-	unsigned push_cert : 1;
 	int depth;
 	const char *uploadpack;
 	const char *receivepack;
