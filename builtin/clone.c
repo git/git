@@ -174,7 +174,8 @@ static char *guess_dir_name(const char *repo, int is_bundle, int is_bare)
 	/*
 	 * Strip .{bundle,git}.
 	 */
-	strip_suffix(start, is_bundle ? ".bundle" : ".git" , &len);
+	len = end - start;
+	strip_suffix_mem(start, &len, is_bundle ? ".bundle" : ".git");
 
 	if (is_bare)
 		dir = xstrfmt("%.*s.git", (int)len, start);
