@@ -94,6 +94,10 @@ test_expect_success 'add sub3' '
 # Back to mainline
 cd ..
 
+test_expect_success 'enable log.date=relative to catch errors' '
+	git config log.date relative
+'
+
 test_expect_success 'add main4' '
 	create main4 &&
 	git commit -m "main4" &&
