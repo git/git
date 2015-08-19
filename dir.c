@@ -1297,7 +1297,7 @@ static enum exist_status directory_exists_in_index(const char *dirname, int len)
  */
 static enum path_treatment treat_directory(struct dir_struct *dir,
 	struct untracked_cache_dir *untracked,
-	const char *dirname, int len, int exclude,
+	const char *dirname, int len, int baselen, int exclude,
 	const struct path_simplify *simplify)
 {
 	/* The "len-1" is to strip the final '/' */
@@ -1324,7 +1324,8 @@ static enum path_treatment treat_directory(struct dir_struct *dir,
 	if (!(dir->flags & DIR_HIDE_EMPTY_DIRECTORIES))
 		return exclude ? path_excluded : path_untracked;
 
-	untracked = lookup_untracked(dir->untracked, untracked, dirname, len);
+	untracked = lookup_untracked(dir->untracked, untracked,
+				     dirname + baselen, len - baselen);
 	return read_directory_recursive(dir, dirname, len,
 					untracked, 1, simplify);
 }
@@ -1444,6 +1445,7 @@ static int get_dtype(struct dirent *de, const char *path, int len)
 static enum path_treatment treat_one_path(struct dir_struct *dir,
 					  struct untracked_cache_dir *untracked,
 					  struct strbuf *path,
+					  int baselen,
 					  const struct path_simplify *simplify,
 					  int dtype, struct dirent *de)
 {
@@ -1495,8 +1497,8 @@ static enum path_treatment treat_one_path(struct dir_struct *dir,
 		return path_none;
 	case DT_DIR:
 		strbuf_addch(path, '/');
-		return treat_directory(dir, untracked, path->buf, path->len, exclude,
-			simplify);
+		return treat_directory(dir, untracked, path->buf, path->len,
+				       baselen, exclude, simplify);
 	case DT_REG:
 	case DT_LNK:
 		return exclude ? path_excluded : path_untracked;
@@ -1557,7 +1559,7 @@ static enum path_treatment treat_path(struct dir_struct *dir,
 		return path_none;
 
 	dtype = DTYPE(de);
-	return treat_one_path(dir, untracked, path, simplify, dtype, de);
+	return treat_one_path(dir, untracked, path, baselen, simplify, dtype, de);
 }
 
 static void add_untracked(struct untracked_cache_dir *dir, const char *name)
@@ -1827,7 +1829,7 @@ static int treat_leading_path(struct dir_struct *dir,
 			break;
 		if (simplify_away(sb.buf, sb.len, simplify))
 			break;
-		if (treat_one_path(dir, NULL, &sb, simplify,
+		if (treat_one_path(dir, NULL, &sb, baselen, simplify,
 				   DT_DIR, NULL) == path_none)
 			break; /* do not recurse into it */
 		if (len <= baselen) {
