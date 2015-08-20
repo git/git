@@ -342,8 +342,7 @@ static int cmd_log_walk(struct rev_info *rev)
 	 * retain that state information if replacing rev->diffopt in this loop
 	 */
 	while ((commit = get_revision(rev)) != NULL) {
-		if (!log_tree_commit(rev, commit) &&
-		    rev->max_count >= 0)
+		if (!log_tree_commit(rev, commit) && rev->max_count >= 0)
 			/*
 			 * We decremented max_count in get_revision,
 			 * but we didn't actually show the commit.
@@ -1464,8 +1463,7 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 			continue;
 		}
 
-		if (ignore_if_in_upstream &&
-				has_commit_patch_id(commit, &ids))
+		if (ignore_if_in_upstream && has_commit_patch_id(commit, &ids))
 			continue;
 
 		nr++;
