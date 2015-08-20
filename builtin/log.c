@@ -504,7 +504,8 @@ static int show_tree_object(const unsigned char *sha1,
 	return 0;
 }
 
-static void show_rev_tweak_rev(struct rev_info *rev, struct setup_revision_opt *opt)
+static void show_setup_revisions_tweak(struct rev_info *rev,
+				       struct setup_revision_opt *opt)
 {
 	if (rev->ignore_merges) {
 		/* There was no "-m" on the command line */
@@ -539,7 +540,7 @@ int cmd_show(int argc, const char **argv, const char *prefix)
 
 	memset(&opt, 0, sizeof(opt));
 	opt.def = "HEAD";
-	opt.tweak = show_rev_tweak_rev;
+	opt.tweak = show_setup_revisions_tweak;
 	cmd_log_init(argc, argv, prefix, &rev, &opt);
 
 	if (!rev.no_walk)
@@ -626,8 +627,8 @@ int cmd_log_reflog(int argc, const char **argv, const char *prefix)
 	return cmd_log_walk(&rev);
 }
 
-static void default_follow_tweak(struct rev_info *rev,
-				 struct setup_revision_opt *opt)
+static void log_setup_revisions_tweak(struct rev_info *rev,
+				      struct setup_revision_opt *opt)
 {
 	if (DIFF_OPT_TST(&rev->diffopt, DEFAULT_FOLLOW_RENAMES) &&
 	    rev->prune_data.nr == 1)
@@ -647,7 +648,7 @@ int cmd_log(int argc, const char **argv, const char *prefix)
 	memset(&opt, 0, sizeof(opt));
 	opt.def = "HEAD";
 	opt.revarg_opt = REVARG_COMMITTISH;
-	opt.tweak = default_follow_tweak;
+	opt.tweak = log_setup_revisions_tweak;
 	cmd_log_init(argc, argv, prefix, &rev, &opt);
 	return cmd_log_walk(&rev);
 }
