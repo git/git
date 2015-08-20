@@ -113,7 +113,7 @@
 #   stash                            |  n. 进度保存; v. 保存进度
 #   submodule                        |  子模组
 #   symref                           |  符号引用
-#   tag                              |  标签
+#   tag                              |  n. 标签; v. 打标签
 #   tag object                       |  标签对象
 #   tagger                           |  打标签者
 #   topic branch                     |  主题分支
