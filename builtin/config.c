@@ -111,41 +111,35 @@ static int format_config(struct strbuf *buf, const char *key_, const char *value
 	if (show_keys)
 		strbuf_addstr(buf, key_);
 	if (!omit_values) {
-		int must_free_vptr = 0;
-		int must_add_delim = show_keys;
-		char value[256];
-		const char *vptr = value;
+		if (show_keys)
+			strbuf_addch(buf, key_delim);
 
 		if (types == TYPE_INT)
-			sprintf(value, "%"PRId64,
-				git_config_int64(key_, value_ ? value_ : ""));
+			strbuf_addf(buf, "%"PRId64,
+				    git_config_int64(key_, value_ ? value_ : ""));
 		else if (types == TYPE_BOOL)
-			vptr = git_config_bool(key_, value_) ? "true" : "false";
+			strbuf_addstr(buf, git_config_bool(key_, value_) ?
+				      "true" : "false");
 		else if (types == TYPE_BOOL_OR_INT) {
 			int is_bool, v;
 			v = git_config_bool_or_int(key_, value_, &is_bool);
 			if (is_bool)
-				vptr = v ? "true" : "false";
+				strbuf_addstr(buf, v ? "true" : "false");
 			else
-				sprintf(value, "%d", v);
+				strbuf_addf(buf, "%d", v);
 		} else if (types == TYPE_PATH) {
-			if (git_config_pathname(&vptr, key_, value_) < 0)
+			const char *v;
+			if (git_config_pathname(&v, key_, value_) < 0)
 				return -1;
-			must_free_vptr = 1;
+			strbuf_addstr(buf, v);
+			free((char *)v);
 		} else if (value_) {
-			vptr = value_;
+			strbuf_addstr(buf, value_);
 		} else {
-			/* Just show the key name */
-			vptr = "";
-			must_add_delim = 0;
+			/* Just show the key name; back out delimiter */
+			if (show_keys)
+				strbuf_setlen(buf, buf->len - 1);
 		}
-
-		if (must_add_delim)
-			strbuf_addch(buf, key_delim);
-		strbuf_addstr(buf, vptr);
-
-		if (must_free_vptr)
-			free((char *)vptr);
 	}
 	strbuf_addch(buf, term);
 	return 0;
