@@ -108,8 +108,6 @@ struct strbuf_list {
 
 static int format_config(struct strbuf *buf, const char *key_, const char *value_)
 {
-	strbuf_init(buf, 0);
-
 	if (show_keys)
 		strbuf_addstr(buf, key_);
 	if (!omit_values) {
@@ -166,6 +164,7 @@ static int collect_config(const char *key_, const char *value_, void *cb)
 		return 0;
 
 	ALLOC_GROW(values->items, values->nr + 1, values->alloc);
+	strbuf_init(&values->items[values->nr], 0);
 
 	return format_config(&values->items[values->nr++], key_, value_);
 }
