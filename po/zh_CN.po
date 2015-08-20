@@ -52,7 +52,7 @@
 #   fast-forward                     |  快进
 #   fetch                            |  获取
 #   file system                      |  文件系统
-#   fork                             |  派生，复刻
+#   fork                             |  派生
 #   Git archive                      |  仓库（对于 arch 用户）
 #   gitfile                          |  gitfile（仓库链接文件）
 #   grafts                           |  （提交）嫁接
@@ -7441,7 +7441,7 @@ msgstr "第一个是其他的祖先提交么？"
 
 #: builtin/merge-base.c:222
 msgid "find where <commit> forked from reflog of <ref>"
-msgstr "根据引用日志 <引用> 查找 <提交> 的派生处"
+msgstr "根据 <引用> 的引用日志查找 <提交> 的派生处"
 
 #: builtin/merge-file.c:8
 msgid ""
