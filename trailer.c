@@ -748,8 +748,9 @@ static int find_trailer_start(struct strbuf **lines, int count)
 	/*
 	 * Get the start of the trailers by looking starting from the end
 	 * for a line with only spaces before lines with one separator.
+	 * The start cannot be the first line.
 	 */
-	for (start = count - 1; start >= 0; start--) {
+	for (start = count - 1; start >= 1; start--) {
 		if (lines[start]->buf[0] == comment_line_char)
 			continue;
 		if (contains_only_spaces(lines[start]->buf)) {

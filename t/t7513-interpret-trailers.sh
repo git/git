@@ -93,9 +93,22 @@ test_expect_success 'with config option on the command line' '
 		Acked-by: Johan
 		Reviewed-by: Peff
 	EOF
-	echo "Acked-by: Johan" |
+	{ echo; echo "Acked-by: Johan"; } |
 	git -c "trailer.Acked-by.ifexists=addifdifferent" interpret-trailers \
 		--trailer "Reviewed-by: Peff" --trailer "Acked-by: Johan" >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'with message that contains only a title' '
+	cat >expected <<-\EOF &&
+		area: change
+
+		Reviewed-by: Peff
+		Acked-by: Johan
+	EOF
+	echo "area: change" |
+	git interpret-trailers --trailer "Reviewed-by: Peff" \
+		--trailer "Acked-by: Johan" >actual &&
 	test_cmp expected actual
 '
 
