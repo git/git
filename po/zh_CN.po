@@ -47,7 +47,7 @@
 #   detached HEAD                    |  分离头指针
 #   directory                        |  目录
 #   dirty                            |  脏（的工作区）
-#   dumb HTTP                        |  哑 HTTP 协议
+#   dumb HTTP protocol               |  哑 HTTP 协议
 #   evil merge                       |  坏合并（合并引入了父提交没有的修改）
 #   fast-forward                     |  快进
 #   fetch                            |  获取
@@ -107,7 +107,7 @@
 #   SHA-1                            |  SHA-1（安全哈希算法1）
 #   shallow repository               |  浅（克隆）仓库
 #   signed tag                       |  签名标签
-#   smart HTTP                       |  智能 HTTP 协议
+#   smart HTTP protocol              |  智能 HTTP 协议
 #   squash                           |  压缩
 #   stage                            |  n. 暂存区（即索引）; v. 暂存
 #   stash                            |  n. 进度保存; v. 保存进度
