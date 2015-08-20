@@ -83,7 +83,7 @@
 #   patch                            |  补丁
 #   pathspec                         |  路径规格
 #   pattern                          |  模式
-#   pickaxe                          |  pickaxe
+#   pickaxe                          |  挖掘
 #   plumbing                         |  管件（Git 底层核心命令的别称）
 #   porcelain                        |  瓷件（Git 上层封装命令的别称）
 #   prune                            |  清除
