@@ -104,7 +104,7 @@
 #   revision                         |  版本
 #   rewind                           |  回退
 #   SCM                              |  源代码管理（工具）
-#   SHA-1                            |  安全哈希算法1
+#   SHA-1                            |  SHA-1（安全哈希算法1）
 #   shallow repository               |  浅（克隆）仓库
 #   signed tag                       |  签名标签
 #   smart HTTP                       |  智能 HTTP 协议
