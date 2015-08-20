@@ -425,14 +425,11 @@ static int get_urlmatch(const char *var, const char *url)
 
 	for_each_string_list_item(item, &values) {
 		struct urlmatch_current_candidate_value *matched = item->util;
-		struct strbuf key = STRBUF_INIT;
 		struct strbuf buf = STRBUF_INIT;
 
-		strbuf_addstr(&key, item->string);
-		format_config(&buf, key.buf,
+		format_config(&buf, item->string,
 			      matched->value_is_null ? NULL : matched->value.buf);
 		fwrite(buf.buf, 1, buf.len, stdout);
-		strbuf_release(&key);
 		strbuf_release(&buf);
 
 		strbuf_release(&matched->value);
