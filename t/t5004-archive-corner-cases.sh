@@ -122,7 +122,7 @@ test_lazy_prereq ZIPINFO '
 	test "x$n" = "x0"
 '
 
-test_expect_failure ZIPINFO 'zip archive with many entries' '
+test_expect_success ZIPINFO 'zip archive with many entries' '
 	# add a directory with 256 files
 	mkdir 00 &&
 	for a in 0 1 2 3 4 5 6 7 8 9 a b c d e f
