@@ -223,6 +223,7 @@ static int write_zip_entry(struct archiver_args *args,
 	unsigned long size;
 	int is_binary = -1;
 	const char *path_without_prefix = path + args->baselen;
+	unsigned int creator_version = 0;
 
 	crc = crc32(0, NULL, 0);
 
@@ -251,6 +252,8 @@ static int write_zip_entry(struct archiver_args *args,
 		method = 0;
 		attr2 = S_ISLNK(mode) ? ((mode | 0777) << 16) :
 			(mode & 0111) ? ((mode) << 16) : 0;
+		if (S_ISLNK(mode) || (mode & 0111))
+			creator_version = 0x0317;
 		if (S_ISREG(mode) && args->compression_level != 0 && size > 0)
 			method = 8;
 
@@ -303,8 +306,7 @@ static int write_zip_entry(struct archiver_args *args,
 	}
 
 	copy_le32(dirent.magic, 0x02014b50);
-	copy_le16(dirent.creator_version,
-		S_ISLNK(mode) || (S_ISREG(mode) && (mode & 0111)) ? 0x0317 : 0);
+	copy_le16(dirent.creator_version, creator_version);
 	copy_le16(dirent.version, 10);
 	copy_le16(dirent.flags, flags);
 	copy_le16(dirent.compression_method, method);
