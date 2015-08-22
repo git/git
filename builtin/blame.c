@@ -2379,11 +2379,6 @@ static struct commit *fake_working_tree_commit(struct diff_options *opt,
 	ce->ce_mode = create_ce_mode(mode);
 	add_cache_entry(ce, ADD_CACHE_OK_TO_ADD|ADD_CACHE_OK_TO_REPLACE);
 
-	/*
-	 * We are not going to write this out, so this does not matter
-	 * right now, but someday we might optimize diff-index --cached
-	 * with cache-tree information.
-	 */
 	cache_tree_invalidate_path(&the_index, path);
 
 	return commit;
