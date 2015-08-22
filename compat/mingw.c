@@ -896,7 +896,7 @@ int pipe(int filedes[2])
 		return -1;
 	}
 	filedes[1] = _open_osfhandle(HCAST(int, h[1]), O_NOINHERIT);
-	if (filedes[0] < 0) {
+	if (filedes[1] < 0) {
 		close(filedes[0]);
 		CloseHandle(h[1]);
 		return -1;
