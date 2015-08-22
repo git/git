@@ -431,7 +431,7 @@ const char *enter_repo(const char *path, int strict)
 		}
 		if (!suffix[i])
 			return NULL;
-		gitfile = read_gitfile(used_path) ;
+		gitfile = read_gitfile(used_path);
 		if (gitfile)
 			strcpy(used_path, gitfile);
 		if (chdir(used_path))
