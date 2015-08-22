@@ -212,7 +212,7 @@ static int check_local_mod(unsigned char *head, int index_only)
 		 * "intent to add" entry.
 		 */
 		if (local_changes && staged_changes) {
-			if (!index_only || !(ce->ce_flags & CE_INTENT_TO_ADD))
+			if (!index_only || !ce_intent_to_add(ce))
 				string_list_append(&files_staged, name);
 		}
 		else if (!index_only) {
