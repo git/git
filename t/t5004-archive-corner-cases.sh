@@ -115,4 +115,44 @@ test_expect_success 'archive empty subtree by direct pathspec' '
 	check_dir extract sub
 '
 
+ZIPINFO=zipinfo
+
+test_lazy_prereq ZIPINFO '
+	n=$("$ZIPINFO" "$TEST_DIRECTORY"/t5004/empty.zip | sed -n "2s/.* //p")
+	test "x$n" = "x0"
+'
+
+test_expect_failure ZIPINFO 'zip archive with many entries' '
+	# add a directory with 256 files
+	mkdir 00 &&
+	for a in 0 1 2 3 4 5 6 7 8 9 a b c d e f
+	do
+		for b in 0 1 2 3 4 5 6 7 8 9 a b c d e f
+		do
+			: >00/$a$b
+		done
+	done &&
+	git add 00 &&
+	git commit -m "256 files in 1 directory" &&
+
+	# duplicate it to get 65536 files in 256 directories
+	subtree=$(git write-tree --prefix=00/) &&
+	for c in 0 1 2 3 4 5 6 7 8 9 a b c d e f
+	do
+		for d in 0 1 2 3 4 5 6 7 8 9 a b c d e f
+		do
+			echo "040000 tree $subtree	$c$d"
+		done
+	done >tree &&
+	tree=$(git mktree <tree) &&
+
+	# zip them
+	git archive -o many.zip $tree &&
+
+	# check the number of entries in the ZIP file directory
+	expr 65536 + 256 >expect &&
+	"$ZIPINFO" many.zip | head -2 | sed -n "2s/.* //p" >actual &&
+	test_cmp expect actual
+'
+
 test_done
