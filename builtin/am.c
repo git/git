@@ -199,19 +199,13 @@ static inline const char *am_path(const struct am_state *state, const char *path
 static int write_state_text(const struct am_state *state,
 			    const char *name, const char *string)
 {
-	const char *fmt;
-
-	if (*string && string[strlen(string) - 1] != '\n')
-		fmt = "%s\n";
-	else
-		fmt = "%s";
-	return write_file(am_path(state, name), fmt, string);
+	return write_file(am_path(state, name), "%s", string);
 }
 
 static int write_state_count(const struct am_state *state,
 			     const char *name, int value)
 {
-	return write_file(am_path(state, name), "%d\n", value);
+	return write_file(am_path(state, name), "%d", value);
 }
 
 static int write_state_bool(const struct am_state *state,

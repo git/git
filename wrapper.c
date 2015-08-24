@@ -632,6 +632,7 @@ static int write_file_v(const char *path, int fatal,
 		return -1;
 	}
 	strbuf_vaddf(&sb, fmt, params);
+	strbuf_complete_line(&sb);
 	if (write_in_full(fd, sb.buf, sb.len) != sb.len) {
 		int err = errno;
 		close(fd);
