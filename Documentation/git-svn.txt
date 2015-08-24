@@ -157,6 +157,9 @@ Skip "branches" and "tags" of first level directories;;
 	(including automatic fetches due to 'clone', 'dcommit',
 	'rebase', etc) on a given repository. '--ignore-paths' takes
 	precedence over '--include-paths'.
++
+[verse]
+config key: svn-remote.<name>.include-paths
 
 --log-window-size=<n>;;
 	Fetch <n> log entries per request when scanning Subversion history.
