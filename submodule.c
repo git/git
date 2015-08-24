@@ -1103,7 +1103,7 @@ void connect_work_tree_and_git_dir(const char *work_tree, const char *git_dir)
 
 	/* Update gitfile */
 	strbuf_addf(&file_name, "%s/.git", work_tree);
-	write_file(file_name.buf, 1, "gitdir: %s\n",
+	write_file(file_name.buf, "gitdir: %s\n",
 		   relative_path(git_dir, real_work_tree, &rel_path));
 
 	/* Update core.worktree setting */

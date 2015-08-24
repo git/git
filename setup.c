@@ -404,7 +404,7 @@ static void update_linked_gitdir(const char *gitfile, const char *gitdir)
 
 	strbuf_addf(&path, "%s/gitfile", gitdir);
 	if (stat(path.buf, &st) || st.st_mtime + 24 * 3600 < time(NULL))
-		write_file(path.buf, 0, "%s\n", gitfile);
+		write_file_gently(path.buf, "%s\n", gitfile);
 	strbuf_release(&path);
 }
 

@@ -205,13 +205,13 @@ static int write_state_text(const struct am_state *state,
 		fmt = "%s\n";
 	else
 		fmt = "%s";
-	return write_file(am_path(state, name), 1, fmt, string);
+	return write_file(am_path(state, name), fmt, string);
 }
 
 static int write_state_count(const struct am_state *state,
 			     const char *name, int value)
 {
-	return write_file(am_path(state, name), 1, "%d\n", value);
+	return write_file(am_path(state, name), "%d\n", value);
 }
 
 static int write_state_bool(const struct am_state *state,

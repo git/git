@@ -621,19 +621,17 @@ char *xgetcwd(void)
 	return strbuf_detach(&sb, NULL);
 }
 
-int write_file(const char *path, int fatal, const char *fmt, ...)
+static int write_file_v(const char *path, int fatal,
+			const char *fmt, va_list params)
 {
 	struct strbuf sb = STRBUF_INIT;
-	va_list params;
 	int fd = open(path, O_RDWR | O_CREAT | O_TRUNC, 0666);
 	if (fd < 0) {
 		if (fatal)
 			die_errno(_("could not open %s for writing"), path);
 		return -1;
 	}
-	va_start(params, fmt);
 	strbuf_vaddf(&sb, fmt, params);
-	va_end(params);
 	if (write_in_full(fd, sb.buf, sb.len) != sb.len) {
 		int err = errno;
 		close(fd);
@@ -650,6 +648,28 @@ int write_file(const char *path, int fatal, const char *fmt, ...)
 		return -1;
 	}
 	return 0;
+}
+
+int write_file(const char *path, const char *fmt, ...)
+{
+	int status;
+	va_list params;
+
+	va_start(params, fmt);
+	status = write_file_v(path, 1, fmt, params);
+	va_end(params);
+	return status;
+}
+
+int write_file_gently(const char *path, const char *fmt, ...)
+{
+	int status;
+	va_list params;
+
+	va_start(params, fmt);
+	status = write_file_v(path, 0, fmt, params);
+	va_end(params);
+	return status;
 }
 
 void sleep_millisec(int millisec)
