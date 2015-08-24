@@ -1288,12 +1288,12 @@ static void read_packed_refs(FILE *f, struct ref_dir *dir)
  */
 static struct packed_ref_cache *get_packed_ref_cache(struct ref_cache *refs)
 {
-	const char *packed_refs_file;
+	char *packed_refs_file;
 
 	if (*refs->name)
-		packed_refs_file = git_path_submodule(refs->name, "packed-refs");
+		packed_refs_file = git_pathdup_submodule(refs->name, "packed-refs");
 	else
-		packed_refs_file = git_path("packed-refs");
+		packed_refs_file = git_pathdup("packed-refs");
 
 	if (refs->packed &&
 	    !stat_validity_check(&refs->packed->validity, packed_refs_file))
@@ -1312,6 +1312,7 @@ static struct packed_ref_cache *get_packed_ref_cache(struct ref_cache *refs)
 			fclose(f);
 		}
 	}
+	free(packed_refs_file);
 	return refs->packed;
 }
 
@@ -1351,19 +1352,23 @@ static void read_loose_refs(const char *dirname, struct ref_dir *dir)
 {
 	struct ref_cache *refs = dir->ref_cache;
 	DIR *d;
-	const char *path;
 	struct dirent *de;
 	int dirnamelen = strlen(dirname);
 	struct strbuf refname;
+	struct strbuf path = STRBUF_INIT;
+	size_t path_baselen;
 
 	if (*refs->name)
-		path = git_path_submodule(refs->name, "%s", dirname);
+		strbuf_git_path_submodule(&path, refs->name, "%s", dirname);
 	else
-		path = git_path("%s", dirname);
+		strbuf_git_path(&path, "%s", dirname);
+	path_baselen = path.len;
 
-	d = opendir(path);
-	if (!d)
+	d = opendir(path.buf);
+	if (!d) {
+		strbuf_release(&path);
 		return;
+	}
 
 	strbuf_init(&refname, dirnamelen + 257);
 	strbuf_add(&refname, dirname, dirnamelen);
@@ -1372,17 +1377,14 @@ static void read_loose_refs(const char *dirname, struct ref_dir *dir)
 		unsigned char sha1[20];
 		struct stat st;
 		int flag;
-		const char *refdir;
 
 		if (de->d_name[0] == '.')
 			continue;
 		if (ends_with(de->d_name, ".lock"))
 			continue;
 		strbuf_addstr(&refname, de->d_name);
-		refdir = *refs->name
-			? git_path_submodule(refs->name, "%s", refname.buf)
-			: git_path("%s", refname.buf);
-		if (stat(refdir, &st) < 0) {
+		strbuf_addstr(&path, de->d_name);
+		if (stat(path.buf, &st) < 0) {
 			; /* silently ignore */
 		} else if (S_ISDIR(st.st_mode)) {
 			strbuf_addch(&refname, '/');
@@ -1429,8 +1431,10 @@ static void read_loose_refs(const char *dirname, struct ref_dir *dir)
 					 create_ref_entry(refname.buf, sha1, flag, 0));
 		}
 		strbuf_setlen(&refname, dirnamelen);
+		strbuf_setlen(&path, path_baselen);
 	}
 	strbuf_release(&refname);
+	strbuf_release(&path);
 	closedir(d);
 }
 
@@ -1481,14 +1485,15 @@ static int resolve_gitlink_ref_recursive(struct ref_cache *refs,
 {
 	int fd, len;
 	char buffer[128], *p;
-	const char *path;
+	char *path;
 
 	if (recursion > MAXDEPTH || strlen(refname) > MAXREFLEN)
 		return -1;
 	path = *refs->name
-		? git_path_submodule(refs->name, "%s", refname)
-		: git_path("%s", refname);
+		? git_pathdup_submodule(refs->name, "%s", refname)
+		: git_pathdup("%s", refname);
 	fd = open(path, O_RDONLY);
+	free(path);
 	if (fd < 0)
 		return resolve_gitlink_packed_ref(refs, refname, sha1);
 
@@ -2285,25 +2290,14 @@ static int verify_lock(struct ref_lock *lock,
 	return 0;
 }
 
-static int remove_empty_directories(const char *file)
+static int remove_empty_directories(struct strbuf *path)
 {
-	/* we want to create a file but there is a directory there;
+	/*
+	 * we want to create a file but there is a directory there;
 	 * if that is an empty directory (or a directory that contains
 	 * only empty directories), remove them.
 	 */
-	struct strbuf path;
-	int result, save_errno;
-
-	strbuf_init(&path, 20);
-	strbuf_addstr(&path, file);
-
-	result = remove_dir_recursively(&path, REMOVE_DIR_EMPTY_ONLY);
-	save_errno = errno;
-
-	strbuf_release(&path);
-	errno = save_errno;
-
-	return result;
+	return remove_dir_recursively(path, REMOVE_DIR_EMPTY_ONLY);
 }
 
 /*
@@ -2403,7 +2397,8 @@ static struct ref_lock *lock_ref_sha1_basic(const char *refname,
 					    unsigned int flags, int *type_p,
 					    struct strbuf *err)
 {
-	const char *ref_file;
+	struct strbuf ref_file = STRBUF_INIT;
+	struct strbuf orig_ref_file = STRBUF_INIT;
 	const char *orig_refname = refname;
 	struct ref_lock *lock;
 	int last_errno = 0;
@@ -2427,20 +2422,19 @@ static struct ref_lock *lock_ref_sha1_basic(const char *refname,
 	refname = resolve_ref_unsafe(refname, resolve_flags,
 				     lock->old_oid.hash, &type);
 	if (!refname && errno == EISDIR) {
-		/* we are trying to lock foo but we used to
+		/*
+		 * we are trying to lock foo but we used to
 		 * have foo/bar which now does not exist;
 		 * it is normal for the empty directory 'foo'
 		 * to remain.
 		 */
-		ref_file = git_path("%s", orig_refname);
-		if (remove_empty_directories(ref_file)) {
+		strbuf_git_path(&orig_ref_file, "%s", orig_refname);
+		if (remove_empty_directories(&orig_ref_file)) {
 			last_errno = errno;
-
 			if (!verify_refname_available(orig_refname, extras, skip,
 						      get_loose_refs(&ref_cache), err))
 				strbuf_addf(err, "there are still refs under '%s'",
 					    orig_refname);
-
 			goto error_return;
 		}
 		refname = resolve_ref_unsafe(orig_refname, resolve_flags,
@@ -2480,10 +2474,10 @@ static struct ref_lock *lock_ref_sha1_basic(const char *refname,
 	}
 	lock->ref_name = xstrdup(refname);
 	lock->orig_ref_name = xstrdup(orig_refname);
-	ref_file = git_path("%s", refname);
+	strbuf_git_path(&ref_file, "%s", refname);
 
  retry:
-	switch (safe_create_leading_directories_const(ref_file)) {
+	switch (safe_create_leading_directories_const(ref_file.buf)) {
 	case SCLD_OK:
 		break; /* success */
 	case SCLD_VANISHED:
@@ -2492,11 +2486,12 @@ static struct ref_lock *lock_ref_sha1_basic(const char *refname,
 		/* fall through */
 	default:
 		last_errno = errno;
-		strbuf_addf(err, "unable to create directory for %s", ref_file);
+		strbuf_addf(err, "unable to create directory for %s",
+			    ref_file.buf);
 		goto error_return;
 	}
 
-	if (hold_lock_file_for_update(lock->lk, ref_file, lflags) < 0) {
+	if (hold_lock_file_for_update(lock->lk, ref_file.buf, lflags) < 0) {
 		last_errno = errno;
 		if (errno == ENOENT && --attempts_remaining > 0)
 			/*
@@ -2506,7 +2501,7 @@ static struct ref_lock *lock_ref_sha1_basic(const char *refname,
 			 */
 			goto retry;
 		else {
-			unable_to_lock_message(ref_file, errno, err);
+			unable_to_lock_message(ref_file.buf, errno, err);
 			goto error_return;
 		}
 	}
@@ -2514,12 +2509,17 @@ static struct ref_lock *lock_ref_sha1_basic(const char *refname,
 		last_errno = errno;
 		goto error_return;
 	}
-	return lock;
+	goto out;
 
  error_return:
 	unlock_ref(lock);
+	lock = NULL;
+
+ out:
+	strbuf_release(&ref_file);
+	strbuf_release(&orig_ref_file);
 	errno = last_errno;
-	return NULL;
+	return lock;
 }
 
 /*
@@ -2925,9 +2925,13 @@ out:
 static int rename_tmp_log(const char *newrefname)
 {
 	int attempts_remaining = 4;
+	struct strbuf path = STRBUF_INIT;
+	int ret = -1;
 
  retry:
-	switch (safe_create_leading_directories_const(git_path("logs/%s", newrefname))) {
+	strbuf_reset(&path);
+	strbuf_git_path(&path, "logs/%s", newrefname);
+	switch (safe_create_leading_directories_const(path.buf)) {
 	case SCLD_OK:
 		break; /* success */
 	case SCLD_VANISHED:
@@ -2936,19 +2940,19 @@ static int rename_tmp_log(const char *newrefname)
 		/* fall through */
 	default:
 		error("unable to create directory for %s", newrefname);
-		return -1;
+		goto out;
 	}
 
-	if (rename(git_path(TMP_RENAMED_LOG), git_path("logs/%s", newrefname))) {
+	if (rename(git_path(TMP_RENAMED_LOG), path.buf)) {
 		if ((errno==EISDIR || errno==ENOTDIR) && --attempts_remaining > 0) {
 			/*
 			 * rename(a, b) when b is an existing
 			 * directory ought to result in ISDIR, but
 			 * Solaris 5.8 gives ENOTDIR.  Sheesh.
 			 */
-			if (remove_empty_directories(git_path("logs/%s", newrefname))) {
+			if (remove_empty_directories(&path)) {
 				error("Directory not empty: logs/%s", newrefname);
-				return -1;
+				goto out;
 			}
 			goto retry;
 		} else if (errno == ENOENT && --attempts_remaining > 0) {
@@ -2961,10 +2965,13 @@ static int rename_tmp_log(const char *newrefname)
 		} else {
 			error("unable to move logfile "TMP_RENAMED_LOG" to logs/%s: %s",
 				newrefname, strerror(errno));
-			return -1;
+			goto out;
 		}
 	}
-	return 0;
+	ret = 0;
+out:
+	strbuf_release(&path);
+	return ret;
 }
 
 static int rename_ref_available(const char *oldname, const char *newname)
@@ -3028,7 +3035,14 @@ int rename_ref(const char *oldrefname, const char *newrefname, const char *logms
 	if (!read_ref_full(newrefname, RESOLVE_REF_READING, sha1, NULL) &&
 	    delete_ref(newrefname, sha1, REF_NODEREF)) {
 		if (errno==EISDIR) {
-			if (remove_empty_directories(git_path("%s", newrefname))) {
+			struct strbuf path = STRBUF_INIT;
+			int result;
+
+			strbuf_git_path(&path, "%s", newrefname);
+			result = remove_empty_directories(&path);
+			strbuf_release(&path);
+
+			if (result) {
 				error("Directory not empty: %s", newrefname);
 				goto rollback;
 			}
@@ -3145,25 +3159,21 @@ static int should_autocreate_reflog(const char *refname)
  * should_autocreate_reflog returns non-zero.  Otherwise, create it
  * regardless of the ref name.  Fill in *err and return -1 on failure.
  */
-static int log_ref_setup(const char *refname, struct strbuf *sb_logfile, struct strbuf *err, int force_create)
+static int log_ref_setup(const char *refname, struct strbuf *logfile, struct strbuf *err, int force_create)
 {
 	int logfd, oflags = O_APPEND | O_WRONLY;
-	char *logfile;
 
-	strbuf_git_path(sb_logfile, "logs/%s", refname);
-	logfile = sb_logfile->buf;
-	/* make sure the rest of the function can't change "logfile" */
-	sb_logfile = NULL;
+	strbuf_git_path(logfile, "logs/%s", refname);
 	if (force_create || should_autocreate_reflog(refname)) {
-		if (safe_create_leading_directories(logfile) < 0) {
+		if (safe_create_leading_directories(logfile->buf) < 0) {
 			strbuf_addf(err, "unable to create directory for %s: "
-				    "%s", logfile, strerror(errno));
+				    "%s", logfile->buf, strerror(errno));
 			return -1;
 		}
 		oflags |= O_CREAT;
 	}
 
-	logfd = open(logfile, oflags, 0666);
+	logfd = open(logfile->buf, oflags, 0666);
 	if (logfd < 0) {
 		if (!(oflags & O_CREAT) && (errno == ENOENT || errno == EISDIR))
 			return 0;
@@ -3171,20 +3181,20 @@ static int log_ref_setup(const char *refname, struct strbuf *sb_logfile, struct 
 		if (errno == EISDIR) {
 			if (remove_empty_directories(logfile)) {
 				strbuf_addf(err, "There are still logs under "
-					    "'%s'", logfile);
+					    "'%s'", logfile->buf);
 				return -1;
 			}
-			logfd = open(logfile, oflags, 0666);
+			logfd = open(logfile->buf, oflags, 0666);
 		}
 
 		if (logfd < 0) {
 			strbuf_addf(err, "unable to append to %s: %s",
-				    logfile, strerror(errno));
+				    logfile->buf, strerror(errno));
 			return -1;
 		}
 	}
 
-	adjust_shared_perm(logfile);
+	adjust_shared_perm(logfile->buf);
 	close(logfd);
 	return 0;
 }
@@ -3228,36 +3238,32 @@ static int log_ref_write_fd(int fd, const unsigned char *old_sha1,
 
 static int log_ref_write_1(const char *refname, const unsigned char *old_sha1,
 			   const unsigned char *new_sha1, const char *msg,
-			   struct strbuf *sb_log_file, int flags,
+			   struct strbuf *logfile, int flags,
 			   struct strbuf *err)
 {
 	int logfd, result, oflags = O_APPEND | O_WRONLY;
-	char *log_file;
 
 	if (log_all_ref_updates < 0)
 		log_all_ref_updates = !is_bare_repository();
 
-	result = log_ref_setup(refname, sb_log_file, err, flags & REF_FORCE_CREATE_REFLOG);
+	result = log_ref_setup(refname, logfile, err, flags & REF_FORCE_CREATE_REFLOG);
 
 	if (result)
 		return result;
-	log_file = sb_log_file->buf;
-	/* make sure the rest of the function can't change "log_file" */
-	sb_log_file = NULL;
 
-	logfd = open(log_file, oflags);
+	logfd = open(logfile->buf, oflags);
 	if (logfd < 0)
 		return 0;
 	result = log_ref_write_fd(logfd, old_sha1, new_sha1,
 				  git_committer_info(0), msg);
 	if (result) {
-		strbuf_addf(err, "unable to append to %s: %s", log_file,
+		strbuf_addf(err, "unable to append to %s: %s", logfile->buf,
 			    strerror(errno));
 		close(logfd);
 		return -1;
 	}
 	if (close(logfd)) {
-		strbuf_addf(err, "unable to append to %s: %s", log_file,
+		strbuf_addf(err, "unable to append to %s: %s", logfile->buf,
 			    strerror(errno));
 		return -1;
 	}
@@ -3378,7 +3384,7 @@ static int commit_ref_update(struct ref_lock *lock,
 int create_symref(const char *ref_target, const char *refs_heads_master,
 		  const char *logmsg)
 {
-	const char *lockpath;
+	char *lockpath = NULL;
 	char ref[1000];
 	int fd, len, written;
 	char *git_HEAD = git_pathdup("%s", ref_target);
@@ -3405,7 +3411,7 @@ int create_symref(const char *ref_target, const char *refs_heads_master,
 		error("refname too long: %s", refs_heads_master);
 		goto error_free_return;
 	}
-	lockpath = mkpath("%s.lock", git_HEAD);
+	lockpath = mkpathdup("%s.lock", git_HEAD);
 	fd = open(lockpath, O_CREAT | O_EXCL | O_WRONLY, 0666);
 	if (fd < 0) {
 		error("Unable to open %s for writing", lockpath);
@@ -3425,9 +3431,11 @@ int create_symref(const char *ref_target, const char *refs_heads_master,
 	error_unlink_return:
 		unlink_or_warn(lockpath);
 	error_free_return:
+		free(lockpath);
 		free(git_HEAD);
 		return -1;
 	}
+	free(lockpath);
 
 #ifndef NO_SYMLINK_HEAD
 	done:
