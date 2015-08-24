@@ -378,7 +378,7 @@ static void separate_git_dir(const char *git_dir)
 			die_errno(_("unable to move %s to %s"), src, git_dir);
 	}
 
-	write_file(git_link, "gitdir: %s\n", git_dir);
+	write_file(git_link, "gitdir: %s", git_dir);
 }
 
 int init_db(const char *template_dir, unsigned int flags)

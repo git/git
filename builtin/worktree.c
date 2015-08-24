@@ -213,7 +213,7 @@ static int add_worktree(const char *path, const char **child_argv)
 	 * after the preparation is over.
 	 */
 	strbuf_addf(&sb, "%s/locked", sb_repo.buf);
-	write_file(sb.buf, "initializing\n");
+	write_file(sb.buf, "initializing");
 
 	strbuf_addf(&sb_git, "%s/.git", path);
 	if (safe_create_leading_directories_const(sb_git.buf))
@@ -223,8 +223,8 @@ static int add_worktree(const char *path, const char **child_argv)
 
 	strbuf_reset(&sb);
 	strbuf_addf(&sb, "%s/gitdir", sb_repo.buf);
-	write_file(sb.buf, "%s\n", real_path(sb_git.buf));
-	write_file(sb_git.buf, "gitdir: %s/worktrees/%s\n",
+	write_file(sb.buf, "%s", real_path(sb_git.buf));
+	write_file(sb_git.buf, "gitdir: %s/worktrees/%s",
 		   real_path(get_git_common_dir()), name);
 	/*
 	 * This is to keep resolve_ref() happy. We need a valid HEAD
@@ -241,10 +241,10 @@ static int add_worktree(const char *path, const char **child_argv)
 		die(_("unable to resolve HEAD"));
 	strbuf_reset(&sb);
 	strbuf_addf(&sb, "%s/HEAD", sb_repo.buf);
-	write_file(sb.buf, "%s\n", sha1_to_hex(rev));
+	write_file(sb.buf, "%s", sha1_to_hex(rev));
 	strbuf_reset(&sb);
 	strbuf_addf(&sb, "%s/commondir", sb_repo.buf);
-	write_file(sb.buf, "../..\n");
+	write_file(sb.buf, "../..");
 
 	fprintf_ln(stderr, _("Enter %s (identifier %s)"), path, name);
 
