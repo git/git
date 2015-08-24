@@ -451,10 +451,10 @@ int cmd_describe(int argc, const char **argv, const char *prefix)
 			if (pattern)
 				argv_array_pushf(&args, "--refs=refs/tags/%s", pattern);
 		}
-		while (*argv) {
-			argv_array_push(&args, *argv);
-			argv++;
-		}
+		if (argc)
+			argv_array_pushv(&args, argv);
+		else
+			argv_array_push(&args, "HEAD");
 		return cmd_name_rev(args.argc, args.argv, prefix);
 	}
 

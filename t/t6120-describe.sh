@@ -113,6 +113,14 @@ check_describe A-3-* --long HEAD^^2
 check_describe c-7-* --tags
 check_describe e-3-* --first-parent --tags
 
+test_expect_success 'describe --contains defaults to HEAD without commit-ish' '
+	echo "A^0" >expect &&
+	git checkout A &&
+	test_when_finished "git checkout -" &&
+	git describe --contains >actual &&
+	test_cmp expect actual
+'
+
 : >err.expect
 check_describe A --all A^0
 test_expect_success 'no warning was displayed for A' '
