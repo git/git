@@ -38,6 +38,7 @@
 #   clean                            |  干净（的工作区）
 #   clone                            |  克隆
 #   commit                           |  提交
+#   commit message                   |  提交说明
 #   commit object                    |  提交对象
 #   commit-ish (also committish)     |  提交号
 #   conflict                         |  冲突
