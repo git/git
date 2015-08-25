@@ -98,6 +98,12 @@ enum scissors_type {
 	SCISSORS_TRUE        /* pass --scissors to git-mailinfo */
 };
 
+enum signoff_type {
+	SIGNOFF_FALSE = 0,
+	SIGNOFF_TRUE = 1,
+	SIGNOFF_EXPLICIT /* --signoff was set on the command-line */
+};
+
 struct am_state {
 	/* state directory path */
 	char *dir;
@@ -123,7 +129,7 @@ struct am_state {
 	int interactive;
 	int threeway;
 	int quiet;
-	int signoff;
+	int signoff; /* enum signoff_type */
 	int utf8;
 	int keep; /* enum keep_type */
 	int message_id;
@@ -1186,6 +1192,18 @@ static void NORETURN die_user_resolve(const struct am_state *state)
 }
 
 /**
+ * Appends signoff to the "msg" field of the am_state.
+ */
+static void am_append_signoff(struct am_state *state)
+{
+	struct strbuf sb = STRBUF_INIT;
+
+	strbuf_attach(&sb, state->msg, state->msg_len, state->msg_len);
+	append_signoff(&sb, 0, 0);
+	state->msg = strbuf_detach(&sb, &state->msg_len);
+}
+
+/**
  * Parses `mail` using git-mailinfo, extracting its patch and authorship info.
  * state->msg will be set to the patch message. state->author_name,
  * state->author_email and state->author_date will be set to the patch author's
@@ -1779,7 +1797,6 @@ static void am_run(struct am_state *state, int resume)
 
 		if (resume) {
 			validate_resume_state(state);
-			resume = 0;
 		} else {
 			int skip;
 
@@ -1841,6 +1858,10 @@ static void am_run(struct am_state *state, int resume)
 
 next:
 		am_next(state);
+
+		if (resume)
+			am_load(state);
+		resume = 0;
 	}
 
 	if (!is_empty_file(am_path(state, "rewritten"))) {
@@ -1895,6 +1916,7 @@ static void am_resolve(struct am_state *state)
 
 next:
 	am_next(state);
+	am_load(state);
 	am_run(state, 0);
 }
 
@@ -2022,6 +2044,7 @@ static void am_skip(struct am_state *state)
 		die(_("failed to clean index"));
 
 	am_next(state);
+	am_load(state);
 	am_run(state, 0);
 }
 
@@ -2132,6 +2155,7 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 	int keep_cr = -1;
 	int patch_format = PATCH_FORMAT_UNKNOWN;
 	enum resume_mode resume = RESUME_FALSE;
+	int in_progress;
 
 	const char * const usage[] = {
 		N_("git am [options] [(<mbox>|<Maildir>)...]"),
@@ -2147,8 +2171,9 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 		OPT_BOOL('3', "3way", &state.threeway,
 			N_("allow fall back on 3way merging if needed")),
 		OPT__QUIET(&state.quiet, N_("be quiet")),
-		OPT_BOOL('s', "signoff", &state.signoff,
-			N_("add a Signed-off-by line to the commit message")),
+		OPT_SET_INT('s', "signoff", &state.signoff,
+			N_("add a Signed-off-by line to the commit message"),
+			SIGNOFF_EXPLICIT),
 		OPT_BOOL('u', "utf8", &state.utf8,
 			N_("recode into utf8 (default)")),
 		OPT_SET_INT('k', "keep", &state.keep,
@@ -2227,6 +2252,10 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 
 	am_state_init(&state, git_path("rebase-apply"));
 
+	in_progress = am_in_progress(&state);
+	if (in_progress)
+		am_load(&state);
+
 	argc = parse_options(argc, argv, prefix, options, usage, 0);
 
 	if (binary >= 0)
@@ -2239,7 +2268,7 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 	if (read_index_preload(&the_index, NULL) < 0)
 		die(_("failed to read the index"));
 
-	if (am_in_progress(&state)) {
+	if (in_progress) {
 		/*
 		 * Catch user error to feed us patches when there is a session
 		 * in progress:
@@ -2258,7 +2287,8 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 		if (resume == RESUME_FALSE)
 			resume = RESUME_APPLY;
 
-		am_load(&state);
+		if (state.signoff == SIGNOFF_EXPLICIT)
+			am_append_signoff(&state);
 	} else {
 		struct argv_array paths = ARGV_ARRAY_INIT;
 		int i;
