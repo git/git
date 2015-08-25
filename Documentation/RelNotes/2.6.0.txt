@@ -56,6 +56,14 @@ UI, Workflows & Features
  * A negative !ref entry in multi-value transfer.hideRefs
    configuration can be used to say "don't hide this one".
 
+ * After "git am" without "-3" stops, running "git am -" pays attention
+   to "-3" only for the patch that caused the original invocation
+   to stop.
+
+ * When linked worktree is used, simultaneous "notes merge" instances
+   for the same ref in refs/notes/* are prevented from stomping on
+   each other.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -109,6 +117,13 @@ Performance, Internal Implementation, Development Support etc.
  * git_path() and mkpath() are handy helper functions but it is easy
    to misuse, as the callers need to be careful to keep the number of
    active results below 4.  Their uses have been reduced.
+
+ * The "lockfile" API has been rebuilt on top of a new "tempfile" API.
+
+ * To prepare for allowing a different "ref" backend to be plugged in
+   to the system, update_ref()/delete_ref() have been taught about
+   ref-like things like MERGE_HEAD that are per-worktree (they will
+   always be written to the filesystem inside $GIT_DIR).
 
 
 Also contains various documentation updates and code clean-ups.
@@ -212,6 +227,23 @@ notes for details).
    in C.
    (merge 22d6857 mm/pull-upload-pack later to maint).
 
+ * When trying to see that an object does not exist, a state errno
+   leaked from our "first try to open a packfile with O_NOATIME and
+   then if it fails retry without it" logic on a system that refuses
+   O_NOATIME.  This confused us and caused us to die, saying that the
+   packfile is unreadable, when we should have just reported that the
+   object does not exist in that packfile to the caller.
+   (merge dff6f28 cb/open-noatime-clear-errno later to maint).
+
+ * The codepath to produce error messages had a hard-coded limit to
+   the size of the message, primarily to avoid memory allocation while
+   calling die().
+   (merge f4c3edc jk/long-error-messages later to maint).
+
+ * strbuf_read() used to have one extra iteration (and an unnecessary
+   strbuf_grow() of 8kB), which was eliminated.
+   (merge 3ebbd00 jh/strbuf-read-use-read-in-full later to maint).
+
  * Code cleanups and documentation updates.
    (merge 1c601af es/doc-clean-outdated-tools later to maint).
    (merge 3581304 kn/tag-doc-fix later to maint).
@@ -221,3 +253,4 @@ notes for details).
    (merge 4a6ada3 ad/bisect-cleanup later to maint).
    (merge da4c5ad ta/docfix-index-format-tech later to maint).
    (merge ae25fd3 sb/check-return-from-read-ref later to maint).
+   (merge b3325df nd/dwim-wildcards-as-pathspecs later to maint).
