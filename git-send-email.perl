@@ -75,6 +75,8 @@ git send-email [options] <file | directory | rev-list options >
                                      Pass an empty string to disable certificate
                                      verification.
     --smtp-domain           <str>  * The domain name sent to HELO/EHLO handshake
+    --smtp-auth             <str>  * Space-separated list of allowed AUTH mechanisms.
+                                     This setting forces to use one of the listed mechanisms.
     --smtp-debug            <0|1>  * Disable, enable Net::SMTP debug.
 
   Automating:
@@ -208,7 +210,7 @@ my ($cover_cc, $cover_to);
 my ($to_cmd, $cc_cmd);
 my ($smtp_server, $smtp_server_port, @smtp_server_options);
 my ($smtp_authuser, $smtp_encryption, $smtp_ssl_cert_path);
-my ($identity, $aliasfiletype, @alias_files, $smtp_domain);
+my ($identity, $aliasfiletype, @alias_files, $smtp_domain, $smtp_auth);
 my ($validate, $confirm);
 my (@suppress_cc);
 my ($auto_8bit_encoding);
@@ -239,6 +241,7 @@ my %config_settings = (
     "smtppass" => \$smtp_authpass,
     "smtpsslcertpath" => \$smtp_ssl_cert_path,
     "smtpdomain" => \$smtp_domain,
+    "smtpauth" => \$smtp_auth,
     "to" => \@initial_to,
     "tocmd" => \$to_cmd,
     "cc" => \@initial_cc,
@@ -310,6 +313,7 @@ my $rc = GetOptions("h" => \$help,
 		    "smtp-ssl-cert-path=s" => \$smtp_ssl_cert_path,
 		    "smtp-debug:i" => \$debug_net_smtp,
 		    "smtp-domain:s" => \$smtp_domain,
+		    "smtp-auth=s" => \$smtp_auth,
 		    "identity=s" => \$identity,
 		    "annotate!" => \$annotate,
 		    "no-annotate" => sub {$annotate = 0},
@@ -1130,6 +1134,12 @@ sub smtp_auth_maybe {
 		Authen::SASL->import(qw(Perl));
 	};
 
+	# Check mechanism naming as defined in:
+	# https://tools.ietf.org/html/rfc4422#page-8
+	if ($smtp_auth !~ /^(\b[A-Z0-9-_]{1,20}\s*)*$/) {
+		die "invalid smtp auth: '${smtp_auth}'";
+	}
+
 	# TODO: Authentication may fail not because credentials were
 	# invalid but due to other reasons, in which we should not
 	# reject credentials.
@@ -1142,6 +1152,20 @@ sub smtp_auth_maybe {
 		'password' => $smtp_authpass
 	}, sub {
 		my $cred = shift;
+
+		if ($smtp_auth) {
+			my $sasl = Authen::SASL->new(
+				mechanism => $smtp_auth,
+				callback => {
+					user => $cred->{'username'},
+					pass => $cred->{'password'},
+					authname => $cred->{'username'},
+				}
+			);
+
+			return !!$smtp->auth($sasl);
+		}
+
 		return !!$smtp->auth($cred->{'username'}, $cred->{'password'});
 	});
 

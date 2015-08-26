@@ -171,6 +171,19 @@ Sending
 	to determine your FQDN automatically.  Default is the value of
 	'sendemail.smtpDomain'.
 
+--smtp-auth=<mechanisms>::
+	Whitespace-separated list of allowed SMTP-AUTH mechanisms. This setting
+	forces using only the listed mechanisms. Example:
++
+------
+$ git send-email --smtp-auth="PLAIN LOGIN GSSAPI" ...
+------
++
+If at least one of the specified mechanisms matches the ones advertised by the
+SMTP server and if it is supported by the utilized SASL library, the mechanism
+is used for authentication. If neither 'sendemail.smtpAuth' nor '--smtp-auth'
+is specified, all mechanisms supported by the SASL library can be used.
+
 --smtp-pass[=<password>]::
 	Password for SMTP-AUTH. The argument is optional: If no
 	argument is specified, then the empty string is used as
