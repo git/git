@@ -1935,7 +1935,7 @@ int git_config_set_multivar_in_file(const char *config_filename,
 				const char *key, const char *value,
 				const char *value_regex, int multi_replace)
 {
-	int fd = -1, in_fd;
+	int fd = -1, in_fd = -1;
 	int ret;
 	struct lock_file *lock = NULL;
 	char *filename_buf = NULL;
@@ -2065,6 +2065,7 @@ int git_config_set_multivar_in_file(const char *config_filename,
 			goto out_free;
 		}
 		close(in_fd);
+		in_fd = -1;
 
 		if (chmod(get_lock_file_path(lock), st.st_mode & 07777) < 0) {
 			error("chmod on %s failed: %s",
@@ -2148,6 +2149,8 @@ out_free:
 	free(filename_buf);
 	if (contents)
 		munmap(contents, contents_sz);
+	if (in_fd >= 0)
+		close(in_fd);
 	return ret;
 
 write_err_out:
