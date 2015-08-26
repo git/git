@@ -99,7 +99,7 @@ test_expect_success 'with config option on the command line' '
 	test_cmp expected actual
 '
 
-test_expect_success 'with message that contains only a title' '
+test_expect_success 'with only a title in the message' '
 	cat >expected <<-\EOF &&
 		area: change
 
