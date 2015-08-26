@@ -2143,7 +2143,7 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 		OPT_BOOL('i', "interactive", &state.interactive,
 			N_("run interactively")),
 		OPT_HIDDEN_BOOL('b', "binary", &binary,
-			N_("(historical option -- no-op")),
+			N_("historical option -- no-op")),
 		OPT_BOOL('3', "3way", &state.threeway,
 			N_("allow fall back on 3way merging if needed")),
 		OPT__QUIET(&state.quiet, N_("be quiet")),
