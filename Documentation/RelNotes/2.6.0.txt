@@ -64,6 +64,13 @@ UI, Workflows & Features
    for the same ref in refs/notes/* are prevented from stomping on
    each other.
 
+ * "git send-email" learned a new option --smtp-auth to limit the SMTP
+   AUTH mechanisms to be used to a subset of what the system library
+   supports.
+
+ * A new configuration variable http.sslVersion can be used to specify
+   what specific version of SSL/TLS to use to make a connection.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -244,6 +251,10 @@ notes for details).
    strbuf_grow() of 8kB), which was eliminated.
    (merge 3ebbd00 jh/strbuf-read-use-read-in-full later to maint).
 
+ * We rewrote one of the build scripts in Perl but this reimplements
+   in Bourne shell.
+   (merge 82aec45 sg/help-group later to maint).
+
  * Code cleanups and documentation updates.
    (merge 1c601af es/doc-clean-outdated-tools later to maint).
    (merge 3581304 kn/tag-doc-fix later to maint).
@@ -254,3 +265,9 @@ notes for details).
    (merge da4c5ad ta/docfix-index-format-tech later to maint).
    (merge ae25fd3 sb/check-return-from-read-ref later to maint).
    (merge b3325df nd/dwim-wildcards-as-pathspecs later to maint).
+   (merge 7aa9b9b sg/wt-status-header-inclusion later to maint).
+   (merge f04c690 as/docfix-reflog-expire-unreachable later to maint).
+   (merge 1269847 sg/t3020-typofix later to maint).
+   (merge 8b54c23 jc/calloc-pathspec later to maint).
+   (merge a6926b8 po/po-readme later to maint).
+   (merge 54d160e ss/fix-config-fd-leak later to maint).
