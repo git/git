@@ -402,7 +402,7 @@ test_expect_success 'set up sparse checkout' '
 	echo "done/[a-z]*" >.git/info/sparse-checkout &&
 	test_config core.sparsecheckout true &&
 	git checkout master &&
-	git update-index --untracked-cache &&
+	git update-index --force-untracked-cache &&
 	git status --porcelain >/dev/null && # prime the cache
 	test_path_is_missing done/.gitignore &&
 	test_path_is_file done/one
