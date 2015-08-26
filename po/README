@@ -10,10 +10,26 @@ coordinates our localization effort in the l10 coordinator repository:
 
         https://github.com/git-l10n/git-po/
 
+The two character language translation codes are defined by ISO_639-1, as
+stated in the gettext(1) full manual, appendix A.1, Usual Language Codes.
+
+
+Contributing to an existing translation
+---------------------------------------
 As a contributor for a language XX, you should first check TEAMS file in
 this directory to see whether a dedicated repository for your language XX
 exists. Fork the dedicated repository and start to work if it exists.
 
+Sometime, contributors may find that the translations of their Git
+distributions are quite different with the translations of the
+corresponding version from Git official. This is because some Git
+distributions (such as from Ubuntu, etc.) have their own l10n workflow.
+For this case, wrong translations should be reported and fixed through
+their workflows.
+
+
+Creating a new language translation
+-----------------------------------
 If you are the first contributor for the language XX, please fork this
 repository, prepare and/or update the translated message file po/XX.po
 (described later), and ask the l10n coordinator to pull your work.
@@ -23,6 +39,9 @@ coordinate among yourselves and nominate the team leader for your
 language, so that the l10n coordinator only needs to interact with one
 person per language.
 
+
+Translation Process Flow
+------------------------
 The overall data-flow looks like this:
 
     +-------------------+            +------------------+
