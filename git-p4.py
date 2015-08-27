@@ -2494,9 +2494,9 @@ class P4Sync(Command, P4UserMap):
                 # find the corresponding git commit; take the oldest commit
                 changelist = int(change['change'])
                 gitCommit = read_pipe(["git", "rev-list", "--max-count=1",
-                     "--reverse", ":/\[git-p4:.*change = %d\]" % changelist])
+                     "--reverse", ":/\[git-p4:.*change = %d\]" % changelist], ignore_error=True)
                 if len(gitCommit) == 0:
-                    print "could not find git commit for changelist %d" % changelist
+                    print "importing label %s: could not find git commit for changelist %d" % (name, changelist)
                 else:
                     gitCommit = gitCommit.strip()
                     commitFound = True
