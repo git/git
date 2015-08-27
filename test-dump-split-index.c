@@ -26,9 +26,11 @@ int main(int ac, char **av)
 		       sha1_to_hex(ce->sha1), ce_stage(ce), ce->name);
 	}
 	printf("replacements:");
-	ewah_each_bit(si->replace_bitmap, show_bit, NULL);
+	if (si->replace_bitmap)
+		ewah_each_bit(si->replace_bitmap, show_bit, NULL);
 	printf("\ndeletions:");
-	ewah_each_bit(si->delete_bitmap, show_bit, NULL);
+	if (si->delete_bitmap)
+		ewah_each_bit(si->delete_bitmap, show_bit, NULL);
 	printf("\n");
 	return 0;
 }
