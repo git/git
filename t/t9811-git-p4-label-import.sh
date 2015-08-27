@@ -222,7 +222,7 @@ p4_head_revision() {
 # has not been seen. The presence of a label on a commit
 # we haven't seen should not cause git-p4 to fail. It should
 # merely skip that label, and still import other labels.
-test_expect_failure 'importing labels with missing revisions' '
+test_expect_success 'importing labels with missing revisions' '
 	test_when_finished cleanup_git &&
 	(
 		rm -fr "$cli" "$git" &&
