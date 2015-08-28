@@ -1297,7 +1297,7 @@ static enum exist_status directory_exists_in_index(const char *dirname, int len)
  */
 static enum path_treatment treat_directory(struct dir_struct *dir,
 	struct untracked_cache_dir *untracked,
-	const char *dirname, int len, int exclude,
+	const char *dirname, int len, int baselen, int exclude,
 	const struct path_simplify *simplify)
 {
 	/* The "len-1" is to strip the final '/' */
@@ -1324,7 +1324,8 @@ static enum path_treatment treat_directory(struct dir_struct *dir,
 	if (!(dir->flags & DIR_HIDE_EMPTY_DIRECTORIES))
 		return exclude ? path_excluded : path_untracked;
 
-	untracked = lookup_untracked(dir->untracked, untracked, dirname, len);
+	untracked = lookup_untracked(dir->untracked, untracked,
+				     dirname + baselen, len - baselen);
 	return read_directory_recursive(dir, dirname, len,
 					untracked, 1, simplify);
 }
@@ -1444,6 +1445,7 @@ static int get_dtype(struct dirent *de, const char *path, int len)
 static enum path_treatment treat_one_path(struct dir_struct *dir,
 					  struct untracked_cache_dir *untracked,
 					  struct strbuf *path,
+					  int baselen,
 					  const struct path_simplify *simplify,
 					  int dtype, struct dirent *de)
 {
@@ -1495,8 +1497,8 @@ static enum path_treatment treat_one_path(struct dir_struct *dir,
 		return path_none;
 	case DT_DIR:
 		strbuf_addch(path, '/');
-		return treat_directory(dir, untracked, path->buf, path->len, exclude,
-			simplify);
+		return treat_directory(dir, untracked, path->buf, path->len,
+				       baselen, exclude, simplify);
 	case DT_REG:
 	case DT_LNK:
 		return exclude ? path_excluded : path_untracked;
@@ -1557,7 +1559,7 @@ static enum path_treatment treat_path(struct dir_struct *dir,
 		return path_none;
 
 	dtype = DTYPE(de);
-	return treat_one_path(dir, untracked, path, simplify, dtype, de);
+	return treat_one_path(dir, untracked, path, baselen, simplify, dtype, de);
 }
 
 static void add_untracked(struct untracked_cache_dir *dir, const char *name)
@@ -1827,7 +1829,7 @@ static int treat_leading_path(struct dir_struct *dir,
 			break;
 		if (simplify_away(sb.buf, sb.len, simplify))
 			break;
-		if (treat_one_path(dir, NULL, &sb, simplify,
+		if (treat_one_path(dir, NULL, &sb, baselen, simplify,
 				   DT_DIR, NULL) == path_none)
 			break; /* do not recurse into it */
 		if (len <= baselen) {
@@ -2616,23 +2618,67 @@ done2:
 	return uc;
 }
 
+static void invalidate_one_directory(struct untracked_cache *uc,
+				     struct untracked_cache_dir *ucd)
+{
+	uc->dir_invalidated++;
+	ucd->valid = 0;
+	ucd->untracked_nr = 0;
+}
+
+/*
+ * Normally when an entry is added or removed from a directory,
+ * invalidating that directory is enough. No need to touch its
+ * ancestors. When a directory is shown as "foo/bar/" in git-status
+ * however, deleting or adding an entry may have cascading effect.
+ *
+ * Say the "foo/bar/file" has become untracked, we need to tell the
+ * untracked_cache_dir of "foo" that "bar/" is not an untracked
+ * directory any more (because "bar" is managed by foo as an untracked
+ * "file").
+ *
+ * Similarly, if "foo/bar/file" moves from untracked to tracked and it
+ * was the last untracked entry in the entire "foo", we should show
+ * "foo/" instead. Which means we have to invalidate past "bar" up to
+ * "foo".
+ *
+ * This function traverses all directories from root to leaf. If there
+ * is a chance of one of the above cases happening, we invalidate back
+ * to root. Otherwise we just invalidate the leaf. There may be a more
+ * sophisticated way than checking for SHOW_OTHER_DIRECTORIES to
+ * detect these cases and avoid unnecessary invalidation, for example,
+ * checking for the untracked entry named "bar/" in "foo", but for now
+ * stick to something safe and simple.
+ */
+static int invalidate_one_component(struct untracked_cache *uc,
+				    struct untracked_cache_dir *dir,
+				    const char *path, int len)
+{
+	const char *rest = strchr(path, '/');
+
+	if (rest) {
+		int component_len = rest - path;
+		struct untracked_cache_dir *d =
+			lookup_untracked(uc, dir, path, component_len);
+		int ret =
+			invalidate_one_component(uc, d, rest + 1,
+						 len - (component_len + 1));
+		if (ret)
+			invalidate_one_directory(uc, dir);
+		return ret;
+	}
+
+	invalidate_one_directory(uc, dir);
+	return uc->dir_flags & DIR_SHOW_OTHER_DIRECTORIES;
+}
+
 void untracked_cache_invalidate_path(struct index_state *istate,
 				     const char *path)
 {
-	const char *sep;
-	struct untracked_cache_dir *d;
 	if (!istate->untracked || !istate->untracked->root)
 		return;
-	sep = strrchr(path, '/');
-	if (sep)
-		d = lookup_untracked(istate->untracked,
-				     istate->untracked->root,
-				     path, sep - path);
-	else
-		d = istate->untracked->root;
-	istate->untracked->dir_invalidated++;
-	d->valid = 0;
-	d->untracked_nr = 0;
+	invalidate_one_component(istate->untracked, istate->untracked->root,
+				 path, strlen(path));
 }
 
 void untracked_cache_remove_from_index(struct index_state *istate,

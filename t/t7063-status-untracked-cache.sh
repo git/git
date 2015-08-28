@@ -375,7 +375,7 @@ EOF
 node creation: 0
 gitignore invalidation: 0
 directory invalidation: 0
-opendir: 1
+opendir: 2
 EOF
 	test_cmp ../trace.expect ../trace
 '
@@ -408,7 +408,8 @@ test_expect_success 'set up sparse checkout' '
 	test_path_is_file done/one
 '
 
-test_expect_success 'create files, some of which are gitignored' '
+test_expect_success 'create/modify files, some of which are gitignored' '
+	echo two bis >done/two &&
 	echo three >done/three && # three is gitignored
 	echo four >done/four && # four is gitignored at a higher level
 	echo five >done/five # five is not gitignored
@@ -420,6 +421,7 @@ test_expect_success 'test sparse status with untracked cache' '
 	GIT_TRACE_UNTRACKED_STATS="$TRASH_DIRECTORY/trace" \
 	git status --porcelain >../status.actual &&
 	cat >../status.expect <<EOF &&
+ M done/two
 ?? .gitignore
 ?? done/five
 ?? dtwo/
@@ -459,6 +461,7 @@ test_expect_success 'test sparse status again with untracked cache' '
 	GIT_TRACE_UNTRACKED_STATS="$TRASH_DIRECTORY/trace" \
 	git status --porcelain >../status.actual &&
 	cat >../status.expect <<EOF &&
+ M done/two
 ?? .gitignore
 ?? done/five
 ?? dtwo/
@@ -471,6 +474,99 @@ directory invalidation: 0
 opendir: 0
 EOF
 	test_cmp ../trace.expect ../trace
+'
+
+test_expect_success 'set up for test of subdir and sparse checkouts' '
+	mkdir done/sub &&
+	mkdir done/sub/sub &&
+	echo "sub" > done/sub/sub/file
+'
+
+test_expect_success 'test sparse status with untracked cache and subdir' '
+	avoid_racy &&
+	: >../trace &&
+	GIT_TRACE_UNTRACKED_STATS="$TRASH_DIRECTORY/trace" \
+	git status --porcelain >../status.actual &&
+	cat >../status.expect <<EOF &&
+ M done/two
+?? .gitignore
+?? done/five
+?? done/sub/
+?? dtwo/
+EOF
+	test_cmp ../status.expect ../status.actual &&
+	cat >../trace.expect <<EOF &&
+node creation: 2
+gitignore invalidation: 0
+directory invalidation: 1
+opendir: 3
+EOF
+	test_cmp ../trace.expect ../trace
+'
+
+test_expect_success 'verify untracked cache dump (sparse/subdirs)' '
+	test-dump-untracked-cache >../actual &&
+	cat >../expect <<EOF &&
+info/exclude 13263c0978fb9fad16b2d580fb800b6d811c3ff0
+core.excludesfile 0000000000000000000000000000000000000000
+exclude_per_dir .gitignore
+flags 00000006
+/ e6fcc8f2ee31bae321d66afd183fcb7237afae6e recurse valid
+.gitignore
+dtwo/
+/done/ 1946f0437f90c5005533cbe1736a6451ca301714 recurse valid
+five
+sub/
+/done/sub/ 0000000000000000000000000000000000000000 recurse check_only valid
+sub/
+/done/sub/sub/ 0000000000000000000000000000000000000000 recurse check_only valid
+file
+/dthree/ 0000000000000000000000000000000000000000 recurse check_only valid
+/dtwo/ 0000000000000000000000000000000000000000 recurse check_only valid
+two
+EOF
+	test_cmp ../expect ../actual
+'
+
+test_expect_success 'test sparse status again with untracked cache and subdir' '
+	avoid_racy &&
+	: >../trace &&
+	GIT_TRACE_UNTRACKED_STATS="$TRASH_DIRECTORY/trace" \
+	git status --porcelain >../status.actual &&
+	test_cmp ../status.expect ../status.actual &&
+	cat >../trace.expect <<EOF &&
+node creation: 0
+gitignore invalidation: 0
+directory invalidation: 0
+opendir: 0
+EOF
+	test_cmp ../trace.expect ../trace
+'
+
+test_expect_success 'move entry in subdir from untracked to cached' '
+	git add dtwo/two &&
+	git status --porcelain >../status.actual &&
+	cat >../status.expect <<EOF &&
+ M done/two
+A  dtwo/two
+?? .gitignore
+?? done/five
+?? done/sub/
+EOF
+	test_cmp ../status.expect ../status.actual
+'
+
+test_expect_success 'move entry in subdir from cached to untracked' '
+	git rm --cached dtwo/two &&
+	git status --porcelain >../status.actual &&
+	cat >../status.expect <<EOF &&
+ M done/two
+?? .gitignore
+?? done/five
+?? done/sub/
+?? dtwo/
+EOF
+	test_cmp ../status.expect ../status.actual
 '
 
 test_done
