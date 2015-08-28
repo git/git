@@ -99,7 +99,6 @@ My public git.git repositories are at:
   https://kernel.googlesource.com/pub/scm/git/git
   git://repo.or.cz/alt-git.git/
   https://github.com/git/git/
-  https://code.google.com/p/git-core/
   git://git.sourceforge.jp/gitroot/git-core/git.git/
   git://git-core.git.sourceforge.net/gitroot/git-core/git-core/
 
@@ -114,7 +113,6 @@ found in:
 
   git://git.kernel.org/pub/scm/git/git-{htmldocs,manpages}.git/
   git://repo.or.cz/git-{htmldocs,manpages}.git/
-  https://code.google.com/p/git-{htmldocs,manpages}.git/
   https://github.com/gitster/git-{htmldocs,manpages}.git/
 
 Also GitHub shows the manual pages formatted in HTML (with a
