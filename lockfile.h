@@ -44,8 +44,7 @@
  *   throughout the life of the program (i.e. you cannot use an
  *   on-stack variable to hold this structure).
  *
- * * Attempts to create a lockfile by calling
- *   `hold_lock_file_for_update()` or `hold_lock_file_for_append()`.
+ * * Attempts to create a lockfile by calling `hold_lock_file_for_update()`.
  *
  * * Writes new content for the destination file by either:
  *
@@ -73,7 +72,7 @@
  * Even after the lockfile is committed or rolled back, the
  * `lock_file` object must not be freed or altered by the caller.
  * However, it may be reused; just pass it to another call of
- * `hold_lock_file_for_update()` or `hold_lock_file_for_append()`.
+ * `hold_lock_file_for_update()`.
  *
  * If the program exits before `commit_lock_file()`,
  * `commit_lock_file_to()`, or `rollback_lock_file()` is called, the
@@ -120,8 +119,7 @@ struct lock_file {
  * Flags
  * -----
  *
- * The following flags can be passed to `hold_lock_file_for_update()`
- * or `hold_lock_file_for_append()`.
+ * The following flags can be passed to `hold_lock_file_for_update()`.
  */
 
 /*
@@ -168,27 +166,17 @@ static inline int hold_lock_file_for_update(
 }
 
 /*
- * Like `hold_lock_file_for_update()`, but before returning copy the
- * existing contents of the file (if any) to the lockfile and position
- * its write pointer at the end of the file. The flags argument and
- * error handling are described above.
- */
-extern int hold_lock_file_for_append(struct lock_file *lk,
-				     const char *path, int flags);
-
-/*
  * Append an appropriate error message to `buf` following the failure
- * of `hold_lock_file_for_update()` or `hold_lock_file_for_append()`
- * to lock `path`. `err` should be the `errno` set by the failing
- * call.
+ * of `hold_lock_file_for_update()` to lock `path`. `err` should be the
+ * `errno` set by the failing call.
  */
 extern void unable_to_lock_message(const char *path, int err,
 				   struct strbuf *buf);
 
 /*
  * Emit an appropriate error message and `die()` following the failure
- * of `hold_lock_file_for_update()` or `hold_lock_file_for_append()`
- * to lock `path`. `err` should be the `errno` set by the failing
+ * of `hold_lock_file_for_update()` to lock `path`. `err` should be the
+ * `errno` set by the failing
  * call.
  */
 extern NORETURN void unable_to_lock_die(const char *path, int err);
