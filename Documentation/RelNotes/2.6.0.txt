@@ -255,6 +255,14 @@ notes for details).
    in Bourne shell.
    (merge 82aec45 sg/help-group later to maint).
 
+ * The experimental untracked-cache feature were buggy when paths with
+   a few levels of subdirectories are involved.
+   (merge 73f9145 dt/untracked-subdir later to maint).
+
+ * "interpret-trailers" helper mistook a single-liner log message that
+   has a colon as the end of existing trailer.
+   (merge 6262fe9 cc/trailers-corner-case-fix later to maint).
+
  * Code cleanups and documentation updates.
    (merge 1c601af es/doc-clean-outdated-tools later to maint).
    (merge 3581304 kn/tag-doc-fix later to maint).
