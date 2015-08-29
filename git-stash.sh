@@ -307,7 +307,25 @@ show_stash () {
 	ALLOW_UNKNOWN_FLAGS=t
 	assert_stash_like "$@"
 
-	git diff ${FLAGS:---stat} $b_commit $w_commit
+	if test -z "$FLAGS"
+	then
+		if test "$(git config --bool stash.showStat || echo true)" = "true"
+		then
+			FLAGS=--stat
+		fi
+
+		if test "$(git config --bool stash.showPatch || echo false)" = "true"
+		then
+			FLAGS=${FLAGS}${FLAGS:+ }-p
+		fi
+
+		if test -z "$FLAGS"
+		then
+			return 0
+		fi
+	fi
+
+	git diff ${FLAGS} $b_commit $w_commit
 }
 
 show_help () {
