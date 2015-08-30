@@ -30,17 +30,19 @@ test_expect_success 'checkout of long paths without core.longpaths fails' '
 	git config core.longpaths false &&
 	test_must_fail git checkout -f 2>error &&
 	grep -q "Filename too long" error &&
-	test_path_is_missing longpa~1/longtestfile
+	test ! -d longpa*
 '
 
 test_expect_success 'checkout of long paths with core.longpaths works' '
 	git config core.longpaths true &&
 	git checkout -f &&
-	test_path_is_file longpa~1/longtestfile
+	(cd longpa* &&
+	 test_path_is_file longtestfile)
 '
 
 test_expect_success 'update of long paths' '
-	echo frotz >> longpa~1/longtestfile &&
+	(cd longpa* &&
+	 echo frotz >> longtestfile) &&
 	echo $path > expect &&
 	git ls-files -m > actual &&
 	test_cmp expect actual &&
