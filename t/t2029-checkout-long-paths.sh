@@ -30,17 +30,17 @@ test_expect_success 'checkout of long paths without core.longpaths fails' '
 	git config core.longpaths false &&
 	test_must_fail git checkout -f 2>error &&
 	grep -q "Filename too long" error &&
-	test_path_is_missing longpa~1/longtestfile
+	test ! -d longpa*
 '
 
 test_expect_success 'checkout of long paths with core.longpaths works' '
 	git config core.longpaths true &&
 	git checkout -f &&
-	test_path_is_file longpa~1/longtestfile
+	test_path_is_file longpa*/longtestfile
 '
 
 test_expect_success 'update of long paths' '
-	echo frotz >> longpa~1/longtestfile &&
+	echo frotz >>$(ls longpa*/longtestfile) &&
 	echo $path > expect &&
 	git ls-files -m > actual &&
 	test_cmp expect actual &&
@@ -52,7 +52,10 @@ test_expect_success 'update of long paths' '
 test_expect_success cleanup '
 	# bash cannot delete the trash dir if it contains a long path
 	# lets help cleaning up (unless in debug mode)
-	test ! -z "$debug" || rm -rf longpa~1
+	if test -z "$debug"
+	then
+		rm -rf longpa~1
+	fi
 '
 
 # check that the template used in the test won't be too long:
