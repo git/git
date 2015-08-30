@@ -19,4 +19,11 @@ GIT_TEXTDOMAINDIR='@@BUILD_DIR@@/po/build/locale'
 PATH='@@BUILD_DIR@@/bin-wrappers:'"$PATH"
 export GIT_EXEC_PATH GITPERLLIB PATH GIT_TEXTDOMAINDIR
 
+if test -n "$TEST_GDB_GIT"
+then
+	exec gdb -args "${GIT_EXEC_PATH}/@@PROG@@" "$@"
+	echo "Could not run gdb -args ${GIT_EXEC_PATH}/@@PROG@@ $*" >&2
+	exit 1
+fi
+
 exec "${GIT_EXEC_PATH}/@@PROG@@" "$@"
