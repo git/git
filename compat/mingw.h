@@ -362,6 +362,7 @@ HANDLE winansi_get_osfhandle(int fd);
  */
 
 #define has_dos_drive_prefix(path) (isalpha(*(path)) && (path)[1] == ':')
+#define has_unc_prefix(path) (*(path) == '\\' && (path)[1] == '\\')
 #define is_dir_sep(c) ((c) == '/' || (c) == '\\')
 static inline char *mingw_find_last_dir_sep(const char *path)
 {
