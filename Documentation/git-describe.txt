@@ -9,7 +9,7 @@ git-describe - Describe a commit using the most recent tag reachable from it
 SYNOPSIS
 --------
 [verse]
-'git describe' [--all] [--tags] [--contains] [--abbrev=<n>] <commit-ish>...
+'git describe' [--all] [--tags] [--contains] [--abbrev=<n>] [<commit-ish>...]
 'git describe' [--all] [--tags] [--contains] [--abbrev=<n>] --dirty[=<mark>]
 
 DESCRIPTION
@@ -27,7 +27,7 @@ see the -a and -s options to linkgit:git-tag[1].
 OPTIONS
 -------
 <commit-ish>...::
-	Commit-ish object names to describe.
+	Commit-ish object names to describe.  Defaults to HEAD if omitted.
 
 --dirty[=<mark>]::
 	Describe the working tree.
