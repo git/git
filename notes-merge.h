@@ -1,6 +1,8 @@
 #ifndef NOTES_MERGE_H
 #define NOTES_MERGE_H
 
+#include "notes-utils.h"
+
 #define NOTES_MERGE_WORKTREE "NOTES_MERGE_WORKTREE"
 
 enum notes_merge_verbosity {
@@ -13,13 +15,7 @@ struct notes_merge_options {
 	const char *remote_ref;
 	struct strbuf commit_msg;
 	int verbosity;
-	enum {
-		NOTES_MERGE_RESOLVE_MANUAL = 0,
-		NOTES_MERGE_RESOLVE_OURS,
-		NOTES_MERGE_RESOLVE_THEIRS,
-		NOTES_MERGE_RESOLVE_UNION,
-		NOTES_MERGE_RESOLVE_CAT_SORT_UNIQ
-	} strategy;
+	enum notes_merge_strategy strategy;
 	unsigned has_worktree:1;
 };
 

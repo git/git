@@ -738,6 +738,19 @@ static int merge_commit(struct notes_merge_options *o)
 	return ret;
 }
 
+static int git_config_get_notes_strategy(const char *key,
+					 enum notes_merge_strategy *strategy)
+{
+	const char *value;
+
+	if (git_config_get_string_const(key, &value))
+		return 1;
+	if (parse_notes_merge_strategy(value, strategy))
+		git_die_config(key, "unknown notes merge strategy %s", value);
+
+	return 0;
+}
+
 static int merge(int argc, const char **argv, const char *prefix)
 {
 	struct strbuf remote_ref = STRBUF_INIT, msg = STRBUF_INIT;
@@ -796,24 +809,28 @@ static int merge(int argc, const char **argv, const char *prefix)
 	expand_notes_ref(&remote_ref);
 	o.remote_ref = remote_ref.buf;
 
+	t = init_notes_check("merge");
+
 	if (strategy) {
-		if (!strcmp(strategy, "manual"))
-			o.strategy = NOTES_MERGE_RESOLVE_MANUAL;
-		else if (!strcmp(strategy, "ours"))
-			o.strategy = NOTES_MERGE_RESOLVE_OURS;
-		else if (!strcmp(strategy, "theirs"))
-			o.strategy = NOTES_MERGE_RESOLVE_THEIRS;
-		else if (!strcmp(strategy, "union"))
-			o.strategy = NOTES_MERGE_RESOLVE_UNION;
-		else if (!strcmp(strategy, "cat_sort_uniq"))
-			o.strategy = NOTES_MERGE_RESOLVE_CAT_SORT_UNIQ;
-		else {
+		if (parse_notes_merge_strategy(strategy, &o.strategy)) {
 			error("Unknown -s/--strategy: %s", strategy);
 			usage_with_options(git_notes_merge_usage, options);
 		}
-	}
+	} else {
+		struct strbuf merge_key = STRBUF_INIT;
+		const char *short_ref = NULL;
 
-	t = init_notes_check("merge");
+		if (!skip_prefix(o.local_ref, "refs/notes/", &short_ref))
+			die("BUG: local ref %s is outside of refs/notes/",
+			    o.local_ref);
+
+		strbuf_addf(&merge_key, "notes.%s.mergeStrategy", short_ref);
+
+		if (git_config_get_notes_strategy(merge_key.buf, &o.strategy))
+			git_config_get_notes_strategy("notes.mergeStrategy", &o.strategy);
+
+		strbuf_release(&merge_key);
+	}
 
 	strbuf_addf(&msg, "notes: Merged notes from %s into %s",
 		    remote_ref.buf, default_notes_ref());
