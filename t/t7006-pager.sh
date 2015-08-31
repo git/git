@@ -447,4 +447,13 @@ test_expect_success TTY 'external command pagers override sub-commands' '
 	test_cmp expect actual
 '
 
+test_expect_success 'command with underscores does not complain' '
+	write_script git-under_score <<-\EOF &&
+	echo ok
+	EOF
+	git --exec-path=. under_score >actual 2>&1 &&
+	echo ok >expect &&
+	test_cmp expect actual
+'
+
 test_done
