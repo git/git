@@ -13,6 +13,7 @@ static char *key;
 static regex_t *key_regexp;
 static regex_t *regexp;
 static int show_keys;
+static int omit_values;
 static int use_key_regexp;
 static int do_all;
 static int do_not_match;
@@ -78,6 +79,7 @@ static struct option builtin_config_options[] = {
 	OPT_BIT(0, "path", &types, N_("value is a path (file or directory name)"), TYPE_PATH),
 	OPT_GROUP(N_("Other")),
 	OPT_BOOL('z', "null", &end_null, N_("terminate values with NUL byte")),
+	OPT_BOOL(0, "name-only", &omit_values, N_("show variable names only")),
 	OPT_BOOL(0, "includes", &respect_includes, N_("respect include directives on lookup")),
 	OPT_END(),
 };
@@ -91,7 +93,7 @@ static void check_argc(int argc, int min, int max) {
 
 static int show_all_config(const char *key_, const char *value_, void *cb)
 {
-	if (value_)
+	if (!omit_values && value_)
 		printf("%s%c%s%c", key_, delim, value_, term);
 	else
 		printf("%s%c", key_, term);
@@ -106,48 +108,40 @@ struct strbuf_list {
 
 static int format_config(struct strbuf *buf, const char *key_, const char *value_)
 {
-	int must_free_vptr = 0;
-	int must_print_delim = 0;
-	char value[256];
-	const char *vptr = value;
-
-	strbuf_init(buf, 0);
-
-	if (show_keys) {
+	if (show_keys)
 		strbuf_addstr(buf, key_);
-		must_print_delim = 1;
-	}
-	if (types == TYPE_INT)
-		sprintf(value, "%"PRId64,
-			git_config_int64(key_, value_ ? value_ : ""));
-	else if (types == TYPE_BOOL)
-		vptr = git_config_bool(key_, value_) ? "true" : "false";
-	else if (types == TYPE_BOOL_OR_INT) {
-		int is_bool, v;
-		v = git_config_bool_or_int(key_, value_, &is_bool);
-		if (is_bool)
-			vptr = v ? "true" : "false";
-		else
-			sprintf(value, "%d", v);
-	} else if (types == TYPE_PATH) {
-		if (git_config_pathname(&vptr, key_, value_) < 0)
-			return -1;
-		must_free_vptr = 1;
-	} else if (value_) {
-		vptr = value_;
-	} else {
-		/* Just show the key name */
-		vptr = "";
-		must_print_delim = 0;
-	}
+	if (!omit_values) {
+		if (show_keys)
+			strbuf_addch(buf, key_delim);
 
-	if (must_print_delim)
-		strbuf_addch(buf, key_delim);
-	strbuf_addstr(buf, vptr);
+		if (types == TYPE_INT)
+			strbuf_addf(buf, "%"PRId64,
+				    git_config_int64(key_, value_ ? value_ : ""));
+		else if (types == TYPE_BOOL)
+			strbuf_addstr(buf, git_config_bool(key_, value_) ?
+				      "true" : "false");
+		else if (types == TYPE_BOOL_OR_INT) {
+			int is_bool, v;
+			v = git_config_bool_or_int(key_, value_, &is_bool);
+			if (is_bool)
+				strbuf_addstr(buf, v ? "true" : "false");
+			else
+				strbuf_addf(buf, "%d", v);
+		} else if (types == TYPE_PATH) {
+			const char *v;
+			if (git_config_pathname(&v, key_, value_) < 0)
+				return -1;
+			strbuf_addstr(buf, v);
+			free((char *)v);
+		} else if (value_) {
+			strbuf_addstr(buf, value_);
+		} else {
+			/* Just show the key name; back out delimiter */
+			if (show_keys)
+				strbuf_setlen(buf, buf->len - 1);
+		}
+	}
 	strbuf_addch(buf, term);
-
-	if (must_free_vptr)
-		free((char *)vptr);
 	return 0;
 }
 
@@ -164,6 +158,7 @@ static int collect_config(const char *key_, const char *value_, void *cb)
 		return 0;
 
 	ALLOC_GROW(values->items, values->nr + 1, values->alloc);
+	strbuf_init(&values->items[values->nr], 0);
 
 	return format_config(&values->items[values->nr++], key_, value_);
 }
@@ -430,14 +425,11 @@ static int get_urlmatch(const char *var, const char *url)
 
 	for_each_string_list_item(item, &values) {
 		struct urlmatch_current_candidate_value *matched = item->util;
-		struct strbuf key = STRBUF_INIT;
 		struct strbuf buf = STRBUF_INIT;
 
-		strbuf_addstr(&key, item->string);
-		format_config(&buf, key.buf,
+		format_config(&buf, item->string,
 			      matched->value_is_null ? NULL : matched->value.buf);
 		fwrite(buf.buf, 1, buf.len, stdout);
-		strbuf_release(&key);
 		strbuf_release(&buf);
 
 		strbuf_release(&matched->value);
@@ -549,7 +541,11 @@ int cmd_config(int argc, const char **argv, const char *prefix)
 		default:
 			usage_with_options(builtin_config_usage, builtin_config_options);
 		}
-
+	if (omit_values &&
+	    !(actions == ACTION_LIST || actions == ACTION_GET_REGEXP)) {
+		error("--name-only is only applicable to --list or --get-regexp");
+		usage_with_options(builtin_config_usage, builtin_config_options);
+	}
 	if (actions == ACTION_LIST) {
 		check_argc(argc, 0, 0);
 		if (git_config_with_options(show_all_config, NULL,

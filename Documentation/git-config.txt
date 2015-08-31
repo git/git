@@ -14,13 +14,13 @@ SYNOPSIS
 'git config' [<file-option>] [type] --replace-all name value [value_regex]
 'git config' [<file-option>] [type] [-z|--null] --get name [value_regex]
 'git config' [<file-option>] [type] [-z|--null] --get-all name [value_regex]
-'git config' [<file-option>] [type] [-z|--null] --get-regexp name_regex [value_regex]
+'git config' [<file-option>] [type] [-z|--null] [--name-only] --get-regexp name_regex [value_regex]
 'git config' [<file-option>] [type] [-z|--null] --get-urlmatch name URL
 'git config' [<file-option>] --unset name [value_regex]
 'git config' [<file-option>] --unset-all name [value_regex]
 'git config' [<file-option>] --rename-section old_name new_name
 'git config' [<file-option>] --remove-section name
-'git config' [<file-option>] [-z|--null] -l | --list
+'git config' [<file-option>] [-z|--null] [--name-only] -l | --list
 'git config' [<file-option>] --get-color name [default]
 'git config' [<file-option>] --get-colorbool name [stdout-is-tty]
 'git config' [<file-option>] -e | --edit
@@ -159,7 +159,7 @@ See also <<FILES>>.
 
 -l::
 --list::
-	List all variables set in config file.
+	List all variables set in config file, along with their values.
 
 --bool::
 	'git config' will ensure that the output is "true" or "false"
@@ -189,6 +189,10 @@ See also <<FILES>>.
 	key and value. This allows for secure parsing of the
 	output without getting confused e.g. by values that
 	contain line breaks.
+
+--name-only::
+	Output only the names of config variables for `--list` or
+	`--get-regexp`.
 
 --get-colorbool name [stdout-is-tty]::
 
