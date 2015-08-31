@@ -12,6 +12,29 @@
 #include "version.h"
 #include "sha1-array.h"
 #include "gpg-interface.h"
+#include "cache.h"
+
+int option_parse_push_signed(const struct option *opt,
+			     const char *arg, int unset)
+{
+	if (unset) {
+		*(int *)(opt->value) = SEND_PACK_PUSH_CERT_NEVER;
+		return 0;
+	}
+	switch (git_parse_maybe_bool(arg)) {
+	case 1:
+		*(int *)(opt->value) = SEND_PACK_PUSH_CERT_ALWAYS;
+		return 0;
+	case 0:
+		*(int *)(opt->value) = SEND_PACK_PUSH_CERT_NEVER;
+		return 0;
+	}
+	if (!strcasecmp("if-asked", arg)) {
+		*(int *)(opt->value) = SEND_PACK_PUSH_CERT_IF_ASKED;
+		return 0;
+	}
+	die("bad %s argument: %s", opt->long_name, arg);
+}
 
 static int feed_object(const unsigned char *sha1, int fd, int negative)
 {
@@ -370,14 +393,20 @@ int send_pack(struct send_pack_args *args,
 		args->use_thin_pack = 0;
 	if (server_supports("atomic"))
 		atomic_supported = 1;
-	if (args->push_cert) {
-		int len;
 
+	if (args->push_cert != SEND_PACK_PUSH_CERT_NEVER) {
+		int len;
 		push_cert_nonce = server_feature_value("push-cert", &len);
-		if (!push_cert_nonce)
+		if (push_cert_nonce) {
+			reject_invalid_nonce(push_cert_nonce, len);
+			push_cert_nonce = xmemdupz(push_cert_nonce, len);
+		} else if (args->push_cert == SEND_PACK_PUSH_CERT_ALWAYS) {
 			die(_("the receiving end does not support --signed push"));
-		reject_invalid_nonce(push_cert_nonce, len);
-		push_cert_nonce = xmemdupz(push_cert_nonce, len);
+		} else if (args->push_cert == SEND_PACK_PUSH_CERT_IF_ASKED) {
+			warning(_("not sending a push certificate since the"
+				  " receiving end does not support --signed"
+				  " push"));
+		}
 	}
 
 	if (!remote_refs) {
@@ -413,7 +442,7 @@ int send_pack(struct send_pack_args *args,
 	if (!args->dry_run)
 		advertise_shallow_grafts_buf(&req_buf);
 
-	if (!args->dry_run && args->push_cert)
+	if (!args->dry_run && push_cert_nonce)
 		cmds_sent = generate_push_cert(&req_buf, remote_refs, args,
 					       cap_buf.buf, push_cert_nonce);
 
@@ -452,7 +481,7 @@ int send_pack(struct send_pack_args *args,
 	for (ref = remote_refs; ref; ref = ref->next) {
 		char *old_hex, *new_hex;
 
-		if (args->dry_run || args->push_cert)
+		if (args->dry_run || push_cert_nonce)
 			continue;
 
 		if (check_to_send_update(ref, args) < 0)

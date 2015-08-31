@@ -12,7 +12,6 @@ struct git_transport_options {
 	unsigned check_self_contained_and_connected : 1;
 	unsigned self_contained_and_connected : 1;
 	unsigned update_shallow : 1;
-	unsigned push_cert : 1;
 	int depth;
 	const char *uploadpack;
 	const char *receivepack;
@@ -124,8 +123,9 @@ struct transport {
 #define TRANSPORT_RECURSE_SUBMODULES_ON_DEMAND 256
 #define TRANSPORT_PUSH_NO_HOOK 512
 #define TRANSPORT_PUSH_FOLLOW_TAGS 1024
-#define TRANSPORT_PUSH_CERT 2048
-#define TRANSPORT_PUSH_ATOMIC 4096
+#define TRANSPORT_PUSH_CERT_ALWAYS 2048
+#define TRANSPORT_PUSH_CERT_IF_ASKED 4096
+#define TRANSPORT_PUSH_ATOMIC 8192
 
 #define TRANSPORT_SUMMARY_WIDTH (2 * DEFAULT_ABBREV + 3)
 #define TRANSPORT_SUMMARY(x) (int)(TRANSPORT_SUMMARY_WIDTH + strlen(x) - gettext_width(x)), (x)

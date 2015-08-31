@@ -11,7 +11,8 @@ SYNOPSIS
 [verse]
 'git push' [--all | --mirror | --tags] [--follow-tags] [--atomic] [-n | --dry-run] [--receive-pack=<git-receive-pack>]
 	   [--repo=<repository>] [-f | --force] [--prune] [-v | --verbose]
-	   [-u | --set-upstream] [--signed]
+	   [-u | --set-upstream]
+	   [--[no-]signed|--sign=(true|false|if-asked)]
 	   [--force-with-lease[=<refname>[:<expect>]]]
 	   [--no-verify] [<repository> [<refspec>...]]
 
@@ -132,12 +133,16 @@ already exists on the remote side.
 	with configuration variable 'push.followTags'.  For more
 	information, see 'push.followTags' in linkgit:git-config[1].
 
-
---signed::
+--[no-]signed::
+--sign=(true|false|if-asked)::
 	GPG-sign the push request to update refs on the receiving
 	side, to allow it to be checked by the hooks and/or be
-	logged.  See linkgit:git-receive-pack[1] for the details
-	on the receiving end.
+	logged.  If `false` or `--no-signed`, no signing will be
+	attempted.  If `true` or `--signed`, the push will fail if the
+	server does not support signed pushes.  If set to `if-asked`,
+	sign if and only if the server supports signed pushes.  The push
+	will also fail if the actual call to `gpg --sign` fails.  See
+	linkgit:git-receive-pack[1] for the details on the receiving end.
 
 --[no-]atomic::
 	Use an atomic transaction on the remote side if available.

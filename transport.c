@@ -476,9 +476,6 @@ static int set_git_option(struct git_transport_options *opts,
 				die("transport: invalid depth option '%s'", value);
 		}
 		return 0;
-	} else if (!strcmp(name, TRANS_OPT_PUSH_CERT)) {
-		opts->push_cert = !!value;
-		return 0;
 	}
 	return 1;
 }
@@ -829,9 +826,15 @@ static int git_transport_push(struct transport *transport, struct ref *remote_re
 	args.progress = transport->progress;
 	args.dry_run = !!(flags & TRANSPORT_PUSH_DRY_RUN);
 	args.porcelain = !!(flags & TRANSPORT_PUSH_PORCELAIN);
-	args.push_cert = !!(flags & TRANSPORT_PUSH_CERT);
 	args.atomic = !!(flags & TRANSPORT_PUSH_ATOMIC);
 	args.url = transport->url;
+
+	if (flags & TRANSPORT_PUSH_CERT_ALWAYS)
+		args.push_cert = SEND_PACK_PUSH_CERT_ALWAYS;
+	else if (flags & TRANSPORT_PUSH_CERT_IF_ASKED)
+		args.push_cert = SEND_PACK_PUSH_CERT_IF_ASKED;
+	else
+		args.push_cert = SEND_PACK_PUSH_CERT_NEVER;
 
 	ret = send_pack(&args, data->fd, data->conn, remote_refs,
 			&data->extra_have);
