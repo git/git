@@ -1209,7 +1209,7 @@ int transport_push(struct transport *transport,
 				transport_update_tracking_ref(transport->remote, ref, verbose);
 		}
 
-		if (porcelain && !push_ret)
+		if (!quiet && porcelain && !push_ret)
 			puts("Done");
 		else if (!quiet && !ret && !transport_refs_pushed(remote_refs))
 			fprintf(stderr, "Everything up-to-date\n");
