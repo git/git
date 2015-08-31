@@ -71,6 +71,19 @@ UI, Workflows & Features
  * A new configuration variable http.sslVersion can be used to specify
    what specific version of SSL/TLS to use to make a connection.
 
+ * "git notes merge" can be told with "--strategy=<how>" option how to
+   automatically handle conflicts; this can now be configured by
+   setting notes.mergeStrategy configuration variable.
+
+ * "git log --cc" did not show any patch, even though most of the time
+   the user meant "git log --cc -p -m" to see patch output for commits
+   with a single parent, and combined diff for merge commits.  The
+   command is taught to DWIM "--cc" (without "--raw" and other forms
+   of output specification) to "--cc -p -m".
+
+ * "git config --list" output was hard to parse when values consist of
+   multiple lines.  "--name-only" option is added to help this.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -131,6 +144,9 @@ Performance, Internal Implementation, Development Support etc.
    to the system, update_ref()/delete_ref() have been taught about
    ref-like things like MERGE_HEAD that are per-worktree (they will
    always be written to the filesystem inside $GIT_DIR).
+
+ * The gitmodules API that is accessed from the C code learned to
+   cache stuff lazily.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -262,6 +278,29 @@ notes for details).
  * "interpret-trailers" helper mistook a single-liner log message that
    has a colon as the end of existing trailer.
    (merge 6262fe9 cc/trailers-corner-case-fix later to maint).
+
+ * "git describe" without argument defaulted to describe the HEAD
+   commit, but "git describe --contains" didn't.  Arguably, in a
+   repository used for active development, such defaulting would not
+   be very useful as the tip of branch is typically not tagged, but it
+   is better to be consistent.
+   (merge 2bd0706 sg/describe-contains later to maint).
+
+ * The client side codepaths in "git push" have been cleaned up
+   and the user can request to perform an optional "signed push",
+   i.e. sign only when the other end accepts signed push.
+   (merge 68c757f db/push-sign-if-asked later to maint).
+
+ * Because the configuration system does not allow "alias.0foo" and
+   "pager.0foo" as the configuration key, the user cannot use '0foo'
+   as a custom command name anyway, but "git 0foo" tried to look these
+   keys up and emitted useless warnings before saying '0foo is not a
+   git command'.  These warning messages have been squelched.
+   (merge 9e9de18 jk/fix-alias-pager-config-key-warnings later to maint).
+
+ * "git rev-list" does not take "--notes" option, but did not complain
+   when one is given.
+   (merge 2aea7a5 jk/rev-list-has-no-notes later to maint).
 
  * Code cleanups and documentation updates.
    (merge 1c601af es/doc-clean-outdated-tools later to maint).
