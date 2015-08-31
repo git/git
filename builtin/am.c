@@ -195,6 +195,27 @@ static inline const char *am_path(const struct am_state *state, const char *path
 }
 
 /**
+ * For convenience to call write_file()
+ */
+static int write_state_text(const struct am_state *state,
+			    const char *name, const char *string)
+{
+	return write_file(am_path(state, name), "%s", string);
+}
+
+static int write_state_count(const struct am_state *state,
+			     const char *name, int value)
+{
+	return write_file(am_path(state, name), "%d", value);
+}
+
+static int write_state_bool(const struct am_state *state,
+			    const char *name, int value)
+{
+	return write_state_text(state, name, value ? "t" : "f");
+}
+
+/**
  * If state->quiet is false, calls fprintf(fp, fmt, ...), and appends a newline
  * at the end.
  */
@@ -363,7 +384,7 @@ static void write_author_script(const struct am_state *state)
 	sq_quote_buf(&sb, state->author_date);
 	strbuf_addch(&sb, '\n');
 
-	write_file(am_path(state, "author-script"), 1, "%s", sb.buf);
+	write_state_text(state, "author-script", sb.buf);
 
 	strbuf_release(&sb);
 }
@@ -1001,13 +1022,10 @@ static void am_setup(struct am_state *state, enum patch_format patch_format,
 	if (state->rebasing)
 		state->threeway = 1;
 
-	write_file(am_path(state, "threeway"), 1, state->threeway ? "t" : "f");
-
-	write_file(am_path(state, "quiet"), 1, state->quiet ? "t" : "f");
-
-	write_file(am_path(state, "sign"), 1, state->signoff ? "t" : "f");
-
-	write_file(am_path(state, "utf8"), 1, state->utf8 ? "t" : "f");
+	write_state_bool(state, "threeway", state->threeway);
+	write_state_bool(state, "quiet", state->quiet);
+	write_state_bool(state, "sign", state->signoff);
+	write_state_bool(state, "utf8", state->utf8);
 
 	switch (state->keep) {
 	case KEEP_FALSE:
@@ -1023,9 +1041,8 @@ static void am_setup(struct am_state *state, enum patch_format patch_format,
 		die("BUG: invalid value for state->keep");
 	}
 
-	write_file(am_path(state, "keep"), 1, "%s", str);
-
-	write_file(am_path(state, "messageid"), 1, state->message_id ? "t" : "f");
+	write_state_text(state, "keep", str);
+	write_state_bool(state, "messageid", state->message_id);
 
 	switch (state->scissors) {
 	case SCISSORS_UNSET:
@@ -1040,24 +1057,23 @@ static void am_setup(struct am_state *state, enum patch_format patch_format,
 	default:
 		die("BUG: invalid value for state->scissors");
 	}
-
-	write_file(am_path(state, "scissors"), 1, "%s", str);
+	write_state_text(state, "scissors", str);
 
 	sq_quote_argv(&sb, state->git_apply_opts.argv, 0);
-	write_file(am_path(state, "apply-opt"), 1, "%s", sb.buf);
+	write_state_text(state, "apply-opt", sb.buf);
 
 	if (state->rebasing)
-		write_file(am_path(state, "rebasing"), 1, "%s", "");
+		write_state_text(state, "rebasing", "");
 	else
-		write_file(am_path(state, "applying"), 1, "%s", "");
+		write_state_text(state, "applying", "");
 
 	if (!get_sha1("HEAD", curr_head)) {
-		write_file(am_path(state, "abort-safety"), 1, "%s", sha1_to_hex(curr_head));
+		write_state_text(state, "abort-safety", sha1_to_hex(curr_head));
 		if (!state->rebasing)
 			update_ref("am", "ORIG_HEAD", curr_head, NULL, 0,
 					UPDATE_REFS_DIE_ON_ERR);
 	} else {
-		write_file(am_path(state, "abort-safety"), 1, "%s", "");
+		write_state_text(state, "abort-safety", "");
 		if (!state->rebasing)
 			delete_ref("ORIG_HEAD", NULL, 0);
 	}
@@ -1067,9 +1083,8 @@ static void am_setup(struct am_state *state, enum patch_format patch_format,
 	 * session is in progress, they should be written last.
 	 */
 
-	write_file(am_path(state, "next"), 1, "%d", state->cur);
-
-	write_file(am_path(state, "last"), 1, "%d", state->last);
+	write_state_count(state, "next", state->cur);
+	write_state_count(state, "last", state->last);
 
 	strbuf_release(&sb);
 }
@@ -1102,12 +1117,12 @@ static void am_next(struct am_state *state)
 	unlink(am_path(state, "original-commit"));
 
 	if (!get_sha1("HEAD", head))
-		write_file(am_path(state, "abort-safety"), 1, "%s", sha1_to_hex(head));
+		write_state_text(state, "abort-safety", sha1_to_hex(head));
 	else
-		write_file(am_path(state, "abort-safety"), 1, "%s", "");
+		write_state_text(state, "abort-safety", "");
 
 	state->cur++;
-	write_file(am_path(state, "next"), 1, "%d", state->cur);
+	write_state_count(state, "next", state->cur);
 }
 
 /**
@@ -1480,8 +1495,7 @@ static int parse_mail_rebase(struct am_state *state, const char *mail)
 	write_commit_patch(state, commit);
 
 	hashcpy(state->orig_commit, commit_sha1);
-	write_file(am_path(state, "original-commit"), 1, "%s",
-			sha1_to_hex(commit_sha1));
+	write_state_text(state, "original-commit", sha1_to_hex(commit_sha1));
 
 	return 0;
 }
@@ -1783,7 +1797,7 @@ static void am_run(struct am_state *state, int resume)
 	refresh_and_write_cache();
 
 	if (index_has_changes(&sb)) {
-		write_file(am_path(state, "dirtyindex"), 1, "t");
+		write_state_bool(state, "dirtyindex", 1);
 		die(_("Dirty index: cannot apply patches (dirty: %s)"), sb.buf);
 	}
 
