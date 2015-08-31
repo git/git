@@ -392,6 +392,7 @@ static inline int mingw_skip_dos_drive_prefix(char **path)
 	return ret;
 }
 #define skip_dos_drive_prefix mingw_skip_dos_drive_prefix
+#define has_unc_prefix(path) (*(path) == '\\' && (path)[1] == '\\' ? 2 : 0)
 #define is_dir_sep(c) ((c) == '/' || (c) == '\\')
 static inline char *mingw_find_last_dir_sep(const char *path)
 {
