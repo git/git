@@ -160,6 +160,13 @@ test_expect_success 'pack ref directly below refs/' '
 	test_path_is_missing .git/refs/top
 '
 
+test_expect_success 'do not pack ref in refs/bisect' '
+	git update-ref refs/bisect/local HEAD &&
+	git pack-refs --all --prune &&
+	! grep refs/bisect/local .git/packed-refs >/dev/null &&
+	test_path_is_file .git/refs/bisect/local
+'
+
 test_expect_success 'disable reflogs' '
 	git config core.logallrefupdates false &&
 	rm -rf .git/logs

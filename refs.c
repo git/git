@@ -304,6 +304,11 @@ struct ref_entry {
 };
 
 static void read_loose_refs(const char *dirname, struct ref_dir *dir);
+static int search_ref_dir(struct ref_dir *dir, const char *refname, size_t len);
+static struct ref_entry *create_dir_entry(struct ref_cache *ref_cache,
+					  const char *dirname, size_t len,
+					  int incomplete);
+static void add_entry_to_dir(struct ref_dir *dir, struct ref_entry *entry);
 
 static struct ref_dir *get_ref_dir(struct ref_entry *entry)
 {
@@ -312,6 +317,24 @@ static struct ref_dir *get_ref_dir(struct ref_entry *entry)
 	dir = &entry->u.subdir;
 	if (entry->flag & REF_INCOMPLETE) {
 		read_loose_refs(entry->name, dir);
+
+		/*
+		 * Manually add refs/bisect, which, being
+		 * per-worktree, might not appear in the directory
+		 * listing for refs/ in the main repo.
+		 */
+		if (!strcmp(entry->name, "refs/")) {
+			int pos = search_ref_dir(dir, "refs/bisect/", 12);
+			if (pos < 0) {
+				struct ref_entry *child_entry;
+				child_entry = create_dir_entry(dir->ref_cache,
+							       "refs/bisect/",
+							       12, 1);
+				add_entry_to_dir(dir, child_entry);
+				read_loose_refs("refs/bisect",
+						&child_entry->u.subdir);
+			}
+		}
 		entry->flag &= ~REF_INCOMPLETE;
 	}
 	return dir;
@@ -2649,6 +2672,8 @@ struct pack_refs_cb_data {
 	struct ref_to_prune *ref_to_prune;
 };
 
+static int is_per_worktree_ref(const char *refname);
+
 /*
  * An each_ref_entry_fn that is run over loose references only.  If
  * the loose reference can be packed, add an entry in the packed ref
@@ -2661,6 +2686,10 @@ static int pack_if_possible_fn(struct ref_entry *entry, void *cb_data)
 	enum peel_status peel_status;
 	struct ref_entry *packed_entry;
 	int is_tag_ref = starts_with(entry->name, "refs/tags/");
+
+	/* Do not pack per-worktree refs: */
+	if (is_per_worktree_ref(entry->name))
+		return 0;
 
 	/* ALWAYS pack tags */
 	if (!(cb->flags & PACK_REFS_ALL) && !is_tag_ref)
@@ -2856,7 +2885,8 @@ static int delete_ref_loose(struct ref_lock *lock, int flag, struct strbuf *err)
 
 static int is_per_worktree_ref(const char *refname)
 {
-	return !strcmp(refname, "HEAD");
+	return !strcmp(refname, "HEAD") ||
+		starts_with(refname, "refs/bisect/");
 }
 
 static int is_pseudoref_syntax(const char *refname)
