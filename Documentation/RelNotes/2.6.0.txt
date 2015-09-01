@@ -302,6 +302,23 @@ notes for details).
    when one is given.
    (merge 2aea7a5 jk/rev-list-has-no-notes later to maint).
 
+ * When re-priming the cache-tree opportunistically while committing
+   the in-core index as-is, we mistakenly invalidated the in-core
+   index too aggressively, causing the experimental split-index code
+   to unnecessarily rewrite the on-disk index file(s).
+   (merge 475a344 dt/commit-preserve-base-index-upon-opportunistic-cache-tree-update later to maint).
+
+ * "git archive" did not use zip64 extension when creating an archive
+   with more than 64k entries, which nobody should need, right ;-)?
+   (merge 88329ca rs/archive-zip-many later to maint).
+
+ * The code in "multiple-worktree" support that attempted to recover
+   from an inconsistent state updated an incorrect file.
+   (merge 82fde87 nd/fixup-linked-gitdir later to maint).
+
+ * On case insensitive systems, "git p4" did not work well with client
+   specs.
+
  * Code cleanups and documentation updates.
    (merge 1c601af es/doc-clean-outdated-tools later to maint).
    (merge 3581304 kn/tag-doc-fix later to maint).
@@ -318,3 +335,8 @@ notes for details).
    (merge 8b54c23 jc/calloc-pathspec later to maint).
    (merge a6926b8 po/po-readme later to maint).
    (merge 54d160e ss/fix-config-fd-leak later to maint).
+   (merge b80fa84 ah/submodule-typofix-in-error later to maint).
+   (merge 99885bc ah/reflog-typofix-in-error later to maint).
+   (merge 9476c2c ah/read-tree-usage-string later to maint).
+   (merge b8c1d27 ah/pack-objects-usage-strings later to maint).
+   (merge 486e1e1 br/svn-doc-include-paths-config later to maint).
