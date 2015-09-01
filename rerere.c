@@ -409,6 +409,8 @@ static int find_conflict(struct string_list *conflict)
 int rerere_remaining(struct string_list *merge_rr)
 {
 	int i;
+	if (setup_rerere(merge_rr, RERERE_READONLY))
+		return 0;
 	if (read_cache() < 0)
 		return error("Could not read index");
 
@@ -603,8 +605,11 @@ int setup_rerere(struct string_list *merge_rr, int flags)
 
 	if (flags & (RERERE_AUTOUPDATE|RERERE_NOAUTOUPDATE))
 		rerere_autoupdate = !!(flags & RERERE_AUTOUPDATE);
-	fd = hold_lock_file_for_update(&write_lock, git_path_merge_rr(),
-				       LOCK_DIE_ON_ERROR);
+	if (flags & RERERE_READONLY)
+		fd = 0;
+	else
+		fd = hold_lock_file_for_update(&write_lock, git_path_merge_rr(),
+					       LOCK_DIE_ON_ERROR);
 	read_rr(merge_rr);
 	return fd;
 }
@@ -701,6 +706,9 @@ void rerere_gc(struct string_list *rr)
 	int cutoff_noresolve = 15;
 	int cutoff_resolve = 60;
 
+	if (setup_rerere(rr, 0) < 0)
+		return;
+
 	git_config_get_int("gc.rerereresolved", &cutoff_resolve);
 	git_config_get_int("gc.rerereunresolved", &cutoff_noresolve);
 	git_config(git_default_config, NULL);
@@ -727,11 +735,15 @@ void rerere_gc(struct string_list *rr)
 	for (i = 0; i < to_remove.nr; i++)
 		unlink_rr_item(to_remove.items[i].string);
 	string_list_clear(&to_remove, 0);
+	rollback_lock_file(&write_lock);
 }
 
 void rerere_clear(struct string_list *merge_rr)
 {
 	int i;
+
+	if (setup_rerere(merge_rr, 0) < 0)
+		return;
 
 	for (i = 0; i < merge_rr->nr; i++) {
 		const char *name = (const char *)merge_rr->items[i].util;
@@ -739,4 +751,5 @@ void rerere_clear(struct string_list *merge_rr)
 			unlink_rr_item(name);
 	}
 	unlink_or_warn(git_path_merge_rr());
+	rollback_lock_file(&write_lock);
 }

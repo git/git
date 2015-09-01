@@ -2057,11 +2057,6 @@ static int clean_index(const unsigned char *head, const unsigned char *remote)
 static void am_rerere_clear(void)
 {
 	struct string_list merge_rr = STRING_LIST_INIT_DUP;
-	int fd = setup_rerere(&merge_rr, 0);
-
-	if (fd < 0)
-		return;
-
 	rerere_clear(&merge_rr);
 	string_list_clear(&merge_rr, 1);
 }

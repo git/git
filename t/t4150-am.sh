@@ -873,4 +873,40 @@ test_expect_success 'am --message-id -s signs off after the message id' '
 	test_cmp expected actual
 '
 
+test_expect_success 'am -3 works with rerere' '
+	rm -fr .git/rebase-apply &&
+	git reset --hard &&
+
+	# make patches one->two and two->three...
+	test_commit one file &&
+	test_commit two file &&
+	test_commit three file &&
+	git format-patch -2 --stdout >seq.patch &&
+
+	# and create a situation that conflicts...
+	git reset --hard one &&
+	test_commit other file &&
+
+	# enable rerere...
+	test_config rerere.enabled true &&
+	test_when_finished "rm -rf .git/rr-cache" &&
+
+	# ...and apply. Our resolution is to skip the first
+	# patch, and the rerere the second one.
+	test_must_fail git am -3 seq.patch &&
+	test_must_fail git am --skip &&
+	echo resolved >file &&
+	git add file &&
+	git am --resolved &&
+
+	# now apply again, and confirm that rerere engaged (we still
+	# expect failure from am because rerere does not auto-commit
+	# for us).
+	git reset --hard other &&
+	test_must_fail git am -3 seq.patch &&
+	test_must_fail git am --skip &&
+	echo resolved >expect &&
+	test_cmp expect file
+'
+
 test_done
