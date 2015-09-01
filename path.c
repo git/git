@@ -91,35 +91,51 @@ static void replace_dir(struct strbuf *buf, int len, const char *newdir)
 		buf->buf[newlen] = '/';
 }
 
-static const char *common_list[] = {
-	"/branches", "/hooks", "/info", "!/logs", "/lost-found",
-	"/objects", "/refs", "/remotes", "/worktrees", "/rr-cache", "/svn",
-	"config", "!gc.pid", "packed-refs", "shallow",
-	NULL
+struct common_dir {
+	/* Not considered garbage for report_linked_checkout_garbage */
+	unsigned ignore_garbage:1;
+	unsigned is_dir:1;
+	/* Not common even though its parent is */
+	unsigned exclude:1;
+	const char *dirname;
+};
+
+static struct common_dir common_list[] = {
+	{ 0, 1, 0, "branches" },
+	{ 0, 1, 0, "hooks" },
+	{ 0, 1, 0, "info" },
+	{ 0, 0, 1, "info/sparse-checkout" },
+	{ 1, 1, 0, "logs" },
+	{ 1, 1, 1, "logs/HEAD" },
+	{ 0, 1, 0, "lost-found" },
+	{ 0, 1, 0, "objects" },
+	{ 0, 1, 0, "refs" },
+	{ 0, 1, 0, "remotes" },
+	{ 0, 1, 0, "worktrees" },
+	{ 0, 1, 0, "rr-cache" },
+	{ 0, 1, 0, "svn" },
+	{ 0, 0, 0, "config" },
+	{ 1, 0, 0, "gc.pid" },
+	{ 0, 0, 0, "packed-refs" },
+	{ 0, 0, 0, "shallow" },
+	{ 0, 0, 0, NULL }
 };
 
 static void update_common_dir(struct strbuf *buf, int git_dir_len)
 {
 	char *base = buf->buf + git_dir_len;
-	const char **p;
+	const struct common_dir *p;
 
 	if (is_dir_file(base, "logs", "HEAD") ||
 	    is_dir_file(base, "info", "sparse-checkout"))
 		return;	/* keep this in $GIT_DIR */
-	for (p = common_list; *p; p++) {
-		const char *path = *p;
-		int is_dir = 0;
-		if (*path == '!')
-			path++;
-		if (*path == '/') {
-			path++;
-			is_dir = 1;
-		}
-		if (is_dir && dir_prefix(base, path)) {
+	for (p = common_list; p->dirname; p++) {
+		const char *path = p->dirname;
+		if (p->is_dir && dir_prefix(base, path)) {
 			replace_dir(buf, git_dir_len, get_git_common_dir());
 			return;
 		}
-		if (!is_dir && !strcmp(base, path)) {
+		if (!p->is_dir && !strcmp(base, path)) {
 			replace_dir(buf, git_dir_len, get_git_common_dir());
 			return;
 		}
@@ -129,16 +145,16 @@ static void update_common_dir(struct strbuf *buf, int git_dir_len)
 void report_linked_checkout_garbage(void)
 {
 	struct strbuf sb = STRBUF_INIT;
-	const char **p;
+	const struct common_dir *p;
 	int len;
 
 	if (!git_common_dir_env)
 		return;
 	strbuf_addf(&sb, "%s/", get_git_dir());
 	len = sb.len;
-	for (p = common_list; *p; p++) {
-		const char *path = *p;
-		if (*path == '!')
+	for (p = common_list; p->dirname; p++) {
+		const char *path = p->dirname;
+		if (p->ignore_garbage)
 			continue;
 		strbuf_setlen(&sb, len);
 		strbuf_addstr(&sb, path);
