@@ -271,6 +271,7 @@ test_git_path GIT_COMMON_DIR=bar objects/bar              bar/objects/bar
 test_git_path GIT_COMMON_DIR=bar info/exclude             bar/info/exclude
 test_git_path GIT_COMMON_DIR=bar info/grafts              bar/info/grafts
 test_git_path GIT_COMMON_DIR=bar info/sparse-checkout     .git/info/sparse-checkout
+test_git_path GIT_COMMON_DIR=bar info//sparse-checkout    .git/info//sparse-checkout
 test_git_path GIT_COMMON_DIR=bar remotes/bar              bar/remotes/bar
 test_git_path GIT_COMMON_DIR=bar branches/bar             bar/branches/bar
 test_git_path GIT_COMMON_DIR=bar logs/refs/heads/master   bar/logs/refs/heads/master
