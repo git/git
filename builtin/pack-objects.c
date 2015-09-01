@@ -25,8 +25,8 @@
 #include "argv-array.h"
 
 static const char *pack_usage[] = {
-	N_("git pack-objects --stdout [options...] [< ref-list | < object-list]"),
-	N_("git pack-objects [options...] base-name [< ref-list | < object-list]"),
+	N_("git pack-objects --stdout [<options>...] [< <ref-list> | < <object-list>]"),
+	N_("git pack-objects [<options>...] <base-name> [< <ref-list> | < <object-list>]"),
 	NULL
 };
 
