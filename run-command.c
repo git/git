@@ -608,7 +608,7 @@ static NORETURN void die_async(const char *err, va_list params)
 {
 	vreportf("fatal: ", err, params);
 
-	if (!pthread_equal(main_thread, pthread_self())) {
+	if (in_async()) {
 		struct async *async = pthread_getspecific(async_key);
 		if (async->proc_in >= 0)
 			close(async->proc_in);
@@ -625,6 +625,13 @@ static int async_die_is_recursing(void)
 	void *ret = pthread_getspecific(async_die_counter);
 	pthread_setspecific(async_die_counter, (void *)1);
 	return ret != NULL;
+}
+
+int in_async(void)
+{
+	if (!main_thread_set)
+		return 0; /* no asyncs started yet */
+	return !pthread_equal(main_thread, pthread_self());
 }
 
 #else
@@ -665,6 +672,12 @@ int git_atexit(void (*handler)(void))
 	return 0;
 }
 #define atexit git_atexit
+
+static int process_is_async;
+int in_async(void)
+{
+	return process_is_async;
+}
 
 #endif
 
@@ -725,6 +738,7 @@ int start_async(struct async *async)
 		if (need_out)
 			close(fdout[0]);
 		git_atexit_clear();
+		process_is_async = 1;
 		exit(!!async->proc(proc_in, proc_out, async->data));
 	}
 
