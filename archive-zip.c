@@ -16,7 +16,9 @@ static unsigned int zip_dir_size;
 
 static unsigned int zip_offset;
 static unsigned int zip_dir_offset;
-static unsigned int zip_dir_entries;
+static uint64_t zip_dir_entries;
+
+static unsigned int max_creator_version;
 
 #define ZIP_DIRECTORY_MIN_SIZE	(1024 * 1024)
 #define ZIP_STREAM	(1 <<  3)
@@ -86,6 +88,28 @@ struct zip_extra_mtime {
 	unsigned char _end[1];
 };
 
+struct zip64_dir_trailer {
+	unsigned char magic[4];
+	unsigned char record_size[8];
+	unsigned char creator_version[2];
+	unsigned char version[2];
+	unsigned char disk[4];
+	unsigned char directory_start_disk[4];
+	unsigned char entries_on_this_disk[8];
+	unsigned char entries[8];
+	unsigned char size[8];
+	unsigned char offset[8];
+	unsigned char _end[1];
+};
+
+struct zip64_dir_trailer_locator {
+	unsigned char magic[4];
+	unsigned char disk[4];
+	unsigned char offset[8];
+	unsigned char number_of_disks[4];
+	unsigned char _end[1];
+};
+
 /*
  * On ARM, padding is added at the end of the struct, so a simple
  * sizeof(struct ...) reports two bytes more than the payload size
@@ -98,6 +122,12 @@ struct zip_extra_mtime {
 #define ZIP_EXTRA_MTIME_SIZE	offsetof(struct zip_extra_mtime, _end)
 #define ZIP_EXTRA_MTIME_PAYLOAD_SIZE \
 	(ZIP_EXTRA_MTIME_SIZE - offsetof(struct zip_extra_mtime, flags))
+#define ZIP64_DIR_TRAILER_SIZE	offsetof(struct zip64_dir_trailer, _end)
+#define ZIP64_DIR_TRAILER_RECORD_SIZE \
+	(ZIP64_DIR_TRAILER_SIZE - \
+	 offsetof(struct zip64_dir_trailer, creator_version))
+#define ZIP64_DIR_TRAILER_LOCATOR_SIZE \
+	offsetof(struct zip64_dir_trailer_locator, _end)
 
 static void copy_le16(unsigned char *dest, unsigned int n)
 {
@@ -111,6 +141,31 @@ static void copy_le32(unsigned char *dest, unsigned int n)
 	dest[1] = 0xff & (n >> 010);
 	dest[2] = 0xff & (n >> 020);
 	dest[3] = 0xff & (n >> 030);
+}
+
+static void copy_le64(unsigned char *dest, uint64_t n)
+{
+	dest[0] = 0xff & n;
+	dest[1] = 0xff & (n >> 010);
+	dest[2] = 0xff & (n >> 020);
+	dest[3] = 0xff & (n >> 030);
+	dest[4] = 0xff & (n >> 040);
+	dest[5] = 0xff & (n >> 050);
+	dest[6] = 0xff & (n >> 060);
+	dest[7] = 0xff & (n >> 070);
+}
+
+static uint64_t clamp_max(uint64_t n, uint64_t max, int *clamped)
+{
+	if (n <= max)
+		return n;
+	*clamped = 1;
+	return max;
+}
+
+static void copy_le16_clamp(unsigned char *dest, uint64_t n, int *clamped)
+{
+	copy_le16(dest, clamp_max(n, 0xffff, clamped));
 }
 
 static void *zlib_deflate_raw(void *data, unsigned long size,
@@ -223,6 +278,7 @@ static int write_zip_entry(struct archiver_args *args,
 	unsigned long size;
 	int is_binary = -1;
 	const char *path_without_prefix = path + args->baselen;
+	unsigned int creator_version = 0;
 
 	crc = crc32(0, NULL, 0);
 
@@ -251,6 +307,8 @@ static int write_zip_entry(struct archiver_args *args,
 		method = 0;
 		attr2 = S_ISLNK(mode) ? ((mode | 0777) << 16) :
 			(mode & 0111) ? ((mode) << 16) : 0;
+		if (S_ISLNK(mode) || (mode & 0111))
+			creator_version = 0x0317;
 		if (S_ISREG(mode) && args->compression_level != 0 && size > 0)
 			method = 8;
 
@@ -279,6 +337,9 @@ static int write_zip_entry(struct archiver_args *args,
 				sha1_to_hex(sha1));
 	}
 
+	if (creator_version > max_creator_version)
+		max_creator_version = creator_version;
+
 	if (buffer && method == 8) {
 		out = deflated = zlib_deflate_raw(buffer, size,
 						  args->compression_level,
@@ -303,8 +364,7 @@ static int write_zip_entry(struct archiver_args *args,
 	}
 
 	copy_le32(dirent.magic, 0x02014b50);
-	copy_le16(dirent.creator_version,
-		S_ISLNK(mode) || (S_ISREG(mode) && (mode & 0111)) ? 0x0317 : 0);
+	copy_le16(dirent.creator_version, creator_version);
 	copy_le16(dirent.version, 10);
 	copy_le16(dirent.flags, flags);
 	copy_le16(dirent.compression_method, method);
@@ -437,20 +497,49 @@ static int write_zip_entry(struct archiver_args *args,
 	return 0;
 }
 
+static void write_zip64_trailer(void)
+{
+	struct zip64_dir_trailer trailer64;
+	struct zip64_dir_trailer_locator locator64;
+
+	copy_le32(trailer64.magic, 0x06064b50);
+	copy_le64(trailer64.record_size, ZIP64_DIR_TRAILER_RECORD_SIZE);
+	copy_le16(trailer64.creator_version, max_creator_version);
+	copy_le16(trailer64.version, 45);
+	copy_le32(trailer64.disk, 0);
+	copy_le32(trailer64.directory_start_disk, 0);
+	copy_le64(trailer64.entries_on_this_disk, zip_dir_entries);
+	copy_le64(trailer64.entries, zip_dir_entries);
+	copy_le64(trailer64.size, zip_dir_offset);
+	copy_le64(trailer64.offset, zip_offset);
+
+	copy_le32(locator64.magic, 0x07064b50);
+	copy_le32(locator64.disk, 0);
+	copy_le64(locator64.offset, zip_offset + zip_dir_offset);
+	copy_le32(locator64.number_of_disks, 1);
+
+	write_or_die(1, &trailer64, ZIP64_DIR_TRAILER_SIZE);
+	write_or_die(1, &locator64, ZIP64_DIR_TRAILER_LOCATOR_SIZE);
+}
+
 static void write_zip_trailer(const unsigned char *sha1)
 {
 	struct zip_dir_trailer trailer;
+	int clamped = 0;
 
 	copy_le32(trailer.magic, 0x06054b50);
 	copy_le16(trailer.disk, 0);
 	copy_le16(trailer.directory_start_disk, 0);
-	copy_le16(trailer.entries_on_this_disk, zip_dir_entries);
-	copy_le16(trailer.entries, zip_dir_entries);
+	copy_le16_clamp(trailer.entries_on_this_disk, zip_dir_entries,
+			&clamped);
+	copy_le16_clamp(trailer.entries, zip_dir_entries, &clamped);
 	copy_le32(trailer.size, zip_dir_offset);
 	copy_le32(trailer.offset, zip_offset);
 	copy_le16(trailer.comment_length, sha1 ? GIT_SHA1_HEXSZ : 0);
 
 	write_or_die(1, zip_dir, zip_dir_offset);
+	if (clamped)
+		write_zip64_trailer();
 	write_or_die(1, &trailer, ZIP_DIR_TRAILER_SIZE);
 	if (sha1)
 		write_or_die(1, sha1_to_hex(sha1), GIT_SHA1_HEXSZ);
