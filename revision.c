@@ -2187,6 +2187,21 @@ static int handle_revision_pseudo_opt(const char *submodule,
 	return 1;
 }
 
+static void NORETURN diagnose_missing_default(const char *def)
+{
+	unsigned char sha1[20];
+	int flags;
+	const char *refname;
+
+	refname = resolve_ref_unsafe(def, 0, sha1, &flags);
+	if (!refname || !(flags & REF_ISSYMREF) || (flags & REF_ISBROKEN))
+		die(_("your current branch appears to be broken"));
+
+	skip_prefix(refname, "refs/heads/", &refname);
+	die(_("your current branch '%s' does not have any commits yet"),
+	    refname);
+}
+
 /*
  * Parse revision information, filling in the "rev_info" structure,
  * and removing the used arguments from the argument list.
@@ -2316,7 +2331,7 @@ int setup_revisions(int argc, const char **argv, struct rev_info *revs, struct s
 		struct object *object;
 		struct object_context oc;
 		if (get_sha1_with_context(revs->def, 0, sha1, &oc))
-			die("bad default revision '%s'", revs->def);
+			diagnose_missing_default(revs->def);
 		object = get_reference(revs, revs->def, sha1, 0);
 		add_pending_object_with_mode(revs, object, revs->def, oc.mode);
 	}
