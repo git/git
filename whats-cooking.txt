@@ -1,22 +1,20 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Aug 2015, #06; Mon, 31)
-X-master-at: 16163602bacb2804d00d599049a62b7af0b0b7b6
-X-next-at: 7a4f88f1005d1360c4762c403490bf540d65766b
+Subject: What's cooking in git.git (Sep 2015, #01; Wed, 2)
+X-master-at: 16ffa6443e279a9b3b63d7a2bebeb07833506010
+X-next-at: f624c3dbe0116484e9e326add66d7bb19da420e0
 
-What's cooking in git.git (Aug 2015, #06; Mon, 31)
+What's cooking in git.git (Sep 2015, #01; Wed, 2)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-A handful of topics have been merged to 'master'.  Because there
-still are a few obviously good and trivially safe fixes cooking in
-'next', it would be pretty much meaningless to tag today's state
-as -rc0 (not that -rc0 has meant that much in the first place), so
-I'll wait for a few days and merge the remaining such topics from
-'next' to 'master' and then tag the -rc0.
+An early preview 2.6-rc0 has been tagged.  There are a few fixes
+that should be merged down to 'master' that are still cooking in
+'next', but other than that this should give a fairly good taste
+for the upcoming release.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -26,181 +24,146 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* db/push-sign-if-asked (2015-08-19) 9 commits
-  (merged to 'next' on 2015-08-26 at a7a32e9)
- + push: add a config option push.gpgSign for default signed pushes
- + push: support signing pushes iff the server supports it
- + builtin/send-pack.c: use parse_options API
- + config.c: rename git_config_maybe_bool_text and export it as git_parse_maybe_bool
- + transport: remove git_transport_options.push_cert
- + gitremote-helpers.txt: document pushcert option
- + Documentation/git-send-pack.txt: document --signed
- + Documentation/git-send-pack.txt: wrap long synopsis line
- + Documentation/git-push.txt: document when --signed may fail
+* ah/pack-objects-usage-strings (2015-08-28) 1 commit
+  (merged to 'next' on 2015-08-31 at 78c8240)
+ + pack-objects: place angle brackets around placeholders in usage strings
 
- The client side codepaths in "git push" have been cleaned up
- and the user can request to perform an optional "signed push",
- i.e. sign only when the other end accepts signed push.
+ Usage string fix.
 
 
-* hv/submodule-config (2015-08-19) 4 commits
-  (merged to 'next' on 2015-08-25 at 82adb30)
- + submodule: allow erroneous values for the fetchRecurseSubmodules option
- + submodule: use new config API for worktree configurations
- + submodule: extract functions for config set and lookup
- + submodule: implement a config API for lookup of .gitmodules values
- (this branch is used by sb/submodule-helper.)
+* ah/read-tree-usage-string (2015-08-28) 1 commit
+  (merged to 'next' on 2015-08-31 at fbaa7bd)
+ + read-tree: replace bracket set with parentheses to clarify usage
 
- The gitmodules API accessed from the C code learned to cache stuff
- lazily.
+ Usage string fix.
 
 
-* jc/am-state-fix (2015-08-25) 5 commits
-  (merged to 'next' on 2015-08-25 at 4efcd88)
- + write_file(): drop caller-supplied LF from calls to create a one-liner file
- + write_file_v(): do not leave incomplete line at the end
- + write_file(): drop "fatal" parameter
- + builtin/am: make sure state files are text
- + builtin/am: introduce write_state_*() helper functions
+* ah/reflog-typofix-in-error (2015-08-28) 1 commit
+  (merged to 'next' on 2015-08-31 at 1b37218)
+ + reflog: add missing single quote to error message
 
- Recent reimplementation of "git am" changed the format of state
- files kept in $GIT_DIR/rebase-apply/ without meaning to do so,
- primarily because write_file() API was cumbersome to use and it was
- easy to mistakenly make text files with incomplete lines.  Update
- write_file() interface to make it harder to misuse.
+ Error string fix.
 
 
-* jc/log-p-cc (2015-08-25) 4 commits
-  (merged to 'next' on 2015-08-25 at 2d6a6d4)
- + builtin/log.c: minor reformat
- + log: show merge commit when --cc is given
- + log: when --cc is given, default to -p unless told otherwise
- + log: rename "tweak" helpers
+* ah/submodule-typofix-in-error (2015-08-28) 1 commit
+  (merged to 'next' on 2015-08-31 at 5a20628)
+ + git-submodule: remove extraneous space from error message
 
- "git log --cc" did not show any patch, even though most of the time
- the user meant "git log --cc -p -m" to see patch output for commits
- with a single parent, and combined diff for merge commits.  The
- command is taught to DWIM "--cc" (without "--raw" and other forms
- of output specification) to "--cc -p -m".
+ Error string fix.
 
 
-* jk/fix-alias-pager-config-key-warnings (2015-08-24) 1 commit
-  (merged to 'next' on 2015-08-25 at 89eac5a)
- + config: silence warnings for command names with invalid keys
-
- Because the configuration system does not allow "alias.0foo" and
- "pager.0foo" as the configuration key, the user cannot use '0foo'
- as a custom command name anyway, but "git 0foo" tried to look these
- keys up and emitted useless warnings before saying '0foo is not a
- git command'.  These warning messages have been squelched.
-
-
-* jk/notes-merge-config (2015-08-17) 6 commits
-  (merged to 'next' on 2015-08-26 at 6dd2286)
- + notes: teach git-notes about notes.<name>.mergeStrategy option
- + notes: add notes.mergeStrategy option to select default strategy
- + notes: add tests for --commit/--abort/--strategy exclusivity
- + notes: extract parse_notes_merge_strategy to notes-utils
- + notes: extract enum notes_merge_strategy to notes-utils.h
- + notes: document cat_sort_uniq rewriteMode
-
- "git notes merge" can be told with "--strategy=<how>" option how to
- automatically handle conflicts; this can now be configured by
- setting notes.mergeStrategy configuration variable.
-
-
-* jk/rev-list-has-no-notes (2015-08-24) 1 commit
-  (merged to 'next' on 2015-08-25 at 73cb2ad)
- + rev-list: make it obvious that we do not support notes
-
- "git rev-list" does not take "--notes" option, but did not complain
- when one is given.
-
-
-* sg/config-name-only (2015-08-20) 6 commits
-  (merged to 'next' on 2015-08-25 at 6cb3b7d)
- + get_urlmatch: avoid useless strbuf write
- + format_config: simplify buffer handling
- + format_config: don't init strbuf
- + config: restructure format_config() for better control flow
-  (merged to 'next' on 2015-08-12 at c658fe4)
- + completion: list variable names reliably with 'git config --name-only'
- + config: add '--name-only' option to list only variable names
-
- "git config --list" output was hard to parse when values consist of
- multiple lines.  "--name-only" option is added to help this.
-
-
-* sg/describe-contains (2015-08-25) 1 commit
-  (merged to 'next' on 2015-08-26 at a7c66d9)
- + describe --contains: default to HEAD when no commit-ish is given
-
- "git describe" without argument defaulted to describe the HEAD
- commit, but "git describe --contains" didn't.  Arguably, in a
- repository used for active development, such defaulting would not
- be very useful as the tip of branch is typically not tagged, but it
- is better to be consistent.
-
---------------------------------------------------
-[New Topics]
-
-* ah/show-ref-usage-string (2015-08-31) 1 commit
- - show-ref: place angle brackets around variables in usage string
-
- Both "git show-ref -h" and "git show-ref --help" illustrated that the
- "--exclude-existing" option makes the command read list of refs
- from its standard input.  Change only the "show-ref -h" output to
- have a pair of "<>" around the placeholder that designate an input
- file, i.e. "git show-ref --exclude-existing < <ref-list>".
+* br/svn-doc-include-paths-config (2015-08-26) 1 commit
+  (merged to 'next' on 2015-08-31 at 27a305f)
+ + git-svn doc: mention "svn-remote.<name>.include-paths"
 
 
 * cc/trailers-corner-case-fix (2015-08-31) 1 commit
- - trailer: support multiline title
+  (merged to 'next' on 2015-09-01 at 4786608)
+ + trailer: support multiline title
 
  The "interpret-trailers" helper mistook a multi-paragraph title of
  a commit log message with a colon in it as the end of the trailer
  block.
 
- Will merge to 'next'.
+
+* dt/commit-preserve-base-index-upon-opportunistic-cache-tree-update (2015-08-31) 1 commit
+  (merged to 'next' on 2015-08-31 at c4133fb)
+ + commit: don't rewrite shared index unnecessarily
+
+ When re-priming the cache-tree opportunistically while committing
+ the in-core index as-is, we mistakenly invalidated the in-core
+ index too aggressively, causing the experimental split-index code
+ to unnecessarily rewrite the on-disk index file(s).
 
 
 * ee/clean-test-fixes (2015-08-31) 1 commit
- - t7300: fix broken && chains
-
- Will merge to 'next'.
-
-
-* jk/date-local (2015-08-31) 3 commits
- - SQUASH???
- - date: make "local" orthogonal to date format
- - fast-import: switch crash-report date to iso8601
-
- "git log --date=local" used to only allow to show the normal
- (default) format in the local timezone. The command learned to take
- 'local' as an instruction to use the local timezone with other
- formats, e.g. "git show --date=rfc-local".
+  (merged to 'next' on 2015-09-01 at 0032b34)
+ + t7300: fix broken && chains
 
 
-* nk/stash-show-config (2015-08-31) 1 commit
- - stash: allow "stash show" diff output configurable
+* jk/log-missing-default-HEAD (2015-08-31) 1 commit
+  (merged to 'next' on 2015-09-01 at 3f4582b)
+ + log: diagnose empty HEAD more clearly
 
- Users who are too busy to type three extra keystrokes to ask for
- "git stash show -p" can now set stash.showPatch configuration
- varible to true to always see the actual patch, not just the list
- of paths affected with feel for the extent of damage via diffstat.
+ "git init empty && git -C empty log" said "bad default revision 'HEAD'",
+ which was found to be a bit confusing to new users.
+
+
+* ls/p4-fold-case-client-specs (2015-08-28) 1 commit
+  (merged to 'next' on 2015-08-31 at f25a3bd)
+ + git-p4: honor core.ignorecase when using P4 client specs
+
+ On case insensitive systems, "git p4" did not work well with client
+ specs.
+
+
+* nd/fixup-linked-gitdir (2015-08-25) 1 commit
+  (merged to 'next' on 2015-08-26 at 7b8a1aa)
+ + setup: update the right file in multiple checkouts
+
+ The code in "multiple-worktree" support that attempted to recover
+ from an inconsistent state updated an incorrect file.
+
+
+* rs/archive-zip-many (2015-08-28) 3 commits
+  (merged to 'next' on 2015-08-31 at b799358)
+ + archive-zip: support more than 65535 entries
+ + archive-zip: use a local variable to store the creator version
+ + t5004: test ZIP archives with many entries
+
+ "git archive" did not use zip64 extension when creating an archive
+ with more than 64k entries, which nobody should need, right ;-)?
+
+
+* rt/remove-hold-lockfile-for-append (2015-08-28) 1 commit
+  (merged to 'next' on 2015-08-31 at caabe4b)
+ + lockfile: remove function "hold_lock_file_for_append"
 
 
 * sb/read-cache-one-indent-style-fix (2015-08-31) 1 commit
- - read-cache: fix indentation in read_index_from
+  (merged to 'next' on 2015-09-01 at adf8298)
+ + read-cache: fix indentation in read_index_from
+
+--------------------------------------------------
+[New Topics]
+
+* jh/quiltimport-explicit-series-file (2015-09-01) 1 commit
+  (merged to 'next' on 2015-09-02 at 1129ca4)
+ + git-quiltimport: add commandline option --series <file>
+
+ "quiltimport" allows to specify the series file by honoring the
+ $QUILT_SERIES environment and also --series command line option.
+
+ Will merge to 'master'.
+
+
+* jk/am-rerere-lock-fix (2015-09-01) 1 commit
+  (merged to 'next' on 2015-09-02 at 686c5c0)
+ + rerere: release lockfile in non-writing functions
+
+ Recent "git am" introduced a double-locking failure when used with
+ the "--3way" option that invokes rerere machinery.
+
+ Will merge to 'master' before 2.6-rc1.
+
+
+* jk/async-pkt-line (2015-09-01) 2 commits
+  (merged to 'next' on 2015-09-02 at e185717)
+ + pkt-line: show packets in async processes as "sideband"
+ + run-command: provide in_async query function
+
+ The debugging infrastructure for pkt-line based communication has
+ been improved to mark the side-band communicatio specifically.
+
+ Will merge to 'master'.
+
+
+* mp/t7060-diff-index-test (2015-09-02) 1 commit
+ - t7060: actually test "git diff-index --cached -M"
+
+ Fix an old test that was doing the same thing as another one.
 
  Will merge to 'next'.
-
-
-* ls/p4-path-encoding (2015-08-31) 1 commit
- - git-p4: add "--path-encoding" option
-
- "git p4" learned to reencode the pathname it uses to communicate
- with the p4 depot with a new option.
 
 --------------------------------------------------
 [Stalled]
@@ -439,11 +402,52 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* ah/show-ref-usage-string (2015-08-31) 1 commit
+ - show-ref: place angle brackets around variables in usage string
+
+ Both "git show-ref -h" and "git show-ref --help" illustrated that the
+ "--exclude-existing" option makes the command read list of refs
+ from its standard input.  Change only the "show-ref -h" output to
+ have a pair of "<>" around the placeholder that designate an input
+ file, i.e. "git show-ref --exclude-existing < <ref-list>".
+
+
+* jk/date-local (2015-09-01) 6 commits
+ - t6300: add tests for "-local" date formats
+ - t6300: add test for "raw" date format
+ - t6300: make UTC and local dates different
+ - t6300: introduce test_date() helper
+ - date: make "local" orthogonal to date format
+ - fast-import: switch crash-report date to iso8601
+
+ "git log --date=local" used to only allow to show the normal
+ (default) format in the local timezone. The command learned to take
+ 'local' as an instruction to use the local timezone with other
+ formats, e.g. "git show --date=rfc-local".
+
+
+* nk/stash-show-config (2015-08-31) 1 commit
+ - stash: allow "stash show" diff output configurable
+
+ Users who are too busy to type three extra keystrokes to ask for
+ "git stash show -p" can now set stash.showPatch configuration
+ varible to true to always see the actual patch, not just the list
+ of paths affected with feel for the extent of damage via diffstat.
+
+
+* ls/p4-path-encoding (2015-08-31) 1 commit
+ . git-p4: add "--path-encoding" option
+
+ "git p4" learned to reencode the pathname it uses to communicate
+ with the p4 depot with a new option.
+
+
 * ad/bisect-terms (2015-08-03) 4 commits
- - bisect: allow setting any user-specified in 'git bisect start'
- - bisect: add 'git bisect terms' to view the current terms
- - bisect: add the terms old/new
- - bisect: sanity check on terms
+  (merged to 'next' on 2015-09-01 at ede6e64)
+ + bisect: allow setting any user-specified in 'git bisect start'
+ + bisect: add 'git bisect terms' to view the current terms
+ + bisect: add the terms old/new
+ + bisect: sanity check on terms
 
  The use of 'good/bad' in "git bisect" made it confusing to use when
  hunting for a state change that is not a regression (e.g. bugfix).
@@ -455,77 +459,11 @@ of the repositories listed at
  certain attractiveness ($gname/272867), and makes some of the work
  on this topic a moot point.
 
- Will merge to 'next'.
-
-
-* jk/log-missing-default-HEAD (2015-08-31) 1 commit
- - log: diagnose empty HEAD more clearly
-
- "git init empty && git -C empty log" said "bad default revision 'HEAD'",
- which was found to be a bit confusing to new users.
-
- Will merge to 'next'.
-
-
-* ah/pack-objects-usage-strings (2015-08-28) 1 commit
-  (merged to 'next' on 2015-08-31 at 78c8240)
- + pack-objects: place angle brackets around placeholders in usage strings
-
- Usage string fix.
-
  Will merge to 'master'.
 
 
-* ah/read-tree-usage-string (2015-08-28) 1 commit
-  (merged to 'next' on 2015-08-31 at fbaa7bd)
- + read-tree: replace bracket set with parentheses to clarify usage
-
- Usage string fix.
-
- Will merge to 'master'.
-
-
-* ah/reflog-typofix-in-error (2015-08-28) 1 commit
-  (merged to 'next' on 2015-08-31 at 1b37218)
- + reflog: add missing single quote to error message
-
- Error string fix.
-
- Will merge to 'master'.
-
-
-* ah/submodule-typofix-in-error (2015-08-28) 1 commit
-  (merged to 'next' on 2015-08-31 at 5a20628)
- + git-submodule: remove extraneous space from error message
-
- Error string fix.
-
- Will merge to 'master'.
-
-
-* br/svn-doc-include-paths-config (2015-08-26) 1 commit
-  (merged to 'next' on 2015-08-31 at 27a305f)
- + git-svn doc: mention "svn-remote.<name>.include-paths"
-
- Will merge to 'master'.
-
-
-* dt/commit-preserve-base-index-upon-opportunistic-cache-tree-update (2015-08-31) 1 commit
-  (merged to 'next' on 2015-08-31 at c4133fb)
- + commit: don't rewrite shared index unnecessarily
-
- When re-priming the cache-tree opportunistically while committing
- the in-core index as-is, we mistakenly invalidated the in-core
- index too aggressively, causing the experimental split-index code
- to unnecessarily rewrite the on-disk index file(s).
-
- Will merge to 'master'.
-
-
-* dt/refs-bisection (2015-08-31) 5 commits
- - bisect: make bisection refs per-worktree
- - refs: make refs/worktree/* per-worktree
- - SQUASH???
+* dt/refs-bisection (2015-09-01) 3 commits
+ - refs: make refs/bisect/* per-worktree
  - path: optimize common dir checking
  - refs: clean up common_list
 
@@ -538,38 +476,10 @@ of the repositories listed at
 
 
 * ld/p4-import-labels (2015-08-28) 3 commits
- - git-p4: fix P4 label import for unprocessed commits
- - git-p4: do not terminate creating tag for unknown commit
- - git-p4: failing test for ignoring invalid p4 labels
-
- Will merge to 'next'.
-
-
-* ls/p4-fold-case-client-specs (2015-08-28) 1 commit
-  (merged to 'next' on 2015-08-31 at f25a3bd)
- + git-p4: honor core.ignorecase when using P4 client specs
-
- On case insensitive systems, "git p4" did not work well with client
- specs.
-
- Will merge to 'master'.
-
-
-* rs/archive-zip-many (2015-08-28) 3 commits
-  (merged to 'next' on 2015-08-31 at b799358)
- + archive-zip: support more than 65535 entries
- + archive-zip: use a local variable to store the creator version
- + t5004: test ZIP archives with many entries
-
- "git archive" did not use zip64 extension when creating an archive
- with more than 64k entries, which nobody should need, right ;-)?
-
- Will merge to 'master'.
-
-
-* rt/remove-hold-lockfile-for-append (2015-08-28) 1 commit
-  (merged to 'next' on 2015-08-31 at caabe4b)
- + lockfile: remove function "hold_lock_file_for_append"
+  (merged to 'next' on 2015-09-01 at cf9f1d6)
+ + git-p4: fix P4 label import for unprocessed commits
+ + git-p4: do not terminate creating tag for unknown commit
+ + git-p4: failing test for ignoring invalid p4 labels
 
  Will merge to 'master'.
 
@@ -598,16 +508,6 @@ of the repositories listed at
  Almost there...
  Waiting for a reroll.
  ($gmane/276615, $gmane/276529, $gmane/276607, $gmane/276606, etc.)
-
-
-* nd/fixup-linked-gitdir (2015-08-25) 1 commit
-  (merged to 'next' on 2015-08-26 at 7b8a1aa)
- + setup: update the right file in multiple checkouts
-
- The code in "multiple-worktree" support that attempted to recover
- from an inconsistent state updated an incorrect file.
-
- Will merge to 'master'.
 
 
 * nd/ita-cleanup (2015-08-25) 6 commits
@@ -648,11 +548,11 @@ of the repositories listed at
 
 
 * sb/submodule-helper (2015-08-31) 5 commits
- - submodule: implement `module_clone` as a builtin helper
- - submodule: implement `module_name` as a builtin helper
- - SQUASH???
- - submodule: implement `module_list` as a builtin helper
- - Merge 'hv/submodule-config' to 'sb/submodule-helper'
+ . submodule: implement `module_clone` as a builtin helper
+ . submodule: implement `module_name` as a builtin helper
+ . SQUASH???
+ . submodule: implement `module_list` as a builtin helper
+ . Merge 'hv/submodule-config' to 'sb/submodule-helper'
 
  The infrastructure to rewrite "git submodule" in C is being built
  incrementally.  Let's polish these early parts well enough and make
