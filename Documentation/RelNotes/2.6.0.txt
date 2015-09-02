@@ -212,7 +212,7 @@ notes for details).
  * "Is this subdirectory a separate repository that should not be
    touched?" check "git clean" was inefficient.  This was replaced
    with a more optimized check.
-   (merge 38ae878 ee/clean-remove-dirs later to maint).
+   (merge fbf2fec ee/clean-remove-dirs later to maint).
 
  * The "new-worktree-mode" hack in "checkout" that was added in
    nd/multiple-work-trees topic has been removed by updating the
@@ -248,7 +248,7 @@ notes for details).
 
    Note that this is irrelevant for 'master' with "git pull" rewritten
    in C.
-   (merge 22d6857 mm/pull-upload-pack later to maint).
+   (merge 13e0e28 mm/pull-upload-pack later to maint).
 
  * When trying to see that an object does not exist, a state errno
    leaked from our "first try to open a packfile with O_NOATIME and
@@ -277,7 +277,11 @@ notes for details).
 
  * "interpret-trailers" helper mistook a single-liner log message that
    has a colon as the end of existing trailer.
-   (merge 6262fe9 cc/trailers-corner-case-fix later to maint).
+
+ * The "interpret-trailers" helper mistook a multi-paragraph title of
+   a commit log message with a colon in it as the end of the trailer
+   block.
+   (merge 5c99995 cc/trailers-corner-case-fix later to maint).
 
  * "git describe" without argument defaulted to describe the HEAD
    commit, but "git describe --contains" didn't.  Arguably, in a
@@ -319,6 +323,10 @@ notes for details).
  * On case insensitive systems, "git p4" did not work well with client
    specs.
 
+ * "git init empty && git -C empty log" said "bad default revision 'HEAD'",
+   which was found to be a bit confusing to new users.
+   (merge ce11360 jk/log-missing-default-HEAD later to maint).
+
  * Code cleanups and documentation updates.
    (merge 1c601af es/doc-clean-outdated-tools later to maint).
    (merge 3581304 kn/tag-doc-fix later to maint).
@@ -340,3 +348,4 @@ notes for details).
    (merge 9476c2c ah/read-tree-usage-string later to maint).
    (merge b8c1d27 ah/pack-objects-usage-strings later to maint).
    (merge 486e1e1 br/svn-doc-include-paths-config later to maint).
+   (merge 1733ed3 ee/clean-test-fixes later to maint).
