@@ -112,6 +112,20 @@ test_expect_success 'with only a title in the message' '
 	test_cmp expected actual
 '
 
+test_expect_success 'with multiline title in the message' '
+	cat >expected <<-\EOF &&
+		place of
+		code: change
+
+		Reviewed-by: Peff
+		Acked-by: Johan
+	EOF
+	printf "%s\n" "place of" "code: change" |
+	git interpret-trailers --trailer "Reviewed-by: Peff" \
+		--trailer "Acked-by: Johan" >actual &&
+	test_cmp expected actual
+'
+
 test_expect_success 'with config setup' '
 	git config trailer.ack.key "Acked-by: " &&
 	cat >expected <<-\EOF &&
