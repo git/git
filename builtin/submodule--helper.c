@@ -5,6 +5,9 @@
 #include "pathspec.h"
 #include "dir.h"
 #include "utf8.h"
+#include "submodule.h"
+#include "submodule-config.h"
+#include "string-list.h"
 
 struct module_list {
 	const struct cache_entry **entries;
@@ -102,6 +105,24 @@ static int module_list(int argc, const char **argv, const char *prefix)
 	return 0;
 }
 
+static int module_name(int argc, const char **argv, const char *prefix)
+{
+	const struct submodule *sub;
+
+	if (argc != 2)
+		usage(_("git submodule--helper name <path>"));
+
+	gitmodules_config();
+	sub = submodule_from_path(null_sha1, argv[1]);
+
+	if (!sub)
+		die(_("no submodule mapping found in .gitmodules for path '%s'"),
+		    argv[1]);
+
+	printf("%s\n", sub->name);
+
+	return 0;
+}
 
 struct cmd_struct {
 	const char *cmd;
@@ -110,6 +131,7 @@ struct cmd_struct {
 
 static struct cmd_struct commands[] = {
 	{"list", module_list},
+	{"name", module_name},
 };
 
 int cmd_submodule__helper(int argc, const char **argv, const char *prefix)
