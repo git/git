@@ -174,6 +174,9 @@ const char *show_date(unsigned long time, int tz, const struct date_mode *mode)
 	struct tm *tm;
 	static struct strbuf timebuf = STRBUF_INIT;
 
+	if (mode->type == DATE_LOCAL)
+		tz = local_tzoffset(time);
+
 	if (mode->type == DATE_RAW) {
 		strbuf_reset(&timebuf);
 		strbuf_addf(&timebuf, "%lu %+05d", time, tz);
@@ -188,9 +191,6 @@ const char *show_date(unsigned long time, int tz, const struct date_mode *mode)
 		show_date_relative(time, tz, &now, &timebuf);
 		return timebuf.buf;
 	}
-
-	if (mode->type == DATE_LOCAL)
-		tz = local_tzoffset(time);
 
 	tm = time_to_tm(time, tz);
 	if (!tm) {
