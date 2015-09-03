@@ -180,6 +180,10 @@ test_expect_success 'Check format "default" formatted date fields output' '
 		"Tue Jul 4 01:18:45 2006 +0200"
 '
 
+test_expect_success 'Check format "default-local" date fields output' '
+	test_date default-local "Mon Jul 3 23:18:43 2006" "Mon Jul 3 23:18:44 2006" "Mon Jul 3 23:18:45 2006"
+'
+
 # Don't know how to do relative check because I can't know when this script
 # is going to be run and can't fake the current time to git, and hence can't
 # provide expected output.  Instead, I'll just make sure that "relative"
@@ -190,8 +194,20 @@ test_expect_success 'Check format "relative" date fields output' '
 	git for-each-ref --shell --format="%(refname) %(taggerdate:$f)" refs/tags) >actual
 '
 
+# We just check that this is the same as "relative" for now.
+test_expect_success 'Check format "relative-local" date fields output' '
+	test_date relative-local \
+		"$(git for-each-ref --format="%(committerdate:relative)" refs/heads)" \
+		"$(git for-each-ref --format="%(authordate:relative)" refs/heads)" \
+		"$(git for-each-ref --format="%(taggerdate:relative)" refs/tags)"
+'
+
 test_expect_success 'Check format "short" date fields output' '
 	test_date short 2006-07-04 2006-07-04 2006-07-04
+'
+
+test_expect_success 'Check format "short-local" date fields output' '
+	test_date short-local 2006-07-03 2006-07-03 2006-07-03
 '
 
 test_expect_success 'Check format "local" date fields output' '
@@ -208,6 +224,10 @@ test_expect_success 'Check format "iso8601" date fields output' '
 		"2006-07-04 01:18:45 +0200"
 '
 
+test_expect_success 'Check format "iso8601-local" date fields output' '
+	test_date iso8601-local "2006-07-03 23:18:43 +0000" "2006-07-03 23:18:44 +0000" "2006-07-03 23:18:45 +0000"
+'
+
 test_expect_success 'Check format "rfc2822" date fields output' '
 	test_date rfc2822 \
 		"Tue, 4 Jul 2006 01:18:43 +0200" \
@@ -215,14 +235,30 @@ test_expect_success 'Check format "rfc2822" date fields output' '
 		"Tue, 4 Jul 2006 01:18:45 +0200"
 '
 
+test_expect_success 'Check format "rfc2822-local" date fields output' '
+	test_date rfc2822-local "Mon, 3 Jul 2006 23:18:43 +0000" "Mon, 3 Jul 2006 23:18:44 +0000" "Mon, 3 Jul 2006 23:18:45 +0000"
+'
+
 test_expect_success 'Check format "raw" date fields output' '
 	test_date raw "1151968723 +0200" "1151968724 +0200" "1151968725 +0200"
+'
+
+test_expect_success 'Check format "raw-local" date fields output' '
+	test_date raw-local "1151968723 +0000" "1151968724 +0000" "1151968725 +0000"
 '
 
 test_expect_success 'Check format of strftime date fields' '
 	echo "my date is 2006-07-04" >expected &&
 	git for-each-ref \
 	  --format="%(authordate:format:my date is %Y-%m-%d)" \
+	  refs/heads >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'Check format of strftime-local date fields' '
+	echo "my date is 2006-07-03" >expected &&
+	git for-each-ref \
+	  --format="%(authordate:format-local:my date is %Y-%m-%d)" \
 	  refs/heads >actual &&
 	test_cmp expected actual
 '
