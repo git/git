@@ -146,85 +146,73 @@ test_expect_success 'Check invalid format specifiers are errors' '
 	test_must_fail git for-each-ref --format="%(authordate:INVALID)" refs/heads
 '
 
-cat >expected <<\EOF
-'refs/heads/master' 'Mon Jul 3 17:18:43 2006 +0200' 'Mon Jul 3 17:18:44 2006 +0200'
-'refs/tags/testtag' 'Mon Jul 3 17:18:45 2006 +0200'
-EOF
+test_date () {
+	f=$1 &&
+	committer_date=$2 &&
+	author_date=$3 &&
+	tagger_date=$4 &&
+	cat >expected <<-EOF &&
+	'refs/heads/master' '$committer_date' '$author_date'
+	'refs/tags/testtag' '$tagger_date'
+	EOF
+	(
+		git for-each-ref --shell \
+			--format="%(refname) %(committerdate${f:+:$f}) %(authordate${f:+:$f})" \
+			refs/heads &&
+		git for-each-ref --shell \
+			--format="%(refname) %(taggerdate${f:+:$f})" \
+			refs/tags
+	) >actual &&
+	test_cmp expected actual
+}
 
 test_expect_success 'Check unformatted date fields output' '
-	(git for-each-ref --shell --format="%(refname) %(committerdate) %(authordate)" refs/heads &&
-	git for-each-ref --shell --format="%(refname) %(taggerdate)" refs/tags) >actual &&
-	test_cmp expected actual
+	test_date "" \
+		"Mon Jul 3 17:18:43 2006 +0200" \
+		"Mon Jul 3 17:18:44 2006 +0200" \
+		"Mon Jul 3 17:18:45 2006 +0200"
 '
 
 test_expect_success 'Check format "default" formatted date fields output' '
-	f=default &&
-	(git for-each-ref --shell --format="%(refname) %(committerdate:$f) %(authordate:$f)" refs/heads &&
-	git for-each-ref --shell --format="%(refname) %(taggerdate:$f)" refs/tags) >actual &&
-	test_cmp expected actual
+	test_date default \
+		"Mon Jul 3 17:18:43 2006 +0200" \
+		"Mon Jul 3 17:18:44 2006 +0200" \
+		"Mon Jul 3 17:18:45 2006 +0200"
 '
 
 # Don't know how to do relative check because I can't know when this script
 # is going to be run and can't fake the current time to git, and hence can't
 # provide expected output.  Instead, I'll just make sure that "relative"
 # doesn't exit in error
-#
-#cat >expected <<\EOF
-#
-#EOF
-#
 test_expect_success 'Check format "relative" date fields output' '
 	f=relative &&
 	(git for-each-ref --shell --format="%(refname) %(committerdate:$f) %(authordate:$f)" refs/heads &&
 	git for-each-ref --shell --format="%(refname) %(taggerdate:$f)" refs/tags) >actual
 '
 
-cat >expected <<\EOF
-'refs/heads/master' '2006-07-03' '2006-07-03'
-'refs/tags/testtag' '2006-07-03'
-EOF
-
 test_expect_success 'Check format "short" date fields output' '
-	f=short &&
-	(git for-each-ref --shell --format="%(refname) %(committerdate:$f) %(authordate:$f)" refs/heads &&
-	git for-each-ref --shell --format="%(refname) %(taggerdate:$f)" refs/tags) >actual &&
-	test_cmp expected actual
+	test_date short 2006-07-03 2006-07-03 2006-07-03
 '
-
-cat >expected <<\EOF
-'refs/heads/master' 'Mon Jul 3 15:18:43 2006' 'Mon Jul 3 15:18:44 2006'
-'refs/tags/testtag' 'Mon Jul 3 15:18:45 2006'
-EOF
 
 test_expect_success 'Check format "local" date fields output' '
-	f=local &&
-	(git for-each-ref --shell --format="%(refname) %(committerdate:$f) %(authordate:$f)" refs/heads &&
-	git for-each-ref --shell --format="%(refname) %(taggerdate:$f)" refs/tags) >actual &&
-	test_cmp expected actual
+	test_date local \
+		"Mon Jul 3 15:18:43 2006" \
+		"Mon Jul 3 15:18:44 2006" \
+		"Mon Jul 3 15:18:45 2006"
 '
-
-cat >expected <<\EOF
-'refs/heads/master' '2006-07-03 17:18:43 +0200' '2006-07-03 17:18:44 +0200'
-'refs/tags/testtag' '2006-07-03 17:18:45 +0200'
-EOF
 
 test_expect_success 'Check format "iso8601" date fields output' '
-	f=iso8601 &&
-	(git for-each-ref --shell --format="%(refname) %(committerdate:$f) %(authordate:$f)" refs/heads &&
-	git for-each-ref --shell --format="%(refname) %(taggerdate:$f)" refs/tags) >actual &&
-	test_cmp expected actual
+	test_date iso8601 \
+		"2006-07-03 17:18:43 +0200" \
+		"2006-07-03 17:18:44 +0200" \
+		"2006-07-03 17:18:45 +0200"
 '
 
-cat >expected <<\EOF
-'refs/heads/master' 'Mon, 3 Jul 2006 17:18:43 +0200' 'Mon, 3 Jul 2006 17:18:44 +0200'
-'refs/tags/testtag' 'Mon, 3 Jul 2006 17:18:45 +0200'
-EOF
-
 test_expect_success 'Check format "rfc2822" date fields output' '
-	f=rfc2822 &&
-	(git for-each-ref --shell --format="%(refname) %(committerdate:$f) %(authordate:$f)" refs/heads &&
-	git for-each-ref --shell --format="%(refname) %(taggerdate:$f)" refs/tags) >actual &&
-	test_cmp expected actual
+	test_date rfc2822 \
+		"Mon, 3 Jul 2006 17:18:43 +0200" \
+		"Mon, 3 Jul 2006 17:18:44 +0200" \
+		"Mon, 3 Jul 2006 17:18:45 +0200"
 '
 
 test_expect_success 'Check format of strftime date fields' '
