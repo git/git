@@ -2213,6 +2213,17 @@ class P4Sync(Command, P4UserMap):
             text = regexp.sub(r'$\1$', text)
             contents = [ text ]
 
+        if gitConfig("git-p4.pathEncoding"):
+            relPath = relPath.decode(gitConfig("git-p4.pathEncoding")).encode('utf8', 'replace')
+        elif self.verbose:
+            try:
+                relPath.decode('ascii')
+            except:
+                print (
+                    "Path with Non-ASCII characters detected and no path encoding defined. "
+                    "Please check the encoding: %s" % relPath
+                )
+
         self.gitStream.write("M %s inline %s\n" % (git_mode, relPath))
 
         # total length...
