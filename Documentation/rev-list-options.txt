@@ -699,7 +699,7 @@ include::pretty-options.txt[]
 --relative-date::
 	Synonym for `--date=relative`.
 
---date=(relative|local|default|iso|iso-strict|rfc|short|raw)::
+--date=<format>::
 	Only takes effect for dates shown in human-readable format, such
 	as when using `--pretty`. `log.date` config variable sets a default
 	value for the log command's `--date` option.
