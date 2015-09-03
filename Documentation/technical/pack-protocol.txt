@@ -14,6 +14,14 @@ data.  The protocol functions to have a server tell a client what is
 currently on the server, then for the two to negotiate the smallest amount
 of data to send in order to fully update one or the other.
 
+pkt-line Format
+---------------
+
+The descriptions below build on the pkt-line format described in
+protocol-common.txt. When the grammar indicate `PKT-LINE(...)`, unless
+otherwise noted the usual pkt-line LF rules apply: the sender SHOULD
+include a LF, but the receiver MUST NOT complain if it is not present.
+
 Transports
 ----------
 There are three transports over which the packfile protocol is
@@ -143,9 +151,6 @@ with the object name that each reference currently points to.
    003fe92df48743b7bc7d26bcaabfddde0a1e20cae47c refs/tags/v1.0^{}
    0000
 
-Server SHOULD terminate each non-flush line using LF ("\n") terminator;
-client MUST NOT complain if there is no terminator.
-
 The returned response is a pkt-line stream describing each ref and
 its current value.  The stream MUST be sorted by name according to
 the C locale ordering.
@@ -165,15 +170,15 @@ MUST peel the ref if it's an annotated tag.
 		      flush-pkt
 
   no-refs          =  PKT-LINE(zero-id SP "capabilities^{}"
-		      NUL capability-list LF)
+		      NUL capability-list)
 
   list-of-refs     =  first-ref *other-ref
   first-ref        =  PKT-LINE(obj-id SP refname
-		      NUL capability-list LF)
+		      NUL capability-list)
 
   other-ref        =  PKT-LINE(other-tip / other-peeled)
-  other-tip        =  obj-id SP refname LF
-  other-peeled     =  obj-id SP refname "^{}" LF
+  other-tip        =  obj-id SP refname
+  other-peeled     =  obj-id SP refname "^{}"
 
   shallow          =  PKT-LINE("shallow" SP obj-id)
 
@@ -216,8 +221,8 @@ out of what the server said it could do with the first 'want' line.
 
   depth-request     =  PKT-LINE("deepen" SP depth)
 
-  first-want        =  PKT-LINE("want" SP obj-id SP capability-list LF)
-  additional-want   =  PKT-LINE("want" SP obj-id LF)
+  first-want        =  PKT-LINE("want" SP obj-id SP capability-list)
+  additional-want   =  PKT-LINE("want" SP obj-id)
 
   depth             =  1*DIGIT
 ----
@@ -284,7 +289,7 @@ so that there is always a block of 32 "in-flight on the wire" at a time.
 		       compute-end
 
   have-list         =  *have-line
-  have-line         =  PKT-LINE("have" SP obj-id LF)
+  have-line         =  PKT-LINE("have" SP obj-id)
   compute-end       =  flush-pkt / PKT-LINE("done")
 ----
 
@@ -348,10 +353,10 @@ Then the server will start sending its packfile data.
 
 ----
   server-response = *ack_multi ack / nak
-  ack_multi       = PKT-LINE("ACK" SP obj-id ack_status LF)
+  ack_multi       = PKT-LINE("ACK" SP obj-id ack_status)
   ack_status      = "continue" / "common" / "ready"
-  ack             = PKT-LINE("ACK SP obj-id LF)
-  nak             = PKT-LINE("NAK" LF)
+  ack             = PKT-LINE("ACK" SP obj-id)
+  nak             = PKT-LINE("NAK")
 ----
 
 A simple clone may look like this (with no 'have' lines):
@@ -467,10 +472,10 @@ references.
 ----
   update-request    =  *shallow ( command-list | push-cert ) [packfile]
 
-  shallow           =  PKT-LINE("shallow" SP obj-id LF)
+  shallow           =  PKT-LINE("shallow" SP obj-id)
 
-  command-list      =  PKT-LINE(command NUL capability-list LF)
-		       *PKT-LINE(command LF)
+  command-list      =  PKT-LINE(command NUL capability-list)
+		       *PKT-LINE(command)
 		       flush-pkt
 
   command           =  create / delete / update
@@ -521,7 +526,8 @@ Push Certificate
 
 A push certificate begins with a set of header lines.  After the
 header and an empty line, the protocol commands follow, one per
-line.
+line. Note that the the trailing LF in push-cert PKT-LINEs is _not_
+optional; it must be present.
 
 Currently, the following header fields are defined:
 
@@ -560,12 +566,12 @@ update was successful, or 'ng [refname] [error]' if the update was not.
 		      1*(command-status)
 		      flush-pkt
 
-  unpack-status     = PKT-LINE("unpack" SP unpack-result LF)
+  unpack-status     = PKT-LINE("unpack" SP unpack-result)
   unpack-result     = "ok" / error-msg
 
   command-status    = command-ok / command-fail
-  command-ok        = PKT-LINE("ok" SP refname LF)
-  command-fail      = PKT-LINE("ng" SP refname SP error-msg LF)
+  command-ok        = PKT-LINE("ok" SP refname)
+  command-fail      = PKT-LINE("ng" SP refname SP error-msg)
 
   error-msg         = 1*(OCTECT) ; where not "ok"
 ----
