@@ -8,8 +8,8 @@ test_description='for-each-ref test'
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-gpg.sh
 
-# Mon Jul 3 15:18:43 2006 +0000
-datestamp=1151939923
+# Mon Jul 3 23:18:43 2006 +0000
+datestamp=1151968723
 setdate_and_increment () {
     GIT_COMMITTER_DATE="$datestamp +0200"
     datestamp=$(expr "$datestamp" + 1)
@@ -61,21 +61,21 @@ test_atom head object ''
 test_atom head type ''
 test_atom head '*objectname' ''
 test_atom head '*objecttype' ''
-test_atom head author 'A U Thor <author@example.com> 1151939924 +0200'
+test_atom head author 'A U Thor <author@example.com> 1151968724 +0200'
 test_atom head authorname 'A U Thor'
 test_atom head authoremail '<author@example.com>'
-test_atom head authordate 'Mon Jul 3 17:18:44 2006 +0200'
-test_atom head committer 'C O Mitter <committer@example.com> 1151939923 +0200'
+test_atom head authordate 'Tue Jul 4 01:18:44 2006 +0200'
+test_atom head committer 'C O Mitter <committer@example.com> 1151968723 +0200'
 test_atom head committername 'C O Mitter'
 test_atom head committeremail '<committer@example.com>'
-test_atom head committerdate 'Mon Jul 3 17:18:43 2006 +0200'
+test_atom head committerdate 'Tue Jul 4 01:18:43 2006 +0200'
 test_atom head tag ''
 test_atom head tagger ''
 test_atom head taggername ''
 test_atom head taggeremail ''
 test_atom head taggerdate ''
-test_atom head creator 'C O Mitter <committer@example.com> 1151939923 +0200'
-test_atom head creatordate 'Mon Jul 3 17:18:43 2006 +0200'
+test_atom head creator 'C O Mitter <committer@example.com> 1151968723 +0200'
+test_atom head creatordate 'Tue Jul 4 01:18:43 2006 +0200'
 test_atom head subject 'Initial'
 test_atom head contents:subject 'Initial'
 test_atom head body ''
@@ -96,7 +96,7 @@ test_atom tag parent ''
 test_atom tag numparent ''
 test_atom tag object $(git rev-parse refs/tags/testtag^0)
 test_atom tag type 'commit'
-test_atom tag '*objectname' '67a36f10722846e891fbada1ba48ed035de75581'
+test_atom tag '*objectname' 'ea122842f48be4afb2d1fc6a4b96c05885ab7463'
 test_atom tag '*objecttype' 'commit'
 test_atom tag author ''
 test_atom tag authorname ''
@@ -107,18 +107,18 @@ test_atom tag committername ''
 test_atom tag committeremail ''
 test_atom tag committerdate ''
 test_atom tag tag 'testtag'
-test_atom tag tagger 'C O Mitter <committer@example.com> 1151939925 +0200'
+test_atom tag tagger 'C O Mitter <committer@example.com> 1151968725 +0200'
 test_atom tag taggername 'C O Mitter'
 test_atom tag taggeremail '<committer@example.com>'
-test_atom tag taggerdate 'Mon Jul 3 17:18:45 2006 +0200'
-test_atom tag creator 'C O Mitter <committer@example.com> 1151939925 +0200'
-test_atom tag creatordate 'Mon Jul 3 17:18:45 2006 +0200'
-test_atom tag subject 'Tagging at 1151939927'
-test_atom tag contents:subject 'Tagging at 1151939927'
+test_atom tag taggerdate 'Tue Jul 4 01:18:45 2006 +0200'
+test_atom tag creator 'C O Mitter <committer@example.com> 1151968725 +0200'
+test_atom tag creatordate 'Tue Jul 4 01:18:45 2006 +0200'
+test_atom tag subject 'Tagging at 1151968727'
+test_atom tag contents:subject 'Tagging at 1151968727'
 test_atom tag body ''
 test_atom tag contents:body ''
 test_atom tag contents:signature ''
-test_atom tag contents 'Tagging at 1151939927
+test_atom tag contents 'Tagging at 1151968727
 '
 test_atom tag HEAD ' '
 
@@ -168,16 +168,16 @@ test_date () {
 
 test_expect_success 'Check unformatted date fields output' '
 	test_date "" \
-		"Mon Jul 3 17:18:43 2006 +0200" \
-		"Mon Jul 3 17:18:44 2006 +0200" \
-		"Mon Jul 3 17:18:45 2006 +0200"
+		"Tue Jul 4 01:18:43 2006 +0200" \
+		"Tue Jul 4 01:18:44 2006 +0200" \
+		"Tue Jul 4 01:18:45 2006 +0200"
 '
 
 test_expect_success 'Check format "default" formatted date fields output' '
 	test_date default \
-		"Mon Jul 3 17:18:43 2006 +0200" \
-		"Mon Jul 3 17:18:44 2006 +0200" \
-		"Mon Jul 3 17:18:45 2006 +0200"
+		"Tue Jul 4 01:18:43 2006 +0200" \
+		"Tue Jul 4 01:18:44 2006 +0200" \
+		"Tue Jul 4 01:18:45 2006 +0200"
 '
 
 # Don't know how to do relative check because I can't know when this script
@@ -191,36 +191,36 @@ test_expect_success 'Check format "relative" date fields output' '
 '
 
 test_expect_success 'Check format "short" date fields output' '
-	test_date short 2006-07-03 2006-07-03 2006-07-03
+	test_date short 2006-07-04 2006-07-04 2006-07-04
 '
 
 test_expect_success 'Check format "local" date fields output' '
 	test_date local \
-		"Mon Jul 3 15:18:43 2006" \
-		"Mon Jul 3 15:18:44 2006" \
-		"Mon Jul 3 15:18:45 2006"
+		"Mon Jul 3 23:18:43 2006" \
+		"Mon Jul 3 23:18:44 2006" \
+		"Mon Jul 3 23:18:45 2006"
 '
 
 test_expect_success 'Check format "iso8601" date fields output' '
 	test_date iso8601 \
-		"2006-07-03 17:18:43 +0200" \
-		"2006-07-03 17:18:44 +0200" \
-		"2006-07-03 17:18:45 +0200"
+		"2006-07-04 01:18:43 +0200" \
+		"2006-07-04 01:18:44 +0200" \
+		"2006-07-04 01:18:45 +0200"
 '
 
 test_expect_success 'Check format "rfc2822" date fields output' '
 	test_date rfc2822 \
-		"Mon, 3 Jul 2006 17:18:43 +0200" \
-		"Mon, 3 Jul 2006 17:18:44 +0200" \
-		"Mon, 3 Jul 2006 17:18:45 +0200"
+		"Tue, 4 Jul 2006 01:18:43 +0200" \
+		"Tue, 4 Jul 2006 01:18:44 +0200" \
+		"Tue, 4 Jul 2006 01:18:45 +0200"
 '
 
 test_expect_success 'Check format "raw" date fields output' '
-	test_date raw "1151939923 +0200" "1151939924 +0200" "1151939925 +0200"
+	test_date raw "1151968723 +0200" "1151968724 +0200" "1151968725 +0200"
 '
 
 test_expect_success 'Check format of strftime date fields' '
-	echo "my date is 2006-07-03" >expected &&
+	echo "my date is 2006-07-04" >expected &&
 	git for-each-ref \
 	  --format="%(authordate:format:my date is %Y-%m-%d)" \
 	  refs/heads >actual &&
@@ -528,8 +528,8 @@ body contents
 $sig"
 
 cat >expected <<EOF
-$(git rev-parse refs/tags/master) <committer@example.com> refs/tags/master
 $(git rev-parse refs/tags/bogo) <committer@example.com> refs/tags/bogo
+$(git rev-parse refs/tags/master) <committer@example.com> refs/tags/master
 EOF
 
 test_expect_success 'Verify sort with multiple keys' '
