@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include "string-list.h"
 #include "color.h"
+#include "pathspec.h"
 
 enum color_wt_status {
 	WT_STATUS_HEADER = 0,
