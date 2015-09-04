@@ -377,15 +377,12 @@ void read_info_alternates(const char * relative_base, int depth)
 	char *map;
 	size_t mapsz;
 	struct stat st;
-	const char alt_file_name[] = "info/alternates";
-	/* Given that relative_base is no longer than PATH_MAX,
-	   ensure that "path" has enough space to append "/", the
-	   file name, "info/alternates", and a trailing NUL.  */
-	char path[PATH_MAX + 1 + sizeof alt_file_name];
+	char *path;
 	int fd;
 
-	sprintf(path, "%s/%s", relative_base, alt_file_name);
+	path = xstrfmt("%s/info/alternates", relative_base);
 	fd = git_open_noatime(path);
+	free(path);
 	if (fd < 0)
 		return;
 	if (fstat(fd, &st) || (st.st_size == 0)) {
