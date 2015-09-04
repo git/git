@@ -1298,7 +1298,7 @@ gc.<pattern>.reflogExpire::
 	the refs that match the <pattern>.
 
 gc.reflogExpireUnreachable::
-gc.<ref>.reflogExpireUnreachable::
+gc.<pattern>.reflogExpireUnreachable::
 	'git reflog expire' removes reflog entries older than
 	this time and are not reachable from the current tip;
 	defaults to 30 days.  With "<pattern>" (e.g. "refs/stash")
