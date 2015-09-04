@@ -432,9 +432,7 @@ test_expect_success 'nested git work tree' '
 	(
 		cd foo &&
 		git init &&
-		>hello.world
-		git add . &&
-		git commit -a -m nested
+		test_commit nested hello.world
 	) &&
 	(
 		cd bar &&
@@ -443,9 +441,7 @@ test_expect_success 'nested git work tree' '
 	(
 		cd baz/boo &&
 		git init &&
-		>deeper.world
-		git add . &&
-		git commit -a -m deeply.nested
+		test_commit deeply.nested deeper.world
 	) &&
 	git clean -f -d &&
 	test -f foo/.git/index &&
@@ -461,9 +457,7 @@ test_expect_success 'force removal of nested git work tree' '
 	(
 		cd foo &&
 		git init &&
-		>hello.world
-		git add . &&
-		git commit -a -m nested
+		test_commit nested hello.world
 	) &&
 	(
 		cd bar &&
@@ -472,9 +466,7 @@ test_expect_success 'force removal of nested git work tree' '
 	(
 		cd baz/boo &&
 		git init &&
-		>deeper.world
-		git add . &&
-		git commit -a -m deeply.nested
+		test_commit deeply.nested deeper.world
 	) &&
 	git clean -f -f -d &&
 	! test -d foo &&
