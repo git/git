@@ -56,9 +56,10 @@ Documentation for older releases are available here:
   link:RelNotes/2.4.1.txt[2.4.1],
   link:RelNotes/2.4.0.txt[2.4].
 
-* link:v2.3.8/git.html[documentation for release 2.3.8]
+* link:v2.3.9/git.html[documentation for release 2.3.9]
 
 * release notes for
+  link:RelNotes/2.3.9.txt[2.3.9],
   link:RelNotes/2.3.8.txt[2.3.8],
   link:RelNotes/2.3.7.txt[2.3.7],
   link:RelNotes/2.3.6.txt[2.3.6],
@@ -69,9 +70,10 @@ Documentation for older releases are available here:
   link:RelNotes/2.3.1.txt[2.3.1],
   link:RelNotes/2.3.0.txt[2.3].
 
-* link:v2.2.2/git.html[documentation for release 2.2.2]
+* link:v2.2.3/git.html[documentation for release 2.2.3]
 
 * release notes for
+  link:RelNotes/2.2.3.txt[2.2.3],
   link:RelNotes/2.2.2.txt[2.2.2],
   link:RelNotes/2.2.1.txt[2.2.1],
   link:RelNotes/2.2.0.txt[2.2].
