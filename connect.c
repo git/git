@@ -721,6 +721,8 @@ struct child_process *git_connect(int fd[2], const char *url,
 		strbuf_addch(&cmd, ' ');
 		sq_quote_buf(&cmd, path);
 
+		/* remove repo-local variables from the environment */
+		conn->env = local_repo_env;
 		conn->in = conn->out = -1;
 		if (protocol == PROTO_SSH) {
 			const char *ssh;
@@ -778,8 +780,6 @@ struct child_process *git_connect(int fd[2], const char *url,
 			}
 			argv_array_push(&conn->args, ssh_host);
 		} else {
-			/* remove repo-local variables from the environment */
-			conn->env = local_repo_env;
 			conn->use_shell = 1;
 		}
 		argv_array_push(&conn->args, cmd.buf);
