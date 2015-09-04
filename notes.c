@@ -362,13 +362,14 @@ static int non_note_cmp(const struct non_note *a, const struct non_note *b)
 	return strcmp(a->path, b->path);
 }
 
-static void add_non_note(struct notes_tree *t, const char *path,
+/* note: takes ownership of path string */
+static void add_non_note(struct notes_tree *t, char *path,
 		unsigned int mode, const unsigned char *sha1)
 {
 	struct non_note *p = t->prev_non_note, *n;
 	n = (struct non_note *) xmalloc(sizeof(struct non_note));
 	n->next = NULL;
-	n->path = xstrdup(path);
+	n->path = path;
 	n->mode = mode;
 	hashcpy(n->sha1, sha1);
 	t->prev_non_note = n;
@@ -482,17 +483,17 @@ handle_non_note:
 		 * component.
 		 */
 		{
-			char non_note_path[PATH_MAX];
-			char *p = non_note_path;
+			struct strbuf non_note_path = STRBUF_INIT;
 			const char *q = sha1_to_hex(subtree->key_sha1);
 			int i;
 			for (i = 0; i < prefix_len; i++) {
-				*p++ = *q++;
-				*p++ = *q++;
-				*p++ = '/';
+				strbuf_addch(&non_note_path, *q++);
+				strbuf_addch(&non_note_path, *q++);
+				strbuf_addch(&non_note_path, '/');
 			}
-			strcpy(p, entry.path);
-			add_non_note(t, non_note_path, entry.mode, entry.sha1);
+			strbuf_addstr(&non_note_path, entry.path);
+			add_non_note(t, strbuf_detach(&non_note_path, NULL),
+				     entry.mode, entry.sha1);
 		}
 	}
 	free(buf);
