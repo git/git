@@ -50,6 +50,7 @@ void child_process_init(struct child_process *);
 
 int start_command(struct child_process *);
 int finish_command(struct child_process *);
+int finish_command_in_signal(struct child_process *);
 int run_command(struct child_process *);
 
 extern const char *find_hook(const char *name);

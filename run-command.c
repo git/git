@@ -18,26 +18,27 @@ struct child_to_clean {
 static struct child_to_clean *children_to_clean;
 static int installed_child_cleanup_handler;
 
-static void cleanup_children(int sig)
+static void cleanup_children(int sig, int in_signal)
 {
 	while (children_to_clean) {
 		struct child_to_clean *p = children_to_clean;
 		children_to_clean = p->next;
 		kill(p->pid, sig);
-		free(p);
+		if (!in_signal)
+			free(p);
 	}
 }
 
 static void cleanup_children_on_signal(int sig)
 {
-	cleanup_children(sig);
+	cleanup_children(sig, 1);
 	sigchain_pop(sig);
 	raise(sig);
 }
 
 static void cleanup_children_on_exit(void)
 {
-	cleanup_children(SIGTERM);
+	cleanup_children(SIGTERM, 0);
 }
 
 static void mark_child_for_cleanup(pid_t pid)
@@ -232,7 +233,7 @@ static inline void set_cloexec(int fd)
 		fcntl(fd, F_SETFD, flags | FD_CLOEXEC);
 }
 
-static int wait_or_whine(pid_t pid, const char *argv0)
+static int wait_or_whine(pid_t pid, const char *argv0, int in_signal)
 {
 	int status, code = -1;
 	pid_t waiting;
@@ -240,6 +241,8 @@ static int wait_or_whine(pid_t pid, const char *argv0)
 
 	while ((waiting = waitpid(pid, &status, 0)) < 0 && errno == EINTR)
 		;	/* nothing */
+	if (in_signal)
+		return 0;
 
 	if (waiting < 0) {
 		failed_errno = errno;
@@ -450,7 +453,7 @@ fail_pipe:
 		 * At this point we know that fork() succeeded, but execvp()
 		 * failed. Errors have been reported to our stderr.
 		 */
-		wait_or_whine(cmd->pid, cmd->argv[0]);
+		wait_or_whine(cmd->pid, cmd->argv[0], 0);
 		failed_errno = errno;
 		cmd->pid = -1;
 	}
@@ -549,11 +552,17 @@ fail_pipe:
 
 int finish_command(struct child_process *cmd)
 {
-	int ret = wait_or_whine(cmd->pid, cmd->argv[0]);
+	int ret = wait_or_whine(cmd->pid, cmd->argv[0], 0);
 	argv_array_clear(&cmd->args);
 	argv_array_clear(&cmd->env_array);
 	return ret;
 }
+
+int finish_command_in_signal(struct child_process *cmd)
+{
+	return wait_or_whine(cmd->pid, cmd->argv[0], 1);
+}
+
 
 int run_command(struct child_process *cmd)
 {
@@ -785,7 +794,7 @@ error:
 int finish_async(struct async *async)
 {
 #ifdef NO_PTHREADS
-	return wait_or_whine(async->pid, "child process");
+	return wait_or_whine(async->pid, "child process", 0);
 #else
 	void *ret = (void *)(intptr_t)(-1);
 
