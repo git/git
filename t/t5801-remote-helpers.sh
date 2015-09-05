@@ -242,13 +242,6 @@ clean_mark () {
 	sort >$(basename "$1")
 }
 
-cmp_marks () {
-	test_when_finished "rm -rf git.marks testgit.marks" &&
-	clean_mark ".git/testgit/$1/git.marks" &&
-	clean_mark ".git/testgit/$1/testgit.marks" &&
-	test_cmp git.marks testgit.marks
-}
-
 test_expect_success 'proper failure checks for fetching' '
 	(cd local &&
 	test_must_fail env GIT_REMOTE_TESTGIT_FAILURE=1 git fetch 2>error &&
@@ -258,12 +251,15 @@ test_expect_success 'proper failure checks for fetching' '
 '
 
 test_expect_success 'proper failure checks for pushing' '
+	test_when_finished "rm -rf local/git.marks local/testgit.marks" &&
 	(cd local &&
 	git checkout -b crash master &&
 	echo crash >>file &&
 	git commit -a -m crash &&
 	test_must_fail env GIT_REMOTE_TESTGIT_FAILURE=1 git push --all &&
-	cmp_marks origin
+	clean_mark ".git/testgit/origin/git.marks" &&
+	clean_mark ".git/testgit/origin/testgit.marks" &&
+	test_cmp git.marks testgit.marks
 	)
 '
 
