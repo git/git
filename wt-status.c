@@ -1434,7 +1434,7 @@ void wt_status_print(struct wt_status *s)
 			    s->branch && !strcmp(s->branch, "HEAD"));
 
 	if (s->branch) {
-		const char *on_what = _("On branch test1 ");
+		const char *on_what = _("On branch ");
 		const char *branch_name = s->branch;
 		if (starts_with(branch_name, "refs/heads/"))
 			branch_name += 11;
@@ -1532,7 +1532,7 @@ void wt_status_print(struct wt_status *s)
 			else
 				printf(_("nothing to commit\n"));
 		} else
-			printf(_("nothing to commit, working directory clean test2\n"));
+				printf(_("nothing to commit, working directory clean.\nTime to go home and have dinner with your significant other.\n"));
 	}
 }
 
