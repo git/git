@@ -201,7 +201,14 @@ test_chmod () {
 
 # Unset a configuration variable, but don't fail if it doesn't exist.
 test_unconfig () {
-	git config --unset-all "$@"
+	config_dir=
+	if test "$1" = -C
+	then
+		shift
+		config_dir=$1
+		shift
+	fi
+	git ${config_dir:+-C "$config_dir"} config --unset-all "$@"
 	config_status=$?
 	case "$config_status" in
 	5) # ok, nothing to unset
@@ -213,8 +220,15 @@ test_unconfig () {
 
 # Set git config, automatically unsetting it after the test is over.
 test_config () {
-	test_when_finished "test_unconfig '$1'" &&
-	git config "$@"
+	config_dir=
+	if test "$1" = -C
+	then
+		shift
+		config_dir=$1
+		shift
+	fi
+	test_when_finished "test_unconfig ${config_dir:+-C '$config_dir'} '$1'" &&
+	git ${config_dir:+-C "$config_dir"} config "$@"
 }
 
 test_config_global () {
