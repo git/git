@@ -1911,7 +1911,7 @@ msgstr ""
 
 #: wt-status.c:1419
 #, c-format
-msgid "nothing to commit, working directory clean\n"
+msgid "nothing to commit, working directory clean test1\n"
 msgstr "test1"
 
 #: wt-status.c:1528
