@@ -1912,7 +1912,7 @@ msgstr ""
 #: wt-status.c:1419
 #, c-format
 msgid "nothing to commit, working directory clean\n"
-msgstr ""
+msgstr "test1"
 
 #: wt-status.c:1528
 msgid "HEAD (no branch)"
