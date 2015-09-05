@@ -18,6 +18,9 @@
 #include "bulk-checkin.h"
 #include "argv-array.h"
 
+#define KCYN  "\x1B[36m"
+#define RESET "\033[0m"
+
 static const char * const builtin_add_usage[] = {
 	N_("git add [<options>] [--] <pathspec>..."),
 	NULL
@@ -28,6 +31,11 @@ static int take_worktree_changes;
 struct update_callback_data {
 	int flags;
 	int add_errors;
+};
+
+static const char *messages[] = {
+	"Progress is great! How is your partner doing?"
+
 };
 
 static int fix_unmerged_status(struct diff_filepair *p,
@@ -444,6 +452,9 @@ finish:
 		if (write_locked_index(&the_index, &lock_file, COMMIT_LOCK))
 			die(_("Unable to write new index file"));
 	}
+
+
+	printf(KCYN "%s\n" RESET, messages[rand() % 1]);
 
 	return exit_status;
 }

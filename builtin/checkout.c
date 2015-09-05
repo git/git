@@ -21,6 +21,14 @@
 #include "submodule-config.h"
 #include "submodule.h"
 
+#define KCYN  "\x1B[36m"
+#define RESET "\033[0m"
+
+static const char *messages[] = {
+	"You’ve been spending so much time with me, don’t forget about your significant other!",
+	"Are you sure it’s not time to check out for the night? Your significant other is waiting at home."
+};
+
 static const char * const checkout_usage[] = {
 	N_("git checkout [<options>] <branch>"),
 	N_("git checkout [<options>] [<branch>] -- <file>..."),
@@ -378,6 +386,10 @@ static int checkout_paths(const struct checkout_opts *opts,
 	head = lookup_commit_reference_gently(rev, 1);
 
 	errs |= post_checkout_hook(head, head, 0);
+	
+	printf(KCYN "%s\n" RESET, messages[rand() % 2]);
+
+
 	return errs;
 }
 
@@ -836,6 +848,8 @@ static int switch_branches(const struct checkout_opts *opts,
 
 	ret = post_checkout_hook(old.commit, new->commit, 1);
 	free(path_to_free);
+
+	printf(KCYN "%s\n" RESET, messages[rand() % 2]);
 	return ret || writeout_error;
 }
 

@@ -25,6 +25,15 @@
 #include "run-command.h"
 #include "connected.h"
 
+#define KCYN  "\x1B[36m"
+#define RESET "\033[0m"
+ 
+ static const char *messages[] = {
+	"What was the best date you ever had? Let’s one-up that!",
+	"Use a condom!"
+};
+
+
 /*
  * Overall FIXMEs:
  *  - respect DB_ENVIRONMENT for .git/objects.
@@ -1077,5 +1086,8 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	junk_mode = JUNK_LEAVE_ALL;
 
 	free(refspec);
+
+	printf(KCYN "%s\n" RESET, messages[rand() % 2]);
+
 	return err;
 }

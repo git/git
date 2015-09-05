@@ -11,9 +11,17 @@
 #include "submodule.h"
 #include "send-pack.h"
 
+#define KCYN  "\x1B[36m"
+#define RESET "\033[0m"
+
 static const char * const push_usage[] = {
 	N_("git push [<options>] [<repository> [<refspec>...]]"),
 	NULL,
+};
+
+static const char *messages[] = {
+	"It’s late! You should go home and spend some time with your significant other",
+	"Tell them you love them!"
 };
 
 static int thin = 1;
@@ -589,6 +597,10 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 	}
 
 	rc = do_push(repo, flags);
+
+	
+	printf(KCYN "%s\n" RESET, messages[rand() % 2]);
+
 	if (rc == -1)
 		usage_with_options(push_usage, options);
 	else
