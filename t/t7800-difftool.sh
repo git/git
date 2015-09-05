@@ -492,12 +492,12 @@ test_expect_success PERL 'difftool --no-symlinks detects conflict ' '
 
 test_expect_success PERL 'difftool properly honors gitlink and core.worktree' '
 	git submodule add ./. submod/ule &&
+	test_config -C submod/ule diff.tool checktrees &&
+	test_config -C submod/ule difftool.checktrees.cmd '\''
+		test -d "$LOCAL" && test -d "$REMOTE" && echo good
+		'\'' &&
 	(
 		cd submod/ule &&
-		test_config diff.tool checktrees &&
-		test_config difftool.checktrees.cmd '\''
-			test -d "$LOCAL" && test -d "$REMOTE" && echo good
-		'\'' &&
 		echo good >expect &&
 		git difftool --tool=checktrees --dir-diff HEAD~ >actual &&
 		test_cmp expect actual
