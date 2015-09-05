@@ -19,6 +19,7 @@
 static const char cut_line[] =
 "------------------------ >8 ------------------------\n";
 
+
 static char default_wt_status_colors[][COLOR_MAXLEN] = {
 	GIT_COLOR_NORMAL, /* WT_STATUS_HEADER */
 	GIT_COLOR_GREEN,  /* WT_STATUS_UPDATED */
@@ -1532,7 +1533,7 @@ void wt_status_print(struct wt_status *s)
 			else
 				printf(_("nothing to commit\n"));
 		} else
-			printf(_("nothing to commit, working directory clean\n"));
+				printf(_("nothing to commit, working directory clean.\nTime to go home and have dinner with your significant other.\n"));
 	}
 }
 

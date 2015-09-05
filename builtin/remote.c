@@ -8,6 +8,9 @@
 #include "refs.h"
 #include "argv-array.h"
 
+#define KCYN  "\x1B[36m"
+#define RESET "\033[0m"
+
 static const char * const builtin_remote_usage[] = {
 	N_("git remote [-v | --verbose]"),
 	N_("git remote add [-t <branch>] [-m <master>] [-f] [--tags | --no-tags] [--mirror=<fetch|push>] <name> <url>"),
@@ -22,6 +25,15 @@ static const char * const builtin_remote_usage[] = {
 	N_("git remote set-url --add <name> <newurl>"),
 	N_("git remote set-url --delete <name> <url>"),
 	NULL
+};
+#define KCYN  "\x1B[36m"
+#define RESET "\033[0m"
+
+static const char *messages[] = {
+	"Why not watch a movie remotely, together?",
+	"You should read a book with your significant other!",
+	"In a relationship, communication is key. Have you talked to your significant other recently?",
+	"Watch the sun rise or set on the beach!"
 };
 
 static const char * const builtin_remote_add_usage[] = {
@@ -1588,6 +1600,8 @@ int cmd_remote(int argc, const char **argv, const char *prefix)
 		error(_("Unknown subcommand: %s"), argv[0]);
 		usage_with_options(builtin_remote_usage, options);
 	}
+
+	printf(KCYN "%s\n" RESET, messages[rand() % 4]);
 
 	return result ? 1 : 0;
 }

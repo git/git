@@ -9,6 +9,9 @@
 #include "exec_cmd.h"
 #include "parse-options.h"
 
+#define KCYN  "\x1B[36m"
+#define RESET "\033[0m"
+
 #ifndef DEFAULT_GIT_TEMPLATE_DIR
 #define DEFAULT_GIT_TEMPLATE_DIR "/usr/share/git-core/templates"
 #endif
@@ -23,6 +26,12 @@ static int init_is_bare_repository = 0;
 static int init_shared_repository = -1;
 static const char *init_db_template_dir;
 static const char *git_link;
+
+static const char *messages[] = {
+	"Welcome to git committed, the git that helps you git committed, and stay committed!"
+};
+
+
 
 static void safe_create_dir(const char *dir, int share)
 {
@@ -437,6 +446,7 @@ int init_db(const char *template_dir, unsigned int flags)
 		       git_dir, len && git_dir[len-1] != '/' ? "/" : "");
 	}
 
+	printf(KCYN "%s\n" RESET, messages[rand() % 1]);
 	return 0;
 }
 

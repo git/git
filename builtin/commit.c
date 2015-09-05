@@ -33,6 +33,18 @@
 #include "notes-utils.h"
 #include "mailmap.h"
 
+#define KCYN  "\x1B[36m"
+#define RESET "\033[0m"
+
+static const char *messages[] = {
+	"Nothing to commit. Why not commit to your significant other instead?",
+	"Nothing to commit, working directory clean."
+};
+
+static const char *messages2[] = {
+	"Maybe it’s time to DTR?"
+};
+
 static const char * const builtin_commit_usage[] = {
 	N_("git commit [<options>] [--] <pathspec>..."),
 	NULL
@@ -1393,6 +1405,10 @@ int cmd_status(int argc, const char **argv, const char *prefix)
 		wt_status_print(&s);
 		break;
 	}
+
+
+	printf(KCYN "%s\n" RESET, messages[rand() % 1]);
+
 	return 0;
 }
 
@@ -1802,5 +1818,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		print_summary(prefix, sha1, !current_head);
 
 	strbuf_release(&err);
+
+	printf(KCYN "%s\n" RESET, messages[rand() % 2]);
 	return 0;
 }

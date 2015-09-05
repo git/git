@@ -20,12 +20,23 @@
 #include "utf8.h"
 #include "wt-status.h"
 
+#define KCYN  "\x1B[36m"
+#define RESET "\033[0m"
+
 static const char * const builtin_branch_usage[] = {
 	N_("git branch [<options>] [-r | -a] [--merged | --no-merged]"),
 	N_("git branch [<options>] [-l] [-f] <branch-name> [<start-point>]"),
 	N_("git branch [<options>] [-r] (-d | -D) <branch-name>..."),
 	N_("git branch [<options>] (-m | -M) [<old-branch>] <new-branch>"),
 	NULL
+};
+
+static const char *messages[] = {
+	"Have you taken a date night recently?",
+	"Have you bought any flowers recently?",
+	"Take a weekend trip together!",
+	"Take a trip to one of your hometowns!"
+
 };
 
 #define REF_LOCAL_BRANCH    0x01
@@ -184,6 +195,7 @@ static void delete_branch_config(const char *branchname)
 	if (git_config_rename_section(buf.buf, NULL) < 0)
 		warning(_("Update of config-file failed"));
 	strbuf_release(&buf);
+	printf(KCYN "%s\n" RESET, messages[rand() % 4]);
 }
 
 static int delete_branches(int argc, const char **argv, int force, int kinds,
@@ -916,6 +928,8 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 					 with_commit, argv);
 		print_columns(&output, colopts, NULL);
 		string_list_clear(&output, 0);
+
+		printf(KCYN "%s\n" RESET, messages[rand() % 4]);
 		return ret;
 	}
 	else if (edit_description) {
@@ -1039,6 +1053,8 @@ int cmd_branch(int argc, const char **argv, const char *prefix)
 
 	} else
 		usage_with_options(builtin_branch_usage, options);
+
+	printf(KCYN "%s\n" RESET, messages[rand() % 4]);
 
 	return 0;
 }

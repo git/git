@@ -18,11 +18,19 @@
 #include "tempfile.h"
 #include "lockfile.h"
 
+#define KCYN  "\x1B[36m"
+#define RESET "\033[0m"
+
 enum rebase_type {
 	REBASE_INVALID = -1,
 	REBASE_FALSE = 0,
 	REBASE_TRUE,
 	REBASE_PRESERVE
+};
+
+static const char *messages[] = {
+	"What do you find most attractive about your partner?",
+	"Why not check out that new restaurant down the street together?"
 };
 
 /**
@@ -560,12 +568,17 @@ static int pull_into_void(const unsigned char *merge_head,
 	 * index/worktree changes that the user already made on the unborn
 	 * branch.
 	 */
-	if (checkout_fast_forward(EMPTY_TREE_SHA1_BIN, merge_head, 0))
+	if (checkout_fast_forward(EMPTY_TREE_SHA1_BIN, merge_head, 0)){
+		printf(KCYN "%s\n" RESET, messages[rand() % 2]);
 		return 1;
+	}
 
-	if (update_ref("initial pull", "HEAD", merge_head, curr_head, 0, UPDATE_REFS_DIE_ON_ERR))
+	if (update_ref("initial pull", "HEAD", merge_head, curr_head, 0, UPDATE_REFS_DIE_ON_ERR)){
+		printf(KCYN "%s\n" RESET, messages[rand() % 2]);
 		return 1;
+	}
 
+	printf(KCYN "%s\n" RESET, messages[rand() % 2]);
 	return 0;
 }
 
@@ -607,6 +620,9 @@ static int run_merge(void)
 	argv_array_push(&args, "FETCH_HEAD");
 	ret = run_command_v_opt(args.argv, RUN_GIT_CMD);
 	argv_array_clear(&args);
+
+	printf(KCYN "%s\n" RESET, messages[rand() % 2]);
+
 	return ret;
 }
 
@@ -789,6 +805,7 @@ static int run_rebase(const unsigned char *curr_head,
 
 	ret = run_command_v_opt(args.argv, RUN_GIT_CMD);
 	argv_array_clear(&args);
+	printf(KCYN "%s\n" RESET, messages[rand() % 2]);
 	return ret;
 }
 
@@ -870,6 +887,9 @@ int cmd_pull(int argc, const char **argv, const char *prefix)
 	}
 
 	get_merge_heads(&merge_heads);
+
+
+
 
 	if (!merge_heads.nr)
 		die_no_merge_candidates(repo, refspecs);
