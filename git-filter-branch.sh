@@ -275,11 +275,39 @@ commits=$(wc -l <../revs | tr -d " ")
 test $commits -eq 0 && die "Found nothing to rewrite"
 
 # Rewrite the commits
+report_progress ()
+{
+	if test -n "$progress" &&
+		test $git_filter_branch__commit_count -gt $next_sample_at
+	then
+		now_timestamp=$(date +%s)
+		elapsed_seconds=$(($now_timestamp - $start_timestamp))
+		remaining_second=$(( ($commits - $git_filter_branch__commit_count) * $elapsed_seconds / $git_filter_branch__commit_count ))
+		if test $elapsed_seconds -gt 0
+		then
+			next_sample_at=$(( ($elapsed_seconds + 1) * $git_filter_branch__commit_count / $elapsed_seconds ))
+		else
+			next_sample_at=$(($next_sample_at + 1))
+		fi
+		progress=" ($elapsed_seconds seconds passed, remaining $remaining_second predicted)"
+	fi
+	printf "\rRewrite $commit ($git_filter_branch__commit_count/$commits)$progress    "
+}
 
 git_filter_branch__commit_count=0
+
+progress= start_timestamp=
+if date '+%s' 2>/dev/null | grep -q '^[0-9][0-9]*$'
+then
+	next_sample_at=0
+	progress="dummy to ensure this is not empty"
+	start_timestamp=$(date '+%s')
+fi
+
 while read commit parents; do
 	git_filter_branch__commit_count=$(($git_filter_branch__commit_count+1))
-	printf "\rRewrite $commit ($git_filter_branch__commit_count/$commits)"
+
+	report_progress
 
 	case "$filter_subdir" in
 	"")
