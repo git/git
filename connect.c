@@ -723,10 +723,11 @@ struct child_process *git_connect(int fd[2], const char *url,
 
 		/* remove repo-local variables from the environment */
 		conn->env = local_repo_env;
+		conn->use_shell = 1;
 		conn->in = conn->out = -1;
 		if (protocol == PROTO_SSH) {
 			const char *ssh;
-			int putty, tortoiseplink = 0;
+			int putty = 0, tortoiseplink = 0;
 			char *ssh_host = hostandport;
 			const char *port = NULL;
 			get_host_and_port(&ssh_host, &port);
@@ -748,12 +749,16 @@ struct child_process *git_connect(int fd[2], const char *url,
 			}
 
 			ssh = getenv("GIT_SSH_COMMAND");
-			if (ssh) {
-				conn->use_shell = 1;
-				putty = 0;
-			} else {
+			if (!ssh) {
 				const char *base;
 				char *ssh_dup;
+
+				/*
+				 * GIT_SSH is the no-shell version of
+				 * GIT_SSH_COMMAND (and must remain so for
+				 * historical compatibility).
+				 */
+				conn->use_shell = 0;
 
 				ssh = getenv("GIT_SSH");
 				if (!ssh)
@@ -764,8 +769,9 @@ struct child_process *git_connect(int fd[2], const char *url,
 
 				tortoiseplink = !strcasecmp(base, "tortoiseplink") ||
 					!strcasecmp(base, "tortoiseplink.exe");
-				putty = !strcasecmp(base, "plink") ||
-					!strcasecmp(base, "plink.exe") || tortoiseplink;
+				putty = tortoiseplink ||
+					!strcasecmp(base, "plink") ||
+					!strcasecmp(base, "plink.exe");
 
 				free(ssh_dup);
 			}
@@ -779,8 +785,6 @@ struct child_process *git_connect(int fd[2], const char *url,
 				argv_array_push(&conn->args, port);
 			}
 			argv_array_push(&conn->args, ssh_host);
-		} else {
-			conn->use_shell = 1;
 		}
 		argv_array_push(&conn->args, cmd.buf);
 
