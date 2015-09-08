@@ -37,7 +37,7 @@ static void print_error(LPCWSTR prefix, DWORD error_number)
 	LocalFree((HLOCAL)buffer);
 }
 
-static void setup_environment(LPWSTR exepath, int full_path)
+static void setup_environment(LPWSTR top_level_path, int full_path)
 {
 	WCHAR msystem[64];
 	LPWSTR path2 = NULL;
@@ -90,7 +90,7 @@ static void setup_environment(LPWSTR exepath, int full_path)
 	len = GetEnvironmentVariable(L"PATH", NULL, 0);
 	len = sizeof(WCHAR) * (len + 2 * MAX_PATH);
 	path2 = (LPWSTR)malloc(len);
-	wcscpy(path2, exepath);
+	wcscpy(path2, top_level_path);
 	if (!full_path)
 		PathAppend(path2, L"cmd;");
 	else {
@@ -98,14 +98,14 @@ static void setup_environment(LPWSTR exepath, int full_path)
 		if (_waccess(path2, 0) != -1) {
 			/* We are in an MSys2-based setup */
 			wcscat(path2, L";");
-			wcscat(path2, exepath);
+			wcscat(path2, top_level_path);
 			PathAppend(path2, L"usr\\bin;");
 		}
 		else {
 			/* Fall back to MSys1 paths */
-			wcscpy(path2, exepath);
+			wcscpy(path2, top_level_path);
 			PathAppend(path2, L"bin;");
-			wcscat(path2, exepath);
+			wcscat(path2, top_level_path);
 			PathAppend(path2, L"mingw\\bin;");
 		}
 	}
@@ -427,7 +427,7 @@ int main(void)
 	int r = 1, wait = 1, prefix_args_len = -1, needs_env_setup = 1,
 		is_git_command = 1, full_path = 1, skip_arguments = 0,
 		allocate_console = 0, show_console = 0;
-	WCHAR exepath[MAX_PATH], exe[MAX_PATH];
+	WCHAR exepath[MAX_PATH], exe[MAX_PATH], top_level_path[MAX_PATH];
 	LPWSTR cmd = NULL, exep = exe, prefix_args = NULL, basename;
 	LPWSTR working_directory = NULL;
 
@@ -441,6 +441,7 @@ int main(void)
 		fwprintf(stderr, L"Invalid executable path: %s\n", exepath);
 		ExitProcess(1);
 	}
+	wcscpy(top_level_path, exepath);
 	basename = exepath + wcslen(exepath) + 1;
 	if (configure_via_resource(basename, exepath, exep,
 			&prefix_args, &prefix_args_len,
@@ -453,25 +454,28 @@ int main(void)
 		static WCHAR buffer[BUFSIZE];
 		wait = 0;
 		allocate_console = 1;
-		if (!PathRemoveFileSpec(exepath)) {
+		if (!PathRemoveFileSpec(top_level_path)) {
 			fwprintf(stderr,
-				L"Invalid executable path: %s\n", exepath);
+				L"Invalid executable path: %s\n",
+				top_level_path);
 			ExitProcess(1);
 		}
 
 		/* set the default exe module */
-		wcscpy(exe, exepath);
+		wcscpy(exe, top_level_path);
 		PathAppend(exe, msystem_bin);
 		PathAppend(exe, L"wish.exe");
 		if (_waccess(exe, 0) != -1)
 			swprintf(buffer, BUFSIZE,
 				L"\"%s\\%.*s\\libexec\\git-core\"",
-				exepath, wcslen(msystem_bin) - 4, msystem_bin);
+				top_level_path,
+				wcslen(msystem_bin) - 4, msystem_bin);
 		else {
-			wcscpy(exe, exepath);
+			wcscpy(exe, top_level_path);
 			PathAppend(exe, L"mingw\\bin\\wish.exe");
 			swprintf(buffer, BUFSIZE,
-				L"\"%s\\mingw\\libexec\\git-core\"", exepath);
+				L"\"%s\\mingw\\libexec\\git-core\"",
+				top_level_path);
 		}
 		PathAppend(buffer, L"git-gui");
 		prefix_args = buffer;
@@ -491,39 +495,41 @@ int main(void)
 		PathAppend(exe, L"git.exe");
 	}
 	else if (!wcsicmp(basename, L"git.exe")) {
-		if (!PathRemoveFileSpec(exepath)) {
+		if (!PathRemoveFileSpec(top_level_path)) {
 			fwprintf(stderr,
-				L"Invalid executable path: %s\n", exepath);
+				L"Invalid executable path: %s\n",
+				top_level_path);
 			ExitProcess(1);
 		}
 
 		/* set the default exe module */
-		wcscpy(exe, exepath);
+		wcscpy(exe, top_level_path);
 		PathAppend(exe, msystem_bin);
 		PathAppend(exe, L"git.exe");
 		if (_waccess(exe, 0) == -1) {
-			wcscpy(exe, exepath);
+			wcscpy(exe, top_level_path);
 			PathAppend(exe, L"bin\\git.exe");
 		}
 	}
 	else if (!wcsicmp(basename, L"gitk.exe")) {
 		static WCHAR buffer[BUFSIZE];
 		allocate_console = 1;
-		if (!PathRemoveFileSpec(exepath)) {
+		if (!PathRemoveFileSpec(top_level_path)) {
 			fwprintf(stderr,
-				L"Invalid executable path: %s\n", exepath);
+				L"Invalid executable path: %s\n",
+				top_level_path);
 			ExitProcess(1);
 		}
 
 		/* set the default exe module */
-		wcscpy(exe, exepath);
-		swprintf(buffer, BUFSIZE, L"\"%s\"", exepath);
+		wcscpy(exe, top_level_path);
+		swprintf(buffer, BUFSIZE, L"\"%s\"", top_level_path);
 		PathAppend(exe, msystem_bin);
 		PathAppend(exe, L"wish.exe");
 		if (_waccess(exe, 0) != -1)
 			PathAppend(buffer, msystem_bin);
 		else {
-			wcscpy(exe, exepath);
+			wcscpy(exe, top_level_path);
 			PathAppend(exe, L"mingw\\bin\\wish.exe");
 			PathAppend(buffer, L"mingw\\bin");
 		}
@@ -533,7 +539,7 @@ int main(void)
 	}
 
 	if (needs_env_setup)
-		setup_environment(exepath, full_path);
+		setup_environment(top_level_path, full_path);
 	cmd = fixup_commandline(exepath, &exep, &wait,
 		prefix_args, prefix_args_len, is_git_command, skip_arguments);
 
