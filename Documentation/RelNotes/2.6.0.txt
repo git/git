@@ -56,7 +56,7 @@ UI, Workflows & Features
  * A negative !ref entry in multi-value transfer.hideRefs
    configuration can be used to say "don't hide this one".
 
- * After "git am" without "-3" stops, running "git am -" pays attention
+ * After "git am" without "-3" stops, running "git am -3" pays attention
    to "-3" only for the patch that caused the original invocation
    to stop.
 
