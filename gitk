@@ -2065,33 +2065,33 @@ proc makewindow {} {
     # The "mc" arguments here are purely so that xgettext
     # sees the following string as needing to be translated
     set file {
-	mc "File" cascade {
-	    {mc "Update" command updatecommits -accelerator F5}
-	    {mc "Reload" command reloadcommits -accelerator Shift-F5}
-	    {mc "Reread references" command rereadrefs}
-	    {mc "List references" command showrefs -accelerator F2}
+	mc "&File" cascade {
+	    {mc "&Update" command updatecommits -accelerator F5}
+	    {mc "&Reload" command reloadcommits -accelerator Shift-F5}
+	    {mc "Reread re&ferences" command rereadrefs}
+	    {mc "&List references" command showrefs -accelerator F2}
 	    {xx "" separator}
-	    {mc "Start git gui" command {exec git gui &}}
+	    {mc "Start git &gui" command {exec git gui &}}
 	    {xx "" separator}
-	    {mc "Quit" command doquit -accelerator Meta1-Q}
+	    {mc "&Quit" command doquit -accelerator Meta1-Q}
 	}}
     set edit {
-	mc "Edit" cascade {
-	    {mc "Preferences" command doprefs}
+	mc "&Edit" cascade {
+	    {mc "&Preferences" command doprefs}
 	}}
     set view {
-	mc "View" cascade {
-	    {mc "New view..." command {newview 0} -accelerator Shift-F4}
-	    {mc "Edit view..." command editview -state disabled -accelerator F4}
-	    {mc "Delete view" command delview -state disabled}
+	mc "&View" cascade {
+	    {mc "&New view..." command {newview 0} -accelerator Shift-F4}
+	    {mc "&Edit view..." command editview -state disabled -accelerator F4}
+	    {mc "&Delete view" command delview -state disabled}
 	    {xx "" separator}
-	    {mc "All files" radiobutton {selectedview 0} -command {showview 0}}
+	    {mc "&All files" radiobutton {selectedview 0} -command {showview 0}}
 	}}
     if {[tk windowingsystem] ne "aqua"} {
 	set help {
-	mc "Help" cascade {
-	    {mc "About gitk" command about}
-	    {mc "Key bindings" command keys}
+	mc "&Help" cascade {
+	    {mc "&About gitk" command about}
+	    {mc "&Key bindings" command keys}
 	}}
 	set bar [list $file $edit $view $help]
     } else {
@@ -2099,13 +2099,13 @@ proc makewindow {} {
 	proc ::tk::mac::Quit {} {doquit}
 	lset file end [lreplace [lindex $file end] end-1 end]
 	set apple {
-	xx "Apple" cascade {
-	    {mc "About gitk" command about}
+	xx "&Apple" cascade {
+	    {mc "&About gitk" command about}
 	    {xx "" separator}
 	}}
 	set help {
-	mc "Help" cascade {
-	    {mc "Key bindings" command keys}
+	mc "&Help" cascade {
+	    {mc "&Key bindings" command keys}
 	}}
 	set bar [list $apple $file $view $help]
     }
@@ -4468,8 +4468,8 @@ proc showview {n} {
 
     set curview $n
     set selectedview $n
-    .bar.view entryconf [mca "Edit view..."] -state [expr {$n == 0? "disabled": "normal"}]
-    .bar.view entryconf [mca "Delete view"] -state [expr {$n == 0? "disabled": "normal"}]
+    .bar.view entryconf [mca "&Edit view..."] -state [expr {$n == 0? "disabled": "normal"}]
+    .bar.view entryconf [mca "&Delete view"] -state [expr {$n == 0? "disabled": "normal"}]
 
     run refill_reflist
     if {![info exists viewcomplete($n)]} {
