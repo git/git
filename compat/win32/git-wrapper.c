@@ -422,6 +422,46 @@ static int configure_via_resource(LPWSTR basename, LPWSTR exepath, LPWSTR exep,
 	return 1;
 }
 
+static void initialize_top_level_path(LPWSTR top_level_path, LPWSTR exepath,
+		LPWSTR msystem_bin, int strip_count)
+{
+	wcscpy(top_level_path, exepath);
+
+	while (strip_count) {
+		if (strip_count < 0) {
+			int len = wcslen(top_level_path);
+			PathAppend(top_level_path, msystem_bin);
+			if (_waccess(top_level_path, 0) != -1) {
+				/* We are in an MSys2-based setup */
+				top_level_path[len] = L'\0';
+				return;
+			}
+			top_level_path[len] = L'\0';
+			PathAppend(top_level_path, L"mingw\\bin");
+			if (_waccess(top_level_path, 0) != -1) {
+				/* We are in an MSys-based setup */
+				top_level_path[len] = L'\0';
+				return;
+			}
+			top_level_path[len] = L'\0';
+			if (!(++strip_count)) {
+				fwprintf(stderr, L"Top-level not found: %s\n",
+					exepath);
+				exit(1);
+			}
+		}
+
+		if (!PathRemoveFileSpec(top_level_path)) {
+			fwprintf(stderr, L"Invalid executable path: %s\n",
+					exepath);
+			ExitProcess(1);
+		}
+
+		if (strip_count > 0)
+			--strip_count;
+	}
+}
+
 int main(void)
 {
 	int r = 1, wait = 1, prefix_args_len = -1, needs_env_setup = 1,
@@ -434,6 +474,7 @@ int main(void)
 	/* Determine MSys2-based Git path. */
 	swprintf(msystem_bin, sizeof(msystem_bin),
 		L"mingw%d\\bin", (int) sizeof(void *) * 8);
+	*top_level_path = L'\0';
 
 	/* get the installation location */
 	GetModuleFileName(NULL, exepath, MAX_PATH);
@@ -441,7 +482,6 @@ int main(void)
 		fwprintf(stderr, L"Invalid executable path: %s\n", exepath);
 		ExitProcess(1);
 	}
-	wcscpy(top_level_path, exepath);
 	basename = exepath + wcslen(exepath) + 1;
 	if (configure_via_resource(basename, exepath, exep,
 			&prefix_args, &prefix_args_len,
@@ -454,12 +494,7 @@ int main(void)
 		static WCHAR buffer[BUFSIZE];
 		wait = 0;
 		allocate_console = 1;
-		if (!PathRemoveFileSpec(top_level_path)) {
-			fwprintf(stderr,
-				L"Invalid executable path: %s\n",
-				top_level_path);
-			ExitProcess(1);
-		}
+		initialize_top_level_path(top_level_path, exepath, NULL, 1);
 
 		/* set the default exe module */
 		wcscpy(exe, top_level_path);
@@ -495,12 +530,7 @@ int main(void)
 		PathAppend(exe, L"git.exe");
 	}
 	else if (!wcsicmp(basename, L"git.exe")) {
-		if (!PathRemoveFileSpec(top_level_path)) {
-			fwprintf(stderr,
-				L"Invalid executable path: %s\n",
-				top_level_path);
-			ExitProcess(1);
-		}
+		initialize_top_level_path(top_level_path, exepath, NULL, 1);
 
 		/* set the default exe module */
 		wcscpy(exe, top_level_path);
@@ -514,12 +544,7 @@ int main(void)
 	else if (!wcsicmp(basename, L"gitk.exe")) {
 		static WCHAR buffer[BUFSIZE];
 		allocate_console = 1;
-		if (!PathRemoveFileSpec(top_level_path)) {
-			fwprintf(stderr,
-				L"Invalid executable path: %s\n",
-				top_level_path);
-			ExitProcess(1);
-		}
+		initialize_top_level_path(top_level_path, exepath, NULL, 1);
 
 		/* set the default exe module */
 		wcscpy(exe, top_level_path);
@@ -538,8 +563,13 @@ int main(void)
 		prefix_args_len = wcslen(buffer);
 	}
 
-	if (needs_env_setup)
+	if (needs_env_setup) {
+		if (!top_level_path[0])
+			initialize_top_level_path(top_level_path, exepath,
+					msystem_bin, -4);
+
 		setup_environment(top_level_path, full_path);
+	}
 	cmd = fixup_commandline(exepath, &exep, &wait,
 		prefix_args, prefix_args_len, is_git_command, skip_arguments);
 
