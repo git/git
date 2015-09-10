@@ -525,7 +525,7 @@ int main(void)
 			prefix_args_len -= 4;
 
 		/* set the default exe module */
-		wcscpy(exe, top_level_path);
+		wcscpy(exe, exepath);
 		PathAppend(exe, L"git.exe");
 	}
 	else if (!wcsicmp(basename, L"git.exe")) {
