@@ -351,6 +351,9 @@ ALL_CFLAGS = $(CPPFLAGS) $(CFLAGS)
 ALL_LDFLAGS = $(LDFLAGS)
 STRIP ?= strip
 
+# Create as necessary, replace existing, make ranlib unneeded.
+ARFLAGS = rcs
+
 # Among the variables below, these:
 #   gitexecdir
 #   template_dir
@@ -2068,13 +2071,13 @@ $(REMOTE_CURL_PRIMARY): remote-curl.o http.o http-walker.o GIT-LDFLAGS $(GITLIBS
 		$(LIBS) $(CURL_LIBCURL) $(EXPAT_LIBEXPAT)
 
 $(LIB_FILE): $(LIB_OBJS)
-	$(QUIET_AR)$(RM) $@ && $(AR) rcs $@ $^
+	$(QUIET_AR)$(RM) $@ && $(AR) $(ARFLAGS) $@ $^
 
 $(XDIFF_LIB): $(XDIFF_OBJS)
-	$(QUIET_AR)$(RM) $@ && $(AR) rcs $@ $^
+	$(QUIET_AR)$(RM) $@ && $(AR) $(ARFLAGS) $@ $^
 
 $(VCSSVN_LIB): $(VCSSVN_OBJS)
-	$(QUIET_AR)$(RM) $@ && $(AR) rcs $@ $^
+	$(QUIET_AR)$(RM) $@ && $(AR) $(ARFLAGS) $@ $^
 
 export DEFAULT_EDITOR DEFAULT_PAGER
 
