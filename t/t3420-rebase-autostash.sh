@@ -37,6 +37,16 @@ testrebase() {
 	type=$1
 	dotest=$2
 
+	test_expect_success "rebase$type: dirty worktree, --no-autostash" '
+		test_config rebase.autostash true &&
+		git reset --hard &&
+		git checkout -b rebased-feature-branch feature-branch &&
+		test_when_finished git branch -D rebased-feature-branch &&
+		test_when_finished git checkout feature-branch &&
+		echo dirty >>file3 &&
+		test_must_fail git rebase$type --no-autostash unrelated-onto-branch
+	'
+
 	test_expect_success "rebase$type: dirty worktree, non-conflicting rebase" '
 		test_config rebase.autostash true &&
 		git reset --hard &&
