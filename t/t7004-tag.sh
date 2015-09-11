@@ -1462,13 +1462,7 @@ test_expect_success 'invalid sort parameter on command line' '
 
 test_expect_success 'invalid sort parameter in configuratoin' '
 	git config tag.sort "v:notvalid" &&
-	git tag -l "foo*" >actual &&
-	cat >expect <<-\EOF &&
-	foo1.10
-	foo1.3
-	foo1.6
-	EOF
-	test_cmp expect actual
+	test_must_fail git tag -l "foo*"
 '
 
 test_expect_success 'version sort with prerelease reordering' '

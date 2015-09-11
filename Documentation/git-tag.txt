@@ -13,7 +13,7 @@ SYNOPSIS
 	<tagname> [<commit> | <object>]
 'git tag' -d <tagname>...
 'git tag' [-n[<num>]] -l [--contains <commit>] [--points-at <object>]
-	[--column[=<options>] | --no-column] [--create-reflog] [<pattern>...]
+	[--column[=<options>] | --no-column] [--create-reflog] [--sort=<key>] [<pattern>...]
 'git tag' -v <tagname>...
 
 DESCRIPTION
@@ -94,14 +94,16 @@ OPTIONS
 	using fnmatch(3)).  Multiple patterns may be given; if any of
 	them matches, the tag is shown.
 
---sort=<type>::
-	Sort in a specific order. Supported type is "refname"
-	(lexicographic order), "version:refname" or "v:refname" (tag
+--sort=<key>::
+	Sort based on the key given.  Prefix `-` to sort in
+	descending order of the value. You may use the --sort=<key> option
+	multiple times, in which case the last key becomes the primary
+	key. Also supports "version:refname" or "v:refname" (tag
 	names are treated as versions). The "version:refname" sort
 	order can also be affected by the
-	"versionsort.prereleaseSuffix" configuration variable. Prepend
-	"-" to reverse sort order. When this option is not given, the
-	sort order defaults to the value configured for the 'tag.sort'
+	"versionsort.prereleaseSuffix" configuration variable.
+	The keys supported are the same as those in `git for-each-ref`.
+	Sort order defaults to the value configured for the 'tag.sort'
 	variable if it exists, or lexicographic order otherwise. See
 	linkgit:git-config[1].
 
