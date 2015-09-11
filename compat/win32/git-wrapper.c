@@ -503,7 +503,8 @@ int main(void)
 		if (_waccess(exe, 0) != -1)
 			swprintf(buffer, BUFSIZE,
 				L"\"%s\\%.*s\\libexec\\git-core\"",
-				exepath, wcslen(msystem_bin) - 4, msystem_bin);
+				top_level_path,
+				wcslen(msystem_bin) - 4, msystem_bin);
 		else {
 			wcscpy(exe, top_level_path);
 			PathAppend(exe, L"mingw\\bin\\wish.exe");
