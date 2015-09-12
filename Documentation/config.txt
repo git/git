@@ -766,9 +766,9 @@ branch.<name>.rebase::
 	"git pull" is run. See "pull.rebase" for doing this in a non
 	branch-specific manner.
 +
-	When preserve, also pass `--preserve-merges` along to 'git rebase'
-	so that locally committed merge commits will not be flattened
-	by running 'git pull'.
+When preserve, also pass `--preserve-merges` along to 'git rebase'
+so that locally committed merge commits will not be flattened
+by running 'git pull'.
 +
 *NOTE*: this is a possibly dangerous operation; do *not* use
 it unless you understand the implications (see linkgit:git-rebase[1]
@@ -1830,9 +1830,9 @@ pull.rebase::
 	pull" is run. See "branch.<name>.rebase" for setting this on a
 	per-branch basis.
 +
-	When preserve, also pass `--preserve-merges` along to 'git rebase'
-	so that locally committed merge commits will not be flattened
-	by running 'git pull'.
+When preserve, also pass `--preserve-merges` along to 'git rebase'
+so that locally committed merge commits will not be flattened
+by running 'git pull'.
 +
 *NOTE*: this is a possibly dangerous operation; do *not* use
 it unless you understand the implications (see linkgit:git-rebase[1]
