@@ -512,7 +512,7 @@ then
 		git read-tree --reset -u $head_tree $head_tree &&
 		index_tree=$(git write-tree) &&
 		git read-tree -m -u $index_tree $head_tree
-		git read-tree $head_tree
+		git read-tree -m $head_tree
 		;;
 	,t)
 		if test -f "$dotest/rebasing"
