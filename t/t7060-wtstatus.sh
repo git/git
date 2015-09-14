@@ -106,7 +106,7 @@ test_expect_success 'git diff-index --cached -M shows 2 added + 1 unmerged' '
 	A	THREE
 	A	TWO
 	EOF
-	git diff-index --cached --name-status HEAD >actual &&
+	git diff-index --cached -M --name-status HEAD >actual &&
 	test_cmp expected actual
 '
 
