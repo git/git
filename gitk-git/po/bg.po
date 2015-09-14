@@ -1,15 +1,15 @@
 # Bulgarian translation of gitk po-file.
-# Copyright (C) 2014 Alexander Shopov <ash@kambanaria.org>.
+# Copyright (C) 2014, 2015 Alexander Shopov <ash@kambanaria.org>.
 # This file is distributed under the same license as the git package.
-# Alexander Shopov <ash@kambanaria.org>, 2014.
+# Alexander Shopov <ash@kambanaria.org>, 2014, 2015.
 #
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: gitk master\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-03-15 14:37+1100\n"
-"PO-Revision-Date: 2014-07-28 07:32+0300\n"
+"POT-Creation-Date: 2015-06-27 20:44+0300\n"
+"PO-Revision-Date: 2015-06-27 20:46+0300\n"
 "Last-Translator: Alexander Shopov <ash@kambanaria.org>\n"
 "Language-Team: Bulgarian <dict@fsa-bg.org>\n"
 "Language: bg\n"
@@ -26,7 +26,7 @@ msgstr "Списъкът с неслети файлове не може да б�
 msgid "Color words"
 msgstr "Оцветяване на думите"
 
-#: gitk:217 gitk:2381 gitk:8201 gitk:8234
+#: gitk:217 gitk:2381 gitk:8220 gitk:8253
 msgid "Markup words"
 msgstr "Отбелязване на думите"
 
@@ -59,13 +59,17 @@ msgstr "Грешка при изпълнение на „git log“:"
 msgid "Reading"
 msgstr "Прочитане"
 
-#: gitk:496 gitk:4508
+#: gitk:496 gitk:4525
 msgid "Reading commits..."
 msgstr "Прочитане на подаванията…"
 
-#: gitk:499 gitk:1637 gitk:4511
+#: gitk:499 gitk:1637 gitk:4528
 msgid "No commits selected"
 msgstr "Не са избрани подавания"
+
+#: gitk:1445 gitk:4045 gitk:12432
+msgid "Command line"
+msgstr "Команден ред"
 
 #: gitk:1511
 msgid "Can't parse git log output:"
@@ -75,16 +79,12 @@ msgstr "Изходът от „git log“ не може да се анализи
 msgid "No commit information available"
 msgstr "Липсва информация за подавания"
 
-#: gitk:1897
-msgid "mc"
-msgstr "mc"
-
-#: gitk:1932 gitk:4298 gitk:9650 gitk:11220 gitk:11500
+#: gitk:1903 gitk:1932 gitk:4315 gitk:9669 gitk:11241 gitk:11521
 msgid "OK"
 msgstr "Добре"
 
-#: gitk:1934 gitk:4300 gitk:9177 gitk:9256 gitk:9372 gitk:9421 gitk:9652
-#: gitk:11221 gitk:11501
+#: gitk:1934 gitk:4317 gitk:9196 gitk:9275 gitk:9391 gitk:9440 gitk:9671
+#: gitk:11242 gitk:11522
 msgid "Cancel"
 msgstr "Отказ"
 
@@ -136,15 +136,15 @@ msgstr "Редактиране на изгледа…"
 msgid "Delete view"
 msgstr "Изтриване на изгледа"
 
-#: gitk:2088
+#: gitk:2088 gitk:4043
 msgid "All files"
 msgstr "Всички файлове"
 
-#: gitk:2083 gitk:4050
+#: gitk:2083 gitk:4067
 msgid "View"
 msgstr "Изглед"
 
-#: gitk:2093 gitk:2103 gitk:3009
+#: gitk:2093 gitk:2103 gitk:3012
 msgid "About gitk"
 msgstr "Относно gitk"
 
@@ -156,7 +156,7 @@ msgstr "Клавишни комбинации"
 msgid "Help"
 msgstr "Помощ"
 
-#: gitk:2185 gitk:8633
+#: gitk:2185 gitk:8652
 msgid "SHA1 ID:"
 msgstr "SHA1:"
 
@@ -172,53 +172,53 @@ msgstr "Търсене"
 msgid "commit"
 msgstr "подаване"
 
-#: gitk:2299 gitk:2301 gitk:4669 gitk:4692 gitk:4716 gitk:6736 gitk:6808
-#: gitk:6893
+#: gitk:2299 gitk:2301 gitk:4687 gitk:4710 gitk:4734 gitk:6755 gitk:6827
+#: gitk:6912
 msgid "containing:"
 msgstr "съдържащо:"
 
-#: gitk:2302 gitk:3522 gitk:3527 gitk:4745
+#: gitk:2302 gitk:3526 gitk:3531 gitk:4763
 msgid "touching paths:"
 msgstr "засягащо пътищата:"
 
-#: gitk:2303 gitk:4759
+#: gitk:2303 gitk:4777
 msgid "adding/removing string:"
 msgstr "добавящо/премахващо низ"
 
-#: gitk:2304 gitk:4761
+#: gitk:2304 gitk:4779
 msgid "changing lines matching:"
 msgstr "променящо редове напасващи:"
 
-#: gitk:2313 gitk:2315 gitk:4748
+#: gitk:2313 gitk:2315 gitk:4766
 msgid "Exact"
 msgstr "Точно"
 
-#: gitk:2315 gitk:4836 gitk:6704
+#: gitk:2315 gitk:4854 gitk:6723
 msgid "IgnCase"
 msgstr "Без регистър"
 
-#: gitk:2315 gitk:4718 gitk:4834 gitk:6700
+#: gitk:2315 gitk:4736 gitk:4852 gitk:6719
 msgid "Regexp"
 msgstr "Рег. израз"
 
-#: gitk:2317 gitk:2318 gitk:4856 gitk:4886 gitk:4893 gitk:6829 gitk:6897
+#: gitk:2317 gitk:2318 gitk:4874 gitk:4904 gitk:4911 gitk:6848 gitk:6916
 msgid "All fields"
 msgstr "Всички полета"
 
-#: gitk:2318 gitk:4853 gitk:4886 gitk:6767
+#: gitk:2318 gitk:4871 gitk:4904 gitk:6786
 msgid "Headline"
 msgstr "Първи ред"
 
-#: gitk:2319 gitk:4853 gitk:6767 gitk:6897 gitk:7370
+#: gitk:2319 gitk:4871 gitk:6786 gitk:6916 gitk:7389
 msgid "Comments"
 msgstr "Коментари"
 
-#: gitk:2319 gitk:4853 gitk:4858 gitk:4893 gitk:6767 gitk:7305 gitk:8811
-#: gitk:8826
+#: gitk:2319 gitk:4871 gitk:4876 gitk:4911 gitk:6786 gitk:7324 gitk:8830
+#: gitk:8845
 msgid "Author"
 msgstr "Автор"
 
-#: gitk:2319 gitk:4853 gitk:6767 gitk:7307
+#: gitk:2319 gitk:4871 gitk:6786 gitk:7326
 msgid "Committer"
 msgstr "Подаващ"
 
@@ -246,7 +246,7 @@ msgstr "Контекст в редове"
 msgid "Ignore space change"
 msgstr "Празните знаци без значение"
 
-#: gitk:2378 gitk:2380 gitk:7940 gitk:8187
+#: gitk:2378 gitk:2380 gitk:7959 gitk:8206
 msgid "Line diff"
 msgstr "Поредови разлики"
 
@@ -258,99 +258,107 @@ msgstr "Кръпка"
 msgid "Tree"
 msgstr "Дърво"
 
-#: gitk:2616 gitk:2636
+#: gitk:2617 gitk:2637
 msgid "Diff this -> selected"
 msgstr "Разлики между това и избраното"
 
-#: gitk:2617 gitk:2637
+#: gitk:2618 gitk:2638
 msgid "Diff selected -> this"
 msgstr "Разлики между избраното и това"
 
-#: gitk:2618 gitk:2638
+#: gitk:2619 gitk:2639
 msgid "Make patch"
 msgstr "Създаване на кръпка"
 
-#: gitk:2619 gitk:9235
+#: gitk:2620 gitk:9254
 msgid "Create tag"
 msgstr "Създаване на етикет"
 
-#: gitk:2620 gitk:9352
+#: gitk:2621 gitk:9371
 msgid "Write commit to file"
 msgstr "Запазване на подаването във файл"
 
-#: gitk:2621 gitk:9409
+#: gitk:2622 gitk:9428
 msgid "Create new branch"
 msgstr "Създаване на нов клон"
 
-#: gitk:2622
+#: gitk:2623
 msgid "Cherry-pick this commit"
 msgstr "Отбиране на това подаване"
 
-#: gitk:2623
+#: gitk:2624
 msgid "Reset HEAD branch to here"
 msgstr "Привеждане на върха на клона към текущото подаване"
 
-#: gitk:2624
+#: gitk:2625
 msgid "Mark this commit"
 msgstr "Отбелязване на това подаване"
 
-#: gitk:2625
+#: gitk:2626
 msgid "Return to mark"
 msgstr "Връщане към отбелязаното подаване"
 
-#: gitk:2626
+#: gitk:2627
 msgid "Find descendant of this and mark"
 msgstr "Откриване и отбелязване на наследниците"
 
-#: gitk:2627
+#: gitk:2628
 msgid "Compare with marked commit"
 msgstr "Сравнение с отбелязаното подаване"
 
-#: gitk:2628 gitk:2639
+#: gitk:2629 gitk:2640
 msgid "Diff this -> marked commit"
 msgstr "Разлики между това и отбелязаното"
 
-#: gitk:2629 gitk:2640
+#: gitk:2630 gitk:2641
 msgid "Diff marked commit -> this"
 msgstr "Разлики между отбелязаното и това"
 
-#: gitk:2630
+#: gitk:2631
 msgid "Revert this commit"
 msgstr "Отмяна на това подаване"
 
-#: gitk:2646
+#: gitk:2647
 msgid "Check out this branch"
 msgstr "Изтегляне на този клон"
 
-#: gitk:2647
+#: gitk:2648
 msgid "Remove this branch"
 msgstr "Изтриване на този клон"
 
-#: gitk:2654
+#: gitk:2649
+msgid "Copy branch name"
+msgstr "Копиране на името на клона"
+
+#: gitk:2656
 msgid "Highlight this too"
 msgstr "Отбелязване и на това"
 
-#: gitk:2655
+#: gitk:2657
 msgid "Highlight this only"
 msgstr "Отбелязване само на това"
 
-#: gitk:2656
+#: gitk:2658
 msgid "External diff"
 msgstr "Външна програма за разлики"
 
-#: gitk:2657
+#: gitk:2659
 msgid "Blame parent commit"
 msgstr "Анотиране на родителското подаване"
 
-#: gitk:2664
+#: gitk:2660
+msgid "Copy path"
+msgstr "Копиране на пътя"
+
+#: gitk:2667
 msgid "Show origin of this line"
 msgstr "Показване на произхода на този ред"
 
-#: gitk:2665
+#: gitk:2668
 msgid "Run git gui blame on this line"
 msgstr "Изпълнение на „git gui blame“ върху този ред"
 
-#: gitk:3011
+#: gitk:3014
 msgid ""
 "\n"
 "Gitk - a commit viewer for git\n"
@@ -366,313 +374,316 @@ msgstr ""
 "\n"
 "Използвайте и разпространявайте при условията на ОПЛ на ГНУ"
 
-#: gitk:3019 gitk:3085 gitk:9836
+#: gitk:3022 gitk:3089 gitk:9857
 msgid "Close"
 msgstr "Затваряне"
 
-#: gitk:3040
+#: gitk:3043
 msgid "Gitk key bindings"
 msgstr "Клавишни комбинации"
 
-#: gitk:3043
+#: gitk:3046
 msgid "Gitk key bindings:"
 msgstr "Клавишни комбинации:"
 
-#: gitk:3045
+#: gitk:3048
 #, tcl-format
 msgid "<%s-Q>\t\tQuit"
 msgstr "<%s-Q>\t\tСпиране на програмата"
 
-#: gitk:3046
+#: gitk:3049
 #, tcl-format
 msgid "<%s-W>\t\tClose window"
 msgstr "<%s-W>\t\tЗатваряне на прозореца"
 
-#: gitk:3047
+#: gitk:3050
 msgid "<Home>\t\tMove to first commit"
 msgstr "<Home>\t\tКъм първото подаване"
 
-#: gitk:3048
+#: gitk:3051
 msgid "<End>\t\tMove to last commit"
 msgstr "<End>\t\tКъм последното подаване"
 
-#: gitk:3049
+#: gitk:3052
 msgid "<Up>, p, k\tMove up one commit"
 msgstr "<Up>, p, k\tЕдно подаване нагоре"
 
-#: gitk:3050
+#: gitk:3053
 msgid "<Down>, n, j\tMove down one commit"
 msgstr "<Down>, n, j\tЕдно подаване надолу"
 
-#: gitk:3051
+#: gitk:3054
 msgid "<Left>, z, h\tGo back in history list"
 msgstr "<Left>, z, h\tНазад в историята"
 
-#: gitk:3052
+#: gitk:3055
 msgid "<Right>, x, l\tGo forward in history list"
 msgstr "<Right>, x, l\tНапред в историята"
 
-#: gitk:3053
+#: gitk:3056
 #, tcl-format
 msgid "<%s-n>\tGo to n-th parent of current commit in history list"
-msgstr ""
+msgstr "<%s-n>\tКъм n-тия родител на текущото подаване в историята"
 
-#: gitk:3054
+#: gitk:3057
 msgid "<PageUp>\tMove up one page in commit list"
 msgstr "<PageUp>\tСтраница нагоре в списъка с подаванията"
 
-#: gitk:3055
+#: gitk:3058
 msgid "<PageDown>\tMove down one page in commit list"
 msgstr "<PageDown>\tСтраница надолу в списъка с подаванията"
 
-#: gitk:3056
+#: gitk:3059
 #, tcl-format
 msgid "<%s-Home>\tScroll to top of commit list"
 msgstr "<%s-Home>\tКъм началото на списъка с подаванията"
 
-#: gitk:3057
+#: gitk:3060
 #, tcl-format
 msgid "<%s-End>\tScroll to bottom of commit list"
 msgstr "<%s-End>\tКъм края на списъка с подаванията"
 
-#: gitk:3058
+#: gitk:3061
 #, tcl-format
 msgid "<%s-Up>\tScroll commit list up one line"
 msgstr "<%s-Up>\tРед нагоре в списъка с подавания"
 
-#: gitk:3059
+#: gitk:3062
 #, tcl-format
 msgid "<%s-Down>\tScroll commit list down one line"
 msgstr "<%s-Down>\tРед надолу в списъка с подавания"
 
-#: gitk:3060
+#: gitk:3063
 #, tcl-format
 msgid "<%s-PageUp>\tScroll commit list up one page"
 msgstr "<%s-PageUp>\tСтраница нагоре в списъка с подавания"
 
-#: gitk:3061
+#: gitk:3064
 #, tcl-format
 msgid "<%s-PageDown>\tScroll commit list down one page"
 msgstr "<%s-PageDown>\tСтраница надолу в списъка с подавания"
 
-#: gitk:3062
+#: gitk:3065
 msgid "<Shift-Up>\tFind backwards (upwards, later commits)"
 msgstr "<Shift-Up>\tТърсене назад (визуално нагоре, исторически — последващи)"
 
-#: gitk:3063
+#: gitk:3066
 msgid "<Shift-Down>\tFind forwards (downwards, earlier commits)"
 msgstr ""
 "<Shift-Down>\tТърсене напред (визуално надолу, исторически — предхождащи)"
 
-#: gitk:3064
+#: gitk:3067
 msgid "<Delete>, b\tScroll diff view up one page"
 msgstr "<Delete>, b\tСтраница нагоре в изгледа за разлики"
 
-#: gitk:3065
+#: gitk:3068
 msgid "<Backspace>\tScroll diff view up one page"
 msgstr "<Backspace>\tСтраница надолу в изгледа за разлики"
 
-#: gitk:3066
+#: gitk:3069
 msgid "<Space>\t\tScroll diff view down one page"
 msgstr "<Space>\t\tСтраница надолу в изгледа за разлики"
 
-#: gitk:3067
+#: gitk:3070
 msgid "u\t\tScroll diff view up 18 lines"
 msgstr "u\t\t18 реда нагоре в изгледа за разлики"
 
-#: gitk:3068
+#: gitk:3071
 msgid "d\t\tScroll diff view down 18 lines"
 msgstr "d\t\t18 реда надолу в изгледа за разлики"
 
-#: gitk:3069
+#: gitk:3072
 #, tcl-format
 msgid "<%s-F>\t\tFind"
 msgstr "<%s-F>\t\tТърсене"
 
-#: gitk:3070
+#: gitk:3073
 #, tcl-format
 msgid "<%s-G>\t\tMove to next find hit"
 msgstr "<%s-G>\t\tКъм следващата поява"
 
-#: gitk:3071
+#: gitk:3074
 msgid "<Return>\tMove to next find hit"
 msgstr "<Return>\tКъм следващата поява"
 
-#: gitk:3072
+#: gitk:3075
+msgid "g\t\tGo to commit"
+msgstr "g\t\tКъм последното подаване"
+
+#: gitk:3076
 msgid "/\t\tFocus the search box"
 msgstr "/\t\tФокус върху полето за търсене"
 
-#: gitk:3073
+#: gitk:3077
 msgid "?\t\tMove to previous find hit"
 msgstr "?\t\tКъм предишната поява"
 
-#: gitk:3074
+#: gitk:3078
 msgid "f\t\tScroll diff view to next file"
 msgstr "f\t\tСледващ файл в изгледа за разлики"
 
-#: gitk:3075
+#: gitk:3079
 #, tcl-format
 msgid "<%s-S>\t\tSearch for next hit in diff view"
 msgstr "<%s-S>\t\tТърсене на следващата поява в изгледа за разлики"
 
-#: gitk:3076
+#: gitk:3080
 #, tcl-format
 msgid "<%s-R>\t\tSearch for previous hit in diff view"
 msgstr "<%s-R>\t\tТърсене на предишната поява в изгледа за разлики"
 
-#: gitk:3077
+#: gitk:3081
 #, tcl-format
 msgid "<%s-KP+>\tIncrease font size"
 msgstr "<%s-KP+>\tПо-голям размер на шрифта"
 
-#: gitk:3078
+#: gitk:3082
 #, tcl-format
 msgid "<%s-plus>\tIncrease font size"
 msgstr "<%s-plus>\tПо-голям размер на шрифта"
 
-#: gitk:3079
+#: gitk:3083
 #, tcl-format
 msgid "<%s-KP->\tDecrease font size"
 msgstr "<%s-KP->\tПо-малък размер на шрифта"
 
-#: gitk:3080
+#: gitk:3084
 #, tcl-format
 msgid "<%s-minus>\tDecrease font size"
 msgstr "<%s-minus>\tПо-малък размер на шрифта"
 
-#: gitk:3081
+#: gitk:3085
 msgid "<F5>\t\tUpdate"
 msgstr "<F5>\t\tОбновяване"
 
-#: gitk:3546 gitk:3555
+#: gitk:3550 gitk:3559
 #, tcl-format
 msgid "Error creating temporary directory %s:"
 msgstr "Грешка при създаването на временната директория „%s“:"
 
-#: gitk:3568
+#: gitk:3572
 #, tcl-format
 msgid "Error getting \"%s\" from %s:"
 msgstr "Грешка при получаването на „%s“ от %s:"
 
-#: gitk:3631
+#: gitk:3635
 msgid "command failed:"
 msgstr "неуспешно изпълнение на команда:"
 
-#: gitk:3780
+#: gitk:3784
 msgid "No such commit"
 msgstr "Такова подаване няма"
 
-#: gitk:3794
+#: gitk:3798
 msgid "git gui blame: command failed:"
 msgstr "„git gui blame“: неуспешно изпълнение на команда:"
 
-#: gitk:3825
+#: gitk:3829
 #, tcl-format
 msgid "Couldn't read merge head: %s"
 msgstr "Върхът за сливане не може да бъде прочетен: %s"
 
-#: gitk:3833
+#: gitk:3837
 #, tcl-format
 msgid "Error reading index: %s"
 msgstr "Грешка при прочитане на индекса: %s"
 
-#: gitk:3858
+#: gitk:3862
 #, tcl-format
 msgid "Couldn't start git blame: %s"
 msgstr "Командата „git blame“ не може да бъде стартирана: %s"
 
-#: gitk:3861 gitk:6735
+#: gitk:3865 gitk:6754
 msgid "Searching"
 msgstr "Търсене"
 
-#: gitk:3893
+#: gitk:3897
 #, tcl-format
 msgid "Error running git blame: %s"
 msgstr "Грешка при изпълнението на „git blame“: %s"
 
-#: gitk:3921
+#: gitk:3925
 #, tcl-format
 msgid "That line comes from commit %s,  which is not in this view"
-msgstr "Този ред идва от подаването %s,  което не е в изгледа"
+msgstr "Този ред идва от подаването %s, което не е в изгледа"
 
-#: gitk:3935
+#: gitk:3939
 msgid "External diff viewer failed:"
 msgstr "Неуспешно изпълнение на външната програма за разлики:"
 
-#: gitk:4053
+#: gitk:4070
 msgid "Gitk view definition"
 msgstr "Дефиниция на изглед в Gitk"
 
-#: gitk:4057
+#: gitk:4074
 msgid "Remember this view"
 msgstr "Запазване на този изглед"
 
-#: gitk:4058
+#: gitk:4075
 msgid "References (space separated list):"
 msgstr "Указатели (списък с разделител интервал):"
 
-#: gitk:4059
+#: gitk:4076
 msgid "Branches & tags:"
 msgstr "Клони и етикети:"
 
-#: gitk:4060
+#: gitk:4077
 msgid "All refs"
 msgstr "Всички указатели"
 
-#: gitk:4061
+#: gitk:4078
 msgid "All (local) branches"
 msgstr "Всички (локални) клони"
 
-#: gitk:4062
+#: gitk:4079
 msgid "All tags"
 msgstr "Всички етикети"
 
-#: gitk:4063
+#: gitk:4080
 msgid "All remote-tracking branches"
 msgstr "Всички следящи клони"
 
-#: gitk:4064
+#: gitk:4081
 msgid "Commit Info (regular expressions):"
 msgstr "Информация за подаване (рег. изр.):"
 
-#: gitk:4065
+#: gitk:4082
 msgid "Author:"
 msgstr "Автор:"
 
-#: gitk:4066
+#: gitk:4083
 msgid "Committer:"
 msgstr "Подал:"
 
-#: gitk:4067
+#: gitk:4084
 msgid "Commit Message:"
 msgstr "Съобщение при подаване:"
 
-#: gitk:4068
+#: gitk:4085
 msgid "Matches all Commit Info criteria"
-msgstr "Съвпадение по коя да е информация за подаването"
+msgstr "Съвпадение по всички характеристики на подаването"
 
-#: gitk:4069
-#, fuzzy
-msgid "Matches none Commit Info criteria"
-msgstr "Съвпадение по коя да е информация за подаването"
+#: gitk:4086
+msgid "Matches no Commit Info criteria"
+msgstr "Не съвпада по никоя от характеристиките на подаването"
 
-#: gitk:4070
+#: gitk:4087
 msgid "Changes to Files:"
 msgstr "Промени по файловете:"
 
-#: gitk:4071
+#: gitk:4088
 msgid "Fixed String"
 msgstr "Дословен низ"
 
-#: gitk:4072
+#: gitk:4089
 msgid "Regular Expression"
 msgstr "Регулярен израз"
 
-#: gitk:4073
+#: gitk:4090
 msgid "Search string:"
 msgstr "Низ за търсене:"
 
-#: gitk:4074
+#: gitk:4091
 msgid ""
 "Commit Dates (\"2 weeks ago\", \"2009-03-17 15:27:38\", \"March 17, 2009 "
 "15:27:38\"):"
@@ -680,204 +691,204 @@ msgstr ""
 "Дата на подаване („2 weeks ago“ (преди 2 седмици), „2009-03-17 15:27:38“, "
 "„March 17, 2009 15:27:38“):"
 
-#: gitk:4075
+#: gitk:4092
 msgid "Since:"
 msgstr "От:"
 
-#: gitk:4076
+#: gitk:4093
 msgid "Until:"
 msgstr "До:"
 
-#: gitk:4077
+#: gitk:4094
 msgid "Limit and/or skip a number of revisions (positive integer):"
 msgstr ""
 "Ограничаване и/или прескачане на определен брой версии (неотрицателно цяло "
 "число):"
 
-#: gitk:4078
+#: gitk:4095
 msgid "Number to show:"
 msgstr "Брой показани:"
 
-#: gitk:4079
+#: gitk:4096
 msgid "Number to skip:"
 msgstr "Брой прескочени:"
 
-#: gitk:4080
+#: gitk:4097
 msgid "Miscellaneous options:"
 msgstr "Разни:"
 
-#: gitk:4081
+#: gitk:4098
 msgid "Strictly sort by date"
 msgstr "Подреждане по дата"
 
-#: gitk:4082
+#: gitk:4099
 msgid "Mark branch sides"
 msgstr "Отбелязване на страните по клона"
 
-#: gitk:4083
+#: gitk:4100
 msgid "Limit to first parent"
 msgstr "Само първия родител"
 
-#: gitk:4084
+#: gitk:4101
 msgid "Simple history"
 msgstr "Опростена история"
 
-#: gitk:4085
+#: gitk:4102
 msgid "Additional arguments to git log:"
 msgstr "Допълнителни аргументи към „git log“:"
 
-#: gitk:4086
+#: gitk:4103
 msgid "Enter files and directories to include, one per line:"
 msgstr "Въведете файловете и директориите за включване, по елемент на ред"
 
-#: gitk:4087
+#: gitk:4104
 msgid "Command to generate more commits to include:"
 msgstr ""
 "Команда за генерирането на допълнителни подавания, които да бъдат включени:"
 
-#: gitk:4211
+#: gitk:4228
 msgid "Gitk: edit view"
 msgstr "Gitk: редактиране на изглед"
 
-#: gitk:4219
+#: gitk:4236
 msgid "-- criteria for selecting revisions"
 msgstr "— критерии за избор на версии"
 
-#: gitk:4224
+#: gitk:4241
 msgid "View Name"
 msgstr "Име на изглед"
 
-#: gitk:4299
+#: gitk:4316
 msgid "Apply (F5)"
 msgstr "Прилагане (F5)"
 
-#: gitk:4337
+#: gitk:4354
 msgid "Error in commit selection arguments:"
 msgstr "Грешка в аргументите за избор на подавания:"
 
-#: gitk:4392 gitk:4445 gitk:4906 gitk:4920 gitk:6190 gitk:12346 gitk:12347
+#: gitk:4409 gitk:4462 gitk:4924 gitk:4938 gitk:6208 gitk:12373 gitk:12374
 msgid "None"
 msgstr "Няма"
 
-#: gitk:5003 gitk:5008
+#: gitk:5021 gitk:5026
 msgid "Descendant"
 msgstr "Наследник"
 
-#: gitk:5004
+#: gitk:5022
 msgid "Not descendant"
 msgstr "Не е наследник"
 
-#: gitk:5011 gitk:5016
+#: gitk:5029 gitk:5034
 msgid "Ancestor"
 msgstr "Предшественик"
 
-#: gitk:5012
+#: gitk:5030
 msgid "Not ancestor"
 msgstr "Не е предшественик"
 
-#: gitk:5306
+#: gitk:5324
 msgid "Local changes checked in to index but not committed"
 msgstr "Локални промени добавени към индекса, но неподадени"
 
-#: gitk:5342
+#: gitk:5360
 msgid "Local uncommitted changes, not checked in to index"
 msgstr "Локални промени извън индекса"
 
-#: gitk:7115
+#: gitk:7134
 msgid "and many more"
 msgstr "и още много"
 
-#: gitk:7118
+#: gitk:7137
 msgid "many"
 msgstr "много"
 
-#: gitk:7309
+#: gitk:7328
 msgid "Tags:"
 msgstr "Етикети:"
 
-#: gitk:7326 gitk:7332 gitk:8806
+#: gitk:7345 gitk:7351 gitk:8825
 msgid "Parent"
 msgstr "Родител"
 
-#: gitk:7337
+#: gitk:7356
 msgid "Child"
 msgstr "Дете"
 
-#: gitk:7346
+#: gitk:7365
 msgid "Branch"
 msgstr "Клон"
 
-#: gitk:7349
+#: gitk:7368
 msgid "Follows"
 msgstr "Следва"
 
-#: gitk:7352
+#: gitk:7371
 msgid "Precedes"
 msgstr "Предшества"
 
-#: gitk:7947
+#: gitk:7966
 #, tcl-format
 msgid "Error getting diffs: %s"
 msgstr "Грешка при получаването на разликите: %s"
 
-#: gitk:8631
+#: gitk:8650
 msgid "Goto:"
 msgstr "Към ред:"
 
-#: gitk:8652
+#: gitk:8671
 #, tcl-format
 msgid "Short SHA1 id %s is ambiguous"
 msgstr "Съкратената сума по SHA1 %s не е еднозначна"
 
-#: gitk:8659
+#: gitk:8678
 #, tcl-format
 msgid "Revision %s is not known"
 msgstr "Непозната версия %s"
 
-#: gitk:8669
+#: gitk:8688
 #, tcl-format
 msgid "SHA1 id %s is not known"
 msgstr "Непозната сума по SHA1 %s"
 
-#: gitk:8671
+#: gitk:8690
 #, tcl-format
 msgid "Revision %s is not in the current view"
 msgstr "Версия %s не е в текущия изглед"
 
-#: gitk:8813 gitk:8828
+#: gitk:8832 gitk:8847
 msgid "Date"
 msgstr "Дата"
 
-#: gitk:8816
+#: gitk:8835
 msgid "Children"
 msgstr "Деца"
 
-#: gitk:8879
+#: gitk:8898
 #, tcl-format
 msgid "Reset %s branch to here"
 msgstr "Зануляване на клона „%s“ към текущото подаване"
 
-#: gitk:8881
+#: gitk:8900
 msgid "Detached head: can't reset"
 msgstr "Несвързан връх: невъзможно зануляване"
 
-#: gitk:8986 gitk:8992
+#: gitk:9005 gitk:9011
 msgid "Skipping merge commit "
 msgstr "Пропускане на подаването на сливането"
 
-#: gitk:9001 gitk:9006
+#: gitk:9020 gitk:9025
 msgid "Error getting patch ID for "
 msgstr "Грешка при получаването на идентификатора на "
 
-#: gitk:9002 gitk:9007
+#: gitk:9021 gitk:9026
 msgid " - stopping\n"
 msgstr " — спиране\n"
 
-#: gitk:9012 gitk:9015 gitk:9023 gitk:9037 gitk:9046
+#: gitk:9031 gitk:9034 gitk:9042 gitk:9056 gitk:9065
 msgid "Commit "
 msgstr "Подаване"
 
-#: gitk:9016
+#: gitk:9035
 msgid ""
 " is the same patch as\n"
 "       "
@@ -885,7 +896,7 @@ msgstr ""
 " е същата кръпка като\n"
 "       "
 
-#: gitk:9024
+#: gitk:9043
 msgid ""
 " differs from\n"
 "       "
@@ -893,7 +904,7 @@ msgstr ""
 " се различава от\n"
 "       "
 
-#: gitk:9026
+#: gitk:9045
 msgid ""
 "Diff of commits:\n"
 "\n"
@@ -901,130 +912,130 @@ msgstr ""
 "Разлика между подаванията:\n"
 "\n"
 
-#: gitk:9038 gitk:9047
+#: gitk:9057 gitk:9066
 #, tcl-format
 msgid " has %s children - stopping\n"
 msgstr " има %s деца — спиране\n"
 
-#: gitk:9066
+#: gitk:9085
 #, tcl-format
 msgid "Error writing commit to file: %s"
 msgstr "Грешка при запазването на подаването във файл: %s"
 
-#: gitk:9072
+#: gitk:9091
 #, tcl-format
 msgid "Error diffing commits: %s"
 msgstr "Грешка при изчисляването на разликите между подаванията: %s"
 
-#: gitk:9118
+#: gitk:9137
 msgid "Top"
 msgstr "Най-горе"
 
-#: gitk:9119
+#: gitk:9138
 msgid "From"
 msgstr "От"
 
-#: gitk:9124
+#: gitk:9143
 msgid "To"
 msgstr "До"
 
-#: gitk:9148
+#: gitk:9167
 msgid "Generate patch"
 msgstr "Генериране на кръпка"
 
-#: gitk:9150
+#: gitk:9169
 msgid "From:"
 msgstr "От:"
 
-#: gitk:9159
+#: gitk:9178
 msgid "To:"
 msgstr "До:"
 
-#: gitk:9168
+#: gitk:9187
 msgid "Reverse"
 msgstr "Обръщане"
 
-#: gitk:9170 gitk:9366
+#: gitk:9189 gitk:9385
 msgid "Output file:"
 msgstr "Запазване във файла:"
 
-#: gitk:9176
+#: gitk:9195
 msgid "Generate"
 msgstr "Генериране"
 
-#: gitk:9214
+#: gitk:9233
 msgid "Error creating patch:"
 msgstr "Грешка при създаването на кръпка:"
 
-#: gitk:9237 gitk:9354 gitk:9411
+#: gitk:9256 gitk:9373 gitk:9430
 msgid "ID:"
 msgstr "Идентификатор:"
 
-#: gitk:9246
+#: gitk:9265
 msgid "Tag name:"
 msgstr "Име на етикет:"
 
-#: gitk:9249
+#: gitk:9268
 msgid "Tag message is optional"
 msgstr "Съобщението за етикет е незадължително"
 
-#: gitk:9251
+#: gitk:9270
 msgid "Tag message:"
 msgstr "Съобщение за етикет:"
 
-#: gitk:9255 gitk:9420
+#: gitk:9274 gitk:9439
 msgid "Create"
 msgstr "Създаване"
 
-#: gitk:9273
+#: gitk:9292
 msgid "No tag name specified"
 msgstr "Липсва име на етикет"
 
-#: gitk:9277
+#: gitk:9296
 #, tcl-format
 msgid "Tag \"%s\" already exists"
 msgstr "Етикетът „%s“ вече съществува"
 
-#: gitk:9287
+#: gitk:9306
 msgid "Error creating tag:"
 msgstr "Грешка при създаването на етикет:"
 
-#: gitk:9363
+#: gitk:9382
 msgid "Command:"
 msgstr "Команда:"
 
-#: gitk:9371
+#: gitk:9390
 msgid "Write"
 msgstr "Запазване"
 
-#: gitk:9389
+#: gitk:9408
 msgid "Error writing commit:"
 msgstr "Грешка при запазването на подаването:"
 
-#: gitk:9416
+#: gitk:9435
 msgid "Name:"
 msgstr "Име:"
 
-#: gitk:9439
+#: gitk:9458
 msgid "Please specify a name for the new branch"
 msgstr "Укажете име за новия клон"
 
-#: gitk:9444
+#: gitk:9463
 #, tcl-format
 msgid "Branch '%s' already exists. Overwrite?"
 msgstr "Клонът „%s“ вече съществува. Да бъде ли презаписан?"
 
-#: gitk:9511
+#: gitk:9530
 #, tcl-format
 msgid "Commit %s is already included in branch %s -- really re-apply it?"
 msgstr ""
 "Подаването „%s“ вече е включено в клона „%s“ — да бъде ли приложено отново?"
 
-#: gitk:9516
+#: gitk:9535
 msgid "Cherry-picking"
 msgstr "Отбиране"
 
-#: gitk:9525
+#: gitk:9544
 #, tcl-format
 msgid ""
 "Cherry-pick failed because of local changes to file '%s'.\n"
@@ -1033,7 +1044,7 @@ msgstr ""
 "Неуспешно отбиране, защото във файла „%s“ има локални промени.\n"
 "Подайте, занулете или ги скатайте и пробвайте отново."
 
-#: gitk:9531
+#: gitk:9550
 msgid ""
 "Cherry-pick failed because of merge conflict.\n"
 "Do you wish to run git citool to resolve it?"
@@ -1041,20 +1052,20 @@ msgstr ""
 "Неуспешно отбиране поради конфликти при сливане.\n"
 "Искате ли да ги коригирате чрез „git citool“?"
 
-#: gitk:9547 gitk:9605
+#: gitk:9566 gitk:9624
 msgid "No changes committed"
 msgstr "Не са подадени промени"
 
-#: gitk:9574
+#: gitk:9593
 #, tcl-format
 msgid "Commit %s is not included in branch %s -- really revert it?"
 msgstr "Подаването „%s“ не е включено в клона „%s“. Да бъде ли отменено?"
 
-#: gitk:9579
+#: gitk:9598
 msgid "Reverting"
 msgstr "Отмяна"
 
-#: gitk:9587
+#: gitk:9606
 #, tcl-format
 msgid ""
 "Revert failed because of local changes to the following files:%s Please "
@@ -1063,7 +1074,7 @@ msgstr ""
 "Неуспешна отмяна, защото във файла „%s“ има локални промени.\n"
 "Подайте, занулете или ги скатайте и пробвайте отново.<"
 
-#: gitk:9591
+#: gitk:9610
 msgid ""
 "Revert failed because of merge conflict.\n"
 " Do you wish to run git citool to resolve it?"
@@ -1071,28 +1082,28 @@ msgstr ""
 "Неуспешно отмяна поради конфликти при сливане.\n"
 "Искате ли да ги коригирате чрез „git citool“?"
 
-#: gitk:9634
+#: gitk:9653
 msgid "Confirm reset"
 msgstr "Потвърждаване на зануляването"
 
-#: gitk:9636
+#: gitk:9655
 #, tcl-format
 msgid "Reset branch %s to %s?"
 msgstr "Да се занули ли клонът „%s“ към „%s“?"
 
-#: gitk:9638
+#: gitk:9657
 msgid "Reset type:"
 msgstr "Вид зануляване:"
 
-#: gitk:9641
+#: gitk:9660
 msgid "Soft: Leave working tree and index untouched"
 msgstr "Слабо: работното дърво и индекса остават същите"
 
-#: gitk:9644
+#: gitk:9663
 msgid "Mixed: Leave working tree untouched, reset index"
 msgstr "Смесено: работното дърво остава същото, индексът се занулява"
 
-#: gitk:9647
+#: gitk:9666
 msgid ""
 "Hard: Reset working tree and index\n"
 "(discard ALL local changes)"
@@ -1100,19 +1111,19 @@ msgstr ""
 "Силно: зануляване и на работното дърво, и на индекса\n"
 "(*ВСИЧКИ* локални промени ще бъдат безвъзвратно загубени)"
 
-#: gitk:9664
+#: gitk:9683
 msgid "Resetting"
 msgstr "Зануляване"
 
-#: gitk:9724
+#: gitk:9743
 msgid "Checking out"
 msgstr "Изтегляне"
 
-#: gitk:9777
+#: gitk:9796
 msgid "Cannot delete the currently checked-out branch"
 msgstr "Текущо изтегленият клон не може да бъде изтрит"
 
-#: gitk:9783
+#: gitk:9802
 #, tcl-format
 msgid ""
 "The commits on branch %s aren't on any other branch.\n"
@@ -1121,16 +1132,16 @@ msgstr ""
 "Подаванията на клона „%s“ не са на никой друг клон.\n"
 "Наистина ли да се изтрие клонът „%s“?"
 
-#: gitk:9814
+#: gitk:9833
 #, tcl-format
 msgid "Tags and heads: %s"
 msgstr "Етикети и върхове: %s"
 
-#: gitk:9829
+#: gitk:9850
 msgid "Filter"
 msgstr "Филтриране"
 
-#: gitk:10125
+#: gitk:10146
 msgid ""
 "Error reading commit topology information; branch and preceding/following "
 "tag information will be incomplete."
@@ -1138,213 +1149,217 @@ msgstr ""
 "Грешка при прочитането на топологията на подаванията. Информацията за клона "
 "и предшестващите/следващите етикети ще е непълна."
 
-#: gitk:11102
+#: gitk:11123
 msgid "Tag"
 msgstr "Етикет"
 
-#: gitk:11106
+#: gitk:11127
 msgid "Id"
 msgstr "Идентификатор"
 
-#: gitk:11189
+#: gitk:11210
 msgid "Gitk font chooser"
 msgstr "Избор на шрифт за Gitk"
 
-#: gitk:11206
+#: gitk:11227
 msgid "B"
 msgstr "Ч"
 
-#: gitk:11209
+#: gitk:11230
 msgid "I"
 msgstr "К"
 
-#: gitk:11327
+#: gitk:11348
 msgid "Commit list display options"
 msgstr "Настройки на списъка с подавания"
 
-#: gitk:11330
+#: gitk:11351
 msgid "Maximum graph width (lines)"
 msgstr "Максимална широчина на графа (в редове)"
 
-#: gitk:11334
+#: gitk:11355
 #, no-tcl-format
 msgid "Maximum graph width (% of pane)"
 msgstr "Максимална широчина на графа (% от панела)"
 
-#: gitk:11337
+#: gitk:11358
 msgid "Show local changes"
 msgstr "Показване на локалните промени"
 
-#: gitk:11340
+#: gitk:11361
 msgid "Auto-select SHA1 (length)"
 msgstr "Автоматично избиране на SHA1 (дължина)"
 
-#: gitk:11344
+#: gitk:11365
 msgid "Hide remote refs"
 msgstr "Скриване на отдалечените указатели"
 
-#: gitk:11348
+#: gitk:11369
 msgid "Diff display options"
 msgstr "Настройки на показването на разликите"
 
-#: gitk:11350
+#: gitk:11371
 msgid "Tab spacing"
 msgstr "Широчина на табулатора"
 
-#: gitk:11353
+#: gitk:11374
 msgid "Display nearby tags/heads"
 msgstr "Извеждане на близките етикети и върхове"
 
-#: gitk:11356
+#: gitk:11377
 msgid "Maximum # tags/heads to show"
 msgstr "Максимален брой етикети/върхове за показване"
 
-#: gitk:11359
+#: gitk:11380
 msgid "Limit diffs to listed paths"
 msgstr "Разлика само в избраните пътища"
 
-#: gitk:11362
+#: gitk:11383
 msgid "Support per-file encodings"
 msgstr "Поддръжка на различни кодирания за всеки файл"
 
-#: gitk:11368 gitk:11515
+#: gitk:11389 gitk:11536
 msgid "External diff tool"
 msgstr "Външен инструмент за разлики"
 
-#: gitk:11369
+#: gitk:11390
 msgid "Choose..."
 msgstr "Избор…"
 
-#: gitk:11374
+#: gitk:11395
 msgid "General options"
 msgstr "Общи настройки"
 
-#: gitk:11377
+#: gitk:11398
 msgid "Use themed widgets"
 msgstr "Използване на тема за графичните обекти"
 
-#: gitk:11379
+#: gitk:11400
 msgid "(change requires restart)"
 msgstr "(промяната изисква рестартиране на Gitk)"
 
-#: gitk:11381
+#: gitk:11402
 msgid "(currently unavailable)"
 msgstr "(в момента недостъпно)"
 
-#: gitk:11392
+#: gitk:11413
 msgid "Colors: press to choose"
 msgstr "Цветове: избира се с натискане"
 
-#: gitk:11395
+#: gitk:11416
 msgid "Interface"
 msgstr "Интерфейс"
 
-#: gitk:11396
+#: gitk:11417
 msgid "interface"
 msgstr "интерфейс"
 
-#: gitk:11399
+#: gitk:11420
 msgid "Background"
 msgstr "Фон"
 
-#: gitk:11400 gitk:11430
+#: gitk:11421 gitk:11451
 msgid "background"
 msgstr "фон"
 
-#: gitk:11403
+#: gitk:11424
 msgid "Foreground"
 msgstr "Знаци"
 
-#: gitk:11404
+#: gitk:11425
 msgid "foreground"
 msgstr "знаци"
 
-#: gitk:11407
+#: gitk:11428
 msgid "Diff: old lines"
 msgstr "Разлика: стари редове"
 
-#: gitk:11408
+#: gitk:11429
 msgid "diff old lines"
 msgstr "разлика, стари редове"
 
-#: gitk:11412
+#: gitk:11433
 msgid "Diff: new lines"
 msgstr "Разлика: нови редове"
 
-#: gitk:11413
+#: gitk:11434
 msgid "diff new lines"
 msgstr "разлика, нови редове"
 
-#: gitk:11417
+#: gitk:11438
 msgid "Diff: hunk header"
 msgstr "Разлика: начало на парче"
 
-#: gitk:11419
+#: gitk:11440
 msgid "diff hunk header"
 msgstr "разлика, начало на парче"
 
-#: gitk:11423
+#: gitk:11444
 msgid "Marked line bg"
 msgstr "Фон на отбелязан ред"
 
-#: gitk:11425
+#: gitk:11446
 msgid "marked line background"
 msgstr "фон на отбелязан ред"
 
-#: gitk:11429
+#: gitk:11450
 msgid "Select bg"
 msgstr "Избор на фон"
 
-#: gitk:11438
+#: gitk:11459
 msgid "Fonts: press to choose"
 msgstr "Шрифтове: избира се с натискане"
 
-#: gitk:11440
+#: gitk:11461
 msgid "Main font"
 msgstr "Основен шрифт"
 
-#: gitk:11441
+#: gitk:11462
 msgid "Diff display font"
 msgstr "Шрифт за разликите"
 
-#: gitk:11442
+#: gitk:11463
 msgid "User interface font"
 msgstr "Шрифт на интерфейса"
 
-#: gitk:11464
+#: gitk:11485
 msgid "Gitk preferences"
 msgstr "Настройки на Gitk"
 
-#: gitk:11473
+#: gitk:11494
 msgid "General"
 msgstr "Общи"
 
-#: gitk:11474
+#: gitk:11495
 msgid "Colors"
 msgstr "Цветове"
 
-#: gitk:11475
+#: gitk:11496
 msgid "Fonts"
 msgstr "Шрифтове"
 
-#: gitk:11525
+#: gitk:11546
 #, tcl-format
 msgid "Gitk: choose color for %s"
 msgstr "Gitk: избор на цвят на „%s“"
 
-#: gitk:12242
+#: gitk:12059
+msgid ""
+"Sorry, gitk cannot run with this version of Tcl/Tk.\n"
+" Gitk requires at least Tcl/Tk 8.4."
+msgstr ""
+"Тази версия на Tcl/Tk не се поддържа от Gitk.\n"
+" Необходима ви е поне Tcl/Tk 8.4."
+
+#: gitk:12269
 msgid "Cannot find a git repository here."
 msgstr "Тук липсва хранилище на Git."
 
-#: gitk:12289
+#: gitk:12316
 #, tcl-format
 msgid "Ambiguous argument '%s': both revision and filename"
 msgstr "Нееднозначен аргумент „%s“: има и такава версия, и такъв файл"
 
-#: gitk:12301
+#: gitk:12328
 msgid "Bad arguments to gitk:"
 msgstr "Неправилни аргументи на gitk:"
-
-#: gitk:12405
-msgid "Command line"
-msgstr "Команден ред"
