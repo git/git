@@ -84,6 +84,12 @@ UI, Workflows & Features
  * "git config --list" output was hard to parse when values consist of
    multiple lines.  "--name-only" option is added to help this.
 
+ * A handful of usability & cosmetic fixes to gitk and l10n updates.
+
+ * A completely empty e-mail address <> is now allowed in the authors
+   file used by git-svn, to match the way it accepts the output from
+   authors-prog.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -349,3 +355,5 @@ notes for details).
    (merge b8c1d27 ah/pack-objects-usage-strings later to maint).
    (merge 486e1e1 br/svn-doc-include-paths-config later to maint).
    (merge 1733ed3 ee/clean-test-fixes later to maint).
+   (merge 5fcadc3 gb/apply-comment-typofix later to maint).
+   (merge b894d3e mp/t7060-diff-index-test later to maint).
