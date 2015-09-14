@@ -785,7 +785,7 @@ static int guess_p_value(const char *nameline)
 }
 
 /*
- * Does the ---/+++ line has the POSIX timestamp after the last HT?
+ * Does the ---/+++ line have the POSIX timestamp after the last HT?
  * GNU diff puts epoch there to signal a creation/deletion event.  Is
  * this such a timestamp?
  */
