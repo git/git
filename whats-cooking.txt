@@ -1,20 +1,18 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Sep 2015, #02; Wed, 9)
-X-master-at: 7a2c4af7a82eebf2ed0e60a2b36c31e70c619264
-X-next-at: 8a6dc4c4eedd63a3d9286c8083e0c7f522faa35b
+Subject: What's cooking in git.git (Sep 2015, #03; Mon, 14)
+X-master-at: f4d9753a89bf04011c00e943d85211906e86a0f6
+X-next-at: 924a60862de14449284d454b8dd848b57a8e3f75
 
-What's cooking in git.git (Sep 2015, #02; Wed, 9)
+What's cooking in git.git (Sep 2015, #03; Mon, 14)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-The first release candidate 2.6-rc1 has been tagged.  Let's make
-sure we catch any possible regressions from now on, without getting
-distracted by yet more shiny new features.  On the 'maint' front,
-we'll have 2.5.2 tomorrow.
+The tip of 'master' is slightly past 2.6-rc2; hopefully l10n team
+can work on this without updates before the end of the cycle.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -24,38 +22,20 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* jc/builtin-am-signoff-regression-fix (2015-09-06) 1 commit
-  (merged to 'next' on 2015-09-06 at 7e84b6f)
- + am: match --signoff to the original scripted version
+* ah/show-ref-usage-string (2015-08-31) 1 commit
+  (merged to 'next' on 2015-09-08 at dc512c8)
+ + show-ref: place angle brackets around variables in usage string
 
- Recent "git am" had regression when adding a Signed-off-by line
- with its "-s" option by an unintended tightening of how an existing
- trailer block is detected.
+ Both "git show-ref -h" and "git show-ref --help" illustrated that the
+ "--exclude-existing" option makes the command read list of refs
+ from its standard input.  Change only the "show-ref -h" output to
+ have a pair of "<>" around the placeholder that designate an input
+ file, i.e. "git show-ref --exclude-existing < <ref-list>".
 
 
-* jk/am-rerere-lock-fix (2015-09-01) 1 commit
-  (merged to 'next' on 2015-09-02 at 686c5c0)
- + rerere: release lockfile in non-writing functions
-
- Recent "git am" introduced a double-locking failure when used with
- the "--3way" option that invokes rerere machinery.
-
---------------------------------------------------
-[New Topics]
-
-* jk/connect-clear-env (2015-09-08) 2 commits
-  (merged to 'next' on 2015-09-08 at 86b64f7)
- + git_connect: clarify conn->use_shell flag
-  (merged to 'next' on 2015-09-06 at 9ddbed8)
- + git_connect: clear GIT_* environment for ssh
-
- The ssh transport, just like any other transport over the network,
- did not clear GIT_* environment variables, but it is possible to
- use SendEnv and AcceptEnv to leak them to the remote invocation of
- Git, which is not a good idea at all.  Explicitly clear them just
- like we do for the local transport.
-
- Will merge to 'master'.
+* gb/apply-comment-typofix (2015-09-09) 1 commit
+  (merged to 'next' on 2015-09-09 at 29fb0ff)
+ + apply: comment grammar fix
 
 
 * jk/pack-protocol-doc (2015-09-03) 1 commit
@@ -64,97 +44,132 @@ of the repositories listed at
 
  Streamline documentation of the pkt-line protocol.
 
- Will merge to 'master'.
+
+* js/maint-am-skip-performance-regression (2015-09-09) 1 commit
+  (merged to 'next' on 2015-09-14 at b669ea1)
+ + am --skip/--abort: merge HEAD/ORIG_HEAD tree into index
+
+ Later versions of scripted "git am" has a performance regression in
+ "git am --skip" codepath, which no longer exists in the built-in
+ version on the 'master' front.  Fix the regression in the last
+ scripted version that appear in 2.5.x maintenance track and older.
+
+ Will merge to 'maint' and older.
 
 
-* ti/glibc-stdio-mutex-from-signal-handler (2015-09-04) 1 commit
-  (merged to 'next' on 2015-09-08 at c8047ba)
- + pager: don't use unsafe functions in signal handlers
+* mp/t7060-diff-index-test (2015-09-02) 1 commit
+  (merged to 'next' on 2015-09-08 at 80ff284)
+ + t7060: actually test "git diff-index --cached -M"
 
- Allocation related functions and stdio are unsafe things to call
- inside a signal handler, and indeed killing the pager can cause
- glibc to deadlock waiting on allocation mutex as our signal handler
- tries to free() some data structures in wait_for_pager().  Reduce
- these unsafe calls.
-
- I seem to recall Peff had other ideas?  Let's revisit this in the
- next cycle.
+ Fix an old test that was doing the same thing as another one.
 
 
-* as/subtree-with-spaces (2015-09-08) 2 commits
-  (merged to 'next' on 2015-09-09 at f3d763d)
- + contrib/subtree: respect spaces in a repository path
- + t7900-subtree: test the "space in a subdirectory name" case
+* rt/help-strings-fix (2015-09-11) 2 commits
+  (merged to 'next' on 2015-09-14 at 875908c)
+ + tag, update-ref: improve description of option "create-reflog"
+ + pull: don't mark values for option "rebase" for translation
+ 
 
- Update "git subtree" (in contrib/) so that it can take whitespaces
- in the pathnames, not only in the in-tree pathname but the name of
- the directory that the repository is in.
+* sg/help-group (2015-09-10) 1 commit
+  (merged to 'next' on 2015-09-14 at cef17e2)
+ + Makefile: use SHELL_PATH when running generate-cmdlist.sh
 
- Will merge to 'master'.
+ Last minute regression fix.
 
+--------------------------------------------------
+[New Topics]
 
-* gb/apply-comment-typofix (2015-09-09) 1 commit
-  (merged to 'next' on 2015-09-09 at 29fb0ff)
- + apply: comment grammar fix
+* ld/p4-detached-head (2015-09-09) 2 commits
+ - git-p4: work with a detached head
+ - git-p4: add failing test for submit from detached head
 
- Will merge to 'master'.
-
-
-* gb/filter-branch-progress (2015-09-08) 1 commit
- - filter-branch: add passed/remaining seconds on progress
-
- Give progress meter to "git filter-branch".
-
- Is a reroll coming?
+ Will be rerolled.
+ ($gmane/277574)
 
 
-* jk/interpret-trailers-outside-a-repository (2015-09-08) 1 commit
-  (merged to 'next' on 2015-09-09 at a75fce3)
- + interpret-trailers: allow running outside a repository
-
- Allow "git interpret-trailers" to run outside of a Git repository.
+* as/config-doc-markup-fix (2015-09-12) 1 commit
+  (merged to 'next' on 2015-09-14 at faa4134)
+ + Documentation/config: fix formatting for branch.*.rebase and pull.rebase
 
  Will merge to 'master'.
 
 
-* jk/test-lint-forbid-when-finished-in-subshell (2015-09-08) 5 commits
-  (merged to 'next' on 2015-09-09 at 74ede61)
- + test-lib-functions: detect test_when_finished in subshell
- + t7800: don't use test_config in a subshell
- + test-lib-functions: support "test_config -C <dir> ..."
- + t5801: don't use test_when_finished in a subshell
- + t7610: don't use test_config in a subshell
-
- Because "test_when_finished" in our test framework queues the
- clean-up tasks to be done in a shell variable, it should not be
- used inside a subshell.  Add a mechanism to allow 'bash' to catch
- such uses, and fix the ones that were found.
+* et/win32-poll-timeout (2015-09-14) 1 commit
+  (merged to 'next' on 2015-09-14 at 308dff4)
+ + poll: honor the timeout on Win32
 
  Will merge to 'master'.
 
 
-* ls/p4-lfs (2015-09-09) 5 commits
- - git-p4: add Git LFS backend for large file system
- - git-p4: add support for large file systems
- - git-p4: return an empty list if a list config has no values
- - git-p4: add gitConfigInt reader
- - git-p4: add optional type specifier to gitConfig reader
+* jk/graph-format-padding (2015-09-14) 1 commit
+ - pretty: pass graph width to pretty formatting for use in '%>|(N)'
 
- Teach "git p4" to send large blobs outside the repository by
- talking to Git LFS.
+ Redefine the way '%>|(N)' padding and the "--graph" option
+ interacts.  It has been that the available columns to display the
+ log message was measured from the edge of the area the graph ended,
+ but with this it becomes the beginning of the entire output.
+
+ I have a suspicion that 50% of the users would appreciate this
+ change, and the remainder see this break their expectation.  If
+ that is the case, we might need to introduce a similar but
+ different alignment operator so that this new behaviour is
+ available to those who want to use it, without negatively affecting
+ existing uses.
 
 
-* nd/clone-linked-checkout (2015-09-07) 5 commits
- - clone: better error when --reference is a linked checkout
- - clone: allow --local from a linked checkout
- - enter_repo: allow .git files in strict mode
- - enter_repo: avoid duplicating logic, use is_git_directory() instead
- - path.c: delete an extra space
+* jk/make-findstring-makeflags-fix (2015-09-10) 1 commit
+ - Makefile: fix MAKEFLAGS tests with multiple flags
 
- It was not possible to use a repository-lookalike created by "git
- worktree add" as a local source of "git clone".
+ Customization to change the behaviour with "make -w" and "make -s"
+ in our Makefile was broken when they were used together.
 
- Is a reroll coming?
+ Will merge to 'next'.
+
+
+* jk/rebase-no-autostash (2015-09-10) 2 commits
+ - Documentation/git-rebase: fix --no-autostash formatting
+ - rebase: support --no-autostash
+
+ There was no way to defeat a configured rebase.autostash variable
+ from the command line, as "git rebase --no-autostash" was missing.
+
+ Will merge to 'next'.
+
+
+* jw/make-arflags-customizable (2015-09-10) 1 commit
+ - Makefile: allow $(ARFLAGS) specified from the command line
+
+ The Makefile always runs the library archiver with hardcoded "crs"
+ options, which was inconvenient for exotic platforms on which
+ people wants to use programs with totally different set of command
+ line options.
+
+ Will merge to 'next'.
+
+
+* nd/ignore-then-not-ignore (2015-09-14) 2 commits
+ - dir.c: don't exclude whole dir prematurely if neg pattern may match
+ - dir.c: make last_exclude_matching_from_list() run til the end
+
+ Allow a later "!/abc/def" to override an earlier "/abc" that
+ appears in the same .gitignore file to make it easier to express
+ "everything in /abc directory is ignored, except for ...".
+
+
+* po/doc-branch-desc (2015-09-14) 1 commit
+  (merged to 'next' on 2015-09-14 at 4934a96)
+ + doc: show usage of branch description
+
+ The branch descriptions that are set with "git branch --edit-description"
+ option were used in many places but they weren't clearly documented.
+
+ Will merge to 'master'.
+
+
+* sb/submodule-parallel-fetch (2015-09-14) 2 commits
+ - fetch: fetch submodules in parallel
+ - submodule.c: write "Fetching submodule <foo>" to stderr
+ (this branch uses sb/submodule-helper.)
 
 --------------------------------------------------
 [Stalled]
@@ -164,17 +179,6 @@ of the repositories listed at
 
  Will discard.
  ($gmane/276104)
-
-
-* mk/submodule-gitdir-path (2015-08-05) 2 commits
- - path: implement common_dir handling in git_path_submodule()
- - submodule refactor: use git_path_submodule() in add_submodule_odb()
-
- The submodule code has been taught to work better with separate
- work trees created via "git worktree add".
-
- Waiting for a review.
- ($gmane/275340).
 
 
 * nd/list-files (2015-02-09) 21 commits
@@ -393,6 +397,113 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* mk/submodule-gitdir-path (2015-09-14) 2 commits
+ - path: implement common_dir handling in git_pathdup_submodule()
+ - submodule refactor: use strbuf_git_path_submodule() in add_submodule_odb()
+
+ The submodule code has been taught to work better with separate
+ work trees created via "git worktree add".
+
+
+* jk/connect-clear-env (2015-09-08) 2 commits
+  (merged to 'next' on 2015-09-08 at 86b64f7)
+ + git_connect: clarify conn->use_shell flag
+  (merged to 'next' on 2015-09-06 at 9ddbed8)
+ + git_connect: clear GIT_* environment for ssh
+
+ The ssh transport, just like any other transport over the network,
+ did not clear GIT_* environment variables, but it is possible to
+ use SendEnv and AcceptEnv to leak them to the remote invocation of
+ Git, which is not a good idea at all.  Explicitly clear them just
+ like we do for the local transport.
+
+ Will merge to 'master'.
+
+
+* ti/glibc-stdio-mutex-from-signal-handler (2015-09-04) 1 commit
+  (merged to 'next' on 2015-09-08 at c8047ba)
+ + pager: don't use unsafe functions in signal handlers
+
+ Allocation related functions and stdio are unsafe things to call
+ inside a signal handler, and indeed killing the pager can cause
+ glibc to deadlock waiting on allocation mutex as our signal handler
+ tries to free() some data structures in wait_for_pager().  Reduce
+ these unsafe calls.
+
+ I seem to recall Peff had other ideas?  Let's revisit this in the
+ next cycle.
+
+
+* as/subtree-with-spaces (2015-09-08) 2 commits
+  (merged to 'next' on 2015-09-09 at f3d763d)
+ + contrib/subtree: respect spaces in a repository path
+ + t7900-subtree: test the "space in a subdirectory name" case
+
+ Update "git subtree" (in contrib/) so that it can take whitespaces
+ in the pathnames, not only in the in-tree pathname but the name of
+ the directory that the repository is in.
+
+ Will merge to 'master'.
+
+
+* gb/filter-branch-progress (2015-09-08) 1 commit
+ - filter-branch: add passed/remaining seconds on progress
+
+ Give progress meter to "git filter-branch".
+
+ Is a reroll coming?
+
+
+* jk/interpret-trailers-outside-a-repository (2015-09-08) 1 commit
+  (merged to 'next' on 2015-09-09 at a75fce3)
+ + interpret-trailers: allow running outside a repository
+
+ Allow "git interpret-trailers" to run outside of a Git repository.
+
+ Will merge to 'master'.
+
+
+* jk/test-lint-forbid-when-finished-in-subshell (2015-09-08) 5 commits
+  (merged to 'next' on 2015-09-09 at 74ede61)
+ + test-lib-functions: detect test_when_finished in subshell
+ + t7800: don't use test_config in a subshell
+ + test-lib-functions: support "test_config -C <dir> ..."
+ + t5801: don't use test_when_finished in a subshell
+ + t7610: don't use test_config in a subshell
+
+ Because "test_when_finished" in our test framework queues the
+ clean-up tasks to be done in a shell variable, it should not be
+ used inside a subshell.  Add a mechanism to allow 'bash' to catch
+ such uses, and fix the ones that were found.
+
+ Will merge to 'master'.
+
+
+* ls/p4-lfs (2015-09-09) 5 commits
+ - git-p4: add Git LFS backend for large file system
+ - git-p4: add support for large file systems
+ - git-p4: return an empty list if a list config has no values
+ - git-p4: add gitConfigInt reader
+ - git-p4: add optional type specifier to gitConfig reader
+
+ Teach "git p4" to send large blobs outside the repository by
+ talking to Git LFS.
+
+
+* nd/clone-linked-checkout (2015-09-14) 5 commits
+ - clone: better error when --reference is a linked checkout
+ - clone: allow --local from a linked checkout
+ - enter_repo: allow .git files in strict mode
+ - enter_repo: avoid duplicating logic, use is_git_directory() instead
+ - path.c: delete an extra space
+
+ It was not possible to use a repository-lookalike created by "git
+ worktree add" as a local source of "git clone".
+
+ Will be rerolled.
+ ($gmane/277815)
+
+
 * jh/quiltimport-explicit-series-file (2015-09-01) 1 commit
   (merged to 'next' on 2015-09-02 at 1129ca4)
  + git-quiltimport: add commandline option --series <file>
@@ -410,28 +521,6 @@ of the repositories listed at
 
  The debugging infrastructure for pkt-line based communication has
  been improved to mark the side-band communicatio specifically.
-
- Will merge to 'master'.
-
-
-* mp/t7060-diff-index-test (2015-09-02) 1 commit
-  (merged to 'next' on 2015-09-08 at 80ff284)
- + t7060: actually test "git diff-index --cached -M"
-
- Fix an old test that was doing the same thing as another one.
-
- Will merge to 'master'.
-
-
-* ah/show-ref-usage-string (2015-08-31) 1 commit
-  (merged to 'next' on 2015-09-08 at dc512c8)
- + show-ref: place angle brackets around variables in usage string
-
- Both "git show-ref -h" and "git show-ref --help" illustrated that the
- "--exclude-existing" option makes the command read list of refs
- from its standard input.  Change only the "show-ref -h" output to
- have a pair of "<>" around the placeholder that designate an input
- file, i.e. "git show-ref --exclude-existing < <ref-list>".
 
  Will merge to 'master'.
 
@@ -522,17 +611,18 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* kn/for-each-tag (2015-08-25) 15 commits
- - SQUASH??? a tag longer than 15 bytes break alignment but keeps SP before the message
+* kn/for-each-tag (2015-09-11) 16 commits
  - tag.c: implement '--merged' and '--no-merged' options
  - tag.c: implement '--format' option
  - tag.c: use 'ref-filter' APIs
  - tag.c: use 'ref-filter' data structures
  - ref-filter: add option to match literal pattern
  - ref-filter: add support to sort by version
- - ref-filter: support printing N lines from tag annotation
+ - ref-filter: add support for %(contents:lines=X)
  - ref-filter: add option to filter out tags, branches and remotes
  - ref-filter: implement an `align` atom
+ - ref-filter: introduce match_atom_name()
+ - ref-filter: introduce handler function for each atom
  - utf8: add function to align a string into given strbuf
  - ref-filter: introduce ref_formatting_state and ref_formatting_stack
  - ref-filter: move `struct atom_value` to ref-filter.c
@@ -543,8 +633,7 @@ of the repositories listed at
  The "ref-filter" code was taught about many parts of what "tag -l"
  does and then "tag -l" is reimplemented in terms of "ref-filter".
 
- Almost there...
- A reroll exists at v16, but it seems there will be another one.
+ Will merge to 'next'.
 
 
 * nd/ita-cleanup (2015-09-06) 6 commits
@@ -581,7 +670,7 @@ of the repositories listed at
  given remote name used for fetching and pushing.
 
  Waiting for a reroll.
- ($gmane/275401)
+ ($gmane/277313)
 
 
 * sb/submodule-helper (2015-09-08) 4 commits
@@ -589,6 +678,7 @@ of the repositories listed at
  - submodule: rewrite `module_name` shell function in C
  - submodule: rewrite `module_list` shell function in C
  - Merge 'hv/submodule-config' to 'sb/submodule-helper'
+ (this branch is used by sb/submodule-parallel-fetch.)
 
  The infrastructure to rewrite "git submodule" in C is being built
  incrementally.  Let's polish these early parts well enough and make
@@ -660,10 +750,10 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* jc/rerere-multi (2015-07-30) 7 commits
- . t4200: rerere a merge with two identical conflicts
- . WIP
- . rerere: allow multiple variants to exist
+* jc/rerere-multi (2015-09-11) 7 commits
+ - t4200: rerere a merge with two identical conflicts
+ - WIP
+ - rerere: allow multiple variants to exist
  - rerere: delay the recording of preimage
  - rerere: handle leftover rr-cache/$ID directory and postimage files
  - rerere: scan $GIT_DIR/rr-cache/$ID when instantiating a rerere_id
