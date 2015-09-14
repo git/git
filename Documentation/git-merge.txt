@@ -78,7 +78,7 @@ will be appended to the specified message.
 +
 The 'git fmt-merge-msg' command can be
 used to give a good default for automated 'git merge'
-invocations.
+invocations. The automated message can include the branch description.
 
 --[no-]rerere-autoupdate::
 	Allow the rerere mechanism to update the index with the

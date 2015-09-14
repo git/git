@@ -213,7 +213,7 @@ feeding the result to `git send-email`.
 
 --[no-]cover-letter::
 	In addition to the patches, generate a cover letter file
-	containing the shortlog and the overall diffstat.  You can
+	containing the branch description, shortlog and the overall diffstat.  You can
 	fill in a description in the file before sending it out.
 
 --notes[=<ref>]::
