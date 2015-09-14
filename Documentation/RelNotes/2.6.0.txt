@@ -275,7 +275,7 @@ notes for details).
 
  * We rewrote one of the build scripts in Perl but this reimplements
    in Bourne shell.
-   (merge 82aec45 sg/help-group later to maint).
+   (merge 57cee8a sg/help-group later to maint).
 
  * The experimental untracked-cache feature were buggy when paths with
    a few levels of subdirectories are involved.
@@ -332,6 +332,12 @@ notes for details).
  * "git init empty && git -C empty log" said "bad default revision 'HEAD'",
    which was found to be a bit confusing to new users.
    (merge ce11360 jk/log-missing-default-HEAD later to maint).
+
+ * Recent versions of scripted "git am" has a performance regression in
+   "git am --skip" codepath, which no longer exists in the built-in
+   version on the 'master' front.  Fix the regression in the last
+   scripted version that appear in 2.5.x maintenance track and older.
+   (merge b9d6689 js/maint-am-skip-performance-regression later to maint).
 
  * Code cleanups and documentation updates.
    (merge 1c601af es/doc-clean-outdated-tools later to maint).
