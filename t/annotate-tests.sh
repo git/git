@@ -111,6 +111,10 @@ test_expect_success 'blame 2 authors + 2 merged-in authors' '
 	check_count A 2 B 1 B1 2 B2 1
 '
 
+test_expect_success 'blame --first-parent blames merge for branch1' '
+	check_count --first-parent A 2 B 1 "A U Thor" 2 B2 1
+'
+
 test_expect_success 'blame ancestor' '
 	check_count -h master A 2 B 2
 '
