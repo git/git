@@ -15,6 +15,7 @@ SYNOPSIS
 'git remote remove' <name>
 'git remote set-head' <name> (-a | --auto | -d | --delete | <branch>)
 'git remote set-branches' [--add] <name> <branch>...
+'git remote get-url' [--push] [--all] <name>
 'git remote set-url' [--push] <name> <newurl> [<oldurl>]
 'git remote set-url --add' [--push] <name> <newurl>
 'git remote set-url --delete' [--push] <name> <url>
@@ -130,6 +131,15 @@ The named branches will be interpreted as if specified with the
 +
 With `--add`, instead of replacing the list of currently tracked
 branches, adds to that list.
+
+'get-url'::
+
+Retrieves the URLs for a remote. Configurations for `insteadOf` and
+`pushInsteadOf` are expanded here. By default, only the first URL is listed.
++
+With '--push', push URLs are queried rather than fetch URLs.
++
+With '--all', all URLs for the remote will be listed.
 
 'set-url'::
 
