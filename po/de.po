@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: Git\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2015-09-05 09:16+0800\n"
+"POT-Creation-Date: 2015-09-15 06:45+0800\n"
 "PO-Revision-Date: 2015-01-21 15:01+0800\n"
 "Last-Translator: Ralf Thielow <ralf.thielow@gmail.com>\n"
 "Language-Team: German <>\n"
@@ -348,8 +348,8 @@ msgstr "Erstellung der Paketindexdatei abgebrochen"
 msgid "invalid color value: %.*s"
 msgstr "Ungültiger Farbwert: %.*s"
 
-#: commit.c:40 builtin/am.c:451 builtin/am.c:487 builtin/am.c:1489
-#: builtin/am.c:2101
+#: commit.c:40 builtin/am.c:451 builtin/am.c:487 builtin/am.c:1516
+#: builtin/am.c:2128
 #, c-format
 msgid "could not parse %s"
 msgstr "konnte %s nicht parsen"
@@ -672,7 +672,7 @@ msgstr "%s: %s - %s"
 msgid "failed to read the cache"
 msgstr "Lesen des Zwischenspeichers fehlgeschlagen"
 
-#: merge.c:94 builtin/am.c:1974 builtin/am.c:2009 builtin/checkout.c:375
+#: merge.c:94 builtin/am.c:2001 builtin/am.c:2036 builtin/checkout.c:375
 #: builtin/checkout.c:586 builtin/clone.c:715
 msgid "unable to write new index file"
 msgstr "Konnte neue Index-Datei nicht schreiben."
@@ -2347,7 +2347,7 @@ msgstr "Konnte neue Index-Datei nicht schreiben."
 msgid "could not stat %s"
 msgstr "Konnte '%s' nicht lesen"
 
-#: builtin/am.c:270 builtin/am.c:1318 builtin/commit.c:737
+#: builtin/am.c:270 builtin/am.c:1345 builtin/commit.c:737
 #: builtin/merge.c:1079
 #, c-format
 msgid "could not read '%s'"
@@ -2427,47 +2427,50 @@ msgstr "Konnte Index-Datei nicht schreiben."
 #: builtin/am.c:1202
 #, c-format
 msgid "When you have resolved this problem, run \"%s --continue\"."
-msgstr "Wenn Sie das Problem aufgelöst haben, führen Sie \"%s --continue\" aus."
+msgstr ""
+"Wenn Sie das Problem aufgelöst haben, führen Sie \"%s --continue\" aus."
 
 #: builtin/am.c:1203
 #, c-format
 msgid "If you prefer to skip this patch, run \"%s --skip\" instead."
-msgstr "Falls Sie diesen Patch auslassen möchten, führen Sie stattdessen "
-"\"%s --skip\" aus."
+msgstr ""
+"Falls Sie diesen Patch auslassen möchten, führen Sie stattdessen \"%s --skip"
+"\" aus."
 
 #: builtin/am.c:1204
 #, c-format
 msgid "To restore the original branch and stop patching, run \"%s --abort\"."
-msgstr "Um den ursprünglichen Branch wiederherzustellen und die Anwendung der "
+msgstr ""
+"Um den ursprünglichen Branch wiederherzustellen und die Anwendung der "
 "Patches abzubrechen, führen Sie \"%s --abort\" aus."
 
-#: builtin/am.c:1312
+#: builtin/am.c:1339
 msgid "Patch is empty. Was it split wrong?"
 msgstr "Patch ist leer. War dessen Aufteilung falsch?"
 
-#: builtin/am.c:1386 builtin/log.c:1345
+#: builtin/am.c:1413 builtin/log.c:1345
 #, c-format
 msgid "invalid ident line: %s"
 msgstr "Ungültige Identifikationszeile: %s"
 
-#: builtin/am.c:1413
+#: builtin/am.c:1440
 #, c-format
 msgid "unable to parse commit %s"
 msgstr "Konnte Commit '%s' nicht parsen."
 
-#: builtin/am.c:1587
+#: builtin/am.c:1614
 msgid "Repository lacks necessary blobs to fall back on 3-way merge."
 msgstr ""
 "Dem Repository fehlen notwendige Blobs um auf einen 3-Wege-Merge "
 "zurückzufallen."
 
-#: builtin/am.c:1589
+#: builtin/am.c:1616
 msgid "Using index info to reconstruct a base tree..."
 msgstr ""
 "Verwende Informationen aus der Staging-Area, um ein Basisverzeichnis "
 "nachzustellen ..."
 
-#: builtin/am.c:1608
+#: builtin/am.c:1635
 msgid ""
 "Did you hand edit your patch?\n"
 "It does not apply to blobs recorded in its index."
@@ -2475,39 +2478,39 @@ msgstr ""
 "Haben Sie den Patch per Hand editiert?\n"
 "Er kann nicht auf die Blobs in seiner 'index' Zeile angewendet werden."
 
-#: builtin/am.c:1614
+#: builtin/am.c:1641
 msgid "Falling back to patching base and 3-way merge..."
 msgstr "Falle zurück zum Patchen der Basis und zum 3-Wege-Merge ..."
 
-#: builtin/am.c:1639
+#: builtin/am.c:1666
 msgid "Failed to merge in the changes."
 msgstr "Merge der Änderungen fehlgeschlagen."
 
-#: builtin/am.c:1664 builtin/merge.c:632
+#: builtin/am.c:1691 builtin/merge.c:632
 msgid "git write-tree failed to write a tree"
 msgstr "\"git write-tree\" schlug beim Schreiben eines \"Tree\"-Objektes fehl"
 
-#: builtin/am.c:1671
+#: builtin/am.c:1698
 msgid "applying to an empty history"
 msgstr "auf leere Historie anwenden"
 
-#: builtin/am.c:1684 builtin/commit.c:1752 builtin/merge.c:829
+#: builtin/am.c:1711 builtin/commit.c:1752 builtin/merge.c:829
 #: builtin/merge.c:854
 msgid "failed to write commit object"
 msgstr "Fehler beim Schreiben des Commit-Objektes."
 
-#: builtin/am.c:1716 builtin/am.c:1720
+#: builtin/am.c:1743 builtin/am.c:1747
 #, c-format
 msgid "cannot resume: %s does not exist."
 msgstr "Kann nicht fortsetzen: %s existiert nicht"
 
-#: builtin/am.c:1736
+#: builtin/am.c:1763
 msgid "cannot be interactive without stdin connected to a terminal."
 msgstr ""
 "Kann nicht interaktiv sein, ohne dass die Standard-Eingabe mit einem "
 "Terminal verbunden ist."
 
-#: builtin/am.c:1741
+#: builtin/am.c:1768
 msgid "Commit Body is:"
 msgstr "Commit-Beschreibung ist:"
 
@@ -2515,36 +2518,35 @@ msgstr "Commit-Beschreibung ist:"
 #. in your translation. The program will only accept English
 #. input at this point.
 #.
-#: builtin/am.c:1751
+#: builtin/am.c:1778
 msgid "Apply? [y]es/[n]o/[e]dit/[v]iew patch/[a]ccept all: "
 msgstr "Anwenden? [y]es/[n]o/[e]dit/[v]iew patch/[a]ccept all: "
 
-#: builtin/am.c:1801
+#: builtin/am.c:1828
 #, c-format
 msgid "Dirty index: cannot apply patches (dirty: %s)"
 msgstr "Geänderter Index: kann Patches nicht anwenden (geändert: %s)"
 
-#: builtin/am.c:1836 builtin/am.c:1907
+#: builtin/am.c:1863 builtin/am.c:1934
 #, c-format
 msgid "Applying: %.*s"
 msgstr "Wende an: %.*s"
 
-#: builtin/am.c:1852
+#: builtin/am.c:1879
 msgid "No changes -- Patch already applied."
 msgstr "Keine Änderungen -- Patches bereits angewendet."
 
-#: builtin/am.c:1860
+#: builtin/am.c:1887
 #, c-format
 msgid "Patch failed at %s %.*s"
 msgstr "Anwendung des Patches fehlgeschlagen bei %s %.*s"
 
-#: builtin/am.c:1866
+#: builtin/am.c:1893
 #, c-format
 msgid "The copy of the patch that failed is found in: %s"
-msgstr ""
-"Die Kopie des fehlgeschlagenen Patches befindet sich in: %s"
+msgstr "Die Kopie des fehlgeschlagenen Patches befindet sich in: %s"
 
-#: builtin/am.c:1910
+#: builtin/am.c:1937
 msgid ""
 "No changes - did you forget to use 'git add'?\n"
 "If there is nothing left to stage, chances are that something else\n"
@@ -2555,7 +2557,7 @@ msgstr ""
 "diese bereits anderweitig eingefügt worden sein; Sie könnten diesen Patch\n"
 "auslassen."
 
-#: builtin/am.c:1917
+#: builtin/am.c:1944
 msgid ""
 "You still have unmerged paths in your index.\n"
 "Did you forget to use 'git add'?"
@@ -2563,17 +2565,17 @@ msgstr ""
 "Sie haben immer noch nicht zusammengeführte Pfade im Index.\n"
 "Haben Sie vergessen 'git add' zu benutzen?"
 
-#: builtin/am.c:2025 builtin/am.c:2029 builtin/am.c:2041 builtin/reset.c:308
+#: builtin/am.c:2052 builtin/am.c:2056 builtin/am.c:2068 builtin/reset.c:308
 #: builtin/reset.c:316
 #, c-format
 msgid "Could not parse object '%s'."
 msgstr "Konnte Objekt '%s' nicht parsen."
 
-#: builtin/am.c:2077
+#: builtin/am.c:2104
 msgid "failed to clean index"
 msgstr "Fehler beim Bereinigen des Index"
 
-#: builtin/am.c:2111
+#: builtin/am.c:2138
 msgid ""
 "You seem to have moved HEAD since the last 'am' failure.\n"
 "Not rewinding to ORIG_HEAD"
@@ -2581,89 +2583,89 @@ msgstr ""
 "Sie scheinen seit dem letzten gescheiterten 'am' HEAD geändert zu haben.\n"
 "Keine Zurücksetzung zu ORIG_HEAD."
 
-#: builtin/am.c:2172
+#: builtin/am.c:2199
 #, c-format
 msgid "Invalid value for --patch-format: %s"
 msgstr "Ungültiger Wert für --patch-format: %s"
 
-#: builtin/am.c:2194
+#: builtin/am.c:2221
 msgid "git am [options] [(<mbox>|<Maildir>)...]"
 msgstr "git am [Optionen] [(<mbox>|<E-Mail-Verzeichnis>)...]"
 
-#: builtin/am.c:2195
+#: builtin/am.c:2222
 msgid "git am [options] (--continue | --skip | --abort)"
 msgstr "git am [Optionen] (--continue | --skip | --abort)"
 
-#: builtin/am.c:2201
+#: builtin/am.c:2228
 msgid "run interactively"
 msgstr "interaktiv ausführen"
 
-#: builtin/am.c:2203
+#: builtin/am.c:2230
 msgid "historical option -- no-op"
 msgstr "historische Option -- kein Effekt"
 
-#: builtin/am.c:2205
+#: builtin/am.c:2232
 msgid "allow fall back on 3way merging if needed"
 msgstr "erlaube, falls notwendig, das Zurückfallen auf einen 3-Wege-Merge"
 
-#: builtin/am.c:2206 builtin/init-db.c:509 builtin/prune-packed.c:57
+#: builtin/am.c:2233 builtin/init-db.c:509 builtin/prune-packed.c:57
 #: builtin/repack.c:171
 msgid "be quiet"
 msgstr "weniger Ausgaben"
 
-#: builtin/am.c:2208
+#: builtin/am.c:2235
 msgid "add a Signed-off-by line to the commit message"
 msgstr "der Commit-Beschreibung eine Signed-off-by Zeile hinzufügen"
 
-#: builtin/am.c:2211
+#: builtin/am.c:2238
 msgid "recode into utf8 (default)"
 msgstr "nach UTF-8 umkodieren (Standard)"
 
-#: builtin/am.c:2213
+#: builtin/am.c:2240
 msgid "pass -k flag to git-mailinfo"
 msgstr "-k an git-mailinfo übergeben"
 
-#: builtin/am.c:2215
+#: builtin/am.c:2242
 msgid "pass -b flag to git-mailinfo"
 msgstr "-b an git-mailinfo übergeben"
 
-#: builtin/am.c:2217
+#: builtin/am.c:2244
 msgid "pass -m flag to git-mailinfo"
 msgstr "-m an git-mailinfo übergeben"
 
-#: builtin/am.c:2219
+#: builtin/am.c:2246
 msgid "pass --keep-cr flag to git-mailsplit for mbox format"
 msgstr "--keep-cr an git-mailsplit für mbox-Format übergeben"
 
-#: builtin/am.c:2222
+#: builtin/am.c:2249
 msgid "do not pass --keep-cr flag to git-mailsplit independent of am.keepcr"
 msgstr "kein --keep-cr an git-mailsplit übergeben, unabhängig von am.keepcr"
 
-#: builtin/am.c:2225
+#: builtin/am.c:2252
 msgid "strip everything before a scissors line"
 msgstr "alles vor einer Scheren-Zeile entfernen"
 
-#: builtin/am.c:2226 builtin/apply.c:4563
+#: builtin/am.c:2253 builtin/apply.c:4563
 msgid "action"
 msgstr "Aktion"
 
-#: builtin/am.c:2227 builtin/am.c:2230 builtin/am.c:2233 builtin/am.c:2236
-#: builtin/am.c:2239 builtin/am.c:2242 builtin/am.c:2245 builtin/am.c:2248
-#: builtin/am.c:2254
+#: builtin/am.c:2254 builtin/am.c:2257 builtin/am.c:2260 builtin/am.c:2263
+#: builtin/am.c:2266 builtin/am.c:2269 builtin/am.c:2272 builtin/am.c:2275
+#: builtin/am.c:2281
 msgid "pass it through git-apply"
 msgstr "an git-apply übergeben"
 
-#: builtin/am.c:2235 builtin/apply.c:4587
+#: builtin/am.c:2262 builtin/apply.c:4587
 msgid "root"
 msgstr "Wurzelverzeichnis"
 
-#: builtin/am.c:2238 builtin/am.c:2241 builtin/apply.c:4525
+#: builtin/am.c:2265 builtin/am.c:2268 builtin/apply.c:4525
 #: builtin/apply.c:4528 builtin/clone.c:85 builtin/fetch.c:93
 #: builtin/pull.c:167
 msgid "path"
 msgstr "Pfad"
 
-#: builtin/am.c:2244 builtin/fmt-merge-msg.c:669 builtin/fmt-merge-msg.c:672
+#: builtin/am.c:2271 builtin/fmt-merge-msg.c:669 builtin/fmt-merge-msg.c:672
 #: builtin/grep.c:698 builtin/merge.c:198 builtin/pull.c:127
 #: builtin/repack.c:178 builtin/repack.c:182 builtin/show-branch.c:664
 #: builtin/show-ref.c:180 builtin/tag.c:591 parse-options.h:132
@@ -2671,61 +2673,61 @@ msgstr "Pfad"
 msgid "n"
 msgstr "Anzahl"
 
-#: builtin/am.c:2247 builtin/apply.c:4531
+#: builtin/am.c:2274 builtin/apply.c:4531
 msgid "num"
 msgstr "Anzahl"
 
-#: builtin/am.c:2250 builtin/for-each-ref.c:34 builtin/replace.c:438
+#: builtin/am.c:2277 builtin/for-each-ref.c:34 builtin/replace.c:438
 msgid "format"
 msgstr "Format"
 
-#: builtin/am.c:2251
+#: builtin/am.c:2278
 msgid "format the patch(es) are in"
 msgstr "Patch-Format"
 
-#: builtin/am.c:2257
+#: builtin/am.c:2284
 msgid "override error message when patch failure occurs"
 msgstr "Meldung bei fehlerhafter Patch-Anwendung überschreiben"
 
-#: builtin/am.c:2259
+#: builtin/am.c:2286
 msgid "continue applying patches after resolving a conflict"
 msgstr "Anwendung der Patches nach Auflösung eines Konfliktes fortsetzen"
 
-#: builtin/am.c:2262
+#: builtin/am.c:2289
 msgid "synonyms for --continue"
 msgstr "Synonyme für --continue"
 
-#: builtin/am.c:2265
+#: builtin/am.c:2292
 msgid "skip the current patch"
 msgstr "den aktuellen Patch auslassen"
 
-#: builtin/am.c:2268
+#: builtin/am.c:2295
 msgid "restore the original branch and abort the patching operation."
-msgstr "ursprünglichen Branch wiederherstellen und Anwendung der Patches "
-"abbrechen"
+msgstr ""
+"ursprünglichen Branch wiederherstellen und Anwendung der Patches abbrechen"
 
-#: builtin/am.c:2272
+#: builtin/am.c:2299
 msgid "lie about committer date"
 msgstr "Autor-Datum als Commit-Datum verwenden"
 
-#: builtin/am.c:2274
+#: builtin/am.c:2301
 msgid "use current timestamp for author date"
 msgstr "aktuellen Zeitstempel als Autor-Datum verwenden"
 
-#: builtin/am.c:2276 builtin/commit.c:1590 builtin/merge.c:225
+#: builtin/am.c:2303 builtin/commit.c:1590 builtin/merge.c:225
 #: builtin/pull.c:155 builtin/revert.c:92 builtin/tag.c:606
 msgid "key-id"
 msgstr "GPG-Schlüsselkennung"
 
-#: builtin/am.c:2277
+#: builtin/am.c:2304
 msgid "GPG-sign commits"
 msgstr "Commits mit GPG signieren"
 
-#: builtin/am.c:2280
+#: builtin/am.c:2307
 msgid "(internal use for git-rebase)"
 msgstr "(intern für git-rebase verwendet)"
 
-#: builtin/am.c:2295
+#: builtin/am.c:2322
 msgid ""
 "The -b/--binary option has been a no-op for long time, and\n"
 "it will be removed. Please do not use it anymore."
@@ -2733,17 +2735,16 @@ msgstr ""
 "Die -b/--binary Option hat seit Langem keinen Effekt und wird\n"
 "entfernt. Bitte nicht mehr verwenden."
 
-#: builtin/am.c:2302
+#: builtin/am.c:2329
 msgid "failed to read the index"
 msgstr "Fehler beim Lesen des Index"
 
-#: builtin/am.c:2317
+#: builtin/am.c:2344
 #, c-format
 msgid "previous rebase directory %s still exists but mbox given."
-msgstr ""
-"Vorheriges Rebase-Verzeichnis %s existiert noch, aber mbox gegeben."
+msgstr "Vorheriges Rebase-Verzeichnis %s existiert noch, aber mbox gegeben."
 
-#: builtin/am.c:2341
+#: builtin/am.c:2368
 #, c-format
 msgid ""
 "Stray %s directory found.\n"
@@ -2752,7 +2753,7 @@ msgstr ""
 "Stray %s Verzeichnis gefunden.\n"
 "Benutzen Sie \"git am --abort\", um es zu entfernen."
 
-#: builtin/am.c:2347
+#: builtin/am.c:2374
 msgid "Resolve operation not in progress, we are not resuming."
 msgstr "Es ist keine Auflösung im Gange, es wird nicht fortgesetzt."
 
@@ -8766,10 +8767,6 @@ msgstr "git pull [<Optionen>] [<Repository> [<Refspec>...]]"
 msgid "Options related to merging"
 msgstr "Optionen bezogen auf Merge"
 
-#: builtin/pull.c:115
-msgid "false|true|preserve"
-msgstr "false|true|preserve"
-
 #: builtin/pull.c:116
 msgid "incorporate changes by rebasing rather than merging"
 msgstr "Integration von Änderungen durch Rebase statt Merge"
@@ -8793,8 +8790,9 @@ msgstr "Ungültiger Wert für pull.ff: %s"
 
 #: builtin/pull.c:352
 msgid "Cannot pull with rebase: You have unstaged changes."
-msgstr "Kann \"pull\" mit \"rebase\" nicht ausführen: Sie haben Änderungen, "
-"die nicht zum Commit vorgemerkt sind."
+msgstr ""
+"Kann \"pull\" mit \"rebase\" nicht ausführen: Sie haben Änderungen, die "
+"nicht zum Commit vorgemerkt sind."
 
 #: builtin/pull.c:358
 msgid "Additionally, your index contains uncommitted changes."
@@ -8802,8 +8800,9 @@ msgstr "Zusätzlich beinhaltet die Staging-Area nicht committete Änderungen."
 
 #: builtin/pull.c:360
 msgid "Cannot pull with rebase: Your index contains uncommitted changes."
-msgstr "Kann \"pull\" mit \"rebase\" nicht ausführen: Die Staging-Area "
-"beinhaltet nicht committete Änderungen."
+msgstr ""
+"Kann \"pull\" mit \"rebase\" nicht ausführen: Die Staging-Area beinhaltet "
+"nicht committete Änderungen."
 
 #: builtin/pull.c:436
 msgid ""
@@ -8846,7 +8845,8 @@ msgstr "Im Moment auf keinem Branch."
 
 #: builtin/pull.c:449 builtin/pull.c:464
 msgid "Please specify which branch you want to rebase against."
-msgstr "Bitte geben Sie den Branch an, gegen welchen Sie \"rebase\" ausführen "
+msgstr ""
+"Bitte geben Sie den Branch an, gegen welchen Sie \"rebase\" ausführen "
 "möchten."
 
 #: builtin/pull.c:451 builtin/pull.c:466
@@ -8868,7 +8868,8 @@ msgid ""
 "\n"
 "    git branch --set-upstream-to=%s/<branch> %s\n"
 msgstr ""
-"Wenn Sie Tracking-Informationen für diesen Branch setzen möchten, können Sie\n"
+"Wenn Sie Tracking-Informationen für diesen Branch setzen möchten, können "
+"Sie\n"
 "dies tun mit:\n"
 "\n"
 " git branch --set-upstream-to=%s/<Branch> %s\n"
@@ -10529,8 +10530,8 @@ msgstr ""
 "hash[=<n>]] [--abbrev[=<n>]] [--tags] [--heads] [--] [<Muster>...] "
 
 #: builtin/show-ref.c:11
-msgid "git show-ref --exclude-existing[=pattern] < ref-list"
-msgstr "git show-ref --exclude-existing[=Muster] < ref-list"
+msgid "git show-ref --exclude-existing[=<pattern>] < <ref-list>"
+msgstr "git show-ref --exclude-existing[=<Muster>] < <Referenzliste>"
 
 #: builtin/show-ref.c:170
 msgid "only show tags (can be combined with heads)"
@@ -10759,8 +10760,8 @@ msgid "replace the tag if exists"
 msgstr "das Tag ersetzen, wenn es existiert"
 
 #: builtin/tag.c:609 builtin/update-ref.c:368
-msgid "create_reflog"
-msgstr "create_reflog"
+msgid "create a reflog"
+msgstr "Reflog erstellen"
 
 #: builtin/tag.c:611
 msgid "Tag listing options"
@@ -11230,8 +11231,9 @@ msgstr "Dateiinhalte zum Commit vormerken"
 
 #: common-cmds.h:18
 msgid "Use binary search to find the commit that introduced a bug"
-msgstr "Binärsuche verwenden, um den Commit zu finden, der einen Fehler "
-"verursacht hat"
+msgstr ""
+"Binärsuche verwenden, um den Commit zu finden, der einen Fehler verursacht "
+"hat"
 
 #: common-cmds.h:19
 msgid "List, create, or delete branches"
@@ -11439,9 +11441,10 @@ msgid ""
 "(You can use \"git bisect $bad_syn\" and \"git bisect $good_syn\" for that.)"
 msgstr ""
 "Sie müssen mit \"git bisect start\" beginnen.\n"
-"Danach müssen Sie mindestens einen \"$good_syn\" und einen \"$bad_syn\" Commit "
-"angeben.\n"
-"(Sie können dafür \"git bisect $bad_syn\" und \"git bisect $good_syn\" benutzen.)"
+"Danach müssen Sie mindestens einen \"$good_syn\" und einen \"$bad_syn\" "
+"Commit angeben.\n"
+"(Sie können dafür \"git bisect $bad_syn\" und \"git bisect $good_syn\" "
+"benutzen.)"
 
 #: git-bisect.sh:391 git-bisect.sh:521
 msgid "We are not bisecting."
@@ -11508,8 +11511,9 @@ msgstr "'bisect run' erfolgreich ausgeführt"
 #: git-bisect.sh:548
 #, sh-format
 msgid "Invalid command: you're currently in a $TERM_BAD/$TERM_GOOD bisect."
-msgstr "Ungültiges Kommando: Sie sind gerade bei einer binären "
-"$TERM_BAD/$TERM_GOOD Suche."
+msgstr ""
+"Ungültiges Kommando: Sie sind gerade bei einer binären $TERM_BAD/$TERM_GOOD "
+"Suche."
 
 #: git-rebase.sh:57
 msgid ""
@@ -12120,6 +12124,9 @@ msgstr "Fehler bei Rekursion in Submodul-Pfad '$sm_path'"
 #, sh-format
 msgid "Synchronizing submodule url for '$displaypath'"
 msgstr "Synchronisiere Submodul-URL für '$displaypath'"
+
+#~ msgid "false|true|preserve"
+#~ msgstr "false|true|preserve"
 
 #~ msgid "BUG: reopen a lockfile that is still open"
 #~ msgstr "FEHLER: Wiederöffnen einer bereits geöffneten Lock-Datei"
