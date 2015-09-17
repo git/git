@@ -339,6 +339,10 @@ notes for details).
    scripted version that appear in 2.5.x maintenance track and older.
    (merge b9d6689 js/maint-am-skip-performance-regression later to maint).
 
+ * The branch descriptions that are set with "git branch --edit-description"
+   option were used in many places but they weren't clearly documented.
+   (merge 561d2b7 po/doc-branch-desc later to maint).
+
  * Code cleanups and documentation updates.
    (merge 1c601af es/doc-clean-outdated-tools later to maint).
    (merge 3581304 kn/tag-doc-fix later to maint).
@@ -363,3 +367,4 @@ notes for details).
    (merge 1733ed3 ee/clean-test-fixes later to maint).
    (merge 5fcadc3 gb/apply-comment-typofix later to maint).
    (merge b894d3e mp/t7060-diff-index-test later to maint).
+   (merge d238710 as/config-doc-markup-fix later to maint).
