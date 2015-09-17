@@ -1,18 +1,17 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Sep 2015, #03; Mon, 14)
-X-master-at: f4d9753a89bf04011c00e943d85211906e86a0f6
-X-next-at: 924a60862de14449284d454b8dd848b57a8e3f75
+Subject: What's cooking in git.git (Sep 2015, #04; Thu, 17)
+X-master-at: 0e5767991b19d8f91b437a679196a1dfd678c5a0
+X-next-at: 3dd15c02a81a280c83c8d5e32c6cb71a64177ca6
 
-What's cooking in git.git (Sep 2015, #03; Mon, 14)
+What's cooking in git.git (Sep 2015, #04; Thu, 17)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-The tip of 'master' is slightly past 2.6-rc2; hopefully l10n team
-can work on this without updates before the end of the cycle.
+I'll be offline til Monday 21st, when 2.6-rc3 is planned to happen.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -22,138 +21,14 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* ah/show-ref-usage-string (2015-08-31) 1 commit
-  (merged to 'next' on 2015-09-08 at dc512c8)
- + show-ref: place angle brackets around variables in usage string
-
- Both "git show-ref -h" and "git show-ref --help" illustrated that the
- "--exclude-existing" option makes the command read list of refs
- from its standard input.  Change only the "show-ref -h" output to
- have a pair of "<>" around the placeholder that designate an input
- file, i.e. "git show-ref --exclude-existing < <ref-list>".
-
-
-* gb/apply-comment-typofix (2015-09-09) 1 commit
-  (merged to 'next' on 2015-09-09 at 29fb0ff)
- + apply: comment grammar fix
-
-
-* jk/pack-protocol-doc (2015-09-03) 1 commit
-  (merged to 'next' on 2015-09-08 at 98d861d)
- + pack-protocol: clarify LF-handling in PKT-LINE()
-
- Streamline documentation of the pkt-line protocol.
-
-
-* js/maint-am-skip-performance-regression (2015-09-09) 1 commit
-  (merged to 'next' on 2015-09-14 at b669ea1)
- + am --skip/--abort: merge HEAD/ORIG_HEAD tree into index
-
- Later versions of scripted "git am" has a performance regression in
- "git am --skip" codepath, which no longer exists in the built-in
- version on the 'master' front.  Fix the regression in the last
- scripted version that appear in 2.5.x maintenance track and older.
-
- Will merge to 'maint' and older.
-
-
-* mp/t7060-diff-index-test (2015-09-02) 1 commit
-  (merged to 'next' on 2015-09-08 at 80ff284)
- + t7060: actually test "git diff-index --cached -M"
-
- Fix an old test that was doing the same thing as another one.
-
-
-* rt/help-strings-fix (2015-09-11) 2 commits
-  (merged to 'next' on 2015-09-14 at 875908c)
- + tag, update-ref: improve description of option "create-reflog"
- + pull: don't mark values for option "rebase" for translation
- 
-
-* sg/help-group (2015-09-10) 1 commit
-  (merged to 'next' on 2015-09-14 at cef17e2)
- + Makefile: use SHELL_PATH when running generate-cmdlist.sh
-
- Last minute regression fix.
-
---------------------------------------------------
-[New Topics]
-
-* ld/p4-detached-head (2015-09-09) 2 commits
- - git-p4: work with a detached head
- - git-p4: add failing test for submit from detached head
-
- Will be rerolled.
- ($gmane/277574)
-
-
 * as/config-doc-markup-fix (2015-09-12) 1 commit
   (merged to 'next' on 2015-09-14 at faa4134)
  + Documentation/config: fix formatting for branch.*.rebase and pull.rebase
-
- Will merge to 'master'.
 
 
 * et/win32-poll-timeout (2015-09-14) 1 commit
   (merged to 'next' on 2015-09-14 at 308dff4)
  + poll: honor the timeout on Win32
-
- Will merge to 'master'.
-
-
-* jk/graph-format-padding (2015-09-14) 1 commit
- - pretty: pass graph width to pretty formatting for use in '%>|(N)'
-
- Redefine the way '%>|(N)' padding and the "--graph" option
- interacts.  It has been that the available columns to display the
- log message was measured from the edge of the area the graph ended,
- but with this it becomes the beginning of the entire output.
-
- I have a suspicion that 50% of the users would appreciate this
- change, and the remainder see this break their expectation.  If
- that is the case, we might need to introduce a similar but
- different alignment operator so that this new behaviour is
- available to those who want to use it, without negatively affecting
- existing uses.
-
-
-* jk/make-findstring-makeflags-fix (2015-09-10) 1 commit
- - Makefile: fix MAKEFLAGS tests with multiple flags
-
- Customization to change the behaviour with "make -w" and "make -s"
- in our Makefile was broken when they were used together.
-
- Will merge to 'next'.
-
-
-* jk/rebase-no-autostash (2015-09-10) 2 commits
- - Documentation/git-rebase: fix --no-autostash formatting
- - rebase: support --no-autostash
-
- There was no way to defeat a configured rebase.autostash variable
- from the command line, as "git rebase --no-autostash" was missing.
-
- Will merge to 'next'.
-
-
-* jw/make-arflags-customizable (2015-09-10) 1 commit
- - Makefile: allow $(ARFLAGS) specified from the command line
-
- The Makefile always runs the library archiver with hardcoded "crs"
- options, which was inconvenient for exotic platforms on which
- people wants to use programs with totally different set of command
- line options.
-
- Will merge to 'next'.
-
-
-* nd/ignore-then-not-ignore (2015-09-14) 2 commits
- - dir.c: don't exclude whole dir prematurely if neg pattern may match
- - dir.c: make last_exclude_matching_from_list() run til the end
-
- Allow a later "!/abc/def" to override an earlier "/abc" that
- appears in the same .gitignore file to make it easier to express
- "everything in /abc directory is ignored, except for ...".
 
 
 * po/doc-branch-desc (2015-09-14) 1 commit
@@ -163,13 +38,21 @@ of the repositories listed at
  The branch descriptions that are set with "git branch --edit-description"
  option were used in many places but they weren't clearly documented.
 
- Will merge to 'master'.
+--------------------------------------------------
+[New Topics]
+
+* jk/blame-first-parent (2015-09-16) 1 commit
+ - blame: handle --first-parent
 
 
-* sb/submodule-parallel-fetch (2015-09-14) 2 commits
- - fetch: fetch submodules in parallel
- - submodule.c: write "Fetching submodule <foo>" to stderr
- (this branch uses sb/submodule-helper.)
+* jk/transfer-limit-protocol (2015-09-16) 3 commits
+ - SQUASH???
+ - submodule: allow only certain protocols for submodule fetches
+ - transport: add a protocol-whitelist environment variable
+
+
+* rj/mailmap-ramsay (2015-09-16) 1 commit
+ - mailmap: update my entry with new email address
 
 --------------------------------------------------
 [Stalled]
@@ -397,6 +280,75 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* ld/p4-detached-head (2015-09-09) 2 commits
+ - git-p4: work with a detached head
+ - git-p4: add failing test for submit from detached head
+
+ Will be rerolled.
+ ($gmane/277574)
+
+
+* jk/graph-format-padding (2015-09-14) 1 commit
+ - pretty: pass graph width to pretty formatting for use in '%>|(N)'
+
+ Redefine the way '%>|(N)' padding and the "--graph" option
+ interacts.  It has been that the available columns to display the
+ log message was measured from the edge of the area the graph ended,
+ but with this it becomes the beginning of the entire output.
+
+ I have a suspicion that 50% of the users would appreciate this
+ change, and the remainder see this break their expectation.  If
+ that is the case, we might need to introduce a similar but
+ different alignment operator so that this new behaviour is
+ available to those who want to use it, without negatively affecting
+ existing uses.
+
+
+* jk/make-findstring-makeflags-fix (2015-09-10) 1 commit
+ - Makefile: fix MAKEFLAGS tests with multiple flags
+
+ Customization to change the behaviour with "make -w" and "make -s"
+ in our Makefile was broken when they were used together.
+
+ Will merge to 'next'.
+
+
+* jk/rebase-no-autostash (2015-09-10) 2 commits
+ - Documentation/git-rebase: fix --no-autostash formatting
+ - rebase: support --no-autostash
+
+ There was no way to defeat a configured rebase.autostash variable
+ from the command line, as "git rebase --no-autostash" was missing.
+
+ Will merge to 'next'.
+
+
+* jw/make-arflags-customizable (2015-09-10) 1 commit
+ - Makefile: allow $(ARFLAGS) specified from the command line
+
+ The Makefile always runs the library archiver with hardcoded "crs"
+ options, which was inconvenient for exotic platforms on which
+ people wants to use programs with totally different set of command
+ line options.
+
+ Will merge to 'next'.
+
+
+* nd/ignore-then-not-ignore (2015-09-14) 2 commits
+ - dir.c: don't exclude whole dir prematurely if neg pattern may match
+ - dir.c: make last_exclude_matching_from_list() run til the end
+
+ Allow a later "!/abc/def" to override an earlier "/abc" that
+ appears in the same .gitignore file to make it easier to express
+ "everything in /abc directory is ignored, except for ...".
+
+
+* sb/submodule-parallel-fetch (2015-09-14) 2 commits
+ - fetch: fetch submodules in parallel
+ - submodule.c: write "Fetching submodule <foo>" to stderr
+ (this branch uses sb/submodule-helper.)
+
+
 * mk/submodule-gitdir-path (2015-09-14) 2 commits
  - path: implement common_dir handling in git_pathdup_submodule()
  - submodule refactor: use strbuf_git_path_submodule() in add_submodule_odb()
@@ -559,7 +511,9 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* ls/p4-path-encoding (2015-09-03) 1 commit
+* ls/p4-path-encoding (2015-09-16) 2 commits
+  (merged to 'next' on 2015-09-17 at 7f8b9e0)
+ + git-p4: improve path encoding verbose output
   (merged to 'next' on 2015-09-08 at 56514f9)
  + git-p4: add config git-p4.pathEncoding
 
@@ -611,29 +565,31 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* kn/for-each-tag (2015-09-11) 16 commits
- - tag.c: implement '--merged' and '--no-merged' options
- - tag.c: implement '--format' option
- - tag.c: use 'ref-filter' APIs
- - tag.c: use 'ref-filter' data structures
- - ref-filter: add option to match literal pattern
- - ref-filter: add support to sort by version
- - ref-filter: add support for %(contents:lines=X)
- - ref-filter: add option to filter out tags, branches and remotes
- - ref-filter: implement an `align` atom
- - ref-filter: introduce match_atom_name()
- - ref-filter: introduce handler function for each atom
- - utf8: add function to align a string into given strbuf
- - ref-filter: introduce ref_formatting_state and ref_formatting_stack
- - ref-filter: move `struct atom_value` to ref-filter.c
- - Merge 'jk/git-path' into kn/for-each-tag
- - Merge 'kn/for-each-tag-branch' into kn/for-each-tag
+* kn/for-each-tag (2015-09-17) 17 commits
+  (merged to 'next' on 2015-09-17 at 1980952)
+ + tag.c: implement '--merged' and '--no-merged' options
+ + tag.c: implement '--format' option
+ + tag.c: use 'ref-filter' APIs
+ + tag.c: use 'ref-filter' data structures
+ + ref-filter: add option to match literal pattern
+ + ref-filter: add support to sort by version
+ + ref-filter: add support for %(contents:lines=X)
+ + ref-filter: add option to filter out tags, branches and remotes
+ + ref-filter: implement an `align` atom
+ + ref-filter: introduce match_atom_name()
+ + ref-filter: introduce handler function for each atom
+ + utf8: add function to align a string into given strbuf
+ + ref-filter: introduce ref_formatting_state and ref_formatting_stack
+ + ref-filter: move `struct atom_value` to ref-filter.c
+ + strtoul_ui: reject negative values
+ + Merge 'jk/git-path' into kn/for-each-tag
+ + Merge 'kn/for-each-tag-branch' into kn/for-each-tag
  (this branch uses kn/for-each-tag-branch.)
 
  The "ref-filter" code was taught about many parts of what "tag -l"
  does and then "tag -l" is reimplemented in terms of "ref-filter".
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * nd/ita-cleanup (2015-09-06) 6 commits
@@ -663,14 +619,13 @@ of the repositories listed at
  Waiting for a reroll.
 
 
-* bb/remote-get-url (2015-09-04) 1 commit
+* bb/remote-get-url (2015-09-17) 1 commit
  - remote: add get-url subcommand
 
  "git remote" learned "get-url" subcommand to show the URL for a
  given remote name used for fetching and pushing.
 
- Waiting for a reroll.
- ($gmane/277313)
+ Will merge to 'next'.
 
 
 * sb/submodule-helper (2015-09-08) 4 commits
@@ -750,9 +705,9 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* jc/rerere-multi (2015-09-11) 7 commits
+* jc/rerere-multi (2015-09-14) 7 commits
+ - rerere: do use multiple variants
  - t4200: rerere a merge with two identical conflicts
- - WIP
  - rerere: allow multiple variants to exist
  - rerere: delay the recording of preimage
  - rerere: handle leftover rr-cache/$ID directory and postimage files
