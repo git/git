@@ -197,7 +197,9 @@ start-point is either a local or remote-tracking branch.
 
 --edit-description::
 	Open an editor and edit the text to explain what the branch is
-	for, to be used by various other commands (e.g. `request-pull`).
+	for, to be used by various other commands (e.g. `format-patch`,
+	`request-pull`, and `merge` (if enabled)). Multi-line explanations
+	may be used.
 
 --contains [<commit>]::
 	Only list branches which contain the specified commit (HEAD
