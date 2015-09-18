@@ -839,8 +839,15 @@ struct tm *localtime_r(const time_t *timep, struct tm *result)
 
 char *mingw_getcwd(char *pointer, int len)
 {
-	wchar_t wpointer[MAX_PATH];
-	if (!_wgetcwd(wpointer, ARRAY_SIZE(wpointer)))
+	wchar_t cwd[MAX_PATH], wpointer[MAX_PATH];
+	DWORD ret = GetCurrentDirectoryW(ARRAY_SIZE(cwd), cwd);
+
+	if (!ret || ret >= ARRAY_SIZE(cwd)) {
+		errno = ret ? ENAMETOOLONG : err_win_to_posix(GetLastError());
+		return NULL;
+	}
+	ret = GetLongPathNameW(cwd, wpointer, ARRAY_SIZE(wpointer));
+	if (!ret || ret >= ARRAY_SIZE(wpointer))
 		return NULL;
 	if (xwcstoutf(pointer, wpointer, len) < 0)
 		return NULL;
