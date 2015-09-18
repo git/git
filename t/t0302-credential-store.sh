@@ -37,7 +37,7 @@ helper_test store
 unset XDG_CONFIG_HOME
 
 test_expect_success 'if custom xdg file exists, home and xdg files not created' '
-	test_when_finished "rm -f $HOME/xdg/git/credentials" &&
+	test_when_finished "rm -f \"$HOME/xdg/git/credentials\"" &&
 	test -s "$HOME/xdg/git/credentials" &&
 	test_path_is_missing "$HOME/.git-credentials" &&
 	test_path_is_missing "$HOME/.config/git/credentials"
