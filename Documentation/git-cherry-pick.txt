@@ -103,7 +103,9 @@ effect to your index in a row.
 
 -S[<keyid>]::
 --gpg-sign[=<keyid>]::
-	GPG-sign commits.
+	GPG-sign commits. The `keyid` argument is optional and
+	defaults to the committer identity; if specified, it must be
+	stuck to the option without a space.
 
 --ff::
 	If the current HEAD is the same as the parent of the

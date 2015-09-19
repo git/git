@@ -314,7 +314,9 @@ changes to tracked files.
 
 -S[<keyid>]::
 --gpg-sign[=<keyid>]::
-	GPG-sign commit.
+	GPG-sign commits. The `keyid` argument is optional and
+	defaults to the committer identity; if specified, it must be
+	stuck to the option without a space.
 
 --no-gpg-sign::
 	Countermand `commit.gpgSign` configuration variable that is
