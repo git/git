@@ -13,7 +13,7 @@ SYNOPSIS
 	   [-F <file> | -m <msg>] [--reset-author] [--allow-empty]
 	   [--allow-empty-message] [--no-verify] [-e] [--author=<author>]
 	   [--date=<date>] [--cleanup=<mode>] [--[no-]status]
-	   [-i | -o] [-S[<key-id>]] [--] [<file>...]
+	   [-i | -o] [-S[<keyid>]] [--] [<file>...]
 
 DESCRIPTION
 -----------

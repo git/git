@@ -8,7 +8,7 @@ git-revert - Revert some existing commits
 SYNOPSIS
 --------
 [verse]
-'git revert' [--[no-]edit] [-n] [-m parent-number] [-s] [-S[<key-id>]] <commit>...
+'git revert' [--[no-]edit] [-n] [-m parent-number] [-s] [-S[<keyid>]] <commit>...
 'git revert' --continue
 'git revert' --quit
 'git revert' --abort
@@ -80,8 +80,8 @@ more details.
 This is useful when reverting more than one commits'
 effect to your index in a row.
 
--S[<key-id>]::
---gpg-sign[=<key-id>]::
+-S[<keyid>]::
+--gpg-sign[=<keyid>]::
 	GPG-sign commits.
 
 -s::
