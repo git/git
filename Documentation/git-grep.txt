@@ -160,8 +160,8 @@ OPTIONS
 	For better compatibility with 'git diff', `--name-only` is a
 	synonym for `--files-with-matches`.
 
--O [<pager>]::
---open-files-in-pager [<pager>]::
+-O[<pager>]::
+--open-files-in-pager[=<pager>]::
 	Open the matching files in the pager (not the output of 'grep').
 	If the pager happens to be "less" or "vi", and the user
 	specified only one pattern, the first file is positioned at
