@@ -29,7 +29,7 @@ test_expect_success 'init depot with UTF-16 encoded file and artificially remove
 	)
 '
 
-test_expect_failure 'clone depot with invalid UTF-16 file in verbose mode' '
+test_expect_success 'clone depot with invalid UTF-16 file in verbose mode' '
 	git p4 clone --dest="$git" --verbose //depot &&
 	test_when_finished cleanup_git &&
 	(
