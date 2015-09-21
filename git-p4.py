@@ -2219,7 +2219,7 @@ class P4Sync(Command, P4UserMap):
             encoding = 'utf8'
             if gitConfig('git-p4.pathEncoding'):
                 encoding = gitConfig('git-p4.pathEncoding')
-            relPath = relPath.decode(encoding).encode('utf8', 'replace')
+            relPath = relPath.decode(encoding, 'replace').encode('utf8', 'replace')
             if self.verbose:
                 print 'Path with non-ASCII characters detected. Used %s to encode: %s ' % (encoding, relPath)
 
