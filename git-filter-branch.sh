@@ -280,18 +280,20 @@ report_progress ()
 	if test -n "$progress" &&
 		test $git_filter_branch__commit_count -gt $next_sample_at
 	then
-		now_timestamp=$(date +%s)
-		elapsed_seconds=$(($now_timestamp - $start_timestamp))
-		remaining_second=$(( ($commits - $git_filter_branch__commit_count) * $elapsed_seconds / $git_filter_branch__commit_count ))
-		if test $elapsed_seconds -gt 0
+		count=$git_filter_branch__commit_count
+
+		now=$(date +%s)
+		elapsed=$(($now - $start_timestamp))
+		remaining=$(( ($commits - $count) * $elapsed / $count ))
+		if test $elapsed -gt 0
 		then
-			next_sample_at=$(( ($elapsed_seconds + 1) * $git_filter_branch__commit_count / $elapsed_seconds ))
+			next_sample_at=$(( ($elapsed + 1) * $count / $elapsed ))
 		else
 			next_sample_at=$(($next_sample_at + 1))
 		fi
-		progress=" ($elapsed_seconds seconds passed, remaining $remaining_second predicted)"
+		progress=" ($elapsed seconds passed, remaining $remaining predicted)"
 	fi
-	printf "\rRewrite $commit ($git_filter_branch__commit_count/$commits)$progress    "
+	printf "\rRewrite $commit ($count/$commits)$progress    "
 }
 
 git_filter_branch__commit_count=0
