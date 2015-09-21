@@ -1136,7 +1136,7 @@ sub smtp_auth_maybe {
 
 	# Check mechanism naming as defined in:
 	# https://tools.ietf.org/html/rfc4422#page-8
-	if ($smtp_auth !~ /^(\b[A-Z0-9-_]{1,20}\s*)*$/) {
+	if ($smtp_auth && $smtp_auth !~ /^(\b[A-Z0-9-_]{1,20}\s*)*$/) {
 		die "invalid smtp auth: '${smtp_auth}'";
 	}
 
