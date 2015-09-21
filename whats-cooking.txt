@@ -1,17 +1,22 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Sep 2015, #04; Thu, 17)
-X-master-at: 0e5767991b19d8f91b437a679196a1dfd678c5a0
-X-next-at: 3dd15c02a81a280c83c8d5e32c6cb71a64177ca6
+Subject: What's cooking in git.git (Sep 2015, #05; Mon, 21)
+X-master-at: 8d530c4d64ffcc853889f7b385f554d53db375ed
+X-next-at: 95c432565effc19a24a53a40dfcd069a5b323853
 
-What's cooking in git.git (Sep 2015, #04; Thu, 17)
+What's cooking in git.git (Sep 2015, #05; Mon, 21)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-I'll be offline til Monday 21st, when 2.6-rc3 is planned to happen.
+The tip of master gained l10n updates and a regression fix to "git
+send-email" and is now at v2.6.0-rc3.  I am hoping that the remainder
+of the cycle will be uneventful and we can have some quality time
+reviewing large-ish topics that were floated but not reviewed quite
+well yet.  I'll probably start spending some time pinging people
+about various topics that seem to have stalled.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -21,38 +26,42 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* as/config-doc-markup-fix (2015-09-12) 1 commit
-  (merged to 'next' on 2015-09-14 at faa4134)
- + Documentation/config: fix formatting for branch.*.rebase and pull.rebase
+* bn/send-email-smtp-auth-error-message-fix (2015-09-21) 1 commit
+  (merged to 'next' on 2015-09-21 at 59f2e59)
+ + send-email: fix uninitialized var warning for $smtp_auth
+
+ Fix a minor regression brought in to "git send-email" by a recent
+ addition of the "--smtp-auth" option.
 
 
-* et/win32-poll-timeout (2015-09-14) 1 commit
-  (merged to 'next' on 2015-09-14 at 308dff4)
- + poll: honor the timeout on Win32
+* rj/mailmap-ramsay (2015-09-16) 1 commit
+  (merged to 'next' on 2015-09-21 at cbd6470)
+ + mailmap: update my entry with new email address
 
-
-* po/doc-branch-desc (2015-09-14) 1 commit
-  (merged to 'next' on 2015-09-14 at 4934a96)
- + doc: show usage of branch description
-
- The branch descriptions that are set with "git branch --edit-description"
- option were used in many places but they weren't clearly documented.
+ Update and consolidate "git shortlog" output entries for Ramsay.
 
 --------------------------------------------------
 [New Topics]
 
-* jk/blame-first-parent (2015-09-16) 1 commit
- - blame: handle --first-parent
+* mm/keyid-docs (2015-09-21) 3 commits
+ - Documentation: explain optional arguments better
+ - Documentation/grep: fix documentation of -O
+ - Documentation: use 'keyid' consistently, not 'key-id'
+
+ Very small number of options take a parameter that is optional
+ (which is not a great UI element as they can only appear at the end
+ of the command line).  Add notice to documentation of each and
+ every one of them.
+
+ Will merge to 'next'.
 
 
-* jk/transfer-limit-protocol (2015-09-16) 3 commits
- - SQUASH???
- - submodule: allow only certain protocols for submodule fetches
- - transport: add a protocol-whitelist environment variable
+* nd/gc-auto-background-fix (2015-09-21) 1 commit
+ - gc: save log from daemonized gc --auto and print it next time
 
-
-* rj/mailmap-ramsay (2015-09-16) 1 commit
- - mailmap: update my entry with new email address
+ When "git gc --auto" is backgrounded, its diagnosis message is
+ lost.  Save it to a file in $GIT_DIR and show it next time the "gc
+ --auto" is run.
 
 --------------------------------------------------
 [Stalled]
@@ -280,6 +289,22 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* jk/blame-first-parent (2015-09-16) 1 commit
+  (merged to 'next' on 2015-09-21 at 7580f6b)
+ + blame: handle --first-parent
+
+ "git blame --first-parent v1.0..v2.0" was not rejected but did not
+ limit the blame to commits on the first parent chain.
+
+ Will merge to 'master'.
+
+
+* jk/transfer-limit-protocol (2015-09-16) 3 commits
+ - SQUASH???
+ - submodule: allow only certain protocols for submodule fetches
+ - transport: add a protocol-whitelist environment variable
+
+
 * ld/p4-detached-head (2015-09-09) 2 commits
  - git-p4: work with a detached head
  - git-p4: add failing test for submit from detached head
@@ -303,44 +328,52 @@ of the repositories listed at
  available to those who want to use it, without negatively affecting
  existing uses.
 
+ Undecided.
+ ($gmane/278326)
+
 
 * jk/make-findstring-makeflags-fix (2015-09-10) 1 commit
- - Makefile: fix MAKEFLAGS tests with multiple flags
+  (merged to 'next' on 2015-09-21 at 26ea6e0)
+ + Makefile: fix MAKEFLAGS tests with multiple flags
 
  Customization to change the behaviour with "make -w" and "make -s"
  in our Makefile was broken when they were used together.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jk/rebase-no-autostash (2015-09-10) 2 commits
- - Documentation/git-rebase: fix --no-autostash formatting
- - rebase: support --no-autostash
+  (merged to 'next' on 2015-09-21 at 034d726)
+ + Documentation/git-rebase: fix --no-autostash formatting
+ + rebase: support --no-autostash
 
  There was no way to defeat a configured rebase.autostash variable
  from the command line, as "git rebase --no-autostash" was missing.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jw/make-arflags-customizable (2015-09-10) 1 commit
- - Makefile: allow $(ARFLAGS) specified from the command line
+  (merged to 'next' on 2015-09-21 at cb3892c1)
+ + Makefile: allow $(ARFLAGS) specified from the command line
 
  The Makefile always runs the library archiver with hardcoded "crs"
  options, which was inconvenient for exotic platforms on which
  people wants to use programs with totally different set of command
  line options.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* nd/ignore-then-not-ignore (2015-09-14) 2 commits
+* nd/ignore-then-not-ignore (2015-09-21) 2 commits
  - dir.c: don't exclude whole dir prematurely if neg pattern may match
  - dir.c: make last_exclude_matching_from_list() run til the end
 
  Allow a later "!/abc/def" to override an earlier "/abc" that
  appears in the same .gitignore file to make it easier to express
  "everything in /abc directory is ignored, except for ...".
+
+ Will merge to 'next'.
 
 
 * sb/submodule-parallel-fetch (2015-09-14) 2 commits
@@ -398,12 +431,14 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* gb/filter-branch-progress (2015-09-08) 1 commit
+* gb/filter-branch-progress (2015-09-21) 2 commits
+ - SQUASH???
  - filter-branch: add passed/remaining seconds on progress
 
  Give progress meter to "git filter-branch".
 
- Is a reroll coming?
+ Undecided.
+ ($gmane/278328).
 
 
 * jk/interpret-trailers-outside-a-repository (2015-09-08) 1 commit
@@ -431,15 +466,19 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* ls/p4-lfs (2015-09-09) 5 commits
+* ls/p4-lfs (2015-09-21) 7 commits
  - git-p4: add Git LFS backend for large file system
  - git-p4: add support for large file systems
+ - git-p4: check free space during streaming
+ - git-p4: add file streaming progress in verbose mode
  - git-p4: return an empty list if a list config has no values
  - git-p4: add gitConfigInt reader
  - git-p4: add optional type specifier to gitConfig reader
 
  Teach "git p4" to send large blobs outside the repository by
  talking to Git LFS.
+
+ Is this ready for 'next' now?
 
 
 * nd/clone-linked-checkout (2015-09-14) 5 commits
@@ -511,7 +550,9 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* ls/p4-path-encoding (2015-09-16) 2 commits
+* ls/p4-path-encoding (2015-09-21) 3 commits
+  (merged to 'next' on 2015-09-21 at 0772d82)
+ + git-p4: use replacement character for non UTF-8 characters in paths
   (merged to 'next' on 2015-09-17 at 7f8b9e0)
  + git-p4: improve path encoding verbose output
   (merged to 'next' on 2015-09-08 at 56514f9)
@@ -629,10 +670,11 @@ of the repositories listed at
 
 
 * sb/submodule-helper (2015-09-08) 4 commits
- - submodule: rewrite `module_clone` shell function in C
- - submodule: rewrite `module_name` shell function in C
- - submodule: rewrite `module_list` shell function in C
- - Merge 'hv/submodule-config' to 'sb/submodule-helper'
+  (merged to 'next' on 2015-09-21 at 9354b31)
+ + submodule: rewrite `module_clone` shell function in C
+ + submodule: rewrite `module_name` shell function in C
+ + submodule: rewrite `module_list` shell function in C
+ + Merge 'hv/submodule-config' to 'sb/submodule-helper'
  (this branch is used by sb/submodule-parallel-fetch.)
 
  The infrastructure to rewrite "git submodule" in C is being built
@@ -640,7 +682,7 @@ of the repositories listed at
  them graduate to 'next' and 'master', so that the more involved
  follow-up can start cooking on a solid ground.
 
- Looked ready for 'next'.  Comments from others?
+ Will merge to 'master'.
 
 
 * ad/cygwin-wants-rename (2015-08-07) 1 commit
