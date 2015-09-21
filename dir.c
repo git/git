@@ -752,6 +752,7 @@ static struct exclude *last_exclude_matching_from_list(const char *pathname,
 						       int *dtype,
 						       struct exclude_list *el)
 {
+	struct exclude *exc = NULL; /* undecided */
 	int i;
 
 	if (!el->nr)
@@ -773,18 +774,22 @@ static struct exclude *last_exclude_matching_from_list(const char *pathname,
 			if (match_basename(basename,
 					   pathlen - (basename - pathname),
 					   exclude, prefix, x->patternlen,
-					   x->flags))
-				return x;
+					   x->flags)) {
+				exc = x;
+				break;
+			}
 			continue;
 		}
 
 		assert(x->baselen == 0 || x->base[x->baselen - 1] == '/');
 		if (match_pathname(pathname, pathlen,
 				   x->base, x->baselen ? x->baselen - 1 : 0,
-				   exclude, prefix, x->patternlen, x->flags))
-			return x;
+				   exclude, prefix, x->patternlen, x->flags)) {
+			exc = x;
+			break;
+		}
 	}
-	return NULL; /* undecided */
+	return exc;
 }
 
 /*
