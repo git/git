@@ -177,7 +177,7 @@ sharedindex.<SHA-1>::
 info::
 	Additional information about the repository is recorded
 	in this directory. This directory is ignored if $GIT_COMMON_DIR
-	is set and "$GIT_COMMON_DIR/index" will be used instead.
+	is set and "$GIT_COMMON_DIR/info" will be used instead.
 
 info/refs::
 	This file helps dumb transports discover what refs are
