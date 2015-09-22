@@ -25,5 +25,9 @@ test_expect_success 'curl redirects respect whitelist' '
 	}
 '
 
+test_expect_success 'curl limits redirects' '
+	test_must_fail git clone "$HTTPD_URL/loop-redir/smart/repo.git"
+'
+
 stop_httpd
 test_done
