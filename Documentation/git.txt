@@ -1071,11 +1071,6 @@ GIT_ICASE_PATHSPECS::
 
 	  - any external helpers are named by their protocol (e.g., use
 	    `hg` to allow the `git-remote-hg` helper)
-+
-Note that this controls only git's internal protocol selection.
-If libcurl is used (e.g., by the `http` transport), it may
-redirect to other protocols. There is not currently any way to
-restrict this.
 
 
 Discussion[[Discussion]]

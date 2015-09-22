@@ -16,5 +16,14 @@ test_expect_success 'create git-accessible repo' '
 
 test_proto "smart http" http "$HTTPD_URL/smart/repo.git"
 
+test_expect_success 'curl redirects respect whitelist' '
+	test_must_fail env GIT_ALLOW_PROTOCOL=http:https \
+		git clone "$HTTPD_URL/ftp-redir/repo.git" 2>stderr &&
+	{
+		test_i18ngrep "ftp.*disabled" stderr ||
+		test_i18ngrep "your curl version is too old"
+	}
+'
+
 stop_httpd
 test_done
