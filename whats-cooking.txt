@@ -1,22 +1,21 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Sep 2015, #05; Mon, 21)
+Subject: What's cooking in git.git (Sep 2015, #06; Wed, 23)
 X-master-at: 8d530c4d64ffcc853889f7b385f554d53db375ed
-X-next-at: 95c432565effc19a24a53a40dfcd069a5b323853
+X-next-at: c07a1e8782dadcedeffd389aa9bce4fda5b0983c
 
-What's cooking in git.git (Sep 2015, #05; Mon, 21)
+What's cooking in git.git (Sep 2015, #06; Wed, 23)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-The tip of master gained l10n updates and a regression fix to "git
-send-email" and is now at v2.6.0-rc3.  I am hoping that the remainder
-of the cycle will be uneventful and we can have some quality time
-reviewing large-ish topics that were floated but not reviewed quite
-well yet.  I'll probably start spending some time pinging people
-about various topics that seem to have stalled.
+Not much has happened on the 'master' or 'next' fronts, but we have
+seen quite a lot of activities above that to prepare for the next
+cycle, which may or may not be a good sign.  I am sending this out
+early in the middle of the week, as I'll likely to be offline all
+day tomorrow.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -24,127 +23,61 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* bn/send-email-smtp-auth-error-message-fix (2015-09-21) 1 commit
-  (merged to 'next' on 2015-09-21 at 59f2e59)
- + send-email: fix uninitialized var warning for $smtp_auth
-
- Fix a minor regression brought in to "git send-email" by a recent
- addition of the "--smtp-auth" option.
-
-
-* rj/mailmap-ramsay (2015-09-16) 1 commit
-  (merged to 'next' on 2015-09-21 at cbd6470)
- + mailmap: update my entry with new email address
-
- Update and consolidate "git shortlog" output entries for Ramsay.
-
---------------------------------------------------
 [New Topics]
 
-* mm/keyid-docs (2015-09-21) 3 commits
- - Documentation: explain optional arguments better
- - Documentation/grep: fix documentation of -O
- - Documentation: use 'keyid' consistently, not 'key-id'
+* ls/p4-translation-failure (2015-09-22) 2 commits
+ - git-p4: handle "Translation of file content failed"
+ - git-p4: add test case for "Translation of file content failed" error
 
- Very small number of options take a parameter that is optional
- (which is not a great UI element as they can only appear at the end
- of the command line).  Add notice to documentation of each and
- every one of them.
+ Work around "git p4" failing when the P4 depot records the contents
+ in UTF-16 without UTF-16 BOM.
 
  Will merge to 'next'.
 
 
-* nd/gc-auto-background-fix (2015-09-21) 1 commit
- - gc: save log from daemonized gc --auto and print it next time
+* mr/worktree-list (2015-09-23) 6 commits
+ - SQUASH???
+ - worktree: add 'list' command
+ - worktree: add functions to get worktree details
+ - worktree: refactor find_linked_symref function
+ - SQUASH???
+ - worktree: add top-level worktree.c
 
- When "git gc --auto" is backgrounded, its diagnosis message is
- lost.  Save it to a file in $GIT_DIR and show it next time the "gc
- --auto" is run.
+ Add the "list" subcommand to "git worktree".
+
+
+* jk/notes-dwim-doc (2015-09-22) 1 commit
+ - notes: correct documentation of DWIMery for notes references
+
+ The way how --ref/--notes to specify the notes tree reference are
+ DWIMmed was not clearly documented.
+
+
+* kn/for-each-branch (2015-09-23) 8 commits
+ - branch: add '--points-at' option
+ - branch.c: use 'ref-filter' APIs
+ - branch.c: use 'ref-filter' data structures
+ - branch: drop non-commit error reporting
+ - branch: move 'current' check down to the presentation layer
+ - branch: roll show_detached HEAD into regular ref_list
+ - branch: bump get_head_description() to the top
+ - branch: refactor width computation
+ (this branch uses kn/for-each-tag and kn/for-each-tag-branch.)
+
+ Update "git branch" that list existing branches, using the
+ ref-filter API that is shared with "git tag" and "git
+ for-each-ref".
+
+
+* jc/fsck-dropped-errors (2015-09-23) 1 commit
+ - fsck: exit with non-zero when problems are found
+
+ There were some classes of errors that "git fsck" diagnosed to its
+ standard error that did not cause it to exit with non-zero status.
+ 
 
 --------------------------------------------------
 [Stalled]
-
-* sb/remove-get-pathspec (2015-08-03) 1 commit
- - builtin/mv: remove get_pathspec()
-
- Will discard.
- ($gmane/276104)
-
-
-* nd/list-files (2015-02-09) 21 commits
- - t3080: tests for git-list-files
- - list-files: -M aka diff-cached
- - list-files -F: show submodules with the new indicator '&'
- - list-files: add -F/--classify
- - list-files: show directories as well as files
- - list-files: do not show duplicate cached entries
- - list-files: sort output and remove duplicates
- - list-files: add -t back
- - list-files: add -1 short for --no-column
- - list-files: add -R/--recursive short for --max-depth=-1
- - list-files: -u does not imply showing stages
- - list-files: make alias 'ls' default to 'list-files'
- - list-files: a user friendly version of ls-files and more
- - ls-files: support --max-depth
- - ls-files: add --column
- - ls-files: add --color to highlight file names
- - ls-files: buffer full item in strbuf before printing
- - ls_colors.c: highlight submodules like directories
- - ls_colors.c: add a function to color a file name
- - ls_colors.c: parse color.ls.* from config file
- - ls_colors.c: add $LS_COLORS parsing code
-
- A new "git list-files" Porcelain command, "ls-files" with bells and
- whistles.
-
- Reroll to base on wt-status work ($gmane/265142) has seen some
- positive discussions.
-
- Waiting for a further polished reroll ($gmane/265534).
-
-
-* mh/numparse (2015-03-19) 14 commits
- . diff_opt_parse(): use convert_i() when handling --abbrev=<num>
- . diff_opt_parse(): use convert_i() when handling "-l<num>"
- . opt_arg(): simplify pointer handling
- . opt_arg(): report errors parsing option values
- . opt_arg(): use convert_i() in implementation
- . opt_arg(): val is always non-NULL
- . builtin_diff(): detect errors when parsing --unified argument
- . handle_revision_opt(): use convert_ui() when handling "--abbrev="
- . strtoul_ui(), strtol_i(): remove functions
- . handle_revision_opt(): use convert_i() when handling "-<digit>"
- . handle_revision_opt(): use skip_prefix() in many places
- . write_subdirectory(): use convert_ui() for parsing mode
- . cacheinfo_callback(): use convert_ui() when handling "--cacheinfo"
- . numparse: new module for parsing integral numbers
-
- Many codepaths use unchecked use of strtol() and friends (or even
- worse, atoi()).  Introduce a set of wrappers that try to be more
- careful.
-
- Waiting for a reroll.
- ($gmane/268058).
-
-
-* kk/log-merges-config (2015-04-21) 5 commits
- - bash-completion: add support for git-log --merges= and log.merges
- - t4202-log: add tests for --merges=
- - Documentation: add git-log --merges= option and log.merges config. var
- - log: honor log.merges= option
- - revision: add --merges={show|only|hide} option
-
- "git log" (but not other commands in the "log" family) learned to
- pay attention to the log.merges configuration variable that can be
- set to "show" (the normal behaviour), "only" (hide non-merge
- commits), or "hide" (hide merge commits).  --merges=(show|only|hide)
- can be used to override the setting from the command line.
-
- The documentation may need to be updated once more ($gmane/267250).
- Waiting for a reroll.
-
 
 * mg/httpd-tests-update-for-apache-2.4 (2015-04-08) 2 commits
  - t/lib-git-svn: check same httpd module dirs as lib-httpd
@@ -156,30 +89,6 @@ of the repositories listed at
  with updated log message ($gmane/268061).
 
 
-* bw/portability-solaris (2015-07-20) 3 commits
- - tests: fix sed usage in tests to work around broken xpg4/sed on Solaris
- - tests: fix sed usage in tests to work around broken xpg4/sed on Solaris
- - tests: modify tr expressions so that xpg4/tr handles it on Solaris
-
- Needs another reroll?
- ($gmane/274296)
-
-
-* jc/clone-bundle (2015-04-30) 1 commit
- - repack: optionally create a clone.bundle
-
- Waiting for further work.
- Still an early WIP.
-
-
-* mg/index-read-error-messages (2015-06-01) 2 commits
- - messages: uniform error messages for index write
- - show-index: uniform error messages for index read
-
- The tip was RFC.
- Waiting for a reroll.
-
-
 * wp/sha1-name-negative-match (2015-06-08) 2 commits
  - sha1_name.c: introduce '^{/!-<negative pattern>}' notation
  - test for '!' handling in rev-parse's named commits
@@ -187,19 +96,8 @@ of the repositories listed at
  Introduce "branch^{/!-<pattern>}" notation to name a commit
  reachable from branch that does not match the given pattern.
 
- Waiting for a reroll.
-
-
-* mk/utf8-no-iconv-warn (2015-06-08) 1 commit
- - utf8.c: print warning about disabled iconv
-
- Warn when a reencoding is requested in a build without iconv
- support, as the end user is likely to get an unexpected result.  I
- think the same level of safety should be added to a build with
- iconv support when the specified encoding is not available, but the
- patch does not go there.
-
- Waiting for a reroll.
+ Getting tired of waiting for a reroll.
+ ($gmane/271213).
 
 
 * ak/format-patch-odir-config (2015-06-19) 1 commit
@@ -240,54 +138,30 @@ of the repositories listed at
 
  The fix in this patch is broken, unfortunately.
 
-
-* pw/remote-set-url-fetch (2014-11-26) 1 commit
- . remote: add --fetch and --both options to set-url
-
- Ejected.
-
-
-* tr/remerge-diff (2014-11-10) 9 commits
- . t4213: avoid "|" in sed regexp
- . log --remerge-diff: show what the conflict resolution changed
- . name-hash: allow dir hashing even when !ignore_case
- . merge-recursive: allow storing conflict hunks in index
- . merge_diff_mode: fold all merge diff variants into an enum
- . combine-diff: do not pass revs->dense_combined_merges redundantly
- . merge-recursive: -Xindex-only to leave worktree unchanged
- . merge-recursive: internal flag to avoid touching the worktree
- . merge-recursive: remove dead conditional in update_stages()
-
- "log -p" output learns a new way to let users inspect a merge
- commit by showing the differences between the automerged result
- with conflicts the person who recorded the merge would have seen
- and the final conflict resolution that was recorded in the merge.
-
- Waiting for a reroll.
- ($gmane/256591).
-
-
-* tg/perf-lib-test-perf-cleanup (2013-09-19) 2 commits
- - perf-lib: add test_perf_cleanup target
- - perf-lib: split starting the test from the execution
-
- Add test_perf_cleanup shell function to the perf suite, that allows
- the script writers to define a test with a clean-up action.
-
- Will hold.
-
-
-* jc/show-branch (2014-03-24) 5 commits
- - show-branch: use commit slab to represent bitflags of arbitrary width
- - show-branch.c: remove "all_mask"
- - show-branch.c: abstract out "flags" operation
- - show-branch.c: lift all_mask/all_revs to a global static
- - show-branch.c: update comment style
-
- Waiting for the final step to lift the hard-limit.
-
 --------------------------------------------------
 [Cooking]
+
+* mm/keyid-docs (2015-09-21) 3 commits
+  (merged to 'next' on 2015-09-21 at f50ccab)
+ + Documentation: explain optional arguments better
+ + Documentation/grep: fix documentation of -O
+ + Documentation: use 'keyid' consistently, not 'key-id'
+
+ Very small number of options take a parameter that is optional
+ (which is not a great UI element as they can only appear at the end
+ of the command line).  Add notice to documentation of each and
+ every one of them.
+
+ Will merge to 'master'.
+
+
+* nd/gc-auto-background-fix (2015-09-21) 1 commit
+ - gc: save log from daemonized gc --auto and print it next time
+
+ When "git gc --auto" is backgrounded, its diagnosis message is
+ lost.  Save it to a file in $GIT_DIR and show it next time the "gc
+ --auto" is run.
+
 
 * jk/blame-first-parent (2015-09-16) 1 commit
   (merged to 'next' on 2015-09-21 at 7580f6b)
@@ -299,8 +173,7 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* jk/transfer-limit-protocol (2015-09-16) 3 commits
- - SQUASH???
+* jk/transfer-limit-protocol (2015-09-23) 2 commits
  - submodule: allow only certain protocols for submodule fetches
  - transport: add a protocol-whitelist environment variable
 
@@ -366,20 +239,35 @@ of the repositories listed at
 
 
 * nd/ignore-then-not-ignore (2015-09-21) 2 commits
- - dir.c: don't exclude whole dir prematurely if neg pattern may match
- - dir.c: make last_exclude_matching_from_list() run til the end
+  (merged to 'next' on 2015-09-21 at 2182591)
+ + dir.c: don't exclude whole dir prematurely if neg pattern may match
+ + dir.c: make last_exclude_matching_from_list() run til the end
 
  Allow a later "!/abc/def" to override an earlier "/abc" that
  appears in the same .gitignore file to make it easier to express
  "everything in /abc directory is ignored, except for ...".
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* sb/submodule-parallel-fetch (2015-09-14) 2 commits
- - fetch: fetch submodules in parallel
+* sb/submodule-parallel-fetch (2015-09-23) 9 commits
+ - submodules: allow parallel fetching, add tests and documentation
+ - fetch_populated_submodules: use new parallel job processing
+ - SQUASH???
+ - run-command: add an asynchronous parallel child processor
+ - run-command: factor out return value computation
+ - strbuf: add strbuf_read_once to read without blocking
+ - xread_nonblock: add functionality to read from fds without blocking
+ - xread: poll on non blocking fds
  - submodule.c: write "Fetching submodule <foo>" to stderr
  (this branch uses sb/submodule-helper.)
+
+ Add a framework to spawn a group of processes in parallel, and use
+ it to run "git fetch --recurse-submodules" in parallel.
+
+ It seems that the fundamentals are almost there, modulo polishing
+ the overall structure to ensure that future enhancement can be made
+ cleanly.
 
 
 * mk/submodule-gitdir-path (2015-09-14) 2 commits
@@ -432,13 +320,13 @@ of the repositories listed at
 
 
 * gb/filter-branch-progress (2015-09-21) 2 commits
- - SQUASH???
- - filter-branch: add passed/remaining seconds on progress
+  (merged to 'next' on 2015-09-21 at 15e698d)
+ + filter-branch: make report-progress more readable
+ + filter-branch: add passed/remaining seconds on progress
 
  Give progress meter to "git filter-branch".
 
- Undecided.
- ($gmane/278328).
+ Will merge to 'master'.
 
 
 * jk/interpret-trailers-outside-a-repository (2015-09-08) 1 commit
@@ -466,7 +354,7 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* ls/p4-lfs (2015-09-21) 7 commits
+* ls/p4-lfs (2015-09-23) 7 commits
  - git-p4: add Git LFS backend for large file system
  - git-p4: add support for large file systems
  - git-p4: check free space during streaming
@@ -478,7 +366,8 @@ of the repositories listed at
  Teach "git p4" to send large blobs outside the repository by
  talking to Git LFS.
 
- Is this ready for 'next' now?
+ Expecting a reroll.
+ ($gmane/278476).
 
 
 * nd/clone-linked-checkout (2015-09-14) 5 commits
@@ -625,7 +514,7 @@ of the repositories listed at
  + strtoul_ui: reject negative values
  + Merge 'jk/git-path' into kn/for-each-tag
  + Merge 'kn/for-each-tag-branch' into kn/for-each-tag
- (this branch uses kn/for-each-tag-branch.)
+ (this branch is used by kn/for-each-branch; uses kn/for-each-tag-branch.)
 
  The "ref-filter" code was taught about many parts of what "tag -l"
  does and then "tag -l" is reimplemented in terms of "ref-filter".
@@ -661,12 +550,13 @@ of the repositories listed at
 
 
 * bb/remote-get-url (2015-09-17) 1 commit
- - remote: add get-url subcommand
+  (merged to 'next' on 2015-09-21 at c07a1e8)
+ + remote: add get-url subcommand
 
  "git remote" learned "get-url" subcommand to show the URL for a
  given remote name used for fetching and pushing.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * sb/submodule-helper (2015-09-08) 4 commits
@@ -705,7 +595,7 @@ of the repositories listed at
  + ref-filter: implement '--points-at' option
  + tag: libify parse_opt_points_at()
  + t6302: for-each-ref tests for ref-filter APIs
- (this branch is used by kn/for-each-tag.)
+ (this branch is used by kn/for-each-branch and kn/for-each-tag.)
 
  Originally merged to 'next' on 2015-07-15
 
@@ -772,3 +662,160 @@ of the repositories listed at
  has been deprecated since October 2007.
 
  Will keep in 'next' during the 2.6 cycle.
+
+--------------------------------------------------
+[Discarded]
+
+* sb/remove-get-pathspec (2015-08-03) 1 commit
+ . builtin/mv: remove get_pathspec()
+
+ ($gmane/276104)
+
+
+* nd/list-files (2015-02-09) 21 commits
+ . t3080: tests for git-list-files
+ . list-files: -M aka diff-cached
+ . list-files -F: show submodules with the new indicator '&'
+ . list-files: add -F/--classify
+ . list-files: show directories as well as files
+ . list-files: do not show duplicate cached entries
+ . list-files: sort output and remove duplicates
+ . list-files: add -t back
+ . list-files: add -1 short for --no-column
+ . list-files: add -R/--recursive short for --max-depth=-1
+ . list-files: -u does not imply showing stages
+ . list-files: make alias 'ls' default to 'list-files'
+ . list-files: a user friendly version of ls-files and more
+ . ls-files: support --max-depth
+ . ls-files: add --column
+ . ls-files: add --color to highlight file names
+ . ls-files: buffer full item in strbuf before printing
+ . ls_colors.c: highlight submodules like directories
+ . ls_colors.c: add a function to color a file name
+ . ls_colors.c: parse color.ls.* from config file
+ . ls_colors.c: add $LS_COLORS parsing code
+
+ A new "git list-files" Porcelain command, "ls-files" with bells and
+ whistles.
+
+ Reroll to base on wt-status work ($gmane/265142) has seen some
+ positive discussions.
+
+ ($gmane/265534).
+
+
+* mh/numparse (2015-03-19) 14 commits
+ . diff_opt_parse(): use convert_i() when handling --abbrev=<num>
+ . diff_opt_parse(): use convert_i() when handling "-l<num>"
+ . opt_arg(): simplify pointer handling
+ . opt_arg(): report errors parsing option values
+ . opt_arg(): use convert_i() in implementation
+ . opt_arg(): val is always non-NULL
+ . builtin_diff(): detect errors when parsing --unified argument
+ . handle_revision_opt(): use convert_ui() when handling "--abbrev="
+ . strtoul_ui(), strtol_i(): remove functions
+ . handle_revision_opt(): use convert_i() when handling "-<digit>"
+ . handle_revision_opt(): use skip_prefix() in many places
+ . write_subdirectory(): use convert_ui() for parsing mode
+ . cacheinfo_callback(): use convert_ui() when handling "--cacheinfo"
+ . numparse: new module for parsing integral numbers
+
+ Many codepaths use unchecked use of strtol() and friends (or even
+ worse, atoi()).  Introduce a set of wrappers that try to be more
+ careful.
+
+ ($gmane/268058).
+
+
+* kk/log-merges-config (2015-04-21) 5 commits
+ . bash-completion: add support for git-log --merges= and log.merges
+ . t4202-log: add tests for --merges=
+ . Documentation: add git-log --merges= option and log.merges config. var
+ . log: honor log.merges= option
+ . revision: add --merges={show|only|hide} option
+
+ "git log" (but not other commands in the "log" family) learned to
+ pay attention to the log.merges configuration variable that can be
+ set to "show" (the normal behaviour), "only" (hide non-merge
+ commits), or "hide" (hide merge commits).  --merges=(show|only|hide)
+ can be used to override the setting from the command line.
+
+ The documentation may need to be updated once more ($gmane/267250).
+
+
+* bw/portability-solaris (2015-07-20) 3 commits
+ . tests: fix sed usage in tests to work around broken xpg4/sed on Solaris
+ . tests: fix sed usage in tests to work around broken xpg4/sed on Solaris
+ . tests: modify tr expressions so that xpg4/tr handles it on Solaris
+
+ ($gmane/274296)
+
+
+* jc/clone-bundle (2015-04-30) 1 commit
+ . repack: optionally create a clone.bundle
+
+ Still an early WIP.
+
+
+* mg/index-read-error-messages (2015-06-01) 2 commits
+ . messages: uniform error messages for index write
+ . show-index: uniform error messages for index read
+
+ The tip was RFC.
+ Waiting for a reroll.
+
+
+* mk/utf8-no-iconv-warn (2015-06-08) 1 commit
+ . utf8.c: print warning about disabled iconv
+
+ Warn when a reencoding is requested in a build without iconv
+ support, as the end user is likely to get an unexpected result.  I
+ think the same level of safety should be added to a build with
+ iconv support when the specified encoding is not available, but the
+ patch does not go there.
+
+ ($gmane/277424).
+
+
+* pw/remote-set-url-fetch (2014-11-26) 1 commit
+ . remote: add --fetch and --both options to set-url
+
+ Ejected.
+
+
+* tr/remerge-diff (2014-11-10) 9 commits
+ . t4213: avoid "|" in sed regexp
+ . log --remerge-diff: show what the conflict resolution changed
+ . name-hash: allow dir hashing even when !ignore_case
+ . merge-recursive: allow storing conflict hunks in index
+ . merge_diff_mode: fold all merge diff variants into an enum
+ . combine-diff: do not pass revs->dense_combined_merges redundantly
+ . merge-recursive: -Xindex-only to leave worktree unchanged
+ . merge-recursive: internal flag to avoid touching the worktree
+ . merge-recursive: remove dead conditional in update_stages()
+
+ "log -p" output learns a new way to let users inspect a merge
+ commit by showing the differences between the automerged result
+ with conflicts the person who recorded the merge would have seen
+ and the final conflict resolution that was recorded in the merge.
+
+ Waiting for a reroll.
+ ($gmane/256591).
+
+
+* tg/perf-lib-test-perf-cleanup (2013-09-19) 2 commits
+ . perf-lib: add test_perf_cleanup target
+ . perf-lib: split starting the test from the execution
+
+ Add test_perf_cleanup shell function to the perf suite, that allows
+ the script writers to define a test with a clean-up action.
+
+
+* jc/show-branch (2014-03-24) 5 commits
+ . show-branch: use commit slab to represent bitflags of arbitrary width
+ . show-branch.c: remove "all_mask"
+ . show-branch.c: abstract out "flags" operation
+ . show-branch.c: lift all_mask/all_revs to a global static
+ . show-branch.c: update comment style
+
+ Waiting for the final step to lift the hard-limit.
