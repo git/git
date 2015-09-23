@@ -154,4 +154,13 @@ test_expect_success 'git branch `--sort` option' '
 	test_i18ncmp expect actual
 '
 
+test_expect_success 'git branch --points-at option' '
+	cat >expect <<-\EOF &&
+	  branch-one
+	  master
+	EOF
+	git branch --points-at=branch-one >actual &&
+	test_cmp expect actual
+'
+
 test_done
