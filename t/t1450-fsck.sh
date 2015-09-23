@@ -77,9 +77,29 @@ test_expect_success 'object with bad sha1' '
 test_expect_success 'branch pointing to non-commit' '
 	git rev-parse HEAD^{tree} >.git/refs/heads/invalid &&
 	test_when_finished "git update-ref -d refs/heads/invalid" &&
-	git fsck 2>out &&
+	test_must_fail git fsck 2>out &&
 	cat out &&
 	grep "not a commit" out
+'
+
+test_expect_success 'HEAD link pointing at a funny object' '
+	test_when_finished "mv .git/SAVED_HEAD .git/HEAD" &&
+	mv .git/HEAD .git/SAVED_HEAD &&
+	echo 0000000000000000000000000000000000000000 >.git/HEAD &&
+	# avoid corrupt/broken HEAD from interfering with repo discovery
+	test_must_fail env GIT_DIR=.git git fsck 2>out &&
+	cat out &&
+	grep "detached HEAD points" out
+'
+
+test_expect_success 'HEAD link pointing at a funny place' '
+	test_when_finished "mv .git/SAVED_HEAD .git/HEAD" &&
+	mv .git/HEAD .git/SAVED_HEAD &&
+	echo "ref: refs/funny/place" >.git/HEAD &&
+	# avoid corrupt/broken HEAD from interfering with repo discovery
+	test_must_fail env GIT_DIR=.git git fsck 2>out &&
+	cat out &&
+	grep "HEAD points to something strange" out
 '
 
 test_expect_success 'email without @ is okay' '
