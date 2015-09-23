@@ -36,7 +36,6 @@ struct ref_array_item {
 	unsigned char objectname[20];
 	int flag;
 	unsigned int kind;
-	int ignore : 1; /* To be removed in the next patch */
 	const char *symref;
 	struct commit *commit;
 	struct atom_value *value;
