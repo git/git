@@ -36,6 +36,7 @@ struct ref_array_item {
 	unsigned char objectname[20];
 	int flag;
 	unsigned int kind;
+	int ignore : 1; /* To be removed in the next patch */
 	const char *symref;
 	struct commit *commit;
 	struct atom_value *value;
@@ -45,6 +46,7 @@ struct ref_array_item {
 struct ref_array {
 	int nr, alloc;
 	struct ref_array_item **items;
+	struct rev_info *revs;
 };
 
 struct ref_filter {
@@ -60,9 +62,12 @@ struct ref_filter {
 	struct commit *merge_commit;
 
 	unsigned int with_commit_tag_algo : 1,
-		match_as_path : 1;
+		match_as_path : 1,
+		detached : 1;
 	unsigned int kind,
 		lines;
+	int abbrev,
+		verbose;
 };
 
 struct ref_filter_cbdata {
