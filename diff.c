@@ -322,7 +322,7 @@ static struct diff_tempfile {
 	 */
 	const char *name;
 
-	char hex[41];
+	char hex[GIT_SHA1_HEXSZ + 1];
 	char mode[10];
 
 	/*
@@ -2878,8 +2878,7 @@ static void prep_temp_blob(const char *path, struct diff_tempfile *temp,
 		die_errno("unable to write temp-file");
 	close_tempfile(&temp->tempfile);
 	temp->name = get_tempfile_path(&temp->tempfile);
-	strcpy(temp->hex, sha1_to_hex(sha1));
-	temp->hex[40] = 0;
+	sha1_to_hex_r(temp->hex, sha1);
 	xsnprintf(temp->mode, sizeof(temp->mode), "%06o", mode);
 	strbuf_release(&buf);
 	strbuf_release(&template);
@@ -2926,9 +2925,9 @@ static struct diff_tempfile *prepare_temp_file(const char *name,
 			/* we can borrow from the file in the work tree */
 			temp->name = name;
 			if (!one->sha1_valid)
-				strcpy(temp->hex, sha1_to_hex(null_sha1));
+				sha1_to_hex_r(temp->hex, null_sha1);
 			else
-				strcpy(temp->hex, sha1_to_hex(one->sha1));
+				sha1_to_hex_r(temp->hex, one->sha1);
 			/* Even though we may sometimes borrow the
 			 * contents from the work tree, we always want
 			 * one->mode.  mode is trustworthy even when
