@@ -162,11 +162,10 @@ static void read_mailmap_line(struct string_list *map, char *buffer,
 			char *cp;
 
 			free(*repo_abbrev);
-			*repo_abbrev = xmalloc(len);
 
 			for (cp = buffer + abblen; isspace(*cp); cp++)
 				; /* nothing */
-			strcpy(*repo_abbrev, cp);
+			*repo_abbrev = xstrdup(cp);
 		}
 		return;
 	}
