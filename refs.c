@@ -1579,16 +1579,15 @@ static int resolve_missing_loose_ref(const char *refname,
 }
 
 /* This function needs to return a meaningful errno on failure */
-static const char *resolve_ref_unsafe_1(const char *refname,
-					int resolve_flags,
-					unsigned char *sha1,
-					int *flags,
-					struct strbuf *sb_path)
+static const char *resolve_ref_1(const char *refname,
+				 int resolve_flags,
+				 unsigned char *sha1,
+				 int *flags,
+				 struct strbuf *sb_refname,
+				 struct strbuf *sb_path,
+				 struct strbuf *sb_contents)
 {
 	int depth = MAXDEPTH;
-	ssize_t len;
-	char buffer[256];
-	static char refname_buffer[256];
 	int bad_name = 0;
 
 	if (flags)
@@ -1654,19 +1653,18 @@ static const char *resolve_ref_unsafe_1(const char *refname,
 
 		/* Follow "normalized" - ie "refs/.." symlinks by hand */
 		if (S_ISLNK(st.st_mode)) {
-			len = readlink(path, buffer, sizeof(buffer)-1);
-			if (len < 0) {
+			strbuf_reset(sb_contents);
+			if (strbuf_readlink(sb_contents, path, 0) < 0) {
 				if (errno == ENOENT || errno == EINVAL)
 					/* inconsistent with lstat; retry */
 					goto stat_ref;
 				else
 					return NULL;
 			}
-			buffer[len] = 0;
-			if (starts_with(buffer, "refs/") &&
-					!check_refname_format(buffer, 0)) {
-				strcpy(refname_buffer, buffer);
-				refname = refname_buffer;
+			if (starts_with(sb_contents->buf, "refs/") &&
+			    !check_refname_format(sb_contents->buf, 0)) {
+				strbuf_swap(sb_refname, sb_contents);
+				refname = sb_refname->buf;
 				if (flags)
 					*flags |= REF_ISSYMREF;
 				if (resolve_flags & RESOLVE_REF_NO_RECURSE) {
@@ -1695,28 +1693,26 @@ static const char *resolve_ref_unsafe_1(const char *refname,
 			else
 				return NULL;
 		}
-		len = read_in_full(fd, buffer, sizeof(buffer)-1);
-		if (len < 0) {
+		strbuf_reset(sb_contents);
+		if (strbuf_read(sb_contents, fd, 256) < 0) {
 			int save_errno = errno;
 			close(fd);
 			errno = save_errno;
 			return NULL;
 		}
 		close(fd);
-		while (len && isspace(buffer[len-1]))
-			len--;
-		buffer[len] = '\0';
+		strbuf_rtrim(sb_contents);
 
 		/*
 		 * Is it a symbolic ref?
 		 */
-		if (!starts_with(buffer, "ref:")) {
+		if (!starts_with(sb_contents->buf, "ref:")) {
 			/*
 			 * Please note that FETCH_HEAD has a second
 			 * line containing other data.
 			 */
-			if (get_sha1_hex(buffer, sha1) ||
-			    (buffer[40] != '\0' && !isspace(buffer[40]))) {
+			if (get_sha1_hex(sb_contents->buf, sha1) ||
+			    (sb_contents->buf[40] != '\0' && !isspace(sb_contents->buf[40]))) {
 				if (flags)
 					*flags |= REF_ISBROKEN;
 				errno = EINVAL;
@@ -1731,10 +1727,12 @@ static const char *resolve_ref_unsafe_1(const char *refname,
 		}
 		if (flags)
 			*flags |= REF_ISSYMREF;
-		buf = buffer + 4;
+		buf = sb_contents->buf + 4;
 		while (isspace(*buf))
 			buf++;
-		refname = strcpy(refname_buffer, buf);
+		strbuf_reset(sb_refname);
+		strbuf_addstr(sb_refname, buf);
+		refname = sb_refname->buf;
 		if (resolve_flags & RESOLVE_REF_NO_RECURSE) {
 			hashclr(sha1);
 			return refname;
@@ -1756,10 +1754,15 @@ static const char *resolve_ref_unsafe_1(const char *refname,
 const char *resolve_ref_unsafe(const char *refname, int resolve_flags,
 			       unsigned char *sha1, int *flags)
 {
+	static struct strbuf sb_refname = STRBUF_INIT;
+	struct strbuf sb_contents = STRBUF_INIT;
 	struct strbuf sb_path = STRBUF_INIT;
-	const char *ret = resolve_ref_unsafe_1(refname, resolve_flags,
-					       sha1, flags, &sb_path);
+	const char *ret;
+
+	ret = resolve_ref_1(refname, resolve_flags, sha1, flags,
+			    &sb_refname, &sb_path, &sb_contents);
 	strbuf_release(&sb_path);
+	strbuf_release(&sb_contents);
 	return ret;
 }
 
