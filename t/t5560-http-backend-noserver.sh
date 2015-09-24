@@ -40,10 +40,6 @@ POST() {
 	test_cmp exp act
 }
 
-log_div() {
-	return 0
-}
-
 . "$TEST_DIRECTORY"/t556x_common
 
 expect_aliased() {

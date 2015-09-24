@@ -35,15 +35,9 @@ POST() {
 	test_cmp exp act
 }
 
-log_div() {
-	echo >>"$HTTPD_ROOT_PATH"/access.log
-	echo "###  $1" >>"$HTTPD_ROOT_PATH"/access.log
-	echo "###" >>"$HTTPD_ROOT_PATH"/access.log
-}
-
 . "$TEST_DIRECTORY"/t556x_common
 
-cat >exp <<EOF
+grep '^[^#]' >exp <<EOF
 
 ###  refs/heads/master
 ###
