@@ -38,7 +38,7 @@ char *path_name(const struct name_path *path, const char *name)
 	}
 	n = xmalloc(len);
 	m = n + len - (nlen + 1);
-	strcpy(m, name);
+	memcpy(m, name, nlen + 1);
 	for (p = path; p; p = p->up) {
 		if (p->elem_len) {
 			m -= p->elem_len + 1;
