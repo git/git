@@ -246,8 +246,6 @@ free_strings:
 
 static char *normalize_value(const char *key, const char *value)
 {
-	char *normalized;
-
 	if (!value)
 		return NULL;
 
@@ -258,27 +256,21 @@ static char *normalize_value(const char *key, const char *value)
 		 * "~/foobar/" in the config file, and to expand the ~
 		 * when retrieving the value.
 		 */
-		normalized = xstrdup(value);
-	else {
-		normalized = xmalloc(64);
-		if (types == TYPE_INT) {
-			int64_t v = git_config_int64(key, value);
-			sprintf(normalized, "%"PRId64, v);
-		}
-		else if (types == TYPE_BOOL)
-			sprintf(normalized, "%s",
-				git_config_bool(key, value) ? "true" : "false");
-		else if (types == TYPE_BOOL_OR_INT) {
-			int is_bool, v;
-			v = git_config_bool_or_int(key, value, &is_bool);
-			if (!is_bool)
-				sprintf(normalized, "%d", v);
-			else
-				sprintf(normalized, "%s", v ? "true" : "false");
-		}
+		return xstrdup(value);
+	if (types == TYPE_INT)
+		return xstrfmt("%"PRId64, git_config_int64(key, value));
+	if (types == TYPE_BOOL)
+		return xstrdup(git_config_bool(key, value) ?  "true" : "false");
+	if (types == TYPE_BOOL_OR_INT) {
+		int is_bool, v;
+		v = git_config_bool_or_int(key, value, &is_bool);
+		if (!is_bool)
+			return xstrfmt("%d", v);
+		else
+			return xstrdup(v ? "true" : "false");
 	}
 
-	return normalized;
+	die("BUG: cannot normalize type %d", types);
 }
 
 static int get_color_found;
