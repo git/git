@@ -1856,7 +1856,6 @@ int main(int argc, char **argv)
 
 	new_refs = 0;
 	for (ref = remote_refs; ref; ref = ref->next) {
-		char old_hex[60], *new_hex;
 		struct argv_array commit_argv = ARGV_ARRAY_INIT;
 
 		if (!ref->peer_ref)
@@ -1911,13 +1910,12 @@ int main(int argc, char **argv)
 		}
 		hashcpy(ref->new_sha1, ref->peer_ref->new_sha1);
 		new_refs++;
-		strcpy(old_hex, sha1_to_hex(ref->old_sha1));
-		new_hex = sha1_to_hex(ref->new_sha1);
 
 		fprintf(stderr, "updating '%s'", ref->name);
 		if (strcmp(ref->name, ref->peer_ref->name))
 			fprintf(stderr, " using '%s'", ref->peer_ref->name);
-		fprintf(stderr, "\n  from %s\n  to   %s\n", old_hex, new_hex);
+		fprintf(stderr, "\n  from %s\n  to   %s\n",
+			sha1_to_hex(ref->old_sha1), sha1_to_hex(ref->new_sha1));
 		if (dry_run) {
 			if (helper_status)
 				printf("ok %s\n", ref->name);
