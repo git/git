@@ -175,6 +175,16 @@ static void do_git_path(struct strbuf *buf, const char *fmt, va_list args)
 	strbuf_cleanup_path(buf);
 }
 
+char *git_path_buf(struct strbuf *buf, const char *fmt, ...)
+{
+	va_list args;
+	strbuf_reset(buf);
+	va_start(args, fmt);
+	do_git_path(buf, fmt, args);
+	va_end(args);
+	return buf->buf;
+}
+
 void strbuf_git_path(struct strbuf *sb, const char *fmt, ...)
 {
 	va_list args;
