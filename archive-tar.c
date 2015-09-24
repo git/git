@@ -233,7 +233,7 @@ static int write_tar_entry(struct archiver_args *args,
 		size_t rest = pathlen - plen - 1;
 		if (plen > 0 && rest <= sizeof(header.name)) {
 			memcpy(header.prefix, path, plen);
-				memcpy(header.name, path + plen + 1, rest);
+			memcpy(header.name, path + plen + 1, rest);
 		} else {
 			sprintf(header.name, "%s.data",
 				sha1_to_hex(sha1));
