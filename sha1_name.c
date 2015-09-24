@@ -1293,8 +1293,7 @@ static void diagnose_invalid_index_path(int stage,
 	const struct cache_entry *ce;
 	int pos;
 	unsigned namelen = strlen(filename);
-	unsigned fullnamelen;
-	char *fullname;
+	struct strbuf fullname = STRBUF_INIT;
 
 	if (!prefix)
 		prefix = "";
@@ -1314,21 +1313,19 @@ static void diagnose_invalid_index_path(int stage,
 	}
 
 	/* Confusion between relative and absolute filenames? */
-	fullnamelen = namelen + strlen(prefix);
-	fullname = xmalloc(fullnamelen + 1);
-	strcpy(fullname, prefix);
-	strcat(fullname, filename);
-	pos = cache_name_pos(fullname, fullnamelen);
+	strbuf_addstr(&fullname, prefix);
+	strbuf_addstr(&fullname, filename);
+	pos = cache_name_pos(fullname.buf, fullname.len);
 	if (pos < 0)
 		pos = -pos - 1;
 	if (pos < active_nr) {
 		ce = active_cache[pos];
-		if (ce_namelen(ce) == fullnamelen &&
-		    !memcmp(ce->name, fullname, fullnamelen))
+		if (ce_namelen(ce) == fullname.len &&
+		    !memcmp(ce->name, fullname.buf, fullname.len))
 			die("Path '%s' is in the index, but not '%s'.\n"
 			    "Did you mean ':%d:%s' aka ':%d:./%s'?",
-			    fullname, filename,
-			    ce_stage(ce), fullname,
+			    fullname.buf, filename,
+			    ce_stage(ce), fullname.buf,
 			    ce_stage(ce), filename);
 	}
 
@@ -1338,7 +1335,7 @@ static void diagnose_invalid_index_path(int stage,
 		die("Path '%s' does not exist (neither on disk nor in the index).",
 		    filename);
 
-	free(fullname);
+	strbuf_release(&fullname);
 }
 
 
