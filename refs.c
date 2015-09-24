@@ -2695,7 +2695,7 @@ static int pack_if_possible_fn(struct ref_entry *entry, void *cb_data)
 		int namelen = strlen(entry->name) + 1;
 		struct ref_to_prune *n = xcalloc(1, sizeof(*n) + namelen);
 		hashcpy(n->sha1, entry->u.value.oid.hash);
-		strcpy(n->name, entry->name);
+		memcpy(n->name, entry->name, namelen); /* includes NUL */
 		n->next = cb->ref_to_prune;
 		cb->ref_to_prune = n;
 	}
@@ -3984,10 +3984,10 @@ void ref_transaction_free(struct ref_transaction *transaction)
 static struct ref_update *add_update(struct ref_transaction *transaction,
 				     const char *refname)
 {
-	size_t len = strlen(refname);
-	struct ref_update *update = xcalloc(1, sizeof(*update) + len + 1);
+	size_t len = strlen(refname) + 1;
+	struct ref_update *update = xcalloc(1, sizeof(*update) + len);
 
-	strcpy((char *)update->refname, refname);
+	memcpy((char *)update->refname, refname, len); /* includes NUL */
 	ALLOC_GROW(transaction->updates, transaction->nr + 1, transaction->alloc);
 	transaction->updates[transaction->nr++] = update;
 	return update;
