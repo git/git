@@ -1464,7 +1464,7 @@ int check_sha1_signature(const unsigned char *sha1, void *map,
 		return -1;
 
 	/* Generate the header */
-	hdrlen = sprintf(hdr, "%s %lu", typename(obj_type), size) + 1;
+	hdrlen = xsnprintf(hdr, sizeof(hdr), "%s %lu", typename(obj_type), size) + 1;
 
 	/* Sha1.. */
 	git_SHA1_Init(&c);
@@ -2930,7 +2930,7 @@ static void write_sha1_file_prepare(const void *buf, unsigned long len,
 	git_SHA_CTX c;
 
 	/* Generate the header */
-	*hdrlen = sprintf(hdr, "%s %lu", type, len)+1;
+	*hdrlen = xsnprintf(hdr, *hdrlen, "%s %lu", type, len)+1;
 
 	/* Sha1.. */
 	git_SHA1_Init(&c);
@@ -2993,7 +2993,7 @@ int hash_sha1_file(const void *buf, unsigned long len, const char *type,
                    unsigned char *sha1)
 {
 	char hdr[32];
-	int hdrlen;
+	int hdrlen = sizeof(hdr);
 	write_sha1_file_prepare(buf, len, type, sha1, hdr, &hdrlen);
 	return 0;
 }
@@ -3139,7 +3139,7 @@ static int freshen_packed_object(const unsigned char *sha1)
 int write_sha1_file(const void *buf, unsigned long len, const char *type, unsigned char *sha1)
 {
 	char hdr[32];
-	int hdrlen;
+	int hdrlen = sizeof(hdr);
 
 	/* Normally if we have it in the pack then we do not bother writing
 	 * it out into .git/objects/??/?{38} file.
@@ -3157,7 +3157,8 @@ int hash_sha1_file_literally(const void *buf, unsigned long len, const char *typ
 	int hdrlen, status = 0;
 
 	/* type string, SP, %lu of the length plus NUL must fit this */
-	header = xmalloc(strlen(type) + 32);
+	hdrlen = strlen(type) + 32;
+	header = xmalloc(hdrlen);
 	write_sha1_file_prepare(buf, len, type, sha1, header, &hdrlen);
 
 	if (!(flags & HASH_WRITE_OBJECT))
@@ -3185,7 +3186,7 @@ int force_object_loose(const unsigned char *sha1, time_t mtime)
 	buf = read_packed_sha1(sha1, &type, &len);
 	if (!buf)
 		return error("cannot read sha1_file for %s", sha1_to_hex(sha1));
-	hdrlen = sprintf(hdr, "%s %lu", typename(type), len) + 1;
+	hdrlen = xsnprintf(hdr, sizeof(hdr), "%s %lu", typename(type), len) + 1;
 	ret = write_loose_object(sha1, hdr, hdrlen, buf, len, mtime);
 	free(buf);
 
