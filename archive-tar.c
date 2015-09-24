@@ -167,21 +167,21 @@ static void prepare_header(struct archiver_args *args,
 			   struct ustar_header *header,
 			   unsigned int mode, unsigned long size)
 {
-	sprintf(header->mode, "%07o", mode & 07777);
-	sprintf(header->size, "%011lo", S_ISREG(mode) ? size : 0);
-	sprintf(header->mtime, "%011lo", (unsigned long) args->time);
+	xsnprintf(header->mode, sizeof(header->mode), "%07o", mode & 07777);
+	xsnprintf(header->size, sizeof(header->size), "%011lo", S_ISREG(mode) ? size : 0);
+	xsnprintf(header->mtime, sizeof(header->mtime), "%011lo", (unsigned long) args->time);
 
-	sprintf(header->uid, "%07o", 0);
-	sprintf(header->gid, "%07o", 0);
+	xsnprintf(header->uid, sizeof(header->uid), "%07o", 0);
+	xsnprintf(header->gid, sizeof(header->gid), "%07o", 0);
 	strlcpy(header->uname, "root", sizeof(header->uname));
 	strlcpy(header->gname, "root", sizeof(header->gname));
-	sprintf(header->devmajor, "%07o", 0);
-	sprintf(header->devminor, "%07o", 0);
+	xsnprintf(header->devmajor, sizeof(header->devmajor), "%07o", 0);
+	xsnprintf(header->devminor, sizeof(header->devminor), "%07o", 0);
 
 	memcpy(header->magic, "ustar", 6);
 	memcpy(header->version, "00", 2);
 
-	sprintf(header->chksum, "%07o", ustar_header_chksum(header));
+	snprintf(header->chksum, sizeof(header->chksum), "%07o", ustar_header_chksum(header));
 }
 
 static int write_extended_header(struct archiver_args *args,
@@ -193,7 +193,7 @@ static int write_extended_header(struct archiver_args *args,
 	memset(&header, 0, sizeof(header));
 	*header.typeflag = TYPEFLAG_EXT_HEADER;
 	mode = 0100666;
-	sprintf(header.name, "%s.paxheader", sha1_to_hex(sha1));
+	xsnprintf(header.name, sizeof(header.name), "%s.paxheader", sha1_to_hex(sha1));
 	prepare_header(args, &header, mode, size);
 	write_blocked(&header, sizeof(header));
 	write_blocked(buffer, size);
@@ -235,8 +235,8 @@ static int write_tar_entry(struct archiver_args *args,
 			memcpy(header.prefix, path, plen);
 			memcpy(header.name, path + plen + 1, rest);
 		} else {
-			sprintf(header.name, "%s.data",
-				sha1_to_hex(sha1));
+			xsnprintf(header.name, sizeof(header.name), "%s.data",
+				  sha1_to_hex(sha1));
 			strbuf_append_ext_header(&ext_header, "path",
 						 path, pathlen);
 		}
@@ -259,8 +259,8 @@ static int write_tar_entry(struct archiver_args *args,
 
 	if (S_ISLNK(mode)) {
 		if (size > sizeof(header.linkname)) {
-			sprintf(header.linkname, "see %s.paxheader",
-			        sha1_to_hex(sha1));
+			xsnprintf(header.linkname, sizeof(header.linkname),
+				  "see %s.paxheader", sha1_to_hex(sha1));
 			strbuf_append_ext_header(&ext_header, "linkpath",
 			                         buffer, size);
 		} else
