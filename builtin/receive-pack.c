@@ -1524,15 +1524,18 @@ static const char *unpack(int err_fd, struct shallow_info *si)
 		if (status)
 			return "unpack-objects abnormal exit";
 	} else {
-		int s;
-		char keep_arg[256];
-
-		s = sprintf(keep_arg, "--keep=receive-pack %"PRIuMAX" on ", (uintmax_t) getpid());
-		if (gethostname(keep_arg + s, sizeof(keep_arg) - s))
-			strcpy(keep_arg + s, "localhost");
+		char hostname[256];
 
 		argv_array_pushl(&child.args, "index-pack",
-				 "--stdin", hdr_arg, keep_arg, NULL);
+				 "--stdin", hdr_arg, NULL);
+
+		if (gethostname(hostname, sizeof(hostname)))
+			xsnprintf(hostname, sizeof(hostname), "localhost");
+		argv_array_pushf(&child.args,
+				 "--keep=receive-pack %"PRIuMAX" on %s",
+				 (uintmax_t)getpid(),
+				 hostname);
+
 		if (fsck_objects)
 			argv_array_pushf(&child.args, "--strict%s",
 				fsck_msg_types.buf);
