@@ -55,16 +55,15 @@ copy_data:
 			parents;
 			parents = parents->next, parent_number++) {
 		if (parent_number > 1) {
-			int len = strlen(tip_name);
+			size_t len;
 			char *new_name;
 
-			if (len > 2 && !strcmp(tip_name + len - 2, "^0"))
-				len -= 2;
+			strip_suffix(tip_name, "^0", &len);
 			if (generation > 0)
-				new_name = xstrfmt("%.*s~%d^%d", len, tip_name,
+				new_name = xstrfmt("%.*s~%d^%d", (int)len, tip_name,
 						   generation, parent_number);
 			else
-				new_name = xstrfmt("%.*s^%d", len, tip_name,
+				new_name = xstrfmt("%.*s^%d", (int)len, tip_name,
 						   parent_number);
 
 			name_rev(parents->item, new_name, 0,
