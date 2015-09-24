@@ -632,7 +632,7 @@ const char *relative_path(const char *in, const char *prefix,
  */
 const char *remove_leading_path(const char *in, const char *prefix)
 {
-	static char buf[PATH_MAX + 1];
+	static struct strbuf buf = STRBUF_INIT;
 	int i = 0, j = 0;
 
 	if (!prefix || !prefix[0])
@@ -661,11 +661,13 @@ const char *remove_leading_path(const char *in, const char *prefix)
 		return in;
 	while (is_dir_sep(in[j]))
 		j++;
+
+	strbuf_reset(&buf);
 	if (!in[j])
-		strcpy(buf, ".");
+		strbuf_addstr(&buf, ".");
 	else
-		strcpy(buf, in + j);
-	return buf;
+		strbuf_addstr(&buf, in + j);
+	return buf.buf;
 }
 
 /*
