@@ -96,11 +96,15 @@ static void find_short_object_filename(int len, const char *hex_pfx, struct disa
 	}
 	fakeent->next = alt_odb_list;
 
-	sprintf(hex, "%.2s", hex_pfx);
+	xsnprintf(hex, sizeof(hex), "%.2s", hex_pfx);
 	for (alt = fakeent; alt && !ds->ambiguous; alt = alt->next) {
 		struct dirent *de;
 		DIR *dir;
-		sprintf(alt->name, "%.2s/", hex_pfx);
+		/*
+		 * every alt_odb struct has 42 extra bytes after the base
+		 * for exactly this purpose
+		 */
+		xsnprintf(alt->name, 42, "%.2s/", hex_pfx);
 		dir = opendir(alt->base);
 		if (!dir)
 			continue;
