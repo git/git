@@ -2193,8 +2193,7 @@ int for_each_glob_ref_in(each_ref_fn fn, const char *pattern,
 
 	if (!has_glob_specials(pattern)) {
 		/* Append implied '/' '*' if not present. */
-		if (real_pattern.buf[real_pattern.len - 1] != '/')
-			strbuf_addch(&real_pattern, '/');
+		strbuf_complete(&real_pattern, '/');
 		/* No need to check for '*', there is none. */
 		strbuf_addch(&real_pattern, '*');
 	}

@@ -1519,8 +1519,7 @@ static enum path_treatment treat_path_fast(struct dir_struct *dir,
 	}
 	strbuf_addstr(path, cdir->ucd->name);
 	/* treat_one_path() does this before it calls treat_directory() */
-	if (path->buf[path->len - 1] != '/')
-		strbuf_addch(path, '/');
+	strbuf_complete(path, '/');
 	if (cdir->ucd->check_only)
 		/*
 		 * check_only is set as a result of treat_directory() getting
@@ -2126,8 +2125,7 @@ static int remove_dir_recurse(struct strbuf *path, int flag, int *kept_up)
 		else
 			return -1;
 	}
-	if (path->buf[original_len - 1] != '/')
-		strbuf_addch(path, '/');
+	strbuf_complete(path, '/');
 
 	len = path->len;
 	while ((e = readdir(dir)) != NULL) {

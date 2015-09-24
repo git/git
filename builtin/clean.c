@@ -159,8 +159,7 @@ static int is_git_repository(struct strbuf *path)
 	int gitfile_error;
 	size_t orig_path_len = path->len;
 	assert(orig_path_len != 0);
-	if (path->buf[orig_path_len - 1] != '/')
-		strbuf_addch(path, '/');
+	strbuf_complete(path, '/');
 	strbuf_addstr(path, ".git");
 	if (read_gitfile_gently(path->buf, &gitfile_error) || is_git_directory(path->buf))
 		ret = 1;
@@ -206,8 +205,7 @@ static int remove_dirs(struct strbuf *path, const char *prefix, int force_flag,
 		return res;
 	}
 
-	if (path->buf[original_len - 1] != '/')
-		strbuf_addch(path, '/');
+	strbuf_complete(path, '/');
 
 	len = path->len;
 	while ((e = readdir(dir)) != NULL) {
