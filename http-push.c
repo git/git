@@ -1459,8 +1459,6 @@ static void add_remote_info_ref(struct remote_ls_ctx *ls)
 {
 	struct strbuf *buf = (struct strbuf *)ls->userData;
 	struct object *o;
-	int len;
-	char *ref_info;
 	struct ref *ref;
 
 	ref = alloc_ref(ls->dentry_name);
@@ -1484,23 +1482,14 @@ static void add_remote_info_ref(struct remote_ls_ctx *ls)
 		return;
 	}
 
-	len = strlen(ls->dentry_name) + 42;
-	ref_info = xcalloc(len + 1, 1);
-	sprintf(ref_info, "%s	%s\n",
-		sha1_to_hex(ref->old_sha1), ls->dentry_name);
-	fwrite_buffer(ref_info, 1, len, buf);
-	free(ref_info);
+	strbuf_addf(buf, "%s\t%s\n",
+		    sha1_to_hex(ref->old_sha1), ls->dentry_name);
 
 	if (o->type == OBJ_TAG) {
 		o = deref_tag(o, ls->dentry_name, 0);
-		if (o) {
-			len = strlen(ls->dentry_name) + 45;
-			ref_info = xcalloc(len + 1, 1);
-			sprintf(ref_info, "%s	%s^{}\n",
-				sha1_to_hex(o->sha1), ls->dentry_name);
-			fwrite_buffer(ref_info, 1, len, buf);
-			free(ref_info);
-		}
+		if (o)
+			strbuf_addf(buf, "%s\t%s^{}\n",
+				    sha1_to_hex(o->sha1), ls->dentry_name);
 	}
 	free(ref);
 }
