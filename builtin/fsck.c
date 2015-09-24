@@ -683,11 +683,12 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 
 		prepare_alt_odb();
 		for (alt = alt_odb_list; alt; alt = alt->next) {
-			char namebuf[PATH_MAX];
-			int namelen = alt->name - alt->base;
-			memcpy(namebuf, alt->base, namelen);
-			namebuf[namelen - 1] = 0;
-			fsck_object_dir(namebuf);
+			/* directory name, minus trailing slash */
+			size_t namelen = alt->name - alt->base - 1;
+			struct strbuf name = STRBUF_INIT;
+			strbuf_add(&name, alt->base, namelen);
+			fsck_object_dir(name.buf);
+			strbuf_release(&name);
 		}
 	}
 
