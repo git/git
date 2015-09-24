@@ -639,8 +639,7 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 				continue;
 
 			if (rm->peer_ref) {
-				ref = xcalloc(1, sizeof(*ref) + strlen(rm->peer_ref->name) + 1);
-				strcpy(ref->name, rm->peer_ref->name);
+				ref = alloc_ref(rm->peer_ref->name);
 				hashcpy(ref->old_sha1, rm->peer_ref->old_sha1);
 				hashcpy(ref->new_sha1, rm->old_sha1);
 				ref->force = rm->peer_ref->force;
