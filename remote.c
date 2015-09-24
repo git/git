@@ -65,7 +65,6 @@ static int valid_remote(const struct remote *remote)
 static const char *alias_url(const char *url, struct rewrites *r)
 {
 	int i, j;
-	char *ret;
 	struct counted_string *longest;
 	int longest_i;
 
@@ -86,11 +85,7 @@ static const char *alias_url(const char *url, struct rewrites *r)
 	if (!longest)
 		return url;
 
-	ret = xmalloc(r->rewrite[longest_i]->baselen +
-		     (strlen(url) - longest->len) + 1);
-	strcpy(ret, r->rewrite[longest_i]->base);
-	strcpy(ret + r->rewrite[longest_i]->baselen, url + longest->len);
-	return ret;
+	return xstrfmt("%s%s", r->rewrite[longest_i]->base, url + longest->len);
 }
 
 static void add_push_refspec(struct remote *remote, const char *ref)

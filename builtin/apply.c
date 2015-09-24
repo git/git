@@ -698,10 +698,7 @@ static char *find_name_common(const char *line, const char *def,
 	}
 
 	if (root) {
-		char *ret = xmalloc(root_len + len + 1);
-		strcpy(ret, root);
-		memcpy(ret + root_len, start, len);
-		ret[root_len + len] = '\0';
+		char *ret = xstrfmt("%s%.*s", root, len, start);
 		return squash_slash(ret);
 	}
 

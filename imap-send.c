@@ -889,9 +889,8 @@ static char *cram(const char *challenge_64, const char *user, const char *pass)
 	}
 
 	/* response: "<user> <digest in hex>" */
-	resp_len = strlen(user) + 1 + strlen(hex) + 1;
-	response = xmalloc(resp_len);
-	sprintf(response, "%s %s", user, hex);
+	response = xstrfmt("%s %s", user, hex);
+	resp_len = strlen(response) + 1;
 
 	response_64 = xmalloc(ENCODED_SIZE(resp_len) + 1);
 	encoded_len = EVP_EncodeBlock((unsigned char *)response_64,
