@@ -678,16 +678,17 @@ int cmd_fsck(int argc, const char **argv, const char *prefix)
 	git_config(fsck_config, NULL);
 
 	fsck_head_link();
-	if (!connectivity_only)
+	if (!connectivity_only) {
 		fsck_object_dir(get_object_directory());
 
-	prepare_alt_odb();
-	for (alt = alt_odb_list; alt; alt = alt->next) {
-		char namebuf[PATH_MAX];
-		int namelen = alt->name - alt->base;
-		memcpy(namebuf, alt->base, namelen);
-		namebuf[namelen - 1] = 0;
-		fsck_object_dir(namebuf);
+		prepare_alt_odb();
+		for (alt = alt_odb_list; alt; alt = alt->next) {
+			char namebuf[PATH_MAX];
+			int namelen = alt->name - alt->base;
+			memcpy(namebuf, alt->base, namelen);
+			namebuf[namelen - 1] = 0;
+			fsck_object_dir(namebuf);
+		}
 	}
 
 	if (check_full) {
