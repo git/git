@@ -142,11 +142,11 @@ static struct ll_merge_driver ll_merge_drv[] = {
 	{ "union", "built-in union merge", ll_union_merge },
 };
 
-static void create_temp(mmfile_t *src, char *path)
+static void create_temp(mmfile_t *src, char *path, size_t len)
 {
 	int fd;
 
-	strcpy(path, ".merge_file_XXXXXX");
+	xsnprintf(path, len, ".merge_file_XXXXXX");
 	fd = xmkstemp(path);
 	if (write_in_full(fd, src->ptr, src->size) != src->size)
 		die_errno("unable to write temp-file");
@@ -187,10 +187,10 @@ static int ll_ext_merge(const struct ll_merge_driver *fn,
 
 	result->ptr = NULL;
 	result->size = 0;
-	create_temp(orig, temp[0]);
-	create_temp(src1, temp[1]);
-	create_temp(src2, temp[2]);
-	sprintf(temp[3], "%d", marker_size);
+	create_temp(orig, temp[0], sizeof(temp[0]));
+	create_temp(src1, temp[1], sizeof(temp[1]));
+	create_temp(src2, temp[2], sizeof(temp[2]));
+	xsnprintf(temp[3], sizeof(temp[3]), "%d", marker_size);
 
 	strbuf_expand(&cmd, fn->cmdline, strbuf_expand_dict_cb, &dict);
 

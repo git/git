@@ -2880,7 +2880,7 @@ static void prep_temp_blob(const char *path, struct diff_tempfile *temp,
 	temp->name = get_tempfile_path(&temp->tempfile);
 	strcpy(temp->hex, sha1_to_hex(sha1));
 	temp->hex[40] = 0;
-	sprintf(temp->mode, "%06o", mode);
+	xsnprintf(temp->mode, sizeof(temp->mode), "%06o", mode);
 	strbuf_release(&buf);
 	strbuf_release(&template);
 	free(path_dup);
@@ -2897,8 +2897,8 @@ static struct diff_tempfile *prepare_temp_file(const char *name,
 		 * a '+' entry produces this for file-1.
 		 */
 		temp->name = "/dev/null";
-		strcpy(temp->hex, ".");
-		strcpy(temp->mode, ".");
+		xsnprintf(temp->hex, sizeof(temp->hex), ".");
+		xsnprintf(temp->mode, sizeof(temp->mode), ".");
 		return temp;
 	}
 
@@ -2935,7 +2935,7 @@ static struct diff_tempfile *prepare_temp_file(const char *name,
 			 * !(one->sha1_valid), as long as
 			 * DIFF_FILE_VALID(one).
 			 */
-			sprintf(temp->mode, "%06o", one->mode);
+			xsnprintf(temp->mode, sizeof(temp->mode), "%06o", one->mode);
 		}
 		return temp;
 	}
@@ -4081,9 +4081,9 @@ const char *diff_unique_abbrev(const unsigned char *sha1, int len)
 	if (abblen < 37) {
 		static char hex[41];
 		if (len < abblen && abblen <= len + 2)
-			sprintf(hex, "%s%.*s", abbrev, len+3-abblen, "..");
+			xsnprintf(hex, sizeof(hex), "%s%.*s", abbrev, len+3-abblen, "..");
 		else
-			sprintf(hex, "%s...", abbrev);
+			xsnprintf(hex, sizeof(hex), "%s...", abbrev);
 		return hex;
 	}
 	return sha1_to_hex(sha1);

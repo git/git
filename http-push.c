@@ -881,7 +881,7 @@ static struct remote_lock *lock_remote(const char *path, long timeout)
 	strbuf_addf(&out_buffer.buf, LOCK_REQUEST, escaped);
 	free(escaped);
 
-	sprintf(timeout_header, "Timeout: Second-%ld", timeout);
+	xsnprintf(timeout_header, sizeof(timeout_header), "Timeout: Second-%ld", timeout);
 	dav_headers = curl_slist_append(dav_headers, timeout_header);
 	dav_headers = curl_slist_append(dav_headers, "Content-Type: text/xml");
 

@@ -3326,10 +3326,10 @@ static int log_ref_write_fd(int fd, const unsigned char *old_sha1,
 	msglen = msg ? strlen(msg) : 0;
 	maxlen = strlen(committer) + msglen + 100;
 	logrec = xmalloc(maxlen);
-	len = sprintf(logrec, "%s %s %s\n",
-		      sha1_to_hex(old_sha1),
-		      sha1_to_hex(new_sha1),
-		      committer);
+	len = xsnprintf(logrec, maxlen, "%s %s %s\n",
+			sha1_to_hex(old_sha1),
+			sha1_to_hex(new_sha1),
+			committer);
 	if (msglen)
 		len += copy_msg(logrec + len - 1, msg) - 1;
 

@@ -301,7 +301,7 @@ static int write_global_extended_header(struct archiver_args *args)
 	memset(&header, 0, sizeof(header));
 	*header.typeflag = TYPEFLAG_GLOBAL_HEADER;
 	mode = 0100666;
-	strcpy(header.name, "pax_global_header");
+	xsnprintf(header.name, sizeof(header.name), "pax_global_header");
 	prepare_header(args, &header, mode, ext_header.len);
 	write_blocked(&header, sizeof(header));
 	write_blocked(ext_header.buf, ext_header.len);

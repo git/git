@@ -901,7 +901,7 @@ static const char *ip2str(int family, struct sockaddr *sin, socklen_t len)
 		inet_ntop(family, &((struct sockaddr_in*)sin)->sin_addr, ip, len);
 		break;
 	default:
-		strcpy(ip, "<unknown>");
+		xsnprintf(ip, sizeof(ip), "<unknown>");
 	}
 	return ip;
 }
@@ -916,7 +916,7 @@ static int setup_named_sock(char *listen_addr, int listen_port, struct socketlis
 	int gai;
 	long flags;
 
-	sprintf(pbuf, "%d", listen_port);
+	xsnprintf(pbuf, sizeof(pbuf), "%d", listen_port);
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;

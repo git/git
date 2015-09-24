@@ -262,7 +262,8 @@ static int create_default_files(const char *template_path)
 	}
 
 	/* This forces creation of new config file */
-	sprintf(repo_version_string, "%d", GIT_REPO_VERSION);
+	xsnprintf(repo_version_string, sizeof(repo_version_string),
+		  "%d", GIT_REPO_VERSION);
 	git_config_set("core.repositoryformatversion", repo_version_string);
 
 	path[len] = 0;
@@ -414,13 +415,13 @@ int init_db(const char *template_dir, unsigned int flags)
 		 */
 		if (shared_repository < 0)
 			/* force to the mode value */
-			sprintf(buf, "0%o", -shared_repository);
+			xsnprintf(buf, sizeof(buf), "0%o", -shared_repository);
 		else if (shared_repository == PERM_GROUP)
-			sprintf(buf, "%d", OLD_PERM_GROUP);
+			xsnprintf(buf, sizeof(buf), "%d", OLD_PERM_GROUP);
 		else if (shared_repository == PERM_EVERYBODY)
-			sprintf(buf, "%d", OLD_PERM_EVERYBODY);
+			xsnprintf(buf, sizeof(buf), "%d", OLD_PERM_EVERYBODY);
 		else
-			die("oops");
+			die("BUG: invalid value for shared_repository");
 		git_config_set("core.sharedrepository", buf);
 		git_config_set("receive.denyNonFastforwards", "true");
 	}
