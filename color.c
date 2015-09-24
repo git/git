@@ -150,22 +150,24 @@ int color_parse(const char *value, char *dst)
  * already have the ANSI escape code in it. "out" should have enough
  * space in it to fit any color.
  */
-static char *color_output(char *out, const struct color *c, char type)
+static char *color_output(char *out, int len, const struct color *c, char type)
 {
 	switch (c->type) {
 	case COLOR_UNSPECIFIED:
 	case COLOR_NORMAL:
 		break;
 	case COLOR_ANSI:
+		if (len < 2)
+			die("BUG: color parsing ran out of space");
 		*out++ = type;
 		*out++ = '0' + c->value;
 		break;
 	case COLOR_256:
-		out += sprintf(out, "%c8;5;%d", type, c->value);
+		out += xsnprintf(out, len, "%c8;5;%d", type, c->value);
 		break;
 	case COLOR_RGB:
-		out += sprintf(out, "%c8;2;%d;%d;%d", type,
-			       c->red, c->green, c->blue);
+		out += xsnprintf(out, len, "%c8;2;%d;%d;%d", type,
+				 c->red, c->green, c->blue);
 		break;
 	}
 	return out;
@@ -180,12 +182,13 @@ int color_parse_mem(const char *value, int value_len, char *dst)
 {
 	const char *ptr = value;
 	int len = value_len;
+	char *end = dst + COLOR_MAXLEN;
 	unsigned int attr = 0;
 	struct color fg = { COLOR_UNSPECIFIED };
 	struct color bg = { COLOR_UNSPECIFIED };
 
 	if (!strncasecmp(value, "reset", len)) {
-		strcpy(dst, GIT_COLOR_RESET);
+		xsnprintf(dst, end - dst, GIT_COLOR_RESET);
 		return 0;
 	}
 
@@ -224,12 +227,19 @@ int color_parse_mem(const char *value, int value_len, char *dst)
 			goto bad;
 	}
 
+#undef OUT
+#define OUT(x) do { \
+	if (dst == end) \
+		die("BUG: color parsing ran out of space"); \
+	*dst++ = (x); \
+} while(0)
+
 	if (attr || !color_empty(&fg) || !color_empty(&bg)) {
 		int sep = 0;
 		int i;
 
-		*dst++ = '\033';
-		*dst++ = '[';
+		OUT('\033');
+		OUT('[');
 
 		for (i = 0; attr; i++) {
 			unsigned bit = (1 << i);
@@ -237,27 +247,28 @@ int color_parse_mem(const char *value, int value_len, char *dst)
 				continue;
 			attr &= ~bit;
 			if (sep++)
-				*dst++ = ';';
-			dst += sprintf(dst, "%d", i);
+				OUT(';');
+			dst += xsnprintf(dst, end - dst, "%d", i);
 		}
 		if (!color_empty(&fg)) {
 			if (sep++)
-				*dst++ = ';';
+				OUT(';');
 			/* foreground colors are all in the 3x range */
-			dst = color_output(dst, &fg, '3');
+			dst = color_output(dst, end - dst, &fg, '3');
 		}
 		if (!color_empty(&bg)) {
 			if (sep++)
-				*dst++ = ';';
+				OUT(';');
 			/* background colors are all in the 4x range */
-			dst = color_output(dst, &bg, '4');
+			dst = color_output(dst, end - dst, &bg, '4');
 		}
-		*dst++ = 'm';
+		OUT('m');
 	}
-	*dst = 0;
+	OUT(0);
 	return 0;
 bad:
 	return error(_("invalid color value: %.*s"), value_len, value);
+#undef OUT
 }
 
 int git_config_colorbool(const char *var, const char *value)
