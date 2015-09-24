@@ -491,10 +491,21 @@ extern void strbuf_add_lines(struct strbuf *sb, const char *prefix, const char *
  */
 extern void strbuf_addstr_xml_quoted(struct strbuf *sb, const char *s);
 
+/**
+ * "Complete" the contents of `sb` by ensuring that either it ends with the
+ * character `term`, or it is empty.  This can be used, for example,
+ * to ensure that text ends with a newline, but without creating an empty
+ * blank line if there is no content in the first place.
+ */
+static inline void strbuf_complete(struct strbuf *sb, char term)
+{
+	if (sb->len && sb->buf[sb->len - 1] != term)
+		strbuf_addch(sb, term);
+}
+
 static inline void strbuf_complete_line(struct strbuf *sb)
 {
-	if (sb->len && sb->buf[sb->len - 1] != '\n')
-		strbuf_addch(sb, '\n');
+	strbuf_complete(sb, '\n');
 }
 
 extern int strbuf_branchname(struct strbuf *sb, const char *name);
