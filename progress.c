@@ -254,7 +254,7 @@ void stop_progress_msg(struct progress **p_progress, const char *msg)
 			throughput_string(&tp->display, tp->curr_total, rate);
 		}
 		progress_update = 1;
-		sprintf(bufp, ", %s.\n", msg);
+		xsnprintf(bufp, len + 1, ", %s.\n", msg);
 		display(progress, progress->last_value, bufp);
 		if (buf != bufp)
 			free(bufp);
