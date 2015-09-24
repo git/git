@@ -82,7 +82,7 @@ int parse_tag_buffer(struct tag *item, const void *data, unsigned long size)
 	nl = memchr(bufptr, '\n', tail - bufptr);
 	if (!nl || sizeof(type) <= (nl - bufptr))
 		return -1;
-	strncpy(type, bufptr, nl - bufptr);
+	memcpy(type, bufptr, nl - bufptr);
 	type[nl - bufptr] = '\0';
 	bufptr = nl + 1;
 

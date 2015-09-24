@@ -176,7 +176,7 @@ static void add_man_viewer(const char *name)
 	while (*p)
 		p = &((*p)->next);
 	*p = xcalloc(1, (sizeof(**p) + len + 1));
-	strncpy((*p)->name, name, len);
+	memcpy((*p)->name, name, len); /* NUL-terminated by xcalloc */
 }
 
 static int supported_man_viewer(const char *name, size_t len)
@@ -192,7 +192,7 @@ static void do_add_man_viewer_info(const char *name,
 {
 	struct man_viewer_info_list *new = xcalloc(1, sizeof(*new) + len + 1);
 
-	strncpy(new->name, name, len);
+	memcpy(new->name, name, len); /* NUL-terminated by xcalloc */
 	new->info = xstrdup(value);
 	new->next = man_viewer_info_list;
 	man_viewer_info_list = new;
