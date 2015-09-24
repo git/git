@@ -150,6 +150,7 @@ static int split_maildir(const char *maildir, const char *dir,
 {
 	char file[PATH_MAX];
 	char name[PATH_MAX];
+	FILE *f = NULL;
 	int ret = -1;
 	int i;
 	struct string_list list = STRING_LIST_INIT_DUP;
@@ -160,7 +161,6 @@ static int split_maildir(const char *maildir, const char *dir,
 		goto out;
 
 	for (i = 0; i < list.nr; i++) {
-		FILE *f;
 		snprintf(file, sizeof(file), "%s/%s", maildir, list.items[i].string);
 		f = fopen(file, "r");
 		if (!f) {
@@ -177,10 +177,13 @@ static int split_maildir(const char *maildir, const char *dir,
 		split_one(f, name, 1);
 
 		fclose(f);
+		f = NULL;
 	}
 
 	ret = skip;
 out:
+	if (f)
+		fclose(f);
 	string_list_clear(&list, 1);
 	return ret;
 }
