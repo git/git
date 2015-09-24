@@ -208,44 +208,25 @@ const char *sha1_file_name(const unsigned char *sha1)
  * provided by the caller.  which should be "pack" or "idx".
  */
 static char *sha1_get_pack_name(const unsigned char *sha1,
-				char **name, char **base, const char *which)
+				struct strbuf *buf,
+				const char *which)
 {
-	static const char hex[] = "0123456789abcdef";
-	char *buf;
-	int i;
-
-	if (!*base) {
-		const char *sha1_file_directory = get_object_directory();
-		int len = strlen(sha1_file_directory);
-		*base = xmalloc(len + 60);
-		sprintf(*base, "%s/pack/pack-1234567890123456789012345678901234567890.%s",
-			sha1_file_directory, which);
-		*name = *base + len + 11;
-	}
-
-	buf = *name;
-
-	for (i = 0; i < 20; i++) {
-		unsigned int val = *sha1++;
-		*buf++ = hex[val >> 4];
-		*buf++ = hex[val & 0xf];
-	}
-
-	return *base;
+	strbuf_reset(buf);
+	strbuf_addf(buf, "%s/pack/pack-%s.%s", get_object_directory(),
+		    sha1_to_hex(sha1), which);
+	return buf->buf;
 }
 
 char *sha1_pack_name(const unsigned char *sha1)
 {
-	static char *name, *base;
-
-	return sha1_get_pack_name(sha1, &name, &base, "pack");
+	static struct strbuf buf = STRBUF_INIT;
+	return sha1_get_pack_name(sha1, &buf, "pack");
 }
 
 char *sha1_pack_index_name(const unsigned char *sha1)
 {
-	static char *name, *base;
-
-	return sha1_get_pack_name(sha1, &name, &base, "idx");
+	static struct strbuf buf = STRBUF_INIT;
+	return sha1_get_pack_name(sha1, &buf, "idx");
 }
 
 struct alternate_object_database *alt_odb_list;
