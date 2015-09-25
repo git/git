@@ -851,18 +851,31 @@ int mingw_stat(const char *file_name, struct stat *buf)
 int mingw_fstat(int fd, struct stat *buf)
 {
 	HANDLE fh = (HANDLE)_get_osfhandle(fd);
-	if (fh == INVALID_HANDLE_VALUE) {
+	DWORD avail, type = GetFileType(fh) & ~FILE_TYPE_REMOTE;
+
+	switch (type) {
+	case FILE_TYPE_DISK:
+		return get_file_info_by_handle(fh, buf);
+
+	case FILE_TYPE_CHAR:
+	case FILE_TYPE_PIPE:
+		/* initialize stat fields */
+		memset(buf, 0, sizeof(*buf));
+		buf->st_nlink = 1;
+
+		if (type == FILE_TYPE_CHAR) {
+			buf->st_mode = _S_IFCHR;
+		} else {
+			buf->st_mode = _S_IFIFO;
+			if (PeekNamedPipe(fh, NULL, 0, NULL, &avail, NULL))
+				buf->st_size = avail;
+		}
+		return 0;
+
+	default:
 		errno = EBADF;
 		return -1;
 	}
-	/* direct non-file handles to MS's fstat() */
-	if (GetFileType(fh) != FILE_TYPE_DISK)
-		return _fstati64(fd, buf);
-
-	if (!get_file_info_by_handle(fh, buf))
-		return 0;
-	errno = EBADF;
-	return -1;
 }
 
 static inline void time_t_to_filetime(time_t t, FILETIME *ft)
