@@ -106,7 +106,7 @@ fi
 case "$NO_PEDANTIC" in
 ?*)	;;
 '')
-	PEDANT="-Werror -Wold-style-definition -std=c99 $PEDANT"
+	PEDANT="-Werror -Wold-style-definition $PEDANT"
 	PEDANT="-Wpointer-arith -Woverflow -Wunused $PEDANT"
 	PEDANT="-Wold-style-declaration -Wstrict-prototypes $PEDANT"
 	;;
