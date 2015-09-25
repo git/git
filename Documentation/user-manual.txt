@@ -3424,7 +3424,7 @@ just missing one particular blob version.
 
 [[the-index]]
 The index
------------
+---------
 
 The index is a binary file (generally kept in `.git/index`) containing a
 sorted list of path names, each with permissions and the SHA-1 of a blob
