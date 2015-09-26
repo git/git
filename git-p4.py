@@ -604,9 +604,12 @@ def gitBranchExists(branch):
 
 _gitConfig = {}
 
-def gitConfig(key):
+def gitConfig(key, typeSpecifier=None):
     if not _gitConfig.has_key(key):
-        cmd = [ "git", "config", key ]
+        cmd = [ "git", "config" ]
+        if typeSpecifier:
+            cmd += [ typeSpecifier ]
+        cmd += [ key ]
         s = read_pipe(cmd, ignore_error=True)
         _gitConfig[key] = s.strip()
     return _gitConfig[key]
@@ -617,10 +620,7 @@ def gitConfigBool(key):
        in the config."""
 
     if not _gitConfig.has_key(key):
-        cmd = [ "git", "config", "--bool", key ]
-        s = read_pipe(cmd, ignore_error=True)
-        v = s.strip()
-        _gitConfig[key] = v == "true"
+        _gitConfig[key] = gitConfig(key, '--bool') == "true"
     return _gitConfig[key]
 
 def gitConfigList(key):
