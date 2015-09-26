@@ -774,9 +774,9 @@ int mingw_lstat(const char *file_name, struct stat *buf)
 		buf->st_size = S_ISLNK(buf->st_mode) ? MAX_LONG_PATH :
 			fdata.nFileSizeLow | (((off_t) fdata.nFileSizeHigh) << 32);
 		buf->st_dev = buf->st_rdev = 0; /* not used by Git */
-		buf->st_atime = filetime_to_time_t(&(fdata.ftLastAccessTime));
-		buf->st_mtime = filetime_to_time_t(&(fdata.ftLastWriteTime));
-		buf->st_ctime = filetime_to_time_t(&(fdata.ftCreationTime));
+		filetime_to_timespec(&(fdata.ftLastAccessTime), &(buf->st_atim));
+		filetime_to_timespec(&(fdata.ftLastWriteTime), &(buf->st_mtim));
+		filetime_to_timespec(&(fdata.ftCreationTime), &(buf->st_ctim));
 		return 0;
 	}
 error:
@@ -821,9 +821,9 @@ static int get_file_info_by_handle(HANDLE hnd, struct stat *buf)
 	buf->st_nlink = 1;
 	buf->st_mode = file_attr_to_st_mode(fdata.dwFileAttributes, 0);
 	buf->st_size = fdata.nFileSizeLow | (((off_t) fdata.nFileSizeHigh) << 32);
-	buf->st_atime = filetime_to_time_t(&(fdata.ftLastAccessTime));
-	buf->st_mtime = filetime_to_time_t(&(fdata.ftLastWriteTime));
-	buf->st_ctime = filetime_to_time_t(&(fdata.ftCreationTime));
+	filetime_to_timespec(&(fdata.ftLastAccessTime), &(buf->st_atim));
+	filetime_to_timespec(&(fdata.ftLastWriteTime), &(buf->st_mtim));
+	filetime_to_timespec(&(fdata.ftCreationTime), &(buf->st_ctim));
 	return 0;
 }
 
