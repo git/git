@@ -510,6 +510,38 @@ git-p4.useClientSpec::
 	option '--use-client-spec'.  See the "CLIENT SPEC" section above.
 	This variable is a boolean, not the name of a p4 client.
 
+git-p4.largeFileSystem::
+	Specify the system that is used for large (binary) files. Please note
+	that large file systems do not support the 'git p4 submit' command.
+	Only Git LFS [1] is implemented right now. Download
+	and install the Git LFS command line extension to use this option
+	and configure it like this:
++
+-------------
+git config       git-p4.largeFileSystem GitLFS
+-------------
++
+	[1] https://git-lfs.github.com/
+
+git-p4.largeFileExtensions::
+	All files matching a file extension in the list will be processed
+	by the large file system. Do not prefix the extensions with '.'.
+
+git-p4.largeFileThreshold::
+	All files with an uncompressed size exceeding the threshold will be
+	processed by the large file system. By default the threshold is
+	defined in bytes. Add the suffix k, m, or g to change the unit.
+
+git-p4.largeFileCompressedThreshold::
+	All files with a compressed size exceeding the threshold will be
+	processed by the large file system. This option might slow down
+	your clone/sync process. By default the threshold is defined in
+	bytes. Add the suffix k, m, or g to change the unit.
+
+git-p4.largeFilePush::
+	Boolean variable which defines if large files are automatically
+	pushed to a server.
+
 Submit variables
 ~~~~~~~~~~~~~~~~
 git-p4.detectRenames::

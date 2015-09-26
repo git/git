@@ -22,6 +22,8 @@ import platform
 import re
 import shutil
 import stat
+import zipfile
+import zlib
 
 try:
     from subprocess import CalledProcessError
@@ -932,6 +934,110 @@ def wildcard_present(path):
     m = re.search("[*#@%]", path)
     return m is not None
 
+class LargeFileSystem(object):
+    """Base class for large file system support."""
+
+    def __init__(self, writeToGitStream):
+        self.largeFiles = set()
+        self.writeToGitStream = writeToGitStream
+
+    def generatePointer(self, cloneDestination, contentFile):
+        """Return the content of a pointer file that is stored in Git instead of
+           the actual content."""
+        assert False, "Method 'generatePointer' required in " + self.__class__.__name__
+
+    def pushFile(self, localLargeFile):
+        """Push the actual content which is not stored in the Git repository to
+           a server."""
+        assert False, "Method 'pushFile' required in " + self.__class__.__name__
+
+    def hasLargeFileExtension(self, relPath):
+        return reduce(
+            lambda a, b: a or b,
+            [relPath.endswith('.' + e) for e in gitConfigList('git-p4.largeFileExtensions')],
+            False
+        )
+
+    def generateTempFile(self, contents):
+        contentFile = tempfile.NamedTemporaryFile(prefix='git-p4-large-file', delete=False)
+        for d in contents:
+            contentFile.write(d)
+        contentFile.close()
+        return contentFile.name
+
+    def exceedsLargeFileThreshold(self, relPath, contents):
+        if gitConfigInt('git-p4.largeFileThreshold'):
+            contentsSize = sum(len(d) for d in contents)
+            if contentsSize > gitConfigInt('git-p4.largeFileThreshold'):
+                return True
+        if gitConfigInt('git-p4.largeFileCompressedThreshold'):
+            contentsSize = sum(len(d) for d in contents)
+            if contentsSize <= gitConfigInt('git-p4.largeFileCompressedThreshold'):
+                return False
+            contentTempFile = self.generateTempFile(contents)
+            compressedContentFile = tempfile.NamedTemporaryFile(prefix='git-p4-large-file', delete=False)
+            zf = zipfile.ZipFile(compressedContentFile.name, mode='w')
+            zf.write(contentTempFile, compress_type=zipfile.ZIP_DEFLATED)
+            zf.close()
+            compressedContentsSize = zf.infolist()[0].compress_size
+            os.remove(contentTempFile)
+            os.remove(compressedContentFile.name)
+            if compressedContentsSize > gitConfigInt('git-p4.largeFileCompressedThreshold'):
+                return True
+        return False
+
+    def addLargeFile(self, relPath):
+        self.largeFiles.add(relPath)
+
+    def removeLargeFile(self, relPath):
+        self.largeFiles.remove(relPath)
+
+    def isLargeFile(self, relPath):
+        return relPath in self.largeFiles
+
+    def processContent(self, git_mode, relPath, contents):
+        """Processes the content of git fast import. This method decides if a
+           file is stored in the large file system and handles all necessary
+           steps."""
+        if self.exceedsLargeFileThreshold(relPath, contents) or self.hasLargeFileExtension(relPath):
+            contentTempFile = self.generateTempFile(contents)
+            (git_mode, contents, localLargeFile) = self.generatePointer(contentTempFile)
+
+            # Move temp file to final location in large file system
+            largeFileDir = os.path.dirname(localLargeFile)
+            if not os.path.isdir(largeFileDir):
+                os.makedirs(largeFileDir)
+            shutil.move(contentTempFile, localLargeFile)
+            self.addLargeFile(relPath)
+            if gitConfigBool('git-p4.largeFilePush'):
+                self.pushFile(localLargeFile)
+            if verbose:
+                sys.stderr.write("%s moved to large file system (%s)\n" % (relPath, localLargeFile))
+        return (git_mode, contents)
+
+class MockLFS(LargeFileSystem):
+    """Mock large file system for testing."""
+
+    def generatePointer(self, contentFile):
+        """The pointer content is the original content prefixed with "pointer-".
+           The local filename of the large file storage is derived from the file content.
+           """
+        with open(contentFile, 'r') as f:
+            content = next(f)
+            gitMode = '100644'
+            pointerContents = 'pointer-' + content
+            localLargeFile = os.path.join(os.getcwd(), '.git', 'mock-storage', 'local', content[:-1])
+            return (gitMode, pointerContents, localLargeFile)
+
+    def pushFile(self, localLargeFile):
+        """The remote filename of the large file storage is the same as the local
+           one but in a different directory.
+           """
+        remotePath = os.path.join(os.path.dirname(localLargeFile), '..', 'remote')
+        if not os.path.exists(remotePath):
+            os.makedirs(remotePath)
+        shutil.copyfile(localLargeFile, os.path.join(remotePath, os.path.basename(localLargeFile)))
+
 class Command:
     def __init__(self):
         self.usage = "usage: %prog [options]"
@@ -1104,6 +1210,9 @@ class P4Submit(Command, P4UserMap):
         self.exportLabels = False
         self.p4HasMoveCommand = p4_has_move_command()
         self.branch = None
+
+        if gitConfig('git-p4.largeFileSystem'):
+            die("Large file system not supported for git-p4 submit command. Please remove it from config.")
 
     def check(self):
         if len(p4CmdList("opened ...")) > 0:
@@ -2055,6 +2164,13 @@ class P4Sync(Command, P4UserMap):
         self.clientSpecDirs = None
         self.tempBranches = []
         self.tempBranchLocation = "git-p4-tmp"
+        self.largeFileSystem = None
+
+        if gitConfig('git-p4.largeFileSystem'):
+            largeFileSystemConstructor = globals()[gitConfig('git-p4.largeFileSystem')]
+            self.largeFileSystem = largeFileSystemConstructor(
+                lambda git_mode, relPath, contents: self.writeToGitStream(git_mode, relPath, contents)
+            )
 
         if gitConfig("git-p4.syncFromOrigin") == "false":
             self.syncWithOrigin = False
@@ -2175,6 +2291,13 @@ class P4Sync(Command, P4UserMap):
 
         return branches
 
+    def writeToGitStream(self, gitMode, relPath, contents):
+        self.gitStream.write('M %s inline %s\n' % (gitMode, relPath))
+        self.gitStream.write('data %d\n' % sum(len(d) for d in contents))
+        for d in contents:
+            self.gitStream.write(d)
+        self.gitStream.write('\n')
+
     # output one file from the P4 stream
     # - helper for streamP4Files
 
@@ -2245,17 +2368,10 @@ class P4Sync(Command, P4UserMap):
             text = regexp.sub(r'$\1$', text)
             contents = [ text ]
 
-        self.gitStream.write("M %s inline %s\n" % (git_mode, relPath))
+        if self.largeFileSystem:
+            (git_mode, contents) = self.largeFileSystem.processContent(git_mode, relPath, contents)
 
-        # total length...
-        length = 0
-        for d in contents:
-            length = length + len(d)
-
-        self.gitStream.write("data %d\n" % length)
-        for d in contents:
-            self.gitStream.write(d)
-        self.gitStream.write("\n")
+        self.writeToGitStream(git_mode, relPath, contents)
 
     def streamOneP4Deletion(self, file):
         relPath = self.stripRepoPath(file['path'], self.branchPrefixes)
@@ -2263,6 +2379,9 @@ class P4Sync(Command, P4UserMap):
             sys.stdout.write("delete %s\n" % relPath)
             sys.stdout.flush()
         self.gitStream.write("D %s\n" % relPath)
+
+        if self.largeFileSystem and self.largeFileSystem.isLargeFile(relPath):
+            self.largeFileSystem.removeLargeFile(relPath)
 
     # handle another chunk of streaming data
     def streamP4FilesCb(self, marshalled):
