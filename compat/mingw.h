@@ -327,18 +327,41 @@ static inline int getrlimit(int resource, struct rlimit *rlp)
 }
 
 /*
- * Use mingw specific stat()/lstat()/fstat() implementations on Windows.
+ * Use mingw specific stat()/lstat()/fstat() implementations on Windows,
+ * including our own struct stat with 64 bit st_size and nanosecond-precision
+ * file times.
  */
 #ifndef __MINGW64_VERSION_MAJOR
 #define off_t off64_t
 #define lseek _lseeki64
+struct timespec {
+	time_t tv_sec;
+	long tv_nsec;
+};
 #endif
 
-/* use struct stat with 64 bit st_size */
+struct mingw_stat {
+    _dev_t st_dev;
+    _ino_t st_ino;
+    _mode_t st_mode;
+    short st_nlink;
+    short st_uid;
+    short st_gid;
+    _dev_t st_rdev;
+    off64_t st_size;
+    struct timespec st_atim;
+    struct timespec st_mtim;
+    struct timespec st_ctim;
+};
+
+#define st_atime st_atim.tv_sec
+#define st_mtime st_mtim.tv_sec
+#define st_ctime st_ctim.tv_sec
+
 #ifdef stat
 #undef stat
 #endif
-#define stat _stati64
+#define stat mingw_stat
 int mingw_lstat(const char *file_name, struct stat *buf);
 int mingw_stat(const char *file_name, struct stat *buf);
 int mingw_fstat(int fd, struct stat *buf);
@@ -351,13 +374,6 @@ int mingw_fstat(int fd, struct stat *buf);
 #endif
 #define lstat mingw_lstat
 
-#ifndef _stati64
-# define _stati64(x,y) mingw_stat(x,y)
-#elif defined (_USE_32BIT_TIME_T)
-# define _stat32i64(x,y) mingw_stat(x,y)
-#else
-# define _stat64(x,y) mingw_stat(x,y)
-#endif
 
 int mingw_utime(const char *file_name, const struct utimbuf *times);
 #define utime mingw_utime
