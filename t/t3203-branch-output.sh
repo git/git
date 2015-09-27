@@ -106,7 +106,7 @@ EOF
 	test_i18ncmp expect actual
 '
 
-test_expect_failure 'git branch shows detached HEAD properly after checkout --detach' '
+test_expect_success 'git branch shows detached HEAD properly after checkout --detach' '
 	git checkout master &&
 	cat >expect <<EOF &&
 * (HEAD detached at $(git rev-parse --short HEAD^0))
