@@ -4,7 +4,7 @@
 #include "remote.h"
 
 static const char ls_remote_usage[] =
-"git ls-remote [--heads] [--tags]  [-u <exec> | --upload-pack <exec>]\n"
+"git ls-remote [--heads] [--tags]  [--upload-pack=<exec>]\n"
 "                     [-q | --quiet] [--exit-code] [--get-url] [<repository> [<refs>...]]";
 
 /*
