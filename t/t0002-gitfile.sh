@@ -116,4 +116,22 @@ test_expect_success 'setup_git_dir twice in subdir' '
 	)
 '
 
+test_expect_success 'enter_repo non-strict mode' '
+	test_create_repo enter_repo &&
+	(
+		cd enter_repo &&
+		test_tick &&
+		test_commit foo &&
+		mv .git .realgit &&
+		echo "gitdir: .realgit" >.git
+	) &&
+	git ls-remote enter_repo >actual &&
+	cat >expected <<-\EOF &&
+	946e985ab20de757ca5b872b16d64e92ff3803a9	HEAD
+	946e985ab20de757ca5b872b16d64e92ff3803a9	refs/heads/master
+	946e985ab20de757ca5b872b16d64e92ff3803a9	refs/tags/foo
+	EOF
+	test_cmp expected actual
+'
+
 test_done
