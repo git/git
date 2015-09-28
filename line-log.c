@@ -325,7 +325,7 @@ static int collect_diff_cb(long start_a, long count_a,
 	return 0;
 }
 
-static void collect_diff(mmfile_t *parent, mmfile_t *target, struct diff_ranges *out)
+static int collect_diff(mmfile_t *parent, mmfile_t *target, struct diff_ranges *out)
 {
 	struct collect_diff_cbdata cbdata = {NULL};
 	xpparam_t xpp;
@@ -340,7 +340,7 @@ static void collect_diff(mmfile_t *parent, mmfile_t *target, struct diff_ranges 
 	xecfg.hunk_func = collect_diff_cb;
 	memset(&ecb, 0, sizeof(ecb));
 	ecb.priv = &cbdata;
-	xdi_diff(parent, target, &xpp, &xecfg, &ecb);
+	return xdi_diff(parent, target, &xpp, &xecfg, &ecb);
 }
 
 /*
@@ -1030,7 +1030,8 @@ static int process_diff_filepair(struct rev_info *rev,
 	}
 
 	diff_ranges_init(&diff);
-	collect_diff(&file_parent, &file_target, &diff);
+	if (collect_diff(&file_parent, &file_target, &diff))
+		die("unable to generate diff for %s", pair->one->path);
 
 	/* NEEDSWORK should apply some heuristics to prevent mismatches */
 	free(rg->path);
