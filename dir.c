@@ -2030,6 +2030,15 @@ int file_exists(const char *f)
 	return lstat(f, &sb) == 0;
 }
 
+static int cmp_icase(char a, char b)
+{
+	if (a == b)
+		return 0;
+	if (ignore_case)
+		return toupper(a) - toupper(b);
+	return a - b;
+}
+
 /*
  * Given two normalized paths (a trailing slash is ok), if subdir is
  * outside dir, return -1.  Otherwise return the offset in subdir that
@@ -2041,7 +2050,7 @@ int dir_inside_of(const char *subdir, const char *dir)
 
 	assert(dir && subdir && *dir && *subdir);
 
-	while (*dir && *subdir && *dir == *subdir) {
+	while (*dir && *subdir && !cmp_icase(*dir, *subdir)) {
 		dir++;
 		subdir++;
 		offset++;
