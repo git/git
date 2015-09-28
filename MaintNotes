@@ -131,7 +131,7 @@ named with three dotted decimal digits (e.g. "1.8.5"), but recently we
 switched the versioning scheme and "feature releases" are named with
 three-dotted decimal digits that ends with ".0" (e.g. "1.9.0").
 
-The last such release was 2.5.0 done on Jul 27th, 2015. You can expect
+The last such release was 2.6.0 done on Sep 28th, 2015. You can expect
 that the tip of the "master" branch is always more stable than any of
 the released versions.
 
