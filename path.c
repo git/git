@@ -438,8 +438,13 @@ const char *enter_repo(const char *path, int strict)
 			return NULL;
 		path = validated_path;
 	}
-	else if (chdir(path))
-		return NULL;
+	else {
+		const char *gitfile = read_gitfile(path);
+		if (gitfile)
+			path = gitfile;
+		if (chdir(path))
+			return NULL;
+	}
 
 	if (is_git_directory(".")) {
 		set_git_dir(".");
