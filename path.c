@@ -441,8 +441,7 @@ const char *enter_repo(const char *path, int strict)
 	else if (chdir(path))
 		return NULL;
 
-	if (access("objects", X_OK) == 0 && access("refs", X_OK) == 0 &&
-	    validate_headref("HEAD") == 0) {
+	if (is_git_directory(".")) {
 		set_git_dir(".");
 		check_repository_format();
 		return path;
