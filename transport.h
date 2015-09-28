@@ -132,6 +132,13 @@ struct transport {
 /* Returns a transport suitable for the url */
 struct transport *transport_get(struct remote *, const char *);
 
+/*
+ * Check whether a transport is allowed by the environment,
+ * and die otherwise. type should generally be the URL scheme,
+ * as described in Documentation/git.txt
+ */
+void transport_check_allowed(const char *type);
+
 /* Transport options which apply to git:// and scp-style URLs */
 
 /* The program to use on the remote side to send a pack */
