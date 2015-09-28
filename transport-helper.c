@@ -1039,6 +1039,8 @@ int transport_helper_init(struct transport *transport, const char *name)
 	struct helper_data *data = xcalloc(1, sizeof(*data));
 	data->name = name;
 
+	transport_check_allowed(name);
+
 	if (getenv("GIT_TRANSPORT_HELPER_DEBUG"))
 		debug = 1;
 

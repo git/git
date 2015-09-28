@@ -88,7 +88,10 @@ static int ll_xdl_merge(const struct ll_merge_driver *drv_unused,
 	xmparam_t xmp;
 	assert(opts);
 
-	if (buffer_is_binary(orig->ptr, orig->size) ||
+	if (orig->size > MAX_XDIFF_SIZE ||
+	    src1->size > MAX_XDIFF_SIZE ||
+	    src2->size > MAX_XDIFF_SIZE ||
+	    buffer_is_binary(orig->ptr, orig->size) ||
 	    buffer_is_binary(src1->ptr, src1->size) ||
 	    buffer_is_binary(src2->ptr, src2->size)) {
 		return ll_binary_merge(drv_unused, result,
