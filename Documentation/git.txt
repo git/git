@@ -48,17 +48,19 @@ Documentation for older releases are available here:
 * release notes for
   link:RelNotes/2.6.0.txt[2.6].
 
-* link:v2.5.3/git.html[documentation for release 2.5.3]
+* link:v2.5.4/git.html[documentation for release 2.5.4]
 
 * release notes for
+  link:RelNotes/2.5.4.txt[2.5.4],
   link:RelNotes/2.5.3.txt[2.5.3],
   link:RelNotes/2.5.2.txt[2.5.2],
   link:RelNotes/2.5.1.txt[2.5.1],
   link:RelNotes/2.5.0.txt[2.5].
 
-* link:v2.4.9/git.html[documentation for release 2.4.9]
+* link:v2.4.10/git.html[documentation for release 2.4.10]
 
 * release notes for
+  link:RelNotes/2.4.10.txt[2.4.10],
   link:RelNotes/2.4.9.txt[2.4.9],
   link:RelNotes/2.4.8.txt[2.4.8],
   link:RelNotes/2.4.7.txt[2.4.7],
@@ -70,9 +72,10 @@ Documentation for older releases are available here:
   link:RelNotes/2.4.1.txt[2.4.1],
   link:RelNotes/2.4.0.txt[2.4].
 
-* link:v2.3.9/git.html[documentation for release 2.3.9]
+* link:v2.3.10/git.html[documentation for release 2.3.10]
 
 * release notes for
+  link:RelNotes/2.3.10.txt[2.3.10],
   link:RelNotes/2.3.9.txt[2.3.9],
   link:RelNotes/2.3.8.txt[2.3.8],
   link:RelNotes/2.3.7.txt[2.3.7],
@@ -1091,6 +1094,33 @@ GIT_ICASE_PATHSPECS::
 	it yourself unless you want to be paranoid about making sure
 	an operation has touched every ref (e.g., because you are
 	cloning a repository to make a backup).
+
+`GIT_ALLOW_PROTOCOL`::
+	If set, provide a colon-separated list of protocols which are
+	allowed to be used with fetch/push/clone. This is useful to
+	restrict recursive submodule initialization from an untrusted
+	repository. Any protocol not mentioned will be disallowed (i.e.,
+	this is a whitelist, not a blacklist). If the variable is not
+	set at all, all protocols are enabled.  The protocol names
+	currently used by git are:
+
+	  - `file`: any local file-based path (including `file://` URLs,
+	    or local paths)
+
+	  - `git`: the anonymous git protocol over a direct TCP
+	    connection (or proxy, if configured)
+
+	  - `ssh`: git over ssh (including `host:path` syntax,
+	    `git+ssh://`, etc).
+
+	  - `rsync`: git over rsync
+
+	  - `http`: git over http, both "smart http" and "dumb http".
+	    Note that this does _not_ include `https`; if you want both,
+	    you should specify both as `http:https`.
+
+	  - any external helpers are named by their protocol (e.g., use
+	    `hg` to allow the `git-remote-hg` helper)
 
 
 Discussion[[Discussion]]
