@@ -270,12 +270,10 @@ proc is_Windows {} {
 proc is_Cygwin {} {
 	global _iscygwin
 	if {$_iscygwin eq {}} {
-		if {$::tcl_platform(platform) eq {windows}} {
-			if {[catch {set p [exec cygpath --windir]} err]} {
-				set _iscygwin 0
-			} else {
-				set _iscygwin 1
-			}
+		if {$::tcl_platform(platform) eq {windows} &&
+				(![info exists ::env(MSYSTEM)] ||
+				 $::env(MSYSTEM) eq {MSYS})} {
+			set _iscygwin 1
 		} else {
 			set _iscygwin 0
 		}
