@@ -948,11 +948,12 @@ class P4UserMap:
             return
         self.users = {}
         self.emails = {}
+        re_fullname = re.compile(r'^\s*([^<]+).*')
 
         for output in p4CmdList("users"):
             if not output.has_key("User"):
                 continue
-            self.users[output["User"]] = output["FullName"] + " <" + output["Email"] + ">"
+            self.users[output["User"]] = re_fullname.search(output["FullName"]).group(1).strip() + " <" + output["Email"] + ">"
             self.emails[output["Email"]] = output["User"]
 
 
