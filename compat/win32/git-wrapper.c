@@ -88,7 +88,7 @@ static void setup_environment(LPWSTR top_level_path, int full_path)
 
 	/* extend the PATH */
 	len = GetEnvironmentVariable(L"PATH", NULL, 0);
-	len = sizeof(WCHAR) * (len + 2 * MAX_PATH);
+	len = sizeof(WCHAR) * (len + 3 * MAX_PATH);
 	path2 = (LPWSTR)malloc(len);
 	wcscpy(path2, top_level_path);
 	if (!full_path)
@@ -97,9 +97,16 @@ static void setup_environment(LPWSTR top_level_path, int full_path)
 		PathAppend(path2, msystem_bin);
 		if (_waccess(path2, 0) != -1) {
 			/* We are in an MSys2-based setup */
+			int len2 = GetEnvironmentVariable(L"HOME", NULL, 0);
+
 			wcscat(path2, L";");
 			wcscat(path2, top_level_path);
 			PathAppend(path2, L"usr\\bin;");
+			if (len2 + 6 < MAX_PATH) {
+				GetEnvironmentVariable(L"HOME",
+						path2 + wcslen(path2), len2);
+				PathAppend(path2, L"bin;");
+			}
 		}
 		else {
 			/* Fall back to MSys1 paths */
