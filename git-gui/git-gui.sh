@@ -273,7 +273,6 @@ proc is_Cygwin {} {
 		if {$::tcl_platform(platform) eq {windows} &&
 				![info exists ::env(MSYSTEM)] &&
 				$::env(MSYSTEM) ne {MSYS}} {
-tk_messageBox -message "We're Cygwin"
 			set _iscygwin 1
 		} else {
 			set _iscygwin 0
