@@ -1,21 +1,26 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Sep 2015, #06; Wed, 23)
-X-master-at: 8d530c4d64ffcc853889f7b385f554d53db375ed
-X-next-at: c07a1e8782dadcedeffd389aa9bce4fda5b0983c
+Subject: What's cooking in git.git (Sep 2015, #07; Wed, 30)
+X-master-at: be08dee9738eaaa0423885ed189c2b6ad8368cf0
+X-next-at: dd5055040e51c9a129af659ad956353485c78698
 
-What's cooking in git.git (Sep 2015, #06; Wed, 23)
+What's cooking in git.git (Sep 2015, #07; Wed, 30)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-Not much has happened on the 'master' or 'next' fronts, but we have
-seen quite a lot of activities above that to prepare for the next
-cycle, which may or may not be a good sign.  I am sending this out
-early in the middle of the week, as I'll likely to be offline all
-day tomorrow.
+Git 2.6.0 was released a few days ago.  I'll do 2.6.1 early next
+week, together with updates to a few older maintenance tracks, and
+we'll start the next cycle after that.
+
+With somewhat reduced review bandwidth, I'd expect that the upcoming
+cycle would be slower than usual.  At tinyurl.com/gitCal, I
+tentatively drew a 14-week schedule for this cycle (I plan to be
+offline during weeks #7-#9 myself---hopefully we'll have capable
+interim maintainers to take care of the list traffic in the meantime
+as in past years).
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -25,56 +30,170 @@ of the repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* ls/p4-translation-failure (2015-09-22) 2 commits
- - git-p4: handle "Translation of file content failed"
- - git-p4: add test case for "Translation of file content failed" error
-
- Work around "git p4" failing when the P4 depot records the contents
- in UTF-16 without UTF-16 BOM.
+* jk/asciidoctor-section-heading-markup-fix (2015-09-25) 1 commit
+ - Documentation: fix section header mark-up
 
  Will merge to 'next'.
 
 
-* mr/worktree-list (2015-09-23) 6 commits
- - SQUASH???
- - worktree: add 'list' command
- - worktree: add functions to get worktree details
- - worktree: refactor find_linked_symref function
- - SQUASH???
- - worktree: add top-level worktree.c
+* jk/war-on-sprintf (2015-09-28) 68 commits
+ - name-rev: use strip_suffix to avoid magic numbers
+ - use strbuf_complete to conditionally append slash
+ - fsck: use for_each_loose_file_in_objdir
+ - Makefile: drop D_INO_IN_DIRENT build knob
+ - fsck: drop inode-sorting code
+ - convert strncpy to memcpy
+ - notes: document length of fanout path with a constant
+ - color: add color_set helper for copying raw colors
+ - prefer memcpy to strcpy
+ - help: clean up kfmclient munging
+ - receive-pack: simplify keep_arg computation
+ - avoid sprintf and strcpy with flex arrays
+ - use alloc_ref rather than hand-allocating "struct ref"
+ - color: add overflow checks for parsing colors
+ - drop strcpy in favor of raw sha1_to_hex
+ - use sha1_to_hex_r() instead of strcpy
+ - daemon: use cld->env_array when re-spawning
+ - stat_tracking_info: convert to argv_array
+ - http-push: use an argv_array for setup_revisions
+ - fetch-pack: use argv_array for index-pack / unpack-objects
+ - diagnose_invalid_index_path: use strbuf to avoid strcpy/strcat
+ - write_loose_object: convert to strbuf
+ - remove_leading_path: use a strbuf for internal storage
+ - enter_repo: convert fixed-size buffers to strbufs
+ - merge-recursive: convert malloc / strcpy to strbuf
+ - transport: use strbufs for status table "quickref" strings
+ - apply: convert root string to strbuf
+ - init: use strbufs to store paths
+ - sha1_get_pack_name: use a strbuf
+ - http-walker: store url in a strbuf
+ - http-push: use strbuf instead of fwrite_buffer
+ - remote-ext: simplify git pkt-line generation
+ - upload-archive: convert sprintf to strbuf
+ - resolve_ref: use strbufs for internal buffers
+ - read_remotes_file: simplify string handling
+ - read_branches_file: simplify string handling
+ - mailmap: replace strcpy with xstrdup
+ - help: drop prepend function in favor of xstrfmt
+ - ref-filter: drop sprintf and strcpy calls
+ - use strip_suffix and xstrfmt to replace suffix
+ - fetch: replace static buffer with xstrfmt
+ - config: use xstrfmt in normalize_value
+ - replace trivial malloc + sprintf / strcpy calls with xstrfmt
+ - receive-pack: convert strncpy to xsnprintf
+ - http-push: replace strcat with xsnprintf
+ - add_packed_git: convert strcpy into xsnprintf
+ - entry.c: convert strcpy to xsnprintf
+ - grep: use xsnprintf to format failure message
+ - compat/hstrerror: convert sprintf to snprintf
+ - stop_progress_msg: convert sprintf to xsnprintf
+ - find_short_object_filename: convert sprintf to xsnprintf
+ - use xsnprintf for generating git object headers
+ - archive-tar: use xsnprintf for trivial formatting
+ - convert trivial sprintf / strcpy calls to xsnprintf
+ - compat/inet_ntop: fix off-by-one in inet_ntop4
+ - test-dump-cache-tree: avoid overflow of cache-tree name
+ - progress: store throughput display in a strbuf
+ - trace: use strbuf for quote_crnl output
+ - mailsplit: make PATH_MAX buffers dynamic
+ - fsck: use strbuf to generate alternate directories
+ - add reentrant variants of sha1_to_hex and find_unique_abbrev
+ - strbuf: make strbuf_complete_line more generic
+ - add git_path_buf helper function
+ - add xsnprintf helper function
+ - fsck: don't fsck alternates for connectivity-only check
+ - archive-tar: fix minor indentation violation
+ - mailsplit: fix FILE* leak in split_maildir
+ - show-branch: avoid segfault with --reflog of unborn branch
 
- Add the "list" subcommand to "git worktree".
+ Needs further tweaking
+ ($gmane/278837)
 
 
-* jk/notes-dwim-doc (2015-09-22) 1 commit
- - notes: correct documentation of DWIMery for notes references
+* rp/link-curl-before-ssl (2015-09-25) 3 commits
+ - configure: make curl-config path configurable
+ - configure.ac: detect ssl need with libcurl
+ - Makefile: link libcurl before openssl and crypto
 
- The way how --ref/--notes to specify the notes tree reference are
- DWIMmed was not clearly documented.
-
-
-* kn/for-each-branch (2015-09-23) 8 commits
- - branch: add '--points-at' option
- - branch.c: use 'ref-filter' APIs
- - branch.c: use 'ref-filter' data structures
- - branch: drop non-commit error reporting
- - branch: move 'current' check down to the presentation layer
- - branch: roll show_detached HEAD into regular ref_list
- - branch: bump get_head_description() to the top
- - branch: refactor width computation
- (this branch uses kn/for-each-tag and kn/for-each-tag-branch.)
-
- Update "git branch" that list existing branches, using the
- ref-filter API that is shared with "git tag" and "git
- for-each-ref".
+ Will merge to 'next'.
 
 
-* jc/fsck-dropped-errors (2015-09-23) 1 commit
- - fsck: exit with non-zero when problems are found
+* sb/http-flaky-test-fix (2015-09-25) 1 commit
+ - t5561: get rid of racy appending to logfile
 
- There were some classes of errors that "git fsck" diagnosed to its
- standard error that did not cause it to exit with non-zero status.
- 
+ Will merge to 'next'.
+
+
+* sb/perf-without-installed-git (2015-09-25) 1 commit
+ - t/perf: make runner work even if Git is not installed
+
+ Will merge to 'next'.
+
+
+* tk/typofix-connect-unknown-proto-error (2015-09-25) 1 commit
+ - connect: fix typo in result string of prot_name()
+
+ Will merge to 'next'.
+
+
+* js/clone-dissociate (2015-09-28) 1 commit
+ - clone --dissociate: avoid locking pack files
+
+ "git clone --dissociate" runs a big "git repack" process at the
+ end, and it helps to close file descriptors that are open on the
+ packs and their idx files before doing so on filesystems that
+ cannot remove a file that is still open.
+
+ Needs more review discussion.
+ ($gmane/278859).
+
+
+* js/gc-with-stale-symref (2015-09-28) 4 commits
+ - gc: remove broken symrefs
+ - mark_reachable_objects(): optionally collect broken symrefs
+ - pack-objects: do not get distracted by broken symrefs
+ - gc: demonstrate failure with stale remote HEAD
+
+ The tip one both the original author and a reviewer felt iffy about.
+
+
+* js/icase-wt-detection (2015-09-28) 1 commit
+ - setup: fix "inside work tree" detection on case-insensitive filesystems
+
+ Will merge to 'next'.
+
+
+* mm/detach-at-HEAD-reflog (2015-09-28) 2 commits
+ - status: don't say 'HEAD detached at HEAD'
+ - t3203: test 'detached at' after checkout --detach
+
+ Will merge to 'next'.
+
+
+* nd/ls-remote-does-not-have-u-option (2015-09-28) 1 commit
+ - ls-remote.txt: delete unsupported option
+
+ Will merge to 'next'.
+
+
+* pt/am-builtin (2015-09-30) 1 commit
+ - am: configure gpg at startup
+
+ When "git am" was rewritten as a built-in, it stopped paying
+ attention to user.signingkey.
+
+ Will merge to 'next'.
+
+
+* sa/send-email-smtp-batch-data-limit (2015-09-30) 1 commit
+ - git-send-email.perl: Fixed sending of many/huge changes/patches
+
+ When "git send-email" wanted to talk over Net::SMTP::SSL,
+ Net::Cmd::datasend() did not like to be fed too many bytes at the
+ same time and failed to send messages.  Send the payload one line
+ at a time to work around the problem.
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -85,7 +204,7 @@ of the repositories listed at
 
  This is the first two commits in a three-patch series $gmane/266962
 
- Waiting for a reroll.
+ Becoming tired of waiting for a reroll.
  with updated log message ($gmane/268061).
 
 
@@ -96,7 +215,7 @@ of the repositories listed at
  Introduce "branch^{/!-<pattern>}" notation to name a commit
  reachable from branch that does not match the given pattern.
 
- Getting tired of waiting for a reroll.
+ Becoming tired of waiting for a reroll.
  ($gmane/271213).
 
 
@@ -106,7 +225,7 @@ of the repositories listed at
  Reroll exists but didn't pick it up as it seemed to be still
  collecting review comments.
 
- Waiting for a reroll.
+ Becoming tired of waiting for a reroll.
  ($gmane/272180).
 
 
@@ -141,6 +260,66 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* ls/p4-translation-failure (2015-09-22) 2 commits
+ - git-p4: handle "Translation of file content failed"
+ - git-p4: add test case for "Translation of file content failed" error
+
+ Work around "git p4" failing when the P4 depot records the contents
+ in UTF-16 without UTF-16 BOM.
+
+ Will merge to 'next'.
+
+
+* mr/worktree-list (2015-09-23) 6 commits
+ - SQUASH???
+ - worktree: add 'list' command
+ - worktree: add functions to get worktree details
+ - worktree: refactor find_linked_symref function
+ - SQUASH???
+ - worktree: add top-level worktree.c
+
+ Add the "list" subcommand to "git worktree".
+
+ Waiting for a reroll.
+ ($gmane/278529).
+
+
+* jk/notes-dwim-doc (2015-09-22) 1 commit
+ - notes: correct documentation of DWIMery for notes references
+
+ The way how --ref/--notes to specify the notes tree reference are
+ DWIMmed was not clearly documented.
+
+ Will merge to 'next'.
+
+
+* kn/for-each-branch (2015-09-25) 8 commits
+ - branch: add '--points-at' option
+ - branch.c: use 'ref-filter' APIs
+ - branch.c: use 'ref-filter' data structures
+ - branch: drop non-commit error reporting
+ - branch: move 'current' check down to the presentation layer
+ - branch: roll show_detached HEAD into regular ref_list
+ - branch: bump get_head_description() to the top
+ - branch: refactor width computation
+ (this branch uses kn/for-each-tag and kn/for-each-tag-branch.)
+
+ Update "git branch" that list existing branches, using the
+ ref-filter API that is shared with "git tag" and "git
+ for-each-ref".
+
+ Will merge to 'next'.
+
+
+* jc/fsck-dropped-errors (2015-09-23) 1 commit
+ - fsck: exit with non-zero when problems are found
+
+ There were some classes of errors that "git fsck" diagnosed to its
+ standard error that did not cause it to exit with non-zero status.
+
+ Will merge to 'next'.
+
+
 * mm/keyid-docs (2015-09-21) 3 commits
   (merged to 'next' on 2015-09-21 at f50ccab)
  + Documentation: explain optional arguments better
@@ -162,6 +341,8 @@ of the repositories listed at
  lost.  Save it to a file in $GIT_DIR and show it next time the "gc
  --auto" is run.
 
+ Will merge to 'next'.
+
 
 * jk/blame-first-parent (2015-09-16) 1 commit
   (merged to 'next' on 2015-09-21 at 7580f6b)
@@ -171,11 +352,6 @@ of the repositories listed at
  limit the blame to commits on the first parent chain.
 
  Will merge to 'master'.
-
-
-* jk/transfer-limit-protocol (2015-09-23) 2 commits
- - submodule: allow only certain protocols for submodule fetches
- - transport: add a protocol-whitelist environment variable
 
 
 * ld/p4-detached-head (2015-09-09) 2 commits
@@ -250,12 +426,12 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* sb/submodule-parallel-fetch (2015-09-23) 9 commits
+* sb/submodule-parallel-fetch (2015-09-30) 9 commits
  - submodules: allow parallel fetching, add tests and documentation
  - fetch_populated_submodules: use new parallel job processing
- - SQUASH???
+ - SQUASH??? return_value() is fed possibly uninitialized code
  - run-command: add an asynchronous parallel child processor
- - run-command: factor out return value computation
+ - sigchain: add command to pop all common signals
  - strbuf: add strbuf_read_once to read without blocking
  - xread_nonblock: add functionality to read from fds without blocking
  - xread: poll on non blocking fds
@@ -265,9 +441,7 @@ of the repositories listed at
  Add a framework to spawn a group of processes in parallel, and use
  it to run "git fetch --recurse-submodules" in parallel.
 
- It seems that the fundamentals are almost there, modulo polishing
- the overall structure to ensure that future enhancement can be made
- cleanly.
+ The overall structure seems more-or-less sensible.
 
 
 * mk/submodule-gitdir-path (2015-09-14) 2 commits
@@ -276,6 +450,8 @@ of the repositories listed at
 
  The submodule code has been taught to work better with separate
  work trees created via "git worktree add".
+
+ Will merge to 'next'.
 
 
 * jk/connect-clear-env (2015-09-08) 2 commits
@@ -303,8 +479,7 @@ of the repositories listed at
  tries to free() some data structures in wait_for_pager().  Reduce
  these unsafe calls.
 
- I seem to recall Peff had other ideas?  Let's revisit this in the
- next cycle.
+ Will merge to 'next'.
 
 
 * as/subtree-with-spaces (2015-09-08) 2 commits
@@ -354,7 +529,7 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* ls/p4-lfs (2015-09-23) 7 commits
+* ls/p4-lfs (2015-09-28) 7 commits
  - git-p4: add Git LFS backend for large file system
  - git-p4: add support for large file systems
  - git-p4: check free space during streaming
@@ -366,22 +541,21 @@ of the repositories listed at
  Teach "git p4" to send large blobs outside the repository by
  talking to Git LFS.
 
- Expecting a reroll.
- ($gmane/278476).
+ Will merge to 'next'.
 
 
-* nd/clone-linked-checkout (2015-09-14) 5 commits
+* nd/clone-linked-checkout (2015-09-28) 6 commits
  - clone: better error when --reference is a linked checkout
  - clone: allow --local from a linked checkout
  - enter_repo: allow .git files in strict mode
  - enter_repo: avoid duplicating logic, use is_git_directory() instead
+ - t0002: add test for enter_repo(), non-strict mode
  - path.c: delete an extra space
 
  It was not possible to use a repository-lookalike created by "git
  worktree add" as a local source of "git clone".
 
- Will be rerolled.
- ($gmane/277815)
+ Will merge to 'next'.
 
 
 * jh/quiltimport-explicit-series-file (2015-09-01) 1 commit
