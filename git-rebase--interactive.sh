@@ -732,8 +732,8 @@ transform_todo_ids () {
 			# that do not have a SHA-1 at the beginning of $rest.
 			;;
 		*)
-			sha1=$(git rev-parse --verify --quiet "$@" ${rest%% *}) &&
-			rest="$sha1 ${rest#* }"
+			sha1=$(git rev-parse --verify --quiet "$@" ${rest%%[	 ]*}) &&
+			rest="$sha1 ${rest#*[	 ]}"
 			;;
 		esac
 		printf '%s\n' "$command${rest:+ }$rest"
