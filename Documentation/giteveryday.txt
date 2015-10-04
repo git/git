@@ -308,18 +308,15 @@ master or exposed as a part of a stable branch.
 <10> create a signed tag.
 <11> make sure master was not accidentally rewound beyond that
 already pushed out.  `ko` shorthand points at the Git maintainer's
-repository at kernel.org, and looks like this:
-+
-------------
-(in .git/config)
-[remote "ko"]
-	url = kernel.org:/pub/scm/git/git.git
-	fetch = refs/heads/*:refs/remotes/ko/*
-	push = refs/heads/master
-	push = refs/heads/next
-	push = +refs/heads/pu
-	push = refs/heads/maint
-------------
+repository at kernel.org, and looks like this: +
+++(in .git/config) +
+{startsb}remote "ko"{endsb} +
+{nbsp}{nbsp}{nbsp}{nbsp}url = kernel.org:/pub/scm/git/git.git +
+{nbsp}{nbsp}{nbsp}{nbsp}fetch = refs/heads/\*:refs/remotes/ko/* +
+{nbsp}{nbsp}{nbsp}{nbsp}push = refs/heads/master +
+{nbsp}{nbsp}{nbsp}{nbsp}push = refs/heads/next +
+{nbsp}{nbsp}{nbsp}{nbsp}push = +refs/heads/pu +
+{nbsp}{nbsp}{nbsp}{nbsp}push = refs/heads/maint++
 +
 <12> In the output from `git show-branch`, `master` should have
 everything `ko/master` has, and `next` should have
