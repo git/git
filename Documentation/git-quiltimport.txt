@@ -10,6 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git quiltimport' [--dry-run | -n] [--author <author>] [--patches <dir>]
+		[--series <file>]
 
 
 DESCRIPTION
@@ -42,11 +43,17 @@ OPTIONS
 	information can be found in the patch description.
 
 --patches <dir>::
-	The directory to find the quilt patches and the
-	quilt series file.
+	The directory to find the quilt patches.
 +
 The default for the patch directory is patches
 or the value of the $QUILT_PATCHES environment
+variable.
+
+--series <file>::
+	The quilt series file.
++
+The default for the series file is <patches>/series
+or the value of the $QUILT_SERIES environment
 variable.
 
 GIT
