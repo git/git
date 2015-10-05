@@ -24,15 +24,21 @@ void *git_mmap(void *start, size_t length, int prot, int flags, int fd, off_t of
 	hmap = CreateFileMapping((HANDLE)_get_osfhandle(fd), NULL,
 		PAGE_WRITECOPY, 0, 0, NULL);
 
-	if (!hmap)
+	if (!hmap) {
+		errno = EINVAL;
 		return MAP_FAILED;
+	}
 
 	temp = MapViewOfFileEx(hmap, FILE_MAP_COPY, h, l, length, start);
 
 	if (!CloseHandle(hmap))
 		warning("unable to close file mapping handle");
 
-	return temp ? temp : MAP_FAILED;
+	if (temp)
+		return temp;
+
+	errno = GetLastError() == ERROR_COMMITMENT_LIMIT ? EFBIG : EINVAL;
+	return MAP_FAILED;
 }
 
 int git_munmap(void *start, size_t length)
