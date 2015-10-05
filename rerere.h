@@ -16,9 +16,19 @@ struct pathspec;
  */
 extern void *RERERE_RESOLVED;
 
+struct rerere_id {
+	char hex[41];
+};
+
 extern int setup_rerere(struct string_list *, int);
 extern int rerere(int);
-extern const char *rerere_path(const char *hex, const char *file);
+/*
+ * Given the conflict ID and the name of a "file" used for replaying
+ * the recorded resolution (e.g. "preimage", "postimage"), return the
+ * path to that filesystem entity.  With "file" specified with NULL,
+ * return the path to the directory that houses these files.
+ */
+extern const char *rerere_path(const struct rerere_id *, const char *file);
 extern int rerere_forget(struct pathspec *);
 extern int rerere_remaining(struct string_list *);
 extern void rerere_clear(struct string_list *);
