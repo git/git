@@ -214,5 +214,26 @@ test_expect_success 'clone and dissociate from reference' '
 	test_must_fail git -C R fsck &&
 	git -C S fsck
 '
+test_expect_failure MINGW 'clone, dissociate from partial reference and repack' '
+	rm -fr P Q R &&
+	git init P &&
+	(
+		cd P &&
+		test_commit one &&
+		git repack &&
+		test_commit two &&
+		git repack
+	) &&
+	git clone --bare P Q &&
+	(
+		cd P &&
+		git checkout -b second &&
+		test_commit three &&
+		git repack
+	) &&
+	git clone --bare --dissociate --reference=P Q R &&
+	ls R/objects/pack/*.pack >packs.txt &&
+	test_line_count = 1 packs.txt
+'
 
 test_done
