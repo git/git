@@ -1,0 +1,109 @@
+Git 2.7 Release Notes
+=====================
+
+Updates since v2.6
+------------------
+
+UI, Workflows & Features
+
+ * "git remote" learned "get-url" subcommand to show the URL for a
+   given remote name used for fetching and pushing.
+
+ * There was no way to defeat a configured rebase.autostash variable
+   from the command line, as "git rebase --no-autostash" was missing.
+
+ * "git log --date=local" used to only show the normal (default)
+   format in the local timezone.  The command learned to take 'local'
+   as an instruction to use the local timezone with other formats,
+
+ * The refs used during a "git bisect" session is now per-worktree so
+   that independent bisect sessions can be done in different worktrees
+   created with "git worktree add".
+
+ * Users who are too busy to type three extra keystrokes to ask for
+   "git stash show -p" can now set stash.showPatch configuration
+   varible to true to always see the actual patch, not just the list
+   of paths affected with feel for the extent of damage via diffstat.
+
+ * "quiltimport" allows to specify the series file by honoring the
+   $QUILT_SERIES environment and also --series command line option.
+
+ * The use of 'good/bad' in "git bisect" made it confusing to use when
+   hunting for a state change that is not a regression (e.g. bugfix).
+   The command learned 'old/new' and then allows the end user to
+   say e.g. "bisect start --term-old=fast --term=new=slow" to find a
+   performance regression.
+
+ * "git interpret-trailers" can now run outside of a Git repository.
+
+
+Performance, Internal Implementation, Development Support etc.
+
+ * The infrastructure to rewrite "git submodule" in C is being built
+   incrementally.  Let's polish these early parts well enough and make
+   them graduate to 'next' and 'master', so that the more involved
+   follow-up can start cooking on a solid ground.
+
+ * Some features from "git tag -l" and "git branch -l" have been made
+   available to "git for-each-ref" so that eventually the unified
+   implementation can be shared across all three.
+
+ * Because "test_when_finished" in our test framework queues the
+   clean-up tasks to be done in a shell variable, it should not be
+   used inside a subshell.  Add a mechanism to allow 'bash' to catch
+   such uses, and fix the ones that were found.
+   (merge 0968f12 jk/test-lint-forbid-when-finished-in-subshell later to maint).
+
+ * The debugging infrastructure for pkt-line based communication has
+   been improved to mark the side-band communication specifically.
+   (merge fd89433 jk/async-pkt-line later to maint).
+
+
+Also contains various documentation updates and code clean-ups.
+
+
+Fixes since v2.6
+----------------
+
+Unless otherwise noted, all the fixes since v2.6 in the maintenance
+track are contained in this release (see the maintenance releases'
+notes for details).
+
+ * Very small number of options take a parameter that is optional
+   (which is not a great UI element as they can only appear at the end
+   of the command line).  Add notice to documentation of each and
+   every one of them.
+   (merge 2b594bf mm/keyid-docs later to maint).
+
+ * "git blame --first-parent v1.0..v2.0" was not rejected but did not
+   limit the blame to commits on the first parent chain.
+   (merge 95a4fb0 jk/blame-first-parent later to maint).
+
+ * "git subtree" (in contrib/) now can take whitespaces in the
+   pathnames, not only in the in-tree pathname but the name of the
+   directory that the repository is in.  (merge 5b6ab38
+   as/subtree-with-spaces later to maint).
+
+ * The ssh transport, just like any other transport over the network,
+   did not clear GIT_* environment variables, but it is possible to
+   use SendEnv and AcceptEnv to leak them to the remote invocation of
+   Git, which is not a good idea at all.  Explicitly clear them just
+   like we do for the local transport.
+   (merge a48b409 jk/connect-clear-env later to maint).
+
+ * Correct "git p4 --detect-labels" so that it does not fail to create
+   a tag that points at a commit that is also being imported.
+   (merge b43702a ld/p4-import-labels later to maint).
+
+ * The Makefile always runs the library archiver with hardcoded "crs"
+   options, which was inconvenient for exotic platforms on which
+   people want to use programs with totally different set of command
+   line options.
+   (merge ac179b4 jw/make-arflags-customizable later to maint).
+
+ * Customization to change the behaviour with "make -w" and "make -s"
+   in our Makefile was broken when they were used together.
+   (merge ef49e05 jk/make-findstring-makeflags-fix later to maint).
+
+ * Code clean-up and minor fixes.
+   (merge 15ed07d jc/rerere later to maint).
