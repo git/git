@@ -14,7 +14,7 @@ git-rebase --continue | --abort | --skip | --edit-todo
  Available options are
 v,verbose!         display a diffstat of what changed upstream
 q,quiet!           be quiet. implies --no-stat
-autostash!         automatically stash/stash pop before and after
+autostash          automatically stash/stash pop before and after
 fork-point         use 'merge-base --fork-point' to refine upstream
 onto=!             rebase onto given branch instead of upstream
 p,preserve-merges! try to recreate merges instead of ignoring them
@@ -291,6 +291,9 @@ do
 		;;
 	--autostash)
 		autostash=true
+		;;
+	--no-autostash)
+		autostash=false
 		;;
 	--verbose)
 		verbose=t
