@@ -1366,8 +1366,15 @@ static void pass_whole_blame(struct scoreboard *sb,
  */
 static struct commit_list *first_scapegoat(struct rev_info *revs, struct commit *commit)
 {
-	if (!reverse)
+	if (!reverse) {
+		if (revs->first_parent_only &&
+		    commit->parents &&
+		    commit->parents->next) {
+			free_commit_list(commit->parents->next);
+			commit->parents->next = NULL;
+		}
 		return commit->parents;
+	}
 	return lookup_decoration(&revs->children, &commit->object);
 }
 
@@ -2679,6 +2686,8 @@ parse_done:
 	}
 	else if (contents_from)
 		die("--contents and --children do not blend well.");
+	else if (revs.first_parent_only)
+		die("combining --first-parent and --reverse is not supported");
 	else {
 		final_commit_name = prepare_initial(&sb);
 		sb.commits.compare = compare_commits_by_reverse_commit_date;
