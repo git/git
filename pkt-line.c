@@ -1,5 +1,6 @@
 #include "cache.h"
 #include "pkt-line.h"
+#include "run-command.h"
 
 char packet_buffer[LARGE_PACKET_MAX];
 static const char *packet_trace_prefix = "git";
@@ -9,6 +10,11 @@ static struct trace_key trace_pack = TRACE_KEY_INIT(PACKFILE);
 void packet_trace_identity(const char *prog)
 {
 	packet_trace_prefix = xstrdup(prog);
+}
+
+static const char *get_trace_prefix(void)
+{
+	return in_async() ? "sideband" : packet_trace_prefix;
 }
 
 static int packet_trace_pack(const char *buf, unsigned int len, int sideband)
@@ -57,7 +63,7 @@ static void packet_trace(const char *buf, unsigned int len, int write)
 	strbuf_init(&out, len+32);
 
 	strbuf_addf(&out, "packet: %12s%c ",
-		    packet_trace_prefix, write ? '>' : '<');
+		    get_trace_prefix(), write ? '>' : '<');
 
 	/* XXX we should really handle printable utf8 */
 	for (i = 0; i < len; i++) {
