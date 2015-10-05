@@ -174,9 +174,9 @@ test_expect_success 'mergetool skips autoresolved' '
 '
 
 test_expect_success 'mergetool merges all from subdir' '
+	test_config rerere.enabled false &&
 	(
 		cd subdir &&
-		test_config rerere.enabled false &&
 		test_must_fail git merge master &&
 		( yes "r" | git mergetool ../submod ) &&
 		( yes "d" "d" | git mergetool --no-prompt ) &&
