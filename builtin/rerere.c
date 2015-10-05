@@ -29,9 +29,10 @@ static int diff_two(const char *file1, const char *label1,
 	xdemitconf_t xecfg;
 	xdemitcb_t ecb;
 	mmfile_t minus, plus;
+	int ret;
 
 	if (read_mmfile(&minus, file1) || read_mmfile(&plus, file2))
-		return 1;
+		return -1;
 
 	printf("--- a/%s\n+++ b/%s\n", label1, label2);
 	fflush(stdout);
@@ -40,11 +41,11 @@ static int diff_two(const char *file1, const char *label1,
 	memset(&xecfg, 0, sizeof(xecfg));
 	xecfg.ctxlen = 3;
 	ecb.outf = outf;
-	xdi_diff(&minus, &plus, &xpp, &xecfg, &ecb);
+	ret = xdi_diff(&minus, &plus, &xpp, &xecfg, &ecb);
 
 	free(minus.ptr);
 	free(plus.ptr);
-	return 0;
+	return ret;
 }
 
 int cmd_rerere(int argc, const char **argv, const char *prefix)
@@ -104,7 +105,8 @@ int cmd_rerere(int argc, const char **argv, const char *prefix)
 		for (i = 0; i < merge_rr.nr; i++) {
 			const char *path = merge_rr.items[i].string;
 			const struct rerere_id *id = merge_rr.items[i].util;
-			diff_two(rerere_path(id, "preimage"), path, path, path);
+			if (diff_two(rerere_path(id, "preimage"), path, path, path))
+				die("unable to generate diff for %s", rerere_path(id, NULL));
 		}
 	} else
 		usage_with_options(rerere_usage, options);
