@@ -1091,7 +1091,6 @@ struct date_mode {
 		DATE_NORMAL = 0,
 		DATE_RELATIVE,
 		DATE_SHORT,
-		DATE_LOCAL,
 		DATE_ISO8601,
 		DATE_ISO8601_STRICT,
 		DATE_RFC2822,
@@ -1099,6 +1098,7 @@ struct date_mode {
 		DATE_RAW
 	} type;
 	const char *strftime_fmt;
+	int local;
 };
 
 /*

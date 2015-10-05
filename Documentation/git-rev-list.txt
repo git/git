@@ -45,7 +45,7 @@ SYNOPSIS
 	     [ --regexp-ignore-case | -i ]
 	     [ --extended-regexp | -E ]
 	     [ --fixed-strings | -F ]
-	     [ --date=(local|relative|default|iso|iso-strict|rfc|short) ]
+	     [ --date=<format>]
 	     [ [ --objects | --objects-edge | --objects-edge-aggressive ]
 	       [ --unpacked ] ]
 	     [ --pretty | --header ]

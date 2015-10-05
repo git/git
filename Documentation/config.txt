@@ -1829,9 +1829,7 @@ log.abbrevCommit::
 log.date::
 	Set the default date-time mode for the 'log' command.
 	Setting a value for log.date is similar to using 'git log''s
-	`--date` option.  Possible values are `relative`, `local`,
-	`default`, `iso`, `rfc`, and `short`; see linkgit:git-log[1]
-	for details.
+	`--date` option.  See linkgit:git-log[1] for details.
 
 log.decorate::
 	Print out the ref names of any commits that are shown by the log

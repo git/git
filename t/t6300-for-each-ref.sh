@@ -8,8 +8,8 @@ test_description='for-each-ref test'
 . ./test-lib.sh
 . "$TEST_DIRECTORY"/lib-gpg.sh
 
-# Mon Jul 3 15:18:43 2006 +0000
-datestamp=1151939923
+# Mon Jul 3 23:18:43 2006 +0000
+datestamp=1151968723
 setdate_and_increment () {
     GIT_COMMITTER_DATE="$datestamp +0200"
     datestamp=$(expr "$datestamp" + 1)
@@ -61,21 +61,21 @@ test_atom head object ''
 test_atom head type ''
 test_atom head '*objectname' ''
 test_atom head '*objecttype' ''
-test_atom head author 'A U Thor <author@example.com> 1151939924 +0200'
+test_atom head author 'A U Thor <author@example.com> 1151968724 +0200'
 test_atom head authorname 'A U Thor'
 test_atom head authoremail '<author@example.com>'
-test_atom head authordate 'Mon Jul 3 17:18:44 2006 +0200'
-test_atom head committer 'C O Mitter <committer@example.com> 1151939923 +0200'
+test_atom head authordate 'Tue Jul 4 01:18:44 2006 +0200'
+test_atom head committer 'C O Mitter <committer@example.com> 1151968723 +0200'
 test_atom head committername 'C O Mitter'
 test_atom head committeremail '<committer@example.com>'
-test_atom head committerdate 'Mon Jul 3 17:18:43 2006 +0200'
+test_atom head committerdate 'Tue Jul 4 01:18:43 2006 +0200'
 test_atom head tag ''
 test_atom head tagger ''
 test_atom head taggername ''
 test_atom head taggeremail ''
 test_atom head taggerdate ''
-test_atom head creator 'C O Mitter <committer@example.com> 1151939923 +0200'
-test_atom head creatordate 'Mon Jul 3 17:18:43 2006 +0200'
+test_atom head creator 'C O Mitter <committer@example.com> 1151968723 +0200'
+test_atom head creatordate 'Tue Jul 4 01:18:43 2006 +0200'
 test_atom head subject 'Initial'
 test_atom head contents:subject 'Initial'
 test_atom head body ''
@@ -96,7 +96,7 @@ test_atom tag parent ''
 test_atom tag numparent ''
 test_atom tag object $(git rev-parse refs/tags/testtag^0)
 test_atom tag type 'commit'
-test_atom tag '*objectname' '67a36f10722846e891fbada1ba48ed035de75581'
+test_atom tag '*objectname' 'ea122842f48be4afb2d1fc6a4b96c05885ab7463'
 test_atom tag '*objecttype' 'commit'
 test_atom tag author ''
 test_atom tag authorname ''
@@ -107,18 +107,18 @@ test_atom tag committername ''
 test_atom tag committeremail ''
 test_atom tag committerdate ''
 test_atom tag tag 'testtag'
-test_atom tag tagger 'C O Mitter <committer@example.com> 1151939925 +0200'
+test_atom tag tagger 'C O Mitter <committer@example.com> 1151968725 +0200'
 test_atom tag taggername 'C O Mitter'
 test_atom tag taggeremail '<committer@example.com>'
-test_atom tag taggerdate 'Mon Jul 3 17:18:45 2006 +0200'
-test_atom tag creator 'C O Mitter <committer@example.com> 1151939925 +0200'
-test_atom tag creatordate 'Mon Jul 3 17:18:45 2006 +0200'
-test_atom tag subject 'Tagging at 1151939927'
-test_atom tag contents:subject 'Tagging at 1151939927'
+test_atom tag taggerdate 'Tue Jul 4 01:18:45 2006 +0200'
+test_atom tag creator 'C O Mitter <committer@example.com> 1151968725 +0200'
+test_atom tag creatordate 'Tue Jul 4 01:18:45 2006 +0200'
+test_atom tag subject 'Tagging at 1151968727'
+test_atom tag contents:subject 'Tagging at 1151968727'
 test_atom tag body ''
 test_atom tag contents:body ''
 test_atom tag contents:signature ''
-test_atom tag contents 'Tagging at 1151939927
+test_atom tag contents 'Tagging at 1151968727
 '
 test_atom tag HEAD ' '
 
@@ -146,91 +146,119 @@ test_expect_success 'Check invalid format specifiers are errors' '
 	test_must_fail git for-each-ref --format="%(authordate:INVALID)" refs/heads
 '
 
-cat >expected <<\EOF
-'refs/heads/master' 'Mon Jul 3 17:18:43 2006 +0200' 'Mon Jul 3 17:18:44 2006 +0200'
-'refs/tags/testtag' 'Mon Jul 3 17:18:45 2006 +0200'
-EOF
+test_date () {
+	f=$1 &&
+	committer_date=$2 &&
+	author_date=$3 &&
+	tagger_date=$4 &&
+	cat >expected <<-EOF &&
+	'refs/heads/master' '$committer_date' '$author_date'
+	'refs/tags/testtag' '$tagger_date'
+	EOF
+	(
+		git for-each-ref --shell \
+			--format="%(refname) %(committerdate${f:+:$f}) %(authordate${f:+:$f})" \
+			refs/heads &&
+		git for-each-ref --shell \
+			--format="%(refname) %(taggerdate${f:+:$f})" \
+			refs/tags
+	) >actual &&
+	test_cmp expected actual
+}
 
 test_expect_success 'Check unformatted date fields output' '
-	(git for-each-ref --shell --format="%(refname) %(committerdate) %(authordate)" refs/heads &&
-	git for-each-ref --shell --format="%(refname) %(taggerdate)" refs/tags) >actual &&
-	test_cmp expected actual
+	test_date "" \
+		"Tue Jul 4 01:18:43 2006 +0200" \
+		"Tue Jul 4 01:18:44 2006 +0200" \
+		"Tue Jul 4 01:18:45 2006 +0200"
 '
 
 test_expect_success 'Check format "default" formatted date fields output' '
-	f=default &&
-	(git for-each-ref --shell --format="%(refname) %(committerdate:$f) %(authordate:$f)" refs/heads &&
-	git for-each-ref --shell --format="%(refname) %(taggerdate:$f)" refs/tags) >actual &&
-	test_cmp expected actual
+	test_date default \
+		"Tue Jul 4 01:18:43 2006 +0200" \
+		"Tue Jul 4 01:18:44 2006 +0200" \
+		"Tue Jul 4 01:18:45 2006 +0200"
+'
+
+test_expect_success 'Check format "default-local" date fields output' '
+	test_date default-local "Mon Jul 3 23:18:43 2006" "Mon Jul 3 23:18:44 2006" "Mon Jul 3 23:18:45 2006"
 '
 
 # Don't know how to do relative check because I can't know when this script
 # is going to be run and can't fake the current time to git, and hence can't
 # provide expected output.  Instead, I'll just make sure that "relative"
 # doesn't exit in error
-#
-#cat >expected <<\EOF
-#
-#EOF
-#
 test_expect_success 'Check format "relative" date fields output' '
 	f=relative &&
 	(git for-each-ref --shell --format="%(refname) %(committerdate:$f) %(authordate:$f)" refs/heads &&
 	git for-each-ref --shell --format="%(refname) %(taggerdate:$f)" refs/tags) >actual
 '
 
-cat >expected <<\EOF
-'refs/heads/master' '2006-07-03' '2006-07-03'
-'refs/tags/testtag' '2006-07-03'
-EOF
+# We just check that this is the same as "relative" for now.
+test_expect_success 'Check format "relative-local" date fields output' '
+	test_date relative-local \
+		"$(git for-each-ref --format="%(committerdate:relative)" refs/heads)" \
+		"$(git for-each-ref --format="%(authordate:relative)" refs/heads)" \
+		"$(git for-each-ref --format="%(taggerdate:relative)" refs/tags)"
+'
 
 test_expect_success 'Check format "short" date fields output' '
-	f=short &&
-	(git for-each-ref --shell --format="%(refname) %(committerdate:$f) %(authordate:$f)" refs/heads &&
-	git for-each-ref --shell --format="%(refname) %(taggerdate:$f)" refs/tags) >actual &&
-	test_cmp expected actual
+	test_date short 2006-07-04 2006-07-04 2006-07-04
 '
 
-cat >expected <<\EOF
-'refs/heads/master' 'Mon Jul 3 15:18:43 2006' 'Mon Jul 3 15:18:44 2006'
-'refs/tags/testtag' 'Mon Jul 3 15:18:45 2006'
-EOF
+test_expect_success 'Check format "short-local" date fields output' '
+	test_date short-local 2006-07-03 2006-07-03 2006-07-03
+'
 
 test_expect_success 'Check format "local" date fields output' '
-	f=local &&
-	(git for-each-ref --shell --format="%(refname) %(committerdate:$f) %(authordate:$f)" refs/heads &&
-	git for-each-ref --shell --format="%(refname) %(taggerdate:$f)" refs/tags) >actual &&
-	test_cmp expected actual
+	test_date local \
+		"Mon Jul 3 23:18:43 2006" \
+		"Mon Jul 3 23:18:44 2006" \
+		"Mon Jul 3 23:18:45 2006"
 '
-
-cat >expected <<\EOF
-'refs/heads/master' '2006-07-03 17:18:43 +0200' '2006-07-03 17:18:44 +0200'
-'refs/tags/testtag' '2006-07-03 17:18:45 +0200'
-EOF
 
 test_expect_success 'Check format "iso8601" date fields output' '
-	f=iso8601 &&
-	(git for-each-ref --shell --format="%(refname) %(committerdate:$f) %(authordate:$f)" refs/heads &&
-	git for-each-ref --shell --format="%(refname) %(taggerdate:$f)" refs/tags) >actual &&
-	test_cmp expected actual
+	test_date iso8601 \
+		"2006-07-04 01:18:43 +0200" \
+		"2006-07-04 01:18:44 +0200" \
+		"2006-07-04 01:18:45 +0200"
 '
 
-cat >expected <<\EOF
-'refs/heads/master' 'Mon, 3 Jul 2006 17:18:43 +0200' 'Mon, 3 Jul 2006 17:18:44 +0200'
-'refs/tags/testtag' 'Mon, 3 Jul 2006 17:18:45 +0200'
-EOF
+test_expect_success 'Check format "iso8601-local" date fields output' '
+	test_date iso8601-local "2006-07-03 23:18:43 +0000" "2006-07-03 23:18:44 +0000" "2006-07-03 23:18:45 +0000"
+'
 
 test_expect_success 'Check format "rfc2822" date fields output' '
-	f=rfc2822 &&
-	(git for-each-ref --shell --format="%(refname) %(committerdate:$f) %(authordate:$f)" refs/heads &&
-	git for-each-ref --shell --format="%(refname) %(taggerdate:$f)" refs/tags) >actual &&
-	test_cmp expected actual
+	test_date rfc2822 \
+		"Tue, 4 Jul 2006 01:18:43 +0200" \
+		"Tue, 4 Jul 2006 01:18:44 +0200" \
+		"Tue, 4 Jul 2006 01:18:45 +0200"
+'
+
+test_expect_success 'Check format "rfc2822-local" date fields output' '
+	test_date rfc2822-local "Mon, 3 Jul 2006 23:18:43 +0000" "Mon, 3 Jul 2006 23:18:44 +0000" "Mon, 3 Jul 2006 23:18:45 +0000"
+'
+
+test_expect_success 'Check format "raw" date fields output' '
+	test_date raw "1151968723 +0200" "1151968724 +0200" "1151968725 +0200"
+'
+
+test_expect_success 'Check format "raw-local" date fields output' '
+	test_date raw-local "1151968723 +0000" "1151968724 +0000" "1151968725 +0000"
 '
 
 test_expect_success 'Check format of strftime date fields' '
-	echo "my date is 2006-07-03" >expected &&
+	echo "my date is 2006-07-04" >expected &&
 	git for-each-ref \
 	  --format="%(authordate:format:my date is %Y-%m-%d)" \
+	  refs/heads >actual &&
+	test_cmp expected actual
+'
+
+test_expect_success 'Check format of strftime-local date fields' '
+	echo "my date is 2006-07-03" >expected &&
+	git for-each-ref \
+	  --format="%(authordate:format-local:my date is %Y-%m-%d)" \
 	  refs/heads >actual &&
 	test_cmp expected actual
 '
@@ -546,8 +574,8 @@ body contents
 $sig"
 
 cat >expected <<EOF
-$(git rev-parse refs/tags/master) <committer@example.com> refs/tags/master
 $(git rev-parse refs/tags/bogo) <committer@example.com> refs/tags/bogo
+$(git rev-parse refs/tags/master) <committer@example.com> refs/tags/master
 EOF
 
 test_expect_success 'Verify sort with multiple keys' '
