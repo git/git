@@ -1466,13 +1466,13 @@ endif
 QUIET_SUBDIR0  = +$(MAKE) -C # space to separate -C and subdir
 QUIET_SUBDIR1  =
 
-ifneq ($(findstring $(MAKEFLAGS),w),w)
+ifneq ($(findstring w,$(MAKEFLAGS)),w)
 PRINT_DIR = --no-print-directory
 else # "make -w"
 NO_SUBDIR = :
 endif
 
-ifneq ($(findstring $(MAKEFLAGS),s),s)
+ifneq ($(findstring s,$(MAKEFLAGS)),s)
 ifndef V
 	QUIET_CC       = @echo '   ' CC $@;
 	QUIET_AR       = @echo '   ' AR $@;
