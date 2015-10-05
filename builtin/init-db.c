@@ -312,7 +312,7 @@ static int create_default_files(const char *template_path)
 		strcpy(path + len, "CoNfIg");
 		if (!access(path, F_OK))
 			git_config_set("core.ignorecase", "true");
-		probe_utf8_pathname_composition(path, len);
+		probe_utf8_pathname_composition();
 	}
 
 	return reinit;

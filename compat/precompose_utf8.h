@@ -27,7 +27,7 @@ typedef struct {
 } PREC_DIR;
 
 void precompose_argv(int argc, const char **argv);
-void probe_utf8_pathname_composition(char *, int);
+void probe_utf8_pathname_composition(void);
 
 PREC_DIR *precompose_utf8_opendir(const char *dirname);
 struct dirent_prec_psx *precompose_utf8_readdir(PREC_DIR *dirp);
