@@ -214,7 +214,7 @@ test_expect_success 'clone and dissociate from reference' '
 	test_must_fail git -C R fsck &&
 	git -C S fsck
 '
-test_expect_failure MINGW 'clone, dissociate from partial reference and repack' '
+test_expect_success 'clone, dissociate from partial reference and repack' '
 	rm -fr P Q R &&
 	git init P &&
 	(
