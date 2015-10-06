@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gitk\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-05-17 14:32+1000\n"
-"PO-Revision-Date: 2015-02-01 22:49-0700\n"
+"PO-Revision-Date: 2015-10-05 22:23-0600\n"
 "Last-Translator: Alex Henrie <alexhenrie24@gmail.com>\n"
 "Language-Team: Catalan\n"
 "Language: ca\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Poedit 1.7.3\n"
+"X-Generator: Poedit 1.8.5\n"
 
 #: gitk:140
 msgid "Couldn't get list of unmerged files:"
@@ -136,7 +136,7 @@ msgstr "Edita la vista..."
 
 #: gitk:2086
 msgid "Delete view"
-msgstr "Suprimeix vista"
+msgstr "Suprimeix la vista"
 
 #: gitk:2088 gitk:4043
 msgid "All files"
@@ -330,7 +330,7 @@ msgstr "Elimina aquesta branca"
 
 #: gitk:2649
 msgid "Copy branch name"
-msgstr ""
+msgstr "Copia el nom de branca"
 
 #: gitk:2656
 msgid "Highlight this too"
@@ -350,7 +350,7 @@ msgstr "Culpabilitat de la comissió mare"
 
 #: gitk:2660
 msgid "Copy path"
-msgstr ""
+msgstr "Copia el camí"
 
 #: gitk:2667
 msgid "Show origin of this line"
@@ -408,11 +408,11 @@ msgstr "<Fi>\t\tVés a l'última comissió"
 
 #: gitk:3052
 msgid "<Up>, p, k\tMove up one commit"
-msgstr "<Amunt>, p, k\tMou-te una comissió amunt"
+msgstr "<Amunt>, p, k\tMou-te cap amunt per una comissió"
 
 #: gitk:3053
 msgid "<Down>, n, j\tMove down one commit"
-msgstr "<Avall>, n, j\tMou-te una comissió avall"
+msgstr "<Avall>, n, j\tMou-te cap avall per una comissió"
 
 #: gitk:3054
 msgid "<Left>, z, h\tGo back in history list"
@@ -430,11 +430,11 @@ msgstr ""
 
 #: gitk:3057
 msgid "<PageUp>\tMove up one page in commit list"
-msgstr "<RePàg>\tBaixa una pàgina en la llista de comissions"
+msgstr "<RePàg>\tMou-te cap amunt per una pàgina en la llista de comissions"
 
 #: gitk:3058
 msgid "<PageDown>\tMove down one page in commit list"
-msgstr "<AvPàg>\tBaixa per una pàgina en la llista de comissions"
+msgstr "<AvPàg>\tMou-te cap avall per una pàgina en la llista de comissions"
 
 #: gitk:3059
 #, tcl-format
@@ -449,50 +449,50 @@ msgstr "<%s-Fi>\tDesplaça't a la part inferior de la llista de comissions"
 #: gitk:3061
 #, tcl-format
 msgid "<%s-Up>\tScroll commit list up one line"
-msgstr "<%s-Amunt>\tDesplaça la llista de comissions una línia cap amunt"
+msgstr "<%s-Amunt>\tDesplaça la llista de comissions cap amunt per una línia"
 
 #: gitk:3062
 #, tcl-format
 msgid "<%s-Down>\tScroll commit list down one line"
-msgstr "<%s-Avall>\tDesplaça la llista de comissions una línia cap avall"
+msgstr "<%s-Avall>\tDesplaça la llista de comissions cap avall per una línia"
 
 #: gitk:3063
 #, tcl-format
 msgid "<%s-PageUp>\tScroll commit list up one page"
-msgstr "<%s-RePàg>\tDesplaça la llista de comissions amunt per una pàgina"
+msgstr "<%s-RePàg>\tDesplaça la llista de comissions cap amunt per una pàgina"
 
 #: gitk:3064
 #, tcl-format
 msgid "<%s-PageDown>\tScroll commit list down one page"
-msgstr "<%s-AvPàg>\tDesplaça la llista de comissions una pàgina cap avall"
+msgstr "<%s-AvPàg>\tDesplaça la llista de comissions cap avall per una pàgina"
 
 #: gitk:3065
 msgid "<Shift-Up>\tFind backwards (upwards, later commits)"
-msgstr "<Maj-Amunt>\tCerca cap enrere (amunt, les comissions més noves)"
+msgstr "<Maj-Amunt>\tCerca cap enrere (cap amunt, les comissions més noves)"
 
 #: gitk:3066
 msgid "<Shift-Down>\tFind forwards (downwards, earlier commits)"
-msgstr "<Maj-Avall>\tCerca cap endavant (avall, les comissions més velles)"
+msgstr "<Maj-Avall>\tCerca cap endavant (cap avall, les comissions més velles)"
 
 #: gitk:3067
 msgid "<Delete>, b\tScroll diff view up one page"
-msgstr "<Supr>, b\tDesplaça la vista de diferència una pàgina cap amunt"
+msgstr "<Supr>, b\tDesplaça la vista de diferència cap amunt per una pàgina"
 
 #: gitk:3068
 msgid "<Backspace>\tScroll diff view up one page"
-msgstr "<Retrocés>\tDesplaça la vista de diferència una pàgina cap amunt"
+msgstr "<Retrocés>\tDesplaça la vista de diferència cap amunt per una pàgina"
 
 #: gitk:3069
 msgid "<Space>\t\tScroll diff view down one page"
-msgstr "<Espai>\t\tDesplaça la vista de diferència una pàgina cap avall"
+msgstr "<Espai>\t\tDesplaça la vista de diferència cap avall per una pàgina"
 
 #: gitk:3070
 msgid "u\t\tScroll diff view up 18 lines"
-msgstr "u\t\tDesplaça la vista de diferència 18 línies cap amunt"
+msgstr "u\t\tDesplaça la vista de diferència cap amunt per 18 línies"
 
 #: gitk:3071
 msgid "d\t\tScroll diff view down 18 lines"
-msgstr "d\t\tDesplaça la vista de diferència 18 línies cap avall "
+msgstr "d\t\tDesplaça la vista de diferència cap avall per 18 línies"
 
 #: gitk:3072
 #, tcl-format
@@ -509,9 +509,8 @@ msgid "<Return>\tMove to next find hit"
 msgstr "<Retorn>\tMou-te a la propera coincidència de la cerca"
 
 #: gitk:3075
-#, fuzzy
 msgid "g\t\tGo to commit"
-msgstr "<Fi>\t\tVés a l'última comissió"
+msgstr "g\t\tVés a l'última comissió"
 
 #: gitk:3076
 msgid "/\t\tFocus the search box"
@@ -668,9 +667,8 @@ msgid "Matches all Commit Info criteria"
 msgstr "Coincideix amb tots els criteris d'informació de comissió"
 
 #: gitk:4086
-#, fuzzy
 msgid "Matches no Commit Info criteria"
-msgstr "Coincideix amb tots els criteris d'informació de comissió"
+msgstr "No coincideix amb cap criteri d'informació de comissió"
 
 #: gitk:4087
 msgid "Changes to Files:"
@@ -1310,7 +1308,7 @@ msgstr "fons de la línia marcada"
 
 #: gitk:11450
 msgid "Select bg"
-msgstr "fons de la selecció"
+msgstr "Fons de la selecció"
 
 #: gitk:11459
 msgid "Fonts: press to choose"
@@ -1354,6 +1352,8 @@ msgid ""
 "Sorry, gitk cannot run with this version of Tcl/Tk.\n"
 " Gitk requires at least Tcl/Tk 8.4."
 msgstr ""
+"Perdó, el gitk no pot executar-se amb aquesta versió de Tcl/Tk.\n"
+" El Gitk requereix com a mínim el Tcl/Tk 8.4."
 
 #: gitk:12269
 msgid "Cannot find a git repository here."
@@ -1367,6 +1367,3 @@ msgstr "Paràmetre ambigu '%s': és tant revisió com nom de fitxer"
 #: gitk:12328
 msgid "Bad arguments to gitk:"
 msgstr "Paràmetres dolents al gitk:"
-
-#~ msgid "mc"
-#~ msgstr "mc"
