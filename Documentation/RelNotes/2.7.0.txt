@@ -36,6 +36,15 @@ UI, Workflows & Features
 
  * "git interpret-trailers" can now run outside of a Git repository.
 
+ * "git p4" learned to reencode the pathname it uses to communicate
+   with the p4 depot with a new option.
+
+ * Give progress meter to "git filter-branch".
+
+ * Allow a later "!/abc/def" to override an earlier "/abc" that
+   appears in the same .gitignore file to make it easier to express
+   "everything in /abc directory is ignored, except for ...".
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -104,6 +113,13 @@ notes for details).
  * Customization to change the behaviour with "make -w" and "make -s"
    in our Makefile was broken when they were used together.
    (merge ef49e05 jk/make-findstring-makeflags-fix later to maint).
+
+ * Allocation related functions and stdio are unsafe things to call
+   inside a signal handler, and indeed killing the pager can cause
+   glibc to deadlock waiting on allocation mutex as our signal handler
+   tries to free() some data structures in wait_for_pager().  Reduce
+   these unsafe calls.
+   (merge 507d780 ti/glibc-stdio-mutex-from-signal-handler later to maint).
 
  * Code clean-up and minor fixes.
    (merge 15ed07d jc/rerere later to maint).
