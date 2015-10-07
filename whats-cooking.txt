@@ -1,19 +1,19 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Oct 2015, #01; Mon, 5)
-X-master-at: 24a00ef646974be49ef7138239c3803805400797
-X-next-at: 70ec07ec915776bb723966160671950e8d4a56c2
+Subject: What's cooking in git.git (Oct 2015, #02; Wed, 7)
+X-master-at: f5b6079871904ba5b0a8548f91545f126caf898b
+X-next-at: 19af20e0b28da5dcbe194ac407afe5175cc4fb85
 
-What's cooking in git.git (Oct 2015, #01; Mon, 5)
+What's cooking in git.git (Oct 2015, #02; Wed, 7)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-A set of releases for a handful of maintenance tracks have been
-tagged (v2.6.1, v2.5.4, v2.4.10 and v2.3.10), thanks to Blake
-Burkhart and Jeff King.
+The tip of 'next' has been rewound and rebuilt.  I plan to start
+merging the topics that have been cooking just above 'next' down in
+the coming days.
 
 With somewhat reduced review bandwidth, I'd expect that the upcoming
 cycle would be slower than usual.  At tinyurl.com/gitCal, I
@@ -30,370 +30,86 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* ad/bisect-terms (2015-08-03) 4 commits
-  (merged to 'next' on 2015-09-01 at ede6e64)
- + bisect: allow setting any user-specified in 'git bisect start'
- + bisect: add 'git bisect terms' to view the current terms
- + bisect: add the terms old/new
- + bisect: sanity check on terms
+* gb/filter-branch-progress (2015-09-21) 2 commits
+  (merged to 'next' on 2015-09-21 at 15e698d)
+ + filter-branch: make report-progress more readable
+ + filter-branch: add passed/remaining seconds on progress
 
- The use of 'good/bad' in "git bisect" made it confusing to use when
- hunting for a state change that is not a regression (e.g. bugfix).
- The command learned 'old/new' and then allows the end user to
- say e.g. "bisect start --term-old=fast --term=new=slow" to find a
- performance regression.
+ Give progress meter to "git filter-branch".
 
- Michael's idea to make 'good/bad' more intelligent does have
- certain attractiveness ($gname/272867), and may make some of
- the work on this topic a moot point, though.
 
+* ls/p4-path-encoding (2015-09-21) 3 commits
+  (merged to 'next' on 2015-09-21 at 0772d82)
+ + git-p4: use replacement character for non UTF-8 characters in paths
+  (merged to 'next' on 2015-09-17 at 7f8b9e0)
+ + git-p4: improve path encoding verbose output
+  (merged to 'next' on 2015-09-08 at 56514f9)
+ + git-p4: add config git-p4.pathEncoding
 
-* as/subtree-with-spaces (2015-09-08) 2 commits
-  (merged to 'next' on 2015-09-09 at f3d763d)
- + contrib/subtree: respect spaces in a repository path
- + t7900-subtree: test the "space in a subdirectory name" case
+ "git p4" learned to reencode the pathname it uses to communicate
+ with the p4 depot with a new option.
 
- Update "git subtree" (in contrib/) so that it can take whitespaces
- in the pathnames, not only in the in-tree pathname but the name of
- the directory that the repository is in.
 
+* nd/ignore-then-not-ignore (2015-09-21) 2 commits
+  (merged to 'next' on 2015-09-21 at 2182591)
+ + dir.c: don't exclude whole dir prematurely if neg pattern may match
+ + dir.c: make last_exclude_matching_from_list() run til the end
 
-* bb/remote-get-url (2015-09-17) 1 commit
-  (merged to 'next' on 2015-09-21 at c07a1e8)
- + remote: add get-url subcommand
+ Allow a later "!/abc/def" to override an earlier "/abc" that
+ appears in the same .gitignore file to make it easier to express
+ "everything in /abc directory is ignored, except for ...".
 
- "git remote" learned "get-url" subcommand to show the URL for a
- given remote name used for fetching and pushing.
 
+* ti/glibc-stdio-mutex-from-signal-handler (2015-09-04) 1 commit
+  (merged to 'next' on 2015-09-08 at c8047ba)
+ + pager: don't use unsafe functions in signal handlers
 
-* dt/refs-bisection (2015-09-01) 3 commits
-  (merged to 'next' on 2015-09-08 at 2b66bad)
- + refs: make refs/bisect/* per-worktree
- + path: optimize common dir checking
- + refs: clean up common_list
- (this branch is used by dt/refs-backend-lmdb.)
-
- Move the refs used during a "git bisect" session to per-worktree
- hierarchy refs/worktree/* so that independent bisect sessions can
- be done in different worktrees.
-
- The second commit may or may not want to be reverted.
-
-
-* jc/rerere (2015-07-24) 21 commits
-  (merged to 'next' on 2015-08-26 at 8ae15ef)
- + rerere: un-nest merge() further
- + rerere: use "struct rerere_id" instead of "char *" for conflict ID
- + rerere: call conflict-ids IDs
- + rerere: further clarify do_rerere_one_path()
- + rerere: further de-dent do_plain_rerere()
- + rerere: refactor "replay" part of do_plain_rerere()
- + rerere: explain the remainder
- + rerere: explain "rerere forget" codepath
- + rerere: explain the primary codepath
- + rerere: explain MERGE_RR management helpers
- + rerere: fix benign off-by-one non-bug and clarify code
- + rerere: explain the rerere I/O abstraction
- + rerere: do not leak mmfile[] for a path with multiple stage #1 entries
- + rerere: stop looping unnecessarily
- + rerere: drop want_sp parameter from is_cmarker()
- + rerere: report autoupdated paths only after actually updating them
- + rerere: write out each record of MERGE_RR in one go
- + rerere: lift PATH_MAX limitation
- + rerere: plug conflict ID leaks
- + rerere: handle conflicts with multiple stage #1 entries
- + rerere: fix an off-by-one non-bug
- (this branch is used by jc/rerere-multi.)
-
- Code clean-up and minor fixes.
-
-
-* jh/quiltimport-explicit-series-file (2015-09-01) 1 commit
-  (merged to 'next' on 2015-09-02 at 1129ca4)
- + git-quiltimport: add commandline option --series <file>
-
- "quiltimport" allows to specify the series file by honoring the
- $QUILT_SERIES environment and also --series command line option.
-
-
-* jk/async-pkt-line (2015-09-01) 2 commits
-  (merged to 'next' on 2015-09-02 at e185717)
- + pkt-line: show packets in async processes as "sideband"
- + run-command: provide in_async query function
-
- The debugging infrastructure for pkt-line based communication has
- been improved to mark the side-band communication specifically.
-
-
-* jk/blame-first-parent (2015-09-16) 1 commit
-  (merged to 'next' on 2015-09-21 at 7580f6b)
- + blame: handle --first-parent
-
- "git blame --first-parent v1.0..v2.0" was not rejected but did not
- limit the blame to commits on the first parent chain.
-
-
-* jk/connect-clear-env (2015-09-08) 2 commits
-  (merged to 'next' on 2015-09-08 at 86b64f7)
- + git_connect: clarify conn->use_shell flag
-  (merged to 'next' on 2015-09-06 at 9ddbed8)
- + git_connect: clear GIT_* environment for ssh
-
- The ssh transport, just like any other transport over the network,
- did not clear GIT_* environment variables, but it is possible to
- use SendEnv and AcceptEnv to leak them to the remote invocation of
- Git, which is not a good idea at all.  Explicitly clear them just
- like we do for the local transport.
-
-
-* jk/date-local (2015-09-03) 11 commits
-  (merged to 'next' on 2015-09-08 at 66781d9)
- + t6300: add tests for "-local" date formats
- + t6300: make UTC and local dates different
- + date: make "local" orthogonal to date format
- + date: check for "local" before anything else
- + t6300: add test for "raw" date format
- + t6300: introduce test_date() helper
- + fast-import: switch crash-report date to iso8601
- + Documentation/rev-list: don't list date formats
- + Documentation/git-for-each-ref: don't list date formats
- + Documentation/config: don't list date formats
- + Documentation/blame-options: don't list date formats
-
- "git log --date=local" used to only show the normal (default)
- format in the local timezone.  The command learned to take 'local'
- as an instruction to use the local timezone with other formats,
- e.g. "git show --date=rfc-local".
-
-
-* jk/interpret-trailers-outside-a-repository (2015-09-08) 1 commit
-  (merged to 'next' on 2015-09-09 at a75fce3)
- + interpret-trailers: allow running outside a repository
-
- Allow "git interpret-trailers" to run outside of a Git repository.
-
-
-* jk/make-findstring-makeflags-fix (2015-09-10) 1 commit
-  (merged to 'next' on 2015-09-21 at 26ea6e0)
- + Makefile: fix MAKEFLAGS tests with multiple flags
-
- Customization to change the behaviour with "make -w" and "make -s"
- in our Makefile was broken when they were used together.
-
-
-* jk/rebase-no-autostash (2015-09-10) 2 commits
-  (merged to 'next' on 2015-09-21 at 034d726)
- + Documentation/git-rebase: fix --no-autostash formatting
- + rebase: support --no-autostash
-
- There was no way to defeat a configured rebase.autostash variable
- from the command line, as "git rebase --no-autostash" was missing.
-
-
-* jk/test-lint-forbid-when-finished-in-subshell (2015-09-08) 5 commits
-  (merged to 'next' on 2015-09-09 at 74ede61)
- + test-lib-functions: detect test_when_finished in subshell
- + t7800: don't use test_config in a subshell
- + test-lib-functions: support "test_config -C <dir> ..."
- + t5801: don't use test_when_finished in a subshell
- + t7610: don't use test_config in a subshell
-
- Because "test_when_finished" in our test framework queues the
- clean-up tasks to be done in a shell variable, it should not be
- used inside a subshell.  Add a mechanism to allow 'bash' to catch
- such uses, and fix the ones that were found.
-
-
-* jw/make-arflags-customizable (2015-09-10) 1 commit
-  (merged to 'next' on 2015-09-21 at cb3892c1)
- + Makefile: allow $(ARFLAGS) specified from the command line
-
- The Makefile always runs the library archiver with hardcoded "crs"
- options, which was inconvenient for exotic platforms on which
- people want to use programs with totally different set of command
- line options.
-
-
-* kn/for-each-tag (2015-09-17) 17 commits
-  (merged to 'next' on 2015-09-17 at 1980952)
- + tag.c: implement '--merged' and '--no-merged' options
- + tag.c: implement '--format' option
- + tag.c: use 'ref-filter' APIs
- + tag.c: use 'ref-filter' data structures
- + ref-filter: add option to match literal pattern
- + ref-filter: add support to sort by version
- + ref-filter: add support for %(contents:lines=X)
- + ref-filter: add option to filter out tags, branches and remotes
- + ref-filter: implement an `align` atom
- + ref-filter: introduce match_atom_name()
- + ref-filter: introduce handler function for each atom
- + utf8: add function to align a string into given strbuf
- + ref-filter: introduce ref_formatting_state and ref_formatting_stack
- + ref-filter: move `struct atom_value` to ref-filter.c
- + strtoul_ui: reject negative values
- + Merge 'jk/git-path' into kn/for-each-tag
- + Merge 'kn/for-each-tag-branch' into kn/for-each-tag
- (this branch is used by dt/refs-backend-lmdb, kn/for-each-branch and kn/for-each-branch-remainder; uses kn/for-each-tag-branch.)
-
- The "ref-filter" code was taught about many parts of what "tag -l"
- does and then "tag -l" is being reimplemented in terms of "ref-filter".
-
-
-* kn/for-each-tag-branch (2015-08-03) 11 commits
-  (merged to 'next' on 2015-08-03 at d9e94b9)
- + for-each-ref: add '--contains' option
- + ref-filter: implement '--contains' option
- + parse-options.h: add macros for '--contains' option
- + parse-option: rename parse_opt_with_commit()
- + for-each-ref: add '--merged' and '--no-merged' options
- + ref-filter: implement '--merged' and '--no-merged' options
- + ref-filter: add parse_opt_merge_filter()
- + for-each-ref: add '--points-at' option
- + ref-filter: implement '--points-at' option
- + tag: libify parse_opt_points_at()
- + t6302: for-each-ref tests for ref-filter APIs
- (this branch is used by dt/refs-backend-lmdb, kn/for-each-branch, kn/for-each-branch-remainder and kn/for-each-tag.)
-
- Originally merged to 'next' on 2015-07-15
-
- Some features from "git tag -l" and "git branch -l" have been made
- available to "git for-each-ref" so that eventually the unified
- implementation can be shared across all three, in a follow-up
- series or two.
-
-
-* ld/p4-import-labels (2015-08-28) 3 commits
-  (merged to 'next' on 2015-09-01 at cf9f1d6)
- + git-p4: fix P4 label import for unprocessed commits
- + git-p4: do not terminate creating tag for unknown commit
- + git-p4: failing test for ignoring invalid p4 labels
-
- Correct "git p4 --detect-labels" so that it does not fail to create
- a tag that points at a commit that is also being imported.
-
-
-* mm/keyid-docs (2015-09-21) 3 commits
-  (merged to 'next' on 2015-09-21 at f50ccab)
- + Documentation: explain optional arguments better
- + Documentation/grep: fix documentation of -O
- + Documentation: use 'keyid' consistently, not 'key-id'
-
- Very small number of options take a parameter that is optional
- (which is not a great UI element as they can only appear at the end
- of the command line).  Add notice to documentation of each and
- every one of them.
-
-
-* nk/stash-show-config (2015-08-31) 1 commit
-  (merged to 'next' on 2015-09-08 at 90dd06f)
- + stash: allow "stash show" diff output configurable
-
- Users who are too busy to type three extra keystrokes to ask for
- "git stash show -p" can now set stash.showPatch configuration
- varible to true to always see the actual patch, not just the list
- of paths affected with feel for the extent of damage via diffstat.
-
-
-* sb/submodule-helper (2015-09-08) 4 commits
-  (merged to 'next' on 2015-09-21 at 9354b31)
- + submodule: rewrite `module_clone` shell function in C
- + submodule: rewrite `module_name` shell function in C
- + submodule: rewrite `module_list` shell function in C
- + Merge 'hv/submodule-config' to 'sb/submodule-helper'
- (this branch is used by dt/refs-backend-lmdb and sb/submodule-parallel-fetch.)
-
- The infrastructure to rewrite "git submodule" in C is being built
- incrementally.  Let's polish these early parts well enough and make
- them graduate to 'next' and 'master', so that the more involved
- follow-up can start cooking on a solid ground.
+ Allocation related functions and stdio are unsafe things to call
+ inside a signal handler, and indeed killing the pager can cause
+ glibc to deadlock waiting on allocation mutex as our signal handler
+ tries to free() some data structures in wait_for_pager().  Reduce
+ these unsafe calls.
 
 --------------------------------------------------
 [New Topics]
 
-* dt/refs-backend-lmdb (2015-10-05) 45 commits
- - SQUASH???
- - refs: tests for db backend
- - refs: add LMDB refs backend
- - refs: add register_refs_backend
- - refs: allow ref backend to be set for clone
- - refs: break out a ref conflict check
- - refs: make some files backend functions public
- - refs: move some defines from refs-be-files.c to refs.h
- - run-command: track total number of commands run
- - refs-be-files.c: add method to rename refs
- - refs.c: make struct ref_transaction generic
- - refs.c: add method for initializing refs db
- - initdb: move safe_create_dir into common code
- - refs.c: add method for initial ref transaction commit
- - refs-be-files.c: add method to expire reflogs
- - refs.c: add methods for reflog
- - refs.c: add ref backend init function
- - refs.c: move should_autocreate_reflog to common code
- - refs.c: move peel_object to the common code
- - refs.c: move copy_msg to the common code
- - refs.h: document make refname_is_safe and add it to header
- - refs.c: move refname_is_safe to the common code
- - refs-be-files.c: add do_for_each_per_worktree_ref
- - refs-be-files.c: add method for for_each_reftype_...
- - refs-be-files.c: add methods for the ref iterators
- - refs-be-files.c: add methods for misc ref operations
- - refs-be-files.c: add a backend method structure with transaction functions
- - refs.c: move head_ref_namespaced to the common code
- - refs.c: move ref iterators to the common code
- - refs.c: move prettify_refname to the common code
- - refs.c: move is_branch to the common code
- - refs.c: move check_refname_format to the common code
- - refs.c: move resolve_refdup to common
- - refs.c: move read_ref, read_ref_full and ref_exists to the common code
- - refs.c: move warn_if_dangling_symref* to the common code
- - refs.c: move dwim and friend functions to the common refs code
- - refs.c: move the hidden refs functions to the common code
- - refs.c: move read_ref_at to the common refs file
- - refs.c: move delete_ref and delete_refs to the common code
- - refs.c: move update_ref to refs.c
- - refs.c: add a new refs.c file to hold all common refs code
- - refs-be-files.c: rename refs to refs-be-files
- - refs: make repack_without_refs and is_branch public
- - refs.c: create a public version of verify_refname_available
- - Merge branch 'jk/war-on-sprintf' into HEAD
- (this branch uses jk/war-on-sprintf.)
+* cc/quote-comments (2015-10-07) 2 commits
+ - quote: move comment before sq_quote_buf()
+ - quote: fix broken sq_quote_buf() related comment
 
- Pluggable ref backend.
-
- Expecting a reroll.
- ($gmane/278757).
-
-
-* gr/rebase-i-drop-warn (2015-10-02) 2 commits
- - rebase-i: loosen over-eager check_bad_cmd check
- - rebase-i: explicitly accept tab as separator in commands
-
- "git rebase -i" had a minor regression recently, which stopped
- considering a line that begins with an indented '#' in its insn
- sheet not a comment, which is now fixed.
+ A no-op code-health maintenance.
 
  Will merge to 'next'.
 
 
-* kn/for-each-branch-remainder (2015-10-02) 9 commits
- - branch: implement '--format' option
- - branch: use ref-filter printing APIs
- - ref-filter: make %(upstream:track) prints "[gone]" for invalid upstreams
- - ref-filter: introduce format_ref_array_item()
- - ref-filter: adopt get_head_description() from branch.c
- - ref-filter: modify "%(objectname:short)" to take length
- - ref-filter: add support for %(path) atom
- - ref-filter: implement %(if:equals=<string>) and %(if:notequals=<string>)
- - ref-filter: implement %(if), %(then), and %(else) atoms
- (this branch uses kn/for-each-branch.)
+* dt/log-follow-config (2015-10-07) 1 commit
+ - log: Update log.follow doc and add to config.txt
 
- More unification among "branch -l", "tag -l" and "for-each-ref --format".
+ Description of the "log.follow" configuration variable in "git log"
+ documentation is now also copied to "git config" documentation.
 
- Expecting a reroll.
- ($gmane/278926)
+ Will merge to 'next'.
 
-* pt/pull-builtin (2015-10-02) 1 commit
- - merge: grammofix in please-commit-before-merge message
+
+* es/worktree-add-cleanup (2015-10-07) 1 commit
+ - t2026: rename worktree prune test
+
+ A no-op code-health maintenance.
+
+ Will merge to 'next'.
+
+
+* sg/pretty-more-date-mode-format (2015-10-07) 1 commit
+ - pretty: add format specifiers for short and raw date formats
+
+ Introduce "%as" and "%aR" placeholders for "log --format" to show
+ the author date in the short and raw formats.
+
+ I have a feeling that that this is a step in a wrong direction.
+
+
+* tk/doc-interpret-trailers-grammo (2015-10-07) 1 commit
+ - Documentation/interpret-trailers: Grammar fix
 
  Will merge to 'next'.
 
@@ -435,7 +151,8 @@ of the repositories listed at
  ($gmane/277574)
 
 
-* mr/worktree-list (2015-10-02) 7 commits
+* mr/worktree-list (2015-10-05) 8 commits
+ - fixup! worktree: add a function to get worktree details
  - SQUASH???
  - worktree: add 'list' command
  - worktree: add details to the worktree struct
@@ -447,7 +164,7 @@ of the repositories listed at
  Add the "list" subcommand to "git worktree".
 
  Waiting for a reroll.
- ($gmane/278529).
+ ($gmane/278529, $gmane/279113).
 
 
 * mg/httpd-tests-update-for-apache-2.4 (2015-04-08) 2 commits
@@ -512,10 +229,101 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* jk/asciidoctor-section-heading-markup-fix (2015-09-25) 1 commit
- - Documentation: fix section header mark-up
+* dt/refs-backend-lmdb (2015-10-05) 45 commits
+ - SQUASH???
+ - refs: tests for db backend
+ - refs: add LMDB refs backend
+ - refs: add register_refs_backend
+ - refs: allow ref backend to be set for clone
+ - refs: break out a ref conflict check
+ - refs: make some files backend functions public
+ - refs: move some defines from refs-be-files.c to refs.h
+ - run-command: track total number of commands run
+ - refs-be-files.c: add method to rename refs
+ - refs.c: make struct ref_transaction generic
+ - refs.c: add method for initializing refs db
+ - initdb: move safe_create_dir into common code
+ - refs.c: add method for initial ref transaction commit
+ - refs-be-files.c: add method to expire reflogs
+ - refs.c: add methods for reflog
+ - refs.c: add ref backend init function
+ - refs.c: move should_autocreate_reflog to common code
+ - refs.c: move peel_object to the common code
+ - refs.c: move copy_msg to the common code
+ - refs.h: document make refname_is_safe and add it to header
+ - refs.c: move refname_is_safe to the common code
+ - refs-be-files.c: add do_for_each_per_worktree_ref
+ - refs-be-files.c: add method for for_each_reftype_...
+ - refs-be-files.c: add methods for the ref iterators
+ - refs-be-files.c: add methods for misc ref operations
+ - refs-be-files.c: add a backend method structure with transaction functions
+ - refs.c: move head_ref_namespaced to the common code
+ - refs.c: move ref iterators to the common code
+ - refs.c: move prettify_refname to the common code
+ - refs.c: move is_branch to the common code
+ - refs.c: move check_refname_format to the common code
+ - refs.c: move resolve_refdup to common
+ - refs.c: move read_ref, read_ref_full and ref_exists to the common code
+ - refs.c: move warn_if_dangling_symref* to the common code
+ - refs.c: move dwim and friend functions to the common refs code
+ - refs.c: move the hidden refs functions to the common code
+ - refs.c: move read_ref_at to the common refs file
+ - refs.c: move delete_ref and delete_refs to the common code
+ - refs.c: move update_ref to refs.c
+ - refs.c: add a new refs.c file to hold all common refs code
+ - refs-be-files.c: rename refs to refs-be-files
+ - refs: make repack_without_refs and is_branch public
+ - refs.c: create a public version of verify_refname_available
+ - Merge branch 'jk/war-on-sprintf' into HEAD
+ (this branch uses jk/war-on-sprintf.)
+
+ Pluggable ref backend.
+
+ Expecting a reroll.
+ ($gmane/278757).
+
+
+* gr/rebase-i-drop-warn (2015-10-05) 2 commits
+ - rebase-i: loosen over-eager check_bad_cmd check
+ - rebase-i: explicitly accept tab as separator in commands
+
+ "git rebase -i" had a minor regression recently, which stopped
+ considering a line that begins with an indented '#' in its insn
+ sheet not a comment, which is now fixed.
 
  Will merge to 'next'.
+
+
+* kn/for-each-branch-remainder (2015-10-02) 9 commits
+ - branch: implement '--format' option
+ - branch: use ref-filter printing APIs
+ - ref-filter: make %(upstream:track) prints "[gone]" for invalid upstreams
+ - ref-filter: introduce format_ref_array_item()
+ - ref-filter: adopt get_head_description() from branch.c
+ - ref-filter: modify "%(objectname:short)" to take length
+ - ref-filter: add support for %(path) atom
+ - ref-filter: implement %(if:equals=<string>) and %(if:notequals=<string>)
+ - ref-filter: implement %(if), %(then), and %(else) atoms
+ (this branch uses kn/for-each-branch.)
+
+ More unification among "branch -l", "tag -l" and "for-each-ref --format".
+
+ Expecting a reroll.
+ ($gmane/278926)
+
+
+* pt/pull-builtin (2015-10-02) 1 commit
+  (merged to 'next' on 2015-10-07 at 19af20e)
+ + merge: grammofix in please-commit-before-merge message
+
+ Will merge to 'master'.
+
+
+* jk/asciidoctor-section-heading-markup-fix (2015-09-25) 1 commit
+  (merged to 'next' on 2015-10-07 at 8bbff49)
+ + Documentation: fix section header mark-up
+
+ Will merge to 'master'.
 
 
 * jk/war-on-sprintf (2015-10-05) 70 commits
@@ -624,12 +432,13 @@ of the repositories listed at
 
 
 * tk/typofix-connect-unknown-proto-error (2015-09-25) 1 commit
- - connect: fix typo in result string of prot_name()
+  (merged to 'next' on 2015-10-07 at cc3430e)
+ + connect: fix typo in result string of prot_name()
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* js/clone-dissociate (2015-10-05) 4 commits
+* js/clone-dissociate (2015-10-07) 4 commits
  - clone --dissociate: avoid locking pack files
  - sha1_file.c: add a function to release all packs
  - sha1_file: consolidate code to close a pack's file descriptor
@@ -668,9 +477,10 @@ of the repositories listed at
 
 
 * nd/ls-remote-does-not-have-u-option (2015-09-28) 1 commit
- - ls-remote.txt: delete unsupported option
+  (merged to 'next' on 2015-10-07 at 0790a76)
+ + ls-remote.txt: delete unsupported option
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * pt/am-builtin (2015-09-30) 1 commit
@@ -704,12 +514,13 @@ of the repositories listed at
 
 
 * jk/notes-dwim-doc (2015-09-22) 1 commit
- - notes: correct documentation of DWIMery for notes references
+  (merged to 'next' on 2015-10-07 at c4341d1)
+ + notes: correct documentation of DWIMery for notes references
 
  The way how --ref/--notes to specify the notes tree reference are
  DWIMmed was not clearly documented.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * kn/for-each-branch (2015-09-25) 8 commits
@@ -768,18 +579,6 @@ of the repositories listed at
  ($gmane/278326)
 
 
-* nd/ignore-then-not-ignore (2015-09-21) 2 commits
-  (merged to 'next' on 2015-09-21 at 2182591)
- + dir.c: don't exclude whole dir prematurely if neg pattern may match
- + dir.c: make last_exclude_matching_from_list() run til the end
-
- Allow a later "!/abc/def" to override an earlier "/abc" that
- appears in the same .gitignore file to make it easier to express
- "everything in /abc directory is ignored, except for ...".
-
- Will merge to 'master'.
-
-
 * sb/submodule-parallel-fetch (2015-10-02) 8 commits
  - submodules: allow parallel fetching, add tests and documentation
  - fetch_populated_submodules: use new parallel job processing
@@ -807,29 +606,6 @@ of the repositories listed at
  work trees created via "git worktree add".
 
  Will merge to 'next'.
-
-
-* ti/glibc-stdio-mutex-from-signal-handler (2015-09-04) 1 commit
-  (merged to 'next' on 2015-09-08 at c8047ba)
- + pager: don't use unsafe functions in signal handlers
-
- Allocation related functions and stdio are unsafe things to call
- inside a signal handler, and indeed killing the pager can cause
- glibc to deadlock waiting on allocation mutex as our signal handler
- tries to free() some data structures in wait_for_pager().  Reduce
- these unsafe calls.
-
- Will merge to 'master'.
-
-
-* gb/filter-branch-progress (2015-09-21) 2 commits
-  (merged to 'next' on 2015-09-21 at 15e698d)
- + filter-branch: make report-progress more readable
- + filter-branch: add passed/remaining seconds on progress
-
- Give progress meter to "git filter-branch".
-
- Will merge to 'master'.
 
 
 * ls/p4-lfs (2015-10-03) 7 commits
@@ -861,20 +637,6 @@ of the repositories listed at
  Will merge to 'next'.
 
 
-* ls/p4-path-encoding (2015-09-21) 3 commits
-  (merged to 'next' on 2015-09-21 at 0772d82)
- + git-p4: use replacement character for non UTF-8 characters in paths
-  (merged to 'next' on 2015-09-17 at 7f8b9e0)
- + git-p4: improve path encoding verbose output
-  (merged to 'next' on 2015-09-08 at 56514f9)
- + git-p4: add config git-p4.pathEncoding
-
- "git p4" learned to reencode the pathname it uses to communicate
- with the p4 depot with a new option.
-
- Will merge to 'master'.
-
-
 * ad/cygwin-wants-rename (2015-08-07) 1 commit
  - config.mak.uname: Cygwin needs OBJECT_CREATION_USES_RENAMES
 
@@ -897,7 +659,7 @@ of the repositories listed at
 
 
 * jc/merge-drop-old-syntax (2015-04-29) 1 commit
-  (merged to 'next' on 2015-08-03 at a52c2b2)
+  (merged to 'next' on 2015-10-07 at 50fed71)
  + merge: drop 'git merge <message> HEAD <commit>' syntax
 
  Originally merged to 'next' on 2015-05-28
