@@ -510,6 +510,13 @@ git-p4.useClientSpec::
 	option '--use-client-spec'.  See the "CLIENT SPEC" section above.
 	This variable is a boolean, not the name of a p4 client.
 
+git-p4.pathEncoding::
+	Perforce keeps the encoding of a path as given by the originating OS.
+	Git expects paths encoded as UTF-8. Use this config to tell git-p4
+	what encoding Perforce had used for the paths. This encoding is used
+	to transcode the paths to UTF-8. As an example, Perforce on Windows
+	often uses “cp1252” to encode path names.
+
 Submit variables
 ~~~~~~~~~~~~~~~~
 git-p4.detectRenames::
