@@ -25,7 +25,9 @@ covered in class. For each,
   post-conditions of its public member functions?
 
 Breanna Devore-McDonald:
-Keith Kinnard:
+Keith Kinnard: Adding a repair function to the git fsck command.  The repair function would fetch uncorrupted versions of objects from another repository when git fsck finds missing or uncorrupted objects. This feature would be useful because then a user would not have to go through the directory manually and fix the problem or find an older version of the corrupted file. 
+This function will be called if git fsck comes across a missing or corrupted file.  The function will need to take in the current repository as well as the name of the corrupted or missing file. It will then search for an older version of that file in either a previous version of the current repository or in a parent repository.  If it does not find one, it will return false and let the user know that an older version of the file was not found.  Otherwise, it will return true and correct the issue.
+
 Nancy McNamara:
 Elliott Runburg:
 
