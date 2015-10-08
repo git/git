@@ -24,6 +24,11 @@ covered in class. For each,
   post-conditions? If it's a class, what are the pre- and
   post-conditions of its public member functions?
 
+Breanna Devore-McDonald:
+Keith Kinnard:
+Nancy McNamara:
+Elliott Runburg:
+
 3b. You should also be in contact with the developer community (ask
 your TA for tips on how to do this successfully). Cut and paste an
 excerpt from one of your conversations.
