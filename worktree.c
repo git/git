@@ -9,6 +9,8 @@ void free_worktrees(struct worktree **worktrees)
 
 	for (i = 0; worktrees[i]; i++) {
 		free(worktrees[i]->path);
+		free(worktrees[i]->git_dir);
+		free(worktrees[i]->head_ref);
 		free(worktrees[i]);
 	}
 	free (worktrees);
@@ -50,6 +52,21 @@ static int parse_ref(char *path_to_ref, struct strbuf *ref, int *is_detached)
 }
 
 /**
+ * Add the head_sha1 and head_ref (if not detached) to the given worktree
+ */
+static void add_head_info(struct strbuf *head_ref, struct worktree *worktree)
+{
+	if (head_ref->len) {
+		if (worktree->is_detached) {
+			get_sha1_hex(head_ref->buf, worktree->head_sha1);
+		} else {
+			resolve_ref_unsafe(head_ref->buf, 0, worktree->head_sha1, NULL);
+			worktree->head_ref = strbuf_detach(head_ref, NULL);
+		}
+	}
+}
+
+/**
  * get the main worktree
  */
 static struct worktree *get_main_worktree(void)
@@ -59,19 +76,29 @@ static struct worktree *get_main_worktree(void)
 	struct strbuf worktree_path = STRBUF_INIT;
 	struct strbuf gitdir = STRBUF_INIT;
 	struct strbuf head_ref = STRBUF_INIT;
+	int is_bare = 0;
+	int is_detached = 0;
 
 	strbuf_addf(&gitdir, "%s", absolute_path(get_git_common_dir()));
 	strbuf_addbuf(&worktree_path, &gitdir);
-	if (!strbuf_strip_suffix(&worktree_path, "/.git"))
+	is_bare = !strbuf_strip_suffix(&worktree_path, "/.git");
+	if (is_bare)
 		strbuf_strip_suffix(&worktree_path, "/.");
 
 	strbuf_addf(&path, "%s/HEAD", get_git_common_dir());
 
-	if (parse_ref(path.buf, &head_ref, NULL) >= 0) {
-		worktree = xmalloc(sizeof(struct worktree));
-		worktree->path = strbuf_detach(&worktree_path, NULL);
-		worktree->git_dir = strbuf_detach(&gitdir, NULL);
-	}
+	if (parse_ref(path.buf, &head_ref, &is_detached) < 0)
+		goto done;
+
+	worktree = xmalloc(sizeof(struct worktree));
+	worktree->path = strbuf_detach(&worktree_path, NULL);
+	worktree->git_dir = strbuf_detach(&gitdir, NULL);
+	worktree->is_bare = is_bare;
+	worktree->head_ref = NULL;
+	worktree->is_detached = is_detached;
+	add_head_info(&head_ref, worktree);
+
+done:
 	strbuf_release(&path);
 	strbuf_release(&gitdir);
 	strbuf_release(&worktree_path);
@@ -86,6 +113,7 @@ static struct worktree *get_linked_worktree(const char *id)
 	struct strbuf worktree_path = STRBUF_INIT;
 	struct strbuf gitdir = STRBUF_INIT;
 	struct strbuf head_ref = STRBUF_INIT;
+	int is_detached = 0;
 
 	if (!id)
 		die("Missing linked worktree name");
@@ -107,11 +135,16 @@ static struct worktree *get_linked_worktree(const char *id)
 	strbuf_reset(&path);
 	strbuf_addf(&path, "%s/worktrees/%s/HEAD", get_git_common_dir(), id);
 
-	if (parse_ref(path.buf, &head_ref, NULL) >= 0) {
-		worktree = xmalloc(sizeof(struct worktree));
-		worktree->path = strbuf_detach(&worktree_path, NULL);
-		worktree->git_dir = strbuf_detach(&gitdir, NULL);
-	}
+	if (parse_ref(path.buf, &head_ref, &is_detached) < 0)
+		goto done;
+
+	worktree = xmalloc(sizeof(struct worktree));
+	worktree->path = strbuf_detach(&worktree_path, NULL);
+	worktree->git_dir = strbuf_detach(&gitdir, NULL);
+	worktree->is_bare = 0;
+	worktree->head_ref = NULL;
+	worktree->is_detached = is_detached;
+	add_head_info(&head_ref, worktree);
 
 done:
 	strbuf_release(&path);

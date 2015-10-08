@@ -4,6 +4,10 @@
 struct worktree {
 	char *path;
 	char *git_dir;
+	char *head_ref;
+	unsigned char head_sha1[20];
+	int is_detached;
+	int is_bare;
 };
 
 /* Functions for acting on the information about worktrees. */
