@@ -1,6 +1,28 @@
 #ifndef WORKTREE_H
 #define WORKTREE_H
 
+struct worktree {
+	char *path;
+	char *git_dir;
+};
+
+/* Functions for acting on the information about worktrees. */
+
+/*
+ * Get the worktrees.  The primary worktree will always be the first returned,
+ * and linked worktrees will be pointed to by 'next' in each subsequent
+ * worktree.  No specific ordering is done on the linked worktrees.
+ *
+ * The caller is responsible for freeing the memory from the returned
+ * worktree(s).
+ */
+extern struct worktree **get_worktrees(void);
+
+/*
+ * Free up the memory for worktree(s)
+ */
+extern void free_worktrees(struct worktree **);
+
 /*
  * Check if a per-worktree symref points to a ref in the main worktree
  * or any linked worktree, and return the path to the exising worktree

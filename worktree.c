@@ -3,6 +3,17 @@
 #include "strbuf.h"
 #include "worktree.h"
 
+void free_worktrees(struct worktree **worktrees)
+{
+	int i = 0;
+
+	for (i = 0; worktrees[i]; i++) {
+		free(worktrees[i]->path);
+		free(worktrees[i]);
+	}
+	free (worktrees);
+}
+
 /*
  * read 'path_to_ref' into 'ref'.  Also if is_detached is not NULL,
  * set is_detached to 1 (0) if the ref is detatched (is not detached).
@@ -38,87 +49,138 @@ static int parse_ref(char *path_to_ref, struct strbuf *ref, int *is_detached)
 	return 0;
 }
 
-static char *find_main_symref(const char *symref, const char *branch)
+/**
+ * get the main worktree
+ */
+static struct worktree *get_main_worktree(void)
 {
-	struct strbuf sb = STRBUF_INIT;
+	struct worktree *worktree = NULL;
 	struct strbuf path = STRBUF_INIT;
+	struct strbuf worktree_path = STRBUF_INIT;
 	struct strbuf gitdir = STRBUF_INIT;
-	char *existing = NULL;
+	struct strbuf head_ref = STRBUF_INIT;
 
-	strbuf_addf(&path, "%s/%s", get_git_common_dir(), symref);
-	if (parse_ref(path.buf, &sb, NULL) < 0)
-		goto done;
-	if (strcmp(sb.buf, branch))
-		goto done;
-	strbuf_addstr(&gitdir, get_git_common_dir());
-	strbuf_strip_suffix(&gitdir, ".git");
-	existing = strbuf_detach(&gitdir, NULL);
-done:
+	strbuf_addf(&gitdir, "%s", absolute_path(get_git_common_dir()));
+	strbuf_addbuf(&worktree_path, &gitdir);
+	if (!strbuf_strip_suffix(&worktree_path, "/.git"))
+		strbuf_strip_suffix(&worktree_path, "/.");
+
+	strbuf_addf(&path, "%s/HEAD", get_git_common_dir());
+
+	if (parse_ref(path.buf, &head_ref, NULL) >= 0) {
+		worktree = xmalloc(sizeof(struct worktree));
+		worktree->path = strbuf_detach(&worktree_path, NULL);
+		worktree->git_dir = strbuf_detach(&gitdir, NULL);
+	}
 	strbuf_release(&path);
-	strbuf_release(&sb);
 	strbuf_release(&gitdir);
-
-	return existing;
+	strbuf_release(&worktree_path);
+	strbuf_release(&head_ref);
+	return worktree;
 }
 
-static char *find_linked_symref(const char *symref, const char *branch,
-				const char *id)
+static struct worktree *get_linked_worktree(const char *id)
 {
-	struct strbuf sb = STRBUF_INIT;
+	struct worktree *worktree = NULL;
 	struct strbuf path = STRBUF_INIT;
+	struct strbuf worktree_path = STRBUF_INIT;
 	struct strbuf gitdir = STRBUF_INIT;
-	char *existing = NULL;
+	struct strbuf head_ref = STRBUF_INIT;
 
 	if (!id)
 		die("Missing linked worktree name");
 
-	strbuf_addf(&path, "%s/worktrees/%s/%s", get_git_common_dir(), id, symref);
+	strbuf_addf(&gitdir, "%s/worktrees/%s",
+			absolute_path(get_git_common_dir()), id);
+	strbuf_addf(&path, "%s/gitdir", gitdir.buf);
+	if (strbuf_read_file(&worktree_path, path.buf, 0) <= 0)
+		/* invalid gitdir file */
+		goto done;
 
-	if (parse_ref(path.buf, &sb, NULL) < 0)
-		goto done;
-	if (strcmp(sb.buf, branch))
-		goto done;
+	strbuf_rtrim(&worktree_path);
+	if (!strbuf_strip_suffix(&worktree_path, "/.git")) {
+		strbuf_reset(&worktree_path);
+		strbuf_addstr(&worktree_path, absolute_path("."));
+		strbuf_strip_suffix(&worktree_path, "/.");
+	}
+
 	strbuf_reset(&path);
-	strbuf_addf(&path, "%s/worktrees/%s/gitdir", get_git_common_dir(), id);
-	if (strbuf_read_file(&gitdir, path.buf, 0) <= 0)
-		goto done;
-	strbuf_rtrim(&gitdir);
-	strbuf_strip_suffix(&gitdir, ".git");
+	strbuf_addf(&path, "%s/worktrees/%s/HEAD", get_git_common_dir(), id);
 
-	existing = strbuf_detach(&gitdir, NULL);
+	if (parse_ref(path.buf, &head_ref, NULL) >= 0) {
+		worktree = xmalloc(sizeof(struct worktree));
+		worktree->path = strbuf_detach(&worktree_path, NULL);
+		worktree->git_dir = strbuf_detach(&gitdir, NULL);
+	}
+
 done:
 	strbuf_release(&path);
-	strbuf_release(&sb);
 	strbuf_release(&gitdir);
-
-	return existing;
+	strbuf_release(&worktree_path);
+	strbuf_release(&head_ref);
+	return worktree;
 }
 
-char *find_shared_symref(const char *symref, const char *target)
+struct worktree **get_worktrees(void)
 {
+	struct worktree **list = NULL;
 	struct strbuf path = STRBUF_INIT;
 	DIR *dir;
 	struct dirent *d;
-	char *existing;
+	int counter = 0, alloc = 2;
 
-	if ((existing = find_main_symref(symref, target)))
-		return existing;
+	list = xmalloc(alloc * sizeof(struct worktree *));
+
+	if ((list[counter] = get_main_worktree()))
+		counter++;
 
 	strbuf_addf(&path, "%s/worktrees", get_git_common_dir());
 	dir = opendir(path.buf);
 	strbuf_release(&path);
-	if (!dir)
-		return NULL;
+	if (dir) {
+		while ((d = readdir(dir)) != NULL) {
+			struct worktree *linked = NULL;
+			if (!strcmp(d->d_name, ".") || !strcmp(d->d_name, ".."))
+				continue;
 
-	while ((d = readdir(dir)) != NULL) {
-		if (!strcmp(d->d_name, ".") || !strcmp(d->d_name, ".."))
-			continue;
-		existing = find_linked_symref(symref, target, d->d_name);
-		if (existing)
-			goto done;
+				if ((linked = get_linked_worktree(d->d_name))) {
+					ALLOC_GROW(list, counter + 1, alloc);
+					list[counter++] = linked;
+				}
+		}
+		closedir(dir);
 	}
-done:
-	closedir(dir);
+	ALLOC_GROW(list, counter + 1, alloc);
+	list[counter] = NULL;
+	return list;
+}
+
+char *find_shared_symref(const char *symref, const char *target)
+{
+	char *existing = NULL;
+	struct strbuf path = STRBUF_INIT;
+	struct strbuf sb = STRBUF_INIT;
+	struct worktree **worktrees = get_worktrees();
+	int i = 0;
+
+	for (i = 0; worktrees[i]; i++) {
+		strbuf_reset(&path);
+		strbuf_reset(&sb);
+		strbuf_addf(&path, "%s/%s", worktrees[i]->git_dir, symref);
+
+		if (parse_ref(path.buf, &sb, NULL)) {
+			continue;
+		}
+
+		if (!strcmp(sb.buf, target)) {
+			existing = xstrdup(worktrees[i]->path);
+			break;
+		}
+	}
+
+	strbuf_release(&path);
+	strbuf_release(&sb);
+	free_worktrees(worktrees);
 
 	return existing;
 }
