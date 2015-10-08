@@ -11,6 +11,7 @@ SYNOPSIS
 [verse]
 'git worktree add' [-f] [--detach] [-b <new-branch>] <path> [<branch>]
 'git worktree prune' [-n] [-v] [--expire <expire>]
+'git worktree list' [--porcelain]
 
 DESCRIPTION
 -----------
@@ -59,6 +60,13 @@ prune::
 
 Prune working tree information in $GIT_DIR/worktrees.
 
+list::
+
+List details of each worktree.  The main worktree is listed first, followed by
+each of the linked worktrees.  The output details include if the worktree is
+bare, the revision currently checked out, and the branch currently checked out
+(or 'detached HEAD' if none).
+
 OPTIONS
 -------
 
@@ -85,6 +93,11 @@ OPTIONS
 --dry-run::
 	With `prune`, do not remove anything; just report what it would
 	remove.
+
+--porcelain::
+	With `list`, output in an easy-to-parse format for scripts.
+	This format will remain stable across Git versions and regardless of user
+	configuration.  See below for details.
 
 -v::
 --verbose::
@@ -134,6 +147,41 @@ to `/path/main/.git/worktrees/test-next` then a file named
 `test-next` entry from being pruned.  See
 linkgit:gitrepository-layout[5] for details.
 
+LIST OUTPUT FORMAT
+------------------
+The worktree list command has two output formats.  The default format shows the
+details on a single line with columns.  For example:
+
+------------
+S git worktree list
+/path/to/bare-source            (bare)
+/path/to/linked-worktree        abcd1234 [master]
+/path/to/other-linked-worktree  1234abc  (detached HEAD)
+------------
+
+Porcelain Format
+~~~~~~~~~~~~~~~~
+The porcelain format has a line per attribute.  Attributes are listed with a
+label and value separated by a single space.  Boolean attributes (like 'bare'
+and 'detached') are listed as a label only, and are only present if and only
+if the value is true.  An empty line indicates the end of a worktree.  For
+example:
+
+------------
+S git worktree list --porcelain
+worktree /path/to/bare-source
+bare
+
+worktree /path/to/linked-worktree
+HEAD abcd1234abcd1234abcd1234abcd1234abcd1234
+branch refs/heads/master
+
+worktree /path/to/other-linked-worktree
+HEAD 1234abc1234abc1234abc1234abc1234abc1234a
+detached
+
+------------
+
 EXAMPLES
 --------
 You are in the middle of a refactoring session and your boss comes in and
@@ -167,7 +215,6 @@ performed manually, such as:
 - `remove` to remove a linked working tree and its administrative files (and
   warn if the working tree is dirty)
 - `mv` to move or rename a working tree and update its administrative files
-- `list` to list linked working trees
 - `lock` to prevent automatic pruning of administrative files (for instance,
   for a working tree on a portable device)
 
