@@ -2,6 +2,7 @@
 
 test_description='git filter-branch'
 . ./test-lib.sh
+. "$TEST_DIRECTORY/lib-gpg.sh"
 
 test_expect_success 'setup' '
 	test_commit A &&
@@ -289,6 +290,19 @@ test_expect_success 'Tag name filtering strips gpg signature' '
 	echo "$faux_gpg_tag" | sed -e s/XXXXXX/$sha1/ | head -n 6 > expect &&
 	git filter-branch -f --tag-name-filter cat &&
 	git cat-file tag S > actual &&
+	test_cmp expect actual
+'
+
+test_expect_success GPG 'Filtering retains message of gpg signed commit' '
+	mkdir gpg &&
+	touch gpg/foo &&
+	git add gpg &&
+	test_tick &&
+	git commit -S -m "Adding gpg" &&
+
+	git log -1 --format="%s" > expect &&
+	git filter-branch -f --msg-filter "cat" &&
+	git log -1 --format="%s" > actual &&
 	test_cmp expect actual
 '
 
