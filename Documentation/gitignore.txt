@@ -113,7 +113,7 @@ PATTERN FORMAT
    For example, "/{asterisk}.c" matches "cat-file.c" but not
    "mozilla-sha1/sha1.c".
 
-Two consecutive asterisks ("`**`") in patterns matched against
+Two consecutive asterisks ("`**`")(support it since v1.8.2) in patterns matched against
 full pathname may have special meaning:
 
  - A leading "`**`" followed by a slash means match in all
