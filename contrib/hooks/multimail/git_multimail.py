@@ -1,4 +1,6 @@
-#! /usr/bin/env python2
+#! /usr/bin/env python
+
+__version__ = '1.2.0'
 
 # Copyright (c) 2015 Matthieu Moy and others
 # Copyright (c) 2012-2014 Michael Haggerty and others
@@ -56,8 +58,54 @@ import shlex
 import optparse
 import smtplib
 import time
+import cgi
+
+PYTHON3 = sys.version_info >= (3, 0)
+
+if sys.version_info <= (2, 5):
+    def all(iterable):
+        for element in iterable:
+            if not element:
+                return False
+            return True
+
+
+def is_ascii(s):
+    return all(ord(c) < 128 and ord(c) > 0 for c in s)
+
+
+if PYTHON3:
+    def str_to_bytes(s):
+        return s.encode(ENCODING)
+
+    def bytes_to_str(s):
+        return s.decode(ENCODING)
+
+    unicode = str
+
+    def write_str(f, msg):
+        # Try outputing with the default encoding. If it fails,
+        # try UTF-8.
+        try:
+            f.buffer.write(msg.encode(sys.getdefaultencoding()))
+        except UnicodeEncodeError:
+            f.buffer.write(msg.encode(ENCODING))
+else:
+    def str_to_bytes(s):
+        return s
+
+    def bytes_to_str(s):
+        return s
+
+    def write_str(f, msg):
+        f.write(msg)
+
+    def next(it):
+        return it.next()
+
 
 try:
+    from email.charset import Charset
     from email.utils import make_msgid
     from email.utils import getaddresses
     from email.utils import formataddr
@@ -65,6 +113,7 @@ try:
     from email.header import Header
 except ImportError:
     # Prior to Python 2.5, the email module used different names:
+    from email.Charset import Charset
     from email.Utils import make_msgid
     from email.Utils import getaddresses
     from email.Utils import formataddr
@@ -109,7 +158,7 @@ Date: %(send_date)s
 To: %(recipients)s
 Subject: %(subject)s
 MIME-Version: 1.0
-Content-Type: text/plain; charset=%(charset)s
+Content-Type: text/%(contenttype)s; charset=%(charset)s
 Content-Transfer-Encoding: 8bit
 Message-ID: %(msgid)s
 From: %(fromaddr)s
@@ -120,6 +169,8 @@ X-Git-Refname: %(refname)s
 X-Git-Reftype: %(refname_type)s
 X-Git-Oldrev: %(oldrev)s
 X-Git-Newrev: %(newrev)s
+X-Git-NotificationType: ref_changed
+X-Git-Multimail-Version: %(multimail_version)s
 Auto-Submitted: auto-generated
 """
 
@@ -238,7 +289,7 @@ To: %(recipients)s
 Cc: %(cc_recipients)s
 Subject: %(emailprefix)s%(num)02d/%(tot)02d: %(oneline)s
 MIME-Version: 1.0
-Content-Type: text/plain; charset=%(charset)s
+Content-Type: text/%(contenttype)s; charset=%(charset)s
 Content-Transfer-Encoding: 8bit
 From: %(fromaddr)s
 Reply-To: %(reply_to)s
@@ -249,6 +300,8 @@ X-Git-Repo: %(repo_shortname)s
 X-Git-Refname: %(refname)s
 X-Git-Reftype: %(refname_type)s
 X-Git-Rev: %(rev)s
+X-Git-NotificationType: diff
+X-Git-Multimail-Version: %(multimail_version)s
 Auto-Submitted: auto-generated
 """
 
@@ -270,7 +323,7 @@ Date: %(send_date)s
 To: %(recipients)s
 Subject: %(subject)s
 MIME-Version: 1.0
-Content-Type: text/plain; charset=%(charset)s
+Content-Type: text/%(contenttype)s; charset=%(charset)s
 Content-Transfer-Encoding: 8bit
 Message-ID: %(msgid)s
 From: %(fromaddr)s
@@ -282,6 +335,8 @@ X-Git-Reftype: %(refname_type)s
 X-Git-Oldrev: %(oldrev)s
 X-Git-Newrev: %(newrev)s
 X-Git-Rev: %(rev)s
+X-Git-NotificationType: ref_changed_plus_diff
+X-Git-Multimail-Version: %(multimail_version)s
 Auto-Submitted: auto-generated
 """
 
@@ -352,12 +407,14 @@ def read_git_output(args, input=None, keepends=False, **kw):
 def read_output(cmd, input=None, keepends=False, **kw):
     if input:
         stdin = subprocess.PIPE
+        input = str_to_bytes(input)
     else:
         stdin = None
     p = subprocess.Popen(
         cmd, stdin=stdin, stdout=subprocess.PIPE, stderr=subprocess.PIPE, **kw
         )
     (out, err) = p.communicate(input)
+    out = bytes_to_str(out)
     retcode = p.wait()
     if retcode:
         raise CommandError(cmd, retcode)
@@ -418,26 +475,37 @@ def git_log(spec, **kw):
 def header_encode(text, header_name=None):
     """Encode and line-wrap the value of an email header field."""
 
-    try:
-        if isinstance(text, str):
-            text = text.decode(ENCODING, 'replace')
-        return Header(text, header_name=header_name).encode()
-    except UnicodeEncodeError:
-        return Header(text, header_name=header_name, charset=CHARSET,
-                      errors='replace').encode()
+    # Convert to unicode, if required.
+    if not isinstance(text, unicode):
+        text = unicode(text, 'utf-8')
+
+    if is_ascii(text):
+        charset = 'ascii'
+    else:
+        charset = 'utf-8'
+
+    return Header(text, header_name=header_name, charset=Charset(charset)).encode()
 
 
 def addr_header_encode(text, header_name=None):
     """Encode and line-wrap the value of an email header field containing
     email addresses."""
 
-    return Header(
-        ', '.join(
-            formataddr((header_encode(name), emailaddr))
-            for name, emailaddr in getaddresses([text])
-            ),
-        header_name=header_name
-        ).encode()
+    # Convert to unicode, if required.
+    if not isinstance(text, unicode):
+        text = unicode(text, 'utf-8')
+
+    text = ', '.join(
+        formataddr((header_encode(name), emailaddr))
+        for name, emailaddr in getaddresses([text])
+        )
+
+    if is_ascii(text):
+        charset = 'ascii'
+    else:
+        charset = 'utf-8'
+
+    return Header(text, header_name=header_name, charset=Charset(charset)).encode()
 
 
 class Config(object):
@@ -496,25 +564,14 @@ class Config(object):
                 ['config', '--get-all', '--null', '%s.%s' % (self.section, name)],
                 env=self.env, keepends=True,
                 ))
-        except CommandError, e:
+        except CommandError:
+            t, e, traceback = sys.exc_info()
             if e.retcode == 1:
                 # "the section or key is invalid"; i.e., there is no
                 # value for the specified key.
                 return default
             else:
                 raise
-
-    def get_recipients(self, name, default=None):
-        """Read a recipients list from the configuration.
-
-        Return the result as a comma-separated list of email
-        addresses, or default if the option is unset.  If the setting
-        has multiple values, concatenate them with comma separators."""
-
-        lines = self.get_all(name, default=None)
-        if lines is None:
-            return default
-        return ', '.join(line.strip() for line in lines)
 
     def set(self, name, value):
         read_git_output(
@@ -542,7 +599,8 @@ class Config(object):
                 ['config', '--unset-all', '%s.%s' % (self.section, name)],
                 env=self.env,
                 )
-        except CommandError, e:
+        except CommandError:
+            t, e, traceback = sys.exc_info()
             if e.retcode == 5:
                 # The name doesn't exist, which is what we wanted anyway...
                 pass
@@ -636,7 +694,7 @@ class GitObject(object):
         if not self.sha1:
             raise ValueError('Empty commit has no summary')
 
-        return iter(generate_summaries('--no-walk', self.sha1)).next()
+        return next(iter(generate_summaries('--no-walk', self.sha1)))
 
     def __eq__(self, other):
         return isinstance(other, GitObject) and self.sha1 == other.sha1
@@ -646,6 +704,10 @@ class GitObject(object):
 
     def __nonzero__(self):
         return bool(self.sha1)
+
+    def __bool__(self):
+        """Python 2 backward compatibility"""
+        return self.__nonzero__()
 
     def __str__(self):
         return self.sha1 or ZEROS
@@ -661,6 +723,12 @@ class Change(object):
     def __init__(self, environment):
         self.environment = environment
         self._values = None
+        self._contains_html_diff = False
+
+    def _contains_diff(self):
+        # We do contain a diff, should it be rendered in HTML?
+        if self.environment.commit_email_format == "html":
+            self._contains_html_diff = True
 
     def _compute_values(self):
         """Return a dictionary {keyword: expansion} for this Change.
@@ -670,7 +738,12 @@ class Change(object):
         get_values().  The return value should always be a new
         dictionary."""
 
-        return self.environment.get_values()
+        values = self.environment.get_values()
+        fromaddr = self.environment.get_fromaddr(change=self)
+        if fromaddr is not None:
+            values['fromaddr'] = fromaddr
+        values['multimail_version'] = get_version()
+        return values
 
     def get_values(self, **extra_values):
         """Return a dictionary {keyword: expansion} for this Change.
@@ -713,12 +786,18 @@ class Change(object):
         skip lines that contain references to unknown variables."""
 
         values = self.get_values(**extra_values)
+        if self._contains_html_diff:
+            values['contenttype'] = 'html'
+        else:
+            values['contenttype'] = 'plain'
+
         for line in template.splitlines():
-            (name, value) = line.split(':', 1)
+            (name, value) = line.split(': ', 1)
 
             try:
                 value = value % values
-            except KeyError, e:
+            except KeyError:
+                t, e, traceback = sys.exc_info()
                 if DEBUG:
                     self.environment.log_warning(
                         'Warning: unknown variable %r in the following line; line skipped:\n'
@@ -764,6 +843,24 @@ class Change(object):
 
         raise NotImplementedError()
 
+    def _wrap_for_html(self, lines):
+        """Wrap the lines in HTML <pre> tag when using HTML format.
+
+        Escape special HTML characters and add <pre> and </pre> tags around
+        the given lines if we should be generating HTML as indicated by
+        self._contains_html_diff being set to true.
+        """
+        if self._contains_html_diff:
+            yield "<pre style='margin:0'>\n"
+
+            for line in lines:
+                yield cgi.escape(line)
+
+            yield '</pre>\n'
+        else:
+            for line in lines:
+                yield line
+
     def generate_email(self, push, body_filter=None, extra_header_values={}):
         """Generate an email describing this change.
 
@@ -779,17 +876,75 @@ class Change(object):
         for line in self.generate_email_header(**extra_header_values):
             yield line
         yield '\n'
-        for line in self.generate_email_intro():
+        for line in self._wrap_for_html(self.generate_email_intro()):
             yield line
 
         body = self.generate_email_body(push)
         if body_filter is not None:
             body = body_filter(body)
+
+        diff_started = False
+        if self._contains_html_diff:
+            # "white-space: pre" is the default, but we need to
+            # specify it again in case the message is viewed in a
+            # webmail which wraps it in an element setting white-space
+            # to something else (Zimbra does this and sets
+            # white-space: pre-line).
+            yield '<pre style="white-space: pre; background: #F8F8F8">'
         for line in body:
+            if self._contains_html_diff:
+                # This is very, very naive. It would be much better to really
+                # parse the diff, i.e. look at how many lines do we have in
+                # the hunk headers instead of blindly highlighting everything
+                # that looks like it might be part of a diff.
+                bgcolor = ''
+                fgcolor = ''
+                if line.startswith('--- a/'):
+                    diff_started = True
+                    bgcolor = 'e0e0ff'
+                elif line.startswith('diff ') or line.startswith('index '):
+                    diff_started = True
+                    fgcolor = '808080'
+                elif diff_started:
+                    if line.startswith('+++ '):
+                        bgcolor = 'e0e0ff'
+                    elif line.startswith('@@'):
+                        bgcolor = 'e0e0e0'
+                    elif line.startswith('+'):
+                        bgcolor = 'e0ffe0'
+                    elif line.startswith('-'):
+                        bgcolor = 'ffe0e0'
+                elif line.startswith('commit '):
+                    fgcolor = '808000'
+                elif line.startswith('    '):
+                    fgcolor = '404040'
+
+                # Chop the trailing LF, we don't want it inside <pre>.
+                line = cgi.escape(line[:-1])
+
+                if bgcolor or fgcolor:
+                    style = 'display:block; white-space:pre;'
+                    if bgcolor:
+                        style += 'background:#' + bgcolor + ';'
+                    if fgcolor:
+                        style += 'color:#' + fgcolor + ';'
+                    # Use a <span style='display:block> to color the
+                    # whole line. The newline must be inside the span
+                    # to display properly both in Firefox and in
+                    # text-based browser.
+                    line = "<span style='%s'>%s\n</span>" % (style, line)
+                else:
+                    line = line + '\n'
+
+            yield line
+        if self._contains_html_diff:
+            yield '</pre>'
+
+        for line in self._wrap_for_html(self.generate_email_footer()):
             yield line
 
-        for line in self.generate_email_footer():
-            yield line
+    def get_alt_fromaddr(self):
+        return None
 
 
 class Revision(Change):
@@ -867,13 +1022,24 @@ class Revision(Change):
     def generate_email_body(self, push):
         """Show this revision."""
 
-        return read_git_lines(
-            ['log'] + self.environment.commitlogopts + ['-1', self.rev.sha1],
-            keepends=True,
-            )
+        for line in read_git_lines(
+                ['log'] + self.environment.commitlogopts + ['-1', self.rev.sha1],
+                keepends=True,
+                ):
+            if line.startswith('Date:   ') and self.environment.date_substitute:
+                yield self.environment.date_substitute + line[len('Date:   '):]
+            else:
+                yield line
 
     def generate_email_footer(self):
         return self.expand_lines(REVISION_FOOTER_TEMPLATE)
+
+    def generate_email(self, push, body_filter=None, extra_header_values={}):
+        self._contains_diff()
+        return Change.generate_email(self, push, body_filter, extra_header_values)
+
+    def get_alt_fromaddr(self):
+        return self.environment.from_commit
 
 
 class ReferenceChange(Change):
@@ -1096,10 +1262,10 @@ class ReferenceChange(Change):
             yield '\n'
             yield 'Detailed log of new commits:\n\n'
             for line in read_git_lines(
-                    ['log', '--no-walk']
-                    + self.logopts
-                    + new_commits_list
-                    + ['--'],
+                    ['log', '--no-walk'] +
+                    self.logopts +
+                    new_commits_list +
+                    ['--'],
                     keepends=True,
                     ):
                 yield line
@@ -1253,9 +1419,9 @@ class ReferenceChange(Change):
             yield '\n'
             yield 'Summary of changes:\n'
             for line in read_git_lines(
-                    ['diff-tree']
-                    + self.diffopts
-                    + ['%s..%s' % (self.old.commit_sha1, self.new.commit_sha1,)],
+                    ['diff-tree'] +
+                    self.diffopts +
+                    ['%s..%s' % (self.old.commit_sha1, self.new.commit_sha1,)],
                     keepends=True,
                     ):
                 yield line
@@ -1315,6 +1481,9 @@ class ReferenceChange(Change):
             rev_short=sha1, text=subject,
             )
         yield '\n'
+
+    def get_alt_fromaddr(self):
+        return self.environment.from_refchange
 
 
 class BranchChange(ReferenceChange):
@@ -1397,9 +1566,9 @@ class BranchChange(ReferenceChange):
             # commit is a non-merge commit, though it may make sense to
             # combine if it is a merge as well.
             if not (
-                    len(new_commits) == 1
-                    and len(new_commits[0][1]) == 1
-                    and new_commits[0][0] in known_added_sha1s
+                    len(new_commits) == 1 and
+                    len(new_commits[0][1]) == 1 and
+                    new_commits[0][0] in known_added_sha1s
                     ):
                 return None
 
@@ -1432,6 +1601,7 @@ class BranchChange(ReferenceChange):
             values['subject'] = self.expand(COMBINED_REFCHANGE_REVISION_SUBJECT_TEMPLATE, **values)
 
         self._single_revision = revision
+        self._contains_diff()
         self.header_template = COMBINED_HEADER_TEMPLATE
         self.intro_template = COMBINED_INTRO_TEMPLATE
         self.footer_template = COMBINED_FOOTER_TEMPLATE
@@ -1690,17 +1860,18 @@ class SendMailer(Mailer):
     def send(self, lines, to_addrs):
         try:
             p = subprocess.Popen(self.command, stdin=subprocess.PIPE)
-        except OSError, e:
+        except OSError:
             sys.stderr.write(
-                '*** Cannot execute command: %s\n' % ' '.join(self.command)
-                + '*** %s\n' % str(e)
-                + '*** Try setting multimailhook.mailer to "smtp"\n'
+                '*** Cannot execute command: %s\n' % ' '.join(self.command) +
+                '*** %s\n' % sys.exc_info()[1] +
+                '*** Try setting multimailhook.mailer to "smtp"\n' +
                 '*** to send emails without using the sendmail command.\n'
                 )
             sys.exit(1)
         try:
+            lines = (str_to_bytes(line) for line in lines)
             p.stdin.writelines(lines)
-        except Exception, e:
+        except Exception:
             sys.stderr.write(
                 '*** Error while generating commit email\n'
                 '***  - mail sending aborted.\n'
@@ -1710,7 +1881,7 @@ class SendMailer(Mailer):
                 p.terminate()
             except AttributeError:
                 pass
-            raise e
+            raise
         else:
             p.stdin.close()
             retcode = p.wait()
@@ -1770,11 +1941,11 @@ class SMTPMailer(Mailer):
                     "*** Setting debug on for SMTP server connection (%s) ***\n"
                     % self.smtpserverdebuglevel)
                 self.smtp.set_debuglevel(self.smtpserverdebuglevel)
-        except Exception, e:
+        except Exception:
             sys.stderr.write(
                 '*** Error establishing SMTP connection to %s ***\n'
                 % self.smtpserver)
-            sys.stderr.write('*** %s\n' % str(e))
+            sys.stderr.write('*** %s\n' % sys.exc_info()[1])
             sys.exit(1)
 
     def __del__(self):
@@ -1784,16 +1955,15 @@ class SMTPMailer(Mailer):
     def send(self, lines, to_addrs):
         try:
             if self.username or self.password:
-                sys.stderr.write("*** Authenticating as %s ***\n" % self.username)
                 self.smtp.login(self.username, self.password)
             msg = ''.join(lines)
             # turn comma-separated list into Python list if needed.
             if isinstance(to_addrs, basestring):
                 to_addrs = [email for (name, email) in getaddresses([to_addrs])]
             self.smtp.sendmail(self.envelopesender, to_addrs, msg)
-        except Exception, e:
+        except Exception:
             sys.stderr.write('*** Error sending email ***\n')
-            sys.stderr.write('*** %s\n' % str(e))
+            sys.stderr.write('*** %s\n' % sys.exc_info()[1])
             self.smtp.quit()
             sys.exit(1)
 
@@ -1809,9 +1979,10 @@ class OutputMailer(Mailer):
         self.f = f
 
     def send(self, lines, to_addrs):
-        self.f.write(self.SEPARATOR)
-        self.f.writelines(lines)
-        self.f.write(self.SEPARATOR)
+        write_str(self.f, self.SEPARATOR)
+        for line in lines:
+            write_str(self.f, line)
+        write_str(self.f, self.SEPARATOR)
 
 
 def get_git_dir():
@@ -1877,11 +2048,13 @@ class Environment(object):
             Return the address to be used as the 'From' email address
             in the email envelope.
 
-        get_fromaddr()
+        get_fromaddr(change=None)
 
             Return the 'From' email address used in the email 'From:'
-            headers.  (May be a full RFC 2822 email address like 'Joe
-            User <user@example.com>'.)
+            headers.  If the change is known when this function is
+            called, it is passed in as the 'change' parameter.  (May
+            be a full RFC 2822 email address like 'Joe User
+            <user@example.com>'.)
 
         get_administrator()
 
@@ -1901,11 +2074,28 @@ class Environment(object):
             get_reply_to_commit() is used for individual commit
             emails.
 
+        get_ref_filter_regex()
+
+            Return a tuple -- a compiled regex, and a boolean indicating
+            whether the regex picks refs to include (if False, the regex
+            matches on refs to exclude).
+
+        get_default_ref_ignore_regex()
+
+            Return a regex that should be ignored for both what emails
+            to send and when computing what commits are considered new
+            to the repository.  Default is "^refs/notes/".
+
     They should also define the following attributes:
 
         announce_show_shortlog (bool)
 
             True iff announce emails should include a shortlog.
+
+        commit_email_format (string)
+
+            If "html", generate commit emails in HTML instead of plain text
+            used by default.
 
         refchange_showgraph (bool)
 
@@ -1939,6 +2129,11 @@ class Environment(object):
             commit mail.  The value should be a list of strings
             representing words to be passed to the command.
 
+        date_substitute (string)
+
+            String to be used in substitution for 'Date:' at start of
+            line in the output of 'git log'.
+
         quiet (bool)
             On success do not write to stderr
 
@@ -1950,6 +2145,13 @@ class Environment(object):
             True if a combined email should be produced when a single
             new commit is pushed to a branch, False otherwise.
 
+        from_refchange, from_commit (strings)
+
+            Addresses to use for the From: field for refchange emails
+            and commit emails respectively.  Set from
+            multimailhook.fromRefchange and multimailhook.fromCommit
+            by ConfigEnvironmentMixin.
+
     """
 
     REPO_NAME_RE = re.compile(r'^(?P<name>.+?)(?:\.git)$')
@@ -1957,6 +2159,7 @@ class Environment(object):
     def __init__(self, osenv=None):
         self.osenv = osenv or os.environ
         self.announce_show_shortlog = False
+        self.commit_email_format = "text"
         self.maxcommitemails = 500
         self.diffopts = ['--stat', '--summary', '--find-copies-harder']
         self.graphopts = ['--oneline', '--decorate']
@@ -1964,6 +2167,7 @@ class Environment(object):
         self.refchange_showgraph = False
         self.refchange_showlog = False
         self.commitlogopts = ['-C', '--stat', '-p', '--cc']
+        self.date_substitute = 'AuthorDate: '
         self.quiet = False
         self.stdout = False
         self.combine_when_single_commit = True
@@ -1972,7 +2176,6 @@ class Environment(object):
             'administrator',
             'charset',
             'emailprefix',
-            'fromaddr',
             'pusher',
             'pusher_email',
             'repo_path',
@@ -1998,7 +2201,7 @@ class Environment(object):
     def get_pusher_email(self):
         return None
 
-    def get_fromaddr(self):
+    def get_fromaddr(self, change=None):
         config = Config('user')
         fromname = config.get('name', default='')
         fromemail = config.get('email', default='')
@@ -2080,6 +2283,15 @@ class Environment(object):
     def get_reply_to_commit(self, revision):
         return revision.author
 
+    def get_default_ref_ignore_regex(self):
+        # The commit messages of git notes are essentially meaningless
+        # and "filenames" in git notes commits are an implementational
+        # detail that might surprise users at first.  As such, we
+        # would need a completely different method for handling emails
+        # of git notes in order for them to be of benefit for users,
+        # which we simply do not have right now.
+        return "^refs/notes/"
+
     def filter_body(self, lines):
         """Filter the lines intended for an email body.
 
@@ -2095,19 +2307,19 @@ class Environment(object):
         """Write the string msg on a log file or on stderr.
 
         Sends the text to stderr by default, override to change the behavior."""
-        sys.stderr.write(msg)
+        write_str(sys.stderr, msg)
 
     def log_warning(self, msg):
         """Write the string msg on a log file or on stderr.
 
         Sends the text to stderr by default, override to change the behavior."""
-        sys.stderr.write(msg)
+        write_str(sys.stderr, msg)
 
     def log_error(self, msg):
         """Write the string msg on a log file or on stderr.
 
         Sends the text to stderr by default, override to change the behavior."""
-        sys.stderr.write(msg)
+        write_str(sys.stderr, msg)
 
 
 class ConfigEnvironmentMixin(Environment):
@@ -2128,6 +2340,14 @@ class ConfigEnvironmentMixin(Environment):
 class ConfigOptionsEnvironmentMixin(ConfigEnvironmentMixin):
     """An Environment that reads most of its information from "git config"."""
 
+    @staticmethod
+    def forbid_field_values(name, value, forbidden):
+        for forbidden_val in forbidden:
+            if value is not None and value.lower() == forbidden:
+                raise ConfigurationException(
+                    '"%s" is not an allowed setting for %s' % (value, name)
+                    )
+
     def __init__(self, config, **kw):
         super(ConfigOptionsEnvironmentMixin, self).__init__(
             config=config, **kw
@@ -2144,14 +2364,26 @@ class ConfigOptionsEnvironmentMixin(ConfigEnvironmentMixin):
             if val is not None:
                 setattr(self, var, val)
 
+        commit_email_format = config.get('commitEmailFormat')
+        if commit_email_format is not None:
+            if commit_email_format != "html" and commit_email_format != "text":
+                self.log_warning(
+                    '*** Unknown value for multimailhook.commitEmailFormat: %s\n' %
+                    commit_email_format +
+                    '*** Expected either "text" or "html".  Ignoring.\n'
+                    )
+            else:
+                self.commit_email_format = commit_email_format
+
         maxcommitemails = config.get('maxcommitemails')
         if maxcommitemails is not None:
             try:
                 self.maxcommitemails = int(maxcommitemails)
             except ValueError:
                 self.log_warning(
-                    '*** Malformed value for multimailhook.maxCommitEmails: %s\n' % maxcommitemails
-                    + '*** Expected a number.  Ignoring.\n'
+                    '*** Malformed value for multimailhook.maxCommitEmails: %s\n'
+                    % maxcommitemails +
+                    '*** Expected a number.  Ignoring.\n'
                     )
 
         diffopts = config.get('diffopts')
@@ -2170,16 +2402,28 @@ class ConfigOptionsEnvironmentMixin(ConfigEnvironmentMixin):
         if commitlogopts is not None:
             self.commitlogopts = shlex.split(commitlogopts)
 
+        date_substitute = config.get('dateSubstitute')
+        if date_substitute == 'none':
+            self.date_substitute = None
+        elif date_substitute is not None:
+            self.date_substitute = date_substitute
+
         reply_to = config.get('replyTo')
         self.__reply_to_refchange = config.get('replyToRefchange', default=reply_to)
-        if (
-                self.__reply_to_refchange is not None
-                and self.__reply_to_refchange.lower() == 'author'
-                ):
-            raise ConfigurationException(
-                '"author" is not an allowed setting for replyToRefchange'
-                )
+        self.forbid_field_values('replyToRefchange',
+                                 self.__reply_to_refchange,
+                                 ['author'])
         self.__reply_to_commit = config.get('replyToCommit', default=reply_to)
+
+        from_addr = self.config.get('from')
+        self.from_refchange = config.get('fromRefchange')
+        self.forbid_field_values('fromRefchange',
+                                 self.from_refchange,
+                                 ['author', 'none'])
+        self.from_commit = config.get('fromCommit')
+        self.forbid_field_values('fromCommit',
+                                 self.from_commit,
+                                 ['none'])
 
         combine = config.get_bool('combineWhenSingleCommit')
         if combine is not None:
@@ -2187,15 +2431,15 @@ class ConfigOptionsEnvironmentMixin(ConfigEnvironmentMixin):
 
     def get_administrator(self):
         return (
-            self.config.get('administrator')
-            or self.get_sender()
-            or super(ConfigOptionsEnvironmentMixin, self).get_administrator()
+            self.config.get('administrator') or
+            self.get_sender() or
+            super(ConfigOptionsEnvironmentMixin, self).get_administrator()
             )
 
     def get_repo_shortname(self):
         return (
-            self.config.get('reponame')
-            or super(ConfigOptionsEnvironmentMixin, self).get_repo_shortname()
+            self.config.get('reponame') or
+            super(ConfigOptionsEnvironmentMixin, self).get_repo_shortname()
             )
 
     def get_emailprefix(self):
@@ -2212,33 +2456,42 @@ class ConfigOptionsEnvironmentMixin(ConfigEnvironmentMixin):
     def get_sender(self):
         return self.config.get('envelopesender')
 
-    def get_fromaddr(self):
+    def process_addr(self, addr, change):
+        if addr.lower() == 'author':
+            if hasattr(change, 'author'):
+                return change.author
+            else:
+                return None
+        elif addr.lower() == 'pusher':
+            return self.get_pusher_email()
+        elif addr.lower() == 'none':
+            return None
+        else:
+            return addr
+
+    def get_fromaddr(self, change=None):
         fromaddr = self.config.get('from')
+        if change:
+            alt_fromaddr = change.get_alt_fromaddr()
+            if alt_fromaddr:
+                fromaddr = alt_fromaddr
+        if fromaddr:
+            fromaddr = self.process_addr(fromaddr, change)
         if fromaddr:
             return fromaddr
-        return super(ConfigOptionsEnvironmentMixin, self).get_fromaddr()
+        return super(ConfigOptionsEnvironmentMixin, self).get_fromaddr(change)
 
     def get_reply_to_refchange(self, refchange):
         if self.__reply_to_refchange is None:
             return super(ConfigOptionsEnvironmentMixin, self).get_reply_to_refchange(refchange)
-        elif self.__reply_to_refchange.lower() == 'pusher':
-            return self.get_pusher_email()
-        elif self.__reply_to_refchange.lower() == 'none':
-            return None
         else:
-            return self.__reply_to_refchange
+            return self.process_addr(self.__reply_to_refchange, refchange)
 
     def get_reply_to_commit(self, revision):
         if self.__reply_to_commit is None:
             return super(ConfigOptionsEnvironmentMixin, self).get_reply_to_commit(revision)
-        elif self.__reply_to_commit.lower() == 'author':
-            return revision.author
-        elif self.__reply_to_commit.lower() == 'pusher':
-            return self.get_pusher_email()
-        elif self.__reply_to_commit.lower() == 'none':
-            return None
         else:
-            return self.__reply_to_commit
+            return self.process_addr(self.__reply_to_commit, revision)
 
     def get_scancommitforcc(self):
         return self.config.get('scancommitforcc')
@@ -2270,12 +2523,14 @@ class FilterLinesEnvironmentMixin(Environment):
     def filter_body(self, lines):
         lines = super(FilterLinesEnvironmentMixin, self).filter_body(lines)
         if self.__strict_utf8:
-            lines = (line.decode(ENCODING, 'replace') for line in lines)
+            if not PYTHON3:
+                lines = (line.decode(ENCODING, 'replace') for line in lines)
             # Limit the line length in Unicode-space to avoid
             # splitting characters:
             if self.__emailmaxlinelength:
                 lines = limit_linelength(lines, self.__emailmaxlinelength)
-            lines = (line.encode(ENCODING, 'replace') for line in lines)
+            if not PYTHON3:
+                lines = (line.encode(ENCODING, 'replace') for line in lines)
         elif self.__emailmaxlinelength:
             lines = limit_linelength(lines, self.__emailmaxlinelength)
 
@@ -2404,10 +2659,10 @@ class StaticRecipientsEnvironmentMixin(Environment):
         # actual *contents* of the change being reported, we only
         # choose based on the *type* of the change.  Therefore we can
         # compute them once and for all:
-        if not (refchange_recipients
-                or announce_recipients
-                or revision_recipients
-                or scancommitforcc):
+        if not (refchange_recipients or
+                announce_recipients or
+                revision_recipients or
+                scancommitforcc):
             raise ConfigurationException('No email recipients configured!')
         self.__refchange_recipients = refchange_recipients
         self.__announce_recipients = announce_recipients
@@ -2457,11 +2712,102 @@ class ConfigRecipientsEnvironmentMixin(
         found, raise a ConfigurationException."""
 
         for name in names:
-            retval = config.get_recipients(name)
-            if retval is not None:
-                return retval
+            lines = config.get_all(name)
+            if lines is not None:
+                lines = [line.strip() for line in lines]
+                # Single "none" is a special value equivalen to empty string.
+                if lines == ['none']:
+                    lines = ['']
+                return ', '.join(lines)
         else:
             return ''
+
+
+class StaticRefFilterEnvironmentMixin(Environment):
+    """Set branch filter statically based on constructor parameters."""
+
+    def __init__(self, ref_filter_incl_regex, ref_filter_excl_regex,
+                 ref_filter_do_send_regex, ref_filter_dont_send_regex,
+                 **kw):
+        super(StaticRefFilterEnvironmentMixin, self).__init__(**kw)
+
+        if ref_filter_incl_regex and ref_filter_excl_regex:
+            raise ConfigurationException(
+                "Cannot specify both a ref inclusion and exclusion regex.")
+        self.__is_inclusion_filter = bool(ref_filter_incl_regex)
+        default_exclude = self.get_default_ref_ignore_regex()
+        if ref_filter_incl_regex:
+            ref_filter_regex = ref_filter_incl_regex
+        elif ref_filter_excl_regex:
+            ref_filter_regex = ref_filter_excl_regex + '|' + default_exclude
+        else:
+            ref_filter_regex = default_exclude
+        try:
+            self.__compiled_regex = re.compile(ref_filter_regex)
+        except Exception:
+            raise ConfigurationException(
+                'Invalid Ref Filter Regex "%s": %s' % (ref_filter_regex, sys.exc_info()[1]))
+
+        if ref_filter_do_send_regex and ref_filter_dont_send_regex:
+            raise ConfigurationException(
+                "Cannot specify both a ref doSend and dontSend regex.")
+        if ref_filter_do_send_regex or ref_filter_dont_send_regex:
+            self.__is_do_send_filter = bool(ref_filter_do_send_regex)
+            if ref_filter_incl_regex:
+                ref_filter_send_regex = ref_filter_incl_regex
+            elif ref_filter_excl_regex:
+                ref_filter_send_regex = ref_filter_excl_regex
+            else:
+                ref_filter_send_regex = '.*'
+                self.__is_do_send_filter = True
+            try:
+                self.__send_compiled_regex = re.compile(ref_filter_send_regex)
+            except Exception:
+                raise ConfigurationException(
+                    'Invalid Ref Filter Regex "%s": %s' %
+                    (ref_filter_send_regex, sys.exc_info()[1]))
+        else:
+            self.__send_compiled_regex = self.__compiled_regex
+            self.__is_do_send_filter = self.__is_inclusion_filter
+
+    def get_ref_filter_regex(self, send_filter=False):
+        if send_filter:
+            return self.__send_compiled_regex, self.__is_do_send_filter
+        else:
+            return self.__compiled_regex, self.__is_inclusion_filter
+
+
+class ConfigRefFilterEnvironmentMixin(
+        ConfigEnvironmentMixin,
+        StaticRefFilterEnvironmentMixin
+        ):
+    """Determine branch filtering statically based on config."""
+
+    def _get_regex(self, config, key):
+        """Get a list of whitespace-separated regex. The refFilter* config
+        variables are multivalued (hence the use of get_all), and we
+        allow each entry to be a whitespace-separated list (hence the
+        split on each line). The whole thing is glued into a single regex."""
+        values = config.get_all(key)
+        if values is None:
+            return values
+        items = []
+        for line in values:
+            for i in line.split():
+                items.append(i)
+        if items == []:
+            return None
+        return '|'.join(items)
+
+    def __init__(self, config, **kw):
+        super(ConfigRefFilterEnvironmentMixin, self).__init__(
+            config=config,
+            ref_filter_incl_regex=self._get_regex(config, 'refFilterInclusionRegex'),
+            ref_filter_excl_regex=self._get_regex(config, 'refFilterExclusionRegex'),
+            ref_filter_do_send_regex=self._get_regex(config, 'refFilterDoSendRegex'),
+            ref_filter_dont_send_regex=self._get_regex(config, 'refFilterDontSendRegex'),
+            **kw
+            )
 
 
 class ProjectdescEnvironmentMixin(Environment):
@@ -2499,6 +2845,7 @@ class GenericEnvironment(
         ComputeFQDNEnvironmentMixin,
         ConfigFilterLinesEnvironmentMixin,
         ConfigRecipientsEnvironmentMixin,
+        ConfigRefFilterEnvironmentMixin,
         PusherDomainEnvironmentMixin,
         ConfigOptionsEnvironmentMixin,
         GenericEnvironmentMixin,
@@ -2513,14 +2860,14 @@ class GitoliteEnvironmentMixin(Environment):
         # repo_shortname (though it's probably not as good as a value
         # the user might have explicitly put in his config).
         return (
-            self.osenv.get('GL_REPO', None)
-            or super(GitoliteEnvironmentMixin, self).get_repo_shortname()
+            self.osenv.get('GL_REPO', None) or
+            super(GitoliteEnvironmentMixin, self).get_repo_shortname()
             )
 
     def get_pusher(self):
         return self.osenv.get('GL_USER', 'unknown user')
 
-    def get_fromaddr(self):
+    def get_fromaddr(self, change=None):
         GL_USER = self.osenv.get('GL_USER')
         if GL_USER is not None:
             # Find the path to gitolite.conf.  Note that gitolite v3
@@ -2536,9 +2883,9 @@ class GitoliteEnvironmentMixin(Environment):
                 f = open(GL_CONF, 'rU')
                 try:
                     in_user_emails_section = False
-                    re_template = r'^\s*#\s*{}\s*$'
+                    re_template = r'^\s*#\s*%s\s*$'
                     re_begin, re_user, re_end = (
-                        re.compile(re_template.format(x))
+                        re.compile(re_template % x)
                         for x in (
                             r'BEGIN\s+USER\s+EMAILS',
                             re.escape(GL_USER) + r'\s+(.*)',
@@ -2557,7 +2904,7 @@ class GitoliteEnvironmentMixin(Environment):
                             return m.group(1)
                 finally:
                     f.close()
-        return super(GitoliteEnvironmentMixin, self).get_fromaddr()
+        return super(GitoliteEnvironmentMixin, self).get_fromaddr(change)
 
 
 class IncrementalDateTime(object):
@@ -2570,8 +2917,9 @@ class IncrementalDateTime(object):
 
     def __init__(self):
         self.time = time.time()
+        self.next = self.__next__  # Python 2 backward compatibility
 
-    def next(self):
+    def __next__(self):
         formatted = formatdate(self.time, True)
         self.time += 1
         return formatted
@@ -2583,9 +2931,121 @@ class GitoliteEnvironment(
         ComputeFQDNEnvironmentMixin,
         ConfigFilterLinesEnvironmentMixin,
         ConfigRecipientsEnvironmentMixin,
+        ConfigRefFilterEnvironmentMixin,
         PusherDomainEnvironmentMixin,
         ConfigOptionsEnvironmentMixin,
         GitoliteEnvironmentMixin,
+        Environment,
+        ):
+    pass
+
+
+class StashEnvironmentMixin(Environment):
+    def __init__(self, user=None, repo=None, **kw):
+        super(StashEnvironmentMixin, self).__init__(**kw)
+        self.__user = user
+        self.__repo = repo
+
+    def get_repo_shortname(self):
+        return self.__repo
+
+    def get_pusher(self):
+        return re.match('(.*?)\s*<', self.__user).group(1)
+
+    def get_pusher_email(self):
+        return self.__user
+
+    def get_fromaddr(self, change=None):
+        return self.__user
+
+
+class StashEnvironment(
+        StashEnvironmentMixin,
+        ProjectdescEnvironmentMixin,
+        ConfigMaxlinesEnvironmentMixin,
+        ComputeFQDNEnvironmentMixin,
+        ConfigFilterLinesEnvironmentMixin,
+        ConfigRecipientsEnvironmentMixin,
+        ConfigRefFilterEnvironmentMixin,
+        PusherDomainEnvironmentMixin,
+        ConfigOptionsEnvironmentMixin,
+        Environment,
+        ):
+    pass
+
+
+class GerritEnvironmentMixin(Environment):
+    def __init__(self, project=None, submitter=None, update_method=None, **kw):
+        super(GerritEnvironmentMixin, self).__init__(**kw)
+        self.__project = project
+        self.__submitter = submitter
+        self.__update_method = update_method
+        "Make an 'update_method' value available for templates."
+        self.COMPUTED_KEYS += ['update_method']
+
+    def get_repo_shortname(self):
+        return self.__project
+
+    def get_pusher(self):
+        if self.__submitter:
+            if self.__submitter.find('<') != -1:
+                # Submitter has a configured email, we transformed
+                # __submitter into an RFC 2822 string already.
+                return re.match('(.*?)\s*<', self.__submitter).group(1)
+            else:
+                # Submitter has no configured email, it's just his name.
+                return self.__submitter
+        else:
+            # If we arrive here, this means someone pushed "Submit" from
+            # the gerrit web UI for the CR (or used one of the programmatic
+            # APIs to do the same, such as gerrit review) and the
+            # merge/push was done by the Gerrit user.  It was technically
+            # triggered by someone else, but sadly we have no way of
+            # determining who that someone else is at this point.
+            return 'Gerrit'  # 'unknown user'?
+
+    def get_pusher_email(self):
+        if self.__submitter:
+            return self.__submitter
+        else:
+            return super(GerritEnvironmentMixin, self).get_pusher_email()
+
+    def get_fromaddr(self, change=None):
+        if self.__submitter and self.__submitter.find('<') != -1:
+            return self.__submitter
+        else:
+            return super(GerritEnvironmentMixin, self).get_fromaddr(change)
+
+    def get_default_ref_ignore_regex(self):
+        default = super(GerritEnvironmentMixin, self).get_default_ref_ignore_regex()
+        return default + '|^refs/changes/|^refs/cache-automerge/|^refs/meta/'
+
+    def get_revision_recipients(self, revision):
+        # Merge commits created by Gerrit when users hit "Submit this patchset"
+        # in the Web UI (or do equivalently with REST APIs or the gerrit review
+        # command) are not something users want to see an individual email for.
+        # Filter them out.
+        committer = read_git_output(['log', '--no-walk', '--format=%cN',
+                                     revision.rev.sha1])
+        if committer == 'Gerrit Code Review':
+            return []
+        else:
+            return super(GerritEnvironmentMixin, self).get_revision_recipients(revision)
+
+    def get_update_method(self):
+        return self.__update_method
+
+
+class GerritEnvironment(
+        GerritEnvironmentMixin,
+        ProjectdescEnvironmentMixin,
+        ConfigMaxlinesEnvironmentMixin,
+        ComputeFQDNEnvironmentMixin,
+        ConfigFilterLinesEnvironmentMixin,
+        ConfigRecipientsEnvironmentMixin,
+        ConfigRefFilterEnvironmentMixin,
+        PusherDomainEnvironmentMixin,
+        ConfigOptionsEnvironmentMixin,
         Environment,
         ):
     pass
@@ -2673,10 +3133,11 @@ class Push(object):
             ])
         )
 
-    def __init__(self, changes, ignore_other_refs=False):
+    def __init__(self, environment, changes, ignore_other_refs=False):
         self.changes = sorted(changes, key=self._sort_key)
         self.__other_ref_sha1s = None
         self.__cached_commits_spec = {}
+        self.environment = environment
 
         if ignore_other_refs:
             self.__other_ref_sha1s = set()
@@ -2703,10 +3164,14 @@ class Push(object):
                 '%(objectname) %(objecttype) %(refname)\n'
                 '%(*objectname) %(*objecttype) %(refname)'
                 )
+            ref_filter_regex, is_inclusion_filter = \
+                self.environment.get_ref_filter_regex()
             for line in read_git_lines(
                     ['for-each-ref', '--format=%s' % (fmt,)]):
                 (sha1, type, name) = line.split(' ', 2)
-                if sha1 and type == 'commit' and name not in updated_refs:
+                if (sha1 and type == 'commit' and
+                        name not in updated_refs and
+                        include_ref(name, ref_filter_regex, is_inclusion_filter)):
                     sha1s.add(sha1)
 
             self.__other_ref_sha1s = sha1s
@@ -2856,7 +3321,7 @@ class Push(object):
                 if not change.environment.quiet:
                     change.environment.log_msg(
                         'Sending notification emails to: %s\n' % (change.recipients,))
-                extra_values = {'send_date': send_date.next()}
+                extra_values = {'send_date': next(send_date)}
 
                 rev = change.send_single_combined_email(sha1s)
                 if rev:
@@ -2876,9 +3341,9 @@ class Push(object):
             max_emails = change.environment.maxcommitemails
             if max_emails and len(sha1s) > max_emails:
                 change.environment.log_warning(
-                    '*** Too many new commits (%d), not sending commit emails.\n' % len(sha1s)
-                    + '*** Try setting multimailhook.maxCommitEmails to a greater value\n'
-                    + '*** Currently, multimailhook.maxCommitEmails=%d\n' % max_emails
+                    '*** Too many new commits (%d), not sending commit emails.\n' % len(sha1s) +
+                    '*** Try setting multimailhook.maxCommitEmails to a greater value\n' +
+                    '*** Currently, multimailhook.maxCommitEmails=%d\n' % max_emails
                     )
                 return
 
@@ -2889,7 +3354,7 @@ class Push(object):
                     rev.recipients = rev.cc_recipients
                     rev.cc_recipients = None
                 if rev.recipients:
-                    extra_values = {'send_date': send_date.next()}
+                    extra_values = {'send_date': next(send_date)}
                     mailer.send(
                         rev.generate_email(self, body_filter, extra_values),
                         rev.recipients,
@@ -2904,18 +3369,33 @@ class Push(object):
                 )
 
 
+def include_ref(refname, ref_filter_regex, is_inclusion_filter):
+    does_match = bool(ref_filter_regex.search(refname))
+    if is_inclusion_filter:
+        return does_match
+    else:  # exclusion filter -- we include the ref if the regex doesn't match
+        return not does_match
+
+
 def run_as_post_receive_hook(environment, mailer):
+    ref_filter_regex, is_inclusion_filter = environment.get_ref_filter_regex(True)
     changes = []
     for line in sys.stdin:
         (oldrev, newrev, refname) = line.strip().split(' ', 2)
+        if not include_ref(refname, ref_filter_regex, is_inclusion_filter):
+            continue
         changes.append(
             ReferenceChange.create(environment, oldrev, newrev, refname)
             )
-    push = Push(changes)
-    push.send_emails(mailer, body_filter=environment.filter_body)
+    if changes:
+        push = Push(environment, changes)
+        push.send_emails(mailer, body_filter=environment.filter_body)
 
 
 def run_as_update_hook(environment, mailer, refname, oldrev, newrev, force_send=False):
+    ref_filter_regex, is_inclusion_filter = environment.get_ref_filter_regex(True)
+    if not include_ref(refname, ref_filter_regex, is_inclusion_filter):
+        return
     changes = [
         ReferenceChange.create(
             environment,
@@ -2924,7 +3404,7 @@ def run_as_update_hook(environment, mailer, refname, oldrev, newrev, force_send=
             refname,
             ),
         ]
-    push = Push(changes, force_send)
+    push = Push(environment, changes, force_send)
     push.send_emails(mailer, body_filter=environment.filter_body)
 
 
@@ -2953,8 +3433,8 @@ def choose_mailer(config, environment):
         mailer = SendMailer(command=command, envelopesender=environment.get_sender())
     else:
         environment.log_error(
-            'fatal: multimailhook.mailer is set to an incorrect value: "%s"\n' % mailer
-            + 'please use one of "smtp" or "sendmail".\n'
+            'fatal: multimailhook.mailer is set to an incorrect value: "%s"\n' % mailer +
+            'please use one of "smtp" or "sendmail".\n'
             )
         sys.exit(1)
     return mailer
@@ -2963,14 +3443,18 @@ def choose_mailer(config, environment):
 KNOWN_ENVIRONMENTS = {
     'generic': GenericEnvironmentMixin,
     'gitolite': GitoliteEnvironmentMixin,
+    'stash': StashEnvironmentMixin,
+    'gerrit': GerritEnvironmentMixin,
     }
 
 
-def choose_environment(config, osenv=None, env=None, recipients=None):
+def choose_environment(config, osenv=None, env=None, recipients=None,
+                       hook_info=None):
     if not osenv:
         osenv = os.environ
 
     environment_mixins = [
+        ConfigRefFilterEnvironmentMixin,
         ProjectdescEnvironmentMixin,
         ConfigMaxlinesEnvironmentMixin,
         ComputeFQDNEnvironmentMixin,
@@ -2992,7 +3476,15 @@ def choose_environment(config, osenv=None, env=None, recipients=None):
         else:
             env = 'generic'
 
-    environment_mixins.append(KNOWN_ENVIRONMENTS[env])
+    environment_mixins.insert(0, KNOWN_ENVIRONMENTS[env])
+
+    if env == 'stash':
+        environment_kw['user'] = hook_info['stash_user']
+        environment_kw['repo'] = hook_info['stash_repo']
+    elif env == 'gerrit':
+        environment_kw['project'] = hook_info['project']
+        environment_kw['submitter'] = hook_info['submitter']
+        environment_kw['update_method'] = hook_info['update_method']
 
     if recipients:
         environment_mixins.insert(0, StaticRecipientsEnvironmentMixin)
@@ -3011,6 +3503,116 @@ def choose_environment(config, osenv=None, env=None, recipients=None):
     return environment_klass(**environment_kw)
 
 
+def get_version():
+    oldcwd = os.getcwd()
+    try:
+        try:
+            os.chdir(os.path.dirname(os.path.realpath(__file__)))
+            git_version = read_git_output(['describe', '--tags', 'HEAD'])
+            if git_version == __version__:
+                return git_version
+            else:
+                return '%s (%s)' % (__version__, git_version)
+        except:
+            pass
+    finally:
+        os.chdir(oldcwd)
+    return __version__
+
+
+def compute_gerrit_options(options, args, required_gerrit_options):
+    if None in required_gerrit_options:
+        raise SystemExit("Error: Specify all of --oldrev, --newrev, --refname, "
+                         "and --project; or none of them.")
+
+    if options.environment not in (None, 'gerrit'):
+        raise SystemExit("Non-gerrit environments incompatible with --oldrev, "
+                         "--newrev, --refname, and --project")
+    options.environment = 'gerrit'
+
+    if args:
+        raise SystemExit("Error: Positional parameters not allowed with "
+                         "--oldrev, --newrev, and --refname.")
+
+    # Gerrit oddly omits 'refs/heads/' in the refname when calling
+    # ref-updated hook; put it back.
+    git_dir = get_git_dir()
+    if (not os.path.exists(os.path.join(git_dir, options.refname)) and
+        os.path.exists(os.path.join(git_dir, 'refs', 'heads',
+                                    options.refname))):
+        options.refname = 'refs/heads/' + options.refname
+
+    # Convert each string option unicode for Python3.
+    if PYTHON3:
+        opts = ['environment', 'recipients', 'oldrev', 'newrev', 'refname',
+                'project', 'submitter', 'stash-user', 'stash-repo']
+        for opt in opts:
+            if not hasattr(options, opt):
+                continue
+            obj = getattr(options, opt)
+            if obj:
+                enc = obj.encode('utf-8', 'surrogateescape')
+                dec = enc.decode('utf-8', 'replace')
+                setattr(options, opt, dec)
+
+    # New revisions can appear in a gerrit repository either due to someone
+    # pushing directly (in which case options.submitter will be set), or they
+    # can press "Submit this patchset" in the web UI for some CR (in which
+    # case options.submitter will not be set and gerrit will not have provided
+    # us the information about who pressed the button).
+    #
+    # Note for the nit-picky: I'm lumping in REST API calls and the ssh
+    # gerrit review command in with "Submit this patchset" button, since they
+    # have the same effect.
+    if options.submitter:
+        update_method = 'pushed'
+        # The submitter argument is almost an RFC 2822 email address; change it
+        # from 'User Name (email@domain)' to 'User Name <email@domain>' so it is
+        options.submitter = options.submitter.replace('(', '<').replace(')', '>')
+    else:
+        update_method = 'submitted'
+        # Gerrit knew who submitted this patchset, but threw that information
+        # away when it invoked this hook.  However, *IF* Gerrit created a
+        # merge to bring the patchset in (project 'Submit Type' is either
+        # "Always Merge", or is "Merge if Necessary" and happens to be
+        # necessary for this particular CR), then it will have the committer
+        # of that merge be 'Gerrit Code Review' and the author will be the
+        # person who requested the submission of the CR.  Since this is fairly
+        # likely for most gerrit installations (of a reasonable size), it's
+        # worth the extra effort to try to determine the actual submitter.
+        rev_info = read_git_lines(['log', '--no-walk', '--merges',
+                                   '--format=%cN%n%aN <%aE>', options.newrev])
+        if rev_info and rev_info[0] == 'Gerrit Code Review':
+            options.submitter = rev_info[1]
+
+    # We pass back refname, oldrev, newrev as args because then the
+    # gerrit ref-updated hook is much like the git update hook
+    return (options,
+            [options.refname, options.oldrev, options.newrev],
+            {'project': options.project, 'submitter': options.submitter,
+             'update_method': update_method})
+
+
+def check_hook_specific_args(options, args):
+    # First check for stash arguments
+    if (options.stash_user is None) != (options.stash_repo is None):
+        raise SystemExit("Error: Specify both of --stash-user and "
+                         "--stash-repo or neither.")
+    if options.stash_user:
+        options.environment = 'stash'
+        return options, args, {'stash_user': options.stash_user,
+                               'stash_repo': options.stash_repo}
+
+    # Finally, check for gerrit specific arguments
+    required_gerrit_options = (options.oldrev, options.newrev, options.refname,
+                               options.project)
+    if required_gerrit_options != (None,) * 4:
+        return compute_gerrit_options(options, args, required_gerrit_options)
+
+    # No special options in use, just return what we started with
+    return options, args, {}
+
+
 def main(args):
     parser = optparse.OptionParser(
         description=__doc__,
@@ -3019,7 +3621,7 @@ def main(args):
 
     parser.add_option(
         '--environment', '--env', action='store', type='choice',
-        choices=['generic', 'gitolite'], default=None,
+        choices=list(KNOWN_ENVIRONMENTS.keys()), default=None,
         help=(
             'Choose type of environment is in use.  Default is taken from '
             'multimailhook.environment if set; otherwise "generic".'
@@ -3048,8 +3650,58 @@ def main(args):
             'detection in this mode.'
             ),
         )
+    parser.add_option(
+        '-c', metavar="<name>=<value>", action='append',
+        help=(
+            'Pass a configuration parameter through to git.  The value given '
+            'will override values from configuration files.  See the -c option '
+            'of git(1) for more details.  (Only works with git >= 1.7.3)'
+            ),
+        )
+    parser.add_option(
+        '--version', '-v', action='store_true', default=False,
+        help=(
+            "Display git-multimail's version"
+            ),
+        )
+    # The following options permit this script to be run as a gerrit
+    # ref-updated hook.  See e.g.
+    # code.google.com/p/gerrit/source/browse/Documentation/config-hooks.txt
+    # We suppress help for these items, since these are specific to gerrit,
+    # and we don't want users directly using them any way other than how the
+    # gerrit ref-updated hook is called.
+    parser.add_option('--oldrev', action='store', help=optparse.SUPPRESS_HELP)
+    parser.add_option('--newrev', action='store', help=optparse.SUPPRESS_HELP)
+    parser.add_option('--refname', action='store', help=optparse.SUPPRESS_HELP)
+    parser.add_option('--project', action='store', help=optparse.SUPPRESS_HELP)
+    parser.add_option('--submitter', action='store', help=optparse.SUPPRESS_HELP)
+
+    # The following allow this to be run as a stash asynchronous post-receive
+    # hook (almost identical to a git post-receive hook but triggered also for
+    # merges of pull requests from the UI).  We suppress help for these items,
+    # since these are specific to stash.
+    parser.add_option('--stash-user', action='store', help=optparse.SUPPRESS_HELP)
+    parser.add_option('--stash-repo', action='store', help=optparse.SUPPRESS_HELP)
 
     (options, args) = parser.parse_args(args)
+    (options, args, hook_info) = check_hook_specific_args(options, args)
+
+    if options.version:
+        sys.stdout.write('git-multimail version ' + get_version() + '\n')
+        return
+
+    if options.c:
+        parameters = os.environ.get('GIT_CONFIG_PARAMETERS', '')
+        if parameters:
+            parameters += ' '
+        # git expects GIT_CONFIG_PARAMETERS to be of the form
+        #    "'name1=value1' 'name2=value2' 'name3=value3'"
+        # including everything inside the double quotes (but not the double
+        # quotes themselves).  Spacing is critical.  Also, if a value contains
+        # a literal single quote that quote must be represented using the
+        # four character sequence: '\''
+        parameters += ' '.join("'" + x.replace("'", "'\\''") + "'" for x in options.c)
+        os.environ['GIT_CONFIG_PARAMETERS'] = parameters
 
     config = Config('multimailhook')
 
@@ -3058,6 +3710,7 @@ def main(args):
             config, osenv=os.environ,
             env=options.environment,
             recipients=options.recipients,
+            hook_info=hook_info,
             )
 
         if options.show_env:
@@ -3080,9 +3733,20 @@ def main(args):
             run_as_update_hook(environment, mailer, refname, oldrev, newrev, options.force_send)
         else:
             run_as_post_receive_hook(environment, mailer)
-    except ConfigurationException, e:
-        sys.exit(str(e))
-
+    except ConfigurationException:
+        sys.exit(sys.exc_info()[1])
+    except Exception:
+        t, e, tb = sys.exc_info()
+        import traceback
+        sys.stdout.write('\n')
+        sys.stdout.write('Exception \'' + t.__name__ +
+                         '\' raised. Please report this as a bug to\n')
+        sys.stdout.write('https://github.com/git-multimail/git-multimail/issues\n')
+        sys.stdout.write('with the information below:\n\n')
+        sys.stdout.write('git-multimail version ' + get_version() + '\n')
+        sys.stdout.write('Python version ' + sys.version + '\n')
+        traceback.print_exc(file=sys.stdout)
+        sys.exit(1)
 
 if __name__ == '__main__':
     main(sys.argv[1:])

@@ -1,4 +1,4 @@
-#! /usr/bin/env python2
+#! /usr/bin/env python
 
 """Example post-receive hook based on git-multimail.
 
@@ -42,7 +42,6 @@ import os
 
 import git_multimail
 
-
 # It is possible to modify the output templates here; e.g.:
 
 #git_multimail.FOOTER_TEMPLATE = """\
@@ -61,8 +60,9 @@ config = git_multimail.Config('multimailhook')
 try:
     environment = git_multimail.GenericEnvironment(config=config)
     #environment = git_multimail.GitoliteEnvironment(config=config)
-except git_multimail.ConfigurationException, e:
-    sys.exit(str(e))
+except git_multimail.ConfigurationException:
+    sys.stderr.write('*** %s\n' % sys.exc_info()[1])
+    sys.exit(1)
 
 
 # Choose the method of sending emails based on the git config:

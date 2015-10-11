@@ -1,5 +1,5 @@
-git-multimail Version 1.1.1
-===========================
+git-multimail (version 1.2.0)
+=============================
 
 .. image:: https://travis-ci.org/git-multimail/git-multimail.svg?branch=master
     :target: https://travis-ci.org/git-multimail/git-multimail
@@ -53,11 +53,13 @@ By default, for each push received by the repository, git-multimail:
      + [git] 07/08: Merge branch 'mm/api-credentials-doc'
      + [git] 08/08: Git 1.7.11-rc2
 
-   Each commit appears in exactly one commit email, the first time
-   that it is pushed to the repository.  If a commit is later merged
-   into another branch, then a one-line summary of the commit is
-   included in the reference change email (as usual), but no
-   additional commit email is generated.
+   By default, each commit appears in exactly one commit email, the
+   first time that it is pushed to the repository.  If a commit is later
+   merged into another branch, then a one-line summary of the commit
+   is included in the reference change email (as usual), but no
+   additional commit email is generated. See
+   `multimailhook.refFilter(Inclusion|Exclusion|DoSend|DontSend)Regex`
+   below to configure which branches and tags are watched by the hook.
 
    By default, reference change emails have their "Reply-To" field set
    to the person who pushed the change, and commit emails have their
@@ -73,21 +75,8 @@ Requirements
 ------------
 
 * Python 2.x, version 2.4 or later.  No non-standard Python modules
-  are required.  git-multimail does *not* currently work with Python
-  3.x.
-
-  The example scripts invoke Python using the following shebang line
-  (following PEP 394 [1]_)::
-
-      #! /usr/bin/env python2
-
-  If your system's Python2 interpreter is not in your PATH or is not
-  called ``python2``, you can change the lines accordingly.  Or you can
-  invoke the Python interpreter explicitly, for example via a tiny
-  shell script like::
-
-      #! /bin/sh
-      /usr/local/bin/python /path/to/git_multimail.py "$@"
+  are required.  git-multimail has preliminary support for Python 3
+  (but it has been better tested with Python 2).
 
 * The ``git`` command must be in your PATH.  git-multimail is known to
   work with Git versions back to 1.7.1.  (Earlier versions have not
@@ -146,7 +135,9 @@ following ``git config`` settings:
 
 multimailhook.environment
 
-    This describes the general environment of the repository.
+    This describes the general environment of the repository. In most
+    cases, you do not need to specify a value for this variable:
+    `git-multimail` will autodetect which environment to use.
     Currently supported values:
 
     * generic
@@ -161,18 +152,57 @@ multimailhook.environment
       optionally read from gitolite.conf (see multimailhook.from).
 
       For more information about gitolite and git-multimail, read
-      doc/gitolite.rst
+      `<doc/gitolite.rst>`__
 
-    If neither of these environments is suitable for your setup, then
-    you can implement a Python class that inherits from Environment
-    and instantiate it via a script that looks like the example
+    * stash
+
+      Environment to use when ``git-multimail`` is ran as an Atlassian
+      BitBucket Server (formerly known as Atlassian Stash) hook.
+
+      **Warning:** this mode was provided by a third-party contributor
+      and never tested by the git-multimail maintainers. It is
+      provided as-is and may or may not work for you.
+
+      This value is automatically assumed when the stash-specific
+      flags (``--stash-user`` and ``--stash-repo``) are specified on
+      the command line. When this environment is active, the username
+      and repo come from these two command line flags, which must be
+      specified.
+
+    * gerrit
+
+      Environment to use when ``git-multimail`` is ran as a
+      ``ref-updated`` Gerrit hook.
+
+      This value is used when the gerrit-specific command line flags
+      (``--oldrev``, ``--newrev``, ``--refname``, ``--project``) for
+      gerrit's ref-updated hook are present. When this environment is
+      active, the username of the pusher is taken from the
+      ``--submitter`` argument if that command line option is passed,
+      otherwise 'Gerrit' is used. The repository name is taken from
+      the ``--project`` option on the command line, which must be passed.
+
+      For more information about gerrit and git-multimail, read
+      `<doc/gerrit.rst>`__
+
+    If none of these environments is suitable for your setup, then you
+    can implement a Python class that inherits from Environment and
+    instantiate it via a script that looks like the example
     post-receive script.
 
     The environment value can be specified on the command line using
-    the --environment option.  If it is not specified on the command
-    line or by multimailhook.environment, then it defaults to
-    ``gitolite`` if the environment contains variables $GL_USER and
-    $GL_REPO; otherwise ``generic``.
+    the ``--environment`` option. If it is not specified on the
+    command line or by ``multimailhook.environment``, the value is
+    guessed as follows:
+
+    * If stash-specific (respectively gerrit-specific) command flags
+      are present on the command-line, then ``stash`` (respectively
+      ``gerrit``) is used.
+
+    * If the environment variables $GL_USER and $GL_REPO are set, then
+      ``gitolite`` is used.
+
+    * If none of the above apply, then ``generic`` is used.
 
 multimailhook.repoName
 
@@ -196,8 +226,8 @@ multimailhook.refchangeList
     reference changes should be sent, as RFC 2822 email addresses
     separated by commas.  This configuration option can be
     multivalued.  The default is the value in
-    multimailhook.mailingList.  Set this value to the empty string to
-    prevent reference change emails from being sent even if
+    multimailhook.mailingList.  Set this value to "none" (or the empty
+    string) to prevent reference change emails from being sent even if
     multimailhook.mailingList is set.
 
 multimailhook.announceList
@@ -206,9 +236,9 @@ multimailhook.announceList
     tags should be sent, as RFC 2822 email addresses separated by
     commas.  This configuration option can be multivalued.  The
     default is the value in multimailhook.refchangeList or
-    multimailhook.mailingList.  Set this value to the empty string to
-    prevent annotated tag announcement emails from being sent even if
-    one of the other values is set.
+    multimailhook.mailingList.  Set this value to "none" (or the empty
+    string) to prevent annotated tag announcement emails from being sent
+    even if one of the other values is set.
 
 multimailhook.commitList
 
@@ -216,7 +246,7 @@ multimailhook.commitList
     commits should be sent, as RFC 2822 email addresses separated by
     commas.  This configuration option can be multivalued.  The
     default is the value in multimailhook.mailingList.  Set this value
-    to the empty string to prevent notification emails about
+    to "none" (or the empty string) to prevent notification emails about
     individual commits from being sent even if
     multimailhook.mailingList is set.
 
@@ -229,6 +259,20 @@ multimailhook.announceShortlog
     happened since the last release.  But if your tagging policy is
     not so straightforward, then the shortlog might be confusing
     rather than useful.  Default is false.
+
+multimailhook.commitEmailFormat
+
+    The format of email messages for the individual commits, can be "text" or
+    "html". In the latter case, the emails will include diffs using colorized
+    HTML instead of plain text used by default. Note that this  currently the
+    ref change emails are always sent in plain text.
+
+    Note that when using "html", the formatting is done by parsing the
+    output of ``git log`` with ``-p``. When using
+    ``multimailhook.commitLogOpts`` to specify a ``--format`` for
+    ``git log``, one may get false positive (e.g. lines in the body of
+    the message starting with ``+++`` or ``---`` colored in red or
+    green).
 
 multimailhook.refchangeShowGraph
 
@@ -305,7 +349,7 @@ multimailhook.mailer
 
       * multimailhook.smtpEncryption
 
-        Set the security type. Allowed values: none, ssl.
+        Set the security type. Allowed values: none, ssl, tls.
         Default=none.
 
       * multimailhook.smtpServerDebugLevel
@@ -313,9 +357,26 @@ multimailhook.mailer
         Integer number. Set to greater than 0 to activate debugging.
 
 multimailhook.from
+multimailhook.fromCommit
+multimailhook.fromRefchange
 
-    If set, use this value in the From: field of generated emails.  If
-    unset, the value of the From: header is determined as follows:
+    If set, use this value in the From: field of generated emails.
+    ``fromCommit`` is used for commit emails, ``fromRefchange`` is
+    used for refchange emails, and ``from`` is used as fall-back in
+    all cases.
+
+    The value for these variables can be either:
+
+    - An email address, which will be used directly.
+
+    - The value ``pusher``, in which case the pusher's address (if
+      available) will be used.
+
+    - The value ``author`` (meaningful only for replyToCommit), in which
+      case the commit author's address will be used.
+
+    If config values are unset, the value of the From: header is
+    determined as follows:
 
     1. (gitolite environment only) Parse gitolite.conf, looking for a
        block of comments that looks like this::
@@ -425,6 +486,15 @@ multimailhook.commitLogOpts
     --stat -p --cc``.  Shell quoting is allowed; see
     multimailhook.logOpts for details.
 
+multimailhook.dateSubstitute
+
+    String to use as a substitute for ``Date:`` in the output of ``git
+    log`` while formatting commit messages. This is usefull to avoid
+    emitting a line that can be interpreted by mailers as the start of
+    a cited message (Zimbra webmail in particular). Defaults to
+    ``CommitDate: ``. Set to an empty string or ``none`` to deactivate
+    the behavior.
+
 multimailhook.emailDomain
 
     Domain name appended to the username of the person doing the push
@@ -440,21 +510,13 @@ multimailhook.replyToRefchange
     Addresses to use in the Reply-To: field for commit emails
     (replyToCommit) and refchange emails (replyToRefchange).
     multimailhook.replyTo is used as default when replyToCommit or
-    replyToRefchange is not set.  The value for these variables can be
-    either:
+    replyToRefchange is not set. The shortcuts ``pusher`` and
+    ``author`` are allowed with the same semantics as for
+    ``multimailhook.from``. In addition, the value ``none`` can be
+    used to omit the ``Reply-To:`` field.
 
-    - An email address, which will be used directly.
-
-    - The value `pusher`, in which case the pusher's address (if
-      available) will be used.  This is the default for refchange
-      emails.
-
-    - The value `author` (meaningful only for replyToCommit), in which
-      case the commit author's address will be used.  This is the
-      default for commit emails.
-
-    - The value `none`, in which case the Reply-To: field will be
-      omitted.
+    The default is ``pusher`` for refchange emails, and ``author`` for
+    commit emails.
 
 multimailhook.quiet
 
@@ -478,6 +540,63 @@ multimailhook.combineWhenSingleCommit
     single email.
     Default: true
 
+multimailhook.refFilterInclusionRegex
+multimailhook.refFilterExclusionRegex
+multimailhook.refFilterDoSendRegex
+multimailhook.refFilterDontSendRegex
+
+    **Warning:** these options are experimental. They should work, but
+    the user-interface is not stable yet (in particular, the option
+    names may change). If you want to participate in stabilizing the
+    feature, please contact the maintainers and/or send pull-requests.
+
+    Regular expressions that can be used to limit refs for which email
+    updates will be sent.  It is an error to specify both an inclusion
+    and an exclusion regex.  If a ``refFilterInclusionRegex`` is
+    specified, emails will only be sent for refs which match this
+    regex.  If a ``refFilterExclusionRegex`` regex is specified,
+    emails will be sent for all refs except those that match this
+    regex (or that match a predefined regex specific to the
+    environment, such as "^refs/notes" for most environments and
+    "^refs/notes|^refs/changes" for the gerrit environment).
+
+    The expressions are matched against the complete refname, and is
+    considered to match if any substring matches. For example, to
+    filter-out all tags, set ``refFilterExclusionRegex`` to
+    ``^refs/tags/`` (note the leading ``^`` but no trailing ``$``). If
+    you set ``refFilterExclusionRegex`` to ``master``, then any ref
+    containing ``master`` will be excluded (the ``master`` branch, but
+    also ``refs/tags/master`` or ``refs/heads/foo-master-bar``).
+
+    ``refFilterDoSendRegex`` and ``refFilterDontSendRegex`` are
+    analogous to ``refFilterInclusionRegex`` and
+    ``refFilterExclusionRegex`` with one difference: with
+    ``refFilterDoSendRegex`` and ``refFilterDontSendRegex``, commits
+    introduced by one excluded ref will not be considered as new when
+    they reach an included ref. Typically, if you add a branch ``foo``
+    to  ``refFilterDontSendRegex``, push commits to this branch, and
+    later merge branch ``foo`` into ``master``, then the notification
+    email for ``master`` will contain a commit email only for the
+    merge commit. If you include ``foo`` in
+    ``refFilterExclusionRegex``, then at the time of merge, you will
+    receive one commit email per commit in the branch.
+
+    These variables can be multi-valued, like::
+
+      [multimailhook]
+              refFilterExclusionRegex = ^refs/tags/
+              refFilterExclusionRegex = ^refs/heads/master$
+
+    You can also provide a whitespace-separated list like::
+
+      [multimailhook]
+              refFilterExclusionRegex = ^refs/tags/ ^refs/heads/master$
+
+    Both examples exclude tags and the master branch, and are
+    equivalent to::
+
+      [multimailhook]
+              refFilterExclusionRegex = ^refs/tags/|^refs/heads/master$
 
 Email filtering aids
 --------------------
@@ -547,35 +666,8 @@ consider sharing them with the community!
 Getting involved
 ----------------
 
-git-multimail is an open-source project, built by volunteers. We would
-welcome your help!
-
-The current maintainers are Michael Haggerty <mhagger@alum.mit.edu>
-and Matthieu Moy <matthieu.moy@grenoble-inp.fr>.
-
-Please note that although a copy of git-multimail is distributed in
-the "contrib" section of the main Git project, development takes place
-in a separate git-multimail repository on GitHub:
-
-    https://github.com/git-multimail/git-multimail
-
-Whenever enough changes to git-multimail have accumulated, a new
-code-drop of git-multimail will be submitted for inclusion in the Git
-project.
-
-We use the GitHub issue tracker to keep track of bugs and feature
-requests, and we use GitHub pull requests to exchange patches (though,
-if you prefer, you can send patches via the Git mailing list with CC
-to the maintainers). Please sign off your patches as per the Git
-project practice.
-
-General discussion of git-multimail can take place on the main Git
-mailing list,
-
-    git@vger.kernel.org
-
-Please CC emails regarding git-multimail to the maintainers so that we
-don't overlook them.
+Please, read `<CONTRIBUTING.rst>`__ for instructions on how to
+contribute to git-multimail.
 
 
 Footnotes

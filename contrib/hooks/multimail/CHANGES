@@ -1,3 +1,44 @@
+Release 1.2.0
+=============
+
+* It is now possible to exclude some refs (e.g. exclude some branches
+  or tags). See refFilterDoSendRegex, refFilterDontSendRegex,
+  refFilterInclusionRegex and refFilterExclusionRegex.
+
+* New commitEmailFormat option which can be set to "html" to generate
+  simple colorized diffs using HTML for the commit emails.
+
+* git-multimail can now be ran as a Gerrit ref-updated hook, or from
+  Atlassian BitBucket Server (formerly known as Atlassian Stash).
+
+* The From: field is now more customizeable. It can be set
+  independently for refchange emails and commit emails (see
+  fromCommit, fromRefChange). The special values pusher and author can
+  be used in these configuration variable.
+
+* A new command-line option, --version, was added. The version is also
+  available in the X-Git-Multimail-Version header of sent emails.
+
+* Set X-Git-NotificationType header to differentiate the various types
+  of notifications. Current values are: diff, ref_changed_plus_diff,
+  ref_changed.
+
+* Preliminary support for Python 3. The testsuite passes with Python 3,
+  but it has not received as much testing as the Python 2 version yet.
+
+* Several encoding-related fixes. UTF-8 characters work in more
+  situations (but non-ascii characters in email address are still not
+  supported).
+
+* The testsuite and its documentation has been greatly improved.
+
+Plus all the bugfixes from version 1.1.1.
+
+This version has been tested with Python 2.4 and 2.6 to 3.5, and Git
+v1.7.10-406-gdc801e7, git-1.8.2.3 and 2.6.0. Git versions prior to
+v1.7.10-406-gdc801e7 probably work, but cannot run the testsuite
+properly.
+
 Release 1.1.1 (bugfix-only release)
 ===================================
 
