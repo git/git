@@ -1722,16 +1722,27 @@ int mingw_getpagesize(void)
 
 struct passwd *getpwuid(int uid)
 {
+	static unsigned initialized;
 	static char user_name[100];
-	static struct passwd p;
+	static struct passwd *p;
+	DWORD len;
 
-	DWORD len = sizeof(user_name);
-	if (!GetUserName(user_name, &len))
+	if (initialized)
+		return p;
+
+	len = sizeof(user_name);
+	if (!GetUserName(user_name, &len)) {
+		initialized = 1;
 		return NULL;
-	p.pw_name = user_name;
-	p.pw_gecos = "unknown";
-	p.pw_dir = NULL;
-	return &p;
+	}
+
+	p = xmalloc(sizeof(*p));
+	p->pw_name = user_name;
+	p->pw_gecos = "unknown";
+	p->pw_dir = NULL;
+
+	initialized = 1;
+	return p;
 }
 
 static HANDLE timer_event;
