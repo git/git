@@ -643,27 +643,25 @@ static int is_scissors_line(const struct strbuf *line)
 		gap * 2 < perforation);
 }
 
-static int handle_commit_msg(struct strbuf *line)
+static int handle_commit_msg(struct strbuf *line, int *still_looking)
 {
-	static int still_looking = 1;
-
 	if (!cmitmsg)
 		return 0;
 
-	if (still_looking) {
+	if (*still_looking) {
 		if (!line->len || (line->len == 1 && line->buf[0] == '\n'))
 			return 0;
 	}
 
-	if (use_inbody_headers && still_looking) {
-		still_looking = check_header(line, s_hdr_data, 0);
-		if (still_looking)
+	if (use_inbody_headers && *still_looking) {
+		*still_looking = check_header(line, s_hdr_data, 0);
+		if (*still_looking)
 			return 0;
 	} else
 		/* Only trim the first (blank) line of the commit message
 		 * when ignoring in-body headers.
 		 */
-		still_looking = 0;
+		*still_looking = 0;
 
 	/* normalize the log message to UTF-8. */
 	if (metainfo_charset)
@@ -675,7 +673,7 @@ static int handle_commit_msg(struct strbuf *line)
 			die_errno("Could not rewind output message file");
 		if (ftruncate(fileno(cmitmsg), 0))
 			die_errno("Could not truncate output message file at scissors");
-		still_looking = 1;
+		*still_looking = 1;
 
 		/*
 		 * We may have already read "secondary headers"; purge
@@ -707,16 +705,13 @@ static void handle_patch(const struct strbuf *line)
 	patch_lines++;
 }
 
-static void handle_filter(struct strbuf *line)
+static void handle_filter(struct strbuf *line, int *filter_stage, int *header_stage)
 {
-	static int filter = 0;
-
-	/* filter tells us which part we left off on */
-	switch (filter) {
+	switch (*filter_stage) {
 	case 0:
-		if (!handle_commit_msg(line))
+		if (!handle_commit_msg(line, header_stage))
 			break;
-		filter++;
+		(*filter_stage)++;
 	case 1:
 		handle_patch(line);
 		break;
@@ -800,7 +795,7 @@ static int find_boundary(void)
 	return 0;
 }
 
-static int handle_boundary(void)
+static int handle_boundary(int *filter_stage, int *header_stage)
 {
 	struct strbuf newline = STRBUF_INIT;
 
@@ -822,7 +817,7 @@ again:
 					"can't recover\n");
 			exit(1);
 		}
-		handle_filter(&newline);
+		handle_filter(&newline, filter_stage, header_stage);
 		strbuf_release(&newline);
 
 		/* skip to the next boundary */
@@ -850,6 +845,8 @@ again:
 static void handle_body(void)
 {
 	struct strbuf prev = STRBUF_INIT;
+	int filter_stage = 0;
+	int header_stage = 1;
 
 	/* Skip up to the first boundary */
 	if (*content_top) {
@@ -862,10 +859,10 @@ static void handle_body(void)
 		if (*content_top && is_multipart_boundary(&line)) {
 			/* flush any leftover */
 			if (prev.len) {
-				handle_filter(&prev);
+				handle_filter(&prev, &filter_stage, &header_stage);
 				strbuf_reset(&prev);
 			}
-			if (!handle_boundary())
+			if (!handle_boundary(&filter_stage, &header_stage))
 				goto handle_body_out;
 		}
 
@@ -895,7 +892,7 @@ static void handle_body(void)
 						strbuf_addbuf(&prev, sb);
 						break;
 					}
-				handle_filter(sb);
+				handle_filter(sb, &filter_stage, &header_stage);
 			}
 			/*
 			 * The partial chunk is saved in "prev" and will be
@@ -905,7 +902,7 @@ static void handle_body(void)
 			break;
 		}
 		default:
-			handle_filter(&line);
+			handle_filter(&line, &filter_stage, &header_stage);
 		}
 
 	} while (!strbuf_getwholeline(&line, fin, '\n'));
