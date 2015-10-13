@@ -1747,6 +1747,11 @@ static char *get_extended_user_info(enum EXTENDED_NAME_FORMAT type)
 	return NULL;
 }
 
+char *mingw_query_user_email(void)
+{
+	return get_extended_user_info(NameUserPrincipal);
+}
+
 struct passwd *getpwuid(int uid)
 {
 	static unsigned initialized;
