@@ -22,14 +22,15 @@ void *git_mmap(void *start, size_t length, int prot, int flags, int fd, off_t of
 		die("Invalid usage of mmap when built with USE_WIN32_MMAP");
 
 	hmap = CreateFileMapping((HANDLE)_get_osfhandle(fd), NULL,
-		PAGE_WRITECOPY, 0, 0, NULL);
+		prot == PROT_READ ? PAGE_READONLY : PAGE_WRITECOPY, 0, 0, NULL);
 
 	if (!hmap) {
 		errno = EINVAL;
 		return MAP_FAILED;
 	}
 
-	temp = MapViewOfFileEx(hmap, FILE_MAP_COPY, h, l, length, start);
+	temp = MapViewOfFileEx(hmap, prot == PROT_READ ?
+			FILE_MAP_READ : FILE_MAP_COPY, h, l, length, start);
 
 	if (!CloseHandle(hmap))
 		warning("unable to close file mapping handle");
