@@ -434,6 +434,8 @@ int mingw_offset_1st_component(const char *path);
 #define PATH_SEP ';'
 extern const char *program_data_config(void);
 #define git_program_data_config program_data_config
+extern char *mingw_query_user_email(void);
+#define query_user_email mingw_query_user_email
 #if !defined(__MINGW64_VERSION_MAJOR) && (!defined(_MSC_VER) || _MSC_VER < 1800)
 #define PRIuMAX "I64u"
 #define PRId64 "I64d"
