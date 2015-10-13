@@ -1720,6 +1720,33 @@ int mingw_getpagesize(void)
 	return si.dwAllocationGranularity;
 }
 
+/* See https://msdn.microsoft.com/en-us/library/windows/desktop/ms724435.aspx */
+enum EXTENDED_NAME_FORMAT {
+	NameDisplay = 3,
+	NameUserPrincipal = 8
+};
+
+static char *get_extended_user_info(enum EXTENDED_NAME_FORMAT type)
+{
+	DECLARE_PROC_ADDR(secur32.dll, BOOL, GetUserNameExW,
+		enum EXTENDED_NAME_FORMAT, LPCWSTR, PULONG);
+	static wchar_t wbuffer[1024];
+	DWORD len;
+
+	if (!INIT_PROC_ADDR(GetUserNameExW))
+		return NULL;
+
+	len = ARRAY_SIZE(wbuffer);
+	if (GetUserNameExW(type, wbuffer, &len)) {
+		char *converted = xmalloc((len *= 3));
+		if (xwcstoutf(converted, wbuffer, len) >= 0)
+			return converted;
+		free(converted);
+	}
+
+	return NULL;
+}
+
 struct passwd *getpwuid(int uid)
 {
 	static unsigned initialized;
@@ -1738,7 +1765,9 @@ struct passwd *getpwuid(int uid)
 
 	p = xmalloc(sizeof(*p));
 	p->pw_name = user_name;
-	p->pw_gecos = "unknown";
+	p->pw_gecos = get_extended_user_info(NameDisplay);
+	if (!p->pw_gecos)
+		p->pw_gecos = "unknown";
 	p->pw_dir = NULL;
 
 	initialized = 1;
