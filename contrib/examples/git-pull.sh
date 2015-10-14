@@ -69,7 +69,7 @@ as appropriate to mark resolution and make a commit.")"
 die_merge () {
     if [ $(git config --bool --get advice.resolveConflict || echo true) = "true" ]; then
 	die "$(gettext "You have not concluded your merge (MERGE_HEAD exists).
-Please, commit your changes before you can merge.")"
+Please, commit your changes before merging.")"
     else
 	die "$(gettext "You have not concluded your merge (MERGE_HEAD exists).")"
     fi
