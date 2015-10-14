@@ -9,13 +9,13 @@
 
 static FILE *cmitmsg, *patchfile, *fin, *fout;
 
-static int keep_subject;
-static int keep_non_patch_brackets_in_subject;
 static const char *metainfo_charset;
 
 struct mailinfo {
 	struct strbuf name;
 	struct strbuf email;
+	int keep_subject;
+	int keep_non_patch_brackets_in_subject;
 };
 static char *message_id;
 
@@ -232,7 +232,7 @@ static int is_multipart_boundary(const struct strbuf *line)
 		!memcmp(line->buf, (*content_top)->buf, (*content_top)->len));
 }
 
-static void cleanup_subject(struct strbuf *subject)
+static void cleanup_subject(struct mailinfo *mi, struct strbuf *subject)
 {
 	size_t at = 0;
 
@@ -260,7 +260,7 @@ static void cleanup_subject(struct strbuf *subject)
 			if (!pos)
 				break;
 			remove = pos - subject->buf + at + 1;
-			if (!keep_non_patch_brackets_in_subject ||
+			if (!mi->keep_non_patch_brackets_in_subject ||
 			    (7 <= remove &&
 			     memmem(subject->buf + at, remove, "PATCH", 5)))
 				strbuf_remove(subject, at, remove);
@@ -945,8 +945,8 @@ static void handle_info(struct mailinfo *mi)
 			continue;
 
 		if (!strcmp(header[i], "Subject")) {
-			if (!keep_subject) {
-				cleanup_subject(hdr);
+			if (!mi->keep_subject) {
+				cleanup_subject(mi, hdr);
 				cleanup_space(hdr);
 			}
 			output_header_lines(fout, "Subject", hdr);
@@ -1049,9 +1049,9 @@ int cmd_mailinfo(int argc, const char **argv, const char *prefix)
 
 	while (1 < argc && argv[1][0] == '-') {
 		if (!strcmp(argv[1], "-k"))
-			keep_subject = 1;
+			mi.keep_subject = 1;
 		else if (!strcmp(argv[1], "-b"))
-			keep_non_patch_brackets_in_subject = 1;
+			mi.keep_non_patch_brackets_in_subject = 1;
 		else if (!strcmp(argv[1], "-m") || !strcmp(argv[1], "--message-id"))
 			add_message_id = 1;
 		else if (!strcmp(argv[1], "-u"))
