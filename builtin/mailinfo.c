@@ -7,11 +7,14 @@
 #include "utf8.h"
 #include "strbuf.h"
 
-static FILE *cmitmsg, *patchfile, *fin, *fout;
+static FILE *cmitmsg, *patchfile;
 
 static const char *metainfo_charset;
 
 struct mailinfo {
+	FILE *input;
+	FILE *output;
+
 	struct strbuf name;
 	struct strbuf email;
 	int keep_subject;
@@ -788,16 +791,17 @@ static int read_one_header_line(struct strbuf *line, FILE *in)
 	return 1;
 }
 
-static int find_boundary(struct strbuf *line)
+static int find_boundary(struct mailinfo *mi, struct strbuf *line)
 {
-	while (!strbuf_getline(line, fin, '\n')) {
+	while (!strbuf_getline(line, mi->input, '\n')) {
 		if (*content_top && is_multipart_boundary(line))
 			return 1;
 	}
 	return 0;
 }
 
-static int handle_boundary(struct strbuf *line, int *filter_stage, int *header_stage)
+static int handle_boundary(struct mailinfo *mi, struct strbuf *line,
+			   int *filter_stage, int *header_stage)
 {
 	struct strbuf newline = STRBUF_INIT;
 
@@ -823,7 +827,7 @@ again:
 		strbuf_release(&newline);
 
 		/* skip to the next boundary */
-		if (!find_boundary(line))
+		if (!find_boundary(mi, line))
 			return 0;
 		goto again;
 	}
@@ -833,18 +837,18 @@ again:
 	strbuf_reset(&charset);
 
 	/* slurp in this section's info */
-	while (read_one_header_line(line, fin))
+	while (read_one_header_line(line, mi->input))
 		check_header(line, p_hdr_data, 0);
 
 	strbuf_release(&newline);
 	/* replenish line */
-	if (strbuf_getline(line, fin, '\n'))
+	if (strbuf_getline(line, mi->input, '\n'))
 		return 0;
 	strbuf_addch(line, '\n');
 	return 1;
 }
 
-static void handle_body(struct strbuf *line)
+static void handle_body(struct mailinfo *mi, struct strbuf *line)
 {
 	struct strbuf prev = STRBUF_INIT;
 	int filter_stage = 0;
@@ -852,7 +856,7 @@ static void handle_body(struct strbuf *line)
 
 	/* Skip up to the first boundary */
 	if (*content_top) {
-		if (!find_boundary(line))
+		if (!find_boundary(mi, line))
 			goto handle_body_out;
 	}
 
@@ -864,7 +868,7 @@ static void handle_body(struct strbuf *line)
 				handle_filter(&prev, &filter_stage, &header_stage);
 				strbuf_reset(&prev);
 			}
-			if (!handle_boundary(line, &filter_stage, &header_stage))
+			if (!handle_boundary(mi, line, &filter_stage, &header_stage))
 				goto handle_body_out;
 		}
 
@@ -907,7 +911,7 @@ static void handle_body(struct strbuf *line)
 			handle_filter(line, &filter_stage, &header_stage);
 		}
 
-	} while (!strbuf_getwholeline(line, fin, '\n'));
+	} while (!strbuf_getwholeline(line, mi->input, '\n'));
 
 handle_body_out:
 	strbuf_release(&prev);
@@ -949,28 +953,24 @@ static void handle_info(struct mailinfo *mi)
 				cleanup_subject(mi, hdr);
 				cleanup_space(hdr);
 			}
-			output_header_lines(fout, "Subject", hdr);
+			output_header_lines(mi->output, "Subject", hdr);
 		} else if (!strcmp(header[i], "From")) {
 			cleanup_space(hdr);
 			handle_from(mi, hdr);
-			fprintf(fout, "Author: %s\n", mi->name.buf);
-			fprintf(fout, "Email: %s\n", mi->email.buf);
+			fprintf(mi->output, "Author: %s\n", mi->name.buf);
+			fprintf(mi->output, "Email: %s\n", mi->email.buf);
 		} else {
 			cleanup_space(hdr);
-			fprintf(fout, "%s: %s\n", header[i], hdr->buf);
+			fprintf(mi->output, "%s: %s\n", header[i], hdr->buf);
 		}
 	}
-	fprintf(fout, "\n");
+	fprintf(mi->output, "\n");
 }
 
-static int mailinfo(struct mailinfo *mi,
-		    FILE *in, FILE *out, const char *msg, const char *patch)
+static int mailinfo(struct mailinfo *mi, const char *msg, const char *patch)
 {
 	int peek;
 	struct strbuf line = STRBUF_INIT;
-
-	fin = in;
-	fout = out;
 
 	cmitmsg = fopen(msg, "w");
 	if (!cmitmsg) {
@@ -988,15 +988,15 @@ static int mailinfo(struct mailinfo *mi,
 	s_hdr_data = xcalloc(MAX_HDR_PARSED, sizeof(*s_hdr_data));
 
 	do {
-		peek = fgetc(in);
+		peek = fgetc(mi->input);
 	} while (isspace(peek));
-	ungetc(peek, in);
+	ungetc(peek, mi->input);
 
 	/* process the email header */
-	while (read_one_header_line(&line, fin))
+	while (read_one_header_line(&line, mi->input))
 		check_header(&line, p_hdr_data, 1);
 
-	handle_body(&line);
+	handle_body(mi, &line);
 	fclose(patchfile);
 
 	handle_info(mi);
@@ -1074,7 +1074,9 @@ int cmd_mailinfo(int argc, const char **argv, const char *prefix)
 	if (argc != 3)
 		usage(mailinfo_usage);
 
-	status = !!mailinfo(&mi, stdin, stdout, argv[1], argv[2]);
+	mi.input = stdin;
+	mi.output = stdout;
+	status = !!mailinfo(&mi, argv[1], argv[2]);
 	clear_mailinfo(&mi);
 
 	return status;
