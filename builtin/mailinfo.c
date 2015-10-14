@@ -19,6 +19,9 @@ struct mailinfo {
 	struct strbuf email;
 	int keep_subject;
 	int keep_non_patch_brackets_in_subject;
+
+	int filter_stage; /* still reading log or are we copying patch? */
+	int header_stage; /* still checking in-body headers? */
 };
 static char *message_id;
 
@@ -648,25 +651,25 @@ static int is_scissors_line(const struct strbuf *line)
 		gap * 2 < perforation);
 }
 
-static int handle_commit_msg(struct strbuf *line, int *still_looking)
+static int handle_commit_msg(struct mailinfo *mi, struct strbuf *line)
 {
 	if (!cmitmsg)
 		return 0;
 
-	if (*still_looking) {
+	if (mi->header_stage) {
 		if (!line->len || (line->len == 1 && line->buf[0] == '\n'))
 			return 0;
 	}
 
-	if (use_inbody_headers && *still_looking) {
-		*still_looking = check_header(line, s_hdr_data, 0);
-		if (*still_looking)
+	if (use_inbody_headers && mi->header_stage) {
+		mi->header_stage = check_header(line, s_hdr_data, 0);
+		if (mi->header_stage)
 			return 0;
 	} else
 		/* Only trim the first (blank) line of the commit message
 		 * when ignoring in-body headers.
 		 */
-		*still_looking = 0;
+		mi->header_stage = 0;
 
 	/* normalize the log message to UTF-8. */
 	if (metainfo_charset)
@@ -678,7 +681,7 @@ static int handle_commit_msg(struct strbuf *line, int *still_looking)
 			die_errno("Could not rewind output message file");
 		if (ftruncate(fileno(cmitmsg), 0))
 			die_errno("Could not truncate output message file at scissors");
-		*still_looking = 1;
+		mi->header_stage = 1;
 
 		/*
 		 * We may have already read "secondary headers"; purge
@@ -710,13 +713,13 @@ static void handle_patch(const struct strbuf *line)
 	patch_lines++;
 }
 
-static void handle_filter(struct strbuf *line, int *filter_stage, int *header_stage)
+static void handle_filter(struct mailinfo *mi, struct strbuf *line)
 {
-	switch (*filter_stage) {
+	switch (mi->filter_stage) {
 	case 0:
-		if (!handle_commit_msg(line, header_stage))
+		if (!handle_commit_msg(mi, line))
 			break;
-		(*filter_stage)++;
+		mi->filter_stage++;
 	case 1:
 		handle_patch(line);
 		break;
@@ -800,8 +803,7 @@ static int find_boundary(struct mailinfo *mi, struct strbuf *line)
 	return 0;
 }
 
-static int handle_boundary(struct mailinfo *mi, struct strbuf *line,
-			   int *filter_stage, int *header_stage)
+static int handle_boundary(struct mailinfo *mi, struct strbuf *line)
 {
 	struct strbuf newline = STRBUF_INIT;
 
@@ -823,7 +825,7 @@ again:
 					"can't recover\n");
 			exit(1);
 		}
-		handle_filter(&newline, filter_stage, header_stage);
+		handle_filter(mi, &newline);
 		strbuf_release(&newline);
 
 		/* skip to the next boundary */
@@ -851,8 +853,6 @@ again:
 static void handle_body(struct mailinfo *mi, struct strbuf *line)
 {
 	struct strbuf prev = STRBUF_INIT;
-	int filter_stage = 0;
-	int header_stage = 1;
 
 	/* Skip up to the first boundary */
 	if (*content_top) {
@@ -865,10 +865,10 @@ static void handle_body(struct mailinfo *mi, struct strbuf *line)
 		if (*content_top && is_multipart_boundary(line)) {
 			/* flush any leftover */
 			if (prev.len) {
-				handle_filter(&prev, &filter_stage, &header_stage);
+				handle_filter(mi, &prev);
 				strbuf_reset(&prev);
 			}
-			if (!handle_boundary(mi, line, &filter_stage, &header_stage))
+			if (!handle_boundary(mi, line))
 				goto handle_body_out;
 		}
 
@@ -898,7 +898,7 @@ static void handle_body(struct mailinfo *mi, struct strbuf *line)
 						strbuf_addbuf(&prev, sb);
 						break;
 					}
-				handle_filter(sb, &filter_stage, &header_stage);
+				handle_filter(mi, sb);
 			}
 			/*
 			 * The partial chunk is saved in "prev" and will be
@@ -908,7 +908,7 @@ static void handle_body(struct mailinfo *mi, struct strbuf *line)
 			break;
 		}
 		default:
-			handle_filter(line, &filter_stage, &header_stage);
+			handle_filter(mi, line);
 		}
 
 	} while (!strbuf_getwholeline(line, mi->input, '\n'));
@@ -1021,6 +1021,7 @@ static void setup_mailinfo(struct mailinfo *mi)
 	memset(mi, 0, sizeof(*mi));
 	strbuf_init(&mi->name, 0);
 	strbuf_init(&mi->email, 0);
+	mi->header_stage = 1;
 	git_config(git_mailinfo_config, &mi);
 }
 
