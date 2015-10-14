@@ -654,8 +654,7 @@ static int is_scissors_line(const struct strbuf *line)
 
 static int handle_commit_msg(struct mailinfo *mi, struct strbuf *line)
 {
-	if (!mi->cmitmsg)
-		return 0;
+	assert(!mi->filter_stage);
 
 	if (mi->header_stage) {
 		if (!line->len || (line->len == 1 && line->buf[0] == '\n'))
