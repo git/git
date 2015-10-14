@@ -20,6 +20,8 @@ struct mailinfo {
 	int keep_subject;
 	int keep_non_patch_brackets_in_subject;
 	int add_message_id;
+	int use_scissors;
+	int use_inbody_headers;
 
 	char *message_id;
 	int patch_lines;
@@ -33,8 +35,6 @@ static enum  {
 
 static struct strbuf charset = STRBUF_INIT;
 static struct strbuf **p_hdr_data, **s_hdr_data;
-static int use_scissors;
-static int use_inbody_headers = 1;
 
 #define MAX_BOUNDARIES 5
 
@@ -663,7 +663,7 @@ static int handle_commit_msg(struct mailinfo *mi, struct strbuf *line)
 			return 0;
 	}
 
-	if (use_inbody_headers && mi->header_stage) {
+	if (mi->use_inbody_headers && mi->header_stage) {
 		mi->header_stage = check_header(mi, line, s_hdr_data, 0);
 		if (mi->header_stage)
 			return 0;
@@ -677,7 +677,7 @@ static int handle_commit_msg(struct mailinfo *mi, struct strbuf *line)
 	if (metainfo_charset)
 		convert_to_utf8(line, charset.buf);
 
-	if (use_scissors && is_scissors_line(line)) {
+	if (mi->use_scissors && is_scissors_line(line)) {
 		int i;
 		if (fseek(cmitmsg, 0L, SEEK_SET))
 			die_errno("Could not rewind output message file");
@@ -1006,12 +1006,14 @@ static int mailinfo(struct mailinfo *mi, const char *msg, const char *patch)
 	return 0;
 }
 
-static int git_mailinfo_config(const char *var, const char *value, void *unused)
+static int git_mailinfo_config(const char *var, const char *value, void *mi_)
 {
+	struct mailinfo *mi = mi_;
+
 	if (!starts_with(var, "mailinfo."))
-		return git_default_config(var, value, unused);
+		return git_default_config(var, value, NULL);
 	if (!strcmp(var, "mailinfo.scissors")) {
-		use_scissors = git_config_bool(var, value);
+		mi->use_scissors = git_config_bool(var, value);
 		return 0;
 	}
 	/* perhaps others here */
@@ -1024,6 +1026,7 @@ static void setup_mailinfo(struct mailinfo *mi)
 	strbuf_init(&mi->name, 0);
 	strbuf_init(&mi->email, 0);
 	mi->header_stage = 1;
+	mi->use_inbody_headers = 1;
 	git_config(git_mailinfo_config, &mi);
 }
 
@@ -1065,11 +1068,11 @@ int cmd_mailinfo(int argc, const char **argv, const char *prefix)
 		else if (starts_with(argv[1], "--encoding="))
 			metainfo_charset = argv[1] + 11;
 		else if (!strcmp(argv[1], "--scissors"))
-			use_scissors = 1;
+			mi.use_scissors = 1;
 		else if (!strcmp(argv[1], "--no-scissors"))
-			use_scissors = 0;
+			mi.use_scissors = 0;
 		else if (!strcmp(argv[1], "--no-inbody-headers"))
-			use_inbody_headers = 0;
+			mi.use_inbody_headers = 0;
 		else
 			usage(mailinfo_usage);
 		argc--; argv++;
