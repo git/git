@@ -63,8 +63,11 @@ automatic consolidation of packs.
 --prune=<date>::
 	Prune loose objects older than date (default is 2 weeks ago,
 	overridable by the config variable `gc.pruneExpire`).
-	--prune=all prunes loose objects regardless of their age.
-	--prune is on by default.
+	--prune=all prunes loose objects regardless of their age (do
+	not use --prune=all unless you know exactly what you are doing.
+	Unless the repository is quiescent, you will lose newly created
+	objects that haven't been anchored with the refs and end up
+	corrupting your repository).  --prune is on by default.
 
 --no-prune::
 	Do not prune any loose objects.
