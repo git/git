@@ -999,6 +999,8 @@ static int mailinfo(FILE *in, FILE *out, const char *msg, const char *patch)
 		check_header(&line, p_hdr_data, 1);
 
 	handle_body();
+	fclose(patchfile);
+
 	handle_info();
 
 	return 0;
