@@ -121,5 +121,13 @@ notes for details).
    these unsafe calls.
    (merge 507d780 ti/glibc-stdio-mutex-from-signal-handler later to maint).
 
+ * The way how --ref/--notes to specify the notes tree reference are
+   DWIMmed was not clearly documented.
+   (merge e14c92e jk/notes-dwim-doc later to maint).
+
  * Code clean-up and minor fixes.
    (merge 15ed07d jc/rerere later to maint).
+   (merge b744767 pt/pull-builtin later to maint).
+   (merge 29bc480 nd/ls-remote-does-not-have-u-option later to maint).
+   (merge be510e0 jk/asciidoctor-section-heading-markup-fix later to maint).
+   (merge 83e6bda tk/typofix-connect-unknown-proto-error later to maint).
