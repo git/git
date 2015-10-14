@@ -20,6 +20,7 @@ struct mailinfo {
 	int keep_subject;
 	int keep_non_patch_brackets_in_subject;
 
+	int patch_lines;
 	int filter_stage; /* still reading log or are we copying patch? */
 	int header_stage; /* still checking in-body headers? */
 };
@@ -30,7 +31,6 @@ static enum  {
 } transfer_encoding;
 
 static struct strbuf charset = STRBUF_INIT;
-static int patch_lines;
 static struct strbuf **p_hdr_data, **s_hdr_data;
 static int use_scissors;
 static int add_message_id;
@@ -707,10 +707,10 @@ static int handle_commit_msg(struct mailinfo *mi, struct strbuf *line)
 	return 0;
 }
 
-static void handle_patch(const struct strbuf *line)
+static void handle_patch(struct mailinfo *mi, const struct strbuf *line)
 {
 	fwrite(line->buf, 1, line->len, patchfile);
-	patch_lines++;
+	mi->patch_lines++;
 }
 
 static void handle_filter(struct mailinfo *mi, struct strbuf *line)
@@ -721,7 +721,7 @@ static void handle_filter(struct mailinfo *mi, struct strbuf *line)
 			break;
 		mi->filter_stage++;
 	case 1:
-		handle_patch(line);
+		handle_patch(mi, line);
 		break;
 	}
 }
@@ -941,7 +941,7 @@ static void handle_info(struct mailinfo *mi)
 
 	for (i = 0; header[i]; i++) {
 		/* only print inbody headers if we output a patch file */
-		if (patch_lines && s_hdr_data[i])
+		if (mi->patch_lines && s_hdr_data[i])
 			hdr = s_hdr_data[i];
 		else if (p_hdr_data[i])
 			hdr = p_hdr_data[i];
