@@ -255,7 +255,7 @@ static const char *prot_name(enum protocol protocol)
 		case PROTO_GIT:
 			return "git";
 		default:
-			return "unkown protocol";
+			return "unknown protocol";
 	}
 }
 
