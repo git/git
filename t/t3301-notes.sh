@@ -1122,6 +1122,12 @@ test_expect_success 'git notes copy diagnoses too many or too few parameters' '
 	test_must_fail git notes copy one two three
 '
 
+test_expect_success 'git notes get-ref expands refs/heads/master to refs/notes/refs/heads/master' '
+	test_unconfig core.notesRef &&
+	sane_unset GIT_NOTES_REF &&
+	test "$(git notes --ref=refs/heads/master get-ref)" = "refs/notes/refs/heads/master"
+'
+
 test_expect_success 'git notes get-ref (no overrides)' '
 	test_unconfig core.notesRef &&
 	sane_unset GIT_NOTES_REF &&

@@ -162,7 +162,9 @@ OPTIONS
 --ref <ref>::
 	Manipulate the notes tree in <ref>.  This overrides
 	'GIT_NOTES_REF' and the "core.notesRef" configuration.  The ref
-	is taken to be in `refs/notes/` if it is not qualified.
+	specifies the full refname when it begins with `refs/notes/`; when it
+	begins with `notes/`, `refs/` and otherwise `refs/notes/` is prefixed
+	to form a full name of the ref.
 
 --ignore-missing::
 	Do not consider it an error to request removing notes from an
