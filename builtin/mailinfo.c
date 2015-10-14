@@ -23,14 +23,14 @@ struct mailinfo {
 	const char *metainfo_charset;
 
 	char *message_id;
+	enum  {
+		TE_DONTCARE, TE_QP, TE_BASE64
+	} transfer_encoding;
 	int patch_lines;
 	int filter_stage; /* still reading log or are we copying patch? */
 	int header_stage; /* still checking in-body headers? */
 };
 
-static enum  {
-	TE_DONTCARE, TE_QP, TE_BASE64
-} transfer_encoding;
 
 static struct strbuf charset = STRBUF_INIT;
 static struct strbuf **p_hdr_data, **s_hdr_data;
@@ -221,14 +221,15 @@ static void handle_message_id(struct mailinfo *mi, const struct strbuf *line)
 		mi->message_id = strdup(line->buf);
 }
 
-static void handle_content_transfer_encoding(const struct strbuf *line)
+static void handle_content_transfer_encoding(struct mailinfo *mi,
+					     const struct strbuf *line)
 {
 	if (strcasestr(line->buf, "base64"))
-		transfer_encoding = TE_BASE64;
+		mi->transfer_encoding = TE_BASE64;
 	else if (strcasestr(line->buf, "quoted-printable"))
-		transfer_encoding = TE_QP;
+		mi->transfer_encoding = TE_QP;
 	else
-		transfer_encoding = TE_DONTCARE;
+		mi->transfer_encoding = TE_DONTCARE;
 }
 
 static int is_multipart_boundary(const struct strbuf *line)
@@ -511,7 +512,7 @@ static int check_header(struct mailinfo *mi,
 		len = strlen("Content-Transfer-Encoding: ");
 		strbuf_add(&sb, line->buf + len, line->len - len);
 		decode_header(mi, &sb);
-		handle_content_transfer_encoding(&sb);
+		handle_content_transfer_encoding(mi, &sb);
 		ret = 1;
 		goto check_header_out;
 	}
@@ -544,11 +545,11 @@ check_header_out:
 	return ret;
 }
 
-static void decode_transfer_encoding(struct strbuf *line)
+static void decode_transfer_encoding(struct mailinfo *mi, struct strbuf *line)
 {
 	struct strbuf *ret;
 
-	switch (transfer_encoding) {
+	switch (mi->transfer_encoding) {
 	case TE_QP:
 		ret = decode_q_segment(line, 0);
 		break;
@@ -835,7 +836,7 @@ again:
 	}
 
 	/* set some defaults */
-	transfer_encoding = TE_DONTCARE;
+	mi->transfer_encoding = TE_DONTCARE;
 	strbuf_reset(&charset);
 
 	/* slurp in this section's info */
@@ -873,9 +874,9 @@ static void handle_body(struct mailinfo *mi, struct strbuf *line)
 		}
 
 		/* Unwrap transfer encoding */
-		decode_transfer_encoding(line);
+		decode_transfer_encoding(mi, line);
 
-		switch (transfer_encoding) {
+		switch (mi->transfer_encoding) {
 		case TE_BASE64:
 		case TE_QP:
 		{
