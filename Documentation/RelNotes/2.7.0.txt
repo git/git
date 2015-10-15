@@ -45,6 +45,9 @@ UI, Workflows & Features
    appears in the same .gitignore file to make it easier to express
    "everything in /abc directory is ignored, except for ...".
 
+ * Teach "git p4" to send large blobs outside the repository by
+   talking to Git LFS.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -66,6 +69,10 @@ Performance, Internal Implementation, Development Support etc.
  * The debugging infrastructure for pkt-line based communication has
    been improved to mark the side-band communication specifically.
    (merge fd89433 jk/async-pkt-line later to maint).
+
+ * Update "git branch" that list existing branches, using the
+   ref-filter API that is shared with "git tag" and "git
+   for-each-ref".
 
 
 Also contains various documentation updates and code clean-ups.
@@ -125,9 +132,80 @@ notes for details).
    DWIMmed was not clearly documented.
    (merge e14c92e jk/notes-dwim-doc later to maint).
 
+ * "git gc" used to barf when a symbolic ref has gone dangling
+   (e.g. the branch that used to be your upstream's default when you
+   cloned from it is now gone, and you did "fetch --prune").
+   (merge 14886b4 js/gc-with-stale-symref later to maint).
+
+ * "git clone --dissociate" runs a big "git repack" process at the
+   end, and it helps to close file descriptors that are open on the
+   packs and their idx files before doing so on filesystems that
+   cannot remove a file that is still open.
+   (merge 786b150 js/clone-dissociate later to maint).
+
+ * Description of the "log.follow" configuration variable in "git log"
+   documentation is now also copied to "git config" documentation.
+   (merge fd8d07e dt/log-follow-config later to maint).
+
+ * "git rebase -i" had a minor regression recently, which stopped
+   considering a line that begins with an indented '#' in its insn
+   sheet not a comment, which is now fixed.
+   (merge 1db168e gr/rebase-i-drop-warn later to maint).
+
+ * After "git checkout --detach", "git status" reported a fairly
+   useless "HEAD detached at HEAD", instead of saying at which exact
+   commit.
+   (merge 0eb8548 mm/detach-at-HEAD-reflog later to maint).
+
+ * When "git send-email" wanted to talk over Net::SMTP::SSL,
+   Net::Cmd::datasend() did not like to be fed too many bytes at the
+   same time and failed to send messages.  Send the payload one line
+   at a time to work around the problem.
+   (merge f60c483 sa/send-email-smtp-batch-data-limit later to maint).
+
+ * When "git am" was rewritten as a built-in, it stopped paying
+   attention to user.signingkey, which was fixed.
+   (merge 434c64d pt/am-builtin later to maint).
+
+ * It was not possible to use a repository-lookalike created by "git
+   worktree add" as a local source of "git clone".
+   (merge d78db84 nd/clone-linked-checkout later to maint).
+
+ * On a case insensitive filesystems, setting GIT_WORK_TREE variable
+   using a random cases that does not agree with what the filesystem
+   thinks confused Git that it wasn't inside the working tree.
+   (merge 63ec5e1 js/icase-wt-detection later to maint).
+
+ * Performance-measurement tests did not work without an installed Git.
+   (merge 31cd128 sb/perf-without-installed-git later to maint).
+
+ * A test script for the HTTP service had a timing dependent bug,
+   which was fixed.
+   (merge 362d8b6 sb/http-flaky-test-fix later to maint).
+
+ * There were some classes of errors that "git fsck" diagnosed to its
+   standard error that did not cause it to exit with non-zero status.
+   (merge 122f76f jc/fsck-dropped-errors later to maint).
+
+ * Work around "git p4" failing when the P4 depot records the contents
+   in UTF-16 without UTF-16 BOM.
+   (merge 1f5f390 ls/p4-translation-failure later to maint).
+
+ * When "git gc --auto" is backgrounded, its diagnosis message is
+   lost.  Save it to a file in $GIT_DIR and show it next time the "gc
+   --auto" is run.
+   (merge 329e6e8 nd/gc-auto-background-fix later to maint).
+
+ * The submodule code has been taught to work better with separate
+   work trees created via "git worktree add".
+   (merge 11f9dd7 mk/submodule-gitdir-path later to maint).
+
  * Code clean-up and minor fixes.
    (merge 15ed07d jc/rerere later to maint).
    (merge b744767 pt/pull-builtin later to maint).
    (merge 29bc480 nd/ls-remote-does-not-have-u-option later to maint).
    (merge be510e0 jk/asciidoctor-section-heading-markup-fix later to maint).
    (merge 83e6bda tk/typofix-connect-unknown-proto-error later to maint).
+   (merge a43eb67 tk/doc-interpret-trailers-grammo later to maint).
+   (merge ba128e2 es/worktree-add-cleanup later to maint).
+   (merge 44cd91e cc/quote-comments later to maint).
