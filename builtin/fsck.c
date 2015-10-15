@@ -38,6 +38,7 @@ static int show_dangling = 1;
 #define ERROR_OBJECT 01
 #define ERROR_REACHABLE 02
 #define ERROR_PACK 04
+#define ERROR_REFS 010
 
 #ifdef NO_D_INO_IN_DIRENT
 #define SORT_DIRENT 0
@@ -521,8 +522,10 @@ static int fsck_handle_ref(const char *refname, const struct object_id *oid,
 		/* We'll continue with the rest despite the error.. */
 		return 0;
 	}
-	if (obj->type != OBJ_COMMIT && is_branch(refname))
+	if (obj->type != OBJ_COMMIT && is_branch(refname)) {
 		error("%s: not a commit", refname);
+		errors_found |= ERROR_REFS;
+	}
 	default_refs++;
 	obj->used = 1;
 	mark_object_reachable(obj);
@@ -585,17 +588,23 @@ static int fsck_head_link(void)
 		fprintf(stderr, "Checking HEAD link\n");
 
 	head_points_at = resolve_ref_unsafe("HEAD", 0, head_oid.hash, &flag);
-	if (!head_points_at)
+	if (!head_points_at) {
+		errors_found |= ERROR_REFS;
 		return error("Invalid HEAD");
+	}
 	if (!strcmp(head_points_at, "HEAD"))
 		/* detached HEAD */
 		null_is_error = 1;
-	else if (!starts_with(head_points_at, "refs/heads/"))
+	else if (!starts_with(head_points_at, "refs/heads/")) {
+		errors_found |= ERROR_REFS;
 		return error("HEAD points to something strange (%s)",
 			     head_points_at);
+	}
 	if (is_null_oid(&head_oid)) {
-		if (null_is_error)
+		if (null_is_error) {
+			errors_found |= ERROR_REFS;
 			return error("HEAD: detached HEAD points at nothing");
+		}
 		fprintf(stderr, "notice: HEAD points to an unborn branch (%s)\n",
 			head_points_at + 11);
 	}
@@ -615,6 +624,7 @@ static int fsck_cache_tree(struct cache_tree *it)
 		if (!obj) {
 			error("%s: invalid sha1 pointer in cache-tree",
 			      sha1_to_hex(it->sha1));
+			errors_found |= ERROR_REFS;
 			return 1;
 		}
 		obj->used = 1;
