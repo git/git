@@ -284,7 +284,6 @@ static void cleanup_space(struct strbuf *sb)
 	}
 }
 
-static void decode_header(struct strbuf *line);
 static const char *header[MAX_HDR_PARSED] = {
 	"From","Subject","Date",
 };
@@ -310,73 +309,6 @@ static int is_format_patch_separator(const char *line, int len)
 		return 0;
 	cp += 40;
 	return !memcmp(SAMPLE + (cp - line), cp, strlen(SAMPLE) - (cp - line));
-}
-
-static int check_header(const struct strbuf *line,
-				struct strbuf *hdr_data[], int overwrite)
-{
-	int i, ret = 0, len;
-	struct strbuf sb = STRBUF_INIT;
-	/* search for the interesting parts */
-	for (i = 0; header[i]; i++) {
-		int len = strlen(header[i]);
-		if ((!hdr_data[i] || overwrite) && cmp_header(line, header[i])) {
-			/* Unwrap inline B and Q encoding, and optionally
-			 * normalize the meta information to utf8.
-			 */
-			strbuf_add(&sb, line->buf + len + 2, line->len - len - 2);
-			decode_header(&sb);
-			handle_header(&hdr_data[i], &sb);
-			ret = 1;
-			goto check_header_out;
-		}
-	}
-
-	/* Content stuff */
-	if (cmp_header(line, "Content-Type")) {
-		len = strlen("Content-Type: ");
-		strbuf_add(&sb, line->buf + len, line->len - len);
-		decode_header(&sb);
-		strbuf_insert(&sb, 0, "Content-Type: ", len);
-		handle_content_type(&sb);
-		ret = 1;
-		goto check_header_out;
-	}
-	if (cmp_header(line, "Content-Transfer-Encoding")) {
-		len = strlen("Content-Transfer-Encoding: ");
-		strbuf_add(&sb, line->buf + len, line->len - len);
-		decode_header(&sb);
-		handle_content_transfer_encoding(&sb);
-		ret = 1;
-		goto check_header_out;
-	}
-	if (cmp_header(line, "Message-Id")) {
-		len = strlen("Message-Id: ");
-		strbuf_add(&sb, line->buf + len, line->len - len);
-		decode_header(&sb);
-		handle_message_id(&sb);
-		ret = 1;
-		goto check_header_out;
-	}
-
-	/* for inbody stuff */
-	if (starts_with(line->buf, ">From") && isspace(line->buf[5])) {
-		ret = is_format_patch_separator(line->buf + 1, line->len - 1);
-		goto check_header_out;
-	}
-	if (starts_with(line->buf, "[PATCH]") && isspace(line->buf[7])) {
-		for (i = 0; header[i]; i++) {
-			if (!strcmp("Subject", header[i])) {
-				handle_header(&hdr_data[i], line);
-				ret = 1;
-				goto check_header_out;
-			}
-		}
-	}
-
-check_header_out:
-	strbuf_release(&sb);
-	return ret;
 }
 
 static struct strbuf *decode_q_segment(const struct strbuf *q_seg, int rfc2047)
@@ -537,6 +469,73 @@ release_return:
 	strbuf_release(&outbuf);
 	strbuf_release(&charset_q);
 	strbuf_release(&piecebuf);
+}
+
+static int check_header(const struct strbuf *line,
+				struct strbuf *hdr_data[], int overwrite)
+{
+	int i, ret = 0, len;
+	struct strbuf sb = STRBUF_INIT;
+	/* search for the interesting parts */
+	for (i = 0; header[i]; i++) {
+		int len = strlen(header[i]);
+		if ((!hdr_data[i] || overwrite) && cmp_header(line, header[i])) {
+			/* Unwrap inline B and Q encoding, and optionally
+			 * normalize the meta information to utf8.
+			 */
+			strbuf_add(&sb, line->buf + len + 2, line->len - len - 2);
+			decode_header(&sb);
+			handle_header(&hdr_data[i], &sb);
+			ret = 1;
+			goto check_header_out;
+		}
+	}
+
+	/* Content stuff */
+	if (cmp_header(line, "Content-Type")) {
+		len = strlen("Content-Type: ");
+		strbuf_add(&sb, line->buf + len, line->len - len);
+		decode_header(&sb);
+		strbuf_insert(&sb, 0, "Content-Type: ", len);
+		handle_content_type(&sb);
+		ret = 1;
+		goto check_header_out;
+	}
+	if (cmp_header(line, "Content-Transfer-Encoding")) {
+		len = strlen("Content-Transfer-Encoding: ");
+		strbuf_add(&sb, line->buf + len, line->len - len);
+		decode_header(&sb);
+		handle_content_transfer_encoding(&sb);
+		ret = 1;
+		goto check_header_out;
+	}
+	if (cmp_header(line, "Message-Id")) {
+		len = strlen("Message-Id: ");
+		strbuf_add(&sb, line->buf + len, line->len - len);
+		decode_header(&sb);
+		handle_message_id(&sb);
+		ret = 1;
+		goto check_header_out;
+	}
+
+	/* for inbody stuff */
+	if (starts_with(line->buf, ">From") && isspace(line->buf[5])) {
+		ret = is_format_patch_separator(line->buf + 1, line->len - 1);
+		goto check_header_out;
+	}
+	if (starts_with(line->buf, "[PATCH]") && isspace(line->buf[7])) {
+		for (i = 0; header[i]; i++) {
+			if (!strcmp("Subject", header[i])) {
+				handle_header(&hdr_data[i], line);
+				ret = 1;
+				goto check_header_out;
+			}
+		}
+	}
+
+check_header_out:
+	strbuf_release(&sb);
+	return ret;
 }
 
 static void decode_transfer_encoding(struct strbuf *line)
