@@ -379,74 +379,6 @@ check_header_out:
 	return ret;
 }
 
-static int is_rfc2822_header(const struct strbuf *line)
-{
-	/*
-	 * The section that defines the loosest possible
-	 * field name is "3.6.8 Optional fields".
-	 *
-	 * optional-field = field-name ":" unstructured CRLF
-	 * field-name = 1*ftext
-	 * ftext = %d33-57 / %59-126
-	 */
-	int ch;
-	char *cp = line->buf;
-
-	/* Count mbox From headers as headers */
-	if (starts_with(cp, "From ") || starts_with(cp, ">From "))
-		return 1;
-
-	while ((ch = *cp++)) {
-		if (ch == ':')
-			return 1;
-		if ((33 <= ch && ch <= 57) ||
-		    (59 <= ch && ch <= 126))
-			continue;
-		break;
-	}
-	return 0;
-}
-
-static int read_one_header_line(struct strbuf *line, FILE *in)
-{
-	struct strbuf continuation = STRBUF_INIT;
-
-	/* Get the first part of the line. */
-	if (strbuf_getline(line, in, '\n'))
-		return 0;
-
-	/*
-	 * Is it an empty line or not a valid rfc2822 header?
-	 * If so, stop here, and return false ("not a header")
-	 */
-	strbuf_rtrim(line);
-	if (!line->len || !is_rfc2822_header(line)) {
-		/* Re-add the newline */
-		strbuf_addch(line, '\n');
-		return 0;
-	}
-
-	/*
-	 * Now we need to eat all the continuation lines..
-	 * Yuck, 2822 header "folding"
-	 */
-	for (;;) {
-		int peek;
-
-		peek = fgetc(in); ungetc(peek, in);
-		if (peek != ' ' && peek != '\t')
-			break;
-		if (strbuf_getline(&continuation, in, '\n'))
-			break;
-		continuation.buf[0] = ' ';
-		strbuf_rtrim(&continuation);
-		strbuf_addbuf(line, &continuation);
-	}
-	strbuf_release(&continuation);
-
-	return 1;
-}
-
 static struct strbuf *decode_q_segment(const struct strbuf *q_seg, int rfc2047)
 {
 	const char *in = q_seg->buf;
@@ -793,6 +725,74 @@ static void handle_filter(struct strbuf *line)
 		handle_patch(line);
 		break;
 	}
+}
+
+static int is_rfc2822_header(const struct strbuf *line)
+{
+	/*
+	 * The section that defines the loosest possible
+	 * field name is "3.6.8 Optional fields".
+	 *
+	 * optional-field = field-name ":" unstructured CRLF
+	 * field-name = 1*ftext
+	 * ftext = %d33-57 / %59-126
+	 */
+	int ch;
+	char *cp = line->buf;
+
+	/* Count mbox From headers as headers */
+	if (starts_with(cp, "From ") || starts_with(cp, ">From "))
+		return 1;
+
+	while ((ch = *cp++)) {
+		if (ch == ':')
+			return 1;
+		if ((33 <= ch && ch <= 57) ||
+		    (59 <= ch && ch <= 126))
+			continue;
+		break;
+	}
+	return 0;
+}
+
+static int read_one_header_line(struct strbuf *line, FILE *in)
+{
+	struct strbuf continuation = STRBUF_INIT;
+
+	/* Get the first part of the line. */
+	if (strbuf_getline(line, in, '\n'))
+		return 0;
+
+	/*
+	 * Is it an empty line or not a valid rfc2822 header?
+	 * If so, stop here, and return false ("not a header")
+	 */
+	strbuf_rtrim(line);
+	if (!line->len || !is_rfc2822_header(line)) {
+		/* Re-add the newline */
+		strbuf_addch(line, '\n');
+		return 0;
+	}
+
+	/*
+	 * Now we need to eat all the continuation lines..
+	 * Yuck, 2822 header "folding"
+	 */
+	for (;;) {
+		int peek;
+
+		peek = fgetc(in); ungetc(peek, in);
+		if (peek != ' ' && peek != '\t')
+			break;
+		if (strbuf_getline(&continuation, in, '\n'))
+			break;
+		continuation.buf[0] = ' ';
+		strbuf_rtrim(&continuation);
+		strbuf_addbuf(line, &continuation);
+	}
+	strbuf_release(&continuation);
+
+	return 1;
 }
 
 static int find_boundary(void)
