@@ -31,8 +31,17 @@ static int use_inbody_headers = 1;
 #define MAX_HDR_PARSED 10
 #define MAX_BOUNDARIES 5
 
-static void cleanup_space(struct strbuf *sb);
-
+static void cleanup_space(struct strbuf *sb)
+{
+	size_t pos, cnt;
+	for (pos = 0; pos < sb->len; pos++) {
+		if (isspace(sb->buf[pos])) {
+			sb->buf[pos] = ' ';
+			for (cnt = 0; isspace(sb->buf[pos + cnt + 1]); cnt++);
+			strbuf_remove(sb, pos + 1, cnt);
+		}
+	}
+}
 
 static void get_sane_name(struct strbuf *out, struct strbuf *name, struct strbuf *email)
 {
@@ -270,18 +279,6 @@ static void cleanup_subject(struct strbuf *subject)
 		break;
 	}
 	strbuf_trim(subject);
-}
-
-static void cleanup_space(struct strbuf *sb)
-{
-	size_t pos, cnt;
-	for (pos = 0; pos < sb->len; pos++) {
-		if (isspace(sb->buf[pos])) {
-			sb->buf[pos] = ' ';
-			for (cnt = 0; isspace(sb->buf[pos + cnt + 1]); cnt++);
-			strbuf_remove(sb, pos + 1, cnt);
-		}
-	}
 }
 
 static const char *header[MAX_HDR_PARSED] = {
