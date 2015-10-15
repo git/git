@@ -31,6 +31,7 @@ struct mailinfo {
 	struct strbuf **s_hdr_data;
 
 	struct strbuf log_message;
+	int input_error;
 };
 
 extern void setup_mailinfo(struct mailinfo *);

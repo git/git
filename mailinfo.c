@@ -163,8 +163,10 @@ static void handle_content_type(struct mailinfo *mi, struct strbuf *line)
 	if (slurp_attr(line->buf, "boundary=", boundary)) {
 		strbuf_insert(boundary, 0, "--", 2);
 		if (++mi->content_top >= &mi->content[MAX_BOUNDARIES]) {
-			fprintf(stderr, "Too many boundaries to handle\n");
-			exit(1);
+			error("Too many boundaries to handle");
+			mi->input_error = -1;
+			mi->content_top = &mi->content[MAX_BOUNDARIES] - 1;
+			return;
 		}
 		*(mi->content_top) = boundary;
 		boundary = NULL;
@@ -355,9 +357,11 @@ static int convert_to_utf8(struct mailinfo *mi,
 	if (same_encoding(mi->metainfo_charset, charset))
 		return 0;
 	out = reencode_string(line->buf, mi->metainfo_charset, charset);
-	if (!out)
+	if (!out) {
+		mi->input_error = -1;
 		return error("cannot convert from %s to %s",
 			     charset, mi->metainfo_charset);
+	}
 	strbuf_attach(line, out, strlen(out), strlen(out));
 	return 0;
 }
@@ -367,6 +371,7 @@ static void decode_header(struct mailinfo *mi, struct strbuf *it)
 	char *in, *ep, *cp;
 	struct strbuf outbuf = STRBUF_INIT, *dec;
 	struct strbuf charset_q = STRBUF_INIT, piecebuf = STRBUF_INIT;
+	int found_error = 1; /* pessimism */
 
 	in = it->buf;
 	while (in - it->buf <= it->len && (ep = strstr(in, "=?")) != NULL) {
@@ -436,10 +441,14 @@ static void decode_header(struct mailinfo *mi, struct strbuf *it)
 	strbuf_addstr(&outbuf, in);
 	strbuf_reset(it);
 	strbuf_addbuf(it, &outbuf);
+	found_error = 0;
 release_return:
 	strbuf_release(&outbuf);
 	strbuf_release(&charset_q);
 	strbuf_release(&piecebuf);
+
+	if (found_error)
+		mi->input_error = -1;
 }
 
 static int check_header(struct mailinfo *mi,
@@ -640,7 +649,7 @@ static int handle_commit_msg(struct mailinfo *mi, struct strbuf *line)
 
 	/* normalize the log message to UTF-8. */
 	if (convert_to_utf8(mi, line, mi->charset.buf))
-		exit(128);
+		return 0; /* mi->input_error already set */
 
 	if (mi->use_scissors && is_scissors_line(line)) {
 		int i;
@@ -785,12 +794,15 @@ again:
 		   will fail first.  But just in case..
 		 */
 		if (--mi->content_top < mi->content) {
-			fprintf(stderr, "Detected mismatched boundaries, "
-					"can't recover\n");
-			exit(1);
+			error("Detected mismatched boundaries, can't recover");
+			mi->input_error = -1;
+			mi->content_top = mi->content;
+			return 0;
 		}
 		handle_filter(mi, &newline);
 		strbuf_release(&newline);
+		if (mi->input_error)
+			return 0;
 
 		/* skip to the next boundary */
 		if (!find_boundary(mi, line))
@@ -875,6 +887,8 @@ static void handle_body(struct mailinfo *mi, struct strbuf *line)
 			handle_filter(mi, line);
 		}
 
+		if (mi->input_error)
+			break;
 	} while (!strbuf_getwholeline(line, mi->input, '\n'));
 
 handle_body_out:
@@ -968,7 +982,7 @@ int mailinfo(struct mailinfo *mi, const char *msg, const char *patch)
 
 	handle_info(mi);
 	strbuf_release(&line);
-	return 0;
+	return mi->input_error;
 }
 
 static int git_mailinfo_config(const char *var, const char *value, void *mi_)
