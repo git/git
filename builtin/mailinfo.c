@@ -28,7 +28,6 @@ static int use_scissors;
 static int add_message_id;
 static int use_inbody_headers = 1;
 
-#define MAX_HDR_PARSED 10
 #define MAX_BOUNDARIES 5
 
 static void cleanup_space(struct strbuf *sb)
@@ -281,6 +280,7 @@ static void cleanup_subject(struct strbuf *subject)
 	strbuf_trim(subject);
 }
 
+#define MAX_HDR_PARSED 10
 static const char *header[MAX_HDR_PARSED] = {
 	"From","Subject","Date",
 };
