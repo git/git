@@ -2208,6 +2208,17 @@ enum resume_mode {
 	RESUME_ABORT
 };
 
+static int git_am_config(const char *k, const char *v, void *cb)
+{
+	int status;
+
+	status = git_gpg_config(k, v, NULL);
+	if (status)
+		return status;
+
+	return git_default_config(k, v, NULL);
+}
+
 int cmd_am(int argc, const char **argv, const char *prefix)
 {
 	struct am_state state;
@@ -2308,7 +2319,7 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 		OPT_END()
 	};
 
-	git_config(git_default_config, NULL);
+	git_config(git_am_config, NULL);
 
 	am_state_init(&state, git_path("rebase-apply"));
 
