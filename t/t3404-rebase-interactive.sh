@@ -1227,6 +1227,21 @@ test_expect_success 'static check of bad command' '
 	test C = $(git cat-file commit HEAD^ | sed -ne \$p)
 '
 
+test_expect_success 'tabs and spaces are accepted in the todolist' '
+	rebase_setup_and_clean indented-comment &&
+	write_script add-indent.sh <<-\EOF &&
+	(
+		# Turn single spaces into space/tab mix
+		sed "1s/ /	/g; 2s/ /  /g; 3s/ / 	/g" "$1"
+		printf "\n\t# comment\n #more\n\t # comment\n"
+	) >$1.new
+	mv "$1.new" "$1"
+	EOF
+	test_set_editor "$(pwd)/add-indent.sh" &&
+	git rebase -i HEAD^^^ &&
+	test E = $(git cat-file commit HEAD | sed -ne \$p)
+'
+
 cat >expect <<EOF
 Warning: the SHA-1 is missing or isn't a commit in the following line:
  - edit XXXXXXX False commit
