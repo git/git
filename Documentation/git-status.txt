@@ -53,8 +53,9 @@ OPTIONS
 --untracked-files[=<mode>]::
 	Show untracked files.
 +
-The mode parameter is optional (defaults to 'all'), and is used to
-specify the handling of untracked files.
+The mode parameter is used to specify the handling of untracked files.
+It is optional: it defaults to 'all', and if specified, it must be
+stuck to the option (e.g. `-uno`, but not `-u no`).
 +
 The possible options are:
 +
