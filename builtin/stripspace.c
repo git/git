@@ -78,8 +78,8 @@ static void comment_lines(struct strbuf *buf)
 }
 
 static const char *usage_msg = "\n"
-"  git stripspace [-s | --strip-comments] < input\n"
-"  git stripspace [-c | --comment-lines] < input";
+"  git stripspace [-s | --strip-comments]\n"
+"  git stripspace [-c | --comment-lines]";
 
 int cmd_stripspace(int argc, const char **argv, const char *prefix)
 {

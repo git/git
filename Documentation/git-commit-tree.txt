@@ -9,7 +9,7 @@ git-commit-tree - Create a new commit object
 SYNOPSIS
 --------
 [verse]
-'git commit-tree' <tree> [(-p <parent>)...] < changelog
+'git commit-tree' <tree> [(-p <parent>)...]
 'git commit-tree' [(-p <parent>)...] [-S[<keyid>]] [(-m <message>)...]
 		  [(-F <file>)...] <tree>
 

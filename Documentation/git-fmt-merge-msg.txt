@@ -9,7 +9,7 @@ git-fmt-merge-msg - Produce a merge commit message
 SYNOPSIS
 --------
 [verse]
-'git fmt-merge-msg' [-m <message>] [--log[=<n>] | --no-log] <$GIT_DIR/FETCH_HEAD
+'git fmt-merge-msg' [-m <message>] [--log[=<n>] | --no-log]
 'git fmt-merge-msg' [-m <message>] [--log[=<n>] | --no-log] -F <file>
 
 DESCRIPTION
@@ -56,6 +56,18 @@ include::fmt-merge-msg-config.txt[]
 merge.summary::
 	Synonym to `merge.log`; this is deprecated and will be removed in
 	the future.
+
+EXAMPLE
+-------
+
+--
+$ git fetch origin master
+$ git fmt-merge-msg --log <$GIT_DIR/FETCH_HEAD
+--
+
+Print a log message describing a merge of the "master" branch from
+the "origin" remote.
+
 
 SEE ALSO
 --------

@@ -165,7 +165,7 @@ static void generate_id_list(int stable)
 	strbuf_release(&line_buf);
 }
 
-static const char patch_id_usage[] = "git patch-id [--stable | --unstable] < patch";
+static const char patch_id_usage[] = "git patch-id [--stable | --unstable]";
 
 static int git_patch_id_config(const char *var, const char *value, void *cb)
 {

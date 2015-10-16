@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git check-ignore' [options] pathname...
-'git check-ignore' [options] --stdin < <list-of-paths>
+'git check-ignore' [options] --stdin
 
 DESCRIPTION
 -----------
@@ -35,7 +35,8 @@ OPTIONS
 	for each given pathname.
 
 --stdin::
-	Read file names from stdin instead of from the command-line.
+	Read pathnames from the standard input, one per line,
+	instead of from the command-line.
 
 -z::
 	The output format is modified to be machine-parseable (see
