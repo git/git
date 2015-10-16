@@ -910,6 +910,11 @@ const char *remove_leading_path(const char *in, const char *prefix)
  * normalized, any time "../" eats up to the prefix_len part,
  * prefix_len is reduced. In the end prefix_len is the remaining
  * prefix that has not been overridden by user pathspec.
+ *
+ * NEEDSWORK: This function doesn't perform normalization w.r.t. trailing '/'.
+ * For everything but the root folder itself, the normalized path should not
+ * end with a '/', then the callers need to be fixed up accordingly.
+ *
  */
 int normalize_path_copy_len(char *dst, const char *src, int *prefix_len)
 {
