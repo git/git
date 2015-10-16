@@ -31,7 +31,7 @@ UI, Workflows & Features
  * The use of 'good/bad' in "git bisect" made it confusing to use when
    hunting for a state change that is not a regression (e.g. bugfix).
    The command learned 'old/new' and then allows the end user to
-   say e.g. "bisect start --term-old=fast --term=new=slow" to find a
+   say e.g. "bisect start --term-old=fast --term-new=slow" to find a
    performance regression.
 
  * "git interpret-trailers" can now run outside of a Git repository.
@@ -200,6 +200,21 @@ notes for details).
    work trees created via "git worktree add".
    (merge 11f9dd7 mk/submodule-gitdir-path later to maint).
 
+ * "git gc" is safe to run anytime only because it has the built-in
+   grace period to protect young objects.  In order to run with no
+   grace period, the user must make sure that the repository is
+   quiescent.
+   (merge fae1a90 jc/doc-gc-prune-now later to maint).
+
+ * A recent "filter-branch --msg-filter" broke skipping of the commit
+   object header, which is fixed.
+   (merge a5a4b3f jk/filter-branch-use-of-sed-on-incomplete-line later to maint).
+
+ * The normalize_ceiling_entry() function does not muck with the end
+   of the path it accepts, and the real world callers do rely on that,
+   but a test insisted that the function drops a trailing slash.
+   (merge b2a7123 rd/test-path-utils later to maint).
+
  * Code clean-up and minor fixes.
    (merge 15ed07d jc/rerere later to maint).
    (merge b744767 pt/pull-builtin later to maint).
@@ -209,3 +224,4 @@ notes for details).
    (merge a43eb67 tk/doc-interpret-trailers-grammo later to maint).
    (merge ba128e2 es/worktree-add-cleanup later to maint).
    (merge 44cd91e cc/quote-comments later to maint).
+   (merge 147875f sb/submodule-config-parse later to maint).
