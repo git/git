@@ -185,10 +185,10 @@ log.date::
 	dates like `Sat May 8 19:35:34 2010 -0500`.
 
 log.follow::
-	If a single <path> is given to git log, it will act as
-	if the `--follow` option was also used.  This has the same
-	limitations as `--follow`, i.e. it cannot be used to follow
-	multiple files and does not work well on non-linear history.
+	If `true`, `git log` will act as if the `--follow` option was used when
+	a single <path> is given.  This has the same limitations as `--follow`,
+	i.e. it cannot be used to follow multiple files and does not work well
+	on non-linear history.
 
 log.showRoot::
 	If `false`, `git log` and related commands will not treat the
