@@ -65,7 +65,7 @@ static int parse_opt_rebase(const struct option *opt, const char *arg, int unset
 }
 
 static const char * const pull_usage[] = {
-	N_("git pull [options] [<repository> [<refspec>...]]"),
+	N_("git pull [<options>] [<repository> [<refspec>...]]"),
 	NULL
 };
 
