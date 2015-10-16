@@ -55,8 +55,9 @@ By default, the notes shown are from the notes refs listed in the
 environment overrides). See linkgit:git-config[1] for more details.
 +
 With an optional '<ref>' argument, show this notes ref instead of the
-default notes ref(s). The ref is taken to be in `refs/notes/` if it
-is not qualified.
+default notes ref(s). The ref specifies the full refname when it begins
+with `refs/notes/`; when it begins with `notes/`, `refs/` and otherwise
+`refs/notes/` is prefixed to form a full name of the ref.
 +
 Multiple --notes options can be combined to control which notes are
 being displayed. Examples: "--notes=foo" will show only notes from
