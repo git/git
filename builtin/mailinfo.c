@@ -842,7 +842,7 @@ again:
 	return 1;
 }
 
-static void handle_body(void)
+static void handle_body(struct strbuf *line)
 {
 	struct strbuf prev = STRBUF_INIT;
 	int filter_stage = 0;
@@ -856,7 +856,7 @@ static void handle_body(void)
 
 	do {
 		/* process any boundary lines */
-		if (*content_top && is_multipart_boundary(&line)) {
+		if (*content_top && is_multipart_boundary(line)) {
 			/* flush any leftover */
 			if (prev.len) {
 				handle_filter(&prev, &filter_stage, &header_stage);
@@ -867,7 +867,7 @@ static void handle_body(void)
 		}
 
 		/* Unwrap transfer encoding */
-		decode_transfer_encoding(&line);
+		decode_transfer_encoding(line);
 
 		switch (transfer_encoding) {
 		case TE_BASE64:
@@ -876,7 +876,7 @@ static void handle_body(void)
 			struct strbuf **lines, **it, *sb;
 
 			/* Prepend any previous partial lines */
-			strbuf_insert(&line, 0, prev.buf, prev.len);
+			strbuf_insert(line, 0, prev.buf, prev.len);
 			strbuf_reset(&prev);
 
 			/*
@@ -884,7 +884,7 @@ static void handle_body(void)
 			 * multiple new lines.  Pass only one chunk
 			 * at a time to handle_filter()
 			 */
-			lines = strbuf_split(&line, '\n');
+			lines = strbuf_split(line, '\n');
 			for (it = lines; (sb = *it); it++) {
 				if (*(it + 1) == NULL) /* The last line */
 					if (sb->buf[sb->len - 1] != '\n') {
@@ -902,10 +902,10 @@ static void handle_body(void)
 			break;
 		}
 		default:
-			handle_filter(&line, &filter_stage, &header_stage);
+			handle_filter(line, &filter_stage, &header_stage);
 		}
 
-	} while (!strbuf_getwholeline(&line, fin, '\n'));
+	} while (!strbuf_getwholeline(line, fin, '\n'));
 
 handle_body_out:
 	strbuf_release(&prev);
@@ -991,7 +991,7 @@ static int mailinfo(FILE *in, FILE *out, const char *msg, const char *patch)
 	while (read_one_header_line(&line, fin))
 		check_header(&line, p_hdr_data, 1);
 
-	handle_body();
+	handle_body(&line);
 	fclose(patchfile);
 
 	handle_info();
