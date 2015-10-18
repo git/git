@@ -384,7 +384,7 @@ static void convert_to_utf8(struct mailinfo *mi,
 {
 	char *out;
 
-	if (!charset || !*charset)
+	if (!mi->metainfo_charset || !charset || !*charset)
 		return;
 
 	if (same_encoding(mi->metainfo_charset, charset))
@@ -459,8 +459,7 @@ static void decode_header(struct mailinfo *mi, struct strbuf *it)
 			dec = decode_q_segment(&piecebuf, 1);
 			break;
 		}
-		if (mi->metainfo_charset)
-			convert_to_utf8(mi, dec, charset_q.buf);
+		convert_to_utf8(mi, dec, charset_q.buf);
 
 		strbuf_addbuf(&outbuf, dec);
 		strbuf_release(dec);
@@ -674,8 +673,7 @@ static int handle_commit_msg(struct mailinfo *mi, struct strbuf *line)
 		mi->header_stage = 0;
 
 	/* normalize the log message to UTF-8. */
-	if (mi->metainfo_charset)
-		convert_to_utf8(mi, line, charset.buf);
+	convert_to_utf8(mi, line, charset.buf);
 
 	if (mi->use_scissors && is_scissors_line(line)) {
 		int i;
