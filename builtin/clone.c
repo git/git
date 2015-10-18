@@ -1067,12 +1067,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 	transport_disconnect(transport);
 
 	if (option_dissociate) {
-		struct packed_git *p;
-
-		for (p = packed_git; p; p = p->next) {
-			close_pack_windows(p);
-			close_pack_index(p);
-		}
+		close_all_packs();
 		dissociate_from_references();
 	}
 
