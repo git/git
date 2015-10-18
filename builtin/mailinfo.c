@@ -795,14 +795,14 @@ static int find_boundary(void)
 	return 0;
 }
 
-static int handle_boundary(int *filter_stage, int *header_stage)
+static int handle_boundary(struct strbuf *line, int *filter_stage, int *header_stage)
 {
 	struct strbuf newline = STRBUF_INIT;
 
 	strbuf_addch(&newline, '\n');
 again:
-	if (line.len >= (*content_top)->len + 2 &&
-	    !memcmp(line.buf + (*content_top)->len, "--", 2)) {
+	if (line->len >= (*content_top)->len + 2 &&
+	    !memcmp(line->buf + (*content_top)->len, "--", 2)) {
 		/* we hit an end boundary */
 		/* pop the current boundary off the stack */
 		strbuf_release(*content_top);
@@ -831,14 +831,14 @@ again:
 	strbuf_reset(&charset);
 
 	/* slurp in this section's info */
-	while (read_one_header_line(&line, fin))
-		check_header(&line, p_hdr_data, 0);
+	while (read_one_header_line(line, fin))
+		check_header(line, p_hdr_data, 0);
 
 	strbuf_release(&newline);
 	/* replenish line */
-	if (strbuf_getline(&line, fin, '\n'))
+	if (strbuf_getline(line, fin, '\n'))
 		return 0;
-	strbuf_addch(&line, '\n');
+	strbuf_addch(line, '\n');
 	return 1;
 }
 
@@ -862,7 +862,7 @@ static void handle_body(struct strbuf *line)
 				handle_filter(&prev, &filter_stage, &header_stage);
 				strbuf_reset(&prev);
 			}
-			if (!handle_boundary(&filter_stage, &header_stage))
+			if (!handle_boundary(line, &filter_stage, &header_stage))
 				goto handle_body_out;
 		}
 
