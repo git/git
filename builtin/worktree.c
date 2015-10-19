@@ -7,7 +7,7 @@
 #include "sigchain.h"
 
 static const char * const worktree_usage[] = {
-	N_("git worktree add [<options>] <path> <branch>"),
+	N_("git worktree add [<options>] <path> [<branch>]"),
 	N_("git worktree prune [<options>]"),
 	NULL
 };
