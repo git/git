@@ -22,6 +22,7 @@ struct mailinfo {
 	int use_inbody_headers;
 	const char *metainfo_charset;
 
+	struct strbuf charset;
 	char *message_id;
 	enum  {
 		TE_DONTCARE, TE_QP, TE_BASE64
@@ -31,8 +32,6 @@ struct mailinfo {
 	int header_stage; /* still checking in-body headers? */
 };
 
-
-static struct strbuf charset = STRBUF_INIT;
 static struct strbuf **p_hdr_data, **s_hdr_data;
 
 #define MAX_BOUNDARIES 5
@@ -193,7 +192,7 @@ static struct strbuf *content[MAX_BOUNDARIES];
 
 static struct strbuf **content_top = content;
 
-static void handle_content_type(struct strbuf *line)
+static void handle_content_type(struct mailinfo *mi, struct strbuf *line)
 {
 	struct strbuf *boundary = xmalloc(sizeof(struct strbuf));
 	strbuf_init(boundary, line->len);
@@ -207,7 +206,7 @@ static void handle_content_type(struct strbuf *line)
 		*content_top = boundary;
 		boundary = NULL;
 	}
-	slurp_attr(line->buf, "charset=", &charset);
+	slurp_attr(line->buf, "charset=", &mi->charset);
 
 	if (boundary) {
 		strbuf_release(boundary);
@@ -504,7 +503,7 @@ static int check_header(struct mailinfo *mi,
 		strbuf_add(&sb, line->buf + len, line->len - len);
 		decode_header(mi, &sb);
 		strbuf_insert(&sb, 0, "Content-Type: ", len);
-		handle_content_type(&sb);
+		handle_content_type(mi, &sb);
 		ret = 1;
 		goto check_header_out;
 	}
@@ -674,7 +673,7 @@ static int handle_commit_msg(struct mailinfo *mi, struct strbuf *line)
 		mi->header_stage = 0;
 
 	/* normalize the log message to UTF-8. */
-	convert_to_utf8(mi, line, charset.buf);
+	convert_to_utf8(mi, line, mi->charset.buf);
 
 	if (mi->use_scissors && is_scissors_line(line)) {
 		int i;
@@ -837,7 +836,7 @@ again:
 
 	/* set some defaults */
 	mi->transfer_encoding = TE_DONTCARE;
-	strbuf_reset(&charset);
+	strbuf_reset(&mi->charset);
 
 	/* slurp in this section's info */
 	while (read_one_header_line(line, mi->input))
@@ -1024,6 +1023,7 @@ static void setup_mailinfo(struct mailinfo *mi)
 	memset(mi, 0, sizeof(*mi));
 	strbuf_init(&mi->name, 0);
 	strbuf_init(&mi->email, 0);
+	strbuf_init(&mi->charset, 0);
 	mi->header_stage = 1;
 	mi->use_inbody_headers = 1;
 	git_config(git_mailinfo_config, &mi);
@@ -1033,6 +1033,7 @@ static void clear_mailinfo(struct mailinfo *mi)
 {
 	strbuf_release(&mi->name);
 	strbuf_release(&mi->email);
+	strbuf_release(&mi->charset);
 	free(mi->message_id);
 }
 
