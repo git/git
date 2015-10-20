@@ -74,6 +74,15 @@ Performance, Internal Implementation, Development Support etc.
    ref-filter API that is shared with "git tag" and "git
    for-each-ref".
 
+ * The test for various line-ending conversions has been enhanced.
+
+ * A few test scripts around "git p4" have been improved for
+   portability.
+
+ * Many allocations that is manually counted (correctly) that are
+   followed by strcpy/sprintf have been replaced with a less error
+   prone constructs such as xstrfmt.
+
 
 Also contains various documentation updates and code clean-ups.
 
@@ -217,7 +226,7 @@ notes for details).
 
  * Code clean-up and minor fixes.
    (merge 15ed07d jc/rerere later to maint).
-   (merge b744767 pt/pull-builtin later to maint).
+   (merge e7a7401 pt/pull-builtin later to maint).
    (merge 29bc480 nd/ls-remote-does-not-have-u-option later to maint).
    (merge be510e0 jk/asciidoctor-section-heading-markup-fix later to maint).
    (merge 83e6bda tk/typofix-connect-unknown-proto-error later to maint).
