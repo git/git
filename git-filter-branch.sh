@@ -347,7 +347,7 @@ while read commit parents; do
 	fi
 
 	{
-		while read -r header_line && test -n "$header_line"
+		while IFS='' read -r header_line && test -n "$header_line"
 		do
 			# skip header lines...
 			:;
