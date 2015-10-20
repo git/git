@@ -4,6 +4,12 @@ test_description='interaction with P4 case-folding'
 
 . ./lib-git-p4.sh
 
+if test_have_prereq CASE_INSENSITIVE_FS
+then
+	skip_all='skipping P4 case-folding tests; case insensitive file system detected'
+	test_done
+fi
+
 test_expect_success 'start p4d with case folding enabled' '
 	start_p4d -C1
 '

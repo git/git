@@ -417,11 +417,8 @@ test_expect_success 'cleanup chmod after submit cancel' '
 		! p4 fstat -T action text &&
 		test_path_is_file text+x &&
 		! p4 fstat -T action text+x &&
-		if test_have_prereq !CYGWIN
-		then
-			stat --format=%A text | egrep ^-r-- &&
-			stat --format=%A text+x | egrep ^-r-x
-		fi
+		ls -l text | egrep ^-r-- &&
+		ls -l text+x | egrep ^-r-x
 	)
 '
 
