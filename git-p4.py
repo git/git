@@ -22,6 +22,7 @@ import platform
 import re
 import shutil
 import stat
+import ctypes
 
 try:
     from subprocess import CalledProcessError
