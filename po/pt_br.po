@@ -90,71 +90,71 @@ msgid "Cancel"
 msgstr "Cancelar"
 
 #: gitk:2069
-msgid "Update"
+msgid "&Update"
 msgstr "Atualizar"
 
 #: gitk:2070
-msgid "Reload"
+msgid "&Reload"
 msgstr "Recarregar"
 
 #: gitk:2071
-msgid "Reread references"
+msgid "Reread re&ferences"
 msgstr "Ler as referências novamente"
 
 #: gitk:2072
-msgid "List references"
+msgid "&List references"
 msgstr "Listar referências"
 
 #: gitk:2074
-msgid "Start git gui"
+msgid "Start git &gui"
 msgstr "Iniciar Git GUI"
 
 #: gitk:2076
-msgid "Quit"
+msgid "&Quit"
 msgstr "Sair"
 
 #: gitk:2068
-msgid "File"
+msgid "&File"
 msgstr "Arquivo"
 
 #: gitk:2080
-msgid "Preferences"
+msgid "&Preferences"
 msgstr "Preferências"
 
 #: gitk:2079
-msgid "Edit"
+msgid "&Edit"
 msgstr "Editar"
 
 #: gitk:2084
-msgid "New view..."
+msgid "&New view..."
 msgstr "Nova vista..."
 
 #: gitk:2085
-msgid "Edit view..."
+msgid "&Edit view..."
 msgstr "Editar vista..."
 
 #: gitk:2086
-msgid "Delete view"
+msgid "&Delete view"
 msgstr "Apagar vista"
 
 #: gitk:2088 gitk:4043
-msgid "All files"
+msgid "&All files"
 msgstr "Todos os arquivos"
 
 #: gitk:2083 gitk:4067
-msgid "View"
+msgid "&View"
 msgstr "Exibir"
 
 #: gitk:2093 gitk:2103 gitk:3012
-msgid "About gitk"
+msgid "&About gitk"
 msgstr "Sobre o gitk"
 
 #: gitk:2094 gitk:2108
-msgid "Key bindings"
+msgid "&Key bindings"
 msgstr "Atalhos de teclado"
 
 #: gitk:2092 gitk:2107
-msgid "Help"
+msgid "&Help"
 msgstr "Ajuda"
 
 #: gitk:2185 gitk:8652
