@@ -63,4 +63,33 @@ test_expect_success 'symbolic-ref fails to delete real ref' '
 '
 reset_to_sane
 
+test_expect_success 'create large ref name' '
+	# make 256+ character ref; some systems may not handle that,
+	# so be gentle
+	long=0123456789abcdef &&
+	long=$long/$long/$long/$long &&
+	long=$long/$long/$long/$long &&
+	long_ref=refs/heads/$long &&
+	tree=$(git write-tree) &&
+	commit=$(echo foo | git commit-tree $tree) &&
+	if git update-ref $long_ref $commit; then
+		test_set_prereq LONG_REF
+	else
+		echo >&2 "long refs not supported"
+	fi
+'
+
+test_expect_success LONG_REF 'symbolic-ref can point to large ref name' '
+	git symbolic-ref HEAD $long_ref &&
+	echo $long_ref >expect &&
+	git symbolic-ref HEAD >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success LONG_REF 'we can parse long symbolic ref' '
+	echo $commit >expect &&
+	git rev-parse --verify HEAD >actual &&
+	test_cmp expect actual
+'
+
 test_done

@@ -14,7 +14,7 @@ static const char *better_branch_name(const char *branch)
 
 	if (strlen(branch) != 40)
 		return branch;
-	sprintf(githead_env, "GITHEAD_%s", branch);
+	xsnprintf(githead_env, sizeof(githead_env), "GITHEAD_%s", branch);
 	name = getenv(githead_env);
 	return name ? name : branch;
 }

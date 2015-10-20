@@ -796,8 +796,7 @@ static int reopen_stdout(struct commit *commit, const char *subject,
 		if (filename.len >=
 		    PATH_MAX - FORMAT_PATCH_NAME_MAX - suffix_len)
 			return error(_("name of output directory is too long"));
-		if (filename.buf[filename.len - 1] != '/')
-			strbuf_addch(&filename, '/');
+		strbuf_complete(&filename, '/');
 	}
 
 	if (rev->numbered_files)

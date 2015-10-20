@@ -120,8 +120,7 @@ char *url_decode_parameter_value(const char **query)
 void end_url_with_slash(struct strbuf *buf, const char *url)
 {
 	strbuf_addstr(buf, url);
-	if (buf->len && buf->buf[buf->len - 1] != '/')
-		strbuf_addch(buf, '/');
+	strbuf_complete(buf, '/');
 }
 
 void str_end_url_with_slash(const char *url, char **dest) {

@@ -10,6 +10,7 @@
 #include "remote.h"
 #include "list-objects.h"
 #include "sigchain.h"
+#include "argv-array.h"
 
 #ifdef EXPAT_NEEDS_XMLPARSE_H
 #include <xmlparse.h>
@@ -361,7 +362,7 @@ static void start_put(struct transfer_request *request)
 	git_zstream stream;
 
 	unpacked = read_sha1_file(request->obj->sha1, &type, &len);
-	hdrlen = sprintf(hdr, "%s %lu", typename(type), len) + 1;
+	hdrlen = xsnprintf(hdr, sizeof(hdr), "%s %lu", typename(type), len) + 1;
 
 	/* Set it up */
 	git_deflate_init(&stream, zlib_compression_level);
@@ -786,21 +787,21 @@ xml_start_tag(void *userData, const char *name, const char **atts)
 {
 	struct xml_ctx *ctx = (struct xml_ctx *)userData;
 	const char *c = strchr(name, ':');
-	int new_len;
+	int old_namelen, new_len;
 
 	if (c == NULL)
 		c = name;
 	else
 		c++;
 
-	new_len = strlen(ctx->name) + strlen(c) + 2;
+	old_namelen = strlen(ctx->name);
+	new_len = old_namelen + strlen(c) + 2;
 
 	if (new_len > ctx->len) {
 		ctx->name = xrealloc(ctx->name, new_len);
 		ctx->len = new_len;
 	}
-	strcat(ctx->name, ".");
-	strcat(ctx->name, c);
+	xsnprintf(ctx->name + old_namelen, ctx->len - old_namelen, ".%s", c);
 
 	free(ctx->cdata);
 	ctx->cdata = NULL;
@@ -881,7 +882,7 @@ static struct remote_lock *lock_remote(const char *path, long timeout)
 	strbuf_addf(&out_buffer.buf, LOCK_REQUEST, escaped);
 	free(escaped);
 
-	sprintf(timeout_header, "Timeout: Second-%ld", timeout);
+	xsnprintf(timeout_header, sizeof(timeout_header), "Timeout: Second-%ld", timeout);
 	dav_headers = curl_slist_append(dav_headers, timeout_header);
 	dav_headers = curl_slist_append(dav_headers, "Content-Type: text/xml");
 
@@ -1459,8 +1460,6 @@ static void add_remote_info_ref(struct remote_ls_ctx *ls)
 {
 	struct strbuf *buf = (struct strbuf *)ls->userData;
 	struct object *o;
-	int len;
-	char *ref_info;
 	struct ref *ref;
 
 	ref = alloc_ref(ls->dentry_name);
@@ -1484,23 +1483,14 @@ static void add_remote_info_ref(struct remote_ls_ctx *ls)
 		return;
 	}
 
-	len = strlen(ls->dentry_name) + 42;
-	ref_info = xcalloc(len + 1, 1);
-	sprintf(ref_info, "%s	%s\n",
-		sha1_to_hex(ref->old_sha1), ls->dentry_name);
-	fwrite_buffer(ref_info, 1, len, buf);
-	free(ref_info);
+	strbuf_addf(buf, "%s\t%s\n",
+		    sha1_to_hex(ref->old_sha1), ls->dentry_name);
 
 	if (o->type == OBJ_TAG) {
 		o = deref_tag(o, ls->dentry_name, 0);
-		if (o) {
-			len = strlen(ls->dentry_name) + 45;
-			ref_info = xcalloc(len + 1, 1);
-			sprintf(ref_info, "%s	%s^{}\n",
-				sha1_to_hex(o->sha1), ls->dentry_name);
-			fwrite_buffer(ref_info, 1, len, buf);
-			free(ref_info);
-		}
+		if (o)
+			strbuf_addf(buf, "%s\t%s^{}\n",
+				    sha1_to_hex(o->sha1), ls->dentry_name);
 	}
 	free(ref);
 }
@@ -1866,10 +1856,7 @@ int main(int argc, char **argv)
 
 	new_refs = 0;
 	for (ref = remote_refs; ref; ref = ref->next) {
-		char old_hex[60], *new_hex;
-		const char *commit_argv[5];
-		int commit_argc;
-		char *new_sha1_hex, *old_sha1_hex;
+		struct argv_array commit_argv = ARGV_ARRAY_INIT;
 
 		if (!ref->peer_ref)
 			continue;
@@ -1923,13 +1910,12 @@ int main(int argc, char **argv)
 		}
 		hashcpy(ref->new_sha1, ref->peer_ref->new_sha1);
 		new_refs++;
-		strcpy(old_hex, sha1_to_hex(ref->old_sha1));
-		new_hex = sha1_to_hex(ref->new_sha1);
 
 		fprintf(stderr, "updating '%s'", ref->name);
 		if (strcmp(ref->name, ref->peer_ref->name))
 			fprintf(stderr, " using '%s'", ref->peer_ref->name);
-		fprintf(stderr, "\n  from %s\n  to   %s\n", old_hex, new_hex);
+		fprintf(stderr, "\n  from %s\n  to   %s\n",
+			sha1_to_hex(ref->old_sha1), sha1_to_hex(ref->new_sha1));
 		if (dry_run) {
 			if (helper_status)
 				printf("ok %s\n", ref->name);
@@ -1948,27 +1934,15 @@ int main(int argc, char **argv)
 		}
 
 		/* Set up revision info for this refspec */
-		commit_argc = 3;
-		new_sha1_hex = xstrdup(sha1_to_hex(ref->new_sha1));
-		old_sha1_hex = NULL;
-		commit_argv[1] = "--objects";
-		commit_argv[2] = new_sha1_hex;
-		if (!push_all && !is_null_sha1(ref->old_sha1)) {
-			old_sha1_hex = xmalloc(42);
-			sprintf(old_sha1_hex, "^%s",
-				sha1_to_hex(ref->old_sha1));
-			commit_argv[3] = old_sha1_hex;
-			commit_argc++;
-		}
-		commit_argv[commit_argc] = NULL;
+		argv_array_push(&commit_argv, ""); /* ignored */
+		argv_array_push(&commit_argv, "--objects");
+		argv_array_push(&commit_argv, sha1_to_hex(ref->new_sha1));
+		if (!push_all && !is_null_sha1(ref->old_sha1))
+			argv_array_pushf(&commit_argv, "^%s",
+					 sha1_to_hex(ref->old_sha1));
 		init_revisions(&revs, setup_git_directory());
-		setup_revisions(commit_argc, commit_argv, &revs, NULL);
+		setup_revisions(commit_argv.argc, commit_argv.argv, &revs, NULL);
 		revs.edge_hint = 0; /* just in case */
-		free(new_sha1_hex);
-		if (old_sha1_hex) {
-			free(old_sha1_hex);
-			commit_argv[1] = NULL;
-		}
 
 		/* Generate a list of objects that need to be pushed */
 		pushing = 0;
@@ -1997,6 +1971,7 @@ int main(int argc, char **argv)
 			printf("%s %s\n", !rc ? "ok" : "error", ref->name);
 		unlock_remote(ref_lock);
 		check_locks();
+		argv_array_clear(&commit_argv);
 	}
 
 	/* Update remote server info if appropriate */

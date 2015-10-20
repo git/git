@@ -441,7 +441,7 @@ static void *unpack_entry_data(unsigned long offset, unsigned long size,
 	int hdrlen;
 
 	if (!is_delta_type(type)) {
-		hdrlen = sprintf(hdr, "%s %lu", typename(type), size) + 1;
+		hdrlen = xsnprintf(hdr, sizeof(hdr), "%s %lu", typename(type), size) + 1;
 		git_SHA1_Init(&c);
 		git_SHA1_Update(&c, hdr, hdrlen);
 	} else

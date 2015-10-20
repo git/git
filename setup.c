@@ -99,10 +99,7 @@ char *prefix_path_gently(const char *prefix, int len,
 			return NULL;
 		}
 	} else {
-		sanitized = xmalloc(len + strlen(path) + 1);
-		if (len)
-			memcpy(sanitized, prefix, len);
-		strcpy(sanitized + len, path);
+		sanitized = xstrfmt("%.*s%s", len, prefix, path);
 		if (remaining_prefix)
 			*remaining_prefix = len;
 		if (normalize_path_copy_len(sanitized, sanitized, remaining_prefix)) {
@@ -475,11 +472,8 @@ const char *read_gitfile_gently(const char *path, int *return_error_code)
 
 	if (!is_absolute_path(dir) && (slash = strrchr(path, '/'))) {
 		size_t pathlen = slash+1 - path;
-		size_t dirlen = pathlen + len - 8;
-		dir = xmalloc(dirlen + 1);
-		strncpy(dir, path, pathlen);
-		strncpy(dir + pathlen, buf + 8, len - 8);
-		dir[dirlen] = '\0';
+		dir = xstrfmt("%.*s%.*s", (int)pathlen, path,
+			      (int)(len - 8), buf + 8);
 		free(buf);
 		buf = dir;
 	}

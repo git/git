@@ -208,44 +208,25 @@ const char *sha1_file_name(const unsigned char *sha1)
  * provided by the caller.  which should be "pack" or "idx".
  */
 static char *sha1_get_pack_name(const unsigned char *sha1,
-				char **name, char **base, const char *which)
+				struct strbuf *buf,
+				const char *which)
 {
-	static const char hex[] = "0123456789abcdef";
-	char *buf;
-	int i;
-
-	if (!*base) {
-		const char *sha1_file_directory = get_object_directory();
-		int len = strlen(sha1_file_directory);
-		*base = xmalloc(len + 60);
-		sprintf(*base, "%s/pack/pack-1234567890123456789012345678901234567890.%s",
-			sha1_file_directory, which);
-		*name = *base + len + 11;
-	}
-
-	buf = *name;
-
-	for (i = 0; i < 20; i++) {
-		unsigned int val = *sha1++;
-		*buf++ = hex[val >> 4];
-		*buf++ = hex[val & 0xf];
-	}
-
-	return *base;
+	strbuf_reset(buf);
+	strbuf_addf(buf, "%s/pack/pack-%s.%s", get_object_directory(),
+		    sha1_to_hex(sha1), which);
+	return buf->buf;
 }
 
 char *sha1_pack_name(const unsigned char *sha1)
 {
-	static char *name, *base;
-
-	return sha1_get_pack_name(sha1, &name, &base, "pack");
+	static struct strbuf buf = STRBUF_INIT;
+	return sha1_get_pack_name(sha1, &buf, "pack");
 }
 
 char *sha1_pack_index_name(const unsigned char *sha1)
 {
-	static char *name, *base;
-
-	return sha1_get_pack_name(sha1, &name, &base, "idx");
+	static struct strbuf buf = STRBUF_INIT;
+	return sha1_get_pack_name(sha1, &buf, "idx");
 }
 
 struct alternate_object_database *alt_odb_list;
@@ -671,13 +652,15 @@ static int check_packed_git_idx(const char *path, struct packed_git *p)
 int open_pack_index(struct packed_git *p)
 {
 	char *idx_name;
+	size_t len;
 	int ret;
 
 	if (p->index_data)
 		return 0;
 
-	idx_name = xstrdup(p->pack_name);
-	strcpy(idx_name + strlen(idx_name) - strlen(".pack"), ".idx");
+	if (!strip_suffix(p->pack_name, ".pack", &len))
+		die("BUG: pack_name does not end in .pack");
+	idx_name = xstrfmt("%.*s.idx", (int)len, p->pack_name);
 	ret = check_packed_git_idx(idx_name, p);
 	free(idx_name);
 	return ret;
@@ -1161,11 +1144,12 @@ static void try_to_free_pack_memory(size_t size)
 	release_pack_memory(size);
 }
 
-struct packed_git *add_packed_git(const char *path, int path_len, int local)
+struct packed_git *add_packed_git(const char *path, size_t path_len, int local)
 {
 	static int have_set_try_to_free_routine;
 	struct stat st;
-	struct packed_git *p = alloc_packed_git(path_len + 2);
+	size_t alloc;
+	struct packed_git *p;
 
 	if (!have_set_try_to_free_routine) {
 		have_set_try_to_free_routine = 1;
@@ -1176,18 +1160,22 @@ struct packed_git *add_packed_git(const char *path, int path_len, int local)
 	 * Make sure a corresponding .pack file exists and that
 	 * the index looks sane.
 	 */
-	path_len -= strlen(".idx");
-	if (path_len < 1) {
-		free(p);
+	if (!strip_suffix_mem(path, &path_len, ".idx"))
 		return NULL;
-	}
+
+	/*
+	 * ".pack" is long enough to hold any suffix we're adding (and
+	 * the use xsnprintf double-checks that)
+	 */
+	alloc = path_len + strlen(".pack") + 1;
+	p = alloc_packed_git(alloc);
 	memcpy(p->pack_name, path, path_len);
 
-	strcpy(p->pack_name + path_len, ".keep");
+	xsnprintf(p->pack_name + path_len, alloc - path_len, ".keep");
 	if (!access(p->pack_name, F_OK))
 		p->pack_keep = 1;
 
-	strcpy(p->pack_name + path_len, ".pack");
+	xsnprintf(p->pack_name + path_len, alloc - path_len, ".pack");
 	if (stat(p->pack_name, &st) || !S_ISREG(st.st_mode)) {
 		free(p);
 		return NULL;
@@ -1207,9 +1195,10 @@ struct packed_git *add_packed_git(const char *path, int path_len, int local)
 struct packed_git *parse_pack_index(unsigned char *sha1, const char *idx_path)
 {
 	const char *path = sha1_pack_name(sha1);
-	struct packed_git *p = alloc_packed_git(strlen(path) + 1);
+	int alloc = strlen(path) + 1;
+	struct packed_git *p = alloc_packed_git(alloc);
 
-	strcpy(p->pack_name, path);
+	memcpy(p->pack_name, path, alloc); /* includes NUL */
 	hashcpy(p->sha1, sha1);
 	if (check_packed_git_idx(idx_path, p)) {
 		free(p);
@@ -1479,7 +1468,7 @@ int check_sha1_signature(const unsigned char *sha1, void *map,
 		return -1;
 
 	/* Generate the header */
-	hdrlen = sprintf(hdr, "%s %lu", typename(obj_type), size) + 1;
+	hdrlen = xsnprintf(hdr, sizeof(hdr), "%s %lu", typename(obj_type), size) + 1;
 
 	/* Sha1.. */
 	git_SHA1_Init(&c);
@@ -2945,7 +2934,7 @@ static void write_sha1_file_prepare(const void *buf, unsigned long len,
 	git_SHA_CTX c;
 
 	/* Generate the header */
-	*hdrlen = sprintf(hdr, "%s %lu", type, len)+1;
+	*hdrlen = xsnprintf(hdr, *hdrlen, "%s %lu", type, len)+1;
 
 	/* Sha1.. */
 	git_SHA1_Init(&c);
@@ -3008,7 +2997,7 @@ int hash_sha1_file(const void *buf, unsigned long len, const char *type,
                    unsigned char *sha1)
 {
 	char hdr[32];
-	int hdrlen;
+	int hdrlen = sizeof(hdr);
 	write_sha1_file_prepare(buf, len, type, sha1, hdr, &hdrlen);
 	return 0;
 }
@@ -3038,29 +3027,31 @@ static inline int directory_size(const char *filename)
  * We want to avoid cross-directory filename renames, because those
  * can have problems on various filesystems (FAT, NFS, Coda).
  */
-static int create_tmpfile(char *buffer, size_t bufsiz, const char *filename)
+static int create_tmpfile(struct strbuf *tmp, const char *filename)
 {
 	int fd, dirlen = directory_size(filename);
 
-	if (dirlen + 20 > bufsiz) {
-		errno = ENAMETOOLONG;
-		return -1;
-	}
-	memcpy(buffer, filename, dirlen);
-	strcpy(buffer + dirlen, "tmp_obj_XXXXXX");
-	fd = git_mkstemp_mode(buffer, 0444);
+	strbuf_reset(tmp);
+	strbuf_add(tmp, filename, dirlen);
+	strbuf_addstr(tmp, "tmp_obj_XXXXXX");
+	fd = git_mkstemp_mode(tmp->buf, 0444);
 	if (fd < 0 && dirlen && errno == ENOENT) {
-		/* Make sure the directory exists */
-		memcpy(buffer, filename, dirlen);
-		buffer[dirlen-1] = 0;
-		if (mkdir(buffer, 0777) && errno != EEXIST)
+		/*
+		 * Make sure the directory exists; note that the contents
+		 * of the buffer are undefined after mkstemp returns an
+		 * error, so we have to rewrite the whole buffer from
+		 * scratch.
+		 */
+		strbuf_reset(tmp);
+		strbuf_add(tmp, filename, dirlen - 1);
+		if (mkdir(tmp->buf, 0777) && errno != EEXIST)
 			return -1;
-		if (adjust_shared_perm(buffer))
+		if (adjust_shared_perm(tmp->buf))
 			return -1;
 
 		/* Try again */
-		strcpy(buffer + dirlen - 1, "/tmp_obj_XXXXXX");
-		fd = git_mkstemp_mode(buffer, 0444);
+		strbuf_addstr(tmp, "/tmp_obj_XXXXXX");
+		fd = git_mkstemp_mode(tmp->buf, 0444);
 	}
 	return fd;
 }
@@ -3073,10 +3064,10 @@ static int write_loose_object(const unsigned char *sha1, char *hdr, int hdrlen,
 	git_zstream stream;
 	git_SHA_CTX c;
 	unsigned char parano_sha1[20];
-	static char tmp_file[PATH_MAX];
+	static struct strbuf tmp_file = STRBUF_INIT;
 	const char *filename = sha1_file_name(sha1);
 
-	fd = create_tmpfile(tmp_file, sizeof(tmp_file), filename);
+	fd = create_tmpfile(&tmp_file, filename);
 	if (fd < 0) {
 		if (errno == EACCES)
 			return error("insufficient permission for adding an object to repository database %s", get_object_directory());
@@ -3125,12 +3116,12 @@ static int write_loose_object(const unsigned char *sha1, char *hdr, int hdrlen,
 		struct utimbuf utb;
 		utb.actime = mtime;
 		utb.modtime = mtime;
-		if (utime(tmp_file, &utb) < 0)
+		if (utime(tmp_file.buf, &utb) < 0)
 			warning("failed utime() on %s: %s",
-				tmp_file, strerror(errno));
+				tmp_file.buf, strerror(errno));
 	}
 
-	return finalize_object_file(tmp_file, filename);
+	return finalize_object_file(tmp_file.buf, filename);
 }
 
 static int freshen_loose_object(const unsigned char *sha1)
@@ -3154,7 +3145,7 @@ static int freshen_packed_object(const unsigned char *sha1)
 int write_sha1_file(const void *buf, unsigned long len, const char *type, unsigned char *sha1)
 {
 	char hdr[32];
-	int hdrlen;
+	int hdrlen = sizeof(hdr);
 
 	/* Normally if we have it in the pack then we do not bother writing
 	 * it out into .git/objects/??/?{38} file.
@@ -3172,7 +3163,8 @@ int hash_sha1_file_literally(const void *buf, unsigned long len, const char *typ
 	int hdrlen, status = 0;
 
 	/* type string, SP, %lu of the length plus NUL must fit this */
-	header = xmalloc(strlen(type) + 32);
+	hdrlen = strlen(type) + 32;
+	header = xmalloc(hdrlen);
 	write_sha1_file_prepare(buf, len, type, sha1, header, &hdrlen);
 
 	if (!(flags & HASH_WRITE_OBJECT))
@@ -3200,7 +3192,7 @@ int force_object_loose(const unsigned char *sha1, time_t mtime)
 	buf = read_packed_sha1(sha1, &type, &len);
 	if (!buf)
 		return error("cannot read sha1_file for %s", sha1_to_hex(sha1));
-	hdrlen = sprintf(hdr, "%s %lu", typename(type), len) + 1;
+	hdrlen = xsnprintf(hdr, sizeof(hdr), "%s %lu", typename(type), len) + 1;
 	ret = write_loose_object(sha1, hdr, hdrlen, buf, len, mtime);
 	free(buf);
 

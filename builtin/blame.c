@@ -459,12 +459,13 @@ static void queue_blames(struct scoreboard *sb, struct origin *porigin,
 static struct origin *make_origin(struct commit *commit, const char *path)
 {
 	struct origin *o;
-	o = xcalloc(1, sizeof(*o) + strlen(path) + 1);
+	size_t pathlen = strlen(path) + 1;
+	o = xcalloc(1, sizeof(*o) + pathlen);
 	o->commit = commit;
 	o->refcnt = 1;
 	o->next = commit->util;
 	commit->util = o;
-	strcpy(o->path, path);
+	memcpy(o->path, path, pathlen); /* includes NUL */
 	return o;
 }
 
@@ -1879,9 +1880,9 @@ static void emit_porcelain(struct scoreboard *sb, struct blame_entry *ent,
 	int cnt;
 	const char *cp;
 	struct origin *suspect = ent->suspect;
-	char hex[41];
+	char hex[GIT_SHA1_HEXSZ + 1];
 
-	strcpy(hex, sha1_to_hex(suspect->commit->object.sha1));
+	sha1_to_hex_r(hex, suspect->commit->object.sha1);
 	printf("%s %d %d %d\n",
 	       hex,
 	       ent->s_lno + 1,
@@ -1917,11 +1918,11 @@ static void emit_other(struct scoreboard *sb, struct blame_entry *ent, int opt)
 	const char *cp;
 	struct origin *suspect = ent->suspect;
 	struct commit_info ci;
-	char hex[41];
+	char hex[GIT_SHA1_HEXSZ + 1];
 	int show_raw_time = !!(opt & OUTPUT_RAW_TIMESTAMP);
 
 	get_commit_info(suspect->commit, &ci, 1);
-	strcpy(hex, sha1_to_hex(suspect->commit->object.sha1));
+	sha1_to_hex_r(hex, suspect->commit->object.sha1);
 
 	cp = nth_line(sb, ent->lno);
 	for (cnt = 0; cnt < ent->num_lines; cnt++) {

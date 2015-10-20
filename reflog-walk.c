@@ -56,12 +56,11 @@ static struct complete_reflogs *read_complete_reflog(const char *ref)
 		}
 	}
 	if (reflogs->nr == 0) {
-		int len = strlen(ref);
-		char *refname = xmalloc(len + 12);
-		sprintf(refname, "refs/%s", ref);
+		char *refname = xstrfmt("refs/%s", ref);
 		for_each_reflog_ent(refname, read_one_reflog, reflogs);
 		if (reflogs->nr == 0) {
-			sprintf(refname, "refs/heads/%s", ref);
+			free(refname);
+			refname = xstrfmt("refs/heads/%s", ref);
 			for_each_reflog_ent(refname, read_one_reflog, reflogs);
 		}
 		free(refname);

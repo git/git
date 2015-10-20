@@ -61,12 +61,10 @@ int get_oid_hex(const char *hex, struct object_id *oid)
 	return get_sha1_hex(hex, oid->hash);
 }
 
-char *sha1_to_hex(const unsigned char *sha1)
+char *sha1_to_hex_r(char *buffer, const unsigned char *sha1)
 {
-	static int bufno;
-	static char hexbuffer[4][GIT_SHA1_HEXSZ + 1];
 	static const char hex[] = "0123456789abcdef";
-	char *buffer = hexbuffer[3 & ++bufno], *buf = buffer;
+	char *buf = buffer;
 	int i;
 
 	for (i = 0; i < GIT_SHA1_RAWSZ; i++) {
@@ -77,6 +75,13 @@ char *sha1_to_hex(const unsigned char *sha1)
 	*buf = '\0';
 
 	return buffer;
+}
+
+char *sha1_to_hex(const unsigned char *sha1)
+{
+	static int bufno;
+	static char hexbuffer[4][GIT_SHA1_HEXSZ + 1];
+	return sha1_to_hex_r(hexbuffer[3 & ++bufno], sha1);
 }
 
 char *oid_to_hex(const struct object_id *oid)

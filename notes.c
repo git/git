@@ -539,6 +539,9 @@ static unsigned char determine_fanout(struct int_node *tree, unsigned char n,
 	return fanout + 1;
 }
 
+/* hex SHA1 + 19 * '/' + NUL */
+#define FANOUT_PATH_MAX 40 + 19 + 1
+
 static void construct_path_with_fanout(const unsigned char *sha1,
 		unsigned char fanout, char *path)
 {
@@ -551,7 +554,7 @@ static void construct_path_with_fanout(const unsigned char *sha1,
 		path[i++] = '/';
 		fanout--;
 	}
-	strcpy(path + i, hex_sha1 + j);
+	xsnprintf(path + i, FANOUT_PATH_MAX - i, "%s", hex_sha1 + j);
 }
 
 static int for_each_note_helper(struct notes_tree *t, struct int_node *tree,
@@ -562,7 +565,7 @@ static int for_each_note_helper(struct notes_tree *t, struct int_node *tree,
 	void *p;
 	int ret = 0;
 	struct leaf_node *l;
-	static char path[40 + 19 + 1];  /* hex SHA1 + 19 * '/' + NUL */
+	static char path[FANOUT_PATH_MAX];
 
 	fanout = determine_fanout(tree, n, fanout);
 	for (i = 0; i < 16; i++) {
@@ -595,7 +598,7 @@ redo:
 				/* invoke callback with subtree */
 				unsigned int path_len =
 					l->key_sha1[19] * 2 + fanout;
-				assert(path_len < 40 + 19);
+				assert(path_len < FANOUT_PATH_MAX - 1);
 				construct_path_with_fanout(l->key_sha1, fanout,
 							   path);
 				/* Create trailing slash, if needed */

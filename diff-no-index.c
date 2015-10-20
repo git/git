@@ -136,15 +136,13 @@ static int queue_diff(struct diff_options *o,
 
 		if (name1) {
 			strbuf_addstr(&buffer1, name1);
-			if (buffer1.len && buffer1.buf[buffer1.len - 1] != '/')
-				strbuf_addch(&buffer1, '/');
+			strbuf_complete(&buffer1, '/');
 			len1 = buffer1.len;
 		}
 
 		if (name2) {
 			strbuf_addstr(&buffer2, name2);
-			if (buffer2.len && buffer2.buf[buffer2.len - 1] != '/')
-				strbuf_addch(&buffer2, '/');
+			strbuf_complete(&buffer2, '/');
 			len2 = buffer2.len;
 		}
 

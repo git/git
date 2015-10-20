@@ -322,7 +322,7 @@ static struct diff_tempfile {
 	 */
 	const char *name;
 
-	char hex[41];
+	char hex[GIT_SHA1_HEXSZ + 1];
 	char mode[10];
 
 	/*
@@ -2882,9 +2882,8 @@ static void prep_temp_blob(const char *path, struct diff_tempfile *temp,
 		die_errno("unable to write temp-file");
 	close_tempfile(&temp->tempfile);
 	temp->name = get_tempfile_path(&temp->tempfile);
-	strcpy(temp->hex, sha1_to_hex(sha1));
-	temp->hex[40] = 0;
-	sprintf(temp->mode, "%06o", mode);
+	sha1_to_hex_r(temp->hex, sha1);
+	xsnprintf(temp->mode, sizeof(temp->mode), "%06o", mode);
 	strbuf_release(&buf);
 	strbuf_release(&template);
 	free(path_dup);
@@ -2901,8 +2900,8 @@ static struct diff_tempfile *prepare_temp_file(const char *name,
 		 * a '+' entry produces this for file-1.
 		 */
 		temp->name = "/dev/null";
-		strcpy(temp->hex, ".");
-		strcpy(temp->mode, ".");
+		xsnprintf(temp->hex, sizeof(temp->hex), ".");
+		xsnprintf(temp->mode, sizeof(temp->mode), ".");
 		return temp;
 	}
 
@@ -2930,16 +2929,16 @@ static struct diff_tempfile *prepare_temp_file(const char *name,
 			/* we can borrow from the file in the work tree */
 			temp->name = name;
 			if (!one->sha1_valid)
-				strcpy(temp->hex, sha1_to_hex(null_sha1));
+				sha1_to_hex_r(temp->hex, null_sha1);
 			else
-				strcpy(temp->hex, sha1_to_hex(one->sha1));
+				sha1_to_hex_r(temp->hex, one->sha1);
 			/* Even though we may sometimes borrow the
 			 * contents from the work tree, we always want
 			 * one->mode.  mode is trustworthy even when
 			 * !(one->sha1_valid), as long as
 			 * DIFF_FILE_VALID(one).
 			 */
-			sprintf(temp->mode, "%06o", one->mode);
+			xsnprintf(temp->mode, sizeof(temp->mode), "%06o", one->mode);
 		}
 		return temp;
 	}
@@ -4085,9 +4084,9 @@ const char *diff_unique_abbrev(const unsigned char *sha1, int len)
 	if (abblen < 37) {
 		static char hex[41];
 		if (len < abblen && abblen <= len + 2)
-			sprintf(hex, "%s%.*s", abbrev, len+3-abblen, "..");
+			xsnprintf(hex, sizeof(hex), "%s%.*s", abbrev, len+3-abblen, "..");
 		else
-			sprintf(hex, "%s...", abbrev);
+			xsnprintf(hex, sizeof(hex), "%s...", abbrev);
 		return hex;
 	}
 	return sha1_to_hex(sha1);

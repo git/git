@@ -767,13 +767,6 @@ elif test x$ac_cv_member_struct_stat_st_mtim_tv_nsec != xyes; then
 	GIT_CONF_SUBST([NO_NSEC])
 fi
 #
-# Define NO_D_INO_IN_DIRENT if you don't have d_ino in your struct dirent.
-AC_CHECK_MEMBER(struct dirent.d_ino,
-[NO_D_INO_IN_DIRENT=],
-[NO_D_INO_IN_DIRENT=YesPlease],
-[#include <dirent.h>])
-GIT_CONF_SUBST([NO_D_INO_IN_DIRENT])
-#
 # Define NO_D_TYPE_IN_DIRENT if your platform defines DT_UNKNOWN but lacks
 # d_type in struct dirent (latest Cygwin -- will be fixed soonish).
 AC_CHECK_MEMBER(struct dirent.d_type,

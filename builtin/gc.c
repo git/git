@@ -217,7 +217,7 @@ static const char *lock_repo_for_gc(int force, pid_t* ret_pid)
 		return NULL;
 
 	if (gethostname(my_host, sizeof(my_host)))
-		strcpy(my_host, "unknown");
+		xsnprintf(my_host, sizeof(my_host), "unknown");
 
 	pidfile_path = git_pathdup("gc.pid");
 	fd = hold_lock_file_for_update(&lock, pidfile_path,

@@ -343,9 +343,7 @@ static int grab_objectname(const char *name, const unsigned char *sha1,
 			    struct atom_value *v)
 {
 	if (!strcmp(name, "objectname")) {
-		char *s = xmalloc(41);
-		strcpy(s, sha1_to_hex(sha1));
-		v->s = s;
+		v->s = xstrdup(sha1_to_hex(sha1));
 		return 1;
 	}
 	if (!strcmp(name, "objectname:short")) {
@@ -370,10 +368,8 @@ static void grab_common_values(struct atom_value *val, int deref, struct object 
 		if (!strcmp(name, "objecttype"))
 			v->s = typename(obj->type);
 		else if (!strcmp(name, "objectsize")) {
-			char *s = xmalloc(40);
-			sprintf(s, "%lu", sz);
 			v->ul = sz;
-			v->s = s;
+			v->s = xstrfmt("%lu", sz);
 		}
 		else if (deref)
 			grab_objectname(name, obj->sha1, v);
@@ -397,11 +393,8 @@ static void grab_tag_values(struct atom_value *val, int deref, struct object *ob
 			v->s = tag->tag;
 		else if (!strcmp(name, "type") && tag->tagged)
 			v->s = typename(tag->tagged->type);
-		else if (!strcmp(name, "object") && tag->tagged) {
-			char *s = xmalloc(41);
-			strcpy(s, sha1_to_hex(tag->tagged->sha1));
-			v->s = s;
-		}
+		else if (!strcmp(name, "object") && tag->tagged)
+			v->s = xstrdup(sha1_to_hex(tag->tagged->sha1));
 	}
 }
 
@@ -419,32 +412,22 @@ static void grab_commit_values(struct atom_value *val, int deref, struct object 
 		if (deref)
 			name++;
 		if (!strcmp(name, "tree")) {
-			char *s = xmalloc(41);
-			strcpy(s, sha1_to_hex(commit->tree->object.sha1));
-			v->s = s;
+			v->s = xstrdup(sha1_to_hex(commit->tree->object.sha1));
 		}
-		if (!strcmp(name, "numparent")) {
-			char *s = xmalloc(40);
+		else if (!strcmp(name, "numparent")) {
 			v->ul = commit_list_count(commit->parents);
-			sprintf(s, "%lu", v->ul);
-			v->s = s;
+			v->s = xstrfmt("%lu", v->ul);
 		}
 		else if (!strcmp(name, "parent")) {
-			int num = commit_list_count(commit->parents);
-			int i;
 			struct commit_list *parents;
-			char *s = xmalloc(41 * num + 1);
-			v->s = s;
-			for (i = 0, parents = commit->parents;
-			     parents;
-			     parents = parents->next, i = i + 41) {
+			struct strbuf s = STRBUF_INIT;
+			for (parents = commit->parents; parents; parents = parents->next) {
 				struct commit *parent = parents->item;
-				strcpy(s+i, sha1_to_hex(parent->object.sha1));
-				if (parents->next)
-					s[i+40] = ' ';
+				if (parents != commit->parents)
+					strbuf_addch(&s, ' ');
+				strbuf_addstr(&s, sha1_to_hex(parent->object.sha1));
 			}
-			if (!i)
-				*s = '\0';
+			v->s = strbuf_detach(&s, NULL);
 		}
 	}
 }
@@ -934,7 +917,6 @@ static void populate_value(struct ref_array_item *ref)
 			else if (!strcmp(formatp, "track") &&
 				 (starts_with(name, "upstream") ||
 				  starts_with(name, "push"))) {
-				char buf[40];
 
 				if (stat_tracking_info(branch, &num_ours,
 						       &num_theirs, NULL))
@@ -942,17 +924,13 @@ static void populate_value(struct ref_array_item *ref)
 
 				if (!num_ours && !num_theirs)
 					v->s = "";
-				else if (!num_ours) {
-					sprintf(buf, "[behind %d]", num_theirs);
-					v->s = xstrdup(buf);
-				} else if (!num_theirs) {
-					sprintf(buf, "[ahead %d]", num_ours);
-					v->s = xstrdup(buf);
-				} else {
-					sprintf(buf, "[ahead %d, behind %d]",
-						num_ours, num_theirs);
-					v->s = xstrdup(buf);
-				}
+				else if (!num_ours)
+					v->s = xstrfmt("[behind %d]", num_theirs);
+				else if (!num_theirs)
+					v->s = xstrfmt("[ahead %d]", num_ours);
+				else
+					v->s = xstrfmt("[ahead %d, behind %d]",
+						       num_ours, num_theirs);
 				continue;
 			} else if (!strcmp(formatp, "trackshort") &&
 				   (starts_with(name, "upstream") ||
@@ -979,12 +957,8 @@ static void populate_value(struct ref_array_item *ref)
 
 		if (!deref)
 			v->s = refname;
-		else {
-			int len = strlen(refname);
-			char *s = xmalloc(len + 4);
-			sprintf(s, "%s^{}", refname);
-			v->s = s;
-		}
+		else
+			v->s = xstrfmt("%s^{}", refname);
 	}
 
 	for (i = 0; i < used_atom_cnt; i++) {

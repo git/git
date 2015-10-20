@@ -1350,9 +1350,7 @@ static int verify_clean_subdirectory(const struct cache_entry *ce,
 	 * Then we need to make sure that we do not lose a locally
 	 * present file that is not ignored.
 	 */
-	pathbuf = xmalloc(namelen + 2);
-	memcpy(pathbuf, ce->name, namelen);
-	strcpy(pathbuf+namelen, "/");
+	pathbuf = xstrfmt("%.*s/", namelen, ce->name);
 
 	memset(&d, 0, sizeof(d));
 	if (o->dir)

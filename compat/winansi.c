@@ -539,7 +539,7 @@ void winansi_init(void)
 		return;
 
 	/* create a named pipe to communicate with the console thread */
-	sprintf(name, "\\\\.\\pipe\\winansi%lu", GetCurrentProcessId());
+	xsnprintf(name, sizeof(name), "\\\\.\\pipe\\winansi%lu", GetCurrentProcessId());
 	hwrite = CreateNamedPipe(name, PIPE_ACCESS_OUTBOUND,
 		PIPE_TYPE_BYTE | PIPE_WAIT, 1, BUFFER_SIZE, 0, 0, NULL);
 	if (hwrite == INVALID_HANDLE_VALUE)

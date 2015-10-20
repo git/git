@@ -8,6 +8,7 @@
 #include "tag.h"
 #include "string-list.h"
 #include "mergesort.h"
+#include "argv-array.h"
 
 enum map_direction { FROM_SRC, FROM_DST };
 
@@ -54,9 +55,6 @@ static const char *pushremote_name;
 static struct rewrites rewrites;
 static struct rewrites rewrites_push;
 
-#define BUF_SIZE (2048)
-static char buffer[BUF_SIZE];
-
 static int valid_remote(const struct remote *remote)
 {
 	return (!!remote->url) || (!!remote->foreign_vcs);
@@ -65,7 +63,6 @@ static int valid_remote(const struct remote *remote)
 static const char *alias_url(const char *url, struct rewrites *r)
 {
 	int i, j;
-	char *ret;
 	struct counted_string *longest;
 	int longest_i;
 
@@ -86,11 +83,7 @@ static const char *alias_url(const char *url, struct rewrites *r)
 	if (!longest)
 		return url;
 
-	ret = xmalloc(r->rewrite[longest_i]->baselen +
-		     (strlen(url) - longest->len) + 1);
-	strcpy(ret, r->rewrite[longest_i]->base);
-	strcpy(ret + r->rewrite[longest_i]->baselen, url + longest->len);
-	return ret;
+	return xstrfmt("%s%s", r->rewrite[longest_i]->base, url + longest->len);
 }
 
 static void add_push_refspec(struct remote *remote, const char *ref)
@@ -248,106 +241,76 @@ static void add_instead_of(struct rewrite *rewrite, const char *instead_of)
 	rewrite->instead_of_nr++;
 }
 
+static const char *skip_spaces(const char *s)
+{
+	while (isspace(*s))
+		s++;
+	return s;
+}
+
 static void read_remotes_file(struct remote *remote)
 {
+	struct strbuf buf = STRBUF_INIT;
 	FILE *f = fopen(git_path("remotes/%s", remote->name), "r");
 
 	if (!f)
 		return;
 	remote->origin = REMOTE_REMOTES;
-	while (fgets(buffer, BUF_SIZE, f)) {
-		int value_list;
-		char *s, *p;
+	while (strbuf_getline(&buf, f, '\n') != EOF) {
+		const char *v;
 
-		if (starts_with(buffer, "URL:")) {
-			value_list = 0;
-			s = buffer + 4;
-		} else if (starts_with(buffer, "Push:")) {
-			value_list = 1;
-			s = buffer + 5;
-		} else if (starts_with(buffer, "Pull:")) {
-			value_list = 2;
-			s = buffer + 5;
-		} else
-			continue;
+		strbuf_rtrim(&buf);
 
-		while (isspace(*s))
-			s++;
-		if (!*s)
-			continue;
-
-		p = s + strlen(s);
-		while (isspace(p[-1]))
-			*--p = 0;
-
-		switch (value_list) {
-		case 0:
-			add_url_alias(remote, xstrdup(s));
-			break;
-		case 1:
-			add_push_refspec(remote, xstrdup(s));
-			break;
-		case 2:
-			add_fetch_refspec(remote, xstrdup(s));
-			break;
-		}
+		if (skip_prefix(buf.buf, "URL:", &v))
+			add_url_alias(remote, xstrdup(skip_spaces(v)));
+		else if (skip_prefix(buf.buf, "Push:", &v))
+			add_push_refspec(remote, xstrdup(skip_spaces(v)));
+		else if (skip_prefix(buf.buf, "Pull:", &v))
+			add_fetch_refspec(remote, xstrdup(skip_spaces(v)));
 	}
+	strbuf_release(&buf);
 	fclose(f);
 }
 
 static void read_branches_file(struct remote *remote)
 {
 	char *frag;
-	struct strbuf branch = STRBUF_INIT;
-	int n = 1000;
-	FILE *f = fopen(git_path("branches/%.*s", n, remote->name), "r");
-	char *s, *p;
-	int len;
+	struct strbuf buf = STRBUF_INIT;
+	FILE *f = fopen(git_path("branches/%s", remote->name), "r");
 
 	if (!f)
 		return;
-	s = fgets(buffer, BUF_SIZE, f);
-	fclose(f);
-	if (!s)
+
+	strbuf_getline(&buf, f, '\n');
+	strbuf_trim(&buf);
+	if (!buf.len) {
+		strbuf_release(&buf);
 		return;
-	while (isspace(*s))
-		s++;
-	if (!*s)
-		return;
+	}
+
 	remote->origin = REMOTE_BRANCHES;
-	p = s + strlen(s);
-	while (isspace(p[-1]))
-		*--p = 0;
-	len = p - s;
-	p = xmalloc(len + 1);
-	strcpy(p, s);
 
 	/*
 	 * The branches file would have URL and optionally
 	 * #branch specified.  The "master" (or specified) branch is
-	 * fetched and stored in the local branch of the same name.
+	 * fetched and stored in the local branch matching the
+	 * remote name.
 	 */
-	frag = strchr(p, '#');
-	if (frag) {
+	frag = strchr(buf.buf, '#');
+	if (frag)
 		*(frag++) = '\0';
-		strbuf_addf(&branch, "refs/heads/%s", frag);
-	} else
-		strbuf_addstr(&branch, "refs/heads/master");
+	else
+		frag = "master";
 
-	strbuf_addf(&branch, ":refs/heads/%s", remote->name);
-	add_url_alias(remote, p);
-	add_fetch_refspec(remote, strbuf_detach(&branch, NULL));
+	add_url_alias(remote, strbuf_detach(&buf, NULL));
+	add_fetch_refspec(remote, xstrfmt("refs/heads/%s:refs/heads/%s",
+					  frag, remote->name));
+
 	/*
 	 * Cogito compatible push: push current HEAD to remote #branch
 	 * (master if missing)
 	 */
-	strbuf_init(&branch, 0);
-	strbuf_addstr(&branch, "HEAD");
-	if (frag)
-		strbuf_addf(&branch, ":refs/heads/%s", frag);
-	else
-		strbuf_addstr(&branch, ":refs/heads/master");
-	add_push_refspec(remote, strbuf_detach(&branch, NULL));
+	add_push_refspec(remote, xstrfmt("HEAD:refs/heads/%s", frag));
 	remote->fetch_tags = 1; /* always auto-follow */
 }
 
@@ -2035,10 +1998,9 @@ int stat_tracking_info(struct branch *branch, int *num_ours, int *num_theirs,
 {
 	unsigned char sha1[20];
 	struct commit *ours, *theirs;
-	char symmetric[84];
 	struct rev_info revs;
-	const char *rev_argv[10], *base;
-	int rev_argc;
+	const char *base;
+	struct argv_array argv = ARGV_ARRAY_INIT;
 
 	/* Cannot stat unless we are marked to build on top of somebody else. */
 	base = branch_get_upstream(branch, NULL);
@@ -2067,19 +2029,15 @@ int stat_tracking_info(struct branch *branch, int *num_ours, int *num_theirs,
 	}
 
 	/* Run "rev-list --left-right ours...theirs" internally... */
-	rev_argc = 0;
-	rev_argv[rev_argc++] = NULL;
-	rev_argv[rev_argc++] = "--left-right";
-	rev_argv[rev_argc++] = symmetric;
-	rev_argv[rev_argc++] = "--";
-	rev_argv[rev_argc] = NULL;
-
-	strcpy(symmetric, sha1_to_hex(ours->object.sha1));
-	strcpy(symmetric + 40, "...");
-	strcpy(symmetric + 43, sha1_to_hex(theirs->object.sha1));
+	argv_array_push(&argv, ""); /* ignored */
+	argv_array_push(&argv, "--left-right");
+	argv_array_pushf(&argv, "%s...%s",
+			 sha1_to_hex(ours->object.sha1),
+			 sha1_to_hex(theirs->object.sha1));
+	argv_array_push(&argv, "--");
 
 	init_revisions(&revs, NULL);
-	setup_revisions(rev_argc, rev_argv, &revs, NULL);
+	setup_revisions(argv.argc, argv.argv, &revs, NULL);
 	if (prepare_revision_walk(&revs))
 		die("revision walk setup failed");
 
@@ -2099,6 +2057,8 @@ int stat_tracking_info(struct branch *branch, int *num_ours, int *num_theirs,
 	/* clear object flags smudged by the above traversal */
 	clear_commit_marks(ours, ALL_REV_FLAGS);
 	clear_commit_marks(theirs, ALL_REV_FLAGS);
+
+	argv_array_clear(&argv);
 	return 0;
 }
 

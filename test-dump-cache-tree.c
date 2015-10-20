@@ -47,7 +47,7 @@ static int dump_cache_tree(struct cache_tree *it,
 		struct cache_tree_sub *rdwn;
 
 		rdwn = cache_tree_sub(ref, down->name);
-		sprintf(path, "%s%.*s/", pfx, down->namelen, down->name);
+		xsnprintf(path, sizeof(path), "%s%.*s/", pfx, down->namelen, down->name);
 		if (dump_cache_tree(down->cache_tree, rdwn->cache_tree, path))
 			errs = 1;
 	}

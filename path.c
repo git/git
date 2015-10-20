@@ -395,6 +395,16 @@ static void do_git_path(struct strbuf *buf, const char *fmt, va_list args)
 	strbuf_cleanup_path(buf);
 }
 
+char *git_path_buf(struct strbuf *buf, const char *fmt, ...)
+{
+	va_list args;
+	strbuf_reset(buf);
+	va_start(args, fmt);
+	do_git_path(buf, fmt, args);
+	va_end(args);
+	return buf->buf;
+}
+
 void strbuf_git_path(struct strbuf *sb, const char *fmt, ...)
 {
 	va_list args;
@@ -452,8 +462,7 @@ static void do_submodule_path(struct strbuf *buf, const char *path,
 	struct strbuf git_submodule_dir = STRBUF_INIT;
 
 	strbuf_addstr(buf, path);
-	if (buf->len && buf->buf[buf->len - 1] != '/')
-		strbuf_addch(buf, '/');
+	strbuf_complete(buf, '/');
 	strbuf_addstr(buf, ".git");
 
 	git_dir = read_gitfile(buf->buf);
@@ -611,8 +620,8 @@ return_null:
  */
 const char *enter_repo(const char *path, int strict)
 {
-	static char used_path[PATH_MAX];
-	static char validated_path[PATH_MAX];
+	static struct strbuf validated_path = STRBUF_INIT;
+	static struct strbuf used_path = STRBUF_INIT;
 
 	if (!path)
 		return NULL;
@@ -627,46 +636,47 @@ const char *enter_repo(const char *path, int strict)
 		while ((1 < len) && (path[len-1] == '/'))
 			len--;
 
+		/*
+		 * We can handle arbitrary-sized buffers, but this remains as a
+		 * sanity check on untrusted input.
+		 */
 		if (PATH_MAX <= len)
 			return NULL;
-		strncpy(used_path, path, len); used_path[len] = 0 ;
-		strcpy(validated_path, used_path);
 
-		if (used_path[0] == '~') {
-			char *newpath = expand_user_path(used_path);
-			if (!newpath || (PATH_MAX - 10 < strlen(newpath))) {
-				free(newpath);
+		strbuf_reset(&used_path);
+		strbuf_reset(&validated_path);
+		strbuf_add(&used_path, path, len);
+		strbuf_add(&validated_path, path, len);
+
+		if (used_path.buf[0] == '~') {
+			char *newpath = expand_user_path(used_path.buf);
+			if (!newpath)
 				return NULL;
-			}
-			/*
-			 * Copy back into the static buffer. A pity
-			 * since newpath was not bounded, but other
-			 * branches of the if are limited by PATH_MAX
-			 * anyway.
-			 */
-			strcpy(used_path, newpath); free(newpath);
+			strbuf_attach(&used_path, newpath, strlen(newpath),
+				      strlen(newpath));
 		}
-		else if (PATH_MAX - 10 < len)
-			return NULL;
-		len = strlen(used_path);
 		for (i = 0; suffix[i]; i++) {
 			struct stat st;
-			strcpy(used_path + len, suffix[i]);
-			if (!stat(used_path, &st) &&
+			size_t baselen = used_path.len;
+			strbuf_addstr(&used_path, suffix[i]);
+			if (!stat(used_path.buf, &st) &&
 			    (S_ISREG(st.st_mode) ||
-			    (S_ISDIR(st.st_mode) && is_git_directory(used_path)))) {
-				strcat(validated_path, suffix[i]);
+			    (S_ISDIR(st.st_mode) && is_git_directory(used_path.buf)))) {
+				strbuf_addstr(&validated_path, suffix[i]);
 				break;
 			}
+			strbuf_setlen(&used_path, baselen);
 		}
 		if (!suffix[i])
 			return NULL;
-		gitfile = read_gitfile(used_path);
-		if (gitfile)
-			strcpy(used_path, gitfile);
-		if (chdir(used_path))
+		gitfile = read_gitfile(used_path.buf);
+		if (gitfile) {
+			strbuf_reset(&used_path);
+			strbuf_addstr(&used_path, gitfile);
+		}
+		if (chdir(used_path.buf))
 			return NULL;
-		path = validated_path;
+		path = validated_path.buf;
 	}
 	else {
 		const char *gitfile = read_gitfile(path);
@@ -855,7 +865,7 @@ const char *relative_path(const char *in, const char *prefix,
  */
 const char *remove_leading_path(const char *in, const char *prefix)
 {
-	static char buf[PATH_MAX + 1];
+	static struct strbuf buf = STRBUF_INIT;
 	int i = 0, j = 0;
 
 	if (!prefix || !prefix[0])
@@ -884,11 +894,13 @@ const char *remove_leading_path(const char *in, const char *prefix)
 		return in;
 	while (is_dir_sep(in[j]))
 		j++;
+
+	strbuf_reset(&buf);
 	if (!in[j])
-		strcpy(buf, ".");
+		strbuf_addstr(&buf, ".");
 	else
-		strcpy(buf, in + j);
-	return buf;
+		strbuf_addstr(&buf, in + j);
+	return buf.buf;
 }
 
 /*

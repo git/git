@@ -280,10 +280,10 @@ static void rp_warning(const char *err, ...) __attribute__((format (printf, 1, 2
 
 static void report_message(const char *prefix, const char *err, va_list params)
 {
-	int sz = strlen(prefix);
+	int sz;
 	char msg[4096];
 
-	strncpy(msg, prefix, sz);
+	sz = xsnprintf(msg, sizeof(msg), "%s", prefix);
 	sz += vsnprintf(msg + sz, sizeof(msg) - sz, err, params);
 	if (sz > (sizeof(msg) - 1))
 		sz = sizeof(msg) - 1;
@@ -1071,8 +1071,11 @@ static void check_aliased_update(struct command *cmd, struct string_list *list)
 	const char *dst_name;
 	struct string_list_item *item;
 	struct command *dst_cmd;
-	unsigned char sha1[20];
-	char cmd_oldh[41], cmd_newh[41], dst_oldh[41], dst_newh[41];
+	unsigned char sha1[GIT_SHA1_RAWSZ];
+	char cmd_oldh[GIT_SHA1_HEXSZ + 1],
+	     cmd_newh[GIT_SHA1_HEXSZ + 1],
+	     dst_oldh[GIT_SHA1_HEXSZ + 1],
+	     dst_newh[GIT_SHA1_HEXSZ + 1];
 	int flag;
 
 	strbuf_addf(&buf, "%s%s", get_git_namespace(), cmd->ref_name);
@@ -1103,10 +1106,10 @@ static void check_aliased_update(struct command *cmd, struct string_list *list)
 
 	dst_cmd->skip_update = 1;
 
-	strcpy(cmd_oldh, find_unique_abbrev(cmd->old_sha1, DEFAULT_ABBREV));
-	strcpy(cmd_newh, find_unique_abbrev(cmd->new_sha1, DEFAULT_ABBREV));
-	strcpy(dst_oldh, find_unique_abbrev(dst_cmd->old_sha1, DEFAULT_ABBREV));
-	strcpy(dst_newh, find_unique_abbrev(dst_cmd->new_sha1, DEFAULT_ABBREV));
+	find_unique_abbrev_r(cmd_oldh, cmd->old_sha1, DEFAULT_ABBREV);
+	find_unique_abbrev_r(cmd_newh, cmd->new_sha1, DEFAULT_ABBREV);
+	find_unique_abbrev_r(dst_oldh, dst_cmd->old_sha1, DEFAULT_ABBREV);
+	find_unique_abbrev_r(dst_newh, dst_cmd->new_sha1, DEFAULT_ABBREV);
 	rp_error("refusing inconsistent update between symref '%s' (%s..%s) and"
 		 " its target '%s' (%s..%s)",
 		 cmd->ref_name, cmd_oldh, cmd_newh,
@@ -1521,15 +1524,18 @@ static const char *unpack(int err_fd, struct shallow_info *si)
 		if (status)
 			return "unpack-objects abnormal exit";
 	} else {
-		int s;
-		char keep_arg[256];
-
-		s = sprintf(keep_arg, "--keep=receive-pack %"PRIuMAX" on ", (uintmax_t) getpid());
-		if (gethostname(keep_arg + s, sizeof(keep_arg) - s))
-			strcpy(keep_arg + s, "localhost");
+		char hostname[256];
 
 		argv_array_pushl(&child.args, "index-pack",
-				 "--stdin", hdr_arg, keep_arg, NULL);
+				 "--stdin", hdr_arg, NULL);
+
+		if (gethostname(hostname, sizeof(hostname)))
+			xsnprintf(hostname, sizeof(hostname), "localhost");
+		argv_array_pushf(&child.args,
+				 "--keep=receive-pack %"PRIuMAX" on %s",
+				 (uintmax_t)getpid(),
+				 hostname);
+
 		if (fsck_objects)
 			argv_array_pushf(&child.args, "--strict%s",
 				fsck_msg_types.buf);

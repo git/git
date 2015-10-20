@@ -96,11 +96,15 @@ static void find_short_object_filename(int len, const char *hex_pfx, struct disa
 	}
 	fakeent->next = alt_odb_list;
 
-	sprintf(hex, "%.2s", hex_pfx);
+	xsnprintf(hex, sizeof(hex), "%.2s", hex_pfx);
 	for (alt = fakeent; alt && !ds->ambiguous; alt = alt->next) {
 		struct dirent *de;
 		DIR *dir;
-		sprintf(alt->name, "%.2s/", hex_pfx);
+		/*
+		 * every alt_odb struct has 42 extra bytes after the base
+		 * for exactly this purpose
+		 */
+		xsnprintf(alt->name, 42, "%.2s/", hex_pfx);
 		dir = opendir(alt->base);
 		if (!dir)
 			continue;
@@ -368,14 +372,13 @@ int for_each_abbrev(const char *prefix, each_abbrev_fn fn, void *cb_data)
 	return ds.ambiguous;
 }
 
-const char *find_unique_abbrev(const unsigned char *sha1, int len)
+int find_unique_abbrev_r(char *hex, const unsigned char *sha1, int len)
 {
 	int status, exists;
-	static char hex[41];
 
-	memcpy(hex, sha1_to_hex(sha1), 40);
+	sha1_to_hex_r(hex, sha1);
 	if (len == 40 || !len)
-		return hex;
+		return 40;
 	exists = has_sha1_file(sha1);
 	while (len < 40) {
 		unsigned char sha1_ret[20];
@@ -384,10 +387,17 @@ const char *find_unique_abbrev(const unsigned char *sha1, int len)
 		    ? !status
 		    : status == SHORT_NAME_NOT_FOUND) {
 			hex[len] = 0;
-			return hex;
+			return len;
 		}
 		len++;
 	}
+	return len;
+}
+
+const char *find_unique_abbrev(const unsigned char *sha1, int len)
+{
+	static char hex[GIT_SHA1_HEXSZ + 1];
+	find_unique_abbrev_r(hex, sha1, len);
 	return hex;
 }
 
@@ -1283,8 +1293,7 @@ static void diagnose_invalid_index_path(int stage,
 	const struct cache_entry *ce;
 	int pos;
 	unsigned namelen = strlen(filename);
-	unsigned fullnamelen;
-	char *fullname;
+	struct strbuf fullname = STRBUF_INIT;
 
 	if (!prefix)
 		prefix = "";
@@ -1304,21 +1313,19 @@ static void diagnose_invalid_index_path(int stage,
 	}
 
 	/* Confusion between relative and absolute filenames? */
-	fullnamelen = namelen + strlen(prefix);
-	fullname = xmalloc(fullnamelen + 1);
-	strcpy(fullname, prefix);
-	strcat(fullname, filename);
-	pos = cache_name_pos(fullname, fullnamelen);
+	strbuf_addstr(&fullname, prefix);
+	strbuf_addstr(&fullname, filename);
+	pos = cache_name_pos(fullname.buf, fullname.len);
 	if (pos < 0)
 		pos = -pos - 1;
 	if (pos < active_nr) {
 		ce = active_cache[pos];
-		if (ce_namelen(ce) == fullnamelen &&
-		    !memcmp(ce->name, fullname, fullnamelen))
+		if (ce_namelen(ce) == fullname.len &&
+		    !memcmp(ce->name, fullname.buf, fullname.len))
 			die("Path '%s' is in the index, but not '%s'.\n"
 			    "Did you mean ':%d:%s' aka ':%d:./%s'?",
-			    fullname, filename,
-			    ce_stage(ce), fullname,
+			    fullname.buf, filename,
+			    ce_stage(ce), fullname.buf,
 			    ce_stage(ce), filename);
 	}
 
@@ -1328,7 +1335,7 @@ static void diagnose_invalid_index_path(int stage,
 		die("Path '%s' does not exist (neither on disk nor in the index).",
 		    filename);
 
-	free(fullname);
+	strbuf_release(&fullname);
 }
 
 

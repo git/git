@@ -277,25 +277,24 @@ void trace_performance_fl(const char *file, int line, uint64_t nanos,
 
 static const char *quote_crnl(const char *path)
 {
-	static char new_path[PATH_MAX];
-	const char *p2 = path;
-	char *p1 = new_path;
+	static struct strbuf new_path = STRBUF_INIT;
 
 	if (!path)
 		return NULL;
 
-	while (*p2) {
-		switch (*p2) {
-		case '\\': *p1++ = '\\'; *p1++ = '\\'; break;
-		case '\n': *p1++ = '\\'; *p1++ = 'n'; break;
-		case '\r': *p1++ = '\\'; *p1++ = 'r'; break;
+	strbuf_reset(&new_path);
+
+	while (*path) {
+		switch (*path) {
+		case '\\': strbuf_addstr(&new_path, "\\\\"); break;
+		case '\n': strbuf_addstr(&new_path, "\\n"); break;
+		case '\r': strbuf_addstr(&new_path, "\\r"); break;
 		default:
-			*p1++ = *p2;
+			strbuf_addch(&new_path, *path);
 		}
-		p2++;
+		path++;
 	}
-	*p1 = '\0';
-	return new_path;
+	return new_path.buf;
 }
 
 /* FIXME: move prefix to startup_info struct and get rid of this arg */

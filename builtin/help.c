@@ -140,17 +140,10 @@ static void exec_man_konqueror(const char *path, const char *page)
 
 		/* It's simpler to launch konqueror using kfmclient. */
 		if (path) {
-			const char *file = strrchr(path, '/');
-			if (file && !strcmp(file + 1, "konqueror")) {
-				char *new = xstrdup(path);
-				char *dest = strrchr(new, '/');
-
-				/* strlen("konqueror") == strlen("kfmclient") */
-				strcpy(dest + 1, "kfmclient");
-				path = new;
-			}
-			if (file)
-				filename = file;
+			size_t len;
+			if (strip_suffix(path, "/konqueror", &len))
+				path = xstrfmt("%.*s/kfmclient", (int)len, path);
+			filename = basename((char *)path);
 		} else
 			path = "kfmclient";
 		strbuf_addf(&man_page, "man:%s(1)", page);
@@ -183,7 +176,7 @@ static void add_man_viewer(const char *name)
 	while (*p)
 		p = &((*p)->next);
 	*p = xcalloc(1, (sizeof(**p) + len + 1));
-	strncpy((*p)->name, name, len);
+	memcpy((*p)->name, name, len); /* NUL-terminated by xcalloc */
 }
 
 static int supported_man_viewer(const char *name, size_t len)
@@ -199,7 +192,7 @@ static void do_add_man_viewer_info(const char *name,
 {
 	struct man_viewer_info_list *new = xcalloc(1, sizeof(*new) + len + 1);
 
-	strncpy(new->name, name, len);
+	memcpy(new->name, name, len); /* NUL-terminated by xcalloc */
 	new->info = xstrdup(value);
 	new->next = man_viewer_info_list;
 	man_viewer_info_list = new;
@@ -295,16 +288,6 @@ static int is_git_command(const char *s)
 		is_in_cmdlist(&other_cmds, s);
 }
 
-static const char *prepend(const char *prefix, const char *cmd)
-{
-	size_t pre_len = strlen(prefix);
-	size_t cmd_len = strlen(cmd);
-	char *p = xmalloc(pre_len + cmd_len + 1);
-	memcpy(p, prefix, pre_len);
-	strcpy(p + pre_len, cmd);
-	return p;
-}
-
 static const char *cmd_to_page(const char *git_cmd)
 {
 	if (!git_cmd)
@@ -312,9 +295,9 @@ static const char *cmd_to_page(const char *git_cmd)
 	else if (starts_with(git_cmd, "git"))
 		return git_cmd;
 	else if (is_git_command(git_cmd))
-		return prepend("git-", git_cmd);
+		return xstrfmt("git-%s", git_cmd);
 	else
-		return prepend("git", git_cmd);
+		return xstrfmt("git%s", git_cmd);
 }
 
 static void setup_man_path(void)
