@@ -1491,7 +1491,7 @@ resolving a merge>>.
 
 [[fixing-a-mistake-by-rewriting-history]]
 Fixing a mistake by rewriting history
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 If the problematic commit is the most recent commit, and you have not
 yet made that commit public, then you may just
