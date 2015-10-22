@@ -2,7 +2,6 @@
 #include "tempfile.h"
 #include "credential.h"
 #include "unix-socket.h"
-#include "sigchain.h"
 #include "parse-options.h"
 
 static struct tempfile socket_file;
