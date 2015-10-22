@@ -210,4 +210,15 @@ test_expect_success 'clone, dissociate from partial reference and repack' '
 	test_line_count = 1 packs.txt
 '
 
+test_expect_success 'clone, dissociate from alternates' '
+	rm -fr A B C &&
+	test_create_repo A &&
+	commit_in A file1 &&
+	git clone --reference=A A B &&
+	test_line_count = 1 B/.git/objects/info/alternates &&
+	git clone --local --dissociate B C &&
+	! test -f C/.git/objects/info/alternates &&
+	( cd C && git fsck )
+'
+
 test_done
