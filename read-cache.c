@@ -17,7 +17,6 @@
 #include "strbuf.h"
 #include "varint.h"
 #include "split-index.h"
-#include "sigchain.h"
 #include "utf8.h"
 
 static struct cache_entry *refresh_cache_entry(struct cache_entry *ce,
