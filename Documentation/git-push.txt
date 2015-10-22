@@ -61,7 +61,7 @@ be named.
 If `git push [<repository>]` without any `<refspec>` argument is set to
 update some ref at the destination with `<src>` with
 `remote.<repository>.push` configuration variable, `:<dst>` part can
-be omitted---such a push will update a ref that `<src>` normally updates
+be omitted--such a push will update a ref that `<src>` normally updates
 without any `<refspec>` on the command line.  Otherwise, missing
 `:<dst>` means to update the same ref as the `<src>`.
 +
