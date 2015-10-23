@@ -282,6 +282,7 @@ static void read_branches_file(struct remote *remote)
 		return;
 
 	strbuf_getline(&buf, f, '\n');
+	fclose(f);
 	strbuf_trim(&buf);
 	if (!buf.len) {
 		strbuf_release(&buf);
