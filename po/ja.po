@@ -380,7 +380,7 @@ msgstr ""
 "\n"
 "Gitk - gitコミットビューア\n"
 "\n"
-"Copyright \\u00a9 2005-2014 Paul Mackerras\n"
+"Copyright © 2005-2014 Paul Mackerras\n"
 "\n"
 "使用および再配布は GNU General Public License に従ってください"
 
