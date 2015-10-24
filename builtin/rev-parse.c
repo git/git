@@ -281,11 +281,8 @@ static int try_difference(const char *arg)
 			b = lookup_commit_reference(end);
 			exclude = get_merge_bases(a, b);
 			while (exclude) {
-				struct commit_list *n = exclude->next;
-				show_rev(REVERSED,
-					 exclude->item->object.sha1,NULL);
-				free(exclude);
-				exclude = n;
+				struct commit *commit = pop_commit(&exclude);
+				show_rev(REVERSED, commit->object.sha1, NULL);
 			}
 		}
 		*dotdot = '.';

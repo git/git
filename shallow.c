@@ -422,12 +422,8 @@ static void paint_down(struct paint_info *info, const unsigned char *sha1,
 	commit_list_insert(c, &head);
 	while (head) {
 		struct commit_list *p;
-		struct commit *c = head->item;
+		struct commit *c = pop_commit(&head);
 		uint32_t **refs = ref_bitmap_at(&info->ref_bitmap, c);
-
-		p = head;
-		head = head->next;
-		free(p);
 
 		/* XXX check "UNINTERESTING" from pack bitmaps if available */
 		if (c->object.flags & (SEEN | UNINTERESTING))
