@@ -417,17 +417,17 @@ msgstr "<End>\t\t最後のコミットに移動"
 #: gitk:3053
 #, fuzzy
 msgid "<Up>, p, k\tMove up one commit"
-msgstr "<Up>, p, i\t一つ上のコミットに移動"
+msgstr "<Up>, p, k\t一つ上のコミットに移動"
 
 #: gitk:3054
 #, fuzzy
 msgid "<Down>, n, j\tMove down one commit"
-msgstr "<Down>, n, k\t一つ下のコミットに移動"
+msgstr "<Down>, n, j\t一つ下のコミットに移動"
 
 #: gitk:3055
 #, fuzzy
 msgid "<Left>, z, h\tGo back in history list"
-msgstr "<Left>, z, j\t履歴の前に戻る"
+msgstr "<Left>, z, h\t履歴の前に戻る"
 
 #: gitk:3056
 msgid "<Right>, x, l\tGo forward in history list"
