@@ -36,6 +36,7 @@ struct progress {
 	unsigned delay;
 	unsigned delayed_percent_treshold;
 	struct throughput *throughput;
+	const char *eol;
 };
 
 static volatile sig_atomic_t progress_update;
@@ -99,7 +100,7 @@ static int display(struct progress *progress, unsigned n, const char *done)
 
 	progress->last_value = n;
 	tp = (progress->throughput) ? progress->throughput->display.buf : "";
-	eol = done ? done : "   \r";
+	eol = done ? done : (progress->eol ? progress->eol : "   \r");
 	if (progress->total) {
 		unsigned percent = n * 100 / progress->total;
 		if (percent != progress->last_percent || progress_update) {
@@ -221,6 +222,7 @@ struct progress *start_progress_delay(const char *title, unsigned total,
 	progress->delayed_percent_treshold = percent_treshold;
 	progress->delay = delay;
 	progress->throughput = NULL;
+	progress->eol = NULL;
 	set_progress_signal();
 	return progress;
 }
@@ -228,6 +230,10 @@ struct progress *start_progress_delay(const char *title, unsigned total,
 struct progress *start_progress(const char *title, unsigned total)
 {
 	return start_progress_delay(title, total, 0, 0);
+}
+
+void set_progress_eol(struct progress *p_progress, const char *eol) {
+	p_progress->eol = eol;
 }
 
 void stop_progress(struct progress **p_progress)

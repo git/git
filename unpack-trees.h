@@ -71,6 +71,8 @@ struct unpack_trees_options {
 	struct index_state *src_index;
 	struct index_state result;
 
+	const char *eol;
+
 	struct exclude_list *el; /* for internal use */
 };
 
