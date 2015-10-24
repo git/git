@@ -1376,21 +1376,3 @@ msgstr "あいまいな引数 '%s': リビジョンとファイル名の両方�
 #: gitk:12343
 msgid "Bad arguments to gitk:"
 msgstr "gitkへの不正な引数:"
-
-#~ msgid "mc"
-#~ msgstr "mc"
-
-#~ msgid "SHA1 ID: "
-#~ msgstr "SHA1 ID: "
-
-#~ msgid "next"
-#~ msgstr "次"
-
-#~ msgid "prev"
-#~ msgstr "前"
-
-#~ msgid "CDate"
-#~ msgstr "作成日"
-
-#~ msgid "Cannot find the git directory \"%s\"."
-#~ msgstr "gitディレクトリ \"%s\" を見つけられません。"
