@@ -255,7 +255,7 @@ void bitmap_writer_build(struct packing_data *to_pack)
 	writer.to_pack = to_pack;
 
 	if (writer.show_progress)
-		writer.progress = start_progress("Building bitmaps", writer.selected_nr);
+		writer.progress = start_progress("Building bitmaps", writer.selected_nr, NULL);
 
 	init_revisions(&revs, NULL);
 	revs.tag_objects = 1;
@@ -390,7 +390,7 @@ void bitmap_writer_select_commits(struct commit **indexed_commits,
 	      date_compare);
 
 	if (writer.show_progress)
-		writer.progress = start_progress("Selecting bitmap commits", 0);
+		writer.progress = start_progress("Selecting bitmap commits", 0, NULL);
 
 	if (indexed_commits_nr < 100) {
 		for (i = 0; i < indexed_commits_nr; ++i)

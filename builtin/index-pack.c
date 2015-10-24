@@ -1116,7 +1116,7 @@ static void parse_pack_objects(unsigned char *sha1)
 	if (verbose)
 		progress = start_progress(
 				from_stdin ? _("Receiving objects") : _("Indexing objects"),
-				nr_objects);
+				nr_objects, NULL);
 	for (i = 0; i < nr_objects; i++) {
 		struct object_entry *obj = &objects[i];
 		void *data = unpack_raw_entry(obj, &ofs_delta->offset,
@@ -1192,7 +1192,7 @@ static void resolve_deltas(void)
 
 	if (verbose)
 		progress = start_progress(_("Resolving deltas"),
-					  nr_ref_deltas + nr_ofs_deltas);
+					  nr_ref_deltas + nr_ofs_deltas, NULL);
 
 #ifndef NO_PTHREADS
 	nr_dispatched = 0;
