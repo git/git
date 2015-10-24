@@ -487,7 +487,7 @@ static void unpack_all(void)
 	use(sizeof(struct pack_header));
 
 	if (!quiet)
-		progress = start_progress(_("Unpacking objects"), nr_objects);
+		progress = start_progress(_("Unpacking objects"), nr_objects, NULL);
 	obj_list = xcalloc(nr_objects, sizeof(*obj_list));
 	for (i = 0; i < nr_objects; i++) {
 		unpack_one(i);

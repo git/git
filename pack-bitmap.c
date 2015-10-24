@@ -968,7 +968,7 @@ void test_bitmap_walk(struct rev_info *revs)
 		die("revision walk setup failed");
 
 	tdata.base = bitmap_new();
-	tdata.prg = start_progress("Verifying bitmap entries", result_popcnt);
+	tdata.prg = start_progress("Verifying bitmap entries", result_popcnt, NULL);
 	tdata.seen = 0;
 
 	traverse_commit_list(revs, &test_show_commit, &test_show_object, &tdata);
@@ -1050,7 +1050,7 @@ int rebuild_existing_bitmaps(struct packing_data *mapping,
 	i = 0;
 
 	if (show_progress)
-		progress = start_progress("Reusing bitmaps", 0);
+		progress = start_progress("Reusing bitmaps", 0, NULL);
 
 	kh_foreach_value(bitmap_git.bitmaps, stored, {
 		if (stored->flags & BITMAP_FLAG_REUSE) {

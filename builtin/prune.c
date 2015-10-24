@@ -134,7 +134,8 @@ int cmd_prune(int argc, const char **argv, const char *prefix)
 	if (show_progress == -1)
 		show_progress = isatty(2);
 	if (show_progress)
-		progress = start_progress_delay(_("Checking connectivity"), 0, 0, 2);
+		progress = start_progress_delay(_("Checking connectivity"), 0, 0,
+						2, NULL);
 
 	mark_reachable_objects(&revs, 1, expire, progress);
 	stop_progress(&progress);

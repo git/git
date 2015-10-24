@@ -37,6 +37,8 @@ struct checkout_opts {
 	int overwrite_ignore;
 	int ignore_skipworktree;
 	int ignore_other_worktrees;
+	int progress_lf;
+	int progress_notty;
 
 	const char *new_branch;
 	const char *new_branch_force;
@@ -417,7 +419,8 @@ static int reset_tree(struct tree *tree, const struct checkout_opts *o,
 	opts.reset = 1;
 	opts.merge = 1;
 	opts.fn = oneway_merge;
-	opts.verbose_update = !o->quiet && isatty(2);
+	opts.verbose_update = !o->quiet && (o->progress_notty || isatty(2));
+	opts.eol = o->progress_lf ? _("\n") : NULL;
 	opts.src_index = &the_index;
 	opts.dst_index = &the_index;
 	parse_tree(tree);
@@ -501,7 +504,8 @@ static int merge_working_tree(const struct checkout_opts *opts,
 		topts.update = 1;
 		topts.merge = 1;
 		topts.gently = opts->merge && old->commit;
-		topts.verbose_update = !opts->quiet && isatty(2);
+		topts.verbose_update = !opts->quiet && (opts->progress_notty || isatty(2));
+		topts.eol = opts->progress_lf ? _("\n") : NULL;
 		topts.fn = twoway_merge;
 		if (opts->overwrite_ignore) {
 			topts.dir = xcalloc(1, sizeof(*topts.dir));
@@ -1156,6 +1160,10 @@ int cmd_checkout(int argc, const char **argv, const char *prefix)
 				N_("second guess 'git checkout <no-such-branch>'")),
 		OPT_BOOL(0, "ignore-other-worktrees", &opts.ignore_other_worktrees,
 			 N_("do not check if another worktree is holding the given ref")),
+		OPT_BOOL(0, "progress-lf", &opts.progress_lf,
+			 N_("write progress using lf instead of cr")),
+		OPT_BOOL(0, "progress-no-tty", &opts.progress_notty,
+			 N_("write progress info even if not using a TTY")),
 		OPT_END(),
 	};
 
