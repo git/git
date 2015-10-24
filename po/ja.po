@@ -312,19 +312,16 @@ msgid "Compare with marked commit"
 msgstr "マークを付けたコミットと比較する"
 
 #: gitk:2630 gitk:2641
-#, fuzzy
 msgid "Diff this -> marked commit"
 msgstr "これと選択したコミットのdiffを見る"
 
 #: gitk:2631 gitk:2642
-#, fuzzy
 msgid "Diff marked commit -> this"
 msgstr "選択したコミットとこれのdiffを見る"
 
 #: gitk:2632
-#, fuzzy
 msgid "Revert this commit"
-msgstr "このコミットにマークをつける"
+msgstr "このコミットを撤回する"
 
 #: gitk:2648
 msgid "Check out this branch"
@@ -367,9 +364,8 @@ msgid "Run git gui blame on this line"
 msgstr "この行に git gui で blame をかける"
 
 #: gitk:3013
-#, fuzzy
 msgid "About gitk"
-msgstr "gitk について(&A)"
+msgstr "gitk について"
 
 #: gitk:3015
 #, fuzzy
@@ -384,7 +380,7 @@ msgstr ""
 "\n"
 "Gitk - gitコミットビューア\n"
 "\n"
-"Copyright \\u00a9 2005-2010 Paul Mackerras\n"
+"Copyright \\u00a9 2005-2014 Paul Mackerras\n"
 "\n"
 "使用および再配布は GNU General Public License に従ってください"
 
@@ -406,9 +402,9 @@ msgid "<%s-Q>\t\tQuit"
 msgstr "<%s-Q>\t\t終了"
 
 #: gitk:3050
-#, fuzzy, tcl-format
+#, tcl-format
 msgid "<%s-W>\t\tClose window"
-msgstr "<%s-F>\t\t検索"
+msgstr "<%s-W>\t\tウィンドウを閉じる"
 
 #: gitk:3051
 msgid "<Home>\t\tMove to first commit"
@@ -523,9 +519,8 @@ msgid "<Return>\tMove to next find hit"
 msgstr "<Return>\t次を検索して移動"
 
 #: gitk:3076
-#, fuzzy
 msgid "g\t\tGo to commit"
-msgstr "<End>\t\t最後のコミットに移動"
+msgstr "g\t\t指定してコミットに移動"
 
 #: gitk:3077
 msgid "/\t\tFocus the search box"
@@ -691,9 +686,8 @@ msgid "Matches all Commit Info criteria"
 msgstr "コミット情報の全ての条件に一致"
 
 #: gitk:4087
-#, fuzzy
 msgid "Matches no Commit Info criteria"
-msgstr "コミット情報の全ての条件に一致"
+msgstr "コミット情報の全ての条件に不一致"
 
 #: gitk:4088
 msgid "Changes to Files:"
@@ -780,7 +774,6 @@ msgid "-- criteria for selecting revisions"
 msgstr "― リビジョンの選択条件"
 
 #: gitk:4242
-#, fuzzy
 msgid "View Name"
 msgstr "ビュー名:"
 
@@ -1003,12 +996,11 @@ msgstr "タグ名:"
 
 #: gitk:9269
 msgid "Tag message is optional"
-msgstr ""
+msgstr "タグメッセージを付ける事も出来ます"
 
 #: gitk:9271
-#, fuzzy
 msgid "Tag message:"
-msgstr "タグ名:"
+msgstr "タグメッセージ:"
 
 #: gitk:9275 gitk:9454
 msgid "Create"
@@ -1085,33 +1077,27 @@ msgid "No changes committed"
 msgstr "何の変更もコミットされていません"
 
 #: gitk:9608
-#, fuzzy, tcl-format
+#, tcl-format
 msgid "Commit %s is not included in branch %s -- really revert it?"
-msgstr ""
-"コミット %s は既にブランチ %s に含まれています ― 本当にこれを再適用しますか？"
+msgstr "コミット %s は既にブランチ %s に含まれています ― 本当にこれを撤回しますか？"
 
 #: gitk:9613
-#, fuzzy
 msgid "Reverting"
-msgstr "リセット中"
+msgstr "撤回中"
 
 #: gitk:9621
-#, fuzzy, tcl-format
+#, tcl-format
 msgid ""
 "Revert failed because of local changes to the following files:%s Please "
 "commit, reset or stash  your changes and try again."
-msgstr ""
-"ファイル '%s' のローカルな変更のためにチェリーピックは失敗しました。\n"
-"あなたの変更に commit, reset, stash のいずれかを行ってからやり直してくださ"
-"い。"
+msgstr "ファイル '%s' のローカルな変更のために撤回は失敗しました。 あなたの変更に commit, reset, stash のいずれかを行ってからやり直してください。"
 
 #: gitk:9625
-#, fuzzy
 msgid ""
 "Revert failed because of merge conflict.\n"
 " Do you wish to run git citool to resolve it?"
 msgstr ""
-"マージの衝突によってチェリーピックは失敗しました。\n"
+"マージの衝突によって撤回は失敗しました。\n"
 "この解決のために git citool を実行したいですか？"
 
 #: gitk:9668
@@ -1219,9 +1205,8 @@ msgid "Show local changes"
 msgstr "ローカルな変更を表示"
 
 #: gitk:11376
-#, fuzzy
 msgid "Auto-select SHA1 (length)"
-msgstr "SHA1 の自動選択"
+msgstr "SHA1 の自動選択 (選択文字数指定)"
 
 #: gitk:11380
 msgid "Hide remote refs"
