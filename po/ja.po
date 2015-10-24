@@ -127,11 +127,11 @@ msgstr "編集(&E)"
 
 #: gitk:2084
 msgid "&New view..."
-msgstr "新規ビュー...(&N)"
+msgstr "新規ビュー(&N)..."
 
 #: gitk:2085
 msgid "&Edit view..."
-msgstr "ビュー編集...(&E)"
+msgstr "ビュー編集(&E)..."
 
 #: gitk:2086
 msgid "&Delete view"
@@ -1236,13 +1236,12 @@ msgid "Tab spacing"
 msgstr "タブ空白幅"
 
 #: gitk:11389
-#, fuzzy
 msgid "Display nearby tags/heads"
-msgstr "近くのタグを表示する"
+msgstr "近くの タグ/head を表示する"
 
 #: gitk:11392
 msgid "Maximum # tags/heads to show"
-msgstr ""
+msgstr "タグ/head の最大表示数"
 
 #: gitk:11395
 msgid "Limit diffs to listed paths"
@@ -1261,21 +1260,20 @@ msgid "Choose..."
 msgstr "選択..."
 
 #: gitk:11410
-#, fuzzy
 msgid "General options"
-msgstr "パッチ生成"
+msgstr "全体設定"
 
 #: gitk:11413
 msgid "Use themed widgets"
-msgstr ""
+msgstr "テーマウィジェットを使用する"
 
 #: gitk:11415
 msgid "(change requires restart)"
-msgstr ""
+msgstr "(変更には再起動が必要です)"
 
 #: gitk:11417
 msgid "(currently unavailable)"
-msgstr ""
+msgstr "(現在は使用出来ません)"
 
 #: gitk:11428
 msgid "Colors: press to choose"
@@ -1364,15 +1362,15 @@ msgstr "Gitk 設定"
 #: gitk:11509
 #, fuzzy
 msgid "General"
-msgstr "生成"
+msgstr "一般"
 
 #: gitk:11510
 msgid "Colors"
-msgstr ""
+msgstr "色"
 
 #: gitk:11511
 msgid "Fonts"
-msgstr ""
+msgstr "フォント"
 
 #: gitk:11561
 #, tcl-format
