@@ -1,5 +1,5 @@
 # Japanese translations for gitk package.
-# Copyright (C) 2005-2009 Paul Mackerras
+# Copyright (C) 2005-2015 Paul Mackerras
 # This file is distributed under the same license as the gitk package.
 #
 # YOKOTA Hiroshi <yokota@netlab.cs.tsukuba.ac.jp>, 2015.
