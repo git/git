@@ -1367,6 +1367,8 @@ msgid ""
 "Sorry, gitk cannot run with this version of Tcl/Tk.\n"
 " Gitk requires at least Tcl/Tk 8.4."
 msgstr ""
+"申し訳ありませんが、このバージョンの Tcl/Tk では gitk を実行出来ません。\n"
+"Gitkの実行には Tcl/Tk 8.4 以上が必要です。"
 
 #: gitk:12284
 msgid "Cannot find a git repository here."
