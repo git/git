@@ -202,6 +202,9 @@ static int check_updates(struct unpack_trees_options *o)
 
 		progress = start_progress_delay(_("Checking out files"),
 						total, 50, 1);
+		if (o->eol) {
+			set_progress_eol(progress, o->eol);
+		}
 		cnt = 0;
 	}
 
