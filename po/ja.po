@@ -433,7 +433,7 @@ msgstr "<Right>, x, l\t履歴の次へ進む"
 #: gitk:3057
 #, tcl-format
 msgid "<%s-n>\tGo to n-th parent of current commit in history list"
-msgstr "<%s-n>\t履歴上で現在のコミットの親コミットの内のn(数字)番目のコミットへ移動"
+msgstr "<%s-n(数字)>\t履歴上で現在のコミットの親コミットの内のn(数字)番目のコミットへ移動"
 
 #: gitk:3058
 msgid "<PageUp>\tMove up one page in commit list"
