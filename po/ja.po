@@ -2,6 +2,7 @@
 # Copyright (C) 2005-2009 Paul Mackerras
 # This file is distributed under the same license as the gitk package.
 #
+# YOKOTA Hiroshi <yokota@netlab.cs.tsukuba.ac.jp>, 2015.
 # Mizar <mizar.jp@gmail.com>, 2009.
 # Junio C Hamano <gitster@pobox.com>, 2009.
 msgid ""
@@ -10,7 +11,7 @@ msgstr ""
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-05-17 14:32+1000\n"
 "PO-Revision-Date: 2009-11-06 01:45+0900\n"
-"Last-Translator: Mizar <mizar.jp@gmail.com>\n"
+"Last-Translator: YOKOTA Hiroshi <yokota@netlab.cs.tsukuba.ac.jp>\n"
 "Language-Team: Japanese\n"
 "Language: \n"
 "MIME-Version: 1.0\n"
