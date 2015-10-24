@@ -815,7 +815,7 @@ msgstr "ステージされていない、コミット前のローカルな変更
 
 #: gitk:7135
 msgid "and many more"
-msgstr ""
+msgstr "他多数"
 
 #: gitk:7138
 msgid "many"
