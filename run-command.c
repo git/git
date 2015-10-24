@@ -11,6 +11,12 @@ void child_process_init(struct child_process *child)
 	argv_array_init(&child->env_array);
 }
 
+void child_process_clear(struct child_process *child)
+{
+	argv_array_clear(&child->args);
+	argv_array_clear(&child->env_array);
+}
+
 struct child_to_clean {
 	pid_t pid;
 	struct child_to_clean *next;
@@ -336,8 +342,7 @@ int start_command(struct child_process *cmd)
 fail_pipe:
 			error("cannot create %s pipe for %s: %s",
 				str, cmd->argv[0], strerror(failed_errno));
-			argv_array_clear(&cmd->args);
-			argv_array_clear(&cmd->env_array);
+			child_process_clear(cmd);
 			errno = failed_errno;
 			return -1;
 		}
@@ -523,8 +528,7 @@ fail_pipe:
 			close_pair(fderr);
 		else if (cmd->err)
 			close(cmd->err);
-		argv_array_clear(&cmd->args);
-		argv_array_clear(&cmd->env_array);
+		child_process_clear(cmd);
 		errno = failed_errno;
 		return -1;
 	}
@@ -550,8 +554,7 @@ fail_pipe:
 int finish_command(struct child_process *cmd)
 {
 	int ret = wait_or_whine(cmd->pid, cmd->argv[0]);
-	argv_array_clear(&cmd->args);
-	argv_array_clear(&cmd->env_array);
+	child_process_clear(cmd);
 	return ret;
 }
 
