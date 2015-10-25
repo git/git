@@ -1431,11 +1431,11 @@ differently.  Normally, a merge results in a merge commit, with two
 parents, one pointing at each of the two lines of development that
 were merged.
 
-However, if the current branch is a descendant of the other--so every
-commit present in the one is already contained in the other--then Git
-just performs a "fast-forward"; the head of the current branch is moved
-forward to point at the head of the merged-in branch, without any new
-commits being created.
+However, if the current branch is an ancestor of the other--so every commit
+present in the current branch is already contained in the other branch--then Git
+just performs a "fast-forward"; the head of the current branch is moved forward
+to point at the head of the merged-in branch, without any new commits being
+created.
 
 [[fixing-mistakes]]
 Fixing mistakes
