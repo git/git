@@ -48,6 +48,13 @@ UI, Workflows & Features
  * Teach "git p4" to send large blobs outside the repository by
    talking to Git LFS.
 
+ * Prepare for Git on-disk repository representation to undergo
+   backward incompatible changes by introducing a new repository
+   format version "1", with an extension mechanism.
+   (merge 067fbd4 jk/repository-extension later to maint).
+
+ * "git worktree" learned a "list" subcommand.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -58,7 +65,9 @@ Performance, Internal Implementation, Development Support etc.
 
  * Some features from "git tag -l" and "git branch -l" have been made
    available to "git for-each-ref" so that eventually the unified
-   implementation can be shared across all three.
+   implementation can be shared across all three.  The version merged
+   to the 'master' branch earlier had a performance regression in "tag
+   --contains", which has since been corrected.
 
  * Because "test_when_finished" in our test framework queues the
    clean-up tasks to be done in a shell variable, it should not be
@@ -82,6 +91,11 @@ Performance, Internal Implementation, Development Support etc.
  * Many allocations that is manually counted (correctly) that are
    followed by strcpy/sprintf have been replaced with a less error
    prone constructs such as xstrfmt.
+
+ * The internal stripspace() function has been moved to where it
+   logically belongs to, i.e. strbuf API, and the command line parser
+   of "git stripspace" has been updated to use the parse_options API.
+   (merge bed4452 tk/stripspace later to maint).
 
 
 Also contains various documentation updates and code clean-ups.
@@ -224,6 +238,26 @@ notes for details).
    but a test insisted that the function drops a trailing slash.
    (merge b2a7123 rd/test-path-utils later to maint).
 
+ * A test for interaction between untracked cache and sparse checkout
+   added in Git 2.5 days were flaky.
+   (merge 9b680fb dt/t7063-fix-flaky-test later to maint).
+
+ * A couple of commands still showed "[options]" in their usage string
+   to note where options should come on their command line, but we
+   spell that "[<options>]" in most places these days.
+   (merge d96a031 rt/placeholder-in-usage later to maint).
+
+ * The synopsis text and the usage string of subcommands that read
+   list of things from the standard input are often shown as if they
+   only take input from a file on a filesystem, which was misleading.
+   (merge 33e8fc8 jc/usage-stdin later to maint).
+
+ * "git am -3" had a small regression where it is aborted in its error
+   handling codepath when underlying merge-recursive failed in certain
+   ways, as it assumed that the internal call to merge-recursive will
+   never die, which is not the case (yet).
+   (merge c63d4b2 jc/am-3-fallback-regression-fix later to maint).
+
  * Code clean-up and minor fixes.
    (merge 15ed07d jc/rerere later to maint).
    (merge e7a7401 pt/pull-builtin later to maint).
@@ -234,3 +268,4 @@ notes for details).
    (merge ba128e2 es/worktree-add-cleanup later to maint).
    (merge 44cd91e cc/quote-comments later to maint).
    (merge 147875f sb/submodule-config-parse later to maint).
+   (merge ae9f274 es/worktree-add later to maint).
