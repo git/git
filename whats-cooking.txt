@@ -1,22 +1,20 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Oct 2015, #05; Thu, 22)
-X-master-at: 74301d6edeb0e081a4ef864057952b6a7ff2b4be
-X-next-at: b049f0a3b4560d97ac87735f8c2e9b4d5c69fd44
+Subject: What's cooking in git.git (Oct 2015, #06; Mon, 26)
+X-master-at: 37023ba381b6d251d7140a997b39b566dbc63c42
+X-next-at: 063f6400bc25ef9c258bf5470b0d2f8188f104b5
 
-What's cooking in git.git (Oct 2015, #05; Thu, 22)
+What's cooking in git.git (Oct 2015, #06; Mon, 26)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-With somewhat reduced review bandwidth, I'd expect that the upcoming
-cycle would be slower than usual.  At tinyurl.com/gitCal, I
-tentatively drew a 14-week schedule for this cycle (I plan to be
-offline during weeks #7-#9 myself---hopefully we'll have capable
-interim maintainers to take care of the list traffic in the meantime
-as in past years).
+At tinyurl.com/gitCal, I drew a 14-week schedule for this cycle.  I
+plan to be offline during weeks #7-#9 myself; hopefully we'll have
+capable interim maintainers to take care of the list traffic in the
+meantime as in past years.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -26,149 +24,42 @@ of the repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* jk/war-on-sprintf (2015-10-05) 70 commits
-  (merged to 'next' on 2015-10-15 at 27a1ae5)
- + name-rev: use strip_suffix to avoid magic numbers
- + use strbuf_complete to conditionally append slash
- + fsck: use for_each_loose_file_in_objdir
- + Makefile: drop D_INO_IN_DIRENT build knob
- + fsck: drop inode-sorting code
- + convert strncpy to memcpy
- + notes: document length of fanout path with a constant
- + color: add color_set helper for copying raw colors
- + prefer memcpy to strcpy
- + help: clean up kfmclient munging
- + receive-pack: simplify keep_arg computation
- + avoid sprintf and strcpy with flex arrays
- + use alloc_ref rather than hand-allocating "struct ref"
- + color: add overflow checks for parsing colors
- + drop strcpy in favor of raw sha1_to_hex
- + use sha1_to_hex_r() instead of strcpy
- + daemon: use cld->env_array when re-spawning
- + stat_tracking_info: convert to argv_array
- + http-push: use an argv_array for setup_revisions
- + fetch-pack: use argv_array for index-pack / unpack-objects
- + diagnose_invalid_index_path: use strbuf to avoid strcpy/strcat
- + write_loose_object: convert to strbuf
- + remove_leading_path: use a strbuf for internal storage
- + enter_repo: convert fixed-size buffers to strbufs
- + merge-recursive: convert malloc / strcpy to strbuf
- + transport: use strbufs for status table "quickref" strings
- + apply: convert root string to strbuf
- + init: use strbufs to store paths
- + probe_utf8_pathname_composition: use internal strbuf
- + precompose_utf8: drop unused variable
- + sha1_get_pack_name: use a strbuf
- + http-walker: store url in a strbuf
- + http-push: use strbuf instead of fwrite_buffer
- + remote-ext: simplify git pkt-line generation
- + upload-archive: convert sprintf to strbuf
- + resolve_ref: use strbufs for internal buffers
- + read_remotes_file: simplify string handling
- + read_branches_file: simplify string handling
- + mailmap: replace strcpy with xstrdup
- + help: drop prepend function in favor of xstrfmt
- + ref-filter: drop sprintf and strcpy calls
- + use strip_suffix and xstrfmt to replace suffix
- + fetch: replace static buffer with xstrfmt
- + config: use xstrfmt in normalize_value
- + replace trivial malloc + sprintf / strcpy calls with xstrfmt
- + receive-pack: convert strncpy to xsnprintf
- + http-push: replace strcat with xsnprintf
- + add_packed_git: convert strcpy into xsnprintf
- + entry.c: convert strcpy to xsnprintf
- + grep: use xsnprintf to format failure message
- + compat/hstrerror: convert sprintf to snprintf
- + stop_progress_msg: convert sprintf to xsnprintf
- + find_short_object_filename: convert sprintf to xsnprintf
- + use xsnprintf for generating git object headers
- + archive-tar: use xsnprintf for trivial formatting
- + convert trivial sprintf / strcpy calls to xsnprintf
- + compat/inet_ntop: fix off-by-one in inet_ntop4
- + test-dump-cache-tree: avoid overflow of cache-tree name
- + progress: store throughput display in a strbuf
- + trace: use strbuf for quote_crnl output
- + mailsplit: make PATH_MAX buffers dynamic
- + fsck: use strbuf to generate alternate directories
- + add reentrant variants of sha1_to_hex and find_unique_abbrev
- + strbuf: make strbuf_complete_line more generic
- + add git_path_buf helper function
- + add xsnprintf helper function
- + fsck: don't fsck alternates for connectivity-only check
- + archive-tar: fix minor indentation violation
- + mailsplit: fix FILE* leak in split_maildir
- + show-branch: avoid segfault with --reflog of unborn branch
- (this branch is used by dt/refs-backend-lmdb and dt/refs-backend-pre-vtable.)
+* dk/p4-import-ctypes (2015-10-20) 1 commit
+  (merged to 'next' on 2015-10-22 at 5760144)
+ + git-p4: import the ctypes module
 
- Many allocations that is manually counted (correctly) that are
- followed by strcpy/sprintf have been replaced with a less error
- prone constructs such as xstrfmt.
+ "git-p4" tried to use from ctypes module without first importing
+ it.
 
 
-* ls/p4-test-updates (2015-10-12) 2 commits
-  (merged to 'next' on 2015-10-15 at 3c94932)
- + git-p4: skip t9819 test case on case insensitive file systems
- + git-p4: avoid "stat" command in t9815 git-p4-submit-fail
-
- A few test scripts around "git p4" have been improved for
- portability.
+* dt/t7063-fix-flaky-test (2015-10-19) 1 commit
+  (merged to 'next' on 2015-10-20 at 156af72)
+ + t7063: fix flaky untracked-cache test
 
 
-* tb/t0027-crlf (2015-10-12) 1 commit
-  (merged to 'next' on 2015-10-15 at 7ab4f31)
- + t0027: improve test for not-normalized files
-
- The test for various line-ending conversions has been enhanced.
-
---------------------------------------------------
-[New Topics]
-
-* ar/clone-dissociate (2015-10-22) 1 commit
- - clone: allow "--dissociate" without reference
-
- "git clone --dissociate" used to require that "--reference" was
- used at the same time, but you can create a new repository that
- borrows objects from another without using "--reference", namely
- with "clone --local" from a repository that borrows objects from
- other repositories.
-
- Will merge to 'next'.
+* es/worktree-add (2015-10-18) 1 commit
+  (merged to 'next' on 2015-10-20 at ccadb70)
+ + worktree: usage: denote <branch> as optional with 'add'
 
 
-* da/difftool (2015-10-21) 1 commit
- - difftool: gracefully handle symlinks to directories
+* jc/am-3-fallback-regression-fix (2015-10-09) 1 commit
+  (merged to 'next' on 2015-10-15 at 7dde994)
+ + am -3: do not let failed merge from completing the error codepath
+ (this branch is used by js/am-3-merge-recursive-direct.)
 
- The code to reuse checked out files for comparison was too
- aggressive and forgot that symbolic links cannot be reused
- for comparison.
-
- Smells wrong that this special-cases based on the target of
- symbolic link.
-
-
-* dt/name-hash-dir-entry-fix (2015-10-21) 1 commit
-  (merged to 'next' on 2015-10-22 at 15eb519)
- + name-hash: don't reuse cache_entry in dir_entry
-
- The name-hash subsystem that is used to cope with case insensitive
- filesystems keeps track of directories and their on-filesystem
- cases for all the paths in the index by holding a pointer to a
- randomly chosen cache entry that is inside the directory (for its
- ce->ce_name component).  This pointer was not updated even when the
- cache entry was removed from the index, leading to use after free.
- This was fixed by recording the path for each directory instead of
- borrowing cache entries and restructuring the API somewhat.
-
- Will merge to 'master'.
+ "git am -3" had a small regression where it is aborted in its error
+ handling codepath when underlying merge-recursive failed in certain
+ ways, as it assumed that the internal call to merge-recursive will
+ never die, which is not the case (yet).
 
 
-* jc/everyday-markup (2015-10-22) 1 commit
-  (merged to 'next' on 2015-10-22 at 0a2702d)
- + Documentation/everyday: match undefline with the text
+* jc/usage-stdin (2015-10-16) 1 commit
+  (merged to 'next' on 2015-10-20 at 937d4aa)
+ + usage: do not insist that standard input must come from a file
 
- AsciiDoc markup fixes.
-
- Will merge to 'master'.
+ The synopsis text and the usage string of subcommands that read
+ list of things from the standard input are often shown as if they
+ only take input from a file on a filesystem, which was misleading.
 
 
 * jk/repository-extension (2015-06-24) 2 commits
@@ -180,36 +71,129 @@ of the repositories listed at
  backward incompatible changes by introducing a new repository
  format version "1", with an extension mechanism.
 
+
+* kn/for-each-tag (2015-10-18) 1 commit
+  (merged to 'next' on 2015-10-20 at 7afd374)
+ + tag.c: use the correct algorithm for the '--contains' option
+
+ Recent update to "git tag --contains" caused a performance
+ regression.
+
+
+* mr/worktree-list (2015-10-08) 5 commits
+  (merged to 'next' on 2015-10-20 at 7cb272d)
+ + worktree: add 'list' command
+ + worktree: add details to the worktree struct
+ + worktree: add a function to get worktree details
+ + worktree: refactor find_linked_symref function
+ + worktree: add top-level worktree.c
+
+ Add the "list" subcommand to "git worktree".
+
+
+* rt/placeholder-in-usage (2015-10-16) 1 commit
+  (merged to 'next' on 2015-10-20 at 5189b23)
+ + am, credential-cache: add angle brackets to usage string
+
+ A couple of commands still showed "[options]" in their usage string
+ to note where options should come on their command line, but we
+ spell that "[<options>]" in most places these days.
+
+
+* tk/stripspace (2015-10-16) 2 commits
+  (merged to 'next' on 2015-10-20 at 327a997)
+ + stripspace: use parse-options for command-line parsing
+ + strbuf: make stripspace() part of strbuf
+
+ The internal stripspace() function has been moved to where it
+ logically belongs to, i.e. strbuf API, and the command line parser
+ of "git stripspace" has been updated to use the parse_options API.
+
+--------------------------------------------------
+[New Topics]
+
+* gr/rebase-i-drop-warn (2015-10-26) 1 commit
+ - rebase-i: work around Windows CRLF line endings
+
+ Recent update to "rebase -i" that tries to sanity check the edited
+ insn sheet before it uses it has become too picky on Windows where
+ CRLF left by the editor is turned into a trailing CR on the line
+ read via the "read" built-in command.
+
+ Waiting for comments.
+
+
+* jc/add-u-A-default-to-top (2015-10-24) 1 commit
+ - add: simplify -u/-A without pathspec
+
+ "git --literal-pathspecs add -u/-A" without any command line
+ argument misbehaved ever since Git 2.0.
+
+ Waiting for comments.
+
+
+* jk/delete-modechange-conflict (2015-10-26) 3 commits
+ - merge: detect delete/modechange conflict
+ - t6031: generalize for recursive and resolve strategies
+ - t6031: move triple-rename test to t3030
+
+ Merging a branch that removes a path and another that changes the
+ mode bits on the same path should have conflicted at the path, but
+ it didn't and silently favoured the removal.
+
+ Will merge to 'next'.
+
+
+* jk/war-on-sprintf (2015-10-23) 2 commits
+  (merged to 'next' on 2015-10-23 at 3a94851)
+ + compat/mingw.c: remove printf format warning
+ + read_branches_file: plug a FILE* leak
+
  Will merge to 'master'.
 
 
-* tk/sigchain-unnecessary-post-tempfile (2015-10-22) 4 commits
-  (merged to 'next' on 2015-10-22 at b049f0a)
- + shallow: remove unused #include "sigchain.h"
- + read-cache: remove unused #include "sigchain.h"
- + diff: remove unused #include "sigchain.h"
- + credential-cache--daemon: remove unused #include "sigchain.h"
+* js/imap-send-curl-compilation-fix (2015-10-26) 1 commit
+ - imap-send: only use CURLOPT_LOGIN_OPTIONS if it is actually available
 
- Remove no-longer used #include.
+ "git imap-send" did not compile well with older version of cURL library.
 
- Will merge to 'master'.
+ Will merge to 'next'.
 
 
-* xf/user-manual-markup (2015-10-22) 3 commits
-  (merged to 'next' on 2015-10-22 at cd33c83)
- + Documentation: match undefline with the text in old release notes
- + Documentation: match underline with the text
- + Documentation: fix header markup
+* js/misc-fixes (2015-10-26) 3 commits
+ - Correct fscanf formatting string for I64u values
+ - Silence GCC's "cast of pointer to integer of a different size" warning
+ - Squelch warning about an integer overflow
 
- AsciiDoc markup fixes.
+ Various compilation fixes and squelching of warnings.
 
- Will merge to 'master'.
+ Will merge to 'next'.
 
 
-* jc/em-dash-in-doc (2015-10-22) 1 commit
- - Documentation: AsciiDoc spells em-dash as double-dashes, not triple
+* mk/blame-error-message (2015-10-26) 1 commit
+ - blame: fix option name in error message
 
- AsciiDoc markup fixes.
+ Will merge to 'next'.
+
+
+* pt/http-socks-proxy (2015-10-26) 1 commit
+ - remote-http(s): support SOCKS proxies
+
+ Add support for talking http/https over socks proxy.
+
+ Will merge to 'next'.
+
+
+* rs/pop-commit (2015-10-26) 1 commit
+ - use pop_commit() for consuming the first entry of a struct commit_list
+
+ Code simplification.
+
+ Will merge to 'next'.
+
+
+* xf/user-manual-ff (2015-10-26) 1 commit
+ - user-manual: fix the description of fast-forward
 
  Will merge to 'next'.
 
@@ -299,8 +283,90 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* ar/clone-dissociate (2015-10-22) 1 commit
+  (merged to 'next' on 2015-10-23 at 6bf746f)
+ + clone: allow "--dissociate" without reference
+
+ "git clone --dissociate" used to require that "--reference" was
+ used at the same time, but you can create a new repository that
+ borrows objects from another without using "--reference", namely
+ with "clone --local" from a repository that borrows objects from
+ other repositories.
+
+ Will merge to 'master'.
+
+
+* da/difftool (2015-10-21) 1 commit
+ - difftool: gracefully handle symlinks to directories
+
+ The code to reuse checked out files for comparison was too
+ aggressive and forgot that symbolic links cannot be reused
+ for comparison.
+
+ Smells wrong that this special-cases based on the target of
+ symbolic link.
+
+
+* dt/name-hash-dir-entry-fix (2015-10-21) 1 commit
+  (merged to 'next' on 2015-10-22 at 15eb519)
+ + name-hash: don't reuse cache_entry in dir_entry
+
+ The name-hash subsystem that is used to cope with case insensitive
+ filesystems keeps track of directories and their on-filesystem
+ cases for all the paths in the index by holding a pointer to a
+ randomly chosen cache entry that is inside the directory (for its
+ ce->ce_name component).  This pointer was not updated even when the
+ cache entry was removed from the index, leading to use after free.
+ This was fixed by recording the path for each directory instead of
+ borrowing cache entries and restructuring the API somewhat.
+
+ Will merge to 'master'.
+
+
+* jc/everyday-markup (2015-10-22) 1 commit
+  (merged to 'next' on 2015-10-22 at 0a2702d)
+ + Documentation/everyday: match undefline with the text
+
+ AsciiDoc markup fixes.
+
+ Will merge to 'master'.
+
+
+* tk/sigchain-unnecessary-post-tempfile (2015-10-22) 4 commits
+  (merged to 'next' on 2015-10-22 at b049f0a)
+ + shallow: remove unused #include "sigchain.h"
+ + read-cache: remove unused #include "sigchain.h"
+ + diff: remove unused #include "sigchain.h"
+ + credential-cache--daemon: remove unused #include "sigchain.h"
+
+ Remove no-longer used #include.
+
+ Will merge to 'master'.
+
+
+* xf/user-manual-markup (2015-10-22) 3 commits
+  (merged to 'next' on 2015-10-22 at cd33c83)
+ + Documentation: match undefline with the text in old release notes
+ + Documentation: match underline with the text
+ + Documentation: fix header markup
+
+ AsciiDoc markup fixes.
+
+ Will merge to 'master'.
+
+
+* jc/em-dash-in-doc (2015-10-22) 1 commit
+  (merged to 'next' on 2015-10-23 at 31a08ce)
+ + Documentation: AsciiDoc spells em-dash as double-dashes, not triple
+
+ AsciiDoc markup fixes.
+
+ Will merge to 'master'.
+
+
 * mh/notes-allow-reading-treeish (2015-10-08) 3 commits
- - notes: allow treeish expressions as notes ref
+  (merged to 'next' on 2015-10-23 at 8a697f0)
+ + notes: allow treeish expressions as notes ref
  + Merge branch 'jk/notes-dwim-doc' into next
  + Merge branch 'jc/merge-drop-old-syntax' into next
  (this branch uses jc/merge-drop-old-syntax.)
@@ -352,87 +418,6 @@ of the repositories listed at
 
  Expecting a reroll after an review of the remainder.
  ($gmane/279897).
-
-
-* jc/usage-stdin (2015-10-16) 1 commit
-  (merged to 'next' on 2015-10-20 at 937d4aa)
- + usage: do not insist that standard input must come from a file
-
- The synopsis text and the usage string of subcommands that read
- list of things from the standard input are often shown as if they
- only take input from a file on a filesystem, which was misleading.
-
- Will merge to 'master'.
-
-
-* rt/placeholder-in-usage (2015-10-16) 1 commit
-  (merged to 'next' on 2015-10-20 at 5189b23)
- + am, credential-cache: add angle brackets to usage string
-
- A couple of commands still showed "[options]" in their usage string
- to note where options should come on their command line, but we
- spell that "[<options>]" in most places these days.
-
- Will merge to 'master'.
-
-
-* tk/stripspace (2015-10-16) 2 commits
-  (merged to 'next' on 2015-10-20 at 327a997)
- + stripspace: use parse-options for command-line parsing
- + strbuf: make stripspace() part of strbuf
-
- The internal stripspace() function has been moved to where it
- logically belongs to, i.e. strbuf API, and the command line parser
- of "git stripspace" has been updated to use the parse_options API.
-
- Will merge to 'master'.
-
-
-* dk/p4-import-ctypes (2015-10-20) 1 commit
-  (merged to 'next' on 2015-10-22 at 5760144)
- + git-p4: import the ctypes module
-
- "git-p4" tried to use from ctypes module without first importing
- it.
-
- Will merge to 'master'.
-
-
-* dt/t7063-fix-flaky-test (2015-10-19) 1 commit
-  (merged to 'next' on 2015-10-20 at 156af72)
- + t7063: fix flaky untracked-cache test
-
- Will merge to 'master'.
-
-
-* es/worktree-add (2015-10-18) 1 commit
-  (merged to 'next' on 2015-10-20 at ccadb70)
- + worktree: usage: denote <branch> as optional with 'add'
-
- Will merge to 'master'.
-
-
-* kn/for-each-tag (2015-10-18) 1 commit
-  (merged to 'next' on 2015-10-20 at 7afd374)
- + tag.c: use the correct algorithm for the '--contains' option
-
- Recent update to "git tag --contains" caused a performance
- regression.
-
- Will merge to 'master'.
-
-
-* mr/worktree-list (2015-10-08) 5 commits
-  (merged to 'next' on 2015-10-20 at 7cb272d)
- + worktree: add 'list' command
- + worktree: add details to the worktree struct
- + worktree: add a function to get worktree details
- + worktree: refactor find_linked_symref function
- + worktree: add top-level worktree.c
-
- Add the "list" subcommand to "git worktree".
-
- Will merge to 'master'.
 
 
 * jc/mailinfo (2015-10-21) 1 commit
@@ -507,23 +492,10 @@ of the repositories listed at
  Will merge to 'master'.
 
 
-* jc/am-3-fallback-regression-fix (2015-10-09) 1 commit
-  (merged to 'next' on 2015-10-15 at 7dde994)
- + am -3: do not let failed merge from completing the error codepath
- (this branch is used by js/am-3-merge-recursive-direct.)
-
- "git am -3" had a small regression where it is aborted in its error
- handling codepath when underlying merge-recursive failed in certain
- ways, as it assumed that the internal call to merge-recursive will
- never die, which is not the case (yet).
-
- Will merge to 'master'.
-
-
 * js/am-3-merge-recursive-direct (2015-10-12) 2 commits
- - am: make a direct call to merge_recursive
- - merge_recursive_options: introduce the "gently" flag
- (this branch uses jc/am-3-fallback-regression-fix.)
+  (merged to 'next' on 2015-10-23 at dc631e5)
+ + am: make a direct call to merge_recursive
+ + merge_recursive_options: introduce the "gently" flag
 
  The merge_recursive_generic() function has been made a bit safer to
  call from inside a process.  "git am -3" was taught to make a direct
@@ -589,15 +561,18 @@ of the repositories listed at
  ($gmane/278326)
 
 
-* sb/submodule-parallel-fetch (2015-10-21) 16 commits
+* sb/submodule-parallel-fetch (2015-10-23) 18 commits
+ - (NEEDSWORK) clone: allow an explicit argument for parallel submodule clones
+ - submodule update: expose parallelism to the user
  - git submodule update: have a dedicated helper for cloning
  - submodule config: keep update strategy around
- - run-command: fix missing output from late callbacks
- - test-run-command: increase test coverage
- - test-run-command: test for gracefully aborting
- - run-command: initialize the shutdown flag
- - run-command: clear leftover state from child_process structure
- - run-command: fix early shutdown
+  (merged to 'next' on 2015-10-23 at 8f04bbd)
+ + run-command: fix missing output from late callbacks
+ + test-run-command: increase test coverage
+ + test-run-command: test for gracefully aborting
+ + run-command: initialize the shutdown flag
+ + run-command: clear leftover state from child_process structure
+ + run-command: fix early shutdown
   (merged to 'next' on 2015-10-15 at df63590)
  + submodules: allow parallel fetching, add tests and documentation
  + fetch_populated_submodules: use new parallel job processing
