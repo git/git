@@ -192,7 +192,7 @@ static void prepare_note_data(const unsigned char *object, struct note_data *d,
 		if (launch_editor(d->edit_path, &d->buf, NULL)) {
 			die(_("Please supply the note contents using either -m or -F option"));
 		}
-		stripspace(&d->buf, 1);
+		strbuf_stripspace(&d->buf, 1);
 	}
 }
 
@@ -215,7 +215,7 @@ static int parse_msg_arg(const struct option *opt, const char *arg, int unset)
 	if (d->buf.len)
 		strbuf_addch(&d->buf, '\n');
 	strbuf_addstr(&d->buf, arg);
-	stripspace(&d->buf, 0);
+	strbuf_stripspace(&d->buf, 0);
 
 	d->given = 1;
 	return 0;
@@ -232,7 +232,7 @@ static int parse_file_arg(const struct option *opt, const char *arg, int unset)
 			die_errno(_("cannot read '%s'"), arg);
 	} else if (strbuf_read_file(&d->buf, arg, 1024) < 0)
 		die_errno(_("could not open or read '%s'"), arg);
-	stripspace(&d->buf, 0);
+	strbuf_stripspace(&d->buf, 0);
 
 	d->given = 1;
 	return 0;
