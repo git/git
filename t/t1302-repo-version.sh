@@ -67,4 +67,64 @@ test_expect_success 'gitdir required mode' '
 	)
 '
 
+check_allow () {
+	git rev-parse --git-dir >actual &&
+	echo .git >expect &&
+	test_cmp expect actual
+}
+
+check_abort () {
+	test_must_fail git rev-parse --git-dir
+}
+
+# avoid git-config, since it cannot be trusted to run
+# in a repository with a broken version
+mkconfig () {
+	echo '[core]' &&
+	echo "repositoryformatversion = $1" &&
+	shift &&
+
+	if test $# -gt 0; then
+		echo '[extensions]' &&
+		for i in "$@"; do
+			echo "$i"
+		done
+	fi
+}
+
+while read outcome version extensions; do
+	test_expect_success "$outcome version=$version $extensions" "
+		mkconfig $version $extensions >.git/config &&
+		check_${outcome}
+	"
+done <<\EOF
+allow 0
+allow 1
+allow 1 noop
+abort 1 no-such-extension
+allow 0 no-such-extension
+EOF
+
+test_expect_success 'precious-objects allowed' '
+	mkconfig 1 preciousObjects >.git/config &&
+	check_allow
+'
+
+test_expect_success 'precious-objects blocks destructive repack' '
+	test_must_fail git repack -ad
+'
+
+test_expect_success 'other repacks are OK' '
+	test_commit foo &&
+	git repack
+'
+
+test_expect_success 'precious-objects blocks prune' '
+	test_must_fail git prune
+'
+
+test_expect_success 'gc runs without complaint' '
+	git gc
+'
+
 test_done
