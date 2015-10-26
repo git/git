@@ -237,6 +237,10 @@ extern char *gitbasename(char *);
 #define PRIuMAX "llu"
 #endif
 
+#ifndef SCNuMAX
+#define SCNuMAX PRIuMAX
+#endif
+
 #ifndef PRIu32
 #define PRIu32 "u"
 #endif
