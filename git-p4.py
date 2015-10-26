@@ -24,6 +24,7 @@ import shutil
 import stat
 import zipfile
 import zlib
+import ctypes
 
 try:
     from subprocess import CalledProcessError
