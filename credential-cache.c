@@ -88,7 +88,7 @@ int main(int argc, const char **argv)
 	int timeout = 900;
 	const char *op;
 	const char * const usage[] = {
-		"git credential-cache [options] <action>",
+		"git credential-cache [<options>] <action>",
 		NULL
 	};
 	struct option options[] = {
