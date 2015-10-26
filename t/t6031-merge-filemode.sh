@@ -74,4 +74,27 @@ do_both_modes () {
 do_both_modes recursive
 do_both_modes resolve
 
+test_expect_success 'set up delete/modechange scenario' '
+	git reset --hard &&
+	git checkout -b deletion master &&
+	git rm file1 &&
+	git commit -m deletion
+'
+
+do_delete_modechange () {
+	strategy=$1
+	us=$2
+	them=$3
+	test_expect_success "detect delete/modechange conflict ($strategy, $us)" '
+		git reset --hard &&
+		git checkout $us &&
+		test_must_fail git merge -s $strategy $them
+	'
+}
+
+do_delete_modechange recursive b1 deletion
+do_delete_modechange recursive deletion b1
+do_delete_modechange resolve b1 deletion
+do_delete_modechange resolve deletion b1
+
 test_done

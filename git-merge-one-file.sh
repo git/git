@@ -38,6 +38,14 @@ case "${1:-.}${2:-.}${3:-.}" in
 # Deleted in both or deleted in one and unchanged in the other
 #
 "$1.." | "$1.$1" | "$1$1.")
+	if { test -z "$6" && test "$5" != "$7"; } ||
+	   { test -z "$7" && test "$5" != "$6"; }
+	then
+		echo "ERROR: File $4 deleted on one branch but had its" >&2
+		echo "ERROR: permissions changed on the other." >&2
+		exit 1
+	fi
+
 	if test -n "$2"
 	then
 		echo "Removing $4"
