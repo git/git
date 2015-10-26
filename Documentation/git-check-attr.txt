@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git check-attr' [-a | --all | attr...] [--] pathname...
-'git check-attr' --stdin [-z] [-a | --all | attr...] < <list-of-paths>
+'git check-attr' --stdin [-z] [-a | --all | attr...]
 
 DESCRIPTION
 -----------
@@ -28,7 +28,8 @@ OPTIONS
 	Consider `.gitattributes` in the index only, ignoring the working tree.
 
 --stdin::
-	Read file names from stdin instead of from the command-line.
+	Read pathnames from the standard input, one per line,
+	instead of from the command-line.
 
 -z::
 	The output format is modified to be machine-parseable.

@@ -8,7 +8,7 @@
 static int quiet, verbose, stdin_paths, show_non_matching, no_index;
 static const char * const check_ignore_usage[] = {
 "git check-ignore [<options>] <pathname>...",
-"git check-ignore [<options>] --stdin < <list-of-paths>",
+"git check-ignore [<options>] --stdin",
 NULL
 };
 

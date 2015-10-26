@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git hash-object' [-t <type>] [-w] [--path=<file>|--no-filters] [--stdin [--literally]] [--] <file>...
-'git hash-object' [-t <type>] [-w] --stdin-paths [--no-filters] < <list-of-paths>
+'git hash-object' [-t <type>] [-w] --stdin-paths [--no-filters]
 
 DESCRIPTION
 -----------
@@ -35,7 +35,8 @@ OPTIONS
 	Read the object from standard input instead of from a file.
 
 --stdin-paths::
-	Read file names from stdin instead of from the command-line.
+	Read file names from the standard input, one per line, instead
+	of from the command-line.
 
 --path::
 	Hash object as it were located at the given path. The location of
