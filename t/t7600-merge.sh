@@ -692,4 +692,37 @@ test_expect_success GPG 'merge --no-edit tag should skip editor' '
 	test_cmp actual expect
 '
 
+test_expect_success 'set up mod-256 conflict scenario' '
+	# 256 near-identical stanzas...
+	for i in $(test_seq 1 256); do
+		for j in 1 2 3 4 5; do
+			echo $i-$j
+		done
+	done >file &&
+	git add file &&
+	git commit -m base &&
+
+	# one side changes the first line of each to "master"
+	sed s/-1/-master/ <file >tmp &&
+	mv tmp file &&
+	git commit -am master &&
+
+	# and the other to "side"; merging the two will
+	# yield 256 separate conflicts
+	git checkout -b side HEAD^ &&
+	sed s/-1/-side/ <file >tmp &&
+	mv tmp file &&
+	git commit -am side
+'
+
+test_expect_success 'merge detects mod-256 conflicts (recursive)' '
+	git reset --hard &&
+	test_must_fail git merge -s recursive master
+'
+
+test_expect_success 'merge detects mod-256 conflicts (resolve)' '
+	git reset --hard &&
+	test_must_fail git merge -s resolve master
+'
+
 test_done
