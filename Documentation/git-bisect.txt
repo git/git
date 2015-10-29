@@ -256,7 +256,7 @@ Then compile and test the chosen revision, and afterwards mark
 the revision as good or bad in the usual manner.
 
 Bisect skip
-~~~~~~~~~~~~
+~~~~~~~~~~~
 
 Instead of choosing a nearby commit by yourself, you can ask Git to do
 it for you by issuing the command:
