@@ -97,6 +97,13 @@ Performance, Internal Implementation, Development Support etc.
    of "git stripspace" has been updated to use the parse_options API.
    (merge bed4452 tk/stripspace later to maint).
 
+ * "git am" used to spawn "git mailinfo" via run_command() API once
+   per each patch, but learned to make a direct call to mailinfo()
+   instead.
+
+ * The implementation of "git mailinfo" was refactored so that a
+   mailinfo() function can be directly called from inside a process.
+
 
 Also contains various documentation updates and code clean-ups.
 
@@ -258,7 +265,20 @@ notes for details).
    never die, which is not the case (yet).
    (merge c63d4b2 jc/am-3-fallback-regression-fix later to maint).
 
- * Code clean-up and minor fixes.
+ * The linkage order of libraries was wrong in places around libcurl.
+   (merge 7e91e8d rp/link-curl-before-ssl later to maint).
+
+ * The name-hash subsystem that is used to cope with case insensitive
+   filesystems keeps track of directories and their on-filesystem
+   cases for all the paths in the index by holding a pointer to a
+   randomly chosen cache entry that is inside the directory (for its
+   ce->ce_name component).  This pointer was not updated even when the
+   cache entry was removed from the index, leading to use after free.
+   This was fixed by recording the path for each directory instead of
+   borrowing cache entries and restructuring the API somewhat.
+   (merge 41284eb dt/name-hash-dir-entry-fix later to maint).
+
+ * Code clean-up, minor fixes etc.
    (merge 15ed07d jc/rerere later to maint).
    (merge e7a7401 pt/pull-builtin later to maint).
    (merge 29bc480 nd/ls-remote-does-not-have-u-option later to maint).
@@ -269,3 +289,6 @@ notes for details).
    (merge 44cd91e cc/quote-comments later to maint).
    (merge 147875f sb/submodule-config-parse later to maint).
    (merge ae9f274 es/worktree-add later to maint).
+   (merge 3b19dba jc/em-dash-in-doc later to maint).
+   (merge f3f38c7 jc/everyday-markup later to maint).
+   (merge 77d5f71 xf/user-manual-markup later to maint).
