@@ -2131,7 +2131,7 @@ void mingw_startup()
 
 int uname(struct utsname *buf)
 {
-	DWORD v = GetVersion();
+	unsigned v = (unsigned)GetVersion();
 	memset(buf, 0, sizeof(*buf));
 	xsnprintf(buf->sysname, sizeof(buf->sysname), "Windows");
 	xsnprintf(buf->release, sizeof(buf->release),
