@@ -592,7 +592,7 @@ msgstr "Fehler beim Schreiben der Signatur nach '%s': %s"
 #: grep.c:1718
 #, c-format
 msgid "'%s': unable to read %s"
-msgstr "'%s': konnte nicht lesen %s"
+msgstr "'%s': konnte %s nicht lesen"
 
 #: grep.c:1735
 #, c-format
@@ -11749,7 +11749,7 @@ msgstr "unbekannte Option: $opt"
 
 #: git-stash.sh:397
 msgid "No stash found."
-msgstr "Kein \"stash\" gefunden."
+msgstr "Kein Stash-Eintrag gefunden."
 
 #: git-stash.sh:404
 #, sh-format
@@ -11773,7 +11773,7 @@ msgstr "'$args' ist keine \"stash\"-Referenz"
 
 #: git-stash.sh:457
 msgid "unable to refresh index"
-msgstr "unfähig den Index zu aktualisieren"
+msgstr "Konnte den Index nicht aktualisieren."
 
 #: git-stash.sh:461
 msgid "Cannot apply a stash in the middle of a merge"
