@@ -70,9 +70,7 @@ sub use_wt_file
 	my ($repo, $workdir, $file, $sha1) = @_;
 	my $null_sha1 = '0' x 40;
 
-	if (! -e "$workdir/$file") {
-		# If the file doesn't exist in the working tree, we cannot
-		# use it.
+	if (-l "$workdir/$file" || ! -e _) {
 		return (0, $null_sha1);
 	}
 
