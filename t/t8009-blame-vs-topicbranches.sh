@@ -26,7 +26,7 @@ test_expect_success setup '
 	test_merge A3 C1
 	'
 
-test_expect_failure 'blame --reverse --first-parent finds A1' '
+test_expect_success 'blame --reverse --first-parent finds A1' '
 	git blame --porcelain --reverse --first-parent A0..A3 -- file.t >actual_full &&
 	head -n 1 <actual_full | sed -e "s/ .*//" >actual &&
 	git rev-parse A1 >expect &&
