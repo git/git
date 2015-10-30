@@ -104,8 +104,13 @@ objects from the source repository into a pack in the cloned repository.
 --dissociate::
 	Borrow the objects from reference repositories specified
 	with the `--reference` options only to reduce network
-	transfer and stop borrowing from them after a clone is made
-	by making necessary local copies of borrowed objects.
+	transfer, and stop borrowing from them after a clone is made
+	by making necessary local copies of borrowed objects.  This
+	option can also be used when cloning locally from a
+	repository that already borrows objects from another
+	repository--the new repository will borrow objects from the
+	same repository, and this option can be used to stop the
+	borrowing.
 
 --quiet::
 -q::
