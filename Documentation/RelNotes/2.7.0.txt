@@ -55,6 +55,9 @@ UI, Workflows & Features
 
  * "git worktree" learned a "list" subcommand.
 
+ * "git clone --dissociate" learned that it can be used even when
+   "--reference" was not used at the same time.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -179,8 +182,11 @@ notes for details).
 
  * "git rebase -i" had a minor regression recently, which stopped
    considering a line that begins with an indented '#' in its insn
-   sheet not a comment, which is now fixed.
-   (merge 1db168e gr/rebase-i-drop-warn later to maint).
+   sheet not a comment. Further, the code was still too picky on
+   Windows where CRLF left by the editor is turned into a trailing CR
+   on the line read via the "read" built-in command of bash.  Both of
+   these issues are now fixed.
+   (merge 39743cf gr/rebase-i-drop-warn later to maint).
 
  * After "git checkout --detach", "git status" reported a fairly
    useless "HEAD detached at HEAD", instead of saying at which exact
@@ -278,6 +284,26 @@ notes for details).
    borrowing cache entries and restructuring the API somewhat.
    (merge 41284eb dt/name-hash-dir-entry-fix later to maint).
 
+ * "git merge-file" tried to signal how many conflicts it found, which
+   obviously would not work well when there are too many of them.
+   (merge e34f802 jk/merge-file-exit-code later to maint).
+
+ * The error message from "git blame --contents --reverse" incorrectly
+   talked about "--contents --children".
+   (merge 9526197 mk/blame-error-message later to maint).
+
+ * "git imap-send" did not compile well with older version of cURL library.
+   (merge 71d9257 js/imap-send-curl-compilation-fix later to maint).
+
+ * Merging a branch that removes a path and another that changes the
+   mode bits on the same path should have conflicted at the path, but
+   it didn't and silently favoured the removal.
+   (merge 72fac66 jk/delete-modechange-conflict later to maint).
+
+ * "git --literal-pathspecs add -u/-A" without any command line
+   argument misbehaved ever since Git 2.0.
+   (merge 29abb33 jc/add-u-A-default-to-top later to maint).
+
  * Code clean-up, minor fixes etc.
    (merge 15ed07d jc/rerere later to maint).
    (merge e7a7401 pt/pull-builtin later to maint).
@@ -292,3 +318,6 @@ notes for details).
    (merge 3b19dba jc/em-dash-in-doc later to maint).
    (merge f3f38c7 jc/everyday-markup later to maint).
    (merge 77d5f71 xf/user-manual-markup later to maint).
+   (merge b2af482 xf/user-manual-ff later to maint).
+   (merge e510ab8 rs/pop-commit later to maint).
+   (merge fdcdb77 js/misc-fixes later to maint).
