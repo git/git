@@ -336,14 +336,8 @@ int cmd_add(int argc, const char **argv, const char *prefix)
 	if (!show_only && ignore_missing)
 		die(_("Option --ignore-missing can only be used together with --dry-run"));
 
-	if ((0 < addremove_explicit || take_worktree_changes) && !argc) {
-		static const char *whole[2] = { ":/", NULL };
-		argc = 1;
-		argv = whole;
-	}
-
 	add_new_files = !take_worktree_changes && !refresh_only;
-	require_pathspec = !take_worktree_changes;
+	require_pathspec = !(take_worktree_changes || (0 < addremove_explicit));
 
 	hold_locked_index(&lock_file, 1);
 
