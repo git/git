@@ -316,10 +316,8 @@ static int reachable(struct commit *want)
 
 	commit_list_insert_by_date(want, &work);
 	while (work) {
-		struct commit_list *list = work->next;
-		struct commit *commit = work->item;
-		free(work);
-		work = list;
+		struct commit_list *list;
+		struct commit *commit = pop_commit(&work);
 
 		if (commit->object.flags & THEY_HAVE) {
 			want->object.flags |= COMMON_KNOWN;

@@ -455,11 +455,8 @@ struct commit_list *copy_commit_list(struct commit_list *list)
 
 void free_commit_list(struct commit_list *list)
 {
-	while (list) {
-		struct commit_list *temp = list;
-		list = temp->next;
-		free(temp);
-	}
+	while (list)
+		pop_commit(&list);
 }
 
 struct commit_list * commit_list_insert_by_date(struct commit *item, struct commit_list **list)
@@ -505,12 +502,8 @@ void commit_list_sort_by_date(struct commit_list **list)
 struct commit *pop_most_recent_commit(struct commit_list **list,
 				      unsigned int mark)
 {
-	struct commit *ret = (*list)->item;
+	struct commit *ret = pop_commit(list);
 	struct commit_list *parents = ret->parents;
-	struct commit_list *old = *list;
-
-	*list = (*list)->next;
-	free(old);
 
 	while (parents) {
 		struct commit *commit = parents->item;
@@ -861,11 +854,9 @@ static struct commit_list *merge_bases_many(struct commit *one, int n, struct co
 	list = paint_down_to_common(one, n, twos);
 
 	while (list) {
-		struct commit_list *next = list->next;
-		if (!(list->item->object.flags & STALE))
-			commit_list_insert_by_date(list->item, &result);
-		free(list);
-		list = next;
+		struct commit *commit = pop_commit(&list);
+		if (!(commit->object.flags & STALE))
+			commit_list_insert_by_date(commit, &result);
 	}
 	return result;
 }
@@ -1546,13 +1537,9 @@ int commit_tree_extended(const char *msg, size_t msg_len,
 	 * if everything else stays the same.
 	 */
 	while (parents) {
-		struct commit_list *next = parents->next;
-		struct commit *parent = parents->item;
-
+		struct commit *parent = pop_commit(&parents);
 		strbuf_addf(&buffer, "parent %s\n",
 			    sha1_to_hex(parent->object.sha1));
-		free(parents);
-		parents = next;
 	}
 
 	/* Person/date information */
