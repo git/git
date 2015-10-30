@@ -89,71 +89,71 @@ msgid "Cancel"
 msgstr "Отказ"
 
 #: gitk:2069
-msgid "Update"
+msgid "&Update"
 msgstr "Обновяване"
 
 #: gitk:2070
-msgid "Reload"
+msgid "&Reload"
 msgstr "Презареждане"
 
 #: gitk:2071
-msgid "Reread references"
+msgid "Reread re&ferences"
 msgstr "Наново прочитане на настройките"
 
 #: gitk:2072
-msgid "List references"
+msgid "&List references"
 msgstr "Изброяване на указателите"
 
 #: gitk:2074
-msgid "Start git gui"
+msgid "Start git &gui"
 msgstr "Стартиране на „git gui“"
 
 #: gitk:2076
-msgid "Quit"
+msgid "&Quit"
 msgstr "Спиране на програмата"
 
 #: gitk:2068
-msgid "File"
+msgid "&File"
 msgstr "Файл"
 
 #: gitk:2080
-msgid "Preferences"
+msgid "&Preferences"
 msgstr "Настройки"
 
 #: gitk:2079
-msgid "Edit"
+msgid "&Edit"
 msgstr "Редактиране"
 
 #: gitk:2084
-msgid "New view..."
+msgid "&New view..."
 msgstr "Нов изглед…"
 
 #: gitk:2085
-msgid "Edit view..."
+msgid "&Edit view..."
 msgstr "Редактиране на изгледа…"
 
 #: gitk:2086
-msgid "Delete view"
+msgid "&Delete view"
 msgstr "Изтриване на изгледа"
 
 #: gitk:2088 gitk:4043
-msgid "All files"
+msgid "&All files"
 msgstr "Всички файлове"
 
 #: gitk:2083 gitk:4067
-msgid "View"
+msgid "&View"
 msgstr "Изглед"
 
 #: gitk:2093 gitk:2103 gitk:3012
-msgid "About gitk"
+msgid "&About gitk"
 msgstr "Относно gitk"
 
 #: gitk:2094 gitk:2108
-msgid "Key bindings"
+msgid "&Key bindings"
 msgstr "Клавишни комбинации"
 
 #: gitk:2092 gitk:2107
-msgid "Help"
+msgid "&Help"
 msgstr "Помощ"
 
 #: gitk:2185 gitk:8652

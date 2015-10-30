@@ -88,71 +88,71 @@ msgid "Cancel"
 msgstr "Visszavonás"
 
 #: gitk:2069
-msgid "Update"
+msgid "&Update"
 msgstr "Frissités"
 
 #: gitk:2070
-msgid "Reload"
+msgid "&Reload"
 msgstr "Újratöltés"
 
 #: gitk:2071
-msgid "Reread references"
+msgid "Reread re&ferences"
 msgstr "Referenciák újraolvasása"
 
 #: gitk:2072
-msgid "List references"
+msgid "&List references"
 msgstr "Referenciák listázása"
 
 #: gitk:2074
-msgid "Start git gui"
+msgid "Start git &gui"
 msgstr "Git gui indítása"
 
 #: gitk:2076
-msgid "Quit"
+msgid "&Quit"
 msgstr "Kilépés"
 
 #: gitk:2068
-msgid "File"
+msgid "&File"
 msgstr "Fájl"
 
 #: gitk:2080
-msgid "Preferences"
+msgid "&Preferences"
 msgstr "Beállítások"
 
 #: gitk:2079
-msgid "Edit"
+msgid "&Edit"
 msgstr "Szerkesztés"
 
 #: gitk:2084
-msgid "New view..."
+msgid "&New view..."
 msgstr "Új nézet ..."
 
 #: gitk:2085
-msgid "Edit view..."
+msgid "&Edit view..."
 msgstr "Nézet szerkesztése ..."
 
 #: gitk:2086
-msgid "Delete view"
+msgid "&Delete view"
 msgstr "Nézet törlése"
 
 #: gitk:2088 gitk:4043
-msgid "All files"
+msgid "&All files"
 msgstr "Minden fájl"
 
 #: gitk:2083 gitk:4067
-msgid "View"
+msgid "&View"
 msgstr "Nézet"
 
 #: gitk:2093 gitk:2103 gitk:3012
-msgid "About gitk"
+msgid "&About gitk"
 msgstr "Gitk névjegy"
 
 #: gitk:2094 gitk:2108
-msgid "Key bindings"
+msgid "&Key bindings"
 msgstr "Billentyűkombináció"
 
 #: gitk:2092 gitk:2107
-msgid "Help"
+msgid "&Help"
 msgstr "Segítség"
 
 #: gitk:2185 gitk:8652

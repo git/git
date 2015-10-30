@@ -93,71 +93,71 @@ msgid "Cancel"
 msgstr "Annuler"
 
 #: gitk:2069
-msgid "Update"
+msgid "&Update"
 msgstr "Mise à jour"
 
 #: gitk:2070
-msgid "Reload"
+msgid "&Reload"
 msgstr "Recharger"
 
 #: gitk:2071
-msgid "Reread references"
+msgid "Reread re&ferences"
 msgstr "Relire les références"
 
 #: gitk:2072
-msgid "List references"
+msgid "&List references"
 msgstr "Lister les références"
 
 #: gitk:2074
-msgid "Start git gui"
+msgid "Start git &gui"
 msgstr "Démarrer git gui"
 
 #: gitk:2076
-msgid "Quit"
+msgid "&Quit"
 msgstr "Quitter"
 
 #: gitk:2068
-msgid "File"
+msgid "&File"
 msgstr "Fichier"
 
 #: gitk:2080
-msgid "Preferences"
+msgid "&Preferences"
 msgstr "Préférences"
 
 #: gitk:2079
-msgid "Edit"
+msgid "&Edit"
 msgstr "Éditer"
 
 #: gitk:2084
-msgid "New view..."
+msgid "&New view..."
 msgstr "Nouvelle vue..."
 
 #: gitk:2085
-msgid "Edit view..."
+msgid "&Edit view..."
 msgstr "Éditer la vue..."
 
 #: gitk:2086
-msgid "Delete view"
+msgid "&Delete view"
 msgstr "Supprimer la vue"
 
 #: gitk:2088 gitk:4043
-msgid "All files"
+msgid "&All files"
 msgstr "Tous les fichiers"
 
 #: gitk:2083 gitk:4067
-msgid "View"
+msgid "&View"
 msgstr "Vue"
 
 #: gitk:2093 gitk:2103 gitk:3012
-msgid "About gitk"
+msgid "&About gitk"
 msgstr "À propos de gitk"
 
 #: gitk:2094 gitk:2108
-msgid "Key bindings"
+msgid "&Key bindings"
 msgstr "Raccourcis clavier"
 
 #: gitk:2092 gitk:2107
-msgid "Help"
+msgid "&Help"
 msgstr "Aide"
 
 #: gitk:2185 gitk:8652

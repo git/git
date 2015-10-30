@@ -92,71 +92,71 @@ msgid "Cancel"
 msgstr "Avbryt"
 
 #: gitk:2069
-msgid "Update"
+msgid "&Update"
 msgstr "Uppdatera"
 
 #: gitk:2070
-msgid "Reload"
+msgid "&Reload"
 msgstr "Ladda om"
 
 #: gitk:2071
-msgid "Reread references"
+msgid "Reread re&ferences"
 msgstr "Läs om referenser"
 
 #: gitk:2072
-msgid "List references"
+msgid "&List references"
 msgstr "Visa referenser"
 
 #: gitk:2074
-msgid "Start git gui"
+msgid "Start git &gui"
 msgstr "Starta git gui"
 
 #: gitk:2076
-msgid "Quit"
+msgid "&Quit"
 msgstr "Avsluta"
 
 #: gitk:2068
-msgid "File"
+msgid "&File"
 msgstr "Arkiv"
 
 #: gitk:2080
-msgid "Preferences"
+msgid "&Preferences"
 msgstr "Inställningar"
 
 #: gitk:2079
-msgid "Edit"
+msgid "&Edit"
 msgstr "Redigera"
 
 #: gitk:2084
-msgid "New view..."
+msgid "&New view..."
 msgstr "Ny vy..."
 
 #: gitk:2085
-msgid "Edit view..."
+msgid "&Edit view..."
 msgstr "Ändra vy..."
 
 #: gitk:2086
-msgid "Delete view"
+msgid "&Delete view"
 msgstr "Ta bort vy"
 
 #: gitk:2088 gitk:4043
-msgid "All files"
+msgid "&All files"
 msgstr "Alla filer"
 
 #: gitk:2083 gitk:4067
-msgid "View"
+msgid "&View"
 msgstr "Visa"
 
 #: gitk:2093 gitk:2103 gitk:3012
-msgid "About gitk"
+msgid "&About gitk"
 msgstr "Om gitk"
 
 #: gitk:2094 gitk:2108
-msgid "Key bindings"
+msgid "&Key bindings"
 msgstr "Tangentbordsbindningar"
 
 #: gitk:2092 gitk:2107
-msgid "Help"
+msgid "&Help"
 msgstr "Hjälp"
 
 #: gitk:2185 gitk:8652

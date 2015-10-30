@@ -90,72 +90,72 @@ msgid "Cancel"
 msgstr "キャンセル"
 
 #: gitk:2069
-msgid "Update"
-msgstr "更新"
+msgid "&Update"
+msgstr "更新(&U)"
 
 #: gitk:2070
-msgid "Reload"
-msgstr "リロード"
+msgid "&Reload"
+msgstr "リロード(&R)"
 
 #: gitk:2071
-msgid "Reread references"
-msgstr "リファレンスを再読み込み"
+msgid "Reread re&ferences"
+msgstr "リファレンスを再読み込み(&F)"
 
 #: gitk:2072
-msgid "List references"
-msgstr "リファレンスリストを表示"
+msgid "&List references"
+msgstr "リファレンスリストを表示(&L)"
 
 #: gitk:2074
-msgid "Start git gui"
-msgstr "git gui の開始"
+msgid "Start git &gui"
+msgstr "git gui の開始(&G)"
 
 #: gitk:2076
-msgid "Quit"
-msgstr "終了"
+msgid "&Quit"
+msgstr "終了(&Q)"
 
 #: gitk:2068
-msgid "File"
-msgstr "ファイル"
+msgid "&File"
+msgstr "ファイル(&F)"
 
 #: gitk:2080
-msgid "Preferences"
-msgstr "設定"
+msgid "&Preferences"
+msgstr "設定(&P)"
 
 #: gitk:2079
-msgid "Edit"
-msgstr "編集"
+msgid "&Edit"
+msgstr "編集(&E)"
 
 #: gitk:2084
-msgid "New view..."
-msgstr "新規ビュー..."
+msgid "&New view..."
+msgstr "新規ビュー...(&N)"
 
 #: gitk:2085
-msgid "Edit view..."
-msgstr "ビュー編集..."
+msgid "&Edit view..."
+msgstr "ビュー編集...(&E)"
 
 #: gitk:2086
-msgid "Delete view"
-msgstr "ビュー削除"
+msgid "&Delete view"
+msgstr "ビュー削除(&D)"
 
 #: gitk:2088 gitk:4043
-msgid "All files"
-msgstr "全てのファイル"
+msgid "&All files"
+msgstr "全てのファイル(&A)"
 
 #: gitk:2083 gitk:4067
-msgid "View"
-msgstr "ビュー"
+msgid "&View"
+msgstr "ビュー(&V)"
 
 #: gitk:2093 gitk:2103 gitk:3012
-msgid "About gitk"
-msgstr "gitk について"
+msgid "&About gitk"
+msgstr "gitk について(&A)"
 
 #: gitk:2094 gitk:2108
-msgid "Key bindings"
-msgstr "キーバインディング"
+msgid "&Key bindings"
+msgstr "キーバインディング(&K)"
 
 #: gitk:2092 gitk:2107
-msgid "Help"
-msgstr "ヘルプ"
+msgid "&Help"
+msgstr "ヘルプ(&H)"
 
 #: gitk:2185 gitk:8652
 msgid "SHA1 ID:"

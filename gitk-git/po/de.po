@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: git-gui\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-05-17 14:32+1000\n"
-"PO-Revision-Date: 2010-01-27 20:27+0100\n"
+"PO-Revision-Date: 2015-10-20 14:20+0200\n"
 "Last-Translator: Christian Stimming <stimming@tuhh.de>\n"
 "Language-Team: German\n"
 "Language: \n"
@@ -89,72 +89,72 @@ msgid "Cancel"
 msgstr "Abbrechen"
 
 #: gitk:2069
-msgid "Update"
-msgstr "Aktualisieren"
+msgid "&Update"
+msgstr "&Aktualisieren"
 
 #: gitk:2070
-msgid "Reload"
-msgstr "Neu laden"
+msgid "&Reload"
+msgstr "&Neu laden"
 
 #: gitk:2071
-msgid "Reread references"
-msgstr "Zweige neu laden"
+msgid "Reread re&ferences"
+msgstr "&Zweige neu laden"
 
 #: gitk:2072
-msgid "List references"
-msgstr "Zweige/Markierungen auflisten"
+msgid "&List references"
+msgstr "Zweige/Markierungen auf&listen"
 
 #: gitk:2074
-msgid "Start git gui"
-msgstr "»git gui« starten"
+msgid "Start git &gui"
+msgstr "»git &gui« starten"
 
 #: gitk:2076
-msgid "Quit"
-msgstr "Beenden"
+msgid "&Quit"
+msgstr "&Beenden"
 
 #: gitk:2068
-msgid "File"
-msgstr "Datei"
+msgid "&File"
+msgstr "&Datei"
 
 #: gitk:2080
-msgid "Preferences"
-msgstr "Einstellungen"
+msgid "&Preferences"
+msgstr "&Einstellungen"
 
 #: gitk:2079
-msgid "Edit"
-msgstr "Bearbeiten"
+msgid "&Edit"
+msgstr "&Bearbeiten"
 
 #: gitk:2084
-msgid "New view..."
-msgstr "Neue Ansicht ..."
+msgid "&New view..."
+msgstr "&Neue Ansicht ..."
 
 #: gitk:2085
-msgid "Edit view..."
-msgstr "Ansicht bearbeiten ..."
+msgid "&Edit view..."
+msgstr "Ansicht &bearbeiten ..."
 
 #: gitk:2086
-msgid "Delete view"
-msgstr "Ansicht entfernen"
+msgid "&Delete view"
+msgstr "Ansicht &entfernen"
 
 #: gitk:2088 gitk:4043
-msgid "All files"
-msgstr "Alle Dateien"
+msgid "&All files"
+msgstr "&Alle Dateien"
 
 #: gitk:2083 gitk:4067
-msgid "View"
-msgstr "Ansicht"
+msgid "&View"
+msgstr "&Ansicht"
 
 #: gitk:2093 gitk:2103 gitk:3012
-msgid "About gitk"
-msgstr "Über gitk"
+msgid "&About gitk"
+msgstr "Über &gitk"
 
 #: gitk:2094 gitk:2108
-msgid "Key bindings"
-msgstr "Tastenkürzel"
+msgid "&Key bindings"
+msgstr "&Tastenkürzel"
 
 #: gitk:2092 gitk:2107
-msgid "Help"
-msgstr "Hilfe"
+msgid "&Help"
+msgstr "&Hilfe"
 
 #: gitk:2185 gitk:8652
 msgid "SHA1 ID:"
