@@ -563,6 +563,11 @@ library for your script to use.
    argument.  This is primarily meant for use during the
    development of a new test script.
 
+ - debug <git-command>
+
+   Run a git command inside a debugger. This is primarily meant for
+   use when debugging a failing test script.
+
  - test_done
 
    Your test script must have test_done at the end.  Its purpose
