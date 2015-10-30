@@ -1,14 +1,14 @@
 # Vietnamese translations for gitk package.
 # Bản dịch tiếng Việt cho gói gitk.
 # This file is distributed under the same license as the gitk package.
-# Trần Ngọc Quân <vnwildman@gmail.com>, 2013.
+# Trần Ngọc Quân <vnwildman@gmail.com>, 2013, 2015.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: gitk @@GIT_VERSION@@\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2015-05-17 14:32+1000\n"
-"PO-Revision-Date: 2013-12-14 14:40+0700\n"
+"PO-Revision-Date: 2015-09-15 07:33+0700\n"
 "Last-Translator: Trần Ngọc Quân <vnwildman@gmail.com>\n"
 "Language-Team: Vietnamese <translation-team-vi@lists.sourceforge.net>\n"
 "Language: vi\n"
@@ -16,6 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Gtranslator 2.91.7\n"
 
 #: gitk:140
 msgid "Couldn't get list of unmerged files:"
@@ -60,7 +61,7 @@ msgstr "Đang đọc"
 
 #: gitk:496 gitk:4525
 msgid "Reading commits..."
-msgstr "Đang đọc các lần chuyển giao..."
+msgstr "Đang đọc các lần chuyển giao…"
 
 #: gitk:499 gitk:1637 gitk:4528
 msgid "No commits selected"
@@ -117,7 +118,7 @@ msgstr "Chính"
 
 #: gitk:2080
 msgid "&Preferences"
-msgstr "Cá nhân hóa"
+msgstr "Tùy thích"
 
 #: gitk:2079
 msgid "&Edit"
@@ -125,11 +126,11 @@ msgstr "Chỉnh sửa"
 
 #: gitk:2084
 msgid "&New view..."
-msgstr "Thêm trình bày mới..."
+msgstr "Thêm trình bày mới…"
 
 #: gitk:2085
 msgid "&Edit view..."
-msgstr "Sửa cách trình bày..."
+msgstr "Sửa cách trình bày…"
 
 #: gitk:2086
 msgid "&Delete view"
@@ -319,7 +320,7 @@ msgstr "Hoàn lại lần chuyển giao này"
 
 #: gitk:2647
 msgid "Check out this branch"
-msgstr "Checkout nhánh này"
+msgstr "Lấy ra nhánh này"
 
 #: gitk:2648
 msgid "Remove this branch"
@@ -327,7 +328,7 @@ msgstr "Gỡ bỏ nhánh này"
 
 #: gitk:2649
 msgid "Copy branch name"
-msgstr ""
+msgstr "Chép tên nhánh"
 
 #: gitk:2656
 msgid "Highlight this too"
@@ -347,7 +348,7 @@ msgstr "Xem công trạng lần chuyển giao cha mẹ"
 
 #: gitk:2660
 msgid "Copy path"
-msgstr ""
+msgstr "Chép đường dẫn"
 
 #: gitk:2667
 msgid "Show origin of this line"
@@ -358,7 +359,6 @@ msgid "Run git gui blame on this line"
 msgstr "Chạy lệnh git gui blame cho dòng này"
 
 #: gitk:3014
-#, fuzzy
 msgid ""
 "\n"
 "Gitk - a commit viewer for git\n"
@@ -368,9 +368,9 @@ msgid ""
 "Use and redistribute under the terms of the GNU General Public License"
 msgstr ""
 "\n"
-"Gitk - phần mềm xem các lần chuyển giao dành cho git\n"
+"Gitk - ứng dụng để xem các lần chuyển giao dành cho git\n"
 "\n"
-"Bản quyền © 2005-2011 Paul Mackerras\n"
+"Bản quyền © 2005-2014 Paul Mackerras\n"
 "\n"
 "Dùng và phân phối lại phần mềm này theo các điều khoản của Giấy Phép Công GNU"
 
@@ -424,6 +424,7 @@ msgstr "<Right>, x, l\tDi chuyển tiếp trong danh sách lịch sử"
 #, tcl-format
 msgid "<%s-n>\tGo to n-th parent of current commit in history list"
 msgstr ""
+"<%s-n>\tĐến cha thứ n của lần chuyển giao hiện tại trong danh sách lịch sử"
 
 #: gitk:3057
 msgid "<PageUp>\tMove up one page in commit list"
@@ -507,9 +508,8 @@ msgid "<Return>\tMove to next find hit"
 msgstr "<Return>\t\tDi chuyển đến chỗ gặp kế tiếp"
 
 #: gitk:3075
-#, fuzzy
 msgid "g\t\tGo to commit"
-msgstr "<End>\t\tChuyển đến lần chuyển giao cuối"
+msgstr "g\t\tChuyển đến lần chuyển giao"
 
 #: gitk:3076
 msgid "/\t\tFocus the search box"
@@ -666,9 +666,8 @@ msgid "Matches all Commit Info criteria"
 msgstr "Khớp mọi điều kiện Thông tin Chuyển giao"
 
 #: gitk:4086
-#, fuzzy
 msgid "Matches no Commit Info criteria"
-msgstr "Khớp mọi điều kiện Thông tin Chuyển giao"
+msgstr "Khớp không điều kiện Thông tin Chuyển giao"
 
 #: gitk:4087
 msgid "Changes to Files:"
@@ -716,7 +715,7 @@ msgstr "Số lượng sẽ bỏ qua:"
 
 #: gitk:4097
 msgid "Miscellaneous options:"
-msgstr "Tuỳ chọn hỗn hợp:"
+msgstr "Tùy chọn hỗn hợp:"
 
 #: gitk:4098
 msgid "Strictly sort by date"
@@ -971,7 +970,7 @@ msgstr "Gặp lỗi khi tạo miếng vá:"
 
 #: gitk:9256 gitk:9373 gitk:9430
 msgid "ID:"
-msgstr "ID:"
+msgstr "Mã số:"
 
 #: gitk:9265
 msgid "Tag name:"
@@ -1186,7 +1185,7 @@ msgstr "Độ rộng biểu đồ tối đa (dòng)"
 #: gitk:11355
 #, no-tcl-format
 msgid "Maximum graph width (% of pane)"
-msgstr "Độ rộng biểu đồ tối đa (% của bảng)"
+msgstr "Độ rộng đồ thị tối đa (% của bảng)"
 
 #: gitk:11358
 msgid "Show local changes"
@@ -1194,7 +1193,7 @@ msgstr "Hiển thị các thay đổi nội bộ"
 
 #: gitk:11361
 msgid "Auto-select SHA1 (length)"
-msgstr "Tự chọn SHA1 (độ dài)"
+msgstr "Tự chọn (độ dài) SHA1"
 
 #: gitk:11365
 msgid "Hide remote refs"
@@ -1230,7 +1229,7 @@ msgstr "Công cụ so sánh từ bên ngoài"
 
 #: gitk:11390
 msgid "Choose..."
-msgstr "Chọn..."
+msgstr "Chọn…"
 
 #: gitk:11395
 msgid "General options"
@@ -1354,6 +1353,8 @@ msgid ""
 "Sorry, gitk cannot run with this version of Tcl/Tk.\n"
 " Gitk requires at least Tcl/Tk 8.4."
 msgstr ""
+"Rất tiếc, gitk không thể chạy Tcl/Tk phiên bản này.\n"
+" Gitk cần ít nhất là Tcl/Tk 8.4."
 
 #: gitk:12269
 msgid "Cannot find a git repository here."
@@ -1366,7 +1367,7 @@ msgstr "Đối số “%s” chưa rõ ràng: vừa là điểm xét duyệt v�
 
 #: gitk:12328
 msgid "Bad arguments to gitk:"
-msgstr "Đối số không hợp lệ cho gitk:"
+msgstr "Đối số cho gitk không hợp lệ:"
 
 #~ msgid "mc"
 #~ msgstr "mc"
