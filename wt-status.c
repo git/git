@@ -1533,7 +1533,7 @@ static void wt_shortstatus_print_tracking(struct wt_status *s)
 	if (starts_with(branch_name, "refs/heads/"))
 		branch_name += 11;
 
-	branch = branch_get(s->branch + 11);
+	branch = branch_get(branch_name);
 
 	color_fprintf(s->fp, branch_color_local, "%s", branch_name);
 
