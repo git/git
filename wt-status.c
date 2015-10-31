@@ -1521,16 +1521,19 @@ static void wt_shortstatus_print_tracking(struct wt_status *s)
 		return;
 	branch_name = s->branch;
 
-	if (starts_with(branch_name, "refs/heads/"))
-		branch_name += 11;
-	else if (!strcmp(branch_name, "HEAD")) {
-		branch_name = _("HEAD (no branch)");
-		branch_color_local = color(WT_STATUS_NOBRANCH, s);
-	}
-
-	branch = branch_get(s->branch + 11);
 	if (s->is_initial)
 		color_fprintf(s->fp, header_color, _("Initial commit on "));
+
+	if (!strcmp(s->branch, "HEAD")) {
+		color_fprintf(s->fp, color(WT_STATUS_NOBRANCH, s), "%s",
+			      _("HEAD (no branch)"));
+		goto conclude;
+	}
+
+	if (starts_with(branch_name, "refs/heads/"))
+		branch_name += 11;
+
+	branch = branch_get(s->branch + 11);
 
 	color_fprintf(s->fp, branch_color_local, "%s", branch_name);
 

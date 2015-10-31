@@ -213,7 +213,7 @@ EOF
 	git checkout master
 '
 
-test_expect_failure 'status --branch with detached HEAD' '
+test_expect_success 'status --branch with detached HEAD' '
 	git reset --hard &&
 	git checkout master^0 &&
 	git status --branch --porcelain >actual &&
