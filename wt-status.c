@@ -897,15 +897,15 @@ static void wt_status_print_verbose(struct wt_status *s)
 static void wt_status_print_tracking(struct wt_status *s)
 {
 	struct strbuf sb = STRBUF_INIT;
-	const char *cp, *ep;
+	const char *cp, *ep, *branch_name;
 	struct branch *branch;
 	char comment_line_string[3];
 	int i;
 
 	assert(s->branch && !s->is_initial);
-	if (!starts_with(s->branch, "refs/heads/"))
+	if (!skip_prefix(s->branch, "refs/heads/", &branch_name))
 		return;
-	branch = branch_get(s->branch + 11);
+	branch = branch_get(branch_name);
 	if (!format_tracking_info(branch, &sb))
 		return;
 
@@ -1154,6 +1154,7 @@ static char *read_and_strip_branch(const char *path)
 {
 	struct strbuf sb = STRBUF_INIT;
 	unsigned char sha1[20];
+	const char *branch_name;
 
 	if (strbuf_read_file(&sb, git_path("%s", path), 0) <= 0)
 		goto got_nothing;
@@ -1162,8 +1163,8 @@ static char *read_and_strip_branch(const char *path)
 		strbuf_setlen(&sb, sb.len - 1);
 	if (!sb.len)
 		goto got_nothing;
-	if (starts_with(sb.buf, "refs/heads/"))
-		strbuf_remove(&sb,0, strlen("refs/heads/"));
+	if (skip_prefix(sb.buf, "refs/heads/", &branch_name))
+		strbuf_remove(&sb, 0, branch_name - sb.buf);
 	else if (starts_with(sb.buf, "refs/"))
 		;
 	else if (!get_sha1_hex(sb.buf, sha1)) {
@@ -1194,9 +1195,8 @@ static int grab_1st_switch(unsigned char *osha1, unsigned char *nsha1,
 	struct grab_1st_switch_cbdata *cb = cb_data;
 	const char *target = NULL, *end;
 
-	if (!starts_with(message, "checkout: moving from "))
+	if (!skip_prefix(message, "checkout: moving from ", &message))
 		return 0;
-	message += strlen("checkout: moving from ");
 	target = strstr(message, " to ");
 	if (!target)
 		return 0;
@@ -1228,14 +1228,10 @@ static void wt_status_get_detached_from(struct wt_status_state *state)
 	     /* perhaps sha1 is a tag, try to dereference to a commit */
 	     ((commit = lookup_commit_reference_gently(sha1, 1)) != NULL &&
 	      !hashcmp(cb.nsha1, commit->object.sha1)))) {
-		int ofs;
-		if (starts_with(ref, "refs/tags/"))
-			ofs = strlen("refs/tags/");
-		else if (starts_with(ref, "refs/remotes/"))
-			ofs = strlen("refs/remotes/");
-		else
-			ofs = 0;
-		state->detached_from = xstrdup(ref + ofs);
+		const char *from = ref;
+		if (!skip_prefix(from, "refs/tags/", &from))
+			skip_prefix(from, "refs/remotes/", &from);
+		state->detached_from = xstrdup(from);
 	} else
 		state->detached_from =
 			xstrdup(find_unique_abbrev(cb.nsha1, DEFAULT_ABBREV));
@@ -1322,9 +1318,7 @@ void wt_status_print(struct wt_status *s)
 	if (s->branch) {
 		const char *on_what = _("On branch ");
 		const char *branch_name = s->branch;
-		if (starts_with(branch_name, "refs/heads/"))
-			branch_name += 11;
-		else if (!strcmp(branch_name, "HEAD")) {
+		if (!strcmp(branch_name, "HEAD")) {
 			branch_status_color = color(WT_STATUS_NOBRANCH, s);
 			if (state.rebase_in_progress || state.rebase_interactive_in_progress) {
 				on_what = _("rebase in progress; onto ");
@@ -1339,7 +1333,8 @@ void wt_status_print(struct wt_status *s)
 				branch_name = "";
 				on_what = _("Not currently on any branch.");
 			}
-		}
+		} else
+			skip_prefix(branch_name, "refs/heads/", &branch_name);
 		status_printf(s, color(WT_STATUS_HEADER, s), "%s", "");
 		status_printf_more(s, branch_status_color, "%s", on_what);
 		status_printf_more(s, branch_color, "%s\n", branch_name);
@@ -1530,8 +1525,7 @@ static void wt_shortstatus_print_tracking(struct wt_status *s)
 		goto conclude;
 	}
 
-	if (starts_with(branch_name, "refs/heads/"))
-		branch_name += 11;
+	skip_prefix(branch_name, "refs/heads/", &branch_name);
 
 	branch = branch_get(branch_name);
 
