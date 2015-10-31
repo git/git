@@ -1535,10 +1535,8 @@ static void wt_shortstatus_print_tracking(struct wt_status *s)
 	color_fprintf(s->fp, branch_color_local, "%s", branch_name);
 
 	if (stat_tracking_info(branch, &num_ours, &num_theirs, &base) < 0) {
-		if (!base) {
-			fputc(s->null_termination ? '\0' : '\n', s->fp);
-			return;
-		}
+		if (!base)
+			goto conclude;
 
 		upstream_is_gone = 1;
 	}
@@ -1548,10 +1546,8 @@ static void wt_shortstatus_print_tracking(struct wt_status *s)
 	color_fprintf(s->fp, branch_color_remote, "%s", base);
 	free((char *)base);
 
-	if (!upstream_is_gone && !num_ours && !num_theirs) {
-		fputc(s->null_termination ? '\0' : '\n', s->fp);
-		return;
-	}
+	if (!upstream_is_gone && !num_ours && !num_theirs)
+		goto conclude;
 
 #define LABEL(string) (s->no_gettext ? (string) : _(string))
 
@@ -1572,6 +1568,7 @@ static void wt_shortstatus_print_tracking(struct wt_status *s)
 	}
 
 	color_fprintf(s->fp, header_color, "]");
+ conclude:
 	fputc(s->null_termination ? '\0' : '\n', s->fp);
 }
 
