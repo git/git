@@ -3,6 +3,7 @@
 #include "refs.h"
 #include "builtin.h"
 #include "color.h"
+#include "argv-array.h"
 #include "parse-options.h"
 
 static const char* show_branch_usage[] = {
@@ -16,9 +17,7 @@ static const char* show_branch_usage[] = {
 
 static int showbranch_use_color = -1;
 
-static int default_num;
-static int default_alloc;
-static const char **default_arg;
+static struct argv_array default_args = ARGV_ARRAY_INIT;
 
 #define UNINTERESTING	01
 
@@ -560,16 +559,9 @@ static int git_show_branch_config(const char *var, const char *value, void *cb)
 		 * default_arg is now passed to parse_options(), so we need to
 		 * mimic the real argv a bit better.
 		 */
-		if (!default_num) {
-			default_alloc = 20;
-			default_arg = xcalloc(default_alloc, sizeof(*default_arg));
-			default_arg[default_num++] = "show-branch";
-		} else if (default_alloc <= default_num + 1) {
-			default_alloc = default_alloc * 3 / 2 + 20;
-			REALLOC_ARRAY(default_arg, default_alloc);
-		}
-		default_arg[default_num++] = xstrdup(value);
-		default_arg[default_num] = NULL;
+		if (!default_args.argc)
+			argv_array_push(&default_args, "show-branch");
+		argv_array_push(&default_args, value);
 		return 0;
 	}
 
@@ -689,9 +681,9 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 	git_config(git_show_branch_config, NULL);
 
 	/* If nothing is specified, try the default first */
-	if (ac == 1 && default_num) {
-		ac = default_num;
-		av = default_arg;
+	if (ac == 1 && default_args.argc) {
+		ac = default_args.argc;
+		av = default_args.argv;
 	}
 
 	ac = parse_options(ac, av, prefix, builtin_show_branch_options,
