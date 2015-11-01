@@ -269,8 +269,10 @@ static LPWSTR expand_variables(LPWSTR buffer, size_t alloc)
 		if (delta > 0)
 			memmove(atat2 + delta, atat2, move_len);
 		len += delta;
-		save = atat[env_len - 1];
+		save = atat[env_len - 1 + (delta < 0 ? -delta : 0)];
 		GetEnvironmentVariable(atat + 2, atat, env_len);
+		if (delta < 0)
+			memmove(atat2 + delta, atat2, move_len);
 		atat[env_len - 1] = save;
 	}
 
