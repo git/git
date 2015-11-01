@@ -239,8 +239,9 @@ static LPWSTR expand_variables(LPWSTR buffer, size_t alloc)
 			break;
 
 		*atat2 = L'\0';
+		atat2 += 2;
 		env_len = GetEnvironmentVariable(atat + 2, NULL, 0);
-		delta = env_len - 1 - (atat2 + 2 - atat);
+		delta = env_len - 1 - (atat2 - atat);
 		if (len + delta >= alloc) {
 			LPWSTR buf2;
 			alloc = alloc_nr(alloc);
@@ -264,10 +265,10 @@ static LPWSTR expand_variables(LPWSTR buffer, size_t alloc)
 			atat2 += buf2 - buf;
 			buf = buf2;
 		}
-		if (delta)
-			memmove(atat2 + 2 + delta, atat2 + 2,
+		if (delta > 0)
+			memmove(atat2 + delta, atat2,
 				sizeof(WCHAR) * (len + 1
-					- (atat2 + 2 - buf)));
+					- (atat2 - buf)));
 		len += delta;
 		save = atat[env_len - 1];
 		GetEnvironmentVariable(atat + 2, atat, env_len);
