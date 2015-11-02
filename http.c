@@ -1205,7 +1205,7 @@ static int http_request(const char *url,
 		curl_easy_setopt(slot->curl, CURLOPT_FILE, result);
 
 		if (target == HTTP_REQUEST_FILE) {
-			long posn = ftell(result);
+			off_t posn = ftello(result);
 			curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION,
 					 fwrite);
 			if (posn > 0)
@@ -1581,7 +1581,7 @@ int finish_http_pack_request(struct http_pack_request *preq)
 struct http_pack_request *new_http_pack_request(
 	struct packed_git *target, const char *base_url)
 {
-	long prev_posn = 0;
+	off_t prev_posn = 0;
 	struct strbuf buf = STRBUF_INIT;
 	struct http_pack_request *preq;
 
@@ -1613,7 +1613,7 @@ struct http_pack_request *new_http_pack_request(
 	 * If there is data present from a previous transfer attempt,
 	 * resume where it left off
 	 */
-	prev_posn = ftell(preq->packfile);
+	prev_posn = ftello(preq->packfile);
 	if (prev_posn>0) {
 		if (http_is_verbose)
 			fprintf(stderr,
@@ -1668,7 +1668,7 @@ struct http_object_request *new_http_object_request(const char *base_url,
 	int prevlocal;
 	char prev_buf[PREV_BUF_SIZE];
 	ssize_t prev_read = 0;
-	long prev_posn = 0;
+	off_t prev_posn = 0;
 	struct http_object_request *freq;
 
 	freq = xcalloc(1, sizeof(*freq));
