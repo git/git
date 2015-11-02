@@ -30,7 +30,6 @@ static CURL *curl_default;
 #endif
 
 #define PREV_BUF_SIZE 4096
-#define RANGE_HEADER_SIZE 30
 
 char curl_errorstr[CURL_ERROR_SIZE];
 
@@ -681,6 +680,7 @@ struct active_request_slot *get_active_slot(void)
 	curl_easy_setopt(slot->curl, CURLOPT_UPLOAD, 0);
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPGET, 1);
 	curl_easy_setopt(slot->curl, CURLOPT_FAILONERROR, 1);
+	curl_easy_setopt(slot->curl, CURLOPT_RANGE, NULL);
 #ifdef LIBCURL_CAN_HANDLE_AUTH_ANY
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPAUTH, http_auth_methods);
 #endif
@@ -1173,6 +1173,13 @@ static const char *get_accept_language(void)
 	return cached_accept_language;
 }
 
+static void http_opt_request_remainder(CURL *curl, off_t pos)
+{
+	char buf[128];
+	xsnprintf(buf, sizeof(buf), "%"PRIuMAX"-", (uintmax_t)pos);
+	curl_easy_setopt(curl, CURLOPT_RANGE, buf);
+}
+
 /* http_request() targets */
 #define HTTP_REQUEST_STRBUF	0
 #define HTTP_REQUEST_FILE	1
@@ -1201,11 +1208,8 @@ static int http_request(const char *url,
 			long posn = ftell(result);
 			curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION,
 					 fwrite);
-			if (posn > 0) {
-				strbuf_addf(&buf, "Range: bytes=%ld-", posn);
-				headers = curl_slist_append(headers, buf.buf);
-				strbuf_reset(&buf);
-			}
+			if (posn > 0)
+				http_opt_request_remainder(slot->curl, posn);
 		} else
 			curl_easy_setopt(slot->curl, CURLOPT_WRITEFUNCTION,
 					 fwrite_buffer);
@@ -1515,10 +1519,6 @@ void release_http_pack_request(struct http_pack_request *preq)
 		fclose(preq->packfile);
 		preq->packfile = NULL;
 	}
-	if (preq->range_header != NULL) {
-		curl_slist_free_all(preq->range_header);
-		preq->range_header = NULL;
-	}
 	preq->slot = NULL;
 	free(preq->url);
 	free(preq);
@@ -1582,7 +1582,6 @@ struct http_pack_request *new_http_pack_request(
 	struct packed_git *target, const char *base_url)
 {
 	long prev_posn = 0;
-	char range[RANGE_HEADER_SIZE];
 	struct strbuf buf = STRBUF_INIT;
 	struct http_pack_request *preq;
 
@@ -1620,10 +1619,7 @@ struct http_pack_request *new_http_pack_request(
 			fprintf(stderr,
 				"Resuming fetch of pack %s at byte %ld\n",
 				sha1_to_hex(target->sha1), prev_posn);
-		xsnprintf(range, sizeof(range), "Range: bytes=%ld-", prev_posn);
-		preq->range_header = curl_slist_append(NULL, range);
-		curl_easy_setopt(preq->slot->curl, CURLOPT_HTTPHEADER,
-			preq->range_header);
+		http_opt_request_remainder(preq->slot->curl, prev_posn);
 	}
 
 	return preq;
@@ -1673,8 +1669,6 @@ struct http_object_request *new_http_object_request(const char *base_url,
 	char prev_buf[PREV_BUF_SIZE];
 	ssize_t prev_read = 0;
 	long prev_posn = 0;
-	char range[RANGE_HEADER_SIZE];
-	struct curl_slist *range_header = NULL;
 	struct http_object_request *freq;
 
 	freq = xcalloc(1, sizeof(*freq));
@@ -1780,10 +1774,7 @@ struct http_object_request *new_http_object_request(const char *base_url,
 			fprintf(stderr,
 				"Resuming fetch of object %s at byte %ld\n",
 				hex, prev_posn);
-		xsnprintf(range, sizeof(range), "Range: bytes=%ld-", prev_posn);
-		range_header = curl_slist_append(range_header, range);
-		curl_easy_setopt(freq->slot->curl,
-				 CURLOPT_HTTPHEADER, range_header);
+		http_opt_request_remainder(freq->slot->curl, prev_posn);
 	}
 
 	return freq;
