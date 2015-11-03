@@ -786,6 +786,37 @@ void close_pack_windows(struct packed_git *p)
 	}
 }
 
+static int close_pack_fd(struct packed_git *p)
+{
+	if (p->pack_fd < 0)
+		return 0;
+
+	close(p->pack_fd);
+	pack_open_fds--;
+	p->pack_fd = -1;
+
+	return 1;
+}
+
+static void close_pack(struct packed_git *p)
+{
+	close_pack_windows(p);
+	close_pack_fd(p);
+	close_pack_index(p);
+}
+
+void close_all_packs(void)
+{
+	struct packed_git *p;
+
+	for (p = packed_git; p; p = p->next)
+		if (p->do_not_close)
+			die("BUG! Want to close pack marked 'do-not-close'");
+		else
+			close_pack(p);
+}
+
+
 /*
  * The LRU pack is the one with the oldest MRU window, preferring packs
  * with no used windows, or the oldest mtime if it has no windows allocated.
@@ -853,12 +884,8 @@ static int close_one_pack(void)
 		find_lru_pack(p, &lru_p, &mru_w, &accept_windows_inuse);
 	}
 
-	if (lru_p) {
-		close(lru_p->pack_fd);
-		pack_open_fds--;
-		lru_p->pack_fd = -1;
-		return 1;
-	}
+	if (lru_p)
+		return close_pack_fd(lru_p);
 
 	return 0;
 }
@@ -898,12 +925,7 @@ void free_pack_by_name(const char *pack_name)
 		p = *pp;
 		if (strcmp(pack_name, p->pack_name) == 0) {
 			clear_delta_base_cache();
-			close_pack_windows(p);
-			if (p->pack_fd != -1) {
-				close(p->pack_fd);
-				pack_open_fds--;
-			}
-			close_pack_index(p);
+			close_pack(p);
 			free(p->bad_object_sha1);
 			*pp = p->next;
 			if (last_found_pack == p)
@@ -1037,11 +1059,7 @@ static int open_packed_git(struct packed_git *p)
 {
 	if (!open_packed_git_1(p))
 		return 0;
-	if (p->pack_fd != -1) {
-		close(p->pack_fd);
-		pack_open_fds--;
-		p->pack_fd = -1;
-	}
+	close_pack_fd(p);
 	return -1;
 }
 
@@ -1107,11 +1125,8 @@ unsigned char *use_pack(struct packed_git *p,
 					p->pack_name,
 					strerror(errno));
 			if (!win->offset && win->len == p->pack_size
-				&& !p->do_not_close) {
-				close(p->pack_fd);
-				pack_open_fds--;
-				p->pack_fd = -1;
-			}
+				&& !p->do_not_close)
+				close_pack_fd(p);
 			pack_mmap_calls++;
 			pack_open_windows++;
 			if (pack_mapped > peak_pack_mapped)
