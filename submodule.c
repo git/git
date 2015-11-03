@@ -130,6 +130,7 @@ static int add_submodule_odb(const char *path)
 		goto done;
 	}
 	/* avoid adding it twice */
+	prepare_alt_odb();
 	for (alt_odb = alt_odb_list; alt_odb; alt_odb = alt_odb->next)
 		if (alt_odb->name - alt_odb->base == objects_directory.len &&
 				!strncmp(alt_odb->base, objects_directory.buf,
@@ -148,7 +149,6 @@ static int add_submodule_odb(const char *path)
 
 	/* add possible alternates from the submodule */
 	read_info_alternates(objects_directory.buf, 0);
-	prepare_alt_odb();
 done:
 	strbuf_release(&objects_directory);
 	return ret;
