@@ -2680,7 +2680,8 @@ For example, if `refs/heads/master` is specified in `transfer.hideRefs` and
 the current namespace is `foo`, then `refs/namespaces/foo/refs/heads/master`
 is omitted from the advertisements but `refs/heads/master` and
 `refs/namespaces/bar/refs/heads/master` are still advertised as so-called
-"have" lines.
+"have" lines. In order to match refs before stripping, add a `^` in front of
+the ref name. If you combine `!` and `^`, `!` must be specified first.
 
 transfer.unpackLimit::
 	When `fetch.unpackLimit` or `receive.unpackLimit` are
