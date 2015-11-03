@@ -47,7 +47,7 @@ static int compare_by_list(const void *a1, const void *a2)
 }
 
 static void insert_one_record(struct shortlog *log,
-			      const char *author,
+			      const char *ident_string,
 			      const char *oneline)
 {
 	struct string_list_item *item;
@@ -56,7 +56,7 @@ static void insert_one_record(struct shortlog *log,
 	struct strbuf namemailbuf = STRBUF_INIT;
 	struct ident_split ident;
 
-	if (split_ident_line(&ident, author, strlen(author)))
+	if (split_ident_line(&ident, ident_string, strlen(ident_string)))
 		return;
 
 	namebuf = ident.name_begin;
@@ -115,12 +115,12 @@ static void insert_one_record(struct shortlog *log,
 
 static void read_from_stdin(struct shortlog *log)
 {
-	struct strbuf author = STRBUF_INIT;
+	struct strbuf ident = STRBUF_INIT;
 	struct strbuf oneline = STRBUF_INIT;
 
-	while (strbuf_getline(&author, stdin, '\n') != EOF) {
+	while (strbuf_getline(&ident, stdin, '\n') != EOF) {
 		const char *v;
-		if (!skip_prefix_icase(author.buf, "Author: ", &v))
+		if (!skip_prefix_icase(ident.buf, "Author: ", &v))
 			continue;
 		while (strbuf_getline(&oneline, stdin, '\n') != EOF &&
 		       oneline.len)
@@ -130,13 +130,13 @@ static void read_from_stdin(struct shortlog *log)
 			; /* discard blanks */
 		insert_one_record(log, v, oneline.buf);
 	}
-	strbuf_release(&author);
+	strbuf_release(&ident);
 	strbuf_release(&oneline);
 }
 
 void shortlog_add_commit(struct shortlog *log, struct commit *commit)
 {
-	struct strbuf author = STRBUF_INIT;
+	struct strbuf ident = STRBUF_INIT;
 	struct strbuf oneline = STRBUF_INIT;
 	struct pretty_print_context ctx = {0};
 
@@ -147,9 +147,9 @@ void shortlog_add_commit(struct shortlog *log, struct commit *commit)
 	ctx.date_mode.type = DATE_NORMAL;
 	ctx.output_encoding = get_log_output_encoding();
 
-	format_commit_message(commit, "%an <%ae>", &author, &ctx);
+	format_commit_message(commit, "%an <%ae>", &ident, &ctx);
 	/* we can detect a total failure only by seeing " <>" in the output */
-	if (author.len <= 3) {
+	if (ident.len <= 3) {
 		warning(_("Missing author: %s"),
 		    oid_to_hex(&commit->object.oid));
 		goto out;
@@ -162,10 +162,10 @@ void shortlog_add_commit(struct shortlog *log, struct commit *commit)
 			format_commit_message(commit, "%s", &oneline, &ctx);
 	}
 
-	insert_one_record(log, author.buf, oneline.len ? oneline.buf : "<none>");
+	insert_one_record(log, ident.buf, oneline.len ? oneline.buf : "<none>");
 
 out:
-	strbuf_release(&author);
+	strbuf_release(&ident);
 	strbuf_release(&oneline);
 }
 
