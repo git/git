@@ -1009,7 +1009,7 @@ void setup_mailinfo(struct mailinfo *mi)
 	mi->header_stage = 1;
 	mi->use_inbody_headers = 1;
 	mi->content_top = mi->content;
-	git_config(git_mailinfo_config, &mi);
+	git_config(git_mailinfo_config, mi);
 }
 
 void clear_mailinfo(struct mailinfo *mi)
