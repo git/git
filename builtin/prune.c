@@ -119,6 +119,9 @@ int cmd_prune(int argc, const char **argv, const char *prefix)
 
 	argc = parse_options(argc, argv, prefix, options, prune_usage, 0);
 
+	if (repository_format_precious_objects)
+		die(_("cannot prune in a precious-objects repo"));
+
 	while (argc--) {
 		unsigned char sha1[20];
 		const char *name = *argv++;

@@ -1,0 +1,88 @@
+Git Repository Format Versions
+==============================
+
+Every git repository is marked with a numeric version in the
+`core.repositoryformatversion` key of its `config` file. This version
+specifies the rules for operating on the on-disk repository data. An
+implementation of git which does not understand a particular version
+advertised by an on-disk repository MUST NOT operate on that repository;
+doing so risks not only producing wrong results, but actually losing
+data.
+
+Because of this rule, version bumps should be kept to an absolute
+minimum. Instead, we generally prefer these strategies:
+
+  - bumping format version numbers of individual data files (e.g.,
+    index, packfiles, etc). This restricts the incompatibilities only to
+    those files.
+
+  - introducing new data that gracefully degrades when used by older
+    clients (e.g., pack bitmap files are ignored by older clients, which
+    simply do not take advantage of the optimization they provide).
+
+A whole-repository format version bump should only be part of a change
+that cannot be independently versioned. For instance, if one were to
+change the reachability rules for objects, or the rules for locking
+refs, that would require a bump of the repository format version.
+
+Note that this applies only to accessing the repository's disk contents
+directly. An older client which understands only format `0` may still
+connect via `git://` to a repository using format `1`, as long as the
+server process understands format `1`.
+
+The preferred strategy for rolling out a version bump (whether whole
+repository or for a single file) is to teach git to read the new format,
+and allow writing the new format with a config switch or command line
+option (for experimentation or for those who do not care about backwards
+compatibility with older gits). Then after a long period to allow the
+reading capability to become common, we may switch to writing the new
+format by default.
+
+The currently defined format versions are:
+
+Version `0`
+-----------
+
+This is the format defined by the initial version of git, including but
+not limited to the format of the repository directory, the repository
+configuration file, and the object and ref storage. Specifying the
+complete behavior of git is beyond the scope of this document.
+
+Version `1`
+-----------
+
+This format is identical to version `0`, with the following exceptions:
+
+  1. When reading the `core.repositoryformatversion` variable, a git
+     implementation which supports version 1 MUST also read any
+     configuration keys found in the `extensions` section of the
+     configuration file.
+
+  2. If a version-1 repository specifies any `extensions.*` keys that
+     the running git has not implemented, the operation MUST NOT
+     proceed. Similarly, if the value of any known key is not understood
+     by the implementation, the operation MUST NOT proceed.
+
+Note that if no extensions are specified in the config file, then
+`core.repositoryformatversion` SHOULD be set to `0` (setting it to `1`
+provides no benefit, and makes the repository incompatible with older
+implementations of git).
+
+This document will serve as the master list for extensions. Any
+implementation wishing to define a new extension should make a note of
+it here, in order to claim the name.
+
+The defined extensions are:
+
+`noop`
+~~~~~~
+
+This extension does not change git's behavior at all. It is useful only
+for testing format-1 compatibility.
+
+`preciousObjects`
+~~~~~~~~~~~~~~~~~
+
+When the config key `extensions.preciousObjects` is set to `true`,
+objects in the repository MUST NOT be deleted (e.g., by `git-prune` or
+`git repack -d`).

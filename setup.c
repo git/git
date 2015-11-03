@@ -5,6 +5,7 @@
 static int inside_git_dir = -1;
 static int inside_work_tree = -1;
 static int work_tree_config_is_bogus;
+static struct string_list unknown_extensions = STRING_LIST_INIT_DUP;
 
 /*
  * The input parameter must contain an absolute path, and it must already be
@@ -352,10 +353,25 @@ void setup_work_tree(void)
 
 static int check_repo_format(const char *var, const char *value, void *cb)
 {
+	const char *ext;
+
 	if (strcmp(var, "core.repositoryformatversion") == 0)
 		repository_format_version = git_config_int(var, value);
 	else if (strcmp(var, "core.sharedrepository") == 0)
 		shared_repository = git_config_perm(var, value);
+	else if (skip_prefix(var, "extensions.", &ext)) {
+		/*
+		 * record any known extensions here; otherwise,
+		 * we fall through to recording it as unknown, and
+		 * check_repository_format will complain
+		 */
+		if (!strcmp(ext, "noop"))
+			;
+		else if (!strcmp(ext, "preciousobjects"))
+			repository_format_precious_objects = git_config_bool(var, value);
+		else
+			string_list_append(&unknown_extensions, ext);
+	}
 	return 0;
 }
 
@@ -365,6 +381,8 @@ static int check_repository_format_gently(const char *gitdir, int *nongit_ok)
 	const char *repo_config;
 	config_fn_t fn;
 	int ret = 0;
+
+	string_list_clear(&unknown_extensions, 0);
 
 	if (get_common_dir(&sb, gitdir))
 		fn = check_repo_format;
@@ -383,16 +401,31 @@ static int check_repository_format_gently(const char *gitdir, int *nongit_ok)
 	 * is a good one.
 	 */
 	git_config_early(fn, NULL, repo_config);
-	if (GIT_REPO_VERSION < repository_format_version) {
+	if (GIT_REPO_VERSION_READ < repository_format_version) {
 		if (!nongit_ok)
 			die ("Expected git repo version <= %d, found %d",
-			     GIT_REPO_VERSION, repository_format_version);
+			     GIT_REPO_VERSION_READ, repository_format_version);
 		warning("Expected git repo version <= %d, found %d",
-			GIT_REPO_VERSION, repository_format_version);
+			GIT_REPO_VERSION_READ, repository_format_version);
 		warning("Please upgrade Git");
 		*nongit_ok = -1;
 		ret = -1;
 	}
+
+	if (repository_format_version >= 1 && unknown_extensions.nr) {
+		int i;
+
+		if (!nongit_ok)
+			die("unknown repository extension: %s",
+			    unknown_extensions.items[0].string);
+
+		for (i = 0; i < unknown_extensions.nr; i++)
+			warning("unknown repository extension: %s",
+				unknown_extensions.items[i].string);
+		*nongit_ok = -1;
+		ret = -1;
+	}
+
 	strbuf_release(&sb);
 	return ret;
 }
