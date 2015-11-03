@@ -775,7 +775,7 @@ static int prepare_to_commit(const char *index_file, const char *prefix,
 	s->hints = 0;
 
 	if (clean_message_contents)
-		stripspace(&sb, 0);
+		strbuf_stripspace(&sb, 0);
 
 	if (signoff)
 		append_signoff(&sb, ignore_non_trailer(&sb), 0);
@@ -1014,7 +1014,7 @@ static int template_untouched(struct strbuf *sb)
 	if (!template_file || strbuf_read_file(&tmpl, template_file, 0) <= 0)
 		return 0;
 
-	stripspace(&tmpl, cleanup_mode == CLEANUP_ALL);
+	strbuf_stripspace(&tmpl, cleanup_mode == CLEANUP_ALL);
 	if (!skip_prefix(sb->buf, tmpl.buf, &start))
 		start = sb->buf;
 	strbuf_release(&tmpl);
@@ -1726,7 +1726,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		wt_status_truncate_message_at_cut_line(&sb);
 
 	if (cleanup_mode != CLEANUP_NONE)
-		stripspace(&sb, cleanup_mode == CLEANUP_ALL);
+		strbuf_stripspace(&sb, cleanup_mode == CLEANUP_ALL);
 	if (template_untouched(&sb) && !allow_empty_message) {
 		rollback_index_files();
 		fprintf(stderr, _("Aborting commit; you did not edit the message.\n"));
