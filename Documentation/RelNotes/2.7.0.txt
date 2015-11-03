@@ -58,6 +58,9 @@ UI, Workflows & Features
  * "git clone --dissociate" learned that it can be used even when
    "--reference" was not used at the same time.
 
+ * "git blame" learnt to take "--first-parent" and "--reverse" at the
+   same time when it makes sense.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -106,6 +109,9 @@ Performance, Internal Implementation, Development Support etc.
 
  * The implementation of "git mailinfo" was refactored so that a
    mailinfo() function can be directly called from inside a process.
+
+ * With a "debug" helper, debugging of a single "git" invocation in
+   our test scripts has become a lot easier.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -304,6 +310,27 @@ notes for details).
    argument misbehaved ever since Git 2.0.
    (merge 29abb33 jc/add-u-A-default-to-top later to maint).
 
+ * "git daemon" uses "run_command()" without "finish_command()", so it
+   needs to release resources itself, which it forgot to do.
+   (merge b1b49ff rs/daemon-plug-child-leak later to maint).
+
+ * "git status --branch --short" accessed beyond the constant string
+   "HEAD", which has been corrected.
+   (merge c72b49d rs/wt-status-detached-branch-fix later to maint).
+
+ * We peek objects from submodule's object store by linking it to the
+   list of alternate object databases, but the code to do so forgot to
+   correctly initialize the list.
+   (merge 9a6e4f0 jk/initialization-fix-to-add-submodule-odb later to maint).
+
+ * The code to prepare the working tree side of temporary directory
+   for the "dir-diff" feature forgot that symbolic links need not be
+   copied (or symlinked) to the temporary area, as the code already
+   special cases and overwrites them.  Besides, it was wrong to try
+   computing the object name of the target of symbolic link, which may
+   not even exist or may be a directory.
+   (merge cfe2d4b da/difftool later to maint).
+
  * Code clean-up, minor fixes etc.
    (merge 15ed07d jc/rerere later to maint).
    (merge e7a7401 pt/pull-builtin later to maint).
@@ -321,3 +348,4 @@ notes for details).
    (merge b2af482 xf/user-manual-ff later to maint).
    (merge e510ab8 rs/pop-commit later to maint).
    (merge fdcdb77 js/misc-fixes later to maint).
+   (merge c949b00 rs/show-branch-argv-array later to maint).
