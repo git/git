@@ -158,8 +158,8 @@ EOF
 
 test_expect_success 'git branch `--sort` option' '
 	cat >expect <<-\EOF &&
-	  branch-two
 	* (HEAD detached from fromtag)
+	  branch-two
 	  branch-one
 	  master
 	EOF
