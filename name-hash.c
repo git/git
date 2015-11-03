@@ -11,16 +11,16 @@
 struct dir_entry {
 	struct hashmap_entry ent;
 	struct dir_entry *parent;
-	struct cache_entry *ce;
 	int nr;
 	unsigned int namelen;
+	char name[FLEX_ARRAY];
 };
 
 static int dir_entry_cmp(const struct dir_entry *e1,
 		const struct dir_entry *e2, const char *name)
 {
-	return e1->namelen != e2->namelen || strncasecmp(e1->ce->name,
-			name ? name : e2->ce->name, e1->namelen);
+	return e1->namelen != e2->namelen || strncasecmp(e1->name,
+			name ? name : e2->name, e1->namelen);
 }
 
 static struct dir_entry *find_dir_entry(struct index_state *istate,
@@ -41,14 +41,6 @@ static struct dir_entry *hash_dir_entry(struct index_state *istate,
 	 * closing slash.  Despite submodules being a directory, they never
 	 * reach this point, because they are stored
 	 * in index_state.name_hash (as ordinary cache_entries).
-	 *
-	 * Note that the cache_entry stored with the dir_entry merely
-	 * supplies the name of the directory (up to dir_entry.namelen). We
-	 * track the number of 'active' files in a directory in dir_entry.nr,
-	 * so we can tell if the directory is still relevant, e.g. for git
-	 * status. However, if cache_entries are removed, we cannot pinpoint
-	 * an exact cache_entry that's still active. It is very possible that
-	 * multiple dir_entries point to the same cache_entry.
 	 */
 	struct dir_entry *dir;
 
@@ -63,10 +55,10 @@ static struct dir_entry *hash_dir_entry(struct index_state *istate,
 	dir = find_dir_entry(istate, ce->name, namelen);
 	if (!dir) {
 		/* not found, create it and add to hash table */
-		dir = xcalloc(1, sizeof(struct dir_entry));
+		dir = xcalloc(1, sizeof(struct dir_entry) + namelen + 1);
 		hashmap_entry_init(dir, memihash(ce->name, namelen));
 		dir->namelen = namelen;
-		dir->ce = ce;
+		strncpy(dir->name, ce->name, namelen);
 		hashmap_add(&istate->dir_hash, dir);
 
 		/* recursively add missing parent directories */
@@ -188,26 +180,36 @@ static int same_name(const struct cache_entry *ce, const char *name, int namelen
 	return slow_same_name(name, namelen, ce->name, len);
 }
 
-struct cache_entry *index_dir_exists(struct index_state *istate, const char *name, int namelen)
+int index_dir_exists(struct index_state *istate, const char *name, int namelen)
 {
-	struct cache_entry *ce;
 	struct dir_entry *dir;
 
 	lazy_init_name_hash(istate);
 	dir = find_dir_entry(istate, name, namelen);
-	if (dir && dir->nr)
-		return dir->ce;
+	return dir && dir->nr;
+}
 
-	/*
-	 * It might be a submodule. Unlike plain directories, which are stored
-	 * in the dir-hash, submodules are stored in the name-hash, so check
-	 * there, as well.
-	 */
-	ce = index_file_exists(istate, name, namelen, 1);
-	if (ce && S_ISGITLINK(ce->ce_mode))
-		return ce;
+void adjust_dirname_case(struct index_state *istate, char *name)
+{
+	const char *startPtr = name;
+	const char *ptr = startPtr;
 
-	return NULL;
+	lazy_init_name_hash(istate);
+	while (*ptr) {
+		while (*ptr && *ptr != '/')
+			ptr++;
+
+		if (*ptr == '/') {
+			struct dir_entry *dir;
+
+			ptr++;
+			dir = find_dir_entry(istate, name, ptr - name + 1);
+			if (dir) {
+				memcpy((void *)startPtr, dir->name + (startPtr - name), ptr - startPtr);
+				startPtr = ptr;
+			}
+		}
+	}
 }
 
 struct cache_entry *index_file_exists(struct index_state *istate, const char *name, int namelen, int icase)
