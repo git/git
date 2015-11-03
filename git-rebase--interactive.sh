@@ -77,6 +77,10 @@ amend="$state_dir"/amend
 rewritten_list="$state_dir"/rewritten-list
 rewritten_pending="$state_dir"/rewritten-pending
 
+# Work around Git for Windows' Bash whose "read" does not strip CRLF
+# and leaves CR at the end instead.
+cr=$(printf "\015")
+
 strategy_args=
 if test -n "$do_merge"
 then
@@ -518,6 +522,10 @@ do_next () {
 	"$comment_char"*|''|noop|drop|d)
 		mark_action_done
 		;;
+	"$cr")
+		# Work around CR left by "read" (e.g. with Git for Windows' Bash).
+		mark_action_done
+		;;
 	pick|p)
 		comment_for_reflog pick
 
@@ -895,6 +903,10 @@ check_bad_cmd_and_sha () {
 		case $command in
 		"$comment_char"*|''|noop|x|exec)
 			# Doesn't expect a SHA-1
+			;;
+		"$cr")
+			# Work around CR left by "read" (e.g. with Git for
+			# Windows' Bash).
 			;;
 		pick|p|drop|d|reword|r|edit|e|squash|s|fixup|f)
 			if ! check_commit_sha "${rest%%[ 	]*}" "$lineno" "$1"
