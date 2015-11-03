@@ -14,8 +14,8 @@ static void comment_lines(struct strbuf *buf)
 }
 
 static const char * const stripspace_usage[] = {
-	N_("git stripspace [-s | --strip-comments] < input"),
-	N_("git stripspace [-c | --comment-lines] < input"),
+	N_("git stripspace [-s | --strip-comments]"),
+	N_("git stripspace [-c | --comment-lines]"),
 	NULL
 };
 

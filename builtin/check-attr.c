@@ -9,7 +9,7 @@ static int cached_attrs;
 static int stdin_paths;
 static const char * const check_attr_usage[] = {
 N_("git check-attr [-a | --all | <attr>...] [--] <pathname>..."),
-N_("git check-attr --stdin [-z] [-a | --all | <attr>...] < <list-of-paths>"),
+N_("git check-attr --stdin [-z] [-a | --all | <attr>...]"),
 NULL
 };
 

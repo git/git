@@ -8,10 +8,12 @@ git-patch-id - Compute unique ID for a patch
 SYNOPSIS
 --------
 [verse]
-'git patch-id' [--stable | --unstable] < <patch>
+'git patch-id' [--stable | --unstable]
 
 DESCRIPTION
 -----------
+Read a patch from the standard input and compute the patch ID for it.
+
 A "patch ID" is nothing but a sum of SHA-1 of the file diffs associated with a
 patch, with whitespace and line numbers ignored.  As such, it's "reasonably
 stable", but at the same time also reasonably unique, i.e., two patches that

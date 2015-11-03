@@ -11,7 +11,7 @@ SYNOPSIS
 'git show-ref' [-q|--quiet] [--verify] [--head] [-d|--dereference]
 	     [-s|--hash[=<n>]] [--abbrev[=<n>]] [--tags]
 	     [--heads] [--] [<pattern>...]
-'git show-ref' --exclude-existing[=<pattern>] < ref-list
+'git show-ref' --exclude-existing[=<pattern>]
 
 DESCRIPTION
 -----------
@@ -23,8 +23,9 @@ particular ref exists.
 
 By default, shows the tags, heads, and remote refs.
 
-The --exclude-existing form is a filter that does the inverse, it shows the
-refs from stdin that don't exist in the local repository.
+The --exclude-existing form is a filter that does the inverse. It reads
+refs from stdin, one ref per line, and shows those that don't exist in
+the local repository.
 
 Use of this utility is encouraged in favor of directly accessing files under
 the `.git` directory.
