@@ -145,6 +145,14 @@ test_pause () {
 	fi
 }
 
+# Wrap git in gdb. Adding this to a command can make it easier to
+# understand what is going on in a failing test.
+#
+# Example: "debug git checkout master".
+debug () {
+	 GIT_TEST_GDB=1 "$@"
+}
+
 # Call test_commit with the arguments "<message> [<file> [<contents> [<tag>]]]"
 #
 # This will commit a file with the given contents and the given commit
