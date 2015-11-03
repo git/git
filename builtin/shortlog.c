@@ -8,6 +8,7 @@
 #include "mailmap.h"
 #include "shortlog.h"
 #include "parse-options.h"
+#include "trailer.h"
 
 static char const * const shortlog_usage[] = {
 	N_("git shortlog [<options>] [<revision-range>] [[--] [<path>...]]"),
@@ -126,6 +127,8 @@ static void read_from_stdin(struct shortlog *log)
 	case SHORTLOG_IDENT_COMMITTER:
 		ident_header = "Commit: ";
 		break;
+	case SHORTLOG_IDENT_TRAILER:
+		die(_("sorry, using a trailer --ident with stdin is not supported"));
 	}
 
 	while (strbuf_getline(&ident, stdin, '\n') != EOF) {
@@ -149,6 +152,7 @@ void shortlog_add_commit(struct shortlog *log, struct commit *commit)
 	struct strbuf ident = STRBUF_INIT;
 	struct strbuf oneline = STRBUF_INIT;
 	struct pretty_print_context ctx = {0};
+	char *oneline_str;
 
 	ctx.fmt = CMIT_FMT_USERFORMAT;
 	ctx.abbrev = log->abbrev;
@@ -174,6 +178,12 @@ void shortlog_add_commit(struct shortlog *log, struct commit *commit)
 			goto out;
 		}
 		break;
+	case SHORTLOG_IDENT_TRAILER:
+		/*
+		 * We might have multiple matches, so deal with it in the loop
+		 * below.
+		 */
+		break;
 	}
 
 	if (!log->summary) {
@@ -183,7 +193,25 @@ void shortlog_add_commit(struct shortlog *log, struct commit *commit)
 			format_commit_message(commit, "%s", &oneline, &ctx);
 	}
 
-	insert_one_record(log, ident.buf, oneline.len ? oneline.buf : "<none>");
+	oneline_str = oneline.len ? oneline.buf : "<none>";
+	if (log->ident_type != SHORTLOG_IDENT_TRAILER)
+		insert_one_record(log, ident.buf, oneline_str);
+	else {
+		struct strbuf msg = STRBUF_INIT;
+		struct trailer_parse_context tp;
+		int i;
+
+		format_commit_message(commit, "%B", &msg, &ctx);
+		trailer_parse_init(&tp, &msg);
+		for (i = tp.start; i < tp.end; i++) {
+			const char *v = trailer_parse_match(&tp, i, log->trailer);
+			if (!v)
+				continue;
+			insert_one_record(log, v, oneline_str);
+		}
+		trailer_parse_clear(&tp);
+		strbuf_release(&msg);
+	}
 
 out:
 	strbuf_release(&ident);
@@ -255,8 +283,11 @@ static int parse_ident_option(const struct option *opt, const char *arg, int uns
 		log->ident_type = SHORTLOG_IDENT_AUTHOR;
 	else if (!strcasecmp(arg, "committer"))
 		log->ident_type = SHORTLOG_IDENT_COMMITTER;
-	else
-		die("unknown ident type: %s", arg);
+	else {
+		log->ident_type = SHORTLOG_IDENT_TRAILER;
+		free(log->trailer);
+		log->trailer = xstrdup(arg);
+	}
 
 	return 0;
 }

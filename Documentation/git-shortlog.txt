@@ -54,6 +54,15 @@ OPTIONS
 +
  - `author`, commits are grouped by author (this is the default)
  - `committer`, commits are grouped by committer
+ - any other value, the `<type>` is interpreted as a case-insensitive
+   commit message trailer (see linkgit:git-interpret-trailers[1]). For
+   example, if your project uses `Reviewed-by` trailers, you might want
+   to see who has been reviewing with
+   `git shortlog -ns --ident=reviewed-by`.
++
+Note that commits that do not include the trailer will not be counted.
+Likewise, commits with multiple trailers (e.g., multiple signoffs) may
+count more than once.
 
 -w[<width>[,<indent1>[,<indent2>]]]::
 	Linewrap the output by wrapping each line at `width`.  The first

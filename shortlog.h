@@ -16,8 +16,10 @@ struct shortlog {
 
 	enum {
 		SHORTLOG_IDENT_AUTHOR = 0,
-		SHORTLOG_IDENT_COMMITTER
+		SHORTLOG_IDENT_COMMITTER,
+		SHORTLOG_IDENT_TRAILER,
 	} ident_type;
+	char *trailer;
 
 	char *common_repo_prefix;
 	int email;

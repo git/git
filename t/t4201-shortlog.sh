@@ -207,4 +207,13 @@ test_expect_success 'shortlog --ident=committer (external)' '
 	test_cmp expect actual
 '
 
+test_expect_success 'shortlog --ident=signed-off-by' '
+	git commit --allow-empty -m foo -s &&
+	cat >expect <<-\EOF &&
+	     1	C O Mitter
+	EOF
+	git shortlog -ns --ident=signed-off-by HEAD >actual &&
+	test_cmp expect actual
+'
+
 test_done
