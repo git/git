@@ -412,7 +412,9 @@ test_expect_success 'create/modify files, some of which are gitignored' '
 	echo two bis >done/two &&
 	echo three >done/three && # three is gitignored
 	echo four >done/four && # four is gitignored at a higher level
-	echo five >done/five # five is not gitignored
+	echo five >done/five && # five is not gitignored
+	echo test >base && #we need to ensure that the root dir is touched
+	rm base
 '
 
 test_expect_success 'test sparse status with untracked cache' '
