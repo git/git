@@ -2229,8 +2229,8 @@ int cmd_am(int argc, const char **argv, const char *prefix)
 	int in_progress;
 
 	const char * const usage[] = {
-		N_("git am [options] [(<mbox>|<Maildir>)...]"),
-		N_("git am [options] (--continue | --skip | --abort)"),
+		N_("git am [<options>] [(<mbox>|<Maildir>)...]"),
+		N_("git am [<options>] (--continue | --skip | --abort)"),
 		NULL
 	};
 
