@@ -504,4 +504,23 @@ test_expect_success PERL 'difftool properly honors gitlink and core.worktree' '
 	)
 '
 
+test_expect_success PERL,SYMLINKS 'difftool --dir-diff symlinked directories' '
+	git init dirlinks &&
+	(
+		cd dirlinks &&
+		git config diff.tool checktrees &&
+		git config difftool.checktrees.cmd "echo good" &&
+		mkdir foo &&
+		: >foo/bar &&
+		git add foo/bar &&
+		test_commit symlink-one &&
+		ln -s foo link &&
+		git add link &&
+		test_commit symlink-two &&
+		echo good >expect &&
+		git difftool --tool=checktrees --dir-diff HEAD~ >actual &&
+		test_cmp expect actual
+	)
+'
+
 test_done
