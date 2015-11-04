@@ -91,20 +91,23 @@ static void insert_one_record(struct shortlog *log,
 
 static void read_from_stdin(struct shortlog *log)
 {
-	char author[1024], oneline[1024];
+	struct strbuf author = STRBUF_INIT;
+	struct strbuf oneline = STRBUF_INIT;
 
-	while (fgets(author, sizeof(author), stdin) != NULL) {
+	while (strbuf_getline(&author, stdin, '\n') != EOF) {
 		const char *v;
-		if (!skip_prefix_icase(author, "Author: ", &v))
+		if (!skip_prefix_icase(author.buf, "Author: ", &v))
 			continue;
-		while (fgets(oneline, sizeof(oneline), stdin) &&
-		       oneline[0] != '\n')
+		while (strbuf_getline(&oneline, stdin, '\n') != EOF &&
+		       oneline.len)
 			; /* discard headers */
-		while (fgets(oneline, sizeof(oneline), stdin) &&
-		       oneline[0] == '\n')
+		while (strbuf_getline(&oneline, stdin, '\n') != EOF &&
+		       !oneline.len)
 			; /* discard blanks */
-		insert_one_record(log, v, oneline);
+		insert_one_record(log, v, oneline.buf);
 	}
+	strbuf_release(&author);
+	strbuf_release(&oneline);
 }
 
 void shortlog_add_commit(struct shortlog *log, struct commit *commit)
