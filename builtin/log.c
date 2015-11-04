@@ -677,10 +677,10 @@ static void add_header(const char *value)
 	struct string_list_item *item;
 	size_t len;
 
-	if (!strncasecmp(value, "to: ", 4))
-		item = string_list_append(&extra_to, value + 4);
-	else if (!strncasecmp(value, "cc: ", 4))
-		item = string_list_append(&extra_cc, value + 4);
+	if (skip_prefix_icase(value, "to: ", &value))
+		item = string_list_append(&extra_to, value);
+	else if (skip_prefix_icase(value, "cc: ", &value))
+		item = string_list_append(&extra_cc, value);
 	else
 		item = string_list_append(&extra_hdr, value);
 

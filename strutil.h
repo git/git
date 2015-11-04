@@ -32,6 +32,21 @@ static inline int skip_prefix(const char *str, const char *prefix,
 }
 
 /*
+ * Identical to skip_prefix, but compare characters case-insensitively.
+ */
+static inline int skip_prefix_icase(const char *str, const char *prefix,
+				    const char **out)
+{
+	do {
+		if (!*prefix) {
+			*out = str;
+			return 1;
+		}
+	} while (tolower(*str++) == tolower(*prefix++));
+	return 0;
+}
+
+/*
  * If buf ends with suffix, return 1 and subtract the length of the suffix
  * from *len. Otherwise, return 0 and leave *len untouched.
  */
