@@ -57,6 +57,22 @@ static void remove_pidfile_on_signal(int signo)
 	raise(signo);
 }
 
+static struct string_list pack_garbage = STRING_LIST_INIT_DUP;
+
+static void clean_pack_garbage(void)
+{
+	int i;
+	for (i = 0; i < pack_garbage.nr; i++)
+		unlink_or_warn(pack_garbage.items[i].string);
+	string_list_clear(&pack_garbage, 0);
+}
+
+static void report_pack_garbage(unsigned seen_bits, const char *path)
+{
+	if (seen_bits == PACKDIR_FILE_IDX)
+		string_list_append(&pack_garbage, path);
+}
+
 static void git_config_date_string(const char *key, const char **output)
 {
 	if (git_config_get_string_const(key, output))
@@ -371,6 +387,11 @@ int cmd_gc(int argc, const char **argv, const char *prefix)
 
 	if (run_command_v_opt(rerere.argv, RUN_GIT_CMD))
 		return error(FAILED_RUN, rerere.argv[0]);
+
+	report_garbage = report_pack_garbage;
+	reprepare_packed_git();
+	if (pack_garbage.nr > 0)
+		clean_pack_garbage();
 
 	if (auto_gc && too_many_loose_objects())
 		warning(_("There are too many unreachable loose objects; "

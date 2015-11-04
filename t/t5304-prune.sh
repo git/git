@@ -245,7 +245,7 @@ EOF
 	test_cmp expected actual
 '
 
-test_expect_failure 'clean pack garbage with gc' '
+test_expect_success 'clean pack garbage with gc' '
 	test_when_finished "rm -f .git/objects/pack/fake*" &&
 	test_when_finished "rm -f .git/objects/pack/foo*" &&
 	: >.git/objects/pack/foo.keep &&
