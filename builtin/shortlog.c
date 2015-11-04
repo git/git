@@ -115,12 +115,22 @@ static void insert_one_record(struct shortlog *log,
 
 static void read_from_stdin(struct shortlog *log)
 {
+	const char *ident_header = NULL;
 	struct strbuf ident = STRBUF_INIT;
 	struct strbuf oneline = STRBUF_INIT;
 
+	switch (log->ident_type) {
+	case SHORTLOG_IDENT_AUTHOR:
+		ident_header = "Author: ";
+		break;
+	case SHORTLOG_IDENT_COMMITTER:
+		ident_header = "Commit: ";
+		break;
+	}
+
 	while (strbuf_getline(&ident, stdin, '\n') != EOF) {
 		const char *v;
-		if (!skip_prefix_icase(ident.buf, "Author: ", &v))
+		if (!skip_prefix_icase(ident.buf, ident_header, &v))
 			continue;
 		while (strbuf_getline(&oneline, stdin, '\n') != EOF &&
 		       oneline.len)
@@ -147,12 +157,23 @@ void shortlog_add_commit(struct shortlog *log, struct commit *commit)
 	ctx.date_mode.type = DATE_NORMAL;
 	ctx.output_encoding = get_log_output_encoding();
 
-	format_commit_message(commit, "%an <%ae>", &ident, &ctx);
-	/* we can detect a total failure only by seeing " <>" in the output */
-	if (ident.len <= 3) {
-		warning(_("Missing author: %s"),
-		    oid_to_hex(&commit->object.oid));
-		goto out;
+	switch (log->ident_type) {
+	case SHORTLOG_IDENT_AUTHOR:
+		format_commit_message(commit, "%an <%ae>", &ident, &ctx);
+		if (ident.len <= 3) {
+			warning(_("Missing author: %s"),
+				oid_to_hex(&commit->object.oid));
+			goto out;
+		}
+		break;
+	case SHORTLOG_IDENT_COMMITTER:
+		format_commit_message(commit, "%cn <%ce>", &ident, &ctx);
+		if (ident.len <= 3) {
+			warning(_("Missing committer: %s"),
+				oid_to_hex(&commit->object.oid));
+			goto out;
+		}
+		break;
 	}
 
 	if (!log->summary) {
@@ -226,6 +247,21 @@ static int parse_wrap_args(const struct option *opt, const char *arg, int unset)
 	return 0;
 }
 
+static int parse_ident_option(const struct option *opt, const char *arg, int unset)
+{
+	struct shortlog *log = opt->value;
+
+	if (unset || !strcasecmp(arg, "author"))
+		log->ident_type = SHORTLOG_IDENT_AUTHOR;
+	else if (!strcasecmp(arg, "committer"))
+		log->ident_type = SHORTLOG_IDENT_COMMITTER;
+	else
+		die("unknown ident type: %s", arg);
+
+	return 0;
+}
+
+
 void shortlog_init(struct shortlog *log)
 {
 	memset(log, 0, sizeof(*log));
@@ -253,6 +289,8 @@ int cmd_shortlog(int argc, const char **argv, const char *prefix)
 			 N_("Show the email address of each author")),
 		{ OPTION_CALLBACK, 'w', NULL, &log, N_("w[,i1[,i2]]"),
 			N_("Linewrap output"), PARSE_OPT_OPTARG, &parse_wrap_args },
+		{ OPTION_CALLBACK, 0, "ident", &log, N_("field"),
+			N_("Use ident from field"), 0, parse_ident_option },
 		OPT_END(),
 	};
 

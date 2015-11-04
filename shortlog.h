@@ -14,6 +14,11 @@ struct shortlog {
 	int user_format;
 	int abbrev;
 
+	enum {
+		SHORTLOG_IDENT_AUTHOR = 0,
+		SHORTLOG_IDENT_COMMITTER
+	} ident_type;
+
 	char *common_repo_prefix;
 	int email;
 	struct string_list mailmap;

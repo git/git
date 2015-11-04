@@ -47,6 +47,14 @@ OPTIONS
 
 	Each pretty-printed commit will be rewrapped before it is shown.
 
+--ident=<type>::
+	By default, `shortlog` collects and collates author identities;
+	using `--ident` will collect other types of identity. If
+	`<type>` is:
++
+ - `author`, commits are grouped by author (this is the default)
+ - `committer`, commits are grouped by committer
+
 -w[<width>[,<indent1>[,<indent2>]]]::
 	Linewrap the output by wrapping each line at `width`.  The first
 	line of each entry is indented by `indent1` spaces, and the second

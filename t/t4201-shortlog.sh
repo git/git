@@ -194,4 +194,17 @@ test_expect_success 'shortlog with revision pseudo options' '
 	git shortlog --exclude=refs/heads/m* --all
 '
 
+test_expect_success 'shortlog --ident=committer (internal)' '
+	cat >expect <<-\EOF &&
+	     5	C O Mitter
+	EOF
+	git shortlog -ns --ident=committer HEAD >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'shortlog --ident=committer (external)' '
+	git log --format=full | git shortlog -ns --ident=committer >actual &&
+	test_cmp expect actual
+'
+
 test_done
