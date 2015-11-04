@@ -842,6 +842,19 @@ static void free_all(struct trailer_item **first)
 	}
 }
 
+static void init_trailer_config(void)
+{
+	static int initialized;
+
+	if (initialized)
+		return;
+
+	git_config(git_trailer_default_config, NULL);
+	git_config(git_trailer_config, NULL);
+
+	initialized = 1;
+}
+
 void process_trailers(const char *file, int trim_empty, struct string_list *trailers)
 {
 	struct trailer_item *in_tok_first = NULL;
@@ -850,10 +863,7 @@ void process_trailers(const char *file, int trim_empty, struct string_list *trai
 	struct strbuf **lines;
 	int trailer_end;
 
-	/* Default config must be setup first */
-	git_config(git_trailer_default_config, NULL);
-	git_config(git_trailer_config, NULL);
-
+	init_trailer_config();
 	lines = read_input_file(file);
 
 	/* Print the lines before the trailers */
