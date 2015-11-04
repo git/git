@@ -8862,7 +8862,7 @@ msgstr ""
 "Si vous souhaitez indiquer l'information de suivi distant pour cette "
 "branche, vous pouvez le faire avec :\n"
 "\n"
-"git branch --set-uptream-to=%s/<branche> %s\n"
+"    git branch --set-upstream-to=%s/<branche> %s\n"
 
 #: builtin/pull.c:476
 #, c-format
