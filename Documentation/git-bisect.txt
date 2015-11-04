@@ -253,7 +253,7 @@ cannot be tested. If the script exits with this code, the current
 revision will be skipped (see `git bisect skip` above). 125 was chosen
 as the highest sensible value to use for this purpose, because 126 and 127
 are used by POSIX shells to signal specific error status (127 is for
-command not found, 126 is for command found but not executable---these
+command not found, 126 is for command found but not executable--these
 details do not matter, as they are normal errors in the script, as far as
 `bisect run` is concerned).
 

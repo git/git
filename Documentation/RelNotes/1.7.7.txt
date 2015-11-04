@@ -84,7 +84,7 @@ Updates since v1.7.6
    logic used by "git diff" to determine the hunk header.
 
  * Invoking the low-level "git http-fetch" without "-a" option (which
-   git itself never did---normal users should not have to worry about
+   git itself never did--normal users should not have to worry about
    this) is now deprecated.
 
  * The "--decorate" option to "git log" and its family learned to
