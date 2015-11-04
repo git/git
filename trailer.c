@@ -882,3 +882,46 @@ void process_trailers(const char *file, int trim_empty, struct string_list *trai
 
 	strbuf_list_free(lines);
 }
+
+void trailer_parse_init(struct trailer_parse_context *ctx, const struct strbuf *buf)
+{
+	int nr_lines = 0;
+
+	init_trailer_config();
+
+	ctx->lines = strbuf_split(buf, '\n');
+	while (ctx->lines[nr_lines])
+		nr_lines++;
+
+	ctx->end = find_trailer_end(ctx->lines, nr_lines);
+	ctx->start = find_trailer_start(ctx->lines, ctx->end);
+
+	strbuf_init(&ctx->token, 0);
+	strbuf_init(&ctx->value, 0);
+}
+
+void trailer_parse_clear(struct trailer_parse_context *ctx)
+{
+	strbuf_list_free(ctx->lines);
+	strbuf_release(&ctx->token);
+	strbuf_release(&ctx->value);
+}
+
+const char *trailer_parse_match(struct trailer_parse_context *ctx, int line, const char *match)
+{
+	size_t len;
+
+	if (ctx->lines[line]->buf[0] == comment_line_char)
+		return NULL;
+
+	strbuf_reset(&ctx->token);
+	strbuf_reset(&ctx->value);
+	if (parse_trailer(&ctx->token, &ctx->value, ctx->lines[line]->buf))
+		return NULL;
+
+	len = token_len_without_separator(ctx->token.buf, ctx->token.len);
+	if (strncasecmp(ctx->token.buf, match, len) || match[len])
+		return NULL;
+
+	return ctx->value.buf;
+}
