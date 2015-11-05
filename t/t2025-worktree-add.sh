@@ -193,4 +193,9 @@ test_expect_success '"add" -B/--detach mutually exclusive' '
 	test_must_fail git worktree add -B poodle --detach bamboo master
 '
 
+test_expect_success 'local clone from linked checkout' '
+	git clone --local here here-clone &&
+	( cd here-clone && git fsck )
+'
+
 test_done

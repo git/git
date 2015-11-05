@@ -445,18 +445,22 @@ const char *enter_repo(const char *path, int strict)
 		}
 		if (!suffix[i])
 			return NULL;
-		gitfile = read_gitfile(used_path) ;
+		gitfile = read_gitfile(used_path);
 		if (gitfile)
 			strcpy(used_path, gitfile);
 		if (chdir(used_path))
 			return NULL;
 		path = validated_path;
 	}
-	else if (chdir(path))
-		return NULL;
+	else {
+		const char *gitfile = read_gitfile(path);
+		if (gitfile)
+			path = gitfile;
+		if (chdir(path))
+			return NULL;
+	}
 
-	if (access("objects", X_OK) == 0 && access("refs", X_OK) == 0 &&
-	    validate_headref("HEAD") == 0) {
+	if (is_git_directory(".")) {
 		set_git_dir(".");
 		check_repository_format();
 		return path;
