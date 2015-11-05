@@ -1531,13 +1531,17 @@ static int read_sha1_strbuf(const unsigned char *sha1, struct strbuf *dst)
 }
 
 static int blob_unchanged(const unsigned char *o_sha,
+			  unsigned o_mode,
 			  const unsigned char *a_sha,
+			  unsigned a_mode,
 			  int renormalize, const char *path)
 {
 	struct strbuf o = STRBUF_INIT;
 	struct strbuf a = STRBUF_INIT;
 	int ret = 0; /* assume changed for safety */
 
+	if (a_mode != o_mode)
+		return 0;
 	if (sha_eq(o_sha, a_sha))
 		return 1;
 	if (!renormalize)
@@ -1723,8 +1727,8 @@ static int process_entry(struct merge_options *o,
 	} else if (o_sha && (!a_sha || !b_sha)) {
 		/* Case A: Deleted in one */
 		if ((!a_sha && !b_sha) ||
-		    (!b_sha && blob_unchanged(o_sha, a_sha, normalize, path)) ||
-		    (!a_sha && blob_unchanged(o_sha, b_sha, normalize, path))) {
+		    (!b_sha && blob_unchanged(o_sha, o_mode, a_sha, a_mode, normalize, path)) ||
+		    (!a_sha && blob_unchanged(o_sha, o_mode, b_sha, b_mode, normalize, path))) {
 			/* Deleted in both or deleted in one and
 			 * unchanged in the other */
 			if (a_sha)
