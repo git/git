@@ -142,8 +142,8 @@ are cut from it.  The maintenance releases used to be named with four
 dotted decimal, named after the feature release they are updates to
 (e.g. "1.8.5.1" was the first maintenance release for "1.8.5" feature
 release).  These days, maintenance releases are named by incrementing
-the last digit of three-dotted decimal name (e.g. "2.5.1" is the
-fourth maintenance release for the "2.5" series).
+the last digit of three-dotted decimal name (e.g. "2.6.3" is the
+third maintenance release for the "2.6" series).
 
 New features never go to the 'maint' branch.  This branch is also
 merged into "master" to propagate the fixes forward as needed.
@@ -159,12 +159,12 @@ general, the "next" branch always contains the tip of "master".  It might
 not be quite rock-solid, but is expected to work more or less without major
 breakage. The "next" branch is where new and exciting things take place. A
 topic that is in "next" is expected to be polished to perfection before it
-is merged to "master".  Please help this process by building, using the
+is merged to "master".  Please help this process by building & using the
 "next" branch for your daily work, and reporting any new bugs you find to
 the mailing list, before the breakage is merged down to the "master".
 
 The "pu" (proposed updates) branch bundles all the remaining topic
-branches the maintainer happens to have.  There is no guarantee that
+branches the maintainer happens to have seen.  There is no guarantee that
 the maintainer has enough bandwidth to pick up any and all topics that
 are remotely promising from the list traffic, so please do not read
 too much into a topic being on (or not on) the "pu" branch.  This
@@ -190,7 +190,7 @@ or a topic that already was in "next" was reverted from "next" because
 fatal flaws were found in it after it was merged to "next".
 
 
-* Other people's trees, trusted lieutenants and credits.
+* Other people's trees.
 
 Documentation/SubmittingPatches outlines to whom your proposed changes
 should be sent.  As described in contrib/README, I would delegate fixes
@@ -211,3 +211,6 @@ own authoritative repository and maintainers:
 
 	https://github.com/git-l10n/git-po/
 
+When sending proposed updates and fixes to these parts of the system,
+please base your patches on these trees, not git.git (the former two
+even have different directory structures).
