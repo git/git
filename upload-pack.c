@@ -692,7 +692,7 @@ static int mark_our_ref(const char *refname, const struct object_id *oid)
 {
 	struct object *o = lookup_unknown_object(oid->hash);
 
-	if (ref_is_hidden(refname)) {
+	if (refname && ref_is_hidden(refname)) {
 		o->flags |= HIDDEN_REF;
 		return 1;
 	}
@@ -703,7 +703,7 @@ static int mark_our_ref(const char *refname, const struct object_id *oid)
 static int check_ref(const char *refname, const struct object_id *oid,
 		     int flag, void *cb_data)
 {
-	mark_our_ref(refname, oid);
+	mark_our_ref(strip_namespace(refname), oid);
 	return 0;
 }
 
@@ -726,7 +726,7 @@ static int send_ref(const char *refname, const struct object_id *oid,
 	const char *refname_nons = strip_namespace(refname);
 	struct object_id peeled;
 
-	if (mark_our_ref(refname, oid))
+	if (mark_our_ref(refname_nons, oid))
 		return 0;
 
 	if (capabilities) {
