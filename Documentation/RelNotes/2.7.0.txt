@@ -61,6 +61,11 @@ UI, Workflows & Features
  * "git blame" learnt to take "--first-parent" and "--reverse" at the
    same time when it makes sense.
 
+ * "git checkout" did not follow the usual "--[no-]progress"
+   convention and implemented only "--quiet" that is essentially
+   a superset of "--no-progress".  Extend the command to support the
+   usual "--[no-]progress".
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -330,6 +335,11 @@ notes for details).
    computing the object name of the target of symbolic link, which may
    not even exist or may be a directory.
    (merge cfe2d4b da/difftool later to maint).
+
+ * A Range: request can be responded with a full response and when
+   asked properly libcurl knows how to strip the result down to the
+   requested range.  However, we were hand-crafting a range request
+   and it did not kick in.
 
  * Code clean-up, minor fixes etc.
    (merge 15ed07d jc/rerere later to maint).
