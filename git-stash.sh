@@ -85,7 +85,7 @@ create_stash () {
 	# state of the index
 	i_tree=$(git write-tree) &&
 	i_commit=$(printf 'index on %s\n' "$msg" |
-		git commit-tree $i_tree -p $b_commit) ||
+		git commit-tree --no-gpg-sign $i_tree -p $b_commit) ||
 		die "$(gettext "Cannot save the current index state")"
 
 	if test -n "$untracked"
@@ -99,7 +99,7 @@ create_stash () {
 				rm -f "$TMPindex" &&
 				git update-index -z --add --remove --stdin &&
 				u_tree=$(git write-tree) &&
-				printf 'untracked files on %s\n' "$msg" | git commit-tree $u_tree  &&
+				printf 'untracked files on %s\n' "$msg" | git commit-tree --no-gpg-sign $u_tree  &&
 				rm -f "$TMPindex"
 		) ) || die "Cannot save the untracked files"
 
@@ -153,7 +153,7 @@ create_stash () {
 		stash_msg=$(printf 'On %s: %s' "$branch" "$stash_msg")
 	fi
 	w_commit=$(printf '%s\n' "$stash_msg" |
-	git commit-tree $w_tree -p $b_commit -p $i_commit $untracked_commit_option) ||
+	git commit-tree --no-gpg-sign $w_tree -p $b_commit -p $i_commit $untracked_commit_option) ||
 	die "$(gettext "Cannot record working tree state")"
 }
 
