@@ -1,24 +1,19 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Nov 2015, #01; Thu, 5)
-X-master-at: 2c78628255b8cc7f0b5d47981acea138db8716d2
-X-next-at: 550542234b0fed5a3944af44b01152b620e8dba1
+Subject: What's cooking in git.git (Nov 2015, #02; Fri, 6)
+X-master-at: f34be46e47773d03e9d09641209121591a6b37c8
+X-next-at: c10b11f912265621bc9c1988f048b8c065303d87
 
-What's cooking in git.git (Nov 2015, #01; Thu, 5)
+What's cooking in git.git (Nov 2015, #02; Fri, 6)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-Git 2.6.3 has been tagged, with accumulated fixes and minor updates
-that are already in 'master'.  We have about 5 weeks left til -rc0
-so hopefully a handful of topics that are not yet in 'next' but have
-already been reviewed and polished may be able to be merged to
-'next', cook in there for a while and be in the next release.  I'll
-be offline for a few weeks starting this weekend, but I am confident
-that our capable interim maintainer can shepherd these topics
-forward with the help from our contributors.
+I'll be offline on vacation for a few weeks, and Jeff King
+graciously agreed to help shepherd the project forward in the
+meantime as an interim maintainer.  Please be gentle.
 
 You can find the changes described here in the integration branches
 of the repositories listed at
@@ -26,105 +21,54 @@ of the repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* da/difftool (2015-10-29) 1 commit
-  (merged to 'next' on 2015-11-01 at 4e5ab33)
- + difftool: ignore symbolic links in use_wt_file
-
- The code to prepare the working tree side of temporary directory
- for the "dir-diff" feature forgot that symbolic links need not be
- copied (or symlinked) to the temporary area, as the code already
- special cases and overwrites them.  Besides, it was wrong to try
- computing the object name of the target of symbolic link, which may
- not even exist or may be a directory.
-
-
-* jc/mailinfo-lib (2015-11-01) 1 commit
-  (merged to 'next' on 2015-11-01 at 3ecaa28)
- + mailinfo: fix passing wrong address to git_mailinfo_config
-
- Hotfix for a topic already in 'master'.
-
-
-* jk/initialization-fix-to-add-submodule-odb (2015-10-28) 1 commit
-  (merged to 'next' on 2015-11-01 at da94b97)
- + add_submodule_odb: initialize alt_odb list earlier
-
- We peek objects from submodule's object store by linking it to the
- list of alternate object databases, but the code to do so forgot to
- correctly initialize the list.
-
-
-* js/git-gdb (2015-10-30) 1 commit
-  (merged to 'next' on 2015-11-01 at 3d232d5)
- + test: facilitate debugging Git executables in tests with gdb
-
- Allow easier debugging of a single "git" invocation in our test
- scripts.
-
-
-* kn/for-each-branch (2015-10-30) 1 commit
-  (merged to 'next' on 2015-11-01 at 4249dc9)
- + ref-filter: fallback on alphabetical comparison
-
- Using the timestamp based criteria in "git branch --sort" did not
- tiebreak branches that point at commits with the same timestamp (or
- the same commit), making the resulting output unstable.
-
-
-* mk/blame-first-parent (2015-10-30) 3 commits
-  (merged to 'next' on 2015-11-01 at 3f87150)
- + blame: allow blame --reverse --first-parent when it makes sense
- + blame: extract find_single_final
- + blame: test to describe use of blame --reverse --first-parent
-
- "git blame" learnt to take "--first-parent" and "--reverse" at the
- same time when it makes sense.
-
-
-* rs/daemon-plug-child-leak (2015-11-02) 2 commits
-  (merged to 'next' on 2015-11-02 at 64afbb9)
- + daemon: plug memory leak
- + run-command: factor out child_process_clear()
- (this branch is used by sb/submodule-parallel-update.)
-
- "git daemon" uses "run_command()" without "finish_command()", so it
- needs to release resources itself, which it forgot to do.
-
-
-* rs/show-branch-argv-array (2015-11-01) 1 commit
-  (merged to 'next' on 2015-11-01 at fac4fa6)
- + show-branch: use argv_array for default arguments
-
- Code simplification.
-
-
-* rs/wt-status-detached-branch-fix (2015-11-01) 5 commits
-  (merged to 'next' on 2015-11-01 at cb23615)
- + wt-status: use skip_prefix() to get rid of magic string length constants
- + wt-status: don't skip a magical number of characters blindly
- + wt-status: avoid building bogus branch name with detached HEAD
- + wt-status: exit early using goto in wt_shortstatus_print_tracking()
- + t7060: add test for status --branch on a detached HEAD
-
- "git status --branch --short" accessed beyond the constant string
- "HEAD", which has been corrected.
-
---------------------------------------------------
 [New Topics]
 
-* ad/sha1-update-chunked (2015-11-05) 2 commits
- - sha1: allow limiting the size of the data passed to SHA1_Update()
- - sha1: provide another level of indirection for the SHA-1 functions
+* dt/refs-backend-pre-vtable (2015-11-03) 26 commits
+ - refs: break out ref conflict checks
+ - refs: create a shared version of verify_refname_available
+ - files_log_ref_write: new function
+ - initdb: make safe_create_dir public
+ - refs: move should_autocreate_reflog to common code
+ - refs: move peel_object to the common code
+ - refs: move copy_msg to the common code
+ - refs: move refname_is_safe to the common code
+ - refs: move transaction functions to the common code
+ - refs: move head_ref_namespaced to the common code
+ - refs: move ref iterators to the common code
+ - refs: move prettify_refname to the common code
+ - refs: move is_branch to the common code
+ - refs: move check_refname_format to the common code
+ - refs: move resolve_refdup to common
+ - refs: move read_ref, read_ref_full and ref_exists to the common code
+ - refs: move warn_if_dangling_symref* to the common code
+ - refs: move dwim and friend functions to the common refs code
+ - refs: move the hidden refs functions to the common code
+ - refs: move read_ref_at to the common refs file
+ - refs: move delete_pseudoref and delete_ref to the common code
+ - refs: move update_ref to refs/refs.c
+ - refs: add a new file, refs/refs.c, to hold common refs code
+ - refs/files-backend.c: new file, renamed from refs.c
+ - refs: make is_branch public
+ - Merge branch 'jk/war-on-sprintf' into HEAD
 
- Apple's common crypto implementation of SHA1_Update() does not take
- more than 4GB at a time, and we now have a compile-time workaround
- for it.
+ This is a verbatim copy of refs-backend-pre-vtable branch taken
+ from https://github.com/mhagger/git; not even signed-off by me, and
+ "thanks for noticing; Junio can you amend?" obviously has not been
+ done.  We would want to rebase the series (after discarding the
+ bottom "Merge into HEAD") on top of 228905f in order to do the
+ amending and then re-merge, but I ran out of time (and patience).
 
- I think this is more or less ready.  I am skeptical about the file
- location reorg ([PATCH 3/3] $gmane/280912) and did not queue it.
 
+* rc/configure-use-libs-when-checking-a-lib (2015-11-06) 1 commit
+ - configure.ac: use $LIBS not $CFLAGS when testing -lpthread
+
+ The "configure" script did not test for -lpthread correctly, which
+ upset some linkers.
+
+ Will merge to 'next'.
+
+--------------------------------------------------
+[Graduated to "master"]
 
 * dt/http-range (2015-11-02) 2 commits
   (merged to 'next' on 2015-11-03 at 7c3cc60)
@@ -136,52 +80,15 @@ of the repositories listed at
  requested range.  However, we were hand-crafting a range request
  and it did not kick in.
 
- Will merge to 'master'.
 
+* ea/checkout-progress (2015-11-01) 1 commit
+  (merged to 'next' on 2015-11-03 at 08a8d1f)
+ + checkout: add --progress option
 
-* vl/grep-configurable-threads (2015-11-01) 1 commit
- - grep: add --threads=<num> option and grep.threads configuration
-
- "git grep" can now be configured (or told from the command line)
- how many threads to use when searching in the working tree files.
-
- Expecting a reroll.
- ($gmane/280854)
-
-
-* kf/http-proxy-auth-methods (2015-11-04) 3 commits
- - SQUASH???
- - http: use credential API to handle proxy authentication
- - http: allow selection of proxy authentication method
-
- New http.proxyAuthMethod configuration variable can be used to
- specify what authentication method to use, as a way to work around
- proxies that do not give error response expected by libcurl when
- CURLAUTH_ANY is used.  Also, the codepath for proxy authentication
- has been taught to use credential API to store the authentication
- material in user's keyrings.
-
- Still being worked on.
- ($gmane/280925).
-
-
-* lf/ref-is-hidden-namespace (2015-11-05) 4 commits
- - t5509: add basic tests for hideRefs
- - hideRefs: add support for matching full refs
- - upload-pack: strip refs before calling ref_is_hidden()
- - config.txt: document the semantics of hideRefs with namespaces
-
- Extend transfer.hideRefs to work better with use of namespaces.
-
- Will merge to 'next'.
-
-
-* dg/git-svn-empty-dirs (2015-11-05) 1 commit
- - git-svn: improve rebase/mkdirs performance
-
-
-* fp/subtree-todo-update (2015-11-05) 1 commit
- - contrib/subtree: remove "push" command from the "todo" file
+ "git checkout" did not follow the usual "--[no-]progress"
+ convention and implemented only "--quiet" that is essentially
+ a superset of "--no-progress".  Extend the command to support the
+ usual "--[no-]progress".
 
 --------------------------------------------------
 [Stalled]
@@ -258,10 +165,71 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* ad/sha1-update-chunked (2015-11-05) 2 commits
+ - sha1: allow limiting the size of the data passed to SHA1_Update()
+ - sha1: provide another level of indirection for the SHA-1 functions
+
+ Apple's common crypto implementation of SHA1_Update() does not take
+ more than 4GB at a time, and we now have a compile-time workaround
+ for it.
+
+ I think this is more or less ready.  I am skeptical about the file
+ location reorg ([PATCH 3/3] $gmane/280912) and did not queue it.
+
+
+* vl/grep-configurable-threads (2015-11-01) 1 commit
+ - grep: add --threads=<num> option and grep.threads configuration
+
+ "git grep" can now be configured (or told from the command line)
+ how many threads to use when searching in the working tree files.
+
+ Expecting a reroll.
+ ($gmane/280854)
+
+
+* kf/http-proxy-auth-methods (2015-11-04) 3 commits
+ - SQUASH???
+ - http: use credential API to handle proxy authentication
+ - http: allow selection of proxy authentication method
+
+ New http.proxyAuthMethod configuration variable can be used to
+ specify what authentication method to use, as a way to work around
+ proxies that do not give error response expected by libcurl when
+ CURLAUTH_ANY is used.  Also, the codepath for proxy authentication
+ has been taught to use credential API to store the authentication
+ material in user's keyrings.
+
+ Still being worked on.
+ ($gmane/280925).
+
+
+* lf/ref-is-hidden-namespace (2015-11-05) 4 commits
+  (merged to 'next' on 2015-11-05 at b245404)
+ + t5509: add basic tests for hideRefs
+ + hideRefs: add support for matching full refs
+ + upload-pack: strip refs before calling ref_is_hidden()
+ + config.txt: document the semantics of hideRefs with namespaces
+
+ Extend transfer.hideRefs to work better with use of namespaces.
+
+ Will merge to 'master'.
+
+
+* dg/git-svn-empty-dirs (2015-11-05) 1 commit
+ - git-svn: improve rebase/mkdirs performance
+
+
+* fp/subtree-todo-update (2015-11-06) 1 commit
+ - contrib/subtree: remove "push" command from the "todo" file
+
+ Will merge to 'next' and then 'master'.
+
+
 * dk/gc-idx-wo-pack (2015-11-04) 3 commits
- - gc: remove garbage .idx files from pack dir
- - t5304: test cleaning pack garbage
- - prepare_packed_git(): refactor garbage reporting in pack directory
+  (merged to 'next' on 2015-11-05 at af058fa)
+ + gc: remove garbage .idx files from pack dir
+ + t5304: test cleaning pack garbage
+ + prepare_packed_git(): refactor garbage reporting in pack directory
 
  Having a leftover .idx file without corresponding .pack file in
  the repository hurts performance; "git gc" learned to prune them.
@@ -270,7 +238,7 @@ of the repositories listed at
  .keep) without corresponding .pack, but that can be a separate
  topic.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * sb/submodule-parallel-update (2015-11-05) 10 commits
@@ -284,7 +252,7 @@ of the repositories listed at
  - run_processes_parallel: add output to tracing messages
  - Merge branch 'rs/daemon-plug-child-leak' into sb/submodule-parallel-update
  - Merge branch 'sb/submodule-parallel-fetch' into sb/submodule-parallel-update
- (this branch uses sb/submodule-parallel-fetch; is tangled with rs/daemon-leak-fix.)
+ (this branch uses sb/submodule-parallel-fetch.)
 
  Builds on top of the "fetch --recurse-submodules" work to introduce
  parallel downloading into multiple submodules for "submodule update".
@@ -349,18 +317,6 @@ of the repositories listed at
  ($gmane/280507)
 
 
-* ea/checkout-progress (2015-11-01) 1 commit
-  (merged to 'next' on 2015-11-03 at 08a8d1f)
- + checkout: add --progress option
-
- "git checkout" did not follow the usual "--[no-]progress"
- convention and implemented only "--quiet" that is essentially
- a superset of "--no-progress".  Extend the command to support the
- usual "--[no-]progress".
-
- Will merge to 'master'.
-
-
 * jc/test-must-fail-with-sigpipe (2015-10-30) 1 commit
  - test: accept death by SIGPIPE as a valid failure mode
 
@@ -371,9 +327,8 @@ of the repositories listed at
  was not prepared to see a death by sigpipe as a normal failure
  exit.
 
- It probably is more sensible to limit the test that allows depth by
- SIGPIPE as Lars Schneider suggests, so it is likely that this will
- be replaced while I am away ;-)
+ Replacement was floated as a part of Travis CI patch series, so it
+ is likely that this will be replaced while I (Junio) am away.
 
 
 * pt/http-socks-proxy (2015-10-26) 1 commit
@@ -509,7 +464,7 @@ of the repositories listed at
  + xread_nonblock: add functionality to read from fds without blocking
  + xread: poll on non blocking fds
  + submodule.c: write "Fetching submodule <foo>" to stderr
- (this branch is used by sb/submodule-parallel-update; is tangled with rs/daemon-leak-fix.)
+ (this branch is used by sb/submodule-parallel-update.)
 
  Add a framework to spawn a group of processes in parallel, and use
  it to run "git fetch --recurse-submodules" in parallel.
@@ -553,69 +508,3 @@ of the repositories listed at
  before this final step can proceed.
 
  Will keep in 'next'.
-
---------------------------------------------------
-[Discarded]
-
-* km/cache-entry-refcnt (2015-10-14) 1 commit
- . merge: fix cache_entry use-after-free
-
- Made unnecessary with dt/name-hash-dir-entry-fix topic.
-
-
-* rs/daemon-leak-fix (2015-10-31) 3 commits
-  (merged to 'next' on 2015-11-01 at 9b6c8f9)
- + daemon: plug memory leak
- + run-command: export child_process_clear()
- + run-command: name the cleanup function child_process_clear()
- (this branch uses sb/submodule-parallel-fetch; is tangled with sb/submodule-parallel-update.)
-
- "git daemon" uses "run_command()" without "finish_command()", so it
- needs to release resources itself, which it forgot to do.
-
- This was tangled with another topic that was not quite ready.
- Discard and replace it with an equivalent rs/daemon-plug-child-leak
- that is independent.
-
-
-* dt/refs-backend-pre-vtable (2015-10-15) 26 commits
- . refs: break out ref conflict checks
- . refs: make files_log_ref_write functions public
- . initdb: move safe_create_dir into common code
- . refs.c: move should_autocreate_reflog to common code
- . refs.c: move peel_object to the common code
- . refs.c: move copy_msg to the common code
- . refs.c: move refname_is_safe to the common code
- . refs: move transaction functions into common code
- . refs.c: move head_ref_namespaced to the common code
- . refs.c: move ref iterators to the common code
- . refs.c: move prettify_refname to the common code
- . refs.c: move is_branch to the common code
- . refs.c: move check_refname_format to the common code
- . refs.c: move resolve_refdup to common
- . refs.c: move read_ref, read_ref_full and ref_exists to the common code
- . refs.c: move warn_if_dangling_symref* to the common code
- . refs.c: move dwim and friend functions to the common refs code
- . refs.c: move the hidden refs functions to the common code
- . refs.c: move read_ref_at to the common refs file
- . refs.c: move delete_pseudoref and delete_ref to the common code
- . refs.c: move update_ref to refs.c
- . refs.c: add a new refs.c file to hold all common refs code
- . refs-be-files.c: rename refs to refs-be-files
- . refs: make repack_without_refs and is_branch public
- . refs.c: create a public version of verify_refname_available
- . Merge branch 'jk/war-on-sprintf' into HEAD
-
- The early part of the pluggable ref backend series, which sifts the
- ref API functions into two bins: the filesystem backend specific
- ones and the generic API functions.  The next step will start
- introducing the framework to dispatch generic calls to specific
- backend implementation(s) and then finally plug a new backend that
- is different from the file backend.
-
- It seems Michael's "I'd do it like this if I were doing it"
- $gmane/280754 would be the way forward?
-
- Ejected while the topic is in flux, as this and its later reroll
- both want to move things around while other topics want to update
- the files involved.
