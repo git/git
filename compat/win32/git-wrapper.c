@@ -224,7 +224,7 @@ static void extract_first_arg(LPWSTR command_line, LPWSTR exepath, LPWSTR buf)
 static LPWSTR expand_variables(LPWSTR buffer, size_t alloc)
 {
 	LPWSTR buf = buffer;
-	size_t len = wcslen(buf);
+	size_t len = wcslen(buf), move_len;
 
 	for (;;) {
 		LPWSTR atat = wcsstr(buf, L"@@"), atat2;
@@ -239,8 +239,9 @@ static LPWSTR expand_variables(LPWSTR buffer, size_t alloc)
 			break;
 
 		*atat2 = L'\0';
+		atat2 += 2;
 		env_len = GetEnvironmentVariable(atat + 2, NULL, 0);
-		delta = env_len - 1 - (atat2 + 2 - atat);
+		delta = env_len - 1 - (atat2 - atat);
 		if (len + delta >= alloc) {
 			LPWSTR buf2;
 			alloc = alloc_nr(alloc);
@@ -264,13 +265,14 @@ static LPWSTR expand_variables(LPWSTR buffer, size_t alloc)
 			atat2 += buf2 - buf;
 			buf = buf2;
 		}
-		if (delta)
-			memmove(atat2 + 2 + delta, atat2 + 2,
-				sizeof(WCHAR) * (len + 1
-					- (atat2 + 2 - buf)));
+		move_len = sizeof(WCHAR) * (len + 1 - (atat2 - buf));
+		if (delta > 0)
+			memmove(atat2 + delta, atat2, move_len);
 		len += delta;
-		save = atat[env_len - 1];
+		save = atat[env_len - 1 + (delta < 0 ? -delta : 0)];
 		GetEnvironmentVariable(atat + 2, atat, env_len);
+		if (delta < 0)
+			memmove(atat2 + delta, atat2, move_len);
 		atat[env_len - 1] = save;
 	}
 
