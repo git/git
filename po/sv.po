@@ -2197,7 +2197,7 @@ msgstr "ta bort \"%s\"\n"
 
 #: builtin/add.c:134
 msgid "Unstaged changes after refreshing the index:"
-msgstr "Ospårade ändringar efter att ha uppdaterat indexet:"
+msgstr "Oköade ändringar efter att ha uppdaterat indexet:"
 
 #: builtin/add.c:194 builtin/rev-parse.c:796
 msgid "Could not read the index"
