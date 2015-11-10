@@ -3287,7 +3287,7 @@ static int commit_ref(struct ref_lock *lock)
  * large, while cleaning up the whitespaces.  Especially, convert LF to space,
  * because reflog file is one line per entry.
  */
-static int copy_msg(char *buf, const char *msg)
+static int copy_reflog_msg(char *buf, const char *msg)
 {
 	char *cp = buf;
 	char c;
@@ -3391,7 +3391,7 @@ static int log_ref_write_fd(int fd, const unsigned char *old_sha1,
 			sha1_to_hex(new_sha1),
 			committer);
 	if (msglen)
-		len += copy_msg(logrec + len - 1, msg) - 1;
+		len += copy_reflog_msg(logrec + len - 1, msg) - 1;
 
 	written = len <= maxlen ? write_in_full(fd, logrec, len) : -1;
 	free(logrec);
