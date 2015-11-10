@@ -559,7 +559,7 @@ static void write_remote_refs(const struct ref *local_refs)
 	for (r = local_refs; r; r = r->next) {
 		if (!r->peer_ref)
 			continue;
-		if (ref_transaction_create(t, r->peer_ref->name, r->old_sha1,
+		if (ref_transaction_create(t, r->peer_ref->name, r->old_oid.hash,
 					   0, NULL, &err))
 			die("%s", err.buf);
 	}
@@ -579,9 +579,9 @@ static void write_followtags(const struct ref *refs, const char *msg)
 			continue;
 		if (ends_with(ref->name, "^{}"))
 			continue;
-		if (!has_sha1_file(ref->old_sha1))
+		if (!has_object_file(&ref->old_oid))
 			continue;
-		update_ref(msg, ref->name, ref->old_sha1,
+		update_ref(msg, ref->name, ref->old_oid.hash,
 			   NULL, 0, UPDATE_REFS_DIE_ON_ERR);
 	}
 }
@@ -601,7 +601,7 @@ static int iterate_ref_map(void *cb_data, unsigned char sha1[20])
 	if (!ref)
 		return -1;
 
-	hashcpy(sha1, ref->old_sha1);
+	hashcpy(sha1, ref->old_oid.hash);
 	*rm = ref->next;
 	return 0;
 }
@@ -650,12 +650,12 @@ static void update_head(const struct ref *our, const struct ref *remote,
 		/* Local default branch link */
 		create_symref("HEAD", our->name, NULL);
 		if (!option_bare) {
-			update_ref(msg, "HEAD", our->old_sha1, NULL, 0,
+			update_ref(msg, "HEAD", our->old_oid.hash, NULL, 0,
 				   UPDATE_REFS_DIE_ON_ERR);
 			install_branch_config(0, head, option_origin, our->name);
 		}
 	} else if (our) {
-		struct commit *c = lookup_commit_reference(our->old_sha1);
+		struct commit *c = lookup_commit_reference(our->old_oid.hash);
 		/* --branch specifies a non-branch (i.e. tags), detach HEAD */
 		update_ref(msg, "HEAD", c->object.sha1,
 			   NULL, REF_NODEREF, UPDATE_REFS_DIE_ON_ERR);
@@ -665,7 +665,7 @@ static void update_head(const struct ref *our, const struct ref *remote,
 		 * HEAD points to a branch but we don't know which one.
 		 * Detach HEAD in all these cases.
 		 */
-		update_ref(msg, "HEAD", remote->old_sha1,
+		update_ref(msg, "HEAD", remote->old_oid.hash,
 			   NULL, REF_NODEREF, UPDATE_REFS_DIE_ON_ERR);
 	}
 }
@@ -1016,7 +1016,7 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 		 * remote HEAD check.
 		 */
 		for (ref = refs; ref; ref = ref->next)
-			if (is_null_sha1(ref->old_sha1)) {
+			if (is_null_oid(&ref->old_oid)) {
 				complete_refs_before_fetch = 0;
 				break;
 			}

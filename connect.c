@@ -166,7 +166,7 @@ struct ref **get_remote_heads(int in, char *src_buf, size_t src_len,
 		if (!check_ref(name, flags))
 			continue;
 		ref = alloc_ref(buffer + 41);
-		hashcpy(ref->old_sha1, old_sha1);
+		hashcpy(ref->old_oid.hash, old_sha1);
 		*list = ref;
 		list = &ref->next;
 		got_at_least_one_head = 1;

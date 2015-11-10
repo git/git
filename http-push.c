@@ -1438,11 +1438,11 @@ static void one_remote_ref(const char *refname)
 	 * Fetch a copy of the object if it doesn't exist locally - it
 	 * may be required for updating server info later.
 	 */
-	if (repo->can_update_info_refs && !has_sha1_file(ref->old_sha1)) {
-		obj = lookup_unknown_object(ref->old_sha1);
+	if (repo->can_update_info_refs && !has_object_file(&ref->old_oid)) {
+		obj = lookup_unknown_object(ref->old_oid.hash);
 		if (obj) {
 			fprintf(stderr,	"  fetch %s for %s\n",
-				sha1_to_hex(ref->old_sha1), refname);
+				oid_to_hex(&ref->old_oid), refname);
 			add_fetch_request(obj);
 		}
 	}
@@ -1473,18 +1473,18 @@ static void add_remote_info_ref(struct remote_ls_ctx *ls)
 		return;
 	}
 
-	o = parse_object(ref->old_sha1);
+	o = parse_object(ref->old_oid.hash);
 	if (!o) {
 		fprintf(stderr,
 			"Unable to parse object %s for remote ref %s\n",
-			sha1_to_hex(ref->old_sha1), ls->dentry_name);
+			oid_to_hex(&ref->old_oid), ls->dentry_name);
 		aborted = 1;
 		free(ref);
 		return;
 	}
 
 	strbuf_addf(buf, "%s\t%s\n",
-		    sha1_to_hex(ref->old_sha1), ls->dentry_name);
+		    oid_to_hex(&ref->old_oid), ls->dentry_name);
 
 	if (o->type == OBJ_TAG) {
 		o = deref_tag(o, ls->dentry_name, 0);
@@ -1581,7 +1581,7 @@ static void fetch_symref(const char *path, char **symref, unsigned char *sha1)
 static int verify_merge_base(unsigned char *head_sha1, struct ref *remote)
 {
 	struct commit *head = lookup_commit_or_die(head_sha1, "HEAD");
-	struct commit *branch = lookup_commit_or_die(remote->old_sha1, remote->name);
+	struct commit *branch = lookup_commit_or_die(remote->old_oid.hash, remote->name);
 
 	return in_merge_bases(branch, head);
 }
@@ -1644,11 +1644,11 @@ static int delete_remote_branch(const char *pattern, int force)
 			return error("Remote HEAD resolves to object %s\nwhich does not exist locally, perhaps you need to fetch?", sha1_to_hex(head_sha1));
 
 		/* Remote branch must resolve to a known object */
-		if (is_null_sha1(remote_ref->old_sha1))
+		if (is_null_oid(&remote_ref->old_oid))
 			return error("Unable to resolve remote branch %s",
 				     remote_ref->name);
-		if (!has_sha1_file(remote_ref->old_sha1))
-			return error("Remote branch %s resolves to object %s\nwhich does not exist locally, perhaps you need to fetch?", remote_ref->name, sha1_to_hex(remote_ref->old_sha1));
+		if (!has_object_file(&remote_ref->old_oid))
+			return error("Remote branch %s resolves to object %s\nwhich does not exist locally, perhaps you need to fetch?", remote_ref->name, oid_to_hex(&remote_ref->old_oid));
 
 		/* Remote branch must be an ancestor of remote HEAD */
 		if (!verify_merge_base(head_sha1, remote_ref)) {
@@ -1861,7 +1861,7 @@ int main(int argc, char **argv)
 		if (!ref->peer_ref)
 			continue;
 
-		if (is_null_sha1(ref->peer_ref->new_sha1)) {
+		if (is_null_oid(&ref->peer_ref->new_oid)) {
 			if (delete_remote_branch(ref->name, 1) == -1) {
 				error("Could not remove %s", ref->name);
 				if (helper_status)
@@ -1874,7 +1874,7 @@ int main(int argc, char **argv)
 			continue;
 		}
 
-		if (!hashcmp(ref->old_sha1, ref->peer_ref->new_sha1)) {
+		if (!oidcmp(&ref->old_oid, &ref->peer_ref->new_oid)) {
 			if (push_verbosely)
 				fprintf(stderr, "'%s': up-to-date\n", ref->name);
 			if (helper_status)
@@ -1883,11 +1883,11 @@ int main(int argc, char **argv)
 		}
 
 		if (!force_all &&
-		    !is_null_sha1(ref->old_sha1) &&
+		    !is_null_oid(&ref->old_oid) &&
 		    !ref->force) {
-			if (!has_sha1_file(ref->old_sha1) ||
-			    !ref_newer(ref->peer_ref->new_sha1,
-				       ref->old_sha1)) {
+			if (!has_object_file(&ref->old_oid) ||
+			    !ref_newer(ref->peer_ref->new_oid.hash,
+				       ref->old_oid.hash)) {
 				/*
 				 * We do not have the remote ref, or
 				 * we know that the remote ref is not
@@ -1908,14 +1908,14 @@ int main(int argc, char **argv)
 				continue;
 			}
 		}
-		hashcpy(ref->new_sha1, ref->peer_ref->new_sha1);
+		oidcpy(&ref->new_oid, &ref->peer_ref->new_oid);
 		new_refs++;
 
 		fprintf(stderr, "updating '%s'", ref->name);
 		if (strcmp(ref->name, ref->peer_ref->name))
 			fprintf(stderr, " using '%s'", ref->peer_ref->name);
 		fprintf(stderr, "\n  from %s\n  to   %s\n",
-			sha1_to_hex(ref->old_sha1), sha1_to_hex(ref->new_sha1));
+			oid_to_hex(&ref->old_oid), oid_to_hex(&ref->new_oid));
 		if (dry_run) {
 			if (helper_status)
 				printf("ok %s\n", ref->name);
@@ -1936,10 +1936,10 @@ int main(int argc, char **argv)
 		/* Set up revision info for this refspec */
 		argv_array_push(&commit_argv, ""); /* ignored */
 		argv_array_push(&commit_argv, "--objects");
-		argv_array_push(&commit_argv, sha1_to_hex(ref->new_sha1));
-		if (!push_all && !is_null_sha1(ref->old_sha1))
+		argv_array_push(&commit_argv, oid_to_hex(&ref->new_oid));
+		if (!push_all && !is_null_oid(&ref->old_oid))
 			argv_array_pushf(&commit_argv, "^%s",
-					 sha1_to_hex(ref->old_sha1));
+					 oid_to_hex(&ref->old_oid));
 		init_revisions(&revs, setup_git_directory());
 		setup_revisions(commit_argv.argc, commit_argv.argv, &revs, NULL);
 		revs.edge_hint = 0; /* just in case */
@@ -1962,7 +1962,7 @@ int main(int argc, char **argv)
 		run_request_queue();
 
 		/* Update the remote branch if all went well */
-		if (aborted || !update_remote(ref->new_sha1, ref_lock))
+		if (aborted || !update_remote(ref->new_oid.hash, ref_lock))
 			rc = 1;
 
 		if (!rc)

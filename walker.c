@@ -190,7 +190,7 @@ static int interpret_target(struct walker *walker, char *target, unsigned char *
 	if (!check_refname_format(target, 0)) {
 		struct ref *ref = alloc_ref(target);
 		if (!walker->fetch_ref(walker, ref)) {
-			hashcpy(sha1, ref->old_sha1);
+			hashcpy(sha1, ref->old_oid.hash);
 			free(ref);
 			return 0;
 		}

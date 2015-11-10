@@ -238,7 +238,7 @@ static void send_request(struct fetch_pack_args *args,
 
 static void insert_one_alternate_ref(const struct ref *ref, void *unused)
 {
-	rev_list_insert_ref(NULL, ref->old_sha1);
+	rev_list_insert_ref(NULL, ref->old_oid.hash);
 }
 
 #define INITIAL_FLUSH 16
@@ -280,7 +280,7 @@ static int find_common(struct fetch_pack_args *args,
 
 	fetching = 0;
 	for ( ; refs ; refs = refs->next) {
-		unsigned char *remote = refs->old_sha1;
+		unsigned char *remote = refs->old_oid.hash;
 		const char *remote_hex;
 		struct object *o;
 
@@ -570,7 +570,7 @@ static void filter_refs(struct fetch_pack_args *args,
 				continue;
 			if (get_sha1_hex(ref->name, sha1) ||
 			    ref->name[40] != '\0' ||
-			    hashcmp(sha1, ref->old_sha1))
+			    hashcmp(sha1, ref->old_oid.hash))
 				continue;
 
 			ref->matched = 1;
@@ -583,7 +583,7 @@ static void filter_refs(struct fetch_pack_args *args,
 
 static void mark_alternate_complete(const struct ref *ref, void *unused)
 {
-	mark_complete(ref->old_sha1);
+	mark_complete(ref->old_oid.hash);
 }
 
 static int everything_local(struct fetch_pack_args *args,
@@ -599,10 +599,10 @@ static int everything_local(struct fetch_pack_args *args,
 	for (ref = *refs; ref; ref = ref->next) {
 		struct object *o;
 
-		if (!has_sha1_file(ref->old_sha1))
+		if (!has_object_file(&ref->old_oid))
 			continue;
 
-		o = parse_object(ref->old_sha1);
+		o = parse_object(ref->old_oid.hash);
 		if (!o)
 			continue;
 
@@ -630,7 +630,7 @@ static int everything_local(struct fetch_pack_args *args,
 	 * Don't mark them common yet; the server has to be told so first.
 	 */
 	for (ref = *refs; ref; ref = ref->next) {
-		struct object *o = deref_tag(lookup_object(ref->old_sha1),
+		struct object *o = deref_tag(lookup_object(ref->old_oid.hash),
 					     NULL, 0);
 
 		if (!o || o->type != OBJ_COMMIT || !(o->flags & COMPLETE))
@@ -646,7 +646,7 @@ static int everything_local(struct fetch_pack_args *args,
 	filter_refs(args, refs, sought, nr_sought);
 
 	for (retval = 1, ref = *refs; ref ; ref = ref->next) {
-		const unsigned char *remote = ref->old_sha1;
+		const unsigned char *remote = ref->old_oid.hash;
 		struct object *o;
 
 		o = lookup_object(remote);
@@ -985,7 +985,7 @@ static void update_shallow(struct fetch_pack_args *args,
 	if (!si->nr_ours && !si->nr_theirs)
 		return;
 	for (i = 0; i < nr_sought; i++)
-		sha1_array_append(&ref, sought[i]->old_sha1);
+		sha1_array_append(&ref, sought[i]->old_oid.hash);
 	si->ref = &ref;
 
 	if (args->update_shallow) {

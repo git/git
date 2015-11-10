@@ -1075,7 +1075,7 @@ static void tail_link_ref(struct ref *ref, struct ref ***tail)
 static struct ref *alloc_delete_ref(void)
 {
 	struct ref *ref = alloc_ref("(delete)");
-	hashclr(ref->new_sha1);
+	oidclr(&ref->new_oid);
 	return ref;
 }
 
@@ -1095,7 +1095,7 @@ static int try_explicit_object_name(const char *name,
 
 	if (match) {
 		*match = alloc_ref(name);
-		hashcpy((*match)->new_sha1, sha1);
+		hashcpy((*match)->new_oid.hash, sha1);
 	}
 	return 0;
 }
@@ -1190,7 +1190,7 @@ static int match_explicit(struct ref *src, struct ref *dst,
 	case 0:
 		if (starts_with(dst_value, "refs/"))
 			matched_dst = make_linked_ref(dst_value, dst_tail);
-		else if (is_null_sha1(matched_src->new_sha1))
+		else if (is_null_oid(&matched_src->new_oid))
 			error("unable to delete '%s': remote ref does not exist",
 			      dst_value);
 		else if ((dst_guess = guess_ref(dst_value, matched_src)))
@@ -1321,10 +1321,10 @@ static void add_missing_tags(struct ref *src, struct ref **dst, struct ref ***ds
 	memset(&sent_tips, 0, sizeof(sent_tips));
 	for (ref = *dst; ref; ref = ref->next) {
 		if (ref->peer_ref &&
-		    !is_null_sha1(ref->peer_ref->new_sha1))
-			add_to_tips(&sent_tips, ref->peer_ref->new_sha1);
+		    !is_null_oid(&ref->peer_ref->new_oid))
+			add_to_tips(&sent_tips, ref->peer_ref->new_oid.hash);
 		else
-			add_to_tips(&sent_tips, ref->old_sha1);
+			add_to_tips(&sent_tips, ref->old_oid.hash);
 		if (starts_with(ref->name, "refs/tags/"))
 			string_list_append(&dst_tag, ref->name);
 	}
@@ -1338,7 +1338,7 @@ static void add_missing_tags(struct ref *src, struct ref **dst, struct ref ***ds
 			continue; /* not a tag */
 		if (string_list_has_string(&dst_tag, ref->name))
 			continue; /* they already have it */
-		if (sha1_object_info(ref->new_sha1, NULL) != OBJ_TAG)
+		if (sha1_object_info(ref->new_oid.hash, NULL) != OBJ_TAG)
 			continue; /* be conservative */
 		item = string_list_append(&src_tag, ref->name);
 		item->util = ref;
@@ -1358,9 +1358,9 @@ static void add_missing_tags(struct ref *src, struct ref **dst, struct ref ***ds
 			struct ref *dst_ref;
 			struct commit *commit;
 
-			if (is_null_sha1(ref->new_sha1))
+			if (is_null_oid(&ref->new_oid))
 				continue;
-			commit = lookup_commit_reference_gently(ref->new_sha1, 1);
+			commit = lookup_commit_reference_gently(ref->new_oid.hash, 1);
 			if (!commit)
 				/* not pushing a commit, which is not an error */
 				continue;
@@ -1374,7 +1374,7 @@ static void add_missing_tags(struct ref *src, struct ref **dst, struct ref ***ds
 
 			/* Add it in */
 			dst_ref = make_linked_ref(ref->name, dst_tail);
-			hashcpy(dst_ref->new_sha1, ref->new_sha1);
+			oidcpy(&dst_ref->new_oid, &ref->new_oid);
 			dst_ref->peer_ref = copy_ref(ref);
 		}
 	}
@@ -1481,7 +1481,7 @@ int match_push_refs(struct ref *src, struct ref **dst,
 
 			/* Create a new one and link it */
 			dst_peer = make_linked_ref(dst_name, &dst_tail);
-			hashcpy(dst_peer->new_sha1, ref->new_sha1);
+			oidcpy(&dst_peer->new_oid, &ref->new_oid);
 			string_list_insert(&dst_ref_index,
 				dst_peer->name)->util = dst_peer;
 		}
@@ -1533,13 +1533,13 @@ void set_ref_status_for_push(struct ref *remote_refs, int send_mirror,
 		int reject_reason = 0;
 
 		if (ref->peer_ref)
-			hashcpy(ref->new_sha1, ref->peer_ref->new_sha1);
+			oidcpy(&ref->new_oid, &ref->peer_ref->new_oid);
 		else if (!send_mirror)
 			continue;
 
-		ref->deletion = is_null_sha1(ref->new_sha1);
+		ref->deletion = is_null_oid(&ref->new_oid);
 		if (!ref->deletion &&
-			!hashcmp(ref->old_sha1, ref->new_sha1)) {
+			!oidcmp(&ref->old_oid, &ref->new_oid)) {
 			ref->status = REF_STATUS_UPTODATE;
 			continue;
 		}
@@ -1558,7 +1558,7 @@ void set_ref_status_for_push(struct ref *remote_refs, int send_mirror,
 		 */
 		if (ref->expect_old_sha1) {
 			if (ref->expect_old_no_trackback ||
-			    hashcmp(ref->old_sha1, ref->old_sha1_expect))
+			    oidcmp(&ref->old_oid, &ref->old_oid_expect))
 				reject_reason = REF_STATUS_REJECT_STALE;
 		}
 
@@ -1582,15 +1582,15 @@ void set_ref_status_for_push(struct ref *remote_refs, int send_mirror,
 		 *     passing the --force argument
 		 */
 
-		else if (!ref->deletion && !is_null_sha1(ref->old_sha1)) {
+		else if (!ref->deletion && !is_null_oid(&ref->old_oid)) {
 			if (starts_with(ref->name, "refs/tags/"))
 				reject_reason = REF_STATUS_REJECT_ALREADY_EXISTS;
-			else if (!has_sha1_file(ref->old_sha1))
+			else if (!has_object_file(&ref->old_oid))
 				reject_reason = REF_STATUS_REJECT_FETCH_FIRST;
-			else if (!lookup_commit_reference_gently(ref->old_sha1, 1) ||
-				 !lookup_commit_reference_gently(ref->new_sha1, 1))
+			else if (!lookup_commit_reference_gently(ref->old_oid.hash, 1) ||
+				 !lookup_commit_reference_gently(ref->new_oid.hash, 1))
 				reject_reason = REF_STATUS_REJECT_NEEDS_FORCE;
-			else if (!ref_newer(ref->new_sha1, ref->old_sha1))
+			else if (!ref_newer(ref->new_oid.hash, ref->old_oid.hash))
 				reject_reason = REF_STATUS_REJECT_NONFASTFORWARD;
 		}
 
@@ -1889,7 +1889,7 @@ int get_fetch_map(const struct ref *remote_refs,
 
 		if (refspec->exact_sha1) {
 			ref_map = alloc_ref(name);
-			get_sha1_hex(name, ref_map->old_sha1);
+			get_oid_hex(name, &ref_map->old_oid);
 		} else {
 			ref_map = get_remote_ref(remote_refs, name);
 		}
@@ -1930,7 +1930,7 @@ int resolve_remote_symref(struct ref *ref, struct ref *list)
 		return 0;
 	for (; list; list = list->next)
 		if (!strcmp(ref->symref, list->name)) {
-			hashcpy(ref->old_sha1, list->old_sha1);
+			oidcpy(&ref->old_oid, &list->old_oid);
 			return 0;
 		}
 	return 1;
@@ -2140,7 +2140,7 @@ static int one_local_ref(const char *refname, const struct object_id *oid,
 
 	len = strlen(refname) + 1;
 	ref = xcalloc(1, sizeof(*ref) + len);
-	hashcpy(ref->new_sha1, oid->hash);
+	oidcpy(&ref->new_oid, oid);
 	memcpy(ref->name, refname, len);
 	**local_tail = ref;
 	*local_tail = &ref->next;
@@ -2177,7 +2177,7 @@ struct ref *guess_remote_head(const struct ref *head,
 	/* If refs/heads/master could be right, it is. */
 	if (!all) {
 		r = find_ref_by_name(refs, "refs/heads/master");
-		if (r && !hashcmp(r->old_sha1, head->old_sha1))
+		if (r && !oidcmp(&r->old_oid, &head->old_oid))
 			return copy_ref(r);
 	}
 
@@ -2185,7 +2185,7 @@ struct ref *guess_remote_head(const struct ref *head,
 	for (r = refs; r; r = r->next) {
 		if (r != head &&
 		    starts_with(r->name, "refs/heads/") &&
-		    !hashcmp(r->old_sha1, head->old_sha1)) {
+		    !oidcmp(&r->old_oid, &head->old_oid)) {
 			*tail = copy_ref(r);
 			tail = &((*tail)->next);
 			if (!all)
@@ -2233,7 +2233,7 @@ static int get_stale_heads_cb(const char *refname, const struct object_id *oid,
 
 	if (stale) {
 		struct ref *ref = make_linked_ref(refname, &info->stale_refs_tail);
-		hashcpy(ref->new_sha1, oid->hash);
+		oidcpy(&ref->new_oid, oid);
 	}
 
 clean_exit:
@@ -2353,8 +2353,8 @@ static void apply_cas(struct push_cas_option *cas,
 			continue;
 		ref->expect_old_sha1 = 1;
 		if (!entry->use_tracking)
-			hashcpy(ref->old_sha1_expect, cas->entry[i].expect);
-		else if (remote_tracking(remote, ref->name, ref->old_sha1_expect))
+			hashcpy(ref->old_oid_expect.hash, cas->entry[i].expect);
+		else if (remote_tracking(remote, ref->name, ref->old_oid_expect.hash))
 			ref->expect_old_no_trackback = 1;
 		return;
 	}
@@ -2364,7 +2364,7 @@ static void apply_cas(struct push_cas_option *cas,
 		return;
 
 	ref->expect_old_sha1 = 1;
-	if (remote_tracking(remote, ref->name, ref->old_sha1_expect))
+	if (remote_tracking(remote, ref->name, ref->old_oid_expect.hash))
 		ref->expect_old_no_trackback = 1;
 }
 

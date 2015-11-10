@@ -17,7 +17,7 @@ static void add_sought_entry_mem(struct ref ***sought, int *nr, int *alloc,
 	unsigned char sha1[20];
 
 	if (namelen > 41 && name[40] == ' ' && !get_sha1_hex(name, sha1)) {
-		hashcpy(ref->old_sha1, sha1);
+		hashcpy(ref->old_oid.hash, sha1);
 		name += 41;
 		namelen -= 41;
 	}
@@ -210,7 +210,7 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 
 	while (ref) {
 		printf("%s %s\n",
-		       sha1_to_hex(ref->old_sha1), ref->name);
+		       oid_to_hex(&ref->old_oid), ref->name);
 		ref = ref->next;
 	}
 

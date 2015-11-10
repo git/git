@@ -196,7 +196,7 @@ static int will_fetch(struct ref **head, const unsigned char *sha1)
 {
 	struct ref *rm = *head;
 	while (rm) {
-		if (!hashcmp(rm->old_sha1, sha1))
+		if (!hashcmp(rm->old_oid.hash, sha1))
 			return 1;
 		rm = rm->next;
 	}
@@ -224,8 +224,8 @@ static void find_non_local_tags(struct transport *transport,
 		 * as one to ignore by setting util to NULL.
 		 */
 		if (ends_with(ref->name, "^{}")) {
-			if (item && !has_sha1_file(ref->old_sha1) &&
-			    !will_fetch(head, ref->old_sha1) &&
+			if (item && !has_object_file(&ref->old_oid) &&
+			    !will_fetch(head, ref->old_oid.hash) &&
 			    !has_sha1_file(item->util) &&
 			    !will_fetch(head, item->util))
 				item->util = NULL;
@@ -251,7 +251,7 @@ static void find_non_local_tags(struct transport *transport,
 			continue;
 
 		item = string_list_insert(&remote_refs, ref->name);
-		item->util = (void *)ref->old_sha1;
+		item->util = (void *)&ref->old_oid;
 	}
 	string_list_clear(&existing_refs, 1);
 
@@ -273,7 +273,7 @@ static void find_non_local_tags(struct transport *transport,
 		{
 			struct ref *rm = alloc_ref(item->string);
 			rm->peer_ref = alloc_ref(item->string);
-			hashcpy(rm->old_sha1, item->util);
+			oidcpy(&rm->old_oid, item->util);
 			**tail = rm;
 			*tail = &rm->next;
 		}
@@ -419,8 +419,8 @@ static int s_update_ref(const char *action,
 	transaction = ref_transaction_begin(&err);
 	if (!transaction ||
 	    ref_transaction_update(transaction, ref->name,
-				   ref->new_sha1,
-				   check_old ? ref->old_sha1 : NULL,
+				   ref->new_oid.hash,
+				   check_old ? ref->old_oid.hash : NULL,
 				   0, msg, &err))
 		goto fail;
 
@@ -453,11 +453,11 @@ static int update_local_ref(struct ref *ref,
 	struct branch *current_branch = branch_get(NULL);
 	const char *pretty_ref = prettify_refname(ref->name);
 
-	type = sha1_object_info(ref->new_sha1, NULL);
+	type = sha1_object_info(ref->new_oid.hash, NULL);
 	if (type < 0)
-		die(_("object %s not found"), sha1_to_hex(ref->new_sha1));
+		die(_("object %s not found"), oid_to_hex(&ref->new_oid));
 
-	if (!hashcmp(ref->old_sha1, ref->new_sha1)) {
+	if (!oidcmp(&ref->old_oid, &ref->new_oid)) {
 		if (verbosity > 0)
 			strbuf_addf(display, "= %-*s %-*s -> %s",
 				    TRANSPORT_SUMMARY(_("[up to date]")),
@@ -468,7 +468,7 @@ static int update_local_ref(struct ref *ref,
 	if (current_branch &&
 	    !strcmp(ref->name, current_branch->name) &&
 	    !(update_head_ok || is_bare_repository()) &&
-	    !is_null_sha1(ref->old_sha1)) {
+	    !is_null_oid(&ref->old_oid)) {
 		/*
 		 * If this is the head, and it's not okay to update
 		 * the head, and the old value of the head isn't empty...
@@ -480,7 +480,7 @@ static int update_local_ref(struct ref *ref,
 		return 1;
 	}
 
-	if (!is_null_sha1(ref->old_sha1) &&
+	if (!is_null_oid(&ref->old_oid) &&
 	    starts_with(ref->name, "refs/tags/")) {
 		int r;
 		r = s_update_ref("updating tag", ref, 0);
@@ -492,8 +492,8 @@ static int update_local_ref(struct ref *ref,
 		return r;
 	}
 
-	current = lookup_commit_reference_gently(ref->old_sha1, 1);
-	updated = lookup_commit_reference_gently(ref->new_sha1, 1);
+	current = lookup_commit_reference_gently(ref->old_oid.hash, 1);
+	updated = lookup_commit_reference_gently(ref->new_oid.hash, 1);
 	if (!current || !updated) {
 		const char *msg;
 		const char *what;
@@ -517,7 +517,7 @@ static int update_local_ref(struct ref *ref,
 
 		if ((recurse_submodules != RECURSE_SUBMODULES_OFF) &&
 		    (recurse_submodules != RECURSE_SUBMODULES_ON))
-			check_for_new_submodule_commits(ref->new_sha1);
+			check_for_new_submodule_commits(ref->new_oid.hash);
 		r = s_update_ref(msg, ref, 0);
 		strbuf_addf(display, "%c %-*s %-*s -> %s%s",
 			    r ? '!' : '*',
@@ -532,10 +532,10 @@ static int update_local_ref(struct ref *ref,
 		int r;
 		strbuf_add_unique_abbrev(&quickref, current->object.sha1, DEFAULT_ABBREV);
 		strbuf_addstr(&quickref, "..");
-		strbuf_add_unique_abbrev(&quickref, ref->new_sha1, DEFAULT_ABBREV);
+		strbuf_add_unique_abbrev(&quickref, ref->new_oid.hash, DEFAULT_ABBREV);
 		if ((recurse_submodules != RECURSE_SUBMODULES_OFF) &&
 		    (recurse_submodules != RECURSE_SUBMODULES_ON))
-			check_for_new_submodule_commits(ref->new_sha1);
+			check_for_new_submodule_commits(ref->new_oid.hash);
 		r = s_update_ref("fast-forward", ref, 1);
 		strbuf_addf(display, "%c %-*s %-*s -> %s%s",
 			    r ? '!' : ' ',
@@ -549,10 +549,10 @@ static int update_local_ref(struct ref *ref,
 		int r;
 		strbuf_add_unique_abbrev(&quickref, current->object.sha1, DEFAULT_ABBREV);
 		strbuf_addstr(&quickref, "...");
-		strbuf_add_unique_abbrev(&quickref, ref->new_sha1, DEFAULT_ABBREV);
+		strbuf_add_unique_abbrev(&quickref, ref->new_oid.hash, DEFAULT_ABBREV);
 		if ((recurse_submodules != RECURSE_SUBMODULES_OFF) &&
 		    (recurse_submodules != RECURSE_SUBMODULES_ON))
-			check_for_new_submodule_commits(ref->new_sha1);
+			check_for_new_submodule_commits(ref->new_oid.hash);
 		r = s_update_ref("forced-update", ref, 1);
 		strbuf_addf(display, "%c %-*s %-*s -> %s  (%s)",
 			    r ? '!' : '+',
@@ -580,7 +580,7 @@ static int iterate_ref_map(void *cb_data, unsigned char sha1[20])
 	if (!ref)
 		return -1; /* end of the list */
 	*rm = ref->next;
-	hashcpy(sha1, ref->old_sha1);
+	hashcpy(sha1, ref->old_oid.hash);
 	return 0;
 }
 
@@ -631,7 +631,7 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 				continue;
 			}
 
-			commit = lookup_commit_reference_gently(rm->old_sha1, 1);
+			commit = lookup_commit_reference_gently(rm->old_oid.hash, 1);
 			if (!commit)
 				rm->fetch_head_status = FETCH_HEAD_NOT_FOR_MERGE;
 
@@ -640,8 +640,8 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 
 			if (rm->peer_ref) {
 				ref = alloc_ref(rm->peer_ref->name);
-				hashcpy(ref->old_sha1, rm->peer_ref->old_sha1);
-				hashcpy(ref->new_sha1, rm->old_sha1);
+				oidcpy(&ref->old_oid, &rm->peer_ref->old_oid);
+				oidcpy(&ref->new_oid, &rm->old_oid);
 				ref->force = rm->peer_ref->force;
 			}
 
@@ -686,7 +686,7 @@ static int store_updated_refs(const char *raw_url, const char *remote_name,
 				/* fall-through */
 			case FETCH_HEAD_MERGE:
 				fprintf(fp, "%s\t%s\t%s",
-					sha1_to_hex(rm->old_sha1),
+					oid_to_hex(&rm->old_oid),
 					merge_status_marker,
 					note.buf);
 				for (i = 0; i < url_len; ++i)
@@ -928,7 +928,7 @@ static int do_fetch(struct transport *transport,
 						   rm->peer_ref->name);
 			if (peer_item) {
 				struct object_id *old_oid = peer_item->util;
-				hashcpy(rm->peer_ref->old_sha1, old_oid->hash);
+				oidcpy(&rm->peer_ref->old_oid, old_oid);
 			}
 		}
 	}

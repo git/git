@@ -79,9 +79,9 @@ extern const struct refspec *tag_refspec;
 
 struct ref {
 	struct ref *next;
-	unsigned char old_sha1[20];
-	unsigned char new_sha1[20];
-	unsigned char old_sha1_expect[20]; /* used by expect-old */
+	struct object_id old_oid;
+	struct object_id new_oid;
+	struct object_id old_oid_expect; /* used by expect-old */
 	char *symref;
 	unsigned int
 		force:1,
