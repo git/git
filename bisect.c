@@ -500,7 +500,7 @@ struct commit_list *filter_skipped(struct commit_list *list,
 		struct commit_list *next = list->next;
 		list->next = NULL;
 		if (0 <= sha1_array_lookup(&skipped_revs,
-					   list->item->object.sha1)) {
+					   get_object_hash(list->item->object))) {
 			if (skipped_first && !*skipped_first)
 				*skipped_first = 1;
 			/* Move current to tried list */
@@ -784,7 +784,7 @@ static void check_merge_bases(int no_checkout)
 	result = get_merge_bases_many(rev[0], rev_nr - 1, rev + 1);
 
 	for (; result; result = result->next) {
-		const unsigned char *mb = result->item->object.sha1;
+		const unsigned char *mb = get_object_hash(result->item->object);
 		if (!hashcmp(mb, current_bad_oid->hash)) {
 			handle_bad_merge_base();
 		} else if (0 <= sha1_array_lookup(&good_revs, mb)) {
@@ -973,7 +973,7 @@ int bisect_next_all(const char *prefix, int no_checkout)
 		exit(4);
 	}
 
-	bisect_rev = revs.commits->item->object.sha1;
+	bisect_rev = get_object_hash(revs.commits->item->object);
 
 	if (!hashcmp(bisect_rev, current_bad_oid->hash)) {
 		exit_if_skipped_commits(tried, current_bad_oid);

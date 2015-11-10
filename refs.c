@@ -1880,7 +1880,7 @@ static enum peel_status peel_object(const unsigned char *name, unsigned char *sh
 	if (!o)
 		return PEEL_INVALID;
 
-	hashcpy(sha1, o->sha1);
+	hashcpy(sha1, get_object_hash(*o));
 	return PEEL_PEELED;
 }
 

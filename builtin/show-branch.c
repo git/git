@@ -291,7 +291,7 @@ static void show_one_commit(struct commit *commit, int no_name)
 		}
 		else
 			printf("[%s] ",
-			       find_unique_abbrev(commit->object.sha1,
+			       find_unique_abbrev(get_object_hash(commit->object),
 						  DEFAULT_ABBREV));
 	}
 	puts(pretty_str);
@@ -867,7 +867,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 						  head_len,
 						  ref_name[i],
 						  head_oid.hash,
-						  rev[i]->object.sha1);
+						  get_object_hash(rev[i]->object));
 			if (extra < 0)
 				printf("%c [%s] ",
 				       is_head ? '*' : ' ', ref_name[i]);

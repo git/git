@@ -568,7 +568,7 @@ static void find_merge_parents(struct merge_parents *result,
 		if (!parent)
 			continue;
 		commit_list_insert(parent, &parents);
-		add_merge_parent(result, obj->sha1, parent->object.sha1);
+		add_merge_parent(result, get_object_hash(*obj), get_object_hash(parent->object));
 	}
 	head_commit = lookup_commit(head);
 	if (head_commit)
@@ -578,7 +578,7 @@ static void find_merge_parents(struct merge_parents *result,
 	while (parents) {
 		struct commit *cmit = pop_commit(&parents);
 		for (i = 0; i < result->nr; i++)
-			if (!hashcmp(result->item[i].commit, cmit->object.sha1))
+			if (!hashcmp(result->item[i].commit, get_object_hash(cmit->object)))
 				result->item[i].used = 1;
 	}
 

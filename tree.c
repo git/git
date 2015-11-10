@@ -102,7 +102,7 @@ static int read_tree_1(struct tree *tree, struct strbuf *base,
 				    sha1_to_hex(entry.sha1),
 				    base->buf, entry.path);
 
-			hashcpy(sha1, commit->tree->object.sha1);
+			hashcpy(sha1, get_object_hash(commit->tree->object));
 		}
 		else
 			continue;
@@ -212,7 +212,7 @@ int parse_tree_gently(struct tree *item, int quiet_on_missing)
 
 	if (item->object.parsed)
 		return 0;
-	buffer = read_sha1_file(item->object.sha1, &type, &size);
+	buffer = read_sha1_file(get_object_hash(item->object), &type, &size);
 	if (!buffer)
 		return quiet_on_missing ? -1 :
 			error("Could not read %s",

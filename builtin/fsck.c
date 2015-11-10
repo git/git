@@ -186,7 +186,7 @@ static void check_reachable_object(struct object *obj)
 	 * do a full fsck
 	 */
 	if (!(obj->flags & HAS_OBJ)) {
-		if (has_sha1_pack(obj->sha1))
+		if (has_sha1_pack(get_object_hash(*obj)))
 			return; /* it is in pack - forget about it */
 		if (connectivity_only && has_sha1_file(obj->sha1))
 			return;
@@ -249,7 +249,7 @@ static void check_unreachable_object(struct object *obj)
 			if (!(f = fopen(filename, "w")))
 				die_errno("Could not open '%s'", filename);
 			if (obj->type == OBJ_BLOB) {
-				if (stream_blob_to_fd(fileno(f), obj->sha1, NULL, 1))
+				if (stream_blob_to_fd(fileno(f), get_object_hash(*obj), NULL, 1))
 					die_errno("Could not write '%s'", filename);
 			} else
 				fprintf(f, "%s\n", sha1_to_hex(obj->sha1));

@@ -597,7 +597,7 @@ static void calculate_changed_submodule_paths(void)
 			diff_opts.output_format |= DIFF_FORMAT_CALLBACK;
 			diff_opts.format_callback = submodule_collect_changed_cb;
 			diff_setup_done(&diff_opts);
-			diff_tree_sha1(parent->item->object.sha1, commit->object.sha1, "", &diff_opts);
+			diff_tree_sha1(get_object_hash(parent->item->object), get_object_hash(commit->object), "", &diff_opts);
 			diffcore_std(&diff_opts);
 			diff_flush(&diff_opts);
 			parent = parent->next;

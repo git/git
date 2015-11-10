@@ -78,7 +78,7 @@ static int process_commit(struct walker *walker, struct commit *commit)
 	if (commit->object.flags & COMPLETE)
 		return 0;
 
-	hashcpy(current_commit_sha1, commit->object.sha1);
+	hashcpy(current_commit_sha1, get_object_hash(commit->object));
 
 	walker_say(walker, "walk %s\n", sha1_to_hex(commit->object.sha1));
 
@@ -146,7 +146,7 @@ static int process(struct walker *walker, struct object *obj)
 	else {
 		if (obj->flags & COMPLETE)
 			return 0;
-		walker->prefetch(walker, obj->sha1);
+		walker->prefetch(walker, get_object_hash(*obj));
 	}
 
 	object_list_insert(obj, process_queue_end);
@@ -170,13 +170,13 @@ static int loop(struct walker *walker)
 		 * the queue because we needed to fetch it first.
 		 */
 		if (! (obj->flags & TO_SCAN)) {
-			if (walker->fetch(walker, obj->sha1)) {
+			if (walker->fetch(walker, get_object_hash(*obj))) {
 				report_missing(obj);
 				return -1;
 			}
 		}
 		if (!obj->type)
-			parse_object(obj->sha1);
+			parse_object(get_object_hash(*obj));
 		if (process_object(walker, obj))
 			return -1;
 	}

@@ -68,7 +68,7 @@ static unsigned int hash_obj(const unsigned char *sha1, unsigned int n)
  */
 static void insert_obj_hash(struct object *obj, struct object **hash, unsigned int size)
 {
-	unsigned int j = hash_obj(obj->sha1, size);
+	unsigned int j = hash_obj(get_object_hash(*obj), size);
 
 	while (hash[j]) {
 		j++;
@@ -92,7 +92,7 @@ struct object *lookup_object(const unsigned char *sha1)
 
 	first = i = hash_obj(sha1, obj_hash_size);
 	while ((obj = obj_hash[i]) != NULL) {
-		if (!hashcmp(sha1, obj->sha1))
+		if (!hashcmp(sha1, get_object_hash(*obj)))
 			break;
 		i++;
 		if (i == obj_hash_size)
@@ -145,7 +145,7 @@ void *create_object(const unsigned char *sha1, void *o)
 	obj->parsed = 0;
 	obj->used = 0;
 	obj->flags = 0;
-	hashcpy(obj->sha1, sha1);
+	hashcpy(get_object_hash(*obj), sha1);
 
 	if (obj_hash_size - 1 <= nr_objs * 2)
 		grow_object_hash();

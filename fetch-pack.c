@@ -169,7 +169,7 @@ static const unsigned char *get_rev(void)
 		}
 	}
 
-	return commit->object.sha1;
+	return get_object_hash(commit->object);
 }
 
 enum ack_type {
@@ -487,7 +487,7 @@ static int mark_complete(const unsigned char *sha1)
 		if (!t->tagged)
 			break; /* broken repository */
 		o->flags |= COMPLETE;
-		o = parse_object(t->tagged->sha1);
+		o = parse_object(get_object_hash(*t->tagged));
 	}
 	if (o && o->type == OBJ_COMMIT) {
 		struct commit *commit = (struct commit *)o;

@@ -562,11 +562,11 @@ static void handle_commit(struct commit *commit, struct rev_info *rev)
 	    get_object_mark(&commit->parents->item->object) != 0 &&
 	    !full_tree) {
 		parse_commit_or_die(commit->parents->item);
-		diff_tree_sha1(commit->parents->item->tree->object.sha1,
-			       commit->tree->object.sha1, "", &rev->diffopt);
+		diff_tree_sha1(get_object_hash(commit->parents->item->tree->object),
+			       get_object_hash(commit->tree->object), "", &rev->diffopt);
 	}
 	else
-		diff_root_tree_sha1(commit->tree->object.sha1,
+		diff_root_tree_sha1(get_object_hash(commit->tree->object),
 				    "", &rev->diffopt);
 
 	/* Export the referenced blobs, and remember the marks. */
@@ -665,7 +665,7 @@ static void handle_tag(const char *name, struct tag *tag)
 		return;
 	}
 
-	buf = read_sha1_file(tag->object.sha1, &type, &size);
+	buf = read_sha1_file(get_object_hash(tag->object), &type, &size);
 	if (!buf)
 		die ("Could not read tag %s", sha1_to_hex(tag->object.sha1));
 	message = memmem(buf, size, "\n\n", 2);
@@ -777,7 +777,7 @@ static struct commit *get_commit(struct rev_cmdline_entry *e, char *full_name)
 
 		/* handle nested tags */
 		while (tag && tag->object.type == OBJ_TAG) {
-			parse_object(tag->object.sha1);
+			parse_object(get_object_hash(tag->object));
 			string_list_append(&extra_refs, full_name)->util = tag;
 			tag = (struct tag *)tag->tagged;
 		}
@@ -828,7 +828,7 @@ static void get_tags_and_duplicates(struct rev_cmdline_info *info)
 		case OBJ_COMMIT:
 			break;
 		case OBJ_BLOB:
-			export_blob(commit->object.sha1);
+			export_blob(get_object_hash(commit->object));
 			continue;
 		default: /* OBJ_TAG (nested tags) is already handled */
 			warning("Tag points to object of unexpected type %s, skipping.",
