@@ -14,12 +14,14 @@ static void add_sought_entry_mem(struct ref ***sought, int *nr, int *alloc,
 				 const char *name, int namelen)
 {
 	struct ref *ref = xcalloc(1, sizeof(*ref) + namelen + 1);
-	unsigned char sha1[20];
+	struct object_id oid;
+	const int chunksz = GIT_SHA1_HEXSZ + 1;
 
-	if (namelen > 41 && name[40] == ' ' && !get_sha1_hex(name, sha1)) {
-		hashcpy(ref->old_oid.hash, sha1);
-		name += 41;
-		namelen -= 41;
+	if (namelen > chunksz && name[chunksz - 1] == ' ' &&
+		!get_oid_hex(name, &oid)) {
+		oidcpy(&ref->old_oid, &oid);
+		name += chunksz;
+		namelen -= chunksz;
 	}
 
 	memcpy(ref->name, name, namelen);
