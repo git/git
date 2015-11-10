@@ -1886,8 +1886,8 @@ int main(int argc, char **argv)
 		    !is_null_oid(&ref->old_oid) &&
 		    !ref->force) {
 			if (!has_object_file(&ref->old_oid) ||
-			    !ref_newer(ref->peer_ref->new_oid.hash,
-				       ref->old_oid.hash)) {
+			    !ref_newer(&ref->peer_ref->new_oid,
+				       &ref->old_oid)) {
 				/*
 				 * We do not have the remote ref, or
 				 * we know that the remote ref is not
