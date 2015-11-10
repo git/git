@@ -52,6 +52,8 @@ struct object {
 	unsigned char sha1[20];
 };
 
+#define get_object_hash(x) ((x).sha1)
+
 extern const char *typename(unsigned int type);
 extern int type_from_string_gently(const char *str, ssize_t, int gentle);
 #define type_from_string(str) type_from_string_gently(str, -1, 0)
