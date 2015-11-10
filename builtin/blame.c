@@ -506,7 +506,7 @@ static int fill_blob_sha1_and_mode(struct origin *origin)
 {
 	if (!is_null_sha1(origin->blob_sha1))
 		return 0;
-	if (get_tree_entry(get_object_hash(origin->commit->object),
+	if (get_tree_entry(origin->commit->object.oid.hash,
 			   origin->path,
 			   origin->blob_sha1, &origin->mode))
 		goto error_out;
@@ -558,10 +558,10 @@ static struct origin *find_origin(struct scoreboard *sb,
 	diff_setup_done(&diff_opts);
 
 	if (is_null_oid(&origin->commit->object.oid))
-		do_diff_cache(get_object_hash(parent->tree->object), &diff_opts);
+		do_diff_cache(parent->tree->object.oid.hash, &diff_opts);
 	else
-		diff_tree_sha1(get_object_hash(parent->tree->object),
-			       get_object_hash(origin->commit->tree->object),
+		diff_tree_sha1(parent->tree->object.oid.hash,
+			       origin->commit->tree->object.oid.hash,
 			       "", &diff_opts);
 	diffcore_std(&diff_opts);
 
@@ -628,10 +628,10 @@ static struct origin *find_rename(struct scoreboard *sb,
 	diff_setup_done(&diff_opts);
 
 	if (is_null_oid(&origin->commit->object.oid))
-		do_diff_cache(get_object_hash(parent->tree->object), &diff_opts);
+		do_diff_cache(parent->tree->object.oid.hash, &diff_opts);
 	else
-		diff_tree_sha1(get_object_hash(parent->tree->object),
-			       get_object_hash(origin->commit->tree->object),
+		diff_tree_sha1(parent->tree->object.oid.hash,
+			       origin->commit->tree->object.oid.hash,
 			       "", &diff_opts);
 	diffcore_std(&diff_opts);
 
@@ -1276,10 +1276,10 @@ static void find_copy_in_parent(struct scoreboard *sb,
 		DIFF_OPT_SET(&diff_opts, FIND_COPIES_HARDER);
 
 	if (is_null_oid(&target->commit->object.oid))
-		do_diff_cache(get_object_hash(parent->tree->object), &diff_opts);
+		do_diff_cache(parent->tree->object.oid.hash, &diff_opts);
 	else
-		diff_tree_sha1(get_object_hash(parent->tree->object),
-			       get_object_hash(target->commit->tree->object),
+		diff_tree_sha1(parent->tree->object.oid.hash,
+			       target->commit->tree->object.oid.hash,
 			       "", &diff_opts);
 
 	if (!DIFF_OPT_TST(&diff_opts, FIND_COPIES_HARDER))
@@ -2077,7 +2077,7 @@ static int read_ancestry(const char *graft_file)
 
 static int update_auto_abbrev(int auto_abbrev, struct origin *suspect)
 {
-	const char *uniq = find_unique_abbrev(get_object_hash(suspect->commit->object),
+	const char *uniq = find_unique_abbrev(suspect->commit->object.oid.hash,
 					      auto_abbrev);
 	int len = strlen(uniq);
 	if (auto_abbrev < len)
@@ -2216,7 +2216,7 @@ static void verify_working_tree_path(struct commit *work_tree, const char *path)
 	struct commit_list *parents;
 
 	for (parents = work_tree->parents; parents; parents = parents->next) {
-		const unsigned char *commit_sha1 = get_object_hash(parents->item->object);
+		const unsigned char *commit_sha1 = parents->item->object.oid.hash;
 		unsigned char blob_sha1[20];
 		unsigned mode;
 

@@ -276,7 +276,7 @@ static int report(struct fsck_options *options, struct object *object,
 		return 0;
 
 	if (options->skiplist && object &&
-			sha1_array_lookup(options->skiplist, get_object_hash(*object)) >= 0)
+			sha1_array_lookup(options->skiplist, object->oid.hash) >= 0)
 		return 0;
 
 	if (msg_type == FSCK_FATAL)
@@ -630,7 +630,7 @@ static int fsck_commit_buffer(struct commit *commit, const char *buffer,
 		buffer += 41;
 		parent_line_count++;
 	}
-	graft = lookup_commit_graft(get_object_hash(commit->object));
+	graft = lookup_commit_graft(commit->object.oid.hash);
 	parent_count = commit_list_count(commit->parents);
 	if (graft) {
 		if (graft->nr_parent == -1 && !parent_count)
@@ -696,7 +696,7 @@ static int fsck_tag_buffer(struct tag *tag, const char *data,
 		enum object_type type;
 
 		buffer = to_free =
-			read_sha1_file(get_object_hash(tag->object), &type, &size);
+			read_sha1_file(tag->object.oid.hash, &type, &size);
 		if (!buffer)
 			return report(options, &tag->object,
 				FSCK_MSG_MISSING_TAG_OBJECT,

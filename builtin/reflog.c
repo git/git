@@ -126,7 +126,7 @@ static int commit_is_complete(struct commit *commit)
 		struct commit_list *parent;
 
 		c = (struct commit *)study.objects[--study.nr].item;
-		if (!c->object.parsed && !parse_object(get_object_hash(c->object)))
+		if (!c->object.parsed && !parse_object(c->object.oid.hash))
 			c->object.flags |= INCOMPLETE;
 
 		if (c->object.flags & INCOMPLETE) {
@@ -152,7 +152,7 @@ static int commit_is_complete(struct commit *commit)
 		for (i = 0; i < found.nr; i++) {
 			struct commit *c =
 				(struct commit *)found.objects[i].item;
-			if (!tree_is_complete(get_object_hash(c->tree->object))) {
+			if (!tree_is_complete(c->tree->object.oid.hash)) {
 				is_incomplete = 1;
 				c->object.flags |= INCOMPLETE;
 			}

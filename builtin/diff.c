@@ -175,8 +175,8 @@ static int builtin_diff_tree(struct rev_info *revs,
 	 */
 	if (ent1->item->flags & UNINTERESTING)
 		swap = 1;
-	sha1[swap] = get_object_hash(*ent0->item);
-	sha1[1 - swap] = get_object_hash(*ent1->item);
+	sha1[swap] = ent0->item->oid.hash;
+	sha1[1 - swap] = ent1->item->oid.hash;
 	diff_tree_sha1(sha1[0], sha1[1], "", &revs->diffopt);
 	log_tree_diff_flush(revs);
 	return 0;
@@ -196,8 +196,8 @@ static int builtin_diff_combined(struct rev_info *revs,
 	if (!revs->dense_combined_merges && !revs->combine_merges)
 		revs->dense_combined_merges = revs->combine_merges = 1;
 	for (i = 1; i < ents; i++)
-		sha1_array_append(&parents, get_object_hash(*ent[i].item));
-	diff_tree_combined(get_object_hash(*ent[0].item), &parents,
+		sha1_array_append(&parents, ent[i].item->oid.hash);
+	diff_tree_combined(ent[0].item->oid.hash, &parents,
 			   revs->dense_combined_merges, revs);
 	sha1_array_clear(&parents);
 	return 0;
@@ -395,7 +395,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 		const char *name = entry->name;
 		int flags = (obj->flags & UNINTERESTING);
 		if (!obj->parsed)
-			obj = parse_object(get_object_hash(*obj));
+			obj = parse_object(obj->oid.hash);
 		obj = deref_tag(obj, NULL, 0);
 		if (!obj)
 			die(_("invalid object '%s' given."), name);
@@ -408,7 +408,7 @@ int cmd_diff(int argc, const char **argv, const char *prefix)
 		} else if (obj->type == OBJ_BLOB) {
 			if (2 <= blobs)
 				die(_("more than two blobs given: '%s'"), name);
-			hashcpy(blob[blobs].sha1, get_object_hash(*obj));
+			hashcpy(blob[blobs].sha1, obj->oid.hash);
 			blob[blobs].name = name;
 			blob[blobs].mode = entry->mode;
 			blobs++;

@@ -52,8 +52,6 @@ struct object {
 	struct object_id oid;
 };
 
-#define get_object_hash(x) ((x).oid.hash)
-
 extern const char *typename(unsigned int type);
 extern int type_from_string_gently(const char *str, ssize_t, int gentle);
 #define type_from_string(str) type_from_string_gently(str, -1, 0)

@@ -543,7 +543,7 @@ static void add_merge_info(const struct pretty_print_context *pp,
 		struct commit *p = parent->item;
 		const char *hex = NULL;
 		if (pp->abbrev)
-			hex = find_unique_abbrev(get_object_hash(p->object), pp->abbrev);
+			hex = find_unique_abbrev(p->object.oid.hash, pp->abbrev);
 		if (!hex)
 			hex = oid_to_hex(&p->object.oid);
 		parent = parent->next;
@@ -1119,7 +1119,7 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 
 	/* these depend on the commit */
 	if (!commit->object.parsed)
-		parse_object(get_object_hash(commit->object));
+		parse_object(commit->object.oid.hash);
 
 	switch (placeholder[0]) {
 	case 'H':		/* commit hash */
@@ -1133,7 +1133,7 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 			strbuf_addstr(sb, diff_get_color(c->auto_color, DIFF_RESET));
 			return 1;
 		}
-		strbuf_addstr(sb, find_unique_abbrev(get_object_hash(commit->object),
+		strbuf_addstr(sb, find_unique_abbrev(commit->object.oid.hash,
 						     c->pretty_ctx->abbrev));
 		strbuf_addstr(sb, diff_get_color(c->auto_color, DIFF_RESET));
 		c->abbrev_commit_hash.len = sb->len - c->abbrev_commit_hash.off;
@@ -1162,7 +1162,7 @@ static size_t format_commit_one(struct strbuf *sb, /* in UTF-8 */
 			if (p != commit->parents)
 				strbuf_addch(sb, ' ');
 			strbuf_addstr(sb, find_unique_abbrev(
-					get_object_hash(p->item->object),
+					p->item->object.oid.hash,
 					c->pretty_ctx->abbrev));
 		}
 		c->abbrev_parent_hashes.len = sb->len -

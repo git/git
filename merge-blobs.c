@@ -11,7 +11,7 @@ static int fill_mmfile_blob(mmfile_t *f, struct blob *obj)
 	unsigned long size;
 	enum object_type type;
 
-	buf = read_sha1_file(get_object_hash(obj->object), &type, &size);
+	buf = read_sha1_file(obj->object.oid.hash, &type, &size);
 	if (!buf)
 		return -1;
 	if (type != OBJ_BLOB) {
@@ -100,7 +100,7 @@ void *merge_blobs(const char *path, struct blob *base, struct blob *our, struct 
 			return NULL;
 		if (!our)
 			our = their;
-		return read_sha1_file(get_object_hash(our->object), &type, size);
+		return read_sha1_file(our->object.oid.hash, &type, size);
 	}
 
 	if (fill_mmfile_blob(&f1, our) < 0)

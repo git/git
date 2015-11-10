@@ -1540,9 +1540,9 @@ void diff_tree_combined_merge(const struct commit *commit, int dense,
 	struct sha1_array parents = SHA1_ARRAY_INIT;
 
 	while (parent) {
-		sha1_array_append(&parents, get_object_hash(parent->item->object));
+		sha1_array_append(&parents, parent->item->object.oid.hash);
 		parent = parent->next;
 	}
-	diff_tree_combined(get_object_hash(commit->object), &parents, dense, rev);
+	diff_tree_combined(commit->object.oid.hash, &parents, dense, rev);
 	sha1_array_clear(&parents);
 }

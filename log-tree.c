@@ -133,7 +133,7 @@ static int add_ref_decoration(const char *refname, const struct object_id *oid,
 		if (!obj)
 			break;
 		if (!obj->parsed)
-			parse_object(get_object_hash(*obj));
+			parse_object(obj->oid.hash);
 		add_name_decoration(DECORATION_REF_TAG, refname, obj);
 	}
 	return 0;
@@ -165,7 +165,7 @@ static void show_parents(struct commit *commit, int abbrev)
 	struct commit_list *p;
 	for (p = commit->parents; p ; p = p->next) {
 		struct commit *parent = p->item;
-		printf(" %s", find_unique_abbrev(get_object_hash(parent->object), abbrev));
+		printf(" %s", find_unique_abbrev(parent->object.oid.hash, abbrev));
 	}
 }
 
@@ -173,7 +173,7 @@ static void show_children(struct rev_info *opt, struct commit *commit, int abbre
 {
 	struct commit_list *p = lookup_decoration(&opt->children, &commit->object);
 	for ( ; p; p = p->next) {
-		printf(" %s", find_unique_abbrev(get_object_hash(p->item->object), abbrev));
+		printf(" %s", find_unique_abbrev(p->item->object.oid.hash, abbrev));
 	}
 }
 
@@ -469,7 +469,7 @@ static int which_parent(const unsigned char *sha1, const struct commit *commit)
 	const struct commit_list *parent;
 
 	for (nth = 0, parent = commit->parents; parent; parent = parent->next) {
-		if (!hashcmp(get_object_hash(parent->item->object), sha1))
+		if (!hashcmp(parent->item->object.oid.hash, sha1))
 			return nth;
 		nth++;
 	}
@@ -507,9 +507,9 @@ static void show_one_mergetag(struct commit *commit,
 			  &commit->parents->next->item->object.oid))
 		strbuf_addf(&verify_message,
 			    "merged tag '%s'\n", tag->tag);
-	else if ((nth = which_parent(get_object_hash(*tag->tagged), commit)) < 0)
+	else if ((nth = which_parent(tag->tagged->oid.hash, commit)) < 0)
 		strbuf_addf(&verify_message, "tag %s names a non-parent %s\n",
-				    tag->tag, get_object_hash(*tag->tagged));
+				    tag->tag, tag->tagged->oid.hash);
 	else
 		strbuf_addf(&verify_message,
 			    "parent #%d, tagged '%s'\n", nth + 1, tag->tag);
@@ -553,7 +553,7 @@ void show_log(struct rev_info *opt)
 
 		if (!opt->graph)
 			put_revision_mark(opt, commit);
-		fputs(find_unique_abbrev(get_object_hash(commit->object), abbrev_commit), stdout);
+		fputs(find_unique_abbrev(commit->object.oid.hash, abbrev_commit), stdout);
 		if (opt->print_parents)
 			show_parents(commit, abbrev_commit);
 		if (opt->children.name)
@@ -613,7 +613,7 @@ void show_log(struct rev_info *opt)
 
 		if (!opt->graph)
 			put_revision_mark(opt, commit);
-		fputs(find_unique_abbrev(get_object_hash(commit->object), abbrev_commit),
+		fputs(find_unique_abbrev(commit->object.oid.hash, abbrev_commit),
 		      stdout);
 		if (opt->print_parents)
 			show_parents(commit, abbrev_commit);
@@ -621,7 +621,7 @@ void show_log(struct rev_info *opt)
 			show_children(opt, commit, abbrev_commit);
 		if (parent)
 			printf(" (from %s)",
-			       find_unique_abbrev(get_object_hash(parent->object),
+			       find_unique_abbrev(parent->object.oid.hash,
 						  abbrev_commit));
 		fputs(diff_get_color_opt(&opt->diffopt, DIFF_RESET), stdout);
 		show_decorations(opt, commit);
@@ -660,7 +660,7 @@ void show_log(struct rev_info *opt)
 		struct strbuf notebuf = STRBUF_INIT;
 
 		raw = (opt->commit_format == CMIT_FMT_USERFORMAT);
-		format_display_notes(get_object_hash(commit->object), &notebuf,
+		format_display_notes(commit->object.oid.hash, &notebuf,
 				     get_log_output_encoding(), raw);
 		ctx.notes_message = notebuf.len
 			? strbuf_detach(&notebuf, NULL)

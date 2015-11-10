@@ -743,7 +743,7 @@ static int get_octopus_merge_base(unsigned char *merge_base,
 	if (!result)
 		return 1;
 
-	hashcpy(merge_base, get_object_hash(result->item->object));
+	hashcpy(merge_base, result->item->object.oid.hash);
 	return 0;
 }
 

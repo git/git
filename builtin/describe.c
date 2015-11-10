@@ -252,14 +252,14 @@ static void describe(const char *arg, int last_one)
 	if (!cmit)
 		die(_("%s is not a valid '%s' object"), arg, commit_type);
 
-	n = find_commit_name(get_object_hash(cmit->object));
+	n = find_commit_name(cmit->object.oid.hash);
 	if (n && (tags || all || n->prio == 2)) {
 		/*
 		 * Exact match to an existing ref.
 		 */
 		display_name(n);
 		if (longformat)
-			show_suffix(0, n->tag ? get_object_hash(*n->tag->tagged) : sha1);
+			show_suffix(0, n->tag ? n->tag->tagged->oid.hash : sha1);
 		if (dirty)
 			printf("%s", dirty);
 		printf("\n");
@@ -380,7 +380,7 @@ static void describe(const char *arg, int last_one)
 
 	display_name(all_matches[0].name);
 	if (abbrev)
-		show_suffix(all_matches[0].depth, get_object_hash(cmit->object));
+		show_suffix(all_matches[0].depth, cmit->object.oid.hash);
 	if (dirty)
 		printf("%s", dirty);
 	printf("\n");

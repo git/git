@@ -162,7 +162,7 @@ static int name_ref(const char *path, const struct object_id *oid, int flags, vo
 		struct tag *t = (struct tag *) o;
 		if (!t->tagged)
 			break; /* broken repository */
-		o = parse_object(get_object_hash(*t->tagged));
+		o = parse_object(t->tagged->oid.hash);
 		deref = 1;
 	}
 	if (o && o->type == OBJ_COMMIT) {
@@ -193,7 +193,7 @@ static const char *get_exact_ref_match(const struct object *o)
 		tip_table.sorted = 1;
 	}
 
-	found = sha1_pos(get_object_hash(*o), tip_table.table, tip_table.nr,
+	found = sha1_pos(o->oid.hash, tip_table.table, tip_table.nr,
 			 nth_tip_table_ent);
 	if (0 <= found)
 		return tip_table.table[found].refname;

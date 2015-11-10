@@ -324,7 +324,7 @@ static int reachable(struct commit *want)
 			break;
 		}
 		if (!commit->object.parsed)
-			parse_object(get_object_hash(commit->object));
+			parse_object(commit->object.oid.hash);
 		if (commit->object.flags & REACHABLE)
 			continue;
 		commit->object.flags |= REACHABLE;
@@ -647,7 +647,7 @@ static void receive_needs(void)
 			if (!(object->flags & (CLIENT_SHALLOW|NOT_SHALLOW))) {
 				packet_write(1, "shallow %s",
 						oid_to_hex(&object->oid));
-				register_shallow(get_object_hash(*object));
+				register_shallow(object->oid.hash);
 				shallow_nr++;
 			}
 			result = result->next;
@@ -661,7 +661,7 @@ static void receive_needs(void)
 					oid_to_hex(&object->oid));
 				object->flags &= ~CLIENT_SHALLOW;
 				/* make sure the real parents are parsed */
-				unregister_shallow(get_object_hash(*object));
+				unregister_shallow(object->oid.hash);
 				object->parsed = 0;
 				parse_commit_or_die((struct commit *)object);
 				parents = ((struct commit *)object)->parents;
@@ -673,14 +673,14 @@ static void receive_needs(void)
 				add_object_array(object, NULL, &extra_edge_obj);
 			}
 			/* make sure commit traversal conforms to client */
-			register_shallow(get_object_hash(*object));
+			register_shallow(object->oid.hash);
 		}
 		packet_flush(1);
 	} else
 		if (shallows.nr > 0) {
 			int i;
 			for (i = 0; i < shallows.nr; i++)
-				register_shallow(get_object_hash(*shallows.objects[i].item));
+				register_shallow(shallows.objects[i].item->oid.hash);
 		}
 
 	shallow_nr += shallows.nr;

@@ -502,7 +502,7 @@ static void fill_blob_sha1(struct commit *commit, struct diff_filespec *spec)
 	unsigned mode;
 	unsigned char sha1[20];
 
-	if (get_tree_entry(get_object_hash(commit->object), spec->path,
+	if (get_tree_entry(commit->object.oid.hash, spec->path,
 			   sha1, &mode))
 		die("There is no path %s in the commit", spec->path);
 	fill_filespec(spec, sha1, 1, mode);
@@ -824,8 +824,8 @@ static void queue_diffs(struct line_log_data *range,
 	assert(commit);
 
 	DIFF_QUEUE_CLEAR(&diff_queued_diff);
-	diff_tree_sha1(parent ? get_object_hash(parent->tree->object) : NULL,
-			get_object_hash(commit->tree->object), "", opt);
+	diff_tree_sha1(parent ? parent->tree->object.oid.hash : NULL,
+			commit->tree->object.oid.hash, "", opt);
 	if (opt->detect_rename) {
 		filter_diffs_for_paths(range, 1);
 		if (diff_might_be_rename())

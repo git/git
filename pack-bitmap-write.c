@@ -152,7 +152,7 @@ static void show_object(struct object *object, const struct name_path *path,
 			const char *last, void *data)
 {
 	struct bitmap *base = data;
-	bitmap_set(base, find_object_pos(get_object_hash(*object)));
+	bitmap_set(base, find_object_pos(object->oid.hash));
 	mark_as_seen(object);
 }
 
@@ -165,12 +165,12 @@ static int
 add_to_include_set(struct bitmap *base, struct commit *commit)
 {
 	khiter_t hash_pos;
-	uint32_t bitmap_pos = find_object_pos(get_object_hash(commit->object));
+	uint32_t bitmap_pos = find_object_pos(commit->object.oid.hash);
 
 	if (bitmap_get(base, bitmap_pos))
 		return 0;
 
-	hash_pos = kh_get_sha1(writer.bitmaps, get_object_hash(commit->object));
+	hash_pos = kh_get_sha1(writer.bitmaps, commit->object.oid.hash);
 	if (hash_pos < kh_end(writer.bitmaps)) {
 		struct bitmapped_commit *bc = kh_value(writer.bitmaps, hash_pos);
 		bitmap_or_ewah(base, bc->bitmap);
@@ -308,7 +308,7 @@ void bitmap_writer_build(struct packing_data *to_pack)
 		if (i >= reuse_after)
 			stored->flags |= BITMAP_FLAG_REUSE;
 
-		hash_pos = kh_put_sha1(writer.bitmaps, get_object_hash(*object), &hash_ret);
+		hash_pos = kh_put_sha1(writer.bitmaps, object->oid.hash, &hash_ret);
 		if (hash_ret == 0)
 			die("Duplicate entry when writing index: %s",
 			    oid_to_hex(&object->oid));
@@ -414,14 +414,14 @@ void bitmap_writer_select_commits(struct commit **indexed_commits,
 
 		if (next == 0) {
 			chosen = indexed_commits[i];
-			reused_bitmap = find_reused_bitmap(get_object_hash(chosen->object));
+			reused_bitmap = find_reused_bitmap(chosen->object.oid.hash);
 		} else {
 			chosen = indexed_commits[i + next];
 
 			for (j = 0; j <= next; ++j) {
 				struct commit *cm = indexed_commits[i + j];
 
-				reused_bitmap = find_reused_bitmap(get_object_hash(cm->object));
+				reused_bitmap = find_reused_bitmap(cm->object.oid.hash);
 				if (reused_bitmap || (cm->object.flags & NEEDS_BITMAP) != 0) {
 					chosen = cm;
 					break;
@@ -474,7 +474,7 @@ static void write_selected_commits_v1(struct sha1file *f,
 		struct bitmapped_commit *stored = &writer.selected[i];
 
 		int commit_pos =
-			sha1_pos(get_object_hash(stored->commit->object), index, index_nr, sha1_access);
+			sha1_pos(stored->commit->object.oid.hash, index, index_nr, sha1_access);
 
 		if (commit_pos < 0)
 			die("BUG: trying to write commit not in index");

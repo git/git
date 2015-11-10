@@ -282,7 +282,7 @@ static struct commit *handle_commit(struct rev_info *revs,
 			add_pending_object(revs, object, tag->tag);
 		if (!tag->tagged)
 			die("bad tag");
-		object = parse_object(get_object_hash(*tag->tagged));
+		object = parse_object(tag->tagged->oid.hash);
 		if (!object) {
 			if (flags & UNINTERESTING)
 				return NULL;
@@ -510,7 +510,7 @@ static int rev_compare_tree(struct rev_info *revs,
 
 	tree_difference = REV_TREE_SAME;
 	DIFF_OPT_CLR(&revs->pruning, HAS_CHANGES);
-	if (diff_tree_sha1(get_object_hash(t1->object), get_object_hash(t2->object), "",
+	if (diff_tree_sha1(t1->object.oid.hash, t2->object.oid.hash, "",
 			   &revs->pruning) < 0)
 		return REV_TREE_DIFFERENT;
 	return tree_difference;
@@ -526,7 +526,7 @@ static int rev_same_tree_as_empty(struct rev_info *revs, struct commit *commit)
 
 	tree_difference = REV_TREE_SAME;
 	DIFF_OPT_CLR(&revs->pruning, HAS_CHANGES);
-	retval = diff_tree_sha1(NULL, get_object_hash(t1->object), "", &revs->pruning);
+	retval = diff_tree_sha1(NULL, t1->object.oid.hash, "", &revs->pruning);
 
 	return retval >= 0 && (tree_difference == REV_TREE_SAME);
 }
@@ -1378,7 +1378,7 @@ static int add_parents_only(struct rev_info *revs, const char *arg_, int flags)
 			break;
 		if (!((struct tag*)it)->tagged)
 			return 0;
-		hashcpy(sha1, get_object_hash(*((struct tag*)it)->tagged));
+		hashcpy(sha1, ((struct tag*)it)->tagged->oid.hash);
 	}
 	if (it->type != OBJ_COMMIT)
 		return 0;
@@ -1555,10 +1555,10 @@ int handle_revision_arg(const char *arg_, struct rev_info *revs, int flags, unsi
 
 				a = (a_obj->type == OBJ_COMMIT
 				     ? (struct commit *)a_obj
-				     : lookup_commit_reference(get_object_hash(*a_obj)));
+				     : lookup_commit_reference(a_obj->oid.hash));
 				b = (b_obj->type == OBJ_COMMIT
 				     ? (struct commit *)b_obj
-				     : lookup_commit_reference(get_object_hash(*b_obj)));
+				     : lookup_commit_reference(b_obj->oid.hash));
 				if (!a || !b)
 					goto missing;
 				exclude = get_merge_bases(a, b);
@@ -2938,7 +2938,7 @@ static int commit_match(struct commit *commit, struct rev_info *opt)
 	if (opt->show_notes) {
 		if (!buf.len)
 			strbuf_addstr(&buf, message);
-		format_display_notes(get_object_hash(commit->object), &buf, encoding, 1);
+		format_display_notes(commit->object.oid.hash, &buf, encoding, 1);
 	}
 
 	/*
@@ -2968,7 +2968,7 @@ enum commit_action get_commit_action(struct rev_info *revs, struct commit *commi
 {
 	if (commit->object.flags & SHOWN)
 		return commit_ignore;
-	if (revs->unpacked && has_sha1_pack(get_object_hash(commit->object)))
+	if (revs->unpacked && has_sha1_pack(commit->object.oid.hash))
 		return commit_ignore;
 	if (revs->show_all)
 		return commit_show;

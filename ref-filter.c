@@ -372,7 +372,7 @@ static void grab_common_values(struct atom_value *val, int deref, struct object 
 			v->s = xstrfmt("%lu", sz);
 		}
 		else if (deref)
-			grab_objectname(name, get_object_hash(*obj), v);
+			grab_objectname(name, obj->oid.hash, v);
 	}
 }
 
@@ -992,7 +992,7 @@ static void populate_value(struct ref_array_item *ref)
 	 * If it is a tag object, see if we use a value that derefs
 	 * the object, and if we do grab the object it refers to.
 	 */
-	tagged = get_object_hash(*((struct tag *)obj)->tagged);
+	tagged = ((struct tag *)obj)->tagged->oid.hash;
 
 	/*
 	 * NEEDSWORK: This derefs tag only once, which
@@ -1218,7 +1218,7 @@ static const unsigned char *match_points_at(struct sha1_array *points_at,
 	if (!obj)
 		die(_("malformed object at '%s'"), refname);
 	if (obj->type == OBJ_TAG)
-		tagged_sha1 = get_object_hash(*((struct tag *)obj)->tagged);
+		tagged_sha1 = ((struct tag *)obj)->tagged->oid.hash;
 	if (tagged_sha1 && sha1_array_lookup(points_at, tagged_sha1) >= 0)
 		return tagged_sha1;
 	return NULL;

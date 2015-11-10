@@ -81,7 +81,7 @@ static void show_commit(struct commit *commit, void *data)
 	if (!revs->graph)
 		fputs(get_revision_mark(revs, commit), stdout);
 	if (revs->abbrev_commit && revs->abbrev)
-		fputs(find_unique_abbrev(get_object_hash(commit->object), revs->abbrev),
+		fputs(find_unique_abbrev(commit->object.oid.hash, revs->abbrev),
 		      stdout);
 	else
 		fputs(oid_to_hex(&commit->object.oid), stdout);
@@ -185,7 +185,7 @@ static void finish_object(struct object *obj,
 	if (obj->type == OBJ_BLOB && !has_object_file(&obj->oid))
 		die("missing blob object '%s'", oid_to_hex(&obj->oid));
 	if (info->revs->verify_objects && !obj->parsed && obj->type != OBJ_COMMIT)
-		parse_object(get_object_hash(*obj));
+		parse_object(obj->oid.hash);
 }
 
 static void show_object(struct object *obj,

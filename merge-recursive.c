@@ -29,9 +29,9 @@ static struct tree *shift_tree_object(struct tree *one, struct tree *two,
 	struct object_id shifted;
 
 	if (!*subtree_shift) {
-		shift_tree(get_object_hash(one->object), get_object_hash(two->object), shifted.hash, 0);
+		shift_tree(one->object.oid.hash, two->object.oid.hash, shifted.hash, 0);
 	} else {
-		shift_tree_by(get_object_hash(one->object), get_object_hash(two->object), shifted.hash,
+		shift_tree_by(one->object.oid.hash, two->object.oid.hash, shifted.hash,
 			      subtree_shift);
 	}
 	if (!oidcmp(&two->object.oid, &shifted))
@@ -184,7 +184,7 @@ static void output_commit_title(struct merge_options *o, struct commit *commit)
 	if (commit->util)
 		printf("virtual %s\n", merge_remote_util(commit)->name);
 	else {
-		printf("%s ", find_unique_abbrev(get_object_hash(commit->object), DEFAULT_ABBREV));
+		printf("%s ", find_unique_abbrev(commit->object.oid.hash, DEFAULT_ABBREV));
 		if (parse_commit(commit) != 0)
 			printf(_("(bad commit)\n"));
 		else {
@@ -313,11 +313,11 @@ static struct stage_data *insert_stage_data(const char *path,
 {
 	struct string_list_item *item;
 	struct stage_data *e = xcalloc(1, sizeof(struct stage_data));
-	get_tree_entry(get_object_hash(o->object), path,
+	get_tree_entry(o->object.oid.hash, path,
 			e->stages[1].sha, &e->stages[1].mode);
-	get_tree_entry(get_object_hash(a->object), path,
+	get_tree_entry(a->object.oid.hash, path,
 			e->stages[2].sha, &e->stages[2].mode);
-	get_tree_entry(get_object_hash(b->object), path,
+	get_tree_entry(b->object.oid.hash, path,
 			e->stages[3].sha, &e->stages[3].mode);
 	item = string_list_insert(entries, path);
 	item->util = e;
@@ -493,7 +493,7 @@ static struct string_list *get_renames(struct merge_options *o,
 	opts.show_rename_progress = o->show_rename_progress;
 	opts.output_format = DIFF_FORMAT_NO_OUTPUT;
 	diff_setup_done(&opts);
-	diff_tree_sha1(get_object_hash(o_tree->object), get_object_hash(tree->object), "", &opts);
+	diff_tree_sha1(o_tree->object.oid.hash, tree->object.oid.hash, "", &opts);
 	diffcore_std(&opts);
 	if (opts.needed_rename_limit > o->needed_rename_limit)
 		o->needed_rename_limit = opts.needed_rename_limit;
@@ -1812,7 +1812,7 @@ int merge_trees(struct merge_options *o,
 		common = shift_tree_object(head, common, o->subtree_shift);
 	}
 
-	if (sha_eq(get_object_hash(common->object), get_object_hash(merge->object))) {
+	if (sha_eq(common->object.oid.hash, merge->object.oid.hash)) {
 		output(o, 0, _("Already up-to-date!"));
 		*result = head;
 		return 1;
