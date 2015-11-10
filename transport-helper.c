@@ -878,13 +878,13 @@ static int push_refs_with_export(struct transport *transport,
 
 	for (ref = remote_refs; ref; ref = ref->next) {
 		char *private;
-		unsigned char sha1[20];
+		struct object_id oid;
 
 		private = apply_refspecs(data->refspecs, data->refspec_nr, ref->name);
-		if (private && !get_sha1(private, sha1)) {
+		if (private && !get_sha1(private, oid.hash)) {
 			strbuf_addf(&buf, "^%s", private);
 			string_list_append(&revlist_args, strbuf_detach(&buf, NULL));
-			hashcpy(ref->old_oid.hash, sha1);
+			oidcpy(&ref->old_oid, &oid);
 		}
 		free(private);
 
@@ -898,7 +898,7 @@ static int push_refs_with_export(struct transport *transport,
 					name = resolve_ref_unsafe(
 						 ref->peer_ref->name,
 						 RESOLVE_REF_READING,
-						 sha1, &flag);
+						 oid.hash, &flag);
 					if (!name || !(flag & REF_ISSYMREF))
 						name = ref->peer_ref->name;
 
