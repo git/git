@@ -249,7 +249,7 @@ static int prepare_submodule_summary(struct rev_info *rev, const char *path,
 	for (list = merge_bases; list; list = list->next) {
 		list->item->object.flags |= UNINTERESTING;
 		add_pending_object(rev, &list->item->object,
-			sha1_to_hex(list->item->object.sha1));
+			oid_to_hex(&list->item->object.oid));
 	}
 	return prepare_revision_walk(rev);
 }
@@ -875,7 +875,7 @@ static int find_first_merges(struct object_array *result, const char *path,
 
 	/* get all revisions that merge commit a */
 	snprintf(merged_revision, sizeof(merged_revision), "^%s",
-			sha1_to_hex(a->object.sha1));
+			oid_to_hex(&a->object.oid));
 	init_revisions(&revs, NULL);
 	rev_opts.submodule = path;
 	setup_revisions(ARRAY_SIZE(rev_args)-1, rev_args, &revs, &rev_opts);
@@ -1006,7 +1006,7 @@ int merge_submodule(unsigned char result[20], const char *path,
 			"by using:\n\n"
 			"  git update-index --cacheinfo 160000 %s \"%s\"\n\n"
 			"which will accept this suggestion.\n",
-			sha1_to_hex(merges.objects[0].item->sha1), path);
+			oid_to_hex(&merges.objects[0].item->oid), path);
 		break;
 
 	default:

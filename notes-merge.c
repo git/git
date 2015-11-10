@@ -618,8 +618,8 @@ int notes_merge(struct notes_merge_options *o,
 
 	if (o->verbosity >= 4)
 		printf("Merging remote commit %.7s into local commit %.7s with "
-			"merge-base %.7s\n", sha1_to_hex(remote->object.sha1),
-			sha1_to_hex(local->object.sha1),
+			"merge-base %.7s\n", oid_to_hex(&remote->object.oid),
+			oid_to_hex(&local->object.oid),
 			sha1_to_hex(base_sha1));
 
 	if (!hashcmp(get_object_hash(remote->object), base_sha1)) {

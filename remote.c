@@ -2031,8 +2031,8 @@ int stat_tracking_info(struct branch *branch, int *num_ours, int *num_theirs,
 	argv_array_push(&argv, ""); /* ignored */
 	argv_array_push(&argv, "--left-right");
 	argv_array_pushf(&argv, "%s...%s",
-			 sha1_to_hex(ours->object.sha1),
-			 sha1_to_hex(theirs->object.sha1));
+			 oid_to_hex(&ours->object.oid),
+			 oid_to_hex(&theirs->object.oid));
 	argv_array_push(&argv, "--");
 
 	init_revisions(&revs, NULL);

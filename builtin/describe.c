@@ -267,7 +267,7 @@ static void describe(const char *arg, int last_one)
 	}
 
 	if (!max_candidates)
-		die(_("no tag exactly matches '%s'"), sha1_to_hex(cmit->object.sha1));
+		die(_("no tag exactly matches '%s'"), oid_to_hex(&cmit->object.oid));
 	if (debug)
 		fprintf(stderr, _("searching to describe %s\n"), arg);
 
@@ -317,7 +317,7 @@ static void describe(const char *arg, int last_one)
 		if (annotated_cnt && !list) {
 			if (debug)
 				fprintf(stderr, _("finished search at %s\n"),
-					sha1_to_hex(c->object.sha1));
+					oid_to_hex(&c->object.oid));
 			break;
 		}
 		while (parents) {
@@ -334,9 +334,9 @@ static void describe(const char *arg, int last_one)
 	}
 
 	if (!match_cnt) {
-		const unsigned char *sha1 = cmit->object.sha1;
+		struct object_id *oid = &cmit->object.oid;
 		if (always) {
-			printf("%s", find_unique_abbrev(sha1, abbrev));
+			printf("%s", find_unique_abbrev(oid->hash, abbrev));
 			if (dirty)
 				printf("%s", dirty);
 			printf("\n");
@@ -345,11 +345,11 @@ static void describe(const char *arg, int last_one)
 		if (unannotated_cnt)
 			die(_("No annotated tags can describe '%s'.\n"
 			    "However, there were unannotated tags: try --tags."),
-			    sha1_to_hex(sha1));
+			    oid_to_hex(oid));
 		else
 			die(_("No tags can describe '%s'.\n"
 			    "Try --always, or create some tags."),
-			    sha1_to_hex(sha1));
+			    oid_to_hex(oid));
 	}
 
 	qsort(all_matches, match_cnt, sizeof(all_matches[0]), compare_pt);
@@ -374,7 +374,7 @@ static void describe(const char *arg, int last_one)
 				_("more than %i tags found; listed %i most recent\n"
 				"gave up search at %s\n"),
 				max_candidates, max_candidates,
-				sha1_to_hex(gave_up_on->object.sha1));
+				oid_to_hex(&gave_up_on->object.oid));
 		}
 	}
 

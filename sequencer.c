@@ -139,7 +139,7 @@ static int get_message(struct commit *commit, struct commit_message *out)
 		git_commit_encoding = "UTF-8";
 
 	out->message = logmsg_reencode(commit, NULL, git_commit_encoding);
-	abbrev = find_unique_abbrev(commit->object.sha1, DEFAULT_ABBREV);
+	abbrev = find_unique_abbrev(commit->object.oid.hash, DEFAULT_ABBREV);
 	abbrev_len = strlen(abbrev);
 
 	subject_len = find_commit_subject(out->message, &subject);
@@ -397,12 +397,12 @@ static int is_original_commit_empty(struct commit *commit)
 
 	if (parse_commit(commit))
 		return error(_("Could not parse commit %s\n"),
-			     sha1_to_hex(commit->object.sha1));
+			     oid_to_hex(&commit->object.oid));
 	if (commit->parents) {
 		struct commit *parent = commit->parents->item;
 		if (parse_commit(parent))
 			return error(_("Could not parse parent commit %s\n"),
-				sha1_to_hex(parent->object.sha1));
+				oid_to_hex(&parent->object.oid));
 		ptree_sha1 = get_object_hash(parent->tree->object);
 	} else {
 		ptree_sha1 = EMPTY_TREE_SHA1_BIN; /* commit is root */
@@ -486,7 +486,7 @@ static int do_pick_commit(struct commit *commit, struct replay_opts *opts)
 
 		if (!opts->mainline)
 			return error(_("Commit %s is a merge but no -m option was given."),
-				sha1_to_hex(commit->object.sha1));
+				oid_to_hex(&commit->object.oid));
 
 		for (cnt = 1, p = commit->parents;
 		     cnt != opts->mainline && p;
@@ -494,11 +494,11 @@ static int do_pick_commit(struct commit *commit, struct replay_opts *opts)
 			p = p->next;
 		if (cnt != opts->mainline || !p)
 			return error(_("Commit %s does not have parent %d"),
-				sha1_to_hex(commit->object.sha1), opts->mainline);
+				oid_to_hex(&commit->object.oid), opts->mainline);
 		parent = p->item;
 	} else if (0 < opts->mainline)
 		return error(_("Mainline was specified but commit %s is not a merge."),
-			sha1_to_hex(commit->object.sha1));
+			oid_to_hex(&commit->object.oid));
 	else
 		parent = commit->parents->item;
 
@@ -511,11 +511,11 @@ static int do_pick_commit(struct commit *commit, struct replay_opts *opts)
 		/* TRANSLATORS: The first %s will be "revert" or
 		   "cherry-pick", the second %s a SHA1 */
 		return error(_("%s: cannot parse parent commit %s"),
-			action_name(opts), sha1_to_hex(parent->object.sha1));
+			action_name(opts), oid_to_hex(&parent->object.oid));
 
 	if (get_message(commit, &msg) != 0)
 		return error(_("Cannot get commit message for %s"),
-			sha1_to_hex(commit->object.sha1));
+			oid_to_hex(&commit->object.oid));
 
 	/*
 	 * "commit" is an existing commit.  We would want to apply
@@ -532,11 +532,11 @@ static int do_pick_commit(struct commit *commit, struct replay_opts *opts)
 		strbuf_addstr(&msgbuf, "Revert \"");
 		strbuf_addstr(&msgbuf, msg.subject);
 		strbuf_addstr(&msgbuf, "\"\n\nThis reverts commit ");
-		strbuf_addstr(&msgbuf, sha1_to_hex(commit->object.sha1));
+		strbuf_addstr(&msgbuf, oid_to_hex(&commit->object.oid));
 
 		if (commit->parents && commit->parents->next) {
 			strbuf_addstr(&msgbuf, ", reversing\nchanges made to ");
-			strbuf_addstr(&msgbuf, sha1_to_hex(parent->object.sha1));
+			strbuf_addstr(&msgbuf, oid_to_hex(&parent->object.oid));
 		}
 		strbuf_addstr(&msgbuf, ".\n");
 	} else {
@@ -562,7 +562,7 @@ static int do_pick_commit(struct commit *commit, struct replay_opts *opts)
 			if (!has_conforming_footer(&msgbuf, NULL, 0))
 				strbuf_addch(&msgbuf, '\n');
 			strbuf_addstr(&msgbuf, cherry_picked_prefix);
-			strbuf_addstr(&msgbuf, sha1_to_hex(commit->object.sha1));
+			strbuf_addstr(&msgbuf, oid_to_hex(&commit->object.oid));
 			strbuf_addstr(&msgbuf, ")\n");
 		}
 	}

@@ -436,7 +436,7 @@ static int show_text_ref(const char *name, const struct object_id *oid,
 		o = deref_tag(o, name, 0);
 		if (!o)
 			return 0;
-		strbuf_addf(buf, "%s\t%s^{}\n", sha1_to_hex(o->sha1),
+		strbuf_addf(buf, "%s\t%s^{}\n", oid_to_hex(&o->oid),
 			    name_nons);
 	}
 	return 0;

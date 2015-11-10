@@ -84,11 +84,11 @@ static void show_commit(struct commit *commit, void *data)
 		fputs(find_unique_abbrev(get_object_hash(commit->object), revs->abbrev),
 		      stdout);
 	else
-		fputs(sha1_to_hex(commit->object.sha1), stdout);
+		fputs(oid_to_hex(&commit->object.oid), stdout);
 	if (revs->print_parents) {
 		struct commit_list *parents = commit->parents;
 		while (parents) {
-			printf(" %s", sha1_to_hex(parents->item->object.sha1));
+			printf(" %s", oid_to_hex(&parents->item->object.oid));
 			parents = parents->next;
 		}
 	}
@@ -97,7 +97,7 @@ static void show_commit(struct commit *commit, void *data)
 
 		children = lookup_decoration(&revs->children, &commit->object);
 		while (children) {
-			printf(" %s", sha1_to_hex(children->item->object.sha1));
+			printf(" %s", oid_to_hex(&children->item->object.oid));
 			children = children->next;
 		}
 	}
@@ -182,8 +182,8 @@ static void finish_object(struct object *obj,
 			  void *cb_data)
 {
 	struct rev_list_info *info = cb_data;
-	if (obj->type == OBJ_BLOB && !has_sha1_file(obj->sha1))
-		die("missing blob object '%s'", sha1_to_hex(obj->sha1));
+	if (obj->type == OBJ_BLOB && !has_object_file(&obj->oid))
+		die("missing blob object '%s'", oid_to_hex(&obj->oid));
 	if (info->revs->verify_objects && !obj->parsed && obj->type != OBJ_COMMIT)
 		parse_object(get_object_hash(*obj));
 }
@@ -201,7 +201,7 @@ static void show_object(struct object *obj,
 
 static void show_edge(struct commit *commit)
 {
-	printf("-%s\n", sha1_to_hex(commit->object.sha1));
+	printf("-%s\n", oid_to_hex(&commit->object.oid));
 }
 
 static void print_var_str(const char *var, const char *val)
@@ -242,7 +242,7 @@ static int show_bisect_vars(struct rev_list_info *info, int reaches, int all)
 		cnt = reaches;
 
 	if (revs->commits)
-		sha1_to_hex_r(hex, revs->commits->item->object.sha1);
+		sha1_to_hex_r(hex, revs->commits->item->object.oid.hash);
 
 	if (flags & BISECT_SHOW_ALL) {
 		traverse_commit_list(revs, show_commit, show_object, info);

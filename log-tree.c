@@ -342,7 +342,7 @@ void log_write_email_headers(struct rev_info *opt, struct commit *commit,
 {
 	const char *subject = NULL;
 	const char *extra_headers = opt->extra_headers;
-	const char *name = sha1_to_hex(commit->object.sha1);
+	const char *name = oid_to_hex(&commit->object.oid);
 
 	*need_8bit_cte_p = 0; /* unknown */
 	if (opt->total > 0) {
@@ -503,8 +503,8 @@ static void show_one_mergetag(struct commit *commit,
 	if (parse_tag_buffer(tag, extra->value, extra->len))
 		strbuf_addstr(&verify_message, "malformed mergetag\n");
 	else if (is_common_merge(commit) &&
-		 !hashcmp(tag->tagged->sha1,
-			  commit->parents->next->item->object.sha1))
+		 !oidcmp(&tag->tagged->oid,
+			  &commit->parents->next->item->object.oid))
 		strbuf_addf(&verify_message,
 			    "merged tag '%s'\n", tag->tag);
 	else if ((nth = which_parent(get_object_hash(*tag->tagged), commit)) < 0)
@@ -796,19 +796,19 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 {
 	int showed_log;
 	struct commit_list *parents;
-	unsigned const char *sha1;
+	struct object_id *oid;
 
 	if (!opt->diff && !DIFF_OPT_TST(&opt->diffopt, EXIT_WITH_STATUS))
 		return 0;
 
 	parse_commit_or_die(commit);
-	sha1 = commit->tree->object.sha1;
+	oid = &commit->tree->object.oid;
 
 	/* Root commit? */
 	parents = get_saved_parents(opt, commit);
 	if (!parents) {
 		if (opt->show_root_diff) {
-			diff_root_tree_sha1(sha1, "", &opt->diffopt);
+			diff_root_tree_sha1(oid->hash, "", &opt->diffopt);
 			log_tree_diff_flush(opt);
 		}
 		return !opt->loginfo;
@@ -827,8 +827,8 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 			 * we merged _in_.
 			 */
 			parse_commit_or_die(parents->item);
-			diff_tree_sha1(parents->item->tree->object.sha1,
-				       sha1, "", &opt->diffopt);
+			diff_tree_sha1(parents->item->tree->object.oid.hash,
+				       oid->hash, "", &opt->diffopt);
 			log_tree_diff_flush(opt);
 			return !opt->loginfo;
 		}
@@ -842,8 +842,8 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 		struct commit *parent = parents->item;
 
 		parse_commit_or_die(parent);
-		diff_tree_sha1(parent->tree->object.sha1,
-			       sha1, "", &opt->diffopt);
+		diff_tree_sha1(parent->tree->object.oid.hash,
+			       oid->hash, "", &opt->diffopt);
 		log_tree_diff_flush(opt);
 
 		showed_log |= !opt->loginfo;

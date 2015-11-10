@@ -316,7 +316,7 @@ static int fsck_walk_tree(struct tree *tree, void *data, struct fsck_options *op
 			result = options->walk(&lookup_blob(entry.sha1)->object, OBJ_BLOB, data, options);
 		else {
 			result = error("in tree %s: entry %s has bad mode %.6o",
-					sha1_to_hex(tree->object.sha1), entry.path, entry.mode);
+					oid_to_hex(&tree->object.oid), entry.path, entry.mode);
 		}
 		if (result < 0)
 			return result;
@@ -373,7 +373,7 @@ int fsck_walk(struct object *obj, void *data, struct fsck_options *options)
 	case OBJ_TAG:
 		return fsck_walk_tag((struct tag *)obj, data, options);
 	default:
-		error("Unknown object type for %s", sha1_to_hex(obj->sha1));
+		error("Unknown object type for %s", oid_to_hex(&obj->oid));
 		return -1;
 	}
 }
@@ -809,9 +809,9 @@ int fsck_object(struct object *obj, void *data, unsigned long size,
 int fsck_error_function(struct object *obj, int msg_type, const char *message)
 {
 	if (msg_type == FSCK_WARN) {
-		warning("object %s: %s", sha1_to_hex(obj->sha1), message);
+		warning("object %s: %s", oid_to_hex(&obj->oid), message);
 		return 0;
 	}
-	error("object %s: %s", sha1_to_hex(obj->sha1), message);
+	error("object %s: %s", oid_to_hex(&obj->oid), message);
 	return 1;
 }

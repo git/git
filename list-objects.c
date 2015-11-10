@@ -84,7 +84,7 @@ static void process_tree(struct rev_info *revs,
 	if (parse_tree_gently(tree, revs->ignore_missing_links) < 0) {
 		if (revs->ignore_missing_links)
 			return;
-		die("bad tree object %s", sha1_to_hex(obj->sha1));
+		die("bad tree object %s", oid_to_hex(&obj->oid));
 	}
 	obj->flags |= SEEN;
 	show(obj, path, name, cb_data);
@@ -229,7 +229,7 @@ void traverse_commit_list(struct rev_info *revs,
 			continue;
 		}
 		die("unknown pending object %s (%s)",
-		    sha1_to_hex(obj->sha1), name);
+		    oid_to_hex(&obj->oid), name);
 	}
 	object_array_clear(&revs->pending);
 	strbuf_release(&base);

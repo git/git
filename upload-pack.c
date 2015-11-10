@@ -130,14 +130,14 @@ static void create_pack_file(void)
 
 	for (i = 0; i < want_obj.nr; i++)
 		fprintf(pipe_fd, "%s\n",
-			sha1_to_hex(want_obj.objects[i].item->sha1));
+			oid_to_hex(&want_obj.objects[i].item->oid));
 	fprintf(pipe_fd, "--not\n");
 	for (i = 0; i < have_obj.nr; i++)
 		fprintf(pipe_fd, "%s\n",
-			sha1_to_hex(have_obj.objects[i].item->sha1));
+			oid_to_hex(&have_obj.objects[i].item->oid));
 	for (i = 0; i < extra_edge_obj.nr; i++)
 		fprintf(pipe_fd, "%s\n",
-			sha1_to_hex(extra_edge_obj.objects[i].item->sha1));
+			oid_to_hex(&extra_edge_obj.objects[i].item->oid));
 	fprintf(pipe_fd, "\n");
 	fflush(pipe_fd);
 	fclose(pipe_fd);
@@ -491,7 +491,7 @@ static void check_non_tip(void)
 			continue;
 		if (!is_our_ref(o))
 			continue;
-		memcpy(namebuf + 1, sha1_to_hex(o->sha1), 40);
+		memcpy(namebuf + 1, oid_to_hex(&o->oid), GIT_SHA1_HEXSZ);
 		if (write_in_full(cmd.in, namebuf, 42) < 0)
 			goto error;
 	}
@@ -500,7 +500,7 @@ static void check_non_tip(void)
 		o = want_obj.objects[i].item;
 		if (is_our_ref(o))
 			continue;
-		memcpy(namebuf, sha1_to_hex(o->sha1), 40);
+		memcpy(namebuf, oid_to_hex(&o->oid), GIT_SHA1_HEXSZ);
 		if (write_in_full(cmd.in, namebuf, 41) < 0)
 			goto error;
 	}
@@ -534,7 +534,7 @@ error:
 		o = want_obj.objects[i].item;
 		if (!is_our_ref(o))
 			die("git upload-pack: not our ref %s",
-			    sha1_to_hex(o->sha1));
+			    oid_to_hex(&o->oid));
 	}
 }
 
@@ -646,7 +646,7 @@ static void receive_needs(void)
 			struct object *object = &result->item->object;
 			if (!(object->flags & (CLIENT_SHALLOW|NOT_SHALLOW))) {
 				packet_write(1, "shallow %s",
-						sha1_to_hex(object->sha1));
+						oid_to_hex(&object->oid));
 				register_shallow(get_object_hash(*object));
 				shallow_nr++;
 			}
@@ -658,7 +658,7 @@ static void receive_needs(void)
 			if (object->flags & NOT_SHALLOW) {
 				struct commit_list *parents;
 				packet_write(1, "unshallow %s",
-					sha1_to_hex(object->sha1));
+					oid_to_hex(&object->oid));
 				object->flags &= ~CLIENT_SHALLOW;
 				/* make sure the real parents are parsed */
 				unregister_shallow(get_object_hash(*object));

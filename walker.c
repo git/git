@@ -19,7 +19,7 @@ static void report_missing(const struct object *obj)
 {
 	fprintf(stderr, "Cannot obtain needed %s %s\n",
 		obj->type ? typename(obj->type): "object",
-		sha1_to_hex(obj->sha1));
+		oid_to_hex(&obj->oid));
 	if (!is_null_sha1(current_commit_sha1))
 		fprintf(stderr, "while processing commit %s.\n",
 			sha1_to_hex(current_commit_sha1));
@@ -80,7 +80,7 @@ static int process_commit(struct walker *walker, struct commit *commit)
 
 	hashcpy(current_commit_sha1, get_object_hash(commit->object));
 
-	walker_say(walker, "walk %s\n", sha1_to_hex(commit->object.sha1));
+	walker_say(walker, "walk %s\n", oid_to_hex(&commit->object.oid));
 
 	if (walker->get_tree) {
 		if (process(walker, &commit->tree->object))
@@ -130,7 +130,7 @@ static int process_object(struct walker *walker, struct object *obj)
 	}
 	return error("Unable to determine requirements "
 		     "of type %s for %s",
-		     typename(obj->type), sha1_to_hex(obj->sha1));
+		     typename(obj->type), oid_to_hex(&obj->oid));
 }
 
 static int process(struct walker *walker, struct object *obj)
@@ -139,7 +139,7 @@ static int process(struct walker *walker, struct object *obj)
 		return 0;
 	obj->flags |= SEEN;
 
-	if (has_sha1_file(obj->sha1)) {
+	if (has_object_file(&obj->oid)) {
 		/* We already have it, so we should scan it now. */
 		obj->flags |= TO_SCAN;
 	}

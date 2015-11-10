@@ -277,7 +277,7 @@ static int add_worktree(const char *path, const char *refname,
 
 	if (commit)
 		argv_array_pushl(&cp.args, "update-ref", "HEAD",
-				 sha1_to_hex(commit->object.sha1), NULL);
+				 oid_to_hex(&commit->object.oid), NULL);
 	else
 		argv_array_pushl(&cp.args, "symbolic-ref", "HEAD",
 				 symref.buf, NULL);

@@ -26,17 +26,17 @@
 static struct tree *shift_tree_object(struct tree *one, struct tree *two,
 				      const char *subtree_shift)
 {
-	unsigned char shifted[20];
+	struct object_id shifted;
 
 	if (!*subtree_shift) {
-		shift_tree(get_object_hash(one->object), get_object_hash(two->object), shifted, 0);
+		shift_tree(get_object_hash(one->object), get_object_hash(two->object), shifted.hash, 0);
 	} else {
-		shift_tree_by(get_object_hash(one->object), get_object_hash(two->object), shifted,
+		shift_tree_by(get_object_hash(one->object), get_object_hash(two->object), shifted.hash,
 			      subtree_shift);
 	}
-	if (!hashcmp(two->object.sha1, shifted))
+	if (!oidcmp(&two->object.oid, &shifted))
 		return two;
-	return lookup_tree(shifted);
+	return lookup_tree(shifted.hash);
 }
 
 static struct commit *make_virtual_commit(struct tree *tree, const char *comment)
@@ -1823,8 +1823,8 @@ int merge_trees(struct merge_options *o,
 	if (code != 0) {
 		if (show(o, 4) || o->call_depth)
 			die(_("merging of trees %s and %s failed"),
-			    sha1_to_hex(head->object.sha1),
-			    sha1_to_hex(merge->object.sha1));
+			    oid_to_hex(&head->object.oid),
+			    oid_to_hex(&merge->object.oid));
 		else
 			exit(128);
 	}

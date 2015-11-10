@@ -378,7 +378,7 @@ static void shortlog(const char *name,
 
 		if (!sb.len)
 			string_list_append(&subjects,
-					   sha1_to_hex(commit->object.sha1));
+					   oid_to_hex(&commit->object.oid));
 		else
 			string_list_append(&subjects, strbuf_detach(&sb, NULL));
 	}

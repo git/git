@@ -365,7 +365,7 @@ static void squash_message(struct commit *commit, struct commit_list *remotehead
 	while ((commit = get_revision(&rev)) != NULL) {
 		strbuf_addch(&out, '\n');
 		strbuf_addf(&out, "commit %s\n",
-			sha1_to_hex(get_object_hash(commit->object)));
+			oid_to_hex(&commit->object.oid));
 		pretty_print_commit(&ctx, commit, &out);
 	}
 	if (write_in_full(fd, out.buf, out.len) != out.len)
@@ -958,14 +958,14 @@ static void write_merge_state(struct commit_list *remoteheads)
 	struct strbuf buf = STRBUF_INIT;
 
 	for (j = remoteheads; j; j = j->next) {
-		unsigned const char *sha1;
+		struct object_id *oid;
 		struct commit *c = j->item;
 		if (c->util && merge_remote_util(c)->obj) {
-			sha1 = merge_remote_util(c)->obj->sha1;
+			oid = &merge_remote_util(c)->obj->oid;
 		} else {
-			sha1 = get_object_hash(c->object);
+			oid = &c->object.oid;
 		}
-		strbuf_addf(&buf, "%s\n", sha1_to_hex(sha1));
+		strbuf_addf(&buf, "%s\n", oid_to_hex(oid));
 	}
 	filename = git_path_merge_head();
 	fd = open(filename, O_WRONLY | O_CREAT, 0666);

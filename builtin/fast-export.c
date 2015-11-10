@@ -544,13 +544,13 @@ static void handle_commit(struct commit *commit, struct rev_info *rev)
 	author = strstr(commit_buffer, "\nauthor ");
 	if (!author)
 		die ("Could not find author in commit %s",
-		     sha1_to_hex(commit->object.sha1));
+		     oid_to_hex(&commit->object.oid));
 	author++;
 	author_end = strchrnul(author, '\n');
 	committer = strstr(author_end, "\ncommitter ");
 	if (!committer)
 		die ("Could not find committer in commit %s",
-		     sha1_to_hex(commit->object.sha1));
+		     oid_to_hex(&commit->object.oid));
 	committer++;
 	committer_end = strchrnul(committer, '\n');
 	message = strstr(committer_end, "\n\n");
@@ -661,13 +661,13 @@ static void handle_tag(const char *name, struct tag *tag)
 	}
 	if (tagged->type == OBJ_TREE) {
 		warning("Omitting tag %s,\nsince tags of trees (or tags of tags of trees, etc.) are not supported.",
-			sha1_to_hex(tag->object.sha1));
+			oid_to_hex(&tag->object.oid));
 		return;
 	}
 
 	buf = read_sha1_file(get_object_hash(tag->object), &type, &size);
 	if (!buf)
-		die ("Could not read tag %s", sha1_to_hex(tag->object.sha1));
+		die ("Could not read tag %s", oid_to_hex(&tag->object.oid));
 	message = memmem(buf, size, "\n\n", 2);
 	if (message) {
 		message += 2;
@@ -706,16 +706,16 @@ static void handle_tag(const char *name, struct tag *tag)
 			case ABORT:
 				die ("Encountered signed tag %s; use "
 				     "--signed-tags=<mode> to handle it.",
-				     sha1_to_hex(tag->object.sha1));
+				     oid_to_hex(&tag->object.oid));
 			case WARN:
 				warning ("Exporting signed tag %s",
-					 sha1_to_hex(tag->object.sha1));
+					 oid_to_hex(&tag->object.oid));
 				/* fallthru */
 			case VERBATIM:
 				break;
 			case WARN_STRIP:
 				warning ("Stripping signature from tag %s",
-					 sha1_to_hex(tag->object.sha1));
+					 oid_to_hex(&tag->object.oid));
 				/* fallthru */
 			case STRIP:
 				message_size = signature + 1 - message;
@@ -731,14 +731,14 @@ static void handle_tag(const char *name, struct tag *tag)
 		case ABORT:
 			die ("Tag %s tags unexported object; use "
 			     "--tag-of-filtered-object=<mode> to handle it.",
-			     sha1_to_hex(tag->object.sha1));
+			     oid_to_hex(&tag->object.oid));
 		case DROP:
 			/* Ignore this tag altogether */
 			return;
 		case REWRITE:
 			if (tagged->type != OBJ_COMMIT) {
 				die ("Tag %s tags unexported %s!",
-				     sha1_to_hex(tag->object.sha1),
+				     oid_to_hex(&tag->object.oid),
 				     typename(tagged->type));
 			}
 			p = (struct commit *)tagged;
@@ -751,7 +751,7 @@ static void handle_tag(const char *name, struct tag *tag)
 					break;
 				if (!p->parents)
 					die ("Can't find replacement commit for tag %s\n",
-					     sha1_to_hex(tag->object.sha1));
+					     oid_to_hex(&tag->object.oid));
 				p = p->parents->item;
 			}
 			tagged_mark = get_object_mark(&p->object);
@@ -888,7 +888,7 @@ static void export_marks(char *file)
 		if (deco->base && deco->base->type == 1) {
 			mark = ptr_to_mark(deco->decoration);
 			if (fprintf(f, ":%"PRIu32" %s\n", mark,
-				sha1_to_hex(deco->base->sha1)) < 0) {
+				oid_to_hex(&deco->base->oid)) < 0) {
 			    e = 1;
 			    break;
 			}

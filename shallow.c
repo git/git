@@ -167,7 +167,7 @@ static int write_one_shallow(const struct commit_graft *graft, void *cb_data)
 		if (!c || !(c->object.flags & SEEN)) {
 			if (data->flags & VERBOSE)
 				printf("Removing %s from .git/shallow\n",
-				       sha1_to_hex(c->object.sha1));
+				       oid_to_hex(&c->object.oid));
 			return 0;
 		}
 	}
@@ -426,7 +426,7 @@ static void paint_down(struct paint_info *info, const unsigned char *sha1,
 
 		if (parse_commit(c))
 			die("unable to parse commit %s",
-			    sha1_to_hex(c->object.sha1));
+			    oid_to_hex(&c->object.oid));
 
 		for (p = c->parents; p; p = p->next) {
 			uint32_t **p_refs = ref_bitmap_at(&info->ref_bitmap,

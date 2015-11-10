@@ -193,7 +193,7 @@ static int compare_commit_dist(const void *a_, const void *b_)
 	b = (struct commit_dist *)b_;
 	if (a->distance != b->distance)
 		return b->distance - a->distance; /* desc sort */
-	return hashcmp(a->commit->object.sha1, b->commit->object.sha1);
+	return oidcmp(&a->commit->object.oid, &b->commit->object.oid);
 }
 
 static struct commit_list *best_bisection_sorted(struct commit_list *list, int nr)
@@ -575,7 +575,7 @@ static struct commit_list *skip_away(struct commit_list *list, int count)
 
 	for (i = 0; cur; cur = cur->next, i++) {
 		if (i == index) {
-			if (hashcmp(cur->item->object.sha1, current_bad_oid->hash))
+			if (oidcmp(&cur->item->object.oid, current_bad_oid))
 				return cur;
 			if (previous)
 				return previous;

@@ -46,7 +46,7 @@ static void add_object_buffer(struct object *object, char *buffer, unsigned long
 	obj->buffer = buffer;
 	obj->size = size;
 	if (add_decoration(&obj_decorate, object, obj))
-		die("object %s tried to add buffer twice!", sha1_to_hex(object->sha1));
+		die("object %s tried to add buffer twice!", oid_to_hex(&object->oid));
 }
 
 /*
@@ -170,7 +170,7 @@ static void write_cached_object(struct object *obj, struct obj_buffer *obj_buf)
 	unsigned char sha1[20];
 
 	if (write_sha1_file(obj_buf->buffer, obj_buf->size, typename(obj->type), sha1) < 0)
-		die("failed to write object %s", sha1_to_hex(obj->sha1));
+		die("failed to write object %s", oid_to_hex(&obj->oid));
 	obj->flags |= FLAG_WRITTEN;
 }
 
@@ -203,12 +203,12 @@ static int check_object(struct object *obj, int type, void *data, struct fsck_op
 
 	obj_buf = lookup_object_buffer(obj);
 	if (!obj_buf)
-		die("Whoops! Cannot find object '%s'", sha1_to_hex(obj->sha1));
+		die("Whoops! Cannot find object '%s'", oid_to_hex(&obj->oid));
 	if (fsck_object(obj, obj_buf->buffer, obj_buf->size, &fsck_options))
 		die("Error in object");
 	fsck_options.walk = check_object;
 	if (fsck_walk(obj, NULL, &fsck_options))
-		die("Error on reachable objects of %s", sha1_to_hex(obj->sha1));
+		die("Error on reachable objects of %s", oid_to_hex(&obj->oid));
 	write_cached_object(obj, obj_buf);
 	return 0;
 }
