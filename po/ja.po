@@ -368,7 +368,6 @@ msgid "About gitk"
 msgstr "gitk について"
 
 #: gitk:3015
-#, fuzzy
 msgid ""
 "\n"
 "Gitk - a commit viewer for git\n"
@@ -415,17 +414,14 @@ msgid "<End>\t\tMove to last commit"
 msgstr "<End>\t\t最後のコミットに移動"
 
 #: gitk:3053
-#, fuzzy
 msgid "<Up>, p, k\tMove up one commit"
 msgstr "<Up>, p, k\t一つ上のコミットに移動"
 
 #: gitk:3054
-#, fuzzy
 msgid "<Down>, n, j\tMove down one commit"
 msgstr "<Down>, n, j\t一つ下のコミットに移動"
 
 #: gitk:3055
-#, fuzzy
 msgid "<Left>, z, h\tGo back in history list"
 msgstr "<Left>, z, h\t履歴の前に戻る"
 
@@ -624,14 +620,12 @@ msgid "External diff viewer failed:"
 msgstr "外部diffビューアが失敗:"
 
 #: gitk:4044
-#, fuzzy
 msgid "All files"
-msgstr "全てのファイル(&A)"
+msgstr "全てのファイル"
 
 #: gitk:4068
-#, fuzzy
 msgid "View"
-msgstr "ビュー(&V)"
+msgstr "ビュー"
 
 #: gitk:4071
 msgid "Gitk view definition"
@@ -1345,7 +1339,6 @@ msgid "Gitk preferences"
 msgstr "Gitk 設定"
 
 #: gitk:11509
-#, fuzzy
 msgid "General"
 msgstr "一般"
 
