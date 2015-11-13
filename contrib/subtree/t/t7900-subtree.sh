@@ -127,9 +127,21 @@ test_expect_success 'no merge from non-existent subtree' '
 	test_must_fail git subtree merge --prefix="sub dir" FETCH_HEAD
 '
 
+test_expect_success 'add subproj as subtree into sub dir/ with --prefix' '
+	git subtree add --prefix="sub dir" sub1 &&
+	check_equal "$(last_commit_message)" "Add '\''sub dir/'\'' from commit '\''$(git rev-parse sub1)'\''" &&
+	undo
+'
+
 test_expect_success 'check if --message works for add' '
 	git subtree add --prefix="sub dir" --message="Added subproject" sub1 &&
 	check_equal ''"$(last_commit_message)"'' "Added subproject" &&
+	undo
+'
+
+test_expect_success 'add subproj as subtree into sub dir/ with --prefix and --message' '
+	git subtree add --prefix="sub dir" --message="Added subproject" sub1 &&
+	check_equal "$(last_commit_message)" "Added subproject" &&
 	undo
 '
 
@@ -145,6 +157,13 @@ test_expect_success 'check if --message works with squash too' '
 	undo
 '
 
+test_expect_success 'add subproj as subtree into sub dir/ with --squash and --prefix and --message' '
+	git subtree add --prefix="sub dir" --message="Added subproject with squash" --squash sub1 &&
+	check_equal "$(last_commit_message)" "Added subproject with squash" &&
+	undo
+'
+
+# Maybe delete
 test_expect_success 'add subproj to mainline' '
 	git subtree add --prefix="sub dir"/ FETCH_HEAD &&
 	check_equal ''"$(last_commit_message)"'' "Add '"'sub dir/'"' from commit '"'"'''"$(git rev-parse sub1)"'''"'"'"
