@@ -123,6 +123,10 @@ test_expect_success 'no pull from non-existant subtree' '
 	test_must_fail git subtree pull --prefix="sub dir" ./"sub proj" sub1
 '
 
+test_expect_success 'no merge from non-existent subtree' '
+	test_must_fail git subtree merge --prefix="sub dir" FETCH_HEAD
+'
+
 test_expect_success 'check if --message works for add' '
 	git subtree add --prefix="sub dir" --message="Added subproject" sub1 &&
 	check_equal ''"$(last_commit_message)"'' "Added subproject" &&
