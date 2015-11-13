@@ -250,7 +250,6 @@ test_expect_success 'split requires path given by option --prefix must exist' '
 
 test_expect_success 'check if --message works for split+rejoin' '
 	spl1=''"$(git subtree split --annotate='"'*'"' --prefix "sub dir" --onto FETCH_HEAD --message "Split & rejoin" --rejoin)"'' &&
-	git branch spl1 "$spl1" &&
 	check_equal ''"$(last_commit_message)"'' "Split & rejoin" &&
 	undo
 '
@@ -282,7 +281,21 @@ test_expect_success 'check split with --branch for an incompatible branch' '
 	test_must_fail git subtree split --prefix "sub dir" --onto FETCH_HEAD --branch subdir
 '
 
-test_expect_success 'check split+rejoin' '
+test_expect_success 'split sub dir/ with --rejoin' '
+	spl1=$(git subtree split --prefix="sub dir" --annotate="*") &&
+	git branch spl1 "$spl1" &&
+	git subtree split --prefix="sub dir" --annotate="*" --rejoin &&
+	check_equal "$(last_commit_message)" "Split '\''sub dir/'\'' into commit '\''$spl1'\''" &&
+	undo
+'
+
+test_expect_success 'split sub dir/ with --rejoin and --message' '
+	git subtree split --prefix="sub dir" --message="Split & rejoin" --annotate="*" --rejoin &&
+	check_equal "$(last_commit_message)" "Split & rejoin" &&
+	undo
+'
+
+test_expect_success 'check split+rejoin+onto' '
 	spl1=''"$(git subtree split --annotate='"'*'"' --prefix "sub dir" --onto FETCH_HEAD --message "Split & rejoin" --rejoin)"'' &&
 	undo &&
 	git subtree split --annotate='"'*'"' --prefix "sub dir" --onto FETCH_HEAD --rejoin &&
