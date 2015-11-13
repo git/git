@@ -245,7 +245,10 @@ find_latest_squash()
 		case "$a" in
 			START) sq="$b" ;;
 			git-subtree-mainline:) main="$b" ;;
-			git-subtree-split:) sub="$b" ;;
+			git-subtree-split:)
+				sub="$(git rev-parse "$b^0")" ||
+				    die "could not rev-parse split hash $b from commit $sq"
+				;;
 			END)
 				if [ -n "$sub" ]; then
 					if [ -n "$main" ]; then
@@ -278,7 +281,10 @@ find_existing_splits()
 		case "$a" in
 			START) sq="$b" ;;
 			git-subtree-mainline:) main="$b" ;;
-			git-subtree-split:) sub="$b" ;;
+			git-subtree-split:)
+				sub="$(git rev-parse "$b^0")" ||
+				    die "could not rev-parse split hash $b from commit $sq"
+				;;
 			END)
 				debug "  Main is: '$main'"
 				if [ -z "$main" -a -n "$sub" ]; then
