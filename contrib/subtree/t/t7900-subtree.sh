@@ -5,7 +5,7 @@
 #
 test_description='Basic porcelain support for subtrees
 
-This test verifies the basic operation of the merge, pull, add
+This test verifies the basic operation of the add, pull, merge
 and split subcommands of git subtree.
 '
 
@@ -19,7 +19,6 @@ create()
 	echo "$1" >"$1"
 	git add "$1"
 }
-
 
 check_equal()
 {
@@ -36,6 +35,30 @@ check_equal()
 undo()
 {
 	git reset --hard HEAD~
+}
+
+# Make sure no patch changes more than one file.
+# The original set of commits changed only one file each.
+# A multi-file change would imply that we pruned commits
+# too aggressively.
+join_commits()
+{
+	commit=
+	all=
+	while read x y; do
+		if [ -z "$x" ]; then
+			continue
+		elif [ "$x" = "commit:" ]; then
+			if [ -n "$commit" ]; then
+				echo "$commit $all"
+				all=
+			fi
+			commit="$y"
+		else
+			all="$all $y"
+		fi
+	done
+	echo "$commit $all"
 }
 
 last_commit_message()
@@ -123,9 +146,11 @@ test_expect_success 'add subproj to mainline' '
 	check_equal ''"$(last_commit_message)"'' "Add '"'sub dir/'"' from commit '"'"'''"$(git rev-parse sub1)"'''"'"'"
 '
 
-# this shouldn't actually do anything, since FETCH_HEAD is already a parent
-test_expect_success 'merge fetched subproj' '
-	git merge -m "merge -s -ours" -s ours FETCH_HEAD
+test_expect_success 'merge the added subproj again, should do nothing' '
+	# this shouldn not actually do anything, since FETCH_HEAD
+	# is already a parent
+	result=$(git merge -s ours -m "merge -s -ours" FETCH_HEAD) &&
+	check_equal "${result}" "Already up-to-date."
 '
 
 test_expect_success 'add main-sub5' '
@@ -167,7 +192,7 @@ test_expect_success 'merge new subproj history into subdir' '
 	undo
 '
 
-test_expect_success 'Check that prefix argument is required for split' '
+test_expect_success 'split requires option --prefix' '
 	echo "You must provide the --prefix option." > expected &&
 	test_must_fail git subtree split > actual 2>&1 &&
 	test_debug "printf '"'"'expected: '"'"'" &&
@@ -178,15 +203,15 @@ test_expect_success 'Check that prefix argument is required for split' '
 	rm -f expected actual
 '
 
-test_expect_success 'Check that the <prefix> exists for a split' '
-	echo "'"'"'non-existent-directory'"'"'" does not exist\; use "'"'"'git subtree add'"'"'" > expected &&
+test_expect_success 'split requires path given by option --prefix must exist' '
+	echo "'\''non-existent-directory'\'' does not exist; use '\''git subtree add'\''" > expected &&
 	test_must_fail git subtree split --prefix=non-existent-directory > actual 2>&1 &&
 	test_debug "printf '"'"'expected: '"'"'" &&
 	test_debug "cat expected" &&
 	test_debug "printf '"'"'actual: '"'"'" &&
 	test_debug "cat actual" &&
-	test_cmp expected actual
-#	rm -f expected actual
+	test_cmp expected actual &&
+	rm -f expected actual
 '
 
 test_expect_success 'check if --message works for split+rejoin' '
@@ -279,18 +304,22 @@ test_expect_success 'merge split into subproj' '
 
 chkm="main4
 main6"
+
 chkms="main-sub10
 main-sub5
 main-sub7
 main-sub8"
+
 chkms_sub=$(cat <<TXT | sed 's,^,sub dir/,'
 $chkms
 TXT
 )
+
 chks="sub1
 sub2
 sub3
 sub9"
+
 chks_sub=$(cat <<TXT | sed 's,^,sub dir/,'
 $chks
 TXT
@@ -301,6 +330,7 @@ test_expect_success 'make sure exactly the right set of files ends up in the sub
 	check_equal "$subfiles" "$chkms
 $chks"
 '
+
 test_expect_success 'make sure the subproj history *only* contains commits that affect the subdir' '
 	allchanges=''"$(git log --name-only --pretty=format:'"''"' | sort | sed "/^$/d")"'' &&
 	check_equal "$allchanges" "$chkms
@@ -324,26 +354,27 @@ $chks_sub"
 '
 
 test_expect_success 'make sure each filename changed exactly once in the entire history' '
-	# main-sub?? and /subdir/main-sub?? both change, because those are the
-	# changes that were split into their own history.  And subdir/sub?? never
+	# main-sub?? and sub dir/main-sub?? both change, because those are the
+	# changes that were split into their own history.  And sub dir/sub?? never
 	# change, since they were *only* changed in the subtree branch.
 	allchanges=''"$(git log --name-only --pretty=format:'"''"' | sort | sed "/^$/d")"'' &&
-	check_equal "$allchanges" ''"$(cat <<TXT | sort
+	expected=''"$(cat <<TXT | sort
 $chkms
 $chkm
 $chks
 $chkms_sub
 TXT
-)"''
+)"'' &&
+	check_equal "$allchanges" "$expected"
 '
 
 test_expect_success 'make sure the --rejoin commits never make it into subproj' '
-	check_equal ''"$(git log --pretty=format:'"'%s'"' HEAD^2 | grep -i split)"'' ""
+	check_equal "$(git log --pretty=format:"%s" HEAD^2 | grep -i split)" ""
 '
 
 test_expect_success 'make sure no "git subtree" tagged commits make it into subproj' '
 	# They are meaningless to subproj since one side of the merge refers to the mainline
-	check_equal ''"$(git log --pretty=format:'"'%s%n%b'"' HEAD^2 | grep "git-subtree.*:")"'' ""
+	check_equal "$(git log --pretty=format:"%s%n%b" HEAD^2 | grep "git-subtree.*:")" ""
 '
 
 # prepare second pair of repositories
@@ -408,13 +439,13 @@ test_expect_success 'split for main-sub4 without --onto' '
 	git subtree split --prefix "sub dir" --branch mainsub4
 '
 
-# at this point, the new commit parent should be sub3 if it is not,
+# At this point, the new commit parent should be sub3.  If it is not,
 # something went wrong (the "newparent" of "master~" commit should
 # have been sub3, but it was not, because its cache was not set to
-# itself)
+# itself).
 
 test_expect_success 'check that the commit parent is sub3' '
-	check_equal ''"$(git log --pretty=format:%P -1 mainsub4)"'' ''"$(git rev-parse sub3)"''
+	check_equal "$(git log --pretty=format:%P -1 mainsub4)" "$(git rev-parse sub3)"
 '
 
 test_expect_success 'add main-sub5' '
@@ -431,36 +462,12 @@ test_expect_success 'split for main-sub5 without --onto' '
 	check_equal ''"$(git log --pretty=format:%P -1 mainsub5)"'' ""
 '
 
-# make sure no patch changes more than one file.  The original set of commits
-# changed only one file each.  A multi-file change would imply that we pruned
-# commits too aggressively.
-joincommits()
-{
-	commit=
-	all=
-	while read x y; do
-		#echo "{$x}" >&2
-		if [ -z "$x" ]; then
-			continue
-		elif [ "$x" = "commit:" ]; then
-			if [ -n "$commit" ]; then
-				echo "$commit $all"
-				all=
-			fi
-			commit="$y"
-		else
-			all="$all $y"
-		fi
-	done
-	echo "$commit $all"
-}
-
 test_expect_success 'verify one file change per commit' '
 	x= &&
-	list=''"$(git log --pretty=format:'"'commit: %H'"' | joincommits)"'' &&
+	list=''"$(git log --pretty=format:'"'commit: %H'"' | join_commits)"'' &&
 #	test_debug "echo HERE" &&
 #	test_debug "echo ''"$list"''" &&
-	(git log --pretty=format:'"'commit: %H'"' | joincommits |
+	git log --pretty=format:'"'commit: %H'"' | join_commits |
 	(	while read commit a b; do
 			test_debug "echo Verifying commit "''"$commit"''
 			test_debug "echo a: "''"$a"''
@@ -468,15 +475,15 @@ test_expect_success 'verify one file change per commit' '
 			check_equal "$b" ""
 			x=1
 		done
-		check_equal "$x" 1
-	))
+		check_equal "$x" "1"
+	)
 '
 
 # test push
 
 cd ../..
 
-mkdir test-push
+mkdir -p test-push
 
 cd test-push
 
