@@ -210,8 +210,19 @@ test_expect_success 'check if --message for merge works with squash too' '
 
 test_expect_success 'merge new subproj history into subdir' '
 	git subtree merge --prefix="sub dir" FETCH_HEAD &&
-	git branch pre-split &&
 	check_equal ''"$(last_commit_message)"'' "Merge commit '"'"'"$(git rev-parse sub2)"'"'"' into mainline" &&
+	undo
+'
+
+test_expect_success 'merge new subproj history into subdir/ with --prefix and --message' '
+	git subtree merge --prefix="sub dir" --message="Merged changes from subproject" FETCH_HEAD &&
+	check_equal "$(last_commit_message)" "Merged changes from subproject" &&
+	undo
+'
+
+test_expect_success 'merge new subproj history into subdir/ with --squash and --prefix and --message' '
+	git subtree merge --prefix="sub dir" --message="Merged changes from subproject using squash" --squash FETCH_HEAD &&
+	check_equal "$(last_commit_message)" "Merged changes from subproject using squash" &&
 	undo
 '
 
