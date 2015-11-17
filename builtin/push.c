@@ -9,6 +9,7 @@
 #include "transport.h"
 #include "parse-options.h"
 #include "submodule.h"
+#include "submodule-config.h"
 #include "send-pack.h"
 
 static const char * const push_usage[] = {
@@ -20,7 +21,7 @@ static int thin = 1;
 static int deleterefs;
 static const char *receivepack;
 static int verbosity;
-static int progress = -1;
+static int progress = -1, recurse_submodules = RECURSE_SUBMODULES_DEFAULT;
 
 static struct push_cas_option cas;
 
@@ -452,22 +453,17 @@ static int do_push(const char *repo, int flags)
 static int option_parse_recurse_submodules(const struct option *opt,
 				   const char *arg, int unset)
 {
-	int *flags = opt->value;
+	int *recurse_submodules = opt->value;
 
-	if (*flags & (TRANSPORT_RECURSE_SUBMODULES_CHECK |
-		      TRANSPORT_RECURSE_SUBMODULES_ON_DEMAND))
+	if (*recurse_submodules != RECURSE_SUBMODULES_DEFAULT)
 		die("%s can only be used once.", opt->long_name);
 
-	if (arg) {
-		if (!strcmp(arg, "check"))
-			*flags |= TRANSPORT_RECURSE_SUBMODULES_CHECK;
-		else if (!strcmp(arg, "on-demand"))
-			*flags |= TRANSPORT_RECURSE_SUBMODULES_ON_DEMAND;
-		else
-			die("bad %s argument: %s", opt->long_name, arg);
-	} else
-		die("option %s needs an argument (check|on-demand)",
-				opt->long_name);
+	if (unset)
+		*recurse_submodules = RECURSE_SUBMODULES_OFF;
+	else if (arg)
+		*recurse_submodules = parse_push_recurse_submodules_arg(opt->long_name, arg);
+	else
+		die("%s missing parameter", opt->long_name);
 
 	return 0;
 }
@@ -522,6 +518,10 @@ static int git_push_config(const char *k, const char *v, void *cb)
 					return error("Invalid value for '%s'", k);
 			}
 		}
+	} else if (!strcmp(k, "push.recursesubmodules")) {
+		const char *value;
+		if (!git_config_get_value("push.recursesubmodules", &value))
+			recurse_submodules = parse_push_recurse_submodules_arg(k, value);
 	}
 
 	return git_default_config(k, v, NULL);
@@ -532,6 +532,7 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 	int flags = 0;
 	int tags = 0;
 	int push_cert = -1;
+	int recurse_submodules_from_cmdline = RECURSE_SUBMODULES_DEFAULT;
 	int rc;
 	const char *repo = NULL;	/* default repository */
 	struct option options[] = {
@@ -549,7 +550,7 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 		  0, CAS_OPT_NAME, &cas, N_("refname>:<expect"),
 		  N_("require old value of ref to be at this value"),
 		  PARSE_OPT_OPTARG, parseopt_push_cas_option },
-		{ OPTION_CALLBACK, 0, "recurse-submodules", &flags, "check|on-demand",
+		{ OPTION_CALLBACK, 0, "recurse-submodules", &recurse_submodules_from_cmdline, N_("check|on-demand|no"),
 			N_("control recursive pushing of submodules"),
 			PARSE_OPT_OPTARG, option_parse_recurse_submodules },
 		OPT_BOOL( 0 , "thin", &thin, N_("use thin pack")),
@@ -579,6 +580,14 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 		die(_("--delete is incompatible with --all, --mirror and --tags"));
 	if (deleterefs && argc < 2)
 		die(_("--delete doesn't make sense without any refs"));
+
+	if (recurse_submodules_from_cmdline != RECURSE_SUBMODULES_DEFAULT)
+		recurse_submodules = recurse_submodules_from_cmdline;
+
+	if (recurse_submodules == RECURSE_SUBMODULES_CHECK)
+		flags |= TRANSPORT_RECURSE_SUBMODULES_CHECK;
+	else if (recurse_submodules == RECURSE_SUBMODULES_ON_DEMAND)
+		flags |= TRANSPORT_RECURSE_SUBMODULES_ON_DEMAND;
 
 	if (tags)
 		add_refspec("refs/tags/*");
