@@ -5,10 +5,6 @@
 #include "color.h"
 #include "utf8.h"
 
-static int parse_options_usage(struct parse_opt_ctx_t *ctx,
-			       const char * const *usagestr,
-			       const struct option *opts, int err);
-
 #define OPT_SHORT 1
 #define OPT_UNSET 2
 
@@ -516,7 +512,7 @@ unknown:
  show_usage_error:
 	err = 1;
  show_usage:
-	return parse_options_usage(ctx, usagestr, options, err);
+	return usage_with_options_internal(ctx, usagestr, options, 0, err);
 }
 
 int parse_options_end(struct parse_opt_ctx_t *ctx)
@@ -660,13 +656,6 @@ void NORETURN usage_msg_opt(const char *msg,
 {
 	fprintf(stderr, "%s\n\n", msg);
 	usage_with_options(usagestr, options);
-}
-
-static int parse_options_usage(struct parse_opt_ctx_t *ctx,
-			       const char * const *usagestr,
-			       const struct option *opts, int err)
-{
-	return usage_with_options_internal(ctx, usagestr, opts, 0, err);
 }
 
 #undef opterror
