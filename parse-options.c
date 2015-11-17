@@ -410,7 +410,7 @@ void parse_options_start(struct parse_opt_ctx_t *ctx,
 			 const struct option *options, int flags)
 {
 	memset(ctx, 0, sizeof(*ctx));
-	ctx->argc = argc - 1;
+	ctx->argc = ctx->total = argc - 1;
 	ctx->argv = argv + 1;
 	ctx->out  = argv;
 	ctx->prefix = prefix;
@@ -448,27 +448,32 @@ int parse_options_step(struct parse_opt_ctx_t *ctx,
 			continue;
 		}
 
+		/* lone -h asks for help */
+		if (internal_help && ctx->total == 1 && !strcmp(arg + 1, "h"))
+			goto show_usage;
+
 		if (arg[1] != '-') {
 			ctx->opt = arg + 1;
-			if (internal_help && *ctx->opt == 'h')
-				goto show_usage;
 			switch (parse_short_opt(ctx, options)) {
 			case -1:
 				goto show_usage_error;
 			case -2:
 				if (ctx->opt)
 					check_typos(arg + 1, options);
+				if (internal_help && *ctx->opt == 'h')
+					goto show_usage;
 				goto unknown;
 			}
 			if (ctx->opt)
 				check_typos(arg + 1, options);
 			while (ctx->opt) {
-				if (internal_help && *ctx->opt == 'h')
-					goto show_usage;
 				switch (parse_short_opt(ctx, options)) {
 				case -1:
 					goto show_usage_error;
 				case -2:
+					if (internal_help && *ctx->opt == 'h')
+						goto show_usage;
+
 					/* fake a short option thing to hide the fact that we may have
 					 * started to parse aggregated stuff
 					 *

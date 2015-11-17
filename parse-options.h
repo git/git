@@ -199,7 +199,7 @@ enum {
 struct parse_opt_ctx_t {
 	const char **argv;
 	const char **out;
-	int argc, cpidx;
+	int argc, cpidx, total;
 	const char *opt;
 	int flags;
 	const char *prefix;
