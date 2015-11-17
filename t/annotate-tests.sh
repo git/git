@@ -68,6 +68,13 @@ test_expect_success 'blame 1 author' '
 	check_count A 2
 '
 
+test_expect_success 'blame by tag objects' '
+	git tag -m "test tag" testTag &&
+	git tag -m "test tag #2" testTag2 testTag &&
+	check_count -h testTag A 2 &&
+	check_count -h testTag2 A 2
+'
+
 test_expect_success 'setup B lines' '
 	echo "2A quick brown fox jumps over the" >>file &&
 	echo "lazy dog" >>file &&
