@@ -207,8 +207,21 @@ test_expect_success 'Recursive with -r but dirty' '
 	test -f frotz/nitfol
 '
 
+test_expect_success 'Recursive with --recursive but dirty' '
+	echo qfwfq >>frotz/nitfol &&
+	test_must_fail git rm --recursive frotz &&
+	test -d frotz &&
+	test -f frotz/nitfol
+'
+
 test_expect_success 'Recursive with -r -f' '
 	git rm -f -r frotz &&
+	! test -f frotz/nitfol &&
+	! test -d frotz
+'
+
+test_expect_success 'Recursive with --recursive -f' '
+	git rm -f --recursive frotz &&
 	! test -f frotz/nitfol &&
 	! test -d frotz
 '

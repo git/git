@@ -47,6 +47,7 @@ OPTIONS
 	by the command.
 
 -r::
+--recursive::
         Allow recursive removal when a leading directory name is
         given.
 
