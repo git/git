@@ -47,8 +47,6 @@ file5_data='an inline file.
 file6_data='#!/bin/sh
 echo "$@"'
 
->empty
-
 ###
 ### series A
 ###
@@ -2320,12 +2318,12 @@ test_expect_success !MINGW 'R: in-stream cat-blob-fd not respected' '
 	cat-blob $blob
 	EOF
 	test_cmp expect actual.3 &&
-	test_cmp empty actual.1 &&
+	test_must_be_empty actual.1 &&
 	git fast-import 3>actual.3 >actual.1 <<-EOF &&
 	option cat-blob-fd=3
 	cat-blob $blob
 	EOF
-	test_cmp empty actual.3 &&
+	test_must_be_empty actual.3 &&
 	test_cmp expect actual.1
 '
 
@@ -2549,7 +2547,7 @@ EOF
 
 test_expect_success 'R: quiet option results in no stats being output' '
 	cat input | git fast-import 2> output &&
-	test_cmp empty output
+	test_must_be_empty output
 '
 
 test_expect_success 'R: feature done means terminating "done" is mandatory' '
