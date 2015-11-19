@@ -6,6 +6,10 @@
 # a subdirectory called "$git"
 TEST_NO_CREATE_REPO=NoThanks
 
+# Some operations require multiple attempts to be successful. Define
+# here the maximal retry timeout in seconds.
+RETRY_TIMEOUT=60
+
 . ./test-lib.sh
 
 if ! test_have_prereq PYTHON
@@ -34,6 +38,15 @@ native_path() {
 		path=$(test-path-utils real_path "$path")
 	fi &&
 	echo "$path"
+}
+
+# On Solaris the 'date +%s' function is not supported and therefore we
+# need this replacement.
+# Attention: This function is not safe again against time offset updates
+# at runtime (e.g. via NTP). The 'clock_gettime(CLOCK_MONOTONIC)'
+# function could fix that but it is not in Python until 3.3.
+time_in_seconds() {
+	python -c 'import time; print int(time.time())'
 }
 
 # Try to pick a unique port: guess a large number, then hope
@@ -121,22 +134,35 @@ p4_add_user() {
 	EOF
 }
 
+retry_until_success() {
+	timeout=$(($(time_in_seconds) + $RETRY_TIMEOUT))
+	until "$@" 2>/dev/null || test $(time_in_seconds) -gt $timeout
+	do
+		sleep 1
+	done
+}
+
+retry_until_fail() {
+	timeout=$(($(time_in_seconds) + $RETRY_TIMEOUT))
+	until ! "$@" 2>/dev/null || test $(time_in_seconds) -gt $timeout
+	do
+		sleep 1
+	done
+}
+
 kill_p4d() {
 	pid=$(cat "$pidfile")
-	# it had better exist for the first kill
-	kill $pid &&
-	for i in 1 2 3 4 5 ; do
-		kill $pid >/dev/null 2>&1 || break
-		sleep 1
-	done &&
+	retry_until_fail kill $pid
+	retry_until_fail kill -9 $pid
 	# complain if it would not die
 	test_must_fail kill $pid >/dev/null 2>&1 &&
 	rm -rf "$db" "$cli" "$pidfile"
 }
 
 cleanup_git() {
-	rm -rf "$git" &&
-	mkdir "$git"
+	retry_until_success rm -r "$git"
+	test_must_fail test -d "$git" &&
+	retry_until_success mkdir "$git"
 }
 
 marshal_dump() {
