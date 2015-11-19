@@ -288,7 +288,7 @@ test_expect_success 'tag with bad tagger' '
 	grep "error in tag .*: invalid author/committer" out
 '
 
-test_expect_failure 'tag with NUL in header' '
+test_expect_success 'tag with NUL in header' '
 	sha=$(git rev-parse HEAD) &&
 	q_to_nul >tag-NUL-header <<-EOF &&
 	object $sha
