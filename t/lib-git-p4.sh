@@ -10,6 +10,10 @@ TEST_NO_CREATE_REPO=NoThanks
 # here the maximal retry timeout in seconds.
 RETRY_TIMEOUT=60
 
+# Sometimes p4d seems to hang. Terminate the p4d process automatically after
+# the defined timeout in seconds.
+P4D_TIMEOUT=300
+
 . ./test-lib.sh
 
 if ! test_have_prereq PYTHON
@@ -94,6 +98,19 @@ start_p4d() {
 	# will be caught with the "kill -0" check below.
 	i=${P4D_START_PATIENCE:-300}
 	pid=$(cat "$pidfile")
+
+	timeout=$(($(time_in_seconds) + $P4D_TIMEOUT))
+	while true
+	do
+		if test $(time_in_seconds) -gt $timeout
+		then
+			kill -9 $pid
+			exit 1
+		fi
+		sleep 1
+	done &
+	watchdog_pid=$!
+
 	ready=
 	while test $i -gt 0
 	do
@@ -156,7 +173,8 @@ kill_p4d() {
 	retry_until_fail kill -9 $pid
 	# complain if it would not die
 	test_must_fail kill $pid >/dev/null 2>&1 &&
-	rm -rf "$db" "$cli" "$pidfile"
+	rm -rf "$db" "$cli" "$pidfile" &&
+	retry_until_fail kill -9 $watchdog_pid
 }
 
 cleanup_git() {
