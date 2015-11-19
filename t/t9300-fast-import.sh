@@ -630,20 +630,9 @@ from refs/heads/branch
 
 INPUT_END
 test_expect_success 'F: non-fast-forward update skips' '
-	if git fast-import <input
-	then
-		echo BAD gfi did not fail
-		return 1
-	else
-		if test $old_branch = `git rev-parse --verify branch^0`
-		then
-			: branch unaffected and failure returned
-			return 0
-		else
-			echo BAD gfi changed branch $old_branch
-			return 1
-		fi
-	fi
+	test_must_fail git fast-import <input &&
+	# branch must remain unaffected
+	test $old_branch = `git rev-parse --verify branch^0`
 '
 
 test_expect_success 'F: verify pack' '
