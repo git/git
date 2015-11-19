@@ -130,17 +130,20 @@ test_expect_success 'A: verify tree' '
 
 echo "$file2_data" >expect
 test_expect_success 'A: verify file2' '
-	git cat-file blob master:file2 >actual && test_cmp expect actual
+	git cat-file blob master:file2 >actual &&
+	test_cmp expect actual
 '
 
 echo "$file3_data" >expect
 test_expect_success 'A: verify file3' '
-	git cat-file blob master:file3 >actual && test_cmp expect actual
+	git cat-file blob master:file3 >actual &&
+	test_cmp expect actual
 '
 
 printf "$file4_data" >expect
 test_expect_success 'A: verify file4' '
-	git cat-file blob master:file4 >actual && test_cmp expect actual
+	git cat-file blob master:file4 >actual &&
+	test_cmp expect actual
 '
 
 cat >expect <<EOF
@@ -1656,10 +1659,14 @@ INPUT_END
 test_expect_success 'P: superproject & submodule mix' '
 	git fast-import <input &&
 	git checkout subuse1 &&
-	rm -rf sub && mkdir sub && (cd sub &&
-	git init &&
-	git fetch --update-head-ok .. refs/heads/sub:refs/heads/master &&
-	git checkout master) &&
+	rm -rf sub &&
+	mkdir sub &&
+	(
+		cd sub &&
+		git init &&
+		git fetch --update-head-ok .. refs/heads/sub:refs/heads/master &&
+		git checkout master
+	) &&
 	git submodule init &&
 	git submodule update
 '
@@ -1697,7 +1704,8 @@ INPUT_END
 
 test_expect_success 'P: verbatim SHA gitlinks' '
 	git branch -D sub &&
-	git gc && git prune &&
+	git gc &&
+	git prune &&
 	git fast-import <input &&
 	test $(git rev-parse --verify subuse2) = $(git rev-parse --verify subuse1)
 '
@@ -1942,17 +1950,20 @@ test_expect_success 'Q: verify first notes tree' '
 
 echo "$note1_data" >expect
 test_expect_success 'Q: verify first note for first commit' '
-	git cat-file blob refs/notes/foobar~2:$commit1 >actual && test_cmp expect actual
+	git cat-file blob refs/notes/foobar~2:$commit1 >actual &&
+	test_cmp expect actual
 '
 
 echo "$note2_data" >expect
 test_expect_success 'Q: verify first note for second commit' '
-	git cat-file blob refs/notes/foobar~2:$commit2 >actual && test_cmp expect actual
+	git cat-file blob refs/notes/foobar~2:$commit2 >actual &&
+	test_cmp expect actual
 '
 
 echo "$note3_data" >expect
 test_expect_success 'Q: verify first note for third commit' '
-	git cat-file blob refs/notes/foobar~2:$commit3 >actual && test_cmp expect actual
+	git cat-file blob refs/notes/foobar~2:$commit3 >actual &&
+	test_cmp expect actual
 '
 
 cat >expect <<EOF
@@ -1980,17 +1991,20 @@ test_expect_success 'Q: verify second notes tree' '
 
 echo "$note1b_data" >expect
 test_expect_success 'Q: verify second note for first commit' '
-	git cat-file blob refs/notes/foobar^:$commit1 >actual && test_cmp expect actual
+	git cat-file blob refs/notes/foobar^:$commit1 >actual &&
+	test_cmp expect actual
 '
 
 echo "$note2_data" >expect
 test_expect_success 'Q: verify first note for second commit' '
-	git cat-file blob refs/notes/foobar^:$commit2 >actual && test_cmp expect actual
+	git cat-file blob refs/notes/foobar^:$commit2 >actual &&
+	test_cmp expect actual
 '
 
 echo "$note3_data" >expect
 test_expect_success 'Q: verify first note for third commit' '
-	git cat-file blob refs/notes/foobar^:$commit3 >actual && test_cmp expect actual
+	git cat-file blob refs/notes/foobar^:$commit3 >actual &&
+	test_cmp expect actual
 '
 
 cat >expect <<EOF
@@ -2015,7 +2029,8 @@ test_expect_success 'Q: verify third notes tree' '
 
 echo "$note1c_data" >expect
 test_expect_success 'Q: verify third note for first commit' '
-	git cat-file blob refs/notes/foobar2:$commit1 >actual && test_cmp expect actual
+	git cat-file blob refs/notes/foobar2:$commit1 >actual &&
+	test_cmp expect actual
 '
 
 cat >expect <<EOF
@@ -2041,7 +2056,8 @@ test_expect_success 'Q: verify fourth notes tree' '
 
 echo "$note2b_data" >expect
 test_expect_success 'Q: verify second note for second commit' '
-	git cat-file blob refs/notes/foobar:$commit2 >actual && test_cmp expect actual
+	git cat-file blob refs/notes/foobar:$commit2 >actual &&
+	test_cmp expect actual
 '
 
 cat >input <<EOF
