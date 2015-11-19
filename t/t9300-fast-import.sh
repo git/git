@@ -344,9 +344,9 @@ M 755 0000000000000000000000000000000000000001 zero1
 
 INPUT_END
 test_expect_success 'B: fail on invalid blob sha1' '
+	test_when_finished "rm -f .git/objects/pack_* .git/objects/index_*" &&
 	test_must_fail git fast-import <input
 '
-rm -f .git/objects/pack_* .git/objects/index_*
 
 cat >input <<INPUT_END
 commit TEMP_TAG
@@ -359,14 +359,13 @@ from refs/heads/master
 
 INPUT_END
 test_expect_success 'B: accept branch name "TEMP_TAG"' '
+	test_when_finished "rm -f .git/TEMP_TAG
+		git gc
+		git prune" &&
 	git fast-import <input &&
 	test -f .git/TEMP_TAG &&
 	test `git rev-parse master` = `git rev-parse TEMP_TAG^`
 '
-rm -f .git/TEMP_TAG
-
-git gc 2>/dev/null >/dev/null
-git prune 2>/dev/null >/dev/null
 
 cat >input <<INPUT_END
 commit refs/heads/empty-committer-1
@@ -376,15 +375,14 @@ empty commit
 COMMIT
 INPUT_END
 test_expect_success 'B: accept empty committer' '
+	test_when_finished "git update-ref -d refs/heads/empty-committer-1
+		git gc
+		git prune" &&
 	git fast-import <input &&
 	out=$(git fsck) &&
 	echo "$out" &&
 	test -z "$out"
 '
-git update-ref -d refs/heads/empty-committer-1 || true
-
-git gc 2>/dev/null >/dev/null
-git prune 2>/dev/null >/dev/null
 
 cat >input <<INPUT_END
 commit refs/heads/empty-committer-2
@@ -394,15 +392,14 @@ empty commit
 COMMIT
 INPUT_END
 test_expect_success 'B: accept and fixup committer with no name' '
+	test_when_finished "git update-ref -d refs/heads/empty-committer-2
+		git gc
+		git prune" &&
 	git fast-import <input &&
 	out=$(git fsck) &&
 	echo "$out" &&
 	test -z "$out"
 '
-git update-ref -d refs/heads/empty-committer-2 || true
-
-git gc 2>/dev/null >/dev/null
-git prune 2>/dev/null >/dev/null
 
 cat >input <<INPUT_END
 commit refs/heads/invalid-committer
@@ -412,9 +409,9 @@ empty commit
 COMMIT
 INPUT_END
 test_expect_success 'B: fail on invalid committer (1)' '
+	test_when_finished "git update-ref -d refs/heads/invalid-committer" &&
 	test_must_fail git fast-import <input
 '
-git update-ref -d refs/heads/invalid-committer || true
 
 cat >input <<INPUT_END
 commit refs/heads/invalid-committer
@@ -424,9 +421,9 @@ empty commit
 COMMIT
 INPUT_END
 test_expect_success 'B: fail on invalid committer (2)' '
+	test_when_finished "git update-ref -d refs/heads/invalid-committer" &&
 	test_must_fail git fast-import <input
 '
-git update-ref -d refs/heads/invalid-committer || true
 
 cat >input <<INPUT_END
 commit refs/heads/invalid-committer
@@ -436,9 +433,9 @@ empty commit
 COMMIT
 INPUT_END
 test_expect_success 'B: fail on invalid committer (3)' '
+	test_when_finished "git update-ref -d refs/heads/invalid-committer" &&
 	test_must_fail git fast-import <input
 '
-git update-ref -d refs/heads/invalid-committer || true
 
 cat >input <<INPUT_END
 commit refs/heads/invalid-committer
@@ -448,9 +445,9 @@ empty commit
 COMMIT
 INPUT_END
 test_expect_success 'B: fail on invalid committer (4)' '
+	test_when_finished "git update-ref -d refs/heads/invalid-committer" &&
 	test_must_fail git fast-import <input
 '
-git update-ref -d refs/heads/invalid-committer || true
 
 cat >input <<INPUT_END
 commit refs/heads/invalid-committer
@@ -460,9 +457,9 @@ empty commit
 COMMIT
 INPUT_END
 test_expect_success 'B: fail on invalid committer (5)' '
+	test_when_finished "git update-ref -d refs/heads/invalid-committer" &&
 	test_must_fail git fast-import <input
 '
-git update-ref -d refs/heads/invalid-committer || true
 
 ###
 ### series C
@@ -914,14 +911,13 @@ g/b/h
 EOF
 
 test_expect_success 'L: nested tree copy does not corrupt deltas' '
+	test_when_finished "git update-ref -d refs/heads/L2" &&
 	git fast-import <input &&
 	git ls-tree L2 g/b/ >tmp &&
 	cat tmp | cut -f 2 >actual &&
 	test_cmp expect actual &&
 	git fsck `git rev-parse L2`
 '
-
-git update-ref -d refs/heads/L2
 
 ###
 ### series M
