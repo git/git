@@ -74,6 +74,15 @@ cli="$TRASH_DIRECTORY/cli"
 git="$TRASH_DIRECTORY/git"
 pidfile="$TRASH_DIRECTORY/p4d.pid"
 
+# Sometimes "prove" seems to hang on exit because p4d is still running
+cleanup() {
+	if test -f "$pidfile"
+	then
+		kill -9 $(cat "$pidfile") 2>/dev/null && exit 255
+	fi
+}
+trap cleanup EXIT
+
 # git p4 submit generates a temp file, which will
 # not get cleaned up if the submission fails.  Don't
 # clutter up /tmp on the test machine.
