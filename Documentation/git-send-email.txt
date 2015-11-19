@@ -10,6 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git send-email' [options] <file|directory|rev-list options>...
+'git send-email' --dump-aliases
 
 
 DESCRIPTION
@@ -385,6 +386,16 @@ default to '--validate'.
 
 --force::
 	Send emails even if safety checks would prevent it.
+
+
+Information
+~~~~~~~~~~~
+
+--dump-aliases::
+	Instead of the normal operation, dump the shorthand alias names from
+	the configured alias file(s), one per line in alphabetical order. Note,
+	this only includes the alias name and not its expanded email addresses.
+	See 'sendemail.aliasesfile' for more information about aliases.
 
 
 CONFIGURATION
