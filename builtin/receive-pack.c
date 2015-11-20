@@ -195,9 +195,6 @@ static int receive_pack_config(const char *var, const char *value, void *cb)
 
 static void show_ref(const char *path, const unsigned char *sha1)
 {
-	if (ref_is_hidden(path))
-		return;
-
 	if (sent_capabilities) {
 		packet_write(1, "%s %s\n", sha1_to_hex(sha1), path);
 	} else {
@@ -219,9 +216,14 @@ static void show_ref(const char *path, const unsigned char *sha1)
 	}
 }
 
-static int show_ref_cb(const char *path, const struct object_id *oid, int flag, void *unused)
+static int show_ref_cb(const char *path_full, const struct object_id *oid,
+		       int flag, void *unused)
 {
-	path = strip_namespace(path);
+	const char *path = strip_namespace(path_full);
+
+	if (ref_is_hidden(path, path_full))
+		return 0;
+
 	/*
 	 * Advertise refs outside our current namespace as ".have"
 	 * refs, so that the client can use them to minimize data
@@ -1195,16 +1197,29 @@ static int iterate_receive_command_list(void *cb_data, unsigned char sha1[20])
 
 static void reject_updates_to_hidden(struct command *commands)
 {
+	struct strbuf refname_full = STRBUF_INIT;
+	size_t prefix_len;
 	struct command *cmd;
 
+	strbuf_addstr(&refname_full, get_git_namespace());
+	prefix_len = refname_full.len;
+
 	for (cmd = commands; cmd; cmd = cmd->next) {
-		if (cmd->error_string || !ref_is_hidden(cmd->ref_name))
+		if (cmd->error_string)
+			continue;
+
+		strbuf_setlen(&refname_full, prefix_len);
+		strbuf_addstr(&refname_full, cmd->ref_name);
+
+		if (!ref_is_hidden(cmd->ref_name, refname_full.buf))
 			continue;
 		if (is_null_sha1(cmd->new_sha1))
 			cmd->error_string = "deny deleting a hidden ref";
 		else
 			cmd->error_string = "deny updating a hidden ref";
 	}
+
+	strbuf_release(&refname_full);
 }
 
 static int should_process_cmd(struct command *cmd)
