@@ -1211,20 +1211,87 @@ sub do_fetch {
 sub mkemptydirs {
 	my ($self, $r) = @_;
 
+	# add/remove/collect a paths table
+	#
+	# Paths are split into a tree of nodes, stored as a hash of hashes.
+	#
+	# Each node contains a 'path' entry for the path (if any) associated
+	# with that node and a 'children' entry for any nodes under that
+	# location.
+	#
+	# Removing a path requires a hash lookup for each component then
+	# dropping that node (and anything under it), which is substantially
+	# faster than a grep slice into a single hash of paths for large
+	# numbers of paths.
+	#
+	# For a large (200K) number of empty_dir directives this reduces
+	# scanning time to 3 seconds vs 10 minutes for grep+delete on a single
+	# hash of paths.
+	sub add_path {
+		my ($paths_table, $path) = @_;
+		my $node_ref;
+
+		foreach my $x (split('/', $path)) {
+			if (!exists($paths_table->{$x})) {
+				$paths_table->{$x} = { children => {} };
+			}
+
+			$node_ref = $paths_table->{$x};
+			$paths_table = $paths_table->{$x}->{children};
+		}
+
+		$node_ref->{path} = $path;
+	}
+
+	sub remove_path {
+		my ($paths_table, $path) = @_;
+		my $nodes_ref;
+		my $node_name;
+
+		foreach my $x (split('/', $path)) {
+			if (!exists($paths_table->{$x})) {
+				return;
+			}
+
+			$nodes_ref = $paths_table;
+			$node_name = $x;
+
+			$paths_table = $paths_table->{$x}->{children};
+		}
+
+		delete($nodes_ref->{$node_name});
+	}
+
+	sub collect_paths {
+		my ($paths_table, $paths_ref) = @_;
+
+		foreach my $v (values %$paths_table) {
+			my $p = $v->{path};
+			my $c = $v->{children};
+
+			collect_paths($c, $paths_ref);
+
+			if (defined($p)) {
+				push(@$paths_ref, $p);
+			}
+		}
+	}
+
 	sub scan {
-		my ($r, $empty_dirs, $line) = @_;
+		my ($r, $paths_table, $line) = @_;
 		if (defined $r && $line =~ /^r(\d+)$/) {
 			return 0 if $1 > $r;
 		} elsif ($line =~ /^  \+empty_dir: (.+)$/) {
-			$empty_dirs->{$1} = 1;
+			add_path($paths_table, $1);
 		} elsif ($line =~ /^  \-empty_dir: (.+)$/) {
-			my @d = grep {m[^\Q$1\E(/|$)]} (keys %$empty_dirs);
-			delete @$empty_dirs{@d};
+			remove_path($paths_table, $1);
 		}
 		1; # continue
 	};
 
-	my %empty_dirs = ();
+	my @empty_dirs;
+	my %paths_table;
+
 	my $gz_file = "$self->{dir}/unhandled.log.gz";
 	if (-f $gz_file) {
 		if (!can_compress()) {
@@ -1235,7 +1302,7 @@ sub mkemptydirs {
 				die "Unable to open $gz_file: $!\n";
 			my $line;
 			while ($gz->gzreadline($line) > 0) {
-				scan($r, \%empty_dirs, $line) or last;
+				scan($r, \%paths_table, $line) or last;
 			}
 			$gz->gzclose;
 		}
@@ -1244,13 +1311,14 @@ sub mkemptydirs {
 	if (open my $fh, '<', "$self->{dir}/unhandled.log") {
 		binmode $fh or croak "binmode: $!";
 		while (<$fh>) {
-			scan($r, \%empty_dirs, $_) or last;
+			scan($r, \%paths_table, $_) or last;
 		}
 		close $fh;
 	}
 
+	collect_paths(\%paths_table, \@empty_dirs);
 	my $strip = qr/\A\Q@{[$self->path]}\E(?:\/|$)/;
-	foreach my $d (sort keys %empty_dirs) {
+	foreach my $d (sort @empty_dirs) {
 		$d = uri_decode($d);
 		$d =~ s/$strip//;
 		next unless length($d);
