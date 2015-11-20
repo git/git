@@ -1217,27 +1217,16 @@ void install_packed_git(struct packed_git *pack)
 	packed_git = pack;
 }
 
-void (*report_garbage)(const char *desc, const char *path);
+void (*report_garbage)(unsigned seen_bits, const char *path);
 
 static void report_helper(const struct string_list *list,
 			  int seen_bits, int first, int last)
 {
-	const char *msg;
-	switch (seen_bits) {
-	case 0:
-		msg = "no corresponding .idx or .pack";
-		break;
-	case 1:
-		msg = "no corresponding .idx";
-		break;
-	case 2:
-		msg = "no corresponding .pack";
-		break;
-	default:
+	if (seen_bits == (PACKDIR_FILE_PACK|PACKDIR_FILE_IDX))
 		return;
-	}
+
 	for (; first < last; first++)
-		report_garbage(msg, list->items[first].string);
+		report_garbage(seen_bits, list->items[first].string);
 }
 
 static void report_pack_garbage(struct string_list *list)
@@ -1260,7 +1249,7 @@ static void report_pack_garbage(struct string_list *list)
 		if (baselen == -1) {
 			const char *dot = strrchr(path, '.');
 			if (!dot) {
-				report_garbage("garbage found", path);
+				report_garbage(PACKDIR_FILE_GARBAGE, path);
 				continue;
 			}
 			baselen = dot - path + 1;
@@ -1332,7 +1321,7 @@ static void prepare_packed_git_one(char *objdir, int local)
 		    ends_with(de->d_name, ".keep"))
 			string_list_append(&garbage, path.buf);
 		else
-			report_garbage("garbage found", path.buf);
+			report_garbage(PACKDIR_FILE_GARBAGE, path.buf);
 	}
 	closedir(dir);
 	report_pack_garbage(&garbage);
