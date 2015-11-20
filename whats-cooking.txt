@@ -1,94 +1,269 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Nov 2015, #02; Fri, 6)
-X-master-at: f34be46e47773d03e9d09641209121591a6b37c8
-X-next-at: c10b11f912265621bc9c1988f048b8c065303d87
+Subject: What's cooking in git.git (Nov 2015, #03; Fri, 20)
+X-master-at: 0c83680e9c047170614fb08ef222ea4f460e514d
+X-next-at: dc6ae483b6062dec4979462c5b072d883a323fee
 
-What's cooking in git.git (Nov 2015, #02; Fri, 6)
+What's cooking in git.git (Nov 2015, #03; Fri, 20)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-I'll be offline on vacation for a few weeks, and Jeff King
-graciously agreed to help shepherd the project forward in the
-meantime as an interim maintainer.  Please be gentle.
+Sorry for the extreme delay in pushing out my tree. I ended up busier
+than I expected during the first week of Junio's absence, and then it
+took me a while to dig myself out of the ever-filling hole of incoming
+topics. :)
 
-You can find the changes described here in the integration branches
-of the repositories listed at
+Expect quite a few new topics in this edition.  A number of them have
+seen review already, and I'm planning to merge them to "next" fairly
+quickly (I may do another integration cycle late tonight or tomorrow
+with those changes).
 
-    http://git-blame.blogspot.com/p/git-public-repositories.html
+I still have a few threads to comb through on the list. If you don't see
+the latest version of your topic here, please feel free to ping me, or
+to repost.
+
+You can find the normal integration branches at:
+
+    https://github.com/git/git/
+
+and all topic branches at:
+
+    https://github.com/peff/git/
+
+But note that I will _not_ be pushing to kernel.org.
+
 
 --------------------------------------------------
 [New Topics]
 
-* dt/refs-backend-pre-vtable (2015-11-03) 26 commits
- - refs: break out ref conflict checks
- - refs: create a shared version of verify_refname_available
- - files_log_ref_write: new function
- - initdb: make safe_create_dir public
- - refs: move should_autocreate_reflog to common code
- - refs: move peel_object to the common code
- - refs: move copy_msg to the common code
- - refs: move refname_is_safe to the common code
- - refs: move transaction functions to the common code
- - refs: move head_ref_namespaced to the common code
- - refs: move ref iterators to the common code
- - refs: move prettify_refname to the common code
- - refs: move is_branch to the common code
- - refs: move check_refname_format to the common code
- - refs: move resolve_refdup to common
- - refs: move read_ref, read_ref_full and ref_exists to the common code
- - refs: move warn_if_dangling_symref* to the common code
- - refs: move dwim and friend functions to the common refs code
- - refs: move the hidden refs functions to the common code
- - refs: move read_ref_at to the common refs file
- - refs: move delete_pseudoref and delete_ref to the common code
- - refs: move update_ref to refs/refs.c
- - refs: add a new file, refs/refs.c, to hold common refs code
- - refs/files-backend.c: new file, renamed from refs.c
- - refs: make is_branch public
- - Merge branch 'jk/war-on-sprintf' into HEAD
+* ap/doc-env-variable-format (2015-11-11) 1 commit
+ - Documentation: make environment variable formatting more consistent
 
- This is a verbatim copy of refs-backend-pre-vtable branch taken
- from https://github.com/mhagger/git; not even signed-off by me, and
- "thanks for noticing; Junio can you amend?" obviously has not been
- done.  We would want to rebase the series (after discarding the
- bottom "Merge into HEAD") on top of 228905f in order to do the
- amending and then re-merge, but I ran out of time (and patience).
-
-
-* rc/configure-use-libs-when-checking-a-lib (2015-11-06) 1 commit
- - configure.ac: use $LIBS not $CFLAGS when testing -lpthread
-
- The "configure" script did not test for -lpthread correctly, which
- upset some linkers.
+ Minor documentation fixup.
 
  Will merge to 'next'.
+
+
+* cb/hook-sigpipe (2015-11-16) 1 commit
+ - allow hooks to ignore their standard input stream
+
+ We now consistently allow all hooks to ignore their standard input,
+ rather than having git complain of SIGPIPE.
+
+ Will merge to 'next'.
+
+
+* dg/subtree-test-cleanup (2015-11-13) 7 commits
+ - contrib/subtree: Handle '--prefix' argument with a slash appended
+ - contrib/subtree: Make each test self-contained
+ - contrib/subtree: Add split tests
+ - contrib/subtree: Add merge tests
+ - contrib/subtree: Add tests for subtree add
+ - contrib/subtree: Add test for missing subtree
+ - contrib/subtree: Clean and refactor test code
+
+ Test cleanups for the subtree project.
+
+ Will merge to 'next'.
+
+
+* dk/check-ignore-docs (2015-11-20) 1 commit
+ - check-ignore: correct documentation about output
+
+ Documentation clarification for "check-ignore" without "--verbose".
+
+ This may be losing information, and we would want to enhance the
+ "--verbose" documentation.
+
+ Will hold for comments.
+
+
+* dk/rerere-train-quoting (2015-11-20) 1 commit
+ - Escape Git's exec path in contrib/rerere-train.sh script
+
+ Fix shell quoting in contrib script.
+
+ Will merge to 'next'.
+
+
+* dk/t5813-unc-paths (2015-11-20) 1 commit
+ - t5813: avoid creating urls that break on cygwin
+
+ Test portability fix for a topic in v2.6.1.
+
+ Will merge to 'next'.
+
+
+* ec/annotate-deleted (2015-11-20) 1 commit
+ - annotate: skip checking working tree if a revision is provided
+
+ Usability fix for annotate-specific "<file> <rev>" syntax with deleted
+ files.
+
+ Needs review.
+
+
+* fm/shell-path-whitespace (2015-11-13) 1 commit
+ - rebase-i-exec: Allow space in SHELL_PATH
+
+ Portability fix for Windows, which may rewrite $SHELL variable using
+ non-POSIX paths.
+
+ Will merge to 'next'.
+
+
+* jk/filter-branch-no-index (2015-11-06) 1 commit
+ - filter-branch: skip index read/write when possible
+
+ Speed up filter-branch for cases where we only care about rewriting
+ commits, not tree data.
+
+ Needs review.
+
+
+* jk/send-email-ca-path (2015-11-20) 1 commit
+ - send-email: die if CA path doesn't exist
+
+ Use a safer behavior when we hit errors verifying remote certificates.
+
+ We may want to update this to guide users toward workarounds.
+
+
+* jk/send-email-complete-aliases (2015-11-20) 2 commits
+ - completion: add support for completing email aliases
+ - sendemail: teach git-send-email to dump alias names
+
+ Teach send-email to dump mail aliases, so that we can do tab completion
+ on the command line.
+
+ This is v4. Is everybody happy with this one?
+
+
+* jk/send-email-expand-paths (2015-11-20) 2 commits
+ - send-email: expand paths in sendemail.{to,cc}cmd config
+ - send-email: expand path in sendemail.smtpsslcertpath config
+
+ Expand paths in some send-email config variables.
+
+ Needs review.
+
+
+* js/test-modernize-t9300 (2015-11-20) 7 commits
+ - modernize t9300: move test preparations into test_expect_success
+ - modernize t9300: mark here-doc words to ignore tab indentation
+ - modernize t9300: use test_when_finished for clean-up
+ - modernize t9300: wrap lines after &&
+ - modernize t9300: use test_must_be_empty
+ - modernize t9300: use test_must_fail
+ - modernize t9300: single-quote placement and indentation
+
+ Clean up style in an ancient test.
+
+ Will merge to 'next'.
+
+
+* ls/p4-test-timeouts (2015-11-20) 3 commits
+ - git-p4: add trap to kill p4d on test exit
+ - git-p4: add p4d timeout in tests
+ - git-p4: retry kill/cleanup operations in tests with timeout
+
+ Work around some test flakiness with p4d.
+
+ Will merge to 'next'.
+
+
+* ls/test-must-fail-sigpipe (2015-11-20) 2 commits
+ - add "ok=sigpipe" to test_must_fail and use it to fix flaky tests
+ - implement test_might_fail using a refactored test_must_fail
+
+ Fix some racy client/server tests by treating SIGPIPE the same as a
+ normal non-zero exit.
+
+ Will merge to 'next'.
+
+
+* mc/push-recurse-submodules-config (2015-11-20) 1 commit
+ - push: add recurseSubmodules config option
+
+ Add new config to avoid typing "--recurse-submodules" on each push.
+
+ People seemed to like v1, but v2 didn't see a lot of review. Is
+ everybody happy?
+
+
+* mk/blame-first-parent (2015-11-20) 1 commit
+ - blame: fix object casting regression
+
+ Regression fix for a topic already in master.
+
+ Will merge to 'next'.
+
+
+* np/credential-cache-sighup (2015-11-20) 1 commit
+ - credential-cache: new option to ignore sighup
+
+ Workaround for using credential-cache with emacs.
+
+ Will merge to 'next'.
+
+
+* rs/fsck-nul-header (2015-11-20) 2 commits
+ - fsck: treat a NUL in a tag header as an error
+ - t1450: add tests for NUL in headers of commits and tags
+
+ Fsck did not correctly detect a NUL-truncated header in a tag.
+
+ Will merge to 'next'.
+
+
+* rs/parseopt-short-help (2015-11-20) 5 commits
+ - show-ref: stop using PARSE_OPT_NO_INTERNAL_HELP
+ - grep: stop using PARSE_OPT_NO_INTERNAL_HELP
+ - parse-options: allow -h as a short option
+ - parse-options: inline parse_options_usage() at its only remaining caller
+ - parse-options: deduplicate parse_options_usage() calls
+
+ Make "-h" command line option work more consistently in all commands.
+
+ Needs review.
+
 
 --------------------------------------------------
 [Graduated to "master"]
 
-* dt/http-range (2015-11-02) 2 commits
-  (merged to 'next' on 2015-11-03 at 7c3cc60)
- + http: use off_t to store partial file size
- + http.c: use CURLOPT_RANGE for range requests
+* dg/git-svn-empty-dirs (2015-11-05) 1 commit
+ - git-svn: improve rebase/mkdirs performance
 
- A Range: request can be responded with a full response and when
- asked properly libcurl knows how to strip the result down to the
- requested range.  However, we were hand-crafting a range request
- and it did not kick in.
+ This came via a pull from Eric's git-svn tree, and I dropped the
+ topic branch that Junio had created.
 
 
-* ea/checkout-progress (2015-11-01) 1 commit
-  (merged to 'next' on 2015-11-03 at 08a8d1f)
- + checkout: add --progress option
+* dk/gc-idx-wo-pack (2015-11-04) 3 commits
+  (merged to 'next' on 2015-11-05 at af058fa)
+ + gc: remove garbage .idx files from pack dir
+ + t5304: test cleaning pack garbage
+ + prepare_packed_git(): refactor garbage reporting in pack directory
 
- "git checkout" did not follow the usual "--[no-]progress"
- convention and implemented only "--quiet" that is essentially
- a superset of "--no-progress".  Extend the command to support the
- usual "--[no-]progress".
+ Having a leftover .idx file without corresponding .pack file in
+ the repository hurts performance; "git gc" learned to prune them.
+
+ We may want to do the same for .bitmap (and notice but not prune
+ .keep) without corresponding .pack, but that can be a separate
+ topic.
+
+
+* lf/ref-is-hidden-namespace (2015-11-05) 4 commits
+  (merged to 'next' on 2015-11-05 at b245404)
+ + t5509: add basic tests for hideRefs
+ + hideRefs: add support for matching full refs
+ + upload-pack: strip refs before calling ref_is_hidden()
+ + config.txt: document the semantics of hideRefs with namespaces
+
+ Extend transfer.hideRefs to work better with use of namespaces.
+
 
 --------------------------------------------------
 [Stalled]
@@ -165,6 +340,36 @@ of the repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* dt/refs-backend-pre-vtable (2015-11-20) 10 commits
+ - refs: break out ref conflict checks
+ - files_log_ref_write: new function
+ - initdb: make safe_create_dir public
+ - refs: split filesystem-based refs code into a new file
+ - refs/refs-internal.h: new header file
+ - refname_is_safe(): improve docstring
+ - pack_if_possible_fn(): use ref_type() instead of is_per_worktree_ref()
+ - copy_msg(): rename to copy_reflog_msg()
+ - verify_refname_available(): new function
+ - verify_refname_available(): rename function
+
+ Code preparation for pluggable ref backends.
+
+ This is the slimmed-down version from Michael, v8. It applies a lot
+ more pleasantly than the old one.
+
+ Will merge to 'next'.
+
+
+* rc/configure-use-libs-when-checking-a-lib (2015-11-06) 1 commit
+  (merged to 'next' on 2015-11-20 at 37c26aa)
+ + configure.ac: use $LIBS not $CFLAGS when testing -lpthread
+
+ The "configure" script did not test for -lpthread correctly, which
+ upset some linkers.
+
+ Will merge to 'master'.
+
+
 * ad/sha1-update-chunked (2015-11-05) 2 commits
  - sha1: allow limiting the size of the data passed to SHA1_Update()
  - sha1: provide another level of indirection for the SHA-1 functions
@@ -173,8 +378,7 @@ of the repositories listed at
  more than 4GB at a time, and we now have a compile-time workaround
  for it.
 
- I think this is more or less ready.  I am skeptical about the file
- location reorg ([PATCH 3/3] $gmane/280912) and did not queue it.
+ Will merge to 'next'.
 
 
 * vl/grep-configurable-threads (2015-11-01) 1 commit
@@ -183,14 +387,13 @@ of the repositories listed at
  "git grep" can now be configured (or told from the command line)
  how many threads to use when searching in the working tree files.
 
- Expecting a reroll.
- ($gmane/280854)
+ I haven't reviewed v6 yet. More eyes are welcome.
 
 
 * kf/http-proxy-auth-methods (2015-11-04) 3 commits
- - SQUASH???
- - http: use credential API to handle proxy authentication
- - http: allow selection of proxy authentication method
+ . SQUASH???
+ . http: use credential API to handle proxy authentication
+ . http: allow selection of proxy authentication method
 
  New http.proxyAuthMethod configuration variable can be used to
  specify what authentication method to use, as a way to work around
@@ -199,57 +402,30 @@ of the repositories listed at
  has been taught to use credential API to store the authentication
  material in user's keyrings.
 
+ I ejected this from pu for the moment, as it conflicts with the
+ pt/http-socks-proxy topic.
+
  Still being worked on.
  ($gmane/280925).
 
 
-* lf/ref-is-hidden-namespace (2015-11-05) 4 commits
-  (merged to 'next' on 2015-11-05 at b245404)
- + t5509: add basic tests for hideRefs
- + hideRefs: add support for matching full refs
- + upload-pack: strip refs before calling ref_is_hidden()
- + config.txt: document the semantics of hideRefs with namespaces
-
- Extend transfer.hideRefs to work better with use of namespaces.
-
- Will merge to 'master'.
-
-
-* dg/git-svn-empty-dirs (2015-11-05) 1 commit
- - git-svn: improve rebase/mkdirs performance
-
-
 * fp/subtree-todo-update (2015-11-06) 1 commit
- - contrib/subtree: remove "push" command from the "todo" file
-
- Will merge to 'next' and then 'master'.
-
-
-* dk/gc-idx-wo-pack (2015-11-04) 3 commits
-  (merged to 'next' on 2015-11-05 at af058fa)
- + gc: remove garbage .idx files from pack dir
- + t5304: test cleaning pack garbage
- + prepare_packed_git(): refactor garbage reporting in pack directory
-
- Having a leftover .idx file without corresponding .pack file in
- the repository hurts performance; "git gc" learned to prune them.
-
- We may want to do the same for .bitmap (and notice but not prune
- .keep) without corresponding .pack, but that can be a separate
- topic.
+  (merged to 'next' on 2015-11-20 at 3861698)
+ + contrib/subtree: remove "push" command from the "todo" file
 
  Will merge to 'master'.
 
 
-* sb/submodule-parallel-update (2015-11-05) 10 commits
+* sb/submodule-parallel-update (2015-11-20) 11 commits
  - clone: allow an explicit argument for parallel submodule clones
  - submodule update: expose parallelism to the user
  - git submodule update: have a dedicated helper for cloning
  - fetching submodules: respect `submodule.jobs` config option
- - submodule config: update parse_config()
- - submodule config: remove name_and_item_from_var
- - submodule config: keep update strategy around
- - run_processes_parallel: add output to tracing messages
+ - submodule-config: introduce parse_generic_submodule_config
+ - submodule-config: remove name_and_item_from_var
+ - submodule-config: drop check against NULL
+ - submodule-config: keep update strategy around
+ - run_processes_parallel: delimit intermixed task output
  - Merge branch 'rs/daemon-plug-child-leak' into sb/submodule-parallel-update
  - Merge branch 'sb/submodule-parallel-fetch' into sb/submodule-parallel-update
  (this branch uses sb/submodule-parallel-fetch.)
@@ -265,6 +441,8 @@ of the repositories listed at
  distracting (besides, some part of the other topic can be updated
  in-place instead of this follow-up topic tweaking them as past
  mistakes and inflexibilities).
+
+ I picked up v4 from the list, but it needs review.
 
 
 * jc/strbuf-gets (2015-10-28) 17 commits
@@ -318,24 +496,17 @@ of the repositories listed at
 
 
 * jc/test-must-fail-with-sigpipe (2015-10-30) 1 commit
- - test: accept death by SIGPIPE as a valid failure mode
+ . test: accept death by SIGPIPE as a valid failure mode
 
- In some tests we expect a git command that transfers objects to
- result in failure, but it is normal for the failure to come from
- SIGPIPE when the other end of the connection detects an (expected)
- error and hangs up.  However, test_expect_failure helper function
- was not prepared to see a death by sigpipe as a normal failure
- exit.
+ Discarded in favor of ls/test-must-fail-sigpipe.
 
- Replacement was floated as a part of Travis CI patch series, so it
- is likely that this will be replaced while I (Junio) am away.
-
-
-* pt/http-socks-proxy (2015-10-26) 1 commit
- - remote-http(s): support SOCKS proxies
+* pt/http-socks-proxy (2015-11-20) 1 commit
+  (merged to 'next' on 2015-11-20 at dc6ae48)
+ + remote-http(s): support SOCKS proxies
 
  Add support for talking http/https over socks proxy.
- Needs a sign-off from the original author.
+
+ Will cook in 'next'.
 
 
 * mh/notes-allow-reading-treeish (2015-10-08) 3 commits
@@ -446,8 +617,9 @@ of the repositories listed at
 
 
 * sb/submodule-parallel-fetch (2015-11-05) 16 commits
- - strbuf: update documentation for strbuf_read_once()
- - run-command: remove set_nonblocking()
+  (merged to 'next' on 2015-11-20 at 89fc723)
+ + strbuf: update documentation for strbuf_read_once()
+ + run-command: remove set_nonblocking()
   (merged to 'next' on 2015-10-23 at 8f04bbd)
  + run-command: fix missing output from late callbacks
  + test-run-command: increase test coverage
@@ -469,9 +641,9 @@ of the repositories listed at
  Add a framework to spawn a group of processes in parallel, and use
  it to run "git fetch --recurse-submodules" in parallel.
 
- Still being worked on, but it seems that we are seeing light at the
- end of the tunnel.
- ($gmane/280937)
+ I merged the removal of the non-blocking descriptors to 'next'.
+
+ Will cook in 'next'.
 
 
 * ad/cygwin-wants-rename (2015-08-07) 1 commit
