@@ -285,7 +285,7 @@ test_expect_success 'prompt - dirty status indicator - orphan branch - clean' '
 	test_cmp expected "$actual"
 '
 
-test_expect_failure 'prompt - dirty status indicator - orphan branch - dirty index' '
+test_expect_success 'prompt - dirty status indicator - orphan branch - dirty index' '
 	printf " (orphan +)" >expected &&
 	test_when_finished "git checkout master" &&
 	git checkout --orphan orphan &&
@@ -296,7 +296,7 @@ test_expect_failure 'prompt - dirty status indicator - orphan branch - dirty ind
 	test_cmp expected "$actual"
 '
 
-test_expect_failure 'prompt - dirty status indicator - orphan branch - dirty index and worktree' '
+test_expect_success 'prompt - dirty status indicator - orphan branch - dirty index and worktree' '
 	printf " (orphan *+)" >expected &&
 	test_when_finished "git checkout master" &&
 	git checkout --orphan orphan &&
