@@ -544,7 +544,12 @@ def p4Where(depotPath):
     return clientPath
 
 def currentGitBranch():
-    return read_pipe("git name-rev HEAD").split(" ")[1].strip()
+    retcode = system(["git", "symbolic-ref", "-q", "HEAD"], ignore_error=True)
+    if retcode != 0:
+        # on a detached head
+        return None
+    else:
+        return read_pipe(["git", "name-rev", "HEAD"]).split(" ")[1].strip()
 
 def isValidGitDir(path):
     if (os.path.exists(path + "/HEAD")
@@ -1653,8 +1658,6 @@ class P4Submit(Command, P4UserMap):
     def run(self, args):
         if len(args) == 0:
             self.master = currentGitBranch()
-            if len(self.master) == 0 or not gitBranchExists("refs/heads/%s" % self.master):
-                die("Detecting current git branch failed!")
         elif len(args) == 1:
             self.master = args[0]
             if not branchExists(self.master):
@@ -1662,9 +1665,10 @@ class P4Submit(Command, P4UserMap):
         else:
             return False
 
-        allowSubmit = gitConfig("git-p4.allowSubmit")
-        if len(allowSubmit) > 0 and not self.master in allowSubmit.split(","):
-            die("%s is not in git-p4.allowSubmit" % self.master)
+        if self.master:
+            allowSubmit = gitConfig("git-p4.allowSubmit")
+            if len(allowSubmit) > 0 and not self.master in allowSubmit.split(","):
+                die("%s is not in git-p4.allowSubmit" % self.master)
 
         [upstream, settings] = findUpstreamBranchPoint()
         self.depotPath = settings['depot-paths'][0]
@@ -1732,7 +1736,12 @@ class P4Submit(Command, P4UserMap):
         self.check()
 
         commits = []
-        for line in read_pipe_lines(["git", "rev-list", "--no-merges", "%s..%s" % (self.origin, self.master)]):
+        if self.master:
+            commitish = self.master
+        else:
+            commitish = 'HEAD'
+
+        for line in read_pipe_lines(["git", "rev-list", "--no-merges", "%s..%s" % (self.origin, commitish)]):
             commits.append(line.strip())
         commits.reverse()
 

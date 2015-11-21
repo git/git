@@ -241,7 +241,7 @@ test_expect_success 'unresolvable host in P4PORT should display error' '
 	)
 '
 
-test_expect_failure 'submit from detached head' '
+test_expect_success 'submit from detached head' '
 	test_when_finished cleanup_git &&
 	git p4 clone --dest="$git" //depot &&
 	(
