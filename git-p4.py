@@ -192,13 +192,15 @@ def p4_has_move_command():
     # assume it failed because @... was invalid changelist
     return True
 
-def system(cmd):
+def system(cmd, ignore_error=False):
     expand = isinstance(cmd,basestring)
     if verbose:
         sys.stderr.write("executing %s\n" % str(cmd))
     retcode = subprocess.call(cmd, shell=expand)
-    if retcode:
+    if retcode and not ignore_error:
         raise CalledProcessError(retcode, cmd)
+
+    return retcode
 
 def p4_system(cmd):
     """Specifically invoke p4 as the system command. """
