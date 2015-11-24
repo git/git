@@ -1538,44 +1538,47 @@ class P4Submit(Command, P4UserMap):
         #
         # Let the user edit the change description, then submit it.
         #
-        if self.edit_template(fileName):
-            # read the edited message and submit
-            ret = True
-            tmpFile = open(fileName, "rb")
-            message = tmpFile.read()
-            tmpFile.close()
-            if self.isWindows:
-                message = message.replace("\r\n", "\n")
-            submitTemplate = message[:message.index(separatorLine)]
-            p4_write_pipe(['submit', '-i'], submitTemplate)
+        submitted = False
 
-            if self.preserveUser:
-                if p4User:
-                    # Get last changelist number. Cannot easily get it from
-                    # the submit command output as the output is
-                    # unmarshalled.
-                    changelist = self.lastP4Changelist()
-                    self.modifyChangelistUser(changelist, p4User)
+        try:
+            if self.edit_template(fileName):
+                # read the edited message and submit
+                tmpFile = open(fileName, "rb")
+                message = tmpFile.read()
+                tmpFile.close()
+                if self.isWindows:
+                    message = message.replace("\r\n", "\n")
+                submitTemplate = message[:message.index(separatorLine)]
+                p4_write_pipe(['submit', '-i'], submitTemplate)
 
-            # The rename/copy happened by applying a patch that created a
-            # new file.  This leaves it writable, which confuses p4.
-            for f in pureRenameCopy:
-                p4_sync(f, "-f")
+                if self.preserveUser:
+                    if p4User:
+                        # Get last changelist number. Cannot easily get it from
+                        # the submit command output as the output is
+                        # unmarshalled.
+                        changelist = self.lastP4Changelist()
+                        self.modifyChangelistUser(changelist, p4User)
 
-        else:
+                # The rename/copy happened by applying a patch that created a
+                # new file.  This leaves it writable, which confuses p4.
+                for f in pureRenameCopy:
+                    p4_sync(f, "-f")
+                submitted = True
+
+        finally:
             # skip this patch
-            ret = False
-            print "Submission cancelled, undoing p4 changes."
-            for f in editedFiles:
-                p4_revert(f)
-            for f in filesToAdd:
-                p4_revert(f)
-                os.remove(f)
-            for f in filesToDelete:
-                p4_revert(f)
+            if not submitted:
+                print "Submission cancelled, undoing p4 changes."
+                for f in editedFiles:
+                    p4_revert(f)
+                for f in filesToAdd:
+                    p4_revert(f)
+                    os.remove(f)
+                for f in filesToDelete:
+                    p4_revert(f)
 
         os.remove(fileName)
-        return ret
+        return submitted
 
     # Export git tags as p4 labels. Create a p4 label and then tag
     # with that.
