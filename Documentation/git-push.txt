@@ -126,12 +126,11 @@ already exists on the remote side.
 	line.
 
 --follow-tags::
-	Push all the refs that would be pushed without this option,
-	and also push annotated tags in `refs/tags` that are missing
-	from the remote but are pointing at commit-ish that are
-	reachable from the refs being pushed.  This can also be specified
-	with configuration variable 'push.followTags'.  For more
-	information, see 'push.followTags' in linkgit:git-config[1].
+	Also push annotated tags in `refs/tags` that are missing from the
+	remote but are pointing at commit-ish that are reachable from the
+	refs being pushed.  This can also be specified with configuration
+	variable 'push.followTags'.  For more information, see
+	'push.followTags' in linkgit:git-config[1].
 
 --[no-]signed::
 --sign=(true|false|if-asked)::
