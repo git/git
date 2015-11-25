@@ -12,8 +12,6 @@
 		exactly the right subtree structure, rather than using
 		subtree merge...)
 
-	add a 'push' subcommand to parallel 'pull'
-	
 	add a 'log' subcommand to see what's new in a subtree?
 
 	add to-submodule and from-submodule commands
