@@ -569,6 +569,21 @@ test_line_count () {
 	fi
 }
 
+# Returns success if a comma separated string of keywords ($1) contains a
+# given keyword ($2).
+# Examples:
+# `list_contains "foo,bar" bar` returns 0
+# `list_contains "foo" bar` returns 1
+
+list_contains () {
+	case ",$1," in
+	*,$2,*)
+		return 0
+		;;
+	esac
+	return 1
+}
+
 # This is not among top-level (test_expect_success | test_expect_failure)
 # but is a prefix that can be used in the test script, like:
 #
@@ -582,18 +597,31 @@ test_line_count () {
 # the failure could be due to a segv.  We want a controlled failure.
 
 test_must_fail () {
+	case "$1" in
+	ok=*)
+		_test_ok=${1#ok=}
+		shift
+		;;
+	*)
+		_test_ok=
+		;;
+	esac
 	"$@"
 	exit_code=$?
-	if test $exit_code = 0; then
+	if test $exit_code -eq 0 && ! list_contains "$_test_ok" success
+	then
 		echo >&2 "test_must_fail: command succeeded: $*"
 		return 1
-	elif test $exit_code -gt 129 && test $exit_code -le 192; then
+	elif test $exit_code -gt 129 && test $exit_code -le 192
+	then
 		echo >&2 "test_must_fail: died by signal: $*"
 		return 1
-	elif test $exit_code = 127; then
+	elif test $exit_code -eq 127
+	then
 		echo >&2 "test_must_fail: command not found: $*"
 		return 1
-	elif test $exit_code = 126; then
+	elif test $exit_code -eq 126
+	then
 		echo >&2 "test_must_fail: valgrind error: $*"
 		return 1
 	fi
@@ -612,16 +640,7 @@ test_must_fail () {
 # because we want to notice if it fails due to segv.
 
 test_might_fail () {
-	"$@"
-	exit_code=$?
-	if test $exit_code -gt 129 && test $exit_code -le 192; then
-		echo >&2 "test_might_fail: died by signal: $*"
-		return 1
-	elif test $exit_code = 127; then
-		echo >&2 "test_might_fail: command not found: $*"
-		return 1
-	fi
-	return 0
+	test_must_fail ok=success "$@"
 }
 
 # Similar to test_must_fail and test_might_fail, but check that a
