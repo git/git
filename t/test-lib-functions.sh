@@ -612,6 +612,9 @@ test_must_fail () {
 	then
 		echo >&2 "test_must_fail: command succeeded: $*"
 		return 1
+	elif test $exit_code -eq 141 && list_contains "$_test_ok" sigpipe
+	then
+		return 0
 	elif test $exit_code -gt 129 && test $exit_code -le 192
 	then
 		echo >&2 "test_must_fail: died by signal: $*"
