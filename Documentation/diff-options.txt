@@ -267,6 +267,9 @@ expression to make sure that it matches all non-whitespace characters.
 A match that contains a newline is silently truncated(!) at the
 newline.
 +
+For example, `--word-diff-regex=.` will treat each character as a word
+and, correspondingly, show differences character by character.
++
 The regex can also be set via a diff driver or configuration option, see
 linkgit:gitattributes[1] or linkgit:git-config[1].  Giving it explicitly
 overrides any diff driver or configuration setting.  Diff drivers
