@@ -2402,10 +2402,12 @@ static struct commit *fake_working_tree_commit(struct diff_options *opt,
 	return commit;
 }
 
-static struct object_array_entry *find_single_final(struct rev_info *revs)
+static struct commit *find_single_final(struct rev_info *revs,
+					const char **name_p)
 {
 	int i;
-	struct object_array_entry *found = NULL;
+	struct commit *found = NULL;
+	const char *name = NULL;
 
 	for (i = 0; i < revs->pending.nr; i++) {
 		struct object *obj = revs->pending.objects[i].item;
@@ -2417,22 +2419,20 @@ static struct object_array_entry *find_single_final(struct rev_info *revs)
 			die("Non commit %s?", revs->pending.objects[i].name);
 		if (found)
 			die("More than one commit to dig from %s and %s?",
-			    revs->pending.objects[i].name,
-			    found->name);
-		found = &(revs->pending.objects[i]);
+			    revs->pending.objects[i].name, name);
+		found = (struct commit *)obj;
+		name = revs->pending.objects[i].name;
 	}
+	if (name_p)
+		*name_p = name;
 	return found;
 }
 
 static char *prepare_final(struct scoreboard *sb)
 {
-	struct object_array_entry *found = find_single_final(sb->revs);
-	if (found) {
-		sb->final = (struct commit *) found->item;
-		return xstrdup(found->name);
-	} else {
-		return NULL;
-	}
+	const char *name;
+	sb->final = find_single_final(sb->revs, &name);
+	return xstrdup_or_null(name);
 }
 
 static char *prepare_initial(struct scoreboard *sb)
@@ -2720,11 +2720,9 @@ parse_done:
 		die("Cannot use --contents with final commit object name");
 
 	if (reverse && revs.first_parent_only) {
-		struct object_array_entry *entry = find_single_final(sb.revs);
-		if (!entry)
+		final_commit = find_single_final(sb.revs, NULL);
+		if (!final_commit)
 			die("--reverse and --first-parent together require specified latest commit");
-		else
-			final_commit = (struct commit*) entry->item;
 	}
 
 	/*
