@@ -418,4 +418,11 @@ test_expect_success 'filter commit message without trailing newline' '
 	test_cmp expect actual
 '
 
+test_expect_success 'tree-filter deals with object name vs pathname ambiguity' '
+	test_when_finished "git reset --hard original" &&
+	ambiguous=$(git rev-list -1 HEAD) &&
+	git filter-branch --tree-filter "mv file.t $ambiguous" HEAD^.. &&
+	git show HEAD:$ambiguous
+'
+
 test_done
