@@ -14,7 +14,7 @@ test_expect_success 'setup repository to clone' '
 '
 
 test_proto "host:path" ssh "remote:repo.git"
-test_proto "ssh://" ssh "ssh://remote/$PWD/remote/repo.git"
-test_proto "git+ssh://" ssh "git+ssh://remote/$PWD/remote/repo.git"
+test_proto "ssh://" ssh "ssh://remote$PWD/remote/repo.git"
+test_proto "git+ssh://" ssh "git+ssh://remote$PWD/remote/repo.git"
 
 test_done
