@@ -349,7 +349,7 @@ while read commit parents; do
 			die "tree filter failed: $filter_tree"
 
 		(
-			git diff-index -r --name-only --ignore-submodules $commit &&
+			git diff-index -r --name-only --ignore-submodules $commit -- &&
 			git ls-files --others
 		) > "$tempdir"/tree-state || exit
 		git update-index --add --replace --remove --stdin \

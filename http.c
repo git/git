@@ -214,10 +214,10 @@ static int http_options(const char *var, const char *value, void *cb)
 #endif
 #if LIBCURL_VERSION_NUM >= 0x070908
 	if (!strcmp("http.sslcapath", var))
-		return git_config_string(&ssl_capath, var, value);
+		return git_config_pathname(&ssl_capath, var, value);
 #endif
 	if (!strcmp("http.sslcainfo", var))
-		return git_config_string(&ssl_cainfo, var, value);
+		return git_config_pathname(&ssl_cainfo, var, value);
 	if (!strcmp("http.sslcertpasswordprotected", var)) {
 		ssl_cert_password_required = git_config_bool(var, value);
 		return 0;
@@ -464,6 +464,17 @@ static CURL *get_curl_handle(void)
 
 	if (curl_http_proxy) {
 		curl_easy_setopt(result, CURLOPT_PROXY, curl_http_proxy);
+#if LIBCURL_VERSION_NUM >= 0x071800
+		if (starts_with(curl_http_proxy, "socks5"))
+			curl_easy_setopt(result,
+				CURLOPT_PROXYTYPE, CURLPROXY_SOCKS5);
+		else if (starts_with(curl_http_proxy, "socks4a"))
+			curl_easy_setopt(result,
+				CURLOPT_PROXYTYPE, CURLPROXY_SOCKS4A);
+		else if (starts_with(curl_http_proxy, "socks"))
+			curl_easy_setopt(result,
+				CURLOPT_PROXYTYPE, CURLPROXY_SOCKS4);
+#endif
 	}
 #if LIBCURL_VERSION_NUM >= 0x070a07
 	curl_easy_setopt(result, CURLOPT_PROXYAUTH, CURLAUTH_ANY);

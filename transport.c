@@ -15,6 +15,7 @@
 #include "submodule.h"
 #include "string-list.h"
 #include "sha1-array.h"
+#include "sigchain.h"
 
 /* rsync support */
 
@@ -1127,6 +1128,8 @@ static int run_pre_push_hook(struct transport *transport,
 		return -1;
 	}
 
+	sigchain_push(SIGPIPE, SIG_IGN);
+
 	strbuf_init(&buf, 256);
 
 	for (r = remote_refs; r; r = r->next) {
@@ -1140,8 +1143,10 @@ static int run_pre_push_hook(struct transport *transport,
 			 r->peer_ref->name, sha1_to_hex(r->new_sha1),
 			 r->name, sha1_to_hex(r->old_sha1));
 
-		if (write_in_full(proc.in, buf.buf, buf.len) != buf.len) {
-			ret = -1;
+		if (write_in_full(proc.in, buf.buf, buf.len) < 0) {
+			/* We do not mind if a hook does not read all refs. */
+			if (errno != EPIPE)
+				ret = -1;
 			break;
 		}
 	}
@@ -1151,6 +1156,8 @@ static int run_pre_push_hook(struct transport *transport,
 	x = close(proc.in);
 	if (!ret)
 		ret = x;
+
+	sigchain_pop(SIGPIPE);
 
 	x = finish_command(&proc);
 	if (!ret)
