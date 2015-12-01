@@ -176,6 +176,18 @@ test_expect_success 'integer overflow in timestamps is reported' '
 	grep "error in commit $new.*integer overflow" out
 '
 
+test_expect_success 'commit with NUL in header' '
+	git cat-file commit HEAD >basis &&
+	sed "s/author ./author Q/" <basis | q_to_nul >commit-NUL-header &&
+	new=$(git hash-object -t commit -w --stdin <commit-NUL-header) &&
+	test_when_finished "remove_object $new" &&
+	git update-ref refs/heads/bogus "$new" &&
+	test_when_finished "git update-ref -d refs/heads/bogus" &&
+	test_must_fail git fsck 2>out &&
+	cat out &&
+	grep "error in commit $new.*unterminated header: NUL at offset" out
+'
+
 test_expect_success 'malformatted tree object' '
 	test_when_finished "git update-ref -d refs/tags/wrong" &&
 	test_when_finished "remove_object \$T" &&
@@ -274,6 +286,26 @@ test_expect_success 'tag with bad tagger' '
 	test_when_finished "git update-ref -d refs/tags/wrong" &&
 	test_must_fail git fsck --tags 2>out &&
 	grep "error in tag .*: invalid author/committer" out
+'
+
+test_expect_success 'tag with NUL in header' '
+	sha=$(git rev-parse HEAD) &&
+	q_to_nul >tag-NUL-header <<-EOF &&
+	object $sha
+	type commit
+	tag contains-Q-in-header
+	tagger T A Gger <tagger@example.com> 1234567890 -0000
+
+	This is an invalid tag.
+	EOF
+
+	tag=$(git hash-object --literally -t tag -w --stdin <tag-NUL-header) &&
+	test_when_finished "remove_object $tag" &&
+	echo $tag >.git/refs/tags/wrong &&
+	test_when_finished "git update-ref -d refs/tags/wrong" &&
+	test_must_fail git fsck --tags 2>out &&
+	cat out &&
+	grep "error in tag $tag.*unterminated header: NUL at offset" out
 '
 
 test_expect_success 'cleaned up' '

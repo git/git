@@ -711,7 +711,8 @@ static int fsck_tag_buffer(struct tag *tag, const char *data,
 		}
 	}
 
-	if (verify_headers(buffer, size, &tag->object, options))
+	ret = verify_headers(buffer, size, &tag->object, options);
+	if (ret)
 		goto done;
 
 	if (!skip_prefix(buffer, "object ", &buffer)) {
