@@ -6,6 +6,14 @@
 # a subdirectory called "$git"
 TEST_NO_CREATE_REPO=NoThanks
 
+# Some operations require multiple attempts to be successful. Define
+# here the maximal retry timeout in seconds.
+RETRY_TIMEOUT=60
+
+# Sometimes p4d seems to hang. Terminate the p4d process automatically after
+# the defined timeout in seconds.
+P4D_TIMEOUT=300
+
 . ./test-lib.sh
 
 if ! test_have_prereq PYTHON
@@ -36,6 +44,15 @@ native_path() {
 	echo "$path"
 }
 
+# On Solaris the 'date +%s' function is not supported and therefore we
+# need this replacement.
+# Attention: This function is not safe again against time offset updates
+# at runtime (e.g. via NTP). The 'clock_gettime(CLOCK_MONOTONIC)'
+# function could fix that but it is not in Python until 3.3.
+time_in_seconds() {
+	python -c 'import time; print int(time.time())'
+}
+
 # Try to pick a unique port: guess a large number, then hope
 # no more than one of each test is running.
 #
@@ -56,6 +73,15 @@ db="$TRASH_DIRECTORY/db"
 cli="$TRASH_DIRECTORY/cli"
 git="$TRASH_DIRECTORY/git"
 pidfile="$TRASH_DIRECTORY/p4d.pid"
+
+# Sometimes "prove" seems to hang on exit because p4d is still running
+cleanup() {
+	if test -f "$pidfile"
+	then
+		kill -9 $(cat "$pidfile") 2>/dev/null && exit 255
+	fi
+}
+trap cleanup EXIT
 
 # git p4 submit generates a temp file, which will
 # not get cleaned up if the submission fails.  Don't
@@ -81,6 +107,19 @@ start_p4d() {
 	# will be caught with the "kill -0" check below.
 	i=${P4D_START_PATIENCE:-300}
 	pid=$(cat "$pidfile")
+
+	timeout=$(($(time_in_seconds) + $P4D_TIMEOUT))
+	while true
+	do
+		if test $(time_in_seconds) -gt $timeout
+		then
+			kill -9 $pid
+			exit 1
+		fi
+		sleep 1
+	done &
+	watchdog_pid=$!
+
 	ready=
 	while test $i -gt 0
 	do
@@ -121,22 +160,36 @@ p4_add_user() {
 	EOF
 }
 
+retry_until_success() {
+	timeout=$(($(time_in_seconds) + $RETRY_TIMEOUT))
+	until "$@" 2>/dev/null || test $(time_in_seconds) -gt $timeout
+	do
+		sleep 1
+	done
+}
+
+retry_until_fail() {
+	timeout=$(($(time_in_seconds) + $RETRY_TIMEOUT))
+	until ! "$@" 2>/dev/null || test $(time_in_seconds) -gt $timeout
+	do
+		sleep 1
+	done
+}
+
 kill_p4d() {
 	pid=$(cat "$pidfile")
-	# it had better exist for the first kill
-	kill $pid &&
-	for i in 1 2 3 4 5 ; do
-		kill $pid >/dev/null 2>&1 || break
-		sleep 1
-	done &&
+	retry_until_fail kill $pid
+	retry_until_fail kill -9 $pid
 	# complain if it would not die
 	test_must_fail kill $pid >/dev/null 2>&1 &&
-	rm -rf "$db" "$cli" "$pidfile"
+	rm -rf "$db" "$cli" "$pidfile" &&
+	retry_until_fail kill -9 $watchdog_pid
 }
 
 cleanup_git() {
-	rm -rf "$git" &&
-	mkdir "$git"
+	retry_until_success rm -r "$git"
+	test_must_fail test -d "$git" &&
+	retry_until_success mkdir "$git"
 }
 
 marshal_dump() {
