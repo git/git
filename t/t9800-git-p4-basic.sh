@@ -241,6 +241,22 @@ test_expect_success 'unresolvable host in P4PORT should display error' '
 	)
 '
 
+test_expect_success 'submit from detached head' '
+	test_when_finished cleanup_git &&
+	git p4 clone --dest="$git" //depot &&
+	(
+		cd "$git" &&
+		git checkout p4/master &&
+		>detached_head_test &&
+		git add detached_head_test &&
+		git commit -m "add detached_head" &&
+		git config git-p4.skipSubmitEdit true &&
+		git p4 submit &&
+		git p4 rebase &&
+		git log p4/master | grep detached_head
+	)
+'
+
 test_expect_success 'kill p4d' '
 	kill_p4d
 '
