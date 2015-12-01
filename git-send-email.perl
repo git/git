@@ -1196,8 +1196,7 @@ sub ssl_verify_params {
 		return (SSL_verify_mode => SSL_VERIFY_PEER(),
 			SSL_ca_file => $smtp_ssl_cert_path);
 	} else {
-		print STDERR "Not using SSL_VERIFY_PEER because the CA path does not exist.\n";
-		return (SSL_verify_mode => SSL_VERIFY_NONE());
+		die "CA path \"$smtp_ssl_cert_path\" does not exist";
 	}
 }
 
