@@ -25,14 +25,14 @@ static const char *env_names[] = {
 	GIT_PREFIX_ENVIRONMENT
 };
 static char *orig_env[4];
-static int saved_environment;
+static int saved_env_before_alias;
 
-static void save_env(void)
+static void save_env_before_alias(void)
 {
 	int i;
-	if (saved_environment)
+	if (saved_env_before_alias)
 		return;
-	saved_environment = 1;
+	saved_env_before_alias = 1;
 	orig_cwd = xgetcwd();
 	for (i = 0; i < ARRAY_SIZE(env_names); i++) {
 		orig_env[i] = getenv(env_names[i]);
@@ -233,6 +233,7 @@ static int handle_alias(int *argcp, const char ***argv)
 	char *alias_string;
 	int unused_nongit;
 
+	save_env_before_alias();
 	subdir = setup_git_directory_gently(&unused_nongit);
 
 	alias_command = (*argv)[0];
@@ -527,7 +528,7 @@ static void handle_builtin(int argc, const char **argv)
 
 	builtin = get_builtin(cmd);
 	if (builtin) {
-		if (saved_environment && (builtin->option & NO_SETUP))
+		if (saved_env_before_alias && (builtin->option & NO_SETUP))
 			restore_env();
 		else
 			exit(run_builtin(builtin, argc, argv));
@@ -587,7 +588,6 @@ static int run_argv(int *argcp, const char ***argv)
 		 */
 		if (done_alias)
 			break;
-		save_env();
 		if (!handle_alias(argcp, argv))
 			break;
 		done_alias = 1;
