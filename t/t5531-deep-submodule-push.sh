@@ -126,24 +126,48 @@ test_expect_success 'push succeeds if submodule commit not on remote but using o
 	)
 '
 
-test_expect_success 'push fails if submodule commit not on remote using check from cmdline overriding config' '
+test_expect_success 'push recurse-submodules on command line overrides config' '
 	(
 		cd work/gar/bage &&
 		>recurse-check-on-command-line-overriding-config &&
 		git add recurse-check-on-command-line-overriding-config &&
-		git commit -m "Recurse on command-line overridiing config junk"
+		git commit -m "Recurse on command-line overriding config junk"
 	) &&
 	(
 		cd work &&
 		git add gar/bage &&
 		git commit -m "Recurse on command-line overriding config for gar/bage" &&
+
+		# Ensure that we can override on-demand in the config
+		# to just check submodules
 		test_must_fail git -c push.recurseSubmodules=on-demand push --recurse-submodules=check ../pub.git master &&
 		# Check that the supermodule commit did not get there
 		git fetch ../pub.git &&
 		git diff --quiet FETCH_HEAD master^ &&
 		# Check that the submodule commit did not get there
-		cd gar/bage &&
-		git diff --quiet origin/master master^
+		(cd gar/bage && git diff --quiet origin/master master^) &&
+
+		# Ensure that we can override check in the config to
+		# disable submodule recursion entirely
+		(cd gar/bage && git diff --quiet origin/master master^) &&
+		git -c push.recurseSubmodules=on-demand push --recurse-submodules=no ../pub.git master &&
+		git fetch ../pub.git &&
+		git diff --quiet FETCH_HEAD master &&
+		(cd gar/bage && git diff --quiet origin/master master^) &&
+
+		# Ensure that we can override check in the config to
+		# disable submodule recursion entirely (alternative form)
+		git -c push.recurseSubmodules=on-demand push --no-recurse-submodules ../pub.git master &&
+		git fetch ../pub.git &&
+		git diff --quiet FETCH_HEAD master &&
+		(cd gar/bage && git diff --quiet origin/master master^) &&
+
+		# Ensure that we can override check in the config to
+		# push the submodule too
+		git -c push.recurseSubmodules=check push --recurse-submodules=on-demand ../pub.git master &&
+		git fetch ../pub.git &&
+		git diff --quiet FETCH_HEAD master &&
+		(cd gar/bage && git diff --quiet origin/master master)
 	)
 '
 
