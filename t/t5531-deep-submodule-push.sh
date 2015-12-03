@@ -171,6 +171,47 @@ test_expect_success 'push recurse-submodules on command line overrides config' '
 	)
 '
 
+test_expect_success 'push recurse-submodules last one wins on command line' '
+	(
+		cd work/gar/bage &&
+		>recurse-check-on-command-line-overriding-earlier-command-line &&
+		git add recurse-check-on-command-line-overriding-earlier-command-line &&
+		git commit -m "Recurse on command-line overridiing earlier command-line junk"
+	) &&
+	(
+		cd work &&
+		git add gar/bage &&
+		git commit -m "Recurse on command-line overriding earlier command-line for gar/bage" &&
+
+		# should result in "check"
+		test_must_fail git push --recurse-submodules=on-demand --recurse-submodules=check ../pub.git master &&
+		# Check that the supermodule commit did not get there
+		git fetch ../pub.git &&
+		git diff --quiet FETCH_HEAD master^ &&
+		# Check that the submodule commit did not get there
+		(cd gar/bage && git diff --quiet origin/master master^) &&
+
+		# should result in "no"
+		git push --recurse-submodules=on-demand --recurse-submodules=no ../pub.git master &&
+		# Check that the supermodule commit did get there
+		git fetch ../pub.git &&
+		git diff --quiet FETCH_HEAD master &&
+		# Check that the submodule commit did not get there
+		(cd gar/bage && git diff --quiet origin/master master^) &&
+
+		# should result in "no"
+		git push --recurse-submodules=on-demand --no-recurse-submodules ../pub.git master &&
+		# Check that the submodule commit did not get there
+		(cd gar/bage && git diff --quiet origin/master master^) &&
+
+		# But the options in the other order should push the submodule
+		git push --recurse-submodules=check --recurse-submodules=on-demand ../pub.git master &&
+		# Check that the submodule commit did get there
+		git fetch ../pub.git &&
+		(cd gar/bage && git diff --quiet origin/master master)
+	)
+'
+
 test_expect_success 'push succeeds if submodule commit not on remote using on-demand from cmdline overriding config' '
 	(
 		cd work/gar/bage &&
