@@ -273,11 +273,36 @@ test_expect_success 'prompt - dirty status indicator - dirty index and worktree'
 	test_cmp expected "$actual"
 '
 
-test_expect_success 'prompt - dirty status indicator - before root commit' '
-	printf " (master #)" >expected &&
+test_expect_success 'prompt - dirty status indicator - orphan branch - clean' '
+	printf " (orphan #)" >expected &&
+	test_when_finished "git checkout master" &&
+	git checkout --orphan orphan &&
+	git reset --hard &&
 	(
 		GIT_PS1_SHOWDIRTYSTATE=y &&
-		cd otherrepo &&
+		__git_ps1 >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success 'prompt - dirty status indicator - orphan branch - dirty index' '
+	printf " (orphan +)" >expected &&
+	test_when_finished "git checkout master" &&
+	git checkout --orphan orphan &&
+	(
+		GIT_PS1_SHOWDIRTYSTATE=y &&
+		__git_ps1 >"$actual"
+	) &&
+	test_cmp expected "$actual"
+'
+
+test_expect_success 'prompt - dirty status indicator - orphan branch - dirty index and worktree' '
+	printf " (orphan *+)" >expected &&
+	test_when_finished "git checkout master" &&
+	git checkout --orphan orphan &&
+	>file &&
+	(
+		GIT_PS1_SHOWDIRTYSTATE=y &&
 		__git_ps1 >"$actual"
 	) &&
 	test_cmp expected "$actual"
