@@ -1122,6 +1122,9 @@ credential.<url>.*::
 	example.com. See linkgit:gitcredentials[7] for details on how URLs are
 	matched.
 
+credentialCache.ignoreSIGHUP::
+	Tell git-credential-cache--daemon to ignore SIGHUP, instead of quitting.
+
 include::diff-config.txt[]
 
 difftool.<tool>.path::
