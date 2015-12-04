@@ -46,6 +46,7 @@ package main;
 sub usage {
 	print <<EOT;
 git send-email [options] <file | directory | rev-list options >
+git send-email --dump-aliases
 
   Composing:
     --from                  <str>  * Email From:
@@ -100,6 +101,9 @@ git send-email [options] <file | directory | rev-list options >
     --[no-]format-patch            * understand any non optional arguments as
                                      `git format-patch` ones.
     --force                        * Send even if safety checks would prevent it.
+
+  Information:
+    --dump-aliases                 * Dump configured aliases and exit.
 
 EOT
 	exit(1);
@@ -180,6 +184,7 @@ my ($quiet, $dry_run) = (0, 0);
 my $format_patch;
 my $compose_filename;
 my $force = 0;
+my $dump_aliases = 0;
 
 # Handle interactive edition of files.
 my $multiedit;
@@ -291,6 +296,11 @@ $SIG{INT}  = \&signal_handler;
 
 my $help;
 my $rc = GetOptions("h" => \$help,
+                    "dump-aliases" => \$dump_aliases);
+usage() unless $rc;
+die "--dump-aliases incompatible with other options\n"
+    if !$help and $dump_aliases and @ARGV;
+$rc = GetOptions(
 		    "sender|from=s" => \$sender,
                     "in-reply-to=s" => \$initial_reply_to,
 		    "subject=s" => \$initial_subject,
@@ -549,6 +559,11 @@ if (@alias_files and $aliasfiletype and defined $parse_alias{$aliasfiletype}) {
 		$parse_alias{$aliasfiletype}->($fh);
 		close $fh;
 	}
+}
+
+if ($dump_aliases) {
+    print "$_\n" for (sort keys %aliases);
+    exit(0);
 }
 
 # is_format_patch_arg($f) returns 0 if $f names a patch, or 1 if
