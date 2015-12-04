@@ -1,19 +1,21 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Dec 2015, #01; Tue, 1)
-X-master-at: fd13a2ecfbda734a54e22695e0219e89682bdd22
-X-next-at: a22bf4777ab14f7322ba61781952635899ef89e7
+Subject: What's cooking in git.git (Dec 2015, #02; Fri, 4)
+X-master-at: e5da8655b23737a8449868e1d99973a8d0e25fe3
+X-next-at: 362d2fc2f8ab9ee22072f76fb36ec16918511944
 
-What's cooking in git.git (Dec 2015, #01; Tue, 1)
+What's cooking in git.git (Dec 2015, #02; Fri, 4)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
 '+' are in 'next'.
 
-This should by my final whats-cooking before handing things back to
-Junio. Thanks all for review help and for your patience during the past
-few weeks.
+A big thank-you to Peff for managing the list traffic during my
+absence for the past few weeks.  I think my tree is now back in
+shape and I started merging a handful of topics to 'next' and
+'master'.  What's in 'master' plus just a few trivial topics in
+'next' should be pretty much "it" for the upcoming release.
 
 You can find the normal integration branches at:
 
@@ -26,293 +28,96 @@ and all topic branches at:
 But note that I will _not_ be pushing to kernel.org.
 
 --------------------------------------------------
+[Graduated to "master"]
+
+* ad/sha1-update-chunked (2015-11-05) 2 commits
+  (merged to 'next' on 2015-12-01 at a22bf47)
+ + sha1: allow limiting the size of the data passed to SHA1_Update()
+ + sha1: provide another level of indirection for the SHA-1 functions
+
+ Apple's common crypto implementation of SHA1_Update() does not take
+ more than 4GB at a time, and we now have a compile-time workaround
+ for it.
+
+
+* jk/filter-branch-no-index (2015-11-06) 1 commit
+  (merged to 'next' on 2015-11-24 at e31946e)
+ + filter-branch: skip index read/write when possible
+
+ Speed up filter-branch for cases where we only care about rewriting
+ commits, not tree data.
+
+
+* jk/send-email-complete-aliases (2015-11-20) 2 commits
+  (merged to 'next' on 2015-11-24 at a50094f)
+ + completion: add support for completing email aliases
+ + sendemail: teach git-send-email to dump alias names
+
+ Teach send-email to dump mail aliases, so that we can do tab completion
+ on the command line.
+
+
+* np/credential-cache-sighup (2015-11-20) 1 commit
+  (merged to 'next' on 2015-11-24 at 410167f)
+ + credential-cache: new option to ignore sighup
+
+ Workaround for using credential-cache with emacs.
+
+
+* rs/parseopt-short-help (2015-11-20) 5 commits
+  (merged to 'next' on 2015-11-24 at f22b6e0)
+ + show-ref: stop using PARSE_OPT_NO_INTERNAL_HELP
+ + grep: stop using PARSE_OPT_NO_INTERNAL_HELP
+ + parse-options: allow -h as a short option
+ + parse-options: inline parse_options_usage() at its only remaining caller
+ + parse-options: deduplicate parse_options_usage() calls
+
+ Make "-h" command line option work more consistently in all commands.
+
+
+* sg/bash-prompt-dirty-orphan (2015-11-24) 3 commits
+  (merged to 'next' on 2015-11-24 at ac6eb1c)
+ + bash prompt: indicate dirty index even on orphan branches
+ + bash prompt: remove a redundant 'git diff' option
+ + bash prompt: test dirty index and worktree while on an orphan branch
+
+ Produce correct "dirty" marker for shell prompts, even when we
+ are on an orphan or an unborn branch.
+
+--------------------------------------------------
 [New Topics]
 
-* bc/object-id (2015-11-20) 12 commits
- - remote: convert functions to struct object_id
- - Remove get_object_hash.
- - Convert struct object to object_id
- - Add several uses of get_object_hash.
- - object: introduce get_object_hash macro.
- - ref_newer: convert to use struct object_id
- - push_refs_with_export: convert to struct object_id
- - get_remote_heads: convert to struct object_id
- - parse_fetch: convert to use struct object_id
- - add_sought_entry_mem: convert to struct object_id
- - Convert struct ref to use object_id.
- - sha1_file: introduce has_object_file helper.
-
- More transition from "unsigned char[40]" to "struct object_id".
-
- This needed a few merge fixups, but is mostly disentangled from other
- topics.
+* cb/t3404-shellquote (2015-12-04) 1 commit
+ - t3404: fix quoting of redirect for some versions of bash
 
  Will merge to 'next'.
 
 
-* dt/fsck-verify-pack-error (2015-12-01) 1 commit
- - verify_pack: do not ignore return value of verification function
+* nd/clear-gitenv-upon-use-of-alias (2015-12-04) 2 commits
+ - setup.c: re-fix d95138e (setup: set env $GIT_WORK_TREE when ..
+ - git.c: make it clear save_env() is for alias handling only
 
- The exit code of git-fsck would not reflect some types of errors found
- in packed objects.
-
- Will merge to 'next'.
-
-
-* kn/ref-filter-atom-parsing (2015-12-01) 10 commits
- - ref-filter: introduce objectname_atom_parser()
- - ref-filter: introduce contents_atom_parser()
- - ref-filter: introduce remote_ref_atom_parser()
- - ref-filter: introduce align_atom_parser()
- - strbuf: introduce strbuf_split_str_without_term()
- - ref-filter: introduce color_atom_parser()
- - ref-filter: skip deref specifier in match_atom_name()
- - ref-fitler: bump match_atom() name to the top
- - ref-filter: introduce struct used_atom
- - ref-filter: introduce a parsing function for each atom in valid_atom
-
- Refactoring of ref-filter's format-parsing code, in preparation
- for "branch --format" and friends.
-
- This replaces (for now) kn/for-each-ref-remainder, which will be built
- on top.
+ d95138e6 (setup: set env $GIT_WORK_TREE when work tree is set, like
+ $GIT_DIR, 2015-06-26) attempted to work around a glitch in alias
+ handling by overwriting GIT_WORK_TREE environment variable to
+ affect subprocesses when set_git_work_tree() gets called, which
+ resulted in a rather unpleasant regression to "clone" and "init".
+ Try to address the same issue by always restoring the environment
+ and respawning the real underlying command when handling alias.
 
  Waiting for review.
 
 
-* ls/travis-yaml (2015-11-28) 1 commit
- - Add Travis CI support
-
- Provides the necessary infrastructure to build topics using the free
- Travis CI. Developers forking from this topic (and enabling Travis) can
- do their own builds, and we can turn on auto-builds for git/git
- (including build-status for pull requests that people open).
-
- I'm inclined to merge this up, as the worst case is that it becomes
- dormant cruft in the repository root.
+* nd/doc-check-ref-format-typo (2015-12-04) 1 commit
+ - git-check-ref-format.txt: typo, s/avoids/avoid/
 
  Will merge to 'next'.
 
 
-* rs/status-detached-head-memcmp (2015-11-28) 1 commit
- - wt-status: correct and simplify check for detached HEAD
+* sb/doc-submodule-sync-recursive (2015-12-04) 1 commit
+ - document submodule sync --recursive
 
- Fix some string-matching corner cases when digging in the reflog for
- "git status".
-
- Will merge to 'next', then 'maint'.
-
-
-* sg/lock-file-commit-error (2015-12-01) 1 commit
- - Make error message after failing commit_lock_file() less confusing
-
- Cosmetic improvement to lock-file error messages.
-
- Comments on the new messages?
-
- Will merge to 'next' after giving time for bikeshedding.
-
-
---------------------------------------------------
-[Graduated to "master"]
-
-* ar/doc-env-variable-format (2015-11-11) 1 commit
-  (merged to 'next' on 2015-11-24 at 5ddf33e)
- + Documentation: make environment variable formatting more consistent
-
- Minor documentation fixup.
-
- Will merge to 'master'.
-
-
-* cb/hook-sigpipe (2015-11-16) 1 commit
-  (merged to 'next' on 2015-11-24 at 0bf4228)
- + allow hooks to ignore their standard input stream
-
- We now consistently allow all hooks to ignore their standard input,
- rather than having git complain of SIGPIPE.
-
- Will merge to 'master'.
-
-
-* cb/ssl-config-pathnames (2015-11-24) 1 commit
-  (merged to 'next' on 2015-11-24 at 658a9c9)
- + http: treat config options sslCAPath and sslCAInfo as paths
-
- Allow tilde-expansion in some http config variables.
-
- Will merge to 'master'.
-
-
-* dg/subtree-test-cleanup (2015-11-13) 7 commits
-  (merged to 'next' on 2015-11-24 at 1297941)
- + contrib/subtree: Handle '--prefix' argument with a slash appended
- + contrib/subtree: Make each test self-contained
- + contrib/subtree: Add split tests
- + contrib/subtree: Add merge tests
- + contrib/subtree: Add tests for subtree add
- + contrib/subtree: Add test for missing subtree
- + contrib/subtree: Clean and refactor test code
-
- Test cleanups for the subtree project.
-
- Will merge to 'master'.
-
-
-* dk/check-ignore-docs (2015-11-24) 1 commit
-  (merged to 'next' on 2015-11-24 at 0cce5c5)
- + check-ignore: correct documentation about output
-
- Documentation clarification for "check-ignore" without "--verbose".
-
- Will merge to 'master'.
-
-
-* dk/rerere-train-quoting (2015-11-20) 1 commit
-  (merged to 'next' on 2015-11-24 at f9fa96e)
- + Escape Git's exec path in contrib/rerere-train.sh script
-
- Fix shell quoting in contrib script.
-
- Will merge to 'master'.
-
-
-* dk/t5813-unc-paths (2015-11-20) 1 commit
-  (merged to 'next' on 2015-11-24 at 204e4a8)
- + t5813: avoid creating urls that break on cygwin
-
- Test portability fix for a topic in v2.6.1.
-
- Will merge to 'master'.
-
-
-* dt/http-range (2015-11-11) 1 commit
-  (merged to 'next' on 2015-11-24 at d342999)
- + http: fix some printf format warnings
-
- Portability fix for a topic already in 'master'.
-
- Will merge to 'master'.
-
-
-* eg/p4-submit-catch-failure (2015-11-24) 1 commit
-  (merged to 'next' on 2015-11-24 at cf2dc76)
- + git-p4: clean up after p4 submit failure
-
- Just like the working tree is cleaned up when the user cancelled
- submission in P4Submit.applyCommit(), clean up the mess if "p4
- submit" fails.
-
- Will merge to 'master'.
-
-
-* fm/shell-path-whitespace (2015-11-13) 1 commit
-  (merged to 'next' on 2015-11-24 at c2b8bdf)
- + rebase-i-exec: Allow space in SHELL_PATH
-
- Portability fix for Windows, which may rewrite $SHELL variable using
- non-POSIX paths.
-
- Will merge to 'master'.
-
-
-* jk/send-email-ca-path (2015-11-24) 1 commit
-  (merged to 'next' on 2015-11-24 at 923b803)
- + send-email: die if CA path doesn't exist
-
- Use a safer behavior when we hit errors verifying remote certificates.
-
- Will merge to 'master'.
-
-
-* jk/send-email-expand-paths (2015-11-20) 1 commit
-  (merged to 'next' on 2015-11-24 at d32fa4d)
- + send-email: expand path in sendemail.smtpsslcertpath config
-
- Expand paths in some send-email config variables.
-
- Will merge to 'master'.
-
-
-* js/test-modernize-t9300 (2015-11-20) 7 commits
-  (merged to 'next' on 2015-11-24 at d399494)
- + modernize t9300: move test preparations into test_expect_success
- + modernize t9300: mark here-doc words to ignore tab indentation
- + modernize t9300: use test_when_finished for clean-up
- + modernize t9300: wrap lines after &&
- + modernize t9300: use test_must_be_empty
- + modernize t9300: use test_must_fail
- + modernize t9300: single-quote placement and indentation
-
- Clean up style in an ancient test.
-
- Will merge to 'master'.
-
-
-* ld/p4-detached-head (2015-11-24) 3 commits
-  (merged to 'next' on 2015-11-24 at 36ab36a)
- + git-p4: work with a detached head
- + git-p4: add option to system() to return subshell status
- + git-p4: add failing test for submit from detached head
-
- Make git-p4 work on a detached head.
-
- Will merge to 'master'.
-
-
-* ls/p4-test-timeouts (2015-11-20) 3 commits
-  (merged to 'next' on 2015-11-24 at 905cff8)
- + git-p4: add trap to kill p4d on test exit
- + git-p4: add p4d timeout in tests
- + git-p4: retry kill/cleanup operations in tests with timeout
-
- Work around some test flakiness with p4d.
-
- Will merge to 'master'.
-
-
-* mg/doc-word-diff-example (2015-11-24) 1 commit
-  (merged to 'next' on 2015-11-24 at 5ba28db)
- + Documentation/diff: give --word-diff-regex=. example
-
- Will merge to 'master'.
-
-
-* mk/blame-first-parent (2015-11-24) 1 commit
-  (merged to 'next' on 2015-11-24 at a2ee2a4)
- + blame: fix object casting regression
-
- Regression fix for a topic already in master.
-
- Will merge to 'master'.
-
-
-* pt/http-socks-proxy (2015-11-20) 1 commit
-  (merged to 'next' on 2015-11-20 at dc6ae48)
- + remote-http(s): support SOCKS proxies
-
- Add support for talking http/https over socks proxy.
-
- Will merge to 'master'.
-
-
-* rs/fsck-nul-header (2015-11-20) 2 commits
-  (merged to 'next' on 2015-11-24 at 093b3d6)
- + fsck: treat a NUL in a tag header as an error
- + t1450: add tests for NUL in headers of commits and tags
-
- Fsck did not correctly detect a NUL-truncated header in a tag.
-
- Will merge to 'master'.
-
-
-* sg/filter-branch-dwim-ambiguity (2015-11-24) 1 commit
-  (merged to 'next' on 2015-11-24 at fe596a6)
- + filter-branch: deal with object name vs. pathname ambiguity in tree-filter
-
- Fix for a corner case in filter-branch.
-
- Will merge to 'master'.
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -381,12 +186,102 @@ But note that I will _not_ be pushing to kernel.org.
 --------------------------------------------------
 [Cooking]
 
+* bc/object-id (2015-11-20) 12 commits
+  (merged to 'next' on 2015-12-04 at 2d3f5f2)
+ + remote: convert functions to struct object_id
+ + Remove get_object_hash.
+ + Convert struct object to object_id
+ + Add several uses of get_object_hash.
+ + object: introduce get_object_hash macro.
+ + ref_newer: convert to use struct object_id
+ + push_refs_with_export: convert to struct object_id
+ + get_remote_heads: convert to struct object_id
+ + parse_fetch: convert to use struct object_id
+ + add_sought_entry_mem: convert to struct object_id
+ + Convert struct ref to use object_id.
+ + sha1_file: introduce has_object_file helper.
+
+ More transition from "unsigned char[40]" to "struct object_id".
+
+ This needed a few merge fixups, but is mostly disentangled from other
+ topics.
+
+ Will merge to 'master'.
+
+
+* dt/fsck-verify-pack-error (2015-12-01) 1 commit
+  (merged to 'next' on 2015-12-04 at fbd82d1)
+ + verify_pack: do not ignore return value of verification function
+
+ The exit code of git-fsck would not reflect some types of errors found
+ in packed objects.
+
+ Will merge to 'master'.
+
+
+* kn/ref-filter-atom-parsing (2015-12-01) 10 commits
+ - ref-filter: introduce objectname_atom_parser()
+ - ref-filter: introduce contents_atom_parser()
+ - ref-filter: introduce remote_ref_atom_parser()
+ - ref-filter: introduce align_atom_parser()
+ - strbuf: introduce strbuf_split_str_without_term()
+ - ref-filter: introduce color_atom_parser()
+ - ref-filter: skip deref specifier in match_atom_name()
+ - ref-fitler: bump match_atom() name to the top
+ - ref-filter: introduce struct used_atom
+ - ref-filter: introduce a parsing function for each atom in valid_atom
+
+ Refactoring of ref-filter's format-parsing code, in preparation
+ for "branch --format" and friends.
+
+ This replaces (for now) kn/for-each-ref-remainder, which will be built
+ on top.
+
+ Waiting for review.
+
+
+* ls/travis-yaml (2015-11-28) 1 commit
+  (merged to 'next' on 2015-12-04 at e7852e1)
+ + Add Travis CI support
+
+ Provides the necessary infrastructure to build topics using the free
+ Travis CI. Developers forking from this topic (and enabling Travis) can
+ do their own builds, and we can turn on auto-builds for git/git
+ (including build-status for pull requests that people open).
+
+ I'm inclined to merge this up, as the worst case is that it becomes
+ dormant cruft in the repository root.
+
+ Will merge to 'master'.
+
+
+* rs/status-detached-head-memcmp (2015-11-28) 1 commit
+  (merged to 'next' on 2015-12-04 at 60232db)
+ + wt-status: correct and simplify check for detached HEAD
+
+ Fix some string-matching corner cases when digging in the reflog for
+ "git status".
+
+ Will merge to 'master' and then 'maint'.
+
+
+* sg/lock-file-commit-error (2015-12-01) 1 commit
+ - Make error message after failing commit_lock_file() less confusing
+
+ Cosmetic improvement to lock-file error messages.
+
+ Comments on the new messages?
+
+ Will merge to 'next' after giving time for bikeshedding.
+
+
 * bb/merge-marker-crlf (2015-11-24) 1 commit
  - merge-file: consider core.crlf when writing merge markers
 
  Write out merge markers using system end-of-line convention.
 
  Waiting for a re-roll to handle gitattributes.
+ ($gmane/281701)
 
 
 * dk/gc-more-wo-pack (2015-11-24) 3 commits
@@ -405,23 +300,8 @@ But note that I will _not_ be pushing to kernel.org.
 
  Improve error reporting when SMTP TLS fails.
 
- Waiting for re-roll.
-
-
-* mr/ff-refs (2015-11-28) 6 commits
- - builtin/ff-refs.c: mark some file-local variables static
- - ff-refs: Add tests
- - ff-refs: Add documentation
- - ff-refs: add --dry-run and --skip-worktree options
- - ff-refs: update each updatable ref
- - ff-refs: builtin cmd to check and fast forward local refs to their upstream
-
- Specialized command to fast-forward refs to match their upstream.
-
- I remain skeptical that this is necessary or sufficient. Comments
- welcome.
-
- Will hold.
+ Waiting for a reroll.
+ ($gmane/281693)
 
 
 * ps/rebase-keep-empty (2015-11-24) 2 commits
@@ -443,18 +323,6 @@ But note that I will _not_ be pushing to kernel.org.
  Waiting for review from subtree folks.
 
 
-* sg/bash-prompt-dirty-orphan (2015-11-24) 3 commits
-  (merged to 'next' on 2015-11-24 at ac6eb1c)
- + bash prompt: indicate dirty index even on orphan branches
- + bash prompt: remove a redundant 'git diff' option
- + bash prompt: test dirty index and worktree while on an orphan branch
-
- Produce correct "dirty" marker for shell prompts, even when we
- are on an orphan branch.
-
- Will merge to 'master'.
-
-
 * sg/sh-require-clean-orphan (2015-11-24) 2 commits
  - sh-setup: make require_clean_work_tree() work on orphan branches
  - Add tests for git-sh-setup's require_clean_work_tree()
@@ -465,8 +333,6 @@ But note that I will _not_ be pushing to kernel.org.
  into the looser behavior, at the expense of carrying around a new
  option-flag forever. I'm not sure if we need to do so. Comments
  welcome.
-
- Waiting for re-roll?
 
 
 * tb/ls-files-eol (2015-11-28) 2 commits
@@ -486,28 +352,7 @@ But note that I will _not_ be pushing to kernel.org.
  Usability fix for annotate-specific "<file> <rev>" syntax with deleted
  files.
 
- Needs review.
-
-
-* jk/filter-branch-no-index (2015-11-06) 1 commit
-  (merged to 'next' on 2015-11-24 at e31946e)
- + filter-branch: skip index read/write when possible
-
- Speed up filter-branch for cases where we only care about rewriting
- commits, not tree data.
-
- Will merge to 'master'.
-
-
-* jk/send-email-complete-aliases (2015-11-20) 2 commits
-  (merged to 'next' on 2015-11-24 at a50094f)
- + completion: add support for completing email aliases
- + sendemail: teach git-send-email to dump alias names
-
- Teach send-email to dump mail aliases, so that we can do tab completion
- on the command line.
-
- Will merge to 'master'.
+ Waiting for review.
 
 
 * ls/test-must-fail-sigpipe (2015-11-28) 2 commits
@@ -518,38 +363,18 @@ But note that I will _not_ be pushing to kernel.org.
  Fix some racy client/server tests by treating SIGPIPE the same as a
  normal non-zero exit.
 
- Will merge to 'master' two cycles from now.
+ Will merge to 'master' by -rc0.
 
 
-* mc/push-recurse-submodules-config (2015-11-20) 1 commit
+* mc/push-recurse-submodules-config (2015-12-04) 3 commits
+ - push: follow the "last one wins" convention for --recurse-submodules
+ - push: test that --recurse-submodules on command line overrides config
   (merged to 'next' on 2015-11-24 at 3644d4b)
  + push: add recurseSubmodules config option
 
  Add new config to avoid typing "--recurse-submodules" on each push.
 
  Waiting for review from submodule folks.
-
-
-* np/credential-cache-sighup (2015-11-20) 1 commit
-  (merged to 'next' on 2015-11-24 at 410167f)
- + credential-cache: new option to ignore sighup
-
- Workaround for using credential-cache with emacs.
-
- Will merge to 'master'.
-
-
-* rs/parseopt-short-help (2015-11-20) 5 commits
-  (merged to 'next' on 2015-11-24 at f22b6e0)
- + show-ref: stop using PARSE_OPT_NO_INTERNAL_HELP
- + grep: stop using PARSE_OPT_NO_INTERNAL_HELP
- + parse-options: allow -h as a short option
- + parse-options: inline parse_options_usage() at its only remaining caller
- + parse-options: deduplicate parse_options_usage() calls
-
- Make "-h" command line option work more consistently in all commands.
-
- Will merge to 'master'.
 
 
 * dt/refs-backend-pre-vtable (2015-11-20) 10 commits
@@ -567,30 +392,19 @@ But note that I will _not_ be pushing to kernel.org.
 
  Code preparation for pluggable ref backends.
 
- Will merge to 'master' two cycles from now.
+ Will merge to 'master' by -rc0.
 
 
-* ad/sha1-update-chunked (2015-11-05) 2 commits
-  (merged to 'next' on 2015-12-01 at a22bf47)
- + sha1: allow limiting the size of the data passed to SHA1_Update()
- + sha1: provide another level of indirection for the SHA-1 functions
-
- Apple's common crypto implementation of SHA1_Update() does not take
- more than 4GB at a time, and we now have a compile-time workaround
- for it.
-
- Will merge to 'master'.
-
-
-* vl/grep-configurable-threads (2015-11-01) 1 commit
- - grep: add --threads=<num> option and grep.threads configuration
+* vl/grep-configurable-threads (2015-12-04) 1 commit
+ . grep: add --threads=<num> option and grep.threads configuration
 
  "git grep" can now be configured (or told from the command line)
  how many threads to use when searching in the working tree files.
 
- There was some review from Eric.
+ There was some review from Eric.  Also this seems to break a test.
 
- Waiting for re-roll?
+ Waiting for a reroll, or at least a response.
+ ($gmane/281160)
 
 
 * kf/http-proxy-auth-methods (2015-11-04) 3 commits
@@ -610,7 +424,7 @@ But note that I will _not_ be pushing to kernel.org.
  be re-rolled on top.
 
  Still being worked on.
- ($gmane/280925).
+ ($gmane/280925)
 
 
 * sb/submodule-parallel-update (2015-11-20) 27 commits
@@ -686,7 +500,7 @@ But note that I will _not_ be pushing to kernel.org.
  list of object names from the standard input instead of from the
  command line, and does not involve files in the working tree.
 
- Waiting for reviews.
+ Waiting for review.
 
 
 * ep/ident-with-getaddrinfo (2015-11-28) 1 commit
@@ -697,7 +511,7 @@ But note that I will _not_ be pushing to kernel.org.
  user's hostname, instead of getaddrinfo() that is used in other
  codepaths in such a build.
 
- Will merge to 'master' two cycles from now.
+ Will merge to 'master' by -rc0.
 
 
 * mh/notes-allow-reading-treeish (2015-10-08) 3 commits
@@ -811,7 +625,8 @@ But note that I will _not_ be pushing to kernel.org.
 
 
 * sb/submodule-parallel-fetch (2015-11-24) 17 commits
- - run-command: detect finished children by closed pipe rather than waitpid
+  (merged to 'next' on 2015-12-04 at 2c5ea47)
+ + run-command: detect finished children by closed pipe rather than waitpid
   (merged to 'next' on 2015-11-20 at 89fc723)
  + strbuf: update documentation for strbuf_read_once()
  + run-command: remove set_nonblocking()
@@ -836,7 +651,7 @@ But note that I will _not_ be pushing to kernel.org.
  Add a framework to spawn a group of processes in parallel, and use
  it to run "git fetch --recurse-submodules" in parallel.
 
- Will merge top commit to 'next'.
+ Waiting for review.
 
 
 * ad/cygwin-wants-rename (2015-08-07) 1 commit
@@ -873,3 +688,19 @@ But note that I will _not_ be pushing to kernel.org.
  before this final step can proceed.
 
  Will keep in 'next'.
+
+
+--------------------------------------------------
+[Discarded]
+
+* mr/ff-refs (2015-11-28) 6 commits
+ . builtin/ff-refs.c: mark some file-local variables static
+ . ff-refs: Add tests
+ . ff-refs: Add documentation
+ . ff-refs: add --dry-run and --skip-worktree options
+ . ff-refs: update each updatable ref
+ . ff-refs: builtin cmd to check and fast forward local refs to their upstream
+
+ Specialized command to fast-forward refs to match their upstream.
+
+
