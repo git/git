@@ -161,11 +161,6 @@ static int exclude_existing_callback(const struct option *opt, const char *arg,
 	return 0;
 }
 
-static int help_callback(const struct option *opt, const char *arg, int unset)
-{
-	return -1;
-}
-
 static const struct option show_ref_options[] = {
 	OPT_BOOL(0, "tags", &tags_only, N_("only show tags (can be combined with heads)")),
 	OPT_BOOL(0, "heads", &heads_only, N_("only show heads (can be combined with tags)")),
@@ -186,18 +181,13 @@ static const struct option show_ref_options[] = {
 	{ OPTION_CALLBACK, 0, "exclude-existing", &exclude_existing_arg,
 	  N_("pattern"), N_("show refs from stdin that aren't in local repository"),
 	  PARSE_OPT_OPTARG | PARSE_OPT_NONEG, exclude_existing_callback },
-	{ OPTION_CALLBACK, 0, "help-all", NULL, NULL, N_("show usage"),
-	  PARSE_OPT_HIDDEN | PARSE_OPT_NOARG, help_callback },
 	OPT_END()
 };
 
 int cmd_show_ref(int argc, const char **argv, const char *prefix)
 {
-	if (argc == 2 && !strcmp(argv[1], "-h"))
-		usage_with_options(show_ref_usage, show_ref_options);
-
 	argc = parse_options(argc, argv, prefix, show_ref_options,
-			     show_ref_usage, PARSE_OPT_NO_INTERNAL_HELP);
+			     show_ref_usage, 0);
 
 	if (exclude_arg)
 		return exclude_existing(exclude_existing_arg);

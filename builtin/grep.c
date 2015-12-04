@@ -612,11 +612,6 @@ static int pattern_callback(const struct option *opt, const char *arg,
 	return 0;
 }
 
-static int help_callback(const struct option *opt, const char *arg, int unset)
-{
-	return -1;
-}
-
 int cmd_grep(int argc, const char **argv, const char *prefix)
 {
 	int hit = 0;
@@ -738,17 +733,8 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			PARSE_OPT_OPTARG, NULL, (intptr_t)default_pager },
 		OPT_BOOL(0, "ext-grep", &external_grep_allowed__ignored,
 			 N_("allow calling of grep(1) (ignored by this build)")),
-		{ OPTION_CALLBACK, 0, "help-all", NULL, NULL, N_("show usage"),
-		  PARSE_OPT_HIDDEN | PARSE_OPT_NOARG, help_callback },
 		OPT_END()
 	};
-
-	/*
-	 * 'git grep -h', unlike 'git grep -h <pattern>', is a request
-	 * to show usage information and exit.
-	 */
-	if (argc == 2 && !strcmp(argv[1], "-h"))
-		usage_with_options(grep_usage, options);
 
 	init_grep_defaults();
 	git_config(grep_cmd_config, NULL);
@@ -766,8 +752,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	 */
 	argc = parse_options(argc, argv, prefix, options, grep_usage,
 			     PARSE_OPT_KEEP_DASHDASH |
-			     PARSE_OPT_STOP_AT_NON_OPTION |
-			     PARSE_OPT_NO_INTERNAL_HELP);
+			     PARSE_OPT_STOP_AT_NON_OPTION);
 	grep_commit_pattern_type(pattern_type_arg, &opt);
 
 	if (use_index && !startup_info->have_repository)
