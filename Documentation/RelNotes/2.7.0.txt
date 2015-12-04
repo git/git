@@ -66,6 +66,20 @@ UI, Workflows & Features
    a superset of "--no-progress".  Extend the command to support the
    usual "--[no-]progress".
 
+ * The semantics of tranfer.hideRefs configuration variable have been
+   extended to work better with the ref "namespace" feature that lets
+   you throw unrelated bunches of repositories in a single physical
+   repository and virtually serve them as separate ones.
+
+ * send-email config variables whose values are pathnames now go
+   through the ~username/ expansion.
+
+ * bash completion learnt to TAB-complete recipient addresses given
+   to send-email.
+
+ * The credential-cache daemon can be told to ignore SIGHUP to work
+   around issue when running Git from inside emacs.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -117,6 +131,30 @@ Performance, Internal Implementation, Development Support etc.
 
  * With a "debug" helper, debugging of a single "git" invocation in
    our test scripts has become a lot easier.
+
+ * The "configure" script did not test for -lpthread correctly, which
+   upset some linkers.
+
+ * Cross completed task off of subtree project's todo list.
+
+ * Test cleanups for the subtree project.
+
+ * Clean up style in an ancient test t9300.
+
+ * Work around some test flakiness with p4d.
+
+ * Fsck did not correctly detect a NUL-truncated header in a tag.
+
+ * Use a safer behavior when we hit errors verifying remote certificates.
+
+ * Speed up filter-branch for cases where we only care about rewriting
+   commits, not tree data.
+
+ * The parse-options API has been updated to make "-h" command line
+   option work more consistently in all commands.
+
+ * "git svn rebase/mkdirs" got optimized by keeping track of empty
+   directories better.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -340,6 +378,19 @@ notes for details).
    asked properly libcurl knows how to strip the result down to the
    requested range.  However, we were hand-crafting a range request
    and it did not kick in.
+
+ * Having a leftover .idx file without corresponding .pack file in
+   the repository hurts performance; "git gc" learned to prune them.
+   (merge 478f34d dk/gc-idx-wo-pack later to maint).
+
+ * Apple's common crypto implementation of SHA1_Update() does not take
+   more than 4GB at a time, and we now have a compile-time workaround
+   for it.
+   (merge 001fd7a ad/sha1-update-chunked later to maint).
+
+ * Produce correct "dirty" marker for shell prompts, even when we
+   are on an orphan or an unborn branch.
+   (merge c26f70c sg/bash-prompt-dirty-orphan later to maint).
 
  * Code clean-up, minor fixes etc.
    (merge 15ed07d jc/rerere later to maint).
