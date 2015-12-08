@@ -44,5 +44,20 @@ Fixes since v2.6.3
    computing the object name of the target of symbolic link, which may
    not even exist or may be a directory.
 
+ * There was no way to defeat a configured rebase.autostash variable
+   from the command line, as "git rebase --no-autostash" was missing.
+
+ * Allow "git interpret-trailers" to run outside of a Git repository.
+
+ * Produce correct "dirty" marker for shell prompts, even when we
+   are on an orphan or an unborn branch.
+
+ * Some corner cases have been fixed in string-matching done in "git
+   status".
+
+ * Apple's common crypto implementation of SHA1_Update() does not take
+   more than 4GB at a time, and we now have a compile-time workaround
+   for it.
+
 Also contains typofixes, documentation updates and trivial code
 clean-ups.
