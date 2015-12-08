@@ -1943,6 +1943,8 @@ proc confirm_popup {msg {owner .}} {
 }
 
 proc setoptions {} {
+    global use_ttk
+
     if {[tk windowingsystem] ne "win32"} {
         option add *Panedwindow.showHandle 1 startupFile
         option add *Panedwindow.sashRelief raised startupFile
@@ -1963,6 +1965,18 @@ proc setoptions {} {
     option add *Labelframe.font uifont startupFile
     option add *Spinbox.font textfont startupFile
     option add *Listbox.font mainfont startupFile
+}
+
+proc setttkstyle {} {
+    eval font configure TkDefaultFont [fontflags mainfont]
+    eval font configure TkTextFont [fontflags textfont]
+    eval font configure TkHeadingFont [fontflags mainfont]
+    eval font configure TkCaptionFont [fontflags mainfont] -weight bold
+    eval font configure TkTooltipFont [fontflags uifont]
+    eval font configure TkFixedFont   [fontflags textfont]
+    eval font configure TkIconFont    [fontflags uifont]
+    eval font configure TkMenuFont    [fontflags uifont]
+    eval font configure TkSmallCaptionFont [fontflags uifont]
 }
 
 # Make a menu and submenus.
@@ -12355,6 +12369,10 @@ if {![info exists have_ttk]} {
 }
 set use_ttk [expr {$have_ttk && $want_ttk}]
 set NS [expr {$use_ttk ? "ttk" : ""}]
+
+if {$use_ttk} {
+    setttkstyle
+}
 
 regexp {^git version ([\d.]*\d)} [exec git version] _ git_version
 
