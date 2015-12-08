@@ -1317,15 +1317,14 @@ static int grab_1st_switch(unsigned char *osha1, unsigned char *nsha1,
 	target += strlen(" to ");
 	strbuf_reset(&cb->buf);
 	hashcpy(cb->nsha1, nsha1);
-	for (end = target; *end && *end != '\n'; end++)
-		;
-	if (!memcmp(target, "HEAD", end - target)) {
+	end = strchrnul(target, '\n');
+	strbuf_add(&cb->buf, target, end - target);
+	if (!strcmp(cb->buf.buf, "HEAD")) {
 		/* HEAD is relative. Resolve it to the right reflog entry. */
+		strbuf_reset(&cb->buf);
 		strbuf_addstr(&cb->buf,
 			      find_unique_abbrev(nsha1, DEFAULT_ABBREV));
-		return 1;
 	}
-	strbuf_add(&cb->buf, target, end - target);
 	return 1;
 }
 
