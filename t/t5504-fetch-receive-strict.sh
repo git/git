@@ -100,7 +100,7 @@ test_expect_success 'push with receive.fsckobjects' '
 		git config receive.fsckobjects true &&
 		git config transfer.fsckobjects false
 	) &&
-	test_must_fail git push --porcelain dst master:refs/heads/test >act &&
+	test_must_fail ok=sigpipe git push --porcelain dst master:refs/heads/test >act &&
 	test_cmp exp act
 '
 
@@ -111,8 +111,7 @@ test_expect_success 'push with transfer.fsckobjects' '
 		cd dst &&
 		git config transfer.fsckobjects true
 	) &&
-	test_must_fail git push --porcelain dst master:refs/heads/test >act &&
-	test_cmp exp act
+	test_must_fail ok=sigpipe git push --porcelain dst master:refs/heads/test >act
 '
 
 cat >bogus-commit <<\EOF
