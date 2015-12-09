@@ -1811,7 +1811,7 @@ else
 RC_VERSION_DEFS := $(join -DMAJOR= -DMINOR= -DMICRO= -DPATCHLEVEL=, $(wordlist 1,4,$(subst -, ,$(subst ., ,$(subst .windows., ,$(GIT_VERSION))))))
 endif
 
-git.res: git.rc GIT-VERSION-FILE
+git.res: git.rc GIT-VERSION-FILE GIT-PREFIX
 	$(QUIET_RC)$(RC) $(RC_VERSION_DEFS) \
 	  -DGIT_VERSION="\\\"$(GIT_VERSION)\\\"" $< -o $@
 
