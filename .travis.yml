@@ -1,0 +1,9 @@
+language: c
+compiler:
+ - gcc
+ - clang
+before_install:
+ - sudo apt-get -qq update && sudo apt-get -qq build-dep git && sudo apt-get -qq install clang gcc
+# `make check` is present, but does strange things, `make test` works; there's no `make distcheck` target
+script: autoreconf -v -i -f && ./configure && make -j24 && make -j24 test && sudo make install
+after_failure: cat test-suite.log
