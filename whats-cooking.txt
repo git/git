@@ -1,126 +1,226 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Dec 2015, #02; Fri, 4)
-X-master-at: e5da8655b23737a8449868e1d99973a8d0e25fe3
-X-next-at: 362d2fc2f8ab9ee22072f76fb36ec16918511944
+Subject: What's cooking in git.git (Dec 2015, #03; Thu, 10)
+X-master-at: 7d722536dd86b5fbd0c0434bfcea5588132ee6ad
+X-next-at: 4a846af92dfa9c9799c6c2f1a61e3a1b87ceb0f4
 
-What's cooking in git.git (Dec 2015, #02; Fri, 4)
+What's cooking in git.git (Dec 2015, #03; Thu, 10)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
 '-' are only in 'pu' (proposed updates) while commits prefixed with
-'+' are in 'next'.
+'+' are in 'next'.  The ones marked with '.' do not appear in any of
+the integration branches, but I am still holding onto them.
 
-A big thank-you to Peff for managing the list traffic during my
-absence for the past few weeks.  I think my tree is now back in
-shape and I started merging a handful of topics to 'next' and
-'master'.  What's in 'master' plus just a few trivial topics in
-'next' should be pretty much "it" for the upcoming release.
+An early preview v2.7.0-rc0 has been tagged.  I notice that quite a
+few topics have been in "waiting for review" state without getting
+anybody helping the review process, leaving them in 'pu'--they will
+not have enough time to be part of 2.7 at this rate, but perhaps
+that is unavoidable, as this is historically a slow season.
 
-You can find the normal integration branches at:
+You can find the changes described here in the integration branches of the
+repositories listed at
 
-    https://github.com/git/git/
-
-and all topic branches at:
-
-    https://github.com/peff/git/
-
-But note that I will _not_ be pushing to kernel.org.
+    http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
 [Graduated to "master"]
 
-* ad/sha1-update-chunked (2015-11-05) 2 commits
-  (merged to 'next' on 2015-12-01 at a22bf47)
- + sha1: allow limiting the size of the data passed to SHA1_Update()
- + sha1: provide another level of indirection for the SHA-1 functions
+* bc/object-id (2015-11-20) 12 commits
+  (merged to 'next' on 2015-12-04 at 2d3f5f2)
+ + remote: convert functions to struct object_id
+ + Remove get_object_hash.
+ + Convert struct object to object_id
+ + Add several uses of get_object_hash.
+ + object: introduce get_object_hash macro.
+ + ref_newer: convert to use struct object_id
+ + push_refs_with_export: convert to struct object_id
+ + get_remote_heads: convert to struct object_id
+ + parse_fetch: convert to use struct object_id
+ + add_sought_entry_mem: convert to struct object_id
+ + Convert struct ref to use object_id.
+ + sha1_file: introduce has_object_file helper.
+ (this branch is used by bc/format-patch-null-from-line.)
 
- Apple's common crypto implementation of SHA1_Update() does not take
- more than 4GB at a time, and we now have a compile-time workaround
- for it.
+ More transition from "unsigned char[40]" to "struct object_id".
 
-
-* jk/filter-branch-no-index (2015-11-06) 1 commit
-  (merged to 'next' on 2015-11-24 at e31946e)
- + filter-branch: skip index read/write when possible
-
- Speed up filter-branch for cases where we only care about rewriting
- commits, not tree data.
-
-
-* jk/send-email-complete-aliases (2015-11-20) 2 commits
-  (merged to 'next' on 2015-11-24 at a50094f)
- + completion: add support for completing email aliases
- + sendemail: teach git-send-email to dump alias names
-
- Teach send-email to dump mail aliases, so that we can do tab completion
- on the command line.
+ This needed a few merge fixups, but is mostly disentangled from other
+ topics.
 
 
-* np/credential-cache-sighup (2015-11-20) 1 commit
-  (merged to 'next' on 2015-11-24 at 410167f)
- + credential-cache: new option to ignore sighup
+* dt/fsck-verify-pack-error (2015-12-01) 1 commit
+  (merged to 'next' on 2015-12-04 at fbd82d1)
+ + verify_pack: do not ignore return value of verification function
 
- Workaround for using credential-cache with emacs.
-
-
-* rs/parseopt-short-help (2015-11-20) 5 commits
-  (merged to 'next' on 2015-11-24 at f22b6e0)
- + show-ref: stop using PARSE_OPT_NO_INTERNAL_HELP
- + grep: stop using PARSE_OPT_NO_INTERNAL_HELP
- + parse-options: allow -h as a short option
- + parse-options: inline parse_options_usage() at its only remaining caller
- + parse-options: deduplicate parse_options_usage() calls
-
- Make "-h" command line option work more consistently in all commands.
+ The exit code of git-fsck didnot reflect some types of errors found
+ in packed objects, which has been corrected.
 
 
-* sg/bash-prompt-dirty-orphan (2015-11-24) 3 commits
-  (merged to 'next' on 2015-11-24 at ac6eb1c)
- + bash prompt: indicate dirty index even on orphan branches
- + bash prompt: remove a redundant 'git diff' option
- + bash prompt: test dirty index and worktree while on an orphan branch
+* dt/refs-backend-pre-vtable (2015-11-20) 10 commits
+  (merged to 'next' on 2015-11-24 at 8fd7293)
+ + refs: break out ref conflict checks
+ + files_log_ref_write: new function
+ + initdb: make safe_create_dir public
+ + refs: split filesystem-based refs code into a new file
+ + refs/refs-internal.h: new header file
+ + refname_is_safe(): improve docstring
+ + pack_if_possible_fn(): use ref_type() instead of is_per_worktree_ref()
+ + copy_msg(): rename to copy_reflog_msg()
+ + verify_refname_available(): new function
+ + verify_refname_available(): rename function
+ (this branch is used by dt/refs-backend-lmdb.)
 
- Produce correct "dirty" marker for shell prompts, even when we
- are on an orphan or an unborn branch.
+ Code preparation for pluggable ref backends.
+
+
+* ep/ident-with-getaddrinfo (2015-11-28) 1 commit
+  (merged to 'next' on 2015-12-01 at 0775d4c)
+ + ident.c: add support for IPv6
+
+ A build without NO_IPv6 used to use gethostbyname() when guessing
+ user's hostname, instead of getaddrinfo() that is used in other
+ codepaths in such a build.
+
+
+* ls/test-must-fail-sigpipe (2015-11-28) 2 commits
+  (merged to 'next' on 2015-12-01 at d374686)
+ + add "ok=sigpipe" to test_must_fail and use it to fix flaky tests
+ + implement test_might_fail using a refactored test_must_fail
+
+ Fix some racy client/server tests by treating SIGPIPE the same as a
+ normal non-zero exit.
+
+
+* ls/travis-yaml (2015-11-28) 1 commit
+  (merged to 'next' on 2015-12-04 at e7852e1)
+ + Add Travis CI support
+
+ The necessary infrastructure to build topics using the free Travis
+ CI has been added. Developers forking from this topic (and enabling
+ Travis) can do their own builds, and we can turn on auto-builds for
+ git/git (including build-status for pull requests that people
+ open).
+
+
+* nd/doc-check-ref-format-typo (2015-12-04) 1 commit
+  (merged to 'next' on 2015-12-08 at 1ec8a6b)
+ + git-check-ref-format.txt: typo, s/avoids/avoid/
+
+
+* rs/status-detached-head-memcmp (2015-11-28) 1 commit
+  (merged to 'next' on 2015-12-04 at 60232db)
+ + wt-status: correct and simplify check for detached HEAD
+
+ Fix some string-matching corner cases when digging in the reflog for
+ "git status".
 
 --------------------------------------------------
 [New Topics]
 
-* cb/t3404-shellquote (2015-12-04) 1 commit
- - t3404: fix quoting of redirect for some versions of bash
+* bc/format-patch-null-from-line (2015-12-07) 2 commits
+ - format-patch: add an option to suppress commit hash
+ - Introduce a null_oid constant.
 
- Will merge to 'next'.
+ "format-patch" has learned a new option to zero-out the commit
+ object name on the mbox "From " line.
+
+ The bottom patch needs to be retitled but otherwise OK.  The top
+ one names the new option --no-hash that is doubly undesirable.
+
+ Waiting for a reroll.
+ ($gmane/282111)
 
 
-* nd/clear-gitenv-upon-use-of-alias (2015-12-04) 2 commits
- - setup.c: re-fix d95138e (setup: set env $GIT_WORK_TREE when ..
- - git.c: make it clear save_env() is for alias handling only
+* sn/null-pointer-arith-in-mark-tree-uninteresting (2015-12-07) 1 commit
+  (merged to 'next' on 2015-12-08 at 91b14e2)
+ + revision.c: fix possible null pointer arithmetic
 
- d95138e6 (setup: set env $GIT_WORK_TREE when work tree is set, like
- $GIT_DIR, 2015-06-26) attempted to work around a glitch in alias
- handling by overwriting GIT_WORK_TREE environment variable to
- affect subprocesses when set_git_work_tree() gets called, which
- resulted in a rather unpleasant regression to "clone" and "init".
- Try to address the same issue by always restoring the environment
- and respawning the real underlying command when handling alias.
+ mark_tree_uninteresting() has code to handle the case where it gets
+ passed a NULL pointer in its 'tree' parameter, but the function had
+ 'object = &tree->object' assignment before checking if tree is
+ NULL.  This gives a compiler an excuse to declare that tree will
+ never be NULL and apply a wrong optimization.  Avoid it.
+
+ Will merge to 'master'.
+
+
+* dt/refs-backend-lmdb (2015-12-04) 16 commits
+ - refs: tests for lmdb backend
+ - refs: add LMDB refs backend
+ - refs: allow ref backend to be set for clone
+ - init: allow alternate backends to be set for new repos
+ - refs: always handle non-normal refs in files backend
+ - refs: move duplicate check to common code
+ - refs: make lock generic
+ - refs: add method to rename refs
+ - refs: add methods to init refs backend and db
+ - refs: add method for delete_refs
+ - refs: add method for initial ref transaction commit
+ - refs: add methods for reflog
+ - refs: add do_for_each_per_worktree_ref
+ - refs: add methods for the ref iterators
+ - refs: add methods for misc ref operations
+ - refs: add a backend method structure with transaction functions
+
+ Building on top of a few refs-backend preparatory series, LMDB
+ based refs backend has been plugged into the system.
 
  Waiting for review.
 
 
-* nd/doc-check-ref-format-typo (2015-12-04) 1 commit
- - git-check-ref-format.txt: typo, s/avoids/avoid/
+* dw/subtree-split-do-not-drop-merge (2015-12-10) 1 commit
+ - contrib/subtree: fix "subtree split" skipped-merge bug
 
- Will merge to 'next'.
+ The "split" subcommand of "git subtree" (in contrib/) incorrectly
+ skipped merges when it shouldn't, which was corrected.
+
+ Waiting for review from 'subtree' folks.
 
 
-* sb/doc-submodule-sync-recursive (2015-12-04) 1 commit
- - document submodule sync --recursive
+* ls/p4-keep-empty-commits (2015-12-10) 1 commit
+ - git-p4: add option to keep empty commits
+
+ "git p4" used to import Perforce CLs that touch only paths outside
+ the client spec as empty commits.  It has been corrected to ignore
+ them instead, with a new configuration git-p4.keepEmptyCommits as a
+ backward compatibility knob.
 
  Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
+
+* vl/grep-configurable-threads (2015-12-04) 1 commit
+ . grep: add --threads=<num> option and grep.threads configuration
+
+ "git grep" can now be configured (or told from the command line)
+ how many threads to use when searching in the working tree files.
+
+ There was some review from Eric.  Also this seems to break a test.
+
+ Waiting for a reroll, or at least a response.
+ ($gmane/281160)
+
+
+* kf/http-proxy-auth-methods (2015-11-04) 3 commits
+ . SQUASH???
+ . http: use credential API to handle proxy authentication
+ . http: allow selection of proxy authentication method
+
+ New http.proxyAuthMethod configuration variable can be used to
+ specify what authentication method to use, as a way to work around
+ proxies that do not give error response expected by libcurl when
+ CURLAUTH_ANY is used.  Also, the codepath for proxy authentication
+ has been taught to use credential API to store the authentication
+ material in user's keyrings.
+
+ I ejected this from pu for the moment, as it conflicts with the
+ pt/http-socks-proxy topic. That is now in master, so it can
+ be re-rolled on top.
+
+ Still being worked on.
+ ($gmane/280925)
+
 
 * nd/ita-cleanup (2015-09-06) 6 commits
  - grep: make it clear i-t-a entries are ignored
@@ -186,35 +286,34 @@ But note that I will _not_ be pushing to kernel.org.
 --------------------------------------------------
 [Cooking]
 
-* bc/object-id (2015-11-20) 12 commits
-  (merged to 'next' on 2015-12-04 at 2d3f5f2)
- + remote: convert functions to struct object_id
- + Remove get_object_hash.
- + Convert struct object to object_id
- + Add several uses of get_object_hash.
- + object: introduce get_object_hash macro.
- + ref_newer: convert to use struct object_id
- + push_refs_with_export: convert to struct object_id
- + get_remote_heads: convert to struct object_id
- + parse_fetch: convert to use struct object_id
- + add_sought_entry_mem: convert to struct object_id
- + Convert struct ref to use object_id.
- + sha1_file: introduce has_object_file helper.
-
- More transition from "unsigned char[40]" to "struct object_id".
-
- This needed a few merge fixups, but is mostly disentangled from other
- topics.
+* cb/t3404-shellquote (2015-12-04) 1 commit
+  (merged to 'next' on 2015-12-08 at 1a01305)
+ + t3404: fix quoting of redirect for some versions of bash
 
  Will merge to 'master'.
 
 
-* dt/fsck-verify-pack-error (2015-12-01) 1 commit
-  (merged to 'next' on 2015-12-04 at fbd82d1)
- + verify_pack: do not ignore return value of verification function
+* nd/clear-gitenv-upon-use-of-alias (2015-12-07) 3 commits
+ . git.c: make sure we do not leak GIT_* to alias scripts
+ - setup.c: re-fix d95138e (setup: set env $GIT_WORK_TREE when ..
+ - git.c: make it clear save_env() is for alias handling only
 
- The exit code of git-fsck would not reflect some types of errors found
- in packed objects.
+ d95138e6 (setup: set env $GIT_WORK_TREE when work tree is set, like
+ $GIT_DIR, 2015-06-26) attempted to work around a glitch in alias
+ handling by overwriting GIT_WORK_TREE environment variable to
+ affect subprocesses when set_git_work_tree() gets called, which
+ resulted in a rather unpleasant regression to "clone" and "init".
+ Try to address the same issue by always restoring the environment
+ and respawning the real underlying command when handling alias.
+
+ The tip one seems to break tests under "prove".
+
+ Waiting for review.
+
+
+* sb/doc-submodule-sync-recursive (2015-12-04) 1 commit
+  (merged to 'next' on 2015-12-08 at 7c24ee5)
+ + document submodule sync --recursive
 
  Will merge to 'master'.
 
@@ -240,39 +339,13 @@ But note that I will _not_ be pushing to kernel.org.
  Waiting for review.
 
 
-* ls/travis-yaml (2015-11-28) 1 commit
-  (merged to 'next' on 2015-12-04 at e7852e1)
- + Add Travis CI support
-
- Provides the necessary infrastructure to build topics using the free
- Travis CI. Developers forking from this topic (and enabling Travis) can
- do their own builds, and we can turn on auto-builds for git/git
- (including build-status for pull requests that people open).
-
- I'm inclined to merge this up, as the worst case is that it becomes
- dormant cruft in the repository root.
-
- Will merge to 'master'.
-
-
-* rs/status-detached-head-memcmp (2015-11-28) 1 commit
-  (merged to 'next' on 2015-12-04 at 60232db)
- + wt-status: correct and simplify check for detached HEAD
-
- Fix some string-matching corner cases when digging in the reflog for
- "git status".
-
- Will merge to 'master' and then 'maint'.
-
-
 * sg/lock-file-commit-error (2015-12-01) 1 commit
- - Make error message after failing commit_lock_file() less confusing
+  (merged to 'next' on 2015-12-08 at ef53cd6)
+ + Make error message after failing commit_lock_file() less confusing
 
  Cosmetic improvement to lock-file error messages.
 
- Comments on the new messages?
-
- Will merge to 'next' after giving time for bikeshedding.
+ Will merge to 'master'.
 
 
 * bb/merge-marker-crlf (2015-11-24) 1 commit
@@ -355,76 +428,16 @@ But note that I will _not_ be pushing to kernel.org.
  Waiting for review.
 
 
-* ls/test-must-fail-sigpipe (2015-11-28) 2 commits
-  (merged to 'next' on 2015-12-01 at d374686)
- + add "ok=sigpipe" to test_must_fail and use it to fix flaky tests
- + implement test_might_fail using a refactored test_must_fail
-
- Fix some racy client/server tests by treating SIGPIPE the same as a
- normal non-zero exit.
-
- Will merge to 'master' by -rc0.
-
-
 * mc/push-recurse-submodules-config (2015-12-04) 3 commits
- - push: follow the "last one wins" convention for --recurse-submodules
- - push: test that --recurse-submodules on command line overrides config
+  (merged to 'next' on 2015-12-08 at 1b81967)
+ + push: follow the "last one wins" convention for --recurse-submodules
+ + push: test that --recurse-submodules on command line overrides config
   (merged to 'next' on 2015-11-24 at 3644d4b)
  + push: add recurseSubmodules config option
 
  Add new config to avoid typing "--recurse-submodules" on each push.
 
  Waiting for review from submodule folks.
-
-
-* dt/refs-backend-pre-vtable (2015-11-20) 10 commits
-  (merged to 'next' on 2015-11-24 at 8fd7293)
- + refs: break out ref conflict checks
- + files_log_ref_write: new function
- + initdb: make safe_create_dir public
- + refs: split filesystem-based refs code into a new file
- + refs/refs-internal.h: new header file
- + refname_is_safe(): improve docstring
- + pack_if_possible_fn(): use ref_type() instead of is_per_worktree_ref()
- + copy_msg(): rename to copy_reflog_msg()
- + verify_refname_available(): new function
- + verify_refname_available(): rename function
-
- Code preparation for pluggable ref backends.
-
- Will merge to 'master' by -rc0.
-
-
-* vl/grep-configurable-threads (2015-12-04) 1 commit
- . grep: add --threads=<num> option and grep.threads configuration
-
- "git grep" can now be configured (or told from the command line)
- how many threads to use when searching in the working tree files.
-
- There was some review from Eric.  Also this seems to break a test.
-
- Waiting for a reroll, or at least a response.
- ($gmane/281160)
-
-
-* kf/http-proxy-auth-methods (2015-11-04) 3 commits
- . SQUASH???
- . http: use credential API to handle proxy authentication
- . http: allow selection of proxy authentication method
-
- New http.proxyAuthMethod configuration variable can be used to
- specify what authentication method to use, as a way to work around
- proxies that do not give error response expected by libcurl when
- CURLAUTH_ANY is used.  Also, the codepath for proxy authentication
- has been taught to use credential API to store the authentication
- material in user's keyrings.
-
- I ejected this from pu for the moment, as it conflicts with the
- pt/http-socks-proxy topic. That is now in master, so it can
- be re-rolled on top.
-
- Still being worked on.
- ($gmane/280925)
 
 
 * sb/submodule-parallel-update (2015-11-20) 27 commits
@@ -501,17 +514,6 @@ But note that I will _not_ be pushing to kernel.org.
  command line, and does not involve files in the working tree.
 
  Waiting for review.
-
-
-* ep/ident-with-getaddrinfo (2015-11-28) 1 commit
-  (merged to 'next' on 2015-12-01 at 0775d4c)
- + ident.c: add support for IPv6
-
- A build without NO_IPv6 used to use gethostbyname() when guessing
- user's hostname, instead of getaddrinfo() that is used in other
- codepaths in such a build.
-
- Will merge to 'master' by -rc0.
 
 
 * mh/notes-allow-reading-treeish (2015-10-08) 3 commits
@@ -688,19 +690,3 @@ But note that I will _not_ be pushing to kernel.org.
  before this final step can proceed.
 
  Will keep in 'next'.
-
-
---------------------------------------------------
-[Discarded]
-
-* mr/ff-refs (2015-11-28) 6 commits
- . builtin/ff-refs.c: mark some file-local variables static
- . ff-refs: Add tests
- . ff-refs: Add documentation
- . ff-refs: add --dry-run and --skip-worktree options
- . ff-refs: update each updatable ref
- . ff-refs: builtin cmd to check and fast forward local refs to their upstream
-
- Specialized command to fast-forward refs to match their upstream.
-
-
