@@ -126,7 +126,7 @@ static int verify_packfile(struct packed_git *p,
 				    sha1_to_hex(entries[i].sha1), p->pack_name);
 		else if (fn) {
 			int eaten = 0;
-			fn(entries[i].sha1, type, size, data, &eaten);
+			err |= fn(entries[i].sha1, type, size, data, &eaten);
 			if (eaten)
 				data = NULL;
 		}
