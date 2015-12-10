@@ -60,7 +60,7 @@ Git imposes the following rules on how references are named:
 
 These rules make it easy for shell script based tools to parse
 reference names, pathname expansion by the shell when a reference name is used
-unquoted (by mistake), and also avoids ambiguities in certain
+unquoted (by mistake), and also avoid ambiguities in certain
 reference name expressions (see linkgit:gitrevisions[7]):
 
 . A double-dot `..` is often used as in `ref1..ref2`, and in some
