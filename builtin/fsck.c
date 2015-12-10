@@ -67,7 +67,7 @@ static void objreport(struct object *obj, const char *msg_type,
 			const char *err)
 {
 	fprintf(stderr, "%s in %s %s: %s\n",
-		msg_type, typename(obj->type), sha1_to_hex(obj->sha1), err);
+		msg_type, typename(obj->type), oid_to_hex(&obj->oid), err);
 }
 
 static int objerror(struct object *obj, const char *err)
@@ -97,7 +97,7 @@ static int mark_object(struct object *obj, int type, void *data, struct fsck_opt
 	if (!obj) {
 		/* ... these references to parent->fld are safe here */
 		printf("broken link from %7s %s\n",
-			   typename(parent->type), sha1_to_hex(parent->sha1));
+			   typename(parent->type), oid_to_hex(&parent->oid));
 		printf("broken link from %7s %s\n",
 			   (type == OBJ_ANY ? "unknown" : typename(type)), "unknown");
 		errors_found |= ERROR_REACHABLE;
@@ -112,11 +112,11 @@ static int mark_object(struct object *obj, int type, void *data, struct fsck_opt
 		return 0;
 	obj->flags |= REACHABLE;
 	if (!(obj->flags & HAS_OBJ)) {
-		if (parent && !has_sha1_file(obj->sha1)) {
+		if (parent && !has_object_file(&obj->oid)) {
 			printf("broken link from %7s %s\n",
-				 typename(parent->type), sha1_to_hex(parent->sha1));
+				 typename(parent->type), oid_to_hex(&parent->oid));
 			printf("              to %7s %s\n",
-				 typename(obj->type), sha1_to_hex(obj->sha1));
+				 typename(obj->type), oid_to_hex(&obj->oid));
 			errors_found |= ERROR_REACHABLE;
 		}
 		return 1;
@@ -186,11 +186,11 @@ static void check_reachable_object(struct object *obj)
 	 * do a full fsck
 	 */
 	if (!(obj->flags & HAS_OBJ)) {
-		if (has_sha1_pack(obj->sha1))
+		if (has_sha1_pack(obj->oid.hash))
 			return; /* it is in pack - forget about it */
-		if (connectivity_only && has_sha1_file(obj->sha1))
+		if (connectivity_only && has_object_file(&obj->oid))
 			return;
-		printf("missing %s %s\n", typename(obj->type), sha1_to_hex(obj->sha1));
+		printf("missing %s %s\n", typename(obj->type), oid_to_hex(&obj->oid));
 		errors_found |= ERROR_REACHABLE;
 		return;
 	}
@@ -215,7 +215,7 @@ static void check_unreachable_object(struct object *obj)
 	 * since this is something that is prunable.
 	 */
 	if (show_unreachable) {
-		printf("unreachable %s %s\n", typename(obj->type), sha1_to_hex(obj->sha1));
+		printf("unreachable %s %s\n", typename(obj->type), oid_to_hex(&obj->oid));
 		return;
 	}
 
@@ -234,11 +234,11 @@ static void check_unreachable_object(struct object *obj)
 	if (!obj->used) {
 		if (show_dangling)
 			printf("dangling %s %s\n", typename(obj->type),
-			       sha1_to_hex(obj->sha1));
+			       oid_to_hex(&obj->oid));
 		if (write_lost_and_found) {
 			char *filename = git_pathdup("lost-found/%s/%s",
 				obj->type == OBJ_COMMIT ? "commit" : "other",
-				sha1_to_hex(obj->sha1));
+				oid_to_hex(&obj->oid));
 			FILE *f;
 
 			if (safe_create_leading_directories_const(filename)) {
@@ -249,10 +249,10 @@ static void check_unreachable_object(struct object *obj)
 			if (!(f = fopen(filename, "w")))
 				die_errno("Could not open '%s'", filename);
 			if (obj->type == OBJ_BLOB) {
-				if (stream_blob_to_fd(fileno(f), obj->sha1, NULL, 1))
+				if (stream_blob_to_fd(fileno(f), obj->oid.hash, NULL, 1))
 					die_errno("Could not write '%s'", filename);
 			} else
-				fprintf(f, "%s\n", sha1_to_hex(obj->sha1));
+				fprintf(f, "%s\n", oid_to_hex(&obj->oid));
 			if (fclose(f))
 				die_errno("Could not finish '%s'",
 					  filename);
@@ -271,7 +271,7 @@ static void check_unreachable_object(struct object *obj)
 static void check_object(struct object *obj)
 {
 	if (verbose)
-		fprintf(stderr, "Checking %s\n", sha1_to_hex(obj->sha1));
+		fprintf(stderr, "Checking %s\n", oid_to_hex(&obj->oid));
 
 	if (obj->flags & REACHABLE)
 		check_reachable_object(obj);
@@ -307,7 +307,7 @@ static int fsck_obj(struct object *obj)
 
 	if (verbose)
 		fprintf(stderr, "Checking %s %s\n",
-			typename(obj->type), sha1_to_hex(obj->sha1));
+			typename(obj->type), oid_to_hex(&obj->oid));
 
 	if (fsck_walk(obj, NULL, &fsck_obj_options))
 		objerror(obj, "broken links");
@@ -326,15 +326,15 @@ static int fsck_obj(struct object *obj)
 		free_commit_buffer(commit);
 
 		if (!commit->parents && show_root)
-			printf("root %s\n", sha1_to_hex(commit->object.sha1));
+			printf("root %s\n", oid_to_hex(&commit->object.oid));
 	}
 
 	if (obj->type == OBJ_TAG) {
 		struct tag *tag = (struct tag *) obj;
 
 		if (show_tags && tag->tagged) {
-			printf("tagged %s %s", typename(tag->tagged->type), sha1_to_hex(tag->tagged->sha1));
-			printf(" (%s) in %s\n", tag->tag, sha1_to_hex(tag->object.sha1));
+			printf("tagged %s %s", typename(tag->tagged->type), oid_to_hex(&tag->tagged->oid));
+			printf(" (%s) in %s\n", tag->tag, oid_to_hex(&tag->object.oid));
 		}
 	}
 

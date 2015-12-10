@@ -133,7 +133,7 @@ static int add_ref_decoration(const char *refname, const struct object_id *oid,
 		if (!obj)
 			break;
 		if (!obj->parsed)
-			parse_object(obj->sha1);
+			parse_object(obj->oid.hash);
 		add_name_decoration(DECORATION_REF_TAG, refname, obj);
 	}
 	return 0;
@@ -165,7 +165,7 @@ static void show_parents(struct commit *commit, int abbrev)
 	struct commit_list *p;
 	for (p = commit->parents; p ; p = p->next) {
 		struct commit *parent = p->item;
-		printf(" %s", find_unique_abbrev(parent->object.sha1, abbrev));
+		printf(" %s", find_unique_abbrev(parent->object.oid.hash, abbrev));
 	}
 }
 
@@ -173,7 +173,7 @@ static void show_children(struct rev_info *opt, struct commit *commit, int abbre
 {
 	struct commit_list *p = lookup_decoration(&opt->children, &commit->object);
 	for ( ; p; p = p->next) {
-		printf(" %s", find_unique_abbrev(p->item->object.sha1, abbrev));
+		printf(" %s", find_unique_abbrev(p->item->object.oid.hash, abbrev));
 	}
 }
 
@@ -342,7 +342,7 @@ void log_write_email_headers(struct rev_info *opt, struct commit *commit,
 {
 	const char *subject = NULL;
 	const char *extra_headers = opt->extra_headers;
-	const char *name = sha1_to_hex(commit->object.sha1);
+	const char *name = oid_to_hex(&commit->object.oid);
 
 	*need_8bit_cte_p = 0; /* unknown */
 	if (opt->total > 0) {
@@ -469,7 +469,7 @@ static int which_parent(const unsigned char *sha1, const struct commit *commit)
 	const struct commit_list *parent;
 
 	for (nth = 0, parent = commit->parents; parent; parent = parent->next) {
-		if (!hashcmp(parent->item->object.sha1, sha1))
+		if (!hashcmp(parent->item->object.oid.hash, sha1))
 			return nth;
 		nth++;
 	}
@@ -503,13 +503,13 @@ static void show_one_mergetag(struct commit *commit,
 	if (parse_tag_buffer(tag, extra->value, extra->len))
 		strbuf_addstr(&verify_message, "malformed mergetag\n");
 	else if (is_common_merge(commit) &&
-		 !hashcmp(tag->tagged->sha1,
-			  commit->parents->next->item->object.sha1))
+		 !oidcmp(&tag->tagged->oid,
+			  &commit->parents->next->item->object.oid))
 		strbuf_addf(&verify_message,
 			    "merged tag '%s'\n", tag->tag);
-	else if ((nth = which_parent(tag->tagged->sha1, commit)) < 0)
+	else if ((nth = which_parent(tag->tagged->oid.hash, commit)) < 0)
 		strbuf_addf(&verify_message, "tag %s names a non-parent %s\n",
-				    tag->tag, tag->tagged->sha1);
+				    tag->tag, tag->tagged->oid.hash);
 	else
 		strbuf_addf(&verify_message,
 			    "parent #%d, tagged '%s'\n", nth + 1, tag->tag);
@@ -553,7 +553,7 @@ void show_log(struct rev_info *opt)
 
 		if (!opt->graph)
 			put_revision_mark(opt, commit);
-		fputs(find_unique_abbrev(commit->object.sha1, abbrev_commit), stdout);
+		fputs(find_unique_abbrev(commit->object.oid.hash, abbrev_commit), stdout);
 		if (opt->print_parents)
 			show_parents(commit, abbrev_commit);
 		if (opt->children.name)
@@ -613,7 +613,7 @@ void show_log(struct rev_info *opt)
 
 		if (!opt->graph)
 			put_revision_mark(opt, commit);
-		fputs(find_unique_abbrev(commit->object.sha1, abbrev_commit),
+		fputs(find_unique_abbrev(commit->object.oid.hash, abbrev_commit),
 		      stdout);
 		if (opt->print_parents)
 			show_parents(commit, abbrev_commit);
@@ -621,7 +621,7 @@ void show_log(struct rev_info *opt)
 			show_children(opt, commit, abbrev_commit);
 		if (parent)
 			printf(" (from %s)",
-			       find_unique_abbrev(parent->object.sha1,
+			       find_unique_abbrev(parent->object.oid.hash,
 						  abbrev_commit));
 		fputs(diff_get_color_opt(&opt->diffopt, DIFF_RESET), stdout);
 		show_decorations(opt, commit);
@@ -660,7 +660,7 @@ void show_log(struct rev_info *opt)
 		struct strbuf notebuf = STRBUF_INIT;
 
 		raw = (opt->commit_format == CMIT_FMT_USERFORMAT);
-		format_display_notes(commit->object.sha1, &notebuf,
+		format_display_notes(commit->object.oid.hash, &notebuf,
 				     get_log_output_encoding(), raw);
 		ctx.notes_message = notebuf.len
 			? strbuf_detach(&notebuf, NULL)
@@ -796,19 +796,19 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 {
 	int showed_log;
 	struct commit_list *parents;
-	unsigned const char *sha1;
+	struct object_id *oid;
 
 	if (!opt->diff && !DIFF_OPT_TST(&opt->diffopt, EXIT_WITH_STATUS))
 		return 0;
 
 	parse_commit_or_die(commit);
-	sha1 = commit->tree->object.sha1;
+	oid = &commit->tree->object.oid;
 
 	/* Root commit? */
 	parents = get_saved_parents(opt, commit);
 	if (!parents) {
 		if (opt->show_root_diff) {
-			diff_root_tree_sha1(sha1, "", &opt->diffopt);
+			diff_root_tree_sha1(oid->hash, "", &opt->diffopt);
 			log_tree_diff_flush(opt);
 		}
 		return !opt->loginfo;
@@ -827,8 +827,8 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 			 * we merged _in_.
 			 */
 			parse_commit_or_die(parents->item);
-			diff_tree_sha1(parents->item->tree->object.sha1,
-				       sha1, "", &opt->diffopt);
+			diff_tree_sha1(parents->item->tree->object.oid.hash,
+				       oid->hash, "", &opt->diffopt);
 			log_tree_diff_flush(opt);
 			return !opt->loginfo;
 		}
@@ -842,8 +842,8 @@ static int log_tree_diff(struct rev_info *opt, struct commit *commit, struct log
 		struct commit *parent = parents->item;
 
 		parse_commit_or_die(parent);
-		diff_tree_sha1(parent->tree->object.sha1,
-			       sha1, "", &opt->diffopt);
+		diff_tree_sha1(parent->tree->object.oid.hash,
+			       oid->hash, "", &opt->diffopt);
 		log_tree_diff_flush(opt);
 
 		showed_log |= !opt->loginfo;

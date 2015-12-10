@@ -49,7 +49,7 @@ struct object {
 	unsigned used : 1;
 	unsigned type : TYPE_BITS;
 	unsigned flags : FLAG_BITS;
-	unsigned char sha1[20];
+	struct object_id oid;
 };
 
 extern const char *typename(unsigned int type);

@@ -171,7 +171,7 @@ int verify_bundle(struct bundle_header *header, int verbose)
 		if (!(refs.objects[i].item->flags & SHOWN)) {
 			if (++ret == 1)
 				error("%s", message);
-			error("%s %s", sha1_to_hex(refs.objects[i].item->sha1),
+			error("%s %s", oid_to_hex(&refs.objects[i].item->oid),
 				refs.objects[i].name);
 		}
 
@@ -217,7 +217,7 @@ static int is_tag_in_date_range(struct object *tag, struct rev_info *revs)
 	if (revs->max_age == -1 && revs->min_age == -1)
 		goto out;
 
-	buf = read_sha1_file(tag->sha1, &type, &size);
+	buf = read_sha1_file(tag->oid.hash, &type, &size);
 	if (!buf)
 		goto out;
 	line = memmem(buf, size, "\ntagger ", 8);
@@ -256,7 +256,7 @@ static int write_pack_data(int bundle_fd, struct rev_info *revs)
 		struct object *object = revs->pending.objects[i].item;
 		if (object->flags & UNINTERESTING)
 			write_or_die(pack_objects.in, "^", 1);
-		write_or_die(pack_objects.in, sha1_to_hex(object->sha1), 40);
+		write_or_die(pack_objects.in, oid_to_hex(&object->oid), GIT_SHA1_HEXSZ);
 		write_or_die(pack_objects.in, "\n", 1);
 	}
 	close(pack_objects.in);
@@ -321,16 +321,16 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 
 	for (i = 0; i < revs->pending.nr; i++) {
 		struct object_array_entry *e = revs->pending.objects + i;
-		unsigned char sha1[20];
+		struct object_id oid;
 		char *ref;
 		const char *display_ref;
 		int flag;
 
 		if (e->item->flags & UNINTERESTING)
 			continue;
-		if (dwim_ref(e->name, strlen(e->name), sha1, &ref) != 1)
+		if (dwim_ref(e->name, strlen(e->name), oid.hash, &ref) != 1)
 			goto skip_write_ref;
-		if (read_ref_full(e->name, RESOLVE_REF_READING, sha1, &flag))
+		if (read_ref_full(e->name, RESOLVE_REF_READING, oid.hash, &flag))
 			flag = 0;
 		display_ref = (flag & REF_ISSYMREF) ? e->name : ref;
 
@@ -360,13 +360,13 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 		 * commit that is referenced by the tag, and not the tag
 		 * itself.
 		 */
-		if (hashcmp(sha1, e->item->sha1)) {
+		if (oidcmp(&oid, &e->item->oid)) {
 			/*
 			 * Is this the positive end of a range expressed
 			 * in terms of a tag (e.g. v2.0 from the range
 			 * "v1.0..v2.0")?
 			 */
-			struct commit *one = lookup_commit_reference(sha1);
+			struct commit *one = lookup_commit_reference(oid.hash);
 			struct object *obj;
 
 			if (e->item == &(one->object)) {
@@ -378,7 +378,7 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 				 * end up triggering "empty bundle"
 				 * error.
 				 */
-				obj = parse_object_or_die(sha1, e->name);
+				obj = parse_object_or_die(oid.hash, e->name);
 				obj->flags |= SHOWN;
 				add_pending_object(revs, obj, e->name);
 			}
@@ -386,7 +386,7 @@ static int write_bundle_refs(int bundle_fd, struct rev_info *revs)
 		}
 
 		ref_count++;
-		write_or_die(bundle_fd, sha1_to_hex(e->item->sha1), 40);
+		write_or_die(bundle_fd, oid_to_hex(&e->item->oid), 40);
 		write_or_die(bundle_fd, " ", 1);
 		write_or_die(bundle_fd, display_ref, strlen(display_ref));
 		write_or_die(bundle_fd, "\n", 1);

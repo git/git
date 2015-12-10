@@ -346,7 +346,7 @@ static int fetch_with_fetch(struct transport *transport,
 			continue;
 
 		strbuf_addf(&buf, "fetch %s %s\n",
-			    sha1_to_hex(posn->old_sha1),
+			    oid_to_hex(&posn->old_oid),
 			    posn->symref ? posn->symref : posn->name);
 	}
 
@@ -489,7 +489,7 @@ static int fetch_with_import(struct transport *transport,
 		else
 			private = xstrdup(name);
 		if (private) {
-			if (read_ref(private, posn->old_sha1) < 0)
+			if (read_ref(private, posn->old_oid.hash) < 0)
 				die("Could not read ref %s", private);
 			free(private);
 		}
@@ -756,7 +756,7 @@ static int push_update_refs_status(struct helper_data *data,
 		private = apply_refspecs(data->refspecs, data->refspec_nr, ref->name);
 		if (!private)
 			continue;
-		update_ref("update by helper", private, ref->new_sha1, NULL, 0, 0);
+		update_ref("update by helper", private, ref->new_oid.hash, NULL, 0, 0);
 		free(private);
 	}
 	strbuf_release(&buf);
@@ -818,7 +818,7 @@ static int push_refs_with_push(struct transport *transport,
 			if (ref->peer_ref)
 				strbuf_addstr(&buf, ref->peer_ref->name);
 			else
-				strbuf_addstr(&buf, sha1_to_hex(ref->new_sha1));
+				strbuf_addstr(&buf, oid_to_hex(&ref->new_oid));
 		}
 		strbuf_addch(&buf, ':');
 		strbuf_addstr(&buf, ref->name);
@@ -827,14 +827,14 @@ static int push_refs_with_push(struct transport *transport,
 		/*
 		 * The "--force-with-lease" options without explicit
 		 * values to expect have already been expanded into
-		 * the ref->old_sha1_expect[] field; we can ignore
+		 * the ref->old_oid_expect[] field; we can ignore
 		 * transport->smart_options->cas altogether and instead
 		 * can enumerate them from the refs.
 		 */
 		if (ref->expect_old_sha1) {
 			struct strbuf cas = STRBUF_INIT;
 			strbuf_addf(&cas, "%s:%s",
-				    ref->name, sha1_to_hex(ref->old_sha1_expect));
+				    ref->name, oid_to_hex(&ref->old_oid_expect));
 			string_list_append(&cas_options, strbuf_detach(&cas, NULL));
 		}
 	}
@@ -878,13 +878,13 @@ static int push_refs_with_export(struct transport *transport,
 
 	for (ref = remote_refs; ref; ref = ref->next) {
 		char *private;
-		unsigned char sha1[20];
+		struct object_id oid;
 
 		private = apply_refspecs(data->refspecs, data->refspec_nr, ref->name);
-		if (private && !get_sha1(private, sha1)) {
+		if (private && !get_sha1(private, oid.hash)) {
 			strbuf_addf(&buf, "^%s", private);
 			string_list_append(&revlist_args, strbuf_detach(&buf, NULL));
-			hashcpy(ref->old_sha1, sha1);
+			oidcpy(&ref->old_oid, &oid);
 		}
 		free(private);
 
@@ -898,7 +898,7 @@ static int push_refs_with_export(struct transport *transport,
 					name = resolve_ref_unsafe(
 						 ref->peer_ref->name,
 						 RESOLVE_REF_READING,
-						 sha1, &flag);
+						 oid.hash, &flag);
 					if (!name || !(flag & REF_ISSYMREF))
 						name = ref->peer_ref->name;
 
@@ -1016,12 +1016,12 @@ static struct ref *get_refs_list(struct transport *transport, int for_push)
 		if (buf.buf[0] == '@')
 			(*tail)->symref = xstrdup(buf.buf + 1);
 		else if (buf.buf[0] != '?')
-			get_sha1_hex(buf.buf, (*tail)->old_sha1);
+			get_oid_hex(buf.buf, &(*tail)->old_oid);
 		if (eon) {
 			if (has_attribute(eon + 1, "unchanged")) {
 				(*tail)->status |= REF_STATUS_UPTODATE;
 				if (read_ref((*tail)->name,
-					     (*tail)->old_sha1) < 0)
+					     (*tail)->old_oid.hash) < 0)
 					die(N_("Could not read ref %s"),
 					    (*tail)->name);
 			}

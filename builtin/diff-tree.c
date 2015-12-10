@@ -49,9 +49,9 @@ static int stdin_diff_trees(struct tree *tree1, char *line, int len)
 	tree2 = lookup_tree(sha1);
 	if (!tree2 || parse_tree(tree2))
 		return -1;
-	printf("%s %s\n", sha1_to_hex(tree1->object.sha1),
-			  sha1_to_hex(tree2->object.sha1));
-	diff_tree_sha1(tree1->object.sha1, tree2->object.sha1,
+	printf("%s %s\n", oid_to_hex(&tree1->object.oid),
+			  oid_to_hex(&tree2->object.oid));
+	diff_tree_sha1(tree1->object.oid.hash, tree2->object.oid.hash,
 		       "", &log_tree_opt.diffopt);
 	log_tree_diff_flush(&log_tree_opt);
 	return 0;
@@ -139,7 +139,7 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 		break;
 	case 1:
 		tree1 = opt->pending.objects[0].item;
-		diff_tree_commit_sha1(tree1->sha1);
+		diff_tree_commit_sha1(tree1->oid.hash);
 		break;
 	case 2:
 		tree1 = opt->pending.objects[0].item;
@@ -149,8 +149,8 @@ int cmd_diff_tree(int argc, const char **argv, const char *prefix)
 			tree2 = tree1;
 			tree1 = tmp;
 		}
-		diff_tree_sha1(tree1->sha1,
-			       tree2->sha1,
+		diff_tree_sha1(tree1->oid.hash,
+			       tree2->oid.hash,
 			       "", &opt->diffopt);
 		log_tree_diff_flush(opt);
 		break;

@@ -86,7 +86,7 @@ void show_object_with_name(FILE *out, struct object *obj,
 	leaf.elem = component;
 	leaf.elem_len = strlen(component);
 
-	fprintf(out, "%s ", sha1_to_hex(obj->sha1));
+	fprintf(out, "%s ", oid_to_hex(&obj->oid));
 	show_path_truncated(out, &leaf);
 	fputc('\n', out);
 }
@@ -106,10 +106,10 @@ static void mark_tree_contents_uninteresting(struct tree *tree)
 	struct name_entry entry;
 	struct object *obj = &tree->object;
 
-	if (!has_sha1_file(obj->sha1))
+	if (!has_object_file(&obj->oid))
 		return;
 	if (parse_tree(tree) < 0)
-		die("bad tree %s", sha1_to_hex(obj->sha1));
+		die("bad tree %s", oid_to_hex(&obj->oid));
 
 	init_tree_desc(&desc, tree->buffer, tree->size);
 	while (tree_entry(&desc, &entry)) {
@@ -164,7 +164,7 @@ void mark_parents_uninteresting(struct commit *commit)
 			 * it is popped next time around, we won't be trying
 			 * to parse it and get an error.
 			 */
-			if (!has_sha1_file(commit->object.sha1))
+			if (!has_object_file(&commit->object.oid))
 				commit->object.parsed = 1;
 
 			if (commit->object.flags & UNINTERESTING)
@@ -282,11 +282,11 @@ static struct commit *handle_commit(struct rev_info *revs,
 			add_pending_object(revs, object, tag->tag);
 		if (!tag->tagged)
 			die("bad tag");
-		object = parse_object(tag->tagged->sha1);
+		object = parse_object(tag->tagged->oid.hash);
 		if (!object) {
 			if (flags & UNINTERESTING)
 				return NULL;
-			die("bad object %s", sha1_to_hex(tag->tagged->sha1));
+			die("bad object %s", oid_to_hex(&tag->tagged->oid));
 		}
 		object->flags |= flags;
 		/*
@@ -510,7 +510,7 @@ static int rev_compare_tree(struct rev_info *revs,
 
 	tree_difference = REV_TREE_SAME;
 	DIFF_OPT_CLR(&revs->pruning, HAS_CHANGES);
-	if (diff_tree_sha1(t1->object.sha1, t2->object.sha1, "",
+	if (diff_tree_sha1(t1->object.oid.hash, t2->object.oid.hash, "",
 			   &revs->pruning) < 0)
 		return REV_TREE_DIFFERENT;
 	return tree_difference;
@@ -526,7 +526,7 @@ static int rev_same_tree_as_empty(struct rev_info *revs, struct commit *commit)
 
 	tree_difference = REV_TREE_SAME;
 	DIFF_OPT_CLR(&revs->pruning, HAS_CHANGES);
-	retval = diff_tree_sha1(NULL, t1->object.sha1, "", &revs->pruning);
+	retval = diff_tree_sha1(NULL, t1->object.oid.hash, "", &revs->pruning);
 
 	return retval >= 0 && (tree_difference == REV_TREE_SAME);
 }
@@ -610,7 +610,7 @@ static unsigned update_treesame(struct rev_info *revs, struct commit *commit)
 
 		st = lookup_decoration(&revs->treesame, &commit->object);
 		if (!st)
-			die("update_treesame %s", sha1_to_hex(commit->object.sha1));
+			die("update_treesame %s", oid_to_hex(&commit->object.oid));
 		relevant_parents = 0;
 		relevant_change = irrelevant_change = 0;
 		for (p = commit->parents, n = 0; p; n++, p = p->next) {
@@ -708,8 +708,8 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 		}
 		if (parse_commit(p) < 0)
 			die("cannot simplify commit %s (because of %s)",
-			    sha1_to_hex(commit->object.sha1),
-			    sha1_to_hex(p->object.sha1));
+			    oid_to_hex(&commit->object.oid),
+			    oid_to_hex(&p->object.oid));
 		switch (rev_compare_tree(revs, p, commit)) {
 		case REV_TREE_SAME:
 			if (!revs->simplify_history || !relevant_commit(p)) {
@@ -741,8 +741,8 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 				 */
 				if (parse_commit(p) < 0)
 					die("cannot simplify commit %s (invalid %s)",
-					    sha1_to_hex(commit->object.sha1),
-					    sha1_to_hex(p->object.sha1));
+					    oid_to_hex(&commit->object.oid),
+					    oid_to_hex(&p->object.oid));
 				p->parents = NULL;
 			}
 		/* fallthrough */
@@ -754,7 +754,7 @@ static void try_to_simplify_commit(struct rev_info *revs, struct commit *commit)
 				irrelevant_change = 1;
 			continue;
 		}
-		die("bad tree compare for commit %s", sha1_to_hex(commit->object.sha1));
+		die("bad tree compare for commit %s", oid_to_hex(&commit->object.oid));
 	}
 
 	/*
@@ -1189,7 +1189,7 @@ static void add_rev_cmdline_list(struct rev_info *revs,
 {
 	while (commit_list) {
 		struct object *object = &commit_list->item->object;
-		add_rev_cmdline(revs, object, sha1_to_hex(object->sha1),
+		add_rev_cmdline(revs, object, oid_to_hex(&object->oid),
 				whence, flags);
 		commit_list = commit_list->next;
 	}
@@ -1378,7 +1378,7 @@ static int add_parents_only(struct rev_info *revs, const char *arg_, int flags)
 			break;
 		if (!((struct tag*)it)->tagged)
 			return 0;
-		hashcpy(sha1, ((struct tag*)it)->tagged->sha1);
+		hashcpy(sha1, ((struct tag*)it)->tagged->oid.hash);
 	}
 	if (it->type != OBJ_COMMIT)
 		return 0;
@@ -1435,7 +1435,7 @@ static void add_pending_commit_list(struct rev_info *revs,
 	while (commit_list) {
 		struct object *object = &commit_list->item->object;
 		object->flags |= flags;
-		add_pending_object(revs, object, sha1_to_hex(object->sha1));
+		add_pending_object(revs, object, oid_to_hex(&object->oid));
 		commit_list = commit_list->next;
 	}
 }
@@ -1555,10 +1555,10 @@ int handle_revision_arg(const char *arg_, struct rev_info *revs, int flags, unsi
 
 				a = (a_obj->type == OBJ_COMMIT
 				     ? (struct commit *)a_obj
-				     : lookup_commit_reference(a_obj->sha1));
+				     : lookup_commit_reference(a_obj->oid.hash));
 				b = (b_obj->type == OBJ_COMMIT
 				     ? (struct commit *)b_obj
-				     : lookup_commit_reference(b_obj->sha1));
+				     : lookup_commit_reference(b_obj->oid.hash));
 				if (!a || !b)
 					goto missing;
 				exclude = get_merge_bases(a, b);
@@ -2938,7 +2938,7 @@ static int commit_match(struct commit *commit, struct rev_info *opt)
 	if (opt->show_notes) {
 		if (!buf.len)
 			strbuf_addstr(&buf, message);
-		format_display_notes(commit->object.sha1, &buf, encoding, 1);
+		format_display_notes(commit->object.oid.hash, &buf, encoding, 1);
 	}
 
 	/*
@@ -2968,7 +2968,7 @@ enum commit_action get_commit_action(struct rev_info *revs, struct commit *commi
 {
 	if (commit->object.flags & SHOWN)
 		return commit_ignore;
-	if (revs->unpacked && has_sha1_pack(commit->object.sha1))
+	if (revs->unpacked && has_sha1_pack(commit->object.oid.hash))
 		return commit_ignore;
 	if (revs->show_all)
 		return commit_show;
@@ -3094,7 +3094,7 @@ static void track_linear(struct rev_info *revs, struct commit *commit)
 		struct commit_list *p;
 		for (p = revs->previous_parents; p; p = p->next)
 			if (p->item == NULL || /* first commit */
-			    !hashcmp(p->item->object.sha1, commit->object.sha1))
+			    !oidcmp(&p->item->object.oid, &commit->object.oid))
 				break;
 		revs->linear = p != NULL;
 	}
@@ -3132,7 +3132,7 @@ static struct commit *get_revision_1(struct rev_info *revs)
 			if (add_parents_to_list(revs, commit, &revs->commits, NULL) < 0) {
 				if (!revs->ignore_missing_links)
 					die("Failed to traverse parents of commit %s",
-						sha1_to_hex(commit->object.sha1));
+						oid_to_hex(&commit->object.oid));
 			}
 		}
 
@@ -3141,7 +3141,7 @@ static struct commit *get_revision_1(struct rev_info *revs)
 			continue;
 		case commit_error:
 			die("Failed to simplify parents of commit %s",
-			    sha1_to_hex(commit->object.sha1));
+			    oid_to_hex(&commit->object.oid));
 		default:
 			if (revs->track_linear)
 				track_linear(revs, commit);

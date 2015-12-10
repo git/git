@@ -38,7 +38,7 @@ struct commit *lookup_commit_or_die(const unsigned char *sha1, const char *ref_n
 	struct commit *c = lookup_commit_reference(sha1);
 	if (!c)
 		die(_("could not parse %s"), ref_name);
-	if (hashcmp(sha1, c->object.sha1)) {
+	if (hashcmp(sha1, c->object.oid.hash)) {
 		warning(_("%s %s is not a commit!"),
 			ref_name, sha1_to_hex(sha1));
 	}
@@ -262,13 +262,13 @@ const void *get_commit_buffer(const struct commit *commit, unsigned long *sizep)
 	if (!ret) {
 		enum object_type type;
 		unsigned long size;
-		ret = read_sha1_file(commit->object.sha1, &type, &size);
+		ret = read_sha1_file(commit->object.oid.hash, &type, &size);
 		if (!ret)
 			die("cannot read commit object %s",
-			    sha1_to_hex(commit->object.sha1));
+			    oid_to_hex(&commit->object.oid));
 		if (type != OBJ_COMMIT)
 			die("expected commit for %s, got %s",
-			    sha1_to_hex(commit->object.sha1), typename(type));
+			    oid_to_hex(&commit->object.oid), typename(type));
 		if (sizep)
 			*sizep = size;
 	}
@@ -327,22 +327,22 @@ int parse_commit_buffer(struct commit *item, const void *buffer, unsigned long s
 	tail += size;
 	if (tail <= bufptr + tree_entry_len + 1 || memcmp(bufptr, "tree ", 5) ||
 			bufptr[tree_entry_len] != '\n')
-		return error("bogus commit object %s", sha1_to_hex(item->object.sha1));
+		return error("bogus commit object %s", oid_to_hex(&item->object.oid));
 	if (get_sha1_hex(bufptr + 5, parent.hash) < 0)
 		return error("bad tree pointer in commit %s",
-			     sha1_to_hex(item->object.sha1));
+			     oid_to_hex(&item->object.oid));
 	item->tree = lookup_tree(parent.hash);
 	bufptr += tree_entry_len + 1; /* "tree " + "hex sha1" + "\n" */
 	pptr = &item->parents;
 
-	graft = lookup_commit_graft(item->object.sha1);
+	graft = lookup_commit_graft(item->object.oid.hash);
 	while (bufptr + parent_entry_len < tail && !memcmp(bufptr, "parent ", 7)) {
 		struct commit *new_parent;
 
 		if (tail <= bufptr + parent_entry_len + 1 ||
 		    get_sha1_hex(bufptr + 7, parent.hash) ||
 		    bufptr[parent_entry_len] != '\n')
-			return error("bad parents in commit %s", sha1_to_hex(item->object.sha1));
+			return error("bad parents in commit %s", oid_to_hex(&item->object.oid));
 		bufptr += parent_entry_len + 1;
 		/*
 		 * The clone is shallow if nr_parent < 0, and we must
@@ -380,15 +380,15 @@ int parse_commit_gently(struct commit *item, int quiet_on_missing)
 		return -1;
 	if (item->object.parsed)
 		return 0;
-	buffer = read_sha1_file(item->object.sha1, &type, &size);
+	buffer = read_sha1_file(item->object.oid.hash, &type, &size);
 	if (!buffer)
 		return quiet_on_missing ? -1 :
 			error("Could not read %s",
-			     sha1_to_hex(item->object.sha1));
+			     oid_to_hex(&item->object.oid));
 	if (type != OBJ_COMMIT) {
 		free(buffer);
 		return error("Object %s not a commit",
-			     sha1_to_hex(item->object.sha1));
+			     oid_to_hex(&item->object.oid));
 	}
 	ret = parse_commit_buffer(item, buffer, size);
 	if (save_commit_buffer && !ret) {
@@ -403,7 +403,7 @@ void parse_commit_or_die(struct commit *item)
 {
 	if (parse_commit(item))
 		die("unable to parse commit %s",
-		    item ? sha1_to_hex(item->object.sha1) : "(null)");
+		    item ? oid_to_hex(&item->object.oid) : "(null)");
 }
 
 int find_commit_subject(const char *commit_buffer, const char **subject)
@@ -563,7 +563,7 @@ void clear_commit_marks_for_object_array(struct object_array *a, unsigned mark)
 
 	for (i = 0; i < a->nr; i++) {
 		object = a->objects[i].item;
-		commit = lookup_commit_reference_gently(object->sha1, 1);
+		commit = lookup_commit_reference_gently(object->oid.hash, 1);
 		if (commit)
 			clear_commit_marks(commit, mark);
 	}
@@ -1206,7 +1206,7 @@ static void handle_signed_tag(struct commit *parent, struct commit_extra_header 
 	desc = merge_remote_util(parent);
 	if (!desc || !desc->obj)
 		return;
-	buf = read_sha1_file(desc->obj->sha1, &type, &size);
+	buf = read_sha1_file(desc->obj->oid.hash, &type, &size);
 	if (!buf || type != OBJ_TAG)
 		goto free_return;
 	len = parse_signature(buf, size);
@@ -1539,7 +1539,7 @@ int commit_tree_extended(const char *msg, size_t msg_len,
 	while (parents) {
 		struct commit *parent = pop_commit(&parents);
 		strbuf_addf(&buffer, "parent %s\n",
-			    sha1_to_hex(parent->object.sha1));
+			    oid_to_hex(&parent->object.oid));
 	}
 
 	/* Person/date information */
@@ -1623,7 +1623,7 @@ void print_commit_list(struct commit_list *list,
 {
 	for ( ; list; list = list->next) {
 		const char *format = list->next ? format_cur : format_last;
-		printf(format, sha1_to_hex(list->item->object.sha1));
+		printf(format, oid_to_hex(&list->item->object.oid));
 	}
 }
 

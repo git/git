@@ -241,7 +241,7 @@ int write_archive_entries(struct archiver_args *args,
 			len--;
 		if (args->verbose)
 			fprintf(stderr, "%.*s\n", (int)len, args->base);
-		err = write_entry(args, args->tree->object.sha1, args->base,
+		err = write_entry(args, args->tree->object.oid.hash, args->base,
 				  len, 040777);
 		if (err)
 			return err;
@@ -374,7 +374,7 @@ static void parse_treeish_arg(const char **argv,
 
 	commit = lookup_commit_reference_gently(oid.hash, 1);
 	if (commit) {
-		commit_sha1 = commit->object.sha1;
+		commit_sha1 = commit->object.oid.hash;
 		archive_time = commit->date;
 	} else {
 		commit_sha1 = NULL;
@@ -390,7 +390,7 @@ static void parse_treeish_arg(const char **argv,
 		unsigned int mode;
 		int err;
 
-		err = get_tree_entry(tree->object.sha1, prefix,
+		err = get_tree_entry(tree->object.oid.hash, prefix,
 				     tree_oid.hash, &mode);
 		if (err || !S_ISDIR(mode))
 			die("current working directory is untracked");

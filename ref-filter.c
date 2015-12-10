@@ -372,7 +372,7 @@ static void grab_common_values(struct atom_value *val, int deref, struct object 
 			v->s = xstrfmt("%lu", sz);
 		}
 		else if (deref)
-			grab_objectname(name, obj->sha1, v);
+			grab_objectname(name, obj->oid.hash, v);
 	}
 }
 
@@ -394,7 +394,7 @@ static void grab_tag_values(struct atom_value *val, int deref, struct object *ob
 		else if (!strcmp(name, "type") && tag->tagged)
 			v->s = typename(tag->tagged->type);
 		else if (!strcmp(name, "object") && tag->tagged)
-			v->s = xstrdup(sha1_to_hex(tag->tagged->sha1));
+			v->s = xstrdup(oid_to_hex(&tag->tagged->oid));
 	}
 }
 
@@ -412,7 +412,7 @@ static void grab_commit_values(struct atom_value *val, int deref, struct object 
 		if (deref)
 			name++;
 		if (!strcmp(name, "tree")) {
-			v->s = xstrdup(sha1_to_hex(commit->tree->object.sha1));
+			v->s = xstrdup(oid_to_hex(&commit->tree->object.oid));
 		}
 		else if (!strcmp(name, "numparent")) {
 			v->ul = commit_list_count(commit->parents);
@@ -425,7 +425,7 @@ static void grab_commit_values(struct atom_value *val, int deref, struct object 
 				struct commit *parent = parents->item;
 				if (parents != commit->parents)
 					strbuf_addch(&s, ' ');
-				strbuf_addstr(&s, sha1_to_hex(parent->object.sha1));
+				strbuf_addstr(&s, oid_to_hex(&parent->object.oid));
 			}
 			v->s = strbuf_detach(&s, NULL);
 		}
@@ -992,7 +992,7 @@ static void populate_value(struct ref_array_item *ref)
 	 * If it is a tag object, see if we use a value that derefs
 	 * the object, and if we do grab the object it refers to.
 	 */
-	tagged = ((struct tag *)obj)->tagged->sha1;
+	tagged = ((struct tag *)obj)->tagged->oid.hash;
 
 	/*
 	 * NEEDSWORK: This derefs tag only once, which
@@ -1049,7 +1049,7 @@ struct contains_stack {
 static int in_commit_list(const struct commit_list *want, struct commit *c)
 {
 	for (; want; want = want->next)
-		if (!hashcmp(want->item->object.sha1, c->object.sha1))
+		if (!oidcmp(&want->item->object.oid, &c->object.oid))
 			return 1;
 	return 0;
 }
@@ -1218,7 +1218,7 @@ static const unsigned char *match_points_at(struct sha1_array *points_at,
 	if (!obj)
 		die(_("malformed object at '%s'"), refname);
 	if (obj->type == OBJ_TAG)
-		tagged_sha1 = ((struct tag *)obj)->tagged->sha1;
+		tagged_sha1 = ((struct tag *)obj)->tagged->oid.hash;
 	if (tagged_sha1 && sha1_array_lookup(points_at, tagged_sha1) >= 0)
 		return tagged_sha1;
 	return NULL;

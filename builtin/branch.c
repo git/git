@@ -349,7 +349,7 @@ static void add_verbose_info(struct strbuf *out, struct ref_array_item *item,
 		fill_tracking_info(&stat, refname, filter->verbose > 1);
 
 	strbuf_addf(out, " %s %s%s",
-		find_unique_abbrev(item->commit->object.sha1, filter->abbrev),
+		find_unique_abbrev(item->commit->object.oid.hash, filter->abbrev),
 		stat.buf, sub);
 	strbuf_release(&stat);
 	strbuf_release(&subject);

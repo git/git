@@ -16,7 +16,7 @@ static int show_merge_base(struct commit **rev, int rev_nr, int show_all)
 		return 1;
 
 	while (result) {
-		printf("%s\n", sha1_to_hex(result->item->object.sha1));
+		printf("%s\n", oid_to_hex(&result->item->object.oid));
 		if (!show_all)
 			return 0;
 		result = result->next;
@@ -62,7 +62,7 @@ static int handle_independent(int count, const char **args)
 		return 1;
 
 	while (result) {
-		printf("%s\n", sha1_to_hex(result->item->object.sha1));
+		printf("%s\n", oid_to_hex(&result->item->object.oid));
 		result = result->next;
 	}
 	return 0;
@@ -83,7 +83,7 @@ static int handle_octopus(int count, const char **args, int show_all)
 		return 1;
 
 	while (result) {
-		printf("%s\n", sha1_to_hex(result->item->object.sha1));
+		printf("%s\n", oid_to_hex(&result->item->object.oid));
 		if (!show_all)
 			return 0;
 		result = result->next;
@@ -196,7 +196,7 @@ static int handle_fork_point(int argc, const char **argv)
 		goto cleanup_return;
 	}
 
-	printf("%s\n", sha1_to_hex(bases->item->object.sha1));
+	printf("%s\n", oid_to_hex(&bases->item->object.oid));
 
 cleanup_return:
 	free_commit_list(bases);

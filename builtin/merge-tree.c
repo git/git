@@ -60,7 +60,7 @@ static void *result(struct merge_list *entry, unsigned long *size)
 	const char *path = entry->path;
 
 	if (!entry->stage)
-		return read_sha1_file(entry->blob->object.sha1, &type, size);
+		return read_sha1_file(entry->blob->object.oid.hash, &type, size);
 	base = NULL;
 	if (entry->stage == 1) {
 		base = entry->blob;
@@ -82,7 +82,7 @@ static void *origin(struct merge_list *entry, unsigned long *size)
 	enum object_type type;
 	while (entry) {
 		if (entry->stage == 2)
-			return read_sha1_file(entry->blob->object.sha1, &type, size);
+			return read_sha1_file(entry->blob->object.oid.hash, &type, size);
 		entry = entry->link;
 	}
 	return NULL;
@@ -130,7 +130,7 @@ static void show_result_list(struct merge_list *entry)
 	do {
 		struct merge_list *link = entry->link;
 		static const char *desc[4] = { "result", "base", "our", "their" };
-		printf("  %-6s %o %s %s\n", desc[entry->stage], entry->mode, sha1_to_hex(entry->blob->object.sha1), entry->path);
+		printf("  %-6s %o %s %s\n", desc[entry->stage], entry->mode, oid_to_hex(&entry->blob->object.oid), entry->path);
 		entry = link;
 	} while (entry);
 }

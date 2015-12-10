@@ -80,7 +80,7 @@ static int read_loose_refs(struct strbuf *path, int name_offset,
 				continue;
 			next = alloc_ref(path->buf + name_offset);
 			if (read_in_full(fd, buffer, 40) != 40 ||
-					get_sha1_hex(buffer, next->old_sha1)) {
+					get_oid_hex(buffer, &next->old_oid)) {
 				close(fd);
 				free(next);
 				continue;
@@ -132,7 +132,7 @@ static void insert_packed_refs(const char *packed_refs, struct ref **list)
 		if (!(*list)->next || cmp < 0) {
 			struct ref *next = alloc_ref(buffer + 41);
 			buffer[40] = '\0';
-			if (get_sha1_hex(buffer, next->old_sha1)) {
+			if (get_oid_hex(buffer, &next->old_oid)) {
 				warning ("invalid SHA-1: %s", buffer);
 				free(next);
 				continue;
@@ -163,7 +163,7 @@ static void set_upstreams(struct transport *transport, struct ref *refs,
 			continue;
 		if (!ref->peer_ref)
 			continue;
-		if (is_null_sha1(ref->new_sha1))
+		if (is_null_oid(&ref->new_oid))
 			continue;
 
 		/* Follow symbolic refs (mainly for HEAD). */
@@ -413,7 +413,7 @@ static struct ref *get_refs_from_bundle(struct transport *transport, int for_pus
 	for (i = 0; i < data->header.references.nr; i++) {
 		struct ref_list_entry *e = data->header.references.list + i;
 		struct ref *ref = alloc_ref(e->name);
-		hashcpy(ref->old_sha1, e->sha1);
+		hashcpy(ref->old_oid.hash, e->sha1);
 		ref->next = result;
 		result = ref;
 	}
@@ -609,7 +609,7 @@ void transport_update_tracking_ref(struct remote *remote, struct ref *ref, int v
 			delete_ref(rs.dst, NULL, 0);
 		} else
 			update_ref("update by push", rs.dst,
-					ref->new_sha1, NULL, 0, 0);
+					ref->new_oid.hash, NULL, 0, 0);
 		free(rs.dst);
 	}
 }
@@ -649,7 +649,7 @@ static void print_ok_ref_status(struct ref *ref, int porcelain)
 {
 	if (ref->deletion)
 		print_ref_status('-', "[deleted]", ref, NULL, NULL, porcelain);
-	else if (is_null_sha1(ref->old_sha1))
+	else if (is_null_oid(&ref->old_oid))
 		print_ref_status('*',
 			(starts_with(ref->name, "refs/tags/") ? "[new tag]" :
 			"[new branch]"),
@@ -659,7 +659,7 @@ static void print_ok_ref_status(struct ref *ref, int porcelain)
 		char type;
 		const char *msg;
 
-		strbuf_addstr(&quickref, status_abbrev(ref->old_sha1));
+		strbuf_addstr(&quickref, status_abbrev(ref->old_oid.hash));
 		if (ref->forced_update) {
 			strbuf_addstr(&quickref, "...");
 			type = '+';
@@ -669,7 +669,7 @@ static void print_ok_ref_status(struct ref *ref, int porcelain)
 			type = ' ';
 			msg = NULL;
 		}
-		strbuf_addstr(&quickref, status_abbrev(ref->new_sha1));
+		strbuf_addstr(&quickref, status_abbrev(ref->new_oid.hash));
 
 		print_ref_status(type, quickref.buf, ref, ref->peer_ref, msg, porcelain);
 		strbuf_release(&quickref);
@@ -1140,8 +1140,8 @@ static int run_pre_push_hook(struct transport *transport,
 
 		strbuf_reset(&buf);
 		strbuf_addf( &buf, "%s %s %s %s\n",
-			 r->peer_ref->name, sha1_to_hex(r->new_sha1),
-			 r->name, sha1_to_hex(r->old_sha1));
+			 r->peer_ref->name, oid_to_hex(&r->new_oid),
+			 r->name, oid_to_hex(&r->old_oid));
 
 		if (write_in_full(proc.in, buf.buf, buf.len) < 0) {
 			/* We do not mind if a hook does not read all refs. */
@@ -1225,8 +1225,8 @@ int transport_push(struct transport *transport,
 		if ((flags & TRANSPORT_RECURSE_SUBMODULES_ON_DEMAND) && !is_bare_repository()) {
 			struct ref *ref = remote_refs;
 			for (; ref; ref = ref->next)
-				if (!is_null_sha1(ref->new_sha1) &&
-				    !push_unpushed_submodules(ref->new_sha1,
+				if (!is_null_oid(&ref->new_oid) &&
+				    !push_unpushed_submodules(ref->new_oid.hash,
 					    transport->remote->name))
 				    die ("Failed to push all needed submodules!");
 		}
@@ -1237,8 +1237,8 @@ int transport_push(struct transport *transport,
 			struct string_list needs_pushing = STRING_LIST_INIT_DUP;
 
 			for (; ref; ref = ref->next)
-				if (!is_null_sha1(ref->new_sha1) &&
-				    find_unpushed_submodules(ref->new_sha1,
+				if (!is_null_oid(&ref->new_oid) &&
+				    find_unpushed_submodules(ref->new_oid.hash,
 					    transport->remote->name, &needs_pushing))
 					die_with_unpushed_submodules(&needs_pushing);
 		}
@@ -1291,8 +1291,8 @@ int transport_fetch_refs(struct transport *transport, struct ref *refs)
 	for (rm = refs; rm; rm = rm->next) {
 		nr_refs++;
 		if (rm->peer_ref &&
-		    !is_null_sha1(rm->old_sha1) &&
-		    !hashcmp(rm->peer_ref->old_sha1, rm->old_sha1))
+		    !is_null_oid(&rm->old_oid) &&
+		    !oidcmp(&rm->peer_ref->old_oid, &rm->old_oid))
 			continue;
 		ALLOC_GROW(heads, nr_heads + 1, nr_alloc);
 		heads[nr_heads++] = rm;

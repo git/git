@@ -105,7 +105,7 @@ struct commit_list *get_shallow_commits(struct object_array *heads, int depth,
 		cur_depth++;
 		if ((depth != INFINITE_DEPTH && cur_depth >= depth) ||
 		    (is_repository_shallow() && !commit->parents &&
-		     (graft = lookup_commit_graft(commit->object.sha1)) != NULL &&
+		     (graft = lookup_commit_graft(commit->object.oid.hash)) != NULL &&
 		     graft->nr_parent < 0)) {
 			commit_list_insert(commit, &result);
 			commit->object.flags |= shallow_flag;
@@ -167,7 +167,7 @@ static int write_one_shallow(const struct commit_graft *graft, void *cb_data)
 		if (!c || !(c->object.flags & SEEN)) {
 			if (data->flags & VERBOSE)
 				printf("Removing %s from .git/shallow\n",
-				       sha1_to_hex(c->object.sha1));
+				       oid_to_hex(&c->object.oid));
 			return 0;
 		}
 	}
@@ -426,7 +426,7 @@ static void paint_down(struct paint_info *info, const unsigned char *sha1,
 
 		if (parse_commit(c))
 			die("unable to parse commit %s",
-			    sha1_to_hex(c->object.sha1));
+			    oid_to_hex(&c->object.oid));
 
 		for (p = c->parents; p; p = p->next) {
 			uint32_t **p_refs = ref_bitmap_at(&info->ref_bitmap,

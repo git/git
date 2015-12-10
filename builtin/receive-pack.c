@@ -246,7 +246,7 @@ static void show_one_alternate_sha1(const unsigned char sha1[20], void *unused)
 static void collect_one_alternate_ref(const struct ref *ref, void *data)
 {
 	struct sha1_array *sa = data;
-	sha1_array_append(sa, ref->old_sha1);
+	sha1_array_append(sa, ref->old_oid.hash);
 }
 
 static void write_head_info(void)

@@ -130,14 +130,14 @@ static void create_pack_file(void)
 
 	for (i = 0; i < want_obj.nr; i++)
 		fprintf(pipe_fd, "%s\n",
-			sha1_to_hex(want_obj.objects[i].item->sha1));
+			oid_to_hex(&want_obj.objects[i].item->oid));
 	fprintf(pipe_fd, "--not\n");
 	for (i = 0; i < have_obj.nr; i++)
 		fprintf(pipe_fd, "%s\n",
-			sha1_to_hex(have_obj.objects[i].item->sha1));
+			oid_to_hex(&have_obj.objects[i].item->oid));
 	for (i = 0; i < extra_edge_obj.nr; i++)
 		fprintf(pipe_fd, "%s\n",
-			sha1_to_hex(extra_edge_obj.objects[i].item->sha1));
+			oid_to_hex(&extra_edge_obj.objects[i].item->oid));
 	fprintf(pipe_fd, "\n");
 	fflush(pipe_fd);
 	fclose(pipe_fd);
@@ -324,7 +324,7 @@ static int reachable(struct commit *want)
 			break;
 		}
 		if (!commit->object.parsed)
-			parse_object(commit->object.sha1);
+			parse_object(commit->object.oid.hash);
 		if (commit->object.flags & REACHABLE)
 			continue;
 		commit->object.flags |= REACHABLE;
@@ -491,7 +491,7 @@ static void check_non_tip(void)
 			continue;
 		if (!is_our_ref(o))
 			continue;
-		memcpy(namebuf + 1, sha1_to_hex(o->sha1), 40);
+		memcpy(namebuf + 1, oid_to_hex(&o->oid), GIT_SHA1_HEXSZ);
 		if (write_in_full(cmd.in, namebuf, 42) < 0)
 			goto error;
 	}
@@ -500,7 +500,7 @@ static void check_non_tip(void)
 		o = want_obj.objects[i].item;
 		if (is_our_ref(o))
 			continue;
-		memcpy(namebuf, sha1_to_hex(o->sha1), 40);
+		memcpy(namebuf, oid_to_hex(&o->oid), GIT_SHA1_HEXSZ);
 		if (write_in_full(cmd.in, namebuf, 41) < 0)
 			goto error;
 	}
@@ -534,7 +534,7 @@ error:
 		o = want_obj.objects[i].item;
 		if (!is_our_ref(o))
 			die("git upload-pack: not our ref %s",
-			    sha1_to_hex(o->sha1));
+			    oid_to_hex(&o->oid));
 	}
 }
 
@@ -646,8 +646,8 @@ static void receive_needs(void)
 			struct object *object = &result->item->object;
 			if (!(object->flags & (CLIENT_SHALLOW|NOT_SHALLOW))) {
 				packet_write(1, "shallow %s",
-						sha1_to_hex(object->sha1));
-				register_shallow(object->sha1);
+						oid_to_hex(&object->oid));
+				register_shallow(object->oid.hash);
 				shallow_nr++;
 			}
 			result = result->next;
@@ -658,10 +658,10 @@ static void receive_needs(void)
 			if (object->flags & NOT_SHALLOW) {
 				struct commit_list *parents;
 				packet_write(1, "unshallow %s",
-					sha1_to_hex(object->sha1));
+					oid_to_hex(&object->oid));
 				object->flags &= ~CLIENT_SHALLOW;
 				/* make sure the real parents are parsed */
-				unregister_shallow(object->sha1);
+				unregister_shallow(object->oid.hash);
 				object->parsed = 0;
 				parse_commit_or_die((struct commit *)object);
 				parents = ((struct commit *)object)->parents;
@@ -673,14 +673,14 @@ static void receive_needs(void)
 				add_object_array(object, NULL, &extra_edge_obj);
 			}
 			/* make sure commit traversal conforms to client */
-			register_shallow(object->sha1);
+			register_shallow(object->oid.hash);
 		}
 		packet_flush(1);
 	} else
 		if (shallows.nr > 0) {
 			int i;
 			for (i = 0; i < shallows.nr; i++)
-				register_shallow(shallows.objects[i].item->sha1);
+				register_shallow(shallows.objects[i].item->oid.hash);
 		}
 
 	shallow_nr += shallows.nr;

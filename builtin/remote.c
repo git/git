@@ -401,7 +401,7 @@ static int get_push_ref_states(const struct ref *remote_refs,
 
 		if (!ref->peer_ref)
 			continue;
-		hashcpy(ref->new_sha1, ref->peer_ref->new_sha1);
+		oidcpy(&ref->new_oid, &ref->peer_ref->new_oid);
 
 		item = string_list_append(&states->push,
 					  abbrev_branch(ref->peer_ref->name));
@@ -410,14 +410,14 @@ static int get_push_ref_states(const struct ref *remote_refs,
 		info->forced = ref->force;
 		info->dest = xstrdup(abbrev_branch(ref->name));
 
-		if (is_null_sha1(ref->new_sha1)) {
+		if (is_null_oid(&ref->new_oid)) {
 			info->status = PUSH_STATUS_DELETE;
-		} else if (!hashcmp(ref->old_sha1, ref->new_sha1))
+		} else if (!oidcmp(&ref->old_oid, &ref->new_oid))
 			info->status = PUSH_STATUS_UPTODATE;
-		else if (is_null_sha1(ref->old_sha1))
+		else if (is_null_oid(&ref->old_oid))
 			info->status = PUSH_STATUS_CREATE;
-		else if (has_sha1_file(ref->old_sha1) &&
-			 ref_newer(ref->new_sha1, ref->old_sha1))
+		else if (has_object_file(&ref->old_oid) &&
+			 ref_newer(&ref->new_oid, &ref->old_oid))
 			info->status = PUSH_STATUS_FASTFORWARD;
 		else
 			info->status = PUSH_STATUS_OUTOFDATE;

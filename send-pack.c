@@ -102,11 +102,11 @@ static int pack_objects(int fd, struct ref *refs, struct sha1_array *extra, stru
 			break;
 
 	while (refs) {
-		if (!is_null_sha1(refs->old_sha1) &&
-		    !feed_object(refs->old_sha1, po.in, 1))
+		if (!is_null_oid(&refs->old_oid) &&
+		    !feed_object(refs->old_oid.hash, po.in, 1))
 			break;
-		if (!is_null_sha1(refs->new_sha1) &&
-		    !feed_object(refs->new_sha1, po.in, 0))
+		if (!is_null_oid(&refs->new_oid) &&
+		    !feed_object(refs->new_oid.hash, po.in, 0))
 			break;
 		refs = refs->next;
 	}
@@ -284,8 +284,8 @@ static int generate_push_cert(struct strbuf *req_buf,
 			continue;
 		update_seen = 1;
 		strbuf_addf(&cert, "%s %s %s\n",
-			    sha1_to_hex(ref->old_sha1),
-			    sha1_to_hex(ref->new_sha1),
+			    oid_to_hex(&ref->old_oid),
+			    oid_to_hex(&ref->new_oid),
 			    ref->name);
 	}
 	if (!update_seen)
@@ -487,8 +487,8 @@ int send_pack(struct send_pack_args *args,
 		if (check_to_send_update(ref, args) < 0)
 			continue;
 
-		old_hex = sha1_to_hex(ref->old_sha1);
-		new_hex = sha1_to_hex(ref->new_sha1);
+		old_hex = oid_to_hex(&ref->old_oid);
+		new_hex = oid_to_hex(&ref->new_oid);
 		if (!cmds_sent) {
 			packet_buf_write(&req_buf,
 					 "%s %s %s%c%s",

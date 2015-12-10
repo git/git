@@ -1402,7 +1402,7 @@ int http_fetch_ref(const char *base, struct ref *ref)
 	if (http_get_strbuf(url, &buffer, &options) == HTTP_OK) {
 		strbuf_rtrim(&buffer);
 		if (buffer.len == 40)
-			ret = get_sha1_hex(buffer.buf, ref->old_sha1);
+			ret = get_oid_hex(buffer.buf, &ref->old_oid);
 		else if (starts_with(buffer.buf, "ref: ")) {
 			ref->symref = xstrdup(buffer.buf + 5);
 			ret = 0;
