@@ -10,6 +10,7 @@
 static struct strbuf git_default_name = STRBUF_INIT;
 static struct strbuf git_default_email = STRBUF_INIT;
 static struct strbuf git_default_date = STRBUF_INIT;
+static int default_email_is_bogus;
 
 #define IDENT_NAME_GIVEN 01
 #define IDENT_MAIL_GIVEN 02
@@ -82,7 +83,7 @@ static int add_mailname_host(struct strbuf *buf)
 	return 0;
 }
 
-static void add_domainname(struct strbuf *out)
+static void add_domainname(struct strbuf *out, int *is_bogus)
 {
 	char buf[1024];
 	struct hostent *he;
@@ -90,17 +91,21 @@ static void add_domainname(struct strbuf *out)
 	if (gethostname(buf, sizeof(buf))) {
 		warning("cannot get host name: %s", strerror(errno));
 		strbuf_addstr(out, "(none)");
+		*is_bogus = 1;
 		return;
 	}
 	if (strchr(buf, '.'))
 		strbuf_addstr(out, buf);
 	else if ((he = gethostbyname(buf)) && strchr(he->h_name, '.'))
 		strbuf_addstr(out, he->h_name);
-	else
+	else {
 		strbuf_addf(out, "%s.(none)", buf);
+		*is_bogus = 1;
+	}
 }
 
-static void copy_email(const struct passwd *pw, struct strbuf *email)
+static void copy_email(const struct passwd *pw, struct strbuf *email,
+		       int *is_bogus)
 {
 	/*
 	 * Make up a fake email address
@@ -111,7 +116,7 @@ static void copy_email(const struct passwd *pw, struct strbuf *email)
 
 	if (!add_mailname_host(email))
 		return;	/* read from "/etc/mailname" (Debian) */
-	add_domainname(email);
+	add_domainname(email, is_bogus);
 }
 
 const char *ident_default_name(void)
@@ -133,7 +138,8 @@ const char *ident_default_email(void)
 			committer_ident_explicitly_given |= IDENT_MAIL_GIVEN;
 			author_ident_explicitly_given |= IDENT_MAIL_GIVEN;
 		} else
-			copy_email(xgetpwuid_self(), &git_default_email);
+			copy_email(xgetpwuid_self(), &git_default_email,
+				   &default_email_is_bogus);
 		strbuf_trim(&git_default_email);
 	}
 	return git_default_email.buf;
@@ -325,8 +331,7 @@ const char *fmt_ident(const char *name, const char *email,
 		name = pw->pw_name;
 	}
 
-	if (strict && email == git_default_email.buf &&
-	    strstr(email, "(none)")) {
+	if (strict && email == git_default_email.buf && default_email_is_bogus) {
 		fputs(env_hint, stderr);
 		die("unable to auto-detect email address (got '%s')", email);
 	}
