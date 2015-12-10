@@ -156,6 +156,15 @@ Performance, Internal Implementation, Development Support etc.
  * "git svn rebase/mkdirs" got optimized by keeping track of empty
    directories better.
 
+ * Fix some racy client/server tests by treating SIGPIPE the same as a
+   normal non-zero exit.
+
+ * The necessary infrastructure to build topics using the free Travis
+   CI has been added. Developers forking from this topic (and enabling
+   Travis) can do their own builds, and we can turn on auto-builds for
+   git/git (including build-status for pull requests that people
+   open).
+
 
 Also contains various documentation updates and code clean-ups.
 
@@ -392,6 +401,15 @@ notes for details).
    are on an orphan or an unborn branch.
    (merge c26f70c sg/bash-prompt-dirty-orphan later to maint).
 
+ * A build without NO_IPv6 used to use gethostbyname() when guessing
+   user's hostname, instead of getaddrinfo() that is used in other
+   codepaths in such a build.
+   (merge 00bce77 ep/ident-with-getaddrinfo later to maint).
+
+ * The exit code of git-fsck didnot reflect some types of errors found
+   in packed objects, which has been corrected.
+   (merge 8c24d83 dt/fsck-verify-pack-error later to maint).
+
  * Code clean-up, minor fixes etc.
    (merge 15ed07d jc/rerere later to maint).
    (merge e7a7401 pt/pull-builtin later to maint).
@@ -410,3 +428,4 @@ notes for details).
    (merge e510ab8 rs/pop-commit later to maint).
    (merge fdcdb77 js/misc-fixes later to maint).
    (merge c949b00 rs/show-branch-argv-array later to maint).
+   (merge 56a8aea nd/doc-check-ref-format-typo later to maint).
