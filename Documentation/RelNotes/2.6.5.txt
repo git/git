@@ -1,0 +1,25 @@
+Git v2.6.5 Release Notes
+========================
+
+Fixes since v2.6.4
+------------------
+
+ * Because "test_when_finished" in our test framework queues the
+   clean-up tasks to be done in a shell variable, it should not be
+   used inside a subshell.  Add a mechanism to allow 'bash' to catch
+   such uses, and fix the ones that were found.
+
+ * Update "git subtree" (in contrib/) so that it can take whitespaces
+   in the pathnames, not only in the in-tree pathname but the name of
+   the directory that the repository is in.
+
+ * Cosmetic improvement to lock-file error messages.
+
+ * mark_tree_uninteresting() has code to handle the case where it gets
+   passed a NULL pointer in its 'tree' parameter, but the function had
+   'object = &tree->object' assignment before checking if tree is
+   NULL.  This gives a compiler an excuse to declare that tree will
+   never be NULL and apply a wrong optimization.  Avoid it.
+
+Also contains typofixes, documentation updates and trivial code
+clean-ups.
