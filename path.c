@@ -10,6 +10,7 @@
 #include "submodule-config.h"
 #include "path.h"
 #include "packfile.h"
+#include "exec_cmd.h"
 
 static int get_st_mode_bits(const char *path, int *mode)
 {
@@ -708,6 +709,10 @@ char *expand_user_path(const char *path, int real_home)
 
 	if (path == NULL)
 		goto return_null;
+#ifdef __MINGW32__
+	if (path[0] == '/')
+		return system_path(path + 1);
+#endif
 	if (path[0] == '~') {
 		const char *first_slash = strchrnul(path, '/');
 		const char *username = path + 1;
