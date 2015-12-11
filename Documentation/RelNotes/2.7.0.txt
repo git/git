@@ -51,7 +51,6 @@ UI, Workflows & Features
  * Prepare for Git on-disk repository representation to undergo
    backward incompatible changes by introducing a new repository
    format version "1", with an extension mechanism.
-   (merge 067fbd4 jk/repository-extension later to maint).
 
  * "git worktree" learned a "list" subcommand.
 
@@ -98,7 +97,6 @@ Performance, Internal Implementation, Development Support etc.
    clean-up tasks to be done in a shell variable, it should not be
    used inside a subshell.  Add a mechanism to allow 'bash' to catch
    such uses, and fix the ones that were found.
-   (merge 0968f12 jk/test-lint-forbid-when-finished-in-subshell later to maint).
 
  * The debugging infrastructure for pkt-line based communication has
    been improved to mark the side-band communication specifically.
@@ -120,7 +118,6 @@ Performance, Internal Implementation, Development Support etc.
  * The internal stripspace() function has been moved to where it
    logically belongs to, i.e. strbuf API, and the command line parser
    of "git stripspace" has been updated to use the parse_options API.
-   (merge bed4452 tk/stripspace later to maint).
 
  * "git am" used to spawn "git mailinfo" via run_command() API once
    per each patch, but learned to make a direct call to mailinfo()
@@ -180,63 +177,51 @@ notes for details).
    (which is not a great UI element as they can only appear at the end
    of the command line).  Add notice to documentation of each and
    every one of them.
-   (merge 2b594bf mm/keyid-docs later to maint).
 
  * "git blame --first-parent v1.0..v2.0" was not rejected but did not
    limit the blame to commits on the first parent chain.
-   (merge 95a4fb0 jk/blame-first-parent later to maint).
 
  * "git subtree" (in contrib/) now can take whitespaces in the
    pathnames, not only in the in-tree pathname but the name of the
-   directory that the repository is in.  (merge 5b6ab38
-   as/subtree-with-spaces later to maint).
+   directory that the repository is in.
 
  * The ssh transport, just like any other transport over the network,
    did not clear GIT_* environment variables, but it is possible to
    use SendEnv and AcceptEnv to leak them to the remote invocation of
    Git, which is not a good idea at all.  Explicitly clear them just
    like we do for the local transport.
-   (merge a48b409 jk/connect-clear-env later to maint).
 
  * Correct "git p4 --detect-labels" so that it does not fail to create
    a tag that points at a commit that is also being imported.
-   (merge b43702a ld/p4-import-labels later to maint).
 
  * The Makefile always runs the library archiver with hardcoded "crs"
    options, which was inconvenient for exotic platforms on which
    people want to use programs with totally different set of command
    line options.
-   (merge ac179b4 jw/make-arflags-customizable later to maint).
 
  * Customization to change the behaviour with "make -w" and "make -s"
    in our Makefile was broken when they were used together.
-   (merge ef49e05 jk/make-findstring-makeflags-fix later to maint).
 
  * Allocation related functions and stdio are unsafe things to call
    inside a signal handler, and indeed killing the pager can cause
    glibc to deadlock waiting on allocation mutex as our signal handler
    tries to free() some data structures in wait_for_pager().  Reduce
    these unsafe calls.
-   (merge 507d780 ti/glibc-stdio-mutex-from-signal-handler later to maint).
 
  * The way how --ref/--notes to specify the notes tree reference are
    DWIMmed was not clearly documented.
-   (merge e14c92e jk/notes-dwim-doc later to maint).
 
  * "git gc" used to barf when a symbolic ref has gone dangling
    (e.g. the branch that used to be your upstream's default when you
    cloned from it is now gone, and you did "fetch --prune").
-   (merge 14886b4 js/gc-with-stale-symref later to maint).
 
  * "git clone --dissociate" runs a big "git repack" process at the
    end, and it helps to close file descriptors that are open on the
    packs and their idx files before doing so on filesystems that
    cannot remove a file that is still open.
-   (merge 786b150 js/clone-dissociate later to maint).
 
  * Description of the "log.follow" configuration variable in "git log"
    documentation is now also copied to "git config" documentation.
-   (merge fd8d07e dt/log-follow-config later to maint).
 
  * "git rebase -i" had a minor regression recently, which stopped
    considering a line that begins with an indented '#' in its insn
@@ -244,93 +229,73 @@ notes for details).
    Windows where CRLF left by the editor is turned into a trailing CR
    on the line read via the "read" built-in command of bash.  Both of
    these issues are now fixed.
-   (merge 39743cf gr/rebase-i-drop-warn later to maint).
 
  * After "git checkout --detach", "git status" reported a fairly
    useless "HEAD detached at HEAD", instead of saying at which exact
    commit.
-   (merge 0eb8548 mm/detach-at-HEAD-reflog later to maint).
 
  * When "git send-email" wanted to talk over Net::SMTP::SSL,
    Net::Cmd::datasend() did not like to be fed too many bytes at the
    same time and failed to send messages.  Send the payload one line
    at a time to work around the problem.
-   (merge f60c483 sa/send-email-smtp-batch-data-limit later to maint).
 
  * When "git am" was rewritten as a built-in, it stopped paying
    attention to user.signingkey, which was fixed.
-   (merge 434c64d pt/am-builtin later to maint).
 
  * It was not possible to use a repository-lookalike created by "git
    worktree add" as a local source of "git clone".
-   (merge d78db84 nd/clone-linked-checkout later to maint).
 
  * On a case insensitive filesystems, setting GIT_WORK_TREE variable
    using a random cases that does not agree with what the filesystem
    thinks confused Git that it wasn't inside the working tree.
-   (merge 63ec5e1 js/icase-wt-detection later to maint).
 
  * Performance-measurement tests did not work without an installed Git.
-   (merge 31cd128 sb/perf-without-installed-git later to maint).
 
  * A test script for the HTTP service had a timing dependent bug,
    which was fixed.
-   (merge 362d8b6 sb/http-flaky-test-fix later to maint).
 
  * There were some classes of errors that "git fsck" diagnosed to its
    standard error that did not cause it to exit with non-zero status.
-   (merge 122f76f jc/fsck-dropped-errors later to maint).
 
  * Work around "git p4" failing when the P4 depot records the contents
    in UTF-16 without UTF-16 BOM.
-   (merge 1f5f390 ls/p4-translation-failure later to maint).
 
  * When "git gc --auto" is backgrounded, its diagnosis message is
    lost.  Save it to a file in $GIT_DIR and show it next time the "gc
    --auto" is run.
-   (merge 329e6e8 nd/gc-auto-background-fix later to maint).
 
  * The submodule code has been taught to work better with separate
    work trees created via "git worktree add".
-   (merge 11f9dd7 mk/submodule-gitdir-path later to maint).
 
  * "git gc" is safe to run anytime only because it has the built-in
    grace period to protect young objects.  In order to run with no
    grace period, the user must make sure that the repository is
    quiescent.
-   (merge fae1a90 jc/doc-gc-prune-now later to maint).
 
  * A recent "filter-branch --msg-filter" broke skipping of the commit
    object header, which is fixed.
-   (merge a5a4b3f jk/filter-branch-use-of-sed-on-incomplete-line later to maint).
 
  * The normalize_ceiling_entry() function does not muck with the end
    of the path it accepts, and the real world callers do rely on that,
    but a test insisted that the function drops a trailing slash.
-   (merge b2a7123 rd/test-path-utils later to maint).
 
  * A test for interaction between untracked cache and sparse checkout
    added in Git 2.5 days were flaky.
-   (merge 9b680fb dt/t7063-fix-flaky-test later to maint).
 
  * A couple of commands still showed "[options]" in their usage string
    to note where options should come on their command line, but we
    spell that "[<options>]" in most places these days.
-   (merge d96a031 rt/placeholder-in-usage later to maint).
 
  * The synopsis text and the usage string of subcommands that read
    list of things from the standard input are often shown as if they
    only take input from a file on a filesystem, which was misleading.
-   (merge 33e8fc8 jc/usage-stdin later to maint).
 
  * "git am -3" had a small regression where it is aborted in its error
    handling codepath when underlying merge-recursive failed in certain
    ways, as it assumed that the internal call to merge-recursive will
    never die, which is not the case (yet).
-   (merge c63d4b2 jc/am-3-fallback-regression-fix later to maint).
 
  * The linkage order of libraries was wrong in places around libcurl.
-   (merge 7e91e8d rp/link-curl-before-ssl later to maint).
 
  * The name-hash subsystem that is used to cope with case insensitive
    filesystems keeps track of directories and their on-filesystem
@@ -340,40 +305,31 @@ notes for details).
    cache entry was removed from the index, leading to use after free.
    This was fixed by recording the path for each directory instead of
    borrowing cache entries and restructuring the API somewhat.
-   (merge 41284eb dt/name-hash-dir-entry-fix later to maint).
 
  * "git merge-file" tried to signal how many conflicts it found, which
    obviously would not work well when there are too many of them.
-   (merge e34f802 jk/merge-file-exit-code later to maint).
 
  * The error message from "git blame --contents --reverse" incorrectly
    talked about "--contents --children".
-   (merge 9526197 mk/blame-error-message later to maint).
 
  * "git imap-send" did not compile well with older version of cURL library.
-   (merge 71d9257 js/imap-send-curl-compilation-fix later to maint).
 
  * Merging a branch that removes a path and another that changes the
    mode bits on the same path should have conflicted at the path, but
    it didn't and silently favoured the removal.
-   (merge 72fac66 jk/delete-modechange-conflict later to maint).
 
  * "git --literal-pathspecs add -u/-A" without any command line
    argument misbehaved ever since Git 2.0.
-   (merge 29abb33 jc/add-u-A-default-to-top later to maint).
 
  * "git daemon" uses "run_command()" without "finish_command()", so it
    needs to release resources itself, which it forgot to do.
-   (merge b1b49ff rs/daemon-plug-child-leak later to maint).
 
  * "git status --branch --short" accessed beyond the constant string
    "HEAD", which has been corrected.
-   (merge c72b49d rs/wt-status-detached-branch-fix later to maint).
 
  * We peek objects from submodule's object store by linking it to the
    list of alternate object databases, but the code to do so forgot to
    correctly initialize the list.
-   (merge 9a6e4f0 jk/initialization-fix-to-add-submodule-odb later to maint).
 
  * The code to prepare the working tree side of temporary directory
    for the "dir-diff" feature forgot that symbolic links need not be
@@ -381,7 +337,6 @@ notes for details).
    special cases and overwrites them.  Besides, it was wrong to try
    computing the object name of the target of symbolic link, which may
    not even exist or may be a directory.
-   (merge cfe2d4b da/difftool later to maint).
 
  * A Range: request can be responded with a full response and when
    asked properly libcurl knows how to strip the result down to the
@@ -390,16 +345,13 @@ notes for details).
 
  * Having a leftover .idx file without corresponding .pack file in
    the repository hurts performance; "git gc" learned to prune them.
-   (merge 478f34d dk/gc-idx-wo-pack later to maint).
 
  * Apple's common crypto implementation of SHA1_Update() does not take
    more than 4GB at a time, and we now have a compile-time workaround
    for it.
-   (merge 001fd7a ad/sha1-update-chunked later to maint).
 
  * Produce correct "dirty" marker for shell prompts, even when we
    are on an orphan or an unborn branch.
-   (merge c26f70c sg/bash-prompt-dirty-orphan later to maint).
 
  * A build without NO_IPv6 used to use gethostbyname() when guessing
    user's hostname, instead of getaddrinfo() that is used in other
@@ -412,20 +364,4 @@ notes for details).
 
  * Code clean-up, minor fixes etc.
    (merge 15ed07d jc/rerere later to maint).
-   (merge e7a7401 pt/pull-builtin later to maint).
-   (merge 29bc480 nd/ls-remote-does-not-have-u-option later to maint).
-   (merge be510e0 jk/asciidoctor-section-heading-markup-fix later to maint).
-   (merge 83e6bda tk/typofix-connect-unknown-proto-error later to maint).
-   (merge a43eb67 tk/doc-interpret-trailers-grammo later to maint).
-   (merge ba128e2 es/worktree-add-cleanup later to maint).
-   (merge 44cd91e cc/quote-comments later to maint).
    (merge 147875f sb/submodule-config-parse later to maint).
-   (merge ae9f274 es/worktree-add later to maint).
-   (merge 3b19dba jc/em-dash-in-doc later to maint).
-   (merge f3f38c7 jc/everyday-markup later to maint).
-   (merge 77d5f71 xf/user-manual-markup later to maint).
-   (merge b2af482 xf/user-manual-ff later to maint).
-   (merge e510ab8 rs/pop-commit later to maint).
-   (merge fdcdb77 js/misc-fixes later to maint).
-   (merge c949b00 rs/show-branch-argv-array later to maint).
-   (merge 56a8aea nd/doc-check-ref-format-typo later to maint).
