@@ -350,6 +350,10 @@ char *expand_user_path(const char *path)
 
 	if (path == NULL)
 		goto return_null;
+#ifdef __MINGW32__
+	if (path[0] == '/')
+		return system_path((*result) + 1);
+#endif
 	if (path[0] == '~') {
 		const char *first_slash = strchrnul(path, '/');
 		const char *username = path + 1;
