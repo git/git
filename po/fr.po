@@ -1913,7 +1913,7 @@ msgid ""
 "Everything below will be removed."
 msgstr ""
 "Ne touchez pas à la ligne ci-dessus\n"
-"Tout se qui suit sera éliminé."
+"Tout ce qui suit sera éliminé."
 
 #: wt-status.c:948
 msgid "You have unmerged paths."
@@ -8862,7 +8862,7 @@ msgstr ""
 "Si vous souhaitez indiquer l'information de suivi distant pour cette "
 "branche, vous pouvez le faire avec :\n"
 "\n"
-"git branch --set-uptream-to=%s/<branche> %s\n"
+"    git branch --set-upstream-to=%s/<branche> %s\n"
 
 #: builtin/pull.c:476
 #, c-format
