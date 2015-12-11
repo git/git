@@ -537,7 +537,7 @@ static void fmt_merge_msg_sigs(struct strbuf *out)
 static void find_merge_parents(struct merge_parents *result,
 			       struct strbuf *in, unsigned char *head)
 {
-	struct commit_list *parents, *next;
+	struct commit_list *parents;
 	struct commit *head_commit;
 	int pos = 0, i, j;
 
@@ -576,13 +576,10 @@ static void find_merge_parents(struct merge_parents *result,
 	parents = reduce_heads(parents);
 
 	while (parents) {
+		struct commit *cmit = pop_commit(&parents);
 		for (i = 0; i < result->nr; i++)
-			if (!hashcmp(result->item[i].commit,
-				     parents->item->object.sha1))
+			if (!hashcmp(result->item[i].commit, cmit->object.sha1))
 				result->item[i].used = 1;
-		next = parents->next;
-		free(parents);
-		parents = next;
 	}
 
 	for (i = j = 0; i < result->nr; i++) {

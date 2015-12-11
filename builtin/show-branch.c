@@ -53,17 +53,6 @@ static struct commit *interesting(struct commit_list *list)
 	return NULL;
 }
 
-static struct commit *pop_one_commit(struct commit_list **list_p)
-{
-	struct commit *commit;
-	struct commit_list *list;
-	list = *list_p;
-	commit = list->item;
-	*list_p = list->next;
-	free(list);
-	return commit;
-}
-
 struct commit_name {
 	const char *head_name; /* which head's ancestor? */
 	int generation; /* how many parents away from head_name */
@@ -213,7 +202,7 @@ static void join_revs(struct commit_list **list_p,
 	while (*list_p) {
 		struct commit_list *parents;
 		int still_interesting = !!interesting(*list_p);
-		struct commit *commit = pop_one_commit(list_p);
+		struct commit *commit = pop_commit(list_p);
 		int flags = commit->object.flags & all_mask;
 
 		if (!still_interesting && extra <= 0)
@@ -504,7 +493,7 @@ static int show_merge_base(struct commit_list *seen, int num_rev)
 	int exit_status = 1;
 
 	while (seen) {
-		struct commit *commit = pop_one_commit(&seen);
+		struct commit *commit = pop_commit(&seen);
 		int flags = commit->object.flags & all_mask;
 		if (!(flags & UNINTERESTING) &&
 		    ((flags & all_revs) == all_revs)) {
@@ -927,7 +916,7 @@ int cmd_show_branch(int ac, const char **av, const char *prefix)
 	all_revs = all_mask & ~((1u << REV_SHIFT) - 1);
 
 	while (seen) {
-		struct commit *commit = pop_one_commit(&seen);
+		struct commit *commit = pop_commit(&seen);
 		int this_flag = commit->object.flags;
 		int is_merge_point = ((this_flag & all_revs) == all_revs);
 
