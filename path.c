@@ -739,6 +739,12 @@ char *interpolate_path(const char *path, int real_home)
 	if (skip_prefix(path, "%(prefix)/", &path))
 		return system_path(path);
 
+#ifdef __MINGW32__
+	if (path[0] == '/') {
+		warning(_("encountered old-style '%s' that should be '%%(prefix)%s'"), path, path);
+		return system_path(path + 1);
+	}
+#endif
 	if (path[0] == '~') {
 		const char *first_slash = strchrnul(path, '/');
 		const char *username = path + 1;
