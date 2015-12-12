@@ -1716,7 +1716,7 @@ _git_send_email ()
 	--to|--cc|--bcc|--from)
 		__gitcomp "
 		$(git --git-dir="$(__gitdir)" send-email --dump-aliases 2>/dev/null)
-		" "" ""
+		"
 		return
 		;;
 	esac
