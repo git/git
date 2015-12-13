@@ -84,7 +84,7 @@ p4_add_file() {
 	(cd "$cli" &&
 		>$1 &&
 		p4 add $1 &&
-		p4 submit -d "Added a file" $1
+		p4 submit -d "Added file $1" $1
 	)
 }
 
@@ -109,6 +109,32 @@ test_expect_success 'Syncing files' '
 		git checkout p4/master &&
 		ls -l x* > log &&
 		test_line_count = 11 log
+	)
+'
+
+# Handling of multiple depot paths:
+#    git p4 clone //depot/pathA //depot/pathB
+#
+test_expect_success 'Create a repo with multiple depot paths' '
+	client_view "//depot/pathA/... //client/pathA/..." \
+		    "//depot/pathB/... //client/pathB/..." &&
+	mkdir -p "$cli/pathA" "$cli/pathB" &&
+	for p in pathA pathB
+	do
+		for i in $(test_seq 1 10)
+		do
+			p4_add_file "$p/file$p$i"
+		done
+	done
+'
+
+test_expect_failure 'Clone repo with multiple depot paths' '
+	(
+		cd "$git" &&
+		git p4 clone --changes-block-size=4 //depot/pathA@all //depot/pathB@all \
+			--destination=dest &&
+		ls -1 dest >log &&
+		test_line_count = 20 log
 	)
 '
 
