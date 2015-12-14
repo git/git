@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Dec 2015, #03; Thu, 10)
-X-master-at: 7d722536dd86b5fbd0c0434bfcea5588132ee6ad
-X-next-at: 4a846af92dfa9c9799c6c2f1a61e3a1b87ceb0f4
+Subject: What's cooking in git.git (Dec 2015, #04; Mon, 14)
+X-master-at: 4b9ab0ee0130090c63da2df83747b7b1d834ad98
+X-next-at: 4fba3f3effbed332ef436c4725de20dc3dde170c
 
-What's cooking in git.git (Dec 2015, #03; Thu, 10)
+What's cooking in git.git (Dec 2015, #04; Mon, 14)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -26,109 +26,21 @@ repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* bc/object-id (2015-11-20) 12 commits
-  (merged to 'next' on 2015-12-04 at 2d3f5f2)
- + remote: convert functions to struct object_id
- + Remove get_object_hash.
- + Convert struct object to object_id
- + Add several uses of get_object_hash.
- + object: introduce get_object_hash macro.
- + ref_newer: convert to use struct object_id
- + push_refs_with_export: convert to struct object_id
- + get_remote_heads: convert to struct object_id
- + parse_fetch: convert to use struct object_id
- + add_sought_entry_mem: convert to struct object_id
- + Convert struct ref to use object_id.
- + sha1_file: introduce has_object_file helper.
- (this branch is used by bc/format-patch-null-from-line.)
-
- More transition from "unsigned char[40]" to "struct object_id".
-
- This needed a few merge fixups, but is mostly disentangled from other
- topics.
+* cb/t3404-shellquote (2015-12-04) 1 commit
+  (merged to 'next' on 2015-12-08 at 1a01305)
+ + t3404: fix quoting of redirect for some versions of bash
 
 
-* dt/fsck-verify-pack-error (2015-12-01) 1 commit
-  (merged to 'next' on 2015-12-04 at fbd82d1)
- + verify_pack: do not ignore return value of verification function
-
- The exit code of git-fsck didnot reflect some types of errors found
- in packed objects, which has been corrected.
+* sb/doc-submodule-sync-recursive (2015-12-04) 1 commit
+  (merged to 'next' on 2015-12-08 at 7c24ee5)
+ + document submodule sync --recursive
 
 
-* dt/refs-backend-pre-vtable (2015-11-20) 10 commits
-  (merged to 'next' on 2015-11-24 at 8fd7293)
- + refs: break out ref conflict checks
- + files_log_ref_write: new function
- + initdb: make safe_create_dir public
- + refs: split filesystem-based refs code into a new file
- + refs/refs-internal.h: new header file
- + refname_is_safe(): improve docstring
- + pack_if_possible_fn(): use ref_type() instead of is_per_worktree_ref()
- + copy_msg(): rename to copy_reflog_msg()
- + verify_refname_available(): new function
- + verify_refname_available(): rename function
- (this branch is used by dt/refs-backend-lmdb.)
+* sg/lock-file-commit-error (2015-12-01) 1 commit
+  (merged to 'next' on 2015-12-08 at ef53cd6)
+ + Make error message after failing commit_lock_file() less confusing
 
- Code preparation for pluggable ref backends.
-
-
-* ep/ident-with-getaddrinfo (2015-11-28) 1 commit
-  (merged to 'next' on 2015-12-01 at 0775d4c)
- + ident.c: add support for IPv6
-
- A build without NO_IPv6 used to use gethostbyname() when guessing
- user's hostname, instead of getaddrinfo() that is used in other
- codepaths in such a build.
-
-
-* ls/test-must-fail-sigpipe (2015-11-28) 2 commits
-  (merged to 'next' on 2015-12-01 at d374686)
- + add "ok=sigpipe" to test_must_fail and use it to fix flaky tests
- + implement test_might_fail using a refactored test_must_fail
-
- Fix some racy client/server tests by treating SIGPIPE the same as a
- normal non-zero exit.
-
-
-* ls/travis-yaml (2015-11-28) 1 commit
-  (merged to 'next' on 2015-12-04 at e7852e1)
- + Add Travis CI support
-
- The necessary infrastructure to build topics using the free Travis
- CI has been added. Developers forking from this topic (and enabling
- Travis) can do their own builds, and we can turn on auto-builds for
- git/git (including build-status for pull requests that people
- open).
-
-
-* nd/doc-check-ref-format-typo (2015-12-04) 1 commit
-  (merged to 'next' on 2015-12-08 at 1ec8a6b)
- + git-check-ref-format.txt: typo, s/avoids/avoid/
-
-
-* rs/status-detached-head-memcmp (2015-11-28) 1 commit
-  (merged to 'next' on 2015-12-04 at 60232db)
- + wt-status: correct and simplify check for detached HEAD
-
- Fix some string-matching corner cases when digging in the reflog for
- "git status".
-
---------------------------------------------------
-[New Topics]
-
-* bc/format-patch-null-from-line (2015-12-07) 2 commits
- - format-patch: add an option to suppress commit hash
- - Introduce a null_oid constant.
-
- "format-patch" has learned a new option to zero-out the commit
- object name on the mbox "From " line.
-
- The bottom patch needs to be retitled but otherwise OK.  The top
- one names the new option --no-hash that is doubly undesirable.
-
- Waiting for a reroll.
- ($gmane/282111)
+ Cosmetic improvement to lock-file error messages.
 
 
 * sn/null-pointer-arith-in-mark-tree-uninteresting (2015-12-07) 1 commit
@@ -141,51 +53,87 @@ repositories listed at
  NULL.  This gives a compiler an excuse to declare that tree will
  never be NULL and apply a wrong optimization.  Avoid it.
 
- Will merge to 'master'.
+--------------------------------------------------
+[New Topics]
 
+* fr/rebase-i-continue-preserve-options (2015-12-11) 1 commit
+ - rebase -i: remember merge options beyond continue actions
 
-* dt/refs-backend-lmdb (2015-12-04) 16 commits
- - refs: tests for lmdb backend
- - refs: add LMDB refs backend
- - refs: allow ref backend to be set for clone
- - init: allow alternate backends to be set for new repos
- - refs: always handle non-normal refs in files backend
- - refs: move duplicate check to common code
- - refs: make lock generic
- - refs: add method to rename refs
- - refs: add methods to init refs backend and db
- - refs: add method for delete_refs
- - refs: add method for initial ref transaction commit
- - refs: add methods for reflog
- - refs: add do_for_each_per_worktree_ref
- - refs: add methods for the ref iterators
- - refs: add methods for misc ref operations
- - refs: add a backend method structure with transaction functions
-
- Building on top of a few refs-backend preparatory series, LMDB
- based refs backend has been plugged into the system.
-
- Waiting for review.
-
-
-* dw/subtree-split-do-not-drop-merge (2015-12-10) 1 commit
- - contrib/subtree: fix "subtree split" skipped-merge bug
-
- The "split" subcommand of "git subtree" (in contrib/) incorrectly
- skipped merges when it shouldn't, which was corrected.
-
- Waiting for review from 'subtree' folks.
-
-
-* ls/p4-keep-empty-commits (2015-12-10) 1 commit
- - git-p4: add option to keep empty commits
-
- "git p4" used to import Perforce CLs that touch only paths outside
- the client spec as empty commits.  It has been corrected to ignore
- them instead, with a new configuration git-p4.keepEmptyCommits as a
- backward compatibility knob.
+ "git rebase -i" started with merge strategy options did not
+ propagate them upon "git rebase --continue".
 
  Will merge to 'next'.
+
+
+* jk/ident-loosen-getpwuid (2015-12-14) 3 commits
+ - ident: loosen getpwuid error in non-strict mode
+ - ident: keep a flag for bogus default_email
+ - ident: make xgetpwuid_self() a static local helper
+
+ When getpwuid() on the system returned NULL (e.g. the user is not
+ in the /etc/passwd file or other uid-to-name mappings), the
+ codepath to find who the user is to record it in the reflog barfed
+ and died.  Loosen the check in this codepath, which already accepts
+ questionable ident string (e.g. host part of the e-mail address is
+ obviously bogus), and in general when we operate fmt_ident() function
+ in non-strict mode.
+
+ Will merge to 'next'.
+
+
+* jk/prune-mtime (2015-08-12) 1 commit
+  (merged to 'next' on 2015-12-14 at 4fba3f3)
+ + prune: close directory earlier during loose-object directory traversal
+
+ The helper used to iterate over loose object directories to prune
+ stale objects did not closedir() immediately when it is done with a
+ directory--a callback such as the one used for "git prune" may want
+ to do rmdir(), but it would fail on open directory on platforms
+ such as WinXP.
+
+ Will merge to 'master' and to 'maint'.
+
+
+* sg/completion-no-column (2015-12-11) 1 commit
+ - completion: remove 'git column' from porcelain commands
+
+ The completion script (in contrib/) used to list "git column"
+ (which is not an end-user facing command) as one of the choices
+
+ Will merge to 'next'.
+
+
+* ep/ident-with-getaddrinfo (2015-12-14) 1 commit
+ - ident: fix undefined variable when NO_IPV6 is set
+
+ A fix-up for recent topic.
+ Will merge to 'next'.
+
+
+* jk/send-email-complete-aliases (2015-12-14) 1 commit
+ - completion: fix completing unstuck email alias arguments
+
+ A fix-up for recent topic.
+ Will merge to 'next'.
+
+
+* ps/push-delete-option (2015-12-14) 2 commits
+ - push: add '-d' as shorthand for '--delete'
+ - push: add '--delete' flag to synopsis
+
+ "branch --delete" has "branch -d" but "push --delete" does not.
+
+
+* sh/p4-multi-depot (2015-12-14) 3 commits
+ - git-p4: reduce number of server queries for fetches
+ - git-p4: support multiple depot paths in p4 submit
+ - git-p4: failing test case for skipping changes with multiple depots
+
+ "git p4" when interacting with multiple depots at the same time
+ used to incorrectly drop changes.
+
+ Waiting for an Ack.
+ ($gmane/282428)
 
 --------------------------------------------------
 [Stalled]
@@ -286,9 +234,58 @@ repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* cb/t3404-shellquote (2015-12-04) 1 commit
-  (merged to 'next' on 2015-12-08 at 1a01305)
- + t3404: fix quoting of redirect for some versions of bash
+* bc/format-patch-null-from-line (2015-12-14) 3 commits
+ - format-patch: check that header line has expected format
+ - format-patch: add an option to suppress commit hash
+ - sha1_file.c: introduce a null_oid constant
+
+ "format-patch" has learned a new option to zero-out the commit
+ object name on the mbox "From " line.
+
+ Looked reasonable modulo minor niggles in the tests.
+
+
+* dt/refs-backend-lmdb (2015-12-04) 16 commits
+ - refs: tests for lmdb backend
+ - refs: add LMDB refs backend
+ - refs: allow ref backend to be set for clone
+ - init: allow alternate backends to be set for new repos
+ - refs: always handle non-normal refs in files backend
+ - refs: move duplicate check to common code
+ - refs: make lock generic
+ - refs: add method to rename refs
+ - refs: add methods to init refs backend and db
+ - refs: add method for delete_refs
+ - refs: add method for initial ref transaction commit
+ - refs: add methods for reflog
+ - refs: add do_for_each_per_worktree_ref
+ - refs: add methods for the ref iterators
+ - refs: add methods for misc ref operations
+ - refs: add a backend method structure with transaction functions
+
+ Building on top of a few refs-backend preparatory series, LMDB
+ based refs backend has been plugged into the system.
+
+ Waiting for review.
+
+
+* dw/subtree-split-do-not-drop-merge (2015-12-10) 1 commit
+ - contrib/subtree: fix "subtree split" skipped-merge bug
+
+ The "split" subcommand of "git subtree" (in contrib/) incorrectly
+ skipped merges when it shouldn't, which was corrected.
+
+ Waiting for review from 'subtree' folks.
+
+
+* ls/p4-keep-empty-commits (2015-12-10) 1 commit
+  (merged to 'next' on 2015-12-11 at 1827062)
+ + git-p4: add option to keep empty commits
+
+ "git p4" used to import Perforce CLs that touch only paths outside
+ the client spec as empty commits.  It has been corrected to ignore
+ them instead, with a new configuration git-p4.keepEmptyCommits as a
+ backward compatibility knob.
 
  Will merge to 'master'.
 
@@ -311,14 +308,7 @@ repositories listed at
  Waiting for review.
 
 
-* sb/doc-submodule-sync-recursive (2015-12-04) 1 commit
-  (merged to 'next' on 2015-12-08 at 7c24ee5)
- + document submodule sync --recursive
-
- Will merge to 'master'.
-
-
-* kn/ref-filter-atom-parsing (2015-12-01) 10 commits
+* kn/ref-filter-atom-parsing (2015-12-11) 10 commits
  - ref-filter: introduce objectname_atom_parser()
  - ref-filter: introduce contents_atom_parser()
  - ref-filter: introduce remote_ref_atom_parser()
@@ -326,7 +316,7 @@ repositories listed at
  - strbuf: introduce strbuf_split_str_without_term()
  - ref-filter: introduce color_atom_parser()
  - ref-filter: skip deref specifier in match_atom_name()
- - ref-fitler: bump match_atom() name to the top
+ - ref-filter: bump match_atom() name to the top
  - ref-filter: introduce struct used_atom
  - ref-filter: introduce a parsing function for each atom in valid_atom
 
@@ -336,16 +326,10 @@ repositories listed at
  This replaces (for now) kn/for-each-ref-remainder, which will be built
  on top.
 
- Waiting for review.
+ Reviewed mostly by Eric.
 
-
-* sg/lock-file-commit-error (2015-12-01) 1 commit
-  (merged to 'next' on 2015-12-08 at ef53cd6)
- + Make error message after failing commit_lock_file() less confusing
-
- Cosmetic improvement to lock-file error messages.
-
- Will merge to 'master'.
+ Waiting for a reroll.
+ ($gmane/281180).
 
 
 * bb/merge-marker-crlf (2015-11-24) 1 commit
@@ -368,13 +352,12 @@ repositories listed at
  Waiting for review.
 
 
-* jk/send-email-ssl-errors (2015-11-24) 1 commit
+* jk/send-email-ssl-errors (2015-12-11) 1 commit
  - send-email: enable SSL level 1 debug output
 
  Improve error reporting when SMTP TLS fails.
 
- Waiting for a reroll.
- ($gmane/281693)
+ Will merge to 'next'.
 
 
 * ps/rebase-keep-empty (2015-11-24) 2 commits
@@ -383,11 +366,9 @@ repositories listed at
 
  Keep duplicate commits via rebase --keep-empty.
 
- I'm not sure if I agree with this interpretation of the "rebase
- --keep-empty" documentation, but I haven't thought too hard about it.
- Comments welcome.
-
- Waiting for review.
+ Of dubious or negative value.
+ Will discard.
+ ($gmane/282107).
 
 
 * rm/subtree-unwrap-tags (2015-11-24) 1 commit
@@ -483,7 +464,7 @@ repositories listed at
  that way, we do not have to have merges in this topic that
  distracting (besides, some part of the other topic can be updated
  in-place instead of this follow-up topic tweaking them as past
- mistakes and inflexibilities).
+ mistakes and inflexibility).
 
  I picked up v4 from the list, but it needs review.
 
@@ -587,26 +568,6 @@ repositories listed at
  Comments?
 
 
-* kn/for-each-branch-remainder (2015-10-02) 9 commits
- . branch: implement '--format' option
- . branch: use ref-filter printing APIs
- . ref-filter: make %(upstream:track) prints "[gone]" for invalid upstreams
- . ref-filter: introduce format_ref_array_item()
- . ref-filter: adopt get_head_description() from branch.c
- . ref-filter: modify "%(objectname:short)" to take length
- . ref-filter: add support for %(path) atom
- . ref-filter: implement %(if:equals=<string>) and %(if:notequals=<string>)
- . ref-filter: implement %(if), %(then), and %(else) atoms
-
- More unification among "branch -l", "tag -l" and "for-each-ref --format".
-
- Ejected from pu for now, as a re-roll should come on top of
- kn/ref-filter-atom-parsing.
-
- Expecting a reroll.
- ($gmane/278926)
-
-
 * jk/graph-format-padding (2015-09-14) 1 commit
  - pretty: pass graph width to pretty formatting for use in '%>|(N)'
 
@@ -690,3 +651,25 @@ repositories listed at
  before this final step can proceed.
 
  Will keep in 'next'.
+
+--------------------------------------------------
+[Discarded]
+
+* kn/for-each-branch-remainder (2015-10-02) 9 commits
+ . branch: implement '--format' option
+ . branch: use ref-filter printing APIs
+ . ref-filter: make %(upstream:track) prints "[gone]" for invalid upstreams
+ . ref-filter: introduce format_ref_array_item()
+ . ref-filter: adopt get_head_description() from branch.c
+ . ref-filter: modify "%(objectname:short)" to take length
+ . ref-filter: add support for %(path) atom
+ . ref-filter: implement %(if:equals=<string>) and %(if:notequals=<string>)
+ . ref-filter: implement %(if), %(then), and %(else) atoms
+
+ More unification among "branch -l", "tag -l" and "for-each-ref --format".
+
+ Ejected from pu for now, as a re-roll should come on top of
+ kn/ref-filter-atom-parsing.
+
+ Expecting a reroll.
+ ($gmane/278926)
