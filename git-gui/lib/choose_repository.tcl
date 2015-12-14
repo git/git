@@ -247,7 +247,7 @@ proc _get_recentrepos {} {
 
 proc _unset_recentrepo {p} {
 	regsub -all -- {([()\[\]{}\.^$+*?\\])} $p {\\\1} p
-	git config --global --unset gui.recentrepo "^$p\$"
+	git config --global --unset-all gui.recentrepo "^$p\$"
 	load_config 1
 }
 
