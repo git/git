@@ -235,14 +235,14 @@ method _invoke_next {} {
 
 proc _get_recentrepos {} {
 	set recent [list]
-	foreach p [get_config gui.recentrepo] {
+	foreach p [lsort -unique [get_config gui.recentrepo]] {
 		if {[_is_git [file join $p .git]]} {
 			lappend recent $p
 		} else {
 			_unset_recentrepo $p
 		}
 	}
-	return [lsort $recent]
+	return $recent
 }
 
 proc _unset_recentrepo {p} {
