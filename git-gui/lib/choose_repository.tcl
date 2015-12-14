@@ -142,6 +142,10 @@ constructor pick {} {
 				-label [mc "Recent Repositories"]
 		}
 
+	if {[set lenrecent [llength $sorted_recent]] < $maxrecent} {
+		set lenrecent $maxrecent
+	}
+
 		${NS}::label $w_body.space
 		${NS}::label $w_body.recentlabel \
 			-anchor w \
@@ -153,7 +157,7 @@ constructor pick {} {
 			-background [get_bg_color $w_body.recentlabel] \
 			-wrap none \
 			-width 50 \
-			-height $maxrecent
+			-height $lenrecent
 		$w_recentlist tag conf link \
 			-foreground blue \
 			-underline 1
