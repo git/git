@@ -21,5 +21,19 @@ Fixes since v2.6.4
    NULL.  This gives a compiler an excuse to declare that tree will
    never be NULL and apply a wrong optimization.  Avoid it.
 
+ * The helper used to iterate over loose object directories to prune
+   stale objects did not closedir() immediately when it is done with a
+   directory--a callback such as the one used for "git prune" may want
+   to do rmdir(), but it would fail on open directory on platforms
+   such as WinXP.
+
+ * "git p4" used to import Perforce CLs that touch only paths outside
+   the client spec as empty commits.  It has been corrected to ignore
+   them instead, with a new configuration git-p4.keepEmptyCommits as a
+   backward compatibility knob.
+
+ * The exit code of git-fsck did not reflect some types of errors
+   found in packed objects, which has been corrected.
+
 Also contains typofixes, documentation updates and trivial code
 clean-ups.
