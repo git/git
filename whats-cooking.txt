@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Dec 2015, #04; Mon, 14)
-X-master-at: 4b9ab0ee0130090c63da2df83747b7b1d834ad98
-X-next-at: 4fba3f3effbed332ef436c4725de20dc3dde170c
+Subject: What's cooking in git.git (Dec 2015, #05; Tue, 15)
+X-master-at: f900c8326a43303685c46b279b9f70411bff1a4b
+X-next-at: 94414c4510aaf2ba48821f6dd770ae47f2829dce
 
-What's cooking in git.git (Dec 2015, #04; Mon, 14)
+What's cooking in git.git (Dec 2015, #05; Tue, 15)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,11 +12,13 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-An early preview v2.7.0-rc0 has been tagged.  I notice that quite a
-few topics have been in "waiting for review" state without getting
-anybody helping the review process, leaving them in 'pu'--they will
-not have enough time to be part of 2.7 at this rate, but perhaps
-that is unavoidable, as this is historically a slow season.
+2.7-rc1 has been tagged.
+
+I notice that quite a few topics have been in "waiting for review"
+state without getting anybody helping the review process, leaving
+them in 'pu'--they will not be part of 2.7 anyway, but the sooner
+they are reviewed, in the more polished shape they can start in
+the cycle after 2.7 gets tagged.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -24,61 +26,42 @@ repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[Graduated to "master"]
-
-* cb/t3404-shellquote (2015-12-04) 1 commit
-  (merged to 'next' on 2015-12-08 at 1a01305)
- + t3404: fix quoting of redirect for some versions of bash
-
-
-* sb/doc-submodule-sync-recursive (2015-12-04) 1 commit
-  (merged to 'next' on 2015-12-08 at 7c24ee5)
- + document submodule sync --recursive
-
-
-* sg/lock-file-commit-error (2015-12-01) 1 commit
-  (merged to 'next' on 2015-12-08 at ef53cd6)
- + Make error message after failing commit_lock_file() less confusing
-
- Cosmetic improvement to lock-file error messages.
-
-
-* sn/null-pointer-arith-in-mark-tree-uninteresting (2015-12-07) 1 commit
-  (merged to 'next' on 2015-12-08 at 91b14e2)
- + revision.c: fix possible null pointer arithmetic
-
- mark_tree_uninteresting() has code to handle the case where it gets
- passed a NULL pointer in its 'tree' parameter, but the function had
- 'object = &tree->object' assignment before checking if tree is
- NULL.  This gives a compiler an excuse to declare that tree will
- never be NULL and apply a wrong optimization.  Avoid it.
-
---------------------------------------------------
 [New Topics]
 
-* fr/rebase-i-continue-preserve-options (2015-12-11) 1 commit
- - rebase -i: remember merge options beyond continue actions
+* cc/untracked (2015-12-15) 10 commits
+ - dir: do not use untracked cache ident anymore
+ - t7063: add tests for core.untrackedCache
+ - config: add core.untrackedCache
+ - dir: free untracked cache when removing it
+ - dir: add remove_untracked_cache()
+ - dir: add add_untracked_cache()
+ - update-index: move 'uc' var declaration
+ - update-index: add untracked cache notifications
+ - update-index: add --test-untracked-cache
+ - update-index: use enum for untracked cache options
 
- "git rebase -i" started with merge strategy options did not
- propagate them upon "git rebase --continue".
+ Update the untracked cache subsystem and change its primary UI from
+ "git update-index" to "git config".
 
- Will merge to 'next'.
+ Needs review.
 
 
-* jk/ident-loosen-getpwuid (2015-12-14) 3 commits
- - ident: loosen getpwuid error in non-strict mode
- - ident: keep a flag for bogus default_email
- - ident: make xgetpwuid_self() a static local helper
+* ep/make-phoney (2015-12-15) 1 commit
+ - Makefile: add missing phony target
 
- When getpwuid() on the system returned NULL (e.g. the user is not
- in the /etc/passwd file or other uid-to-name mappings), the
- codepath to find who the user is to record it in the reflog barfed
- and died.  Loosen the check in this codepath, which already accepts
- questionable ident string (e.g. host part of the e-mail address is
- obviously bogus), and in general when we operate fmt_ident() function
- in non-strict mode.
+ A slight update to the Makefile.
 
- Will merge to 'next'.
+ Needs review.
+ Comments?
+
+--------------------------------------------------
+[Graduated to "master"]
+
+* ep/ident-with-getaddrinfo (2015-12-14) 1 commit
+  (merged to 'next' on 2015-12-15 at 2c19123)
+ + ident: fix undefined variable when NO_IPV6 is set
+
+ A fix-up for a recent topic.
 
 
 * jk/prune-mtime (2015-08-12) 1 commit
@@ -91,64 +74,25 @@ repositories listed at
  to do rmdir(), but it would fail on open directory on platforms
  such as WinXP.
 
- Will merge to 'master' and to 'maint'.
-
-
-* sg/completion-no-column (2015-12-11) 1 commit
- - completion: remove 'git column' from porcelain commands
-
- The completion script (in contrib/) used to list "git column"
- (which is not an end-user facing command) as one of the choices
-
- Will merge to 'next'.
-
-
-* ep/ident-with-getaddrinfo (2015-12-14) 1 commit
- - ident: fix undefined variable when NO_IPV6 is set
-
- A fix-up for recent topic.
- Will merge to 'next'.
-
 
 * jk/send-email-complete-aliases (2015-12-14) 1 commit
- - completion: fix completing unstuck email alias arguments
+  (merged to 'next' on 2015-12-15 at 6978ff4)
+ + completion: fix completing unstuck email alias arguments
 
- A fix-up for recent topic.
- Will merge to 'next'.
-
-
-* ps/push-delete-option (2015-12-14) 2 commits
- - push: add '-d' as shorthand for '--delete'
- - push: add '--delete' flag to synopsis
-
- "branch --delete" has "branch -d" but "push --delete" does not.
+ A fix-up for a recent topic.
 
 
-* sh/p4-multi-depot (2015-12-14) 3 commits
- - git-p4: reduce number of server queries for fetches
- - git-p4: support multiple depot paths in p4 submit
- - git-p4: failing test case for skipping changes with multiple depots
+* ls/p4-keep-empty-commits (2015-12-10) 1 commit
+  (merged to 'next' on 2015-12-11 at 1827062)
+ + git-p4: add option to keep empty commits
 
- "git p4" when interacting with multiple depots at the same time
- used to incorrectly drop changes.
-
- Waiting for an Ack.
- ($gmane/282428)
+ "git p4" used to import Perforce CLs that touch only paths outside
+ the client spec as empty commits.  It has been corrected to ignore
+ them instead, with a new configuration git-p4.keepEmptyCommits as a
+ backward compatibility knob.
 
 --------------------------------------------------
 [Stalled]
-
-* vl/grep-configurable-threads (2015-12-04) 1 commit
- . grep: add --threads=<num> option and grep.threads configuration
-
- "git grep" can now be configured (or told from the command line)
- how many threads to use when searching in the working tree files.
-
- There was some review from Eric.  Also this seems to break a test.
-
- Waiting for a reroll, or at least a response.
- ($gmane/281160)
-
 
 * kf/http-proxy-auth-methods (2015-11-04) 3 commits
  . SQUASH???
@@ -166,8 +110,7 @@ repositories listed at
  pt/http-socks-proxy topic. That is now in master, so it can
  be re-rolled on top.
 
- Still being worked on.
- ($gmane/280925)
+ Anybody wants to help rerolling this?  Otherwise will discard. 
 
 
 * nd/ita-cleanup (2015-09-06) 6 commits
@@ -182,8 +125,8 @@ repositories listed at
  in the index, but various commands behaved as if they already are.
 
  Some commits need better explanation.
-
- Waiting for a reroll.
+ Becoming tired of waiting for a reroll.
+ Will discard.
 
 
 * mg/httpd-tests-update-for-apache-2.4 (2015-04-08) 2 commits
@@ -194,6 +137,7 @@ repositories listed at
 
  Becoming tired of waiting for a reroll.
  with updated log message ($gmane/268061).
+ Will discard.
 
 
 * wp/sha1-name-negative-match (2015-06-08) 2 commits
@@ -205,15 +149,14 @@ repositories listed at
 
  Becoming tired of waiting for a reroll.
  ($gmane/271213).
+ Anybody wants to help rerolling this?  Otherwise will discard. 
 
 
 * ak/format-patch-odir-config (2015-06-19) 1 commit
  - format-patch: introduce format.outputDirectory configuration
 
- Reroll exists but didn't pick it up as it seemed to be still
- collecting review comments.
-
  Becoming tired of waiting for a reroll.
+ Anybody wants to help rerolling this?  Otherwise will discard. 
  ($gmane/272180).
 
 
@@ -230,11 +173,79 @@ repositories listed at
  other place.
 
  The fix in this patch is broken, unfortunately.
+ Will discard.
 
 --------------------------------------------------
 [Cooking]
 
-* bc/format-patch-null-from-line (2015-12-14) 3 commits
+* vl/grep-configurable-threads (2015-12-15) 3 commits
+ - grep: add --threads=<num> option and grep.threads configuration
+ - grep: slight refactoring to the code that disables threading
+ - grep: allow threading even on a single-core machine
+
+ "git grep" can now be configured (or told from the command line)
+ how many threads to use when searching in the working tree files.
+
+ Needs review.
+
+
+* fr/rebase-i-continue-preserve-options (2015-12-11) 1 commit
+  (merged to 'next' on 2015-12-15 at e99677a)
+ + rebase -i: remember merge options beyond continue actions
+
+ "git rebase -i" started with merge strategy options did not
+ propagate them upon "git rebase --continue".
+
+ Will merge to 'master'.
+
+
+* jk/ident-loosen-getpwuid (2015-12-14) 3 commits
+  (merged to 'next' on 2015-12-15 at 0c8137b)
+ + ident: loosen getpwuid error in non-strict mode
+ + ident: keep a flag for bogus default_email
+ + ident: make xgetpwuid_self() a static local helper
+
+ When getpwuid() on the system returned NULL (e.g. the user is not
+ in the /etc/passwd file or other uid-to-name mappings), the
+ codepath to find who the user is to record it in the reflog barfed
+ and died.  Loosen the check in this codepath, which already accepts
+ questionable ident string (e.g. host part of the e-mail address is
+ obviously bogus), and in general when we operate fmt_ident() function
+ in non-strict mode.
+
+ Will merge to 'master'.
+
+
+* sg/completion-no-column (2015-12-11) 1 commit
+  (merged to 'next' on 2015-12-15 at 01a2476)
+ + completion: remove 'git column' from porcelain commands
+
+ The completion script (in contrib/) used to list "git column"
+ (which is not an end-user facing command) as one of the choices
+
+ Will merge to 'master'.
+
+
+* ps/push-delete-option (2015-12-14) 2 commits
+ - push: add '-d' as shorthand for '--delete'
+ - push: add '--delete' flag to synopsis
+
+ "branch --delete" has "branch -d" but "push --delete" does not.
+
+
+* sh/p4-multi-depot (2015-12-14) 3 commits
+ - git-p4: reduce number of server queries for fetches
+ - git-p4: support multiple depot paths in p4 submit
+ - git-p4: failing test case for skipping changes with multiple depots
+
+ "git p4" when interacting with multiple depots at the same time
+ used to incorrectly drop changes.
+
+ Reported to be broken.
+ ($gmane/282447)
+
+
+* bc/format-patch-null-from-line (2015-12-15) 3 commits
  - format-patch: check that header line has expected format
  - format-patch: add an option to suppress commit hash
  - sha1_file.c: introduce a null_oid constant
@@ -242,7 +253,7 @@ repositories listed at
  "format-patch" has learned a new option to zero-out the commit
  object name on the mbox "From " line.
 
- Looked reasonable modulo minor niggles in the tests.
+ Will merge to 'next'.
 
 
 * dt/refs-backend-lmdb (2015-12-04) 16 commits
@@ -276,18 +287,6 @@ repositories listed at
  skipped merges when it shouldn't, which was corrected.
 
  Waiting for review from 'subtree' folks.
-
-
-* ls/p4-keep-empty-commits (2015-12-10) 1 commit
-  (merged to 'next' on 2015-12-11 at 1827062)
- + git-p4: add option to keep empty commits
-
- "git p4" used to import Perforce CLs that touch only paths outside
- the client spec as empty commits.  It has been corrected to ignore
- them instead, with a new configuration git-p4.keepEmptyCommits as a
- backward compatibility knob.
-
- Will merge to 'master'.
 
 
 * nd/clear-gitenv-upon-use-of-alias (2015-12-07) 3 commits
@@ -353,11 +352,12 @@ repositories listed at
 
 
 * jk/send-email-ssl-errors (2015-12-11) 1 commit
- - send-email: enable SSL level 1 debug output
+  (merged to 'next' on 2015-12-15 at 104f448)
+ + send-email: enable SSL level 1 debug output
 
  Improve error reporting when SMTP TLS fails.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * ps/rebase-keep-empty (2015-11-24) 2 commits
@@ -385,8 +385,9 @@ repositories listed at
 
  This series takes the conservative route of requiring scripts to opt
  into the looser behavior, at the expense of carrying around a new
- option-flag forever. I'm not sure if we need to do so. Comments
- welcome.
+ option-flag forever. I'm not sure if we need to do so.
+
+ Needs review.
 
 
 * tb/ls-files-eol (2015-11-28) 2 commits
@@ -421,52 +422,41 @@ repositories listed at
  Waiting for review from submodule folks.
 
 
-* sb/submodule-parallel-update (2015-11-20) 27 commits
+* sb/submodule-parallel-fetch (2015-12-14) 8 commits
+ - submodules: allow parallel fetching, add tests and documentation
+ - fetch_populated_submodules: use new parallel job processing
+ - run-command: add an asynchronous parallel child processor
+ - sigchain: add command to pop all common signals
+ - strbuf: add strbuf_read_once to read without blocking
+ - xread_nonblock: add functionality to read from fds without blocking
+ - xread: poll on non blocking fds
+ - submodule.c: write "Fetching submodule <foo>" to stderr
+ (this branch is used by sb/submodule-parallel-update.)
+
+ Add a framework to spawn a group of processes in parallel, and use
+ it to run "git fetch --recurse-submodules" in parallel.
+
+ Rerolled and this seems to be a lot cleaner.  The merge of the
+ earlier one to 'next' has been reverted.
+
+ Will merge to 'next' after a few days.
+
+ 
+* sb/submodule-parallel-update (2015-12-14) 8 commits
  - clone: allow an explicit argument for parallel submodule clones
  - submodule update: expose parallelism to the user
  - git submodule update: have a dedicated helper for cloning
- - fetching submodules: respect `submodule.jobs` config option
+ - fetching submodules: respect `submodule.fetchJobs` config option
  - submodule-config: introduce parse_generic_submodule_config
  - submodule-config: remove name_and_item_from_var
  - submodule-config: drop check against NULL
  - submodule-config: keep update strategy around
- - run_processes_parallel: delimit intermixed task output
- - Merge branch 'rs/daemon-plug-child-leak' into sb/submodule-parallel-update
- - Merge branch 'sb/submodule-parallel-fetch' into sb/submodule-parallel-update
-  (merged to 'next' on 2015-11-20 at 89fc723)
- + strbuf: update documentation for strbuf_read_once()
- + run-command: remove set_nonblocking()
-  (merged to 'next' on 2015-10-23 at 8f04bbd)
- + run-command: fix missing output from late callbacks
- + test-run-command: increase test coverage
- + test-run-command: test for gracefully aborting
- + run-command: initialize the shutdown flag
- + run-command: clear leftover state from child_process structure
- + run-command: fix early shutdown
-  (merged to 'next' on 2015-10-15 at df63590)
- + submodules: allow parallel fetching, add tests and documentation
- + fetch_populated_submodules: use new parallel job processing
- + run-command: add an asynchronous parallel child processor
- + sigchain: add command to pop all common signals
- + strbuf: add strbuf_read_once to read without blocking
- + xread_nonblock: add functionality to read from fds without blocking
- + xread: poll on non blocking fds
- + submodule.c: write "Fetching submodule <foo>" to stderr
- (this branch is tangled with sb/submodule-parallel-fetch.)
+ (this branch uses sb/submodule-parallel-fetch.)
 
  Builds on top of the "fetch --recurse-submodules" work to introduce
  parallel downloading into multiple submodules for "submodule update".
 
- Waiting for sb/submodule-parallel-fetch to stabilize.
-
- It would be the cleanest to rebuild sb/submodule-parallel-fetch on
- top of 2.7.0 once it ships and then build this directly on top;
- that way, we do not have to have merges in this topic that
- distracting (besides, some part of the other topic can be updated
- in-place instead of this follow-up topic tweaking them as past
- mistakes and inflexibility).
-
- I picked up v4 from the list, but it needs review.
+ Needs review.
 
 
 * jc/strbuf-gets (2015-10-28) 17 commits
@@ -530,8 +520,8 @@ repositories listed at
  look like RFC2822 headers like "MIME-Version: ...") to be there and
  ignore them.
 
- I have a feeling that that this is a step in a wrong direction.
- Comments?
+ No comments after waiting for a long time.
+ Will discard.
 
 
 * js/am-3-merge-recursive-direct (2015-10-12) 2 commits
@@ -564,8 +554,8 @@ repositories listed at
  Introduce "%as" and "%aR" placeholders for "log --format" to show
  the author date in the short and raw formats.
 
- I have a feeling that that this is a step in a wrong direction.
- Comments?
+ No comments after waiting for a long time.
+ Will discard.
 
 
 * jk/graph-format-padding (2015-09-14) 1 commit
@@ -583,38 +573,9 @@ repositories listed at
  available to those who want to use it, without negatively affecting
  existing uses.
 
- Undecided.
+ No comments after waiting for a long time.
+ Will discard.
  ($gmane/278326)
-
-
-* sb/submodule-parallel-fetch (2015-11-24) 17 commits
-  (merged to 'next' on 2015-12-04 at 2c5ea47)
- + run-command: detect finished children by closed pipe rather than waitpid
-  (merged to 'next' on 2015-11-20 at 89fc723)
- + strbuf: update documentation for strbuf_read_once()
- + run-command: remove set_nonblocking()
-  (merged to 'next' on 2015-10-23 at 8f04bbd)
- + run-command: fix missing output from late callbacks
- + test-run-command: increase test coverage
- + test-run-command: test for gracefully aborting
- + run-command: initialize the shutdown flag
- + run-command: clear leftover state from child_process structure
- + run-command: fix early shutdown
-  (merged to 'next' on 2015-10-15 at df63590)
- + submodules: allow parallel fetching, add tests and documentation
- + fetch_populated_submodules: use new parallel job processing
- + run-command: add an asynchronous parallel child processor
- + sigchain: add command to pop all common signals
- + strbuf: add strbuf_read_once to read without blocking
- + xread_nonblock: add functionality to read from fds without blocking
- + xread: poll on non blocking fds
- + submodule.c: write "Fetching submodule <foo>" to stderr
- (this branch is tangled with sb/submodule-parallel-update.)
-
- Add a framework to spawn a group of processes in parallel, and use
- it to run "git fetch --recurse-submodules" in parallel.
-
- Waiting for review.
 
 
 * ad/cygwin-wants-rename (2015-08-07) 1 commit
@@ -636,6 +597,8 @@ repositories listed at
  "git rerere" can encounter two or more files with the same conflict
  signature that have to be resolved in different ways, but there was
  no way to record these separate resolutions.
+
+ Needs review.
 
 
 * jc/merge-drop-old-syntax (2015-04-29) 1 commit
