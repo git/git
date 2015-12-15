@@ -86,7 +86,7 @@ static int canonical_name(const char *host, struct strbuf *out)
 		freeaddrinfo(ai);
 	}
 #else
-	struct hostent *he = gethostbyname(buf);
+	struct hostent *he = gethostbyname(host);
 	if (he && strchr(he->h_name, '.')) {
 		strbuf_addstr(out, he->h_name);
 		status = 0;
