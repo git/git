@@ -135,6 +135,7 @@ struct rev_info {
 			pretty_given:1,
 			abbrev_commit:1,
 			abbrev_commit_given:1,
+			zero_commit:1,
 			use_terminator:1,
 			missing_newline:1,
 			date_mode_explicit:1,

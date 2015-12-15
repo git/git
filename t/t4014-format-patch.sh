@@ -1431,4 +1431,11 @@ test_expect_success 'cover letter auto user override' '
 	test_line_count = 2 list
 '
 
+test_expect_success 'format-patch --zero-commit' '
+	git format-patch --zero-commit --stdout v2..v1 >patch2 &&
+	grep "^From " patch2 | sort | uniq >actual &&
+	echo "From $_z40 Mon Sep 17 00:00:00 2001" >expect &&
+	test_cmp expect actual
+'
+
 test_done
