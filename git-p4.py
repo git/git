@@ -2307,12 +2307,6 @@ class P4Sync(Command, P4UserMap):
         filesToDelete = []
 
         for f in files:
-            # if using a client spec, only add the files that have
-            # a path in the client
-            if self.clientSpecDirs:
-                if self.clientSpecDirs.map_in_client(f['path']) == "":
-                    continue
-
             filesForCommit.append(f)
             if f['action'] in self.delete_actions:
                 filesToDelete.append(f)
@@ -2383,24 +2377,40 @@ class P4Sync(Command, P4UserMap):
         gitStream.write(description)
         gitStream.write("\n")
 
+    def inClientSpec(self, path):
+        if not self.clientSpecDirs:
+            return True
+        inClientSpec = self.clientSpecDirs.map_in_client(path)
+        if not inClientSpec and self.verbose:
+            print('Ignoring file outside of client spec: {0}'.format(path))
+        return inClientSpec
+
+    def hasBranchPrefix(self, path):
+        if not self.branchPrefixes:
+            return True
+        hasPrefix = [p for p in self.branchPrefixes
+                        if p4PathStartsWith(path, p)]
+        if hasPrefix and self.verbose:
+            print('Ignoring file outside of prefix: {0}'.format(path))
+        return hasPrefix
+
     def commit(self, details, files, branch, parent = ""):
         epoch = details["time"]
         author = details["user"]
 
         if self.verbose:
-            print "commit into %s" % branch
-
-        # start with reading files; if that fails, we should not
-        # create a commit.
-        new_files = []
-        for f in files:
-            if [p for p in self.branchPrefixes if p4PathStartsWith(f['path'], p)]:
-                new_files.append (f)
-            else:
-                sys.stderr.write("Ignoring file outside of prefix: %s\n" % f['path'])
+            print('commit into {0}'.format(branch))
 
         if self.clientSpecDirs:
             self.clientSpecDirs.update_client_spec_path_cache(files)
+
+        files = [f for f in files
+            if self.inClientSpec(f['path']) and self.hasBranchPrefix(f['path'])]
+
+        if not files and not gitConfigBool('git-p4.keepEmptyCommits'):
+            print('Ignoring revision {0} as it would produce an empty commit.'
+                .format(details['change']))
+            return
 
         self.gitStream.write("commit %s\n" % branch)
         self.gitStream.write("mark :%s\n" % details["change"])
@@ -2425,7 +2435,7 @@ class P4Sync(Command, P4UserMap):
                 print "parent %s" % parent
             self.gitStream.write("from %s\n" % parent)
 
-        self.streamP4Files(new_files)
+        self.streamP4Files(files)
         self.gitStream.write("\n")
 
         change = int(details["change"])

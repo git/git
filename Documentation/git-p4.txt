@@ -510,6 +510,10 @@ git-p4.useClientSpec::
 	option '--use-client-spec'.  See the "CLIENT SPEC" section above.
 	This variable is a boolean, not the name of a p4 client.
 
+git-p4.keepEmptyCommits::
+	A changelist that contains only excluded files will be imported
+	as an empty commit if this boolean option is set to true.
+
 Submit variables
 ~~~~~~~~~~~~~~~~
 git-p4.detectRenames::
