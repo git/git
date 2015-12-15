@@ -801,7 +801,6 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 		opt.output_priv = &path_list;
 		opt.output = append_path;
 		string_list_append(&path_list, show_in_pager);
-		use_threads = 0;
 	}
 
 	if (!opt.pattern_list)
@@ -832,7 +831,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	}
 
 #ifndef NO_PTHREADS
-	if (list.nr || cached)
+	if (list.nr || cached || show_in_pager)
 		use_threads = 0;
 #else
 	use_threads = 0;
