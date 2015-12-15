@@ -549,6 +549,10 @@ git-p4.largeFilePush::
 	Boolean variable which defines if large files are automatically
 	pushed to a server.
 
+git-p4.keepEmptyCommits::
+	A changelist that contains only excluded files will be imported
+	as an empty commit if this boolean option is set to true.
+
 Submit variables
 ~~~~~~~~~~~~~~~~
 git-p4.detectRenames::
