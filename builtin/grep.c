@@ -832,7 +832,7 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 	}
 
 #ifndef NO_PTHREADS
-	if (list.nr || cached || online_cpus() == 1)
+	if (list.nr || cached)
 		use_threads = 0;
 #else
 	use_threads = 0;
