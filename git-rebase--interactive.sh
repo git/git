@@ -81,17 +81,13 @@ rewritten_pending="$state_dir"/rewritten-pending
 # and leaves CR at the end instead.
 cr=$(printf "\015")
 
-strategy_args=
-if test -n "$do_merge"
-then
-	strategy_args=${strategy:+--strategy=$strategy}
-	eval '
-		for strategy_opt in '"$strategy_opts"'
-		do
-			strategy_args="$strategy_args -X$(git rev-parse --sq-quote "${strategy_opt#--}")"
-		done
-	'
-fi
+strategy_args=${strategy:+--strategy=$strategy}
+eval '
+	for strategy_opt in '"$strategy_opts"'
+	do
+		strategy_args="$strategy_args -X$(git rev-parse --sq-quote "${strategy_opt#--}")"
+	done
+'
 
 GIT_CHERRY_PICK_HELP="$resolvemsg"
 export GIT_CHERRY_PICK_HELP
