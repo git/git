@@ -210,6 +210,9 @@ FILE *mingw_freopen (const char *filename, const char *otype, FILE *stream);
 int mingw_fflush(FILE *stream);
 #define fflush mingw_fflush
 
+ssize_t mingw_write(int fd, const void *buf, size_t len);
+#define write mingw_write
+
 int mingw_access(const char *filename, int mode);
 #undef access
 #define access mingw_access
