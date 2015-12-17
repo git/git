@@ -225,22 +225,7 @@ FILE *mingw_freopen (const char *filename, const char *otype, FILE *stream);
 int mingw_fflush(FILE *stream);
 #define fflush mingw_fflush
 
-static inline ssize_t mingw_write(int fd, const void *buf, size_t len)
-{
-	ssize_t result = write(fd, buf, len);
-
-	if (result < 0 && errno == EINVAL && buf) {
-		/* check if fd is a pipe */
-		HANDLE h = (HANDLE) _get_osfhandle(fd);
-		if (GetFileType(h) == FILE_TYPE_PIPE)
-			errno = EPIPE;
-		else
-			errno = EINVAL;
-	}
-
-	return result;
-}
-
+ssize_t mingw_write(int fd, const void *buf, size_t len);
 #define write mingw_write
 
 int mingw_access(const char *filename, int mode);
