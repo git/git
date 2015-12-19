@@ -128,7 +128,7 @@ test_expect_success 'Create a repo with multiple depot paths' '
 	done
 '
 
-test_expect_failure 'Clone repo with multiple depot paths' '
+test_expect_success 'Clone repo with multiple depot paths' '
 	(
 		cd "$git" &&
 		git p4 clone --changes-block-size=4 //depot/pathA@all //depot/pathB@all \
