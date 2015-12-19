@@ -2265,7 +2265,7 @@ proc makewindow {} {
 	set h [expr {[font metrics uifont -linespace] + 2}]
 	set progresscanv .tf.bar.progress
 	canvas $progresscanv -relief sunken -height $h -borderwidth 2
-	set progressitem [$progresscanv create rect -1 0 0 $h -fill green]
+	set progressitem [$progresscanv create rect -1 0 0 $h -fill lime]
 	set fprogitem [$progresscanv create rect -1 0 0 $h -fill yellow]
 	set rprogitem [$progresscanv create rect -1 0 0 $h -fill red]
     }
@@ -3397,7 +3397,7 @@ set rectmask {
        0x00, 0x00, 0xfc, 0x0f, 0xfc, 0x0f, 0xfc, 0x0f,
        0xfc, 0x0f, 0xfc, 0x0f, 0xfc, 0x0f, 0xfc, 0x0f, 0x00, 0x00};
 }
-image create bitmap reficon-H -background black -foreground green \
+image create bitmap reficon-H -background black -foreground lime \
     -data $rectdata -maskdata $rectmask
 image create bitmap reficon-o -background black -foreground "#ddddff" \
     -data $rectdata -maskdata $rectmask
@@ -12188,7 +12188,7 @@ if {[tk windowingsystem] eq "aqua"} {
     set extdifftool "meld"
 }
 
-set colors {green red blue magenta darkgrey brown orange}
+set colors {lime red blue magenta darkgrey brown orange}
 if {[tk windowingsystem] eq "win32"} {
     set uicolor SystemButtonFace
     set uifgcolor SystemButtonText
@@ -12206,12 +12206,12 @@ if {[tk windowingsystem] eq "win32"} {
 }
 set diffcolors {red "#00a000" blue}
 set diffcontext 3
-set mergecolors {red blue green purple brown "#009090" magenta "#808000" "#009000" "#ff0080" cyan "#b07070" "#70b0f0" "#70f0b0" "#f0b070" "#ff70b0"}
+set mergecolors {red blue lime purple brown "#009090" magenta "#808000" "#009000" "#ff0080" cyan "#b07070" "#70b0f0" "#70f0b0" "#f0b070" "#ff70b0"}
 set ignorespace 0
 set worddiff ""
 set markbgcolor "#e0e0ff"
 
-set headbgcolor green
+set headbgcolor lime
 set headfgcolor black
 set headoutlinecolor black
 set remotebgcolor #ffddaa
@@ -12226,7 +12226,7 @@ set linehoverfgcolor black
 set linehoveroutlinecolor black
 set mainheadcirclecolor yellow
 set workingfilescirclecolor red
-set indexcirclecolor green
+set indexcirclecolor lime
 set circlecolors {white blue gray blue blue}
 set linkfgcolor blue
 set circleoutlinecolor $fgcolor
