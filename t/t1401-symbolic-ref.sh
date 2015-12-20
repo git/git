@@ -63,4 +63,10 @@ test_expect_success 'symbolic-ref fails to delete real ref' '
 '
 reset_to_sane
 
+test_expect_success 'symbolic-ref reports failure in exit code' '
+	test_when_finished "rm -f .git/HEAD.lock" &&
+	>.git/HEAD.lock &&
+	test_must_fail git symbolic-ref HEAD refs/heads/whatever
+'
+
 test_done
