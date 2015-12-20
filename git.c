@@ -41,13 +41,16 @@ static void save_env_before_alias(void)
 	}
 }
 
-static void restore_env(void)
+static void restore_env(int external_alias)
 {
 	int i;
-	if (orig_cwd && chdir(orig_cwd))
+	if (!external_alias && orig_cwd && chdir(orig_cwd))
 		die_errno("could not move to %s", orig_cwd);
 	free(orig_cwd);
 	for (i = 0; i < ARRAY_SIZE(env_names); i++) {
+		if (external_alias &&
+		    !strcmp(env_names[i], GIT_PREFIX_ENVIRONMENT))
+			continue;
 		if (orig_env[i])
 			setenv(env_names[i], orig_env[i], 1);
 		else
@@ -243,6 +246,7 @@ static int handle_alias(int *argcp, const char ***argv)
 			int argc = *argcp, i;
 
 			commit_pager_choice();
+			restore_env(1);
 
 			/* build alias_argv */
 			alias_argv = xmalloc(sizeof(*alias_argv) * (argc + 1));
@@ -291,7 +295,7 @@ static int handle_alias(int *argcp, const char ***argv)
 		ret = 1;
 	}
 
-	restore_env();
+	restore_env(0);
 
 	errno = saved_errno;
 
