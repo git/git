@@ -226,7 +226,6 @@ static int handle_options(const char ***argv, int *argc, int *envchanged)
 static int handle_alias(int *argcp, const char ***argv)
 {
 	int envchanged = 0, ret = 0, saved_errno = errno;
-	const char *subdir;
 	int count, option_count;
 	const char **new_argv;
 	const char *alias_command;
@@ -234,7 +233,7 @@ static int handle_alias(int *argcp, const char ***argv)
 	int unused_nongit;
 
 	save_env_before_alias();
-	subdir = setup_git_directory_gently(&unused_nongit);
+	setup_git_directory_gently(&unused_nongit);
 
 	alias_command = (*argv)[0];
 	alias_string = alias_lookup(alias_command);
@@ -292,8 +291,7 @@ static int handle_alias(int *argcp, const char ***argv)
 		ret = 1;
 	}
 
-	if (subdir && chdir(subdir))
-		die_errno("Cannot change to '%s'", subdir);
+	restore_env();
 
 	errno = saved_errno;
 
@@ -308,7 +306,6 @@ static int handle_alias(int *argcp, const char ***argv)
  * RUN_SETUP for reading from the configuration file.
  */
 #define NEED_WORK_TREE		(1<<3)
-#define NO_SETUP		(1<<4)
 
 struct cmd_struct {
 	const char *cmd;
@@ -389,7 +386,7 @@ static struct cmd_struct commands[] = {
 	{ "cherry", cmd_cherry, RUN_SETUP },
 	{ "cherry-pick", cmd_cherry_pick, RUN_SETUP | NEED_WORK_TREE },
 	{ "clean", cmd_clean, RUN_SETUP | NEED_WORK_TREE },
-	{ "clone", cmd_clone, NO_SETUP },
+	{ "clone", cmd_clone },
 	{ "column", cmd_column, RUN_SETUP_GENTLY },
 	{ "commit", cmd_commit, RUN_SETUP | NEED_WORK_TREE },
 	{ "commit-tree", cmd_commit_tree, RUN_SETUP },
@@ -415,8 +412,8 @@ static struct cmd_struct commands[] = {
 	{ "hash-object", cmd_hash_object },
 	{ "help", cmd_help },
 	{ "index-pack", cmd_index_pack, RUN_SETUP_GENTLY },
-	{ "init", cmd_init_db, NO_SETUP },
-	{ "init-db", cmd_init_db, NO_SETUP },
+	{ "init", cmd_init_db },
+	{ "init-db", cmd_init_db },
 	{ "interpret-trailers", cmd_interpret_trailers, RUN_SETUP },
 	{ "log", cmd_log, RUN_SETUP },
 	{ "ls-files", cmd_ls_files, RUN_SETUP },
@@ -528,9 +525,13 @@ static void handle_builtin(int argc, const char **argv)
 
 	builtin = get_builtin(cmd);
 	if (builtin) {
-		if (saved_env_before_alias && (builtin->option & NO_SETUP))
-			restore_env();
-		else
+		/*
+		 * XXX: if we can figure out cases where it is _safe_
+		 * to do, we can avoid spawning a new process when
+		 * saved_env_before_alias is true
+		 * (i.e. setup_git_dir* has been run once)
+		 */
+		if (!saved_env_before_alias)
 			exit(run_builtin(builtin, argc, argv));
 	}
 }
