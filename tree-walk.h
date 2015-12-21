@@ -59,6 +59,7 @@ enum follow_symlinks_result {
 enum follow_symlinks_result get_tree_entry_follow_symlinks(unsigned char *tree_sha1, const char *name, unsigned char *result, struct strbuf *result_path, unsigned *mode);
 
 struct traverse_info {
+	const char *traverse_path;
 	struct traverse_info *prev;
 	struct name_entry name;
 	int pathlen;

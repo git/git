@@ -320,6 +320,7 @@ int traverse_trees(int n, struct tree_desc *t, struct traverse_info *info)
 	struct tree_desc_x *tx = xcalloc(n, sizeof(*tx));
 	struct strbuf base = STRBUF_INIT;
 	int interesting = 1;
+	char *traverse_path;
 
 	for (i = 0; i < n; i++)
 		tx[i].d = t[i];
@@ -329,7 +330,11 @@ int traverse_trees(int n, struct tree_desc *t, struct traverse_info *info)
 		make_traverse_path(base.buf, info->prev, &info->name);
 		base.buf[info->pathlen-1] = '/';
 		strbuf_setlen(&base, info->pathlen);
+		traverse_path = xstrndup(base.buf, info->pathlen);
+	} else {
+		traverse_path = xstrndup(info->name.path, info->pathlen);
 	}
+	info->traverse_path = traverse_path;
 	for (;;) {
 		int trees_used;
 		unsigned long mask, dirmask;
@@ -411,6 +416,8 @@ int traverse_trees(int n, struct tree_desc *t, struct traverse_info *info)
 	for (i = 0; i < n; i++)
 		free_extended_entry(tx + i);
 	free(tx);
+	free(traverse_path);
+	info->traverse_path = NULL;
 	strbuf_release(&base);
 	return error;
 }
