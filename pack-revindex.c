@@ -8,51 +8,12 @@
  * size is easily available by examining the pack entry header).  It is
  * also rather expensive to find the sha1 for an object given its offset.
  *
- * We build a hashtable of existing packs (pack_revindex), and keep reverse
- * index here -- pack index file is sorted by object name mapping to offset;
- * this pack_revindex[].revindex array is a list of offset/index_nr pairs
+ * The pack index file is sorted by object name mapping to offset;
+ * this revindex array is a list of offset/index_nr pairs
  * ordered by offset, so if you know the offset of an object, next offset
  * is where its packed representation ends and the index_nr can be used to
  * get the object sha1 from the main index.
  */
-
-static struct pack_revindex *pack_revindex;
-static int pack_revindex_hashsz;
-
-static int pack_revindex_ix(struct packed_git *p)
-{
-	unsigned long ui = (unsigned long)p;
-	int i;
-
-	ui = ui ^ (ui >> 16); /* defeat structure alignment */
-	i = (int)(ui % pack_revindex_hashsz);
-	while (pack_revindex[i].p) {
-		if (pack_revindex[i].p == p)
-			return i;
-		if (++i == pack_revindex_hashsz)
-			i = 0;
-	}
-	return -1 - i;
-}
-
-static void init_pack_revindex(void)
-{
-	int num;
-	struct packed_git *p;
-
-	for (num = 0, p = packed_git; p; p = p->next)
-		num++;
-	if (!num)
-		return;
-	pack_revindex_hashsz = num * 11;
-	pack_revindex = xcalloc(sizeof(*pack_revindex), pack_revindex_hashsz);
-	for (p = packed_git; p; p = p->next) {
-		num = pack_revindex_ix(p);
-		num = - 1 - num;
-		pack_revindex[num].p = p;
-	}
-	/* revindex elements are lazily initialized */
-}
 
 /*
  * This is a least-significant-digit radix sort.
@@ -198,20 +159,11 @@ static void create_pack_revindex(struct pack_revindex *rix)
 
 struct pack_revindex *revindex_for_pack(struct packed_git *p)
 {
-	int num;
-	struct pack_revindex *rix;
-
-	if (!pack_revindex_hashsz)
-		init_pack_revindex();
-
-	num = pack_revindex_ix(p);
-	if (num < 0)
-		die("internal error: pack revindex fubar");
-
-	rix = &pack_revindex[num];
-	if (!rix->revindex)
+	struct pack_revindex *rix = &p->reverse_index;
+	if (!rix->revindex) {
+		rix->p = p;
 		create_pack_revindex(rix);
-
+	}
 	return rix;
 }
 

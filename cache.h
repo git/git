@@ -7,6 +7,7 @@
 #include "advice.h"
 #include "gettext.h"
 #include "convert.h"
+#include "pack-revindex.h"
 
 #include SHA1_HEADER
 #ifndef git_SHA_CTX
@@ -1117,6 +1118,7 @@ extern struct packed_git {
 		 pack_keep:1,
 		 do_not_close:1;
 	unsigned char sha1[20];
+	struct pack_revindex reverse_index;
 	/* something like ".git/objects/pack/xxxxx.pack" */
 	char pack_name[FLEX_ARRAY]; /* more */
 } *packed_git;
