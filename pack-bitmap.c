@@ -33,9 +33,6 @@ static struct bitmap_index {
 	/* Packfile to which this bitmap index belongs to */
 	struct packed_git *pack;
 
-	/* reverse index for the packfile */
-	struct pack_revindex *reverse_index;
-
 	/*
 	 * Mark the first `reuse_objects` in the packfile as reused:
 	 * they will be sent as-is without using them for repacking
@@ -293,7 +290,7 @@ static int load_pack_bitmap(void)
 
 	bitmap_git.bitmaps = kh_init_sha1();
 	bitmap_git.ext_index.positions = kh_init_sha1_pos();
-	bitmap_git.reverse_index = revindex_for_pack(bitmap_git.pack);
+	load_pack_revindex(bitmap_git.pack);
 
 	if (!(bitmap_git.commits = read_bitmap_1(&bitmap_git)) ||
 		!(bitmap_git.trees = read_bitmap_1(&bitmap_git)) ||
@@ -379,7 +376,7 @@ static inline int bitmap_position_packfile(const unsigned char *sha1)
 	if (!offset)
 		return -1;
 
-	return find_revindex_position(bitmap_git.reverse_index, offset);
+	return find_revindex_position(bitmap_git.pack, offset);
 }
 
 static int bitmap_position(const unsigned char *sha1)
@@ -631,7 +628,7 @@ static void show_objects_for_type(
 			if (pos + offset < bitmap_git.reuse_objects)
 				continue;
 
-			entry = &bitmap_git.reverse_index->revindex[pos + offset];
+			entry = &bitmap_git.pack->revindex[pos + offset];
 			sha1 = nth_packed_object_sha1(bitmap_git.pack, entry->nr);
 
 			if (bitmap_git.hashes)
@@ -805,7 +802,7 @@ int reuse_partial_packfile_from_bitmap(struct packed_git **packfile,
 		return -1;
 
 	bitmap_git.reuse_objects = *entries = reuse_objects;
-	*up_to = bitmap_git.reverse_index->revindex[reuse_objects].offset;
+	*up_to = bitmap_git.pack->revindex[reuse_objects].offset;
 	*packfile = bitmap_git.pack;
 
 	return 0;
@@ -1037,7 +1034,7 @@ int rebuild_existing_bitmaps(struct packing_data *mapping,
 		struct revindex_entry *entry;
 		struct object_entry *oe;
 
-		entry = &bitmap_git.reverse_index->revindex[i];
+		entry = &bitmap_git.pack->revindex[i];
 		sha1 = nth_packed_object_sha1(bitmap_git.pack, entry->nr);
 		oe = packlist_find(mapping, sha1, NULL);
 

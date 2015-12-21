@@ -115,14 +115,13 @@ static void sort_revindex(struct revindex_entry *entries, unsigned n, off_t max)
 /*
  * Ordered list of offsets of objects in the pack.
  */
-static void create_pack_revindex(struct pack_revindex *rix)
+static void create_pack_revindex(struct packed_git *p)
 {
-	struct packed_git *p = rix->p;
 	unsigned num_ent = p->num_objects;
 	unsigned i;
 	const char *index = p->index_data;
 
-	rix->revindex = xmalloc(sizeof(*rix->revindex) * (num_ent + 1));
+	p->revindex = xmalloc(sizeof(*p->revindex) * (num_ent + 1));
 	index += 4 * 256;
 
 	if (p->index_version > 1) {
@@ -132,46 +131,42 @@ static void create_pack_revindex(struct pack_revindex *rix)
 		for (i = 0; i < num_ent; i++) {
 			uint32_t off = ntohl(*off_32++);
 			if (!(off & 0x80000000)) {
-				rix->revindex[i].offset = off;
+				p->revindex[i].offset = off;
 			} else {
-				rix->revindex[i].offset =
+				p->revindex[i].offset =
 					((uint64_t)ntohl(*off_64++)) << 32;
-				rix->revindex[i].offset |=
+				p->revindex[i].offset |=
 					ntohl(*off_64++);
 			}
-			rix->revindex[i].nr = i;
+			p->revindex[i].nr = i;
 		}
 	} else {
 		for (i = 0; i < num_ent; i++) {
 			uint32_t hl = *((uint32_t *)(index + 24 * i));
-			rix->revindex[i].offset = ntohl(hl);
-			rix->revindex[i].nr = i;
+			p->revindex[i].offset = ntohl(hl);
+			p->revindex[i].nr = i;
 		}
 	}
 
 	/* This knows the pack format -- the 20-byte trailer
 	 * follows immediately after the last object data.
 	 */
-	rix->revindex[num_ent].offset = p->pack_size - 20;
-	rix->revindex[num_ent].nr = -1;
-	sort_revindex(rix->revindex, num_ent, p->pack_size);
+	p->revindex[num_ent].offset = p->pack_size - 20;
+	p->revindex[num_ent].nr = -1;
+	sort_revindex(p->revindex, num_ent, p->pack_size);
 }
 
-struct pack_revindex *revindex_for_pack(struct packed_git *p)
+void load_pack_revindex(struct packed_git *p)
 {
-	struct pack_revindex *rix = &p->reverse_index;
-	if (!rix->revindex) {
-		rix->p = p;
-		create_pack_revindex(rix);
-	}
-	return rix;
+	if (!p->revindex)
+		create_pack_revindex(p);
 }
 
-int find_revindex_position(struct pack_revindex *pridx, off_t ofs)
+int find_revindex_position(struct packed_git *p, off_t ofs)
 {
 	int lo = 0;
-	int hi = pridx->p->num_objects + 1;
-	struct revindex_entry *revindex = pridx->revindex;
+	int hi = p->num_objects + 1;
+	struct revindex_entry *revindex = p->revindex;
 
 	do {
 		unsigned mi = lo + (hi - lo) / 2;
@@ -189,11 +184,13 @@ int find_revindex_position(struct pack_revindex *pridx, off_t ofs)
 
 struct revindex_entry *find_pack_revindex(struct packed_git *p, off_t ofs)
 {
-	struct pack_revindex *pridx = revindex_for_pack(p);
-	int pos = find_revindex_position(pridx, ofs);
+	int pos;
+
+	load_pack_revindex(p);
+	pos = find_revindex_position(p, ofs);
 
 	if (pos < 0)
 		return NULL;
 
-	return pridx->revindex + pos;
+	return p->revindex + pos;
 }

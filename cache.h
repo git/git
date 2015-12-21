@@ -1118,7 +1118,7 @@ extern struct packed_git {
 		 pack_keep:1,
 		 do_not_close:1;
 	unsigned char sha1[20];
-	struct pack_revindex reverse_index;
+	struct revindex_entry *revindex;
 	/* something like ".git/objects/pack/xxxxx.pack" */
 	char pack_name[FLEX_ARRAY]; /* more */
 } *packed_git;
