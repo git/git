@@ -256,6 +256,10 @@ you can use `--suffix=-patch` to get `0001-description-of-my-change-patch`.
 	using this option cannot be applied properly, but they are
 	still useful for code review.
 
+--zero-commit::
+  Output an all-zero hash in each patch's From header instead
+  of the hash of the commit.
+
 --root::
 	Treat the revision argument as a <revision range>, even if it
 	is just a single commit (that would normally be treated as a

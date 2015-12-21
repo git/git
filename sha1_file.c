@@ -36,6 +36,7 @@
 static inline uintmax_t sz_fmt(size_t s) { return s; }
 
 const unsigned char null_sha1[20];
+const struct object_id null_oid;
 
 /*
  * This is meant to hold a *small* number of objects that you would

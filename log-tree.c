@@ -342,7 +342,8 @@ void log_write_email_headers(struct rev_info *opt, struct commit *commit,
 {
 	const char *subject = NULL;
 	const char *extra_headers = opt->extra_headers;
-	const char *name = oid_to_hex(&commit->object.oid);
+	const char *name = oid_to_hex(opt->zero_commit ?
+				      &null_oid : &commit->object.oid);
 
 	*need_8bit_cte_p = 0; /* unknown */
 	if (opt->total > 0) {
