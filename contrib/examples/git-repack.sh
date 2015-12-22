@@ -67,8 +67,8 @@ case ",$all_into_one," in
 ,t,)
 	args= existing=
 	if [ -d "$PACKDIR" ]; then
-		for e in `cd "$PACKDIR" && find . -type f -name '*.pack' \
-			| sed -e 's/^\.\///' -e 's/\.pack$//'`
+		for e in $(cd "$PACKDIR" && find . -type f -name '*.pack' \
+			| sed -e 's/^\.\///' -e 's/\.pack$//')
 		do
 			if [ -e "$PACKDIR/$e.keep" ]; then
 				: keep
