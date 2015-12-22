@@ -11,7 +11,7 @@
 if [ $# -eq 0 ]
 then
 	cat <<!
-Usage: `basename $0` git-gui-glossary.txt > git-gui-glossary.pot
+Usage: $(basename $0) git-gui-glossary.txt > git-gui-glossary.pot
 !
 	exit 1;
 fi
@@ -33,7 +33,7 @@ cat <<!
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: `date +'%Y-%m-%d %H:%M%z'`\n"
+"POT-Creation-Date: $(date +'%Y-%m-%d %H:%M%z')\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
