@@ -523,10 +523,10 @@ do
 
 	if test "$exit" -eq 1
 	then
-	    cnt=`{
+	    cnt=$({
 		git diff-files --name-only
 		git ls-files --unmerged
-	    } | wc -l`
+	    } | wc -l)
 	    if test $best_cnt -le 0 || test $cnt -le $best_cnt
 	    then
 		best_strategy=$strategy
