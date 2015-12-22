@@ -171,6 +171,9 @@ Performance, Internal Implementation, Development Support etc.
    git/git (including build-status for pull requests that people
    open).
 
+ * The write(2) emulation for Windows learned to set errno to EPIPE
+   when necessary.
+
 
 Also contains various documentation updates and code clean-ups.
 
