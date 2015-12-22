@@ -29,7 +29,7 @@ reset_to_sane
 
 test_expect_success 'symbolic-ref refuses bare sha1' '
 	echo content >file && git add file && git commit -m one &&
-	test_must_fail git symbolic-ref HEAD `git rev-parse HEAD`
+	test_must_fail git symbolic-ref HEAD $(git rev-parse HEAD)
 '
 reset_to_sane
 
