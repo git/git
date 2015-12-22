@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
-"POT-Creation-Date: 2015-12-11 23:36+0800\n"
+"POT-Creation-Date: 2015-12-22 22:50+0800\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -71,7 +71,7 @@ msgstr ""
 msgid "archive format"
 msgstr ""
 
-#: archive.c:430 builtin/log.c:1228
+#: archive.c:430 builtin/log.c:1229
 msgid "prefix"
 msgstr ""
 
@@ -264,7 +264,7 @@ msgstr ""
 
 #: bundle.c:163 ref-filter.c:1372 sequencer.c:636 sequencer.c:1083
 #: builtin/blame.c:2734 builtin/commit.c:1045 builtin/log.c:334
-#: builtin/log.c:849 builtin/log.c:1456 builtin/log.c:1689 builtin/merge.c:358
+#: builtin/log.c:849 builtin/log.c:1461 builtin/log.c:1694 builtin/merge.c:358
 #: builtin/shortlog.c:158
 msgid "revision walk setup failed"
 msgstr ""
@@ -304,7 +304,7 @@ msgstr ""
 msgid "ref '%s' is excluded by the rev-list options"
 msgstr ""
 
-#: bundle.c:443 builtin/log.c:157 builtin/log.c:1366 builtin/shortlog.c:261
+#: bundle.c:443 builtin/log.c:157 builtin/log.c:1369 builtin/shortlog.c:261
 #, c-format
 msgid "unrecognized argument: %s"
 msgstr ""
@@ -1209,16 +1209,16 @@ msgstr[1] ""
 msgid "  (use \"git pull\" to merge the remote branch into yours)\n"
 msgstr ""
 
-#: revision.c:2191
+#: revision.c:2193
 msgid "your current branch appears to be broken"
 msgstr ""
 
-#: revision.c:2194
+#: revision.c:2196
 #, c-format
 msgid "your current branch '%s' does not have any commits yet"
 msgstr ""
 
-#: revision.c:2388
+#: revision.c:2390
 msgid "--first-parent is incompatible with --bisect"
 msgstr ""
 
@@ -1614,30 +1614,21 @@ msgstr ""
 msgid "unable to access '%s'"
 msgstr ""
 
-#: wrapper.c:611
-#, c-format
-msgid "unable to look up current user in the passwd file: %s"
-msgstr ""
-
-#: wrapper.c:612
-msgid "no such user"
-msgstr ""
-
-#: wrapper.c:620
+#: wrapper.c:608
 msgid "unable to get current working directory"
 msgstr ""
 
-#: wrapper.c:647
+#: wrapper.c:635
 #, c-format
 msgid "could not open %s for writing"
 msgstr ""
 
-#: wrapper.c:658 builtin/am.c:425
+#: wrapper.c:646 builtin/am.c:425
 #, c-format
 msgid "could not write to %s"
 msgstr ""
 
-#: wrapper.c:664
+#: wrapper.c:652
 #, c-format
 msgid "could not close %s"
 msgstr ""
@@ -2142,14 +2133,14 @@ msgid "The following paths are ignored by one of your .gitignore files:\n"
 msgstr ""
 
 #: builtin/add.c:249 builtin/clean.c:894 builtin/fetch.c:108 builtin/mv.c:110
-#: builtin/prune-packed.c:55 builtin/pull.c:182 builtin/push.c:545
+#: builtin/prune-packed.c:55 builtin/pull.c:182 builtin/push.c:543
 #: builtin/remote.c:1345 builtin/rm.c:268 builtin/send-pack.c:162
 msgid "dry run"
 msgstr ""
 
 #: builtin/add.c:250 builtin/apply.c:4571 builtin/check-ignore.c:19
 #: builtin/commit.c:1322 builtin/count-objects.c:85 builtin/fsck.c:558
-#: builtin/log.c:1640 builtin/mv.c:109 builtin/read-tree.c:114
+#: builtin/log.c:1645 builtin/mv.c:109 builtin/read-tree.c:114
 msgid "be verbose"
 msgstr ""
 
@@ -2334,7 +2325,7 @@ msgstr ""
 msgid "Patch is empty. Was it split wrong?"
 msgstr ""
 
-#: builtin/am.c:1417 builtin/log.c:1344
+#: builtin/am.c:1417 builtin/log.c:1347
 #, c-format
 msgid "invalid ident line: %s"
 msgstr ""
@@ -4079,7 +4070,7 @@ msgstr ""
 msgid "update ignored files (default)"
 msgstr ""
 
-#: builtin/checkout.c:1151 builtin/log.c:1263 parse-options.h:250
+#: builtin/checkout.c:1151 builtin/log.c:1266 parse-options.h:250
 msgid "style"
 msgstr ""
 
@@ -4100,7 +4091,7 @@ msgid "do not check if another worktree is holding the given ref"
 msgstr ""
 
 #: builtin/checkout.c:1160 builtin/clone.c:57 builtin/fetch.c:112
-#: builtin/merge.c:224 builtin/pull.c:109 builtin/push.c:560
+#: builtin/merge.c:224 builtin/pull.c:109 builtin/push.c:558
 #: builtin/send-pack.c:168
 msgid "force progress reporting"
 msgstr ""
@@ -4897,7 +4888,7 @@ msgstr ""
 msgid "show branch information"
 msgstr ""
 
-#: builtin/commit.c:1328 builtin/commit.c:1609 builtin/push.c:546
+#: builtin/commit.c:1328 builtin/commit.c:1609 builtin/push.c:544
 #: builtin/worktree.c:423
 msgid "machine-readable output"
 msgstr ""
@@ -5019,7 +5010,7 @@ msgstr ""
 msgid "the commit is authored by me now (used with -C/-c/--amend)"
 msgstr ""
 
-#: builtin/commit.c:1588 builtin/log.c:1215 builtin/revert.c:86
+#: builtin/commit.c:1588 builtin/log.c:1216 builtin/revert.c:86
 msgid "add Signed-off-by:"
 msgstr ""
 
@@ -5573,7 +5564,7 @@ msgstr ""
 msgid "convert to a complete repository"
 msgstr ""
 
-#: builtin/fetch.c:118 builtin/log.c:1232
+#: builtin/fetch.c:118 builtin/log.c:1233
 msgid "dir"
 msgstr ""
 
@@ -6861,187 +6852,191 @@ msgstr ""
 msgid "Two output directories?"
 msgstr ""
 
-#: builtin/log.c:1210
+#: builtin/log.c:1211
 msgid "use [PATCH n/m] even with a single patch"
 msgstr ""
 
-#: builtin/log.c:1213
+#: builtin/log.c:1214
 msgid "use [PATCH] even with multiple patches"
 msgstr ""
 
-#: builtin/log.c:1217
+#: builtin/log.c:1218
 msgid "print patches to standard out"
 msgstr ""
 
-#: builtin/log.c:1219
+#: builtin/log.c:1220
 msgid "generate a cover letter"
 msgstr ""
 
-#: builtin/log.c:1221
+#: builtin/log.c:1222
 msgid "use simple number sequence for output file names"
 msgstr ""
 
-#: builtin/log.c:1222
+#: builtin/log.c:1223
 msgid "sfx"
 msgstr ""
 
-#: builtin/log.c:1223
+#: builtin/log.c:1224
 msgid "use <sfx> instead of '.patch'"
 msgstr ""
 
-#: builtin/log.c:1225
+#: builtin/log.c:1226
 msgid "start numbering patches at <n> instead of 1"
 msgstr ""
 
-#: builtin/log.c:1227
+#: builtin/log.c:1228
 msgid "mark the series as Nth re-roll"
 msgstr ""
 
-#: builtin/log.c:1229
+#: builtin/log.c:1230
 msgid "Use [<prefix>] instead of [PATCH]"
 msgstr ""
 
-#: builtin/log.c:1232
+#: builtin/log.c:1233
 msgid "store resulting files in <dir>"
 msgstr ""
 
-#: builtin/log.c:1235
+#: builtin/log.c:1236
 msgid "don't strip/add [PATCH]"
 msgstr ""
 
-#: builtin/log.c:1238
+#: builtin/log.c:1239
 msgid "don't output binary diffs"
 msgstr ""
 
-#: builtin/log.c:1240
+#: builtin/log.c:1241
+msgid "output all-zero hash in From header"
+msgstr ""
+
+#: builtin/log.c:1243
 msgid "don't include a patch matching a commit upstream"
 msgstr ""
 
-#: builtin/log.c:1242
+#: builtin/log.c:1245
 msgid "show patch format instead of default (patch + stat)"
 msgstr ""
 
-#: builtin/log.c:1244
+#: builtin/log.c:1247
 msgid "Messaging"
 msgstr ""
 
-#: builtin/log.c:1245
+#: builtin/log.c:1248
 msgid "header"
 msgstr ""
 
-#: builtin/log.c:1246
+#: builtin/log.c:1249
 msgid "add email header"
 msgstr ""
 
-#: builtin/log.c:1247 builtin/log.c:1249
+#: builtin/log.c:1250 builtin/log.c:1252
 msgid "email"
 msgstr ""
 
-#: builtin/log.c:1247
+#: builtin/log.c:1250
 msgid "add To: header"
 msgstr ""
 
-#: builtin/log.c:1249
+#: builtin/log.c:1252
 msgid "add Cc: header"
 msgstr ""
 
-#: builtin/log.c:1251
+#: builtin/log.c:1254
 msgid "ident"
 msgstr ""
 
-#: builtin/log.c:1252
+#: builtin/log.c:1255
 msgid "set From address to <ident> (or committer ident if absent)"
 msgstr ""
 
-#: builtin/log.c:1254
+#: builtin/log.c:1257
 msgid "message-id"
 msgstr ""
 
-#: builtin/log.c:1255
+#: builtin/log.c:1258
 msgid "make first mail a reply to <message-id>"
 msgstr ""
 
-#: builtin/log.c:1256 builtin/log.c:1259
+#: builtin/log.c:1259 builtin/log.c:1262
 msgid "boundary"
 msgstr ""
 
-#: builtin/log.c:1257
+#: builtin/log.c:1260
 msgid "attach the patch"
 msgstr ""
 
-#: builtin/log.c:1260
+#: builtin/log.c:1263
 msgid "inline the patch"
 msgstr ""
 
-#: builtin/log.c:1264
+#: builtin/log.c:1267
 msgid "enable message threading, styles: shallow, deep"
 msgstr ""
 
-#: builtin/log.c:1266
+#: builtin/log.c:1269
 msgid "signature"
 msgstr ""
 
-#: builtin/log.c:1267
+#: builtin/log.c:1270
 msgid "add a signature"
 msgstr ""
 
-#: builtin/log.c:1269
+#: builtin/log.c:1272
 msgid "add a signature from a file"
 msgstr ""
 
-#: builtin/log.c:1270
+#: builtin/log.c:1273
 msgid "don't print the patch filenames"
 msgstr ""
 
-#: builtin/log.c:1359
+#: builtin/log.c:1362
 msgid "-n and -k are mutually exclusive."
 msgstr ""
 
-#: builtin/log.c:1361
+#: builtin/log.c:1364
 msgid "--subject-prefix and -k are mutually exclusive."
 msgstr ""
 
-#: builtin/log.c:1369
+#: builtin/log.c:1372
 msgid "--name-only does not make sense"
 msgstr ""
 
-#: builtin/log.c:1371
+#: builtin/log.c:1374
 msgid "--name-status does not make sense"
 msgstr ""
 
-#: builtin/log.c:1373
+#: builtin/log.c:1376
 msgid "--check does not make sense"
 msgstr ""
 
-#: builtin/log.c:1396
+#: builtin/log.c:1401
 msgid "standard output, or directory, which one?"
 msgstr ""
 
-#: builtin/log.c:1398
+#: builtin/log.c:1403
 #, c-format
 msgid "Could not create directory '%s'"
 msgstr ""
 
-#: builtin/log.c:1495
+#: builtin/log.c:1500
 #, c-format
 msgid "unable to read signature file '%s'"
 msgstr ""
 
-#: builtin/log.c:1558
+#: builtin/log.c:1563
 msgid "Failed to create output files"
 msgstr ""
 
-#: builtin/log.c:1606
+#: builtin/log.c:1611
 msgid "git cherry [-v] [<upstream> [<head> [<limit>]]]"
 msgstr ""
 
-#: builtin/log.c:1660
+#: builtin/log.c:1665
 #, c-format
 msgid ""
 "Could not find a tracked remote branch, please specify <upstream> manually.\n"
 msgstr ""
 
-#: builtin/log.c:1671 builtin/log.c:1673 builtin/log.c:1685
+#: builtin/log.c:1676 builtin/log.c:1678 builtin/log.c:1690
 #, c-format
 msgid "Unknown commit %s"
 msgstr ""
@@ -8398,25 +8393,25 @@ msgstr ""
 msgid "Cannot rebase onto multiple branches."
 msgstr ""
 
-#: builtin/push.c:15
+#: builtin/push.c:16
 msgid "git push [<options>] [<repository> [<refspec>...]]"
 msgstr ""
 
-#: builtin/push.c:86
+#: builtin/push.c:88
 msgid "tag shorthand without <tag>"
 msgstr ""
 
-#: builtin/push.c:96
+#: builtin/push.c:98
 msgid "--delete only accepts plain target ref names"
 msgstr ""
 
-#: builtin/push.c:140
+#: builtin/push.c:142
 msgid ""
 "\n"
 "To choose either option permanently, see push.default in 'git help config'."
 msgstr ""
 
-#: builtin/push.c:143
+#: builtin/push.c:145
 #, c-format
 msgid ""
 "The upstream branch of your current branch does not match\n"
@@ -8431,7 +8426,7 @@ msgid ""
 "%s"
 msgstr ""
 
-#: builtin/push.c:158
+#: builtin/push.c:160
 #, c-format
 msgid ""
 "You are not currently on a branch.\n"
@@ -8441,7 +8436,7 @@ msgid ""
 "    git push %s HEAD:<name-of-remote-branch>\n"
 msgstr ""
 
-#: builtin/push.c:172
+#: builtin/push.c:174
 #, c-format
 msgid ""
 "The current branch %s has no upstream branch.\n"
@@ -8450,12 +8445,12 @@ msgid ""
 "    git push --set-upstream %s %s\n"
 msgstr ""
 
-#: builtin/push.c:180
+#: builtin/push.c:182
 #, c-format
 msgid "The current branch %s has multiple upstream branches, refusing to push."
 msgstr ""
 
-#: builtin/push.c:183
+#: builtin/push.c:185
 #, c-format
 msgid ""
 "You are pushing to remote '%s', which is not the upstream of\n"
@@ -8463,7 +8458,7 @@ msgid ""
 "to update which remote branch."
 msgstr ""
 
-#: builtin/push.c:206
+#: builtin/push.c:208
 msgid ""
 "push.default is unset; its implicit value has changed in\n"
 "Git 2.0 from 'matching' to 'simple'. To squelch this message\n"
@@ -8488,12 +8483,12 @@ msgid ""
 "'current' instead of 'simple' if you sometimes use older versions of Git)"
 msgstr ""
 
-#: builtin/push.c:273
+#: builtin/push.c:275
 msgid ""
 "You didn't specify any refspecs to push, and push.default is \"nothing\"."
 msgstr ""
 
-#: builtin/push.c:280
+#: builtin/push.c:282
 msgid ""
 "Updates were rejected because the tip of your current branch is behind\n"
 "its remote counterpart. Integrate the remote changes (e.g.\n"
@@ -8501,7 +8496,7 @@ msgid ""
 "See the 'Note about fast-forwards' in 'git push --help' for details."
 msgstr ""
 
-#: builtin/push.c:286
+#: builtin/push.c:288
 msgid ""
 "Updates were rejected because a pushed branch tip is behind its remote\n"
 "counterpart. Check out this branch and integrate the remote changes\n"
@@ -8509,7 +8504,7 @@ msgid ""
 "See the 'Note about fast-forwards' in 'git push --help' for details."
 msgstr ""
 
-#: builtin/push.c:292
+#: builtin/push.c:294
 msgid ""
 "Updates were rejected because the remote contains work that you do\n"
 "not have locally. This is usually caused by another repository pushing\n"
@@ -8518,33 +8513,33 @@ msgid ""
 "See the 'Note about fast-forwards' in 'git push --help' for details."
 msgstr ""
 
-#: builtin/push.c:299
+#: builtin/push.c:301
 msgid "Updates were rejected because the tag already exists in the remote."
 msgstr ""
 
-#: builtin/push.c:302
+#: builtin/push.c:304
 msgid ""
 "You cannot update a remote ref that points at a non-commit object,\n"
 "or update a remote ref to make it point at a non-commit object,\n"
 "without using the '--force' option.\n"
 msgstr ""
 
-#: builtin/push.c:361
+#: builtin/push.c:363
 #, c-format
 msgid "Pushing to %s\n"
 msgstr ""
 
-#: builtin/push.c:365
+#: builtin/push.c:367
 #, c-format
 msgid "failed to push some refs to '%s'"
 msgstr ""
 
-#: builtin/push.c:395
+#: builtin/push.c:397
 #, c-format
 msgid "bad repository '%s'"
 msgstr ""
 
-#: builtin/push.c:396
+#: builtin/push.c:398
 msgid ""
 "No configured push destination.\n"
 "Either specify the URL from the command-line or configure a remote "
@@ -8557,100 +8552,104 @@ msgid ""
 "    git push <name>\n"
 msgstr ""
 
-#: builtin/push.c:411
+#: builtin/push.c:413
 msgid "--all and --tags are incompatible"
 msgstr ""
 
-#: builtin/push.c:412
+#: builtin/push.c:414
 msgid "--all can't be combined with refspecs"
 msgstr ""
 
-#: builtin/push.c:417
+#: builtin/push.c:419
 msgid "--mirror and --tags are incompatible"
 msgstr ""
 
-#: builtin/push.c:418
+#: builtin/push.c:420
 msgid "--mirror can't be combined with refspecs"
 msgstr ""
 
-#: builtin/push.c:423
+#: builtin/push.c:425
 msgid "--all and --mirror are incompatible"
 msgstr ""
 
-#: builtin/push.c:539
+#: builtin/push.c:537
 msgid "repository"
 msgstr ""
 
-#: builtin/push.c:540 builtin/send-pack.c:161
+#: builtin/push.c:538 builtin/send-pack.c:161
 msgid "push all refs"
 msgstr ""
 
-#: builtin/push.c:541 builtin/send-pack.c:163
+#: builtin/push.c:539 builtin/send-pack.c:163
 msgid "mirror all refs"
 msgstr ""
 
-#: builtin/push.c:543
+#: builtin/push.c:541
 msgid "delete refs"
 msgstr ""
 
-#: builtin/push.c:544
+#: builtin/push.c:542
 msgid "push tags (can't be used with --all or --mirror)"
 msgstr ""
 
-#: builtin/push.c:547 builtin/send-pack.c:164
+#: builtin/push.c:545 builtin/send-pack.c:164
 msgid "force updates"
 msgstr ""
 
-#: builtin/push.c:549 builtin/send-pack.c:175
+#: builtin/push.c:547 builtin/send-pack.c:175
 msgid "refname>:<expect"
 msgstr ""
 
-#: builtin/push.c:550 builtin/send-pack.c:176
+#: builtin/push.c:548 builtin/send-pack.c:176
 msgid "require old value of ref to be at this value"
 msgstr ""
 
-#: builtin/push.c:553
+#: builtin/push.c:550
+msgid "check|on-demand|no"
+msgstr ""
+
+#: builtin/push.c:551
 msgid "control recursive pushing of submodules"
 msgstr ""
 
-#: builtin/push.c:555 builtin/send-pack.c:169
+#: builtin/push.c:553 builtin/send-pack.c:169
 msgid "use thin pack"
 msgstr ""
 
-#: builtin/push.c:556 builtin/push.c:557 builtin/send-pack.c:158
+#: builtin/push.c:554 builtin/push.c:555 builtin/send-pack.c:158
 #: builtin/send-pack.c:159
 msgid "receive pack program"
 msgstr ""
 
-#: builtin/push.c:558
+#: builtin/push.c:556
 msgid "set upstream for git pull/status"
 msgstr ""
 
-#: builtin/push.c:561
+#: builtin/push.c:559
 msgid "prune locally removed refs"
 msgstr ""
 
-#: builtin/push.c:563
+#: builtin/push.c:561
 msgid "bypass pre-push hook"
 msgstr ""
 
-#: builtin/push.c:564
+#: builtin/push.c:562
 msgid "push missing but relevant tags"
 msgstr ""
 
-#: builtin/push.c:567 builtin/send-pack.c:166
+#: builtin/push.c:565 builtin/send-pack.c:166
 msgid "GPG sign the push"
 msgstr ""
 
-#: builtin/push.c:569 builtin/send-pack.c:170
+#: builtin/push.c:567 builtin/send-pack.c:170
 msgid "request atomic transaction on remote side"
 msgstr ""
 
-#: builtin/push.c:579
+#: builtin/push.c:577
 msgid "--delete is incompatible with --all, --mirror and --tags"
 msgstr ""
 
-#: builtin/push.c:581
+#: builtin/push.c:579
 msgid "--delete doesn't make sense without any refs"
 msgstr ""
 
