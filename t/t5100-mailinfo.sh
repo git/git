@@ -23,7 +23,7 @@ check_mailinfo () {
 }
 
 
-for mail in $(echo 00*)
+for mail in 00*
 do
 	test_expect_success "mailinfo $mail" '
 		check_mailinfo $mail "" &&
@@ -51,7 +51,7 @@ test_expect_success 'split box with rfc2047 samples' \
 	echo total is $last &&
 	test $(cat rfc2047/last) = 11'
 
-for mail in $(echo rfc2047/00*)
+for mail in rfc2047/00*
 do
 	test_expect_success "mailinfo $mail" '
 		git mailinfo -u $mail-msg $mail-patch <$mail >$mail-info &&
