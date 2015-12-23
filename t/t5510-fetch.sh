@@ -7,7 +7,7 @@ test_description='Per branch config variables affects "git fetch".
 
 . ./test-lib.sh
 
-D=`pwd`
+D=$(pwd)
 
 test_bundle_object_count () {
 	git verify-pack -v "$1" >verify.out &&
@@ -64,8 +64,8 @@ test_expect_success "fetch test" '
 	cd two &&
 	git fetch &&
 	test -f .git/refs/heads/one &&
-	mine=`git rev-parse refs/heads/one` &&
-	his=`cd ../one && git rev-parse refs/heads/master` &&
+	mine=$(git rev-parse refs/heads/one) &&
+	his=$(cd ../one && git rev-parse refs/heads/master) &&
 	test "z$mine" = "z$his"
 '
 
@@ -75,8 +75,8 @@ test_expect_success "fetch test for-merge" '
 	git fetch &&
 	test -f .git/refs/heads/two &&
 	test -f .git/refs/heads/one &&
-	master_in_two=`cd ../two && git rev-parse master` &&
-	one_in_two=`cd ../two && git rev-parse one` &&
+	master_in_two=$(cd ../two && git rev-parse master) &&
+	one_in_two=$(cd ../two && git rev-parse one) &&
 	{
 		echo "$one_in_two	"
 		echo "$master_in_two	not-for-merge"
