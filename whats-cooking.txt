@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Dec 2015, #05; Tue, 15)
-X-master-at: f900c8326a43303685c46b279b9f70411bff1a4b
-X-next-at: 94414c4510aaf2ba48821f6dd770ae47f2829dce
+Subject: What's cooking in git.git (Dec 2015, #06; Mon, 28)
+X-master-at: 28274d02c489f4c7e68153056e9061a46f62d7a0
+X-next-at: 0ac5344e619fec2068de9ab2afdb99d1af8854be
 
-What's cooking in git.git (Dec 2015, #05; Tue, 15)
+What's cooking in git.git (Dec 2015, #06; Mon, 28)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,13 +12,8 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-2.7-rc1 has been tagged.
-
-I notice that quite a few topics have been in "waiting for review"
-state without getting anybody helping the review process, leaving
-them in 'pu'--they will not be part of 2.7 anyway, but the sooner
-they are reviewed, in the more polished shape they can start in
-the cycle after 2.7 gets tagged.
+v2.7.0-rc3, hopefully the last release candidate for the upcoming 2.7
+release, has been tagged.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -26,70 +21,215 @@ repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[New Topics]
-
-* cc/untracked (2015-12-15) 10 commits
- - dir: do not use untracked cache ident anymore
- - t7063: add tests for core.untrackedCache
- - config: add core.untrackedCache
- - dir: free untracked cache when removing it
- - dir: add remove_untracked_cache()
- - dir: add add_untracked_cache()
- - update-index: move 'uc' var declaration
- - update-index: add untracked cache notifications
- - update-index: add --test-untracked-cache
- - update-index: use enum for untracked cache options
-
- Update the untracked cache subsystem and change its primary UI from
- "git update-index" to "git config".
-
- Needs review.
-
-
-* ep/make-phoney (2015-12-15) 1 commit
- - Makefile: add missing phony target
-
- A slight update to the Makefile.
-
- Needs review.
- Comments?
-
---------------------------------------------------
 [Graduated to "master"]
 
-* ep/ident-with-getaddrinfo (2015-12-14) 1 commit
-  (merged to 'next' on 2015-12-15 at 2c19123)
- + ident: fix undefined variable when NO_IPV6 is set
+* bc/format-patch-null-from-line (2015-12-15) 3 commits
+  (merged to 'next' on 2015-12-16 at ff58fc7)
+ + format-patch: check that header line has expected format
+ + format-patch: add an option to suppress commit hash
+ + sha1_file.c: introduce a null_oid constant
 
- A fix-up for a recent topic.
-
-
-* jk/prune-mtime (2015-08-12) 1 commit
-  (merged to 'next' on 2015-12-14 at 4fba3f3)
- + prune: close directory earlier during loose-object directory traversal
-
- The helper used to iterate over loose object directories to prune
- stale objects did not closedir() immediately when it is done with a
- directory--a callback such as the one used for "git prune" may want
- to do rmdir(), but it would fail on open directory on platforms
- such as WinXP.
+ "format-patch" has learned a new option to zero-out the commit
+ object name on the mbox "From " line.
 
 
-* jk/send-email-complete-aliases (2015-12-14) 1 commit
-  (merged to 'next' on 2015-12-15 at 6978ff4)
- + completion: fix completing unstuck email alias arguments
+* fr/rebase-i-continue-preserve-options (2015-12-11) 1 commit
+  (merged to 'next' on 2015-12-15 at e99677a)
+ + rebase -i: remember merge options beyond continue actions
 
- A fix-up for a recent topic.
+ "git rebase -i" started with merge strategy options did not
+ propagate them upon "git rebase --continue".
 
 
-* ls/p4-keep-empty-commits (2015-12-10) 1 commit
-  (merged to 'next' on 2015-12-11 at 1827062)
- + git-p4: add option to keep empty commits
+* jk/ident-loosen-getpwuid (2015-12-14) 3 commits
+  (merged to 'next' on 2015-12-15 at 0c8137b)
+ + ident: loosen getpwuid error in non-strict mode
+ + ident: keep a flag for bogus default_email
+ + ident: make xgetpwuid_self() a static local helper
 
- "git p4" used to import Perforce CLs that touch only paths outside
- the client spec as empty commits.  It has been corrected to ignore
- them instead, with a new configuration git-p4.keepEmptyCommits as a
- backward compatibility knob.
+ When getpwuid() on the system returned NULL (e.g. the user is not
+ in the /etc/passwd file or other uid-to-name mappings), the
+ codepath to find who the user is to record it in the reflog barfed
+ and died.  Loosen the check in this codepath, which already accepts
+ questionable ident string (e.g. host part of the e-mail address is
+ obviously bogus), and in general when we operate fmt_ident() function
+ in non-strict mode.
+
+
+* jk/pending-keep-tag-name (2015-12-17) 1 commit
+  (merged to 'next' on 2015-12-22 at d00d451)
+ + revision.c: propagate tag names from pending array
+
+ History traversal with "git log --source" that starts with an
+ annotated tag failed to report the tag as "source", due to an
+ old regression in the command line parser back in v2.2 days.
+
+
+* jk/send-email-ssl-errors (2015-12-11) 1 commit
+  (merged to 'next' on 2015-12-15 at 104f448)
+ + send-email: enable SSL level 1 debug output
+
+ Improve error reporting when SMTP TLS fails.
+
+
+* jk/symbolic-ref-maint (2015-12-21) 2 commits
+  (merged to 'next' on 2015-12-22 at f0d548e)
+ + t1401: test reflog creation for git-symbolic-ref
+ + symbolic-ref: propagate error code from create_symref()
+ (this branch is used by jk/symbolic-ref.)
+
+ "git symbolic-ref" forgot to report a failure with its exit status.
+
+
+* js/emu-write-epipe-on-windows (2015-12-21) 1 commit
+ + mingw: emulate write(2) that fails with a EPIPE
+
+ The write(2) emulation for Windows learned to set errno to EPIPE
+ when necessary.
+
+
+* mc/push-recurse-submodules-config (2015-12-04) 3 commits
+  (merged to 'next' on 2015-12-08 at 1b81967)
+ + push: follow the "last one wins" convention for --recurse-submodules
+ + push: test that --recurse-submodules on command line overrides config
+  (merged to 'next' on 2015-11-24 at 3644d4b)
+ + push: add recurseSubmodules config option
+
+ Add new config to avoid typing "--recurse-submodules" on each push.
+
+
+* sg/completion-no-column (2015-12-11) 1 commit
+  (merged to 'next' on 2015-12-15 at 01a2476)
+ + completion: remove 'git column' from porcelain commands
+
+ The completion script (in contrib/) used to list "git column"
+ (which is not an end-user facing command) as one of the choices
+
+
+* sh/p4-multi-depot (2015-12-21) 3 commits
+  (merged to 'next' on 2015-12-22 at aff269a)
+ + git-p4: reduce number of server queries for fetches
+ + git-p4: support multiple depot paths in p4 submit
+ + git-p4: failing test case for skipping changes with multiple depots
+
+ "git p4" when interacting with multiple depots at the same time
+ used to incorrectly drop changes.
+
+--------------------------------------------------
+[New Topics]
+
+* ea/blame-progress (2015-12-16) 1 commit
+  (merged to 'next' on 2015-12-22 at f8e8643)
+ + blame: add support for --[no-]progress option
+
+ "git blame" learned to produce the progress eye-candy when it takes
+ too much time before emitting the first line of the result.
+
+ Will merge to 'master'.
+
+
+* dt/unpack-compare-entry-optim (2015-12-21) 1 commit
+ - do_compare_entry: use already-computed path
+
+ Will merge to 'next'.
+
+
+* jk/pack-revindex (2015-12-21) 2 commits
+ - pack-revindex: store entries directly in packed_git
+ - pack-revindex: drop hash table
+
+ Will merge to 'next'.
+
+
+* jk/symbolic-ref (2015-12-28) 2 commits
+ - create_symref: use existing ref-lock code
+ - create_symref: modernize variable names
+
+ Expecting a reroll.
+ ($gmane/283032, $gmane/283031)
+
+
+* nd/stop-setenv-work-tree (2015-12-22) 1 commit
+  (merged to 'next' on 2015-12-22 at 6d7bb0c)
+ + Revert "setup: set env $GIT_WORK_TREE when work tree is set, like $GIT_DIR"
+ (this branch is used by nd/clear-gitenv-upon-use-of-alias.)
+
+ An earlier change in 2.5.x-era broke users' hooks and aliases by
+ exporting GIT_WORK_TREE to point at the root of the working tree,
+ interfering when they tried to use a different working tree without
+ setting GIT_WORK_TREE environment themselves.
+
+ Will merge to 'master'.
+
+
+* ep/update-command-substitution-style (2015-12-28) 41 commits
+ - t/t5517-push-mirror.sh: use the $( ... ) construct for command substitution
+ - t/t5516-fetch-push.sh: use the $( ... ) construct for command substitution
+ - t/t5515-fetch-merge-logic.sh: use the $( ... ) construct for command substitution
+ - t/t5510-fetch.sh: use the $( ... ) construct for command substitution
+ - t/t5506-remote-groups.sh: use the $( ... ) construct for command substitution
+ - t/t5505-remote.sh: use the $( ... ) construct for command substitution
+ - t/t5500-fetch-pack.sh: use the $( ... ) construct for command substitution
+ - t/t5305-include-tag.sh: use the $( ... ) construct for command substitution
+ - t/t5304-prune.sh: use the $( ... ) construct for command substitution
+ - t/t5303-pack-corruption-resilience.sh: use the $( ... ) construct for command substitution
+ - t/t5100: no need to use 'echo' command substitutions for globbing
+ - t/t5302-pack-index.sh: use the $( ... ) construct for command substitution
+ - t/t5301-sliding-window.sh: use the $( ... ) construct for command substitution
+ - t/t5300-pack-object.sh: use the $( ... ) construct for command substitution
+ - t/t5100-mailinfo.sh: use the $( ... ) construct for command substitution
+ - t/t3700-add.sh: use the $( ... ) construct for command substitution
+ - t/t3600-rm.sh: use the $( ... ) construct for command substitution
+ - t/t3511-cherry-pick-x.sh: use the $( ... ) construct for command substitution
+ - t/t3403-rebase-skip.sh: use the $( ... ) construct for command substitution
+ - t/t3210-pack-refs.sh: use the $( ... ) construct for command substitution
+ - t/t3101-ls-tree-dirname.sh: use the $( ... ) construct for command substitution
+ - t/t3100-ls-tree-restrict.sh: use the $( ... ) construct for command substitution
+ - t/t3030-merge-recursive.sh: use the $( ... ) construct for command substitution
+ - t/t2102-update-index-symlinks.sh: use the $( ... ) construct for command substitution
+ - t/t2025-worktree-add.sh: use the $( ... ) construct for command substitution
+ - t/t1700-split-index.sh: use the $( ... ) construct for command substitution
+ - t/t1512-rev-parse-disambiguation.sh: use the $( ... ) construct for command substitution
+ - t/t1511-rev-parse-caret.sh: use the $( ... ) construct for command substitution
+ - t/t1410-reflog.sh: use the $( ... ) construct for command substitution
+ - t/t1401-symbolic-ref.sh: use the $( ... ) construct for command substitution
+ - t/t1100-commit-tree-options.sh: use the $( ... ) construct for command substitution
+ - unimplemented.sh: use the $( ... ) construct for command substitution
+ - test-sha1.sh: use the $( ... ) construct for command substitution
+ - t/lib-httpd.sh: use the $( ... ) construct for command substitution
+ - git-gui/po/glossary/txt-to-pot.sh: use the $( ... ) construct for command substitution
+ - contrib/thunderbird-patch-inline/appp.sh: use the $( ... ) construct for command substitution
+ - contrib/examples/git-revert.sh: use the $( ... ) construct for command substitution
+ - contrib/examples/git-repack.sh: use the $( ... ) construct for command substitution
+ - contrib/examples/git-merge.sh: use the $( ... ) construct for command substitution
+ - contrib/examples/git-fetch.sh: use the $( ... ) construct for command substitution
+ - contrib/examples/git-commit.sh: use the $( ... ) construct for command substitution
+
+ A shell script style update to change `command substitution` into
+ $(command substitution).  Coverts contrib/ and an early half of t/
+ directory contents.
+
+ Will merge to 'next'.
+
+
+* nd/dir-exclude-cleanup (2015-12-28) 1 commit
+ - dir.c: clean the entire struct in clear_exclude_list()
+
+ The "exclude_list" structure has the usual "alloc, nr" pair of
+ fields to be used by ALLOC_GROW(), but clear_exclude_list() forgot
+ to reset 'alloc' to 0 when it cleared 'nr' and discarded the
+ managed array.
+
+ Will merge to 'next'.
+
+
+* ss/user-manual (2015-12-28) 1 commit
+ - user-manual: remove temporary branch entry from todo list
+
+ Drop an old "todo" item by deciding that the change it suggests is
+ not such a good idea.
+
+ Will merge to 'next'.
 
 --------------------------------------------------
 [Stalled]
@@ -110,23 +250,7 @@ repositories listed at
  pt/http-socks-proxy topic. That is now in master, so it can
  be re-rolled on top.
 
- Anybody wants to help rerolling this?  Otherwise will discard. 
-
-
-* nd/ita-cleanup (2015-09-06) 6 commits
- - grep: make it clear i-t-a entries are ignored
- - checkout(-index): do not checkout i-t-a entries
- - apply: make sure check_preimage() does not leave empty file on error
- - apply: fix adding new files on i-t-a entries
- - add and use a convenience macro ce_intent_to_add()
- - blame: remove obsolete comment
-
- Paths that have been told the index about with "add -N" are not yet
- in the index, but various commands behaved as if they already are.
-
- Some commits need better explanation.
- Becoming tired of waiting for a reroll.
- Will discard.
+ Anybody wants to help rerolling this?  Otherwise will discard.
 
 
 * mg/httpd-tests-update-for-apache-2.4 (2015-04-08) 2 commits
@@ -149,14 +273,14 @@ repositories listed at
 
  Becoming tired of waiting for a reroll.
  ($gmane/271213).
- Anybody wants to help rerolling this?  Otherwise will discard. 
+ Anybody wants to help rerolling this?  Otherwise will discard.
 
 
 * ak/format-patch-odir-config (2015-06-19) 1 commit
  - format-patch: introduce format.outputDirectory configuration
 
  Becoming tired of waiting for a reroll.
- Anybody wants to help rerolling this?  Otherwise will discard. 
+ Anybody wants to help rerolling this?  Otherwise will discard.
  ($gmane/272180).
 
 
@@ -178,82 +302,69 @@ repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* vl/grep-configurable-threads (2015-12-15) 3 commits
- - grep: add --threads=<num> option and grep.threads configuration
- - grep: slight refactoring to the code that disables threading
- - grep: allow threading even on a single-core machine
+* nd/ita-cleanup (2015-12-28) 3 commits
+ - grep: make it clear i-t-a entries are ignored
+ - add and use a convenience macro ce_intent_to_add()
+ - blame: remove obsolete comment
+
+ Paths that have been told the index about with "add -N" are not
+ quite yet in the index, but a few commands behaved as if they
+ already are in a harmful way.
+
+ Here are only the obviously correct bits; some other changes were
+ in the posted series, but not quite ready to be queued here.
+
+ Will merge to 'next'.
+
+
+* cc/untracked (2015-12-15) 10 commits
+ - dir: do not use untracked cache ident anymore
+ - t7063: add tests for core.untrackedCache
+ - config: add core.untrackedCache
+ - dir: free untracked cache when removing it
+ - dir: add remove_untracked_cache()
+ - dir: add add_untracked_cache()
+ - update-index: move 'uc' var declaration
+ - update-index: add untracked cache notifications
+ - update-index: add --test-untracked-cache
+ - update-index: use enum for untracked cache options
+
+ Update the untracked cache subsystem and change its primary UI from
+ "git update-index" to "git config".
+
+ Expecting a reroll.
+ $gmane/282955
+
+
+* ep/make-phoney (2015-12-16) 1 commit
+  (merged to 'next' on 2015-12-22 at 27c7593)
+ + Makefile: add missing phony target
+
+ A slight update to the Makefile.
+
+ Will merge to 'master'.
+
+
+* vl/grep-configurable-threads (2015-12-16) 3 commits
+  (merged to 'next' on 2015-12-22 at 8954705)
+ + grep: add --threads=<num> option and grep.threads configuration
+ + grep: slight refactoring to the code that disables threading
+ + grep: allow threading even on a single-core machine
 
  "git grep" can now be configured (or told from the command line)
  how many threads to use when searching in the working tree files.
 
- Needs review.
-
-
-* fr/rebase-i-continue-preserve-options (2015-12-11) 1 commit
-  (merged to 'next' on 2015-12-15 at e99677a)
- + rebase -i: remember merge options beyond continue actions
-
- "git rebase -i" started with merge strategy options did not
- propagate them upon "git rebase --continue".
-
  Will merge to 'master'.
 
 
-* jk/ident-loosen-getpwuid (2015-12-14) 3 commits
-  (merged to 'next' on 2015-12-15 at 0c8137b)
- + ident: loosen getpwuid error in non-strict mode
- + ident: keep a flag for bogus default_email
- + ident: make xgetpwuid_self() a static local helper
-
- When getpwuid() on the system returned NULL (e.g. the user is not
- in the /etc/passwd file or other uid-to-name mappings), the
- codepath to find who the user is to record it in the reflog barfed
- and died.  Loosen the check in this codepath, which already accepts
- questionable ident string (e.g. host part of the e-mail address is
- obviously bogus), and in general when we operate fmt_ident() function
- in non-strict mode.
-
- Will merge to 'master'.
-
-
-* sg/completion-no-column (2015-12-11) 1 commit
-  (merged to 'next' on 2015-12-15 at 01a2476)
- + completion: remove 'git column' from porcelain commands
-
- The completion script (in contrib/) used to list "git column"
- (which is not an end-user facing command) as one of the choices
-
- Will merge to 'master'.
-
-
-* ps/push-delete-option (2015-12-14) 2 commits
- - push: add '-d' as shorthand for '--delete'
- - push: add '--delete' flag to synopsis
+* ps/push-delete-option (2015-12-16) 2 commits
+  (merged to 'next' on 2015-12-22 at d83cc1d)
+ + push: add '-d' as shorthand for '--delete'
+ + push: add '--delete' flag to synopsis
 
  "branch --delete" has "branch -d" but "push --delete" does not.
 
-
-* sh/p4-multi-depot (2015-12-14) 3 commits
- - git-p4: reduce number of server queries for fetches
- - git-p4: support multiple depot paths in p4 submit
- - git-p4: failing test case for skipping changes with multiple depots
-
- "git p4" when interacting with multiple depots at the same time
- used to incorrectly drop changes.
-
- Reported to be broken.
- ($gmane/282447)
-
-
-* bc/format-patch-null-from-line (2015-12-15) 3 commits
- - format-patch: check that header line has expected format
- - format-patch: add an option to suppress commit hash
- - sha1_file.c: introduce a null_oid constant
-
- "format-patch" has learned a new option to zero-out the commit
- object name on the mbox "From " line.
-
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * dt/refs-backend-lmdb (2015-12-04) 16 commits
@@ -289,10 +400,12 @@ repositories listed at
  Waiting for review from 'subtree' folks.
 
 
-* nd/clear-gitenv-upon-use-of-alias (2015-12-07) 3 commits
- . git.c: make sure we do not leak GIT_* to alias scripts
+* nd/clear-gitenv-upon-use-of-alias (2015-12-22) 4 commits
+ - git.c: make sure we do not leak GIT_* to alias scripts
  - setup.c: re-fix d95138e (setup: set env $GIT_WORK_TREE when ..
  - git.c: make it clear save_env() is for alias handling only
+ - Merge branch 'nd/stop-setenv-work-tree' into nd/clear-gitenv-upon-use-of-alias
+ (this branch uses nd/stop-setenv-work-tree.)
 
  d95138e6 (setup: set env $GIT_WORK_TREE when work tree is set, like
  $GIT_DIR, 2015-06-26) attempted to work around a glitch in alias
@@ -302,9 +415,7 @@ repositories listed at
  Try to address the same issue by always restoring the environment
  and respawning the real underlying command when handling alias.
 
- The tip one seems to break tests under "prove".
-
- Waiting for review.
+ Will merge to 'next'.
 
 
 * kn/ref-filter-atom-parsing (2015-12-11) 10 commits
@@ -351,15 +462,6 @@ repositories listed at
  Waiting for review.
 
 
-* jk/send-email-ssl-errors (2015-12-11) 1 commit
-  (merged to 'next' on 2015-12-15 at 104f448)
- + send-email: enable SSL level 1 debug output
-
- Improve error reporting when SMTP TLS fails.
-
- Will merge to 'master'.
-
-
 * ps/rebase-keep-empty (2015-11-24) 2 commits
  - rebase: fix preserving commits with --keep-empty
  - rebase: test broken behavior with --keep-empty
@@ -390,15 +492,13 @@ repositories listed at
  Needs review.
 
 
-* tb/ls-files-eol (2015-11-28) 2 commits
- - convert.c: mark a file-local function static
+* tb/ls-files-eol (2015-12-16) 1 commit
  - ls-files: Add eol diagnostics
 
  Add options to ls-files to help diagnose end-of-line problems.
 
- This latest round hasn't gotten any review yet.
-
- Waiting for review.
+ Expecting a reroll.
+ ($gmane/282537)
 
 
 * ec/annotate-deleted (2015-11-20) 1 commit
@@ -410,27 +510,15 @@ repositories listed at
  Waiting for review.
 
 
-* mc/push-recurse-submodules-config (2015-12-04) 3 commits
-  (merged to 'next' on 2015-12-08 at 1b81967)
- + push: follow the "last one wins" convention for --recurse-submodules
- + push: test that --recurse-submodules on command line overrides config
-  (merged to 'next' on 2015-11-24 at 3644d4b)
- + push: add recurseSubmodules config option
-
- Add new config to avoid typing "--recurse-submodules" on each push.
-
- Waiting for review from submodule folks.
-
-
-* sb/submodule-parallel-fetch (2015-12-14) 8 commits
- - submodules: allow parallel fetching, add tests and documentation
- - fetch_populated_submodules: use new parallel job processing
- - run-command: add an asynchronous parallel child processor
- - sigchain: add command to pop all common signals
- - strbuf: add strbuf_read_once to read without blocking
- - xread_nonblock: add functionality to read from fds without blocking
- - xread: poll on non blocking fds
- - submodule.c: write "Fetching submodule <foo>" to stderr
+* sb/submodule-parallel-fetch (2015-12-16) 7 commits
+  (merged to 'next' on 2015-12-22 at 44e84ff)
+ + submodules: allow parallel fetching, add tests and documentation
+ + fetch_populated_submodules: use new parallel job processing
+ + run-command: add an asynchronous parallel child processor
+ + sigchain: add command to pop all common signals
+ + strbuf: add strbuf_read_once to read without blocking
+ + xread: poll on non blocking fds
+ + submodule.c: write "Fetching submodule <foo>" to stderr
  (this branch is used by sb/submodule-parallel-update.)
 
  Add a framework to spawn a group of processes in parallel, and use
@@ -439,10 +527,10 @@ repositories listed at
  Rerolled and this seems to be a lot cleaner.  The merge of the
  earlier one to 'next' has been reverted.
 
- Will merge to 'next' after a few days.
+ Will merge to 'master'.
 
- 
-* sb/submodule-parallel-update (2015-12-14) 8 commits
+
+* sb/submodule-parallel-update (2015-12-16) 8 commits
  - clone: allow an explicit argument for parallel submodule clones
  - submodule update: expose parallelism to the user
  - git submodule update: have a dedicated helper for cloning
@@ -459,24 +547,24 @@ repositories listed at
  Needs review.
 
 
-* jc/strbuf-gets (2015-10-28) 17 commits
- - test-sha1-array: read command stream with strbuf_gets()
- - grep: read -f file with strbuf_gets()
- - send-pack: read list of refs with strbuf_gets()
- - column: read lines with strbuf_gets()
- - cat-file: read batch stream with strbuf_gets()
- - transport-helper: read helper response with strbuf_gets()
- - clone/sha1_file: read info/alternates with strbuf_gets()
- - remote.c: read $GIT_DIR/remotes/* with strbuf_gets()
- - ident.c: read /etc/mailname with strbuf_gets()
- - rev-parse: read parseopt spec with strbuf_gets()
- - revision: read --stdin with strbuf_gets()
- - hash-object: read --stdin-paths with strbuf_gets()
- - mktree: read textual tree representation with strbuf_gets()
- - update-index: read list of paths with strbuf_gets() under --stdin
- - update-index: read --index-info with strbuf_gets()
- - check-attr, check-ignore, checkout-index: read paths with strbuf_gets()
- - strbuf: add strbuf_gets()
+* jc/strbuf-gets (2015-12-16) 17 commits
+ - test-sha1-array: read command stream with strbuf_getline_crlf()
+ - grep: read -f file with strbuf_getline_crlf()
+ - send-pack: read list of refs with strbuf_getline_crlf()
+ - column: read lines with strbuf_getline_crlf()
+ - cat-file: read batch stream with strbuf_getline_crlf()
+ - transport-helper: read helper response with strbuf_getline_crlf()
+ - clone/sha1_file: read info/alternates with strbuf_getline_crlf()
+ - remote.c: read $GIT_DIR/remotes/* with strbuf_getline_crlf()
+ - ident.c: read /etc/mailname with strbuf_getline_crlf()
+ - rev-parse: read parseopt spec with strbuf_getline_crlf()
+ - revision: read --stdin with strbuf_getline_crlf()
+ - hash-object: read --stdin-paths with strbuf_getline_crlf()
+ - mktree: read textual tree representation with strbuf_getline_crlf()
+ - update-index: read list of paths with strbuf_getline_crlf() under --stdin
+ - update-index: read --index-info with strbuf_getline_crlf()
+ - check-attr, check-ignore, checkout-index: read paths with strbuf_getline_crlf()
+ - strbuf: make strbuf_getline_crlf() global
 
  Teach codepaths that communicate with users by reading text files
  to be more lenient to editors that write CRLF-terminated lines.
@@ -484,7 +572,8 @@ repositories listed at
  list of object names from the standard input instead of from the
  command line, and does not involve files in the working tree.
 
- Waiting for review.
+ Rerolled.
+ Needs review.
 
 
 * mh/notes-allow-reading-treeish (2015-10-08) 3 commits
@@ -612,6 +701,7 @@ repositories listed at
  been deprecated since October 2007.  It has been reported that
  git-gui still uses the deprecated syntax, which needs to be fixed
  before this final step can proceed.
+ ($gmane/282594)
 
  Will keep in 'next'.
 
