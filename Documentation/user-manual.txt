@@ -4636,9 +4636,6 @@ Scan email archives for other stuff left out
 Scan man pages to see if any assume more background than this manual
 provides.
 
-Simplify beginning by suggesting disconnected head instead of
-temporary branch creation?
-
 Add more good examples.  Entire sections of just cookbook examples
 might be a good idea; maybe make an "advanced examples" section a
 standard end-of-chapter section?
