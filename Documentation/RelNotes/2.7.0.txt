@@ -400,4 +400,15 @@ notes for details).
    in non-strict mode.
    (merge 92bcbb9 jk/ident-loosen-getpwuid later to maint).
 
+ * "git symbolic-ref" forgot to report a failure with its exit status.
+   (merge f91b273 jk/symbolic-ref-maint later to maint).
+
+ * History traversal with "git log --source" that starts with an
+   annotated tag failed to report the tag as "source", due to an
+   old regression in the command line parser back in v2.2 days.
+   (merge 728350b jk/pending-keep-tag-name later to maint).
+
+ * "git p4" when interacting with multiple depots at the same time
+   used to incorrectly drop changes.
+
  * Code clean-up, minor fixes etc.
