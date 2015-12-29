@@ -504,6 +504,11 @@ The most notable example is `HEAD`.
 	"Secure Hash Algorithm 1"; a cryptographic hash function.
 	In the context of Git used as a synonym for <<def_object_name,object name>>.
 
+[[def_shallow_clone]]shallow clone::
+	Mostly a synonym to <<def_shallow_repository,shallow repository>>
+	but the phrase makes it more explicit that it was created by
+	running `git clone --depth=...` command.
+
 [[def_shallow_repository]]shallow repository::
 	A shallow <<def_repository,repository>> has an incomplete
 	history some of whose <<def_commit,commits>> have <<def_parent,parents>> cauterized away (in other
