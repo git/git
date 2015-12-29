@@ -114,4 +114,12 @@ test_expect_success 'symbolic-ref writes reflog entry' '
 	test_cmp expect actual
 '
 
+test_expect_success 'symbolic-ref does not create ref d/f conflicts' '
+	git checkout -b df &&
+	test_commit df &&
+	test_must_fail git symbolic-ref refs/heads/df/conflict refs/heads/df &&
+	git pack-refs --all --prune &&
+	test_must_fail git symbolic-ref refs/heads/df/conflict refs/heads/df
+'
+
 test_done
