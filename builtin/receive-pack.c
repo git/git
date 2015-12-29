@@ -1597,7 +1597,7 @@ static void prepare_shallow_update(struct command *commands,
 				continue;
 			si->need_reachability_test[i]++;
 			for (k = 0; k < 32; k++)
-				if (si->used_shallow[i][j] & (1 << k))
+				if (si->used_shallow[i][j] & (1U << k))
 					si->shallow_ref[j * 32 + k]++;
 		}
 
