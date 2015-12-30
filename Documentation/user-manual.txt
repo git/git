@@ -2125,8 +2125,17 @@ Allowing web browsing of a repository
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 The gitweb cgi script provides users an easy way to browse your
-project's files and history without having to install Git; see the file
-gitweb/INSTALL in the Git source tree for instructions on setting it up.
+project's revisions, file contents and logs without having to install
+Git. Features like RSS/Atom feeds and blame/annotation details may
+optionally be enabled.
+
+The linkgit:git-instaweb[1] command provides a simple way to start
+browsing the repository using gitweb. The default server when using
+instaweb is lighttpd.
+
+See the file gitweb/INSTALL in the Git source tree and
+linkgit:gitweb[1] for instructions on details setting up a permament
+installation with a CGI or Perl capable server.
 
 [[how-to-get-a-git-repository-with-minimal-history]]
 How to get a Git repository with minimal history
@@ -4664,8 +4673,6 @@ Include cross-references to the glossary, where appropriate.
 
 Add a section on working with other version control systems, including
 CVS, Subversion, and just imports of series of release tarballs.
-
-More details on gitweb?
 
 Write a chapter on using plumbing and writing scripts.
 
