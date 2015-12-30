@@ -2128,6 +2128,26 @@ The gitweb cgi script provides users an easy way to browse your
 project's files and history without having to install Git; see the file
 gitweb/INSTALL in the Git source tree for instructions on setting it up.
 
+[[how-to-get-a-git-repository-with-minimal-history]]
+How to get a Git repository with minimal history
+------------------------------------------------
+
+A <<def_shallow_clone,shallow clone>>, with its truncated
+history, is useful when one is interested only in recent history
+of a project and getting full history from the upstream is
+expensive.
+
+A <<def_shallow_clone,shallow clone>> is created by specifying
+the linkgit:git-clone[1] `--depth` switch. The depth can later be
+changed with the linkgit:git-fetch[1] `--depth` switch, or full
+history restored with `--unshallow`.
+
+Merging inside a <<def_shallow_clone,shallow clone>> will work as long
+as a merge base is in the recent history.
+Otherwise, it will be like merging unrelated histories and may
+have to result in huge conflicts.  This limitation may make such
+a repository unsuitable to be used in merge based workflows.
+
 [[sharing-development-examples]]
 Examples
 --------
@@ -4641,9 +4661,6 @@ might be a good idea; maybe make an "advanced examples" section a
 standard end-of-chapter section?
 
 Include cross-references to the glossary, where appropriate.
-
-Document shallow clones?  See draft 1.5.0 release notes for some
-documentation.
 
 Add a section on working with other version control systems, including
 CVS, Subversion, and just imports of series of release tarballs.
