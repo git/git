@@ -10,6 +10,8 @@
 static struct strbuf git_default_name = STRBUF_INIT;
 static struct strbuf git_default_email = STRBUF_INIT;
 static struct strbuf git_default_date = STRBUF_INIT;
+static int default_email_is_bogus;
+static int default_name_is_bogus;
 
 #define IDENT_NAME_GIVEN 01
 #define IDENT_MAIL_GIVEN 02
@@ -22,6 +24,25 @@ static int author_ident_explicitly_given;
 #else
 #define get_gecos(struct_passwd) ((struct_passwd)->pw_gecos)
 #endif
+
+static struct passwd *xgetpwuid_self(int *is_bogus)
+{
+	struct passwd *pw;
+
+	errno = 0;
+	pw = getpwuid(getuid());
+	if (!pw) {
+		static struct passwd fallback;
+		fallback.pw_name = "unknown";
+#ifndef NO_GECOS_IN_PWENT
+		fallback.pw_gecos = "Unknown";
+#endif
+		pw = &fallback;
+		if (is_bogus)
+			*is_bogus = 1;
+	}
+	return pw;
+}
 
 static void copy_gecos(const struct passwd *w, struct strbuf *name)
 {
@@ -96,22 +117,26 @@ static int canonical_name(const char *host, struct strbuf *out)
 	return status;
 }
 
-static void add_domainname(struct strbuf *out)
+static void add_domainname(struct strbuf *out, int *is_bogus)
 {
 	char buf[1024];
 
 	if (gethostname(buf, sizeof(buf))) {
 		warning("cannot get host name: %s", strerror(errno));
 		strbuf_addstr(out, "(none)");
+		*is_bogus = 1;
 		return;
 	}
 	if (strchr(buf, '.'))
 		strbuf_addstr(out, buf);
-	else if (canonical_name(buf, out) < 0)
+	else if (canonical_name(buf, out) < 0) {
 		strbuf_addf(out, "%s.(none)", buf);
+		*is_bogus = 1;
+	}
 }
 
-static void copy_email(const struct passwd *pw, struct strbuf *email)
+static void copy_email(const struct passwd *pw, struct strbuf *email,
+		       int *is_bogus)
 {
 	/*
 	 * Make up a fake email address
@@ -122,13 +147,13 @@ static void copy_email(const struct passwd *pw, struct strbuf *email)
 
 	if (!add_mailname_host(email))
 		return;	/* read from "/etc/mailname" (Debian) */
-	add_domainname(email);
+	add_domainname(email, is_bogus);
 }
 
 const char *ident_default_name(void)
 {
 	if (!git_default_name.len) {
-		copy_gecos(xgetpwuid_self(), &git_default_name);
+		copy_gecos(xgetpwuid_self(&default_name_is_bogus), &git_default_name);
 		strbuf_trim(&git_default_name);
 	}
 	return git_default_name.buf;
@@ -144,7 +169,8 @@ const char *ident_default_email(void)
 			committer_ident_explicitly_given |= IDENT_MAIL_GIVEN;
 			author_ident_explicitly_given |= IDENT_MAIL_GIVEN;
 		} else
-			copy_email(xgetpwuid_self(), &git_default_email);
+			copy_email(xgetpwuid_self(&default_email_is_bogus),
+				   &git_default_email, &default_email_is_bogus);
 		strbuf_trim(&git_default_email);
 	}
 	return git_default_email.buf;
@@ -332,12 +358,17 @@ const char *fmt_ident(const char *name, const char *email,
 				fputs(env_hint, stderr);
 			die("empty ident name (for <%s>) not allowed", email);
 		}
-		pw = xgetpwuid_self();
+		pw = xgetpwuid_self(NULL);
 		name = pw->pw_name;
 	}
 
-	if (strict && email == git_default_email.buf &&
-	    strstr(email, "(none)")) {
+	if (want_name && strict &&
+	    name == git_default_name.buf && default_name_is_bogus) {
+		fputs(env_hint, stderr);
+		die("unable to auto-detect name (got '%s')", name);
+	}
+
+	if (strict && email == git_default_email.buf && default_email_is_bogus) {
 		fputs(env_hint, stderr);
 		die("unable to auto-detect email address (got '%s')", email);
 	}
