@@ -663,6 +663,7 @@ __git_list_porcelain_commands ()
 		check-mailmap)    : plumbing;;
 		check-ref-format) : plumbing;;
 		checkout-index)   : plumbing;;
+		column)           : internal helper;;
 		commit-tree)      : plumbing;;
 		count-objects)    : infrequent;;
 		credential)       : credentials;;
