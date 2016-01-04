@@ -294,9 +294,8 @@ static struct commit *handle_commit(struct rev_info *revs,
 		/*
 		 * We'll handle the tagged object by looping or dropping
 		 * through to the non-tag handlers below. Do not
-		 * propagate data from the tag's pending entry.
+		 * propagate path data from the tag's pending entry.
 		 */
-		name = "";
 		path = NULL;
 		mode = 0;
 	}
