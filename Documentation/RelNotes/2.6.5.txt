@@ -35,5 +35,24 @@ Fixes since v2.6.4
  * The exit code of git-fsck did not reflect some types of errors
    found in packed objects, which has been corrected.
 
+ * The completion script (in contrib/) used to list "git column"
+   (which is not an end-user facing command) as one of the choices
+
+ * Improve error reporting when SMTP TLS fails.
+
+ * When getpwuid() on the system returned NULL (e.g. the user is not
+   in the /etc/passwd file or other uid-to-name mappings), the
+   codepath to find who the user is to record it in the reflog barfed
+   and died.  Loosen the check in this codepath, which already accepts
+   questionable ident string (e.g. host part of the e-mail address is
+   obviously bogus), and in general when we operate fmt_ident() function
+   in non-strict mode.
+
+ * "git symbolic-ref" forgot to report a failure with its exit status.
+
+ * History traversal with "git log --source" that starts with an
+   annotated tag failed to report the tag as "source", due to an
+   old regression in the command line parser back in v2.2 days.
+
 Also contains typofixes, documentation updates and trivial code
 clean-ups.
