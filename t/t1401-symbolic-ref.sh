@@ -63,4 +63,26 @@ test_expect_success 'symbolic-ref fails to delete real ref' '
 '
 reset_to_sane
 
+test_expect_success 'symbolic-ref reports failure in exit code' '
+	test_when_finished "rm -f .git/HEAD.lock" &&
+	>.git/HEAD.lock &&
+	test_must_fail git symbolic-ref HEAD refs/heads/whatever
+'
+
+test_expect_success 'symbolic-ref writes reflog entry' '
+	git checkout -b log1 &&
+	test_commit one &&
+	git checkout -b log2  &&
+	test_commit two &&
+	git checkout --orphan orphan &&
+	git symbolic-ref -m create HEAD refs/heads/log1 &&
+	git symbolic-ref -m update HEAD refs/heads/log2 &&
+	cat >expect <<-\EOF &&
+	update
+	create
+	EOF
+	git log --format=%gs -g >actual &&
+	test_cmp expect actual
+'
+
 test_done
