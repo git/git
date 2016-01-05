@@ -856,7 +856,7 @@ static void handle_reset(const char *name, struct object *object)
 		       get_object_mark(object));
 	else
 		printf("reset %s\nfrom %s\n\n", name,
-		       sha1_to_hex(object->sha1));
+		       oid_to_hex(&object->oid));
 }
 
 static void handle_tags_and_duplicates(void)
