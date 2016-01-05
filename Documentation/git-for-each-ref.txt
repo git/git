@@ -109,6 +109,11 @@ In addition to the above, for commit and tag objects, the header
 field names (`tree`, `parent`, `object`, `type`, and `tag`) can
 be used to specify the value in the header field.
 
+For commit and tag objects, the special `creatordate` and `creator`
+fields will correspond to the appropriate date or name-email-date tuple
+from the `committer` or `tagger` fields depending on the object type.
+These are intended for working on a mix of annotated and lightweight tags.
+
 Fields that have name-email-date tuple as its value (`author`,
 `committer`, and `tagger`) can be suffixed with `name`, `email`,
 and `date` to extract the named component.
@@ -119,8 +124,8 @@ of all lines of the commit message up to the first blank line.  The next
 line is 'contents:body', where body is all of the lines after the first
 blank line.  Finally, the optional GPG signature is `contents:signature`.
 
-For sorting purposes, fields with numeric values sort in numeric
-order (`objectsize`, `authordate`, `committerdate`, `taggerdate`).
+For sorting purposes, fields with numeric values sort in numeric order
+(`objectsize`, `authordate`, `committerdate`, `creatordate`, `taggerdate`).
 All other fields are used to sort in their byte-value order.
 
 In any case, a field name that refers to a field inapplicable to
