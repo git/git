@@ -949,7 +949,7 @@ int normalize_path_copy_len(char *dst, const char *src, int *prefix_len)
 {
 	char *dst0;
 
-	if (has_dos_drive_prefix(src)) {
+	if (has_unc_prefix(src) || has_dos_drive_prefix(src)) {
 		*dst++ = *src++;
 		*dst++ = *src++;
 	}
