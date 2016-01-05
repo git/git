@@ -109,6 +109,7 @@ include::diff-options.txt[]
 --signoff::
 	Add `Signed-off-by:` line to the commit message, using
 	the committer identity of yourself.
+	See the signoff option in linkgit:git-commit[1] for more information.
 
 --stdout::
 	Print all commits to the standard output in mbox format,
