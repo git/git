@@ -101,7 +101,10 @@ test_expect_success 'push with receive.fsckobjects' '
 		git config transfer.fsckobjects false
 	) &&
 	test_must_fail ok=sigpipe git push --porcelain dst master:refs/heads/test >act &&
-	test_cmp exp act
+	if ! test_cmp exp act
+	then
+		test ! -s act
+	fi
 '
 
 test_expect_success 'push with transfer.fsckobjects' '
