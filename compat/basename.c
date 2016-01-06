@@ -4,9 +4,7 @@
 char *gitbasename (char *path)
 {
 	const char *base;
-	/* Skip over the disk name in MSDOS pathnames. */
-	if (has_dos_drive_prefix(path))
-		path += 2;
+	skip_dos_drive_prefix(&path);
 	for (base = path; *path; path++) {
 		if (is_dir_sep(*path))
 			base = path + 1;
