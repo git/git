@@ -23,8 +23,8 @@ test_expect_success 'listing all tags in an empty tree should succeed' '
 '
 
 test_expect_success 'listing all tags in an empty tree should output nothing' '
-	test `git tag -l | wc -l` -eq 0 &&
-	test `git tag | wc -l` -eq 0
+	test $(git tag -l | wc -l) -eq 0 &&
+	test $(git tag | wc -l) -eq 0
 '
 
 test_expect_success 'looking for a tag in an empty tree should fail' \
@@ -72,8 +72,8 @@ test_expect_success 'listing all tags if one exists should succeed' '
 '
 
 test_expect_success 'listing all tags if one exists should output that tag' '
-	test `git tag -l` = mytag &&
-	test `git tag` = mytag
+	test $(git tag -l) = mytag &&
+	test $(git tag) = mytag
 '
 
 # pattern matching:
@@ -83,7 +83,7 @@ test_expect_success 'listing a tag using a matching pattern should succeed' \
 
 test_expect_success \
 	'listing a tag using a matching pattern should output that tag' \
-	'test `git tag -l mytag` = mytag'
+	'test $(git tag -l mytag) = mytag'
 
 # todo: git tag -l now returns always zero, when fixed, change this test
 test_expect_success \
@@ -92,7 +92,7 @@ test_expect_success \
 
 test_expect_success \
 	'listing tags using a non-matching pattern should output nothing' \
-	'test `git tag -l xxx | wc -l` -eq 0'
+	'test $(git tag -l xxx | wc -l) -eq 0'
 
 # special cases for creating tags:
 
@@ -102,13 +102,13 @@ test_expect_success \
 
 test_expect_success \
 	'trying to create a tag with a non-valid name should fail' '
-	test `git tag -l | wc -l` -eq 1 &&
+	test $(git tag -l | wc -l) -eq 1 &&
 	test_must_fail git tag "" &&
 	test_must_fail git tag .othertag &&
 	test_must_fail git tag "other tag" &&
 	test_must_fail git tag "othertag^" &&
 	test_must_fail git tag "other~tag" &&
-	test `git tag -l | wc -l` -eq 1
+	test $(git tag -l | wc -l) -eq 1
 '
 
 test_expect_success 'creating a tag using HEAD directly should succeed' '
