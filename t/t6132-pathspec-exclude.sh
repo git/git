@@ -7,7 +7,7 @@ test_description='test case exclude pathspec'
 test_expect_success 'setup' '
 	for p in file sub/file sub/sub/file sub/file2 sub/sub/sub/file sub2/file; do
 		if echo $p | grep /; then
-			mkdir -p `dirname $p`
+			mkdir -p $(dirname $p)
 		fi &&
 		: >$p &&
 		git add $p &&
