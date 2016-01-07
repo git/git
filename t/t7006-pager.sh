@@ -424,7 +424,7 @@ test_expect_success TTY 'command-specific pager works for external commands' '
 	echo "foo:initial" >expect &&
 	>actual &&
 	test_config pager.external "sed s/^/foo:/ >actual" &&
-	test_terminal git --exec-path="`pwd`" external log --format=%s -1 &&
+	test_terminal git --exec-path="$(pwd)" external log --format=%s -1 &&
 	test_cmp expect actual
 '
 
