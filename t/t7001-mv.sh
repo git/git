@@ -156,11 +156,11 @@ test_expect_success "Michael Cassar's test case" '
 	echo b > partA/outline.txt &&
 	echo c > papers/unsorted/_another &&
 	git add papers partA &&
-	T1=`git write-tree` &&
+	T1=$(git write-tree) &&
 
 	git mv papers/unsorted/Thesis.pdf papers/all-papers/moo-blah.pdf &&
 
-	T=`git write-tree` &&
+	T=$(git write-tree) &&
 	git ls-tree -r $T | verbose grep partA/outline.txt
 '
 
