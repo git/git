@@ -153,7 +153,7 @@ test_expect_success 'blame path that used to be a directory' '
 '
 
 test_expect_success 'blame to a commit with no author name' '
-  TREE=`git rev-parse HEAD:` &&
+  TREE=$(git rev-parse HEAD:) &&
   cat >badcommit <<EOF &&
 tree $TREE
 author <noname> 1234567890 +0000
@@ -161,7 +161,7 @@ committer David Reiss <dreiss@facebook.com> 1234567890 +0000
 
 some message
 EOF
-  COMMIT=`git hash-object -t commit -w badcommit` &&
+  COMMIT=$(git hash-object -t commit -w badcommit) &&
   git --no-pager blame $COMMIT -- uno >/dev/null
 '
 
