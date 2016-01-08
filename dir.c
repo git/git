@@ -733,72 +733,11 @@ int match_pathname(const char *pathname, int pathlen,
 		 */
 		if (!patternlen && !namelen)
 			return 1;
-		/*
-		 * This can happen when we ignore some exclude rules
-		 * on directories in other to see if negative rules
-		 * may match. E.g.
-		 *
-		 * /abc
-		 * !/abc/def/ghi
-		 *
-		 * The pattern of interest is "/abc". On the first
-		 * try, we should match path "abc" with this pattern
-		 * in the "if" statement right above, but the caller
-		 * ignores it.
-		 *
-		 * On the second try with paths within "abc",
-		 * e.g. "abc/xyz", we come here and try to match it
-		 * with "/abc".
-		 */
-		if (!patternlen && namelen && *name == '/')
-			return 1;
 	}
 
 	return fnmatch_icase_mem(pattern, patternlen,
 				 name, namelen,
 				 WM_PATHNAME) == 0;
-}
-
-/*
- * Return non-zero if pathname is a directory and an ancestor of the
- * literal path in a (negative) pattern. This is used to keep
- * descending in "foo" and "foo/bar" when the pattern is
- * "!foo/bar/.gitignore". "foo/notbar" will not be descended however.
- */
-static int match_neg_path(const char *pathname, int pathlen, int *dtype,
-			  const char *base, int baselen,
-			  const char *pattern, int prefix, int patternlen,
-			  int flags)
-{
-	assert((flags & EXC_FLAG_NEGATIVE) && !(flags & EXC_FLAG_NODIR));
-
-	if (*dtype == DT_UNKNOWN)
-		*dtype = get_dtype(NULL, pathname, pathlen);
-	if (*dtype != DT_DIR)
-		return 0;
-
-	if (*pattern == '/') {
-		pattern++;
-		patternlen--;
-		prefix--;
-	}
-
-	if (baselen) {
-		if (((pathlen < baselen && base[pathlen] == '/') ||
-		     pathlen == baselen) &&
-		    !strncmp_icase(pathname, base, pathlen))
-			return 1;
-		pathname += baselen + 1;
-		pathlen  -= baselen + 1;
-	}
-
-
-	if (prefix &&
-	    ((pathlen < prefix && pattern[pathlen] == '/') &&
-	     !strncmp_icase(pathname, pattern, pathlen)))
-		return 1;
-
-	return 0;
 }
 
 /*
@@ -814,7 +753,7 @@ static struct exclude *last_exclude_matching_from_list(const char *pathname,
 						       struct exclude_list *el)
 {
 	struct exclude *exc = NULL; /* undecided */
-	int i, matched_negative_path = 0;
+	int i;
 
 	if (!el->nr)
 		return NULL;	/* undefined */
@@ -849,18 +788,7 @@ static struct exclude *last_exclude_matching_from_list(const char *pathname,
 			exc = x;
 			break;
 		}
-
-		if ((x->flags & EXC_FLAG_NEGATIVE) && !matched_negative_path &&
-		    match_neg_path(pathname, pathlen, dtype, x->base,
-				   x->baselen ? x->baselen - 1 : 0,
-				   exclude, prefix, x->patternlen, x->flags))
-			matched_negative_path = 1;
 	}
-	if (exc &&
-	    !(exc->flags & EXC_FLAG_NEGATIVE) &&
-	    !(exc->flags & EXC_FLAG_NODIR) &&
-	    matched_negative_path)
-		exc = NULL;
 	return exc;
 }
 
