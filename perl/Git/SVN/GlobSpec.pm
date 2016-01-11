@@ -11,16 +11,20 @@ sub new {
 	my $die_msg = "Only one set of wildcard directories " .
 				"(e.g. '*' or '*/*/*') is supported: '$glob'\n";
 	for my $part (split(m|/|, $glob)) {
-		if ($part =~ /\*/ && $part ne "*") {
-			die "Invalid pattern in '$glob': $part\n";
-		} elsif ($pattern_ok && $part =~ /[{}]/ &&
+		if ($pattern_ok && $part =~ /[{}]/ &&
 			 $part !~ /^\{[^{}]+\}/) {
 			die "Invalid pattern in '$glob': $part\n";
 		}
-		if ($part eq "*") {
+		my $nstars = $part =~ tr/*//;
+		if ($nstars > 1) {
+			die "Only one '*' is allowed in a pattern: '$part'\n";
+		}
+		if ($part =~ /(.*)\*(.*)/) {
 			die $die_msg if $state eq "right";
+			my ($l, $r) = ($1, $2);
 			$state = "pattern";
-			push(@patterns, "[^/]*");
+			my $pat = quotemeta($l) . '[^/]*' . quotemeta($r);
+			push(@patterns, $pat);
 		} elsif ($pattern_ok && $part =~ /^\{(.*)\}$/) {
 			die $die_msg if $state eq "right";
 			$state = "pattern";

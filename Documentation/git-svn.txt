@@ -1034,6 +1034,8 @@ listed below are allowed:
 	url = http://server.org/svn
 	fetch = trunk/project-a:refs/remotes/project-a/trunk
 	branches = branches/*/project-a:refs/remotes/project-a/branches/*
+	branches = branches/release_*:refs/remotes/project-a/branches/release_*
+	branches = branches/re*se:refs/remotes/project-a/branches/*
 	tags = tags/*/project-a:refs/remotes/project-a/tags/*
 ------------------------------------------------------------------------
 
@@ -1043,6 +1045,16 @@ however the remote wildcard may be anywhere as long as it's an
 independent path component (surrounded by '/' or EOL).   This
 type of configuration is not automatically created by 'init' and
 should be manually entered with a text-editor or using 'git config'.
+
+Also note that only one asterisk is allowed per word. For example:
+
+	branches = branches/re*se:refs/remotes/project-a/branches/*
+
+will match branches 'release', 'rese', 're123se', however
+
+	branches = branches/re*s*e:refs/remotes/project-a/branches/*
+
+will produce an error.
 
 It is also possible to fetch a subset of branches or tags by using a
 comma-separated list of names within braces. For example:
