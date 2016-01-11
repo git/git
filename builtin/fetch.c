@@ -836,7 +836,7 @@ static void check_not_current_branch(struct ref *ref_map)
 static int truncate_fetch_head(void)
 {
 	const char *filename = git_path_fetch_head();
-	FILE *fp = fopen(filename, "w");
+	FILE *fp = fopen_for_writing(filename);
 
 	if (!fp)
 		return error(_("cannot open %s: %s\n"), filename, strerror(errno));
