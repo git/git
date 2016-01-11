@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jan 2016, #01; Mon, 4)
+Subject: What's cooking in git.git (Jan 2016, #02; Mon, 11)
 X-master-at: 754884255bb580df159e58defa81cdd30b5c430c
 X-next-at: ef7b32d4f2d070ec6e688815cb7d6b6c2bc843fb
 
-What's cooking in git.git (Jan 2016, #01; Mon, 4)
+What's cooking in git.git (Jan 2016, #02; Mon, 11)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,8 +12,17 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-Git 2.7 has been released.  Also, Git 2.6.5, hopefully the final
-maintenance release for 2.6.x series, has been released.
+It's been a week or so since Git 2.7 was released.  I'll draw the
+projected timeline for the next cycle (which I expect to be a
+shorter and lightweight cycle), reorder 'next' and possibly eject a
+few topics from it to give them a fresh slate to rebuild on, and
+then start the 2.7.x maintenance track soonish, but none of these
+has happened yet; I'm feeling behind X-<.
+
+Big thanks to Stephen Smith for picking up a few topics from the
+Stalled pile and reviving them.  And as always, thanks for the
+regular reviewers (you know who you are) for helping the topics
+move forward.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -23,43 +32,72 @@ repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* jk/notes-merge-from-anywhere (2015-12-29) 1 commit
- - notes: allow merging from arbitrary references
+* dw/signoff-doc (2016-01-05) 1 commit
+ - Expand documentation describing --signoff
 
- "git notes merge" used to limit the source of the merged notes tree
- to somewhere under refs/notes/ hierarchy, which was too limiting
- when inventing a workflow to exchange notes with remote
- repositories using remote-tracking notes trees (located in e.g.
- refs/remote-notes/ or somesuch).
-
- Needs review.
-
-
-* dk/reflog-walk-with-non-commit (2015-12-30) 1 commit
- - reflog-walk: don't segfault on non-commit sha1's in the reflog
-
- "git reflog" incorrectly assumed that all objects that used to be
- at the tip of a ref must be commits, which caused it to segfault.
-
- Needs a bit of tweak to the test?
- ($gmane/283245).
-
-
-* ew/send-email-mutt-alias-fix (2016-01-04) 1 commit
- - git-send-email: do not double-escape quotes from mutt
-
- "git send-email" was confused by escaped quotes stored in the alias
- files saved by "mutt".
+ The documentation has been updated to hint the connection between
+ the '--signoff' option and DCO.
 
  Will merge to 'next'.
 
 
-* jk/clang-pedantic (2016-01-04) 2 commits
- - bswap: add NO_UNALIGNED_LOADS define
- - avoid shifting signed integers 31 bits
+* ew/for-each-ref-doc (2016-01-05) 1 commit
+ - for-each-ref: document `creatordate` and `creator` fields
 
- A few unportable C construct have been spotted by clang compiler
- and have been fixed.
+ Will merge to 'next'.
+
+
+* sg/t6050-failing-editor-test-fix (2016-01-05) 1 commit
+ - t6050-replace: make failing editor test more robust
+
+ Will merge to 'next'.
+
+
+* js/dirname-basename (2016-01-11) 4 commits
+ - t0060: verify that basename() and dirname() work as expected
+ - compat/basename.c: provide a dirname() compatibility function
+ - compat/basename: make basename() conform to POSIX
+ - Refactor skipping DOS drive prefixes
+
+ dirname() emulation has been added, as Msys2 lacks it.
+
+ Will merge to 'next', 'master', and then to 'maint'.
+
+ The third-patch has an optional suggestion to make it easier to
+ follow; I'm slightly in favor but lack of a reroll for it is not a
+ showstopper, either.
+
+
+* js/fopen-harder (2016-01-11) 2 commits
+ - Handle more file writes correctly in shared repos
+ - commit: allow editing the commit message even in shared repos
+
+ Some codepaths used fopen(3) when opening a fixed path in $GIT_DIR
+ (e.g. COMMIT_EDITMSG) that is meant to be left after the command is
+ done.  This however did not work well if the repository is set to
+ be shared with core.sharedRepository and the umask of the previous
+ user is tighter.  Make them work better by calling unlink(2) and
+ retrying after fopen(3) fails with EPERM.
+
+ Will merge to 'next'.
+
+
+* nd/exclusion-regression-fix (2016-01-08) 1 commit
+ - Revert "dir.c: don't exclude whole dir prematurely if neg pattern may match"
+
+ The ignore mechanism saw a few regressions around untracked file
+ listing and sparse checkout selection areas in 2.7.0; the change
+ that is responsible for the regression has been reverted.
+
+ Will merge to 'next' and then to 'master'.
+
+
+* ss/clone-depth-single-doc (2016-01-08) 3 commits
+ - docs: clarify that --depth for git-fetch works with newly initialized repos
+ - docs: say "commits" in the --depth option wording for git-clone
+ - docs: clarify that passing --depth to git-clone implies --single-branch
+
+ Updates documents to clarify "git fetch --depth".
 
  Will merge to 'next'.
 
@@ -96,26 +134,6 @@ repositories listed at
  Will discard.
 
 
-* wp/sha1-name-negative-match (2015-06-08) 2 commits
- - sha1_name.c: introduce '^{/!-<negative pattern>}' notation
- - test for '!' handling in rev-parse's named commits
-
- Introduce "branch^{/!-<pattern>}" notation to name a commit
- reachable from branch that does not match the given pattern.
-
- Becoming tired of waiting for a reroll.
- ($gmane/271213).
- Anybody wants to help rerolling this?  Otherwise will discard.
-
-
-* ak/format-patch-odir-config (2015-06-19) 1 commit
- - format-patch: introduce format.outputDirectory configuration
-
- Becoming tired of waiting for a reroll.
- Anybody wants to help rerolling this?  Otherwise will discard.
- ($gmane/272180).
-
-
 * jc/diff-b-m (2015-02-23) 5 commits
  . WIPWIP
  . WIP: diff-b-m
@@ -134,6 +152,64 @@ repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* wp/sha1-name-negative-match (2016-01-11) 2 commits
+ - object name: introduce '^{/!-<negative pattern>}' notation
+ - test for '!' handling in rev-parse's named commits
+
+ Introduce "<branch>^{/!-<pattern>}" notation to name a commit
+ reachable from <branch> that does not match the given <pattern>.
+
+
+* ak/format-patch-odir-config (2016-01-11) 1 commit
+ . format-patch: introduce format.outputDirectory configuration
+
+ Allow "-o <dir>" option to be omitted on the command line of "git
+ format-patch" if you always use the same directory in your
+ workflow.
+
+ Left out of 'pu' for now as t4014 seems to break with this topic.
+
+
+* jk/notes-merge-from-anywhere (2015-12-29) 1 commit
+ - notes: allow merging from arbitrary references
+
+ "git notes merge" used to limit the source of the merged notes tree
+ to somewhere under refs/notes/ hierarchy, which was too limiting
+ when inventing a workflow to exchange notes with remote
+ repositories using remote-tracking notes trees (located in e.g.
+ refs/remote-notes/ or somesuch).
+
+ Needs review.
+
+
+* dk/reflog-walk-with-non-commit (2016-01-05) 1 commit
+ - reflog-walk: don't segfault on non-commit sha1's in the reflog
+
+ "git reflog" incorrectly assumed that all objects that used to be
+ at the tip of a ref must be commits, which caused it to segfault.
+
+ Will merge to 'next'.
+
+
+* ew/send-email-mutt-alias-fix (2016-01-04) 1 commit
+ - git-send-email: do not double-escape quotes from mutt
+
+ "git send-email" was confused by escaped quotes stored in the alias
+ files saved by "mutt".
+
+ Will merge to 'next'.
+
+
+* jk/clang-pedantic (2016-01-04) 2 commits
+ - bswap: add NO_UNALIGNED_LOADS define
+ - avoid shifting signed integers 31 bits
+
+ A few unportable C construct have been spotted by clang compiler
+ and have been fixed.
+
+ Will merge to 'next'.
+
+
 * ea/blame-progress (2015-12-16) 1 commit
   (merged to 'next' on 2015-12-22 at f8e8643)
  + blame: add support for --[no-]progress option
@@ -144,7 +220,7 @@ repositories listed at
  Will merge to 'master'.
 
 
-* dt/unpack-compare-entry-optim (2015-12-21) 1 commit
+* dt/unpack-compare-entry-optim (2016-01-05) 1 commit
  - do_compare_entry: use already-computed path
 
  Will merge to 'next'.
@@ -157,7 +233,9 @@ repositories listed at
  Will merge to 'next'.
 
 
-* jk/symbolic-ref (2015-12-29) 3 commits
+* jk/symbolic-ref (2016-01-11) 5 commits
+ - lock_ref_sha1_basic: handle REF_NODEREF with invalid refs
+ - checkout,clone: check return value of create_symref
  - create_symref: write reflog while holding lock
  - create_symref: use existing ref-lock code
  - create_symref: modernize variable names
@@ -182,7 +260,26 @@ repositories listed at
  Will merge to 'master'.
 
 
-* ep/update-command-substitution-style (2016-01-04) 51 commits
+* ep/update-command-substitution-style (2016-01-11) 70 commits
+ - t/t9001-send-email.sh: use the $( ... ) construct for command substitution
+ - t/t8003-blame-corner-cases.sh: use the $( ... ) construct for command substitution
+ - t/t7700-repack.sh: use the $( ... ) construct for command substitution
+ - t/t7602-merge-octopus-many.sh: use the $( ... ) construct for command substitution
+ - t/t7505-prepare-commit-msg-hook.sh: use the $( ... ) construct for command substitution
+ - t/t7504-commit-msg-hook.sh: use the $( ... ) construct for command substitution
+ - t/t7408-submodule-reference.sh: use the $( ... ) construct for command substitution
+ - t/t7406-submodule-update.sh: use the $( ... ) construct for command substitution
+ - t/t7103-reset-bare.sh: use the $( ... ) construct for command substitution
+ - t/t7006-pager.sh: use the $( ... ) construct for command substitution
+ - t/t7004-tag.sh: use the $( ... ) construct for command substitution
+ - t/t7003-filter-branch.sh: use the $( ... ) construct for command substitution
+ - t/t7001-mv.sh: use the $( ... ) construct for command substitution
+ - t/t6132-pathspec-exclude.sh: use the $( ... ) construct for command substitution
+ - t/t6032-merge-large-rename.sh: use the $( ... ) construct for command substitution
+ - t/t6015-rev-list-show-all-parents.sh: use the $( ... ) construct for command substitution
+ - t/t6002-rev-list-bisect.sh: use the $( ... ) construct for command substitution
+ - t/t6001-rev-list-graft.sh: use the $( ... ) construct for command substitution
+ - t/t5900-repo-selection.sh: use the $( ... ) construct for command substitution
  - t/t5710-info-alternate.sh: use the $( ... ) construct for command substitution
  - t/t5700-clone-reference.sh: use the $( ... ) construct for command substitution
  - t/t5601-clone.sh: use the $( ... ) construct for command substitution
@@ -236,7 +333,7 @@ repositories listed at
  - contrib/examples/git-commit.sh: use the $( ... ) construct for command substitution
 
  A shell script style update to change `command substitution` into
- $(command substitution).  Coverts contrib/ and an early half of t/
+ $(command substitution).  Coverts contrib/ and much of the t/
  directory contents.
 
  Will merge to 'next'.
@@ -296,7 +393,7 @@ repositories listed at
  Update the untracked cache subsystem and change its primary UI from
  "git update-index" to "git config".
 
- Getting there...
+ Still being discussed and worked on.
  $gmane/283080
 
 
@@ -352,7 +449,7 @@ repositories listed at
  Building on top of a few refs-backend preparatory series, LMDB
  based refs backend has been plugged into the system.
 
- Waiting for review.
+ Still being discussed and worked on.
 
 
 * dw/subtree-split-do-not-drop-merge (2015-12-10) 1 commit
@@ -383,17 +480,22 @@ repositories listed at
  Will merge to 'next'.
 
 
-* kn/ref-filter-atom-parsing (2015-12-11) 10 commits
+* kn/ref-filter-atom-parsing (2016-01-05) 15 commits
  - ref-filter: introduce objectname_atom_parser()
  - ref-filter: introduce contents_atom_parser()
  - ref-filter: introduce remote_ref_atom_parser()
+ - ref-filter: align: introduce long-form syntax
+ - ref-filter: convert variable 'width' to an unsigned int
+ - ref-filter: introduce parse_align_position()
  - ref-filter: introduce align_atom_parser()
- - strbuf: introduce strbuf_split_str_without_term()
  - ref-filter: introduce color_atom_parser()
  - ref-filter: skip deref specifier in match_atom_name()
- - ref-filter: bump match_atom() name to the top
+ - ref-fitler: bump match_atom() name to the top
+ - ref-filter: introduce parsing functions for each valid atom
  - ref-filter: introduce struct used_atom
- - ref-filter: introduce a parsing function for each atom in valid_atom
+ - ref-filter: bump 'used_atom' and related code to the top
+ - ref-filter: use strbuf_split_str_omit_term()
+ - strbuf: introduce strbuf_split_str_omit_term()
 
  Refactoring of ref-filter's format-parsing code, in preparation
  for "branch --format" and friends.
@@ -401,10 +503,7 @@ repositories listed at
  This replaces (for now) kn/for-each-ref-remainder, which will be built
  on top.
 
- Reviewed mostly by Eric.
-
- Waiting for a reroll.
- ($gmane/281180).
+ Still being discussed and worked on.
 
 
 * bb/merge-marker-crlf (2015-11-24) 1 commit
@@ -457,13 +556,12 @@ repositories listed at
  Needs review.
 
 
-* tb/ls-files-eol (2015-12-16) 1 commit
- - ls-files: Add eol diagnostics
+* tb/ls-files-eol (2016-01-07) 1 commit
+ - ls-files: add eol diagnostics
 
  Add options to ls-files to help diagnose end-of-line problems.
 
- Expecting a reroll.
- ($gmane/282537)
+ Needs review.
 
 
 * ec/annotate-deleted (2015-11-20) 1 commit
@@ -669,25 +767,3 @@ repositories listed at
  ($gmane/282594)
 
  Will keep in 'next'.
-
---------------------------------------------------
-[Discarded]
-
-* kn/for-each-branch-remainder (2015-10-02) 9 commits
- . branch: implement '--format' option
- . branch: use ref-filter printing APIs
- . ref-filter: make %(upstream:track) prints "[gone]" for invalid upstreams
- . ref-filter: introduce format_ref_array_item()
- . ref-filter: adopt get_head_description() from branch.c
- . ref-filter: modify "%(objectname:short)" to take length
- . ref-filter: add support for %(path) atom
- . ref-filter: implement %(if:equals=<string>) and %(if:notequals=<string>)
- . ref-filter: implement %(if), %(then), and %(else) atoms
-
- More unification among "branch -l", "tag -l" and "for-each-ref --format".
-
- Ejected from pu for now, as a re-roll should come on top of
- kn/ref-filter-atom-parsing.
-
- Expecting a reroll.
- ($gmane/278926)
