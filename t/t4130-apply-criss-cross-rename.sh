@@ -14,8 +14,8 @@ create_file() {
 
 test_expect_success 'setup' '
 	create_file file1 "File1 contents" &&
-	create_file file2 "File2 more contents" &&
-	create_file file3 "File3 even more contents" &&
+	create_file file2 "File2 contents" &&
+	create_file file3 "File3 contents" &&
 	git add file1 file2 file3 &&
 	git commit -m 1
 '
