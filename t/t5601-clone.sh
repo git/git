@@ -65,6 +65,29 @@ test_expect_success 'clone respects GIT_WORK_TREE' '
 
 '
 
+test_expect_success 'clone from hooks' '
+
+	test_create_repo r0 &&
+	cd r0 &&
+	test_commit initial &&
+	cd .. &&
+	git init r1 &&
+	cd r1 &&
+	cat >.git/hooks/pre-commit <<-\EOF &&
+	#!/bin/sh
+	git clone ../r0 ../r2
+	exit 1
+	EOF
+	chmod u+x .git/hooks/pre-commit &&
+	: >file &&
+	git add file &&
+	test_must_fail git commit -m invoke-hook &&
+	cd .. &&
+	test_cmp r0/.git/HEAD r2/.git/HEAD &&
+	test_cmp r0/initial.t r2/initial.t
+
+'
+
 test_expect_success 'clone creates intermediate directories' '
 
 	git clone src long/path/to/dst &&
