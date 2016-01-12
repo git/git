@@ -43,7 +43,7 @@ test_expect_success \
 	echo fake: "$@"
 	EOF
 	chmod +x "fake browser" &&
-	git config browser.w3m.path "`pwd`/fake browser" &&
+	git config browser.w3m.path "$(pwd)/fake browser" &&
 	test_web_browse w3m http://example.com/foo
 '
 
