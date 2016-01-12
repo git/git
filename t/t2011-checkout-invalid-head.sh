@@ -19,4 +19,10 @@ test_expect_success 'checkout master from invalid HEAD' '
 	git checkout master --
 '
 
+test_expect_success 'checkout notices failure to lock HEAD' '
+	test_when_finished "rm -f .git/HEAD.lock" &&
+	>.git/HEAD.lock &&
+	test_must_fail git checkout -b other
+'
+
 test_done
