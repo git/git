@@ -25,4 +25,37 @@ test_expect_success 'checkout notices failure to lock HEAD' '
 	test_must_fail git checkout -b other
 '
 
+test_expect_success 'create ref directory/file conflict scenario' '
+	git update-ref refs/heads/outer/inner master &&
+
+	# do not rely on symbolic-ref to get a known state,
+	# as it may use the same code we are testing
+	reset_to_df () {
+		echo "ref: refs/heads/outer" >.git/HEAD
+	}
+'
+
+test_expect_success 'checkout away from d/f HEAD (unpacked, to branch)' '
+	reset_to_df &&
+	git checkout master
+'
+
+test_expect_success 'checkout away from d/f HEAD (unpacked, to detached)' '
+	reset_to_df &&
+	git checkout --detach master
+'
+
+test_expect_success 'pack refs' '
+	git pack-refs --all --prune
+'
+
+test_expect_success 'checkout away from d/f HEAD (packed, to branch)' '
+	reset_to_df &&
+	git checkout master
+'
+
+test_expect_success 'checkout away from d/f HEAD (packed, to detached)' '
+	reset_to_df &&
+	git checkout --detach master
+'
 test_done
