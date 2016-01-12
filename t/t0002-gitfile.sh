@@ -99,7 +99,7 @@ test_expect_success 'check rev-list' '
 	test "$SHA" = "$(git rev-list HEAD)"
 '
 
-test_expect_success 'setup_git_dir twice in subdir' '
+test_expect_failure 'setup_git_dir twice in subdir' '
 	git init sgd &&
 	(
 		cd sgd &&
