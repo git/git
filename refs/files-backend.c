@@ -1840,12 +1840,17 @@ static int verify_lock(struct ref_lock *lock,
 	if (read_ref_full(lock->ref_name,
 			  mustexist ? RESOLVE_REF_READING : 0,
 			  lock->old_oid.hash, NULL)) {
-		int save_errno = errno;
-		strbuf_addf(err, "can't verify ref %s", lock->ref_name);
-		errno = save_errno;
-		return -1;
+		if (old_sha1) {
+			int save_errno = errno;
+			strbuf_addf(err, "can't verify ref %s", lock->ref_name);
+			errno = save_errno;
+			return -1;
+		} else {
+			hashclr(lock->old_oid.hash);
+			return 0;
+		}
 	}
-	if (hashcmp(lock->old_oid.hash, old_sha1)) {
+	if (old_sha1 && hashcmp(lock->old_oid.hash, old_sha1)) {
 		strbuf_addf(err, "ref %s is at %s but expected %s",
 			    lock->ref_name,
 			    sha1_to_hex(lock->old_oid.hash),
@@ -1985,7 +1990,7 @@ static struct ref_lock *lock_ref_sha1_basic(const char *refname,
 			goto error_return;
 		}
 	}
-	if (old_sha1 && verify_lock(lock, old_sha1, mustexist, err)) {
+	if (verify_lock(lock, old_sha1, mustexist, err)) {
 		last_errno = errno;
 		goto error_return;
 	}
