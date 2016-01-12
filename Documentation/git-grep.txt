@@ -61,6 +61,10 @@ grep.threads::
 grep.fullName::
 	If set to true, enable '--full-name' option by default.
 
+grep.fallbackToNoIndex::
+	If set to true, fall back to git grep --no-index if git grep
+	is executed outside of a git repository.  Defaults to false.
+
 
 OPTIONS
 -------
