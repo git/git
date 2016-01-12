@@ -1,0 +1,44 @@
+Git 2.8 Release Notes
+=====================
+
+Updates since v2.7
+------------------
+
+UI, Workflows & Features
+
+ * "branch --delete" has "branch -d" but "push --delete" does not.
+   (merge 38a2559 ps/push-delete-option later to maint).
+
+ * "git blame" learned to produce the progress eye-candy when it takes
+   too much time before emitting the first line of the result.
+   (merge aba37f4 ea/blame-progress later to maint).
+
+ * "git grep" can now be configured (or told from the command line)
+   how many threads to use when searching in the working tree files.
+   (merge 89f09dd vl/grep-configurable-threads later to maint).
+
+
+Performance, Internal Implementation, Development Support etc.
+
+ * Add a framework to spawn a group of processes in parallel, and use
+   it to run "git fetch --recurse-submodules" in parallel.
+
+ * A slight update to the Makefile to mark "phoney" targets
+   as such correctly.
+
+
+Also contains various documentation updates and code clean-ups.
+
+
+Fixes since v2.7
+----------------
+
+Unless otherwise noted, all the fixes since v2.7 in the maintenance
+track are contained in this release (see the maintenance releases'
+notes for details).
+
+ * An earlier change in 2.5.x-era broke users' hooks and aliases by
+   exporting GIT_WORK_TREE to point at the root of the working tree,
+   interfering when they tried to use a different working tree without
+   setting GIT_WORK_TREE environment themselves.
+   (merge df1e6ea nd/stop-setenv-work-tree later to maint).
