@@ -564,9 +564,7 @@ void clear_exclude_list(struct exclude_list *el)
 	free(el->excludes);
 	free(el->filebuf);
 
-	el->nr = 0;
-	el->excludes = NULL;
-	el->filebuf = NULL;
+	memset(el, 0, sizeof(*el));
 }
 
 static void trim_trailing_spaces(char *buf)
