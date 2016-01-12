@@ -32,6 +32,10 @@ Repository:	https://github.com/quizzlo/git-po-it/
 Leader:		Marco Paolone <marcopaolone AT gmail.com>
 Members:	Stefano Lattarini <stefano.lattarini AT gmail.com>
 
+Language:	ko (Korean)
+Repository:	https://github.com/changwoo/git-l10n-ko/
+Leader:		Changwoo Ryu <cwryu@debian.org>
+
 Language:	pt_PT (Portuguese - Portugal)
 Repository:	https://github.com/marcomsousa/git-l10n-pt_PT/
 Leader:		Marco Sousa <marcomsousa AT gmail.com>
