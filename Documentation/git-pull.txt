@@ -101,7 +101,7 @@ Options related to merging
 include::merge-options.txt[]
 
 -r::
---rebase[=false|true|preserve]::
+--rebase[=false|true|preserve|interactive]::
 	When true, rebase the current branch on top of the upstream
 	branch after fetching. If there is a remote-tracking branch
 	corresponding to the upstream branch and the upstream branch
@@ -112,6 +112,8 @@ When set to preserve, rebase with the `--preserve-merges` option passed
 to `git rebase` so that locally created merge commits will not be flattened.
 +
 When false, merge the current branch into the upstream branch.
++
+When `interactive`, enable the interactive mode of rebase.
 +
 See `pull.rebase`, `branch.<name>.rebase` and `branch.autoSetupRebase` in
 linkgit:git-config[1] if you want to make `git pull` always use
