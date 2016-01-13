@@ -285,6 +285,23 @@ EOF
 	test_cmp expected actual
 '
 
+test_expect_success 'ensure unknown garbage kept with gc' '
+	test_when_finished "rm -f .git/objects/pack/fake*" &&
+	test_when_finished "rm -f .git/objects/pack/foo*" &&
+	: >.git/objects/pack/foo.keep &&
+	: >.git/objects/pack/fake.pack &&
+	: >.git/objects/pack/fake2.foo &&
+	git gc &&
+	git count-objects -v 2>stderr &&
+	grep "^warning:" stderr | sort >actual &&
+	cat >expected <<\EOF &&
+warning: garbage found: .git/objects/pack/fake2.foo
+warning: no corresponding .idx or .pack: .git/objects/pack/foo.keep
+warning: no corresponding .idx: .git/objects/pack/fake.pack
+EOF
+	test_cmp expected actual
+'
+
 test_expect_success 'prune .git/shallow' '
 	SHA1=`echo hi|git commit-tree HEAD^{tree}` &&
 	echo $SHA1 >.git/shallow &&
