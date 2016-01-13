@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jan 2016, #02; Mon, 11)
-X-master-at: 754884255bb580df159e58defa81cdd30b5c430c
-X-next-at: ef7b32d4f2d070ec6e688815cb7d6b6c2bc843fb
+Subject: What's cooking in git.git (Jan 2016, #03; Wed, 13)
+X-master-at: fc10eb5b87a75af2cb93a3932897572f2c544915
+X-next-at: dc08a1951c8b3cd3e311ff0c2612db06ab28ae13
 
-What's cooking in git.git (Jan 2016, #02; Mon, 11)
+What's cooking in git.git (Jan 2016, #03; Wed, 13)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,17 +12,9 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-It's been a week or so since Git 2.7 was released.  I'll draw the
-projected timeline for the next cycle (which I expect to be a
-shorter and lightweight cycle), reorder 'next' and possibly eject a
-few topics from it to give them a fresh slate to rebuild on, and
-then start the 2.7.x maintenance track soonish, but none of these
-has happened yet; I'm feeling behind X-<.
-
-Big thanks to Stephen Smith for picking up a few topics from the
-Stalled pile and reviving them.  And as always, thanks for the
-regular reviewers (you know who you are) for helping the topics
-move forward.
+The tip of 'next' has been rewound.  A handful of topics have
+graduated to 'master'.  A few topics that are fixes to 2.7.0 started
+cooking in 'next'.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -30,76 +22,178 @@ repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
+[Graduated to "master"]
+
+* ea/blame-progress (2015-12-16) 1 commit
+  (merged to 'next' on 2015-12-22 at f8e8643)
+ + blame: add support for --[no-]progress option
+
+ Originally merged to 'next' on 2015-12-22
+
+ "git blame" learned to produce the progress eye-candy when it takes
+ too much time before emitting the first line of the result.
+
+
+* ep/make-phoney (2015-12-16) 1 commit
+  (merged to 'next' on 2015-12-22 at 27c7593)
+ + Makefile: add missing phony target
+
+ Originally merged to 'next' on 2015-12-22
+
+ A slight update to the Makefile.
+
+
+* nd/stop-setenv-work-tree (2015-12-22) 1 commit
+  (merged to 'next' on 2015-12-22 at 6d7bb0c)
+ + Revert "setup: set env $GIT_WORK_TREE when work tree is set, like $GIT_DIR"
+ (this branch is used by nd/clear-gitenv-upon-use-of-alias.)
+
+ Originally merged to 'next' on 2015-12-22
+
+ An earlier change in 2.5.x-era broke users' hooks and aliases by
+ exporting GIT_WORK_TREE to point at the root of the working tree,
+ interfering when they tried to use a different working tree without
+ setting GIT_WORK_TREE environment themselves.
+
+
+* ps/push-delete-option (2015-12-16) 2 commits
+  (merged to 'next' on 2015-12-22 at d83cc1d)
+ + push: add '-d' as shorthand for '--delete'
+ + push: add '--delete' flag to synopsis
+
+ Originally merged to 'next' on 2015-12-22
+
+ "branch --delete" has "branch -d" but "push --delete" does not.
+
+
+* sb/submodule-parallel-fetch (2015-12-16) 7 commits
+  (merged to 'next' on 2015-12-22 at 44e84ff)
+ + submodules: allow parallel fetching, add tests and documentation
+ + fetch_populated_submodules: use new parallel job processing
+ + run-command: add an asynchronous parallel child processor
+ + sigchain: add command to pop all common signals
+ + strbuf: add strbuf_read_once to read without blocking
+ + xread: poll on non blocking fds
+ + submodule.c: write "Fetching submodule <foo>" to stderr
+ (this branch is used by sb/submodule-parallel-update.)
+
+ Originally merged to 'next' on 2015-12-22
+
+ Add a framework to spawn a group of processes in parallel, and use
+ it to run "git fetch --recurse-submodules" in parallel.
+
+ Rerolled and this seems to be a lot cleaner.  The merge of the
+ earlier one to 'next' has been reverted.
+
+
+* vl/grep-configurable-threads (2015-12-16) 3 commits
+  (merged to 'next' on 2015-12-22 at 8954705)
+ + grep: add --threads=<num> option and grep.threads configuration
+ + grep: slight refactoring to the code that disables threading
+ + grep: allow threading even on a single-core machine
+
+ Originally merged to 'next' on 2015-12-22
+
+ "git grep" can now be configured (or told from the command line)
+ how many threads to use when searching in the working tree files.
+
+--------------------------------------------------
 [New Topics]
 
-* dw/signoff-doc (2016-01-05) 1 commit
- - Expand documentation describing --signoff
+* ho/gitweb-squelch-undef-warning (2016-01-12) 1 commit
+  (merged to 'next' on 2016-01-12 at ef4fc5f)
+ + gitweb: squelch "uninitialized value" warning
 
- The documentation has been updated to hint the connection between
- the '--signoff' option and DCO.
+ Asking gitweb for a nonexistent commit left a warning in the server
+ log.
 
- Will merge to 'next'.
+ Somebody may want to follow this up with a new test, perhaps?
+ IIRC, we do test that no Perl warnings are given to the server log,
+ so this should have been caught if our test coverage were good.
 
-
-* ew/for-each-ref-doc (2016-01-05) 1 commit
- - for-each-ref: document `creatordate` and `creator` fields
-
- Will merge to 'next'.
-
-
-* sg/t6050-failing-editor-test-fix (2016-01-05) 1 commit
- - t6050-replace: make failing editor test more robust
-
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* js/dirname-basename (2016-01-11) 4 commits
- - t0060: verify that basename() and dirname() work as expected
- - compat/basename.c: provide a dirname() compatibility function
- - compat/basename: make basename() conform to POSIX
- - Refactor skipping DOS drive prefixes
+* tg/grep-no-index-fallback (2016-01-12) 2 commits
+  (merged to 'next' on 2016-01-12 at 8960bdd)
+ + builtin/grep: add grep.fallbackToNoIndex config
+ + t7810: correct --no-index test
 
- dirname() emulation has been added, as Msys2 lacks it.
+ "git grep" by default does not fall back to its --no-index
+ behaviour outside a directory under Git's control (otherwise the
+ user may by mistake end up running a huge recursive search); with a
+ new configuration (set in $HOME/.gitconfig--by definition this
+ cannot be set in the config file per project), this safety can be
+ disabled.
 
- Will merge to 'next', 'master', and then to 'maint'.
-
- The third-patch has an optional suggestion to make it easier to
- follow; I'm slightly in favor but lack of a reroll for it is not a
- showstopper, either.
+ Will merge to 'master'.
 
 
-* js/fopen-harder (2016-01-11) 2 commits
- - Handle more file writes correctly in shared repos
- - commit: allow editing the commit message even in shared repos
+* js/pull-rebase-i (2016-01-13) 3 commits
+ - completion: add missing branch.*.rebase values
+ - remote: handle the config setting branch.*.rebase=interactive
+ - pull: allow interactive rebase with --rebase=interactive
 
- Some codepaths used fopen(3) when opening a fixed path in $GIT_DIR
- (e.g. COMMIT_EDITMSG) that is meant to be left after the command is
- done.  This however did not work well if the repository is set to
- be shared with core.sharedRepository and the umask of the previous
- user is tighter.  Make them work better by calling unlink(2) and
- retrying after fopen(3) fails with EPERM.
+ "git pull --rebase" has been extended to allow invoking
+ "rebase -i".
 
  Will merge to 'next'.
 
 
-* nd/exclusion-regression-fix (2016-01-08) 1 commit
- - Revert "dir.c: don't exclude whole dir prematurely if neg pattern may match"
+* jk/ok-to-fail-gc-auto-in-rebase (2016-01-13) 1 commit
+ - rebase: ignore failures from "gc --auto"
 
- The ignore mechanism saw a few regressions around untracked file
- listing and sparse checkout selection areas in 2.7.0; the change
- that is responsible for the regression has been reverted.
-
- Will merge to 'next' and then to 'master'.
-
-
-* ss/clone-depth-single-doc (2016-01-08) 3 commits
- - docs: clarify that --depth for git-fetch works with newly initialized repos
- - docs: say "commits" in the --depth option wording for git-clone
- - docs: clarify that passing --depth to git-clone implies --single-branch
-
- Updates documents to clarify "git fetch --depth".
+ "git rebase", unlike all other callers of "gc --auto", did not
+ ignore the exit code from "gc --auto".
 
  Will merge to 'next'.
+
+
+* js/close-packs-before-gc (2016-01-13) 4 commits
+ - receive-pack: release pack files before garbage-collecting
+ - merge: release pack files before garbage-collecting
+ - am: release pack files before garbage-collecting
+ - fetch: release pack files before garbage-collecting
+
+ Many codepaths that run "gc --auto" before exiting kept packfiles
+ mapped and left the file descriptors to them open, which was not
+ friendly to systems that cannot remove files that are open.  They
+ now close the packs before doing so.
+
+ Will merge to 'next'.
+
+
+* js/msys2 (2016-01-13) 5 commits
+ - compat/winansi: support compiling with MSys2
+ - compat/mingw: support MSys2-based MinGW build
+ - nedmalloc: allow compiling with MSys2's compiler
+ - config.mak.uname: supporting 64-bit MSys2
+ - config.mak.uname: support MSys2
+
+ Beginning of the upstreaming process of Git for Windows effort.
+
+ Waiting for review.
+ ($gmane/283975).
+
+
+* rp/p4-filetype-change (2016-01-13) 1 commit
+ - git-p4.py: add support for filetype change
+
+ Will merge to 'next'.
+
+
+* tk/interpret-trailers-in-place (2016-01-13) 2 commits
+ - interpret-trailers: add option for in-place editing
+ - trailer: use fprintf instead of printf
+
+ "interpret-trailers" has been taught to optionally update a file in
+ place, instead of always writing the result to the standard output.
+
+ Test may need to be updated to ensure a failing rewrite does not
+ clobber the original input.
+
+ Waiting for review.
+ ($gmane/283959).
 
 --------------------------------------------------
 [Stalled]
@@ -152,22 +246,104 @@ repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* wp/sha1-name-negative-match (2016-01-11) 2 commits
+* dw/signoff-doc (2016-01-05) 1 commit
+  (merged to 'next' on 2016-01-12 at 1b08b48)
+ + Expand documentation describing --signoff
+
+ The documentation has been updated to hint the connection between
+ the '--signoff' option and DCO.
+
+ Will merge to 'master'.
+
+
+* ew/for-each-ref-doc (2016-01-05) 1 commit
+  (merged to 'next' on 2016-01-12 at e5c4e75)
+ + for-each-ref: document `creatordate` and `creator` fields
+
+ Will merge to 'master'.
+
+
+* sg/t6050-failing-editor-test-fix (2016-01-05) 1 commit
+  (merged to 'next' on 2016-01-12 at dc08a19)
+ + t6050-replace: make failing editor test more robust
+
+ Will merge to 'master'.
+
+
+* js/dirname-basename (2016-01-12) 4 commits
+  (merged to 'next' on 2016-01-12 at c3c970a)
+ + t0060: verify that basename() and dirname() work as expected
+ + compat/basename.c: provide a dirname() compatibility function
+ + compat/basename: make basename() conform to POSIX
+ + Refactor skipping DOS drive prefixes
+
+ dirname() emulation has been added, as Msys2 lacks it.
+
+ The test needs to be loosened to allow implementation defined
+ behaviour; currently it fails on Macs.
+
+ Waiting for an update.
+ ($gmane/283968).
+
+
+* js/fopen-harder (2016-01-11) 2 commits
+  (merged to 'next' on 2016-01-12 at c6ef194)
+ + Handle more file writes correctly in shared repos
+ + commit: allow editing the commit message even in shared repos
+
+ Some codepaths used fopen(3) when opening a fixed path in $GIT_DIR
+ (e.g. COMMIT_EDITMSG) that is meant to be left after the command is
+ done.  This however did not work well if the repository is set to
+ be shared with core.sharedRepository and the umask of the previous
+ user is tighter.  Make them work better by calling unlink(2) and
+ retrying after fopen(3) fails with EPERM.
+
+ Will merge to 'master'.
+
+
+* nd/exclusion-regression-fix (2016-01-08) 1 commit
+  (merged to 'next' on 2016-01-12 at 0eb98a5)
+ + Revert "dir.c: don't exclude whole dir prematurely if neg pattern may match"
+
+ The ignore mechanism saw a few regressions around untracked file
+ listing and sparse checkout selection areas in 2.7.0; the change
+ that is responsible for the regression has been reverted.
+
+ Will merge to 'master'.
+
+
+* ss/clone-depth-single-doc (2016-01-08) 3 commits
+  (merged to 'next' on 2016-01-12 at 16ded8c)
+ + docs: clarify that --depth for git-fetch works with newly initialized repos
+ + docs: say "commits" in the --depth option wording for git-clone
+ + docs: clarify that passing --depth to git-clone implies --single-branch
+
+ Updates documents to clarify "git fetch --depth".
+
+ Will merge to 'master'.
+
+
+* wp/sha1-name-negative-match (2016-01-13) 2 commits
  - object name: introduce '^{/!-<negative pattern>}' notation
  - test for '!' handling in rev-parse's named commits
 
  Introduce "<branch>^{/!-<pattern>}" notation to name a commit
  reachable from <branch> that does not match the given <pattern>.
 
+ A questionable corner case where commit has no message remains.
 
-* ak/format-patch-odir-config (2016-01-11) 1 commit
- . format-patch: introduce format.outputDirectory configuration
+ Waiting for review.
+ ($gmane/283971)
+
+
+* ak/format-patch-odir-config (2016-01-13) 1 commit
+ - format-patch: introduce format.outputDirectory configuration
 
  Allow "-o <dir>" option to be omitted on the command line of "git
  format-patch" if you always use the same directory in your
  workflow.
 
- Left out of 'pu' for now as t4014 seems to break with this topic.
+ Will merge to 'next'.
 
 
 * jk/notes-merge-from-anywhere (2015-12-29) 1 commit
@@ -183,39 +359,32 @@ repositories listed at
 
 
 * dk/reflog-walk-with-non-commit (2016-01-05) 1 commit
- - reflog-walk: don't segfault on non-commit sha1's in the reflog
+  (merged to 'next' on 2016-01-12 at 5f7b10e)
+ + reflog-walk: don't segfault on non-commit sha1's in the reflog
 
  "git reflog" incorrectly assumed that all objects that used to be
  at the tip of a ref must be commits, which caused it to segfault.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * ew/send-email-mutt-alias-fix (2016-01-04) 1 commit
- - git-send-email: do not double-escape quotes from mutt
+  (merged to 'next' on 2016-01-12 at 84d1329)
+ + git-send-email: do not double-escape quotes from mutt
 
  "git send-email" was confused by escaped quotes stored in the alias
  files saved by "mutt".
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * jk/clang-pedantic (2016-01-04) 2 commits
- - bswap: add NO_UNALIGNED_LOADS define
- - avoid shifting signed integers 31 bits
+  (merged to 'next' on 2016-01-12 at b5be271)
+ + bswap: add NO_UNALIGNED_LOADS define
+ + avoid shifting signed integers 31 bits
 
  A few unportable C construct have been spotted by clang compiler
  and have been fixed.
-
- Will merge to 'next'.
-
-
-* ea/blame-progress (2015-12-16) 1 commit
-  (merged to 'next' on 2015-12-22 at f8e8643)
- + blame: add support for --[no-]progress option
-
- "git blame" learned to produce the progress eye-candy when it takes
- too much time before emitting the first line of the result.
 
  Will merge to 'master'.
 
@@ -227,14 +396,16 @@ repositories listed at
 
 
 * jk/pack-revindex (2015-12-21) 2 commits
- - pack-revindex: store entries directly in packed_git
- - pack-revindex: drop hash table
+  (merged to 'next' on 2016-01-12 at 2e39a16)
+ + pack-revindex: store entries directly in packed_git
+ + pack-revindex: drop hash table
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* jk/symbolic-ref (2016-01-11) 5 commits
+* jk/symbolic-ref (2016-01-13) 6 commits
  - lock_ref_sha1_basic: handle REF_NODEREF with invalid refs
+ - lock_ref_sha1_basic: always fill old_oid while holding lock
  - checkout,clone: check return value of create_symref
  - create_symref: write reflog while holding lock
  - create_symref: use existing ref-lock code
@@ -247,20 +418,29 @@ repositories listed at
  Will merge to 'next'.
 
 
-* nd/stop-setenv-work-tree (2015-12-22) 1 commit
-  (merged to 'next' on 2015-12-22 at 6d7bb0c)
- + Revert "setup: set env $GIT_WORK_TREE when work tree is set, like $GIT_DIR"
- (this branch is used by nd/clear-gitenv-upon-use-of-alias.)
-
- An earlier change in 2.5.x-era broke users' hooks and aliases by
- exporting GIT_WORK_TREE to point at the root of the working tree,
- interfering when they tried to use a different working tree without
- setting GIT_WORK_TREE environment themselves.
-
- Will merge to 'master'.
-
-
-* ep/update-command-substitution-style (2016-01-11) 70 commits
+* ep/shell-command-substitution-style (2016-01-12) 92 commits
+ - t9901-git-web--browse.sh: use the $( ... ) construct for command substitution
+ - t9501-gitweb-standalone-http-status.sh: use the $( ... ) construct for command substitution
+ - t9350-fast-export.sh: use the $( ... ) construct for command substitution
+ - t9300-fast-import.sh: use the $( ... ) construct for command substitution
+ - t9150-svk-mergetickets.sh: use the $( ... ) construct for command substitution
+ - t9145-git-svn-master-branch.sh: use the $( ... ) construct for command substitution
+ - t9138-git-svn-authors-prog.sh: use the $( ... ) construct for command substitution
+ - t9137-git-svn-dcommit-clobber-series.sh: use the $( ... ) construct for command substitution
+ - t9132-git-svn-broken-symlink.sh: use the $( ... ) construct for command substitution
+ - t9130-git-svn-authors-file.sh: use the $( ... ) construct for command substitution
+ - t9129-git-svn-i18n-commitencoding.sh: use the $( ... ) construct for command substitution
+ - t9119-git-svn-info.sh: use the $( ... ) construct for command substitution
+ - t9118-git-svn-funky-branch-names.sh: use the $( ... ) construct for command substitution
+ - t9114-git-svn-dcommit-merge.sh: use the $( ... ) construct for command substitution
+ - t9110-git-svn-use-svm-props.sh: use the $( ... ) construct for command substitution
+ - t9109-git-svn-multi-glob.sh: use the $( ... ) construct for command substitution
+ - t9108-git-svn-glob.sh: use the $( ... ) construct for command substitution
+ - t9107-git-svn-migrate.sh: use the $( ... ) construct for command substitution
+ - t9105-git-svn-commit-diff.sh: use the $( ... ) construct for command substitution
+ - t9104-git-svn-follow-parent.sh: use the $( ... ) construct for command substitution
+ - t9101-git-svn-props.sh: use the $( ... ) construct for command substitution
+ - t9100-git-svn-basic.sh: use the $( ... ) construct for command substitution
  - t/t9001-send-email.sh: use the $( ... ) construct for command substitution
  - t/t8003-blame-corner-cases.sh: use the $( ... ) construct for command substitution
  - t/t7700-repack.sh: use the $( ... ) construct for command substitution
@@ -340,33 +520,36 @@ repositories listed at
 
 
 * nd/dir-exclude-cleanup (2015-12-28) 1 commit
- - dir.c: clean the entire struct in clear_exclude_list()
+  (merged to 'next' on 2016-01-12 at e6584c9)
+ + dir.c: clean the entire struct in clear_exclude_list()
 
  The "exclude_list" structure has the usual "alloc, nr" pair of
  fields to be used by ALLOC_GROW(), but clear_exclude_list() forgot
  to reset 'alloc' to 0 when it cleared 'nr' and discarded the
  managed array.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * ss/user-manual (2015-12-30) 4 commits
- - user-manual: add addition gitweb information
- - user-manual: add section documenting shallow clones
- - glossary: define the term shallow clone
- - user-manual: remove temporary branch entry from todo list
+  (merged to 'next' on 2016-01-12 at c7f0328)
+ + user-manual: add addition gitweb information
+ + user-manual: add section documenting shallow clones
+ + glossary: define the term shallow clone
+ + user-manual: remove temporary branch entry from todo list
 
  Drop a few old "todo" items by deciding that the change one of them
  suggests is not such a good idea, and doing the change the other
  one suggested to do.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * nd/ita-cleanup (2015-12-28) 3 commits
- - grep: make it clear i-t-a entries are ignored
- - add and use a convenience macro ce_intent_to_add()
- - blame: remove obsolete comment
+  (merged to 'next' on 2016-01-12 at 008a6e3)
+ + grep: make it clear i-t-a entries are ignored
+ + add and use a convenience macro ce_intent_to_add()
+ + blame: remove obsolete comment
 
  Paths that have been told the index about with "add -N" are not
  quite yet in the index, but a few commands behaved as if they
@@ -375,7 +558,7 @@ repositories listed at
  Here are only the obviously correct bits; some other changes were
  in the posted series, but not quite ready to be queued here.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * cc/untracked (2015-12-29) 10 commits
@@ -397,59 +580,34 @@ repositories listed at
  $gmane/283080
 
 
-* ep/make-phoney (2015-12-16) 1 commit
-  (merged to 'next' on 2015-12-22 at 27c7593)
- + Makefile: add missing phony target
-
- A slight update to the Makefile.
-
- Will merge to 'master'.
-
-
-* vl/grep-configurable-threads (2015-12-16) 3 commits
-  (merged to 'next' on 2015-12-22 at 8954705)
- + grep: add --threads=<num> option and grep.threads configuration
- + grep: slight refactoring to the code that disables threading
- + grep: allow threading even on a single-core machine
-
- "git grep" can now be configured (or told from the command line)
- how many threads to use when searching in the working tree files.
-
- Will merge to 'master'.
-
-
-* ps/push-delete-option (2015-12-16) 2 commits
-  (merged to 'next' on 2015-12-22 at d83cc1d)
- + push: add '-d' as shorthand for '--delete'
- + push: add '--delete' flag to synopsis
-
- "branch --delete" has "branch -d" but "push --delete" does not.
-
- Will merge to 'master'.
-
-
-* dt/refs-backend-lmdb (2015-12-04) 16 commits
- - refs: tests for lmdb backend
- - refs: add LMDB refs backend
- - refs: allow ref backend to be set for clone
- - init: allow alternate backends to be set for new repos
- - refs: always handle non-normal refs in files backend
- - refs: move duplicate check to common code
- - refs: make lock generic
- - refs: add method to rename refs
- - refs: add methods to init refs backend and db
- - refs: add method for delete_refs
- - refs: add method for initial ref transaction commit
- - refs: add methods for reflog
- - refs: add do_for_each_per_worktree_ref
- - refs: add methods for the ref iterators
- - refs: add methods for misc ref operations
- - refs: add a backend method structure with transaction functions
+* dt/refs-backend-lmdb (2016-01-12) 22 commits
+ . DONTMERGE: compilation fix
+ . refs: tests for lmdb backend
+ . refs: add LMDB refs backend
+ . svn: learn ref-storage argument
+ . refs: allow ref backend to be set for clone
+ . clone: use child_process for recursive checkouts
+ . refs: check submodules ref storage config
+ . init: allow alternate backends to be set for new repos
+ . refs: always handle non-normal refs in files backend
+ . refs: resolve symbolic refs first
+ . refs: allow log-only updates
+ . refs: move duplicate check to common code
+ . refs: make lock generic
+ . refs: add method to rename refs
+ . refs: add methods to init refs db
+ . refs: add method for delete_refs
+ . refs: add method for initial ref transaction commit
+ . refs: add methods for reflog
+ . refs: add do_for_each_per_worktree_ref
+ . refs: add methods for the ref iterators
+ . refs: add methods for misc ref operations
+ . refs: add a backend method structure with transaction functions
 
  Building on top of a few refs-backend preparatory series, LMDB
  based refs backend has been plugged into the system.
 
- Still being discussed and worked on.
+ Rerolled, but left out of 'pu' for now due to conflicts.
 
 
 * dw/subtree-split-do-not-drop-merge (2015-12-10) 1 commit
@@ -458,16 +616,17 @@ repositories listed at
  The "split" subcommand of "git subtree" (in contrib/) incorrectly
  skipped merges when it shouldn't, which was corrected.
 
- Waiting for review from 'subtree' folks.
+ Still being worked on.
+ ($gmane/283874)
 
 
 * nd/clear-gitenv-upon-use-of-alias (2015-12-29) 5 commits
- - run-command: don't warn on SIGPIPE deaths
- - git.c: make sure we do not leak GIT_* to alias scripts
- - setup.c: re-fix d95138e (setup: set env $GIT_WORK_TREE when ..
- - git.c: make it clear save_env() is for alias handling only
- - Merge branch 'nd/stop-setenv-work-tree' into nd/clear-gitenv-upon-use-of-alias
- (this branch uses nd/stop-setenv-work-tree.)
+  (merged to 'next' on 2016-01-12 at 696b1f5)
+ + run-command: don't warn on SIGPIPE deaths
+ + git.c: make sure we do not leak GIT_* to alias scripts
+ + setup.c: re-fix d95138e (setup: set env $GIT_WORK_TREE when ..
+ + git.c: make it clear save_env() is for alias handling only
+ + Merge branch 'nd/stop-setenv-work-tree' into nd/clear-gitenv-upon-use-of-alias
 
  d95138e6 (setup: set env $GIT_WORK_TREE when work tree is set, like
  $GIT_DIR, 2015-06-26) attempted to work around a glitch in alias
@@ -477,7 +636,7 @@ repositories listed at
  Try to address the same issue by always restoring the environment
  and respawning the real underlying command when handling alias.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * kn/ref-filter-atom-parsing (2016-01-05) 15 commits
@@ -515,9 +674,10 @@ repositories listed at
  ($gmane/281701)
 
 
-* dk/gc-more-wo-pack (2015-11-24) 3 commits
- - gc: Clean garbage .bitmap files from pack dir
- - t5304: Add test for .bitmap garbage files
+* dk/gc-more-wo-pack (2016-01-13) 4 commits
+ - gc: clean garbage .bitmap files from pack dir
+ - t5304: ensure non-garbage files are not deleted
+ - t5304: test .bitmap garbage files
  - prepare_packed_git(): find more garbage
 
  Follow-on to dk/gc-idx-wo-pack topic, to clean up stale
@@ -526,21 +686,16 @@ repositories listed at
  Waiting for review.
 
 
-* ps/rebase-keep-empty (2015-11-24) 2 commits
- - rebase: fix preserving commits with --keep-empty
- - rebase: test broken behavior with --keep-empty
-
- Keep duplicate commits via rebase --keep-empty.
-
- Of dubious or negative value.
- Will discard.
- ($gmane/282107).
-
-
 * rm/subtree-unwrap-tags (2015-11-24) 1 commit
  - contrib/subtree: unwrap tag refs
 
- Waiting for review from subtree folks.
+ "git subtree" (in contrib/) records the tag object name in the
+ commit log message when a subtree is added using a tag, without
+ peeling it down to the underlying commit.  The tag needs to be
+ peeled when "git subtree split" wants to work on the commit, but
+ the command forgot to do so.
+
+ Will merge to 'next'.
 
 
 * sg/sh-require-clean-orphan (2015-11-24) 2 commits
@@ -561,7 +716,7 @@ repositories listed at
 
  Add options to ls-files to help diagnose end-of-line problems.
 
- Needs review.
+ Will merge to 'next'.
 
 
 * ec/annotate-deleted (2015-11-20) 1 commit
@@ -573,27 +728,7 @@ repositories listed at
  Waiting for review.
 
 
-* sb/submodule-parallel-fetch (2015-12-16) 7 commits
-  (merged to 'next' on 2015-12-22 at 44e84ff)
- + submodules: allow parallel fetching, add tests and documentation
- + fetch_populated_submodules: use new parallel job processing
- + run-command: add an asynchronous parallel child processor
- + sigchain: add command to pop all common signals
- + strbuf: add strbuf_read_once to read without blocking
- + xread: poll on non blocking fds
- + submodule.c: write "Fetching submodule <foo>" to stderr
- (this branch is used by sb/submodule-parallel-update.)
-
- Add a framework to spawn a group of processes in parallel, and use
- it to run "git fetch --recurse-submodules" in parallel.
-
- Rerolled and this seems to be a lot cleaner.  The merge of the
- earlier one to 'next' has been reverted.
-
- Will merge to 'master'.
-
-
-* sb/submodule-parallel-update (2015-12-16) 8 commits
+* sb/submodule-parallel-update (2016-01-12) 8 commits
  - clone: allow an explicit argument for parallel submodule clones
  - submodule update: expose parallelism to the user
  - git submodule update: have a dedicated helper for cloning
@@ -602,7 +737,6 @@ repositories listed at
  - submodule-config: remove name_and_item_from_var
  - submodule-config: drop check against NULL
  - submodule-config: keep update strategy around
- (this branch uses sb/submodule-parallel-fetch.)
 
  Builds on top of the "fetch --recurse-submodules" work to introduce
  parallel downloading into multiple submodules for "submodule update".
@@ -635,16 +769,14 @@ repositories listed at
  list of object names from the standard input instead of from the
  command line, and does not involve files in the working tree.
 
- Rerolled.
- Needs review.
+ Will be rerolled.
 
 
-* mh/notes-allow-reading-treeish (2015-10-08) 3 commits
-  (merged to 'next' on 2015-10-23 at 8a697f0)
+* mh/notes-allow-reading-treeish (2016-01-12) 1 commit
+  (merged to 'next' on 2016-01-12 at 7aa311f)
  + notes: allow treeish expressions as notes ref
- + Merge branch 'jk/notes-dwim-doc' into next
- + Merge branch 'jc/merge-drop-old-syntax' into next
- (this branch uses jc/merge-drop-old-syntax.)
+
+ Originally merged to 'next' on 2015-10-23
 
  Some "git notes" operations, e.g. "git log --notes=<note>", should
  be able to read notes from any tree-ish that is shaped like a notes
@@ -653,33 +785,12 @@ repositories listed at
  when the operation would update the notes (in which case we must
  have a place to store the updated notes tree, iow, a ref).
 
- As the patch was done on top of the 'drop old-syntax from merge',
- this has to wait until that other topic can graduate, unfortunately.
- It can be redone in a way that does not depend on that topic after
- this cycle, though.
-
- Will keep in 'next'.
-
-
-* jc/mailinfo (2015-10-21) 1 commit
- - mailinfo: ignore in-body header that we do not care about
-
- Some people write arbitrary garbage at the beginning of a piece of
- e-mail (or after -- >8 -- scissors -- >8 -- line) in the commit log
- message and expect them to be discarded, even though "From:" and
- "Subject:" are the only documented in-body headers that you are
- supposed to have there.  Allow some garbage (specifically, what may
- look like RFC2822 headers like "MIME-Version: ...") to be there and
- ignore them.
-
- No comments after waiting for a long time.
- Will discard.
+ Will merge to 'master'.
 
 
 * js/am-3-merge-recursive-direct (2015-10-12) 2 commits
-  (merged to 'next' on 2015-10-23 at dc631e5)
- + am: make a direct call to merge_recursive
- + merge_recursive_options: introduce the "gently" flag
+ - am: make a direct call to merge_recursive
+ - merge_recursive_options: introduce the "gently" flag
 
  The merge_recursive_generic() function has been made a bit safer to
  call from inside a process.  "git am -3" was taught to make a direct
@@ -696,38 +807,6 @@ repositories listed at
  The original code certainly did not care the program states at the
  point of dying exactly because it knew it is going to exit, but now
  they have to care, and they need to be audited.
-
- Will keep in 'next'.
-
-
-* sg/pretty-more-date-mode-format (2015-10-07) 1 commit
- - pretty: add format specifiers for short and raw date formats
-
- Introduce "%as" and "%aR" placeholders for "log --format" to show
- the author date in the short and raw formats.
-
- No comments after waiting for a long time.
- Will discard.
-
-
-* jk/graph-format-padding (2015-09-14) 1 commit
- - pretty: pass graph width to pretty formatting for use in '%>|(N)'
-
- Redefine the way '%>|(N)' padding and the "--graph" option
- interacts.  It has been that the available columns to display the
- log message was measured from the edge of the area the graph ended,
- but with this it becomes the beginning of the entire output.
-
- I have a suspicion that 50% of the users would appreciate this
- change, and the remainder see this break their expectation.  If
- that is the case, we might need to introduce a similar but
- different alignment operator so that this new behaviour is
- available to those who want to use it, without negatively affecting
- existing uses.
-
- No comments after waiting for a long time.
- Will discard.
- ($gmane/278326)
 
 
 * ad/cygwin-wants-rename (2015-08-07) 1 commit
@@ -754,16 +833,10 @@ repositories listed at
 
 
 * jc/merge-drop-old-syntax (2015-04-29) 1 commit
-  (merged to 'next' on 2015-10-07 at 50fed71)
- + merge: drop 'git merge <message> HEAD <commit>' syntax
- (this branch is used by mh/notes-allow-reading-treeish.)
-
- Originally merged to 'next' on 2015-05-28
+ - merge: drop 'git merge <message> HEAD <commit>' syntax
 
  Stop supporting "git merge <message> HEAD <commit>" syntax that has
  been deprecated since October 2007.  It has been reported that
  git-gui still uses the deprecated syntax, which needs to be fixed
  before this final step can proceed.
  ($gmane/282594)
-
- Will keep in 'next'.
