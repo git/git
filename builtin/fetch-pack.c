@@ -158,7 +158,7 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 		else {
 			/* read from stdin one ref per line, until EOF */
 			struct strbuf line = STRBUF_INIT;
-			while (strbuf_getline(&line, stdin, '\n') != EOF)
+			while (strbuf_getline_lf(&line, stdin) != EOF)
 				add_sought_entry(&sought, &nr_sought, &alloc_sought, line.buf);
 			strbuf_release(&line);
 		}

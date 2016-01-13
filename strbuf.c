@@ -522,6 +522,16 @@ int strbuf_getline_crlf(struct strbuf *sb, FILE *fp)
 	return 0;
 }
 
+int strbuf_getline_lf(struct strbuf *sb, FILE *fp)
+{
+	return strbuf_getline(sb, fp, '\n');
+}
+
+int strbuf_getline_nul(struct strbuf *sb, FILE *fp)
+{
+	return strbuf_getline(sb, fp, '\0');
+}
+
 int strbuf_getwholeline_fd(struct strbuf *sb, int fd, int term)
 {
 	strbuf_reset(sb);

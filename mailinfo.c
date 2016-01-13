@@ -732,7 +732,7 @@ static int read_one_header_line(struct strbuf *line, FILE *in)
 	struct strbuf continuation = STRBUF_INIT;
 
 	/* Get the first part of the line. */
-	if (strbuf_getline(line, in, '\n'))
+	if (strbuf_getline_lf(line, in))
 		return 0;
 
 	/*
@@ -756,7 +756,7 @@ static int read_one_header_line(struct strbuf *line, FILE *in)
 		peek = fgetc(in); ungetc(peek, in);
 		if (peek != ' ' && peek != '\t')
 			break;
-		if (strbuf_getline(&continuation, in, '\n'))
+		if (strbuf_getline_lf(&continuation, in))
 			break;
 		continuation.buf[0] = ' ';
 		strbuf_rtrim(&continuation);
@@ -769,7 +769,7 @@ static int read_one_header_line(struct strbuf *line, FILE *in)
 
 static int find_boundary(struct mailinfo *mi, struct strbuf *line)
 {
-	while (!strbuf_getline(line, mi->input, '\n')) {
+	while (!strbuf_getline_lf(line, mi->input)) {
 		if (*(mi->content_top) && is_multipart_boundary(mi, line))
 			return 1;
 	}
@@ -820,7 +820,7 @@ again:
 
 	strbuf_release(&newline);
 	/* replenish line */
-	if (strbuf_getline(line, mi->input, '\n'))
+	if (strbuf_getline_lf(line, mi->input))
 		return 0;
 	strbuf_addch(line, '\n');
 	return 1;

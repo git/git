@@ -220,7 +220,7 @@ int walker_targets_stdin(char ***target, const char ***write_ref)
 		char *rf_one = NULL;
 		char *tg_one;
 
-		if (strbuf_getline(&buf, stdin, '\n') == EOF)
+		if (strbuf_getline_lf(&buf, stdin) == EOF)
 			break;
 		tg_one = buf.buf;
 		rf_one = strchr(tg_one, '\t');

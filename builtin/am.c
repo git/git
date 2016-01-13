@@ -269,7 +269,7 @@ static char *read_shell_var(FILE *fp, const char *key)
 	struct strbuf sb = STRBUF_INIT;
 	const char *str;
 
-	if (strbuf_getline(&sb, fp, '\n'))
+	if (strbuf_getline_lf(&sb, fp))
 		goto fail;
 
 	if (!skip_prefix(sb.buf, key, &str))
@@ -558,7 +558,7 @@ static int copy_notes_for_rebase(const struct am_state *state)
 
 	fp = xfopen(am_path(state, "rewritten"), "r");
 
-	while (!strbuf_getline(&sb, fp, '\n')) {
+	while (!strbuf_getline_lf(&sb, fp)) {
 		unsigned char from_obj[GIT_SHA1_RAWSZ], to_obj[GIT_SHA1_RAWSZ];
 
 		if (sb.len != GIT_SHA1_HEXSZ * 2 + 1) {
@@ -802,7 +802,7 @@ static int stgit_patch_to_mail(FILE *out, FILE *in, int keep_cr)
 	struct strbuf sb = STRBUF_INIT;
 	int subject_printed = 0;
 
-	while (!strbuf_getline(&sb, in, '\n')) {
+	while (!strbuf_getline_lf(&sb, in)) {
 		const char *str;
 
 		if (str_isspace(sb.buf))
@@ -860,7 +860,7 @@ static int split_mail_stgit_series(struct am_state *state, const char **paths,
 		return error(_("could not open '%s' for reading: %s"), *paths,
 				strerror(errno));
 
-	while (!strbuf_getline(&sb, fp, '\n')) {
+	while (!strbuf_getline_lf(&sb, fp)) {
 		if (*sb.buf == '#')
 			continue; /* skip comment lines */
 
@@ -885,7 +885,7 @@ static int hg_patch_to_mail(FILE *out, FILE *in, int keep_cr)
 {
 	struct strbuf sb = STRBUF_INIT;
 
-	while (!strbuf_getline(&sb, in, '\n')) {
+	while (!strbuf_getline_lf(&sb, in)) {
 		const char *str;
 
 		if (skip_prefix(sb.buf, "# User ", &str))
@@ -1302,7 +1302,7 @@ static int parse_mail(struct am_state *state, const char *mail)
 
 	/* Extract message and author information */
 	fp = xfopen(am_path(state, "info"), "r");
-	while (!strbuf_getline(&sb, fp, '\n')) {
+	while (!strbuf_getline_lf(&sb, fp)) {
 		const char *x;
 
 		if (skip_prefix(sb.buf, "Subject: ", &x)) {
@@ -1368,7 +1368,7 @@ static int get_mail_commit_sha1(unsigned char *commit_id, const char *mail)
 	FILE *fp = xfopen(mail, "r");
 	const char *x;
 
-	if (strbuf_getline(&sb, fp, '\n'))
+	if (strbuf_getline_lf(&sb, fp))
 		return -1;
 
 	if (!skip_prefix(sb.buf, "From ", &x))

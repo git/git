@@ -440,7 +440,7 @@ static void read_bisect_paths(struct argv_array *array)
 	if (!fp)
 		die_errno("Could not open file '%s'", filename);
 
-	while (strbuf_getline(&str, fp, '\n') != EOF) {
+	while (strbuf_getline_lf(&str, fp) != EOF) {
 		strbuf_trim(&str);
 		if (sq_dequote_to_argv_array(str.buf, array))
 			die("Badly quoted content in file '%s': %s",
@@ -668,7 +668,7 @@ static int is_expected_rev(const struct object_id *oid)
 	if (!fp)
 		return 0;
 
-	if (strbuf_getline(&str, fp, '\n') != EOF)
+	if (strbuf_getline_lf(&str, fp) != EOF)
 		res = !strcmp(str.buf, oid_to_hex(oid));
 
 	strbuf_release(&str);
@@ -914,9 +914,9 @@ void read_bisect_terms(const char **read_bad, const char **read_good)
 				strerror(errno));
 		}
 	} else {
-		strbuf_getline(&str, fp, '\n');
+		strbuf_getline_lf(&str, fp);
 		*read_bad = strbuf_detach(&str, NULL);
-		strbuf_getline(&str, fp, '\n');
+		strbuf_getline_lf(&str, fp);
 		*read_good = strbuf_detach(&str, NULL);
 	}
 	strbuf_release(&str);
