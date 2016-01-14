@@ -8,8 +8,8 @@ sub new {
 	$re =~ s!/+$!!g; # no need for trailing slashes
 	my (@left, @right, @patterns);
 	my $state = "left";
-	my $die_msg = "Only one set of wildcard directories " .
-				"(e.g. '*' or '*/*/*') is supported: '$glob'\n";
+	my $die_msg = "Only one set of wildcards " .
+				"(e.g. '*' or '*/*/*') is supported: $glob\n";
 	for my $part (split(m|/|, $glob)) {
 		if ($pattern_ok && $part =~ /[{}]/ &&
 			 $part !~ /^\{[^{}]+\}/) {

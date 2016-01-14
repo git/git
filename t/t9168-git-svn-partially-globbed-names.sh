@@ -130,9 +130,10 @@ test_expect_success 'test prefixed globs match just prefix' '
 	'
 
 test_expect_success 'prepare test disallow prefixed multi-globs' "
-	echo \"Only one set of wildcard directories\" \
-	     \"(e.g. '*' or '*/*/*') is supported: 'branches/b_*/t/*'\" >expect.four &&
-	echo \"\" >>expect.four
+cat >expect.four <<EOF
+Only one set of wildcards (e.g. '*' or '*/*/*') is supported: branches/b_*/t/*
+
+EOF
 	"
 
 test_expect_success 'test disallow prefixed multi-globs' '
