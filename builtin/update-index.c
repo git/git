@@ -468,12 +468,14 @@ static void update_one(const char *path)
 	report("add '%s'", path);
 }
 
-static void read_index_info(int line_termination)
+static void read_index_info(int nul_term_line)
 {
 	struct strbuf buf = STRBUF_INIT;
 	struct strbuf uq = STRBUF_INIT;
+	strbuf_getline_fn getline_fn;
 
-	while (strbuf_getline(&buf, stdin, line_termination) != EOF) {
+	getline_fn = nul_term_line ? strbuf_getline_nul : strbuf_getline_lf;
+	while (getline_fn(&buf, stdin) != EOF) {
 		char *ptr, *tab;
 		char *path_name;
 		unsigned char sha1[20];
@@ -522,7 +524,7 @@ static void read_index_info(int line_termination)
 			goto bad_line;
 
 		path_name = ptr;
-		if (line_termination && path_name[0] == '"') {
+		if (!nul_term_line && path_name[0] == '"') {
 			strbuf_reset(&uq);
 			if (unquote_c_style(&uq, path_name, NULL)) {
 				die("git update-index: bad quoting of path name");
@@ -844,12 +846,12 @@ static int cacheinfo_callback(struct parse_opt_ctx_t *ctx,
 static int stdin_cacheinfo_callback(struct parse_opt_ctx_t *ctx,
 			      const struct option *opt, int unset)
 {
-	int *line_termination = opt->value;
+	int *nul_term_line = opt->value;
 
 	if (ctx->argc != 1)
 		return error("option '%s' must be the last argument", opt->long_name);
 	allow_add = allow_replace = allow_remove = 1;
-	read_index_info(*line_termination);
+	read_index_info(*nul_term_line);
 	return 0;
 }
 
@@ -901,7 +903,7 @@ static int reupdate_callback(struct parse_opt_ctx_t *ctx,
 
 int cmd_update_index(int argc, const char **argv, const char *prefix)
 {
-	int newfd, entries, has_errors = 0, line_termination = '\n';
+	int newfd, entries, has_errors = 0, nul_term_line = 0;
 	int untracked_cache = -1;
 	int read_from_stdin = 0;
 	int prefix_length = prefix ? strlen(prefix) : 0;
@@ -912,6 +914,7 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 	int split_index = -1;
 	struct lock_file *lock_file;
 	struct parse_opt_ctx_t ctx;
+	strbuf_getline_fn getline_fn;
 	int parseopt_state = PARSE_OPT_UNKNOWN;
 	struct option options[] = {
 		OPT_BIT('q', NULL, &refresh_args.flags,
@@ -963,13 +966,13 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 			N_("add to index only; do not add content to object database"), 1),
 		OPT_SET_INT(0, "force-remove", &force_remove,
 			N_("remove named paths even if present in worktree"), 1),
-		OPT_SET_INT('z', NULL, &line_termination,
-			N_("with --stdin: input lines are terminated by null bytes"), '\0'),
+		OPT_BOOL('z', NULL, &nul_term_line,
+			 N_("with --stdin: input lines are terminated by null bytes")),
 		{OPTION_LOWLEVEL_CALLBACK, 0, "stdin", &read_from_stdin, NULL,
 			N_("read list of paths to be updated from standard input"),
 			PARSE_OPT_NONEG | PARSE_OPT_NOARG,
 			(parse_opt_cb *) stdin_callback},
-		{OPTION_LOWLEVEL_CALLBACK, 0, "index-info", &line_termination, NULL,
+		{OPTION_LOWLEVEL_CALLBACK, 0, "index-info", &nul_term_line, NULL,
 			N_("add entries from standard input to the index"),
 			PARSE_OPT_NONEG | PARSE_OPT_NOARG,
 			(parse_opt_cb *) stdin_cacheinfo_callback},
@@ -1057,6 +1060,8 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 		}
 	}
 	argc = parse_options_end(&ctx);
+
+	getline_fn = nul_term_line ? strbuf_getline_nul : strbuf_getline_lf;
 	if (preferred_index_format) {
 		if (preferred_index_format < INDEX_FORMAT_LB ||
 		    INDEX_FORMAT_UB < preferred_index_format)
@@ -1073,9 +1078,9 @@ int cmd_update_index(int argc, const char **argv, const char *prefix)
 		struct strbuf buf = STRBUF_INIT, nbuf = STRBUF_INIT;
 
 		setup_work_tree();
-		while (strbuf_getline(&buf, stdin, line_termination) != EOF) {
+		while (getline_fn(&buf, stdin) != EOF) {
 			char *p;
-			if (line_termination && buf.buf[0] == '"') {
+			if (!nul_term_line && buf.buf[0] == '"') {
 				strbuf_reset(&nbuf);
 				if (unquote_c_style(&nbuf, buf.buf, NULL))
 					die("line is badly quoted");
