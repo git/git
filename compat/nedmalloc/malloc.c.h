@@ -720,6 +720,9 @@ struct mallinfo {
   inlining are defined as macros, so these aren't used for them.
 */
 
+#ifdef __MINGW64_VERSION_MAJOR
+#undef FORCEINLINE
+#endif
 #ifndef FORCEINLINE
   #if defined(__GNUC__)
 #define FORCEINLINE __inline __attribute__ ((always_inline))
@@ -1382,6 +1385,7 @@ LONG __cdecl _InterlockedExchange(LONG volatile *Target, LONG Value);
 
   /*** Atomic operations ***/
   #if (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__) > 40100
+    #undef _ReadWriteBarrier
     #define _ReadWriteBarrier() __sync_synchronize()
   #else
     static __inline__ __attribute__((always_inline)) long __sync_lock_test_and_set(volatile long * const Target, const long Value)
