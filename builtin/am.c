@@ -613,7 +613,7 @@ static int is_mail(FILE *fp)
 	if (regcomp(&regex, header_regex, REG_NOSUB | REG_EXTENDED))
 		die("invalid pattern: %s", header_regex);
 
-	while (!strbuf_getline_crlf(&sb, fp)) {
+	while (!strbuf_getline(&sb, fp)) {
 		if (!sb.len)
 			break; /* End of header */
 
@@ -660,7 +660,7 @@ static int detect_patch_format(const char **paths)
 
 	fp = xfopen(*paths, "r");
 
-	while (!strbuf_getline_crlf(&l1, fp)) {
+	while (!strbuf_getline(&l1, fp)) {
 		if (l1.len)
 			break;
 	}
@@ -681,9 +681,9 @@ static int detect_patch_format(const char **paths)
 	}
 
 	strbuf_reset(&l2);
-	strbuf_getline_crlf(&l2, fp);
+	strbuf_getline(&l2, fp);
 	strbuf_reset(&l3);
-	strbuf_getline_crlf(&l3, fp);
+	strbuf_getline(&l3, fp);
 
 	/*
 	 * If the second line is empty and the third is a From, Author or Date

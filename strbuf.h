@@ -354,8 +354,8 @@ extern void strbuf_addftime(struct strbuf *sb, const char *fmt, const struct tm 
  *
  * NOTE: The buffer is rewound if the read fails. If -1 is returned,
  * `errno` must be consulted, like you would do for `read(3)`.
- * `strbuf_read()`, `strbuf_read_file()` and `strbuf_getline()` has the
- * same behaviour as well.
+ * `strbuf_read()`, `strbuf_read_file()` and `strbuf_getline_*()`
+ * family of functions have the same behaviour as well.
  */
 extern size_t strbuf_fread(struct strbuf *, size_t, FILE *);
 
@@ -379,18 +379,13 @@ extern ssize_t strbuf_read_file(struct strbuf *sb, const char *path, size_t hint
 extern int strbuf_readlink(struct strbuf *sb, const char *path, size_t hint);
 
 /**
- * Read a line from a FILE *, overwriting the existing contents
- * of the strbuf. The second argument specifies the line
- * terminator character, typically `'\n'`.
+ * Read a line from a FILE *, overwriting the existing contents of
+ * the strbuf.  The strbuf_getline*() family of functions share
+ * this signature, but have different line termination conventions.
+ *
  * Reading stops after the terminator or at EOF.  The terminator
  * is removed from the buffer before returning.  Returns 0 unless
  * there was nothing left before EOF, in which case it returns `EOF`.
- */
-extern int strbuf_getline(struct strbuf *, FILE *, int);
-
-/**
- * The strbuf_getline*() family of functions share this signature, but
- * have different line termination conventions.
  */
 typedef int (*strbuf_getline_fn)(struct strbuf *, FILE *);
 
@@ -403,8 +398,11 @@ extern int strbuf_getline_nul(struct strbuf *sb, FILE *fp);
 /*
  * Similar to strbuf_getline_lf(), but additionally treats a CR that
  * comes immediately before the LF as part of the terminator.
+ * This is the most friendly version to be used to read "text" files
+ * that can come from platforms whose native text format is CRLF
+ * terminated.
  */
-extern int strbuf_getline_crlf(struct strbuf *, FILE *);
+extern int strbuf_getline(struct strbuf *, FILE *);
 
 
 /**
