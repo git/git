@@ -42,6 +42,7 @@ static void normalize_argv_string(const char **var, const char *input)
 struct test_data {
 	const char *from;  /* input:  transform from this ... */
 	const char *to;    /* output: ... to this.            */
+	const char *alternative; /* output: ... or this.      */
 };
 
 static int test_function(struct test_data *data, char *(*func)(char *input),
@@ -58,11 +59,18 @@ static int test_function(struct test_data *data, char *(*func)(char *input),
 			strcpy(buffer, data[i].from);
 			to = func(buffer);
 		}
-		if (strcmp(to, data[i].to)) {
+		if (!strcmp(to, data[i].to))
+			continue;
+		if (!data[i].alternative)
 			error("FAIL: %s(%s) => '%s' != '%s'\n",
 				funcname, data[i].from, to, data[i].to);
-			failed = 1;
-		}
+		else if (!strcmp(to, data[i].alternative))
+			continue;
+		else
+			error("FAIL: %s(%s) => '%s' != '%s', '%s'\n",
+				funcname, data[i].from, to, data[i].to,
+				data[i].alternative);
+		failed = 1;
 	}
 	return failed;
 }
@@ -74,15 +82,9 @@ static struct test_data basename_data[] = {
 	{ ".",               "."    },
 	{ "..",              ".."   },
 	{ "/",               "/"    },
-#if defined(__CYGWIN__) && !defined(NO_LIBGEN_H)
-	{ "//",              "//"   },
-	{ "///",             "//"   },
-	{ "////",            "//"   },
-#else
-	{ "//",              "/"    },
-	{ "///",             "/"    },
-	{ "////",            "/"    },
-#endif
+	{ "//",              "/", "//" },
+	{ "///",             "/", "//" },
+	{ "////",            "/", "//" },
 	{ "usr",             "usr"  },
 	{ "/usr",            "usr"  },
 	{ "/usr/",           "usr"  },
@@ -92,7 +94,6 @@ static struct test_data basename_data[] = {
 	{ "usr/lib///",      "lib"  },
 
 #if defined(__MINGW32__) || defined(_MSC_VER)
-
 	/* --- win32 type paths --- */
 	{ "\\usr",           "usr"  },
 	{ "\\usr\\",         "usr"  },
@@ -111,26 +112,9 @@ static struct test_data basename_data[] = {
 	{ "C:a",             "a"    },
 	{ "C:/",             "/"    },
 	{ "C:///",           "/"    },
-#if defined(NO_LIBGEN_H)
-	{ "\\",              "\\"   },
-	{ "\\\\",            "\\"   },
-	{ "\\\\\\",          "\\"   },
-#else
-
-	/* win32 platform variations: */
-#if defined(__MINGW32__)
-	{ "\\",              "/"    },
-	{ "\\\\",            "/"    },
-	{ "\\\\\\",          "/"    },
-#endif
-
-#if defined(_MSC_VER)
-	{ "\\",              "\\"   },
-	{ "\\\\",            "\\"   },
-	{ "\\\\\\",          "\\"   },
-#endif
-
-#endif
+	{ "\\",              "\\", "/" },
+	{ "\\\\",            "\\", "/" },
+	{ "\\\\\\",          "\\", "/" },
 #endif
 	{ NULL,              NULL   }
 };
@@ -142,14 +126,9 @@ static struct test_data dirname_data[] = {
 	{ ".",               "."      },
 	{ "..",              "."      },
 	{ "/",               "/"      },
-	{ "//",              "//"     },
-#if defined(__CYGWIN__) && !defined(NO_LIBGEN_H)
-	{ "///",             "//"     },
-	{ "////",            "//"     },
-#else
-	{ "///",             "/"      },
-	{ "////",            "/"      },
-#endif
+	{ "//",              "/", "//" },
+	{ "///",             "/", "//" },
+	{ "////",            "/", "//" },
 	{ "usr",             "."      },
 	{ "/usr",            "/"      },
 	{ "/usr/",           "/"      },
@@ -159,7 +138,6 @@ static struct test_data dirname_data[] = {
 	{ "usr/lib///",      "usr"    },
 
 #if defined(__MINGW32__) || defined(_MSC_VER)
-
 	/* --- win32 type paths --- */
 	{ "\\",              "\\"     },
 	{ "\\\\",            "\\\\"   },
@@ -180,21 +158,7 @@ static struct test_data dirname_data[] = {
 	{ "C:usr/lib///",    "C:usr"  },
 	{ "\\\\\\",          "\\"     },
 	{ "\\\\\\\\",        "\\"     },
-#if defined(NO_LIBGEN_H)
-	{ "C:",              "C:."    },
-#else
-
-	/* win32 platform variations: */
-#if defined(__MINGW32__)
-	/* the following is clearly wrong ... */
-	{ "C:",              "."      },
-#endif
-
-#if defined(_MSC_VER)
-	{ "C:",              "C:."    },
-#endif
-
-#endif
+	{ "C:",              "C:.", "." },
 #endif
 	{ NULL,              NULL     }
 };
