@@ -77,7 +77,7 @@ extern pthread_t pthread_self(void);
 
 static inline int pthread_exit(void *ret)
 {
-	ExitThread((DWORD)ret);
+	ExitThread((DWORD)(intptr_t)ret);
 }
 
 typedef DWORD pthread_key_t;
