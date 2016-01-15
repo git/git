@@ -1014,4 +1014,64 @@ test_expect_success 'push split to subproj' '
 	)
 '
 
+#
+# This test covers 2 cases in subtree split copy_or_skip code
+# 1) Merges where one parent is a superset of the changes of the other
+#    parent regarding changes to the subtree, in this case the merge
+#    commit should be copied
+# 2) Merges where only one parent operate on the subtree, and the merge
+#    commit should be skipped
+#
+# (1) is checked by ensuring subtree_tip is a descendent of subtree_branch
+# (2) should have a check added (not_a_subtree_change shouldn't be present
+#     on the produced subtree)
+#
+# Other related cases which are not tested (or currently handled correctly)
+# - Case (1) where there are more than 2 parents, it will sometimes correctly copy
+#   the merge, and sometimes not
+# - Merge commit where both parents have same tree as the merge, currently
+#   will always be skipped, even if they reached that state via different
+#   set of commits.
+#
+
+next_test
+test_expect_success 'subtree descendant check' '
+	subtree_test_create_repo "$subtree_test_count" &&
+	test_create_commit "$subtree_test_count" folder_subtree/a &&
+	(
+		cd "$subtree_test_count" &&
+		git branch branch
+	) &&
+	test_create_commit "$subtree_test_count" folder_subtree/0 &&
+	test_create_commit "$subtree_test_count" folder_subtree/b &&
+	cherry=$(cd "$subtree_test_count"; git rev-parse HEAD) &&
+	(
+		cd "$subtree_test_count" &&
+		git checkout branch
+	) &&
+	test_create_commit "$subtree_test_count" commit_on_branch &&
+	(
+		cd "$subtree_test_count" &&
+		git cherry-pick $cherry &&
+		git checkout master &&
+		git merge -m "merge should be kept on subtree" branch &&
+		git branch no_subtree_work_branch
+	) &&
+	test_create_commit "$subtree_test_count" folder_subtree/d &&
+	(
+		cd "$subtree_test_count" &&
+		git checkout no_subtree_work_branch
+	) &&
+	test_create_commit "$subtree_test_count" not_a_subtree_change &&
+	(
+		cd "$subtree_test_count" &&
+		git checkout master &&
+		git merge -m "merge should be skipped on subtree" no_subtree_work_branch &&
+
+		git subtree split --prefix folder_subtree/ --branch subtree_tip master &&
+		git subtree split --prefix folder_subtree/ --branch subtree_branch branch &&
+		check_equal $(git rev-list --count subtree_tip..subtree_branch) 0
+	)
+'
+
 test_done
