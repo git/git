@@ -1802,9 +1802,10 @@ struct win32_mlock_t
   volatile long threadid;
 };
 
+static inline int return_0(int i) { return 0; }
 #define MLOCK_T               struct win32_mlock_t
 #define CURRENT_THREAD        win32_getcurrentthreadid()
-#define INITIAL_LOCK(sl)      (memset(sl, 0, sizeof(MLOCK_T)), 0)
+#define INITIAL_LOCK(sl)      (memset(sl, 0, sizeof(MLOCK_T)), return_0(0))
 #define ACQUIRE_LOCK(sl)      win32_acquire_lock(sl)
 #define RELEASE_LOCK(sl)      win32_release_lock(sl)
 #define TRY_LOCK(sl)          win32_try_lock(sl)
