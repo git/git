@@ -26,14 +26,18 @@ typedef int pid_t;
 #define S_ISLNK(x) (((x) & S_IFMT) == S_IFLNK)
 #define S_ISSOCK(x) 0
 
+#ifndef S_IRWXG
 #define S_IRGRP 0
 #define S_IWGRP 0
 #define S_IXGRP 0
 #define S_IRWXG (S_IRGRP | S_IWGRP | S_IXGRP)
+#endif
+#ifndef S_IRWXO
 #define S_IROTH 0
 #define S_IWOTH 0
 #define S_IXOTH 0
 #define S_IRWXO (S_IROTH | S_IWOTH | S_IXOTH)
+#endif
 
 #define S_ISUID 0004000
 #define S_ISGID 0002000
