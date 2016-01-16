@@ -538,6 +538,12 @@ else
 	ifeq ($(shell expr "$(uname_R)" : '2\.'),2)
 		# MSys2
 		prefix = /usr/
+		# Enable DEP
+		BASIC_LDFLAGS += -Wl,--nxcompat
+		# Enable ASLR (unless debugging)
+		ifneq (,$(findstring -O,$(CFLAGS)))
+			BASIC_LDFLAGS += -Wl,--dynamicbase
+		endif
 		ifeq (MINGW32,$(MSYSTEM))
 			prefix = /mingw32
 			BASIC_LDFLAGS += -Wl,--pic-executable,-e,_mainCRTStartup
