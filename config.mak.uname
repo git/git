@@ -576,6 +576,12 @@ else
 	ifneq ($(shell expr "$(uname_R)" : '1\.'),2)
 		# MSys2
 		prefix = /usr/
+		# Enable DEP
+		BASIC_LDFLAGS += -Wl,--nxcompat
+		# Enable ASLR (unless debugging)
+		ifneq (,$(findstring -O,$(CFLAGS)))
+			BASIC_LDFLAGS += -Wl,--dynamicbase
+		endif
 		ifeq (MINGW32,$(MSYSTEM))
 			prefix = /mingw32
 			HOST_CPU = i686
