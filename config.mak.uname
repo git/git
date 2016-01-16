@@ -573,10 +573,12 @@ else
 		ifeq (MINGW32,$(MSYSTEM))
 			prefix = /mingw32
 			HOST_CPU = i686
+			BASIC_LDFLAGS += -Wl,--pic-executable,-e,_mainCRTStartup
 		endif
 		ifeq (MINGW64,$(MSYSTEM))
 			prefix = /mingw64
 			HOST_CPU = x86_64
+			BASIC_LDFLAGS += -Wl,--pic-executable,-e,mainCRTStartup
 		else
 			COMPAT_CFLAGS += -D_USE_32BIT_TIME_T
 			BASIC_LDFLAGS += -Wl,--large-address-aware
