@@ -81,7 +81,6 @@ sub prepare_config_once {
 	SVN::_Core::svn_config_ensure($config_dir, undef);
 	my ($baton, $callbacks) = SVN::Core::auth_open_helper(_auth_providers);
 	my $config = SVN::Core::config_get_config($config_dir);
-	my $dont_store_passwords = 1;
 	my $conf_t = $config->{'config'};
 
 	no warnings 'once';
@@ -93,9 +92,14 @@ sub prepare_config_once {
 	    $SVN::_Core::SVN_CONFIG_SECTION_AUTH,
 	    $SVN::_Core::SVN_CONFIG_OPTION_STORE_PASSWORDS,
 	    1) == 0) {
+		my $val = '1';
+		if (::compare_svn_version('1.9.0') < 0) { # pre-SVN r1553823
+			my $dont_store_passwords = 1;
+			$val = bless \$dont_store_passwords, "_p_void";
+		}
 		SVN::_Core::svn_auth_set_parameter($baton,
 		    $SVN::_Core::SVN_AUTH_PARAM_DONT_STORE_PASSWORDS,
-		    bless (\$dont_store_passwords, "_p_void"));
+		    $val);
 	}
 	if (SVN::_Core::svn_config_get_bool($conf_t,
 	    $SVN::_Core::SVN_CONFIG_SECTION_AUTH,
