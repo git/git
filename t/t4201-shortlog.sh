@@ -120,6 +120,12 @@ test_expect_success !MINGW 'shortlog from non-git directory' '
 	test_cmp expect out
 '
 
+test_expect_success !MINGW 'shortlog can read --format=raw output' '
+	git log --format=raw HEAD >log &&
+	GIT_DIR=non-existing git shortlog -w <log >out &&
+	test_cmp expect out
+'
+
 test_expect_success 'shortlog should add newline when input line matches wraplen' '
 	cat >expect <<\EOF &&
 A U Thor (2):
