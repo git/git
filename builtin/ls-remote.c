@@ -5,7 +5,8 @@
 
 static const char * const ls_remote_usage[] = {
 	N_("git ls-remote [--heads] [--tags] [--refs] [--upload-pack=<exec>]\n"
-	   "                     [-q | --quiet] [--exit-code] [--get-url] [<repository> [<refs>...]]"),
+	   "                     [-q | --quiet] [--exit-code] [--get-url]\n"
+	   "                     [--symref] [<repository> [<refs>...]]"),
 	NULL
 };
 
@@ -37,6 +38,7 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 	int get_url = 0;
 	int quiet = 0;
 	int status = 0;
+	int show_symref_target = 0;
 	const char *uploadpack = NULL;
 	const char **pattern = NULL;
 
@@ -58,6 +60,8 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 			 N_("take url.<base>.insteadOf into account")),
 		OPT_SET_INT(0, "exit-code", &status,
 			    N_("exit with exit code 2 if no matching refs are found"), 2),
+		OPT_BOOL(0, "symref", &show_symref_target,
+			 N_("show underlying ref in addition to the object pointed by it")),
 		OPT_END()
 	};
 
@@ -101,7 +105,9 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 			continue;
 		if (!tail_match(pattern, ref->name))
 			continue;
-		printf("%s	%s\n", oid_to_hex(&ref->old_oid), ref->name);
+		if (show_symref_target && ref->symref)
+			printf("ref: %s\t%s\n", ref->symref, ref->name);
+		printf("%s\t%s\n", oid_to_hex(&ref->old_oid), ref->name);
 		status = 0; /* we found something */
 	}
 	return status;

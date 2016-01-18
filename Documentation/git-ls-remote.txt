@@ -10,7 +10,8 @@ SYNOPSIS
 --------
 [verse]
 'git ls-remote' [--heads] [--tags] [--refs] [--upload-pack=<exec>]
-	      [-q | --quiet] [--exit-code] [--get-url] [<repository> [<refs>...]]
+	      [-q | --quiet] [--exit-code] [--get-url]
+	      [--symref] [<repository> [<refs>...]]
 
 DESCRIPTION
 -----------
@@ -52,6 +53,12 @@ OPTIONS
 	Expand the URL of the given remote repository taking into account any
 	"url.<base>.insteadOf" config setting (See linkgit:git-config[1]) and
 	exit without talking to the remote.
+
+--symref::
+	In addition to the object pointed by it, show the underlying
+	ref pointed by it when showing a symbolic ref.  Currently,
+	upload-pack only shows the symref HEAD, so it will be the only
+	one shown by ls-remote.
 
 <repository>::
 	The "remote" repository to query.  This parameter can be
