@@ -9,7 +9,7 @@ git-ls-remote - List references in a remote repository
 SYNOPSIS
 --------
 [verse]
-'git ls-remote' [--heads] [--tags]  [--upload-pack=<exec>]
+'git ls-remote' [--heads] [--tags] [--refs] [--upload-pack=<exec>]
 	      [-q | --quiet] [--exit-code] <repository> [<refs>...]
 
 DESCRIPTION
@@ -28,6 +28,9 @@ OPTIONS
 	These options are _not_ mutually exclusive; when given
 	both, references stored in refs/heads and refs/tags are
 	displayed.
+
+--refs::
+	Do not show peeled tags or pseudorefs like HEAD	in the output.
 
 -q::
 --quiet::
