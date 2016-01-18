@@ -3,9 +3,11 @@
 #include "transport.h"
 #include "remote.h"
 
-static const char ls_remote_usage[] =
-"git ls-remote [--heads] [--tags] [--refs] [--upload-pack=<exec>]\n"
-"                     [-q | --quiet] [--exit-code] [--get-url] [<repository> [<refs>...]]";
+static const char * const ls_remote_usage[] = {
+	N_("git ls-remote [--heads] [--tags] [--refs] [--upload-pack=<exec>]\n"
+	   "                     [-q | --quiet] [--exit-code] [--get-url] [<repository> [<refs>...]]"),
+	NULL
+};
 
 /*
  * Is there one among the list of patterns that match the tail part
@@ -30,7 +32,6 @@ static int tail_match(const char **pattern, const char *path)
 
 int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 {
-	int i;
 	const char *dest = NULL;
 	unsigned flags = 0;
 	int get_url = 0;
@@ -43,59 +44,34 @@ int cmd_ls_remote(int argc, const char **argv, const char *prefix)
 	struct transport *transport;
 	const struct ref *ref;
 
-	if (argc == 2 && !strcmp("-h", argv[1]))
-		usage(ls_remote_usage);
+	struct option options[] = {
+		OPT__QUIET(&quiet, N_("do not print remote URL")),
+		OPT_STRING(0, "upload-pack", &uploadpack, N_("exec"),
+			   N_("path of git-upload-pack on the remote host")),
+		{ OPTION_STRING, 0, "exec", &uploadpack, N_("exec"),
+			   N_("path of git-upload-pack on the remote host"),
+			   PARSE_OPT_HIDDEN },
+		OPT_BIT('t', "tags", &flags, N_("limit to tags"), REF_TAGS),
+		OPT_BIT('h', "heads", &flags, N_("limit to heads"), REF_HEADS),
+		OPT_BIT(0, "refs", &flags, N_("do not show peeled tags"), REF_NORMAL),
+		OPT_BOOL(0, "get-url", &get_url,
+			 N_("take url.<base>.insteadOf into account")),
+		OPT_SET_INT(0, "exit-code", &status,
+			    N_("exit with exit code 2 if no matching refs are found"), 2),
+		OPT_END()
+	};
 
-	for (i = 1; i < argc; i++) {
-		const char *arg = argv[i];
+	argc = parse_options(argc, argv, prefix, options, ls_remote_usage,
+			     PARSE_OPT_STOP_AT_NON_OPTION);
+	dest = argv[0];
 
-		if (*arg == '-') {
-			if (starts_with(arg, "--upload-pack=")) {
-				uploadpack = arg + 14;
-				continue;
-			}
-			if (starts_with(arg, "--exec=")) {
-				uploadpack = arg + 7;
-				continue;
-			}
-			if (!strcmp("--tags", arg) || !strcmp("-t", arg)) {
-				flags |= REF_TAGS;
-				continue;
-			}
-			if (!strcmp("--heads", arg) || !strcmp("-h", arg)) {
-				flags |= REF_HEADS;
-				continue;
-			}
-			if (!strcmp("--refs", arg)) {
-				flags |= REF_NORMAL;
-				continue;
-			}
-			if (!strcmp("--quiet", arg) || !strcmp("-q", arg)) {
-				quiet = 1;
-				continue;
-			}
-			if (!strcmp("--get-url", arg)) {
-				get_url = 1;
-				continue;
-			}
-			if (!strcmp("--exit-code", arg)) {
-				/* return this code if no refs are reported */
-				status = 2;
-				continue;
-			}
-			usage(ls_remote_usage);
-		}
-		dest = arg;
-		i++;
-		break;
+	if (argc > 1) {
+		int i;
+		pattern = xcalloc(argc, sizeof(const char *));
+		for (i = 1; i < argc; i++)
+			pattern[i - 1] = xstrfmt("*/%s", argv[i]);
 	}
 
-	if (argv[i]) {
-		int j;
-		pattern = xcalloc(argc - i + 1, sizeof(const char *));
-		for (j = i; j < argc; j++)
-			pattern[j - i] = xstrfmt("*/%s", argv[j]);
-	}
 	remote = remote_get(dest);
 	if (!remote) {
 		if (dest)
