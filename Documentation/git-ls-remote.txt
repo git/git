@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git ls-remote' [--heads] [--tags]  [--upload-pack=<exec>]
-	      [--exit-code] <repository> [<refs>...]
+	      [-q | --quiet] [--exit-code] <repository> [<refs>...]
 
 DESCRIPTION
 -----------
@@ -28,6 +28,10 @@ OPTIONS
 	These options are _not_ mutually exclusive; when given
 	both, references stored in refs/heads and refs/tags are
 	displayed.
+
+-q::
+--quiet::
+	Do not print remote URL to stderr.
 
 --upload-pack=<exec>::
 	Specify the full path of 'git-upload-pack' on the remote
