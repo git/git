@@ -106,6 +106,7 @@ fi
 case "$NO_PEDANTIC" in
 ?*)	;;
 '')
+	# PEDANT="-Wtypedef-redefinition $PEDANT"
 	PEDANT="-Werror -Wold-style-definition $PEDANT"
 	PEDANT="-Wpointer-arith -Woverflow -Wunused $PEDANT"
 	PEDANT="-Wold-style-declaration -Wstrict-prototypes $PEDANT"
@@ -197,7 +198,8 @@ if test -z "$oldtest" &&
    sh -c 'prove --version >/dev/null 2>&1' &&
    sh -c 'prove --exec : >/dev/null 2>&1'
 then
-        DEFAULT_TEST_TARGET=prove GIT_PROVE_OPTS="$jobs"
+	# --state=slow,save
+        DEFAULT_TEST_TARGET=prove GIT_PROVE_OPTS="--timer $jobs"
         export DEFAULT_TEST_TARGET GIT_PROVE_OPTS
 fi
 
