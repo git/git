@@ -44,6 +44,9 @@ sh -c 'asciidoc --version >/dev/null 2>&1' || nodoc=y
 GIT_TEST_CHAIN_LINT=1
 export GIT_TEST_CHAIN_LINT
 
+GIT_PROVE_OPTS="${GIT_PROVE_OPTS:+$GIT_PROVE_OPTS }--state=slow,save"
+export GIT_PROVE_OPTS
+
 test -f /bin/dash || with_dash=
 if test -z "$BUILDBASE"
 then
