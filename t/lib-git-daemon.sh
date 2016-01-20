@@ -23,6 +23,11 @@ then
 	test_done
 fi
 
+if test_have_prereq !PIPE
+then
+	test_skip_or_die $GIT_TEST_GIT_DAEMON "file system does not support FIFOs"
+fi
+
 LIB_GIT_DAEMON_PORT=${LIB_GIT_DAEMON_PORT-${this_test#t}}
 
 GIT_DAEMON_PID=
