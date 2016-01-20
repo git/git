@@ -286,7 +286,7 @@ static int notes_copy_from_stdin(int force, const char *rewrite_cmd)
 		if (!c)
 			return 0;
 	} else {
-		init_notes(NULL, NULL, NULL, 0);
+		init_notes(NULL, NULL, NULL, NOTES_INIT_WRITABLE);
 		t = &default_notes_tree;
 	}
 
@@ -329,15 +329,18 @@ static int notes_copy_from_stdin(int force, const char *rewrite_cmd)
 	return ret;
 }
 
-static struct notes_tree *init_notes_check(const char *subcommand)
+static struct notes_tree *init_notes_check(const char *subcommand,
+					   int flags)
 {
 	struct notes_tree *t;
-	init_notes(NULL, NULL, NULL, 0);
+	const char *ref;
+	init_notes(NULL, NULL, NULL, flags);
 	t = &default_notes_tree;
 
-	if (!starts_with(t->ref, "refs/notes/"))
+	ref = (flags & NOTES_INIT_WRITABLE) ? t->update_ref : t->ref;
+	if (!starts_with(ref, "refs/notes/"))
 		die("Refusing to %s notes in %s (outside of refs/notes/)",
-		    subcommand, t->ref);
+		    subcommand, ref);
 	return t;
 }
 
@@ -360,7 +363,7 @@ static int list(int argc, const char **argv, const char *prefix)
 		usage_with_options(git_notes_list_usage, options);
 	}
 
-	t = init_notes_check("list");
+	t = init_notes_check("list", 0);
 	if (argc) {
 		if (get_sha1(argv[0], object))
 			die(_("Failed to resolve '%s' as a valid ref."), argv[0]);
@@ -420,7 +423,7 @@ static int add(int argc, const char **argv, const char *prefix)
 	if (get_sha1(object_ref, object))
 		die(_("Failed to resolve '%s' as a valid ref."), object_ref);
 
-	t = init_notes_check("add");
+	t = init_notes_check("add", NOTES_INIT_WRITABLE);
 	note = get_note(t, object);
 
 	if (note) {
@@ -511,7 +514,7 @@ static int copy(int argc, const char **argv, const char *prefix)
 	if (get_sha1(object_ref, object))
 		die(_("Failed to resolve '%s' as a valid ref."), object_ref);
 
-	t = init_notes_check("copy");
+	t = init_notes_check("copy", NOTES_INIT_WRITABLE);
 	note = get_note(t, object);
 
 	if (note) {
@@ -589,7 +592,7 @@ static int append_edit(int argc, const char **argv, const char *prefix)
 	if (get_sha1(object_ref, object))
 		die(_("Failed to resolve '%s' as a valid ref."), object_ref);
 
-	t = init_notes_check(argv[0]);
+	t = init_notes_check(argv[0], NOTES_INIT_WRITABLE);
 	note = get_note(t, object);
 
 	prepare_note_data(object, &d, edit ? note : NULL);
@@ -652,7 +655,7 @@ static int show(int argc, const char **argv, const char *prefix)
 	if (get_sha1(object_ref, object))
 		die(_("Failed to resolve '%s' as a valid ref."), object_ref);
 
-	t = init_notes_check("show");
+	t = init_notes_check("show", 0);
 	note = get_note(t, object);
 
 	if (!note)
@@ -809,7 +812,7 @@ static int merge(int argc, const char **argv, const char *prefix)
 	expand_notes_ref(&remote_ref);
 	o.remote_ref = remote_ref.buf;
 
-	t = init_notes_check("merge");
+	t = init_notes_check("merge", NOTES_INIT_WRITABLE);
 
 	if (strategy) {
 		if (parse_notes_merge_strategy(strategy, &o.strategy)) {
@@ -901,7 +904,7 @@ static int remove_cmd(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, prefix, options,
 			     git_notes_remove_usage, 0);
 
-	t = init_notes_check("remove");
+	t = init_notes_check("remove", NOTES_INIT_WRITABLE);
 
 	if (!argc && !from_stdin) {
 		retval = remove_one_note(t, "HEAD", flag);
@@ -943,7 +946,7 @@ static int prune(int argc, const char **argv, const char *prefix)
 		usage_with_options(git_notes_prune_usage, options);
 	}
 
-	t = init_notes_check("prune");
+	t = init_notes_check("prune", NOTES_INIT_WRITABLE);
 
 	prune_notes(t, (verbose ? NOTES_PRUNE_VERBOSE : 0) |
 		(show_only ? NOTES_PRUNE_VERBOSE|NOTES_PRUNE_DRYRUN : 0) );

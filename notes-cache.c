@@ -32,14 +32,14 @@ void notes_cache_init(struct notes_cache *c, const char *name,
 		     const char *validity)
 {
 	struct strbuf ref = STRBUF_INIT;
-	int flags = 0;
+	int flags = NOTES_INIT_WRITABLE;
 
 	memset(c, 0, sizeof(*c));
 	c->validity = xstrdup(validity);
 
 	strbuf_addf(&ref, "refs/notes/%s", name);
 	if (!notes_cache_match_validity(ref.buf, validity))
-		flags = NOTES_INIT_EMPTY;
+		flags |= NOTES_INIT_EMPTY;
 	init_notes(&c->tree, ref.buf, combine_notes_overwrite, flags);
 	strbuf_release(&ref);
 }
@@ -49,7 +49,8 @@ int notes_cache_write(struct notes_cache *c)
 	unsigned char tree_sha1[20];
 	unsigned char commit_sha1[20];
 
-	if (!c || !c->tree.initialized || !c->tree.ref || !*c->tree.ref)
+	if (!c || !c->tree.initialized || !c->tree.update_ref ||
+	    !*c->tree.update_ref)
 		return -1;
 	if (!c->tree.dirty)
 		return 0;
@@ -59,8 +60,8 @@ int notes_cache_write(struct notes_cache *c)
 	if (commit_tree(c->validity, strlen(c->validity), tree_sha1, NULL,
 			commit_sha1, NULL, NULL) < 0)
 		return -1;
-	if (update_ref("update notes cache", c->tree.ref, commit_sha1, NULL,
-		       0, UPDATE_REFS_QUIET_ON_ERR) < 0)
+	if (update_ref("update notes cache", c->tree.update_ref, commit_sha1,
+		       NULL, 0, UPDATE_REFS_QUIET_ON_ERR) < 0)
 		return -1;
 
 	return 0;
