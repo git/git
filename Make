@@ -199,8 +199,9 @@ if test -z "$oldtest" &&
    sh -c 'prove --exec : >/dev/null 2>&1'
 then
 	# --state=slow,save
-        DEFAULT_TEST_TARGET=prove GIT_PROVE_OPTS="--timer $jobs"
-        export DEFAULT_TEST_TARGET GIT_PROVE_OPTS
+	DEFAULT_TEST_TARGET=prove
+	GIT_PROVE_OPTS="${GIT_PROVE_OPTS:+$GIT_PROVE_OPTS }--timer $jobs"
+	export DEFAULT_TEST_TARGET GIT_PROVE_OPTS
 fi
 
 LC_ALL=$LANG
