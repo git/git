@@ -768,9 +768,15 @@ int cmd_grep(int argc, const char **argv, const char *prefix)
 			     PARSE_OPT_STOP_AT_NON_OPTION);
 	grep_commit_pattern_type(pattern_type_arg, &opt);
 
-	if (use_index && !startup_info->have_repository)
-		/* die the same way as if we did it at the beginning */
-		setup_git_directory();
+	if (use_index && !startup_info->have_repository) {
+		int fallback = 0;
+		git_config_get_bool("grep.fallbacktonoindex", &fallback);
+		if (fallback)
+			use_index = 0;
+		else
+			/* die the same way as if we did it at the beginning */
+			setup_git_directory();
+	}
 
 	/*
 	 * skip a -- separator; we know it cannot be
