@@ -386,7 +386,7 @@ static int grep_cache(struct grep_opt *opt, const struct pathspec *pathspec, int
 
 	for (nr = 0; nr < active_nr; nr++) {
 		const struct cache_entry *ce = active_cache[nr];
-		if (!S_ISREG(ce->ce_mode))
+		if (!S_ISREG(ce->ce_mode) || ce_intent_to_add(ce))
 			continue;
 		if (!ce_path_match(ce, pathspec, NULL))
 			continue;
