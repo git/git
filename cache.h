@@ -215,7 +215,7 @@ struct cache_entry {
 #define CE_INTENT_TO_ADD     (1 << 29)
 #define CE_SKIP_WORKTREE     (1 << 30)
 /* CE_EXTENDED2 is for future extension */
-#define CE_EXTENDED2         (1 << 31)
+#define CE_EXTENDED2         (1U << 31)
 
 #define CE_EXTENDED_FLAGS (CE_INTENT_TO_ADD | CE_SKIP_WORKTREE)
 
