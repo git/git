@@ -561,6 +561,7 @@ else
 		INTERNAL_QSORT = YesPlease
 		HAVE_LIBCHARSET_H = YesPlease
 		NO_GETTEXT =
+		USE_GETTEXT_SCHEME = fallthrough
 		USE_LIBPCRE= YesPlease
 		NO_CURL =
 		USE_NED_ALLOCATOR = YesPlease
