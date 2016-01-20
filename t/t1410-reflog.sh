@@ -325,4 +325,17 @@ test_expect_success 'parsing reverse reflogs at BUFSIZ boundaries' '
 	test_cmp expect actual
 '
 
+test_expect_success 'no segfaults for reflog containing non-commit sha1s' '
+	git update-ref --create-reflog -m "Creating ref" \
+		refs/tests/tree-in-reflog HEAD &&
+	git update-ref -m "Forcing tree" refs/tests/tree-in-reflog HEAD^{tree} &&
+	git update-ref -m "Restoring to commit" refs/tests/tree-in-reflog HEAD &&
+	git reflog refs/tests/tree-in-reflog
+'
+
+test_expect_failure 'reflog with non-commit entries displays all entries' '
+	git reflog refs/tests/tree-in-reflog >actual &&
+	test_line_count = 3 actual
+'
+
 test_done
