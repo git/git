@@ -265,18 +265,18 @@ test_expect_success 'able to dcommit to a subdirectory' "
 	git update-index --add d &&
 	git commit -m '/bar/d should be in the log' &&
 	git svn dcommit -i bar &&
-	test -z \"\`git diff refs/heads/my-bar refs/remotes/bar\`\" &&
+	test -z \"\$(git diff refs/heads/my-bar refs/remotes/bar)\" &&
 	mkdir newdir &&
 	echo new > newdir/dir &&
 	git update-index --add newdir/dir &&
 	git commit -m 'add a new directory' &&
 	git svn dcommit -i bar &&
-	test -z \"\`git diff refs/heads/my-bar refs/remotes/bar\`\" &&
+	test -z \"\$(git diff refs/heads/my-bar refs/remotes/bar)\" &&
 	echo foo >> newdir/dir &&
 	git update-index newdir/dir &&
 	git commit -m 'modify a file in new directory' &&
 	git svn dcommit -i bar &&
-	test -z \"\`git diff refs/heads/my-bar refs/remotes/bar\`\"
+	test -z \"\$(git diff refs/heads/my-bar refs/remotes/bar)\"
 	"
 
 test_expect_success 'dcommit should not fail with a touched file' '
@@ -295,7 +295,7 @@ test_expect_success 'able to set-tree to a subdirectory' "
 	git update-index d &&
 	git commit -m 'update /bar/d' &&
 	git svn set-tree -i bar HEAD &&
-	test -z \"\`git diff refs/heads/my-bar refs/remotes/bar\`\"
+	test -z \"\$(git diff refs/heads/my-bar refs/remotes/bar)\"
 	"
 
 test_expect_success 'git-svn works in a bare repository' '

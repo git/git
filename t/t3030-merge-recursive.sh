@@ -263,7 +263,7 @@ test_expect_success 'setup 8' '
 	test_ln_s_add e a &&
 	test_tick &&
 	git commit -m "rename a->e, symlink a->e" &&
-	oln=`printf e | git hash-object --stdin`
+	oln=$(printf e | git hash-object --stdin)
 '
 
 test_expect_success 'setup 9' '

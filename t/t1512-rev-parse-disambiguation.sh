@@ -275,19 +275,19 @@ test_expect_success 'rev-parse --disambiguate' '
 
 test_expect_success 'ambiguous 40-hex ref' '
 	TREE=$(git mktree </dev/null) &&
-	REF=`git rev-parse HEAD` &&
+	REF=$(git rev-parse HEAD) &&
 	VAL=$(git commit-tree $TREE </dev/null) &&
 	git update-ref refs/heads/$REF $VAL &&
-	test `git rev-parse $REF 2>err` = $REF &&
+	test $(git rev-parse $REF 2>err) = $REF &&
 	grep "refname.*${REF}.*ambiguous" err
 '
 
 test_expect_success 'ambiguous short sha1 ref' '
 	TREE=$(git mktree </dev/null) &&
-	REF=`git rev-parse --short HEAD` &&
+	REF=$(git rev-parse --short HEAD) &&
 	VAL=$(git commit-tree $TREE </dev/null) &&
 	git update-ref refs/heads/$REF $VAL &&
-	test `git rev-parse $REF 2>err` = $VAL &&
+	test $(git rev-parse $REF 2>err) = $VAL &&
 	grep "refname.*${REF}.*ambiguous" err
 '
 
