@@ -11,11 +11,23 @@ UI, Workflows & Features
 
  * "git blame" learned to produce the progress eye-candy when it takes
    too much time before emitting the first line of the result.
-   (merge aba37f4 ea/blame-progress later to maint).
 
  * "git grep" can now be configured (or told from the command line)
    how many threads to use when searching in the working tree files.
-   (merge 89f09dd vl/grep-configurable-threads later to maint).
+
+ * Some "git notes" operations, e.g. "git log --notes=<note>", should
+   be able to read notes from any tree-ish that is shaped like a notes
+   tree, but the notes infrastructure required that the argument must
+   be a ref under refs/notes/.  Loosen it to require a valid ref only
+   when the operation would update the notes (in which case we must
+   have a place to store the updated notes tree, iow, a ref).
+
+ * "git grep" by default does not fall back to its "--no-index"
+   behaviour outside a directory under Git's control (otherwise the
+   user may by mistake end up running a huge recursive search); with a
+   new configuration (set in $HOME/.gitconfig--by definition this
+   cannot be set in the config file per project), this safety can be
+   disabled.
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -25,6 +37,17 @@ Performance, Internal Implementation, Development Support etc.
 
  * A slight update to the Makefile to mark "phoney" targets
    as such correctly.
+
+ * In-core storage of the reverse index for .pack files (which lets
+   you go from a pack offset to an object name) has been streamlined.
+
+ * d95138e6 (setup: set env $GIT_WORK_TREE when work tree is set, like
+   $GIT_DIR, 2015-06-26) attempted to work around a glitch in alias
+   handling by overwriting GIT_WORK_TREE environment variable to
+   affect subprocesses when set_git_work_tree() gets called, which
+   resulted in a rather unpleasant regression to "clone" and "init".
+   Try to address the same issue by always restoring the environment
+   and respawning the real underlying command when handling alias.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -42,3 +65,57 @@ notes for details).
    interfering when they tried to use a different working tree without
    setting GIT_WORK_TREE environment themselves.
    (merge df1e6ea nd/stop-setenv-work-tree later to maint).
+
+ * The "exclude_list" structure has the usual "alloc, nr" pair of
+   fields to be used by ALLOC_GROW(), but clear_exclude_list() forgot
+   to reset 'alloc' to 0 when it cleared 'nr' to discard the managed
+   array.
+   (merge 2653a8c nd/dir-exclude-cleanup later to maint).
+
+ * Paths that have been told the index about with "add -N" are not
+   quite yet in the index, but a few commands behaved as if they
+   already are in a harmful way.
+   (merge 4d55200 nd/ita-cleanup later to maint).
+
+ * "git send-email" was confused by escaped quotes stored in the alias
+   files saved by "mutt", which has been corrected.
+   (merge 2c510f2 ew/send-email-mutt-alias-fix later to maint).
+
+ * A few unportable C construct have been spotted by clang compiler
+   and have been fixed.
+   (merge a0df2e5 jk/clang-pedantic later to maint).
+
+ * The documentation has been updated to hint the connection between
+   the '--signoff' option and DCO.
+   (merge b2c150d dw/signoff-doc later to maint).
+
+ * "git reflog" incorrectly assumed that all objects that used to be
+   at the tip of a ref must be commits, which caused it to segfault.
+   (merge aecad37 dk/reflog-walk-with-non-commit later to maint).
+
+ * The ignore mechanism saw a few regressions around untracked file
+   listing and sparse checkout selection areas in 2.7.0; the change
+   that is responsible for the regression has been reverted.
+   (merge 8c72236 nd/exclusion-regression-fix later to maint).
+
+ * Some codepaths used fopen(3) when opening a fixed path in $GIT_DIR
+   (e.g. COMMIT_EDITMSG) that is meant to be left after the command is
+   done.  This however did not work well if the repository is set to
+   be shared with core.sharedRepository and the umask of the previous
+   user is tighter.  They have been made to work better by calling
+   unlink(2) and retrying after fopen(3) fails with EPERM.
+   (merge ea56518 js/fopen-harder later to maint).
+
+ * Asking gitweb for a nonexistent commit left a warning in the server
+   log.
+
+   Somebody may want to follow this up with an additional test, perhaps?
+   IIRC, we do test that no Perl warnings are given to the server log,
+   so this should have been caught if our test coverage were good.
+   (merge a9eb90a ho/gitweb-squelch-undef-warning later to maint).
+
+ * Other minor clean-ups and documentation updates
+   (merge 99487cf ss/user-manual later to maint).
+   (merge e914ef0 ew/for-each-ref-doc later to maint).
+   (merge 36fc7d8 sg/t6050-failing-editor-test-fix later to maint).
+   (merge 60253a6 ss/clone-depth-single-doc later to maint).
