@@ -239,12 +239,12 @@ static void fixup_paths(const char **path, struct strbuf *replacement)
 }
 
 void diff_no_index(struct rev_info *revs,
-		   int argc, const char **argv,
-		   const char *prefix)
+		   int argc, const char **argv)
 {
 	int i, prefixlen;
 	const char *paths[2];
 	struct strbuf replacement = STRBUF_INIT;
+	const char *prefix = revs->prefix;
 
 	diff_setup(&revs->diffopt);
 	for (i = 1; i < argc - 2; ) {
