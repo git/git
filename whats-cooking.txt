@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Jan 2016, #03; Wed, 13)
-X-master-at: fc10eb5b87a75af2cb93a3932897572f2c544915
-X-next-at: dc08a1951c8b3cd3e311ff0c2612db06ab28ae13
+Subject: What's cooking in git.git (Jan 2016, #04; Wed, 20)
+X-master-at: 3ee1e0fe11e2eb617170d0487fccfffc67f2b82b
+X-next-at: 9df04547ff2623b1b0f211cc82ef42c01b6dd101
 
-What's cooking in git.git (Jan 2016, #03; Wed, 13)
+What's cooking in git.git (Jan 2016, #04; Wed, 20)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -12,9 +12,10 @@ Here are the topics that have been cooking.  Commits prefixed with
 '+' are in 'next'.  The ones marked with '.' do not appear in any of
 the integration branches, but I am still holding onto them.
 
-The tip of 'next' has been rewound.  A handful of topics have
-graduated to 'master'.  A few topics that are fixes to 2.7.0 started
-cooking in 'next'.
+The tip of 'master' now has second batch of topics merged, some of
+which should later be merged to 'maint'.  There are a few topics
+that are v2.7.0 regression fixes still cooking outside 'master',
+which also need to be merged to 'maint' for the maintenance release.
 
 You can find the changes described here in the integration branches of the
 repositories listed at
@@ -24,81 +25,34 @@ repositories listed at
 --------------------------------------------------
 [Graduated to "master"]
 
-* ea/blame-progress (2015-12-16) 1 commit
-  (merged to 'next' on 2015-12-22 at f8e8643)
- + blame: add support for --[no-]progress option
+* dk/reflog-walk-with-non-commit (2016-01-05) 1 commit
+  (merged to 'next' on 2016-01-12 at 5f7b10e)
+ + reflog-walk: don't segfault on non-commit sha1's in the reflog
 
- Originally merged to 'next' on 2015-12-22
-
- "git blame" learned to produce the progress eye-candy when it takes
- too much time before emitting the first line of the result.
+ "git reflog" incorrectly assumed that all objects that used to be
+ at the tip of a ref must be commits, which caused it to segfault.
 
 
-* ep/make-phoney (2015-12-16) 1 commit
-  (merged to 'next' on 2015-12-22 at 27c7593)
- + Makefile: add missing phony target
+* dw/signoff-doc (2016-01-05) 1 commit
+  (merged to 'next' on 2016-01-12 at 1b08b48)
+ + Expand documentation describing --signoff
 
- Originally merged to 'next' on 2015-12-22
-
- A slight update to the Makefile.
-
-
-* nd/stop-setenv-work-tree (2015-12-22) 1 commit
-  (merged to 'next' on 2015-12-22 at 6d7bb0c)
- + Revert "setup: set env $GIT_WORK_TREE when work tree is set, like $GIT_DIR"
- (this branch is used by nd/clear-gitenv-upon-use-of-alias.)
-
- Originally merged to 'next' on 2015-12-22
-
- An earlier change in 2.5.x-era broke users' hooks and aliases by
- exporting GIT_WORK_TREE to point at the root of the working tree,
- interfering when they tried to use a different working tree without
- setting GIT_WORK_TREE environment themselves.
+ The documentation has been updated to hint the connection between
+ the '--signoff' option and DCO.
 
 
-* ps/push-delete-option (2015-12-16) 2 commits
-  (merged to 'next' on 2015-12-22 at d83cc1d)
- + push: add '-d' as shorthand for '--delete'
- + push: add '--delete' flag to synopsis
-
- Originally merged to 'next' on 2015-12-22
-
- "branch --delete" has "branch -d" but "push --delete" does not.
+* ew/for-each-ref-doc (2016-01-05) 1 commit
+  (merged to 'next' on 2016-01-12 at e5c4e75)
+ + for-each-ref: document `creatordate` and `creator` fields
 
 
-* sb/submodule-parallel-fetch (2015-12-16) 7 commits
-  (merged to 'next' on 2015-12-22 at 44e84ff)
- + submodules: allow parallel fetching, add tests and documentation
- + fetch_populated_submodules: use new parallel job processing
- + run-command: add an asynchronous parallel child processor
- + sigchain: add command to pop all common signals
- + strbuf: add strbuf_read_once to read without blocking
- + xread: poll on non blocking fds
- + submodule.c: write "Fetching submodule <foo>" to stderr
- (this branch is used by sb/submodule-parallel-update.)
+* ew/send-email-mutt-alias-fix (2016-01-04) 1 commit
+  (merged to 'next' on 2016-01-12 at 84d1329)
+ + git-send-email: do not double-escape quotes from mutt
 
- Originally merged to 'next' on 2015-12-22
+ "git send-email" was confused by escaped quotes stored in the alias
+ files saved by "mutt", which has been corrected.
 
- Add a framework to spawn a group of processes in parallel, and use
- it to run "git fetch --recurse-submodules" in parallel.
-
- Rerolled and this seems to be a lot cleaner.  The merge of the
- earlier one to 'next' has been reverted.
-
-
-* vl/grep-configurable-threads (2015-12-16) 3 commits
-  (merged to 'next' on 2015-12-22 at 8954705)
- + grep: add --threads=<num> option and grep.threads configuration
- + grep: slight refactoring to the code that disables threading
- + grep: allow threading even on a single-core machine
-
- Originally merged to 'next' on 2015-12-22
-
- "git grep" can now be configured (or told from the command line)
- how many threads to use when searching in the working tree files.
-
---------------------------------------------------
-[New Topics]
 
 * ho/gitweb-squelch-undef-warning (2016-01-12) 1 commit
   (merged to 'next' on 2016-01-12 at ef4fc5f)
@@ -111,7 +65,123 @@ repositories listed at
  IIRC, we do test that no Perl warnings are given to the server log,
  so this should have been caught if our test coverage were good.
 
- Will merge to 'master'.
+
+* jk/clang-pedantic (2016-01-04) 2 commits
+  (merged to 'next' on 2016-01-12 at b5be271)
+ + bswap: add NO_UNALIGNED_LOADS define
+ + avoid shifting signed integers 31 bits
+
+ A few unportable C construct have been spotted by clang compiler
+ and have been fixed.
+
+
+* jk/pack-revindex (2015-12-21) 2 commits
+  (merged to 'next' on 2016-01-12 at 2e39a16)
+ + pack-revindex: store entries directly in packed_git
+ + pack-revindex: drop hash table
+
+ In-core storage of the reverse index for .pack files (which lets
+ you go from a pack offset to an object name) has been streamlined.
+
+
+* js/fopen-harder (2016-01-11) 2 commits
+  (merged to 'next' on 2016-01-12 at c6ef194)
+ + Handle more file writes correctly in shared repos
+ + commit: allow editing the commit message even in shared repos
+
+ Some codepaths used fopen(3) when opening a fixed path in $GIT_DIR
+ (e.g. COMMIT_EDITMSG) that is meant to be left after the command is
+ done.  This however did not work well if the repository is set to
+ be shared with core.sharedRepository and the umask of the previous
+ user is tighter.  They have been made to work better by calling
+ unlink(2) and retrying after fopen(3) fails with EPERM.
+
+
+* mh/notes-allow-reading-treeish (2016-01-12) 1 commit
+  (merged to 'next' on 2016-01-12 at 7aa311f)
+ + notes: allow treeish expressions as notes ref
+
+ Originally merged to 'next' on 2015-10-23
+
+ Some "git notes" operations, e.g. "git log --notes=<note>", should
+ be able to read notes from any tree-ish that is shaped like a notes
+ tree, but the notes infrastructure required that the argument must
+ be a ref under refs/notes/.  Loosen it to require a valid ref only
+ when the operation would update the notes (in which case we must
+ have a place to store the updated notes tree, iow, a ref).
+
+
+* nd/clear-gitenv-upon-use-of-alias (2015-12-29) 5 commits
+  (merged to 'next' on 2016-01-12 at 696b1f5)
+ + run-command: don't warn on SIGPIPE deaths
+ + git.c: make sure we do not leak GIT_* to alias scripts
+ + setup.c: re-fix d95138e (setup: set env $GIT_WORK_TREE when ..
+ + git.c: make it clear save_env() is for alias handling only
+ + Merge branch 'nd/stop-setenv-work-tree' into nd/clear-gitenv-upon-use-of-alias
+
+ d95138e6 (setup: set env $GIT_WORK_TREE when work tree is set, like
+ $GIT_DIR, 2015-06-26) attempted to work around a glitch in alias
+ handling by overwriting GIT_WORK_TREE environment variable to
+ affect subprocesses when set_git_work_tree() gets called, which
+ resulted in a rather unpleasant regression to "clone" and "init".
+ Try to address the same issue by always restoring the environment
+ and respawning the real underlying command when handling alias.
+
+
+* nd/dir-exclude-cleanup (2015-12-28) 1 commit
+  (merged to 'next' on 2016-01-12 at e6584c9)
+ + dir.c: clean the entire struct in clear_exclude_list()
+
+ The "exclude_list" structure has the usual "alloc, nr" pair of
+ fields to be used by ALLOC_GROW(), but clear_exclude_list() forgot
+ to reset 'alloc' to 0 when it cleared 'nr' to discard the managed
+ array.
+
+
+* nd/exclusion-regression-fix (2016-01-08) 1 commit
+  (merged to 'next' on 2016-01-12 at 0eb98a5)
+ + Revert "dir.c: don't exclude whole dir prematurely if neg pattern may match"
+
+ The ignore mechanism saw a few regressions around untracked file
+ listing and sparse checkout selection areas in 2.7.0; the change
+ that is responsible for the regression has been reverted.
+
+
+* nd/ita-cleanup (2015-12-28) 3 commits
+  (merged to 'next' on 2016-01-12 at 008a6e3)
+ + grep: make it clear i-t-a entries are ignored
+ + add and use a convenience macro ce_intent_to_add()
+ + blame: remove obsolete comment
+
+ Paths that have been told the index about with "add -N" are not
+ quite yet in the index, but a few commands behaved as if they
+ already are in a harmful way.
+
+
+* sg/t6050-failing-editor-test-fix (2016-01-05) 1 commit
+  (merged to 'next' on 2016-01-12 at dc08a19)
+ + t6050-replace: make failing editor test more robust
+
+
+* ss/clone-depth-single-doc (2016-01-08) 3 commits
+  (merged to 'next' on 2016-01-12 at 16ded8c)
+ + docs: clarify that --depth for git-fetch works with newly initialized repos
+ + docs: say "commits" in the --depth option wording for git-clone
+ + docs: clarify that passing --depth to git-clone implies --single-branch
+
+ Documentation for "git fetch --depth" has been updated for clarity.
+
+
+* ss/user-manual (2015-12-30) 4 commits
+  (merged to 'next' on 2016-01-12 at c7f0328)
+ + user-manual: add addition gitweb information
+ + user-manual: add section documenting shallow clones
+ + glossary: define the term shallow clone
+ + user-manual: remove temporary branch entry from todo list
+
+ Drop a few old "todo" items by deciding that the change one of them
+ suggests is not such a good idea, and doing the change the other
+ one suggested to do.
 
 
 * tg/grep-no-index-fallback (2016-01-12) 2 commits
@@ -119,81 +189,125 @@ repositories listed at
  + builtin/grep: add grep.fallbackToNoIndex config
  + t7810: correct --no-index test
 
- "git grep" by default does not fall back to its --no-index
+ "git grep" by default does not fall back to its "--no-index"
  behaviour outside a directory under Git's control (otherwise the
  user may by mistake end up running a huge recursive search); with a
  new configuration (set in $HOME/.gitconfig--by definition this
  cannot be set in the config file per project), this safety can be
  disabled.
 
- Will merge to 'master'.
+--------------------------------------------------
+[New Topics]
+
+* dg/subtree-rebase-test (2016-01-19) 1 commit
+ - contrib/subtree: Add a test for subtree rebase that loses commits
+
+ Reviewed up to v5.
+ Will be rerolled.
+ ($gmane/284426)
 
 
-* js/pull-rebase-i (2016-01-13) 3 commits
- - completion: add missing branch.*.rebase values
- - remote: handle the config setting branch.*.rebase=interactive
- - pull: allow interactive rebase with --rebase=interactive
+* jk/shortlog (2016-01-19) 7 commits
+ - shortlog: don't warn on empty author
+ - shortlog: optimize out useless string list
+ - shortlog: optimize out useless "<none>" normalization
+ - shortlog: optimize "--summary" mode
+ - shortlog: replace hand-parsing of author with pretty-printer
+ - shortlog: use strbufs to read from stdin
+ - shortlog: match both "Author:" and "author" on stdin
 
- "git pull --rebase" has been extended to allow invoking
- "rebase -i".
-
- Will merge to 'next'.
-
-
-* jk/ok-to-fail-gc-auto-in-rebase (2016-01-13) 1 commit
- - rebase: ignore failures from "gc --auto"
-
- "git rebase", unlike all other callers of "gc --auto", did not
- ignore the exit code from "gc --auto".
-
- Will merge to 'next'.
-
-
-* js/close-packs-before-gc (2016-01-13) 4 commits
- - receive-pack: release pack files before garbage-collecting
- - merge: release pack files before garbage-collecting
- - am: release pack files before garbage-collecting
- - fetch: release pack files before garbage-collecting
-
- Many codepaths that run "gc --auto" before exiting kept packfiles
- mapped and left the file descriptors to them open, which was not
- friendly to systems that cannot remove files that are open.  They
- now close the packs before doing so.
+ "git shortlog" used to accumulate various pieces of information
+ regardless of what was asked to be shown in the final output.  It
+ has been optimized by noticing what need not to be collected
+ (e.g. there is no need to collect the log messages when showing
+ only the number of changes).
 
  Will merge to 'next'.
 
 
-* js/msys2 (2016-01-13) 5 commits
- - compat/winansi: support compiling with MSys2
- - compat/mingw: support MSys2-based MinGW build
- - nedmalloc: allow compiling with MSys2's compiler
- - config.mak.uname: supporting 64-bit MSys2
- - config.mak.uname: support MSys2
+* jc/peace-with-crlf (2016-01-15) 12 commits
+ - test-sha1-array: read command stream with strbuf_getline()
+ - grep: read -f file with strbuf_getline()
+ - send-pack: read list of refs with strbuf_getline()
+ - column: read lines with strbuf_getline()
+ - cat-file: read batch stream with strbuf_getline()
+ - transport-helper: read helper response with strbuf_getline()
+ - clone/sha1_file: read info/alternates with strbuf_getline()
+ - remote.c: read $GIT_DIR/remotes/* with strbuf_getline()
+ - ident.c: read /etc/mailname with strbuf_getline()
+ - rev-parse: read parseopt spec with strbuf_getline()
+ - revision: read --stdin with strbuf_getline()
+ - hash-object: read --stdin-paths with strbuf_getline()
+ (this branch uses jc/strbuf-getline.)
 
- Beginning of the upstreaming process of Git for Windows effort.
-
- Waiting for review.
- ($gmane/283975).
-
-
-* rp/p4-filetype-change (2016-01-13) 1 commit
- - git-p4.py: add support for filetype change
+ Teach codepaths that communicate with users by reading text files
+ to be more lenient to editors that write CRLF-terminated lines.
+ Note that this is only about communication with Git, like feeding
+ list of object names from the standard input instead of from the
+ command line, and does not involve files in the working tree.
 
  Will merge to 'next'.
 
 
-* tk/interpret-trailers-in-place (2016-01-13) 2 commits
- - interpret-trailers: add option for in-place editing
- - trailer: use fprintf instead of printf
+* dg/subtree-test (2016-01-19) 1 commit
+ - contrib/subtree: Make testing easier
 
- "interpret-trailers" has been taught to optionally update a file in
- place, instead of always writing the result to the standard output.
+ Needs review.
+ ($gmane/284277)
 
- Test may need to be updated to ensure a failing rewrite does not
- clobber the original input.
 
- Waiting for review.
- ($gmane/283959).
+* jk/filter-branch-no-index (2016-01-19) 1 commit
+ - filter-branch: resolve $commit^{tree} in no-index case
+
+ A recent optimization to filter-branch in v2.7.0 introduced a
+ regression when --prune-empty filter is used, which has been
+ corrected.
+
+ Will merge to 'next'.
+
+
+* jk/sanity (2016-01-19) 1 commit
+ - test-lib: clarify and tighten SANITY
+
+ The description for SANITY prerequisite the test suite uses has
+ been clarified both in the comment and in the implementation.
+
+ Will merge to 'next'.
+
+
+* ls/travis-prove-order (2016-01-19) 1 commit
+ - travis-ci: run previously failed tests first, then slowest to fastest
+
+ By persisting runtime statistics of previous "prove" run, execute
+ tests that take longer before other ones, to reduce the total
+ wallclock time when running with Travis CI.
+
+ Waiting for a reroll.
+ ($gmane/284431)
+
+
+* nd/do-not-move-worktree-manually (2016-01-19) 2 commits
+ - worktree: stop supporting moving worktrees manually
+ - worktree.c: fix indentation
+
+ "git worktree" had a broken code that attempted to auto-fix
+ possible inconsistency that results from end-users moving a
+ worktree to different places without telling Git (the original
+ repository needs to maintain backpointers to its worktrees, but
+ "mv" run by end-users who are not familiar with that fact will
+ obviously not adjust them), which actually made things worse
+ when triggered.
+
+ Will merge to 'next'.
+
+
+* sb/submodule-init (2016-01-20) 2 commits
+ - submodule: port init from shell to C
+ - submodule: port resolve_relative_url from shell to C
+ (this branch uses sb/submodule-parallel-update.)
+
+ Needs review.
+ ($gmane/284419)
 
 --------------------------------------------------
 [Stalled]
@@ -246,31 +360,79 @@ repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* dw/signoff-doc (2016-01-05) 1 commit
-  (merged to 'next' on 2016-01-12 at 1b08b48)
- + Expand documentation describing --signoff
+* js/pull-rebase-i (2016-01-13) 3 commits
+  (merged to 'next' on 2016-01-20 at a0c5440)
+ + completion: add missing branch.*.rebase values
+ + remote: handle the config setting branch.*.rebase=interactive
+ + pull: allow interactive rebase with --rebase=interactive
 
- The documentation has been updated to hint the connection between
- the '--signoff' option and DCO.
-
- Will merge to 'master'.
-
-
-* ew/for-each-ref-doc (2016-01-05) 1 commit
-  (merged to 'next' on 2016-01-12 at e5c4e75)
- + for-each-ref: document `creatordate` and `creator` fields
+ "git pull --rebase" has been extended to allow invoking
+ "rebase -i".
 
  Will merge to 'master'.
 
 
-* sg/t6050-failing-editor-test-fix (2016-01-05) 1 commit
-  (merged to 'next' on 2016-01-12 at dc08a19)
- + t6050-replace: make failing editor test more robust
+* jk/ok-to-fail-gc-auto-in-rebase (2016-01-13) 1 commit
+  (merged to 'next' on 2016-01-20 at c9a8e82)
+ + rebase: ignore failures from "gc --auto"
+
+ "git rebase", unlike all other callers of "gc --auto", did not
+ ignore the exit code from "gc --auto".
 
  Will merge to 'master'.
 
 
-* js/dirname-basename (2016-01-12) 4 commits
+* js/close-packs-before-gc (2016-01-13) 4 commits
+  (merged to 'next' on 2016-01-20 at 16cf87b)
+ + receive-pack: release pack files before garbage-collecting
+ + merge: release pack files before garbage-collecting
+ + am: release pack files before garbage-collecting
+ + fetch: release pack files before garbage-collecting
+
+ Many codepaths that run "gc --auto" before exiting kept packfiles
+ mapped and left the file descriptors to them open, which was not
+ friendly to systems that cannot remove files that are open.  They
+ now close the packs before doing so.
+
+ Will merge to 'master'.
+
+
+* js/msys2 (2016-01-15) 9 commits
+ - mingw: uglify (a, 0) definitions to shut up warnings
+ - mingw: squash another warning about a cast
+ - mingw: avoid warnings when casting HANDLEs to int
+ - mingw: avoid redefining S_* constants
+ - compat/winansi: support compiling with MSys2
+ - compat/mingw: support MSys2-based MinGW build
+ - nedmalloc: allow compiling with MSys2's compiler
+ - config.mak.uname: supporting 64-bit MSys2
+ - config.mak.uname: support MSys2
+
+ Beginning of the upstreaming process of Git for Windows effort.
+
+ Will merge to 'next'.
+
+
+* rp/p4-filetype-change (2016-01-13) 1 commit
+  (merged to 'next' on 2016-01-20 at 7b5954b)
+ + git-p4.py: add support for filetype change
+
+ Will merge to 'master'.
+
+
+* tk/interpret-trailers-in-place (2016-01-14) 2 commits
+ - interpret-trailers: add option for in-place editing
+ - trailer: allow to write to files other than stdout
+
+ "interpret-trailers" has been taught to optionally update a file in
+ place, instead of always writing the result to the standard output.
+
+ Will merge to 'next'.
+
+
+* js/dirname-basename (2016-01-15) 5 commits
+  (merged to 'next' on 2016-01-20 at d198512)
+ + t0060: loosen overly strict expectations
   (merged to 'next' on 2016-01-12 at c3c970a)
  + t0060: verify that basename() and dirname() work as expected
  + compat/basename.c: provide a dirname() compatibility function
@@ -278,47 +440,6 @@ repositories listed at
  + Refactor skipping DOS drive prefixes
 
  dirname() emulation has been added, as Msys2 lacks it.
-
- The test needs to be loosened to allow implementation defined
- behaviour; currently it fails on Macs.
-
- Waiting for an update.
- ($gmane/283968).
-
-
-* js/fopen-harder (2016-01-11) 2 commits
-  (merged to 'next' on 2016-01-12 at c6ef194)
- + Handle more file writes correctly in shared repos
- + commit: allow editing the commit message even in shared repos
-
- Some codepaths used fopen(3) when opening a fixed path in $GIT_DIR
- (e.g. COMMIT_EDITMSG) that is meant to be left after the command is
- done.  This however did not work well if the repository is set to
- be shared with core.sharedRepository and the umask of the previous
- user is tighter.  Make them work better by calling unlink(2) and
- retrying after fopen(3) fails with EPERM.
-
- Will merge to 'master'.
-
-
-* nd/exclusion-regression-fix (2016-01-08) 1 commit
-  (merged to 'next' on 2016-01-12 at 0eb98a5)
- + Revert "dir.c: don't exclude whole dir prematurely if neg pattern may match"
-
- The ignore mechanism saw a few regressions around untracked file
- listing and sparse checkout selection areas in 2.7.0; the change
- that is responsible for the regression has been reverted.
-
- Will merge to 'master'.
-
-
-* ss/clone-depth-single-doc (2016-01-08) 3 commits
-  (merged to 'next' on 2016-01-12 at 16ded8c)
- + docs: clarify that --depth for git-fetch works with newly initialized repos
- + docs: say "commits" in the --depth option wording for git-clone
- + docs: clarify that passing --depth to git-clone implies --single-branch
-
- Updates documents to clarify "git fetch --depth".
 
  Will merge to 'master'.
 
@@ -337,16 +458,17 @@ repositories listed at
 
 
 * ak/format-patch-odir-config (2016-01-13) 1 commit
- - format-patch: introduce format.outputDirectory configuration
+  (merged to 'next' on 2016-01-20 at 97c699b)
+ + format-patch: introduce format.outputDirectory configuration
 
  Allow "-o <dir>" option to be omitted on the command line of "git
  format-patch" if you always use the same directory in your
  workflow.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
-* jk/notes-merge-from-anywhere (2015-12-29) 1 commit
+* jk/notes-merge-from-anywhere (2016-01-17) 1 commit
  - notes: allow merging from arbitrary references
 
  "git notes merge" used to limit the source of the merged notes tree
@@ -355,214 +477,137 @@ repositories listed at
  repositories using remote-tracking notes trees (located in e.g.
  refs/remote-notes/ or somesuch).
 
- Needs review.
-
-
-* dk/reflog-walk-with-non-commit (2016-01-05) 1 commit
-  (merged to 'next' on 2016-01-12 at 5f7b10e)
- + reflog-walk: don't segfault on non-commit sha1's in the reflog
-
- "git reflog" incorrectly assumed that all objects that used to be
- at the tip of a ref must be commits, which caused it to segfault.
-
- Will merge to 'master'.
-
-
-* ew/send-email-mutt-alias-fix (2016-01-04) 1 commit
-  (merged to 'next' on 2016-01-12 at 84d1329)
- + git-send-email: do not double-escape quotes from mutt
-
- "git send-email" was confused by escaped quotes stored in the alias
- files saved by "mutt".
-
- Will merge to 'master'.
-
-
-* jk/clang-pedantic (2016-01-04) 2 commits
-  (merged to 'next' on 2016-01-12 at b5be271)
- + bswap: add NO_UNALIGNED_LOADS define
- + avoid shifting signed integers 31 bits
-
- A few unportable C construct have been spotted by clang compiler
- and have been fixed.
-
- Will merge to 'master'.
-
-
-* dt/unpack-compare-entry-optim (2016-01-05) 1 commit
- - do_compare_entry: use already-computed path
-
  Will merge to 'next'.
 
 
-* jk/pack-revindex (2015-12-21) 2 commits
-  (merged to 'next' on 2016-01-12 at 2e39a16)
- + pack-revindex: store entries directly in packed_git
- + pack-revindex: drop hash table
+* dt/unpack-compare-entry-optim (2016-01-05) 1 commit
+  (merged to 'next' on 2016-01-20 at 180dccf)
+ + do_compare_entry: use already-computed path
 
  Will merge to 'master'.
 
 
 * jk/symbolic-ref (2016-01-13) 6 commits
- - lock_ref_sha1_basic: handle REF_NODEREF with invalid refs
- - lock_ref_sha1_basic: always fill old_oid while holding lock
- - checkout,clone: check return value of create_symref
- - create_symref: write reflog while holding lock
- - create_symref: use existing ref-lock code
- - create_symref: modernize variable names
+  (merged to 'next' on 2016-01-20 at 30b5408)
+ + lock_ref_sha1_basic: handle REF_NODEREF with invalid refs
+ + lock_ref_sha1_basic: always fill old_oid while holding lock
+ + checkout,clone: check return value of create_symref
+ + create_symref: write reflog while holding lock
+ + create_symref: use existing ref-lock code
+ + create_symref: modernize variable names
 
  The low-level code that is used to create symbolic references has
  been updated to share more code with the code that deals with
  normal references.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * ep/shell-command-substitution-style (2016-01-12) 92 commits
- - t9901-git-web--browse.sh: use the $( ... ) construct for command substitution
- - t9501-gitweb-standalone-http-status.sh: use the $( ... ) construct for command substitution
- - t9350-fast-export.sh: use the $( ... ) construct for command substitution
- - t9300-fast-import.sh: use the $( ... ) construct for command substitution
- - t9150-svk-mergetickets.sh: use the $( ... ) construct for command substitution
- - t9145-git-svn-master-branch.sh: use the $( ... ) construct for command substitution
- - t9138-git-svn-authors-prog.sh: use the $( ... ) construct for command substitution
- - t9137-git-svn-dcommit-clobber-series.sh: use the $( ... ) construct for command substitution
- - t9132-git-svn-broken-symlink.sh: use the $( ... ) construct for command substitution
- - t9130-git-svn-authors-file.sh: use the $( ... ) construct for command substitution
- - t9129-git-svn-i18n-commitencoding.sh: use the $( ... ) construct for command substitution
- - t9119-git-svn-info.sh: use the $( ... ) construct for command substitution
- - t9118-git-svn-funky-branch-names.sh: use the $( ... ) construct for command substitution
- - t9114-git-svn-dcommit-merge.sh: use the $( ... ) construct for command substitution
- - t9110-git-svn-use-svm-props.sh: use the $( ... ) construct for command substitution
- - t9109-git-svn-multi-glob.sh: use the $( ... ) construct for command substitution
- - t9108-git-svn-glob.sh: use the $( ... ) construct for command substitution
- - t9107-git-svn-migrate.sh: use the $( ... ) construct for command substitution
- - t9105-git-svn-commit-diff.sh: use the $( ... ) construct for command substitution
- - t9104-git-svn-follow-parent.sh: use the $( ... ) construct for command substitution
- - t9101-git-svn-props.sh: use the $( ... ) construct for command substitution
- - t9100-git-svn-basic.sh: use the $( ... ) construct for command substitution
- - t/t9001-send-email.sh: use the $( ... ) construct for command substitution
- - t/t8003-blame-corner-cases.sh: use the $( ... ) construct for command substitution
- - t/t7700-repack.sh: use the $( ... ) construct for command substitution
- - t/t7602-merge-octopus-many.sh: use the $( ... ) construct for command substitution
- - t/t7505-prepare-commit-msg-hook.sh: use the $( ... ) construct for command substitution
- - t/t7504-commit-msg-hook.sh: use the $( ... ) construct for command substitution
- - t/t7408-submodule-reference.sh: use the $( ... ) construct for command substitution
- - t/t7406-submodule-update.sh: use the $( ... ) construct for command substitution
- - t/t7103-reset-bare.sh: use the $( ... ) construct for command substitution
- - t/t7006-pager.sh: use the $( ... ) construct for command substitution
- - t/t7004-tag.sh: use the $( ... ) construct for command substitution
- - t/t7003-filter-branch.sh: use the $( ... ) construct for command substitution
- - t/t7001-mv.sh: use the $( ... ) construct for command substitution
- - t/t6132-pathspec-exclude.sh: use the $( ... ) construct for command substitution
- - t/t6032-merge-large-rename.sh: use the $( ... ) construct for command substitution
- - t/t6015-rev-list-show-all-parents.sh: use the $( ... ) construct for command substitution
- - t/t6002-rev-list-bisect.sh: use the $( ... ) construct for command substitution
- - t/t6001-rev-list-graft.sh: use the $( ... ) construct for command substitution
- - t/t5900-repo-selection.sh: use the $( ... ) construct for command substitution
- - t/t5710-info-alternate.sh: use the $( ... ) construct for command substitution
- - t/t5700-clone-reference.sh: use the $( ... ) construct for command substitution
- - t/t5601-clone.sh: use the $( ... ) construct for command substitution
- - t/t5570-git-daemon.sh: use the $( ... ) construct for command substitution
- - t/t5550-http-fetch-dumb.sh: use the $( ... ) construct for command substitution
- - t/t5538-push-shallow.sh: use the $( ... ) construct for command substitution
- - t/t5537-fetch-shallow.sh: use the $( ... ) construct for command substitution
- - t/t5532-fetch-proxy.sh: use the $( ... ) construct for command substitution
- - t/t5530-upload-pack-error.sh: use the $( ... ) construct for command substitution
- - t/t5522-pull-symlink.sh: use the $( ... ) construct for command substitution
- - t/t5517-push-mirror.sh: use the $( ... ) construct for command substitution
- - t/t5516-fetch-push.sh: use the $( ... ) construct for command substitution
- - t/t5515-fetch-merge-logic.sh: use the $( ... ) construct for command substitution
- - t/t5510-fetch.sh: use the $( ... ) construct for command substitution
- - t/t5506-remote-groups.sh: use the $( ... ) construct for command substitution
- - t/t5505-remote.sh: use the $( ... ) construct for command substitution
- - t/t5500-fetch-pack.sh: use the $( ... ) construct for command substitution
- - t/t5305-include-tag.sh: use the $( ... ) construct for command substitution
- - t/t5304-prune.sh: use the $( ... ) construct for command substitution
- - t/t5303-pack-corruption-resilience.sh: use the $( ... ) construct for command substitution
- - t/t5100: no need to use 'echo' command substitutions for globbing
- - t/t5302-pack-index.sh: use the $( ... ) construct for command substitution
- - t/t5301-sliding-window.sh: use the $( ... ) construct for command substitution
- - t/t5300-pack-object.sh: use the $( ... ) construct for command substitution
- - t/t5100-mailinfo.sh: use the $( ... ) construct for command substitution
- - t/t3700-add.sh: use the $( ... ) construct for command substitution
- - t/t3600-rm.sh: use the $( ... ) construct for command substitution
- - t/t3511-cherry-pick-x.sh: use the $( ... ) construct for command substitution
- - t/t3403-rebase-skip.sh: use the $( ... ) construct for command substitution
- - t/t3210-pack-refs.sh: use the $( ... ) construct for command substitution
- - t/t3101-ls-tree-dirname.sh: use the $( ... ) construct for command substitution
- - t/t3100-ls-tree-restrict.sh: use the $( ... ) construct for command substitution
- - t/t3030-merge-recursive.sh: use the $( ... ) construct for command substitution
- - t/t2102-update-index-symlinks.sh: use the $( ... ) construct for command substitution
- - t/t2025-worktree-add.sh: use the $( ... ) construct for command substitution
- - t/t1700-split-index.sh: use the $( ... ) construct for command substitution
- - t/t1512-rev-parse-disambiguation.sh: use the $( ... ) construct for command substitution
- - t/t1511-rev-parse-caret.sh: use the $( ... ) construct for command substitution
- - t/t1410-reflog.sh: use the $( ... ) construct for command substitution
- - t/t1401-symbolic-ref.sh: use the $( ... ) construct for command substitution
- - t/t1100-commit-tree-options.sh: use the $( ... ) construct for command substitution
- - unimplemented.sh: use the $( ... ) construct for command substitution
- - test-sha1.sh: use the $( ... ) construct for command substitution
- - t/lib-httpd.sh: use the $( ... ) construct for command substitution
- - git-gui/po/glossary/txt-to-pot.sh: use the $( ... ) construct for command substitution
- - contrib/thunderbird-patch-inline/appp.sh: use the $( ... ) construct for command substitution
- - contrib/examples/git-revert.sh: use the $( ... ) construct for command substitution
- - contrib/examples/git-repack.sh: use the $( ... ) construct for command substitution
- - contrib/examples/git-merge.sh: use the $( ... ) construct for command substitution
- - contrib/examples/git-fetch.sh: use the $( ... ) construct for command substitution
- - contrib/examples/git-commit.sh: use the $( ... ) construct for command substitution
+  (merged to 'next' on 2016-01-20 at ae1b1d8)
+ + t9901-git-web--browse.sh: use the $( ... ) construct for command substitution
+ + t9501-gitweb-standalone-http-status.sh: use the $( ... ) construct for command substitution
+ + t9350-fast-export.sh: use the $( ... ) construct for command substitution
+ + t9300-fast-import.sh: use the $( ... ) construct for command substitution
+ + t9150-svk-mergetickets.sh: use the $( ... ) construct for command substitution
+ + t9145-git-svn-master-branch.sh: use the $( ... ) construct for command substitution
+ + t9138-git-svn-authors-prog.sh: use the $( ... ) construct for command substitution
+ + t9137-git-svn-dcommit-clobber-series.sh: use the $( ... ) construct for command substitution
+ + t9132-git-svn-broken-symlink.sh: use the $( ... ) construct for command substitution
+ + t9130-git-svn-authors-file.sh: use the $( ... ) construct for command substitution
+ + t9129-git-svn-i18n-commitencoding.sh: use the $( ... ) construct for command substitution
+ + t9119-git-svn-info.sh: use the $( ... ) construct for command substitution
+ + t9118-git-svn-funky-branch-names.sh: use the $( ... ) construct for command substitution
+ + t9114-git-svn-dcommit-merge.sh: use the $( ... ) construct for command substitution
+ + t9110-git-svn-use-svm-props.sh: use the $( ... ) construct for command substitution
+ + t9109-git-svn-multi-glob.sh: use the $( ... ) construct for command substitution
+ + t9108-git-svn-glob.sh: use the $( ... ) construct for command substitution
+ + t9107-git-svn-migrate.sh: use the $( ... ) construct for command substitution
+ + t9105-git-svn-commit-diff.sh: use the $( ... ) construct for command substitution
+ + t9104-git-svn-follow-parent.sh: use the $( ... ) construct for command substitution
+ + t9101-git-svn-props.sh: use the $( ... ) construct for command substitution
+ + t9100-git-svn-basic.sh: use the $( ... ) construct for command substitution
+ + t/t9001-send-email.sh: use the $( ... ) construct for command substitution
+ + t/t8003-blame-corner-cases.sh: use the $( ... ) construct for command substitution
+ + t/t7700-repack.sh: use the $( ... ) construct for command substitution
+ + t/t7602-merge-octopus-many.sh: use the $( ... ) construct for command substitution
+ + t/t7505-prepare-commit-msg-hook.sh: use the $( ... ) construct for command substitution
+ + t/t7504-commit-msg-hook.sh: use the $( ... ) construct for command substitution
+ + t/t7408-submodule-reference.sh: use the $( ... ) construct for command substitution
+ + t/t7406-submodule-update.sh: use the $( ... ) construct for command substitution
+ + t/t7103-reset-bare.sh: use the $( ... ) construct for command substitution
+ + t/t7006-pager.sh: use the $( ... ) construct for command substitution
+ + t/t7004-tag.sh: use the $( ... ) construct for command substitution
+ + t/t7003-filter-branch.sh: use the $( ... ) construct for command substitution
+ + t/t7001-mv.sh: use the $( ... ) construct for command substitution
+ + t/t6132-pathspec-exclude.sh: use the $( ... ) construct for command substitution
+ + t/t6032-merge-large-rename.sh: use the $( ... ) construct for command substitution
+ + t/t6015-rev-list-show-all-parents.sh: use the $( ... ) construct for command substitution
+ + t/t6002-rev-list-bisect.sh: use the $( ... ) construct for command substitution
+ + t/t6001-rev-list-graft.sh: use the $( ... ) construct for command substitution
+ + t/t5900-repo-selection.sh: use the $( ... ) construct for command substitution
+ + t/t5710-info-alternate.sh: use the $( ... ) construct for command substitution
+ + t/t5700-clone-reference.sh: use the $( ... ) construct for command substitution
+ + t/t5601-clone.sh: use the $( ... ) construct for command substitution
+ + t/t5570-git-daemon.sh: use the $( ... ) construct for command substitution
+ + t/t5550-http-fetch-dumb.sh: use the $( ... ) construct for command substitution
+ + t/t5538-push-shallow.sh: use the $( ... ) construct for command substitution
+ + t/t5537-fetch-shallow.sh: use the $( ... ) construct for command substitution
+ + t/t5532-fetch-proxy.sh: use the $( ... ) construct for command substitution
+ + t/t5530-upload-pack-error.sh: use the $( ... ) construct for command substitution
+ + t/t5522-pull-symlink.sh: use the $( ... ) construct for command substitution
+ + t/t5517-push-mirror.sh: use the $( ... ) construct for command substitution
+ + t/t5516-fetch-push.sh: use the $( ... ) construct for command substitution
+ + t/t5515-fetch-merge-logic.sh: use the $( ... ) construct for command substitution
+ + t/t5510-fetch.sh: use the $( ... ) construct for command substitution
+ + t/t5506-remote-groups.sh: use the $( ... ) construct for command substitution
+ + t/t5505-remote.sh: use the $( ... ) construct for command substitution
+ + t/t5500-fetch-pack.sh: use the $( ... ) construct for command substitution
+ + t/t5305-include-tag.sh: use the $( ... ) construct for command substitution
+ + t/t5304-prune.sh: use the $( ... ) construct for command substitution
+ + t/t5303-pack-corruption-resilience.sh: use the $( ... ) construct for command substitution
+ + t/t5100: no need to use 'echo' command substitutions for globbing
+ + t/t5302-pack-index.sh: use the $( ... ) construct for command substitution
+ + t/t5301-sliding-window.sh: use the $( ... ) construct for command substitution
+ + t/t5300-pack-object.sh: use the $( ... ) construct for command substitution
+ + t/t5100-mailinfo.sh: use the $( ... ) construct for command substitution
+ + t/t3700-add.sh: use the $( ... ) construct for command substitution
+ + t/t3600-rm.sh: use the $( ... ) construct for command substitution
+ + t/t3511-cherry-pick-x.sh: use the $( ... ) construct for command substitution
+ + t/t3403-rebase-skip.sh: use the $( ... ) construct for command substitution
+ + t/t3210-pack-refs.sh: use the $( ... ) construct for command substitution
+ + t/t3101-ls-tree-dirname.sh: use the $( ... ) construct for command substitution
+ + t/t3100-ls-tree-restrict.sh: use the $( ... ) construct for command substitution
+ + t/t3030-merge-recursive.sh: use the $( ... ) construct for command substitution
+ + t/t2102-update-index-symlinks.sh: use the $( ... ) construct for command substitution
+ + t/t2025-worktree-add.sh: use the $( ... ) construct for command substitution
+ + t/t1700-split-index.sh: use the $( ... ) construct for command substitution
+ + t/t1512-rev-parse-disambiguation.sh: use the $( ... ) construct for command substitution
+ + t/t1511-rev-parse-caret.sh: use the $( ... ) construct for command substitution
+ + t/t1410-reflog.sh: use the $( ... ) construct for command substitution
+ + t/t1401-symbolic-ref.sh: use the $( ... ) construct for command substitution
+ + t/t1100-commit-tree-options.sh: use the $( ... ) construct for command substitution
+ + unimplemented.sh: use the $( ... ) construct for command substitution
+ + test-sha1.sh: use the $( ... ) construct for command substitution
+ + t/lib-httpd.sh: use the $( ... ) construct for command substitution
+ + git-gui/po/glossary/txt-to-pot.sh: use the $( ... ) construct for command substitution
+ + contrib/thunderbird-patch-inline/appp.sh: use the $( ... ) construct for command substitution
+ + contrib/examples/git-revert.sh: use the $( ... ) construct for command substitution
+ + contrib/examples/git-repack.sh: use the $( ... ) construct for command substitution
+ + contrib/examples/git-merge.sh: use the $( ... ) construct for command substitution
+ + contrib/examples/git-fetch.sh: use the $( ... ) construct for command substitution
+ + contrib/examples/git-commit.sh: use the $( ... ) construct for command substitution
 
  A shell script style update to change `command substitution` into
  $(command substitution).  Coverts contrib/ and much of the t/
  directory contents.
 
- Will merge to 'next'.
-
-
-* nd/dir-exclude-cleanup (2015-12-28) 1 commit
-  (merged to 'next' on 2016-01-12 at e6584c9)
- + dir.c: clean the entire struct in clear_exclude_list()
-
- The "exclude_list" structure has the usual "alloc, nr" pair of
- fields to be used by ALLOC_GROW(), but clear_exclude_list() forgot
- to reset 'alloc' to 0 when it cleared 'nr' and discarded the
- managed array.
-
  Will merge to 'master'.
 
 
-* ss/user-manual (2015-12-30) 4 commits
-  (merged to 'next' on 2016-01-12 at c7f0328)
- + user-manual: add addition gitweb information
- + user-manual: add section documenting shallow clones
- + glossary: define the term shallow clone
- + user-manual: remove temporary branch entry from todo list
-
- Drop a few old "todo" items by deciding that the change one of them
- suggests is not such a good idea, and doing the change the other
- one suggested to do.
-
- Will merge to 'master'.
-
-
-* nd/ita-cleanup (2015-12-28) 3 commits
-  (merged to 'next' on 2016-01-12 at 008a6e3)
- + grep: make it clear i-t-a entries are ignored
- + add and use a convenience macro ce_intent_to_add()
- + blame: remove obsolete comment
-
- Paths that have been told the index about with "add -N" are not
- quite yet in the index, but a few commands behaved as if they
- already are in a harmful way.
-
- Here are only the obviously correct bits; some other changes were
- in the posted series, but not quite ready to be queued here.
-
- Will merge to 'master'.
-
-
-* cc/untracked (2015-12-29) 10 commits
+* cc/untracked (2016-01-20) 11 commits
  - t7063: add tests for core.untrackedCache
+ - test-dump-untracked-cache: don't modify the untracked cache
  - config: add core.untrackedCache
  - dir: simplify untracked cache "ident" field
  - dir: add remove_untracked_cache()
@@ -576,8 +621,7 @@ repositories listed at
  Update the untracked cache subsystem and change its primary UI from
  "git update-index" to "git config".
 
- Still being discussed and worked on.
- $gmane/283080
+ Will merge to 'next'.
 
 
 * dt/refs-backend-lmdb (2016-01-12) 22 commits
@@ -610,33 +654,13 @@ repositories listed at
  Rerolled, but left out of 'pu' for now due to conflicts.
 
 
-* dw/subtree-split-do-not-drop-merge (2015-12-10) 1 commit
+* dw/subtree-split-do-not-drop-merge (2016-01-20) 1 commit
  - contrib/subtree: fix "subtree split" skipped-merge bug
 
  The "split" subcommand of "git subtree" (in contrib/) incorrectly
  skipped merges when it shouldn't, which was corrected.
 
- Still being worked on.
- ($gmane/283874)
-
-
-* nd/clear-gitenv-upon-use-of-alias (2015-12-29) 5 commits
-  (merged to 'next' on 2016-01-12 at 696b1f5)
- + run-command: don't warn on SIGPIPE deaths
- + git.c: make sure we do not leak GIT_* to alias scripts
- + setup.c: re-fix d95138e (setup: set env $GIT_WORK_TREE when ..
- + git.c: make it clear save_env() is for alias handling only
- + Merge branch 'nd/stop-setenv-work-tree' into nd/clear-gitenv-upon-use-of-alias
-
- d95138e6 (setup: set env $GIT_WORK_TREE when work tree is set, like
- $GIT_DIR, 2015-06-26) attempted to work around a glitch in alias
- handling by overwriting GIT_WORK_TREE environment variable to
- affect subprocesses when set_git_work_tree() gets called, which
- resulted in a rather unpleasant regression to "clone" and "init".
- Try to address the same issue by always restoring the environment
- and respawning the real underlying command when handling alias.
-
- Will merge to 'master'.
+ Will merge to 'next'.
 
 
 * kn/ref-filter-atom-parsing (2016-01-05) 15 commits
@@ -683,11 +707,13 @@ repositories listed at
  Follow-on to dk/gc-idx-wo-pack topic, to clean up stale
  .bitmap and .keep files.
 
- Waiting for review.
+ Waiting for a reroll.
+ ($gmane/284368).
 
 
 * rm/subtree-unwrap-tags (2015-11-24) 1 commit
- - contrib/subtree: unwrap tag refs
+  (merged to 'next' on 2016-01-20 at 6373d95)
+ + contrib/subtree: unwrap tag refs
 
  "git subtree" (in contrib/) records the tag object name in the
  commit log message when a subtree is added using a tag, without
@@ -695,7 +721,7 @@ repositories listed at
  peeled when "git subtree split" wants to work on the commit, but
  the command forgot to do so.
 
- Will merge to 'next'.
+ Will merge to 'master'.
 
 
 * sg/sh-require-clean-orphan (2015-11-24) 2 commits
@@ -711,7 +737,7 @@ repositories listed at
  Needs review.
 
 
-* tb/ls-files-eol (2016-01-07) 1 commit
+* tb/ls-files-eol (2016-01-18) 1 commit
  - ls-files: add eol diagnostics
 
  Add options to ls-files to help diagnose end-of-line problems.
@@ -737,6 +763,7 @@ repositories listed at
  - submodule-config: remove name_and_item_from_var
  - submodule-config: drop check against NULL
  - submodule-config: keep update strategy around
+ (this branch is used by sb/submodule-init.)
 
  Builds on top of the "fetch --recurse-submodules" work to introduce
  parallel downloading into multiple submodules for "submodule update".
@@ -744,48 +771,21 @@ repositories listed at
  Needs review.
 
 
-* jc/strbuf-gets (2015-12-16) 17 commits
- - test-sha1-array: read command stream with strbuf_getline_crlf()
- - grep: read -f file with strbuf_getline_crlf()
- - send-pack: read list of refs with strbuf_getline_crlf()
- - column: read lines with strbuf_getline_crlf()
- - cat-file: read batch stream with strbuf_getline_crlf()
- - transport-helper: read helper response with strbuf_getline_crlf()
- - clone/sha1_file: read info/alternates with strbuf_getline_crlf()
- - remote.c: read $GIT_DIR/remotes/* with strbuf_getline_crlf()
- - ident.c: read /etc/mailname with strbuf_getline_crlf()
- - rev-parse: read parseopt spec with strbuf_getline_crlf()
- - revision: read --stdin with strbuf_getline_crlf()
- - hash-object: read --stdin-paths with strbuf_getline_crlf()
- - mktree: read textual tree representation with strbuf_getline_crlf()
- - update-index: read list of paths with strbuf_getline_crlf() under --stdin
- - update-index: read --index-info with strbuf_getline_crlf()
- - check-attr, check-ignore, checkout-index: read paths with strbuf_getline_crlf()
+* jc/strbuf-getline (2016-01-15) 9 commits
+ - strbuf: give strbuf_getline() to the "most text friendly" variant
+ - checkout-index: there are only two possible line terminations
+ - update-index: there are only two possible line terminations
+ - check-ignore: there are only two possible line terminations
+ - check-attr: there are only two possible line terminations
+ - mktree: there are only two possible line terminations
+ - strbuf: introduce strbuf_getline_{lf,nul}()
  - strbuf: make strbuf_getline_crlf() global
+ - strbuf: miniscule style fix
+ (this branch is used by jc/peace-with-crlf.)
 
- Teach codepaths that communicate with users by reading text files
- to be more lenient to editors that write CRLF-terminated lines.
- Note that this is only about communication with Git, like feeding
- list of object names from the standard input instead of from the
- command line, and does not involve files in the working tree.
+ The preliminary clean-up for jc/peace-with-crlf topic.
 
- Will be rerolled.
-
-
-* mh/notes-allow-reading-treeish (2016-01-12) 1 commit
-  (merged to 'next' on 2016-01-12 at 7aa311f)
- + notes: allow treeish expressions as notes ref
-
- Originally merged to 'next' on 2015-10-23
-
- Some "git notes" operations, e.g. "git log --notes=<note>", should
- be able to read notes from any tree-ish that is shaped like a notes
- tree, but the notes infrastructure required that the argument must
- be a ref under refs/notes/.  Loosen it to require a valid ref only
- when the operation would update the notes (in which case we must
- have a place to store the updated notes tree, iow, a ref).
-
- Will merge to 'master'.
+ Will merge to 'next'.
 
 
 * js/am-3-merge-recursive-direct (2015-10-12) 2 commits
@@ -797,7 +797,9 @@ repositories listed at
  call to the function when falling back to three-way merge.
 
  Being able to make a direct call would be good in general, but as a
- performance thing, we would want to see it backed up by numbers.
+ performance thing, the change needs to be backed up by numbers.
+
+ Needs review.
 
  I haven't gone through the "gently" change with fine toothed comb;
  I can see that the change avoids calling die(), but I haven't made
