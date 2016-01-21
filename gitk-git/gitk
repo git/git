@@ -10025,7 +10025,7 @@ proc showrefs {} {
     text $top.list -background $bgcolor -foreground $fgcolor \
 	-selectbackground $selectbgcolor -font mainfont \
 	-xscrollcommand "$top.xsb set" -yscrollcommand "$top.ysb set" \
-	-width 30 -height 20 -cursor $maincursor \
+	-width 60 -height 20 -cursor $maincursor \
 	-spacing1 1 -spacing3 1 -state disabled
     $top.list tag configure highlight -background $selectbgcolor
     if {![lsearch -exact $bglist $top.list]} {
