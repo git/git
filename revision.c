@@ -2049,7 +2049,7 @@ static int handle_revision_opt(struct rev_info *revs, int argc, const char **arg
 	} else if (!strcmp(arg, "--ignore-missing")) {
 		revs->ignore_missing = 1;
 	} else {
-		int opts = diff_opt_parse(&revs->diffopt, argv, argc);
+		int opts = diff_opt_parse(&revs->diffopt, argv, argc, revs->prefix);
 		if (!opts)
 			unkv[(*unkc)++] = arg;
 		return opts;
