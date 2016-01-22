@@ -46,21 +46,6 @@ static int is_empty_file(const char *filename)
 }
 
 /**
- * Like strbuf_getline(), but treats both '\n' and "\r\n" as line terminators.
- */
-static int strbuf_getline_crlf(struct strbuf *sb, FILE *fp)
-{
-	if (strbuf_getwholeline(sb, fp, '\n'))
-		return EOF;
-	if (sb->buf[sb->len - 1] == '\n') {
-		strbuf_setlen(sb, sb->len - 1);
-		if (sb->len > 0 && sb->buf[sb->len - 1] == '\r')
-			strbuf_setlen(sb, sb->len - 1);
-	}
-	return 0;
-}
-
-/**
  * Returns the length of the first line of msg.
  */
 static int linelen(const char *msg)
@@ -284,7 +269,7 @@ static char *read_shell_var(FILE *fp, const char *key)
 	struct strbuf sb = STRBUF_INIT;
 	const char *str;
 
-	if (strbuf_getline(&sb, fp, '\n'))
+	if (strbuf_getline_lf(&sb, fp))
 		goto fail;
 
 	if (!skip_prefix(sb.buf, key, &str))
@@ -573,7 +558,7 @@ static int copy_notes_for_rebase(const struct am_state *state)
 
 	fp = xfopen(am_path(state, "rewritten"), "r");
 
-	while (!strbuf_getline(&sb, fp, '\n')) {
+	while (!strbuf_getline_lf(&sb, fp)) {
 		unsigned char from_obj[GIT_SHA1_RAWSZ], to_obj[GIT_SHA1_RAWSZ];
 
 		if (sb.len != GIT_SHA1_HEXSZ * 2 + 1) {
@@ -628,7 +613,7 @@ static int is_mail(FILE *fp)
 	if (regcomp(&regex, header_regex, REG_NOSUB | REG_EXTENDED))
 		die("invalid pattern: %s", header_regex);
 
-	while (!strbuf_getline_crlf(&sb, fp)) {
+	while (!strbuf_getline(&sb, fp)) {
 		if (!sb.len)
 			break; /* End of header */
 
@@ -675,7 +660,7 @@ static int detect_patch_format(const char **paths)
 
 	fp = xfopen(*paths, "r");
 
-	while (!strbuf_getline_crlf(&l1, fp)) {
+	while (!strbuf_getline(&l1, fp)) {
 		if (l1.len)
 			break;
 	}
@@ -696,9 +681,9 @@ static int detect_patch_format(const char **paths)
 	}
 
 	strbuf_reset(&l2);
-	strbuf_getline_crlf(&l2, fp);
+	strbuf_getline(&l2, fp);
 	strbuf_reset(&l3);
-	strbuf_getline_crlf(&l3, fp);
+	strbuf_getline(&l3, fp);
 
 	/*
 	 * If the second line is empty and the third is a From, Author or Date
@@ -817,7 +802,7 @@ static int stgit_patch_to_mail(FILE *out, FILE *in, int keep_cr)
 	struct strbuf sb = STRBUF_INIT;
 	int subject_printed = 0;
 
-	while (!strbuf_getline(&sb, in, '\n')) {
+	while (!strbuf_getline_lf(&sb, in)) {
 		const char *str;
 
 		if (str_isspace(sb.buf))
@@ -875,7 +860,7 @@ static int split_mail_stgit_series(struct am_state *state, const char **paths,
 		return error(_("could not open '%s' for reading: %s"), *paths,
 				strerror(errno));
 
-	while (!strbuf_getline(&sb, fp, '\n')) {
+	while (!strbuf_getline_lf(&sb, fp)) {
 		if (*sb.buf == '#')
 			continue; /* skip comment lines */
 
@@ -900,7 +885,7 @@ static int hg_patch_to_mail(FILE *out, FILE *in, int keep_cr)
 {
 	struct strbuf sb = STRBUF_INIT;
 
-	while (!strbuf_getline(&sb, in, '\n')) {
+	while (!strbuf_getline_lf(&sb, in)) {
 		const char *str;
 
 		if (skip_prefix(sb.buf, "# User ", &str))
@@ -1317,7 +1302,7 @@ static int parse_mail(struct am_state *state, const char *mail)
 
 	/* Extract message and author information */
 	fp = xfopen(am_path(state, "info"), "r");
-	while (!strbuf_getline(&sb, fp, '\n')) {
+	while (!strbuf_getline_lf(&sb, fp)) {
 		const char *x;
 
 		if (skip_prefix(sb.buf, "Subject: ", &x)) {
@@ -1383,7 +1368,7 @@ static int get_mail_commit_sha1(unsigned char *commit_id, const char *mail)
 	FILE *fp = xfopen(mail, "r");
 	const char *x;
 
-	if (strbuf_getline(&sb, fp, '\n'))
+	if (strbuf_getline_lf(&sb, fp))
 		return -1;
 
 	if (!skip_prefix(sb.buf, "From ", &x))

@@ -154,7 +154,7 @@ static void check_or_regenerate_marks(int latestrev)
 		fclose(marksfile);
 	} else {
 		strbuf_addf(&sb, ":%d ", latestrev);
-		while (strbuf_getline(&line, marksfile, '\n') != EOF) {
+		while (strbuf_getline_lf(&line, marksfile) != EOF) {
 			if (starts_with(line.buf, sb.buf)) {
 				found++;
 				break;
@@ -322,7 +322,7 @@ int main(int argc, char **argv)
 	marksfilename = marksfilename_sb.buf;
 
 	while (1) {
-		if (strbuf_getline(&buf, stdin, '\n') == EOF) {
+		if (strbuf_getline_lf(&buf, stdin) == EOF) {
 			if (ferror(stdin))
 				die("Error reading command stream");
 			else
