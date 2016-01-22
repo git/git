@@ -28,4 +28,8 @@ test_perf 'clean many untracked sub dirs, ignore nested git' '
 	git clean -n -q -f -f -d 100000_sub_dirs/
 '
 
+test_perf 'ls-files -o' '
+	git ls-files -o
+'
+
 test_done
