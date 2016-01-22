@@ -2,6 +2,7 @@
 #include "string-list.h"
 #include "run-command.h"
 #include "commit.h"
+#include "tempfile.h"
 #include "trailer.h"
 /*
  * Copyright (c) 2013, 2014 Christian Couder <chriscool@tuxfamily.org>
@@ -108,23 +109,23 @@ static char last_non_space_char(const char *s)
 	return '\0';
 }
 
-static void print_tok_val(const char *tok, const char *val)
+static void print_tok_val(FILE *outfile, const char *tok, const char *val)
 {
 	char c = last_non_space_char(tok);
 	if (!c)
 		return;
 	if (strchr(separators, c))
-		printf("%s%s\n", tok, val);
+		fprintf(outfile, "%s%s\n", tok, val);
 	else
-		printf("%s%c %s\n", tok, separators[0], val);
+		fprintf(outfile, "%s%c %s\n", tok, separators[0], val);
 }
 
-static void print_all(struct trailer_item *first, int trim_empty)
+static void print_all(FILE *outfile, struct trailer_item *first, int trim_empty)
 {
 	struct trailer_item *item;
 	for (item = first; item; item = item->next) {
 		if (!trim_empty || strlen(item->value) > 0)
-			print_tok_val(item->token, item->value);
+			print_tok_val(outfile, item->token, item->value);
 	}
 }
 
@@ -795,14 +796,15 @@ static int has_blank_line_before(struct strbuf **lines, int start)
 	return 0;
 }
 
-static void print_lines(struct strbuf **lines, int start, int end)
+static void print_lines(FILE *outfile, struct strbuf **lines, int start, int end)
 {
 	int i;
 	for (i = start; lines[i] && i < end; i++)
-		printf("%s", lines[i]->buf);
+		fprintf(outfile, "%s", lines[i]->buf);
 }
 
-static int process_input_file(struct strbuf **lines,
+static int process_input_file(FILE *outfile,
+			      struct strbuf **lines,
 			      struct trailer_item **in_tok_first,
 			      struct trailer_item **in_tok_last)
 {
@@ -818,10 +820,10 @@ static int process_input_file(struct strbuf **lines,
 	trailer_start = find_trailer_start(lines, trailer_end);
 
 	/* Print lines before the trailers as is */
-	print_lines(lines, 0, trailer_start);
+	print_lines(outfile, lines, 0, trailer_start);
 
 	if (!has_blank_line_before(lines, trailer_start - 1))
-		printf("\n");
+		fprintf(outfile, "\n");
 
 	/* Parse trailer lines */
 	for (i = trailer_start; i < trailer_end; i++) {
@@ -842,13 +844,45 @@ static void free_all(struct trailer_item **first)
 	}
 }
 
-void process_trailers(const char *file, int trim_empty, struct string_list *trailers)
+static struct tempfile trailers_tempfile;
+
+static FILE *create_in_place_tempfile(const char *file)
+{
+	struct stat st;
+	struct strbuf template = STRBUF_INIT;
+	const char *tail;
+	FILE *outfile;
+
+	if (stat(file, &st))
+		die_errno(_("could not stat %s"), file);
+	if (!S_ISREG(st.st_mode))
+		die(_("file %s is not a regular file"), file);
+	if (!(st.st_mode & S_IWUSR))
+		die(_("file %s is not writable by user"), file);
+
+	/* Create temporary file in the same directory as the original */
+	tail = strrchr(file, '/');
+	if (tail != NULL)
+		strbuf_add(&template, file, tail - file + 1);
+	strbuf_addstr(&template, "git-interpret-trailers-XXXXXX");
+
+	xmks_tempfile_m(&trailers_tempfile, template.buf, st.st_mode);
+	strbuf_release(&template);
+	outfile = fdopen_tempfile(&trailers_tempfile, "w");
+	if (!outfile)
+		die_errno(_("could not open temporary file"));
+
+	return outfile;
+}
+
+void process_trailers(const char *file, int in_place, int trim_empty, struct string_list *trailers)
 {
 	struct trailer_item *in_tok_first = NULL;
 	struct trailer_item *in_tok_last = NULL;
 	struct trailer_item *arg_tok_first;
 	struct strbuf **lines;
 	int trailer_end;
+	FILE *outfile = stdout;
 
 	/* Default config must be setup first */
 	git_config(git_trailer_default_config, NULL);
@@ -856,19 +890,26 @@ void process_trailers(const char *file, int trim_empty, struct string_list *trai
 
 	lines = read_input_file(file);
 
+	if (in_place)
+		outfile = create_in_place_tempfile(file);
+
 	/* Print the lines before the trailers */
-	trailer_end = process_input_file(lines, &in_tok_first, &in_tok_last);
+	trailer_end = process_input_file(outfile, lines, &in_tok_first, &in_tok_last);
 
 	arg_tok_first = process_command_line_args(trailers);
 
 	process_trailers_lists(&in_tok_first, &in_tok_last, &arg_tok_first);
 
-	print_all(in_tok_first, trim_empty);
+	print_all(outfile, in_tok_first, trim_empty);
 
 	free_all(&in_tok_first);
 
 	/* Print the lines after the trailers as is */
-	print_lines(lines, trailer_end, INT_MAX);
+	print_lines(outfile, lines, trailer_end, INT_MAX);
+
+	if (in_place)
+		if (rename_tempfile(&trailers_tempfile, file))
+			die_errno(_("could not rename temporary file to %s"), file);
 
 	strbuf_list_free(lines);
 }
