@@ -85,7 +85,7 @@ test_expect_success C_LOCALE_OUTPUT 'check remote-tracking' '
 test_expect_success 'remote forces tracking branches' '
 	(
 		cd test &&
-		case `git config remote.second.fetch` in
+		case $(git config remote.second.fetch) in
 		+*) true ;;
 		 *) false ;;
 		esac

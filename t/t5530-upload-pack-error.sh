@@ -4,7 +4,7 @@ test_description='errors in upload-pack'
 
 . ./test-lib.sh
 
-D=`pwd`
+D=$(pwd)
 
 corrupt_repo () {
 	object_sha1=$(git rev-parse "$1") &&

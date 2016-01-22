@@ -6,11 +6,11 @@ test_description='tests for ref^{stuff}'
 
 test_expect_success 'setup' '
 	echo blob >a-blob &&
-	git tag -a -m blob blob-tag `git hash-object -w a-blob` &&
+	git tag -a -m blob blob-tag $(git hash-object -w a-blob) &&
 	mkdir a-tree &&
 	echo moreblobs >a-tree/another-blob &&
 	git add . &&
-	TREE_SHA1=`git write-tree` &&
+	TREE_SHA1=$(git write-tree) &&
 	git tag -a -m tree tree-tag "$TREE_SHA1" &&
 	git commit -m Initial &&
 	git tag -a -m commit commit-tag &&

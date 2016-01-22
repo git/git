@@ -27,7 +27,7 @@ SHA1=
 test_expect_success \
     'see if git show-ref works as expected' \
     'git branch a &&
-     SHA1=`cat .git/refs/heads/a` &&
+     SHA1=$(cat .git/refs/heads/a) &&
      echo "$SHA1 refs/heads/a" >expect &&
      git show-ref a >result &&
      test_cmp expect result'

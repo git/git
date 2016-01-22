@@ -104,7 +104,7 @@ EOF
 '
 
 test_expect_success 'push from full to shallow' '
-	! git --git-dir=shallow2/.git cat-file blob `echo 1|git hash-object --stdin` &&
+	! git --git-dir=shallow2/.git cat-file blob $(echo 1|git hash-object --stdin) &&
 	commit 1 &&
 	git push shallow2/.git +master:refs/remotes/top/master &&
 	(
@@ -117,7 +117,7 @@ test_expect_success 'push from full to shallow' '
 3
 EOF
 	test_cmp expect actual &&
-	git cat-file blob `echo 1|git hash-object --stdin` >/dev/null
+	git cat-file blob $(echo 1|git hash-object --stdin) >/dev/null
 	)
 '
 test_done

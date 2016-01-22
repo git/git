@@ -163,7 +163,7 @@ test_expect_success 'setup submodule' '
 		git add file &&
 		git commit -m sub_initial
 	) &&
-	git submodule add "`pwd`/sub" sub &&
+	git submodule add "$(pwd)/sub" sub &&
 	git commit -m initial &&
 	test_tick &&
 	(
@@ -377,7 +377,7 @@ test_expect_success 'full-tree re-shows unmodified files'        '
 
 test_expect_success 'set-up a few more tags for tag export tests' '
 	git checkout -f master &&
-	HEAD_TREE=`git show -s --pretty=raw HEAD | grep tree | sed "s/tree //"` &&
+	HEAD_TREE=$(git show -s --pretty=raw HEAD | grep tree | sed "s/tree //") &&
 	git tag    tree_tag        -m "tagging a tree" $HEAD_TREE &&
 	git tag -a tree_tag-obj    -m "tagging a tree" $HEAD_TREE &&
 	git tag    tag-obj_tag     -m "tagging a tag" tree_tag-obj &&
@@ -422,7 +422,7 @@ test_expect_success 'directory becomes symlink'        '
 test_expect_success 'fast-export quotes pathnames' '
 	git init crazy-paths &&
 	(cd crazy-paths &&
-	 blob=`echo foo | git hash-object -w --stdin` &&
+	 blob=$(echo foo | git hash-object -w --stdin) &&
 	 git update-index --add \
 		--cacheinfo 100644 $blob "$(printf "path with\\nnewline")" \
 		--cacheinfo 100644 $blob "path with \"quote\"" \

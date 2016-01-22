@@ -574,10 +574,10 @@ then
 	if test "$templatefile" != ""
 	then
 		# Test whether this is just the unaltered template.
-		if cnt=`sed -e '/^#/d' < "$templatefile" |
+		if cnt=$(sed -e '/^#/d' < "$templatefile" |
 			git stripspace |
 			diff "$GIT_DIR"/COMMIT_BAREMSG - |
-			wc -l` &&
+			wc -l) &&
 		   test 0 -lt $cnt
 		then
 			have_commitmsg=t
@@ -630,8 +630,8 @@ then
 	fi
 	if test -z "$quiet"
 	then
-		commit=`git diff-tree --always --shortstat --pretty="format:%h: %s"\
-		       --abbrev --summary --root HEAD --`
+		commit=$(git diff-tree --always --shortstat --pretty="format:%h: %s"\
+		       --abbrev --summary --root HEAD --)
 		echo "Created${initial_commit:+ initial} commit $commit"
 	fi
 fi

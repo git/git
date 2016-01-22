@@ -244,7 +244,7 @@ test_expect_success 'clone separate gitdir' '
 '
 
 test_expect_success 'clone separate gitdir: output' '
-	echo "gitdir: `pwd`/realgitdir" >expected &&
+	echo "gitdir: $(pwd)/realgitdir" >expected &&
 	test_cmp expected dst/.git
 '
 

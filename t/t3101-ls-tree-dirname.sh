@@ -35,7 +35,7 @@ test_expect_success 'setup' '
 	echo 222 >path3/2.txt &&
 	find *.txt path* \( -type f -o -type l \) -print |
 	xargs git update-index --add &&
-	tree=`git write-tree` &&
+	tree=$(git write-tree) &&
 	echo $tree
 '
 

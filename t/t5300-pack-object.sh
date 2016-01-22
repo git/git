@@ -8,7 +8,7 @@ test_description='git pack-object
 '
 . ./test-lib.sh
 
-TRASH=`pwd`
+TRASH=$(pwd)
 
 test_expect_success \
     'setup' \
@@ -20,8 +20,8 @@ test_expect_success \
      test-genrandom "seed b" 2097152 > b_big &&
      git update-index --add a a_big b b_big c &&
      cat c >d && echo foo >>d && git update-index --add d &&
-     tree=`git write-tree` &&
-     commit=`git commit-tree $tree </dev/null` && {
+     tree=$(git write-tree) &&
+     commit=$(git commit-tree $tree </dev/null) && {
 	 echo $tree &&
 	 echo $commit &&
 	 git ls-tree $tree | sed -e "s/.* \\([0-9a-f]*\\)	.*/\\1/"
@@ -29,7 +29,7 @@ test_expect_success \
 	 git diff-tree --root -p $commit &&
 	 while read object
 	 do
-	    t=`git cat-file -t $object` &&
+	    t=$(git cat-file -t $object) &&
 	    git cat-file $t $object || return 1
 	 done <obj-list
      } >expect'
@@ -147,7 +147,7 @@ test_expect_success \
 	 git diff-tree --root -p $commit &&
 	 while read object
 	 do
-	    t=`git cat-file -t $object` &&
+	    t=$(git cat-file -t $object) &&
 	    git cat-file $t $object || return 1
 	 done <obj-list
     } >current &&
@@ -162,7 +162,7 @@ test_expect_success \
 	 git diff-tree --root -p $commit &&
 	 while read object
 	 do
-	    t=`git cat-file -t $object` &&
+	    t=$(git cat-file -t $object) &&
 	    git cat-file $t $object || return 1
 	 done <obj-list
     } >current &&
@@ -177,7 +177,7 @@ test_expect_success \
 	 git diff-tree --root -p $commit &&
 	 while read object
 	 do
-	    t=`git cat-file -t $object` &&
+	    t=$(git cat-file -t $object) &&
 	    git cat-file $t $object || return 1
 	 done <obj-list
     } >current &&
@@ -252,8 +252,8 @@ test_expect_success \
 
 test_expect_success \
     'verify-pack catches a corrupted sum of the index file itself' \
-    'l=`wc -c <test-3.idx` &&
-     l=`expr $l - 20` &&
+    'l=$(wc -c <test-3.idx) &&
+     l=$(expr $l - 20) &&
      cat test-1-${packname_1}.pack >test-3.pack &&
      printf "%20s" "" | dd of=test-3.idx count=20 bs=1 conv=notrunc seek=$l &&
      if git verify-pack test-3.pack

@@ -115,7 +115,7 @@ test_expect_success '"rm" command printed' '
 	git add test-file &&
 	git commit -m "add file for rm test" &&
 	git rm test-file > rm-output &&
-	test `grep "^rm " rm-output | wc -l` = 1 &&
+	test $(grep "^rm " rm-output | wc -l) = 1 &&
 	rm -f test-file rm-output &&
 	git commit -m "remove file from rm test"
 '
@@ -125,7 +125,7 @@ test_expect_success '"rm" command suppressed with --quiet' '
 	git add test-file &&
 	git commit -m "add file for rm --quiet test" &&
 	git rm --quiet test-file > rm-output &&
-	test `wc -l < rm-output` = 0 &&
+	test $(wc -l < rm-output) = 0 &&
 	rm -f test-file rm-output &&
 	git commit -m "remove file from rm --quiet test"
 '
