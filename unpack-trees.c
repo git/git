@@ -695,8 +695,19 @@ static int find_cache_pos(struct traverse_info *info,
 				++o->cache_bottom;
 			continue;
 		}
-		if (!ce_in_traverse_path(ce, info))
+		if (!ce_in_traverse_path(ce, info)) {
+			/*
+			 * Check if we can skip future cache checks
+			 * (because we're already past all possible
+			 * entries in the traverse path).
+			 */
+			if (info->traverse_path) {
+				if (strncmp(ce->name, info->traverse_path,
+					    info->pathlen) > 0)
+					break;
+			}
 			continue;
+		}
 		ce_name = ce->name + pfxlen;
 		ce_slash = strchr(ce_name, '/');
 		if (ce_slash)
