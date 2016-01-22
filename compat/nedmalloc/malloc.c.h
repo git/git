@@ -720,6 +720,9 @@ struct mallinfo {
   inlining are defined as macros, so these aren't used for them.
 */
 
+#ifdef __MINGW64_VERSION_MAJOR
+#undef FORCEINLINE
+#endif
 #ifndef FORCEINLINE
   #if defined(__GNUC__)
 #define FORCEINLINE __inline __attribute__ ((always_inline))
@@ -1382,6 +1385,7 @@ LONG __cdecl _InterlockedExchange(LONG volatile *Target, LONG Value);
 
   /*** Atomic operations ***/
   #if (__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__) > 40100
+    #undef _ReadWriteBarrier
     #define _ReadWriteBarrier() __sync_synchronize()
   #else
     static __inline__ __attribute__((always_inline)) long __sync_lock_test_and_set(volatile long * const Target, const long Value)
@@ -1798,9 +1802,10 @@ struct win32_mlock_t
   volatile long threadid;
 };
 
+static inline int return_0(int i) { return 0; }
 #define MLOCK_T               struct win32_mlock_t
 #define CURRENT_THREAD        win32_getcurrentthreadid()
-#define INITIAL_LOCK(sl)      (memset(sl, 0, sizeof(MLOCK_T)), 0)
+#define INITIAL_LOCK(sl)      (memset(sl, 0, sizeof(MLOCK_T)), return_0(0))
 #define ACQUIRE_LOCK(sl)      win32_acquire_lock(sl)
 #define RELEASE_LOCK(sl)      win32_release_lock(sl)
 #define TRY_LOCK(sl)          win32_try_lock(sl)
