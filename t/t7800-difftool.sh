@@ -430,11 +430,11 @@ EOF
 test_expect_success PERL,SYMLINKS 'difftool --dir-diff --symlink without unstaged changes' '
 	cat >expect <<-EOF &&
 	file
-	$(pwd)/file
+	$PWD/file
 	file2
-	$(pwd)/file2
+	$PWD/file2
 	sub/sub
-	$(pwd)/sub/sub
+	$PWD/sub/sub
 	EOF
 	git difftool --dir-diff --symlink \
 		--extcmd "./.git/CHECK_SYMLINKS" branch HEAD &&
@@ -448,14 +448,14 @@ EOF
 run_dir_diff_test 'difftool --dir-diff syncs worktree with unstaged change' '
 	test_when_finished git reset --hard &&
 	echo "orig content" >file &&
-	git difftool -d $symlinks --extcmd "$(pwd)/modify-right-file" branch &&
+	git difftool -d $symlinks --extcmd "$PWD/modify-right-file" branch &&
 	echo "new content" >expect &&
 	test_cmp expect file
 '
 
 run_dir_diff_test 'difftool --dir-diff syncs worktree without unstaged change' '
 	test_when_finished git reset --hard &&
-	git difftool -d $symlinks --extcmd "$(pwd)/modify-right-file" branch &&
+	git difftool -d $symlinks --extcmd "$PWD/modify-right-file" branch &&
 	echo "new content" >expect &&
 	test_cmp expect file
 '
@@ -466,7 +466,7 @@ EOF
 
 test_expect_success PERL 'difftool --no-symlinks does not overwrite working tree file ' '
 	echo "orig content" >file &&
-	git difftool --dir-diff --no-symlinks --extcmd "$(pwd)/modify-file" branch &&
+	git difftool --dir-diff --no-symlinks --extcmd "$PWD/modify-file" branch &&
 	echo "new content" >expect &&
 	test_cmp expect file
 '
@@ -482,7 +482,7 @@ test_expect_success PERL 'difftool --no-symlinks detects conflict ' '
 		TMPDIR=$TRASH_DIRECTORY &&
 		export TMPDIR &&
 		echo "orig content" >file &&
-		test_must_fail git difftool --dir-diff --no-symlinks --extcmd "$(pwd)/modify-both-files" branch &&
+		test_must_fail git difftool --dir-diff --no-symlinks --extcmd "$PWD/modify-both-files" branch &&
 		echo "wt content" >expect &&
 		test_cmp expect file &&
 		echo "tmp content" >expect &&
