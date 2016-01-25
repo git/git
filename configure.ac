@@ -620,6 +620,10 @@ fi
 
 GIT_STASH_FLAGS($ZLIB_PATH)
 
+AC_CHECK_HEADER(zlib.h,
+    [],
+    [AC_MSG_ERROR([Couldn't find or include zlib.h])])
+
 AC_DEFUN([ZLIBTEST_SRC], [
 AC_LANG_PROGRAM([#include <zlib.h>],
  [deflateBound(0, 0);])])
