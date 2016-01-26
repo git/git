@@ -25,14 +25,7 @@ test_expect_success \
 	(
 		cd import &&
 		echo foo >foo &&
-		if test_have_prereq !MINGW
-		then
-			ln -s foo foo.link
-		else
-			# MSYS libsvn does not support symlinks, so always use cp, even if
-			# ln -s actually works
-			cp foo foo.link
-		fi
+		ln -s foo foo.link
 		mkdir -p dir/a/b/c/d/e &&
 		echo "deep dir" >dir/a/b/c/d/e/file &&
 		mkdir bar &&
