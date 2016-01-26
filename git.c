@@ -30,8 +30,6 @@ static int saved_env_before_alias;
 static void save_env_before_alias(void)
 {
 	int i;
-	if (saved_env_before_alias)
-		return;
 	saved_env_before_alias = 1;
 	orig_cwd = xgetcwd();
 	for (i = 0; i < ARRAY_SIZE(env_names); i++) {
