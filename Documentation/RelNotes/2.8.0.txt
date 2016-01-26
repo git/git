@@ -29,6 +29,16 @@ UI, Workflows & Features
    cannot be set in the config file per project), this safety can be
    disabled.
 
+ * "git pull --rebase" has been extended to allow invoking
+   "rebase -i".
+
+ * "git p4" learned to cope with the type of a file getting changed.
+
+ * "git format-patch" learned to notice format.outputDirectory
+   configuration variable.  This allows "-o <dir>" option to be
+   omitted on the command line if you always use the same directory in
+   your workflow.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -49,6 +59,10 @@ Performance, Internal Implementation, Development Support etc.
    Try to address the same issue by always restoring the environment
    and respawning the real underlying command when handling alias.
 
+ * The low-level code that is used to create symbolic references has
+   been updated to share more code with the code that deals with
+   normal references.
+   (merge 2859dcd jk/symbolic-ref later to maint).
 
 Also contains various documentation updates and code clean-ups.
 
@@ -113,6 +127,16 @@ notes for details).
    IIRC, we do test that no Perl warnings are given to the server log,
    so this should have been caught if our test coverage were good.
    (merge a9eb90a ho/gitweb-squelch-undef-warning later to maint).
+
+ * "git rebase", unlike all other callers of "gc --auto", did not
+   ignore the exit code from "gc --auto".
+   (merge 8c24f5b jk/ok-to-fail-gc-auto-in-rebase later to maint).
+
+ * Many codepaths that run "gc --auto" before exiting kept packfiles
+   mapped and left the file descriptors to them open, which was not
+   friendly to systems that cannot remove files that are open.  They
+   now close the packs before doing so.
+   (merge d562102 js/close-packs-before-gc later to maint).
 
  * Other minor clean-ups and documentation updates
    (merge 99487cf ss/user-manual later to maint).
