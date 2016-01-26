@@ -2623,9 +2623,6 @@ static void setup_windows_environment()
 				*tmp = '/';
 	}
 
-	if (!getenv("TZ") && (tmp = getenv("MSYS2_TZ")))
-		setenv("TZ", tmp, 1);
-
 	/* simulate TERM to enable auto-color (see color.c) */
 	if (!getenv("TERM"))
 		setenv("TERM", "cygwin", 1);
