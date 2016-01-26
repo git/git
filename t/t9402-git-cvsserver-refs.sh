@@ -7,14 +7,6 @@ tags, branches and other git refspecs'
 
 . ./test-lib.sh
 
-if test_have_prereq MINGW
-then
-	# Avoid posix-to-windows path mangling
-	pwd () {
-		builtin pwd
-	}
-fi
-
 #########
 
 check_start_tree() {

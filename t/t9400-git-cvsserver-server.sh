@@ -10,14 +10,6 @@ cvs CLI client via git-cvsserver server'
 
 . ./test-lib.sh
 
-if test_have_prereq MINGW
-then
-	# Avoid posix-to-windows path mangling
-	pwd () {
-		builtin pwd
-	}
-fi
-
 if ! test_have_prereq PERL; then
 	skip_all='skipping git cvsserver tests, perl not available'
 	test_done
