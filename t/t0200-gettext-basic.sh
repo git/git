@@ -58,7 +58,7 @@ test_expect_success GETTEXT_LOCALE 'sanity: gettext(unknown) is passed through' 
 '
 
 # xgettext from C
-test_expect_success GETTEXT_LOCALE,!MINGW 'xgettext: C extraction of _() and N_() strings' '
+test_expect_success GETTEXT_LOCALE 'xgettext: C extraction of _() and N_() strings' '
     printf "TILRAUN: C tilraunastrengur" >expect &&
     printf "\n" >>expect &&
     printf "Sjá '\''git help SKIPUN'\'' til að sjá hjálp fyrir tiltekna skipun." >>expect &&
@@ -81,7 +81,7 @@ test_expect_success GETTEXT_LOCALE 'xgettext: Shell extraction' '
     test_cmp expect actual
 '
 
-test_expect_success GETTEXT_LOCALE,!MINGW 'xgettext: Shell extraction with $variable' '
+test_expect_success GETTEXT_LOCALE 'xgettext: Shell extraction with $variable' '
     printf "TILRAUN: Skeljartilraunastrengur með breytunni a var i able" >x-expect &&
     LANGUAGE=is LC_ALL="$is_IS_locale" variable="a var i able" eval_gettext "TEST: A Shell test \$variable" >x-actual &&
     test_cmp x-expect x-actual
@@ -94,7 +94,7 @@ test_expect_success GETTEXT_LOCALE 'xgettext: Perl extraction' '
     test_cmp expect actual
 '
 
-test_expect_success GETTEXT_LOCALE,!MINGW 'xgettext: Perl extraction with %s' '
+test_expect_success GETTEXT_LOCALE 'xgettext: Perl extraction with %s' '
     printf "TILRAUN: Perl tilraunastrengur með breytunni %%s" >expect &&
     LANGUAGE=is LC_ALL="$is_IS_locale" gettext "TEST: A Perl test variable %s" >actual &&
     test_cmp expect actual
