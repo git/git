@@ -2044,6 +2044,22 @@ int xwcstoutf(char *utf, const wchar_t *wcs, size_t utflen)
 	return -1;
 }
 
+static void setup_windows_environment()
+{
+	/* on Windows it is TMP and TEMP */
+	if (!getenv("TMPDIR")) {
+		const char *tmp = getenv("TMP");
+		if (!tmp)
+			tmp = getenv("TEMP");
+		if (tmp)
+			setenv("TMPDIR", tmp, 1);
+	}
+
+	/* simulate TERM to enable auto-color (see color.c) */
+	if (!getenv("TERM"))
+		setenv("TERM", "cygwin", 1);
+}
+
 /*
  * Disable MSVCRT command line wildcard expansion (__getmainargs called from
  * mingw startup code, see init.c in mingw runtime).
@@ -2122,19 +2138,7 @@ void mingw_startup()
 	qsort(environ, i, sizeof(char*), compareenv);
 
 	/* fix Windows specific environment settings */
-
-	/* on Windows it is TMP and TEMP */
-	if (!mingw_getenv("TMPDIR")) {
-		const char *tmp = mingw_getenv("TMP");
-		if (!tmp)
-			tmp = mingw_getenv("TEMP");
-		if (tmp)
-			setenv("TMPDIR", tmp, 1);
-	}
-
-	/* simulate TERM to enable auto-color (see color.c) */
-	if (!getenv("TERM"))
-		setenv("TERM", "cygwin", 1);
+	setup_windows_environment();
 
 	/* initialize critical section for waitpid pinfo_t list */
 	InitializeCriticalSection(&pinfo_cs);
