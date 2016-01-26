@@ -253,8 +253,8 @@ def p4_add(f):
 def p4_delete(f):
     p4_system(["delete", wildcard_encode(f)])
 
-def p4_edit(f):
-    p4_system(["edit", wildcard_encode(f)])
+def p4_edit(f, *options):
+    p4_system(["edit"] + list(options) + [wildcard_encode(f)])
 
 def p4_revert(f):
     p4_system(["revert", wildcard_encode(f)])
@@ -1554,6 +1554,7 @@ class P4Submit(Command, P4UserMap):
 
         diff = read_pipe_lines("git diff-tree -r %s \"%s^\" \"%s\"" % (self.diffOpts, id, id))
         filesToAdd = set()
+        filesToChangeType = set()
         filesToDelete = set()
         editedFiles = set()
         pureRenameCopy = set()
@@ -1614,6 +1615,8 @@ class P4Submit(Command, P4UserMap):
                     os.unlink(dest)
                     filesToDelete.add(src)
                 editedFiles.add(dest)
+            elif modifier == "T":
+                filesToChangeType.add(path)
             else:
                 die("unknown modifier %s for %s" % (modifier, path))
 
@@ -1673,6 +1676,8 @@ class P4Submit(Command, P4UserMap):
         #
         system(applyPatchCmd)
 
+        for f in filesToChangeType:
+            p4_edit(f, "-t", "auto")
         for f in filesToAdd:
             p4_add(f)
         for f in filesToDelete:
