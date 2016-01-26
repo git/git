@@ -57,7 +57,11 @@ The names of the output files are printed to standard
 output, unless the `--stdout` option is specified.
 
 If `-o` is specified, output files are created in <dir>.  Otherwise
-they are created in the current working directory.
+they are created in the current working directory. The default path
+can be set with the 'format.outputDirectory' configuration option.
+The `-o` option takes precedence over `format.outputDirectory`.
+To store patches in the current working directory even when
+`format.outputDirectory` points elsewhere, use `-o .`.
 
 By default, the subject of a single patch is "[PATCH] " followed by
 the concatenation of lines from the commit message up to the first blank

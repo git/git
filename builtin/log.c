@@ -699,6 +699,7 @@ static int do_signoff;
 static const char *signature = git_version_string;
 static const char *signature_file;
 static int config_cover_letter;
+static const char *config_output_directory;
 
 enum {
 	COVER_UNSET,
@@ -777,6 +778,8 @@ static int git_format_config(const char *var, const char *value, void *cb)
 		config_cover_letter = git_config_bool(var, value) ? COVER_ON : COVER_OFF;
 		return 0;
 	}
+	if (!strcmp(var, "format.outputdirectory"))
+		return git_config_string(&config_output_directory, var, value);
 
 	return git_log_config(var, value, cb);
 }
@@ -1390,6 +1393,9 @@ int cmd_format_patch(int argc, const char **argv, const char *prefix)
 
 	if (rev.show_notes)
 		init_display_notes(&rev.notes_opt);
+
+	if (!output_directory && !use_stdout)
+		output_directory = config_output_directory;
 
 	if (!use_stdout)
 		output_directory = set_outdir(prefix, output_directory);
