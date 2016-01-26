@@ -2046,13 +2046,28 @@ int xwcstoutf(char *utf, const wchar_t *wcs, size_t utflen)
 
 static void setup_windows_environment()
 {
+	char *tmp = getenv("TMPDIR");
+
 	/* on Windows it is TMP and TEMP */
-	if (!getenv("TMPDIR")) {
-		const char *tmp = getenv("TMP");
-		if (!tmp)
+	if (!tmp) {
+		if (!(tmp = getenv("TMP")))
 			tmp = getenv("TEMP");
-		if (tmp)
+		if (tmp) {
 			setenv("TMPDIR", tmp, 1);
+			tmp = getenv("TMPDIR");
+		}
+	}
+
+	if (tmp) {
+		/*
+		 * Convert all dir separators to forward slashes,
+		 * to help shell commands called from the Git
+		 * executable (by not mistaking the dir separators
+		 * for escape characters).
+		 */
+		for (; *tmp; tmp++)
+			if (*tmp == '\\')
+				*tmp = '/';
 	}
 
 	/* simulate TERM to enable auto-color (see color.c) */
