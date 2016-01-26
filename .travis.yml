@@ -1,5 +1,7 @@
 language: c
 
+sudo: false
+
 cache:
   directories:
     - $HOME/travis-cache
