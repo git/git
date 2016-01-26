@@ -1603,7 +1603,12 @@ repeat:
 	if (gle == ERROR_ACCESS_DENIED &&
 	    (attrs = GetFileAttributesW(wpnew)) != INVALID_FILE_ATTRIBUTES) {
 		if (attrs & FILE_ATTRIBUTE_DIRECTORY) {
-			errno = EISDIR;
+			DWORD attrsold = GetFileAttributesW(wpold);
+			if (attrsold == INVALID_FILE_ATTRIBUTES ||
+			    !(attrsold & FILE_ATTRIBUTE_DIRECTORY))
+				errno = EISDIR;
+			else if (!_wrmdir(wpnew))
+				goto repeat;
 			return -1;
 		}
 		if ((attrs & FILE_ATTRIBUTE_READONLY) &&
