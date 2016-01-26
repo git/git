@@ -763,6 +763,29 @@ static inline char *copy_advance(char *dst, const char *src)
 	return dst;
 }
 
+static const char *strip_ref_components(const char *refname, const char *nr_arg)
+{
+	char *end;
+	long nr = strtol(nr_arg, &end, 10);
+	long remaining = nr;
+	const char *start = refname;
+
+	if (nr < 1 || *end != '\0')
+		die(":strip= requires a positive integer argument");
+
+	while (remaining) {
+		switch (*start++) {
+		case '\0':
+			die("ref '%s' does not have %ld components to :strip",
+			    refname, nr);
+		case '/':
+			remaining--;
+			break;
+		}
+	}
+	return start;
+}
+
 /*
  * Parse the object referred by ref, and grab needed value.
  */
@@ -909,11 +932,14 @@ static void populate_value(struct ref_array_item *ref)
 		formatp = strchr(name, ':');
 		if (formatp) {
 			int num_ours, num_theirs;
+			const char *arg;
 
 			formatp++;
 			if (!strcmp(formatp, "short"))
 				refname = shorten_unambiguous_ref(refname,
 						      warn_ambiguous_refs);
+			else if (skip_prefix(formatp, "strip=", &arg))
+				refname = strip_ref_components(refname, arg);
 			else if (!strcmp(formatp, "track") &&
 				 (starts_with(name, "upstream") ||
 				  starts_with(name, "push"))) {

@@ -50,6 +50,8 @@ test_atom() {
 
 test_atom head refname refs/heads/master
 test_atom head refname:short master
+test_atom head refname:strip=1 heads/master
+test_atom head refname:strip=2 master
 test_atom head upstream refs/remotes/origin/master
 test_atom head upstream:short origin/master
 test_atom head push refs/remotes/myfork/master
@@ -130,6 +132,16 @@ test_atom tag HEAD ' '
 
 test_expect_success 'Check invalid atoms names are errors' '
 	test_must_fail git for-each-ref --format="%(INVALID)" refs/heads
+'
+
+test_expect_success 'arguments to :strip must be positive integers' '
+	test_must_fail git for-each-ref --format="%(refname:strip=0)" &&
+	test_must_fail git for-each-ref --format="%(refname:strip=-1)" &&
+	test_must_fail git for-each-ref --format="%(refname:strip=foo)"
+'
+
+test_expect_success 'stripping refnames too far gives an error' '
+	test_must_fail git for-each-ref --format="%(refname:strip=3)"
 '
 
 test_expect_success 'Check format specifiers are ignored in naming date atoms' '
