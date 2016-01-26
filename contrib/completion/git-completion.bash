@@ -2381,7 +2381,7 @@ _git_show_branch ()
 
 _git_stash ()
 {
-	local save_opts='--keep-index --no-keep-index --quiet --patch'
+	local save_opts='--all --keep-index --no-keep-index --quiet --patch --include-untracked'
 	local subcommands='save list show apply clear drop pop create branch'
 	local subcommand="$(__git_find_on_cmdline "$subcommands")"
 	if [ -z "$subcommand" ]; then
@@ -2403,9 +2403,20 @@ _git_stash ()
 		apply,--*|pop,--*)
 			__gitcomp "--index --quiet"
 			;;
-		show,--*|drop,--*|branch,--*)
+		drop,--*)
+			__gitcomp "--quiet"
 			;;
-		show,*|apply,*|drop,*|pop,*|branch,*)
+		show,--*|branch,--*)
+			;;
+		branch,*)
+		  if [ $cword -eq 3 ]; then
+			__gitcomp_nl "$(__git_refs)";
+			else
+				__gitcomp_nl "$(git --git-dir="$(__gitdir)" stash list \
+						| sed -n -e 's/:.*//p')"
+			fi
+			;;
+		show,*|apply,*|drop,*|pop,*)
 			__gitcomp_nl "$(git --git-dir="$(__gitdir)" stash list \
 					| sed -n -e 's/:.*//p')"
 			;;
