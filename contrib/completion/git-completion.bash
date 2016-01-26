@@ -1808,7 +1808,7 @@ _git_config ()
 		return
 		;;
 	branch.*.rebase)
-		__gitcomp "false true"
+		__gitcomp "false true preserve interactive"
 		return
 		;;
 	remote.pushdefault)
