@@ -62,6 +62,24 @@ static long curl_low_speed_limit = -1;
 static long curl_low_speed_time = -1;
 static int curl_ftp_no_epsv;
 static const char *curl_http_proxy;
+static const char *http_proxy_authmethod;
+static struct {
+	const char *name;
+	long curlauth_param;
+} proxy_authmethods[] = {
+	{ "basic", CURLAUTH_BASIC },
+	{ "digest", CURLAUTH_DIGEST },
+	{ "negotiate", CURLAUTH_GSSNEGOTIATE },
+	{ "ntlm", CURLAUTH_NTLM },
+#ifdef LIBCURL_CAN_HANDLE_AUTH_ANY
+	{ "anyauth", CURLAUTH_ANY },
+#endif
+	/*
+	 * CURLAUTH_DIGEST_IE has no corresponding command-line option in
+	 * curl(1) and is not included in CURLAUTH_ANY, so we leave it out
+	 * here, too
+	 */
+};
 static const char *curl_cookie_file;
 static int curl_save_cookies;
 struct credential http_auth = CREDENTIAL_INIT;
@@ -256,6 +274,9 @@ static int http_options(const char *var, const char *value, void *cb)
 	if (!strcmp("http.proxy", var))
 		return git_config_string(&curl_http_proxy, var, value);
 
+	if (!strcmp("http.proxyauthmethod", var))
+		return git_config_string(&http_proxy_authmethod, var, value);
+
 	if (!strcmp("http.cookiefile", var))
 		return git_config_string(&curl_cookie_file, var, value);
 	if (!strcmp("http.savecookies", var)) {
@@ -301,6 +322,40 @@ static void init_curl_http_auth(CURL *result)
 				http_auth.username, http_auth.password);
 		curl_easy_setopt(result, CURLOPT_USERPWD, up.buf);
 	}
+#endif
+}
+
+/* *var must be free-able */
+static void var_override(const char **var, char *value)
+{
+	if (value) {
+		free((void *)*var);
+		*var = xstrdup(value);
+	}
+}
+
+static void init_curl_proxy_auth(CURL *result)
+{
+	var_override(&http_proxy_authmethod, getenv("GIT_HTTP_PROXY_AUTHMETHOD"));
+
+#if LIBCURL_VERSION_NUM >= 0x070a07 /* CURLOPT_PROXYAUTH and CURLAUTH_ANY */
+	if (http_proxy_authmethod) {
+		int i;
+		for (i = 0; i < ARRAY_SIZE(proxy_authmethods); i++) {
+			if (!strcmp(http_proxy_authmethod, proxy_authmethods[i].name)) {
+				curl_easy_setopt(result, CURLOPT_PROXYAUTH,
+						proxy_authmethods[i].curlauth_param);
+				break;
+			}
+		}
+		if (i == ARRAY_SIZE(proxy_authmethods)) {
+			warning("unsupported proxy authentication method %s: using anyauth",
+					http_proxy_authmethod);
+			curl_easy_setopt(result, CURLOPT_PROXYAUTH, CURLAUTH_ANY);
+		}
+	}
+	else
+		curl_easy_setopt(result, CURLOPT_PROXYAUTH, CURLAUTH_ANY);
 #endif
 }
 
@@ -476,9 +531,7 @@ static CURL *get_curl_handle(void)
 				CURLOPT_PROXYTYPE, CURLPROXY_SOCKS4);
 #endif
 	}
-#if LIBCURL_VERSION_NUM >= 0x070a07
-	curl_easy_setopt(result, CURLOPT_PROXYAUTH, CURLAUTH_ANY);
-#endif
+	init_curl_proxy_auth(result);
 
 	set_curl_keepalive(result);
 
@@ -518,6 +571,9 @@ void http_init(struct remote *remote, const char *url, int proactive_auth)
 
 	if (remote && remote->http_proxy)
 		curl_http_proxy = xstrdup(remote->http_proxy);
+
+	if (remote)
+		var_override(&http_proxy_authmethod, remote->http_proxy_authmethod);
 
 	pragma_header = curl_slist_append(pragma_header, "Pragma: no-cache");
 	no_pragma_header = curl_slist_append(no_pragma_header, "Pragma:");
@@ -616,6 +672,9 @@ void http_cleanup(void)
 		free((void *)curl_http_proxy);
 		curl_http_proxy = NULL;
 	}
+
+	free((void *)http_proxy_authmethod);
+	http_proxy_authmethod = NULL;
 
 	if (cert_auth.password != NULL) {
 		memset(cert_auth.password, 0, strlen(cert_auth.password));
