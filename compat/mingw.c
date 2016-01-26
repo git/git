@@ -2735,14 +2735,8 @@ void mingw_startup()
 	__argv[0] = wcstoutfdup_startup(buffer, _wpgmptr, maxlen);
 	for (i = 1; i < argc; i++)
 		__argv[i] = wcstoutfdup_startup(buffer, wargv[i], maxlen);
-	for (i = 0; wenv[i]; i++) {
+	for (i = 0; wenv[i]; i++)
 		environ[i] = wcstoutfdup_startup(buffer, wenv[i], maxlen);
-		if (!strncasecmp(environ[i], "MSYS2_TZ=", 9)) {
-			char *to_free = environ[i];
-			environ[i] = xstrdup(to_free + 6);
-			free(to_free);
-		}
-	}
 	environ[i] = NULL;
 	free(buffer);
 
