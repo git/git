@@ -1596,9 +1596,13 @@ help.htmlPath::
 
 http.proxy::
 	Override the HTTP proxy, normally configured using the 'http_proxy',
-	'https_proxy', and 'all_proxy' environment variables (see
-	`curl(1)`).  This can be overridden on a per-remote basis; see
-	remote.<name>.proxy
+	'https_proxy', and 'all_proxy' environment variables (see `curl(1)`). In
+	addition to the syntax understood by curl, it is possible to specify a
+	proxy string with a user name but no password, in which case git will
+	attempt to acquire one in the same way it does for other credentials. See
+	linkgit:gitcredentials[7] for more information. The syntax thus is
+	'[protocol://][user[:password]@]proxyhost[:port]'. This can be overridden
+	on a per-remote basis; see remote.<name>.proxy
 
 http.proxyAuthMethod::
 	Set the method with which to authenticate against the HTTP proxy. This
