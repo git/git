@@ -159,7 +159,6 @@ do
 		;;
 	--no-rebase)
 		rebase=false
-
 		;;
 	--recurse-submodules)
 		recurse_submodules=--recurse-submodules
@@ -225,10 +224,6 @@ do
 done
 
 case "$rebase" in
-i|interactive)
-	rebase=true
-	rebase_args=-i
-	;;
 preserve)
 	rebase=true
 	rebase_args=--preserve-merges
@@ -236,7 +231,7 @@ preserve)
 true|false|'')
 	;;
 *)
-	echo "Invalid value for --rebase, should be true, false, interactive or preserve"
+	echo "Invalid value for --rebase, should be true, false, or preserve"
 	usage
 	exit 1
 	;;
