@@ -49,11 +49,17 @@ test_atom() {
 }
 
 test_atom head refname refs/heads/master
+test_atom head refname:short master
+test_atom head refname:strip=1 heads/master
+test_atom head refname:strip=2 master
 test_atom head upstream refs/remotes/origin/master
+test_atom head upstream:short origin/master
 test_atom head push refs/remotes/myfork/master
+test_atom head push:short myfork/master
 test_atom head objecttype commit
 test_atom head objectsize 171
 test_atom head objectname $(git rev-parse refs/heads/master)
+test_atom head objectname:short $(git rev-parse --short refs/heads/master)
 test_atom head tree $(git rev-parse refs/heads/master^{tree})
 test_atom head parent ''
 test_atom head numparent 0
@@ -86,11 +92,13 @@ test_atom head contents 'Initial
 test_atom head HEAD '*'
 
 test_atom tag refname refs/tags/testtag
+test_atom tag refname:short testtag
 test_atom tag upstream ''
 test_atom tag push ''
 test_atom tag objecttype tag
 test_atom tag objectsize 154
 test_atom tag objectname $(git rev-parse refs/tags/testtag)
+test_atom tag objectname:short $(git rev-parse --short refs/tags/testtag)
 test_atom tag tree ''
 test_atom tag parent ''
 test_atom tag numparent ''
@@ -124,6 +132,16 @@ test_atom tag HEAD ' '
 
 test_expect_success 'Check invalid atoms names are errors' '
 	test_must_fail git for-each-ref --format="%(INVALID)" refs/heads
+'
+
+test_expect_success 'arguments to :strip must be positive integers' '
+	test_must_fail git for-each-ref --format="%(refname:strip=0)" &&
+	test_must_fail git for-each-ref --format="%(refname:strip=-1)" &&
+	test_must_fail git for-each-ref --format="%(refname:strip=foo)"
+'
+
+test_expect_success 'stripping refnames too far gives an error' '
+	test_must_fail git for-each-ref --format="%(refname:strip=3)"
 '
 
 test_expect_success 'Check format specifiers are ignored in naming date atoms' '
@@ -338,47 +356,14 @@ for i in "--perl --shell" "-s --python" "--python --tcl" "--tcl --perl"; do
 	"
 done
 
-cat >expected <<\EOF
-master
-testtag
-EOF
-
-test_expect_success 'Check short refname format' '
-	(git for-each-ref --format="%(refname:short)" refs/heads &&
-	git for-each-ref --format="%(refname:short)" refs/tags) >actual &&
-	test_cmp expected actual
-'
-
-cat >expected <<EOF
-origin/master
-EOF
-
-test_expect_success 'Check short upstream format' '
-	git for-each-ref --format="%(upstream:short)" refs/heads >actual &&
-	test_cmp expected actual
-'
-
 test_expect_success 'setup for upstream:track[short]' '
 	test_commit two
 '
 
-cat >expected <<EOF
-[ahead 1]
-EOF
-
-test_expect_success 'Check upstream:track format' '
-	git for-each-ref --format="%(upstream:track)" refs/heads >actual &&
-	test_cmp expected actual
-'
-
-cat >expected <<EOF
->
-EOF
-
-test_expect_success 'Check upstream:trackshort format' '
-	git for-each-ref --format="%(upstream:trackshort)" refs/heads >actual &&
-	test_cmp expected actual
-'
+test_atom head upstream:track '[ahead 1]'
+test_atom head upstream:trackshort '>'
+test_atom head push:track '[ahead 1]'
+test_atom head push:trackshort '>'
 
 test_expect_success 'Check that :track[short] cannot be used with other atoms' '
 	test_must_fail git for-each-ref --format="%(refname:track)" 2>/dev/null &&
@@ -395,21 +380,6 @@ test_expect_success 'Check that :track[short] works when upstream is invalid' '
 	git for-each-ref \
 		--format="%(upstream:track)$LF%(upstream:trackshort)" \
 		refs/heads >actual &&
-	test_cmp expected actual
-'
-
-test_expect_success '%(push) supports tracking specifiers, too' '
-	echo "[ahead 1]" >expected &&
-	git for-each-ref --format="%(push:track)" refs/heads >actual &&
-	test_cmp expected actual
-'
-
-cat >expected <<EOF
-$(git rev-parse --short HEAD)
-EOF
-
-test_expect_success 'Check short objectname format' '
-	git for-each-ref --format="%(objectname:short)" refs/heads >actual &&
 	test_cmp expected actual
 '
 
