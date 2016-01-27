@@ -346,13 +346,14 @@ test_expect_success 'conflict at EOF without LF resolved by --union' \
 	 printf "line1\nline2\nline3x\nline3y" >expect.txt &&
 	 test_cmp expect.txt output.txt'
 
-test_expect_success 'conflict markers match existing line endings' '
+test_expect_success 'conflict sections match existing line endings' '
 	printf "1\\r\\n2\\r\\n3" >crlf-orig.txt &&
 	printf "1\\r\\n2\\r\\n4" >crlf-diff1.txt &&
 	printf "1\\r\\n2\\r\\n5" >crlf-diff2.txt &&
 	test_must_fail git -c core.eol=crlf merge-file -p \
 		crlf-diff1.txt crlf-orig.txt crlf-diff2.txt >crlf.txt &&
 	test $(tr "\015" Q <crlf.txt | grep "^[<=>].*Q$" | wc -l) = 3 &&
+	test $(tr "\015" Q <crlf.txt | grep "[345]Q$" | wc -l) = 3 &&
 	test_must_fail git -c core.eol=crlf merge-file -p \
 		nolf-diff1.txt nolf-orig.txt nolf-diff2.txt >nolf.txt &&
 	test $(tr "\015" Q <nolf.txt | grep "^[<=>].*Q$" | wc -l) = 0

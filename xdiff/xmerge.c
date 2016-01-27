@@ -109,7 +109,7 @@ static int xdl_merge_cmp_lines(xdfenv_t *xe1, int i1, xdfenv_t *xe2, int i2,
 	return 0;
 }
 
-static int xdl_recs_copy_0(int use_orig, xdfenv_t *xe, int i, int count, int add_nl, char *dest)
+static int xdl_recs_copy_0(int use_orig, xdfenv_t *xe, int i, int count, int needs_cr, int add_nl, char *dest)
 {
 	xrecord_t **recs;
 	int size = 0;
@@ -125,6 +125,12 @@ static int xdl_recs_copy_0(int use_orig, xdfenv_t *xe, int i, int count, int add
 	if (add_nl) {
 		i = recs[count - 1]->size;
 		if (i == 0 || recs[count - 1]->ptr[i - 1] != '\n') {
+			if (needs_cr) {
+				if (dest)
+					dest[size] = '\r';
+				size++;
+			}
+
 			if (dest)
 				dest[size] = '\n';
 			size++;
@@ -133,14 +139,14 @@ static int xdl_recs_copy_0(int use_orig, xdfenv_t *xe, int i, int count, int add
 	return size;
 }
 
-static int xdl_recs_copy(xdfenv_t *xe, int i, int count, int add_nl, char *dest)
+static int xdl_recs_copy(xdfenv_t *xe, int i, int count, int needs_cr, int add_nl, char *dest)
 {
-	return xdl_recs_copy_0(0, xe, i, count, add_nl, dest);
+	return xdl_recs_copy_0(0, xe, i, count, needs_cr, add_nl, dest);
 }
 
-static int xdl_orig_copy(xdfenv_t *xe, int i, int count, int add_nl, char *dest)
+static int xdl_orig_copy(xdfenv_t *xe, int i, int count, int needs_cr, int add_nl, char *dest)
 {
-	return xdl_recs_copy_0(1, xe, i, count, add_nl, dest);
+	return xdl_recs_copy_0(1, xe, i, count, needs_cr, add_nl, dest);
 }
 
 /*
@@ -202,7 +208,7 @@ static int fill_conflict_hunk(xdfenv_t *xe1, const char *name1,
 		marker_size = DEFAULT_CONFLICT_MARKER_SIZE;
 
 	/* Before conflicting part */
-	size += xdl_recs_copy(xe1, i, m->i1 - i, 0,
+	size += xdl_recs_copy(xe1, i, m->i1 - i, 0, 0,
 			      dest ? dest + size : NULL);
 
 	if (!dest) {
@@ -221,7 +227,7 @@ static int fill_conflict_hunk(xdfenv_t *xe1, const char *name1,
 	}
 
 	/* Postimage from side #1 */
-	size += xdl_recs_copy(xe1, m->i1, m->chg1, 1,
+	size += xdl_recs_copy(xe1, m->i1, m->chg1, needs_cr, 1,
 			      dest ? dest + size : NULL);
 
 	if (style == XDL_MERGE_DIFF3) {
@@ -240,7 +246,7 @@ static int fill_conflict_hunk(xdfenv_t *xe1, const char *name1,
 				dest[size++] = '\r';
 			dest[size++] = '\n';
 		}
-		size += xdl_orig_copy(xe1, m->i0, m->chg0, 1,
+		size += xdl_orig_copy(xe1, m->i0, m->chg0, needs_cr, 1,
 				      dest ? dest + size : NULL);
 	}
 
@@ -255,7 +261,7 @@ static int fill_conflict_hunk(xdfenv_t *xe1, const char *name1,
 	}
 
 	/* Postimage from side #2 */
-	size += xdl_recs_copy(xe2, m->i2, m->chg2, 1,
+	size += xdl_recs_copy(xe2, m->i2, m->chg2, needs_cr, 1,
 			      dest ? dest + size : NULL);
 	if (!dest) {
 		size += marker_size + 1 + needs_cr + marker2_size;
@@ -294,21 +300,24 @@ static int xdl_fill_merge_buffer(xdfenv_t *xe1, const char *name1,
 						  marker_size);
 		else if (m->mode & 3) {
 			/* Before conflicting part */
-			size += xdl_recs_copy(xe1, i, m->i1 - i, 0,
+			size += xdl_recs_copy(xe1, i, m->i1 - i, 0, 0,
 					      dest ? dest + size : NULL);
 			/* Postimage from side #1 */
-			if (m->mode & 1)
-				size += xdl_recs_copy(xe1, m->i1, m->chg1, (m->mode & 2),
+			if (m->mode & 1) {
+				int needs_cr = is_cr_needed(xe1, xe2, m);
+
+				size += xdl_recs_copy(xe1, m->i1, m->chg1, needs_cr, (m->mode & 2),
 						      dest ? dest + size : NULL);
+			}
 			/* Postimage from side #2 */
 			if (m->mode & 2)
-				size += xdl_recs_copy(xe2, m->i2, m->chg2, 0,
+				size += xdl_recs_copy(xe2, m->i2, m->chg2, 0, 0,
 						      dest ? dest + size : NULL);
 		} else
 			continue;
 		i = m->i1 + m->chg1;
 	}
-	size += xdl_recs_copy(xe1, i, xe1->xdf2.nrec - i, 0,
+	size += xdl_recs_copy(xe1, i, xe1->xdf2.nrec - i, 0, 0,
 			      dest ? dest + size : NULL);
 	return size;
 }
