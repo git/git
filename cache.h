@@ -458,7 +458,6 @@ extern char *git_work_tree_cfg;
 extern int is_inside_work_tree(void);
 extern const char *get_git_dir(void);
 extern const char *get_git_common_dir(void);
-extern int is_git_directory(const char *path);
 extern char *get_object_directory(void);
 extern char *get_index_file(void);
 extern char *get_graft_file(void);
@@ -468,6 +467,25 @@ extern int get_common_dir(struct strbuf *sb, const char *gitdir);
 extern const char *get_git_namespace(void);
 extern const char *strip_namespace(const char *namespaced_ref);
 extern const char *get_git_work_tree(void);
+
+/*
+ * Return true if the given path is a git directory; note that this _just_
+ * looks at the directory itself. If you want to know whether "foo/.git"
+ * is a repository, you must feed that path, not just "foo".
+ */
+extern int is_git_directory(const char *path);
+
+/*
+ * Return 1 if the given path is the root of a git repository or
+ * submodule, else 0. Will not return 1 for bare repositories with the
+ * exception of creating a bare repository in "foo/.git" and calling
+ * is_git_repository("foo").
+ *
+ * If we run into read errors, we err on the side of saying "yes, it is",
+ * as we usually consider sub-repos precious, and would prefer to err on the
+ * side of not disrupting or deleting them.
+ */
+extern int is_nonbare_repository_dir(struct strbuf *path);
 
 #define READ_GITFILE_ERR_STAT_FAILED 1
 #define READ_GITFILE_ERR_NOT_A_FILE 2
