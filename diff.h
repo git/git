@@ -268,7 +268,7 @@ extern int parse_long_opt(const char *opt, const char **argv,
 extern int git_diff_basic_config(const char *var, const char *value, void *cb);
 extern int git_diff_ui_config(const char *var, const char *value, void *cb);
 extern void diff_setup(struct diff_options *);
-extern int diff_opt_parse(struct diff_options *, const char **, int);
+extern int diff_opt_parse(struct diff_options *, const char **, int, const char *);
 extern void diff_setup_done(struct diff_options *);
 
 #define DIFF_DETECT_RENAME	1
@@ -345,7 +345,7 @@ extern int diff_flush_patch_id(struct diff_options *, unsigned char *);
 
 extern int diff_result_code(struct diff_options *, int);
 
-extern void diff_no_index(struct rev_info *, int, const char **, const char *);
+extern void diff_no_index(struct rev_info *, int, const char **);
 
 extern int index_differs_from(const char *def, int diff_flags);
 

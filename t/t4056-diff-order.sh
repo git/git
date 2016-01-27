@@ -68,6 +68,12 @@ test_expect_success POSIXPERM,SANITY 'unreadable orderfile' '
 	test_must_fail git diff -Ounreadable_file --name-only HEAD^..HEAD
 '
 
+test_expect_success "orderfile using option from subdir with --output" '
+	mkdir subdir &&
+	git -C subdir diff -O../order_file_1 --output ../actual --name-only HEAD^..HEAD &&
+	test_cmp expect_1 actual
+'
+
 for i in 1 2
 do
 	test_expect_success "orderfile using option ($i)" '
