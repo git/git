@@ -37,6 +37,7 @@ GIT_SUBTREE_DOC := git-subtree.1
 GIT_SUBTREE_XML := git-subtree.xml
 GIT_SUBTREE_TXT := git-subtree.txt
 GIT_SUBTREE_HTML := git-subtree.html
+GIT_SUBTREE_TEST := ../../git-subtree
 
 all:: $(GIT_SUBTREE)
 
@@ -71,7 +72,10 @@ $(GIT_SUBTREE_HTML): $(GIT_SUBTREE_TXT)
 	$(ASCIIDOC) -b xhtml11 -d manpage -f $(ASCIIDOC_CONF) \
 		-agit_version=$(GIT_VERSION) $^
 
-test:
+$(GIT_SUBTREE_TEST): $(GIT_SUBTREE)
+	cp $< $@
+
+test: $(GIT_SUBTREE_TEST)
 	$(MAKE) -C t/ test
 
 clean:
