@@ -148,7 +148,7 @@ gitk-specific options
 
 Examples
 --------
-gitk v2.6.12.. include/scsi drivers/scsi::
+gitk v2.6.12.. -- include/scsi drivers/scsi::
 
 	Show the changes since version 'v2.6.12' that changed any
 	file in the include/scsi or drivers/scsi subdirectories
