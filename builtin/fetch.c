@@ -1221,6 +1221,8 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 	list.strdup_strings = 1;
 	string_list_clear(&list, 0);
 
+	close_all_packs();
+
 	argv_array_pushl(&argv_gc_auto, "gc", "--auto", NULL);
 	if (verbosity < 0)
 		argv_array_push(&argv_gc_auto, "--quiet");
