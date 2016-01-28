@@ -255,6 +255,8 @@ struct itimerval {
 #else
 #define basename gitbasename
 extern char *gitbasename(char *);
+#define dirname gitdirname
+extern char *gitdirname(char *);
 #endif
 
 #ifndef NO_ICONV
@@ -335,6 +337,14 @@ static inline int git_has_dos_drive_prefix(const char *path)
 	return 0;
 }
 #define has_dos_drive_prefix git_has_dos_drive_prefix
+#endif
+
+#ifndef skip_dos_drive_prefix
+static inline int git_skip_dos_drive_prefix(const char **path)
+{
+	return 0;
+}
+#define skip_dos_drive_prefix git_skip_dos_drive_prefix
 #endif
 
 #ifndef is_dir_sep
