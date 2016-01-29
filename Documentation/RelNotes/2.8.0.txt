@@ -39,6 +39,9 @@ UI, Workflows & Features
    omitted on the command line if you always use the same directory in
    your workflow.
 
+ * "interpret-trailers" has been taught to optionally update a file in
+   place, instead of always writing the result to the standard output.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -62,7 +65,18 @@ Performance, Internal Implementation, Development Support etc.
  * The low-level code that is used to create symbolic references has
    been updated to share more code with the code that deals with
    normal references.
-   (merge 2859dcd jk/symbolic-ref later to maint).
+
+ * strbuf_getline() and friends have been redefined to make it easier
+   to identify which callsite of (new) strbuf_getline_lf() should
+   allow and silently ignore carriage-return at the end of the line to
+   help users on DOSsy systems.
+
+ * "git shortlog" used to accumulate various pieces of information
+   regardless of what was asked to be shown in the final output.  It
+   has been optimized by noticing what need not to be collected
+   (e.g. there is no need to collect the log messages when showing
+   only the number of changes).
+
 
 Also contains various documentation updates and code clean-ups.
 
@@ -137,6 +151,15 @@ notes for details).
    friendly to systems that cannot remove files that are open.  They
    now close the packs before doing so.
    (merge d562102 js/close-packs-before-gc later to maint).
+
+ * A recent optimization to filter-branch in v2.7.0 introduced a
+   regression when --prune-empty filter is used, which has been
+   corrected.
+   (merge 1dc413e jk/filter-branch-no-index later to maint).
+
+ * The description for SANITY prerequisite the test suite uses has
+   been clarified both in the comment and in the implementation.
+   (merge 719c3da jk/sanity later to maint).
 
  * Other minor clean-ups and documentation updates
    (merge 99487cf ss/user-manual later to maint).
