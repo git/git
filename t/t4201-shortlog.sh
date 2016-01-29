@@ -120,6 +120,12 @@ test_expect_success !MINGW 'shortlog from non-git directory' '
 	test_cmp expect out
 '
 
+test_expect_success !MINGW 'shortlog can read --format=raw output' '
+	git log --format=raw HEAD >log &&
+	GIT_DIR=non-existing git shortlog -w <log >out &&
+	test_cmp expect out
+'
+
 test_expect_success 'shortlog should add newline when input line matches wraplen' '
 	cat >expect <<\EOF &&
 A U Thor (2):
@@ -171,22 +177,6 @@ test_expect_success !MINGW 'shortlog encoding' '
 	git config --unset i18n.commitencoding &&
 	git shortlog HEAD~2.. > out &&
 test_cmp expect out'
-
-test_expect_success 'shortlog ignores commits with missing authors' '
-	git commit --allow-empty -m normal &&
-	git commit --allow-empty -m soon-to-be-broken &&
-	git cat-file commit HEAD >commit.tmp &&
-	sed "/^author/d" commit.tmp >broken.tmp &&
-	commit=$(git hash-object -w -t commit --stdin <broken.tmp) &&
-	git update-ref HEAD $commit &&
-	cat >expect <<-\EOF &&
-	A U Thor (1):
-	      normal
-
-	EOF
-	git shortlog HEAD~2.. >actual &&
-	test_cmp expect actual
-'
 
 test_expect_success 'shortlog with revision pseudo options' '
 	git shortlog --all &&
