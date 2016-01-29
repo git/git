@@ -395,7 +395,7 @@ static int apply_filter(const char *path, const char *src, size_t len, int fd,
 	struct async async;
 	struct filter_params params;
 
-	if (!cmd)
+	if (!cmd || !*cmd)
 		return 0;
 
 	if (!dst)
