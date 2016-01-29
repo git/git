@@ -9,7 +9,7 @@ msgstr ""
 "Project-Id-Version: gitk\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-01-22 22:04+0100\n"
-"PO-Revision-Date: 2016-01-22 23:05+0100\n"
+"PO-Revision-Date: 2016-01-22 23:28+0100\n"
 "Last-Translator: Jean-Noël Avila <jn.avila@free.fr>\n"
 "Language-Team: git@vger.kernel.org\n"
 "Language: \n"
@@ -95,27 +95,27 @@ msgstr "Mise à jour"
 
 #: gitk:2084
 msgid "&Reload"
-msgstr "Recharger"
+msgstr "&Recharger"
 
 #: gitk:2085
 msgid "Reread re&ferences"
-msgstr "Relire les références"
+msgstr "Relire les ré&férences"
 
 #: gitk:2086
 msgid "&List references"
-msgstr "Lister les références"
+msgstr "&Lister les références"
 
 #: gitk:2088
 msgid "Start git &gui"
-msgstr "Démarrer git gui"
+msgstr "Démarrer git &gui"
 
 #: gitk:2090
 msgid "&Quit"
-msgstr "Quitter"
+msgstr "&Quitter"
 
 #: gitk:2082
 msgid "&File"
-msgstr "Fichier"
+msgstr "&Fichier"
 
 #: gitk:2094
 msgid "&Preferences"
@@ -123,15 +123,15 @@ msgstr "Préférences"
 
 #: gitk:2093
 msgid "&Edit"
-msgstr "Éditer"
+msgstr "&Éditer"
 
 #: gitk:2098
 msgid "&New view..."
-msgstr "Nouvelle vue..."
+msgstr "&Nouvelle vue..."
 
 #: gitk:2099
 msgid "&Edit view..."
-msgstr "Éditer la vue..."
+msgstr "&Éditer la vue..."
 
 #: gitk:2100
 msgid "&Delete view"
@@ -143,7 +143,7 @@ msgstr "Tous les fichiers"
 
 #: gitk:2097
 msgid "&View"
-msgstr "Vue"
+msgstr "&Vue"
 
 #: gitk:2107 gitk:2117
 msgid "&About gitk"
@@ -208,7 +208,7 @@ msgstr "Tous les champs"
 
 #: gitk:2332 gitk:4890 gitk:4923 gitk:6805
 msgid "Headline"
-msgstr "Surligner"
+msgstr "Titre"
 
 #: gitk:2333 gitk:4890 gitk:6805 gitk:6935 gitk:7408
 msgid "Comments"
@@ -221,7 +221,7 @@ msgstr "Auteur"
 
 #: gitk:2333 gitk:4890 gitk:6805 gitk:7345
 msgid "Committer"
-msgstr "Auteur du commit"
+msgstr "Validateur"
 
 #: gitk:2367
 msgid "Search"
@@ -261,11 +261,11 @@ msgstr "Arbre"
 
 #: gitk:2635 gitk:2656
 msgid "Diff this -> selected"
-msgstr "Diff entre ceci et la sélection"
+msgstr "Diff ceci -> la sélection"
 
 #: gitk:2636 gitk:2657
 msgid "Diff selected -> this"
-msgstr "Diff entre sélection et ceci"
+msgstr "Diff sélection -> ceci"
 
 #: gitk:2637 gitk:2658
 msgid "Make patch"
@@ -273,7 +273,7 @@ msgstr "Créer patch"
 
 #: gitk:2638 gitk:9273
 msgid "Create tag"
-msgstr "Créer tag"
+msgstr "Créer étiquette"
 
 #: gitk:2639
 msgid "Copy commit summary"
@@ -643,7 +643,7 @@ msgstr "Références (liste d'éléments séparés par des espaces) :"
 
 #: gitk:4095
 msgid "Branches & tags:"
-msgstr "Branches & tags :"
+msgstr "Branches & étiquettes :"
 
 #: gitk:4096
 msgid "All refs"
@@ -655,7 +655,7 @@ msgstr "Toutes les branches (locales)"
 
 #: gitk:4098
 msgid "All tags"
-msgstr "Tous les tags"
+msgstr "Toutes les étiquettes"
 
 #: gitk:4099
 msgid "All remote-tracking branches"
@@ -671,7 +671,7 @@ msgstr "Auteur :"
 
 #: gitk:4102
 msgid "Committer:"
-msgstr "Commiteur :"
+msgstr "Validateur :"
 
 #: gitk:4103
 msgid "Commit Message:"
@@ -711,7 +711,7 @@ msgstr ""
 
 #: gitk:4111
 msgid "Since:"
-msgstr "De :"
+msgstr "Depuis :"
 
 #: gitk:4112
 msgid "Until:"
@@ -737,7 +737,6 @@ msgstr "Options diverses :"
 msgid "Strictly sort by date"
 msgstr "Trier par date"
 
-# FIXME : traduction de "branch sides"
 #: gitk:4118
 msgid "Mark branch sides"
 msgstr "Indiquer les côtés des branches"
@@ -804,11 +803,11 @@ msgstr "Pas un ancêtre"
 
 #: gitk:5343
 msgid "Local changes checked in to index but not committed"
-msgstr "Modifications locales enregistrées dans l'index mais non commitées"
+msgstr "Modifications locales enregistrées dans l'index mais non validées"
 
 #: gitk:5379
 msgid "Local uncommitted changes, not checked in to index"
-msgstr "Modifications locales non enregistrées dans l'index et non commitées"
+msgstr "Modifications locales non enregistrées dans l'index et non validées"
 
 #: gitk:7153
 msgid "and many more"
@@ -820,7 +819,7 @@ msgstr "nombreux"
 
 #: gitk:7347
 msgid "Tags:"
-msgstr "Tags :"
+msgstr "Étiquettes :"
 
 #: gitk:7364 gitk:7370 gitk:8844
 msgid "Parent"
@@ -854,17 +853,17 @@ msgstr "Aller à :"
 #: gitk:8690
 #, tcl-format
 msgid "Short SHA1 id %s is ambiguous"
-msgstr "Id SHA1 court %s est ambigu"
+msgstr "L'id SHA1 court %s est ambigu"
 
 #: gitk:8697
 #, tcl-format
 msgid "Revision %s is not known"
-msgstr "Id SHA1 %s est inconnu"
+msgstr "La révision %s est inconnu"
 
 #: gitk:8707
 #, tcl-format
 msgid "SHA1 id %s is not known"
-msgstr "Id SHA1 %s est inconnu"
+msgstr "L'id SHA1 %s est inconnu"
 
 #: gitk:8709
 #, tcl-format
@@ -987,15 +986,15 @@ msgstr "ID :"
 
 #: gitk:9284
 msgid "Tag name:"
-msgstr "Nom du Tag :"
+msgstr "Nom de l'étiquette :"
 
 #: gitk:9287
 msgid "Tag message is optional"
-msgstr "Le message du tag est optionnel"
+msgstr "Le message d'étiquette est optionnel"
 
 #: gitk:9289
 msgid "Tag message:"
-msgstr "Message du Tag :"
+msgstr "Message d'étiquette :"
 
 #: gitk:9293 gitk:9472
 msgid "Create"
@@ -1003,16 +1002,16 @@ msgstr "Créer"
 
 #: gitk:9311
 msgid "No tag name specified"
-msgstr "Aucun nom de tag spécifié"
+msgstr "Aucun nom d'étiquette spécifié"
 
 #: gitk:9315
 #, tcl-format
 msgid "Tag \"%s\" already exists"
-msgstr "Le tag \"%s\" existe déjà"
+msgstr "L'étiquette \"%s\" existe déjà"
 
 #: gitk:9325
 msgid "Error creating tag:"
-msgstr "Erreur à la création du tag :"
+msgstr "Erreur à la création de l'étiquette :"
 
 #: gitk:9415
 msgid "Command:"
@@ -1048,7 +1047,7 @@ msgstr ""
 
 #: gitk:9568
 msgid "Cherry-picking"
-msgstr "Cueillir (Cherry-picking)"
+msgstr "Picorer (Cherry-picking)"
 
 #: gitk:9577
 #, tcl-format
@@ -1056,23 +1055,20 @@ msgid ""
 "Cherry-pick failed because of local changes to file '%s'.\n"
 "Please commit, reset or stash your changes and try again."
 msgstr ""
-"La cueillette (cherry-pick) a échouée à cause de modifications locales du "
-"fichier '%s'.\n"
-"Veuillez commiter, réinitialiser ou stasher vos changements et essayer de "
-"nouveau."
+"Le picorage (cherry-pick) a échouée à cause de modifications locales du fichier '%s'.\n"
+"Veuillez commiter, réinitialiser ou stasher vos changements et essayer de nouveau."
 
 #: gitk:9583
 msgid ""
 "Cherry-pick failed because of merge conflict.\n"
 "Do you wish to run git citool to resolve it?"
 msgstr ""
-"La cueillette (cherry-pick) a échouée à cause d'un conflit lors d'une "
-"fusion.\n"
+"Le picorage (cherry-pick) a échouée à cause d'un conflit lors d'une fusion.\n"
 "Souhaitez-vous exécuter git citool pour le résoudre ?"
 
 #: gitk:9599 gitk:9657
 msgid "No changes committed"
-msgstr "Aucun changement commité"
+msgstr "Aucune modification validée"
 
 #: gitk:9626
 #, tcl-format
@@ -1127,7 +1123,7 @@ msgid ""
 "(discard ALL local changes)"
 msgstr ""
 "Dure : Réinitialise le répertoire de travail et l'index\n"
-"(abandonne TOUS les changements locaux)"
+"(abandonne TOUTES les modifications locale)"
 
 #: gitk:9716
 msgid "Resetting"
@@ -1140,7 +1136,7 @@ msgstr "Extraction"
 
 #: gitk:9829
 msgid "Cannot delete the currently checked-out branch"
-msgstr "Impossible de supprimer la branche en cours"
+msgstr "Impossible de supprimer la branche extraite"
 
 #: gitk:9835
 #, tcl-format
@@ -1154,7 +1150,7 @@ msgstr ""
 #: gitk:9866
 #, tcl-format
 msgid "Tags and heads: %s"
-msgstr "Tags et heads : %s"
+msgstr "Étiquettes et heads : %s"
 
 #: gitk:9883
 msgid "Filter"
@@ -1171,7 +1167,7 @@ msgstr ""
 
 #: gitk:11156
 msgid "Tag"
-msgstr "Tag"
+msgstr "Étiquette"
 
 #: gitk:11160
 msgid "Id"
@@ -1205,7 +1201,7 @@ msgstr "Largeur maximum du graphe (% du panneau)"
 
 #: gitk:11391
 msgid "Show local changes"
-msgstr "Montrer les changements locaux"
+msgstr "Montrer les modifications locales"
 
 #: gitk:11394
 msgid "Auto-select SHA1 (length)"
@@ -1229,7 +1225,7 @@ msgstr "Afficher les tags les plus proches"
 
 #: gitk:11410
 msgid "Maximum # tags/heads to show"
-msgstr "Nombre maximum de tags/heads à afficher"
+msgstr "Nombre maximum d'étiquettes/heads à afficher"
 
 #: gitk:11413
 msgid "Limit diffs to listed paths"
@@ -1317,15 +1313,15 @@ msgstr "diff : entête du hunk"
 
 #: gitk:11477
 msgid "Marked line bg"
-msgstr "Arrière-plan de la ligne marquée"
+msgstr "Fond de la ligne marquée"
 
 #: gitk:11479
 msgid "marked line background"
-msgstr "Arrière-plan de la ligne marquée"
+msgstr "Fond de la ligne marquée"
 
 #: gitk:11483
 msgid "Select bg"
-msgstr "Sélectionner l'arrière-plan"
+msgstr "Sélectionner le fond"
 
 #: gitk:11492
 msgid "Fonts: press to choose"
