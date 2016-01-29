@@ -11,7 +11,7 @@ int main(int argc, char **argv)
 	struct sha1_array array = SHA1_ARRAY_INIT;
 	struct strbuf line = STRBUF_INIT;
 
-	while (strbuf_getline(&line, stdin, '\n') != EOF) {
+	while (strbuf_getline_lf(&line, stdin) != EOF) {
 		const char *arg;
 		unsigned char sha1[20];
 

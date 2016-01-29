@@ -1888,7 +1888,7 @@ static int read_next_command(void)
 			struct recent_command *rc;
 
 			strbuf_detach(&command_buf, NULL);
-			stdin_eof = strbuf_getline(&command_buf, stdin, '\n');
+			stdin_eof = strbuf_getline_lf(&command_buf, stdin);
 			if (stdin_eof)
 				return EOF;
 
@@ -1960,7 +1960,7 @@ static int parse_data(struct strbuf *sb, uintmax_t limit, uintmax_t *len_res)
 
 		strbuf_detach(&command_buf, NULL);
 		for (;;) {
-			if (strbuf_getline(&command_buf, stdin, '\n') == EOF)
+			if (strbuf_getline_lf(&command_buf, stdin) == EOF)
 				die("EOF in data (terminator '%s' not found)", term);
 			if (term_len == command_buf.len
 				&& !strcmp(term, command_buf.buf))

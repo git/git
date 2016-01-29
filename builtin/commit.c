@@ -1690,7 +1690,7 @@ int cmd_commit(int argc, const char **argv, const char *prefix)
 		if (fp == NULL)
 			die_errno(_("could not open '%s' for reading"),
 				  git_path_merge_head());
-		while (strbuf_getline(&m, fp, '\n') != EOF) {
+		while (strbuf_getline_lf(&m, fp) != EOF) {
 			struct commit *parent;
 
 			parent = get_merge_parent(m.buf);

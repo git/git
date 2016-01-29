@@ -11,7 +11,7 @@
 #include "parse-options.h"
 
 #define CHECKOUT_ALL 4
-static int line_termination = '\n';
+static int nul_term_line;
 static int checkout_stage; /* default to checkout stage0 */
 static int to_tempfile;
 static char topath[4][TEMPORARY_FILENAME_LENGTH + 1];
@@ -35,7 +35,8 @@ static void write_tempfile_record(const char *name, const char *prefix)
 		fputs(topath[checkout_stage], stdout);
 
 	putchar('\t');
-	write_name_quoted_relative(name, prefix, stdout, line_termination);
+	write_name_quoted_relative(name, prefix, stdout,
+				   nul_term_line ? '\0' : '\n');
 
 	for (i = 0; i < 4; i++) {
 		topath[i][0] = 0;
@@ -144,10 +145,7 @@ static int option_parse_u(const struct option *opt,
 static int option_parse_z(const struct option *opt,
 			  const char *arg, int unset)
 {
-	if (unset)
-		line_termination = '\n';
-	else
-		line_termination = 0;
+	nul_term_line = !unset;
 	return 0;
 }
 
@@ -254,13 +252,15 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 
 	if (read_from_stdin) {
 		struct strbuf buf = STRBUF_INIT, nbuf = STRBUF_INIT;
+		strbuf_getline_fn getline_fn;
 
 		if (all)
 			die("git checkout-index: don't mix '--all' and '--stdin'");
 
-		while (strbuf_getline(&buf, stdin, line_termination) != EOF) {
+		getline_fn = nul_term_line ? strbuf_getline_nul : strbuf_getline_lf;
+		while (getline_fn(&buf, stdin) != EOF) {
 			char *p;
-			if (line_termination && buf.buf[0] == '"') {
+			if (!nul_term_line && buf.buf[0] == '"') {
 				strbuf_reset(&nbuf);
 				if (unquote_c_style(&nbuf, buf.buf, NULL))
 					die("line is badly quoted");
