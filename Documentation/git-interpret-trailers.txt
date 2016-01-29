@@ -8,7 +8,7 @@ git-interpret-trailers - help add structured information into commit messages
 SYNOPSIS
 --------
 [verse]
-'git interpret-trailers' [--trim-empty] [(--trailer <token>[(=|:)<value>])...] [<file>...]
+'git interpret-trailers' [--in-place] [--trim-empty] [(--trailer <token>[(=|:)<value>])...] [<file>...]
 
 DESCRIPTION
 -----------
@@ -64,6 +64,9 @@ folding rules, the encoding rules and probably many other rules.
 
 OPTIONS
 -------
+--in-place::
+	Edit the files in place.
+
 --trim-empty::
 	If the <value> part of any trailer contains only whitespace,
 	the whole trailer will be removed from the resulting message.
@@ -214,6 +217,25 @@ message
 
 Signed-off-by: Alice <alice@example.com>
 Signed-off-by: Bob <bob@example.com>
+------------
+
+* Use the '--in-place' option to edit a message file in place:
++
+------------
+$ cat msg.txt
+subject
+
+message
+
+Signed-off-by: Bob <bob@example.com>
+$ git interpret-trailers --trailer 'Acked-by: Alice <alice@example.com>' --in-place msg.txt
+$ cat msg.txt
+subject
+
+message
+
+Signed-off-by: Bob <bob@example.com>
+Acked-by: Alice <alice@example.com>
 ------------
 
 * Extract the last commit as a patch, and add a 'Cc' and a
