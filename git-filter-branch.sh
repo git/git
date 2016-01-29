@@ -404,7 +404,7 @@ while read commit parents; do
 	then
 		tree=$(git write-tree)
 	else
-		tree="$commit^{tree}"
+		tree=$(git rev-parse "$commit^{tree}")
 	fi
 	workdir=$workdir @SHELL_PATH@ -c "$filter_commit" "git commit-tree" \
 		"$tree" $parentstr < ../message > ../map/$commit ||
