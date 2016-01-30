@@ -2074,7 +2074,7 @@ pack.indexVersion::
 	larger than 2 GB.
 +
 If you have an old Git that does not understand the version 2 `*.idx` file,
-cloning or fetching over a non native protocol (e.g. "http" and "rsync")
+cloning or fetching over a non native protocol (e.g. "http")
 that will copy both `*.pack` file and corresponding `*.idx` file from the
 other side may give you a repository that cannot be accessed with your
 older version of Git. If the `*.pack` file is smaller than 2 GB, however,
