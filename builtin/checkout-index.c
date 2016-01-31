@@ -130,18 +130,6 @@ static const char * const builtin_checkout_index_usage[] = {
 
 static struct lock_file lock_file;
 
-static int option_parse_u(const struct option *opt,
-			      const char *arg, int unset)
-{
-	int *newfd = opt->value;
-
-	state.refresh_cache = 1;
-	state.istate = &the_index;
-	if (*newfd < 0)
-		*newfd = hold_locked_index(&lock_file, 1);
-	return 0;
-}
-
 static int option_parse_stage(const struct option *opt,
 			      const char *arg, int unset)
 {
@@ -166,6 +154,7 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 	int read_from_stdin = 0;
 	int prefix_length;
 	int force = 0, quiet = 0, not_new = 0;
+	int index_opt = 0;
 	struct option builtin_checkout_index_options[] = {
 		OPT_BOOL('a', "all", &all,
 			N_("check out all files in the index")),
@@ -174,9 +163,8 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 			N_("no warning for existing files and files not in index")),
 		OPT_BOOL('n', "no-create", &not_new,
 			N_("don't checkout new files")),
-		{ OPTION_CALLBACK, 'u', "index", &newfd, NULL,
-			N_("update stat information in the index file"),
-			PARSE_OPT_NOARG, option_parse_u },
+		OPT_BOOL('u', "index", &index_opt,
+			 N_("update stat information in the index file")),
 		OPT_BOOL('z', NULL, &nul_term_line,
 			N_("paths are separated with NUL character")),
 		OPT_BOOL(0, "stdin", &read_from_stdin,
@@ -211,15 +199,13 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 		state.base_dir = "";
 	state.base_dir_len = strlen(state.base_dir);
 
-	if (state.base_dir_len || to_tempfile) {
-		/* when --prefix is specified we do not
-		 * want to update cache.
-		 */
-		if (state.refresh_cache) {
-			rollback_lock_file(&lock_file);
-			newfd = -1;
-		}
-		state.refresh_cache = 0;
+	/*
+	 * when --prefix is specified we do not want to update cache.
+	 */
+	if (index_opt && !state.base_dir_len && !to_tempfile) {
+		state.refresh_cache = 1;
+		state.istate = &the_index;
+		newfd = hold_locked_index(&lock_file, 1);
 	}
 
 	/* Check out named files first */
