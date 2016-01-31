@@ -142,14 +142,6 @@ static int option_parse_u(const struct option *opt,
 	return 0;
 }
 
-static int option_parse_prefix(const struct option *opt,
-			       const char *arg, int unset)
-{
-	state.base_dir = arg;
-	state.base_dir_len = strlen(arg);
-	return 0;
-}
-
 static int option_parse_stage(const struct option *opt,
 			      const char *arg, int unset)
 {
@@ -191,9 +183,8 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 			N_("read list of paths from the standard input")),
 		OPT_BOOL(0, "temp", &to_tempfile,
 			N_("write the content to temporary files")),
-		OPT_CALLBACK(0, "prefix", NULL, N_("string"),
-			N_("when creating files, prepend <string>"),
-			option_parse_prefix),
+		OPT_STRING(0, "prefix", &state.base_dir, N_("string"),
+			N_("when creating files, prepend <string>")),
 		OPT_CALLBACK(0, "stage", NULL, NULL,
 			N_("copy out the files from named stage"),
 			option_parse_stage),
@@ -204,7 +195,6 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 		usage_with_options(builtin_checkout_index_usage,
 				   builtin_checkout_index_options);
 	git_config(git_default_config, NULL);
-	state.base_dir = "";
 	prefix_length = prefix ? strlen(prefix) : 0;
 
 	if (read_cache() < 0) {
@@ -216,6 +206,10 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 	state.force = force;
 	state.quiet = quiet;
 	state.not_new = not_new;
+
+	if (!state.base_dir)
+		state.base_dir = "";
+	state.base_dir_len = strlen(state.base_dir);
 
 	if (state.base_dir_len || to_tempfile) {
 		/* when --prefix is specified we do not
