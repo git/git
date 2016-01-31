@@ -359,14 +359,6 @@ static const char * const ls_files_usage[] = {
 	NULL
 };
 
-static int option_parse_z(const struct option *opt,
-			  const char *arg, int unset)
-{
-	line_terminator = unset ? '\n' : '\0';
-
-	return 0;
-}
-
 static int option_parse_exclude(const struct option *opt,
 				const char *arg, int unset)
 {
@@ -408,9 +400,9 @@ int cmd_ls_files(int argc, const char **argv, const char *cmd_prefix)
 	struct exclude_list *el;
 	struct string_list exclude_list = STRING_LIST_INIT_NODUP;
 	struct option builtin_ls_files_options[] = {
-		{ OPTION_CALLBACK, 'z', NULL, NULL, NULL,
-			N_("paths are separated with NUL character"),
-			PARSE_OPT_NOARG, option_parse_z },
+		/* Think twice before adding "--nul" synonym to this */
+		OPT_SET_INT('z', NULL, &line_terminator,
+			N_("paths are separated with NUL character"), '\0'),
 		OPT_BOOL('t', NULL, &show_tag,
 			N_("identify the file status with tags")),
 		OPT_BOOL('v', NULL, &show_valid_bit,
