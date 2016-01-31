@@ -142,13 +142,6 @@ static int option_parse_u(const struct option *opt,
 	return 0;
 }
 
-static int option_parse_z(const struct option *opt,
-			  const char *arg, int unset)
-{
-	nul_term_line = !unset;
-	return 0;
-}
-
 static int option_parse_prefix(const struct option *opt,
 			       const char *arg, int unset)
 {
@@ -192,9 +185,8 @@ int cmd_checkout_index(int argc, const char **argv, const char *prefix)
 		{ OPTION_CALLBACK, 'u', "index", &newfd, NULL,
 			N_("update stat information in the index file"),
 			PARSE_OPT_NOARG, option_parse_u },
-		{ OPTION_CALLBACK, 'z', NULL, NULL, NULL,
-			N_("paths are separated with NUL character"),
-			PARSE_OPT_NOARG, option_parse_z },
+		OPT_BOOL('z', NULL, &nul_term_line,
+			N_("paths are separated with NUL character")),
 		OPT_BOOL(0, "stdin", &read_from_stdin,
 			N_("read list of paths from the standard input")),
 		OPT_BOOL(0, "temp", &to_tempfile,
