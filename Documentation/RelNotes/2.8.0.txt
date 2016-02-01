@@ -161,6 +161,15 @@ notes for details).
    been clarified both in the comment and in the implementation.
    (merge 719c3da jk/sanity later to maint).
 
+ * "git tag" started listing a tag "foo" as "tags/foo" when a branch
+   named "foo" exists in the same repository; remove this unnecessary
+   disambiguation, which is a regression introduced in v2.7.0.
+   (merge 0571979 jk/list-tag-2.7-regression later to maint).
+
+ * The way "git svn" uses auth parameter was broken by Subversion
+   1.9.0 and later.
+   (merge 0b66415 ew/svn-1.9.0-auth later to maint).
+
  * Other minor clean-ups and documentation updates
    (merge 99487cf ss/user-manual later to maint).
    (merge e914ef0 ew/for-each-ref-doc later to maint).
