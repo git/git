@@ -1610,9 +1610,34 @@ help.htmlPath::
 
 http.proxy::
 	Override the HTTP proxy, normally configured using the 'http_proxy',
-	'https_proxy', and 'all_proxy' environment variables (see
-	`curl(1)`).  This can be overridden on a per-remote basis; see
-	remote.<name>.proxy
+	'https_proxy', and 'all_proxy' environment variables (see `curl(1)`). In
+	addition to the syntax understood by curl, it is possible to specify a
+	proxy string with a user name but no password, in which case git will
+	attempt to acquire one in the same way it does for other credentials. See
+	linkgit:gitcredentials[7] for more information. The syntax thus is
+	'[protocol://][user[:password]@]proxyhost[:port]'. This can be overridden
+	on a per-remote basis; see remote.<name>.proxy
+
+http.proxyAuthMethod::
+	Set the method with which to authenticate against the HTTP proxy. This
+	only takes effect if the configured proxy string contains a user name part
+	(i.e. is of the form 'user@host' or 'user@host:port'). This can be
+	overridden on a per-remote basis; see `remote.<name>.proxyAuthMethod`.
+	Both can be overridden by the 'GIT_HTTP_PROXY_AUTHMETHOD' environment
+	variable.  Possible values are:
++
+--
+* `anyauth` - Automatically pick a suitable authentication method. It is
+  assumed that the proxy answers an unauthenticated request with a 407
+  status code and one or more Proxy-authenticate headers with supported
+  authentication methods. This is the default.
+* `basic` - HTTP Basic authentication
+* `digest` - HTTP Digest authentication; this prevents the password from being
+  transmitted to the proxy in clear text
+* `negotiate` - GSS-Negotiate authentication (compare the --negotiate option
+  of `curl(1)`)
+* `ntlm` - NTLM authentication (compare the --ntlm option of `curl(1)`)
+--
 
 http.cookieFile::
 	File containing previously stored cookie lines which should be used
@@ -2422,6 +2447,11 @@ remote.<name>.proxy::
 	For remotes that require curl (http, https and ftp), the URL to
 	the proxy to use for that remote.  Set to the empty string to
 	disable proxying for that remote.
+
+remote.<name>.proxyAuthMethod::
+	For remotes that require curl (http, https and ftp), the method to use for
+	authenticating against the proxy in use (probably set in
+	`remote.<name>.proxy`). See `http.proxyAuthMethod`.
 
 remote.<name>.fetch::
 	The default set of "refspec" for linkgit:git-fetch[1]. See
