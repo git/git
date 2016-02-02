@@ -54,10 +54,12 @@ static void restore_env(int external_alias)
 		if (external_alias &&
 		    !strcmp(env_names[i], GIT_PREFIX_ENVIRONMENT))
 			continue;
-		if (orig_env[i])
+		if (orig_env[i]) {
 			setenv(env_names[i], orig_env[i], 1);
-		else
+			free(orig_env[i]);
+		} else {
 			unsetenv(env_names[i]);
+		}
 	}
 }
 
