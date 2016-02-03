@@ -13,6 +13,11 @@
  * translation when the "text" attribute or "auto_crlf" option is set.
  */
 
+/* Stat bits: When BIN is set, the txt bits are unset */
+#define CONVERT_STAT_BITS_TXT_LF    0x1
+#define CONVERT_STAT_BITS_TXT_CRLF  0x2
+#define CONVERT_STAT_BITS_BIN       0x4
+
 enum crlf_action {
 	CRLF_GUESS = -1,
 	CRLF_BINARY = 0,
@@ -75,24 +80,73 @@ static void gather_stats(const char *buf, unsigned long size, struct text_stat *
 
 /*
  * The same heuristics as diff.c::mmfile_is_binary()
+ * We treat files with bare CR as binary
  */
-static int is_binary(unsigned long size, struct text_stat *stats)
+static int convert_is_binary(unsigned long size, const struct text_stat *stats)
 {
-
+	if (stats->cr != stats->crlf)
+		return 1;
 	if (stats->nul)
 		return 1;
 	if ((stats->printable >> 7) < stats->nonprintable)
 		return 1;
-	/*
-	 * Other heuristics? Average line length might be relevant,
-	 * as might LF vs CR vs CRLF counts..
-	 *
-	 * NOTE! It might be normal to have a low ratio of CRLF to LF
-	 * (somebody starts with a LF-only file and edits it with an editor
-	 * that adds CRLF only to lines that are added..). But do  we
-	 * want to support CR-only? Probably not.
-	 */
 	return 0;
+}
+
+static unsigned int gather_convert_stats(const char *data, unsigned long size)
+{
+	struct text_stat stats;
+	if (!data || !size)
+		return 0;
+	gather_stats(data, size, &stats);
+	if (convert_is_binary(size, &stats))
+		return CONVERT_STAT_BITS_BIN;
+	else if (stats.crlf && stats.crlf == stats.lf)
+		return CONVERT_STAT_BITS_TXT_CRLF;
+	else if (stats.crlf && stats.lf)
+		return CONVERT_STAT_BITS_TXT_CRLF | CONVERT_STAT_BITS_TXT_LF;
+	else if (stats.lf)
+		return CONVERT_STAT_BITS_TXT_LF;
+	else
+		return 0;
+}
+
+static const char *gather_convert_stats_ascii(const char *data, unsigned long size)
+{
+	unsigned int convert_stats = gather_convert_stats(data, size);
+
+	if (convert_stats & CONVERT_STAT_BITS_BIN)
+		return "-text";
+	switch (convert_stats) {
+	case CONVERT_STAT_BITS_TXT_LF:
+		return "lf";
+	case CONVERT_STAT_BITS_TXT_CRLF:
+		return "crlf";
+	case CONVERT_STAT_BITS_TXT_LF | CONVERT_STAT_BITS_TXT_CRLF:
+		return "mixed";
+	default:
+		return "none";
+	}
+}
+
+const char *get_cached_convert_stats_ascii(const char *path)
+{
+	const char *ret;
+	unsigned long sz;
+	void *data = read_blob_data_from_cache(path, &sz);
+	ret = gather_convert_stats_ascii(data, sz);
+	free(data);
+	return ret;
+}
+
+const char *get_wt_convert_stats_ascii(const char *path)
+{
+	const char *ret = "";
+	struct strbuf sb = STRBUF_INIT;
+	if (strbuf_read_file(&sb, path, 0) >= 0)
+		ret = gather_convert_stats_ascii(sb.buf, sb.len);
+	strbuf_release(&sb);
+	return ret;
 }
 
 static enum eol output_eol(enum crlf_action crlf_action)
@@ -187,18 +241,7 @@ static int crlf_to_git(const char *path, const char *src, size_t len,
 	gather_stats(src, len, &stats);
 
 	if (crlf_action == CRLF_AUTO || crlf_action == CRLF_GUESS) {
-		/*
-		 * We're currently not going to even try to convert stuff
-		 * that has bare CR characters. Does anybody do that crazy
-		 * stuff?
-		 */
-		if (stats.cr != stats.crlf)
-			return 0;
-
-		/*
-		 * And add some heuristics for binary vs text, of course...
-		 */
-		if (is_binary(len, &stats))
+		if (convert_is_binary(len, &stats))
 			return 0;
 
 		if (crlf_action == CRLF_GUESS) {
@@ -277,11 +320,7 @@ static int crlf_to_worktree(const char *path, const char *src, size_t len,
 				return 0;
 		}
 
-		/* If we have any bare CR characters, we're not going to touch it */
-		if (stats.cr != stats.crlf)
-			return 0;
-
-		if (is_binary(len, &stats))
+		if (convert_is_binary(len, &stats))
 			return 0;
 	}
 
@@ -775,6 +814,30 @@ int would_convert_to_git_filter_fd(const char *path)
 		return 0;
 
 	return apply_filter(path, NULL, 0, -1, NULL, ca.drv->clean);
+}
+
+const char *get_convert_attr_ascii(const char *path)
+{
+	struct conv_attrs ca;
+	enum crlf_action crlf_action;
+
+	convert_attrs(&ca, path);
+	crlf_action = input_crlf_action(ca.crlf_action, ca.eol_attr);
+	switch (crlf_action) {
+	case CRLF_GUESS:
+		return "";
+	case CRLF_BINARY:
+		return "-text";
+	case CRLF_TEXT:
+		return "text";
+	case CRLF_INPUT:
+		return "text eol=lf";
+	case CRLF_CRLF:
+		return "text=auto eol=crlf";
+	case CRLF_AUTO:
+		return "text=auto";
+	}
+	return "";
 }
 
 int convert_to_git(const char *path, const char *src, size_t len,
