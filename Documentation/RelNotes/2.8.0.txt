@@ -7,7 +7,6 @@ Updates since v2.7
 UI, Workflows & Features
 
  * "branch --delete" has "branch -d" but "push --delete" does not.
-   (merge 38a2559 ps/push-delete-option later to maint).
 
  * "git blame" learned to produce the progress eye-candy when it takes
    too much time before emitting the first line of the result.
@@ -41,6 +40,32 @@ UI, Workflows & Features
 
  * "interpret-trailers" has been taught to optionally update a file in
    place, instead of always writing the result to the standard output.
+
+ * Many commands that read files that are expected to contain text
+   that is generated (or can be edited) by the end user to control
+   their behaviour (e.g. "git grep -f <filename>") have been updated
+   to be more tolerant to lines that are terminated with CRLF (they
+   used to treat such a line to contain payload that ends with CR,
+   which is usually not what the users expect).
+
+ * "git notes merge" used to limit the source of the merged notes tree
+   to somewhere under refs/notes/ hierarchy, which was too limiting
+   when inventing a workflow to exchange notes with remote
+   repositories using remote-tracking notes trees (located in e.g.
+   refs/remote-notes/ or somesuch).
+
+ * "git ls-files" learned a new "--eol" option to help diagnose
+   end-of-line problems.
+
+ * "ls-remote" learned an option to show which branch the remote
+   repository advertises as its primary by pointing its HEAD at.
+
+ * New http.proxyAuthMethod configuration variable can be used to
+   specify what authentication method to use, as a way to work around
+   proxies that do not give error response expected by libcurl when
+   CURLAUTH_ANY is used.  Also, the codepath for proxy authentication
+   has been taught to use credential API to store the authentication
+   material in user's keyrings.
 
 
 Performance, Internal Implementation, Development Support etc.
@@ -76,6 +101,14 @@ Performance, Internal Implementation, Development Support etc.
    has been optimized by noticing what need not to be collected
    (e.g. there is no need to collect the log messages when showing
    only the number of changes).
+
+ * "git checkout $branch" (and other operations that share the same
+   underlying machinery) has been optimized.
+
+ * Automated tests in Travis CI environment has been optimized by
+   persisting runtime statistics of previous "prove" run, executing
+   tests that take longer before other ones; this reduces the total
+   wallclock time.
 
 
 Also contains various documentation updates and code clean-ups.
@@ -170,8 +203,33 @@ notes for details).
    1.9.0 and later.
    (merge 0b66415 ew/svn-1.9.0-auth later to maint).
 
+ * The "split" subcommand of "git subtree" (in contrib/) incorrectly
+   skipped merges when it shouldn't, which was corrected.
+   (merge 933cfeb dw/subtree-split-do-not-drop-merge later to maint).
+
+ * A few options of "git diff" did not work well when the command was
+   run from a subdirectory.
+   (merge a97262c nd/diff-with-path-params later to maint).
+
+ * The command line completion learned a handful of additional options
+   and command specific syntax.
+   (merge fa4b5e3 jk/completion-rebase later to maint).
+   (merge f7c2e1a pw/completion-show-branch later to maint).
+   (merge d7d4ca8 pw/completion-stash later to maint).
+   (merge e6414b4 tb/complete-word-diff-regex later to maint).
+
+ * dirname() emulation has been added, as Msys2 lacks it.
+   (merge e7d5ce8 js/dirname-basename later to maint).
+
+ * The underlying machinery used by "ls-files -o" and other commands
+   have been taught not to create empty submodule ref cache for a
+   directory that is not a submodule.  This removes a ton of wasted
+   CPU cycles.
+   (merge a2d5156 jk/ref-cache-non-repository-optim later to maint).
+
  * Other minor clean-ups and documentation updates
    (merge 99487cf ss/user-manual later to maint).
    (merge e914ef0 ew/for-each-ref-doc later to maint).
    (merge 36fc7d8 sg/t6050-failing-editor-test-fix later to maint).
    (merge 60253a6 ss/clone-depth-single-doc later to maint).
+   (merge bd02e97 lv/add-doc-working-tree later to maint).
