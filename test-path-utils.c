@@ -39,6 +39,130 @@ static void normalize_argv_string(const char **var, const char *input)
 		die("Bad value: %s\n", input);
 }
 
+struct test_data {
+	const char *from;  /* input:  transform from this ... */
+	const char *to;    /* output: ... to this.            */
+	const char *alternative; /* output: ... or this.      */
+};
+
+static int test_function(struct test_data *data, char *(*func)(char *input),
+	const char *funcname)
+{
+	int failed = 0, i;
+	char buffer[1024];
+	char *to;
+
+	for (i = 0; data[i].to; i++) {
+		if (!data[i].from)
+			to = func(NULL);
+		else {
+			strcpy(buffer, data[i].from);
+			to = func(buffer);
+		}
+		if (!strcmp(to, data[i].to))
+			continue;
+		if (!data[i].alternative)
+			error("FAIL: %s(%s) => '%s' != '%s'\n",
+				funcname, data[i].from, to, data[i].to);
+		else if (!strcmp(to, data[i].alternative))
+			continue;
+		else
+			error("FAIL: %s(%s) => '%s' != '%s', '%s'\n",
+				funcname, data[i].from, to, data[i].to,
+				data[i].alternative);
+		failed = 1;
+	}
+	return failed;
+}
+
+static struct test_data basename_data[] = {
+	/* --- POSIX type paths --- */
+	{ NULL,              "."    },
+	{ "",                "."    },
+	{ ".",               "."    },
+	{ "..",              ".."   },
+	{ "/",               "/"    },
+	{ "//",              "/", "//" },
+	{ "///",             "/", "//" },
+	{ "////",            "/", "//" },
+	{ "usr",             "usr"  },
+	{ "/usr",            "usr"  },
+	{ "/usr/",           "usr"  },
+	{ "/usr//",          "usr"  },
+	{ "/usr/lib",        "lib"  },
+	{ "usr/lib",         "lib"  },
+	{ "usr/lib///",      "lib"  },
+
+#if defined(__MINGW32__) || defined(_MSC_VER)
+	/* --- win32 type paths --- */
+	{ "\\usr",           "usr"  },
+	{ "\\usr\\",         "usr"  },
+	{ "\\usr\\\\",       "usr"  },
+	{ "\\usr\\lib",      "lib"  },
+	{ "usr\\lib",        "lib"  },
+	{ "usr\\lib\\\\\\",  "lib"  },
+	{ "C:/usr",          "usr"  },
+	{ "C:/usr",          "usr"  },
+	{ "C:/usr/",         "usr"  },
+	{ "C:/usr//",        "usr"  },
+	{ "C:/usr/lib",      "lib"  },
+	{ "C:usr/lib",       "lib"  },
+	{ "C:usr/lib///",    "lib"  },
+	{ "C:",              "."    },
+	{ "C:a",             "a"    },
+	{ "C:/",             "/"    },
+	{ "C:///",           "/"    },
+	{ "\\",              "\\", "/" },
+	{ "\\\\",            "\\", "/" },
+	{ "\\\\\\",          "\\", "/" },
+#endif
+	{ NULL,              NULL   }
+};
+
+static struct test_data dirname_data[] = {
+	/* --- POSIX type paths --- */
+	{ NULL,              "."      },
+	{ "",                "."      },
+	{ ".",               "."      },
+	{ "..",              "."      },
+	{ "/",               "/"      },
+	{ "//",              "/", "//" },
+	{ "///",             "/", "//" },
+	{ "////",            "/", "//" },
+	{ "usr",             "."      },
+	{ "/usr",            "/"      },
+	{ "/usr/",           "/"      },
+	{ "/usr//",          "/"      },
+	{ "/usr/lib",        "/usr"   },
+	{ "usr/lib",         "usr"    },
+	{ "usr/lib///",      "usr"    },
+
+#if defined(__MINGW32__) || defined(_MSC_VER)
+	/* --- win32 type paths --- */
+	{ "\\",              "\\"     },
+	{ "\\\\",            "\\\\"   },
+	{ "\\usr",           "\\"     },
+	{ "\\usr\\",         "\\"     },
+	{ "\\usr\\\\",       "\\"     },
+	{ "\\usr\\lib",      "\\usr"  },
+	{ "usr\\lib",        "usr"    },
+	{ "usr\\lib\\\\\\",  "usr"    },
+	{ "C:a",             "C:."    },
+	{ "C:/",             "C:/"    },
+	{ "C:///",           "C:/"    },
+	{ "C:/usr",          "C:/"    },
+	{ "C:/usr/",         "C:/"    },
+	{ "C:/usr//",        "C:/"    },
+	{ "C:/usr/lib",      "C:/usr" },
+	{ "C:usr/lib",       "C:usr"  },
+	{ "C:usr/lib///",    "C:usr"  },
+	{ "\\\\\\",          "\\"     },
+	{ "\\\\\\\\",        "\\"     },
+	{ "C:",              "C:.", "." },
+#endif
+	{ NULL,              NULL     }
+};
+
 int main(int argc, char **argv)
 {
 	if (argc == 3 && !strcmp(argv[1], "normalize_path_copy")) {
@@ -132,6 +256,12 @@ int main(int argc, char **argv)
 		strbuf_release(&sb);
 		return 0;
 	}
+
+	if (argc == 2 && !strcmp(argv[1], "basename"))
+		return test_function(basename_data, basename, argv[1]);
+
+	if (argc == 2 && !strcmp(argv[1], "dirname"))
+		return test_function(dirname_data, dirname, argv[1]);
 
 	fprintf(stderr, "%s: unknown function name: %s\n", argv[0],
 		argv[1] ? argv[1] : "(there was none)");
