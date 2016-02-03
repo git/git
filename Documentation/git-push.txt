@@ -277,6 +277,13 @@ origin +master` to force a push to the `master` branch). See the
 	default is --verify, giving the hook a chance to prevent the
 	push.  With --no-verify, the hook is bypassed completely.
 
+-4::
+--ipv4::
+	Use IPv4 addresses only, ignoring IPv6 addresses.
+
+-6::
+--ipv6::
+	Use IPv6 addresses only, ignoring IPv4 addresses.
 
 include::urls-remotes.txt[]
 

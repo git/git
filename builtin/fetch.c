@@ -37,6 +37,7 @@ static int prune = -1; /* unspecified */
 static int all, append, dry_run, force, keep, multiple, update_head_ok, verbosity;
 static int progress = -1, recurse_submodules = RECURSE_SUBMODULES_DEFAULT;
 static int tags = TAGS_DEFAULT, unshallow, update_shallow;
+static enum transport_family family;
 static const char *depth;
 static const char *upload_pack;
 static struct strbuf default_rla = STRBUF_INIT;
@@ -124,6 +125,10 @@ static struct option builtin_fetch_options[] = {
 		 N_("accept refs that update .git/shallow")),
 	{ OPTION_CALLBACK, 0, "refmap", NULL, N_("refmap"),
 	  N_("specify fetch refmap"), PARSE_OPT_NONEG, parse_refmap_arg },
+	OPT_SET_INT('4', "ipv4", &family, N_("use IPv4 addresses only"),
+			TRANSPORT_FAMILY_IPV4),
+	OPT_SET_INT('6', "ipv6", &family, N_("use IPv6 addresses only"),
+			TRANSPORT_FAMILY_IPV6),
 	OPT_END()
 };
 
@@ -861,6 +866,7 @@ static struct transport *prepare_transport(struct remote *remote)
 	struct transport *transport;
 	transport = transport_get(remote, NULL);
 	transport_set_verbosity(transport, verbosity, progress);
+	transport->family = family;
 	if (upload_pack)
 		set_option(transport, TRANS_OPT_UPLOADPACK, upload_pack);
 	if (keep)
