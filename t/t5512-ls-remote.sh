@@ -163,4 +163,49 @@ test_expect_success 'overrides work between mixed transfer/upload-pack hideRefs'
 	grep refs/tags/magic actual
 '
 
+test_expect_success 'ls-remote --symref' '
+	cat >expect <<-\EOF &&
+	ref: refs/heads/master	HEAD
+	1bd44cb9d13204b0fe1958db0082f5028a16eb3a	HEAD
+	1bd44cb9d13204b0fe1958db0082f5028a16eb3a	refs/heads/master
+	1bd44cb9d13204b0fe1958db0082f5028a16eb3a	refs/remotes/origin/HEAD
+	1bd44cb9d13204b0fe1958db0082f5028a16eb3a	refs/remotes/origin/master
+	1bd44cb9d13204b0fe1958db0082f5028a16eb3a	refs/tags/mark
+	EOF
+	git ls-remote --symref >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'ls-remote with filtered symref (refname)' '
+	cat >expect <<-\EOF &&
+	ref: refs/heads/master	HEAD
+	1bd44cb9d13204b0fe1958db0082f5028a16eb3a	HEAD
+	EOF
+	git ls-remote --symref . HEAD >actual &&
+	test_cmp expect actual
+'
+
+test_expect_failure 'ls-remote with filtered symref (--heads)' '
+	git symbolic-ref refs/heads/foo refs/tags/mark &&
+	cat >expect <<-\EOF &&
+	ref: refs/tags/mark	refs/heads/foo
+	1bd44cb9d13204b0fe1958db0082f5028a16eb3a	refs/heads/foo
+	1bd44cb9d13204b0fe1958db0082f5028a16eb3a	refs/heads/master
+	EOF
+	git ls-remote --symref --heads . >actual &&
+	test_cmp expect actual
+'
+
+test_expect_success 'ls-remote --symref omits filtered-out matches' '
+	cat >expect <<-\EOF &&
+	1bd44cb9d13204b0fe1958db0082f5028a16eb3a	refs/heads/foo
+	1bd44cb9d13204b0fe1958db0082f5028a16eb3a	refs/heads/master
+	EOF
+	git ls-remote --symref --heads . >actual &&
+	test_cmp expect actual &&
+	git ls-remote --symref . "refs/heads/*" >actual &&
+	test_cmp expect actual
+'
+
+
 test_done
