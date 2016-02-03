@@ -1,14 +1,14 @@
 # Swedish translations for Git.
-# Copyright (C) 2010-2015 Peter krefting <peter@softwolves.pp.se>
+# Copyright (C) 2010-2016 Peter krefting <peter@softwolves.pp.se>
 # This file is distributed under the same license as the Git package.
-# Peter Krefting <peter@softwolves.pp.se>, 2010, 2011, 2012, 2013, 2014, 2015.
+# Peter Krefting <peter@softwolves.pp.se>, 2010, 2011, 2012, 2013, 2014, 2015, 2016.
 #
 msgid ""
 msgstr ""
 "Project-Id-Version: git 2.6.0\n"
 "Report-Msgid-Bugs-To: Git Mailing List <git@vger.kernel.org>\n"
 "POT-Creation-Date: 2015-12-22 22:50+0800\n"
-"PO-Revision-Date: 2015-12-26 12:25+0100\n"
+"PO-Revision-Date: 2016-02-03 20:27+0100\n"
 "Last-Translator: Peter Krefting <peter@softwolves.pp.se>\n"
 "Language-Team: Swedish <tp-sv@listor.tp-sv.se>\n"
 "Language: sv\n"
@@ -8433,7 +8433,7 @@ msgstr "visa förloppsindikator under objektskrivningsfasen"
 
 #: builtin/pack-objects.c:2609
 msgid "similar to --all-progress when progress meter is shown"
-msgstr "som --all-progress när förloppsmätaren visas"
+msgstr "som --all-progress när förloppsindikatorn visas"
 
 #: builtin/pack-objects.c:2610
 msgid "version[,offset]"
