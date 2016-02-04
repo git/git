@@ -3021,7 +3021,7 @@ proc bindall {event action} {
 }
 
 proc about {} {
-    global uifont NS
+    global bgcolor NS
     set w .about
     if {[winfo exists $w]} {
 	raise $w
@@ -3036,7 +3036,7 @@ Gitk - a commit viewer for git
 Copyright \u00a9 2005-2014 Paul Mackerras
 
 Use and redistribute under the terms of the GNU General Public License"] \
-	    -justify center -aspect 400 -border 2 -bg white -relief groove
+	    -justify center -aspect 400 -border 2 -bg $bgcolor -relief groove
     pack $w.m -side top -fill x -padx 2 -pady 2
     ${NS}::button $w.ok -text [mc "Close"] -command "destroy $w" -default active
     pack $w.ok -side bottom
@@ -3047,7 +3047,7 @@ Use and redistribute under the terms of the GNU General Public License"] \
 }
 
 proc keys {} {
-    global NS
+    global bgcolor NS
     set w .keys
     if {[winfo exists $w]} {
 	raise $w
@@ -3103,7 +3103,7 @@ proc keys {} {
 [mc "<%s-minus>	Decrease font size" $M1T]
 [mc "<F5>		Update"]
 " \
-	    -justify left -bg white -border 2 -relief groove
+	    -justify left -bg $bgcolor -border 2 -relief groove
     pack $w.m -side top -fill both -padx 2 -pady 2
     ${NS}::button $w.ok -text [mc "Close"] -command "destroy $w" -default active
     bind $w <Key-Escape> [list destroy $w]
