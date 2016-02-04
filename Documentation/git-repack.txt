@@ -133,7 +133,7 @@ By default, the command passes `--delta-base-offset` option to
 'git pack-objects'; this typically results in slightly smaller packs,
 but the generated packs are incompatible with versions of Git older than
 version 1.4.4. If you need to share your repository with such ancient Git
-versions, either directly or via the dumb http or rsync protocol, then you
+versions, either directly or via the dumb http protocol, then you
 need to set the configuration variable `repack.UseDeltaBaseOffset` to
 "false" and repack. Access from old Git versions over the native protocol
 is unaffected by this option as the conversion is performed on the fly

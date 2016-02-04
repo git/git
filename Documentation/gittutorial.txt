@@ -451,7 +451,7 @@ perform clones and pulls using the ssh protocol:
 bob$ git clone alice.org:/home/alice/project myrepo
 -------------------------------------
 
-Alternatively, Git has a native protocol, or can use rsync or http;
+Alternatively, Git has a native protocol, or can use http;
 see linkgit:git-pull[1] for details.
 
 Git can also be used in a CVS-like mode, with a central repository

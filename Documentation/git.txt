@@ -1123,8 +1123,6 @@ of clones and fetches.
 	  - `ssh`: git over ssh (including `host:path` syntax,
 	    `git+ssh://`, etc).
 
-	  - `rsync`: git over rsync
-
 	  - `http`: git over http, both "smart http" and "dumb http".
 	    Note that this does _not_ include `https`; if you want both,
 	    you should specify both as `http:https`.

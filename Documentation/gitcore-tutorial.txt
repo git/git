@@ -710,7 +710,7 @@ files).
 Again, this can all be simplified with
 
 ----------------
-$ git clone rsync://rsync.kernel.org/pub/scm/git/git.git/ my-git
+$ git clone git://git.kernel.org/pub/scm/git/git.git/ my-git
 $ cd my-git
 $ git checkout
 ----------------
@@ -1010,20 +1010,6 @@ $ git fetch <remote-repository>
 
 One of the following transports can be used to name the
 repository to download from:
-
-Rsync::
-	`rsync://remote.machine/path/to/repo.git/`
-+
-Rsync transport is usable for both uploading and downloading,
-but is completely unaware of what git does, and can produce
-unexpected results when you download from the public repository
-while the repository owner is uploading into it via `rsync`
-transport.  Most notably, it could update the files under
-`refs/` which holds the object name of the topmost commits
-before uploading the files in `objects/` -- the downloader would
-obtain head commit object name while that object itself is still
-not available in the repository.  For this reason, it is
-considered deprecated.
 
 SSH::
 	`remote.machine:/path/to/repo.git/` or
@@ -1430,7 +1416,7 @@ while, depending on how active your project is.
 
 When a repository is synchronized via `git push` and `git pull`
 objects packed in the source repository are usually stored
-unpacked in the destination, unless rsync transport is used.
+unpacked in the destination.
 While this allows you to use different packing strategies on
 both ends, it also means you may need to repack both
 repositories every once in a while.
