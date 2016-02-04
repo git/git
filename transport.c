@@ -481,9 +481,10 @@ static int set_git_option(struct git_transport_options *opts,
 	return 1;
 }
 
-static int connect_setup(struct transport *transport, int for_push, int verbose)
+static int connect_setup(struct transport *transport, int for_push)
 {
 	struct git_transport_data *data = transport->data;
+	int flags = transport->verbose > 0 ? CONNECT_VERBOSE : 0;
 
 	if (data->conn)
 		return 0;
@@ -491,7 +492,7 @@ static int connect_setup(struct transport *transport, int for_push, int verbose)
 	data->conn = git_connect(data->fd, transport->url,
 				 for_push ? data->options.receivepack :
 				 data->options.uploadpack,
-				 verbose ? CONNECT_VERBOSE : 0);
+				 flags);
 
 	return 0;
 }
@@ -501,7 +502,7 @@ static struct ref *get_refs_via_connect(struct transport *transport, int for_pus
 	struct git_transport_data *data = transport->data;
 	struct ref *refs;
 
-	connect_setup(transport, for_push, 0);
+	connect_setup(transport, for_push);
 	get_remote_heads(data->fd[0], NULL, 0, &refs,
 			 for_push ? REF_NORMAL : 0,
 			 &data->extra_have,
@@ -536,7 +537,7 @@ static int fetch_refs_via_pack(struct transport *transport,
 	args.update_shallow = data->options.update_shallow;
 
 	if (!data->got_remote_heads) {
-		connect_setup(transport, 0, 0);
+		connect_setup(transport, 0);
 		get_remote_heads(data->fd[0], NULL, 0, &refs_tmp, 0,
 				 NULL, &data->shallow);
 		data->got_remote_heads = 1;
@@ -812,7 +813,7 @@ static int git_transport_push(struct transport *transport, struct ref *remote_re
 
 	if (!data->got_remote_heads) {
 		struct ref *tmp_refs;
-		connect_setup(transport, 1, 0);
+		connect_setup(transport, 1);
 
 		get_remote_heads(data->fd[0], NULL, 0, &tmp_refs, REF_NORMAL,
 				 NULL, &data->shallow);
