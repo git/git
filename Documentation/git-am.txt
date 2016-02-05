@@ -35,6 +35,7 @@ OPTIONS
 --signoff::
 	Add a `Signed-off-by:` line to the commit message, using
 	the committer identity of yourself.
+	See the signoff option in linkgit:git-commit[1] for more information.
 
 -k::
 --keep::
