@@ -59,6 +59,9 @@ case $(uname -s) in
 	;;
 esac
 
+test_expect_success basename 'test-path-utils basename'
+test_expect_success dirname 'test-path-utils dirname'
+
 norm_path "" ""
 norm_path . ""
 norm_path ./ ""
