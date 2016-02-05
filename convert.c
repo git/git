@@ -149,6 +149,19 @@ const char *get_wt_convert_stats_ascii(const char *path)
 	return ret;
 }
 
+static int text_eol_is_crlf(void)
+{
+	if (auto_crlf == AUTO_CRLF_TRUE)
+		return 1;
+	else if (auto_crlf == AUTO_CRLF_INPUT)
+		return 0;
+	if (core_eol == EOL_CRLF)
+		return 1;
+	if (core_eol == EOL_UNSET && EOL_NATIVE == EOL_CRLF)
+		return 1;
+	return 0;
+}
+
 static enum eol output_eol(enum crlf_action crlf_action)
 {
 	switch (crlf_action) {
@@ -164,12 +177,7 @@ static enum eol output_eol(enum crlf_action crlf_action)
 		/* fall through */
 	case CRLF_TEXT:
 	case CRLF_AUTO:
-		if (auto_crlf == AUTO_CRLF_TRUE)
-			return EOL_CRLF;
-		else if (auto_crlf == AUTO_CRLF_INPUT)
-			return EOL_LF;
-		else if (core_eol == EOL_UNSET)
-			return EOL_NATIVE;
+		return text_eol_is_crlf() ? EOL_CRLF : EOL_LF;
 	}
 	return core_eol;
 }
