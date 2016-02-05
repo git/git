@@ -351,10 +351,14 @@ test_expect_success 'test --format long' '
 	test_cmp expected actual
 '
 
-test_expect_success 'setup a fake editor' '
-	write_script fakeeditor <<-\EOF
+test_expect_success 'setup fake editors' '
+	write_script fakeeditor <<-\EOF &&
 		sed -e "s/A U Thor/A fake Thor/" "$1" >"$1.new"
 		mv "$1.new" "$1"
+	EOF
+	write_script failingfakeeditor <<-\EOF
+		./fakeeditor "$@"
+		false
 	EOF
 '
 
@@ -372,7 +376,7 @@ test_expect_success '--edit with and without already replaced object' '
 test_expect_success '--edit and change nothing or command failed' '
 	git replace -d "$PARA3" &&
 	test_must_fail env GIT_EDITOR=true git replace --edit "$PARA3" &&
-	test_must_fail env GIT_EDITOR="./fakeeditor;false" git replace --edit "$PARA3" &&
+	test_must_fail env GIT_EDITOR="./failingfakeeditor" git replace --edit "$PARA3" &&
 	GIT_EDITOR=./fakeeditor git replace --edit "$PARA3" &&
 	git replace -l | grep "$PARA3" &&
 	git cat-file commit "$PARA3" | grep "A fake Thor"
