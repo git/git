@@ -708,4 +708,17 @@ test_expect_success 'fetching a one-level ref works' '
 	)
 '
 
+test_expect_success 'fetching with auto-gc does not lock up' '
+	write_script askyesno <<-\EOF &&
+	echo "$*" &&
+	false
+	EOF
+	git clone "file://$D" auto-gc &&
+	test_commit test2 &&
+	cd auto-gc &&
+	git config gc.autoPackLimit 1 &&
+	GIT_ASK_YESNO="$D/askyesno" git fetch >fetch.out 2>&1 &&
+	! grep "Should I try again" fetch.out
+'
+
 test_done

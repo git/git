@@ -1796,6 +1796,7 @@ int cmd_receive_pack(int argc, const char **argv, const char *prefix)
 				"gc", "--auto", "--quiet", NULL,
 			};
 			int opt = RUN_GIT_CMD | RUN_COMMAND_STDOUT_TO_STDERR;
+			close_all_packs();
 			run_command_v_opt(argv_gc_auto, opt);
 		}
 		if (auto_update_server_info)
