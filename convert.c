@@ -696,7 +696,7 @@ static int ident_to_worktree(const char *path, const char *src, size_t len,
 	return 1;
 }
 
-static enum crlf_action git_path_check_crlf(const char *path, struct git_attr_check *check)
+static enum crlf_action git_path_check_crlf(struct git_attr_check *check)
 {
 	const char *value = check->value;
 
@@ -713,7 +713,7 @@ static enum crlf_action git_path_check_crlf(const char *path, struct git_attr_ch
 	return CRLF_GUESS;
 }
 
-static enum eol git_path_check_eol(const char *path, struct git_attr_check *check)
+static enum eol git_path_check_eol(struct git_attr_check *check)
 {
 	const char *value = check->value;
 
@@ -726,8 +726,7 @@ static enum eol git_path_check_eol(const char *path, struct git_attr_check *chec
 	return EOL_UNSET;
 }
 
-static struct convert_driver *git_path_check_convert(const char *path,
-					     struct git_attr_check *check)
+static struct convert_driver *git_path_check_convert(struct git_attr_check *check)
 {
 	const char *value = check->value;
 	struct convert_driver *drv;
@@ -740,7 +739,7 @@ static struct convert_driver *git_path_check_convert(const char *path,
 	return NULL;
 }
 
-static int git_path_check_ident(const char *path, struct git_attr_check *check)
+static int git_path_check_ident(struct git_attr_check *check)
 {
 	const char *value = check->value;
 
@@ -783,12 +782,12 @@ static void convert_attrs(struct conv_attrs *ca, const char *path)
 	}
 
 	if (!git_check_attr(path, NUM_CONV_ATTRS, ccheck)) {
-		ca->crlf_action = git_path_check_crlf(path, ccheck + 4);
+		ca->crlf_action = git_path_check_crlf( ccheck + 4);
 		if (ca->crlf_action == CRLF_GUESS)
-			ca->crlf_action = git_path_check_crlf(path, ccheck + 0);
-		ca->ident = git_path_check_ident(path, ccheck + 1);
-		ca->drv = git_path_check_convert(path, ccheck + 2);
-		ca->eol_attr = git_path_check_eol(path, ccheck + 3);
+			ca->crlf_action = git_path_check_crlf(ccheck + 0);
+		ca->ident = git_path_check_ident(ccheck + 1);
+		ca->drv = git_path_check_convert(ccheck + 2);
+		ca->eol_attr = git_path_check_eol(ccheck + 3);
 	} else {
 		ca->drv = NULL;
 		ca->crlf_action = CRLF_GUESS;
