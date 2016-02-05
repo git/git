@@ -190,15 +190,14 @@ objects from the source repository into a pack in the cloned repository.
 
 --depth <depth>::
 	Create a 'shallow' clone with a history truncated to the
-	specified number of revisions.
+	specified number of commits. Implies `--single-branch` unless
+	`--no-single-branch` is given to fetch the histories near the
+	tips of all branches.
 
 --[no-]single-branch::
 	Clone only the history leading to the tip of a single branch,
 	either specified by the `--branch` option or the primary
-	branch remote's `HEAD` points at. When creating a shallow
-	clone with the `--depth` option, this is the default, unless
-	`--no-single-branch` is given to fetch the histories near the
-	tips of all branches.
+	branch remote's `HEAD` points at.
 	Further fetches into the resulting repository will only update the
 	remote-tracking branch for the branch this option was used for the
 	initial cloning.  If the HEAD at the remote did not point at any
