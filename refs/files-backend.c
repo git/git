@@ -933,6 +933,10 @@ static void clear_loose_ref_cache(struct ref_cache *refs)
 	}
 }
 
+/*
+ * Create a new submodule ref cache and add it to the internal
+ * set of caches.
+ */
 static struct ref_cache *create_ref_cache(const char *submodule)
 {
 	int len;
@@ -942,7 +946,22 @@ static struct ref_cache *create_ref_cache(const char *submodule)
 	len = strlen(submodule) + 1;
 	refs = xcalloc(1, sizeof(struct ref_cache) + len);
 	memcpy(refs->name, submodule, len);
+	refs->next = submodule_ref_caches;
+	submodule_ref_caches = refs;
 	return refs;
+}
+
+static struct ref_cache *lookup_ref_cache(const char *submodule)
+{
+	struct ref_cache *refs;
+
+	if (!submodule || !*submodule)
+		return &ref_cache;
+
+	for (refs = submodule_ref_caches; refs; refs = refs->next)
+		if (!strcmp(submodule, refs->name))
+			return refs;
+	return NULL;
 }
 
 /*
@@ -953,18 +972,9 @@ static struct ref_cache *create_ref_cache(const char *submodule)
  */
 static struct ref_cache *get_ref_cache(const char *submodule)
 {
-	struct ref_cache *refs;
-
-	if (!submodule || !*submodule)
-		return &ref_cache;
-
-	for (refs = submodule_ref_caches; refs; refs = refs->next)
-		if (!strcmp(submodule, refs->name))
-			return refs;
-
-	refs = create_ref_cache(submodule);
-	refs->next = submodule_ref_caches;
-	submodule_ref_caches = refs;
+	struct ref_cache *refs = lookup_ref_cache(submodule);
+	if (!refs)
+		refs = create_ref_cache(submodule);
 	return refs;
 }
 
@@ -1336,16 +1346,24 @@ static int resolve_gitlink_ref_recursive(struct ref_cache *refs,
 int resolve_gitlink_ref(const char *path, const char *refname, unsigned char *sha1)
 {
 	int len = strlen(path), retval;
-	char *submodule;
+	struct strbuf submodule = STRBUF_INIT;
 	struct ref_cache *refs;
 
 	while (len && path[len-1] == '/')
 		len--;
 	if (!len)
 		return -1;
-	submodule = xstrndup(path, len);
-	refs = get_ref_cache(submodule);
-	free(submodule);
+
+	strbuf_add(&submodule, path, len);
+	refs = lookup_ref_cache(submodule.buf);
+	if (!refs) {
+		if (!is_nonbare_repository_dir(&submodule)) {
+			strbuf_release(&submodule);
+			return -1;
+		}
+		refs = create_ref_cache(submodule.buf);
+	}
+	strbuf_release(&submodule);
 
 	retval = resolve_gitlink_ref_recursive(refs, refname, sha1, 0);
 	return retval;
