@@ -333,6 +333,14 @@ test_expect_success 'prune empty collapsed merges' '
 	test_cmp expect actual
 '
 
+test_expect_success 'prune empty works even without index/tree filters' '
+	git rev-list HEAD >expect &&
+	git commit --allow-empty -m empty &&
+	git filter-branch -f --prune-empty HEAD &&
+	git rev-list HEAD >actual &&
+	test_cmp expect actual
+'
+
 test_expect_success '--remap-to-ancestor with filename filters' '
 	git checkout master &&
 	git reset --hard A &&
