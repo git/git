@@ -30,7 +30,8 @@ test_expect_success \
 		echo "deep dir" >dir/a/b/c/d/e/file &&
 		mkdir bar &&
 		echo "zzz" >bar/zzz &&
-		write_script exec.sh </dev/null &&
+		echo "#!/bin/sh" >exec.sh &&
+		chmod +x exec.sh &&
 		svn_cmd import -m "import for git svn" . "$svnrepo" >/dev/null
 	) &&
 	rm -rf import &&
