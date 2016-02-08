@@ -56,7 +56,7 @@ static int test_function(struct test_data *data, char *(*func)(char *input),
 		if (!data[i].from)
 			to = func(NULL);
 		else {
-			strcpy(buffer, data[i].from);
+			xsnprintf(buffer, sizeof(buffer), "%s", data[i].from);
 			to = func(buffer);
 		}
 		if (!strcmp(to, data[i].to))
