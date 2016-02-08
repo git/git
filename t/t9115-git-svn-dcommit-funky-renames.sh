@@ -104,6 +104,21 @@ test_expect_success UTF8 'svn.pathnameencoding=cp932 new file on dcommit' '
 	git svn dcommit
 '
 
+# See the comment on the above test for setting of LC_ALL.
+test_expect_success 'svn.pathnameencoding=cp932 rename on dcommit' '
+	LC_ALL=$a_utf8_locale &&
+	export LC_ALL &&
+	inf=$(printf "\201\207") &&
+	git config svn.pathnameencoding cp932 &&
+	echo inf >"$inf" &&
+	git add "$inf" &&
+	git commit -m "inf" &&
+	git svn dcommit &&
+	git mv "$inf" inf &&
+	git commit -m "inf rename" &&
+	git svn dcommit
+'
+
 stop_httpd
 
 test_done
