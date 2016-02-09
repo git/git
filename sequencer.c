@@ -28,6 +28,14 @@ static GIT_PATH_FUNC(git_path_todo_file, "sequencer/todo")
 static GIT_PATH_FUNC(git_path_opts_file, "sequencer/opts")
 static GIT_PATH_FUNC(git_path_head_file, "sequencer/head")
 
+static GIT_PATH_FUNC(rebase_path, "rebase-merge")
+/*
+ * The file containing rebase commands, comments, and empty lines.
+ * This file is created by "git rebase -i" then edited by the user. As
+ * the lines are processed, they are removed from the front of this
+ * file and written to the tail of 'done'.
+ */
+static GIT_PATH_FUNC(rebase_path_todo, "rebase-merge/git-rebase-todo")
 /*
  * A script to set the GIT_AUTHOR_NAME, GIT_AUTHOR_EMAIL, and
  * GIT_AUTHOR_DATE that will be used for the commit that is currently
@@ -40,19 +48,22 @@ static GIT_PATH_FUNC(rebase_path_author_script, "rebase-merge/author-script")
  */
 static GIT_PATH_FUNC(rebase_path_gpg_sign_opt, "rebase-merge/gpg_sign_opt")
 
-/* We will introduce the 'interactive rebase' mode later */
 static inline int is_rebase_i(const struct replay_opts *opts)
 {
-	return 0;
+	return opts->action == REPLAY_INTERACTIVE_REBASE;
 }
 
 static const char *get_dir(const struct replay_opts *opts)
 {
+	if (is_rebase_i(opts))
+		return rebase_path();
 	return git_path_seq_dir();
 }
 
 static const char *get_todo_path(const struct replay_opts *opts)
 {
+	if (is_rebase_i(opts))
+		return rebase_path_todo();
 	return git_path_todo_file();
 }
 
@@ -168,7 +179,15 @@ int sequencer_remove_state(struct replay_opts *opts)
 
 static const char *action_name(const struct replay_opts *opts)
 {
-	return opts->action == REPLAY_REVERT ? N_("revert") : N_("cherry-pick");
+	switch (opts->action) {
+	case REPLAY_REVERT:
+		return N_("revert");
+	case REPLAY_PICK:
+		return N_("cherry-pick");
+	case REPLAY_INTERACTIVE_REBASE:
+		return N_("rebase -i");
+	}
+	die(_("Unknown action: %d"), opts->action);
 }
 
 struct commit_message {
@@ -395,7 +414,10 @@ static int do_recursive_merge(struct commit *base, struct commit *next,
 
 	if (active_cache_changed &&
 	    write_locked_index(&the_index, &index_lock, COMMIT_LOCK))
-		/* TRANSLATORS: %s will be "revert" or "cherry-pick" */
+		/*
+		 * TRANSLATORS: %s will be "revert", "cherry-pick" or
+		 * "rebase -i".
+		 */
 		return error(_("%s: Unable to write new index file"),
 			_(action_name(opts)));
 	rollback_lock_file(&index_lock);
@@ -1203,6 +1225,9 @@ static int save_todo(struct todo_list *todo_list, struct replay_opts *opts)
 	static struct lock_file todo_lock;
 	const char *todo_path = get_todo_path(opts);
 	int next = todo_list->current, offset, fd;
+
+	if (is_rebase_i(opts))
+		next++;
 
 	fd = hold_lock_file_for_update(&todo_lock, todo_path, 0);
 	if (fd < 0)
