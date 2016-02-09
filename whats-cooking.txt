@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Feb 2016, #02; Fri, 5)
+Subject: What's cooking in git.git (Feb 2016, #03; Tue, 9)
 X-master-at: ff4ea6004fb48146330d663d64a71e7774f059f9
-X-next-at: b2aa7f843ccc79397d54723df13034a8761f5a18
+X-next-at: ced85554d3d871f66dc4442631320a96a5d702f5
 
-What's cooking in git.git (Feb 2016, #02; Fri, 5)
+What's cooking in git.git (Feb 2016, #03; Tue, 9)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -20,181 +20,80 @@ repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* da/user-useconfigonly (2016-02-05) 2 commits
- - ident: add user.useConfigOnly boolean for when ident shouldn't be guessed
- - fmt_ident: refactor strictness checks
+* jk/rerere-xsnprintf (2016-02-08) 1 commit
+  (merged to 'next' on 2016-02-09 at ff9ade3)
+ + rerere: replace strcpy with xsnprintf
+ (this branch is used by jc/rerere-multi.)
 
- The "user.useConfigOnly" configuration variable can be used to
- force the user to always set user.email & user.name configuration
- variables, serving as a reminder for those who work on multiple
- projects and do not want to put these in their $HOME/.gitconfig.
+ Some calls to strcpy(3) triggers a false warning from static
+ analysers that are less intelligent than humans, and reducing the
+ number of these false hits helps us notice real issues.  A few
+ calls to strcpy(3) in "git rerere" that are already safe has been
+ rewritten to avoid false wanings.
 
---------------------------------------------------
-[Graduated to "master"]
-
-* dg/subtree-test (2016-01-19) 1 commit
-  (merged to 'next' on 2016-01-26 at 81f1356)
- + contrib/subtree: Make testing easier
+ Will merge to 'master'.
 
 
-* dt/unpack-compare-entry-optim (2016-01-22) 2 commits
-  (merged to 'next' on 2016-01-26 at 110e053)
- + unpack-trees: fix accidentally quadratic behavior
-  (merged to 'next' on 2016-01-20 at 180dccf)
- + do_compare_entry: use already-computed path
+* jk/test-path-utils-xsnprintf (2016-02-08) 1 commit
+  (merged to 'next' on 2016-02-09 at 931f70b)
+ + test-path-utils: use xsnprintf in favor of strcpy
 
- "git checkout $branch" (and other operations that share the same
- underlying machinery) has been optimized.
+ Some calls to strcpy(3) triggers a false warning from static
+ analysers that are less intelligent than humans, and reducing the
+ number of these false hits helps us notice real issues.  A few
+ calls to strcpy(3) in test-path-utils that are already safe has
+ been rewritten to avoid false wanings.
 
-
-* dw/subtree-split-do-not-drop-merge (2016-01-20) 1 commit
-  (merged to 'next' on 2016-01-26 at 3cfefef)
- + contrib/subtree: fix "subtree split" skipped-merge bug
-
- The "split" subcommand of "git subtree" (in contrib/) incorrectly
- skipped merges when it shouldn't, which was corrected.
+ Will merge to 'master'.
 
 
-* jc/peace-with-crlf (2016-01-15) 12 commits
-  (merged to 'next' on 2016-01-26 at 08724bc)
- + test-sha1-array: read command stream with strbuf_getline()
- + grep: read -f file with strbuf_getline()
- + send-pack: read list of refs with strbuf_getline()
- + column: read lines with strbuf_getline()
- + cat-file: read batch stream with strbuf_getline()
- + transport-helper: read helper response with strbuf_getline()
- + clone/sha1_file: read info/alternates with strbuf_getline()
- + remote.c: read $GIT_DIR/remotes/* with strbuf_getline()
- + ident.c: read /etc/mailname with strbuf_getline()
- + rev-parse: read parseopt spec with strbuf_getline()
- + revision: read --stdin with strbuf_getline()
- + hash-object: read --stdin-paths with strbuf_getline()
+* mm/clean-doc-fix (2016-02-09) 1 commit
+  (merged to 'next' on 2016-02-09 at ced8555)
+ + Documentation/git-clean.txt: don't mention deletion of .git/modules/*
 
- Many commands that read files that are expected to contain text
- that is generated (or can be edited) by the end user to control
- their behaviour (e.g. "git grep -f <filename>") have been updated
- to be more tolerant to lines that are terminated with CRLF (they
- used to treat such a line to contain payload that ends with CR,
- which is usually not what the users expect).
+ The documentation for "git clean" has been corrected; it mentioned
+ that .git/modules/* are removed by giving two "-f", which has never
+ been the case.
+
+ Will merge to 'master'.
 
 
-* jk/completion-rebase (2016-01-25) 1 commit
-  (merged to 'next' on 2016-01-26 at def3e0b)
- + completion: add missing git-rebase options
+* mg/mingw-test-fix (2016-02-08) 1 commit
+ - t9100: fix breakage when SHELL_PATH is not /bin/sh
+ (this branch uses js/mingw-tests.)
+
+ An earlier adjustment of test mistakenly used write_script
+ to prepare a file whose exact content matters for the test;
+ reverting that part fixes the breakage for those who use
+ SHELL_PATH that is different from /bin/sh.
 
 
-* jk/notes-merge-from-anywhere (2016-01-17) 1 commit
-  (merged to 'next' on 2016-01-26 at c60ac66)
- + notes: allow merging from arbitrary references
+* nd/icase (2016-02-09) 11 commits
+ - diffcore-pickaxe: support case insensitive match on non-ascii
+ - diffcore-pickaxe: "share" regex error handling code
+ - grep/pcre: support utf-8
+ - gettext: add is_utf8_locale()
+ - grep/pcre: prepare locale-dependent tables for icase matching
+ - grep/icase: avoid kwsset when -F is specified
+ - grep/icase: avoid kwsset on literal non-ascii strings
+ - test-regex: expose full regcomp() to the command line
+ - test-regex: isolate the bug test code
+ - grep: break down an "if" stmt in preparation for next changes
+ - grep: allow -F -i combination
 
- "git notes merge" used to limit the source of the merged notes tree
- to somewhere under refs/notes/ hierarchy, which was too limiting
- when inventing a workflow to exchange notes with remote
- repositories using remote-tracking notes trees (located in e.g.
- refs/remote-notes/ or somesuch).
-
-
-* jk/ref-cache-non-repository-optim (2016-01-25) 2 commits
-  (merged to 'next' on 2016-01-26 at 09057bc)
- + resolve_gitlink_ref: ignore non-repository paths
- + clean: make is_git_repository a public function
-
- The underlying machinery used by "ls-files -o" and other commands
- have been taught not to create empty submodule ref cache for a
- directory that is not a submodule.  This removes a ton of wasted
- CPU cycles.
+ "git grep -i" has been taught to fold case in non-ascii locales.
 
 
-* js/dirname-basename (2016-01-25) 6 commits
-  (merged to 'next' on 2016-01-26 at b16b2b8)
- + mingw: avoid linking to the C library's isalpha()
-  (merged to 'next' on 2016-01-20 at d198512)
- + t0060: loosen overly strict expectations
-  (merged to 'next' on 2016-01-12 at c3c970a)
- + t0060: verify that basename() and dirname() work as expected
- + compat/basename.c: provide a dirname() compatibility function
- + compat/basename: make basename() conform to POSIX
- + Refactor skipping DOS drive prefixes
+* tb/conversion (2016-02-08) 7 commits
+ - convert.c: simplify text_stat
+ - convert.c: refactor crlf_action
+ - convert: auto_crlf=false and no attributes set: same as binary
+ - convert.c: use text_eol_is_crlf()
+ - convert.c: remove input_crlf_action()
+ - convert.c: remove unused parameter 'path'
+ - t0027: add tests for get_stream_filter()
 
- dirname() emulation has been added, as Msys2 lacks it.
-
-
-* kf/http-proxy-auth-methods (2016-01-26) 2 commits
-  (merged to 'next' on 2016-02-01 at b0956b2)
- + http: use credential API to handle proxy authentication
- + http: allow selection of proxy authentication method
-
- New http.proxyAuthMethod configuration variable can be used to
- specify what authentication method to use, as a way to work around
- proxies that do not give error response expected by libcurl when
- CURLAUTH_ANY is used.  Also, the codepath for proxy authentication
- has been taught to use credential API to store the authentication
- material in user's keyrings.
-
-
-* ls/travis-prove-order (2016-01-26) 2 commits
-  (merged to 'next' on 2016-01-26 at d8e2a4a)
- + travis-ci: explicity use container-based infrastructure
- + travis-ci: run previously failed tests first, then slowest to fastest
-
- Automated tests in Travis CI environment has been optimized by
- persisting runtime statistics of previous "prove" run, executing
- tests that take longer before other ones; this reduces the total
- wallclock time.
-
-
-* lv/add-doc-working-tree (2016-01-21) 1 commit
-  (merged to 'next' on 2016-01-26 at c5b1ab1)
- + git-add doc: do not say working directory when you mean working tree
-
-
-* mk/asciidoctor-bq-workaround (2016-01-20) 1 commit
-  (merged to 'next' on 2016-01-26 at 19a742a)
- + Documentation: remove unnecessary backslashes
-
-
-* nd/diff-with-path-params (2016-01-21) 2 commits
-  (merged to 'next' on 2016-01-26 at b29a363)
- + diff: make -O and --output work in subdirectory
- + diff-no-index: do not take a redundant prefix argument
-
- A few options of "git diff" did not work well when the command was
- run from a subdirectory.
-
-
-* pw/completion-show-branch (2016-01-25) 1 commit
-  (merged to 'next' on 2016-01-26 at d0d7735)
- + completion: complete show-branch "--date-order"
-
-
-* pw/completion-stash (2016-01-26) 1 commit
-  (merged to 'next' on 2016-01-26 at e41153c)
- + completion: update completion arguments for stash
-
-
-* tb/complete-word-diff-regex (2016-01-20) 1 commit
-  (merged to 'next' on 2016-01-26 at a5beecc)
- + completion: complete "diff --word-diff-regex="
-
-
-* tb/ls-files-eol (2016-01-18) 1 commit
-  (merged to 'next' on 2016-01-26 at bc9246f)
- + ls-files: add eol diagnostics
-
- "git ls-files" learned a new "--eol" option to help diagnose
- end-of-line problems.
-
-
-* tg/ls-remote-symref (2016-01-19) 5 commits
-  (merged to 'next' on 2016-01-26 at e466ee2)
- + ls-remote: add support for showing symrefs
- + ls-remote: use parse-options api
- + ls-remote: fix synopsis
- + ls-remote: document --refs option
- + ls-remote: document --quiet option
-
- "ls-remote" learned an option to show which branch the remote
- repository advertises as its primary by pointing its HEAD at.
+ Simplication of eol conversion codepath.
 
 --------------------------------------------------
 [Stalled]
@@ -257,6 +156,19 @@ repositories listed at
 
 --------------------------------------------------
 [Cooking]
+
+* da/user-useconfigonly (2016-02-08) 2 commits
+  (merged to 'next' on 2016-02-09 at 8b303ce)
+ + ident: add user.useConfigOnly boolean for when ident shouldn't be guessed
+ + fmt_ident: refactor strictness checks
+
+ The "user.useConfigOnly" configuration variable can be used to
+ force the user to always set user.email & user.name configuration
+ variables, serving as a reminder for those who work on multiple
+ projects and do not want to put these in their $HOME/.gitconfig.
+
+ Will merge to 'master'.
+
 
 * aw/push-force-with-lease-reporting (2016-02-01) 1 commit
   (merged to 'next' on 2016-02-03 at facd28f)
@@ -336,8 +248,8 @@ repositories listed at
 * dv/http-try-negotiate-at-least-once (2016-02-02) 1 commit
  - remote-curl: don't fall back to Basic auth if we haven't tried Negotiate
 
- Needs at least an update to the log message.
- ($gmane/285314)
+ Will be replaced with a solution with a different approach.
+ ($gmane/285633)
 
 
 * js/test-lib-windows-emulated-yes (2016-02-02) 1 commit
@@ -363,35 +275,33 @@ repositories listed at
  - submodule-config: keep update strategy around
  (this branch is used by dt/refs-backend-lmdb and sb/submodule-init.)
 
- Builds on top of the "fetch --recurse-submodules" work to introduce
- parallel downloading into multiple submodules for "submodule update".
-
- Needs review.
- ($gmane/285285)
+ A reroll exists.  Not picked up yet as it takes a while to flip
+ three overlapping topics.
 
 
-* dt/refs-backend-lmdb (2016-02-02) 21 commits
- . refs: tests for lmdb backend
- . refs: add LMDB refs backend
- . svn: learn ref-storage argument
- . refs: allow ref backend to be set for clone
- . refs: check submodules ref storage config
- . init: allow alternate backends to be set for new repos
- . refs: always handle non-normal refs in files backend
- . refs: resolve symbolic refs first
- . refs: allow log-only updates
- . refs: move duplicate check to common code
- . refs: make lock generic
- . refs: add method to rename refs
- . refs: add methods to init refs db
- . refs: add method for delete_refs
- . refs: add method for initial ref transaction commit
- . refs: add methods for reflog
- . refs: add do_for_each_per_worktree_ref
- . refs: add methods for the ref iterators
- . refs: add methods for misc ref operations
- . refs: add a backend method structure with transaction functions
- . Merge branch 'sb/submodule-parallel-update' into dt/refs-backend-lmdb
+* dt/refs-backend-lmdb (2016-02-08) 22 commits
+ - refs: tests for lmdb backend
+ - refs: add LMDB refs storage backend
+ - refs: add register_ref_storage_backends()
+ - svn: learn ref-storage argument
+ - clone: allow ref storage backend to be set for clone
+ - refs: check submodules ref storage config
+ - init: allow alternate ref strorage to be set for new repos
+ - refs: always handle non-normal refs in files backend
+ - refs: resolve symbolic refs first
+ - refs: allow log-only updates
+ - refs: move duplicate check to common code
+ - refs: make lock generic
+ - refs: add method to rename refs
+ - refs: add methods to init refs db
+ - refs: add method for delete_refs
+ - refs: add method for initial ref transaction commit
+ - refs: add methods for reflog
+ - refs: add do_for_each_per_worktree_ref
+ - refs: add methods for the ref iterators
+ - refs: add methods for misc ref operations
+ - refs: add a backend method structure with transaction functions
+ - Merge branch 'sb/submodule-parallel-update' into dt/refs-backend-lmdb
  (this branch uses sb/submodule-parallel-update; is tangled with sb/submodule-init.)
 
  Building on top of a few refs-backend preparatory series, LMDB
@@ -403,7 +313,9 @@ repositories listed at
  list were done on top of some version of 'pu'.
 
 
-* js/mingw-tests (2016-01-28) 20 commits
+* js/mingw-tests (2016-02-08) 21 commits
+  (merged to 'next' on 2016-02-08 at 417e555)
+ + gitignore: ignore generated test-fake-ssh executable
   (merged to 'next' on 2016-02-03 at ace7624)
  + mingw: do not bother to test funny file names
  + mingw: skip a test in t9130 that cannot pass on Windows
@@ -425,6 +337,7 @@ repositories listed at
  + Git.pm: stop assuming that absolute paths start with a slash
  + mingw: do not trust MSYS2's MinGW gettext.sh
  + mingw: let's use gettext with MSYS2
+ (this branch is used by mg/mingw-test-fix.)
 
  Test scripts have been updated to remove assumptions that are not
  portable between Git for POSIX and Git for Windows, or to skip ones
@@ -446,15 +359,16 @@ repositories listed at
 
 
 * nd/clear-gitenv-upon-use-of-alias (2016-02-02) 4 commits
- - restore_env(): free the saved environment variable once we are done
- - git: simplify environment save/restore logic
- - git: protect against unbalanced calls to {save,restore}_env()
- - git: remove an early return from save_env_before_alias()
+  (merged to 'next' on 2016-02-09 at 2c441b4)
+ + restore_env(): free the saved environment variable once we are done
+ + git: simplify environment save/restore logic
+ + git: protect against unbalanced calls to {save,restore}_env()
+ + git: remove an early return from save_env_before_alias()
 
  The automatic typo correction applied to an alias was broken
  with a recent change already in 'master'.
 
- Needs review.
+ Will merge to 'master'.
 
 
 * nd/do-not-move-worktree-manually (2016-01-22) 2 commits
@@ -565,7 +479,7 @@ repositories listed at
  ($gmane/275680).
 
 
-* jc/rerere-multi (2016-01-21) 7 commits
+* jc/rerere-multi (2016-02-08) 7 commits
  - rerere: do use multiple variants
  - t4200: rerere a merge with two identical conflicts
  - rerere: allow multiple variants to exist
@@ -573,6 +487,7 @@ repositories listed at
  - rerere: handle leftover rr-cache/$ID directory and postimage files
  - rerere: scan $GIT_DIR/rr-cache/$ID when instantiating a rerere_id
  - rerere: split conflict ID further
+ (this branch uses jk/rerere-xsnprintf.)
 
  "git rerere" can encounter two or more files with the same conflict
  signature that have to be resolved in different ways, but there was
@@ -589,19 +504,3 @@ repositories listed at
  git-gui still uses the deprecated syntax, which needs to be fixed
  before this final step can proceed.
  ($gmane/282594)
-
---------------------------------------------------
-[Discarded]
-
-* bb/merge-marker-crlf (2015-11-24) 1 commit
- . merge-file: consider core.crlf when writing merge markers
-
- Resurrected as 'js/xmerge-maker-eol'.
-
-
-* sg/sh-require-clean-orphan (2015-11-24) 2 commits
- . sh-setup: make require_clean_work_tree() work on orphan branches
- . Add tests for git-sh-setup's require_clean_work_tree()
-
- Allow users of git-sh-setup to handle orphan branch state.
- ($gmane/284488)
