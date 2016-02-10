@@ -32,11 +32,9 @@ The working tree's administrative files in the repository (see
 `git worktree prune` in the main or any linked working tree to
 clean up any stale administrative files.
 
-If you move a linked working tree to another file system, or
-within a file system that does not support hard links, you need to run
-at least one git command inside the linked working tree
-(e.g. `git status`) in order to update its administrative files in the
-repository so that they do not get automatically pruned.
+If you move a linked working tree, you need to manually update the
+administrative files so that they do not get pruned automatically. See
+section "DETAILS" for more information.
 
 If a linked working tree is stored on a portable device or network share
 which is not always mounted, you can prevent its administrative files from
@@ -136,6 +134,13 @@ See linkgit:gitrepository-layout[5] for more information. The rule of
 thumb is do not make any assumption about whether a path belongs to
 $GIT_DIR or $GIT_COMMON_DIR when you need to directly access something
 inside $GIT_DIR. Use `git rev-parse --git-path` to get the final path.
+
+If you move a linked working tree, you need to update the 'gitdir' file
+in the entry's directory. For example, if a linked working tree is moved
+to `/newpath/test-next` and its `.git` file points to
+`/path/main/.git/worktrees/test-next`, then update
+`/path/main/.git/worktrees/test-next/gitdir` to reference `/newpath/test-next`
+instead.
 
 To prevent a $GIT_DIR/worktrees entry from being pruned (which
 can be useful in some situations, such as when the
