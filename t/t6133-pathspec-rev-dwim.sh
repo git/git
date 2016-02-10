@@ -35,4 +35,14 @@ test_expect_success '@{foo} with metacharacters dwims to rev' '
 	test_cmp expect actual
 '
 
+test_expect_success ':/*.t from a subdir dwims to a pathspec' '
+	mkdir subdir &&
+	(
+		cd subdir &&
+		git log -- ":/*.t" >expect &&
+		git log    ":/*.t" >actual &&
+		test_cmp expect actual
+	)
+'
+
 test_done
