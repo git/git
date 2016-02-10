@@ -31,7 +31,7 @@ enum crlf_action {
 
 struct text_stat {
 	/* NUL, CR, LF and CRLF counts */
-	unsigned nul, cr, lf, crlf;
+	unsigned nul, lonecr, lonelf, crlf;
 
 	/* These are just approximations! */
 	unsigned printable, nonprintable;
@@ -46,13 +46,15 @@ static void gather_stats(const char *buf, unsigned long size, struct text_stat *
 	for (i = 0; i < size; i++) {
 		unsigned char c = buf[i];
 		if (c == '\r') {
-			stats->cr++;
-			if (i+1 < size && buf[i+1] == '\n')
+			if (i+1 < size && buf[i+1] == '\n') {
 				stats->crlf++;
+				i++;
+			} else
+				stats->lonecr++;
 			continue;
 		}
 		if (c == '\n') {
-			stats->lf++;
+			stats->lonelf++;
 			continue;
 		}
 		if (c == 127)
@@ -86,7 +88,7 @@ static void gather_stats(const char *buf, unsigned long size, struct text_stat *
  */
 static int convert_is_binary(unsigned long size, const struct text_stat *stats)
 {
-	if (stats->cr != stats->crlf)
+	if (stats->lonecr)
 		return 1;
 	if (stats->nul)
 		return 1;
@@ -98,19 +100,18 @@ static int convert_is_binary(unsigned long size, const struct text_stat *stats)
 static unsigned int gather_convert_stats(const char *data, unsigned long size)
 {
 	struct text_stat stats;
+	int ret = 0;
 	if (!data || !size)
 		return 0;
 	gather_stats(data, size, &stats);
 	if (convert_is_binary(size, &stats))
-		return CONVERT_STAT_BITS_BIN;
-	else if (stats.crlf && stats.crlf == stats.lf)
-		return CONVERT_STAT_BITS_TXT_CRLF;
-	else if (stats.crlf && stats.lf)
-		return CONVERT_STAT_BITS_TXT_CRLF | CONVERT_STAT_BITS_TXT_LF;
-	else if (stats.lf)
-		return CONVERT_STAT_BITS_TXT_LF;
-	else
-		return 0;
+		ret |= CONVERT_STAT_BITS_BIN;
+	if (stats.crlf)
+		ret |= CONVERT_STAT_BITS_TXT_CRLF;
+	if (stats.lonelf)
+		ret |=  CONVERT_STAT_BITS_TXT_LF;
+
+	return ret;
 }
 
 static const char *gather_convert_stats_ascii(const char *data, unsigned long size)
@@ -207,7 +208,7 @@ static void check_safe_crlf(const char *path, enum crlf_action crlf_action,
 		 * CRLFs would be added by checkout:
 		 * check if we have "naked" LFs
 		 */
-		if (stats->lf != stats->crlf) {
+		if (stats->lonelf) {
 			if (checksafe == SAFE_CRLF_WARN)
 				warning("LF will be replaced by CRLF in %s.\nThe file will have its original line endings in your working directory.", path);
 			else /* i.e. SAFE_CRLF_FAIL */
@@ -266,8 +267,8 @@ static int crlf_to_git(const char *path, const char *src, size_t len,
 
 	check_safe_crlf(path, crlf_action, &stats, checksafe);
 
-	/* Optimization: No CR? Nothing to convert, regardless. */
-	if (!stats.cr)
+	/* Optimization: No CRLF? Nothing to convert, regardless. */
+	if (!stats.crlf)
 		return 0;
 
 	/*
@@ -314,19 +315,15 @@ static int crlf_to_worktree(const char *path, const char *src, size_t len,
 
 	gather_stats(src, len, &stats);
 
-	/* No LF? Nothing to convert, regardless. */
-	if (!stats.lf)
-		return 0;
-
-	/* Was it already in CRLF format? */
-	if (stats.lf == stats.crlf)
+	/* No "naked" LF? Nothing to convert, regardless. */
+	if (!stats.lonelf)
 		return 0;
 
 	if (crlf_action == CRLF_AUTO || crlf_action == CRLF_AUTO_INPUT || crlf_action == CRLF_AUTO_CRLF) {
 		if (crlf_action == CRLF_AUTO_INPUT || crlf_action == CRLF_AUTO_CRLF) {
 			/* If we have any CR or CRLF line endings, we do not touch it */
 			/* This is the new safer autocrlf-handling */
-			if (stats.cr > 0 || stats.crlf > 0)
+			if (stats.lonecr || stats.crlf )
 				return 0;
 		}
 
@@ -338,7 +335,7 @@ static int crlf_to_worktree(const char *path, const char *src, size_t len,
 	if (src == buf->buf)
 		to_free = strbuf_detach(buf, NULL);
 
-	strbuf_grow(buf, len + stats.lf - stats.crlf);
+	strbuf_grow(buf, len + stats.lonelf);
 	for (;;) {
 		const char *nl = memchr(src, '\n', len);
 		if (!nl)
