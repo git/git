@@ -19,12 +19,14 @@
 #define CONVERT_STAT_BITS_BIN       0x4
 
 enum crlf_action {
-	CRLF_GUESS = -1,
-	CRLF_BINARY = 0,
+	CRLF_UNDEFINED,
+	CRLF_BINARY,
 	CRLF_TEXT,
-	CRLF_INPUT,
-	CRLF_CRLF,
-	CRLF_AUTO
+	CRLF_TEXT_INPUT,
+	CRLF_TEXT_CRLF,
+	CRLF_AUTO,
+	CRLF_AUTO_INPUT,
+	CRLF_AUTO_CRLF
 };
 
 struct text_stat {
@@ -167,18 +169,19 @@ static enum eol output_eol(enum crlf_action crlf_action)
 	switch (crlf_action) {
 	case CRLF_BINARY:
 		return EOL_UNSET;
-	case CRLF_CRLF:
+	case CRLF_TEXT_CRLF:
 		return EOL_CRLF;
-	case CRLF_INPUT:
+	case CRLF_TEXT_INPUT:
 		return EOL_LF;
-	case CRLF_GUESS:
-		if (!auto_crlf)
-			return EOL_UNSET;
-		/* fall through */
+	case CRLF_UNDEFINED:
+	case CRLF_AUTO_CRLF:
+	case CRLF_AUTO_INPUT:
 	case CRLF_TEXT:
 	case CRLF_AUTO:
+		/* fall through */
 		return text_eol_is_crlf() ? EOL_CRLF : EOL_LF;
 	}
+	warning("Illegal crlf_action %d\n", (int)crlf_action);
 	return core_eol;
 }
 
@@ -235,7 +238,6 @@ static int crlf_to_git(const char *path, const char *src, size_t len,
 	char *dst;
 
 	if (crlf_action == CRLF_BINARY ||
-	    (crlf_action == CRLF_GUESS && auto_crlf == AUTO_CRLF_FALSE) ||
 	    (src && !len))
 		return 0;
 
@@ -248,11 +250,11 @@ static int crlf_to_git(const char *path, const char *src, size_t len,
 
 	gather_stats(src, len, &stats);
 
-	if (crlf_action == CRLF_AUTO || crlf_action == CRLF_GUESS) {
+	if (crlf_action == CRLF_AUTO || crlf_action == CRLF_AUTO_INPUT || crlf_action == CRLF_AUTO_CRLF) {
 		if (convert_is_binary(len, &stats))
 			return 0;
 
-		if (crlf_action == CRLF_GUESS) {
+		if (crlf_action == CRLF_AUTO_INPUT || crlf_action == CRLF_AUTO_CRLF) {
 			/*
 			 * If the file in the index has any CR in it, do not convert.
 			 * This is the new safer autocrlf handling.
@@ -279,7 +281,7 @@ static int crlf_to_git(const char *path, const char *src, size_t len,
 	if (strbuf_avail(buf) + buf->len < len)
 		strbuf_grow(buf, len - buf->len);
 	dst = buf->buf;
-	if (crlf_action == CRLF_AUTO || crlf_action == CRLF_GUESS) {
+	if (crlf_action == CRLF_AUTO || crlf_action == CRLF_AUTO_INPUT || crlf_action == CRLF_AUTO_CRLF) {
 		/*
 		 * If we guessed, we already know we rejected a file with
 		 * lone CR, and we can strip a CR without looking at what
@@ -320,8 +322,8 @@ static int crlf_to_worktree(const char *path, const char *src, size_t len,
 	if (stats.lf == stats.crlf)
 		return 0;
 
-	if (crlf_action == CRLF_AUTO || crlf_action == CRLF_GUESS) {
-		if (crlf_action == CRLF_GUESS) {
+	if (crlf_action == CRLF_AUTO || crlf_action == CRLF_AUTO_INPUT || crlf_action == CRLF_AUTO_CRLF) {
+		if (crlf_action == CRLF_AUTO_INPUT || crlf_action == CRLF_AUTO_CRLF) {
 			/* If we have any CR or CRLF line endings, we do not touch it */
 			/* This is the new safer autocrlf-handling */
 			if (stats.cr > 0 || stats.crlf > 0)
@@ -709,16 +711,16 @@ static enum crlf_action git_path_check_crlf(struct git_attr_check *check)
 	const char *value = check->value;
 
 	if (ATTR_TRUE(value))
-		return CRLF_TEXT;
+		return text_eol_is_crlf() ? CRLF_TEXT_CRLF : CRLF_TEXT_INPUT;
 	else if (ATTR_FALSE(value))
 		return CRLF_BINARY;
 	else if (ATTR_UNSET(value))
 		;
 	else if (!strcmp(value, "input"))
-		return CRLF_INPUT;
+		return CRLF_TEXT_INPUT;
 	else if (!strcmp(value, "auto"))
 		return CRLF_AUTO;
-	return CRLF_GUESS;
+	return CRLF_UNDEFINED;
 }
 
 static enum eol git_path_check_eol(struct git_attr_check *check)
@@ -781,7 +783,7 @@ static void convert_attrs(struct conv_attrs *ca, const char *path)
 	if (!git_check_attr(path, NUM_CONV_ATTRS, ccheck)) {
 		enum eol eol_attr;
 		ca->crlf_action = git_path_check_crlf(ccheck + 4);
-		if (ca->crlf_action == CRLF_GUESS)
+		if (ca->crlf_action == CRLF_UNDEFINED)
 			ca->crlf_action = git_path_check_crlf(ccheck + 0);
 		ca->attr_action = ca->crlf_action;
 		ca->ident = git_path_check_ident(ccheck + 1);
@@ -790,14 +792,22 @@ static void convert_attrs(struct conv_attrs *ca, const char *path)
 			return;
 		eol_attr = git_path_check_eol(ccheck + 3);
 		if (eol_attr == EOL_LF)
-			ca->crlf_action = CRLF_INPUT;
+			ca->crlf_action = CRLF_TEXT_INPUT;
 		else if (eol_attr == EOL_CRLF)
-			ca->crlf_action = CRLF_CRLF;
+			ca->crlf_action = CRLF_TEXT_CRLF;
 	} else {
 		ca->drv = NULL;
-		ca->crlf_action = CRLF_GUESS;
+		ca->crlf_action = CRLF_UNDEFINED;
 		ca->ident = 0;
 	}
+	if (ca->crlf_action == CRLF_TEXT)
+		ca->crlf_action = text_eol_is_crlf() ? CRLF_TEXT_CRLF : CRLF_TEXT_INPUT;
+	if (ca->crlf_action == CRLF_UNDEFINED && auto_crlf == AUTO_CRLF_FALSE)
+		ca->crlf_action = CRLF_BINARY;
+	if (ca->crlf_action == CRLF_UNDEFINED && auto_crlf == AUTO_CRLF_TRUE)
+		ca->crlf_action = CRLF_AUTO_CRLF;
+	if (ca->crlf_action == CRLF_UNDEFINED && auto_crlf == AUTO_CRLF_INPUT)
+		ca->crlf_action = CRLF_AUTO_INPUT;
 }
 
 int would_convert_to_git_filter_fd(const char *path)
@@ -825,18 +835,22 @@ const char *get_convert_attr_ascii(const char *path)
 
 	convert_attrs(&ca, path);
 	switch (ca.attr_action) {
-	case CRLF_GUESS:
+	case CRLF_UNDEFINED:
 		return "";
 	case CRLF_BINARY:
 		return "-text";
 	case CRLF_TEXT:
 		return "text";
-	case CRLF_INPUT:
+	case CRLF_TEXT_INPUT:
 		return "text eol=lf";
-	case CRLF_CRLF:
-		return "text=auto eol=crlf";
+	case CRLF_TEXT_CRLF:
+		return "text eol=crlf";
 	case CRLF_AUTO:
 		return "text=auto";
+	case CRLF_AUTO_CRLF:
+		return "text=auto eol=crlf"; /* This is not supported yet */
+	case CRLF_AUTO_INPUT:
+		return "text=auto eol=lf"; /* This is not supported yet */
 	}
 	return "";
 }
@@ -1382,12 +1396,13 @@ struct stream_filter *get_stream_filter(const char *path, const unsigned char *s
 
 	crlf_action = ca.crlf_action;
 
-	if ((crlf_action == CRLF_BINARY) || (crlf_action == CRLF_INPUT) ||
-	    (crlf_action == CRLF_GUESS && auto_crlf == AUTO_CRLF_FALSE))
+	if ((crlf_action == CRLF_BINARY) ||
+			crlf_action == CRLF_AUTO_INPUT ||
+			(crlf_action == CRLF_TEXT_INPUT))
 		filter = cascade_filter(filter, &null_filter_singleton);
 
 	else if (output_eol(crlf_action) == EOL_CRLF &&
-		 !(crlf_action == CRLF_AUTO || crlf_action == CRLF_GUESS))
+		 !(crlf_action == CRLF_AUTO || crlf_action == CRLF_AUTO_CRLF))
 		filter = cascade_filter(filter, lf_to_crlf_filter());
 
 	return filter;
