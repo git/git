@@ -12079,7 +12079,7 @@ msgid ""
 "option."
 msgstr ""
 "oder Sie sich unsicher sind, was das bedeutet, wählen Sie einen anderen "
-"Namenmit der Option '--name'."
+"Namen mit der Option '--name'."
 
 #: git-submodule.sh:347
 #, sh-format
