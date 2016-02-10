@@ -450,6 +450,13 @@ sub write_cooking {
 
 			print $fh $lead, $d->{'desc'}, "\n";
 			if ($d->{'text'}) {
+				# Final clean-up.  No leading or trailing
+				# blank lines, no multi-line gaps.
+				for ($d->{'text'}) {
+					s/^\n+//s;
+					s/\n{3,}/\n\n/s;
+					s/\n+$//s;
+				}
 				print $fh "\n", $d->{'text'}, "\n";
 			}
 			$lead = "\n\n";
@@ -509,6 +516,8 @@ sub update_issue {
 	    blurb_text($mon, $year, $issue, $dow, $date,
 		       $master_at, $next_at, $btext);
 
+	# If starting a new issue, move what used to be in
+	# new topics to cooking topics.
 	if (!$incremental) {
 		my $sd = $cooking->{'section_data'};
 		my $sl = $cooking->{'section_list'};
@@ -540,6 +549,11 @@ sub tweak_willdo {
 	my ($td) = @_;
 	my $desc = $td->{'desc'};
 	my $text = $td->{'text'};
+
+	# If updated description (i.e. the list of patches with
+	# merge trail to 'next') has 'merged to next', then
+	# tweak the topic to be slated to 'master'.
+	# NEEDSWORK: does this work correctly for a half-merged topic?
 	$desc =~ s/\n<<\n.*//s;
 	if ($desc =~ /^  \(merged to 'next'/m) {
 		$text =~ s/^ Will merge to 'next'\.$/ Will merge to 'master'./m;
@@ -547,11 +561,27 @@ sub tweak_willdo {
 	$td->{'text'} = $text;
 }
 
+sub tweak_graduated {
+	my ($td) = @_;
+
+	# Remove the "Will merge" marker from topics that have graduated.
+	for ($td->{'text'}) {
+		s/\n Will merge to 'master'\.(\n|$)//s;
+	}
+}
+
 sub merge_cooking {
 	my ($cooking, $current) = @_;
+
+	# A hash to find <desc, text> with a branch name or $blurb
 	my $td = $cooking->{'topic_description'};
+
+	# A hash to find a list of $td element given a section name
 	my $sd = $cooking->{'section_data'};
+
+	# A list of section names
 	my $sl = $cooking->{'section_list'};
+
 	my (@new_topic, @gone_topic);
 
 	# Make sure "New Topics" and "Graduated" exists
@@ -615,6 +645,7 @@ sub merge_cooking {
 		}
 		for (@gone_topic) {
 			push @{$sd->{$graduated}}, $_;
+			tweak_graduated($td->{$_});
 		}
 	}
 }
