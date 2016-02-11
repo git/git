@@ -62,7 +62,6 @@ static void process_gitlink(struct rev_info *revs,
 static void process_tree(struct rev_info *revs,
 			 struct tree *tree,
 			 show_object_fn show,
-			 struct name_path *path,
 			 struct strbuf *base,
 			 const char *name,
 			 void *cb_data)
@@ -86,17 +85,14 @@ static void process_tree(struct rev_info *revs,
 			return;
 		die("bad tree object %s", oid_to_hex(&obj->oid));
 	}
-	obj->flags |= SEEN;
-	show(obj, path, name, cb_data);
-	me.up = path;
-	me.elem = name;
-	me.elem_len = strlen(name);
 
-	if (!match) {
-		strbuf_addstr(base, name);
-		if (base->len)
-			strbuf_addch(base, '/');
-	}
+	obj->flags |= SEEN;
+	me.base = base;
+	show(obj, &me, name, cb_data);
+
+	strbuf_addstr(base, name);
+	if (base->len)
+		strbuf_addch(base, '/');
 
 	init_tree_desc(&desc, tree->buffer, tree->size);
 
@@ -113,7 +109,7 @@ static void process_tree(struct rev_info *revs,
 		if (S_ISDIR(entry.mode))
 			process_tree(revs,
 				     lookup_tree(entry.sha1),
-				     show, &me, base, entry.path,
+				     show, base, entry.path,
 				     cb_data);
 		else if (S_ISGITLINK(entry.mode))
 			process_gitlink(revs, entry.sha1,
@@ -220,7 +216,7 @@ void traverse_commit_list(struct rev_info *revs,
 			path = "";
 		if (obj->type == OBJ_TREE) {
 			process_tree(revs, (struct tree *)obj, show_object,
-				     NULL, &base, path, data);
+				     &base, path, data);
 			continue;
 		}
 		if (obj->type == OBJ_BLOB) {

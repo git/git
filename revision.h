@@ -258,9 +258,7 @@ extern void mark_parents_uninteresting(struct commit *commit);
 extern void mark_tree_uninteresting(struct tree *tree);
 
 struct name_path {
-	struct name_path *up;
-	int elem_len;
-	const char *elem;
+	struct strbuf *base;
 };
 
 char *path_name(const struct name_path *path, const char *name);

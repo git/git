@@ -27,26 +27,11 @@ static const char *term_good;
 
 char *path_name(const struct name_path *path, const char *name)
 {
-	const struct name_path *p;
-	char *n, *m;
-	int nlen = strlen(name);
-	int len = nlen + 1;
-
-	for (p = path; p; p = p->up) {
-		if (p->elem_len)
-			len += p->elem_len + 1;
-	}
-	n = xmalloc(len);
-	m = n + len - (nlen + 1);
-	memcpy(m, name, nlen + 1);
-	for (p = path; p; p = p->up) {
-		if (p->elem_len) {
-			m -= p->elem_len + 1;
-			memcpy(m, p->elem, p->elem_len);
-			m[p->elem_len] = '/';
-		}
-	}
-	return n;
+	struct strbuf ret = STRBUF_INIT;
+	if (path)
+		strbuf_addbuf(&ret, path->base);
+	strbuf_addstr(&ret, name);
+	return strbuf_detach(&ret, NULL);
 }
 
 void show_object_with_name(FILE *out, struct object *obj,
