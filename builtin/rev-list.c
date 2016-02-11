@@ -178,7 +178,7 @@ static void finish_commit(struct commit *commit, void *data)
 }
 
 static void finish_object(struct object *obj,
-			  const struct name_path *path, const char *name,
+			  struct strbuf *path, const char *name,
 			  void *cb_data)
 {
 	struct rev_list_info *info = cb_data;
@@ -189,7 +189,7 @@ static void finish_object(struct object *obj,
 }
 
 static void show_object(struct object *obj,
-			const struct name_path *path, const char *component,
+			struct strbuf *path, const char *component,
 			void *cb_data)
 {
 	struct rev_list_info *info = cb_data;
