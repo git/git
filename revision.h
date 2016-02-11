@@ -259,8 +259,7 @@ extern void mark_tree_uninteresting(struct tree *tree);
 
 char *path_name(struct strbuf *path, const char *name);
 
-extern void show_object_with_name(FILE *, struct object *,
-				  struct strbuf *, const char *);
+extern void show_object_with_name(FILE *, struct object *, const char *);
 
 extern void add_pending_object(struct rev_info *revs,
 			       struct object *obj, const char *name);

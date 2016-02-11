@@ -16,6 +16,7 @@ static void process_blob(struct rev_info *revs,
 			 void *cb_data)
 {
 	struct object *obj = &blob->object;
+	size_t pathlen;
 
 	if (!revs->blob_objects)
 		return;
@@ -24,7 +25,11 @@ static void process_blob(struct rev_info *revs,
 	if (obj->flags & (UNINTERESTING | SEEN))
 		return;
 	obj->flags |= SEEN;
-	show(obj, path, name, cb_data);
+
+	pathlen = path->len;
+	strbuf_addstr(path, name);
+	show(obj, path->buf, cb_data);
+	strbuf_setlen(path, pathlen);
 }
 
 /*
@@ -86,9 +91,8 @@ static void process_tree(struct rev_info *revs,
 	}
 
 	obj->flags |= SEEN;
-	show(obj, base, name, cb_data);
-
 	strbuf_addstr(base, name);
+	show(obj, base->buf, cb_data);
 	if (base->len)
 		strbuf_addch(base, '/');
 
@@ -207,7 +211,7 @@ void traverse_commit_list(struct rev_info *revs,
 			continue;
 		if (obj->type == OBJ_TAG) {
 			obj->flags |= SEEN;
-			show_object(obj, NULL, name, data);
+			show_object(obj, name, data);
 			continue;
 		}
 		if (!path)
@@ -219,7 +223,7 @@ void traverse_commit_list(struct rev_info *revs,
 		}
 		if (obj->type == OBJ_BLOB) {
 			process_blob(revs, (struct blob *)obj, show_object,
-				     NULL, path, data);
+				     &base, path, data);
 			continue;
 		}
 		die("unknown pending object %s (%s)",
