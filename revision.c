@@ -21,27 +21,14 @@
 
 volatile show_early_output_fn_t show_early_output;
 
-char *path_name(struct strbuf *path, const char *name)
+void show_object_with_name(FILE *out, struct object *obj, const char *name)
 {
-	struct strbuf ret = STRBUF_INIT;
-	if (path)
-		strbuf_addbuf(&ret, path);
-	strbuf_addstr(&ret, name);
-	return strbuf_detach(&ret, NULL);
-}
-
-void show_object_with_name(FILE *out, struct object *obj,
-			   struct strbuf *path, const char *component)
-{
-	char *name = path_name(path, component);
-	char *p;
+	const char *p;
 
 	fprintf(out, "%s ", sha1_to_hex(obj->sha1));
 	for (p = name; *p && *p != '\n'; p++)
 		fputc(*p, out);
 	fputc('\n', out);
-
-	free(name);
 }
 
 static void mark_blob_uninteresting(struct blob *blob)
