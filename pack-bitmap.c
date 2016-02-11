@@ -422,7 +422,7 @@ static int ext_index_add_object(struct object *object, const char *name)
 	return bitmap_pos + bitmap_git.pack->num_objects;
 }
 
-static void show_object(struct object *object, const struct name_path *path,
+static void show_object(struct object *object, struct strbuf *path,
 			const char *last, void *data)
 {
 	struct bitmap *base = data;
@@ -903,7 +903,7 @@ struct bitmap_test_data {
 };
 
 static void test_show_object(struct object *object,
-			     const struct name_path *path,
+			     struct strbuf *path,
 			     const char *last, void *data)
 {
 	struct bitmap_test_data *tdata = data;

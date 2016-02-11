@@ -256,14 +256,10 @@ extern void put_revision_mark(const struct rev_info *revs,
 extern void mark_parents_uninteresting(struct commit *commit);
 extern void mark_tree_uninteresting(struct tree *tree);
 
-struct name_path {
-	struct strbuf *base;
-};
-
-char *path_name(const struct name_path *path, const char *name);
+char *path_name(struct strbuf *path, const char *name);
 
 extern void show_object_with_name(FILE *, struct object *,
-				  const struct name_path *, const char *);
+				  struct strbuf *, const char *);
 
 extern void add_pending_object(struct rev_info *revs,
 			       struct object *obj, const char *name);

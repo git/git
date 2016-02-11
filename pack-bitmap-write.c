@@ -148,7 +148,7 @@ static uint32_t find_object_pos(const unsigned char *sha1)
 	return entry->in_pack_pos;
 }
 
-static void show_object(struct object *object, const struct name_path *path,
+static void show_object(struct object *object, struct strbuf *path,
 			const char *last, void *data)
 {
 	struct bitmap *base = data;

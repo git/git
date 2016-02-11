@@ -21,17 +21,17 @@
 
 volatile show_early_output_fn_t show_early_output;
 
-char *path_name(const struct name_path *path, const char *name)
+char *path_name(struct strbuf *path, const char *name)
 {
 	struct strbuf ret = STRBUF_INIT;
 	if (path)
-		strbuf_addbuf(&ret, path->base);
+		strbuf_addbuf(&ret, path);
 	strbuf_addstr(&ret, name);
 	return strbuf_detach(&ret, NULL);
 }
 
 void show_object_with_name(FILE *out, struct object *obj,
-			   const struct name_path *path, const char *component)
+			   struct strbuf *path, const char *component)
 {
 	char *name = path_name(path, component);
 	char *p;

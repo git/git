@@ -11,7 +11,7 @@
 static void process_blob(struct rev_info *revs,
 			 struct blob *blob,
 			 show_object_fn show,
-			 struct name_path *path,
+			 struct strbuf *path,
 			 const char *name,
 			 void *cb_data)
 {
@@ -52,7 +52,7 @@ static void process_blob(struct rev_info *revs,
 static void process_gitlink(struct rev_info *revs,
 			    const unsigned char *sha1,
 			    show_object_fn show,
-			    struct name_path *path,
+			    struct strbuf *path,
 			    const char *name,
 			    void *cb_data)
 {
@@ -69,7 +69,6 @@ static void process_tree(struct rev_info *revs,
 	struct object *obj = &tree->object;
 	struct tree_desc desc;
 	struct name_entry entry;
-	struct name_path me;
 	enum interesting match = revs->diffopt.pathspec.nr == 0 ?
 		all_entries_interesting: entry_not_interesting;
 	int baselen = base->len;
@@ -87,8 +86,7 @@ static void process_tree(struct rev_info *revs,
 	}
 
 	obj->flags |= SEEN;
-	me.base = base;
-	show(obj, &me, name, cb_data);
+	show(obj, base, name, cb_data);
 
 	strbuf_addstr(base, name);
 	if (base->len)
@@ -113,12 +111,12 @@ static void process_tree(struct rev_info *revs,
 				     cb_data);
 		else if (S_ISGITLINK(entry.mode))
 			process_gitlink(revs, entry.sha1,
-					show, &me, entry.path,
+					show, base, entry.path,
 					cb_data);
 		else
 			process_blob(revs,
 				     lookup_blob(entry.sha1),
-				     show, &me, entry.path,
+				     show, base, entry.path,
 				     cb_data);
 	}
 	strbuf_setlen(base, baselen);

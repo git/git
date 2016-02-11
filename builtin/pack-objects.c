@@ -2285,7 +2285,7 @@ static void show_commit(struct commit *commit, void *data)
 }
 
 static void show_object(struct object *obj,
-			const struct name_path *path, const char *last,
+			struct strbuf *path, const char *last,
 			void *data)
 {
 	char *name = path_name(path, last);
@@ -2480,7 +2480,7 @@ static int get_object_list_from_bitmap(struct rev_info *revs)
 }
 
 static void record_recent_object(struct object *obj,
-				 const struct name_path *path,
+				 struct strbuf *path,
 				 const char *last,
 				 void *data)
 {
