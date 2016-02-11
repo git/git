@@ -32,7 +32,7 @@ between two blob objects.
 	further add to the index but you still haven't.  You can
 	stage these changes by using linkgit:git-add[1].
 
-'git diff' [options] --no-index [--] [<path>...]::
+'git diff' [options] --no-index [--] <path> <path>::
 
 	This form is to compare the given two paths on the
 	filesystem.  You can omit the `--no-index` option when
