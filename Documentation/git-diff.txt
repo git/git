@@ -10,7 +10,7 @@ SYNOPSIS
 --------
 [verse]
 'git diff' [options] [--] [<path>...]
-'git diff' [options] --no-index [--] [<path>...]
+'git diff' [options] --no-index [--] <path> <path>
 'git diff' [options] --cached [<commit>] [--] [<path>...]
 'git diff' [options] <commit> [--] [<path>...]
 'git diff' [options] <commit>..<commit> [--] [<path>...]
