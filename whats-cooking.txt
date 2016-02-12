@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Feb 2016, #03; Tue, 9)
-X-master-at: ff4ea6004fb48146330d663d64a71e7774f059f9
-X-next-at: ced85554d3d871f66dc4442631320a96a5d702f5
+Subject: What's cooking in git.git (Feb 2016, #04; Fri, 12)
+X-master-at: 494398473714dcbedb38b1ac79b531c7384b3bc4
+X-next-at: 6faf27b4ff26804a07363078b238b5cfd3dfa976
 
-What's cooking in git.git (Feb 2016, #03; Tue, 9)
+What's cooking in git.git (Feb 2016, #04; Fri, 12)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -20,80 +20,175 @@ repositories listed at
 --------------------------------------------------
 [New Topics]
 
-* jk/rerere-xsnprintf (2016-02-08) 1 commit
-  (merged to 'next' on 2016-02-09 at ff9ade3)
- + rerere: replace strcpy with xsnprintf
- (this branch is used by jc/rerere-multi.)
+* ep/format-printf (2016-02-11) 22 commits
+ - wt-status.h: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
+ - utf8.h: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
+ - transport-helper.c: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
+ - trace.h: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
+ - strbuf.h: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
+ - remote.c: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
+ - pkt-line.h: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
+ - merge-recursive.c: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
+ - imap-send.c: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
+ - http-backend.c: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
+ - fsck.c: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
+ - daemon.c: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
+ - config.c: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
+ - color.h: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
+ - cache.h: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
+ - builtin/upload-archive.c: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
+ - builtin/update-index.c: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
+ - builtin/receive-pack.c: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
+ - builtin/index-pack.c: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
+ - argv-array.h: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
+ - advice.h: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
+ - git-compat-util.h: add the FORMAT_PRINTF macro
 
- Some calls to strcpy(3) triggers a false warning from static
- analysers that are less intelligent than humans, and reducing the
- number of these false hits helps us notice real issues.  A few
- calls to strcpy(3) in "git rerere" that are already safe has been
- rewritten to avoid false wanings.
-
- Will merge to 'master'.
-
-
-* jk/test-path-utils-xsnprintf (2016-02-08) 1 commit
-  (merged to 'next' on 2016-02-09 at 931f70b)
- + test-path-utils: use xsnprintf in favor of strcpy
-
- Some calls to strcpy(3) triggers a false warning from static
- analysers that are less intelligent than humans, and reducing the
- number of these false hits helps us notice real issues.  A few
- calls to strcpy(3) in test-path-utils that are already safe has
- been rewritten to avoid false wanings.
-
- Will merge to 'master'.
-
-
-* mm/clean-doc-fix (2016-02-09) 1 commit
-  (merged to 'next' on 2016-02-09 at ced8555)
- + Documentation/git-clean.txt: don't mention deletion of .git/modules/*
-
- The documentation for "git clean" has been corrected; it mentioned
- that .git/modules/* are removed by giving two "-f", which has never
- been the case.
-
- Will merge to 'master'.
+ Undecided.
 
 
-* mg/mingw-test-fix (2016-02-08) 1 commit
- - t9100: fix breakage when SHELL_PATH is not /bin/sh
- (this branch uses js/mingw-tests.)
+* ew/force-ipv4 (2016-02-12) 1 commit
+ - connect & http: support -4 and -6 switches for remote operations
 
- An earlier adjustment of test mistakenly used write_script
- to prepare a file whose exact content matters for the test;
- reverting that part fixes the breakage for those who use
- SHELL_PATH that is different from /bin/sh.
+ "git fetch" and friends that make network connections can now be
+ told to only use ipv4 (or ipv6).
 
-
-* nd/icase (2016-02-09) 11 commits
- - diffcore-pickaxe: support case insensitive match on non-ascii
- - diffcore-pickaxe: "share" regex error handling code
- - grep/pcre: support utf-8
- - gettext: add is_utf8_locale()
- - grep/pcre: prepare locale-dependent tables for icase matching
- - grep/icase: avoid kwsset when -F is specified
- - grep/icase: avoid kwsset on literal non-ascii strings
- - test-regex: expose full regcomp() to the command line
- - test-regex: isolate the bug test code
- - grep: break down an "if" stmt in preparation for next changes
- - grep: allow -F -i combination
-
- "git grep -i" has been taught to fold case in non-ascii locales.
+ Will merge to 'next'.
 
 
-* tb/conversion (2016-02-08) 7 commits
- - convert.c: simplify text_stat
- - convert.c: refactor crlf_action
- - convert: auto_crlf=false and no attributes set: same as binary
- - convert.c: use text_eol_is_crlf()
- - convert.c: remove input_crlf_action()
- - convert.c: remove unused parameter 'path'
- - t0027: add tests for get_stream_filter()
+* jk/lose-name-path (2016-02-12) 5 commits
+ - list-objects: pass full pathname to callbacks
+ - list-objects: drop name_path entirely
+ - list-objects: convert name_path to a strbuf
+ - show_object_with_name: simplify by using path_name()
+ - http-push: stop using name_path
 
- Simplication of eol conversion codepath.
+ The "name_path" API was an attempt to reduce the need to construct
+ the full path out of a series of path components while walking a
+ tree hierarchy, but over time made less efficient because the path
+ needs to be flattened, e.g. to be compared with another path that
+ is already flat.  Remove the API and rewrite its users to simplify
+ overall code complexity.
+
+ Will merge to 'next'.
+
+--------------------------------------------------
+[Graduated to "master"]
+
+* aw/push-force-with-lease-reporting (2016-02-01) 1 commit
+  (merged to 'next' on 2016-02-03 at facd28f)
+ + push: fix ref status reporting for --force-with-lease
+
+ "git push --force-with-lease" has been taught to report if the push
+ needed to force (or fast-forwarded).
+
+
+* cc/untracked (2016-01-27) 11 commits
+  (merged to 'next' on 2016-02-01 at 8203631)
+ + t7063: add tests for core.untrackedCache
+ + test-dump-untracked-cache: don't modify the untracked cache
+ + config: add core.untrackedCache
+ + dir: simplify untracked cache "ident" field
+ + dir: add remove_untracked_cache()
+ + dir: add {new,add}_untracked_cache()
+ + update-index: move 'uc' var declaration
+ + update-index: add untracked cache notifications
+ + update-index: add --test-untracked-cache
+ + update-index: use enum for untracked cache options
+ + dir: free untracked cache when removing it
+
+ Update the untracked cache subsystem and change its primary UI from
+ "git update-index" to "git config".
+
+
+* ew/connect-verbose (2016-01-28) 1 commit
+  (merged to 'next' on 2016-02-03 at ceac37e)
+ + pass transport verbosity down to git_connect
+
+ There were a few "now I am doing this thing" progress messages in
+ the TCP connection code that can be triggered by setting a verbose
+ option internally in the code, but "git fetch -v" and friends never
+ passed the verbose option down to that codepath.
+
+ There was a brief discussion about the impact on the end-user
+ experience by not limiting this to "fetch -v -v", but I think the
+ conclusion is that this is OK to enable with a single "-v" as it is
+ not too noisy.
+
+
+* jk/options-cleanup (2016-02-01) 6 commits
+  (merged to 'next' on 2016-02-03 at a78d89d)
+ + apply, ls-files: simplify "-z" parsing
+ + checkout-index: disallow "--no-stage" option
+ + checkout-index: handle "--no-index" option
+ + checkout-index: handle "--no-prefix" option
+ + checkout-index: simplify "-z" option parsing
+ + give "nbuf" strbuf a more meaningful name
+
+ Various clean-ups to the command line option parsing.
+
+
+* js/test-lib-windows-emulated-yes (2016-02-02) 1 commit
+  (merged to 'next' on 2016-02-03 at bf6b42c)
+ + test-lib: limit the output of the yes utility
+
+ The emulated "yes" command used in our test scripts has been
+ tweaked not to spend too much time generating unnecessary output
+ that is not used, to help those who test on Windows where it would
+ not stop until it fills the pipe buffer due to lack of SIGPIPE.
+
+
+* js/xmerge-marker-eol (2016-01-27) 2 commits
+  (merged to 'next' on 2016-02-01 at 05d91a4)
+ + merge-file: ensure that conflict sections match eol style
+ + merge-file: let conflict markers match end-of-line style of the context
+
+ The low-level merge machinery has been taught to use CRLF line
+ termination when inserting conflict markers to merged contents that
+ are themselves CRLF line-terminated.
+
+
+* ls/clean-smudge-override-in-config (2016-01-29) 1 commit
+  (merged to 'next' on 2016-02-03 at 5962354)
+ + convert: treat an empty string for clean/smudge filters as "cat"
+
+ Clean/smudge filters defined in a configuration file of lower
+ precedence can now be overridden to be a pass-through no-op by
+ setting the variable to an empty string.
+
+
+* nd/do-not-move-worktree-manually (2016-01-22) 2 commits
+  (merged to 'next' on 2016-01-26 at c539221)
+ + worktree: stop supporting moving worktrees manually
+ + worktree.c: fix indentation
+
+ "git worktree" had a broken code that attempted to auto-fix
+ possible inconsistency that results from end-users moving a
+ worktree to different places without telling Git (the original
+ repository needs to maintain backpointers to its worktrees, but
+ "mv" run by end-users who are not familiar with that fact will
+ obviously not adjust them), which actually made things worse
+ when triggered.
+
+
+* sb/submodule-init (2016-01-28) 2 commits
+ - submodule: port init from shell to C
+ - submodule: port resolve_relative_url from shell to C
+ (this branch uses sb/submodule-parallel-update; is tangled with dt/refs-backend-lmdb.)
+
+ Major part of "git submodule init" has been ported to C.
+
+ Will have to wait for 'sb/submodule-parallel-update'.
+
+
+* wp/sha1-name-negative-match (2016-02-01) 2 commits
+  (merged to 'next' on 2016-02-03 at 89fa5ef)
+ + object name: introduce '^{/!-<negative pattern>}' notation
+ + test for '!' handling in rev-parse's named commits
+
+ A new "<branch>^{/!-<pattern>}" notation can be used to name a
+ commit that is reachable from <branch> that does not match the
+ given <pattern>.
 
 --------------------------------------------------
 [Stalled]
@@ -113,6 +208,29 @@ repositories listed at
  Reviewed up to v5.
  Will be rerolled.
  ($gmane/284426)
+
+
+* js/am-3-merge-recursive-direct (2015-10-12) 2 commits
+ - am: make a direct call to merge_recursive
+ - merge_recursive_options: introduce the "gently" flag
+
+ The merge_recursive_generic() function has been made a bit safer to
+ call from inside a process.  "git am -3" was taught to make a direct
+ call to the function when falling back to three-way merge.
+
+ Being able to make a direct call would be good in general, but as a
+ performance thing, the change needs to be backed up by numbers.
+
+ Needs review.
+
+ I haven't gone through the "gently" change with fine toothed comb;
+ I can see that the change avoids calling die(), but I haven't made
+ sure that the program states (e.g. what's in the in-core index) are
+ adjusted sensibly when it returns to the caller instead of dying,
+ or the codepaths that used to die() are free of resource leaks.
+ The original code certainly did not care the program states at the
+ point of dying exactly because it knew it is going to exit, but now
+ they have to care, and they need to be audited.
 
 
 * dk/gc-more-wo-pack (2016-01-13) 4 commits
@@ -157,6 +275,74 @@ repositories listed at
 --------------------------------------------------
 [Cooking]
 
+* jk/rerere-xsnprintf (2016-02-08) 1 commit
+  (merged to 'next' on 2016-02-09 at ff9ade3)
+ + rerere: replace strcpy with xsnprintf
+ (this branch is used by jc/rerere-multi.)
+
+ Some calls to strcpy(3) triggers a false warning from static
+ analysers that are less intelligent than humans, and reducing the
+ number of these false hits helps us notice real issues.  A few
+ calls to strcpy(3) in "git rerere" that are already safe has been
+ rewritten to avoid false wanings.
+
+ Will merge to 'master'.
+
+
+* jk/test-path-utils-xsnprintf (2016-02-08) 1 commit
+  (merged to 'next' on 2016-02-09 at 931f70b)
+ + test-path-utils: use xsnprintf in favor of strcpy
+
+ Some calls to strcpy(3) triggers a false warning from static
+ analysers that are less intelligent than humans, and reducing the
+ number of these false hits helps us notice real issues.  A few
+ calls to strcpy(3) in test-path-utils that are already safe has
+ been rewritten to avoid false wanings.
+
+ Will merge to 'master'.
+
+
+* mm/clean-doc-fix (2016-02-09) 1 commit
+  (merged to 'next' on 2016-02-09 at ced8555)
+ + Documentation/git-clean.txt: don't mention deletion of .git/modules/*
+
+ The documentation for "git clean" has been corrected; it mentioned
+ that .git/modules/* are removed by giving two "-f", which has never
+ been the case.
+
+ Will merge to 'master'.
+
+
+* nd/icase (2016-02-09) 11 commits
+ - diffcore-pickaxe: support case insensitive match on non-ascii
+ - diffcore-pickaxe: "share" regex error handling code
+ - grep/pcre: support utf-8
+ - gettext: add is_utf8_locale()
+ - grep/pcre: prepare locale-dependent tables for icase matching
+ - grep/icase: avoid kwsset when -F is specified
+ - grep/icase: avoid kwsset on literal non-ascii strings
+ - test-regex: expose full regcomp() to the command line
+ - test-regex: isolate the bug test code
+ - grep: break down an "if" stmt in preparation for next changes
+ - grep: allow -F -i combination
+
+ "git grep -i" has been taught to fold case in non-ascii locales.
+
+ ($gmane/285666)
+
+
+* tb/conversion (2016-02-10) 6 commits
+  (merged to 'next' on 2016-02-12 at 6faf27b)
+ + convert.c: simplify text_stat
+ + convert.c: refactor crlf_action
+ + convert.c: use text_eol_is_crlf()
+ + convert.c: remove input_crlf_action()
+ + convert.c: remove unused parameter 'path'
+ + t0027: add tests for get_stream_filter()
+
+ Simplication of eol conversion codepath.
+
+
 * da/user-useconfigonly (2016-02-08) 2 commits
   (merged to 'next' on 2016-02-09 at 8b303ce)
  + ident: add user.useConfigOnly boolean for when ident shouldn't be guessed
@@ -170,54 +356,24 @@ repositories listed at
  Will merge to 'master'.
 
 
-* aw/push-force-with-lease-reporting (2016-02-01) 1 commit
-  (merged to 'next' on 2016-02-03 at facd28f)
- + push: fix ref status reporting for --force-with-lease
-
- "git push --force-with-lease" has been taught to report if the push
- needed to force (or fast-forwarded).
-
- Will merge to 'master'.
-
-
-* ew/connect-verbose (2016-01-28) 1 commit
-  (merged to 'next' on 2016-02-03 at ceac37e)
- + pass transport verbosity down to git_connect
-
- There were a few "now I am doing this thing" progress messages in
- the TCP connection code that can be triggered by setting a verbose
- option internally in the code, but "git fetch -v" and friends never
- passed the verbose option down to that codepath.
-
- There was a brief discussion about the impact on the end-user
- experience by not limiting this to "fetch -v -v", but I think the
- conclusion is that this is OK to enable with a single "-v" as it is
- not too noisy.
-
- Will merge to 'master'.
-
-
-* ls/clean-smudge-override-in-config (2016-01-29) 1 commit
-  (merged to 'next' on 2016-02-03 at 5962354)
- + convert: treat an empty string for clean/smudge filters as "cat"
-
- Clean/smudge filters defined in a configuration file of lower
- precedence can now be overridden to be a pass-through no-op by
- setting the variable to an empty string.
-
- Will merge to 'master'.
-
-
 * ah/stripspace-optstring (2016-01-29) 1 commit
- - stripspace: call U+0020 a "space" instead of a "blank"
+  (merged to 'next' on 2016-02-12 at cd021aa)
+ + stripspace: call U+0020 a "space" instead of a "blank"
 
- Comments?
+ Will merge to 'master'.
 
 
-* dw/mergetool-vim-window-shuffle (2016-01-29) 1 commit
- - mergetool: reorder vim/gvim buffers in three-way diffs
+* dw/mergetool-vim-window-shuffle (2016-02-12) 1 commit
+  (merged to 'next' on 2016-02-12 at 2a2e8bd)
+ + mergetool: reorder vim/gvim buffers in three-way diffs
 
- Comments from real vim/gvim users?
+ The vimdiff backend for "git mergetool" has been tweaked to arrange
+ and number buffers in the order that would match the expectation of
+ majority of people who read left to right, then top down and assign
+ buffers 1 2 3 4 "mentally" to local base remote merge windows based
+ on that order.
+
+ Will merge to 'master'.
 
 
 * jk/drop-rsync-transport (2016-02-01) 1 commit
@@ -231,55 +387,30 @@ repositories listed at
  Will merge to 'master'.
 
 
-* jk/options-cleanup (2016-02-01) 6 commits
-  (merged to 'next' on 2016-02-03 at a78d89d)
- + apply, ls-files: simplify "-z" parsing
- + checkout-index: disallow "--no-stage" option
- + checkout-index: handle "--no-index" option
- + checkout-index: handle "--no-prefix" option
- + checkout-index: simplify "-z" option parsing
- + give "nbuf" strbuf a more meaningful name
-
- Various clean-ups to the command line option parsing.
-
- Will merge to 'master'.
-
-
 * dv/http-try-negotiate-at-least-once (2016-02-02) 1 commit
  - remote-curl: don't fall back to Basic auth if we haven't tried Negotiate
 
- Will be replaced with a solution with a different approach.
+ Will be rerolled.
+ A solution with a different approach may be a better one.
  ($gmane/285633)
 
 
-* js/test-lib-windows-emulated-yes (2016-02-02) 1 commit
-  (merged to 'next' on 2016-02-03 at bf6b42c)
- + test-lib: limit the output of the yes utility
-
- The emulated "yes" command used in our test scripts has been
- tweaked not to spend too much time generating unnecessary output
- that is not used, to help those who test on Windows where it would
- not stop until it fills the pipe buffer due to lack of SIGPIPE.
-
- Will merge to 'master'.
-
-
-* sb/submodule-parallel-update (2016-01-12) 8 commits
+* sb/submodule-parallel-update (2016-02-12) 7 commits
  - clone: allow an explicit argument for parallel submodule clones
  - submodule update: expose parallelism to the user
  - git submodule update: have a dedicated helper for cloning
+ - submodule update: direct error message to stderr
  - fetching submodules: respect `submodule.fetchJobs` config option
- - submodule-config: introduce parse_generic_submodule_config
- - submodule-config: remove name_and_item_from_var
  - submodule-config: drop check against NULL
  - submodule-config: keep update strategy around
- (this branch is used by dt/refs-backend-lmdb and sb/submodule-init.)
+ (this branch is used by dt/refs-backend-lmdb.)
 
- A reroll exists.  Not picked up yet as it takes a while to flip
- three overlapping topics.
+ A major part of "git submodule update" has been ported to C to take
+ advantage of the recently added framework to run download tasks in
+ parallel.
 
 
-* dt/refs-backend-lmdb (2016-02-08) 22 commits
+* dt/refs-backend-lmdb (2016-02-12) 22 commits
  - refs: tests for lmdb backend
  - refs: add LMDB refs storage backend
  - refs: add register_ref_storage_backends()
@@ -301,16 +432,14 @@ repositories listed at
  - refs: add methods for the ref iterators
  - refs: add methods for misc ref operations
  - refs: add a backend method structure with transaction functions
- - Merge branch 'sb/submodule-parallel-update' into dt/refs-backend-lmdb
- (this branch uses sb/submodule-parallel-update; is tangled with sb/submodule-init.)
+ - Merge branch 'sb/submodule-parallel-update' into dt/refs/backend-lmdb
+ (this branch uses sb/submodule-parallel-update.)
 
  Building on top of a few refs-backend preparatory series, LMDB
  based refs backend has been plugged into the system.
 
- This can now be reviewed and polished as it no longer depends on
- too many topics in flight.  I haven't picked the latest one posted
- apart to queue it as a topic properly, as the patches sent to the
- list were done on top of some version of 'pu'.
+ Will be rerolled.
+ ($gmane/285604)
 
 
 * js/mingw-tests (2016-02-08) 21 commits
@@ -346,14 +475,15 @@ repositories listed at
  Will merge to 'master'.
 
 
-* js/xmerge-marker-eol (2016-01-27) 2 commits
-  (merged to 'next' on 2016-02-01 at 05d91a4)
- + merge-file: ensure that conflict sections match eol style
- + merge-file: let conflict markers match end-of-line style of the context
+* mg/mingw-test-fix (2016-02-08) 1 commit
+  (merged to 'next' on 2016-02-12 at df77956)
+ + t9100: fix breakage when SHELL_PATH is not /bin/sh
+ (this branch uses js/mingw-tests.)
 
- The low-level merge machinery has been taught to use CRLF line
- termination when inserting conflict markers to merged contents that
- are themselves CRLF line-terminated.
+ An earlier adjustment of test mistakenly used write_script
+ to prepare a file whose exact content matters for the test;
+ reverting that part fixes the breakage for those who use
+ SHELL_PATH that is different from /bin/sh.
 
  Will merge to 'master'.
 
@@ -367,64 +497,6 @@ repositories listed at
 
  The automatic typo correction applied to an alias was broken
  with a recent change already in 'master'.
-
- Will merge to 'master'.
-
-
-* nd/do-not-move-worktree-manually (2016-01-22) 2 commits
-  (merged to 'next' on 2016-01-26 at c539221)
- + worktree: stop supporting moving worktrees manually
- + worktree.c: fix indentation
-
- "git worktree" had a broken code that attempted to auto-fix
- possible inconsistency that results from end-users moving a
- worktree to different places without telling Git (the original
- repository needs to maintain backpointers to its worktrees, but
- "mv" run by end-users who are not familiar with that fact will
- obviously not adjust them), which actually made things worse
- when triggered.
-
- Will merge to 'master'.
-
-
-* sb/submodule-init (2016-01-28) 2 commits
- - submodule: port init from shell to C
- - submodule: port resolve_relative_url from shell to C
- (this branch uses sb/submodule-parallel-update; is tangled with dt/refs-backend-lmdb.)
-
- Major part of "git submodule init" has been ported to C.
-
- Will have to wait for 'sb/submodule-parallel-update'.
-
-
-* wp/sha1-name-negative-match (2016-02-01) 2 commits
-  (merged to 'next' on 2016-02-03 at 89fa5ef)
- + object name: introduce '^{/!-<negative pattern>}' notation
- + test for '!' handling in rev-parse's named commits
-
- A new "<branch>^{/!-<pattern>}" notation can be used to name a
- commit that is reachable from <branch> that does not match the
- given <pattern>.
-
- Will merge to 'master'.
-
-
-* cc/untracked (2016-01-27) 11 commits
-  (merged to 'next' on 2016-02-01 at 8203631)
- + t7063: add tests for core.untrackedCache
- + test-dump-untracked-cache: don't modify the untracked cache
- + config: add core.untrackedCache
- + dir: simplify untracked cache "ident" field
- + dir: add remove_untracked_cache()
- + dir: add {new,add}_untracked_cache()
- + update-index: move 'uc' var declaration
- + update-index: add untracked cache notifications
- + update-index: add --test-untracked-cache
- + update-index: use enum for untracked cache options
- + dir: free untracked cache when removing it
-
- Update the untracked cache subsystem and change its primary UI from
- "git update-index" to "git config".
 
  Will merge to 'master'.
 
@@ -447,29 +519,6 @@ repositories listed at
  for "branch --format" and friends.
 
  ($gmane/285158)
-
-
-* js/am-3-merge-recursive-direct (2015-10-12) 2 commits
- - am: make a direct call to merge_recursive
- - merge_recursive_options: introduce the "gently" flag
-
- The merge_recursive_generic() function has been made a bit safer to
- call from inside a process.  "git am -3" was taught to make a direct
- call to the function when falling back to three-way merge.
-
- Being able to make a direct call would be good in general, but as a
- performance thing, the change needs to be backed up by numbers.
-
- Needs review.
-
- I haven't gone through the "gently" change with fine toothed comb;
- I can see that the change avoids calling die(), but I haven't made
- sure that the program states (e.g. what's in the in-core index) are
- adjusted sensibly when it returns to the caller instead of dying,
- or the codepaths that used to die() are free of resource leaks.
- The original code certainly did not care the program states at the
- point of dying exactly because it knew it is going to exit, but now
- they have to care, and they need to be audited.
 
 
 * ad/cygwin-wants-rename (2015-08-07) 1 commit
