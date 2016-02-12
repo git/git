@@ -35,7 +35,7 @@ int cmd_stripspace(int argc, const char **argv, const char *prefix)
 			    N_("skip and remove all lines starting with comment character"),
 			    STRIP_COMMENTS),
 		OPT_CMDMODE('c', "comment-lines", &mode,
-			    N_("prepend comment character and blank to each line"),
+			    N_("prepend comment character and space to each line"),
 			    COMMENT_LINES),
 		OPT_END()
 	};
