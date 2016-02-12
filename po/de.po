@@ -23,11 +23,11 @@ msgstr "Liste der nicht zusammengeführten Dateien nicht gefunden:"
 
 #: gitk:212 gitk:2381
 msgid "Color words"
-msgstr ""
+msgstr "Wörter einfärben"
 
 #: gitk:217 gitk:2381 gitk:8220 gitk:8253
 msgid "Markup words"
-msgstr ""
+msgstr "Wörter kennzeichnen"
 
 #: gitk:324
 msgid "Error parsing revisions:"
@@ -187,7 +187,7 @@ msgstr "Änderungen:"
 
 #: gitk:2304 gitk:4779
 msgid "changing lines matching:"
-msgstr ""
+msgstr "Geänderte Zeilen entsprechen:"
 
 #: gitk:2313 gitk:2315 gitk:4766
 msgid "Exact"
@@ -248,7 +248,7 @@ msgstr "Leerzeichenänderungen ignorieren"
 
 #: gitk:2378 gitk:2380 gitk:7959 gitk:8206
 msgid "Line diff"
-msgstr ""
+msgstr "Zeilenunterschied"
 
 #: gitk:2445
 msgid "Patch"
@@ -307,19 +307,16 @@ msgid "Compare with marked commit"
 msgstr "Mit Lesezeichen vergleichen"
 
 #: gitk:2629 gitk:2640
-#, fuzzy
 msgid "Diff this -> marked commit"
-msgstr "Vergleich: diese -> gewählte"
+msgstr "Vergleich: diese -> gewählte Version"
 
 #: gitk:2630 gitk:2641
-#, fuzzy
 msgid "Diff marked commit -> this"
-msgstr "Vergleich: gewählte -> diese"
+msgstr "Vergleich: gewählte -> diese Version"
 
 #: gitk:2631
-#, fuzzy
 msgid "Revert this commit"
-msgstr "Lesezeichen setzen"
+msgstr "Version umkehren"
 
 #: gitk:2647
 msgid "Check out this branch"
@@ -331,7 +328,7 @@ msgstr "Zweig löschen"
 
 #: gitk:2649
 msgid "Copy branch name"
-msgstr ""
+msgstr "Zweigname kopieren"
 
 #: gitk:2656
 msgid "Highlight this too"
@@ -351,7 +348,7 @@ msgstr "Annotieren der Elternversion"
 
 #: gitk:2660
 msgid "Copy path"
-msgstr ""
+msgstr "Pfad kopieren"
 
 #: gitk:2667
 msgid "Show origin of this line"
@@ -362,7 +359,6 @@ msgid "Run git gui blame on this line"
 msgstr "Diese Zeile annotieren (»git gui blame«)"
 
 #: gitk:3014
-#, fuzzy
 msgid ""
 "\n"
 "Gitk - a commit viewer for git\n"
@@ -374,7 +370,7 @@ msgstr ""
 "\n"
 "Gitk - eine Visualisierung der Git-Historie\n"
 "\n"
-"Copyright \\u00a9 2005-2010 Paul Mackerras\n"
+"Copyright \\u00a9 2005-2014 Paul Mackerras\n"
 "\n"
 "Benutzung und Weiterverbreitung gemäß den Bedingungen der GNU General Public "
 "License"
@@ -397,9 +393,9 @@ msgid "<%s-Q>\t\tQuit"
 msgstr "<%s-Q>\t\tBeenden"
 
 #: gitk:3049
-#, fuzzy, tcl-format
+#, tcl-format
 msgid "<%s-W>\t\tClose window"
-msgstr "<%s-F>\t\tSuchen"
+msgstr "<%s-F>\t\tFenster schließen"
 
 #: gitk:3050
 msgid "<Home>\t\tMove to first commit"
@@ -410,19 +406,16 @@ msgid "<End>\t\tMove to last commit"
 msgstr "<Ende>\t\tZur ältesten Version springen"
 
 #: gitk:3052
-#, fuzzy
 msgid "<Up>, p, k\tMove up one commit"
-msgstr "<Hoch>, p, i\tNächste neuere Version"
+msgstr "<Hoch>, p, k\tNächste neuere Version"
 
 #: gitk:3053
-#, fuzzy
 msgid "<Down>, n, j\tMove down one commit"
-msgstr "<Runter>, n, k\tNächste ältere Version"
+msgstr "<Runter>, n, j\tNächste ältere Version"
 
 #: gitk:3054
-#, fuzzy
 msgid "<Left>, z, h\tGo back in history list"
-msgstr "<Links>, z, j\tEine Version zurückgehen"
+msgstr "<Links>, z, h\tEine Version zurückgehen"
 
 #: gitk:3055
 msgid "<Right>, x, l\tGo forward in history list"
@@ -431,7 +424,7 @@ msgstr "<Rechts>, x, l\tEine Version weitergehen"
 #: gitk:3056
 #, tcl-format
 msgid "<%s-n>\tGo to n-th parent of current commit in history list"
-msgstr ""
+msgstr "<%s-n>\tZu n-ter Elternversion in Versionshistorie springen"
 
 #: gitk:3057
 msgid "<PageUp>\tMove up one page in commit list"
@@ -514,9 +507,8 @@ msgid "<Return>\tMove to next find hit"
 msgstr "<Eingabetaste>\tWeitersuchen"
 
 #: gitk:3075
-#, fuzzy
 msgid "g\t\tGo to commit"
-msgstr "<Ende>\t\tZur ältesten Version springen"
+msgstr "g\t\tZu Version springen"
 
 #: gitk:3076
 msgid "/\t\tFocus the search box"
@@ -673,9 +665,8 @@ msgid "Matches all Commit Info criteria"
 msgstr "Alle Versionsinformationen-Kriterien erfüllen"
 
 #: gitk:4086
-#, fuzzy
 msgid "Matches no Commit Info criteria"
-msgstr "Alle Versionsinformationen-Kriterien erfüllen"
+msgstr "keine Versionsinformationen-Kriterien erfüllen"
 
 #: gitk:4087
 msgid "Changes to Files:"
@@ -802,7 +793,7 @@ msgstr "Lokale Änderungen, nicht bereitgestellt"
 
 #: gitk:7134
 msgid "and many more"
-msgstr ""
+msgstr "und weitere"
 
 #: gitk:7137
 msgid "many"
@@ -1066,34 +1057,31 @@ msgid "No changes committed"
 msgstr "Keine Änderungen eingetragen"
 
 #: gitk:9593
-#, fuzzy, tcl-format
+#, tcl-format
 msgid "Commit %s is not included in branch %s -- really revert it?"
 msgstr ""
-"Version »%s« ist bereits im Zweig »%s« enthalten -- trotzdem erneut "
-"eintragen?"
+"Version »%s« ist nicht im Zweig »%s« enthalten -- trotzdem umkehren?"
 
 #: gitk:9598
-#, fuzzy
 msgid "Reverting"
-msgstr "Zurücksetzen"
+msgstr "Umkehren"
 
 #: gitk:9606
-#, fuzzy, tcl-format
+#, tcl-format
 msgid ""
 "Revert failed because of local changes to the following files:%s Please "
 "commit, reset or stash  your changes and try again."
 msgstr ""
-"Pflücken fehlgeschlagen, da noch lokale Änderungen in Datei »%s«\n"
+"Umkehren fehlgeschlagen, da noch lokale Änderungen in Datei »%s«\n"
 "vorliegen. Bitte diese Änderungen eintragen, zurücksetzen oder\n"
 "zwischenspeichern (»git stash«) und dann erneut versuchen."
 
 #: gitk:9610
-#, fuzzy
 msgid ""
 "Revert failed because of merge conflict.\n"
 " Do you wish to run git citool to resolve it?"
 msgstr ""
-"Pflücken fehlgeschlagen, da ein Zusammenführungs-Konflikt aufgetreten\n"
+"Umkehren fehlgeschlagen, da ein Zusammenführungs-Konflikt aufgetreten\n"
 "ist. Soll das Zusammenführungs-Werkzeug (»git citool«) aufgerufen\n"
 "werden, um diesen Konflikt aufzulösen?"
 
@@ -1206,9 +1194,8 @@ msgid "Show local changes"
 msgstr "Lokale Änderungen anzeigen"
 
 #: gitk:11361
-#, fuzzy
 msgid "Auto-select SHA1 (length)"
-msgstr "SHA1-Hashwert automatisch auswählen"
+msgstr "SHA1-Hashwert (Länge) automatisch auswählen"
 
 #: gitk:11365
 msgid "Hide remote refs"
@@ -1223,13 +1210,12 @@ msgid "Tab spacing"
 msgstr "Tabulatorbreite"
 
 #: gitk:11374
-#, fuzzy
 msgid "Display nearby tags/heads"
-msgstr "Naheliegende Markierungen anzeigen"
+msgstr "Naheliegende Markierungen/Zweigspitzen anzeigen"
 
 #: gitk:11377
 msgid "Maximum # tags/heads to show"
-msgstr ""
+msgstr "Maximale Anzahl anzuzeigender Markierungen/Zweigspitzen"
 
 #: gitk:11380
 msgid "Limit diffs to listed paths"
@@ -1348,17 +1334,16 @@ msgid "Gitk preferences"
 msgstr "Gitk-Einstellungen"
 
 #: gitk:11494
-#, fuzzy
 msgid "General"
-msgstr "Erzeugen"
+msgstr "Allgemein"
 
 #: gitk:11495
 msgid "Colors"
-msgstr ""
+msgstr "Farben"
 
 #: gitk:11496
 msgid "Fonts"
-msgstr ""
+msgstr "Schriftarten"
 
 #: gitk:11546
 #, tcl-format
@@ -1370,6 +1355,8 @@ msgid ""
 "Sorry, gitk cannot run with this version of Tcl/Tk.\n"
 " Gitk requires at least Tcl/Tk 8.4."
 msgstr ""
+"Entschuldigung, gitk kann nicht mit dieser Tcl/Tk Version ausgeführt werden.\n"
+" Gitk erfordert mindestens Tcl/Tk 8.4."
 
 #: gitk:12269
 msgid "Cannot find a git repository here."
