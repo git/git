@@ -61,4 +61,11 @@ test_expect_success REGEX_LOCALE 'grep string with regex, with -F' '
 	test_cmp expect2 debug2
 '
 
+test_expect_success REGEX_LOCALE 'pickaxe -i on non-ascii' '
+	git commit -m first &&
+	git log --format=%f -i -S"TILRAUN: HALLÓ HEIMUR!" >actual &&
+	echo first >expected &&
+	test_cmp expected actual
+'
+
 test_done
