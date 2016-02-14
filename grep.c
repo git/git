@@ -5,6 +5,7 @@
 #include "diff.h"
 #include "diffcore.h"
 #include "commit.h"
+#include "quote.h"
 
 static int grep_source_load(struct grep_source *gs);
 static int grep_source_is_binary(struct grep_source *gs);
@@ -397,6 +398,24 @@ static int is_fixed(const char *s, size_t len)
 	return 1;
 }
 
+static void compile_fixed_regexp(struct grep_pat *p, struct grep_opt *opt)
+{
+	struct strbuf sb = STRBUF_INIT;
+	int err;
+
+	basic_regex_quote_buf(&sb, p->pattern);
+	err = regcomp(&p->regexp, sb.buf, opt->regflags & ~REG_EXTENDED);
+	if (opt->debug)
+		fprintf(stderr, "fixed %s\n", sb.buf);
+	strbuf_release(&sb);
+	if (err) {
+		char errbuf[1024];
+		regerror(err, &p->regexp, errbuf, sizeof(errbuf));
+		regfree(&p->regexp);
+		compile_regexp_failed(p, errbuf);
+	}
+}
+
 static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
 {
 	int icase, ascii_only;
@@ -408,7 +427,11 @@ static void compile_regexp(struct grep_pat *p, struct grep_opt *opt)
 	ascii_only     = !has_non_ascii(p->pattern);
 
 	if (opt->fixed) {
-		p->fixed = 1;
+		p->fixed = !icase || ascii_only;
+		if (!p->fixed) {
+			compile_fixed_regexp(p, opt);
+			return;
+		}
 	} else if ((!icase || ascii_only) &&
 		   is_fixed(p->pattern, p->patternlen))
 		p->fixed = 1;
