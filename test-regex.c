@@ -1,6 +1,6 @@
 #include "git-compat-util.h"
 
-int main(int argc, char **argv)
+static int test_regex_bug(void)
 {
 	char *pat = "[^={} \t]+";
 	char *str = "={}\nfred";
@@ -16,5 +16,13 @@ int main(int argc, char **argv)
 	if (m[0].rm_so == 3) /* matches '\n' when it should not */
 		die("regex bug confirmed: re-build git with NO_REGEX=1");
 
-	exit(0);
+	return 0;
+}
+
+int main(int argc, char **argv)
+{
+	if (argc == 2 && !strcmp(argv[1], "--bug"))
+		return test_regex_bug();
+	else
+		usage("test-regex --bug");
 }
