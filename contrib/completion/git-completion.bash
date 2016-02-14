@@ -2571,7 +2571,7 @@ _git_whatchanged ()
 
 __git_main ()
 {
-	local i c=1 command __git_dir
+	local i c=1 command __git_dir __cwd
 
 	while [ $c -lt $cword ]; do
 		i="${words[c]}"
@@ -2581,11 +2581,21 @@ __git_main ()
 		--bare)      __git_dir="." ;;
 		--help) command="help"; break ;;
 		-c|--work-tree|--namespace) ((c++)) ;;
+		-C) ((c++)) ; __cwd="${words[c]}" ;;
 		-*) ;;
 		*) command="$i"; break ;;
 		esac
 		((c++))
 	done
+
+	if [ -n "$__cwd" ]; then
+		if [ -z "$__git_dir" ]; then
+			__git_dir=.git
+		fi
+		if ! [[ "$__git_dir" == /* ]] ; then
+			__git_dir="$__cwd/$__git_dir"
+		fi
+	fi
 
 	if [ -z "$command" ]; then
 		case "$cur" in
