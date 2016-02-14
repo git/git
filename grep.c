@@ -329,6 +329,8 @@ static void compile_pcre_regexp(struct grep_pat *p, const struct grep_opt *opt)
 			p->pcre_tables = pcre_maketables();
 		options |= PCRE_CASELESS;
 	}
+	if (is_utf8_locale() && has_non_ascii(p->pattern))
+		options |= PCRE_UTF8;
 
 	p->pcre_regexp = pcre_compile(p->pattern, options, &error, &erroffset,
 				      p->pcre_tables);
