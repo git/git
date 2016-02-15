@@ -53,6 +53,8 @@ static enum path_treatment read_directory_recursive(struct dir_struct *dir,
 	int check_only, const struct path_simplify *simplify);
 static int get_dtype(struct dirent *de, const char *path, int len);
 
+static struct trace_key trace_exclude = TRACE_KEY_INIT(EXCLUDE);
+
 /* helper string functions with support for the ignore_case flag */
 int strcmp_icase(const char *a, const char *b)
 {
@@ -905,6 +907,8 @@ static struct exclude *last_exclude_matching_from_list(const char *pathname,
 	if (!el->nr)
 		return NULL;	/* undefined */
 
+	trace_printf_key(&trace_exclude, "exclude: from %s\n", el->src);
+
 	for (i = el->nr - 1; 0 <= i; i--) {
 		struct exclude *x = el->excludes[i];
 		const char *exclude = x->pattern;
@@ -936,6 +940,16 @@ static struct exclude *last_exclude_matching_from_list(const char *pathname,
 			break;
 		}
 	}
+
+	if (!exc) {
+		trace_printf_key(&trace_exclude, "exclude: %.*s => n/a\n",
+				 pathlen, pathname);
+		return NULL;
+	}
+
+	trace_printf_key(&trace_exclude, "exclude: %.*s vs %s at line %d => %s\n",
+			 pathlen, pathname, exc->pattern, exc->srcpos,
+			 exc->flags & EXC_FLAG_NEGATIVE ? "no" : "yes");
 	return exc;
 }
 
@@ -1683,8 +1697,12 @@ static enum path_treatment read_directory_recursive(struct dir_struct *dir,
 	struct cached_dir cdir;
 	enum path_treatment state, subdir_state, dir_state = path_none;
 	struct strbuf path = STRBUF_INIT;
+	static int level = 0;
 
 	strbuf_add(&path, base, baselen);
+
+	trace_printf_key(&trace_exclude, "exclude: [%d] enter '%.*s'\n",
+			 level++, baselen, base);
 
 	if (open_cached_dir(&cdir, dir, untracked, &path, check_only))
 		goto out;
@@ -1749,6 +1767,8 @@ static enum path_treatment read_directory_recursive(struct dir_struct *dir,
 	}
 	close_cached_dir(&cdir);
  out:
+	trace_printf_key(&trace_exclude, "exclude: [%d] leave '%.*s'\n",
+			 --level, baselen, base);
 	strbuf_release(&path);
 
 	return dir_state;
