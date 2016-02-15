@@ -193,6 +193,13 @@ test_expect_success '"add" -B/--detach mutually exclusive' '
 	test_must_fail git worktree add -B poodle --detach bamboo master
 '
 
+test_expect_success '"add -B" fails if the branch is checked out' '
+	git rev-parse newmaster >before &&
+	test_must_fail git worktree add -B newmaster bamboo master &&
+	git rev-parse newmaster >after &&
+	test_cmp before after
+'
+
 test_expect_success 'add -B' '
 	git worktree add -B poodle bamboo2 master^ &&
 	git -C bamboo2 symbolic-ref HEAD >actual &&
