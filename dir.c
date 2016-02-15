@@ -521,6 +521,7 @@ void add_exclude(const char *string, const char *base,
 	x->baselen = baselen;
 	x->flags = flags;
 	x->srcpos = srcpos;
+	string_list_init(&x->sticky_paths, 1);
 	ALLOC_GROW(el->excludes, el->nr + 1, el->alloc);
 	el->excludes[el->nr++] = x;
 	x->el = el;
@@ -561,8 +562,10 @@ void clear_exclude_list(struct exclude_list *el)
 {
 	int i;
 
-	for (i = 0; i < el->nr; i++)
+	for (i = 0; i < el->nr; i++) {
+		string_list_clear(&el->excludes[i]->sticky_paths, 0);
 		free(el->excludes[i]);
+	}
 	free(el->excludes);
 	free(el->filebuf);
 
@@ -889,6 +892,44 @@ int match_pathname(const char *pathname, int pathlen,
 				 WM_PATHNAME) == 0;
 }
 
+static void add_sticky(struct exclude *exc, const char *pathname, int pathlen)
+{
+	struct strbuf sb = STRBUF_INIT;
+	int i;
+
+	for (i = exc->sticky_paths.nr - 1; i >= 0; i--) {
+		const char *sticky = exc->sticky_paths.items[i].string;
+		int len = strlen(sticky);
+
+		if (pathlen < len && sticky[pathlen] == '/' &&
+		    !strncmp(pathname, sticky, pathlen))
+			return;
+	}
+
+	strbuf_add(&sb, pathname, pathlen);
+	string_list_append_nodup(&exc->sticky_paths, strbuf_detach(&sb, NULL));
+}
+
+static int match_sticky(struct exclude *exc, const char *pathname, int pathlen, int dtype)
+{
+	int i;
+
+	for (i = exc->sticky_paths.nr - 1; i >= 0; i--) {
+		const char *sticky = exc->sticky_paths.items[i].string;
+		int len = strlen(sticky);
+
+		if (pathlen == len && dtype == DT_DIR &&
+		    !strncmp(pathname, sticky, len))
+			return 1;
+
+		if (pathlen > len && pathname[len] == '/' &&
+		    !strncmp(pathname, sticky, len))
+			return 1;
+	}
+
+	return 0;
+}
+
 /*
  * Scan the given exclude list in reverse to see whether pathname
  * should be ignored.  The first match (i.e. the last on the list), if
@@ -913,6 +954,16 @@ static struct exclude *last_exclude_matching_from_list(const char *pathname,
 		struct exclude *x = el->excludes[i];
 		const char *exclude = x->pattern;
 		int prefix = x->nowildcardlen;
+
+		if (x->sticky_paths.nr) {
+			if (*dtype == DT_UNKNOWN)
+				*dtype = get_dtype(NULL, pathname, pathlen);
+			if (match_sticky(x, pathname, pathlen, *dtype)) {
+				exc = x;
+				break;
+			}
+			continue;
+		}
 
 		if (x->flags & EXC_FLAG_MUSTBEDIR) {
 			if (*dtype == DT_UNKNOWN)
@@ -947,9 +998,10 @@ static struct exclude *last_exclude_matching_from_list(const char *pathname,
 		return NULL;
 	}
 
-	trace_printf_key(&trace_exclude, "exclude: %.*s vs %s at line %d => %s\n",
+	trace_printf_key(&trace_exclude, "exclude: %.*s vs %s at line %d => %s%s\n",
 			 pathlen, pathname, exc->pattern, exc->srcpos,
-			 exc->flags & EXC_FLAG_NEGATIVE ? "no" : "yes");
+			 exc->flags & EXC_FLAG_NEGATIVE ? "no" : "yes",
+			 exc->sticky_paths.nr ? " (stuck)" : "");
 	return exc;
 }
 
@@ -2003,6 +2055,25 @@ static struct untracked_cache_dir *validate_untracked_cache(struct dir_struct *d
 	/* Make sure this directory is not dropped out at saving phase */
 	root->recurse = 1;
 	return root;
+}
+
+static void clear_sticky(struct dir_struct *dir)
+{
+	struct exclude_list_group *g;
+	struct exclude_list *el;
+	struct exclude *x;
+	int i, j, k;
+
+	for (i = EXC_CMDL; i <= EXC_FILE; i++) {
+		g = &dir->exclude_list_group[i];
+		for (j = g->nr - 1; j >= 0; j--) {
+			el = &g->el[j];
+			for (k = el->nr - 1; 0 <= k; k--) {
+				x = el->excludes[k];
+				string_list_clear(&x->sticky_paths, 0);
+			}
+		}
+	}
 }
 
 int read_directory(struct dir_struct *dir, const char *path, int len, const struct pathspec *pathspec)
