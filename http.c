@@ -67,6 +67,7 @@ static int curl_save_cookies;
 struct credential http_auth = CREDENTIAL_INIT;
 static int http_proactive_auth;
 static const char *user_agent;
+static int curl_empty_auth;
 
 #if LIBCURL_VERSION_NUM >= 0x071700
 /* Use CURLOPT_KEYPASSWD as is */
@@ -273,14 +274,22 @@ static int http_options(const char *var, const char *value, void *cb)
 	if (!strcmp("http.useragent", var))
 		return git_config_string(&user_agent, var, value);
 
+	if (!strcmp("http.emptyauth", var)) {
+		curl_empty_auth = git_config_bool(var, value);
+		return 0;
+	}
+
 	/* Fall back on the default ones */
 	return git_default_config(var, value, cb);
 }
 
 static void init_curl_http_auth(CURL *result)
 {
-	if (!http_auth.username)
+	if (!http_auth.username) {
+		if (curl_empty_auth)
+			curl_easy_setopt(result, CURLOPT_USERPWD, ":");
 		return;
+	}
 
 	credential_fill(&http_auth);
 
@@ -695,7 +704,7 @@ struct active_request_slot *get_active_slot(void)
 #ifdef LIBCURL_CAN_HANDLE_AUTH_ANY
 	curl_easy_setopt(slot->curl, CURLOPT_HTTPAUTH, http_auth_methods);
 #endif
-	if (http_auth.password)
+	if (http_auth.password || curl_empty_auth)
 		init_curl_http_auth(slot->curl);
 
 	return slot;
