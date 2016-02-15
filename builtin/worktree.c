@@ -201,9 +201,7 @@ static int add_worktree(const char *path, const char *refname,
 		die(_("'%s' already exists"), path);
 
 	/* is 'refname' a branch or commit? */
-	if (opts->force_new_branch) /* definitely a branch */
-		;
-	else if (!opts->detach && !strbuf_check_branch_ref(&symref, refname) &&
+	if (!opts->detach && !strbuf_check_branch_ref(&symref, refname) &&
 		 ref_exists(symref.buf)) { /* it's a branch */
 		if (!opts->force)
 			die_if_checked_out(symref.buf);

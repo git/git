@@ -193,6 +193,14 @@ test_expect_success '"add" -B/--detach mutually exclusive' '
 	test_must_fail git worktree add -B poodle --detach bamboo master
 '
 
+test_expect_success 'add -B' '
+	git worktree add -B poodle bamboo2 master^ &&
+	git -C bamboo2 symbolic-ref HEAD >actual &&
+	echo refs/heads/poodle >expected &&
+	test_cmp expected actual &&
+	test_cmp_rev master^ poodle
+'
+
 test_expect_success 'local clone from linked checkout' '
 	git clone --local here here-clone &&
 	( cd here-clone && git fsck )
