@@ -930,6 +930,75 @@ static int match_sticky(struct exclude *exc, const char *pathname, int pathlen, 
 	return 0;
 }
 
+static inline int different_decisions(const struct exclude *a,
+				      const struct exclude *b)
+{
+	return (a->flags & EXC_FLAG_NEGATIVE) != (b->flags & EXC_FLAG_NEGATIVE);
+}
+
+/*
+ * Return non-zero if pathname is a directory and an ancestor of the
+ * literal path in a pattern.
+ */
+static int match_directory_part(const char *pathname, int pathlen,
+				int *dtype, struct exclude *x)
+{
+	const char	*base	    = x->base;
+	int		 baselen    = x->baselen ? x->baselen - 1 : 0;
+	const char	*pattern    = x->pattern;
+	int		 prefix	    = x->nowildcardlen;
+	int		 patternlen = x->patternlen;
+
+	if (*dtype == DT_UNKNOWN)
+		*dtype = get_dtype(NULL, pathname, pathlen);
+	if (*dtype != DT_DIR)
+		return 0;
+
+	if (*pattern == '/') {
+		pattern++;
+		patternlen--;
+		prefix--;
+	}
+
+	if (baselen) {
+		if (((pathlen < baselen && base[pathlen] == '/') ||
+		     pathlen == baselen) &&
+		    !strncmp_icase(pathname, base, pathlen))
+			return 1;
+		pathname += baselen + 1;
+		pathlen  -= baselen + 1;
+	}
+
+
+	if (prefix &&
+	    (((pathlen < prefix && pattern[pathlen] == '/') ||
+	      pathlen == prefix) &&
+	     !strncmp_icase(pathname, pattern, pathlen)))
+		return 1;
+
+	return 0;
+}
+
+static struct exclude *should_descend(const char *pathname, int pathlen,
+				      int *dtype, struct exclude_list *el,
+				      struct exclude *exc)
+{
+	int i;
+
+	for (i = el->nr - 1; 0 <= i; i--) {
+		struct exclude *x = el->excludes[i];
+
+		if (x == exc)
+			break;
+
+		if (!(x->flags & EXC_FLAG_NODIR) &&
+		    different_decisions(x, exc) &&
+		    match_directory_part(pathname, pathlen, dtype, x))
+			return x;
+	}
+	return NULL;
+}
+
 /*
  * Scan the given exclude list in reverse to see whether pathname
  * should be ignored.  The first match (i.e. the last on the list), if
@@ -943,7 +1012,7 @@ static struct exclude *last_exclude_matching_from_list(const char *pathname,
 						       struct exclude_list *el)
 {
 	struct exclude *exc = NULL; /* undecided */
-	int i;
+	int i, maybe_descend = 0;
 
 	if (!el->nr)
 		return NULL;	/* undefined */
@@ -954,6 +1023,10 @@ static struct exclude *last_exclude_matching_from_list(const char *pathname,
 		struct exclude *x = el->excludes[i];
 		const char *exclude = x->pattern;
 		int prefix = x->nowildcardlen;
+
+		if (!maybe_descend && i < el->nr - 1 &&
+		    different_decisions(x, el->excludes[i+1]))
+			maybe_descend = 1;
 
 		if (x->sticky_paths.nr) {
 			if (*dtype == DT_UNKNOWN)
@@ -996,6 +1069,34 @@ static struct exclude *last_exclude_matching_from_list(const char *pathname,
 		trace_printf_key(&trace_exclude, "exclude: %.*s => n/a\n",
 				 pathlen, pathname);
 		return NULL;
+	}
+
+	/*
+	 * We have found a matching pattern "exc" that may exclude whole
+	 * directory. We also found that there may be a pattern that matches
+	 * something inside the directory and reincludes stuff.
+	 *
+	 * Go through the patterns again, find that pattern and double check.
+	 * If it's true, return "undecided" and keep descending in. "exc" is
+	 * marked sticky so that it continues to match inside the directory.
+	 */
+	if (!(exc->flags & EXC_FLAG_NEGATIVE) && maybe_descend) {
+		struct exclude *x;
+
+		if (*dtype == DT_UNKNOWN)
+			*dtype = get_dtype(NULL, pathname, pathlen);
+
+		if (*dtype == DT_DIR &&
+		    (x = should_descend(pathname, pathlen, dtype, el, exc))) {
+			add_sticky(exc, pathname, pathlen);
+			trace_printf_key(&trace_exclude,
+					 "exclude: %.*s vs %s at line %d => %s,"
+					 " forced open by %s at line %d => n/a\n",
+					 pathlen, pathname, exc->pattern, exc->srcpos,
+					 exc->flags & EXC_FLAG_NEGATIVE ? "no" : "yes",
+					 x->pattern, x->srcpos);
+			return NULL;
+		}
 	}
 
 	trace_printf_key(&trace_exclude, "exclude: %.*s vs %s at line %d => %s%s\n",
@@ -2095,6 +2196,12 @@ int read_directory(struct dir_struct *dir, const char *path, int len, const stru
 
 	if (has_symlink_leading_path(path, len))
 		return dir->nr;
+
+	/*
+	 * Stay on the safe side. if read_directory() has run once on
+	 * "dir", some sticky flag may have been left. Clear them all.
+	 */
+	clear_sticky(dir);
 
 	/*
 	 * exclude patterns are treated like positive ones in
