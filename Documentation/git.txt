@@ -1122,7 +1122,7 @@ of clones and fetches.
 	    connection (or proxy, if configured)
 
 	  - `ssh`: git over ssh (including `host:path` syntax,
-	    `git+ssh://`, etc).
+	    `ssh://`, etc).
 
 	  - `rsync`: git over rsync
 
