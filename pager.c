@@ -11,7 +11,6 @@
  * something different on Windows.
  */
 
-static const char *pager_argv[] = { NULL, NULL };
 static struct child_process pager_process = CHILD_PROCESS_INIT;
 
 static void wait_for_pager(void)
@@ -70,9 +69,8 @@ void setup_pager(void)
 	setenv("GIT_PAGER_IN_USE", "true", 1);
 
 	/* spawn the pager */
-	pager_argv[0] = pager;
+	argv_array_push(&pager_process.args, pager);
 	pager_process.use_shell = 1;
-	pager_process.argv = pager_argv;
 	pager_process.in = -1;
 	if (!getenv("LESS"))
 		argv_array_push(&pager_process.env_array, "LESS=FRX");
