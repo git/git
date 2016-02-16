@@ -186,10 +186,7 @@ static int add(int argc, const char **argv)
 	url = argv[1];
 
 	remote = remote_get(name);
-	if (remote && (remote->url_nr > 1 ||
-			(strcmp(name, remote->url[0]) &&
-				strcmp(url, remote->url[0])) ||
-			remote->fetch_refspec_nr))
+	if (remote_is_configured(remote))
 		die(_("remote %s already exists."), name);
 
 	strbuf_addf(&buf2, "refs/heads/test:refs/remotes/%s/test", name);
@@ -641,7 +638,7 @@ static int mv(int argc, const char **argv)
 		return migrate_file(oldremote);
 
 	newremote = remote_get(rename.new);
-	if (newremote && (newremote->url_nr > 1 || newremote->fetch_refspec_nr))
+	if (remote_is_configured(newremote))
 		die(_("remote %s already exists."), rename.new);
 
 	strbuf_addf(&buf, "refs/heads/test:refs/remotes/%s/test", rename.new);

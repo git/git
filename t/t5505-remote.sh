@@ -157,6 +157,21 @@ test_expect_success 'rename errors out early when deleting non-existent branch' 
 	)
 '
 
+test_expect_success 'add existing foreign_vcs remote' '
+	test_config remote.foo.vcs bar &&
+	echo "fatal: remote foo already exists." >expect &&
+	test_must_fail git remote add foo bar 2>actual &&
+	test_i18ncmp expect actual
+'
+
+test_expect_success 'add existing foreign_vcs remote' '
+	test_config remote.foo.vcs bar &&
+	test_config remote.bar.vcs bar &&
+	echo "fatal: remote bar already exists." >expect &&
+	test_must_fail git remote rename foo bar 2>actual &&
+	test_i18ncmp expect actual
+'
+
 cat >test/expect <<EOF
 * remote origin
   Fetch URL: $(pwd)/one
