@@ -53,6 +53,16 @@ const char *git_pager(int stdout_is_tty)
 	return pager;
 }
 
+void prepare_pager_args(struct child_process *pager_process, const char *pager)
+{
+	argv_array_push(&pager_process->args, pager);
+	pager_process->use_shell = 1;
+	if (!getenv("LESS"))
+		argv_array_push(&pager_process->env_array, "LESS=FRX");
+	if (!getenv("LV"))
+		argv_array_push(&pager_process->env_array, "LV=-c");
+}
+
 void setup_pager(void)
 {
 	const char *pager = git_pager(isatty(1));
@@ -69,13 +79,8 @@ void setup_pager(void)
 	setenv("GIT_PAGER_IN_USE", "true", 1);
 
 	/* spawn the pager */
-	argv_array_push(&pager_process.args, pager);
-	pager_process.use_shell = 1;
+	prepare_pager_args(&pager_process, pager);
 	pager_process.in = -1;
-	if (!getenv("LESS"))
-		argv_array_push(&pager_process.env_array, "LESS=FRX");
-	if (!getenv("LV"))
-		argv_array_push(&pager_process.env_array, "LV=-c");
 	argv_array_push(&pager_process.env_array, "GIT_PAGER_IN_USE");
 	if (start_command(&pager_process))
 		return;
