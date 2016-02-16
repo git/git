@@ -1441,9 +1441,9 @@ static int set_remote_branches(const char *remotename, const char **branches,
 
 	strbuf_addf(&key, "remote.%s.fetch", remotename);
 
-	if (!remote_is_configured(remotename))
-		die(_("No such remote '%s'"), remotename);
 	remote = remote_get(remotename);
+	if (!remote_is_configured(remote))
+		die(_("No such remote '%s'"), remotename);
 
 	if (!add_mode && remove_all_fetch_refspecs(remotename, key.buf)) {
 		strbuf_release(&key);
@@ -1498,9 +1498,9 @@ static int get_url(int argc, const char **argv)
 
 	remotename = argv[0];
 
-	if (!remote_is_configured(remotename))
-		die(_("No such remote '%s'"), remotename);
 	remote = remote_get(remotename);
+	if (!remote_is_configured(remote))
+		die(_("No such remote '%s'"), remotename);
 
 	url_nr = 0;
 	if (push_mode) {
@@ -1566,9 +1566,9 @@ static int set_url(int argc, const char **argv)
 	if (delete_mode)
 		oldurl = newurl;
 
-	if (!remote_is_configured(remotename))
-		die(_("No such remote '%s'"), remotename);
 	remote = remote_get(remotename);
+	if (!remote_is_configured(remote))
+		die(_("No such remote '%s'"), remotename);
 
 	if (push_mode) {
 		strbuf_addf(&name_buf, "remote.%s.pushurl", remotename);

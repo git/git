@@ -713,18 +713,9 @@ struct remote *pushremote_get(const char *name)
 	return remote_get_1(name, pushremote_for_branch);
 }
 
-int remote_is_configured(const char *name)
+int remote_is_configured(struct remote *remote)
 {
-	struct remotes_hash_key lookup;
-	struct hashmap_entry lookup_entry;
-	read_config();
-
-	init_remotes_hash();
-	lookup.str = name;
-	lookup.len = strlen(name);
-	hashmap_entry_init(&lookup_entry, memhash(name, lookup.len));
-
-	return hashmap_get(&remotes_hash, &lookup_entry, &lookup) != NULL;
+	return remote && remote->origin;
 }
 
 int for_each_remote(each_remote_fn fn, void *priv)
