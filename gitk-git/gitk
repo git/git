@@ -2234,7 +2234,7 @@ proc makewindow {} {
     global headctxmenu progresscanv progressitem progresscoords statusw
     global fprogitem fprogcoord lastprogupdate progupdatepending
     global rprogitem rprogcoord rownumsel numcommits
-    global have_tk85 use_ttk NS
+    global have_tk85 have_tk86 use_ttk NS
     global git_version
     global worddiff
 
@@ -2732,8 +2732,13 @@ proc makewindow {} {
     bind . <Key-Down> "selnextline 1"
     bind . <Shift-Key-Up> "dofind -1 0"
     bind . <Shift-Key-Down> "dofind 1 0"
-    bindkey <Key-Right> "goforw"
-    bindkey <Key-Left> "goback"
+    if {$have_tk86} {
+        bindkey <<NextChar>> "goforw"
+        bindkey <<PrevChar>> "goback"
+    } else {
+        bindkey <Key-Right> "goforw"
+        bindkey <Key-Left> "goback"
+    }
     bind . <Key-Prior> "selnextpage -1"
     bind . <Key-Next> "selnextpage 1"
     bind . <$M1B-Home> "allcanvs yview moveto 0.0"
@@ -12734,6 +12739,7 @@ set nullid2 "0000000000000000000000000000000000000001"
 set nullfile "/dev/null"
 
 set have_tk85 [expr {[package vcompare $tk_version "8.5"] >= 0}]
+set have_tk86 [expr {[package vcompare $tk_version "8.6"] >= 0}]
 if {![info exists have_ttk]} {
     set have_ttk [llength [info commands ::ttk::style]]
 }
