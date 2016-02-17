@@ -1,10 +1,10 @@
 To: git@vger.kernel.org
 Bcc: lwn@lwn.net
-Subject: What's cooking in git.git (Feb 2016, #04; Fri, 12)
-X-master-at: 494398473714dcbedb38b1ac79b531c7384b3bc4
-X-next-at: 6faf27b4ff26804a07363078b238b5cfd3dfa976
+Subject: What's cooking in git.git (Feb 2016, #05; Wed, 17)
+X-master-at: 0233b800c838ddda41db318ee396320b3c21a560
+X-next-at: 45cd78e6c697b37c226f619775990486cf53e84f
 
-What's cooking in git.git (Feb 2016, #04; Fri, 12)
+What's cooking in git.git (Feb 2016, #05; Wed, 17)
 --------------------------------------------------
 
 Here are the topics that have been cooking.  Commits prefixed with
@@ -18,177 +18,333 @@ repositories listed at
     http://git-blame.blogspot.com/p/git-public-repositories.html
 
 --------------------------------------------------
-[New Topics]
-
-* ep/format-printf (2016-02-11) 22 commits
- - wt-status.h: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
- - utf8.h: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
- - transport-helper.c: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
- - trace.h: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
- - strbuf.h: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
- - remote.c: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
- - pkt-line.h: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
- - merge-recursive.c: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
- - imap-send.c: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
- - http-backend.c: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
- - fsck.c: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
- - daemon.c: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
- - config.c: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
- - color.h: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
- - cache.h: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
- - builtin/upload-archive.c: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
- - builtin/update-index.c: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
- - builtin/receive-pack.c: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
- - builtin/index-pack.c: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
- - argv-array.h: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
- - advice.h: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
- - git-compat-util.h: add the FORMAT_PRINTF macro
-
- Undecided.
-
-
-* ew/force-ipv4 (2016-02-12) 1 commit
- - connect & http: support -4 and -6 switches for remote operations
-
- "git fetch" and friends that make network connections can now be
- told to only use ipv4 (or ipv6).
-
- Will merge to 'next'.
-
-
-* jk/lose-name-path (2016-02-12) 5 commits
- - list-objects: pass full pathname to callbacks
- - list-objects: drop name_path entirely
- - list-objects: convert name_path to a strbuf
- - show_object_with_name: simplify by using path_name()
- - http-push: stop using name_path
-
- The "name_path" API was an attempt to reduce the need to construct
- the full path out of a series of path components while walking a
- tree hierarchy, but over time made less efficient because the path
- needs to be flattened, e.g. to be compared with another path that
- is already flat.  Remove the API and rewrite its users to simplify
- overall code complexity.
-
- Will merge to 'next'.
-
---------------------------------------------------
 [Graduated to "master"]
 
-* aw/push-force-with-lease-reporting (2016-02-01) 1 commit
-  (merged to 'next' on 2016-02-03 at facd28f)
- + push: fix ref status reporting for --force-with-lease
-
- "git push --force-with-lease" has been taught to report if the push
- needed to force (or fast-forwarded).
+* ah/stripspace-optstring (2016-01-29) 1 commit
+  (merged to 'next' on 2016-02-12 at cd021aa)
+ + stripspace: call U+0020 a "space" instead of a "blank"
 
 
-* cc/untracked (2016-01-27) 11 commits
-  (merged to 'next' on 2016-02-01 at 8203631)
- + t7063: add tests for core.untrackedCache
- + test-dump-untracked-cache: don't modify the untracked cache
- + config: add core.untrackedCache
- + dir: simplify untracked cache "ident" field
- + dir: add remove_untracked_cache()
- + dir: add {new,add}_untracked_cache()
- + update-index: move 'uc' var declaration
- + update-index: add untracked cache notifications
- + update-index: add --test-untracked-cache
- + update-index: use enum for untracked cache options
- + dir: free untracked cache when removing it
+* da/user-useconfigonly (2016-02-08) 2 commits
+  (merged to 'next' on 2016-02-09 at 8b303ce)
+ + ident: add user.useConfigOnly boolean for when ident shouldn't be guessed
+ + fmt_ident: refactor strictness checks
 
- Update the untracked cache subsystem and change its primary UI from
- "git update-index" to "git config".
+ The "user.useConfigOnly" configuration variable can be used to
+ force the user to always set user.email & user.name configuration
+ variables, serving as a reminder for those who work on multiple
+ projects and do not want to put these in their $HOME/.gitconfig.
 
 
-* ew/connect-verbose (2016-01-28) 1 commit
-  (merged to 'next' on 2016-02-03 at ceac37e)
- + pass transport verbosity down to git_connect
+* dw/mergetool-vim-window-shuffle (2016-02-12) 1 commit
+  (merged to 'next' on 2016-02-12 at 2a2e8bd)
+ + mergetool: reorder vim/gvim buffers in three-way diffs
 
- There were a few "now I am doing this thing" progress messages in
- the TCP connection code that can be triggered by setting a verbose
- option internally in the code, but "git fetch -v" and friends never
- passed the verbose option down to that codepath.
-
- There was a brief discussion about the impact on the end-user
- experience by not limiting this to "fetch -v -v", but I think the
- conclusion is that this is OK to enable with a single "-v" as it is
- not too noisy.
+ The vimdiff backend for "git mergetool" has been tweaked to arrange
+ and number buffers in the order that would match the expectation of
+ majority of people who read left to right, then top down and assign
+ buffers 1 2 3 4 "mentally" to local base remote merge windows based
+ on that order.
 
 
-* jk/options-cleanup (2016-02-01) 6 commits
-  (merged to 'next' on 2016-02-03 at a78d89d)
- + apply, ls-files: simplify "-z" parsing
- + checkout-index: disallow "--no-stage" option
- + checkout-index: handle "--no-index" option
- + checkout-index: handle "--no-prefix" option
- + checkout-index: simplify "-z" option parsing
- + give "nbuf" strbuf a more meaningful name
+* jk/drop-rsync-transport (2016-02-01) 1 commit
+  (merged to 'next' on 2016-02-03 at 08be402)
+ + transport: drop support for git-over-rsync
 
- Various clean-ups to the command line option parsing.
+ It turns out "git clone" over rsync transport has been broken when
+ the source repository has packed references for a long time, and
+ nobody noticed nor complained about it.
 
 
-* js/test-lib-windows-emulated-yes (2016-02-02) 1 commit
-  (merged to 'next' on 2016-02-03 at bf6b42c)
- + test-lib: limit the output of the yes utility
+* jk/rerere-xsnprintf (2016-02-08) 1 commit
+  (merged to 'next' on 2016-02-09 at ff9ade3)
+ + rerere: replace strcpy with xsnprintf
+ (this branch is used by jc/rerere-multi.)
 
- The emulated "yes" command used in our test scripts has been
- tweaked not to spend too much time generating unnecessary output
- that is not used, to help those who test on Windows where it would
- not stop until it fills the pipe buffer due to lack of SIGPIPE.
-
-
-* js/xmerge-marker-eol (2016-01-27) 2 commits
-  (merged to 'next' on 2016-02-01 at 05d91a4)
- + merge-file: ensure that conflict sections match eol style
- + merge-file: let conflict markers match end-of-line style of the context
-
- The low-level merge machinery has been taught to use CRLF line
- termination when inserting conflict markers to merged contents that
- are themselves CRLF line-terminated.
+ Some calls to strcpy(3) triggers a false warning from static
+ analysers that are less intelligent than humans, and reducing the
+ number of these false hits helps us notice real issues.  A few
+ calls to strcpy(3) in "git rerere" that are already safe has been
+ rewritten to avoid false wanings.
 
 
-* ls/clean-smudge-override-in-config (2016-01-29) 1 commit
-  (merged to 'next' on 2016-02-03 at 5962354)
- + convert: treat an empty string for clean/smudge filters as "cat"
+* jk/test-path-utils-xsnprintf (2016-02-08) 1 commit
+  (merged to 'next' on 2016-02-09 at 931f70b)
+ + test-path-utils: use xsnprintf in favor of strcpy
 
- Clean/smudge filters defined in a configuration file of lower
- precedence can now be overridden to be a pass-through no-op by
- setting the variable to an empty string.
-
-
-* nd/do-not-move-worktree-manually (2016-01-22) 2 commits
-  (merged to 'next' on 2016-01-26 at c539221)
- + worktree: stop supporting moving worktrees manually
- + worktree.c: fix indentation
-
- "git worktree" had a broken code that attempted to auto-fix
- possible inconsistency that results from end-users moving a
- worktree to different places without telling Git (the original
- repository needs to maintain backpointers to its worktrees, but
- "mv" run by end-users who are not familiar with that fact will
- obviously not adjust them), which actually made things worse
- when triggered.
+ Some calls to strcpy(3) triggers a false warning from static
+ analysers that are less intelligent than humans, and reducing the
+ number of these false hits helps us notice real issues.  A few
+ calls to strcpy(3) in test-path-utils that are already safe has
+ been rewritten to avoid false wanings.
 
 
-* sb/submodule-init (2016-01-28) 2 commits
- - submodule: port init from shell to C
- - submodule: port resolve_relative_url from shell to C
- (this branch uses sb/submodule-parallel-update; is tangled with dt/refs-backend-lmdb.)
+* js/mingw-tests (2016-02-08) 21 commits
+  (merged to 'next' on 2016-02-08 at 417e555)
+ + gitignore: ignore generated test-fake-ssh executable
+  (merged to 'next' on 2016-02-03 at ace7624)
+ + mingw: do not bother to test funny file names
+ + mingw: skip a test in t9130 that cannot pass on Windows
+ + mingw: handle the missing POSIXPERM prereq in t9124
+ + mingw: avoid illegal filename in t9118
+ + mingw: mark t9100's test cases with appropriate prereqs
+ + t0008: avoid absolute path
+ + mingw: work around pwd issues in the tests
+ + mingw: fix t9700's assumption about directory separators
+ + mingw: skip test in t1508 that fails due to path conversion
+ + tests: turn off git-daemon tests if FIFOs are not available
+ + mingw: disable mkfifo-based tests
+ + mingw: accomodate t0060-path-utils for MSYS2
+ + mingw: fix t5601-clone.sh
+ + mingw: let lstat() fail with errno == ENOTDIR when appropriate
+ + mingw: try to delete target directory before renaming
+ + mingw: prepare the TMPDIR environment variable for shell scripts
+ + mingw: factor out Windows specific environment setup
+ + Git.pm: stop assuming that absolute paths start with a slash
+ + mingw: do not trust MSYS2's MinGW gettext.sh
+ + mingw: let's use gettext with MSYS2
+ (this branch is used by mg/mingw-test-fix.)
 
- Major part of "git submodule init" has been ported to C.
+ Test scripts have been updated to remove assumptions that are not
+ portable between Git for POSIX and Git for Windows, or to skip ones
+ with expectations that are not satisfiable on Git for Windows.
 
- Will have to wait for 'sb/submodule-parallel-update'.
+
+* mg/mingw-test-fix (2016-02-08) 1 commit
+  (merged to 'next' on 2016-02-12 at df77956)
+ + t9100: fix breakage when SHELL_PATH is not /bin/sh
+ (this branch uses js/mingw-tests.)
+
+ An earlier adjustment of test mistakenly used write_script
+ to prepare a file whose exact content matters for the test;
+ reverting that part fixes the breakage for those who use
+ SHELL_PATH that is different from /bin/sh.
 
 
-* wp/sha1-name-negative-match (2016-02-01) 2 commits
-  (merged to 'next' on 2016-02-03 at 89fa5ef)
- + object name: introduce '^{/!-<negative pattern>}' notation
- + test for '!' handling in rev-parse's named commits
+* mm/clean-doc-fix (2016-02-09) 1 commit
+  (merged to 'next' on 2016-02-09 at ced8555)
+ + Documentation/git-clean.txt: don't mention deletion of .git/modules/*
 
- A new "<branch>^{/!-<pattern>}" notation can be used to name a
- commit that is reachable from <branch> that does not match the
- given <pattern>.
+ The documentation for "git clean" has been corrected; it mentioned
+ that .git/modules/* are removed by giving two "-f", which has never
+ been the case.
+
+
+* nd/clear-gitenv-upon-use-of-alias (2016-02-02) 4 commits
+  (merged to 'next' on 2016-02-09 at 2c441b4)
+ + restore_env(): free the saved environment variable once we are done
+ + git: simplify environment save/restore logic
+ + git: protect against unbalanced calls to {save,restore}_env()
+ + git: remove an early return from save_env_before_alias()
+
+ The automatic typo correction applied to an alias was broken
+ with a recent change already in 'master'.
+
+--------------------------------------------------
+[New Topics]
+
+* cn/deprecate-ssh-git-url (2016-02-15) 1 commit
+ - Disown ssh+git and git+ssh
+
+ Needs toning down by replacing the condescendence with an
+ explanation and enlightenment.
+ ($gmane/286222)
+
+
+* jk/config-include (2016-02-13) 1 commit
+ - git-config: better document default behavior for `--include`
+
+ Will merge to 'next'.
+
+
+* nd/git-common-dir-fix (2016-02-12) 1 commit
+ - rev-parse: take prefix into account in --git-common-dir
+
+ Will merge to 'next'.
+
+
+* sp/remote-curl-ssl-strerror (2016-02-15) 1 commit
+ - remote-curl: include curl_errorstr on SSL setup failures
+
+ Help those who debug http(s) part of the system.
+
+ Will merge to 'next'.
+
+
+* bc/http-empty-auth (2016-02-15) 1 commit
+ - http: add option to try authentication without username
+
+ Some authentication methods do not need username or password, but
+ libcurl needs some hint that it needs to perform authentication.
+ Supplying an empty username and password string is a valid way to
+ do so, but you can set the http.[<url>.]emptyAuth configuration
+ variable to achieve the same, if you find it cleaner.
+
+ Will merge to 'next'.
+
+
+* ce/https-public-key-pinning (2016-02-15) 1 commit
+ - http: implement public key pinning
+
+ You can now set http.[<url>.]pinnedpubkey to specify the pinned
+ public key when building with recent enough versions of libcURL.
+
+ Will merge to 'next'.
+
+
+* ew/connect-verbose (2016-02-15) 1 commit
+ - t5570: add tests for "git {clone,fetch,pull} -v"
+
+ Will merge to 'next'.
+
+
+* fa/merge-recursive-no-rename (2016-02-17) 2 commits
+ - merge-recursive: more consistent interface
+ - merge-recursive: option to disable renames
+
+ "git merge-recursive" learned "--no-renames" option to disable its
+ rename detection logic.
+
+ Will merge to 'next'.
+
+
+* jc/am-i-v-fix (2016-02-17) 3 commits
+ - am -i: fix "v"iew
+ - pager: factor out a helper to prepare a child process to run the pager
+ - pager: lose a separate argv[]
+
+ The "v(iew)" subcommand of the interactive "git am -i" command was
+ broken in 2.6.0 timeframe when the command was rewritten in C.
+
+ Will merge to 'next'.
+
+
+* jk/merge-tree-merge-blobs (2016-02-16) 1 commit
+ - merge_blobs: use strbuf instead of manually-sized mmfile_t
+
+ "git merge-tree" (a throw-away demonstration) did not work very
+ well when merging "both sides added a new file at the same path"
+ case.
+
+ Undecided; we might be better off deleting it altogether.
+
+
+* jk/tighten-alloc (2016-02-15) 18 commits
+ - ewah: convert to REALLOC_ARRAY, etc
+ - convert ewah/bitmap code to use xmalloc
+ - diff_populate_gitlink: use a strbuf
+ - transport_anonymize_url: use xstrfmt
+ - git-compat-util: drop mempcpy compat code
+ - sequencer: simplify memory allocation of get_message
+ - test-path-utils: fix normalize_path_copy output buffer size
+ - fetch-pack: simplify add_sought_entry
+ - fast-import: simplify allocation in start_packfile
+ - write_untracked_extension: use FLEX_ALLOC helper
+ - use st_add and st_mult for allocation size computation
+ - convert trivial cases to FLEX_ARRAY macros
+ - use xmallocz to avoid size arithmetic
+ - convert trivial cases to ALLOC_ARRAY
+ - add helpers for allocating flex-array structs
+ - harden REALLOC_ARRAY and xcalloc against size_t overflow
+ - tree-diff: catch integer overflow in combine_diff_path allocation
+ - add helpers for detecting size_t overflow
+
+ Update various codepaths to avoid manually-counted malloc().
+
+ Will merge to 'next'.
+
+
+* js/git-remote-add-url-insteadof-test (2016-02-17) 1 commit
+ - t5505: 'remote add x y' should work when url.y.insteadOf = x
+
+ Will merge to 'next'.
+
+
+* nd/dwim-wildcards-as-pathspecs (2016-02-10) 3 commits
+ - get_sha1: don't die() on bogus search strings
+ - check_filename: tighten dwim-wildcard ambiguity
+ - checkout: reorder check_filename conditional
+
+ "git show 'HEAD:Foo[BAR]Baz'" did not interpret the argument as a
+ rev, i.e. the object named by the the pathname with wildcard
+ characters in a tree object.
+
+ I lost track of this topic; did we decide that this is a good thing
+ to do, or unnecessary noise to only cater to a crazy use case?
+
+
+* nd/exclusion-regression-fix (2016-02-15) 4 commits
+ - dir.c: don't exclude whole dir prematurely
+ - dir.c: support marking some patterns already matched
+ - dir.c: support tracing exclude
+ - dir.c: fix match_pathname()
+
+ Another try to add support to the ignore mechanism that lets you
+ say "this is excluded" and then later say "oh, no, this part (that
+ is a subset of the previous part) is not exlucded".
+
+ Will merge to 'next'.
+
+
+* nd/worktree-add-B (2016-02-15) 2 commits
+ - worktree add -B: do the checkout test before update branch
+ - worktree: fix "add -B"
+
+ "git worktree add -B <branchname>" did not work.
+
+ Will merge to 'next'.
+
+
+* ps/config-error (2016-02-17) 16 commits
+ - SQUASH
+ - config: rename git_config_set_or_die to git_config_set
+ - config: rename git_config_set to git_config_set_gently
+ - compat: die when unable to set core.precomposeunicode
+ - sequencer: die on config error when saving replay opts
+ - init-db: die on config errors when initializing empty repo
+ - clone: die on config error in cmd_clone
+ - remote: die on config error when manipulating remotes
+ - remote: die on config error when setting/adding branches
+ - remote: die on config error when setting URL
+ - submodule--helper: die on config error when cloning module
+ - submodule: die on config error when linking modules
+ - branch: die on config error when editing branch description
+ - branch: die on config error when unsetting upstream
+ - branch: report errors in tracking branch setup
+ - config: introduce set_or_die wrappers
+
+ Many codepaths forget to check return value from git_config_set();
+ the function is made to die() to make sure we do not proceed when
+ setting a configuration variable failed.
+
+ Need to squash the tip two commits into one before moving forward.
+
+
+* ss/commit-dry-run-resolve-merge-to-no-op (2016-02-17) 1 commit
+ - wt-status.c: set commitable bit if there is a meaningful merge.
+
+ "git commit --dry-run" reported "No, no, you cannot commit." in one
+ case where "git commit" would have allowed you to commit, and this
+ improves it a little bit ("git commit --dry-run --short" still does
+ not give you the correct answer, for example).
+
+
+* tg/git-remote (2016-02-16) 4 commits
+ - remote: use remote_is_configured() for add and rename
+ - remote: actually check if remote exits
+ - remote: simplify remote_is_configured()
+ - remote: use parse_config_key
+
+ The internal API to interact with "remote.*" configuration
+ variables has been streamlined.
+
+ Will merge to 'next'.
+
+
+* ls/config-origin (2016-02-17) 3 commits
+ - config: add '--show-origin' option to print the origin of a config value
+ - config: add 'type' to config_source struct that identifies config type
+ - t: do not hide Git's exit code in tests using 'nul_to_q'
 
 --------------------------------------------------
 [Stalled]
@@ -275,45 +431,61 @@ repositories listed at
 --------------------------------------------------
 [Cooking]
 
-* jk/rerere-xsnprintf (2016-02-08) 1 commit
-  (merged to 'next' on 2016-02-09 at ff9ade3)
- + rerere: replace strcpy with xsnprintf
- (this branch is used by jc/rerere-multi.)
+* ep/format-printf (2016-02-11) 22 commits
+ - wt-status.h: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
+ - utf8.h: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
+ - transport-helper.c: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
+ - trace.h: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
+ - strbuf.h: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
+ - remote.c: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
+ - pkt-line.h: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
+ - merge-recursive.c: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
+ - imap-send.c: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
+ - http-backend.c: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
+ - fsck.c: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
+ - daemon.c: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
+ - config.c: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
+ - color.h: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
+ - cache.h: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
+ - builtin/upload-archive.c: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
+ - builtin/update-index.c: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
+ - builtin/receive-pack.c: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
+ - builtin/index-pack.c: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
+ - argv-array.h: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
+ - advice.h: use the FORMAT_PRINTF macro to declare the gcc function attribute 'format printf'
+ - git-compat-util.h: add the FORMAT_PRINTF macro
 
- Some calls to strcpy(3) triggers a false warning from static
- analysers that are less intelligent than humans, and reducing the
- number of these false hits helps us notice real issues.  A few
- calls to strcpy(3) in "git rerere" that are already safe has been
- rewritten to avoid false wanings.
-
- Will merge to 'master'.
-
-
-* jk/test-path-utils-xsnprintf (2016-02-08) 1 commit
-  (merged to 'next' on 2016-02-09 at 931f70b)
- + test-path-utils: use xsnprintf in favor of strcpy
-
- Some calls to strcpy(3) triggers a false warning from static
- analysers that are less intelligent than humans, and reducing the
- number of these false hits helps us notice real issues.  A few
- calls to strcpy(3) in test-path-utils that are already safe has
- been rewritten to avoid false wanings.
-
- Will merge to 'master'.
-
-
-* mm/clean-doc-fix (2016-02-09) 1 commit
-  (merged to 'next' on 2016-02-09 at ced8555)
- + Documentation/git-clean.txt: don't mention deletion of .git/modules/*
-
- The documentation for "git clean" has been corrected; it mentioned
- that .git/modules/* are removed by giving two "-f", which has never
- been the case.
-
- Will merge to 'master'.
+ Undecided.
 
 
-* nd/icase (2016-02-09) 11 commits
+* ew/force-ipv4 (2016-02-12) 1 commit
+ - connect & http: support -4 and -6 switches for remote operations
+
+ "git fetch" and friends that make network connections can now be
+ told to only use ipv4 (or ipv6).
+
+ Will merge to 'next'.
+
+
+* jk/lose-name-path (2016-02-12) 5 commits
+ - list-objects: pass full pathname to callbacks
+ - list-objects: drop name_path entirely
+ - list-objects: convert name_path to a strbuf
+ - show_object_with_name: simplify by using path_name()
+ - http-push: stop using name_path
+
+ The "name_path" API was an attempt to reduce the need to construct
+ the full path out of a series of path components while walking a
+ tree hierarchy, but over time made less efficient because the path
+ needs to be flattened, e.g. to be compared with another path that
+ is already flat.  Remove the API and rewrite its users to simplify
+ overall code complexity.
+
+ Will merge to 'next'.
+
+
+* nd/icase (2016-02-15) 12 commits
+ - grep.c: reuse "icase" variable
  - diffcore-pickaxe: support case insensitive match on non-ascii
  - diffcore-pickaxe: "share" regex error handling code
  - grep/pcre: support utf-8
@@ -328,7 +500,7 @@ repositories listed at
 
  "git grep -i" has been taught to fold case in non-ascii locales.
 
- ($gmane/285666)
+ ($gmane/286137)
 
 
 * tb/conversion (2016-02-10) 6 commits
@@ -340,62 +512,11 @@ repositories listed at
  + convert.c: remove unused parameter 'path'
  + t0027: add tests for get_stream_filter()
 
- Simplication of eol conversion codepath.
-
-
-* da/user-useconfigonly (2016-02-08) 2 commits
-  (merged to 'next' on 2016-02-09 at 8b303ce)
- + ident: add user.useConfigOnly boolean for when ident shouldn't be guessed
- + fmt_ident: refactor strictness checks
-
- The "user.useConfigOnly" configuration variable can be used to
- force the user to always set user.email & user.name configuration
- variables, serving as a reminder for those who work on multiple
- projects and do not want to put these in their $HOME/.gitconfig.
-
- Will merge to 'master'.
-
-
-* ah/stripspace-optstring (2016-01-29) 1 commit
-  (merged to 'next' on 2016-02-12 at cd021aa)
- + stripspace: call U+0020 a "space" instead of a "blank"
-
- Will merge to 'master'.
-
-
-* dw/mergetool-vim-window-shuffle (2016-02-12) 1 commit
-  (merged to 'next' on 2016-02-12 at 2a2e8bd)
- + mergetool: reorder vim/gvim buffers in three-way diffs
-
- The vimdiff backend for "git mergetool" has been tweaked to arrange
- and number buffers in the order that would match the expectation of
- majority of people who read left to right, then top down and assign
- buffers 1 2 3 4 "mentally" to local base remote merge windows based
- on that order.
-
- Will merge to 'master'.
-
-
-* jk/drop-rsync-transport (2016-02-01) 1 commit
-  (merged to 'next' on 2016-02-03 at 08be402)
- + transport: drop support for git-over-rsync
-
- It turns out "git clone" over rsync transport has been broken when
- the source repository has packed references for a long time, and
- nobody noticed nor complained about it.
-
- Will merge to 'master'.
-
-
-* dv/http-try-negotiate-at-least-once (2016-02-02) 1 commit
- - remote-curl: don't fall back to Basic auth if we haven't tried Negotiate
-
  Will be rerolled.
- A solution with a different approach may be a better one.
- ($gmane/285633)
+ ($gmane/286219)
 
 
-* sb/submodule-parallel-update (2016-02-12) 7 commits
+* sb/submodule-parallel-update (2016-02-13) 7 commits
  - clone: allow an explicit argument for parallel submodule clones
  - submodule update: expose parallelism to the user
  - git submodule update: have a dedicated helper for cloning
@@ -403,14 +524,16 @@ repositories listed at
  - fetching submodules: respect `submodule.fetchJobs` config option
  - submodule-config: drop check against NULL
  - submodule-config: keep update strategy around
- (this branch is used by dt/refs-backend-lmdb.)
+ (this branch is used by dt/refs-backend-lmdb and sb/submodule-init.)
 
  A major part of "git submodule update" has been ported to C to take
  advantage of the recently added framework to run download tasks in
  parallel.
 
+ Comments?
 
-* dt/refs-backend-lmdb (2016-02-12) 22 commits
+
+* dt/refs-backend-lmdb (2016-02-13) 22 commits
  - refs: tests for lmdb backend
  - refs: add LMDB refs storage backend
  - refs: add register_ref_storage_backends()
@@ -432,8 +555,8 @@ repositories listed at
  - refs: add methods for the ref iterators
  - refs: add methods for misc ref operations
  - refs: add a backend method structure with transaction functions
- - Merge branch 'sb/submodule-parallel-update' into dt/refs/backend-lmdb
- (this branch uses sb/submodule-parallel-update.)
+ - Merge branch 'sb/submodule-parallel-update' into dt/refs-backend-lmdb
+ (this branch uses sb/submodule-parallel-update; is tangled with sb/submodule-init.)
 
  Building on top of a few refs-backend preparatory series, LMDB
  based refs backend has been plugged into the system.
@@ -442,66 +565,7 @@ repositories listed at
  ($gmane/285604)
 
 
-* js/mingw-tests (2016-02-08) 21 commits
-  (merged to 'next' on 2016-02-08 at 417e555)
- + gitignore: ignore generated test-fake-ssh executable
-  (merged to 'next' on 2016-02-03 at ace7624)
- + mingw: do not bother to test funny file names
- + mingw: skip a test in t9130 that cannot pass on Windows
- + mingw: handle the missing POSIXPERM prereq in t9124
- + mingw: avoid illegal filename in t9118
- + mingw: mark t9100's test cases with appropriate prereqs
- + t0008: avoid absolute path
- + mingw: work around pwd issues in the tests
- + mingw: fix t9700's assumption about directory separators
- + mingw: skip test in t1508 that fails due to path conversion
- + tests: turn off git-daemon tests if FIFOs are not available
- + mingw: disable mkfifo-based tests
- + mingw: accomodate t0060-path-utils for MSYS2
- + mingw: fix t5601-clone.sh
- + mingw: let lstat() fail with errno == ENOTDIR when appropriate
- + mingw: try to delete target directory before renaming
- + mingw: prepare the TMPDIR environment variable for shell scripts
- + mingw: factor out Windows specific environment setup
- + Git.pm: stop assuming that absolute paths start with a slash
- + mingw: do not trust MSYS2's MinGW gettext.sh
- + mingw: let's use gettext with MSYS2
- (this branch is used by mg/mingw-test-fix.)
-
- Test scripts have been updated to remove assumptions that are not
- portable between Git for POSIX and Git for Windows, or to skip ones
- with expectations that are not satisfiable on Git for Windows.
-
- Will merge to 'master'.
-
-
-* mg/mingw-test-fix (2016-02-08) 1 commit
-  (merged to 'next' on 2016-02-12 at df77956)
- + t9100: fix breakage when SHELL_PATH is not /bin/sh
- (this branch uses js/mingw-tests.)
-
- An earlier adjustment of test mistakenly used write_script
- to prepare a file whose exact content matters for the test;
- reverting that part fixes the breakage for those who use
- SHELL_PATH that is different from /bin/sh.
-
- Will merge to 'master'.
-
-
-* nd/clear-gitenv-upon-use-of-alias (2016-02-02) 4 commits
-  (merged to 'next' on 2016-02-09 at 2c441b4)
- + restore_env(): free the saved environment variable once we are done
- + git: simplify environment save/restore logic
- + git: protect against unbalanced calls to {save,restore}_env()
- + git: remove an early return from save_env_before_alias()
-
- The automatic typo correction applied to an alias was broken
- with a recent change already in 'master'.
-
- Will merge to 'master'.
-
-
-* kn/ref-filter-atom-parsing (2016-02-02) 12 commits
+* kn/ref-filter-atom-parsing (2016-02-17) 11 commits
  - ref-filter: introduce objectname_atom_parser()
  - ref-filter: introduce contents_atom_parser()
  - ref-filter: introduce remote_ref_atom_parser()
@@ -512,13 +576,12 @@ repositories listed at
  - ref-filter: introduce parsing functions for each valid atom
  - ref-filter: introduce struct used_atom
  - ref-filter: bump 'used_atom' and related code to the top
- - ref-filter: use strbuf_split_str_omit_term()
- - strbuf: introduce strbuf_split_str_omit_term()
+ - ref-filter: use string_list_split over strbuf_split
 
  Refactoring of ref-filter's format-parsing code, in preparation
  for "branch --format" and friends.
 
- ($gmane/285158)
+ Will merge to 'next'.
 
 
 * ad/cygwin-wants-rename (2015-08-07) 1 commit
@@ -536,7 +599,6 @@ repositories listed at
  - rerere: handle leftover rr-cache/$ID directory and postimage files
  - rerere: scan $GIT_DIR/rr-cache/$ID when instantiating a rerere_id
  - rerere: split conflict ID further
- (this branch uses jk/rerere-xsnprintf.)
 
  "git rerere" can encounter two or more files with the same conflict
  signature that have to be resolved in different ways, but there was
@@ -553,3 +615,12 @@ repositories listed at
  git-gui still uses the deprecated syntax, which needs to be fixed
  before this final step can proceed.
  ($gmane/282594)
+
+--------------------------------------------------
+[Discarded]
+
+* dv/http-try-negotiate-at-least-once (2016-02-02) 1 commit
+ . remote-curl: don't fall back to Basic auth if we haven't tried Negotiate
+
+ bc/http-empty-auth satisfies the original need that triggered this
+ topic better.
