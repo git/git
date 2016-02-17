@@ -1,10 +1,20 @@
 Git 2.8 Release Notes
 =====================
 
+Backward compatibility note
+---------------------------
+
+The rsync:// transport has been removed.
+
+
 Updates since v2.7
 ------------------
 
 UI, Workflows & Features
+
+ * It turns out "git clone" over rsync transport has been broken when
+   the source repository has packed references for a long time, and
+   nobody noticed nor complained about it.
 
  * "branch --delete" has "branch -d" but "push --delete" does not.
 
@@ -83,6 +93,11 @@ UI, Workflows & Features
    commit that is reachable from <branch> that does not match the
    given <pattern>.
 
+ * The "user.useConfigOnly" configuration variable can be used to
+   force the user to always set user.email & user.name configuration
+   variables, serving as a reminder for those who work on multiple
+   projects and do not want to put these in their $HOME/.gitconfig.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -126,6 +141,21 @@ Performance, Internal Implementation, Development Support etc.
    tests that take longer before other ones; this reduces the total
    wallclock time.
 
+ * Test scripts have been updated to remove assumptions that are not
+   portable between Git for POSIX and Git for Windows, or to skip ones
+   with expectations that are not satisfiable on Git for Windows.
+
+ * Some calls to strcpy(3) triggers a false warning from static
+   analysers that are less intelligent than humans, and reducing the
+   number of these false hits helps us notice real issues.  A few
+   calls to strcpy(3) in test-path-utils that are already safe has
+   been rewritten to avoid false wanings.
+
+ * Some calls to strcpy(3) triggers a false warning from static
+   analysers that are less intelligent than humans, and reducing the
+   number of these false hits helps us notice real issues.  A few
+   calls to strcpy(3) in "git rerere" that are already safe has been
+   rewritten to avoid false wanings.
 
 Also contains various documentation updates and code clean-ups.
 
@@ -267,9 +297,22 @@ notes for details).
    not stop until it fills the pipe buffer due to lack of SIGPIPE.
    (merge 6129c93 js/test-lib-windows-emulated-yes later to maint).
 
+ * The documentation for "git clean" has been corrected; it mentioned
+   that .git/modules/* are removed by giving two "-f", which has never
+   been the case.
+   (merge 31e3c2d mm/clean-doc-fix later to maint).
+
+ * The vimdiff backend for "git mergetool" has been tweaked to arrange
+   and number buffers in the order that would match the expectation of
+   majority of people who read left to right, then top down and assign
+   buffers 1 2 3 4 "mentally" to local base remote merge windows based
+   on that order.
+   (merge 2300328 dw/mergetool-vim-window-shuffle later to maint).
+
  * Other minor clean-ups and documentation updates
    (merge 99487cf ss/user-manual later to maint).
    (merge e914ef0 ew/for-each-ref-doc later to maint).
    (merge 36fc7d8 sg/t6050-failing-editor-test-fix later to maint).
    (merge 60253a6 ss/clone-depth-single-doc later to maint).
    (merge bd02e97 lv/add-doc-working-tree later to maint).
+   (merge f562d7d ah/stripspace-optstring later to maint).
