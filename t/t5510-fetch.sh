@@ -314,42 +314,6 @@ test_expect_success 'bundle should be able to create a full history' '
 
 '
 
-! rsync --help > /dev/null 2> /dev/null &&
-say 'Skipping rsync tests because rsync was not found' || {
-test_expect_success 'fetch via rsync' '
-	git pack-refs &&
-	mkdir rsynced &&
-	(cd rsynced &&
-	 git init --bare &&
-	 git fetch "rsync:../.git" master:refs/heads/master &&
-	 git gc --prune &&
-	 test $(git rev-parse master) = $(cd .. && git rev-parse master) &&
-	 git fsck --full)
-'
-
-test_expect_success 'push via rsync' '
-	mkdir rsynced2 &&
-	(cd rsynced2 &&
-	 git init) &&
-	(cd rsynced &&
-	 git push "rsync:../rsynced2/.git" master) &&
-	(cd rsynced2 &&
-	 git gc --prune &&
-	 test $(git rev-parse master) = $(cd .. && git rev-parse master) &&
-	 git fsck --full)
-'
-
-test_expect_success 'push via rsync' '
-	mkdir rsynced3 &&
-	(cd rsynced3 &&
-	 git init) &&
-	git push --all "rsync:rsynced3/.git" &&
-	(cd rsynced3 &&
-	 test $(git rev-parse master) = $(cd .. && git rev-parse master) &&
-	 git fsck --full)
-'
-}
-
 test_expect_success 'fetch with a non-applying branch.<name>.merge' '
 	git config branch.master.remote yeti &&
 	git config branch.master.merge refs/heads/bigfoot &&

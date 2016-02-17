@@ -115,8 +115,7 @@ objects from the source repository into a pack in the cloned repository.
 --quiet::
 -q::
 	Operate quietly.  Progress is not reported to the standard
-	error stream. This flag is also passed to the `rsync'
-	command when given.
+	error stream.
 
 --verbose::
 -v::
