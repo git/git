@@ -176,10 +176,10 @@ struct worktree **get_worktrees(void)
 			if (!strcmp(d->d_name, ".") || !strcmp(d->d_name, ".."))
 				continue;
 
-				if ((linked = get_linked_worktree(d->d_name))) {
-					ALLOC_GROW(list, counter + 1, alloc);
-					list[counter++] = linked;
-				}
+			if ((linked = get_linked_worktree(d->d_name))) {
+				ALLOC_GROW(list, counter + 1, alloc);
+				list[counter++] = linked;
+			}
 		}
 		closedir(dir);
 	}
