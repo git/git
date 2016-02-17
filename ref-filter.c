@@ -16,6 +16,11 @@
 
 typedef enum { FIELD_STR, FIELD_ULONG, FIELD_TIME } cmp_type;
 
+struct align {
+	align_type position;
+	unsigned int width;
+};
+
 /*
  * An atom is a valid field atom listed below, possibly prefixed with
  * a "*" to denote deref_tag().
@@ -31,6 +36,7 @@ static struct used_atom {
 	cmp_type type;
 	union {
 		char color[COLOR_MAXLEN];
+		struct align align;
 	} u;
 } *used_atom;
 static int used_atom_cnt, need_tagged, need_symref;
@@ -53,6 +59,37 @@ static align_type parse_align_position(const char *s)
 	else if (!strcmp(s, "left"))
 		return ALIGN_LEFT;
 	return -1;
+}
+
+static void align_atom_parser(struct used_atom *atom, const char *arg)
+{
+	struct align *align = &atom->u.align;
+	struct string_list params = STRING_LIST_INIT_DUP;
+	int i;
+	unsigned int width = ~0U;
+
+	if (!arg)
+		die(_("expected format: %%(align:<width>,<position>)"));
+
+	align->position = ALIGN_LEFT;
+
+	string_list_split(&params, arg, ',', -1);
+	for (i = 0; i < params.nr; i++) {
+		const char *s = params.items[i].string;
+		int position;
+
+		if (!strtoul_ui(s, 10, &width))
+			;
+		else if ((position = parse_align_position(s)) >= 0)
+			align->position = position;
+		else
+			die(_("unrecognized %%(align) argument: %s"), s);
+	}
+
+	if (width == ~0U)
+		die(_("positive width expected with the %%(align) atom"));
+	align->width = width;
+	string_list_clear(&params, 0);
 }
 
 static struct {
@@ -93,16 +130,11 @@ static struct {
 	{ "flag" },
 	{ "HEAD" },
 	{ "color", FIELD_STR, color_atom_parser },
-	{ "align" },
+	{ "align", FIELD_STR, align_atom_parser },
 	{ "end" },
 };
 
 #define REF_FORMATTING_STATE_INIT  { 0, NULL }
-
-struct align {
-	align_type position;
-	unsigned int width;
-};
 
 struct contents {
 	unsigned int lines;
@@ -286,22 +318,6 @@ static void end_atom_handler(struct atom_value *atomv, struct ref_formatting_sta
 	}
 	strbuf_release(&s);
 	pop_stack_element(&state->stack);
-}
-
-static int match_atom_name(const char *name, const char *atom_name, const char **val)
-{
-	const char *body;
-
-	if (!skip_prefix(name, atom_name, &body))
-		return 0; /* doesn't even begin with "atom_name" */
-	if (!body[0]) {
-		*val = NULL; /* %(atom_name) and no customization */
-		return 1;
-	}
-	if (body[0] != ':')
-		return 0; /* "atom_namefoo" is not "atom_name" or "atom_name:..." */
-	*val = body + 1; /* "atom_name:val" */
-	return 1;
 }
 
 /*
@@ -845,7 +861,6 @@ static void populate_value(struct ref_array_item *ref)
 		int deref = 0;
 		const char *refname;
 		const char *formatp;
-		const char *valp;
 		struct branch *branch = NULL;
 
 		v->handler = append_atom;
@@ -909,34 +924,8 @@ static void populate_value(struct ref_array_item *ref)
 			else
 				v->s = " ";
 			continue;
-		} else if (match_atom_name(name, "align", &valp)) {
-			struct align *align = &v->u.align;
-			struct string_list params = STRING_LIST_INIT_DUP;
-			int i;
-			int width = -1;
-
-			if (!valp)
-				die(_("expected format: %%(align:<width>,<position>)"));
-
-			align->position = ALIGN_LEFT;
-
-			string_list_split(&params, valp, ',', -1);
-			for (i = 0; i < params.nr; i++) {
-				const char *s = params.items[i].string;
-				int position;
-
-				if (!strtoul_ui(s, 10, (unsigned int *)&width))
-					;
-				else if ((position = parse_align_position(s)) >= 0)
-					align->position = position;
-				else
-					die(_("improper format entered align:%s"), s);
-			}
-
-			if (width < 0)
-				die(_("positive width expected with the %%(align) atom"));
-			align->width = width;
-			string_list_clear(&params, 0);
+		} else if (starts_with(name, "align")) {
+			v->u.align = atom->u.align;
 			v->handler = align_atom_handler;
 			continue;
 		} else if (!strcmp(name, "end")) {
