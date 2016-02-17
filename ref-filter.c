@@ -886,41 +886,34 @@ static void populate_value(struct ref_array_item *ref)
 			continue;
 		} else if (match_atom_name(name, "align", &valp)) {
 			struct align *align = &v->u.align;
-			struct strbuf **s, **to_free;
+			struct string_list params = STRING_LIST_INIT_DUP;
+			int i;
 			int width = -1;
 
 			if (!valp)
 				die(_("expected format: %%(align:<width>,<position>)"));
 
-			/*
-			 * TODO: Implement a function similar to strbuf_split_str()
-			 * which would omit the separator from the end of each value.
-			 */
-			s = to_free = strbuf_split_str(valp, ',', 0);
-
 			align->position = ALIGN_LEFT;
 
-			while (*s) {
-				/*  Strip trailing comma */
-				if (s[1])
-					strbuf_setlen(s[0], s[0]->len - 1);
-				if (!strtoul_ui(s[0]->buf, 10, (unsigned int *)&width))
+			string_list_split(&params, valp, ',', -1);
+			for (i = 0; i < params.nr; i++) {
+				const char *s = params.items[i].string;
+				if (!strtoul_ui(s, 10, (unsigned int *)&width))
 					;
-				else if (!strcmp(s[0]->buf, "left"))
+				else if (!strcmp(s, "left"))
 					align->position = ALIGN_LEFT;
-				else if (!strcmp(s[0]->buf, "right"))
+				else if (!strcmp(s, "right"))
 					align->position = ALIGN_RIGHT;
-				else if (!strcmp(s[0]->buf, "middle"))
+				else if (!strcmp(s, "middle"))
 					align->position = ALIGN_MIDDLE;
 				else
-					die(_("improper format entered align:%s"), s[0]->buf);
-				s++;
+					die(_("improper format entered align:%s"), s);
 			}
 
 			if (width < 0)
 				die(_("positive width expected with the %%(align) atom"));
 			align->width = width;
-			strbuf_list_free(to_free);
+			string_list_clear(&params, 0);
 			v->handler = align_atom_handler;
 			continue;
 		} else if (!strcmp(name, "end")) {
