@@ -51,6 +51,11 @@ test_expect_success setup '
 	git clone one test
 '
 
+test_expect_success 'add remote whose URL agrees with url.<...>.insteadOf' '
+	test_config url.git@host.com:team/repo.git.insteadOf myremote &&
+	git remote add myremote git@host.com:team/repo.git
+'
+
 test_expect_success C_LOCALE_OUTPUT 'remote information for the origin' '
 	(
 		cd test &&
