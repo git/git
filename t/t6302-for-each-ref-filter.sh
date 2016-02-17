@@ -133,6 +133,48 @@ test_expect_success 'right alignment' '
 	test_cmp expect actual
 '
 
+cat >expect <<-\EOF
+|       refname is refs/heads/master       |refs/heads/master
+|        refname is refs/heads/side        |refs/heads/side
+|         refname is refs/odd/spot         |refs/odd/spot
+|     refname is refs/tags/double-tag      |refs/tags/double-tag
+|        refname is refs/tags/four         |refs/tags/four
+|         refname is refs/tags/one         |refs/tags/one
+|     refname is refs/tags/signed-tag      |refs/tags/signed-tag
+|        refname is refs/tags/three        |refs/tags/three
+|         refname is refs/tags/two         |refs/tags/two
+EOF
+
+test_align_permutations() {
+	while read -r option
+	do
+		test_expect_success "align:$option" '
+			git for-each-ref --format="|%(align:$option)refname is %(refname)%(end)|%(refname)" >actual &&
+			test_cmp expect actual
+		'
+	done
+}
+
+test_align_permutations <<-\EOF
+	middle,42
+	42,middle
+	position=middle,42
+	42,position=middle
+	middle,width=42
+	width=42,middle
+	position=middle,width=42
+	width=42,position=middle
+EOF
+
+# Last one wins (silently) when multiple arguments of the same type are given
+
+test_align_permutations <<-\EOF
+	32,width=42,middle
+	width=30,42,middle
+	width=42,position=right,middle
+	42,right,position=middle
+EOF
+
 # Individual atoms inside %(align:...) and %(end) must not be quoted.
 
 test_expect_success 'alignment with format quote' "
