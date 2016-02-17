@@ -482,6 +482,9 @@ static struct string_list *get_renames(struct merge_options *o,
 	struct diff_options opts;
 
 	renames = xcalloc(1, sizeof(struct string_list));
+	if (!o->detect_rename)
+		return renames;
+
 	diff_setup(&opts);
 	DIFF_OPT_SET(&opts, RECURSIVE);
 	DIFF_OPT_CLR(&opts, RENAME_EMPTY);
@@ -2039,6 +2042,7 @@ void init_merge_options(struct merge_options *o)
 	o->diff_rename_limit = -1;
 	o->merge_rename_limit = -1;
 	o->renormalize = 0;
+	o->detect_rename = 1;
 	merge_recursive_config(o);
 	if (getenv("GIT_MERGE_VERBOSITY"))
 		o->verbosity =
@@ -2088,9 +2092,12 @@ int parse_merge_opt(struct merge_options *o, const char *s)
 		o->renormalize = 1;
 	else if (!strcmp(s, "no-renormalize"))
 		o->renormalize = 0;
+	else if (!strcmp(s, "no-renames"))
+		o->detect_rename = 0;
 	else if (skip_prefix(s, "rename-threshold=", &arg)) {
 		if ((o->rename_score = parse_rename_score(&arg)) == -1 || *arg != 0)
 			return -1;
+		o->detect_rename = 1;
 	}
 	else
 		return -1;
