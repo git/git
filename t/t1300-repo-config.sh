@@ -957,13 +957,15 @@ Qsection.sub=section.val4
 Qsection.sub=section.val5Q
 EOF
 test_expect_success '--null --list' '
-	git config --null --list | nul_to_q >result &&
+	git config --null --list >result.raw &&
+	nul_to_q <result.raw >result &&
 	echo >>result &&
 	test_cmp expect result
 '
 
 test_expect_success '--null --get-regexp' '
-	git config --null --get-regexp "val[0-9]" | nul_to_q >result &&
+	git config --null --get-regexp "val[0-9]" >result.raw &&
+	nul_to_q <result.raw >result &&
 	echo >>result &&
 	test_cmp expect result
 '

@@ -141,7 +141,8 @@ test_expect_success 'grep respects not-binary diff attribute' '
 	test_cmp expect actual &&
 	echo "b diff" >.gitattributes &&
 	echo "b:binQary" >expect &&
-	git grep bin b | nul_to_q >actual &&
+	git grep bin b >actual.raw &&
+	nul_to_q <actual.raw >actual &&
 	test_cmp expect actual
 '
 
