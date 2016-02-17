@@ -2664,7 +2664,7 @@ sub argsfromdir
     #   co  # Obtain list directly.
     #   remove # HERE: TEST: MAYBE client does the recursion for us,
     #          # since it only makes sense to remove stuff already in
-    #          # the sandobx?
+    #          # the sandbox?
     #   ci # HERE: Similar to remove...
     #      # Don't try to implement the confusing/weird
     #      # ci -r bug er.."feature".
