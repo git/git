@@ -18,6 +18,12 @@ struct git_transport_options {
 	struct push_cas_option *cas;
 };
 
+enum transport_family {
+	TRANSPORT_FAMILY_ALL = 0,
+	TRANSPORT_FAMILY_IPV4,
+	TRANSPORT_FAMILY_IPV6
+};
+
 struct transport {
 	struct remote *remote;
 	const char *url;
@@ -110,6 +116,8 @@ struct transport {
 	 * actually turns out to be smart.
 	 */
 	struct git_transport_options *smart_options;
+
+	enum transport_family family;
 };
 
 #define TRANSPORT_PUSH_ALL 1

@@ -23,6 +23,7 @@ static const char *receivepack;
 static int verbosity;
 static int progress = -1;
 static int recurse_submodules = RECURSE_SUBMODULES_DEFAULT;
+static enum transport_family family;
 
 static struct push_cas_option cas;
 
@@ -346,6 +347,7 @@ static int push_with_options(struct transport *transport, int flags)
 	unsigned int reject_reasons;
 
 	transport_set_verbosity(transport, verbosity, progress);
+	transport->family = family;
 
 	if (receivepack)
 		transport_set_option(transport,
@@ -565,6 +567,10 @@ int cmd_push(int argc, const char **argv, const char *prefix)
 		  0, "signed", &push_cert, "yes|no|if-asked", N_("GPG sign the push"),
 		  PARSE_OPT_OPTARG, option_parse_push_signed },
 		OPT_BIT(0, "atomic", &flags, N_("request atomic transaction on remote side"), TRANSPORT_PUSH_ATOMIC),
+		OPT_SET_INT('4', "ipv4", &family, N_("use IPv4 addresses only"),
+				TRANSPORT_FAMILY_IPV4),
+		OPT_SET_INT('6', "ipv6", &family, N_("use IPv6 addresses only"),
+				TRANSPORT_FAMILY_IPV6),
 		OPT_END()
 	};
 
