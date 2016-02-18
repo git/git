@@ -982,7 +982,8 @@ static int parse_branchname_arg(int argc, const char **argv,
 		 */
 		int recover_with_dwim = dwim_new_local_branch_ok;
 
-		if (check_filename(NULL, arg) && !has_dash_dash)
+		if (!has_dash_dash &&
+		    (check_filename(NULL, arg) || !no_wildcard(arg)))
 			recover_with_dwim = 0;
 		/*
 		 * Accept "git checkout foo" and "git checkout foo --"
