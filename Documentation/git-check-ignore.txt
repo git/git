@@ -114,6 +114,7 @@ SEE ALSO
 linkgit:gitignore[5]
 linkgit:gitconfig[5]
 linkgit:git-ls-files[1]
+GIT_TRACE_EXCLUDE in linkgit:git[1]
 
 GIT
 ---
