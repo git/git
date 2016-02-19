@@ -24,6 +24,7 @@ struct config_source {
 			size_t pos;
 		} buf;
 	} u;
+	const char *origin_type;
 	const char *name;
 	const char *path;
 	int die_on_error;
@@ -471,9 +472,9 @@ static int git_parse_source(config_fn_t fn, void *data)
 			break;
 	}
 	if (cf->die_on_error)
-		die(_("bad config file line %d in %s"), cf->linenr, cf->name);
+		die(_("bad config line %d in %s %s"), cf->linenr, cf->origin_type, cf->name);
 	else
-		return error(_("bad config file line %d in %s"), cf->linenr, cf->name);
+		return error(_("bad config line %d in %s %s"), cf->linenr, cf->origin_type, cf->name);
 }
 
 static int parse_unit_factor(const char *end, uintmax_t *val)
@@ -588,9 +589,9 @@ static void die_bad_number(const char *name, const char *value)
 	if (!value)
 		value = "";
 
-	if (cf && cf->name)
-		die(_("bad numeric config value '%s' for '%s' in %s: %s"),
-		    value, name, cf->name, reason);
+	if (cf && cf->origin_type && cf->name)
+		die(_("bad numeric config value '%s' for '%s' in %s %s: %s"),
+		    value, name, cf->origin_type, cf->name, reason);
 	die(_("bad numeric config value '%s' for '%s': %s"), value, name, reason);
 }
 
@@ -1061,11 +1062,13 @@ static int do_config_from(struct config_source *top, config_fn_t fn, void *data)
 }
 
 static int do_config_from_file(config_fn_t fn,
-		const char *name, const char *path, FILE *f, void *data)
+		const char *origin_type, const char *name, const char *path, FILE *f,
+		void *data)
 {
 	struct config_source top;
 
 	top.u.file = f;
+	top.origin_type = origin_type;
 	top.name = name;
 	top.path = path;
 	top.die_on_error = 1;
@@ -1078,7 +1081,7 @@ static int do_config_from_file(config_fn_t fn,
 
 static int git_config_from_stdin(config_fn_t fn, void *data)
 {
-	return do_config_from_file(fn, "<stdin>", NULL, stdin, data);
+	return do_config_from_file(fn, "standard input", "", NULL, stdin, data);
 }
 
 int git_config_from_file(config_fn_t fn, const char *filename, void *data)
@@ -1089,21 +1092,22 @@ int git_config_from_file(config_fn_t fn, const char *filename, void *data)
 	f = fopen(filename, "r");
 	if (f) {
 		flockfile(f);
-		ret = do_config_from_file(fn, filename, filename, f, data);
+		ret = do_config_from_file(fn, "file", filename, filename, f, data);
 		funlockfile(f);
 		fclose(f);
 	}
 	return ret;
 }
 
-int git_config_from_mem(config_fn_t fn, const char *name, const char *buf,
-			size_t len, void *data)
+int git_config_from_mem(config_fn_t fn, const char *origin_type,
+			const char *name, const char *buf, size_t len, void *data)
 {
 	struct config_source top;
 
 	top.u.buf.buf = buf;
 	top.u.buf.len = len;
 	top.u.buf.pos = 0;
+	top.origin_type = origin_type;
 	top.name = name;
 	top.path = NULL;
 	top.die_on_error = 0;
@@ -1132,7 +1136,7 @@ static int git_config_from_blob_sha1(config_fn_t fn,
 		return error("reference '%s' does not point to a blob", name);
 	}
 
-	ret = git_config_from_mem(fn, name, buf, size, data);
+	ret = git_config_from_mem(fn, "blob", name, buf, size, data);
 	free(buf);
 
 	return ret;
@@ -2384,4 +2388,14 @@ int parse_config_key(const char *var,
 	}
 
 	return 0;
+}
+
+const char *current_config_origin_type(void)
+{
+	return cf && cf->origin_type ? cf->origin_type : "command line";
+}
+
+const char *current_config_name(void)
+{
+	return cf && cf->name ? cf->name : "";
 }

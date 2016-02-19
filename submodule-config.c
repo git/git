@@ -427,8 +427,8 @@ static const struct submodule *config_from(struct submodule_cache *cache,
 	parameter.commit_sha1 = commit_sha1;
 	parameter.gitmodules_sha1 = sha1;
 	parameter.overwrite = 0;
-	git_config_from_mem(parse_config, rev.buf, config, config_size,
-			&parameter);
+	git_config_from_mem(parse_config, "submodule-blob", rev.buf,
+			config, config_size, &parameter);
 	free(config);
 
 	switch (lookup_type) {
