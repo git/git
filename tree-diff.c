@@ -124,8 +124,8 @@ static struct combine_diff_path *path_appendnew(struct combine_diff_path *last,
 	unsigned mode, const unsigned char *sha1)
 {
 	struct combine_diff_path *p;
-	int len = base->len + pathlen;
-	int alloclen = combine_diff_path_size(nparent, len);
+	size_t len = st_add(base->len, pathlen);
+	size_t alloclen = combine_diff_path_size(nparent, len);
 
 	/* if last->next is !NULL - it is a pre-allocated memory, we can reuse */
 	p = last->next;
