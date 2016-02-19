@@ -1096,7 +1096,7 @@ int git_config_from_file(config_fn_t fn, const char *filename, void *data)
 	return ret;
 }
 
-int git_config_from_buf(config_fn_t fn, const char *name, const char *buf,
+int git_config_from_mem(config_fn_t fn, const char *name, const char *buf,
 			size_t len, void *data)
 {
 	struct config_source top;
@@ -1132,7 +1132,7 @@ static int git_config_from_blob_sha1(config_fn_t fn,
 		return error("reference '%s' does not point to a blob", name);
 	}
 
-	ret = git_config_from_buf(fn, name, buf, size, data);
+	ret = git_config_from_mem(fn, name, buf, size, data);
 	free(buf);
 
 	return ret;
