@@ -86,8 +86,8 @@ no-renames;;
 	See also linkgit:git-diff[1] `--no-renames`.
 
 find-renames[=<n>];;
-	Turn on rename detection, optionally setting the the similarity
-	threshold. This is the default.
+	Turn on rename detection, optionally setting the similarity
+	threshold.  This is the default.
 	See also linkgit:git-diff[1] `--find-renames`.
 
 rename-threshold=<n>;;
