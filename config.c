@@ -1825,10 +1825,10 @@ contline:
 	return offset;
 }
 
-int git_config_set_in_file(const char *config_filename,
-			const char *key, const char *value)
+int git_config_set_in_file_gently(const char *config_filename,
+				  const char *key, const char *value)
 {
-	return git_config_set_multivar_in_file(config_filename, key, value, NULL, 0);
+	return git_config_set_multivar_in_file_gently(config_filename, key, value, NULL, 0);
 }
 
 void git_config_set_in_file_or_die(const char *config_filename,
@@ -1837,9 +1837,9 @@ void git_config_set_in_file_or_die(const char *config_filename,
 	git_config_set_multivar_in_file_or_die(config_filename, key, value, NULL, 0);
 }
 
-int git_config_set(const char *key, const char *value)
+int git_config_set_gently(const char *key, const char *value)
 {
-	return git_config_set_multivar(key, value, NULL, 0);
+	return git_config_set_multivar_gently(key, value, NULL, 0);
 }
 
 void git_config_set_or_die(const char *key, const char *value)
@@ -1961,9 +1961,10 @@ int git_config_key_is_valid(const char *key)
  * - the config file is removed and the lock file rename()d to it.
  *
  */
-int git_config_set_multivar_in_file(const char *config_filename,
-				const char *key, const char *value,
-				const char *value_regex, int multi_replace)
+int git_config_set_multivar_in_file_gently(const char *config_filename,
+					   const char *key, const char *value,
+					   const char *value_regex,
+					   int multi_replace)
 {
 	int fd = -1, in_fd = -1;
 	int ret;
@@ -2194,16 +2195,16 @@ void git_config_set_multivar_in_file_or_die(const char *config_filename,
 				const char *key, const char *value,
 				const char *value_regex, int multi_replace)
 {
-	if (git_config_set_multivar_in_file(config_filename, key, value,
-					    value_regex, multi_replace) < 0)
+	if (git_config_set_multivar_in_file_gently(config_filename, key, value,
+						   value_regex, multi_replace) < 0)
 		die(_("Could not set '%s' to '%s'"), key, value);
 }
 
-int git_config_set_multivar(const char *key, const char *value,
-			const char *value_regex, int multi_replace)
+int git_config_set_multivar_gently(const char *key, const char *value,
+				   const char *value_regex, int multi_replace)
 {
-	return git_config_set_multivar_in_file(NULL, key, value, value_regex,
-					       multi_replace);
+	return git_config_set_multivar_in_file_gently(NULL, key, value, value_regex,
+						      multi_replace);
 }
 
 void git_config_set_multivar_or_die(const char *key, const char *value,

@@ -70,18 +70,18 @@ int install_branch_config(int flag, const char *local, const char *origin, const
 	}
 
 	strbuf_addf(&key, "branch.%s.remote", local);
-	if (git_config_set(key.buf, origin ? origin : ".") < 0)
+	if (git_config_set_gently(key.buf, origin ? origin : ".") < 0)
 		goto out_err;
 
 	strbuf_reset(&key);
 	strbuf_addf(&key, "branch.%s.merge", local);
-	if (git_config_set(key.buf, remote) < 0)
+	if (git_config_set_gently(key.buf, remote) < 0)
 		goto out_err;
 
 	if (rebasing) {
 		strbuf_reset(&key);
 		strbuf_addf(&key, "branch.%s.rebase", local);
-		if (git_config_set(key.buf, "true") < 0)
+		if (git_config_set_gently(key.buf, "true") < 0)
 			goto out_err;
 	}
 	strbuf_release(&key);
