@@ -1579,11 +1579,12 @@ static int set_url(int argc, const char **argv)
 	/* Special cases that add new entry. */
 	if ((!oldurl && !delete_mode) || add_mode) {
 		if (add_mode)
-			git_config_set_multivar(name_buf.buf, newurl,
-				"^$", 0);
+			git_config_set_multivar_or_die(name_buf.buf, newurl,
+						       "^$", 0);
 		else
-			git_config_set(name_buf.buf, newurl);
+			git_config_set_or_die(name_buf.buf, newurl);
 		strbuf_release(&name_buf);
+
 		return 0;
 	}
 
@@ -1604,9 +1605,9 @@ static int set_url(int argc, const char **argv)
 	regfree(&old_regex);
 
 	if (!delete_mode)
-		git_config_set_multivar(name_buf.buf, newurl, oldurl, 0);
+		git_config_set_multivar_or_die(name_buf.buf, newurl, oldurl, 0);
 	else
-		git_config_set_multivar(name_buf.buf, NULL, oldurl, 1);
+		git_config_set_multivar_or_die(name_buf.buf, NULL, oldurl, 1);
 	return 0;
 }
 
