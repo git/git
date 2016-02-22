@@ -2324,16 +2324,15 @@ void write_untracked_extension(struct strbuf *out, struct untracked_cache *untra
 	struct ondisk_untracked_cache *ouc;
 	struct write_data wd;
 	unsigned char varbuf[16];
-	int len = 0, varint_len;
-	if (untracked->exclude_per_dir)
-		len = strlen(untracked->exclude_per_dir);
-	ouc = xmalloc(sizeof(*ouc) + len + 1);
+	int varint_len;
+	size_t len = strlen(untracked->exclude_per_dir);
+
+	FLEX_ALLOC_MEM(ouc, exclude_per_dir, untracked->exclude_per_dir, len);
 	stat_data_to_disk(&ouc->info_exclude_stat, &untracked->ss_info_exclude.stat);
 	stat_data_to_disk(&ouc->excludes_file_stat, &untracked->ss_excludes_file.stat);
 	hashcpy(ouc->info_exclude_sha1, untracked->ss_info_exclude.sha1);
 	hashcpy(ouc->excludes_file_sha1, untracked->ss_excludes_file.sha1);
 	ouc->dir_flags = htonl(untracked->dir_flags);
-	memcpy(ouc->exclude_per_dir, untracked->exclude_per_dir, len + 1);
 
 	varint_len = encode_varint(untracked->ident.len, varbuf);
 	strbuf_add(out, varbuf, varint_len);
