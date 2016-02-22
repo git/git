@@ -25,8 +25,8 @@
 
 struct bitmap *bitmap_new(void)
 {
-	struct bitmap *bitmap = ewah_malloc(sizeof(struct bitmap));
-	bitmap->words = ewah_calloc(32, sizeof(eword_t));
+	struct bitmap *bitmap = xmalloc(sizeof(struct bitmap));
+	bitmap->words = xcalloc(32, sizeof(eword_t));
 	bitmap->word_alloc = 32;
 	return bitmap;
 }
@@ -38,8 +38,8 @@ void bitmap_set(struct bitmap *self, size_t pos)
 	if (block >= self->word_alloc) {
 		size_t old_size = self->word_alloc;
 		self->word_alloc = block * 2;
-		self->words = ewah_realloc(self->words,
-			self->word_alloc * sizeof(eword_t));
+		self->words = xrealloc(self->words,
+				      self->word_alloc * sizeof(eword_t));
 
 		memset(self->words + old_size, 0x0,
 			(self->word_alloc - old_size) * sizeof(eword_t));
@@ -102,7 +102,7 @@ struct bitmap *ewah_to_bitmap(struct ewah_bitmap *ewah)
 	while (ewah_iterator_next(&blowup, &it)) {
 		if (i >= bitmap->word_alloc) {
 			bitmap->word_alloc *= 1.5;
-			bitmap->words = ewah_realloc(
+			bitmap->words = xrealloc(
 				bitmap->words, bitmap->word_alloc * sizeof(eword_t));
 		}
 
@@ -134,7 +134,7 @@ void bitmap_or_ewah(struct bitmap *self, struct ewah_bitmap *other)
 
 	if (self->word_alloc < other_final) {
 		self->word_alloc = other_final;
-		self->words = ewah_realloc(self->words,
+		self->words = xrealloc(self->words,
 			self->word_alloc * sizeof(eword_t));
 		memset(self->words + original_size, 0x0,
 			(self->word_alloc - original_size) * sizeof(eword_t));
