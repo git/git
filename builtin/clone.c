@@ -783,12 +783,12 @@ static void write_refspec_config(const char *src_ref_prefix,
 		/* Configure the remote */
 		if (value.len) {
 			strbuf_addf(&key, "remote.%s.fetch", option_origin);
-			git_config_set_multivar_or_die(key.buf, value.buf, "^$", 0);
+			git_config_set_multivar(key.buf, value.buf, "^$", 0);
 			strbuf_reset(&key);
 
 			if (option_mirror) {
 				strbuf_addf(&key, "remote.%s.mirror", option_origin);
-				git_config_set_or_die(key.buf, "true");
+				git_config_set(key.buf, "true");
 				strbuf_reset(&key);
 			}
 		}
@@ -946,14 +946,14 @@ int cmd_clone(int argc, const char **argv, const char *prefix)
 			src_ref_prefix = "refs/";
 		strbuf_addstr(&branch_top, src_ref_prefix);
 
-		git_config_set_or_die("core.bare", "true");
+		git_config_set("core.bare", "true");
 	} else {
 		strbuf_addf(&branch_top, "refs/remotes/%s/", option_origin);
 	}
 
 	strbuf_addf(&value, "+%s*:%s*", src_ref_prefix, branch_top.buf);
 	strbuf_addf(&key, "remote.%s.url", option_origin);
-	git_config_set_or_die(key.buf, repo);
+	git_config_set(key.buf, repo);
 	strbuf_reset(&key);
 
 	if (option_reference.nr)

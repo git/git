@@ -119,7 +119,7 @@ static void add_branch(const char *key, const char *branchname,
 	else
 		strbuf_addf(tmp, "refs/heads/%s:refs/remotes/%s/%s",
 				branchname, remotename, branchname);
-	git_config_set_multivar_or_die(key, tmp->buf, "^$", 0);
+	git_config_set_multivar(key, tmp->buf, "^$", 0);
 }
 
 static const char mirror_advice[] =
@@ -197,7 +197,7 @@ static int add(int argc, const char **argv)
 		die(_("'%s' is not a valid remote name"), name);
 
 	strbuf_addf(&buf, "remote.%s.url", name);
-	git_config_set_or_die(buf.buf, url);
+	git_config_set(buf.buf, url);
 
 	if (!mirror || mirror & MIRROR_FETCH) {
 		strbuf_reset(&buf);
@@ -213,14 +213,14 @@ static int add(int argc, const char **argv)
 	if (mirror & MIRROR_PUSH) {
 		strbuf_reset(&buf);
 		strbuf_addf(&buf, "remote.%s.mirror", name);
-		git_config_set_or_die(buf.buf, "true");
+		git_config_set(buf.buf, "true");
 	}
 
 	if (fetch_tags != TAGS_DEFAULT) {
 		strbuf_reset(&buf);
 		strbuf_addf(&buf, "remote.%s.tagopt", name);
-		git_config_set_or_die(buf.buf,
-				      fetch_tags == TAGS_SET ? "--tags" : "--no-tags");
+		git_config_set(buf.buf,
+			       fetch_tags == TAGS_SET ? "--tags" : "--no-tags");
 	}
 
 	if (fetch && fetch_remote(name))
@@ -586,15 +586,15 @@ static int migrate_file(struct remote *remote)
 
 	strbuf_addf(&buf, "remote.%s.url", remote->name);
 	for (i = 0; i < remote->url_nr; i++)
-		git_config_set_multivar_or_die(buf.buf, remote->url[i], "^$", 0);
+		git_config_set_multivar(buf.buf, remote->url[i], "^$", 0);
 	strbuf_reset(&buf);
 	strbuf_addf(&buf, "remote.%s.push", remote->name);
 	for (i = 0; i < remote->push_refspec_nr; i++)
-		git_config_set_multivar_or_die(buf.buf, remote->push_refspec[i], "^$", 0);
+		git_config_set_multivar(buf.buf, remote->push_refspec[i], "^$", 0);
 	strbuf_reset(&buf);
 	strbuf_addf(&buf, "remote.%s.fetch", remote->name);
 	for (i = 0; i < remote->fetch_refspec_nr; i++)
-		git_config_set_multivar_or_die(buf.buf, remote->fetch_refspec[i], "^$", 0);
+		git_config_set_multivar(buf.buf, remote->fetch_refspec[i], "^$", 0);
 	if (remote->origin == REMOTE_REMOTES)
 		unlink_or_warn(git_path("remotes/%s", remote->name));
 	else if (remote->origin == REMOTE_BRANCHES)
@@ -646,7 +646,7 @@ static int mv(int argc, const char **argv)
 
 	strbuf_reset(&buf);
 	strbuf_addf(&buf, "remote.%s.fetch", rename.new);
-	git_config_set_multivar_or_die(buf.buf, NULL, NULL, 1);
+	git_config_set_multivar(buf.buf, NULL, NULL, 1);
 	strbuf_addf(&old_remote_context, ":refs/remotes/%s/", rename.old);
 	for (i = 0; i < oldremote->fetch_refspec_nr; i++) {
 		char *ptr;
@@ -666,7 +666,7 @@ static int mv(int argc, const char **argv)
 				  "\tPlease update the configuration manually if necessary."),
 				buf2.buf);
 
-		git_config_set_multivar_or_die(buf.buf, buf2.buf, "^$", 0);
+		git_config_set_multivar(buf.buf, buf2.buf, "^$", 0);
 	}
 
 	read_branches();
@@ -676,7 +676,7 @@ static int mv(int argc, const char **argv)
 		if (info->remote_name && !strcmp(info->remote_name, rename.old)) {
 			strbuf_reset(&buf);
 			strbuf_addf(&buf, "branch.%s.remote", item->string);
-			git_config_set_or_die(buf.buf, rename.new);
+			git_config_set(buf.buf, rename.new);
 		}
 	}
 
@@ -774,7 +774,7 @@ static int rm(int argc, const char **argv)
 				strbuf_reset(&buf);
 				strbuf_addf(&buf, "branch.%s.%s",
 						item->string, *k);
-				git_config_set_or_die(buf.buf, NULL);
+				git_config_set(buf.buf, NULL);
 			}
 		}
 	}
@@ -1556,10 +1556,10 @@ static int set_url(int argc, const char **argv)
 	/* Special cases that add new entry. */
 	if ((!oldurl && !delete_mode) || add_mode) {
 		if (add_mode)
-			git_config_set_multivar_or_die(name_buf.buf, newurl,
+			git_config_set_multivar(name_buf.buf, newurl,
 						       "^$", 0);
 		else
-			git_config_set_or_die(name_buf.buf, newurl);
+			git_config_set(name_buf.buf, newurl);
 		strbuf_release(&name_buf);
 
 		return 0;
@@ -1582,9 +1582,9 @@ static int set_url(int argc, const char **argv)
 	regfree(&old_regex);
 
 	if (!delete_mode)
-		git_config_set_multivar_or_die(name_buf.buf, newurl, oldurl, 0);
+		git_config_set_multivar(name_buf.buf, newurl, oldurl, 0);
 	else
-		git_config_set_multivar_or_die(name_buf.buf, NULL, oldurl, 1);
+		git_config_set_multivar(name_buf.buf, NULL, oldurl, 1);
 	return 0;
 }
 

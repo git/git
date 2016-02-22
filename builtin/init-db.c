@@ -227,7 +227,7 @@ static int create_default_files(const char *template_path)
 	/* This forces creation of new config file */
 	xsnprintf(repo_version_string, sizeof(repo_version_string),
 		  "%d", GIT_REPO_VERSION);
-	git_config_set_or_die("core.repositoryformatversion", repo_version_string);
+	git_config_set("core.repositoryformatversion", repo_version_string);
 
 	/* Check filemode trustability */
 	path = git_path_buf(&buf, "config");
@@ -241,18 +241,18 @@ static int create_default_files(const char *template_path)
 		if (filemode && !reinit && (st1.st_mode & S_IXUSR))
 			filemode = 0;
 	}
-	git_config_set_or_die("core.filemode", filemode ? "true" : "false");
+	git_config_set("core.filemode", filemode ? "true" : "false");
 
 	if (is_bare_repository())
-		git_config_set_or_die("core.bare", "true");
+		git_config_set("core.bare", "true");
 	else {
 		const char *work_tree = get_git_work_tree();
-		git_config_set_or_die("core.bare", "false");
+		git_config_set("core.bare", "false");
 		/* allow template config file to override the default */
 		if (log_all_ref_updates == -1)
-			git_config_set_or_die("core.logallrefupdates", "true");
+			git_config_set("core.logallrefupdates", "true");
 		if (needs_work_tree_config(get_git_dir(), work_tree))
-			git_config_set_or_die("core.worktree", work_tree);
+			git_config_set("core.worktree", work_tree);
 	}
 
 	if (!reinit) {
@@ -265,12 +265,12 @@ static int create_default_files(const char *template_path)
 		    S_ISLNK(st1.st_mode))
 			unlink(path); /* good */
 		else
-			git_config_set_or_die("core.symlinks", "false");
+			git_config_set("core.symlinks", "false");
 
 		/* Check if the filesystem is case-insensitive */
 		path = git_path_buf(&buf, "CoNfIg");
 		if (!access(path, F_OK))
-			git_config_set_or_die("core.ignorecase", "true");
+			git_config_set("core.ignorecase", "true");
 		probe_utf8_pathname_composition();
 	}
 
@@ -386,8 +386,8 @@ int init_db(const char *template_dir, unsigned int flags)
 			xsnprintf(buf, sizeof(buf), "%d", OLD_PERM_EVERYBODY);
 		else
 			die("BUG: invalid value for shared_repository");
-		git_config_set_or_die("core.sharedrepository", buf);
-		git_config_set_or_die("receive.denyNonFastforwards", "true");
+		git_config_set("core.sharedrepository", buf);
+		git_config_set("receive.denyNonFastforwards", "true");
 	}
 
 	if (!(flags & INIT_DB_QUIET)) {
