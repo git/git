@@ -88,7 +88,7 @@ char *prefix_path_gently(const char *prefix, int len,
 	const char *orig = path;
 	char *sanitized;
 	if (is_absolute_path(orig)) {
-		sanitized = xmalloc(strlen(path) + 1);
+		sanitized = xmallocz(strlen(path));
 		if (remaining_prefix)
 			*remaining_prefix = 0;
 		if (normalize_path_copy_len(sanitized, path, remaining_prefix)) {
@@ -499,14 +499,13 @@ const char *read_gitfile_gently(const char *path, int *return_error_code)
 		error_code = READ_GITFILE_ERR_OPEN_FAILED;
 		goto cleanup_return;
 	}
-	buf = xmalloc(st.st_size + 1);
+	buf = xmallocz(st.st_size);
 	len = read_in_full(fd, buf, st.st_size);
 	close(fd);
 	if (len != st.st_size) {
 		error_code = READ_GITFILE_ERR_READ_FAILED;
 		goto cleanup_return;
 	}
-	buf[len] = '\0';
 	if (!starts_with(buf, "gitdir: ")) {
 		error_code = READ_GITFILE_ERR_INVALID_FORMAT;
 		goto cleanup_return;

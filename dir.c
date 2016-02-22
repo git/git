@@ -711,7 +711,7 @@ static int add_excludes(const char *fname, const char *base, int baselen,
 			close(fd);
 			return 0;
 		}
-		buf = xmalloc(size+1);
+		buf = xmallocz(size);
 		if (read_in_full(fd, buf, size) != size) {
 			free(buf);
 			close(fd);
