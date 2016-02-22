@@ -473,6 +473,13 @@ test_expect_success '--unset-upstream should fail if given a non-existent branch
 	test_must_fail git branch --unset-upstream i-dont-exist
 '
 
+test_expect_success '--unset-upstream should fail if config is locked' '
+	test_when_finished "rm -f .git/config.lock" &&
+	git branch --set-upstream-to locked &&
+	>.git/config.lock &&
+	test_must_fail git branch --unset-upstream
+'
+
 test_expect_success 'test --unset-upstream on HEAD' '
 	git branch my14 &&
 	test_config branch.master.remote foo &&
