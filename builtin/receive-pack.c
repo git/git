@@ -1031,7 +1031,6 @@ static void run_update_post_hook(struct command *commands)
 {
 	struct command *cmd;
 	int argc;
-	const char **argv;
 	struct child_process proc = CHILD_PROCESS_INIT;
 	const char *hook;
 
@@ -1044,21 +1043,16 @@ static void run_update_post_hook(struct command *commands)
 	if (!argc || !hook)
 		return;
 
-	argv = xmalloc(sizeof(*argv) * (2 + argc));
-	argv[0] = hook;
-
-	for (argc = 1, cmd = commands; cmd; cmd = cmd->next) {
+	argv_array_push(&proc.args, hook);
+	for (cmd = commands; cmd; cmd = cmd->next) {
 		if (cmd->error_string || cmd->did_not_exist)
 			continue;
-		argv[argc] = xstrdup(cmd->ref_name);
-		argc++;
+		argv_array_push(&proc.args, cmd->ref_name);
 	}
-	argv[argc] = NULL;
 
 	proc.no_stdin = 1;
 	proc.stdout_to_stderr = 1;
 	proc.err = use_sideband ? -1 : 0;
-	proc.argv = argv;
 
 	if (!start_command(&proc)) {
 		if (use_sideband)
