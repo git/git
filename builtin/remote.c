@@ -108,8 +108,8 @@ enum {
 #define MIRROR_PUSH 2
 #define MIRROR_BOTH (MIRROR_FETCH|MIRROR_PUSH)
 
-static int add_branch(const char *key, const char *branchname,
-		const char *remotename, int mirror, struct strbuf *tmp)
+static void add_branch(const char *key, const char *branchname,
+		       const char *remotename, int mirror, struct strbuf *tmp)
 {
 	strbuf_reset(tmp);
 	strbuf_addch(tmp, '+');
@@ -119,7 +119,7 @@ static int add_branch(const char *key, const char *branchname,
 	else
 		strbuf_addf(tmp, "refs/heads/%s:refs/remotes/%s/%s",
 				branchname, remotename, branchname);
-	return git_config_set_multivar(key, tmp->buf, "^$", 0);
+	git_config_set_multivar_or_die(key, tmp->buf, "^$", 0);
 }
 
 static const char mirror_advice[] =
@@ -206,9 +206,8 @@ static int add(int argc, const char **argv)
 		if (track.nr == 0)
 			string_list_append(&track, "*");
 		for (i = 0; i < track.nr; i++) {
-			if (add_branch(buf.buf, track.items[i].string,
-				       name, mirror, &buf2))
-				return 1;
+			add_branch(buf.buf, track.items[i].string,
+				   name, mirror, &buf2);
 		}
 	}
 
@@ -1412,21 +1411,17 @@ static int remove_all_fetch_refspecs(const char *remote, const char *key)
 	return git_config_set_multivar(key, NULL, NULL, 1);
 }
 
-static int add_branches(struct remote *remote, const char **branches,
-			const char *key)
+static void add_branches(struct remote *remote, const char **branches,
+			 const char *key)
 {
 	const char *remotename = remote->name;
 	int mirror = remote->mirror;
 	struct strbuf refspec = STRBUF_INIT;
 
 	for (; *branches; branches++)
-		if (add_branch(key, *branches, remotename, mirror, &refspec)) {
-			strbuf_release(&refspec);
-			return 1;
-		}
+		add_branch(key, *branches, remotename, mirror, &refspec);
 
 	strbuf_release(&refspec);
-	return 0;
 }
 
 static int set_remote_branches(const char *remotename, const char **branches,
@@ -1445,10 +1440,7 @@ static int set_remote_branches(const char *remotename, const char **branches,
 		strbuf_release(&key);
 		return 1;
 	}
-	if (add_branches(remote, branches, key.buf)) {
-		strbuf_release(&key);
-		return 1;
-	}
+	add_branches(remote, branches, key.buf);
 
 	strbuf_release(&key);
 	return 0;
