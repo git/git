@@ -199,17 +199,14 @@ static struct ref_entry *create_ref_entry(const char *refname,
 					  const unsigned char *sha1, int flag,
 					  int check_name)
 {
-	int len;
 	struct ref_entry *ref;
 
 	if (check_name &&
 	    check_refname_format(refname, REFNAME_ALLOW_ONELEVEL))
 		die("Reference has invalid format: '%s'", refname);
-	len = strlen(refname) + 1;
-	ref = xmalloc(sizeof(struct ref_entry) + len);
+	FLEX_ALLOC_STR(ref, name, refname);
 	hashcpy(ref->u.value.oid.hash, sha1);
 	oidclr(&ref->u.value.peeled);
-	memcpy(ref->name, refname, len);
 	ref->flag = flag;
 	return ref;
 }
@@ -268,9 +265,7 @@ static struct ref_entry *create_dir_entry(struct ref_cache *ref_cache,
 					  int incomplete)
 {
 	struct ref_entry *direntry;
-	direntry = xcalloc(1, sizeof(struct ref_entry) + len + 1);
-	memcpy(direntry->name, dirname, len);
-	direntry->name[len] = '\0';
+	FLEX_ALLOC_MEM(direntry, name, dirname, len);
 	direntry->u.subdir.ref_cache = ref_cache;
 	direntry->flag = REF_DIR | (incomplete ? REF_INCOMPLETE : 0);
 	return direntry;
@@ -939,13 +934,10 @@ static void clear_loose_ref_cache(struct ref_cache *refs)
  */
 static struct ref_cache *create_ref_cache(const char *submodule)
 {
-	int len;
 	struct ref_cache *refs;
 	if (!submodule)
 		submodule = "";
-	len = strlen(submodule) + 1;
-	refs = xcalloc(1, sizeof(struct ref_cache) + len);
-	memcpy(refs->name, submodule, len);
+	FLEX_ALLOC_STR(refs, name, submodule);
 	refs->next = submodule_ref_caches;
 	submodule_ref_caches = refs;
 	return refs;
@@ -2191,10 +2183,9 @@ static int pack_if_possible_fn(struct ref_entry *entry, void *cb_data)
 
 	/* Schedule the loose reference for pruning if requested. */
 	if ((cb->flags & PACK_REFS_PRUNE)) {
-		int namelen = strlen(entry->name) + 1;
-		struct ref_to_prune *n = xcalloc(1, sizeof(*n) + namelen);
+		struct ref_to_prune *n;
+		FLEX_ALLOC_STR(n, name, entry->name);
 		hashcpy(n->sha1, entry->u.value.oid.hash);
-		memcpy(n->name, entry->name, namelen); /* includes NUL */
 		n->next = cb->ref_to_prune;
 		cb->ref_to_prune = n;
 	}

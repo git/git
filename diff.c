@@ -2607,12 +2607,9 @@ static void builtin_checkdiff(const char *name_a, const char *name_b,
 
 struct diff_filespec *alloc_filespec(const char *path)
 {
-	int namelen = strlen(path);
-	struct diff_filespec *spec = xmalloc(sizeof(*spec) + namelen + 1);
+	struct diff_filespec *spec;
 
-	memset(spec, 0, sizeof(*spec));
-	spec->path = (char *)(spec + 1);
-	memcpy(spec->path, path, namelen+1);
+	FLEXPTR_ALLOC_STR(spec, path, path);
 	spec->count = 1;
 	spec->is_binary = -1;
 	return spec;

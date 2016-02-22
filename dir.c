@@ -503,12 +503,7 @@ void add_exclude(const char *string, const char *base,
 
 	parse_exclude_pattern(&string, &patternlen, &flags, &nowildcardlen);
 	if (flags & EXC_FLAG_MUSTBEDIR) {
-		char *s;
-		x = xmalloc(sizeof(*x) + patternlen + 1);
-		s = (char *)(x+1);
-		memcpy(s, string, patternlen);
-		s[patternlen] = '\0';
-		x->pattern = s;
+		FLEXPTR_ALLOC_MEM(x, pattern, string, patternlen);
 	} else {
 		x = xmalloc(sizeof(*x));
 		x->pattern = string;
@@ -625,10 +620,7 @@ static struct untracked_cache_dir *lookup_untracked(struct untracked_cache *uc,
 	}
 
 	uc->dir_created++;
-	d = xmalloc(sizeof(*d) + len + 1);
-	memset(d, 0, sizeof(*d));
-	memcpy(d->name, name, len);
-	d->name[len] = '\0';
+	FLEX_ALLOC_MEM(d, name, name, len);
 
 	ALLOC_GROW(dir->dirs, dir->dirs_nr + 1, dir->dirs_alloc);
 	memmove(dir->dirs + first + 1, dir->dirs + first,
@@ -1167,10 +1159,8 @@ static struct dir_entry *dir_entry_new(const char *pathname, int len)
 {
 	struct dir_entry *ent;
 
-	ent = xmalloc(sizeof(*ent) + len + 1);
+	FLEX_ALLOC_MEM(ent, name, pathname, len);
 	ent->len = len;
-	memcpy(ent->name, pathname, len);
-	ent->name[len] = 0;
 	return ent;
 }
 

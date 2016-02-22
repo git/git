@@ -93,9 +93,7 @@ static struct git_attr *git_attr_internal(const char *name, int len)
 	if (invalid_attr_name(name, len))
 		return NULL;
 
-	a = xmalloc(sizeof(*a) + len + 1);
-	memcpy(a->name, name, len);
-	a->name[len] = 0;
+	FLEX_ALLOC_MEM(a, name, name, len);
 	a->h = hval;
 	a->next = git_attr_hash[pos];
 	a->attr_nr = attr_nr++;

@@ -171,12 +171,10 @@ static void exec_man_cmd(const char *cmd, const char *page)
 static void add_man_viewer(const char *name)
 {
 	struct man_viewer_list **p = &man_viewer_list;
-	size_t len = strlen(name);
 
 	while (*p)
 		p = &((*p)->next);
-	*p = xcalloc(1, (sizeof(**p) + len + 1));
-	memcpy((*p)->name, name, len); /* NUL-terminated by xcalloc */
+	FLEX_ALLOC_STR(*p, name, name);
 }
 
 static int supported_man_viewer(const char *name, size_t len)
@@ -190,9 +188,8 @@ static void do_add_man_viewer_info(const char *name,
 				   size_t len,
 				   const char *value)
 {
-	struct man_viewer_info_list *new = xcalloc(1, sizeof(*new) + len + 1);
-
-	memcpy(new->name, name, len); /* NUL-terminated by xcalloc */
+	struct man_viewer_info_list *new;
+	FLEX_ALLOC_MEM(new, name, name, len);
 	new->info = xstrdup(value);
 	new->next = man_viewer_info_list;
 	man_viewer_info_list = new;

@@ -319,7 +319,7 @@ static void append_lost(struct sline *sline, int n, const char *line, int len)
 	if (line[len-1] == '\n')
 		len--;
 
-	lline = xmalloc(sizeof(*lline) + len + 1);
+	FLEX_ALLOC_MEM(lline, line, line, len);
 	lline->len = len;
 	lline->next = NULL;
 	lline->prev = sline->plost.lost_tail;
@@ -330,8 +330,6 @@ static void append_lost(struct sline *sline, int n, const char *line, int len)
 	sline->plost.lost_tail = lline;
 	sline->plost.len++;
 	lline->parent_map = this_mask;
-	memcpy(lline->line, line, len);
-	lline->line[len] = 0;
 }
 
 struct combine_diff_state {
