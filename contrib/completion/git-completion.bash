@@ -2413,8 +2413,8 @@ _git_stash ()
 		show,--*|branch,--*)
 			;;
 		branch,*)
-		  if [ $cword -eq 3 ]; then
-			__gitcomp_nl "$(__git_refs)";
+			if [ $cword -eq 3 ]; then
+				__gitcomp_nl "$(__git_refs)";
 			else
 				__gitcomp_nl "$(git --git-dir="$(__gitdir)" stash list \
 						| sed -n -e 's/:.*//p')"
