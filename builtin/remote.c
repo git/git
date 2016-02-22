@@ -197,8 +197,7 @@ static int add(int argc, const char **argv)
 		die(_("'%s' is not a valid remote name"), name);
 
 	strbuf_addf(&buf, "remote.%s.url", name);
-	if (git_config_set(buf.buf, url))
-		return 1;
+	git_config_set_or_die(buf.buf, url);
 
 	if (!mirror || mirror & MIRROR_FETCH) {
 		strbuf_reset(&buf);
@@ -214,16 +213,14 @@ static int add(int argc, const char **argv)
 	if (mirror & MIRROR_PUSH) {
 		strbuf_reset(&buf);
 		strbuf_addf(&buf, "remote.%s.mirror", name);
-		if (git_config_set(buf.buf, "true"))
-			return 1;
+		git_config_set_or_die(buf.buf, "true");
 	}
 
 	if (fetch_tags != TAGS_DEFAULT) {
 		strbuf_reset(&buf);
 		strbuf_addf(&buf, "remote.%s.tagopt", name);
-		if (git_config_set(buf.buf,
-			fetch_tags == TAGS_SET ? "--tags" : "--no-tags"))
-			return 1;
+		git_config_set_or_die(buf.buf,
+				      fetch_tags == TAGS_SET ? "--tags" : "--no-tags");
 	}
 
 	if (fetch && fetch_remote(name))
@@ -589,25 +586,20 @@ static int migrate_file(struct remote *remote)
 
 	strbuf_addf(&buf, "remote.%s.url", remote->name);
 	for (i = 0; i < remote->url_nr; i++)
-		if (git_config_set_multivar(buf.buf, remote->url[i], "^$", 0))
-			return error(_("Could not append '%s' to '%s'"),
-					remote->url[i], buf.buf);
+		git_config_set_multivar_or_die(buf.buf, remote->url[i], "^$", 0);
 	strbuf_reset(&buf);
 	strbuf_addf(&buf, "remote.%s.push", remote->name);
 	for (i = 0; i < remote->push_refspec_nr; i++)
-		if (git_config_set_multivar(buf.buf, remote->push_refspec[i], "^$", 0))
-			return error(_("Could not append '%s' to '%s'"),
-					remote->push_refspec[i], buf.buf);
+		git_config_set_multivar_or_die(buf.buf, remote->push_refspec[i], "^$", 0);
 	strbuf_reset(&buf);
 	strbuf_addf(&buf, "remote.%s.fetch", remote->name);
 	for (i = 0; i < remote->fetch_refspec_nr; i++)
-		if (git_config_set_multivar(buf.buf, remote->fetch_refspec[i], "^$", 0))
-			return error(_("Could not append '%s' to '%s'"),
-					remote->fetch_refspec[i], buf.buf);
+		git_config_set_multivar_or_die(buf.buf, remote->fetch_refspec[i], "^$", 0);
 	if (remote->origin == REMOTE_REMOTES)
 		unlink_or_warn(git_path("remotes/%s", remote->name));
 	else if (remote->origin == REMOTE_BRANCHES)
 		unlink_or_warn(git_path("branches/%s", remote->name));
+
 	return 0;
 }
 
@@ -654,8 +646,7 @@ static int mv(int argc, const char **argv)
 
 	strbuf_reset(&buf);
 	strbuf_addf(&buf, "remote.%s.fetch", rename.new);
-	if (git_config_set_multivar(buf.buf, NULL, NULL, 1))
-		return error(_("Could not remove config section '%s'"), buf.buf);
+	git_config_set_multivar_or_die(buf.buf, NULL, NULL, 1);
 	strbuf_addf(&old_remote_context, ":refs/remotes/%s/", rename.old);
 	for (i = 0; i < oldremote->fetch_refspec_nr; i++) {
 		char *ptr;
@@ -675,8 +666,7 @@ static int mv(int argc, const char **argv)
 				  "\tPlease update the configuration manually if necessary."),
 				buf2.buf);
 
-		if (git_config_set_multivar(buf.buf, buf2.buf, "^$", 0))
-			return error(_("Could not append '%s'"), buf.buf);
+		git_config_set_multivar_or_die(buf.buf, buf2.buf, "^$", 0);
 	}
 
 	read_branches();
@@ -686,9 +676,7 @@ static int mv(int argc, const char **argv)
 		if (info->remote_name && !strcmp(info->remote_name, rename.old)) {
 			strbuf_reset(&buf);
 			strbuf_addf(&buf, "branch.%s.remote", item->string);
-			if (git_config_set(buf.buf, rename.new)) {
-				return error(_("Could not set '%s'"), buf.buf);
-			}
+			git_config_set_or_die(buf.buf, rename.new);
 		}
 	}
 
@@ -786,10 +774,7 @@ static int rm(int argc, const char **argv)
 				strbuf_reset(&buf);
 				strbuf_addf(&buf, "branch.%s.%s",
 						item->string, *k);
-				if (git_config_set(buf.buf, NULL)) {
-					strbuf_release(&buf);
-					return -1;
-				}
+				git_config_set_or_die(buf.buf, NULL);
 			}
 		}
 	}
