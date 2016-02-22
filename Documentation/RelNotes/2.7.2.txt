@@ -24,4 +24,18 @@ Fixes since v2.7.1
    that is not used, to help those who test on Windows where it would
    not stop until it fills the pipe buffer due to lack of SIGPIPE.
 
+ * The vimdiff backend for "git mergetool" has been tweaked to arrange
+   and number buffers in the order that would match the expectation of
+   majority of people who read left to right, then top down and assign
+   buffers 1 2 3 4 "mentally" to local base remote merge windows based
+   on that order.
+
+ * The documentation for "git clean" has been corrected; it mentioned
+   that .git/modules/* are removed by giving two "-f", which has never
+   been the case.
+
+ * Paths that have been told the index about with "add -N" are not
+   quite yet in the index, but a few commands behaved as if they
+   already are in a harmful way.
+
 Also includes tiny documentation and test updates.
