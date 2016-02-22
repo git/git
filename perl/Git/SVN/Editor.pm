@@ -41,6 +41,7 @@ sub new {
 	                       "$self->{svn_path}/" : '';
 	$self->{config} = $opts->{config};
 	$self->{mergeinfo} = $opts->{mergeinfo};
+	$self->{pathnameencoding} = Git::config('svn.pathnameencoding');
 	return $self;
 }
 
@@ -143,11 +144,12 @@ sub repo_path {
 
 sub url_path {
 	my ($self, $path) = @_;
+	$path = $self->repo_path($path);
 	if ($self->{url} =~ m#^https?://#) {
 		# characters are taken from subversion/libsvn_subr/path.c
 		$path =~ s#([^~a-zA-Z0-9_./!$&'()*+,-])#sprintf("%%%02X",ord($1))#eg;
 	}
-	$self->{url} . '/' . $self->repo_path($path);
+	$self->{url} . '/' . $path;
 }
 
 sub rmdirs {

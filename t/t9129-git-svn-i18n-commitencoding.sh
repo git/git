@@ -14,17 +14,7 @@ compare_git_head_with () {
 	test_cmp current "$1"
 }
 
-a_utf8_locale=$(locale -a | sed -n '/\.[uU][tT][fF]-*8$/{
-	p
-	q
-}')
-
-if test -n "$a_utf8_locale"
-then
-	test_set_prereq UTF8
-else
-	say "# UTF-8 locale not available, some tests are skipped"
-fi
+prepare_a_utf8_locale
 
 compare_svn_head_with () {
 	# extract just the log message and strip out committer info.
