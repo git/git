@@ -622,7 +622,7 @@ static void *pool_alloc(size_t len)
 			return xmalloc(len);
 		}
 		total_allocd += sizeof(struct mem_pool) + mem_pool_alloc;
-		p = xmalloc(sizeof(struct mem_pool) + mem_pool_alloc);
+		p = xmalloc(st_add(sizeof(struct mem_pool), mem_pool_alloc));
 		p->next_pool = mem_pool;
 		p->next_free = (char *) p->space;
 		p->end = p->next_free + mem_pool_alloc;

@@ -906,7 +906,7 @@ char *shorten_unambiguous_ref(const char *refname, int strict)
 			/* -2 for strlen("%.*s") - strlen("%s"); +1 for NUL */
 			total_len += strlen(ref_rev_parse_rules[nr_rules]) - 2 + 1;
 
-		scanf_fmts = xmalloc(nr_rules * sizeof(char *) + total_len);
+		scanf_fmts = xmalloc(st_add(st_mult(nr_rules, sizeof(char *)), total_len));
 
 		offset = 0;
 		for (i = 0; i < nr_rules; i++) {

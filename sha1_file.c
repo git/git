@@ -253,7 +253,7 @@ static int link_alt_odb_entry(const char *entry, const char *relative_base,
 {
 	struct alternate_object_database *ent;
 	struct alternate_object_database *alt;
-	int pfxlen, entlen;
+	size_t pfxlen, entlen;
 	struct strbuf pathbuf = STRBUF_INIT;
 
 	if (!is_absolute_path(entry) && relative_base) {
@@ -273,8 +273,8 @@ static int link_alt_odb_entry(const char *entry, const char *relative_base,
 	while (pfxlen && pathbuf.buf[pfxlen-1] == '/')
 		pfxlen -= 1;
 
-	entlen = pfxlen + 43; /* '/' + 2 hex + '/' + 38 hex + NUL */
-	ent = xmalloc(sizeof(*ent) + entlen);
+	entlen = st_add(pfxlen, 43); /* '/' + 2 hex + '/' + 38 hex + NUL */
+	ent = xmalloc(st_add(sizeof(*ent), entlen));
 	memcpy(ent->base, pathbuf.buf, pfxlen);
 	strbuf_release(&pathbuf);
 
@@ -1134,7 +1134,7 @@ unsigned char *use_pack(struct packed_git *p,
 
 static struct packed_git *alloc_packed_git(int extra)
 {
-	struct packed_git *p = xmalloc(sizeof(*p) + extra);
+	struct packed_git *p = xmalloc(st_add(sizeof(*p), extra));
 	memset(p, 0, sizeof(*p));
 	p->pack_fd = -1;
 	return p;
@@ -1168,7 +1168,7 @@ struct packed_git *add_packed_git(const char *path, size_t path_len, int local)
 	 * ".pack" is long enough to hold any suffix we're adding (and
 	 * the use xsnprintf double-checks that)
 	 */
-	alloc = path_len + strlen(".pack") + 1;
+	alloc = st_add3(path_len, strlen(".pack"), 1);
 	p = alloc_packed_git(alloc);
 	memcpy(p->pack_name, path, path_len);
 
@@ -1196,7 +1196,7 @@ struct packed_git *add_packed_git(const char *path, size_t path_len, int local)
 struct packed_git *parse_pack_index(unsigned char *sha1, const char *idx_path)
 {
 	const char *path = sha1_pack_name(sha1);
-	int alloc = strlen(path) + 1;
+	size_t alloc = st_add(strlen(path), 1);
 	struct packed_git *p = alloc_packed_git(alloc);
 
 	memcpy(p->pack_name, path, alloc); /* includes NUL */
@@ -1413,10 +1413,12 @@ static void mark_bad_packed_object(struct packed_git *p,
 {
 	unsigned i;
 	for (i = 0; i < p->num_bad_objects; i++)
-		if (!hashcmp(sha1, p->bad_object_sha1 + 20 * i))
+		if (!hashcmp(sha1, p->bad_object_sha1 + GIT_SHA1_RAWSZ * i))
 			return;
-	p->bad_object_sha1 = xrealloc(p->bad_object_sha1, 20 * (p->num_bad_objects + 1));
-	hashcpy(p->bad_object_sha1 + 20 * p->num_bad_objects, sha1);
+	p->bad_object_sha1 = xrealloc(p->bad_object_sha1,
+				      st_mult(GIT_SHA1_RAWSZ,
+					      st_add(p->num_bad_objects, 1)));
+	hashcpy(p->bad_object_sha1 + GIT_SHA1_RAWSZ * p->num_bad_objects, sha1);
 	p->num_bad_objects++;
 }
 

@@ -769,7 +769,7 @@ static const char *quote_arg(const char *arg)
 		return arg;
 
 	/* insert \ where necessary */
-	d = q = xmalloc(len+n+3);
+	d = q = xmalloc(st_add3(len, n, 3));
 	*d++ = '"';
 	while (*arg) {
 		if (*arg == '"')
@@ -1028,7 +1028,7 @@ static pid_t mingw_spawnve_fd(const char *cmd, const char **argv, char **deltaen
 			free(quoted);
 	}
 
-	wargs = xmalloc((2 * args.len + 1) * sizeof(wchar_t));
+	wargs = xmalloc_array(st_add(st_mult(2, args.len), 1), sizeof(wchar_t));
 	xutftowcs(wargs, args.buf, 2 * args.len + 1);
 	strbuf_release(&args);
 

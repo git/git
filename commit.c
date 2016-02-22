@@ -147,7 +147,7 @@ struct commit_graft *read_graft_line(char *buf, int len)
 	if ((len + 1) % entry_size)
 		goto bad_graft_data;
 	i = (len + 1) / entry_size - 1;
-	graft = xmalloc(sizeof(*graft) + GIT_SHA1_RAWSZ * i);
+	graft = xmalloc(st_add(sizeof(*graft), st_mult(GIT_SHA1_RAWSZ, i)));
 	graft->nr_parent = i;
 	if (get_oid_hex(buf, &graft->oid))
 		goto bad_graft_data;

@@ -689,7 +689,7 @@ static int add_excludes(const char *fname, const char *base, int baselen,
 			return 0;
 		}
 		if (buf[size-1] != '\n') {
-			buf = xrealloc(buf, size+1);
+			buf = xrealloc(buf, st_add(size, 1));
 			buf[size++] = '\n';
 		}
 	} else {
@@ -2452,7 +2452,7 @@ static int read_one_dir(struct untracked_cache_dir **untracked_,
 	next = data + len + 1;
 	if (next > rd->end)
 		return -1;
-	*untracked_ = untracked = xmalloc(sizeof(*untracked) + len);
+	*untracked_ = untracked = xmalloc(st_add(sizeof(*untracked), len));
 	memcpy(untracked, &ud, sizeof(ud));
 	memcpy(untracked->name, data, len + 1);
 	data = next;

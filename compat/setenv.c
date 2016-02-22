@@ -18,7 +18,7 @@ int gitsetenv(const char *name, const char *value, int replace)
 
 	namelen = strlen(name);
 	valuelen = strlen(value);
-	envstr = malloc((namelen + valuelen + 2));
+	envstr = malloc(st_add3(namelen, valuelen, 2));
 	if (!envstr) {
 		errno = ENOMEM;
 		return -1;
