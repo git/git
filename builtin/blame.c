@@ -2042,7 +2042,8 @@ static int prepare_lines(struct scoreboard *sb)
 	for (p = buf; p < end; p = get_next_line(p, end))
 		num++;
 
-	sb->lineno = lineno = xmalloc(sizeof(*sb->lineno) * (num + 1));
+	ALLOC_ARRAY(sb->lineno, num + 1);
+	lineno = sb->lineno;
 
 	for (p = buf; p < end; p = get_next_line(p, end))
 		*lineno++ = p - buf;

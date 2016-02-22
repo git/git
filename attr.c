@@ -799,7 +799,7 @@ int git_all_attrs(const char *path, int *num, struct git_attr_check **check)
 			++count;
 	}
 	*num = count;
-	*check = xmalloc(sizeof(**check) * count);
+	ALLOC_ARRAY(*check, count);
 	j = 0;
 	for (i = 0; i < attr_nr; i++) {
 		const char *value = check_all_attr[i].value;

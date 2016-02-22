@@ -543,7 +543,7 @@ static int *list_and_choose(struct menu_opts *opts, struct menu_stuff *stuff)
 	int eof = 0;
 	int i;
 
-	chosen = xmalloc(sizeof(int) * stuff->nr);
+	ALLOC_ARRAY(chosen, stuff->nr);
 	/* set chosen as uninitialized */
 	for (i = 0; i < stuff->nr; i++)
 		chosen[i] = -1;

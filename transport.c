@@ -1306,7 +1306,7 @@ int transport_fetch_refs(struct transport *transport, struct ref *refs)
 		 * This condition shouldn't be met in a non-deepening fetch
 		 * (see builtin/fetch.c:quickfetch()).
 		 */
-		heads = xmalloc(nr_refs * sizeof(*heads));
+		ALLOC_ARRAY(heads, nr_refs);
 		for (rm = refs; rm; rm = rm->next)
 			heads[nr_heads++] = rm;
 	}

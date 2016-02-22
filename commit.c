@@ -903,7 +903,7 @@ static int remove_redundant(struct commit **array, int cnt)
 
 	work = xcalloc(cnt, sizeof(*work));
 	redundant = xcalloc(cnt, 1);
-	filled_index = xmalloc(sizeof(*filled_index) * (cnt - 1));
+	ALLOC_ARRAY(filled_index, cnt - 1);
 
 	for (i = 0; i < cnt; i++)
 		parse_commit(array[i]);

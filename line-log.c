@@ -522,7 +522,7 @@ static void fill_line_ends(struct diff_filespec *spec, long *lines,
 	if (diff_populate_filespec(spec, 0))
 		die("Cannot read blob %s", sha1_to_hex(spec->sha1));
 
-	ends = xmalloc(size * sizeof(*ends));
+	ALLOC_ARRAY(ends, size);
 	ends[cur++] = 0;
 	data = spec->data;
 	while (num < spec->size) {
@@ -1142,9 +1142,9 @@ static int process_ranges_merge_commit(struct rev_info *rev, struct commit *comm
 	if (nparents > 1 && rev->first_parent_only)
 		nparents = 1;
 
-	diffqueues = xmalloc(nparents * sizeof(*diffqueues));
-	cand = xmalloc(nparents * sizeof(*cand));
-	parents = xmalloc(nparents * sizeof(*parents));
+	ALLOC_ARRAY(diffqueues, nparents);
+	ALLOC_ARRAY(cand, nparents);
+	ALLOC_ARRAY(parents, nparents);
 
 	p = commit->parents;
 	for (i = 0; i < nparents; i++) {

@@ -814,7 +814,8 @@ static struct tree_entry *new_tree_entry(void)
 	if (!avail_tree_entry) {
 		unsigned int n = tree_entry_alloc;
 		total_allocd += n * sizeof(struct tree_entry);
-		avail_tree_entry = e = xmalloc(n * sizeof(struct tree_entry));
+		ALLOC_ARRAY(e, n);
+		avail_tree_entry = e;
 		while (n-- > 1) {
 			*((void**)e) = e + 1;
 			e++;
@@ -898,7 +899,7 @@ static const char *create_index(void)
 	struct object_entry_pool *o;
 
 	/* Build the table of object IDs. */
-	idx = xmalloc(object_count * sizeof(*idx));
+	ALLOC_ARRAY(idx, object_count);
 	c = idx;
 	for (o = blocks; o; o = o->next_pool)
 		for (e = o->next_free; e-- != o->entries;)

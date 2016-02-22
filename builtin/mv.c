@@ -24,7 +24,8 @@ static const char **internal_copy_pathspec(const char *prefix,
 					   int count, unsigned flags)
 {
 	int i;
-	const char **result = xmalloc((count + 1) * sizeof(const char *));
+	const char **result;
+	ALLOC_ARRAY(result, count + 1);
 	memcpy(result, pathspec, count * sizeof(const char *));
 	result[count] = NULL;
 	for (i = 0; i < count; i++) {

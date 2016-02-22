@@ -852,7 +852,7 @@ static char **get_path_split(void)
 	if (!n)
 		return NULL;
 
-	path = xmalloc((n+1)*sizeof(char *));
+	ALLOC_ARRAY(path, n + 1);
 	p = envpath;
 	i = 0;
 	do {
@@ -937,7 +937,7 @@ static wchar_t *make_environment_block(char **deltaenv)
 		i++;
 
 	/* copy the environment, leaving space for changes */
-	tmpenv = xmalloc((size + i) * sizeof(char*));
+	ALLOC_ARRAY(tmpenv, size + i);
 	memcpy(tmpenv, environ, size * sizeof(char*));
 
 	/* merge supplied environment changes into the temporary environment */
@@ -1127,7 +1127,7 @@ static int try_shell_exec(const char *cmd, char *const *argv)
 		int argc = 0;
 		const char **argv2;
 		while (argv[argc]) argc++;
-		argv2 = xmalloc(sizeof(*argv) * (argc+1));
+		ALLOC_ARRAY(argv2, argc + 1);
 		argv2[0] = (char *)cmd;	/* full path to the script file */
 		memcpy(&argv2[1], &argv[1], sizeof(*argv) * argc);
 		pid = mingw_spawnv(prog, argv2, 1);

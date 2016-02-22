@@ -1372,7 +1372,7 @@ static struct combine_diff_path *find_paths_multitree(
 	struct combine_diff_path paths_head;
 	struct strbuf base;
 
-	parents_sha1 = xmalloc(nparent * sizeof(parents_sha1[0]));
+	ALLOC_ARRAY(parents_sha1, nparent);
 	for (i = 0; i < nparent; i++)
 		parents_sha1[i] = parents->sha1[i];
 
@@ -1483,7 +1483,7 @@ void diff_tree_combined(const unsigned char *sha1,
 	if (opt->orderfile && num_paths) {
 		struct obj_order *o;
 
-		o = xmalloc(sizeof(*o) * num_paths);
+		ALLOC_ARRAY(o, num_paths);
 		for (i = 0, p = paths; p; p = p->next, i++)
 			o[i].obj = p;
 		order_objects(opt->orderfile, path_path, o, num_paths);

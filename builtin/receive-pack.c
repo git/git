@@ -1591,8 +1591,7 @@ static void prepare_shallow_update(struct command *commands,
 {
 	int i, j, k, bitmap_size = (si->ref->nr + 31) / 32;
 
-	si->used_shallow = xmalloc(sizeof(*si->used_shallow) *
-				   si->shallow->nr);
+	ALLOC_ARRAY(si->used_shallow, si->shallow->nr);
 	assign_shallow_commits_to_refs(si, si->used_shallow, NULL);
 
 	si->need_reachability_test =
@@ -1658,7 +1657,7 @@ static void update_shallow_info(struct command *commands,
 		return;
 	}
 
-	ref_status = xmalloc(sizeof(*ref_status) * ref->nr);
+	ALLOC_ARRAY(ref_status, ref->nr);
 	assign_shallow_commits_to_refs(si, NULL, ref_status);
 	for (cmd = commands; cmd; cmd = cmd->next) {
 		if (is_null_sha1(cmd->new_sha1))

@@ -1942,7 +1942,7 @@ static enum object_type packed_to_object_type(struct packed_git *p,
 		/* Push the object we're going to leave behind */
 		if (poi_stack_nr >= poi_stack_alloc && poi_stack == small_poi_stack) {
 			poi_stack_alloc = alloc_nr(poi_stack_nr);
-			poi_stack = xmalloc(sizeof(off_t)*poi_stack_alloc);
+			ALLOC_ARRAY(poi_stack, poi_stack_alloc);
 			memcpy(poi_stack, small_poi_stack, sizeof(off_t)*poi_stack_nr);
 		} else {
 			ALLOC_GROW(poi_stack, poi_stack_nr+1, poi_stack_alloc);
@@ -2308,7 +2308,7 @@ void *unpack_entry(struct packed_git *p, off_t obj_offset,
 		if (delta_stack_nr >= delta_stack_alloc
 		    && delta_stack == small_delta_stack) {
 			delta_stack_alloc = alloc_nr(delta_stack_nr);
-			delta_stack = xmalloc(sizeof(*delta_stack)*delta_stack_alloc);
+			ALLOC_ARRAY(delta_stack, delta_stack_alloc);
 			memcpy(delta_stack, small_delta_stack,
 			       sizeof(*delta_stack)*delta_stack_nr);
 		} else {

@@ -2448,14 +2448,14 @@ static int read_one_dir(struct untracked_cache_dir **untracked_,
 	ud.untracked_alloc = value;
 	ud.untracked_nr	   = value;
 	if (ud.untracked_nr)
-		ud.untracked = xmalloc(sizeof(*ud.untracked) * ud.untracked_nr);
+		ALLOC_ARRAY(ud.untracked, ud.untracked_nr);
 	data = next;
 
 	next = data;
 	ud.dirs_alloc = ud.dirs_nr = decode_varint(&next);
 	if (next > end)
 		return -1;
-	ud.dirs = xmalloc(sizeof(*ud.dirs) * ud.dirs_nr);
+	ALLOC_ARRAY(ud.dirs, ud.dirs_nr);
 	data = next;
 
 	len = strlen((const char *)data);
@@ -2575,7 +2575,7 @@ struct untracked_cache *read_untracked_extension(const void *data, unsigned long
 	rd.data	      = next;
 	rd.end	      = end;
 	rd.index      = 0;
-	rd.ucd        = xmalloc(sizeof(*rd.ucd) * len);
+	ALLOC_ARRAY(rd.ucd, len);
 
 	if (read_one_dir(&uc->root, &rd) || rd.index != len)
 		goto done;

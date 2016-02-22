@@ -52,7 +52,7 @@ static void prepare_order(const char *orderfile)
 		}
 		if (pass == 0) {
 			order_cnt = cnt;
-			order = xmalloc(sizeof(*order) * cnt);
+			ALLOC_ARRAY(order, cnt);
 		}
 	}
 }
@@ -120,7 +120,7 @@ void diffcore_order(const char *orderfile)
 	if (!q->nr)
 		return;
 
-	o = xmalloc(sizeof(*o) * q->nr);
+	ALLOC_ARRAY(o, q->nr);
 	for (i = 0; i < q->nr; i++)
 		o[i].obj = q->queue[i];
 	order_objects(orderfile, pair_pathtwo, o, q->nr);

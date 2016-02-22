@@ -1021,7 +1021,7 @@ int cmd_fast_export(int argc, const char **argv, const char *prefix)
 		const char **refspecs_str;
 		int i;
 
-		refspecs_str = xmalloc(sizeof(*refspecs_str) * refspecs_list.nr);
+		ALLOC_ARRAY(refspecs_str, refspecs_list.nr);
 		for (i = 0; i < refspecs_list.nr; i++)
 			refspecs_str[i] = refspecs_list.items[i].string;
 
