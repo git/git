@@ -17,7 +17,7 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-#include "git-compat-util.h"
+#include "cache.h"
 #include "ewok.h"
 
 #define EWAH_MASK(x) ((eword_t)1 << (x % BITS_IN_EWORD))
@@ -38,9 +38,7 @@ void bitmap_set(struct bitmap *self, size_t pos)
 	if (block >= self->word_alloc) {
 		size_t old_size = self->word_alloc;
 		self->word_alloc = block * 2;
-		self->words = xrealloc(self->words,
-				      self->word_alloc * sizeof(eword_t));
-
+		REALLOC_ARRAY(self->words, self->word_alloc);
 		memset(self->words + old_size, 0x0,
 			(self->word_alloc - old_size) * sizeof(eword_t));
 	}
@@ -100,12 +98,7 @@ struct bitmap *ewah_to_bitmap(struct ewah_bitmap *ewah)
 	ewah_iterator_init(&it, ewah);
 
 	while (ewah_iterator_next(&blowup, &it)) {
-		if (i >= bitmap->word_alloc) {
-			bitmap->word_alloc *= 1.5;
-			bitmap->words = xrealloc(
-				bitmap->words, bitmap->word_alloc * sizeof(eword_t));
-		}
-
+		ALLOC_GROW(bitmap->words, i + 1, bitmap->word_alloc);
 		bitmap->words[i++] = blowup;
 	}
 
@@ -134,8 +127,7 @@ void bitmap_or_ewah(struct bitmap *self, struct ewah_bitmap *other)
 
 	if (self->word_alloc < other_final) {
 		self->word_alloc = other_final;
-		self->words = xrealloc(self->words,
-			self->word_alloc * sizeof(eword_t));
+		REALLOC_ARRAY(self->words, self->word_alloc);
 		memset(self->words + original_size, 0x0,
 			(self->word_alloc - original_size) * sizeof(eword_t));
 	}
