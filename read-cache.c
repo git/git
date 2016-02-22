@@ -327,7 +327,7 @@ int ie_match_stat(const struct index_state *istate,
 	 * by definition never matches what is in the work tree until it
 	 * actually gets added.
 	 */
-	if (ce->ce_flags & CE_INTENT_TO_ADD)
+	if (ce_intent_to_add(ce))
 		return DATA_CHANGED | TYPE_CHANGED | MODE_CHANGED;
 
 	changed = ce_match_stat_basic(ce, st);
@@ -1237,7 +1237,7 @@ int refresh_index(struct index_state *istate, unsigned int flags,
 
 			if (cache_errno == ENOENT)
 				fmt = deleted_fmt;
-			else if (ce->ce_flags & CE_INTENT_TO_ADD)
+			else if (ce_intent_to_add(ce))
 				fmt = added_fmt; /* must be before other checks */
 			else if (changed & TYPE_CHANGED)
 				fmt = typechange_fmt;
