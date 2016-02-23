@@ -236,6 +236,15 @@ static void init_socket_directory(const char *path)
 		if (mkdir(dir, 0700) < 0)
 			die_errno("unable to mkdir '%s'", dir);
 	}
+
+	if (chdir(dir))
+		/*
+		 * We don't actually care what our cwd is; we chdir here just to
+		 * be a friendly daemon and avoid tying up our original cwd.
+		 * If this fails, it's OK to just continue without that benefit.
+		 */
+		;
+
 	free(path_copy);
 }
 
