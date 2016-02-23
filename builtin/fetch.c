@@ -36,9 +36,10 @@ static int prune = -1; /* unspecified */
 
 static int all, append, dry_run, force, keep, multiple, update_head_ok, verbosity;
 static int progress = -1, recurse_submodules = RECURSE_SUBMODULES_DEFAULT;
-static int tags = TAGS_DEFAULT, unshallow, update_shallow;
+static int tags = TAGS_DEFAULT, unshallow, update_shallow, deepen;
 static int max_children = 1;
 static const char *depth;
+static const char *deepen_since;
 static const char *upload_pack;
 static struct strbuf default_rla = STRBUF_INIT;
 static struct transport *gtransport;
@@ -115,6 +116,8 @@ static struct option builtin_fetch_options[] = {
 	OPT_BOOL(0, "progress", &progress, N_("force progress reporting")),
 	OPT_STRING(0, "depth", &depth, N_("depth"),
 		   N_("deepen history of shallow clone")),
+	OPT_STRING(0, "shallow-since", &deepen_since, N_("time"),
+		   N_("deepen history of shallow repository based on time")),
 	{ OPTION_SET_INT, 0, "unshallow", &unshallow, NULL,
 		   N_("convert to a complete repository"),
 		   PARSE_OPT_NONEG | PARSE_OPT_NOARG, NULL, 1 },
@@ -754,7 +757,7 @@ static int quickfetch(struct ref *ref_map)
 	 * really need to perform.  Claiming failure now will ensure
 	 * we perform the network exchange to deepen our history.
 	 */
-	if (depth)
+	if (deepen)
 		return -1;
 	return check_everything_connected(iterate_ref_map, 1, &rm);
 }
@@ -859,7 +862,7 @@ static void set_option(struct transport *transport, const char *name, const char
 			name, transport->url);
 }
 
-static struct transport *prepare_transport(struct remote *remote)
+static struct transport *prepare_transport(struct remote *remote, int deepen)
 {
 	struct transport *transport;
 	transport = transport_get(remote, NULL);
@@ -870,6 +873,8 @@ static struct transport *prepare_transport(struct remote *remote)
 		set_option(transport, TRANS_OPT_KEEP, "yes");
 	if (depth)
 		set_option(transport, TRANS_OPT_DEPTH, depth);
+	if (deepen && deepen_since)
+		set_option(transport, TRANS_OPT_DEEPEN_SINCE, deepen_since);
 	if (update_shallow)
 		set_option(transport, TRANS_OPT_UPDATE_SHALLOW, "yes");
 	return transport;
@@ -877,8 +882,18 @@ static struct transport *prepare_transport(struct remote *remote)
 
 static void backfill_tags(struct transport *transport, struct ref *ref_map)
 {
-	if (transport->cannot_reuse) {
-		gsecondary = prepare_transport(transport->remote);
+	int cannot_reuse;
+
+	/*
+	 * Once we have set TRANS_OPT_DEEPEN_SINCE, we can't unset it
+	 * when remote helper is used (setting it to an empty string
+	 * is not unsetting). We could extend the remote helper
+	 * protocol for that, but for now, just force a new connection
+	 * without deepen-since.
+	 */
+	cannot_reuse = transport->cannot_reuse || deepen_since;
+	if (cannot_reuse) {
+		gsecondary = prepare_transport(transport->remote, 0);
 		transport = gsecondary;
 	}
 
@@ -1095,7 +1110,7 @@ static int fetch_one(struct remote *remote, int argc, const char **argv)
 		die(_("No remote repository specified.  Please, specify either a URL or a\n"
 		    "remote name from which new revisions should be fetched."));
 
-	gtransport = prepare_transport(remote);
+	gtransport = prepare_transport(remote, 1);
 
 	if (prune < 0) {
 		/* no command line request */
@@ -1167,6 +1182,8 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 	/* no need to be strict, transport_set_option() will validate it again */
 	if (depth && atoi(depth) < 1)
 		die(_("depth %s is not a positive number"), depth);
+	if (depth || deepen_since)
+		deepen = 1;
 
 	if (recurse_submodules != RECURSE_SUBMODULES_OFF) {
 		if (recurse_submodules_default) {
