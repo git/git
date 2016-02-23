@@ -193,6 +193,9 @@ objects from the source repository into a pack in the cloned repository.
 	`--no-single-branch` is given to fetch the histories near the
 	tips of all branches.
 
+--shallow-since=<date>::
+	Create a shallow clone with a history after the specified time.
+
 --[no-]single-branch::
 	Clone only the history leading to the tip of a single branch,
 	either specified by the `--branch` option or the primary
