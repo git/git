@@ -708,7 +708,7 @@ static enum crlf_action git_path_check_crlf(struct git_attr_check *check)
 	const char *value = check->value;
 
 	if (ATTR_TRUE(value))
-		return text_eol_is_crlf() ? CRLF_TEXT_CRLF : CRLF_TEXT_INPUT;
+		return CRLF_TEXT;
 	else if (ATTR_FALSE(value))
 		return CRLF_BINARY;
 	else if (ATTR_UNSET(value))
@@ -778,20 +778,20 @@ static void convert_attrs(struct conv_attrs *ca, const char *path)
 	}
 
 	if (!git_check_attr(path, NUM_CONV_ATTRS, ccheck)) {
-		enum eol eol_attr;
 		ca->crlf_action = git_path_check_crlf(ccheck + 4);
 		if (ca->crlf_action == CRLF_UNDEFINED)
 			ca->crlf_action = git_path_check_crlf(ccheck + 0);
 		ca->attr_action = ca->crlf_action;
 		ca->ident = git_path_check_ident(ccheck + 1);
 		ca->drv = git_path_check_convert(ccheck + 2);
-		if (ca->crlf_action == CRLF_BINARY)
-			return;
-		eol_attr = git_path_check_eol(ccheck + 3);
-		if (eol_attr == EOL_LF)
-			ca->crlf_action = CRLF_TEXT_INPUT;
-		else if (eol_attr == EOL_CRLF)
-			ca->crlf_action = CRLF_TEXT_CRLF;
+		if (ca->crlf_action != CRLF_BINARY) {
+			enum eol eol_attr = git_path_check_eol(ccheck + 3);
+			if (eol_attr == EOL_LF)
+				ca->crlf_action = CRLF_TEXT_INPUT;
+			else if (eol_attr == EOL_CRLF)
+				ca->crlf_action = CRLF_TEXT_CRLF;
+		}
+		ca->attr_action = ca->crlf_action;
 	} else {
 		ca->drv = NULL;
 		ca->crlf_action = CRLF_UNDEFINED;
