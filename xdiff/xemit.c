@@ -120,21 +120,6 @@ static long def_ff(const char *rec, long len, char *buf, long sz, void *priv)
 	return -1;
 }
 
-static int xdl_emit_common(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
-                           xdemitconf_t const *xecfg) {
-	xdfile_t *xdf = &xe->xdf2;
-	const char *rchg = xdf->rchg;
-	long ix;
-
-	for (ix = 0; ix < xdf->nrec; ix++) {
-		if (rchg[ix])
-			continue;
-		if (xdl_emit_record(xdf, ix, "", ecb))
-			return -1;
-	}
-	return 0;
-}
-
 struct func_line {
 	long len;
 	char buf[80];
@@ -169,9 +154,6 @@ int xdl_emit_diff(xdfenv_t *xe, xdchange_t *xscr, xdemitcb_t *ecb,
 	xdchange_t *xch, *xche;
 	long funclineprev = -1;
 	struct func_line func_line = { 0 };
-
-	if (xecfg->flags & XDL_EMIT_COMMON)
-		return xdl_emit_common(xe, xscr, ecb, xecfg);
 
 	for (xch = xscr; xch; xch = xche->next) {
 		xche = xdl_get_hunk(&xch, xecfg);
