@@ -168,6 +168,11 @@ long parse_algorithm_value(const char *value)
  * never be affected by the setting of diff.renames
  * the user happens to have in the configuration file.
  */
+void init_diff_ui_defaults(void)
+{
+	diff_detect_rename_default = 1;
+}
+
 int git_diff_ui_config(const char *var, const char *value, void *cb)
 {
 	if (!strcmp(var, "diff.color") || !strcmp(var, "color.diff")) {
