@@ -554,7 +554,7 @@ static void send_shallow(struct commit_list *result)
 
 static void deepen(int depth, const struct object_array *shallows)
 {
-	struct commit_list *result = NULL, *backup = NULL;
+	struct commit_list *result = NULL;
 	int i;
 	if (depth == INFINITE_DEPTH && !is_repository_shallow())
 		for (i = 0; i < shallows->nr; i++) {
@@ -562,11 +562,10 @@ static void deepen(int depth, const struct object_array *shallows)
 			object->flags |= NOT_SHALLOW;
 		}
 	else
-		backup = result =
-			get_shallow_commits(&want_obj, depth,
-					    SHALLOW, NOT_SHALLOW);
+		result = get_shallow_commits(&want_obj, depth,
+					     SHALLOW, NOT_SHALLOW);
 	send_shallow(result);
-	free_commit_list(backup);
+	free_commit_list(result);
 	for (i = 0; i < shallows->nr; i++) {
 		struct object *object = shallows->objects[i].item;
 		if (object->flags & NOT_SHALLOW) {
