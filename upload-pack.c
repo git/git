@@ -452,24 +452,24 @@ static int is_our_ref(struct object *o)
 	return o->flags & ((allow_hidden_ref ? HIDDEN_REF : 0) | OUR_REF);
 }
 
-static int check_unreachable(struct object_array *src)
+static int do_reachable_revlist(struct child_process *cmd,
+				struct object_array *src)
 {
 	static const char *argv[] = {
 		"rev-list", "--stdin", NULL,
 	};
-	static struct child_process cmd = CHILD_PROCESS_INIT;
 	struct object *o;
 	char namebuf[42]; /* ^ + SHA-1 + LF */
 	int i;
 
-	cmd.argv = argv;
-	cmd.git_cmd = 1;
-	cmd.no_stderr = 1;
-	cmd.in = -1;
-	cmd.out = -1;
+	cmd->argv = argv;
+	cmd->git_cmd = 1;
+	cmd->no_stderr = 1;
+	cmd->in = -1;
+	cmd->out = -1;
 
-	if (start_command(&cmd))
-		return 0;
+	if (start_command(cmd))
+		return -1;
 
 	/*
 	 * If rev-list --stdin encounters an unknown commit, it
@@ -487,8 +487,8 @@ static int check_unreachable(struct object_array *src)
 		if (!is_our_ref(o))
 			continue;
 		memcpy(namebuf + 1, oid_to_hex(&o->oid), GIT_SHA1_HEXSZ);
-		if (write_in_full(cmd.in, namebuf, 42) < 0)
-			return 0;
+		if (write_in_full(cmd->in, namebuf, 42) < 0)
+			return -1;
 	}
 	namebuf[40] = '\n';
 	for (i = 0; i < src->nr; i++) {
@@ -496,18 +496,29 @@ static int check_unreachable(struct object_array *src)
 		if (is_our_ref(o))
 			continue;
 		memcpy(namebuf, oid_to_hex(&o->oid), GIT_SHA1_HEXSZ);
-		if (write_in_full(cmd.in, namebuf, 41) < 0)
-			return 0;
+		if (write_in_full(cmd->in, namebuf, 41) < 0)
+			return -1;
 	}
-	close(cmd.in);
+	close(cmd->in);
 
 	sigchain_pop(SIGPIPE);
+	return 0;
+}
+
+static int check_unreachable(struct object_array *src)
+{
+	struct child_process cmd = CHILD_PROCESS_INIT;
+	int i, ret = do_reachable_revlist(&cmd, src);
+	char buf[1];
+
+	if (ret < 0)
+		return 0;
 
 	/*
 	 * The commits out of the rev-list are not ancestors of
 	 * our ref.
 	 */
-	i = read_in_full(cmd.out, namebuf, 1);
+	i = read_in_full(cmd.out, buf, 1);
 	if (i)
 		return 0;
 	close(cmd.out);
