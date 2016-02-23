@@ -14,6 +14,11 @@
 	linkgit:git-clone[1]), deepen or shorten the history to the specified
 	number of commits. Tags for the deepened commits are not fetched.
 
+--deepen=<depth>::
+	Similar to --depth, except it specifies the number of commits
+	from the current shallow boundary instead of from the tip of
+	each remote branch history.
+
 --shallow-since=<date>::
 	Deepen or shorten the history of a shallow repository to
 	include all reachable commits after <date>.

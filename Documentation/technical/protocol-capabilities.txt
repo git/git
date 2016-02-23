@@ -197,6 +197,13 @@ specific revision, instead of depth. Internally it's equivalent of
 doing "rev-list --not <rev>" on the server side. "deepen-not"
 cannot be used with "deepen", but can be used with "deepen-since".
 
+deepen-relative
+---------------
+
+If this capability is requested by the client, the semantics of
+"deepen" command is changed. The "depth" argument is the depth from
+the current shallow boundary, instead of the depth from remote refs.
+
 no-progress
 -----------
 

@@ -32,6 +32,7 @@ static const char upload_pack_usage[] = "git upload-pack [--strict] [--timeout=<
 
 static unsigned long oldest_have;
 
+static int deepen_relative;
 static int multi_ack;
 static int no_done;
 static int use_thin_pack, use_ofs_delta, use_include_tag;
@@ -652,7 +653,8 @@ static void send_unshallow(const struct object_array *shallows)
 	}
 }
 
-static void deepen(int depth, const struct object_array *shallows)
+static void deepen(int depth, int deepen_relative,
+		   struct object_array *shallows)
 {
 	struct commit_list *result = NULL;
 	int i;
@@ -661,7 +663,14 @@ static void deepen(int depth, const struct object_array *shallows)
 			struct object *object = shallows->objects[i].item;
 			object->flags |= NOT_SHALLOW;
 		}
-	else
+	else if (deepen_relative) {
+		struct object_array reachable_shallows = OBJECT_ARRAY_INIT;
+		get_reachable_list(shallows, &reachable_shallows);
+		result = get_shallow_commits(&reachable_shallows,
+					     depth + 1,
+					     SHALLOW, NOT_SHALLOW);
+		object_array_clear(&reachable_shallows);
+	} else
 		result = get_shallow_commits(&want_obj, depth,
 					     SHALLOW, NOT_SHALLOW);
 	send_shallow(result);
@@ -753,6 +762,8 @@ static void receive_needs(void)
 
 		features = arg + 40;
 
+		if (parse_feature_request(features, "deepen-relative"))
+			deepen_relative = 1;
 		if (parse_feature_request(features, "multi_ack_detailed"))
 			multi_ack = 2;
 		else if (parse_feature_request(features, "multi_ack"))
@@ -802,7 +813,7 @@ static void receive_needs(void)
 	if (depth > 0 && deepen_rev_list)
 		die("git upload-pack: deepen and deepen-since (or deepen-not) cannot be used together");
 	if (depth > 0)
-		deepen(depth, &shallows);
+		deepen(depth, deepen_relative, &shallows);
 	else if (deepen_rev_list) {
 		struct argv_array av = ARGV_ARRAY_INIT;
 		int i;
@@ -873,8 +884,8 @@ static int send_ref(const char *refname, const struct object_id *oid,
 		    int flag, void *cb_data)
 {
 	static const char *capabilities = "multi_ack thin-pack side-band"
-		" side-band-64k ofs-delta shallow deepen-since deepen-not no-progress"
-		" include-tag multi_ack_detailed";
+		" side-band-64k ofs-delta shallow deepen-since deepen-not"
+		" deepen-relative no-progress include-tag multi_ack_detailed";
 	const char *refname_nons = strip_namespace(refname);
 	struct object_id peeled;
 

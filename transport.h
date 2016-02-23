@@ -14,6 +14,7 @@ struct git_transport_options {
 	unsigned check_self_contained_and_connected : 1;
 	unsigned self_contained_and_connected : 1;
 	unsigned update_shallow : 1;
+	unsigned deepen_relative : 1;
 	int depth;
 	const char *deepen_since;
 	const struct string_list *deepen_not;
@@ -180,6 +181,9 @@ int transport_restrict_protocols(void);
 
 /* Limit the depth of the fetch based on revs if not null */
 #define TRANS_OPT_DEEPEN_NOT "deepen-not"
+
+/* Limit the deepen of the fetch if not null */
+#define TRANS_OPT_DEEPEN_RELATIVE "deepen-relative"
 
 /* Aggressively fetch annotated tags if possible */
 #define TRANS_OPT_FOLLOWTAGS "followtags"

@@ -34,7 +34,7 @@ static int fetch_prune_config = -1; /* unspecified */
 static int prune = -1; /* unspecified */
 #define PRUNE_BY_DEFAULT 0 /* do we prune by default? */
 
-static int all, append, dry_run, force, keep, multiple, update_head_ok, verbosity;
+static int all, append, dry_run, force, keep, multiple, update_head_ok, verbosity, deepen_relative;
 static int progress = -1, recurse_submodules = RECURSE_SUBMODULES_DEFAULT;
 static int tags = TAGS_DEFAULT, unshallow, update_shallow, deepen;
 static int max_children = 1;
@@ -129,6 +129,8 @@ static struct option builtin_fetch_options[] = {
 	{ OPTION_CALLBACK, 0, "shallow-exclude", NULL, N_("revision"),
 		    N_("deepen history of shallow clone by excluding rev"),
 		    PARSE_OPT_NONEG, option_parse_deepen_not },
+	OPT_INTEGER(0, "deepen", &deepen_relative,
+		    N_("deepen history of shallow clone")),
 	{ OPTION_SET_INT, 0, "unshallow", &unshallow, NULL,
 		   N_("convert to a complete repository"),
 		   PARSE_OPT_NONEG | PARSE_OPT_NOARG, NULL, 1 },
@@ -889,6 +891,8 @@ static struct transport *prepare_transport(struct remote *remote, int deepen)
 	if (deepen && deepen_not.nr)
 		set_option(transport, TRANS_OPT_DEEPEN_NOT,
 			   (const char *)&deepen_not);
+	if (deepen_relative)
+		set_option(transport, TRANS_OPT_DEEPEN_RELATIVE, "yes");
 	if (update_shallow)
 		set_option(transport, TRANS_OPT_UPDATE_SHALLOW, "yes");
 	return transport;
@@ -914,6 +918,7 @@ static void backfill_tags(struct transport *transport, struct ref *ref_map)
 
 	transport_set_option(transport, TRANS_OPT_FOLLOWTAGS, NULL);
 	transport_set_option(transport, TRANS_OPT_DEPTH, "0");
+	transport_set_option(transport, TRANS_OPT_DEEPEN_RELATIVE, NULL);
 	fetch_refs(transport, ref_map);
 
 	if (gsecondary) {
@@ -1185,6 +1190,13 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 	argc = parse_options(argc, argv, prefix,
 			     builtin_fetch_options, builtin_fetch_usage, 0);
 
+	if (deepen_relative) {
+		if (deepen_relative < 0)
+			die(_("Negative depth in --deepen is not supported"));
+		if (depth)
+			die(_("--deepen and --depth are mutually exclusive"));
+		depth = xstrfmt("%d", deepen_relative);
+	}
 	if (unshallow) {
 		if (depth)
 			die(_("--depth and --unshallow cannot be used together"));
