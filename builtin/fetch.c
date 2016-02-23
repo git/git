@@ -41,6 +41,7 @@ static int max_children = 1;
 static const char *depth;
 static const char *deepen_since;
 static const char *upload_pack;
+struct string_list deepen_not = STRING_LIST_INIT_NODUP;
 static struct strbuf default_rla = STRBUF_INIT;
 static struct transport *gtransport;
 static struct transport *gsecondary;
@@ -49,6 +50,13 @@ static const char *recurse_submodules_default;
 static int shown_url = 0;
 static int refmap_alloc, refmap_nr;
 static const char **refmap_array;
+
+static int option_parse_deepen_not(const struct option *opt,
+				   const char *arg, int unset)
+{
+	string_list_append(&deepen_not, arg);
+	return 0;
+}
 
 static int option_parse_recurse_submodules(const struct option *opt,
 				   const char *arg, int unset)
@@ -118,6 +126,9 @@ static struct option builtin_fetch_options[] = {
 		   N_("deepen history of shallow clone")),
 	OPT_STRING(0, "shallow-since", &deepen_since, N_("time"),
 		   N_("deepen history of shallow repository based on time")),
+	{ OPTION_CALLBACK, 0, "shallow-exclude", NULL, N_("revision"),
+		    N_("deepen history of shallow clone by excluding rev"),
+		    PARSE_OPT_NONEG, option_parse_deepen_not },
 	{ OPTION_SET_INT, 0, "unshallow", &unshallow, NULL,
 		   N_("convert to a complete repository"),
 		   PARSE_OPT_NONEG | PARSE_OPT_NOARG, NULL, 1 },
@@ -875,6 +886,9 @@ static struct transport *prepare_transport(struct remote *remote, int deepen)
 		set_option(transport, TRANS_OPT_DEPTH, depth);
 	if (deepen && deepen_since)
 		set_option(transport, TRANS_OPT_DEEPEN_SINCE, deepen_since);
+	if (deepen && deepen_not.nr)
+		set_option(transport, TRANS_OPT_DEEPEN_NOT,
+			   (const char *)&deepen_not);
 	if (update_shallow)
 		set_option(transport, TRANS_OPT_UPDATE_SHALLOW, "yes");
 	return transport;
@@ -889,9 +903,10 @@ static void backfill_tags(struct transport *transport, struct ref *ref_map)
 	 * when remote helper is used (setting it to an empty string
 	 * is not unsetting). We could extend the remote helper
 	 * protocol for that, but for now, just force a new connection
-	 * without deepen-since.
+	 * without deepen-since. Similar story for deepen-not.
 	 */
-	cannot_reuse = transport->cannot_reuse || deepen_since;
+	cannot_reuse = transport->cannot_reuse ||
+		deepen_since || deepen_not.nr;
 	if (cannot_reuse) {
 		gsecondary = prepare_transport(transport->remote, 0);
 		transport = gsecondary;
@@ -1182,7 +1197,7 @@ int cmd_fetch(int argc, const char **argv, const char *prefix)
 	/* no need to be strict, transport_set_option() will validate it again */
 	if (depth && atoi(depth) < 1)
 		die(_("depth %s is not a positive number"), depth);
-	if (depth || deepen_since)
+	if (depth || deepen_since || deepen_not.nr)
 		deepen = 1;
 
 	if (recurse_submodules != RECURSE_SUBMODULES_OFF) {

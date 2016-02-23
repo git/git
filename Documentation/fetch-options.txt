@@ -18,6 +18,11 @@
 	Deepen or shorten the history of a shallow repository to
 	include all reachable commits after <date>.
 
+--shallow-exclude=<revision>::
+	Deepen or shorten the history of a shallow repository to
+	exclude commits reachable from a specified remote branch or tag.
+	This option can be specified multiple times.
+
 --unshallow::
 	If the source repository is complete, convert a shallow
 	repository to a complete one, removing all the limitations

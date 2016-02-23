@@ -50,6 +50,7 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 	struct child_process *conn;
 	struct fetch_pack_args args;
 	struct sha1_array shallow = SHA1_ARRAY_INIT;
+	struct string_list deepen_not = STRING_LIST_INIT_DUP;
 
 	packet_trace_identity("fetch-pack");
 
@@ -108,6 +109,10 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 			args.deepen_since = xstrdup(arg);
 			continue;
 		}
+		if (skip_prefix(arg, "--shallow-exclude=", &arg)) {
+			string_list_append(&deepen_not, arg);
+			continue;
+		}
 		if (!strcmp("--no-progress", arg)) {
 			args.no_progress = 1;
 			continue;
@@ -135,6 +140,8 @@ int cmd_fetch_pack(int argc, const char **argv, const char *prefix)
 		}
 		usage(fetch_pack_usage);
 	}
+	if (deepen_not.nr)
+		args.deepen_not = &deepen_not;
 
 	if (i < argc)
 		dest = argv[i++];
