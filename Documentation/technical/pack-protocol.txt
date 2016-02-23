@@ -220,7 +220,8 @@ out of what the server said it could do with the first 'want' line.
   shallow-line      =  PKT-LINE("shallow" SP obj-id)
 
   depth-request     =  PKT-LINE("deepen" SP depth) /
-		       PKT-LINE("deepen-since" SP timestamp)
+		       PKT-LINE("deepen-since" SP timestamp) /
+		       PKT-LINE("deepen-not" SP ref)
 
   first-want        =  PKT-LINE("want" SP obj-id SP capability-list)
   additional-want   =  PKT-LINE("want" SP obj-id)
