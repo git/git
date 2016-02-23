@@ -453,7 +453,8 @@ static int is_our_ref(struct object *o)
 }
 
 static int do_reachable_revlist(struct child_process *cmd,
-				struct object_array *src)
+				struct object_array *src,
+				struct object_array *reachable)
 {
 	static const char *argv[] = {
 		"rev-list", "--stdin", NULL,
@@ -484,6 +485,8 @@ static int do_reachable_revlist(struct child_process *cmd,
 		o = get_indexed_object(--i);
 		if (!o)
 			continue;
+		if (reachable && o->type == OBJ_COMMIT)
+			o->flags &= ~TMP_MARK;
 		if (!is_our_ref(o))
 			continue;
 		memcpy(namebuf + 1, oid_to_hex(&o->oid), GIT_SHA1_HEXSZ);
@@ -493,8 +496,13 @@ static int do_reachable_revlist(struct child_process *cmd,
 	namebuf[40] = '\n';
 	for (i = 0; i < src->nr; i++) {
 		o = src->objects[i].item;
-		if (is_our_ref(o))
+		if (is_our_ref(o)) {
+			if (reachable)
+				add_object_array(o, NULL, reachable);
 			continue;
+		}
+		if (reachable && o->type == OBJ_COMMIT)
+			o->flags |= TMP_MARK;
 		memcpy(namebuf, oid_to_hex(&o->oid), GIT_SHA1_HEXSZ);
 		if (write_in_full(cmd->in, namebuf, 41) < 0)
 			return -1;
@@ -505,10 +513,48 @@ static int do_reachable_revlist(struct child_process *cmd,
 	return 0;
 }
 
+static int get_reachable_list(struct object_array *src,
+			      struct object_array *reachable)
+{
+	struct child_process cmd = CHILD_PROCESS_INIT;
+	int i, ret = do_reachable_revlist(&cmd, src, reachable);
+	struct object *o;
+	char namebuf[42]; /* ^ + SHA-1 + LF */
+
+	if (ret < 0)
+		return -1;
+
+	while ((i = read_in_full(cmd.out, namebuf, 41)) == 41) {
+		struct object_id sha1;
+
+		if (namebuf[40] != '\n' || get_oid_hex(namebuf, &sha1))
+			break;
+
+		o = lookup_object(sha1.hash);
+		if (o && o->type == OBJ_COMMIT) {
+			o->flags &= ~TMP_MARK;
+		}
+	}
+	for (i = get_max_object_index(); 0 < i; i--) {
+		o = get_indexed_object(i - 1);
+		if (o && o->type == OBJ_COMMIT &&
+		    (o->flags & TMP_MARK)) {
+			add_object_array(o, NULL, reachable);
+				o->flags &= ~TMP_MARK;
+		}
+	}
+	close(cmd.out);
+
+	if (finish_command(&cmd))
+		return -1;
+
+	return 0;
+}
+
 static int check_unreachable(struct object_array *src)
 {
 	struct child_process cmd = CHILD_PROCESS_INIT;
-	int i, ret = do_reachable_revlist(&cmd, src);
+	int i, ret = do_reachable_revlist(&cmd, src, NULL);
 	char buf[1];
 
 	if (ret < 0)
