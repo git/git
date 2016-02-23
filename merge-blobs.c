@@ -48,40 +48,6 @@ static void *three_way_filemerge(const char *path, mmfile_t *base, mmfile_t *our
 	return res.ptr;
 }
 
-static int common_outf(void *priv_, mmbuffer_t *mb, int nbuf)
-{
-	int i;
-	mmfile_t *dst = priv_;
-
-	for (i = 0; i < nbuf; i++) {
-		memcpy(dst->ptr + dst->size, mb[i].ptr, mb[i].size);
-		dst->size += mb[i].size;
-	}
-	return 0;
-}
-
-static int generate_common_file(mmfile_t *res, mmfile_t *f1, mmfile_t *f2)
-{
-	unsigned long size = f1->size < f2->size ? f1->size : f2->size;
-	void *ptr = xmalloc(size);
-	xpparam_t xpp;
-	xdemitconf_t xecfg;
-	xdemitcb_t ecb;
-
-	memset(&xpp, 0, sizeof(xpp));
-	xpp.flags = 0;
-	memset(&xecfg, 0, sizeof(xecfg));
-	xecfg.ctxlen = 3;
-	xecfg.flags = XDL_EMIT_COMMON;
-	ecb.outf = common_outf;
-
-	res->ptr = ptr;
-	res->size = 0;
-
-	ecb.priv = res;
-	return xdi_diff(f1, f2, &xpp, &xecfg, &ecb);
-}
-
 void *merge_blobs(const char *path, struct blob *base, struct blob *our, struct blob *their, unsigned long *size)
 {
 	void *res = NULL;
@@ -112,8 +78,8 @@ void *merge_blobs(const char *path, struct blob *base, struct blob *our, struct 
 		if (fill_mmfile_blob(&common, base) < 0)
 			goto out_free_f2_f1;
 	} else {
-		if (generate_common_file(&common, &f1, &f2) < 0)
-			goto out_free_f2_f1;
+		common.ptr = xstrdup("");
+		common.size = 0;
 	}
 	res = three_way_filemerge(path, &common, &f1, &f2, size);
 	free_mmfile(&common);
