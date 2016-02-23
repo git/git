@@ -451,7 +451,7 @@ static int is_our_ref(struct object *o)
 	return o->flags & ((allow_hidden_ref ? HIDDEN_REF : 0) | OUR_REF);
 }
 
-static void check_non_tip(void)
+static int check_unreachable(struct object_array *src)
 {
 	static const char *argv[] = {
 		"rev-list", "--stdin", NULL,
@@ -461,14 +461,6 @@ static void check_non_tip(void)
 	char namebuf[42]; /* ^ + SHA-1 + LF */
 	int i;
 
-	/*
-	 * In the normal in-process case without
-	 * uploadpack.allowReachableSHA1InWant,
-	 * non-tip requests can never happen.
-	 */
-	if (!stateless_rpc && !(allow_unadvertised_object_request & ALLOW_REACHABLE_SHA1))
-		goto error;
-
 	cmd.argv = argv;
 	cmd.git_cmd = 1;
 	cmd.no_stderr = 1;
@@ -476,7 +468,7 @@ static void check_non_tip(void)
 	cmd.out = -1;
 
 	if (start_command(&cmd))
-		goto error;
+		return 0;
 
 	/*
 	 * If rev-list --stdin encounters an unknown commit, it
@@ -495,16 +487,16 @@ static void check_non_tip(void)
 			continue;
 		memcpy(namebuf + 1, oid_to_hex(&o->oid), GIT_SHA1_HEXSZ);
 		if (write_in_full(cmd.in, namebuf, 42) < 0)
-			goto error;
+			return 0;
 	}
 	namebuf[40] = '\n';
-	for (i = 0; i < want_obj.nr; i++) {
-		o = want_obj.objects[i].item;
+	for (i = 0; i < src->nr; i++) {
+		o = src->objects[i].item;
 		if (is_our_ref(o))
 			continue;
 		memcpy(namebuf, oid_to_hex(&o->oid), GIT_SHA1_HEXSZ);
 		if (write_in_full(cmd.in, namebuf, 41) < 0)
-			goto error;
+			return 0;
 	}
 	close(cmd.in);
 
@@ -516,7 +508,7 @@ static void check_non_tip(void)
 	 */
 	i = read_in_full(cmd.out, namebuf, 1);
 	if (i)
-		goto error;
+		return 0;
 	close(cmd.out);
 
 	/*
@@ -525,15 +517,29 @@ static void check_non_tip(void)
 	 * even when it showed no commit.
 	 */
 	if (finish_command(&cmd))
-		goto error;
+		return 0;
 
 	/* All the non-tip ones are ancestors of what we advertised */
-	return;
+	return 1;
+}
 
-error:
+static void check_non_tip(void)
+{
+	int i;
+
+	/*
+	 * In the normal in-process case without
+	 * uploadpack.allowReachableSHA1InWant,
+	 * non-tip requests can never happen.
+	 */
+	if (!stateless_rpc && !(allow_unadvertised_object_request & ALLOW_REACHABLE_SHA1))
+		;		/* error */
+	else if (check_unreachable(&want_obj))
+		return;
+
 	/* Pick one of them (we know there at least is one) */
 	for (i = 0; i < want_obj.nr; i++) {
-		o = want_obj.objects[i].item;
+		struct object *o = want_obj.objects[i].item;
 		if (!is_our_ref(o))
 			die("git upload-pack: not our ref %s",
 			    oid_to_hex(&o->oid));
