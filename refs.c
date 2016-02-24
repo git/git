@@ -1547,3 +1547,10 @@ int delete_refs(struct string_list *refnames, unsigned int flags)
 
 	return refs->be->delete_refs(refs, refnames, flags);
 }
+
+int rename_ref(const char *oldref, const char *newref, const char *logmsg)
+{
+	struct ref_store *refs = get_ref_store(NULL);
+
+	return refs->be->rename_ref(refs, oldref, newref, logmsg);
+}
