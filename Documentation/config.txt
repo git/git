@@ -1648,6 +1648,12 @@ http.proxyAuthMethod::
 * `ntlm` - NTLM authentication (compare the --ntlm option of `curl(1)`)
 --
 
+http.emptyAuth::
+	Attempt authentication without seeking a username or password.  This
+	can be used to attempt GSS-Negotiate authentication without specifying
+	a username in the URL, as libcurl normally requires a username for
+	authentication.
+
 http.cookieFile::
 	File containing previously stored cookie lines which should be used
 	in the Git http session, if they match the server. The file format
