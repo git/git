@@ -3520,9 +3520,8 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 
 	ret = lock_raw_ref(refs, update->refname, mustexist,
 			   affected_refnames, NULL,
-			   &update->lock, &referent,
+			   &lock, &referent,
 			   &update->type, err);
-
 	if (ret) {
 		char *reason;
 
@@ -3533,7 +3532,7 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 		return ret;
 	}
 
-	lock = update->lock;
+	update->backend_data = lock;
 
 	if (update->type & REF_ISSYMREF) {
 		if (update->flags & REF_NODEREF) {
@@ -3588,7 +3587,8 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 		for (parent_update = update->parent_update;
 		     parent_update;
 		     parent_update = parent_update->parent_update) {
-			oidcpy(&parent_update->lock->old_oid, &lock->old_oid);
+			struct ref_lock *parent_lock = parent_update->backend_data;
+			oidcpy(&parent_lock->old_oid, &lock->old_oid);
 		}
 
 		if ((update->flags & REF_HAVE_OLD) &&
@@ -3623,7 +3623,7 @@ static int lock_ref_for_update(struct files_ref_store *refs,
 			 * The lock was freed upon failure of
 			 * write_ref_to_lockfile():
 			 */
-			update->lock = NULL;
+			update->backend_data = NULL;
 			strbuf_addf(err,
 				    "cannot update the ref '%s': %s",
 				    update->refname, write_err);
@@ -3741,7 +3741,7 @@ static int files_transaction_commit(struct ref_store *ref_store,
 	/* Perform updates first so live commits remain referenced */
 	for (i = 0; i < transaction->nr; i++) {
 		struct ref_update *update = transaction->updates[i];
-		struct ref_lock *lock = update->lock;
+		struct ref_lock *lock = update->backend_data;
 
 		if (update->flags & REF_NEEDS_COMMIT ||
 		    update->flags & REF_LOG_ONLY) {
@@ -3754,7 +3754,7 @@ static int files_transaction_commit(struct ref_store *ref_store,
 					    lock->ref_name, old_msg);
 				free(old_msg);
 				unlock_ref(lock);
-				update->lock = NULL;
+				update->backend_data = NULL;
 				ret = TRANSACTION_GENERIC_ERROR;
 				goto cleanup;
 			}
@@ -3764,7 +3764,7 @@ static int files_transaction_commit(struct ref_store *ref_store,
 			if (commit_ref(lock)) {
 				strbuf_addf(err, "couldn't set '%s'", lock->ref_name);
 				unlock_ref(lock);
-				update->lock = NULL;
+				update->backend_data = NULL;
 				ret = TRANSACTION_GENERIC_ERROR;
 				goto cleanup;
 			}
@@ -3773,17 +3773,18 @@ static int files_transaction_commit(struct ref_store *ref_store,
 	/* Perform deletes now that updates are safely completed */
 	for (i = 0; i < transaction->nr; i++) {
 		struct ref_update *update = transaction->updates[i];
+		struct ref_lock *lock = update->backend_data;
 
 		if (update->flags & REF_DELETING &&
 		    !(update->flags & REF_LOG_ONLY)) {
-			if (delete_ref_loose(update->lock, update->type, err)) {
+			if (delete_ref_loose(lock, update->type, err)) {
 				ret = TRANSACTION_GENERIC_ERROR;
 				goto cleanup;
 			}
 
 			if (!(update->flags & REF_ISPRUNING))
 				string_list_append(&refs_to_delete,
-						   update->lock->ref_name);
+						   lock->ref_name);
 		}
 	}
 
@@ -3799,8 +3800,8 @@ cleanup:
 	transaction->state = REF_TRANSACTION_CLOSED;
 
 	for (i = 0; i < transaction->nr; i++)
-		if (transaction->updates[i]->lock)
-			unlock_ref(transaction->updates[i]->lock);
+		if (transaction->updates[i]->backend_data)
+			unlock_ref(transaction->updates[i]->backend_data);
 	string_list_clear(&refs_to_delete, 0);
 	free(head_ref);
 	string_list_clear(&affected_refnames, 0);

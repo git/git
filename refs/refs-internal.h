@@ -162,7 +162,7 @@ struct ref_update {
 	 */
 	unsigned int flags;
 
-	struct ref_lock *lock;
+	void *backend_data;
 	unsigned int type;
 	char *msg;
 
