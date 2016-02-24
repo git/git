@@ -98,6 +98,18 @@ UI, Workflows & Features
    variables, serving as a reminder for those who work on multiple
    projects and do not want to put these in their $HOME/.gitconfig.
 
+ * "git fetch" and friends that make network connections can now be
+   told to only use ipv4 (or ipv6).
+
+ * Some authentication methods do not need username or password, but
+   libcurl needs some hint that it needs to perform authentication.
+   Supplying an empty username and password string is a valid way to
+   do so, but you can set the http.[<url>.]emptyAuth configuration
+   variable to achieve the same, if you find it cleaner.
+
+ * You can now set http.[<url>.]pinnedpubkey to specify the pinned
+   public key when building with recent enough versions of libcURL.
+
 
 Performance, Internal Implementation, Development Support etc.
 
@@ -157,6 +169,16 @@ Performance, Internal Implementation, Development Support etc.
    calls to strcpy(3) in "git rerere" that are already safe has been
    rewritten to avoid false wanings.
 
+ * The "name_path" API was an attempt to reduce the need to construct
+   the full path out of a series of path components while walking a
+   tree hierarchy, but over time made less efficient because the path
+   needs to be flattened, e.g. to be compared with another path that
+   is already flat.  The API has been removed and its users have been
+   rewritten to simplify the overall code complexity.
+
+ * Help those who debug http(s) part of the system.
+   (merge 0054045 sp/remote-curl-ssl-strerror later to maint).
+
 Also contains various documentation updates and code clean-ups.
 
 
@@ -171,39 +193,31 @@ notes for details).
    exporting GIT_WORK_TREE to point at the root of the working tree,
    interfering when they tried to use a different working tree without
    setting GIT_WORK_TREE environment themselves.
-   (merge df1e6ea nd/stop-setenv-work-tree later to maint).
 
  * The "exclude_list" structure has the usual "alloc, nr" pair of
    fields to be used by ALLOC_GROW(), but clear_exclude_list() forgot
    to reset 'alloc' to 0 when it cleared 'nr' to discard the managed
    array.
-   (merge 2653a8c nd/dir-exclude-cleanup later to maint).
 
  * Paths that have been told the index about with "add -N" are not
    quite yet in the index, but a few commands behaved as if they
    already are in a harmful way.
-   (merge 4d55200 nd/ita-cleanup later to maint).
 
  * "git send-email" was confused by escaped quotes stored in the alias
    files saved by "mutt", which has been corrected.
-   (merge 2c510f2 ew/send-email-mutt-alias-fix later to maint).
 
  * A few unportable C construct have been spotted by clang compiler
    and have been fixed.
-   (merge a0df2e5 jk/clang-pedantic later to maint).
 
  * The documentation has been updated to hint the connection between
    the '--signoff' option and DCO.
-   (merge b2c150d dw/signoff-doc later to maint).
 
  * "git reflog" incorrectly assumed that all objects that used to be
    at the tip of a ref must be commits, which caused it to segfault.
-   (merge aecad37 dk/reflog-walk-with-non-commit later to maint).
 
  * The ignore mechanism saw a few regressions around untracked file
    listing and sparse checkout selection areas in 2.7.0; the change
    that is responsible for the regression has been reverted.
-   (merge 8c72236 nd/exclusion-regression-fix later to maint).
 
  * Some codepaths used fopen(3) when opening a fixed path in $GIT_DIR
    (e.g. COMMIT_EDITMSG) that is meant to be left after the command is
@@ -211,7 +225,6 @@ notes for details).
    be shared with core.sharedRepository and the umask of the previous
    user is tighter.  They have been made to work better by calling
    unlink(2) and retrying after fopen(3) fails with EPERM.
-   (merge ea56518 js/fopen-harder later to maint).
 
  * Asking gitweb for a nonexistent commit left a warning in the server
    log.
@@ -219,59 +232,44 @@ notes for details).
    Somebody may want to follow this up with an additional test, perhaps?
    IIRC, we do test that no Perl warnings are given to the server log,
    so this should have been caught if our test coverage were good.
-   (merge a9eb90a ho/gitweb-squelch-undef-warning later to maint).
 
  * "git rebase", unlike all other callers of "gc --auto", did not
    ignore the exit code from "gc --auto".
-   (merge 8c24f5b jk/ok-to-fail-gc-auto-in-rebase later to maint).
 
  * Many codepaths that run "gc --auto" before exiting kept packfiles
    mapped and left the file descriptors to them open, which was not
    friendly to systems that cannot remove files that are open.  They
    now close the packs before doing so.
-   (merge d562102 js/close-packs-before-gc later to maint).
 
  * A recent optimization to filter-branch in v2.7.0 introduced a
    regression when --prune-empty filter is used, which has been
    corrected.
-   (merge 1dc413e jk/filter-branch-no-index later to maint).
 
  * The description for SANITY prerequisite the test suite uses has
    been clarified both in the comment and in the implementation.
-   (merge 719c3da jk/sanity later to maint).
 
  * "git tag" started listing a tag "foo" as "tags/foo" when a branch
    named "foo" exists in the same repository; remove this unnecessary
    disambiguation, which is a regression introduced in v2.7.0.
-   (merge 0571979 jk/list-tag-2.7-regression later to maint).
 
  * The way "git svn" uses auth parameter was broken by Subversion
    1.9.0 and later.
-   (merge 0b66415 ew/svn-1.9.0-auth later to maint).
 
  * The "split" subcommand of "git subtree" (in contrib/) incorrectly
    skipped merges when it shouldn't, which was corrected.
-   (merge 933cfeb dw/subtree-split-do-not-drop-merge later to maint).
 
  * A few options of "git diff" did not work well when the command was
    run from a subdirectory.
-   (merge a97262c nd/diff-with-path-params later to maint).
 
  * The command line completion learned a handful of additional options
    and command specific syntax.
-   (merge fa4b5e3 jk/completion-rebase later to maint).
-   (merge f7c2e1a pw/completion-show-branch later to maint).
-   (merge d7d4ca8 pw/completion-stash later to maint).
-   (merge e6414b4 tb/complete-word-diff-regex later to maint).
 
  * dirname() emulation has been added, as Msys2 lacks it.
-   (merge e7d5ce8 js/dirname-basename later to maint).
 
  * The underlying machinery used by "ls-files -o" and other commands
    have been taught not to create empty submodule ref cache for a
    directory that is not a submodule.  This removes a ton of wasted
    CPU cycles.
-   (merge a2d5156 jk/ref-cache-non-repository-optim later to maint).
 
  * "git worktree" had a broken code that attempted to auto-fix
    possible inconsistency that results from end-users moving a
@@ -280,39 +278,46 @@ notes for details).
    "mv" run by end-users who are not familiar with that fact will
    obviously not adjust them), which actually made things worse
    when triggered.
-   (merge 618244e nd/do-not-move-worktree-manually later to maint).
 
  * The low-level merge machinery has been taught to use CRLF line
    termination when inserting conflict markers to merged contents that
    are themselves CRLF line-terminated.
-   (merge 15980de js/xmerge-marker-eol later to maint).
 
  * "git push --force-with-lease" has been taught to report if the push
    needed to force (or fast-forwarded).
-   (merge b2e93f8 aw/push-force-with-lease-reporting later to maint).
 
  * The emulated "yes" command used in our test scripts has been
    tweaked not to spend too much time generating unnecessary output
    that is not used, to help those who test on Windows where it would
    not stop until it fills the pipe buffer due to lack of SIGPIPE.
-   (merge 6129c93 js/test-lib-windows-emulated-yes later to maint).
 
  * The documentation for "git clean" has been corrected; it mentioned
    that .git/modules/* are removed by giving two "-f", which has never
    been the case.
-   (merge 31e3c2d mm/clean-doc-fix later to maint).
 
  * The vimdiff backend for "git mergetool" has been tweaked to arrange
    and number buffers in the order that would match the expectation of
    majority of people who read left to right, then top down and assign
    buffers 1 2 3 4 "mentally" to local base remote merge windows based
    on that order.
-   (merge 2300328 dw/mergetool-vim-window-shuffle later to maint).
+
+ * "git show 'HEAD:Foo[BAR]Baz'" did not interpret the argument as a
+   rev, i.e. the object named by the the pathname with wildcard
+   characters in a tree object.
+   (merge aac4fac nd/dwim-wildcards-as-pathspecs later to maint).
+
+ * "git rev-parse --git-common-dir" used in the worktree feature
+   misbehaved when run from a subdirectory.
+   (merge 17f1365 nd/git-common-dir-fix later to maint).
+
+ * Another try to add support to the ignore mechanism that lets you
+   say "this is excluded" and then later say "oh, no, this part (that
+   is a subset of the previous part) is not excluded".
+
+ * "git worktree add -B <branchname>" did not work.
+
+ * The "v(iew)" subcommand of the interactive "git am -i" command was
+   broken in 2.6.0 timeframe when the command was rewritten in C.
+   (merge 708b8cc jc/am-i-v-fix later to maint).
 
  * Other minor clean-ups and documentation updates
-   (merge 99487cf ss/user-manual later to maint).
-   (merge e914ef0 ew/for-each-ref-doc later to maint).
-   (merge 36fc7d8 sg/t6050-failing-editor-test-fix later to maint).
-   (merge 60253a6 ss/clone-depth-single-doc later to maint).
-   (merge bd02e97 lv/add-doc-working-tree later to maint).
-   (merge f562d7d ah/stripspace-optstring later to maint).
