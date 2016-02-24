@@ -892,12 +892,12 @@ static int get_sha1_oneline(const char *prefix, unsigned char *sha1,
 			prefix++;
 			negative = 1;
 		} else if (prefix[0] != '!') {
-			die ("Invalid search pattern: %s", prefix);
+			return -1;
 		}
 	}
 
 	if (regcomp(&regex, prefix, REG_EXTENDED))
-		die("Invalid search pattern: %s", prefix);
+		return -1;
 
 	for (l = list; l; l = l->next) {
 		l->item->object.flags |= ONELINE_SEEN;
