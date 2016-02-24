@@ -1532,3 +1532,10 @@ int initial_ref_transaction_commit(struct ref_transaction *transaction,
 
 	return refs->be->initial_transaction_commit(refs, transaction, err);
 }
+
+int delete_refs(struct string_list *refnames, unsigned int flags)
+{
+	struct ref_store *refs = get_ref_store(NULL);
+
+	return refs->be->delete_refs(refs, refnames, flags);
+}
