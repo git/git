@@ -404,13 +404,6 @@ struct ref_iterator *prefix_ref_iterator_begin(struct ref_iterator *iter0,
 					       const char *prefix,
 					       int trim);
 
-/*
- * Iterate over the references in the main ref_store that have a
- * reflog. The paths within a directory are iterated over in arbitrary
- * order.
- */
-struct ref_iterator *files_reflog_iterator_begin(void);
-
 /* Internal implementation of reference iteration: */
 
 /*
@@ -507,6 +500,35 @@ typedef struct ref_iterator *ref_iterator_begin_fn(
 		struct ref_store *ref_store,
 		const char *prefix, unsigned int flags);
 
+/* reflog functions */
+
+/*
+ * Iterate over the references in the specified ref_store that have a
+ * reflog. The refs are iterated over in arbitrary order.
+ */
+typedef struct ref_iterator *reflog_iterator_begin_fn(
+		struct ref_store *ref_store);
+
+typedef int for_each_reflog_ent_fn(struct ref_store *ref_store,
+				   const char *refname,
+				   each_reflog_ent_fn fn,
+				   void *cb_data);
+typedef int for_each_reflog_ent_reverse_fn(struct ref_store *ref_store,
+					   const char *refname,
+					   each_reflog_ent_fn fn,
+					   void *cb_data);
+typedef int reflog_exists_fn(struct ref_store *ref_store, const char *refname);
+typedef int create_reflog_fn(struct ref_store *ref_store, const char *refname,
+			     int force_create, struct strbuf *err);
+typedef int delete_reflog_fn(struct ref_store *ref_store, const char *refname);
+typedef int reflog_expire_fn(struct ref_store *ref_store,
+			     const char *refname, const unsigned char *sha1,
+			     unsigned int flags,
+			     reflog_expiry_prepare_fn prepare_fn,
+			     reflog_expiry_should_prune_fn should_prune_fn,
+			     reflog_expiry_cleanup_fn cleanup_fn,
+			     void *policy_cb_data);
+
 /*
  * Read a reference from the specified reference store, non-recursively.
  * Set type to describe the reference, and:
@@ -568,6 +590,14 @@ struct ref_storage_be {
 	ref_iterator_begin_fn *iterator_begin;
 	read_raw_ref_fn *read_raw_ref;
 	verify_refname_available_fn *verify_refname_available;
+
+	reflog_iterator_begin_fn *reflog_iterator_begin;
+	for_each_reflog_ent_fn *for_each_reflog_ent;
+	for_each_reflog_ent_reverse_fn *for_each_reflog_ent_reverse;
+	reflog_exists_fn *reflog_exists;
+	create_reflog_fn *create_reflog;
+	delete_reflog_fn *delete_reflog;
+	reflog_expire_fn *reflog_expire;
 };
 
 extern struct ref_storage_be refs_be_files;
