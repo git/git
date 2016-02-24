@@ -83,6 +83,14 @@ check_exact_renames () {
 	rename_detected 3
 }
 
+check_no_renames () {
+	check_common &&
+	rename_undetected 0 &&
+	rename_undetected 1 &&
+	rename_undetected 2 &&
+	rename_undetected 3
+}
+
 test_expect_success 'setup repo' '
 	cat <<-\EOF >3-old &&
 	33a
@@ -195,6 +203,12 @@ test_expect_success 'rename threshold is truncated' '
 	check_exact_renames
 '
 
+test_expect_success 'disabled rename detection' '
+	git read-tree --reset -u HEAD &&
+	git merge-recursive --no-renames $tail &&
+	check_no_renames
+'
+
 test_expect_success 'last wins in --find-renames=<m> --find-renames=<n>' '
 	git read-tree --reset -u HEAD &&
 	test_must_fail git merge-recursive \
@@ -209,6 +223,18 @@ test_expect_success '--find-renames resets threshold' '
 	$check_50
 '
 
+test_expect_success 'last wins in --no-renames --find-renames' '
+	git read-tree --reset -u HEAD &&
+	test_must_fail git merge-recursive --no-renames --find-renames $tail &&
+	$check_50
+'
+
+test_expect_success 'last wins in --find-renames --no-renames' '
+	git read-tree --reset -u HEAD &&
+	git merge-recursive --find-renames --no-renames $tail &&
+	check_no_renames
+'
+
 test_expect_success 'assumption for further tests: trivial merge succeeds' '
 	git read-tree --reset -u HEAD &&
 	git merge-recursive HEAD -- HEAD HEAD &&
@@ -218,6 +244,8 @@ test_expect_success 'assumption for further tests: trivial merge succeeds' '
 	git merge-recursive --find-renames=$th2 HEAD -- HEAD HEAD &&
 	git diff --quiet --cached &&
 	git merge-recursive --find-renames=100% HEAD -- HEAD HEAD &&
+	git diff --quiet --cached &&
+	git merge-recursive --no-renames HEAD -- HEAD HEAD &&
 	git diff --quiet --cached
 '
 
