@@ -382,11 +382,9 @@ static int collect_reflog(const char *ref, const struct object_id *oid, int unus
 {
 	struct collected_reflog *e;
 	struct collect_reflog_cb *cb = cb_data;
-	size_t namelen = strlen(ref);
 
-	e = xmalloc(sizeof(*e) + namelen + 1);
+	FLEX_ALLOC_STR(e, reflog, ref);
 	hashcpy(e->sha1, oid->hash);
-	memcpy(e->reflog, ref, namelen + 1);
 	ALLOC_GROW(cb->e, cb->nr + 1, cb->alloc);
 	cb->e[cb->nr++] = e;
 	return 0;
@@ -396,7 +394,6 @@ static struct reflog_expire_cfg {
 	struct reflog_expire_cfg *next;
 	unsigned long expire_total;
 	unsigned long expire_unreachable;
-	size_t len;
 	char pattern[FLEX_ARRAY];
 } *reflog_expire_cfg, **reflog_expire_cfg_tail;
 
@@ -408,13 +405,11 @@ static struct reflog_expire_cfg *find_cfg_ent(const char *pattern, size_t len)
 		reflog_expire_cfg_tail = &reflog_expire_cfg;
 
 	for (ent = reflog_expire_cfg; ent; ent = ent->next)
-		if (ent->len == len &&
-		    !memcmp(ent->pattern, pattern, len))
+		if (!strncmp(ent->pattern, pattern, len) &&
+		    ent->pattern[len] == '\0')
 			return ent;
 
-	ent = xcalloc(1, (sizeof(*ent) + len));
-	memcpy(ent->pattern, pattern, len);
-	ent->len = len;
+	FLEX_ALLOC_MEM(ent, pattern, pattern, len);
 	*reflog_expire_cfg_tail = ent;
 	reflog_expire_cfg_tail = &(ent->next);
 	return ent;

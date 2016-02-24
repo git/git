@@ -466,13 +466,11 @@ static void queue_blames(struct scoreboard *sb, struct origin *porigin,
 static struct origin *make_origin(struct commit *commit, const char *path)
 {
 	struct origin *o;
-	size_t pathlen = strlen(path) + 1;
-	o = xcalloc(1, sizeof(*o) + pathlen);
+	FLEX_ALLOC_STR(o, path, path);
 	o->commit = commit;
 	o->refcnt = 1;
 	o->next = commit->util;
 	commit->util = o;
-	memcpy(o->path, path, pathlen); /* includes NUL */
 	return o;
 }
 
@@ -2059,7 +2057,8 @@ static int prepare_lines(struct scoreboard *sb)
 	for (p = buf; p < end; p = get_next_line(p, end))
 		num++;
 
-	sb->lineno = lineno = xmalloc(sizeof(*sb->lineno) * (num + 1));
+	ALLOC_ARRAY(sb->lineno, num + 1);
+	lineno = sb->lineno;
 
 	for (p = buf; p < end; p = get_next_line(p, end))
 		*lineno++ = p - buf;

@@ -55,10 +55,9 @@ static struct dir_entry *hash_dir_entry(struct index_state *istate,
 	dir = find_dir_entry(istate, ce->name, namelen);
 	if (!dir) {
 		/* not found, create it and add to hash table */
-		dir = xcalloc(1, sizeof(struct dir_entry) + namelen + 1);
+		FLEX_ALLOC_MEM(dir, name, ce->name, namelen);
 		hashmap_entry_init(dir, memihash(ce->name, namelen));
 		dir->namelen = namelen;
-		strncpy(dir->name, ce->name, namelen);
 		hashmap_add(&istate->dir_hash, dir);
 
 		/* recursively add missing parent directories */

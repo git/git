@@ -52,7 +52,7 @@ static int prune_worktree(const char *id, struct strbuf *reason)
 		return 1;
 	}
 	len = st.st_size;
-	path = xmalloc(len + 1);
+	path = xmallocz(len);
 	read_in_full(fd, path, len);
 	close(fd);
 	while (len && (path[len - 1] == '\n' || path[len - 1] == '\r'))

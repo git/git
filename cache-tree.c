@@ -79,11 +79,9 @@ static struct cache_tree_sub *find_subtree(struct cache_tree *it,
 	ALLOC_GROW(it->down, it->subtree_nr + 1, it->subtree_alloc);
 	it->subtree_nr++;
 
-	down = xmalloc(sizeof(*down) + pathlen + 1);
+	FLEX_ALLOC_MEM(down, name, path, pathlen);
 	down->cache_tree = NULL;
 	down->namelen = pathlen;
-	memcpy(down->name, path, pathlen);
-	down->name[pathlen] = 0;
 
 	if (pos < it->subtree_nr)
 		memmove(it->down + pos + 1,

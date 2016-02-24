@@ -505,12 +505,7 @@ void add_exclude(const char *string, const char *base,
 
 	parse_exclude_pattern(&string, &patternlen, &flags, &nowildcardlen);
 	if (flags & EXC_FLAG_MUSTBEDIR) {
-		char *s;
-		x = xmalloc(sizeof(*x) + patternlen + 1);
-		s = (char *)(x+1);
-		memcpy(s, string, patternlen);
-		s[patternlen] = '\0';
-		x->pattern = s;
+		FLEXPTR_ALLOC_MEM(x, pattern, string, patternlen);
 	} else {
 		x = xmalloc(sizeof(*x));
 		x->pattern = string;
@@ -630,10 +625,7 @@ static struct untracked_cache_dir *lookup_untracked(struct untracked_cache *uc,
 	}
 
 	uc->dir_created++;
-	d = xmalloc(sizeof(*d) + len + 1);
-	memset(d, 0, sizeof(*d));
-	memcpy(d->name, name, len);
-	d->name[len] = '\0';
+	FLEX_ALLOC_MEM(d, name, name, len);
 
 	ALLOC_GROW(dir->dirs, dir->dirs_nr + 1, dir->dirs_alloc);
 	memmove(dir->dirs + first + 1, dir->dirs + first,
@@ -702,7 +694,7 @@ static int add_excludes(const char *fname, const char *base, int baselen,
 			return 0;
 		}
 		if (buf[size-1] != '\n') {
-			buf = xrealloc(buf, size+1);
+			buf = xrealloc(buf, st_add(size, 1));
 			buf[size++] = '\n';
 		}
 	} else {
@@ -716,7 +708,7 @@ static int add_excludes(const char *fname, const char *base, int baselen,
 			close(fd);
 			return 0;
 		}
-		buf = xmalloc(size+1);
+		buf = xmallocz(size);
 		if (read_in_full(fd, buf, size) != size) {
 			free(buf);
 			close(fd);
@@ -1334,10 +1326,8 @@ static struct dir_entry *dir_entry_new(const char *pathname, int len)
 {
 	struct dir_entry *ent;
 
-	ent = xmalloc(sizeof(*ent) + len + 1);
+	FLEX_ALLOC_MEM(ent, name, pathname, len);
 	ent->len = len;
-	memcpy(ent->name, pathname, len);
-	ent->name[len] = 0;
 	return ent;
 }
 
@@ -2568,16 +2558,15 @@ void write_untracked_extension(struct strbuf *out, struct untracked_cache *untra
 	struct ondisk_untracked_cache *ouc;
 	struct write_data wd;
 	unsigned char varbuf[16];
-	int len = 0, varint_len;
-	if (untracked->exclude_per_dir)
-		len = strlen(untracked->exclude_per_dir);
-	ouc = xmalloc(sizeof(*ouc) + len + 1);
+	int varint_len;
+	size_t len = strlen(untracked->exclude_per_dir);
+
+	FLEX_ALLOC_MEM(ouc, exclude_per_dir, untracked->exclude_per_dir, len);
 	stat_data_to_disk(&ouc->info_exclude_stat, &untracked->ss_info_exclude.stat);
 	stat_data_to_disk(&ouc->excludes_file_stat, &untracked->ss_excludes_file.stat);
 	hashcpy(ouc->info_exclude_sha1, untracked->ss_info_exclude.sha1);
 	hashcpy(ouc->excludes_file_sha1, untracked->ss_excludes_file.sha1);
 	ouc->dir_flags = htonl(untracked->dir_flags);
-	memcpy(ouc->exclude_per_dir, untracked->exclude_per_dir, len + 1);
 
 	varint_len = encode_varint(untracked->ident.len, varbuf);
 	strbuf_add(out, varbuf, varint_len);
@@ -2682,21 +2671,21 @@ static int read_one_dir(struct untracked_cache_dir **untracked_,
 	ud.untracked_alloc = value;
 	ud.untracked_nr	   = value;
 	if (ud.untracked_nr)
-		ud.untracked = xmalloc(sizeof(*ud.untracked) * ud.untracked_nr);
+		ALLOC_ARRAY(ud.untracked, ud.untracked_nr);
 	data = next;
 
 	next = data;
 	ud.dirs_alloc = ud.dirs_nr = decode_varint(&next);
 	if (next > end)
 		return -1;
-	ud.dirs = xmalloc(sizeof(*ud.dirs) * ud.dirs_nr);
+	ALLOC_ARRAY(ud.dirs, ud.dirs_nr);
 	data = next;
 
 	len = strlen((const char *)data);
 	next = data + len + 1;
 	if (next > rd->end)
 		return -1;
-	*untracked_ = untracked = xmalloc(sizeof(*untracked) + len);
+	*untracked_ = untracked = xmalloc(st_add(sizeof(*untracked), len));
 	memcpy(untracked, &ud, sizeof(ud));
 	memcpy(untracked->name, data, len + 1);
 	data = next;
@@ -2809,7 +2798,7 @@ struct untracked_cache *read_untracked_extension(const void *data, unsigned long
 	rd.data	      = next;
 	rd.end	      = end;
 	rd.index      = 0;
-	rd.ucd        = xmalloc(sizeof(*rd.ucd) * len);
+	ALLOC_ARRAY(rd.ucd, len);
 
 	if (read_one_dir(&uc->root, &rd) || rd.index != len)
 		goto done;

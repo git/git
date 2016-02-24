@@ -189,11 +189,11 @@ static struct lline *coalesce_lines(struct lline *base, int *lenbase,
 	 *   - Else if we have NEW, insert newend lline into base and
 	 *   consume newend
 	 */
-	lcs = xcalloc(origbaselen + 1, sizeof(int*));
-	directions = xcalloc(origbaselen + 1, sizeof(enum coalesce_direction*));
+	lcs = xcalloc(st_add(origbaselen, 1), sizeof(int*));
+	directions = xcalloc(st_add(origbaselen, 1), sizeof(enum coalesce_direction*));
 	for (i = 0; i < origbaselen + 1; i++) {
-		lcs[i] = xcalloc(lennew + 1, sizeof(int));
-		directions[i] = xcalloc(lennew + 1, sizeof(enum coalesce_direction));
+		lcs[i] = xcalloc(st_add(lennew, 1), sizeof(int));
+		directions[i] = xcalloc(st_add(lennew, 1), sizeof(enum coalesce_direction));
 		directions[i][0] = BASE;
 	}
 	for (j = 1; j < lennew + 1; j++)
@@ -319,7 +319,7 @@ static void append_lost(struct sline *sline, int n, const char *line, int len)
 	if (line[len-1] == '\n')
 		len--;
 
-	lline = xmalloc(sizeof(*lline) + len + 1);
+	FLEX_ALLOC_MEM(lline, line, line, len);
 	lline->len = len;
 	lline->next = NULL;
 	lline->prev = sline->plost.lost_tail;
@@ -330,8 +330,6 @@ static void append_lost(struct sline *sline, int n, const char *line, int len)
 	sline->plost.lost_tail = lline;
 	sline->plost.len++;
 	lline->parent_map = this_mask;
-	memcpy(lline->line, line, len);
-	lline->line[len] = 0;
 }
 
 struct combine_diff_state {
@@ -1043,15 +1041,13 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 				elem->mode = canon_mode(S_IFLNK);
 
 			result_size = len;
-			result = xmalloc(len + 1);
+			result = xmallocz(len);
 
 			done = read_in_full(fd, result, len);
 			if (done < 0)
 				die_errno("read error '%s'", elem->path);
 			else if (done < len)
 				die("early EOF '%s'", elem->path);
-
-			result[len] = 0;
 
 			/* If not a fake symlink, apply filters, e.g. autocrlf */
 			if (is_file) {
@@ -1115,7 +1111,7 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 	if (result_size && result[result_size-1] != '\n')
 		cnt++; /* incomplete line */
 
-	sline = xcalloc(cnt+2, sizeof(*sline));
+	sline = xcalloc(st_add(cnt, 2), sizeof(*sline));
 	sline[0].bol = result;
 	for (lno = 0, cp = result; cp < result + result_size; cp++) {
 		if (*cp == '\n') {
@@ -1134,7 +1130,7 @@ static void show_patch_diff(struct combine_diff_path *elem, int num_parent,
 	/* Even p_lno[cnt+1] is valid -- that is for the end line number
 	 * for deletion hunk at the end.
 	 */
-	sline[0].p_lno = xcalloc((cnt+2) * num_parent, sizeof(unsigned long));
+	sline[0].p_lno = xcalloc(st_mult(st_add(cnt, 2), num_parent), sizeof(unsigned long));
 	for (lno = 0; lno <= cnt; lno++)
 		sline[lno+1].p_lno = sline[lno].p_lno + num_parent;
 
@@ -1266,7 +1262,7 @@ static struct diff_filepair *combined_pair(struct combine_diff_path *p,
 	struct diff_filespec *pool;
 
 	pair = xmalloc(sizeof(*pair));
-	pool = xcalloc(num_parent + 1, sizeof(struct diff_filespec));
+	pool = xcalloc(st_add(num_parent, 1), sizeof(struct diff_filespec));
 	pair->one = pool + 1;
 	pair->two = pool;
 
@@ -1372,7 +1368,7 @@ static struct combine_diff_path *find_paths_multitree(
 	struct combine_diff_path paths_head;
 	struct strbuf base;
 
-	parents_sha1 = xmalloc(nparent * sizeof(parents_sha1[0]));
+	ALLOC_ARRAY(parents_sha1, nparent);
 	for (i = 0; i < nparent; i++)
 		parents_sha1[i] = parents->sha1[i];
 
@@ -1483,7 +1479,7 @@ void diff_tree_combined(const unsigned char *sha1,
 	if (opt->orderfile && num_paths) {
 		struct obj_order *o;
 
-		o = xmalloc(sizeof(*o) * num_paths);
+		ALLOC_ARRAY(o, num_paths);
 		for (i = 0, p = paths; p; p = p->next, i++)
 			o[i].obj = p;
 		order_objects(opt->orderfile, path_path, o, num_paths);
