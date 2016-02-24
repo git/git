@@ -66,6 +66,8 @@ int ref_exists(const char *refname);
 
 int is_branch(const char *refname);
 
+extern int refs_init_db(struct strbuf *err);
+
 /*
  * If refname is a non-symbolic reference that refers to a tag object,
  * and the tag can be (recursively) dereferenced to a non-tag object,

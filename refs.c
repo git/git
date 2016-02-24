@@ -1292,6 +1292,14 @@ static const char *resolve_ref_recursively(struct ref_store *refs,
 	return NULL;
 }
 
+/* backend functions */
+int refs_init_db(struct strbuf *err)
+{
+	struct ref_store *refs = get_ref_store(NULL);
+
+	return refs->be->init_db(refs, err);
+}
+
 const char *resolve_ref_unsafe(const char *refname, int resolve_flags,
 			       unsigned char *sha1, int *flags)
 {
