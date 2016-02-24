@@ -1951,10 +1951,6 @@ static int lock_config_file(const char *config_filename,
 {
 	int fd;
 
-	/* make sure the parent directory exists */
-	if (safe_create_leading_directories_const(config_filename))
-		return error("could not create parent directory of %s",
-				config_filename);
 	*result = xcalloc(1, sizeof(struct lock_file));
 	fd = hold_lock_file_for_update(*result, config_filename, 0);
 	if (fd < 0)
