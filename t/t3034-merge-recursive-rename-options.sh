@@ -263,4 +263,50 @@ test_expect_success '--find-renames rejects non-numbers' '
 	git diff --quiet --cached
 '
 
+test_expect_success 'rename-threshold=<n> is a synonym for find-renames=<n>' '
+	git read-tree --reset -u HEAD &&
+	test_must_fail git merge-recursive --rename-threshold=$th0 $tail &&
+	check_threshold_0
+'
+
+test_expect_success 'last wins in --no-renames --rename-threshold=<n>' '
+	git read-tree --reset -u HEAD &&
+	test_must_fail git merge-recursive --no-renames --rename-threshold=$th0 $tail &&
+	check_threshold_0
+'
+
+test_expect_success 'last wins in --rename-threshold=<n> --no-renames' '
+	git read-tree --reset -u HEAD &&
+	git merge-recursive --rename-threshold=$th0 --no-renames $tail &&
+	check_no_renames
+'
+
+test_expect_success '--rename-threshold=<n> rejects negative argument' '
+	git read-tree --reset -u HEAD &&
+	test_must_fail git merge-recursive --rename-threshold=-25 \
+		HEAD -- HEAD HEAD &&
+	git diff --quiet --cached
+'
+
+test_expect_success '--rename-threshold=<n> rejects non-numbers' '
+	git read-tree --reset -u HEAD &&
+	test_must_fail git merge-recursive --rename-threshold=0xf \
+		HEAD -- HEAD HEAD &&
+	git diff --quiet --cached
+'
+
+test_expect_success 'last wins in --rename-threshold=<m> --find-renames=<n>' '
+	git read-tree --reset -u HEAD &&
+	test_must_fail git merge-recursive \
+		--rename-threshold=$th0 --find-renames=$th2 $tail &&
+	check_threshold_2
+'
+
+test_expect_success 'last wins in --find-renames=<m> --rename-threshold=<n>' '
+	git read-tree --reset -u HEAD &&
+	test_must_fail git merge-recursive \
+		--find-renames=$th2 --rename-threshold=$th0 $tail &&
+	check_threshold_0
+'
+
 test_done
