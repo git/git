@@ -201,9 +201,7 @@ static int add_worktree(const char *path, const char *refname,
 		die(_("'%s' already exists"), path);
 
 	/* is 'refname' a branch or commit? */
-	if (opts->force_new_branch) /* definitely a branch */
-		;
-	else if (!opts->detach && !strbuf_check_branch_ref(&symref, refname) &&
+	if (!opts->detach && !strbuf_check_branch_ref(&symref, refname) &&
 		 ref_exists(symref.buf)) { /* it's a branch */
 		if (!opts->force)
 			die_if_checked_out(symref.buf);
@@ -336,8 +334,17 @@ static int add(int ac, const char **av, const char *prefix)
 	branch = ac < 2 ? "HEAD" : av[1];
 
 	opts.force_new_branch = !!new_branch_force;
-	if (opts.force_new_branch)
+	if (opts.force_new_branch) {
+		struct strbuf symref = STRBUF_INIT;
+
 		opts.new_branch = new_branch_force;
+
+		if (!opts.force &&
+		    !strbuf_check_branch_ref(&symref, opts.new_branch) &&
+		    ref_exists(symref.buf))
+			die_if_checked_out(symref.buf);
+		strbuf_release(&symref);
+	}
 
 	if (ac < 2 && !opts.new_branch && !opts.detach) {
 		int n;
