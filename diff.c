@@ -5082,7 +5082,7 @@ size_t fill_textconv(struct userdiff_driver *driver,
 {
 	size_t size;
 
-	if (!driver || !driver->textconv) {
+	if (!driver) {
 		if (!DIFF_FILE_VALID(df)) {
 			*outbuf = "";
 			return 0;
@@ -5092,6 +5092,9 @@ size_t fill_textconv(struct userdiff_driver *driver,
 		*outbuf = df->data;
 		return df->size;
 	}
+
+	if (!driver->textconv)
+		die("BUG: fill_textconv called with non-textconv driver");
 
 	if (driver->textconv_cache && df->sha1_valid) {
 		*outbuf = notes_cache_get(driver->textconv_cache, df->sha1,
